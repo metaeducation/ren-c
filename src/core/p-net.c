@@ -113,7 +113,7 @@ static REB_R Transport_Actor(
 
             switch (property) {
             case SYM_OPEN_Q:
-                return Init_False(D_OUT);
+                return Init_False(OUT);
 
             default:
                 break;
@@ -217,7 +217,7 @@ static REB_R Transport_Actor(
         case SYM_LENGTH: {
             Value* port_data = CTX_VAR(ctx, STD_PORT_DATA);
             return Init_Integer(
-                D_OUT,
+                OUT,
                 ANY_SERIES(port_data) ? VAL_LEN_HEAD(port_data) : 0
             ); }
 
@@ -226,7 +226,7 @@ static REB_R Transport_Actor(
             // Connect for clients, bind for servers:
             //
             return Init_Logic(
-                D_OUT,
+                OUT,
                 (sock->state & (RSM_CONNECT | RSM_BIND)) != 0
             );
 
@@ -253,7 +253,7 @@ static REB_R Transport_Actor(
         else if (sock->command == RDC_WRITE) {
             Init_Blank(port_data); // Write is done.
         }
-        return Init_Bar(D_OUT); }
+        return Init_Bar(OUT); }
 
     case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
@@ -314,11 +314,11 @@ static REB_R Transport_Actor(
             rebRelease(result); // ignore result
         }
 
-        // !!! Post-processing enforces READ as returning D_OUT at the moment;
+        // !!! Post-processing enforces READ as returning OUT at the moment;
         // so you can't just `return port`.
         //
-        Move_Value(D_OUT, port);
-        return D_OUT; }
+        Move_Value(OUT, port);
+        return OUT; }
 
     case SYM_WRITE: {
         INCLUDE_PARAMS_OF_WRITE;
@@ -443,8 +443,8 @@ static REB_R Transport_Actor(
         // Get specific information - the scheme's info object.
         // Special notation allows just getting part of the info.
         //
-        Query_Net(D_OUT, port, DEVREQ_NET(sock));
-        return D_OUT; }
+        Query_Net(OUT, port, DEVREQ_NET(sock));
+        return OUT; }
 
     case SYM_CLOSE: {
         if (sock->flags & RRF_OPEN) {
@@ -510,8 +510,8 @@ static REB_R UDP_Actor(REBFRM *frame_, Value* port, Value* verb)
 //
 DECLARE_NATIVE(get_tcp_actor_handle)
 {
-    Make_Port_Actor_Handle(D_OUT, &TCP_Actor);
-    return D_OUT;
+    Make_Port_Actor_Handle(OUT, &TCP_Actor);
+    return OUT;
 }
 
 
@@ -525,8 +525,8 @@ DECLARE_NATIVE(get_tcp_actor_handle)
 //
 DECLARE_NATIVE(get_udp_actor_handle)
 {
-    Make_Port_Actor_Handle(D_OUT, &UDP_Actor);
-    return D_OUT;
+    Make_Port_Actor_Handle(OUT, &UDP_Actor);
+    return OUT;
 }
 
 

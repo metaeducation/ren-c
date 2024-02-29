@@ -110,7 +110,7 @@ DECLARE_NATIVE(reduce)
         REBDSP dsp_orig = DSP;
 
         if (Reduce_To_Stack_Throws(
-            D_OUT,
+            OUT,
             value,
             REDUCE_MASK_NONE
                 | (REF(try) ? REDUCE_FLAG_TRY : 0)
@@ -124,7 +124,7 @@ DECLARE_NATIVE(reduce)
             pop_flags |= ARRAY_FLAG_TAIL_NEWLINE;
 
         return Init_Any_Array(
-            D_OUT,
+            OUT,
             VAL_TYPE(value),
             Pop_Stack_Values_Core(dsp_orig, pop_flags)
         );
@@ -139,14 +139,14 @@ DECLARE_NATIVE(reduce)
     if (ANY_INERT(value)) // don't bother with the evaluation
         RETURN (value);
 
-    if (Eval_Value_Throws(D_OUT, value))
+    if (Eval_Value_Throws(OUT, value))
         return R_THROWN;
 
-    if (not IS_NULLED(D_OUT))
-        return D_OUT;
+    if (not IS_NULLED(OUT))
+        return OUT;
 
     if (REF(try))
-        return Init_Blank(D_OUT);
+        return Init_Blank(OUT);
 
     return nullptr; // let caller worry about whether to error on nulls
 }
@@ -354,7 +354,7 @@ DECLARE_NATIVE(compose)
     REBDSP dsp_orig = DSP;
 
     if (Compose_To_Stack_Throws(
-        D_OUT,
+        OUT,
         ARG(value),
         VAL_SPECIFIER(ARG(value)),
         ARG(pattern),
@@ -372,7 +372,7 @@ DECLARE_NATIVE(compose)
         flags |= ARRAY_FLAG_TAIL_NEWLINE;
 
     return Init_Any_Array(
-        D_OUT,
+        OUT,
         VAL_TYPE(ARG(value)),
         Pop_Stack_Values_Core(dsp_orig, flags)
     );
@@ -431,5 +431,5 @@ DECLARE_NATIVE(flatten)
         REF(deep) ? FLATTEN_DEEP : FLATTEN_ONCE
     );
 
-    return Init_Block(D_OUT, Pop_Stack_Values(dsp_orig));
+    return Init_Block(OUT, Pop_Stack_Values(dsp_orig));
 }

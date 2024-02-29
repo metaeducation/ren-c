@@ -181,7 +181,7 @@ bool Next_Path_Throws(REBPVS *pvs)
 
         default:
             //
-            // Something like a generic D_OUT.  We could in theory take those
+            // Something like a generic OUT.  We could in theory take those
             // to just be variations of R_IMMEDIATE, but it's safer to break
             // that out as a separate class.
             //
@@ -588,8 +588,8 @@ DECLARE_NATIVE(pick)
     DECLARE_FRAME (pvs);
     pvs->flags = Endlike_Header(DO_MASK_NONE);
 
-    Move_Value(D_OUT, location);
-    pvs->out = D_OUT;
+    Move_Value(OUT, location);
+    pvs->out = OUT;
 
     Move_Value(PVS_PICKER(pvs), ARG(picker));
 
@@ -617,11 +617,11 @@ DECLARE_NATIVE(pick)
 
     case REB_R_REFERENCE:
         Derelativize(
-            D_OUT,
+            OUT,
             pvs->u.ref.cell,
             pvs->u.ref.specifier
         );
-        return D_OUT;
+        return OUT;
 
     default:
         break;
@@ -669,8 +669,8 @@ DECLARE_NATIVE(poke)
     DECLARE_FRAME (pvs);
     pvs->flags = Endlike_Header(DO_MASK_NONE);
 
-    Move_Value(D_OUT, location);
-    pvs->out = D_OUT;
+    Move_Value(OUT, location);
+    pvs->out = OUT;
 
     Move_Value(PVS_PICKER(pvs), ARG(picker));
 

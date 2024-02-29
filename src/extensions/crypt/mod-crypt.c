@@ -47,9 +47,19 @@
 #include "dh/dh.h"
 #include "aes/aes.h"
 
+// !!! Modern Ren-C's crypt module does not use %sys-core.h, it uses %rebol.h,
+// so these conflicts don't happen.
+//
 #ifdef IS_ERROR
-#undef IS_ERROR //winerror.h defines this, so undef it to avoid the warning
+    #undef IS_ERROR //winerror.h defines this, so undef it to avoid the warning
 #endif
+#ifdef OUT
+    #undef OUT  // %minwindef.h defines this, we have a better use for it
+#endif
+#ifdef VOID
+    #undef VOID  // %winnt.h defines this, we have a better use for it
+#endif
+
 #include "sys-core.h"
 
 #include "sha256/sha256.h" // depends on %reb-c.h for u8, u32, u64
@@ -88,7 +98,7 @@ DECLARE_NATIVE(init_crypto)
     }
   #endif
 
-    return Init_Trash(D_OUT);
+    return Init_Trash(OUT);
 }
 
 
@@ -111,7 +121,7 @@ DECLARE_NATIVE(shutdown_crypto)
         close(rng_fd);
   #endif
 
-    return Init_Trash(D_OUT);
+    return Init_Trash(OUT);
 }
 
 
@@ -183,7 +193,7 @@ DECLARE_NATIVE(rc4)
             VAL_LEN_AT(ARG(crypt_key))
         );
 
-        return Init_Handle_Managed(D_OUT, rc4_ctx, 0, &cleanup_rc4_ctx);
+        return Init_Handle_Managed(OUT, rc4_ctx, 0, &cleanup_rc4_ctx);
     }
 
     rebJumps("fail {Refinement /key or /stream has to be present}");
@@ -579,7 +589,7 @@ DECLARE_NATIVE(aes)
         if (REF(decrypt))
             AES_convert_key(aes_ctx);
 
-        return Init_Handle_Managed(D_OUT, aes_ctx, 0, &cleanup_aes_ctx);
+        return Init_Handle_Managed(OUT, aes_ctx, 0, &cleanup_aes_ctx);
     }
 
     rebJumps("fail {Refinement /key or /stream has to be present}");

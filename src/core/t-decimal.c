@@ -358,9 +358,9 @@ REBTYPE(Decimal)
             sym == SYM_ADD ||
             sym == SYM_MULTIPLY
         )){
-            Move_Value(D_OUT, D_ARG(2));
+            Move_Value(OUT, D_ARG(2));
             Move_Value(D_ARG(2), D_ARG(1));
-            Move_Value(D_ARG(1), D_OUT);
+            Move_Value(D_ARG(1), OUT);
             GENERIC_HOOK hook = Generic_Hooks[VAL_TYPE(D_ARG(1))];
             return hook(frame_, verb);
         }
@@ -448,8 +448,8 @@ REBTYPE(Decimal)
     switch (sym) {
 
     case SYM_COPY:
-        Move_Value(D_OUT, val);
-        return D_OUT;
+        Move_Value(OUT, val);
+        return OUT;
 
     case SYM_NEGATE:
         d1 = -d1;
@@ -462,14 +462,14 @@ REBTYPE(Decimal)
     case SYM_EVEN_Q:
         d1 = fabs(fmod(d1, 2.0));
         if (d1 < 0.5 || d1 >= 1.5)
-            return Init_True(D_OUT);
-        return Init_False(D_OUT);
+            return Init_True(OUT);
+        return Init_False(OUT);
 
     case SYM_ODD_Q:
         d1 = fabs(fmod(d1, 2.0));
         if (d1 < 0.5 || d1 >= 1.5)
-            return Init_False(D_OUT);
-        return Init_True(D_OUT);
+            return Init_False(OUT);
+        return Init_True(OUT);
 
     case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;
@@ -489,7 +489,7 @@ REBTYPE(Decimal)
         arg = ARG(scale);
         if (REF(to)) {
             if (IS_MONEY(arg))
-                return Init_Money(D_OUT, Round_Deci(
+                return Init_Money(OUT, Round_Deci(
                     decimal_to_deci(d1), flags, VAL_MONEY_AMOUNT(arg)
                 ));
 
@@ -498,7 +498,7 @@ REBTYPE(Decimal)
 
             d1 = Round_Dec(d1, flags, Dec64(arg));
             if (IS_INTEGER(arg))
-                return Init_Integer(D_OUT, cast(REBI64, d1));
+                return Init_Integer(OUT, cast(REBI64, d1));
 
             if (IS_PERCENT(arg))
                 type = REB_PERCENT;
@@ -528,7 +528,7 @@ REBTYPE(Decimal)
         goto setDec; }
 
     case SYM_COMPLEMENT:
-        return Init_Integer(D_OUT, ~cast(REBINT, d1));
+        return Init_Integer(OUT, ~cast(REBINT, d1));
 
     default:
         ; // put fail outside switch() to catch any leaks
@@ -540,8 +540,8 @@ setDec:
     if (not FINITE(d1))
         fail (Error_Overflow_Raw());
 
-    RESET_CELL(D_OUT, type);
-    VAL_DECIMAL(D_OUT) = d1;
+    RESET_CELL(OUT, type);
+    VAL_DECIMAL(OUT) = d1;
 
-    return D_OUT;
+    return OUT;
 }

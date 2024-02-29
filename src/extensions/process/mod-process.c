@@ -33,9 +33,9 @@
     #include <process.h>
     #include <shlobj.h>
 
-    #ifdef IS_ERROR
-        #undef IS_ERROR //winerror.h defines, Rebol has a different meaning
-    #endif
+    #undef IS_ERROR //winerror.h defines, Rebol has a different meaning
+    #undef OUT  // %minwindef.h defines this, we have a better use for it
+    #undef VOID  // %winnt.h defines this, we have a better use for it
 #else
     #if !defined(__cplusplus) && defined(TO_LINUX)
         //
@@ -1684,7 +1684,7 @@ DECLARE_NATIVE(call)
                 exit_code
             );
 
-        return Init_Object(D_OUT, info);
+        return Init_Object(OUT, info);
     }
 
     if (r != 0)
@@ -1694,9 +1694,9 @@ DECLARE_NATIVE(call)
     // we only return a process ID if /WAIT was not explicitly used
     //
     if (REF(wait))
-        return Init_Integer(D_OUT, exit_code);
+        return Init_Integer(OUT, exit_code);
 
-    return Init_Integer(D_OUT, pid);
+    return Init_Integer(OUT, pid);
 }
 
 
@@ -1828,7 +1828,7 @@ DECLARE_NATIVE(sleep)
     usleep(msec * 1000);
   #endif
 
-    return Init_Trash(D_OUT);
+    return Init_Trash(OUT);
 }
 
 #if defined(TO_LINUX) || defined(TO_ANDROID) || defined(TO_POSIX) || defined(TO_OSX)
@@ -1941,7 +1941,7 @@ DECLARE_NATIVE(get_env)
     DWORD val_len_plus_one = GetEnvironmentVariable(key, nullptr, 0);
     if (val_len_plus_one == 0) { // some failure...
         if (GetLastError() == ERROR_ENVVAR_NOT_FOUND)
-            Init_Nulled(D_OUT);
+            Init_Nulled(OUT);
         else
             error = Error_User("Unknown error when requesting variable size");
     }
@@ -1952,7 +1952,7 @@ DECLARE_NATIVE(get_env)
             error = Error_User("Unknown error fetching variable to buffer");
         else {
             Value* temp = rebLengthedTextW(val, val_len_plus_one - 1);
-            Move_Value(D_OUT, temp);
+            Move_Value(OUT, temp);
             rebRelease(temp);
         }
         rebFree(val);
@@ -1966,13 +1966,13 @@ DECLARE_NATIVE(get_env)
 
     const char* val = getenv(key);
     if (val == nullptr) // key not present in environment
-        Init_Nulled(D_OUT);
+        Init_Nulled(OUT);
     else {
         size_t size = strsize(val);
 
         /* assert(size != 0); */ // True?  Should it return BLANK!?
 
-        Init_Text(D_OUT, Make_Sized_String_UTF8(val, size));
+        Init_Text(OUT, Make_Sized_String_UTF8(val, size));
     }
 
     rebFree(key);
@@ -1984,7 +1984,7 @@ DECLARE_NATIVE(get_env)
     if (error != nullptr)
         fail (error);
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -2430,7 +2430,7 @@ DECLARE_NATIVE(send_signal)
     //
     kill_process(rebUnboxInteger(ARG(pid)), rebUnboxInteger(ARG(signal)));
 
-    return Init_Trash(D_OUT);
+    return Init_Trash(OUT);
 }
 
 #endif // defined(TO_LINUX) || defined(TO_ANDROID) || defined(TO_POSIX) || defined(TO_OSX)

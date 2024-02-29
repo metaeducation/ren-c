@@ -465,7 +465,7 @@ REBTYPE(Tuple)
 
         switch (property) {
         case SYM_LENGTH:
-            return Init_Integer(D_OUT, MAX(len, 3));
+            return Init_Integer(OUT, MAX(len, 3));
 
         default:
             break;
@@ -500,7 +500,7 @@ REBTYPE(Tuple)
             fail (Error_Out_Of_Range(arg));
         }
         if (action == A_PICK)
-            return Init_Integer(D_OUT, vp[a-1]);
+            return Init_Integer(OUT, vp[a-1]);
         // Poke:
         if (not IS_INTEGER(D_ARG(3)))
             fail (Error_Invalid(D_ARG(3)));

@@ -70,10 +70,10 @@ DECLARE_NATIVE(if)
     if (IS_CONDITIONAL_FALSE(ARG(condition))) // fails on void, literal blocks
         return nullptr;
 
-    if (Do_Branch_With_Throws(D_OUT, ARG(branch), ARG(condition)))
+    if (Do_Branch_With_Throws(OUT, ARG(branch), ARG(condition)))
         return R_THROWN;
 
-    return Trashify_If_Nulled(D_OUT);  // trash means no branch (cues ELSE)
+    return Trashify_If_Nulled(OUT);  // trash means no branch (cues ELSE)
 }
 
 
@@ -95,10 +95,10 @@ DECLARE_NATIVE(if_not)
     if (IS_CONDITIONAL_TRUE(ARG(condition))) // fails on void, literal blocks
         return nullptr;
 
-    if (Do_Branch_With_Throws(D_OUT, ARG(branch), ARG(condition)))
+    if (Do_Branch_With_Throws(OUT, ARG(branch), ARG(condition)))
         return R_THROWN;
 
-    return Trashify_If_Nulled(D_OUT);  // trash means no branch (cues ELSE)
+    return Trashify_If_Nulled(OUT);  // trash means no branch (cues ELSE)
 }
 
 
@@ -120,7 +120,7 @@ DECLARE_NATIVE(either)
     INCLUDE_PARAMS_OF_EITHER;
 
     if (Do_Branch_With_Throws(
-        D_OUT,
+        OUT,
         IS_CONDITIONAL_TRUE(ARG(condition)) // fails on void, literal blocks
             ? ARG(true_branch)
             : ARG(false_branch),
@@ -129,7 +129,7 @@ DECLARE_NATIVE(either)
         return R_THROWN;
     }
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -283,16 +283,16 @@ DECLARE_NATIVE(either_test)
 {
     INCLUDE_PARAMS_OF_EITHER_TEST;
 
-    if (Either_Test_Core_Throws(D_OUT, ARG(test), ARG(arg)))
+    if (Either_Test_Core_Throws(OUT, ARG(test), ARG(arg)))
         return R_THROWN;
 
-    if (VAL_LOGIC(D_OUT))
+    if (VAL_LOGIC(OUT))
         RETURN (ARG(arg));
 
-    if (Do_Branch_With_Throws(D_OUT, ARG(branch), ARG(arg)))
+    if (Do_Branch_With_Throws(OUT, ARG(branch), ARG(arg)))
         return R_THROWN;
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -315,10 +315,10 @@ DECLARE_NATIVE(else)
     if (not IS_NULLED(ARG(optional)))  // Note: trash is crucially non-NULL
         RETURN (ARG(optional));
 
-    if (Do_Branch_With_Throws(D_OUT, ARG(branch), NULLED_CELL))
+    if (Do_Branch_With_Throws(OUT, ARG(branch), NULLED_CELL))
         return R_THROWN;
 
-    return D_OUT;  // don't trashify, allows chaining: `else [...] then [...]`
+    return OUT;  // don't trashify, allows chaining: `else [...] then [...]`
 }
 
 
@@ -342,10 +342,10 @@ DECLARE_NATIVE(then)
     if (IS_NULLED(ARG(optional)))  // Note: trash is crucially non-NULL
         return nullptr; // left didn't run, so signal THEN didn't run either
 
-    if (Do_Branch_With_Throws(D_OUT, ARG(branch), ARG(optional)))
+    if (Do_Branch_With_Throws(OUT, ARG(branch), ARG(optional)))
         return R_THROWN;
 
-    return Trashify_If_Nulled(D_OUT);  // if left ran, make THEN signal it did
+    return Trashify_If_Nulled(OUT);  // if left ran, make THEN signal it did
 }
 
 
@@ -369,7 +369,7 @@ DECLARE_NATIVE(also)
     if (IS_NULLED(ARG(optional)))  // Note: trash is crucially non-NULL
         return nullptr;
 
-    if (Do_Branch_With_Throws(D_OUT, ARG(branch), ARG(optional)))
+    if (Do_Branch_With_Throws(OUT, ARG(branch), ARG(optional)))
         return R_THROWN;
 
     RETURN (ARG(optional)); // just passing thru the input
@@ -404,8 +404,8 @@ DECLARE_NATIVE(match)
 
     if (VAL_LOGIC(temp)) {
         if (IS_FALSEY(value)) // see above for why false match not passed thru
-            return Init_Trash(D_OUT);
-        return Move_Value(D_OUT, value);
+            return Init_Trash(OUT);
+        return Move_Value(OUT, value);
     }
 
     return nullptr;
@@ -470,26 +470,26 @@ DECLARE_NATIVE(all)
     DECLARE_FRAME (f);
     Push_Frame(f, ARG(block));
 
-    Init_Nulled(D_OUT); // default return result
+    Init_Nulled(OUT); // default return result
 
     while (NOT_END(f->value)) {
-        if (Eval_Step_Maybe_Stale_Throws(D_OUT, f)) {
+        if (Eval_Step_Maybe_Stale_Throws(OUT, f)) {
             Abort_Frame(f);
             return R_THROWN;
         }
 
-        if (IS_FALSEY(D_OUT)) { // any false/blank/null will trigger failure
+        if (IS_FALSEY(OUT)) { // any false/blank/null will trigger failure
             Abort_Frame(f);
             return nullptr;
         }
 
         // consider case of `all [true elide print "hi"]`
         //
-        D_OUT->header.bits &= ~OUT_MARKED_STALE;
+        OUT->header.bits &= ~OUT_MARKED_STALE;
     }
 
     Drop_Frame(f);
-    return D_OUT; // successful ALL when the last D_OUT assignment is truthy
+    return OUT; // successful ALL when the last OUT assignment is truthy
 }
 
 
@@ -511,22 +511,22 @@ DECLARE_NATIVE(any)
     DECLARE_FRAME (f);
     Push_Frame(f, ARG(block));
 
-    Init_Nulled(D_OUT); // default return result
+    Init_Nulled(OUT); // default return result
 
     while (NOT_END(f->value)) {
-        if (Eval_Step_Maybe_Stale_Throws(D_OUT, f)) {
+        if (Eval_Step_Maybe_Stale_Throws(OUT, f)) {
             Abort_Frame(f);
             return R_THROWN;
         }
 
-        if (IS_TRUTHY(D_OUT)) { // successful ANY returns the value
+        if (IS_TRUTHY(OUT)) { // successful ANY returns the value
             Abort_Frame(f);
-            return D_OUT;
+            return OUT;
         }
 
         // consider case of `any [true elide print "hi"]`
         //
-        D_OUT->header.bits &= ~OUT_MARKED_STALE;
+        OUT->header.bits &= ~OUT_MARKED_STALE;
     }
 
     Drop_Frame(f);
@@ -555,26 +555,26 @@ DECLARE_NATIVE(none)
     DECLARE_FRAME (f);
     Push_Frame(f, ARG(block));
 
-    Init_Nulled(D_OUT); // default return result
+    Init_Nulled(OUT); // default return result
 
     while (NOT_END(f->value)) {
-        if (Eval_Step_Maybe_Stale_Throws(D_OUT, f)) {
+        if (Eval_Step_Maybe_Stale_Throws(OUT, f)) {
             Abort_Frame(f);
             return R_THROWN;
         }
 
-        if (IS_TRUTHY(D_OUT)) { // any true results mean failure
+        if (IS_TRUTHY(OUT)) { // any true results mean failure
             Abort_Frame(f);
             return nullptr;
         }
 
         // consider case of `none [true elide print "hi"]`
         //
-        D_OUT->header.bits &= ~OUT_MARKED_STALE;
+        OUT->header.bits &= ~OUT_MARKED_STALE;
     }
 
     Drop_Frame(f);
-    return Init_Bar(D_OUT); // truthy, but doesn't suggest LOGIC! on failure
+    return Init_Bar(OUT); // truthy, but doesn't suggest LOGIC! on failure
 }
 
 
@@ -592,7 +592,7 @@ static REB_R Case_Choose_Core_May_Throw(
     DECLARE_FRAME (f);
     Push_Frame(f, block); // array GC safe now, can re-use `block` cell
 
-    Init_Nulled(D_OUT); // default return result
+    Init_Nulled(OUT); // default return result
 
     DECLARE_VALUE (cell); // unsafe to use ARG() slots as frame's f->out
     SET_END(cell);
@@ -605,7 +605,7 @@ static REB_R Case_Choose_Core_May_Throw(
 
         if (Eval_Step_Throws(SET_END(cell), f)) {
             DROP_GC_GUARD(cell);
-            Move_Value(D_OUT, cell);
+            Move_Value(OUT, cell);
             Abort_Frame(f);
             return R_THROWN;
         }
@@ -624,7 +624,7 @@ static REB_R Case_Choose_Core_May_Throw(
         if (IS_END(f->value)) {
             DROP_GC_GUARD(cell);
             Drop_Frame(f);
-            return Move_Value(D_OUT, cell);
+            return Move_Value(OUT, cell);
         }
 
         if (IS_CONDITIONAL_FALSE(cell)) { // not a matching condition
@@ -640,7 +640,7 @@ static REB_R Case_Choose_Core_May_Throw(
                 Abort_Frame(f);
                 // preserving `out` value (may be previous match)
                 DROP_GC_GUARD(cell);
-                return Move_Value(D_OUT, cell);
+                return Move_Value(OUT, cell);
             }
 
             if (IS_END(cell))
@@ -658,13 +658,13 @@ static REB_R Case_Choose_Core_May_Throw(
         }
 
         if (choose) {
-            Derelativize(D_OUT, f->value, f->specifier); // null not possible
+            Derelativize(OUT, f->value, f->specifier); // null not possible
             Fetch_Next_In_Frame(nullptr, f); // keep matching if /ALL
         }
         else {
             // Note: we are preserving `cell` to pass to an arity-1 ACTION!
 
-            if (Eval_Step_Throws(SET_END(D_OUT), f)) {
+            if (Eval_Step_Throws(SET_END(OUT), f)) {
                 DROP_GC_GUARD(cell);
                 Abort_Frame(f);
                 return R_THROWN;
@@ -672,36 +672,36 @@ static REB_R Case_Choose_Core_May_Throw(
 
             f->gotten = nullptr; // can't hold onto cache, running user code
 
-            if (IS_BLOCK(D_OUT)) {
-                if (Do_Any_Array_At_Throws(D_OUT, D_OUT)) { // legal args
+            if (IS_BLOCK(OUT)) {
+                if (Do_Any_Array_At_Throws(OUT, OUT)) { // legal args
                     Abort_Frame(f);
                     DROP_GC_GUARD(cell);
                     return R_THROWN;
                 }
             }
-            else if (IS_ACTION(D_OUT)) {
-                Move_Value(block, D_OUT); // can't evaluate into ARG(block)
-                if (Do_Branch_With_Throws(D_OUT, block, cell)) {
+            else if (IS_ACTION(OUT)) {
+                Move_Value(block, OUT); // can't evaluate into ARG(block)
+                if (Do_Branch_With_Throws(OUT, block, cell)) {
                     Abort_Frame(f);
                     DROP_GC_GUARD(cell);
                     return R_THROWN;
                 }
             } else
-                fail (Error_Invalid_Core(D_OUT, f->specifier));
+                fail (Error_Invalid_Core(OUT, f->specifier));
 
-            Trashify_If_Nulled(D_OUT);  // null is reserved for no branch taken
+            Trashify_If_Nulled(OUT);  // null is reserved for no branch taken
         }
 
         if (not REF(all)) {
             DROP_GC_GUARD(cell);
             Abort_Frame(f);
-            return D_OUT;
+            return OUT;
         }
     }
 
     DROP_GC_GUARD(cell);
     Drop_Frame(f);
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -789,7 +789,7 @@ DECLARE_NATIVE(switch)
 
     Value* value = ARG(value);
 
-    Init_Nulled(D_OUT); // used for "fallout"
+    Init_Nulled(OUT); // used for "fallout"
 
     while (NOT_END(f->value)) {
         //
@@ -798,7 +798,7 @@ DECLARE_NATIVE(switch)
         // feature of the last value "falling out" the bottom of the switch
         //
         if (IS_BLOCK(f->value)) {
-            Init_Nulled(D_OUT);
+            Init_Nulled(OUT);
             Fetch_Next_In_Frame(nullptr, f);
             continue;
         }
@@ -821,16 +821,16 @@ DECLARE_NATIVE(switch)
         }
 
         if (REF(quote))
-            Quote_Next_In_Frame(D_OUT, f);
+            Quote_Next_In_Frame(OUT, f);
         else {
-            if (Eval_Step_Throws(SET_END(D_OUT), f)) {
+            if (Eval_Step_Throws(SET_END(OUT), f)) {
                 Abort_Frame(f);
                 return R_THROWN;
             }
 
-            if (IS_END(D_OUT)) {
+            if (IS_END(OUT)) {
                 assert(IS_END(f->value));
-                Init_Nulled(D_OUT);
+                Init_Nulled(OUT);
                 break;
             }
         }
@@ -848,7 +848,7 @@ DECLARE_NATIVE(switch)
         // !!! A branch composed into the switch cases block may want to see
         // the un-mutated condition value.
 
-        if (!Compare_Modify_Values(ARG(value), D_OUT, REF(strict) ? 1 : 0))
+        if (!Compare_Modify_Values(ARG(value), OUT, REF(strict) ? 1 : 0))
             continue;
 
         // Skip ahead to try and find a block, to treat as code for the match
@@ -856,7 +856,7 @@ DECLARE_NATIVE(switch)
         while (true) {
             if (IS_END(f->value)) {
                 Drop_Frame(f);
-                return D_OUT; // last test "falls out", might be void
+                return OUT; // last test "falls out", might be void
             }
             if (IS_BLOCK(f->value))
                 break;
@@ -866,7 +866,7 @@ DECLARE_NATIVE(switch)
         }
 
         if (Do_At_Throws( // it's a match, so run the BLOCK!
-            D_OUT,
+            OUT,
             Cell_Array(f->value),
             VAL_INDEX(f->value),
             f->specifier
@@ -875,18 +875,18 @@ DECLARE_NATIVE(switch)
             return R_THROWN;
         }
 
-        Trashify_If_Nulled(D_OUT);  // null is reserved for no branch run
+        Trashify_If_Nulled(OUT);  // null is reserved for no branch run
 
         if (not REF(all)) {
             Abort_Frame(f);
-            return D_OUT;
+            return OUT;
         }
 
         Fetch_Next_In_Frame(nullptr, f); // keep matching if /ALL
     }
 
     Drop_Frame(f);
-    return D_OUT; // last test "falls out" or last match if /ALL, may be void
+    return OUT; // last test "falls out" or last match if /ALL, may be void
 }
 
 
@@ -934,41 +934,41 @@ DECLARE_NATIVE(default)
         if (NOT_END(frame_->value)) // !!! shortcut using variadic for now
             fail ("DEFAULT usage with no left hand side must be at <end>");
 
-        if (Do_Branch_Throws(D_OUT, ARG(branch)))
+        if (Do_Branch_Throws(OUT, ARG(branch)))
             return R_THROWN;
 
-        return D_OUT; // NULL is okay in this case
+        return OUT; // NULL is okay in this case
     }
 
     if (IS_SET_WORD(target))
-        Move_Opt_Var_May_Fail(D_OUT, target, SPECIFIED);
+        Move_Opt_Var_May_Fail(OUT, target, SPECIFIED);
     else {
         assert(IS_SET_PATH(target));
-        Get_Path_Core(D_OUT, target, SPECIFIED); // will fail() on GROUP!s
+        Get_Path_Core(OUT, target, SPECIFIED); // will fail() on GROUP!s
     }
 
     if (
-        not IS_NULLED(D_OUT)
-        and not IS_TRASH(D_OUT)
-        and (not IS_BLANK(D_OUT) or REF(only))
+        not IS_NULLED(OUT)
+        and not IS_TRASH(OUT)
+        and (not IS_BLANK(OUT) or REF(only))
     ){
-        return D_OUT;  // count it as "already set"
+        return OUT;  // count it as "already set"
     }
 
-    if (Do_Branch_Throws(D_OUT, ARG(branch)))
+    if (Do_Branch_Throws(OUT, ARG(branch)))
         return R_THROWN;
 
-    if (IS_NULLED(D_OUT))
+    if (IS_NULLED(OUT))
         fail ("DEFAULT came back NULL"); // !!! Review--what about BLANK!
 
     const bool enfix = false;
     if (IS_SET_WORD(target))
-        Move_Value(Sink_Var_May_Fail(target, SPECIFIED), D_OUT);
+        Move_Value(Sink_Var_May_Fail(target, SPECIFIED), OUT);
     else {
         assert(IS_SET_PATH(target));
-        Set_Path_Core(target, SPECIFIED, D_OUT, enfix);
+        Set_Path_Core(target, SPECIFIED, OUT, enfix);
     }
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -1017,23 +1017,23 @@ DECLARE_NATIVE(catch)
     if (REF(any) and REF(name))
         fail (Error_Bad_Refines_Raw());
 
-    if (not Do_Any_Array_At_Throws(D_OUT, ARG(block))) {
+    if (not Do_Any_Array_At_Throws(OUT, ARG(block))) {
         if (REF(result))
-            rebElide(rebEval(NAT_VALUE(set)), ARG(uncaught), D_OUT);
+            rebElide(rebEval(NAT_VALUE(set)), ARG(uncaught), OUT);
 
         return nullptr;  // no throw means just return null
     }
 
     if (REF(any) and not (
-        IS_ACTION(D_OUT)
-        and VAL_ACT_DISPATCHER(D_OUT) == &N_quit
+        IS_ACTION(OUT)
+        and VAL_ACT_DISPATCHER(OUT) == &N_quit
     )){
         goto was_caught;
     }
 
     if (REF(quit) and (
-        IS_ACTION(D_OUT)
-        and VAL_ACT_DISPATCHER(D_OUT) == &N_quit
+        IS_ACTION(OUT)
+        and VAL_ACT_DISPATCHER(OUT) == &N_quit
     )){
         goto was_caught;
     }
@@ -1062,7 +1062,7 @@ DECLARE_NATIVE(catch)
                     fail (Error_Invalid(ARG(names)));
 
                 Derelativize(temp1, candidate, VAL_SPECIFIER(ARG(names)));
-                Move_Value(temp2, D_OUT);
+                Move_Value(temp2, OUT);
 
                 // Return the THROW/NAME's arg if the names match
                 // !!! 0 means equal?, but strict-equal? might be better
@@ -1073,7 +1073,7 @@ DECLARE_NATIVE(catch)
         }
         else {
             Move_Value(temp1, ARG(names));
-            Move_Value(temp2, D_OUT);
+            Move_Value(temp2, OUT);
 
             // Return the THROW/NAME's arg if the names match
             // !!! 0 means equal?, but strict-equal? might be better
@@ -1085,27 +1085,27 @@ DECLARE_NATIVE(catch)
     else {
         // Return THROW's arg only if it did not have a /NAME supplied
         //
-        if (IS_BLANK(D_OUT) and (REF(any) or not REF(quit)))
+        if (IS_BLANK(OUT) and (REF(any) or not REF(quit)))
             goto was_caught;
     }
 
-    return R_THROWN; // throw name is in D_OUT, value is held task local
+    return R_THROWN; // throw name is in OUT, value is held task local
 
   was_caught:
 
     if (REF(name) or REF(any)) {
         Array* a = Make_Arr(2);
 
-        CATCH_THROWN(Array_At(a, 1), D_OUT); // thrown value--may be null!
-        Move_Value(Array_At(a, 0), D_OUT); // throw name (thrown bit clear)
+        CATCH_THROWN(Array_At(a, 1), OUT); // thrown value--may be null!
+        Move_Value(Array_At(a, 0), OUT); // throw name (thrown bit clear)
         if (IS_NULLED(Array_At(a, 1)))
             TERM_ARRAY_LEN(a, 1); // trim out null value (illegal in block)
         else
             TERM_ARRAY_LEN(a, 2);
-        return Init_Block(D_OUT, a);
+        return Init_Block(OUT, a);
     }
     else
-        CATCH_THROWN(D_OUT, D_OUT);  // thrown value
+        CATCH_THROWN(OUT, OUT);  // thrown value
 
     // !!! You are not allowed to run evaluations while a throw is in effect,
     // so this assignment has to wait until the end.
@@ -1113,7 +1113,7 @@ DECLARE_NATIVE(catch)
     if (REF(result))  // caught case voids result to minimize likely use
         rebElide(NAT_VALUE(set), ARG(uncaught), TRASH_VALUE);
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -1140,13 +1140,13 @@ DECLARE_NATIVE(throw)
     Value* value = ARG(value);
 
     if (REF(name))
-        Move_Value(D_OUT, ARG(name_value));
+        Move_Value(OUT, ARG(name_value));
     else {
         // Blank values serve as representative of THROWN() means "no name"
         //
-        Init_Blank(D_OUT);
+        Init_Blank(OUT);
     }
 
-    CONVERT_NAME_TO_THROWN(D_OUT, value);
+    CONVERT_NAME_TO_THROWN(OUT, value);
     return R_THROWN;
 }

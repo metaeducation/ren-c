@@ -1360,7 +1360,7 @@ REBTYPE(String)
         if (REF(part)) {
             len = Part_Len_May_Modify_Index(v, ARG(limit));
             if (len == 0)
-                return Init_Any_Series(D_OUT, VAL_TYPE(v), Make_Binary(0));
+                return Init_Any_Series(OUT, VAL_TYPE(v), Make_Binary(0));
         } else
             len = 1;
 
@@ -1378,7 +1378,7 @@ REBTYPE(String)
         if (cast(REBINT, VAL_INDEX(v)) >= tail) {
             if (not REF(part))
                 return nullptr;
-            return Init_Any_Series(D_OUT, VAL_TYPE(v), Make_Binary(0));
+            return Init_Any_Series(OUT, VAL_TYPE(v), Make_Binary(0));
         }
 
         REBSER *ser = VAL_SERIES(v);
@@ -1388,22 +1388,22 @@ REBTYPE(String)
         //
         if (not REF(part)) {
             if (IS_BINARY(v))
-                Init_Integer(D_OUT, *Cell_Binary_At(v));
+                Init_Integer(OUT, *Cell_Binary_At(v));
             else
-                str_to_char(D_OUT, v, VAL_INDEX(v));
+                str_to_char(OUT, v, VAL_INDEX(v));
         }
         else {
             enum Reb_Kind kind = VAL_TYPE(v);
             if (IS_BINARY(v)) {
                 Init_Binary(
-                    D_OUT,
+                    OUT,
                     Copy_Sequence_At_Len(VAL_SERIES(v), VAL_INDEX(v), len)
                 );
             } else
-                Init_Any_Series(D_OUT, kind, Copy_String_At_Len(v, len));
+                Init_Any_Series(OUT, kind, Copy_String_At_Len(v, len));
         }
         Remove_Series(ser, VAL_INDEX(v), len);
-        return D_OUT; }
+        return OUT; }
 
     case SYM_CLEAR: {
         FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(v));
@@ -1438,7 +1438,7 @@ REBTYPE(String)
             ser = Copy_Sequence_At_Len(VAL_SERIES(v), VAL_INDEX(v), len);
         else
             ser = Copy_String_At_Len(v, len);
-        return Init_Any_Series(D_OUT, VAL_TYPE(v), ser); }
+        return Init_Any_Series(OUT, VAL_TYPE(v), ser); }
 
     //-- Bitwise:
 
@@ -1455,7 +1455,7 @@ REBTYPE(String)
             VAL_INDEX(arg) = VAL_LEN_HEAD(arg);
 
         return Init_Any_Series(
-            D_OUT,
+            OUT,
             VAL_TYPE(v),
             Xandor_Binary(verb, v, arg)); }
 
@@ -1463,7 +1463,7 @@ REBTYPE(String)
         if (not IS_BINARY(v))
             fail (Error_Invalid(v));
 
-        return Init_Any_Series(D_OUT, VAL_TYPE(v), Complement_Binary(v)); }
+        return Init_Any_Series(OUT, VAL_TYPE(v), Complement_Binary(v)); }
 
     // Arithmetic operations are allowed on BINARY!, because it's too limiting
     // to not allow `#{4B} + 1` => `#{4C}`.  Allowing the operations requires
@@ -1506,8 +1506,8 @@ REBTYPE(String)
             amount = -amount;
 
         if (amount == 0) { // adding or subtracting 0 works, even #{} + 0
-            Move_Value(D_OUT, v);
-            return D_OUT;
+            Move_Value(OUT, v);
+            return OUT;
         }
         else if (VAL_LEN_AT(v) == 0) // add/subtract to #{} otherwise
             fail (Error_Overflow_Raw());
@@ -1630,10 +1630,10 @@ REBTYPE(String)
                 return nullptr;
             index += (REBLEN)Random_Int(REF(secure)) % (tail - index);
             if (IS_BINARY(v)) // same as PICK
-                return Init_Integer(D_OUT, *VAL_BIN_AT_HEAD(v, index));
+                return Init_Integer(OUT, *VAL_BIN_AT_HEAD(v, index));
 
-            str_to_char(D_OUT, v, index);
-            return D_OUT;
+            str_to_char(OUT, v, index);
+            return OUT;
         }
 
         if (ANY_STRING(v) and not Is_String_ASCII(v))

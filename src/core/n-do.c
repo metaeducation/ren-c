@@ -75,12 +75,12 @@ DECLARE_NATIVE(reeval)
         ARG(value)->header.bits ^= VALUE_FLAG_EVAL_FLIP;
     }
 
-    Init_Trash(D_OUT);  // !!! R3C patch, better than error on `reeval :elide`
+    Init_Trash(OUT);  // !!! R3C patch, better than error on `reeval :elide`
 
-    if (Eval_Step_In_Subframe_Throws(D_OUT, frame_, flags, child))
+    if (Eval_Step_In_Subframe_Throws(OUT, frame_, flags, child))
         return R_THROWN;
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -150,7 +150,7 @@ DECLARE_NATIVE(eval_enfix)
 //
 // But generalizing this mechanic is...non-obvious.  It needs to be done, but
 // this hacks up the specific case of "enfix with left hand side and variadic
-// feed" by loading the given value into D_OUT and then re-entering the
+// feed" by loading the given value into OUT and then re-entering the
 // evaluator via the DO_FLAG_POST_SWITCH mechanic (which was actuallly
 // designed for backtracking on enfix normal deferment.)
 {
@@ -213,7 +213,7 @@ DECLARE_NATIVE(eval_enfix)
     // Simulate as if the passed-in value was calculated into the output slot,
     // which is where enfix functions usually find their left hand values.
     //
-    Move_Value(D_OUT, ARG(left));
+    Move_Value(OUT, ARG(left));
 
     // We're kind-of-abusing an internal mechanism, where it is checked that
     // we are actually doing a deferment.  Try not to make that abuse break
@@ -227,7 +227,7 @@ DECLARE_NATIVE(eval_enfix)
     FS_TOP->u.defer.arg = m_cast(Value*, BLANK_VALUE); // !!! signal our hack
 
     REBFLGS flags = DO_FLAG_FULFILLING_ARG | DO_FLAG_POST_SWITCH;
-    if (Eval_Step_In_Subframe_Throws(D_OUT, f, flags, child)) {
+    if (Eval_Step_In_Subframe_Throws(OUT, f, flags, child)) {
         DROP_GC_GUARD(temp);
         return R_THROWN;
     }
@@ -235,7 +235,7 @@ DECLARE_NATIVE(eval_enfix)
     TRASH_POINTER_IF_DEBUG(FS_TOP->u.defer.arg);
 
     DROP_GC_GUARD(temp);
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -283,7 +283,7 @@ DECLARE_NATIVE(do)
     case REB_BLOCK:
     case REB_GROUP: {
         REBIXO indexor = Eval_Array_At_Core(
-            Init_Trash(D_OUT),  // so `do []` matches up with `while [] [...]`
+            Init_Trash(OUT),  // so `do []` matches up with `while [] [...]`
             nullptr, // opt_head (interpreted as no head, not nulled cell)
             Cell_Array(source),
             VAL_INDEX(source),
@@ -294,7 +294,7 @@ DECLARE_NATIVE(do)
         if (indexor == THROWN_FLAG)
             return R_THROWN;
 
-        return D_OUT; }
+        return OUT; }
 
     case REB_VARARGS: {
         Value* position;
@@ -308,7 +308,7 @@ DECLARE_NATIVE(do)
             // or DO'd while this operation is in progress.
             //
             REBIXO indexor = Eval_Array_At_Core(
-                Init_Trash(D_OUT),
+                Init_Trash(OUT),
                 nullptr, // opt_head (no head, not intepreted as nulled cell)
                 Cell_Array(position),
                 VAL_INDEX(position),
@@ -328,7 +328,7 @@ DECLARE_NATIVE(do)
             }
 
             SET_END(position); // convention for shared data at end point
-            return D_OUT;
+            return OUT;
         }
 
         REBFRM *f;
@@ -341,13 +341,13 @@ DECLARE_NATIVE(do)
         //
         DECLARE_SUBFRAME (child, f);
         REBFLGS flags = 0;
-        Init_Trash(D_OUT);
+        Init_Trash(OUT);
         while (NOT_END(f->value)) {
-            if (Eval_Step_In_Subframe_Throws(D_OUT, f, flags, child))
+            if (Eval_Step_In_Subframe_Throws(OUT, f, flags, child))
                 return R_THROWN;
         }
 
-        return D_OUT; }
+        return OUT; }
 
     case REB_BINARY:
     case REB_TEXT:
@@ -364,7 +364,7 @@ DECLARE_NATIVE(do)
 
         const bool fully = true; // error if not all arguments consumed
         if (Apply_Only_Throws(
-            D_OUT,
+            OUT,
             fully,
             sys_do_helper,
             source,
@@ -374,7 +374,7 @@ DECLARE_NATIVE(do)
         )){
             return R_THROWN;
         }
-        return D_OUT; }
+        return OUT; }
 
     case REB_ERROR:
         //
@@ -402,9 +402,9 @@ DECLARE_NATIVE(do)
         if (NOT_END(param))
             fail (Error_Use_Eval_For_Eval_Raw());
 
-        if (Eval_Value_Throws(D_OUT, source))
+        if (Eval_Value_Throws(OUT, source))
             return R_THROWN;
-        return D_OUT; }
+        return OUT; }
 
     case REB_FRAME: {
         REBCTX *c = VAL_CONTEXT(source); // checks for INACCESSIBLE
@@ -419,7 +419,7 @@ DECLARE_NATIVE(do)
         // the context's memory in the cases where a copy isn't needed.
 
         DECLARE_END_FRAME (f);
-        f->out = D_OUT;
+        f->out = OUT;
         Push_Frame_At_End(
             f,
             DO_FLAG_FULLY_SPECIALIZED | DO_FLAG_PROCESS_ACTION
@@ -510,7 +510,7 @@ DECLARE_NATIVE(evaluate)
         );
 
         if (indexor == THROWN_FLAG) {
-            Move_Value(D_OUT, temp);
+            Move_Value(OUT, temp);
             return R_THROWN;
         }
 
@@ -520,10 +520,10 @@ DECLARE_NATIVE(evaluate)
         if (REF(set))
             Move_Value(Sink_Var_May_Fail(ARG(var), SPECIFIED), temp);
 
-        Move_Value(D_OUT, source);
-        VAL_INDEX(D_OUT) = cast(REBLEN, indexor) - 1; // was one past
-        assert(VAL_INDEX(D_OUT) <= VAL_LEN_HEAD(source));
-        return D_OUT; }
+        Move_Value(OUT, source);
+        VAL_INDEX(OUT) = cast(REBLEN, indexor) - 1; // was one past
+        assert(VAL_INDEX(OUT) <= VAL_LEN_HEAD(source));
+        return OUT; }
 
     case REB_VARARGS: {
         Value* position;
@@ -648,13 +648,13 @@ DECLARE_NATIVE(redo)
 
     Value* restartee = ARG(restartee);
     if (not IS_FRAME(restartee)) {
-        if (not Did_Get_Binding_Of(D_OUT, restartee))
+        if (not Did_Get_Binding_Of(OUT, restartee))
             fail ("No context found from restartee in REDO");
 
-        if (not IS_FRAME(D_OUT))
+        if (not IS_FRAME(OUT))
             fail ("Context of restartee in REDO is not a FRAME!");
 
-        Move_Value(restartee, D_OUT);
+        Move_Value(restartee, OUT);
     }
 
     REBCTX *c = VAL_CONTEXT(restartee);
@@ -694,14 +694,14 @@ DECLARE_NATIVE(redo)
     // of the frame.  Use REDO as the throw label that Eval_Core_Throws() will
     // identify for that behavior.
     //
-    Move_Value(D_OUT, NAT_VALUE(redo));
-    INIT_BINDING(D_OUT, c);
+    Move_Value(OUT, NAT_VALUE(redo));
+    INIT_BINDING(OUT, c);
 
     // The FRAME! contains its ->phase and ->binding, which should be enough
     // to restart the phase at the point of parameter checking.  Make that
     // the actual value that Eval_Core_Throws() catches.
     //
-    CONVERT_NAME_TO_THROWN(D_OUT, restartee);
+    CONVERT_NAME_TO_THROWN(OUT, restartee);
     return R_THROWN;
 }
 
@@ -737,7 +737,7 @@ DECLARE_NATIVE(applique)
     Value* applicand = ARG(applicand);
 
     DECLARE_END_FRAME (f); // captures f->dsp
-    f->out = D_OUT;
+    f->out = OUT;
 
     // Argument can be a literal action (APPLY :APPEND) or a WORD!/PATH!.
     // If it is a path, we push the refinements to the stack so they can
@@ -746,7 +746,7 @@ DECLARE_NATIVE(applique)
     REBDSP lowest_ordered_dsp = DSP;
     Symbol* opt_label;
     if (Get_If_Word_Or_Path_Throws(
-        D_OUT,
+        OUT,
         &opt_label,
         applicand,
         SPECIFIED,
@@ -755,9 +755,9 @@ DECLARE_NATIVE(applique)
         return R_THROWN;
     }
 
-    if (not IS_ACTION(D_OUT))
+    if (not IS_ACTION(OUT))
         fail (Error_Invalid(applicand));
-    Move_Value(applicand, D_OUT);
+    Move_Value(applicand, OUT);
 
     // Make a FRAME! for the ACTION!, weaving in the ordered refinements
     // collected on the stack (if any).  Any refinements that are used in
@@ -857,5 +857,5 @@ DECLARE_NATIVE(applique)
         return R_THROWN;
 
     assert(IS_END(f->value)); // we started at END_FLAG, can only throw
-    return D_OUT;
+    return OUT;
 }

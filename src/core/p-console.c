@@ -52,7 +52,7 @@ static REB_R Console_Actor(REBFRM *frame_, Value* port, Value* verb)
 
         switch (property) {
         case SYM_OPEN_Q:
-            return Init_Logic(D_OUT, did (req->flags & RRF_OPEN));
+            return Init_Logic(OUT, did (req->flags & RRF_OPEN));
 
         default:
             break;
@@ -97,8 +97,8 @@ static REB_R Console_Actor(REBFRM *frame_, Value* port, Value* verb)
 
         // !!! Among many confusions in this file, it said "Another copy???"
         //
-        Init_Binary(D_OUT, Copy_Bytes(req->common.data, req->actual));
-        return D_OUT; }
+        Init_Binary(OUT, Copy_Bytes(req->common.data, req->actual));
+        return OUT; }
 
     case SYM_OPEN: {
         req->flags |= RRF_OPEN;
@@ -127,6 +127,6 @@ static REB_R Console_Actor(REBFRM *frame_, Value* port, Value* verb)
 //
 DECLARE_NATIVE(get_console_actor_handle)
 {
-    Make_Port_Actor_Handle(D_OUT, &Console_Actor);
-    return D_OUT;
+    Make_Port_Actor_Handle(OUT, &Console_Actor);
+    return OUT;
 }

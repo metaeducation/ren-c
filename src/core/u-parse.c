@@ -1360,12 +1360,12 @@ DECLARE_NATIVE(subparse)
 // Rules are matched until one of these things happens:
 //
 // * A rule fails, and is not then picked up by a later "optional" rule.
-// This returns D_OUT with the value in out as BLANK!.
+// This returns OUT with the value in out as BLANK!.
 //
 // * You run out of rules to apply without any failures or errors, and the
 // position in the input series is returned.  This may be at the end of
 // the input data or not--it's up to the caller to decide if that's relevant.
-// This will return D_OUT with out containing an integer index.
+// This will return OUT with out containing an integer index.
 //
 // !!! The return of an integer index is based on the R3-Alpha convention,
 // but needs to be rethought in light of the ability to switch series.  It
@@ -2500,7 +2500,7 @@ DECLARE_NATIVE(subparse)
 
             FETCH_TO_BAR_OR_END(f);
             if (IS_END(P_RULE)) // no alternate rule
-                return Init_Nulled(D_OUT);
+                return Init_Nulled(OUT);
 
             // Jump to the alternate rule and reset input
             //
@@ -2512,7 +2512,7 @@ DECLARE_NATIVE(subparse)
         mincount = maxcount = 1;
     }
 
-    return Init_Integer(D_OUT, P_POS); // !!! return switched input series??
+    return Init_Integer(OUT, P_POS); // !!! return switched input series??
 }
 
 
@@ -2539,7 +2539,7 @@ DECLARE_NATIVE(parse)
     bool interrupted;
     if (Subparse_Throws(
         &interrupted,
-        D_OUT,
+        OUT,
         ARG(input),
         SPECIFIED, // input is a non-relative Value
         rules,
@@ -2557,14 +2557,14 @@ DECLARE_NATIVE(parse)
         return R_THROWN;
     }
 
-    if (IS_NULLED(D_OUT))
+    if (IS_NULLED(OUT))
         return nullptr;
 
-    REBLEN progress = VAL_UINT32(D_OUT);
+    REBLEN progress = VAL_UINT32(OUT);
     assert(progress <= VAL_LEN_HEAD(ARG(input)));
-    Move_Value(D_OUT, ARG(input));
-    VAL_INDEX(D_OUT) = progress;
-    return D_OUT;
+    Move_Value(OUT, ARG(input));
+    VAL_INDEX(OUT) = progress;
+    return OUT;
 }
 
 

@@ -45,7 +45,7 @@ static const Value* Trap_Dangerous(REBFRM *frame_) {
     UNUSED(ARG(result));
     UNUSED(ARG(valid));
 
-    if (Do_Branch_Throws(D_OUT, ARG(code)))
+    if (Do_Branch_Throws(OUT, ARG(code)))
         return TRASH_VALUE;
 
     return nullptr;
@@ -93,7 +93,7 @@ DECLARE_NATIVE(trap)
 
     if (not error) {  // code didn't fail() or throw
         if (REF(result))
-            rebElide(rebEval(NAT_VALUE(set)), ARG(valid), D_OUT);
+            rebElide(rebEval(NAT_VALUE(set)), ARG(valid), OUT);
 
         return nullptr;
     }
@@ -113,17 +113,17 @@ DECLARE_NATIVE(trap)
 static Value* Entrap_Dangerous(REBFRM *frame_) {
     INCLUDE_PARAMS_OF_ENTRAP;
 
-    if (Do_Branch_Throws(D_OUT, ARG(code))) {
-        Init_Error(D_OUT, Error_No_Catch_For_Throw(D_OUT));
+    if (Do_Branch_Throws(OUT, ARG(code))) {
+        Init_Error(OUT, Error_No_Catch_For_Throw(OUT));
         return nullptr;
     }
 
-    if (IS_NULLED(D_OUT))
+    if (IS_NULLED(OUT))
         return nullptr; // don't box it up
 
     Array* a = Alloc_Singular(ARRAY_FLAG_FILE_LINE | NODE_FLAG_MANAGED);
-    Move_Value(ARR_SINGLE(a), D_OUT);
-    Init_Block(D_OUT, a);
+    Move_Value(ARR_SINGLE(a), OUT);
+    Init_Block(OUT, a);
     return nullptr;
 }
 
@@ -149,7 +149,7 @@ DECLARE_NATIVE(entrap)
     if (error)
         return error;
 
-    return D_OUT;
+    return OUT;
 }
 
 

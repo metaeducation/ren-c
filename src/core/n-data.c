@@ -68,7 +68,7 @@ DECLARE_NATIVE(ascii_q)
 {
     INCLUDE_PARAMS_OF_ASCII_Q;
 
-    return Init_Logic(D_OUT, Check_Char_Range(ARG(value), 0x7f));
+    return Init_Logic(OUT, Check_Char_Range(ARG(value), 0x7f));
 }
 
 
@@ -84,7 +84,7 @@ DECLARE_NATIVE(latin1_q)
 {
     INCLUDE_PARAMS_OF_LATIN1_Q;
 
-    return Init_Logic(D_OUT, Check_Char_Range(ARG(value), 0xff));
+    return Init_Logic(OUT, Check_Char_Range(ARG(value), 0xff));
 }
 
 
@@ -111,7 +111,7 @@ DECLARE_NATIVE(as_pair)
         fail ("PAIR! must currently have INTEGER! or DECIMAL! x and y values");
     }
 
-    return Init_Pair(D_OUT, x, y);
+    return Init_Pair(OUT, x, y);
 }
 
 
@@ -196,9 +196,9 @@ DECLARE_NATIVE(bind)
     // FRAME! that they intend to return from.)
     //
     if (IS_ACTION(v)) {
-        Move_Value(D_OUT, v);
-        INIT_BINDING(D_OUT, context);
-        return D_OUT;
+        Move_Value(OUT, v);
+        INIT_BINDING(OUT, context);
+        return OUT;
     }
 
     assert(ANY_ARRAY(v));
@@ -215,11 +215,11 @@ DECLARE_NATIVE(bind)
             TS_ARRAY // types to copy deeply
         );
         at = ARR_HEAD(copy);
-        Init_Any_Array(D_OUT, VAL_TYPE(v), copy);
+        Init_Any_Array(OUT, VAL_TYPE(v), copy);
     }
     else {
         at = Cell_Array_At(v); // only affects binding from current index
-        Move_Value(D_OUT, v);
+        Move_Value(OUT, v);
     }
 
     Bind_Values_Core(
@@ -230,7 +230,7 @@ DECLARE_NATIVE(bind)
         flags
     );
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -272,10 +272,10 @@ DECLARE_NATIVE(use)
         ARG(vars) // similar to the "spec" of a loop: WORD!/LIT-WORD!/BLOCK!
     );
 
-    if (Do_Any_Array_At_Throws(D_OUT, ARG(body)))
+    if (Do_Any_Array_At_Throws(OUT, ARG(body)))
         return R_THROWN;
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -371,7 +371,7 @@ DECLARE_NATIVE(value_q)
 {
     INCLUDE_PARAMS_OF_VALUE_Q;
 
-    return Init_Logic(D_OUT, ANY_VALUE(ARG(optional)));
+    return Init_Logic(OUT, ANY_VALUE(ARG(optional)));
 }
 
 
@@ -387,7 +387,7 @@ DECLARE_NATIVE(element_q)
 {
     INCLUDE_PARAMS_OF_ELEMENT_Q;
 
-    return Init_Logic(D_OUT, ANY_VALUE(ARG(optional)));
+    return Init_Logic(OUT, ANY_VALUE(ARG(optional)));
 }
 
 
@@ -450,7 +450,7 @@ DECLARE_NATIVE(collect_words)
 
     Cell* head = Cell_Array_At(ARG(block));
     return Init_Block(
-        D_OUT,
+        OUT,
         Collect_Unique_Words_Managed(head, flags, ARG(hidden))
     );
 }
@@ -512,8 +512,8 @@ DECLARE_NATIVE(get)
     Value* source = ARG(source);
 
     if (not IS_BLOCK(source)) {
-        Get_Opt_Polymorphic_May_Fail(D_OUT, source, SPECIFIED, REF(any));
-        return D_OUT;
+        Get_Opt_Polymorphic_May_Fail(OUT, source, SPECIFIED, REF(any));
+        return OUT;
     }
 
     Array* results = Make_Arr(VAL_LEN_AT(source));
@@ -531,7 +531,7 @@ DECLARE_NATIVE(get)
     }
 
     TERM_ARRAY_LEN(results, VAL_LEN_AT(source));
-    return Init_Block(D_OUT, results);
+    return Init_Block(OUT, results);
 }
 
 
@@ -554,13 +554,13 @@ DECLARE_NATIVE(get_p)
     INCLUDE_PARAMS_OF_GET_P;
 
     Get_Opt_Polymorphic_May_Fail(
-        D_OUT,
+        OUT,
         ARG(source),
         SPECIFIED,
         true  // allow trash, e.g. GET/ANY
     );
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -722,7 +722,7 @@ DECLARE_NATIVE(try)
         fail ("TRY cannot accept trash values");
 
     if (IS_NULLED(ARG(optional)))
-        return Init_Blank(D_OUT);
+        return Init_Blank(OUT);
 
     RETURN (ARG(optional));
 }
@@ -750,7 +750,7 @@ DECLARE_NATIVE(opt)
     // creating a likely error in those cases.  To get around it, OPT TRY
     //
     if (IS_NULLED(ARG(optional)))
-        return Init_Trash(D_OUT);
+        return Init_Trash(OUT);
 
     RETURN (ARG(optional));
 }
@@ -797,7 +797,7 @@ DECLARE_NATIVE(in)
                     );
                     if (index != 0)
                         return Init_Any_Word_Bound(
-                            D_OUT,
+                            OUT,
                             VAL_TYPE(word),
                             Cell_Word_Symbol(word),
                             context,
@@ -824,7 +824,7 @@ DECLARE_NATIVE(in)
         return nullptr;
 
     return Init_Any_Word_Bound(
-        D_OUT,
+        OUT,
         VAL_TYPE(word),
         Cell_Word_Symbol(word),
         context,
@@ -890,7 +890,7 @@ DECLARE_NATIVE(enfixed_q)
         const Value* var = Get_Opt_Var_May_Fail(source, SPECIFIED);
 
         assert(NOT_VAL_FLAG(var, VALUE_FLAG_ENFIXED) or IS_ACTION(var));
-        return Init_Logic(D_OUT, GET_VAL_FLAG(var, VALUE_FLAG_ENFIXED));
+        return Init_Logic(OUT, GET_VAL_FLAG(var, VALUE_FLAG_ENFIXED));
     }
     else {
         assert(ANY_PATH(source));
@@ -898,7 +898,7 @@ DECLARE_NATIVE(enfixed_q)
         DECLARE_VALUE (temp);
         Get_Path_Core(temp, source, SPECIFIED);
         assert(NOT_VAL_FLAG(temp, VALUE_FLAG_ENFIXED) or IS_ACTION(temp));
-        return Init_Logic(D_OUT, GET_VAL_FLAG(temp, VALUE_FLAG_ENFIXED));
+        return Init_Logic(OUT, GET_VAL_FLAG(temp, VALUE_FLAG_ENFIXED));
     }
 }
 
@@ -924,9 +924,9 @@ DECLARE_NATIVE(identity)
 {
     INCLUDE_PARAMS_OF_IDENTITY;
 
-    Move_Value(D_OUT, ARG(value));
+    Move_Value(OUT, ARG(value));
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -954,7 +954,7 @@ DECLARE_NATIVE(free)
     FAIL_IF_READ_ONLY_SERIES(s);
 
     Decay_Series(s);
-    return Init_Trash(D_OUT);  // !!! Should it return freed, not-useful value?
+    return Init_Trash(OUT);  // !!! Should it return freed, not-useful value?
 }
 
 
@@ -982,9 +982,9 @@ DECLARE_NATIVE(free_q)
     else if (ANY_SERIES(v))
         s = v->payload.any_series.series; // VAL_SERIES fails if freed
     else
-        return Init_False(D_OUT);
+        return Init_False(OUT);
 
-    return Init_Logic(D_OUT, GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE));
+    return Init_Logic(OUT, GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE));
 }
 
 
@@ -1039,7 +1039,7 @@ DECLARE_NATIVE(as)
                 Symbol_Size(symbol)
             );
             SET_SER_INFO(string, SERIES_INFO_FROZEN);
-            return Init_Any_Series(D_OUT, new_kind, string);
+            return Init_Any_Series(OUT, new_kind, string);
         }
 
         // !!! Similarly, until UTF-8 Everywhere, we can't actually alias
@@ -1061,7 +1061,7 @@ DECLARE_NATIVE(as)
                 //
                 Decay_Series(VAL_SERIES(v));
             }
-            return Init_Any_Series(D_OUT, new_kind, string);
+            return Init_Any_Series(OUT, new_kind, string);
         }
 
         if (not ANY_STRING(v))
@@ -1094,7 +1094,7 @@ DECLARE_NATIVE(as)
                 &offset, &utf8_size, v, VAL_LEN_AT(v)
             );
             return Init_Any_Word(
-                D_OUT,
+                OUT,
                 new_kind,
                 Intern_UTF8_Managed(Binary_At(temp, offset), utf8_size)
             );
@@ -1111,7 +1111,7 @@ DECLARE_NATIVE(as)
         if (IS_BINARY(v)) {
             Freeze_Sequence(VAL_SERIES(v));
             return Init_Any_Word(
-                D_OUT,
+                OUT,
                 new_kind,
                 Intern_UTF8_Managed(Cell_Binary_At(v), VAL_LEN_AT(v))
             );
@@ -1130,7 +1130,7 @@ DECLARE_NATIVE(as)
         //
         if (ANY_WORD(v)) {
             assert(Is_Value_Immutable(v));
-            return Init_Binary(D_OUT, Cell_Word_Symbol(v));
+            return Init_Binary(OUT, Cell_Word_Symbol(v));
         }
 
         if (ANY_STRING(v)) {
@@ -1145,7 +1145,7 @@ DECLARE_NATIVE(as)
             else
                 Decay_Series(VAL_SERIES(v));
 
-            return Init_Binary(D_OUT, bin);
+            return Init_Binary(OUT, bin);
         }
 
         fail (v); }
@@ -1156,9 +1156,9 @@ DECLARE_NATIVE(as)
         fail (Error_Bad_Cast_Raw(v, ARG(type)));
     }
 
-    Move_Value(D_OUT, v);
-    CHANGE_VAL_TYPE_BITS(D_OUT, new_kind);
-    return D_OUT;
+    Move_Value(OUT, v);
+    CHANGE_VAL_TYPE_BITS(OUT, new_kind);
+    return OUT;
 }
 
 
@@ -1175,7 +1175,7 @@ DECLARE_NATIVE(aliases_q)
 {
     INCLUDE_PARAMS_OF_ALIASES_Q;
 
-    return Init_Logic(D_OUT, VAL_SERIES(ARG(value1)) == VAL_SERIES(ARG(value2)));
+    return Init_Logic(OUT, VAL_SERIES(ARG(value1)) == VAL_SERIES(ARG(value2)));
 }
 
 
@@ -1211,7 +1211,7 @@ DECLARE_NATIVE(set_q)
 {
     INCLUDE_PARAMS_OF_SET_Q;
 
-    return Init_Logic(D_OUT, Is_Set(ARG(location)));
+    return Init_Logic(OUT, Is_Set(ARG(location)));
 }
 
 
@@ -1229,7 +1229,7 @@ DECLARE_NATIVE(unset_q)
 {
     INCLUDE_PARAMS_OF_UNSET_Q;
 
-    return Init_Logic(D_OUT, not Is_Set(ARG(location)));
+    return Init_Logic(OUT, not Is_Set(ARG(location)));
 }
 
 
@@ -1260,8 +1260,8 @@ DECLARE_NATIVE(quote)
     if (REF(soft) and IS_QUOTABLY_SOFT(v))
         fail ("QUOTE/SOFT not currently implemented, should clone EVAL");
 
-    Move_Value(D_OUT, v);
-    return D_OUT;
+    Move_Value(OUT, v);
+    return OUT;
 }
 
 
@@ -1296,7 +1296,7 @@ DECLARE_NATIVE(null_q)
 {
     INCLUDE_PARAMS_OF_NULL_Q;
 
-    return Init_Logic(D_OUT, IS_NULLED(ARG(optional)));
+    return Init_Logic(OUT, IS_NULLED(ARG(optional)));
 }
 
 
@@ -1314,7 +1314,7 @@ DECLARE_NATIVE(trashify)
     INCLUDE_PARAMS_OF_TRASHIFY;
 
     if (IS_NULLED(ARG(optional)))
-        return Init_Trash(D_OUT);
+        return Init_Trash(OUT);
 
     RETURN (ARG(optional));
 }
@@ -1339,7 +1339,7 @@ DECLARE_NATIVE(nothing_q)
 
     // !!! Should trash be considered "nothing" also?
     //
-    return Init_Logic(D_OUT, IS_NULLED_OR_BLANK(ARG(value)));
+    return Init_Logic(OUT, IS_NULLED_OR_BLANK(ARG(value)));
 }
 
 
@@ -1360,5 +1360,5 @@ DECLARE_NATIVE(something_q)
 {
     INCLUDE_PARAMS_OF_SOMETHING_Q;
 
-    return Init_Logic(D_OUT, not IS_NULLED_OR_BLANK(ARG(value)));
+    return Init_Logic(OUT, not IS_NULLED_OR_BLANK(ARG(value)));
 }

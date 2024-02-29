@@ -715,10 +715,10 @@ REB_R Context_Common_Action_Maybe_Unhandled(
 
         switch (property) {
         case SYM_LENGTH: // !!! Should this be legal?
-            return Init_Integer(D_OUT, CTX_LEN(c));
+            return Init_Integer(OUT, CTX_LEN(c));
 
         case SYM_TAIL_Q: // !!! Should this be legal?
-            return Init_Logic(D_OUT, CTX_LEN(c) == 0);
+            return Init_Logic(OUT, CTX_LEN(c) == 0);
 
         case SYM_WORDS:
             //
@@ -729,17 +729,17 @@ REB_R Context_Common_Action_Maybe_Unhandled(
             //
             if (IS_FRAME(value))
                 return Init_Block(
-                    D_OUT,
+                    OUT,
                     List_Func_Words(ACT_ARCHETYPE(ACT(CTX_KEYLIST(c))), true)
                 );
 
-            return Init_Block(D_OUT, Context_To_Array(c, 1));
+            return Init_Block(OUT, Context_To_Array(c, 1));
 
         case SYM_VALUES:
-            return Init_Block(D_OUT, Context_To_Array(c, 2));
+            return Init_Block(OUT, Context_To_Array(c, 2));
 
         case SYM_BODY:
-            return Init_Block(D_OUT, Context_To_Array(c, 3));
+            return Init_Block(OUT, Context_To_Array(c, 3));
 
         // Noticeably not handled by average objects: SYM_OPEN_Q (`open?`)
 
@@ -787,25 +787,25 @@ REBTYPE(Context)
             Symbol* file = FRM_FILE(f);
             if (not file)
                 return nullptr;
-            return Init_Word(D_OUT, file); }
+            return Init_Word(OUT, file); }
 
           case SYM_LINE: {
             REBLIN line = FRM_LINE(f);
             if (line == 0)
                 return nullptr;
-            return Init_Integer(D_OUT, line); }
+            return Init_Integer(OUT, line); }
 
           case SYM_LABEL: {
             if (not f->opt_label)
                 return nullptr;
-            return Init_Word(D_OUT, f->opt_label); }
+            return Init_Word(OUT, f->opt_label); }
 
           case SYM_NEAR:
-            return Init_Near_For_Frame(D_OUT, f);
+            return Init_Near_For_Frame(OUT, f);
 
           case SYM_ACTION: {
             return Init_Action_Maybe_Bound(
-                D_OUT,
+                OUT,
                 value->payload.any_context.phase, // archetypal, so no binding
                 value->extra.binding // e.g. where to return for a RETURN
             ); }
@@ -866,7 +866,7 @@ REBTYPE(Context)
             types = 0;
 
         return Init_Any_Context(
-            D_OUT,
+            OUT,
             VAL_TYPE(value),
             Copy_Context_Core_Managed(c, types)
         ); }
@@ -881,7 +881,7 @@ REBTYPE(Context)
             return nullptr;
 
         if (Cell_Word_Id(verb) == SYM_FIND)
-            return Init_Bar(D_OUT); // TRUE would obscure non-LOGIC! result
+            return Init_Bar(OUT); // TRUE would obscure non-LOGIC! result
 
         RETURN (CTX_VAR(c, n)); }
 
@@ -938,13 +938,13 @@ DECLARE_NATIVE(construct)
         if (!IS_BLOCK(body))
             fail (Error_Bad_Make(REB_EVENT, body));
 
-        Move_Value(D_OUT, spec); // !!! very "shallow" clone of the event
+        Move_Value(OUT, spec); // !!! very "shallow" clone of the event
         Set_Event_Vars(
-            D_OUT,
+            OUT,
             Cell_Array_At(body),
             VAL_SPECIFIER(body)
         );
-        return D_OUT;
+        return OUT;
     }
     else if (ANY_CONTEXT(spec)) {
         parent = VAL_CONTEXT(spec);
@@ -969,7 +969,7 @@ DECLARE_NATIVE(construct)
     //
     if (REF(only)) {
         Init_Object(
-            D_OUT,
+            OUT,
             Construct_Context_Managed(
                 REB_OBJECT,
                 Cell_Array_At(body),
@@ -977,7 +977,7 @@ DECLARE_NATIVE(construct)
                 parent
             )
         );
-        return D_OUT;
+        return OUT;
     }
 
     // This code came from REBTYPE(Context) for implementing MAKE OBJECT!.
@@ -993,7 +993,7 @@ DECLARE_NATIVE(construct)
 
         // First we scan the object for top-level set words in
         // order to make an appropriately sized context.  Then
-        // we put it into an object in D_OUT to GC protect it.
+        // we put it into an object in OUT to GC protect it.
         //
         context = Make_Selfish_Context_Detect_Managed(
             target, // type
@@ -1003,7 +1003,7 @@ DECLARE_NATIVE(construct)
                 : Cell_Array_At(body),
             parent
         );
-        Init_Object(D_OUT, context);
+        Init_Object(OUT, context);
 
         if (!IS_BLANK(body)) {
             //
@@ -1014,12 +1014,12 @@ DECLARE_NATIVE(construct)
 
             DECLARE_VALUE (temp);
             if (Do_Any_Array_At_Throws(temp, body)) {
-                Move_Value(D_OUT, temp);
+                Move_Value(OUT, temp);
                 return R_THROWN; // evaluation result ignored unless thrown
             }
         }
 
-        return D_OUT;
+        return OUT;
     }
 
     // "multiple inheritance" case when both spec and body are objects.
@@ -1033,7 +1033,7 @@ DECLARE_NATIVE(construct)
         // the generator choice by the person doing the derivation.
         //
         context = Merge_Contexts_Selfish_Managed(parent, VAL_CONTEXT(body));
-        return Init_Object(D_OUT, context);
+        return Init_Object(OUT, context);
     }
 
     fail ("Unsupported CONSTRUCT arguments");

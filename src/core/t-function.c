@@ -219,7 +219,7 @@ REBTYPE(Action)
             Blit_Cell(dest, src);
         TERM_ARRAY_LEN(ACT_DETAILS(proxy), details_len);
 
-        return Init_Action_Maybe_Bound(D_OUT, proxy, VAL_BINDING(value)); }
+        return Init_Action_Maybe_Bound(OUT, proxy, VAL_BINDING(value)); }
 
     case SYM_REFLECT: {
         Option(SymId) sym = Cell_Word_Id(arg);
@@ -227,17 +227,17 @@ REBTYPE(Action)
         switch (sym) {
 
         case SYM_BINDING: {
-            if (Did_Get_Binding_Of(D_OUT, value))
-                return D_OUT;
+            if (Did_Get_Binding_Of(OUT, value))
+                return OUT;
             return nullptr; }
 
         case SYM_WORDS:
-            Init_Block(D_OUT, List_Func_Words(value, false)); // no locals
-            return D_OUT;
+            Init_Block(OUT, List_Func_Words(value, false)); // no locals
+            return OUT;
 
         case SYM_BODY:
-            Get_Maybe_Fake_Action_Body(D_OUT, value);
-            return D_OUT;
+            Get_Maybe_Fake_Action_Body(OUT, value);
+            return OUT;
 
         case SYM_TYPES: {
             Array* copy = Make_Arr(VAL_ACT_NUM_PARAMS(value));
@@ -257,7 +257,7 @@ REBTYPE(Action)
             TERM_ARRAY_LEN(copy, VAL_ACT_NUM_PARAMS(value));
             assert(IS_END(typeset));
 
-            return Init_Block(D_OUT, copy);
+            return Init_Block(OUT, copy);
         }
 
         // We use a heuristic that if the first element of a function's body
@@ -279,9 +279,9 @@ REBTYPE(Action)
             // !!! How to tell whether it's a URL! or a FILE! ?
             //
             Scan_File(
-                D_OUT, cb_cast(Symbol_Head(LINK(a).file)), SER_LEN(LINK(a).file)
+                OUT, cb_cast(Symbol_Head(LINK(a).file)), SER_LEN(LINK(a).file)
             );
-            return D_OUT; }
+            return OUT; }
 
         case SYM_LINE: {
             Array* details = VAL_ACT_DETAILS(value);
@@ -295,7 +295,7 @@ REBTYPE(Action)
             if (NOT_SER_FLAG(a, ARRAY_FLAG_FILE_LINE))
                 return nullptr;
 
-            return Init_Integer(D_OUT, MISC(a).line); }
+            return Init_Integer(OUT, MISC(a).line); }
 
         default:
             fail (Error_Cannot_Reflect(VAL_TYPE(value), arg));

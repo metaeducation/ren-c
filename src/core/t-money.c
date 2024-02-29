@@ -176,49 +176,49 @@ REBTYPE(Money)
 
     switch (Cell_Word_Id(verb)) {
     case SYM_ADD:
-        arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
-        Init_Money(D_OUT, deci_add(
+        arg = Math_Arg_For_Money(OUT, D_ARG(2), verb);
+        Init_Money(OUT, deci_add(
             VAL_MONEY_AMOUNT(val), VAL_MONEY_AMOUNT(arg)
         ));
         break;
 
     case SYM_SUBTRACT:
-        arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
-        Init_Money(D_OUT, deci_subtract(
+        arg = Math_Arg_For_Money(OUT, D_ARG(2), verb);
+        Init_Money(OUT, deci_subtract(
             VAL_MONEY_AMOUNT(val), VAL_MONEY_AMOUNT(arg)
         ));
         break;
 
     case SYM_MULTIPLY:
-        arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
-        Init_Money(D_OUT, deci_multiply(
+        arg = Math_Arg_For_Money(OUT, D_ARG(2), verb);
+        Init_Money(OUT, deci_multiply(
             VAL_MONEY_AMOUNT(val), VAL_MONEY_AMOUNT(arg)
         ));
         break;
 
     case SYM_DIVIDE:
-        arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
-        Init_Money(D_OUT, deci_divide(
+        arg = Math_Arg_For_Money(OUT, D_ARG(2), verb);
+        Init_Money(OUT, deci_divide(
             VAL_MONEY_AMOUNT(val), VAL_MONEY_AMOUNT(arg)
         ));
         break;
 
     case SYM_REMAINDER:
-        arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
-        Init_Money(D_OUT, deci_mod(
+        arg = Math_Arg_For_Money(OUT, D_ARG(2), verb);
+        Init_Money(OUT, deci_mod(
             VAL_MONEY_AMOUNT(val), VAL_MONEY_AMOUNT(arg)
         ));
         break;
 
     case SYM_NEGATE:
         val->payload.money.s = !val->payload.money.s;
-        Move_Value(D_OUT, D_ARG(1));
-        return D_OUT;
+        Move_Value(OUT, D_ARG(1));
+        return OUT;
 
     case SYM_ABSOLUTE:
         val->payload.money.s = 0;
-        Move_Value(D_OUT, D_ARG(1));
-        return D_OUT;
+        Move_Value(OUT, D_ARG(1));
+        return OUT;
 
     case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;
@@ -251,7 +251,7 @@ REBTYPE(Money)
         else
             Init_Money(temp, int_to_deci(0));
 
-        Init_Money(D_OUT, Round_Deci(
+        Init_Money(OUT, Round_Deci(
             VAL_MONEY_AMOUNT(val),
             flags,
             VAL_MONEY_AMOUNT(temp)
@@ -259,14 +259,14 @@ REBTYPE(Money)
 
         if (REF(to)) {
             if (IS_DECIMAL(scale) or IS_PERCENT(scale)) {
-                REBDEC dec = deci_to_decimal(VAL_MONEY_AMOUNT(D_OUT));
-                RESET_CELL(D_OUT, VAL_TYPE(scale));
-                VAL_DECIMAL(D_OUT) = dec;
-                return D_OUT;
+                REBDEC dec = deci_to_decimal(VAL_MONEY_AMOUNT(OUT));
+                RESET_CELL(OUT, VAL_TYPE(scale));
+                VAL_DECIMAL(OUT) = dec;
+                return OUT;
             }
             if (IS_INTEGER(scale)) {
-                REBI64 i64 = deci_to_int(VAL_MONEY_AMOUNT(D_OUT));
-                return Init_Integer(D_OUT, i64);
+                REBI64 i64 = deci_to_int(VAL_MONEY_AMOUNT(OUT));
+                return Init_Integer(OUT, i64);
             }
         }
         break; }
@@ -276,12 +276,12 @@ REBTYPE(Money)
         REBINT result = 1 & cast(REBINT, deci_to_int(VAL_MONEY_AMOUNT(val)));
         if (Cell_Word_Id(verb) == SYM_EVEN_Q)
             result = not result;
-        return Init_Logic(D_OUT, result != 0); }
+        return Init_Logic(OUT, result != 0); }
 
     default:
         fail (Error_Illegal_Action(REB_MONEY, verb));
     }
 
-    RESET_VAL_HEADER(D_OUT, REB_MONEY);
-    return D_OUT;
+    RESET_VAL_HEADER(OUT, REB_MONEY);
+    return OUT;
 }

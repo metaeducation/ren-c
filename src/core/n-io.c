@@ -47,7 +47,7 @@ DECLARE_NATIVE(form)
 {
     INCLUDE_PARAMS_OF_FORM;
 
-    return Init_Text(D_OUT, Copy_Form_Value(ARG(value), 0));
+    return Init_Text(OUT, Copy_Form_Value(ARG(value), 0));
 }
 
 
@@ -90,7 +90,7 @@ DECLARE_NATIVE(mold)
 
     Mold_Value(mo, ARG(value));
 
-    return Init_Text(D_OUT, Pop_Molded_String(mo));
+    return Init_Text(OUT, Pop_Molded_String(mo));
 }
 
 
@@ -154,7 +154,7 @@ DECLARE_NATIVE(write_stdout)
         DROP_GC_GUARD(temp);
     }
 
-    return Init_Trash(D_OUT);
+    return Init_Trash(OUT);
 }
 
 
@@ -184,7 +184,7 @@ DECLARE_NATIVE(new_line)
 
     FAIL_IF_READ_ONLY_ARRAY(a);
 
-    Move_Value(D_OUT, pos); // always returns the input position
+    Move_Value(OUT, pos); // always returns the input position
 
     Cell* item = Cell_Array_At(pos);
 
@@ -193,7 +193,7 @@ DECLARE_NATIVE(new_line)
             SET_SER_FLAG(a, ARRAY_FLAG_TAIL_NEWLINE);
         else
             CLEAR_SER_FLAG(a, ARRAY_FLAG_TAIL_NEWLINE);
-        return D_OUT;
+        return OUT;
     }
 
     REBINT skip;
@@ -221,7 +221,7 @@ DECLARE_NATIVE(new_line)
             break;
     }
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -257,7 +257,7 @@ DECLARE_NATIVE(new_line_q)
                 //    bool case_two = rebDid(new_line_q, "[\n]");
                 //
                 assert(f->source->index == TRASHED_INDEX);
-                return Init_Logic(D_OUT, false);
+                return Init_Logic(OUT, false);
             }
 
             arr = f->source->array;
@@ -278,12 +278,12 @@ DECLARE_NATIVE(new_line_q)
 
     if (NOT_END(item))
         return Init_Logic(
-            D_OUT,
+            OUT,
             GET_VAL_FLAG(item, VALUE_FLAG_NEWLINE_BEFORE)
         );
 
     return Init_Logic(
-        D_OUT,
+        OUT,
         GET_SER_FLAG(arr, ARRAY_FLAG_TAIL_NEWLINE)
     );
 }
@@ -331,7 +331,7 @@ DECLARE_NATIVE(now)
     assert(GET_VAL_FLAG(timestamp, DATE_FLAG_HAS_TIME));
     assert(GET_VAL_FLAG(timestamp, DATE_FLAG_HAS_ZONE));
 
-    Move_Value(D_OUT, timestamp);
+    Move_Value(OUT, timestamp);
     rebRelease(timestamp);
 
     if (not REF(precise)) {
@@ -341,7 +341,7 @@ DECLARE_NATIVE(now)
         // seconds portion (with the nanoseconds set to 0).  This achieves
         // that by extracting the seconds and then multiplying by nanoseconds.
         //
-        VAL_NANO(D_OUT) = SECS_TO_NANO(VAL_SECS(D_OUT));
+        VAL_NANO(OUT) = SECS_TO_NANO(VAL_SECS(OUT));
     }
 
     if (REF(utc)) {
@@ -349,13 +349,13 @@ DECLARE_NATIVE(now)
         // Say it has a time zone component, but it's 0:00 (as opposed
         // to saying it has no time zone component at all?)
         //
-        INIT_VAL_ZONE(D_OUT, 0);
+        INIT_VAL_ZONE(OUT, 0);
     }
     else if (REF(local)) {
         //
         // Clear out the time zone flag
         //
-        CLEAR_VAL_FLAG(D_OUT, DATE_FLAG_HAS_ZONE);
+        CLEAR_VAL_FLAG(OUT, DATE_FLAG_HAS_ZONE);
     }
     else {
         if (
@@ -368,38 +368,38 @@ DECLARE_NATIVE(now)
             || REF(yearday)
         ){
             const bool to_utc = false;
-            Adjust_Date_Zone(D_OUT, to_utc); // Add timezone, adjust date/time
+            Adjust_Date_Zone(OUT, to_utc); // Add timezone, adjust date/time
         }
     }
 
     REBINT n = -1;
 
     if (REF(date)) {
-        CLEAR_VAL_FLAG(D_OUT, DATE_FLAG_HAS_TIME);
-        CLEAR_VAL_FLAG(D_OUT, DATE_FLAG_HAS_ZONE);
+        CLEAR_VAL_FLAG(OUT, DATE_FLAG_HAS_TIME);
+        CLEAR_VAL_FLAG(OUT, DATE_FLAG_HAS_ZONE);
     }
     else if (REF(time)) {
-        RESET_VAL_HEADER(D_OUT, REB_TIME); // reset clears date flags
+        RESET_VAL_HEADER(OUT, REB_TIME); // reset clears date flags
     }
     else if (REF(zone)) {
-        VAL_NANO(D_OUT) = VAL_ZONE(D_OUT) * ZONE_MINS * MIN_SEC;
-        RESET_VAL_HEADER(D_OUT, REB_TIME); // reset clears date flags
+        VAL_NANO(OUT) = VAL_ZONE(OUT) * ZONE_MINS * MIN_SEC;
+        RESET_VAL_HEADER(OUT, REB_TIME); // reset clears date flags
     }
     else if (REF(weekday))
-        n = Week_Day(VAL_DATE(D_OUT));
+        n = Week_Day(VAL_DATE(OUT));
     else if (REF(yearday))
-        n = Julian_Date(VAL_DATE(D_OUT));
+        n = Julian_Date(VAL_DATE(OUT));
     else if (REF(year))
-        n = VAL_YEAR(D_OUT);
+        n = VAL_YEAR(OUT);
     else if (REF(month))
-        n = VAL_MONTH(D_OUT);
+        n = VAL_MONTH(OUT);
     else if (REF(day))
-        n = VAL_DAY(D_OUT);
+        n = VAL_DAY(OUT);
 
     if (n > 0)
-        Init_Integer(D_OUT, n);
+        Init_Integer(OUT, n);
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -460,7 +460,7 @@ DECLARE_NATIVE(wait)
     else {
         REBDSP dsp_orig = DSP;
         if (Reduce_To_Stack_Throws(
-            D_OUT,
+            OUT,
             ARG(value),
             REDUCE_MASK_NONE
         )){
@@ -518,15 +518,15 @@ DECLARE_NATIVE(wait)
     // Note: Port block is always a copy of the block.
     //
     if (ports)
-        Init_Block(D_OUT, ports);
+        Init_Block(OUT, ports);
 
     // Process port events [stack-move]:
-    if (Wait_Ports_Throws(D_OUT, ports, timeout, REF(only)))
+    if (Wait_Ports_Throws(OUT, ports, timeout, REF(only)))
         return R_THROWN;
 
-    assert(IS_LOGIC(D_OUT));
+    assert(IS_LOGIC(OUT));
 
-    if (IS_FALSEY(D_OUT)) { // timeout
+    if (IS_FALSEY(OUT)) { // timeout
         Sieve_Ports(nullptr);  // just reset the waked list
         return nullptr;
     }
@@ -542,10 +542,10 @@ DECLARE_NATIVE(wait)
         if (not IS_PORT(val))
             return nullptr;
 
-        Move_Value(D_OUT, KNOWN(val));
+        Move_Value(OUT, KNOWN(val));
     }
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -593,14 +593,14 @@ DECLARE_NATIVE(wake_up)
     if (IS_ACTION(awake)) {
         const bool fully = true; // error if not all arguments consumed
 
-        if (Apply_Only_Throws(D_OUT, fully, awake, ARG(event), rebEND))
-            fail (Error_No_Catch_For_Throw(D_OUT));
+        if (Apply_Only_Throws(OUT, fully, awake, ARG(event), rebEND))
+            fail (Error_No_Catch_For_Throw(OUT));
 
-        if (not (IS_LOGIC(D_OUT) and VAL_LOGIC(D_OUT)))
+        if (not (IS_LOGIC(OUT) and VAL_LOGIC(OUT)))
             woke_up = false;
     }
 
-    return Init_Logic(D_OUT, woke_up);
+    return Init_Logic(OUT, woke_up);
 }
 
 
@@ -629,7 +629,7 @@ DECLARE_NATIVE(local_to_file)
             fail ("LOCAL-TO-FILE only passes through FILE! if /PASS used");
 
         return Init_File(
-            D_OUT,
+            OUT,
             Copy_Sequence_At_Len( // Copy (callers frequently modify result)
                 VAL_SERIES(path),
                 VAL_INDEX(path),
@@ -639,7 +639,7 @@ DECLARE_NATIVE(local_to_file)
     }
 
     return Init_File(
-        D_OUT,
+        OUT,
         To_REBOL_Path(path, REF(dir) ? PATH_OPT_SRC_IS_DIR : 0)
     );
 }
@@ -674,7 +674,7 @@ DECLARE_NATIVE(file_to_local)
             fail ("FILE-TO-LOCAL only passes through STRING! if /PASS used");
 
         return Init_Text(
-            D_OUT,
+            OUT,
             Copy_Sequence_At_Len( // Copy (callers frequently modify result)
                 VAL_SERIES(path),
                 VAL_INDEX(path),
@@ -684,7 +684,7 @@ DECLARE_NATIVE(file_to_local)
     }
 
     return Init_Text(
-        D_OUT,
+        OUT,
         To_Local_Path(
             path,
             REB_FILETOLOCAL_0
@@ -733,7 +733,7 @@ DECLARE_NATIVE(what_dir)
     // the variable holding the current path must be copied.
     //
     return Init_Any_Series_At(
-        D_OUT,
+        OUT,
         VAL_TYPE(current_path),
         Copy_Sequence_Core(VAL_SERIES(current_path), NODE_FLAG_MANAGED),
         VAL_INDEX(current_path)

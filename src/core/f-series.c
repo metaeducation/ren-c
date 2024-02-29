@@ -58,29 +58,29 @@ REB_R Series_Common_Action_Maybe_Unhandled(
 
         switch (property) {
         case SYM_INDEX:
-            return Init_Integer(D_OUT, cast(REBI64, index) + 1);
+            return Init_Integer(OUT, cast(REBI64, index) + 1);
 
         case SYM_LENGTH:
-            return Init_Integer(D_OUT, tail > index ? tail - index : 0);
+            return Init_Integer(OUT, tail > index ? tail - index : 0);
 
         case SYM_HEAD:
-            Move_Value(D_OUT, value);
-            VAL_INDEX(D_OUT) = 0;
-            return D_OUT;
+            Move_Value(OUT, value);
+            VAL_INDEX(OUT) = 0;
+            return OUT;
 
         case SYM_TAIL:
-            Move_Value(D_OUT, value);
-            VAL_INDEX(D_OUT) = cast(REBLEN, tail);
-            return D_OUT;
+            Move_Value(OUT, value);
+            VAL_INDEX(OUT) = cast(REBLEN, tail);
+            return OUT;
 
         case SYM_HEAD_Q:
-            return Init_Logic(D_OUT, index == 0);
+            return Init_Logic(OUT, index == 0);
 
         case SYM_TAIL_Q:
-            return Init_Logic(D_OUT, index >= tail);
+            return Init_Logic(OUT, index >= tail);
 
         case SYM_PAST_Q:
-            return Init_Logic(D_OUT, index > tail);
+            return Init_Logic(OUT, index > tail);
 
         case SYM_FILE: {
             REBSER *s = VAL_SERIES(value);
@@ -89,18 +89,18 @@ REB_R Series_Common_Action_Maybe_Unhandled(
                 // !!! How to tell whether it's a URL! or a FILE! ?
                 //
                 Scan_File(
-                    D_OUT,
+                    OUT,
                     cb_cast(Symbol_Head(LINK(s).file)),
                     SER_LEN(LINK(s).file)
                 );
-                return D_OUT;
+                return OUT;
             }
             return nullptr; }
 
         case SYM_LINE: {
             REBSER *s = VAL_SERIES(value);
             if (IS_SER_ARRAY(s) and GET_SER_FLAG(s, ARRAY_FLAG_FILE_LINE))
-                return Init_Integer(D_OUT, MISC(s).line);
+                return Init_Integer(OUT, MISC(s).line);
             return nullptr; }
 
         default:
@@ -196,7 +196,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
         UNUSED(ARG(value1)); // covered by value
 
         return Init_Any_Series(
-            D_OUT,
+            OUT,
             VAL_TYPE(value),
             Make_Set_Operation_Series(
                 value,
@@ -216,7 +216,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
         UNUSED(ARG(value1)); // covered by value
 
         return Init_Any_Series(
-            D_OUT,
+            OUT,
             VAL_TYPE(value),
             Make_Set_Operation_Series(
                 value,
@@ -236,7 +236,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
         UNUSED(ARG(value1)); // covered by value
 
         return Init_Any_Series(
-            D_OUT,
+            OUT,
             VAL_TYPE(value),
             Make_Set_Operation_Series(
                 value,

@@ -157,7 +157,7 @@ DECLARE_NATIVE(identify_text_q)
 
     UNUSED(ARG(data)); // see notes on decode-text
 
-    return Init_True(D_OUT);
+    return Init_True(OUT);
 }
 
 
@@ -184,8 +184,8 @@ DECLARE_NATIVE(decode_text)
     // is to UTF-8 for source code, a .TXT file is a different beast, so
     // having wider format support might be a good thing.
 
-    Init_Text(D_OUT, Make_String_UTF8(cs_cast(Cell_Binary_At(ARG(data)))));
-    return D_OUT;
+    Init_Text(OUT, Make_String_UTF8(cs_cast(Cell_Binary_At(ARG(data)))));
+    return OUT;
 }
 
 
@@ -211,7 +211,7 @@ DECLARE_NATIVE(encode_text)
         fail ("Can only write out strings to .txt if they are Latin1.");
     }
 
-    return Init_Binary(D_OUT, Copy_Sequence_At_Position(ARG(string)));
+    return Init_Binary(OUT, Copy_Sequence_At_Position(ARG(string)));
 }
 
 
@@ -295,7 +295,7 @@ DECLARE_NATIVE(identify_utf16le_q)
     //
     UNUSED(ARG(data));
 
-    return Init_True(D_OUT);
+    return Init_True(OUT);
 }
 
 
@@ -317,18 +317,18 @@ DECLARE_NATIVE(decode_utf16le)
 
     const bool little_endian = true;
 
-    Decode_Utf16_Core(D_OUT, data, len, little_endian);
+    Decode_Utf16_Core(OUT, data, len, little_endian);
 
     // Drop byte-order marker, if present
     //
     if (
-        VAL_LEN_AT(D_OUT) > 0
-        && GET_ANY_CHAR(VAL_SERIES(D_OUT), VAL_INDEX(D_OUT)) == 0xFEFF
+        VAL_LEN_AT(OUT) > 0
+        && GET_ANY_CHAR(VAL_SERIES(OUT), VAL_INDEX(OUT)) == 0xFEFF
     ){
-        Remove_Series(VAL_SERIES(D_OUT), VAL_INDEX(D_OUT), 1);
+        Remove_Series(VAL_SERIES(OUT), VAL_INDEX(OUT), 1);
     }
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -350,12 +350,12 @@ DECLARE_NATIVE(encode_utf16le)
 
     const bool little_endian = true;
     Encode_Utf16_Core(
-        D_OUT,
+        OUT,
         Cell_String_At(ARG(text)),
         VAL_LEN_AT(ARG(text)),
         little_endian
     );
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -380,7 +380,7 @@ DECLARE_NATIVE(identify_utf16be_q)
     //
     UNUSED(ARG(data));
 
-    return Init_True(D_OUT);
+    return Init_True(OUT);
 }
 
 
@@ -402,18 +402,18 @@ DECLARE_NATIVE(decode_utf16be)
 
     const bool little_endian = false;
 
-    Decode_Utf16_Core(D_OUT, data, len, little_endian);
+    Decode_Utf16_Core(OUT, data, len, little_endian);
 
     // Drop byte-order marker, if present
     //
     if (
-        VAL_LEN_AT(D_OUT) > 0
-        && GET_ANY_CHAR(VAL_SERIES(D_OUT), VAL_INDEX(D_OUT)) == 0xFEFF
+        VAL_LEN_AT(OUT) > 0
+        && GET_ANY_CHAR(VAL_SERIES(OUT), VAL_INDEX(OUT)) == 0xFEFF
     ){
-        Remove_Series(VAL_SERIES(D_OUT), VAL_INDEX(D_OUT), 1);
+        Remove_Series(VAL_SERIES(OUT), VAL_INDEX(OUT), 1);
     }
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -436,10 +436,10 @@ DECLARE_NATIVE(encode_utf16be)
     // is weird "userspace" encoding it should be an option to the codec.
 
     Encode_Utf16_Core(
-        D_OUT,
+        OUT,
         Cell_String_At(ARG(text)),
         VAL_LEN_AT(ARG(text)),
         little_endian
     );
-    return D_OUT;
+    return OUT;
 }

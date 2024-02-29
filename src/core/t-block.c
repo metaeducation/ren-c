@@ -816,7 +816,7 @@ REBTYPE(Array)
         if (REF(part)) {
             len = Part_Len_May_Modify_Index(array, ARG(limit));
             if (len == 0)
-                return Init_Block(D_OUT, Make_Arr(0)); // new empty block
+                return Init_Block(OUT, Make_Arr(0)); // new empty block
         }
         else
             len = 1;
@@ -830,18 +830,18 @@ REBTYPE(Array)
             if (not REF(part))
                 return nullptr;
 
-            return Init_Block(D_OUT, Make_Arr(0)); // new empty block
+            return Init_Block(OUT, Make_Arr(0)); // new empty block
         }
 
         if (REF(part))
             Init_Block(
-                D_OUT, Copy_Array_At_Max_Shallow(arr, index, specifier, len)
+                OUT, Copy_Array_At_Max_Shallow(arr, index, specifier, len)
             );
         else
-            Derelativize(D_OUT, &ARR_HEAD(arr)[index], specifier);
+            Derelativize(OUT, &ARR_HEAD(arr)[index], specifier);
 
         Remove_Series(SER(arr), index, len);
-        return D_OUT; }
+        return OUT; }
 
     //-- Search:
 
@@ -883,16 +883,16 @@ REBTYPE(Array)
             if (REF(tail) || REF(match))
                 ret += len;
             VAL_INDEX(array) = ret;
-            Move_Value(D_OUT, array);
+            Move_Value(OUT, array);
         }
         else {
             ret += len;
             if (ret >= limit)
                 return nullptr;
 
-            Derelativize(D_OUT, Array_At(arr, ret), specifier);
+            Derelativize(OUT, Array_At(arr, ret), specifier);
         }
-        return D_OUT; }
+        return OUT; }
 
     //-- Modification:
       case SYM_APPEND:
@@ -933,8 +933,8 @@ REBTYPE(Array)
         if (REF(line))
             flags |= AM_LINE;
 
-        Move_Value(D_OUT, array);
-        VAL_INDEX(D_OUT) = Modify_Array(
+        Move_Value(OUT, array);
+        VAL_INDEX(OUT) = Modify_Array(
             unwrap(Cell_Word_Id(verb)),
             arr,
             index,
@@ -943,7 +943,7 @@ REBTYPE(Array)
             len,
             REF(dup) ? Int32(ARG(count)) : 1
         );
-        return D_OUT; }
+        return OUT; }
 
       case SYM_CLEAR: {
         FAIL_IF_READ_ONLY_ARRAY(arr);
@@ -990,7 +990,7 @@ REBTYPE(Array)
             ARRAY_FLAG_FILE_LINE, // flags
             types // types to copy deeply
         );
-        return Init_Any_Array(D_OUT, VAL_TYPE(array), copy);
+        return Init_Any_Array(OUT, VAL_TYPE(array), copy);
     }
 
     //-- Special actions:
@@ -1116,13 +1116,13 @@ REBTYPE(Array)
                 1 + (Random_Int(REF(secure)) % (VAL_LEN_HEAD(array) - index))
             );
 
-            Cell* slot = Pick_Block(D_OUT, array, ARG(seed));
-            if (IS_NULLED(D_OUT)) {
+            Cell* slot = Pick_Block(OUT, array, ARG(seed));
+            if (IS_NULLED(OUT)) {
                 assert(slot);
                 UNUSED(slot);
                 return nullptr;
             }
-            return D_OUT;
+            return OUT;
 
         }
 

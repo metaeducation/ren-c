@@ -232,9 +232,9 @@ DECLARE_NATIVE(running_q)
     REBFRM *f = CTX_FRAME_MAY_FAIL(frame_ctx);
 
     if (Is_Action_Frame_Fulfilling(f))
-        return Init_False(D_OUT);
+        return Init_False(OUT);
 
-    return Init_True(D_OUT);
+    return Init_True(OUT);
 }
 
 
@@ -255,7 +255,7 @@ DECLARE_NATIVE(pending_q)
     REBFRM *f = CTX_FRAME_MAY_FAIL(frame_ctx);
 
     if (Is_Action_Frame_Fulfilling(f))
-        return Init_True(D_OUT);
+        return Init_True(OUT);
 
-    return Init_False(D_OUT);
+    return Init_False(OUT);
 }

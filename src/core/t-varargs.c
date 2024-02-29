@@ -153,7 +153,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
 // and this case cannot return a thrown value.
 //
 // For other ops, it will return END_NODE if at the end of variadic input,
-// or D_OUT if there is a value.
+// or OUT if there is a value.
 //
 // If an evaluation is involved, then a thrown value is possibly returned.
 //
@@ -495,15 +495,15 @@ REBTYPE(Varargs)
         switch (property) {
         case SYM_TAIL_Q: {
             if (Do_Vararg_Op_Maybe_End_Throws(
-                D_OUT,
+                OUT,
                 value,
                 VARARG_OP_TAIL_Q
             )){
                 assert(false);
                 return R_THROWN;
             }
-            assert(IS_LOGIC(D_OUT));
-            return D_OUT; }
+            assert(IS_LOGIC(OUT));
+            return OUT; }
 
         default:
             break;
@@ -522,15 +522,15 @@ REBTYPE(Varargs)
 
         if (not REF(part)) {
             if (Do_Vararg_Op_Maybe_End_Throws(
-                D_OUT,
+                OUT,
                 value,
                 VARARG_OP_TAKE
             )){
                 return R_THROWN;
             }
-            if (IS_END(D_OUT))
-                return Init_Endish_Nulled(D_OUT);
-            return D_OUT;
+            if (IS_END(OUT))
+                return Init_Endish_Nulled(OUT);
+            return OUT;
         }
 
         REBDSP dsp_orig = DSP;
@@ -549,20 +549,20 @@ REBTYPE(Varargs)
 
         while (limit-- > 0) {
             if (Do_Vararg_Op_Maybe_End_Throws(
-                D_OUT,
+                OUT,
                 value,
                 VARARG_OP_TAKE
             )){
                 return R_THROWN;
             }
-            if (IS_END(D_OUT))
+            if (IS_END(OUT))
                 break;
-            DS_PUSH(D_OUT);
+            DS_PUSH(OUT);
         }
 
         // !!! What if caller wanted a REB_GROUP, REB_PATH, or an /INTO?
         //
-        return Init_Block(D_OUT, Pop_Stack_Values(dsp_orig)); }
+        return Init_Block(OUT, Pop_Stack_Values(dsp_orig)); }
 
     default:
         break;

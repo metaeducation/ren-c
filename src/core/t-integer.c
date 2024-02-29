@@ -352,9 +352,9 @@ DECLARE_NATIVE(to_integer)
 {
     INCLUDE_PARAMS_OF_TO_INTEGER;
 
-    Value_To_Int64(D_OUT, ARG(value), REF(unsigned));
+    Value_To_Int64(OUT, ARG(value), REF(unsigned));
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -411,9 +411,9 @@ REBTYPE(Integer)
             case SYM_ADD:
             case SYM_MULTIPLY: {
                 // Swap parameter order:
-                Move_Value(D_OUT, val2);  // Use as temp workspace
+                Move_Value(OUT, val2);  // Use as temp workspace
                 Move_Value(val2, val);
-                Move_Value(val, D_OUT);
+                Move_Value(val, OUT);
                 GENERIC_HOOK hook = Generic_Hooks[VAL_TYPE(val)];
                 return hook(frame_, verb); }
 
@@ -454,26 +454,26 @@ REBTYPE(Integer)
     switch (sym) {
 
     case SYM_COPY:
-        Move_Value(D_OUT, val);
-        return D_OUT;
+        Move_Value(OUT, val);
+        return OUT;
 
     case SYM_ADD: {
         REBI64 anum;
         if (REB_I64_ADD_OF(num, arg, &anum))
             fail (Error_Overflow_Raw());
-        return Init_Integer(D_OUT, anum); }
+        return Init_Integer(OUT, anum); }
 
     case SYM_SUBTRACT: {
         REBI64 anum;
         if (REB_I64_SUB_OF(num, arg, &anum))
             fail (Error_Overflow_Raw());
-        return Init_Integer(D_OUT, anum); }
+        return Init_Integer(OUT, anum); }
 
     case SYM_MULTIPLY: {
         REBI64 p;
         if (REB_I64_MUL_OF(num, arg, &p))
             fail (Error_Overflow_Raw());
-        return Init_Integer(D_OUT, p); }
+        return Init_Integer(OUT, p); }
 
     case SYM_DIVIDE:
         if (arg == 0)
@@ -481,7 +481,7 @@ REBTYPE(Integer)
         if (num == INT64_MIN && arg == -1)
             fail (Error_Overflow_Raw());
         if (num % arg == 0)
-            return Init_Integer(D_OUT, num / arg);
+            return Init_Integer(OUT, num / arg);
         // Fall thru
     case SYM_POWER:
         Init_Decimal(D_ARG(1), cast(REBDEC, num));
@@ -491,37 +491,37 @@ REBTYPE(Integer)
     case SYM_REMAINDER:
         if (arg == 0)
             fail (Error_Zero_Divide_Raw());
-        return Init_Integer(D_OUT, (arg != -1) ? (num % arg) : 0);
+        return Init_Integer(OUT, (arg != -1) ? (num % arg) : 0);
 
     case SYM_INTERSECT:
-        return Init_Integer(D_OUT, num & arg);
+        return Init_Integer(OUT, num & arg);
 
     case SYM_UNION:
-        return Init_Integer(D_OUT, num | arg);
+        return Init_Integer(OUT, num | arg);
 
     case SYM_DIFFERENCE:
-        return Init_Integer(D_OUT, num ^ arg);
+        return Init_Integer(OUT, num ^ arg);
 
     case SYM_NEGATE:
         if (num == INT64_MIN)
             fail (Error_Overflow_Raw());
-        return Init_Integer(D_OUT, -num);
+        return Init_Integer(OUT, -num);
 
     case SYM_COMPLEMENT:
-        return Init_Integer(D_OUT, ~num);
+        return Init_Integer(OUT, ~num);
 
     case SYM_ABSOLUTE:
         if (num == INT64_MIN)
             fail (Error_Overflow_Raw());
-        return Init_Integer(D_OUT, num < 0 ? -num : num);
+        return Init_Integer(OUT, num < 0 ? -num : num);
 
     case SYM_EVEN_Q:
         num = ~num;
         // falls through
     case SYM_ODD_Q:
         if (num & 1)
-            return Init_True(D_OUT);
-        return Init_False(D_OUT);
+            return Init_True(OUT);
+        return Init_False(OUT);
 
     case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;
@@ -542,7 +542,7 @@ REBTYPE(Integer)
         if (REF(to)) {
             if (IS_MONEY(val2))
                 return Init_Money(
-                    D_OUT,
+                    OUT,
                     Round_Deci(
                         int_to_deci(num), flags, VAL_MONEY_AMOUNT(val2)
                     )
@@ -551,9 +551,9 @@ REBTYPE(Integer)
                 REBDEC dec = Round_Dec(
                     cast(REBDEC, num), flags, VAL_DECIMAL(val2)
                 );
-                RESET_CELL(D_OUT, VAL_TYPE(val2));
-                VAL_DECIMAL(D_OUT) = dec;
-                return D_OUT;
+                RESET_CELL(OUT, VAL_TYPE(val2));
+                VAL_DECIMAL(OUT) = dec;
+                return OUT;
             }
             if (IS_TIME(val2))
                 fail (Error_Invalid(val2));
@@ -562,7 +562,7 @@ REBTYPE(Integer)
         else
             arg = 0L;
 
-        return Init_Integer(D_OUT, Round_Int(num, flags, arg)); }
+        return Init_Integer(OUT, Round_Int(num, flags, arg)); }
 
     case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
@@ -578,7 +578,7 @@ REBTYPE(Integer)
         }
         if (num == 0)
             break;
-        return Init_Integer(D_OUT, Random_Range(num, REF(secure))); }
+        return Init_Integer(OUT, Random_Range(num, REF(secure))); }
 
     default:
         break;
@@ -690,7 +690,7 @@ DECLARE_NATIVE(enbin)
         );
 
     TERM_BIN_LEN(bin, num_bytes);
-    return Init_Binary(D_OUT, bin);
+    return Init_Binary(OUT, bin);
 }
 
 
@@ -765,7 +765,7 @@ DECLARE_NATIVE(debin)
     REBINT n = num_bytes;
 
     if (n == 0)
-        return Init_Integer(D_OUT, 0);  // !!! Only if we let num_bytes = 0
+        return Init_Integer(OUT, 0);  // !!! Only if we let num_bytes = 0
 
     // default signedness interpretation to high-bit of first byte, but
     // override if the function was called with `no_sign`
@@ -794,9 +794,9 @@ DECLARE_NATIVE(debin)
     if (n == 0) {
         if (negative) {
             assert(not no_sign);
-            return Init_Integer(D_OUT, -1);
+            return Init_Integer(OUT, -1);
         }
-        return Init_Integer(D_OUT, 0);
+        return Init_Integer(OUT, 0);
     }
 
     // Not using BigNums (yet) so max representation is 8 bytes after
@@ -830,5 +830,5 @@ DECLARE_NATIVE(debin)
         fail (Error_Out_Of_Range_Raw(ARG(binary)));
     }
 
-    return Init_Integer(D_OUT, i);
+    return Init_Integer(OUT, i);
 }

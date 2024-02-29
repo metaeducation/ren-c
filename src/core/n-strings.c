@@ -120,7 +120,7 @@ DECLARE_NATIVE(delimit)
     assert(IS_BLOCK(line));
 
     if (Form_Reduce_Throws(
-        D_OUT,
+        OUT,
         Cell_Array(line),
         VAL_INDEX(line),
         VAL_SPECIFIER(line),
@@ -129,12 +129,12 @@ DECLARE_NATIVE(delimit)
         return R_THROWN;
     }
 
-    if (IS_NULLED(D_OUT) or not REF(tail))
-        return D_OUT;
+    if (IS_NULLED(OUT) or not REF(tail))
+        return OUT;
 
-    assert(IS_TEXT(D_OUT));
+    assert(IS_TEXT(OUT));
 
-    return rebValue("append", D_OUT, ARG(delimiter));
+    return rebValue("append", OUT, ARG(delimiter));
 }
 
 
@@ -199,7 +199,7 @@ DECLARE_NATIVE(checksum)
             // could be used by Rebol2, as it only had 32-bit signed INTEGER!.
             //
             REBINT crc32 = cast(int32_t, crc32_z(0L, data, len));
-            return Init_Integer(D_OUT, crc32);
+            return Init_Integer(OUT, crc32);
         }
 
         if (sym == SYM_ADLER32) {
@@ -211,7 +211,7 @@ DECLARE_NATIVE(checksum)
             // of the adler calculation to a signed integer.
             //
             uLong adler = z_adler32(0L, data, len);
-            return Init_Integer(D_OUT, adler);
+            return Init_Integer(OUT, adler);
         }
 
         REBLEN i;
@@ -281,14 +281,14 @@ DECLARE_NATIVE(checksum)
             }
 
             TERM_BIN_LEN(digest, digests[i].len);
-            return Init_Binary(D_OUT, digest);
+            return Init_Binary(OUT, digest);
         }
 
         fail (Error_Invalid(ARG(word)));
     }
     else if (REF(tcp)) {
         REBINT ipc = Compute_IPC(data, len);
-        Init_Integer(D_OUT, ipc);
+        Init_Integer(OUT, ipc);
     }
     else if (REF(hash)) {
         REBINT sum = VAL_INT32(ARG(size));
@@ -296,12 +296,12 @@ DECLARE_NATIVE(checksum)
             sum = 1;
 
         REBINT hash = Hash_Bytes_Or_Uni(data, len, wide) % sum;
-        Init_Integer(D_OUT, hash);
+        Init_Integer(OUT, hash);
     }
     else
-        Init_Integer(D_OUT, Compute_CRC24(data, len));
+        Init_Integer(OUT, Compute_CRC24(data, len));
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -468,10 +468,10 @@ DECLARE_NATIVE(debase)
     else
         base = 64;
 
-    if (!Decode_Binary(D_OUT, Binary_At(temp, offset), size, base, 0))
+    if (!Decode_Binary(OUT, Binary_At(temp, offset), size, base, 0))
         fail (Error_Invalid_Data_Raw(ARG(value)));
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -538,12 +538,12 @@ DECLARE_NATIVE(enbase)
     // then this conversion won't be necessary.
 
     Init_Text(
-        D_OUT,
+        OUT,
         Make_Sized_String_UTF8(cs_cast(Binary_Head(enbased)), Binary_Len(enbased))
     );
     Free_Unmanaged_Series(enbased);
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -705,7 +705,7 @@ DECLARE_NATIVE(enhex)
     SET_SERIES_LEN(mo->series, dp - Binary_Head(mo->series));
 
     return Init_Any_Series(
-        D_OUT,
+        OUT,
         VAL_TYPE(ARG(string)),
         Pop_Molded_String(mo)
     );
@@ -833,7 +833,7 @@ DECLARE_NATIVE(dehex)
     SET_SERIES_LEN(mo->series, dp - Binary_Head(mo->series));
 
     return Init_Any_Series(
-        D_OUT,
+        OUT,
         VAL_TYPE(ARG(string)),
         Pop_Molded_String(mo)
     );
@@ -859,7 +859,7 @@ DECLARE_NATIVE(deline)
     Value* val = ARG(string);
 
     if (REF(lines))
-        return Init_Block(D_OUT, Split_Lines(val));
+        return Init_Block(OUT, Split_Lines(val));
 
     REBSER *s = VAL_SERIES(val);
     REBLEN len_head = SER_LEN(s);
@@ -1036,7 +1036,7 @@ DECLARE_NATIVE(entab)
 
     TERM_BIN_LEN(mo->series, dp - Binary_Head(mo->series));
 
-    return Init_Any_Series(D_OUT, VAL_TYPE(val), Pop_Molded_String(mo));
+    return Init_Any_Series(OUT, VAL_TYPE(val), Pop_Molded_String(mo));
 }
 
 
@@ -1115,7 +1115,7 @@ DECLARE_NATIVE(detab)
 
     TERM_BIN_LEN(mo->series, dp - Binary_Head(mo->series));
 
-    return Init_Any_Series(D_OUT, VAL_TYPE(val), Pop_Molded_String(mo));
+    return Init_Any_Series(OUT, VAL_TYPE(val), Pop_Molded_String(mo));
 }
 
 
@@ -1136,8 +1136,8 @@ DECLARE_NATIVE(lowercase)
     INCLUDE_PARAMS_OF_LOWERCASE;
 
     UNUSED(REF(part)); // checked by if limit is null
-    Change_Case(D_OUT, ARG(string), ARG(limit), false);
-    return D_OUT;
+    Change_Case(OUT, ARG(string), ARG(limit), false);
+    return OUT;
 }
 
 
@@ -1158,8 +1158,8 @@ DECLARE_NATIVE(uppercase)
     INCLUDE_PARAMS_OF_UPPERCASE;
 
     UNUSED(REF(part)); // checked by if limit is nulled
-    Change_Case(D_OUT, ARG(string), ARG(limit), true);
-    return D_OUT;
+    Change_Case(OUT, ARG(string), ARG(limit), true);
+    return OUT;
 }
 
 
@@ -1218,10 +1218,10 @@ DECLARE_NATIVE(to_hex)
     else
         fail (Error_Invalid(arg));
 
-    if (nullptr == Scan_Issue(D_OUT, &buffer[0], len))
+    if (nullptr == Scan_Issue(OUT, &buffer[0], len))
         fail (Error_Invalid(arg));
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -1244,9 +1244,9 @@ DECLARE_NATIVE(find_script)
     if (offset == -1)
         return nullptr;
 
-    Move_Value(D_OUT, arg);
-    VAL_INDEX(D_OUT) += offset;
-    return D_OUT;
+    Move_Value(OUT, arg);
+    VAL_INDEX(OUT) += offset;
+    return OUT;
 }
 
 
@@ -1268,7 +1268,7 @@ DECLARE_NATIVE(invalid_utf8_q)
     if (not bp)
         return nullptr;
 
-    Move_Value(D_OUT, arg);
-    VAL_INDEX(D_OUT) = bp - VAL_BIN_HEAD(arg);
-    return D_OUT;
+    Move_Value(OUT, arg);
+    VAL_INDEX(OUT) = bp - VAL_BIN_HEAD(arg);
+    return OUT;
 }

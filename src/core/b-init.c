@@ -376,7 +376,7 @@ DECLARE_NATIVE(generic)
     //
     Init_Action_Unbound(Sink_Var_May_Fail(ARG(verb), SPECIFIED), generic);
 
-    return Init_Action_Unbound(D_OUT, generic);
+    return Init_Action_Unbound(OUT, generic);
 }
 
 

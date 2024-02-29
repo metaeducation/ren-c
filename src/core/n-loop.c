@@ -93,8 +93,8 @@ DECLARE_NATIVE(break)
 {
     INCLUDE_PARAMS_OF_BREAK;
 
-    Move_Value(D_OUT, NAT_VALUE(break));
-    CONVERT_NAME_TO_THROWN(D_OUT, NULLED_CELL);
+    Move_Value(OUT, NAT_VALUE(break));
+    CONVERT_NAME_TO_THROWN(OUT, NULLED_CELL);
     return R_THROWN;
 }
 
@@ -116,8 +116,8 @@ DECLARE_NATIVE(continue)
 {
     INCLUDE_PARAMS_OF_CONTINUE;
 
-    Move_Value(D_OUT, NAT_VALUE(continue));
-    CONVERT_NAME_TO_THROWN(D_OUT, ARG(value)); // null if e.g. `do [continue]`
+    Move_Value(OUT, NAT_VALUE(continue));
+    CONVERT_NAME_TO_THROWN(OUT, ARG(value)); // null if e.g. `do [continue]`
 
     return R_THROWN;
 }
@@ -624,11 +624,11 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 {
     INCLUDE_PARAMS_OF_FOR_EACH; // MAP-EACH & EVERY must have same interface
 
-    Init_Blank(D_OUT); // result if body never runs (MAP-EACH gives [])
+    Init_Blank(OUT); // result if body never runs (MAP-EACH gives [])
 
     struct Loop_Each_State les;
     les.mode = mode;
-    les.out = D_OUT;
+    les.out = OUT;
     les.data = ARG(data);
     les.body = ARG(body);
 
@@ -701,7 +701,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 
         les.data_len = SER_LEN(les.data_ser); // HOLD so length can't change
         if (les.data_idx >= les.data_len) {
-            assert(IS_BLANK(D_OUT)); // result if loop body never runs
+            assert(IS_BLANK(OUT)); // result if loop body never runs
             r = nullptr;
             goto cleanup;
         }
@@ -737,7 +737,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         rebJumps ("FAIL", rebR(r));
     }
 
-    // Otherwise, nullptr signals result in les.out (a.k.a. D_OUT)
+    // Otherwise, nullptr signals result in les.out (a.k.a. OUT)
 
     switch (mode) {
       case LOOP_FOR_EACH:
@@ -747,7 +747,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         // void means the last body evaluation returned null or blank
         // any other value is the plain last body result
         //
-        return D_OUT;
+        return OUT;
 
       case LOOP_EVERY:
         //
@@ -757,11 +757,11 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         // any other value is the last body result, and is truthy
         // only illegal value here is trash (would cause error if body gave it)
         //
-        assert(not IS_TRASH(D_OUT));
-        return D_OUT;
+        assert(not IS_TRASH(OUT));
+        return OUT;
 
       case LOOP_MAP_EACH:
-        if (IS_NULLED(D_OUT)) { // e.g. there was a BREAK...*must* return null
+        if (IS_NULLED(OUT)) { // e.g. there was a BREAK...*must* return null
             DS_DROP_TO(dsp_orig);
             return nullptr;
         }
@@ -770,7 +770,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         // paralleling some changes to COLLECT, it may be better if the body
         // never runs it returns blank (?)
         //
-        return Init_Block(D_OUT, Pop_Stack_Values(dsp_orig));
+        return Init_Block(OUT, Pop_Stack_Values(dsp_orig));
     }
 
     DEAD_END; // all branches handled in enum switch
@@ -815,7 +815,7 @@ DECLARE_NATIVE(for)
         and IS_INTEGER(ARG(bump))
     ){
         return Loop_Integer_Common(
-            D_OUT,
+            OUT,
             var,
             ARG(body),
             VAL_INT64(ARG(start)),
@@ -829,7 +829,7 @@ DECLARE_NATIVE(for)
     if (ANY_SERIES(ARG(start))) {
         if (ANY_SERIES(ARG(end))) {
             return Loop_Series_Common(
-                D_OUT,
+                OUT,
                 var,
                 ARG(body),
                 ARG(start),
@@ -839,7 +839,7 @@ DECLARE_NATIVE(for)
         }
         else {
             return Loop_Series_Common(
-                D_OUT,
+                OUT,
                 var,
                 ARG(body),
                 ARG(start),
@@ -850,7 +850,7 @@ DECLARE_NATIVE(for)
     }
 
     return Loop_Number_Common(
-        D_OUT, var, ARG(body), ARG(start), ARG(end), ARG(bump)
+        OUT, var, ARG(body), ARG(start), ARG(end), ARG(bump)
     );
 }
 
@@ -878,14 +878,14 @@ DECLARE_NATIVE(for_skip)
 
     Value* series = ARG(series);
 
-    Init_Blank(D_OUT); // result if body never runs, like `while [null] [...]`
+    Init_Blank(OUT); // result if body never runs, like `while [null] [...]`
 
     REBINT skip = Int32(ARG(skip));
     if (skip == 0) {
         //
         // !!! https://forum.rebol.info/t/infinite-loops-vs-errors/936
         //
-        return D_OUT; // blank is loop protocol if body never ran
+        return OUT; // blank is loop protocol if body never ran
     }
 
     REBCTX *context;
@@ -920,14 +920,14 @@ DECLARE_NATIVE(for_skip)
             VAL_INDEX(var) = index;
         }
 
-        if (Do_Branch_Throws(D_OUT, ARG(body))) {
+        if (Do_Branch_Throws(OUT, ARG(body))) {
             bool broke;
-            if (not Catching_Break_Or_Continue(D_OUT, &broke))
+            if (not Catching_Break_Or_Continue(OUT, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;
         }
-        Trashify_If_Nulled_Or_Blank(D_OUT);  // null->BREAK, blank->empty
+        Trashify_If_Nulled_Or_Blank(OUT);  // null->BREAK, blank->empty
 
         // Modifications to var are allowed, to another ANY-SERIES! value.
         //
@@ -945,7 +945,7 @@ DECLARE_NATIVE(for_skip)
         VAL_INDEX(var) += skip;
     }
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -977,11 +977,11 @@ DECLARE_NATIVE(stop)
 
     Value* v = ARG(value);
 
-    Move_Value(D_OUT, NAT_VALUE(stop));
+    Move_Value(OUT, NAT_VALUE(stop));
     if (IS_ENDISH_NULLED(v))
-        CONVERT_NAME_TO_THROWN(D_OUT, TRASH_VALUE); // `if true [stop]`
+        CONVERT_NAME_TO_THROWN(OUT, TRASH_VALUE); // `if true [stop]`
     else
-        CONVERT_NAME_TO_THROWN(D_OUT, v); // `if true [stop ...]`
+        CONVERT_NAME_TO_THROWN(OUT, v); // `if true [stop ...]`
 
     return R_THROWN;
 }
@@ -1003,18 +1003,18 @@ DECLARE_NATIVE(cycle)
     INCLUDE_PARAMS_OF_CYCLE;
 
     do {
-        if (Do_Branch_Throws(D_OUT, ARG(body))) {
+        if (Do_Branch_Throws(OUT, ARG(body))) {
             bool broke;
-            if (not Catching_Break_Or_Continue(D_OUT, &broke)) {
+            if (not Catching_Break_Or_Continue(OUT, &broke)) {
                 if (
-                    IS_ACTION(D_OUT)
-                    and VAL_ACT_DISPATCHER(D_OUT) == &N_stop
+                    IS_ACTION(OUT)
+                    and VAL_ACT_DISPATCHER(OUT) == &N_stop
                 ){
                     // See notes on STOP for why CYCLE is unique among loop
                     // constructs, with a BREAK variant that returns a value.
                     //
-                    CATCH_THROWN(D_OUT, D_OUT);
-                    return D_OUT; // special case: null allowed (like break)
+                    CATCH_THROWN(OUT, OUT);
+                    return OUT; // special case: null allowed (like break)
                 }
 
                 return R_THROWN;
@@ -1378,7 +1378,7 @@ DECLARE_NATIVE(remove_each)
         // !!! Should REMOVE-EACH follow the "loop conventions" where if the
         // body never gets a chance to run, the return value is trash?
         //
-        return Init_Integer(D_OUT, 0);
+        return Init_Integer(OUT, 0);
     }
 
     // Create a context for the loop variables, and bind the body to it.
@@ -1429,8 +1429,8 @@ DECLARE_NATIVE(remove_each)
         Push_Mold(res.mo);
     }
 
-    SET_END(D_OUT); // will be tested for THROWN() to signal a throw happened
-    res.out = D_OUT;
+    SET_END(OUT); // will be tested for THROWN() to signal a throw happened
+    res.out = OUT;
 
     res.broke = false; // will be set to true if there is a BREAK
 
@@ -1452,7 +1452,7 @@ DECLARE_NATIVE(remove_each)
     if (res.broke)
         return nullptr;
 
-    return Init_Integer(D_OUT, removals);
+    return Init_Integer(OUT, removals);
 }
 
 
@@ -1494,11 +1494,11 @@ DECLARE_NATIVE(loop)
 {
     INCLUDE_PARAMS_OF_LOOP;
 
-    Init_Blank(D_OUT); // result if body never runs, like `while [null] [...]`
+    Init_Blank(OUT); // result if body never runs, like `while [null] [...]`
 
     if (IS_FALSEY(ARG(count))) {
         assert(IS_LOGIC(ARG(count))); // is false...opposite of infinite loop
-        return D_OUT;
+        return OUT;
     }
 
     REBI64 count;
@@ -1516,20 +1516,20 @@ DECLARE_NATIVE(loop)
         count = Int64(ARG(count));
 
     for (; count > 0; count--) {
-        if (Do_Branch_Throws(D_OUT, ARG(body))) {
+        if (Do_Branch_Throws(OUT, ARG(body))) {
             bool broke;
-            if (not Catching_Break_Or_Continue(D_OUT, &broke))
+            if (not Catching_Break_Or_Continue(OUT, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;
         }
-        Trashify_If_Nulled_Or_Blank(D_OUT);  // null->BREAK, blank->empty
+        Trashify_If_Nulled_Or_Blank(OUT);  // null->BREAK, blank->empty
     }
 
     if (IS_LOGIC(ARG(count)))
         goto restart; // "infinite" loop exhausted MAX_I64 steps (rare case)
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -1570,15 +1570,15 @@ DECLARE_NATIVE(repeat)
     Value* var = CTX_VAR(context, 1); // not movable, see #2274
     if (ANY_SERIES(value))
         return Loop_Series_Common(
-            D_OUT, var, ARG(body), value, VAL_LEN_HEAD(value) - 1, 1
+            OUT, var, ARG(body), value, VAL_LEN_HEAD(value) - 1, 1
         );
 
     REBI64 n = VAL_INT64(value);
     if (n < 1) // Loop_Integer from 1 to 0 with bump of 1 is infinite
-        return Init_Blank(D_OUT); // blank if loop condition never runs
+        return Init_Blank(OUT); // blank if loop condition never runs
 
     return Loop_Integer_Common(
-        D_OUT, var, ARG(body), 1, VAL_INT64(value), 1
+        OUT, var, ARG(body), 1, VAL_INT64(value), 1
     );
 }
 
@@ -1595,12 +1595,12 @@ INLINE REB_R Until_Core(
 
     skip_check:;
 
-        if (Do_Branch_Throws(D_OUT, ARG(body))) {
+        if (Do_Branch_Throws(OUT, ARG(body))) {
             bool broke;
-            if (not Catching_Break_Or_Continue(D_OUT, &broke))
+            if (not Catching_Break_Or_Continue(OUT, &broke))
                 return R_THROWN;
             if (broke)
-                return Init_Nulled(D_OUT);
+                return Init_Nulled(OUT);
 
             // UNTIL and UNTIL-NOT both follow the precedent that the way
             // a CONTINUE/WITH works is to act as if the loop body returned
@@ -1613,16 +1613,16 @@ INLINE REB_R Until_Core(
             // conditions must be true or false...and continue needs to work.
             // Hence it just means to continue either way.
             //
-            if (IS_NULLED(D_OUT))
+            if (IS_NULLED(OUT))
                 goto skip_check;
         }
         else { // didn't throw, see above about null difference from CONTINUE
-            if (IS_TRASH(D_OUT))
+            if (IS_TRASH(OUT))
                 fail (Error_Trash_Conditional_Raw());
         }
 
-        if (IS_TRUTHY(D_OUT) == trigger)
-            return D_OUT;
+        if (IS_TRUTHY(OUT) == trigger)
+            return OUT;
 
     } while (true);
 }
@@ -1674,11 +1674,11 @@ INLINE REB_R While_Core(
     SET_END(cell);
     PUSH_GC_GUARD(cell);
 
-    Init_Blank(D_OUT); // result if body never runs
+    Init_Blank(OUT); // result if body never runs
 
     do {
         if (Do_Branch_Throws(cell, ARG(condition))) {
-            Move_Value(D_OUT, cell);
+            Move_Value(OUT, cell);
             DROP_GC_GUARD(cell);
             return R_THROWN; // don't see BREAK/CONTINUE in the *condition*
         }
@@ -1688,21 +1688,21 @@ INLINE REB_R While_Core(
 
         if (IS_TRUTHY(cell) != trigger) {
             DROP_GC_GUARD(cell);
-            return D_OUT; // trigger didn't match, return last body result
+            return OUT; // trigger didn't match, return last body result
         }
 
-        if (Do_Branch_With_Throws(D_OUT, ARG(body), cell)) {
+        if (Do_Branch_With_Throws(OUT, ARG(body), cell)) {
             bool broke;
-            if (not Catching_Break_Or_Continue(D_OUT, &broke)) {
+            if (not Catching_Break_Or_Continue(OUT, &broke)) {
                 DROP_GC_GUARD(cell);
                 return R_THROWN;
             }
             if (broke) {
                 DROP_GC_GUARD(cell);
-                return Init_Nulled(D_OUT);
+                return Init_Nulled(OUT);
             }
         }
-        Trashify_If_Nulled_Or_Blank(D_OUT);  // null->BREAK, blank->empty
+        Trashify_If_Nulled_Or_Blank(OUT);  // null->BREAK, blank->empty
     } while (true);
 
     DEAD_END;

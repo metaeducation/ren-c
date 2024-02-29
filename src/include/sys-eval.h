@@ -1109,9 +1109,9 @@ INLINE void Handle_Api_Dispatcher_Result(REBFRM *f, const Value* r) {
 
   #if !defined(NDEBUG)
     if (NOT_VAL_FLAG(r, NODE_FLAG_ROOT)) {
-        printf("dispatcher returned non-API value not in D_OUT\n");
+        printf("dispatcher returned non-API value not in OUT\n");
         printf("during ACTION!: %s\n", f->label_utf8);
-        printf("`return D_OUT;` or use `RETURN (non_api_cell);`\n");
+        printf("`return OUT;` or use `RETURN (non_api_cell);`\n");
         panic(r);
     }
   #endif

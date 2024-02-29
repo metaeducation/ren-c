@@ -39,6 +39,8 @@
 #ifdef IS_ERROR
 #undef IS_ERROR //winerror.h defines this, so undef it to avoid the warning
 #endif
+
+#define REBOL_LEVEL_SHORTHAND_MACROS 0  // windows defines IN, OUT
 #include "sys-core.h"
 
 #include "reb-net.h"

@@ -390,7 +390,7 @@ DECLARE_NATIVE(locked_q)
 {
     INCLUDE_PARAMS_OF_LOCKED_Q;
 
-    return Init_Logic(D_OUT, Is_Value_Immutable(ARG(value)));
+    return Init_Logic(OUT, Is_Value_Immutable(ARG(value)));
 }
 
 
@@ -465,11 +465,11 @@ DECLARE_NATIVE(lock)
     Value* v = ARG(value);
 
     if (!REF(clone))
-        Move_Value(D_OUT, v);
+        Move_Value(OUT, v);
     else {
         if (ANY_ARRAY(v)) {
             Init_Any_Array_At(
-                D_OUT,
+                OUT,
                 VAL_TYPE(v),
                 Copy_Array_Deep_Managed(
                     Cell_Array(v),
@@ -480,14 +480,14 @@ DECLARE_NATIVE(lock)
         }
         else if (ANY_CONTEXT(v)) {
             Init_Any_Context(
-                D_OUT,
+                OUT,
                 VAL_TYPE(v),
                 Copy_Context_Core_Managed(VAL_CONTEXT(v), TS_STD_SERIES)
             );
         }
         else if (ANY_SERIES(v)) {
             Init_Any_Series_At(
-                D_OUT,
+                OUT,
                 VAL_TYPE(v),
                 Copy_Sequence_Core(VAL_SERIES(v), NODE_FLAG_MANAGED),
                 VAL_INDEX(v)
@@ -498,7 +498,7 @@ DECLARE_NATIVE(lock)
     }
 
     REBSER *locker = nullptr;
-    Ensure_Value_Immutable(D_OUT, locker);
+    Ensure_Value_Immutable(OUT, locker);
 
-    return D_OUT;
+    return OUT;
 }

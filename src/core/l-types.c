@@ -136,12 +136,12 @@ DECLARE_NATIVE(make)
     if (hook == nullptr)
         fail (Error_Bad_Make(kind, arg));
 
-    REB_R r = hook(D_OUT, kind, arg); // might throw, fail...
+    REB_R r = hook(OUT, kind, arg); // might throw, fail...
     if (r == R_THROWN)
         return r;
     if (r == nullptr or VAL_TYPE(r) != kind)
         fail ("MAKE dispatcher did not return correct type");
-    return r; // may be D_OUT or an API handle
+    return r; // may be OUT or an API handle
 }
 
 
@@ -195,16 +195,16 @@ DECLARE_NATIVE(to)
     if (not hook)
         fail (Error_Invalid(v));
 
-    REB_R r = hook(D_OUT, new_kind, v); // may fail();
+    REB_R r = hook(OUT, new_kind, v); // may fail();
     if (r == R_THROWN) {
         assert(!"Illegal throw in TO conversion handler");
-        fail (Error_No_Catch_For_Throw(D_OUT));
+        fail (Error_No_Catch_For_Throw(OUT));
     }
     if (r == nullptr or VAL_TYPE(r) != new_kind) {
         assert(!"TO conversion did not return intended type");
         fail (Error_Invalid_Type(VAL_TYPE(r)));
     }
-    return r; // must be either D_OUT or an API handle
+    return r; // must be either OUT or an API handle
 }
 
 
@@ -255,7 +255,7 @@ REB_R Reflect_Core(REBFRM *frame_)
         if (kind == REB_MAX_NULLED)
             return nullptr; // `() = type of ()`, `null = type of ()`
 
-        return Init_Datatype(D_OUT, kind);;
+        return Init_Datatype(OUT, kind);;
 
     default:
         // !!! Are there any other universal reflectors?
@@ -1424,5 +1424,5 @@ DECLARE_NATIVE(scan_net_header)
         Init_Text(val, string);
     }
 
-    return Init_Block(D_OUT, result);
+    return Init_Block(OUT, result);
 }

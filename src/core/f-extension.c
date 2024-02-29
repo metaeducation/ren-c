@@ -340,7 +340,7 @@ DECLARE_NATIVE(load_extension)
     // defined in a couple of extensions, but no protocol by which the
     // system will automatically call them on shutdown (yet)
 
-    return Init_Any_Context(D_OUT, REB_MODULE, module_ctx);
+    return Init_Any_Context(OUT, REB_MODULE, module_ctx);
 }
 
 

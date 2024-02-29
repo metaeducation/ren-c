@@ -58,7 +58,7 @@ static REB_R DNS_Actor(REBFRM *frame_, Value* port, Value* verb)
 
         switch (property) {
         case SYM_OPEN_Q:
-            return Init_Logic(D_OUT, did (sock->flags & RRF_OPEN));
+            return Init_Logic(OUT, did (sock->flags & RRF_OPEN));
 
         default:
             break;
@@ -131,22 +131,22 @@ static REB_R DNS_Actor(REBFRM *frame_, Value* port, Value* verb)
         assert(sock->flags & RRF_DONE); // R3-Alpha async DNS removed
 
         if (DEVREQ_NET(sock)->host_info == nullptr) {
-            Init_Blank(D_OUT); // HOST_NOT_FOUND or NO_ADDRESS blank vs. error
-            return D_OUT; // READ action currently required to use D_OUT
+            Init_Blank(OUT); // HOST_NOT_FOUND or NO_ADDRESS blank vs. error
+            return OUT; // READ action currently required to use OUT
         }
 
         if (sock->modes & RST_REVERSE) {
             Init_Text(
-                D_OUT,
+                OUT,
                 Copy_Bytes(sock->common.data, LEN_BYTES(sock->common.data))
             );
         }
         else {
-            Set_Tuple(D_OUT, cast(Byte*, &DEVREQ_NET(sock)->remote_ip), 4);
+            Set_Tuple(OUT, cast(Byte*, &DEVREQ_NET(sock)->remote_ip), 4);
         }
 
         OS_DO_DEVICE_SYNC(sock, RDC_CLOSE);
-        return D_OUT; }
+        return OUT; }
 
     case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
@@ -173,7 +173,7 @@ static REB_R DNS_Actor(REBFRM *frame_, Value* port, Value* verb)
         RETURN (port); }
 
     case SYM_ON_WAKE_UP:
-        return Init_Bar(D_OUT);
+        return Init_Bar(OUT);
 
     default:
         break;
@@ -193,6 +193,6 @@ static REB_R DNS_Actor(REBFRM *frame_, Value* port, Value* verb)
 //
 DECLARE_NATIVE(get_dns_actor_handle)
 {
-    Make_Port_Actor_Handle(D_OUT, &DNS_Actor);
-    return D_OUT;
+    Make_Port_Actor_Handle(OUT, &DNS_Actor);
+    return OUT;
 }

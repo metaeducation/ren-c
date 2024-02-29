@@ -128,7 +128,7 @@ REBTYPE(Datatype)
                 }
             }
 
-            Init_Object(D_OUT, context);
+            Init_Object(OUT, context);
         }
         else
             fail (Error_Cannot_Reflect(VAL_TYPE(value), arg));
@@ -138,5 +138,5 @@ REBTYPE(Datatype)
         fail (Error_Illegal_Action(REB_DATATYPE, verb));
     }
 
-    return D_OUT;
+    return OUT;
 }

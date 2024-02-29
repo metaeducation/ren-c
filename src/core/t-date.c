@@ -889,7 +889,7 @@ REBTYPE(Date)
 
     Option(SymId) sym = Cell_Word_Id(verb);
 
-    RESET_CELL(D_OUT, REB_DATE); // so we can set flags on it
+    RESET_CELL(OUT, REB_DATE); // so we can set flags on it
 
     REBDAT date = VAL_DATE(val);
     REBLEN day = VAL_DAY(val) - 1;
@@ -904,16 +904,16 @@ REBTYPE(Date)
 
         if (type == REB_DATE) {
             if (sym == SYM_SUBTRACT)
-                return Init_Integer(D_OUT, Diff_Date(date, VAL_DATE(arg)));
+                return Init_Integer(OUT, Diff_Date(date, VAL_DATE(arg)));
         }
         else if (type == REB_TIME) {
             if (sym == SYM_ADD) {
-                SET_VAL_FLAG(D_OUT, DATE_FLAG_HAS_TIME);
+                SET_VAL_FLAG(OUT, DATE_FLAG_HAS_TIME);
                 secs += VAL_NANO(arg);
                 goto fixTime;
             }
             if (sym == SYM_SUBTRACT) {
-                SET_VAL_FLAG(D_OUT, DATE_FLAG_HAS_TIME);
+                SET_VAL_FLAG(OUT, DATE_FLAG_HAS_TIME);
                 secs -= VAL_NANO(arg);
                 goto fixTime;
             }
@@ -932,12 +932,12 @@ REBTYPE(Date)
         else if (type == REB_DECIMAL) {
             REBDEC dec = Dec64(arg);
             if (sym == SYM_ADD) {
-                SET_VAL_FLAG(D_OUT, DATE_FLAG_HAS_TIME);
+                SET_VAL_FLAG(OUT, DATE_FLAG_HAS_TIME);
                 secs += (REBI64)(dec * TIME_IN_DAY);
                 goto fixTime;
             }
             if (sym == SYM_SUBTRACT) {
-                SET_VAL_FLAG(D_OUT, DATE_FLAG_HAS_TIME);
+                SET_VAL_FLAG(OUT, DATE_FLAG_HAS_TIME);
                 secs -= (REBI64)(dec * TIME_IN_DAY);
                 goto fixTime;
             }
@@ -946,10 +946,10 @@ REBTYPE(Date)
     else {
         switch (sym) {
         case SYM_EVEN_Q:
-            return Init_Logic(D_OUT, ((~day) & 1) == 0);
+            return Init_Logic(OUT, ((~day) & 1) == 0);
 
         case SYM_ODD_Q:
-            return Init_Logic(D_OUT, (day & 1) == 0);
+            return Init_Logic(OUT, (day & 1) == 0);
 
         case SYM_RANDOM: {
             INCLUDE_PARAMS_OF_RANDOM;
@@ -1011,8 +1011,8 @@ REBTYPE(Date)
             if (not IS_DATE(val2))
                 fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
 
-            Subtract_Date(val1, val2, D_OUT);
-            return D_OUT; }
+            Subtract_Date(val1, val2, OUT);
+            return OUT; }
 
         default:
             fail (Error_Illegal_Action(REB_DATE, verb));
@@ -1032,10 +1032,10 @@ fixDate:
     );
 
 setDate:
-    VAL_DATE(D_OUT) = date;
-    if (GET_VAL_FLAG(D_OUT, DATE_FLAG_HAS_TIME))
-        VAL_NANO(D_OUT) = secs;
-    return D_OUT;
+    VAL_DATE(OUT) = date;
+    if (GET_VAL_FLAG(OUT, DATE_FLAG_HAS_TIME))
+        VAL_NANO(OUT) = secs;
+    return OUT;
 }
 
 
@@ -1068,17 +1068,17 @@ DECLARE_NATIVE(make_date_ymdsnz)
 {
     INCLUDE_PARAMS_OF_MAKE_DATE_YMDSNZ;
 
-    RESET_CELL(D_OUT, REB_DATE);
-    VAL_YEAR(D_OUT) = VAL_INT32(ARG(year));
-    VAL_MONTH(D_OUT) = VAL_INT32(ARG(month));
-    VAL_DAY(D_OUT) = VAL_INT32(ARG(day));
+    RESET_CELL(OUT, REB_DATE);
+    VAL_YEAR(OUT) = VAL_INT32(ARG(year));
+    VAL_MONTH(OUT) = VAL_INT32(ARG(month));
+    VAL_DAY(OUT) = VAL_INT32(ARG(day));
 
-    SET_VAL_FLAG(D_OUT, DATE_FLAG_HAS_ZONE);
-    INIT_VAL_ZONE(D_OUT, VAL_INT32(ARG(zone)) / ZONE_MINS);
+    SET_VAL_FLAG(OUT, DATE_FLAG_HAS_ZONE);
+    INIT_VAL_ZONE(OUT, VAL_INT32(ARG(zone)) / ZONE_MINS);
 
-    SET_VAL_FLAG(D_OUT, DATE_FLAG_HAS_TIME);
-    VAL_NANO(D_OUT)
+    SET_VAL_FLAG(OUT, DATE_FLAG_HAS_TIME);
+    VAL_NANO(OUT)
         = SECS_TO_NANO(VAL_INT64(ARG(seconds))) + VAL_INT64(ARG(nano));
 
-    return D_OUT;
+    return OUT;
 }

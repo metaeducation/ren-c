@@ -160,7 +160,7 @@ static REB_R Event_Actor(REBFRM *frame_, Value* port, Value* verb)
 
         switch (property) {
         case SYM_LENGTH:
-            return Init_Integer(D_OUT, VAL_LEN_HEAD(state));
+            return Init_Integer(OUT, VAL_LEN_HEAD(state));
 
         default:
             break;
@@ -169,7 +169,7 @@ static REB_R Event_Actor(REBFRM *frame_, Value* port, Value* verb)
         break; }
 
     case SYM_ON_WAKE_UP:
-        return Init_Bar(D_OUT);
+        return Init_Bar(OUT);
 
     // Normal block actions done on events:
     case SYM_POKE:
@@ -297,6 +297,6 @@ void Shutdown_Event_Scheme(void)
 //
 DECLARE_NATIVE(get_event_actor_handle)
 {
-    Make_Port_Actor_Handle(D_OUT, &Event_Actor);
-    return D_OUT;
+    Make_Port_Actor_Handle(OUT, &Event_Actor);
+    return OUT;
 }

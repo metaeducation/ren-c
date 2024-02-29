@@ -531,9 +531,9 @@ REBTYPE(Time)
                 if (secs2 == 0)
                     fail (Error_Zero_Divide_Raw());
                 //secs /= secs2;
-                RESET_CELL(D_OUT, REB_DECIMAL);
-                VAL_DECIMAL(D_OUT) = cast(REBDEC, secs) / cast(REBDEC, secs2);
-                return D_OUT;
+                RESET_CELL(OUT, REB_DECIMAL);
+                VAL_DECIMAL(OUT) = cast(REBDEC, secs) / cast(REBDEC, secs2);
+                return OUT;
 
             case SYM_REMAINDER:
                 if (secs2 == 0)
@@ -567,7 +567,7 @@ REBTYPE(Time)
                 if (num == 0)
                     fail (Error_Zero_Divide_Raw());
                 secs /= num;
-                Init_Integer(D_OUT, secs);
+                Init_Integer(OUT, secs);
                 goto setTime;
 
             case SYM_REMAINDER:
@@ -634,10 +634,10 @@ REBTYPE(Time)
         switch (sym) {
 
         case SYM_ODD_Q:
-            return Init_Logic(D_OUT, (SECS_FROM_NANO(secs) & 1) != 0);
+            return Init_Logic(OUT, (SECS_FROM_NANO(secs) & 1) != 0);
 
         case SYM_EVEN_Q:
-            return Init_Logic(D_OUT, (SECS_FROM_NANO(secs) & 1) == 0);
+            return Init_Logic(OUT, (SECS_FROM_NANO(secs) & 1) == 0);
 
         case SYM_NEGATE:
             secs = -secs;
@@ -675,14 +675,14 @@ REBTYPE(Time)
                     );
                     VAL_DECIMAL(arg) /= SEC_SEC;
                     RESET_VAL_HEADER(arg, REB_DECIMAL);
-                    Move_Value(D_OUT, ARG(scale));
-                    return D_OUT;
+                    Move_Value(OUT, ARG(scale));
+                    return OUT;
                 }
                 else if (IS_INTEGER(arg)) {
                     VAL_INT64(arg) = Round_Int(secs, 1, Int32(arg) * SEC_SEC) / SEC_SEC;
                     RESET_VAL_HEADER(arg, REB_INTEGER);
-                    Move_Value(D_OUT, ARG(scale));
-                    return D_OUT;
+                    Move_Value(OUT, ARG(scale));
+                    return OUT;
                 }
                 else
                     fail (Error_Invalid(arg));
@@ -715,7 +715,7 @@ REBTYPE(Time)
 
 fixTime:
 setTime:
-    RESET_CELL(D_OUT, REB_TIME);
-    VAL_NANO(D_OUT) = secs;
-    return D_OUT;
+    RESET_CELL(OUT, REB_TIME);
+    VAL_NANO(OUT) = secs;
+    return OUT;
 }

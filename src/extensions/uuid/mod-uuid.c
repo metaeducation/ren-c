@@ -34,9 +34,10 @@
 #endif
     #include <windows.h>
 
-    #ifdef IS_ERROR
-        #undef IS_ERROR //winerror.h defines, Rebol has a different meaning
-    #endif
+    #undef IS_ERROR //winerror.h defines, Rebol has a different meaning
+    #undef OUT  // %minwindef.h defines this, we have a better use for it
+    #undef VOID  // %winnt.h defines this, we have a better use for it
+
 #elif defined(TO_OSX)
     #include <CoreFoundation/CFUUID.h>
 #else
@@ -82,7 +83,7 @@ DECLARE_NATIVE(generate)
 
     TERM_BIN_LEN(ser, 16);
 
-    Init_Binary(D_OUT, ser);
+    Init_Binary(OUT, ser);
 
 #elif defined(TO_OSX)
     CFUUIDRef newId = CFUUIDCreate(nullptr);
@@ -109,17 +110,17 @@ DECLARE_NATIVE(generate)
 
     TERM_BIN_LEN(ser, 16);
 
-    Init_Binary(D_OUT, ser);
+    Init_Binary(OUT, ser);
 
 #elif defined(TO_LINUX)
     uuid_t uuid;
     uuid_generate(uuid);
 
-    Init_Binary(D_OUT, Copy_Bytes(uuid, sizeof(uuid)));
+    Init_Binary(OUT, Copy_Bytes(uuid, sizeof(uuid)));
 
 #else
     fail ("UUID is not implemented");
 #endif
 
-    return D_OUT;
+    return OUT;
 }

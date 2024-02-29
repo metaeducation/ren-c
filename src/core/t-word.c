@@ -260,11 +260,11 @@ REBTYPE(Word)
                     ++len;
                }
             }
-            return Init_Integer(D_OUT, len); }
+            return Init_Integer(OUT, len); }
 
         case SYM_BINDING: {
-            if (Did_Get_Binding_Of(D_OUT, val))
-                return D_OUT;
+            if (Did_Get_Binding_Of(OUT, val))
+                return OUT;
             return nullptr; }
 
         default:

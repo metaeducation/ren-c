@@ -877,7 +877,7 @@ DECLARE_NATIVE(specialize)
     //
     Symbol* opt_name;
     if (Get_If_Word_Or_Path_Throws(
-        D_OUT,
+        OUT,
         &opt_name,
         specializee,
         SPECIFIED,
@@ -891,12 +891,12 @@ DECLARE_NATIVE(specialize)
     // Note: Even if there was a PATH! doesn't mean there were refinements
     // used, e.g. `specialize 'lib/append [...]`.
 
-    if (not IS_ACTION(D_OUT))
+    if (not IS_ACTION(OUT))
         fail (Error_Invalid(specializee));
-    Move_Value(specializee, D_OUT); // Frees D_OUT, and GC safe (in ARG slot)
+    Move_Value(specializee, OUT); // Frees OUT, and GC safe (in ARG slot)
 
     if (Specialize_Action_Throws(
-        D_OUT,
+        OUT,
         specializee,
         opt_name,
         ARG(def),
@@ -907,7 +907,7 @@ DECLARE_NATIVE(specialize)
         return R_THROWN;
     }
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -1181,5 +1181,5 @@ DECLARE_NATIVE(does)
     Ensure_Value_Immutable(value, locker);
     Move_Value(body, value);
 
-    return Init_Action_Unbound(D_OUT, doer);
+    return Init_Action_Unbound(OUT, doer);
 }

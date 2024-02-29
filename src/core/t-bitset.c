@@ -601,7 +601,7 @@ REBTYPE(Bitset)
 
         case SYM_TAIL_Q:
             // Necessary to make EMPTY? work:
-            return Init_Logic(D_OUT, VAL_LEN_HEAD(value) == 0);
+            return Init_Logic(OUT, VAL_LEN_HEAD(value) == 0);
 
         default:
             break;
@@ -637,7 +637,7 @@ REBTYPE(Bitset)
 
         if (not Check_Bits(VAL_SERIES(value), arg, REF(case)))
             return nullptr;
-        return Init_Bar(D_OUT);
+        return Init_Bar(OUT);
     }
 
     case SYM_COMPLEMENT:
@@ -697,13 +697,13 @@ REBTYPE(Bitset)
         }
 
         Init_Any_Series_At(
-            D_OUT,
+            OUT,
             REB_BITSET,
             Copy_Sequence_At_Position(value),
             VAL_INDEX(value) // !!! can bitset ever not be at 0?
         );
-        INIT_BITS_NOT(VAL_SERIES(D_OUT), BITS_NOT(VAL_SERIES(value)));
-        return D_OUT; }
+        INIT_BITS_NOT(VAL_SERIES(OUT), BITS_NOT(VAL_SERIES(value)));
+        return OUT; }
 
     case SYM_CLEAR:
         FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(value));
@@ -717,7 +717,7 @@ REBTYPE(Bitset)
             fail (Error_Math_Args(VAL_TYPE(arg), verb));
         ser = Xandor_Binary(verb, value, arg);
         Trim_Tail_Zeros(ser);
-        return Init_Any_Series(D_OUT, VAL_TYPE(value), ser);
+        return Init_Any_Series(OUT, VAL_TYPE(value), ser);
 
     default:
         break;
@@ -727,6 +727,6 @@ REBTYPE(Bitset)
 
   return_bitset:;
 
-    Move_Value(D_OUT, value);
-    return D_OUT;
+    Move_Value(OUT, value);
+    return OUT;
 }

@@ -58,7 +58,7 @@ DECLARE_NATIVE(func)
         MKF_RETURN | MKF_KEYWORDS
     );
 
-    return Init_Action_Unbound(D_OUT, func);
+    return Init_Action_Unbound(OUT, func);
 }
 
 
@@ -154,7 +154,7 @@ DECLARE_NATIVE(unwind)
 
     UNUSED(REF(with)); // implied by non-null value
 
-    Make_Thrown_Unwind_Value(D_OUT, ARG(level), ARG(value), frame_);
+    Make_Thrown_Unwind_Value(OUT, ARG(level), ARG(value), frame_);
     return R_THROWN;
 }
 
@@ -241,10 +241,10 @@ DECLARE_NATIVE(return)
 
     assert(f_binding->header.bits & ARRAY_FLAG_VARLIST);
 
-    Move_Value(D_OUT, NAT_VALUE(unwind)); // see also Make_Thrown_Unwind_Value
-    INIT_BINDING_MAY_MANAGE(D_OUT, f_binding);
+    Move_Value(OUT, NAT_VALUE(unwind)); // see also Make_Thrown_Unwind_Value
+    INIT_BINDING_MAY_MANAGE(OUT, f_binding);
 
-    CONVERT_NAME_TO_THROWN(D_OUT, v);
+    CONVERT_NAME_TO_THROWN(OUT, v);
     return R_THROWN;
 }
 
@@ -294,7 +294,7 @@ DECLARE_NATIVE(typechecker)
     );
     Move_Value(ARR_HEAD(ACT_DETAILS(typechecker)), type);
 
-    return Init_Action_Unbound(D_OUT, typechecker);
+    return Init_Action_Unbound(OUT, typechecker);
 }
 
 
@@ -314,7 +314,7 @@ DECLARE_NATIVE(chain)
 {
     INCLUDE_PARAMS_OF_CHAIN;
 
-    Value* out = D_OUT; // plan ahead for factoring into Chain_Action(out..
+    Value* out = OUT; // plan ahead for factoring into Chain_Action(out..
 
     Value* pipeline = ARG(pipeline);
     Array* chainees;
@@ -405,7 +405,7 @@ DECLARE_NATIVE(adapt)
     Symbol* opt_adaptee_name;
     const bool push_refinements = false;
     if (Get_If_Word_Or_Path_Throws(
-        D_OUT,
+        OUT,
         &opt_adaptee_name,
         adaptee,
         SPECIFIED,
@@ -414,9 +414,9 @@ DECLARE_NATIVE(adapt)
         return R_THROWN;
     }
 
-    if (not IS_ACTION(D_OUT))
+    if (not IS_ACTION(OUT))
         fail (Error_Invalid(adaptee));
-    Move_Value(adaptee, D_OUT); // Frees D_OUT, and GC safe (in ARG slot)
+    Move_Value(adaptee, OUT); // Frees OUT, and GC safe (in ARG slot)
 
     // The paramlist needs to be unique to designate this function, but
     // will be identical typesets to the original.  It's [0] element must
@@ -475,7 +475,7 @@ DECLARE_NATIVE(adapt)
 
     Move_Value(Array_At(details, 1), adaptee);
 
-    return Init_Action_Unbound(D_OUT, adaptation);
+    return Init_Action_Unbound(OUT, adaptation);
 }
 
 
@@ -499,7 +499,7 @@ DECLARE_NATIVE(enclose)
     Symbol* opt_inner_name;
     const bool push_refinements = false;
     if (Get_If_Word_Or_Path_Throws(
-        D_OUT,
+        OUT,
         &opt_inner_name,
         inner,
         SPECIFIED,
@@ -508,14 +508,14 @@ DECLARE_NATIVE(enclose)
         return R_THROWN;
     }
 
-    if (not IS_ACTION(D_OUT))
+    if (not IS_ACTION(OUT))
         fail (Error_Invalid(inner));
-    Move_Value(inner, D_OUT); // Frees D_OUT, and GC safe (in ARG slot)
+    Move_Value(inner, OUT); // Frees OUT, and GC safe (in ARG slot)
 
     Value* outer = ARG(outer);
     Symbol* opt_outer_name;
     if (Get_If_Word_Or_Path_Throws(
-        D_OUT,
+        OUT,
         &opt_outer_name,
         outer,
         SPECIFIED,
@@ -524,9 +524,9 @@ DECLARE_NATIVE(enclose)
         return R_THROWN;
     }
 
-    if (not IS_ACTION(D_OUT))
+    if (not IS_ACTION(OUT))
         fail (Error_Invalid(outer));
-    Move_Value(outer, D_OUT); // Frees D_OUT, and GC safe (in ARG slot)
+    Move_Value(outer, OUT); // Frees OUT, and GC safe (in ARG slot)
 
     // The paramlist needs to be unique to designate this function, but
     // will be identical typesets to the inner.  It's [0] element must
@@ -583,7 +583,7 @@ DECLARE_NATIVE(enclose)
     Move_Value(Array_At(details, 0), inner);
     Move_Value(Array_At(details, 1), outer);
 
-    return Init_Action_Unbound(D_OUT, enclosure);
+    return Init_Action_Unbound(OUT, enclosure);
 }
 
 
@@ -614,7 +614,7 @@ DECLARE_NATIVE(hijack)
     Symbol* opt_victim_name;
     const bool push_refinements = false;
     if (Get_If_Word_Or_Path_Throws(
-        D_OUT,
+        OUT,
         &opt_victim_name,
         ARG(victim),
         SPECIFIED,
@@ -623,14 +623,14 @@ DECLARE_NATIVE(hijack)
         return R_THROWN;
     }
 
-    if (not IS_ACTION(D_OUT))
+    if (not IS_ACTION(OUT))
         fail ("Victim of HIJACK must be an ACTION!");
-    Move_Value(ARG(victim), D_OUT); // Frees up D_OUT
+    Move_Value(ARG(victim), OUT); // Frees up OUT
     REBACT *victim = VAL_ACTION(ARG(victim)); // GC safe (in ARG slot)
 
     Symbol* opt_hijacker_name;
     if (Get_If_Word_Or_Path_Throws(
-        D_OUT,
+        OUT,
         &opt_hijacker_name,
         ARG(hijacker),
         SPECIFIED,
@@ -639,9 +639,9 @@ DECLARE_NATIVE(hijack)
         return R_THROWN;
     }
 
-    if (not IS_ACTION(D_OUT))
+    if (not IS_ACTION(OUT))
         fail ("Hijacker in HIJACK must be an ACTION!");
-    Move_Value(ARG(hijacker), D_OUT); // Frees up D_OUT
+    Move_Value(ARG(hijacker), OUT); // Frees up OUT
     REBACT *hijacker = VAL_ACTION(ARG(hijacker)); // GC safe (in ARG slot)
 
     if (victim == hijacker)
@@ -711,7 +711,7 @@ DECLARE_NATIVE(hijack)
     // alone?  Add a note about the hijacking?  Also: how should binding and
     // hijacking interact?
 
-    return Init_Action_Maybe_Bound(D_OUT, victim, VAL_BINDING(ARG(hijacker)));
+    return Init_Action_Maybe_Bound(OUT, victim, VAL_BINDING(ARG(hijacker)));
 }
 
 
@@ -731,10 +731,10 @@ DECLARE_NATIVE(variadic_q)
     Value* param = VAL_ACT_PARAMS_HEAD(ARG(action));
     for (; NOT_END(param); ++param) {
         if (Is_Param_Variadic(param))
-            return Init_True(D_OUT);
+            return Init_True(OUT);
     }
 
-    return Init_False(D_OUT);
+    return Init_False(OUT);
 }
 
 
@@ -822,7 +822,7 @@ DECLARE_NATIVE(tighten)
     TERM_ARRAY_LEN(ACT_DETAILS(tightened), details_len);
 
     return Init_Action_Maybe_Bound(
-        D_OUT,
+        OUT,
         tightened, // REBACT* archetype doesn't contain a binding
         VAL_BINDING(ARG(action)) // e.g. keep binding for `tighten 'return`
     );
@@ -912,5 +912,5 @@ DECLARE_NATIVE(n_shot)
     );
     Init_Integer(ARR_HEAD(ACT_DETAILS(n_shot)), n);
 
-    return Init_Action_Unbound(D_OUT, n_shot);
+    return Init_Action_Unbound(OUT, n_shot);
 }

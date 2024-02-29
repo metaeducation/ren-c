@@ -171,10 +171,10 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
         switch (property) {
         case SYM_LENGTH: {
             REBLEN len = IS_BLOCK(state) ? VAL_ARRAY_LEN_AT(state) : 0;
-            return Init_Integer(D_OUT, len); }
+            return Init_Integer(OUT, len); }
 
         case SYM_OPEN_Q:
-            return Init_Logic(D_OUT, IS_BLOCK(state));
+            return Init_Logic(OUT, IS_BLOCK(state));
 
         default:
             break;
@@ -199,13 +199,13 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
 
         if (not IS_BLOCK(state)) {     // !!! ignores /SKIP and /PART, for now
             Init_Dir_Path(&dir, path, POL_READ);
-            Init_Block(D_OUT, Read_Dir_May_Fail(&dir));
+            Init_Block(OUT, Read_Dir_May_Fail(&dir));
         }
         else {
             // !!! This copies the strings in the block, shallowly.  What is
             // the purpose of doing this?  Why copy at all?
             Init_Block(
-                D_OUT,
+                OUT,
                 Copy_Array_Core_Managed(
                     Cell_Array(state),
                     0, // at
@@ -217,7 +217,7 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
                 )
             );
         }
-        return D_OUT; }
+        return OUT; }
 
     case SYM_CREATE: {
         if (IS_BLOCK(state))
@@ -324,8 +324,8 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
 
         rebRelease(result); // ignore result
 
-        Query_File_Or_Dir(D_OUT, port, &dir);
-        return D_OUT; }
+        Query_File_Or_Dir(OUT, port, &dir);
+        return OUT; }
 
     default:
         break;
@@ -345,6 +345,6 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
 //
 DECLARE_NATIVE(get_dir_actor_handle)
 {
-    Make_Port_Actor_Handle(D_OUT, &Dir_Actor);
-    return D_OUT;
+    Make_Port_Actor_Handle(OUT, &Dir_Actor);
+    return OUT;
 }

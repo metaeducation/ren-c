@@ -447,7 +447,7 @@ REB_R Do_Port_Action(REBFRM *frame_, Value* port, Value* verb)
     if (Redo_Action_Throws(frame_, VAL_ACTION(action)))
         return R_THROWN;
 
-    r = D_OUT; // result should be in frame_->out
+    r = OUT; // result should be in frame_->out
 
     // !!! READ's /LINES and /STRING refinements are something that should
     // work regardless of data source.  But R3-Alpha only implemented it in
@@ -466,25 +466,25 @@ post_process_output:
         UNUSED(PAR(seek));
         UNUSED(PAR(index));
 
-        assert(r == D_OUT);
+        assert(r == OUT);
 
-        if ((REF(string) or REF(lines)) and not IS_TEXT(D_OUT)) {
-            if (not IS_BINARY(D_OUT))
+        if ((REF(string) or REF(lines)) and not IS_TEXT(OUT)) {
+            if (not IS_BINARY(OUT))
                 fail ("/STRING or /LINES used on a non-BINARY!/STRING! read");
 
             REBSER *decoded = Make_Sized_String_UTF8(
-                cs_cast(Cell_Binary_At(D_OUT)),
-                VAL_LEN_AT(D_OUT)
+                cs_cast(Cell_Binary_At(OUT)),
+                VAL_LEN_AT(OUT)
             );
-            Init_Text(D_OUT, decoded);
+            Init_Text(OUT, decoded);
         }
 
         if (REF(lines)) { // caller wants a BLOCK! of STRING!s, not one string
-            assert(IS_TEXT(D_OUT));
+            assert(IS_TEXT(OUT));
 
             DECLARE_VALUE (temp);
-            Move_Value(temp, D_OUT);
-            Init_Block(D_OUT, Split_Lines(temp));
+            Move_Value(temp, OUT);
+            Init_Block(OUT, Split_Lines(temp));
         }
     }
 

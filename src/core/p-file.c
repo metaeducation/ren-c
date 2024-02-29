@@ -302,13 +302,13 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
 
         switch (property) {
         case SYM_INDEX:
-            return Init_Integer(D_OUT, file->index + 1);;
+            return Init_Integer(OUT, file->index + 1);;
 
         case SYM_LENGTH:
             //
             // Comment said "clip at zero"
             ///
-            return Init_Integer(D_OUT, file->size - file->index);;
+            return Init_Integer(OUT, file->size - file->index);;
 
         case SYM_HEAD:
             file->index = 0;
@@ -321,16 +321,16 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
             RETURN (port);
 
         case SYM_HEAD_Q:
-            return Init_Logic(D_OUT, file->index == 0);
+            return Init_Logic(OUT, file->index == 0);
 
         case SYM_TAIL_Q:
-            return Init_Logic(D_OUT, file->index >= file->size);
+            return Init_Logic(OUT, file->index >= file->size);
 
         case SYM_PAST_Q:
-            return Init_Logic(D_OUT, file->index > file->size);
+            return Init_Logic(OUT, file->index > file->size);
 
         case SYM_OPEN_Q:
-            return Init_Logic(D_OUT, did (req->flags & RRF_OPEN));
+            return Init_Logic(OUT, did (req->flags & RRF_OPEN));
 
         default:
             break;
@@ -366,7 +366,7 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
             Set_Seek(file, ARG(index));
 
         REBLEN len = Set_Length(file, REF(part) ? VAL_INT64(ARG(limit)) : -1);
-        Read_File_Port(D_OUT, port, file, path, flags, len);
+        Read_File_Port(OUT, port, file, path, flags, len);
 
         if (opened) {
             Value* result = OS_DO_DEVICE(req, RDC_CLOSE);
@@ -380,7 +380,7 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
             rebRelease(result); // ignore result
         }
 
-        return D_OUT; }
+        return OUT; }
 
     case SYM_APPEND:
         //
@@ -493,8 +493,8 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
 
         REBLEN len = Set_Length(file, REF(part) ? VAL_INT64(ARG(limit)) : -1);
         REBFLGS flags = 0;
-        Read_File_Port(D_OUT, port, file, path, flags, len);
-        return D_OUT; }
+        Read_File_Port(OUT, port, file, path, flags, len);
+        return OUT; }
 
     case SYM_CLOSE: {
         INCLUDE_PARAMS_OF_CLOSE;
@@ -588,11 +588,11 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
             }
             rebRelease(result); // ignore result
         }
-        Query_File_Or_Dir(D_OUT, port, file);
+        Query_File_Or_Dir(OUT, port, file);
 
         // !!! free file path?
 
-        return D_OUT; }
+        return OUT; }
 
     case SYM_MODIFY: {
         INCLUDE_PARAMS_OF_MODIFY;
@@ -609,11 +609,11 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
             assert(result != nullptr);
             if (rebDid("error?", result)) {
                 rebRelease(result); // !!! R3-Alpha returned blank on error
-                return Init_False(D_OUT);
+                return Init_False(OUT);
             }
             rebRelease(result); // ignore result
         }
-        return Init_True(D_OUT); }
+        return Init_True(OUT); }
 
     case SYM_SKIP: {
         INCLUDE_PARAMS_OF_SKIP;
@@ -652,6 +652,6 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
 //
 DECLARE_NATIVE(get_file_actor_handle)
 {
-    Make_Port_Actor_Handle(D_OUT, &File_Actor);
-    return D_OUT;
+    Make_Port_Actor_Handle(OUT, &File_Actor);
+    return OUT;
 }

@@ -2878,7 +2878,7 @@ DECLARE_NATIVE(transcode)
     LINK(a).file = ss.file;
     SET_SER_FLAG(a, ARRAY_FLAG_FILE_LINE);
 
-    return Init_Block(D_OUT, a);
+    return Init_Block(OUT, a);
 }
 
 

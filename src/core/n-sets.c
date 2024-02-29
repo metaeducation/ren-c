@@ -355,20 +355,20 @@ DECLARE_NATIVE(exclude)
 
         DECLARE_VALUE (verb); // initial code did something weird w/this
         Init_Word(verb, Canon(SYM_EXCLUDE));
-        return Init_Bitset(D_OUT, Xandor_Binary(verb, val1, val2));
+        return Init_Bitset(OUT, Xandor_Binary(verb, val1, val2));
     }
 
     if (IS_TYPESET(val1) || IS_TYPESET(val2)) {
         if (VAL_TYPE(val1) != VAL_TYPE(val2))
             fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
 
-        Move_Value(D_OUT, val1);
-        VAL_TYPESET_BITS(D_OUT) &= ~VAL_TYPESET_BITS(val2);
-        return D_OUT;
+        Move_Value(OUT, val1);
+        VAL_TYPESET_BITS(OUT) &= ~VAL_TYPESET_BITS(val2);
+        return OUT;
     }
 
     return Init_Any_Series(
-        D_OUT,
+        OUT,
         VAL_TYPE(val1),
         Make_Set_Operation_Series(
             val1,
@@ -404,7 +404,7 @@ DECLARE_NATIVE(unique)
         return val; // bitsets & typesets already unique (by definition)
 
     return Init_Any_Series(
-        D_OUT,
+        OUT,
         VAL_TYPE(val),
         Make_Set_Operation_Series(
             val,

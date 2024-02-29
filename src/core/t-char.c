@@ -194,8 +194,8 @@ REBTYPE(Char)
         // the above would give -1.
         //
         if (IS_CHAR(D_ARG(2))) {
-            Init_Integer(D_OUT, chr - arg);
-            return D_OUT;
+            Init_Integer(OUT, chr - arg);
+            return OUT;
         }
 
         chr -= arg;
@@ -240,10 +240,10 @@ REBTYPE(Char)
         break;
 
     case SYM_EVEN_Q:
-        return Init_Logic(D_OUT, did (cast(REBUNI, ~chr) & 1));
+        return Init_Logic(OUT, did (cast(REBUNI, ~chr) & 1));
 
     case SYM_ODD_Q:
-        return Init_Logic(D_OUT, did (chr & 1));
+        return Init_Logic(OUT, did (chr & 1));
 
     case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
@@ -267,5 +267,5 @@ REBTYPE(Char)
     if (chr < 0 || chr > 0xffff) // DEBUG_UTF8_EVERYWHERE
         fail (Error_Type_Limit_Raw(Datatype_From_Kind(REB_CHAR)));
 
-    return Init_Char(D_OUT, cast(REBUNI, chr));
+    return Init_Char(OUT, cast(REBUNI, chr));
 }

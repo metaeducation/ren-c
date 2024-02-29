@@ -121,7 +121,7 @@ DECLARE_NATIVE(cosine)
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
-    return Init_Decimal(D_OUT, dval);
+    return Init_Decimal(OUT, dval);
 }
 
 
@@ -144,7 +144,7 @@ DECLARE_NATIVE(sine)
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
-    return Init_Decimal(D_OUT, dval);
+    return Init_Decimal(OUT, dval);
 }
 
 
@@ -167,7 +167,7 @@ DECLARE_NATIVE(tangent)
     if (Eq_Decimal(fabs(dval), PI / 2.0))
         fail (Error_Overflow_Raw());
 
-    return Init_Decimal(D_OUT, tan(dval));
+    return Init_Decimal(OUT, tan(dval));
 }
 
 
@@ -186,8 +186,8 @@ DECLARE_NATIVE(arccosine)
 {
     INCLUDE_PARAMS_OF_ARCCOSINE;
 
-    Arc_Trans(D_OUT, ARG(cosine), REF(radians), COSINE);
-    return D_OUT;
+    Arc_Trans(OUT, ARG(cosine), REF(radians), COSINE);
+    return OUT;
 }
 
 
@@ -206,8 +206,8 @@ DECLARE_NATIVE(arcsine)
 {
     INCLUDE_PARAMS_OF_ARCSINE;
 
-    Arc_Trans(D_OUT, ARG(sine), REF(radians), SINE);
-    return D_OUT;
+    Arc_Trans(OUT, ARG(sine), REF(radians), SINE);
+    return OUT;
 }
 
 
@@ -226,8 +226,8 @@ DECLARE_NATIVE(arctangent)
 {
     INCLUDE_PARAMS_OF_ARCTANGENT;
 
-    Arc_Trans(D_OUT, ARG(tangent), REF(radians), TANGENT);
-    return D_OUT;
+    Arc_Trans(OUT, ARG(tangent), REF(radians), TANGENT);
+    return OUT;
 }
 
 
@@ -248,7 +248,7 @@ DECLARE_NATIVE(exp)
 
     // !!! Check_Overflow(dval);
 
-    return Init_Decimal(D_OUT, dval);
+    return Init_Decimal(OUT, dval);
 }
 
 
@@ -268,7 +268,7 @@ DECLARE_NATIVE(log_10)
     if (dval <= 0)
         fail (Error_Positive_Raw());
 
-    return Init_Decimal(D_OUT, log10(dval));
+    return Init_Decimal(OUT, log10(dval));
 }
 
 
@@ -288,7 +288,7 @@ DECLARE_NATIVE(log_2)
     if (dval <= 0)
         fail (Error_Positive_Raw());
 
-    return Init_Decimal(D_OUT, log(dval) / LOG2);
+    return Init_Decimal(OUT, log(dval) / LOG2);
 }
 
 
@@ -308,7 +308,7 @@ DECLARE_NATIVE(log_e)
     if (dval <= 0)
         fail (Error_Positive_Raw());
 
-    return Init_Decimal(D_OUT, log(dval));
+    return Init_Decimal(OUT, log(dval));
 }
 
 
@@ -328,7 +328,7 @@ DECLARE_NATIVE(square_root)
     if (dval < 0)
         fail (Error_Positive_Raw());
 
-    return Init_Decimal(D_OUT, sqrt(dval));
+    return Init_Decimal(OUT, sqrt(dval));
 }
 
 
@@ -573,9 +573,9 @@ DECLARE_NATIVE(equal_q)
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
     if (Compare_Modify_Values(ARG(value1), ARG(value2), 0))
-        return Init_True(D_OUT);
+        return Init_True(OUT);
 
-    return Init_False(D_OUT);
+    return Init_False(OUT);
 }
 
 
@@ -594,9 +594,9 @@ DECLARE_NATIVE(not_equal_q)
     INCLUDE_PARAMS_OF_NOT_EQUAL_Q;
 
     if (Compare_Modify_Values(ARG(value1), ARG(value2), 0))
-        return Init_False(D_OUT);
+        return Init_False(OUT);
 
-    return Init_True(D_OUT);
+    return Init_True(OUT);
 }
 
 
@@ -615,9 +615,9 @@ DECLARE_NATIVE(strict_equal_q)
     INCLUDE_PARAMS_OF_STRICT_EQUAL_Q;
 
     if (Compare_Modify_Values(ARG(value1), ARG(value2), 1))
-        return Init_True(D_OUT);
+        return Init_True(OUT);
 
-    return Init_False(D_OUT);
+    return Init_False(OUT);
 }
 
 
@@ -636,9 +636,9 @@ DECLARE_NATIVE(strict_not_equal_q)
     INCLUDE_PARAMS_OF_STRICT_NOT_EQUAL_Q;
 
     if (Compare_Modify_Values(ARG(value1), ARG(value2), 1))
-        return Init_False(D_OUT);
+        return Init_False(OUT);
 
-    return Init_True(D_OUT);
+    return Init_True(OUT);
 }
 
 
@@ -666,15 +666,15 @@ DECLARE_NATIVE(same_q)
     Value* value2 = ARG(value2);
 
     if (VAL_TYPE(value1) != VAL_TYPE(value2))
-        return Init_False(D_OUT); // can't be "same" value if not same type
+        return Init_False(OUT); // can't be "same" value if not same type
 
     if (IS_BITSET(value1)) {
         //
         // BITSET! only has a series, no index.
         //
         if (VAL_SERIES(value1) != VAL_SERIES(value2))
-            return Init_False(D_OUT);
-        return Init_True(D_OUT);
+            return Init_False(OUT);
+        return Init_True(OUT);
     }
 
     if (ANY_SERIES(value1)) {
@@ -682,10 +682,10 @@ DECLARE_NATIVE(same_q)
         // ANY-SERIES! can only be the same if pointers and indices match.
         //
         if (VAL_SERIES(value1) != VAL_SERIES(value2))
-            return Init_False(D_OUT);
+            return Init_False(OUT);
         if (VAL_INDEX(value1) != VAL_INDEX(value2))
-            return Init_False(D_OUT);
-        return Init_True(D_OUT);
+            return Init_False(OUT);
+        return Init_True(OUT);
     }
 
     if (ANY_CONTEXT(value1)) {
@@ -693,8 +693,8 @@ DECLARE_NATIVE(same_q)
         // ANY-CONTEXT! are the same if the varlists match.
         //
         if (VAL_CONTEXT(value1) != VAL_CONTEXT(value2))
-            return Init_False(D_OUT);
-        return Init_True(D_OUT);
+            return Init_False(OUT);
+        return Init_True(OUT);
     }
 
     if (IS_MAP(value1)) {
@@ -702,8 +702,8 @@ DECLARE_NATIVE(same_q)
         // MAP! will be the same if the map pointer matches.
         //
         if (VAL_MAP(value1) != VAL_MAP(value2))
-            return Init_False(D_OUT);
-        return Init_True(D_OUT);
+            return Init_False(OUT);
+        return Init_True(OUT);
     }
 
     if (ANY_WORD(value1)) {
@@ -711,10 +711,10 @@ DECLARE_NATIVE(same_q)
         // ANY-WORD! must match in binding as well as be otherwise equal.
         //
         if (Cell_Word_Symbol(value1) != Cell_Word_Symbol(value2))
-            return Init_False(D_OUT);
+            return Init_False(OUT);
         if (VAL_BINDING(value1) != VAL_BINDING(value2))
-            return Init_False(D_OUT);
-        return Init_True(D_OUT);
+            return Init_False(OUT);
+        return Init_True(OUT);
     }
 
     if (IS_DECIMAL(value1) || IS_PERCENT(value1)) {
@@ -727,10 +727,10 @@ DECLARE_NATIVE(same_q)
                 &VAL_DECIMAL(value1), &VAL_DECIMAL(value2), sizeof(REBDEC)
             ) == 0
         ){
-            return Init_True(D_OUT);
+            return Init_True(OUT);
         }
 
-        return Init_False(D_OUT);
+        return Init_False(OUT);
     }
 
     if (IS_MONEY(value1)) {
@@ -745,16 +745,16 @@ DECLARE_NATIVE(same_q)
         // == false
         //
         if (deci_is_same(VAL_MONEY_AMOUNT(value1), VAL_MONEY_AMOUNT(value2)))
-            return Init_True(D_OUT);
-        return Init_False(D_OUT);
+            return Init_True(OUT);
+        return Init_False(OUT);
     }
 
     // For other types, just fall through to strict equality comparison
     //
     if (Compare_Modify_Values(value1, value2, 1))
-        return Init_True(D_OUT);
+        return Init_True(OUT);
 
-    return Init_False(D_OUT);
+    return Init_False(OUT);
 }
 
 
@@ -772,9 +772,9 @@ DECLARE_NATIVE(lesser_q)
     INCLUDE_PARAMS_OF_LESSER_Q;
 
     if (Compare_Modify_Values(ARG(value1), ARG(value2), -1))
-        return Init_False(D_OUT);
+        return Init_False(OUT);
 
-    return Init_True(D_OUT);
+    return Init_True(OUT);
 }
 
 
@@ -792,9 +792,9 @@ DECLARE_NATIVE(equal_or_lesser_q)
     INCLUDE_PARAMS_OF_EQUAL_OR_LESSER_Q;
 
     if (Compare_Modify_Values(ARG(value1), ARG(value2), -2))
-        return Init_False(D_OUT);
+        return Init_False(OUT);
 
-    return Init_True(D_OUT);
+    return Init_True(OUT);
 }
 
 
@@ -812,9 +812,9 @@ DECLARE_NATIVE(greater_q)
     INCLUDE_PARAMS_OF_GREATER_Q;
 
     if (Compare_Modify_Values(ARG(value1), ARG(value2), -2))
-        return Init_True(D_OUT);
+        return Init_True(OUT);
 
-    return Init_False(D_OUT);
+    return Init_False(OUT);
 }
 
 
@@ -832,9 +832,9 @@ DECLARE_NATIVE(greater_or_equal_q)
     INCLUDE_PARAMS_OF_GREATER_OR_EQUAL_Q;
 
     if (Compare_Modify_Values(ARG(value1), ARG(value2), -1))
-        return Init_True(D_OUT);
+        return Init_True(OUT);
 
-    return Init_False(D_OUT);
+    return Init_False(OUT);
 }
 
 
@@ -855,7 +855,7 @@ DECLARE_NATIVE(maximum)
     const Value* value2 = ARG(value2);
 
     if (IS_PAIR(value1) || IS_PAIR(value2)) {
-        Min_Max_Pair(D_OUT, value1, value2, true);
+        Min_Max_Pair(OUT, value1, value2, true);
     }
     else {
         DECLARE_VALUE (coerced1);
@@ -864,11 +864,11 @@ DECLARE_NATIVE(maximum)
         Move_Value(coerced2, value2);
 
         if (Compare_Modify_Values(coerced1, coerced2, -1))
-            Move_Value(D_OUT, value1);
+            Move_Value(OUT, value1);
         else
-            Move_Value(D_OUT, value2);
+            Move_Value(OUT, value2);
     }
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -889,7 +889,7 @@ DECLARE_NATIVE(minimum)
     const Value* value2 = ARG(value2);
 
     if (IS_PAIR(ARG(value1)) || IS_PAIR(ARG(value2))) {
-        Min_Max_Pair(D_OUT, ARG(value1), ARG(value2), false);
+        Min_Max_Pair(OUT, ARG(value1), ARG(value2), false);
     }
     else {
         DECLARE_VALUE (coerced1);
@@ -898,11 +898,11 @@ DECLARE_NATIVE(minimum)
         Move_Value(coerced2, value2);
 
         if (Compare_Modify_Values(coerced1, coerced2, -1))
-            Move_Value(D_OUT, value2);
+            Move_Value(OUT, value2);
         else
-            Move_Value(D_OUT, value1);
+            Move_Value(OUT, value1);
     }
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -922,9 +922,9 @@ DECLARE_NATIVE(negative_q)
     Init_Zeroed_Hack(zero, VAL_TYPE(ARG(number)));
 
     if (Compare_Modify_Values(ARG(number), zero, -1))
-        return Init_False(D_OUT);
+        return Init_False(OUT);
 
-    return Init_True(D_OUT);
+    return Init_True(OUT);
 }
 
 
@@ -944,9 +944,9 @@ DECLARE_NATIVE(positive_q)
     Init_Zeroed_Hack(zero, VAL_TYPE(ARG(number)));
 
     if (Compare_Modify_Values(ARG(number), zero, -2))
-        return Init_True(D_OUT);
+        return Init_True(OUT);
 
-    return Init_False(D_OUT);
+    return Init_False(OUT);
 }
 
 
@@ -969,7 +969,7 @@ DECLARE_NATIVE(zero_q)
         Init_Zeroed_Hack(zero, type);
 
         if (Compare_Modify_Values(ARG(value), zero, 1))
-            return Init_True(D_OUT);
+            return Init_True(OUT);
     }
-    return Init_False(D_OUT);
+    return Init_False(OUT);
 }

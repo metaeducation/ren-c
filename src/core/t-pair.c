@@ -250,7 +250,7 @@ REBTYPE(Pair)
 
     switch (Cell_Word_Id(verb)) {
       case SYM_REVERSE:
-        return Init_Pair(D_OUT, second1, first1);
+        return Init_Pair(OUT, second1, first1);
 
       case SYM_ADD:
       case SYM_SUBTRACT:
@@ -275,7 +275,7 @@ REBTYPE(Pair)
     // mechanical trick vs. the standard DO, because the frame thinks it is
     // already running...and the check for that would be subverted.
 
-    Value* frame = Init_Frame(D_OUT, Context_For_Frame_May_Manage(frame_));
+    Value* frame = Init_Frame(OUT, Context_For_Frame_May_Manage(frame_));
 
     Move_Value(D_ARG(1), first1);
     if (first2)
@@ -290,10 +290,10 @@ REBTYPE(Pair)
     Value* x = rebValue(rebEval(NAT_VALUE(do)), rebR(x_frame));
     Value* y = rebValue(rebEval(NAT_VALUE(do)), rebR(y_frame));
 
-    Init_Pair(D_OUT, x, y);
+    Init_Pair(OUT, x, y);
 
     rebRelease(x);
     rebRelease(y);
 
-    return D_OUT;
+    return OUT;
 }

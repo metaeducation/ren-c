@@ -46,9 +46,9 @@ DECLARE_NATIVE(and_q)
     INCLUDE_PARAMS_OF_AND_Q;
 
     if (IS_TRUTHY(ARG(value1)) && IS_TRUTHY(ARG(value2)))
-        return Init_True(D_OUT);
+        return Init_True(OUT);
 
-    return Init_False(D_OUT);
+    return Init_False(OUT);
 }
 
 
@@ -66,9 +66,9 @@ DECLARE_NATIVE(nor_q)
     INCLUDE_PARAMS_OF_NOR_Q;
 
     if (IS_FALSEY(ARG(value1)) && IS_FALSEY(ARG(value2)))
-        return Init_True(D_OUT);
+        return Init_True(OUT);
 
-    return Init_False(D_OUT);
+    return Init_False(OUT);
 }
 
 
@@ -86,7 +86,7 @@ DECLARE_NATIVE(nand_q)
     INCLUDE_PARAMS_OF_NAND_Q;
 
     return Init_Logic(
-        D_OUT,
+        OUT,
         IS_TRUTHY(ARG(value1)) and IS_TRUTHY(ARG(value2))
     );
 }
@@ -106,7 +106,7 @@ DECLARE_NATIVE(did_q)
 {
     INCLUDE_PARAMS_OF_DID_Q;
 
-    return Init_Logic(D_OUT, IS_TRUTHY(ARG(value)));
+    return Init_Logic(OUT, IS_TRUTHY(ARG(value)));
 }
 
 
@@ -126,7 +126,7 @@ DECLARE_NATIVE(did)
 {
     INCLUDE_PARAMS_OF_DID;
 
-    return Init_Logic(D_OUT, IS_TRUTHY(ARG(optional)));
+    return Init_Logic(OUT, IS_TRUTHY(ARG(optional)));
 }
 
 
@@ -144,7 +144,7 @@ DECLARE_NATIVE(not_q)
 {
     INCLUDE_PARAMS_OF_NOT_Q;
 
-    return Init_Logic(D_OUT, IS_FALSEY(ARG(value)));
+    return Init_Logic(OUT, IS_FALSEY(ARG(value)));
 }
 
 
@@ -162,7 +162,7 @@ DECLARE_NATIVE(not)
 {
     INCLUDE_PARAMS_OF_NOT;
 
-    return Init_Logic(D_OUT, IS_FALSEY(ARG(optional)));
+    return Init_Logic(OUT, IS_FALSEY(ARG(optional)));
 }
 
 
@@ -180,7 +180,7 @@ DECLARE_NATIVE(or_q)
     INCLUDE_PARAMS_OF_OR_Q;
 
     return Init_Logic(
-        D_OUT,
+        OUT,
         IS_TRUTHY(ARG(value1)) or IS_TRUTHY(ARG(value2))
     );
 }
@@ -202,7 +202,7 @@ DECLARE_NATIVE(xor_q)
     // Note: no boolean ^^ in C; check unequal
     //
     return Init_Logic(
-        D_OUT,
+        OUT,
         IS_TRUTHY(ARG(value1)) != IS_TRUTHY(ARG(value2))
     );
 }
@@ -230,16 +230,16 @@ DECLARE_NATIVE(and)
 
     if (IS_FALSEY(left)) {
         if (IS_GROUP(right)) { // no need to evaluate right if BLOCK!
-            if (Do_Any_Array_At_Throws(D_OUT, right))
+            if (Do_Any_Array_At_Throws(OUT, right))
                 return R_THROWN;
         }
         RETURN (left); // preserve falsey value
     }
 
-    if (Do_Any_Array_At_Throws(D_OUT, right))
+    if (Do_Any_Array_At_Throws(OUT, right))
         return R_THROWN;
 
-    return D_OUT; // preserve the exact truthy or falsey value
+    return OUT; // preserve the exact truthy or falsey value
 }
 
 
@@ -263,16 +263,16 @@ DECLARE_NATIVE(or)
 
     if (IS_TRUTHY(left)) {
         if (IS_GROUP(right)) { // no need to evaluate right if BLOCK!
-            if (Do_Any_Array_At_Throws(D_OUT, right))
+            if (Do_Any_Array_At_Throws(OUT, right))
                 return R_THROWN;
         }
         RETURN (left);
     }
 
-    if (Do_Any_Array_At_Throws(D_OUT, right))
+    if (Do_Any_Array_At_Throws(OUT, right))
         return R_THROWN;
 
-    return D_OUT; // preserve the exact truthy or falsey value
+    return OUT; // preserve the exact truthy or falsey value
 }
 
 
@@ -295,20 +295,20 @@ DECLARE_NATIVE(xor)
 
     Value* left = ARG(left);
 
-    if (Do_Any_Array_At_Throws(D_OUT, ARG(right))) // always evaluated
+    if (Do_Any_Array_At_Throws(OUT, ARG(right))) // always evaluated
         return R_THROWN;
 
-    Value* right = D_OUT;
+    Value* right = OUT;
 
     if (IS_FALSEY(left)) {
         if (IS_FALSEY(right))
-            return Init_False(D_OUT); // default to logic false if both false
+            return Init_False(OUT); // default to logic false if both false
 
         return right;
     }
 
     if (IS_TRUTHY(right))
-        return Init_False(D_OUT); // default to logic false if both true
+        return Init_False(OUT); // default to logic false if both true
 
     RETURN (left);
 }
@@ -431,18 +431,18 @@ REBTYPE(Logic)
 
     case SYM_INTERSECT:
         b2 = Math_Arg_For_Logic(D_ARG(2));
-        return Init_Logic(D_OUT, b1 and b2);
+        return Init_Logic(OUT, b1 and b2);
 
     case SYM_UNION:
         b2 = Math_Arg_For_Logic(D_ARG(2));
-        return Init_Logic(D_OUT, b1 or b2);
+        return Init_Logic(OUT, b1 or b2);
 
     case SYM_DIFFERENCE:
         b2 = Math_Arg_For_Logic(D_ARG(2));
-        return Init_Logic(D_OUT, b1 != b2);
+        return Init_Logic(OUT, b1 != b2);
 
     case SYM_COMPLEMENT:
-        return Init_Logic(D_OUT, not b1);
+        return Init_Logic(OUT, not b1);
 
     case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
@@ -458,8 +458,8 @@ REBTYPE(Logic)
             return nullptr;
         }
         if (Random_Int(REF(secure)) & 1)
-            return Init_True(D_OUT);
-        return Init_False(D_OUT); }
+            return Init_True(OUT);
+        return Init_False(OUT); }
 
     default:
         fail (Error_Illegal_Action(REB_LOGIC, verb));

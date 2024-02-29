@@ -43,9 +43,9 @@ DECLARE_NATIVE(halt)
 {
     INCLUDE_PARAMS_OF_HALT;
 
-    Move_Value(D_OUT, NAT_VALUE(halt));
-    CONVERT_NAME_TO_THROWN(D_OUT, NULLED_CELL);
-    return D_OUT;
+    Move_Value(OUT, NAT_VALUE(halt));
+    CONVERT_NAME_TO_THROWN(OUT, NULLED_CELL);
+    return OUT;
 }
 
 
@@ -68,10 +68,10 @@ DECLARE_NATIVE(quit)
 {
     INCLUDE_PARAMS_OF_QUIT;
 
-    Move_Value(D_OUT, NAT_VALUE(quit));
+    Move_Value(OUT, NAT_VALUE(quit));
 
     if (REF(with))
-        CONVERT_NAME_TO_THROWN(D_OUT, ARG(value));
+        CONVERT_NAME_TO_THROWN(OUT, ARG(value));
     else {
         // Chosen to do it this way because returning to a calling script it
         // will be no value by default, for parity with BREAK and EXIT without
@@ -79,7 +79,7 @@ DECLARE_NATIVE(quit)
 
         // void translated to 0 if it gets caught for the shell, see #2241
 
-        CONVERT_NAME_TO_THROWN(D_OUT, NULLED_CELL);
+        CONVERT_NAME_TO_THROWN(OUT, NULLED_CELL);
     }
 
     return R_THROWN;
@@ -199,7 +199,7 @@ DECLARE_NATIVE(recycle)
       #endif
     }
 
-    return Init_Integer(D_OUT, count);
+    return Init_Integer(OUT, count);
 }
 
 
@@ -247,7 +247,7 @@ DECLARE_NATIVE(check)
         ASSERT_ARRAY(VAL_ACT_DETAILS(value));
     }
 
-    return Init_True(D_OUT);
+    return Init_True(OUT);
 #endif
 }
 

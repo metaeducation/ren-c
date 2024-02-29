@@ -60,14 +60,14 @@ DECLARE_NATIVE(stats)
     INCLUDE_PARAMS_OF_STATS;
 
     if (REF(timer)) {
-        RESET_CELL(D_OUT, REB_TIME);
-        VAL_NANO(D_OUT) = OS_DELTA_TIME(PG_Boot_Time) * 1000;
-        return D_OUT;
+        RESET_CELL(OUT, REB_TIME);
+        VAL_NANO(OUT) = OS_DELTA_TIME(PG_Boot_Time) * 1000;
+        return OUT;
     }
 
     if (REF(evals)) {
         REBI64 n = Eval_Cycles + Eval_Dose - Eval_Count;
-        return Init_Integer(D_OUT, n);
+        return Init_Integer(OUT, n);
     }
 
 #ifdef NDEBUG
@@ -79,9 +79,9 @@ DECLARE_NATIVE(stats)
     fail (Error_Debug_Only_Raw());
 #else
     if (REF(profile)) {
-        Move_Value(D_OUT, Get_System(SYS_STANDARD, STD_STATS));
-        if (IS_OBJECT(D_OUT)) {
-            Value* stats = VAL_CONTEXT_VAR(D_OUT, 1);
+        Move_Value(OUT, Get_System(SYS_STANDARD, STD_STATS));
+        if (IS_OBJECT(OUT)) {
+            Value* stats = VAL_CONTEXT_VAR(OUT, 1);
 
             RESET_CELL(stats, REB_TIME);
             VAL_NANO(stats) = OS_DELTA_TIME(PG_Boot_Time) * 1000;
@@ -110,7 +110,7 @@ DECLARE_NATIVE(stats)
             Init_Integer(stats, PG_Reb_Stats->Recycle_Counter);
         }
 
-        return D_OUT;
+        return OUT;
     }
 
     if (REF(dump_series)) {
@@ -122,7 +122,7 @@ DECLARE_NATIVE(stats)
     if (REF(show))
         Dump_Pools();
 
-    return Init_Integer(D_OUT, Inspect_Series(REF(show)));
+    return Init_Integer(OUT, Inspect_Series(REF(show)));
 #endif
 }
 
@@ -167,7 +167,7 @@ DECLARE_NATIVE(callgrind)
     default:
         fail ("Currently CALLGRIND only supports ON and OFF");
     }
-    return Init_Trash(D_OUT);
+    return Init_Trash(OUT);
   #else
     UNUSED(ARG(instruction));
     fail ("This executable wasn't compiled with INCLUDE_CALLGRIND_NATIVE");

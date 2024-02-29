@@ -33,6 +33,8 @@
 #ifdef TO_WINDOWS
     #include <windows.h>
     #undef IS_ERROR
+    #undef OUT  // %minwindef.h defines this, we have a better use for it
+    #undef VOID  // %winnt.h defines this, we have a better use for it
 #endif
 
 #include "sys-core.h"
@@ -65,7 +67,7 @@ static REB_R Clipboard_Actor(
 
         switch (property) {
         case SYM_OPEN_Q:
-            return Init_Logic(D_OUT, true); // !!! need "port state"?  :-/
+            return Init_Logic(OUT, true); // !!! need "port state"?  :-/
 
         default:
             break;
@@ -98,7 +100,7 @@ static REB_R Clipboard_Actor(
             if (last_error != NO_ERROR)
                 rebFail_OS (last_error);
 
-            return Init_Blank(D_OUT);
+            return Init_Blank(OUT);
         }
 
         if (not OpenClipboard(nullptr))
@@ -259,6 +261,6 @@ static REB_R Clipboard_Actor(
 //
 DECLARE_NATIVE(get_clipboard_actor_handle)
 {
-    Make_Port_Actor_Handle(D_OUT, &Clipboard_Actor);
-    return D_OUT;
+    Make_Port_Actor_Handle(OUT, &Clipboard_Actor);
+    return OUT;
 }
