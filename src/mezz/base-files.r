@@ -224,4 +224,3 @@ intern: function [
     resolve/only usr lib index ; Copy only the new values into the user context
     :data
 ]
-

@@ -28,7 +28,7 @@ mkdir/deep output-dir/include
 mkdir/deep output-dir/include
 mkdir/deep output-dir/core
 
-change-dir %../../src/core/
+change-dir %../src/core/
 
 print "------ Building headers"
 

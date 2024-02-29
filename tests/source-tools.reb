@@ -39,7 +39,7 @@ REBOL [
 
 ren-c-repo: clean-path %../
 
-do %../make/tools/common.r
+do %../tools/common.r
 do repo/tools/common-parsers.r
 do repo/tools/text-lines.reb
 do repo/tools/%read-deep.reb

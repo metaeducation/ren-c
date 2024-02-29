@@ -28,7 +28,7 @@ do %common-emitter.r
 ; file which wants to #include "tmp-host-start.inc" currently lives in the
 ; %os/ directory.  (That's also where host-start.r is.)
 ;
-change-dir %../../src/os
+change-dir %../src/os
 
 args: parse-args system/options/args
 output-dir: system/options/path/prep
@@ -103,7 +103,7 @@ host-code: load-files [
 ;
 append host-code [:host-start]
 
-file-base: has load %../../make/tools/file-base.r
+file-base: has load %../../tools/file-base.r
 
 ; copied from make-boot.r
 host-protocols: make block! 2

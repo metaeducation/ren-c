@@ -84,7 +84,7 @@ a [number of older platforms][15].  However, if it is compiled with a C++ compil
 there is significantly more static analysis at build time, to catch errors.
 
 [14]: https://github.com/metaeducation/ren-c/wiki/On-Building-Ren-C-With-Cpp-Compilers
-[15]: https://github.com/metaeducation/ren-c/blob/master/make/tools/systems.r
+[15]: https://github.com/metaeducation/ren-c/blob/master/tools/platforms.r
 
 The open-sourced R3-Alpha was based on a build process that depended on GNU make, and
 needed an existing R3-Alpha executable in order to generate that makefile (as well as other

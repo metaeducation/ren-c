@@ -3,7 +3,7 @@ REBOL []
 name: 'UUID
 source: %uuid/mod-uuid.c
 includes: reduce [
-    src-dir/extensions/uuid/libuuid
+    repo-dir/extensions/uuid/libuuid
     %prep/extensions/uuid ;for %tmp-extensions-uuid-init.inc
 ]
 depends: try switch system-config/os-base [

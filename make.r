@@ -14,12 +14,15 @@ do %tools/rebmake.r
 
 ;;;; GLOBALS
 
-make-dir: system/options/current-path
-tools-dir: make-dir/tools
+repo-dir: system/options/current-path
+print ["REPO-DIR is" repo-dir]
+
+tools-dir: repo-dir/tools
 change-dir output-dir: system/options/path
-src-dir: append copy make-dir %../src
+src-dir: append copy repo-dir %/src
 src-dir: relative-to-path src-dir output-dir
-user-config: make object! load make-dir/default-config.r
+
+user-config: make object! load repo-dir/configs/default-config.r
 
 ;;;; PROCESS ARGS
 ; args are:
@@ -268,7 +271,7 @@ parse-ext-build-spec: function [
 
 ; Discover extensions:
 use [extension-dir entry][
-    extension-dir: src-dir/extensions/%
+    extension-dir: repo-dir/extensions/%
     for-each entry read extension-dir [
         ;print ["entry:" mold entry]
         all [
@@ -400,7 +403,7 @@ MORE HELP:^/
 FILES IN %make/configs/ SUBFOLDER:^/
     }
     indent/space form sort map-each x ;\
-        load make-dir/configs/%
+        load repo-dir/configs/%
         [to-text x]
     newline ]
 
@@ -1243,7 +1246,7 @@ process-module: func [
         depends: map-each s (append reduce [mod/source] opt mod/depends) [
             case [
                 match [file! block!] s [
-                    gen-obj/dir s src-dir/extensions/%
+                    gen-obj/dir s repo-dir/extensions/%
                 ]
                 object? s and [find [#object-library #object-file] s/class] [
                     s
@@ -1373,9 +1376,9 @@ vars: reduce [
             'file = exists? value: system/options/boot
             all [
                 user-config/rebol-tool
-                'file = exists? value: join-of make-dir user-config/rebol-tool
+                'file = exists? value: join-of repo-dir user-config/rebol-tool
             ]
-            'file = exists? value: join-of make-dir unspaced [
+            'file = exists? value: join-of repo-dir unspaced [
                 {r3-make}
                 rebmake/target-platform/exe-suffix
             ]
@@ -1557,7 +1560,7 @@ for-each ext dynamic-extensions [
     if ext/source [
         append mod-objs gen-obj/dir/I/D/F
             ext/source
-            src-dir/extensions/%
+            repo-dir/extensions/%
             opt ext/includes
             append copy ["EXT_DLL"] opt ext/definitions
             opt ext/cflags

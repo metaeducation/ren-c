@@ -8,7 +8,7 @@ includes: reduce [
     ; Added so `#include "bigint/bigint.h` can be found by %rsa.h
     ; and `#include "rsa/rsa.h" can be found by %dh.c
     ;
-    src-dir/extensions/crypt
+    repo-dir/extensions/crypt
     %prep/extensions/crypt ;for %tmp-extensions-crypt-init.inc
 ]
 depends: [

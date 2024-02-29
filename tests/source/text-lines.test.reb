@@ -2,7 +2,7 @@
 ;; Included as they are part of the build and source tests.
 
 (; Setup test.
-    do %../make/tools/common.r
+    do %../tools/common.r
     do repo/tools/text-lines.reb
     true
 )

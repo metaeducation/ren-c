@@ -26,7 +26,7 @@ output-dir: system/options/path/prep
 output-dir: output-dir/include
 mkdir/deep output-dir
 
-ver: load %../../src/boot/version.r
+ver: load %../src/boot/version.r
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -133,7 +133,7 @@ process: func [file] [
     proto-parser/process data
 ]
 
-src-dir: %../../src/core/
+src-dir: %../src/core/
 
 process src-dir/a-lib.c
 process src-dir/f-extension.c ; !!! is there a reason to process this file?

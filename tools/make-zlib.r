@@ -39,9 +39,9 @@ do %c-lexicals.r
 ;
 ; Target paths+filenames for the generated include and source file
 ;
-path-include: %../../src/include/
+path-include: %../src/include/
 file-include: %sys-zlib.h
-path-source: %../../src/core/
+path-source: %../src/core/
 file-source: %u-zlib.c
 
 
@@ -76,7 +76,7 @@ disable-user-includes: function [
             some space include-rule to end
         ] then [
             if inline and [pos: find headers to file! name] [
-                change/part line-iter (read/lines join-all [path-zlib name]) 1 
+                change/part line-iter (read/lines join-all [path-zlib name]) 1
                 take pos
             ] else [
                 insert line unspaced [{//} space]
@@ -84,7 +84,7 @@ disable-user-includes: function [
                     space {/* REBOL: see make-zlib.r */}
                 ]
             ]
-        ] 
+        ]
     ]
 
     if inline and [not empty? headers] [
@@ -103,7 +103,7 @@ disable-user-includes: function [
 make-warning-lines: func [name [file!] title [text!]] [
     reduce [
         {//}
-        {// Extraction of ZLIB compression and decompression routines} 
+        {// Extraction of ZLIB compression and decompression routines}
         {// for REBOL [R3] Language Interpreter and Run-time Environment}
         {// This is a code-generated file.}
         {//}
@@ -361,7 +361,7 @@ source-lines: copy []
 
 append source-lines read/lines join-all [path-zlib %crc32.c]
 
-; 
+;
 ; Macros DO1 and DO8 are defined differently in crc32.c, and if you don't #undef
 ; them you'll get a redefinition warning.
 ;

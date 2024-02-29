@@ -28,7 +28,7 @@ do %common-emitter.r
 
 do %systems.r
 
-change-dir %../../src/boot/
+change-dir %../src/boot/
 
 args: parse-args system/options/args
 config: config-system try get 'args/OS_ID

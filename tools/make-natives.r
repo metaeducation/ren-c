@@ -22,7 +22,7 @@ print "------ Generate tmp-natives.r"
 
 r3: system/version > 2.100.0
 
-src-dir: %../../src
+src-dir: %../src
 output-dir: system/options/path/prep
 mkdir/deep output-dir/boot
 

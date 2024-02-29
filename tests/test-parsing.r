@@ -14,8 +14,8 @@ Rebol [
 ]
 
 do %line-numberq.r
-do %../make/tools/parsing-tools.reb
-do %../make/tools/text-lines.reb
+do %../tools/parsing-tools.reb
+do %../tools/text-lines.reb
 
 whitespace: charset [#"^A" - #" " "^(7F)^(A0)"]
 digit: charset {0123456789}
