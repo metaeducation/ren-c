@@ -37,18 +37,15 @@ REBOL [
 ; This script makes some assumptions about the structure of the repo.
 ;
 
-do %../tools/common.r
-do tools-dir/common-parsers.r
-do tools-dir/text-lines.reb
-do tools-dir/%read-deep.reb
+do <../../tools/common.r>
+do join tools-dir %common-parsers.r
+do join tools-dir %text-lines.reb
+do join tools-dir %read-deep.reb
 
 ; rebsource is organised along the lines of a context sensitive vocabulary.
 ;
 
 rebsource: context [
-
-    src-folder: clean-path repo-dir/src
-    ; Path to rebol source files.
 
     logfn: func [message][print mold new-line/all compose/only message false]
     log: :logfn
@@ -130,7 +127,7 @@ rebsource: context [
             all [
                 filetype: select extensions extension-of file
                 type: in source filetype
-                reeval (ensure action! get type) file (read src-folder/:file)
+                reeval (ensure action! get type) file (read join repo-dir file)
             ]
         ]
 
@@ -275,7 +272,7 @@ rebsource: context [
             analysis: copy []
             emit: specialize 'log-emit [log: analysis]
 
-            data: read src-folder/:file
+            data: read join repo-dir file
 
             bol: _
             line: _
@@ -385,7 +382,7 @@ rebsource: context [
         source-files: function [
             {Retrieves a list of source files (relative paths).}
         ][
-            if not src-folder [fail {Configuration of src-folder required.}]
+            if not repo-dir [fail {Configuration of repo-dir required.}]
 
             files: read-deep/full/strategy source-paths :source-files-seq
 
@@ -403,7 +400,7 @@ rebsource: context [
             item: ensure file! take queue
 
             if equal? #"/" last item [
-                contents: read join src-folder item
+                contents: read join repo-dir item
                 insert queue map-each x contents [join item x]
                 item: _
             ] else [

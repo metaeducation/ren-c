@@ -12,7 +12,7 @@
 ;;
 
 (
-    do %source-tools.reb
+    do %source/source-tools.reb
     source-analysis: rebsource/analyse/files
     save %source-analysis.log source-analysis
     true
