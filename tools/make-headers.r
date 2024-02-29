@@ -14,12 +14,13 @@ REBOL [
     Needs: 2.100.100
 ]
 
-do %bootstrap-shim.r
-do %common.r
-do %common-emitter.r
-do %common-parsers.r
-do %native-emitters.r ; for emit-include-params-macro
-file-base: has load %file-base.r
+change-dir do %bootstrap-shim.r
+do <common.r>
+do <common-emitter.r>
+do <common-parsers.r>
+do <native-emitters.r>  ; for emit-include-params-macro
+
+file-base: make object! load <file-base.r>
 
 tools-dir: system/options/current-path
 output-dir: system/options/path/prep
@@ -28,7 +29,8 @@ mkdir/deep output-dir/include
 mkdir/deep output-dir/include
 mkdir/deep output-dir/core
 
-change-dir %../src/core/
+change-dir repo-dir
+change-dir %src/core/
 
 print "------ Building headers"
 

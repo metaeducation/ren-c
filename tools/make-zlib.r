@@ -317,8 +317,8 @@ fix-const-char: func [
     source
 ]
 
-do %bootstrap-shim.r
-do %common.r
+change-dir do %bootstrap-shim.r
+do <common.r>
 
 ;;
 ;; Generate %sys-zlib.h Aggregate Header File

@@ -20,15 +20,18 @@ REBOL [
     }
 ]
 
-do %bootstrap-shim.r
-do %common.r
-do %common-emitter.r
+change-dir do %bootstrap-shim.r
+do <common.r>
+do <common-emitter.r>
 
-; This script starts running in the %make/ directory, but the %host-main.c
-; file which wants to #include "tmp-host-start.inc" currently lives in the
-; %os/ directory.  (That's also where host-start.r is.)
+; Due to CHANGE-DIR above, this script starts in the directory where the user
+; was when the interpreter was invoked.
 ;
-change-dir %../src/os
+; The %host-main.c file which wants to #include "tmp-host-start.inc" currently
+; lives in the %os/ directory.  (That's also where host-start.r is.)
+;
+change-dir repo-dir
+change-dir %src/os/
 
 args: parse-args system/options/args
 output-dir: system/options/path/prep
@@ -103,7 +106,7 @@ host-code: load-files [
 ;
 append host-code [:host-start]
 
-file-base: has load %../../tools/file-base.r
+file-base: make object! load <file-base.r>
 
 ; copied from make-boot.r
 host-protocols: make block! 2

@@ -31,18 +31,18 @@ REBOL [
     }
 ]
 
-do %bootstrap-shim.r
-do %common.r
-do %common-emitter.r
-do %systems.r
+change-dir do %bootstrap-shim.r
+do <common.r>
+do <common-emitter.r>
+do <systems.r>
 
 ; The way that the processing code for extracting Rebol information out of
 ; C file comments is written is that the PROTO-PARSER has several callback
 ; functions that can be registered to receive each item it detects.
 ;
 
-do %common-parsers.r
-do %native-emitters.r ; for emit-include-params-macro
+do <common-parsers.r>
+do <native-emitters.r>  ; for emit-include-params-macro
 
 
 ; !!! We put the modules .h files and the .inc file for the initialization
@@ -63,7 +63,7 @@ m-name: mod
 l-m-name: lowercase copy m-name
 u-m-name: uppercase copy m-name
 
-c-src: join-of %../ fix-win32-path to file! ensure text! args/SRC
+c-src: join-of repo-dir fix-win32-path to file! ensure text! args/SRC
 
 print ["building" m-name "from" c-src]
 

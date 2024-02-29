@@ -32,10 +32,55 @@ REBOL [
 
 read: lib/read: adapt 'lib/read [
     ;
-    ; !!! This can be useful in R3C to get better error messages about where
-    ; a bad read is reading from.
+    ; !!! This can be useful in build 8994d23 to get better error messages
+    ; about where a bad read is reading from (fixed in R3C and later)
     ;
-    ; print ["READING:" mold source "from" what-dir]
+    ; if not port? source [print ["READING:" mold source "from" what-dir]]
+]
+
+
+; New interpreters do not change the working directory when a script is
+; executed to the directory of the script.  This is in line with what most
+; other languages do.  Because this makes it more difficult to run helper
+; scripts relative to the script's directory, `do <subdir/script.r>` is used
+; with a TAG! to mean "run relative to system/script/header".
+;
+; To subvert the change-to-directory-of-script behavior, we have to LOAD the
+; script and then DO it, so that DO does not receive a FILE!.  But this means
+; we have to manually update the system/script object.
+;
+do: enclose :lib/do func [f <local> old-system-script] [
+    old-system-script: _
+    if tag? :f/source [
+        f/source: append copy system/script/path to text! f/source
+        f/source: clean-path f/source
+        old-system-script: system/script
+        system/script: construct system/standard/script [
+            title: spaced ["Bootstrap Shim DO LOAD of:" f/source]
+            header: compose [File: f/source]
+            parent: system/script
+            path: first split-path f/source
+            args: f/args
+        ]
+        f/source: load f/source  ; avoid dir-changing mechanic of DO FILE!
+    ]
+    lib/do f  ; avoid SET/ANY vs SET/OPT problem by using ELIDE
+    elide if old-system-script[
+        system/script: old-system-script
+    ]
+]
+load: func [source /all /header] [  ; can't ENCLOSE, does not take TAG!
+    if tag? source [
+        source: append copy system/script/path to text! source
+    ]
+    case [
+        header [
+            assert [not all]
+            lib/load/header source
+        ]
+        all [lib/load/all source]
+        true [lib/load source]
+    ]
 ]
 
 ; The snapshotted Ren-C existed right before <blank> was legal to mark an
@@ -52,7 +97,7 @@ trap [
     func [i [<blank> integer!]] [...]
 ] or [
     nulled?: func [var [word! path!]] [return null = get var]
-    quit
+    quit/with system/options/path
 ]
 
 print "== SHIMMING OLDER R3 TO MODERN LANGUAGE DEFINITIONS =="
@@ -127,3 +172,5 @@ trim: adapt 'trim [ // there's a bug in TRIM/AUTO in 8994d23
         ]
     ]
 ]
+
+quit/with system/options/path

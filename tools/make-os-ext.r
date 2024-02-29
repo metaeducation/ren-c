@@ -15,25 +15,26 @@ REBOL [
 
 verbose: false
 
-version: load %../src/boot/version.r
+change-dir do %bootstrap-shim.r
+do <common.r>
+do <common-emitter.r>
+do <common-parsers.r>
+do <systems.r>
+
+version: load <../src/boot/version.r>
 
 lib-version: version/3
 print ["--- Make OS Ext Lib --- Version:" lib-version]
 
-do %bootstrap-shim.r
-do %common.r
-do %common-emitter.r
-do %common-parsers.r
-do %systems.r
-
-change-dir %../src/os/
+change-dir repo-dir
+change-dir %src/os/
 
 args: parse-args system/options/args
 config: config-system try get 'args/OS_ID
 output-dir: system/options/path/prep
 mkdir/deep output-dir/include
 
-file-base: has load %../../tools/file-base.r
+file-base: make object! load <file-base.r>
 
 ; Collect OS-specific host files:
 if not (

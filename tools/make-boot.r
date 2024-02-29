@@ -22,13 +22,14 @@ REBOL [
 
 print "--- Make Boot : System Embedded Script ---"
 
-do %bootstrap-shim.r
-do %common.r
-do %common-emitter.r
+change-dir do %bootstrap-shim.r
+do <common.r>
+do <common-emitter.r>
 
-do %systems.r
+do <systems.r>
 
-change-dir %../src/boot/
+change-dir repo-dir
+change-dir %src/boot/
 
 args: parse-args system/options/args
 config: config-system try get 'args/OS_ID

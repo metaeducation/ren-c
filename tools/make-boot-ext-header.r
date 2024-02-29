@@ -37,9 +37,9 @@ REBOL [
     }
 ]
 
-do %bootstrap-shim.r
-do %common.r
-do %common-emitter.r
+change-dir do %bootstrap-shim.r
+do <common.r>
+do <common-emitter.r>
 
 r3: system/version > 2.100.0
 

@@ -38,11 +38,8 @@ REBOL [
 ;; - Good for keeping fixed paths out of scripts.
 ;;
 
-repo: context [
-    root: clean-path %../../
-    source-root: root
-    tools: what-dir
-]
+repo-dir: clean-path append copy system/script/path %../
+tools-dir: system/script/path
 
 ;;
 
@@ -102,7 +99,7 @@ to-c-name: function [
             ; shorthand; e.g. `foo?` => `foo_q`
 
             for-each [reb c] [
-              #"'"  ""      ; isn't => isnt, don't => dont 
+              #"'"  ""      ; isn't => isnt, don't => dont
                 -   "_"     ; foo-bar => foo_bar
                 *   "_p"    ; !!! because it symbolizes a (p)ointer in C??
                 .   "_"     ; !!! same as hyphen?
@@ -243,7 +240,7 @@ for-each-record: function [
 
 find-record-unique: function [
     {Get a record in a table as an object, error if duplicate, blank if absent}
-    
+
     return: [<opt> object!]
     table [block!]
         {Table of values with header block as first element}
@@ -395,4 +392,3 @@ relative-to-path: func [
     append base target
     to-file delimit "/" base
 ]
-

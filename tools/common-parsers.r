@@ -20,9 +20,9 @@ REBOL [
     }
 ]
 
-do %c-lexicals.r
-do %text-lines.reb
-do %parsing-tools.reb
+do <c-lexicals.r>
+do <text-lines.reb>
+do <parsing-tools.reb>
 
 decode-key-value-text: function [
     {Decode key value formatted text.}

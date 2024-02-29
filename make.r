@@ -1,26 +1,32 @@
 REBOL []
 
 ;;;; DO & IMPORT ;;;;
-do %tools/bootstrap-shim.r
-do %tools/common.r
-do %tools/systems.r
-file-base: make object! load %tools/file-base.r
+
+change-dir do %tools/bootstrap-shim.r
+
+do <tools/common.r>
+
+do <tools/systems.r>
+file-base: make object! load <tools/file-base.r>
 
 ; See notes on %rebmake.r for why it is not a module at this time, due to the
 ; need to have it inherit the shim behaviors of IF, CASE, FILE-TO-LOCAL, etc.
 ;
-; rebmake: import %tools/rebmake.r
-do %tools/rebmake.r
+; rebmake: import <tools/rebmake.r>
+do <tools/rebmake.r>
 
 ;;;; GLOBALS
 
-repo-dir: system/options/current-path
-print ["REPO-DIR is" repo-dir]
+if what-dir = repo-dir [
+    print ["BUILDING FROM REPO-DIR:" repo-dir]
+    print "(...so assuming you want build products in /BUILD subdirectory)"
+    output-dir: join-of repo-dir %build/
+    make-dir output-dir
+] else [
+    output-dir: what-dir
+]
 
-tools-dir: repo-dir/tools
-change-dir output-dir: system/options/path
-src-dir: append copy repo-dir %/src
-src-dir: relative-to-path src-dir output-dir
+src-dir: join-of repo-dir %/src
 
 user-config: make object! load repo-dir/configs/default-config.r
 
@@ -343,10 +349,10 @@ targets: [
         ]
     ]
     'makefile [
-        rebmake/makefile/generate %makefile solution
+        rebmake/makefile/generate (join-of output-dir %makefile) solution
     ]
     'nmake [
-        rebmake/nmake/generate %makefile solution
+        rebmake/nmake/generate (join-of output-dir %makefile) solution
     ]
     'vs2017
     'visual-studio [
