@@ -84,22 +84,6 @@ export-words: func [
 ]
 
 
-mixin?: func [
-    "Returns TRUE if module is a mixin with exports."
-    return: [logic!]
-    mod [module! object!] "Module or spec header"
-][
-    ; Note: Unnamed modules DO NOT default to being mixins.
-    if module? mod [mod: meta-of mod]  ; Get the header object
-    did all [
-        find select mod 'options 'private
-        ; If there are no exports, there's no difference
-        block? select mod 'exports
-        not empty? select mod 'exports
-    ]
-]
-
-
 load-header: function [
     {Loads script header object and body binary (not loaded).}
 
@@ -412,110 +396,6 @@ load: function [
 ]
 
 
-do-needs: function [
-    {Process the NEEDS block of a program header. Returns unapplied mixins.}
-
-    needs "Needs block, header or version"
-        [block! object! tuple! blank!]
-    /no-share "Force module to use its own non-shared global namespace"
-    /no-lib "Don't export to the runtime library"
-    /no-user "Don't export to the user context (mixins returned)"
-    /block "Return all the imported modules in a block, instead"
-][
-    ; NOTES:
-    ; This is a low-level function and its use and return values reflect that.
-    ; In user mode, the mixins are applied by IMPORT, so they don't need to
-    ; be returned. In /no-user mode the mixins are collected into an object
-    ; and returned, if the object isn't empty. This object can then be passed
-    ; to MAKE module! to be applied there. The /block option returns a block
-    ; of all the modules imported, not any mixins - this is for when IMPORT
-    ; is called with a Needs block.
-
-    if object? needs [ ;-- header object
-        needs: select needs 'needs ; (protected)
-    ]
-
-    switch type of needs [
-        blank! [return blank]
-
-        tuple! [ ;-- simple version number check for interpreter itself
-            case [
-                needs > system/version [
-                    cause-error 'syntax 'needs reduce ['core needs]
-                ]
-
-                3 >= length of needs [ ; no platform id
-                    blank
-                ]
-
-                (needs and+ 0.0.0.255.255)
-                <> (system/version and+ 0.0.0.255.255) [
-                    cause-error 'syntax 'needs reduce ['core needs]
-                ]
-            ]
-            return blank
-        ]
-
-        block! [
-            if empty? needs [return blank]
-        ]
-    ] else [
-        needs: reduce [needs] ;-- If it's an inline value, put it in a block
-    ]
-
-    ; Parse the needs dialect [source <version>]
-    mods: make block! length of needs
-    name: vers: hash: _
-    parse ensure block! needs [
-        here:
-        opt [opt 'core set vers tuple! (do-needs vers)]
-        any [
-            here:
-            set name [word! | file! | url! | tag!]
-            set vers opt tuple!
-            set hash opt binary!
-            (append mods reduce [name vers hash])
-        ]
-        end
-    ] or [
-        cause-error 'script 'invalid-arg here
-    ]
-
-    ; Temporary object to collect exports of "mixins" (private modules).
-    ; Don't bother if returning all the modules in a block, or if in user mode.
-    ;
-    if no-user and [not block] [
-        mixins: make object! 0 ;-- Minimal length since it may persist later
-    ]
-
-    ; Import the modules:
-    ;
-    mods: map-each [name vers hash] mods [
-        mod: applique 'import [
-            module: name
-
-            version: true
-            set the ver: opt vers
-
-            set the no-share: no-share
-            set the no-lib: no-lib
-            set the no-user: no-user
-        ]
-
-        ; Collect any mixins into the object (if we are doing that)
-        if all [set? 'mixins | mixin? mod] [
-            resolve/extend/only mixins mod select meta-of mod 'exports
-        ]
-        mod
-    ]
-
-    return try case [
-        block [mods] ; /block refinement asks for block of modules
-        not empty? to-value :mixins [mixins] ; else if any mixins, return them
-    ]
-]
-
-
 load-module: function [
     {Loads a module and inserts it into the system module list.}
 
@@ -715,7 +595,6 @@ load-module: function [
         ; Unnamed module can't be imported to lib, so /no-lib here
         no-lib: true  ; Still not /no-lib in IMPORT
 
-        ; But make it a mixin and it will be imported directly later
         if not find hdr/options 'private [
             hdr/options: append any [hdr/options make block! 1] 'private
         ]
@@ -816,9 +695,7 @@ load-module: function [
         ]
 
         catch/quit [
-            mod: module/mixin/into hdr code (
-                opt do-needs/no-user hdr
-            ) :existing
+            mod: module/into hdr code :existing
         ]
     ]
 
@@ -831,7 +708,6 @@ load-module: function [
 
         all [
             module? mod
-            not mixin? hdr
             block? select hdr 'exports
         ] then [
             resolve/extend/only lib mod hdr/exports ; no-op if empty
@@ -846,7 +722,7 @@ load-module: function [
 ]
 
 
-; See also: sys/make-module*, sys/load-module, sys/do-needs
+; See also: sys/make-module*, sys/load-module
 ;
 import: function [
     {Imports a module; locate, load, make, and setup its bindings.}
@@ -865,21 +741,6 @@ import: function [
             fail ["Can't relatively load" module "- system/script/path not set"]
         ]
         module: join system/script/path to text! module
-    ]
-
-    ; If it's a needs dialect block, call DO-NEEDS/block:
-    ;
-    ; Note: IMPORT block! returns a block of all the modules imported.
-    ;
-    if block? module [
-        assert [not version] ; can only apply to one module
-        return applique 'do-needs [
-            needs: module
-            no-share: :no-share
-            no-lib: :no-lib
-            no-user: :no-user
-            block: true
-        ]
     ]
 
     set [name: mod:] applique 'load-module [
@@ -944,7 +805,7 @@ import: function [
             no-lib
             find select hdr 'options 'private ; /no-lib causes private
         ][
-            ; It's a private module (mixin)
+            ; It's a private module
             ; we must add *all* of its exports to user
 
             resolve/extend/only system/contexts/user mod exports

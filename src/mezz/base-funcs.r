@@ -798,16 +798,11 @@ module: func [
         [block! object!]
     body "The body block of the module (modified)"
         [block!]
-    /mixin "Mix in words from other modules"
-    mixins "Words collected into an object"
-        [object!]
     /into "Add data to existing MODULE! context (vs making a new one)"
     mod [module!]
 
     <local> hidden w
 ][
-    mixins: default [_]
-
     ; !!! Is it a good idea to mess with the given spec and body bindings?
     ; This was done by MODULE but not seemingly automatically by MAKE MODULE!
     ;
@@ -846,7 +841,6 @@ module: func [
     for-each [var types] [
         spec object!
         body block!
-        mixins [object! blank!]
         spec/name [word! blank!]
         spec/type [word! blank!]
         spec/version [tuple! blank!]
@@ -928,10 +922,6 @@ module: func [
         ;
         bind/new body mod
 
-        ; The module keeps its own variables (not shared with system):
-        ;
-        if object? mixins [resolve mod mixins]
-
         resolve mod lib
     ][
         ; Only top level defined words are module variables.
@@ -941,8 +931,6 @@ module: func [
         ; The module shares system exported variables:
         ;
         bind body lib
-
-        if object? mixins [bind body mixins]
     ]
 
     bind body mod ;-- redundant?

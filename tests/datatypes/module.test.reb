@@ -40,7 +40,6 @@
 ;-- Tests that were in %sys-load.r, these were originally using XLOAD, but
 ;-- there is no XLOAD.
 
-([1 2 3] = load ["1" "2" "3"])
 ([] = load " ")
 (1 = load "1")
 ([1] = load "[1]")

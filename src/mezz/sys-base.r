@@ -110,7 +110,7 @@ do*: function [
 
     ; Load the code (do this before CHANGE-DIR so if there's an error in the
     ; LOAD it will trigger before the failure of changing the working dir)
-    ; It is loaded as UNBOUND so that DO-NEEDS runs before INTERN.
+    ; It is loaded as UNBOUND.
     ;
     code: ensure block! (load/header/type source 'unbound)
 
@@ -132,7 +132,6 @@ do*: function [
         ; Return result without "script overhead" (e.g. don't change the
         ; working directory to the base of the file path supplied)
         ;
-        do-needs hdr  ; Load the script requirements
         intern code   ; Bind the user script
         catch/quit [
             ;
@@ -161,10 +160,9 @@ do*: function [
         ; Eval the block or make the module, returned
         either is-module [ ; Import the module and set the var
             catch/quit [
-                result: import module/mixin hdr code (opt do-needs/no-user hdr)
+                result: import module hdr code
             ] then :finalizer/quit
         ][
-            do-needs hdr  ; Load the script requirements
             intern code   ; Bind the user script
             catch/quit [
                 set the result: do code
