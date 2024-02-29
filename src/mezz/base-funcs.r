@@ -42,36 +42,6 @@ so: enfix func [
     ]
 ]
 
-maybe: enfix func [
-    "Set word or path to a default value if that value is a value"
-
-    return: [<opt> any-value!]
-    'target [set-word! set-path!]
-        "The word to which might be set"
-    optional [<opt> any-value!]
-        "Value to assign only if it is not null"
-
-    <local> gotten
-][
-    case [
-        set-word? target [
-            if null? :optional [return get target]
-            set target :optional
-        ]
-
-        set-path? target [
-            ; If a SET-PATH!, it may contain a GROUP!.  SET/GET don't accept
-            ; that due to potential side-effects, so use REDUCE.  See also:
-            ;
-            ; https://github.com/rebol/rebol-issues/issues/2275
-            ;
-            if null? :optional [return do compose [(as get-path! target)]]
-            do compose [(target) the ((:optional))]
-        ]
-    ]
-]
-
-
 was: func [
     {Return a variable's value prior to an assignment, then do the assignment}
 
@@ -284,7 +254,10 @@ dig-action-meta-fields: function [value [action!]] [
     inherit-frame: function [parent [<blank> frame!]] [
         child: make frame! :value
         for-each param child [
-            child/(param): maybe select parent param
+            child/(param): any [
+                select parent param
+                :child/param
+            ]
         ]
         return child
     ]

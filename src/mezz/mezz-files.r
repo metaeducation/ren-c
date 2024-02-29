@@ -280,13 +280,19 @@ to-relative-file: function [
                 file: next tmp
             ]
         ]
-        file: maybe find/match file file-to-local what-dir
+        file: any [
+            find/match file file-to-local what-dir
+            file
+        ]
         if as-rebol [
             file: local-to-file file
             no-copy: true
         ]
     ] else [
-        file: maybe find/match file what-dir
+        file: any [
+            find/match file what-dir
+            file
+        ]
         if as-local [
             file: file-to-local file
             no-copy: true
