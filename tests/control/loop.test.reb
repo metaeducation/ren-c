@@ -83,7 +83,7 @@
 ; leave the gathered material in the mold buffer
 ;
 (
-    void? loop 2 [unspaced ["abc" continue]]
+    trash? loop 2 [unspaced ["abc" continue]]
 )
 
 ; Test ACTION! as branch

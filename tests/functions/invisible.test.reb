@@ -9,7 +9,7 @@
     1 = do [1 comment "a"]
 )
 (
-    void = do [comment "a"]
+    ~ = do [comment "a"]
 )
 
 (
@@ -49,7 +49,7 @@
     1 = do [1 elide "a"]
 )
 (
-    void = do [elide "a"]
+    ~ = do [elide "a"]
 )
 
 (
@@ -72,14 +72,14 @@
 
 
 (
-    x: void
+    x: ~
     x: 1 + 2 * 3
     elide (y: :x)
 
     did all [x = 9 | y = 9]
 )
 (
-    x: void
+    x: ~
     x: 1 + elide (y: 10) 2 * 3
     did all [
         x = 9
@@ -88,7 +88,7 @@
 )
 
 (
-    x: y: z: void
+    x: y: z: ~
 
     x: 10
     y: 1 comment [+ 2
@@ -97,12 +97,12 @@
     did all [
         x = 10
         y = 8
-        voided? 'z
+        unset? 'z
     ]
 )
 
 (
-    void = do [end]
+    ~ = do [end]
 )
 (
     3 = do [1 + 2 end 10 + 20 | 100 + 200]
@@ -273,8 +273,8 @@
     ]
 )
 
-(void? (if true [] else [<else>]))
-(void? (if true [comment <true-branch>] else [<else>]))
+(trash? (if true [] else [<else>]))
+(trash? (if true [comment <true-branch>] else [<else>]))
 
 (1 = all [1 elide <invisible>])
 (1 = any [1 elide <invisible>])
@@ -286,14 +286,14 @@
 ) 300 + 4))
 
 
-; It's likely more useful for EVAL to give VOID! than error if asked to
+; It's likely more useful for EVAL to give TRASH than error if asked to
 ; evaluate something that turns out to be invisible.
 ;
-(void? reeval quote (comment "void is better than failing here"))
+(trash? reeval quote (comment "void is better than failing here"))
 (
     x: <before>
     did all [
-        void? reeval :elide x: <after>
+        trash? reeval :elide x: <after>
         x = <after>
     ]
 )

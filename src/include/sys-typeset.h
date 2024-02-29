@@ -145,7 +145,7 @@ enum Reb_Param_Class {
     //
     //     >> eval/only :foo 1 + 2
     //     a is 1
-    //     ** Script error: + does not allow void! for its value1 argument
+    //     ** Script error: + does not allow trash for its value1 argument
     //
     PARAM_CLASS_NORMAL = 0x01,
 

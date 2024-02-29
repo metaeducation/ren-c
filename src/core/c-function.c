@@ -250,9 +250,9 @@ Array* Make_Paramlist_Managed_May_Fail(
                 continue;
             }
             else if (0 == Compare_String_Vals(item, Root_Void_Tag, true)) {
-                header_bits |= ACTION_FLAG_VOIDER; // use Voider_Dispatcher()
+                header_bits |= ACTION_FLAG_TRASHER;  // use Trasher_Dispatcher()
 
-                // Fake as if they said [void!] !!! make more efficient
+                // Fake as if they said [trash!] !!! make more efficient
                 //
                 item = Get_System(SYS_STANDARD, STD_PROC_RETURN_TYPE);
                 goto process_typeset_block;
@@ -378,7 +378,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             DS_PUSH(EMPTY_TEXT);
         assert(IS_TEXT(DS_TOP));
 
-        // Non-annotated arguments disallow ACTION!, VOID! and NULL.  Not
+        // Non-annotated arguments disallow ACTION!, TRASH and NULL.  Not
         // having to worry about ACTION! and NULL means by default, code
         // does not have to worry about "disarming" arguments via GET-WORD!.
         // Also, keeping NULL a bit "prickly" helps discourage its use as
@@ -396,7 +396,7 @@ Array* Make_Paramlist_Managed_May_Fail(
                 ? TS_OPT_VALUE
                 : TS_VALUE & ~(
                     FLAGIT_KIND(REB_ACTION)
-                    | FLAGIT_KIND(REB_VOID)
+                    | FLAGIT_KIND(REB_TRASH)
                 ),
             Cell_Word_Symbol(item) // don't canonize, see #2258
         );
@@ -516,7 +516,7 @@ Array* Make_Paramlist_Managed_May_Fail(
     if (flags & MKF_RETURN) {
         if (definitional_return_dsp == 0) { // no explicit RETURN: pure local
             //
-            // While default arguments disallow ACTION!, VOID!, and NULL...
+            // While default arguments disallow ACTION!, TRASH, and NULL...
             // they are allowed to return anything.  Generally speaking, the
             // checks are on the input side, not the output.
             //
@@ -1068,9 +1068,9 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
 
     if (
         ACT_DISPATCHER(a) == &Null_Dispatcher
-        or ACT_DISPATCHER(a) == &Void_Dispatcher
+        or ACT_DISPATCHER(a) == &Trash_Dispatcher
         or ACT_DISPATCHER(a) == &Unchecked_Dispatcher
-        or ACT_DISPATCHER(a) == &Voider_Dispatcher
+        or ACT_DISPATCHER(a) == &Trasher_Dispatcher
         or ACT_DISPATCHER(a) == &Returner_Dispatcher
         or ACT_DISPATCHER(a) == &Block_Dispatcher
     ){
@@ -1086,7 +1086,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
 
         Value* example;
         REBLEN real_body_index;
-        if (ACT_DISPATCHER(a) == &Voider_Dispatcher) {
+        if (ACT_DISPATCHER(a) == &Trasher_Dispatcher) {
             example = Get_System(SYS_STANDARD, STD_PROC_BODY);
             real_body_index = 4;
         }
@@ -1228,8 +1228,8 @@ REBACT *Make_Interpreted_Action_May_Fail(
         if (GET_VAL_FLAG(value, ACTION_FLAG_INVISIBLE)) {
             ACT_DISPATCHER(a) = &Commenter_Dispatcher;
         }
-        else if (GET_VAL_FLAG(value, ACTION_FLAG_VOIDER)) {
-            ACT_DISPATCHER(a) = &Voider_Dispatcher;
+        else if (GET_VAL_FLAG(value, ACTION_FLAG_TRASHER)) {
+            ACT_DISPATCHER(a) = &Trasher_Dispatcher;
         }
         else if (GET_VAL_FLAG(value, ACTION_FLAG_RETURN)) {
             Value* typeset = ACT_PARAM(a, ACT_NUM_PARAMS(a));
@@ -1249,8 +1249,8 @@ REBACT *Make_Interpreted_Action_May_Fail(
 
         if (GET_VAL_FLAG(value, ACTION_FLAG_INVISIBLE))
             ACT_DISPATCHER(a) = &Elider_Dispatcher; // no f->out mutation
-        else if (GET_VAL_FLAG(value, ACTION_FLAG_VOIDER))
-            ACT_DISPATCHER(a) = &Voider_Dispatcher; // forces f->out void
+        else if (GET_VAL_FLAG(value, ACTION_FLAG_TRASHER))
+            ACT_DISPATCHER(a) = &Trasher_Dispatcher; // forces f->out trash
         else if (GET_VAL_FLAG(value, ACTION_FLAG_RETURN))
             ACT_DISPATCHER(a) = &Returner_Dispatcher; // type checks f->out
         else
@@ -1378,17 +1378,17 @@ REB_R Null_Dispatcher(REBFRM *f)
 
 
 //
-//  Void_Dispatcher: C
+//  Trash_Dispatcher: C
 //
 // Analogue to Null_Dispatcher() for `func [return: <void> ...] []`.
 //
-REB_R Void_Dispatcher(REBFRM *f)
+REB_R Trash_Dispatcher(REBFRM *f)
 {
     Array* details = ACT_DETAILS(FRM_PHASE(f));
     assert(VAL_LEN_AT(ARR_HEAD(details)) == 0);
     UNUSED(details);
 
-    return Init_Void(f->out);
+    return Init_Trash(f->out);
 }
 
 
@@ -1446,13 +1446,13 @@ REB_R Unchecked_Dispatcher(REBFRM *f)
 
 
 //
-//  Voider_Dispatcher: C
+//  Trasher_Dispatcher: C
 //
-// Variant of Unchecked_Dispatcher, except sets the output value to void.
+// Variant of Unchecked_Dispatcher, except sets the output value to trash.
 // Pushing that code into the dispatcher means there's no need to do flag
 // testing in the main loop.
 //
-REB_R Voider_Dispatcher(REBFRM *f)
+REB_R Trasher_Dispatcher(REBFRM *f)
 {
     Array* details = ACT_DETAILS(FRM_PHASE(f));
     Cell* body = ARR_HEAD(details);
@@ -1461,7 +1461,7 @@ REB_R Voider_Dispatcher(REBFRM *f)
     if (Do_At_Throws(f->out, Cell_Array(body), 0, SPC(f->varlist)))
         return R_THROWN;
 
-    return Init_Void(f->out);
+    return Init_Trash(f->out);
 }
 
 

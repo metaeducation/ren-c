@@ -123,43 +123,43 @@
 )
 
 (
-    void? redbol-apply func [
+    trash? redbol-apply func [
         return: [<opt> any-value!]
         x [<opt> any-value!]
     ][
         get/any 'x
     ][
-        void
+        ~
     ]
 )
 (
-    void? redbol-apply func [
+    trash? redbol-apply func [
         return: [<opt> any-value!]
         'x [<opt> any-value!]
     ][
         get/any 'x
     ][
-        void
+        ~
     ]
 )
 (
-    void? redbol-apply func [
+    trash? redbol-apply func [
         return: [<opt> any-value!]
         x [<opt> any-value!]
     ][
         return get/any 'x
     ][
-        void
+        ~
     ]
 )
 (
-    void? redbol-apply func [
+    trash? redbol-apply func [
         return: [<opt> any-value!]
         'x [<opt> any-value!]
     ][
         return get/any 'x
     ][
-        void
+        ~
     ]
 )
 (

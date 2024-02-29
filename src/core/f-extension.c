@@ -372,7 +372,7 @@ static const Value* Unloaded_Dispatcher(REBFRM *f)
 //
 //  "Unload an extension"
 //
-//      return: [void!]
+//      return: [trash!]
 //      ext [object!]
 //          "The extension to be unloaded"
 //      /cleanup

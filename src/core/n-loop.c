@@ -161,7 +161,7 @@ static REB_R Loop_Series_Common(
             if (broke)
                 return nullptr;
         }
-        return Voidify_If_Nulled_Or_Blank(out); // null->BREAK, blank->empty
+        return Trashify_If_Nulled_Or_Blank(out);  // null->BREAK, blank->empty
     }
 
     // As per #1993, start relative to end determines the "direction" of the
@@ -184,7 +184,7 @@ static REB_R Loop_Series_Common(
             if (broke)
                 return nullptr;
         }
-        Voidify_If_Nulled_Or_Blank(out); // null->BREAK, blank->empty
+        Trashify_If_Nulled_Or_Blank(out);  // null->BREAK, blank->empty
         if (
             VAL_TYPE(var) != VAL_TYPE(start)
             or VAL_SERIES(var) != VAL_SERIES(start)
@@ -237,7 +237,7 @@ static REB_R Loop_Integer_Common(
             if (broke)
                 return nullptr;
         }
-        return Voidify_If_Nulled_Or_Blank(out); // null->BREAK, blank->empty
+        return Trashify_If_Nulled_Or_Blank(out);  // null->BREAK, blank->empty
     }
 
     // As per #1993, start relative to end determines the "direction" of the
@@ -256,7 +256,7 @@ static REB_R Loop_Integer_Common(
             if (broke)
                 return nullptr;
         }
-        Voidify_If_Nulled_Or_Blank(out); // null->BREAK, blank->empty
+        Trashify_If_Nulled_Or_Blank(out);  // null->BREAK, blank->empty
 
         if (not IS_INTEGER(var))
             fail (Error_Invalid_Type(VAL_TYPE(var)));
@@ -323,7 +323,7 @@ static REB_R Loop_Number_Common(
             if (broke)
                 return nullptr;
         }
-        return Voidify_If_Nulled_Or_Blank(out); // null->BREAK, blank->empty
+        return Trashify_If_Nulled_Or_Blank(out);  // null->BREAK, blank->empty
     }
 
     // As per #1993, see notes in Loop_Integer_Common()
@@ -340,7 +340,7 @@ static REB_R Loop_Number_Common(
             if (broke)
                 return nullptr;
         }
-        Voidify_If_Nulled_Or_Blank(out); // null->BREAK, blank->empty
+        Trashify_If_Nulled_Or_Blank(out);  // null->BREAK, blank->empty
 
         if (not IS_DECIMAL(var))
             fail (Error_Invalid_Type(VAL_TYPE(var)));
@@ -582,7 +582,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
         switch (les->mode) {
           case LOOP_FOR_EACH:
-            Voidify_If_Nulled_Or_Blank(les->out); // null->BREAK, blank->empty
+            Trashify_If_Nulled_Or_Blank(les->out);  // null->BREAK, blank->empty
             break;
 
           case LOOP_EVERY:
@@ -591,7 +591,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
           case LOOP_MAP_EACH:
             if (IS_NULLED(les->out))
-                Init_Void(les->out); // nulled is used to signal breaking only
+                Init_Trash(les->out);  // nulled is used to signal breaking only
             else
                 DS_PUSH(les->out); // anything not null is added to the result
             break;
@@ -755,9 +755,9 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         // blank means body never ran (`_ = every x [] [<unused>]`)
         // #[false] means loop ran, and at least one body result was "falsey"
         // any other value is the last body result, and is truthy
-        // only illegal value here is void (would cause error if body gave it)
+        // only illegal value here is trash (would cause error if body gave it)
         //
-        assert(not IS_VOID(D_OUT));
+        assert(not IS_TRASH(D_OUT));
         return D_OUT;
 
       case LOOP_MAP_EACH:
@@ -927,7 +927,7 @@ DECLARE_NATIVE(for_skip)
             if (broke)
                 return nullptr;
         }
-        Voidify_If_Nulled_Or_Blank(D_OUT); // null->BREAK, blank->empty
+        Trashify_If_Nulled_Or_Blank(D_OUT);  // null->BREAK, blank->empty
 
         // Modifications to var are allowed, to another ANY-SERIES! value.
         //
@@ -954,7 +954,7 @@ DECLARE_NATIVE(for_skip)
 //
 //  {End the current iteration of CYCLE and return a value (nulls allowed)}
 //
-//      value "If no argument is provided, assume VOID!"
+//      value "If no argument is provided, assume trash"
 //          [<opt> <end> any-value!]
 //  ]
 //
@@ -979,7 +979,7 @@ DECLARE_NATIVE(stop)
 
     Move_Value(D_OUT, NAT_VALUE(stop));
     if (IS_ENDISH_NULLED(v))
-        CONVERT_NAME_TO_THROWN(D_OUT, VOID_VALUE); // `if true [stop]`
+        CONVERT_NAME_TO_THROWN(D_OUT, TRASH_VALUE); // `if true [stop]`
     else
         CONVERT_NAME_TO_THROWN(D_OUT, v); // `if true [stop ...]`
 
@@ -1022,7 +1022,7 @@ DECLARE_NATIVE(cycle)
             if (broke)
                 return nullptr;
         }
-        // No need to voidify result, it doesn't escape...
+        // No need to trashify result, it doesn't escape...
     } while (true);
 
     DEAD_END;
@@ -1286,8 +1286,8 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
                 // CONTINUE - res->out may not be void if /WITH refinement used
             }
         }
-        if (IS_VOID(res->out))
-            fail (Error_Void_Conditional_Raw()); // neither true nor false
+        if (IS_TRASH(res->out))
+            fail (Error_Trash_Conditional_Raw());  // neither true nor false
 
         if (ANY_ARRAY(res->data)) {
             if (IS_NULLED(res->out) or IS_FALSEY(res->out)) {
@@ -1376,7 +1376,7 @@ DECLARE_NATIVE(remove_each)
         // If index is past the series end, then there's nothing removable.
         //
         // !!! Should REMOVE-EACH follow the "loop conventions" where if the
-        // body never gets a chance to run, the return value is void?
+        // body never gets a chance to run, the return value is trash?
         //
         return Init_Integer(D_OUT, 0);
     }
@@ -1523,7 +1523,7 @@ DECLARE_NATIVE(loop)
             if (broke)
                 return nullptr;
         }
-        Voidify_If_Nulled_Or_Blank(D_OUT); // null->BREAK, blank->empty
+        Trashify_If_Nulled_Or_Blank(D_OUT);  // null->BREAK, blank->empty
     }
 
     if (IS_LOGIC(ARG(count)))
@@ -1617,8 +1617,8 @@ INLINE REB_R Until_Core(
                 goto skip_check;
         }
         else { // didn't throw, see above about null difference from CONTINUE
-            if (IS_VOID(D_OUT))
-                fail (Error_Void_Conditional_Raw());
+            if (IS_TRASH(D_OUT))
+                fail (Error_Trash_Conditional_Raw());
         }
 
         if (IS_TRUTHY(D_OUT) == trigger)
@@ -1683,8 +1683,8 @@ INLINE REB_R While_Core(
             return R_THROWN; // don't see BREAK/CONTINUE in the *condition*
         }
 
-        if (IS_VOID(cell))
-            fail (Error_Void_Conditional_Raw()); // neither truthy nor falsey
+        if (IS_TRASH(cell))
+            fail (Error_Trash_Conditional_Raw());  // neither truthy nor falsey
 
         if (IS_TRUTHY(cell) != trigger) {
             DROP_GC_GUARD(cell);
@@ -1702,7 +1702,7 @@ INLINE REB_R While_Core(
                 return Init_Nulled(D_OUT);
             }
         }
-        Voidify_If_Nulled_Or_Blank(D_OUT); // null->BREAK, blank->empty
+        Trashify_If_Nulled_Or_Blank(D_OUT);  // null->BREAK, blank->empty
     } while (true);
 
     DEAD_END;

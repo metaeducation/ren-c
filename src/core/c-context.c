@@ -237,7 +237,7 @@ Value* Append_Context(
     //
     EXPAND_SERIES_TAIL(SER(CTX_VARLIST(context)), 1);
 
-    Value* value = Init_Void(ARR_LAST(CTX_VARLIST(context)));
+    Value* value = Init_Trash(ARR_LAST(CTX_VARLIST(context)));
     TERM_ARRAY_LEN(CTX_VARLIST(context), ARR_LEN(CTX_VARLIST(context)));
 
     if (not any_word)
@@ -1237,10 +1237,10 @@ void Resolve_Context(
             // "the remove succeeded, so it's marked as set now" (old comment)
             if (
                 NOT_VAL_FLAG(var, CELL_FLAG_PROTECTED)
-                and (all or IS_VOID(var))
+                and (all or IS_TRASH(var))
             ){
                 if (m < 0)
-                    Init_Void(var);  // treat as undefined in source context
+                    Init_Trash(var);  // treat as undefined in source context
                 else
                     Move_Var(var, CTX_VAR(source, m)); // preserves enfix
             }

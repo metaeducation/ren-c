@@ -20,16 +20,16 @@
     null? case [] ;-- empty case block is legal (e.g. as COMPOSE product)
 )
 (
-    void? case [true []] ;-- void indicates branch was taken (vs. null)
+    trash? case [true []]  ;-- trash indicates branch was taken (vs. null)
 )
 (
-    void? case [
+    trash? case [
         true []
         false [1 + 2]
     ]
 )
 [#2246 (
-    void? case [true []]
+    trash? case [true []]
 )]
 
 (

@@ -316,7 +316,7 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
 // So the best thing to do is to pass in whatever Value* or REBSER* subclass
 // (including Array*, REBCTX*, REBACT*...) is the most useful "smoking gun":
 //
-//     if (VAL_TYPE(value) == REB_VOID)
+//     if (VAL_TYPE(value) == REB_TRASH)
 //         panic (value);
 //
 //     if (ARR_LEN(array) < 2)

@@ -14,7 +14,7 @@
     same? a-value reeval a-value
 )
 ; do block start
-(void? do [])
+(trash? do [])
 (:abs = do [:abs])
 (
     a-value: #{}
@@ -103,7 +103,7 @@
 )
 (0:00 == do [0:00])
 (0.0.0 == do [0.0.0])
-(void? do [()])
+(trash? do [()])
 ('a == do ['a])
 ; do block end
 (
@@ -181,7 +181,7 @@
     a-value: "1"
     1 == do :a-value
 )
-(void? do "")
+(trash? do "")
 (1 = do "1")
 (3 = do "1 2 3")
 (

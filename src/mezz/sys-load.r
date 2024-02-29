@@ -684,7 +684,7 @@ load-module: function [
     ; module/block mod used later for override testing
 
     ; Get and process the header
-    if unset? 'hdr [
+    if not hdr [
         ; Only happens for string, binary or non-extension file/url source
         set [hdr: code: line:] load-header/required data
         case [
@@ -811,7 +811,7 @@ load-module: function [
         ensure block! code
 
         if exports [
-            if unset? 'hdr/exports [
+            if null? hdr/exports [
                 append hdr compose [exports: ((export-list))]
             ] else [
                 append exports hdr/exports

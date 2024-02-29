@@ -2311,9 +2311,9 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                     Init_True(DS_TOP);
                     break;
 
-                case SYM_VOID:
+                case SYM_TRASH:
                     DS_PUSH_TRASH;
-                    Init_Void(DS_TOP);
+                    Init_Trash(DS_TOP);
                     break;
 
                 default: {

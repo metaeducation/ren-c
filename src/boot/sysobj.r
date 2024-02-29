@@ -160,7 +160,7 @@ standard: construct [] [
         ] #BODY
     ]
 
-    proc-return-type: [void!]
+    proc-return-type: [trash!]
 
     proc-body: [
         return: make action! [

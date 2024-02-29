@@ -107,18 +107,18 @@
 ; here to do the same thing.
 
 ; <| and |> were originally enfix, so the following tests would have meant x
-; would be void
+; would be trash
 (
-    value: void
-    x: void
+    value: ~
+    x: ~
 
     3 = (value: 1 + 2 <| 30 + 40 x: value  () ())
 
     did all [value = 3 | x = 3]
 )
 (
-    value: void
-    x: void
+    value: ~
+    x: ~
 
     70 = (value: 1 + 2 |> 30 + 40 x: value () () ())
 
@@ -126,11 +126,11 @@
 )
 
 (
-    is-barrier?: func [x [<end> integer!]] [unset? 'x]
+    is-barrier?: func [x [<end> integer!]] [null? x]
     is-barrier? (<| 10)
 )
 (
-    void? (10 |>)
+    trash? (10 |>)
 )
 
 (
@@ -139,4 +139,3 @@
 (
     1 = (1 <| 2 | 3 + 4 | 5 + 6)
 )
-

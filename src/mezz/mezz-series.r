@@ -126,7 +126,7 @@ replace: function [
 
     ; Consider adding an /any refinement to use find/any, once that works.
 ][
-    if not set? 'pattern [return target]
+    if null? :pattern [return target]
 
     all_REPLACE: all
     all: :lib/all

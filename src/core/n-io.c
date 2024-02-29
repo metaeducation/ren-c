@@ -99,7 +99,7 @@ DECLARE_NATIVE(mold)
 //
 //  "Write text to standard output, or raw BINARY! (for control codes / CGI)"
 //
-//      return: [<opt> void!]
+//      return: [<opt> trash!]
 //      value [<blank> text! char! binary!]
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
@@ -154,7 +154,7 @@ DECLARE_NATIVE(write_stdout)
         DROP_GC_GUARD(temp);
     }
 
-    return Init_Void(D_OUT);
+    return Init_Trash(D_OUT);
 }
 
 

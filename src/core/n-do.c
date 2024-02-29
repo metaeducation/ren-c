@@ -75,7 +75,7 @@ DECLARE_NATIVE(reeval)
         ARG(value)->header.bits ^= VALUE_FLAG_EVAL_FLIP;
     }
 
-    Init_Void(D_OUT);  // !!! R3C patch, better than error on `reeval :elide`
+    Init_Trash(D_OUT);  // !!! R3C patch, better than error on `reeval :elide`
 
     if (Eval_Step_In_Subframe_Throws(D_OUT, frame_, flags, child))
         return R_THROWN;
@@ -283,7 +283,7 @@ DECLARE_NATIVE(do)
     case REB_BLOCK:
     case REB_GROUP: {
         REBIXO indexor = Eval_Array_At_Core(
-            Init_Void(D_OUT), // so `do []` matches up with `while [] [...]`
+            Init_Trash(D_OUT),  // so `do []` matches up with `while [] [...]`
             nullptr, // opt_head (interpreted as no head, not nulled cell)
             Cell_Array(source),
             VAL_INDEX(source),
@@ -308,7 +308,7 @@ DECLARE_NATIVE(do)
             // or DO'd while this operation is in progress.
             //
             REBIXO indexor = Eval_Array_At_Core(
-                Init_Void(D_OUT),
+                Init_Trash(D_OUT),
                 nullptr, // opt_head (no head, not intepreted as nulled cell)
                 Cell_Array(position),
                 VAL_INDEX(position),
@@ -341,7 +341,7 @@ DECLARE_NATIVE(do)
         //
         DECLARE_SUBFRAME (child, f);
         REBFLGS flags = 0;
-        Init_Void(D_OUT);
+        Init_Trash(D_OUT);
         while (NOT_END(f->value)) {
             if (Eval_Step_In_Subframe_Throws(D_OUT, f, flags, child))
                 return R_THROWN;

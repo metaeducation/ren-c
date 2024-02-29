@@ -51,10 +51,15 @@ read: lib/read: adapt 'lib/read [
 trap [
     func [i [<blank> integer!]] [...]
 ] or [
-    QUIT
+    nulled?: func [var [word! path!]] [return null = get var]
+    quit
 ]
 
 print "== SHIMMING OLDER R3 TO MODERN LANGUAGE DEFINITIONS =="
+
+; Older Ren-C considers nulled variables to be "unset".
+;
+nulled?: :unset?
 
 ; The "real apply" hasn't really been designed, but it would be able to mix
 ; positional arguments with named ones.  This is changed by the nature of
@@ -122,4 +127,3 @@ trim: adapt 'trim [ // there's a bug in TRIM/AUTO in 8994d23
         ]
     ]
 ]
-

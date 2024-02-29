@@ -60,7 +60,7 @@ self
 blank
 true
 false
-void
+trash
 on
 off
 yes

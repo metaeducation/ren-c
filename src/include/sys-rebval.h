@@ -304,7 +304,7 @@ INLINE union Reb_Header Endlike_Header(uintptr_t bits) {
 // `Reb_Track_Payload` is the value payload in debug builds for any cell
 // whose VAL_TYPE() doesn't need any information beyond the header.  This
 // offers a chance to inject some information into the payload to help
-// know where the value originated.  It is used by NULL cells, VOID!, BLANK!,
+// know where the value originated.  It is used by NULL cells, TRASH, BLANK!,
 // LOGIC!, and BAR!.
 //
 // In addition to the file and line number where the assignment was made,
@@ -679,7 +679,7 @@ union Reb_Value_Extra {
 union Reb_Value_Payload {
 
   #if defined(DEBUG_TRACK_CELLS) && !defined(DEBUG_TRACK_EXTEND_CELLS)
-    struct Reb_Track_Payload track; // NULL, VOID!, BLANK!, LOGIC!, BAR!
+    struct Reb_Track_Payload track; // NULL, TRASH, BLANK!, LOGIC!, BAR!
   #endif
 
     REBUNI character; // It's CHAR! (for now), but 'char' is a C keyword

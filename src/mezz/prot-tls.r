@@ -614,8 +614,8 @@ client-key-exchange: function [
             ; initialization vector, so the ctx does not use one for the whole
             ; session.  Unset it to make sure.
             ;
-            set in ctx 'client-iv void
-            set in ctx 'server-iv void
+            ctx/client-iv: ~
+            ctx/server-iv: ~
         ]
     ]
 
@@ -786,7 +786,7 @@ encrypt-data: function [
     ;
     if ctx/version > 1.0 [
         insert data ctx/client-iv
-        set in ctx 'client-iv void  ; avoid accidental reuse
+        ctx/client-iv ~  ; avoid accidental reuse
     ]
 
     return data
@@ -918,7 +918,7 @@ parse-messages: function [
             )
             debug ["depadding..."]
             if ctx/version > 1.0 [
-                set in ctx 'server-iv void  ; avoid reuse in TLS 1.1 and above
+                ctx/server-iv: ~  ; avoid reuse in TLS 1.1 and above
             ]
         ]
         debug ["data:" data]

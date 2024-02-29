@@ -7,7 +7,7 @@
 )
 (
     f1: func [return: <void>] [return]
-    void? f1
+    trash? f1
 )
 [#1515 ; the "result" of an arity-0 return should not be assignable
     (a: 1 reeval func [return: <void>] [a: return] :a =? 1)

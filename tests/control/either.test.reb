@@ -82,7 +82,7 @@
         true
     )
 
-    (takes-2-logics (void) = void false)
+    (takes-2-logics (~) = ~ false)
 
     ('arg-required = (trap [takes-2-logics true infix-voider true false])/id)
 ]

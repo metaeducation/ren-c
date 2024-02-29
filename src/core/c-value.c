@@ -45,7 +45,7 @@
 // it can find it).  This will allow those using Address Sanitizer or
 // Valgrind to know a bit more about where the value came from.
 //
-// Additionally, if it happens to be NULLED, VOID!, LOGIC!, BAR!, BLANK!, or
+// Additionally, if it happens to be NULLED, TRASH, LOGIC!, BAR!, BLANK!, or
 // a trash cell, it will dump out where the initialization happened if that
 // information was stored.  (See DEBUG_TRACK_EXTEND_CELLS for more intense
 // debugging scenarios, which track all cell types, but at greater cost.)

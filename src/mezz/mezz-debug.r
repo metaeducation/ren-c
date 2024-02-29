@@ -29,8 +29,8 @@ verify: function [
             fail/where [
                 "Assertion condition returned"
                  choose [
-                    (unset? 'result) "null"
-                    (void? result) "void"
+                    (unset? 'result) "trash"
+                    (null? result) "null"
                     (blank? result) "blank"
                     (result = false) "false"
                 ]

@@ -31,7 +31,7 @@
 // typically the last value an evaluation step computed.
 //
 // If no evaluative product can be produced (as in `do [comment "hi"]` or
-// `do [| | ()]` or just plain `do []`) then Do_XXX() will synthesize a VOID!.
+// `do [| | ()]` or just plain `do []`) then Do_XXX() will synthesize a trash.
 //
 
 
@@ -42,7 +42,7 @@ INLINE bool Do_At_Throws(
     REBSPC *specifier
 ){
     return THROWN_FLAG == Eval_Array_At_Core(
-        Init_Void(out),
+        Init_Trash(out),
         nullptr, // opt_first (null indicates nothing, not nulled cell)
         array,
         index,
@@ -71,7 +71,7 @@ INLINE bool Do_Va_Throws(
     va_list *vaptr // va_end() will be called on success, fail, throw, etc.
 ){
     return THROWN_FLAG == Eval_Va_Core(
-        Init_Void(out),
+        Init_Trash(out),
         opt_first,
         vaptr,
         DO_FLAG_TO_END | DO_FLAG_EXPLICIT_EVALUATE

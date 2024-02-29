@@ -188,7 +188,7 @@ help: function [
     make-libuser: does [
         libuser: copy system/contexts/lib
         for-each [key val] system/contexts/user [
-            if not void? get* 'val [
+            if not trash? get* 'val [
                append libuser reduce [key :val]
             ]
         ]
@@ -218,8 +218,8 @@ help: function [
                 null [
                     print ["No information on" topic "(is null)"]
                 ]
-                void! [
-                    print [topic "is unset (e.g. a VOID! value)"]
+                trash! [
+                    print [topic "is unset (e.g. a trash ~ value)"]
                 ]
             ] then [
                 return

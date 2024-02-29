@@ -4,17 +4,17 @@
 (not null? 1)
 
 (
-    is-barrier?: func [x [<end> integer!]] [unset? 'x]
+    is-barrier?: func [x [<end> integer!]] [null? x]
     is-barrier? ()
 )
-(void! = type of (do []))
-(not void? 1)
+(trash! = type of (do []))
+(not trash? 1)
 
 [
-    ('need-non-void = (trap [a: void | a])/id)
+    ('need-non-trash = (trap [a: ~ | a])/id)
 ]
 
-; NULL and VOID! assignments via SET are legal.  You are expected to do your
+; NULL and TRASH assignments via SET are legal.  You are expected to do your
 ; own checks with ENSURE and NON.
 ;
 (
@@ -23,10 +23,10 @@
 )
 (not error? trap [set 'a null])
 (
-    value: void
-    error? trap [set quote a: non void! :value]
+    value: ~
+    error? trap [set quote a: non trash! :value]
 )
-(not error? trap [set 'a void])
+(not error? trap [set 'a ~])
 
 (
     a-value: null

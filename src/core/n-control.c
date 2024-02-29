@@ -36,7 +36,7 @@
 //
 // * If a branch *does* run--and that branch evaluation produces a NULL--then
 //   conditionals designed to be used with branching (like IF or CASE) will
-//   return a VOID! result.  Voids are neither true nor false, and since they
+//   return a trash result.  Trashes are neither true nor false, and since they
 //   are values (unlike NULL), they distinguish the signal of a branch that
 //   evaluated to NULL from no branch at all.
 //
@@ -73,7 +73,7 @@ DECLARE_NATIVE(if)
     if (Do_Branch_With_Throws(D_OUT, ARG(branch), ARG(condition)))
         return R_THROWN;
 
-    return Voidify_If_Nulled(D_OUT); // null means no branch (cues ELSE, etc.)
+    return Trashify_If_Nulled(D_OUT);  // trash means no branch (cues ELSE)
 }
 
 
@@ -98,7 +98,7 @@ DECLARE_NATIVE(if_not)
     if (Do_Branch_With_Throws(D_OUT, ARG(branch), ARG(condition)))
         return R_THROWN;
 
-    return Voidify_If_Nulled(D_OUT); // null means no branch (cues ELSE, etc.)
+    return Trashify_If_Nulled(D_OUT);  // trash means no branch (cues ELSE)
 }
 
 
@@ -204,8 +204,8 @@ bool Either_Test_Core_Throws(
             return true;
         }
 
-        if (IS_VOID(out))
-            fail (Error_Void_Conditional_Raw());
+        if (IS_TRASH(out))
+            fail (Error_Trash_Conditional_Raw());
 
         Init_Logic(out, IS_TRUTHY(out));
         return false; }
@@ -312,13 +312,13 @@ DECLARE_NATIVE(else)
 {
     INCLUDE_PARAMS_OF_ELSE; // faster than EITHER-TEST specialized w/`VALUE?`
 
-    if (not IS_NULLED(ARG(optional))) // Note: VOID!s are crucially non-NULL
+    if (not IS_NULLED(ARG(optional)))  // Note: trash is crucially non-NULL
         RETURN (ARG(optional));
 
     if (Do_Branch_With_Throws(D_OUT, ARG(branch), NULLED_CELL))
         return R_THROWN;
 
-    return D_OUT; // don't voidify, allows chaining: `else [...] then [...]`
+    return D_OUT;  // don't trashify, allows chaining: `else [...] then [...]`
 }
 
 
@@ -339,13 +339,13 @@ DECLARE_NATIVE(then)
 {
     INCLUDE_PARAMS_OF_THEN; // faster than EITHER-TEST specialized w/`NULL?`
 
-    if (IS_NULLED(ARG(optional))) // Note: VOID!s are crucially non-NULL
+    if (IS_NULLED(ARG(optional)))  // Note: trash is crucially non-NULL
         return nullptr; // left didn't run, so signal THEN didn't run either
 
     if (Do_Branch_With_Throws(D_OUT, ARG(branch), ARG(optional)))
         return R_THROWN;
 
-    return Voidify_If_Nulled(D_OUT); // if left ran, make THEN signal it did
+    return Trashify_If_Nulled(D_OUT);  // if left ran, make THEN signal it did
 }
 
 
@@ -366,7 +366,7 @@ DECLARE_NATIVE(also)
 {
     INCLUDE_PARAMS_OF_ALSO; // `then func [x] [(...) :x]` => `also [...]`
 
-    if (IS_NULLED(ARG(optional))) // Note: VOID!s are crucially non-NULL
+    if (IS_NULLED(ARG(optional)))  // Note: trash is crucially non-NULL
         return nullptr;
 
     if (Do_Branch_With_Throws(D_OUT, ARG(branch), ARG(optional)))
@@ -404,7 +404,7 @@ DECLARE_NATIVE(match)
 
     if (VAL_LOGIC(temp)) {
         if (IS_FALSEY(value)) // see above for why false match not passed thru
-            return Init_Void(D_OUT);
+            return Init_Trash(D_OUT);
         return Move_Value(D_OUT, value);
     }
 
@@ -428,7 +428,7 @@ DECLARE_NATIVE(match)
 DECLARE_NATIVE(non)
 //
 // !!! This is a partial implementation of NON implemented for R3C, just good
-// enough for `non void!` and `non null` cases to give validation options to
+// enough for `non [trash!]` and `non null` cases to give validation options to
 // those wanting a less permissive SET (now that it has no /ANY refinement).
 {
     INCLUDE_PARAMS_OF_NON;
@@ -440,9 +440,9 @@ DECLARE_NATIVE(non)
         if (IS_NULLED(value))
             fail ("NON expected value to not be NULL, but it was");
     }
-    else if (VAL_TYPE_KIND(test) == REB_VOID) {  // specialize common case
-        if (IS_VOID(value))
-            fail ("NON expected value to not be VOID!, but it was");
+    else if (VAL_TYPE_KIND(test) == REB_TRASH) {  // specialize common case
+        if (IS_TRASH(value))
+            fail ("NON expected value to not be trash, but it was");
     }
     else if (not TYPE_CHECK(value, VAL_TYPE_KIND(test))) {
         fail ("NON expected value to not match a type, but it did match");
@@ -689,7 +689,7 @@ static REB_R Case_Choose_Core_May_Throw(
             } else
                 fail (Error_Invalid_Core(D_OUT, f->specifier));
 
-            Voidify_If_Nulled(D_OUT); // null is reserved for no branch taken
+            Trashify_If_Nulled(D_OUT);  // null is reserved for no branch taken
         }
 
         if (not REF(all)) {
@@ -875,7 +875,7 @@ DECLARE_NATIVE(switch)
             return R_THROWN;
         }
 
-        Voidify_If_Nulled(D_OUT); // null is reserved for no branch run
+        Trashify_If_Nulled(D_OUT);  // null is reserved for no branch run
 
         if (not REF(all)) {
             Abort_Frame(f);
@@ -949,7 +949,7 @@ DECLARE_NATIVE(default)
 
     if (
         not IS_NULLED(D_OUT)
-        and not IS_VOID(D_OUT)
+        and not IS_TRASH(D_OUT)
         and (not IS_BLANK(D_OUT) or REF(only))
     ){
         return D_OUT;  // count it as "already set"
@@ -1006,7 +1006,7 @@ DECLARE_NATIVE(catch)
 //
 //     catch: catch/result [...] 'uncaught
 //
-// When the value being set is VOID!, SET/ANY must be used at this time.  This
+// When the value being set is TRASH, SET/ANY must be used at this time.  This
 // is a bit more inefficient in the API since it requires scanning.  Non-void
 // cases are done with directly referencing the SET native.
 {
@@ -1111,7 +1111,7 @@ DECLARE_NATIVE(catch)
     // so this assignment has to wait until the end.
     //
     if (REF(result))  // caught case voids result to minimize likely use
-        rebElide(NAT_VALUE(set), ARG(uncaught), VOID_VALUE);
+        rebElide(NAT_VALUE(set), ARG(uncaught), TRASH_VALUE);
 
     return D_OUT;
 }

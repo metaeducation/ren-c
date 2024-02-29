@@ -245,7 +245,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
             special == param
             or IS_NULLED(special)
             or (
-                IS_VOID(special)
+                IS_TRASH(special)
                 and GET_VAL_FLAG(special, ARG_MARKED_CHECKED)
             )
         );
@@ -673,7 +673,7 @@ bool Specialize_Action_Throws(
     // unspecialized) in the exemplar now all contain REB_X_PARTIAL, but we
     // must now convert these transitional placeholders to...
     //
-    // * VOID! -- Unspecialized, BUT in traversal order before a partial
+    // * TRASH -- Unspecialized, BUT in traversal order before a partial
     //   refinement.  That partial must pre-empt Eval_Core_Throws() fulfilling
     //   a use of this unspecialized refinement from a PATH! at the callsite.
     //
@@ -710,7 +710,7 @@ bool Specialize_Action_Throws(
             if (ordered == DS_TOP)
                 Init_Nulled(partial); // no more partials coming
             else {
-                Init_Void(partial); // still partials to go, signal pre-empt
+                Init_Trash(partial);  // still partials to go, signal pre-empt
                 SET_VAL_FLAG(partial, ARG_MARKED_CHECKED);
             }
             goto continue_loop;

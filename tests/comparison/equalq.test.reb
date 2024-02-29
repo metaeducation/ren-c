@@ -520,19 +520,19 @@
         ]
 )]
 
-; VOID is legal to test with equality (as is UNSET! in R3-Alpha/Red)
+; TRASH is legal to test with equality (as is UNSET! in R3-Alpha/Red)
 [
-    (equal? void void)
-    (not-equal? void blank)
-    (not-equal? blank void)
-    (equal? (equal? blank void) (equal? void blank))
-    (not (void = blank))
-    (void <> blank)
-    (not (blank = void))
-    (blank != void)
-    (void = void)
-    (not (void != void))
-    (equal? (blank = void) (void = blank))
+    (equal? ~ ~)
+    (not-equal? ~ blank)
+    (not-equal? blank ~)
+    (equal? (equal? blank ~) (equal? ~ blank))
+    (not (~ = blank))
+    (~ <> blank)
+    (not (blank = ~))
+    (blank != ~)
+    (~ = ~)
+    (not (~ != ~))
+    (equal? (blank = ~) (~ = blank))
 ]
 
 ; NULL is legal to test with equality (as is UNSET! in R3-Alpha/Red)

@@ -472,7 +472,7 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
         Init_Bar(out);
     }
     else if (IS_BLANK(v)) {
-        Init_Nulled(out);  // may be turned to VOID! after loop, or error
+        Init_Nulled(out);  // may be turned to trash after loop, or error
     }
     else if (ANY_WORD(v)) {
         Move_Opt_Var_May_Fail(out, v, specifier);
@@ -487,8 +487,8 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
     else
         fail (Error_Invalid_Core(v, specifier));
 
-    if (not any and IS_VOID(out))
-        fail (Error_Need_Non_Void_Core(v, specifier));
+    if (not any and IS_TRASH(out))
+        fail (Error_Need_Non_Trash_Core(v, specifier));
 }
 
 
@@ -500,7 +500,7 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
 //      return: [<opt> any-value!]
 //      source [blank! any-word! any-path! block!]
 //          {Word or path to get, or block of words or paths (blank is no-op)}
-//      /any "Retrieve ANY-VALUE! (e.g. do not error on VOID!)"
+//      /any "Retrieve ANY-VALUE! (e.g. do not error on trash)"
 //  ]
 //
 DECLARE_NATIVE(get)
@@ -527,7 +527,7 @@ DECLARE_NATIVE(get)
             VAL_SPECIFIER(source),
             REF(any)
         );
-        Voidify_If_Nulled(dest);  // !!! can't put nulls in blocks (blankify?)
+        Trashify_If_Nulled(dest);  // !!! can't put nulls in blocks (blankify?)
     }
 
     TERM_ARRAY_LEN(results, VAL_LEN_AT(source));
@@ -538,7 +538,7 @@ DECLARE_NATIVE(get)
 //
 //  get*: native [
 //
-//  {Gets the value of a word or path, allows VOID!}
+//  {Gets the value of a word or path, allows trash}
 //
 //      return: [<opt> any-value!]
 //      source "Word or path to get"
@@ -557,7 +557,7 @@ DECLARE_NATIVE(get_p)
         D_OUT,
         ARG(source),
         SPECIFIED,
-        true  // allow VOID!, e.g. GET/ANY
+        true  // allow trash, e.g. GET/ANY
     );
 
     return D_OUT;
@@ -642,10 +642,10 @@ DECLARE_NATIVE(set)
 //     >> print b
 //     2
 //
-// Note: Initial prescriptivisim about not allowing VOID! in SET has been
+// Note: Initial prescriptivisim about not allowing trash in SET has been
 // changed to allow void assignments, with the idea that preventing it can
-// be done e.g. with `set var non void! (...)` or more narrow ideas like
-// `set numeric-var ensure integer (...)`.  SET thus mirrors SET-WORD! in
+// be done e.g. with `set var non [trash!] (...)` or more narrow ideas like
+// `set numeric-var ensure integer! (...)`.  SET thus mirrors SET-WORD! in
 // allowing void assignments.
 {
     INCLUDE_PARAMS_OF_SET;
@@ -718,8 +718,8 @@ DECLARE_NATIVE(try)
 {
     INCLUDE_PARAMS_OF_TRY;
 
-    if (IS_VOID(ARG(optional)))
-        fail ("TRY cannot accept VOID! values");
+    if (IS_TRASH(ARG(optional)))
+        fail ("TRY cannot accept trash values");
 
     if (IS_NULLED(ARG(optional)))
         return Init_Blank(D_OUT);
@@ -742,15 +742,15 @@ DECLARE_NATIVE(opt)
 {
     INCLUDE_PARAMS_OF_OPT;
 
-    if (IS_VOID(ARG(optional)))
-        fail ("OPT cannot accept VOID! values");
+    if (IS_TRASH(ARG(optional)))
+        fail ("OPT cannot accept trash values");
 
-    // !!! Experimental idea: opting a null gives you a void.  You generally
+    // !!! Experimental idea: opting a null gives you a trash.  You generally
     // don't put OPT on expressions you believe can be null, so this permits
     // creating a likely error in those cases.  To get around it, OPT TRY
     //
     if (IS_NULLED(ARG(optional)))
-        return Init_Void(D_OUT);
+        return Init_Trash(D_OUT);
 
     RETURN (ARG(optional));
 }
@@ -935,7 +935,7 @@ DECLARE_NATIVE(identity)
 //
 //  {Releases the underlying data of a value so it can no longer be accessed}
 //
-//      return: [void!]
+//      return: [trash!]
 //      memory [any-series! any-context! handle!]
 //  ]
 //
@@ -954,7 +954,7 @@ DECLARE_NATIVE(free)
     FAIL_IF_READ_ONLY_SERIES(s);
 
     Decay_Series(s);
-    return Init_Void(D_OUT); // !!! Should it return the freed, not-useful value?
+    return Init_Trash(D_OUT);  // !!! Should it return freed, not-useful value?
 }
 
 
@@ -1189,11 +1189,11 @@ DECLARE_NATIVE(aliases_q)
 INLINE bool Is_Set(const Value* location)
 {
     if (ANY_WORD(location))
-        return ANY_VALUE(Get_Opt_Var_May_Fail(location, SPECIFIED));
+        return not IS_TRASH(Get_Opt_Var_May_Fail(location, SPECIFIED));
 
     DECLARE_VALUE (temp); // result may be generated
     Get_Path_Core(temp, location, SPECIFIED);
-    return ANY_VALUE(temp);
+    return not IS_TRASH(temp);
 }
 
 
@@ -1301,37 +1301,7 @@ DECLARE_NATIVE(null_q)
 
 
 //
-//  Is_Voided: C
-//
-bool Is_Voided(const Value* location) {
-    if (ANY_WORD(location))
-        return IS_VOID(Get_Opt_Var_May_Fail(location, SPECIFIED));
-
-    DECLARE_VALUE (temp); // result may be generated
-    Get_Path_Core(temp, location, SPECIFIED);
-    return IS_VOID(temp);
-}
-
-
-//
-//  voided?: native [
-//
-//  {Tells you if a path or variable are set to VOID!}
-//
-//      return: [logic!]
-//      var [word! path!]
-//  ]
-//
-DECLARE_NATIVE(voided_q)
-{
-    INCLUDE_PARAMS_OF_VOIDED_Q;
-
-    return Init_Logic(D_OUT, Is_Voided(ARG(var)));
-}
-
-
-//
-//  voidify: native [
+//  trashify: native [
 //
 //  "Turn nulls into voids, passing through all other values"
 //
@@ -1339,12 +1309,12 @@ DECLARE_NATIVE(voided_q)
 //      optional [<opt> any-value!]
 //  ]
 //
-DECLARE_NATIVE(voidify)
+DECLARE_NATIVE(trashify)
 {
-    INCLUDE_PARAMS_OF_VOIDIFY;
+    INCLUDE_PARAMS_OF_TRASHIFY;
 
     if (IS_NULLED(ARG(optional)))
-        return Init_Void(D_OUT);
+        return Init_Trash(D_OUT);
 
     RETURN (ARG(optional));
 }
@@ -1367,7 +1337,7 @@ DECLARE_NATIVE(nothing_q)
 {
     INCLUDE_PARAMS_OF_NOTHING_Q;
 
-    // !!! Should VOID! be considered "nothing" also?
+    // !!! Should trash be considered "nothing" also?
     //
     return Init_Logic(D_OUT, IS_NULLED_OR_BLANK(ARG(value)));
 }

@@ -494,9 +494,9 @@ void Virtual_Bind_Deep_To_New_Context(
             // with something.  However, in case any other code gets run,
             // it can't be left trash...so we'd need it to be at least an
             // unreadable blank.  But since this code is also shared with USE,
-            // it doesn't do any initialization...so go ahead and put void.
+            // it doesn't do any initialization...so go ahead and put trash.
             //
-            Init_Void(var);
+            Init_Trash(var);
 
             assert(rebinding); // shouldn't get here unless we're rebinding
 

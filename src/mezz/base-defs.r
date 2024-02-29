@@ -23,7 +23,7 @@ REBOL [
 ]
 
 
-unset: func [word [any-word!]] [set/any word void]  ; !!! was missing in R3C
+unset: func [word [any-word!]] [set/any word ~]
 
 
 ; Start with basic debugging
@@ -212,7 +212,7 @@ reeval func [
         ]
     ]
 ]
-    void?:
+    trash?:
     blank?:
     bar?:
     lit-bar?:
@@ -275,8 +275,8 @@ reeval func [
 print: func [
     {Textually output spaced line (evaluating elements if a block)}
 
-    return: "NULL if blank input or effectively empty block, otherwise VOID!"
-        [<opt> void!]
+    return: "NULL if blank input or effectively empty block, otherwise trash"
+        [<opt> trash!]
     line "Line of text or block, blank or [] has NO output, newline allowed"
         [<blank> char! text! block!]
 ][

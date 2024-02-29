@@ -127,7 +127,7 @@ console!: make object! [
     ]
 
     print-result: function [return: <void> v [<opt> any-value!]]  [
-        if void? last-result: get/any 'v [
+        if trash? last-result: get/any 'v [
             ; Actions that by contract return no information return void.
             ; Since it's what comes back from things like HELP it's best
             ; that the console not print anything in response.
@@ -457,7 +457,7 @@ ext-console-impl: function [
         ; something like that) then whoever broke into the REPL takes
         ; care of that.
         ;
-        assert [unset? 'result]
+        assert [result = null]
         if unset? 'system/console or [not system/console] [
             emit [start-console]
         ]
@@ -602,11 +602,11 @@ ext-console-impl: function [
         return <prompt>
     ]
 
-    if block? :result [
+    if block? result [
         assert [length of result = 1]
         result: get/any 'result/1
     ] else [
-        assert [unset? 'result]
+        assert [null? result]
     ]
 
     if group? prior [ ;-- plain execution of user code

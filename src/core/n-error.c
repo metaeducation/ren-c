@@ -46,7 +46,7 @@ static const Value* Trap_Dangerous(REBFRM *frame_) {
     UNUSED(ARG(valid));
 
     if (Do_Branch_Throws(D_OUT, ARG(code)))
-        return VOID_VALUE;
+        return TRASH_VALUE;
 
     return nullptr;
 }
@@ -77,7 +77,7 @@ DECLARE_NATIVE(trap)
 //
 //     error: trap/result [...] 'valid
 //
-// !!! When the value being set is VOID!, SET/ANY must be used at this time.
+// !!! When the value being set is trash, SET/ANY must be used at this time.
 // This is a bit more inefficient in the API since it requires scanning.
 // Non-void cases are done with directly referencing the SET native.
 //
@@ -98,13 +98,13 @@ DECLARE_NATIVE(trap)
         return nullptr;
     }
 
-    if (IS_VOID(error))  // signal used to indicate a throw
+    if (IS_TRASH(error))  // signal used to indicate a throw
         return R_THROWN;
 
     assert(IS_ERROR(error));
 
     if (REF(result))  // error case voids result to minimize likely use
-        rebElide(NAT_VALUE(set), ARG(valid), VOID_VALUE);
+        rebElide(NAT_VALUE(set), ARG(valid), TRASH_VALUE);
 
     return error;
 }

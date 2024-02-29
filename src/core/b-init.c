@@ -430,7 +430,7 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
     for (i = 0; names[i] != nullptr; ++i) {
         Symbol* str = Intern_UTF8_Managed(cb_cast(names[i]), strlen(names[i]));
         Value* val = Append_Context(Lib_Context, nullptr, str);
-        assert(IS_VOID(val));  // functions will fill in
+        assert(IS_TRASH(val));  // functions will fill in
         UNUSED(val);
     }
 }
@@ -860,10 +860,10 @@ static void Init_Root_Vars(void)
     Init_True(&PG_True_Value[0]);
     TRASH_CELL_IF_DEBUG(&PG_True_Value[1]);
 
-    Erase_Cell(&PG_Void_Value[0]);
-    Erase_Cell(&PG_Void_Value[1]);
-    Init_Void(&PG_Void_Value[0]);
-    TRASH_CELL_IF_DEBUG(&PG_Void_Value[1]);
+    Erase_Cell(&PG_Trash_Value[0]);
+    Erase_Cell(&PG_Trash_Value[1]);
+    Init_Trash(&PG_Trash_Value[0]);
+    TRASH_CELL_IF_DEBUG(&PG_Trash_Value[1]);
 
     Erase_Cell(&PG_R_Thrown[0]);
     Erase_Cell(&PG_R_Thrown[1]);
@@ -1570,7 +1570,7 @@ static Value* Startup_Mezzanine(BOOT_BLK *boot)
         fail (Error_No_Catch_For_Throw(result));
     }
 
-    if (not IS_VOID(result))
+    if (not IS_TRASH(result))
         panic (result); // FINISH-INIT-CORE is a PROCEDURE, returns void
 
     return nullptr;

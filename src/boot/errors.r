@@ -80,7 +80,7 @@ Syntax: [
 
 Script: [
     no-value:           [:arg1 {has no value}]
-    need-non-void:      [:arg1 {is VOID! (Note: use GET/ANY to GET voids)}]
+    need-non-trash:     [:arg1 {is trash (~) (Note: use GET/ANY to GET trash)}]
     need-non-end:       [{end was reached while trying to set} :arg1]
     not-bound:          [:arg1 {word is not bound to a context}]
     no-relative:        [:arg1 {word is bound relative to context not on stack}]
@@ -125,7 +125,7 @@ Script: [
     bad-func-arg:       [{function argument} :arg1 {is not valid}]
 
     needs-return-opt:   [:arg1 {can't return null (see RETURN: [<opt> ...])}]
-    needs-return-value: [:arg1 {can't return void! (see RETURN: <void>)}]
+    needs-return-value: [:arg1 {can't return trash (see RETURN: [trash!])}]
     bad-return-type:    [:arg1 {doesn't have RETURN: enabled for} :arg2]
 
     no-refine:          [:arg1 {has no refinement called} :arg2]
@@ -196,7 +196,7 @@ Script: [
 
     conflicting-key:    [:arg1 {key conflicts; use SELECT or PUT with /CASE}]
 
-    void-conditional:   [{VOID! values are not conditionally true or false}]
+    trash-conditional:  [{Trash values (~) not conditionally true or false}]
     non-block-branch:   [{Evaluated non-block/function used as branch} :arg1]
 
     native-unloaded:    [{Native has been unloaded:} :arg1]

@@ -87,7 +87,7 @@ was: func [
 ]
 
 assert [null = binding of :return] ;-- it's archetypal, nowhere to return to
-return: void  ; so don't let the archetype be visible
+return: ~  ; so don't let the archetype be visible
 
 function: func [
     {Make action with set-words as locals, <static>, <in>, <with>, <local>}
@@ -432,7 +432,7 @@ redescribe: function [
     ; If you kill all the notes then they will be cleaned up.  The meta
     ; object will be left behind, however.
     ;
-    if notes and [every [param note] notes [unset? 'note]] [
+    if notes and [every [param note] notes [unset? 'note or (null? note)]] [
         meta/parameter-notes: _
     ]
 
@@ -547,9 +547,9 @@ attempt: func [
     code [block! action!]
 ][
     trap [
-        return do code ;; VOIDIFY of null avoids conflation, but is overkill
+        return do code  ; TRASHIFY of null avoids conflation, but is overkill
     ]
-    null ;; don't look at trapped error value, just return null
+    null  ; don't look at trapped error value, just return null
 ]
 
 for-next: redescribe [

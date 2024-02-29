@@ -659,11 +659,11 @@ const void *RL_rebR(RebolValue* v)
 
 
 //
-//  rebVoid: RL_API
+//  rebTrash: RL_API
 //
-RebolValue* RL_rebVoid(void)
+RebolValue* RL_rebTrash(void)
 {
-    return Init_Void(Alloc_Value());
+    return Init_Trash(Alloc_Value());
 }
 
 
@@ -876,7 +876,7 @@ RebolValue* RL_rebRescue(
     if (VAL_TYPE_RAW(result) == REB_ERROR) {
         if (Is_Api_Value(result))
             rebRelease(result);
-        return rebVoid();
+        return rebTrash();
     }
 
     if (not Is_Api_Value(result))
@@ -1574,7 +1574,7 @@ void RL_rebPromise_callback(intptr_t promise_id)
 
     Value* result = Alloc_Value();
     if (THROWN_FLAG == Eval_Array_At_Core(
-        Init_Void(result),
+        Init_Trash(result),
         nullptr, // opt_first (null indicates nothing, not nulled cell)
         arr,
         0, // index

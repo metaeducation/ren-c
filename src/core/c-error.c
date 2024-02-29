@@ -897,14 +897,14 @@ REBCTX *Error_Need_Non_End_Core(const Cell* target, REBSPC *specifier) {
 
 
 //
-//  Error_Need_Non_Void_Core: C
+//  Error_Need_Non_Trash_Core: C
 //
-REBCTX *Error_Need_Non_Void_Core(const Cell* target, REBSPC *specifier) {
+REBCTX *Error_Need_Non_Trash_Core(const Cell* target, REBSPC *specifier) {
     assert(ANY_WORD(target) or ANY_PATH(target));
 
     DECLARE_VALUE (specific);
     Derelativize(specific, target, specifier);
-    return Error_Need_Non_Void_Raw(specific);
+    return Error_Need_Non_Trash_Raw(specific);
 }
 
 
@@ -1234,7 +1234,7 @@ REBCTX *Error_Bad_Return_Type(REBFRM *f, enum Reb_Kind kind) {
     if (kind == REB_MAX_NULLED)
         return Error_Needs_Return_Opt_Raw(label);
 
-    if (kind == REB_VOID)
+    if (kind == REB_TRASH)
         return Error_Needs_Return_Value_Raw(label);
 
     return Error_Bad_Return_Type_Raw(label, Datatype_From_Kind(kind));

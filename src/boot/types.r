@@ -131,17 +131,6 @@ REBOL [
         #define ANY_INERT(v) \
             ANY_INERT_KIND(VAL_TYPE(v))
 
-        /* Doing a SET-WORD! or SET-PATH!, or a plain SET assignment, does
-           not generally tolerate either voids or nulls.  By having them
-           sequential in the type chart they can be tested together fast. */
-
-        INLINE bool IS_NULLED_OR_VOID_KIND(enum Reb_Kind k) {
-            return k >= REB_VOID;
-        }
-
-        #define IS_NULLED_OR_VOID(v) \
-            IS_NULLED_OR_VOID_KIND(VAL_TYPE(v))
-
         /*
          * This is another kind of test that might have some way to speed up
          * based on types or bits, or as an alternate to another speedup if
@@ -240,9 +229,7 @@ blank       unit        blank   +       +       -
 ; end of inert unbindable types
 bar         unit        -       +       +       -
 lit-bar     unit        -       +       +       -
-void        unit        -       +       +       -
+trash       unit        -       +       +       -
 
 ; Note that the "null?" state has no associated NULL! datatype.  Internally
-; it uses REB_MAX, but like the REB_0 it stays off the type map.  It is
-; right next to void so that IS_NULLED_OR_VOID() can test for both with >=
-; REB_VOID...
+; it uses REB_MAX, but like the REB_0 it stays off the type map.

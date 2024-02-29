@@ -9,7 +9,7 @@
 ; return-less return value tests
 (
     f: does []
-    void? f
+    trash? f
 )
 (
     f: does [:abs]
@@ -179,7 +179,7 @@
 )
 (
     f: does [()]
-    void? f
+    trash? f
 )
 (
     f: does ['a]
@@ -344,10 +344,10 @@
     (reeval does [reduce reduce [:self] true])
 ]
 [#2025 (
-    ; ensure x and y are void from previous tests, as the test here
+    ; ensure x and y are trash from previous tests, as the test here
     ; is trying to cause an error...
-    x: void
-    y: void
+    x: ~
+    y: ~
 
     body: [x + y]
     f: make action! reduce [[x] body]
@@ -413,5 +413,5 @@
         use [x] [return] ;-- https://github.com/metaeducation/ren-c/issues/755
         42
     ]
-    void? f
+    trash? f
 )]

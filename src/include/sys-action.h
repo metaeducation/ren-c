@@ -204,9 +204,9 @@ INLINE Value* ACT_SPECIALTY_HEAD(REBACT *a) {
 //
 #define ACTION_FLAG_RETURN ACTION_FLAG(0)
 
-// Uses the Voider_Dispatcher() (implies ACTION_FLAG_RETURN + arity-0 RETURN)
+// Uses the Trasher_Dispatcher() (implies ACTION_FLAG_RETURN + arity-0 RETURN)
 //
-#define ACTION_FLAG_VOIDER ACTION_FLAG(1)
+#define ACTION_FLAG_TRASHER ACTION_FLAG(1)
 
 // DEFERS_LOOKBACK_ARG flag is a cached property, which tells you whether a
 // function defers its first real argument when used as a lookback.  Because

@@ -1,17 +1,22 @@
 ; functions/context/unset.r
 (
-    a: null
+    a: ~
     not set? 'a
 )
 (
-    set 'a null
+    set 'a ~
     not set? 'a
 )
 (
-    a: void
-    voided? 'a
+    a: ~
+    unset? 'a
 )
 (
-    set 'a void
-    voided? 'a
+    set 'a ~
+    unset? 'a
+)
+(
+    a: 10
+    unset 'a
+    not set? 'a
 )

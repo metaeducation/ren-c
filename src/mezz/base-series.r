@@ -164,7 +164,7 @@ charset: function [
     ;-- /CAPACITY SIZE or something similar, but keep it working for now.
     ;--
     length_CHARSET: length      ; refinement passed in
-    length: void                ; helps avoid overlooking the ambiguity
+    length: ~                   ; helps avoid overlooking the ambiguity
 
     init: either length_CHARSET [len][[]]
     append make bitset! init chars

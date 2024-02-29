@@ -26,7 +26,7 @@ dump: function [
     <static> enablements (make map! [])
 ][
     print: adapt 'lib/print [
-        if set? 'sigil [
+        if sigil [
             if select enablements sigil <> #on [return]
             write-stdout sigil
             write-stdout space
@@ -35,7 +35,7 @@ dump: function [
 
     val-to-text: function [return: [text!] val [<opt> any-value!]] [
         case [
-            not set? 'val ["// null"]
+            null? val ["// null"]
             object? :val [unspaced ["make object! [" (dump-obj val) "]"]]
             default [mold/limit :val system/options/dump-size]
         ]
@@ -219,7 +219,7 @@ dump-obj: function [
         wild: did all [set? 'pat | text? pat | find pat "*"]
 
         for-each [word val] obj [
-            if void! = type: type of get* 'val [
+            if trash! = type: type of get* 'val [
                 continue  ; !!! review
             ]
 

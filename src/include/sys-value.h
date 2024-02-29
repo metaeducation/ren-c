@@ -101,7 +101,7 @@
 //
 // In the debug build, "Trash" cells (NODE_FLAG_FREE) can use their payload to
 // store where and when they were initialized.  This also applies to some
-// datatypes like BLANK!, BAR!, LOGIC!, or VOID!--since they only use their
+// datatypes like BLANK!, BAR!, LOGIC!, or TRASH--since they only use their
 // header bits, they can also use the payload for this in the debug build.
 //
 // (Note: The release build does not canonize unused bits of payloads, so
@@ -765,37 +765,30 @@ INLINE const Value* NULLIZE(const Value* cell)
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  VOID!
+//  TRASH!
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Void! results are the default for `do []`, and unlike NULL a void! *is*
-// a value...however a somewhat unfriendly one.  While NULLs are falsey, void!
-// is *neither* truthy nor falsey.  But like NULL they can't be casually
-// assigned via a SET-WORD!, SET-PATH!, or SET.  Though a void! can be put in
-// an array (a NULL can't) if the evaluator comes across a void! cell in an
-// array, it will trigger an error.
+// TRASH! results are the default for `do []`, and unlike NULL a trash! *is*
+// a value...however a somewhat unfriendly one.  While NULLs are falsey, trash
+// is *neither* truthy nor falsey.
 //
-// Void! also comes into play in what is known as "voidification" of NULLs.
+// TRASH! also comes into play in what is known as "voidification" of NULLs.
 // Loops wish to reserve NULL as the return result if there is a BREAK, and
 // conditionals like IF and SWITCH want to reserve NULL to mean there was no
 // branch taken.  So when branches or loop bodies produce null, they need
 // to be converted to some ANY-VALUE!.
 //
-// The console doesn't print anything for void! evaluation results by default,
-// so that routines like HELP won't have additional output than what they
-// print out.
-//
 
-#define VOID_VALUE \
-    c_cast(const Value*, &PG_Void_Value[0])
+#define TRASH_VALUE \
+    c_cast(const Value*, &PG_Trash_Value[0])
 
-#define Init_Void(out) \
-    RESET_CELL((out), REB_VOID)
+#define Init_Trash(out) \
+    RESET_CELL((out), REB_TRASH)
 
-INLINE Value* Voidify_If_Nulled(Value* cell) {
+INLINE Value* Trashify_If_Nulled(Value* cell) {
     if (IS_NULLED(cell))
-        Init_Void(cell);
+        Init_Trash(cell);
     return cell;
 }
 
@@ -805,9 +798,9 @@ INLINE Value* Voidify_If_Nulled(Value* cell) {
 // than it is to be able to return BLANK! from a loop, so blanks are voidified
 // alongside NULL (reserved for BREAKing)
 //
-INLINE Value* Voidify_If_Nulled_Or_Blank(Value* cell) {
+INLINE Value* Trashify_If_Nulled_Or_Blank(Value* cell) {
     if (IS_NULLED_OR_BLANK(cell))
-        Init_Void(cell);
+        Init_Trash(cell);
     return cell;
 }
 
@@ -845,8 +838,8 @@ INLINE Value* Voidify_If_Nulled_Or_Blank(Value* cell) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Blank! values are a kind of "reified" null/void!, and you can convert
-// between them using TRY and OPT:
+// Blank! values are a kind of "reified" null, and you can convert between
+// them using TRY and OPT:
 //
 //     >> try ()
 //     == _
@@ -944,8 +937,8 @@ INLINE Value* Voidify_If_Nulled_Or_Blank(Value* cell) {
 INLINE bool IS_TRUTHY(const Cell* v) {
     if (GET_VAL_FLAG(v, VALUE_FLAG_FALSEY))
         return false;
-    if (IS_VOID(v))
-        fail (Error_Void_Conditional_Raw());
+    if (IS_TRASH(v))
+        fail (Error_Trash_Conditional_Raw());
     return true;
 }
 
@@ -972,8 +965,8 @@ INLINE bool IS_TRUTHY(const Cell* v) {
 INLINE bool IS_CONDITIONAL_TRUE(const Value* v) {
     if (GET_VAL_FLAG(v, VALUE_FLAG_FALSEY))
         return false;
-    if (IS_VOID(v))
-        fail (Error_Void_Conditional_Raw());
+    if (IS_TRASH(v))
+        fail (Error_Trash_Conditional_Raw());
     return true;
 }
 

@@ -916,12 +916,12 @@ bool Eval_Core_Throws(REBFRM * const f)
                     goto used_refinement; // !!! ...this would fix it up.
                 }
 
-                // A "typechecked" void means it's unspecialized, but partial
+                // A "typechecked" trash means it's unspecialized, but partial
                 // refinements are still coming that may have higher priority
                 // in taking arguments at the callsite than the current
                 // refinement, if it's in use due to a PATH! invocation.
                 //
-                if (IS_VOID(f->special))
+                if (IS_TRASH(f->special))
                     goto unspecialized_refinement_must_pickup; // defer this
 
                 // A "typechecked" ISSUE! with binding indicates a partial
@@ -1011,7 +1011,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 
             switch (pclass) {
               case PARAM_CLASS_LOCAL:
-                Init_Void(f->arg);  // !!! f->special?
+                Init_Trash(f->arg);  // !!! f->special?
                 SET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
 
@@ -1766,8 +1766,8 @@ bool Eval_Core_Throws(REBFRM * const f)
             goto process_action;
         }
 
-        if (IS_VOID(current_gotten))  // need `:x` if `x` is unset
-            fail (Error_Need_Non_Void_Core(current, f->specifier));
+        if (IS_TRASH(current_gotten))  // need `:x` if `x` is unset
+            fail (Error_Need_Non_Trash_Core(current, f->specifier));
 
         Move_Value(f->out, current_gotten);
         break;
@@ -1785,7 +1785,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 // data stack (which provides GC protection).  Eval_Step_Mid_Frame_Throws()
 // has remarks on how this is done.
 //
-// Note that Ren-C deemed it better to allow NULL and VOID! cells to be
+// Note that Ren-C deemed it better to allow null and trash cells to be
 // assigned via SET-WORD! without erroring.  Use ENSURE or NON to check value.
 //
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1799,7 +1799,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 
         REBFLGS flags = (f->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
 
-        Init_Void(f->out); // `1 x: comment "hi"` shouldn't set x to 1!
+        Init_Trash(f->out);  // `1 x: comment "hi"` shouldn't set x to 1!
 
         if (CURRENT_CHANGES_IF_FETCH_NEXT) { // must use new frame
             DECLARE_SUBFRAME(child, f);
@@ -1949,8 +1949,8 @@ bool Eval_Core_Throws(REBFRM * const f)
             goto return_thrown;
         }
 
-        if (IS_VOID(f->out))  // need GET/ANY if path is VOID!
-            fail (Error_Need_Non_Void_Core(current, f->specifier));
+        if (IS_TRASH(f->out))  // need GET/ANY if path is trash
+            fail (Error_Need_Non_Trash_Core(current, f->specifier));
 
         if (IS_ACTION(f->out)) {
             //
@@ -2003,7 +2003,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 //     left
 //     == 20
 //
-// Note that Ren-C deemed it better to allow NULL and VOID! cells to be
+// Note that Ren-C deemed it better to allow NULL and trash cells to be
 // assigned via SET-PATH! without erroring, use ENSURE or NON to check value.
 //
 //==//////////////////////////////////////////////////////////////////////==//
@@ -2017,7 +2017,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 
         REBFLGS flags = (f->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
 
-        Init_Void(f->out); // `1 o/x: comment "hi"` shouldn't set o/x to 1!
+        Init_Trash(f->out);  // `1 o/x: comment "hi"` shouldn't set o/x to 1!
 
         if (CURRENT_CHANGES_IF_FETCH_NEXT) { // must use new frame
             DECLARE_SUBFRAME(child, f);
@@ -2196,17 +2196,17 @@ bool Eval_Core_Throws(REBFRM * const f)
 
 //==//////////////////////////////////////////////////////////////////////==//
 //
-// [VOID!]
+// [TRASH!]
 //
-// VOID is "evaluatively unfriendly", and unlike NULL is an actual value.
+// Trash is "evaluatively unfriendly", it shouldn't reach the evaluator.
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      case REB_VOID:
+      case REB_TRASH:
         if (not EVALUATING(current))
             goto inert;
 
-        fail ("VOID! cells cannot be evaluated");
+        fail ("Trash cells cannot be evaluated");
 
 //==//////////////////////////////////////////////////////////////////////==//
 //

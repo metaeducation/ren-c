@@ -13,7 +13,7 @@
 (10 = match :even? 10)
 (null = match :even? 3)
 
-(void? match blank! _)
+(trash? match blank! _)
 (null = match blank! 10)
 (null = match blank! false)
 

@@ -136,7 +136,7 @@ DECLARE_NATIVE(stats)
 //
 //  {Provide access to services in <valgrind/callgrind.h>}
 //
-//      return: [void!]
+//      return: [trash!]
 //      'instruction [word!]
 //          {Currently just either ON or OFF}
 //  ]
@@ -167,7 +167,7 @@ DECLARE_NATIVE(callgrind)
     default:
         fail ("Currently CALLGRIND only supports ON and OFF");
     }
-    return Init_Void(D_OUT);
+    return Init_Trash(D_OUT);
   #else
     UNUSED(ARG(instruction));
     fail ("This executable wasn't compiled with INCLUDE_CALLGRIND_NATIVE");

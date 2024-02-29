@@ -16,5 +16,5 @@
     ]
 )(
     once: oneshot
-    void? once [null]
+    trash? once [null]
 )

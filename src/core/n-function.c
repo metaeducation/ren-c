@@ -164,7 +164,7 @@ DECLARE_NATIVE(unwind)
 //
 //  {RETURN, giving a result to the caller}
 //
-//      value "If no argument is given, result will be a VOID!"
+//      value "If no argument is given, result will be a trash"
 //          [<end> <opt> any-value!]
 //  ]
 //
@@ -223,7 +223,7 @@ DECLARE_NATIVE(return)
     }
     else {
         if (IS_ENDISH_NULLED(v))
-            Init_Void(v); // `do [return]` acts as `return void`
+            Init_Trash(v);  // `do [return]` acts as `return trash`
 
         // Check type NOW instead of waiting and letting Eval_Core_Throws()
         // check it.  Reasoning is that the error can indicate the callsite,
@@ -844,7 +844,7 @@ REB_R N_Shot_Dispatcher(REBFRM *f)
     if (Do_Branch_Throws(f->out, code))
         return R_THROWN;
 
-    return Voidify_If_Nulled(f->out);
+    return Trashify_If_Nulled(f->out);
 }
 
 
@@ -863,7 +863,7 @@ REB_R N_Upshot_Dispatcher(REBFRM *f)
     if (Do_Branch_Throws(f->out, code))
         return R_THROWN;
 
-    return Voidify_If_Nulled(f->out);
+    return Trashify_If_Nulled(f->out);
 }
 
 
