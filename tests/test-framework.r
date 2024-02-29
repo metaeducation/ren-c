@@ -61,7 +61,11 @@ make object! compose [
                 "test returned null"
             ]
             error? :result [
-                to text! result/id
+                any [
+                    to text! result/id
+                    mold result/message   ; errors with no ID may have BLOCK!
+                    "(unknown)"
+                ]
             ]
 
             elide (result: first result)
