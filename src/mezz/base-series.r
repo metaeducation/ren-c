@@ -89,6 +89,11 @@ last: func [
 ;
 
 
+; REPEND very literally does what it says, which is to reduce the argument
+; and call APPEND.  This is not necessarily the most useful operation.
+; Note that `x: 10 | repend [] 'x` would give you `[x]` in R3-Alpha
+; and not 10.
+;
 repend: redescribe [
     "APPEND a reduced value to a series."
 ](
@@ -100,44 +105,14 @@ repend: redescribe [
 )
 
 
-; REPEND very literally does what it says, which is to reduce the argument
-; and call APPEND.  This is not necessarily the most useful operation.
-; Note that `x: 10 | repend [] 'x` would give you `[x]` in R3-Alpha
-; and not 10.  The new JOIN (temporarily ADJOIN) and JOIN-OF operations
-; can take more license with their behavior if it makes the function more
-; convenient, and not be beholden to the behavior that the name REPEND would
-; seem to suggest.
-;
-join: func [ ;-- renamed to ADJOIN in %sys-start.r for user context, temporary
-    "Concatenates values to the end of a series."
-    return: [any-series! port! map! object! module! bitset!]
-    series [any-series! port! map! object! module! bitset!]
-    value [<opt> any-value!]
+join: func [
+    "Concatenates values to the end of a string or path."
+    return: [binary! any-string! path!]
+    series [binary! any-string! path!]
+    value [<opt> binary! any-string! path! word! integer!]
 ][
-    case [
-        block? :value [repend series :value]
-        group? :value [
-            fail/where
-                <- "Can't JOIN a GROUP! onto a series (use APPEND)."
-                <- 'value
-        ]
-        action? :value [
-            fail/where
-                <- "Can't JOIN an ACTION! onto a series (use APPEND)."
-                <- 'value
-        ]
-    ] else [
-        append/only series :value ;-- paths, words, not in block
-    ]
+    return append/only copy series value
 ]
-
-join-of: redescribe [
-    "Concatenates values to the end of a copy of a series."
-](
-    adapt 'join [
-        series: copy series
-    ]
-)
 
 append-of: redescribe [
     "APPEND variation that copies the input series first."

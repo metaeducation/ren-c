@@ -76,7 +76,7 @@ disable-user-includes: function [
             some space include-rule to end
         ] then [
             if inline and [pos: find headers to file! name] [
-                change/part line-iter (read/lines join-all [path-zlib name]) 1
+                change/part line-iter (read/lines join path-zlib name) 1
                 take pos
             ] else [
                 insert line unspaced [{//} space]
@@ -332,7 +332,7 @@ for-each h-file [
     %zlib.h
     %deflate.h
 ] [
-    append header-lines read/lines join-all [path-zlib h-file]
+    append header-lines read/lines (join path-zlib h-file)
 ]
 
 disable-user-includes header-lines
@@ -349,7 +349,7 @@ insert header-lines [
 
 insert header-lines make-warning-lines file-include {ZLIB aggregated header file}
 
-write/lines join-all [path-include file-include] header-lines
+write/lines (join path-include file-include) header-lines
 
 
 
@@ -359,7 +359,7 @@ write/lines join-all [path-include file-include] header-lines
 
 source-lines: copy []
 
-append source-lines read/lines join-all [path-zlib %crc32.c]
+append source-lines read/lines (join path-zlib %crc32.c)
 
 ;
 ; Macros DO1 and DO8 are defined differently in crc32.c, and if you don't #undef
@@ -386,7 +386,7 @@ for-each c-file [
     %inffast.c
     %inflate.c
 ] [
-    append source-lines read/lines join-all [path-zlib c-file]
+    append source-lines read/lines (join path-zlib c-file)
 ]
 
 disable-user-includes/stdio/inline source-lines copy [%trees.h %inffixed.h %crc32.h]
@@ -402,4 +402,4 @@ insert source-lines make-warning-lines file-source {ZLIB aggregated source file}
 
 all-source: newlined source-lines
 
-write join-all [path-source file-source] fix-const-char fix-kr all-source
+write (join path-source file-source) fix-const-char fix-kr all-source

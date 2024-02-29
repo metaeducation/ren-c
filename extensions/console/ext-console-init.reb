@@ -228,10 +228,12 @@ console!: make object! [
         list-shortcuts: [print system/console/shortcuts]
         changes: [
             say-browser
-            browse (join-all [
+            browse (join
                 https://github.com/metaeducation/ren-c/blob/master/CHANGES.md#
-                join-all ["" system/version/1 system/version/2 system/version/3]
-            ])
+                unspaced [
+                    system/version/1 "." system/version/2 "."system/version/3
+                ]
+            )
         ]
         topics: [
             say-browser
@@ -271,7 +273,7 @@ start-console: function [
         skin-file: %console-skin.reb
         not find o/suppress skin-file
         o/resources
-        exists? skin-file: join-of o/resources skin-file
+        exists? skin-file: join o/resources skin-file
     ] then [
         trap [
             new-skin: do load skin-file
@@ -747,7 +749,7 @@ why: function [
     if error? err [
         say-browser
         err: lowercase unspaced [err/type #"-" err/id]
-        browse join-of http://www.rebol.com/r3/docs/errors/ [err ".html"]
+        browse join http://www.rebol.com/r3/docs/errors/ unspaced [err ".html"]
     ] else [
         print "No information is available."
     ]

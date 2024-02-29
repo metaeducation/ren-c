@@ -63,13 +63,14 @@ m-name: mod
 l-m-name: lowercase copy m-name
 u-m-name: uppercase copy m-name
 
-c-src: join-of repo-dir fix-win32-path to file! ensure text! args/SRC
+c-src: join repo-dir fix-win32-path to file! ensure text! args/SRC
 
 print ["building" m-name "from" c-src]
 
 
 e1: (make-emitter "Module C Header File Preface"
-    ensure file! join-all [output-dir/tmp-mod- l-m-name %.h])
+    ensure file! (join output-dir unspaced [%tmp-mod- l-m-name %.h])
+)
 
 
 verbose: false
@@ -301,7 +302,7 @@ replace script-name "mod" "ext"
 inc-name: copy file-name
 replace inc-name ".c" "-init.c"
 
-dest: join-of output-dir join-of %tmp- inc-name
+dest: join output-dir unspaced [%tmp- inc-name]
 
 e: make-emitter "Ext custom init code" dest
 

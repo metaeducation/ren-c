@@ -66,7 +66,7 @@ e/emit {
      */
     extern const Byte core_header_source[];
     const Byte core_header_source[] = {
-        $<Binary-To-C Join-Of Inp #{00}>
+        $<Binary-To-C Join Inp #{00}>
     };
 }
 

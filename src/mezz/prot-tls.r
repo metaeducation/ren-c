@@ -416,7 +416,7 @@ client-hello: function [
     random/seed now/time/precise
     loop 28 [append ctx/client-random (random/secure 256) - 1]
 
-    cs-data: join-all map-each item cipher-suites [
+    cs-data: to binary! map-each item cipher-suites [
         if binary? item [item]
     ]
 
@@ -688,7 +688,7 @@ finished: function [
     who-finished: if ctx/server? ["server finished"] else ["client finished"]
 
     seed: if ctx/version < 1.2 [
-        join-all [
+        to binary! reduce [
             checksum/method ctx/handshake-messages 'md5
             checksum/method ctx/handshake-messages 'sha1
         ]
@@ -702,7 +702,7 @@ finished: function [
         sha256 ctx/handshake-messages
     ]
 
-    return join-all [
+    return to binary! reduce [
         #{14}       ; protocol message type (20=Finished)
         #{00 00 0c} ; protocol message length (12 bytes)
 
@@ -745,7 +745,7 @@ encrypt-data: function [
     ; Message Authentication Code
     ; https://tools.ietf.org/html/rfc5246#section-6.2.3.1
     ;
-    MAC: checksum/method/key join-all [
+    MAC: checksum/method/key to binary! reduce [
         to-bin ctx/seq-num-w 8              ; sequence number (64-bit int)
         msg-type                            ; msg type
         ctx/ver-bytes                       ; version
@@ -753,7 +753,7 @@ encrypt-data: function [
         content                             ; msg content
     ] (to word! ctx/hash-method) ctx/client-mac-key
 
-    data: join-all [content MAC]
+    data: to binary! reduce [content MAC]
 
     if ctx/block-size [
         ; add the padding data in CBC mode
@@ -1115,7 +1115,7 @@ parse-messages: function [
                             "server finished"
                         ]
                         seed: if ctx/version < 1.2 [
-                            join-all [
+                            to binary! reduce [
                                 checksum/method ctx/handshake-messages 'md5
                                 checksum/method ctx/handshake-messages 'sha1
                             ]
@@ -1150,7 +1150,7 @@ parse-messages: function [
                 skip-amount: either ctx/encrypted? [
                     mac: copy/part skip data len + 4 ctx/hash-size
 
-                    mac-check: checksum/method/key join-all [
+                    mac-check: checksum/method/key to binary! reduce [
                         to-bin ctx/seq-num-r 8  ; 64-bit sequence number
                         #{16}                   ; msg type
                         ctx/ver-bytes           ; version
@@ -1185,7 +1185,7 @@ parse-messages: function [
             ]
             len: length of msg-obj/content
             mac: copy/part skip data len ctx/hash-size
-            mac-check: checksum/method/key join-all [
+            mac-check: checksum/method/key to binary! reduce [
                 to-bin ctx/seq-num-r 8  ; sequence number (64-bit int in R3)
                 #{17}                   ; msg type
                 ctx/ver-bytes           ; version
@@ -1246,7 +1246,7 @@ prf: function [
     ;
     ; PRF(secret, label, seed) = P_<hash>(secret, label + seed)
     ;
-    seed: join-all [#{} label seed]
+    seed: to binary! reduce [label seed]
 
     if ctx/version < 1.2 [
         ;
@@ -1264,14 +1264,14 @@ prf: function [
         a: seed ; A(0)
         while [output-length > length of p-md5] [
             a: checksum/method/key a 'md5 s-1 ; A(n)
-            append p-md5 checksum/method/key join-all [a seed] 'md5 s-1
+            append p-md5 checksum/method/key to binary! reduce [a seed] 'md5 s-1
         ]
 
         p-sha1: copy #{}
         a: seed ; A(0)
         while [output-length > length of p-sha1] [
             a: checksum/method/key a 'sha1 s-2 ; A(n)
-            append p-sha1 checksum/method/key join-all [a seed] 'sha1 s-2
+            append p-sha1 checksum/method/key to binary! reduce [a seed] 'sha1 s-2
         ]
         return (
             (copy/part p-md5 output-length)
@@ -1289,7 +1289,7 @@ prf: function [
     a: seed ; A(0)
     while [output-length > length of p-sha256] [
         a: hmac-sha256 secret a
-        append p-sha256 hmac-sha256 secret join-all [a seed]
+        append p-sha256 hmac-sha256 secret to binary! reduce [a seed]
     ]
     take/last/part p-sha256 ((length of p-sha256) - output-length)
     return p-sha256
@@ -1304,7 +1304,7 @@ make-key-block: function [
         ctx: ctx
         secret: ctx/master-secret
         label: "key expansion"
-        seed: join-all [ctx/server-random ctx/client-random]
+        seed: to binary! reduce [ctx/server-random ctx/client-random]
         output-length: (
             (ctx/hash-size + ctx/crypt-size)
             + (either ctx/block-size [ctx/iv-size] [0])
@@ -1322,7 +1322,7 @@ make-master-secret: function [
         ctx: ctx
         secret: pre-master-secret
         label: "master secret"
-        seed: join-all [ctx/client-random ctx/server-random]
+        seed: to binary! reduce [ctx/client-random ctx/server-random]
         output-length: 48
     ]
 ]
@@ -1692,7 +1692,7 @@ sys/make-scheme [
                 scheme: 'tcp
                 host: port/spec/host
                 port-id: port/spec/port-id
-                ref: join-all [tcp:// host ":" port-id]
+                ref: join tcp:// unspaced [host ":" port-id]
             ]
 
             port/data: port/state/port-data

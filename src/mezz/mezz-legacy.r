@@ -106,15 +106,8 @@ prin: function [
 ]
 
 
-; REJOIN in R3-Alpha meant "reduce and join"; the idea of JOIN in Ren-C
-; already implies reduction of the appended data.  JOIN-ALL is a friendlier
-; name, suggesting the join result is the type of the first reduced element.
-;
-; But JOIN-ALL doesn't act exactly the same as REJOIN--in fact, most cases
-; of REJOIN should be replaced not with JOIN-ALL, but with UNSPACED.  Note
-; that although UNSPACED always returns a STRING!, the AS operator allows
-; aliasing to other string types (`as tag! unspaced [...]` will not create a
-; copy of the series data the way TO TAG! would).
+; REJOIN is deprecated in Ren-C, due to its erratic semantics.
+; Use UNSPACED and SPACED to make strings.
 ;
 rejoin: function [
     "Reduces and joins a block of values."

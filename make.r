@@ -20,15 +20,15 @@ do <tools/rebmake.r>
 if what-dir = repo-dir [
     print ["BUILDING FROM REPO-DIR:" repo-dir]
     print "(...so assuming you want build products in /BUILD subdirectory)"
-    output-dir: join-of repo-dir %build/
+    output-dir: join repo-dir %build/
     make-dir output-dir
 ] else [
     output-dir: what-dir
 ]
 
-src-dir: join-of repo-dir %/src
+src-dir: join repo-dir %src/
 
-user-config: make object! load repo-dir/configs/default-config.r
+user-config: make object! load join repo-dir %configs/default-config.r
 
 ;;;; PROCESS ARGS
 ; args are:
@@ -91,7 +91,7 @@ to-obj-path: func [
 ][
     ext: find/last file #"."
     remove/part ext (length of ext)
-    join-of %objs/ head-of append ext rebmake/target-platform/obj-suffix
+    join %objs/ head-of append ext rebmake/target-platform/obj-suffix
 ]
 
 gen-obj: func [
@@ -231,13 +231,13 @@ gen-obj: func [
 
     make rebmake/object-file-class compose/only [
         source: to-file case [
-            dir [join-of directory s]
+            dir [join directory s]
             main [s]
-            default [join-of src-dir s]
+            default [join src-dir s]
         ]
         output: to-obj-path to text! ;\
             either main [
-                join-of %main/ (last ensure path! s)
+                join %main/ (last ensure path! s)
             ] [s]
         cflags: either empty? flags [_] [flags]
         definitions: (try get 'definitions)
@@ -368,10 +368,10 @@ targets: [
         ]
     ]
     'makefile [
-        rebmake/makefile/generate (join-of output-dir %makefile) solution
+        rebmake/makefile/generate (join output-dir %makefile) solution
     ]
     'nmake [
-        rebmake/nmake/generate (join-of output-dir %makefile) solution
+        rebmake/nmake/generate (join output-dir %makefile) solution
     ]
 ]
 target-names: make block! 16
@@ -1400,9 +1400,9 @@ vars: reduce [
             'file = exists? value: system/options/boot
             all [
                 user-config/rebol-tool
-                'file = exists? value: join-of repo-dir user-config/rebol-tool
+                'file = exists? value: join repo-dir user-config/rebol-tool
             ]
-            'file = exists? value: join-of repo-dir unspaced [
+            'file = exists? value: join repo-dir unspaced [
                 {r3-make}
                 rebmake/target-platform/exe-suffix
             ]
@@ -1510,7 +1510,7 @@ for-each file os-file-block [
     ; For better or worse, original R3-Alpha didn't use FILE! in %file-base.r
     ; for filenames.  Note that `+` markers should be removed by this point.
     ;
-    file: join-of %objs/ (ensure [word! path!] file)
+    file: join %objs/ (ensure [word! path!] file)
     path: first split-path (ensure file! file)
     find folders path or [append folders path]
 ]
@@ -1531,7 +1531,7 @@ app: make rebmake/application-class [
     ][
         reduce [
             make rebmake/cmd-strip-class [
-                file: join-of output opt rebmake/target-platform/exe-suffix
+                file: join output opt rebmake/target-platform/exe-suffix
             ]
         ]
     ]
@@ -1598,7 +1598,7 @@ for-each ext dynamic-extensions [
             opt ext/cflags
     ]
     append dynamic-libs ext-proj: make rebmake/dynamic-library-class [
-        name: join-of either system-config/os-base = 'windows ["r3-"]["libr3-"]
+        name: join either system-config/os-base = 'windows ["r3-"]["libr3-"]
             lowercase to text! ext/name
         output: to file! name
         depends: append compose [
@@ -1612,7 +1612,7 @@ for-each ext dynamic-extensions [
         ][
             reduce [
                 make rebmake/cmd-strip-class [
-                    file: join-of output opt rebmake/target-platform/dll-suffix
+                    file: join output opt rebmake/target-platform/dll-suffix
                 ]
             ]
         ]
@@ -1649,7 +1649,9 @@ clean: make rebmake/entry-class [
     commands: flatten reduce [
         make rebmake/cmd-delete-class [file: %objs/]
         make rebmake/cmd-delete-class [file: %prep/]
-        make rebmake/cmd-delete-class [file: join-of %r3 opt rebmake/target-platform/exe-suffix]
+        make rebmake/cmd-delete-class [
+            file: join %r3 opt rebmake/target-platform/exe-suffix
+        ]
     ]
 ]
 
@@ -1658,11 +1660,11 @@ check: make rebmake/entry-class [
     depends: append copy dynamic-libs app
     commands: collect [
         keep make rebmake/cmd-strip-class [
-            file: join-of app/output opt rebmake/target-platform/exe-suffix
+            file: join app/output opt rebmake/target-platform/exe-suffix
         ]
         for-each s dynamic-libs [
             keep make rebmake/cmd-strip-class [
-                file: join-of s/output opt rebmake/target-platform/dll-suffix
+                file: join s/output opt rebmake/target-platform/dll-suffix
             ]
         ]
     ]

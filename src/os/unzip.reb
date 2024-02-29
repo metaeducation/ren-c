@@ -173,7 +173,7 @@ ctx-zip: context [
 
         return reduce [
             ; local file entry
-            join-all [
+            to binary! reduce [
                 local-file-sig
                 #{0A00}  ; version (both Mac OS Zip and Linux Zip put #{0A00})
                 #{0000}  ; flags
@@ -193,7 +193,7 @@ ctx-zip: context [
             ; central-dir file entry.  note that the file attributes are
             ; interpreted based on the OS of origin--can't say Amiga :-(
             ;
-            join-all [
+            to binary! reduce [
                 central-file-sig
                 #{1E}  ; version of zip spec this encoder speaks (#{1E}=3.0)
                 #{03}  ; OS of origin: 0=DOS, 3=Unix, 7=Mac, 1=Amiga...
@@ -228,7 +228,7 @@ ctx-zip: context [
             return value
         ]
         value: decode-url value
-        join-of %"" [
+        join %"" unspaced [
             value/host "/"
             any [value/path ""]
             any [value/target ""]
@@ -315,7 +315,7 @@ ctx-zip: context [
             offset: me + length of file-entry
         ]
 
-        append where join-all [
+        append where to binary! reduce [
             central-directory
             end-of-central-sig
             #{0000}  ; disk num
@@ -346,7 +346,7 @@ ctx-zip: context [
         info: either all [quiet | not verbose] [
             func [value] []
         ][
-            func [value][prin join-of "" value]
+            func [value][prin form value]
         ]
         if not block? where [
             where: my dirize

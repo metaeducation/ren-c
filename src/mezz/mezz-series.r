@@ -47,28 +47,6 @@ extend: func [
 ]
 
 
-join-all: function [
-    "Reduces and appends a block of values together."
-    return: [<opt> any-series!]
-        "Will be the type of the first non-null series produced by evaluation"
-    block [block!]
-        "Values to join together"
-    <local> position base
-][
-    until [
-        block: (evaluate/set block 'base) else [return null]
-        set? 'base
-    ]
-
-    ; !!! It isn't especially compelling that  `join-of 3 "hello"` gives you
-    ; `3hello`; defaulting to a string doesn't make obviously more sense than
-    ; `[3 "hello"]` when using a series operation.  However, so long as
-    ; JOIN-OF is willing to do so, it will be legal to do it here.
-    ;
-    join-of base block
-]
-
-
 remold: redescribe [
     {Reduces and converts a value to a REBOL-readable string.}
 ](

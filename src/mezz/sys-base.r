@@ -99,7 +99,7 @@ do*: function [
     ; is a URL!, then adjust the source to be a URL! based from that path.
     ;
     if all [url? original-path | file? source] [
-         source: join-of original-path source
+         source: join original-path source
     ]
 
     ; Load the code (do this before CHANGE-DIR so if there's an error in the
