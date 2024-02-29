@@ -271,18 +271,6 @@ int main(int argc, char *argv_ansi[])
     Bind_Values_Set_Midstream_Shallow(VAL_ARRAY_HEAD(host_code), startup_ctx);
     Bind_Values_Deep(VAL_ARRAY_HEAD(host_code), startup_ctx);
 
-    // The new policy for source code in Ren-C is that it loads read only.
-    // This didn't go through the LOAD Rebol action or anything like it, so
-    // go ahead and lock it manually.
-    //
-    // !!! This file is supposed to be based on libRebol APIs, and the method
-    // of creating a new context here is low level using the internal API.
-    // However the console context is created should ideally be done in a
-    // way that would work well for users, by leveraging modules or some other
-    // level of abstraction, where issues like this would be taken care of.
-    //
-    rebElide("lib/lock", host_code);
-
     Value* host_start = rebValueInline(host_code); // HOST-START is an ACTION!
     rebRelease(host_code);
 
