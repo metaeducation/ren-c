@@ -377,7 +377,7 @@ host-start: function [
         if error [
             print either o/verbose [[e]] ["!! use --verbose for more detail"]
         ]
-        return [quit/with 1]
+        return <die>
     ]
 
     to-dir: function [
