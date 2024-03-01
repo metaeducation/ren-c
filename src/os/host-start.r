@@ -71,7 +71,6 @@ make-banner: function [
             ]
             (append append str s newline)
         ]
-        end
     ]
     return str
 ]
@@ -496,7 +495,7 @@ host-start: function [
 
     while-not [tail? argv] [
 
-        is-option: did parse/case argv/1 [
+        is-option: did parse/match/case argv/1 [
 
             ["--" end] (
                 ; Double-dash means end of command line arguments, and the

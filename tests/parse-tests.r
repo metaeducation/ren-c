@@ -1,90 +1,90 @@
 ; Is PARSE working at all?
 
-(did parse "abc" ["abc" end])
+(did parse/match "abc" ["abc" end])
 
 ; Blank and empty block case handling
 
-(did parse [] [end])
-(did parse [] [[[]] end])
-(did parse [_ _ _] [_ _ _ end])
-(not parse [x] [end])
-(not parse [x] [_ _ _ end])
-(not parse [x] [[[]] end])
-(did parse [_ _ _] [[[_ _ _] end]])
-(did parse [x _] ['x _ end])
-(did parse [_ x] [_ 'x end])
-(did parse [x] [[] 'x [] end])
+(did parse/match [] [end])
+(did parse/match [] [[[]]])
+(did parse/match [_ _ _] [_ _ _ end])
+(not parse/match [x] [end])
+(not parse/match [x] [_ _ _])
+(not parse/match [x] [[[]] end])
+(did parse/match [_ _ _] [[[_ _ _] end]])
+(did parse/match [x _] ['x _ end])
+(did parse/match [_ x] [_ 'x end])
+(did parse/match [x] [[] 'x []])
 
-(did parse "" [end])
-(did parse "" [[[]] end])
-(did parse "   " [_ _ _ end])
-(not parse "x" [end])
-(not parse "x" [_ _ _ end])
-(not parse "x" [[[]] end])
-(did parse "   " [[[_ _ _] end]])
-(did parse "x " ["x" _ end])
-(did parse " x" [_ "x" end])
-(did parse "x" [[] "x" [] end])
+(did parse/match "" [])
+(did parse/match "" [[[]] end])
+(did parse/match "   " [_ _ _ end])
+(not parse/match "x" [end])
+(not parse/match "x" [_ _ _ end])
+(not parse/match "x" [[[]]])
+(did parse/match "   " [[[_ _ _] end]])
+(did parse/match "x " ["x" _ end])
+(did parse/match " x" [_ "x"])
+(did parse/match "x" [[] "x" [] end])
 
 
 ; SET-WORD! (store current input position)
 
 (
-    res: did parse ser: [x y] [pos: skip skip end]
+    res: did parse/match ser: [x y] [pos: skip skip]
     all [res | pos = ser]
 )
 (
-    res: did parse ser: [x y] [skip pos: skip end]
+    res: did parse/match ser: [x y] [skip pos: skip]
     all [res | pos = next ser]
 )
 (
-    res: did parse ser: [x y] [skip skip pos: end]
+    res: did parse/match ser: [x y] [skip skip pos:]
     all [res | pos = tail of ser]
 )
 [#2130 (
-    res: did parse ser: [x] [set val pos: word! end]
+    res: did parse/match ser: [x] [set val pos: word!]
     all [res | val = 'x | pos = ser]
 )]
 [#2130 (
-    res: did parse ser: [x] [set val: pos: word! end]
+    res: did parse/match ser: [x] [set val: pos: word!]
     all [res | val = 'x | pos = ser]
 )]
 [#2130 (
-    res: did parse ser: "foo" [copy val pos: skip end]
+    res: did parse/match ser: "foo" [copy val pos: skip]
     all [not res | val = "f" | pos = ser]
 )]
 [#2130 (
-    res: did parse ser: "foo" [copy val: pos: skip end]
+    res: did parse/match ser: "foo" [copy val: pos: skip]
     all [not res | val = "f" | pos = ser]
 )]
 
 ; TO/THRU integer!
 
-(did parse "abcd" [to 3 "cd" end])
-(did parse "abcd" [to 5 end])
-(did parse "abcd" [to 128 end])
+(did parse/match "abcd" [to 3 "cd"])
+(did parse/match "abcd" [to 5])
+(did parse/match "abcd" [to 128])
 
 [#1965
-    (did parse "abcd" [thru 3 "d" end])
+    (did parse/match "abcd" [thru 3 "d"])
 ]
 [#1965
-    (did parse "abcd" [thru 4 end])
+    (did parse/match "abcd" [thru 4])
 ]
 [#1965
-    (did parse "abcd" [thru 128 end])
+    (did parse/match "abcd" [thru 128])
 ]
 [#1965
-    (did parse "abcd" ["ab" to 1 "abcd" end])
+    (did parse/match "abcd" ["ab" to 1 "abcd"])
 ]
 [#1965
-    (did parse "abcd" ["ab" thru 1 "bcd" end])
+    (did parse/match "abcd" ["ab" thru 1 "bcd"])
 ]
 
-; parse THRU tag!
+; parse/match THRU tag!
 
 [#682 (
     t: _
-    parse "<tag>text</tag>" [thru <tag> copy t to </tag> end]
+    parse/match "<tag>text</tag>" [thru <tag> copy t to </tag>]
     t == "text"
 )]
 
@@ -92,51 +92,50 @@
 
 (
     i: 0
-    parse "a." [
+    parse/match "a." [
         any [thru "a" (i: i + 1 j: to-value if i > 1 [[end skip]]) j]
-        end
     ]
     i == 1
 )
 
 [#1959
-    (did parse "abcd" [thru "d" end])
+    (did parse/match "abcd" [thru "d"])
 ]
 [#1959
-    (did parse "abcd" [to "d" skip end])
+    (did parse/match "abcd" [to "d" skip])
 ]
 
 [#1959
-    (did parse "<abcd>" [thru <abcd> end])
+    (did parse/match "<abcd>" [thru <abcd>])
 ]
 [#1959
-    (did parse [a b c d] [thru 'd end])
+    (did parse/match [a b c d] [thru 'd])
 ]
 [#1959
-    (did parse [a b c d] [to 'd skip end])
+    (did parse/match [a b c d] [to 'd skip])
 ]
 
 ; self-invoking rule
 
 [#1672 (
     a: [a end]
-    error? trap [parse [] a]
+    error? trap [parse/match [] a]
 )]
 
 ; repetition
 
 [#1280 (
-    parse "" [(i: 0) 3 [["a" |] (i: i + 1)] end]
+    parse/match "" [(i: 0) 3 [["a" |] (i: i + 1)]]
     i == 3
 )]
 [#1268 (
     i: 0
-    parse "a" [any [(i: i + 1)] end]
+    parse/match "a" [any [(i: i + 1)]]
     i == 1
 )]
 [#1268 (
     i: 0
-    parse "a" [while [(i: i + 1 j: to-value if i = 2 [[fail]]) j] end]
+    parse/match "a" [while [(i: i + 1 j: to-value if i = 2 [[fail]]) j]]
     i == 2
 )]
 
@@ -145,116 +144,116 @@
 [#1267 (
     b: "abc"
     c: ["a" | "b"]
-    a2: [any [b e: (d: [:e]) then fail | [c | (d: [fail]) fail]] d end]
-    a4: [any [b then e: (d: [:e]) fail | [c | (d: [fail]) fail]] d end]
-    equal? parse "aaaaabc" a2 parse "aaaaabc" a4
+    a2: [any [b e: (d: [:e]) then fail | [c | (d: [fail]) fail]] d]
+    a4: [any [b then e: (d: [:e]) fail | [c | (d: [fail]) fail]] d]
+    equal? parse/match "aaaaabc" a2 parse/match "aaaaabc" a4
 )]
 
 ; NOT rule
 
 [#1246
-    (did parse "1" [not not "1" "1" end])
+    (did parse/match "1" [not not "1" "1"])
 ]
 [#1246
-    (did parse "1" [not [not "1"] "1" end])
+    (did parse/match "1" [not [not "1"] "1"])
 ]
 [#1246
-    (not parse "" [not 0 "a" end])
+    (not parse/match "" [not 0 "a"])
 ]
 [#1246
-    (not parse "" [not [0 "a"] end])
+    (not parse/match "" [not [0 "a"]])
 ]
 [#1240
-    (did parse "" [not "a" end])
+    (did parse/match "" [not "a"])
 ]
 [#1240
-    (did parse "" [not skip end])
+    (did parse/match "" [not skip])
 ]
 [#1240
-    (did parse "" [not fail end])
+    (did parse/match "" [not fail])
 ]
 
 
 ; TO/THRU + bitset!/charset!
 
 [#1457
-    (did parse "a" compose [thru (charset "a") end])
+    (did parse/match "a" compose [thru (charset "a")])
 ]
 [#1457
-    (not parse "a" compose [thru (charset "a") skip end])
+    (not parse/match "a" compose [thru (charset "a") skip])
 ]
 [#1457
-    (did parse "ba" compose [to (charset "a") skip end])
+    (did parse/match "ba" compose [to (charset "a") skip])
 ]
 [#1457
-    (not parse "ba" compose [to (charset "a") "ba" end])
+    (not parse/match "ba" compose [to (charset "a") "ba"])
 ]
 
-; self-modifying rule, not legal in Ren-C if it's during the parse
+; self-modifying rule, not legal in Ren-C if it's during the parse/match
 
 (error? trap [
-    not parse "abcd" rule: ["ab" (remove back tail of rule) "cd" end]
+    not parse/match "abcd" rule: ["ab" (remove back tail of rule) "cd"]
 ])
 
 (
     https://github.com/metaeducation/ren-c/issues/377
     o: make object! [a: 1]
-    parse s: "a" [o/a: skip end]
+    parse/match s: "a" [o/a: skip]
     o/a = s
 )
 
 ; AHEAD and AND are synonyms
 ;
-(did parse ["aa"] [ahead text! into ["a" "a"] end])
-(did parse ["aa"] [and text! into ["a" "a"] end])
+(did parse/match ["aa"] [ahead text! into ["a" "a"]])
+(did parse/match ["aa"] [and text! into ["a" "a"]])
 
-; INTO is not legal if a string parse is already running
+; INTO is not legal if a string parse/match is already running
 ;
-(error? trap [parse "aa" [into ["a" "a"]] end])
+(error? trap [parse/match "aa" [into ["a" "a"]]])
 
 
 ; Should return the same series type as input (Rebol2 did not do this)
 (
     a-value: first ['a/b]
-    parse a-value [b-value: end]
+    parse/match a-value [b-value:]
     same? a-value b-value
 )
 (
     a-value: first [()]
-    parse a-value [b-value: end]
+    parse/match a-value [b-value:]
     same? a-value b-value
 )
 (
     a-value: 'a/b
-    parse a-value [b-value: end]
+    parse/match a-value [b-value:]
     same? a-value b-value
 )
 (
     a-value: first [a/b:]
-    parse a-value [b-value: end]
+    parse/match a-value [b-value:]
     same? a-value b-value
 )
 
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
 (
     i: 1
-    parse "a" [any [(i: i + 1 j: if i = 2 [[end skip]]) j] end]
+    parse/match "a" [any [(i: i + 1 j: if i = 2 [[end skip]]) j]]
     i == 2
 )
 
 
 ;; DOUBLED GROUPS
-;; Doubled groups inject their material into the PARSE, if it is not null.
+;; Doubled groups inject their material into the parse/match, if it is not null.
 ;; They act like a COMPOSE/ONLY that runs each time the GROUP! is passed.
 
-(did parse "aaabbb" [(([some "a"])) (([some "b"])) end])
-(did parse "aaabbb" [(([some "a"])) ((if false [some "c"])) (([some "b"])) end])
-(did parse "aaa" [(('some)) "a" end])
-(not parse "aaa" [((1 + 1)) "a" end])
-(did parse "aaa" [((1 + 2)) "a" end])
+(did parse/match "aaabbb" [(([some "a"])) (([some "b"]))])
+(did parse/match "aaabbb" [(([some "a"])) ((if false [some "c"])) (([some "b"]))])
+(did parse/match "aaa" [(('some)) "a"])
+(not parse/match "aaa" [((1 + 1)) "a"])
+(did parse/match "aaa" [((1 + 2)) "a"])
 (
     count: 0
-    did parse ["a" "aa" "aaa"] [some [into [((count: count + 1)) "a"]]]
+    did parse/match ["a" "aa" "aaa"] [some [into [((count: count + 1)) "a"]]]
 )
 
 
@@ -268,30 +267,30 @@
 ; (like a SET or COPY) instead of affecting the return result.
 
 (all [
-    parse [1 2 3] [collect x [keep [some integer!]]]
+    parse/match [1 2 3] [collect x [keep [some integer!]]]
     x = [1 2 3]
 ])
 (all [
-    parse [1 2 3] [collect x [some [keep integer!]]]
+    parse/match [1 2 3] [collect x [some [keep integer!]]]
     x = [1 2 3]
 ])
 (all [
-    parse [1 2 3] [collect x [keep only [some integer!]]]
+    parse/match [1 2 3] [collect x [keep only [some integer!]]]
     x = [[1 2 3]]
 ])
 (all [
-    parse [1 2 3] [collect x [some [keep only integer!]]]
+    parse/match [1 2 3] [collect x [some [keep only integer!]]]
     x = [[1] [2] [3]]
 ])
 
 ; Collecting non-array series fragments
 
 (all [
-    "bbb" = parse "aaabbb" [collect x [keep [some "a"]]]
+    "bbb" = parse/match "aaabbb" [collect x [keep [some "a"]]]
     x = ["aaa"]
 ])
 (all [
-    "" = parse "aaabbbccc" [
+    "" = parse/match "aaabbbccc" [
         collect x [keep [some "a"] some "b" keep [some "c"]]
     ]
     x = ["aaa" "ccc"]
@@ -300,7 +299,7 @@
 ; Backtracking (more tests needed!)
 
 (all [
-    [] = parse [1 2 3] [
+    [] = parse/match [1 2 3] [
         collect x [
             keep integer! keep integer! keep text!
             |
@@ -316,7 +315,7 @@
 (
     x: <before>
     all [
-        null = parse [1 2] [collect x [keep integer! keep text!]]
+        null = parse/match [1 2] [collect x [keep integer! keep text!]]
         x = <before>
     ]
 )
@@ -325,13 +324,12 @@
 
 (
     all [
-        did parse [1 2 3 4] [
+        did parse/match [1 2 3 4] [
             collect a [
                 keep integer!
                 collect b [keep [2 integer!]]
                 keep integer!
             ]
-            end
         ]
 
         a = [1 4]
@@ -347,7 +345,7 @@
 ; somewhat prohibitive.
 ;
 ;(all [
-;    [3] = parse [1 2 3] [
+;    [3] = parse/match [1 2 3] [
 ;        collect x [
 ;            keep integer!
 ;            keep :['a <b> #c]
@@ -357,16 +355,16 @@
 ;    x = [1 a <b> #c 2]
 ;])
 ;(all [
-;    [3] = parse [1 2 3] [
+;    [3] = parse/match [1 2 3] [
 ;        collect x [
 ;            keep integer!
 ;            keep only :['a <b> #c]
 ;            keep integer!
 ;        ]
-;    ]s
+;    ]
 ;    x = [1 [a <b> #c] 2]
 ;])
 ;(all [
-;    parse [1 2 3] [collect x [keep only :[[a b c]]]]
+;    parse/match [1 2 3] [collect x [keep only :[[a b c]]]]
 ;    x = [[[a b c]]]
 ;])

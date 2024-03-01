@@ -361,7 +361,7 @@ iterate generic-list [
 ]
 
 native-list: load output-dir/boot/tmp-natives.r
-parse native-list [
+parse/match native-list [
     some [
         opt 'export
         set name: set-word! (name: to-word name)
@@ -374,8 +374,7 @@ parse native-list [
             e-params/emit newline
         )
     ]
-    end
-] or [
+] else [
     fail "Error processing native-list"
 ]
 
@@ -395,11 +394,11 @@ e-strings/emit {
 }
 for-each line read/lines %a-constants.c [
     case [
-        parse line ["#define" to end] [
+        parse/match line ["#define" to end] [
             e-strings/emit line
             e-strings/emit newline
         ]
-        parse line [to {const } copy constd to { =} to end] [
+        parse/match line [to {const } copy constd to { =} to end] [
             e-strings/emit {
                 extern $<Constd>;
             }

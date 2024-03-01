@@ -514,7 +514,7 @@ load-module: function [
 
             data: make block! length of source
 
-            parse source [
+            parse/match source [
                 any [
                     tmp:
                     set name opt set-word!
@@ -525,8 +525,7 @@ load-module: function [
                         append data reduce [mod ver if name [to word! name]]
                     )
                 ]
-                end
-            ] or [
+            ] else [
                 cause-error 'script 'invalid-arg tmp
             ]
 

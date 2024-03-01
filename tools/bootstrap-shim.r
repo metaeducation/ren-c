@@ -118,6 +118,24 @@ load: func [source /all /header] [  ; can't ENCLOSE, does not take TAG!
     ]
 ]
 
+; Raise errors by default if mistmatch or not end of input.
+; PARSE/MATCH switches in a mode to give you the input, or null on failure.
+; Result is given as void to prepare for the arbitrary synthesized result.
+;
+parse: func [input rules /case /match] [
+    f: make frame! :lib/parse
+    f/input: input
+    f/rules: rules
+    f/case: case
+    if match [
+        return either do f [input] [null]
+    ]
+    do f else [
+        probe rules
+        fail "Error: PARSE rules did not match (or did not reach end)"
+    ]
+    return void
+]
 
 ; Older Ren-C considers nulled variables to be "unset".
 ;

@@ -210,11 +210,10 @@ reword: function [
     switch type of :delimiters [
         null [prefix: "$"]
         block! [
-            parse delimiters [
+            parse/match delimiters [
                 set prefix delimiter-types
                 set suffix opt delimiter-types
-                end
-            ] or [
+            ] else [
                 fail ["Invalid /ESCAPE delimiter block" delimiters]
             ]
         ]
@@ -356,7 +355,7 @@ reword: function [
         (append out a)
     ]
 
-    parse/(try if case_REWORD [/case]) source rule or [
+    parse/(try if case_REWORD [/case]) source rule else [
         fail "Unexpected error in REWORD's parse rule, should not happen."
     ]
 
@@ -409,7 +408,7 @@ extract: func [
     ]
     if not index [pos: 1]
     if block? pos [
-        parse pos [some [any-number! | logic!] end] or [
+        parse/match pos [some [any-number! | logic!]] else [
             cause-error 'Script 'invalid-arg reduce [pos]
         ]
         out: make (type of series) len * length of pos
@@ -618,7 +617,7 @@ split: function [
         [block! integer! char! bitset! text! tag!]
     /into "If dlm is integer, split in n pieces (vs. pieces of length n)"
 ][
-    if block? dlm and [parse dlm [some integer! end]] [
+    if block? dlm and [parse/match dlm [some integer!]] [
         return map-each len dlm [
             if len <= 0 [
                 series: skip series negate len
@@ -631,7 +630,7 @@ split: function [
     if tag? dlm [dlm: form dlm] ;-- reserve other strings for future meanings
 
     result: collect [
-        parse series <- if integer? dlm [
+        parse/match series <- if integer? dlm [
             size: dlm ;-- alias for readability in integer case
             if size < 1 [fail "Bad SPLIT size given:" size]
 

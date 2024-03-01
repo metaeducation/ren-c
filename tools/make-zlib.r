@@ -70,7 +70,7 @@ disable-user-includes: function [
     ]
 
     for-each line lines [
-        parse line [
+        parse/match line [
             any space {#}
             any space {include}
             some space include-rule to end
@@ -207,7 +207,6 @@ fix-kr: function [
                             append param-block reduce [name _]
                         )
                     ]
-                    end
                 ]
 
                 ;dump param-block
@@ -295,7 +294,6 @@ fix-kr: function [
             :check-point
             | skip
         ]
-        end
     ] c.lexical/grammar
 
     source
@@ -312,7 +310,6 @@ fix-const-char: func [
                 any white-space "*" any white-space ")"
             | skip
         ]
-        end
     ] c.lexical/grammar
     source
 ]

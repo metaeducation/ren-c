@@ -177,6 +177,9 @@ Script: [
     parse-command:      [{PARSE - command cannot be used as variable:} :arg1]
     parse-series:       [{PARSE - input must be a series:} :arg1]
 
+    parse-mismatch:     [{PARSE input not matched by rule block:} :arg1]
+    parse-incomplete:   [{PARSE rules matched but didn't reach end:} :arg1]
+
     bad-library:        {bad library (already closed?)}
     only-callback-ptr:  {Only callback functions may be passed by FFI pointer}
     free-needs-routine: {Function to destroy struct storage must be routine}

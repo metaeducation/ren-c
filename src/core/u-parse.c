@@ -2355,21 +2355,35 @@ DECLARE_NATIVE(subparse)
 //
 //  parse: native [
 //
-//  "Parse series according to grammar rules, return last match position"
+//  "Parse series according to grammar rules"
 //
-//      return: "null if rules failed, else terminal position of match"
-//          [<opt> any-series!]
+//      return: "Input series if /MATCH, otherwise synthesized result"  ; [1]
+//          [<opt> any-value!]
 //      input "Input series to parse"
 //          [<blank> any-series!]
 //      rules "Rules to parse by"
 //          [<blank> block!]
 //      /case "Uses case-sensitive comparison"
+//      /match "Return PARSE input instead of synthesized result"
 //  ]
 //
 DECLARE_NATIVE(parse)
+//
+// 1. In modern Ren-C beyond this bootstrap branch, PARSE is designed to
+//    extract and synthesize results, e.g.:
+//
+//        >> parse "bbb" [some "a" (1) | some "b" (2)]
+//        == 2
+//
+//    This isn't supported by the R3-Alpha parse design, and it won't be
+//    retrofitted to get it.  But to be interface-compatible, it returns a
+//    trash value or it raises an error.
+//
+//    Shifting it into /MATCH mode will return the input or null.
 {
     INCLUDE_PARAMS_OF_PARSE;
 
+    Value* input = ARG(input);
     Value* rules = ARG(rules);
 
     bool interrupted;
@@ -2393,14 +2407,24 @@ DECLARE_NATIVE(parse)
         return R_THROWN;
     }
 
-    if (IS_NULLED(OUT))
-        return nullptr;
+    if (IS_NULLED(OUT)) {
+        if (REF(match))
+            return nullptr;
+        fail (Error_Parse_Mismatch_Raw(rules));
+    }
 
     REBLEN progress = VAL_UINT32(OUT);
-    assert(progress <= VAL_LEN_HEAD(ARG(input)));
-    Move_Value(OUT, ARG(input));
-    VAL_INDEX(OUT) = progress;
-    return OUT;
+    assert(progress <= VAL_LEN_HEAD(input));
+    if (progress < VAL_LEN_HEAD(input)) {
+        if (REF(match))
+            return nullptr;
+        fail (Error_Parse_Incomplete_Raw(rules));
+    }
+
+    if (REF(match))
+        return Move_Value(OUT, input);
+
+    return Init_Trash(OUT);  // should be synthesized value, see [1]
 }
 
 

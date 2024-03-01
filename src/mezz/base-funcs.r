@@ -197,7 +197,7 @@ function: func [
                 "Invalid spec item:" (mold other/1)
             ]
         )
-    ] end]
+    ]]
 
     locals: collect-words/deep/set/ignore body exclusions
 
@@ -397,8 +397,7 @@ redescribe: function [
                 ]
             )]
         ]
-        end
-    ] or [
+    ] else [
         fail [{REDESCRIBE specs should be STRING! and ANY-WORD! only:} spec]
     ]
 

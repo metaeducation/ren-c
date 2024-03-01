@@ -254,7 +254,7 @@ trim: function [
     ; /ALL just removes all whitespace entirely.  No subtlety needed.
     ;
     if all_TRIM [
-        parse series [while [remove rule | skip | end break] end]
+        parse series [while [remove rule | skip | end break]]
         return series
     ]
 
@@ -264,7 +264,7 @@ trim: function [
         ]
 
         tail_TRIM [
-            parse series [while [remove [some rule end] | skip] end] ;-- #2289
+            parse series [while [remove [some rule end] | skip]] ;-- #2289
         ]
     ] then [
         return series
@@ -276,7 +276,7 @@ trim: function [
     ; with leading and trailing whitespace removed.
     ;
     if lines [
-        parse series [while [change [some rule] space skip | skip] end]
+        parse series [while [change [some rule] space skip | skip]]
         if first series = space [take series]
         if last series = space [take/last series]
         return series
@@ -288,7 +288,7 @@ trim: function [
     ;
     indent: _
     if auto [
-        parse series [
+        parse/match series [  ; !!! May not succeed, rules can mismatch
             ; Don't count empty lines, (e.g. trim/auto {^/^/^/    asdf})
             remove [any LF]
 
@@ -296,7 +296,7 @@ trim: function [
             s: some rule e:
             (indent: (index of e) - (index of s))
 
-            end
+            to end  ; !!! was just END, but didn't check success
         ]
     ]
 
@@ -315,8 +315,6 @@ trim: function [
                 skip
             ]
         ]
-
-        end
     ]
 
     ; While trimming with /TAIL takes out any number of newlines, plain TRIM
@@ -325,7 +323,6 @@ trim: function [
     parse series [
         remove [any newline]
         while [newline remove [some newline end] | skip]
-        end
     ]
 
     return series

@@ -66,7 +66,6 @@ clean-path: function [
                 ]
             )
         ]
-        end
     ]
 
     if (#"/" = last out) and [#"/" <> last file] [

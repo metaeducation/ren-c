@@ -281,7 +281,7 @@ parse-ext-build-spec: function [
                 | end
                 | (print "wrong format for options") return false
             ]
-        ] or [
+        ] else [
             fail ["Could not parse extension build spec" mold spec]
         ]
 
@@ -428,7 +428,7 @@ parse user-config/toolset [
         | pos: (
             if not tail? pos [fail ["failed to parset toolset at:" mold pos]]
         )
-    ] end
+    ]
 ]
 
 ; sanity checking the compiler and linker

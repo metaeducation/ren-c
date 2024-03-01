@@ -105,7 +105,6 @@ make object! compose [
                     set 'dialect-failures (dialect-failures + 1)
                 )
             ]
-            end
         ]
     ]
 
@@ -147,7 +146,7 @@ make object! compose [
             ]
 
             all [
-                parse read log-file [
+                parse/match read log-file [
                     (
                         last-vector: _
                         guard: [end skip]
@@ -206,8 +205,7 @@ make object! compose [
                             |
                         :position
                     ]
-                    end
-                ] or [
+                ] else [
                     fail "do-recover log file parsing problem"
                 ]
                 last-vector

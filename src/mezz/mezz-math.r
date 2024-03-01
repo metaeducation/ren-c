@@ -226,7 +226,7 @@ math: function [
     ])
 ][
     clear nested-expr-val
-    res: either parse expr expression [expr-val] [blank]
+    res: either parse/match expr expression [expr-val] [blank]
 
     either only [
         res

@@ -78,10 +78,10 @@ filter-flag: function [
 ][
     if not tag? flag [return flag] ;-- no filtering
 
-    parse to text! flag [
+    parse/match to text! flag [
         copy header: to ":"
         ":" copy option: to end
-    ] or [
+    ] else [
         fail ["Tag must be <prefix:flag> ->" (flag)]
     ]
 
@@ -138,7 +138,6 @@ pkg-config: function [
                     append ret to file! item
                 )
             ]
-            end
         ]
         ret
     ][
@@ -431,7 +430,7 @@ gcc: make compiler-class [
         attempt [
             exec-file: path: default ["gcc"]
             call/output reduce [path "--version"] version
-            parse version [
+            parse/match version [
                 {gcc (GCC)} space
                 copy major: some digit #"."
                 copy minor: some digit #"."
@@ -1214,7 +1213,7 @@ generator-class: make object! [
         stop: false
         while [not stop][
             stop: true
-            parse cmd [
+            parse/match cmd [
                 while [
                     change [
                         [
@@ -1224,8 +1223,7 @@ generator-class: make object! [
                     ] val
                     | skip
                 ]
-                end
-            ] or [
+            ] else [
                 fail ["failed to do var substitution:" cmd]
             ]
         ]

@@ -321,7 +321,6 @@ help: function [
         copy refinements any [
             refinement! | word! | get-word! | lit-word! | issue!
         ]
-        end
     ]
 
     ; Output exemplar calling string, e.g. LEFT + RIGHT or FOO A B C

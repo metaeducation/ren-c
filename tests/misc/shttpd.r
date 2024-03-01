@@ -44,7 +44,7 @@ send-chunk: func [port] [
 ]
 
 handle-request: function [config req] [
-    parse to-text req ["get " ["/ " | copy uri: to " "] end]
+    parse to-text req ["get " ["/ " | copy uri: to " "]]
     uri: default ["index.html"]
     print ["URI:" uri]
     parse uri [some [thru "."] copy ext to end (type: mime-map/:ext)]

@@ -61,7 +61,7 @@ decode-key-value-text: function [
 
     meta: copy []
 
-    parse text data-fields or [
+    parse/match text data-fields else [
         fail [
             {Expected key value format on line} (text-line-of position)
             {and lines must end with newline.}
@@ -102,7 +102,7 @@ load-until-blank: function [
         opt wsp opt [1 2 newline] position: to end
     ]
 
-    either parse text rule [
+    either parse/match text rule [
         values: load copy/part text position
         reduce [values position]
     ][
@@ -129,7 +129,7 @@ proto-parser: context [
     eoh: _ ; End of file header.
 
     process: func [return: <void> text] [
-        parse text [grammar/rule] ;-- Review: no END (return result unused?)
+        parse/match text [grammar/rule]
     ]
 
     grammar: context bind [
@@ -216,7 +216,7 @@ proto-parser: context [
         is-fileheader: parsing-at position [
             try all [
                 lines: attempt [decode-lines lines {//} { }]
-                parse lines [copy data to {=///} to end]
+                parse/match lines [copy data to {=///} to end]
                 data: attempt [load-until-blank trim/auto data]
                 data: attempt [
                     if set-word? first data/1 [data/1]
@@ -310,7 +310,6 @@ rewrite-if-directives: function [
                 ] (rewritten: true) :position
                 | thru newline
             ]
-            end
         ]
         not rewritten
     ]

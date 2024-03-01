@@ -377,7 +377,7 @@ client-hello: function [
         not set? 'ver [[1.0 1.2]]
         decimal? ver [reduce [ver ver]]
         block? ver [
-            parse ver [decimal! decimal! end] or [
+            parse/match ver [decimal! decimal!] else [
                 fail "BLOCK! /VERSION must be two DECIMAL! (min ver, max ver)"
             ]
             ver
@@ -1362,7 +1362,6 @@ do-commands: function [
                 update-write-state ctx cmd
             )
         ]
-        end
     ]
     debug ["writing bytes:" length of ctx/msg]
     ctx/resp: copy []

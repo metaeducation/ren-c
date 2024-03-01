@@ -182,7 +182,7 @@ rebsource: context [
                     do in c-parser-extension [
                         if last-func-end [
                             all [
-                                parse last-func-end [
+                                parse/match last-func-end [
                                     function-spacing-rule
                                     position:
                                     to end
@@ -199,7 +199,7 @@ rebsource: context [
                         ]
                     ]
 
-                    parse proto-parser/data [
+                    parse/match proto-parser/data [
                         opt 'export
                         set name: set-word! (name: to-word name)
                         opt 'enfix
@@ -405,7 +405,7 @@ rebsource: context [
                 item: _
             ] else [
                 any [
-                    parse second split-path item ["tmp-" to end]
+                    parse/match second split-path item ["tmp-" to end]
                     not find extensions extension-of item
                 ] then [
                     item: _

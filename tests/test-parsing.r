@@ -203,7 +203,7 @@ make object! [
 
         rule: [any token end]
 
-        parse test-sources rule or [
+        parse/match test-sources rule else [
             append collected-tests reduce [
                 'dialect
                 spaced [
@@ -273,7 +273,6 @@ make object! [
                     |
                 :position
             ]
-            end
         ]
     ]
 ]

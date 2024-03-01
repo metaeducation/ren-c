@@ -145,7 +145,7 @@ native-defs: collect [
         )
     ]
 
-    parse native-list [any native-rule end] or [
+    parse/match native-list [any native-rule end] else [
         fail [
             "Malformed native found in extension specs" mold native-list
         ]

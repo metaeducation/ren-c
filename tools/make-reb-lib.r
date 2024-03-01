@@ -78,7 +78,7 @@ emit-proto: func [return: <void> proto] [
     ]
 
     paramlist: collect [
-        parse proto [
+        parse/match proto [
             copy returns to "RL_" "RL_" copy name to "(" skip
             ["void)" | some [ ;-- C void, or at least one parameter expected
                 [copy param to "," skip | copy param to ")" to end] (
@@ -102,8 +102,7 @@ emit-proto: func [return: <void> proto] [
                     keep to word! next pos ;-- WORD! of the parameter name
                 )
             ]]
-            end
-        ] or [
+        ] else [
             fail ["Couldn't extract API schema from prototype:" proto]
         ]
     ]

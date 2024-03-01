@@ -210,7 +210,7 @@ split-path: func [
             ]
             all [find [%. %..] pos: to file! pos insert tail of pos #"/"]
         )
-        end
+        to end  ; !!! was plain END, but was unchecked and didn't reach it!
     ]
     reduce [dir pos]
 ]

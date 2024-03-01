@@ -90,7 +90,7 @@ cscape: function [
             newline (col: 0 prefix: _ suffix: _) start:
                 |
             skip (col: col + 1)
-        ]] end
+        ]]
     ]
 
     if empty? list [return string]
@@ -175,7 +175,6 @@ cscape: function [
             (nonwhite: true)
             skip
         ]
-        end
     ]
 
     return string
@@ -207,11 +206,11 @@ make-emitter: function [
 
     stem: second split-path file
 
-    temporary: did any [temporary | parse stem ["tmp-" to end]]
+    temporary: did any [temporary | parse/match stem ["tmp-" to end]]
 
-    is-c: did parse stem [thru [".c" | ".h" | ".inc"] end]
+    is-c: did parse/match stem [thru [".c" | ".h" | ".inc"]]
 
-    is-js: did parse stem [thru ".js" end]
+    is-js: did parse/match stem [thru ".js" end]
 
     e: make object! compose [
         ;

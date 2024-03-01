@@ -27,7 +27,7 @@ REBOL [
 digit: charset [#"0" - #"9"]
 alpha: charset [#"a" - #"z" #"A" - #"Z"]
 idate-to-date: function [return: [date!] date [text!]] [
-    parse date [
+    parse/match date [
         5 skip
         copy day: 2 digit
         space
@@ -38,7 +38,7 @@ idate-to-date: function [return: [date!] date [text!]] [
         copy time: to space
         space
         copy zone: to end
-    ] or [
+    ] else [
         fail ["Invalid idate:" date]
     ]
     if zone = "GMT" [zone: copy "+0"]
@@ -276,7 +276,6 @@ parse-write-dialect: func [port block <local> spec debug] [
             set block [any-string! | binary!] (spec/content: block)
             | (spec/content: blank)
         ]
-        end
     ]
 ]
 
@@ -383,7 +382,6 @@ check-response: function [port] [
                 ]
                 | (throw 'version-not-supported)
             ]
-            end
         ]
     ]
 
@@ -575,7 +573,7 @@ check-data: function [
             ]
             out: port/data
 
-            while [parse data [
+            while [parse/match data [
                 copy chunk-size some hex-digits thru crlfbin mk1: to end
             ]][
                 ; The chunk size is in the byte stream as ASCII chars
@@ -585,7 +583,7 @@ check-data: function [
                 )
 
                 if chunk-size = 0 [
-                    parse mk1 [
+                    parse/match mk1 [
                         crlfbin (trailer: "") to end
                             |
                         copy trailer to crlf2bin to end
@@ -603,7 +601,7 @@ check-data: function [
                     break
                 ]
                 else [
-                    parse mk1 [chunk-size skip mk2: crlfbin to end] or [
+                    parse/match mk1 [chunk-size skip mk2: crlfbin to end] else [
                         break
                     ]
 
