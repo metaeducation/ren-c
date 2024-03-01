@@ -37,7 +37,7 @@ export spaced-tab: unspaced [space space space space]
 export to-c-name: func [
     {Take a Rebol value and transliterate it as a (likely) valid C identifier}
 
-    return: [<opt> text!]
+    return: [~null~ text!]
     value "Will be converted to text (via UNSPACED if BLOCK!)"
         [<maybe> text! block! word!]
     /scope "[#global #local #prefixed] see http://stackoverflow.com/q/228783/"

@@ -18,7 +18,7 @@ REBOL [
 
 info?: func [
     {Returns an info object about a file or url.}
-    return: [<opt> object! word!]
+    return: [~null~ object! word!]
     target [file! url!]
     /only {for urls, returns 'file or blank}
 ][
@@ -39,7 +39,7 @@ info?: func [
 
 exists?: func [
     {Returns the type of a file or URL if it exists, otherwise blank.}
-    return: [<opt> word!]
+    return: [~null~ word!]
         "FILE, DIR, or null"  ; should return LOGIC!, FILETYPE OF separate
     target [file! url! blank!]
 ][
@@ -54,7 +54,7 @@ exists?: func [
 
 size-of: size?: func [
     {Returns the size of a file.}
-    return: [<opt> integer!]
+    return: [~null~ integer!]
     target [file! url!]
 ][
     return all [
@@ -65,7 +65,7 @@ size-of: size?: func [
 
 modified?: func [
     {Returns the last modified date of a file.}
-    return: [<opt> date!]
+    return: [~null~ date!]
     target [file! url!]
 ][
     return all [
@@ -76,7 +76,7 @@ modified?: func [
 
 suffix-of: func [
     "Return the file suffix of a filename or url. Else, null."
-    return: [<opt> file!]
+    return: [~null~ file!]
     path [file! url! text!]
 ][
     path: as text! path
@@ -171,7 +171,7 @@ delete-dir: func [
 script?: func [
     {Checks file, url, or text string for a valid script header.}
 
-    return: [<opt> binary!]
+    return: [~null~ binary!]
     source [file! url! binary! text!]
 ][
     if match [file! url!] source [
@@ -186,7 +186,7 @@ script?: func [
 
 file-type?: func [
     "Return the identifying word for a specific file type (or null)"
-    return: [<opt> word!]
+    return: [~null~ word!]
     file [file! url!]
 ][
     return all [
@@ -197,8 +197,8 @@ file-type?: func [
 
 split-path: func [
     {Splits and returns file and directory path (either may be null)}
-    return: [<opt> file!]
-    @directory [<opt> file! url!]  ; /DIR used by AUGMENT in bootstrap shim
+    return: [~null~ file!]
+    @directory [~null~ file! url!]  ; /DIR used by AUGMENT in bootstrap shim
 
     target [file! url!]
     /relax "Allow filenames to be . and .."

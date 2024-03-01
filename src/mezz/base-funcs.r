@@ -260,7 +260,7 @@ func: func* [
 
 what-dir: func [  ; This can be HIJACK'd by a "smarter" version
     {Returns the current directory path}
-    return: [<opt> file! url!]
+    return: [~null~ file! url!]
 ][
     return system.options.current-path
 ]
@@ -565,7 +565,7 @@ attempt: func [
 trap: func [
     {If evaluation raises an error, return it, otherwise NULL}
 
-    return: [<opt> error!]
+    return: [~null~ error!]
     code [block!]
 ][
     return match error! entrap code

@@ -259,7 +259,7 @@ DECLARE_INTRINSIC(ok_q)
 //
 //  "Sets the WHERE, NEAR, FILE, and LINE fields of an error"
 //
-//      return: [<opt>]
+//      return: [~null~]
 //      error [error!]
 //      location [frame! any-word?]
 //  ]

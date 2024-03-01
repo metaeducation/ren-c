@@ -62,7 +62,7 @@ map-files-to-local: func [
 ends-with?: func [
     return: [logic?!]
     s [any-string?]
-    suffix [<opt> any-string?]
+    suffix [~null~ any-string?]
 ][
     return to-logic any [
         null? :suffix
@@ -72,7 +72,7 @@ ends-with?: func [
 ]
 
 filter-flag: func [
-    return: [<opt> text! file!]
+    return: [~null~ text! file!]
     flag [tag! text! file!]
         {If TAG! then must be <prefix:flag>, e.g. <gnu:-Wno-unknown-warning>}
     prefix [text!]
@@ -714,11 +714,11 @@ linker-class: make object! [
         ...  ; overridden
     ]
     commands: meth [
-        return: [<opt> block!]
+        return: [~null~ block!]
         output [file!]
-        depends [<opt> block!]
-        searches [<opt> block!]
-        ldflags [<opt> block! any-string?]
+        depends [~null~ block!]
+        searches [~null~ block!]
+        ldflags [~null~ block! any-string?]
     ][
         ...  ; overridden
     ]
@@ -740,9 +740,9 @@ ld: make linker-class [
     command: meth [
         return: [text!]
         output [file!]
-        depends [<opt> block!]
-        searches [<opt> block!]
-        ldflags [<opt> block! any-string?]
+        depends [~null~ block!]
+        searches [~null~ block!]
+        ldflags [~null~ block! any-string?]
         /dynamic
         /debug [logic?!]
     ][
@@ -785,7 +785,7 @@ ld: make linker-class [
     ]
 
     accept: meth [
-        return: [<opt> text!]
+        return: [~null~ text!]
         dep [object!]
     ][
         return degrade switch dep/class [
@@ -849,9 +849,9 @@ llvm-link: make linker-class [
     command: meth [
         return: [text!]
         output [file!]
-        depends [<opt> block!]
-        searches [<opt> block!]
-        ldflags [<opt> block! any-string?]
+        depends [~null~ block!]
+        searches [~null~ block!]
+        ldflags [~null~ block! any-string?]
         /dynamic
         /debug [logic?!]
     ][
@@ -891,7 +891,7 @@ llvm-link: make linker-class [
     ]
 
     accept: meth [
-        return: [<opt> text!]
+        return: [~null~ text!]
         dep [object!]
     ][
         return degrade switch dep/class [
@@ -933,9 +933,9 @@ link: make linker-class [
     command: meth [
         return: [text!]
         output [file!]
-        depends [<opt> block!]
-        searches [<opt> block!]
-        ldflags [<opt> block! any-string?]
+        depends [~null~ block!]
+        searches [~null~ block!]
+        ldflags [~null~ block! any-string?]
         /dynamic
         /debug [logic?!]
     ][
@@ -977,7 +977,7 @@ link: make linker-class [
     ]
 
     accept: meth [
-        return: [<opt> text!]
+        return: [~null~ text!]
         dep [object!]
     ][
         return degrade switch dep/class [
@@ -1030,7 +1030,7 @@ strip-class: make object! [
     commands: meth [
         return: [block!]
         target [file!]
-        params [<opt> blank! block! any-string?]
+        params [~null~ blank! block! any-string?]
     ][
         return reduce [spaced collect [
             keep any [(file-to-local/pass maybe exec-file) "strip"]
@@ -1233,7 +1233,7 @@ generator-class: make object! [
         {Substitute variables in the command with its value}
         {(will recursively substitute if the value has variables)}
 
-        return: [<opt> object! any-string?]
+        return: [~null~ object! any-string?]
         cmd [object! any-string?]
     ][
         ; !!! These were previously static, but bootstrap executable's non

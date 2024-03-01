@@ -179,7 +179,17 @@ void Set_Parameter_Spec(
             }
             if (Cell_Heart(item) != REB_WORD)
                 fail (item);
-            *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+
+            switch (Cell_Word_Id(item)) {
+              case SYM_NULL:
+                *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
+                break;
+              case SYM_VOID:
+                *flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
+                break;
+              default:
+                *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+            }
             continue;
         }
         if (Is_Quoted(item)) {
@@ -214,20 +224,6 @@ void Set_Parameter_Spec(
                 *flags |= PARAMETER_FLAG_NOOP_IF_VOID;
                 Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
                 Init_Quasi_Word(dest, Canon(VOID));  // !!!
-            }
-            else if (0 == CT_String(item, Root_Opt_Tag, strict)) {
-                Init_Quasi_Word(dest, Canon(NULL));  // !!!
-                *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
-            }
-            else if (0 == CT_String(item, Root_Void_Tag, strict)) {
-                Value* word = Init_Any_Word(
-                    dest,
-                    REB_WORD,
-                    Canon(VOID_Q)
-                );
-                INIT_VAL_WORD_INDEX(word, INDEX_PATCHED);
-                BINDING(word) = &PG_Lib_Patches[SYM_VOID_Q];
-                *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
             }
             else if (0 == CT_String(item, Root_Skip_Tag, strict)) {
                 if (pclass != PARAMCLASS_HARD)

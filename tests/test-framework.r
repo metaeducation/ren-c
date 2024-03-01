@@ -51,7 +51,7 @@ run-single-test: func [
     return: [~]
     code "Code GROUP! from test file, assumed bound into isolated module"
         [group!]
-    expected-id [<opt> word!]
+    expected-id [~null~ word!]
 ][
     assert [expected-id <> '!!!]  ; dialecting mistake, vs. ???, easy to make
 

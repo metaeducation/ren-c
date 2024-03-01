@@ -316,19 +316,6 @@ bool Typecheck_Atom_Core(
                 goto test_failed;
             break; }
 
-          case REB_TAG: {
-            bool strict = false;
-
-            if (0 == CT_String(test, Root_Opt_Tag, strict)) {
-                if (not Is_Nulled(v))
-                    goto test_failed;
-            }
-            if (0 == CT_String(test, Root_Void_Tag, strict)) {
-                if (not Is_Void(v))
-                    goto test_failed;
-            }
-            break; }  // currently, ignore all other tags
-
           default:
             fail ("Invalid element in TYPE-GROUP!");
         }
@@ -397,14 +384,19 @@ bool Typecheck_Coerce_Argument(
 
   typecheck_again:
 
-    if (Get_Parameter_Flag(param, NULL_DEFINITELY_OK) and Is_Nulled(arg))
-        goto return_true;
+    if (Is_Antiform(arg)) {
+        if (Get_Parameter_Flag(param, NULL_DEFINITELY_OK) and Is_Nulled(arg))
+            goto return_true;
 
-    if (Get_Parameter_Flag(param, NIHIL_DEFINITELY_OK) and Is_Nihil(arg))
-        goto return_true;
+        if (Get_Parameter_Flag(param, VOID_DEFINITELY_OK) and Is_Void(arg))
+            goto return_true;
 
-    if (Get_Parameter_Flag(param, TRASH_DEFINITELY_OK) and Is_Trash(arg))
-        goto return_true;
+        if (Get_Parameter_Flag(param, NIHIL_DEFINITELY_OK) and Is_Nihil(arg))
+            goto return_true;
+
+        if (Get_Parameter_Flag(param, TRASH_DEFINITELY_OK) and Is_Trash(arg))
+            goto return_true;
+    }
 
     if (Get_Parameter_Flag(param, ANY_VALUE_OK) and Is_Stable(arg))
         goto return_true;

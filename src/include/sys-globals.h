@@ -85,7 +85,6 @@ PVAR Value PG_R_Suspend;
 
 PVAR Value* Root_With_Tag; // overrides locals gathering (can disable RETURN)
 PVAR Value* Root_Variadic_Tag; // marks variadic argument <variadic>
-PVAR Value* Root_Opt_Tag; // marks optional argument (can be NULL)
 PVAR Value* Root_End_Tag; // marks endable argument (NULL if at end of input)
 PVAR Value* Root_Maybe_Tag; // passing void won't run the action, return null
 PVAR Value* Root_Local_Tag; // marks beginning of a list of "pure locals"

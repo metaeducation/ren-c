@@ -29,7 +29,7 @@
 //
 //     foo: func [
 //         return: [integer!]  ; PARAMCLASS_RETURN
-//         arg [<opt> block!]  ; PARAMCLASS_NORMAL
+//         arg [~null~ block!]  ; PARAMCLASS_NORMAL
 //         'qarg [word!]       ; PARAMCLASS_QUOTED
 //         earg [<end> time!]  ; PARAMCLASS_NORMAL + PARAMETER_FLAG_ENDABLE
 //         /refine [tag!]      ; PARAMCLASS_NORMAL + PARAMETER_FLAG_REFINEMENT
@@ -250,7 +250,15 @@ INLINE Option(const Array*) Cell_Parameter_Spec(const Cell* v) {
     FLAG_LEFT_BIT(19)
 
 
-#define PARAMETER_FLAG_20           FLAG_LEFT_BIT(20)
+//=//// PARAMETER_FLAG_VOID_DEFINITELY_OK /////////////////////////////////=//
+//
+// This may or may not be a great use of a bit in the flags, but we haven't
+// run out of flags yet.  When we do, rethink the optimizations.
+//
+#define PARAMETER_FLAG_VOID_DEFINITELY_OK \
+    FLAG_LEFT_BIT(20)
+
+
 #define PARAMETER_FLAG_21           FLAG_LEFT_BIT(21)
 #define PARAMETER_FLAG_22           FLAG_LEFT_BIT(22)
 #define PARAMETER_FLAG_23           FLAG_LEFT_BIT(23)

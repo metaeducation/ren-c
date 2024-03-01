@@ -293,7 +293,7 @@ even?: generic [
 skip: generic [
     {Returns the series forward or backward from the current position.}
     return: "Input skipped by offset, or null if out of bounds"
-        [<opt> any-series? port!]
+        [~null~ any-series? port!]
     series [<maybe> any-series? port!]
     offset [any-number? logic? pair!]
     /unbounded "Return out of bounds series if before tail or after head"
@@ -302,7 +302,7 @@ skip: generic [
 at: generic [
     {Returns the series at the specified index.}
     return: "Input at the given index, not clipped to head/tail by default"
-        [<opt> any-series? port!]
+        [~null~ any-series? port!]
     series [<maybe> any-series? port!]
     index [any-number? logic? pair!]
     /bounded "Return null if index is before tail or after head"
@@ -314,9 +314,9 @@ find: generic [
     {Searches for the position where a matching value is found}
 
     return: "position found, else null - logic true if non-positional find"
-        [<opt> any-series? logic?]
+        [~null~ any-series? logic?]
     @tail "Returns the end of the found data"
-        [<opt> any-series?]
+        [~null~ any-series?]
     series [
         <maybe> any-series? any-context? map!
     ]
@@ -362,7 +362,7 @@ poke*: generic [
     {Low-level hook for POKE, used also by SET-PATH!}
 
     return: "Bits referencing cell must update (nullptr if no update needed)"
-        [<opt> element?]
+        [~null~ element?]
     location "Target value (on some steps, bits are modified)"
         [element?]
     picker "The property to update"
@@ -376,7 +376,7 @@ protect*: generic [
     {Low-level hook for PROTECT, used as /UPDATER with SET}
 
     return: "Bits referencing cell must update (nullptr if no update needed)"
-        [<opt> element?]
+        [~null~ element?]
     location "Target value (on some steps, bits are modified)"
         [element?]
     picker "The property to update (e.g. object field)"
@@ -439,7 +439,7 @@ insert: generic [
     series "At position (modified)"
         [<maybe> any-series? port! map! object! bitset! port!]
     value "What to insert (antiform groups will splice, e.g. SPREAD)"
-        [<void> element? splice?]
+        [~void~ element? splice?]
     /part "Limits to a given length or position"
         [any-number? any-series? pair!]
     /dup "Duplicates the insert a specified number of times"
@@ -457,7 +457,7 @@ append: generic [
     series "Any position (modified)"
         [<maybe> any-series? port! map! object! module! bitset!]
     value "What to append (antiform groups will splice, e.g. SPREAD)"
-        [<void> element? splice?]
+        [~void~ element? splice?]
     /part "Limits to a given length or position"
         [any-number? any-series? pair!]
     /dup "Duplicates the insert a specified number of times"
@@ -475,7 +475,7 @@ change: generic [
     series "At position (modified)"
         [<maybe> any-series? port!]
     value "The new value (antiform groups will splice, e.g. SPREAD)"
-        [<void> element? splice?]
+        [~void~ element? splice?]
     /part "Limits the amount to change to a given length or position"
         [any-number? any-series? pair!]
     /dup "Duplicates the change a specified number of times"
@@ -576,7 +576,7 @@ close: generic [
 read: generic [
     {Read from a file, URL, or other port.}
     return: "null on (some) failures (REVIEW as part of port model review)" [
-        <opt> binary!  ; should all READ return a BINARY!?
+        ~null~ binary!  ; should all READ return a BINARY!?
         text!  ; READ/STRING returned TEXT!
         block!  ; READ/LINES returned BLOCK!
         port!  ; asynchronous READ on PORT!s returned the PORT!
@@ -610,7 +610,7 @@ write: generic [
 query: generic [
     {Returns information about a port, file, or URL}
 
-    return: [<opt> object!]
+    return: [~null~ object!]
     target [port! file! url! block!]
 ]
 

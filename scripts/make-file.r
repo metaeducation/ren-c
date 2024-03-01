@@ -232,7 +232,7 @@ make-file-path-parts: func [
 make-file: func [
     {Create a FILE! using the file path specification dialect}
 
-    return: [<opt> file!]
+    return: [~null~ file!]
     def [<maybe> word! path! tuple! block!]
     /predicate [action?]
     <local> result

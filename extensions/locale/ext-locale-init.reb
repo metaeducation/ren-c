@@ -451,7 +451,7 @@ if 'Windows <> first system.platform [
     "zu" "Zulu" ]
 
     hijack :locale func [
-        return: [<opt> text!]
+        return: [~null~ text!]
         type [word!]
         <static>
         iso-639 (iso-639-table)

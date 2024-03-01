@@ -162,7 +162,7 @@ Script: [
     bad-func-def:       [{invalid function definition:} :arg1]
     bad-func-arg:       [{function argument} :arg1 {is not valid}]
 
-    needs-return-opt:   [:arg1 {can't return null (see RETURN: [<opt> ...])}]
+    needs-return-opt:   [:arg1 {can't return null (see RETURN: [~null~ ...])}]
     bad-return-type:    [:arg1 {doesn't have RETURN: enabled for} :arg2]
     bad-void-return:    [:arg1 {doesn't have void RETURN enabled}]
 
@@ -232,7 +232,7 @@ Script: [
     varargs-no-look:    {VARARGS! may only lookahead by 1 if "hard quoted"}
     varargs-take-last:  {VARARGS! does not support TAKE-ing only /LAST item}
 
-    null-vararg-array:  {Can't MAKE ANY-ARRAY? from VARARGS! that allow <opt>}
+    null-vararg-array:  {Can't MAKE ANY-ARRAY? from VARARGS! allowing ~null~}
     null-object-block:  {Can't create block from object if it has null values}
 
     conflicting-key:    [:arg1 {key conflicts; use SELECT or PUT with /CASE}]

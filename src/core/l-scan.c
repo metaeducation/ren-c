@@ -2907,7 +2907,7 @@ void Shutdown_Scanner(void)
 //  "Translates UTF-8 source (from a text or binary) to values"
 //
 //      return: "Transcoded value (or block of values)"
-//          [<opt> element?]
+//          [~null~ element?]
 //      @rest "Remainder of input after transcoding (series tail if not /ONE)"
 //          [text! binary!]
 //      source "If BINARY!, must be UTF-8 encoded"

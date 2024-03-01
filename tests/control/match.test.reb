@@ -116,5 +116,5 @@
 
     (true = smatch logic?! true)
     ~falsey-match~ !! (smatch logic?! false)
-    ~falsey-match~ !! (smatch [<opt>] null)
+    ~falsey-match~ !! (smatch [~null~] null)
 ]

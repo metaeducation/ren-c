@@ -177,7 +177,7 @@ host-script-pre-load: func [
     {Code registered as a hook when a module or script are loaded}
     return: [~]
     is-module [logic?]
-    hdr [<opt> object!]
+    hdr [~null~ object!]
         {Header object (missing for DO of BINARY! with no header)}
 ][
     ; Print out the script info
@@ -378,7 +378,7 @@ main-startup: func [
         {Convert string path to absolute dir! path}
 
         return: "Null if not found"
-            [<opt> file!]
+            [~null~ file!]
         dir [<maybe> text!]
     ][
         return all [
@@ -390,7 +390,7 @@ main-startup: func [
 
     let get-home-path: func [
         {Return HOME path (e.g. $HOME on *nix)}
-        return: [<opt> element? file!]
+        return: [~null~ element? file!]
     ][
         let get-env: if select system.modules 'Process [
             runs :system.modules.Process.get-env
@@ -414,7 +414,7 @@ main-startup: func [
 
     let get-resources-path: func [
         {Return platform specific resources path.}
-        return: [<opt> file!]
+        return: [~null~ file!]
     ][
         ; lives under systems.options.home
 

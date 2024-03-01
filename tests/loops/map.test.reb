@@ -28,7 +28,7 @@
 ; ACTION!s are called repeatedly util NULL is returned
 (
     make-one-thru-five: func [
-        return: [<opt> integer!]
+        return: [~null~ integer!]
         <static> count (0)
     ][
         if count = 5 [return null]
@@ -39,7 +39,7 @@
     ]
 )(
     make-one-thru-five: func [
-        return: [<opt> integer!]
+        return: [~null~ integer!]
         <static> count (0)
     ][
         if count = 5 [return null]

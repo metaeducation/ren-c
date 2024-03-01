@@ -251,7 +251,7 @@ e-cwrap/emit {
 }
 
 to-js-type: func [
-    return: [<opt> text! tag!]
+    return: [~null~ text! tag!]
     s [text!] "C type as string"
 ][
     return case [

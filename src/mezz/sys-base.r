@@ -35,7 +35,7 @@ lib.enrescue: ~  ; forcing long name of SYS.UTIL.ENRESCUE hints it is dangerous
 rescue: func [  ; see also TRAP
     {If evaluation encounters a failure, return it, otherwise NULL}
 
-    return: [<opt> error!]
+    return: [~null~ error!]
     code [block!]
 ][
     return match error! enrescue code
@@ -75,7 +75,7 @@ module: func [
     @quitting "If requested and quitting, when true PRODUCT is QUIT's argument"
         [logic?]
     spec "The header block of the module (modified)"
-        [<opt> block! object!]
+        [~null~ block! object!]
     body "The body of the module"
         [block!]
     /mixin "Bind body to this additional object before executing"
@@ -105,10 +105,10 @@ module: func [
         ; either a quoted word or plain word.  Now only WORD! is tolerated.
         ;
         for-each [var types] [  ; !!! `has spec` doesn't work here, why not?
-            spec.name [<opt> word!]
+            spec.name [~null~ word!]
             spec.type [word!]  ; default is `script` from system.standard.header
-            spec.version [<opt> tuple!]
-            spec.options [<opt> block!]
+            spec.version [~null~ tuple!]
+            spec.options [~null~ block!]
         ][
             (match inside [] types get inside [] var) else [
                 fail ["Module" var "must be in" mold types "- not" ^(get var)]
@@ -196,7 +196,7 @@ do*: func [
     source "Files, urls and modules evaluate as scripts, other strings don't"
         [file! url! text! binary! tag! the-word!]
     args "Args passed as system.script.args to a script (normally a string)"
-        [<opt> element?]
+        [~null~ element?]
     only "Do not catch quits...propagate them"
         [logic?]
 ][

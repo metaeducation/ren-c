@@ -21,13 +21,13 @@ spec-of: func [
     let adjunct: (match object! adjunct-of action) else [return [~bad-spec~]]
 
     return collect [
-        keep/line maybe ensure [<opt> text!] select adjunct 'description
+        keep/line maybe ensure [~null~ text!] select adjunct 'description
 
-        let types: ensure [<opt> frame! object!] select adjunct 'parameter-types
-        let notes: ensure [<opt> frame! object!] select adjunct 'parameter-notes
+        let types: ensure [~null~ frame! object!] select adjunct 'parameter-types
+        let notes: ensure [~null~ frame! object!] select adjunct 'parameter-notes
 
-        let return-type: ensure [<opt> block!] select maybe types 'return
-        let return-note: ensure [<opt> text!] select maybe notes 'return
+        let return-type: ensure [~null~ block!] select maybe types 'return
+        let return-note: ensure [~null~ text!] select maybe notes 'return
 
         if return-type or return-note [
             keep spread compose [
@@ -49,7 +49,7 @@ spec-of: func [
 description-of: func [
     {One-line summary of a value's purpose}
 
-    return: [<opt> text!]
+    return: [~null~ text!]
     v [<maybe> any-value?]
 ][
     if action? :v [

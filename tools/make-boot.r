@@ -117,7 +117,7 @@ sym-n: 1  ; counts up as symbols are added
 
 add-sym: func [
     {Add SYM_XXX to enumeration}
-    return: [<opt> integer!]
+    return: [~null~ integer!]
     word "Word (but may be in text form to gloss over bootstrap issues)"
         [word! text!]
     /exists "return ID of existing SYM_XXX constant if already exists"

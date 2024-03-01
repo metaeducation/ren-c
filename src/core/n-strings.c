@@ -33,8 +33,8 @@
 //  "Joins a block of values into TEXT! with delimiters"
 //
 //      return: "Null if blank input or block's contents are all null"
-//          [<opt> text!]
-//      delimiter [<opt> blank! char? text!]
+//          [~null~ text!]
+//      delimiter [~null~ blank! char? text!]
 //      line "Will be copied if already a text value"
 //          [<maybe> text! block! the-block! issue!]
 //      /head "Include delimiter at head of result (if non-NULL)"
@@ -986,7 +986,7 @@ DECLARE_NATIVE(to_hex)
 //  "Checks UTF-8 encoding"
 //
 //      return: "NULL if correct, otherwise position in binary of the error"
-//          [<opt> binary!]
+//          [~null~ binary!]
 //      data [binary!]
 //  ]
 //

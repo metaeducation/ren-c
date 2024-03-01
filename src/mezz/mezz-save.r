@@ -113,7 +113,7 @@ save: func [
             ]
         ]
 
-        length: ensure [<opt> integer!] try select header 'length
+        length: ensure [~null~ integer!] try select header 'length
         header: body-of header
     ]
 

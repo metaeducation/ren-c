@@ -98,9 +98,9 @@ replace: func [
     target "Series to replace within (modified)"
         [any-series?]
     pattern "Value to be replaced (converted if necessary)"
-        [<void> element? splice? action?]
+        [~void~ element? splice? action?]
     replacement "Value to replace with (called each time if action)"
-        [<void> element? splice? action?]
+        [~void~ element? splice? action?]
 
     ; !!! Note these refinements alias ALL, CASE natives!
     /all "Replace all occurrences"
@@ -386,7 +386,7 @@ collect*: func [
     {Evaluate body, and return block of values collected via keep function}
 
     return: "Result block, or null if no KEEPs (prevent nulls with KEEP [])"
-        [<opt> block!]
+        [~null~ block!]
     body "Block to evaluate"
         [<maybe> block!]
 ][

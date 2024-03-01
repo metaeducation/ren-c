@@ -265,7 +265,7 @@ static void kill_process(pid_t pid, int signal)
 //
 //  "Terminate a process (not current one)"
 //
-//      return: [<opt>]
+//      return: [~null~]
 //      pid [integer!]
 //          {The process ID}
 //  ]
@@ -336,7 +336,7 @@ DECLARE_NATIVE(terminate)
 //  "Returns the value of an OS environment variable (for current process)"
 //
 //      return: "String the variable was set to, or null if not set"
-//          [<opt> text!]
+//          [~null~ text!]
 //      variable "Name of variable to get (case-insensitive in Windows)"
 //          [<maybe> text! word!]
 //  ]
@@ -448,10 +448,10 @@ DECLARE_NATIVE(get_env)
 //  "Sets value of operating system environment variable for current process"
 //
 //      return: "Returns same value passed in"
-//          [<opt> text!]
+//          [~null~ text!]
 //      variable [<maybe> text! word!]
 //          "Variable to set (case-insensitive in Windows)"
-//      value [<opt> text!]
+//      value [~null~ text!]
 //          "Value to set the variable to, or NULL to unset it"
 //  ]
 //
@@ -464,7 +464,7 @@ DECLARE_NATIVE(set_env)
 
   #if TO_WINDOWS
     WCHAR* key_wide = rebSpellWide(variable);
-    Option(WCHAR*) val_wide = rebSpellWideMaybe("ensure [<opt> text!]", value);
+    Option(WCHAR*) val_wide = rebSpellWideMaybe("ensure [~null~ text!]", value);
 
     if (not SetEnvironmentVariable(
         key_wide,

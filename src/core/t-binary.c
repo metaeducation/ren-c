@@ -390,7 +390,7 @@ REBTYPE(Binary)
         UNUSED(PARAM(series));  // covered by `v`
 
         Value* arg = ARG(value);
-        assert(not Is_Nulled(arg));  // not an <opt> parameter
+        assert(not Is_Nulled(arg));  // not an ~null~ parameter
 
         REBLEN len; // length of target
         if (id == SYM_CHANGE)

@@ -529,7 +529,7 @@ Value* Setify(Value* out) {  // called on stack values; can't call evaluator
 //
 //  "If possible, convert a value to a SET-XXX! representation"
 //
-//      return: [<opt> set-word! set-path! set-tuple! set-group! set-block!]
+//      return: [~null~ any-set-value?]
 //      value [<maybe> element?]
 //  ]
 //
@@ -575,7 +575,7 @@ Value* Getify(Value* out) {  // called on stack values; can't call evaluator
 //
 //  "If possible, convert a value to a GET-XXX! representation"
 //
-//      return: [<opt> get-word! get-path! get-tuple! get-group! get-block!]
+//      return: [~null~ any-get-value?]
 //      value [<maybe> element?]
 //  ]
 //
@@ -624,8 +624,8 @@ Value* Metafy(Value* out) {  // called on stack values; can't call evaluator
 //
 //  "If possible, convert a value to a META-XXX! representation"
 //
-//      return: [word! meta-word! meta-path! meta-tuple! meta-group! meta-block!]
-//      value [<void> element?]  ; void makes @ as a WORD!
+//      return: [any-meta-value? sigil!]
+//      value [~void~ element?]  ; void makes @ as a SIGIL!
 //  ]
 //
 DECLARE_NATIVE(metafy)
@@ -673,7 +673,7 @@ Value* Theify(Value* out) {  // called on stack values; can't call evaluator
 //
 //  "If possible, convert a value to a THE-XXX! representation"
 //
-//      return: [<opt> the-word! the-path! the-tuple! the-group! the-block!]
+//      return: [~null~ any-the-value?]
 //      value [<maybe> element?]
 //  ]
 //
@@ -721,7 +721,7 @@ Value* Plainify(Value* out) {
 //
 //  "Convert a value into its plain representation"
 //
-//      return: [<opt> element?]
+//      return: [~null~ element?]
 //      value [<maybe> element?]
 //  ]
 //

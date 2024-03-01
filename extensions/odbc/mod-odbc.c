@@ -838,7 +838,7 @@ SQLRETURN Get_ODBC_Catalog(
     int index;
     for (index = 2; index != 6; ++index) {
         pattern[index - 2] = rebSpellWide(  // gives nullptr if BLANK!
-            "ensure [<opt> text!]",
+            "ensure [~null~ text!]",
                 "pick ensure block!", block, rebI(index)
         );
     }
@@ -1233,7 +1233,7 @@ DECLARE_NATIVE(insert_odbc)
         // then prepare a new statement.
         //
         use_cache = rebUnboxLogic(
-            "strict-equal? (first sql) ensure [<opt> text!] statement.string"
+            "strict-equal? (first sql) ensure [~null~ text!] statement.string"
         );
 
         SQLLEN sql_index = 1;

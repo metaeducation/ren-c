@@ -231,7 +231,7 @@ elf-format: context [
     ]
 
     find-section: meth [
-        return: [<opt> integer!]
+        return: [~null~ integer!]
             {The index of the section header with encap (sh_xxx vars set)}
         name [text!]
         section-headers [binary!]
@@ -489,7 +489,7 @@ elf-format: context [
     ]
 
     get-embedding: meth [
-        return: [<opt> binary!]
+        return: [~null~ binary!]
         file [file!]
     ][
         let header-data: read/part file 64  ; 64-bit size, 32-bit is smaller
@@ -999,7 +999,7 @@ pe-format: context [
 
     find-section: func [
         "Find a section to the exe"
-        return: [<opt> binary!]
+        return: [~null~ binary!]
         exe-data [binary!]
         section-name [text!]
         /header "Return only the section header"
@@ -1157,7 +1157,7 @@ pe-format: context [
     ]
 
     get-embedding: func [
-        return: [<opt> binary!]
+        return: [~null~ binary!]
         file [file!]
     ][
         ;print ["Geting embedded from" mold file]
@@ -1219,7 +1219,7 @@ generic-format: context [
     ]
 
     get-embedding: meth [
-        return: [<opt> binary!]
+        return: [~null~ binary!]
         file [file!]
     ][
         let info: query file
@@ -1301,7 +1301,7 @@ encap: func [
 
 get-encap: func [
     return: "NULL if no encapping found, unzipped BLOCK! results if found"
-        [<opt> block!]
+        [~null~ block!]
     rebol-path "The executable to search for the encap information in"
         [file!]
 ][

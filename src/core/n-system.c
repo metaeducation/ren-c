@@ -79,7 +79,7 @@ DECLARE_NATIVE(quit)
 //
 //      return: []  ; !!! Notation for divergent functions?
 //      status "See: http://en.wikipedia.org/wiki/Exit_status"
-//          [<opt> <end> integer!]
+//          [~null~ <end> integer!]
 //  ]
 //
 DECLARE_NATIVE(exit_rebol)
@@ -102,7 +102,7 @@ DECLARE_NATIVE(exit_rebol)
 //  "Recycles unused memory"
 //
 //      return: "Number of series nodes recycled (if applicable)"
-//          [<opt> integer!]
+//          [~null~ integer!]
 //      /off "Disable auto-recycling"
 //      /on "Enable auto-recycling"
 //      /ballast "Trigger for auto-recycle (memory used)"
@@ -300,7 +300,7 @@ int ceil_log2(unsigned long long x) {
 //
 //  "Get the evaluator tick count (currently only available in debug builds)"
 //
-//      return: [<opt> integer!]
+//      return: [~null~ integer!]
 //  ]
 //
 DECLARE_NATIVE(c_debug_tick)

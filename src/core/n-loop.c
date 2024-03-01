@@ -1328,7 +1328,7 @@ DECLARE_NATIVE(every)
 //  "Removes values for each block that returns true"
 //
 //      return: "Number of removed series items, or null if BREAK"
-//          [<opt> integer!]
+//          [~null~ integer!]
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
 //      data "The series to traverse (modified)"
@@ -1667,7 +1667,7 @@ DECLARE_NATIVE(remove_each)
 //  "Evaluate a block for each value(s) in a series and collect as a block"
 //
 //      return: "Collected block"
-//          [<opt> block!]
+//          [~null~ block!]
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
 //      data "The series to traverse"
@@ -1710,7 +1710,7 @@ DECLARE_NATIVE(map_each)
 //  "Evaluate a block for each value(s) in a series and collect as a block"
 //
 //      return: "Collected block"
-//          [<opt> block!]
+//          [~null~ block!]
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
 //      data "The series to traverse (only QUOTED? BLOCK! at the moment...)"

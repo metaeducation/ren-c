@@ -34,7 +34,7 @@
 //
 //  "Provides status and statistics information about the interpreter"
 //
-//      return: [<opt> time! integer! object!]
+//      return: [~null~ time! integer! object!]
 //      /show "Print formatted results to console"
 //      /profile "Returns profiler object"
 //      /evals "Number of values evaluated by interpreter"

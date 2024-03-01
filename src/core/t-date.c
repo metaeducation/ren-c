@@ -1176,8 +1176,8 @@ REBTYPE(Date)
 //          [integer!]
 //      seconds "3600 for each hour, 60 for each minute"
 //          [integer!]
-//      nano [<opt> integer!]
-//      zone [<opt> integer!]
+//      nano [~null~ integer!]
+//      zone [~null~ integer!]
 //  ]
 //
 DECLARE_NATIVE(make_date_ymdsnz)
@@ -1219,7 +1219,7 @@ DECLARE_NATIVE(make_date_ymdsnz)
 //      seconds "3600 for each hour, 60 for each minute"
 //          [integer!]
 //      nano "Nanoseconds"
-//          [<opt> integer!]
+//          [~null~ integer!]
 //  ]
 //
 DECLARE_NATIVE(make_time_sn)

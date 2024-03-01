@@ -1168,8 +1168,8 @@ DECLARE_NATIVE(shutdown_p)
 //  "Waits for a duration, port, or both"
 //
 //      return: "NULL if timeout, PORT! that awoke or BLOCK! of ports if /ALL"
-//          [<opt> port! block!]
-//      value [<opt> any-number? time! port! block!]
+//          [~null~ port! block!]
+//      value [~null~ any-number? time! port! block!]
 //  ]
 //
 DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code

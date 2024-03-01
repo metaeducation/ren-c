@@ -300,7 +300,7 @@ static Value* Make_Locked_Tag(const char *utf8) { // helper
 //
 //  Init_Action_Spec_Tags: C
 //
-// FUNC and PROC search for these tags, like <opt> and <local>.  They are
+// FUNC and PROC search for these tags, like ~null~ and <local>.  They are
 // natives and run during bootstrap, so these string comparisons are
 // needed.
 //
@@ -308,13 +308,11 @@ static void Init_Action_Spec_Tags(void)
 {
     ensure(nullptr, Root_With_Tag) = Make_Locked_Tag("with");
     ensure(nullptr, Root_Variadic_Tag) = Make_Locked_Tag("variadic");
-    ensure(nullptr, Root_Opt_Tag) = Make_Locked_Tag("opt");
     ensure(nullptr, Root_End_Tag) = Make_Locked_Tag("end");
     ensure(nullptr, Root_Maybe_Tag) = Make_Locked_Tag("maybe");
     ensure(nullptr, Root_Local_Tag) = Make_Locked_Tag("local");
     ensure(nullptr, Root_Skip_Tag) = Make_Locked_Tag("skip");
     ensure(nullptr, Root_Const_Tag) = Make_Locked_Tag("const");
-    ensure(nullptr, Root_Void_Tag) = Make_Locked_Tag("void");
     ensure(nullptr, Root_Unrun_Tag) = Make_Locked_Tag("unrun");
 
     ensure(nullptr, Root_Here_Tag) = Make_Locked_Tag("here");  // used by PARSE
@@ -324,13 +322,11 @@ static void Shutdown_Action_Spec_Tags(void)
 {
     rebReleaseAndNull(&Root_With_Tag);
     rebReleaseAndNull(&Root_Variadic_Tag);
-    rebReleaseAndNull(&Root_Opt_Tag);
     rebReleaseAndNull(&Root_End_Tag);
     rebReleaseAndNull(&Root_Maybe_Tag);
     rebReleaseAndNull(&Root_Local_Tag);
     rebReleaseAndNull(&Root_Skip_Tag);
     rebReleaseAndNull(&Root_Const_Tag);
-    rebReleaseAndNull(&Root_Void_Tag);
     rebReleaseAndNull(&Root_Unrun_Tag);
 
     rebReleaseAndNull(&Root_Here_Tag);  // used by PARSE
@@ -793,8 +789,8 @@ void Startup_Core(void)
     // basic words need to be defined.  For instance: You can't run %sysobj.r
     // unless `true` and `false` have been added to the Lib_Context--they'd be
     // undefined.  And while analyzing the function specs during the
-    // definition of natives, things like the <opt> tag are needed as a basis
-    // for comparison to see if a usage matches that.
+    // definition of natives, things like the <maybe> tag are needed as a
+    // basis for comparison to see if a usage matches that.
 
     Array* datatypes_catalog = Startup_Datatypes(
         Cell_Array_Known_Mutable(&boot->typespecs)

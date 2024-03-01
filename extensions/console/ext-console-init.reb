@@ -271,7 +271,7 @@ export console!: make object! [
         "Receives line input, parse/transform, send back to CONSOLE eval"
 
         return: "null if EOF, ~escape~ if canceled, else line of text input"
-            [<opt> text! quasi-word?]
+            [~null~ text! quasi-word?]
     ][
         return read-line
     ]
@@ -431,13 +431,13 @@ ext-console-impl: func [
     return: "Code for C caller to sandbox, exit status, RESUME code, or hook"
         [block! group! integer! meta-group! handle!]  ; RETURN is hooked below!
     prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
-        [<opt> block! group!]
+        [~null~ block! group!]
     result "^META result from evaluating PRIOR, or non-quoted error"
-        [<opt> error! quoted? quasi?]
+        [~null~ error! quoted? quasi?]
     resumable "Is the RESUME function allowed to exit this console"
         [logic?]
     skin "Console skin to use if the console has to be launched"
-        [<opt> object! file!]
+        [~null~ object! file!]
 ][
     === HOOK RETURN FUNCTION TO GIVE EMITTED INSTRUCTION ===
 

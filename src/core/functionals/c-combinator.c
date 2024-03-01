@@ -139,7 +139,7 @@ Bounce Combinator_Dispatcher(Level* L)
 //             [return: [any-value?]],
 //         ])
 //
-//         remainder: [<opt> any-series?]
+//         remainder: [~null~ any-series?]
 //
 //         state [frame!]
 //         input [any-series?]
@@ -391,7 +391,7 @@ DECLARE_NATIVE(opt_combinator)
 //  {Match a TEXT! value as an array item or at current position of bin/string}
 //
 //      return: "The rule series matched against (not input value)"
-//          [<opt> text!]
+//          [~null~ text!]
 //      value [text!]
 //  ]
 //

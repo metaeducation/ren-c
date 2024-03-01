@@ -1465,7 +1465,7 @@ DECLARE_NATIVE(aes_key)
 //  "Encrypt/decrypt data using AES algorithm"
 //
 //      return: "Encrypted/decrypted data (null if zero length)"
-//          [<opt> binary!]
+//          [~null~ binary!]
 //      ctx "Stream cipher context"
 //          [handle!]
 //      data [binary!]

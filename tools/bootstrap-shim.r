@@ -562,7 +562,7 @@ empty-or-null?: :empty?
 ; not have /ONLY.  So redo it here in the shim.
 ;
 collect*: func3 [  ; variant giving NULL if no actual material kept
-    return: [blank! block!]  ; actually BLANK! acts like <opt>, but FUNC3
+    return: [blank! block!]  ; actually BLANK! acts like ~null~, but FUNC3
     body [block!]
     <local> out keeper
 ][
@@ -625,7 +625,7 @@ modernize-typespec: function3 [
     types [block!]
 ][
     types: copy types
-    replace types <opt> 'blank!
+    replace types '~null~ 'blank!
     replace types 'any-value? [<opt> any-value!]
     replace types 'any-string? 'any-string!
     replace types 'element? 'any-value!
@@ -742,7 +742,7 @@ modernize-action: function3 [
                     continue
                 ]
 
-                if spec/1 = <void> [
+                if spec/1 = [nihil?] [
                     keep3/only []  ; old cue for invisibility
                     spec: my next
                     continue
@@ -999,8 +999,8 @@ split: function3 [
 ; Also it didn't have the "literal BLANK!s are space characters" behavior.
 ;
 delimit: func [
-    return: [<opt> text!]
-    delimiter [<opt> char?! text!]
+    return: [~null~ text!]
+    delimiter [~null~ char?! text!]
     line [<maybe> text! block!]
     /tail "Include delimiter at tail of result (if non-NULL)"
     <local> text value pending anything tail-PARAM

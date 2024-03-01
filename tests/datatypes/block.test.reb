@@ -41,7 +41,7 @@
 
 (
     make-one-thru-five: func [
-        return: [<opt> integer!]
+        return: [~null~ integer!]
         <static> count (0)
     ][
         if count = 5 [count: 0 return null]

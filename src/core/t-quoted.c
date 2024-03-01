@@ -216,7 +216,7 @@ DECLARE_INTRINSIC(meta)
 //
 //  "META variant that passes through VOID and NULL, and doesn't take failures"
 //
-//      return: [<opt> <void> quoted! quasi?]
+//      return: [~null~ ~void~ quoted! quasi?]
 //      ^optional [pack? any-value?]
 //  ]
 //
@@ -241,10 +241,8 @@ DECLARE_NATIVE(meta_p)
 //
 //  "Remove quoting levels from the evaluated argument"
 //
-//      return: "Value with quotes removed"
-//          [<void> element?]
-//      value "Void allowed in case input is void and /DEPTH is 0"
-//          [<void> element?]
+//      return: [element?]
+//      value [element?]
 //      /depth "Number of quoting levels to remove (default 1)"
 //          [integer!]
 //  ]
@@ -275,7 +273,7 @@ DECLARE_NATIVE(unquote)
 //
 //      return: [quasi?]
 //      value "Any non-QUOTED! value"
-//          [<opt> element?]  ; there isn't an any-nonquoted! typeset
+//          [~null~ element?]  ; there isn't an any-nonquoted! typeset
 //  ]
 //
 DECLARE_NATIVE(quasi)
@@ -337,7 +335,7 @@ DECLARE_INTRINSIC(antiform_q)
 //
 //      return: [antiform?]
 //      value "Any non-QUOTED!, non-QUASI value"
-//          [<opt> element?]  ; there isn't an any-nonquoted! typeset
+//          [~null~ element?]  ; there isn't an any-nonquoted! typeset
 //  ]
 //
 DECLARE_NATIVE(anti)
@@ -382,7 +380,7 @@ DECLARE_INTRINSIC(unmeta)
 //  "Variant of UNMETA that passes thru VOID and NULL"
 //
 //      return: [any-atom?]
-//      value [<opt> <void> quoted? quasi?]
+//      value [~null~ ~void~ quoted? quasi?]
 //  ]
 //
 DECLARE_INTRINSIC(unmeta_p)
@@ -408,8 +406,8 @@ DECLARE_INTRINSIC(unmeta_p)
 //  "Make block arguments splice"
 //
 //      return: "Antiform of GROUP! or unquoted value (pass null and void)"
-//          [<opt> <void> element? splice?]
-//      value [<opt> <void> quoted? blank! any-array?]
+//          [~null~ ~void~ element? splice?]
+//      value [~null~ ~void~ quoted? blank! any-array?]
 //  ]
 //
 DECLARE_INTRINSIC(spread)
@@ -463,9 +461,9 @@ DECLARE_INTRINSIC(spread)
 //  "Make objects lazy"
 //
 //      return: "Antiform of OBJECT! or unquoted value (pass null and void)"
-//          [<opt> <void> element? lazy?]
+//          [~null~ ~void~ element? lazy?]
 //      object "Will do MAKE OBJECT! on BLOCK!"
-//          [<opt> <void> quoted? object! block!]
+//          [~null~ ~void~ quoted? object! block!]
 //  ]
 //
 DECLARE_NATIVE(lazy)
@@ -792,8 +790,8 @@ DECLARE_INTRINSIC(quasi_q)
 //
 //  "Removes all levels of quoting from a quoted value"
 //
-//      return: [<void> element?]
-//      optional [<void> element?]
+//      return: [element?]
+//      optional [element?]
 //  ]
 //
 DECLARE_INTRINSIC(noquote)

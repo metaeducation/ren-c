@@ -31,7 +31,7 @@
 //  "Converts a value to a human-readable string"
 //
 //      return: "Returns null if input is void"
-//          [<opt> text!]
+//          [~null~ text!]
 //      value "The value to form (currently errors on antiforms)"
 //          [<maybe> element?]
 //  ]
@@ -52,7 +52,7 @@ DECLARE_NATIVE(form)
 //  "Converts value to a REBOL-readable string"
 //
 //      return: "Returns null if input is void"
-//          [<opt> text!]
+//          [~null~ text!]
 //      @truncated "Whether the mold was truncated"
 //          [logic?]
 //      value [<maybe> element? splice?]

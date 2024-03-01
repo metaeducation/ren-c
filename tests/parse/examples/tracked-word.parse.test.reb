@@ -26,7 +26,7 @@
 
 [(
     tracked-word!: enclose :default-combinators.(word!) func [
-        return: [<opt> pack?]
+        return: [~null~ pack?]
         f [frame!]
         <static> indent (0)
         <local> result' remainder subpending

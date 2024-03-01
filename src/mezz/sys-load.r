@@ -39,8 +39,8 @@ REBOL [
 transcode-header: func [
     {Try to match a data binary! as being a script, definitional fail if not}
 
-    return: [<opt> block!]
-    @rest [<opt> binary!]
+    return: [~null~ block!]
+    @rest [~null~ binary!]
     @line [integer!]
 
     data [binary!]
@@ -95,7 +95,7 @@ load-header: func [
     {Loads script header object and body binary (not loaded)}
 
     return: "header OBJECT! if present"
-        [<opt> object!]
+        [~null~ object!]
     @body [binary! text!]
     @line [integer!]
     @final [binary!]
@@ -140,7 +140,7 @@ load-header: func [
         return raise "bad-header"
     ]
 
-    (match [<opt> block!] hdr.options) else [
+    (match [~null~ block!] hdr.options) else [
         return raise "bad-header"
     ]
 
@@ -215,7 +215,7 @@ load-header: func [
     final: ensure [binary! text!] end
 
     ensure object! hdr
-    ensure [<opt> block! blank!] hdr.options
+    ensure [~null~ block! blank!] hdr.options
     return hdr
 ]
 
@@ -224,9 +224,9 @@ load: func [
     {Loads code or data from a file, URL, text string, or binary.}
 
     return: "BLOCK! if Rebol code, otherwise value(s) appropriate for codec"
-        [<opt> element?]
+        [~null~ element?]
     @header "Request the Rebol header object be returned as well"
-        [<opt> object!]
+        [~null~ object!]
     source "Source of the information being loaded"
         [<maybe> file! url! tag! the-word! text! binary!]
     /type "E.g. rebol, text, markup, jpeg... (by default, auto-detected)"
@@ -282,7 +282,7 @@ load: func [
 
     if word? header [cause-error 'syntax header source]
 
-    ensure [<opt> object!] header
+    ensure [~null~ object!] header
     ensure [binary! block! text!] data
 
     ; Convert code to block
@@ -338,7 +338,7 @@ load-value: redescribe [
 ; this routine as well.
 
 adjust-url-for-raw: func [
-    return: [<opt> url!]
+    return: [~null~ url!]
     url [<maybe> url!]
 ][
     let text: to text! url  ; URL! may become immutable, try thinking ahead
@@ -406,11 +406,11 @@ import*: func [
     {Imports a module; locate, load, make, and setup its bindings}
 
     return: "Loaded module"
-        [<opt> module!]
+        [~null~ module!]
     @product' "Evaluative product of module body (only if WHERE is BLANK!)"
         [~cached~ ~registered~ ~nameless~ quoted? quasi?]
     where "Where to put exported definitions from SOURCE"
-        [<opt> module!]
+        [~null~ module!]
     source [
         file! url!  ; get from location, run with location as working dir
         tag!  ; load relative to system.script.path
@@ -549,7 +549,7 @@ import*: func [
         return cached
     ]
 
-    ensure [<opt> object!] hdr
+    ensure [~null~ object!] hdr
 
     let is-module: hdr and ('module = select hdr 'type)
 

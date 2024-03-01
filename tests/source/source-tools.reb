@@ -138,7 +138,7 @@ export analyse: context [
 
     file: func [
         {Analyse a file returning facts.}
-        return: [<opt> block!]
+        return: [~null~ block!]
         file
     ][
         lib.print ["Analyzing:" file]  ; subvert tests PRINT disablement
@@ -428,7 +428,7 @@ list: context [
 
     source-files-seq: func [
         {Take next file from a sequence that is represented by a queue.}
-        return: [<opt> file!]
+        return: [~null~ file!]
         queue [block!]
     ][
         let item: ensure file! take queue

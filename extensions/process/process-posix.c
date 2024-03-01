@@ -127,7 +127,7 @@ DECLARE_NATIVE(set_uid)
 //  "Get effective user ID of the process"
 //
 //      return: "Same ID as input"
-//          [<opt>]
+//          [~null~]
 //      euid "The effective user ID"
 //          [integer!]
 //  ]
@@ -158,7 +158,7 @@ DECLARE_NATIVE(set_euid)
 //  "Set real group ID of the process"
 //
 //      return: "Same ID as input"
-//          [<opt>]
+//          [~null~]
 //      gid "The effective group ID"
 //          [integer!]
 //  ]

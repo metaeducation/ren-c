@@ -488,7 +488,7 @@ Bounce TO_String(Level* level_, Kind k, const Value* arg)
 //
 //  "Variant of TO TEXT! with option to tolerate invisible codepoints"
 //
-//      return: [<opt> text!]
+//      return: [~null~ text!]
 //      value [<maybe> element?]
 //      /relax "Allow invisible codepoints like CR when converting BINARY!"
 //  ]
@@ -1031,7 +1031,7 @@ REBTYPE(String)
         UNUSED(PARAM(series));
 
         Value* arg = ARG(value);
-        assert(not Is_Nulled(arg));  // not an <opt> parameter
+        assert(not Is_Nulled(arg));  // not an ~null~ parameter
 
         REBLEN len; // length of target
         if (Symbol_Id(verb) == SYM_CHANGE)

@@ -94,7 +94,7 @@ typedef RebolValue Value;
 //  "Asks user to select file(s) and returns full file path(s)"
 //
 //      return: "Null if canceled, otherwise a path or block of paths"
-//          [<opt> file! block!]
+//          [~null~ file! block!]
 //      /save "File save mode"
 //      /multi "Allows multiple file selection, returned as a block"
 //      /initial "Default file name or directory"

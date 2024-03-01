@@ -32,7 +32,7 @@
 //
 //     return: [block!]
 //     value "If VOID, the resulting block will be empty"  ; [2]
-//          [<void> element?]
+//          [~void~ element?]
 //  ]
 //
 DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
@@ -1023,7 +1023,7 @@ REBTYPE(Array)
         UNUSED(PARAM(series));
 
         Value* arg = ARG(value);
-        assert(not Is_Nulled(arg));  // not <opt> in typecheck
+        assert(not Is_Nulled(arg));  // not ~null~ in typecheck
 
         REBLEN len; // length of target
         if (id == SYM_CHANGE)
@@ -1345,7 +1345,7 @@ REBTYPE(Array)
 //
 //      return: [block!]
 //      value "VOID input will produce an empty block"
-//          [<void> element?]
+//          [~void~ element?]
 //  ]
 //
 DECLARE_NATIVE(blockify)
@@ -1378,7 +1378,7 @@ DECLARE_NATIVE(blockify)
 //
 //      return: [group!]
 //      value "VOID input will produce an empty group"
-//          [<void> element?]
+//          [~void~ element?]
 //  ]
 //
 DECLARE_NATIVE(groupify)
@@ -1411,7 +1411,7 @@ DECLARE_NATIVE(groupify)
 //
 //      return: [block!]
 //      value "VOID input will produce an empty block"
-//          [<void> element?]
+//          [~void~ element?]
 //  ]
 //
 DECLARE_NATIVE(enblock)
@@ -1442,7 +1442,7 @@ DECLARE_NATIVE(enblock)
 //
 //      return: [group!]
 //      value "VOID input will produce an empty group"
-//          [<void> element?]
+//          [~void~ element?]
 //  ]
 //
 DECLARE_NATIVE(engroup)
@@ -1471,9 +1471,9 @@ DECLARE_NATIVE(engroup)
 //
 //  "Efficient destructive appending operation that will reuse appended memory"
 //
-//      return: [<opt> block!]
-//      accumulator [<opt> block!]
-//      result [<void> element? splice?]
+//      return: [~null~ block!]
+//      accumulator [~null~ block!]
+//      result [~void~ element? splice?]
 //  ]
 //
 DECLARE_NATIVE(glom)

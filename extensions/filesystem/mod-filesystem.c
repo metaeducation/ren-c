@@ -568,7 +568,7 @@ DECLARE_NATIVE(file_to_local)
 //
 //  "Returns the current directory path"
 //
-//      return: [<opt> file! url!]
+//      return: [~null~ file! url!]
 //  ]
 //
 DECLARE_NATIVE(what_dir)
@@ -608,7 +608,7 @@ DECLARE_NATIVE(what_dir)
 //
 //  "Changes the current path (where scripts with relative paths will be run)"
 //
-//      return: [<opt> file! url!]
+//      return: [~null~ file! url!]
 //      path [<maybe> file! url!]
 //  ]
 //
@@ -648,7 +648,7 @@ extern Value* Get_Current_Exec(void);
 //
 //  "Get the current path to the running executable"
 //
-//      return: [<opt> file!]
+//      return: [~null~ file!]
 //  ]
 //
 DECLARE_NATIVE(get_current_exec)

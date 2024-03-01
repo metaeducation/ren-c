@@ -582,7 +582,7 @@ use [
 export configure-platform: func [
     {Return build configuration information}
     hint "Version ID (null means guess)"
-        [<opt> text! tuple!]
+        [~null~ text! tuple!]
 ][
     if null? hint [  ; Try same version as this r3-make was built with
         hint: to tuple! reduce [0 system/version/4 system/version/5]

@@ -226,7 +226,7 @@ DECLARE_NATIVE(bind)
 //
 //  "Returns a view of the input bound virtually to the context"
 //
-//      return: [<opt> any-value?]
+//      return: [~null~ any-value?]
 //      context [any-context? any-array?]
 //      value [<maybe> any-value?]  ; QUOTED? support?
 //  ]
@@ -256,7 +256,7 @@ DECLARE_NATIVE(inside)
 //
 //  "Add definitions from context to environment of value"
 //
-//      return: [<opt> any-value?]
+//      return: [~null~ any-value?]
 //      context [any-context?]
 //      value [<maybe> any-array?]  ; QUOTED? support?
 //  ]
@@ -284,7 +284,7 @@ DECLARE_NATIVE(overbind)
 //
 //  "Returns a word bound into the context, if it's available, else null"
 //
-//      return: [<opt> any-word?]
+//      return: [~null~ any-word?]
 //      context [any-context?]
 //      value [<maybe> any-word?]  ; QUOTED? support?
 //  ]
@@ -319,7 +319,7 @@ DECLARE_NATIVE(has)
 //
 //  "Remove a virtual binding from a value"
 //
-//      return: [<opt> any-word? any-array?]
+//      return: [~null~ any-word? any-array?]
 //      context "If integer, then removes that number of virtual bindings"
 //          [integer! any-context?]
 //      value [<const> <maybe> any-word? any-array?]  ; QUOTED? support?
@@ -1562,7 +1562,7 @@ void Set_Var_May_Fail(
 //      return: "Same value as input (pass through if target is void)"
 //          [any-value?]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
-//          [<void> any-word? any-sequence? any-group? the-block!]
+//          [~void~ any-word? any-sequence? any-group? the-block!]
 //      ^value [raised? any-value?]  ; tunnels failure
 //      /any "Do not error on unset words"
 //      /groups "Allow GROUP! Evaluations"
@@ -1996,7 +1996,7 @@ bool Try_As_String(
 //  "Aliases underlying data of one value to act as another of same class"
 //
 //      return: [
-//          <opt> integer!
+//          ~null~ integer!
 //          issue! url!
 //          any-sequence? any-series? any-word?
 //          frame!
@@ -2381,7 +2381,7 @@ DECLARE_NATIVE(as)
 //
 //  "AS TEXT! variant that may disallow CR LF sequences in BINARY! alias"
 //
-//      return: [<opt> text!]
+//      return: [~null~ text!]
 //      value [<maybe> any-value?]
 //      /strict "Don't allow CR LF sequences in the alias"
 //  ]
@@ -2846,7 +2846,7 @@ DECLARE_NATIVE(concretize)
 //
 //  "Turn antiforms into their plain forms, pass thru other values"
 //
-//      return: [<void> element?]
+//      return: [element?]
 //      value
 //  ]
 //

@@ -637,7 +637,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 //      return: "Input if it matched, NULL if it did not"
 //          [any-value?]
 //      test "Typeset or arity-1 filter function"
-//          [<opt> logic? action? block! type-word! type-group! type-block!]
+//          [~null~ logic? action? block! type-word! type-group! type-block!]
 //      value [any-value?]
 //  ]
 //

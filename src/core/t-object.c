@@ -712,7 +712,7 @@ Bounce TO_Context(Level* level_, Kind kind, const Value* arg)
 //
 //  "Get a reference to the 'adjunct' context associated with a value"
 //
-//      return: [<opt> any-context?]
+//      return: [~null~ any-context?]
 //      value [<unrun> <maybe> frame! any-context?]
 //  ]
 //
@@ -746,9 +746,9 @@ DECLARE_NATIVE(adjunct_of)
 //
 //  "Set 'adjunct' object associated with all references to a value"
 //
-//      return: [<opt> any-context?]
+//      return: [~null~ any-context?]
 //      value [<unrun> frame! any-context?]
-//      adjunct [<opt> any-context?]
+//      adjunct [~null~ any-context?]
 //  ]
 //
 DECLARE_NATIVE(set_adjunct)
@@ -1710,7 +1710,7 @@ void MF_Frame(REB_MOLD *mo, const Cell* v, bool form) {
 //
 //  "Creates an ANY-CONTEXT? instance"
 //
-//      return: [<opt> any-context?]
+//      return: [~null~ any-context?]
 //      spec [<maybe> block!]
 //          "Object specification block (bindings modified)"
 //      /only "Values are kept as-is"

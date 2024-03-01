@@ -88,7 +88,7 @@ join: func [
         any-array?
         binary!
     ]
-    value [<void> element? splice?]
+    value [~void~ element? splice?]
 ][
     if void? value [
         return copy base

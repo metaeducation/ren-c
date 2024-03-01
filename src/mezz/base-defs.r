@@ -306,7 +306,7 @@ empty?: func* [
 empty-or-null?: func* [
     {TRUE if null, blank, or if series is empty or at or beyond its tail}
     return: [logic?]
-    series [<opt> blank! any-series? object! port! bitset! map!]
+    series [~null~ blank! any-series? object! port! bitset! map!]
 ][
     return did any [null? series, blank? series, tail? series]
 ]

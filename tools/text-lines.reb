@@ -106,7 +106,7 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
     {Return the line numbers of lines exceeding line-length.}
 
     return: "Returns null if no lines (is this better than returning []?)"
-        [<opt> block!]
+        [~null~ block!]
     line-length [integer!]
     text [text!]
 ] [
@@ -143,7 +143,7 @@ text-line-of: func [
     {Returns line number of position within text}
 
     return: "Line 0 does not exist, no counting is performed for empty text"
-        [<opt> integer!]
+        [~null~ integer!]
     position "Position (newline is considered the last character of a line)"
         [text! binary!]
 ] [
