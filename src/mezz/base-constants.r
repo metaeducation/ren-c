@@ -67,4 +67,4 @@ action?!: &action?
 ; feels a bit like "sending things to `/dev/null`".
 ;
 blackhole: #
-void: '
+void: ~void~

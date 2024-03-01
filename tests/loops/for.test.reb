@@ -47,7 +47,7 @@
 (
     success: true
     all [
-        '~[']~ = ^ for i each [1] [continue, success: false]
+        '~[~void~]~ = ^ for i each [1] [continue, success: false]
         success
     ]
 )
@@ -231,7 +231,7 @@
 [
     (void? for-each x [] [fail])
     (void? for-each x _ [fail])
-    (null? for-each x ' [fail])
+    (null? for-each x ~void~ [fail])
 
     ~expect-arg~ !! (for-each x '~ [fail])
     ~expect-arg~ !! (for-each x ~ [fail])

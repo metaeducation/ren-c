@@ -65,17 +65,10 @@
 
 INLINE bool Is_Nulled(Need(const Value*) v) {
     ASSERT_CELL_READABLE(v);
-    return QUOTE_BYTE(v) == 0
+    return QUOTE_BYTE(v) == ANTIFORM_0
         and HEART_BYTE(v) == REB_WORD
         and Cell_Word_Id(v) == SYM_NULL;
 }
-
-#define Init_Anti_Word(out,label) \
-    TRACK(Init_Any_Word_Untracked(ensure(Sink(Value*), (out)), REB_WORD, \
-            (label), ANTIFORM_0))
-
-#define Init_Quasi_Word(out,label) \
-    TRACK(Init_Any_Word_Untracked((out), REB_WORD, (label), QUASIFORM_2))
 
 #define Init_Nulled(out) \
     Init_Anti_Word((out), Canon(NULL))

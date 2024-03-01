@@ -63,11 +63,11 @@
     ]
 )
 
-(['] = transcode "';")
+([a] = transcode "a ;")
 (
-    data: transcode "';^/a"
+    data: transcode "a ;^/a"
     all [
-        data = [' a]
+        data = [a a]
         not new-line? data
         new-line? next data
         not new-line? next next data

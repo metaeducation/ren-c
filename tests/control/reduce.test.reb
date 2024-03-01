@@ -11,7 +11,7 @@
 [#1760 ; unwind functions should stop evaluation
     (null? repeat 1 [reduce [break]])
 ]
-('~[']~ = ^ repeat 1 [reduce [continue]])
+('~[~void~]~ = ^ repeat 1 [reduce [continue]])
 (1 = catch [reduce [throw 1]])
 
 ; There used to be a multi-return situation where the name of a throw was
@@ -85,10 +85,10 @@
 
 ~no-arg~ !! (reduce/predicate [null] chain [:null?, :non])
 
-; Voids are never offered in today's REDUCE
+; Voids are offered, but omitted if predicate doesn't take them.
 ; https://forum.rebol.info/t/should-void-be-offered-to-predicates-for-reduce-any-all-etc/1872
 ;
-([3 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :reify)
+([3 ~void~ 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :reify)
 ([-3 -300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :negate)
 ([3 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :maybe)
 

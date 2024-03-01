@@ -166,6 +166,6 @@
     ; loop didn't run.  It forces our hand to put a void in a pack--to still
     ; convey a void intent, but not truly be a void for ELSE/THEN purposes.
 
-    ('~[']~ = ^ for-both x [1 2] [3 4] [if x > 2 [continue] x * 10])
-    ('~[']~ = ^ for-both x [1 2] [3 4] [comment "Maintain invariant!"])
+    ('~[~void~]~ = ^ for-both x [1 2] [3 4] [if x > 2 [continue] x * 10])
+    ('~[~void~]~ = ^ for-both x [1 2] [3 4] [comment "Maintain invariant!"])
 ]

@@ -4,9 +4,9 @@
 ; fetched from words), voids have no-op behavior...leaving the parse position
 ; alone and succeeding, evaluating to void.
 
-; Quoted voids are just skipped, and skipped if hit in a variable
+; meta voids are just skipped, and skipped if hit in a variable
 
-('b = parse [a b] ['a ' 'b])
+('b = parse [a b] ['a ~void~ 'b])
 (
     var: void
     'b = parse [a b] ['a var 'b]
@@ -14,7 +14,7 @@
 
 ; Voids evaporate, leaving the previous result...
 
-('b = parse [a b] ['a 'b '])
+('b = parse [a b] ['a 'b ~void~])
 (
     var: void
     'b = parse [a b] ['a 'b var]
@@ -25,7 +25,7 @@
 (
     test: ~
     all [
-        'b = parse [a b] ['a test: ^['] 'b]
+        'b = parse [a b] ['a test: ^[~void~] 'b]
         nihil' = test
     ]
 )

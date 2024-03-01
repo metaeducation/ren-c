@@ -492,9 +492,6 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
         // "strict" here still allows coercion, e.g. `1 < 1.1` should work.
         //
         switch (a_heart) {
-          case REB_VOID:
-            return -1;  // consider always less than anything else
-
           case REB_INTEGER:
             if (b_heart == REB_DECIMAL || b_heart == REB_PERCENT) {
                 Init_Decimal(a, cast(REBDEC, VAL_INT64(a)));
@@ -562,13 +559,6 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
     }
 
   compare:;
-
-    Heart heart = Cell_Heart(a);
-
-    if (heart == REB_VOID) {
-        assert(Cell_Heart(b) == REB_VOID);
-        return 0;  // voids always equal
-    }
 
     // At this point, the types should match...e.g. be able to be passed to
     // the same comparison dispatcher.  They might not be *exactly* equal.

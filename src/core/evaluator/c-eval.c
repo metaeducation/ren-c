@@ -469,22 +469,6 @@ Bounce Evaluator_Executor(Level* L)
     }
     else switch ((STATE = HEART_BYTE(L_current))) {  // states include type [2]
 
-    //=//// VOID //////////////////////////////////////////////////////////=//
-    //
-    // Void cells are not elements, and feeds should only give back Element*.
-    // This should never be able to happen, but try not to crash if it does.
-    //
-    // The API should error if you try to make this situation happen:
-    //
-    //     Value* v = rebVoid();
-    //     bool is_void = rebUnboxLogic("void?", v);  // should be rebQ(v)
-
-      case REB_VOID:
-        assert("VOID seen in evaluator feed, should not be able to happen");
-        Init_Anti_Word(OUT, Canon(VOID));  // non-lethal behavior if release
-        break;
-
-
     //=//// COMMA! ////////////////////////////////////////////////////////=//
     //
     // A comma is a lightweight looking expression barrier, which evaluates
@@ -1136,12 +1120,12 @@ Bounce Evaluator_Executor(Level* L)
 
         assert(L_current_gotten == nullptr);
 
-        switch (VAL_TYPE(SPARE)) {
-          case REB_VOID :
+        if (Is_Void(SPARE)) {
             STATE = REB_SET_WORD;
             Init_Blank(CURRENT);  // can't put voids in feed position
             goto set_word_common_maybe_blank;
-
+        }
+        else switch (VAL_TYPE(SPARE)) {
           case REB_BLOCK :
             Copy_Cell(CURRENT, cast(Element*, SPARE));
             HEART_BYTE(CURRENT) = REB_SET_BLOCK;

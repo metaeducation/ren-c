@@ -2042,12 +2042,15 @@ Bounce Scanner_Executor(Level* const L) {
             or *ep == ']' or *ep == ')'
             or *ep == ';'
         ){
-            // If we have something like ['''] there won't be another token
-            // push coming along to apply the quotes to, so quote a void.
-            // This also applies to comments.
+            // !!! At one point the ['''] would be a "triple-quoted void", but
+            // it should either be illegal or be what triple-quoted blanks
+            // look like.  The question of if ['] is better than ['_] as the
+            // representation for quoted blanks was considered, but it's no
+            // good for parse [_ _ _] [some '], hence it needs to error.
             //
             assert(level->quotes_pending == 0);
-            Quotify(Init_Void(PUSH()), len);
+            /* Quotify(Init_Blank(PUSH()), len); */
+            return RAISE(Error_Syntax(ss, level->token));
         }
         else
             level->quotes_pending = len;  // apply quoting to next token
@@ -2074,7 +2077,7 @@ Bounce Scanner_Executor(Level* const L) {
             // push coming along to apply the quotes to, so quasi a null.
             // This also applies to comments.
             //
-            Init_Quasi_Void(PUSH());
+            Init_Quasi_Blank(PUSH());
             break;
         }
         else

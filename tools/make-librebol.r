@@ -213,7 +213,10 @@ for-each-api [
         continue
     ]
 
-    if find spec #noreturn [
+    all [
+        spec
+        find spec #noreturn
+    ] then [
         assert [return-type = "void"]
         attributes: "ATTRIBUTE_NO_RETURN  /* divergent */"
         epilogue: cscape [:api

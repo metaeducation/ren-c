@@ -485,13 +485,24 @@ INLINE Option(const Value*) Lookup_Word(
     return CTX_VAR(c, index);
 }
 
+// Like with set-friendliness, get-friendliness relates to what can be done
+// with plain WORD! access regarding antiforms.  Since ~true~ and ~false~
+// antiforms are the currency of "logic" now, they have to be legal...so this
+// is opened up to the entire class of antiforms.  But unlike in assignment,
+// antiform blanks (trash) are not get-friendly.
+//
+INLINE bool Is_Antiform_Get_Friendly(const Value* v) {
+    assert(QUOTE_BYTE(v) == ANTIFORM_0);
+    return HEART_BYTE(v) != REB_BLANK;
+}
+
 INLINE const Value* Get_Word_May_Fail(
     Sink(Value*) out,
     const Element* any_word,
     Specifier* specifier
 ){
     const Value* var = Lookup_Word_May_Fail(any_word, specifier);
-    if (Is_Antiform(var) and not Is_Logic(var))
+    if (Is_Antiform(var) and not Is_Antiform_Get_Friendly(var))
         fail (Error_Bad_Word_Get(any_word, var));
 
     return Copy_Cell(out, var);

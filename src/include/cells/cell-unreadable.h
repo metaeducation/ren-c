@@ -1,6 +1,6 @@
 //
 //  File: %cell-unreadable.h
-//  Summary: "Unreadable Variant of Quasi-Void Available In Early Boot"
+//  Summary: "Unreadable Variant of Quasi-Blank Available In Early Boot"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -28,13 +28,13 @@
 // a later time--spanning an evaluation.  Debug asserts help catch cases where
 // it's accidentally read from.
 //
-// it will panic if you try to test it and will also refuse VAL_TYPE() checks.
+// It will panic if you try to test it and will also refuse VAL_TYPE() checks.
 // The only way to check if something is unreadable is in the debug build, and
 // hence should only appear in asserts.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * The low-level type used to store these cells is a quasi-void (~) with
+// * The low-level type used to store these cells is a quasi-blank (~) with
 //   NODE_FLAG_FREE set in the debug build.  While an antiform might seem
 //   more desirable to draw attention if these leak to userspace in the
 //   release build, quasiform cells can be used in blocks.  It would break
@@ -49,7 +49,7 @@
 
 #if DEBUG_UNREADABLE_CELLS
     INLINE Element* Init_Unreadable_Untracked(Sink(Element*) out) {
-        Init_Void_Untracked(out, QUASIFORM_2);
+        Init_Quasi_Blank(out);
         Set_Node_Free_Bit(out);  // cell won't be READABLE(), but WRITABLE()
         return out;
     }
@@ -58,7 +58,7 @@
         if (not Is_Node_Free(v))
             return false;
         assert(Is_Node(v) and Is_Node_A_Cell(v));
-        assert(HEART_BYTE(v) == REB_VOID);
+        assert(HEART_BYTE(v) == REB_BLANK);
         assert(QUOTE_BYTE(v) == QUASIFORM_2);
         return true;
     }
@@ -67,7 +67,7 @@
         assert(Is_Unreadable_Debug(v))
 #else
     #define Init_Unreadable_Untracked(out) \
-        Init_Void_Untracked((out), QUASIFORM_2)
+        Init_Quasi_Blank(out)
 
     #undef Is_Unreadable_Debug  // testing in release builds is not meaningful
 

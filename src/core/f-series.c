@@ -447,9 +447,6 @@ REBINT Cmp_Value(const Cell* s, const Cell* t, bool strict)
       case REB_FRAME:
         return CT_Frame(s, t, strict);
 
-      case REB_VOID: // !!! should voids be allowed at this level?
-        return 0;  // voids always equal to each other
-
       case REB_BLANK:
         assert(CT_Blank(s, t, strict) == 0);
         return 0;  // shortcut call to comparison

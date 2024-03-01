@@ -580,7 +580,7 @@ DECLARE_INTRINSIC(any_inert_q)
 
     Init_Logic(
         out,
-        not Is_Void(arg) and not Is_Antiform(arg) and Any_Inert(arg)
+        not Is_Antiform(arg) and Any_Inert(arg)
     );
 }
 
@@ -2483,7 +2483,7 @@ DECLARE_INTRINSIC(element_q)
 {
     UNUSED(phase);
 
-    if (Is_Void(arg) or Is_Antiform(arg))
+    if (Is_Antiform(arg))
         Init_False(out);
     else
         Init_True(out);
@@ -2785,20 +2785,10 @@ DECLARE_INTRINSIC(decay)
 //  "Make antiforms into their quasiforms, pass thru other values"
 //
 //      return: [element?]
-//      value [non-void-value?]  ; so reduce/predicate won't pass void [1]
+//      value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(reify)
-//
-// 1. REIFY of VOID isn't supported, in order for this to work:
-//
-//       >> reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :reify
-//       == [3 300]
-//
-//   When REDUCE/PREDICATE sees a typecheck on void fail, it assumes the
-//   predicate does not have handling.  If we did handle it, we'd have to
-//   return void to get the same outcome...which seems inconsistent with
-//   "reification".  But an argument for the exception could be made.
 {
     INCLUDE_PARAMS_OF_REIFY;
 
@@ -2813,20 +2803,14 @@ DECLARE_NATIVE(reify)
 //  "Make quasiforms into their antiforms, pass thru other values"
 //
 //      return: [any-value?]
-//      value [any-value?]
+//      value [any-value?]  ; should input be enforced as ELEMENT?
 //  ]
 //
 DECLARE_NATIVE(degrade)
-//
-// 1. DEGRADE of a quoted void stays a quoted void.  This should change if
-//    REIFY is altered to support turning voids into quoted voids.
 {
     INCLUDE_PARAMS_OF_DEGRADE;
 
     Value* v = ARG(value);
-
-    assert(not Is_Void(v));  // typechecking
-
     return Degrade(Copy_Cell(OUT, v));
 }
 
@@ -2834,7 +2818,7 @@ DECLARE_NATIVE(degrade)
 //
 //  concretize: native [
 //
-//  "Make antiforms into plain forms, pass thru other values"
+//  "Make non-trash antiforms into plain forms, pass thru other values"
 //
 //      return: [element?]
 //      value [any-value?]
@@ -2842,16 +2826,13 @@ DECLARE_NATIVE(degrade)
 //
 DECLARE_NATIVE(concretize)
 //
-// 1. CONCRETIZE of TRASH and VOID are not currently supported by default.
-//    If they were, then they would both become '
+// 1. CONCRETIZE of TRASH is not supported by default (it's not entirely
+//    clear why CONCRETIZE was created as distinct from REIFY, is this
+//    actually needed?)
 {
-    INCLUDE_PARAMS_OF_REIFY;
+    INCLUDE_PARAMS_OF_CONCRETIZE;
 
     Value* v = ARG(value);
-
-    if (Is_Void(v))  // see 1
-        fail ("CONCRETIZE of VOID is undefined (needs motivating case)");
-
     if (Is_Trash(v))  // see 1
         fail ("CONCRETIZE of TRASH is undefined (needs motivating case)");
 

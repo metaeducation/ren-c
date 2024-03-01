@@ -91,7 +91,7 @@
 
 ; WORD! isotopes cause an error, quasi-word cannot be used as rule
 [
-    ~bad-word-get~ !! (
+    ~bad-antiform~ !! (
         foo: ~bad~
         parse3 "a" [foo]
         true
@@ -128,7 +128,7 @@
 ;
 ; BLANK! behavior is still contentious at time of writing.
 [
-    ~bad-word-get~ !! (
+    ~bad-null~ !! (
         parse3 [x] ['x null]
     )
     (

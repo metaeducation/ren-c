@@ -29,14 +29,13 @@ REBOL [
 
 true
 false
-#void
+void
 on
 off
 yes
 no
 
 null
-quoted-void
 quasi-void
 quasi-null
 blackhole

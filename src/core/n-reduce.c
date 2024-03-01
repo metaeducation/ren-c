@@ -678,17 +678,18 @@ Bounce Composer_Executor(Level* const L)
     if (Is_Nulled(OUT))
         return RAISE(Error_Need_Non_Null_Raw());  // [(null)] => error!
 
-    if (Is_Antiform(OUT))
-        return RAISE(Error_Bad_Antiform(OUT));
-
     if (Is_Void(OUT)) {
         if (group_heart == REB_GROUP and group_quote_byte == NOQUOTE_1)
             goto handle_next_item;  // compose [(void)] => []
 
-        // [''(void)] => ['']
-
-        Init_Void(PUSH());  // will have group_quote_byte applied
+        // !!! At one point, [''(void)] => [''] but today that's not possible.
+        // We could make the group vanish anyway, [''(void)] => [], but that
+        // seems like a bad idea.  Give an error.
+        //
+        fail ("COMPOSE cannot quote groups that vanished with void");
     }
+    else if (Is_Antiform(OUT))
+        return RAISE(Error_Bad_Antiform(OUT));
     else
         Copy_Cell(PUSH(), cast(Element*, OUT));
 

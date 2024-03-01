@@ -561,7 +561,7 @@ INLINE Bounce Native_Void_Result_Untracked(
     assert(out == level_->out);
     UNUSED(out);
     assert(not THROWING);
-    return Init_Void_Untracked(level_->out, NOQUOTE_1);
+    return Init_Void_Untracked(level_->out);
 }
 
 INLINE Bounce Native_Unmeta_Result(Level* level_, const Value* v) {
@@ -576,7 +576,7 @@ INLINE Bounce Native_Trash_Result_Untracked(
     assert(out == level_->out);
     UNUSED(out);
     assert(not THROWING);
-    return Init_Void_Untracked(level_->out, ANTIFORM_0);
+    return Init_Trash(level_->out);
 }
 
 INLINE Bounce Native_Raised_Result(Level* level_, const void *p) {

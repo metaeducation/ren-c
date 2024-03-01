@@ -133,7 +133,7 @@
 
     ([a b c '[3 d e]] = append [a b c] ^ compose [(1 + 2) d e])
 
-    ([a b c '] = append [a b c] quote void)
+    ([a b c ~void~] = append [a b c] meta void)
 
     (
         [a b c ~null~] = append [a b c] ^(null)
@@ -169,7 +169,7 @@
     ([a b c '@] = append [a b c] ^ '@)
 ]
 
-([a b c '] = append [a b c] the ')
+([a b c ~void~] = append [a b c] the ~void~)
 
 ; Added support for /PART on ISSUE!
 ;
@@ -184,7 +184,7 @@
 ; leads to a useful interaction with blocks, while retaining the reactivity
 ; of a true branch product with THEN, and false giving void runs ELSE.
 [
-    ('~[']~ = ^ if true [])
+    ('~[~void~]~ = ^ if true [])
     (void? if false [<a>])
     ([a b c] = append [a b c] if true [])
     ([a b c] = append [a b c] if false [<a>])
@@ -199,6 +199,6 @@
         [a b] = append [a b] spread second [c ~]
     )
     (
-        [a b] = append [a b] spread second [c ']
+        [a b] = append [a b] spread second [c ~void~]
     )
 ]

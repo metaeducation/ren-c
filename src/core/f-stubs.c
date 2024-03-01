@@ -593,6 +593,9 @@ DECLARE_NATIVE(getify)
 // Turn a value into its META-XXX! equivalent, if possible.
 //
 Value* Metafy(Value* out) {  // called on stack values; can't call evaluator
+    if (Is_Void(out))
+        return Init_Sigil(out, SIGIL_META);
+
     Heart heart = Cell_Heart(out);
     if (Any_Word_Kind(heart)) {
         HEART_BYTE(out) = REB_META_WORD;
@@ -608,9 +611,6 @@ Value* Metafy(Value* out) {  // called on stack values; can't call evaluator
     }
     else if (Any_Group_Kind(heart)) {
         HEART_BYTE(out) = REB_META_GROUP;
-    }
-    else if (heart == REB_VOID) {
-        Init_Sigil(out, SIGIL_META);
     }
     else
         fail ("Cannot METAFY");
@@ -642,6 +642,9 @@ DECLARE_NATIVE(metafy)
 // Turn a value into its THE-XXX! equivalent, if possible.
 //
 Value* Theify(Value* out) {  // called on stack values; can't call evaluator
+    if (Is_Void(out))
+        return Init_Sigil(out, SIGIL_THE);
+
     Heart heart = Cell_Heart(out);
     if (Any_Word_Kind(heart)) {
         HEART_BYTE(out) = REB_THE_WORD;
@@ -657,9 +660,6 @@ Value* Theify(Value* out) {  // called on stack values; can't call evaluator
     }
     else if (Any_Group_Kind(heart)) {
         HEART_BYTE(out) = REB_THE_GROUP;
-    }
-    else if (heart == REB_VOID) {
-        Init_Sigil(out, SIGIL_THE);
     }
     else
         fail ("Cannot THEIFY");

@@ -856,3 +856,23 @@ INLINE bool Is_Antiform(Need(const Value*) v)
 
 #define Is_Metaform(v) \
     (QUOTE_BYTE(READABLE(v)) >= QUASIFORM_2)  // quasi or quoted
+
+
+//=//// ENSURE THINGS ARE ELEMENTS ////////////////////////////////////////=//
+//
+// An array element can't be an antiform.
+
+INLINE Element* Ensure_Element(const_if_c Atom* cell) {
+    if (QUOTE_BYTE(cell) == ANTIFORM_0)
+        fail (Error_Bad_Antiform(cell));
+    return u_cast(Element*, cell);
+}
+
+#if CPLUSPLUS_11
+    INLINE const Element* Ensure_Element(const Atom* cell)
+      { return Ensure_Element(m_cast(Atom*, cell)); }
+
+  #if DEBUG_USE_CELL_SUBCLASSES
+    void Ensure_Element(const Element*) = delete;
+  #endif
+#endif

@@ -231,7 +231,6 @@ INLINE Element* Quasify_Antiform(Atom* v) {
 }
 
 INLINE Value* Reify(Atom* v) {
-    assert(not Is_Void(v));
     if (QUOTE_BYTE(v) == ANTIFORM_0)
         QUOTE_BYTE(v) = QUASIFORM_2;
     return cast(Value*, v);
@@ -244,7 +243,6 @@ INLINE Atom* Degrade(Atom* v) {
 }
 
 INLINE Element* Concretize(Atom* v) {
-    assert(not Is_Void(v));
     assert(not Is_Trash(v));
     if (QUOTE_BYTE(v) == ANTIFORM_0)
         QUOTE_BYTE(v) = NOQUOTE_1;

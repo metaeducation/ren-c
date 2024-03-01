@@ -173,7 +173,7 @@ void Set_Parameter_Spec(
         Clear_Cell_Flag(dest, NEWLINE_BEFORE);
 
         if (Is_Quasiform(item)) {
-            if (Cell_Heart(item) == REB_VOID) {
+            if (Cell_Heart(item) == REB_BLANK) {
                 *flags |= PARAMETER_FLAG_TRASH_DEFINITELY_OK;
                 continue;
             }

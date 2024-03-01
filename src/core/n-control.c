@@ -206,7 +206,7 @@ DECLARE_NATIVE(either)
 //    branches if applicable.  But the decision on whether it's a THEN or
 //    ELSE case comes from the first parameter in the pack.
 //
-// 3. With the exception of ~[~null~]~ and ~[']~ when /DECAY is used, a "pack"
+// 3. With the exception of ~[~null~]~ and ~[~void~]~ when /DECAY is used, a "pack"
 //    (antiform block) will always run a THEN and not an ELSE.  If a function
 //    wants to tweak this, it needs to return a lazy object with customized
 //    then/else behavior that otherwise reifies to a pack.

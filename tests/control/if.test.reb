@@ -12,7 +12,7 @@
 (1 = if true [1])
 
 (void' = ^ if false [])
-('~[']~ = ^ if true [])
+('~[~void~]~ = ^ if true [])
 
 (error? if true [trap [1 / 0]])
 ; RETURN stops the evaluation
@@ -83,7 +83,7 @@
 
 ; recursive behaviour
 
-('~[']~ = ^ if true [if false [1]])
+('~[~void~]~ = ^ if true [if false [1]])
 (void? if true [2 if false [1]])
 (1 = if true [if true [1]])
 

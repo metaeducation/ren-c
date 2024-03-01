@@ -229,8 +229,8 @@ static void Startup_Lib(void)
     Set_Cell_Flag(Init_Nulled(force_Lib(NULL)), PROTECTED);
     assert(Is_Falsey(Lib(NULL)) and Is_Nulled(Lib(NULL)));
 
-    Set_Cell_Flag(Init_Quoted_Void(force_Lib(QUOTED_VOID)), PROTECTED);
-    assert(Is_Truthy(Lib(QUOTED_VOID)));
+    Set_Cell_Flag(Init_Quasi_Void(force_Lib(QUASI_VOID)), PROTECTED);
+    assert(Is_Truthy(Lib(QUASI_VOID)));
 
     Set_Cell_Flag(Init_Blank(force_Lib(BLANK)), PROTECTED);
     assert(Is_Truthy(Lib(BLANK)) and Is_Blank(Lib(BLANK)));
@@ -243,9 +243,6 @@ static void Startup_Lib(void)
         Is_Truthy(Lib(QUASI_NULL))
         and Is_Quasi_Null(Lib(QUASI_NULL))
     );
-
-    Set_Cell_Flag(Init_Quasi_Void(force_Lib(QUASI_VOID)), PROTECTED);
-    assert(Is_Truthy(Lib(QUASI_VOID)) and Is_Meta_Of_Trash(Lib(QUASI_VOID)));
 
     Init_True(force_Lib(TRUE));
     Init_False(force_Lib(FALSE));
@@ -361,9 +358,9 @@ static void Startup_Empty_Arrays(void)
   blockscope {
     Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
     Set_Series_Len(a, 1);
-    Init_Quoted_Void(Array_At(a, 0));
+    Init_Quasi_Void(Array_At(a, 0));
     Freeze_Array_Deep(a);
-    PG_1_Quoted_Void_Array = a;
+    PG_1_Quasi_Void_Array = a;
   }
 
     // "Empty" PATH!s that look like `/` are actually a WORD! cell format
@@ -445,7 +442,7 @@ static void Init_Root_Vars(void)
 
     ensure(nullptr, Root_Heavy_Void) = Init_Block(
         Alloc_Value(),
-        PG_1_Quoted_Void_Array
+        PG_1_Quasi_Void_Array
       );
     Force_Value_Frozen_Deep(Root_Heavy_Void);
 

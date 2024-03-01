@@ -110,11 +110,8 @@
 )
 
 
-(void? ')
-(void? do ['])
-(['] = reduce [''])
-([''] = reduce ['''])
-([' '' ''' ''''] = reduce ['' ''' '''' '''''])
+(void? ~void~)
+(void? do [~void~])
 
 (
     [1 (2 + 3) [4 + 5] a/+/b c/+/d: :e/+/f]
@@ -131,13 +128,13 @@
 
 ; No quote levels is legal for QUOTE to add also, if /DEPTH is 0
 [
-    (void? quote/depth void 0)
     (<x> = quote/depth <x> 0)
+    ~expect-arg~ !! (void? quote/depth void 0)  ; can't quote voids, only meta
 ]
 
 ; low level "KIND"
 [
-    (quoted! = kind of the ')
+    (quoted! = kind of the '_)
     (quoted! = kind of the 'foo)
 ]
 
@@ -172,10 +169,8 @@
 
 (did the '_)
 (did the '~false~)
-(did the ')
 (did the ''''''''_)
 (did the ''''''''~false~)
-(did the '''''''')
 
 
 ; An escaped word that can't fit in a cell and has to do an additional
@@ -240,7 +235,7 @@
         ("try library here")
         _
         |
-        ~()~
+        ~(_)~
     ][
         lit-item: quote get/any $item
 
@@ -276,3 +271,10 @@
         quasi? get/any $x
     ]
 )
+
+; Once representations of quoted void, quotes of nothingness are now illegal.
+[
+    ~scan-invalid~ !! (transcode "['] = reduce ['']")
+    ~scan-invalid~ !! (transcode "[''] = reduce [''']")
+    ~scan-invalid~ !! (transcode "[' '' ''' ''''] = reduce ['' ''' '''' ''''']")
+]

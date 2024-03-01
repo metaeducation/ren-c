@@ -177,9 +177,6 @@ void Probe_Cell_Print_Helper(
     if (Is_Cell_Poisoned(v)) {
         Append_Ascii(mo->series, "**POISONED CELL**");
     }
-    else if (Is_Void(v)) {
-        Append_Ascii(mo->series, "; void");
-    }
     else if (Is_Antiform(v)) {
         DECLARE_VALUE (reified);
         Quasify_Antiform(Copy_Cell(reified, v));

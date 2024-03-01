@@ -250,8 +250,6 @@ Array* Pop_Stack_Values_Core(StackIndex base, Flags flags)
             Assert_Cell_Stable(src);
             assert(flavor >= FLAVOR_MIN_ISOTOPES_OK);
         }
-        if (VAL_TYPE_UNCHECKED(src) == REB_VOID)  // allow unreadable
-            assert(flavor >= FLAVOR_MIN_VOIDS_OK);
       #endif
 
         Move_Cell_Untracked(dest, src, (~ CELL_MASK_PERSIST));

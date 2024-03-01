@@ -175,8 +175,8 @@ DECLARE_NATIVE(the)
 //  "Constructs a quoted form of the evaluated argument"
 //
 //      return: "Quoted value (if depth = 0, may not be quoted)"
-//          [<void> element?]
-//      optional [<void> element?]
+//          [element?]
+//      optional [element?]
 //      /depth "Number of quoting levels to apply (default 1)"
 //          [integer!]
 //  ]

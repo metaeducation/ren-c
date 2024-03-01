@@ -84,5 +84,35 @@ INLINE Element* Init_Blank_Untracked(Cell* out, Byte quote_byte) {
 #define Init_Quasi_Blank(out) \
     TRACK(Init_Blank_Untracked((out), QUASIFORM_2))
 
-INLINE bool Is_Quasi_Blank(const Cell* v)
-  { return Is_Quasiform(v) and HEART_BYTE(v) == REB_BLANK; }
+
+
+//=//// '~' ISOTOPE (a.k.a. TRASH) ////////////////////////////////////////=//
+//
+// Picking antiform  as the contents of unset variables has many benefits
+// over choosing something like an `~unset~` or `~trash~` antiforms:
+//
+//  * Reduces noise when looking at a list of variables to see which are unset
+//
+//  * We consider variables to be unset and not values, e.g. (unset? 'var).
+//    This has less chance for confusion as if it were named ~unset~ people
+//    would likely expect `(unset? ~unset~)` to work.
+//
+//  * Quick way to unset variables, simply `(var: ~)`
+//
+// While "trash" is a slightly jarring name for ~ antiforms, one doesn't need
+// to call it by name to use it.  e.g. return specs can say `return: [~]`
+// instead of `return: [trash?]`, and `return ~` instead of `return trash`
+//
+// The choice of this name (vs. "unset") was meditated on for quite some time,
+// and resolved as superior to trying to claim there's such a thing as an
+// "unset value".
+//
+
+#define Init_Trash(out) \
+    u_cast(Value*, TRACK( \
+        Init_Blank_Untracked(ensure(Sink(Value*), (out)), ANTIFORM_0)))
+
+#define Init_Meta_Of_Trash(out)     Init_Quasi_Blank(out)
+
+#define TRASH_CELL \
+    cast(const Value*, &PG_Trash_Cell)  // Note that Lib(TRASH) is a function

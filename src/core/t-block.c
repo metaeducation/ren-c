@@ -881,9 +881,6 @@ REBTYPE(Array)
         if (Is_Antiform(setval))
             fail (Error_Bad_Antiform(setval));  // can't put in blocks
 
-        if (Is_Void(setval))
-            fail (Error_Bad_Void());
-
         // !!! If we are jumping here from getting updated bits, then
         // if the block isn't immutable or locked from modification, the
         // memory may have moved!  There's no way to guarantee semantics

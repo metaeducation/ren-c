@@ -122,6 +122,13 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
     TRACK(Init_Any_Word_Bound_Untracked((out), \
             (heart), (symbol), CTX_VARLIST(context), (index)))
 
+#define Init_Anti_Word(out,label) \
+    TRACK(Init_Any_Word_Untracked(ensure(Sink(Value*), (out)), REB_WORD, \
+            (label), ANTIFORM_0))
+
+#define Init_Quasi_Word(out,label) \
+    TRACK(Init_Any_Word_Untracked((out), REB_WORD, (label), QUASIFORM_2))
+
 
 // Helper calls strsize() so you can more easily use literals at callsite.
 // (Better to call Intern_UTF8_Managed() with the size if you know it.)

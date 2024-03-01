@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -21,137 +21,55 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // VOID is the result of branching constructs that don't take a branch, and if
-// code evaluates to void then there will be no `==` in the console (as void
-// has no representation).
+// code evaluates to void then there will be no `==` in the console.
 //
 //     >> if false [<d>]
 //
 //     >> if true [<d>]
 //     == <d>
 //
-// Though void is like an antiform in that it cannot be used as an array
-// element, it is not itself considered to be an antiform.  Array operations
-// that try to add it will be no-ops instead of errors:
+// However, its implementation is the WORD! antiform of "void", so you can
+// reveal that with a META operation:
+//
+//     >> meta if false [<d>]
+//     == ~void~
+//
+// Array operations that try to add voids will be no-ops instead of errors:
 //
 //     >> append [a b c] if false [<d>]
 //     == [a b c]
 //
-// While void doesn't have a representation, it has quoted and quasi forms
-// that are single characters which can be used as array elements:
-//
-//     >> append [a b c] quote void
-//     == [a b c ']
-//
-//     >> append [a b c] quasi void
-//     == [a b c ~]
-//
-// These fit pleasingly into the META/UNMETA paradigm, as the quoted form
-// evaluates to a plain void, and the quasi form evaluates to an antiform:
-//
-//     >> meta void
-//     == '
-//
-//     >> '
-//
-//     >> append [a b c] '
-//     == [a b c]
-//
-//     >> ~
-//     == ~  ; anti
-//
-// The `~` antiform is called TRASH, and is chosen in particular by the system
-// to represent variables that have not been assigned, that generate an error
-// when accessed by plain WORD!.
-//
 
-INLINE Cell* Init_Void_Untracked(Cell* out, Byte quote_byte) {
-    FRESHEN_CELL(out);
-    out->header.bits |= (
-        NODE_FLAG_NODE | NODE_FLAG_CELL
-            | CELL_MASK_VOID | FLAG_QUOTE_BYTE(quote_byte)
-    );
-
-  #ifdef ZERO_UNUSED_CELL_FIELDS
-    EXTRA(Any, out).corrupt = CORRUPTZERO;  // not Cell_Extra_Needs_Mark()
-    PAYLOAD(Any, out).first.corrupt = CORRUPTZERO;
-    PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;
-  #endif
-
-    return out;
+INLINE bool Is_Void(Need(const Value*) v) {
+    ASSERT_CELL_READABLE(v);
+    return QUOTE_BYTE(v) == ANTIFORM_0
+        and HEART_BYTE(v) == REB_WORD
+        and Cell_Word_Id(v) == SYM_VOID;
 }
 
 #define Init_Void(out) \
-    u_cast(Value*, TRACK( \
-        Init_Void_Untracked(ensure(Sink(Value*), (out)), NOQUOTE_1)))
+    Init_Anti_Word((out), Canon(VOID))
 
-#define Init_Quoted_Void(out) \
-    u_cast(Element*, TRACK( \
-        Init_Void_Untracked(ensure(Sink(Element*), (out)), ONEQUOTE_3)))
-
-INLINE bool Is_Quoted_Void(const Cell* v)
-  { return QUOTE_BYTE(v) == ONEQUOTE_3 and HEART_BYTE(v) == REB_VOID; }
+#define Init_Void_Untracked(out) \
+    Init_Any_Word_Untracked(ensure(Sink(Value*), (out)), REB_WORD, \
+        Canon(VOID), ANTIFORM_0)
 
 #define Init_Quasi_Void(out) \
-    u_cast(Element*, TRACK( \
-        Init_Void_Untracked(ensure(Sink(Element*), (out)), QUASIFORM_2)))
+    Init_Quasi_Word((out), Canon(VOID))
 
-#define Init_Meta_Of_Void(out)       Init_Quoted_Void(out)
-#define Is_Meta_Of_Void(v)           Is_Quoted_Void(v)
-
-
-//=//// ENSURE THINGS ARE ELEMENTS ////////////////////////////////////////=//
-//
-// An array element can't be an antiform, and it can't be void.  Now that we
-// have defined void, define an ensure routine.
-
-INLINE Element* Ensure_Element(const_if_c Atom* cell) {
-    if (QUOTE_BYTE(cell) == ANTIFORM_0)
-        fail (Error_Bad_Antiform(cell));
-    if (HEART_BYTE(cell) == REB_VOID and QUOTE_BYTE(cell) == NOQUOTE_1)
-        fail (Error_Bad_Void());
-    return u_cast(Element*, cell);
+INLINE bool Is_Quasi_Void(const Cell* v) {
+    if (not Is_Quasiform(v))
+        return false;
+    if (HEART_BYTE(v) != REB_WORD)
+        return false;
+    return Cell_Word_Id(v) == SYM_VOID;
 }
 
-#if CPLUSPLUS_11
-    INLINE const Element* Ensure_Element(const Atom* cell)
-      { return Ensure_Element(m_cast(Atom*, cell)); }
+#define Init_Meta_Of_Void(out) \
+    Init_Quasi_Void(out)
 
-  #if DEBUG_USE_CELL_SUBCLASSES
-    void Ensure_Element(const Element*) = delete;
-  #endif
-#endif
-
-
-//=//// '~' ISOTOPE (a.k.a. TRASH) ////////////////////////////////////////=//
-//
-// Picking antiform void as the contents of unset variables has many benefits
-// over choosing something like an `~unset~` or `~trash~` antiforms:
-//
-//  * Reduces noise when looking at a list of variables to see which are unset
-//
-//  * We consider variables to be unset and not values, e.g. (unset? 'var).
-//    This has less chance for confusion as if it were named ~unset~ people
-//    would likely expect `(unset? ~unset~)` to work.
-//
-//  * Quick way to unset variables, simply `(var: ~)`
-//
-// While "trash" is a slightly jarring name for ~ antiforms, one doesn't need
-// to call it by name to use it.  e.g. return specs can say `return: [~]`
-// instead of `return: [trash?]`, and `return ~` instead of `return trash`
-//
-// The choice of this name (vs. "unset") was meditated on for quite some time,
-// and resolved as superior to trying to claim there's such a thing as an
-// "unset value".
-//
-
-#define Init_Trash(out) \
-    u_cast(Value*, TRACK( \
-        Init_Void_Untracked(ensure(Sink(Value*), (out)), ANTIFORM_0)))
-
-#define Init_Meta_Of_Trash(out)     Init_Quasi_Void(out)
-
-#define TRASH_CELL \
-    cast(const Value*, &PG_Trash_Cell)  // Note that Lib(TRASH) is a function
+#define Is_Meta_Of_Void(v) \
+    Is_Quasi_Void(v)
 
 
 //=//// "HEAVY VOIDS" (BLOCK! Antiform Pack with ['] in it) ////////////////=//
@@ -164,7 +82,7 @@ INLINE Element* Ensure_Element(const_if_c Atom* cell) {
 //     ; void (will trigger ELSE)
 //
 //     >> if true []
-//     == ~[']~  ; anti (will trigger THEN, not ELSE)
+//     == ~[~void~]~  ; anti (will trigger THEN, not ELSE)
 //
 //     >> append [a b c] if false [<a>]
 //     == [a b c]
@@ -176,7 +94,7 @@ INLINE Element* Ensure_Element(const_if_c Atom* cell) {
 //
 
 #define Init_Heavy_Void(out) \
-    Init_Pack((out), PG_1_Quoted_Void_Array)
+    Init_Pack((out), PG_1_Quasi_Void_Array)
 
 INLINE bool Is_Heavy_Void(const Atom* v) {
     if (not Is_Pack(v))

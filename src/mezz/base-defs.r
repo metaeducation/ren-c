@@ -27,8 +27,9 @@ REBOL [
 
 c-break-debug: runs :c-debug-break  ; easy to mix up
 
-; These are faster than clear versions (e.g. `(meta void) = ^ expr`) and
-; clearer than compressed forms (like '' for quote void)
+; These definitions have been helpful as the syntax has shuffled around,
+; though today you can say '~void~ and it is considered stable (vs the old
+; way of saying '')
 ;
 void': meta void
 null': meta null

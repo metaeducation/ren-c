@@ -330,7 +330,7 @@ void Form_Array_At(
                 Cell_Word_Symbol(item)
             ));
             if (wval) {
-                if (relax and (Is_Antiform(wval) or Is_Void(wval)))
+                if (relax and (Is_Antiform(wval)))
                     item = Copy_Meta_Cell(safe, wval);
                 else
                     item = Ensure_Element(wval);
@@ -452,7 +452,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Element* v, bool form)
         Mold_Or_Form_Cell(mo, v, form);
     else {
         Append_Codepoint(mo->series, '~');
-        if (HEART_BYTE(v) != REB_VOID) {
+        if (HEART_BYTE(v) != REB_BLANK) {
             Mold_Or_Form_Cell(mo, v, form);
             Append_Codepoint(mo->series, '~');
         }

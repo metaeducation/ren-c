@@ -80,11 +80,11 @@ enum StubFlavorEnum {
     //
     FLAVOR_INSTRUCTION_SPLICE,
 
-    // Pairlists are used by map!.  They can't hold antiforms, but voids are
+    // Pairlists are used by map!.  They can't hold antiforms, but trash is
     // used to signal missing keys.
     //
     FLAVOR_PAIRLIST,
-    FLAVOR_MIN_VOIDS_OK = FLAVOR_PAIRLIST,
+    FLAVOR_MIN_TRASH_OK = FLAVOR_PAIRLIST,
 
     FLAVOR_MIN_ISOTOPES_OK,  //=//// BELOW HERE, THE ARRAYS CAN HOLD ISOTOPES
 

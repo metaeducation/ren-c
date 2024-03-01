@@ -497,13 +497,13 @@ bool Process_Group_For_Parse_Throws(
         Decay_If_Unstable(atom_out);
 
         if (Is_Antiform(atom_out)) {
-            if (Is_Logic(atom_out))
+            if (Is_Void(atom_out))
+                Init_Quasi_Word(atom_out, Canon(VOID));
+            else if (Is_Logic(atom_out))
                 Meta_Quotify(atom_out);
             else
                 fail (Error_Bad_Antiform(atom_out));
         }
-        else if (Is_Void(atom_out))
-            Init_Quasi_Word(atom_out, Canon(VOID));
     }
   }
 

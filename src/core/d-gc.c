@@ -98,7 +98,6 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Is_Fresh(v));
         break;
 
-      case REB_VOID:
       case REB_BLANK:
       case REB_COMMA:
         break;

@@ -44,7 +44,7 @@
 //    from one that has CONTINUE'd each body.  Unless those are allowed to be
 //    indistinguishable, loop compositions that work don't work.  So instead:
 //
-//        for-each x [1 2 3] [if x != 3 [x]]  =>  ~[']~ antiform
+//        for-each x [1 2 3] [if x != 3 [x]]  =>  ~[~void~]~ antiform
 //
 bool Try_Catch_Break_Or_Continue(
     Sink(Value*) out,
@@ -1222,7 +1222,7 @@ DECLARE_NATIVE(every)
 //
 //        every x [1 2 3 4] [if even? x [x]]  =>  4
 //
-//        every x [1 2 3 4] [if odd? x [x]]  => ~[']~ antiform
+//        every x [1 2 3 4] [if odd? x [x]]  => ~[~void~]~ antiform
 //
 //    It returns heavy void on skipped bodies, as loop composition breaks down
 //    if we try to keep old values.

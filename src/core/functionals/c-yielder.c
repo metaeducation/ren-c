@@ -80,7 +80,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     // "instance" of this yielder.  So the Phase_Details() is modified while
     // running, and it's the `state` we pay attention to.
 
-    if (Is_Quasi_Void(mode))  // currently on the stack and running
+    if (Is_Quasi_Blank(mode))  // currently on the stack and running
         fail ("Yielder was re-entered");
 
     if (Is_Logic(mode)) {  // terminated due to finishing the body or error
@@ -108,7 +108,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     //
     Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
 
-    Init_Quasi_Void(mode);  // indicate "running"
+    Init_Quasi_Blank(mode);  // indicate "running"
     STATE = ST_YIELDER_RUNNING_BODY;
 
     return CONTINUE_CORE(
@@ -216,7 +216,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     Level_State_Byte(yielder_level) = ST_YIELDER_RUNNING_BODY;  // set again
     Set_Executor_Flag(ACTION, yielder_level, DISPATCHER_CATCHES);  // set again
-    Init_Quasi_Void(mode);  // indicate running
+    Init_Quasi_Blank(mode);  // indicate running
     return BOUNCE_CONTINUE;  // ...resuming where we left off (was DEWIND)
 
 } body_finished_or_threw: {  /////////////////////////////////////////////////
@@ -395,7 +395,7 @@ DECLARE_NATIVE(yield)
     // until the nullptr that we put at the root.
     //
     Value* mode = Details_At(yielder_details, IDX_YIELDER_MODE);
-    assert(Is_Quasi_Void(mode));  // should be signal for "currently running"
+    assert(Is_Quasi_Blank(mode));  // should be signal for "currently running"
     Init_Frame(mode, Context_For_Level_May_Manage(yield_level), ANONYMOUS);
     Assert_Series_Managed(VAL_CONTEXT(mode));
     assert(CTX_LEVEL_IF_ON_STACK(VAL_CONTEXT(mode)) == yield_level);

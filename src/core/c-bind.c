@@ -732,11 +732,11 @@ DECLARE_NATIVE(let)
                 if (Do_Any_Array_At_Throws(OUT, temp, item_specifier))
                     return THROWN;
 
-                if (Is_Antiform(OUT))
-                    fail (Error_Bad_Antiform(OUT));
-
-                if (Is_Void(OUT))
+                if (Is_Void(OUT)) {
                     Init_Blank(OUT);
+                }
+                else if (Is_Antiform(OUT))
+                    fail (Error_Bad_Antiform(OUT));
 
                 temp = cast(Element*, OUT);
                 temp_specifier = SPECIFIED;

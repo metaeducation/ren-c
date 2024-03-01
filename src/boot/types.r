@@ -64,15 +64,8 @@ REBOL [
 ]
 
 
-; VOID is not a "datatype" (type of void is NULL)
-
-void        "absence of value, used by many operations to opt-out"
-~trash~     (CELL_MASK_NO_NODES)
-            []  ; Any_Inert() should assert on void and antiforms
-            [-       -       -]
-
 blank       "placeholder unit type"
-            (CELL_MASK_NO_NODES)
+~trash~     (CELL_MASK_NO_NODES)
             [any-unit? any-inert?]  ; allow as `branch`?
             [blank       -       +]
 

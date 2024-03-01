@@ -174,7 +174,7 @@ bool Typecheck_Atom_Core(
         // items.  For the moment just try quasiforms for antiforms.
         //
         if (Is_Quasiform(item)) {
-            if (HEART_BYTE(item) == REB_VOID) {
+            if (HEART_BYTE(item) == REB_BLANK) {
                 if (Is_Trash(v))
                     goto test_succeeded;
                 goto test_failed;

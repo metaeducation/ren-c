@@ -93,14 +93,13 @@ INLINE bool Is_Truthy(const Value* v) {
             return true;
         if (id == SYM_FALSE)
             return false;
+        if (id == SYM_VOID)
+            fail (Error_Bad_Void());  // void is neither truthy nor falsey
         fail (Error_Bad_Antiform(v));  // !!! special error?
     }
 
     if (QUOTE_BYTE(v) != NOQUOTE_1)
         return true;  // all quoted values and quasiforms are truthy
-
-    if (HEART_BYTE(v) == REB_VOID)
-        fail (Error_Bad_Void());  // void is neither truthy nor falsey
 
     return true;  // all other non-antiform values are truthy
 }

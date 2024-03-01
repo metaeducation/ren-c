@@ -677,14 +677,16 @@ default-combinators: make map! reduce [
         [^where remainder]: parser input except e -> [
             return raise e
         ]
-        if quasi? where [
-            fail "Cannot SEEK to antiform"
-        ]
-        where: my unquote
         case [
-            void? where [
+            '~void~ = where [
                 remainder: input
             ]
+            quasi? where [
+                fail "Cannot SEEK to antiform"
+            ]
+
+            (elide where: my unquote)
+
             integer? where [
                 remainder: at head input where
             ]
@@ -1563,7 +1565,7 @@ default-combinators: make map! reduce [
     ][
         ; It is legal to say:
         ;
-        ;     >> parse "" [' (1020)]
+        ;     >> parse "" [~void~ (1020)]
         ;     == 1020
         ;
         ; Arguably there is a void match at every position (note that by

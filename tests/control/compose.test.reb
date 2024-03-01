@@ -11,7 +11,7 @@
 ; Preserve one element rule vs. tolerate vaporization.
 ;
 ([~null~ *] = compose [(reify null) * (maybe null)])
-([' *] = compose [(meta void) * (void)])
+([~void~ *] = compose [(meta void) * (void)])
 
 ; Voids vaporize regardless of form.
 
@@ -137,7 +137,7 @@
 ; labeled compose...saving it for quoting composed material.
 
 ([3 '3 ''3] == compose [(1 + 2) '(1 + 2) ''(1 + 2)])
-(['] = compose ['(if false [<vanish>])])
+~???~ !! (compose ['(if false [<cant-vanish-with-quote>])])
 
 ; Quoting should be preserved by deep composition
 
@@ -214,7 +214,7 @@
         /predicate chain [:eval :reify]
     ])
     ([<a>] = compose [<a> (~()~)])
-    ([<a>] = compose [<a> (')])  ; exception made for pure void
+    ([<a>] = compose [<a> (~void~)])  ; exception made for pure void
 ]
 
 [
@@ -237,9 +237,9 @@
     ])
 ]
 
-; More tests of crazy quoting depths needed, as it's tricky.
+; More tests of crazy quoting depths
 [
-    (['''''''] = compose ['''''''(if false [<a>])])
+    ~???~ !! (compose ['''''''(if false [<a>])])
 ]
 
 ; You can apply quasiforms just like other quoting levels, but the value

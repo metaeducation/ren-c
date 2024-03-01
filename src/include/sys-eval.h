@@ -98,17 +98,6 @@ INLINE bool Is_Antiform_Set_Friendly(const Value* v) {
     return true;
 }
 
-// Like with set-friendliness, get-friendliness relates to what can be done
-// with plain WORD! access regarding antiforms.  Since ~true~ and ~false~
-// antiforms are the currency of "logic" now, they have to be legal...so this
-// is opened up to the entire class of antiforms.  But unlike in assignment,
-// antiform voids (trash) are not get-friendly.
-//
-INLINE bool Is_Antiform_Get_Friendly(const Value* v) {
-    assert(QUOTE_BYTE(v) == ANTIFORM_0);
-    return HEART_BYTE(v) != REB_VOID;
-}
-
 INLINE void Restart_Evaluator_Level(Level* L) {
     assert(L->executor == &Evaluator_Executor);
     Level_State_Byte(L) = STATE_0;

@@ -26,6 +26,12 @@
 
 #include "sys-core.h"
 
+// "Zombie" keys in map, represent missing or deleted entries.
+//
+#define Is_Zombie Is_Trash
+#define ZOMBIE_CELL TRASH_CELL
+
+
 //
 //  CT_Map: C
 //
@@ -128,7 +134,7 @@ REBINT Find_Key_Hashed(
             }
         }
 
-        if (wide > 1 && Is_Void(k + 1) && zombie_slot == -1)
+        if (wide > 1 && Is_Zombie(k + 1) && zombie_slot == -1)
             zombie_slot = slot;
 
         slot += skip;
@@ -183,7 +189,7 @@ static void Rehash_Map(Map* map)
     for (n = 0; n < Array_Len(pairlist); n += 2, key += 2) {
         const bool cased = true; // cased=true is always fine
 
-        if (Is_Void(key + 1)) {
+        if (Is_Zombie(key + 1)) {
             //
             // It's a "zombie", move last key to overwrite it
             //
@@ -203,7 +209,9 @@ static void Rehash_Map(Map* map)
 
         // discard zombies at end of pairlist
         //
-        while (Is_Void(Series_At(Value, pairlist, Array_Len(pairlist) - 1))) {
+        while (
+            Is_Zombie(Series_At(Value, pairlist, Array_Len(pairlist) - 1))
+        ){
             Set_Series_Len(pairlist, Array_Len(pairlist) - 2);
         }
     }
@@ -281,7 +289,7 @@ REBLEN Find_Map_Entry(
     if (n) {  // re-set it:
         Copy_Cell(
             Series_At(Value, pairlist, ((n - 1) * 2) + 1),
-            unwrap(val)  // val may be void
+            Is_Void(unwrap(val)) ? ZOMBIE_CELL : unwrap(val)
         );
         return n;
     }
@@ -392,8 +400,8 @@ inline static Map* Copy_Map(const Map* map, bool deeply) {
 
         Value* v = key + 1;
         assert(v != tail);
-        if (Is_Void(v))
-            continue; // "zombie" map element (not present)
+        if (Is_Zombie(v))
+            continue;
 
         Flags flags = NODE_FLAG_MANAGED;  // !!! Review
         Clonify(v, flags, deeply);
@@ -454,8 +462,8 @@ Array* Map_To_Array(const Map* map, REBINT what)
     const Value* val_tail = Series_Tail(Value, MAP_PAIRLIST(map));
     const Value* val = Series_Head(Value, MAP_PAIRLIST(map));
     for (; val != val_tail; val += 2) {
-        if (Is_Void(val + 1))  // val + 1 can't be past tail
-            continue;  // zombie key, e.g. not actually in map
+        if (Is_Zombie(val + 1))  // val + 1 can't be past tail
+            continue;
 
         if (what <= 0) {
             Copy_Cell(dest, c_cast(Element*, &val[0]));  // no keys void
@@ -489,7 +497,7 @@ Context* Alloc_Context_From_Map(const Map* map)
     const Value* mval_tail = Series_Tail(Value, MAP_PAIRLIST(map));
     const Value* mval = Series_Head(Value, MAP_PAIRLIST(map));
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
-        if (Any_Word(mval) and not Is_Void(mval + 1))
+        if (Any_Word(mval) and not Is_Zombie(mval + 1))
             ++count;
     }
   }
@@ -502,7 +510,7 @@ Context* Alloc_Context_From_Map(const Map* map)
     const Value* mval = Series_Head(Value, MAP_PAIRLIST(map));
 
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
-        if (Any_Word(mval) and not Is_Void(mval + 1)) {
+        if (Any_Word(mval) and not Is_Zombie(mval + 1)) {
             Value* var = Append_Context(c, Cell_Word_Symbol(mval));
             Copy_Cell(var, mval + 1);
         }
@@ -541,8 +549,8 @@ void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
     const Value* key = Series_Head(Value, MAP_PAIRLIST(m));
     for (; key != tail; key += 2) {  // note value slot must not be END
         assert(key + 1 != tail);
-        if (Is_Void(key + 1))
-            continue;  // if value for this key is void, key has been removed
+        if (Is_Zombie(key + 1))
+            continue;  // key has been removed
 
         if (not form)
             New_Indented_Line(mo);
@@ -625,8 +633,8 @@ REBTYPE(Map)
             return nullptr;
 
         const Value* val = Series_At(Value, MAP_PAIRLIST(m), ((n - 1) * 2) + 1);
-        if (Is_Void(val))
-            return nullptr;  // zombie value
+        if (Is_Zombie(val))
+            return nullptr;
 
         return Copy_Cell(OUT, val); }
 
@@ -637,10 +645,10 @@ REBTYPE(Map)
         Value* key = ARG(key);
         Value* val = ARG(value);
 
-        if (Is_Antiform(key))
-            fail (Error_Bad_Antiform(key));
         if (Is_Void(key))
             fail (Error_Bad_Void());  // tolerate?
+        if (Is_Antiform(key))
+            fail (Error_Bad_Antiform(key));
 
         if (Is_Antiform(val))  // Note: void is remove
             fail (Error_Bad_Antiform(val));
@@ -729,7 +737,7 @@ REBTYPE(Map)
             MAP_PAIRLIST(VAL_MAP(map)),
             ((n - 1) * 2) + 1
         );
-        if (Is_Void(val))  // zombie entry, means unused
+        if (Is_Zombie(val))
             return nullptr;
 
         return Copy_Cell(OUT, val); }
@@ -755,7 +763,10 @@ REBTYPE(Map)
 
         Value* setval = ARG(value);  // Note: VOID interpreted as remove key
 
-        if (Is_Antiform(setval))  // antiforms not allowed as value in maps
+        if (Is_Void(setval)) {
+            // removal signal
+        }
+        else if (Is_Antiform(setval))  // other antiforms not allowed in maps
             return RAISE(Error_Bad_Antiform(setval));
 
         REBINT n = Find_Map_Entry(

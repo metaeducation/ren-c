@@ -313,12 +313,11 @@ degrade: func3 [v [<opt> any-value!]] [
     if void3? :v [fail "Attempt to degrade a void, may have been _, try ~null~"]
     if null3? :v [fail "Attempt to degrade a blank where ~null~ may be meant"]
     if :v = '~null~ [return null]
-    if :v = '~ [fail "degrade ~ would be ambiguous with degrade '"]
-    if :v = the3 ' [return void]
+    if :v = '~void~ [return void]
     :v
 ]
 reify: func3 [v [<opt> any-value!]] [
-    if void? :v [return the3 ']  ; ambiguous with ~, but favor invisibility
+    if void? :v [return '~void~]
     if null? :v [return '~null~]
     if :v = #[true] [return '~true~]
     if :v = #[false] [return '~false~]
