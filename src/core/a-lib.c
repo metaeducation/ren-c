@@ -2303,7 +2303,7 @@ const RebolNodeInternal* API_rebQUOTING(const void* p)
     ENTER_API;
 
     if (p == nullptr)
-        return c_cast(RebolNodeInternal*, FEED_NULL_SUBSTITUTE_CELL);
+        return c_cast(RebolNodeInternal*, Lib(QUASI_NULL));
 
     const Stub* stub;
 
@@ -2318,7 +2318,7 @@ const RebolNodeInternal* API_rebQUOTING(const void* p)
         const Value* at = cast(const Value*, p);
         if (Is_Nulled(at)) {
             assert(not Is_Api_Value(at));  // only internals use nulled cells
-            return c_cast(RebolNodeInternal*, FEED_NULL_SUBSTITUTE_CELL);
+            return c_cast(RebolNodeInternal*, Lib(QUASI_NULL));
         }
 
         Value* v = Copy_Cell(Alloc_Value(), at);

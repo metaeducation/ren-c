@@ -132,21 +132,14 @@
     ~need-non-end~ !! ($)
 ]
 
-; @ is THE, with exception that quasiforms will reconstitute antiforms
-;
-; (this quirk is used in the API, though a better idea for how to achieve the
-; goal is being designed)
+; @ is THE, with exception that it has special handling in API feeds to
+; be able to reconstitute antiforms.  (See TEST-LIBREBOL)
 [
     ('x = @ x)
     ('(a b c) = @ (a b c))
     (''3 = @ '3)
 
-    (null = @ ~null~)  ; reconstitutes antiforms (used by API, revisit)
-    (
-        assert ['~null~ = ^ x: @ ~null~]
-        x = null
-    )
-    ('~something~ = ^ @ ~something~)
+    ('~null~ = @ ~null~)
 
     ~need-non-end~ !! (@)
 ]

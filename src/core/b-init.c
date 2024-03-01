@@ -455,6 +455,10 @@ static void Init_Root_Vars(void)
       );
     Force_Value_Frozen_Deep(Root_Heavy_False);
 
+    ensure(nullptr, Root_Feed_Null_Substitute) = Init_Quasi_Null(Alloc_Value());
+    Set_Cell_Flag(Root_Feed_Null_Substitute, FEED_NOTE_META);
+    Force_Value_Frozen_Deep(Root_Feed_Null_Substitute);
+
     // Note: rebText() can't run yet, review.
     //
     String* nulled_uni = Make_String(1);
@@ -490,6 +494,7 @@ static void Shutdown_Root_Vars(void)
     rebReleaseAndNull(&Root_2_Blanks_Block);
     rebReleaseAndNull(&Root_Heavy_Null);
     rebReleaseAndNull(&Root_Heavy_Void);
+    rebReleaseAndNull(&Root_Feed_Null_Substitute);
     rebReleaseAndNull(&Root_Heavy_False);
     rebReleaseAndNull(&Root_Empty_Binary);
 }

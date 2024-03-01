@@ -254,7 +254,7 @@ Array* Pop_Stack_Values_Core(StackIndex base, Flags flags)
             assert(flavor >= FLAVOR_MIN_VOIDS_OK);
       #endif
 
-        Move_Cell_Untracked(dest, src, CELL_MASK_COPY);
+        Move_Cell_Untracked(dest, src, (~ CELL_MASK_PERSIST));
 
       #if DEBUG_POISON_DROPPED_STACK_CELLS
         Poison_Cell(src);

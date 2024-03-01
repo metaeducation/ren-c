@@ -422,7 +422,7 @@ DECLARE_NATIVE(evaluate)
     if (Any_Array(source)) {
         if (Cell_Series_Len_At(source) == 0) {  // `evaluate []` is invisible intent
             if (REF(next))
-                rebElide(Canon(SET), rebQ(rest_var), nullptr);
+                rebElide(Canon(SET), rebQ(rest_var), rebQ(nullptr));
 
             Init_Nihil(OUT);  // !!! Callers not prepared for more ornery result
             return Proxy_Multi_Returns(level_);

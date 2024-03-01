@@ -542,7 +542,8 @@ DECLARE_NATIVE(pack)
 
     if (rebRunThrows(
         cast(Value*, SPARE),  // output cell
-        Canon(QUASI), "reduce/predicate", v, Lib(META)  // commas excluded [2]
+        Canon(QUASI), "reduce/predicate",
+            v, rebQ(Lib(META))  // commas excluded [2]
     )){
         return THROWN;
     }

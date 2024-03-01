@@ -110,6 +110,8 @@ PVAR Value* Root_Heavy_Null;  // antiform block containing a blank
 PVAR Value* Root_Heavy_Void;  // antiform block containing a quasi null
 PVAR Value* Root_Heavy_False;  // antiform block containing a meta false
 
+PVAR Value* Root_Feed_Null_Substitute;  // flagged with FEED_NOTE_META
+
 PVAR Stub PG_Inaccessible_Stub;  // GC canonizes all inaccessible stubs to this
 
 PVAR Value* Root_Action_Adjunct;

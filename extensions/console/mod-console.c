@@ -305,7 +305,7 @@ DECLARE_NATIVE(console)
             rebQ(code),  // group! or block! executed prior (or null)
             rebQ(metaresult),  // prior result quoted, or error (or null)
             rebL(REF(resumable)),
-            ARG(skin)  // if null, feed makes BLANK!, evals to null again
+            rebQ(ARG(skin))
     );
 
     /*rebRelease(code);

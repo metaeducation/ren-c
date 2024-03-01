@@ -171,18 +171,6 @@ INLINE Option(va_list*) FEED_VAPTR(Feed* feed) {
     VAL_INDEX_UNBOUNDED(FEED_SINGLE(feed))
 
 
-// When we see nullptr in the valist, we make a compromise of convenience,
-// where it is replaced with a ~null~ quasiform.  We've told a lie, but if
-// evaluated it will produce a null antiform, e.g. NULL.  If not evaluated it
-// will stand out as unusual.
-//
-// Also: the `@` operator is tweaked to turn quasiforms into their antiforms.
-// So this can be leveraged in API calls.
-//
-#define FEED_NULL_SUBSTITUTE_CELL \
-    Lib(QUASI_NULL)
-
-
 // 1. The va_end() is taken care of here; all code--regardless of throw or
 //    errors--must walk through feeds to the end in order to clean up manual
 //    series backing instructions (and also to run va_end() if needed, which
@@ -355,7 +343,7 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
 
     if (not feed->p) {  // libRebol's NULL (prohibited as an Is_Nulled() CELL)
 
-        feed->p = FEED_NULL_SUBSTITUTE_CELL;
+        feed->p = Root_Feed_Null_Substitute;
 
     } else switch (Detect_Rebol_Pointer(feed->p)) {
 

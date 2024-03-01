@@ -1021,8 +1021,8 @@ static Token Maybe_Locate_Token_May_Push_Mold(
     //
     while (not ss->begin) {
         if (L->feed->p == nullptr) {  // API null, can't be in feed, use BLANK
-            assert(Is_Quasi_Null(FEED_NULL_SUBSTITUTE_CELL));
             Init_Quasi_Null(PUSH());
+            Set_Cell_Flag(TOP, FEED_NOTE_META);
             if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING)) {
                 Clear_Scan_Executor_Flag(L, NEWLINE_PENDING);
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);
