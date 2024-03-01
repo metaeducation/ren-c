@@ -236,7 +236,7 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
         rebRelease(result); // ignore result
 
         if (Cell_Word_Id(verb) != SYM_CREATE)
-            Init_Blank(state);
+            Init_Nulled(state);
 
         RETURN (port); }
 
@@ -263,7 +263,7 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
         RETURN (port); }
 
     case SYM_DELETE: {
-        Init_Blank(state);
+        Init_Nulled(state);
 
         Init_Dir_Path(&dir, path, POL_WRITE);
 
@@ -307,11 +307,11 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
         RETURN (port); }
 
     case SYM_CLOSE:
-        Init_Blank(state);
+        Init_Nulled(state);
         RETURN (port);
 
     case SYM_QUERY: {
-        Init_Blank(state);
+        Init_Nulled(state);
 
         Init_Dir_Path(&dir, path, POL_READ);
         Value* result = OS_DO_DEVICE(&dir.devreq, RDC_QUERY);

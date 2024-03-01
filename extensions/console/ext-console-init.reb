@@ -127,20 +127,28 @@ console!: make object! [
     ]
 
     print-result: function [return: <void> v [<opt> any-value!]]  [
+
         if trash? last-result: get/any 'v [
-            ; Actions that by contract return no information return void.
-            ; Since it's what comes back from things like HELP it's best
-            ; that the console not print anything in response.
+            ;
+            ; There are no antiforms in the R3C branch, but we can lie and
+            ; make this legacy bootstrapping branch at least look a bit like
+            ; the new branch.
+
+            print [result "~  ; anti"]
 
             return
         ]
 
         case [
+            void? :v [  ; nothingness (e.g. result of do [] or if false [...])
+                return  ; show nothing!
+            ]
+
             null? :v [
-                ; Because NULL has no representation, there's nothing really
-                ; to print after "==".  Just go with a comment.
+                ; As with trash, we can be forward-looking and lie about the
+                ; representation of null, as a WORD! antiform.
                 ;
-                print "; null"
+                print [result "~null~  ; anti"]
             ]
 
             free? :v [
@@ -271,7 +279,7 @@ start-console: function [
 
     all [
         skin-file: %console-skin.reb
-        not find o/suppress skin-file
+        not find maybe o/suppress skin-file
         o/resources
         exists? skin-file: join o/resources skin-file
     ] then [
@@ -408,7 +416,7 @@ ext-console-impl: function [
                 emit [system/console/print-gap]
                 emit [system/console/print-prompt]
                 emit [reduce [
-                    try system/console/input-hook
+                    any [system/console/input-hook | '~escape~]
                 ]] ;-- gather first line (or null), put in BLOCK!
             ]
             <halt> [
@@ -637,12 +645,13 @@ ext-console-impl: function [
 
     assert [not empty? result] ;-- should have at least one item
 
-    if blank? last result [
+    if '~escape~ = last result [
         ;
         ; It was aborted.  This comes from ESC on POSIX (which is the ideal
         ; behavior), Ctrl-D on Windows (because ReadConsole() can't trap ESC),
         ; Ctrl-D on POSIX (just to be compatible with Windows).
         ;
+        take/last result
         return <prompt>
     ]
 
@@ -682,7 +691,7 @@ ext-console-impl: function [
                 write-stdout unspaced [unclosed #"\" space space]
                 emit compose/deep [reduce [
                     (result)
-                    system/console/input-hook
+                    any [system/console/input-hook | '~escape~]
                 ]]
 
                 return block!
@@ -696,7 +705,7 @@ ext-console-impl: function [
         return <prompt>
     ]
 
-    if shortcut: select system/console/shortcuts try first code [
+    if shortcut: select system/console/shortcuts maybe first code [
         ;
         ; Shortcuts like `q => [quit]`, `d => [dump]`
         ;

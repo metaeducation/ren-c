@@ -100,7 +100,7 @@ contains-newline: function [return: [logic!] pos [block! group!]] [
             (match [block! group!] :pos/1) and [contains-newline :pos/1]
         ] then [return true]
 
-        pos: try next pos
+        pos: next pos
     ]
     return false
 ]

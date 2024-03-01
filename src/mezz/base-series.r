@@ -109,8 +109,9 @@ join: func [
     "Concatenates values to the end of a string or path."
     return: [binary! any-string! path!]
     series [binary! any-string! path!]
-    value [<opt> binary! any-string! path! word! integer!]
+    value [void! binary! any-string! path! word! integer!]
 ][
+    if void? value [return copy series]
     return append/only copy series value
 ]
 

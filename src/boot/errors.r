@@ -82,6 +82,8 @@ Script: [
     no-value:           [:arg1 {has no value}]
     need-non-trash:     [:arg1 {is trash (~) (Note: use GET/ANY to GET trash)}]
     need-non-end:       [{end was reached while trying to set} :arg1]
+    need-non-null:      {non-NULL value required (see MAYBE, TRY, REIFY)}
+
     not-bound:          [:arg1 {word is not bound to a context}]
     no-relative:        [:arg1 {word is bound relative to context not on stack}]
     not-in-context:     [:arg1 {is not in the specified context}]
@@ -107,7 +109,6 @@ Script: [
 
     enfix-path-group:   [:arg1 {GROUP! can't be in a lookback quoted PATH!}]
 
-    reduce-made-null:   {Expression in REDUCE was null, see REDUCE/OPT, /TRY}
     break-not-continue: {Use BREAK/WITH when body is the breaking condition}
 
     use-eval-for-eval:  {Use REEVAL or APPLY on actions of arity > 0, not DO}
@@ -199,8 +200,8 @@ Script: [
 
     conflicting-key:    [:arg1 {key conflicts; use SELECT or PUT with /CASE}]
 
-    trash-conditional:  [{Trash values (~) not conditionally true or false}]
-    non-block-branch:   [{Evaluated non-block/function used as branch} :arg1]
+    trash-conditional:  [{Trash antiforms (~) not conditionally true/false}]
+    void-conditional:   [{Void antiforms (~void~) not conditionally true/false}]
 
     native-unloaded:    [{Native has been unloaded:} :arg1]
 ]

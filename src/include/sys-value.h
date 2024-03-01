@@ -786,8 +786,8 @@ INLINE const Value* NULLIZE(const Value* cell)
 #define Init_Trash(out) \
     RESET_CELL((out), REB_TRASH)
 
-INLINE Value* Trashify_If_Nulled(Value* cell) {
-    if (IS_NULLED(cell))
+INLINE Value* Trashify_Branched(Value* cell) {
+    if (IS_NULLED(cell) or IS_VOID(cell))
         Init_Trash(cell);
     return cell;
 }
@@ -803,6 +803,21 @@ INLINE Value* Trashify_If_Nulled_Or_Blank(Value* cell) {
         Init_Trash(cell);
     return cell;
 }
+
+
+//=////////////////////////////////////////////////////////////////////////=//
+//
+//  VOID
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// Void is a non-valued type from the future of Ren-C.  It has been lightly
+// patched into this old R3C branch, to be the "opt out" case instead of NULL.
+//
+
+#define Init_Void(out) \
+    RESET_CELL((out), REB_VOID)
+
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -939,6 +954,8 @@ INLINE bool IS_TRUTHY(const Cell* v) {
         return false;
     if (IS_TRASH(v))
         fail (Error_Trash_Conditional_Raw());
+    if (IS_VOID(v))
+        fail (Error_Void_Conditional_Raw());
     return true;
 }
 
@@ -954,24 +971,6 @@ INLINE bool IS_TRUTHY(const Cell* v) {
 
 #define Init_False(out) \
     Init_Logic((out), false)
-
-
-// Although a BLOCK! value is true, some constructs are safer by not allowing
-// literal blocks.  e.g. `if [x] [print "this is not safe"]`.  The evaluated
-// bit can let these instances be distinguished.  Note that making *all*
-// evaluations safe would be limiting, e.g. `foo: any [false-thing []]`...
-// So ANY and ALL use IS_TRUTHY() directly
-//
-INLINE bool IS_CONDITIONAL_TRUE(const Value* v) {
-    if (GET_VAL_FLAG(v, VALUE_FLAG_FALSEY))
-        return false;
-    if (IS_TRASH(v))
-        fail (Error_Trash_Conditional_Raw());
-    return true;
-}
-
-#define IS_CONDITIONAL_FALSE(v) \
-    (not IS_CONDITIONAL_TRUE(v))
 
 INLINE bool VAL_LOGIC(const Cell* v) {
     assert(IS_LOGIC(v));

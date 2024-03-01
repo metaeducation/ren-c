@@ -44,7 +44,7 @@ REBINT CT_Unit(const Cell* a, const Cell* b, REBINT mode)
 //  MAKE_Unit: C
 //
 // MAKE is disallowed, with the general rule that a blank in will give
-// a null out... for e.g. `make object! try select data spec else [...]`
+// a null out... for e.g. `make object! maybe select data spec else [...]`
 //
 REB_R MAKE_Unit(Value* out, enum Reb_Kind kind, const Value* arg) {
     UNUSED(out);
@@ -83,8 +83,12 @@ void MF_Unit(REB_MOLD *mo, const Cell* v, bool form)
         Append_Unencoded(mo->series, "_");
         break;
 
-    case REB_TRASH:  // In modern Ren-C, trash in an antiform of void
+    case REB_TRASH:  // In modern Ren-C, trash in an antiform of blank
         Append_Unencoded(mo->series, "~");
+        break;
+
+    case REB_VOID:  // In modern Ren-C, void is the antiform of the word VOID
+        Append_Unencoded(mo->series, "~void~");
         break;
 
     default:
@@ -119,26 +123,28 @@ REB_R PD_Blank(
 //
 //  REBTYPE: C
 //
-// Asking to read a property of a BLANK! value is handled as a "light"
-// failure, in the sense that it just returns void.  Returning void instead
-// of blank helps establish error locality in chains of operations:
+// Asking to read a property of a VOID value is handled as a "light"
+// failure, in the sense that it just returns NULL.  Returning NULL instead
+// helps establish error locality in chains of operations:
 //
 //     if not find select next first x [
 //        ;
-//        ; If blanks propagated too far, what actually went wrong, here?
+//        ; If voids propagated too far, what actually went wrong, here?
 //        ; (reader might just assume it was the last FIND, but it could
 //        ; have been anything)
 //     ]
 //
-// Giving back void instead of an error means the situation can be handled
-// precisely with operations like ELSE or ALSO, or just converted to a BLANK!
-// to continue the chain.  Historically this conversion was done with TO-VALUE
-// but is proposed to use TRY.
+// Giving back NULL instead of an error means the situation can be handled
+// precisely with operations like ELSE or ALSO, or just converted to a VOID
+// to continue the chain.  Converting NULL to VOID is done with MAYBE.
 //
 REBTYPE(Unit)
 {
     Value* val = D_ARG(1);
     assert(not IS_NULLED(val));
+
+    if (not IS_VOID(val))
+        fail (Error_Invalid(val));
 
     switch (Cell_Word_Id(verb)) {
 

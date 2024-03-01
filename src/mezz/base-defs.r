@@ -110,6 +110,7 @@ uneval: func [
     optional [<opt> any-value!]
 ][
     case [
+        void? :optional [the (void)]
         null? :optional [the (null)]
         trash? :optional [the (~)]
         true [as group! reduce ['the :optional]]
@@ -133,7 +134,7 @@ back: specialize 'skip [
 
 bound?: chain [specialize 'reflect [property: 'binding] | :value?]
 
-unspaced: specialize 'delimit [delimiter: _]
+unspaced: specialize 'delimit [delimiter: void]
 unspaced-text: chain [:unspaced | specialize 'else [branch: [copy ""]]]
 
 spaced: specialize 'delimit [delimiter: space]
@@ -187,9 +188,9 @@ open?: specialize 'reflect [property: 'open?]
 empty?: func [
     {TRUE if empty or BLANK!, or if series is at or beyond its tail.}
     return: [logic!]
-    series [any-series! object! port! bitset! map! blank!]
+    series [any-series! object! port! bitset! map! blank! void!]
 ][
-    did any [blank? series | tail? series]
+    did any [void? series | blank? series | tail? series]
 ]
 
 
@@ -213,6 +214,7 @@ reeval func [
     ]
 ]
     trash?:
+    void?:
     blank?:
     bar?:
     lit-bar?:
@@ -278,7 +280,7 @@ print: func [
     return: "NULL if blank input or effectively empty block, otherwise trash"
         [<opt> trash!]
     line "Line of text or block, blank or [] has NO output, newline allowed"
-        [<blank> char! text! block!]
+        [<maybe> char! text! block!]
 ][
     if char? line [
         if not equal? line newline [
@@ -287,7 +289,7 @@ print: func [
         return write-stdout line
     ]
 
-    (write-stdout try spaced line) then [write-stdout newline]
+    (write-stdout maybe spaced line) then [write-stdout newline]
 ]
 
 

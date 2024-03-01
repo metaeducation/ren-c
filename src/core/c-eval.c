@@ -222,7 +222,7 @@ INLINE void Finalize_Arg(
         or IS_REFINEMENT(refine) // ensure arg not null
     );
 
-    if (IS_NULLED(arg)) {
+    if (IS_NULLED(arg) or IS_VOID(arg)) {
         if (IS_REFINEMENT(refine)) {
             //
             // We can only revoke the refinement if this is the 1st
@@ -260,7 +260,7 @@ INLINE void Finalize_Arg(
             fail (Error_Bad_Refine_Revoke(param, arg));
     }
 
-    if (IS_BLANK(arg) and TYPE_CHECK(param, REB_TS_NOOP_IF_BLANK)) {
+    if (IS_VOID(arg) and TYPE_CHECK(param, REB_TS_NOOP_IF_VOID)) {
         SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
         FRM_PHASE_OR_DUMMY(f_state) = PG_Dummy_Action;
         return;
@@ -2128,6 +2128,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case REB_BLANK:
+      case REB_VOID:
         //
       case REB_LOGIC:
       case REB_INTEGER:

@@ -140,10 +140,10 @@ load-header: function [
     data: script? tmp else [ ; no script header found
         return either required ['no-header] [
             reduce [
-                _ ;-- no header object
-                tmp ;-- body text
-                1 ;-- line number
-                tail of tmp ;-- end of script
+                '~null~  ;-- no header object
+                tmp  ;-- body text
+                1  ;-- line number
+                tail of tmp  ;-- end of script
             ]
         ]
     ]
@@ -174,11 +174,13 @@ load-header: function [
         return 'bad-header
     ]
 
-    if null? match [block! blank!] try :hdr/options [
-        return 'bad-header
+    if :hdr/options [
+        if not block? :hdr/options [
+            return 'bad-header
+        ]
     ]
 
-    if find hdr/options 'content [
+    if find maybe hdr/options 'content [
         append hdr reduce ['content data]  ; as of start of header
     ]
 
@@ -199,7 +201,7 @@ load-header: function [
     if :key = 'rebol [
         ; regular script, binary or script encoded compression supported
         case [
-            find hdr/options 'compress [
+            find maybe hdr/options 'compress [
                 rest: any [
                     attempt [
                         ; Raw bits.  whitespace *could* be tolerated; if
@@ -227,7 +229,7 @@ load-header: function [
         rest: skip first set [data: end:] transcode/next data 2
 
         case [
-            find hdr/options 'compress [ ; script encoded only
+            find maybe hdr/options 'compress [ ; script encoded only
                 rest: attempt [gunzip first rest] or [
                     return 'bad-compress
                 ]
@@ -240,7 +242,7 @@ load-header: function [
     return reduce [
         ensure object! hdr
         elide (
-            ensure [block! blank!] hdr/options
+            ensure [<opt> block!] hdr/options
         )
         ensure [binary! block!] rest
         ensure integer! line
@@ -264,6 +266,8 @@ load: function [
         [word!]
     <in> no-all ;-- temporary fake of <unbind> option
 ][
+    hdr: null
+
     self: binding of 'return ;-- so you can say SELF/ALL
 
     ; TAG! means load new script relative to current system/script/path
@@ -321,7 +325,7 @@ load: function [
         ]
     ]
     else [
-        file: line: _
+        file: line: null
         data: source
         ftype: default ['rebol]
 
@@ -346,17 +350,13 @@ load: function [
 
     ;-- Try to load the header, handle error:
     if not self/all [
-        set [hdr: data: line:] either object? data [
-            fail "Code has not been updated for LOAD-EXT-MODULE"
-            load-ext-module data
-        ][
-            load-header data
-        ]
+        set [hdr: data: line:] load-header data
+        hdr: degrade hdr
 
         if word? hdr [cause-error 'syntax hdr source]
     ]
 
-    ensure [object! blank!] hdr: default [_]
+    ensure [<opt> object!] hdr
     ensure [binary! block! text!] data
 
     ;-- Convert code to block, insert header if requested:
@@ -365,19 +365,19 @@ load: function [
             data: to binary! data ;-- !!! inefficient, might be UTF8
         ]
         assert [binary? data]
-        data: transcode/file/line data (opt file) (opt line)
+        data: transcode/file/line data (maybe file) (maybe line)
         take/last data ;-- !!! always the residual, a #{}... why?
     ]
 
     if header [
-        insert data hdr
+        insert data reify hdr
     ]
 
     ;-- Bind code to user context:
     none [
         'unbound = ftype
-        'module = select hdr 'type
-        find try get 'hdr/options 'unbound
+        'module = select maybe hdr 'type
+        find (maybe select maybe hdr 'options) 'unbound
     ] then [
         data: intern data
     ]
@@ -457,7 +457,7 @@ load-module: function [
             ; If no further processing is needed, shortcut return
 
             if not version and [delay or [module? :mod]] [
-                return reduce [source (try match module! :mod)]
+                return reduce [source (reify match module! :mod)]
             ]
         ]
 
@@ -567,7 +567,7 @@ load-module: function [
             import [
                 ; /import overrides 'delay option
             ]
-            not delay [delay: did find hdr/options 'delay]
+            not delay [delay: did find maybe hdr/options 'delay]
         ]
     ] else [
         ; !!! Some circumstances, e.g. `do <json>`, will wind up not passing
@@ -594,7 +594,7 @@ load-module: function [
         ; Unnamed module can't be imported to lib, so /no-lib here
         no-lib: true  ; Still not /no-lib in IMPORT
 
-        if not find hdr/options 'private [
+        if not find maybe hdr/options 'private [
             hdr/options: append any [hdr/options make block! 1] 'private
         ]
     ]
@@ -606,7 +606,8 @@ load-module: function [
     all [
         ; set to false later if existing module is used
         override?: not no-lib
-        set [name0: mod0:] pos: try find/skip system/modules name 2
+        pos: find/skip system/modules name 2
+        set [name0: mod0:] pos
     ] then [
         ; Get existing module's info
 
@@ -667,17 +668,7 @@ load-module: function [
     if not mod [
         ; not prebuilt or delayed, make a module
 
-        if find hdr/options 'isolate [no-share: true] ; in case of delay
-
-        if object? code [ ; delayed extension
-            fail "Code has not been updated for LOAD-EXT-MODULE"
-
-            set [hdr: code:] load-ext-module code
-            hdr/name: name ; in case of delayed rename
-            if all [no-share not find hdr/options 'isolate] [
-                hdr/options: append any [hdr/options make block! 1] 'isolate
-            ]
-        ]
+        if find maybe hdr/options 'isolate [no-share: true] ; in case of delay
 
         if binary? code [code: make block! code]
 

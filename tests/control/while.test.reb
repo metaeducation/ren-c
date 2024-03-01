@@ -9,7 +9,7 @@
     num: 0
     1 = while [num < 1] [num: num + 1]
 )]
-(blank? while [false] [])
+(void? while [false] [])
 ; zero repetition
 (
     success: true

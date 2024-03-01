@@ -53,7 +53,7 @@
 )
 (
     a-value: make error! ""
-    blank? a-value/type
+    null? a-value/type
 )
 (
     a-value: first ['a/b]
@@ -77,7 +77,7 @@
 )
 (
     a-value: make port! http://
-    blank? a-value/data
+    null? a-value/data
 )
 (
     a-value: first [a/b:]

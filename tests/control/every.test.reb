@@ -38,13 +38,13 @@
 (
     sum: 0
     did all [
-        false = every x [1 2 7] [
+        true = every x [1 2 7] [
             sum: me + x
-            if even? x [continue] // acts as `continue null`, get "falsified"
+            if even? x [continue] // acts as `continue void`, ignored
             true
         ]
         10 = sum
     ]
 )
 
-(_ = every x [] [<unused>])
+(void? every x [] [<unused>])

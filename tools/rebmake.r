@@ -412,7 +412,7 @@ compiler-class: make object! [
     ;check if the compiler is available
     check: method [
         return: [logic!]
-        path [<blank> any-string!]
+        path [<maybe> any-string!]
     ][
     ]
 ]

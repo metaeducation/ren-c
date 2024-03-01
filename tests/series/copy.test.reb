@@ -21,7 +21,7 @@
 ([] = copy/part [] 0)
 ([] = copy/part [] 1)
 ([] = copy/part [] 2147483647)
-(ok? trap [copy blank])
+(ok? trap [copy void])
 [#877 (
     a: copy []
     insert/only a a

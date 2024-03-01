@@ -84,9 +84,9 @@ REB_R MAKE_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //      return: [<opt> any-value!]
 //          {Constructed value, or NULL if BLANK! input}
-//      type [<blank> any-value!]
+//      type [<maybe> any-value!]
 //          {The datatype -or- an examplar value of the type to construct}
-//      def [<blank> any-value!]
+//      def [<maybe> any-value!]
 //          {Definition or size of the new value (binding may be modified)}
 //  ]
 //
@@ -180,8 +180,8 @@ REB_R TO_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //      return: "VALUE converted to TYPE, null if type or value are blank"
 //          [<opt> any-value!]
-//      type [<blank> datatype!]
-//      value [<blank> any-value!]
+//      type [<maybe> datatype!]
+//      value [<maybe> any-value!]
 //  ]
 //
 DECLARE_NATIVE(to)

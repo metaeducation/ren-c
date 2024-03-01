@@ -153,7 +153,7 @@ rebsource: context [
 
                 malloc-check: [
                     and identifier "malloc" (
-                        append malloc-found try text-line-of position
+                        append malloc-found reify text-line-of position
                     )
                 ]
 
@@ -189,12 +189,12 @@ rebsource: context [
                                 ]
                                 same? position proto-parser/parse.position
                             ] else [
-                                line: try (
+                                line: (
                                     text-line-of proto-parser/parse.position
                                 )
                                 append
                                     non-std-func-space: default [copy []]
-                                    line ;-- should it be appending BLANK! ?
+                                    reify line
                             ]
                         ]
                     ]
@@ -212,9 +212,9 @@ rebsource: context [
                         ; as the "to-c-name" of the Rebol set-word
                         ;
                         if proto-parser/proto.arg.1 <> to-c-name name [
-                            line: try text-line-of proto-parser/parse.position
+                            line: text-line-of proto-parser/parse.position
                             emit <id-mismatch> [
-                                (mold proto-parser/data/1) (file) (line)
+                                (mold proto-parser/data/1) (file) (reify line)
                             ]
                         ]
                     ] else [
@@ -229,9 +229,9 @@ rebsource: context [
                                     "RL_" to word! proto-parser/data/1
                                 ]
                         ] else [
-                            line: try text-line-of proto-parser/parse.position
+                            line: text-line-of proto-parser/parse.position
                             emit <id-mismatch> [
-                                (mold proto-parser/data/1) (file) (line)
+                                (mold proto-parser/data/1) (file) (reify line)
                             ]
                         ]
                     ]
@@ -288,7 +288,7 @@ rebsource: context [
             ; Identify line termination.
 
             all [
-                position: try find data #{0a}
+                position: find data #{0a}
                 1 < index of position
                 13 = first back position
             ] then [
@@ -369,7 +369,7 @@ rebsource: context [
                 not equal? 10 last data ; Check for newline.
             ] then [
                 emit <eof-eol-missing> [
-                     (file) (reduce [try text-line-of tail of to text! data])
+                     (file) (reduce [reify text-line-of tail of to text! data])
                 ]
             ]
 
@@ -402,17 +402,17 @@ rebsource: context [
             if equal? #"/" last item [
                 contents: read join repo-dir item
                 insert queue map-each x contents [join item x]
-                item: _
+                item: null
             ] else [
                 any [
                     parse/match second split-path item ["tmp-" to end]
                     not find extensions extension-of item
                 ] then [
-                    item: _
+                    item: null
                 ]
             ]
 
-            opt item ;-- blanked items are to be filtered out
+            item ;-- blanked items are to be filtered out
         ]
     ]
 

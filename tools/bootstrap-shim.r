@@ -54,7 +54,7 @@ read: lib/read: adapt 'lib/read [
 ]
 
 
-; The snapshotted Ren-C existed right before <blank> was legal to mark an
+; The snapshotted Ren-C existed right before <maybe> was legal to mark an
 ; argument as meaning a function returns null if that argument is blank.
 ; See if this causes an error, and if so assume it's the old Ren-C, not a
 ; new one...?
@@ -65,7 +65,7 @@ read: lib/read: adapt 'lib/read [
 ; obvious reward.)
 ;
 trap [
-    func [i [<blank> integer!]] [...]
+    func [i [<maybe> integer!]] [...]
 ] or [
     nulled?: func [var [word! path!]] [return null = get var]
     quit/with system/options/path
@@ -157,7 +157,7 @@ collect*: :collect
 collect: :collect-block
 
 modernize-action: function [
-    "Account for the <blank> annotation as a usermode feature"
+    "Account for the <maybe> annotation as a usermode feature"
     return: [block!]
     spec [block!]
     body [block!]
@@ -176,11 +176,11 @@ modernize-action: function [
                     keep/only spec/1
                 ]
 
-                ; Substitute BLANK! for any <blank> found, and save some code
+                ; Substitute BLANK! for any <maybe> found, and save some code
                 ; to inject for that parameter to return null if it's blank
                 ;
-                if find (try match block! spec/1) <blank> [
-                    keep/only replace copy spec/1 <blank> 'blank!
+                if find (try match block! spec/1) <maybe> [
+                    keep/only replace copy spec/1 <maybe> 'blank!
                     append blankers compose [
                         if blank? (as get-word! w) [return null]
                     ]

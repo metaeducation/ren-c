@@ -175,14 +175,14 @@ host-script-pre-load: function [
     {Code registered as a hook when a module or script are loaded}
     return: <void>
     is-module [logic!]
-    hdr [blank! object!]
+    hdr [<opt> object!]
         {Header object (will be blank for DO of BINARY! with no header)}
 ][
     ; Print out the script info
     boot-print [
-        (if is-module ["Module:"] else ["Script:"]) select hdr 'title
-            "Version:" select hdr 'version
-            "Date:" select hdr 'date
+        (if is-module ["Module:"] else ["Script:"]) reify select maybe hdr 'title
+            "Version:" reify select maybe hdr 'version
+            "Date:" reify select maybe hdr 'date
     ]
 ]
 
@@ -255,8 +255,8 @@ host-start: function [
                 emit [system/console/print-gap]
                 emit [system/console/print-prompt]
                 emit [reduce [
-                    system/console/input-hook
-                ]] ;-- gather first line (or BLANK!), put in BLOCK!
+                    any [system/console/input-hook | '~escape~]
+                ]] ;-- gather first line (or escape), put in BLOCK!
             ]
             <halt> [
                 emit [halt]
@@ -384,7 +384,7 @@ host-start: function [
 
         return: "Null if not found"
             [<opt> file!]
-        dir [<blank> text!]
+        dir [<maybe> text!]
     ][
         return all [
             not empty? dir
@@ -405,7 +405,7 @@ host-start: function [
             return null
         ]
 
-        return to-dir try any [
+        return to-dir maybe any [
             get-env 'HOME
             all [
                 homedrive: get-env 'HOMEDRIVE
@@ -427,7 +427,10 @@ host-start: function [
             %.rebol/     ;; default *nix (covers Linux, MacOS (OS X) and Unix)
         ]
 
-        return if exists? path [path]
+        return all [
+            exists? path
+            path
+        ]
     ]
 
     ; Set system/users/home (users HOME directory)
@@ -436,9 +439,9 @@ host-start: function [
     ; NB. Above can be overridden by --home option
     ; TBD - check perms are correct (SECURITY)
     all [
-        home-dir: try get-home-path
+        home-dir: get-home-path
         system/user/home: o/home: home-dir
-        resources-dir: try get-resources-path
+        resources-dir: get-resources-path
         o/resources: resources-dir
     ]
 
@@ -682,7 +685,7 @@ host-start: function [
     ; !!! see https://github.com/rebol/rebol-issues/issues/706
     ;
     all [
-        not find o/suppress %rebol.reb
+        not find maybe o/suppress %rebol.reb
         elide (loud-print ["Checking for rebol.reb file in" o/bin])
         exists? o/bin/rebol.reb
     ] then [
@@ -700,7 +703,7 @@ host-start: function [
     ;
     all [
         o/resources
-        not find o/suppress %user.reb
+        not find maybe o/suppress %user.reb
         elide (loud-print ["Checking for user.reb file in" o/resources])
         exists? o/resources/user.reb
     ] then [

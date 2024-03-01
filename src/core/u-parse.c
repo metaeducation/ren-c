@@ -95,7 +95,7 @@
 
 #define P_COLLECTION_VALUE  (f->rootvar + 4)
 #define P_COLLECTION \
-    (IS_BLANK(P_COLLECTION_VALUE) ? nullptr : Cell_Array(P_COLLECTION_VALUE))
+    (IS_NULLED(P_COLLECTION_VALUE) ? nullptr : Cell_Array(P_COLLECTION_VALUE))
 
 #define P_OUT (f->out)
 
@@ -243,7 +243,7 @@ static bool Subparse_Throws(
         collect_tail = ARR_LEN(opt_collection);  // roll back here on failure
     }
     else {
-        Init_Blank(Erase_Cell(FRM_ARGS_HEAD(f) + 3));
+        Init_Nulled(Erase_Cell(FRM_ARGS_HEAD(f) + 3));
         collect_tail = 0;
     }
 
@@ -648,11 +648,11 @@ static REBIXO Parse_Array_One_Rule_Core(
 
     if (IS_END(item)) {
         //
-        // Only the BLANK and BLOCK rules can potentially handle an END input
-        // For instance, `parse [] [[[_ _ _]]]` should be able to match.
+        // Only the VOID and BLOCK rules can potentially handle an END input
+        // For instance, `parse [] [[[void void void]]]` should match.
         // The other cases would assert if fed an END marker as item.
         //
-        if (not IS_BLANK(rule) and not IS_BLOCK(rule))
+        if (not IS_VOID(rule) and not IS_BLOCK(rule))
             return END_FLAG;
     }
 
@@ -1036,7 +1036,7 @@ static REBIXO To_Thru_Non_Block_Rule(
 ) {
     assert(not IS_BLOCK(rule));
 
-    if (IS_BLANK(rule))
+    if (IS_VOID(rule))
         return P_POS; // make it a no-op
 
     if (IS_INTEGER(rule)) {
@@ -1883,7 +1883,7 @@ DECLARE_NATIVE(subparse)
         REBINT count; // gotos would cross initialization
         count = 0;
         while (count < maxcount) {
-            if (IS_BLANK(rule)) // these type tests should be in a switch
+            if (IS_VOID(rule)) // these type tests should be in a switch
                 break;
 
             assert(not IS_BAR(rule));
@@ -2360,9 +2360,9 @@ DECLARE_NATIVE(subparse)
 //      return: "Input series if /MATCH, otherwise synthesized result"  ; [1]
 //          [<opt> any-value!]
 //      input "Input series to parse"
-//          [<blank> any-series!]
+//          [<maybe> any-series!]
 //      rules "Rules to parse by"
-//          [<blank> block!]
+//          [<maybe> block!]
 //      /case "Uses case-sensitive comparison"
 //      /match "Return PARSE input instead of synthesized result"
 //  ]

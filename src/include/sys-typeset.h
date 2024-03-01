@@ -312,11 +312,11 @@ INLINE void INIT_VAL_PARAM_CLASS(Cell* v, enum Reb_Param_Class c) {
     TYPE_CHECK((v), REB_TS_UNBINDABLE)
 
 // Parameters can be marked such that if they are blank, the action will not
-// be run at all.  This is done via the `<blank>` annotation, which indicates
+// be run at all.  This is done via the `<maybe>` annotation, which indicates
 // "handle blanks specially" (in contrast to BLANK!, which just means a
 // parameter can be passed in as a blank, and the function runs normally)
 //
-#define REB_TS_NOOP_IF_BLANK \
+#define REB_TS_NOOP_IF_VOID \
     REB_MAX_PLUS_FIVE
 
 

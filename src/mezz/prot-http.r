@@ -93,7 +93,7 @@ read-sync-awake: function [return: [logic!] event [event!]] [
         'close [true]
         'error [
             error: event/port/state/error
-            event/port/state/error: _
+            event/port/state/error: null
             fail error
         ]
         default [false]
@@ -127,7 +127,7 @@ http-awake: function [return: [logic!] event [event!]] [
             awake make event! [type: 'connect port: http-port]
         ]
         'close [
-            res: try switch state/state [
+            res: switch state/state [
                 'ready [
                     awake make event! [type: 'close port: http-port]
                 ]
@@ -323,7 +323,7 @@ check-response: function [port] [
                 <- to-integer/unsigned headers/content-length
         ]
         if headers/last-modified [
-            info/date: try attempt [idate-to-date headers/last-modified]
+            info/date: attempt [idate-to-date headers/last-modified]
         ]
         remove/part conn/data d2
         state/state: 'reading-data
@@ -741,7 +741,7 @@ sys/make-scheme [
                 error: _
                 close?: no
                 info: construct port/scheme/info [type: 'file]
-                awake: ensure [action! blank!] :port/awake
+                awake: ensure [<opt> action!] :port/awake
             ]
             port/state/connection: conn: make port! compose [
                 scheme: (
@@ -774,8 +774,8 @@ sys/make-scheme [
         ][
             if port/state [
                 close port/state/connection
-                port/state/connection/awake: _
-                port/state: _
+                port/state/connection/awake: null
+                port/state: null
             ]
             port
         ]

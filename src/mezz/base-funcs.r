@@ -251,7 +251,7 @@ dig-action-meta-fields: function [value [action!]] [
 
     fields: all [:underlying | dig-action-meta-fields :underlying]
 
-    inherit-frame: function [parent [<blank> frame!]] [
+    inherit-frame: function [parent [<maybe> frame!]] [
         child: make frame! :value
         for-each param child [
             child/(param): any [
@@ -265,23 +265,23 @@ dig-action-meta-fields: function [value [action!]] [
     return construct system/standard/action-meta [
         description: ensure [<opt> text!] any [
             select meta 'description
-            copy try select fields 'description
+            copy maybe select maybe fields 'description
         ]
         return-type: ensure [<opt> block!] any [
             select meta 'return-type
-            copy try select fields 'return-type
+            copy maybe select maybe fields 'return-type
         ]
         return-note: ensure [<opt> text!] any [
             select meta 'return-note
-            copy try select fields 'return-note
+            copy maybe select maybe fields 'return-note
         ]
         parameter-types: ensure [<opt> frame!] any [
             select meta 'parameter-types
-            inherit-frame try get 'fields/parameter-types
+            inherit-frame maybe get maybe 'parameter-types
         ]
         parameter-notes: ensure [<opt> frame!] any [
             select meta 'parameter-notes
-            inherit-frame try get 'fields/parameter-notes
+            inherit-frame maybe get maybe 'parameter-notes
         ]
     ]
 ]
@@ -312,7 +312,7 @@ redescribe: function [
             fail [{archetype META-OF doesn't have DESCRIPTION slot} meta]
         ]
 
-        if notes: try get 'meta/parameter-notes [
+        if notes: get 'meta/parameter-notes [
             if not frame? notes [
                 fail [{PARAMETER-NOTES in META-OF is not a FRAME!} notes]
             ]
@@ -668,6 +668,23 @@ lambda: function [
     ]
 ]
 
+reify: func [value [<opt> void! trash! any-value!]] [
+    case [
+        void? :value [return '~void~]
+        trash? :value [return '~]
+        null? :value [return '~null~]
+    ]
+    return :value
+]
+
+degrade: func [value [any-value!]] [
+    case [
+        '~void~ = :value [return void]
+        '~ = :value [return ~]
+        '~null~ = :value [return null]
+    ]
+    return :value
+]
 
 invisible-eval-all: func [
     {Evaluate any number of expressions, but completely elide the results.}
@@ -725,7 +742,7 @@ has: func [
     /only
         "Values are kept as-is"
 ][
-    construct/(try if only [/only]) [] body
+    construct/(if only [/only]) [] body
 ]
 
 method: enfix func [
@@ -786,7 +803,7 @@ module: func [
     ;
     if block? :spec [
         unbind/deep spec
-        spec: try attempt [construct/only system/standard/header :spec]
+        spec: attempt [construct/only system/standard/header :spec]
     ]
 
     ; Historically, the Name: and Type: fields would tolerate either LIT-WORD!
@@ -815,13 +832,15 @@ module: func [
     for-each [var types] [
         spec object!
         body block!
-        spec/name [word! blank!]
-        spec/type [word! blank!]
-        spec/version [tuple! blank!]
-        spec/options [block! blank!]
+        spec/name [<opt> word!]
+        spec/type [<opt> word!]
+        spec/version [<opt> tuple!]
+        spec/options [<opt> block!]
     ][
         do compose [ensure ((types)) (var)] ;-- names to show if fails
     ]
+
+    spec/options: default [copy []]
 
     ; In Ren-C, MAKE MODULE! acts just like MAKE OBJECT! due to the generic
     ; facility for SET-META.
@@ -934,9 +953,9 @@ cause-error: func [
     fail make error! [
         type: err-type
         id: err-id
-        arg1: try first args
-        arg2: try second args
-        arg3: try third args
+        arg1: first args
+        arg2: second args
+        arg3: third args
     ]
 ]
 

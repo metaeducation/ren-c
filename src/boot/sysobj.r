@@ -40,10 +40,10 @@ catalog: construct [] [
     ;
     ; These catalogs are filled in by Init_System_Object()
     ;
-    datatypes: _
-    actions: _
-    natives: _
-    errors: _
+    datatypes: null
+    actions: null
+    natives: null
+    errors: null
 ]
 
 contexts: construct [] [
@@ -51,7 +51,7 @@ contexts: construct [] [
     sys:
     lib:
     user:
-        _
+        null
 ]
 
 state: construct [] [
@@ -72,13 +72,14 @@ ports: construct [] [
     input:          ; Port for user input.
     output:         ; Port for user output
     system:         ; Port for system events
-    callback: _     ; Port for callback events
+    callback: null  ; Port for callback events
 ]
 
 locale: construct [] [
     language:   ; Human language locale
-    language*: _
-    library: _ ;make object! [modules: utilities: https://raw.githubusercontent.com/r3n/renclib/master/usermodules.reb]
+    language*: null
+    library: null
+    ;make object! [modules: utilities: https://raw.githubusercontent.com/r3n/renclib/master/usermodules.reb]
     locale:
     locale*: _
     months: [
@@ -96,20 +97,20 @@ set in locale 'library construct [][
 ]
 
 options: construct [] [  ; Options supplied to REBOL during startup
-    bin: _          ; Path to directory where Rebol executable binary lives
-    boot: _         ; Path of executable, ie. system/options/bin/r3-exe
-    home: _         ; Path of home directory
-    resources: _    ; users resources directory (for %user.r, skins, modules etc)
-    suppress: _     ; block of user --suppress items, eg [%rebol.r %user.r %console-skin.reb]
+    bin: null       ; Path to directory where Rebol executable binary lives
+    boot: null      ; Path of executable, ie. system/options/bin/r3-exe
+    home: null      ; Path of home directory
+    resources: null ; users resources directory (for %user.r, skins, modules etc)
+    suppress: null  ; block of user --suppress items, eg [%rebol.r %user.r %console-skin.reb]
     loaded: []      ; block with full paths to loaded start-up scripts
-    path: _         ; Where script was started or the startup dir
+    path: null      ; Where script was started or the startup dir
 
-    current-path: _ ; Current URL! or FILE! path to use for relative lookups
+    current-path: null   ; Current URL! or FILE! path to use for relative lookups
 
-    script: _       ; Filename of script to evaluate
-    args: _         ; Command line arguments passed to script
-    debug: _        ; debug flags
-    version: _      ; script version needed
+    script: null    ; Filename of script to evaluate
+    args: null      ; Command line arguments passed to script
+    debug: null     ; debug flags
+    version: null   ; script version needed
 
     dump-size: 68   ; used by dump
 
@@ -139,7 +140,7 @@ script: construct [] [
     parent:         ; Script that loaded the current one
     path:           ; Location of the script being evaluated
     args:           ; args passed to script
-        _
+        null
 ]
 
 standard: construct [] [
@@ -192,7 +193,7 @@ standard: construct [] [
         return-note:
         parameter-types:
         parameter-notes:
-            _
+            null
     ]
 
     ; The common case is that derived actions will not need to be
@@ -205,14 +206,14 @@ standard: construct [] [
         description:
         specializee:
         specializee-name:
-            _
+            null
     ]
 
     adapted-meta: construct [] [
         description:
         adaptee:
         adaptee-name:
-            _
+            null
     ]
 
     enclosed-meta: construct [] [
@@ -221,14 +222,14 @@ standard: construct [] [
         inner-name:
         outer:
         outer-name:
-            _
+            null
     ]
 
     chained-meta: construct [] [
         description:
         chainees:
         chainee-names:
-            _
+            null
     ]
 
     ; !!! This is the template used for all errors, to which extra fields are
@@ -238,13 +239,13 @@ standard: construct [] [
     ; like FILE and LINE would not conflict with parameters.
     ;
     error: construct [] [
-        type: _
-        id: _
-        message: _ ; a BLOCK! template with arg substitution or just a STRING!
-        near: _
-        where: _
-        file: _
-        line: _
+        type: null
+        id: null
+        message: null  ; BLOCK! template with arg substitution or just a STRING!
+        near: null
+        where: null
+        file: null
+        line: null
 
         ; Arguments will be allocated in the context at creation time if
         ; necessary (errors with no arguments will just have a message)
@@ -256,7 +257,7 @@ standard: construct [] [
         parent:
         path:
         args:
-            _
+            null
     ]
 
     header: construct [] [
@@ -273,7 +274,7 @@ standard: construct [] [
 ;       compress:
 ;       exports:
 ;       content:
-            _
+            null
     ]
 
     scheme: construct [] [
@@ -285,7 +286,7 @@ standard: construct [] [
 ;       type:       ; bytes, integers, objects, values, block
         actor:      ; standard action handler for scheme port functions
         awake:      ; standard awake handler for this scheme's ports
-            _
+            null
     ]
 
     port: construct [] [ ; Port specification object
@@ -306,7 +307,7 @@ standard: construct [] [
         connections:
 
 ;       stats:      ; stats on operation (optional)
-            _
+            null
     ]
 
     port-spec-head: construct [] [
@@ -314,18 +315,18 @@ standard: construct [] [
         scheme:     ; reference to scheme that defines this port
         ref:        ; reference path or url (for errors)
         path:       ; used for files
-           _            ; (extended here)
+           null            ; (extended here)
     ]
 
     port-spec-net: construct port-spec-head [
-        host: _
+        host: null
         port-id: 80
 
         ; Set this to make outgoing packets seem to originate from a specific
         ; port (it's done by calling bind() before the first sendto(),
         ; otherwise the OS will pick an available port and stick with it.)
         ;
-        local-id: _
+        local-id: null
     ]
 
     port-spec-signal: construct port-spec-head [
@@ -337,7 +338,7 @@ standard: construct [] [
         size:
         date:
         type:
-            _
+            null
     ]
 
     net-info: construct [] [
@@ -345,7 +346,7 @@ standard: construct [] [
         local-port:
         remote-ip:
         remote-port:
-            _
+            null
     ]
 
     stats: construct [] [ ; port stats
@@ -360,28 +361,28 @@ standard: construct [] [
         made-blocks:
         made-objects:
         recycles:
-            _
+            null
     ]
 
     type-spec: construct [] [
         title:
         type:
-            _
+            null
     ]
 
-    utype: _
-    font: _  ; mezz-graphics.h
-    para: _  ; mezz-graphics.h
+    utype: null
+    font: null  ; mezz-graphics.h
+    para: null  ; mezz-graphics.h
 ]
 
-;;stats: _
+;;stats: null
 
 ;user-license: context [
 ;   name:
 ;   email:
 ;   id:
 ;   message:
-;       _
+;       null
 ;]
 
 
@@ -432,7 +433,7 @@ standard: construct [] [
 ;       data-bits:
 ;       parity:
 ;       stop-bits:
-;           _
+;           null
 ;       rts-cts: true
 ;       user-data:
 ;       awake:
@@ -442,7 +443,7 @@ standard: construct [] [
 ;       pass-thru:
 ;       open-append:
 ;       open-new:
-;           _
+;           null
 ;   ]
 
 ;   email: construct [] [ ; Email header object
@@ -461,13 +462,13 @@ standard: construct [] [
 ;       MIME-Version:
 ;       Content-Type:
 ;       Content:
-;           _
+;           null
 ;   ]
 
 user: construct [] [
    name:           ; User's name
    home:           ; The HOME environment variable
-   words: _
+   words: null
    identity: construct [][email: smtp: pop3: esmtp-user: esmtp-pass: fqdn: _]
    identities: []
 ]
@@ -475,18 +476,18 @@ user: construct [] [
 ;network: construct [] [
 ;   host: ""        ; Host name of the user's computer
 ;   host-address: 0.0.0.0 ; Host computer's TCP-IP address
-;   trace: _
+;   trace: null
 ;]
 
-console: _         ;; console (repl) object created in host-start (os/host-start.r)
+console: null  ; console (repl) object created in host-start (os/host-start.r)
 
 ; Below is original console construct (unused and comment-out in r3/ren-c)
 ; Left here for reference (for future development)
 ;
 ;console: construct [] [
-;   hide-types: _    ; types not to print
-;   history: _       ; Log of user inputs
-;   keys: _          ; Keymap for special key
+;   hide-types: null    ; types not to print
+;   history: null       ; Log of user inputs
+;   keys: null          ; Keymap for special key
 ;   prompt:  {>> }   ; Specifies the prompt
 ;   result:  {== }   ; Specifies result
 ;   escape:  {(escape)} ; Indicates an escape
@@ -518,14 +519,14 @@ cgi: construct [] [ ; CGI environment variables
        remote-user:
        remote-ident:
        Content-Type:           ; cap'd for email header
-       content-length: _
+       content-length: null
        other-headers: []
 ]
 ;   browser-type: 0
 
 ;   trace:          ; True if the --trace flag was specified
-;   help: _         ; True if the --help flags was specified
-;   halt: _         ; halt after script
+;   help: null      ; True if the --help flags was specified
+;   halt: null      ; halt after script
 
 ;-- Current expectation is that evaluation ends with BLANK!
 _

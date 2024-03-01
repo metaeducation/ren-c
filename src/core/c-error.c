@@ -550,8 +550,8 @@ bool Make_Error_Object_Throws(
         error = Copy_Context_Shallow_Managed(root_error);
 
         vars = ERR_VARS(error);
-        assert(IS_BLANK(&vars->type));
-        assert(IS_BLANK(&vars->id));
+        assert(IS_NULLED(&vars->type));
+        assert(IS_NULLED(&vars->id));
 
         Init_Text(&vars->message, Copy_Sequence_At_Position(arg));
     }
@@ -591,7 +591,7 @@ bool Make_Error_Object_Throws(
             if (message) {
                 assert(IS_TEXT(message) or IS_BLOCK(message));
 
-                if (not IS_BLANK(&vars->message))
+                if (not IS_NULLED(&vars->message))
                     fail (Error_Invalid_Error_Raw(arg));
 
                 Move_Value(&vars->message, message);
@@ -627,12 +627,12 @@ bool Make_Error_Object_Throws(
         // good for general purposes.
 
         if (not (
-            (IS_WORD(&vars->id) or IS_BLANK(&vars->id))
-            and (IS_WORD(&vars->type) or IS_BLANK(&vars->type))
+            (IS_WORD(&vars->id) or IS_NULLED(&vars->id))
+            and (IS_WORD(&vars->type) or IS_NULLED(&vars->type))
             and (
                 IS_BLOCK(&vars->message)
                 or IS_TEXT(&vars->message)
-                or IS_BLANK(&vars->message)
+                or IS_NULLED(&vars->message)
             )
         )){
             fail (Error_Invalid_Error_Raw(CTX_ARCHETYPE(error)));
@@ -685,8 +685,8 @@ REBCTX *Make_Error_Managed_Core(
     DECLARE_VALUE (type);
     const Value* message;
     if (cat_sym == SYM_0 and id_sym == SYM_0) {
-        Init_Blank(id);
-        Init_Blank(type);
+        Init_Nulled(id);
+        Init_Nulled(type);
         message = va_arg(*vaptr, const Value*);
     }
     else {
@@ -1270,7 +1270,7 @@ REBCTX *Error_On_Port(SymId id_sym, Value* port, REBINT err_code)
     Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
 
     Value* val = VAL_CONTEXT_VAR(spec, STD_PORT_SPEC_HEAD_REF);
-    if (IS_BLANK(val))
+    if (IS_NULLED(val))
         val = VAL_CONTEXT_VAR(spec, STD_PORT_SPEC_HEAD_TITLE); // less info
 
     DECLARE_VALUE (err_code_value);
@@ -1379,7 +1379,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
     ERROR_VARS *vars = ERR_VARS(error);
 
     // Form: ** <type> Error:
-    if (IS_BLANK(&vars->type))
+    if (IS_NULLED(&vars->type))
         Emit(mo, "** S", RM_ERROR_LABEL);
     else {
         assert(IS_WORD(&vars->type));
@@ -1397,7 +1397,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
     // Form: ** Where: function
     Value* where = KNOWN(&vars->where);
     if (
-        not IS_BLANK(where)
+        not IS_NULLED(where)
         and not (IS_BLOCK(where) and VAL_LEN_AT(where) == 0)
     ){
         Append_Utf8_Codepoint(mo->series, '\n');
@@ -1407,7 +1407,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
 
     // Form: ** Near: location
     Value* nearest = KNOWN(&vars->nearest);
-    if (not IS_BLANK(nearest)) {
+    if (not IS_NULLED(nearest)) {
         Append_Utf8_Codepoint(mo->series, '\n');
         Append_Unencoded(mo->series, RM_ERROR_NEAR);
 
@@ -1435,7 +1435,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
     // not a FILE!.
     //
     Value* file = KNOWN(&vars->file);
-    if (not IS_BLANK(file)) {
+    if (not IS_NULLED(file)) {
         Append_Utf8_Codepoint(mo->series, '\n');
         Append_Unencoded(mo->series, RM_ERROR_FILE);
         if (IS_WORD(file))
@@ -1446,7 +1446,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
 
     // Form: ** Line: line-number
     Value* line = KNOWN(&vars->line);
-    if (not IS_BLANK(line)) {
+    if (not IS_NULLED(line)) {
         Append_Utf8_Codepoint(mo->series, '\n');
         Append_Unencoded(mo->series, RM_ERROR_LINE);
         if (IS_INTEGER(line))

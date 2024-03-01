@@ -322,7 +322,7 @@ DECLARE_NATIVE(chain)
         chainees = COPY_ANY_ARRAY_AT_DEEP_MANAGED(pipeline);
     else {
         REBDSP dsp_orig = DSP;
-        if (Reduce_To_Stack_Throws(out, pipeline, REDUCE_MASK_NONE))
+        if (Reduce_To_Stack_Throws(out, pipeline))
             return out;
 
         // No more evaluations *should* run before putting this array in a
@@ -844,7 +844,7 @@ REB_R N_Shot_Dispatcher(REBFRM *f)
     if (Do_Branch_Throws(f->out, code))
         return R_THROWN;
 
-    return Trashify_If_Nulled(f->out);
+    return Trashify_Branched(f->out);
 }
 
 
@@ -863,7 +863,7 @@ REB_R N_Upshot_Dispatcher(REBFRM *f)
     if (Do_Branch_Throws(f->out, code))
         return R_THROWN;
 
-    return Trashify_If_Nulled(f->out);
+    return Trashify_Branched(f->out);
 }
 
 

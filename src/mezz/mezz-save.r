@@ -48,8 +48,8 @@ save: function [
     all_SAVE: all
     all: :lib/all
 
-    method: default [_]
-    header-data: default [_]
+    method: default [null]
+    header-data: default [null]
 
     ;-- Special datatypes use codecs directly (e.g. PNG image file):
     all [
@@ -88,7 +88,7 @@ save: function [
         if compress [ ; Make the header option match
             case [
                 not method [
-                    remove find to-value select header-data 'options 'compress
+                    remove maybe find maybe select header-data 'options 'compress
                 ]
                 not block? select header-data 'options [
                     append header-data reduce ['options copy [compress]]
@@ -105,12 +105,12 @@ save: function [
             append header-data compose [length: (true)]
         ]
 
-        compress: did find try (select header-data 'options) 'compress
+        compress: did find maybe (select header-data 'options) 'compress
         if not compress [
-            method: _
+            method: null
         ]
 
-        length: ensure [integer! blank!] try select header-data 'length
+        length: ensure [<opt> integer!] select header-data 'length
         header-data: body-of header-data
     ]
 
@@ -123,7 +123,7 @@ save: function [
     append data newline
 
     case/all [
-        tmp: find header-data 'checksum [
+        tmp: find maybe header-data 'checksum [
             ; Checksum uncompressed data, if requested
             change next tmp checksum/secure data: to-binary data
         ]

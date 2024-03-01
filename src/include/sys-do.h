@@ -42,7 +42,7 @@ INLINE bool Do_At_Throws(
     REBSPC *specifier
 ){
     return THROWN_FLAG == Eval_Array_At_Core(
-        Init_Trash(out),
+        Init_Void(out),
         nullptr, // opt_first (null indicates nothing, not nulled cell)
         array,
         index,
@@ -150,11 +150,3 @@ INLINE bool Do_Branch_Core_Throws(
 
 #define Do_Branch_Throws(out,branch) \
     Do_Branch_Core_Throws((out), (branch), END_NODE)
-
-
-enum {
-    REDUCE_FLAG_TRY = 1 << 0, // null should be converted to blank, vs fail
-    REDUCE_FLAG_OPT = 1 << 1 // discard nulls (incompatible w/REDUCE_FLAG_TRY)
-};
-
-#define REDUCE_MASK_NONE 0

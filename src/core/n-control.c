@@ -67,13 +67,13 @@ DECLARE_NATIVE(if)
 {
     INCLUDE_PARAMS_OF_IF;
 
-    if (IS_CONDITIONAL_FALSE(ARG(condition))) // fails on void, literal blocks
-        return nullptr;
+    if (IS_FALSEY(ARG(condition))) // fails on void and trash
+        return Init_Void(OUT);
 
     if (Do_Branch_With_Throws(OUT, ARG(branch), ARG(condition)))
         return R_THROWN;
 
-    return Trashify_If_Nulled(OUT);  // trash means no branch (cues ELSE)
+    return Trashify_Branched(OUT);  // trash means no branch (cues ELSE)
 }
 
 
@@ -92,13 +92,13 @@ DECLARE_NATIVE(if_not)
 {
     INCLUDE_PARAMS_OF_IF_NOT;
 
-    if (IS_CONDITIONAL_TRUE(ARG(condition))) // fails on void, literal blocks
+    if (IS_TRUTHY(ARG(condition)))  // fails on void and trash
         return nullptr;
 
     if (Do_Branch_With_Throws(OUT, ARG(branch), ARG(condition)))
         return R_THROWN;
 
-    return Trashify_If_Nulled(OUT);  // trash means no branch (cues ELSE)
+    return Trashify_Branched(OUT);  // trash means no branch (cues ELSE)
 }
 
 
@@ -121,7 +121,7 @@ DECLARE_NATIVE(either)
 
     if (Do_Branch_With_Throws(
         OUT,
-        IS_CONDITIONAL_TRUE(ARG(condition)) // fails on void, literal blocks
+        IS_TRUTHY(ARG(condition))  // fails on void and trash
             ? ARG(true_branch)
             : ARG(false_branch),
         ARG(condition)
@@ -152,8 +152,7 @@ bool Either_Test_Core_Throws(
         //
         // If this is the result of composing together a test with a literal,
         // it may be the *test* that changes...so in effect, we could be
-        // "testing the test" on a fixed value.  Allow literal blocks (e.g.
-        // use IS_TRUTHY() instead of IS_CONDITIONAL_TRUE())
+        // "testing the test" on a fixed value.
         //
         Init_Logic(out, VAL_LOGIC(test) == IS_TRUTHY(arg));
         return false;
@@ -313,8 +312,8 @@ DECLARE_NATIVE(either_test)
 //
 //      return: "Input value if not null, or branch result (possibly null)"
 //          [<opt> any-value!]
-//      optional "Run branch if this is null"
-//          [<opt> any-value!]
+//      left "Run branch if this is null or void"
+//          [<opt> void! any-value!]
 //      branch [block! action!]
 //  ]
 //
@@ -322,8 +321,9 @@ DECLARE_NATIVE(else)
 {
     INCLUDE_PARAMS_OF_ELSE; // faster than EITHER-TEST specialized w/`VALUE?`
 
-    if (not IS_NULLED(ARG(optional)))  // Note: trash is crucially non-NULL
-        RETURN (ARG(optional));
+    Value* left = ARG(left);
+    if (not IS_NULLED(left) and not IS_VOID(left))
+        RETURN (left);
 
     if (Do_Branch_With_Throws(OUT, ARG(branch), NULLED_CELL))
         return R_THROWN;
@@ -339,8 +339,8 @@ DECLARE_NATIVE(else)
 //
 //      return: "null if input is null, or branch result (voided if null)"
 //          [<opt> any-value!]
-//      optional "Run branch if this is not null"
-//          [<opt> any-value!]
+//      left "Run branch if this is not null or void"
+//          [<opt> void! any-value!]
 //      branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [block! action!]
 //  ]
@@ -349,13 +349,14 @@ DECLARE_NATIVE(then)
 {
     INCLUDE_PARAMS_OF_THEN; // faster than EITHER-TEST specialized w/`NULL?`
 
-    if (IS_NULLED(ARG(optional)))  // Note: trash is crucially non-NULL
-        return nullptr; // left didn't run, so signal THEN didn't run either
+    Value* left = ARG(left);
+    if (IS_NULLED(left) or IS_VOID(left))
+        return nullptr;  // left didn't run, so signal THEN didn't run either
 
-    if (Do_Branch_With_Throws(OUT, ARG(branch), ARG(optional)))
+    if (Do_Branch_With_Throws(OUT, ARG(branch), left))
         return R_THROWN;
 
-    return Trashify_If_Nulled(OUT);  // if left ran, make THEN signal it did
+    return Trashify_Branched(OUT);  // if left ran, make THEN signal it did
 }
 
 
@@ -366,7 +367,7 @@ DECLARE_NATIVE(then)
 //
 //      return: "The same value as input, regardless of if branch runs"
 //          [<opt> any-value!]
-//      optional "Run branch if this is not null"
+//      left "Run branch if this is not null or void"
 //          [<opt> any-value!]
 //      branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [block! action!]
@@ -376,13 +377,14 @@ DECLARE_NATIVE(also)
 {
     INCLUDE_PARAMS_OF_ALSO; // `then func [x] [(...) :x]` => `also [...]`
 
-    if (IS_NULLED(ARG(optional)))  // Note: trash is crucially non-NULL
+    Value* left = ARG(left);
+    if (IS_NULLED(left) or IS_VOID(left))
         return nullptr;
 
-    if (Do_Branch_With_Throws(OUT, ARG(branch), ARG(optional)))
+    if (Do_Branch_With_Throws(OUT, ARG(branch), left))
         return R_THROWN;
 
-    RETURN (ARG(optional)); // just passing thru the input
+    RETURN (left); // just passing thru the input
 }
 
 
@@ -480,7 +482,7 @@ DECLARE_NATIVE(all)
     DECLARE_FRAME (f);
     Push_Frame(f, ARG(block));
 
-    Init_Nulled(OUT); // default return result
+    Init_Void(OUT);  // default return result
 
     while (NOT_END(f->value)) {
         if (Eval_Step_Maybe_Stale_Throws(OUT, f)) {
@@ -488,7 +490,10 @@ DECLARE_NATIVE(all)
             return R_THROWN;
         }
 
-        if (IS_FALSEY(OUT)) { // any false/blank/null will trigger failure
+        if (
+            not IS_VOID(OUT)
+            and IS_FALSEY(OUT)
+        ){ // any false/blank/null will trigger failure
             Abort_Frame(f);
             return nullptr;
         }
@@ -521,7 +526,7 @@ DECLARE_NATIVE(any)
     DECLARE_FRAME (f);
     Push_Frame(f, ARG(block));
 
-    Init_Nulled(OUT); // default return result
+    Init_Void(OUT);  // default return result
 
     while (NOT_END(f->value)) {
         if (Eval_Step_Maybe_Stale_Throws(OUT, f)) {
@@ -529,7 +534,10 @@ DECLARE_NATIVE(any)
             return R_THROWN;
         }
 
-        if (IS_TRUTHY(OUT)) { // successful ANY returns the value
+        if (
+            not IS_VOID(OUT)
+            and IS_TRUTHY(OUT)
+        ){ // successful ANY returns the value
             Abort_Frame(f);
             return OUT;
         }
@@ -637,7 +645,7 @@ static REB_R Case_Choose_Core_May_Throw(
             return Move_Value(OUT, cell);
         }
 
-        if (IS_CONDITIONAL_FALSE(cell)) { // not a matching condition
+        if (IS_FALSEY(cell)) {  // not a matching condition
             if (choose) {
                 Fetch_Next_In_Frame(nullptr, f); // skip next, whatever it is
                 continue;
@@ -699,7 +707,7 @@ static REB_R Case_Choose_Core_May_Throw(
             } else
                 fail (Error_Invalid_Core(OUT, f->specifier));
 
-            Trashify_If_Nulled(OUT);  // null is reserved for no branch taken
+            Trashify_Branched(OUT);  // null is reserved for no branch taken
         }
 
         if (not REF(all)) {
@@ -885,7 +893,7 @@ DECLARE_NATIVE(switch)
             return R_THROWN;
         }
 
-        Trashify_If_Nulled(OUT);  // null is reserved for no branch run
+        Trashify_Branched(OUT);  // null is reserved for no branch run
 
         if (not REF(all)) {
             Abort_Frame(f);
@@ -950,9 +958,6 @@ DECLARE_NATIVE(default)
 
     if (Do_Branch_Throws(OUT, ARG(branch)))
         return R_THROWN;
-
-    if (IS_NULLED(OUT))
-        fail ("DEFAULT came back NULL"); // !!! Review--what about BLANK!
 
     const bool enfix = false;
     if (IS_SET_WORD(target))

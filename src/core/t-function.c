@@ -332,19 +332,15 @@ REB_R PD_Action(
 
     assert(IS_ACTION(pvs->out));
 
-    if (IS_BLANK(picker)) {
+    if (IS_VOID(picker)) {
         //
         // Leave the function value as-is, and continue processing.  This
-        // enables things like `append/(either only [/only] [_])/dup`...
+        // enables things like `append/(if only [/only])/dup`...
         //
         // Note this feature doesn't have obvious applications to refinements
         // that take arguments...only ones that don't.  Use "revoking" to
         // pass void as arguments to a refinement that is always present
         // in that case.
-        //
-        // Null might seem more convenient, for `append/(if only [/only])/dup`
-        // however it is disallowed to use nulls at the higher level path
-        // protocol.  This is probably for the best.
         //
         return pvs->out;
     }

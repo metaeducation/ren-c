@@ -6,10 +6,10 @@
     [] = rejoin [[]]
 )
 (
-    "" = rejoin [null]
+    "" = rejoin [void]
 )
 (
-    "" = rejoin [null null]
+    "" = rejoin [void void]
 )
 (
     [[]] = rejoin [[][]]

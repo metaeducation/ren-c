@@ -105,7 +105,7 @@ DECLARE_NATIVE(break)
 //  "Throws control back to top of loop for next iteration."
 //
 //      value "If provided, act as if loop body finished with this value"
-//          [<end> <opt> any-value!]
+//          [<end> any-value!]
 //  ]
 //
 DECLARE_NATIVE(continue)
@@ -115,6 +115,9 @@ DECLARE_NATIVE(continue)
 // name of the throw, like `throw/name value :continue`.
 {
     INCLUDE_PARAMS_OF_CONTINUE;
+
+    if (IS_NULLED(ARG(value)))  // it's an END (should change to CONTINUE/WITH)
+        Init_Void(ARG(value));
 
     Move_Value(OUT, NAT_VALUE(continue));
     CONVERT_NAME_TO_THROWN(OUT, ARG(value)); // null if e.g. `do [continue]`
@@ -134,7 +137,7 @@ static REB_R Loop_Series_Common(
     REBINT end,
     REBINT bump
 ){
-    Init_Blank(out); // result if body never runs
+    Init_Void(out); // result if body never runs
 
     // !!! This bounds incoming `end` inside the array.  Should it assert?
     //
@@ -217,7 +220,7 @@ static REB_R Loop_Integer_Common(
     REBI64 end,
     REBI64 bump
 ){
-    Init_Blank(out); // result if body never runs
+    Init_Void(out); // result if body never runs
 
     // A value cell exposed to the user is used to hold the state.  This means
     // if they change `var` during the loop, it affects the iteration.  Hence
@@ -280,7 +283,7 @@ static REB_R Loop_Number_Common(
     Value* end,
     Value* bump
 ){
-    Init_Blank(out); // result if body never runs
+    Init_Void(out); // result if body never runs
 
     REBDEC s;
     if (IS_INTEGER(start))
@@ -330,7 +333,7 @@ static REB_R Loop_Number_Common(
     //
     const bool counting_up = (s < e); // equal checked above
     if ((counting_up and b <= 0) or (not counting_up and b >= 0))
-        return Init_Blank(out); // avoid infinite loop, blank means never ran
+        return Init_Void(out); // avoid infinite loop, void means never ran
 
     while (counting_up ? *state <= e : *state >= e) {
         if (Do_Branch_Throws(out, body)) {
@@ -586,11 +589,15 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             break;
 
           case LOOP_EVERY:
-            no_falseys = no_falseys and IS_TRUTHY(les->out);
+            no_falseys = no_falseys and (
+                IS_VOID(les->out) or IS_TRUTHY(les->out)
+            );
             break;
 
           case LOOP_MAP_EACH:
-            if (IS_NULLED(les->out))
+            if (IS_NULLED(les->out))  // null body is error now
+                fail (Error_Need_Non_Null_Raw());
+            if (IS_VOID(les->out))  // vanish result
                 Init_Trash(les->out);  // nulled is used to signal breaking only
             else
                 DS_PUSH(les->out); // anything not null is added to the result
@@ -624,7 +631,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 {
     INCLUDE_PARAMS_OF_FOR_EACH; // MAP-EACH & EVERY must have same interface
 
-    Init_Blank(OUT); // result if body never runs (MAP-EACH gives [])
+    Init_Void(OUT); // result if body never runs (MAP-EACH gives [])
 
     struct Loop_Each_State les;
     les.mode = mode;
@@ -701,7 +708,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 
         les.data_len = SER_LEN(les.data_ser); // HOLD so length can't change
         if (les.data_idx >= les.data_len) {
-            assert(IS_BLANK(OUT)); // result if loop body never runs
+            assert(IS_VOID(OUT));  // result if loop body never runs
             r = nullptr;
             goto cleanup;
         }
@@ -752,7 +759,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
       case LOOP_EVERY:
         //
         // nulled output means there was a BREAK
-        // blank means body never ran (`_ = every x [] [<unused>]`)
+        // void means body never ran (`void? every x [] [<unused>]`)
         // #[false] means loop ran, and at least one body result was "falsey"
         // any other value is the last body result, and is truthy
         // only illegal value here is trash (would cause error if body gave it)
@@ -865,9 +872,9 @@ DECLARE_NATIVE(for)
 //      'word "Variable set to each position in the series at skip distance"
 //          [word! lit-word! blank!]
 //      series "The series to iterate over"
-//          [<blank> any-series!]
+//          [<maybe> any-series!]
 //      skip "Number of positions to skip each time"
-//          [<blank> integer!]
+//          [<maybe> integer!]
 //      body "Code to evaluate each time"
 //          [block! action!]
 //  ]
@@ -878,14 +885,14 @@ DECLARE_NATIVE(for_skip)
 
     Value* series = ARG(series);
 
-    Init_Blank(OUT); // result if body never runs, like `while [null] [...]`
+    Init_Void(OUT);  // result if body never runs, like `while [null] [...]`
 
     REBINT skip = Int32(ARG(skip));
     if (skip == 0) {
         //
         // !!! https://forum.rebol.info/t/infinite-loops-vs-errors/936
         //
-        return OUT; // blank is loop protocol if body never ran
+        return OUT;  // void is loop protocol if body never ran
     }
 
     REBCTX *context;
@@ -1038,7 +1045,7 @@ DECLARE_NATIVE(cycle)
 //          {Last body result, or null if BREAK}
 //      'vars [word! lit-word! block!]
 //          "Word or block of words to set each time, no new var if LIT-WORD!"
-//      data [<blank> any-series! any-context! map! datatype! action!]
+//      data [<maybe> any-series! any-context! map! datatype! action!]
 //          "The series to traverse"
 //      body [block! action!]
 //          "Block to evaluate each time"
@@ -1059,7 +1066,7 @@ DECLARE_NATIVE(for_each)
 //          {null on BREAK, blank on empty, false or the last truthy value}
 //      'vars [word! block!]
 //          "Word or block of words to set each time (local)"
-//      data [<blank> any-series! any-context! map! datatype! action!]
+//      data [<maybe> any-series! any-context! map! datatype! action!]
 //          "The series to traverse"
 //      body [block! action!]
 //          "Block to evaluate each time"
@@ -1290,7 +1297,11 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
             fail (Error_Trash_Conditional_Raw());  // neither true nor false
 
         if (ANY_ARRAY(res->data)) {
-            if (IS_NULLED(res->out) or IS_FALSEY(res->out)) {
+            if (
+                IS_NULLED(res->out)
+                or IS_VOID(res->out)
+                or IS_FALSEY(res->out)
+            ){
                 res->start = index;
                 continue; // keep requested, don't mark for culling
             }
@@ -1303,7 +1314,11 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
             } while (res->start != index);
         }
         else {
-            if (not IS_NULLED(res->out) and IS_TRUTHY(res->out)) {
+            if (
+                not IS_NULLED(res->out)
+                and not IS_VOID(res->out)
+                and IS_TRUTHY(res->out)
+            ){
                 res->start = index;
                 continue; // remove requested, don't save to buffer
             }
@@ -1345,7 +1360,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
 //          {Number of removed series items, or null if BREAK}
 //      'vars [word! block!]
 //          "Word or block of words to set each time (local)"
-//      data [<blank> any-series!]
+//      data [<maybe> any-series!]
 //          "The series to traverse (modified)" ; should BLANK! opt-out?
 //      body [block! action!]
 //          "Block to evaluate (return TRUE to remove)"
@@ -1465,7 +1480,7 @@ DECLARE_NATIVE(remove_each)
 //          {Collected block (BREAK/WITH can add a final result to block)}
 //      'vars [word! block!]
 //          "Word or block of words to set each time (local)"
-//      data [<blank> any-series! action!]
+//      data [<maybe> any-series! action!]
 //          "The series to traverse"
 //      body [block!]
 //          "Block to evaluate each time"
@@ -1484,7 +1499,7 @@ DECLARE_NATIVE(map_each)
 //
 //      return: [<opt> any-value!]
 //          {Last body result, or null if BREAK}
-//      count [<blank> any-number! logic!]
+//      count [<maybe> any-number! logic!]
 //          "Repetitions (true loops infinitely, false doesn't run)"
 //      body [block! action!]
 //          "Block to evaluate or action to run."
@@ -1494,7 +1509,7 @@ DECLARE_NATIVE(loop)
 {
     INCLUDE_PARAMS_OF_LOOP;
 
-    Init_Blank(OUT); // result if body never runs, like `while [null] [...]`
+    Init_Void(OUT);  // result if body never runs, like `while [null] [...]`
 
     if (IS_FALSEY(ARG(count))) {
         assert(IS_LOGIC(ARG(count))); // is false...opposite of infinite loop
@@ -1542,7 +1557,7 @@ DECLARE_NATIVE(loop)
 //          {Last body result or BREAK value}
 //      'word [word!]
 //          "Word to set each time"
-//      value [<blank> any-number! any-series!]
+//      value [<maybe> any-number! any-series!]
 //          "Maximum number or series to traverse"
 //      body [block!]
 //          "Block to evaluate each time"
@@ -1575,7 +1590,7 @@ DECLARE_NATIVE(repeat)
 
     REBI64 n = VAL_INT64(value);
     if (n < 1) // Loop_Integer from 1 to 0 with bump of 1 is infinite
-        return Init_Blank(OUT); // blank if loop condition never runs
+        return Init_Void(OUT);  // void if loop condition never runs
 
     return Loop_Integer_Common(
         OUT, var, ARG(body), 1, VAL_INT64(value), 1
@@ -1602,18 +1617,7 @@ INLINE REB_R Until_Core(
             if (broke)
                 return Init_Nulled(OUT);
 
-            // UNTIL and UNTIL-NOT both follow the precedent that the way
-            // a CONTINUE/WITH works is to act as if the loop body returned
-            // the value passed to the WITH.  Since the condition and body are
-            // the same in this case, the implications are a strange, though
-            // logical.  CONTINUE/WITH FALSE will break UNTIL-NOT, and
-            // CONTINUE/WITH TRUE breaks UNTIL.
-            //
-            // But this is different for null, since loop bodies returning
-            // conditions must be true or false...and continue needs to work.
-            // Hence it just means to continue either way.
-            //
-            if (IS_NULLED(OUT))
+            if (IS_VOID(OUT))  // e.g. CONTINUE and no /WITH
                 goto skip_check;
         }
         else { // didn't throw, see above about null difference from CONTINUE
@@ -1621,7 +1625,7 @@ INLINE REB_R Until_Core(
                 fail (Error_Trash_Conditional_Raw());
         }
 
-        if (IS_TRUTHY(OUT) == trigger)
+        if (not IS_VOID(OUT) and IS_TRUTHY(OUT) == trigger)
             return OUT;
 
     } while (true);
@@ -1674,7 +1678,7 @@ INLINE REB_R While_Core(
     SET_END(cell);
     PUSH_GC_GUARD(cell);
 
-    Init_Blank(OUT); // result if body never runs
+    Init_Void(OUT);  // result if body never runs
 
     do {
         if (Do_Branch_Throws(cell, ARG(condition))) {

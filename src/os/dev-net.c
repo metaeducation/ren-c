@@ -687,8 +687,8 @@ DEVICE_CMD Accept_Socket(REBREQ *req)
     REBCTX *connection = Copy_Context_Shallow_Managed(listener);
     PUSH_GC_GUARD(connection);
 
-    Init_Blank(CTX_VAR(connection, STD_PORT_DATA)); // just to be sure.
-    Init_Blank(CTX_VAR(connection, STD_PORT_STATE)); // just to be sure.
+    Init_Nulled(CTX_VAR(connection, STD_PORT_DATA));  // just to be sure.
+    Init_Nulled(CTX_VAR(connection, STD_PORT_STATE));  // just to be sure.
 
     struct devreq_net *sock = cast(
         struct devreq_net*,

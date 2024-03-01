@@ -93,7 +93,7 @@
 (
     i: 0
     parse/match "a." [
-        any [thru "a" (i: i + 1 j: to-value if i > 1 [[end skip]]) j]
+        any [thru "a" (i: i + 1 j: if i > 1 [[end skip]]) j]
     ]
     i == 1
 )
@@ -135,7 +135,7 @@
 )]
 [#1268 (
     i: 0
-    parse/match "a" [while [(i: i + 1 j: to-value if i = 2 [[fail]]) j]]
+    parse/match "a" [while [(i: i + 1 j: if i = 2 [[fail]]) j]]
     i == 2
 )]
 

@@ -246,7 +246,7 @@ DECLARE_NATIVE(eval_enfix)
 //
 //      return: [<opt> any-value!]
 //      source [
-//          blank! ;-- useful for `do try ...` scenarios when no match
+//          <maybe> ;-- useful for `do maybe ...` scenarios when no match
 //          block! ;-- source code in block form
 //          group! ;-- same as block (or should it have some other nuance?)
 //          text! ;-- source code in text form
@@ -283,7 +283,7 @@ DECLARE_NATIVE(do)
     case REB_BLOCK:
     case REB_GROUP: {
         REBIXO indexor = Eval_Array_At_Core(
-            Init_Trash(OUT),  // so `do []` matches up with `while [] [...]`
+            Init_Void(OUT),  // so `do []` vanishes
             nullptr, // opt_head (interpreted as no head, not nulled cell)
             Cell_Array(source),
             VAL_INDEX(source),
@@ -308,7 +308,7 @@ DECLARE_NATIVE(do)
             // or DO'd while this operation is in progress.
             //
             REBIXO indexor = Eval_Array_At_Core(
-                Init_Trash(OUT),
+                Init_Void(OUT),
                 nullptr, // opt_head (no head, not intepreted as nulled cell)
                 Cell_Array(position),
                 VAL_INDEX(position),
@@ -474,7 +474,7 @@ DECLARE_NATIVE(do)
 //
 //      return: [<opt> block! group! varargs!]
 //      source [
-//          blank! ;-- useful for `do try ...` scenarios when no match
+//          <maybe> ;-- useful for `do maybe ...` scenarios when no match
 //          block! ;-- source code in block form
 //          group! ;-- same as block (or should it have some other nuance?)
 //          varargs! ;-- simulates as if frame! or block! is being executed

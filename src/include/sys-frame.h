@@ -249,10 +249,10 @@ INLINE bool Is_Frame_Gotten_Shoved(REBFRM *f) {
     #define OUT         FRM_OUT(frame_)       // GC-safe slot for output value
     #define D_ARGC      FRM_NUM_ARGS(frame_)  // count of args+refinements/args
     #define D_ARG(n)    FRM_ARG(frame_, (n))  // pass 1 for first arg
-#endif
 
-#define RETURN(v) \
-    return Move_Value(OUT, (v));
+    #define RETURN(v) \
+        return Move_Value(OUT, (v))
+#endif
 
 INLINE bool Is_Action_Frame(REBFRM *f) {
     if (f->original != nullptr) {

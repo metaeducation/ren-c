@@ -49,7 +49,7 @@ exists?: func [
         return info?/only target
     ]
 
-    select try attempt [query target] 'type
+    select maybe attempt [query target] 'type
 ]
 
 size-of: size?: function [
@@ -189,8 +189,8 @@ file-type?: function [
     file [file! url!]
 ][
     all [
-        pos: find system/options/file-types try suffix-of file
-        first try find pos word!
+        pos: find system/options/file-types maybe suffix-of file
+        first maybe find pos word!
     ]
 ]
 

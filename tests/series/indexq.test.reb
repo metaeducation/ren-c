@@ -8,5 +8,5 @@
     2 == index? a
 )
 [#1611
-    (null? index of blank)
+    (null? index of void)
 ]

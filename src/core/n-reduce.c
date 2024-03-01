@@ -36,13 +36,8 @@
 //
 bool Reduce_To_Stack_Throws(
     Value* out,
-    Value* any_array,
-    REBFLGS flags
+    Value* any_array
 ){
-    // Can't have more than one policy on null conversion in effect.
-    //
-    assert(not ((flags & REDUCE_FLAG_TRY) and (flags & REDUCE_FLAG_OPT)));
-
     REBDSP dsp_orig = DSP;
 
     DECLARE_FRAME (f);
@@ -62,15 +57,11 @@ bool Reduce_To_Stack_Throws(
             break;
         }
 
-        if (IS_NULLED(out)) {
-            if (flags & REDUCE_FLAG_TRY) {
-                DS_PUSH_TRASH;
-                Init_Blank(DS_TOP);
-                if (line)
-                    SET_VAL_FLAG(DS_TOP, VALUE_FLAG_NEWLINE_BEFORE);
-            }
-            else if (not (flags & REDUCE_FLAG_OPT))
-                fail (Error_Reduce_Made_Null_Raw());
+        if (IS_NULLED(out))
+            fail (Error_Need_Non_Null_Raw());
+
+        if (IS_VOID(out)) {
+            // ignore
         }
         else {
             DS_PUSH(out);
@@ -93,8 +84,6 @@ bool Reduce_To_Stack_Throws(
 //          [<opt> any-value!]
 //      value "GROUP! and BLOCK! evaluate each item, single values evaluate"
 //          [any-value!]
-//      /try "If an evaluation returns null, convert to blank vs. failing"
-//      /opt "If an evaluation returns null, omit the result" ; !!! EXPERIMENT
 //  ]
 //
 DECLARE_NATIVE(reduce)
@@ -103,21 +92,11 @@ DECLARE_NATIVE(reduce)
 
     Value* value = ARG(value);
 
-    if (REF(opt) and REF(try))
-        fail (Error_Bad_Refines_Raw());
-
     if (IS_BLOCK(value) or IS_GROUP(value)) {
         REBDSP dsp_orig = DSP;
 
-        if (Reduce_To_Stack_Throws(
-            OUT,
-            value,
-            REDUCE_MASK_NONE
-                | (REF(try) ? REDUCE_FLAG_TRY : 0)
-                | (REF(opt) ? REDUCE_FLAG_OPT : 0)
-        )){
+        if (Reduce_To_Stack_Throws(OUT, value))
             return R_THROWN;
-        }
 
         REBFLGS pop_flags = NODE_FLAG_MANAGED | ARRAY_FLAG_FILE_LINE;
         if (GET_SER_FLAG(Cell_Array(value), ARRAY_FLAG_TAIL_NEWLINE))
@@ -144,9 +123,6 @@ DECLARE_NATIVE(reduce)
 
     if (not IS_NULLED(OUT))
         return OUT;
-
-    if (REF(try))
-        return Init_Blank(OUT);
 
     return nullptr; // let caller worry about whether to error on nulls
 }
@@ -234,7 +210,7 @@ bool Compose_To_Stack_Throws(
 
         if (match) { // only f->value if pattern is just [] or (), else deeper
             REBIXO indexor = Eval_Array_At_Core(
-                Init_Nulled(out), // want empty () to vanish as a NULL would
+                Init_Void(out), // want empty () to vanish as a VOID would
                 nullptr, // no opt_first
                 Cell_Array(match),
                 VAL_INDEX(match),
@@ -248,9 +224,12 @@ bool Compose_To_Stack_Throws(
                 return true;
             }
 
-            if (IS_NULLED(out)) {
+            if (IS_NULLED(out))
+                fail (Error_Need_Non_Null_Raw());
+
+            if (IS_VOID(out)) {
                 //
-                // compose [("nulls *vanish*!" null)] => []
+                // compose [("voids *vanish*!" null)] => []
                 // compose [(elide "so do 'empty' composes")] => []
             }
             else if (splice and IS_BLOCK(out)) {

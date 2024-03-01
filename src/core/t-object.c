@@ -228,7 +228,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
         }
 
         if (IS_END(word + 1)) {
-            Init_Blank(var);
+            Init_Trash(var);
             break; // fix bug#708
         }
         else {
@@ -443,7 +443,7 @@ REB_R PD_Context(
 //  {Get a reference to the "meta" context associated with a value.}
 //
 //      return: [<opt> any-context!]
-//      value [<blank> action! any-context!]
+//      value [<maybe> action! any-context!]
 //  ]
 //
 DECLARE_NATIVE(meta_of)

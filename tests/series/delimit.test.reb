@@ -7,6 +7,6 @@
 
 ("1^/^/2" = delimit #"^/" ["1^/" "2"])
 
-;-- Empty text is distinct from BLANK/null
-("A" = delimit ":" [_ "A" null])
+;-- Empty text is distinct from BLANK/void
+(" A" = delimit ":" [_ "A" void])
 (":A:" = delimit ":" ["" "A" ""])

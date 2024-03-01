@@ -124,8 +124,8 @@ do*: function [
     ; of the returned result to avoid LOCKing it when the code array is locked
     ; because even with series not at their head, LOCK NEXT CODE will lock it.
     ;
-    hdr: ensure [object! blank!] take code
-    is-module: 'module = select hdr 'type
+    hdr: ensure [<opt> object!] degrade take code
+    is-module: 'module = select maybe hdr 'type
 
     if text? source and [not is-module] [
         ;
@@ -146,7 +146,7 @@ do*: function [
         ; Make the new script object
         original-script: system/script  ; and save old one
         system/script: construct system/standard/script [
-            title: select hdr 'title
+            title: select maybe hdr 'title
             header: hdr
             parent: :original-script
             path: dir

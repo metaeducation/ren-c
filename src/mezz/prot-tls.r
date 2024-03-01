@@ -949,7 +949,7 @@ parse-messages: function [
 
         #handshake [
             while-not [tail? data] [
-                msg-type: try select message-types data/1
+                msg-type: select message-types data/1
 
                 update-read-state ctx (
                     if ctx/encrypted? [#encrypted-handshake] else [msg-type]
@@ -1643,10 +1643,10 @@ sys/make-scheme [
                     select (ensure block! second find suite email!) 'size
                 ]
                 block-size: does [
-                    try select (ensure block! second find suite email!) 'block
+                    select (ensure block! second find suite email!) 'block
                 ]
                 iv-size: does [
-                    try select (ensure block! second find suite email!) 'iv
+                    select (ensure block! second find suite email!) 'iv
                 ]
 
                 client-crypt-key: _

@@ -1574,7 +1574,7 @@ void RL_rebPromise_callback(intptr_t promise_id)
 
     Value* result = Alloc_Value();
     if (THROWN_FLAG == Eval_Array_At_Core(
-        Init_Trash(result),
+        Init_Void(result),
         nullptr, // opt_first (null indicates nothing, not nulled cell)
         arr,
         0, // index

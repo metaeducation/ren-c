@@ -14,6 +14,9 @@ Rebol [
 ]
 
 do %line-numberq.r
+
+try: func [x [<opt> any-value!]] [either null? x [_] [:x]]
+
 do %../tools/parsing-tools.reb
 do %../tools/text-lines.reb
 

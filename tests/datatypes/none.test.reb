@@ -8,18 +8,16 @@
     (blank = _)
 ]
 
-; MAKE of a BLANK! is not legal, but MAKE TARGET-TYPE BLANK follows the rule
-; of "blanks in, nulls out".  (If it tried to do a custom error at the moment,
-; that would lose the efficiency of the optimized handling where revoked
-; blanks don't run the functions body at all.)
+; MAKE of a BLANK! is not legal, but MAKE TARGET-TYPE VOID follows rule of
+; void-in null-out
 ;
-(null = make blank! blank)
+(null = make blank! void)
 (error? trap [make blank! [a b c]])
-(null = make integer! blank)
-(null = make object! blank)
+(null = make integer! void)
+(null = make object! void)
 
-(null? to blank! _) ;-- TO's universal protocol for blank 2nd argument
-(null? to _ 1) ;-- TO's universal protocol for blank 1st argument
+(null? to blank! void)  ;-- TO's universal protocol for void 2nd argument
+(null? to void 1) ;-- TO's universal protocol for void 1st argument
 (error? trap [to blank! 1]) ;-- no other types allow "conversion" to blank
 
 ("_" = mold blank)

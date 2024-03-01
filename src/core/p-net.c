@@ -131,7 +131,7 @@ static REB_R Transport_Actor(
             // must be set before the OS_DO_DEVICE() call.
             //
             Value* local_id = Obj_Value(spec, STD_PORT_SPEC_NET_LOCAL_ID);
-            if (IS_BLANK(local_id))
+            if (IS_NULLED(local_id))
                 DEVREQ_NET(sock)->local_port = 0; // let the system pick
             else if (IS_INTEGER(local_id))
                 DEVREQ_NET(sock)->local_port = VAL_INT32(local_id);
@@ -251,7 +251,7 @@ static REB_R Transport_Actor(
             }
         }
         else if (sock->command == RDC_WRITE) {
-            Init_Blank(port_data); // Write is done.
+            Init_Nulled(port_data); // Write is done.
         }
         return Init_Bar(OUT); }
 

@@ -576,6 +576,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
     case REB_BAR:
     case REB_LIT_BAR:
     case REB_TRASH:
+    case REB_VOID:
         break;
 
     case REB_MAX_NULLED:

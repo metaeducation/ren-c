@@ -570,7 +570,7 @@ bool Form_Reduce_Throws(
     const Value* delimiter
 ){
     assert(
-        IS_NULLED(delimiter) or IS_BLANK(delimiter)
+        IS_NULLED(delimiter) or IS_VOID(delimiter)
         or IS_CHAR(delimiter) or IS_TEXT(delimiter)
     );
 
@@ -593,16 +593,23 @@ bool Form_Reduce_Throws(
         if (IS_END(out))
             break;  // e.g. `spaced [comment "hi"]`
 
-        if (IS_NULLED_OR_BLANK(out))
+        if (IS_NULLED(out))
+            fail (Error_Need_Non_Null_Raw());
+
+        if (IS_VOID(out))
             continue; // opt-out and maybe keep option open to return NULL
 
         nothing = false;
 
-        if (IS_CHAR(out)) { // not delimiting on CHAR! (e.g. space, newline)
+        if (IS_BLANK(out)) {  // acting like a space character seems useful
+            Append_Utf8_Codepoint(mo->series, ' ');
+            pending = false;
+        }
+        else if (IS_CHAR(out)) { // no delimit on CHAR! (e.g. space, newline)
             Append_Utf8_Codepoint(mo->series, VAL_CHAR(out));
             pending = false;
         }
-        else if (IS_NULLED_OR_BLANK(delimiter))
+        else if (IS_NULLED(delimiter) or IS_VOID(delimiter))
             Form_Value(mo, out);
         else {
             if (pending)

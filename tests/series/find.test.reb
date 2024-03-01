@@ -1,6 +1,6 @@
 ; functions/series/find.r
 [#473 (
-    null? find blank 1
+    null? find void 1
 )]
 (null? find [] 1)
 (

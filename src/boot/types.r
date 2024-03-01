@@ -230,6 +230,7 @@ blank       unit        blank   +       +       -
 bar         unit        -       +       +       -
 lit-bar     unit        -       +       +       -
 trash       unit        -       +       +       -
+void        unit        -       +       +       -
 
 ; Note that the "null?" state has no associated NULL! datatype.  Internally
 ; it uses REB_MAX, but like the REB_0 it stays off the type map.

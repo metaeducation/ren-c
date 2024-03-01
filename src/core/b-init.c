@@ -459,7 +459,7 @@ static void Init_Action_Spec_Tags(void)
     Root_Ellipsis_Tag = Make_Locked_Tag("...");
     Root_Opt_Tag = Make_Locked_Tag("opt");
     Root_End_Tag = Make_Locked_Tag("end");
-    Root_Blank_Tag = Make_Locked_Tag("blank");
+    Root_Maybe_Tag = Make_Locked_Tag("maybe");
     Root_Local_Tag = Make_Locked_Tag("local");
     Root_Skip_Tag = Make_Locked_Tag("skip");
 }
@@ -471,7 +471,7 @@ static void Shutdown_Action_Spec_Tags(void)
     rebRelease(Root_Ellipsis_Tag);
     rebRelease(Root_Opt_Tag);
     rebRelease(Root_End_Tag);
-    rebRelease(Root_Blank_Tag);
+    rebRelease(Root_Maybe_Tag);
     rebRelease(Root_Local_Tag);
     rebRelease(Root_Skip_Tag);
 }
@@ -496,8 +496,8 @@ static void Init_Action_Meta_Shim(void) {
     };
     REBCTX *meta = Alloc_Context_Core(REB_OBJECT, 6, NODE_FLAG_MANAGED);
     REBLEN i = 1;
-    for (; i != 7; ++i) // BLANK!, as `make object! [x: ()]` is illegal
-        Init_Blank(Append_Context(meta, nullptr, Canon(field_syms[i - 1])));
+    for (; i != 7; ++i)
+        Init_Nulled(Append_Context(meta, nullptr, Canon(field_syms[i - 1])));
 
     Init_Object(CTX_VAR(meta, 1), meta); // it's "selfish"
 

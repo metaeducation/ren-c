@@ -157,7 +157,7 @@
         return count: count + 1
     ]
     [[1 2] [3 4] [5]]  = map-each [a b] :make-one-thru-five [
-        compose [(:a) (:b)]
+        compose [(maybe a) (maybe b)]
     ]
 )
 

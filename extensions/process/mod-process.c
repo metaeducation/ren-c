@@ -1995,7 +1995,7 @@ DECLARE_NATIVE(get_env)
 //
 //      return: "Returns same value passed in"
 //          [<opt> text!]
-//      variable [<blank> text! word!]
+//      variable [<maybe> text! word!]
 //          "Variable to set (case-insensitive in Windows)"
 //      value [<opt> text!]
 //          "Value to set the variable to, or NULL to unset it"

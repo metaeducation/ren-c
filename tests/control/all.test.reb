@@ -1,6 +1,6 @@
 ; functions/control/all.r
 ; zero values
-(null? all [])
+(void? all [])
 ; one value
 (:abs = all [:abs])
 (

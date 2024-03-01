@@ -62,7 +62,7 @@ make object! compose [
             ]
             error? :result [
                 any [
-                    to text! result/id
+                    to text! maybe result/id
                     mold result/message   ; errors with no ID may have BLOCK!
                     "(unknown)"
                 ]

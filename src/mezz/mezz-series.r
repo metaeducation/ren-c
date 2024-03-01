@@ -81,7 +81,7 @@ array: func [
             loop size [block: insert/only block value] ; Called every time
         ]
     ] else [
-        insert/dup/only try get 'value size
+        insert/dup/only (maybe get 'value) size
     ]
     head of block
 ]
@@ -93,9 +93,9 @@ replace: function [
     target "Series to replace within (modified)"
         [any-series!]
     pattern "Value to be replaced (converted if necessary)"
-        [<opt> any-value!]
+        [void! any-value!]
     replacement "Value to replace with (called each time if a function)"
-        [<opt> any-value!]
+        [void! any-value!]
 
     ; !!! Note these refinments alias ALL, CASE, TAIL natives!
     /all "Replace all occurrences"
@@ -104,7 +104,7 @@ replace: function [
 
     ; Consider adding an /any refinement to use find/any, once that works.
 ][
-    if null? :pattern [return target]
+    if void? :pattern [return target]
 
     all_REPLACE: all
     all: :lib/all
@@ -146,7 +146,7 @@ replace: function [
         any-array? :pattern [length of :pattern]
     ]
 
-    while [pos: find/(try if case_REPLACE [/case]) target :pattern] [
+    while [pos: find/(if case_REPLACE [/case]) target :pattern] [
         either action? :replacement [
             ;
             ; If arity-0 action, value gets replacement and pos discarded
@@ -205,8 +205,8 @@ reword: function [
 
     out: make (type of source) length of source
 
-    prefix: _
-    suffix: _
+    prefix: void
+    suffix: void
     switch type of :delimiters [
         null [prefix: "$"]
         block! [
@@ -231,6 +231,13 @@ reword: function [
     if match [integer! word!] prefix [prefix: to-text prefix]
     if match [integer! word!] suffix [suffix: to-text suffix]
 
+    if blank? prefix [
+        prefix: void
+    ]
+    if blank? suffix [
+        suffix: void
+    ]
+
     ; MAKE MAP! will create a map with no duplicates from the input if it
     ; is a BLOCK! (though differing cases of the same key will be preserved).
     ; This might be better with stricter checking, in case later keys
@@ -248,7 +255,7 @@ reword: function [
     ; to figure this out based on copying data out of the source series would
     ; need to do a lot of reverse-engineering of the types.
     ;
-    keyword-match: _
+    keyword-match: null
 
     ; Note that the enclosing rule has to account for `prefix` and `suffix`,
     ; this just matches the keywords themselves, setting `match` if one did.
@@ -326,7 +333,7 @@ reword: function [
                         ;
                         append/part out a b
 
-                        v: select/(try if case_REWORD [/case]) values keyword-match
+                        v: select/(if case_REWORD [/case]) values keyword-match
                         append out case [
                             action? :v [v :keyword-match]
                             block? :v [do :v]
@@ -355,7 +362,7 @@ reword: function [
         (append out a)
     ]
 
-    parse/(try if case_REWORD [/case]) source rule else [
+    parse/(if case_REWORD [/case]) source rule else [
         fail "Unexpected error in REWORD's parse rule, should not happen."
     ]
 
@@ -448,7 +455,7 @@ alter: func [
         append series :value
         return true
     ]
-    if remove (find/(try if case_ALTER [/case]) series :value) [
+    if remove (find/(if case_ALTER [/case]) series :value) [
         append series :value
         return true
     ]
@@ -477,7 +484,7 @@ collect-with: func [
         enclose 'append function [f [frame!] <with> out] [
             ;-- ENCLOSE (vs. ADAPT) in order to alter return result
 
-            if not :f/value [return null] ;-- doesn't "count" as collected
+            if void? :f/value [return null] ;-- doesn't "count" as collected
 
             f/series: out: default [make block! 16] ;-- won't return null now
             :f/value ;-- ELIDE leaves as result (F/VALUE invalid after DO F)
@@ -518,7 +525,7 @@ collect-lines: adapt 'collect [  ; https://forum.rebol.info/t/945/1
     body: compose [
         keep: adapt specialize 'keep [
             line: true | only: false | part: false
-        ] [value: spaced try :value]
+        ] [value: maybe spaced maybe :value]
         ((as group! body))
     ]
 ]
@@ -529,13 +536,13 @@ collect-text: chain [  ; https://forum.rebol.info/t/945/2
              keep: adapt specialize 'keep [
                  line: false | only: false | part: false
              ][
-                 value: unspaced try :value
+                 value: maybe unspaced maybe :value
              ]
              ((as group! body))
          ]
      ]
         |
-    :try
+    :maybe
         |
     :spaced
         |
@@ -683,7 +690,7 @@ split: function [
         ; implied empty field after it, which we add here.
         ;
         switch type of dlm [
-            bitset! [did find dlm try last series]
+            bitset! [did find dlm maybe last series]
             char! [dlm = last series]
             text! [
                 (did find series dlm) and [empty? find/last/tail series dlm]

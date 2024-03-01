@@ -182,8 +182,8 @@ bool Update_Typeset_Bits_Core(
             else if (0 == Compare_String_Vals(item, Root_End_Tag, true)) {
                 TYPE_SET(typeset, REB_TS_ENDABLE);
             }
-            else if (0 == Compare_String_Vals(item, Root_Blank_Tag, true)) {
-                TYPE_SET(typeset, REB_TS_NOOP_IF_BLANK);
+            else if (0 == Compare_String_Vals(item, Root_Maybe_Tag, true)) {
+                TYPE_SET(typeset, REB_TS_NOOP_IF_VOID);
             }
             else if (0 == Compare_String_Vals(item, Root_Opt_Tag, true)) {
                 //
@@ -260,12 +260,7 @@ Array* Typeset_To_Array(const Value* tset)
         if (TYPE_CHECK(tset, cast(enum Reb_Kind, n))) {
             DS_PUSH_TRASH;
             if (n == REB_MAX_NULLED) {
-                //
-                // !!! A BLANK! value is currently supported in typesets to
-                // indicate that they take optional values.  This may wind up
-                // as a feature of MAKE ACTION! only.
-                //
-                Init_Blank(DS_TOP);
+                Move_Value(DS_TOP, Root_Opt_Tag);
             }
             else
                 Init_Datatype(DS_TOP, cast(enum Reb_Kind, n));

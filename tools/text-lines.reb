@@ -97,7 +97,7 @@ lines-exceeding: function [ ;-- !!! Doesn't appear used, except in tests (?)
     line-length [integer!]
     text [text!]
 ][
-    line-list: line: _
+    line-list: line: null
 
     count-line: [
         (
@@ -114,7 +114,7 @@ lines-exceeding: function [ ;-- !!! Doesn't appear used, except in tests (?)
         to end  ; !!! Said plain END here, but didn't check...parse mismatches!
     ]
 
-    opt line-list
+    line-list
 ]
 
 text-line-of: function [

@@ -22,22 +22,22 @@
     using-args: true
 
     while [block: sync-invisibles block] [
-        block: if only [
+        block: degrade if only [
             arg: block/1
-            try next block
+            reify next block
         ] else [
-            try evaluate/set block the arg:
+            reify evaluate/set block the arg:
         ]
 
-        if refinement? params/1 [
+        if refinement? first maybe params [
             using-args: did set (in frame params/1) get/any 'arg
         ] else [
             if using-args [
-                set (in frame params/1) get/any 'arg
+                set (in frame first maybe params) get/any 'arg
             ]
         ]
 
-        params: try next params
+        params: next params
     ]
 
     comment [

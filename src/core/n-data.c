@@ -471,7 +471,7 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
         //
         Init_Bar(out);
     }
-    else if (IS_BLANK(v)) {
+    else if (IS_VOID(v)) {
         Init_Nulled(out);  // may be turned to trash after loop, or error
     }
     else if (ANY_WORD(v)) {
@@ -498,8 +498,8 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
 //  {Gets the value of a word or path, or block of words/paths.}
 //
 //      return: [<opt> any-value!]
-//      source [blank! any-word! any-path! block!]
-//          {Word or path to get, or block of words or paths (blank is no-op)}
+//      source [<maybe> any-word! any-path! block!]
+//          {Word or path to get, or block of words or paths}
 //      /any "Retrieve ANY-VALUE! (e.g. do not error on trash)"
 //  ]
 //
@@ -527,7 +527,7 @@ DECLARE_NATIVE(get)
             VAL_SPECIFIER(source),
             REF(any)
         );
-        Trashify_If_Nulled(dest);  // !!! can't put nulls in blocks (blankify?)
+        Trashify_Branched(dest);  // !!! can't put nulls in blocks (blankify?)
     }
 
     TERM_ARRAY_LEN(results, VAL_LEN_AT(source));
@@ -542,7 +542,7 @@ DECLARE_NATIVE(get)
 //
 //      return: [<opt> any-value!]
 //      source "Word or path to get"
-//          [<blank> <dequote> any-word! any-path!]
+//          [<maybe> <dequote> any-word! any-path!]
 //  ]
 //
 DECLARE_NATIVE(get_p)
@@ -705,24 +705,35 @@ DECLARE_NATIVE(set)
 
 
 //
-//  try: native [
+//  void: native [
 //
-//  {Turn nulls/voids into blanks, all else passes through (see also: OPT)}
+//  {Absence of a value, used to opt out of many routines (appending, etc.)}
+//
+//      return: [void!]
+//  ]
+//
+DECLARE_NATIVE(void) {
+    INCLUDE_PARAMS_OF_VOID;
+
+    return Init_Void(OUT);
+}
+
+
+//
+//  maybe: native [
+//
+//  {Convert nulls to voids, pass through most other values}
 //
 //      return: [any-value!]
-//          {blank if input was null, or original value otherwise}
 //      optional [<opt> any-value!]
 //  ]
 //
-DECLARE_NATIVE(try)
+DECLARE_NATIVE(maybe)
 {
-    INCLUDE_PARAMS_OF_TRY;
-
-    if (IS_TRASH(ARG(optional)))
-        fail ("TRY cannot accept trash values");
+    INCLUDE_PARAMS_OF_MAYBE;
 
     if (IS_NULLED(ARG(optional)))
-        return Init_Blank(OUT);
+        return Init_Void(OUT);
 
     RETURN (ARG(optional));
 }
@@ -735,7 +746,7 @@ DECLARE_NATIVE(try)
 //
 //      return: "null on blank, void if input was null, else original value"
 //          [<opt> any-value!]
-//      optional [<opt> <blank> any-value!]
+//      optional [<opt> <maybe> any-value!]
 //  ]
 //
 DECLARE_NATIVE(opt)
@@ -995,7 +1006,7 @@ DECLARE_NATIVE(free_q)
 //
 //      return: [<opt> any-series! any-word!]
 //      type [datatype!]
-//      value [<blank> any-series! any-word!]
+//      value [<maybe> any-series! any-word!]
 //  ]
 //
 DECLARE_NATIVE(as)

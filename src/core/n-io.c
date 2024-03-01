@@ -100,7 +100,7 @@ DECLARE_NATIVE(mold)
 //  "Write text to standard output, or raw BINARY! (for control codes / CGI)"
 //
 //      return: [<opt> trash!]
-//      value [<blank> text! char! binary!]
+//      value [<maybe> text! char! binary!]
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
 //
@@ -459,13 +459,8 @@ DECLARE_NATIVE(wait)
         val = ARG(value);
     else {
         REBDSP dsp_orig = DSP;
-        if (Reduce_To_Stack_Throws(
-            OUT,
-            ARG(value),
-            REDUCE_MASK_NONE
-        )){
+        if (Reduce_To_Stack_Throws(OUT, ARG(value)))
             return R_THROWN;
-        }
 
         // !!! This takes the stack array and creates an unmanaged array from
         // it, which ends up being put into a value and becomes managed.  So
@@ -611,7 +606,7 @@ DECLARE_NATIVE(wake_up)
 //
 //      return: [<opt> file!]
 //          {The returned value should be a valid natural FILE! literal}
-//      path [<blank> text! file!]
+//      path [<maybe> text! file!]
 //          {Path to convert (by default, only TEXT! for type safety)}
 //      /pass
 //          {Convert TEXT!, but pass thru FILE!, assuming it's canonized}
@@ -652,7 +647,7 @@ DECLARE_NATIVE(local_to_file)
 //
 //      return: [<opt> text!]
 //          {A TEXT! like "\foo\bar" is not a "natural" FILE! %\foo\bar}
-//      path [<blank> file! text!]
+//      path [<maybe> file! text!]
 //          {Path to convert (by default, only FILE! for type safety)}
 //      /pass
 //          {Convert FILE!s, but pass thru TEXT!, assuming it's local}
@@ -706,7 +701,7 @@ DECLARE_NATIVE(what_dir)
 {
     Value* current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
-    if (IS_FILE(current_path) || IS_BLANK(current_path)) {
+    if (IS_FILE(current_path) || IS_NULLED(current_path)) {
         //
         // !!! Because of the need to track a notion of "current path" which
         // could be a URL! as well as a FILE!, the state is stored in the

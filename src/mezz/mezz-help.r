@@ -18,47 +18,48 @@ spec-of: function [
     return: [block!]
     action [action!]
 ][
-    meta: try match object! meta-of :action
+    meta: match object! meta-of :action
 
-    specializee: try match action! select meta 'specializee
-    adaptee: try match action! select meta 'adaptee
-    original-meta: try match object! any [
-        meta-of :specializee
-        meta-of :adaptee
+    specializee: match action! select maybe meta 'specializee
+    adaptee: match action! select maybe meta 'adaptee
+    original-meta: match object! any [
+        meta-of maybe :specializee
+        meta-of maybe :adaptee
     ]
 
     return collect [
-        keep/line ensure [<opt> text!] any [
-            select meta 'description
-            select original-meta 'description
+        keep/line maybe ensure [<opt> text!] any [
+            select maybe meta 'description
+            select maybe original-meta 'description
         ]
 
         return-type: ensure [<opt> block!] any [
-            select meta 'return-type
-            select original-meta 'return-type
+            select maybe meta 'return-type
+            select maybe original-meta 'return-type
         ]
         return-note: ensure [<opt> text!] any [
-            select meta 'return-note
-            select original-meta 'return-note
+            select maybe meta 'return-note
+            select maybe original-meta 'return-note
         ]
         if any [return-type return-note] [
             keep compose [
-                return: ((opt return-type)) (opt return-note)
+                return: ((maybe return-type)) (maybe return-note)
             ]
         ]
 
         types: ensure [<opt> frame!] any [
-            select meta 'parameter-types
-            select original-meta 'parameter-types
+            select maybe meta 'parameter-types
+            select maybe original-meta 'parameter-types
         ]
         notes: ensure [<opt> frame!] any [
-            select meta 'parameter-notes
-            select original-meta 'parameter-notes
+            select maybe meta 'parameter-notes
+            select maybe original-meta 'parameter-notes
         ]
 
         for-each param words of :action [
             keep compose [
-                (param) ((select types param)) (select notes param)
+                (param) ((maybe select maybe types param))
+                    (maybe select maybe notes param)
             ]
         ]
     ]
@@ -70,11 +71,11 @@ title-of: function [
 
     value [any-value!]
 ][
-    opt switch type of :value [
+    degrade switch type of :value [
         action! [
-            try all [
-                meta: try match object! meta-of :value
-                copy try match text! select meta 'description
+            reify all [
+                meta: match object! meta-of :value
+                copy maybe match text! select maybe meta 'description
             ]
         ]
 
@@ -90,7 +91,7 @@ browse: function [
     "stub function for browse* in extensions/process/ext-process-init.reb"
 
     return: <void>
-    location [<blank> url! file!]
+    location [<maybe> url! file!]
 ][
     print "Browse needs redefining"
 ]
@@ -338,25 +339,25 @@ help: function [
 
     ; Dig deeply, but try to inherit the most specific meta fields available
     ;
-    fields: dig-action-meta-fields :value
+    fields: maybe dig-action-meta-fields :value
 
     ; For reporting what *kind* of action this is, don't dig at all--just
     ; look at the meta information of the action being asked about.  Note that
     ; not all actions have META-OF (e.g. those from MAKE ACTION!, or FUNC
     ; when there was no type annotations or description information.)
     ;
-    meta: try meta-of :value
+    meta: meta-of :value
 
     original-name: (ensure [<opt> word!] any [
-        select meta 'specializee-name
-        select meta 'adaptee-name
+        select maybe meta 'specializee-name
+        select maybe meta 'adaptee-name
     ]) also lambda name [
         uppercase mold name
     ]
 
-    specializee: ensure [<opt> action!] select meta 'specializee
-    adaptee: ensure [<opt> action!] select meta 'adaptee
-    chainees: ensure [<opt> block!] select meta 'chainees
+    specializee: ensure [<opt> action!] select maybe meta 'specializee
+    adaptee: ensure [<opt> action!] select maybe meta 'adaptee
+    chainees: ensure [<opt> block!] select maybe meta 'chainees
 
     classification: case [
         :specializee [
@@ -391,10 +392,10 @@ help: function [
     print-args: function [list /indent-words] [
         for-each param list [
             type: ensure [<opt> block!] (
-                select fields/parameter-types to-word param
+                select maybe fields/parameter-types to-word param
             )
             note: ensure [<opt> text!] (
-                select fields/parameter-notes to-word param
+                select maybe fields/parameter-notes to-word param
             )
 
             ;-- parameter name and type line
@@ -515,7 +516,12 @@ what: function [
     list: make block! 400
     size: 0
 
-    ctx: all [set? 'name try select system/modules :name ] or [lib]
+    ctx: all [
+        set? 'name
+        select system/modules :name
+    ] else [
+        lib
+    ]
 
     for-each [word val] ctx [
         if action? :val [

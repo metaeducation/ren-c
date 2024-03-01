@@ -12,7 +12,7 @@
 [#1760 ; unwind functions should stop evaluation
     (null? loop 1 [reduce [break]])
 ]
-(trash? loop 1 [reduce [continue]])
+(void? loop 1 [reduce [continue]])
 (1 = catch [reduce [throw 1]])
 ([a 1] = catch/name [reduce [throw/name 1 'a]] 'a)
 (1 = reeval func [] [reduce [return 1 2] 2])
@@ -26,11 +26,13 @@
 )
 
 [
-    (did blk: [1 + 2 if false [10 + 20] 100 + 200])
+    (did blk: [1 + 2 null 100 + 200])
+    ('need-non-null = (trap [reduce blk])/id)
+]
 
-    ('reduce-made-null = (trap [reduce blk])/id)
-    ([3 _ 300] = reduce/try blk)
-    ([3 300] = reduce/opt blk)
+[
+    (did blk: [1 + 2 if false [10 + 20] 100 + 200])
+    ([3 300] = reduce blk)
 ]
 
 ; Quick flatten test, here for now

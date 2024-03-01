@@ -56,7 +56,7 @@ REBREQ *Ensure_Port_State(Value* port, REBLEN device)
     REBLEN req_size = dev->req_size;
 
     if (!IS_BINARY(state)) {
-        assert(IS_BLANK(state));
+        assert(IS_NULLED(state));
         REBSER *data = Make_Binary(req_size);
         CLEAR(Binary_Head(data), req_size);
         TERM_BIN_LEN(data, req_size);

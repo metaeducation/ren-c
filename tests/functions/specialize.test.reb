@@ -7,9 +7,11 @@
 ;     :append/dup/part
 
 (
-    foo: func [/A aa /B bb /C cc] [
+    foo: func [/A aa /B bb /C cc] [  ; would be nice if refinements were null
         return compose [
-            (opt A) (:aa) (opt B) (:bb) (opt C) (:cc)
+            (maybe any [A]) (maybe aa)  ; ANY makes blanks into nulls
+            (maybe any [B]) (maybe bb)
+            (maybe any [C]) (maybe cc)
         ]
     ]
 

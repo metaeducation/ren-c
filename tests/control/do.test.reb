@@ -14,7 +14,7 @@
     same? a-value reeval a-value
 )
 ; do block start
-(trash? do [])
+(void? do [])
 (:abs = do [:abs])
 (
     a-value: #{}
@@ -103,7 +103,7 @@
 )
 (0:00 == do [0:00])
 (0.0.0 == do [0.0.0])
-(trash? do [()])
+(void? do [()])
 ('a == do ['a])
 ; do block end
 (
@@ -152,7 +152,7 @@
 (false = reeval false)
 ($1 == reeval $1)
 (null? reeval (specialize 'of [property: 'type]) null)
-(null? do _)
+(null? do void)
 (
     a-value: make object! []
     same? :a-value reeval :a-value
@@ -181,7 +181,7 @@
     a-value: "1"
     1 == do :a-value
 )
-(trash? do "")
+(void? do "")
 (1 = do "1")
 (3 = do "1 2 3")
 (

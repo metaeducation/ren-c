@@ -222,7 +222,7 @@ find: generic [
     {Searches for the position where a matching value is found}
     return: {position found, else blank (void if series is itself blank)}
         [<opt> any-series! blank! bar!]
-    series [<blank> any-series! any-context! map! bitset! typeset!]
+    series [<maybe> any-series! any-context! map! bitset! typeset!]
     value [any-value!]
     /part {Limits the search to a given length or position}
     limit [any-number! any-series! pair!]
@@ -239,7 +239,7 @@ find: generic [
 select: generic [
     {Searches for a value; returns the value that follows, else void.}
     return: [<opt> any-value!]
-    series [<blank> any-series! any-context! map!]
+    series [<maybe> any-series! any-context! map!]
     value [any-value!]
     /part {Limits the search to a given length or position}
     limit [any-number! any-series! pair!]
@@ -303,7 +303,7 @@ insert: generic [
     return: {Just past the insert (<opt> needed for COLLECT/KEEP, see notes)}
         [<opt> any-value!]
     series [any-series! port! map! object! bitset! port!] {At position (modified)}
-    value [<opt> any-value!] {The value to insert}
+    value [void! any-value!] {The value to insert}
     /part {Limits to a given length or position}
     limit [any-number! any-series! pair!]
     /only {Only insert a block as a single value (not the contents of the block)}
@@ -319,7 +319,7 @@ append: generic [
     {Inserts element(s) at tail; for series, returns head.}
     series [any-series! port! map! object! module! bitset!]
         {Any position (modified)}
-    value [<opt> any-value!] {The value to insert}
+    value [void! any-value!] {The value to insert}
     /part {Limits to a given length or position}
     limit [any-number! any-series! pair!]
     /only {Only insert a block as a single value (not the contents of the block)}
@@ -334,7 +334,7 @@ append: generic [
 change: generic [
     {Replaces element(s); returns just past the change.}
     series [any-series! port!]{At position (modified)}
-    value [<opt> any-value!] {The new value}
+    value [void! any-value!] {The new value}
     /part {Limits the amount to change to a given length or position}
     limit [any-number! any-series! pair!]
     /only {Only change a block as a single value (not the contents of the block)}

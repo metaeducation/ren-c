@@ -14,7 +14,7 @@ REBOL [
 launch: func [
     {Runs a script as a separate process; return immediately.}
 
-    script [<blank> file! text!] "The name of the script"
+    script [<maybe> file! text!] "The name of the script"
     /args arg [text! block!] "Arguments to the script"
     /wait "Wait for the process to terminate"
 ][

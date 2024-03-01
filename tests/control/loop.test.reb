@@ -83,7 +83,7 @@
 ; leave the gathered material in the mold buffer
 ;
 (
-    trash? loop 2 [unspaced ["abc" continue]]
+    void? loop 2 [unspaced ["abc" continue]]
 )
 
 ; Test ACTION! as branch
@@ -91,7 +91,7 @@
 [
     (did branch: does [if nbreak = n [break] n: n + 1])
 
-    (nbreak: '... n: 0 | blank? loop 0 :branch)
+    (nbreak: '... n: 0 | void? loop 0 :branch)
     (nbreak: '... n: 0 | 3 = loop 3 :branch)
     (nbreak: 2 n: 0 | null? loop 3 :branch)
 ]

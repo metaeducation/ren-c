@@ -53,7 +53,7 @@ make-port*: function [
     ; Get the scheme definition:
     all [
         match [word! lit-word!] name
-        scheme: get try in system/schemes as word! name
+        scheme: get maybe in system/schemes as word! name
     ] else [
         cause-error 'access 'no-scheme name
     ]
@@ -65,9 +65,9 @@ make-port*: function [
     port/scheme: scheme
 
     ; Defaults:
-    port/actor: try get in scheme 'actor ; avoid evaluation
-    port/awake: try any [
-        get try in port/spec 'awake
+    port/actor: get in scheme 'actor ; avoid evaluation
+    port/awake: any [
+        get maybe in port/spec 'awake
         get 'scheme/awake
     ]
     port/spec/ref: default [spec]
