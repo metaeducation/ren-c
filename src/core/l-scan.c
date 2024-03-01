@@ -1130,9 +1130,6 @@ static Token Maybe_Locate_Token_May_Push_Mold(
     ){
         bool seen_angles = false;
 
-        if (*cp == '<' and cp[1] == '{')
-            goto scan_newstyle_string;
-
         const Byte* temp = cp;
         while (
             (*temp == '<' and (seen_angles = true))
@@ -1404,17 +1401,6 @@ static Token Maybe_Locate_Token_May_Push_Mold(
             return TOKEN_0;
 
           case LEX_SPECIAL_LESSER:
-            if (cp[1] == '{') {  // <{ }> is a TEXT! representation
-              scan_newstyle_string:
-                cp = Scan_Quote_Push_Mold(mo, cp + 1, ss);
-                if (not cp or cp[0] != '>') {
-                    *error = Error_Syntax(ss, TOKEN_STRING);
-                    return TOKEN_0;
-                }
-                ss->end = cp + 1;
-                return TOKEN_STRING;
-            }
-
             cp = Skip_Tag(cp);
             if (
                 not cp  // couldn't find ending `>`

@@ -738,11 +738,11 @@ void Mold_Text_Series_At(REB_MOLD *mo, const String* s, REBLEN index) {
         return;
     }
 
-    // It is a braced string, emit it as <{string}>:
+    // It is a braced string, emit it as {string}:
     if (malign == 0)
         brace_in = brace_out = 0;
 
-    Append_Ascii(buf, "<{");
+    Append_Codepoint(buf, '{');
 
     REBLEN n;
     for (n = index; n < String_Len(s); n++) {
@@ -767,7 +767,7 @@ void Mold_Text_Series_At(REB_MOLD *mo, const String* s, REBLEN index) {
         }
     }
 
-    Append_Ascii(buf, "}>");
+    Append_Codepoint(buf, '}');
 
     USED(escape);
     USED(paren);
