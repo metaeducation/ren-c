@@ -6,14 +6,26 @@
 
 (did parse [] [end])
 (did parse [] [[[]] end])
-(did parse [] [_ _ _ end])
+(did parse [_ _ _] [_ _ _ end])
 (not parse [x] [end])
 (not parse [x] [_ _ _ end])
 (not parse [x] [[[]] end])
-(did parse [] [[[_ _ _] end]])
-(did parse [x] ['x _ end])
-(did parse [x] [_ 'x end])
+(did parse [_ _ _] [[[_ _ _] end]])
+(did parse [x _] ['x _ end])
+(did parse [_ x] [_ 'x end])
 (did parse [x] [[] 'x [] end])
+
+(did parse "" [end])
+(did parse "" [[[]] end])
+(did parse "   " [_ _ _ end])
+(not parse "x" [end])
+(not parse "x" [_ _ _ end])
+(not parse "x" [[[]] end])
+(did parse "   " [[[_ _ _] end]])
+(did parse "x " ["x" _ end])
+(did parse " x" [_ "x" end])
+(did parse "x" [[] "x" [] end])
+
 
 ; SET-WORD! (store current input position)
 

@@ -511,7 +511,9 @@ static REBIXO Parse_String_One_Rule(REBFRM *f, const Cell* rule) {
 
     switch (VAL_TYPE(rule)) {
     case REB_BLANK:
-        return P_POS; // just ignore blanks
+        if (GET_ANY_CHAR(P_INPUT, P_POS) == ' ')  // treat as space
+            return P_POS + 1;
+        return END_FLAG;
 
     case REB_CHAR:
         //
@@ -669,7 +671,9 @@ static REBIXO Parse_Array_One_Rule_Core(
 
     switch (VAL_TYPE(rule)) {
     case REB_BLANK:
-        return pos; // blank rules "match" but don't affect the parse position
+        if (VAL_TYPE(item) == REB_BLANK)
+            return pos + 1;
+        return END_FLAG;
 
     case REB_DATATYPE:
         if (VAL_TYPE(item) == VAL_TYPE_KIND(rule)) // specific datatype match
