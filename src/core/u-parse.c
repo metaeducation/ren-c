@@ -411,6 +411,10 @@ static const Cell* Get_Parse_Value(
             return rule;
 
         Move_Opt_Var_May_Fail(cell, rule, specifier);
+
+        if (IS_TRASH(cell))
+            fail (Error_No_Value_Core(rule, specifier));
+
         if (IS_NULLED(cell))
             fail (Error_No_Value_Core(rule, specifier));
 
@@ -426,6 +430,9 @@ static const Cell* Get_Parse_Value(
 
         if (Get_Path_Throws_Core(cell, rule, specifier))
             fail (Error_No_Catch_For_Throw(cell));
+
+        if (IS_TRASH(cell))
+            fail (Error_No_Value_Core(rule, specifier));
 
         if (IS_NULLED(cell))
             fail (Error_No_Value_Core(rule, specifier));
