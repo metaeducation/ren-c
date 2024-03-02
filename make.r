@@ -19,6 +19,10 @@ REBOL [
     }
 ]
 
+if trap [:import/into] [  ; See %import-shim.r
+    do <tools/import-shim.r>
+]
+
 import <tools/bootstrap-shim.r>
 
 import <tools/common.r>  ; Note: sets up `repo-dir`
@@ -1404,10 +1408,10 @@ append app-config/ldflags maybe spread :user-config/ldflags
 
 libr3-core: make rebmake/object-library-class [
     name: 'libr3-core
-    definitions: join ["REB_API"] spread app-config/definitions
+    definitions: append copy ["REB_API"] spread app-config/definitions
 
     ; might be modified by the generator, thus copying
-    includes: join app-config/includes %prep/core
+    includes: append copy app-config/includes %prep/core
 
     ; might be modified by the generator, thus copying
     cflags: copy app-config/cflags
@@ -1425,8 +1429,8 @@ libr3-core: make rebmake/object-library-class [
 main: make libr3-core [
     name: 'main
 
-    definitions: join ["REB_CORE"] spread app-config/definitions
-    includes: join app-config/includes %prep/main  ; generator may modify
+    definitions: append copy ["REB_CORE"] spread app-config/definitions
+    includes: append copy app-config/includes %prep/main  ; generator may modify
     cflags: copy app-config/cflags  ; generator may modify
 
     depends: reduce [

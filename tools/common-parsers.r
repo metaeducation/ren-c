@@ -38,10 +38,7 @@ load-until-blank: func [
 
     let res: null  ; !!! collect as SET-WORD!s for locals, evolving...
     let rebol-value: parsing-at x [
-        ;
-        ; !!! SET-BLOCK! not bootstrap
-        ;
-        attempt [transcode/next x inside [] 'res] else [res: null]
+        attempt [transcode/next x inside [] 'res]
         res
     ]
 
@@ -184,35 +181,28 @@ export proto-parser: context [
             ]
         ]
 
+        ; Recognize a comment header on a function, e.g. `Some_Function: C`
+        ; or `rebSomething: API`.  It does this by trying to LOAD the lines,
+        ; and if it succeeds looks for SET-WORD! or EXPORT of SET-WORD!
+        ;
+        ; !!! Could this be simpler, e.g. go by noticing DECLARE_NATIVE() etc?
+        ;
         is-intro: parsing-at position [
-            all [  ; note: not LOGIC!, a series
+            all [
                 lines: attempt [decode-lines lines {//} { }]
                 data: load-until-blank lines
-                if data [ data: attempt [
-                    ;
-                    ; !!! The recognition of Rebol-styled comment headers
-                    ; originally looked for SET-WORD!, but the syntax for
-                    ; doing export uses a WORD! (EXPORT) before the SET-WORD!
-                    ;
-                    ; http://www.rebol.net/r3blogs/0300.html
-                    ;
-                    ; It's hacky to just throw it in here, but the general
-                    ; consensus is that the build process needs to be made
-                    ; much simpler.  It really should be going by seeing it
-                    ; is a DECLARE_NATIVE() vs. worrying too much about the text
-                    ; pattern in the comment being detected.
-                    ;
-                    if any [
-                        set-word? first data/1
-                        'export = first data/1
-                    ][
-                        notes: data/2
-                        data/1
-                    ] else [
-                        false
-                    ]
-                ] ]
-                position ; Success.
+
+                any [
+                    set-word? first data/1
+                    'export = first data/1
+                ] then [
+                    notes: data/2
+                    data: data/1
+                ] else [
+                    data: notes: ~
+                    false
+                ]
+                position  ; return the start position (e.g. stay at head)
             ]
         ]
 

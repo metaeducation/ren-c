@@ -26,6 +26,10 @@ REBOL [
     }
 ]
 
+if trap [:import/into] [  ; See %import-shim.r
+    do <import-shim.r>
+]
+
 verbose: false
 
 import <bootstrap-shim.r>

@@ -20,6 +20,10 @@ REBOL [
     }
 ]
 
+if trap [:import/into] [  ; See %import-shim.r
+    do <import-shim.r>
+]
+
 import <bootstrap-shim.r>
 
 seek: []  ; Temporary measure, SEEK as no-op in bootstrap

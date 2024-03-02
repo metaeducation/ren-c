@@ -37,6 +37,10 @@ REBOL [
     }
 ]
 
+if trap [:import/into] [  ; See %import-shim.r
+    do <import-shim.r>
+]
+
 import <bootstrap-shim.r>
 
 default-compiler: null
@@ -1515,7 +1519,7 @@ makefile: make generator-class [
                     ]
                     append buf gen-rule make entry-class [
                         target: dep/output
-                        depends: join objs spread map-each ddep dep/depends [
+                        depends: append copy objs spread map-each ddep dep/depends [
                             if ddep/class <> #object-library [ddep]
                         ]
                         commands: append reduce [dep/command] maybe (

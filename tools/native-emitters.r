@@ -16,6 +16,10 @@ REBOL [
     Needs: 2.100.100
 ]
 
+if trap [:import/into] [  ; See %import-shim.r
+    do <import-shim.r>
+]
+
 import <bootstrap-shim.r>
 
 import <common.r>

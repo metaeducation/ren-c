@@ -178,36 +178,21 @@ change-dir system/options/path  ; EXE startup path (not SYSTEM/SCRIPT/PATH)
 ;    the top level seems to work around it.
 ;
 ;    (Using SET-WORD!s here also helps searchability if you're looking for
-;    where `find3: ...` is set.)
+;    where `func3: ...` is set.)
 
 aliases: lib3/reeval lib3/func [:item [any-value! <...>]] [  ; very weird [1]
-    collect [while [item/1 != #end] [keep/only take item]]
+    lib3/collect [while [item/1 != #end] [keep/only take item]]
     ]
-    null3?: null?: *
-    null3: null: *
-    void3?: void?: *
-    void3: void: *
-    find3: find: *
-    if3: if: *
-    the3: quote: *
-    reeval3: reeval: *
     func3: func: *
-    function3: func: *
+    function3: function: *
     append3: append: *
     change3: change: *
     insert3: insert: *
+    join3: join: *
     compose3: compose: *
-    select3: select: *
     split-path3: split-path: *
     local-to-file3: local-to-file: *
     file-to-local3: file-to-local: *
-    any3: any: *
-    all3: all: *
-    case3: case: *
-    switch3: switch: *
-    maybe3: maybe: *
-    match3: match: *
-    for-each3: for-each: *
 
     collect3: collect: (adapt :lib3/collect [  ; to make KEEP3 obvious
         body: lib3/compose [
@@ -223,7 +208,7 @@ lib3/for-each [alias name shim] aliases [
     set alias either group? shim [
         do shim
     ][
-        get (in lib3 name)
+        get (lib3/in lib3 name)
     ]
 
     ; Manually expanding contexts this way seems a bit buggy in bootstrap EXE
@@ -238,24 +223,12 @@ lib3/for-each [alias name shim] aliases [
 
 ;=== THESE REMAPPINGS ARE OKAY TO USE IN THE BOOTSTRAP SHIM ITSELF ===
 
-; modern antiform void (trash) can be assigned, e.g. (foo: ~), the result is
-; then ornery to access.  Bootstrap build's closest match was its null.
-;
-set '~ :null3
-trash: :null3
-
 ; Done is used as a signal in the boot files that the expected end is reached.
 ; This is a QUASI-WORD? in modern Ren-C, but a plain word in the bootstrap EXE.
 ; Must use SET because even though we don't run this in modern Ren-C, the file
 ; gets scanned...and `~done~:` would be invalid.
 ;
-set '~done~ :void3
-
-null?: :blank?
-null: blank
-
-void?: :null3?
-void: :null3
+set '~done~ does [~]
 
 repeat: :loop
 
@@ -271,7 +244,7 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
         ]
 
         product: do pos/1
-        all3 [
+        all [
             block? :product
             #splice! = first product
         ] then [
@@ -279,21 +252,12 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
             ;
             pos: change3/part pos second product 1
         ] else [
-            case3 [
-                ;
-                ; Permit NULL but only in bootstrap build (as it has no pure
-                ; void and null is the product of non-branch conditionals).
-                ; Trust current build to catch errors.
-                ;
-                null3? :product [
-                    change3/part pos null3 1
+            case [
+                void? :product [
+                    change3/part pos void 1
                 ]
-                void3? :product [  ; e.g. compose [(if true [null])]
-                    comment [change3/part pos null 1]  ; we *could* support it
-                    fail/where "#[void] compose found, disabled" 'return
-                ]
-                blank? :product [
-                    fail/where "COMPOSE blanks with SPREAD [_]" 'return
+                trash? :product [  ; e.g. compose [(if true [null])]
+                    fail/where "trash compose found" 'return
                 ]
             ] else [
                 change3/only pos :product
@@ -304,15 +268,6 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
     return result
 ]
 
-isotopify-blanks: func3 [x [<opt> any-value!]] [
-    lib3/if blank? :x [return void3]
-    :x
-]
-null3-to-blank: func3 [x [<opt> any-value!]] [
-    lib3/if null3? :x [return blank]
-    :x
-]
-
 ; Things like INTEGER! are now type constraints, not to be confused with
 ; "cell kinds" like &integer.  SWITCH/TYPE does not exist in the bootstrap
 ; so one must use the more limited `switch kind of` pattern.
@@ -321,30 +276,6 @@ of: enfix adapt :of [
     if property = 'type [fail "Use KIND OF not type of"]
     if property = 'kind [property: 'type]
 ]
-
-any: chain [:any3 :null3-to-blank]
-all: chain [:all3 :null3-to-blank]
-get: chain [:lib3/get :null3-to-blank]
-find: chain [
-    adapt :find3 [
-        if blank? value [
-            fail "Can't FIND a NULL (BLANK! in shim), use MAYBE"
-        ]
-    ]
-    :null3-to-blank
-]
-select: chain [
-    adapt :select3 [
-        if blank? value [
-            fail "Can't SELECT a NULL (BLANK! in shim), use MAYBE"
-        ]
-    ]
-    :null3-to-blank
-]
-
-if: chain [:lib3/if :isotopify-blanks]
-case: chain [:lib3/case :isotopify-blanks]
-switch: chain [:lib3/switch :isotopify-blanks]
 
 quasiform!: word!  ; conflated, but can work in a very limited sense
 quasi?: func3 [v <local> spelling] [
@@ -370,39 +301,14 @@ unquasi: func3 [v <local> spelling] [
 and: enfix :lib3/and [assert [not block? right] right: as block! :right]
 or: enfix :lib3/or [assert [not block? right] right: as block! :right]
 
-else: enfix chain [
-    adapt :lib3/else [if blank? :optional [optional: null3]]
-    ; we don't isotopify blanks to simulate antiform null via shim blank null
-]
-then: enfix chain [
-    adapt :lib3/then [if blank? :optional [optional: null3]]
-    :isotopify-blanks
-]
-also: enfix adapt :lib3/also [if blank? :optional [optional: null3]]
-
-
-; Modern DO is more limited in giving back "void intent" so it doesn't go
-; well in situations like `map-each code blocks-of-code [do code]`...because
-; situations that would have returned NULL and opted out don't opt out.
-; You are supposed to use EVAL for that.
-;
-reeval: chain [:reeval3 :null3-to-blank]
 eval: :do
-
-did: func3 [return: [logic!] optional [<opt> any-value!]] [
-    not any [
-        blank? :optional  ; acts like NULL
-        null3? :optional  ; acts like VOID
-    ]
-]
-
-didn't: chain [:did :not]
 
 to-logic: func3 [return: [logic!] optional [<opt> any-value!]] [
     case [
-        null3? :optional [fail "Can't turn void (null proxied) TO-LOGIC"]
-        blank? :optional [false]  ; blank acts like null
-        true [to logic! :optional]
+        void? :optional [fail "Can't turn void (null proxied) TO-LOGIC"]
+        null? :optional [false]
+        true = :optional [true]
+        true [true]
     ]
 ]
 
@@ -412,29 +318,9 @@ to-logic: func3 [return: [logic!] optional [<opt> any-value!]] [
 ; into NULL, and trust that the current build will catch cases of something
 ; like a PRINT being turned into a NULL.
 ;
-~null~: :null3  ; e.g. _
-~true~: #[true]
-~false~: #[false]
-degrade: func3 [v [<opt> any-value!]] [
-    assert [not null3? :v]
-    if void3? :v [fail "Attempt to degrade a void, may have been _, try ~null~"]
-    if null3? :v [fail "Attempt to degrade a blank where ~null~ may be meant"]
-    if :v = '~null~ [return null]
-    if :v = '~void~ [return void]
-    :v
-]
-reify: func3 [v [<opt> any-value!]] [
-    if void? :v [return '~void~]
-    if null? :v [return '~null~]
-    if :v = #[true] [return '~true~]
-    if :v = #[false] [return '~false~]
-    :v
-]
 unrun: func3 [] [
     fail/where "No UNRUN in bootstrap, but could be done w/make FRAME!" 'return
 ]
-opt: ~  ; replaced by DEGRADE word
-try: ~  ; reviewing uses
 
 has: :in  ; old IN behavior of word lookup achieved by HAS now
 overbind: :in  ; works in a limited sense
@@ -458,22 +344,13 @@ reify-logic: func3 [logic [logic!]] [
     either logic ['~true~] ['~false~]
 ]
 
-maybe: func3 [
-    v [<opt> any-value!]
-][
-    if null? :v [return void]  ; null here is blank in the shim, void is null
-    :v
-]
-
 ; Tricky way of getting simple non-definitional break extraction that looks
 ; like getting a definitional break.
 ;
 set '^break does [does [:break]]
 set '^continue does [does [:continue]]
 
-the: :the3  ; Renamed due to the QUOTED! datatype
-quote: func3 [x [<opt> any-value!]] [
-    if null? x [return the ()]
+quote: func3 [x [<opt> any-value!]] [  ; see the more general UNEVAL
     switch kind of x [
         word! [to lit-word! x]  ; to lit-word! not legal in new EXE
         path! [to lit-path! x]  ; to lit-path! not legal in new EXE
@@ -482,6 +359,10 @@ quote: func3 [x [<opt> any-value!]] [
             "QUOTE can only work on WORD!, PATH!, NULL in old Rebols"
         ] 'x
     ]
+]
+
+blank-to-void: func3 [x [<opt> any-value!]] [
+    either blank? :x [void] [:x]
 ]
 
 
@@ -531,14 +412,8 @@ append: func3 [series value [<opt> any-value!] /line <local> only] [
 
     only: 'only
     case [
-        null3? :value []
-        void3? :value [fail/where "APPEND of VOID! disallowed" 'value]
-        blank? :value [fail/where "APPEND blanks with [_] only" 'value]
         logic? :value [fail/where "APPEND LOGIC! LOGIC-TO-WORD, REIFY" 'value]
         block? :value [
-            if find3 value void! [
-                fail/where "APPEND of BLOCK! w/VOID! disallowed" 'value
-            ]
             if #splice! = (first value) [
                 value: second value
                 if not any-array? series [  ; itemwise appends for strings/etc.
@@ -551,20 +426,14 @@ append: func3 [series value [<opt> any-value!] /line <local> only] [
             ]
         ]
     ]
-    append3/(only)/(line) series :value
+    append3/(blank-to-void only)/(blank-to-void line) series :value
 ]
 
 insert: func3 [series value [<opt> any-value!] /line <local> only] [
     only: 'only
     case [
-        null3? :value []
-        void3? :value [fail/where "INSERT of VOID! disallowed" 'value]
-        blank? :value [fail/where "INSERT blanks with [_] only" 'value]
         logic? :value [fail/where "INSERT LOGIC! LOGIC-TO-WORD, REIFY" 'value]
         block? :value [
-            if find3 value void! [
-                fail/where "INSERT of BLOCK! w/VOID! disallowed"
-            ]
             if #splice! = (first value) [
                 value: second value
                 if not any-array? series [  ; itemwise appends for strings/etc.
@@ -573,24 +442,18 @@ insert: func3 [series value [<opt> any-value!] /line <local> only] [
                     ]
                     return series
                 ]
-                only: _
+                only: void
             ]
         ]
     ]
-    insert3/(only)/(line) series :value
+    insert3/(blank-to-void only)/(blank-to-void line) series :value
 ]
 
 change: func3 [series value [<opt> any-value!] /line <local> only] [
     only: 'only
     case [
-        null3? :value []
-        void3? :value [fail/where "CHANGE of VOID! disallowed" 'value]
-        blank? :value [fail/where "CHANGE blanks with [_] only" 'value]
         logic? :value [fail/where "CHANGE LOGIC! LOGIC-TO-WORD, REIFY" 'value]
         block? :value [
-            if find3 value void! [
-                fail/where "CHANGE of BLOCK! w/VOID! disallowed" 'value
-            ]
             if #splice! = (first value) [
                 value: second value
                 if not any-array? series [
@@ -600,8 +463,20 @@ change: func3 [series value [<opt> any-value!] /line <local> only] [
             ]
         ]
     ]
-    change3/(only)/(line) series :value
+    change3/(blank-to-void only)/(blank-to-void line) series :value
 ]
+
+; It obeys the "as-is" by default rule, so that `join 'a/b [c]` will give the
+; predictable outcome of `a/b/[c]`.  This means that SPREAD must be used to
+; get the splicing semantics, and plain `join "ab" [c]` is an error.
+;
+join: func3 [base value [void! any-value!]] [
+    if void? :value [
+        return copy base
+    ]
+    append copy base :value  ; shim APPEND, that offers SPLICE behavior
+]
+
 
 
 ; Lambda was redefined to `->` to match Haskell/Elm vs. `=>` for JavaScript.
@@ -630,8 +505,7 @@ write: adapt :lib/write [
 ; should be able to emulate.  While it has the rules of Rebol2 PARSE, the
 ; result is null on failure in order to be ELSE-triggering.
 ;
-parse2: :lib/parse
-assert [parse2 "a" ["b"] then [false] else [true]]
+parse2: :lib/parse/match
 
 parse: does [
     fail "Only PARSE2 is available in bootstrap executable, not PARSE"
@@ -665,14 +539,14 @@ empty-or-null?: :empty?
 ; not have /ONLY.  So redo it here in the shim.
 ;
 collect*: func3 [  ; variant giving NULL if no actual material kept
-    return: [blank! block!]  ; actually BLANK! acts like ~null~, but FUNC3
+    return: [<opt> block!]  ; actually BLANK! acts like ~null~, but FUNC3
     body [block!]
     <local> out keeper
 ][
-    out: _
+    out: null
     keeper: specialize (  ; SPECIALIZE to remove series argument
         enclose 'append func3 [f [frame!] <with> out] [  ; gets /LINE, /DUP
-            if null? :f/value [return null]  ; doesn't "count" as collected
+            if void? :f/value [return void]  ; doesn't "count" as collected
 
             f/series: out: default [make block! 16]  ; won't return null now
             :f/value  ; ELIDE leaves as result (F/VALUE invalid after DO F)
@@ -703,11 +577,11 @@ collect-lets: func3 [
         case [
             item/1 = 'let [
                 item: next item
-                if match3 [set-word! word! block!] item/1 [
+                if match [set-word! word! block!] item/1 [
                     lib/append lets item/1
                 ]
             ]
-            match3 [block! group!] item/1 [
+            match [block! group!] item/1 [
                 lib/append lets collect-lets item/1
             ]
         ]
@@ -728,7 +602,7 @@ modernize-typespec: function3 [
     types [block!]
 ][
     types: copy types
-    replace types '~null~ 'blank!
+    replace types '~null~ <opt>
     replace types 'any-value? [<opt> any-value!]
     replace types 'any-string? 'any-string!
     replace types 'element? 'any-value!
@@ -786,9 +660,9 @@ modernize-action: function3 [
                 keep3/only proxy
                 keep3/only modernize-typespec spec/1
 
-                append3 proxiers compose [  ; lib3/try turns null3 to blank
-                    (as set-word! last-refine-word) lib3/try (as get-word! proxy)
-                    set (as lit-word! proxy) void
+                append3 proxiers compose [
+                    (as set-word! last-refine-word) (as get-word! proxy)
+                    (as set-word! proxy) ~
                 ]
                 spec: my next
                 continue
@@ -796,11 +670,11 @@ modernize-action: function3 [
 
             ; Find ANY-WORD!s (args/locals)
             ;
-            if w: match3 any-word! spec/1 [
+            if w: match any-word! spec/1 [
                 if set-word? w [
                     assert [w = first [return:]]
                     keep3 spec/1, spec: my next
-                    if [~] = spec/1 [keep3/only [<opt>] spec: my next]
+                    if [~] = spec/1 [keep3/only [trash!] spec: my next]
                     if tail? spec [continue]
                     if text? spec/1 [keep3 spec/1, spec: my next]
                     if block? spec/1 [
@@ -839,7 +713,7 @@ modernize-action: function3 [
                     keep3/only spec/1
                 ]
 
-                if spec/1 = [~] [  ; new semantics: [~] -> ~[]~
+                if spec/1 = [~] [
                     keep3/only <void>  ; old cue for returning garbage
                     spec: my next
                     continue
@@ -854,14 +728,8 @@ modernize-action: function3 [
                 ; Substitute <opt> for any <maybe> found, and save some code
                 ; to inject for that parameter to return null if it's null
                 ;
-                if types: match3 block! spec/1 [
+                if types: match block! spec/1 [
                     types: modernize-typespec types
-                    if find3 types <maybe> [
-                        replace types <maybe> <opt>
-                        append3 tryers compose [  ; splices
-                            if null3? (as get-word! w) [return _]
-                        ]
-                    ]
                     keep3/only types
                     spec: my next
                     continue
@@ -907,36 +775,10 @@ function: does [
     fail "gathering FUNCTION deprecated (will be synonym for FUNC, eventually)"
 ]
 
-; Bootstrap MATCH was designed very strangely as a variadic for some since
-; dropped features.  But it seems to not be able to be CHAIN'd or ADAPTed
-; due to that quirky interface.  It's simple, just rewrite it.
-;
-match: func [
-    return: [any-value?]
-    types [block! datatype! typeset!]
-    value [<maybe> any-value?]
-][
-    case [
-        datatype? types [types: make typeset! reduce [types]]  ; circuitious :-(
-        block? types [types: make typeset! types]
-    ]
-    if find3 types kind of value [return value]
-    return _
-]
-
 
 meth: enfix adapt :lib/meth [set [spec body] modernize-action spec body]
 method: func3 [] [
     fail/where "METHOD deprecated temporarily, use METH" 'return
-]
-
-for-each: func [  ; add opt-out ability with <maybe>
-    return: [any-value?]
-    'vars [word! lit-word! block!]
-    data [<maybe> any-series! any-context! map! datatype! action!]
-    body [block!]
-][
-    return for-each3 (vars) data body else [_]
 ]
 
 trim: adapt :trim [  ; there's a bug in TRIM/AUTO in 8994d23
@@ -955,19 +797,6 @@ mutable: func3 [x [any-value!]] [
     ; emerges as being needed.
     ;
     :x
-]
-
-
-; Historical JOIN reduced.  Modern JOIN does not; one of the big justifications
-; of its existence is the assembly of PATH! and TUPLE! which are immutable
-; and can't use normal APPEND.
-;
-; It obeys the "as-is" by default rule, so that `join 'a/b [c]` will give the
-; predictable outcome of `a/b/[c]`.  This means that SPREAD must be used to
-; get the splicing semantics, and plain `join "ab" [c]` is an error.
-;
-join: func3 [base value [<opt> any-value!]] [
-    append copy base :value  ; shim APPEND, that offers SPLICE behavior
 ]
 
 const?: func3 [x] [return false]
@@ -992,65 +821,6 @@ find-last: specialize :find [
     ; to kill these refinements): `find/reverse tail "abcd" "bc"` was blank.
     ;
     last: true
-]
-
-
-; The bootstrap executable was picked without noticing it had an issue with
-; reporting errors on file READ where it wouldn't tell you what file it was
-; trying to READ.  It has been fixed, but won't be fixed until a new bootstrap
-; executable is picked--which might be a while since UTF-8 Everywhere has to
-; stabilize and speed up.
-;
-; So augment the READ with a bit more information.
-;
-lib-read: copy :lib/read
-lib/read: read: enclose :lib-read function3 [f [frame!]] [
-    saved-source: :f/source
-    if e: trap [bin: do f] [
-        parse2 e/message [
-            [
-                {The system cannot find the } ["file" | "path"] { specified.}
-                | "No such file or directory"  ; Linux
-            ]
-            to end
-        ] then [
-            fail/where ["READ could not find file" saved-source] 'f
-        ]
-        print "Some READ error besides FILE-NOT-FOUND?"
-        fail e
-    ]
-    bin
-]
-
-transcode: function3 [
-    return: [<opt> any-value!]
-    source [text! binary!]
-    /next
-    next-arg [word!]
-][
-    next: lib/try :next-arg
-
-    values: lib/transcode/(either next ['next] [blank])
-        either text? source [to binary! source] [source]
-    pos: take/last values
-    assert [binary? pos]
-
-    if next [
-        assert [1 >= length of values]
-
-        ; In order to return a text position in pre-UTF-8 everywhere, fake it
-        ; by seeing how much binary was consumed and assume skipping that many
-        ; bytes will sync us.  (From @rgchris's LOAD-NEXT).
-        ;
-        if text? source [
-            rest: to text! pos
-            pos: skip source subtract (length of source) (length of rest)
-        ]
-        set next pos
-        return pick values 1  ; may be null
-    ]
-
-    return values
 ]
 
 mold: adapt :lib/mold [  ; update so MOLD SPREAD works
@@ -1107,52 +877,6 @@ noquote: func3 [x [<opt> any-value!]] [
     :x
 ]
 
-
-; Temporarily work around MATCH usage bug in bootstrap unzip:
-;
-;    data: if match [file! url! blank!] try :source/2 [
-;
-; If there is no SOURCE/2, it gets NULL...which it turns into a blank because
-; there was no <opt> in match.
-;
-; But then if that blank matches, it gives ~falsey~ so you don't get misled
-; in tests exactly like this one.  (!)
-;
-; Temporarily make falsey matches just return true for duration of the zip.
-; Also, make PRINT accept FILE! and TEXT! so the /VERBOSE option will work.
-;
-zip: enclose :zip function3 [f] [
-    old-match: :match
-    old-print: :print
-
-    if f/verbose [
-        fail/where [
-            "/VERBOSE not working due to PRINT problem, broken in bootstrap"
-        ] 'f
-    ]
-
-    ; !!! This workaround is crashing the bootstrap EXE, let it go for now
-    ;lib/print: adapt :print [
-    ;    if match [file! text!] :line [
-    ;        line: reduce [line]
-    ;    ]
-    ;]
-
-    lib/match: func3 [type value [<opt> any-value!] <local> answer] [
-        if quasi? set* 'answer old-match type value [
-            return true
-        ]
-        return get 'answer
-    ]
-
-    result: do f
-
-    lib/match: :old-match
-    ;lib/print: :old-print
-
-    return result
-]
-
 ; We've scrapped the form of refinements via GROUP! for function dispatch, and
 ; you need to use APPLY now.  This is a poor man's compatibility APPLY
 ;
@@ -1185,14 +909,14 @@ apply: function3 [
             refinement? pos/2
         ] then [  ; doesn't take an argument, set it to the logical next value
             if blank? :result [
-                f/(to word! pos/1): null3
+                f/(to word! pos/1): null
             ] else [
                 f/(to word! pos/1): :result
             ]
         ] else [  ; takes an arg, so set refinement to true and set NEXT param
             f/(to word! pos/1): true
             if blank? :result [
-                f/(to word! pos/2): null3
+                f/(to word! pos/2): null
             ] else [
                 f/(to word! pos/2): :result
             ]
@@ -1202,24 +926,16 @@ apply: function3 [
     do f
 ]
 
-local-to-file: lib/local-to-file: func3 [path [<opt> text! file!] /pass /dir] [
+local-to-file: lib/local-to-file: func3 [path [<maybe> text! file!] /pass /dir] [
     path: default [_]
-    local-to-file3/(pass)/(dir) path
+    local-to-file3/(blank-to-void pass)/(blank-to-void dir) path
 ]
 
 file-to-local: lib/file-to-local: func3 [
-    path [<opt> text! file!] /pass /full /no-tail-slash /wild
+    path [<maybe> text! file!] /pass /full /no-tail-slash /wild
 ][
     path: default [_]
-    file-to-local3/(pass)/(full)/(no-tail-slash)/(wild) path
-]
-
-select: func3 [
-    series [<opt> any-series! any-context! map!]
-    value [any-value!]
-][
-    if null? :series [return null]
-    select3 :series :value
+    file-to-local3/(blank-to-void pass)/(blank-to-void full)/(blank-to-void no-tail-slash)/(blank-to-void wild) path
 ]
 
 split-path: func3 [  ; interface changed to multi-return in new Ren-C
@@ -1237,18 +953,6 @@ split-path: func3 [  ; interface changed to multi-return in new Ren-C
 
 === "SANITY CHECKS" ===
 
-if not void3? (
-    if true [null] else [fail "ELSE shim running when it shouldn't"]
-) [
-    fail "shim IF/ELSE did not voidify null result"
-]
-
-if not all [
-    null? either true [null] [<unused>]
-    null? either false [<unused>] [null]
-][
-    fail "EITHER not preserving null"
-]
 
 ; This is a surrogate for being able to receive the environment for string
 ; interpolation from a block.  Instead, the words that aren't in the user

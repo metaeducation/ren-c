@@ -1,11 +1,7 @@
 Rebol [
     Title: "Compatibility IMPORT/EXPORT for Bootstrap"
     File: %import-shim.r
-    Type: module
-
-    ; SEE NOTES BELOW: r3-alpha module system fully broken in bootstrap  EXE
-    ;Name: Import-Shim  ; without Name: will act like `Options: [private]`
-    ;Exports: [lib3 import export load]
+    Type: script
 
     Description: {
         This shim redefines IMPORT and EXPORT for the bootstrap executable:
@@ -76,8 +72,7 @@ lib/lib3: lib3: lib  ; use LIB3 to make it clearer when using old semantics
 
 === "EXPORT" ===
 
-append lib [export: _]  ; see header notes: `Exports` broken
-lib3/export: export: lib3/func [
+export: lib3/func [
     "%import-shim.r variant of EXPORT which just puts the definition into LIB"
 
     :set-word [<skip> set-word!]  ; old style unescapable literal
@@ -182,14 +177,14 @@ strip-commas-and-downgrade-strings: lib3/func [
 wrap-module: false
 
 old-do: :lib3/do
-lib3/do: enclose :lib3/do lib3/func [
+do: enclose :lib3/do lib3/func [
     f [frame!]
     <local> old-system-script file
     <with> wrap-module
 ][
     old-system-script: system/script
 
-    if file? f/source [
+    if file? :f/source [
         file: f/source
 
         system/script: make system/standard/script [
@@ -199,7 +194,7 @@ lib3/do: enclose :lib3/do lib3/func [
                 file: (file)
             ]
             parent: old-system-script
-            path: first split-path file
+            path: first lib3/split-path file
             args: either old-system-script/path [_] [system/options/args]
         ]
 
@@ -236,7 +231,7 @@ already-imported: make map! []  ; avoid importing things twice
 
 
 ; see header notes: `Exports` broken
-lib3/import: enfix lib3/func [
+import: enfix lib3/func [
     "%import-shim.r variant of IMPORT which acts like DO and loads only once"
 
     :set-word "optional left argument, used by `rebmake: import <rebmake.r>`"
@@ -251,7 +246,8 @@ lib3/import: enfix lib3/func [
 
     ; NOTE: LET is unavailable (we have not run the bootstrap shim yet)
     ;
-    <local> ret path+file new-script-path old-dir code
+    <local> ret path+file full-script-dir full-script-path old-dir code
+            script-filename
     <with> wrap-module already-imported
 ][
     if into [
@@ -260,27 +256,32 @@ lib3/import: enfix lib3/func [
 
     f: as file! f
 
-    if ret: select already-imported f [
-        return ret
-    ]
-
     path+file: lib3/split-path f
 
     assert [#"/" <> first path+file/1]  ; should be relative
     assert [#"%" <> first path+file/1]  ; accidental `import <%foo.r>`
 
-    new-script-path: clean-path lib3/append copy any [
+    full-script-dir: clean-path lib3/append copy any [
         system/script/path system/options/path
     ] path+file/1
 
+    script-filename: path+file/2
+    full-script-path: join full-script-dir script-filename
+
+    if ret: select already-imported full-script-path [
+        ; print ["ALREADY IMPORTED:" full-script-path]
+        return ret
+    ]
+    ; print ["IMPORTING" full-script-path]
+
     old-dir: what-dir
-    change-dir new-script-path  ; modules expect to run in their directory
+    change-dir full-script-dir  ; modules expect to run in their directory
 
     ret: #quit
     catch/quit [
         ret: if :set-word [
             wrap-module: true
-            set set-word do path+file/2
+            set set-word do script-filename
         ] else [
             assert [not wrap-module]
             do path+file/2
@@ -290,7 +291,7 @@ lib3/import: enfix lib3/func [
 
     change-dir old-dir
 
-    already-imported/(f): ret
+    already-imported/(full-script-path): ret
     return ret
 ]
 
@@ -298,7 +299,7 @@ lib3/import: enfix lib3/func [
 === "LOAD WRAPPING" ===
 
 ; see header notes: `Exports` broken
-lib3/load: adapt :lib3/load [  ; source [file! url! text! binary! block!]
+load: adapt :lib3/load [  ; source [file! url! text! binary! block!]
     if all [  ; ALL THEN does not seem to work in bootstrap EXE
         file? source
         not dir? source
@@ -306,6 +307,16 @@ lib3/load: adapt :lib3/load [  ; source [file! url! text! binary! block!]
         source: strip-commas-and-downgrade-strings read/string source
         source: next find source unspaced ["]" newline]  ; skip header
     ]]
+]
+
+; Poor-man's export in a non-working R3-Alpha module system.
+;
+append lib compose [
+    lib3: (lib3)
+    import: (:import)
+    do: (:do)
+    export: (:export)
+    load: (:load)
 ]
 
 print "COMPLETE!"

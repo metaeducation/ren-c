@@ -20,6 +20,10 @@ REBOL [
     }
 ]
 
+if trap [:import/into] [  ; See %import-shim.r
+    do <import-shim.r>
+]
+
 print "--- Make Boot : System Embedded Script ---"
 
 import <bootstrap-shim.r>
