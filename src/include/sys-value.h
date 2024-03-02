@@ -787,18 +787,6 @@ INLINE Value* Trashify_Branched(Value* cell) {
     return cell;
 }
 
-// Many loop constructs use BLANK! as a unique signal that the loop body
-// never ran, e.g. `for-each x [] [<unreturned>]` or `loop 0 [<unreturned>]`.
-// It's more valuable to have that signal be unique and have it be falsey
-// than it is to be able to return BLANK! from a loop, so blanks are voidified
-// alongside NULL (reserved for BREAKing)
-//
-INLINE Value* Trashify_If_Nulled_Or_Blank(Value* cell) {
-    if (IS_NULLED_OR_BLANK(cell))
-        Init_Trash(cell);
-    return cell;
-}
-
 
 //=////////////////////////////////////////////////////////////////////////=//
 //

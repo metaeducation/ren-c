@@ -164,7 +164,7 @@ static REB_R Loop_Series_Common(
             if (broke)
                 return nullptr;
         }
-        return Trashify_If_Nulled_Or_Blank(out);  // null->BREAK, blank->empty
+        return Trashify_Branched(out);  // null->BREAK, void->empty
     }
 
     // As per #1993, start relative to end determines the "direction" of the
@@ -187,7 +187,7 @@ static REB_R Loop_Series_Common(
             if (broke)
                 return nullptr;
         }
-        Trashify_If_Nulled_Or_Blank(out);  // null->BREAK, blank->empty
+        Trashify_Branched(out);  // null->BREAK, void->empty
         if (
             VAL_TYPE(var) != VAL_TYPE(start)
             or VAL_SERIES(var) != VAL_SERIES(start)
@@ -240,7 +240,7 @@ static REB_R Loop_Integer_Common(
             if (broke)
                 return nullptr;
         }
-        return Trashify_If_Nulled_Or_Blank(out);  // null->BREAK, blank->empty
+        return Trashify_Branched(out);  // null->BREAK, void->empty
     }
 
     // As per #1993, start relative to end determines the "direction" of the
@@ -259,7 +259,7 @@ static REB_R Loop_Integer_Common(
             if (broke)
                 return nullptr;
         }
-        Trashify_If_Nulled_Or_Blank(out);  // null->BREAK, blank->empty
+        Trashify_Branched(out);  // null->BREAK, void->empty
 
         if (not IS_INTEGER(var))
             fail (Error_Invalid_Type(VAL_TYPE(var)));
@@ -326,7 +326,7 @@ static REB_R Loop_Number_Common(
             if (broke)
                 return nullptr;
         }
-        return Trashify_If_Nulled_Or_Blank(out);  // null->BREAK, blank->empty
+        return Trashify_Branched(out);  // null->BREAK, void->empty
     }
 
     // As per #1993, see notes in Loop_Integer_Common()
@@ -343,7 +343,7 @@ static REB_R Loop_Number_Common(
             if (broke)
                 return nullptr;
         }
-        Trashify_If_Nulled_Or_Blank(out);  // null->BREAK, blank->empty
+        Trashify_Branched(out);  // null->BREAK, void->empty
 
         if (not IS_DECIMAL(var))
             fail (Error_Invalid_Type(VAL_TYPE(var)));
@@ -585,7 +585,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
         switch (les->mode) {
           case LOOP_FOR_EACH:
-            Trashify_If_Nulled_Or_Blank(les->out);  // null->BREAK, blank->empty
+            Trashify_Branched(les->out);  // null->BREAK, void->empty
             break;
 
           case LOOP_EVERY:
@@ -934,7 +934,7 @@ DECLARE_NATIVE(for_skip)
             if (broke)
                 return nullptr;
         }
-        Trashify_If_Nulled_Or_Blank(OUT);  // null->BREAK, blank->empty
+        Trashify_Branched(OUT);  // null->BREAK, blank->empty
 
         // Modifications to var are allowed, to another ANY-SERIES! value.
         //
@@ -1538,7 +1538,7 @@ DECLARE_NATIVE(loop)
             if (broke)
                 return nullptr;
         }
-        Trashify_If_Nulled_Or_Blank(OUT);  // null->BREAK, blank->empty
+        Trashify_Branched(OUT);  // null->BREAK, blank->empty
     }
 
     if (IS_LOGIC(ARG(count)))
@@ -1706,7 +1706,7 @@ INLINE REB_R While_Core(
                 return Init_Nulled(OUT);
             }
         }
-        Trashify_If_Nulled_Or_Blank(OUT);  // null->BREAK, blank->empty
+        Trashify_Branched(OUT);  // null->BREAK, blank->empty
     } while (true);
 
     DEAD_END;

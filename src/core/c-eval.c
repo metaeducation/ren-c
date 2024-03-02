@@ -233,6 +233,8 @@ INLINE void Finalize_Arg(
                 fail (Error_Bad_Refine_Revoke(param, arg));
 
             Init_Blank(refine); // can't re-enable...
+
+            Init_Nulled(arg);  // canonize revoke state to null
             SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
 
             refine = ARG_TO_REVOKED_REFINEMENT;
