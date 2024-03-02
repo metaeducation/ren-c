@@ -673,6 +673,8 @@ reify: func [value [<opt> void! trash! any-value!]] [
         void? :value [return '~void~]
         trash? :value [return '~]
         null? :value [return '~null~]
+        true = :value [return '~true~]
+        false = :value [return '~false~]
     ]
     return :value
 ]
@@ -682,9 +684,18 @@ degrade: func [value [any-value!]] [
         '~void~ = :value [return void]
         '~ = :value [return ~]
         '~null~ = :value [return null]
+        '~true~ = :value [return true]
+        '~false~ = :value [return false]
     ]
     return :value
 ]
+
+; Simulate quasiform evaluation
+;
+~true~: #[true]
+~false~: #[false]
+~null~: null
+~void~: void
 
 invisible-eval-all: func [
     {Evaluate any number of expressions, but completely elide the results.}
