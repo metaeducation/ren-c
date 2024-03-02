@@ -853,20 +853,16 @@ INLINE Value* Trashify_If_Nulled_Or_Blank(Value* cell) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Blank! values are a kind of "reified" null, and you can convert between
-// them using TRY and OPT:
+// Blank! values are sort of array's equivalent to "space" in strings.
 //
-//     >> try ()
-//     == _
+// Historically they were falsey, but have been reconsidered in modern Ren-C
+// and are no longer special in that way:
 //
-//     >> opt _
-//     ;-- no result
+// https://forum.rebol.info/t/blank-2022-revisiting-the-datatype/1942
 //
-// Like null, they are considered to be false--like the LOGIC! #[false] value.
-// Only these three things are conditionally false in Rebol, and testing for
-// conditional truth and falsehood is frequent.  Hence in addition to its
-// type, BLANK! also carries a header bit that can be checked for conditional
-// falsehood, to save on needing to separately test the type.
+// They are kept falsey in this historical branch in order to be backwards
+// compatible for bootstrap purposes, so that this codebase can be built
+// either with itself or with r3-8994d23.
 //
 // In the debug build, it is possible to make an "unreadable" blank!.  This
 // will behave neutrally as far as the garbage collector is concerned, so

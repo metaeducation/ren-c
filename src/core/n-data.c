@@ -740,34 +740,6 @@ DECLARE_NATIVE(maybe)
 
 
 //
-//  opt: native [
-//
-//  {Convert blanks to nulls, pass through most other values (See Also: TRY)}
-//
-//      return: "null on blank, void if input was null, else original value"
-//          [<opt> any-value!]
-//      optional [<opt> <maybe> any-value!]
-//  ]
-//
-DECLARE_NATIVE(opt)
-{
-    INCLUDE_PARAMS_OF_OPT;
-
-    if (IS_TRASH(ARG(optional)))
-        fail ("OPT cannot accept trash values");
-
-    // !!! Experimental idea: opting a null gives you a trash.  You generally
-    // don't put OPT on expressions you believe can be null, so this permits
-    // creating a likely error in those cases.  To get around it, OPT TRY
-    //
-    if (IS_NULLED(ARG(optional)))
-        return Init_Trash(OUT);
-
-    RETURN (ARG(optional));
-}
-
-
-//
 //  in: native [
 //
 //  "Returns the word or block bound into the given context."
