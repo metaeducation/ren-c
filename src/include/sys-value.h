@@ -187,9 +187,7 @@
     #define VAL_TYPE(v) \
         VAL_TYPE_RAW(v)
 #else
-    INLINE enum Reb_Kind VAL_TYPE_Debug(
-        const Cell* v, const char *file, int line
-    ){
+    INLINE enum Reb_Kind VAL_TYPE(const Cell* v){
         // VAL_TYPE is called *a lot*, so that makes it a great place to do
         // sanity checks in the debug build.  But a debug build will not
         // inline this function, and makes *no* optimizations.  Using no
@@ -212,11 +210,11 @@
         //
         if (not (v->header.bits & NODE_FLAG_CELL)) {
             printf("VAL_TYPE() called on non-cell\n");
-            panic_at (v, file, line);
+            panic (v);
         }
         if (v->header.bits & NODE_FLAG_FREE) {
             printf("VAL_TYPE() called on invalid cell--marked FREE\n");
-            panic_at (v, file, line);
+            panic (v);
         }
 
         // Cell is good, so let the good cases pass through
@@ -234,7 +232,7 @@
               #ifdef DEBUG_COUNT_TICKS
                 printf("Was made on tick: %d\n", cast(int, -v->extra.tick));
               #endif
-                panic_at (v, file, line);
+                panic (v);
             }
             return REB_BLANK;
         }
@@ -243,19 +241,16 @@
         //
         if (VAL_TYPE_RAW(v) == REB_0_END) {
             printf("VAL_TYPE() called on END marker\n");
-            panic_at (v, file, line);
+            panic (v);
         }
         if (VAL_TYPE_RAW(v) == REB_T_TRASH) {
             printf("VAL_TYPE() called on trash cell\n");
-            panic_at (v, file, line);
+            panic (v);
         }
 
         printf("non-RAW VAL_TYPE() called on pseudotype (or garbage)");
-        panic_at (v, file, line);
+        panic (v);
     }
-
-    #define VAL_TYPE(v) \
-        VAL_TYPE_Debug((v), __FILE__, __LINE__)
 #endif
 
 
