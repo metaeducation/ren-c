@@ -268,31 +268,6 @@ extension-class: make object! [
 
 available-extensions: copy []
 
-parse-ext-build-spec: function [
-    spec [block!]
-][
-    ext: make extension-class spec
-
-    if not nulled? 'ext/options [
-        ensure block! ext/options
-        parse ext/options [
-            any [
-                word! block! opt text! set config: group! end
-                | end
-                | (print "wrong format for options") return false
-            ]
-        ] else [
-            fail ["Could not parse extension build spec" mold spec]
-        ]
-
-        if set? 'config [
-            do as block! config ;-- some old Ren-Cs disallowed DO of GROUP!
-        ]
-    ]
-
-    return ext
-]
-
 ; Discover extensions:
 use [extension-dir entry][
     extension-dir: repo-dir/extensions/%
@@ -302,11 +277,9 @@ use [extension-dir entry][
             dir? entry
             find read rejoin [extension-dir entry] %make-spec.r
         ] then [
-            append available-extensions opt (
-                parse-ext-build-spec load rejoin [
-                    extension-dir entry/make-spec.r
-                ]
-            )
+            append available-extensions make extension-class load rejoin [
+                extension-dir entry/make-spec.r
+            ]
         ]
     ]
 ]
