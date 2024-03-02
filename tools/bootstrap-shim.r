@@ -89,6 +89,54 @@ trap [
 
 print "== SHIMMING OLDER R3 TO MODERN LANGUAGE DEFINITIONS =="
 
+; "WORKAROUND FOR BUGGY PRINT IN BOOTSTRAP EXECUTABLE"
+;
+; Commit #8994d23 circa Dec 2018 has sporadic problems printing large chunks
+; (in certain mediums, e.g. to the VSCode integrated terminal).  Replace PRINT
+; as early as possible in the boot process with one that uses smaller chunks.
+; This seems to avoid the issue.
+;
+prin3-buggy: :lib/prin
+print: lib/print: lib/func [value <local> pos] [
+    if value = newline [  ; new: allow newline, to mean print newline only
+        prin3-buggy newline
+        return
+    ]
+    value: spaced value  ; uses bootstrap shim spaced (once available)
+    while [true] [
+        prin3-buggy copy/part value 256
+        if tail? value: skip value 256 [break]
+    ]
+    prin3-buggy newline
+]
+
+; The bootstrap executable was picked without noticing it had an issue with
+; reporting errors on file READ where it wouldn't tell you what file it was
+; trying to READ.  It has been fixed, but won't be fixed until a new bootstrap
+; executable is picked--which might be a while since UTF-8 Everywhere has to
+; stabilize and speed up.
+;
+; So augment the READ with a bit more information.
+;
+lib-read: copy :lib/read
+lib/read: read: enclose :lib-read function [f [frame!]] [
+    saved-source: :f/source
+    if e: trap [bin: do f] [
+        parse e/message [
+            [
+                {The system cannot find the } ["file" | "path"] { specified.}
+                | "No such file or directory"  ; Linux
+            ]
+            to end
+        ] then [
+            fail/where ["READ could not find file" saved-source] 'f
+        ]
+        print "Some READ error besides FILE-NOT-FOUND?"
+        fail e
+    ]
+    bin
+]
+
 maybe+: :try  ; see [2]
 maybe-: func [x [<opt> any-value!]] [either blank? :x [null] [:x]]
 
