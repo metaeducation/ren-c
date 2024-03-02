@@ -32,7 +32,7 @@ change-dir repo-dir
 change-dir %src/os/
 
 args: parse-args system/options/args
-config: config-system try get 'args/OS_ID
+config: config-system (get 'args/OS_ID else [_])
 output-dir: system/options/path/prep
 mkdir/deep output-dir/include
 
@@ -99,7 +99,7 @@ emit-proto: func [
         trim proto
         not find proto "static"
 
-        pos.id: try find proto "OS_"
+        pos.id: null-to-blank find proto "OS_"
 
         ;-- !!! All functions *should* start with OS_, not just
         ;-- have OS_ somewhere in it!  At time of writing, Atronix

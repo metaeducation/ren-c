@@ -115,22 +115,27 @@ cscape: function [
             sub: do code
 
             sub: case [
-                blank? sub [copy "/* _ */"] ;-- replaced in post-phase
+                any [
+                    void? :sub  ; new style void
+                    not sub  ; old style void (blank null)
+                ][
+                    copy "/* _ */"  ; replaced in post phase, vaporization
+                ]
                 mode = #cname [
-                    if not all [text? sub | empty? sub] [
+                    reify if not all [text? sub | empty? sub] [
                         to-c-name sub
                     ]
                 ]
                 mode = #unspaced [
-                    try either block? sub [unspaced sub] [form sub]
+                    reify either block? sub [unspaced sub] [form sub]
                 ]
                 mode = #delimit [
-                    try delimit (unspaced [suffix newline]) sub
+                    reify delimit (unspaced [suffix newline]) sub
                 ]
                 fail ["Invalid CSCAPE mode:" mode]
-            ] or [
-                copy ""
             ]
+
+            sub: any [degrade sub copy ""]
 
             case [
                 all [any-upper | not any-lower] [uppercase sub]
@@ -245,7 +250,7 @@ make-emitter: function [
             data: take data
             switch type of data [
                 text! [
-                    append buf-emit cscape/with data opt context
+                    append buf-emit cscape/with data maybe- context
                 ]
                 char! [
                     append buf-emit data

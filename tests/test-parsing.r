@@ -15,7 +15,7 @@ Rebol [
 
 do %line-numberq.r
 
-try: func [x [<opt> any-value!]] [either null? x [_] [:x]]
+null-to-blank: func [x [<opt> any-value!]] [either null? x [_] [:x]]
 
 do %../tools/parsing-tools.reb
 do %../tools/text-lines.reb
@@ -41,7 +41,7 @@ make object! [
             ["{" | {"}] (
                 ; handle string using TRANSCODE
                 success-rule: trap [
-                    position: second transcode/next position
+                    transcode/next position 'position
                 ] then [
                     [end skip]
                 ] else [
@@ -126,7 +126,7 @@ make object! [
 
         single-value: parsing-at x [
             trap [
-                set [value: next-position:] transcode/next x
+                value: transcode/next x the next-position:
             ] else [
                 type: in types 'val
                 next-position
@@ -233,7 +233,7 @@ make object! [
                 any whitespace
                 [
                     position: "%"
-                    (set [value: next-position:] transcode/next position)
+                    (value: transcode/next position the next-position:)
                     :next-position
                         |
                     ; dialect failure?

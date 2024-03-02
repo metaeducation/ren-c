@@ -141,7 +141,7 @@ posix: make platform-class [
         cmd [object!]
     ][
         if tool: any [:cmd/strip :default-strip] [
-            b: ensure block! tool/commands/params cmd/file opt cmd/options
+            b: ensure block! tool/commands/params cmd/file maybe- cmd/options
             assert [1 = length of b]
             return b/1
         ]
@@ -468,7 +468,7 @@ gcc: make compiler-class [
             ]
             if F [
                 for-each flg cflags [
-                    keep filter-flag flg id
+                    keep maybe- filter-flag flg id
                 ]
             ]
 
@@ -546,7 +546,7 @@ tcc: make compiler-class [
             ]
             if F [
                 for-each flg cflags [
-                    keep filter-flag flg id
+                    keep maybe- filter-flag flg id
                 ]
             ]
 
@@ -641,7 +641,7 @@ cl: make compiler-class [
             ]
             if F [
                 for-each flg cflags [
-                    keep filter-flag flg id
+                    keep maybe- filter-flag flg id
                 ]
             ]
 
@@ -724,7 +724,7 @@ ld: make linker-class [
             ]
 
             for-each flg ldflags [
-                keep filter-flag flg id
+                keep maybe- filter-flag flg id
             ]
 
             for-each dep depends [
@@ -737,7 +737,7 @@ ld: make linker-class [
         return: [<opt> text!]
         dep [object!]
     ][
-        opt switch dep/class [
+        degrade switch dep/class [
             #object-file [
                 comment [ ;-- !!! This was commented out, why?
                     if find words-of dep 'depends [
@@ -755,7 +755,7 @@ ld: make linker-class [
                     ]
                 ][
                     unspaced [
-                        if find dep/flags 'static ["-static "]
+                        if find maybe+ dep/flags 'static ["-static "]
                         "-l" dep/output
                     ]
                 ]
@@ -769,13 +769,13 @@ ld: make linker-class [
                 ]
             ]
             #application [
-                _
+                '~null~
             ]
             #variable [
-                _
+                '~null~
             ]
             #entry [
-                _
+                '~null~
             ]
             default [
                 dump dep
@@ -835,7 +835,7 @@ llvm-link: make linker-class [
             ]
 
             for-each flg ldflags [
-                keep filter-flag flg id
+                keep maybe- filter-flag flg id
             ]
 
             for-each dep depends [
@@ -848,15 +848,15 @@ llvm-link: make linker-class [
         return: [<opt> text!]
         dep [object!]
     ][
-        opt switch dep/class [
+        degrade switch dep/class [
             #object-file [
                 file-to-local dep/output
             ]
             #dynamic-extension [
-                _
+                '~null~
             ]
             #static-extension [
-                _
+                '~null~
             ]
             #object-library [
                 spaced map-each ddep dep/depends [
@@ -864,13 +864,13 @@ llvm-link: make linker-class [
                 ]
             ]
             #application [
-                _
+                '~null~
             ]
             #variable [
-                _
+                '~null~
             ]
             #entry [
-                _
+                '~null~
             ]
             default [
                 dump dep
@@ -918,11 +918,11 @@ link: make linker-class [
             ]
 
             for-each flg ldflags [
-                keep filter-flag flg id
+                keep maybe- filter-flag flg id
             ]
 
             for-each dep depends [
-                keep accept dep
+                keep maybe- accept dep
             ]
         ]
     ]
@@ -931,7 +931,7 @@ link: make linker-class [
         return: [<opt> text!]
         dep [object!]
     ][
-        opt switch dep/class [
+        degrade switch dep/class [
             #object-file [
                 file-to-local to-file dep/output
             ]
@@ -939,7 +939,7 @@ link: make linker-class [
                 comment [import file] ;-- static property is ignored
 
                 either tag? dep/output [
-                    try filter-flag dep/output id
+                    reify filter-flag dep/output id
                 ][
                     ;dump dep/output
                     file-to-local/pass either ends-with? dep/output ".lib" [
@@ -961,10 +961,10 @@ link: make linker-class [
                 file-to-local any [dep/implib join dep/basename ".lib"]
             ]
             #variable [
-                _
+                '~null~
             ]
             #entry [
-                _
+                '~null~
             ]
             default [
                 dump dep
@@ -991,7 +991,7 @@ strip-class: make object! [
             switch type of flags [
                 block! [
                     for-each flag flags [
-                        keep filter-flag flag id
+                        keep maybe- filter-flag flag id
                     ]
                 ]
                 text! [
@@ -1037,15 +1037,15 @@ object-file-class: make object! [
         /E {only preprocessing}
     ][
         cc: any [compiler default-compiler]
-        cc/command/I/D/F/O/g/(PIC)/(E) output source
-            <- compose [(opt includes) (if I [ex-includes])]
-            <- compose [(opt definitions) (if D [ex-definitions])]
-            <- compose [(if F [ex-cflags]) (opt cflags)] ;; ex-cflags override
+        cc/command/I/D/F/O/g/(maybe+ PIC)/(maybe+ E) output source
+            <- compose [(maybe- includes) (if I [ex-includes])]
+            <- compose [(maybe- definitions) (if D [ex-definitions])]
+            <- compose [(if F [ex-cflags]) (maybe- cflags)] ;; ex-cflags override
 
             ; current setting overwrites /refinement
             ; because the refinements are inherited from the parent
-            opt either O [either optimization [optimization][opt-level]][optimization]
-            opt either g [either debug [debug][dbg]][debug]
+            maybe- either O [either optimization [optimization][opt-level]][optimization]
+            maybe- either g [either debug [debug][dbg]][debug]
     ]
 
     gen-entries: method [
@@ -1066,13 +1066,13 @@ object-file-class: make object! [
             target: output
             depends: append-of either depends [depends][[]] source
             commands: reduce [command/I/D/F/O/g/(
-                try if (PIC or [parent/class = #dynamic-library]) ['PIC]
+                maybe+ all [PIC or [parent/class = #dynamic-library] 'PIC]
             )
-                opt parent/includes
-                opt parent/definitions
-                opt parent/cflags
-                opt parent/optimization
-                opt parent/debug
+                maybe- parent/includes
+                maybe- parent/definitions
+                maybe- parent/cflags
+                maybe- parent/optimization
+                maybe- parent/debug
             ]
         ]
     ]
@@ -1347,7 +1347,8 @@ makefile: make generator-class [
                         ]
                         fail ["Unknown entry/target type" entry/target]
                     ]
-                    for-each w (ensure [block! blank!] entry/depends) [
+                    ensure [block! blank!] entry/depends
+                    for-each w (maybe+ entry/depends) [
                         switch w/class [
                             #variable [
                                 keep ["$(" w/name ")"]
@@ -1372,7 +1373,8 @@ makefile: make generator-class [
                 ;; lines of shell code that run to build the target.  These
                 ;; may use escaped makefile variables that get substituted.
                 ;;
-                for-each cmd (ensure [block! blank!] entry/commands) [
+                ensure [block! blank!] entry/commands
+                for-each cmd (maybe+ entry/commands) [
                     c: ((match text! cmd) else [gen-cmd cmd]) else [continue]
                     if empty? c [continue] ;; !!! Review why this happens
                     keep [tab c] ;; makefiles demand TAB codepoint :-(
@@ -1426,7 +1428,7 @@ makefile: make generator-class [
                         depends: append objs map-each ddep dep/depends [
                             if ddep/class <> #object-library [ddep]
                         ]
-                        commands: append reduce [dep/command] opt dep/post-build-commands
+                        commands: append reduce [dep/command] maybe- dep/post-build-commands
                     ]
                     emit buf dep
                 ]
@@ -1440,7 +1442,7 @@ makefile: make generator-class [
                         assert [obj/class = #object-file]
                         if not obj/generated? [
                             obj/generated?: true
-                            append buf gen-rule obj/gen-entries/(try all [
+                            append buf gen-rule obj/gen-entries/(maybe+ all [
                                 project/class = #dynamic-library
                                 'PIC
                             ]) dep
@@ -1590,7 +1592,7 @@ Execution: make generator-class [
                     assert [obj/class = #object-file]
                     if not obj/generated? [
                         obj/generated?: true
-                        run-target obj/gen-entries/(try all [
+                        run-target obj/gen-entries/(maybe+ all [
                             p-project/class = #dynamic-library
                             'PIC
                         ]) project

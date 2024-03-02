@@ -29,7 +29,7 @@ REBOL [
         operations, like ADAPT, CHAIN, SPECIALIZE, and ENCLOSE.
     }
     Usage: {
-        This should be called like:
+        1. This should be called like:
 
           (change-dir do join copy system/script/path %bootstrap-shim.r)
 
@@ -53,6 +53,16 @@ read: lib/read: adapt 'lib/read [
     ; if not port? source [print ["READING:" mold source "from" what-dir]]
 ]
 
+; 2. Some routines in r3-8994d23 treat NULL as opt out (e.g. APPEND, COMPOSE)
+; while others treat BLANK! like an opt out (e.g. FIND, TO-WORD).  These have
+; been consolidated to all take VOID to opt out in modern Ren-C, and MAYBE is
+; consolidated to just taking NULL and making VOID.
+;
+; For bootstrap purposes here, use MAYBE+ to make blank opt-outs and MAYBE-
+; to make null opt-outs.  The newer executable produces voids for both.
+;
+maybe: func [] [fail/where "MAYBE+ => blank or MAYBE- => null" 'return]
+
 
 ; The snapshotted Ren-C existed right before <maybe> was legal to mark an
 ; argument as meaning a function returns null if that argument is blank.
@@ -66,13 +76,48 @@ read: lib/read: adapt 'lib/read [
 ;
 trap [
     func [i [<maybe> integer!]] [...]
-] or [
+] else [
     nulled?: func [var [word! path!]] [return null = get var]
-    quit/with system/options/path
+    null-to-blank: func [x [<opt> any-value!]] [either null? :x [_] [:x]]
+
+    maybe-: maybe+: func [x [<opt> any-value!]] [  ; see [2]
+        either any [blank? :x null? :x] [void] [:x]
+    ]
+
+    quit/with system/options/path  ; see [1]
 ]
 
 print "== SHIMMING OLDER R3 TO MODERN LANGUAGE DEFINITIONS =="
 
+maybe+: :try  ; see [2]
+maybe-: func [x [<opt> any-value!]] [either blank? :x [null] [:x]]
+
+null-to-blank: :try  ; if we put null in variables, word accesses will fail
+try: func [] [fail/where "Use MAYBE instead of TRY for bootstrap" 'return]
+opt: func [] [fail/where "Use REIFY instead of OPT for bootstrap" 'return]
+
+trash: :void
+trash!: :void!
+void!: <opt>
+void: :null
+
+reify: func [value [<opt> any-value!]] [
+    case [
+        void? :value [return '~trash~]
+        ; there is no actual "void" type, null acts as void sometimes
+        null? :value [return '~null~]
+    ]
+    return :value
+]
+
+degrade: func [value [any-value!]] [
+    case [
+        '~trash~ = :value [return void]
+        '~void~ = :value [return null]  ; append [a b c] null is no-op
+        '~null~ = :value [return null]
+    ]
+    return :value
+]
 
 ; New interpreters do not change the working directory when a script is
 ; executed to the directory of the script.  This is in line with what most
@@ -179,7 +224,7 @@ modernize-action: function [
                 ; Substitute BLANK! for any <maybe> found, and save some code
                 ; to inject for that parameter to return null if it's blank
                 ;
-                if find (try match block! spec/1) <maybe> [
+                if find (maybe+ match block! spec/1) <maybe> [
                     keep/only replace copy spec/1 <maybe> 'blank!
                     append blankers compose [
                         if blank? (as get-word! w) [return null]
@@ -213,4 +258,4 @@ trim: adapt 'trim [ ; there's a bug in TRIM/AUTO in 8994d23
 
 join: :join-of  ; Note: JOIN now for strings and paths only (not arrays)
 
-quit/with system/options/path
+quit/with system/options/path  ; see [1]

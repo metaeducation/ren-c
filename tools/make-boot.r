@@ -34,7 +34,7 @@ change-dir repo-dir
 change-dir %src/boot/
 
 args: parse-args system/options/args
-config: config-system try get 'args/OS_ID
+config: config-system (get 'args/OS_ID else [_])
 
 first-rebol-commit: "19d4f969b4f5c1536f24b023991ec11ee6d5adfb"
 
@@ -108,11 +108,11 @@ args: any [
 
     ; This is the only piece that should be necessary if not dealing w/legacy
     system/options/args
-] or [
+] else [
     fail "No platform specified."
 ]
 
-product: to-word any [try get 'args/PRODUCT | "core"]
+product: to-word any [get 'args/PRODUCT | "core"]
 
 platform-data: context [type: 'windows]
 build: context [features: [help-strings]]
@@ -453,7 +453,7 @@ typeset-sets: copy []
 for-each-record t type-table [
     for-each ts compose [(t/typesets)] [
         spot: any [
-            try select typeset-sets ts
+            select typeset-sets ts
             first back insert tail-of typeset-sets reduce [ts copy []]
         ]
         append spot t/name

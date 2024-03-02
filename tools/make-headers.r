@@ -63,7 +63,7 @@ emit-proto: func [
         block? header
         2 <= length of header
         set-word? header/1
-    ] or [
+    ] else [
         print mold proto-parser/data
         fail [
             proto

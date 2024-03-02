@@ -6,7 +6,7 @@ includes: reduce [
     repo-dir/extensions/uuid/libuuid
     %prep/extensions/uuid ;for %tmp-extensions-uuid-init.inc
 ]
-depends: try switch system-config/os-base [
+depends: null-to-blank switch system-config/os-base [
     'linux [
         [
             %uuid/libuuid/gen_uuid.c
@@ -17,12 +17,12 @@ depends: try switch system-config/os-base [
     ]
 ]
 
-libraries: try switch system-config/os-base [
+libraries: null-to-blank switch system-config/os-base [
     'Windows [
         [%rpcrt4]
     ]
 ]
-ldflags: try switch system-config/os-base [
+ldflags: null-to-blank switch system-config/os-base [
     'OSX [
         ["-framework CoreFoundation"]
     ]

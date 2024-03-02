@@ -64,7 +64,7 @@ emit-proto: func [return: <void> proto] [
         block? header
         2 <= length of header
         set-word? header/1
-    ] or [
+    ] else [
         fail [
             proto
             newline
@@ -118,7 +118,7 @@ emit-proto: func [return: <void> proto] [
     ; https://github.com/rebol/rebol-issues/issues/2317
     ;
     append api-objects make object! compose/only [
-        spec: try match block! third header ;-- Rebol metadata API comment
+        spec: null-to-blank match block! third header ;-- metadata API comment
         name: (ensure text! name)
         returns: (ensure text! trim/tail returns)
         paramlist: (ensure block! paramlist)
@@ -196,7 +196,7 @@ for-each api api-objects [do in api [
         ]
     ]) else ["void"]
 
-    proxied-args: try delimit ", " map-each [type var] paramlist [
+    proxied-args: null-to-blank delimit ", " map-each [type var] paramlist [
         if type = "va_list *" [
             "&va" ;-- to produce vaptr
         ] else [
@@ -204,7 +204,7 @@ for-each api api-objects [do in api [
         ]
     ]
 
-    if find spec #noreturn [
+    if find maybe+ spec #noreturn [
         assert [returns = "void"]
         opt-dead-end: "DEAD_END;"
         opt-noreturn: "ATTRIBUTE_NO_RETURN"
@@ -213,9 +213,9 @@ for-each api api-objects [do in api [
         opt-noreturn: _
     ]
 
-    opt-return: try if returns != "void" ["return"]
+    opt-return: null-to-blank if returns != "void" ["return"]
 
-    enter: try if name != "rebStartup" [
+    enter: null-to-blank if name != "rebStartup" [
         copy "RL_rebEnterApi_internal();^/"
     ]
 

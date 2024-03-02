@@ -214,19 +214,19 @@ proto-parser: context [
         doubleslashed-lines: [copy lines some ["//" thru newline]]
 
         is-fileheader: parsing-at position [
-            try all [
+            null-to-blank all [
                 lines: attempt [decode-lines lines {//} { }]
                 parse/match lines [copy data to {=///} to end]
                 data: attempt [load-until-blank trim/auto data]
                 data: attempt [
-                    if set-word? first data/1 [data/1]
+                    if set-word? first data/1 [data/1] else [_]
                 ]
                 position ; Success.
             ]
         ]
 
         is-intro: parsing-at position [
-            try all [
+            null-to-blank all [
                 lines: attempt [decode-lines lines {//} { }]
                 data: load-until-blank lines
                 data: attempt [
@@ -249,7 +249,7 @@ proto-parser: context [
                     ][
                         notes: data/2
                         data/1
-                    ]
+                    ] else [_]
                 ]
                 position ; Success.
             ]

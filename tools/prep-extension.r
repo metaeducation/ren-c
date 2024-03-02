@@ -58,7 +58,7 @@ output-dir: system/options/path/prep/:in-dir
 mkdir/deep output-dir
 
 
-config: config-system try get 'args/OS_ID
+config: config-system (get 'args/OS_ID else [_])
 
 mod: ensure text! args/MODULE
 m-name: mod
@@ -140,7 +140,7 @@ native-defs: collect [
                 export: (n-export)
                 name: (to lit-word! n-name)
                 spec: (n-spec) ;-- includes NATIVE or NATIVE/BODY
-                platforms: (try copy n-platforms)
+                platforms: ((copy maybe+ n-platforms) else [_])
             ]
         )
     ]

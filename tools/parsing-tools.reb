@@ -27,9 +27,9 @@ parsing-at: func [
     /end {Drop the default tail check (allows evaluation at the tail).}
 ] [
     use [result position][
-        block: compose/only [try (as group! block)]
+        block: compose/only [null-to-blank (as group! block)]
         if not end [
-            block: compose/deep [try if not tail? (word) [(block)]]
+            block: compose/deep [either not tail? (word) [(block)] [_]]
         ]
         block: compose/deep [result: either position: (block) [[:position]] [[end skip]]]
         use compose [(word)] compose/deep [

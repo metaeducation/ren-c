@@ -37,7 +37,7 @@ user-config: make object! load join repo-dir %configs/default-config.r
 args: parse-args system/options/args
 ; now args are ordered and separated by bar:
 ; [NAME VALUE ... '| COMMAND ...]
-either commands: try find args '| [
+either commands: null-to-blank find args '| [
     options: copy/part args commands
     commands: next commands
 ] [options: args]
@@ -78,7 +78,7 @@ for-each [name value] options [
 ]
 
 ; process commands
-if not empty? commands [user-config/target: load commands]
+if not empty? maybe+ commands [user-config/target: load commands]
 
 ;;;; MODULES & EXTENSIONS
 system-config: config-system user-config/os-id
@@ -170,7 +170,7 @@ gen-obj: func [
 
     if block? s [
         for-each flag next s [
-            append flags opt switch flag [
+            append flags degrade switch flag [
                 <no-uninitialized> [
                     [
                         <gnu:-Wno-uninitialized>
@@ -206,7 +206,7 @@ gen-obj: func [
                 ]
                 <no-make-header> [
                     ;for make-header. ignoring
-                    _
+                    '~void~
                 ]
                 <no-unreachable> [
                     <msc:/wd4702>
@@ -239,8 +239,8 @@ gen-obj: func [
                 join %main/ (last ensure path! s)
             ] [s]
         cflags: either empty? flags [_] [flags]
-        definitions: (try get 'definitions)
-        includes: (try get 'includes)
+        definitions: (get 'definitions else [_])
+        includes: (get 'includes else [_])
     ]
 ]
 
@@ -531,9 +531,9 @@ switch user-config/optimize [
 
 cfg-cplusplus: false
 ;standard
-append app-config/cflags opt switch user-config/standard [
+append app-config/cflags degrade switch user-config/standard [
     'c [
-        _
+        '~void~
     ]
     'gnu89 'c99 'gnu99 'c11 [
         to tag! unspaced ["gnu:--std=" user-config/standard]
@@ -610,7 +610,7 @@ append app-config/cflags opt switch user-config/standard [
 ; Example. Mingw32 does not have access to windows console api prior to vista.
 ;
 cfg-pre-vista: false
-append app-config/definitions opt switch user-config/pre-vista [
+append app-config/definitions degrade switch user-config/pre-vista [
     #[true] 'yes 'on 'true [
         cfg-pre-vista: true
         compose [
@@ -619,14 +619,14 @@ append app-config/definitions opt switch user-config/pre-vista [
     ]
     _ #[false] 'no 'off 'false [
         cfg-pre-vista: false
-        _
+        '~void~
     ]
 
     fail ["PRE-VISTA [yes no \logic!\] not" (user-config/pre-vista)]
 ]
 
 cfg-rigorous: false
-append app-config/cflags opt switch user-config/rigorous [
+append app-config/cflags degrade switch user-config/rigorous [
     #[true] 'yes 'on 'true [
         cfg-rigorous: true
         compose [
@@ -848,16 +848,16 @@ append app-config/cflags opt switch user-config/rigorous [
     ]
     _ #[false] 'no 'off 'false [
         cfg-rigorous: false
-        _
+        '~void~
     ]
 
     fail ["RIGOROUS [yes no \logic!\] not" (user-config/rigorous)]
 ]
 
-append app-config/ldflags opt switch user-config/static [
+append app-config/ldflags degrade switch user-config/static [
     _ 'no 'off 'false #[false] [
         ;pass
-        _
+        '~void~
     ]
     'yes 'on #[true] [
         compose [
@@ -933,11 +933,11 @@ append app-config/definitions reduce [
 
 ;; Add user settings
 ;;
-append app-config/definitions opt user-config/definitions
-append app-config/includes opt user-config/includes
-append app-config/cflags opt user-config/cflags
-append app-config/libraries opt user-config/libraries
-append app-config/ldflags opt user-config/ldflags
+append app-config/definitions maybe- user-config/definitions
+append app-config/includes maybe- user-config/includes
+append app-config/cflags maybe- user-config/cflags
+append app-config/libraries maybe- user-config/libraries
+append app-config/ldflags maybe- user-config/ldflags
 
 libr3-core: make rebmake/object-library-class [
     name: 'libr3-core
@@ -1057,7 +1057,7 @@ for-each [label list] reduce [
     for-each ext list [
         print collect [ ;-- CHAR! values don't auto-space in Ren-C PRINT
             keep ["ext:" ext/name #":" space #"["]
-            for-each mod ext/modules [
+            for-each mod (maybe+ ext/modules) [
                 keep to-text mod/name
             ]
             keep #"]"
@@ -1123,7 +1123,7 @@ process-module: func [
     assert [mod/class = #extension]
     ret: make rebmake/object-library-class [
         name: mod/name
-        depends: map-each s (append reduce [mod/source] opt mod/depends) [
+        depends: map-each s (append reduce [mod/source] maybe- mod/depends) [
             case [
                 match [file! block!] s [
                     gen-obj/dir s repo-dir/extensions/%
@@ -1139,7 +1139,7 @@ process-module: func [
                 ]
             ]
         ]
-        libraries: try all [
+        libraries: null-to-blank all [
             mod/libraries
             map-each lib mod/libraries [
                 case [
@@ -1184,15 +1184,15 @@ for-each ext builtin-extensions [
         not empty? ext/depends
     ] then [
         append ext-objs map-each s ext/depends [
-            all [object? s | s/class = #object-library] then [s]
+            all [object? s | s/class = #object-library] then [s] else [continue]
         ]
     ]
 
     append ext-objs mod-obj: process-module ext
 
-    append app-config/libraries opt mod-obj/libraries
-    append app-config/searches opt ext/searches
-    append app-config/ldflags opt ext/ldflags
+    append app-config/libraries maybe- mod-obj/libraries
+    append app-config/searches maybe- ext/searches
+    append app-config/ldflags maybe- ext/ldflags
 
     ; Modify module properties
     add-project-flags/I/D/c/O/g mod-obj
@@ -1214,9 +1214,9 @@ for-each ext builtin-extensions [
     append any [all [mod-obj mod-obj/depends] ext-objs] gen-obj/dir/I/D/F
         ext-init-source
         unspaced ["prep/extensions/" ext-name-lower "/"]
-        opt ext/includes
-        opt ext/definitions
-        opt ext/cflags
+        maybe- ext/includes
+        maybe- ext/definitions
+        maybe- ext/cflags
 ]
 
 
@@ -1387,7 +1387,7 @@ app: make rebmake/application-class [
     ][
         reduce [
             make rebmake/cmd-strip-class [
-                file: join output opt rebmake/target-platform/exe-suffix
+                file: join output maybe- rebmake/target-platform/exe-suffix
             ]
         ]
     ]
@@ -1428,11 +1428,11 @@ for-each ext dynamic-extensions [
     mod-objs: make block! 8
     for-each mod ext/modules [
         append mod-objs mod-obj: process-module mod
-        append ext-libs opt mod-obj/libraries
+        append ext-libs maybe- mod-obj/libraries
         append ext-includes app-config/includes
 
-        append ext-ldflags opt mod/ldflags
-        append ext-includes opt mod/includes
+        append ext-ldflags maybe- mod/ldflags
+        append ext-includes maybe- mod/includes
 
         ; Modify module properties
         add-project-flags/I/D/c/O/g mod-obj
@@ -1449,9 +1449,9 @@ for-each ext dynamic-extensions [
         append mod-objs gen-obj/dir/I/D/F
             ext/source
             repo-dir/extensions/%
-            opt ext/includes
-            append copy ["EXT_DLL"] opt ext/definitions
-            opt ext/cflags
+            maybe- ext/includes
+            append copy ["EXT_DLL"] maybe- ext/definitions
+            maybe- ext/cflags
     ]
     append dynamic-libs ext-proj: make rebmake/dynamic-library-class [
         name: join either system-config/os-base = 'windows ["r3-"]["libr3-"]
@@ -1468,7 +1468,7 @@ for-each ext dynamic-extensions [
         ][
             reduce [
                 make rebmake/cmd-strip-class [
-                    file: join output opt rebmake/target-platform/dll-suffix
+                    file: join output maybe- rebmake/target-platform/dll-suffix
                 ]
             ]
         ]
@@ -1506,7 +1506,7 @@ clean: make rebmake/entry-class [
         make rebmake/cmd-delete-class [file: %objs/]
         make rebmake/cmd-delete-class [file: %prep/]
         make rebmake/cmd-delete-class [
-            file: join %r3 opt rebmake/target-platform/exe-suffix
+            file: join %r3 maybe- rebmake/target-platform/exe-suffix
         ]
     ]
 ]
@@ -1516,11 +1516,11 @@ check: make rebmake/entry-class [
     depends: append copy dynamic-libs app
     commands: collect [
         keep make rebmake/cmd-strip-class [
-            file: join app/output opt rebmake/target-platform/exe-suffix
+            file: join app/output maybe- rebmake/target-platform/exe-suffix
         ]
         for-each s dynamic-libs [
             keep make rebmake/cmd-strip-class [
-                file: join s/output opt rebmake/target-platform/dll-suffix
+                file: join s/output maybe- rebmake/target-platform/dll-suffix
             ]
         ]
     ]

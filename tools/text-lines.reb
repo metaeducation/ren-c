@@ -25,7 +25,7 @@ decode-lines: function [
     line: [pos: pattern rest: (rest: remove/part pos rest) :rest thru newline]
     parse/match text [any line] else [
         fail [
-            {Expected line} (try text-line-of text pos)
+            {Expected line} (reify text-line-of text pos)
             {to begin with} (mold line-prefix)
             {and end with newline.}
         ]

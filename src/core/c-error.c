@@ -278,7 +278,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     assert(CTX_TYPE(error) == REB_ERROR);
 
     // If we raise the error we'll lose the stack, and if it's an early
-    // error we always want to see it (do not use ATTEMPT or TRY on
+    // error we always want to see it (do not use ATTEMPT or TRAP on
     // purpose in Startup_Core()...)
     //
     if (PG_Boot_Phase < BOOT_DONE)
