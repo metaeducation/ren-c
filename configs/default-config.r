@@ -50,7 +50,6 @@ standard: 'c
 rigorous: no
 
 static: no
-pkg-config: try get-env "PKGCONFIG" ;path to pkg-config, or default
 
 ; Console API for windows does not exist before vista.
 ;

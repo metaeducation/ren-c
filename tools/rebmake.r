@@ -96,55 +96,6 @@ run-command: function [
     trim/with x "^/^M"
 ]
 
-pkg-config: function [
-    return: [text! block!]
-    pkg [any-string!]
-    var [word!]
-    lib [any-string!]
-][
-    switch var [
-        'includes [
-            dlm: "-I"
-            opt: "--cflags-only-I"
-        ]
-        'searches [
-            dlm: "-L"
-            opt: "--libs-only-L"
-        ]
-        'libraries [
-            dlm: "-l"
-            opt: "--libs-only-l"
-        ]
-        'cflags [
-            dlm: _
-            opt: "--cflags-only-other"
-        ]
-        'ldflags [
-            dlm: _
-            opt: "--libs-only-other"
-        ]
-        fail ["Unsupported pkg-config word:" var]
-    ]
-
-    x: run-command spaced reduce [pkg opt lib]
-    ;dump x
-    either dlm [
-        ret: make block! 1
-        parse x [
-            some [
-                thru dlm
-                copy item: to [dlm | end] (
-                    ;dump item
-                    append ret to file! item
-                )
-            ]
-        ]
-        ret
-    ][
-        x
-    ]
-]
-
 platform-class: make object! [
     name: _
     exe-suffix: _
