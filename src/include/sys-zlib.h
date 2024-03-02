@@ -1,45 +1,45 @@
-//
-// Extraction of ZLIB compression and decompression routines
-// for REBOL [R3] Language Interpreter and Run-time Environment
-// This is a code-generated file.
-//
-// ZLIB Copyright notice:
-//
-//   (C) 1995-2013 Jean-loup Gailly and Mark Adler
-//
-//   This software is provided 'as-is', without any express or implied
-//   warranty.  In no event will the authors be held liable for any damages
-//   arising from the use of this software.
-//
-//   Permission is granted to anyone to use this software for any purpose,
-//   including commercial applications, and to alter it and redistribute it
-//   freely, subject to the following restrictions:
-//
-//   1. The origin of this software must not be misrepresented; you must not
-//      claim that you wrote the original software. If you use this software
-//      in a product, an acknowledgment in the product documentation would be
-//      appreciated but is not required.
-//   2. Altered source versions must be plainly marked as such, and must not be
-//      misrepresented as being the original software.
-//   3. This notice may not be removed or altered from any source distribution.
-//
-//       Jean-loup Gailly        Mark Adler
-//       jloup@gzip.org          madler@alumni.caltech.edu
-//
-// REBOL is a trademark of REBOL Technologies
-// Licensed under the Apache License, Version 2.0
-//
-// **********************************************************************
-//
-// Title: ZLIB aggregated header file
-// Build: A0
-// Date:  8-Jul-2017
-// File:  sys-zlib.h
-//
-// AUTO-GENERATED FILE - Do not modify. (From: make-zlib.r)
-//
+/*
+ * Extraction of ZLIB compression and decompression routines
+ * for REBOL [R3] Language Interpreter and Run-time Environment
+ * This is a code-generated file.
+ *
+ * ZLIB Copyright notice:
+ *
+ *   (C) 1995-2017 Jean-loup Gailly and Mark Adler
+ *
+ *   This software is provided 'as-is', without any express or implied
+ *   warranty.  In no event will the authors be held liable for any damages
+ *   arising from the use of this software.
+ *
+ *   Permission is granted to anyone to use this software for any purpose,
+ *   including commercial applications, and to alter it and redistribute it
+ *   freely, subject to the following restrictions:
+ *
+ *   1. The origin of this software must not be misrepresented; you must not
+ *      claim that you wrote the original software. If you use this software
+ *      in a product, an acknowledgment in the product documentation would be
+ *      appreciated but is not required.
+ *   2. Altered source versions must be plainly marked as such, and must not be
+ *      misrepresented as being the original software.
+ *   3. This notice may not be removed or altered from any source distribution.
+ *
+ *       Jean-loup Gailly        Mark Adler
+ *       jloup@gzip.org          madler@alumni.caltech.edu
+ *
+ * REBOL is a trademark of REBOL Technologies
+ * Licensed under the Apache License, Version 2.0
+ *
+ * **********************************************************************
+ *
+ * Title: ZLIB aggregated header
+ * Build: A0
+ * Date:  28-Jul-2020
+ * File:  sys-zlib.h
+ *
+ * AUTO-GENERATED FILE - Do not modify. (From: make-zlib.r)
+ */
 
-// Ren-C
+// REBOL
 #define NO_DUMMY_DECL 1
 #define Z_PREFIX 1
 #define ZLIB_CONST
@@ -441,7 +441,7 @@ typedef unsigned int   uInt;  /* 16 bits or more */
 typedef unsigned long  uLong; /* 32 bits or more */
 
 #ifdef SMALL_MEDIUM
-   /* Borland C/C++ and some old MSC versions ignore FAR inside typedef */
+   /* Borland C/C++ and some old MSC versions ignore FAR in typedef */
 #  define Bytef Byte FAR
 #else
    typedef Byte  FAR Bytef;
@@ -732,7 +732,11 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #  define OS_CODE  10
 #endif
 
-#ifdef _BEOS_
+// !!! The patch for defined __HAIKU__ was added for Ren-C, but would be lost
+// if %make-zlib.reb were executed again to extract from the main sources.
+// The change should be submitted to zlib if it's important.
+//
+#if defined _BEOS_ || defined __HAIKU__
 #  define OS_CODE  16
 #endif
 

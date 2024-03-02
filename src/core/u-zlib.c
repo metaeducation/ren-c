@@ -1,45 +1,45 @@
-//
-// Extraction of ZLIB compression and decompression routines
-// for REBOL [R3] Language Interpreter and Run-time Environment
-// This is a code-generated file.
-//
-// ZLIB Copyright notice:
-//
-//   (C) 1995-2013 Jean-loup Gailly and Mark Adler
-//
-//   This software is provided 'as-is', without any express or implied
-//   warranty.  In no event will the authors be held liable for any damages
-//   arising from the use of this software.
-//
-//   Permission is granted to anyone to use this software for any purpose,
-//   including commercial applications, and to alter it and redistribute it
-//   freely, subject to the following restrictions:
-//
-//   1. The origin of this software must not be misrepresented; you must not
-//      claim that you wrote the original software. If you use this software
-//      in a product, an acknowledgment in the product documentation would be
-//      appreciated but is not required.
-//   2. Altered source versions must be plainly marked as such, and must not be
-//      misrepresented as being the original software.
-//   3. This notice may not be removed or altered from any source distribution.
-//
-//       Jean-loup Gailly        Mark Adler
-//       jloup@gzip.org          madler@alumni.caltech.edu
-//
-// REBOL is a trademark of REBOL Technologies
-// Licensed under the Apache License, Version 2.0
-//
-// **********************************************************************
-//
-// Title: ZLIB aggregated source file
-// Build: A0
-// Date:  8-Jul-2017
-// File:  u-zlib.c
-//
-// AUTO-GENERATED FILE - Do not modify. (From: make-zlib.r)
-//
+/*
+ * Extraction of ZLIB compression and decompression routines
+ * for REBOL [R3] Language Interpreter and Run-time Environment
+ * This is a code-generated file.
+ *
+ * ZLIB Copyright notice:
+ *
+ *   (C) 1995-2017 Jean-loup Gailly and Mark Adler
+ *
+ *   This software is provided 'as-is', without any express or implied
+ *   warranty.  In no event will the authors be held liable for any damages
+ *   arising from the use of this software.
+ *
+ *   Permission is granted to anyone to use this software for any purpose,
+ *   including commercial applications, and to alter it and redistribute it
+ *   freely, subject to the following restrictions:
+ *
+ *   1. The origin of this software must not be misrepresented; you must not
+ *      claim that you wrote the original software. If you use this software
+ *      in a product, an acknowledgment in the product documentation would be
+ *      appreciated but is not required.
+ *   2. Altered source versions must be plainly marked as such, and must not be
+ *      misrepresented as being the original software.
+ *   3. This notice may not be removed or altered from any source distribution.
+ *
+ *       Jean-loup Gailly        Mark Adler
+ *       jloup@gzip.org          madler@alumni.caltech.edu
+ *
+ * REBOL is a trademark of REBOL Technologies
+ * Licensed under the Apache License, Version 2.0
+ *
+ * **********************************************************************
+ *
+ * Title: ZLIB aggregated source
+ * Build: A0
+ * Date:  28-Jul-2020
+ * File:  u-zlib.c
+ *
+ * AUTO-GENERATED FILE - Do not modify. (From: make-zlib.r)
+ */
 
-#include "sys-zlib.h" /* REBOL: see make-zlib.r */
+#include "sys-zlib.h"  /* REBOL: see make-zlib.r */
 #define local static
 
 /* crc32.c -- compute the CRC-32 of a data stream
@@ -924,8 +924,8 @@ uLong ZEXPORT crc32_combine64(
 {
     return crc32_combine_(crc1, crc2, len2);
 }
-#undef DO1 /* REBOL: see make-zlib.r */
-#undef DO8 /* REBOL: see make-zlib.r */
+#undef DO1  /* REBOL: see make-zlib.r */
+#undef DO8  /* REBOL: see make-zlib.r */
 /* adler32.c -- compute the Adler-32 checksum of a data stream
  * Copyright (C) 1995-2011, 2016 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -2499,10 +2499,10 @@ local uInt longest_match(
     deflate_state *s,
     IPos cur_match)
 {
-    register Bytef *scan = s->window + s->strstart; /* current string */
-    register Bytef *match;                       /* matched string */
-    register int len;                           /* length of current match */
-    register Bytef *strend = s->window + s->strstart + MAX_MATCH;
+    Bytef *scan = s->window + s->strstart; /* current string */
+    Bytef *match;                       /* matched string */
+    int len;                           /* length of current match */
+    Bytef *strend = s->window + s->strstart + MAX_MATCH;
 
     /* The code is optimized for HASH_BITS >= 8 and MAX_MATCH-2 multiple of 16.
      * It is easy to get rid of this optimization if necessary.
