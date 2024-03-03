@@ -195,16 +195,19 @@ file-type?: function [
 ]
 
 split-path: func [
-    "Splits and returns directory path and file as a block."
-    target [file! url! text!]
-    <local> dir pos
+    "Splits and returns dir component, variable for filename optionally set"
+    return: [<opt> file!]
+    location [<maybe> file! url! text!]
+    /file  ; no multi-return, simulate it
+        farg [any-word! any-path!]
+    <local> pos dir
 ][
-    pos: _
-    parse target [
-        [#"/" | 1 2 #"." opt #"/"] end (dir: dirize target) |
+    pos: null
+    parse location [
+        [#"/" | 1 2 #"." opt #"/"] end (dir: dirize location) |
         pos: any [thru #"/" [end | pos:]] (
             all [
-                empty? dir: copy/part target at head of target index of pos
+                empty? dir: copy/part location at head of location index of pos
                     |
                 dir: %./
             ]
@@ -212,7 +215,8 @@ split-path: func [
         )
         to end  ; !!! was plain END, but was unchecked and didn't reach it!
     ]
-    reduce [dir pos]
+    set (maybe farg) pos
+    return dir
 ]
 
 intern: function [

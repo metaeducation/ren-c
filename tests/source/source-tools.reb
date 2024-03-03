@@ -404,8 +404,9 @@ rebsource: context [
                 insert queue map-each x contents [join item x]
                 item: null
             ] else [
+                split-path/file item the filename:
                 any [
-                    parse/match second split-path item ["tmp-" to end]
+                    parse/match filename item ["tmp-" to end]
                     not find extensions extension-of item
                 ] then [
                     item: null

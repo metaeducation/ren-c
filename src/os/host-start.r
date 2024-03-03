@@ -468,7 +468,7 @@ host-start: function [
         take argv
     ]
     if o/boot [
-        o/bin: first split-path o/boot
+        o/bin: split-path o/boot
     ]
 
     param-or-die: func [
@@ -659,16 +659,6 @@ host-start: function [
     ;-- !!! this was commented out.  Is it important?
     comment [
         if slash <> first o/boot [o/boot: clean-path o/boot]
-    ]
-
-    if file? o/script [ ; Get the path
-        script-path: split-path o/script
-        case [
-            slash = first first script-path []      ; absolute
-            %./ = first script-path [script-path/1: o/path]   ; curr dir
-        ] else [
-            insert first script-path o/path ; relative
-        ]
     ]
 
     ;-- Convert command line arg strings as needed:

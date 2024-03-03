@@ -1,16 +1,36 @@
 
 (
-    equal? [%./ _] split-path %./
+    file: ~
+    all [
+        %./ = split-path/file %./ 'file
+        file = null
+    ]
 )
 (
-    equal? [%../ _] split-path %../
+    file: ~
+    all [
+        %../ = split-path/file %../ 'file
+        file = null
+    ]
 )
 (
-    equal? [%./ %test] split-path %test
+    file: ~
+    all [
+        %./ = split-path/file %test 'file
+        file = %test
+    ]
 )
 (
-    equal? [%./ %test/] split-path %test/
+    file: ~
+    all [
+        %./ = split-path/file %test/ 'file
+        file = %test/
+    ]
 )
 (
-    equal? [%test/ %test/] split-path %test/test/
+    file: ~
+    all [
+        %test/ = split-path/file %test/test/ 'file
+        file = %test/
+    ]
 )

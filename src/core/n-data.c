@@ -616,7 +616,7 @@ INLINE void Set_Opt_Polymorphic_May_Fail(
 //
 //      return: [<opt> any-value!]
 //          {Will be the values set to, or void if any set values are void}
-//      target [any-word! any-path! block!]
+//      target [<maybe> any-word! any-path! block!]
 //          {Word or path, or block of words and paths}
 //      value [<opt> any-value!]
 //          "Value or block of values"

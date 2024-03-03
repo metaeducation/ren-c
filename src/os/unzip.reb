@@ -453,7 +453,7 @@ ctx-zip: context [
                                 make-dir/deep where/:name
                             ]
                         ][
-                            set [path: file:] split-path name
+                            path: split-path/file name the file:
                             if not exists? where/:path [
                                 make-dir/deep where/:path
                             ]

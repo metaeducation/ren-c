@@ -53,7 +53,7 @@ do <native-emitters.r>  ; for emit-include-params-macro
 
 args: parse-args system/options/args
 src: fix-win32-path to file! :args/SRC
-set [in-dir file-name] split-path src
+in-dir: split-path/file src the file-name:
 output-dir: system/options/path/prep/:in-dir
 mkdir/deep output-dir
 

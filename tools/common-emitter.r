@@ -209,7 +209,7 @@ make-emitter: function [
 
     print unspaced [{Generating "} title {" (via } by {)}]
 
-    stem: second split-path file
+    split-path/file file the stem:
 
     temporary: did any [temporary | parse/match stem ["tmp-" to end]]
 

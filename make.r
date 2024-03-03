@@ -1352,7 +1352,7 @@ add-new-obj-folders: function [
         ]
 
         for-each obj lib [
-            dir: first split-path obj/output
+            dir: split-path obj/output
             if not find folders dir [
                 append folders dir
             ]
@@ -1367,7 +1367,7 @@ for-each file os-file-block [
     ; for filenames.  Note that `+` markers should be removed by this point.
     ;
     file: join %objs/ (ensure [word! path!] file)
-    path: first split-path (ensure file! file)
+    path: split-path (ensure file! file)
     find folders path or [append folders path]
 ]
 add-new-obj-folders ext-objs folders

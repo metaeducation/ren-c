@@ -93,7 +93,7 @@ make object! [
         trap [
             if file? test-file [
                 test-file: clean-path test-file
-                change-dir first split-path test-file
+                change-dir split-path test-file
             ]
             test-sources: get in load-testfile test-file 'contents
         ] then err => [

@@ -187,7 +187,7 @@ do: enclose :lib/do func [f <local> old-system-script] [
             title: spaced ["Bootstrap Shim DO LOAD of:" f/source]
             header: compose [File: f/source]
             parent: system/script
-            path: first split-path f/source
+            path: split-path f/source
             args: f/args
         ]
         f/source: load f/source  ; avoid dir-changing mechanic of DO FILE!
@@ -331,6 +331,34 @@ transcode: lib/function [
     ]
 
     return values
+]
+
+split-path: lib/func [
+    "Splits and returns directory component, variable for file optionally set"
+    return: [<opt> file!]
+    location [<opt> file! url! text!]
+    /file  ; no multi-return, simulate it
+        farg [any-word! any-path!]
+    <local> pos dir
+][
+    if null? :location [return null]
+    pos: _
+    parse location [
+        [#"/" | 1 2 #"." opt #"/"] end (dir: dirize location) |
+        pos: any [thru #"/" [end | pos:]] (
+            all [
+                empty? dir: copy/part location at head of location index of pos
+                    |
+                dir: %./
+            ]
+            all [find [%. %..] pos: to file! pos insert tail of pos #"/"]
+        )
+        to end  ; !!! was plain END, but was unchecked and didn't reach it!
+    ]
+    if :farg [
+        set farg pos
+    ]
+    return maybe- dir
 ]
 
 join: :join-of  ; Note: JOIN now for strings and paths only (not arrays)

@@ -741,7 +741,7 @@ DECLARE_NATIVE(what_dir)
 //
 //  {Changes the current path (where scripts with relative paths will be run).}
 //
-//      path [file! url!]
+//      path [<maybe> file! url!]
 //  ]
 //
 DECLARE_NATIVE(change_dir)
