@@ -1,7 +1,7 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Generate extention native header files"
-    File: %make-ext-native.r ;-- EMIT-HEADER uses to indicate emitting script
+    File: %prep-extension.r  ;-- EMIT-HEADER uses to indicate emitting script
     Rights: {
         Copyright 2017 Atronix Engineering
         Copyright 2017-2018 Rebol Open Source Contributors

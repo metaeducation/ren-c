@@ -198,9 +198,9 @@ made: [
     make-boot.r         core/tmp-boot-block.c
     make-headers.r      include/tmp-internals.h
 
-    make-host-init.r    include/host-init.h
+    make-host-init.r    include/tmp-host-start.inc
     make-os-ext.r       include/host-lib.h
-    make-reb-lib.r      include/rebol.h
+    make-librebol.r     include/rebol.h
 ]
 
 ;

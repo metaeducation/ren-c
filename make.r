@@ -1298,7 +1298,7 @@ prep: make rebmake/entry-class [
         ]
         keep [{$(REBOL)} tools-dir/make-host-init.r]
         keep [{$(REBOL)} tools-dir/make-os-ext.r]
-        keep [{$(REBOL)} tools-dir/make-reb-lib.r]
+        keep [{$(REBOL)} tools-dir/make-librebol.r]
 
         for-each ext all-extensions [
             keep [{$(REBOL)} tools-dir/prep-extension.r
@@ -1312,7 +1312,7 @@ prep: make rebmake/entry-class [
             ]
         ]
 
-        keep [{$(REBOL)} tools-dir/make-boot-ext-header.r
+        keep [{$(REBOL)} tools-dir/make-extensions-table.r
             unspaced [
                 {EXTENSIONS=} delimit ":" map-each ext builtin-extensions [
                     to text! ext/name

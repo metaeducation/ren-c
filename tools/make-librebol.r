@@ -1,7 +1,7 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Make libRebol related files (for %rebol.h)"
-    File: %make-reb-lib.r
+    File: %make-librebol.r
     Rights: {
         Copyright 2012 REBOL Technologies
         Copyright 2012-2018 Rebol Open Source Contributors
