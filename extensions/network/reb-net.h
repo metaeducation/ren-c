@@ -69,7 +69,7 @@ struct Reb_Sock_Port_State {
 
 typedef struct Reb_Sock_Port_State SOCKREQ;
 
-inline static SOCKREQ *Sock_Of_Port(const Value* port)
+INLINE SOCKREQ *Sock_Of_Port(const Value* port)
 {
     Value* state = CTX_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
     return VAL_HANDLE_POINTER(SOCKREQ, state);

@@ -90,7 +90,7 @@ static bool PG_Api_Initialized = false;
 // are Is_Api_Value() mustn't be nulled.  nullptr is the only currency exposed
 // to the clients of the API for NULL.
 //
-inline static const RebolValue* NULLIFY_NULLED(const Value* value) {
+INLINE const RebolValue* NULLIFY_NULLED(const Value* value) {
     if (Is_Nulled(value))
         return nullptr;
     return value;
@@ -1092,7 +1092,7 @@ static bool Run_Va_Throws(
 // or use rebElide() and say it doesn't matter.  (or just find a way in the
 // executed code passed to not have it evaluate to nihil)
 //
-inline static void Run_Va_Undecayed_May_Fail_Calls_Va_End(
+INLINE void Run_Va_Undecayed_May_Fail_Calls_Va_End(
     RebolSpecifier** specifier_ref,
     Atom* out,
     const void* p,  // first pointer (may be END, nullptr means NULLED)
@@ -1119,7 +1119,7 @@ inline static void Run_Va_Undecayed_May_Fail_Calls_Va_End(
 // APIs just as if you'd tried to do a SET-WORD!...so you don't have to worry
 // about multi-return packs etc.
 //
-inline static void Run_Va_Decay_May_Fail_Calls_Va_End(
+INLINE void Run_Va_Decay_May_Fail_Calls_Va_End(
     RebolSpecifier** specifier_ref,
     Value* out,
     const void* p,  // first pointer (may be END, nullptr means NULLED)

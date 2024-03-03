@@ -185,10 +185,10 @@ static void WRITE_UTF8(const unsigned char *utf8, size_t size)
 static bool Term_Initialized = false;  // Terminal init was successful
 
 
-inline static unsigned int Term_End(STD_TERM *t)
+INLINE unsigned int Term_End(STD_TERM *t)
   { return rebUnboxInteger("length of", t->buffer); }
 
-inline static unsigned int Term_Remain(STD_TERM *t)
+INLINE unsigned int Term_Remain(STD_TERM *t)
   { return Term_End(t) - t->pos; }
 
 // Older MSVC installations don't define SetConsoleMode()'s "extended flags"

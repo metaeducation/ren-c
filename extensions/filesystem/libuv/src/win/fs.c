@@ -142,7 +142,7 @@ void uv__fs_init(void) {
 }
 
 
-INLINE static int fs__capture_path(uv_fs_t* req, const char* path,
+inline static int fs__capture_path(uv_fs_t* req, const char* path,
     const char* new_path, const int copy_path) {
   char* buf;
   char* pos;
@@ -241,7 +241,7 @@ INLINE static int fs__capture_path(uv_fs_t* req, const char* path,
 
 
 
-INLINE static void uv__fs_req_init(uv_loop_t* loop, uv_fs_t* req,
+inline static void uv__fs_req_init(uv_loop_t* loop, uv_fs_t* req,
     uv_fs_type fs_type, const uv_fs_cb cb) {
   uv__once_init();
   UV_REQ_INIT(req, UV_FS);
@@ -306,7 +306,7 @@ static int fs__wide_to_utf8(WCHAR* w_source_ptr,
 }
 
 
-INLINE static int fs__readlink_handle(HANDLE handle, char** target_ptr,
+inline static int fs__readlink_handle(HANDLE handle, char** target_ptr,
     uint64_t* target_len_ptr) {
   char buffer[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
   REPARSE_DATA_BUFFER* reparse_data = (REPARSE_DATA_BUFFER*) buffer;
@@ -1248,7 +1248,7 @@ void fs__mktemp(uv_fs_t* req, uv__fs_mktemp_func func) {
   size_t len;
   uint64_t v;
   char* path;
-  
+
   path = (char*)req->path;
   len = wcslen(req->file.pathw);
   ep = req->file.pathw + len;
@@ -1704,7 +1704,7 @@ void fs__closedir(uv_fs_t* req) {
   SET_REQ_RESULT(req, 0);
 }
 
-INLINE static int fs__stat_handle(HANDLE handle, uv_stat_t* statbuf,
+inline static int fs__stat_handle(HANDLE handle, uv_stat_t* statbuf,
     int do_lstat) {
   FILE_ALL_INFORMATION file_info;
   FILE_FS_VOLUME_INFORMATION volume_info;
@@ -1849,7 +1849,7 @@ INLINE static int fs__stat_handle(HANDLE handle, uv_stat_t* statbuf,
 }
 
 
-INLINE static void fs__stat_prepare_path(WCHAR* pathw) {
+inline static void fs__stat_prepare_path(WCHAR* pathw) {
   size_t len = wcslen(pathw);
 
   /* TODO: ignore namespaced paths. */
@@ -1860,7 +1860,7 @@ INLINE static void fs__stat_prepare_path(WCHAR* pathw) {
 }
 
 
-INLINE static DWORD fs__stat_impl_from_path(WCHAR* path,
+inline static DWORD fs__stat_impl_from_path(WCHAR* path,
                                             int do_lstat,
                                             uv_stat_t* statbuf) {
   HANDLE handle;
@@ -1892,7 +1892,7 @@ INLINE static DWORD fs__stat_impl_from_path(WCHAR* path,
 }
 
 
-INLINE static void fs__stat_impl(uv_fs_t* req, int do_lstat) {
+inline static void fs__stat_impl(uv_fs_t* req, int do_lstat) {
   DWORD error;
 
   error = fs__stat_impl_from_path(req->file.pathw, do_lstat, &req->statbuf);
@@ -1960,7 +1960,7 @@ static void fs__rename(uv_fs_t* req) {
 }
 
 
-INLINE static void fs__sync_impl(uv_fs_t* req) {
+inline static void fs__sync_impl(uv_fs_t* req) {
   int fd = req->file.fd;
   int result;
 
@@ -2266,7 +2266,7 @@ fchmod_cleanup:
 }
 
 
-INLINE static int fs__utime_handle(HANDLE handle, double atime, double mtime) {
+inline static int fs__utime_handle(HANDLE handle, double atime, double mtime) {
   FILETIME filetime_a, filetime_m;
 
   TIME_T_TO_FILETIME(atime, &filetime_a);
@@ -2279,7 +2279,7 @@ INLINE static int fs__utime_handle(HANDLE handle, double atime, double mtime) {
   return 0;
 }
 
-INLINE static DWORD fs__utime_impl_from_path(WCHAR* path,
+inline static DWORD fs__utime_impl_from_path(WCHAR* path,
                                              double atime,
                                              double mtime,
                                              int do_lutime) {
@@ -2312,7 +2312,7 @@ INLINE static DWORD fs__utime_impl_from_path(WCHAR* path,
   return ret;
 }
 
-INLINE static void fs__utime_impl(uv_fs_t* req, int do_lutime) {
+inline static void fs__utime_impl(uv_fs_t* req, int do_lutime) {
   DWORD error;
 
   error = fs__utime_impl_from_path(req->file.pathw,

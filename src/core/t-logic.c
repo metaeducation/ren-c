@@ -149,7 +149,7 @@ DECLARE_INTRINSIC(not_1)  // see TO-C-NAME
 // This scales the idea back to a very simple concept of a quoted GROUP!,
 // WORD!, or TUPLE!.
 //
-inline static bool Do_Logic_Right_Side_Throws(
+INLINE bool Do_Logic_Right_Side_Throws(
     Sink(Value*) out,
     const Value* right
 ){
@@ -286,7 +286,7 @@ DECLARE_NATIVE(unless)
 }
 
 
-inline static bool Math_Arg_For_Logic(Value* arg)
+INLINE bool Math_Arg_For_Logic(Value* arg)
 {
     if (Is_Logic(arg))
         return Cell_Logic(arg);

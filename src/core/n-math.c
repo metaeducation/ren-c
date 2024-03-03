@@ -924,7 +924,7 @@ DECLARE_NATIVE(minimum)
 }
 
 
-inline static Element* Init_Zeroed_Hack(Sink(Element*) out, Heart heart) {
+INLINE Element* Init_Zeroed_Hack(Sink(Element*) out, Heart heart) {
     //
     // !!! This captures of a dodgy behavior of R3-Alpha, which was to assume
     // that clearing the payload of a value and then setting the header made

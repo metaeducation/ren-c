@@ -144,7 +144,7 @@ STATIC_ASSERT(
 //    an arity-1 function.  `1 + x: whatever ...`.  This overrides the no
 //    lookahead behavior flag right up front.
 //
-inline static Level* Maybe_Rightward_Continuation_Needed(Level* L)
+INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
 {
     if (Is_Feed_At_End(L->feed))  // `do [x:]`, `do [o.x:]`, etc. are illegal
         fail (Error_Need_Non_End(L_current));

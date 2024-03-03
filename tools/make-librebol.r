@@ -238,7 +238,7 @@ for-each-api [
 
     append variadic-api-c-helpers cscape [:api {
         $<Maybe Attributes>
-        inline static $<Return-Type> $<Name>_helper(  /* C version */
+        static inline $<Return-Type> $<Name>_helper(  /* C version */
             RebolSpecifier** specifier_ref,
             $<Helper-Params, >
             const void* p, ...
@@ -450,7 +450,7 @@ e-lib/emit [ver {
         #define Compiler_Lacks_Variadic_Macros_If_This_Errors(...) \
             (__VA_ARGS__ + 304)
 
-        inline static int Feature_Test_Compiler_For_Variadic_Macros(void)
+        static inline int Feature_Test_Compiler_For_Variadic_Macros(void)
             { return Compiler_Lacks_Variadic_Macros_If_This_Errors(1020); }
     #endif
 
@@ -1125,7 +1125,7 @@ e-lib/emit [ver {
         ((T*)rebTryAllocBytes(sizeof(T) * (n)))
 
     /* Used during boot to zero out global variables */
-    inline static void rebReleaseAndNull(RebolValue** v) {
+    static inline void rebReleaseAndNull(RebolValue** v) {
         rebRelease(*v);
         *v = rebNull;  /* nullptr may not be defined */
     }

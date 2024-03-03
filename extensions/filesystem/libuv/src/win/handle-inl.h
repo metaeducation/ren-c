@@ -85,7 +85,7 @@
   } while (0)
 
 
-INLINE static void uv__want_endgame(uv_loop_t* loop, uv_handle_t* handle) {
+inline static void uv__want_endgame(uv_loop_t* loop, uv_handle_t* handle) {
   if (!(handle->flags & UV_HANDLE_ENDGAME_QUEUED)) {
     handle->flags |= UV_HANDLE_ENDGAME_QUEUED;
 
@@ -95,7 +95,7 @@ INLINE static void uv__want_endgame(uv_loop_t* loop, uv_handle_t* handle) {
 }
 
 
-INLINE static void uv__process_endgames(uv_loop_t* loop) {
+inline static void uv__process_endgames(uv_loop_t* loop) {
   uv_handle_t* handle;
 
   while (loop->endgame_handles) {
@@ -163,7 +163,7 @@ INLINE static void uv__process_endgames(uv_loop_t* loop) {
   }
 }
 
-INLINE static HANDLE uv__get_osfhandle(int fd)
+inline static HANDLE uv__get_osfhandle(int fd)
 {
   /* _get_osfhandle() raises an assert in debug builds if the FD is invalid.
    * But it also correctly checks the FD and returns INVALID_HANDLE_VALUE for

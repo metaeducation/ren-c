@@ -61,11 +61,11 @@
 
 #include "reb-process.h"
 
-static inline bool retry_read(int nbytes) {
+INLINE bool retry_read(int nbytes) {
     return nbytes < 0 && (errno == EAGAIN || errno == EINTR);
 }
 
-static inline ssize_t safe_read(int f, void*b, size_t c) {
+INLINE ssize_t safe_read(int f, void*b, size_t c) {
   read_again: ;
     ssize_t r = read(f,b,c);
     if (retry_read(r))
@@ -73,7 +73,7 @@ static inline ssize_t safe_read(int f, void*b, size_t c) {
     return r;
 }
 
-inline static bool Open_Pipe_Fails(int pipefd[2]) {
+INLINE bool Open_Pipe_Fails(int pipefd[2]) {
   #ifdef USE_PIPE2_NOT_PIPE
     //
     // NOTE: pipe() is POSIX, but pipe2() is Linux-specific.  With pipe() it
@@ -107,7 +107,7 @@ inline static bool Open_Pipe_Fails(int pipefd[2]) {
     return false;
 }
 
-inline static bool Set_Nonblocking_Fails(int fd) {
+INLINE bool Set_Nonblocking_Fails(int fd) {
     int oldflags = fcntl(fd, F_GETFL);
     if (oldflags < 0)
         return true;

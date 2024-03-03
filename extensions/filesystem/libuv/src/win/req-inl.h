@@ -82,12 +82,12 @@
   }
 
 
-INLINE static uv_req_t* uv__overlapped_to_req(OVERLAPPED* overlapped) {
+inline static uv_req_t* uv__overlapped_to_req(OVERLAPPED* overlapped) {
   return CONTAINING_RECORD(overlapped, uv_req_t, u.io.overlapped);
 }
 
 
-INLINE static void uv__insert_pending_req(uv_loop_t* loop, uv_req_t* req) {
+inline static void uv__insert_pending_req(uv_loop_t* loop, uv_req_t* req) {
   req->next_req = NULL;
   if (loop->pending_reqs_tail) {
 #ifdef _DEBUG
@@ -138,7 +138,7 @@ INLINE static void uv__insert_pending_req(uv_loop_t* loop, uv_req_t* req) {
   } while (0)
 
 
-INLINE static void uv__process_reqs(uv_loop_t* loop) {
+inline static void uv__process_reqs(uv_loop_t* loop) {
   uv_req_t* req;
   uv_req_t* first;
   uv_req_t* next;

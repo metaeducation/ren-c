@@ -91,26 +91,26 @@
 // To avoid the cost of incrementing and decrementing, only in debug builds.
 //
 #if DEBUG
-    inline static void Remove_GC_Mark(const Node* node) {  // stub or pairing
+    INLINE void Remove_GC_Mark(const Node* node) {  // stub or pairing
         assert(Is_Node_Marked(node));
         Clear_Node_Marked_Bit(node);
         g_gc.mark_count -= 1;
     }
 
-    inline static void Remove_GC_Mark_If_Marked(const Node* node) {
+    INLINE void Remove_GC_Mark_If_Marked(const Node* node) {
         if (Is_Node_Marked(node)) {
             Clear_Node_Marked_Bit(node);
             g_gc.mark_count -= 1;
         }
     }
 
-    inline static void Add_GC_Mark(const Node* node) {
+    INLINE void Add_GC_Mark(const Node* node) {
         assert(not Is_Node_Marked(node));
         Set_Node_Marked_Bit(node);
         g_gc.mark_count += 1;
     }
 
-    inline static void Add_GC_Mark_If_Not_Already_Marked(const Node* node) {
+    INLINE void Add_GC_Mark_If_Not_Already_Marked(const Node* node) {
         if (not Is_Node_Marked(node)) {
             Set_Node_Marked_Bit(node);
             g_gc.mark_count += 1;
@@ -126,7 +126,7 @@
 
 static void Queue_Mark_Cell_Deep(const Cell* v);
 
-inline static void Queue_Mark_Maybe_Fresh_Cell_Deep(const Cell* v) {
+INLINE void Queue_Mark_Maybe_Fresh_Cell_Deep(const Cell* v) {
     if (not Is_Fresh(v))
         Queue_Mark_Cell_Deep(v);
 }

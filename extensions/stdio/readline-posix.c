@@ -68,7 +68,7 @@ enum {
 };
 
 
-inline static void WRITE_UTF8(const unsigned char *utf8, size_t size) {
+INLINE void WRITE_UTF8(const unsigned char *utf8, size_t size) {
     if (write(STDOUT_FILENO, utf8, size) == -1) {
         /* Error here, or better to "just try to keep going"? */
     }
@@ -98,10 +98,10 @@ struct Reb_Terminal_Struct {
 static bool Term_Initialized = false;  // Terminal init was successful
 
 
-inline static unsigned int Term_End(STD_TERM *t)
+INLINE unsigned int Term_End(STD_TERM *t)
   { return rebUnboxInteger("length of", t->buffer); }
 
-inline static unsigned int Term_Remain(STD_TERM *t)
+INLINE unsigned int Term_Remain(STD_TERM *t)
   { return Term_End(t) - t->pos; }
 
 

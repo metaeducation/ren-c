@@ -217,7 +217,7 @@ STATIC_ASSERT((int)AM_FIND_MATCH == (int)PF_FIND_MATCH);
 // !!! This and other efficiency tricks from R3-Alpha should be reviewed to
 // see if they're really the best option.
 //
-inline static Option(SymId) VAL_CMD(const Cell* v) {
+INLINE Option(SymId) VAL_CMD(const Cell* v) {
     Option(SymId) sym = Cell_Word_Id(v);
     if (sym >= SYM_SET and sym <= SYM_END)
         return sym;
@@ -351,19 +351,19 @@ static bool Subparse_Throws(
 // question, but now the `where` at the time of failure will indicate the
 // location in the parse dialect that's the problem.
 
-inline static Context* Error_Parse3_Rule(void) {
+INLINE Context* Error_Parse3_Rule(void) {
     return Error_Parse3_Rule_Raw();
 }
 
-inline static Context* Error_Parse3_End(void) {
+INLINE Context* Error_Parse3_End(void) {
     return Error_Parse3_End_Raw();
 }
 
-inline static Context* Error_Parse3_Command(Level* level_) {
+INLINE Context* Error_Parse3_Command(Level* level_) {
     return Error_Parse3_Command_Raw(P_RULE);
 }
 
-inline static Context* Error_Parse3_Variable(Level* level_) {
+INLINE Context* Error_Parse3_Variable(Level* level_) {
     return Error_Parse3_Variable_Raw(P_RULE);
 }
 

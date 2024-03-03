@@ -116,7 +116,7 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
 
 #if DEBUG_HAS_PROBE
 
-inline static void Probe_Print_Helper(
+INLINE void Probe_Print_Helper(
     const void *p,  // the Value*, Series*, or UTF-8 char*
     const char *expr,  // stringified contents of the PROBE() macro
     const char *label,  // detected type of `p` (see %rebnod.h)
@@ -134,7 +134,7 @@ inline static void Probe_Print_Helper(
 }
 
 
-inline static void Probe_Molded_Value(const Value* v)
+INLINE void Probe_Molded_Value(const Value* v)
 {
     DECLARE_MOLD (mo);
     Push_Mold(mo);

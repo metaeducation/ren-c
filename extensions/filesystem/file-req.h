@@ -109,7 +109,7 @@ struct Reb_File_Port_State {
 
 typedef struct Reb_File_Port_State FILEREQ;
 
-inline static FILEREQ *File_Of_Port(const Value* port)
+INLINE FILEREQ *File_Of_Port(const Value* port)
 {
     Value* state = CTX_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
     return cast(FILEREQ*, Cell_Binary_At_Ensure_Mutable(state));

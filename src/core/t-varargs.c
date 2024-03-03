@@ -29,7 +29,7 @@
 #include "sys-core.h"
 
 
-inline static void Init_For_Vararg_End(Atom* out, enum Reb_Vararg_Op op) {
+INLINE void Init_For_Vararg_End(Atom* out, enum Reb_Vararg_Op op) {
     if (op == VARARG_OP_TAIL_Q)
         Init_True(out);
     else
@@ -43,7 +43,7 @@ inline static void Init_For_Vararg_End(Atom* out, enum Reb_Vararg_Op op) {
 // prelude which sees if it can answer the current query just from looking one
 // unit ahead.
 //
-inline static bool Vararg_Op_If_No_Advance_Handled(
+INLINE bool Vararg_Op_If_No_Advance_Handled(
     Atom* out,
     enum Reb_Vararg_Op op,
     Option(const Element*) opt_look, // the first value in the varargs input

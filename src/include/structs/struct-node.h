@@ -190,28 +190,28 @@ typedef uintptr_t Flags;
     #define THIRD_BYTE(p)       x_cast(Byte*, (p))[2]
     #define FOURTH_BYTE(p)      x_cast(Byte*, (p))[3]
 #else
-    inline static Byte FIRST_BYTE(const void* p)
+    INLINE Byte FIRST_BYTE(const void* p)
       { return cast(const Byte*, p)[0]; }
 
-    inline static Byte& FIRST_BYTE(void* p)
+    INLINE Byte& FIRST_BYTE(void* p)
       { return cast(Byte*, p)[0]; }
 
-    inline static Byte SECOND_BYTE(const void* p)
+    INLINE Byte SECOND_BYTE(const void* p)
       { return cast(const Byte*, p)[1]; }
 
-    inline static Byte& SECOND_BYTE(void* p)
+    INLINE Byte& SECOND_BYTE(void* p)
       { return cast(Byte*, p)[1]; }
 
-    inline static Byte THIRD_BYTE(const void* p)
+    INLINE Byte THIRD_BYTE(const void* p)
       { return cast(const Byte*, p)[2]; }
 
-    inline static Byte& THIRD_BYTE(void *p)
+    INLINE Byte& THIRD_BYTE(void *p)
       { return cast(Byte*, p)[2]; }
 
-    inline static Byte FOURTH_BYTE(const void* p)
+    INLINE Byte FOURTH_BYTE(const void* p)
       { return cast(const Byte*, p)[3]; }
 
-    inline static Byte& FOURTH_BYTE(void* p)
+    INLINE Byte& FOURTH_BYTE(void* p)
       { return cast(Byte*, p)[3]; }
 #endif
 

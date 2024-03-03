@@ -55,15 +55,15 @@
     ((L)->flags.bits &= ~SCAN_EXECUTOR_FLAG_##name)
 
 
-inline static bool Is_Dot_Or_Slash(char c)
+INLINE bool Is_Dot_Or_Slash(char c)
   { return c == '/' or c == '.'; }
 
-inline static bool Interstitial_Match(char c, char mode) {
+INLINE bool Interstitial_Match(char c, char mode) {
     assert(mode == '/' or mode == '.');
     return c == mode;
 }
 
-inline static Sigil Sigil_From_Token(Token t) {
+INLINE Sigil Sigil_From_Token(Token t) {
     assert(t < u_cast(int, SIGIL_MAX));
     assert(t != u_cast(int, SIGIL_0));
     assert(t != u_cast(int, SIGIL_SET));

@@ -45,7 +45,7 @@
   // of in the debugger.
   //
   #if defined(__HAIKU__) || defined(__EMSCRIPTEN__)
-      inline static void debug_break() {
+      static inline void debug_break() {
           int x = 0;
         #if !defined(NDEBUG)
           printf("debug_break() called\n");
@@ -62,7 +62,7 @@
     #include <assert.h>  // include so it will think it has been included
     #undef assert  // (this way its include guard prevents it defining again)
 
-    inline static void Assertion_Failure(
+    static inline void Assertion_Failure(
         const char* file,
         int line,
         const char* expr

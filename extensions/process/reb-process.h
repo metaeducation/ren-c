@@ -24,12 +24,12 @@
 
 
 ATTRIBUTE_NO_RETURN
-inline static void Fail_Permission_Denied(void) {
+INLINE void Fail_Permission_Denied(void) {
     rebJumps("fail {The process does not have enough permission}");
 }
 
 ATTRIBUTE_NO_RETURN
-inline static void Fail_No_Process(const Value* arg) {
+INLINE void Fail_No_Process(const Value* arg) {
     rebJumps(
         "fail [{The target process (group) does not exist:}", arg, "]"
     );
@@ -37,7 +37,7 @@ inline static void Fail_No_Process(const Value* arg) {
 
 #if TO_WINDOWS
     ATTRIBUTE_NO_RETURN
-    inline static void Fail_Terminate_Failed(DWORD err) {  // GetLastError()
+    INLINE void Fail_Terminate_Failed(DWORD err) {  // GetLastError()
         rebJumps(
             "fail [{Terminate failed with error number:}", rebI(err), "]"
         );

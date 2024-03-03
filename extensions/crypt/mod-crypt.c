@@ -71,7 +71,7 @@ typedef RebolValue Value;
 // specific errors.  But a debug build might want to.  For now, one error
 // (good place to set a breakpoint).
 //
-inline static Value* rebMbedtlsError(int mbedtls_ret) {
+INLINE Value* rebMbedtlsError(int mbedtls_ret) {
     Value* result = rebValue("make error! {mbedTLS error}");  // break here
     UNUSED(mbedtls_ret);  // corrupts mbedtls_ret in release build
     return result;

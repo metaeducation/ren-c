@@ -86,7 +86,7 @@ extern Value* Rename_File_Or_Directory(const Value* port, const Value* to);
 extern Value* Truncate_File(const Value* port);
 
 
-inline static uint64_t File_Size_Cacheable_May_Fail(const Value* port)
+INLINE uint64_t File_Size_Cacheable_May_Fail(const Value* port)
 {
     uint64_t size;
     Value* error = Get_File_Size_Cacheable(&size, port);

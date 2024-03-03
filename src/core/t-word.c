@@ -220,7 +220,7 @@ void MF_Word(REB_MOLD *mo, const Cell* v, bool form) {
 }
 
 
-inline static void Mold_Decorable_Word(REB_MOLD *mo, const Cell* v)
+INLINE void Mold_Decorable_Word(REB_MOLD *mo, const Cell* v)
 {
     const Symbol* symbol = Cell_Word_Symbol(v);
     Append_Utf8(mo->series, String_UTF8(symbol), String_Size(symbol));

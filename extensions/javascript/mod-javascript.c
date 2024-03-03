@@ -113,7 +113,7 @@
 
     static bool PG_JS_Trace = false;  // Turned on/off with JS-TRACE native
 
-    inline static void Javascript_Trace_Helper_Debug(const char *buf) {
+    INLINE void Javascript_Trace_Helper_Debug(const char *buf) {
         if (PG_JS_Trace) {
             printf("@%ld: %s\n", cast(long, TG_tick), buf);  // prefix ticks
             fflush(stdout);  // just to be safe
@@ -188,13 +188,13 @@
 
 typedef unsigned int heapaddr_t;
 
-inline static heapaddr_t Heapaddr_From_Pointer(const void *p) {
+INLINE heapaddr_t Heapaddr_From_Pointer(const void *p) {
     uintptr_t u = i_cast(uintptr_t, p);
     assert(u < UINT_MAX);
     return u;
 }
 
-inline static void* Pointer_From_Heapaddr(heapaddr_t addr)
+INLINE void* Pointer_From_Heapaddr(heapaddr_t addr)
   { return p_cast(void*, cast(uintptr_t, addr)); }
 
 static void cleanup_js_object(const Value* v) {
@@ -228,15 +228,15 @@ static void cleanup_js_object(const Value* v) {
 //  from JavaScript code may only be caught by JavaScript code."
 //
 
-inline static heapaddr_t Level_Id_For_Level(Level* L) {
+INLINE heapaddr_t Level_Id_For_Level(Level* L) {
     return Heapaddr_From_Pointer(L);
 }
 
-inline static Level* Level_From_Level_Id(heapaddr_t id) {
+INLINE Level* Level_From_Level_Id(heapaddr_t id) {
     return cast(Level*, Pointer_From_Heapaddr(id));
 }
 
-inline static Value* Value_From_Value_Id(heapaddr_t id) {
+INLINE Value* Value_From_Value_Id(heapaddr_t id) {
     if (id == 0)
         return nullptr;
 
@@ -262,7 +262,7 @@ inline static Value* Value_From_Value_Id(heapaddr_t id) {
 // was put in that table at the time of creation (the native_id).
 //
 
-inline static heapaddr_t Native_Id_For_Action(Action* act)
+INLINE heapaddr_t Native_Id_For_Action(Action* act)
   { return Heapaddr_From_Pointer(ACT_IDENTITY(act)); }
 
 enum {

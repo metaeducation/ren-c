@@ -114,7 +114,7 @@ enum {
     PATH_OPT_SRC_IS_DIR = 1 << 0
 };
 
-inline static bool Last_In_Mold_Is_Slash(REB_MOLD *mo) {
+INLINE bool Last_In_Mold_Is_Slash(REB_MOLD *mo) {
     if (mo->base.size == Series_Used(mo->series))
         return false;  // nothing added yet
 
