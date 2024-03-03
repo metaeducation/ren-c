@@ -1,8 +1,7 @@
 Rebol [
-    Title: "Run-tests"
+    Title: "Core tests run with crash recovery"
     File: %run-tests.r
-    Copyright: [2014 "Saphirion AG"]
-    Author: "Ladislav Mecir"
+    Copyright: [2012 "Saphirion AG"]
     License: {
         Licensed under the Apache License, Version 2.0 (the "License");
         you may not use this file except in compliance with the License.
@@ -11,28 +10,49 @@ Rebol [
         http://www.apache.org/licenses/LICENSE-2.0
     }
     Author: "Ladislav Mecir"
-    Purpose: {Click and run tests in a file or directory.}
+    Purpose: "Core tests"
 ]
 
 do %test-framework.r
 
-run-tests: function [tests] [
-    if dir? tests [
-        tests: dirize tests
-        change-dir tests
-        for-each file read tests [
-            ; check if it is a test file
-            if %.tst = find/last file %. [run-tests file]
+; Example runner for the REBOL/Core tests which chooses
+; appropriate flags depending on the interpreter version.
+
+do-core-tests: function [return: <void>] [
+    ; Check if we run R3 or R2.
+    flags: pick [
+        [<64bit> <r3only> <r3>]
+        [<32bit> <r2only>]
+    ] not blank? in system 'catalog
+
+    ; calculate interpreter checksum
+    case [
+        file? system/options/boot and [#"/" = first system/options/boot] [
+            interpreter-checksum: checksum/method read-binary
+                system/options/boot 'sha1
         ]
-        return null
+        text? system/script/args [
+            interpreter-checksum: checksum/method read-binary
+                local-to-file system/script/args 'sha1
+        ]
+    ] else [
+        ; use system/build
+        interpreter-checksum: checksum/method to binary!
+            mold system/build 'sha1
     ]
 
-    ; having an individual file
-    suffix: find/last tests %.
-    log-file-prefix: copy/part tests suffix
+    log-file-prefix: copy %r
+    repeat i length of version: system/version [
+        append log-file-prefix "_"
+        append log-file-prefix mold version/:i
+    ]
 
     print "Testing ..."
-    set [log-file: summary:] do-recover tests [] blank log-file-prefix
+    result: do-recover %core-tests.r flags interpreter-checksum log-file-prefix
+    set [log-file summary] result
+
+    print ["Done, see the log file:" log-file]
+    print summary
 ]
 
-run-tests local-to-file first system/options/args
+do-core-tests
