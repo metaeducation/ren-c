@@ -326,8 +326,8 @@ to-lit-path: func* [return: [quoted?] value [element?]] [
 print: func* [
     {Output SPACED text with newline (evaluating elements if BLOCK!)}
 
-    return: "See NIHIL docs for caution on casually making vaporizing routines"
-        [nihil?]
+    return: "Returns null if line outputs nothing, e.g. print [void]"
+        [~ ~null~]
     line "Line of text or block, [] has NO output, CHAR! newline allowed"
         [<maybe> char? text! block! quoted?]
 ][
@@ -336,7 +336,7 @@ print: func* [
             fail "PRINT only allows CHAR! of newline (see WRITE-STDOUT)"
         ]
         write-stdout line
-        return nihil
+        return ~
     ]
 
     if quoted? line [  ; Speculative feature: quote mark as a mold request
@@ -345,15 +345,15 @@ print: func* [
 
     write-stdout (maybe spaced line) then [
         write-stdout newline
+    ] else [
+        return null
     ]
-
-    return nihil
 ]
 
 echo: func* [
     {Freeform output of text, with @WORD, @TU.P.LE, and @(GR O UP) as escapes}
 
-    return: [nihil?]
+    return: [~]
     'args "If a BLOCK!, then just that block's contents--else to end of line"
         [element? <variadic>]
     <local> line
@@ -380,7 +380,6 @@ echo: func* [
         ]
     ]
     write-stdout newline
-    return nihil
 ]
 
 

@@ -296,7 +296,7 @@ confirm: func [
 list-dir: func [
     "Print contents of a directory (ls)."
 
-    return: [nihil?]
+    return: [~]
     'path [<end> file! word! path! text!]
         "Accepts %file, :variables, and just words (as dirs)"
     /l "Line of info format"
@@ -328,7 +328,7 @@ list-dir: func [
     let files: attempt [read %./] else [
         print ["Not found:" :path]
         change-dir save-dir
-        return nihil
+        return ~
     ]
 
     for-each file files [
@@ -356,7 +356,6 @@ list-dir: func [
     all [text? l, not empty? l] then [print l]
 
     change-dir save-dir
-    return nihil
 ]
 
 

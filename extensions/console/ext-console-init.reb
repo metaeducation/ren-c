@@ -174,15 +174,23 @@ export console!: make object! [
             v: first v  ; items in pack are ^META'd
         ]
 
-        === PRINT NOTHING FOR VOID ===
+        === PRINT NOTHING FOR TRASH ===
 
-        ; VOID lacks any representation.  So there's nothing we can print
-        ; like `== void` (which would look like the WORD! void), and no special
-        ; syntax exists for them...only meta/quasiforms...that's by design.
+        ; By default, we've decided that some value needs to not display in
+        ; the console, to suppress output from things like HELP or PRINT,
+        ; because it's noisy to have `== xxx` produced in that case.
         ;
-        ; So giving *no* output is the most natural case for such a situation.
+        ; (Of course, a console customization could be done which displayed
+        ; all results...but the default should look somewhat streamlined.)
+        ;
+        ; Whatever doesn't display will be a "lie" in some sense.  The two
+        ; competing lies are VOID (a.k.a. the ~void~ WORD! antiform) and
+        ; TRASH (a.k.a. ~, the antiform of blank).  The decision has flipped
+        ; many times, but trash is the winner.
+        ;
+        ; https://forum.rebol.info/t/console-treatment-of-void-vs-trash/2045
 
-        if v = void' [
+        if v = trash' [
             return ~
         ]
 

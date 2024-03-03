@@ -99,10 +99,9 @@ boot-banner: [
 
 about: func [
     "Information about REBOL"
-    return: [nihil?]
+    return: [~]
 ][
     print make-banner boot-banner
-    return nihil
 ]
 
 
@@ -116,7 +115,7 @@ about: func [
 ;
 usage: func [
     "Prints command-line arguments."
-    return: [nihil?]
+    return: [~]
 ][
 ;       --cgi (-c)       Load CGI utiliy module and modes
 ;       --version tuple  Script must be this version or greater
@@ -161,16 +160,13 @@ usage: func [
         REBOL
         REBOL -q --about --suppress "%rebol.reb %user.reb"
     }
-
-    return nihil
 ]
 
 license: func [
     "Prints the REBOL/core license agreement."
-    return: [nihil?]
+    return: [~]
 ][
     print system.license
-    return nihil
 ]
 
 host-script-pre-load: func [

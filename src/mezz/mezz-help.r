@@ -83,7 +83,7 @@ browse: func [
 help: func [
     "Prints information about words and values (if no args, general help)."
 
-    return: [nihil?]
+    return: [~]
     'topic [<end> element?]
         "WORD! whose value to explain, or other HELP target (try HELP HELP)"
     /doc "Open web browser to related documentation."
@@ -144,7 +144,7 @@ help: func [
                 upgrade - check for newer versions
                 usage - program cmd line options
         }
-        return nihil
+        return ~
     ]
 
     ; HELP quotes, but someone might want to use an expression, e.g.
@@ -157,7 +157,7 @@ help: func [
     if match [group! get-word! get-path! get-tuple!] topic [
         topic: reeval topic else [
             print "NULL is a non-valued state that cannot be put in arrays"
-            return nihil
+            return ~
         ]
     ]
 
@@ -187,7 +187,7 @@ help: func [
 
             browse join https://r3n.github.io/topics/ as text! topic
             print newline
-            return nihil
+            return ~
         ]
 
         text! [
@@ -201,7 +201,7 @@ help: func [
             ] else [
                 print ["No information on" topic]
             ]
-            return nihil
+            return ~
         ]
 
         path! word! [
@@ -212,12 +212,12 @@ help: func [
                 null? binding of topic
             ] then [
                 print [topic "is an unbound WORD!"]
-                return nihil
+                return ~
             ]
 
             if '~attached~ = binding of topic [
                 print [topic "is ~attached~ to a context, but has no variable"]
-                return nihil
+                return ~
             ]
 
             switch/type value: get/any topic [
@@ -231,7 +231,7 @@ help: func [
                     print [topic "is not defined (e.g. has a trash value)"]
                 ]
             ] then [
-                return nihil
+                return ~
             ]
             enfixed: (action? :value) and (enfix? :value)
         ]
@@ -247,7 +247,7 @@ help: func [
             if free? topic [keep "a *freed*"]
             keep any [mold kind of topic, "VOID"]
         ]
-        return nihil
+        return ~
     ]
 
     ; Open the web page for it?
@@ -294,7 +294,7 @@ help: func [
         ] else [
             print [topic {is a datatype}]
         ]
-        return nihil
+        return ~
     ]
 
     match [frame! action?] :value else [
@@ -317,7 +317,7 @@ help: func [
                 ]
             ]
         ]
-        return nihil
+        return ~
     ]
 
     ; The HELP mechanics for ACTION! are more complex in Ren-C due to the
@@ -410,14 +410,14 @@ help: func [
         print-args/indent-words refinements
     ]
 
-    return nihil
+    return ~
 ]
 
 
 source: func [
     "Prints the source code for an ACTION! (if available)"
 
-    return: [nihil?]
+    return: [~]
     'arg [<unrun> word! path! frame! tag!]
 ][
     let name
@@ -437,7 +437,7 @@ source: func [
             name: arg
             f: get arg else [
                 print [name "is not set to a value"]
-                return nihil
+                return ~
             ]
         ]
     ] else [
@@ -459,7 +459,7 @@ source: func [
             ]
         ]
     ] then [
-        return nihil
+        return ~
     ]
 
     ; ACTION!
@@ -488,7 +488,7 @@ source: func [
         print "...native code, no source available..."
     ]
 
-    return nihil
+    return ~
 ]
 
 
