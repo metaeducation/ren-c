@@ -573,21 +573,12 @@ e-lib/emit [ver {
     /*
      * !!! Same story for DEAD_END as for ATTRIBUTE_NO_RETURN.  Necessary to
      * suppress spurious warnings.
-     *
-     * We use `inline static` here in the C function vs plain `inline` due to
-     * pragmatic issues.  See comments on the INLINE macro in %c-enhanced.h for
-     * why C builds of the core define INLINE as `static inline` in C builds
-     * and `inline` in C++ builds.  That macro is avoided in this header to
-     * avoid potential conflicts with INLINE definitions in the utilizing code.
      */
     #if !defined(DEAD_END)  /* !!! duplicated in %reb-config.h */
         #if __has_builtin(__builtin_unreachable) || GCC_VERSION_AT_LEAST(4, 5)
             #define DEAD_END __builtin_unreachable()
         #elif defined(_MSC_VER)
-            __declspec(noreturn) inline static void msvc_unreachable(void) {
-                while (1) { }
-            }
-            #define DEAD_END msvc_unreachable()
+            #define DEAD_END __assume(0)
         #else
             #define DEAD_END
         #endif
