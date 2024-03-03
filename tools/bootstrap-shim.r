@@ -198,8 +198,6 @@ aliases: lib3/reeval lib3/func [:item [any-value! <...>]] [  ; very weird [1]
     compose3: compose: *
     split-path3: split-path: *
     transcode3: transcode: *
-    local-to-file3: local-to-file: *
-    file-to-local3: file-to-local: *
 
     collect3: collect: (adapt :lib3/collect [  ; to make KEEP3 obvious
         body: lib3/compose [
@@ -931,18 +929,6 @@ apply: function3 [
     ]
 
     do f
-]
-
-local-to-file: lib/local-to-file: func3 [path [<maybe> text! file!] /pass /dir] [
-    path: default [_]
-    local-to-file3/(blank-to-void pass)/(blank-to-void dir) path
-]
-
-file-to-local: lib/file-to-local: func3 [
-    path [<maybe> text! file!] /pass /full /no-tail-slash /wild
-][
-    path: default [_]
-    file-to-local3/(blank-to-void pass)/(blank-to-void full)/(blank-to-void no-tail-slash)/(blank-to-void wild) path
 ]
 
 split-path: func [] [
