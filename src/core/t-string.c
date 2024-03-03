@@ -361,7 +361,7 @@ static REBSER *make_binary(const Value* arg, bool make)
     case REB_URL:
     case REB_TAG:
 //  case REB_ISSUE:
-        ser = Make_UTF8_From_Any_String(arg, VAL_LEN_AT(arg));
+        ser = Make_Utf8_From_Cell_String_At_Limit(arg, VAL_LEN_AT(arg));
         break;
 
     case REB_BLOCK:

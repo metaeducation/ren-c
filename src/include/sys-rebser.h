@@ -125,7 +125,7 @@
 #define SERIES_FLAG_DONT_RELOCATE SERIES_FLAG_FIXED_SIZE
 
 
-//=//// SERIES_FLAG_UTF8_STRING ///////////////////////////////////////////=//
+//=//// SERIES_FLAG_UTF8 ///////////////////////////////////////////=//
 //
 // Indicates the series holds a UTF-8 encoded string.
 //
@@ -138,7 +138,7 @@
 //
 // http://utf8everywhere.org/
 //
-#define SERIES_FLAG_UTF8_STRING \
+#define SERIES_FLAG_UTF8 \
     FLAG_LEFT_BIT(10)
 
 
@@ -488,7 +488,7 @@
 
 //=//// STRING_INFO_CANON /////////////////////////////////////////////////=//
 //
-// This is used to indicate when a SERIES_FLAG_UTF8_STRING series represents
+// This is used to indicate when a SERIES_FLAG_UTF8 series represents
 // the canon form of a word.  This doesn't mean anything special about the
 // case of its letters--just that it was loaded first.  Canon forms can be
 // GC'd and then delegate the job of being canon to another symbol.
@@ -691,7 +691,7 @@ union Reb_Series_Link {
     // source that was running at the time is propagated into the new
     // second-generation series.
     //
-    Symbol* file;
+    String* file;
 
     // REBCTX types use this field of their varlist (which is the identity of
     // an ANY-CONTEXT!) to find their "keylist".  It is stored in the REBSER
@@ -1077,7 +1077,7 @@ struct Reb_Array {
 
 #define MAX_SERIES_WIDE 0x100
 
-INLINE Byte SER_WIDE(REBSER *s) {
+INLINE Byte SER_WIDE(REBSER* s) {
     //
     // Arrays use 0 width as a strategic choice, so that the second byte of
     // the ->info flags is 0.  See Endlike_Header() for why.

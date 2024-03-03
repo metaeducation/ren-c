@@ -264,12 +264,21 @@ DECLARE_NATIVE(panic)
     // the evaluation of the value argument.  Hence the tick count shown in
     // the dump would be the one that would queue up right to the exact moment
     // *before* the PANIC ACTION! was invoked.
-    //
+
+    Option(String*) file = FRM_FILE(frame_);
+    const char* file_utf8;
+    if (file) {
+        Binary* bin = Make_Utf8_From_String(unwrap(file));  // leak ok, panic
+        file_utf8 = cast(const char*, Binary_Head(bin));
+    }
+    else
+      file_utf8 = "(anonymous)";
+
   #ifdef DEBUG_COUNT_TICKS
-    Panic_Core(p, frame_->tick, FRM_FILE_UTF8(frame_), FRM_LINE(frame_));
+    Panic_Core(p, frame_->tick, file_utf8, FRM_LINE(frame_));
   #else
     const REBTCK tick = 0;
-    Panic_Core(p, tick, FRM_FILE_UTF8(frame_), FRM_LINE(frame_));
+    Panic_Core(p, tick, file_utf8, FRM_LINE(frame_));
   #endif
 }
 
@@ -287,16 +296,25 @@ DECLARE_NATIVE(panic_value)
 {
     INCLUDE_PARAMS_OF_PANIC_VALUE;
 
+    Option(String*) file = FRM_FILE(frame_);
+    const char* file_utf8;
+    if (file) {
+        Binary* bin = Make_Utf8_From_String(unwrap(file));  // leak ok, panic
+        file_utf8 = cast(const char*, Binary_Head(bin));
+    }
+    else
+       file_utf8 = "(anonymous)";
+
   #ifdef DEBUG_TRACK_TICKS
     //
     // Use frame tick (if available) instead of TG_Tick, so tick count dumped
     // is the exact moment before the PANIC-VALUE ACTION! was invoked.
     //
     Panic_Core(
-        ARG(value), frame_->tick, FRM_FILE_UTF8(frame_), FRM_LINE(frame_)
+        ARG(value), frame_->tick, file_utf8, FRM_LINE(frame_)
     );
   #else
     const REBTCK tick = 0;
-    Panic_Core(ARG(value), tick, FRM_FILE_UTF8(frame_), FRM_LINE(frame_));
+    Panic_Core(ARG(value), tick, file_utf8, FRM_LINE(frame_));
   #endif
 }

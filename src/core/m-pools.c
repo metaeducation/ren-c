@@ -1050,7 +1050,7 @@ void Decay_Series(REBSER *s)
 {
     assert(NOT_SER_INFO(s, SERIES_INFO_INACCESSIBLE));
 
-    if (GET_SER_FLAG(s, SERIES_FLAG_UTF8_STRING))
+    if (GET_SER_FLAG(s, SERIES_FLAG_UTF8))
         GC_Kill_Interning(s); // needs special handling to adjust canons
 
     // Remove series from expansion list, if found:

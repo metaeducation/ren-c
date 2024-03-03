@@ -455,12 +455,11 @@ void Set_Location_Of_Error(
         break;
     }
     if (f != FS_BOTTOM) {
-        Symbol* file = LINK(f->source->array).file;
+        Option(String*) file = LINK(f->source->array).file;
         REBLIN line = MISC(f->source->array).line;
 
-        Option(SymId) file_sym = Symbol_Id(file);
-        if (file_sym != SYM___ANONYMOUS__)
-            Init_Word(&vars->file, file);
+        if (file)
+            Init_File(&vars->file, unwrap(file));
         if (line != 0)
             Init_Integer(&vars->line, line);
     }
@@ -1438,7 +1437,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
     if (not IS_NULLED(file)) {
         Append_Utf8_Codepoint(mo->series, '\n');
         Append_Unencoded(mo->series, RM_ERROR_FILE);
-        if (IS_WORD(file))
+        if (IS_FILE(file))
             Form_Value(mo, file);
         else
             Append_Unencoded(mo->series, RM_BAD_ERROR_FORMAT);

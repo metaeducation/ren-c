@@ -203,7 +203,7 @@ static void Write_File_Port(struct devreq_file *file, Value* data, REBLEN len, b
     }
 
     if (IS_TEXT(data)) {
-        bin = Make_UTF8_From_Any_String(data, len);
+        bin = Make_Utf8_From_Cell_String_At_Limit(data, len);
         MANAGE_SERIES(bin);
         req->common.data = Binary_Head(bin);
         len = SER_LEN(bin);

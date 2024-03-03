@@ -142,7 +142,7 @@
 // "content", there's room for a length in the node.
 //
 
-INLINE REBLEN SER_LEN(REBSER *s) {
+INLINE REBLEN SER_LEN(REBSER* s) {
     Byte len_byte = LEN_BYTE_OR_255(s);
     return len_byte == 255 ? s->content.dynamic.len : len_byte;
 }

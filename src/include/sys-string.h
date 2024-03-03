@@ -93,12 +93,20 @@ INLINE bool Are_Synonyms(Symbol* s1, Symbol* s2) {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-INLINE REBLEN String_Len(REBSER *s) {
+INLINE bool Is_Series_Ucs2(REBSER* s) {
+    //
+    // There's no specific flag for UCS-2, but these are the only 2-byte
+    // series at the moment.
+    //
+    return SER_WIDE(s) == sizeof(REBUNI);
+}
+
+INLINE REBLEN String_Len(String* s) {
     assert(SER_WIDE(s) == sizeof(REBUNI));
     return SER_LEN(s);
 }
 
-INLINE void Set_String_Len(REBSER *s, REBLEN len) {
+INLINE void Set_String_Len(String* s, REBLEN len) {
     assert(SER_WIDE(s) == sizeof(REBUNI));
     SET_SERIES_LEN(s, len);
 }
@@ -120,14 +128,17 @@ INLINE void Term_String_Len(String* s, REBLEN len) {
     *SER_AT(REBUNI, s, len) = '\0';
 }
 
+#define Cell_String(cell) \
+    VAL_SERIES(cell)
+
 #define Cell_String_Head(v) \
-    String_Head(VAL_SERIES(v))
+    String_Head(Cell_String(v))
 
 #define Cell_String_Tail(v) \
-    String_Tail(VAL_SERIES(v))
+    String_Tail(Cell_String(v))
 
 INLINE REBUNI *Cell_String_At(const Cell* v) {
-    return AS_REBUNI(String_At(VAL_SERIES(v), VAL_INDEX(v)));
+    return AS_REBUNI(String_At(Cell_String(v), VAL_INDEX(v)));
 }
 
 INLINE REBSIZ VAL_SIZE_LIMIT_AT(

@@ -176,7 +176,7 @@ void* Probe_Core_Debug(
         // This routine is also a little catalog of the outlying series
         // types in terms of sizing, just to know what they are.
 
-        if (GET_SER_FLAG(s, SERIES_FLAG_UTF8_STRING)) {
+        if (GET_SER_FLAG(s, SERIES_FLAG_UTF8)) {
             assert(SER_WIDE(s) == sizeof(Byte));
             Probe_Print_Helper(p, "Symbol Series", file, line);
 

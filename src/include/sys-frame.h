@@ -119,7 +119,7 @@ INLINE REBLEN FRM_EXPR_INDEX(REBFRM *f) {
         : f->expr_index - 1;
 }
 
-INLINE Symbol* FRM_FILE(REBFRM *f) {
+INLINE Option(String*) FRM_FILE(REBFRM *f) {
     //
     // !!! the rebValue function could be a variadic macro in C99 or higher, as
     // `rebValueFileLine(__FILE__, __LINE__, ...`.  This could let the file and
@@ -134,16 +134,11 @@ INLINE Symbol* FRM_FILE(REBFRM *f) {
     if (NOT_SER_FLAG(f->source->array, ARRAY_FLAG_FILE_LINE))
         return nullptr;
 
-    return LINK(f->source->array).file;
-}
+    Option(String*) file = LINK(f->source->array).file;
+    if (file)
+        assert(Is_Series_Ucs2(unwrap(file)));
 
-INLINE const char* FRM_FILE_UTF8(REBFRM *f) {
-    //
-    // !!! Note: This is used too early in boot at the moment to use
-    // Canon(__ANONYMOUS__).
-    //
-    Symbol* str = FRM_FILE(f);
-    return str ? Symbol_Head(str) : "(anonymous)";
+    return try_unwrap(file);
 }
 
 INLINE int FRM_LINE(REBFRM *f) {
@@ -426,7 +421,7 @@ INLINE void Begin_Action(
     f->original = FRM_PHASE_OR_DUMMY(f);
 
     assert(IS_POINTER_TRASH_DEBUG(f->opt_label)); // only valid w/REB_ACTION
-    assert(not opt_label or GET_SER_FLAG(opt_label, SERIES_FLAG_UTF8_STRING));
+    assert(not opt_label or GET_SER_FLAG(opt_label, SERIES_FLAG_UTF8));
     f->opt_label = opt_label;
   #if defined(DEBUG_FRAME_LABELS) // helpful for looking in the debugger
     f->label_utf8 = cast(const char*, Frame_Label_Or_Anonymous_UTF8(f));
@@ -559,7 +554,7 @@ INLINE void Drop_Action(REBFRM *f) {
 
     assert(
         not f->opt_label
-        or GET_SER_FLAG(f->opt_label, SERIES_FLAG_UTF8_STRING)
+        or GET_SER_FLAG(f->opt_label, SERIES_FLAG_UTF8)
     );
 
     if (not (f->flags.bits & DO_FLAG_FULFILLING_ARG))

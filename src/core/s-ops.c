@@ -164,7 +164,7 @@ Binary* Temp_UTF8_At_Managed(
 
     assert(length_limit <= VAL_LEN_AT(str));
 
-    Binary* bin = Make_UTF8_From_Any_String(str, length_limit);
+    Binary* bin = Make_Utf8_From_Cell_String_At_Limit(str, length_limit);
     assert(BYTE_SIZE(bin));
 
     MANAGE_SERIES(bin);

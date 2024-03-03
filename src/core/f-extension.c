@@ -206,8 +206,9 @@ DECLARE_NATIVE(load_extension)
         Canon(SYM_GZIP)
     );
 
+    Option(String*) filename = nullptr;  // !!! Name of DLL if available?
     Array* specs = Scan_UTF8_Managed(
-        Canon(SYM___ANONYMOUS__), // !!! Name of DLL if available?
+        filename,
         specs_utf8,
         specs_size
     );

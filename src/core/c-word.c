@@ -279,7 +279,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
     Symbol* intern = Make_Ser_Core(
         size + 1,
         sizeof(Byte),
-        SERIES_FLAG_UTF8_STRING | SERIES_FLAG_FIXED_SIZE
+        SERIES_FLAG_UTF8 | SERIES_FLAG_FIXED_SIZE
     );
 
     // The incoming string isn't always null terminated, e.g. if you are

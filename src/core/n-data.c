@@ -1117,7 +1117,7 @@ DECLARE_NATIVE(as)
         }
 
         if (ANY_STRING(v)) {
-            Binary* bin = Make_UTF8_From_Any_String(v, VAL_LEN_AT(v));
+            Binary* bin = Make_Utf8_From_Cell_String_At_Limit(v, VAL_LEN_AT(v));
 
             // !!! Making a binary out of a UCS-2 encoded string currently
             // frees the string data if it's mutable, and if that's not

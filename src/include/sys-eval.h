@@ -180,7 +180,11 @@ INLINE void Push_Frame_Core(REBFRM *f)
     //
     // !!! TBD: the relevant file/line update when f->source->array changes
     //
-    f->file = FRM_FILE_UTF8(f);
+    Option(String*) file = FRM_FILE(f);
+    if (file)
+        f->file = String_Head(unwrap(file));  // UCS-2 sadly, in old branch
+    else
+        f->file = nullptr;
     f->line = FRM_LINE(f);
   #endif
 
@@ -352,10 +356,11 @@ INLINE void Set_Frame_Detected_Fetch(
         REBDSP dsp_orig = DSP;
 
         SCAN_STATE ss;
+        String* filename = nullptr;
         const REBLIN start_line = 1;
         Init_Va_Scan_State_Core(
             &ss,
-            Intern("sys-do.h"),
+            filename,
             start_line,
             cast(const Byte*, p),
             f->source->vaptr

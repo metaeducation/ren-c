@@ -1343,7 +1343,7 @@ void Startup_Core(void)
     Startup_Mold(MIN_COMMON / 4);
 
     Startup_Data_Stack(STACK_MIN / 4);
-    Startup_Frame_Stack(); // uses Canon() in FRM_FILE() currently
+    Startup_Frame_Stack();  // uses FRM_FILE() currently
 
     Startup_Api();
 
@@ -1390,13 +1390,15 @@ void Startup_Core(void)
         max
     ));
 
+    Value* filename = rebText("tmp-boot.r");
     Array* boot_array = Scan_UTF8_Managed(
-        Intern("tmp-boot.r"),
+        Cell_String(filename),
         utf8,
         utf8_size
     );
     PUSH_GC_GUARD(boot_array); // managed, so must be guarded
 
+    rebRelease(filename);  // must release API handle
     rebFree(utf8); // don't need decompressed text after it's scanned
 
     BOOT_BLK *boot = cast(BOOT_BLK*, VAL_ARRAY_HEAD(ARR_HEAD(boot_array)));

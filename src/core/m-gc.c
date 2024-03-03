@@ -177,7 +177,7 @@ INLINE void Queue_Mark_Array_Deep(Array* a) { // plain array
     assert(NOT_SER_FLAG(a, ARRAY_FLAG_PARAMLIST));
     assert(NOT_SER_FLAG(a, ARRAY_FLAG_PAIRLIST));
 
-    if (GET_SER_FLAG(a, ARRAY_FLAG_FILE_LINE))
+    if (GET_SER_FLAG(a, ARRAY_FLAG_FILE_LINE) and LINK(a).file)
         LINK(a).file->header.bits |= NODE_FLAG_MARKED;
 
     Queue_Mark_Array_Subclass_Deep(a);

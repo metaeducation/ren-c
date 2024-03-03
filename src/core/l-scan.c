@@ -632,6 +632,7 @@ static const Byte *Skip_Tag(const Byte *cp)
 //
 static void Update_Error_Near_For_Line(
     REBCTX *error,
+    SCAN_STATE *ss,
     REBLEN line,
     const Byte *line_head
 ){
@@ -664,6 +665,11 @@ static void Update_Error_Near_For_Line(
 
     ERROR_VARS *vars = ERR_VARS(error);
     Init_Text(&vars->nearest, Pop_Molded_String(mo));
+
+    if (ss->file)
+        Init_File(&vars->file, unwrap(ss->file));
+    else
+        Init_Nulled(&vars->file);
 }
 
 
@@ -705,7 +711,7 @@ static REBCTX *Error_Syntax(SCAN_STATE *ss) {
     );
 
     REBCTX *error = Error_Scan_Invalid_Raw(token_name, token_text);
-    Update_Error_Near_For_Line(error, ss->line, ss->line_head);
+    Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
     return error;
 }
 
@@ -725,7 +731,7 @@ static REBCTX *Error_Missing(SCAN_STATE *ss, char wanted) {
     Init_Text(expected, Make_Ser_Codepoint(wanted));
 
     REBCTX *error = Error_Scan_Missing_Raw(expected);
-    Update_Error_Near_For_Line(error, ss->start_line, ss->start_line_head);
+    Update_Error_Near_For_Line(error, ss, ss->start_line, ss->start_line_head);
     return error;
 }
 
@@ -740,7 +746,7 @@ static REBCTX *Error_Extra(SCAN_STATE *ss, char seen) {
     Init_Text(unexpected, Make_Ser_Codepoint(seen));
 
     REBCTX *error = Error_Scan_Extra_Raw(unexpected);
-    Update_Error_Near_For_Line(error, ss->line, ss->line_head);
+    Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
     return error;
 }
 
@@ -756,7 +762,7 @@ static REBCTX *Error_Extra(SCAN_STATE *ss, char seen) {
 //
 static REBCTX *Error_Mismatch(SCAN_STATE *ss, char wanted, char seen) {
     REBCTX *error = Error_Scan_Mismatch_Raw(rebChar(wanted), rebChar(seen));
-    Update_Error_Near_For_Line(error, ss->start_line, ss->start_line_head);
+    Update_Error_Near_For_Line(error, ss, ss->start_line, ss->start_line_head);
     return error;
 }
 
@@ -1744,7 +1750,7 @@ scanword:
 //
 void Init_Va_Scan_State_Core(
     SCAN_STATE *ss,
-    Symbol* file,
+    Option(String*) file,
     REBLIN line,
     const Byte *opt_begin, // preload the scanner outside the va_list
     va_list *vaptr
@@ -1766,6 +1772,9 @@ void Init_Va_Scan_State_Core(
     ss->start_line_head = ss->line_head = nullptr;
 
     ss->start_line = ss->line = line;
+
+    if (file)
+        assert(Is_Series_Ucs2(unwrap(file)));
     ss->file = file;
 
     ss->newline_pending = false;
@@ -1788,7 +1797,7 @@ void Init_Va_Scan_State_Core(
 //
 void Init_Scan_State(
     SCAN_STATE *ss,
-    Symbol* file,
+    Option(String*) file,
     REBLIN line,
     const Byte *utf8,
     REBLEN limit
@@ -1811,7 +1820,10 @@ void Init_Scan_State(
 
     ss->newline_pending = false;
 
+    if (file)
+        assert(Is_Series_Ucs2(unwrap(file)));
     ss->file = file;
+
     ss->opts = 0;
 
     ss->binder = nullptr;
@@ -2596,7 +2608,7 @@ static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char)
     // Tag array with line where the beginning bracket/group/etc. was found
     //
     MISC(a).line = ss->line;
-    LINK(a).file = ss->file;
+    LINK(a).file = try_unwrap(ss->file);
     SET_SER_FLAG(a, ARRAY_FLAG_FILE_LINE);
 
     // The only variables that should actually be written back into the
@@ -2626,14 +2638,14 @@ static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char)
 //     Value* item1 = ...;
 //     Value* item2 = ...;
 //     Value* item3 = ...;
-//     Symbol* filename = ...; // where to say code came from
+//     String* filename = ...; // where to say code came from (or nullptr)
 //
 //     Array* result = Scan_Va_Managed(filename,
 //         "if not", item1, "[\n",
 //             item2, "| print {Close brace separate from content}\n",
 //         "] else [\n",
 //             item3, "| print {Close brace with content}]\n",
-//         END
+//         rebEND
 //     );
 //
 // While the approach is flexible, any token must appear fully inside its
@@ -2642,7 +2654,7 @@ static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char)
 // ("a", "/", "b") produces `a / b` and not the PATH! `a/b`.
 //
 Array* Scan_Va_Managed(
-    Symbol* filename, // NOTE: va_start must get last parameter before ...
+    String* filename, // NOTE: va_start must get last parameter before ...
     ...
 ){
     REBDSP dsp_orig = DSP;
@@ -2670,7 +2682,7 @@ Array* Scan_Va_Managed(
     );
 
     MISC(a).line = ss.line;
-    LINK(a).file = ss.file;
+    LINK(a).file = try_unwrap(ss.file);
     SET_SER_FLAG(a, ARRAY_FLAG_FILE_LINE);
 
     // !!! While in practice every system has va_end() as a no-op, it's not
@@ -2694,8 +2706,11 @@ Array* Scan_Va_Managed(
 //
 // Scan source code. Scan state initialized. No header required.
 //
-Array* Scan_UTF8_Managed(Symbol* filename, const Byte *utf8, REBLEN size)
-{
+Array* Scan_UTF8_Managed(
+    Option(String*) filename,
+    const Byte *utf8,
+    REBLEN size
+){
     SCAN_STATE ss;
     const REBLIN start_line = 1;
     Init_Scan_State(&ss, filename, start_line, utf8, size);
@@ -2710,7 +2725,7 @@ Array* Scan_UTF8_Managed(Symbol* filename, const Byte *utf8, REBLEN size)
     );
 
     MISC(a).line = ss.line;
-    LINK(a).file = ss.file;
+    LINK(a).file = try_unwrap(ss.file);
     SET_SER_FLAG(a, ARRAY_FLAG_FILE_LINE);
 
     return a;
@@ -2725,7 +2740,7 @@ Array* Scan_UTF8_Managed(Symbol* filename, const Byte *utf8, REBLEN size)
 REBINT Scan_Header(const Byte *utf8, REBLEN len)
 {
     SCAN_STATE ss;
-    Symbol*  const filename = Canon(SYM___ANONYMOUS__);
+    String* filename = nullptr;
     const REBLIN start_line = 1;
     Init_Scan_State(&ss, filename, start_line, utf8, len);
 
@@ -2802,9 +2817,9 @@ DECLARE_NATIVE(transcode)
 
     // !!! Should the base name and extension be stored, or whole path?
     //
-    Symbol* filename = REF(file)
-        ? Intern(ARG(file_name))
-        : Canon(SYM___ANONYMOUS__);
+    String* filename = REF(file)
+        ? Cell_String(ARG(file_name))
+        : nullptr;
 
     REBLIN start_line;
     if (REF(line)) {
@@ -2890,7 +2905,7 @@ DECLARE_NATIVE(transcode)
             | (ss.newline_pending ? ARRAY_FLAG_TAIL_NEWLINE : 0)
     );
     MISC(a).line = ss.line;
-    LINK(a).file = ss.file;
+    LINK(a).file = try_unwrap(ss.file);
     SET_SER_FLAG(a, ARRAY_FLAG_FILE_LINE);
 
     return Init_Block(OUT, a);
@@ -2911,7 +2926,7 @@ const Byte *Scan_Any_Word(
     REBLEN len
 ) {
     SCAN_STATE ss;
-    Symbol*  const filename = Canon(SYM___ANONYMOUS__);
+    String* filename = nullptr;
     const REBLIN start_line = 1;
     Init_Scan_State(&ss, filename, start_line, utf8, len);
 

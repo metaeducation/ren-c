@@ -961,11 +961,31 @@ REBLEN Encode_UTF8(
 
 
 //
-//  Make_UTF8_From_Any_String: C
+//  Make_Utf8_From_String: C
+//
+Binary* Make_Utf8_From_String(String* string) {
+    assert(Is_Series_Ucs2(string));
+
+    const REBUNI* data = String_Head(string);
+    size_t size = Size_As_UTF8(data, String_Len(string));
+    Binary* bin = Make_Binary(size);
+    REBLEN len = 0;
+    SET_SERIES_LEN(bin, Encode_UTF8(Binary_Head(bin), size, data, &len));
+    assert(SER_LEN(bin) == size);
+    TERM_SEQUENCE(bin);
+    return bin;
+}
+
+
+//
+//  Make_Utf8_From_Cell_String_At_Limit: C
 //
 // !!! With UTF-8 Everywhere, strings will already be in UTF-8.
 //
-REBSER *Make_UTF8_From_Any_String(const Cell* any_string, REBLEN len) {
+Binary* Make_Utf8_From_Cell_String_At_Limit(
+    const Cell* any_string,
+    REBLEN len
+){
     assert(ANY_STRING(any_string));
 
     const REBUNI *data = Cell_String_At(any_string);

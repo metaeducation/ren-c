@@ -800,7 +800,7 @@ struct Reb_Frame {
     // them.  As the feature gets better, it will certainly be useful to be
     // able to quickly see the information in the debugger for f->source.
     //
-    const char *file; // is Byte (UTF-8), but char* for debug watch
+    REBUNI* file;  // is wide char, unfortunately, in this old branch
     int line;
   #endif
 

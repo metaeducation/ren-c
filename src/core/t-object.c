@@ -784,10 +784,10 @@ REBTYPE(Context)
 
         switch (sym) {
           case SYM_FILE: {
-            Symbol* file = FRM_FILE(f);
+            Option(String*) file = FRM_FILE(f);
             if (not file)
                 return nullptr;
-            return Init_Word(OUT, file); }
+            return Init_Word(OUT, unwrap(file)); }
 
           case SYM_LINE: {
             REBLIN line = FRM_LINE(f);

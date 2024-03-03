@@ -87,7 +87,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
             &offset, &size, arg, VAL_LEN_AT(arg)
         );
         PUSH_GC_GUARD(temp);
-        Symbol*  const filename = Canon(SYM___ANONYMOUS__);
+        Option(String*) filename = nullptr;
         Init_Any_Array(
             out,
             kind,
@@ -169,7 +169,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         // `to block! #{00BDAE....}` assumes the binary data is UTF8, and
         // goes directly to the scanner to make an unbound code array.
         //
-        Symbol*  const filename = Canon(SYM___ANONYMOUS__);
+        Option(String*) filename = nullptr;
         return Init_Any_Array(
             out,
             kind,
