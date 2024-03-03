@@ -1439,7 +1439,7 @@ INLINE void INIT_BINDING_MAY_MANAGE(Cell* out, REBNOD* binding) {
 // a function is used.  The reason that a function is used is because this
 // gives more flexibility in decisions based on the destination cell.
 //
-INLINE Value* Move_Value(Cell* out, const Value* v)
+INLINE Value* Copy_Cell(Cell* out, const Value* v)
 {
     Move_Value_Header(out, v);
 
@@ -1465,7 +1465,7 @@ INLINE Value* Move_Var(Cell* out, const Value* v)
     // but it should never be relative.  If it's stack, we have to go through
     // the whole potential reification process...double-set header for now.)
 
-    Move_Value(out, v);
+    Copy_Cell(out, v);
     out->header.bits |= (
         v->header.bits & (VALUE_FLAG_ENFIXED | ARG_MARKED_CHECKED)
     );

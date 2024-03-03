@@ -270,7 +270,7 @@ INLINE Value* Init_Any_Context(
     UNUSED(kind);
     assert(IS_ARRAY_MANAGED(CTX_VARLIST(c)));
     assert(IS_ARRAY_MANAGED(CTX_KEYLIST(c)));
-    return Move_Value(out, CTX_ARCHETYPE(c));
+    return Copy_Cell(out, CTX_ARCHETYPE(c));
 }
 
 #define Init_Object(out,c) \

@@ -1246,7 +1246,7 @@ DECLARE_NATIVE(find_script)
     if (offset == -1)
         return nullptr;
 
-    Move_Value(OUT, arg);
+    Copy_Cell(OUT, arg);
     VAL_INDEX(OUT) += offset;
     return OUT;
 }
@@ -1270,7 +1270,7 @@ DECLARE_NATIVE(invalid_utf8_q)
     if (not bp)
         return nullptr;
 
-    Move_Value(OUT, arg);
+    Copy_Cell(OUT, arg);
     VAL_INDEX(OUT) = bp - VAL_BIN_HEAD(arg);
     return OUT;
 }

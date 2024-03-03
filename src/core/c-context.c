@@ -873,7 +873,7 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
     // won't destroy the integrity of the context.)
     //
     assert(CTX_KEY_SYM(context, self_index) == SYM_SELF);
-    Move_Value(CTX_VAR(context, self_index), CTX_ARCHETYPE(context));
+    Copy_Cell(CTX_VAR(context, self_index), CTX_ARCHETYPE(context));
 
     if (opt_parent)
         Rebind_Context_Deep(opt_parent, context, nullptr);  // no more binds
@@ -1137,7 +1137,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
     REBLEN self_index = Find_Canon_In_Context(merged, Canon(SYM_SELF), true);
     assert(self_index != 0);
     assert(CTX_KEY_SYM(merged, self_index) == SYM_SELF);
-    Move_Value(CTX_VAR(merged, self_index), CTX_ARCHETYPE(merged));
+    Copy_Cell(CTX_VAR(merged, self_index), CTX_ARCHETYPE(merged));
 
     return merged;
 }

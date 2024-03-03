@@ -184,7 +184,7 @@ DECLARE_NATIVE(new_line)
 
     FAIL_IF_READ_ONLY_ARRAY(a);
 
-    Move_Value(OUT, pos); // always returns the input position
+    Copy_Cell(OUT, pos); // always returns the input position
 
     Cell* item = Cell_Array_At(pos);
 
@@ -331,7 +331,7 @@ DECLARE_NATIVE(now)
     assert(GET_VAL_FLAG(timestamp, DATE_FLAG_HAS_TIME));
     assert(GET_VAL_FLAG(timestamp, DATE_FLAG_HAS_ZONE));
 
-    Move_Value(OUT, timestamp);
+    Copy_Cell(OUT, timestamp);
     rebRelease(timestamp);
 
     if (not REF(precise)) {
@@ -537,7 +537,7 @@ DECLARE_NATIVE(wait)
         if (not IS_PORT(val))
             return nullptr;
 
-        Move_Value(OUT, KNOWN(val));
+        Copy_Cell(OUT, KNOWN(val));
     }
 
     return OUT;
@@ -712,7 +712,7 @@ DECLARE_NATIVE(what_dir)
         // reconsider the duplication.
 
         Value* refresh = OS_GET_CURRENT_DIR();
-        Move_Value(current_path, refresh);
+        Copy_Cell(current_path, refresh);
         rebRelease(refresh);
     }
     else if (not IS_URL(current_path)) {
@@ -767,7 +767,7 @@ DECLARE_NATIVE(change_dir)
             fail (Error_Invalid(arg));
     }
 
-    Move_Value(current_path, arg);
+    Copy_Cell(current_path, arg);
 
     RETURN (ARG(path));
 }

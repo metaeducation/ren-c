@@ -213,7 +213,7 @@ DECLARE_NATIVE(eval_enfix)
     // Simulate as if the passed-in value was calculated into the output slot,
     // which is where enfix functions usually find their left hand values.
     //
-    Move_Value(OUT, ARG(left));
+    Copy_Cell(OUT, ARG(left));
 
     // We're kind-of-abusing an internal mechanism, where it is checked that
     // we are actually doing a deferment.  Try not to make that abuse break
@@ -510,7 +510,7 @@ DECLARE_NATIVE(evaluate)
         );
 
         if (indexor == THROWN_FLAG) {
-            Move_Value(OUT, temp);
+            Copy_Cell(OUT, temp);
             return R_THROWN;
         }
 
@@ -518,9 +518,9 @@ DECLARE_NATIVE(evaluate)
             return nullptr; // no disruption of output result
 
         if (REF(set))
-            Move_Value(Sink_Var_May_Fail(ARG(var), SPECIFIED), temp);
+            Copy_Cell(Sink_Var_May_Fail(ARG(var), SPECIFIED), temp);
 
-        Move_Value(OUT, source);
+        Copy_Cell(OUT, source);
         VAL_INDEX(OUT) = cast(REBLEN, indexor) - 1; // was one past
         assert(VAL_INDEX(OUT) <= VAL_LEN_HEAD(source));
         return OUT; }
@@ -563,7 +563,7 @@ DECLARE_NATIVE(evaluate)
             }
 
             if (REF(set))
-                Move_Value(Sink_Var_May_Fail(ARG(var), SPECIFIED), source);
+                Copy_Cell(Sink_Var_May_Fail(ARG(var), SPECIFIED), source);
 
             RETURN (source); // original VARARGS! will have updated position
         }
@@ -589,7 +589,7 @@ DECLARE_NATIVE(evaluate)
             return nullptr;
 
         if (REF(set))
-            Move_Value(Sink_Var_May_Fail(ARG(var), SPECIFIED), temp);
+            Copy_Cell(Sink_Var_May_Fail(ARG(var), SPECIFIED), temp);
 
         RETURN (source); } // original VARARGS! will have an updated position
 
@@ -654,7 +654,7 @@ DECLARE_NATIVE(redo)
         if (not IS_FRAME(OUT))
             fail ("Context of restartee in REDO is not a FRAME!");
 
-        Move_Value(restartee, OUT);
+        Copy_Cell(restartee, OUT);
     }
 
     REBCTX *c = VAL_CONTEXT(restartee);
@@ -694,7 +694,7 @@ DECLARE_NATIVE(redo)
     // of the frame.  Use REDO as the throw label that Eval_Core_Throws() will
     // identify for that behavior.
     //
-    Move_Value(OUT, NAT_VALUE(redo));
+    Copy_Cell(OUT, NAT_VALUE(redo));
     INIT_BINDING(OUT, c);
 
     // The FRAME! contains its ->phase and ->binding, which should be enough
@@ -757,7 +757,7 @@ DECLARE_NATIVE(applique)
 
     if (not IS_ACTION(OUT))
         fail (Error_Invalid(applicand));
-    Move_Value(applicand, OUT);
+    Copy_Cell(applicand, OUT);
 
     // Make a FRAME! for the ACTION!, weaving in the ordered refinements
     // collected on the stack (if any).  Any refinements that are used in

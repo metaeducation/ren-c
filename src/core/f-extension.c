@@ -98,7 +98,7 @@ DECLARE_NATIVE(builtin_extensions)
         COLLATE_CFUNC *collator = Builtin_Extension_Collators[i];
         Value* details = (*collator)();
         assert(IS_BLOCK(details) and VAL_LEN_AT(details) == IDX_COLLATOR_MAX);
-        Move_Value(Alloc_Tail_Array(list), details);
+        Copy_Cell(Alloc_Tail_Array(list), details);
         rebRelease(details);
     }
     return Init_Block(Alloc_Value(), list);

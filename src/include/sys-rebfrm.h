@@ -115,7 +115,7 @@
 //
 // This DO_FLAG has the same bit position as OUT_FLAG_STALE, allowing it to
 // be bitwise-&'d out easily via masking with this bit.  This saves most
-// callers the trouble of clearing it (though it's not copied in Move_Value(),
+// callers the trouble of clearing it (though it's not copied in Copy_Cell(),
 // it will be "sticky" to output cells returned by dispatchers, and it would
 // be irritating for every evaluator call to clear it.)
 //

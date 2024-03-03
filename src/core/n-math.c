@@ -859,14 +859,14 @@ DECLARE_NATIVE(maximum)
     }
     else {
         DECLARE_VALUE (coerced1);
-        Move_Value(coerced1, value1);
+        Copy_Cell(coerced1, value1);
         DECLARE_VALUE (coerced2);
-        Move_Value(coerced2, value2);
+        Copy_Cell(coerced2, value2);
 
         if (Compare_Modify_Values(coerced1, coerced2, -1))
-            Move_Value(OUT, value1);
+            Copy_Cell(OUT, value1);
         else
-            Move_Value(OUT, value2);
+            Copy_Cell(OUT, value2);
     }
     return OUT;
 }
@@ -893,14 +893,14 @@ DECLARE_NATIVE(minimum)
     }
     else {
         DECLARE_VALUE (coerced1);
-        Move_Value(coerced1, value1);
+        Copy_Cell(coerced1, value1);
         DECLARE_VALUE (coerced2);
-        Move_Value(coerced2, value2);
+        Copy_Cell(coerced2, value2);
 
         if (Compare_Modify_Values(coerced1, coerced2, -1))
-            Move_Value(OUT, value2);
+            Copy_Cell(OUT, value2);
         else
-            Move_Value(OUT, value1);
+            Copy_Cell(OUT, value1);
     }
     return OUT;
 }

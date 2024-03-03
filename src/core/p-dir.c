@@ -58,7 +58,7 @@ static Array* Read_Dir_May_Fail(struct devreq_file *dir)
             break;
 
         DS_PUSH_TRASH;
-        Move_Value(DS_TOP, file.path);
+        Copy_Cell(DS_TOP, file.path);
 
         // Assume the file.devreq gets blown away on each loop, so there's
         // nowhere to free the file->path unless we do it here.

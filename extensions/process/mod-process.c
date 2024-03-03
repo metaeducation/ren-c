@@ -1952,7 +1952,7 @@ DECLARE_NATIVE(get_env)
             error = Error_User("Unknown error fetching variable to buffer");
         else {
             Value* temp = rebLengthedTextW(val, val_len_plus_one - 1);
-            Move_Value(OUT, temp);
+            Copy_Cell(OUT, temp);
             rebRelease(temp);
         }
         rebFree(val);

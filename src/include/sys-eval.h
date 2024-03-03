@@ -327,7 +327,7 @@ INLINE void Set_Frame_Detected_Fetch(
         //
         // The FRM_CELL(f) is used as the GC-safe location proxied to.
         //
-        Move_Value(FRM_CELL(f), KNOWN(f->value));
+        Copy_Cell(FRM_CELL(f), KNOWN(f->value));
         if (GET_VAL_FLAG(f->value, VALUE_FLAG_EVAL_FLIP))
             SET_VAL_FLAG(FRM_CELL(f), VALUE_FLAG_EVAL_FLIP);
         *opt_lookback = FRM_CELL(f);
@@ -1119,7 +1119,7 @@ INLINE void Handle_Api_Dispatcher_Result(REBFRM *f, const Value* r) {
     if (IS_NULLED(r))
         assert(!"Dispatcher returned nulled cell, not C nullptr for API use");
 
-    Move_Value(f->out, r);
+    Copy_Cell(f->out, r);
     if (NOT_VAL_FLAG(r, NODE_FLAG_MANAGED))
         rebRelease(r);
 }

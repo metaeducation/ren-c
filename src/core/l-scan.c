@@ -981,11 +981,11 @@ acquisition_loop:
                 fail ("VOID cell leaked to API, see NULLIZE() in C sources");
 
             DS_PUSH_TRASH;
-            Move_Value(DS_TOP, splice);
+            Copy_Cell(DS_TOP, splice);
 
             // !!! The needs of rebValue() are such that it wants to preserve
             // the non-user-visible EVAL_FLIP bit, which is usually not copied
-            // by Move_Value.
+            // by Copy_Cell.
             //
             if (GET_VAL_FLAG(splice, VALUE_FLAG_EVAL_FLIP))
                 SET_VAL_FLAG(DS_TOP, VALUE_FLAG_EVAL_FLIP);
@@ -1020,7 +1020,7 @@ acquisition_loop:
                     fail ("can only use rebEval() at top level of run");
 
                 DS_PUSH_TRASH;
-                Move_Value(DS_TOP, single);
+                Copy_Cell(DS_TOP, single);
                 SET_VAL_FLAG(DS_TOP, VALUE_FLAG_EVAL_FLIP);
             }
             else { // rebUneval()
@@ -1037,7 +1037,7 @@ acquisition_loop:
                 );
 
                 DS_PUSH_TRASH;
-                Move_Value(DS_TOP, single);
+                Copy_Cell(DS_TOP, single);
             }
 
             if (ss->newline_pending) {
@@ -2276,7 +2276,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 DROP_GC_GUARD(array);
 
                 DS_PUSH_TRASH;
-                Move_Value(DS_TOP, cell);
+                Copy_Cell(DS_TOP, cell);
                 DROP_GC_GUARD(cell);
             }
             else {
@@ -2545,7 +2545,7 @@ void Scan_To_Stack_Relaxed(SCAN_STATE *ss) {
     // partial scanned data plus the error raised?)
     //
     DS_PUSH_TRASH;
-    Move_Value(DS_TOP, error);
+    Copy_Cell(DS_TOP, error);
     rebRelease(error);
 }
 
@@ -2857,7 +2857,7 @@ DECLARE_NATIVE(transcode)
     }
     if (REF(next)) {
         Value* nvar = Get_Mutable_Var_May_Fail(ARG(next_arg), SPECIFIED);
-        Move_Value(nvar, ARG(source));
+        Copy_Cell(nvar, ARG(source));
         if (IS_TEXT(ARG(source))) {
             assert(VAL_INDEX(source) == 0);  // binary converted
             Byte* bp = VAL_BIN_HEAD(source);
@@ -2879,7 +2879,7 @@ DECLARE_NATIVE(transcode)
             return nullptr;
 
         assert(DSP == dsp_orig + 1);
-        Move_Value(OUT, DS_TOP);
+        Copy_Cell(OUT, DS_TOP);
         DS_DROP;
         return OUT;
     }

@@ -66,7 +66,7 @@ REB_R MAKE_Library(Value* out, enum Reb_Kind kind, const Value* arg)
     LINK(singular).fd = fd;
     MISC(singular).meta = nullptr;  // build from spec, e.g. arg?
 
-    return Move_Value(out, KNOWN(ARR_HEAD(singular)));
+    return Copy_Cell(out, KNOWN(ARR_HEAD(singular)));
 }
 
 

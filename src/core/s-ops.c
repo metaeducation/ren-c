@@ -119,7 +119,7 @@ Byte *Analyze_String_For_Scan(
         fail (Error_Past_End_Raw());
 
     DECLARE_VALUE (reindexed);
-    Move_Value(reindexed, any_string);
+    Copy_Cell(reindexed, any_string);
     VAL_INDEX(reindexed) = index;
 
     REBSIZ offset;
@@ -335,7 +335,7 @@ void Trim_Tail(REBSER *src, Byte chr)
 //
 void Change_Case(Value* out, Value* val, Value* part, bool upper)
 {
-    Move_Value(out, val);
+    Copy_Cell(out, val);
 
     if (IS_CHAR(val)) {
         REBUNI c = VAL_CHAR(val);

@@ -104,8 +104,8 @@ INLINE Value* Init_Pair(
     assert(IS_INTEGER(first) or IS_DECIMAL(first));
     assert(IS_INTEGER(second) or IS_DECIMAL(second));
     out->payload.pair = Alloc_Pairing();
-    Move_Value(PAIRING_KEY(out->payload.pair), first);
-    Move_Value(out->payload.pair, second);
+    Copy_Cell(PAIRING_KEY(out->payload.pair), first);
+    Copy_Cell(out->payload.pair, second);
     Manage_Pairing(out->payload.pair);
     return KNOWN(out);
 }

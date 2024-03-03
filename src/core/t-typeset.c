@@ -95,7 +95,7 @@ void Startup_Typesets(void)
         DS_PUSH_TRASH;
         Init_Typeset(DS_TOP, Typesets[n].bits, nullptr);
 
-        Move_Value(
+        Copy_Cell(
             Append_Context(Lib_Context, nullptr, Canon(Typesets[n].sym)),
             DS_TOP
         );
@@ -224,7 +224,7 @@ REB_R MAKE_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
     UNUSED(kind);
 
     if (IS_TYPESET(arg))
-        return Move_Value(out, arg);
+        return Copy_Cell(out, arg);
 
     if (!IS_BLOCK(arg)) goto bad_make;
 
@@ -260,7 +260,7 @@ Array* Typeset_To_Array(const Value* tset)
         if (TYPE_CHECK(tset, cast(enum Reb_Kind, n))) {
             DS_PUSH_TRASH;
             if (n == REB_MAX_NULLED) {
-                Move_Value(DS_TOP, Root_Opt_Tag);
+                Copy_Cell(DS_TOP, Root_Opt_Tag);
             }
             else
                 Init_Datatype(DS_TOP, cast(enum Reb_Kind, n));

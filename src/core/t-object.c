@@ -538,7 +538,7 @@ REBCTX *Copy_Context_Core_Managed(REBCTX *original, REBU64 types)
     // get filled in with a copy, but the varlist needs to be updated in the
     // copied rootvar to the one just created.
     //
-    Move_Value(dest, CTX_ARCHETYPE(original));
+    Copy_Cell(dest, CTX_ARCHETYPE(original));
     dest->payload.any_context.varlist = varlist;
 
     ++dest;
@@ -938,7 +938,7 @@ DECLARE_NATIVE(construct)
         if (!IS_BLOCK(body))
             fail (Error_Bad_Make(REB_EVENT, body));
 
-        Move_Value(OUT, spec); // !!! very "shallow" clone of the event
+        Copy_Cell(OUT, spec); // !!! very "shallow" clone of the event
         Set_Event_Vars(
             OUT,
             Cell_Array_At(body),
@@ -1014,7 +1014,7 @@ DECLARE_NATIVE(construct)
 
             DECLARE_VALUE (temp);
             if (Do_Any_Array_At_Throws(temp, body)) {
-                Move_Value(OUT, temp);
+                Copy_Cell(OUT, temp);
                 return R_THROWN; // evaluation result ignored unless thrown
             }
         }

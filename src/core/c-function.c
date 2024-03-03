@@ -103,7 +103,7 @@ Array* List_Func_Typesets(Value* func)
     for (; NOT_END(typeset); typeset++) {
         assert(IS_TYPESET(typeset));
 
-        Value* value = Move_Value(Alloc_Tail_Array(array), typeset);
+        Value* value = Copy_Cell(Alloc_Tail_Array(array), typeset);
 
         // !!! It's already a typeset, but this will clear out the header
         // bits.  This may not be desirable over the long run (what if
@@ -597,7 +597,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             if (definitional_return and src == definitional_return)
                 continue;
 
-            Move_Value(dest, src);
+            Copy_Cell(dest, src);
             ++dest;
         }
 
@@ -614,7 +614,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             }
             else {
                 assert(flags & MKF_RETURN);
-                Move_Value(dest, definitional_return);
+                Copy_Cell(dest, definitional_return);
                 ++dest;
             }
         }
@@ -663,7 +663,7 @@ Array* Make_Paramlist_Managed_May_Fail(
     //
     if (has_description) {
         assert(IS_TEXT(DS_AT(dsp_orig + 3)));
-        Move_Value(
+        Copy_Cell(
             CTX_VAR(meta, STD_ACTION_META_DESCRIPTION),
             DS_AT(dsp_orig + 3)
         );
@@ -696,7 +696,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             if (VAL_ARRAY_LEN_AT(src) == 0)
                 Init_Nulled(dest);
             else
-                Move_Value(dest, src);
+                Copy_Cell(dest, src);
             ++dest;
         }
 
@@ -710,7 +710,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             // the function.)
             //
             if (VAL_ARRAY_LEN_AT(definitional_return + 1) != 0) {
-                Move_Value(
+                Copy_Cell(
                     CTX_VAR(meta, STD_ACTION_META_RETURN_TYPE),
                     &definitional_return[1]
                 );
@@ -758,7 +758,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             if (SER_LEN(VAL_SERIES(src)) == 0)
                 Init_Nulled(dest);
             else
-                Move_Value(dest, src);
+                Copy_Cell(dest, src);
             ++dest;
         }
 
@@ -771,7 +771,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             if (SER_LEN(VAL_SERIES(definitional_return + 2)) == 0)
                 Init_Nulled(CTX_VAR(meta, STD_ACTION_META_RETURN_NOTE));
             else {
-                Move_Value(
+                Copy_Cell(
                     CTX_VAR(meta, STD_ACTION_META_RETURN_NOTE),
                     &definitional_return[2]
                 );
@@ -1148,14 +1148,14 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
         //
         Value* frame = KNOWN(ARR_HEAD(details));
         assert(IS_FRAME(frame));
-        Move_Value(out, frame);
+        Copy_Cell(out, frame);
         return;
     }
 
     if (ACT_DISPATCHER(a) == &Generic_Dispatcher) {
         Value* verb = KNOWN(ARR_HEAD(details));
         assert(IS_WORD(verb));
-        Move_Value(out, verb);
+        Copy_Cell(out, verb);
         return;
     }
 
@@ -1519,7 +1519,7 @@ REB_R Elider_Dispatcher(REBFRM *f)
     SET_END(dummy);
 
     if (Do_At_Throws(dummy, Cell_Array(body), 0, SPC(f->varlist))) {
-        Move_Value(f->out, dummy); // can't return a local variable
+        Copy_Cell(f->out, dummy); // can't return a local variable
         return R_THROWN;
     }
 
@@ -1599,7 +1599,7 @@ REB_R Adapter_Dispatcher(REBFRM *f)
         VAL_INDEX(prelude),
         SPC(f->varlist)
     )){
-        Move_Value(f->out, dummy);
+        Copy_Cell(f->out, dummy);
         return R_THROWN;
     }
 
@@ -1648,7 +1648,7 @@ REB_R Encloser_Dispatcher(REBFRM *f)
     rootvar->payload.any_context.phase = VAL_ACTION(inner);
     INIT_BINDING_MAY_MANAGE(rootvar, VAL_BINDING(inner));
 
-    Move_Value(FRM_CELL(f), rootvar); // user may DO this, or not...
+    Copy_Cell(FRM_CELL(f), rootvar); // user may DO this, or not...
 
     // We don't actually know how long the frame we give back is going to
     // live, or who it might be given to.  And it may contain things like

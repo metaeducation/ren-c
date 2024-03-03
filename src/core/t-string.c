@@ -1506,7 +1506,7 @@ REBTYPE(String)
             amount = -amount;
 
         if (amount == 0) { // adding or subtracting 0 works, even #{} + 0
-            Move_Value(OUT, v);
+            Copy_Cell(OUT, v);
             return OUT;
         }
         else if (VAL_LEN_AT(v) == 0) // add/subtract to #{} otherwise

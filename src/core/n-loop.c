@@ -93,7 +93,7 @@ DECLARE_NATIVE(break)
 {
     INCLUDE_PARAMS_OF_BREAK;
 
-    Move_Value(OUT, NAT_VALUE(break));
+    Copy_Cell(OUT, NAT_VALUE(break));
     CONVERT_NAME_TO_THROWN(OUT, NULLED_CELL);
     return R_THROWN;
 }
@@ -119,7 +119,7 @@ DECLARE_NATIVE(continue)
     if (IS_NULLED(ARG(value)))  // it's an END (should change to CONTINUE/WITH)
         Init_Void(ARG(value));
 
-    Move_Value(OUT, NAT_VALUE(continue));
+    Copy_Cell(OUT, NAT_VALUE(continue));
     CONVERT_NAME_TO_THROWN(OUT, ARG(value)); // null if e.g. `do [continue]`
 
     return R_THROWN;
@@ -150,7 +150,7 @@ static REB_R Loop_Series_Common(
     // if they change `var` during the loop, it affects the iteration.  Hence
     // it must be checked for changing to another series, or non-series.
     //
-    Move_Value(var, start);
+    Copy_Cell(var, start);
     REBLEN *state = &VAL_INDEX(var);
 
     // Run only once if start is equal to end...edge case.
@@ -490,7 +490,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                     //
                     ++pseudo_var;
                     var = Real_Var_From_Pseudo(pseudo_var);
-                    Move_Value(var, val);
+                    Copy_Cell(var, val);
                 }
                 else
                     fail ("Loop enumeration of contexts must be 1 or 2 vars");
@@ -514,7 +514,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                         goto finished;
                 } while (IS_NULLED(val));
 
-                Move_Value(var, key);
+                Copy_Cell(var, key);
 
                 if (CTX_LEN(les->pseudo_vars_ctx) == 1) {
                     //
@@ -526,7 +526,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                     //
                     ++pseudo_var;
                     var = Real_Var_From_Pseudo(pseudo_var);
-                    Move_Value(var, val);
+                    Copy_Cell(var, val);
                 }
                 else
                     fail ("Loop enumeration of contexts must be 1 or 2 vars");
@@ -552,7 +552,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
               case REB_ACTION: {
                 Value* generated = rebValue(rebEval(les->data));
                 if (generated) {
-                    Move_Value(var, generated);
+                    Copy_Cell(var, generated);
                     rebRelease(generated);
                 }
                 else {
@@ -905,7 +905,7 @@ DECLARE_NATIVE(for_skip)
 
     Value* pseudo_var = CTX_VAR(context, 1); // not movable, see #2274
     Value* var = Real_Var_From_Pseudo(pseudo_var);
-    Move_Value(var, series);
+    Copy_Cell(var, series);
 
     // Starting location when past end with negative skip:
     //
@@ -984,7 +984,7 @@ DECLARE_NATIVE(stop)
 
     Value* v = ARG(value);
 
-    Move_Value(OUT, NAT_VALUE(stop));
+    Copy_Cell(OUT, NAT_VALUE(stop));
     if (IS_ENDISH_NULLED(v))
         CONVERT_NAME_TO_THROWN(OUT, TRASH_VALUE); // `if true [stop]`
     else
@@ -1682,7 +1682,7 @@ INLINE REB_R While_Core(
 
     do {
         if (Do_Branch_Throws(cell, ARG(condition))) {
-            Move_Value(OUT, cell);
+            Copy_Cell(OUT, cell);
             DROP_GC_GUARD(cell);
             return R_THROWN; // don't see BREAK/CONTINUE in the *condition*
         }

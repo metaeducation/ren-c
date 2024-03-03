@@ -201,7 +201,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             // want to double evaluation...so return that single element.
             //
             Value* single = KNOWN(ARR_SINGLE(Cell_Array(shared)));
-            Move_Value(out, single);
+            Copy_Cell(out, single);
             SET_END(shared);
             goto type_check_and_return;
         }
@@ -407,7 +407,7 @@ REB_R MAKE_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
         if (IS_END(Cell_Array_At(arg)))
             SET_END(ARR_SINGLE(array1));
         else
-            Move_Value(ARR_SINGLE(array1), arg);
+            Copy_Cell(ARR_SINGLE(array1), arg);
 
         RESET_CELL(out, REB_VARARGS);
         out->payload.varargs.phase = nullptr;
@@ -456,7 +456,7 @@ REB_R PD_Varargs(
         fail (Error_Varargs_No_Look_Raw());
 
     DECLARE_VALUE (location);
-    Move_Value(location, pvs->out);
+    Copy_Cell(location, pvs->out);
 
     if (Do_Vararg_Op_Maybe_End_Throws(
         pvs->out,

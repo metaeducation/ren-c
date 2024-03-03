@@ -76,7 +76,7 @@ void Make_Thrown_Unwind_Value(
     const Value* value,
     REBFRM *frame // required if level is INTEGER! or ACTION!
 ) {
-    Move_Value(out, NAT_VALUE(unwind));
+    Copy_Cell(out, NAT_VALUE(unwind));
 
     if (IS_FRAME(level)) {
         INIT_BINDING(out, VAL_CONTEXT(level));
@@ -241,7 +241,7 @@ DECLARE_NATIVE(return)
 
     assert(f_binding->header.bits & ARRAY_FLAG_VARLIST);
 
-    Move_Value(OUT, NAT_VALUE(unwind)); // see also Make_Thrown_Unwind_Value
+    Copy_Cell(OUT, NAT_VALUE(unwind)); // see also Make_Thrown_Unwind_Value
     INIT_BINDING_MAY_MANAGE(OUT, f_binding);
 
     CONVERT_NAME_TO_THROWN(OUT, v);
@@ -292,7 +292,7 @@ DECLARE_NATIVE(typechecker)
         nullptr, // no specialization exemplar (or inherited exemplar)
         1 // details array capacity
     );
-    Move_Value(ARR_HEAD(ACT_DETAILS(typechecker)), type);
+    Copy_Cell(ARR_HEAD(ACT_DETAILS(typechecker)), type);
 
     return Init_Action_Unbound(OUT, typechecker);
 }
@@ -416,7 +416,7 @@ DECLARE_NATIVE(adapt)
 
     if (not IS_ACTION(OUT))
         fail (Error_Invalid(adaptee));
-    Move_Value(adaptee, OUT); // Frees OUT, and GC safe (in ARG slot)
+    Copy_Cell(adaptee, OUT); // Frees OUT, and GC safe (in ARG slot)
 
     // The paramlist needs to be unique to designate this function, but
     // will be identical typesets to the original.  It's [0] element must
@@ -435,7 +435,7 @@ DECLARE_NATIVE(adapt)
 
     REBCTX *meta = Copy_Context_Shallow_Managed(VAL_CONTEXT(example));
     Init_Nulled(CTX_VAR(meta, STD_ADAPTED_META_DESCRIPTION)); // default
-    Move_Value(CTX_VAR(meta, STD_ADAPTED_META_ADAPTEE), adaptee);
+    Copy_Cell(CTX_VAR(meta, STD_ADAPTED_META_ADAPTEE), adaptee);
     if (opt_adaptee_name == nullptr)
         Init_Nulled(CTX_VAR(meta, STD_ADAPTED_META_ADAPTEE_NAME));
     else
@@ -473,7 +473,7 @@ DECLARE_NATIVE(adapt)
     VAL_INDEX(block) = 0;
     INIT_BINDING(block, underlying); // relative binding
 
-    Move_Value(Array_At(details, 1), adaptee);
+    Copy_Cell(Array_At(details, 1), adaptee);
 
     return Init_Action_Unbound(OUT, adaptation);
 }
@@ -510,7 +510,7 @@ DECLARE_NATIVE(enclose)
 
     if (not IS_ACTION(OUT))
         fail (Error_Invalid(inner));
-    Move_Value(inner, OUT); // Frees OUT, and GC safe (in ARG slot)
+    Copy_Cell(inner, OUT); // Frees OUT, and GC safe (in ARG slot)
 
     Value* outer = ARG(outer);
     Symbol* opt_outer_name;
@@ -526,7 +526,7 @@ DECLARE_NATIVE(enclose)
 
     if (not IS_ACTION(OUT))
         fail (Error_Invalid(outer));
-    Move_Value(outer, OUT); // Frees OUT, and GC safe (in ARG slot)
+    Copy_Cell(outer, OUT); // Frees OUT, and GC safe (in ARG slot)
 
     // The paramlist needs to be unique to designate this function, but
     // will be identical typesets to the inner.  It's [0] element must
@@ -552,7 +552,7 @@ DECLARE_NATIVE(enclose)
 
     REBCTX *meta = Copy_Context_Shallow_Managed(VAL_CONTEXT(example));
     Init_Nulled(CTX_VAR(meta, STD_ENCLOSED_META_DESCRIPTION)); // default
-    Move_Value(CTX_VAR(meta, STD_ENCLOSED_META_INNER), inner);
+    Copy_Cell(CTX_VAR(meta, STD_ENCLOSED_META_INNER), inner);
     if (opt_inner_name == nullptr)
         Init_Nulled(CTX_VAR(meta, STD_ENCLOSED_META_INNER_NAME));
     else
@@ -560,7 +560,7 @@ DECLARE_NATIVE(enclose)
             CTX_VAR(meta, STD_ENCLOSED_META_INNER_NAME),
             opt_inner_name
         );
-    Move_Value(CTX_VAR(meta, STD_ENCLOSED_META_OUTER), outer);
+    Copy_Cell(CTX_VAR(meta, STD_ENCLOSED_META_OUTER), outer);
     if (opt_outer_name == nullptr)
         Init_Nulled(CTX_VAR(meta, STD_ENCLOSED_META_OUTER_NAME));
     else
@@ -580,8 +580,8 @@ DECLARE_NATIVE(enclose)
     );
 
     Array* details = ACT_DETAILS(enclosure);
-    Move_Value(Array_At(details, 0), inner);
-    Move_Value(Array_At(details, 1), outer);
+    Copy_Cell(Array_At(details, 0), inner);
+    Copy_Cell(Array_At(details, 1), outer);
 
     return Init_Action_Unbound(OUT, enclosure);
 }
@@ -625,7 +625,7 @@ DECLARE_NATIVE(hijack)
 
     if (not IS_ACTION(OUT))
         fail ("Victim of HIJACK must be an ACTION!");
-    Move_Value(ARG(victim), OUT); // Frees up OUT
+    Copy_Cell(ARG(victim), OUT); // Frees up OUT
     REBACT *victim = VAL_ACTION(ARG(victim)); // GC safe (in ARG slot)
 
     Symbol* opt_hijacker_name;
@@ -641,7 +641,7 @@ DECLARE_NATIVE(hijack)
 
     if (not IS_ACTION(OUT))
         fail ("Hijacker in HIJACK must be an ACTION!");
-    Move_Value(ARG(hijacker), OUT); // Frees up OUT
+    Copy_Cell(ARG(hijacker), OUT); // Frees up OUT
     REBACT *hijacker = VAL_ACTION(ARG(hijacker)); // GC safe (in ARG slot)
 
     if (victim == hijacker)
@@ -703,7 +703,7 @@ DECLARE_NATIVE(hijack)
 
         if (ARR_LEN(victim_details) < 1)
             Alloc_Tail_Array(victim_details);
-        Move_Value(ARR_HEAD(victim_details), ARG(hijacker));
+        Copy_Cell(ARR_HEAD(victim_details), ARG(hijacker));
         TERM_ARRAY_LEN(victim_details, 1);
     }
 

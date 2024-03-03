@@ -43,7 +43,7 @@ DECLARE_NATIVE(halt)
 {
     INCLUDE_PARAMS_OF_HALT;
 
-    Move_Value(OUT, NAT_VALUE(halt));
+    Copy_Cell(OUT, NAT_VALUE(halt));
     CONVERT_NAME_TO_THROWN(OUT, NULLED_CELL);
     return OUT;
 }
@@ -68,7 +68,7 @@ DECLARE_NATIVE(quit)
 {
     INCLUDE_PARAMS_OF_QUIT;
 
-    Move_Value(OUT, NAT_VALUE(quit));
+    Copy_Cell(OUT, NAT_VALUE(quit));
 
     if (REF(with))
         CONVERT_NAME_TO_THROWN(OUT, ARG(value));

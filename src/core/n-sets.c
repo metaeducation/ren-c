@@ -362,7 +362,7 @@ DECLARE_NATIVE(exclude)
         if (VAL_TYPE(val1) != VAL_TYPE(val2))
             fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
 
-        Move_Value(OUT, val1);
+        Copy_Cell(OUT, val1);
         VAL_TYPESET_BITS(OUT) &= ~VAL_TYPESET_BITS(val2);
         return OUT;
     }

@@ -231,7 +231,7 @@ REB_R MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
 
     switch (VAL_TYPE(arg)) {
     case REB_TIME: // just copy it (?)
-        return Move_Value(out, arg);
+        return Copy_Cell(out, arg);
 
     case REB_TEXT: { // scan using same decoding as LOAD would
         REBSIZ size;
@@ -622,9 +622,9 @@ REBTYPE(Time)
         }
         else if (type == REB_DATE and sym == SYM_ADD) { // TIME + DATE case
             // Swap args and call DATE datatupe:
-            Move_Value(D_ARG(3), val); // (temporary location for swap)
-            Move_Value(D_ARG(1), arg);
-            Move_Value(D_ARG(2), D_ARG(3));
+            Copy_Cell(D_ARG(3), val); // (temporary location for swap)
+            Copy_Cell(D_ARG(1), arg);
+            Copy_Cell(D_ARG(2), D_ARG(3));
             return T_Date(frame_, verb);
         }
         fail (Error_Math_Args(REB_TIME, verb));
@@ -675,13 +675,13 @@ REBTYPE(Time)
                     );
                     VAL_DECIMAL(arg) /= SEC_SEC;
                     RESET_VAL_HEADER(arg, REB_DECIMAL);
-                    Move_Value(OUT, ARG(scale));
+                    Copy_Cell(OUT, ARG(scale));
                     return OUT;
                 }
                 else if (IS_INTEGER(arg)) {
                     VAL_INT64(arg) = Round_Int(secs, 1, Int32(arg) * SEC_SEC) / SEC_SEC;
                     RESET_VAL_HEADER(arg, REB_INTEGER);
-                    Move_Value(OUT, ARG(scale));
+                    Copy_Cell(OUT, ARG(scale));
                     return OUT;
                 }
                 else

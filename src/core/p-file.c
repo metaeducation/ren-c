@@ -99,13 +99,13 @@ void Query_File_Or_Dir(Value* out, Value* port, struct devreq_file *file)
     Init_Integer(CTX_VAR(ctx, STD_FILE_INFO_SIZE), file->size);
 
     Value* timestamp = OS_FILE_TIME(file);
-    Move_Value(CTX_VAR(ctx, STD_FILE_INFO_DATE), timestamp);
+    Copy_Cell(CTX_VAR(ctx, STD_FILE_INFO_DATE), timestamp);
     rebRelease(timestamp);
 
     assert(IS_FILE(file->path));
-    Move_Value(CTX_VAR(ctx, STD_FILE_INFO_NAME), file->path);
+    Copy_Cell(CTX_VAR(ctx, STD_FILE_INFO_NAME), file->path);
 
-    Move_Value(out, info);
+    Copy_Cell(out, info);
     rebRelease(info);
 }
 

@@ -202,7 +202,7 @@ bool Wait_Ports_Throws(
         if (GET_SIGNAL(SIG_HALT)) {
             CLR_SIGNAL(SIG_HALT);
 
-            Move_Value(out, NAT_VALUE(halt));
+            Copy_Cell(out, NAT_VALUE(halt));
             CONVERT_NAME_TO_THROWN(out, NULLED_CELL);
             return true; // thrown
         }
@@ -221,7 +221,7 @@ bool Wait_Ports_Throws(
 
         // Process any waiting events:
         if ((ret = Awake_System(ports, only)) > 0) {
-            Move_Value(out, TRUE_VALUE); // port action happened
+            Copy_Cell(out, TRUE_VALUE); // port action happened
             return false; // not thrown
         }
 
@@ -256,7 +256,7 @@ bool Wait_Ports_Throws(
     //time = (REBLEN)OS_DELTA_TIME(base);
     //Print("dt: %d", time);
 
-    Move_Value(out, FALSE_VALUE); // timeout;
+    Copy_Cell(out, FALSE_VALUE); // timeout;
     return false; // not thrown
 }
 
@@ -368,7 +368,7 @@ bool Redo_Action_Throws(REBFRM *f, REBACT *run)
         if (ignoring)
             continue;
 
-        Move_Value(code, f->arg);
+        Copy_Cell(code, f->arg);
         ++code;
     }
 
@@ -483,7 +483,7 @@ post_process_output:
             assert(IS_TEXT(OUT));
 
             DECLARE_VALUE (temp);
-            Move_Value(temp, OUT);
+            Copy_Cell(temp, OUT);
             Init_Block(OUT, Split_Lines(temp));
         }
     }

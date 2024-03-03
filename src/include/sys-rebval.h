@@ -86,7 +86,7 @@
 //=//// CELL_FLAG_PROTECTED ///////////////////////////////////////////////=//
 //
 // Values can carry a user-level protection bit.  The bit is not copied by
-// Move_Value(), and hence reading a protected value and writing it to
+// Copy_Cell(), and hence reading a protected value and writing it to
 // another location will not propagate the protectedness from the original
 // value to the copy.
 //
@@ -190,9 +190,9 @@
 // involved is an action.  One benefit is that testing for an enfix action
 // can be done just by looking at this bit--since only actions have it set.
 //
-// But also, this bit is not copied by Move_Value.  As a result, if you say
+// But also, this bit is not copied by Copy_Cell.  As a result, if you say
 // something like `foo: :+`, foo will contain the non-enfixed form of the
-// function.  To do that would require more nuance in Move_Value if it were
+// function.  To do that would require more nuance in Copy_Cell if it were
 // an ACTION_FLAG_XXX, testing for action-ness vs. just masking it out.
 //
 #define VALUE_FLAG_ENFIXED \
@@ -745,7 +745,7 @@ union Reb_Value_Payload {
         //
         // Goal is that the mechanics are managed with low-level C, so the
         // C++ build gives errors on bit copy.  Use functions instead.
-        // (See: Move_Value(), Blit_Cell(), Derelativize())
+        // (See: Copy_Cell(), Blit_Cell(), Derelativize())
         //
         // Note: It is annoying that this means any structure that embeds a
         // value cell cannot be assigned.  However, `struct Reb_Value` must

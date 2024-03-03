@@ -122,7 +122,7 @@ static Value* Entrap_Dangerous(REBFRM *frame_) {
         return nullptr; // don't box it up
 
     Array* a = Alloc_Singular(ARRAY_FLAG_FILE_LINE | NODE_FLAG_MANAGED);
-    Move_Value(ARR_SINGLE(a), OUT);
+    Copy_Cell(ARR_SINGLE(a), OUT);
     Init_Block(OUT, a);
     return nullptr;
 }

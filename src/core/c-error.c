@@ -530,7 +530,7 @@ bool Make_Error_Object_Throws(
 
         DECLARE_VALUE (evaluated);
         if (Do_Any_Array_At_Throws(evaluated, arg)) {
-            Move_Value(out, evaluated);
+            Copy_Cell(out, evaluated);
             return true;
         }
 
@@ -594,7 +594,7 @@ bool Make_Error_Object_Throws(
                 if (not IS_NULLED(&vars->message))
                     fail (Error_Invalid_Error_Raw(arg));
 
-                Move_Value(&vars->message, message);
+                Copy_Cell(&vars->message, message);
             }
             else {
                 // At the moment, we don't let the user make a user-ID'd
@@ -802,7 +802,7 @@ REBCTX *Make_Error_Managed_Core(
                     TS_VALUE, // !!! Currently not in use
                     Cell_Word_Symbol(temp)
                 );
-                Move_Value(value, arg);
+                Copy_Cell(value, arg);
 
                 key++;
                 value++;
@@ -817,9 +817,9 @@ REBCTX *Make_Error_Managed_Core(
     //
     ERROR_VARS *vars = ERR_VARS(error);
 
-    Move_Value(&vars->message, message);
-    Move_Value(&vars->id, id);
-    Move_Value(&vars->type, type);
+    Copy_Cell(&vars->message, message);
+    Copy_Cell(&vars->id, id);
+    Copy_Cell(&vars->type, type);
 
     Set_Location_Of_Error(error, FS_TOP);
     return error;

@@ -70,7 +70,7 @@ REB_R MAKE_Money(Value* out, enum Reb_Kind kind, const Value* arg)
         return Init_Money(out, decimal_to_deci(VAL_DECIMAL(arg)));
 
       case REB_MONEY:
-        return Move_Value(out, arg);
+        return Copy_Cell(out, arg);
 
       case REB_TEXT: {
         Byte *bp = Analyze_String_For_Scan(nullptr, arg, MAX_SCAN_MONEY);
@@ -212,12 +212,12 @@ REBTYPE(Money)
 
     case SYM_NEGATE:
         val->payload.money.s = !val->payload.money.s;
-        Move_Value(OUT, D_ARG(1));
+        Copy_Cell(OUT, D_ARG(1));
         return OUT;
 
     case SYM_ABSOLUTE:
         val->payload.money.s = 0;
-        Move_Value(OUT, D_ARG(1));
+        Copy_Cell(OUT, D_ARG(1));
         return OUT;
 
     case SYM_ROUND: {
@@ -244,7 +244,7 @@ REBTYPE(Money)
             else if (IS_DECIMAL(scale) or IS_PERCENT(scale))
                 Init_Money(temp, decimal_to_deci(VAL_DECIMAL(scale)));
             else if (IS_MONEY(scale))
-                Move_Value(temp, scale);
+                Copy_Cell(temp, scale);
             else
                 fail (Error_Invalid(scale));
         }

@@ -157,7 +157,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
         if (VAL_PARAM_CLASS(param) != PARAM_CLASS_REFINEMENT) {
             if (Is_Param_Hidden(param)) {
                 assert(GET_VAL_FLAG(special, ARG_MARKED_CHECKED));
-                Move_Value(arg, special); // !!! copy the flag?
+                Copy_Cell(arg, special); // !!! copy the flag?
                 SET_VAL_FLAG(arg, ARG_MARKED_CHECKED); // !!! not copied
                 goto continue_specialized; // Eval_Core_Throws() checks type
             }
@@ -791,7 +791,7 @@ bool Specialize_Action_Throws(
     REBCTX *meta = Copy_Context_Shallow_Managed(VAL_CONTEXT(example));
 
     Init_Nulled(CTX_VAR(meta, STD_SPECIALIZED_META_DESCRIPTION)); // default
-    Move_Value(
+    Copy_Cell(
         CTX_VAR(meta, STD_SPECIALIZED_META_SPECIALIZEE),
         specializee
     );
@@ -820,7 +820,7 @@ bool Specialize_Action_Throws(
     // action in the phase, so Specializer_Dispatcher() knows what to call.
     //
     Cell* body = ARR_HEAD(ACT_DETAILS(specialized));
-    Move_Value(body, CTX_ARCHETYPE(exemplar));
+    Copy_Cell(body, CTX_ARCHETYPE(exemplar));
     INIT_BINDING(body, VAL_BINDING(specializee));
     body->payload.any_context.phase = unspecialized;
 
@@ -893,7 +893,7 @@ DECLARE_NATIVE(specialize)
 
     if (not IS_ACTION(OUT))
         fail (Error_Invalid(specializee));
-    Move_Value(specializee, OUT); // Frees OUT, and GC safe (in ARG slot)
+    Copy_Cell(specializee, OUT); // Frees OUT, and GC safe (in ARG slot)
 
     if (Specialize_Action_Throws(
         OUT,
@@ -1179,7 +1179,7 @@ DECLARE_NATIVE(does)
     Cell* body = ARR_HEAD(ACT_DETAILS(doer));
     REBSER *locker = nullptr;
     Ensure_Value_Immutable(value, locker);
-    Move_Value(body, value);
+    Copy_Cell(body, value);
 
     return Init_Action_Unbound(OUT, doer);
 }

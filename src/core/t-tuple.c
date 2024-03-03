@@ -54,7 +54,7 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
     UNUSED(kind);
 
     if (IS_TUPLE(arg))
-        return Move_Value(out, arg);
+        return Copy_Cell(out, arg);
 
     RESET_CELL(out, REB_TUPLE);
     Byte *vp = VAL_TUPLE(out);

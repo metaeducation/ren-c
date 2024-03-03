@@ -91,7 +91,7 @@ void MF_Date(REB_MOLD *mo, const Cell* v_orig, bool form)
     // so we make a copy that we can tweak during the emit process
 
     DECLARE_VALUE (v);
-    Move_Value(v, KNOWN(v_orig));
+    Copy_Cell(v, KNOWN(v_orig));
 
     if (
         VAL_MONTH(v) == 0
@@ -434,7 +434,7 @@ REB_R MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
     UNUSED(kind);
 
     if (IS_DATE(arg))
-        return Move_Value(out, arg);
+        return Copy_Cell(out, arg);
 
     if (IS_TEXT(arg)) {
         REBSIZ size;
@@ -607,7 +607,7 @@ void Pick_Or_Poke_Date(
             if (NOT_VAL_FLAG(v, DATE_FLAG_HAS_TIME))
                 Init_Nulled(opt_out);
             else {
-                Move_Value(opt_out, v); // want v's adjusted VAL_NANO()
+                Copy_Cell(opt_out, v); // want v's adjusted VAL_NANO()
                 Adjust_Date_Zone(opt_out, false);
                 RESET_VAL_HEADER(opt_out, REB_TIME); // clears date flags
             }
@@ -628,7 +628,7 @@ void Pick_Or_Poke_Date(
             break;
 
         case SYM_DATE: {
-            Move_Value(opt_out, v);
+            Copy_Cell(opt_out, v);
 
             const bool to_utc = false;
             Adjust_Date_Zone(opt_out, to_utc); // !!! necessary?
@@ -647,7 +647,7 @@ void Pick_Or_Poke_Date(
             break;
 
         case SYM_UTC: {
-            Move_Value(opt_out, v);
+            Copy_Cell(opt_out, v);
             SET_VAL_FLAG(opt_out, DATE_FLAG_HAS_ZONE);
             INIT_VAL_ZONE(opt_out, 0);
             const bool to_utc = true;
@@ -873,7 +873,7 @@ REB_R PD_Date(
     // !!! The date picking as written can't both read and write the out cell.
     //
     DECLARE_VALUE (temp);
-    Move_Value(temp, pvs->out);
+    Copy_Cell(temp, pvs->out);
     Pick_Or_Poke_Date(pvs->out, temp, picker, nullptr);
     return pvs->out;
 }

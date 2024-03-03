@@ -348,7 +348,7 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
 
     for (; NOT_END(src); ++src, ++dest) {
         if (not IS_RELATIVE(src)) {
-            Move_Value(dest, KNOWN(src));
+            Copy_Cell(dest, KNOWN(src));
             continue;
         }
 

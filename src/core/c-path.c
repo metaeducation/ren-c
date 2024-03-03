@@ -107,7 +107,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             VAL_INDEX(pvs->value),
             derived
         )) {
-            Move_Value(pvs->out, PVS_PICKER(pvs));
+            Copy_Cell(pvs->out, PVS_PICKER(pvs));
             return true; // thrown
         }
     }
@@ -146,7 +146,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             break; // nothing left to do, have to take the dispatcher's word
 
         case REB_R_REFERENCE: { // dispatcher wants a set *if* at end of path
-            Move_Value(pvs->u.ref.cell, PVS_OPT_SETVAL(pvs));
+            Copy_Cell(pvs->u.ref.cell, PVS_OPT_SETVAL(pvs));
 
             if (pvs->flags.bits & DO_FLAG_SET_PATH_ENFIXED) {
                 assert(IS_ACTION(PVS_OPT_SETVAL(pvs)));
@@ -176,7 +176,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             if (not pvs->u.ref.cell)
                 fail ("Can't update temporary immediate value via SET-PATH!");
 
-            Move_Value(pvs->u.ref.cell, pvs->out);
+            Copy_Cell(pvs->u.ref.cell, pvs->out);
             break; }
 
         default:
@@ -307,7 +307,7 @@ bool Eval_Path_Throws_Core(
     if (IS_END(Array_At(array, index))) {
         if (label_out)
             *label_out = nullptr;
-        Move_Value(out, NAT_VALUE(path_0));
+        Copy_Cell(out, NAT_VALUE(path_0));
         return false;
     }
 
@@ -358,7 +358,7 @@ bool Eval_Path_Throws_Core(
         //
         pvs->u.ref.cell = Get_Mutable_Var_May_Fail(pvs->value, pvs->specifier);
 
-        Move_Value(pvs->out, KNOWN(pvs->u.ref.cell));
+        Copy_Cell(pvs->out, KNOWN(pvs->u.ref.cell));
 
         if (IS_ACTION(pvs->out)) {
             if (GET_VAL_FLAG(pvs->u.ref.cell, VALUE_FLAG_ENFIXED))
@@ -465,7 +465,7 @@ bool Eval_Path_Throws_Core(
                 panic ("REFINE-only specializations should not THROW");
             }
 
-            Move_Value(pvs->out, PVS_PICKER(pvs));
+            Copy_Cell(pvs->out, PVS_PICKER(pvs));
         }
     }
 
@@ -588,10 +588,10 @@ DECLARE_NATIVE(pick)
     DECLARE_FRAME (pvs);
     pvs->flags = Endlike_Header(DO_MASK_NONE);
 
-    Move_Value(OUT, location);
+    Copy_Cell(OUT, location);
     pvs->out = OUT;
 
-    Move_Value(PVS_PICKER(pvs), ARG(picker));
+    Copy_Cell(PVS_PICKER(pvs), ARG(picker));
 
     pvs->value = END_NODE;
     pvs->specifier = SPECIFIED;
@@ -669,10 +669,10 @@ DECLARE_NATIVE(poke)
     DECLARE_FRAME (pvs);
     pvs->flags = Endlike_Header(DO_MASK_NONE);
 
-    Move_Value(OUT, location);
+    Copy_Cell(OUT, location);
     pvs->out = OUT;
 
-    Move_Value(PVS_PICKER(pvs), ARG(picker));
+    Copy_Cell(PVS_PICKER(pvs), ARG(picker));
 
     pvs->value = END_NODE;
     pvs->specifier = SPECIFIED;
@@ -693,7 +693,7 @@ DECLARE_NATIVE(poke)
         break;
 
     case REB_R_REFERENCE: // wants us to write it
-        Move_Value(pvs->u.ref.cell, ARG(value));
+        Copy_Cell(pvs->u.ref.cell, ARG(value));
         break;
 
     default:

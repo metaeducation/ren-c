@@ -99,7 +99,7 @@ INLINE bool Apply_Only_Throws(
     va_start(va, applicand);
 
     DECLARE_VALUE (applicand_eval);
-    Move_Value(applicand_eval, applicand);
+    Copy_Cell(applicand_eval, applicand);
     SET_VAL_FLAG(applicand_eval, VALUE_FLAG_EVAL_FLIP);
 
     REBIXO indexor = Eval_Va_Core(

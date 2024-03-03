@@ -64,12 +64,12 @@ REB_R Series_Common_Action_Maybe_Unhandled(
             return Init_Integer(OUT, tail > index ? tail - index : 0);
 
         case SYM_HEAD:
-            Move_Value(OUT, value);
+            Copy_Cell(OUT, value);
             VAL_INDEX(OUT) = 0;
             return OUT;
 
         case SYM_TAIL:
-            Move_Value(OUT, value);
+            Copy_Cell(OUT, value);
             VAL_INDEX(OUT) = cast(REBLEN, tail);
             return OUT;
 

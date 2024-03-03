@@ -107,7 +107,7 @@ INLINE Value* DS_AT(REBDSP d) {
         : TRASH_CELL_IF_DEBUG(DS_Movable_Top)) \
 
 #define DS_PUSH(v) \
-    (DS_PUSH_TRASH, Move_Value(DS_TOP, (v))) \
+    (DS_PUSH_TRASH, Copy_Cell(DS_TOP, (v))) \
 
 
 //

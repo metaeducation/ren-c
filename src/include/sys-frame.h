@@ -66,7 +66,7 @@ INLINE void CONVERT_NAME_TO_THROWN(Value* name, const Value* arg) {
 
     ASSERT_UNREADABLE_IF_DEBUG(&TG_Thrown_Arg);
 
-    Move_Value(&TG_Thrown_Arg, arg);
+    Copy_Cell(&TG_Thrown_Arg, arg);
 }
 
 INLINE void CATCH_THROWN(Cell* arg_out, Value* thrown) {
@@ -77,7 +77,7 @@ INLINE void CATCH_THROWN(Cell* arg_out, Value* thrown) {
     CLEAR_VAL_FLAG(thrown, VALUE_FLAG_THROWN);
 
     ASSERT_READABLE_IF_DEBUG(&TG_Thrown_Arg);
-    Move_Value(arg_out, &TG_Thrown_Arg);
+    Copy_Cell(arg_out, &TG_Thrown_Arg);
     Init_Unreadable_Blank(&TG_Thrown_Arg);
 }
 
@@ -251,7 +251,7 @@ INLINE bool Is_Frame_Gotten_Shoved(REBFRM *f) {
     #define D_ARG(n)    FRM_ARG(frame_, (n))  // pass 1 for first arg
 
     #define RETURN(v) \
-        return Move_Value(OUT, (v))
+        return Copy_Cell(OUT, (v))
 #endif
 
 INLINE bool Is_Action_Frame(REBFRM *f) {

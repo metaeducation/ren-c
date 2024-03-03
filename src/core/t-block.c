@@ -282,7 +282,7 @@ REB_R TO_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         // !!! Review handling of making a 1-element PATH!, e.g. TO PATH! 10
         //
         Array* single = Alloc_Singular(NODE_FLAG_MANAGED);
-        Move_Value(ARR_SINGLE(single), arg);
+        Copy_Cell(ARR_SINGLE(single), arg);
         return Init_Any_Array(out, kind, single);
     }
 }
@@ -883,7 +883,7 @@ REBTYPE(Array)
             if (REF(tail) || REF(match))
                 ret += len;
             VAL_INDEX(array) = ret;
-            Move_Value(OUT, array);
+            Copy_Cell(OUT, array);
         }
         else {
             ret += len;
@@ -933,7 +933,7 @@ REBTYPE(Array)
         if (REF(line))
             flags |= AM_LINE;
 
-        Move_Value(OUT, array);
+        Copy_Cell(OUT, array);
         VAL_INDEX(OUT) = Modify_Array(
             unwrap(Cell_Word_Id(verb)),
             arr,

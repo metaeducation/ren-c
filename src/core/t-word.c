@@ -78,7 +78,7 @@ REB_R MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
         // Only reset the type, not all the header bits (the bits must
         // stay in sync with the binding state)
         //
-        Move_Value(out, arg);
+        Copy_Cell(out, arg);
         CHANGE_VAL_TYPE_BITS(out, kind);
         return out;
     }

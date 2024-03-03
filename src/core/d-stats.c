@@ -79,7 +79,7 @@ DECLARE_NATIVE(stats)
     fail (Error_Debug_Only_Raw());
 #else
     if (REF(profile)) {
-        Move_Value(OUT, Get_System(SYS_STANDARD, STD_STATS));
+        Copy_Cell(OUT, Get_System(SYS_STANDARD, STD_STATS));
         if (IS_OBJECT(OUT)) {
             Value* stats = VAL_CONTEXT_VAR(OUT, 1);
 

@@ -476,7 +476,7 @@ INLINE void Move_Opt_Var_May_Fail(
     const Cell* any_word,
     REBSPC *specifier
 ){
-    Move_Value(out, Get_Opt_Var_May_Fail(any_word, specifier));
+    Copy_Cell(out, Get_Opt_Var_May_Fail(any_word, specifier));
 }
 
 INLINE Value* Get_Mutable_Var_May_Fail(
@@ -537,7 +537,7 @@ INLINE Value* Sink_Var_May_Fail(
 // in an array may only be relative to the function that deep copied them, and
 // that is the only kind of specifier you can use with them).
 //
-// Interface designed to line up with Move_Value()
+// Interface designed to line up with Copy_Cell()
 //
 // !!! At the moment, there is a fair amount of overlap in this code with
 // Get_Context_Core().  One of them resolves a value's real binding and then
@@ -631,7 +631,7 @@ INLINE Value* Derelativize(
 
 // In the C++ build, defining this overload that takes a Value* instead of
 // a Cell*, and then not defining it...will tell you that you do not need
-// to use Derelativize.  Juse Move_Value() if your source is a Value!
+// to use Derelativize.  Juse Copy_Cell() if your source is a Value!
 //
 #if CPLUSPLUS_11
     Value* Derelativize(Cell* dest, const Value* v, REBSPC *specifier);

@@ -727,6 +727,6 @@ REBTYPE(Bitset)
 
   return_bitset:;
 
-    Move_Value(OUT, value);
+    Copy_Cell(OUT, value);
     return OUT;
 }

@@ -196,7 +196,7 @@ DECLARE_NATIVE(bind)
     // FRAME! that they intend to return from.)
     //
     if (IS_ACTION(v)) {
-        Move_Value(OUT, v);
+        Copy_Cell(OUT, v);
         INIT_BINDING(OUT, context);
         return OUT;
     }
@@ -219,7 +219,7 @@ DECLARE_NATIVE(bind)
     }
     else {
         at = Cell_Array_At(v); // only affects binding from current index
-        Move_Value(OUT, v);
+        Copy_Cell(OUT, v);
     }
 
     Bind_Values_Core(
@@ -312,7 +312,7 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
         // have a longer lifetime than the REBFRM* or other node)
         //
         REBCTX *c = VAL_WORD_CONTEXT(v);
-        Move_Value(out, CTX_ARCHETYPE(c));
+        Copy_Cell(out, CTX_ARCHETYPE(c));
         break; }
 
     default:
@@ -907,7 +907,7 @@ DECLARE_NATIVE(identity)
 {
     INCLUDE_PARAMS_OF_IDENTITY;
 
-    Move_Value(OUT, ARG(value));
+    Copy_Cell(OUT, ARG(value));
 
     return OUT;
 }
@@ -1139,7 +1139,7 @@ DECLARE_NATIVE(as)
         fail (Error_Bad_Cast_Raw(v, ARG(type)));
     }
 
-    Move_Value(OUT, v);
+    Copy_Cell(OUT, v);
     CHANGE_VAL_TYPE_BITS(OUT, new_kind);
     return OUT;
 }
@@ -1237,7 +1237,7 @@ DECLARE_NATIVE(the)
     if (REF(soft) and IS_QUOTABLY_SOFT(v))
         fail ("QUOTE/SOFT not currently implemented, should clone EVAL");
 
-    Move_Value(OUT, v);
+    Copy_Cell(OUT, v);
     return OUT;
 }
 

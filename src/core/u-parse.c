@@ -374,7 +374,7 @@ static void Set_Parse_Series(
     const Value* any_series
 ) {
     if (any_series != FRM_ARGS_HEAD(f) + 0)
-        Move_Value(FRM_ARGS_HEAD(f) + 0, any_series);
+        Copy_Cell(FRM_ARGS_HEAD(f) + 0, any_series);
 
     VAL_INDEX(FRM_ARGS_HEAD(f) + 0) =
         (VAL_INDEX(any_series) > VAL_LEN_HEAD(any_series))
@@ -506,7 +506,7 @@ static REBIXO Parse_String_One_Rule(REBFRM *f, const Cell* rule) {
     if (IS_GROUP(rule)) {
         rule = Process_Group_For_Parse(f, P_CELL, rule);
         if (rule == R_THROWN) {
-            Move_Value(P_OUT, P_CELL);
+            Copy_Cell(P_OUT, P_CELL);
             return THROWN_FLAG;
         }
         if (rule == R_INVISIBLE) {
@@ -609,7 +609,7 @@ static REBIXO Parse_String_One_Rule(REBFRM *f, const Cell* rule) {
             P_COLLECTION,
             P_FIND_FLAGS
         )) {
-            Move_Value(P_OUT, subresult);
+            Copy_Cell(P_OUT, subresult);
             return THROWN_FLAG;
         }
 
@@ -666,7 +666,7 @@ static REBIXO Parse_Array_One_Rule_Core(
     if (IS_GROUP(rule)) {
         rule = Process_Group_For_Parse(f, P_CELL, rule);
         if (rule == R_THROWN) {
-            Move_Value(P_OUT, P_CELL);
+            Copy_Cell(P_OUT, P_CELL);
             return THROWN_FLAG;
         }
         if (rule == R_INVISIBLE) {
@@ -725,7 +725,7 @@ static REBIXO Parse_Array_One_Rule_Core(
             P_COLLECTION,
             P_FIND_FLAGS
         )) {
-            Move_Value(P_OUT, subresult);
+            Copy_Cell(P_OUT, subresult);
             return THROWN_FLAG;
         }
 
@@ -810,7 +810,7 @@ static REBIXO To_Thru_Block_Rule(
             else {
                 rule = Process_Group_For_Parse(f, cell, blk);
                 if (rule == R_THROWN) {
-                    Move_Value(P_OUT, cell);
+                    Copy_Cell(P_OUT, cell);
                     return THROWN_FLAG;
                 }
                 if (rule == R_INVISIBLE)
@@ -840,7 +840,7 @@ static REBIXO To_Thru_Block_Rule(
                                fail ("QUOTE needs doubled GROUP! ((...))"); */
                             rule = Process_Group_For_Parse(f, cell, rule);
                             if (rule == R_THROWN) {
-                                Move_Value(P_OUT, cell);
+                                Copy_Cell(P_OUT, cell);
                                 return THROWN_FLAG;
                             }
                         }
@@ -1373,7 +1373,7 @@ DECLARE_NATIVE(subparse)
         else {
             rule = Process_Group_For_Parse(f, save, P_RULE);
             if (rule == R_THROWN) {
-                Move_Value(P_OUT, save);
+                Copy_Cell(P_OUT, save);
                 return R_THROWN;
             }
             if (rule == R_INVISIBLE) { // was a (...), or null-bearing ((...))
@@ -1577,7 +1577,7 @@ DECLARE_NATIVE(subparse)
                             Value* stacked = DS_AT(dsp_orig);
                             do {
                                 ++stacked;
-                                Move_Value(
+                                Copy_Cell(
                                     Alloc_Tail_Array(P_COLLECTION),
                                     stacked
                                 );
@@ -1663,12 +1663,12 @@ DECLARE_NATIVE(subparse)
                         //
                         DECLARE_VALUE (thrown_arg);
                         Init_Integer(thrown_arg, P_POS);
-                        Move_Value(P_OUT, NAT_VALUE(parse_accept));
+                        Copy_Cell(P_OUT, NAT_VALUE(parse_accept));
 
                         // Unfortunately, when the warnings are set all the
                         // way high for uninitialized variable use, the
                         // compiler may think this integer's binding will
-                        // be used by the Move_Value() inlined here.  Get
+                        // be used by the Copy_Cell() inlined here.  Get
                         // past that by initializing it.
                         //
                         thrown_arg->extra.trash = thrown_arg; // local trash
@@ -1681,7 +1681,7 @@ DECLARE_NATIVE(subparse)
                         //
                         // Similarly, this is a break/continue style "throw"
                         //
-                        Move_Value(P_OUT, NAT_VALUE(parse_reject));
+                        Copy_Cell(P_OUT, NAT_VALUE(parse_reject));
                         CONVERT_NAME_TO_THROWN(P_OUT, NULLED_CELL);
                         return R_THROWN;
                     }
@@ -1707,7 +1707,7 @@ DECLARE_NATIVE(subparse)
                             VAL_INDEX(P_RULE),
                             P_RULE_SPECIFIER
                         )) {
-                            Move_Value(P_OUT, condition);
+                            Copy_Cell(P_OUT, condition);
                             return R_THROWN;
                         }
 
@@ -1747,7 +1747,7 @@ DECLARE_NATIVE(subparse)
                     //
                     // if (flags != 0) fail (Error_Parse_Rule());
 
-                    Move_Value(
+                    Copy_Cell(
                         Sink_Var_May_Fail(rule, P_RULE_SPECIFIER),
                         P_INPUT_VALUE
                     );
@@ -1802,7 +1802,7 @@ DECLARE_NATIVE(subparse)
         else if (ANY_PATH(rule)) {
             if (IS_PATH(rule)) {
                 if (Get_Path_Throws_Core(save, rule, P_RULE_SPECIFIER)) {
-                    Move_Value(P_OUT, save);
+                    Copy_Cell(P_OUT, save);
                     return R_THROWN;
                 }
 
@@ -1812,7 +1812,7 @@ DECLARE_NATIVE(subparse)
                 if (Set_Path_Throws_Core(
                     save, rule, P_RULE_SPECIFIER, P_INPUT_VALUE
                 )){
-                    Move_Value(P_OUT, save);
+                    Copy_Cell(P_OUT, save);
                     return R_THROWN;
                 }
 
@@ -1824,7 +1824,7 @@ DECLARE_NATIVE(subparse)
             }
             else if (IS_GET_PATH(rule)) {
                 if (Get_Path_Throws_Core(save, rule, P_RULE_SPECIFIER)) {
-                    Move_Value(P_OUT, save);
+                    Copy_Cell(P_OUT, save);
                     return R_THROWN;
                 }
 
@@ -1995,7 +1995,7 @@ DECLARE_NATIVE(subparse)
                         P_COLLECTION,
                         P_FIND_FLAGS
                     )) {
-                        Move_Value(P_OUT, P_CELL);
+                        Copy_Cell(P_OUT, P_CELL);
                         return R_THROWN;
                     }
 
@@ -2029,7 +2029,7 @@ DECLARE_NATIVE(subparse)
                     P_COLLECTION,
                     P_FIND_FLAGS
                 )) {
-                    Move_Value(P_OUT, P_CELL);
+                    Copy_Cell(P_OUT, P_CELL);
                     return R_THROWN;
                 }
 
@@ -2170,7 +2170,7 @@ DECLARE_NATIVE(subparse)
                         );
                     }
 
-                    Move_Value(
+                    Copy_Cell(
                         Sink_Var_May_Fail(set_or_copy_word, P_RULE_SPECIFIER),
                         temp
                     );
@@ -2253,7 +2253,7 @@ DECLARE_NATIVE(subparse)
                             VAL_INDEX(rule),
                             derived
                         )) {
-                            Move_Value(P_OUT, evaluated);
+                            Copy_Cell(P_OUT, evaluated);
                             return R_THROWN;
                         }
 
@@ -2429,7 +2429,7 @@ DECLARE_NATIVE(parse)
     }
 
     if (REF(match))
-        return Move_Value(OUT, input);
+        return Copy_Cell(OUT, input);
 
     return Init_Trash(OUT);  // should be synthesized value, see [1]
 }

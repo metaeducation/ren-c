@@ -318,7 +318,7 @@ INLINE Value* Init_Action_Unbound(
     Extra_Init_Action_Checks_Debug(a);
   #endif
     ENSURE_ARRAY_MANAGED(ACT_PARAMLIST(a));
-    Move_Value(out, ACT_ARCHETYPE(a));
+    Copy_Cell(out, ACT_ARCHETYPE(a));
     assert(VAL_BINDING(out) == UNBOUND);
     return KNOWN(out);
 }
@@ -332,7 +332,7 @@ INLINE Value* Init_Action_Maybe_Bound(
     Extra_Init_Action_Checks_Debug(a);
   #endif
     ENSURE_ARRAY_MANAGED(ACT_PARAMLIST(a));
-    Move_Value(out, ACT_ARCHETYPE(a));
+    Copy_Cell(out, ACT_ARCHETYPE(a));
     assert(VAL_BINDING(out) == UNBOUND);
     INIT_BINDING(out, binding);
     return KNOWN(out);

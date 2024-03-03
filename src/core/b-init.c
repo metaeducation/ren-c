@@ -629,7 +629,7 @@ Value* Make_Native(
     // stack and looks to see where the native function that is running
     // says its "module" is.  For natives, we default to Lib_Context.
     //
-    Move_Value(Array_At(details, IDX_NATIVE_CONTEXT), module);
+    Copy_Cell(Array_At(details, IDX_NATIVE_CONTEXT), module);
 
     // Append the native to the module under the name given.
     //
@@ -705,10 +705,10 @@ static Array* Startup_Natives(const Value* boot_natives)
         // does not change, see uses via NAT_VALUE() and NAT_ACT().
         //
         Erase_Cell(&Natives[n]);
-        Move_Value(&Natives[n], native); // Note: Loses enfixedness (!)
+        Copy_Cell(&Natives[n], native); // Note: Loses enfixedness (!)
         SET_VAL_FLAG(&Natives[n], CELL_FLAG_PROTECTED);
 
-        Value* catalog_item = Move_Value(Alloc_Tail_Array(catalog), name);
+        Value* catalog_item = Copy_Cell(Alloc_Tail_Array(catalog), name);
         CHANGE_VAL_TYPE_BITS(catalog_item, REB_WORD);
 
         if (Cell_Word_Id(name) == SYM_GENERIC)

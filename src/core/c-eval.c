@@ -584,7 +584,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                 f->specifier,
                 false // ok, crazypants, don't push refinements (?)
             )){
-                Move_Value(f->out, FRM_SHOVE(f));
+                Copy_Cell(f->out, FRM_SHOVE(f));
                 goto return_thrown;
             }
         }
@@ -598,14 +598,14 @@ bool Eval_Core_Throws(REBFRM * const f)
                 DO_FLAG_TO_END
             );
             if (indexor == THROWN_FLAG) {
-                Move_Value(f->out, FRM_SHOVE(f));
+                Copy_Cell(f->out, FRM_SHOVE(f));
                 goto return_thrown;
             }
             if (IS_END(FRM_SHOVE(f))) // !!! need SHOVE frame for type error
                 fail ("GROUP! passed to SHOVE did not evaluate to content");
         }
         else if (IS_ACTION(f->value)) {
-            Move_Value(FRM_SHOVE(f), KNOWN(f->value));
+            Copy_Cell(FRM_SHOVE(f), KNOWN(f->value));
         }
         else
             fail ("SHOVE only accepts WORD!, PATH!, GROUP!, or ACTION!");
@@ -1025,7 +1025,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 
               case PARAM_CLASS_RETURN:
                 assert(Cell_Parameter_Id(f->param) == SYM_RETURN);
-                Move_Value(f->arg, NAT_VALUE(return)); // !!! f->special?
+                Copy_Cell(f->arg, NAT_VALUE(return)); // !!! f->special?
                 INIT_BINDING(f->arg, f->varlist);
                 SET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
@@ -1070,7 +1070,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                         or IS_VARARGS(f->special)
                     );
 
-                    Move_Value(f->arg, f->special); // won't copy the bit
+                    Copy_Cell(f->arg, f->special); // won't copy the bit
                     SET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED);
                 }
                 goto continue_arg_loop;
@@ -1159,23 +1159,23 @@ bool Eval_Core_Throws(REBFRM * const f)
 
                 switch (pclass) {
                   case PARAM_CLASS_NORMAL:
-                    Move_Value(f->arg, f->out);
+                    Copy_Cell(f->arg, f->out);
                     break;
 
                   case PARAM_CLASS_TIGHT:
-                    Move_Value(f->arg, f->out);
+                    Copy_Cell(f->arg, f->out);
                     break;
 
                   case PARAM_CLASS_HARD_QUOTE:
                     // Is_Param_Skippable() accounted for in pre-lookback
 
-                    Move_Value(f->arg, f->out);
+                    Copy_Cell(f->arg, f->out);
                     break;
 
                   case PARAM_CLASS_SOFT_QUOTE:
                     if (IS_QUOTABLY_SOFT(f->out)) {
                         if (Eval_Value_Throws(f->arg, f->out)) {
-                            Move_Value(f->out, f->arg);
+                            Copy_Cell(f->out, f->arg);
                             goto abort_action;
                         }
                     }
@@ -1187,7 +1187,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                         SET_END(f->arg);
                     }
                     else {
-                        Move_Value(f->arg, f->out);
+                        Copy_Cell(f->arg, f->out);
                     }
                     break;
 
@@ -1210,7 +1210,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                         array1 = EMPTY_ARRAY;
                     else {
                         Array* feed = Alloc_Singular(NODE_FLAG_MANAGED);
-                        Move_Value(ARR_SINGLE(feed), f->arg);
+                        Copy_Cell(ARR_SINGLE(feed), f->arg);
 
                         array1 = Alloc_Singular(NODE_FLAG_MANAGED);
                         Init_Block(ARR_SINGLE(array1), feed); // index 0
@@ -1270,7 +1270,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 
                 if (Is_Frame_Gotten_Shoved(f)) {
                     Erase_Cell(FRM_SHOVE(child));
-                    Move_Value(FRM_SHOVE(child), f->gotten);
+                    Copy_Cell(FRM_SHOVE(child), f->gotten);
                     SET_VAL_FLAG(FRM_SHOVE(child), VALUE_FLAG_ENFIXED);
                     f->gotten = FRM_SHOVE(child);
                 }
@@ -1281,7 +1281,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                     flags | DO_FLAG_POST_SWITCH,
                     child
                 )){
-                    Move_Value(f->out, f->u.defer.arg);
+                    Copy_Cell(f->out, f->u.defer.arg);
                     goto abort_action;
                 }
 
@@ -1319,7 +1319,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                 DECLARE_SUBFRAME (child, f); // capture DSP *now*
                 SET_END(f->arg); // Finalize_Arg() sets to Endish_Nulled
                 if (Eval_Step_In_Subframe_Throws(f->arg, f, flags, child)) {
-                    Move_Value(f->out, f->arg);
+                    Copy_Cell(f->out, f->arg);
                     goto abort_action;
                 }
                 break; }
@@ -1340,7 +1340,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                 DECLARE_SUBFRAME (child, f);
                 SET_END(f->arg); // Finalize_Arg() sets to Endish_Nulled
                 if (Eval_Step_In_Subframe_Throws(f->arg, f, flags, child)) {
-                    Move_Value(f->out, f->arg);
+                    Copy_Cell(f->out, f->arg);
                     goto abort_action;
                 }
                 break; }
@@ -1380,7 +1380,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                 }
 
                 if (Eval_Value_Core_Throws(f->arg, f->value, f->specifier)) {
-                    Move_Value(f->out, f->arg);
+                    Copy_Cell(f->out, f->arg);
                     goto abort_action;
                 }
 
@@ -1616,7 +1616,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                         for (; NOT_END(f->arg); ++f->arg, ++f->special) {
                             if (IS_NULLED(f->special)) // no specialization
                                 continue;
-                            Move_Value(f->arg, f->special); // reset it
+                            Copy_Cell(f->arg, f->special); // reset it
                         }
                     }
 
@@ -1777,7 +1777,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         if (IS_TRASH(current_gotten))  // need `:x` if `x` is unset
             fail (Error_Need_Non_Trash_Core(current, f->specifier));
 
-        Move_Value(f->out, current_gotten);
+        Copy_Cell(f->out, current_gotten);
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1819,7 +1819,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                 goto return_thrown;
         }
 
-        Move_Value(Sink_Var_May_Fail(current, f->specifier), f->out);
+        Copy_Cell(Sink_Var_May_Fail(current, f->specifier), f->out);
         break; }
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1908,7 +1908,7 @@ bool Eval_Core_Throws(REBFRM * const f)
             DO_FLAG_TO_END
         );
         if (indexor == THROWN_FLAG) {
-            Move_Value(f->out, FRM_CELL(f));
+            Copy_Cell(f->out, FRM_CELL(f));
             goto return_thrown;
         }
         if (IS_END(FRM_CELL(f))) {
@@ -1921,7 +1921,7 @@ bool Eval_Core_Throws(REBFRM * const f)
             goto finished;
         }
 
-        Move_Value(f->out, FRM_CELL(f));
+        Copy_Cell(f->out, FRM_CELL(f));
         break; }
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -2046,7 +2046,7 @@ bool Eval_Core_Throws(REBFRM * const f)
             f->out,
             DO_MASK_NONE // evaluating GROUP!s ok
         )){
-            Move_Value(f->out, FRM_CELL(f));
+            Copy_Cell(f->out, FRM_CELL(f));
             goto return_thrown;
         }
         break; }
@@ -2459,7 +2459,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         //
         if (Is_Frame_Gotten_Shoved(f)) {
             Erase_Cell(FRM_SHOVE(f->prior));
-            Move_Value(FRM_SHOVE(f->prior), f->gotten);
+            Copy_Cell(FRM_SHOVE(f->prior), f->gotten);
             SET_VAL_FLAG(FRM_SHOVE(f->prior), VALUE_FLAG_ENFIXED);
             f->gotten = FRM_SHOVE(f->prior);
         }
@@ -2499,7 +2499,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 
         if (Is_Frame_Gotten_Shoved(f)) {
             Erase_Cell(FRM_SHOVE(f->prior));
-            Move_Value(FRM_SHOVE(f->prior), f->gotten);
+            Copy_Cell(FRM_SHOVE(f->prior), f->gotten);
             SET_VAL_FLAG(FRM_SHOVE(f->prior), VALUE_FLAG_ENFIXED);
             f->gotten = FRM_SHOVE(f->prior);
         }

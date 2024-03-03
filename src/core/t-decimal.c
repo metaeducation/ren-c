@@ -358,9 +358,9 @@ REBTYPE(Decimal)
             sym == SYM_ADD ||
             sym == SYM_MULTIPLY
         )){
-            Move_Value(OUT, D_ARG(2));
-            Move_Value(D_ARG(2), D_ARG(1));
-            Move_Value(D_ARG(1), OUT);
+            Copy_Cell(OUT, D_ARG(2));
+            Copy_Cell(D_ARG(2), D_ARG(1));
+            Copy_Cell(D_ARG(1), OUT);
             GENERIC_HOOK hook = Generic_Hooks[VAL_TYPE(D_ARG(1))];
             return hook(frame_, verb);
         }
@@ -448,7 +448,7 @@ REBTYPE(Decimal)
     switch (sym) {
 
     case SYM_COPY:
-        Move_Value(OUT, val);
+        Copy_Cell(OUT, val);
         return OUT;
 
     case SYM_NEGATE:

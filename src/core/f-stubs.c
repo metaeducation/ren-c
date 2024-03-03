@@ -233,7 +233,7 @@ const Value* Datatype_From_Kind(enum Reb_Kind kind)
 Value* Init_Datatype(Cell* out, enum Reb_Kind kind)
 {
     assert(kind > REB_0 and kind < REB_MAX);
-    Move_Value(out, Datatype_From_Kind(kind));
+    Copy_Cell(out, Datatype_From_Kind(kind));
     return KNOWN(out);
 }
 

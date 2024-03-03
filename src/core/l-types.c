@@ -325,9 +325,9 @@ DECLARE_NATIVE(of)
     // property in the second.
     //
     DECLARE_VALUE (temp);
-    Move_Value(temp, ARG(property));
-    Move_Value(ARG(property), ARG(value));
-    Move_Value(ARG(value), temp);
+    Copy_Cell(temp, ARG(property));
+    Copy_Cell(ARG(property), ARG(value));
+    Copy_Cell(ARG(value), temp);
 
     return Reflect_Core(frame_);
 }

@@ -184,7 +184,7 @@ bool Either_Test_Core_Throws(
         assert(lowest_ordered_dsp == DSP); // would have made specialization
         UNUSED(lowest_ordered_dsp);
 
-        Move_Value(test, out);
+        Copy_Cell(test, out);
 
         if (not IS_ACTION(test))
             fail ("EITHER-TEST only takes WORD! and PATH! for ACTION! vars");
@@ -417,7 +417,7 @@ DECLARE_NATIVE(match)
     if (VAL_LOGIC(temp)) {
         if (IS_FALSEY(value)) // see above for why false match not passed thru
             return Init_Trash(OUT);
-        return Move_Value(OUT, value);
+        return Copy_Cell(OUT, value);
     }
 
     return nullptr;
@@ -623,7 +623,7 @@ static REB_R Case_Choose_Core_May_Throw(
 
         if (Eval_Step_Throws(SET_END(cell), f)) {
             DROP_GC_GUARD(cell);
-            Move_Value(OUT, cell);
+            Copy_Cell(OUT, cell);
             Abort_Frame(f);
             return R_THROWN;
         }
@@ -642,7 +642,7 @@ static REB_R Case_Choose_Core_May_Throw(
         if (IS_END(f->value)) {
             DROP_GC_GUARD(cell);
             Drop_Frame(f);
-            return Move_Value(OUT, cell);
+            return Copy_Cell(OUT, cell);
         }
 
         if (IS_FALSEY(cell)) {  // not a matching condition
@@ -658,7 +658,7 @@ static REB_R Case_Choose_Core_May_Throw(
                 Abort_Frame(f);
                 // preserving `out` value (may be previous match)
                 DROP_GC_GUARD(cell);
-                return Move_Value(OUT, cell);
+                return Copy_Cell(OUT, cell);
             }
 
             if (IS_END(cell))
@@ -690,7 +690,7 @@ static REB_R Case_Choose_Core_May_Throw(
 
             f->gotten = nullptr; // can't hold onto cache, running user code
 
-            Move_Value(block, OUT); // can't evaluate into ARG(block)
+            Copy_Cell(block, OUT); // can't evaluate into ARG(block)
             if (IS_BLOCK(block)) {
                 if (Do_Any_Array_At_Throws(OUT, block)) {
                     Abort_Frame(f);
@@ -961,7 +961,7 @@ DECLARE_NATIVE(default)
 
     const bool enfix = false;
     if (IS_SET_WORD(target))
-        Move_Value(Sink_Var_May_Fail(target, SPECIFIED), OUT);
+        Copy_Cell(Sink_Var_May_Fail(target, SPECIFIED), OUT);
     else {
         assert(IS_SET_PATH(target));
         Set_Path_Core(target, SPECIFIED, OUT, enfix);
@@ -1060,7 +1060,7 @@ DECLARE_NATIVE(catch)
                     fail (Error_Invalid(ARG(names)));
 
                 Derelativize(temp1, candidate, VAL_SPECIFIER(ARG(names)));
-                Move_Value(temp2, OUT);
+                Copy_Cell(temp2, OUT);
 
                 // Return the THROW/NAME's arg if the names match
                 // !!! 0 means equal?, but strict-equal? might be better
@@ -1070,8 +1070,8 @@ DECLARE_NATIVE(catch)
             }
         }
         else {
-            Move_Value(temp1, ARG(names));
-            Move_Value(temp2, OUT);
+            Copy_Cell(temp1, ARG(names));
+            Copy_Cell(temp2, OUT);
 
             // Return the THROW/NAME's arg if the names match
             // !!! 0 means equal?, but strict-equal? might be better
@@ -1095,7 +1095,7 @@ DECLARE_NATIVE(catch)
         Array* a = Make_Arr(2);
 
         CATCH_THROWN(Array_At(a, 1), OUT); // thrown value--may be null!
-        Move_Value(Array_At(a, 0), OUT); // throw name (thrown bit clear)
+        Copy_Cell(Array_At(a, 0), OUT); // throw name (thrown bit clear)
         if (IS_NULLED(Array_At(a, 1)))
             TERM_ARRAY_LEN(a, 1); // trim out null value (illegal in block)
         else
@@ -1138,7 +1138,7 @@ DECLARE_NATIVE(throw)
     Value* value = ARG(value);
 
     if (REF(name))
-        Move_Value(OUT, ARG(name_value));
+        Copy_Cell(OUT, ARG(name_value));
     else {
         // Blank values serve as representative of THROWN() means "no name"
         //

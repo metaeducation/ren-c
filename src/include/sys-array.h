@@ -176,7 +176,7 @@ INLINE void Deep_Freeze_Array(Array* a) {
 //
 // The cells cannot be written to unless they carry VALUE_FLAG_CELL, and
 // have been "formatted" to convey their lifetime (stack or array).  This
-// helps debugging, but is also important information needed by Move_Value()
+// helps debugging, but is also important information needed by Copy_Cell()
 // for deciding if the lifetime of a target cell requires the "reification"
 // of any temporary referenced structures into ones managed by the GC.
 //
@@ -379,7 +379,7 @@ INLINE Array* Alloc_Singular(REBFLGS flags) {
 }
 
 #define Append_Value(a,v) \
-    Move_Value(Alloc_Tail_Array(a), (v))
+    Copy_Cell(Alloc_Tail_Array(a), (v))
 
 #define Append_Value_Core(a,v,s) \
     Derelativize(Alloc_Tail_Array(a), (v), (s))

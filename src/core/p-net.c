@@ -70,7 +70,7 @@ static void Query_Net(Value* out, Value* port, struct devreq_net *sock)
         sock->remote_port
     );
 
-    Move_Value(out, info);
+    Copy_Cell(out, info);
     rebRelease(info);
 }
 
@@ -317,7 +317,7 @@ static REB_R Transport_Actor(
         // !!! Post-processing enforces READ as returning OUT at the moment;
         // so you can't just `return port`.
         //
-        Move_Value(OUT, port);
+        Copy_Cell(OUT, port);
         return OUT; }
 
     case SYM_WRITE: {
@@ -366,7 +366,7 @@ static REB_R Transport_Actor(
             sock->common.data = Cell_Binary_At(data);
             sock->length = len;
 
-            Move_Value(CTX_VAR(ctx, STD_PORT_DATA), data); // keep it GC safe
+            Copy_Cell(CTX_VAR(ctx, STD_PORT_DATA), data); // keep it GC safe
         }
         else {
             // !!! R3-Alpha did not lay out the invariants of the port model,

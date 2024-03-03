@@ -450,7 +450,7 @@ RebolValue* RL_rebArg(const void *p, va_list *vaptr)
     Value* arg = FRM_ARGS_HEAD(f);
     for (; NOT_END(param); ++param, ++arg) {
         if (Are_Synonyms(Cell_Parameter_Symbol(param), symbol))
-            return Move_Value(Alloc_Value(), arg);
+            return Copy_Cell(Alloc_Value(), arg);
     }
 
     fail ("Unknown rebArg(...) name.");
@@ -549,7 +549,7 @@ RebolValue* RL_rebValueInline(const RebolValue* array)
         fail ("rebValueInline() only supports BLOCK! and GROUP!");
 
     DECLARE_VALUE (group);
-    Move_Value(group, array);
+    Copy_Cell(group, array);
     CHANGE_VAL_TYPE_BITS(group, REB_GROUP);
 
     return rebValue(rebEval(group));
@@ -575,7 +575,7 @@ const void *RL_rebEval(const RebolValue* v)
 
     Array* instruction = Alloc_Instruction();
     Cell* single = ARR_SINGLE(instruction);
-    Move_Value(single, v);
+    Copy_Cell(single, v);
 
     // !!! The presence of the VALUE_FLAG_EVAL_FLIP is a pretty good
     // indication that it's an eval instruction.  So it's not necessary to
@@ -618,13 +618,13 @@ const void *RL_rebUneval(const RebolValue* v)
         // should be revisited where instructions encode what they are in the
         // header/info/link/misc.
         //
-        Move_Value(single, NAT_VALUE(null));  // the NULL function
+        Copy_Cell(single, NAT_VALUE(null));  // the NULL function
     }
     else {
         Array* a = Make_Arr(2);
         SET_SER_INFO(a, SERIES_INFO_HOLD);
-        Move_Value(Alloc_Tail_Array(a), NAT_VALUE(the));  // the THE function
-        Move_Value(Alloc_Tail_Array(a), v);
+        Copy_Cell(Alloc_Tail_Array(a), NAT_VALUE(the));  // the THE function
+        Copy_Cell(Alloc_Tail_Array(a), v);
 
         Init_Group(single, a);
     }
@@ -889,7 +889,7 @@ RebolValue* RL_rebRescue(
     // covered by this, and would have to be unmanaged.  Do another allocation
     // just for the sake of it.
 
-    Value* proxy = Move_Value(Alloc_Value(), result); // parent is not f
+    Value* proxy = Copy_Cell(Alloc_Value(), result); // parent is not f
     rebRelease(result);
     return proxy;
 }
@@ -1322,7 +1322,7 @@ RebolValue* RL_rebText(const char *utf8)
 //
 // !!! Since the data is UTF-8, it may be possible to make this a "delayed"
 // text argument...that saves the pointer it is given and uses it directly,
-// then only proxies it into a series at Move_Value() time.
+// then only proxies it into a series at Copy_Cell() time.
 //
 const void *RL_rebT(const char *utf8)
 {

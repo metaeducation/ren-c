@@ -55,7 +55,7 @@ REB_R MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
     UNUSED(kind);
 
     if (IS_PAIR(arg))
-        return Move_Value(out, arg);
+        return Copy_Cell(out, arg);
 
     if (IS_TEXT(arg)) {
         //
@@ -191,9 +191,9 @@ REB_R PD_Pair(
 
     if (opt_setval == nullptr) {
         if (n == 1)
-            Move_Value(pvs->out, VAL_PAIR_FIRST(pvs->out));
+            Copy_Cell(pvs->out, VAL_PAIR_FIRST(pvs->out));
         else
-            Move_Value(pvs->out, VAL_PAIR_SECOND(pvs->out));
+            Copy_Cell(pvs->out, VAL_PAIR_SECOND(pvs->out));
         return pvs->out;
     }
 
@@ -205,9 +205,9 @@ REB_R PD_Pair(
         return R_UNHANDLED;
 
     if (n == 1)
-        Move_Value(VAL_PAIR_FIRST(pvs->out), opt_setval);
+        Copy_Cell(VAL_PAIR_FIRST(pvs->out), opt_setval);
     else
-        Move_Value(VAL_PAIR_SECOND(pvs->out), opt_setval);
+        Copy_Cell(VAL_PAIR_SECOND(pvs->out), opt_setval);
 
     // Using R_IMMEDIATE means that although we've updated pvs->out, we'll
     // leave it to the path dispatch to figure out if that can be written back
@@ -277,14 +277,14 @@ REBTYPE(Pair)
 
     Value* frame = Init_Frame(OUT, Context_For_Frame_May_Manage(frame_));
 
-    Move_Value(D_ARG(1), first1);
+    Copy_Cell(D_ARG(1), first1);
     if (first2)
-        Move_Value(D_ARG(2), first2);  // use extracted arg x vs pair arg
+        Copy_Cell(D_ARG(2), first2);  // use extracted arg x vs pair arg
     Value* x_frame = rebValue("copy", frame);
 
-    Move_Value(D_ARG(1), second1);
+    Copy_Cell(D_ARG(1), second1);
     if (second2)
-        Move_Value(D_ARG(2), second2);  // use extracted arg y vs pair arg
+        Copy_Cell(D_ARG(2), second2);  // use extracted arg y vs pair arg
     Value* y_frame = rebValue("copy", frame);
 
     Value* x = rebValue(rebEval(NAT_VALUE(do)), rebR(x_frame));

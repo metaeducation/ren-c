@@ -159,7 +159,7 @@ static Value* Get_Event_Var(Cell* out, const Cell* v, Symbol* name)
             return Init_Object(out, CTX(VAL_EVENT_SER(v)));
 
         if (IS_EVENT_MODEL(v, EVM_CALLBACK))
-            return Move_Value(out, Get_System(SYS_PORTS, PORTS_CALLBACK));
+            return Copy_Cell(out, Get_System(SYS_PORTS, PORTS_CALLBACK));
 
         assert(IS_EVENT_MODEL(v, EVM_DEVICE)); // holds IO request w/PORT!
         REBREQ *req = VAL_EVENT_REQ(v);

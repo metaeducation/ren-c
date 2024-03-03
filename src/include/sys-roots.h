@@ -67,7 +67,7 @@ INLINE Value* Alloc_Value(void)
     Array* a = Alloc_Singular(NODE_FLAG_ROOT | NODE_FLAG_MANAGED);
 
     // Giving the cell itself NODE_FLAG_ROOT lets a Value* be discerned as
-    // either an API handle or not.  The flag is not copied by Move_Value().
+    // either an API handle or not.  The flag is not copied by Copy_Cell().
     //
     Value* v = KNOWN(ARR_SINGLE(a));
     v->header.bits |= NODE_FLAG_ROOT; // it's trash (can't use SET_VAL_FLAGS)

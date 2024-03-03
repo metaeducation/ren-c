@@ -122,7 +122,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
     // Use SWITCH instead of IF chain? (was written w/ANY_STR test)
 
     if (IS_INTEGER(value)) {
-        Move_Value(out, value);
+        Copy_Cell(out, value);
         goto check_sign;
     }
     if (IS_DECIMAL(value) || IS_PERCENT(value)) {
@@ -411,9 +411,9 @@ REBTYPE(Integer)
             case SYM_ADD:
             case SYM_MULTIPLY: {
                 // Swap parameter order:
-                Move_Value(OUT, val2);  // Use as temp workspace
-                Move_Value(val2, val);
-                Move_Value(val, OUT);
+                Copy_Cell(OUT, val2);  // Use as temp workspace
+                Copy_Cell(val2, val);
+                Copy_Cell(val, OUT);
                 GENERIC_HOOK hook = Generic_Hooks[VAL_TYPE(val)];
                 return hook(frame_, verb); }
 
@@ -454,7 +454,7 @@ REBTYPE(Integer)
     switch (sym) {
 
     case SYM_COPY:
-        Move_Value(OUT, val);
+        Copy_Cell(OUT, val);
         return OUT;
 
     case SYM_ADD: {

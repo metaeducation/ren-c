@@ -239,10 +239,10 @@ static void Rehash_Map(REBMAP *map)
             //
             // It's a "zombie", move last key to overwrite it
             //
-            Move_Value(
+            Copy_Cell(
                 key, KNOWN(Array_At(pairlist, ARR_LEN(pairlist) - 2))
             );
-            Move_Value(
+            Copy_Cell(
                 &key[1], KNOWN(Array_At(pairlist, ARR_LEN(pairlist) - 1))
             );
             SET_ARRAY_LEN_NOTERM(pairlist, ARR_LEN(pairlist) - 2);
@@ -407,7 +407,7 @@ REB_R PD_Map(
     if (IS_NULLED(val)) // zombie entry, means unused
         return nullptr;
 
-    return Move_Value(pvs->out, val); // RETURN (...) uses `frame_`, not `pvs`
+    return Copy_Cell(pvs->out, val); // RETURN (...) uses `frame_`, not `pvs`
 }
 
 
@@ -557,11 +557,11 @@ Array* Map_To_Array(REBMAP *map, REBINT what)
         assert(NOT_END(val + 1));
         if (not IS_NULLED(val + 1)) {
             if (what <= 0) {
-                Move_Value(dest, &val[0]);
+                Copy_Cell(dest, &val[0]);
                 ++dest;
             }
             if (what >= 0) {
-                Move_Value(dest, &val[1]);
+                Copy_Cell(dest, &val[1]);
                 ++dest;
             }
         }
@@ -613,7 +613,7 @@ REBCTX *Alloc_Context_From_Map(REBMAP *map)
                 Cell_Word_Symbol(mval)
             );
             ++key;
-            Move_Value(var, &mval[1]);
+            Copy_Cell(var, &mval[1]);
             ++var;
         }
     }
@@ -756,7 +756,7 @@ REBTYPE(Map)
         if (n == 0)
             return nullptr;
 
-        Move_Value(
+        Copy_Cell(
             OUT,
             KNOWN(Array_At(MAP_PAIRLIST(map), ((n - 1) * 2) + 1))
         );
@@ -833,7 +833,7 @@ REBTYPE(Map)
         if (not REF(map))
             fail (Error_Illegal_Action(REB_MAP, verb));
 
-        Move_Value(OUT, val);
+        Copy_Cell(OUT, val);
         Find_Map_Entry(
             map, ARG(key), SPECIFIED, NULLED_CELL, SPECIFIED, true
         );
