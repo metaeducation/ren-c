@@ -304,6 +304,35 @@ trim: adapt 'trim [ ; there's a bug in TRIM/AUTO in 8994d23
     ]
 ]
 
+transcode: lib/function [
+    return: [<opt> any-value!]
+    source [text! binary!]
+    /next
+    next-arg [any-word!]
+][
+    values: lib/transcode/(either next ['next] [_])
+        either text? source [to binary! source] [source]
+    pos: take/last values
+    assert [binary? pos]
+
+    if next [
+        assert [1 >= length of values]
+
+        ; In order to return a text position in pre-UTF-8 everywhere, fake it
+        ; by seeing how much binary was consumed and assume skipping that many
+        ; bytes will sync us.  (From @rgchris's LOAD-NEXT).
+        ;
+        if text? source [
+            rest: to text! pos
+            pos: skip source subtract (length of source) (length of rest)
+        ]
+        set next-arg pos
+        return pick values 1  ; may be null
+    ]
+
+    return values
+]
+
 join: :join-of  ; Note: JOIN now for strings and paths only (not arrays)
 
 quit/with system/options/path  ; see [1]

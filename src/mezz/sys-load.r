@@ -91,6 +91,8 @@ load-header: function [
         [block! word!]
     source "Source code (text! will be UTF-8 encoded)"
         [binary! text!]
+    line-var [word!]
+
     /only "Only process header, don't decompress body"
     /required "Script header is required"
 
@@ -148,22 +150,13 @@ load-header: function [
         ]
     ]
 
-    ; The TRANSCODE function returns a BLOCK! containing the transcoded
-    ; elements as well as a BINARY! indicating any remainder.  Convention
-    ; is also that block has a LINE OF with the line number of the *end*
-    ; of the transcoding so far, to sync line numbering across transcodes.
-
     ; get 'rebol keyword
     ;
-    keyrest: transcode/only data
-    line: line of keyrest
-    set [key: rest:] keyrest
+    key: transcode/next/line data 'rest line-var
 
     ; get header block
     ;
-    hdrrest: transcode/next/relax/line rest line
-    line: line of hdrrest
-    set [hdr: rest:] hdrrest
+    hdr: transcode/next/line/relax rest 'rest line-var
 
     if not block? :hdr [
         ; header block is incomplete
@@ -185,7 +178,10 @@ load-header: function [
     ]
 
     if 13 = rest/1 [rest: next rest] ; skip CR
-    if 10 = rest/1 [rest: next rest | line: me + 1] ; skip LF
+    if 10 = rest/1 [
+        rest: next rest  ; skip LF
+        set line-var (get line-var) + 1
+    ]
 
     if integer? tmp: select hdr 'length [
         end: skip rest tmp
@@ -215,7 +211,7 @@ load-header: function [
                         ; uses transcode, leading whitespace and comments
                         ; are tolerated before the literal.
                         ;
-                        gunzip first transcode/next rest
+                        gunzip first transcode/next rest 'dummy
                     ]
                 ] or [
                     return 'bad-compress
@@ -226,7 +222,7 @@ load-header: function [
         ; block-embedded script, only script compression, ignore hdr/length
 
         ; decode embedded script
-        rest: skip first set [data: end:] transcode/next data 2
+        rest: skip first set [data: end:] transcode/next data 'dummy 2
 
         case [
             find maybe hdr/options 'compress [ ; script encoded only
@@ -245,7 +241,6 @@ load-header: function [
             ensure [<opt> block!] hdr/options
         )
         ensure [binary! block!] rest
-        ensure integer! line
         ensure binary! end
     ]
 ]
@@ -350,7 +345,8 @@ load: function [
 
     ;-- Try to load the header, handle error:
     if not self/all [
-        set [hdr: data: line:] load-header data
+        line: 1
+        set [hdr: data:] load-header data 'line
         hdr: degrade hdr
 
         if word? hdr [cause-error 'syntax hdr source]
@@ -366,7 +362,6 @@ load: function [
         ]
         assert [binary? data]
         data: transcode/file/line data (maybe file) (maybe line)
-        take/last data ;-- !!! always the residual, a #{}... why?
     ]
 
     if header [
@@ -561,7 +556,8 @@ load-module: function [
     ; Get and process the header
     if not hdr [
         ; Only happens for string, binary or non-extension file/url source
-        set [hdr: code: line:] load-header/required data
+        line: 1
+        set [hdr: code:] load-header/required data 'line
         case [
             word? hdr [cause-error 'syntax hdr source]
             import [

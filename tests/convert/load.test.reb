@@ -17,7 +17,10 @@
 ; LOAD/NEXT removed, see #1703
 ;
 (error? trap [load/next "1"])
-([1 #{}] = transcode/next to binary! "1")
+(all [
+    1 = transcode/next to binary! "1" 'rest
+    rest = #{}
+])
 
 [#1122 (
     any [

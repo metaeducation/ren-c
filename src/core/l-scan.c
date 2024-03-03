@@ -1888,8 +1888,7 @@ static REBINT Scan_Head(SCAN_STATE *ss)
 }
 
 
-static Array* Scan_Full_Array(SCAN_STATE *ss, Byte mode_char);
-static Array* Scan_Child_Array(SCAN_STATE *ss, Byte mode_char);
+static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char);
 
 //
 //  Scan_To_Stack: C
@@ -2031,7 +2030,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
 
         case TOKEN_BLOCK_BEGIN:
         case TOKEN_GROUP_BEGIN: {
-            Array* array = Scan_Child_Array(
+            Array* array = Scan_Array(
                 ss, (ss->token == TOKEN_BLOCK_BEGIN) ? ']' : ')'
             );
 
@@ -2224,7 +2223,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             break;
 
         case TOKEN_CONSTRUCT: {
-            Array* array = Scan_Full_Array(ss, ']');
+            Array* array = Scan_Array(ss, ']');
 
             // !!! Should the scanner be doing binding at all, and if so why
             // just Lib_Context?  Not binding would break functions entirely,
@@ -2413,7 +2412,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 // pushed item from us...as it's the head of the path it
                 // couldn't see coming in the future.
 
-                arr = Scan_Child_Array(ss, '/');
+                arr = Scan_Array(ss, '/');
 
               #if !defined(NDEBUG)
                 assert(DSP == dsp_check - 1); // should only take one!
@@ -2474,7 +2473,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
 
         // Added for TRANSCODE/NEXT (LOAD/NEXT is deprecated, see #1703)
         //
-        if ((ss->opts & SCAN_FLAG_ONLY) or just_once)
+        if (just_once)
             goto array_done;
     }
 
@@ -2552,14 +2551,14 @@ void Scan_To_Stack_Relaxed(SCAN_STATE *ss) {
 
 
 //
-//  Scan_Child_Array: C
+//  Scan_Array: C
 //
 // This routine would create a new structure on the scanning stack.  Putting
 // what would be local variables for each level into a structure helps with
 // reflection, allowing for better introspection and error messages.  (This
 // is similar to the benefits of Reb_Frame.)
 //
-static Array* Scan_Child_Array(SCAN_STATE *ss, Byte mode_char)
+static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char)
 {
     SCAN_STATE child = *ss;
 
@@ -2613,25 +2612,6 @@ static Array* Scan_Child_Array(SCAN_STATE *ss, Byte mode_char)
     ss->line_head = child.line_head;
 
     return a;
-}
-
-
-//
-//  Scan_Full_Array: C
-//
-// Simple variation of scan_block to avoid problem with
-// construct of aggregate values.
-//
-static Array* Scan_Full_Array(SCAN_STATE *ss, Byte mode_char)
-{
-    bool saved_only = did (ss->opts & SCAN_FLAG_ONLY);
-    ss->opts &= ~SCAN_FLAG_ONLY;
-
-    Array* array = Scan_Child_Array(ss, mode_char);
-
-    if (saved_only)
-        ss->opts |= SCAN_FLAG_ONLY;
-    return array;
 }
 
 
@@ -2796,23 +2776,29 @@ void Shutdown_Scanner(void)
 //
 //  {Translates UTF-8 binary source to values. Returns [value binary].}
 //
-//      source [binary!]
+//      return: [<opt> any-value!]
+//      source [<maybe> binary! text!]
 //          "Must be Unicode UTF-8 encoded"
 //      /next
 //          {Translate next complete value (blocks as single value)}
-//      /only
-//          "Translate only a single value (blocks dissected)"
+//          next-arg [any-word!]  ; word to set
 //      /relax
 //          {Do not cause errors - return error object as value in place}
 //      /file
 //          file-name [file! url!]
 //      /line
-//          line-number [integer!]
+//          line-number [integer! word!]
 //  ]
 //
 DECLARE_NATIVE(transcode)
 {
     INCLUDE_PARAMS_OF_TRANSCODE;
+
+    Value* source;
+    if (IS_TEXT(ARG(source)))
+        source = rebValue("to binary!", ARG(source));
+    else
+        source = ARG(source);
 
     // !!! Should the base name and extension be stored, or whole path?
     //
@@ -2820,11 +2806,20 @@ DECLARE_NATIVE(transcode)
         ? Intern(ARG(file_name))
         : Canon(SYM___ANONYMOUS__);
 
-    REBLIN start_line = 1;
+    REBLIN start_line;
     if (REF(line)) {
-        start_line = VAL_INT32(ARG(line_number));
+        Value* ival;
+        if (IS_WORD(ARG(line_number)))  // get mutable, to fail early
+            ival = Get_Mutable_Var_May_Fail(ARG(line_number), SPECIFIED);
+        else
+            ival = ARG(line_number);
+
+        if (not IS_INTEGER(ival))
+            fail (ARG(line_number));
+
+        start_line = VAL_INT32(ival);
         if (start_line <= 0)
-            fail (Error_Invalid(ARG(line_number)));
+            fail (Error_Invalid(ival));
     }
     else
         start_line = 1;
@@ -2834,14 +2829,12 @@ DECLARE_NATIVE(transcode)
         &ss,
         filename,
         start_line,
-        Cell_Binary_At(ARG(source)),
-        VAL_LEN_AT(ARG(source))
+        Cell_Binary_At(source),
+        VAL_LEN_AT(source)
     );
 
     if (REF(next))
         ss.opts |= SCAN_FLAG_NEXT;
-    if (REF(only))
-        ss.opts |= SCAN_FLAG_ONLY;
     if (REF(relax))
         ss.opts |= SCAN_FLAG_RELAX;
 
@@ -2858,16 +2851,38 @@ DECLARE_NATIVE(transcode)
     else
         Scan_To_Stack(&ss);
 
-    // Add a value to the tail of the result, representing the input
-    // with position advanced past the content consumed by the scan.
-    // (Returning a length 2 block is how TRANSCODE does a "multiple
-    // return value, but #1916 discusses a possible "revamp" of this.)
-    //
-    DS_PUSH(ARG(source));
-    if (REF(next) or REF(only))
-        VAL_INDEX(DS_TOP) = ss.end - VAL_BIN_HEAD(ARG(source));
-    else
-        VAL_INDEX(DS_TOP) = VAL_LEN_HEAD(ARG(source)); // ss.end is trash
+    if (IS_WORD(ARG(line_number))) {
+        Value* ivar = Get_Mutable_Var_May_Fail(ARG(line_number), SPECIFIED);
+        Init_Integer(ivar, ss.line);
+    }
+    if (REF(next)) {
+        Value* nvar = Get_Mutable_Var_May_Fail(ARG(next_arg), SPECIFIED);
+        Move_Value(nvar, ARG(source));
+        if (IS_TEXT(ARG(source))) {
+            assert(VAL_INDEX(source) == 0);  // binary converted
+            Byte* bp = VAL_BIN_HEAD(source);
+            for (; bp < ss.end; ++bp) {
+                if (not Is_Continuation_Byte(*bp))
+                    ++VAL_INDEX(nvar);  // bump ahead for each utf8 codepoint
+            }
+        }
+        else {
+            VAL_INDEX(nvar) = ss.end - VAL_BIN_HEAD(nvar);  // binary advance
+        }
+    }
+
+    if (IS_TEXT(ARG(source)))
+        rebRelease(source);  // release temporary binary created
+
+    if (REF(next)) {
+        if (DSP == dsp_orig)
+            return nullptr;
+
+        assert(DSP == dsp_orig + 1);
+        Move_Value(OUT, DS_TOP);
+        DS_DROP;
+        return OUT;
+    }
 
     Array* a = Pop_Stack_Values_Core(
         dsp_orig,

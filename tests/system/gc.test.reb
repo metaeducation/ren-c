@@ -50,7 +50,7 @@
 ; transcode...
 (
     (unspaced ["<" mold transcode to binary! "a [b c]"  ">"])
-        = "<[a [b c] #{}]>"
+        = "<[a [b c]]>"
 )
 ; ...
 (

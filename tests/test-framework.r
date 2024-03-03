@@ -155,9 +155,7 @@ make object! compose [
                         any whitespace
                         [
                             position: "%" (
-                                set [value next-position]
-                                    transcode/next
-                                    position
+                                value: transcode/next position 'next-position
                             )
                             :next-position
                                 |

@@ -71,17 +71,6 @@ decode-key-value-text: function [
     new-line/all/skip meta true 2
 ]
 
-
-load-next: function [
-    {Load the next value. Return block with value and new position.}
-    text [text!]
-][
-    out: transcode/next to binary! text
-    out/2: skip text subtract (length of text) (length of to text! out/2)
-    out
-] ; by @rgchris.
-
-
 load-until-blank: function [
     {Load rebol values from text until double newline.}
     text [text!]
@@ -91,8 +80,10 @@ load-until-blank: function [
     wsp: compose [some (charset { ^-})]
 
     rebol-value: parsing-at x [
-        res: any [attempt [load-next x] []]
-        either empty? res [blank] [second res]
+        attempt [
+            transcode/next x the temp:
+            temp
+        ]
     ]
 
     terminator: [opt wsp newline opt wsp newline]

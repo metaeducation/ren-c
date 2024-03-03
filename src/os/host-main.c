@@ -235,9 +235,6 @@ int main(int argc, char *argv_ansi[])
     Value* host_code = rebValue(
         "lib/transcode/file", host_bin, "%tmp-host-start.inc"
     );
-    rebElide(
-        "lib/ensure :lib/empty? lib/take/last", host_code  // empty bin @ tail
-    );
     rebRelease(host_bin);
 
     // Create a new context specifically for startup.  This way, changes

@@ -3,8 +3,6 @@ REBOL [
     Version: 1.0.0
     Rights: {
         Copyright 2015 Brett Handley
-
-        Rebol3 load-next by Chris Ross-Gill.
     }
     License: {
         Licensed under the Apache License, Version 2.0

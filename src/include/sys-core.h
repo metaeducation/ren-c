@@ -618,6 +618,9 @@ INLINE void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
 #define IS_WHITE(c) ((c) <= 32 and (White_Chars[c] & 1) != 0)
 #define IS_SPACE(c) ((c) <= 32 and (White_Chars[c] & 2) != 0)
 
+#define Is_Continuation_Byte(b) \
+    (((b) & 0xC0) == 0x80)  // only certain if UTF-8 validity is already known
+
 #define GET_SIGNAL(f) \
     (did (Eval_Signals & (f)))
 
