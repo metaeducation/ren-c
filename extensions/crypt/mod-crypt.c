@@ -62,7 +62,7 @@
 
 #include "sys-core.h"
 
-#include "sha256/sha256.h" // depends on %reb-c.h for u8, u32, u64
+#include "sha256/sha256.h"
 
 #include "tmp-mod-crypt.h"
 

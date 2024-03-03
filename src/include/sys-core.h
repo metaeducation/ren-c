@@ -97,7 +97,7 @@ typedef RebolValue Value;
 #include <assert.h>
 #include "assert-fixes.h"
 
-#include "reb-c.h"
+#include "c-enhanced.h"
 
 
 //

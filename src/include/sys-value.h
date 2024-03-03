@@ -290,7 +290,8 @@
             SECOND_BYTE(flag) = 0; \
         }
 #else
-    #define CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(flag) NOOP
+    #define CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(flag) \
+        USED(kind);
 #endif
 
 INLINE void SET_VAL_FLAG(Cell* v, uintptr_t f) {

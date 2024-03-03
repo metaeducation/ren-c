@@ -1,5 +1,5 @@
 //
-//  File: %reb-c.h
+//  File: %c-enhanced.h
 //  Summary: "General C definitions and constants"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -61,7 +61,7 @@
 //
 // The code was changed to use either the C99 types -or- a portable shim that
 // could mimic the types (with the same names) on older compilers.  It should
-// be included before %reb-c.h is included.
+// be included before %c-enhanced.h is included.
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -625,6 +625,10 @@
 // Though the version here is more verbose, it uses the specializations to
 // avoid excessive calls to memset() in the debug build.
 //
+
+#define USED(x) \
+    ((void)(x))
+
 #if defined(NDEBUG) || (! CPLUSPLUS_11)
     #define UNUSED(x) \
         ((void)(x))

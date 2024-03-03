@@ -349,59 +349,6 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
-//=//// UNREACHABLE CODE ANNOTATIONS //////////////////////////////////////=//
-//
-// Because Rebol uses `longjmp` and `exit` there are cases where a function
-// might look like not all paths return a value, when those paths actually
-// aren't supposed to return at all.  For instance:
-//
-//     int foo(int x) {
-//         if (x < 1020)
-//             return x + 304;
-//         fail ("x is too big"); // compiler may warn about no return value
-//     }
-//
-// One way of annotating to say this is okay is on the caller, with DEAD_END:
-//
-//     int foo(int x) {
-//         if (x < 1020)
-//             return x + 304;
-//         fail ("x is too big");
-//         DEAD_END; // our warning-suppression macro for applicable compilers
-//     }
-//
-// DEAD_END is just a no-op in compilers that don't have the feature of
-// suppressing the warning--which can often mean they don't have the warning
-// in the first place.
-//
-// Another macro we define is ATTRIBUTE_NO_RETURN.  This can be put on the
-// declaration site of a function like `fail()` itself, so the callsites don't
-// need to be changed.  As with DEAD_END it degrades into a no-op in compilers
-// that don't support it.
-//
-
-#if defined(__clang__) || GCC_VERSION_AT_LEAST(2, 5)
-    #define ATTRIBUTE_NO_RETURN __attribute__ ((noreturn))
-#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
-    #define ATTRIBUTE_NO_RETURN _Noreturn
-#elif defined(_MSC_VER)
-    #define ATTRIBUTE_NO_RETURN __declspec(noreturn)
-#else
-    #define ATTRIBUTE_NO_RETURN
-#endif
-
-#if __has_builtin(__builtin_unreachable) || GCC_VERSION_AT_LEAST(4, 5)
-    #define DEAD_END __builtin_unreachable()
-#elif defined(_MSC_VER)
-    __declspec(noreturn) static inline void msvc_unreachable(void) {
-        while (1) { }
-    }
-    #define DEAD_END msvc_unreachable()
-#else
-    #define DEAD_END
-#endif
-
-
 // Initially the debug build switches were all (default) or nothing (-DNDEBUG)
 // but needed to be broken down into a finer-grained list.  This way, more
 // constrained systems (like emscripten) can build in just the features it

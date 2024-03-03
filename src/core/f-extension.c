@@ -383,8 +383,8 @@ static const Value* Unloaded_Dispatcher(REBFRM *f)
 DECLARE_NATIVE(unload_extension)
 {
     UNUSED(frame_);
-    UNUSED(Unloaded_Dispatcher);
-    UNUSED(cleanup_module_handler);
+    UNUSED(&Unloaded_Dispatcher);
+    UNUSED(&cleanup_module_handler);
 
     fail ("Unloading extensions is currently not supported");
 

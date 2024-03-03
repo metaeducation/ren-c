@@ -16,7 +16,7 @@
 #define SHA256_BLOCK_SIZE 32            // SHA256 outputs a 32 byte digest
 
 // Note: Original defined WORD as a 32-bit entity and BYTE.  This conflicts
-// with definitions in Windows.  Modified to use u8, u32, u64 from %reb-c.h
+// with definitions in Windows.  Modified to use <stdint.h> types
 
 typedef struct {
     uint8_t data[64];

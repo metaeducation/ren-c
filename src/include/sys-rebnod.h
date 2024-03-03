@@ -159,8 +159,8 @@
 //
 // Assignments to bits and fields in the header are done through a native
 // platform-sized integer...while still being able to control the underlying
-// ordering of those bits in memory.  See FLAG_LEFT_BIT() in %reb-c.h for how
-// this is achieved.
+// ordering of those bits in memory.  See FLAG_LEFT_BIT() for how this is
+// achieved.
 //
 // This control allows the leftmost byte of a Rebol header (the one you'd
 // get by casting Value* to an unsigned char*) to always start with the bit
