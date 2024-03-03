@@ -58,7 +58,7 @@
 //
 // !!! There is actually not a specific list of roots of the garbage collect,
 // so a first pass of all the REBSER nodes must be done to find them.  This is
-// because with the redesigned "RL_API" in Ren-C, ordinary REBSER nodes do
+// because with the redesigned Librebol in Ren-C, ordinary REBSER nodes do
 // double duty as lifetime-managed containers for REBVALs handed out by the
 // API--without requiring a separate series data allocation.  These could be
 // in their own "pool", but that would prevent mingling and reuse among REBSER

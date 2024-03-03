@@ -38,7 +38,7 @@ ver: load <../src/boot/version.r>
 ;; This leverages the prototype parser, which uses PARSE on C lexicals, and
 ;; loads Rebol-structured data out of comments in the file.
 ;;
-;; Currently only two files are searched for RL_API entries.  This makes it
+;; Currently only one file (%a-lib.c) is searched for API entries.  So it is
 ;; easier to track the order of the API routines and change them sparingly
 ;; (such as by adding new routines to the end of the list, so as not to break
 ;; binary compatibility with code built to the old ordered interface).
@@ -72,14 +72,14 @@ emit-proto: func [return: <void> proto] [
         ]
     ]
 
-    if header/2 != 'RL_API [return]
+    if header/2 != 'API [return]
     if not set-word? header/1 [
         fail ["API declaration should be a SET-WORD!, not" (header/1)]
     ]
 
     paramlist: collect [
         parse/match proto [
-            copy returns to "RL_" "RL_" copy name to "(" skip
+            copy returns to "API_" "API_" copy name to "(" skip
             ["void)" | some [ ;-- C void, or at least one parameter expected
                 [copy param to "," skip | copy param to ")" to end] (
                     ;
@@ -107,10 +107,10 @@ emit-proto: func [return: <void> proto] [
         ]
     ]
 
-    if (to set-word! name) != header/1 [ ;-- e.g. `//  rebValue: RL_API`
+    if (to set-word! name) != header/1 [ ;-- e.g. `//  rebValue: API`
         fail [
             "Name in comment header (" header/1 ") isn't C function name"
-            "minus RL_ prefix to match" (name)
+            "minus API_ prefix to match" (name)
         ]
     ]
 
@@ -137,7 +137,6 @@ process: func [file] [
 src-dir: clean-path append copy repo-dir %src/core/
 
 process src-dir/a-lib.c
-process src-dir/f-extension.c ; !!! is there a reason to process this file?
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -175,7 +174,7 @@ direct-call-inlines: make block! length of api-objects
 
 for-each api api-objects [do in api [
     if find [
-        "rebEnterApi_internal" ; called as RL_rebEnterApi_internal
+        "rebEnterApi_internal" ; called as API_rebEnterApi_internal
     ] name [
         continue
     ]
@@ -216,7 +215,7 @@ for-each api api-objects [do in api [
     opt-return: null-to-blank if returns != "void" ["return"]
 
     enter: null-to-blank if name != "rebStartup" [
-        copy "RL_rebEnterApi_internal();^/"
+        copy "API_rebEnterApi_internal();^/"
     ]
 
     make-inline-proxy: func [
@@ -234,8 +233,8 @@ for-each api api-objects [do in api [
         } reduce [api 'internal]
     ]
 
-    append direct-call-inlines make-inline-proxy unspaced ["RL_" name]
-    append struct-call-inlines make-inline-proxy unspaced ["RL->" name]
+    append direct-call-inlines make-inline-proxy unspaced ["API_" name]
+    append struct-call-inlines make-inline-proxy unspaced ["g_librebol->" name]
 ]]
 
 c99-or-c++11-macros: map-each-api [
@@ -347,9 +346,9 @@ e-lib/emit {
      * !!! These constants are part of an old R3-Alpha versioning system
      * that hasn't been paid much attention to.  Keeping as a placeholder.
      */
-    #define RL_VER $<ver/1>
-    #define RL_REV $<ver/2>
-    #define RL_UPD $<ver/3>
+    #define LIBREBOL_VERSION $<ver/1>
+    #define LIBREBOL_MAJOR $<ver/2>
+    #define LIBREBOL_MINOR $<ver/3>
 
     /*
      * The API can be used by the core on value cell pointers that are in
@@ -447,13 +446,13 @@ e-lib/emit {
      */
     typedef struct rebol_ext_api {
         $[Lib-Struct-Fields];
-    } RL_LIB;
+    } RebolApiTable;
 
     #ifdef REB_EXT /* can't direct call into EXE, must go through interface */
         /*
          * The inline functions below will require this base pointer:
          */
-        extern RL_LIB *RL; /* is passed to the RX_Init() function */
+        extern RebolApiTable* g_librebol;  /* passed to RX_Init() function */
 
         /*
          * Inlines to access reb-lib functions (from non-linked extensions):
@@ -574,11 +573,11 @@ e-table: (make-emitter
     "REBOL Interface Table Singleton" output-dir/tmp-reb-lib-table.inc)
 
 table-init-items: map-each-api [
-    unspaced ["RL_" name]
+    unspaced ["API_" name]
 ]
 
 e-table/emit {
-    RL_LIB Ext_Lib = {
+    RebolApiTable g_librebol = {
         $(Table-Init-Items),
     };
 }

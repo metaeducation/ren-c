@@ -38,15 +38,15 @@
 // the C code using the library isn't competing as much for definitions in
 // the global namespace.
 //
-// (That was true of the original RL_API in R3-Alpha, but this later iteration
+// (That was true of the original API in R3-Alpha, but this later iteration
 // speaks in terms of actual Value* cells--vs. creating a new type.  They are
 // just opaque pointers to cells whose lifetime is either indefinite, or
 // tied to particular function FRAME!s.)
 //
-// Each exported routine here has a name RL_rebXxxYyy.  This is a name by
+// Each exported routine here has a name API_rebXxxYyy.  This is a name by
 // which it can be called internally from the codebase like any other function
 // that is part of the core.  However, macros for calling it from the core
-// are given as `#define rebXxxYyy RL_rebXxxYyy`.  This is a little bit nicer
+// are given as `#define rebXxxYyy API_rebXxxYyy`.  This is a little bit nicer
 // and consistent with the way it looks when an external client calls the
 // functions.
 //
@@ -76,7 +76,7 @@
 
 
 //
-// rebEnterApi_Internal: RL_API
+// rebEnterApi_Internal: API
 //
 // This stub is added automatically to the calling wrappers.
 //
@@ -85,7 +85,7 @@
 // in particular notice if the core tries to use an API function before the
 // proper moment in the boot.
 //
-void RL_rebEnterApi_internal(void) {
+void API_rebEnterApi_internal(void) {
     if (not Host_Lib)
         panic ("rebStartup() not called before API call");
 }
@@ -109,7 +109,7 @@ void RL_rebEnterApi_internal(void) {
 
 
 //
-//  rebMalloc: RL_API
+//  rebMalloc: API
 //
 // * Unlike plain malloc(), this will fail() instead of return null if an
 //   allocation cannot be fulfilled.
@@ -128,7 +128,7 @@ void RL_rebEnterApi_internal(void) {
 // on wasted bytes when ALIGN_SIZE > sizeof(REBSER*)...or work with "weird"
 // large fundamental types that need more alignment than ALIGN_SIZE.
 //
-void *RL_rebMalloc(size_t size)
+void *API_rebMalloc(size_t size)
 {
     REBSER *s = Make_Ser_Core(
         ALIGN_SIZE // stores REBSER* (must be at least big enough for void*)
@@ -164,7 +164,7 @@ void *RL_rebMalloc(size_t size)
 
 
 //
-//  rebRealloc: RL_API
+//  rebRealloc: API
 //
 // * Like plain realloc(), null is legal for ptr (despite the fact that
 //   rebMalloc() never returns null, this can still be useful)
@@ -180,7 +180,7 @@ void *RL_rebMalloc(size_t size)
 // * A 0 size is considered illegal.  This is consistent with the C11 standard
 //   for realloc(), but not with malloc() or rebMalloc()...which allow it.
 //
-void *RL_rebRealloc(void *ptr, size_t new_size)
+void *API_rebRealloc(void *ptr, size_t new_size)
 {
     assert(new_size > 0); // realloc() deprecated this as of C11 DR 400
 
@@ -207,11 +207,11 @@ void *RL_rebRealloc(void *ptr, size_t new_size)
 
 
 //
-//  rebFree: RL_API
+//  rebFree: API
 //
 // * As with free(), null is accepted as a no-op.
 //
-void RL_rebFree(void *ptr)
+void API_rebFree(void *ptr)
 {
     if (not ptr)
         return;
@@ -236,7 +236,7 @@ void RL_rebFree(void *ptr)
 
 
 //
-//  rebRepossess: RL_API
+//  rebRepossess: API
 //
 // Alternative to rebFree() is to take over the underlying series as a
 // BINARY!.  The old void* should not be used after the transition, as this
@@ -259,7 +259,7 @@ void RL_rebFree(void *ptr)
 // and since C does not have the size exposed in malloc() and you track it
 // yourself, it seems fair to *always* ask the caller to pass in a size.
 //
-RebolValue* RL_rebRepossess(void *ptr, size_t size)
+RebolValue* API_rebRepossess(void *ptr, size_t size)
 {
     REBSER **ps = cast(REBSER**, ptr) - 1;
     UNPOISON_MEMORY(ps, sizeof(REBSER*)); // need to underrun to fetch `s`
@@ -302,7 +302,7 @@ RebolValue* RL_rebRepossess(void *ptr, size_t size)
 //
 //  Startup_Api: C
 //
-// RL_API routines may be used by extensions (which are invoked by a fully
+// API routines may be used by extensions (which are invoked by a fully
 // initialized Rebol core) or by normal linkage (such as from within the core
 // itself).  A call to rebStartup() won't be needed in the former case.  So
 // setup code that is needed to interact with the API needs to be done by the
@@ -327,7 +327,7 @@ void Shutdown_Api(void)
 
 
 //
-//  rebStartup: RL_API
+//  rebStartup: API
 //
 // This function will allocate and initialize all memory structures used by
 // the REBOL interpreter. This is an extensive process that takes time.
@@ -349,7 +349,7 @@ void Shutdown_Api(void)
 // default host operation.  It is expected that the OS_XXX functions will
 // eventually disappear completely.
 //
-void RL_rebStartup(void)
+void API_rebStartup(void)
 {
     if (Host_Lib)
         panic ("rebStartup() called when it's already started");
@@ -367,7 +367,7 @@ void RL_rebStartup(void)
 
 
 //
-//  rebShutdown: RL_API
+//  rebShutdown: API
 //
 // Shut down a Rebol interpreter initialized with rebStartup().
 //
@@ -379,7 +379,7 @@ void RL_rebStartup(void)
 //
 // For rigor, the debug build *always* runs a "clean" shutdown.
 //
-void RL_rebShutdown(bool clean)
+void API_rebShutdown(bool clean)
 {
     // At time of writing, nothing Shutdown_Core() does pertains to
     // committing unfinished data to disk.  So really there is
@@ -400,12 +400,12 @@ void RL_rebShutdown(bool clean)
 
 
 //
-//  rebTick: RL_API
+//  rebTick: API
 //
 // If the executable is built with tick counting, this will return the tick
 // without requiring any Rebol code to run (which would disrupt the tick).
 //
-long RL_rebTick(void)
+long API_rebTick(void)
 {
   #ifdef DEBUG_COUNT_TICKS
     return cast(long, TG_Tick);
@@ -416,7 +416,7 @@ long RL_rebTick(void)
 
 
 //
-//  rebArg: RL_API
+//  rebArg: API
 //
 // !!! When code is being used to look up arguments of a function, exactly
 // how that will work is being considered:
@@ -427,7 +427,7 @@ long RL_rebTick(void)
 // For the moment, this routine specifically accesses arguments of the most
 // recent ACTION! on the stack.
 //
-RebolValue* RL_rebArg(const void *p, va_list *vaptr)
+RebolValue* API_rebArg(const void *p, va_list *vaptr)
 {
     REBFRM *f = FS_TOP;
     REBACT *act = FRM_PHASE(f);
@@ -458,7 +458,7 @@ RebolValue* RL_rebArg(const void *p, va_list *vaptr)
 
 
 //
-//  rebValue: RL_API
+//  rebValue: API
 //
 // C variadic function which calls the evaluator on multiple pointers.
 // Each pointer may either be a Value* or a UTF-8 string which will be
@@ -468,7 +468,7 @@ RebolValue* RL_rebArg(const void *p, va_list *vaptr)
 // product already.  Use rebEval() to "retrigger" them (which wraps them in
 // a singular Array*, another type of detectable pointer.)
 //
-RebolValue* RL_rebValue(const void *p, va_list *vaptr)
+RebolValue* API_rebValue(const void *p, va_list *vaptr)
 {
     Value* result = Alloc_Value();
     if (Do_Va_Throws(result, p, vaptr)) // calls va_end()
@@ -483,12 +483,12 @@ RebolValue* RL_rebValue(const void *p, va_list *vaptr)
 
 
 //
-//  rebElide: RL_API
+//  rebElide: API
 //
 // Variant of rebValue() which assumes you don't need the result.  This saves on
 // allocating an API handle, or the caller needing to manage its lifetime.
 //
-void RL_rebElide(const void *p, va_list *vaptr)
+void API_rebElide(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (elided);
     if (Do_Va_Throws(elided, p, vaptr)) // calls va_end()
@@ -497,7 +497,7 @@ void RL_rebElide(const void *p, va_list *vaptr)
 
 
 //
-//  rebJumps: RL_API [
+//  rebJumps: API [
 //      #noreturn
 //  ]
 //
@@ -517,7 +517,7 @@ void RL_rebElide(const void *p, va_list *vaptr)
 //    rebNoReturn(...) -- whose return?
 //    rebStop(...) -- STOP is rather final sounding, the code keeps going
 //
-void RL_rebJumps(const void *p, va_list *vaptr)
+void API_rebJumps(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (elided);
     if (Do_Va_Throws(elided, p, vaptr)) { // calls va_end()
@@ -535,7 +535,7 @@ void RL_rebJumps(const void *p, va_list *vaptr)
 
 
 //
-//  rebValueInline: RL_API
+//  rebValueInline: API
 //
 // Non-variadic function which takes a single argument which must be a single
 // value that is a BLOCK! or GROUP!.  The goal is that it not add an extra
@@ -543,7 +543,7 @@ void RL_rebJumps(const void *p, va_list *vaptr)
 // the console, so that BACKTRACE does not look up and see a Rebol function
 // like DO on the stack.
 //
-RebolValue* RL_rebValueInline(const RebolValue* array)
+RebolValue* API_rebValueInline(const RebolValue* array)
 {
     if (not IS_BLOCK(array) and not IS_GROUP(array))
         fail ("rebValueInline() only supports BLOCK! and GROUP!");
@@ -557,7 +557,7 @@ RebolValue* RL_rebValueInline(const RebolValue* array)
 
 
 //
-//  rebEval: RL_API
+//  rebEval: API
 //
 // When rebValue() receives a Value*, the default is to assume it should be
 // spliced into the input stream as if it had already been evaluated.  It's
@@ -568,7 +568,7 @@ RebolValue* RL_rebValueInline(const RebolValue* array)
 // evaluated.  So `rebValue(rebEval(some_word), ...)` will execute that word
 // if it's bound to an ACTION! and dereference if it's a variable.
 //
-const void *RL_rebEval(const RebolValue* v)
+const void *API_rebEval(const RebolValue* v)
 {
     if (IS_NULLED(v))
         fail ("Cannot pass NULL to rebEval()");
@@ -590,7 +590,7 @@ const void *RL_rebEval(const RebolValue* v)
 
 
 //
-//  rebUneval: RL_API
+//  rebUneval: API
 //
 // nulls are not legal to splice into blocks.  So the rebUneval() expression
 // works around it by splicing in a GROUP!, and if it's not null then it puts
@@ -605,7 +605,7 @@ const void *RL_rebEval(const RebolValue* v)
 // variadic stream.  This leaves the implementation method more open, and
 // has the benefit of not requiring a rebRelease().
 //
-const void *RL_rebUneval(const RebolValue* v)
+const void *API_rebUneval(const RebolValue* v)
 {
     Array* instruction = Alloc_Instruction();
     Cell* single = ARR_SINGLE(instruction);
@@ -637,14 +637,14 @@ const void *RL_rebUneval(const RebolValue* v)
 
 
 //
-//  rebR: RL_API
+//  rebR: API
 //
 // Convenience tool for making "auto-release" form of values.  They will only
 // exist for one API call.  They will be automatically rebRelease()'d when
 // they are seen (or even if they are not seen, if there is a failure on that
 // call it will still process the va_list in order to release these handles)
 //
-const void *RL_rebR(RebolValue* v)
+const void *API_rebR(RebolValue* v)
 {
     if (not Is_Api_Value(v))
         fail ("Cannot apply rebR() to non-API value");
@@ -659,25 +659,25 @@ const void *RL_rebR(RebolValue* v)
 
 
 //
-//  rebTrash: RL_API
+//  rebTrash: API
 //
-RebolValue* RL_rebTrash(void)
+RebolValue* API_rebTrash(void)
 {
     return Init_Trash(Alloc_Value());
 }
 
 
 //
-//  rebBlank: RL_API
+//  rebBlank: API
 //
-RebolValue* RL_rebBlank(void)
+RebolValue* API_rebBlank(void)
 {
     return Init_Blank(Alloc_Value());
 }
 
 
 //
-//  rebLogic: RL_API
+//  rebLogic: API
 //
 // !!! Use of bool in this file assumes compatibility between C99 stdbool and
 // C++ stdbool.  Are they compatible?
@@ -693,7 +693,7 @@ RebolValue* RL_rebBlank(void)
 // stdbool would be defined to be the same size as C++'s bool (if such a
 // pre-C99 system could even be used to make a C++ build at all!)
 //
-RebolValue* RL_rebLogic(bool logic)
+RebolValue* API_rebLogic(bool logic)
 {
     // Use DID on the bool, in case it's a "shim bool" (e.g. just some integer
     // type) and hence may have values other than strictly 0 or 1.
@@ -703,9 +703,9 @@ RebolValue* RL_rebLogic(bool logic)
 
 
 //
-//  rebChar: RL_API
+//  rebChar: API
 //
-RebolValue* RL_rebChar(uint32_t codepoint)
+RebolValue* API_rebChar(uint32_t codepoint)
 {
     if (codepoint > MAX_UNI)
         fail ("Codepoint out of range, see: https://forum.rebol.info/t/374");
@@ -715,39 +715,39 @@ RebolValue* RL_rebChar(uint32_t codepoint)
 
 
 //
-//  rebInteger: RL_API
+//  rebInteger: API
 //
 // !!! Should there be rebSigned() and rebUnsigned(), in order to catch cases
 // of using out of range values?
 //
-RebolValue* RL_rebInteger(int64_t i)
+RebolValue* API_rebInteger(int64_t i)
 {
     return Init_Integer(Alloc_Value(), i);
 }
 
 
 //
-//  rebI: RL_API
+//  rebI: API
 //
 // Convenience form of `rebR(rebInteger(i))`.
 //
-const void *RL_rebI(int64_t i)
+const void *API_rebI(int64_t i)
 {
     return rebR(rebInteger(i));
 }
 
 
 //
-//  rebDecimal: RL_API
+//  rebDecimal: API
 //
-RebolValue* RL_rebDecimal(double dec)
+RebolValue* API_rebDecimal(double dec)
 {
     return Init_Decimal(Alloc_Value(), dec);
 }
 
 
 //
-//  rebHalt: RL_API
+//  rebHalt: API
 //
 // Signal that code evaluation needs to be interrupted.
 //
@@ -759,14 +759,14 @@ RebolValue* RL_rebDecimal(double dec)
 //     trap. Note that control must be passed back to REBOL for the
 //     signal to be recognized and handled.
 //
-void RL_rebHalt(void)
+void API_rebHalt(void)
 {
     SET_SIGNAL(SIG_HALT);
 }
 
 
 //
-//  rebRescue: RL_API
+//  rebRescue: API
 //
 // This API abstracts the mechanics by which exception-handling is done.
 // While code that knows specifically which form is used can take advantage of
@@ -806,7 +806,7 @@ void RL_rebHalt(void)
 //
 // !!! As a first step, this only implements the setjmp/longjmp logic.
 //
-RebolValue* RL_rebRescue(
+RebolValue* API_rebRescue(
     REBDNG *dangerous, // !!! pure C function only if not using throw/catch!
     void *opaque
 ){
@@ -896,13 +896,13 @@ RebolValue* RL_rebRescue(
 
 
 //
-//  rebRescueWith: RL_API
+//  rebRescueWith: API
 //
 // Variant of rebRescue() with a handler hook (parallels TRAP/WITH, except
 // for C code as the protected code and the handler).  More similar to
 // Ruby's rescue2 operation.
 //
-RebolValue* RL_rebRescueWith(
+RebolValue* API_rebRescueWith(
     REBDNG *dangerous, // !!! pure C function only if not using throw/catch!
     REBRSC *rescuer, // errors in the rescuer function will *not* be caught
     void *opaque
@@ -934,9 +934,9 @@ RebolValue* RL_rebRescueWith(
 
 
 //
-//  rebDid: RL_API
+//  rebDid: API
 //
-bool RL_rebDid(const void *p, va_list *vaptr)
+bool API_rebDid(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (condition);
     if (Do_Va_Throws(condition, p, vaptr)) // calls va_end()
@@ -947,12 +947,12 @@ bool RL_rebDid(const void *p, va_list *vaptr)
 
 
 //
-//  rebNot: RL_API
+//  rebNot: API
 //
 // !!! If this were going to be a macro like (not (rebDid(...))) it would have
 // to be a variadic macro.  Just make a separate entry point for now.
 //
-bool RL_rebNot(const void *p, va_list *vaptr)
+bool API_rebNot(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (condition);
     if (Do_Va_Throws(condition, p, vaptr)) // calls va_end()
@@ -963,7 +963,7 @@ bool RL_rebNot(const void *p, va_list *vaptr)
 
 
 //
-//  rebUnbox: RL_API
+//  rebUnbox: API
 //
 // C++, JavaScript, and other languages can do some amount of intelligence
 // with a generic `rebUnbox()` operation...either picking the type to return
@@ -972,7 +972,7 @@ bool RL_rebNot(const void *p, va_list *vaptr)
 // an integer for INTEGER!, LOGIC!, CHAR!...assume it's most common so the
 // short name is worth it.
 //
-long RL_rebUnbox(const void *p, va_list *vaptr)
+long API_rebUnbox(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (result);
     if (Do_Va_Throws(result, p, vaptr))
@@ -995,9 +995,9 @@ long RL_rebUnbox(const void *p, va_list *vaptr)
 
 
 //
-//  rebUnboxInteger: RL_API
+//  rebUnboxInteger: API
 //
-long RL_rebUnboxInteger(const void *p, va_list *vaptr)
+long API_rebUnboxInteger(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (result);
     if (Do_Va_Throws(result, p, vaptr))
@@ -1011,9 +1011,9 @@ long RL_rebUnboxInteger(const void *p, va_list *vaptr)
 
 
 //
-//  rebUnboxDecimal: RL_API
+//  rebUnboxDecimal: API
 //
-double RL_rebUnboxDecimal(const void *p, va_list *vaptr)
+double API_rebUnboxDecimal(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (result);
     if (Do_Va_Throws(result, p, vaptr))
@@ -1030,9 +1030,9 @@ double RL_rebUnboxDecimal(const void *p, va_list *vaptr)
 
 
 //
-//  rebUnboxChar: RL_API
+//  rebUnboxChar: API
 //
-uint32_t RL_rebUnboxChar(const void *p, va_list *vaptr)
+uint32_t API_rebUnboxChar(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (result);
     if (Do_Va_Throws(result, p, vaptr))
@@ -1046,21 +1046,21 @@ uint32_t RL_rebUnboxChar(const void *p, va_list *vaptr)
 
 
 //
-//  rebHandle: RL_API
+//  rebHandle: API
 //
 // !!! The HANDLE! type has some complexity to it, because function pointers
 // in C and C++ are not actually guaranteed to be the same size as data
 // pointers.  Also, there is an optional size stored in the handle, and a
 // cleanup function the GC may call when references to the handle are gone.
 //
-RebolValue* RL_rebHandle(void *data, size_t length, CLEANUP_CFUNC *cleaner)
+RebolValue* API_rebHandle(void *data, size_t length, CLEANUP_CFUNC *cleaner)
 {
     return Init_Handle_Managed(Alloc_Value(), data, length, cleaner);
 }
 
 
 //
-//  rebSpellInto: RL_API
+//  rebSpellInto: API
 //
 // Extract UTF-8 data from an ANY-STRING! or ANY-WORD!.
 //
@@ -1068,7 +1068,7 @@ RebolValue* RL_rebHandle(void *data, size_t length, CLEANUP_CFUNC *cleaner)
 // the answer to that is always cached for any value position as LENGTH OF.
 // The more immediate quantity of concern to return is the number of bytes.
 //
-size_t RL_rebSpellInto(
+size_t API_rebSpellInto(
     char *buf,
     size_t buf_size, // number of bytes
     const RebolValue* v
@@ -1103,13 +1103,13 @@ size_t RL_rebSpellInto(
 
 
 //
-//  rebSpell: RL_API
+//  rebSpell: API
 //
 // This gives the spelling as UTF-8 bytes.  Length in codepoints should be
 // extracted with LENGTH OF.  If size in bytes of the encoded UTF-8 is needed,
 // use the binary extraction API (works on ANY-STRING! to get UTF-8)
 //
-char *RL_rebSpell(const void *p, va_list *vaptr)
+char *API_rebSpell(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (string);
     if (Do_Va_Throws(string, p, vaptr)) // calls va_end()
@@ -1126,7 +1126,7 @@ char *RL_rebSpell(const void *p, va_list *vaptr)
 
 
 //
-//  rebSpellIntoW: RL_API
+//  rebSpellIntoW: API
 //
 // Extract UCS-2 data from an ANY-STRING! or ANY-WORD!.  Note this is *not*
 // UTF-16, so codepoints that require more than two bytes to represent will
@@ -1137,7 +1137,7 @@ char *RL_rebSpell(const void *p, va_list *vaptr)
 // be more useful for the wide string APIs to do this so leaving it that way
 // for now.
 //
-unsigned int RL_rebSpellIntoW(
+unsigned int API_rebSpellIntoW(
     REBWCHAR *buf,
     unsigned int buf_chars, // chars buf can hold (not including terminator)
     const RebolValue* v
@@ -1180,7 +1180,7 @@ unsigned int RL_rebSpellIntoW(
 
 
 //
-//  rebSpellW: RL_API
+//  rebSpellW: API
 //
 // Gives the spelling as WCHARs.  If length in codepoints is needed, use
 // a separate LENGTH OF call.
@@ -1192,7 +1192,7 @@ unsigned int RL_rebSpellIntoW(
 // API (possible solutions could include usermode UTF-16 conversion to binary,
 // and extraction of that with rebBytes(), then dividing the size by 2).
 //
-REBWCHAR *RL_rebSpellW(const void *p, va_list *vaptr)
+REBWCHAR *API_rebSpellW(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (string);
     if (Do_Va_Throws(string, p, vaptr)) // calls va_end()
@@ -1211,7 +1211,7 @@ REBWCHAR *RL_rebSpellW(const void *p, va_list *vaptr)
 
 
 //
-//  rebBytesInto: RL_API
+//  rebBytesInto: API
 //
 // Extract binary data from a BINARY!
 //
@@ -1219,7 +1219,7 @@ REBWCHAR *RL_rebSpellW(const void *p, va_list *vaptr)
 // if this is a good idea; but this is based on a longstanding convention of
 // zero termination of Rebol series, including binaries.  Review.
 //
-size_t RL_rebBytesInto(
+size_t API_rebBytesInto(
     unsigned char *buf,
     size_t buf_size,
     const RebolValue* binary
@@ -1242,7 +1242,7 @@ size_t RL_rebBytesInto(
 
 
 //
-//  rebBytes: RL_API
+//  rebBytes: API
 //
 // Can be used to get the bytes of a BINARY! and its size, or the UTF-8
 // encoding of an ANY-STRING! or ANY-WORD! and that size in bytes.  (Hence,
@@ -1251,7 +1251,7 @@ size_t RL_rebBytesInto(
 // !!! This may wind up being a generic TO BINARY! converter, so you might
 // be able to get the byte conversion for any type.
 //
-unsigned char *RL_rebBytes(
+unsigned char *API_rebBytes(
     size_t *size_out, // !!! Enforce non-null, to ensure type safety?
     const void *p, va_list *vaptr
 ){
@@ -1283,9 +1283,9 @@ unsigned char *RL_rebBytes(
 
 
 //
-//  rebBinary: RL_API
+//  rebBinary: API
 //
-RebolValue* RL_rebBinary(const void *bytes, size_t size)
+RebolValue* API_rebBinary(const void *bytes, size_t size)
 {
     REBSER *bin = Make_Binary(size);
     memcpy(Binary_Head(bin), bytes, size);
@@ -1296,27 +1296,27 @@ RebolValue* RL_rebBinary(const void *bytes, size_t size)
 
 
 //
-//  rebSizedText: RL_API
+//  rebSizedText: API
 //
 // If utf8 does not contain valid UTF-8 data, this may fail().
 //
-RebolValue* RL_rebSizedText(const char *utf8, size_t size)
+RebolValue* API_rebSizedText(const char *utf8, size_t size)
 {
     return Init_Text(Alloc_Value(), Make_Sized_String_UTF8(utf8, size));
 }
 
 
 //
-//  rebText: RL_API
+//  rebText: API
 //
-RebolValue* RL_rebText(const char *utf8)
+RebolValue* API_rebText(const char *utf8)
 {
     return rebSizedText(utf8, strsize(utf8));
 }
 
 
 //
-//  rebT: RL_API
+//  rebT: API
 //
 // Shorthand for `rebR(rebText(...))` to more easily create text parameters.
 //
@@ -1324,16 +1324,16 @@ RebolValue* RL_rebText(const char *utf8)
 // text argument...that saves the pointer it is given and uses it directly,
 // then only proxies it into a series at Copy_Cell() time.
 //
-const void *RL_rebT(const char *utf8)
+const void *API_rebT(const char *utf8)
 {
     return rebR(rebText(utf8));
 }
 
 
 //
-//  rebLengthedTextWide: RL_API
+//  rebLengthedTextWide: API
 //
-RebolValue* RL_rebLengthedTextWide(
+RebolValue* API_rebLengthedTextWide(
     const REBWCHAR *wstr,
     unsigned int num_chars
 ){
@@ -1348,9 +1348,9 @@ RebolValue* RL_rebLengthedTextWide(
 
 
 //
-//  rebTextWide: RL_API
+//  rebTextWide: API
 //
-RebolValue* RL_rebTextWide(const REBWCHAR *wstr)
+RebolValue* API_rebTextWide(const REBWCHAR *wstr)
 {
     DECLARE_MOLD (mo);
     Push_Mold(mo);
@@ -1363,7 +1363,7 @@ RebolValue* RL_rebTextWide(const REBWCHAR *wstr)
 
 
 //
-//  rebManage: RL_API
+//  rebManage: API
 //
 // The "friendliest" default for the API is to assume you want handles to be
 // tied to the lifetime of the frame they're in.  Long-running top-level
@@ -1371,7 +1371,7 @@ RebolValue* RL_rebTextWide(const REBWCHAR *wstr)
 // memory if that were the case...so there should be some options for metrics
 // as a form of "leak detection" even so.
 //
-RebolValue* RL_rebManage(RebolValue* v)
+RebolValue* API_rebManage(RebolValue* v)
 {
     assert(Is_Api_Value(v));
 
@@ -1390,11 +1390,11 @@ RebolValue* RL_rebManage(RebolValue* v)
 
 
 //
-//  rebUnmanage: RL_API
+//  rebUnmanage: API
 //
 // This converts an API handle value to indefinite lifetime.
 //
-void RL_rebUnmanage(void *p)
+void API_rebUnmanage(void *p)
 {
     REBNOD *nod = NOD(p);
     if (not (nod->header.bits & NODE_FLAG_CELL))
@@ -1422,7 +1422,7 @@ void RL_rebUnmanage(void *p)
 
 
 //
-//  rebRelease: RL_API
+//  rebRelease: API
 //
 // An API handle is only 4 platform pointers in size (plus some bookkeeping),
 // but it still takes up some storage.  The intended default for API handles
@@ -1433,7 +1433,7 @@ void RL_rebUnmanage(void *p)
 // leak avoidance will need to at least allow for GC of handles across errors
 // for their associated frames.
 //
-void RL_rebRelease(const RebolValue* v)
+void API_rebRelease(const RebolValue* v)
 {
     if (not v)
         return; // less rigorous, but makes life easier for C programmers
@@ -1446,7 +1446,7 @@ void RL_rebRelease(const RebolValue* v)
 
 
 //
-//  rebPromise: RL_API
+//  rebPromise: API
 //
 // The concept of promises in the API is that the code may not be able to run
 // to completion, due to a synchronous dependency on something that must be
@@ -1466,7 +1466,7 @@ void RL_rebRelease(const RebolValue* v)
 // The resolve will be called if it reaches the end of the input and the
 // reject if there is a failure.
 //
-intptr_t RL_rebPromise(const void *p, va_list *vaptr)
+intptr_t API_rebPromise(const void *p, va_list *vaptr)
 {
   #if !defined(TO_JAVASCRIPT)
     UNUSED(p);
@@ -1531,7 +1531,7 @@ intptr_t RL_rebPromise(const void *p, va_list *vaptr)
 
     EM_ASM_({
         setTimeout(function() { // evaluate the code w/no other code on GUI
-            _RL_rebPromise_callback($0); // for emscripten_sleep_with_yield()
+            _API_rebPromise_callback($0); // for emscripten_sleep_with_yield()
         }, 0);
     }, f->source->array);
 
@@ -1541,20 +1541,20 @@ intptr_t RL_rebPromise(const void *p, va_list *vaptr)
 
 
 //
-//  rebPromise_callback: RL_API
+//  rebPromise_callback: API
 //
 // In the emterpreter build, this is the code that rebPromise() defers to run
 // until there is no JavaScript above it or after it on the GUI thread stack.
 // This makes it safe to use emscripten_sleep_with_yield() inside of it.
 //
-// *However* it must be called via _RL_rebPromise_callback, not a wrapper.
+// *However* it must be called via _API_rebPromise_callback, not a wrapper.
 // emscripten_sleep_with_yield() sets the EmterpreterAsync.state to 1 while it
 // is unwinding, and the cwrap() implementation checks the state *after* the
 // call that it is 0...since usually, continuing to run would mean running
 // more JavaScript.  Calling directly avoids this check as we're *sure* this
 // is in an otherwise empty top-level handler.
 //
-void RL_rebPromise_callback(intptr_t promise_id)
+void API_rebPromise_callback(intptr_t promise_id)
 {
   #if !defined(TO_JAVASCRIPT)
     UNUSED(promise_id);
@@ -1592,14 +1592,14 @@ void RL_rebPromise_callback(intptr_t promise_id)
     }
 
     EM_ASM_({
-        RL_Resolve($0, $1); // assumes it can now free the table entry
+        API_Resolve($0, $1); // assumes it can now free the table entry
     }, promise_id, result);
   #endif
 }
 
 
 //
-//  rebDeflateAlloc: RL_API
+//  rebDeflateAlloc: API
 //
 // Exposure of the deflate() of the built-in zlib.  Assumes no envelope.
 //
@@ -1607,7 +1607,7 @@ void RL_rebPromise_callback(intptr_t promise_id)
 //
 // See rebRepossess() for the ability to mutate the result into a BINARY!
 //
-void *RL_rebDeflateAlloc(
+void *API_rebDeflateAlloc(
     size_t *out_len,
     const void *input,
     size_t in_len
@@ -1618,12 +1618,12 @@ void *RL_rebDeflateAlloc(
 
 
 //
-//  rebZdeflateAlloc: RL_API
+//  rebZdeflateAlloc: API
 //
 // Variant of rebDeflateAlloc() which adds a zlib envelope...which is a 2-byte
 // header and 32-bit ADLER32 CRC at the tail.
 //
-void *RL_rebZdeflateAlloc(
+void *API_rebZdeflateAlloc(
     size_t *out_len,
     const void *input,
     size_t in_len
@@ -1634,12 +1634,12 @@ void *RL_rebZdeflateAlloc(
 
 
 //
-//  rebGzipAlloc: RL_API
+//  rebGzipAlloc: API
 //
 // Slight variant of deflate() which stores the uncompressed data's size
 // implicitly in the returned data, and a CRC32 checksum.
 //
-void *RL_rebGzipAlloc(
+void *API_rebGzipAlloc(
     size_t *out_len,
     const void *input,
     size_t in_len
@@ -1650,7 +1650,7 @@ void *RL_rebGzipAlloc(
 
 
 //
-//  rebInflateAlloc: RL_API
+//  rebInflateAlloc: API
 //
 // Exposure of the inflate() of the built-in zlib.  Assumes no envelope.
 //
@@ -1659,7 +1659,7 @@ void *RL_rebGzipAlloc(
 //
 // See rebRepossess() for the ability to mutate the result into a BINARY!
 //
-void *RL_rebInflateAlloc(
+void *API_rebInflateAlloc(
     size_t *len_out,
     const void *input,
     size_t len_in,
@@ -1671,12 +1671,12 @@ void *RL_rebInflateAlloc(
 
 
 //
-//  rebZinflateAlloc: RL_API
+//  rebZinflateAlloc: API
 //
 // Variant of rebInflateAlloc() which assumes a zlib envelope...checking for
 // the 2-byte header and verifying the 32-bit ADLER32 CRC at the tail.
 //
-void *RL_rebZinflateAlloc(
+void *API_rebZinflateAlloc(
     size_t *len_out,
     const void *input,
     size_t len_in,
@@ -1688,7 +1688,7 @@ void *RL_rebZinflateAlloc(
 
 
 //
-//  rebGunzipAlloc: RL_API
+//  rebGunzipAlloc: API
 //
 // Slight variant of inflate() which is compatible with gzip, and checks its
 // CRC32.  For data whose original size was < 2^32 bytes, the gzip envelope
@@ -1700,7 +1700,7 @@ void *RL_rebZinflateAlloc(
 //
 // http://stackoverflow.com/a/9213826
 //
-void *RL_rebGunzipAlloc(
+void *API_rebGunzipAlloc(
     size_t *len_out,
     const void *input,
     size_t len_in,
@@ -1716,14 +1716,14 @@ void *RL_rebGunzipAlloc(
 
 
 //
-//  rebDeflateDetectAlloc: RL_API
+//  rebDeflateDetectAlloc: API
 //
 // Does DEFLATE with detection, and also ignores the size information in a
 // gzip file, due to the reasoning here:
 //
 // http://stackoverflow.com/a/9213826
 //
-void *RL_rebDeflateDetectAlloc(
+void *API_rebDeflateDetectAlloc(
     size_t *len_out,
     const void *input,
     size_t len_in,
@@ -1750,7 +1750,7 @@ void *RL_rebDeflateDetectAlloc(
 #endif
 
 //
-//  rebError_OS: RL_API
+//  rebError_OS: API
 //
 // Produce an error from an OS error code, by asking the OS for textual
 // information it knows internally from its database of error strings.
@@ -1763,7 +1763,7 @@ void *RL_rebDeflateDetectAlloc(
 // !!! Should not be in core, but extensions need a way to trigger the
 // common functionality one way or another.
 //
-RebolValue* RL_rebError_OS(int errnum)
+RebolValue* API_rebError_OS(int errnum)
 {
     REBCTX *error;
 
@@ -1884,5 +1884,5 @@ RebolValue* RL_rebError_OS(int errnum)
 //
 // !!! Note: if Rebol is built as a DLL or LIB, the story is different.
 //
-extern RL_LIB Ext_Lib;
-#include "tmp-reb-lib-table.inc" // declares Ext_Lib
+extern RebolApiTable g_librebol;
+#include "tmp-reb-lib-table.inc" // declares g_librebol
