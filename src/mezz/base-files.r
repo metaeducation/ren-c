@@ -197,31 +197,31 @@ file-type?: func [
 
 split-path: func [
     {Splits and returns file and directory path (either may be null)}
-    return: [~null~ file!]
-    @directory [~null~ file! url!]  ; /DIR used by AUGMENT in bootstrap shim
+    return: [~null~ file! url!]
+    @filename [~null~ file! url!]  ; /FILE used by AUGMENT in bootstrap shim
 
     target [file! url!]
     /relax "Allow filenames to be . and .."
-    <local> text file
+    <local> text directory
 ][
     parse3 as text! target [
         copy directory try some thru "/"
-        copy file thru <end>
+        copy filename thru <end>
     ]
     if empty? directory [
         directory: null
     ] else [
         directory: as kind of target directory
     ]
-    if empty? file [
-        file: null
+    if empty? filename [
+        filename: null
     ] else [
-        file: as file! file
+        filename: as file! filename
         all [
             not relax
-            find [%. %..] file
+            find [%. %..] filename
             fail {. and .. are invalid filenames}
         ]
     ]
-    return file
+    return directory
 ]

@@ -166,7 +166,7 @@ export collect-tests: func [
             set item file! (
                 let referenced-file: item
 
-                change-dir maybe [_ @]: split-path file
+                change-dir maybe split-path file
                 collect-tests/into referenced-file into
                 change-dir current-dir
             )

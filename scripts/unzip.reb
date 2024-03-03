@@ -594,7 +594,7 @@ unzip: func [
                             make-dir/deep %%(where)/(name)
                         ]
                     ][
-                        let [file path]: split-path name
+                        let [path file]: split-path name
                         if not exists? %% (where)/(path) [
                             make-dir/deep %% (where)/(path)
                         ]

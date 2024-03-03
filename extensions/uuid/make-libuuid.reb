@@ -156,7 +156,8 @@ files: compose [
 
 for-each [file fix] files [
     data: to-text read url: join ROOT file
-    target: join %libuuid/ (split-path file)
+    split-path3/file file inside [] 'filename
+    target: join %libuuid/ filename
 
     print [
         url LF

@@ -194,7 +194,7 @@ do: enclose :lib3/do lib3/func [
                 file: (file)
             ]
             parent: old-system-script
-            path: first lib3/split-path file
+            path: lib3/split-path file
             args: either old-system-script/path [_] [system/options/args]
         ]
 
@@ -246,7 +246,7 @@ import: enfix lib3/func [
 
     ; NOTE: LET is unavailable (we have not run the bootstrap shim yet)
     ;
-    <local> ret path+file full-script-dir full-script-path old-dir code
+    <local> ret dir full-script-dir full-script-path old-dir code
             script-filename
     <with> wrap-module already-imported
 ][
@@ -256,16 +256,15 @@ import: enfix lib3/func [
 
     f: as file! f
 
-    path+file: lib3/split-path f
+    dir: lib3/split-path/file f 'script-filename
 
-    assert [#"/" <> first path+file/1]  ; should be relative
-    assert [#"%" <> first path+file/1]  ; accidental `import <%foo.r>`
+    assert [#"/" <> dir/1]  ; should be relative
+    assert [#"%" <> dir/1]  ; accidental `import <%foo.r>`
 
     full-script-dir: clean-path lib3/append copy any [
         system/script/path system/options/path
-    ] path+file/1
+    ] dir
 
-    script-filename: path+file/2
     full-script-path: join full-script-dir script-filename
 
     if ret: select already-imported full-script-path [
@@ -284,7 +283,7 @@ import: enfix lib3/func [
             set set-word do script-filename
         ] else [
             assert [not wrap-module]
-            do path+file/2
+            do script-filename
             #imported
         ]
     ]

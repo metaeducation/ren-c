@@ -55,7 +55,7 @@ args: parse-args system/script/args  ; either from command line or DO/ARGS
 ; just point at a directory and follow the specification.
 ;
 src: to file! :args/SRC
-file-name: split-path/dir src inside [] 'in-dir
+in-dir: split-path3/file src inside [] 'file-name
 
 ; Assume we start up in the directory where build products are being made
 ;
@@ -103,7 +103,7 @@ parse2 script-name [
     ]  ; auto-generating version of initial (and poor) manual naming scheme
 ]
 
-inc-name: split-path c-src
+split-path3/file c-src inside [] 'inc-name
 is-cpp: false
 parse2 inc-name [
     change "mod-" ("tmp-mod-")

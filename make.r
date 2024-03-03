@@ -108,7 +108,7 @@ for-each [name value] options [
             ;
             config-stack: copy []
             while [:config] [
-                file: split-path/dir config inside [] 'dir
+                dir: split-path3/file config inside [] 'file
                 change-dir dir
                 append config-stack (load read file)
 
@@ -118,7 +118,7 @@ for-each [name value] options [
                 ;
                 ; Note: Inherits may be a good non-config-specific feature.
                 ;
-                let temp: transcode read file
+                let temp: transcode3 read file
                 assert ['REBOL = first temp]
                 config: select ensure block! second temp 'Inherits
             ]
@@ -1490,7 +1490,7 @@ add-new-obj-folders: func [
         ]
 
         for-each obj lib [
-            split-path/dir obj/output inside [] 'dir
+            dir: split-path3 obj/output
             if not find folders dir [
                 append folders dir
             ]
@@ -1517,7 +1517,7 @@ for-each [category entries] file-base [
                         ; assume taken care of
                     ]
                     path! [
-                        split-path/dir to file! entry inside [] 'dir
+                        dir: split-path3 to file! entry
                         if not find folders dir [
                             append folders join %objs/ dir
                         ]

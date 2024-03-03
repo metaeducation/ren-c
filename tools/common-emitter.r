@@ -157,7 +157,7 @@ export cscape: func [
             ;
             ; !!! Needs LOAD-ALL shim hack for bootstrap since /ALL deprecated
             ;
-            let code: transcode lowercase expr
+            let code: transcode3 lowercase expr
 
             code: cscape-inside template code
 
@@ -311,7 +311,8 @@ export make-emitter: func [
 
     print unspaced [{Generating "} title {" (via } by {)}]
 
-    let stem: split-path file
+    let stem
+    split-path3/file file inside [] 'stem
 
     temporary: to-logic any [
         temporary

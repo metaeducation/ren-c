@@ -218,7 +218,7 @@ process-tests: func [
                 ; relative the directory where the test is running.  So
                 ; we CHANGE-DIR to the test file's path.
                 ;
-                change-dir [_ @]: split-path test-file
+                change-dir split-path test-file
             )
                 |
             'dialect set value: text! (  ; bad parse of test file itself

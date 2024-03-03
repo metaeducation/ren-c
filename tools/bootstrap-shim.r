@@ -108,15 +108,19 @@ trap [
     ; Bootstrap EXE doesn't support multi-returns so SPLIT-PATH takes a /DIR
     ; refinement of a variable to write to.
     ;
-    let split-path2: enclose (augment :split-path [/dir [word!]]) f -> [
-        let dir: f.dir
+    export split-path3: enclose (
+        augment :split-path [/file [any-word? any-path?]]
+    ) f -> [
+        let file: f.file
         let results: unquasi ^ do f  ; no [...]: in bootstrap load of this file
-        set maybe dir unmeta second results
-        unmeta first results
+        set maybe file unmeta results.2
+        unmeta results.1
     ]
-    export split-path: :split-path2
+    export split-path: func [] [
+        fail/where "Use SPLIT-PATH3 in Bootstrap (no multi-return)" 'return
+    ]
 
-    let transcode2: enclose (augment :transcode [/next [word!]]) func [f] [
+    export transcode3: enclose (augment :transcode [/next [word!]]) func [f] [
         let next: f.next  ; note: contention with NEXT series verb
         f.one: all [next make issue! 0]  ; # is invalid issue in bootstrap
         let result: ^ (do f except e -> [return raise e])
@@ -124,7 +128,9 @@ trap [
         set maybe next unmeta second unquasi result
         return unmeta first unquasi result
     ]
-    export transcode: :transcode2
+    export transcode: func [] [
+        fail/where "Use TRANSCODE3 in Bootstrap (no multi-return)" 'return
+    ]
 
     export cscape-inside: :inside  ; modern string interpolation tool
 
@@ -191,6 +197,7 @@ aliases: lib3/reeval lib3/func [:item [any-value! <...>]] [  ; very weird [1]
     join3: join: *
     compose3: compose: *
     split-path3: split-path: *
+    transcode3: transcode: *
     local-to-file3: local-to-file: *
     file-to-local3: file-to-local: *
 
@@ -938,16 +945,8 @@ file-to-local: lib/file-to-local: func3 [
     file-to-local3/(blank-to-void pass)/(blank-to-void full)/(blank-to-void no-tail-slash)/(blank-to-void wild) path
 ]
 
-split-path: func3 [  ; interface changed to multi-return in new Ren-C
-    return: [file!]
-    in [file! url!]
-    /dir  ; no multi-return, simulate it
-    darg [word!]
-    <local> path+file
-][
-    dir+file: split-path3 in
-    if dir [set darg degrade first dir+file]
-    return degrade second dir+file
+split-path: func [] [
+    fail/where "Use SPLIT-PATH3 in Bootstrap (no multi-return)" 'return
 ]
 
 

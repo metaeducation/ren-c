@@ -1,14 +1,14 @@
 
 (
-    [file dir]: split-path %./
+    [dir file]: split-path %./
     [%./ ~null~] = reduce [dir, reify file]
 )
 (
-    [file dir]: split-path %../
+    [dir file]: split-path %../
     [%../ ~null~] = reduce [dir, reify file]
 )
 (
-    [file dir]: split-path http://rebol.com/index.html
+    [dir file]: split-path http://rebol.com/index.html
     [http://rebol.com/ %index.html] = reduce [dir file]
 )
 
@@ -81,7 +81,7 @@
         (at %/vol/dir/file.r 6)         [%dir/ %file.r]
     ]
     for-each [test result] split-path-tests [
-        [file dir]: split-path/relax test
+        [dir file]: split-path/relax test
         if result <> actual: reduce [any [dir _], any [file _]] [
             fail [mold test 'expected mold result "but got" mold actual]
         ]

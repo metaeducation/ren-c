@@ -345,7 +345,9 @@ list-dir: func [
             if greater? length of l 60 [print l clear l]
         ] else [
             let info: get (words of query file)
-            change info split-path info/1
+            let filename
+            split-path3 info/1 inside [] 'filename
+            change info
             printf [i 16 -8 #" " 24 #" " 6] info
             if all [r, dir? file] [
                 list-dir/l/r/i :file join i "    "

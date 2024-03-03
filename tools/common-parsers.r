@@ -38,7 +38,7 @@ load-until-blank: func [
 
     let res: null  ; !!! collect as SET-WORD!s for locals, evolving...
     let rebol-value: parsing-at x [
-        attempt [transcode/next x inside [] 'res]
+        attempt [transcode3/next x inside [] 'res]
         res
     ]
 

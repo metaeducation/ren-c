@@ -461,7 +461,7 @@ main-startup: func [
         take argv
     ]
     if o.boot [
-        [_ o.bin]: split-path o.boot
+        o.bin: split-path o.boot
     ] else [
         o.bin: null
     ]
@@ -689,16 +689,6 @@ main-startup: func [
     ; !!! this was commented out.  Is it important?
     comment [
         if slash <> first o.boot [o.boot: clean-path o.boot]
-    ]
-
-    if file? o.script [  ; Get the path
-        let script-path: split-path o.script
-        case [
-            slash = first first script-path []      ; absolute
-            %./ = first script-path [script-path.1: o.path]   ; curr dir
-        ] else [
-            insert script-path o.path ; relative
-        ]
     ]
 
     ; Convert command line arg strings as needed:
