@@ -38,10 +38,11 @@ probe: func [
         [<opt> any-value!]
     value [<opt> any-value!]
 ][
-    either set? 'value [
-        write-stdout mold :value
-    ][
-        write-stdout "// null" ;; MOLD won't take voids
+    case [
+        trash? :value [write-stdout "~  ; anti"]
+        void? :value [write-stdout "~void~  ; anti"]
+        null? :value [write-stdout "~null~  ; anti"]
+        true [write-stdout mold :value]
     ]
     write-stdout newline
     :value
