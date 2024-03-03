@@ -363,7 +363,7 @@ e-lib/emit {
      * `wchar_t` is a pre-Unicode abstraction, whose size varies per-platform
      * and should be avoided where possible.  But Win32 standardizes it to
      * 2 bytes in size for UTF-16, and uses it pervasively.  So libRebol
-     * currently offers APIs (e.g. rebTextW() instead of rebText()) which
+     * currently offers APIs (e.g. rebTextWide() instead of rebText()) which
      * support this 2-byte notion of wide characters.
      *
      * In order for C++ to be type-compatible with Windows's WCHAR definition,

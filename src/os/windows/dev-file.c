@@ -200,7 +200,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
 
     file->path = rebValue(
         "applique 'local-to-file [",
-            "path:", rebR(rebTextW(info.cFileName)),
+            "path:", rebR(rebTextWide(info.cFileName)),
             "dir:", rebR(rebLogic(file_req->modes & RFM_DIR)),
         "]"
     );

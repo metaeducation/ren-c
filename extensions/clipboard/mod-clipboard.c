@@ -123,7 +123,7 @@ static REB_R Clipboard_Actor(
             );
         }
 
-        Value* str = rebTextW(wide);
+        Value* str = rebTextWide(wide);
 
         GlobalUnlock(h);
         CloseClipboard();

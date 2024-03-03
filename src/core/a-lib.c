@@ -1331,10 +1331,12 @@ const void *RL_rebT(const char *utf8)
 
 
 //
-//  rebLengthedTextW: RL_API
+//  rebLengthedTextWide: RL_API
 //
-RebolValue* RL_rebLengthedTextW(const REBWCHAR *wstr, unsigned int num_chars)
-{
+RebolValue* RL_rebLengthedTextWide(
+    const REBWCHAR *wstr,
+    unsigned int num_chars
+){
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 
@@ -1346,9 +1348,9 @@ RebolValue* RL_rebLengthedTextW(const REBWCHAR *wstr, unsigned int num_chars)
 
 
 //
-//  rebTextW: RL_API
+//  rebTextWide: RL_API
 //
-RebolValue* RL_rebTextW(const REBWCHAR *wstr)
+RebolValue* RL_rebTextWide(const REBWCHAR *wstr)
 {
     DECLARE_MOLD (mo);
     Push_Mold(mo);
@@ -1803,7 +1805,7 @@ RebolValue* RL_rebError_OS(int errnum)
         error = Error_User("FormatMessage() gave no error description");
     }
     else {
-        Value* message = rebTextW(lpMsgBuf);
+        Value* message = rebTextWide(lpMsgBuf);
         LocalFree(lpMsgBuf);
 
         error = Error(SYM_0, SYM_0, message, END_NODE);

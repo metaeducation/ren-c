@@ -117,7 +117,7 @@ OSCHR *rebValSpellingAllocOS(const Value* any_string)
 void Append_OS_Str(Value* dest, const void *src, REBINT len)
 {
   #ifdef TO_WINDOWS
-    Value* src_str = rebLengthedTextW(cast(const REBWCHAR*, src), len);
+    Value* src_str = rebLengthedTextWide(cast(const REBWCHAR*, src), len);
   #else
     Value* src_str = rebSizedText(cast(const char*, src), len);
   #endif
@@ -1770,7 +1770,7 @@ DECLARE_NATIVE(get_os_browsers)
         --len;
     }
 
-    rebElide("append", list, rebR(rebLengthedTextW(buffer, len)));
+    rebElide("append", list, rebR(rebLengthedTextWide(buffer, len)));
 
     rebFree(buffer);
 
@@ -1951,7 +1951,7 @@ DECLARE_NATIVE(get_env)
         if (result == 0)
             error = Error_User("Unknown error fetching variable to buffer");
         else {
-            Value* temp = rebLengthedTextW(val, val_len_plus_one - 1);
+            Value* temp = rebLengthedTextWide(val, val_len_plus_one - 1);
             Copy_Cell(OUT, temp);
             rebRelease(temp);
         }
@@ -2123,10 +2123,10 @@ DECLARE_NATIVE(list_env)
         }
 
         int key_len = eq_pos - key_equals_val;
-        Value* key = rebLengthedTextW(key_equals_val, key_len);
+        Value* key = rebLengthedTextWide(key_equals_val, key_len);
 
         int val_len = len - (eq_pos - key_equals_val) - 1;
-        Value* val = rebLengthedTextW(eq_pos + 1, val_len);
+        Value* val = rebLengthedTextWide(eq_pos + 1, val_len);
 
         rebElide("append", map, "[", rebR(key), rebR(val), "]");
 

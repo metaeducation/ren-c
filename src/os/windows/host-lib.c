@@ -137,7 +137,7 @@ Value* OS_Get_Current_Dir(void)
     WCHAR *path = rebAllocN(WCHAR, len);
     GetCurrentDirectory(len, path);
 
-    Value* result = rebValue("local-to-file/dir", rebR(rebTextW(path)));
+    Value* result = rebValue("local-to-file/dir", rebR(rebTextWide(path)));
     rebFree(path);
     return result;
 }
@@ -278,7 +278,7 @@ Value* OS_Get_Current_Exec(void)
     }
     path[r] = '\0'; // May not be nullptr-terminated if buffer is not big enough
 
-    Value* result = rebValue("local-to-file", rebR(rebTextW(path)));
+    Value* result = rebValue("local-to-file", rebR(rebTextWide(path)));
     rebFree(path);
 
     return result;
