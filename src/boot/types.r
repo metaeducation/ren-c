@@ -232,7 +232,7 @@ pair        "two dimensional point or size"
 ; BEGIN BINDABLE TYPES - SEE Is_Bindable() - Cell's "extra" USED FOR BINDING
 ; ============================================================================
 
-<ANY-BINDABLE?>
+<BINDABLE?>
 
 <ANY-WORD?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
@@ -440,7 +440,7 @@ pair        "two dimensional point or size"
 
 </ANY-ARRAY?>
 
-</ANY-BINDABLE?>
+</BINDABLE?>
 
 
 ; ============================================================================

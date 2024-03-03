@@ -225,7 +225,7 @@ for-each-typerange: func [
                 ; ANY_META() in the C code.  Extract relevant name part.
                 ;
                 parse2 name* [
-                    remove "any-"
+                    opt remove "any-"
                     to "?"  ; once dropped -VALUE from e.g. ANY-META-VALUE?
                     remove "?"
                 ] else [

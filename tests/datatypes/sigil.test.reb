@@ -77,18 +77,18 @@
 
 ; Test SIGIL OF for each bindable type
 (
-    for-each [sigil' items] [
-        ~null~ [  word   tu.p.le   pa/th   [bl o ck]   (gr o up)  ]
-        '::    [  word:  tu.p.le:  pa/th:  [bl o ck]:  (gr o up): ]
-        ':     [ :word  :tu.p.le  :pa/th  :[bl o ck]  :(gr o up)  ]
-        '^     [ ^word  ^tu.p.le  ^pa/th  ^[bl o ck]  ^(gr o up)  ]
-        '&     [ &word  &tu.p.le  &pa/th  &[bl o ck]  &(gr o up)  ]
-        '@     [ @word  @tu.p.le  @pa/th  @[bl o ck]  @(gr o up)  ]
-        '$     [ $word  $tu.p.le  $pa/th  $[bl o ck]  $(gr o up)  ]
+    for-each [sigil items] [
+        ~null~  [  word   tu.p.le   pa/th   [bl o ck]   (gr o up)  ]
+        ::      [  word:  tu.p.le:  pa/th:  [bl o ck]:  (gr o up): ]
+        :       [ :word  :tu.p.le  :pa/th  :[bl o ck]  :(gr o up)  ]
+        ^       [ ^word  ^tu.p.le  ^pa/th  ^[bl o ck]  ^(gr o up)  ]
+        &       [ &word  &tu.p.le  &pa/th  &[bl o ck]  &(gr o up)  ]
+        @       [ @word  @tu.p.le  @pa/th  @[bl o ck]  @(gr o up)  ]
+        $       [ $word  $tu.p.le  $pa/th  $[bl o ck]  $(gr o up)  ]
     ][
         for-each item items [
-            assert [any-bindable? item]
-            if (unmeta sigil') <> sigil of item [
+            assert [bindable? item]
+            if (degrade sigil) <> sigil of item [
                 fail [mold item]
             ]
         ]
