@@ -86,7 +86,7 @@
 [
     (match+: reframer func [f [frame!] <local> p] [
         p: f.(first parameters of f)  ; get the first parameter
-        do f except [return null]
+        eval f except [return null]
         return p  ; evaluate to parameter if operation succeeds
     ]
     true)
@@ -102,8 +102,8 @@
 ; is not worse than the disease.
 [
     (smatch: enclose (augment :match [/unsafe]) func [f [frame!]] [
-        if f.unsafe [return do f]
-        let result': ^ do f
+        if f.unsafe [return eval f]
+        let result': ^ eval f
         any [
             result' = '~[~false~]~
             result' = '~[~null~]~

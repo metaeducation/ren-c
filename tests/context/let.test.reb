@@ -17,14 +17,14 @@
     (
        x: <in-user-context>
        all [
-           1020 = do compose [let (unbind 'x:) 20, 1000 + (unbind 'x)]
+           1020 = eval compose [let (unbind 'x:) 20, 1000 + (unbind 'x)]
            x = <in-user-context>
        ]
     )
     (
        x: <in-user-context>
        all [
-           1020 = do compose [let x: 20, 1000 + x]
+           1020 = eval compose [let x: 20, 1000 + x]
            x = <in-user-context>
        ]
     )
@@ -59,7 +59,7 @@
 (
     value: <value>
     pos: <pos>
-    result: do [
+    result: eval [
         let [value 'pos]: transcode/one "[first item] #residue"
         reduce [value pos]
     ]
@@ -77,7 +77,7 @@
     value: <value>
     pos: <pos>
     word: 'value
-    result: do [
+    result: eval [
         let [(word) 'pos]: transcode/one "[first item] #residue"
         reduce [value pos]
     ]
@@ -139,7 +139,7 @@
         let y: [x + z]
 
         let foo: func [] compose [let z: 20, (y)]
-        func [] compose collect [keep [let z: 2000], keep y, keep [do (y)]]
+        func [] compose collect [keep [let z: 2000], keep y, keep [eval (y)]]
     ]
     baz: bar
     baz = 2010
@@ -149,16 +149,16 @@
 ; to be merged.  Such merging only is necessary when a specifier is being
 ; derived, e.g. the meeting of two blocks with LET chains in their binding.
 (
-    block1: do [let x: 10, [x + y]]
-    block2: do compose/deep [let y: 20, [(block1)]]
-    30 = do first block2
+    block1: eval [let x: 10, [x + y]]
+    block2: eval compose/deep [let y: 20, [(block1)]]
+    30 = eval first block2
 )
 
 ; Slightly more complex version...use functions
 (
     block1: run func [] [let x: 10, [x + y]]
     block2: run func [] compose/deep [let y: 20, [(block1)]]
-    30 = do first block2
+    30 = eval first block2
 )
 
 ; REEVAL presents a different case to the "wave of binding" a LET introduces
@@ -179,7 +179,7 @@
     )
     (
         bar: func [b] [
-            do compose [
+            eval compose [
                 let n: 10
                 reeval (b.1)  ; updated LET of N should apply (LET "sees" (n))
             ]
@@ -196,16 +196,16 @@
     (
         x: 10
         y: 'x
-        10 = do [let x: 20, reeval y]
+        10 = eval [let x: 20, reeval y]
     )
     (
         x: 10
         y: 'x
-        20 = do compose [let x: 20, reeval '(y)]
+        20 = eval compose [let x: 20, reeval '(y)]
     )
     (
         x: 10
-        20 = do compose [let x: 20, reeval 'x]  ; sanity check
+        20 = eval compose [let x: 20, reeval 'x]  ; sanity check
     )
 ]
 

@@ -890,7 +890,7 @@ void Startup_Core(void)
         // Create actual variables for top-level SET-WORD!s only, and run.
         //
         "bind/only/set", &boot->base, Lib_Context_Value,
-        "do inside", Lib_Context_Value, rebQ(&boot->base)
+        "eval inside", Lib_Context_Value, rebQ(&boot->base)
         //
         // Note: ENSURE not available yet.
     );
@@ -922,7 +922,9 @@ void Startup_Core(void)
         "sys.util:", Sys_Util_Module,
 
         "bind/only/set", &boot->system_util, Sys_Util_Module,
-        "if not equal? '~done~ ^ do inside", Sys_Util_Module, rebQ(&boot->system_util), "[fail {sys.util}]",
+        "if not equal? '~done~",
+          "^ eval inside", Sys_Util_Module, rebQ(&boot->system_util),
+            "[fail {sys.util}]",
 
         // SYS contains the implementation of the module machinery itself, so
         // we don't have MODULE or EXPORT available.  Do the exports manually,
@@ -952,7 +954,7 @@ void Startup_Core(void)
         // Create actual variables for top-level SET-WORD!s only, and run.
         //
         "bind/only/set", &boot->mezz, Lib_Context_Value,
-        "do inside", Lib_Context_Value, rebQ(&boot->mezz)
+        "eval inside", Lib_Context_Value, rebQ(&boot->mezz)
     );
 
   //=//// MAKE USER CONTEXT ////////////////////////////////////////////////=//
@@ -969,7 +971,7 @@ void Startup_Core(void)
     // rebElide() here runs in the Lib_Context by default, which means the
     // block we are passing evaluatively as the module body will evaluate
     // and carry the lib context.  This achieves the desired inheritance,
-    // because when we say DO INSIDE SYSTEM.CONTEXTS.USER CODE we want the
+    // because when we say EVAL INSIDE SYSTEM.CONTEXTS.USER CODE we want the
     // code to find definitions in user as well as in lib.
     //
     rebElide(

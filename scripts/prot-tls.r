@@ -220,7 +220,7 @@ emit: func [
         else [
             let result': ^ evaluate/next code $code
             if code [
-                if result' = nihil' [continue]  ; invisible
+                if result' = void' [continue]  ; invisible
                 append ctx.msg ensure binary! unmeta result'
             ]
         ]
@@ -1020,7 +1020,7 @@ grab: enfix func [
 ]
 
 grab-int: enfix enclose :grab lambda [f [frame!]] [
-    set f.left (debin [be +] do copy f)
+    set f.left (debin [be +] eval copy f)
 ]
 
 

@@ -6,7 +6,8 @@
 
 (void? attempt [])
 (void? attempt [void void])
-(1 = attempt [1 void])
+(void = attempt [1 void])
+(1 = attempt [1 nihil])
 
 ; RETURN stops attempt evaluation
 (

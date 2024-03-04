@@ -290,7 +290,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // While it may seem that a mutable value would be merely one that did not
 // carry CELL_FLAG_CONST, there's a need for a separate bit to indicate when
 // MUTABLE has been specified explicitly.  That way, evaluative situations
-// like `do mutable compose [...]` or `make object! mutable load ...` can
+// like `eval mutable compose [...]` or `make object! mutable load ...` can
 // realize that they should switch into a mode which doesn't enforce const
 // by default--which it would ordinarily do.
 //

@@ -36,7 +36,7 @@ verify: func [
         ; Using a meta-value here is a way of reacting to unstable isotopes,
         ; could also put that responsibility onto the access points.  Review.
         ;
-        [^/result']: evaluate/next conditions $pos
+        [^/result']: evaluate/next/undecayed conditions $pos
         pos
     ][
         any [
@@ -46,7 +46,7 @@ verify: func [
 
             if handler [  ; may or may-not take two arguments
                 let reaction: ^ if block? handler [
-                    do handler
+                    eval handler
                 ] else [
                     apply/relax handler [  ; arity 0 or 1 is okay
                         copy/part conditions pos
@@ -117,7 +117,7 @@ delta-profile: func [
     <local> start end
 ][
     start: values of stats/profile
-    do block
+    eval block
     end: values of stats/profile
     for-each num start [
         change end end/1 - num
@@ -177,9 +177,9 @@ speed?: func [
         let secs: now/precise
         calc: 0
         recycle
-        do block
+        eval block
         secs: to decimal! difference now/precise secs
-        append result to integer! do calc
+        append result to integer! eval calc
         if times [append result secs]
     ]
     return result

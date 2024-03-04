@@ -146,7 +146,7 @@ STATIC_ASSERT(
 //
 INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
 {
-    if (Is_Feed_At_End(L->feed))  // `do [x:]`, `do [o.x:]`, etc. are illegal
+    if (Is_Feed_At_End(L->feed))  // `eval [x:]`, `eval [o.x:]`, etc. illegal
         fail (Error_Need_Non_End(L_current));
 
     Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // always >= 2 elements [2]
@@ -497,7 +497,7 @@ Bounce Evaluator_Executor(Level* L)
     //=//// FRAME! ////////////////////////////////////////////////////////=//
     //
     // If a FRAME! makes it to the SWITCH statement, that means it is either
-    // literally a frame in the array (`do compose [(unrun :add) 1 2]`) or is
+    // literally a frame in the array (eval compose [(unrun :add) 1 2]) or is
     // being retriggered via REEVAL.
     //
     // Most FRAME! evaluations come from the antiform ("actions") triggered
@@ -873,7 +873,7 @@ Bounce Evaluator_Executor(Level* L)
             //
             // PATH! dispatch is costly and can error in more ways than WORD!:
             //
-            //     e: trap [do make block! ":a"] e.id = 'not-bound
+            //     e: trap [eval transcode ":a"] e.id = 'not-bound
             //                                   ^-- not ready @ lookahead
             //
             // Plus with GROUP!s in a path, their evaluations can't be undone.
@@ -957,7 +957,7 @@ Bounce Evaluator_Executor(Level* L)
 
         // PATH! dispatch is costly and can error in more ways than WORD!:
         //
-        //     e: trap [do make block! ":a"] e.id = 'not-bound
+        //     e: trap [eval make block! ":a"] e.id = 'not-bound
         //                                   ^-- not ready @ lookahead
         //
         // Plus with GROUP!s in a path, their evaluations can't be undone.

@@ -25,11 +25,11 @@
     f.series: [a b c]
     f.value: <d>
     all [
-        [a b c <d>] = do copy f  ; making a copy works around the expiration
+        [a b c <d>] = eval copy f  ; making a copy works around the expiration
         f.series = [a b c <d>]
         f.value = <d>
-        [a b c <d> <d>] = do f
-        'stale-frame = pick sys.util.rescue [do f] 'id
+        [a b c <d> <d>] = eval f
+        'stale-frame = pick sys.util.rescue [eval f] 'id
         'bad-pick = pick sys.util.rescue [f.series] 'id
         'bad-pick = pick sys.util.rescue [f.value] 'id
     ]
@@ -49,7 +49,7 @@
         f-outer: make frame! unrun :foo  ; frame as seen from exterior
         f-outer.public: 1020
 
-        f-inner: do copy f-outer
+        f-inner: eval copy f-outer
         true
     )
 
@@ -80,7 +80,7 @@
         f-outer-adapt: make frame! unrun :adapted-foo
         f-outer-adapt.public: 1020
 
-        f-inner-foo: do copy f-outer-adapt
+        f-inner-foo: eval copy f-outer-adapt
 
         true
     )
@@ -122,7 +122,7 @@
         f-outer-augment.public: 1020
         f-outer-augment.additional: 1020304
 
-        f-inner-foo: do copy f-outer-augment
+        f-inner-foo: eval copy f-outer-augment
 
         true
     )
@@ -163,7 +163,7 @@
         f-outer.public: 1020
         f-outer.private: <different!>
 
-        f-inner: do f-outer
+        f-inner: eval f-outer
 
         true
     )

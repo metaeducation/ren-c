@@ -30,5 +30,5 @@ wrap: lambda [
     "Evaluates a block, wrapping all set-words as locals."
     body [block!] "Block to evaluate"
 ][
-    do bind/copy/set body make object! 0
+    eval bind/copy/set body make object! 0
 ]

@@ -216,7 +216,7 @@ DECLARE_NATIVE(shove)
 //      return: [any-value?]
 //      source "Block of code, or indirect specification to find/make it" [
 //          <maybe>  ; opts out of the DO, returns null
-//          block!  ; source code in block form (see EVALUATE for other kinds)
+//          ; block!  ; will be "DO spec", use EVAL for "classic block DO" [1]
 //          text!  ; source code in text form
 //          binary!  ; treated as UTF-8
 //          url!  ; load code from URL via protocol
@@ -234,16 +234,15 @@ DECLARE_NATIVE(shove)
 //  ]
 //
 DECLARE_NATIVE(do)
-// 2. FAIL is the preferred operation for triggering errors, as it has a
-//    natural behavior for blocks passed to construct readable messages and
-//    "FAIL X" more clearly communicates a failure than "DO X".  But DO of an
-//    ERROR! would have to raise an error anyway, so it might as well raise the
-//    one it is given.
 //
-// 3. There's an error given if you try to run a continuation of an ACTION!
-//    and it takes a parameter, but you specify END as the WITH.  But giving
-//    a special error here--that can point people to "did you mean REEVALUATE"
-//    is something that is probably helpful enough to add.
+// 1. DO is aiming to be polymorphic, to run things like JavaScript.  It
+//    always requires a header (or an implied header from filename/location).
+//    It will support blocks at one point, but not in the historical way.
+//
+//    https://forum.rebol.info/t/polyglot-polymorphic-do/1846
+//
+//    Modern calls for evaluation services on BLOCK! etc. should use EVAL.
+//
 {
     INCLUDE_PARAMS_OF_DO;
 
@@ -258,8 +257,189 @@ DECLARE_NATIVE(do)
     Deactivate_If_Action(source);
 
     switch (VAL_TYPE(source)) {
-      case REB_BLOCK :  // no REB_GROUP, etc...EVAL does that.  [1]
-        return DELEGATE(OUT, source);
+      case REB_BLOCK :
+        fail ("BLOCK! reserved for new meaning in DO, use EVAL to evaluate");
+
+      case REB_THE_WORD : goto do_helper;
+      case REB_BINARY : goto do_helper;
+      case REB_TEXT : goto do_helper;
+      case REB_URL : goto do_helper;
+      case REB_FILE : goto do_helper;
+      case REB_TAG : goto do_helper;
+
+      do_helper : {
+        UNUSED(REF(args)); // detected via `value? :arg`
+
+        rebPushContinuation(
+            cast(Value*, OUT),  // <-- output cell
+            LEVEL_MASK_NONE,
+            rebRUN(SysUtil(DO_P)),
+                source,
+                rebQ(ARG(args)),
+                REF(only) ? rebQ(Lib(TRUE)) : rebQ(Lib(FALSE))
+        );
+        return BOUNCE_DELEGATE; }
+
+      case REB_ERROR :
+        fail ("Use EVAL (not DO) to evaluate ERROR!");
+
+      case REB_VARARGS :
+        fail ("Use EVAL (not DO) to evaluate VARARGS!");
+
+      case REB_FRAME :
+        fail ("Use EVAL to evaluate FRAME!");
+
+      default :
+        break;
+    }
+
+    fail (Error_Do_Arity_Non_Zero_Raw());  // https://trello.com/c/YMAb89dv
+}
+
+
+//
+//  eval: native [
+//
+//  "Perform a single evaluator step, returning the next source position"
+//
+//      return: "Value from the step"
+//          [any-atom?]
+//      source [
+//          <maybe>  ; useful for `evaluate maybe ...` scenarios
+//          any-array?  ; source code
+//          <unrun> frame!  ; invoke the frame (no arguments, see RUN)
+//          error!  ; raise the error
+//          varargs!  ; simulates as if frame! or block! is being executed
+//      ]
+//      /next "Do one step of evaluation"
+//          [word! tuple!]  ; !!! does not use multi-return, see 1
+//      /undecayed "Do not decay result"
+//  ]
+//
+DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
+//
+// 1. Having a function like EVALUATE itself be multi-return is a pain, as
+//    it is trying to return a result that can itself be a multi-return.
+//    This is the nature of anything that does proxying.  It's *technically*
+//    possible for a caller to pick parameter packs out of parameter packs,
+//    but inconvenient.  Especially considering that stepwise evaluation is
+//    going to be done on some kind of "evaluator state"--not just a block,
+//    that state should be updated.
+//
+// 2. We want EVALUATE to treat all ANY-ARRAY? the same.  (e.g. a ^[1 + 2] just
+//    does the same thing as [1 + 2] and gives 3, not '3)  Rather than mutate
+//    the cell to plain BLOCK! and pass it to CONTINUE_CORE(), we initialize
+//    a feed from the array directly.
+//
+// 6. There may have been a LET statement in the code.  If there was, we have
+//    to incorporate the binding it added into the reported state *somehow*.
+//    Right now we add it to the block we give back...this gives rise to
+//    questionable properties, such as if the user goes backward in the block
+//    and were to evaluate it again:
+//
+//      https://forum.rebol.info/t/1496
+//
+//    Right now we can politely ask "don't do that", but better would probably
+//    be to make EVALUATE return something with more limited privileges... more
+//    like a FRAME!/VARARGS!.
+//
+// 7. FAIL is the preferred operation for triggering errors, as it has a
+//    natural behavior for blocks passed to construct readable messages and
+//    "FAIL X" more clearly communicates a failure than "DO X".  But DO of an
+//    ERROR! would have to raise an error anyway, so it might as well raise the
+//    one it is given.
+{
+    INCLUDE_PARAMS_OF_EVAL;
+
+    Value* rest_var = ARG(next);
+    Value* source = ARG(source);  // may be only GC reference, don't lose it!
+
+    enum {
+        ST_EVALUATE_INITIAL_ENTRY = STATE_0,
+        ST_EVALUATE_SINGLE_STEPPING,
+        ST_EVALUATE_RUNNING_TO_END
+    };
+
+    switch (STATE) {
+      case ST_EVALUATE_INITIAL_ENTRY :
+        goto initial_entry;
+
+      case ST_EVALUATE_SINGLE_STEPPING :
+        goto single_step_result_in_out;
+
+      case ST_EVALUATE_RUNNING_TO_END :
+        goto result_in_out;
+
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
+    Deactivate_If_Action(source);
+    Tweak_Non_Const_To_Explicitly_Mutable(source);
+
+  #if !defined(NDEBUG)
+    Set_Cell_Flag(ARG(source), PROTECTED);
+  #endif
+
+    if (Any_Array(source)) {
+        if (Cell_Series_Len_At(source) == 0) {  // `eval []` is void
+            if (REF(next))
+                rebElide(Canon(SET), rebQ(rest_var), rebQ(nullptr));
+
+            if (REF(undecayed))
+                Init_Nihil(OUT);
+            else
+                Init_Void(OUT);
+            return Proxy_Multi_Returns(level_);
+        }
+
+        Feed* feed = Make_At_Feed_Core(  // use feed [2]
+            source,
+            SPECIFIED
+        );
+        assert(Not_Feed_At_End(feed));
+
+        Flags flags = LEVEL_MASK_NONE;
+
+        if (not REF(next))
+            Init_Nihil(Alloc_Stepper_Primed_Result());
+
+        Level* sub = Make_Level(feed, flags);
+        Push_Level(OUT, sub);
+
+        if (not REF(next)) {  // plain evaluation to end, maybe invisible
+            sub->executor = &Stepper_Executor;
+            if (REF(undecayed))
+                return DELEGATE_SUBLEVEL(sub);
+
+            STATE = ST_EVALUATE_RUNNING_TO_END;
+            return CONTINUE_SUBLEVEL(sub);  // need callback to decay
+        }
+
+        STATE = ST_EVALUATE_SINGLE_STEPPING;
+
+        Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
+
+        return CONTINUE_SUBLEVEL(sub);
+    }
+    else switch (VAL_TYPE(source)) {
+
+      case REB_FRAME : {
+        //
+        // !!! It is likely that the return result for the NEXT: will actually
+        // be a FRAME! when the input to EVALUATE is a BLOCK!, so that the
+        // LET bindings can be preserved.  Binding is still a mess when it
+        // comes to questions like backtracking in blocks, so review.
+        //
+        if (REF(next))
+            fail ("/NEXT Behavior not implemented for FRAME! in EVALUATE");
+
+        if (Is_Frame_Details(source))
+            if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
+                fail (Error_Do_Arity_Non_Zero_Raw());  // see notes in DO on error
+
+        return DELEGATE(OUT, source); }
 
       case REB_VARARGS : {
         Element* position;
@@ -307,239 +487,34 @@ DECLARE_NATIVE(do)
         Push_Level(OUT, sub);
         return DELEGATE_SUBLEVEL(sub); }
 
-      case REB_THE_WORD : goto do_helper;
-      case REB_BINARY : goto do_helper;
-      case REB_TEXT : goto do_helper;
-      case REB_URL : goto do_helper;
-      case REB_FILE : goto do_helper;
-      case REB_TAG : goto do_helper;
-
-      do_helper : {
-        UNUSED(REF(args)); // detected via `value? :arg`
-
-        rebPushContinuation(
-            cast(Value*, OUT),  // <-- output cell
-            LEVEL_MASK_NONE,
-            rebRUN(SysUtil(DO_P)),
-                source,
-                rebQ(ARG(args)),
-                REF(only) ? rebQ(Lib(TRUE)) : rebQ(Lib(FALSE))
-        );
-        return BOUNCE_DELEGATE; }
-
       case REB_ERROR :
-        fail (VAL_CONTEXT(source));  // would fail anyway [2]
-
-      case REB_FRAME : {
-        if (Is_Frame_Details(source))
-            if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
-                fail (Error_Do_Arity_Non_Zero_Raw());  // specific error?  [3]
-
-        return DELEGATE(OUT, source); }
-
-      default :
-        break;
-    }
-
-    fail (Error_Do_Arity_Non_Zero_Raw());  // https://trello.com/c/YMAb89dv
-}
-
-
-//
-//  evaluate: native [
-//
-//  "Perform a single evaluator step, returning the next source position"
-//
-//      return: "Value from the step"
-//          [any-atom?]
-//      source [
-//          <maybe>  ; useful for `evaluate try ...` scenarios when no match
-//          any-array?  ; source code in block form
-//          action?
-//          frame!
-//          varargs!  ; simulates as if frame! or block! is being executed
-//      ]
-//      /next "Do one step of evaluation"
-//          [word! tuple!]  ; !!! does not use multi-return, see 1
-//  ]
-//
-DECLARE_NATIVE(evaluate)
-//
-// 1. Having a function like EVALUATE itself be multi-return is a pain, as
-//    it is trying to return a result that can itself be a multi-return.
-//    This is the nature of anything that does proxying.  It's *technically*
-//    possible for a caller to pick parameter packs out of parameter packs,
-//    but inconvenient.  Especially considering that stepwise evaluation is
-//    going to be done on some kind of "evaluator state"--not just a block,
-//    that state should be updated.
-//
-// 2. We want EVALUATE to treat all ANY-ARRAY? the same.  (e.g. a ^[1 + 2] just
-//    does the same thing as [1 + 2] and gives 3, not '3)  Rather than mutate
-//    the cell to plain BLOCK! and pass it to CONTINUE_CORE(), we initialize
-//    a feed from the array directly.
-//
-// 6. There may have been a LET statement in the code.  If there was, we have
-//    to incorporate the binding it added into the reported state *somehow*.
-//    Right now we add it to the block we give back...this gives rise to
-//    questionable properties, such as if the user goes backward in the block
-//    and were to evaluate it again:
-//
-//      https://forum.rebol.info/t/1496
-//
-//    Right now we can politely ask "don't do that", but better would probably
-//    be to make EVALUATE return something with more limited privileges... more
-//    like a FRAME!/VARARGS!.
-{
-    INCLUDE_PARAMS_OF_EVALUATE;
-
-    Value* rest_var = ARG(next);
-    Value* source = ARG(source);  // may be only GC reference, don't lose it!
-
-    enum {
-        ST_EVALUATE_INITIAL_ENTRY = STATE_0,
-        ST_EVALUATE_SINGLE_STEPPING
-    };
-
-    switch (STATE) {
-      case ST_EVALUATE_INITIAL_ENTRY :
-        goto initial_entry;
-
-      case ST_EVALUATE_SINGLE_STEPPING :
-        goto single_step_result_in_out;
-
-      default: assert(false);
-    }
-
-  initial_entry: {  //////////////////////////////////////////////////////////
-
-    Deactivate_If_Action(source);
-    Tweak_Non_Const_To_Explicitly_Mutable(source);
-
-  #if !defined(NDEBUG)
-    Set_Cell_Flag(ARG(source), PROTECTED);
-  #endif
-
-    if (Any_Array(source)) {
-        if (Cell_Series_Len_At(source) == 0) {  // `evaluate []` is invisible intent
-            if (REF(next))
-                rebElide(Canon(SET), rebQ(rest_var), rebQ(nullptr));
-
-            Init_Nihil(OUT);  // !!! Callers not prepared for more ornery result
-            return Proxy_Multi_Returns(level_);
-        }
-
-        Feed* feed = Make_At_Feed_Core(  // use feed [2]
-            source,
-            SPECIFIED
-        );
-        assert(Not_Feed_At_End(feed));
-
-        Flags flags = LEVEL_MASK_NONE;
-
-        if (not REF(next)) {
-            Init_Nihil(Alloc_Stepper_Primed_Result());
-        }
-
-        Level* sub = Make_Level(feed, flags);
-        Push_Level(OUT, sub);
-
-        if (not REF(next)) {  // plain evaluation to end, maybe invisible
-            sub->executor = &Stepper_Executor;
-            return DELEGATE_SUBLEVEL(sub);
-        }
-
-        Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
-
-        STATE = ST_EVALUATE_SINGLE_STEPPING;
-        return CONTINUE_SUBLEVEL(sub);
-    }
-    else switch (VAL_TYPE(source)) {
-
-      case REB_FRAME : {
-        //
-        // !!! It is likely that the return result for the NEXT: will actually
-        // be a FRAME! when the input to EVALUATE is a BLOCK!, so that the
-        // LET bindings can be preserved.  Binding is still a mess when it
-        // comes to questions like backtracking in blocks, so review.
-        //
-        if (REF(next))
-            fail ("/NEXT Behavior not implemented for FRAME! in EVALUATE");
-
-        if (Is_Frame_Details(source))
-            if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
-                fail (Error_Do_Arity_Non_Zero_Raw());  // see notes in DO on error
-
-        return DELEGATE(OUT, source); }
-
-      case REB_VARARGS : {
-        assert(Is_Varargs(source));
-
-        Element* position;
-        if (Is_Block_Style_Varargs(&position, source)) {
-            //
-            // We can execute the array, but we must "consume" elements out
-            // of it (e.g. advance the index shared across all instances)
-            //
-            // !!! If any VARARGS! op does not honor the "locked" flag on the
-            // array during execution, there will be problems if it is TAKE'n
-            // or DO'd while this operation is in progress.
-            //
-            REBLEN index;
-            if (Eval_Step_In_Any_Array_At_Throws(
-                SPARE,
-                &index,
-                position,
-                SPECIFIED,
-                LEVEL_MASK_NONE
-            )){
-                // !!! A BLOCK! varargs doesn't technically need to "go bad"
-                // on a throw, since the block is still around.  But a FRAME!
-                // varargs does.  This will cause an assert if reused, and
-                // having BLANK! mean "thrown" may evolve into a convention.
-                //
-                Init_Unreadable(position);
-                return THROWN;
-            }
-
-            VAL_INDEX_UNBOUNDED(position) = index;
-        }
-        else {
-            Level* L;
-            if (not Is_Level_Style_Varargs_May_Fail(&L, source))
-                panic (source); // Frame is the only other type
-
-            // By definition, we're in the middle of a function call in level
-            // the varargs came from.  It's still on the stack--we don't want
-            // to disrupt its state (beyond feed advancing).  Use a sublevle.
-
-            if (Is_Level_At_End(L))
-                return nullptr;
-
-            Flags flags = LEVEL_MASK_NONE;
-            if (Eval_Step_In_Sublevel_Throws(SPARE, L, flags))
-                return THROWN;
-        }
-        break; }
+        fail (VAL_CONTEXT(source));  // would fail anyway [7]
 
       default:
         fail (PARAM(source));
     }
 
-    if (REF(next))
-        rebElide(Canon(SET), rebQ(rest_var), source);
-
-    return COPY(SPARE);
+    DEAD_END;
 
 } single_step_result_in_out: {  //////////////////////////////////////////////
+
+    assert(REF(next));
 
     Specifier* specifier = Level_Specifier(SUBLEVEL);
     VAL_INDEX_UNBOUNDED(source) = Level_Array_Index(SUBLEVEL);  // new index
     Drop_Level(SUBLEVEL);
 
     BINDING(source) = specifier;  // integrate LETs [6]
+    rebElide(Canon(SET), rebQ(rest_var), source);
 
-    if (REF(next))
-        rebElide(Canon(SET), rebQ(rest_var), source);
+} result_in_out: {  //////////////////////////////////////////////////////////
+
+    if (not REF(undecayed)) {
+        if (Is_Nihil(OUT))
+            Init_Void(OUT);
+        else
+            Decay_If_Unstable(OUT);
+    }
 
     return OUT;
 }}
@@ -595,7 +570,7 @@ DECLARE_NATIVE(redo)
 
     Level* L = CTX_LEVEL_IF_ON_STACK(c);
     if (L == NULL)
-        fail ("Use DO to start a not-currently running FRAME! (not REDO)");
+        fail ("Use EVAL to start a not-currently running FRAME! (not REDO)");
 
     if (REF(sibling)) {  // ensure frame compatibility [1]
         Value* sibling = ARG(sibling);

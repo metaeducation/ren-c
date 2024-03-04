@@ -23,7 +23,7 @@
 // These routines are for gathering statistics and metrics.  While some of
 // the metrics-gathering may require custom code in the memory allocator,
 // it is hoped that many services can be built as an optional extension by
-// taking advantage of hooks provided in DO and APPLY.
+// taking advantage of hooks provided in EVAL and APPLY.
 //
 
 #include "sys-core.h"

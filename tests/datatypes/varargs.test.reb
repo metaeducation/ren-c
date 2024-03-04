@@ -50,11 +50,11 @@
         true
     )
 
-    (1 = do [normal])
-    (11 = do [10 normal])
-    (21 = do [10 20 normal])
-    (31 = do [x: 30, y: 'x, 1 2 x normal])
-    (30 = do [multiply 3 9 normal])  ; seen as ((multiply 3 (9 normal))
+    (1 = eval [normal])
+    (11 = eval [10 normal])
+    (21 = eval [10 20 normal])
+    (31 = eval [x: 30, y: 'x, 1 2 x normal])
+    (30 = eval [multiply 3 9 normal])  ; seen as ((multiply 3 (9 normal))
 ][
     (
         defers: enfix func [return: [integer!] v [integer! <variadic>]] [
@@ -68,11 +68,11 @@
         true
     )
 
-    (1 = do [defers])
-    (11 = do [10 defers])
-    (21 = do [10 20 defers])
-    (31 = do [x: 30, y: 'x, 1 2 x defers])
-    (28 = do [multiply 3 9 defers])  ; seen as (multiply 3 9) defers))
+    (1 = eval [defers])
+    (11 = eval [10 defers])
+    (21 = eval [10 20 defers])
+    (31 = eval [x: 30, y: 'x, 1 2 x defers])
+    (28 = eval [multiply 3 9 defers])  ; seen as (multiply 3 9) defers))
 ][
     (
         soft: enfix func [:v [any-value? <variadic>]] [
@@ -85,12 +85,12 @@
         true
     )
 
-    ([] = do [soft])
+    ([] = eval [soft])
     ~literal-left-tuple~ !! (
         a: ~end~
         (a soft)
     )
-    ([7] = do [:(1 + 2) :(3 + 4) soft])
+    ([7] = eval [:(1 + 2) :(3 + 4) soft])
 ][
     (
         hard: enfix func [:v [any-value? <variadic>]] [
@@ -103,12 +103,12 @@
         true
     )
 
-    ([] = do [hard])
+    ([] = eval [hard])
     ~literal-left-tuple~ !! (
         a: ~end~
         (a hard)
     )
-    ([(3 + 4)] = do [(1 + 2) (3 + 4) hard])
+    ([(3 + 4)] = eval [(1 + 2) (3 + 4) hard])
 ]
 
 

@@ -245,7 +245,7 @@ for-each-typerange: func [
                         types: types*
                     ]
                     types*: _
-                    do body  ; no support for BREAK/CONTINUE in bootstrap
+                    eval body  ; no support for BREAK/CONTINUE in bootstrap
                 ]
             )]
             [set name* word! (if not blank? types* [

@@ -59,7 +59,7 @@
         /c [integer!]
     ] lambda [f [frame!]] [
         let old-c: f.c
-        let x: do f
+        let x: eval f
         if old-c [
             x + (4 * old-c)
         ] else [

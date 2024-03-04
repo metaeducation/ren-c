@@ -191,7 +191,7 @@
 ; two-function return tests
 (
     g: func [return: [integer!] f [action?]] [f [return 1] 2]
-    1 = g :do
+    1 = g :eval
 )
 ; BREAK out of a function
 (
@@ -285,7 +285,7 @@
         got: null
         test: lambda [expr [block!]] [
             got: '~junk~
-            compose [(do expr), (:got)]
+            compose [(eval expr), (:got)]
         ]
         true
     )
@@ -321,7 +321,7 @@
         got: null
         test: func [expr [block!]] [
             got: '~junk~
-            return compose [(do expr), (:got)]
+            return compose [(eval expr), (:got)]
         ]
         true
     )
@@ -362,13 +362,13 @@
 ; !!! Review: Fix these tests.
 
 ~expect-arg~ !! (
-    f: func [code value] [return either blank? code [$value] [do code]]
+    f: func [code value] [return either blank? code [$value] [eval code]]
     f-value: f blank blank
     f compose [2 * (f-value)] 21  ; re-entering same function
 )
 ~expect-arg~ !! (
-    f: func [code value] [return either blank? code [$value] [do code]]
-    g: func [code value] [return either blank? code [$value] [do code]]
+    f: func [code value] [return either blank? code [$value] [eval code]]
+    g: func [code value] [return either blank? code [$value] [eval code]]
     f-value: f blank blank
     g compose [2 * (f-value)] 21  ; re-entering different function
 )
@@ -404,7 +404,7 @@
     ]
     f: lambda [d] [
         a [d]
-        do c
+        eval c
     ]
     all [
         1 = f 1

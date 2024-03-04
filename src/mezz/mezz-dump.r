@@ -31,7 +31,7 @@ dump: func [
             write-stdout prefix
             write-stdout space
         ]
-        do f
+        eval f
     ]
 
     let val-to-text: func [return: [text!] ^val [any-value?]] [

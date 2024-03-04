@@ -60,7 +60,7 @@
 [
     (returnproxy: lambda [frame [<unrun> frame!]] [
         enclose (augment frame [/return [word!]]) f -> [
-            (maybe f.return): do f
+            (maybe f.return): eval f
         ]
     ], true)
 
@@ -83,7 +83,7 @@
         f.return: 'out
 
         all [
-            1020 = do f
+            1020 = eval f
             1020 = y
         ]
     )

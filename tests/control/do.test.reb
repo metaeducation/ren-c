@@ -1,25 +1,22 @@
 ; functions/control/do.r
 
-; !!! Should DO be able to return void?
 [
-    (void' = ^(do []))
-    (nihil' = ^ (eval []))
-    (nihil' = ^(eval []))
+    (nihil' = ^ (eval/undecayed []))
+    (nihil' = ^(eval/undecayed []))
 
-    (void? do [])
-    (nihil? (eval []))
-    (3 = (1 + 2 eval []))
-    (3 = (1 + 2 unmeta ^ eval []))
+    (nihil? (eval/undecayed []))
+    (3 = (1 + 2 eval/undecayed []))
+    (3 = (1 + 2 unmeta ^ eval/undecayed []))
 
-    (''30 = ^ (10 + 20 eval []))
+    (''30 = ^ (10 + 20 eval/undecayed []))
     (void' = ^ (10 + 20 eval [void]))
-    (''30 = ^ (10 + 20 eval [comment "hi"]))
-    (''30 = ^ (10 + 20 eval make frame! :nihil))
+    (''30 = ^ (10 + 20 eval/undecayed [comment "hi"]))
+    (''30 = ^ (10 + 20 eval/undecayed make frame! :nihil))
 
-    (didn't do [null])
-    ('~[~null~]~ = ^ do [if true [null]])
-    (void' = ^ do [if false [<a>]])
-    (void' = ^ do [10 + 20 if false [<a>]])
+    (didn't eval [null])
+    ('~[~null~]~ = ^ eval/undecayed [if true [null]])
+    (void' = ^ eval/undecayed [if false [<a>]])
+    (void' = ^ eval/undecayed [10 + 20 if false [<a>]])
 
     (all [
         x: <overwritten>
@@ -29,53 +26,53 @@
 
     (all [
         x: <overwritten>
-        void' = (x: ^(comment "HI") ^ do [comment "HI"])
+        nihil' = (x: ^(comment "HI") ^ eval/undecayed [comment "HI"])
         nihil' = x
     ])
 
-    (nihil' = (10 + 20 ^(eval [])))
-    (nihil' = (10 + 20 ^(eval [comment "hi"])))
-    (void' = (10 + 20 ^(eval make frame! lambda [] [void])))
+    (nihil' = (10 + 20 ^(eval/undecayed [])))
+    (nihil' = (10 + 20 ^(eval/undecayed [comment "hi"])))
+    (void' = (10 + 20 ^(eval/undecayed make frame! lambda [] [void])))
     (null' = ^(eval [null]))
-    ('~[~null~]~ = ^(eval [if true [null]]))
+    ('~[~null~]~ = ^(eval/undecayed [if true [null]]))
 
-    (30 = (10 + 20 eval []))
-    (30 = (10 + 20 eval [comment "hi"]))
-    (30 = (10 + 20 eval make frame! :nihil))
-    (null' = ^(eval [null]))
-    ('~[~null~]~ = ^ eval [heavy null])
-    ('~[~null~]~ = ^ eval [if true [null]])
+    (30 = (10 + 20 eval/undecayed []))
+    (30 = (10 + 20 eval/undecayed [comment "hi"]))
+    (30 = (10 + 20 eval/undecayed make frame! :nihil))
+    (null' = ^(eval/undecayed [null]))
+    ('~[~null~]~ = ^ eval/undecayed [heavy null])
+    ('~[~null~]~ = ^ eval/undecayed [if true [null]])
 
     ; Try standalone ^ operator so long as we're at it.
-    (nihil' = ^ eval [])
-    (nihil' = ^ eval [comment "hi"])
-    (nihil' = ^ eval make frame! :nihil)
-    (void' = ^ do [void])
+    (nihil' = ^ eval/undecayed [])
+    (nihil' = ^ eval/undecayed [comment "hi"])
+    (nihil' = ^ eval/undecayed make frame! :nihil)
+    (void' = ^ eval/undecayed [void])
 
-    (null' = ^ eval [null])
-    (null' = ^(eval [null]))
-    (null' = ^ (eval [null]))
-    (null' = meta eval [null])
+    (null' = ^ eval/undecayed [null])
+    (null' = ^(eval/undecayed [null]))
+    (null' = ^ (eval/undecayed [null]))
+    (null' = meta eval/undecayed [null])
 
-    ('~[~null~]~ = ^ eval [heavy null])
-    ('~[~null~]~ = ^(eval [heavy null]))
-    ('~[~null~]~ = ^ (eval [heavy null]))
-    ('~[~null~]~ = meta eval [heavy null])
+    ('~[~null~]~ = ^ eval/undecayed [heavy null])
+    ('~[~null~]~ = ^(eval/undecayed [heavy null]))
+    ('~[~null~]~ = ^ (eval/undecayed [heavy null]))
+    ('~[~null~]~ = meta eval/undecayed [heavy null])
 
-    ('~[~null~]~ = ^ eval [if true [null]])
+    ('~[~null~]~ = ^ eval/undecayed [if true [null]])
 ]
 
 
 [
-    (''3 = ^ (1 + 2 eval [comment "HI"]))
-    (nihil' = ^ eval [comment "HI"])
+    (''3 = ^ (1 + 2 eval/undecayed [comment "HI"]))
+    (nihil' = ^ eval/undecayed [comment "HI"])
 
-    (3 = (1 + 2 eval [comment "HI"]))
-    (nihil? eval [comment "HI"])
+    (3 = (1 + 2 eval/undecayed [comment "HI"]))
+    (nihil? eval/undecayed [comment "HI"])
 
     (
         y: <overwritten>
-        x: (1 + 2 y: (void eval [comment "HI"]))
+        x: (1 + 2 y: (void eval/undecayed [comment "HI"]))
         all [
             void? x
             voided? $y
@@ -85,115 +82,114 @@
 
 (
     success: false
-    do [success: true]
+    eval [success: true]
     success
 )
-(
+~expect-arg~ !! (
     a-value: to binary! "Rebol [] 1 + 1"
-    2 == do a-value
+    eval a-value  ; strings not handled by EVAL
 )
-; do block start
-(:abs = do [:abs])
+(:abs = eval [:abs])
 (
     a-value: #{}
-    same? a-value do reduce [a-value]
+    same? a-value eval reduce [a-value]
 )
 (
     a-value: charset ""
-    same? a-value do reduce [a-value]
+    same? a-value eval reduce [a-value]
 )
 (
     a-value: []
-    same? a-value do reduce [a-value]
+    same? a-value eval reduce [a-value]
 )
-(same? blank! do reduce [blank!])
-(1/Jan/0000 = do [1/Jan/0000])
-(0.0 == do [0.0])
-(1.0 == do [1.0])
+(same? blank! eval reduce [blank!])
+(1/Jan/0000 = eval [1/Jan/0000])
+(0.0 == eval [0.0])
+(1.0 == eval [1.0])
 (
     a-value: me@here.com
-    same? a-value do reduce [a-value]
+    same? a-value eval reduce [a-value]
 )
-(error? do [trap [1 / 0]])
+(error? eval [trap [1 / 0]])
 (
     a-value: %""
-    same? a-value do reduce [a-value]
+    same? a-value eval reduce [a-value]
 )
 (
     a-value: does []
-    same? :a-value do [:a-value]
+    same? :a-value eval [:a-value]
 )
 (
     a-value: first [:a-value]
-    :a-value == do reduce [:a-value]
+    :a-value == eval reduce [:a-value]
 )
-(NUL == do [NUL])
+(NUL == eval [NUL])
 
-(0 == do [0])
-(1 == do [1])
-(#a == do [#a])
+(0 == eval [0])
+(1 == eval [1])
+(#a == eval [#a])
 (
     a-value: first ['a/b]
-    :a-value == do [:a-value]
+    :a-value == eval [:a-value]
 )
 (
     a-value: first ['a]
-    :a-value == do [:a-value]
+    :a-value == eval [:a-value]
 )
-(~true~ == do [~true~])
-(~false~ == do [~false~])
-($1 == do [$1])
-(same? :append do [:append])
-(null? do [~null~])
+(~true~ == eval [~true~])
+(~false~ == eval [~false~])
+($1 == eval [$1])
+(same? :append eval [:append])
+(null? eval [~null~])
 (
     a-value: make object! []
-    same? :a-value do reduce [:a-value]
+    same? :a-value eval reduce [:a-value]
 )
 (
     a-value: first [()]
-    same? :a-value do [:a-value]
+    same? :a-value eval [:a-value]
 )
-(same? get $+ do [get $+])
-(0x0 == do [0x0])
+(same? get $+ eval [get $+])
+(0x0 == eval [0x0])
 (
     a-value: 'a/b
-    :a-value == do [:a-value]
+    :a-value == eval [:a-value]
 )
 (
     a-value: make port! http://
-    port? do reduce [:a-value]
+    port? eval reduce [:a-value]
 )
-(/a == do [/a])
+(/a == eval [/a])
 (
     a-value: first [a/b:]
-    :a-value == do [:a-value]
+    :a-value == eval [:a-value]
 )
 (
     a-value: first [a:]
-    :a-value == do [:a-value]
+    :a-value == eval [:a-value]
 )
 (
     a-value: ""
-    same? :a-value do reduce [:a-value]
+    same? :a-value eval reduce [:a-value]
 )
 (
     a-value: make tag! ""
-    same? :a-value do reduce [:a-value]
+    same? :a-value eval reduce [:a-value]
 )
-(0:00 == do [0:00])
-(0.0.0 == do [0.0.0])
-(void' = ^ do [()])
-('a == do ['a])
+(0:00 == eval [0:00])
+(0.0.0 == eval [0.0.0])
+(void' = ^ eval [()])
+('a == eval ['a])
 
-; !!! At time of writing, DO of an ERROR! is like FAIL; it is not definitional,
+; !!! Currently, EVAL of an ERROR! is like FAIL; it is not definitional,
 ; and can only be caught with SYS.UTIL.RESCUE.  Should it be?  Or should a
-; DO of an ERROR! just make it into a definitional error?
+; EVAL of an ERROR! just make it into a definitional error?
 ;
-~zero-divide~ !! (error? trap [do trap [1 / 0] 1])
+~zero-divide~ !! (error? trap [eval trap [1 / 0] 1])
 
 (
     a-value: first [(2)]
-    2 == do as block! :a-value
+    2 == eval as block! :a-value
 )
 (
     a-value: "Rebol [] 1"
@@ -205,13 +201,13 @@
 
 ; RETURN stops the evaluation
 (
-    f1: func [return: [integer!]] [do [return 1 2] 2]
+    f1: func [return: [integer!]] [eval [return 1 2] 2]
     1 = f1
 )
 ; THROW stops evaluation
 (
     1 = catch [
-        do [
+        eval [
             throw 1
             2
         ]
@@ -221,7 +217,7 @@
 ; BREAK stops evaluation
 (
     null? repeat 1 [
-        do [
+        eval [
             break
             2
         ]
@@ -244,7 +240,7 @@
 )
 (
     all [
-        nihil? evaluate/next [] $pos
+        nihil? evaluate/next/undecayed [] $pos
         pos = null
     ]
 )
@@ -260,14 +256,14 @@
     1 = f1
 )
 ; recursive behaviour
-(1 = do [do [1]])
-(1 = do "Rebol [] do [1]")
+(1 = eval [eval [1]])
+(1 = do "Rebol [] eval [1]")
 (1 == 1)
 (3 = reeval unrun :reeval unrun :add 1 2)
 ; infinite recursion for block
 (
     x: 0
-    blk: [x: x + 1, if x = 2000 [throw <deep-enough>] do blk]
+    blk: [x: x + 1, if x = 2000 [throw <deep-enough>] eval blk]
     <deep-enough> = catch blk
 )
 

@@ -8,7 +8,7 @@
 
 ; frames are active
 [#1659
-    (1 == do reduce [unrun :abs -1])
+    (1 == eval reduce [unrun :abs -1])
 ]
 
 ; Actions should store labels of the last GET-WORD! or GET-PATH! that was

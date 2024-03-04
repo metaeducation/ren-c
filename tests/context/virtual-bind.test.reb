@@ -14,9 +14,9 @@
 
     obj284: make object! [x: 284]
     all [
-        1020 = do block
-        304 = do inside obj284 block
-        1020 = do block
+        1020 = eval block
+        304 = eval inside obj284 block
+        1020 = eval block
     ]
 )
 
@@ -78,20 +78,20 @@
     ; Basic robustness
     ;
     (30 = eval group)
-    (30 = do compose [(group)])
-    (30 = do compose [(group)])
-    (30 = do compose/deep [do [(group)]])
-    (30 = reeval unrun does [do compose [(group)]])
+    (30 = eval compose [(group)])
+    (30 = eval compose [(group)])
+    (30 = eval compose/deep [eval [(group)]])
+    (30 = reeval unrun does [eval compose [(group)]])
 
     ; Unrelated USE should not interfere
     ;
     (30 = use [z] compose [(group)])
-    (30 = use [z] compose/deep [do [(group)]])
+    (30 = use [z] compose/deep [eval [(group)]])
 
     ; Related USE should override
     ;
     (110 = use [y] compose [y: 100, (group)])
-    (110 = use [y] compose/deep [y: 100, do [(group)]])
+    (110 = use [y] compose/deep [y: 100, eval [(group)]])
 
     ; Chaining will affect any values that were visible at the time of the
     ; USE (think of it the way you would as if the BIND were run mutably).
@@ -101,7 +101,7 @@
     ; x gets overridden as well.
     ;
     (110 = use [x] [x: 1000, use [y] compose [y: 100, (group)]])
-    (1100 = use [x] compose/deep [x: 1000, use [y] [y: 100, do [(group)]]])
+    (1100 = use [x] compose/deep [x: 1000, use [y] [y: 100, eval [(group)]]])
 ]
 
 
@@ -112,7 +112,7 @@
     for-each x data [
         code: copy []
         for-each y data [
-            append code spread compose [sum: sum + do [(x) + (y) + z]]
+            append code spread compose [sum: sum + eval [(x) + (y) + z]]
         ]
         for-each z data code
     ]
@@ -131,7 +131,7 @@
     ; It tried to warn you that the X binding wouldn't be updated... but
     ; using MUTABLE overrides the warning.
     ;
-    (11 = do bind mutable use [x] [x: 10, [x + 1]] make object! [x: 20])
+    (11 = eval bind mutable use [x] [x: 10, [x + 1]] make object! [x: 20])
 
     ; Quoted values elude the CONST inheritance (this is a general mechanism
     ; that is purposeful, and used heavily by the API).  The more cautious
@@ -171,16 +171,16 @@
     ]
     [11 1001 999 9 30 -10 3000 -1000 300 -100] = collect [
         for-each y [1] compose [
-            keep do (alpha.plus)  ; needs chain y -> alpha
-            keep do (beta.plus)  ; needs chain y -> beta
-            keep do (beta.minus)  ; also needs chain y -> beta
-            keep do (alpha.minus)  ; back to needing chain y -> alpha
-            keep do alpha.plus
-            keep do alpha.minus
-            keep do beta.plus
-            keep do beta.minus
-            keep do inside [] plus-global
-            keep do inside [] minus-global
+            keep eval (alpha.plus)  ; needs chain y -> alpha
+            keep eval (beta.plus)  ; needs chain y -> beta
+            keep eval (beta.minus)  ; also needs chain y -> beta
+            keep eval (alpha.minus)  ; back to needing chain y -> alpha
+            keep eval alpha.plus
+            keep eval alpha.minus
+            keep eval beta.plus
+            keep eval beta.minus
+            keep eval inside [] plus-global
+            keep eval inside [] minus-global
         ]
     ]
 )

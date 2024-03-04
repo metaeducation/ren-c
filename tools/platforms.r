@@ -504,7 +504,7 @@ export for-each-platform: func [
             (
                 if os [
                     set var p
-                    do body
+                    eval body
                 ]
             )
         ]

@@ -24,7 +24,7 @@
             [<unrun> frame!]
         <local> steps
     ][
-        ([steps @v]: resolve target) else [set steps do branch]
+        ([steps @v]: resolve target) else [set steps eval branch]
     ],
     true)
 

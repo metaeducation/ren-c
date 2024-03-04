@@ -282,7 +282,7 @@ reword: func [
                             frame! [
                                 apply/relax v [:keyword-match]  ; arity-0 okay
                             ]
-                            block! [do v]
+                            block! [eval v]
                         ] else [
                             v
                         ]
@@ -401,7 +401,7 @@ collect*: func [
             ][
                 f.series: out: default [make block! 16]  ; no null return now
                 f.value  ; ELIDE leaves as result
-                elide do f  ; would invalidate f.value (hence ELIDE)
+                elide eval f  ; would invalidate f.value (hence ELIDE)
             ]
         ]
     )[
@@ -665,7 +665,7 @@ find-all: func [
         , set series find get series :value
         , (set series orig, false)  ; reset series and break loop
     ]][
-        do body
+        eval body
         series: next series
     ]
 ]

@@ -34,7 +34,7 @@
 //
 //         f/(p): noquote f/(p)
 //
-//         return quote/depth do f num-quotes
+//         return quote/depth eval f num-quotes
 //     ]
 //
 //     >> item: the '''[a b c]
@@ -169,11 +169,11 @@ bool Init_Invokable_From_Feed_Throws(
         return false;
     }
 
-    // Unfortunately, this means that `[x y]: ^(do f)` and `[x y]: ^ do f`
+    // Unfortunately, it means that `[x y]: ^(eval f)` and `[x y]: ^ eval f`
     // can't work.  The problem is that you don't know how many expressions
     // will be involved in these cases, and the multi-return is a syntax trick
     // that can only work when interacting with one function, and even plain
-    // groups break that guarantee.  Do meta values with e.g. `[^x y]: do f`.
+    // groups break that guarantee.  Do meta values with e.g. `[^x y]: eval f`.
     //
     if (Any_Group(v))  // `requote (append [a b c] #d, <can't-work>)`
         fail ("Actions made with REFRAMER cannot work with GROUP!s");

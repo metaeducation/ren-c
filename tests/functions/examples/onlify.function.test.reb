@@ -58,7 +58,7 @@ true)
     f: make frame! unrun :append/only
     f.series: copy [a b c]
     f.value: [d e f]
-    [a b c [d e f]] = do f
+    [a b c [d e f]] = eval f
 )
 
 (
@@ -87,7 +87,7 @@ true)
         ]
     ][
         is-bad: me and (
-            'bad-parameter = (sys.util.rescue [do inside [] code]).id)
+            'bad-parameter = (sys.util.rescue [eval inside [] code]).id)
     ]
 
     is-bad

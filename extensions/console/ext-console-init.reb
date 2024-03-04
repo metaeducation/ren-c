@@ -44,14 +44,14 @@ boot-print: redescribe [
     "Prints during boot when not quiet."
 ](
     ; !!! Duplicates code in %main-startup.reb, where this isn't exported.
-    enclose :print f -> [if not system.options.quiet [do f]]
+    enclose :print f -> [if not system.options.quiet [eval f]]
 )
 
 loud-print: redescribe [
     "Prints during boot when verbose."
 ](
     ; !!! Duplicates code in %main-startup.reb, where this isn't exported.
-    enclose :print f -> [if system.options.verbose [do f]]
+    enclose :print f -> [if system.options.verbose [eval f]]
 )
 
 
@@ -136,7 +136,7 @@ export console!: make object! [
             v: unquasi v
             if has v 'decay [
                 print ["; decay of lazy object with" mold words of v]
-                v: ^ do v.decay
+                v: ^ eval v.decay
             ] else [
                 print ["; no decay in lazy object with" mold words of v]
                 v: quasi v
@@ -201,7 +201,7 @@ export console!: make object! [
             ; Antiforms don't technically have "a representation", but the
             ; historical console behavior is to add a comment annotation.
             ;
-            ;     >> do [~something~]
+            ;     >> eval [~something~]
             ;     == ~something~  ; anti
             ;
             ; Antiforms are evaluative products only, so you won't see the
@@ -361,7 +361,7 @@ start-console: func [
         o.resources
         exists? skin-file: join o.resources skin-file
     ] then [
-        let new-skin: do (load skin-file) then [
+        let new-skin: do skin-file then [
             ; if loaded skin returns console! object then use as prototype
             all [
                 object? new-skin
@@ -759,7 +759,7 @@ ext-console-impl: func [
         emit [(  ; <-- GROUP! needed for binding bug, review
             let f: make frame! :system.console.print-result
             f.v: '(<*> result)
-            do f
+            eval f
         )]
         return <prompt>
     ]

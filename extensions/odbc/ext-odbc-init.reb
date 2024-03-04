@@ -194,7 +194,7 @@ sqlform: func [
         ]
 
         the-group! [
-            append parameters do as block! value
+            append parameters eval as block! value
             "?"
         ]
 

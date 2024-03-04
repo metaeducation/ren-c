@@ -466,7 +466,7 @@ INLINE void Deep_Freeze_Context(Context* c) {
 // "free" node, while grabbing the underlying memory for its variables into
 // an array of values.
 //
-// It has a notable use by DO of a heap-based FRAME!, so that the frame's
+// It has a notable use by EVAL of a heap-based FRAME!, so that the frame's
 // filled-in heap memory can be directly used as the args for the invocation,
 // instead of needing to push a redundant run of stack-based memory cells.
 //

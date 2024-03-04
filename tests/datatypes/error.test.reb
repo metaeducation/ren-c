@@ -4,7 +4,7 @@
 (error! = kind of trap [1 / 0])
 
 ; error evaluation
-(error? do head of insert copy [] trap [1 / 0])
+(error? eval head of insert copy [] trap [1 / 0])
 
 ; error that does not exist in the SCRIPT category--all of whose ids are
 ; reserved by the system and must be formed from mezzanine/user code in
@@ -139,7 +139,7 @@
 
 ; are error reports for DO and EVALUATE consistent?
 (
-    e1: sys.util.rescue [do [1 / 0]]
+    e1: sys.util.rescue [do "Rebol [] 1 / 0"]
     e2: sys.util.rescue [evaluate [1 / 0]]
     e1.near = e2.near
 )

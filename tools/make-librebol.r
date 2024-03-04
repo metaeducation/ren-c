@@ -1205,9 +1205,9 @@ saved-dir: what-dir
 ; first...
 ;
 change-dir (join repo-dir %extensions/tcc/tools/)
-do overbind (binding of inside [] 'prep-dir) load %prep-libr3-tcc.reb
+eval overbind (binding of inside [] 'prep-dir) load %prep-libr3-tcc.reb
 
 change-dir (join repo-dir %extensions/javascript/tools/)
-do overbind (binding of inside [] 'prep-dir) load %prep-libr3-js.reb
+eval overbind (binding of inside [] 'prep-dir) load %prep-libr3-js.reb
 
 change-dir saved-dir

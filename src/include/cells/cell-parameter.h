@@ -104,7 +104,7 @@ INLINE Option(const Array*) Cell_Parameter_Spec(const Cell* v) {
 //
 // Endability means that a parameter is willing to accept being at the end
 // of the input.  This means either an infix dispatch's left argument is
-// missing (e.g. `do [+ 5]`) or an ordinary argument hit the end (e.g. the
+// missing (e.g. `eval [+ 5]`) or an ordinary argument hit the end (e.g. the
 // trick used for `>> help` when the arity is 1 usually as `>> help foo`)
 //
 // ~null~ is used to represent the end state in all parameter types.  In the

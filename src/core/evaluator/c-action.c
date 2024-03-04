@@ -715,7 +715,7 @@ Bounce Action_Executor(Level* L)
         //
         // !!! The case of:
         //
-        //     30 = (10 + 20 maybe do [])
+        //     30 = (10 + 20 eval [comment "hi"])
         //
         // Is breaking this.  Review when there is time, and put the assert
         // back if it makes sense.

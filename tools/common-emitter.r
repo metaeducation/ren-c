@@ -161,7 +161,7 @@ export cscape: func [
 
             code: cscape-inside template code
 
-            if null? let sub: do code [  ; shim null, e.g. blank!
+            if null? let sub: eval code [  ; shim null, e.g. blank!
                 print mold template
                 print mold code
                 fail "Substitution can't be NULL (shim BLANK!)"

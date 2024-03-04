@@ -12,7 +12,7 @@
         while [(not empty-or-null? blk1) or (not empty-or-null? blk2)] [
             (vars): pack [(first maybe blk1) (first maybe blk2)]
 
-            do body  ; BREAK from body break the outer while, it returns NULL
+            eval body  ; BREAK from body break the outer while, it returns NULL
 
             ; Now ELIDE the increment, so body evaluation above is result
             ;

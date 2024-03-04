@@ -1,6 +1,6 @@
 ; functions/context/bind.r
 
-~not-bound~ !! (do make block! ":a")
+~not-bound~ !! (eval make block! ":a")
 
 [#50
     (null? binding of to word! "zzz")

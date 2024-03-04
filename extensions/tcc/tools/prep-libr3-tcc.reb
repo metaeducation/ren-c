@@ -28,7 +28,7 @@ REBOL [
     }
 ]
 
-; Note: There are no `import` statements here because this is run via DO LOAD
+; Note: There are no `import` statements here because this is run via EVAL LOAD
 ; within the %make-librebol.r script's context.  This is done in order to
 ; inherit the `api` object, and the `for-each-api` enumerator.  As a result
 ; it also inherits access to CWRAP and other tools.  Review.

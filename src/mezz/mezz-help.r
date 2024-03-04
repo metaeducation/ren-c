@@ -90,7 +90,7 @@ help: func [
 ][
     if null? topic [
         ;
-        ; Was just `>> help` or `do [help]` or similar.
+        ; Was just `>> help` or `eval [help]` or similar.
         ; Print out generic help message.
         ;
         print trim/auto copy {
@@ -580,7 +580,7 @@ require-commit: func [
             "If it doesn't run as expected"
             "you can try seeing if this commit is still available" LF
 
-            "by using the `do <dl-renc>` tool and look for"
+            "by using the `do @dl-renc` tool and look for"
             unspaced [
                 "r3-" copy/part id 7 "*"
                 if find-last form system.version "0.3.4" [%.exe]

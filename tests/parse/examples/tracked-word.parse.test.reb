@@ -31,7 +31,7 @@
         <static> indent (0)
         <local> result' remainder subpending
     ][
-        let input: f.input  ; save to use after DO F
+        let input: f.input  ; save to use after EVAL F
         let name: f.value
 
         indent: me + 1
@@ -72,7 +72,7 @@
 
     trackparse: enclose :trackparse* lambda [f [frame!]] [
         stack: copy []
-        do f then [
+        eval f then [
             append stack ""  ; give final newline
             (delimit newline stack, elide clear stack)
         ]

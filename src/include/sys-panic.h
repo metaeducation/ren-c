@@ -104,7 +104,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Each iteration of DO bumps a global count, that in deterministic repro
+// Each trampoline step bumps a global count, that in deterministic repro
 // cases can be very helpful in identifying the "tick" where certain problems
 // are occurring.  The debug build pokes this ticks lots of places--into
 // value cells when they are formatted, into series when they are allocated

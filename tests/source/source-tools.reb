@@ -199,7 +199,7 @@ export analyse: context [
             let emit-proto: func [return: [~] proto] [
                 if not block? proto-parser.data [return ~]
 
-                do overbind c-parser-extension [
+                eval overbind c-parser-extension [
                     if last-func-end [
                         all [
                             parse2 last-func-end [

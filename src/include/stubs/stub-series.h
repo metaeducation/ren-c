@@ -58,7 +58,7 @@
 //
 // An inaccessible series is one which may still have extant references, but
 // the data is no longer available.  Some internal mechanics can create this
-// situation, such as DO of a FRAME! which steals the memory of the frame
+// situation, such as EVAL of a FRAME! which steals the memory of the frame
 // to execute it...leaving the old stub as inaccessible.  There is also a
 // FREE operation that users can use to manually throw away data.
 //

@@ -23,7 +23,7 @@
 // COMMA!) then it does not overwrite the previous output.  This is to
 // facilitate features like this:
 //
-//    >> do [1 + 2 comment "hi"]
+//    >> eval [1 + 2 comment "hi"]
 //    == 3
 //
 // The 1 + 2 evaluated to 3.  If we merely called the evaluator executor

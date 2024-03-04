@@ -68,7 +68,7 @@
 
     (<deep-enough> = catch [
         depth: 0
-        do blk: [
+        eval blk: [
             depth: me + 1
             if depth = 1000 [throw <deep-enough>]
             either true (blk) []
@@ -76,7 +76,7 @@
     ])
     (<deep-enough> = catch [
         depth: 0
-        do blk: [
+        eval blk: [
             depth: me + 1
             if depth = 1000 [throw <deep-enough>]
             either false [] (blk)

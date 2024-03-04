@@ -185,7 +185,7 @@
 
 ~stack-overflow~ !! (
     blk: [cfor i 1 1 1 blk]
-    do blk
+    eval blk
 )
 ; local variable changeability - this is how it works in R3
 (

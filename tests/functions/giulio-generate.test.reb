@@ -26,7 +26,7 @@
             if block? count [
                 let result: bind count 'count
                 count: 1
-                return do result
+                return eval result
             ]
             count: me + 1
             let result: (to group! iteration)

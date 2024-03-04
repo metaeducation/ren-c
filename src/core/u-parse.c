@@ -43,7 +43,7 @@
 //=/////////////////////////////////////////////////////////////////////////=//
 //
 // As a major operational difference from R3-Alpha, each recursion in Ren-C's
-// PARSE runs using a "Rebol Stack Level"--similar to how the DO evaluator
+// PARSE runs using a "Rebol Stack Level"--similar to how the EVAL evaluator
 // works.  So `[print "abc"]` and `[thru "abc"]` are both seen as "code" and
 // iterated using the same mechanic.  (The rules are also locked from
 // modification during the course of the PARSE, as code is in Ren-C.)
@@ -55,7 +55,7 @@
 // state at every step in the parse rule recursions.
 //
 // The function users see on the stack for each recursion is a native called
-// SUBPARSE.  Although it is shaped similarly to typical DO code, there are
+// SUBPARSE.  Although it is shaped similarly to typical EVAL code, there are
 // differences.  The subparse advances the "current evaluation position" in
 // the frame as it operates, so it is a variadic function...with the rules as
 // the variadic parameter.  Calling it directly looks a bit unusual:
@@ -1292,7 +1292,7 @@ DECLARE_NATIVE(subparse)
 // up to the most recently pushed handler.  This can happen due to an invalid
 // rule pattern, or if there's an error in code that is run in parentheses.
 //
-// * A throw-style result caused by DO code run in parentheses (e.g. a
+// * A throw-style result caused by EVAL code run in parentheses (e.g. a
 // THROW, RETURN, BREAK, CONTINUE).  This returns a thrown value.
 //
 // * A special throw to indicate a return out of the PARSE itself, triggered
@@ -1708,7 +1708,7 @@ DECLARE_NATIVE(subparse)
                     FRESHEN(OUT);  // since we didn't throw, put it back
 
                     // Don't touch P_POS, we didn't consume anything from
-                    // the input series but just fabricated DO material.
+                    // the input series but just fabricated EVAL material.
 
                     FETCH_NEXT_RULE(L);
                 }
@@ -2788,7 +2788,7 @@ DECLARE_NATIVE(parse3)
             "let temp: null",
             "let f: copy @", CTX_ARCHETYPE(frame_ctx),
             "f.rules: [temp: collect", specific, "]",
-            "do f",
+            "eval f",
             "temp"
         );
     }

@@ -353,7 +353,7 @@ curtail: reframer func [
     return: [any-value?]
     frame [frame!]
 ][
-    return do frame except e -> [
+    return eval frame except e -> [
         if e.id == 'need-non-null [return void]
         fail e
     ]
@@ -480,15 +480,15 @@ ensure: redescribe [
     ; and matches NULL.  This is not reactive with ELSE
     ;
     enclose :match lambda [f <local> value] [  ; LET was having trouble
-        value: :f.value  ; DO makes frame arguments unavailable
-        do f else [
+        value: :f.value  ; EVAL makes frame arguments unavailable
+        eval f else [
             ; !!! Can't use FAIL/WHERE until we can implicate the callsite.
             ;
             ; https://github.com/metaeducation/ren-c/issues/587
             ;
             fail [
                 "ENSURE failed with argument of type"
-                    kind of :value else ["VOID"]
+                    (mold kind of :value) else ["VOID"]
             ]
         ]
     ]
@@ -498,8 +498,8 @@ non: redescribe [
     {Pass through value if it *doesn't* match test, else null (e.g. MATCH/NOT)}
 ](
     enclose :match lambda [f] [
-        let value: :f.value  ; DO makes frame arguments unavailable
-        light (do f then [null] else [:value])
+        let value: :f.value  ; EVAL makes frame arguments unavailable
+        light (eval f then [null] else [:value])
     ]
 )
 
@@ -507,8 +507,8 @@ prohibit: redescribe [
     {Pass through value if it *doesn't* match test, else fail (e.g. ENSURE/NOT)}
 ](
     enclose :match lambda [f] [
-        let value: :f.value  ; DO makes frame arguments unavailable
-        do f then [
+        let value: :f.value  ; EVAL makes frame arguments unavailable
+        eval f then [
             ; !!! Can't use FAIL/WHERE until we can implicate the callsite.
             ;
             ; https://github.com/metaeducation/ren-c/issues/587
@@ -623,7 +623,7 @@ iterate-skip: redescribe [
         ; !!! https://github.com/rebol/rebol-issues/issues/2331
         comment [
             let result
-            trap [result: do f] then e -> [
+            trap [result: eval f] then e -> [
                 set word saved
                 fail e
             ]
@@ -631,7 +631,7 @@ iterate-skip: redescribe [
             :result
         ]
 
-        return (do f, elide set word saved)
+        return (eval f, elide set word saved)
     ][
         series: <overwritten>
     ]
@@ -716,7 +716,7 @@ eval-all: func [
     expressions "Any number of expressions on the right"
         [any-value? <variadic>]
 ][
-    do expressions
+    eval expressions
     return nihil
 ]
 
@@ -883,7 +883,7 @@ raise: func [
         set-location-of-error error where  ; !!! why is this native?
     ]
 
-    ; Initially this would call DO in order to force an exception to the nearest
+    ; Initially this would call EVAL to force an exception to the nearest
     ; trap up the stack (if any).  However, Ren-C rethought errors as being
     ; "definitional", which means you would say RETURN RAISE and it would be
     ; a special kind of "error antiform" that was a unique return result.  Then

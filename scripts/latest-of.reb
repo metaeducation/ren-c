@@ -23,7 +23,7 @@ Rebol [
         ; of the script.  We are reviewing the packaging options as the module
         ; system matures.
 
-        >> latest-of: do <latest-of>
+        >> latest-of: do @latest-of
 
         ; An invocation with no arguments (or a blank argument) will assume you
         ; want the latest version of the currently running interpreter.

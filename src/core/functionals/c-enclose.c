@@ -28,28 +28,28 @@
 //     >> add2x3x+1: enclose :add func [f [frame!]] [
 //            f.value1: f.value1 * 2
 //            f.value2: f.value2 * 3
-//            return 1 + do f
+//            return 1 + eval f
 //         ]
 //
 //     >> add2x3x+1 10 20
 //     == 81  ; e.g. (10 * 2) + (20 * 3) + 1
 //
 // This affords significant flexibility to the "outer" function, as it can
-// choose when to `DO F` to execute the frame... or opt to not execute it.
+// choose when to `EVAL F` to execute the frame... or opt to not execute it.
 // Given the mechanics of FRAME!, it's also possible to COPY the frame for
 // multiple invocations.
 //
 //     >> print2x: enclose :print func [f [frame!]] [
-//            do copy f
+//            eval copy f
 //            f.value: append f.value "again!"
-//            do f
+//            eval f
 //        ]
 //
 //     >> print2x ["Print" "me"]
 //     Print me
 //     Print me again!
 //
-// (Note: Each time you DO a FRAME!, the original frame becomes inaccessible,
+// (Note: Each time you EVAL a FRAME!, the original frame becomes inaccessible,
 // because its contents--the "varlist"--are stolen for function execution,
 // where the function freely modifies the argument data while it runs.  If
 // the frame did not expire, it would not be practically reusable.)
@@ -83,12 +83,12 @@ enum {
 //    should not be this level any longer.
 //
 // 2. We're passing the built context to the `outer` function as a FRAME!,
-//    which that function can DO (or not).  But when the DO runs, we don't
+//    which that function can EVAL (or not).  But when the EVAL runs, we don't
 //    want it to run the encloser again--that would be an infinite loop.
 //    Update CTX_FRAME_PHASE() to point to the `inner` that was enclosed.
 //
-// 3. DO does not allow you to invoke a FRAME! that is currently running.
-//    we have to clear the FRAME_HAS_BEEN_INVOKED_FLAG to allow DO INNER.
+// 3. EVAL does not allow you to invoke a FRAME! that is currently running.
+//    we have to clear the FRAME_HAS_BEEN_INVOKED_FLAG to allow EVLA INNER.
 //
 // 4. The FRAME! we're making demands that the varlist be managed to put it
 //    into a cell.  It may already have been managed...but since varlists
@@ -170,7 +170,7 @@ Bounce Encloser_Dispatcher(Level* const L)
 //      return: [action?]
 //      inner "Frame to be copied, then passed to OUTER"
 //          [<unrun> frame!]
-//      outer "Gets a FRAME! for INNER before invocation, can DO it (or not)"
+//      outer "Gets a FRAME! for INNER before invocation, can EVAL it (or not)"
 //          [<unrun> frame!]
 //  ]
 //

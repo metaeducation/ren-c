@@ -842,7 +842,7 @@ parse-ext-build-spec: func [
         ]
 
         if config [
-            do as block! config  ; Note: old Ren-Cs disallowed DO of GROUP!
+            eval as block! config
         ]
     ]
 

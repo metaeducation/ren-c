@@ -35,9 +35,9 @@ c99-logged: enclose :c99 function [f [frame!]] [
 
     fdebug: copy f
     fdebug.inspect: true
-    do fdebug  ; Run command once with /INSPECT (don't compile)
+    eval fdebug  ; Run command once with /INSPECT (don't compile)
 
-    return do f  ; Run original command without /INSPECT
+    return eval f  ; Run original command without /INSPECT
 ]
 
 print "== ONE STEP COMPILATION (direct to executable) =="

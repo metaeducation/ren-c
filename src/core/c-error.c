@@ -1166,7 +1166,7 @@ Context* Error_No_Arg_Typecheck(Option(const Symbol*) label)
 //
 //  Error_Bad_Argless_Refine: C
 //
-// Refinements that take no arguments can only be # or NULL as far as DO FRAME!
+// Refinements that take no arguments can only be # or NULL as EVAL FRAME!
 // is concerned.  (Some higher level mechanisms like APPLY will editorialize
 // and translate true => # and false => NULL, but the core mechanics don't.)
 //

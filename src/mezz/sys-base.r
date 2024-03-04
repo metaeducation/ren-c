@@ -171,7 +171,7 @@ module: func [
         ;
         assert [block? body]
 
-        product: ^ do body  ; can't set variable to trash/etc.
+        product: ^ eval body  ; can't set variable to trash/etc.
         quitting: false
     ]
     then ^arg-to-quit -> [
@@ -183,10 +183,8 @@ module: func [
 ]
 
 
-; DO of functions, blocks, paths, and other do-able types is done directly by
-; C code in DECLARE_NATIVE(do).  But that code delegates to this Rebol function
-; for ANY-STRING? and BINARY! types (presumably because it would be laborious
-; to express as C).
+; DO delegates to this Rebol function for ANY-STRING? and BINARY! types
+; (presumably because it would be laborious to express as C).
 ;
 do*: func [
     {SYS: Called by system for DO on datatypes that require special handling}

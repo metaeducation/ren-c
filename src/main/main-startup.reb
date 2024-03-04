@@ -29,13 +29,13 @@ REBOL [
 boot-print: redescribe [
     "Prints during boot when not quiet."
 ](
-    enclose :print f -> [if not system.options.quiet [do f]]
+    enclose :print f -> [if not system.options.quiet [eval f]]
 )
 
 loud-print: redescribe [
     "Prints during boot when verbose."
 ](
-    enclose :print f -> [if system.options.verbose [do f]]
+    enclose :print f -> [if system.options.verbose [eval f]]
 )
 
 make-banner: func [
@@ -773,7 +773,7 @@ main-startup: func [
     ;
     ; This can be worked around with multiple do statements in a row, e.g.:
     ;
-    ;     r3 --do "do %script1.reb" --do "do %script2.reb"
+    ;     r3 --do "eval %script1.reb" --do "eval %script2.reb"
     ;
     any [
         file? o.script

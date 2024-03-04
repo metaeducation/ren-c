@@ -3,7 +3,7 @@
 (
     e-multiply: enclose :multiply lambda [f [frame!]] [
         let diff: abs (f.value1 - f.value2)
-        diff + do f
+        diff + eval f
     ]
 
     73 = e-multiply 7 10
@@ -12,7 +12,7 @@
     n-add: enclose :add lambda [f [frame!]] [
         if 10 <> f.value1 [
             f.value1: 5
-            do f
+            eval f
         ]
     ]
 
@@ -29,7 +29,7 @@
         return var: 1020
     ]
     outer: enclose :inner func [f] [
-        assert [1020 = do f]
+        assert [1020 = eval f]
         return nihil
     ]
     all [
@@ -70,7 +70,7 @@
         func [@out in] [out: in + 1]
     ) f -> [
         x: f.in
-        [_ o]: do f
+        [_ o]: eval f
         o * 10
     ]
     110 = wrapped 10
@@ -81,7 +81,7 @@
         func [@out in] [out: in + 1]
     ) f -> [
         x: f.in
-        do f
+        eval f
         f.in
     ]
 

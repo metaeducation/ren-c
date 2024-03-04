@@ -476,7 +476,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
             feed->p = &PG_Feed_At_End;
 
             // !!! At first this dropped the hold here; but that created
-            // problems if you write `do code: [clear code]`, because END
+            // problems if you write `eval code: [clear code]`, because END
             // is reached when CODE is fulfilled as an argument to CLEAR but
             // before CLEAR runs.  This subverted the series hold mechanic.
             // Instead we do the drop in Free_Feed(), though drops on splices
@@ -571,7 +571,7 @@ INLINE void Free_Feed(Feed* feed) {
 
     // !!! See notes in Fetch_Next regarding the somewhat imperfect way in
     // which splices release their holds.  (We wait until Free_Feed() so that
-    // `do code: [clear code]` doesn't drop the hold until the block level
+    // `eval code: [clear code]` doesn't drop the hold until the block level
     // is actually fully dropped.)
     //
     if (FEED_IS_VARIADIC(feed)) {

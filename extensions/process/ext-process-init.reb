@@ -75,7 +75,7 @@ call: enclose (
     ]
 ) func [f [frame!]] [
     let relax: f.relax
-    let result: do f
+    let result: eval f
     if relax or (result = 0) [
         return result
     ]

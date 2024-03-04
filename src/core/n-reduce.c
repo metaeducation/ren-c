@@ -30,7 +30,7 @@
 //
 //  reduce: native [
 //
-//  "Evaluates expressions, keeping each result (DO only gives last result)"
+//  "Evaluates expressions, keeping each result (EVAL only gives last result)"
 //
 //      return: "New array or value"
 //          [element?]
@@ -225,7 +225,7 @@ DECLARE_NATIVE(reduce)
 //
 //  reduce-each: native [
 //
-//  "Evaluates expressions, keeping each result (DO only gives last result)"
+//  "Evaluates expressions, keeping each result (EVAL only gives last result)"
 //
 //      return: "Last body result"
 //          [any-atom?]

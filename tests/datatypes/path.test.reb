@@ -36,11 +36,11 @@
 )
 (
     blk: [_ 3]
-    3 == do [blk.('_)]
+    3 == eval [blk.('_)]
 )
 (
     blk: [blank 3]
-    3 == do [blk.blank]
+    3 == eval [blk.blank]
 )
 (
     a-value: 1/Jan/0000

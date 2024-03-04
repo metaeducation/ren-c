@@ -64,11 +64,11 @@
 ; These should elaborated on, and possibly be in their own file.  Simple tests
 ; for now.
 [
-    ~series-held~ !! (do code: [clear code])
+    ~series-held~ !! (eval code: [clear code])
 
     ~series-held~ !! (
         obj: make object! [x: 10]
-        do code: [obj.x: (clear code recycle 20)]
+        eval code: [obj.x: (clear code recycle 20)]
     )
 ]
 

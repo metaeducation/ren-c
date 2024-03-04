@@ -77,7 +77,7 @@ void Collapsify_Array(Array* array, REBLEN limit)
 // go all the way to the tail of the block (where future potential evaluation
 // should be.
 //
-// !!! DO also offers a feature whereby values can be supplied at the start
+// !!! Eval also offers a feature whereby values can be supplied at the start
 // of an evaluation which are not resident in the array.  It also can run
 // on an irreversible C va_list of Value*, where these disappear as the
 // evaluation proceeds.  A special debug setting would be needed to hang

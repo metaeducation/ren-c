@@ -138,7 +138,7 @@
 
     (void? for-both x [] [] [fail "Body Never Runs"])
     (
-        <something> = do [
+        <something> = eval [
             <something>
             elide-if-void for-both x [] [] [fail "Body Never Runs"]
         ]

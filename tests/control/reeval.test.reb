@@ -72,7 +72,7 @@
 ~expect-arg~ !! (false = reeval false)
 
 ($1 == reeval $1)
-(null? do maybe null)
+(null? eval maybe null)
 (
     a-value: make object! []
     same? :a-value reeval :a-value

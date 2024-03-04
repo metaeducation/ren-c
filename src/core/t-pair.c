@@ -289,8 +289,8 @@ REBTYPE(Pair)
 
     return rebValue(
         "make pair! reduce [",
-            "to integer! do @", rebR(x_frame),
-            "to integer! do @", rebR(y_frame),
+            "to integer! eval @", rebR(x_frame),
+            "to integer! eval @", rebR(y_frame),
         "]"
     );
 }

@@ -243,16 +243,13 @@ make-file: func [
     ; paths, and no support for generic tuples.  It only offers the BLOCK!
     ; dialect form.
 
-    result: as file! maybe unspaced do [
-        def: switch/type def [  ; consolidate to BLOCK!-oriented file spec
-            word! [to text! predicate def]
-            path! [make-file-path-parts def :predicate]
-            tuple! [make-file-tuple-parts def :predicate]
-            block! [make-file-block-parts def :predicate]
-        ]
-        def
-    ]
-    else [
+    result: as file! unspaced switch/type def [
+        ; consolidate to BLOCK!-oriented file spec
+        word! [to text! predicate def]
+        path! [make-file-path-parts def :predicate]
+        tuple! [make-file-tuple-parts def :predicate]
+        block! [make-file-block-parts def :predicate]
+    ] else [
         fail "Empty filename produced in MAKE-FILE"
     ]
 

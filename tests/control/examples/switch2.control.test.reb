@@ -46,7 +46,7 @@ switch2: func [
                     ]
                     log ["Built frame for condition:" mold f]
 
-                    if found: to-logic do f [
+                    if found: to-logic eval f [
                         log "Result was truthy, skipping to branch!"
                     ] else [
                         log "Result was falsey, seeking next condition."

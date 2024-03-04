@@ -8,8 +8,8 @@
 (action? get $+)
 
 ; #1934
-(3 = do reduce [1 unrun get $+ 2])
-~no-arg~ !! (do reduce [unrun :+ 1 2])
+(3 = eval reduce [1 unrun get $+ 2])
+~no-arg~ !! (eval reduce [unrun :+ 1 2])
 
 
 (
@@ -34,7 +34,7 @@
     ]
 )
 
-~no-arg~ !! (do reduce [unrun get $+ 1 2])  ; enfix no argument
+~no-arg~ !! (eval reduce [unrun get $+ 1 2])  ; enfix no argument
 
 
 ; Only hard-quoted parameters are <skip>-able

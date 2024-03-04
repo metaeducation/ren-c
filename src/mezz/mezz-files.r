@@ -387,7 +387,7 @@ in-dir: func [
     ; You don't want the block to be done if the change-dir fails, for safety.
 
     return (
-        do block  ; return result
+        eval block  ; return result
         elide change-dir old-dir
     )
 ]

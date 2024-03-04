@@ -29,7 +29,7 @@
 
 ; Commas are invisible and hence do not erase an evaluation value
 ;
-(3 = do [1 + 2,])
+(3 = eval [1 + 2,])
 
 ; There must be space or other delimiters after commas.
 (

@@ -12,7 +12,7 @@
 (null? catch [()])
 (error? catch [throw trap [1 / 0]])
 (1 = catch [throw 1])
-((the '~()~) = ^ catch [throw do ['~()~]])
+((the '~()~) = ^ catch [throw eval ['~()~]])
 (error? first catch [throw reduce [trap [1 / 0]]])
 (1 = catch [throw 1])
 

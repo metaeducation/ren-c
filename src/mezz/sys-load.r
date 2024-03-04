@@ -686,7 +686,7 @@ export*: func [
     ]
 
     items: ^ try take args
-    if group? unmeta items [items: do unmeta items]
+    if group? unmeta items [items: eval unmeta items]
     if not block? unmeta items [
         fail "EXPORT must be of form `export x: ...` or `export [...]`"
     ]

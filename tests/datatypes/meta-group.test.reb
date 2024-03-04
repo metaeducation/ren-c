@@ -2,7 +2,7 @@
 
 (meta-group! = kind of '^(a b c))
 
-; Voids don't vanish in ordinary DO operations (just special constructs which
+; nihils don't vanish in ordinary EVAL operations (just special constructs which
 ; choose to interpret them as vanishing).  But they are invalid as parameters
 ; to things like EQUAL?, so meta operations (or functions taking meta args)
 ; are the only way to test for and process them.
@@ -16,7 +16,7 @@
 
     (void' = ^(maybe void))
     (void' = ^ (maybe void))
-    ~expect-arg~ !! (maybe comment "hi")
+    ~no-value~ !! (maybe comment "hi")
 
     (nihil' = ^ ())
     (nihil' = ^ (comment "hi"))

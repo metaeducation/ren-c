@@ -13,7 +13,7 @@
 [
     (replace: enclose :lib.replace func [f [frame!] <local> head tail rule] [
         if not all [match [text! binary!] f.target, block? f.pattern] [
-            return do f
+            return eval f
         ]
         rule: if action? :f.replacement '[
             head: <here>

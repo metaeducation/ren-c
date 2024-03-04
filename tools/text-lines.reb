@@ -98,7 +98,7 @@ for-each-line: func [
         ]
         text: next eol
 
-        do body
+        eval body
     ]
 ]
 

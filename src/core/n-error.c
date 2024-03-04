@@ -88,7 +88,7 @@ DECLARE_NATIVE(enrescue)
 //
 //  entrap: native [
 //
-//  "Tries to DO a block, trapping raised errors"
+//  "Tries to EVAL a block, trapping raised errors"
 //
 //      return: "ERROR! if raised, else the ^META of the result"
 //          [error! quasi? quoted? blank!]

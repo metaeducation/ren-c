@@ -45,15 +45,15 @@
     f: make frame! unrun :append-10
     f.series: copy [a b c]
 
-    comment {COPY before DO allows reuse of F, only the copy is "stolen"}
-    do copy f
-    [a b c 10 10] = do f
+    comment {COPY before EVAL allows reuse of F, only the copy is "stolen"}
+    eval copy f
+    [a b c 10 10] = eval f
 )
 (
     f: make frame! unrun :append
     f.series: copy [a b c]
     f.value: [d e f]
-    [a b c [d e f]] = do f
+    [a b c [d e f]] = eval f
 )
 (
     foo: func [return: [integer!]] [
@@ -162,7 +162,7 @@
         ]
     ][
         is-bad: me and (
-            'bad-parameter = (sys.util.rescue [do inside [] code]).id
+            'bad-parameter = (sys.util.rescue [eval inside [] code]).id
         )
     ]
 
@@ -175,9 +175,9 @@
     f: make frame! unrun :ap10d
     f.series: copy [a b c]
     all [
-        [a b c 10] = do copy f
+        [a b c 10] = eval copy f
         f.dup: 2
-        [a b c 10 10 10] = do f
+        [a b c 10 10 10] = eval f
     ]
 )
 

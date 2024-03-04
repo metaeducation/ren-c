@@ -91,7 +91,7 @@
             return reduce @(b a)
         ]
     ]
-    0.5 = do code
+    0.5 = eval code
     bind inside [] code obj
-    '(2 1) = do code
+    '(2 1) = eval code
 )]

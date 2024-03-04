@@ -117,7 +117,7 @@ combinator: func [
             return either f.state.hook [
                 run f.state.hook f
             ][
-                do f
+                eval/undecayed f
             ]
         ]
     )
@@ -189,9 +189,10 @@ combinator: func [
                         f2
                         <local> result' remainder subpending
                     ][
-                        [^result' remainder subpending]: eval f2 except e -> [
-                            return raise e
-                        ]
+                        [^result' remainder subpending]:
+                            eval/undecayed f2 except e -> [
+                                return raise e
+                            ]
                         pending: glom pending spread subpending
                         return pack [
                             unmeta result', remainder, subpending
@@ -208,7 +209,7 @@ combinator: func [
         ; return?)  Or RETURN ACCEPT and RETURN REJECT to make it clearer,
         ; where ACCEPT makes a pack and REJECT does RAISE?
 
-        do overbind binding of $return (body)
+        eval overbind binding of $return (body)
 
         ; If the body does not return and falls through here, the function
         ; will fail as it has a RETURN: that needs to be used to type check
@@ -1126,7 +1127,7 @@ default-combinators: make map! reduce [
         <local> result'
     ][
         if set-group? target [
-            if not any-word? (target: do as block! target) [
+            if not any-word? (target: eval as block! target) [
                 fail [
                     "GROUP! from EMIT (...): must produce an ANY-WORD?, not"
                     ^target
@@ -1393,7 +1394,7 @@ default-combinators: make map! reduce [
         return: "Result of evaluating the group (invisible if <delay>)"
             [any-value? pack?]
         @pending [blank! block!]
-        value [any-array?]  ; allow any array to use this "DO combinator"
+        value [any-array?]  ; allow any array to use this "EVAL combinator"
     ][
         remainder: input
 
@@ -1406,7 +1407,7 @@ default-combinators: make map! reduce [
         ]
 
         pending: _
-        return eval value  ; !!! Pass on definitional failure?
+        return eval/undecayed value  ; !!! Pass on definitional failure?
     ]
 
     'phase combinator [
@@ -1455,7 +1456,7 @@ default-combinators: make map! reduce [
         ; !!! The rules of what are allowed or not when triggering through
         ; WORD!s likely apply here.  Should it all be repeated?
 
-        r: ^ eval value
+        r: ^ eval/undecayed value
 
         any [
             r = nihil'  ; like [:(comment "hi")]
@@ -3058,7 +3059,7 @@ parse*: func [
     f.rule-end: null
 
     sys.util.rescue+ [
-        [^synthesized' remainder pending]: eval f except e -> [
+        [^synthesized' remainder pending]: eval/undecayed f except e -> [
             assert [empty? state.loops]
             pending: _  ; didn't get assigned due to error
             return raise e  ; wrappers catch
@@ -3092,7 +3093,7 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
     {Process input in the parse dialect, definitional error on failure}
 ] ]
     enclose :parse* func [f] [
-        let [^synthesized' pending]: do f except e -> [
+        let [^synthesized' pending]: eval/undecayed f except e -> [
             return raise e
         ]
         if not empty? pending [
@@ -3108,7 +3109,7 @@ parse-: (comment [redescribe [  ; redescribe not working at the moment (?)
     enclose :parse* func [f] [
         f.rules: compose [(f.rules) || accept <here>]
 
-        let [^synthesized' pending]: do f except [
+        let [^synthesized' pending]: eval/undecayed f except [
             return null
         ]
         if not empty? pending [
@@ -3137,7 +3138,7 @@ parse-trace-hook: func [
         print ["RULE:" mold spread copy/part f.rule-start f.rule-end]
     ]
 
-    let result': ^ eval f except e -> [
+    let result': ^ eval/undecayed f except e -> [
         print ["RESULT': FAIL"]
         return raise e
     ]
@@ -3155,7 +3156,7 @@ parse-furthest-hook: func [
     f [frame!]
     var [word! tuple!]
 ][
-    let result': ^ eval f except e -> [
+    let result': ^ eval/undecayed f except e -> [
         return raise e
     ]
 

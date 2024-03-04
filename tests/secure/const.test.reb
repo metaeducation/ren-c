@@ -47,36 +47,36 @@
 ; as const...it shouldn't be inheriting a "wave of constness" otherwise.
 [
     ~const-value~ !! (
-        repeat 2 [do [append d: [] <item>]]
+        repeat 2 [eval [append d: [] <item>]]
     )
 
     (
         block: [append d: [] <item>]
-        [<item> <item>] = repeat 2 [do block]
+        [<item> <item>] = repeat 2 [eval block]
     )
 
     ~const-value~ !! (
         block: [append d: [] <item>]
-        repeat 2 [do const block]
+        repeat 2 [eval const block]
     )
 ]
 
 
 ; While a value fetched from a WORD! during evaluation isn't subject to the
 ; wave of constness that a loop or function body puts on a frame, if you
-; do a COMPOSE then it looks the same from the evaluator's point of view.
+; EVAL a COMPOSE then it looks the same from the evaluator's point of view.
 ; Hence, if you want to modify composed-in blocks, use explicit mutability.
 [
-    ([<legal> <legal>] = do compose [repeat 2 [append mutable [] <legal>]])
+    ([<legal> <legal>] = eval compose [repeat 2 [append mutable [] <legal>]])
 
     ~const-value~ !! (
         block: []
-        do compose/deep [repeat 2 [append (block) <illegal>]]
+        eval compose/deep [repeat 2 [append (block) <illegal>]]
     )
 
     (
         block: mutable []
-        do compose/deep [repeat 2 [append (block) <legal>]]
+        eval compose/deep [repeat 2 [append (block) <legal>]]
         block = [<legal> <legal>]
     )
 ]

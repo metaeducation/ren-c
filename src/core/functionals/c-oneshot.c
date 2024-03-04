@@ -87,7 +87,7 @@ Bounce Upshot_Dispatcher(Level* const L)  // won't run until count is reached
 //
 //  do-branch: native [
 //
-//  "Sample Interface for a Simplified DO that just runs a Branch"
+//  "Sample Interface for a Simplified EVAL that just runs a Branch"
 //
 //      return: [any-atom?]
 //      branch [any-branch?]
@@ -98,7 +98,7 @@ DECLARE_NATIVE(do_branch)
 // !!! This function only exists to serve as the interface for the generated
 // function from N-SHOT.  More thinking is necessary about how to layer DO
 // on top of a foundational DO* (instead of the current way, which has the
-// higher level DO as a native that calls out to helper code for its
+// higher level EVAL as a native that calls out to helper code for its
 // implementation...)  Revisit.
 {
     INCLUDE_PARAMS_OF_DO_BRANCH;
@@ -111,7 +111,7 @@ DECLARE_NATIVE(do_branch)
 //
 //  n-shot: native [
 //
-//  "Create a DO variant that executes what it's given for N times"
+//  "Create an EVAL variant that executes what it's given for N times"
 //
 //      return: [action?]
 //      n "Number of times to execute before being a no-op"

@@ -2,16 +2,16 @@
 ;
 ; https://trello.com/c/dWQnsspG
 
-(1 = do [comment "a" 1])
-(1 = do [1 comment "a"])
+(1 = eval [comment "a" 1])
+(1 = eval [1 comment "a"])
 (nihil? comment "a")
 (nihil? (comment "a"))
 
 (nihil' = (meta comment "a"))
 ((quote nihil') = ^(^ comment "a"))
 
-(nihil' = meta eval [comment "a"])
-((quote nihil') = ^(^ eval [comment "a"]))
+(nihil' = meta eval/undecayed [comment "a"])
+((quote nihil') = ^(^ eval/undecayed [comment "a"]))
 
 ; !!! At one time, comment mechanics allowed comments to be enfix such that
 ; they ran as part of the previous evaluation.  This is no longer the case,
@@ -53,16 +53,13 @@
 ; https://trello.com/c/snnG8xwW
 
 (
-    1 = do [elide "a" 1]
+    1 = eval [elide "a" 1]
 )
 (
-    1 = do [1 elide "a"]
+    1 = eval [1 elide "a"]
 )
 (
-    void' = ^ do [elide "a"]
-)
-(
-    nihil' = ^ eval [elide "a"]
+    nihil' = ^ eval/undecayed [elide "a"]
 )
 (nihil? elide "a")
 (nihil' = ^ elide "a")
@@ -142,13 +139,10 @@
 ]
 
 (
-    void? do [|||]
-)
-(
     nihil? eval [|||]
 )
 (
-    3 = do [1 + 2 ||| 10 + 20, 100 + 200]
+    3 = eval [1 + 2 ||| 10 + 20, 100 + 200]
 )
 
 ; !!! There used to be some concept that these void-returning things could
@@ -199,39 +193,39 @@
     )
 
     ~no-arg~ !! (right-normal ||)
-    (null? do [right-normal* ||])
-    (null? do [right-normal*])
+    (null? eval [right-normal* ||])
+    (null? eval [right-normal*])
 
     ~no-arg~ !! (|| left-normal)
-    (null? do [|| left-normal*])
-    (null? do [left-normal*])
+    (null? eval [|| left-normal*])
+    (null? eval [left-normal*])
 
     ~no-arg~ !! (|| left-defer)
-    (null? do [|| left-defer*])
-    (null? do [left-defer*])
+    (null? eval [|| left-defer*])
+    (null? eval [left-defer*])
 
-    ('|| = do [right-soft ||])
-    ('|| = do [right-soft* ||])
-    (null? do [right-soft*])
+    ('|| = eval [right-soft ||])
+    ('|| = eval [right-soft* ||])
+    (null? eval [right-soft*])
 
     ; !!! At one point, when left quoting saw a "barrier" to the left, it would
     ; perceive it as a null.  Today's barriers (commas or ||) make nihil, and
     ; we have to distinguish between the case where it expects to see a nihil
     ; vs. when that should act as an <end>.  This is not thought out well.
     ;
-    ~expect-arg~ !! (<bug> do [|| left-soft])
-    ~expect-arg~ !! (<bug> do [|| left-soft*])
-    (null? do [left-soft*])
+    ~expect-arg~ !! (<bug> eval [|| left-soft])
+    ~expect-arg~ !! (<bug> eval [|| left-soft*])
+    (null? eval [left-soft*])
 
-    ('|| = do [right-hard ||])
-    ('|| = do [right-hard* ||])
-    (null? do [right-hard*])
+    ('|| = eval [right-hard ||])
+    ('|| = eval [right-hard* ||])
+    (null? eval [right-hard*])
 
     ; !!! See notes above.
     ;
-    ~expect-arg~ !! (<bug> do [|| left-hard])
-    ~expect-arg~ !! (<bug> do [|| left-hard*])
-    (null? do [left-hard*])
+    ~expect-arg~ !! (<bug> eval [|| left-hard])
+    ~expect-arg~ !! (<bug> eval [|| left-hard*])
+    (null? eval [left-hard*])
 ]
 
 
@@ -276,42 +270,42 @@
     ; fuzzy:
     ; https://github.com/metaeducation/ren-c/issues/1057
     ;
-    ~nothing-to-take~ !! (do [right-normal ||])
-    ~nothing-to-take~ !! (do [|| left-normal])
+    ~nothing-to-take~ !! (eval [right-normal ||])
+    ~nothing-to-take~ !! (eval [|| left-normal])
 
-    (null? do [right-normal* ||])
-    (null? do [right-normal*])
+    (null? eval [right-normal* ||])
+    (null? eval [right-normal*])
 
-    (null? do [|| left-normal*])
-    (null? do [left-normal*])
+    (null? eval [|| left-normal*])
+    (null? eval [left-normal*])
 
-    ~nothing-to-take~ !! (do [|| left-defer])
-    (null? do [|| left-defer*])
-    (null? do [left-defer*])
+    ~nothing-to-take~ !! (eval [|| left-defer])
+    (null? eval [|| left-defer*])
+    (null? eval [left-defer*])
 
-    ('|| = do [right-soft ||])
-    ('|| = do [right-soft* ||])
-    (null? do [right-soft*])
+    ('|| = eval [right-soft ||])
+    ('|| = eval [right-soft* ||])
+    (null? eval [right-soft*])
 
     ; !!! At one point, when left quoting saw a "barrier" to the left, it would
     ; perceive it as a null.  Today's barriers (commas or ||) make nihil, and
     ; we have to distinguish between the case where it expects to see a nihil
     ; vs. when that should act as an <end>.  This is not thought out well.
     ;
-    ~expect-arg~ !! (<bug> do [|| left-soft])
-    ~expect-arg~ !! (<bug> do [|| left-soft*])
-    (null? do [left-soft*])
+    ~expect-arg~ !! (<bug> eval [|| left-soft])
+    ~expect-arg~ !! (<bug> eval [|| left-soft*])
+    (null? eval [left-soft*])
 
-    ~nothing-to-take~ !! (do [right-hard])
-    ('|| = do [right-hard ||])
-    ('|| = do [right-hard* ||])
-    (null? do [right-hard*])
+    ~nothing-to-take~ !! (eval [right-hard])
+    ('|| = eval [right-hard ||])
+    ('|| = eval [right-hard* ||])
+    (null? eval [right-hard*])
 
     ; !!! See notes above.
     ;
-    ~expect-arg~ !! (<bug> do [|| left-hard])
-    ~expect-arg~ !! (<bug> do [|| left-hard*])
-    (null? do [left-hard*])
+    ~expect-arg~ !! (<bug> eval [|| left-hard])
+    ~expect-arg~ !! (<bug> eval [|| left-hard*])
+    (null? eval [left-hard*])
 ]
 
 ~no-value~ !! (

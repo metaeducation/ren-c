@@ -1,18 +1,12 @@
 Rebol [
     Title: "Compatibility IMPORT/EXPORT for Bootstrap"
     File: %import-shim.r
-    Type: script
+    Type: script  ; R3-Alpha module system broken, see notes
 
     Description: {
         This shim redefines IMPORT and EXPORT for the bootstrap executable:
 
-        * It uses plain DO of the code so that the `Type: module` in the
-          header is ignored.  That just puts everything into the user context,
-          which is ugly but made to work in order to use the old executable
-          to build.  It also avoids importing things more than once, so it
-          achieves a similar semantic to modules.
-
-        * It preprocesses the source, so that <{...}> strings are turned into
+        * It preprocesses the source, so that -{...}- strings are turned into
           legacy {...} strings.  ({...} are FENCE! arrays in modern Ren-C)
 
         * It removes commas from non-strings in source, so that commas can be
@@ -38,13 +32,6 @@ Rebol [
         overwrite the definitions in lib instead of using Exports:  Not even
         that worked in pre-R3C builds, so it forced an update of the bootstrap
         executable to R3C when we started using the `--import` option.
-
-      * DO LOAD is used instead of DO to avoid the legacy behavior of changing
-        to the directory of %import-shim.r when running a FILE! (vs. a BLOCK!)
-        This also keeps it from resetting the directory when the DO is over,
-        so we can CHANGE-DIR from this shim to compensate for the changing
-        into the calling script's directory...making it appear that the
-        command line processing never switched the dir in the first place.
     }
 ]
 
@@ -90,7 +77,7 @@ export: lib3/func [
     ]
 
     items: take args
-    if group? :items [items: do args]
+    if group? :items [items: eval args]
     if not block? :items [
         fail "EXPORT must be of form `export x: ...` or `export [...]`"
     ]
@@ -226,7 +213,6 @@ do: enclose :lib3/do lib3/func [
     elide system/script: old-system-script
 ]
 
-
 already-imported: make map! []  ; avoid importing things twice
 
 
@@ -314,6 +300,7 @@ append lib compose [
     lib3: (lib3)
     import: (:import)
     do: (:do)
+    eval: (:eval)
     export: (:export)
     load: (:load)
 ]

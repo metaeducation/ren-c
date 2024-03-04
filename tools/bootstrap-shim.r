@@ -120,7 +120,7 @@ trap [
         augment :split-path [/file [any-word? any-path?]]
     ) f -> [
         let file: f.file
-        let results: unquasi ^ do f  ; no [...]: in bootstrap load of this file
+        let results: unquasi ^ eval f  ; no [...]: in bootstrap load of file
         set maybe file unmeta results.2
         unmeta results.1
     ]
@@ -131,7 +131,7 @@ trap [
     export transcode3: enclose (augment :transcode [/next [word!]]) func [f] [
         let next: f.next  ; note: contention with NEXT series verb
         f.one: all [next make issue! 0]  ; # is invalid issue in bootstrap
-        let result: ^ (do f except e -> [return raise e])
+        let result: ^ (eval f except e -> [return raise e])
         if result = null' [return null]
         set maybe next unmeta second unquasi result
         return unmeta first unquasi result
@@ -176,6 +176,8 @@ trap [
 ;    (Using SET-WORD!s here also helps searchability if you're looking for
 ;    where `func3: ...` is set.)
 
+eval: :do
+
 aliases: lib3/reeval lib3/func [:item [any-value! <...>]] [  ; very weird [1]
     lib3/collect [while [item/1 != #end] [keep/only take item]]
     ]
@@ -201,7 +203,7 @@ aliases: lib3/reeval lib3/func [:item [any-value! <...>]] [  ; very weird [1]
 
 lib3/for-each [alias name shim] aliases [
     set alias either group? shim [
-        do shim
+        eval shim
     ][
         get (lib3/in lib3 name)
     ]
@@ -282,8 +284,6 @@ unquasi: func3 [v <local> spelling] [
 ;
 and: enfix :lib3/and [assert [not block? right] right: as block! :right]
 or: enfix :lib3/or [assert [not block? right] right: as block! :right]
-
-eval: :do
 
 to-logic: func3 [return: [logic!] optional [<opt> any-value!]] [
     case [
@@ -485,8 +485,8 @@ collect*: func3 [  ; variant giving NULL if no actual material kept
             if void? :f/value [return void]  ; doesn't "count" as collected
 
             f/series: out: default [make block! 16]  ; won't return null now
-            :f/value  ; ELIDE leaves as result (F/VALUE invalid after DO F)
-            elide do f
+            :f/value  ; ELIDE leaves as result (F/VALUE invalid after EVAL F)
+            elide eval f
         ]
     )[
         series: <replaced>
@@ -513,7 +513,7 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
             continue
         ]
 
-        product: do pos/1
+        product: eval pos/1
         all [
             block? :product
             #splice! = first product
@@ -549,7 +549,7 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
 ; and a notion that ENFIX is applied to SET-WORD!s not ACTION!s (which was
 ; later overturned), remapping lambda to `->` is complicated.
 ;
-do compose3 [(to set-word! first [->]) enfix :lambda]
+eval compose3 [(to set-word! first [->]) enfix :lambda]
 unset first [=>]
 
 
@@ -881,7 +881,7 @@ apply: function3 [
         ]
     ]
 
-    do f
+    eval f
 ]
 
 

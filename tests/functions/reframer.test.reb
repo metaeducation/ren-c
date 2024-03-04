@@ -24,7 +24,7 @@
 ; Executing frames is the typical mode of a reframer.
 ; It may also execute frames more than once.
 (
-    two-times: reframer func [f [frame!]] [do copy f, return do f]
+    two-times: reframer func [f [frame!]] [eval copy f, return eval f]
 
     [a b c <d> <d>] = two-times append [a b c] <d>
 )
@@ -36,7 +36,7 @@
 
     bracketer: reframer lambda [msg f] [
         append data msg
-        do f
+        eval f
         append data msg
     ]
 

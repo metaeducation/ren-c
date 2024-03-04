@@ -36,7 +36,7 @@ null': meta null
 trash': meta trash
 nihil': meta nihil
 
-eval: :evaluate  ; shorthands should be synonyms, too confusing otherwise
+evaluate: :eval  ; shorthands should be synonyms, too confusing otherwise
 
 probe: func* [
     {Debug print a molded value and returns that same value.}
@@ -218,7 +218,7 @@ requote: reframer lambda [
 
     f.(p): noquote f.(p)
 
-    light (do f then result -> [  ; !!! proper light-null handling here?
+    light (eval f then result -> [  ; !!! proper light-null handling here?
         quote/depth get/any $result num-quotes
     ] else [null])
 ]
@@ -258,7 +258,7 @@ newlined: specialize :delimit [delimiter: newline, tail: #]
 
 validate3: enclose :parse3 func* [f] [
     let input: f.input
-    do f except [return null]
+    eval f except [return null]
     return input
 ]
 
@@ -374,7 +374,7 @@ echo: func* [
         switch/type item [
             the-word! [get item]
             the-tuple! [get item]
-            the-group! [do as block! item]
+            the-group! [eval item]
         ] else [
             item
         ]

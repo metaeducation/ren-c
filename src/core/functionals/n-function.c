@@ -274,7 +274,7 @@ Phase* Make_Interpreted_Action_May_Fail(
     // Capture the mutability flag that was in effect when this action was
     // created.  This allows the following to work:
     //
-    //    >> do mutable [f: func [] [b: [1 2 3] clear b]]
+    //    >> eval mutable [f: func [] [b: [1 2 3] clear b]]
     //    >> f
     //    == []
     //

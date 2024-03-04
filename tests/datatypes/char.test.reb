@@ -42,8 +42,8 @@
 ; to actually work with 0 byte representations in strings (even for a test
 ; that is character based).
 ;
-(true = do load #{23225E4022203D2023225E2830302922})  ; ^ @ = ^ (00)
-(true = do load #{23225E286E756C6C2922203D2023225E2830302922})  ; ^ (null) = ^ (00)
+(true = eval load #{23225E4022203D2023225E2830302922})  ; ^ @ = ^ (00)
+(true = eval load #{23225E286E756C6C2922203D2023225E2830302922})  ; ^ (null) = ^ (00)
 ((load-value #{23225E2830302922}) = codepoint-to-char 0)  ; ^ (00)
 
 (#"^A" = #"^(01)")

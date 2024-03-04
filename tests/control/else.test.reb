@@ -115,8 +115,8 @@
     ((void) else [true])
     (void? (1000 + 20 ((void) then [fail ~unreachable~])))
 
-    (do [] else [true])
-    (void? do [] then [fail ~reachable~])
+    (eval [] else [true])
+    (void? eval [] then [fail ~reachable~])
 ]
 
 [

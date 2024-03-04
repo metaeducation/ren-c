@@ -42,7 +42,7 @@ INLINE Context* VAL_CONTEXT(const Cell* v) {
 //
 //     >> f: make frame! unrun :append
 //     >> label of f
-//     == append  ; useful in debug stack traces if you `do f`
+//     == append  ; useful in debug stack traces if you `eval f`
 //
 // So extraction of the phase has to be sensitive to this.
 //

@@ -195,7 +195,7 @@
     ([a b] = append [a b] spread second [c []])
     ([a b] = append [a b] spread second [c _])
 
-    ~expect-arg~ !! (
+    ~bad-value~ !! (
         [a b] = append [a b] spread second [c ~]
     )
     (

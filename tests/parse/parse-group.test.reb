@@ -1,7 +1,7 @@
 ; %parse-group.test.reb
 ;
 ; GROUP! are value-bearing rules that do not advance the input and get their
-; argument literally from a DO evaluation.  They always succeed.
+; argument literally from a EVAL evaluation.  They always succeed.
 
 (10 = parse [aaa] ['aaa (10)])
 ~parse-incomplete~ !! (parse [aaa] [(10)])

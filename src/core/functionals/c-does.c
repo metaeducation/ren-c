@@ -50,7 +50,7 @@
 //
 //  does: native [
 //
-//  "Make action that will DO a value"
+//  "Make action that will EVAL a BLOCK! or DO a value"
 //
 //      return: [action?]
 //      source [element?]  ; can be e.g. (does http://example.com/script.r)

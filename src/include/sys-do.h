@@ -25,13 +25,13 @@
 // always implies running to the end of an input.  It also implies returning
 // void if nothing can be synthesized, otherwise let the last value fall out:
 //
-//     >> do [1 + 2]
+//     >> eval [1 + 2]
 //     == 3
 //
-//     >> do []
-//     ; void
+//     >> eval []
+//     == ~void~  ; anti
 //
-//     >> do [1 + 2 comment "hi"]
+//     >> eval [1 + 2 comment "hi"]
 //     == 3
 //
 // See %sys-eval.h for the lower level routines if this isn't enough control.

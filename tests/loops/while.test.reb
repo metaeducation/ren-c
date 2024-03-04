@@ -152,7 +152,7 @@
     implemented-with-loops: func [body [block!]] [
         let sum: 0
         let result
-        while [result: do body] [
+        while [result: eval body] [
             sum: sum + result
         ]
         return sum

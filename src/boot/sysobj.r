@@ -89,7 +89,7 @@ locale: make object! [
     library: make object! [
         ;
         ; This is a list mapping tags to URLs as [<tag> http://example.com]
-        ; They make it easy to do things like `import <json>` or `do <chess>`
+        ; They make it easy to do things like `import @json` or `do @chess`
         ;
         utilities: https://raw.githubusercontent.com/r3n/renclib/master/userutils.reb
     ]

@@ -57,7 +57,7 @@ run-single-test: func [
 
     log [mold code]
 
-    ; Need to do ^result, otherwise nihil (empty pack) would case a failure
+    ; Need to use ^result, otherwise nihil (empty pack) would case a failure
     ; in the test code itself trying to unpack to a regular result.  We want
     ; to report it as a failure, not fail ourseves...
     ;

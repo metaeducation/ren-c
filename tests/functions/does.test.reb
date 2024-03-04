@@ -37,7 +37,7 @@
 ; you wanted a DOES that was like that, you make one...here's DOES+
 [
     (does+: reframer lambda [f [frame!]] [
-        does [do copy f]
+        does [eval copy f]
     ]
     true)
 
@@ -74,7 +74,7 @@
 ; !!! The following tests were designed before the creation of METHOD, at a
 ; time when DOES was expected to obey the same derived binding mechanics that
 ; FUNC [] would have.  (See notes on its implementation about how that is
-; tricky, as it tries to optimize the case of when it's just a DO of a BLOCK!
+; tricky, as it tries to optimize the case of when it's just a EVAL of a BLOCK!
 ; with no need for relativization.)  At time of writing there is no arity-1
 ; METHOD-analogue to DOES.
 (

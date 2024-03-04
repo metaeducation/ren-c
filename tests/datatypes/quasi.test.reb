@@ -21,7 +21,7 @@
         bad: load-value str
         assert [quasi? bad]
         assert [word = unquasi bad]
-        quasiform: ^ do reduce [bad]
+        quasiform: ^ eval reduce [bad]
         assert [bad = quasiform]
     ]
     true
@@ -40,24 +40,24 @@
 
 ; https://forum.rebol.info/t/what-should-do-do/1426
 ;
-(void? do [])
+(void? eval [])
 (
     x: <overwritten>
     all [
-        void' = ^ x: do []
+        void' = ^ x: eval []
         void' = ^x
     ]
 )
 (
     x: 10
     all [
-        nihil' = x: ^ eval []
+        nihil' = x: ^ eval/undecayed []
         nihil? unmeta x
     ]
 )
 (
     x: 10
-    10 = (x eval [])
+    10 = (x eval/undecayed [])
 )
 
 [
@@ -71,7 +71,7 @@
     (void' = ^ eval :foo)
     (void? eval :foo)
 
-    (void? do :foo)
+    (void? eval :foo)
 ]
 
 [
@@ -85,7 +85,7 @@
     (trash' = ^ eval :foo)
     (trash? eval :foo)
 
-    (trash' = ^ do :foo)
+    (trash' = ^ eval :foo)
 ]
 
 ; Explicit return of VOID
@@ -114,7 +114,7 @@
     ('~()~ = ^ foo)
 
     ('~()~ = ^ applique :foo [])
-    ('~()~ = ^ do :foo)
+    ('~()~ = ^ eval :foo)
 ]
 
 
@@ -166,7 +166,7 @@
 ; but the idea is to help draw attention to when a script was cut short
 ; prematurely via a QUIT command.  Antiforms may be passed.
 ;
-; Note: DO of BLOCK! does not catch quits, so TEXT! is used here.
+; Note: EVAL of BLOCK! does not catch quits, so TEXT! is used here.
 [
     (1 = do "Rebol [] quit/with 1")
     ('~quit~ =  ^ do "Rebol [] quit")
@@ -194,7 +194,7 @@
     parse3 [~foo~ ~foo~] [some foo]
     true
 )
-~bad-word-get~ !! (
+~bad-antiform~ !! (
     foo: ~foo~
     parse3 [~foo~ ~foo~] [some foo]
     true

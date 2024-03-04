@@ -3,7 +3,7 @@
 (not get-word? 1)
 (get-word! = kind of first [:a])
 ~not-bound~ !! (
-    do make block! ":a"  ; context-less get-word
+    eval make block! ":a"  ; context-less get-word
 )
 
 ; R3-Alpha and Red permit GET-WORD! access to subvert unsetness.  Rebol2 did

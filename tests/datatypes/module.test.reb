@@ -96,23 +96,23 @@
 
 ; Overwrite a lib definition but make a helper that runs code in lib
 (
-    do-before: :do
+    eval-before: :eval
     import m: module [Exports: [test]] [
-        do: func [source] [throw <override>]
+        eval: func [source] [throw <override>]
 
         emulate: func [source [block!] <local> rebound] [
-            assert ['do = first source]
+            assert ['eval = first source]
 
             rebound: inside lib bindable source
-            return lib.do rebound
+            return lib.eval rebound
         ]
 
-        test: does [emulate [do [1 + 2]]]
+        test: does [emulate [eval [1 + 2]]]
     ]
     all [
         3 = test
-        <override> = catch [m.do [1 + 2]]
-        ^do = ^do-before
+        <override> = catch [m.eval [1 + 2]]
+        ^eval = ^eval-before
     ]
 )
 

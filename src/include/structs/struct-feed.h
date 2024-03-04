@@ -228,7 +228,7 @@ struct FeedStruct {
     //
     //     obj: make object! [x: 10]
     //     foo: does [append obj [y: 20]]
-    //     do in obj [foo x]
+    //     eval in obj [foo x]
     //                   ^-- consider the moment of lookahead, here
     //
     // Before foo is run, it will fetch x to ->gotten, and see that it is not

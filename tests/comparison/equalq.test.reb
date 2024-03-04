@@ -576,9 +576,9 @@
 (not equal? make port! http:// make port! http://)
 
 [#859
-    ~expect-arg~ !! (
+    ~stack-overflow~ !! (
         a: copy the ()
         insert a a
-        do a
+        eval a
     )
 ]

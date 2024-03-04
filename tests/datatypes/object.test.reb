@@ -54,7 +54,7 @@
     c: b
     o: make object! [a: 2 c: b]
     p: make o [a: 3]
-    1 == do p.c
+    1 == eval p.c
 )]
 ; appending to objects
 [#1979 (
