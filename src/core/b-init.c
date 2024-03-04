@@ -270,7 +270,7 @@ static Array* Startup_Datatypes(Array* boot_types, Array* boot_typespecs)
     if (Cell_Word_Id(word) != SYM_ACTION_X)
         panic (word); // First type should be ACTION!
 
-    Array* catalog = Make_Arr(REB_MAX - 1);
+    Array* catalog = Make_Array(REB_MAX - 1);
 
     REBINT n;
     for (n = 1; NOT_END(word); word++, n++) {
@@ -681,7 +681,7 @@ static Array* Startup_Natives(const Value* boot_natives)
     //
     Bind_Values_Deep(item, Lib_Context);
 
-    Array* catalog = Make_Arr(Num_Natives);
+    Array* catalog = Make_Array(Num_Natives);
 
     REBLEN n = 0;
     Value* generic_word = nullptr; // gives clear error if GENERIC not found
@@ -802,7 +802,7 @@ static void Startup_End_Node(void)
 //
 static void Startup_Empty_Array(void)
 {
-    PG_Empty_Array = Make_Arr_Core(0, NODE_FLAG_MANAGED);
+    PG_Empty_Array = Make_Array_Core(0, NODE_FLAG_MANAGED);
     SET_SER_INFO(PG_Empty_Array, SERIES_INFO_FROZEN);
 }
 

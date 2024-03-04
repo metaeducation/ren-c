@@ -51,7 +51,7 @@ REBINT CT_Map(const Cell* a, const Cell* b, REBINT mode)
 //
 REBMAP *Make_Map(REBLEN capacity)
 {
-    Array* pairlist = Make_Arr_Core(capacity * 2, ARRAY_FLAG_PAIRLIST);
+    Array* pairlist = Make_Array_Core(capacity * 2, ARRAY_FLAG_PAIRLIST);
     LINK(pairlist).hashlist = Make_Hash_Sequence(capacity);
 
     return MAP(pairlist);
@@ -549,7 +549,7 @@ REB_R TO_Map(Value* out, enum Reb_Kind kind, const Value* arg)
 Array* Map_To_Array(REBMAP *map, REBINT what)
 {
     REBLEN count = Length_Map(map);
-    Array* a = Make_Arr(count * ((what == 0) ? 2 : 1));
+    Array* a = Make_Array(count * ((what == 0) ? 2 : 1));
 
     Value* dest = KNOWN(ARR_HEAD(a));
     Value* val = KNOWN(ARR_HEAD(MAP_PAIRLIST(map)));

@@ -264,7 +264,7 @@ DECLARE_NATIVE(typechecker)
 
     Value* type = ARG(type);
 
-    Array* paramlist = Make_Arr_Core(
+    Array* paramlist = Make_Array_Core(
         2,
         SERIES_MASK_ACTION | NODE_FLAG_MANAGED
     );
@@ -882,7 +882,7 @@ DECLARE_NATIVE(n_shot)
 
     REBI64 n = VAL_INT64(ARG(n));
 
-    Array* paramlist = Make_Arr_Core(
+    Array* paramlist = Make_Array_Core(
         2,
         SERIES_MASK_ACTION | NODE_FLAG_MANAGED
     );

@@ -937,7 +937,7 @@ static void Mark_Root_Series(void)
                     continue;
                 }
 
-                // This means someone did something like Make_Arr() and then
+                // This means someone did something like Make_Array() and then
                 // ran an evaluation before referencing it somewhere from the
                 // root set.
 
@@ -1295,7 +1295,7 @@ static REBLEN Sweep_Series(void)
 
             case 8:
                 // 0x8: unmanaged and unmarked, e.g. a series that was made
-                // with Make_Ser() and hasn't been managed.  It doesn't
+                // with Make_Series() and hasn't been managed.  It doesn't
                 // participate in the GC.  Leave it as is.
                 //
                 // !!! Are there actually legitimate reasons to do this with
@@ -1725,12 +1725,12 @@ void Startup_GC(void)
 
     // Temporary series and values protected from GC. Holds node pointers.
     //
-    GC_Guarded = Make_Ser(15, sizeof(REBNOD*));
+    GC_Guarded = Make_Series(15, sizeof(REBNOD*));
 
     // The marking queue used in lieu of recursion to ensure that deeply
     // nested structures don't cause the C stack to overflow.
     //
-    GC_Mark_Stack = Make_Ser(100, sizeof(Array*));
+    GC_Mark_Stack = Make_Series(100, sizeof(Array*));
     TERM_SEQUENCE(GC_Mark_Stack);
 }
 

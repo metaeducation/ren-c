@@ -82,7 +82,7 @@
 // The following are the SERIES_FLAG_XXX and ARRAY_FLAG_XXX etc. that are used
 // in the header, while the SERIES_INFO_XXX flags will be found in the info.
 //
-// ** Make_Ser() takes SERIES_FLAG_XXX as a parameter, so anything that
+// ** Make_Series() takes SERIES_FLAG_XXX as a parameter, so anything that
 // controls series creation should be a _FLAG_ as opposed to an _INFO_! **
 //
 // (Other general rules might be that bits that are to be tested or set as

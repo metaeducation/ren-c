@@ -400,7 +400,7 @@ REBSER *Make_Hash_Sequence(REBLEN len)
         fail (Error_Size_Limit_Raw(temp));
     }
 
-    REBSER *ser = Make_Ser(n + 1, sizeof(REBLEN));
+    REBSER *ser = Make_Series(n + 1, sizeof(REBLEN));
     Clear_Series(ser);
     SET_SERIES_LEN(ser, n);
 

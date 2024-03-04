@@ -290,7 +290,7 @@ INLINE void TERM_SEQUENCE_LEN(REBSER *s, REBLEN len) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// When a series is allocated by the Make_Ser() routine, it is not initially
+// When a series is allocated by the Make_Series() routine, it is not initially
 // visible to the garbage collector.  To keep from leaking it, then it must
 // be either freed with Free_Unmanaged_Series or delegated to the GC to manage
 // with MANAGE_SERIES.
@@ -582,7 +582,7 @@ INLINE REBSER *Alloc_Series_Node(REBFLGS flags) {
     TRASH_POINTER_IF_DEBUG(MISC(s).trash); // #8
 
     // Note: This series will not participate in management tracking!
-    // See NODE_FLAG_MANAGED handling in Make_Arr_Core() and Make_Ser_Core().
+    // See NODE_FLAG_MANAGED handling in Make_Array_Core() and Make_Series_Core().
 
   #if !defined(NDEBUG)
     TOUCH_SERIES_IF_DEBUG(s); // tag current C stack as series origin in ASAN
@@ -701,7 +701,7 @@ INLINE bool Did_Series_Data_Alloc(REBSER *s, REBLEN length) {
 // Small series will be allocated from a memory pool.
 // Large series will be allocated from system memory.
 //
-INLINE REBSER *Make_Ser_Core(
+INLINE REBSER *Make_Series_Core(
     REBLEN capacity,
     Byte wide,
     REBFLGS flags
@@ -745,7 +745,7 @@ INLINE REBSER *Make_Ser_Core(
     // create it in the managed state.  But be sure no evaluations are called
     // before it's made reachable by the GC, or use PUSH_GC_GUARD().
     //
-    // !!! Code duplicated in Make_Arr_Core() ATM.
+    // !!! Code duplicated in Make_Array_Core() ATM.
     //
     if (not (flags & NODE_FLAG_MANAGED)) {
         if (SER_FULL(GC_Manuals))
@@ -761,8 +761,8 @@ INLINE REBSER *Make_Ser_Core(
 
 // !!! When series are made they are not terminated, which means that though
 // they are empty they may not be "valid".  Should this be called Alloc_Ser()?
-// Is Make_Ser() needed or are there few enough calls it should always take
+// Is Make_Series() needed or are there few enough calls it should always take
 // the flags and not have a _Core() variant?
 //
-#define Make_Ser(capacity, wide) \
-    Make_Ser_Core((capacity), (wide), SERIES_FLAGS_NONE)
+#define Make_Series(capacity, wide) \
+    Make_Series_Core((capacity), (wide), SERIES_FLAGS_NONE)

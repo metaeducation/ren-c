@@ -641,7 +641,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 
     if (IS_BLANK(les.data)) {
         if (mode == LOOP_MAP_EACH)
-            return Init_Block(OUT, Make_Arr(0));
+            return Init_Block(OUT, Make_Array(0));
         return OUT;
     }
 

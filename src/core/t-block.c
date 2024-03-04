@@ -72,7 +72,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         //
         // `make block! 10` => creates array with certain initial capacity
         //
-        return Init_Any_Array(out, kind, Make_Arr(Int32s(arg, 0)));
+        return Init_Any_Array(out, kind, Make_Array(Int32s(arg, 0)));
     }
     else if (IS_TEXT(arg)) {
         //
@@ -816,7 +816,7 @@ REBTYPE(Array)
         if (REF(part)) {
             len = Part_Len_May_Modify_Index(array, ARG(limit));
             if (len == 0)
-                return Init_Block(OUT, Make_Arr(0)); // new empty block
+                return Init_Block(OUT, Make_Array(0)); // new empty block
         }
         else
             len = 1;
@@ -830,7 +830,7 @@ REBTYPE(Array)
             if (not REF(part))
                 return nullptr;
 
-            return Init_Block(OUT, Make_Arr(0)); // new empty block
+            return Init_Block(OUT, Make_Array(0)); // new empty block
         }
 
         if (REF(part))

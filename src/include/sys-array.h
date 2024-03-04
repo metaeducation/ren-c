@@ -29,7 +29,7 @@
 // A "Rebol Array" is a series of cell structs which is terminated by an
 // END marker.  In R3-Alpha, the END marker was itself a full-sized cell
 // which meant code was allowed to write one cell past the capacity requested
-// when Make_Arr() was called.  But this always had to be an END.
+// when Make_Array() was called.  But this always had to be an END.
 //
 // In Ren-C, there is an implicit END marker just past the last cell in the
 // capacity.  Allowing a SET_END() on this position could corrupt the END
@@ -250,7 +250,7 @@ INLINE void Prep_Array(
 // Make a series that is the right size to store REBVALs (and marked for the
 // garbage collector to look into recursively).  ARR_LEN() will be 0.
 //
-INLINE Array* Make_Arr_Core(REBLEN capacity, REBFLGS flags) {
+INLINE Array* Make_Array_Core(REBLEN capacity, REBFLGS flags) {
     const REBLEN wide = sizeof(Cell);
 
     REBSER *s = Alloc_Series_Node(flags);
@@ -323,12 +323,12 @@ INLINE Array* Make_Arr_Core(REBLEN capacity, REBFLGS flags) {
     return cast(Array*, s);
 }
 
-#define Make_Arr(capacity) \
-    Make_Arr_Core((capacity), ARRAY_FLAG_FILE_LINE)
+#define Make_Array(capacity) \
+    Make_Array_Core((capacity), ARRAY_FLAG_FILE_LINE)
 
 // !!! Currently, many bits of code that make copies don't specify if they are
 // copying an array to turn it into a paramlist or varlist, or to use as the
-// kind of array the use might see.  If we used plain Make_Arr() then it
+// kind of array the use might see.  If we used plain Make_Array() then it
 // would add a flag saying there were line numbers available, which may
 // compete with the usage of the ->misc and ->link fields of the series node
 // for internal arrays.
@@ -352,14 +352,14 @@ INLINE Array* Make_Arr_For_Copy(
     ){
         flags &= ~ARRAY_FLAG_FILE_LINE;
 
-        Array* a = Make_Arr_Core(capacity, flags);
+        Array* a = Make_Array_Core(capacity, flags);
         LINK(a).file = LINK(original).file;
         MISC(a).line = MISC(original).line;
         SET_SER_FLAG(a, ARRAY_FLAG_FILE_LINE);
         return a;
     }
 
-    return Make_Arr_Core(capacity, flags);
+    return Make_Array_Core(capacity, flags);
 }
 
 
@@ -373,7 +373,7 @@ INLINE Array* Make_Arr_For_Copy(
 //
 INLINE Array* Alloc_Singular(REBFLGS flags) {
     assert(not (flags & SERIES_FLAG_ALWAYS_DYNAMIC));
-    Array* a = Make_Arr_Core(1, flags | SERIES_FLAG_FIXED_SIZE);
+    Array* a = Make_Array_Core(1, flags | SERIES_FLAG_FIXED_SIZE);
     LEN_BYTE_OR_255(SER(a)) = 1; // non-dynamic length (defaulted to 0)
     return a;
 }

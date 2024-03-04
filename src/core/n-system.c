@@ -166,7 +166,7 @@ DECLARE_NATIVE(recycle)
       #if defined(NDEBUG)
         fail (Error_Debug_Only_Raw());
       #else
-        REBSER *sweeplist = Make_Ser(100, sizeof(REBNOD*));
+        REBSER *sweeplist = Make_Series(100, sizeof(REBNOD*));
         count = Recycle_Core(false, sweeplist);
         assert(count == SER_LEN(sweeplist));
 

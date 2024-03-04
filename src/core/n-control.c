@@ -1092,7 +1092,7 @@ DECLARE_NATIVE(catch)
   was_caught:
 
     if (REF(name) or REF(any)) {
-        Array* a = Make_Arr(2);
+        Array* a = Make_Array(2);
 
         CATCH_THROWN(Array_At(a, 1), OUT); // thrown value--may be null!
         Copy_Cell(Array_At(a, 0), OUT); // throw name (thrown bit clear)

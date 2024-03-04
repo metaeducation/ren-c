@@ -130,7 +130,7 @@ void API_rebEnterApi_internal(void) {
 //
 void *API_rebMalloc(size_t size)
 {
-    REBSER *s = Make_Ser_Core(
+    REBSER *s = Make_Series_Core(
         ALIGN_SIZE // stores REBSER* (must be at least big enough for void*)
             + size // for the actual data capacity (may be 0...see notes)
             + 1, // for termination (even BINARY! has this, review necessity)
@@ -621,7 +621,7 @@ const void *API_rebUneval(const RebolValue* v)
         Copy_Cell(single, NAT_VALUE(null));  // the NULL function
     }
     else {
-        Array* a = Make_Arr(2);
+        Array* a = Make_Array(2);
         SET_SER_INFO(a, SERIES_INFO_HOLD);
         Copy_Cell(Alloc_Tail_Array(a), NAT_VALUE(the));  // the THE function
         Copy_Cell(Alloc_Tail_Array(a), v);

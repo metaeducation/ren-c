@@ -98,7 +98,7 @@ REBSER *Make_Set_Operation_Series(
         // a new buffer every time, but reusing one might be slightly more
         // efficient.
         //
-        REBSER *buffer = SER(Make_Arr(i));
+        REBSER *buffer = SER(Make_Array(i));
         hret = Make_Hash_Sequence(i);   // allocated
 
         // Optimization note: !!

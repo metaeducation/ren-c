@@ -38,7 +38,7 @@
 // unwinding via longjmp, the macros in this file provide an abstraction
 // layer.  These allow Rebol to clean up after itself for some kinds of
 // "dangling" state--such as manually memory managed series that have been
-// made with Make_Ser() but never passed to either Free_Unmanaged_Series()
+// made with Make_Series() but never passed to either Free_Unmanaged_Series()
 // or MANAGE_SERIES().  This covers several potential leaks known-to-Rebol,
 // but custom interception code is needed for any generalized resource
 // that might be leaked in the case of a longjmp().

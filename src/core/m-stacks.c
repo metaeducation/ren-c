@@ -46,7 +46,7 @@ void Startup_Data_Stack(REBLEN size)
     // contain them.  But DS_PUSH_MAYBE_VOID allows you to, in case you
     // are building a context varlist or similar.
     //
-    DS_Array = Make_Arr_Core(1, ARRAY_FLAG_NULLEDS_LEGAL);
+    DS_Array = Make_Array_Core(1, ARRAY_FLAG_NULLEDS_LEGAL);
     Init_Unreadable_Blank(ARR_HEAD(DS_Array));
 
     // The END marker will signal DS_PUSH that it has run out of space,
@@ -110,7 +110,7 @@ void Startup_Frame_Stack(void)
 
     // It's too early to be using Make_Paramlist_Managed_May_Fail()
     //
-    Array* paramlist = Make_Arr_Core(
+    Array* paramlist = Make_Array_Core(
         1,
         NODE_FLAG_MANAGED | SERIES_MASK_ACTION
     );

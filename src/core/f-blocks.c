@@ -113,7 +113,7 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
     REBLEN extra,
     REBFLGS flags
 ){
-    Array* a = Make_Arr_Core(len + extra, flags);
+    Array* a = Make_Array_Core(len + extra, flags);
 
     REBLEN count = 0;
     const Cell* src = head;
@@ -304,7 +304,7 @@ Array* Copy_Array_Core_Managed(
         index = tail;
 
     if (index > ARR_LEN(original)) // !!! should this be asserted?
-        return Make_Arr_Core(extra, flags | NODE_FLAG_MANAGED);
+        return Make_Array_Core(extra, flags | NODE_FLAG_MANAGED);
 
     return Copy_Array_Core_Managed_Inner_Loop(
         original,

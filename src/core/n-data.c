@@ -516,7 +516,7 @@ DECLARE_NATIVE(get)
         return OUT;
     }
 
-    Array* results = Make_Arr(VAL_LEN_AT(source));
+    Array* results = Make_Array(VAL_LEN_AT(source));
     Value* dest = KNOWN(ARR_HEAD(results));
     Cell* item = Cell_Array_At(source);
 

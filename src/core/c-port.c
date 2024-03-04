@@ -144,7 +144,7 @@ REBINT Awake_System(Array* ports, bool only)
         // If we're using /ONLY, we need path AWAKE/ONLY to call.  (Ren-C's
         // va_list API does not support positionally-provided refinements.)
         //
-        Array* a = Make_Arr(2);
+        Array* a = Make_Array(2);
         Append_Value(a, awake);
         Init_Word(Alloc_Tail_Array(a), Canon(SYM_ONLY));
 
@@ -319,13 +319,13 @@ void Sieve_Ports(Array* ports)
 //
 bool Redo_Action_Throws(REBFRM *f, REBACT *run)
 {
-    Array* code_arr = Make_Arr(FRM_NUM_ARGS(f)); // max, e.g. no refines
+    Array* code_arr = Make_Array(FRM_NUM_ARGS(f)); // max, e.g. no refines
     Cell* code = ARR_HEAD(code_arr);
 
     // The first element of our path will be the ACTION!, followed by its
     // refinements...which in the worst case, all args will be refinements:
     //
-    Array* path_arr = Make_Arr(FRM_NUM_ARGS(f) + 1);
+    Array* path_arr = Make_Array(FRM_NUM_ARGS(f) + 1);
     Cell* path = ARR_HEAD(path_arr);
     Init_Action_Unbound(path, run); // !!! What if there's a binding?
     ++path;

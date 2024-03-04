@@ -1476,7 +1476,7 @@ DECLARE_NATIVE(subparse)
                     if (not IS_BLOCK(P_RULE))
                         fail (Error_Parse_Variable(f));
 
-                    Array* collection = Make_Arr_Core(
+                    Array* collection = Make_Array_Core(
                         10,  // !!! how big?
                         NODE_FLAG_MANAGED
                     );
@@ -1626,7 +1626,7 @@ DECLARE_NATIVE(subparse)
                             );
                         }
                         else if (only) {  // taken to mean "add as one block"
-                            target = Make_Arr_Core(
+                            target = Make_Array_Core(
                                 P_POS - pos_before,
                                 NODE_FLAG_MANAGED
                             );

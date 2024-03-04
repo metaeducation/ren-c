@@ -42,7 +42,7 @@
 //
 REBSER *Make_Binary(REBLEN capacity)
 {
-    REBSER *bin = Make_Ser(capacity + 1, sizeof(Byte));
+    REBSER *bin = Make_Series(capacity + 1, sizeof(Byte));
     TERM_SEQUENCE(bin);
     return bin;
 }
@@ -55,7 +55,7 @@ REBSER *Make_Binary(REBLEN capacity)
 //
 String* Make_String(REBLEN capacity)
 {
-    REBSER *ser = Make_Ser(capacity + 1, sizeof(REBUNI));
+    REBSER *ser = Make_Series(capacity + 1, sizeof(REBUNI));
     TERM_SEQUENCE(ser);
     return ser;
 }

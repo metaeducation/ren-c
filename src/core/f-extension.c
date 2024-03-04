@@ -92,7 +92,7 @@ DECLARE_NATIVE(builtin_extensions)
     // all the collated information that would be needed to initialize and
     // use the extension (but don't act on the information yet!)
 
-    Array* list = Make_Arr(NUM_BUILTIN_EXTENSIONS);
+    Array* list = Make_Array(NUM_BUILTIN_EXTENSIONS);
     REBLEN i;
     for (i = 0; i != NUM_BUILTIN_EXTENSIONS; ++i) {
         COLLATE_CFUNC *collator = Builtin_Extension_Collators[i];
@@ -462,7 +462,7 @@ Value* rebCollateExtension_internal(
     REBNAT dispatchers[], REBLEN dispatchers_len
 ) {
 
-    Array* a = Make_Arr(IDX_COLLATOR_MAX); // details
+    Array* a = Make_Array(IDX_COLLATOR_MAX); // details
     Init_Handle_Simple(
         Array_At(a, IDX_COLLATOR_SCRIPT),
         m_cast(Byte*, script_compressed), // !!! by contract, don't change!

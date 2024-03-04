@@ -495,7 +495,7 @@ DECLARE_NATIVE(wait)
         case REB_PORT:
             if (not Pending_Port(KNOWN(val)))
                 return nullptr;
-            ports = Make_Arr(1);
+            ports = Make_Array(1);
             Append_Value(ports, KNOWN(val));
             timeout = ALL_BITS;
             break;

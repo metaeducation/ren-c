@@ -408,7 +408,7 @@ Array* Split_Lines(const Value* str)
     Ucs2(const*) up = start;
 
     if (i == len)
-        return Make_Arr(0);
+        return Make_Array(0);
 
     REBUNI c;
     up = Ucs2_Next(&c, up);

@@ -119,7 +119,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
     REBACT *act = VAL_ACTION(action);
 
     REBLEN num_slots = ACT_NUM_PARAMS(act) + 1;
-    Array* varlist = Make_Arr_Core(
+    Array* varlist = Make_Array_Core(
         num_slots, // includes +1 for the CTX_ARCHETYPE() at [0]
         SERIES_MASK_CONTEXT
     );
@@ -1144,7 +1144,7 @@ DECLARE_NATIVE(does)
 
     Value* value = ARG(value);
 
-    Array* paramlist = Make_Arr_Core(
+    Array* paramlist = Make_Array_Core(
         1, // archetype only...DOES always makes action with no arguments
         SERIES_MASK_ACTION
     );

@@ -240,7 +240,7 @@ REBTYPE(Action)
             return OUT;
 
         case SYM_TYPES: {
-            Array* copy = Make_Arr(VAL_ACT_NUM_PARAMS(value));
+            Array* copy = Make_Array(VAL_ACT_NUM_PARAMS(value));
 
             // The typesets have a symbol in them for the parameters, and
             // ordinary typesets aren't supposed to have it--that's a

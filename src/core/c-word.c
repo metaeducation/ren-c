@@ -133,7 +133,7 @@ static void Expand_Word_Table(void)
 
     assert(SER_WIDE(PG_Canons_By_Hash) == sizeof(Symbol*));
 
-    REBSER *ser = Make_Ser_Core(
+    REBSER *ser = Make_Series_Core(
         num_slots, sizeof(Symbol*), SERIES_FLAG_POWER_OF_2
     );
     Clear_Series(ser);
@@ -276,7 +276,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
     // separate allocation.  Because automatically doing this is a new
     // feature, double check with an assert that the behavior matches.
     //
-    Symbol* intern = Make_Ser_Core(
+    Symbol* intern = Make_Series_Core(
         size + 1,
         sizeof(Byte),
         SERIES_FLAG_UTF8 | SERIES_FLAG_FIXED_SIZE
@@ -491,7 +491,7 @@ void Startup_Interning(void)
     n = 1; // forces exercise of rehashing logic in debug build
 #endif
 
-    PG_Canons_By_Hash = Make_Ser_Core(
+    PG_Canons_By_Hash = Make_Series_Core(
         n, sizeof(Symbol*), SERIES_FLAG_POWER_OF_2
     );
     Clear_Series(PG_Canons_By_Hash);  // all slots start at nullptr
@@ -516,7 +516,7 @@ void Startup_Interning(void)
 //
 void Startup_Symbols(Array* words)
 {
-    PG_Symbol_Canons = Make_Ser_Core(
+    PG_Symbol_Canons = Make_Series_Core(
         1 + ARR_LEN(words), // 1 + => extra trash at head for SYM_0
         sizeof(Symbol*),
         SERIES_FLAG_FIXED_SIZE // can't ever add more SYM_XXX lookups

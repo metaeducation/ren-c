@@ -118,7 +118,7 @@ void Assert_State_Balanced_Debug(
     }
     else if (s->manuals_len < SER_LEN(GC_Manuals)) {
         printf(
-            "Make_Ser()x%d w/o Free_Unmanaged_Series or MANAGE_SERIES\n",
+            "Make_Series()x%d w/o Free_Unmanaged_Series or MANAGE_SERIES\n",
             cast(int, SER_LEN(GC_Manuals) - s->manuals_len)
         );
         REBSER *manual = *(SER_AT(
@@ -930,7 +930,7 @@ REBCTX *Error_Bad_Func_Def(const Value* spec, const Value* body)
     // !!! Improve this error; it's simply a direct emulation of arity-1
     // error that existed before refactoring code out of MAKE_Function().
 
-    Array* a = Make_Arr(2);
+    Array* a = Make_Array(2);
     Append_Value(a, spec);
     Append_Value(a, body);
 

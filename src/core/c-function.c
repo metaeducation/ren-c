@@ -97,7 +97,7 @@ Array* List_Func_Words(const Cell* func, bool pure_locals)
 //
 Array* List_Func_Typesets(Value* func)
 {
-    Array* array = Make_Arr(VAL_ACT_NUM_PARAMS(func));
+    Array* array = Make_Array(VAL_ACT_NUM_PARAMS(func));
     Value* typeset = VAL_ACT_PARAMS_HEAD(func);
 
     for (; NOT_END(typeset); typeset++) {
@@ -561,7 +561,7 @@ Array* Make_Paramlist_Managed_May_Fail(
 
     // Must make the function "paramlist" even if "empty", for identity.
     //
-    Array* paramlist = Make_Arr_Core(num_slots, SERIES_MASK_ACTION);
+    Array* paramlist = Make_Array_Core(num_slots, SERIES_MASK_ACTION);
 
     if (true) {
         Value* canon = RESET_CELL_EXTRA(
@@ -672,7 +672,7 @@ Array* Make_Paramlist_Managed_May_Fail(
     // Only make `parameter-types` if there were blocks in the spec
     //
     if (has_types) {
-        Array* types_varlist = Make_Arr_Core(
+        Array* types_varlist = Make_Array_Core(
             num_slots,
             SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED
         );
@@ -734,7 +734,7 @@ Array* Make_Paramlist_Managed_May_Fail(
     // Only make `parameter-notes` if there were strings (besides description)
     //
     if (has_notes) {
-        Array* notes_varlist = Make_Arr_Core(
+        Array* notes_varlist = Make_Array_Core(
             num_slots,
             SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED
         );
@@ -940,7 +940,7 @@ REBACT *Make_Action(
     // the dispatcher understands it to be, by contract.  Terminate it
     // at the given length implicitly.
 
-    Array* details = Make_Arr_Core(details_capacity, NODE_FLAG_MANAGED);
+    Array* details = Make_Array_Core(details_capacity, NODE_FLAG_MANAGED);
     TERM_ARRAY_LEN(details, details_capacity);
 
     rootparam->payload.action.details = details;
@@ -1243,7 +1243,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
 
         // Reusing EMPTY_ARRAY won't allow adding ARRAY_FLAG_FILE_LINE bits
         //
-        copy = Make_Arr_Core(1, NODE_FLAG_MANAGED);
+        copy = Make_Array_Core(1, NODE_FLAG_MANAGED);
     }
     else { // body not empty, pick dispatcher based on output disposition
 

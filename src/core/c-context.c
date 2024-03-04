@@ -80,7 +80,7 @@ REBCTX *Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
 {
     assert(not (flags & ARRAY_FLAG_FILE_LINE)); // LINK and MISC are taken
 
-    Array* varlist = Make_Arr_Core(
+    Array* varlist = Make_Array_Core(
         capacity + 1, // size + room for ROOTVAR
         SERIES_MASK_CONTEXT // includes assurance of dynamic allocation
             | flags // e.g. NODE_FLAG_MANAGED
@@ -98,7 +98,7 @@ REBCTX *Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
     // keylist[0] is the "rootkey" which we currently initialize to an
     // unreadable BLANK!.  It is reserved for future use.
 
-    Array* keylist = Make_Arr_Core(
+    Array* keylist = Make_Array_Core(
         capacity + 1, // size + room for ROOTKEY
         NODE_FLAG_MANAGED // No keylist flag, but we don't want line numbers
     );
@@ -799,7 +799,7 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
     );
 
     REBLEN len = ARR_LEN(keylist);
-    Array* varlist = Make_Arr_Core(
+    Array* varlist = Make_Array_Core(
         len,
         SERIES_MASK_CONTEXT
             | NODE_FLAG_MANAGED // Note: Rebind below requires managed context
@@ -1069,7 +1069,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
     else
         LINK(keylist).ancestor = CTX_KEYLIST(parent1);
 
-    Array* varlist = Make_Arr_Core(
+    Array* varlist = Make_Array_Core(
         ARR_LEN(keylist),
         SERIES_MASK_CONTEXT
             | NODE_FLAG_MANAGED // rebind below requires managed context
@@ -1365,7 +1365,7 @@ void Startup_Collector(void)
     // least 2 long to hold the rootkey (SYM_0) and a possible SYM_SELF
     // hidden actual key.
     //
-    TG_Buf_Collect = Make_Arr_Core(2 + 98, 0);
+    TG_Buf_Collect = Make_Array_Core(2 + 98, 0);
 }
 
 

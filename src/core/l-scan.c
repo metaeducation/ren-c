@@ -1988,7 +1988,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 Init_Any_Array(
                     DS_TOP,
                     ss->token == TOKEN_LIT ? REB_LIT_PATH : REB_GET_PATH,
-                    Make_Arr(0)
+                    Make_Array(0)
                 );
                 break;
             }
@@ -2063,7 +2063,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 // element path, so push it.
                 //
                 DS_PUSH_TRASH;
-                Init_Path(DS_TOP, Make_Arr(0));
+                Init_Path(DS_TOP, Make_Array(0));
             }
             break;
 
@@ -2408,7 +2408,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 or IS_LEX_ANY_SPACE(*ss->begin) // `foo/ bar`
                 or *ss->begin == ';' // `foo/;--bar`
             ){
-                arr = Make_Arr_Core(
+                arr = Make_Array_Core(
                     1,
                     NODE_FLAG_MANAGED | ARRAY_FLAG_FILE_LINE
                 );

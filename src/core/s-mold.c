@@ -897,7 +897,7 @@ void Drop_Mold_Core(REB_MOLD *mo, bool not_pushed_ok)
 //
 void Startup_Mold(REBLEN size)
 {
-    TG_Mold_Stack = Make_Ser(10, sizeof(void*));
+    TG_Mold_Stack = Make_Series(10, sizeof(void*));
 
     TG_Mold_Buf = Make_Binary(size);
 }

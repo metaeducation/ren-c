@@ -145,7 +145,7 @@ REBSER *Copy_Sequence_Core(REBSER *s, REBFLGS flags)
     assert(not IS_SER_ARRAY(s));
 
     REBLEN len = SER_LEN(s);
-    REBSER *copy = Make_Ser_Core(len + 1, SER_WIDE(s), flags);
+    REBSER *copy = Make_Series_Core(len + 1, SER_WIDE(s), flags);
 
     memcpy(SER_DATA_RAW(copy), SER_DATA_RAW(s), len * SER_WIDE(s));
     TERM_SEQUENCE_LEN(copy, SER_LEN(s));
@@ -170,7 +170,7 @@ REBSER *Copy_Sequence_At_Len_Extra(
 ){
     assert(not IS_SER_ARRAY(s));
 
-    REBSER *copy = Make_Ser(len + 1 + extra, SER_WIDE(s));
+    REBSER *copy = Make_Series(len + 1 + extra, SER_WIDE(s));
     memcpy(
         SER_DATA_RAW(copy),
         SER_DATA_RAW(s) + index * SER_WIDE(s),

@@ -1302,7 +1302,7 @@ DECLARE_NATIVE(scan_net_header)
 {
     INCLUDE_PARAMS_OF_SCAN_NET_HEADER;
 
-    Array* result = Make_Arr(10); // Just a guess at size (use STD_BUF?)
+    Array* result = Make_Array(10); // Just a guess at size (use STD_BUF?)
 
     Value* header = ARG(header);
     REBLEN index = VAL_INDEX(header);
@@ -1352,7 +1352,7 @@ DECLARE_NATIVE(scan_net_header)
                 }
                 else {
                     // Create new block for values:
-                    Array* a = Make_Arr(2);
+                    Array* a = Make_Array(2);
                     Derelativize(
                         Alloc_Tail_Array(a),
                         item + 1, // prior value
