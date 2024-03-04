@@ -508,7 +508,6 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
 ]
 
 
-
 ; Lambda was redefined to `->` to match Haskell/Elm vs. `=>` for JavaScript.
 ; It is lighter to look at, but also if the symbol `<=` is deemed to be
 ; "less than or equal" there's no real reason why `=>` shouldn't be "equal
@@ -522,14 +521,6 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
 do compose3 [(to set-word! first [->]) enfix :lambda]
 unset first [=>]
 
-
-; Historically WRITE did platform line endings (CRLF) when the string had no
-; CR in it on Windows.  Ren-C's philosophy is on eliminating CRLF.
-;
-write: adapt :lib/write [
-    if lines [fail ["WRITE/LINES defective in bootstrap EXE (CR in files)"]]
-    if text? data [data: to binary! data]
-]
 
 ; Bootstrap strategy is to base the code on Rebol2-style PARSE, which UPARSE
 ; should be able to emulate.  While it has the rules of Rebol2 PARSE, the
