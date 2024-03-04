@@ -153,24 +153,6 @@ trap [
 ]
 
 
-=== "STANDARDIZE DIRECTORY TO WHERE THE COMMAND LINE WAS INVOKED FROM" ===
-
-; Typically if any filenames are passed to a script, those paths should be
-; interpreted relative to what directory the user was in when they invoked
-; the program.  Historical Rebol changed the directory to the directory of the
-; running script--which throws this off.
-;
-; Here we change the directory back to where it was when the script was
-; started, which is compatible with the current EXE's behavior.  This helps
-; standardize the following rules between the new and the old executables:
-;
-;   https://github.com/metaeducation/rebol-issues/issues/2374
-;
-; This only happens once, since the shim is applied just once per session.
-
-change-dir system/options/path  ; EXE startup path (not SYSTEM/SCRIPT/PATH)
-
-
 === "GIVE SHORT NAMES THAT CALL OUT BOOTSTRAP EXE'S VERSIONS OF FUNCTIONS" ===
 
 ; The shims use the functions in the bootstrap EXE's lib to make forwards
