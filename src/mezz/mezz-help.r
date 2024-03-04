@@ -190,7 +190,8 @@ help: function [
         libuser: copy system/contexts/lib
         for-each [key val] system/contexts/user [
             if not trash? get* 'val [
-               append libuser reduce [key :val]
+               append libuser key
+               libuser/(key): :val
             ]
         ]
         libuser
