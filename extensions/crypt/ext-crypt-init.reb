@@ -58,7 +58,7 @@ dh-make-key: func [
 ;       size [integer!] \"Key length\"
 ;       generator [integer!] \"Generator number\"
 ][
-    has [
+    make object! [
         priv-key:   ;private key
         pub-key:    ;public key
         g:          ;generator

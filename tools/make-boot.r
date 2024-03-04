@@ -547,7 +547,7 @@ change/only at-value platform reduce [
     any [config/build-label | ""]
 ]
 
-ob: has boot-sysobj
+ob: make object! boot-sysobj
 
 make-obj-defs: function [
     {Given a Rebol OBJECT!, write C structs that can access its raw variables}
@@ -743,7 +743,7 @@ e-sysctx: make-emitter "Sys Context" inc/tmp-sysctx.h
 ; of SET-WORD! and unevaluated value (even another SET-WORD!).  So we just
 ; gather the top-level set-words manually.
 
-sctx: has collect [
+sctx: make object! collect [
     for-each item boot-sys [
         if set-word? :item [
             keep item

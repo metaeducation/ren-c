@@ -2004,7 +2004,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 // and requires the value to set as a parameter to Eval_Path.  Yet it is
 // counterintuitive given the "left-to-right" nature of the language:
 //
-//     >> foo: make object! [[bar][bar: 10]]
+//     >> foo: make object! [bar: 10]
 //
 //     >> foo/(print "left" 'bar): (print "right" 20)
 //     right

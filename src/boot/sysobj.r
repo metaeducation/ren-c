@@ -30,11 +30,9 @@ Licensed under the Apache License, Version 2.0.
 See: http://www.apache.org/licenses/LICENSE-2.0
 }
 
-; !!! HAS is defined later, so this uses CONSTRUCT [] [body] instead.
-; MAKE OBJECT! is not used because that is too low-level (no evaluation or
-; collection of fields).  Reconsider if base-funcs should be loaded before
-; the system object here, or if it should be able to work with just the
-; low level MAKE OBJECT! and not use things like `x: y: z: none` etc.
+; !!! CONSTRUCT is used here, because the shim to implement historical MAKE
+; OBJECT! behavior is not loaded yet.  See `make: enclose 'lib/make` for
+; an explanation of the wackiness in this old bootstrap EXE.
 
 catalog: construct [] [
     ;

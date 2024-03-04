@@ -35,7 +35,7 @@ register-codec*: func [
 ][
     if not block? suffixes [suffixes: reduce [suffixes]]
 
-    codec: construct [] compose [
+    codec: make object! compose [
         name: the (name)
 
         ; !!! There was a "type:" field here before, which was always set to

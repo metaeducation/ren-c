@@ -81,7 +81,7 @@ make-port*: function [
     port
 ]
 
-*parse-url: has [
+*parse-url: make object! [
     digit:       make bitset! "0123456789"
     digits:      [1 5 digit]
     alpha-num:   make bitset! [#"a" - #"z" #"A" - #"Z" #"0" - #"9"]

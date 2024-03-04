@@ -467,13 +467,13 @@
 ; Structural equality requires equality of the object's fields.
 ;
 [#1133 (
-    a-value: has/only [
+    a-value: construct/only [] [
         a: 1 b: 1.0 c: $1 d: 1%
         e: [a 'a :a a: /a #"a" #{00}]
         f: ["a" #a http://a a@a.com <a>]
         g: :a/b/(c: 'd/e/f)/(b/d: [:f/g h/i])
     ]
-    b-value: has/only [
+    b-value: construct/only [] [
         a: 1 b: 1.0 c: $1 d: 1%
         e: [a 'a :a a: /a #"a" #{00}]
         f: ["a" #a http://a a@a.com <a>]
@@ -481,13 +481,13 @@
     ]
     equal? a-value b-value
 )(
-    a-value: has/only [
+    a-value: construct/only [] [
         a: 1 b: 1.0 c: $1 d: 1%
         e: [a 'a :a a: /a #"a" #{00}]
         f: ["a" #a http://a a@a.com <a>]
         g: :a/b/(c: 'd/e/f)/(b/d: [:f/g h/i])
     ]
-    b-value: has/only [
+    b-value: construct/only [] [
         a: 1 b: 1.0 c: $1 d: 1%
         e: [a 'a :a a: /a #"a" #{00}]
         f: ["a" #a http://a a@a.com <a>]
@@ -500,13 +500,13 @@
             if not test :v select b-value w [break]
         ]
 )(
-    a-value: has/only [
+    a-value: construct/only [] [
         a: 1 b: 1.0 c: $1 d: 1%
         e: [a 'a :a a: /a #"a" #{00}]
         f: ["a" #a http://a a@a.com <a>]
         g: :a/b/(c: 'd/e/f)/(b/d: [:f/g h/i])
     ]
-    b-value: has/only [
+    b-value: construct/only [] [
         a: 1.0 b: $1 c: 100% d: 0.01
         e: [/a a 'a :a a: #"A" #[binary! [#{0000} 2]]]
         f: [#a <A> http://A a@A.com "A"]

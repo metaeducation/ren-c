@@ -17,17 +17,11 @@ REBOL [
 ]
 
 
-; CONSTRUCT (arity 2) and HAS (arity 1) have arisen as the OBJECT!-making
-; routines, parallel to FUNCTION (arity 2) and DOES (arity 1).  By not being
-; nouns like CONTEXT and OBJECT, they free up those words for other usages.
-; For legacy support, both CONTEXT and OBJECT are just defined to be HAS.
-;
 ; Note: Historically OBJECT was essentially a synonym for CONTEXT with the
 ; ability to tolerate a spec of `[a:]` by transforming it to `[a: none].
-; The tolerance of ending with a set-word has been added to CONSTRUCT+HAS
-; so this distinction is no longer required.
+; That is not pursued in Ren-C.
 ;
-context: object: :has
+context: func [spec] [construct [] spec]
 
 
 ; To be more visually pleasing, properties like LENGTH can be extracted using
@@ -140,28 +134,6 @@ rejoin: function [
         form first values
     ]
     append result next values
-]
-
-; In Ren-C, MAKE for OBJECT! does not use the "type" slot for parent
-; objects.  You have to use the arity-2 CONSTRUCT to get that behavior.
-; Also, MAKE OBJECT! does not do evaluation--it is a raw creation,
-; and requires a format of a spec block and a body block.
-;
-; Because of the commonality of the alternate interpretation of MAKE, this
-; bridges until further notice.
-;
-make: enclose 'lib/make func [f] [
-    all [
-        :f/type = object!
-        block? :f/def
-        not block? first f/def
-    ] then [
-        return has f/def
-    ]
-    if object? :f/type [
-        return construct :f/type :f/def
-    ]
-    do f
 ]
 
 

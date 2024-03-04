@@ -204,7 +204,7 @@ function: func [
     ;; dump [{before} statics new-spec exclusions]
 
     if statics [
-        statics: has statics
+        statics: make object! statics
         bind new-body statics
     ]
 
@@ -741,19 +741,6 @@ once-bar: func [
             "|| expected single expression, found residual of" :look
         ] 'right
     ]
-]
-
-
-; Shorthand helper for CONSTRUCT (similar to DOES for FUNCTION).
-;
-has: func [
-    "Defines an object with just a body...no spec and no parent."
-    body [block!]
-        "Object words and values (bindings modified)"
-    /only
-        "Values are kept as-is"
-][
-    construct/(if only [/only]) [] body
 ]
 
 method: enfix func [

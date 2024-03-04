@@ -244,7 +244,7 @@ do-request: func [
 ] [
     spec: port/spec
     info: port/state/info
-    spec/headers: body-of construct has [
+    spec/headers: body-of construct (make object! [
         Accept: "*/*"
         Accept-Charset: "utf-8"
         Host: either not find [80 443] spec/port-id [
@@ -253,7 +253,7 @@ do-request: func [
             form spec/host
         ]
         User-Agent: "REBOL"
-    ] spec/headers
+    ]) spec/headers
     port/state/state: 'doing-request
     info/headers: info/response-line: info/response-parsed: port/data:
     info/size: info/date: info/name: blank
@@ -588,7 +588,7 @@ check-data: function [
                             |
                         copy trailer to crlf2bin to end
                     ] then [
-                        trailer: has/only trailer
+                        trailer: construct/only [] trailer
                         append headers body-of trailer
                         state/state: 'ready
                         res: state/awake make event! [
@@ -735,7 +735,7 @@ sys/make-scheme [
             if not port/spec/host [
                 fail make-http-error "Missing host address"
             ]
-            port/state: has [
+            port/state: make object! [
                 state: 'inited
                 connection: _
                 error: _
