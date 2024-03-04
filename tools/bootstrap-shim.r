@@ -519,9 +519,8 @@ enfixed: enfix :enfix
 empty-or-null?: :empty?
 
 
-; COLLECT in the bootstrap version would return NULL on no keeps.  But beyond
-; wanting to change that, we also want KEEP to be based on the new rules and
-; not have /ONLY.  So redo it here in the shim.
+; We want KEEP to be based on the new rules and not have /ONLY.
+; (Splices not implemented in bootstrap executable.)
 ;
 collect*: func3 [  ; variant giving NULL if no actual material kept
     return: [<opt> block!]  ; actually BLANK! acts like ~null~, but FUNC3
@@ -773,18 +772,6 @@ trim: adapt :trim [  ; there's a bug in TRIM/AUTO in 8994d23
         ]
     ]
 ]
-
-mutable: func3 [x [any-value!]] [
-    ;
-    ; Some cases which did not notice immutability in the bootstrap build
-    ; now do, e.g. MAKE OBJECT! on a block that you LOAD.  This is a no-op
-    ; in the older build, but should run MUTABLE in the new build when it
-    ; emerges as being needed.
-    ;
-    :x
-]
-
-const?: func3 [x] [return false]
 
 call*: adapt 'call [
     if block? command [command: compose command]
