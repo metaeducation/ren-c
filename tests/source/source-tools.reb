@@ -42,6 +42,8 @@ do join tools-dir %common-parsers.r
 do join tools-dir %text-lines.reb
 do join tools-dir %read-deep.reb
 
+null-to-blank: func [x [<opt> any-value!]] [either null? x [_] [:x]]
+
 ; rebsource is organised along the lines of a context sensitive vocabulary.
 ;
 
@@ -406,7 +408,7 @@ rebsource: context [
             ] else [
                 split-path/file item the filename:
                 any [
-                    parse/match filename item ["tmp-" to end]
+                    parse/match filename ["tmp-" to end]
                     not find extensions extension-of item
                 ] then [
                     item: null
