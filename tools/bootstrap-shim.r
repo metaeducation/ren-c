@@ -217,41 +217,6 @@ lib3/for-each [alias name shim] aliases [
 ;
 set '~done~ does [~]
 
-compose: func3 [block [block!] /deep <local> result pos product count] [
-    if deep [
-        fail/where "COMPOSE bootstrap shim doesn't recurse, yet" 'block
-    ]
-    pos: result: copy block
-    while [not tail? pos] [
-        if not group? pos/1 [
-            pos: next pos
-            continue
-        ]
-
-        product: do pos/1
-        all [
-            block? :product
-            #splice! = first product
-        ] then [
-            ; Doing the change can insert more than one item, update pos
-            ;
-            pos: change3/part pos second product 1
-        ] else [
-            case [
-                void? :product [
-                    change3/part pos void 1
-                ]
-                trash? :product [  ; e.g. compose [(if true [null])]
-                    fail/where "trash compose found" 'return
-                ]
-            ] else [
-                change3/only pos :product
-                pos: next pos
-            ]
-        ]
-    ]
-    return result
-]
 
 ; Things like INTEGER! are now type constraints, not to be confused with
 ; "cell kinds" like &integer.  SWITCH/TYPE does not exist in the bootstrap
@@ -369,16 +334,32 @@ set '&refinement? refinement!  ; modern refinement is PATH! constraint
 element?: :any-value?  ; used to exclude null
 any-value?: func3 [x] [true]  ; now inclusive of null
 
+matches: func3 [x [<opt> datatype! typeset! block!]] [
+    if :x [if block? x [make typeset! x] else [x]]
+]
+
+
+=== "SPLICE-AWARE FUNCTIONS IN BOOTSTRAP" ===
+
+; The bootstrap executable is still based on the /ONLY refinement for asking
+; to keep blocks as-is, while splicing by default.  This has been replaced
+; in modern Ren-C, where all append-like operations do as-is by default and
+; carry splicing intent on the value by means of antiform groups:
+;
+; https://forum.rebol.info/t/the-long-awaited-death-of-only/1607
+;
+; While many tweaks have been made to the bootstrap executable where it was
+; possible to easily sync it to modern decisions, it would be disruptive to
+; graft splicing into it... especially because it's most stable if the
+; bootstrap executable can build itself with the prior bootstrap executable.
+; These few shims have worked well enough.
+
 spread: func3 [x [<opt> blank! block!]] [
     case [
         null? :x [return null]
         blank? :x [return blank]
         true [reduce [#splice! x]]
     ]
-]
-
-matches: func3 [x [<opt> datatype! typeset! block!]] [
-    if :x [if block? x [make typeset! x] else [x]]
 ]
 
 append: func3 [series value [<opt> any-value!] /line <local> only] [
@@ -459,7 +440,71 @@ join: func3 [base value [void! any-value!]] [
     if void? :value [
         return copy base
     ]
-    append copy base :value  ; shim APPEND, that offers SPLICE behavior
+    append copy base :value  ; not APPEND3, shim APPEND w/SPLICE behavior
+]
+
+collect*: func3 [  ; variant giving NULL if no actual material kept
+    return: [<opt> block!]
+    body [block!]
+    <local> out keeper
+][
+    out: null
+    keeper: specialize (  ; SPECIALIZE to remove series argument
+        enclose 'append func3 [f [frame!] <with> out] [  ; gets /LINE, /DUP
+            if void? :f/value [return void]  ; doesn't "count" as collected
+
+            f/series: out: default [make block! 16]  ; won't return null now
+            :f/value  ; ELIDE leaves as result (F/VALUE invalid after DO F)
+            elide do f
+        ]
+    )[
+        series: <replaced>
+    ]
+
+    lib/reeval func3 [keep [action!] <with> return] body :keeper
+
+    :out
+]
+
+collect: chain [  ; Gives empty block instead of null if no keeps
+    :collect*  ; note: does not support , in bootstrap build
+    specialize 'else [branch: [copy []]]
+]
+
+compose: func3 [block [block!] /deep <local> result pos product count] [
+    if deep [
+        fail/where "COMPOSE bootstrap shim doesn't recurse, yet" 'block
+    ]
+    pos: result: copy block
+    while [not tail? pos] [
+        if not group? pos/1 [
+            pos: next pos
+            continue
+        ]
+
+        product: do pos/1
+        all [
+            block? :product
+            #splice! = first product
+        ] then [
+            ; Doing the change can insert more than one item, update pos
+            ;
+            pos: change3/part pos second product 1
+        ] else [
+            case [
+                void? :product [
+                    change3/part pos void 1
+                ]
+                trash? :product [  ; e.g. compose [(if true [null])]
+                    fail/where "trash compose found" 'return
+                ]
+            ] else [
+                change3/only pos :product
+                pos: next pos
+            ]
+        ]
+    ]
+    return result
 ]
 
 
@@ -517,38 +562,6 @@ enfixed: enfix :enfix
 ; EMPTY? in modern Ren-C only considers blanks and tail series empty.
 ;
 empty-or-null?: :empty?
-
-
-; We want KEEP to be based on the new rules and not have /ONLY.
-; (Splices not implemented in bootstrap executable.)
-;
-collect*: func3 [  ; variant giving NULL if no actual material kept
-    return: [<opt> block!]  ; actually BLANK! acts like ~null~, but FUNC3
-    body [block!]
-    <local> out keeper
-][
-    out: null
-    keeper: specialize (  ; SPECIALIZE to remove series argument
-        enclose 'append func3 [f [frame!] <with> out] [  ; gets /LINE, /DUP
-            if void? :f/value [return void]  ; doesn't "count" as collected
-
-            f/series: out: default [make block! 16]  ; won't return null now
-            :f/value  ; ELIDE leaves as result (F/VALUE invalid after DO F)
-            elide do f
-        ]
-    )[
-        series: <replaced>
-    ]
-
-    lib/reeval func3 [keep [action!] <with> return] body :keeper
-
-    :out
-]
-
-collect: chain [  ; Gives empty block instead of null if no keeps
-    :collect*  ; note: does not support , in bootstrap build
-    specialize 'else [branch: [copy []]]
-]
 
 
 collect-lets: func3 [
@@ -865,10 +878,6 @@ apply: function3 [
 split-path: func [] [
     fail/where "Use SPLIT-PATH3 in Bootstrap (no multi-return)" 'return
 ]
-
-
-=== "SANITY CHECKS" ===
-
 
 ; This is a surrogate for being able to receive the environment for string
 ; interpolation from a block.  Instead, the words that aren't in the user
