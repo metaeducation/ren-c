@@ -121,51 +121,47 @@ static void reverse_string(Value* v, REBLEN len)
     if (len == 0)
         return; // if non-zero, at least one character in the string
 
-    if (Is_String_ASCII(v))
-        reverse_binary(v, len);
-    else {
-        // !!! This is an inefficient method for reversing strings with
-        // variable size codepoints.  Better way could work in place:
-        //
-        // https://stackoverflow.com/q/199260/
+    // !!! This is an inefficient method for reversing strings with
+    // variable size codepoints.  Better way could work in place:
+    //
+    // https://stackoverflow.com/q/199260/
 
-        DECLARE_MOLD (mo);
-        Push_Mold(mo);
+    DECLARE_MOLD (mo);
+    Push_Mold(mo);
 
-        REBLEN val_len_head = VAL_LEN_HEAD(v);
+    REBLEN val_len_head = VAL_LEN_HEAD(v);
 
-        REBSER *ser = VAL_SERIES(v);
-        Ucs2(const*) up = String_Last(ser); // last exists due to len != 0
-        REBLEN n;
-        for (n = 0; n < len; ++n) {
-            REBUNI c;
-            up = Ucs2_Back(&c, up);
-            Append_Utf8_Codepoint(mo->series, c);
-        }
-
-        DECLARE_VALUE (temp);
-        Init_Text(temp, Pop_Molded_String(mo));
-
-        // Effectively do a CHANGE/PART to overwrite the reversed portion of
-        // the string (from the input value's index to the tail).
-
-        DECLARE_VALUE (verb);
-        Init_Word(verb, Canon(SYM_CHANGE));
-        Modify_String(
-            v,
-            unwrap(Cell_Word_Id(verb)),
-            temp,
-            0, // not AM_PART, we want to change all len bytes
-            len,
-            1 // dup count
-        );
-
-        // Regardless of whether the whole string was reversed or just some
-        // part from the index to the tail, the length shouldn't change.
-        //
-        assert(VAL_LEN_HEAD(v) == val_len_head);
-        UNUSED(val_len_head);
+    REBSER *ser = VAL_SERIES(v);
+    Ucs2(const*) up = String_Last(ser); // last exists due to len != 0
+    REBLEN n;
+    for (n = 0; n < len; ++n) {
+        REBUNI c;
+        up = Ucs2_Back(&c, up);
+        Append_Utf8_Codepoint(mo->series, c);
     }
+
+    DECLARE_VALUE (temp);
+    Init_Text(temp, Pop_Molded_String(mo));
+
+    // Effectively do a CHANGE/PART to overwrite the reversed portion of
+    // the string (from the input value's index to the tail).
+
+    DECLARE_VALUE (verb);
+    Init_Word(verb, Canon(SYM_CHANGE));
+    Modify_String(
+        v,
+        unwrap(Cell_Word_Id(verb)),
+        temp,
+        0, // not AM_PART, we want to change all len bytes
+        len,
+        1 // dup count
+    );
+
+    // Regardless of whether the whole string was reversed or just some
+    // part from the index to the tail, the length shouldn't change.
+    //
+    assert(VAL_LEN_HEAD(v) == val_len_head);
+    UNUSED(val_len_head);
 }
 
 
@@ -1585,7 +1581,7 @@ REBTYPE(String)
         if (REF(all)) // Not Supported
             fail (Error_Bad_Refine_Raw(ARG(all)));
 
-        if (ANY_STRING(v) and not Is_String_ASCII(v))
+        if (ANY_STRING(v))  // always true here
             fail ("UTF-8 Everywhere: String sorting temporarily unavailable");
 
         Sort_String(
@@ -1636,7 +1632,7 @@ REBTYPE(String)
             return OUT;
         }
 
-        if (ANY_STRING(v) and not Is_String_ASCII(v))
+        if (ANY_STRING(v))  // always true here
             fail ("UTF-8 Everywhere: String shuffle temporarily unavailable");
 
         Shuffle_String(v, REF(secure));
