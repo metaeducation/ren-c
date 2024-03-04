@@ -614,16 +614,27 @@ printf: func [
 ]
 
 
+; Note: Newer Ren-C supports QUOTED! to split on the value as-is, unquoted.
+; That can be done with a BLOCK! in this version, with a quoted item in it,
+; although there is no "remainder logic" at the end.
+;
 split: function [
     {Split series in pieces: fixed/variable size, fixed number, or delimited}
 
     return: [block!]
     series "The series to split"
-        [any-series!]
+        [<maybe> any-series!]
     dlm "Split size, delimiter(s) (if all integer block), or block rule(s)"
-        [block! integer! char! bitset! text! tag!]
+        [void! block! integer! char! bitset! text!]
     /into "If dlm is integer, split in n pieces (vs. pieces of length n)"
 ][
+    if void? dlm [  ; nothing to split by
+        return reduce [series]
+    ]
+
+    ; In newer Ren-C, this is @[1 2 3] and not [1 2 3], avoiding ambiguity
+    ; with BLOCK! meaning PARSE rule.
+    ;
     if block? dlm and [parse/match dlm [some integer!]] [
         return map-each len dlm [
             if len <= 0 [
@@ -633,8 +644,6 @@ split: function [
             copy/part series series: skip series len
         ]
     ]
-
-    if tag? dlm [dlm: form dlm] ;-- reserve other strings for future meanings
 
     result: collect [
         parse/match series <- if integer? dlm [

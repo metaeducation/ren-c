@@ -19,7 +19,6 @@
 ([[1 2] [3] [4 5 6]] == split [1 2 3 4 5 6] [2 1 6])
 ([[1 2] [5 6]] == split [1 2 3 4 5 6] [2 -2 2])
 (["abc" "de" "fghi" "jk"] == split "abc,de,fghi,jk" #",")
-(["abc" "de" "fghi" "jk"] == split "abc<br>de<br>fghi<br>jk" <br>)
 (["a" "b" "c"] == split "a.b.c" ".")
 (["c" "c"] == split "c c" " ")
 (["1,2,3"] == split "1,2,3" " ")
@@ -32,3 +31,9 @@
 (["abc" "de" "fghi" "jk"] == split "abc|de/fghi:jk" charset "|/:")
 (["abc" "de" "fghi" "jk"] == split "abc^M^Jde^Mfghi^Jjk" [CR LF | #"^M" | newline])
 (["abc" "de" "fghi" "jk"] == split "abc     de fghi  jk" [some #" "])
+
+; VOID has nothing to split by, return original input (but in a block, to
+; match the other outputs).
+;
+(["a,b,c"] = split "a,b,c" void)
+([[a b c]] = split [a b c] void)
