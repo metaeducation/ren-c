@@ -755,7 +755,7 @@ ld: make linker-class [
                     ]
                 ][
                     unspaced [
-                        if find maybe+ dep/flags 'static ["-static "]
+                        if find dep/flags 'static ["-static "]
                         "-l" dep/output
                     ]
                 ]
@@ -1348,7 +1348,7 @@ makefile: make generator-class [
                         fail ["Unknown entry/target type" entry/target]
                     ]
                     ensure [block! blank!] entry/depends
-                    for-each w (maybe+ entry/depends) [
+                    for-each w entry/depends [
                         switch w/class [
                             #variable [
                                 keep ["$(" w/name ")"]
@@ -1374,7 +1374,7 @@ makefile: make generator-class [
                 ;; may use escaped makefile variables that get substituted.
                 ;;
                 ensure [block! blank!] entry/commands
-                for-each cmd (maybe+ entry/commands) [
+                for-each cmd entry/commands [
                     c: ((match text! cmd) else [gen-cmd cmd]) else [continue]
                     if empty? c [continue] ;; !!! Review why this happens
                     keep [tab c] ;; makefiles demand TAB codepoint :-(

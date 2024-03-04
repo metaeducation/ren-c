@@ -25,3 +25,19 @@
     f: does [_]
     _ == f
 )]
+
+[
+    (void? for-each x _ [1020])
+    ([] = map-each x _ [1020])
+    (void? for-next x _ [1020])
+    (0 = remove-each x _ [true])
+    (void? every x _ [true])
+    (void? for-skip x _ 2 [1020])
+
+    (null = take _)
+    (null = find _ 304)
+    (null = select _ 304)
+    (null = pick _ 304)
+
+    (_ = copy _)  ; do NOT want opt out behavior for copy...!
+]

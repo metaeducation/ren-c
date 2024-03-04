@@ -222,7 +222,7 @@ find: generic [
     {Searches for the position where a matching value is found}
     return: {position found, else blank (void if series is itself blank)}
         [<opt> any-series! blank! bar!]
-    series [<maybe> any-series! any-context! map! bitset! typeset!]
+    series [<maybe> blank! any-series! any-context! map! bitset! typeset!]
     value [any-value!]
     /part {Limits the search to a given length or position}
     limit [any-number! any-series! pair!]
@@ -239,7 +239,7 @@ find: generic [
 select: generic [
     {Searches for a value; returns the value that follows, else void.}
     return: [<opt> any-value!]
-    series [<maybe> any-series! any-context! map!]
+    series [<maybe> blank! any-series! any-context! map!]
     value [any-value!]
     /part {Limits the search to a given length or position}
     limit [any-number! any-series! pair!]
@@ -276,7 +276,7 @@ copy: generic [
     return: {Return type will match the input type, or void if blank}
         [<opt> any-value!]
     value {If an ANY-SERIES!, it is only copied from its current position}
-        [any-value!]
+        [<maybe> any-value!]
     /part {Limits to a given length or position}
     limit [any-number! any-series! pair!]
     /deep {Also copies series values within the block}
@@ -288,7 +288,8 @@ take: generic [
     {Removes and returns one or more elements}
 
     return: [<opt> any-value!]
-    series [any-series! port! blank! varargs!] {At position (modified)}
+    series [<maybe> blank! any-series! port! blank! varargs!]
+        {At position (modified)}
     /part {Specifies a length or end position}
     limit [any-number! any-series! pair! bar!]
     /deep {Also copies series values within the block}

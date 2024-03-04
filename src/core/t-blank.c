@@ -143,7 +143,7 @@ REBTYPE(Unit)
     Value* val = D_ARG(1);
     assert(not IS_NULLED(val));
 
-    if (not IS_VOID(val))
+    if (not IS_VOID(val) and not IS_BLANK(val))
         fail (Error_Invalid(val));
 
     switch (Cell_Word_Id(verb)) {
@@ -173,9 +173,14 @@ REBTYPE(Unit)
 
     case SYM_SELECT:
     case SYM_FIND:
-    case SYM_COPY:
     case SYM_SKIP:
     case SYM_AT:
+    case SYM_TAKE:
+        return nullptr;
+
+    case SYM_COPY:
+        if (IS_BLANK(val))
+            return Init_Blank(OUT);
         return nullptr;
 
     default:

@@ -133,15 +133,13 @@ console!: make object! [
             ; There are no antiforms in the R3C branch, but we can lie and
             ; make this legacy bootstrapping branch at least look a bit like
             ; the new branch.
-
-            print [result "~  ; anti"]
-
+            ;
             return
         ]
 
         case [
             void? :v [  ; nothingness (e.g. result of do [] or if false [...])
-                return  ; show nothing!
+                print [result "~void~  ; anti"]
             ]
 
             null? :v [

@@ -639,6 +639,12 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
     les.data = ARG(data);
     les.body = ARG(body);
 
+    if (IS_BLANK(les.data)) {
+        if (mode == LOOP_MAP_EACH)
+            return Init_Block(OUT, Make_Arr(0));
+        return OUT;
+    }
+
     Virtual_Bind_Deep_To_New_Context(
         ARG(body), // may be updated, will still be GC safe
         &les.pseudo_vars_ctx,
@@ -868,11 +874,11 @@ DECLARE_NATIVE(for)
 //  "Evaluates a block for periodic values in a series"
 //
 //      return: "Last body result, or null if BREAK"
-//          [<opt> any-value!]
+//          [<opt> void! any-value!]
 //      'word "Variable set to each position in the series at skip distance"
 //          [word! lit-word! blank!]
 //      series "The series to iterate over"
-//          [<maybe> any-series!]
+//          [<maybe> blank! any-series!]
 //      skip "Number of positions to skip each time"
 //          [<maybe> integer!]
 //      body "Code to evaluate each time"
@@ -886,6 +892,9 @@ DECLARE_NATIVE(for_skip)
     Value* series = ARG(series);
 
     Init_Void(OUT);  // result if body never runs, like `while [null] [...]`
+
+    if (IS_BLANK(series))
+        return OUT;
 
     REBINT skip = Int32(ARG(skip));
     if (skip == 0) {
@@ -1041,11 +1050,11 @@ DECLARE_NATIVE(cycle)
 //
 //  "Evaluates a block for each value(s) in a series."
 //
-//      return: [<opt> any-value!]
+//      return: [<opt> void! any-value!]
 //          {Last body result, or null if BREAK}
 //      'vars [word! lit-word! block!]
 //          "Word or block of words to set each time, no new var if LIT-WORD!"
-//      data [<maybe> any-series! any-context! map! datatype! action!]
+//      data [<maybe> blank! any-series! any-context! map! datatype! action!]
 //          "The series to traverse"
 //      body [block! action!]
 //          "Block to evaluate each time"
@@ -1062,11 +1071,11 @@ DECLARE_NATIVE(for_each)
 //
 //  {Iterate and return false if any previous body evaluations were false}
 //
-//      return: [<opt> any-value!]
+//      return: [<opt> void! any-value!]
 //          {null on BREAK, blank on empty, false or the last truthy value}
 //      'vars [word! block!]
 //          "Word or block of words to set each time (local)"
-//      data [<maybe> any-series! any-context! map! datatype! action!]
+//      data [<maybe> blank! any-series! any-context! map! datatype! action!]
 //          "The series to traverse"
 //      body [block! action!]
 //          "Block to evaluate each time"
@@ -1360,7 +1369,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
 //          {Number of removed series items, or null if BREAK}
 //      'vars [word! block!]
 //          "Word or block of words to set each time (local)"
-//      data [<maybe> any-series!]
+//      data [<maybe> blank! any-series!]
 //          "The series to traverse (modified)" ; should BLANK! opt-out?
 //      body [block! action!]
 //          "Block to evaluate (return TRUE to remove)"
@@ -1372,6 +1381,9 @@ DECLARE_NATIVE(remove_each)
 
     struct Remove_Each_State res;
     res.data = ARG(data);
+
+    if (IS_BLANK(res.data))
+        return Init_Integer(OUT, 0);
 
     if (not (
         ANY_ARRAY(res.data) or ANY_STRING(res.data) or IS_BINARY(res.data)
@@ -1476,11 +1488,11 @@ DECLARE_NATIVE(remove_each)
 //
 //  {Evaluate a block for each value(s) in a series and collect as a block.}
 //
-//      return: [<opt> block!]
+//      return: [<opt> void! block!]
 //          {Collected block (BREAK/WITH can add a final result to block)}
 //      'vars [word! block!]
 //          "Word or block of words to set each time (local)"
-//      data [<maybe> any-series! action!]
+//      data [<maybe> blank! any-series! action!]
 //          "The series to traverse"
 //      body [block!]
 //          "Block to evaluate each time"
