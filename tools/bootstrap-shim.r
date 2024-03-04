@@ -93,21 +93,29 @@ trap [
 
     system.options.redbol-paths: true  ; new interpreter, make it act older
 
-    === "TWEAKS SO MODERN REN-C DOESN'T ACT TOO MODERN" ===
+
+    === "BACKWARDS-LEANING BOOTSTRAP FUNCTIONS" ===
+
+    ; Most of the time, we want to shim the old executable so that it acts like
+    ; a modern one...so the source in files implementing the build process does
+    ; not look any more antiquated than it has to.  But some features are just
+    ; not available.  e.g. SET-BLOCK! and multi-return do not exist in the
+    ; bootstrap executable.  In these cases, the modern EXE is shimmed to act
+    ; like the old one, offering the function under the name with a number.
+    ;
+    ; Note that the bootstrap strategy is to base the code on Rebol2-style
+    ; PARSE, which UPARSE should be able to emulate.  While it has the rules
+    ; of Rebol2 PARSE, the result is null on failure to be ELSE-triggering.
+    ; In the distant future, modern EXE bootstrap should use UPARSE-based code
+    ; of Redbol's PARSE2.  For now, it relies on hacks to make PARSE3 act
+    ; in a legacy way.
 
     export parse: func [] [
         fail/where "Use PARSE2 in Bootstrap Process, not UPARSE/PARSE" 'return
     ]
 
-    ; In the distant future, modern EXE bootstrap should use UPARSE-based code
-    ; of Redbol's PARSE2.  For now, it relies on hacks to make PARSE3 act
-    ; in a legacy way.
-    ;
     export parse2: :parse3/redbol
 
-    ; Bootstrap EXE doesn't support multi-returns so SPLIT-PATH takes a /DIR
-    ; refinement of a variable to write to.
-    ;
     export split-path3: enclose (
         augment :split-path [/file [any-word? any-path?]]
     ) f -> [
@@ -208,7 +216,31 @@ lib3/for-each [alias name shim] aliases [
 ]
 
 
-;=== THESE REMAPPINGS ARE OKAY TO USE IN THE BOOTSTRAP SHIM ITSELF ===
+=== "BACKWARDS-LEANING BOOTSTRAP FUNCTIONS (SHIM ERRORS)" ===
+
+; At the top of the file, modern executables are dialed back on features which
+; can't be emulated by older executables.  Here we raise errors in the old
+; executable on any undecorated functions that have no emulation equivalent.
+
+parse2: :lib/parse/match
+
+parse: does [
+    fail "Only PARSE2 is available in bootstrap executable, not PARSE"
+]
+parse3: does [
+    fail "Only PARSE2 is available in bootstrap executable, not PARSE3"
+]
+
+split-path: func3 [] [
+    fail/where "Use SPLIT-PATH3 in Bootstrap (no multi-return)" 'return
+]
+
+transcode: func3 [] [
+    fail/where "Use TRANSCODE3 in Bootstrap (no multi-return)" 'return
+]
+
+
+=== "THESE REMAPPINGS ARE OKAY TO USE IN THE BOOTSTRAP SHIM ITSELF" ===
 
 ; Done is used as a signal in the boot files that the expected end is reached.
 ; This is a QUASI-WORD? in modern Ren-C, but a plain word in the bootstrap EXE.
@@ -521,19 +553,6 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
 do compose3 [(to set-word! first [->]) enfix :lambda]
 unset first [=>]
 
-
-; Bootstrap strategy is to base the code on Rebol2-style PARSE, which UPARSE
-; should be able to emulate.  While it has the rules of Rebol2 PARSE, the
-; result is null on failure in order to be ELSE-triggering.
-;
-parse2: :lib/parse/match
-
-parse: does [
-    fail "Only PARSE2 is available in bootstrap executable, not PARSE"
-]
-parse3: does [
-    fail "Only PARSE2 is available in bootstrap executable, not PARSE3"
-]
 
 ; Enfixedness was conceived as not a property of an action itself, but of a
 ; particular relationship between a word and an action.  While this had some
@@ -866,9 +885,6 @@ apply: function3 [
     do f
 ]
 
-split-path: func [] [
-    fail/where "Use SPLIT-PATH3 in Bootstrap (no multi-return)" 'return
-]
 
 ; This is a surrogate for being able to receive the environment for string
 ; interpolation from a block.  Instead, the words that aren't in the user
