@@ -464,11 +464,10 @@ change: func3 [series value [<opt> any-value!] /line <local> only] [
     change3/(blank-to-void only)/(blank-to-void line) series :value
 ]
 
-; It obeys the "as-is" by default rule, so that `join 'a/b [c]` will give the
-; predictable outcome of `a/b/[c]`.  This means that SPREAD must be used to
-; get the splicing semantics, and plain `join "ab" [c]` is an error.
-;
-join: func3 [base value [void! any-value!]] [
+join: func3 [
+    base [binary! any-string! path!]
+    value [void! any-value!]
+][
     if void? :value [
         return copy base
     ]
