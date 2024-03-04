@@ -43,7 +43,7 @@
 
         let consumed: copy/part input remainder
 
-        subpending: default [copy []]
+        if blank? subpending [subpending: copy []]
 
         ; GROUP!s in the pending list are deferred until the parse finishes
         ; (or reaches a PHASE boundary).  We don't know if this rule will

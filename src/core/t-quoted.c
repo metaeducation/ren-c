@@ -407,7 +407,7 @@ DECLARE_INTRINSIC(unmeta_p)
 //
 //      return: "Antiform of GROUP! or unquoted value (pass null and void)"
 //          [~null~ ~void~ element? splice?]
-//      value [~null~ ~void~ quoted? blank! any-array?]
+//      value [~null~ ~void~ blank! any-array? quoted? quasi?]  ; see [3]
 //  ]
 //
 DECLARE_INTRINSIC(spread)
@@ -419,38 +419,43 @@ DECLARE_INTRINSIC(spread)
 // 1. The current thinking on SPREAD is that it acts as passthru for null and
 //    for void, and whatever you were going to pass the result of spread to
 //    is responsible for raising errors or MAYBE'ing it.  Seems to work out.
+//    It also DEGRADEs quasiforms, so if you have reified intent in a block
+//    for voidness or nullness it passes thru those cases.
 //
-// 2. BLANK! is sort of the universal placeholder meaning agnostically "no
-//    value here".  If you wanted SPREAD to give an error you could use the
-//    more ornery single-character placeholder `~` (a quasi-void).
+// 2. BLANK! is considered EMPTY? and hence legal to use with spread.  It
+//    could return an empty splice...but that would then wind up having to
+//    make a decision on using a "cheap" shared read-only array, or making
+//    a new empty array to use.  Different usage situations would warrant
+//    one vs. the other, e.g. GLOM expects splices to be mutable.  Void is
+//    cheap and agnostic, so it's the logical choice here.
 //
 // 3. !!! The idea that quoted elements spread to be their unquoted forms was
 //    presumably added here to provide an efficiency hack, so that you could
-//    avoid making a series.  This has the added behavior that a single quote
-//    (') would SPREAD to make a VOID...which may be desirable even if the
-//    generic unquoting behavior is not.  This might be something controlled
-//    with a refinement (which would prevent spread from being an intrinsic)
-//    but it may just be undesirable.  Review.
+//    avoid making a series.  It's probably a bad idea.  Leaving here to
+//    keep the concept under review, but expect it to go away.
 {
     UNUSED(phase);
 
-    if (Is_Void(arg)) {
-        Init_Void(out);  // pass through [1]
-    }
-    else if (Is_Nulled(arg)) {
-        Init_Nulled(out);  // pass through [1]
+    if (Any_Array(arg)) {  // most common case
+        Copy_Cell(out, arg);
+        HEART_BYTE(out) = REB_GROUP;
+        QUOTE_BYTE(out) = ANTIFORM_0;
     }
     else if (Is_Blank(arg)) {
-        Init_Splice(out, EMPTY_ARRAY);  // treat blank as if it was [] [2]
+        Init_Void(out);  // empty array has problems if used with GLOM [2]
+    }
+    else if (Is_Void(arg) or Is_Quasi_Void(arg)) {
+        Init_Void(out);  // pass through [1]
+    }
+    else if (Is_Nulled(arg) or Is_Quasi_Null(arg)) {
+        Init_Nulled(out);  // pass through [1]
     }
     else if (Is_Quoted(arg)) {
         Unquotify(Copy_Cell(out, arg), 1);  // !!! good idea or not?  [3]
     }
     else {
-        assert(Any_Array(arg));
-        Copy_Cell(out, arg);
-        HEART_BYTE(out) = REB_GROUP;
-        QUOTE_BYTE(out) = ANTIFORM_0;
+        assert(Is_Quasiform(arg));
+        fail (arg);
     }
 }
 

@@ -318,7 +318,7 @@ find: generic [
     @tail "Returns the end of the found data"
         [~null~ any-series?]
     series [
-        <maybe> any-series? any-context? map!
+        <maybe> blank! any-series? any-context? map!
     ]
     pattern "What to find, if an action call as a predicate on each item"
         [<maybe> element? splice? action?]
@@ -335,7 +335,7 @@ select: generic [
 
     return: [any-value?]
     @tail []  ; for frame compatibility with FIND
-    series [<maybe> any-series? any-context? map! bitset!]
+    series [<maybe> blank! any-series? any-context? map! bitset!]
     value [<maybe> element? splice? action?]
     /part "Limits the search to a given length or position"
         [any-number? any-series? pair!]
@@ -420,7 +420,7 @@ take: generic [
 
     return: [any-value?]  ; !!! Variadic TAKE may evaluate, rethink
     series "At position (modified)"
-        [any-series? port! varargs!]
+        [blank! any-series? port! varargs!]
     /part "Specifies a length or end position"
         [any-number? any-series? pair!]
     /deep "Also copies series values within the block"

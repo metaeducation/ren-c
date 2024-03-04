@@ -543,7 +543,7 @@ DECLARE_NATIVE(cfor)
 //      'word "Variable set to each position in the series at skip distance"
 //          [word! lit-word? blank!]
 //      series "The series to iterate over"
-//          [<maybe> any-series?]
+//          [<maybe> blank! any-series?]
 //      skip "Number of positions to skip each time"
 //          [<maybe> integer!]
 //      body "Code to evaluate each time"
@@ -556,6 +556,9 @@ DECLARE_NATIVE(for_skip)
 
     Value* series = ARG(series);
     Value* body = ARG(body);
+
+    if (Is_Blank(series))
+        return VOID;
 
     REBINT skip = Int32(ARG(skip));
     if (skip == 0) {
@@ -1210,7 +1213,7 @@ DECLARE_NATIVE(for_each)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
 //      data "The series to traverse"
-//          [<maybe> any-series? any-context? map! action?]
+//          [<maybe> blank! any-series? any-context? map! action?]
 //      body [<const> block! meta-block!]
 //          "Block to evaluate each time"
 //  ]
@@ -1332,7 +1335,7 @@ DECLARE_NATIVE(every)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
 //      data "The series to traverse (modified)"
-//          [<maybe> any-series?]
+//          [<maybe> blank! any-series?]
 //      body "Block to evaluate (return TRUE to remove)"
 //          [<const> block!]
 //  ]
@@ -1386,6 +1389,9 @@ DECLARE_NATIVE(remove_each)
 
     Value* data = ARG(data);
     Value* body = ARG(body);
+
+    if (Is_Blank(data))
+        return Init_Integer(OUT, 0);
 
     Series* series = Cell_Series_Ensure_Mutable(data);  // check even if empty
 
@@ -1687,14 +1693,16 @@ DECLARE_NATIVE(map_each)
     UNUSED(PARAM(vars));
     UNUSED(PARAM(body));
 
+    if (Is_Blank(ARG(data)))  // should have same result as empty array data
+        return Init_Block(OUT, Make_Array(0));
+
     // The theory is that MAP would use a dialect on BLOCK! arguments for data
     // by default, like [1 thru 10].  But you could give it an arbitrary
     // enumerating action and it would iteratively call it.  Since such an
     // iterator does not exist yet (and would not be cheap) a QUOTED? BLOCK!
     // is used temporarily as a substitute for passing a block iterator.
     //
-    if (not Is_Blank(ARG(data)))
-        Quotify(ARG(data), 1);
+    Quotify(ARG(data), 1);
 
     INIT_LVL_PHASE(LEVEL, ACT_IDENTITY(VAL_ACTION(Lib(MAP))));
     // INIT_LVL_BINDING ?
@@ -1756,13 +1764,13 @@ DECLARE_NATIVE(map)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Is_Block(body) or Is_Meta_Block(body))
-        Add_Definitional_Break_Continue(body, level_);
-
     assert(Is_Fresh(OUT));  // output only written during MAP if BREAK hit
 
     if (Is_Blank(data))  // same response as to empty series
         return Init_Block(OUT, Make_Array(0));
+
+    if (Is_Block(body) or Is_Meta_Block(body))
+        Add_Definitional_Break_Continue(body, level_);
 
     if (Is_Action(data)) {
         // treat as a generator

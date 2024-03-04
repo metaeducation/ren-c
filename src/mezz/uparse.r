@@ -146,13 +146,13 @@ combinator: func [
         @remainder [any-series?]  ; all combinators have remainder
 
         (if spec.1 = '@pending [
-            assert [spec.2 = [~null~ block!]]
+            assert [spec.2 = [blank! block!]]
             autopipe: false  ; they're asking to handle pending themselves
             spread reduce ['@pending spec.2]
             elide spec: my skip 2
         ] else [
             autopipe: true  ; they didn't mention pending, handle automatically
-            spread [@pending [~null~ block!]]
+            spread [@pending [blank! block!]]
         ])
 
         state [frame!]
@@ -170,7 +170,7 @@ combinator: func [
         (spread if autopipe '[
             let f: binding of $return
 
-            pending: null
+            pending: _
             let in-args: false
             for-each [key val] f [
                 if not in-args [
@@ -192,7 +192,7 @@ combinator: func [
                         [^result' remainder subpending]: eval f2 except e -> [
                             return raise e
                         ]
-                        pending: glom pending maybe spread subpending
+                        pending: glom pending spread subpending
                         return pack [
                             unmeta result', remainder, subpending
                         ]
@@ -506,7 +506,7 @@ default-combinators: make map! reduce [
         ; things like PENDING (which gets type checked as a multi-return, so
         ; we can't leave it as unset).  Review.
         ;
-        state.pending: null
+        state.pending: _
         state.return unmeta value'
     ]
 
@@ -740,7 +740,7 @@ default-combinators: make map! reduce [
         {Special noun-like keyword subdispatcher for TAG!s}
         return: "What the delegated-to tag returned"
             [any-value? pack?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         value [tag!]
         <local> comb
     ][
@@ -977,7 +977,7 @@ default-combinators: make map! reduce [
     'collect combinator [
         return: "Block of collected values"
             [block!]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         parser [action?]
         <local> collected
     ][
@@ -995,7 +995,7 @@ default-combinators: make map! reduce [
         ; unquoted forms.  Punt on such optimizations for now.
         ;
         collected: collect [
-            remove-each item (maybe pending) [
+            remove-each item pending [
                 if quoted? item [keep unquote item, true]
             ]
         ]
@@ -1006,7 +1006,7 @@ default-combinators: make map! reduce [
     'keep combinator [
         return: "The kept value (same as input)"
             [any-value?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         parser [action?]
         <local> result'
     ][
@@ -1019,7 +1019,7 @@ default-combinators: make map! reduce [
             ]
         ]
         if void? unmeta result' [
-            pending: null
+            pending: _
             return void
         ]
 
@@ -1095,7 +1095,7 @@ default-combinators: make map! reduce [
     'gather combinator [
         return: "The gathered object"
             [object!]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         parser [action?]
         <local> obj
     ][
@@ -1107,7 +1107,7 @@ default-combinators: make map! reduce [
         ; intended for GATHER.
 
         obj: make object! collect [
-            remove-each item (maybe pending) [
+            remove-each item pending [
                 if block? item [keep spread item, true]
             ] else [
                 ; should it error or fail if pending was NULL ?
@@ -1120,7 +1120,7 @@ default-combinators: make map! reduce [
     'emit combinator [
         return: "The emitted value"
             [any-value?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         'target [set-word! set-group!]
         parser [action?]
         <local> result'
@@ -1392,7 +1392,7 @@ default-combinators: make map! reduce [
     group! combinator [
         return: "Result of evaluating the group (invisible if <delay>)"
             [any-value? pack?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         value [any-array?]  ; allow any array to use this "DO combinator"
     ][
         remainder: input
@@ -1405,14 +1405,14 @@ default-combinators: make map! reduce [
             return nihil  ; act invisible
         ]
 
-        pending: null
+        pending: _
         return eval value  ; !!! Pass on definitional failure?
     ]
 
     'phase combinator [
         return: "Result of the parser evaluation"
             [any-value? pack?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         parser [action?]
         <local> result'
     ][
@@ -1422,7 +1422,7 @@ default-combinators: make map! reduce [
 
         ; Run GROUP!s in order, removing them as one goes
         ;
-        remove-each item (maybe pending) [
+        remove-each item pending [
             if group? item [eval item, true]
         ]
 
@@ -1447,7 +1447,7 @@ default-combinators: make map! reduce [
     get-group! combinator [
         return: "Result of running combinator from fetching the WORD!"
             [any-value? pack?]
-        @pending [~null~ block!]   ; we retrigger combinator; it may KEEP, etc.
+        @pending [blank! block!]   ; we retrigger combinator; it may KEEP, etc.
 
         value [any-array?]  ; allow any array to use this "REPARSE-COMBINATOR"
         <local> r comb
@@ -1461,7 +1461,7 @@ default-combinators: make map! reduce [
             r = nihil'  ; like [:(comment "hi")]
             r = void'  ; like [:(if false [...])]
         ] then [
-            pending: null
+            pending: _
             remainder: input
             return nihil  ; invisible
         ]
@@ -1559,7 +1559,7 @@ default-combinators: make map! reduce [
     quoted! combinator [
         return: "The matched value"
             [nihil? element? splice?]  ; !!! splice b.c. called by @(...)
-        @pending [~null~ block!]
+        @pending [blank! block!]
         value [quoted? quasi?]
         <local> comb neq?
     ][
@@ -1572,7 +1572,7 @@ default-combinators: make map! reduce [
         ; contrast, null rules are errors)
         ;
         if void' = value [
-            pending: null
+            pending: _
             remainder: input
             return nihil  ; act invisibly
         ]
@@ -1586,7 +1586,7 @@ default-combinators: make map! reduce [
                     ]
                 ]
                 remainder: next input
-                pending: null
+                pending: _
                 return unquote value
             ]
             if not splice? unmeta value [
@@ -1601,7 +1601,7 @@ default-combinators: make map! reduce [
                 input: next input
             ]
             remainder: input
-            pending: null
+            pending: _
             return unmeta value
         ]
 
@@ -1626,7 +1626,7 @@ default-combinators: make map! reduce [
 
     'lit combinator [  ; should long form be LITERALLY or LITERAL ?
         return: "Literal value" [element?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         'value [element?]
         <local> comb
     ][
@@ -1923,7 +1923,7 @@ default-combinators: make map! reduce [
     '@ combinator [
         return: "Match product of result of applying rule"
             [element? splice?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         parser [action?]
         <local> comb result'
     ][
@@ -1935,7 +1935,7 @@ default-combinators: make map! reduce [
 
     the-word! combinator [
         return: "Literal value or splice" [element? splice?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         value [the-word!]
         <local> comb
     ][
@@ -1945,7 +1945,7 @@ default-combinators: make map! reduce [
 
     the-path! combinator [
         return: "Literal value or splice" [element? splice?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         value [the-word!]
         <local> comb
     ][
@@ -1955,7 +1955,7 @@ default-combinators: make map! reduce [
 
     the-tuple! combinator [
         return: "Literal value or splice" [element? splice?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         value [the-tuple!]
         <local> comb
     ][
@@ -1965,7 +1965,7 @@ default-combinators: make map! reduce [
 
     the-group! combinator [
         return: "Literal value or splice" [element? splice?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         value [the-group!]
         <local> result' comb subpending single
     ][
@@ -1986,13 +1986,13 @@ default-combinators: make map! reduce [
                 return raise e
             ]
 
-        pending: glom pending maybe spread subpending
+        pending: glom pending spread subpending
         return unmeta result'
     ]
 
     the-block! combinator [
         return: "Literal value" [element?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         value [the-block!]
         <local> result' comb subpending
     ][
@@ -2005,18 +2005,18 @@ default-combinators: make map! reduce [
         ; as useless as it sounds, since a rule can synthesize an arbitrary
         ; value.
 
-        pending: null
+        pending: _
         value: as block! value
         comb: runs (state.combinators).(block!)
         [^result' input subpending]: comb state input value except e -> [
             return raise e
         ]
-        pending: glom pending maybe spread subpending
+        pending: glom pending spread subpending
         comb: runs (state.combinators).(quoted!)
         [^result' remainder subpending]: comb state input result' except e -> [
             return raise e
         ]
-        pending: glom pending maybe spread subpending
+        pending: glom pending spread subpending
         return unmeta result'
     ]
 
@@ -2044,7 +2044,7 @@ default-combinators: make map! reduce [
 
     meta-word! combinator [
         return: "Meta quoted" [~null~ quasi? quoted?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         value [meta-word!]
         <local> comb
     ][
@@ -2055,7 +2055,7 @@ default-combinators: make map! reduce [
 
     meta-tuple! combinator [
         return: "Meta quoted" [~null~ quasi? quoted?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         value [meta-tuple!]
         <local> comb
     ][
@@ -2066,7 +2066,7 @@ default-combinators: make map! reduce [
 
     meta-path! combinator [
         return: "Meta quoted" [~null~ quasi? quoted?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         value [meta-path!]
         <local> comb
     ][
@@ -2077,7 +2077,7 @@ default-combinators: make map! reduce [
 
     meta-group! combinator [
         return: "Meta quoted" [~null~ quasi? quoted?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         value [meta-group!]
         <local> comb
     ][
@@ -2088,7 +2088,7 @@ default-combinators: make map! reduce [
 
     meta-block! combinator [
         return: "Meta quoted" [~null~ quasi? quoted?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         value [meta-block!]
         <local> comb
     ][
@@ -2178,7 +2178,7 @@ default-combinators: make map! reduce [
         {Run an ordinary action with parse rule products as its arguments}
         return: "The return value of the action"
             [any-value? pack?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         value [frame!]
         ; AUGMENT is used to add param1, param2, param3, etc.
         /parsers "Sneaky argument of parsers collected from arguments"
@@ -2196,7 +2196,7 @@ default-combinators: make map! reduce [
         ; !!! We cannot use the autopipe mechanism because the hooked combinator
         ; does not see the augmented frame.  Have to do it manually.
         ;
-        pending: null
+        pending: _
 
         let f: make frame! value
         for-each param (parameters of f) [
@@ -2216,7 +2216,7 @@ default-combinators: make map! reduce [
                         return raise e
                     ]
                 ]
-                pending: glom pending maybe spread subpending
+                pending: glom pending spread subpending
                 parsers: next parsers
             ]
         ]
@@ -2237,7 +2237,7 @@ default-combinators: make map! reduce [
     word! combinator [
         return: "Result of running combinator from fetching the WORD!"
             [any-value? pack?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         value [word! tuple!]
         <local> r comb rule-start rule-end
     ][
@@ -2289,7 +2289,7 @@ default-combinators: make map! reduce [
 
             void?! [
                 remainder: input
-                pending: null  ; not delegating to combinator with pending
+                pending: _  ; not delegating to combinator with pending
                 return nihil  ; act invisibly
             ]
 
@@ -2334,7 +2334,7 @@ default-combinators: make map! reduce [
     'any combinator [
         return: "Last result value"
             [any-value? pack?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         'arg "To catch instances of old ANY, only GROUP! and THE-BLOCK!"
             [element?]  ; lie and take any element to report better error
         <local> result' block
@@ -2387,7 +2387,7 @@ default-combinators: make map! reduce [
     block! (block-combinator: combinator [
         return: "Last result value"
             [any-value? pack?]
-        @pending [~null~ block!]
+        @pending [blank! block!]
         value [block!]
         /limit "Limit of how far to consider (used by ... recursion)"
             [block!]
@@ -2398,7 +2398,7 @@ default-combinators: make map! reduce [
         limit: default [tail of rules]
         pos: input
 
-        pending: null  ; can become GLOM'd into a BLOCK!
+        pending: _  ; can become GLOM'd into a BLOCK!
 
         result': nihil'  ; default result is invisible
 
@@ -2505,12 +2505,12 @@ default-combinators: make map! reduce [
                 if temp <> nihil' [
                     result': temp  ; overwrite if was visible
                 ]
-                pending: glom pending maybe spread subpending
+                pending: glom pending spread subpending
             ] else [
                 result': nihil'  ; reset, e.g. `[false |]`
 
-                free maybe pending  ; proactively release memory
-                pending: null
+                free pending  ; proactively release memory
+                pending: _
 
                 ; If we fail a match, we skip ahead to the next alternate rule
                 ; by looking for an `|`, resetting the input position to where
@@ -2973,7 +2973,7 @@ parse*: func [
     return: "Synthesized value from last match rule, or NULL if rules failed"
         [any-value? pack?]
     @pending "Values remaining in pending queue after reaching end"
-        [~null~ block!]
+        [blank! block!]
 
     input "Input data"
         [<maybe> any-series? url! any-sequence?]
@@ -3060,7 +3060,7 @@ parse*: func [
     sys.util.rescue+ [
         [^synthesized' remainder pending]: eval f except e -> [
             assert [empty? state.loops]
-            pending: null  ; didn't get assigned due to error
+            pending: _  ; didn't get assigned due to error
             return raise e  ; wrappers catch
         ]
     ] then e -> [
@@ -3095,7 +3095,7 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
         let [^synthesized' pending]: do f except e -> [
             return raise e
         ]
-        if not empty-or-null? pending [
+        if not empty? pending [
             fail "PARSE completed, but pending array was not empty"
         ]
         return unmeta synthesized'
@@ -3111,7 +3111,7 @@ parse-: (comment [redescribe [  ; redescribe not working at the moment (?)
         let [^synthesized' pending]: do f except [
             return null
         ]
-        if not empty-or-null? pending [
+        if not empty? pending [
             fail "PARSE completed, but pending array was not empty"
         ]
         return heavy unmeta synthesized'

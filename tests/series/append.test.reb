@@ -199,6 +199,9 @@
         [a b] = append [a b] spread second [c ~]
     )
     (
+        [a b] = append [a b] spread second [c _]
+    )
+    (
         [a b] = append [a b] spread second [c ~void~]
     )
 ]

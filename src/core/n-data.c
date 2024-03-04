@@ -1785,7 +1785,7 @@ DECLARE_NATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
 //  "Releases the underlying data of a value so it can no longer be accessed"
 //
 //      return: [~]
-//      memory [<maybe> any-series? any-context? handle!]
+//      memory [<maybe> blank! any-series? any-context? handle!]
 //  ]
 //
 DECLARE_NATIVE(free)
@@ -1793,6 +1793,8 @@ DECLARE_NATIVE(free)
     INCLUDE_PARAMS_OF_FREE;
 
     Value* v = ARG(memory);
+    if (Is_Blank(v))
+        return TRASH;
 
     if (Any_Context(v) or Is_Handle(v))
         fail ("FREE only implemented for ANY-SERIES? at the moment");

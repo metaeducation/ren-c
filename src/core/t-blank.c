@@ -101,12 +101,15 @@ REBTYPE(Blank)
         }
         break; }
 
+      case SYM_SELECT:
+      case SYM_FIND:
+        return nullptr;
+
+      case SYM_TAKE:
+        return RAISE(Error_Nothing_To_Take_Raw());
+
       case SYM_PICK_P: {
-          INCLUDE_PARAMS_OF_PICK_P;
-
-        UNUSED(ARG(location));
-        UNUSED(ARG(picker));
-
+        //
         // !!! The idea of allowing you to pick one step of anything out of
         // a BLANK! and return NULL was thrown in as a potential way of
         // getting an interesting distinction between NULL and BLANK!.  It

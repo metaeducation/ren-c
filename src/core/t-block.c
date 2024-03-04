@@ -1471,8 +1471,8 @@ DECLARE_NATIVE(engroup)
 //
 //  "Efficient destructive appending operation that will reuse appended memory"
 //
-//      return: [~null~ block!]
-//      accumulator [~null~ block!]
+//      return: [blank! block!]
+//      accumulator [blank! block!]
 //      result [~void~ element? splice?]
 //  ]
 //
@@ -1509,7 +1509,7 @@ DECLARE_NATIVE(glom)
         QUOTE_BYTE(result) = NOQUOTE_1;
     }
 
-    if (Is_Nulled(accumulator)) {
+    if (Is_Blank(accumulator)) {
         if (splice)  // it was a non-quoted block initially
             return COPY(result);  // see note: index may be nonzero
 
