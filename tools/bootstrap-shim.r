@@ -836,42 +836,6 @@ mold: adapt :lib/mold [  ; update so MOLD SPREAD works
     ]
 ]
 
-split: function3 [
-    return: [block!]
-    series [any-series!]
-    dlm "Split size, delimiter(s) (if all integer block), or block rule(s)"
-        [block! integer! char! bitset! text! tag! word! bar!]
-    /into "If dlm is integer, split in n pieces (vs. pieces of length n)"
-][
-    all [
-        any-string? series
-        tag? dlm
-    ] then [
-        dlm: form dlm
-    ]
-    any [
-        word? dlm
-        bar? dlm  ; just a WORD! `|` in non-bootstrap executable
-        tag? dlm
-    ] then [
-        return lib/collect [  ; Note: offers KEEP/ONLY
-            keep []  ; so bootstrap COLLECT won't be NULL if no KEEPs
-
-            parse2 series [
-                some [
-                    copy t: [to dlm | to end]
-                    (keep/only t)
-                    opt thru dlm
-                ]
-                end
-            ]
-        ]
-    ]
-
-    apply :lib/split [series: series dlm: dlm into: into]
-]
-
-
 noquote: func3 [x [<opt> any-value!]] [
     switch kind of :x [
         lit-word! [return to word! x]

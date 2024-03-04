@@ -502,15 +502,43 @@ printf: func [
 split: func [
     {Split series in pieces: fixed/variable size, fixed number, or delimited}
 
-    return: [block!]
+    return: [~null~ block!]
     series "The series to split"
-        [any-series?]
+        [<maybe> any-series?]
     dlm "Split size, delimiter(s) (if all integer block), or block rule(s)"
-        [block! integer! char? bitset! text! tag! word!]
+        [
+            ~void~  ; just return input
+            block!  ; parse rule
+            the-block!  ; list of integers for piece lengths
+            integer!  ; length of pieces (or number of pieces if /INTO)
+            bitset!  ; set of characters to split by
+            char? text!  ; text to split by
+            quoted!  ; literally look for value
+            splice?  ; split on a splice's literal contents
+            quasiform!  ; alternate way to pass in splice or void
+        ]
     /into "If dlm is integer, split in n pieces (vs. pieces of length n)"
 ][
-    if validate3 (maybe match block! dlm) [some integer!] [
+    if (void? dlm) or ('~void~ = dlm) [
+        return reduce [series]
+    ]
+
+    if quasi? dlm [
+        if not splice? unmeta dlm [
+            fail "SPLIT only allows QUASIFORM! of SPLICE?! or VOID"
+        ]
+        dlm: unmeta dlm
+    ]
+
+    if splice? dlm [
+        fail "SPLIT on SPLICE?! would need UPARSE, currently based on PARSE3"
+    ]
+
+    if the-block? dlm [
         return map-each len dlm [
+            if not integer? len [
+                fail ["THE-BLOCK! in SPLIT must be all integers:" mold len]
+            ]
             if len <= 0 [
                 series: skip series negate len
                 continue  ; don't add to output
@@ -518,9 +546,6 @@ split: func [
             copy/part series series: skip series len
         ]
     ]
-
-    if all [any-string? series tag? dlm] [dlm: form dlm]
-    ; reserve other strings for future meanings
 
     let size  ; set for INTEGER! case
     let result: collect [parse3 series case [
@@ -550,9 +575,6 @@ split: func [
             ]
         ]
         block? dlm [
-            ; A block that is not all integers, e.g. not `[1 1 1]`, acts as a
-            ; PARSE rule (see %split.test.reb)
-            ;
             let mk1
             let mk2
             [
@@ -564,14 +586,24 @@ split: func [
                 <end>
             ]
         ]
+        match [bitset! text! char?] dlm [  ; PARSE behavior (merge w/above?)
+            let mk1
+            [
+                some [not <end> [
+                    copy mk1: [to dlm | to <end>]
+                    (keep mk1)
+                    try thru dlm
+                ]]
+            ]
+        ]
     ] else [
-        ensure [bitset! text! char? word! tag!] dlm
+        assert [quoted? dlm]
         let mk1
-        [
+        compose/deep <*> [
             some [not <end> [
-                copy mk1: [to @dlm | to <end>]
+                copy mk1: [to (<*> dlm) | to <end>]
                 (keep mk1)
-                try thru @dlm
+                try thru (<*> dlm)
             ]]
         ]
     ]]
@@ -600,8 +632,13 @@ split: func [
         switch/type dlm [
             bitset! [did select dlm maybe last series]
             char?! [dlm = last series]
-            text! tag! word! [
+            text! [
                 (find series dlm) and (empty? [_ @]: find-last series dlm)
+            ]
+            quoted! [
+                (find series unquote dlm) and (
+                    empty? [_ @]: find-last series unquote dlm
+                )
             ]
             block! [false]
         ] then fill -> [
