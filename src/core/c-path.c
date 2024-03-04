@@ -131,6 +131,9 @@ bool Next_Path_Throws(REBPVS *pvs)
             PVS_OPT_SETVAL(pvs)
         );
 
+        if (r == nullptr)
+            fail (Error_Bad_Path_Poke_Raw(PVS_PICKER(pvs)));
+
         switch (VAL_TYPE_RAW(r)) {
 
         case REB_0_END: // unhandled
