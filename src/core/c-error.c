@@ -167,8 +167,12 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // If this were to be done there would have to be a preallocated array
     // to use for it.
     //
-    if (error != Error_No_Memory(1020))  // static global, review
-        Force_Location_Of_Error(error, TOP_LEVEL);
+    if (
+        error != VAL_CONTEXT(Root_No_Memory_Error)
+        and error != VAL_CONTEXT(Root_Stackoverflow_Error)  // e.g. bad PUSH()
+    ){
+        Force_Location_Of_Error(error, TOP_LEVEL);  // needs PUSH(), etc.
+    }
 
   #if DEBUG_HAS_PROBE
     if (PG_Probe_Failures) {  // see R3_PROBE_FAILURES environment variable
