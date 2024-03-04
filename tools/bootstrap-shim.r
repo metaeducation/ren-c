@@ -235,8 +235,6 @@ lib3/for-each [alias name shim] aliases [
 ;
 set '~done~ does [~]
 
-repeat: :loop
-
 compose: func3 [block [block!] /deep <local> result pos product count] [
     if deep [
         fail/where "COMPOSE bootstrap shim doesn't recurse, yet" 'block
