@@ -648,7 +648,7 @@ Bounce Composer_Executor(Level* const L)
     if (label)
         Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
 
-    Init_Void(PUSH());  // primed result
+    Init_Void(Alloc_Stepper_Primed_Result());
     Level* sublevel = Make_Level(
         subfeed,  // used subfeed so we could skip the label if there was one
         LEVEL_MASK_NONE

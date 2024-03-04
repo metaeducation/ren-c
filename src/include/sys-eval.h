@@ -98,6 +98,13 @@ INLINE bool Is_Antiform_Set_Friendly(const Value* v) {
     return true;
 }
 
+// See Stepper_Executor().  This helps document the places where the primed
+// result is being pushed, and gives a breakpoint opportunity for it.
+//
+INLINE Atom* Alloc_Stepper_Primed_Result() {
+    return atom_PUSH();
+}
+
 INLINE void Restart_Evaluator_Level(Level* L) {
     assert(L->executor == &Evaluator_Executor);
     Level_State_Byte(L) = STATE_0;

@@ -830,7 +830,7 @@ Bounce Evaluator_Executor(Level* L)
         if (STATE == REB_META_GROUP)
             flags |= LEVEL_FLAG_META_RESULT;
 
-        Init_Nihil(atom_PUSH());  // primed result
+        Init_Nihil(Alloc_Stepper_Primed_Result());
         Level* sub = Make_Level_At_Core(
             L_current,
             L_specifier,
@@ -1105,7 +1105,7 @@ Bounce Evaluator_Executor(Level* L)
       case REB_SET_GROUP: {
         L_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
-        Init_Void(PUSH());  // primed result
+        Init_Void(Alloc_Stepper_Primed_Result());
         Level* sub = Make_Level_At_Core(
             L_current,
             L_specifier,

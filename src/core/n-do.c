@@ -301,7 +301,7 @@ DECLARE_NATIVE(do)
         if (Is_Level_At_End(L))
             return VOID;
 
-        Init_Void(PUSH());  // primed result
+        Init_Void(Alloc_Stepper_Primed_Result());
         Level* sub = Make_Level(L->feed, LEVEL_MASK_NONE);
         sub->executor = &Stepper_Executor;
         Push_Level(OUT, sub);
@@ -437,7 +437,7 @@ DECLARE_NATIVE(evaluate)
         Flags flags = LEVEL_MASK_NONE;
 
         if (not REF(next)) {
-            Init_Nihil(atom_PUSH());  // primed result for array executor
+            Init_Nihil(Alloc_Stepper_Primed_Result());
         }
 
         Level* sub = Make_Level(feed, flags);

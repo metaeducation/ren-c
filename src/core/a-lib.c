@@ -1066,7 +1066,7 @@ static bool Run_Va_Throws(
     else
         mutable_FEED_SPECIFIER(feed) = Get_Context_From_Stack();
 
-    Init_Void(PUSH());  // primed result
+    Init_Void(Alloc_Stepper_Primed_Result());
     Level* L = Make_Level(feed, flags);
     L->executor = &Stepper_Executor;
 
@@ -1284,7 +1284,7 @@ void API_rebPushContinuation(
     else
         BINDING(block) = Lib_Context;  // [3]
 
-    Init_Void(PUSH());  // primed result
+    Init_Void(Alloc_Stepper_Primed_Result());
     Level* L = Make_Level_At(block, flags);
     Push_Level(out, L);
     L->executor = &Stepper_Executor;

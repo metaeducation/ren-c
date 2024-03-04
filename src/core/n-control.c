@@ -97,7 +97,7 @@ Bounce Group_Branch_Executor(Level* level_)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Init_Void(PUSH());  // primed result
+    Init_Void(Alloc_Stepper_Primed_Result());
     Level* sub = Make_Level(
         LEVEL->feed,
         ((LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255)))  // take out state 1
@@ -1125,7 +1125,7 @@ DECLARE_NATIVE(case)
             // GET-GROUP! run even on no-match (see IF), but result discarded
         }
 
-        Init_Void(PUSH());  // primed result
+        Init_Void(Alloc_Stepper_Primed_Result());
         Level* sub = Make_Level_At_Core(
             branch,  // turning into feed drops cell type, :(...) not special
             Level_Specifier(SUBLEVEL),
