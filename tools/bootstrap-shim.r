@@ -131,7 +131,7 @@ lib/read: read: enclose :lib-read function [f [frame!]] [
         ] then [
             fail/where ["READ could not find file" saved-source] 'f
         ]
-        print "Some READ error besides FILE-NOT-FOUND?"
+        print ["Some READ error besides FILE-NOT-FOUND:" saved-source]
         fail e
     ]
     bin

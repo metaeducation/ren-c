@@ -21,7 +21,7 @@ verbose: false
 do <common.r>
 do <common-emitter.r>
 do <common-parsers.r>
-do <systems.r>
+do <platforms.r>
 
 version: load <../src/boot/version.r>
 

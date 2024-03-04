@@ -36,7 +36,7 @@ REBOL [
 
 do <common.r>
 do <common-emitter.r>
-do <systems.r>
+do <platforms.r>
 
 ; The way that the processing code for extracting Rebol information out of
 ; C file comments is written is that the PROTO-PARSER has several callback

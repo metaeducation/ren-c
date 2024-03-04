@@ -5,7 +5,7 @@ REBOL []
 
 do <tools/common.r>
 
-do <tools/systems.r>
+do <tools/platforms.r>
 file-base: make object! load <tools/file-base.r>
 
 ; See notes on %rebmake.r for why it is not a module at this time, due to the

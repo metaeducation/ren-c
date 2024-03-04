@@ -1,6 +1,6 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "System build targets"
+    Title: "Platform build targets"
     Rights: {
         Copyright 2012 REBOL Technologies
         Copyright 2012-2017 Rebol Open Source Contributors
@@ -482,7 +482,7 @@ for-each-system: function [
             )
         ]
     ]] else [
-        fail "Couldn't parse systems.r table"
+        fail "Couldn't parse platforms.r table"
     ]
 ]
 
@@ -526,7 +526,7 @@ use [
                 words-of context
             if not empty? unknown-flags [
                 print mold unknown-flags
-                fail ["Unknown" word "used in %systems.r specification"]
+                fail ["Unknown" word "used in %platforms.r specification"]
             ]
             used-flags: union used-flags any [build-flags []]
         ]
@@ -541,7 +541,7 @@ use [
 
     if not empty? unused-flags [
         print mold unused-flags
-        fail "Unused flags in %systems.r specifications"
+        fail "Unused flags in %platforms.r specifications"
     ]
 ]
 
@@ -576,7 +576,7 @@ config-system: function [
 
     if not result [
         fail [
-            {No table entry for} version {found in systems.r}
+            {No table entry for} version {found in platforms.r}
         ]
     ]
 

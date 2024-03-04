@@ -35,7 +35,7 @@
 // the TO_<target> definitions) come from -DTO_<target> in the
 // compiler command-line.  These command lines are generally
 // produced automatically, based on the build that is picked
-// from %systems.r.
+// from %platforms.r.
 //
 // However, some flags require the preprocessor's help to
 // decide if they are relevant, for instance if they involve
@@ -44,7 +44,7 @@
 // into the system configuration would seem unnecessary.
 //
 // Over time, this file should be balanced and adjusted with
-// %systems.r in order to make the most convenient and clear
+// %platforms.r in order to make the most convenient and clear
 // build process.  If there is difficulty in making a build
 // work on a system, use that as an opportunity to reflect
 // how to make this better.

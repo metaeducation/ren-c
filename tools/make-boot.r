@@ -28,7 +28,7 @@ print "--- Make Boot : System Embedded Script ---"
 do <common.r>
 do <common-emitter.r>
 
-do <systems.r>
+do <platforms.r>
 
 change-dir repo-dir
 change-dir %src/boot/
