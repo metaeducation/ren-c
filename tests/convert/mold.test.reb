@@ -22,7 +22,7 @@
     catch [forever [
         a: copy []
         if error? trap [
-            loop n [a: append/only copy [] a]
+            repeat n [a: append/only copy [] a]
             mold a
         ] [throw true]
         n: n * 2
@@ -121,7 +121,7 @@
     ][
         buff: copy ""
         for-each val test-block [
-            loop 5000 [
+            repeat 5000 [
                 append buff form reduce [reduce [<td> 'OK </td>] cr lf]
             ]
         ]

@@ -12,7 +12,7 @@
 
 (
     random/seed {Reproducible Permutations!}
-    loop 1000 [
+    repeat 1000 [
         endian: random/only [be le]
         signedness: random/only [+ +/-]
         num-bytes: random 8

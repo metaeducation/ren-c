@@ -1505,7 +1505,7 @@ DECLARE_NATIVE(map_each)
 
 
 //
-//  loop: native [
+//  repeat: native [
 //
 //  "Evaluates a block a specified number of times."
 //
@@ -1517,9 +1517,9 @@ DECLARE_NATIVE(map_each)
 //          "Block to evaluate or action to run."
 //  ]
 //
-DECLARE_NATIVE(loop)
+DECLARE_NATIVE(repeat)
 {
-    INCLUDE_PARAMS_OF_LOOP;
+    INCLUDE_PARAMS_OF_REPEAT;
 
     Init_Void(OUT);  // result if body never runs, like `while [null] [...]`
 
@@ -1561,23 +1561,23 @@ DECLARE_NATIVE(loop)
 
 
 //
-//  repeat: native [
+//  count-up: native [
 //
-//  {Evaluates a block a number of times or over a series.}
+//  {Evaluates a block a number of times.}
 //
 //      return: [<opt> any-value!]
-//          {Last body result or BREAK value}
+//          {Last body result or null if BREAK}
 //      'word [word!]
 //          "Word to set each time"
-//      value [<maybe> any-number! any-series!]
+//      value [<maybe> any-number!]
 //          "Maximum number or series to traverse"
 //      body [block!]
 //          "Block to evaluate each time"
 //  ]
 //
-DECLARE_NATIVE(repeat)
+DECLARE_NATIVE(count_up)
 {
-    INCLUDE_PARAMS_OF_REPEAT;
+    INCLUDE_PARAMS_OF_COUNT_UP;
 
     Value* value = ARG(value);
 
@@ -1595,10 +1595,6 @@ DECLARE_NATIVE(repeat)
     assert(CTX_LEN(context) == 1);
 
     Value* var = CTX_VAR(context, 1); // not movable, see #2274
-    if (ANY_SERIES(value))
-        return Loop_Series_Common(
-            OUT, var, ARG(body), value, VAL_LEN_HEAD(value) - 1, 1
-        );
 
     REBI64 n = VAL_INT64(value);
     if (n < 1) // Loop_Integer from 1 to 0 with bump of 1 is infinite
@@ -1606,6 +1602,47 @@ DECLARE_NATIVE(repeat)
 
     return Loop_Integer_Common(
         OUT, var, ARG(body), 1, VAL_INT64(value), 1
+    );
+}
+
+
+//
+//  for-next: native [
+//
+//  {Evaluates a block over a series.}
+//
+//      return: [<opt> any-value!]
+//          {Last body result or BREAK value}
+//      'word [word!]
+//          "Word to set each time"
+//      value [<maybe> any-number! any-series!]
+//          "Maximum number or series to traverse"
+//      body [block!]
+//          "Block to evaluate each time"
+//  ]
+//
+DECLARE_NATIVE(for_next)
+{
+    INCLUDE_PARAMS_OF_FOR_NEXT;
+
+    Value* value = ARG(value);
+
+    if (IS_DECIMAL(value) or IS_PERCENT(value))
+        Init_Integer(value, Int64(value));
+
+    REBCTX *context;
+    Virtual_Bind_Deep_To_New_Context(
+        ARG(body),
+        &context,
+        ARG(word)
+    );
+    Init_Object(ARG(word), context); // keep GC safe
+
+    assert(CTX_LEN(context) == 1);
+
+    Value* var = CTX_VAR(context, 1); // not movable, see #2274
+    return Loop_Series_Common(
+        OUT, var, ARG(body), value, VAL_LEN_HEAD(value) - 1, 1
     );
 }
 

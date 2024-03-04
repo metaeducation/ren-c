@@ -42,7 +42,7 @@ do-core-tests: function [return: <void>] [
     ]
 
     log-file-prefix: copy %r
-    repeat i length of version: system/version [
+    count-up i length of version: system/version [
         append log-file-prefix "_"
         append log-file-prefix mold version/:i
     ]

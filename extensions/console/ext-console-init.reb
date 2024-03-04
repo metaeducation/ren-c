@@ -171,7 +171,7 @@ console!: make object! [
             ; print the first 20 lines of the first 2048 characters of mold
             ;
             pos: molded: mold/limit :v 2048
-            loop 20 [
+            repeat 20 [
                 pos: next (find pos newline else [break])
             ] then [ ; e.g. didn't break
                 insert clear pos "..."
@@ -578,7 +578,7 @@ ext-console-impl: function [
                 print newline
                 print "** Hit Ctrl-C to break into the console in 5 seconds"
 
-                repeat n 25 [
+                count-up n 25 [
                     if remainder n 5 = 1 [
                         write-stdout form (5 - to-integer (n / 5))
                     ] else [

@@ -48,7 +48,7 @@
 // structures could quickly wind up overflowing the C stack.  Consider:
 //
 //     a: copy []
-//     loop 200'000 [a: append/only copy [] a]
+//     repeat 200'000 [a: append/only copy [] a]
 //     recycle
 //
 // The simple solution is that when an unmarked array is hit that it is

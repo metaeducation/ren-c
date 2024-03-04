@@ -18,7 +18,7 @@
 
 ; BREAK out of USE
 (
-    null? loop 1 [
+    null? repeat 1 [
         use [a] [break]
         2
     ]

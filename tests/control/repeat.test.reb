@@ -2,85 +2,85 @@
 (
     success: true
     num: 0
-    repeat i 10 [
+    count-up i 10 [
         num: num + 1
         success: success and [i = num]
     ]
     success and [10 = num]
 )
 ; cycle return value
-(false = repeat i 1 [false])
+(false = count-up i 1 [false])
 ; break cycle
 (
     num: 0
-    repeat i 10 [num: i break]
+    count-up i 10 [num: i break]
     num = 1
 )
 ; break return value
-(null? repeat i 10 [break])
+(null? count-up i 10 [break])
 ; continue cycle
 (
     success: true
-    repeat i 1 [continue | success: false]
+    count-up i 1 [continue | success: false]
     success
 )
 (
     success: true
-    repeat i "a" [continue | success: false]
+    for-next i "a" [continue | success: false]
     success
 )
 (
     success: true
-    repeat i [a] [continue | success: false]
+    for-next i [a] [continue | success: false]
     success
 )
 ; decimal! test
-([1 2 3] == collect [repeat i 3.0 [keep i]])
-([1 2 3] == collect [repeat i 3.1 [keep i]])
-([1 2 3] == collect [repeat i 3.5 [keep i]])
-([1 2 3] == collect [repeat i 3.9 [keep i]])
+([1 2 3] == collect [count-up i 3.0 [keep i]])
+([1 2 3] == collect [count-up i 3.1 [keep i]])
+([1 2 3] == collect [count-up i 3.5 [keep i]])
+([1 2 3] == collect [count-up i 3.9 [keep i]])
 ; text! test
 (
     out: copy ""
-    repeat i "abc" [append out i]
+    for-next i "abc" [append out i]
     out = "abcbcc"
 )
 ; block! test
 (
     out: copy []
-    repeat i [1 2 3] [append out i]
+    for-next i [1 2 3] [append out i]
     out = [1 2 3 2 3 3]
 )
 ; TODO: is hash! test and list! test needed too?
 ; zero repetition
 (
     success: true
-    repeat i 0 [success: false]
+    count-up i 0 [success: false]
     success
 )
 (
     success: true
-    repeat i -1 [success: false]
+    count-up i -1 [success: false]
     success
 )
 ; Test that return stops the loop
 (
-    f1: func [] [repeat i 1 [return 1 2]]
+    f1: func [] [count-up i 1 [return 1 2]]
     1 = f1
 )
 ; Test that errors do not stop the loop and errors can be returned
 (
     num: 0
-    e: repeat i 2 [num: i trap [1 / 0]]
+    e: count-up i 2 [num: i trap [1 / 0]]
     all [error? e num = 2]
 )
 ; "recursive safety", "locality" and "body constantness" test in one
-(repeat i 1 b: [not same? 'i b/3])
+(count-up i 1 b: [not same? 'i b/3])
 ; recursivity
 (
     num: 0
-    repeat i 5 [
-        repeat i 2 [num: num + 1]
+    count-up i 5 [
+        count-up i 2 [num: num + 1]
     ]
     num = 10
 )
@@ -88,7 +88,7 @@
 (
     test: false
     error? trap [
-        repeat i 2 [
+        count-up i 2 [
             either test [i == 2] [
                 test: true
                 i: false
@@ -110,11 +110,11 @@
 ; https://trello.com/c/CjEfA0ef
 (
     out: copy ""
-    repeat i "abc" [append out first i]
+    for-next i "abc" [append out first i]
     out = "abc"
 )
 (
     out: copy []
-    repeat i [1 2 3] [append out first i]
+    for-next i [1 2 3] [append out first i]
     out = [1 2 3]
 )

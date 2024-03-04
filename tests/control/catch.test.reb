@@ -67,7 +67,7 @@
 )
 ; CATCH and BREAK
 (
-    null? loop 1 [
+    null? repeat 1 [
         catch [break 2]
         2
     ]

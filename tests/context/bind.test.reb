@@ -26,10 +26,10 @@
     ]
     f
 )]
-; BIND works 'as expected' in REPEAT body
+; BIND works 'as expected' in COUNT-UP body
 [#1549 (
     b1: [self]
-    repeat i 1 [
+    count-up i 1 [
         b2: [self]
         same? first b2 first bind/copy b1 'i
     ]

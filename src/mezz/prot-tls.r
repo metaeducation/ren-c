@@ -414,7 +414,7 @@ client-hello: function [
     ;
     ctx/client-random: to-bin to-integer difference now/precise 1-Jan-1970 4
     random/seed now/time/precise
-    loop 28 [append ctx/client-random (random/secure 256) - 1]
+    repeat 28 [append ctx/client-random (random/secure 256) - 1]
 
     cs-data: to binary! map-each item cipher-suites [
         if binary? item [item]
@@ -541,7 +541,7 @@ client-key-exchange: function [
             ; generate pre-master-secret
             ctx/pre-master-secret: copy ctx/ver-bytes
             random/seed now/time/precise
-            loop 46 [append ctx/pre-master-secret (random/secure 256) - 1]
+            repeat 46 [append ctx/pre-master-secret (random/secure 256) - 1]
 
             ; encrypt pre-master-secret
             rsa-key: rsa-make-key
@@ -739,7 +739,7 @@ encrypt-data: function [
         ;  which is equal to the SecurityParameters.block_size."
         ;
         ctx/client-iv: copy #{}
-        loop ctx/block-size [append ctx/client-iv (random/secure 256) - 1]
+        repeat ctx/block-size [append ctx/client-iv (random/secure 256) - 1]
     ]
 
     ; Message Authentication Code

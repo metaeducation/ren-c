@@ -21,7 +21,7 @@
 (
     n: 25000
     s4t: 0.0
-    repeat l n [
+    count-up l n [
         k: to decimal! l
         kt: tangent/radians k
         s4t: (((1.0 / (kt * kt)) + 1.0) / (k * k * k)) + s4t

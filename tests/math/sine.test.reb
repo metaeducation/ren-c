@@ -27,7 +27,7 @@
 [#852 (
     n: 25000
     s4: 0.0
-    repeat l n [
+    count-up l n [
         k: to decimal! l
         ks: sine/radians k
         s4: (1.0 / (k * k * k * ks * ks)) + s4

@@ -1,7 +1,7 @@
 ; system/gc.r
 [#1776 #2072 (
     a: copy []
-    loop 200'000 [a: append/only copy [] a]
+    repeat 200'000 [a: append/only copy [] a]
     recycle
     true
 )]

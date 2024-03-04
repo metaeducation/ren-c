@@ -124,7 +124,7 @@ to-c-name: function [
         ]
     ]
 
-    repeat s string [
+    for-next s string [
         (head? s) and [find charset [#"0" - #"9"] s/1] and [
             fail ["identifier" string "starts with digit in to-c-name"]
         ]

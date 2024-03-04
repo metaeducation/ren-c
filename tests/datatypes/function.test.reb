@@ -192,7 +192,7 @@
 )
 ; BREAK out of a function
 (
-    null? loop 1 [
+    null? repeat 1 [
         f: does [break]
         f
         2
@@ -216,10 +216,10 @@
 )
 ; BREAK out leaves a "running" function in a "clean" state
 (
-    1 = loop 1 [
+    1 = repeat 1 [
         f: func [x] [
             either x = 1 [
-                loop 1 [f 2]
+                repeat 1 [f 2]
                 x
             ] [break]
         ]

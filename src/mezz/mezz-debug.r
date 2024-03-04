@@ -95,7 +95,7 @@ speed?: function [
     result: copy []
     for-each block [
         [
-            loop 100'000 [
+            repeat 100'000 [
                 ; measure more than just loop func
                 ; typical load: 1 set, 2 data, 1 op, 4 trivial funcs
                 x: 1 * index of back next "x"
@@ -107,7 +107,7 @@ speed?: function [
         ][
             tmp: make binary! 500'000
             insert/dup tmp "abcdefghij" 50000
-            loop 10 [
+            repeat 10 [
                 random tmp
                 gunzip gzip tmp
             ]
@@ -122,7 +122,7 @@ speed?: function [
                 write file: %tmp-junk.txt "" ; force security request before timer
                 tmp: make text! 32000 * 5
                 insert/dup tmp "test^/" 32000
-                loop 100 [
+                repeat 100 [
                     write file tmp
                     read file
                 ]

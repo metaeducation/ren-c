@@ -79,7 +79,7 @@
     ]
 )
 (
-    null? loop 1 [
+    null? repeat 1 [
         case [break 2]
         2
     ]
