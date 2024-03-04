@@ -194,6 +194,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
         // before the expansion, we have to decrement it if failing.
         //
         --g_ds.index;
+        --g_ds.movable_top;
         Fail_Stack_Overflow(); // !!! Should this be a "data stack" message?
     }
 
