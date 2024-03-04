@@ -665,6 +665,13 @@ INLINE Cell* Copy_Cell_Untracked(
 
     out->extra = v->extra;  // binding or inert bits
 
+  #if DEBUG_TRACK_EXTEND_CELLS
+    out->file = v->file;
+    out->line = v->line;
+    out->tick = v->tick;
+    out->touch = v->touch;
+  #endif
+
     return out;
 }
 
@@ -695,15 +702,15 @@ INLINE Cell* Copy_Cell_Untracked(
     }
 
     #define Copy_Cell(out,v) \
-        TRACK(Copy_Cell_Overload((out), (v)))
+        Copy_Cell_Overload((out), (v))
 #endif
 
 #define Copy_Cell_Core(out,v,copy_mask) \
-    TRACK(Copy_Cell_Untracked((out), (v), (copy_mask)))
+    Copy_Cell_Untracked((out), (v), (copy_mask))
 
 #define Copy_Meta_Cell(out,v) \
-    cast(Element*, TRACK( \
-        Meta_Quotify(Copy_Cell_Untracked((out), (v), CELL_MASK_COPY))))
+    cast(Element*, \
+        Meta_Quotify(Copy_Cell_Untracked((out), (v), CELL_MASK_COPY)))
 
 
 //=//// CELL MOVEMENT //////////////////////////////////////////////////////=//
