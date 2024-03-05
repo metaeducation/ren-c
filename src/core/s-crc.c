@@ -370,7 +370,6 @@ uint32_t Hash_Value(const Cell* v)
 
     case REB_EVENT:
     case REB_HANDLE:
-    case REB_LIBRARY:
         //
         // !!! Review hashing behavior or needs of these types if necessary.
         //

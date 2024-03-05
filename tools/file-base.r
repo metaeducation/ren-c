@@ -47,7 +47,6 @@ core: [
     d-print.c
     d-stack.c
     d-stats.c
-    d-trace.c
 
     ; (F)???
     f-blocks.c
@@ -151,7 +150,6 @@ core: [
     t-event.c
     t-function.c
     t-integer.c
-    t-library.c
     t-logic.c
     t-map.c
     t-money.c
@@ -234,7 +232,6 @@ os-posix: [
     posix/dev-file.c
 
     + posix/host-browse.c
-    + posix/host-library.c
     + posix/host-process.c
     + posix/host-time.c
     + posix/host-exec-path.c
@@ -248,7 +245,6 @@ os-osx: [
     posix/dev-file.c
 
     + posix/host-browse.c
-    + posix/host-library.c
     + posix/host-process.c
     + posix/host-time.c
     + osx/host-exec-path.c
@@ -265,7 +261,6 @@ os-linux: [
     posix/dev-file.c
 
     ; It also uses POSIX for most host functions
-    + posix/host-library.c
     + posix/host-process.c
     + posix/host-time.c
     + posix/host-exec-path.c
@@ -289,7 +284,6 @@ os-android: [
     posix/dev-file.c
 
     ; It also uses POSIX for most host functions
-    + posix/host-library.c
     + posix/host-process.c
     + posix/host-time.c
     + posix/host-exec-path.c

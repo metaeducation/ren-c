@@ -247,7 +247,6 @@ gen-obj: func [
 extension-class: make object! [
     class: #extension
     name: _
-    loadable: yes ;can be loaded at runtime
     modules: _
     source: _ ; main script
     depends: _ ; additional C files compiled in
@@ -995,7 +994,6 @@ pthread: make rebmake/ext-dynamic-class [
 
 ;extensions
 builtin-extensions: copy available-extensions
-dynamic-extensions: make block! 8
 assert [map? user-config/extensions]
 for-each name user-config/extensions [
     action: user-config/extensions/:name
@@ -1005,43 +1003,15 @@ for-each name user-config/extensions [
         '+ [; builtin
             ;pass, default action
         ]
-        '* '- [
+        '- [
             item: _
             iterate builtin-extensions [
                 if builtin-extensions/1/name = name [
                     item: take builtin-extensions
-                    all [
-                        not item/loadable
-                        action = '*
-                    ] then [
-                        fail [{Extension} name {is not dynamically loadable}]
-                    ]
                 ]
             ]
             if not item [
                 fail [{Unrecognized extension name:} name]
-            ]
-
-            if action = '* [;dynamic extension
-                selected-modules: if blank? modules [
-                    ; all modules in the extension
-                    item/modules
-                ] else [
-                    map-each m item/modules [
-                        if find modules m/name [
-                            m
-                        ]
-                    ]
-                ]
-
-                if empty? selected-modules [
-                    fail [
-                        {No modules are selected,}
-                        {check module names or use '-' to remove}
-                    ]
-                ]
-                item/modules: selected-modules
-                append dynamic-extensions item
             ]
         ]
 
@@ -1051,7 +1021,6 @@ for-each name user-config/extensions [
 
 for-each [label list] reduce [
     {Builtin extensions} builtin-extensions
-    {Dynamic extensions} dynamic-extensions
 ][
     print label
     for-each ext list [
@@ -1064,8 +1033,6 @@ for-each [label list] reduce [
         ]
     ]
 ]
-
-all-extensions: append (copy builtin-extensions) dynamic-extensions
 
 add-project-flags: func [
     return: <void>
@@ -1300,7 +1267,7 @@ prep: make rebmake/entry-class [
         keep [{$(REBOL)} tools-dir/make-os-ext.r]
         keep [{$(REBOL)} tools-dir/make-librebol.r]
 
-        for-each ext all-extensions [
+        for-each ext builtin-extensions [
             keep [{$(REBOL)} tools-dir/prep-extension.r
                 unspaced [{MODULE=} ext/name]
                 unspaced [{SRC=extensions/} switch type of ext/source [
@@ -1423,68 +1390,6 @@ dynamic-libs: make block! 8
 ext-libs: make block! 8
 ext-ldflags: make block! 8
 ext-dynamic-objs: make block! 8
-for-each ext dynamic-extensions [
-    ext-includes: make block! 8
-    mod-objs: make block! 8
-    for-each mod ext/modules [
-        append mod-objs mod-obj: process-module mod
-        append ext-libs maybe- mod-obj/libraries
-        append ext-includes app-config/includes
-
-        append ext-ldflags maybe- mod/ldflags
-        append ext-includes maybe- mod/includes
-
-        ; Modify module properties
-        add-project-flags/I/D/c/O/g mod-obj
-            ext-includes
-            append copy ["EXT_DLL"] app-config/definitions
-            app-config/cflags
-            app-config/optimization
-            app-config/debug
-    ]
-
-    append ext-dynamic-objs copy mod-objs
-
-    if ext/source [
-        append mod-objs gen-obj/dir/I/D/F
-            ext/source
-            repo-dir/extensions/%
-            maybe- ext/includes
-            append copy ["EXT_DLL"] maybe- ext/definitions
-            maybe- ext/cflags
-    ]
-    append dynamic-libs ext-proj: make rebmake/dynamic-library-class [
-        name: join either system-config/os-base = 'windows ["r3-"]["libr3-"]
-            lowercase to text! ext/name
-        output: to file! name
-        depends: append compose [
-            (mod-objs)
-            (app) ;all dynamic extensions depend on r3
-            (app-config/libraries)
-        ] ext-libs
-
-        post-build-commands: either cfg-symbols [
-            _
-        ][
-            reduce [
-                make rebmake/cmd-strip-class [
-                    file: join output maybe- rebmake/target-platform/dll-suffix
-                ]
-            ]
-        ]
-
-        ldflags: append-of either empty? ext-ldflags [[]][ext-ldflags] [<gnu:-Wl,--as-needed>]
-    ]
-
-    add-project-flags/I/D/c/O/g ext-proj
-        ext-includes
-        append copy ["EXT_DLL"] app-config/definitions
-        app-config/cflags
-        app-config/optimization
-        app-config/debug
-
-    add-new-obj-folders mod-objs folders
-]
 
 top: make rebmake/entry-class [
     target: 'top ; phony target
@@ -1540,7 +1445,6 @@ solution: make rebmake/solution-class [
         app
         library
         dynamic-libs
-        ext-dynamic-objs
         check
         clean
     ]

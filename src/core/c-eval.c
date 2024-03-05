@@ -2148,7 +2148,6 @@ bool Eval_Core_Throws(REBFRM * const f)
         //
       case REB_EVENT:
       case REB_HANDLE:
-      case REB_LIBRARY:
 
       inert:;
 

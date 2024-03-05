@@ -417,9 +417,6 @@ chkDecimal:
     case REB_ACTION:
         return VAL_ACT_PARAMLIST(s) - VAL_ACT_PARAMLIST(t);
 
-    case REB_LIBRARY:
-        return VAL_LIBRARY(s) - VAL_LIBRARY(t);
-
     case REB_BLANK:
     case REB_MAX_NULLED:
     default:

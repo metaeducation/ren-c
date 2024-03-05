@@ -565,13 +565,6 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         Queue_Mark_Event_Deep(v);
         break;
 
-    case REB_LIBRARY: {
-        Queue_Mark_Array_Deep(VAL_LIBRARY(v));
-        REBCTX *meta = VAL_LIBRARY_META(v);
-        if (meta != nullptr)
-            Queue_Mark_Context_Deep(meta);
-        break; }
-
     case REB_BLANK:
     case REB_BAR:
     case REB_LIT_BAR:

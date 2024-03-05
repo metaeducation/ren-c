@@ -603,8 +603,6 @@ INLINE void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
 #include "sys-frame.h"
 #include "sys-bind.h"
 
-#include "sys-library.h"
-
 #include "host-lib.h"
 
 /***********************************************************************

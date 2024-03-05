@@ -221,7 +221,6 @@ typeset     typeset     -       +       +       -
 
 event       event       +       +       +       -
 handle      handle      -       -       +       -
-library     library     -       +       +       -
 
 ; "unit types" https://en.wikipedia.org/wiki/Unit_type
 

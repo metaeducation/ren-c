@@ -759,14 +759,6 @@ union Reb_Series_Link {
     // it.  This is used to link a varlist into the reusable list.
     //
     Array* reuse;
-
-    // For LIBRARY!, the file descriptor.  This is set to nullptr when the
-    // library is not loaded.
-    //
-    // !!! As with some other types, this may not need the optimization of
-    // being in the Reb_Series node--but be handled via user defined types
-    //
-    void *fd;
 };
 
 

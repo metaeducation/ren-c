@@ -26,11 +26,6 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// This was originally the file host-lib.c, providing the entire
-// host API.  When the host routines were broken into smaller
-// pieces, it made sense that host-lib.c be kept as the largest
-// set of related routines.  That turned out to be the process
-// related routines and support for CALL.
 //
 
 #if !defined( __cplusplus) && defined(TO_LINUX)

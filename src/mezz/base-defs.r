@@ -289,7 +289,6 @@ reeval func [
     port?:
     event?:
     handle?:
-    library?:
 
     ; Typesets predefined during bootstrap.
 

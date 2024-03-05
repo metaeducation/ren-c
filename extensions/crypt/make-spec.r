@@ -1,7 +1,6 @@
 REBOL []
 
 name: 'Crypt
-loadable: no ;tls depends on this, so it has to be builtin
 source: %crypt/mod-crypt.c
 includes: reduce [
     ;

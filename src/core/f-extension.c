@@ -76,9 +76,8 @@ void cleanup_extension_quit_handler(const Value* v)
 DECLARE_NATIVE(builtin_extensions)
 //
 // The config file used by %make.r marks extensions to be built into the
-// executable (`+`), built as a dynamic library (`*`), or not built at
-// all (`-`).  Each of the options marked with + has a C function for
-// startup and shutdown.
+// executable (`+`), or not built at all (`-`).  (built as a dynamic
+// library (`*`) is supported in the main branch, but not this old branch)
 //
 // rebStartup() should not initialize these extensions, because it might not
 // be the right ordering.  Command-line processing or other code that uses
@@ -112,64 +111,23 @@ DECLARE_NATIVE(builtin_extensions)
 //
 //      return: [module!]
 //      where "Path to extension file or block of builtin extension details"
-//          [file! block!] ;-- !!! Should it take a LIBRARY! instead?
+//          [block!]
 //      /no-user "Do not export to the user context"
 //      /no-lib "Do not export to the lib context"
 //  ]
 //
 DECLARE_NATIVE(load_extension)
+//
 // !!! It is not ideal that this code be all written as C, as it is really
 // kind of a variation of LOAD-MODULE and will have to repeat a lot of work.
 {
     INCLUDE_PARAMS_OF_LOAD_EXTENSION;
 
-    DECLARE_VALUE (lib);
-    SET_END(lib);
-    PUSH_GC_GUARD(lib);
-
-    DECLARE_VALUE (path);
-    SET_END(path);
-    PUSH_GC_GUARD(path);
-
     // See IDX_COLLATOR_MAX for collated block contents, which include init
     // and shutdown functions, as well as native specs and Rebol script
     // source, plus the REBNAT functions for each native.
     //
-    Array* details;
-
-    if (IS_BLOCK(ARG(where))) { // It's one of rebBuiltinExtensions()
-        Init_Blank(lib);
-        Init_Blank(path);
-        details = Cell_Array(ARG(where)); // already "collated"
-    }
-    else { // It's a DLL, must locate and call its RX_Collate() function
-        assert(IS_FILE(ARG(where)));
-
-        MAKE_Library(lib, REB_LIBRARY, ARG(where));
-
-        // !!! This code used to check for loading an already loaded
-        // extension.  It looked in an "extensions list", but now that the
-        // extensions are modules really this should just be the same as
-        // looking in the modules list.  Such code should be in usermode
-        // (very awkward in C).  The only unusual C bit was:
-        //
-        //     // found the existing extension, decrease the reference
-        //     // added by MAKE_library
-        //     //
-        //     OS_CLOSE_LIBRARY(VAL_LIBRARY_FD(lib));
-        //
-
-        CFUNC *collator = OS_FIND_FUNCTION(VAL_LIBRARY_FD(lib), "RX_Collate");
-        if (not collator) {
-            OS_CLOSE_LIBRARY(VAL_LIBRARY_FD(lib));
-            fail (Error_Bad_Extension_Raw(ARG(where)));
-        }
-
-        Value* details_block = (*cast(COLLATE_CFUNC*, collator))();
-        assert(IS_BLOCK(details_block));
-        details = Cell_Array(details_block);
-        rebRelease(details_block);
-    }
+    Array* details = Cell_Array(ARG(where));
 
     assert(ARR_LEN(details) == IDX_COLLATOR_MAX);
     PUSH_GC_GUARD(details);
@@ -270,17 +228,7 @@ DECLARE_NATIVE(load_extension)
             dispatchers[i],
             module
         );
-
-        // !!! Unloading is a feature that was entertained in the original
-        // extension model, but support was sketchy.  So unloading is not
-        // currently enabled, but mark the native with an "unloadable" flag
-        // if it's in a DLL...as a reminder to revisit the issue.
-        //
-        if (not IS_BLANK(lib))
-            SET_VAL_FLAG(
-                ACT_ARCHETYPE(VAL_ACTION(native)),
-                ACTION_FLAG_UNLOADABLE_NATIVE
-            );
+        UNUSED(native);
 
         // !!! The mechanics of exporting is something modules do and have to
         // get right.  We shouldn't recreate that process here, just gather
@@ -333,8 +281,6 @@ DECLARE_NATIVE(load_extension)
     DROP_GC_GUARD(module);
     DROP_GC_GUARD(specs);
     DROP_GC_GUARD(details);
-    DROP_GC_GUARD(path);
-    DROP_GC_GUARD(lib);
 
     // !!! If modules are to be "unloadable", they would need some kind of
     // finalizer to clean up their resources.  There are shutdown actions
@@ -342,95 +288,6 @@ DECLARE_NATIVE(load_extension)
     // system will automatically call them on shutdown (yet)
 
     return Init_Any_Context(OUT, REB_MODULE, module_ctx);
-}
-
-
-//
-// Just an ID for the handler
-//
-static void cleanup_module_handler(const Value* val)
-{
-    UNUSED(val);
-}
-
-
-//
-//  Unloaded_Dispatcher: C
-//
-// This will be the dispatcher for the natives in an extension after the
-// extension is unloaded.
-//
-static const Value* Unloaded_Dispatcher(REBFRM *f)
-{
-    UNUSED(f);
-
-    fail (Error_Native_Unloaded_Raw(ACT_ARCHETYPE(FRM_PHASE(f))));
-}
-
-
-//
-//  unload-extension: native [
-//
-//  "Unload an extension"
-//
-//      return: [trash!]
-//      ext [object!]
-//          "The extension to be unloaded"
-//      /cleanup
-//      cleaner [handle!]
-//          "The RX_Quit pointer for the builtin extension"
-//  ]
-//
-DECLARE_NATIVE(unload_extension)
-{
-    UNUSED(frame_);
-    UNUSED(&Unloaded_Dispatcher);
-    UNUSED(&cleanup_module_handler);
-
-    fail ("Unloading extensions is currently not supported");
-
-    // !!! The initial extension model had support for not just loading an
-    // extension from a DLL, but also unloading it.  It raises a lot of
-    // questions that are somewhat secondary to any known use cases, and the
-    // semantics of the system were not pinned down well enough to support it.
-    //
-    // But one important feature it did achieve was that if an extension
-    // initialized something (perhaps e.g. initializing memory) then calling
-    // code to free that memory (or release whatever API/resource it was
-    // holding) is necessary.
-    //
-    // HOWEVER: modules that are written entirely in usermode may want some
-    // shutdown code too (closing files or network connections, or if using
-    // FFI maybe needing to make some FFI close calls.  So a better model of
-    // "extension shutdown" would build on a mechanism that would work for
-    // any MODULE!...registering its interest with an ACTION! that may be one
-    // of its natives, or even just usermode code.
-    //
-    // Hence the mechanics from the initial extension shutdown (which called
-    // CFUNC entry points in the DLL) have been removed.  There's also a lot
-    // of other murky areas--like how to disconnect REBNATIVEs from CFUNC
-    // dispatchers that have been unloaded...a mechanism was implemented here,
-    // but it was elaborate and made it hard to modify and improve the system
-    // while still not having clear semantics.  (If an extension is unloaded
-    // and reloaded again, should old ACTION! values work again?  If so, how
-    // would this deal with a recompiled extension which might have changed
-    // the parameters--thus breaking any specializations, etc?)
-    //
-    // Long story short: the extension model is currently in a simpler state
-    // to bring it into alignment with the module system, so that both can
-    // be improved together.  The most important feature to add for both is
-    // some kind of "finalizer".
-
-    // Note: The mechanical act of unloading a DLL involved these calls.
-    /*
-        if (not IS_LIBRARY(lib))
-            fail (Error_Invalid(ARG(ext)));
-
-        if (IS_LIB_CLOSED(VAL_LIBRARY(lib)))
-            fail (Error_Bad_Library_Raw());
-
-        OS_CLOSE_LIBRARY(VAL_LIBRARY_FD(lib));
-    */
 }
 
 
