@@ -1692,7 +1692,7 @@ DECLARE_NATIVE(proxy_exports)
         Value* dest = MOD_VAR(where, symbol, strict);
         if (dest != nullptr) {
             // Fail if found?
-            FRESHEN(dest);
+            Freshen_Cell(dest);
         }
         else {
             dest = Append_Context(where, symbol);

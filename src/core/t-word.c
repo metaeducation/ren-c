@@ -167,7 +167,7 @@ Bounce TO_Word(Level* level_, Kind k, const Value* arg)
     // a generalization of "refinement paths"
     //
     if (Is_Path(arg) or Is_Tuple(arg)) {
-        FRESHEN(OUT);
+        Freshen_Cell(OUT);
 
         DECLARE_ATOM (temp);
 

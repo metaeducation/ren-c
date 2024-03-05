@@ -127,8 +127,8 @@ INLINE Array* Singular_From_Cell(const Cell* v) {
     Series_Used(ensure(const Array*, (a)))
 
 
-// See READABLE(), WRITABLE() and related functions for an explanation of the
-// bits that have to be formatted in cell headers to be legal to use.
+// See Ensure_Readable(), Ensure_Writable() and related functions for an
+// explanation of bits that are formatted in cell headers to be legal to use.
 //
 INLINE void Prep_Array(
     Array* a,

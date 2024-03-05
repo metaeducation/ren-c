@@ -138,7 +138,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     const Cell* vararg,
     ParamClass pclass  // PARAMCLASS_0 to use vararg's class
 ){
-    FRESHEN(out);
+    Freshen_Cell(out);
 
     const Key* key;
     const Param* param = Param_For_Varargs_Maybe_Null(&key, vararg);

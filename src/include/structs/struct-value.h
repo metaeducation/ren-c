@@ -56,8 +56,6 @@
 #define Stable_Unchecked(atom) \
     x_cast(Value*, ensure(const Atom*, (atom)))
 
-INLINE Value* Freshen_Cell_Untracked(Cell* v);
-
 #if DEBUG_USE_CELL_SUBCLASSES  // wrapper has runtime cost
     template<typename T>
     struct SinkWrapper {

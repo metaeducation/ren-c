@@ -54,7 +54,7 @@ DECLARE_NATIVE(reduce)
 //    ARG(value) cell, as newline flags on ARG()s are available.
 //
 // 3. There is an assert which checks to make sure that no values overwrite
-//    a raised error--cells must be cleared first (see FRESHEN()).  This
+//    a raised error--cells must be cleared first (see Freshen_Cell()).  This
 //    makes it tough in situations where you are trying to pass a const
 //    cell pointer to something like a continuation--it makes a copy of the
 //    raised error, leaving it in its old location.  The aggressive assert

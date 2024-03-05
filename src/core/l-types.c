@@ -925,7 +925,7 @@ const Byte* Scan_Date(
     //
     Reset_Unquoted_Header_Untracked(TRACK(out), CELL_MASK_DATE);
 
-    // payload.time.nanoseconds is set, may be NO_DATE_TIME, don't FRESHEN()
+    // payload.time.nanoseconds is set, may be NO_DATE_TIME, don't Freshen_Cell()
 
     VAL_YEAR(out) = year;
     VAL_MONTH(out) = month;

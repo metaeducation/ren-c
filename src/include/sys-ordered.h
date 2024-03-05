@@ -51,7 +51,7 @@
     ((k) >= REB_VARARGS)
 
 #define Cell_Extra_Needs_Mark(v) \
-    Is_Extra_Mark_Kind(HEART_BYTE(v))  // READABLE() checked elsewhere
+    Is_Extra_Mark_Kind(HEART_BYTE(v))  // readable checked elsewhere
 
 
 //=//// BINDABILITY ///////////////////////////////////////////////////////=//
@@ -64,7 +64,7 @@ INLINE bool Is_Bindable_Heart(Heart h)
   { return h >= REB_WORD; }
 
 #define Is_Bindable(v) \
-    Is_Bindable_Heart(Cell_Heart_Unchecked(v))  // READABLE() checked elsewhere
+    Is_Bindable_Heart(Cell_Heart_Unchecked(v))  // readable checked elsewhere
 
 INLINE bool Bindable_Heart_Is_Any_Word(Heart heart) {
     assert(heart >= REB_WORD);  // inlined Is_Bindable_Heart()

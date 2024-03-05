@@ -189,7 +189,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         assert(Is_Throwing(LEVEL));
     }
     else if (STATE == STATE_0) {  // can't read STATE if ABRUPT_FAILURE
-        FRESHEN(OUT);
+        Freshen_Cell(OUT);
     }
 
 { //=//// CALL THE EXECUTOR ///////////////////////////////////////////////=//
@@ -672,7 +672,7 @@ void Drop_Level_Core(Level* L) {
         while (n != L) {
             Stub* s = cast(Stub*, n);
             n = LINK(ApiNext, s);
-            FRESHEN(Stub_Cell(s));
+            Freshen_Cell(Stub_Cell(s));
             GC_Kill_Series(s);
         }
         Corrupt_Pointer_If_Debug(L->alloc_value_list);

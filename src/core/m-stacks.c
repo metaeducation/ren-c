@@ -243,7 +243,7 @@ Array* Pop_Stack_Values_Core(StackIndex base, Flags flags)
   #endif
 
     Count count = 0;
-    Atom* src = Data_Stack_At(base + 1);  // not const, will be FRESHEN()
+    Atom* src = Data_Stack_At(base + 1);  // not const, will be Freshen_Cell()
     Cell* dest = Array_Head(a);
     for (; count < len; ++count, ++src, ++dest) {
       #if DEBUG

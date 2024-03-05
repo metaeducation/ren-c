@@ -1078,7 +1078,7 @@ DECLARE_NATIVE(case)
 
 } handle_next_clause: {  /////////////////////////////////////////////////////
 
-    FRESHEN(SPARE);  // must do before goto reached_end
+    Freshen_Cell(SPARE);  // must do before goto reached_end
 
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;
@@ -1285,7 +1285,7 @@ DECLARE_NATIVE(switch)
 
 } next_switch_step: {  ///////////////////////////////////////////////////////
 
-    FRESHEN(SPARE);  // fallout must be reset each time
+    Freshen_Cell(SPARE);  // fallout must be reset each time
 
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;
@@ -1359,7 +1359,7 @@ DECLARE_NATIVE(switch)
     STATE = ST_SWITCH_RUNNING_BRANCH;
     SUBLEVEL->executor = &Just_Use_Out_Executor;
     return CONTINUE_CORE(
-        FRESHEN(OUT),
+        Freshen_Cell(OUT),
         LEVEL_FLAG_BRANCH,
         Level_Specifier(SUBLEVEL), at
     );

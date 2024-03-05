@@ -299,7 +299,7 @@ bool Specialize_Action_Throws(
             return true;
         }
 
-        FRESHEN(out);
+        Freshen_Cell(out);
     }
 
     const Key* tail;

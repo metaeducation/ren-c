@@ -918,7 +918,7 @@ DECLARE_NATIVE(apply)
         else
             Init_Nulled(var);
 
-        FRESHEN(SPARE);
+        Freshen_Cell(SPARE);
     }
     else {
         Move_Cell(var, stable_SPARE);  // !!! Review stability

@@ -1303,7 +1303,8 @@ void Assert_Pointer_Detection_Working(void)
     stale_cell->header.bits =
         NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
         | FLAG_HEART_BYTE(REB_BLANK);
-    assert(Detect_Rebol_Pointer(WRITABLE(stale_cell)) == DETECTED_AS_UTF8);
+    ASSERT_CELL_WRITABLE(stale_cell);
+    assert(Detect_Rebol_Pointer(stale_cell) == DETECTED_AS_UTF8);
 
     assert(Detect_Rebol_Pointer(rebEND) == DETECTED_AS_END);
 

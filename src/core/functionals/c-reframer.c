@@ -101,7 +101,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
         LEVEL_MASK_NONE  // FULFILL_ONLY added after Push_Action()
     );
     L->baseline.stack_base = base;  // incorporate refinements
-    FRESHEN(out);
+    Freshen_Cell(out);
     Push_Level(out, L);
 
     if (error_on_deferred)  // can't deal with ELSE/THEN [1]
@@ -166,7 +166,7 @@ bool Init_Invokable_From_Feed_Throws(
     // needs review.
     //
     if (v == nullptr) {  // no first, and feed was at end
-        FRESHEN(out);
+        Freshen_Cell(out);
         return false;
     }
 

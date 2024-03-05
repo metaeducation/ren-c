@@ -120,7 +120,7 @@ bool Pushed_Continuation(
                 | FLAG_STATE_BYTE(ST_GROUP_BRANCH_ENTRY_DONT_ERASE_OUT)
         );
         if (with == nullptr)
-            FRESHEN(out);
+            Freshen_Cell(out);
         else
             Copy_Cell(out, unwrap(with));  // need lifetime preserved
         Push_Level(out, grouper);

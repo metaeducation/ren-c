@@ -39,7 +39,7 @@
     (ensure(const Cell*, (paired)) + 2)
 
 INLINE bool Any_Pairlike(const Cell* v) {
-    // called by core code, sacrifice READABLE() checks
+    // called by core code, sacrifice Ensure_Readable() checks
     if (Cell_Heart_Unchecked(v) == REB_PAIR)
         return true;
     if (not Any_Sequence_Kind(Cell_Heart_Unchecked(v)))

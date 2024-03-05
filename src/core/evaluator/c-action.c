@@ -245,7 +245,7 @@ Bounce Action_Executor(Level* L)
         goto fulfill_loop_body;  // optimized out
 
       continue_fulfilling:
-        assert(Is_Stable(ARG));  // implicitly asserts READABLE(ARG)
+        assert(Is_Stable(ARG));  // also checks ARG is readable
 
         if (Get_Action_Executor_Flag(L, DOING_PICKUPS)) {
             if (TOP_INDEX != L->baseline.stack_base)
@@ -437,7 +437,7 @@ Bounce Action_Executor(Level* L)
                 assert(not Is_Trash(OUT));
                 Decay_If_Unstable(OUT);  // !!! ^META variadics?
                 Init_Varargs_Untyped_Enfix(ARG, stable_OUT);
-                FRESHEN(OUT);
+                Freshen_Cell(OUT);
             }
             else switch (pclass) {
               case PARAMCLASS_NORMAL:
@@ -464,7 +464,7 @@ Bounce Action_Executor(Level* L)
                 if (ANY_ESCAPABLE_GET(OUT)) {
                     if (Eval_Value_Throws(ARG, cast(Element*, OUT), SPECIFIED))
                         goto handle_thrown_maybe_redo;
-                    FRESHEN(OUT);
+                    Freshen_Cell(OUT);
                 }
                 else
                     Move_Cell(ARG, OUT);
@@ -672,7 +672,7 @@ Bounce Action_Executor(Level* L)
                 // and it knows to get the arg from there.
 
                 Flags flags =
-                    FLAG_STATE_BYTE(ST_STEPPER_LOOKING_AHEAD)  // no FRESHEN()
+                    FLAG_STATE_BYTE(ST_STEPPER_LOOKING_AHEAD)  // no Freshen_Cell()
                     | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
                     | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
 
@@ -824,14 +824,14 @@ Bounce Action_Executor(Level* L)
 
     assert(STATE == ST_ACTION_TYPECHECKING);
 
-    FRESHEN(OUT);
+    Freshen_Cell(OUT);
 
     KEY = ACT_KEYS(&KEY_TAIL, Level_Phase(L));
     ARG = Level_Args_Head(L);
     PARAM = ACT_PARAMS_HEAD(Level_Phase(L));
 
     for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
-        assert(Is_Stable(ARG));  // implicitly asserts READABLE(ARG)
+        assert(Is_Stable(ARG));  // implicitly asserts Ensure_Readable(ARG)
 
         if (Is_Specialized(PARAM))  // checked when specialized [1]
             continue;
@@ -926,7 +926,7 @@ Bounce Action_Executor(Level* L)
             fail (Error_Literal_Left_Tuple_Raw());
 
         assert(Get_Action_Executor_Flag(L, RUNNING_ENFIX));
-        FRESHEN(OUT);
+        Freshen_Cell(OUT);
     }
 
     assert(Get_Action_Executor_Flag(L, IN_DISPATCH));
@@ -936,7 +936,7 @@ Bounce Action_Executor(Level* L)
         goto skip_output_check;
     }
 
-    FRESHEN(SPARE);  // tiny cost (one bit clear) but worth it [3]
+    Freshen_Cell(SPARE);  // tiny cost (one bit clear) but worth it [3]
     STATE = STATE_0;  // reset to zero for each phase
 
     L_next_gotten = nullptr;  // arbitrary code changes fetched variables

@@ -463,8 +463,8 @@ for-each-datatype t [
 
     need: either t/unstable ["Atom"] ["Value"]
 
-    ; Note: READABLE() not defined yet at this point, so wrapped in a macro.
-    ; Revisit.
+    ; Note: Ensure_Readable() not defined yet at this point, so defined as
+    ; a macro vs. an inline function.  Revisit.
     ;
     e-types/emit [t {
         INLINE bool Is_$<Propercase T/Antiname>_Core(Need(const $<Need>*) v) { \
@@ -473,10 +473,10 @@ for-each-datatype t [
         }
 
         #define Is_$<Propercase T/Antiname>(v) \
-            Is_$<Propercase T/Antiname>_Core(READABLE(v))
+            Is_$<Propercase T/Antiname>_Core(Ensure_Readable(v))
 
         #define Is_Meta_Of_$<Propercase T/Antiname>(v) \
-        ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
+        ((Ensure_Readable(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
             == (FLAG_QUOTE_BYTE(QUASIFORM_2) | FLAG_HEART_BYTE(REB_$<T/NAME>)))
 
         #define Is_Quasi_$<Propercase T/Name>(v) \

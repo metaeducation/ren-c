@@ -67,7 +67,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 
 #define CELL_MASK_NO_NODES 0  // no CELL_FLAG_FIRST_IS_NODE or SECOND_IS_NODE
 
-#define CELL_MASK_0 0  // considered "Fresh" but not WRITABLE()/READABLE()
+#define CELL_MASK_0 0  // "Fresh" so initable, but not readable or writable
 #define CELL_MASK_0_ROOT NODE_FLAG_ROOT  // same (but for API cells)
 
 
@@ -342,9 +342,9 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 #define CELL_MASK_ALL \
     ~cast(Flags, 0)
 
-// The poison mask has NODE_FLAG_CELL but no NODE_FLAG_NODE, so it is not
-// READABLE(), and it is CELL_FLAG_PROTECTED so it's not WRITABLE() and nor
-// can it be FRESHEN().  It has to be ERASE()'d.
+// Poison mask has NODE_FLAG_CELL but no NODE_FLAG_NODE, so Ensure_Readable()
+// will fail, and it is CELL_FLAG_PROTECTED so Ensure_Writable() will fail.
+// Nor can it be freshened with Freshen_Cell().  It has to be Erase_Cell()'d.
 //
 #define CELL_MASK_POISON \
     (NODE_FLAG_CELL | CELL_FLAG_PROTECTED)

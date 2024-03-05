@@ -235,7 +235,7 @@ Bounce Stepper_Executor(Level* L)
             goto process_action;
         }
 
-        FRESHEN(OUT);
+        Freshen_Cell(OUT);
 
         L_current_gotten = nullptr;  // !!! allow/require to be passe in?
         goto evaluate; }
@@ -377,7 +377,7 @@ Bounce Stepper_Executor(Level* L)
     if (Get_Subclass_Flag(VARLIST, paramlist, PARAMLIST_SKIPPABLE_FIRST)) {
         const Param* first = First_Unspecialized_Param(nullptr, enfixed);
         if (not Typecheck_Atom(first, OUT)) {  // left's kind
-            FRESHEN(OUT);
+            Freshen_Cell(OUT);
             goto give_up_backward_quote_priority;
         }
     }
@@ -647,7 +647,7 @@ Bounce Stepper_Executor(Level* L)
                     if (Get_Eval_Executor_Flag(L, FULFILLING_ARG)) {
                         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
                         Set_Feed_Flag(L->feed, DEFERRING_ENFIX);
-                        FRESHEN(OUT);
+                        Freshen_Cell(OUT);
                         goto finished;
                     }
                 }

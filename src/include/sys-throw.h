@@ -70,7 +70,7 @@ INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
 
     assert(THROWING);
 
-    FRESHEN(level_->out);
+    Freshen_Cell(level_->out);
     return BOUNCE_THROWN;
 }
 

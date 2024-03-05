@@ -260,7 +260,7 @@ static void Shutdown_Lib(void)
 {
     // !!! Since PG_Lib_Patches are array stubs that live outside the pools,
     // the Shutdown_GC() will not kill them off.  We want to make sure the
-    // variables are FRESHEN() and that the patches look empty in case the
+    // variables are Freshen_Cell() and that the patches look empty in case the
     // Startup() gets called again.
     //
     assert(Is_Node_Free(&PG_Lib_Patches[0]));
@@ -272,7 +272,7 @@ static void Shutdown_Lib(void)
         if (INODE(PatchContext, patch) == nullptr)
             continue;  // was never initialized !!! should it not be in lib?
 
-        Erase_Cell(Stub_Cell(patch));  // may be PROTECTED, can't FRESHEN()
+        Erase_Cell(Stub_Cell(patch));  // may be PROTECTED, can't Freshen_Cell()
         Decay_Series(patch);
 
         // !!! Typically nodes aren't zeroed out when they are freed.  Since
@@ -575,7 +575,7 @@ static void Init_System_Object(
     // Create SYSTEM.CODECS object
     //
     Init_Object(
-        FRESHEN(Get_System(SYS_CODECS, 0)),
+        Freshen_Cell(Get_System(SYS_CODECS, 0)),
         Alloc_Context_Core(REB_OBJECT, 10, NODE_FLAG_MANAGED)
     );
 

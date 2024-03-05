@@ -31,7 +31,7 @@
 //
 
 INLINE bool Any_Wordlike(const Cell* v) {
-    // called by core code, sacrifice READABLE() checks
+    // called by core code, sacrifice Ensure_Readable() checks
     if (Any_Word_Kind(Cell_Heart_Unchecked(v)))
         return true;
     if (not Any_Sequence_Kind(Cell_Heart_Unchecked(v)))

@@ -627,7 +627,7 @@ INLINE void SET_SIGNAL(Flags f) { // used in %sys-series.h
 #include "cells/cell-series.h"
 #include "cells/cell-array.h"
 
-#include "cells/cell-unreadable.h"  // a cell not READABLE(), but WRITABLE()
+#include "cells/cell-unreadable.h"  // writable, but Ensure_Readable() fails
 
 #include "cells/cell-comma.h"  // Is_Elision() references nihil block antiform
 

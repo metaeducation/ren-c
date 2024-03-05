@@ -554,7 +554,7 @@ INLINE Value* Sink_Word_May_Fail(
     Specifier* specifier
 ){
     Value* var = Lookup_Mutable_Word_May_Fail(any_word, specifier);
-    return FRESHEN(var);
+    return Freshen_Cell(var);
 }
 
 

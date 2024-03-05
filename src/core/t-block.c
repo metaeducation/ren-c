@@ -1588,7 +1588,8 @@ void Assert_Array_Core(const Array* a)
     Offset n;
     Length len = Array_Len(a);
     for (n = 0; n < len; ++n, ++item) {
-        if (HEART_BYTE(item) >= REB_MAX) {  // checks READABLE()
+        ASSERT_CELL_READABLE(item);
+        if (HEART_BYTE(item) >= REB_MAX) {
             printf("Invalid HEART_BYTE() at index %d\n", cast(int, n));
             panic (a);
         }

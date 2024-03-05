@@ -36,7 +36,7 @@ INLINE const Series* Cell_Series(const Cell* v) {
     //
     //     VAL_INDEX_UNBOUNDED(v) = xxx;  // ensures v is Any_Series!
     //
-    // Avoids READABLE() macro, because it's assumed that it was done in the
+    // Avoids Ensure_Readable(), because it's assumed that it was done in the
     // type checking to ensure VAL_INDEX() applied.  (This is called often.)
     //
     INLINE REBIDX VAL_INDEX_UNBOUNDED(const Cell* v) {

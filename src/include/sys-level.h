@@ -575,7 +575,7 @@ INLINE Level* Prep_Level_Core(
 
 INLINE Bounce Native_Thrown_Result(Level* level_) {
     assert(THROWING);
-    FRESHEN(level_->out);
+    Freshen_Cell(level_->out);
     return BOUNCE_THROWN;
 }
 

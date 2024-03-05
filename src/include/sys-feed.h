@@ -391,7 +391,7 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
         panic (feed->p);
     }
 
-    assert(Is_Feed_At_End(feed) or READABLE(c_cast(Cell*, feed->p)));
+    assert(Is_Feed_At_End(feed) or Ensure_Readable(c_cast(Cell*, feed->p)));
     return;
 
 } detect_again: {  ///////////////////////////////////////////////////////////
@@ -412,7 +412,7 @@ INLINE void Sync_Feed_At_Cell_Or_End_May_Fail(Feed* feed) {
         Force_Variadic_Feed_At_Cell_Or_End_May_Fail(feed);
         Clear_Feed_Flag(feed, NEEDS_SYNC);
     }
-    assert(Is_Feed_At_End(feed) or READABLE(c_cast(Cell*, feed->p)));
+    assert(Is_Feed_At_End(feed) or Ensure_Readable(c_cast(Cell*, feed->p)));
 }
 
 
@@ -506,7 +506,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
         Set_Cell_Flag(&feed->fetched, PROTECTED);
   #endif
 
-    assert(Is_Feed_At_End(feed) or READABLE(c_cast(Cell*, feed->p)));
+    assert(Is_Feed_At_End(feed) or Ensure_Readable(c_cast(Cell*, feed->p)));
 }
 
 
@@ -667,7 +667,7 @@ INLINE Feed* Prep_Array_Feed(
     if (Is_Feed_At_End(feed))
         assert(FEED_PENDING(feed) == nullptr);
     else
-        assert(READABLE(c_cast(Cell*, feed->p)));
+        assert(Ensure_Readable(c_cast(Cell*, feed->p)));
 
     return feed;
 }

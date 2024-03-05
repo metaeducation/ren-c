@@ -622,7 +622,7 @@ static REBIXO Parse_One_Rule(
         bool interrupted;
         if (Subparse_Throws(
             &interrupted,
-            FRESHEN(subresult),
+            Freshen_Cell(subresult),
             ARG(position),  // affected by P_POS assignment above
             SPECIFIED,
             sub,
@@ -1194,7 +1194,7 @@ static void Handle_Mark_Rule(
         )){
             fail (Error_No_Catch_For_Throw(LEVEL));
         }
-        FRESHEN(OUT);
+        Freshen_Cell(OUT);
     }
     else
         fail (Error_Parse3_Variable(level_));
@@ -1587,7 +1587,7 @@ DECLARE_NATIVE(subparse)
                         fail ("REPEAT range can't have lower max than minimum");
                 }
 
-                FRESHEN(OUT);
+                Freshen_Cell(OUT);
 
                 FETCH_NEXT_RULE(L);
                 goto pre_rule;
@@ -1706,7 +1706,7 @@ DECLARE_NATIVE(subparse)
                     else
                         rebElide(Canon(APPEND), ARG(collection), rebQ(OUT));
 
-                    FRESHEN(OUT);  // since we didn't throw, put it back
+                    Freshen_Cell(OUT);  // since we didn't throw, put it back
 
                     // Don't touch P_POS, we didn't consume anything from
                     // the input series but just fabricated EVAL material.
@@ -1740,11 +1740,11 @@ DECLARE_NATIVE(subparse)
                         goto return_thrown;
 
                     if (Is_Nulled(OUT)) {  // match of rule failed
-                        FRESHEN(OUT);  // restore invariant
+                        Freshen_Cell(OUT);  // restore invariant
                         goto next_alternate;  // backtrack collect, seek |
                     }
                     REBLEN pos_after = VAL_INT32(OUT);
-                    FRESHEN(OUT);  // restore invariant
+                    Freshen_Cell(OUT);  // restore invariant
 
                     assert(pos_after >= pos_before);  // 0 or more matches
 
@@ -2051,11 +2051,11 @@ DECLARE_NATIVE(subparse)
                 goto return_thrown;
 
             if (Is_Nulled(OUT)) {  // match of rule failed
-                FRESHEN(OUT);  // restore invariant
+                Freshen_Cell(OUT);  // restore invariant
                 goto next_alternate;  // backtrack collect, seek |
             }
             P_POS = VAL_INT32(OUT);
-            FRESHEN(OUT);  // restore invariant
+            Freshen_Cell(OUT);  // restore invariant
 
             Init_Block(
                 Sink_Word_May_Fail(set_or_copy_word, P_RULE_SPECIFIER),
@@ -2326,7 +2326,7 @@ DECLARE_NATIVE(subparse)
                 if (Is_Api_Value(into))
                     rebRelease(x_cast(Value*, into));  // !!! or use SPARE?
 
-                FRESHEN(OUT);  // restore invariant
+                Freshen_Cell(OUT);  // restore invariant
                 break; }
 
               default:
@@ -2344,7 +2344,7 @@ DECLARE_NATIVE(subparse)
             bool interrupted;
             if (Subparse_Throws(
                 &interrupted,
-                FRESHEN(SPARE),
+                Freshen_Cell(SPARE),
                 ARG(position),
                 SPECIFIED,
                 sub,
@@ -2816,7 +2816,7 @@ DECLARE_NATIVE(parse3)
     bool interrupted;
     if (Subparse_Throws(
         &interrupted,
-        FRESHEN(OUT),
+        Freshen_Cell(OUT),
         input, SPECIFIED,
         sub,
         nullptr,  // start out with no COLLECT in effect, so no P_COLLECTION

@@ -507,7 +507,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         else
             feed->p = Array_Head(FEED_ARRAY(feed));
 
-        assert(READABLE(At_Feed(feed)));  // not end at start, not end now
+        assert(Ensure_Readable(At_Feed(feed)));  // not end at start, not end now
 
         // The array just popped into existence, and it's tied to a running
         // level...so safe to say we're holding it.
@@ -850,7 +850,7 @@ static void Mark_Level_Stack_Deep(void)
         // L->out can be nullptr at the moment, when a level is created that
         // can ask for a different output each evaluation.
         //
-        if (L->out)  // output is allowed to be FRESHEN()
+        if (L->out)  // output is allowed to be Freshen_Cell()
             Queue_Mark_Maybe_Fresh_Cell_Deep(L->out);
 
         // Level temporary cell should always contain initialized bits, as

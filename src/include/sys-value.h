@@ -132,7 +132,7 @@
 //
 // Fresh cells can occur "naturally" (from memset() or other 0 memory), be
 // made manually with Erase_Cell(), or an already initialized cell can have
-// its CELL_MASK_PERSIST portions wiped out with FRESHEN().
+// its CELL_MASK_PERSIST portions wiped out with Freshen_Cell().
 //
 // Note that if CELL_FLAG_PROTECTED is set on a cell, it will not be considered
 // fresh for initialization.  So the flag must be cleared or the cell erased
@@ -171,9 +171,10 @@
 
   // 1. These macros are "evil", because in the debug build, functions aren't
   //    inlined, and the overhead actually adds up very quickly.  We repeat
-  //    arguments to speed up these critical tests, then wrap in READABLE()
-  //    and WRITABLE() functions for callers that don't mind the cost.  The
-  //    STATIC_ASSERT_LVALUE() macro catches any potential violators.
+  //    arguments to speed up these critical tests, then wrap them in
+  //    Ensure_Readable() and Ensure_Writable() functions for callers that
+  //    don't mind the cost.  The STATIC_ASSERT_LVALUE() macro catches any
+  //    potential violators.
 
     #define ASSERT_CELL_READABLE(c) do { \
         STATIC_ASSERT_LVALUE(c);  /* "evil macro" [1] */ \
@@ -214,17 +215,17 @@
     } while (0)
 
   #if (! CPLUSPLUS_11)
-    #define READABLE(c) (c)
-    #define WRITABLE(c) (c)
+    #define Ensure_Readable(c) (c)
+    #define Ensure_Writable(c) (c)
   #else
     template <typename T>
-    T READABLE(T cell) {
+    T Ensure_Readable(T cell) {
         ASSERT_CELL_READABLE(cell);
         return cell;
     }
 
     template <typename T>
-    T WRITABLE(T cell) {
+    T Ensure_Writable(T cell) {
         ASSERT_CELL_WRITABLE(cell);
         return cell;
     }
@@ -233,8 +234,8 @@
     #define ASSERT_CELL_READABLE(c)    NOOP
     #define ASSERT_CELL_WRITABLE(c)    NOOP
 
-    #define READABLE(c) (c)
-    #define WRITABLE(c) (c)
+    #define Ensure_Readable(c) (c)
+    #define Ensure_Writable(c) (c)
 #endif
 
 
@@ -269,7 +270,7 @@ INLINE void Init_Cell_Node2(Cell* v, Option(const Node*) node) {
     u_cast(Heart, HEART_BYTE(cell))
 
 #define Cell_Heart(cell) \
-    Cell_Heart_Unchecked(READABLE(cell))
+    Cell_Heart_Unchecked(Ensure_Readable(cell))
 
 INLINE Heart Cell_Heart_Ensure_Noquote(const Cell* cell) {
     assert(QUOTE_BYTE(cell) == NOQUOTE_1);
@@ -314,7 +315,7 @@ INLINE Kind VAL_TYPE_UNCHECKED(const Atom* v) {
     #define VAL_TYPE VAL_TYPE_UNCHECKED
 #else
     #define VAL_TYPE(v) \
-        VAL_TYPE_UNCHECKED(READABLE(v))
+        VAL_TYPE_UNCHECKED(Ensure_Readable(v))
 #endif
 
 
@@ -332,10 +333,10 @@ INLINE Kind VAL_TYPE_UNCHECKED(const Atom* v) {
 //    vs. x_cast() on the (c) to get the typechecking of [1]
 
 #define Get_Cell_Flag(c,name) /* [1] */ \
-    ((READABLE(c)->header.bits & CELL_FLAG_##name) != 0)
+    ((Ensure_Readable(c)->header.bits & CELL_FLAG_##name) != 0)
 
 #define Not_Cell_Flag(c,name) \
-    ((READABLE(c)->header.bits & CELL_FLAG_##name) == 0)
+    ((Ensure_Readable(c)->header.bits & CELL_FLAG_##name) == 0)
 
 #define Get_Cell_Flag_Unchecked(c,name) \
     (((c)->header.bits & CELL_FLAG_##name) != 0)
@@ -344,10 +345,12 @@ INLINE Kind VAL_TYPE_UNCHECKED(const Atom* v) {
     (((c)->header.bits & CELL_FLAG_##name) == 0)
 
 #define Set_Cell_Flag(c,name) /* [2] */ \
-    m_cast(union HeaderUnion*, &READABLE(c)->header)->bits |= CELL_FLAG_##name
+    m_cast(union HeaderUnion*, &Ensure_Readable(c)->header)->bits \
+        |= CELL_FLAG_##name
 
 #define Clear_Cell_Flag(c,name) \
-    m_cast(union HeaderUnion*, &READABLE(c)->header)->bits &= ~CELL_FLAG_##name
+    m_cast(union HeaderUnion*, &Ensure_Readable(c)->header)->bits \
+        &= ~CELL_FLAG_##name
 
 
 // See notes on ALIGN_SIZE regarding why we check this, and when it does and
@@ -382,7 +385,8 @@ INLINE Kind VAL_TYPE_UNCHECKED(const Atom* v) {
 // all zeros to protect leakage from other processes...so it's good to be
 // able to take advantage of it where possible.
 //
-// Note that an erased cell Is_Fresh(), but not READABLE() or WRITABLE().
+// Note that an erased cell Is_Fresh(), but Ensure_Readable() will fail, and
+// so will Ensure_Writable().
 
 INLINE Cell* Erase_Cell_Untracked(Cell* c) {
     ALIGN_CHECK_CELL(c);
@@ -401,8 +405,8 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 //
 // Poisoning is used in the spirit of things like Address Sanitizer to block
 // reading or writing locations such as beyond the allocated memory of an
-// array series.  It leverages the checks done by READABLE(), WRITABLE() and
-// FRESH()
+// array series.  It leverages the checks done by Ensure_Readable(),
+// Ensure_Writable() and Is_Fresh()
 //
 // Another use for the poisoned state is in an optimized array representation
 // that fits 0 or 1 cells into the series node itself.  Since the cell lives
@@ -469,9 +473,9 @@ INLINE Value* Freshen_Cell_Untracked(Cell* v) {
     return cast(Value*, v);
 }
 
-#define FRESHEN(v) \
+#define Freshen_Cell(v) \
     TRACK(Freshen_Cell_Untracked(v))
-        // ^-- track AFTER reset, so you can diagnose cell origin in WRITABLE()
+        // ^-- track AFTER reset, can diagnose cell origin in Ensure_Writable()
 
 
 
@@ -850,19 +854,19 @@ INLINE Value* Constify(Value* v) {
 
 
 INLINE bool Is_Antiform(Need(const Value*) v)
-  { return QUOTE_BYTE(READABLE(v)) == ANTIFORM_0; }
+  { return QUOTE_BYTE(Ensure_Readable(v)) == ANTIFORM_0; }
 
 #define Is_Unquoted(v) \
-    (QUOTE_BYTE(READABLE(v)) == NOQUOTE_1)
+    (QUOTE_BYTE(Ensure_Readable(v)) == NOQUOTE_1)
 
 #define Is_Quasiform(v) \
-    (QUOTE_BYTE(READABLE(v)) == QUASIFORM_2)
+    (QUOTE_BYTE(Ensure_Readable(v)) == QUASIFORM_2)
 
 #define Is_Quoted(v) \
-    (QUOTE_BYTE(READABLE(v)) >= ONEQUOTE_3)  // '''~a~ is quoted, not quasi
+    (QUOTE_BYTE(Ensure_Readable(v)) >= ONEQUOTE_3)  // '~a~ quoted, not quasi
 
 #define Is_Metaform(v) \
-    (QUOTE_BYTE(READABLE(v)) >= QUASIFORM_2)  // quasi or quoted
+    (QUOTE_BYTE(Ensure_Readable(v)) >= QUASIFORM_2)  // quasi or quoted
 
 
 //=//// ENSURE THINGS ARE ELEMENTS ////////////////////////////////////////=//

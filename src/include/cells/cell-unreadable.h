@@ -50,7 +50,7 @@
 #if DEBUG_UNREADABLE_CELLS
     INLINE Element* Init_Unreadable_Untracked(Sink(Element*) out) {
         Init_Quasi_Blank(out);
-        Set_Node_Free_Bit(out);  // cell won't be READABLE(), but WRITABLE()
+        Set_Node_Free_Bit(out);  // won't be readable, but still writable
         return out;
     }
 
