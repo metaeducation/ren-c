@@ -199,7 +199,7 @@ console!: make object! [
         return: "null if canceled, otherwise processed text line input"
             [<opt> text!]
     ][
-        input
+        ask text!
     ]
 
     dialect-hook: func [
@@ -755,145 +755,6 @@ why: function [
     ]
 ]
 
-
-upgrade: function [
-    "Check for newer versions."
-    return: <void>
-][
-    ; Should this be a console-detected command, like Q, or is it meaningful
-    ; to define this as a function you could call from code?
-    ;
-    do <upgrade>
-]
-
-
-; The ECHO routine has to collaborate specifically with the console, because
-; it is often desirable to capture the input only, the output only, or both.
-;
-; !!! The features that tie the echo specifically to the console would be
-; things like ECHO INPUT, e.g.:
-;
-; https://github.com/red/red/issues/2487
-;
-; They are not implemented yet, but ECHO is moved here to signify the known
-; issue that the CONSOLE must collaborate specifically with ECHO to achieve
-; this.
-;
-echo: function [
-    {Copies console I/O to a file.}
-
-    return: <void>
-    'instruction [file! text! block! word!]
-        {File or template with * substitution, or command: [ON OFF RESET].}
-
-    <static>
-    target ([%echo * %.txt])
-    form-target
-    sub ("")
-    old-input (copy :input)
-    old-write-stdout (copy :write-stdout)
-    hook-in
-    hook-out
-    logger
-    ensure-echo-on
-    ensure-echo-off
-][
-    ; Sample "interesting" feature, be willing to form the filename by filling
-    ; in the blank with a substitute string you can change.
-    ;
-    form-target: default [func [return: [file!]] [
-        either block? target [
-            as file! unspaced replace (copy target) '* (
-                either empty? sub [[]] [unspaced ["-" sub]]
-            )
-        ][
-            target
-        ]
-    ]]
-
-    logger: default [func [value][
-        write/append form-target either char? value [to-text value][value]
-        value
-    ]]
-
-    ; Installed hook; in an ideal world, WRITE-STDOUT would not exist and
-    ; would just be WRITE, so this would be hooking WRITE and checking for
-    ; STDOUT or falling through.  Note WRITE doesn't take CHAR! right now.
-    ;
-    hook-out: default [func [
-        return: <void>
-        value [text! char! binary!]
-            {Text to write, if a STRING! or CHAR! is converted to OS format}
-    ][
-        old-write-stdout value
-        logger value
-    ]]
-
-    ; It looks a bit strange to look at a console log without the input
-    ; being included too.  Note that hooking the input function doesn't get
-    ; the newlines, has to be added.
-    ;
-    hook-in: default [
-        chain [
-            :old-input
-                |
-            func [value] [
-                logger value
-                logger newline
-                value ;-- hook still needs to return the original value
-            ]
-        ]
-    ]
-
-    ensure-echo-on: default [does [
-        ;
-        ; Hijacking is a NO-OP if the functions are the same.
-        ; (this is indicated by a BLANK! return vs an ACTION!)
-        ;
-        hijack 'write-stdout 'hook-out
-        hijack 'input 'hook-in
-    ]]
-
-    ensure-echo-off: default [does [
-        ;
-        ; Restoring a hijacked function with its original will
-        ; remove any overhead and be as fast as it was originally.
-        ;
-        hijack 'write-stdout 'old-write-stdout
-        hijack 'input 'old-input
-    ]]
-
-    switch type of instruction [
-        word! [
-            switch instruction [
-                'on [ensure-echo-on]
-                'off [ensure-echo-off]
-                'reset [
-                    delete form-target
-                    write/append form-target "" ;-- or just have it not exist?
-                ]
-            ] else [
-                word: to-uppercase word
-                fail [
-                    "Unknown ECHO command, not [ON OFF RESET]" LF
-                    "Use ECHO" unspaced ["(" word ")"] "to force evaluation"
-                ]
-            ]
-        ]
-
-        text! [
-            sub: instruction
-            ensure-echo-on
-        ]
-
-        block! file! [
-            target: instruction
-            ensure-echo-on
-        ]
-    ]
-]
-
-
 ; !!! It should likely be the case that the namespace for the user natives in
 ; an extension would be shared with the Rebol code for a module, but there's
 ; also a likely need to be able to have several source-level Rebol files
@@ -921,6 +782,4 @@ append lib compose [
     ;-- the object key would be gathered as a local.
     ;
     why: (ensure action! :why)
-    echo: (ensure action! :echo)
-    upgrade: (ensure action! :upgrade)
 ]

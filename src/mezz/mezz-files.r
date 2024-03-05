@@ -76,16 +76,23 @@ clean-path: function [
 ]
 
 
-input: function [
+ask: function [
     {Inputs a line of text from the console. New-line character is removed.}
 
     return: "Null if the input was aborted (via ESCAPE, Ctrl-D, etc.)"
         [<opt> text!]
-
-    ; https://github.com/rebol/rebol-issues/issues/476#issuecomment-441417774
-    ;
-    ; /hide "Mask input with a * character"
+    question "Prompt to user"
+        [datatype! any-series!]
 ][
+    if datatype? question [
+        if question <> text! [
+            fail "ASK only supports ASK TEXT! in bootstrap build"
+        ]
+    ]
+    else [
+        write-stdout either block? question [spaced question] [question]
+    ]
+
     all [
         port? system/ports/input
         open? system/ports/input
@@ -119,19 +126,6 @@ input: function [
     line: to-text data
     trim/with line newline
     line
-]
-
-
-ask: function [
-    {Ask the user for input.}
-
-    return: [text!]
-    question "Prompt to user"
-        [any-series!]
-    /hide "mask input with *"
-][
-    write-stdout either block? question [spaced question] [question]
-    trim either hide [input/hide] [input]
 ]
 
 
