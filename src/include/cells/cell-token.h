@@ -35,6 +35,19 @@
 // However, there are UTF-8-based accessors VAL_UTF8_XXX which can be used to
 // polymorphically access const data across ANY-STRING?, ANY-WORD?, and ISSUE!
 //
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// * In addition to the encoded bytes of the UTF-8, a single-codepoint ISSUE!
+//   will also cache that codepoint.  Hence a CHAR? cell has both the UTF-8
+//   representation and the codepoint on hand locally in the cell.
+//
+// * The 0 codepoint ("NUL") is a valid ISSUE! -but- it can not appear in an
+//   ANY-STRING?.  Only BINARY! can have embedded zero bytes.  For strings it
+//   is kept for termination, so that only one return result is needed from
+//   APIs like rebSpell().  All efforts are being made to make it as easy to
+//   work with a BINARY! on string-like tasks where internal 0 bytes are ok.
+//
+
 
 INLINE bool IS_CHAR_CELL(const Cell* v) {
     if (Cell_Heart(v) != REB_ISSUE)

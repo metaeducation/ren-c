@@ -1,5 +1,5 @@
 //
-//  File: %cell-char.h
+//  File: %sys-utf8.h
 //  Summary: "CHAR! Datatype Header"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2019 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -20,27 +20,9 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A CHAR! value cell stores both a codepoint and the bytes of the codepoint
-// when UTF-8 encoded.  It's inexpensive to do the encoding at the time of
-// initializing the cell, and almost always necessary to have it available.
-//
-// The encoded payload takes the whole 8 bytes of a 32-bit payload.  The first
-// is used for the encoded length, then the encoding, then a null terminator.
-// This leaves 6 bytes for the encoded size, which is the maximum the
-// implementation could use (though see UNI_ENCODED_SIZE_MAX for notes on
-// why it has been typically limited to 4).
-//
-//=//// NOTES /////////////////////////////////////////////////////////////=//
-//
-// * The 0 codepoint ("NUL") is a valid CHAR! -but- it can not appear in an
-//   ANY-STRING?.  Only BINARY! can have embedded zero bytes.  For strings it
-//   is kept for termination, so that only one return result is needed from
-//   APIs like rebSpell().  All efforts are being made to make it as easy to
-//   work with a BINARY! on string-like tasks where internal 0 bytes are ok.
-//
-// * Portions here are derived from the files ConvertUTF.h and ConvertUTF.c,
-//   by Unicode Inc.  The files are no longer available from Unicode.org but
-//   can be found in some other projects, including Android:
+// Portions here are derived from the files ConvertUTF.h and ConvertUTF.c,
+// by Unicode Inc.  The files are no longer available from Unicode.org but
+// can be found in some other projects, including Android:
 //
 // https://android.googlesource.com/platform/external/id3lib/+/master/unicode.org/ConvertUTF.h
 // https://android.googlesource.com/platform/external/id3lib/+/master/unicode.org/ConvertUTF.c
@@ -111,6 +93,10 @@ extern const uint_fast32_t g_offsets_from_utf8[6];  // defined in %t-char.c
 
 #define MAX_UNI UNI_MAX_LEGAL_UTF32  // https://stackoverflow.com/a/20883643
 
+// 1. Some languages have the feature of decoding illegal codepoints as a
+//    substitution character.  If Rebol were willing to do this, at what level
+//    would that decision be made?
+//
 INLINE uint_fast8_t Encoded_Size_For_Codepoint(Codepoint c) {
     if (c < cast(uint32_t, 0x80))
         return 1;
@@ -122,7 +108,7 @@ INLINE uint_fast8_t Encoded_Size_For_Codepoint(Codepoint c) {
         return UNI_ENCODED_MAX;
 
     /*len = 3;
-    c = UNI_REPLACEMENT_CHAR; */  // previous code could tolerate
+    c = UNI_REPLACEMENT_CHAR; */  // 1. previous code could tolerate
 
     fail ("Codepoint is greater than maximum legal UTF-32 value");
 }
@@ -154,6 +140,9 @@ INLINE void Encode_UTF8_Char(
         *--dst = cast(Byte, c | g_first_byte_mark_utf8[encoded_size]);
     }
 }
+
+// Wide characters are supported by the API, due to their prevalence in
+// things like Windows and ODBC.
 
 INLINE void Encode_UTF16_Pair(Codepoint codepoint, REBWCHAR *units)
 {
@@ -261,6 +250,9 @@ INLINE bool Is_Legal_UTF8(const Byte* source, int length) {
 }
 
 
+//
+//  Back_Scan_UTF8_Char: C
+//
 // Converts a single UTF8 code-point and returns the position *at the
 // the last byte of the character's data*.  (This differs from the usual
 // `Scan_XXX` interface of returning the position after the scanned
@@ -286,13 +278,30 @@ INLINE bool Is_Legal_UTF8(const Byte* source, int length) {
 // the number of "extra" bytes the UTF8 has beyond a single byte character.
 // This allows for decrement-style loops such as the above.
 //
-// Prescans source for null, and will not return code point 0.
-//
-// If failure due to insufficient data or malformed bytes, then NULL is
+// If failure due to insufficient data or malformed bytes, then nullptr is
 // returned (size is not advanced).
 //
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// 1. Note that Ren-C disallows internal zero bytes in ANY-STRING?, so that
+//    a single pointer can be given to C for the data in APIs like rebText(),
+//    with no length...and not have this be misleading or cause bugs.  Same
+//    for getting back a single pointer from rebSpell() for the data and
+//    not be missing some part of it.
+//
+// 2. This check was considered "too expensive" and omitted in R3-Alpha:
+//
+//      https://github.com/rebol/rebol-issues/issues/638
+//
+//    ...which meant that various illegal input patterns would be tolerated,
+//    so long as they didn't cause crashes.  You would just not have the
+//    input validated, and get garbage characters out.  The Ren-C philosophy
+//    is that since this check only applies to non-ASCII, it is worth it to
+//    do the validation.  And it only applies when scanning strings...once
+//    they are loaded into String* we use Back_Scan_UTF8_Char_Unchecked().
+//
 INLINE const Byte* Back_Scan_UTF8_Char(
-    Codepoint *out,
+    Codepoint *out,  // the valid codepoint, no NUL or substitution chars [1]
     const Byte* bp,
     Option(Size*) size
 ){
@@ -301,8 +310,7 @@ INLINE const Byte* Back_Scan_UTF8_Char(
     const Byte* source = bp;
     uint_fast8_t trail = g_trailing_bytes_for_utf8[*source];
 
-    // Check that we have enough valid source bytes:
-    if (size) {
+    if (size) {  // Check that we have enough valid source bytes
         if (cast(uint_fast8_t, trail + 1) > *unwrap(size))
             return nullptr;
     }
@@ -315,21 +323,7 @@ INLINE const Byte* Back_Scan_UTF8_Char(
         trail = g_trailing_bytes_for_utf8[*source];
     }
 
-    // This check was considered "too expensive" and omitted in R3-Alpha:
-    //
-    // https://github.com/rebol/rebol-issues/issues/638
-    //
-    // ...which meant that various illegal input patterns would be tolerated,
-    // so long as they didn't cause crashes.  You would just not have the
-    // input validated, and get garbage characters out.  The Ren-C philosophy
-    // is that since this check only applies to non-ASCII, it is worth it to
-    // do the validation.
-    //
-    // !!! Once a UTF-8 ANY-STRING? has been loaded (e.g. Utf8(*)), this
-    // routine could be stripped down to remove checks for character decoding.
-    // But again, low priority--it would only apply to non-ASCII chars.
-    //
-    if (not Is_Legal_UTF8(source, trail + 1))
+    if (not Is_Legal_UTF8(source, trail + 1))  // was omitted in R3-Alpha [2]
         return nullptr;
 
     switch (trail) {
@@ -342,32 +336,15 @@ INLINE const Byte* Back_Scan_UTF8_Char(
     }
     *out -= g_offsets_from_utf8[trail];
 
-    // UTF-16 surrogate values are illegal in UTF-32, and anything
-    // over Plane 17 (> 0x10FFFF) is illegal.
-    //
-    // !!! It may be that someday, when UTF-16 is no longer in the picture,
-    // that these codepoints are reclaimed.  Also someone might want to be
-    // using UTF-8 encoding as a space optimization for another numeric
-    // encoding where small numbers are considered more likely than large.
-    // These may be filtered at some other level (codec?).
-    //
     if (*out > UNI_MAX_LEGAL_UTF32)
-        return nullptr;
+        return nullptr;  // anything over Plane 17 (> 0x10FFFF) is illegal
     if (*out >= UNI_SUR_HIGH_START && *out <= UNI_SUR_LOW_END)
-        return nullptr;
+        return nullptr;  // UTF-16 surrogate values illegal in UTF-8
 
     if (size)
         *unwrap(size) -= trail;
 
-    // Note that Ren-C disallows internal zero bytes in ANY-STRING?, so that
-    // a single pointer can be given to C for the data and no length...and
-    // not have this be misleading or cause bugs.
-    //
-    // !!! Note also that there is a trend to decode illegal codepoints as
-    // a substitution character.  If Rebol is willing to do this, at what
-    // level would that decision be made?
-    //
-    if (*out == 0)
+    if (*out == 0)  // string types disallow internal 0 bytes in Ren-C [1]
         return nullptr;
 
     return bp + trail;
