@@ -56,8 +56,11 @@ INLINE bool Do_Any_Array_At_Core_Throws(
     Specifier* specifier
 ){
     Init_Void(Alloc_Evaluator_Primed_Result());
-    Level* L = Make_Level_At_Core(any_array, specifier, flags);
-    L->executor = &Evaluator_Executor;
+    Level* L = Make_Level_At_Core(
+        &Evaluator_Executor,
+        any_array, specifier,
+        flags
+    );
 
     return Trampoline_Throws(out, L);
 }

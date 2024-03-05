@@ -128,6 +128,7 @@ Bounce Evaluator_Executor(Level* const L)
 
     if (SPORADICALLY(64)) {  // 1 out of 64 times, use sublevel if debug [2]
         Level* sub = Make_Level(
+            &Stepper_Executor,
             L->feed,
             LEVEL_FLAG_RAISED_RESULT_OK
                 | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
@@ -143,7 +144,7 @@ Bounce Evaluator_Executor(Level* const L)
 
   #if DEBUG
     if (L != TOP_LEVEL) {  // detect if a sublevel was used [2]
-        Restart_Evaluator_Level(SUBLEVEL);
+        Restart_Stepper_Level(SUBLEVEL);
         return BOUNCE_CONTINUE;
     }
   #endif

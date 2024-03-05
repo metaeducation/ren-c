@@ -549,7 +549,10 @@ void Startup_Trampoline(void)
     assert(TOP_LEVEL == nullptr);
     assert(BOTTOM_LEVEL == nullptr);
 
-    Level* L = Make_End_Level(LEVEL_MASK_NONE);  // ensure L->prior [1]
+    Level* L = Make_End_Level(  // ensure L->prior [1]
+        &Stepper_Executor,  // executor is irrelevant (permit nullptr?)
+        LEVEL_MASK_NONE
+    );
     Push_Level(nullptr, L);  // global API handles attach here [2]
 
     Corrupt_Pointer_If_Debug(L->prior);  // catches enumeration past bottom_level

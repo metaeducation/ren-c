@@ -1067,8 +1067,7 @@ static bool Run_Va_Throws(
         mutable_FEED_SPECIFIER(feed) = Get_Context_From_Stack();
 
     Init_Void(Alloc_Evaluator_Primed_Result());
-    Level* L = Make_Level(feed, flags);
-    L->executor = &Evaluator_Executor;
+    Level* L = Make_Level(&Evaluator_Executor, feed, flags);
 
     bool threw = Trampoline_Throws(out, L);
 
@@ -1166,7 +1165,7 @@ bool API_rebRunCoreThrows(
     else
         mutable_FEED_SPECIFIER(feed) = Get_Context_From_Stack();
 
-    Level* L = Make_Level(feed, flags);
+    Level* L = Make_Level(&Stepper_Executor, feed, flags);
     Push_Level(out, L);
 
     if (Trampoline_With_Top_As_Root_Throws()) {
@@ -1285,9 +1284,8 @@ void API_rebPushContinuation(
         BINDING(block) = Lib_Context;  // [3]
 
     Init_Void(Alloc_Evaluator_Primed_Result());
-    Level* L = Make_Level_At(block, flags);
+    Level* L = Make_Level_At(&Evaluator_Executor, block, flags);
     Push_Level(out, L);
-    L->executor = &Evaluator_Executor;
 }
 
 
@@ -2172,7 +2170,10 @@ RebolValue* API_rebRescueWith(
 ){
     ENTER_API;
 
-    Level* dummy = Make_End_Level(LEVEL_MASK_NONE);
+    Level* dummy = Make_End_Level(
+        &Stepper_Executor,  // executor is irrelevant (permit nullptr?)
+        LEVEL_MASK_NONE
+    );
     Push_Level(nullptr, dummy);  // for owning API cells [1]
 
   RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE {  //////////////////////////////////

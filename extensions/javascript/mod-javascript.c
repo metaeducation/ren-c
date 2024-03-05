@@ -423,7 +423,7 @@ void RunPromise(void)
     Init_Block(code, a);
     BINDING(code) = info->specifier;
 
-    Level* L = Make_Level_At(code, LEVEL_FLAG_ROOT_LEVEL);
+    Level* L = Make_Level_At(&Stepper_Executor, code, LEVEL_FLAG_ROOT_LEVEL);
     Push_Level(Alloc_Value_Core(CELL_MASK_0), L);
     goto run_promise;
 

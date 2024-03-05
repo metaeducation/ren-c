@@ -137,7 +137,7 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
 
     DECLARE_ATOM (block);
     Init_Block(block, normals);
-    Level* L2 = Make_Level_At(block, flags);
+    Level* L2 = Make_Level_At(&Action_Executor, block, flags);
     L2->baseline.stack_base = base;
 
     Push_Level(out, L2);

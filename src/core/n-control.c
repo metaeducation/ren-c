@@ -99,12 +99,12 @@ Bounce Group_Branch_Executor(Level* level_)
 
     Init_Void(Alloc_Evaluator_Primed_Result());
     Level* sub = Make_Level(
+        &Evaluator_Executor,
         LEVEL->feed,
         ((LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255)))  // take out state 1
             | LEVEL_FLAG_BRANCH)
     );
     Push_Level(SPARE, sub);
-    sub->executor = &Evaluator_Executor;
 
     STATE = ST_GROUP_BRANCH_RUNNING_GROUP;
     return CATCH_CONTINUE_SUBLEVEL(sub);
@@ -767,7 +767,7 @@ DECLARE_NATIVE(all)
     if (Is_The_Block(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
-    Level* sub = Make_Level_At(block, flags);
+    Level* sub = Make_Level_At(&Stepper_Executor, block, flags);
     Push_Level(SPARE, sub);
 
     STATE = ST_ALL_EVAL_STEP;
@@ -781,7 +781,7 @@ DECLARE_NATIVE(all)
             goto reached_end;
 
         assert(STATE == ST_ALL_EVAL_STEP);
-        Restart_Evaluator_Level(SUBLEVEL);
+        Restart_Stepper_Level(SUBLEVEL);
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
@@ -831,7 +831,7 @@ DECLARE_NATIVE(all)
         goto reached_end;
 
     assert(STATE == ST_ALL_EVAL_STEP);
-    Restart_Evaluator_Level(SUBLEVEL);
+    Restart_Stepper_Level(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } reached_end: {  ////////////////////////////////////////////////////////////
@@ -900,7 +900,7 @@ DECLARE_NATIVE(any)
     if (Is_The_Block(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
-    Level* sub = Make_Level_At(block, flags);
+    Level* sub = Make_Level_At(&Stepper_Executor, block, flags);
     Push_Level(OUT, sub);
 
     STATE = ST_ANY_EVAL_STEP;
@@ -914,7 +914,7 @@ DECLARE_NATIVE(any)
             goto reached_end;
 
         assert(STATE == ST_ANY_EVAL_STEP);
-        Restart_Evaluator_Level(SUBLEVEL);
+        Restart_Stepper_Level(SUBLEVEL);
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
@@ -956,7 +956,7 @@ DECLARE_NATIVE(any)
         goto reached_end;
 
     assert(STATE == ST_ANY_EVAL_STEP);
-    Restart_Evaluator_Level(SUBLEVEL);
+    Restart_Stepper_Level(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } return_out: {  /////////////////////////////////////////////////////////////
@@ -1066,6 +1066,7 @@ DECLARE_NATIVE(case)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Level* L = Make_Level_At(
+        &Stepper_Executor,
         cases,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
@@ -1083,8 +1084,9 @@ DECLARE_NATIVE(case)
         goto reached_end;
 
     STATE = ST_CASE_CONDITION_EVAL_STEP;
-    SUBLEVEL->executor = &Stepper_Executor;
-    Restart_Evaluator_Level(SUBLEVEL);
+    SUBLEVEL->executor = &Stepper_Executor;  // undo &Just_Use_Out_Executor
+    Restart_Stepper_Level(SUBLEVEL);
+
     return CONTINUE_SUBLEVEL(SUBLEVEL);  // one step to pass predicate [1]
 
 } condition_result_in_spare: {  //////////////////////////////////////////////
@@ -1127,11 +1129,11 @@ DECLARE_NATIVE(case)
 
         Init_Void(Alloc_Evaluator_Primed_Result());
         Level* sub = Make_Level_At_Core(
+            &Evaluator_Executor,
             branch,  // turning into feed drops cell type, :(...) not special
             Level_Specifier(SUBLEVEL),
             LEVEL_MASK_NONE
         );
-        sub->executor = &Evaluator_Executor;
 
         STATE = ST_CASE_DISCARDING_GET_GROUP;
         SUBLEVEL->executor = &Just_Use_Out_Executor;
@@ -1274,6 +1276,7 @@ DECLARE_NATIVE(switch)
         fail (Error_Bad_Refines_Raw());
 
     Level* sub = Make_Level_At(
+        &Stepper_Executor,
         cases,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
@@ -1296,7 +1299,7 @@ DECLARE_NATIVE(switch)
 
     STATE = ST_SWITCH_EVALUATING_RIGHT;
     SUBLEVEL->executor = &Stepper_Executor;
-    Restart_Evaluator_Level(SUBLEVEL);
+    Restart_Stepper_Level(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);  // no direct predicate call [1]
 
 } right_result_in_spare: {  //////////////////////////////////////////////////

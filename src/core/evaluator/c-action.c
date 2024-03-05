@@ -583,7 +583,7 @@ Bounce Action_Executor(Level* L)
                 flags |= LEVEL_FLAG_META_RESULT;
             }
 
-            Level* sub = Make_Level(L->feed, flags);
+            Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
             Push_Level(ARG, sub);
 
             return CATCH_CONTINUE_SUBLEVEL(sub); }
@@ -676,7 +676,7 @@ Bounce Action_Executor(Level* L)
                     | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
                     | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
 
-                Level* sub = Make_Level(L->feed, flags);
+                Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
                 Push_Level(ARG, sub);
                 return CATCH_CONTINUE_SUBLEVEL(sub);
             }
@@ -1150,7 +1150,7 @@ void Push_Action(
     Action* act,
     Context* binding  // actions may only be bound to contexts ATM
 ){
-    L->executor = &Action_Executor;
+    assert(L->executor == &Action_Executor);
 
     assert(Not_Action_Executor_Flag(L, FULFILL_ONLY));
     assert(Not_Action_Executor_Flag(L, RUNNING_ENFIX));

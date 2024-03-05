@@ -2073,12 +2073,12 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_GROUP_BEGIN:
       case TOKEN_BLOCK_BEGIN: {
         Level* sub = Make_Level(
+            &Scanner_Executor,
             L->feed,
             LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (L->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
                 | LEVEL_FLAG_RAISED_RESULT_OK
         );
-        sub->executor = &Scanner_Executor;
 
         sub->u.scan.ss = ss;
 
@@ -2361,12 +2361,12 @@ Bounce Scanner_Executor(Level* const L) {
 
       case TOKEN_CONSTRUCT: {
         Level* sub = Make_Level(
+            &Scanner_Executor,
             L->feed,
             LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (L->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
                 | LEVEL_FLAG_RAISED_RESULT_OK
         );
-        sub->executor = &Scanner_Executor;
 
         sub->u.scan.ss = ss;
 
@@ -2539,10 +2539,10 @@ Bounce Scanner_Executor(Level* const L) {
         }
         else {
             Level* sub = Make_Level(
+                &Scanner_Executor,
                 L->feed,
                 LEVEL_FLAG_RAISED_RESULT_OK
             );
-            sub->executor = &Scanner_Executor;
 
             SCAN_LEVEL *child = &sub->u.scan;
             child->ss = ss;
@@ -3021,8 +3021,7 @@ DECLARE_NATIVE(transcode)
     if (REF(one))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
 
-    Level* sub = Make_Level(feed, flags);
-    sub->executor = &Scanner_Executor;
+    Level* sub = Make_Level(&Scanner_Executor, feed, flags);
     SCAN_LEVEL *level = &sub->u.scan;
 
     Binary* bin = Make_Binary(sizeof(SCAN_STATE));
@@ -3139,7 +3138,7 @@ const Byte* Scan_Any_Word(
     Option(const String*) file = ANONYMOUS;
     const LineNumber start_line = 1;
 
-    Level* L = Make_End_Level(LEVEL_MASK_NONE);  // note: no feed `context`
+    Level* L = Make_End_Level(&Scanner_Executor, LEVEL_MASK_NONE);
     SCAN_LEVEL *level = &L->u.scan;
 
     Init_Scan_Level(level, &ss, file, start_line, utf8);
@@ -3234,8 +3233,7 @@ Option(Array*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
 {
     assert(Detect_Rebol_Pointer(feed->p) == DETECTED_AS_UTF8);
 
-    Level* L = Make_Level(feed, LEVEL_MASK_NONE);
-    L->executor = &Scanner_Executor;
+    Level* L = Make_Level(&Scanner_Executor, feed, LEVEL_MASK_NONE);
 
     SCAN_LEVEL *level = &L->u.scan;
     SCAN_STATE ss;

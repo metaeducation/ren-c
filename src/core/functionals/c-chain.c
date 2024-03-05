@@ -57,10 +57,12 @@ enum {
 // entry to Process_Action().  The ability is also used by RESKINNED.
 //
 Level* Push_Downshifted_Level(Atom* out, Level* L) {
+    assert(L->executor == &Action_Executor);
+
     Flags flags = ACTION_EXECUTOR_FLAG_IN_DISPATCH;
     flags |= L->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK;
 
-    Level* sub = Make_Level(L->feed, flags);
+    Level* sub = Make_Level(&Action_Executor, L->feed, flags);
     Push_Level(out, sub);
     assert(sub->varlist == nullptr);
     sub->varlist = L->varlist;
@@ -81,8 +83,6 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
     Corrupt_Pointer_If_Debug(L->label);
 
     sub->u.action.dispatcher_base = L->u.action.dispatcher_base;
-
-    sub->executor = &Action_Executor;
 
     Corrupt_If_Debug(L->u);  // no longer action; corrupt after get stack base
 
@@ -123,7 +123,7 @@ Bounce Chainer_Dispatcher(Level* const L)
 // 2. You can't have an Action_Executor()-based frame on the stack unless it
 //    has a lot of things (like a varlist, which provides the phase, etc.)
 //    So we switch it around to where the level that had its varlist stolen
-//    just uses this function as its executor, so we get called back.
+//    just uses Chainer_Dispatcher() as its executor, so we get called back.
 //
 // 3. At the head of the chain we start at the dispatching phase since the
 //    frame is already filled, but each step after that uses enfix and runs
@@ -207,6 +207,7 @@ Bounce Chainer_Dispatcher(Level* const L)
 
     ++VAL_INDEX_RAW(pipeline_at);
 
+    Restart_Action_Level(sub);  // see notes
     Push_Action(sub, VAL_ACTION(chained), VAL_FRAME_BINDING(chained));
 
     Begin_Prefix_Action(sub, VAL_FRAME_LABEL(chained));

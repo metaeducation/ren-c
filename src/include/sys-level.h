@@ -114,6 +114,30 @@ INLINE bool ANY_ESCAPABLE_GET(const Atom* v) {
     ((L)->executor == &Action_Executor)
 
 
+// 1. When Drop_Action() happens, it currently sets the action executor to be
+//    nullptr in order to tell the GC not to mark the state variables.  This
+//    may not be the right way to do it, instead reflecting the dropped state
+//    in the executor state struct and leaving the executor alone.  But this
+//    routine helps find places that turn the level back into one that the
+//    Push_Action() function is legal on.
+//
+// 2. CHAIN has a strange implementation detail where it steals the frame
+//    data built for the chain and gives it to the function at the head of
+//    the chain.  Then it replaces the executor for the original frame to
+//    the &Chainer_Dispatcher.  Hence Drop_Action() is never called on such
+//    functions to null out the executor.  These mechanisms are the ones
+//    most likely to break when code is rearranged, so it's good to call
+//    out the weirdness.
+//
+INLINE void Restart_Action_Level(Level* L) {
+    assert(
+        L->executor == nullptr  // Drop_Action() sets to nullptr [1]
+        or L->executor == &Chainer_Dispatcher   // Weird exception [2]
+    );
+    L->executor = &Action_Executor;
+}
+
+
 INLINE bool Level_Is_Variadic(Level* L) {
     return FEED_IS_VARIADIC(L->feed);
 }
@@ -424,6 +448,7 @@ INLINE void Drop_Level(Level* L)
 
 
 INLINE Level* Prep_Level_Core(
+    Executor* executor,
     Level* L,
     Feed* feed,
     Flags flags
@@ -438,7 +463,7 @@ INLINE Level* Prep_Level_Core(
     Corrupt_Pointer_If_Debug(L->out);
 
     L->varlist = nullptr;
-    L->executor = &Stepper_Executor;  // compatible default (for now)
+    L->executor = executor;
 
     Corrupt_Pointer_If_Debug(L->alloc_value_list);
 
@@ -471,12 +496,13 @@ INLINE Level* Prep_Level_Core(
     return L;
 }
 
-#define Make_Level(feed,flags) \
-    Prep_Level_Core(u_cast(Level*, Alloc_Pooled(LEVEL_POOL)), \
+#define Make_Level(executor,feed,flags) \
+    Prep_Level_Core(executor, u_cast(Level*, Alloc_Pooled(LEVEL_POOL)), \
         Add_Feed_Reference(feed), (flags))
 
-#define Make_Level_At_Core(any_array,specifier,level_flags) \
+#define Make_Level_At_Core(executor,any_array,specifier,level_flags) \
     Make_Level( \
+        (executor), \
         Prep_At_Feed( \
             Alloc_Feed(), \
             (any_array), \
@@ -486,11 +512,11 @@ INLINE Level* Prep_Level_Core(
         (level_flags) \
     )
 
-#define Make_Level_At(any_array,flags) \
-    Make_Level_At_Core((any_array), SPECIFIED, (flags))
+#define Make_Level_At(executor, any_array,flags) \
+    Make_Level_At_Core((executor), (any_array), SPECIFIED, (flags))
 
-#define Make_End_Level(flags) \
-    Make_Level(TG_End_Feed, (flags))
+#define Make_End_Level(executor,flags) \
+    Make_Level((executor), TG_End_Feed, (flags))
 
 
 #define Begin_Enfix_Action(L,label) \

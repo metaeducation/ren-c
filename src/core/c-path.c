@@ -216,13 +216,13 @@ Bounce MAKE_Path(
     if (not Is_Block(arg))
         fail (Error_Bad_Make(heart, arg)); // "make path! 0" has no meaning
 
-    Level* L = Make_Level_At(arg, LEVEL_MASK_NONE);
+    Level* L = Make_Level_At(&Stepper_Executor, arg, LEVEL_MASK_NONE);
 
     Push_Level(OUT, L);
 
     StackIndex base = TOP_INDEX;
 
-    for (; Not_Level_At_End(L); Restart_Evaluator_Level(L)) {
+    for (; Not_Level_At_End(L); Restart_Stepper_Level(L)) {
         if (Eval_Step_Throws(OUT, L)) {
             Drop_Level(L);
             return BOUNCE_THROWN;

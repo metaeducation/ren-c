@@ -244,6 +244,7 @@ bool Typecheck_Atom_Core(
 
             Flags flags = 0;
             Level* L = Make_End_Level(
+                &Action_Executor,
                 FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
             );
             Push_Action(L, VAL_ACTION(test), VAL_FRAME_BINDING(test));

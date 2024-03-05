@@ -182,6 +182,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
         case PARAMCLASS_NORMAL: {
             Level* L_temp = Make_Level_At(
+                &Stepper_Executor,
                 shared,
                 EVAL_EXECUTOR_FLAG_FULFILLING_ARG
             );

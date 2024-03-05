@@ -113,12 +113,12 @@ bool Pushed_Continuation(
     if (Is_Group(branch) or Is_Get_Group(branch)) {  // [2] for GET-GROUP!
         assert(flags & LEVEL_FLAG_BRANCH);  // needed for trick
         Level* grouper = Make_Level_At_Core(
+            &Group_Branch_Executor,  // evaluates to synthesize branch
             branch,
             branch_specifier,
             (flags & (~ LEVEL_FLAG_BRANCH))
                 | FLAG_STATE_BYTE(ST_GROUP_BRANCH_ENTRY_DONT_ERASE_OUT)
         );
-        grouper->executor = &Group_Branch_Executor;  // evaluates to get branch
         if (with == nullptr)
             FRESHEN(out);
         else
@@ -144,18 +144,24 @@ bool Pushed_Continuation(
       case REB_META_BLOCK:
       case REB_BLOCK: {
         Init_Void(Alloc_Evaluator_Primed_Result());
-        Level* L = Make_Level_At_Core(branch, branch_specifier, flags);
+        Level* L = Make_Level_At_Core(
+            &Evaluator_Executor,
+            branch, branch_specifier,
+            flags
+        );
         if (Cell_Heart_Unchecked(branch) == REB_META_BLOCK) {
             Set_Level_Flag(L, META_RESULT);
             Set_Level_Flag(L, RAISED_RESULT_OK);
         }
-        L->executor = &Evaluator_Executor;
 
         Push_Level(out, L);
         goto pushed_continuation; }  // trampoline handles LEVEL_FLAG_BRANCH
 
       case REB_GET_BLOCK: {  // effectively REDUCE
-        Level* L = Make_End_Level(FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING));
+        Level* L = Make_End_Level(
+            &Action_Executor,
+            FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
+        );
 
         const Value* action = Lib(REDUCE);
         Push_Action(L, VAL_ACTION(action), VAL_FRAME_BINDING(action));
@@ -178,6 +184,7 @@ bool Pushed_Continuation(
 
       handle_action: {
         Level* L = Make_End_Level(
+            &Action_Executor,
             FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
         );
         Prep_Action_Level(L, branch, with);
@@ -197,9 +204,9 @@ bool Pushed_Continuation(
             fail (Error_Stale_Frame_Raw());
 
         Level* L = Make_End_Level(
+            &Action_Executor,
             FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
         );
-        L->executor = &Action_Executor;  // usually done by Push_Action()s
 
         Array* varlist = CTX_VARLIST(c);
         L->varlist = varlist;

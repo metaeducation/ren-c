@@ -117,7 +117,7 @@ STATIC_ASSERT(
 );
 
 #define Make_Action_Sublevel(parent) \
-    Make_Level((parent)->feed, \
+    Make_Level(&Action_Executor, (parent)->feed, \
         LEVEL_FLAG_RAISED_RESULT_OK \
         | ((parent)->flags.bits & EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE))
 
@@ -156,6 +156,7 @@ INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
         | LEVEL_FLAG_RAISED_RESULT_OK;  // trap [e: transcode "1&aa"] works
 
     Level* sub = Make_Level(
+        &Stepper_Executor,
         L->feed,
         flags  // inert optimize adjusted the flags to jump in mid-eval
     );
@@ -682,7 +683,7 @@ Bounce Stepper_Executor(Level* L)
 
                 Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-enfix call
 
-                Level* sub = Make_Level(L->feed, flags);
+                Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
                 Push_Level(SPARE, sub);
                 STATE = ST_STEPPER_CALCULATING_INTRINSIC_ARG;
                 return CATCH_CONTINUE_SUBLEVEL(sub);
@@ -832,12 +833,12 @@ Bounce Stepper_Executor(Level* L)
 
         Init_Nihil(Alloc_Evaluator_Primed_Result());
         Level* sub = Make_Level_At_Core(
+            &Evaluator_Executor,
             L_current,
             L_specifier,
             flags
         );
         Push_Level(OUT, sub);
-        sub->executor = &Evaluator_Executor;
 
         return CATCH_CONTINUE_SUBLEVEL(sub); }
 
@@ -1107,12 +1108,12 @@ Bounce Stepper_Executor(Level* L)
 
         Init_Void(Alloc_Evaluator_Primed_Result());
         Level* sub = Make_Level_At_Core(
+            &Evaluator_Executor,
             L_current,
             L_specifier,
             LEVEL_MASK_NONE
         );
         Push_Level(SPARE, sub);
-        sub->executor = &Evaluator_Executor;
 
         return CATCH_CONTINUE_SUBLEVEL(sub);
 

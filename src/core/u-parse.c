@@ -613,6 +613,7 @@ static REBIXO Parse_One_Rule(
         P_POS = pos;  // modify input position
 
         Level* sub = Make_Level_At_Core(
+            &Action_Executor,  // !!! Parser_Executor?
             rule, rule_specifier(),
             LEVEL_MASK_NONE
         );
@@ -1714,7 +1715,11 @@ DECLARE_NATIVE(subparse)
                 }
                 else {  // Ordinary rule (may be block, may not be)
 
-                    Level* sub = Make_Level(L->feed, LEVEL_MASK_NONE);
+                    Level* sub = Make_Level(
+                        &Action_Executor,  // !!! Parser_Executor?
+                        L->feed,
+                        LEVEL_MASK_NONE
+                    );
 
                     bool interrupted;
                     assert(Is_Fresh(OUT));  // invariant until finished
@@ -2020,7 +2025,11 @@ DECLARE_NATIVE(subparse)
             );
             Push_GC_Guard(collection);
 
-            Level* sub = Make_Level(L->feed, LEVEL_MASK_NONE);
+            Level* sub = Make_Level(
+                &Action_Executor,  // !!! Parser_Executor?
+                L->feed,
+                LEVEL_MASK_NONE
+            );
 
             bool interrupted;
             assert(Is_Fresh(OUT));  // invariant until finished
@@ -2283,6 +2292,7 @@ DECLARE_NATIVE(subparse)
                 }
 
                 Level* sub = Make_Level_At_Core(
+                    &Action_Executor,  // !!! Parser_Executor?
                     subrule, P_RULE_SPECIFIER,
                     LEVEL_MASK_NONE
                 );
@@ -2326,6 +2336,7 @@ DECLARE_NATIVE(subparse)
         else if (Is_Block(rule)) {  // word fetched block, or inline block
 
             Level* sub = Make_Level_At_Core(
+                &Action_Executor,  // !!! Parser_Executor?
                 rule, rule_specifier(),
                 LEVEL_MASK_NONE
             );
@@ -2796,7 +2807,11 @@ DECLARE_NATIVE(parse3)
     if (not Any_Series_Kind(Cell_Heart(input)))
         fail ("PARSE input must be an ANY-SERIES? (use AS BLOCK! for PATH!)");
 
-    Level* sub = Make_Level_At(rules, LEVEL_MASK_NONE);
+    Level* sub = Make_Level_At(
+        &Action_Executor,  // !!! Parser_Executor?
+        rules,
+        LEVEL_MASK_NONE
+    );
 
     bool interrupted;
     if (Subparse_Throws(

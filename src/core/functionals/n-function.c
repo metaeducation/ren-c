@@ -675,6 +675,8 @@ DECLARE_NATIVE(definitional_return)
     }
     else if (Is_Action(atom) or Is_Frame(atom)) {  // just reuse Level
         Drop_Action(target_level);
+
+        Restart_Action_Level(target_level);
         Push_Action(
             target_level,
             VAL_ACTION(atom),

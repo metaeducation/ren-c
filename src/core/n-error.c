@@ -131,6 +131,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
     Level* sub;
     if (Is_Block(code)) {
         sub = Make_Level_At(
+            &Stepper_Executor,
             code,  // REB_BLOCK or REB_GROUP
             flags
         );
@@ -167,7 +168,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
     if (Is_Level_At_End(SUBLEVEL))
         goto finished;
 
-    Restart_Evaluator_Level(SUBLEVEL);
+    Restart_Stepper_Level(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } finished: {  ///////////////////////////////////////////////////////////////

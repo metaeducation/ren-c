@@ -105,7 +105,7 @@ INLINE Atom* Alloc_Evaluator_Primed_Result() {
     return atom_PUSH();
 }
 
-INLINE void Restart_Evaluator_Level(Level* L) {
+INLINE void Restart_Stepper_Level(Level* L) {
     assert(L->executor == &Stepper_Executor);
     Level_State_Byte(L) = STATE_0;
 }
@@ -155,7 +155,7 @@ INLINE bool Eval_Step_In_Sublevel_Throws(
     Level* L,
     Flags flags
 ){
-    Level* sub = Make_Level(L->feed, flags);
+    Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
 
     return Trampoline_Throws(out, sub);
 }
@@ -171,7 +171,7 @@ INLINE bool Reevaluate_In_Sublevel_Throws(
     assert(State_Byte_From_Flags(flags) == 0);
     flags |= FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
 
-    Level* sub = Make_Level(L->feed, flags);
+    Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
     Copy_Cell(&sub->u.eval.current, reval);
     sub->u.eval.current_gotten = nullptr;
     sub->u.eval.enfix_reevaluate = enfix ? 'Y' : 'N';
@@ -196,7 +196,7 @@ INLINE bool Eval_Step_In_Any_Array_At_Throws(
         return false;
     }
 
-    Level* L = Make_Level(feed, flags);
+    Level* L = Make_Level(&Stepper_Executor, feed, flags);
     Push_Level(out, L);
 
     if (Trampoline_With_Top_As_Root_Throws()) {
@@ -231,7 +231,7 @@ INLINE bool Eval_Value_Core_Throws(
         FEED_MASK_DEFAULT | (value->header.bits & FEED_FLAG_CONST)
     );
 
-    Level* L = Make_Level(feed, flags);
+    Level* L = Make_Level(&Stepper_Executor, feed, flags);
 
     return Trampoline_Throws(out, L);
 }

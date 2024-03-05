@@ -99,6 +99,7 @@ DECLARE_NATIVE(reduce)
         return COPY(v);  // save time if it's something like a TEXT!
 
     Level* sub = Make_End_Level(
+        &Stepper_Executor,
         FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
     );
     Push_Level(OUT, sub);
@@ -112,6 +113,7 @@ DECLARE_NATIVE(reduce)
 } initial_entry_any_array: {  ////////////////////////////////////////////////
 
     Level* sub = Make_Level_At(
+        &Stepper_Executor,
         v,  // REB_BLOCK or REB_GROUP
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
             | LEVEL_FLAG_RAISED_RESULT_OK  // predicates (like META) may handle
@@ -131,7 +133,7 @@ DECLARE_NATIVE(reduce)
 
     SUBLEVEL->executor = &Stepper_Executor;
     STATE = ST_REDUCE_EVAL_STEP;
-    Restart_Evaluator_Level(SUBLEVEL);
+    Restart_Stepper_Level(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } reduce_step_result_in_out: {  //////////////////////////////////////////////
@@ -290,7 +292,7 @@ DECLARE_NATIVE(reduce_each)
     if (Is_The_Block(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
-    Level* sub = Make_Level_At(block, flags);
+    Level* sub = Make_Level_At(&Stepper_Executor, block, flags);
     Push_Level(SPARE, sub);
     goto reduce_next;
 
@@ -299,10 +301,10 @@ DECLARE_NATIVE(reduce_each)
     if (Is_Feed_At_End(SUBLEVEL->feed))
         goto finished;
 
-    SUBLEVEL->executor = &Stepper_Executor;  // restore from pass through
+    SUBLEVEL->executor = &Stepper_Executor;  // undo &Just_Use_Out_Executor
 
     STATE = ST_REDUCE_EACH_REDUCING_STEP;
-    Restart_Evaluator_Level(SUBLEVEL);
+    Restart_Stepper_Level(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } reduce_step_output_in_spare: {  ////////////////////////////////////////////
@@ -407,6 +409,7 @@ static void Push_Composer_Level(
     }
 
     Level* sub = Make_Level_At_Core(
+        &Composer_Executor,
         adjusted ? adjusted : arraylike,
         Derive_Specifier(specifier, adjusted ? adjusted : arraylike),
         EVAL_EXECUTOR_FLAG_NO_EVALUATIONS
@@ -417,8 +420,6 @@ static void Push_Composer_Level(
 
     if (adjusted)
         rebRelease(adjusted);
-
-    sub->executor = &Composer_Executor;
 
     sub->u.compose.main_level = main_level;   // pass options [2]
     sub->u.compose.changed = false;
@@ -650,10 +651,10 @@ Bounce Composer_Executor(Level* const L)
 
     Init_Void(Alloc_Evaluator_Primed_Result());
     Level* sublevel = Make_Level(
+        &Evaluator_Executor,
         subfeed,  // used subfeed so we could skip the label if there was one
         LEVEL_MASK_NONE
     );
-    sublevel->executor = &Evaluator_Executor;
 
     Push_Level(OUT, sublevel);
 

@@ -96,6 +96,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     bool error_on_deferred
 ){
     Level* L = Make_Level(
+        &Action_Executor,
         feed,
         LEVEL_MASK_NONE  // FULFILL_ONLY added after Push_Action()
     );

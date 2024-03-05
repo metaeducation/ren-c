@@ -817,7 +817,7 @@ DECLARE_NATIVE(let)
         | (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
         | (L->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK);
 
-    Level* sub = Make_Level(LEVEL->feed, flags);
+    Level* sub = Make_Level(&Stepper_Executor, LEVEL->feed, flags);
     Copy_Cell(&sub->u.eval.current, cast(Element*, SPARE));
     sub->u.eval.current_gotten = nullptr;
     sub->u.eval.enfix_reevaluate = 'N';  // detect?

@@ -118,7 +118,7 @@ DECLARE_NATIVE(delimit)
     else
         assert(Is_Block(line));
 
-    Level* L = Make_Level_At(line, flags);
+    Level* L = Make_Level_At(&Stepper_Executor, line, flags);
     Push_Level(OUT, L);
 
     DECLARE_MOLD (mo);
@@ -133,7 +133,7 @@ DECLARE_NATIVE(delimit)
     bool pending = false;  // pending delimiter output, *if* more non-nulls
     bool nothing = true;  // any elements seen so far have been null or blank
 
-    for (; Not_Level_At_End(L); Restart_Evaluator_Level(L)) {
+    for (; Not_Level_At_End(L); Restart_Stepper_Level(L)) {
         if (Eval_Step_Throws(OUT, L)) {
             Drop_Mold(mo);
             Drop_Level(L);

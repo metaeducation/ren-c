@@ -199,7 +199,7 @@ DECLARE_NATIVE(shove)
 
     Flags flags = FLAG_STATE_BYTE(ST_ACTION_INITIAL_ENTRY_ENFIX);
 
-    Level* sub = Make_Level(level_->feed, flags);
+    Level* sub = Make_Level(&Action_Executor, level_->feed, flags);
     Push_Action(sub, VAL_ACTION(shovee), VAL_FRAME_BINDING(shovee));
     Begin_Action_Core(sub, label, enfix);
 
@@ -405,11 +405,14 @@ DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
         if (not REF(next))
             Init_Nihil(Alloc_Evaluator_Primed_Result());
 
-        Level* sub = Make_Level(feed, flags);
+        Level* sub = Make_Level(
+            REF(next) ? &Stepper_Executor : &Evaluator_Executor,
+            feed,
+            flags
+        );
         Push_Level(OUT, sub);
 
         if (not REF(next)) {  // plain evaluation to end, maybe invisible
-            sub->executor = &Evaluator_Executor;
             if (REF(undecayed))
                 return DELEGATE_SUBLEVEL(sub);
 
@@ -482,8 +485,7 @@ DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
             return VOID;
 
         Init_Void(Alloc_Evaluator_Primed_Result());
-        Level* sub = Make_Level(L->feed, LEVEL_MASK_NONE);
-        sub->executor = &Evaluator_Executor;
+        Level* sub = Make_Level(&Evaluator_Executor, L->feed, LEVEL_MASK_NONE);
         Push_Level(OUT, sub);
         return DELEGATE_SUBLEVEL(sub); }
 
@@ -779,6 +781,7 @@ DECLARE_NATIVE(apply)
     Drop_Data_Stack_To(STACK_BASE);  // partials ordering unimportant
 
     Level* L = Make_Level_At(
+        &Stepper_Executor,
         args,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
@@ -882,7 +885,7 @@ DECLARE_NATIVE(apply)
     else
         Clear_Level_Flag(SUBLEVEL, META_RESULT);
 
-    Restart_Evaluator_Level(SUBLEVEL);
+    Restart_Stepper_Level(SUBLEVEL);
     return CATCH_CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } labeled_step_result_in_spare: {  ///////////////////////////////////////////
@@ -948,7 +951,7 @@ DECLARE_NATIVE(apply)
 // From %c-eval.c -- decide if this should be shared or otherwise.
 //
 #define Make_Action_Sublevel(parent) \
-    Make_Level((parent)->feed, \
+    Make_Level(&Action_Executor, (parent)->feed, \
         LEVEL_FLAG_RAISED_RESULT_OK \
         | ((parent)->flags.bits & EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE))
 
