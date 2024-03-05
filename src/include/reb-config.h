@@ -58,28 +58,8 @@ The primary target system is defined by:
     TO_(os-base)    - for example TO_WINDOWS or TO_LINUX
     TO_(os-name)    - for example TO_WINDOWS_X86 or TO_LINUX_X64
 
-The default config builds an R3 HOST executable program.
-
-To change the config, host-kit developers can define:
-
-    REB_EXT         - build an extension module
-                      * create a DLL, not a host executable
-                      * do not export a host lib (OS_ lib)
-                      * call r3lib via struct and macros
-
-    REB_CORE        - build /core only, no graphics, windows, etc.
-
-Special internal defines used by RT, not Host-Kit developers:
-
-    REB_API         - build r3lib as API
-                      * export r3lib functions
-                      * build r3lib dispatch table
-                      * call host lib (OS_) via struct and macros
-
-    REB_EXE         - build r3 as a standalone executable
-
-    REB_DEF         - special includes, symbols, and tables
-
+The bootstrap executable has had its configuration pared down to only produce
+an EXE, no DLLs or LIBs.  See the main branch for more complex options.
 */
 
 
@@ -103,26 +83,6 @@ Special internal defines used by RT, not Host-Kit developers:
 
 
 //* Common *************************************************************
-
-
-#ifdef REB_EXE
-    // standalone exe from RT
-    // Export all of the APIs such that they can be referenced by extensions.
-    // The purpose is to have one exe and some dynamic libraries for extensions (.dll, .so etc.)
-    #define RL_API API_EXPORT
-#else
-    #ifdef REB_API
-        // r3lib dll from RT
-        #define RL_API API_EXPORT
-    #elif defined(EXT_DLL) || defined(REB_HOST)
-        // Building extensions as external libraries (.dll, .so etc.)
-        // or r3 host against r3lib dll
-        #define RL_API API_IMPORT
-    #else
-        // Extensions are builtin
-        #define RL_API
-    #endif
-#endif
 
 
 // Windows headers define the macros IN and OUT as part of an interface

@@ -152,24 +152,10 @@ process src-dir/a-lib.c
 
 extern-prototypes: map-each-api [
     cscape/with
-        <- {RL_API $<Proto>}
+        <- {$<Proto>}
         <- api
 ]
 
-lib-struct-fields: map-each-api [
-    cfunc-params: if empty? paramlist [
-        "void"
-    ] else [
-        delimit ", " map-each [type var] paramlist [
-            spaced [type var]
-        ]
-    ]
-    cscape/with
-        <- {$<Returns> (*$<Name>)($<Cfunc-Params>)}
-        <- api
-]
-
-struct-call-inlines: make block! length of api-objects
 direct-call-inlines: make block! length of api-objects
 
 for-each api api-objects [do in api [
@@ -234,7 +220,6 @@ for-each api api-objects [do in api [
     ]
 
     append direct-call-inlines make-inline-proxy unspaced ["API_" name]
-    append struct-call-inlines make-inline-proxy unspaced ["g_librebol->" name]
 ]]
 
 c99-or-c++11-macros: map-each-api [
@@ -438,44 +423,18 @@ e-lib/emit {
         ((const void*)"\x80")
 
     /*
-     * Function entry points for reb-lib.  Formulating this way allows the
-     * interface structure to be passed from an EXE to a DLL, then the DLL
-     * can call into the EXE (which is not generically possible via linking).
-     *
-     * For convenience, calls to RL->xxx are wrapped in inline functions:
+     * Extern prototypes for API_XXX, don't call these functions directly.
+     * They use vaptr instead of `...`, and may not do all the proper
+     * exception/longjmp handling needed.
      */
-    typedef struct rebol_ext_api {
-        $[Lib-Struct-Fields];
-    } RebolApiTable;
 
-    #ifdef REB_EXT /* can't direct call into EXE, must go through interface */
-        /*
-         * The inline functions below will require this base pointer:
-         */
-        extern RebolApiTable* g_librebol;  /* passed to RX_Init() function */
+    $[Extern-Prototypes];
 
-        /*
-         * Inlines to access reb-lib functions (from non-linked extensions):
-         */
+    /*
+     * rebXXX_inline functions which do the work of passing the variadics.
+    */
 
-        $[Struct-Call-Inlines]
-
-    #else /* ...calling Rebol as DLL, or code built into the EXE itself */
-        /*
-         * Extern prototypes for RL_XXX, don't call these functions directly.
-         * They use vaptr instead of `...`, and may not do all the proper
-         * exception/longjmp handling needed.
-         */
-
-        $[Extern-Prototypes];
-
-        /*
-         * rebXXX_inline functions which do the work of
-         */
-
-        $[Direct-Call-Inlines]
-
-    #endif /* !REB_EXT */
+    $[Direct-Call-Inlines]
 
     /*
      * C's variadic interface is very low-level, as a thin wrapper over the
@@ -561,25 +520,3 @@ e-lib/emit {
 }
 
 e-lib/write-emitted
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; GENERATE TMP-REB-LIB-TABLE.INC
-;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-e-table: (make-emitter
-    "REBOL Interface Table Singleton" output-dir/tmp-reb-lib-table.inc)
-
-table-init-items: map-each-api [
-    unspaced ["API_" name]
-]
-
-e-table/emit {
-    RebolApiTable g_librebol = {
-        $(Table-Init-Items),
-    };
-}
-
-e-table/write-emitted

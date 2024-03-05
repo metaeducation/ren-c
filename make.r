@@ -940,7 +940,7 @@ append app-config/ldflags maybe- user-config/ldflags
 
 libr3-core: make rebmake/object-library-class [
     name: 'libr3-core
-    definitions: append copy ["REB_API"] app-config/definitions
+    definitions: app-config/definitions
 
     ; might be modified by the generator, thus copying
     includes: append-of app-config/includes %prep/core
@@ -1164,7 +1164,7 @@ for-each ext builtin-extensions [
     ; Modify module properties
     add-project-flags/I/D/c/O/g mod-obj
         app-config/includes
-        append copy ["REB_API"] app-config/definitions
+        app-config/definitions
         app-config/cflags
         app-config/optimization
         app-config/debug

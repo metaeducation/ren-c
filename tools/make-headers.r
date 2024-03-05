@@ -74,7 +74,7 @@ emit-proto: func [
 
     switch header/2 [
         'API [
-            ; Currently the RL_API entries should only occur in %a-lib.c, and
+            ; Currently rebXXX API entries should only occur in %a-lib.c, and
             ; are processed by %make-librebol.r.  Their RL_XxxYyy() forms are
             ; not in the %tmp-internals.h file, but core includes %rebol.h
             ; and considers itself to have "non-extension linkage" to the API,

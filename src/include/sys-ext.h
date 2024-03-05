@@ -26,36 +26,19 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-#if defined(EXT_DLL)
-    //
-    // EXT_DLL being defined indicates an "external extension".  Its entry
-    // point has a predictable name of RX_Init() exported from the DLL.
+// All extensions in the bootstrap build are "built-in extensions".  They are
+// part of the exe or lib, and the loader function must be distinguished
+// by name from other extensions that are built-in.
+//
+// !!! This could also be done with some kind of numbering scheme (UUID?)
+// by the build process, but given that name collisions in Rebol cause
+// other problems the idea of not colliding with extension filenames
+// is par for the course.
 
-  #if defined(REB_EXE)
-    #define EXT_API EXTERN_C API_IMPORT // Hosting Rebol is an EXE
-  #else
-    #define EXT_API EXTERN_C API_EXPORT // Hosting Rebol is a DLL/LIB
-  #endif
+// *Don't* ignore the extension name parameter
+//
+#define RX_COLLATE_NAME(ext_name) RX_Collate_##ext_name
 
-    // Just ignore the extension name parameter
-    //
-    #define RX_COLLATE_NAME(ext_name) RX_Collate
-#else
-    // If EXT_DLL is not defined, this is a "built-in extension".  It is
-    // part of the exe or lib, and its loader function must be distinguished
-    // by name from other extensions that are built-in.
-    //
-    // !!! This could also be done with some kind of numbering scheme (UUID?)
-    // by the build process, but given that name collisions in Rebol cause
-    // other problems the idea of not colliding with extension filenames
-    // is par for the course.
-
-    #define EXT_API EXTERN_C
-
-    // *Don't* ignore the extension name parameter
-    //
-    #define RX_COLLATE_NAME(ext_name) RX_Collate_##ext_name
-#endif
 
 // The init function does not actually decompress any of the script or spec
 // code, make any natives, or run any startup.  It just returns an aggregate
@@ -73,7 +56,7 @@
 //=//// EXTENSION MACROS //////////////////////////////////////////////////=//
 
 #define DECLARE_EXT_COLLATE(ext_name) \
-    EXT_API Value* RX_COLLATE_NAME(ext_name)(void)
+    EXTERN_C Value* RX_COLLATE_NAME(ext_name)(void)
 
 // !!! Currently used for just a BLOCK!, but may become ACT_DETAILS()
 //

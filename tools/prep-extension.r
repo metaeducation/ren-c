@@ -354,7 +354,7 @@ e/emit {
      * box or interface could provide more flexibility for arbitrary future
      * extension implementations.
      */
-    EXT_API Value* RX_COLLATE_NAME(${Mod})(void) {
+    EXTERN_C Value* RX_COLLATE_NAME(${Mod})(void) {
         return rebCollateExtension_internal(
             script_compressed, sizeof(script_compressed),
             specs_compressed, sizeof(specs_compressed),

@@ -545,21 +545,11 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 // feature is better implemented as in the V8 JavaScript engine as "isolates"
 
 #ifdef __cplusplus
-    #define PVAR extern "C" RL_API
-    #define TVAR extern "C" RL_API
+    #define PVAR extern "C"
+    #define TVAR extern "C"
 #else
-    // When being preprocessed by TCC and combined with the user - native
-    // code, all global variables need to be declared
-    // `extern __attribute__((dllimport))` on Windows, or incorrect code
-    // will be generated for dereferences.  Hence these definitions for
-    // PVAR and TVAR allow for overriding at the compiler command line.
-    //
-    #if !defined(PVAR)
-        #define PVAR extern RL_API
-    #endif
-    #if !defined(TVAR)
-        #define TVAR extern RL_API
-    #endif
+    #define PVAR extern
+    #define TVAR extern
 #endif
 
 #include "sys-globals.h"

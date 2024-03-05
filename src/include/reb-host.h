@@ -27,9 +27,6 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-// don't define REB_DEF, so it assumes non-core API pattern
-// (e.g. calls APIs via struct, RL->rebXXX(), vs. directly as RL_rebXXX())
-//
 #include "reb-config.h"
 
 #include <stdlib.h> // size_t and other types used in rebol.h
