@@ -38,6 +38,14 @@ datatypes
 ; !!! Kept for functionality of #[none] in the loader for <r3-legacy>
 none
 
+; These aren't "quasiforms" in the bootstrap executable, they're words...but
+; they're used in function specs and other places.
+;
+~void~
+~null~
+
+...  ; SYM_ELLIPSIS
+
 generic ;-- used in boot, see %generics.r
 
 export ;-- used in extensions
@@ -224,85 +232,6 @@ identify
 decode
 encode
 
-; Serial parameters
-; Parity
-odd
-even
-; Control flow
-hardware
-software
-
-; Struct
-uint8
-int8
-uint16
-int16
-uint32
-int32
-uint64
-int64
-float
-;double ;reuse earlier definition
-pointer
-raw-memory
-raw-size
-extern
-rebval
-
-;routine
-;void -- already specified
-library
-name
-abi
-stdcall
-fastcall
-sysv
-thiscall
-unix64
-ms-cdecl
-win64
-default
-vfp ;arm
-o32; mips abi
-n32; mips abi
-n64; mips abi
-o32-soft-float; mips abi
-n32-soft-float; mips abi
-n64-soft-float; mips abi
-...
-varargs
-
-; posix signal names
-all
-sigalrm
-sigabrt
-sigbus
-sigchld
-sigcont
-sigfpe
-sighup
-sigill
-sigint
-sigkill
-sigpipe
-sigquit
-sigsegv
-sigstop
-sigterm
-sigtstp
-sigttin
-sigttou
-sigusr1
-sigusr2
-sigpoll
-sigprof
-sigsys
-sigtrap
-sigurg
-sigvtalrm
-sigxcpu
-sigxfsz
-
 bits
 
 uid
@@ -326,11 +255,6 @@ exit-code
 
 ; used to indicate the execution point where an error or debug frame is
 ~~
-
-; used to signal a void in a reified va_list call, since voids can't actually
-; appear in user-visible arrays
-;
---void--
 
 include
 source

@@ -142,13 +142,13 @@ Value* Init_Near_For_Frame(Cell* out, REBFRM *f)
             // If a va_list is used to do a non-evaluative call (something
             // like R3-Alpha's APPLY/ONLY) then nulled cells are currently
             // allowed.  Reify_Va_To_Array_In_Frame() may come along and
-            // make a special block containing voids, which we don't want
+            // make a special block containing nulls, which we don't want
             // to expose in a user-visible block.  Since this array is just
             // for display purposes and is "lossy" (as evidenced by the ...)
             // substitute a placeholder to avoid crashing the GC.
             //
             assert(GET_SER_FLAG(FRM_ARRAY(f), ARRAY_FLAG_NULLEDS_LEGAL));
-            Init_Word(DS_TOP, Canon(SYM___VOID__));
+            Init_Word(DS_TOP, Canon(SYM__TNULL_T));  // ~null~ WORD!
         }
         else
             Derelativize(DS_TOP, item, f->specifier);
