@@ -272,8 +272,6 @@ n64-soft-float; mips abi
 ...
 varargs
 
-*port-modes*
-
 ; posix signal names
 all
 sigalrm

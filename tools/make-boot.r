@@ -506,7 +506,6 @@ e-version/write-emitted
 ;-- Add SYM_XXX constants for the words in %words.r
 
 wordlist: load %words.r
-replace wordlist '*port-modes* load %modes.r
 for-each word wordlist [add-sym word]
 
 
