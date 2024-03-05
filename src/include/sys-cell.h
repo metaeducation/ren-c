@@ -64,7 +64,7 @@
 //
 // Fresh cells can occur "naturally" (from memset() or other 0 memory), be
 // made manually with Erase_Cell(), or an already initialized cell can have
-// its CELL_MASK_PERSIST portions wiped out with Freshen_Cell().
+// its non-CELL_MASK_PERSIST portions wiped out with Freshen_Cell().
 //
 // Note that if CELL_FLAG_PROTECTED is set on a cell, it will not be considered
 // fresh for initialization.  So the flag must be cleared or the cell erased
@@ -503,16 +503,6 @@ INLINE Value* Freshen_Cell_Untracked(Cell* v) {
 
 #define UNBOUND nullptr  // making this a stub did not improve performance [1]
 #define UNSPECIFIED nullptr
-
-
-
-// Use large indices to avoid confusion with 0 (reserved for unbound) and
-// to avoid confusing with actual indices into objects.
-//
-#define INDEX_PATCHED (INT32_MAX - 1)  // directly points at variable patch
-#define INDEX_ATTACHED INT32_MAX  // lazy creation of module variables
-
-#define VAL_WORD_INDEX_I32(v)         PAYLOAD(Any, (v)).second.i32
 
 
 //=//// COPYING CELLS /////////////////////////////////////////////////////=//

@@ -55,6 +55,14 @@ INLINE const Symbol* Cell_Word_Symbol(const Cell* cell) {
 #define Cell_Word_Id(v) \
     Symbol_Id(Cell_Word_Symbol(v))
 
+// Use large indices to avoid confusion with 0 (reserved for unbound) and
+// to avoid confusing with actual indices into objects.
+//
+#define INDEX_PATCHED (INT32_MAX - 1)  // directly points at variable patch
+#define INDEX_ATTACHED INT32_MAX  // lazy creation of module variables
+
+#define VAL_WORD_INDEX_I32(v)         PAYLOAD(Any, (v)).second.i32
+
 INLINE void INIT_VAL_WORD_INDEX(Cell* v, REBINT i) {
     assert(Any_Wordlike(v));
     assert(i != 0);
