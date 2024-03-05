@@ -102,7 +102,7 @@ REBCTX *Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
         capacity + 1, // size + room for ROOTKEY
         NODE_FLAG_MANAGED // No keylist flag, but we don't want line numbers
     );
-    Init_Unreadable_Blank(Alloc_Tail_Array(keylist));
+    Init_Unreadable(Alloc_Tail_Array(keylist));
 
     // Default the ancestor link to be to this keylist itself.
     //
@@ -573,7 +573,7 @@ Array* Collect_Keylist_Managed(
     // Leave the [0] slot blank while collecting (ROOTKEY/ROOTPARAM), but
     // valid (but "unreadable") bits so that the copy will still work.
     //
-    Init_Unreadable_Blank(ARR_HEAD(BUF_COLLECT));
+    Init_Unreadable(ARR_HEAD(BUF_COLLECT));
     SET_ARRAY_LEN_NOTERM(BUF_COLLECT, 1);
 
     if (flags & COLLECT_ENSURE_SELF) {
@@ -636,7 +636,7 @@ Array* Collect_Keylist_Managed(
     // but it's set to an unreadable blank at the moment just to make sure it
     // doesn't get used on accident.
     //
-    ASSERT_UNREADABLE_IF_DEBUG(ARR_HEAD(keylist));
+    Assert_Unreadable_If_Debug(ARR_HEAD(keylist));
 
     Collect_End(cl);
     return keylist;
@@ -1033,7 +1033,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
     // Leave the [0] slot blank while collecting (ROOTKEY/ROOTPARAM), but
     // valid (but "unreadable") bits so that the copy will still work.
     //
-    Init_Unreadable_Blank(ARR_HEAD(BUF_COLLECT));
+    Init_Unreadable(ARR_HEAD(BUF_COLLECT));
     SET_ARRAY_LEN_NOTERM(BUF_COLLECT, 1);
 
     // Setup binding table and BUF_COLLECT with parent1 words.  Don't bother
@@ -1062,7 +1062,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
         SPECIFIED,
         NODE_FLAG_MANAGED
     );
-    Init_Unreadable_Blank(ARR_HEAD(keylist)); // Currently no rootkey usage
+    Init_Unreadable(ARR_HEAD(keylist)); // Currently no rootkey usage
 
     if (parent1 == nullptr)
         LINK(keylist).ancestor = keylist;

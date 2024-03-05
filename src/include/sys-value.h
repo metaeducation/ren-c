@@ -866,7 +866,7 @@ INLINE Value* Trashify_Branched(Value* cell) {
     RESET_CELL_EXTRA((v), REB_BLANK, VALUE_FLAG_FALSEY)
 
 #ifdef DEBUG_UNREADABLE_BLANKS
-    INLINE Value* Init_Unreadable_Blank_Debug(
+    INLINE Value* Init_Unreadable_Debug(
         Cell* out, const char *file, int line
     ){
         RESET_CELL_EXTRA_Debug(out, REB_BLANK, VALUE_FLAG_FALSEY, file, line);
@@ -875,35 +875,35 @@ INLINE Value* Trashify_Branched(Value* cell) {
         return KNOWN(out);
     }
 
-    #define Init_Unreadable_Blank(out) \
-        Init_Unreadable_Blank_Debug((out), __FILE__, __LINE__)
+    #define Init_Unreadable(out) \
+        Init_Unreadable_Debug((out), __FILE__, __LINE__)
 
     INLINE bool IS_BLANK_RAW(const Cell* v) {
         return VAL_TYPE_RAW(v) == REB_BLANK;
     }
 
-    INLINE bool IS_UNREADABLE_DEBUG(const Cell* v) {
+    INLINE bool Is_Unreadable_Debug(const Cell* v) {
         if (VAL_TYPE_RAW(v) != REB_BLANK)
             return false;
         return v->extra.tick < 0;
     }
 
-    #define ASSERT_UNREADABLE_IF_DEBUG(v) \
-        assert(IS_UNREADABLE_DEBUG(v))
+    #define Assert_Unreadable_If_Debug(v) \
+        assert(Is_Unreadable_Debug(v))
 
-    #define ASSERT_READABLE_IF_DEBUG(v) \
-        assert(not IS_UNREADABLE_DEBUG(v))
+    #define Assert_Readable_If_Debug(v) \
+        assert(not Is_Unreadable_Debug(v))
 #else
-    #define Init_Unreadable_Blank(v) \
+    #define Init_Unreadable(v) \
         Init_Blank(v)
 
     #define IS_BLANK_RAW(v) \
         IS_BLANK(v)
 
-    #define ASSERT_UNREADABLE_IF_DEBUG(v) \
+    #define Assert_Unreadable_If_Debug(v) \
         assert(IS_BLANK(v)) // would have to be a blank even if not unreadable
 
-    #define ASSERT_READABLE_IF_DEBUG(v) \
+    #define Assert_Readable_If_Debug(v) \
         NOOP
 #endif
 

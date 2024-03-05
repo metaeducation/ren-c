@@ -260,7 +260,7 @@ bool Compose_To_Stack_Throws(
             }
 
           #ifdef DEBUG_UNREADABLE_BLANKS
-            Init_Unreadable_Blank(out); // shouldn't leak temp eval to caller
+            Init_Unreadable(out); // shouldn't leak temp eval to caller
           #endif
         }
         else if (deep) {

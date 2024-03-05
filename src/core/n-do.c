@@ -323,7 +323,7 @@ DECLARE_NATIVE(do)
                 // varargs does.  This will cause an assert if reused, and
                 // having BLANK! mean "thrown" may evolve into a convention.
                 //
-                Init_Unreadable_Blank(position);
+                Init_Unreadable(position);
                 return R_THROWN;
             }
 
@@ -553,7 +553,7 @@ DECLARE_NATIVE(evaluate)
                 // varargs does.  This will cause an assert if reused, and
                 // having BLANK! mean "thrown" may evolve into a convention.
                 //
-                Init_Unreadable_Blank(position);
+                Init_Unreadable(position);
                 return R_THROWN;
             }
 

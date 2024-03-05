@@ -1130,7 +1130,7 @@ void Startup_Task(void)
     // seen by the GC.
     //
     Erase_Cell(&TG_Thrown_Arg);
-    Init_Unreadable_Blank(&TG_Thrown_Arg);
+    Init_Unreadable(&TG_Thrown_Arg);
 
     Startup_Raw_Print();
     Startup_Scanner();

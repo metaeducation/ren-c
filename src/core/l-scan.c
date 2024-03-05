@@ -2272,7 +2272,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 // data stack could go bad on any DS_PUSH or DS_DROP.
                 //
                 DECLARE_VALUE (cell);
-                Init_Unreadable_Blank(cell);
+                Init_Unreadable(cell);
                 PUSH_GC_GUARD(cell);
 
                 PUSH_GC_GUARD(array);

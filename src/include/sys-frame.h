@@ -64,7 +64,7 @@ INLINE void CONVERT_NAME_TO_THROWN(Value* name, const Value* arg) {
     assert(not THROWN(name));
     SET_VAL_FLAG(name, VALUE_FLAG_THROWN);
 
-    ASSERT_UNREADABLE_IF_DEBUG(&TG_Thrown_Arg);
+    Assert_Unreadable_If_Debug(&TG_Thrown_Arg);
 
     Copy_Cell(&TG_Thrown_Arg, arg);
 }
@@ -76,9 +76,9 @@ INLINE void CATCH_THROWN(Cell* arg_out, Value* thrown) {
     assert(THROWN(thrown));
     CLEAR_VAL_FLAG(thrown, VALUE_FLAG_THROWN);
 
-    ASSERT_READABLE_IF_DEBUG(&TG_Thrown_Arg);
+    Assert_Readable_If_Debug(&TG_Thrown_Arg);
     Copy_Cell(arg_out, &TG_Thrown_Arg);
-    Init_Unreadable_Blank(&TG_Thrown_Arg);
+    Init_Unreadable(&TG_Thrown_Arg);
 }
 
 

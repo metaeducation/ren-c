@@ -1039,7 +1039,7 @@ INLINE REBIXO Eval_Va_Core(
     // but the previous f->value will be tested for NODE_FLAG_ROOT.
     //
     DECLARE_VALUE (junk);
-    f->value = Init_Unreadable_Blank(junk); // shows where garbage came from
+    f->value = Init_Unreadable(junk); // shows where garbage came from
   #else
     f->value = BLANK_VALUE; // less informative but faster to initialize
   #endif

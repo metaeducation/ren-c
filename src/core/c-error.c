@@ -319,7 +319,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // raised, then it had the thrown argument set.  Trash it in debug
     // builds.  (The value will not be kept alive, it is not seen by GC)
     //
-    Init_Unreadable_Blank(&TG_Thrown_Arg);
+    Init_Unreadable(&TG_Thrown_Arg);
 
     LONG_JUMP(Saved_State->cpu_state, 1);
 }

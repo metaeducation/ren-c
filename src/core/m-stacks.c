@@ -47,7 +47,7 @@ void Startup_Data_Stack(REBLEN size)
     // are building a context varlist or similar.
     //
     DS_Array = Make_Array_Core(1, ARRAY_FLAG_NULLEDS_LEGAL);
-    Init_Unreadable_Blank(ARR_HEAD(DS_Array));
+    Init_Unreadable(ARR_HEAD(DS_Array));
 
     // The END marker will signal DS_PUSH that it has run out of space,
     // and it will perform the allocation at that time.
@@ -74,7 +74,7 @@ void Startup_Data_Stack(REBLEN size)
 void Shutdown_Data_Stack(void)
 {
     assert(DSP == 0);
-    ASSERT_UNREADABLE_IF_DEBUG(ARR_HEAD(DS_Array));
+    Assert_Unreadable_If_Debug(ARR_HEAD(DS_Array));
 
     Free_Unmanaged_Array(DS_Array);
 }
@@ -102,7 +102,7 @@ void Startup_Frame_Stack(void)
 
     REBFRM *f = ALLOC(REBFRM); // needs dynamic allocation
     Erase_Cell(FRM_CELL(f));
-    Init_Unreadable_Blank(FRM_CELL(f));
+    Init_Unreadable(FRM_CELL(f));
 
     f->out = m_cast(Value*, END_NODE); // should not be written
     f->source = &TG_Frame_Source_End;
@@ -300,7 +300,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     REBLEN len_new = len_old + amount;
     REBLEN n;
     for (n = len_old; n < len_new; ++n) {
-        Init_Unreadable_Blank(cell);
+        Init_Unreadable(cell);
         ++cell;
     }
 

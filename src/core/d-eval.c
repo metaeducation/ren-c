@@ -207,7 +207,7 @@ void Eval_Core_Expression_Checks_Debug(REBFRM *f) {
     }
 
   #if defined(DEBUG_UNREADABLE_BLANKS)
-    assert(IS_UNREADABLE_DEBUG(&TG_Thrown_Arg)); // no evals between throws
+    assert(Is_Unreadable_Debug(&TG_Thrown_Arg)); // no evals between throws
   #endif
 
     // Trash fields that GC won't be seeing unless Is_Action_Frame()

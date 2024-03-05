@@ -374,7 +374,7 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
     }
     else {
       #ifdef DEBUG_UNREADABLE_BLANKS
-        assert(IS_UNREADABLE_DEBUG(CTX_ROOTKEY(c)));
+        assert(Is_Unreadable_Debug(CTX_ROOTKEY(c)));
       #endif
         assert(not archetype->payload.any_context.phase);
     }

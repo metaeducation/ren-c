@@ -715,7 +715,7 @@ static void Propagate_All_GC_Marks(void)
                 }
                 else {
                     assert(NOT_SER_FLAG(keylist, ARRAY_FLAG_PARAMLIST));
-                    ASSERT_UNREADABLE_IF_DEBUG(ARR_HEAD(keylist));
+                    Assert_Unreadable_If_Debug(ARR_HEAD(keylist));
 
                     Array* ancestor = LINK(keylist).ancestor;
                     Queue_Mark_Array_Subclass_Deep(ancestor); // maybe keylist
@@ -983,7 +983,7 @@ static void Mark_Root_Series(void)
 static void Mark_Data_Stack(void)
 {
     Value* head = KNOWN(ARR_HEAD(DS_Array));
-    ASSERT_UNREADABLE_IF_DEBUG(head);
+    Assert_Unreadable_If_Debug(head);
 
     Value* stackval = DS_TOP;
     for (; stackval != head; --stackval)

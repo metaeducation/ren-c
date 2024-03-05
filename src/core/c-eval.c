@@ -380,7 +380,7 @@ INLINE void Expire_Out_Cell_Unless_Invisible(REBFRM *f) {
     //
     if (not GET_ACT_FLAG(FRM_PHASE_OR_DUMMY(f), ACTION_FLAG_INVISIBLE)) {
         if (SPORADICALLY(2))
-            Init_Unreadable_Blank(f->out);
+            Init_Unreadable(f->out);
         else
             SET_END(f->out);
         f->out->header.bits |= OUT_MARKED_STALE;
@@ -1422,7 +1422,7 @@ bool Eval_Core_Throws(REBFRM * const f)
             // enumerated, so we need to put *something* in this slot when
             // skipping, since we're going past it in the enumeration.
             //
-            Init_Unreadable_Blank(f->arg);
+            Init_Unreadable(f->arg);
             continue;
         }
 

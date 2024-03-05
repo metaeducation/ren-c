@@ -126,7 +126,7 @@ INLINE Value* DS_AT(REBDSP d) {
         (DS_Movable_Top -= (DS_Index - (dsp)), DS_Index = (dsp))
 #else
     INLINE void DS_DROP_Core(void) {
-        Init_Unreadable_Blank(DS_TOP); // TRASH makes ASSERT_ARRAY fail
+        Init_Unreadable(DS_TOP); // TRASH makes ASSERT_ARRAY fail
         --DS_Index;
         --DS_Movable_Top;
     }

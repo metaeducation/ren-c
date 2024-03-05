@@ -853,7 +853,7 @@ struct Reb_Frame {
     name##struct.source = (source_ptr); \
     REBFRM * const name = &name##struct; \
     Erase_Cell(&name->cell); \
-    Init_Unreadable_Blank(&name->cell); \
+    Init_Unreadable(&name->cell); \
     name->dsp_orig = DSP;
 
 #define DECLARE_FRAME(name) \
