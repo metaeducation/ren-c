@@ -184,7 +184,7 @@ INLINE bool Is_Stable_Antiform_Heart(Heart heart) {
 }
 
 INLINE bool Is_Stable(Need(const Atom*) v) {  // repeat for non-inlined speed
-    ASSERT_CELL_READABLE(v);
+    Assert_Cell_Readable(v);
     if (QUOTE_BYTE(v) != ANTIFORM_0)
         return true;
     return (

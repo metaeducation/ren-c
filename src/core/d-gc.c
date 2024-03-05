@@ -48,7 +48,7 @@ static bool Not_Node_Accessible_Canon(const Node* n) {
 //
 void Assert_Cell_Marked_Correctly(const Cell* v)
 {
-    ASSERT_CELL_READABLE(v);  // then we use unchecked() on v below
+    Assert_Cell_Readable(v);  // then we use unchecked() on v below
 
     Heart heart = Cell_Heart_Unchecked(v);
 

@@ -28,7 +28,7 @@ INLINE void INIT_VAL_ACTION_LABEL(
     Cell* v,
     Option(const Symbol*) label
 ){
-    ASSERT_CELL_WRITABLE(v);  // archetype R/O
+    Assert_Cell_Writable(v);  // archetype R/O
     if (label)
         INIT_VAL_ACTION_PARTIALS_OR_LABEL(v, unwrap(label));
     else

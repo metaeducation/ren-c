@@ -622,18 +622,18 @@ INLINE Byte* Series_Data_Last(size_t wide, const_if_c Series* s) {
         }
     }
 
-    #define POISON_SERIES_TAIL(s) \
+    #define Poison_Series_Tail_If_Debug(s) \
         Poison_Or_Unpoison_Tail_Debug((s), true)
 
-    #define UNPOISON_SERIES_TAIL(s) \
+    #define Unpoison_Series_Tail_If_Debug(s) \
         Poison_Or_Unpoison_Tail_Debug((s), false)
 #else
     #define ONE_IF_POISON_TAILS 0
 
-    #define POISON_SERIES_TAIL(s) \
+    #define Poison_Series_Tail_If_Debug(s) \
         NOOP
 
-    #define UNPOISON_SERIES_TAIL(s) \
+    #define Unpoison_Series_Tail_If_Debug(s) \
         NOOP
 #endif
 
@@ -712,9 +712,9 @@ INLINE void Set_Series_Used_Internal(Series* s, Count used) {
 }
 
 INLINE void Set_Series_Used(Series* s, Count used) {
-    UNPOISON_SERIES_TAIL(s);
+    Unpoison_Series_Tail_If_Debug(s);
     Set_Series_Used_Internal(s, used);
-    POISON_SERIES_TAIL(s);
+    Poison_Series_Tail_If_Debug(s);
 }
 
 INLINE void Set_Series_Len(Series* s, Length len) {

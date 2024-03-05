@@ -76,7 +76,7 @@ INLINE Element* Init_Any_Word_Untracked(
     Byte quote_byte
 ){
     assert(Any_Word_Kind(heart));
-    FRESHEN_CELL(out);
+    Freshen_Cell_Untracked(out);
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL
             | FLAG_HEART_BYTE(heart) | FLAG_QUOTE_BYTE(quote_byte)

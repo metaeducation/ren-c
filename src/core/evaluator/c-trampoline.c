@@ -420,7 +420,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     Set_Level_Flag(LEVEL, ABRUPT_FAILURE);
 
-    FRESHEN_MOVED_CELL(OUT);  // avoid sweep error under rug assert
+    Freshen_Moved_Cell_Untracked(OUT);  // avoid sweep error under rug assert
     Init_Thrown_Failure(LEVEL, CTX_ARCHETYPE(e));  // non-definitional [1]
 
     while (TOP_LEVEL != LEVEL) {  // drop idle levels above the fail [2]

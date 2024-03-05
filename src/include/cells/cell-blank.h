@@ -63,7 +63,7 @@
 //
 
 INLINE Element* Init_Blank_Untracked(Cell* out, Byte quote_byte) {
-    FRESHEN_CELL(out);
+    Freshen_Cell_Untracked(out);
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL
             | FLAG_HEART_BYTE(REB_BLANK) | FLAG_QUOTE_BYTE(quote_byte)

@@ -45,7 +45,7 @@ INLINE const Series* Cell_Series(const Cell* v) {
         return VAL_INDEX_RAW(v);
     }
     INLINE REBIDX & VAL_INDEX_UNBOUNDED(Cell* v) {
-        ASSERT_CELL_WRITABLE(v);
+        Assert_Cell_Writable(v);
         assert(Any_Series_Kind(Cell_Heart_Unchecked(v)));
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         return VAL_INDEX_RAW(v);  // returns a C++ reference

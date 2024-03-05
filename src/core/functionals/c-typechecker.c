@@ -166,7 +166,7 @@ bool Typecheck_Atom_Core(
     }
 
     for (; item != tail; ++item) {
-        ASSERT_CELL_READABLE(item);
+        Assert_Cell_Readable(item);
 
         Option(const Symbol*) label = nullptr;  // so goto doesn't cross
 

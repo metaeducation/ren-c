@@ -53,7 +53,7 @@
 
 
 INLINE bool Is_Logic(Need(const Value*) v) {
-    ASSERT_CELL_READABLE(v);
+    Assert_Cell_Readable(v);
 
     if (QUOTE_BYTE(v) != ANTIFORM_0)
         return false;
@@ -81,7 +81,7 @@ INLINE bool Cell_Logic(Need(const Value*) v) {
 
 
 INLINE bool Is_Truthy(const Value* v) {
-    ASSERT_CELL_READABLE(v);
+    Assert_Cell_Readable(v);
 
     if (QUOTE_BYTE(v) == ANTIFORM_0) {
         if (HEART_BYTE(v) != REB_WORD)

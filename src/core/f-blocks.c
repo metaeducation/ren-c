@@ -201,7 +201,7 @@ Element* Alloc_Tail_Array(Array* a)
 
   #if DEBUG_ERASE_ALLOC_TAIL_CELLS
     if (not Is_Cell_Erased(last)) {
-        ASSERT_CELL_WRITABLE(last);
+        Assert_Cell_Writable(last);
         Erase_Cell(last);  // helps ensure new values written
     }
   #endif

@@ -787,14 +787,14 @@ void Expand_Series(Series* s, REBLEN index, REBLEN delta)
         // separately with TERM_SERIES (in case it reaches an implicit
         // termination that is not a full-sized cell).
 
-        UNPOISON_SERIES_TAIL(s);
+        Unpoison_Series_Tail_If_Debug(s);
         memmove(
             Series_Data(s) + start + extra,
             Series_Data(s) + start,
             size - start
         );
         Set_Series_Used_Internal(s, used_old + delta);
-        POISON_SERIES_TAIL(s);
+        Poison_Series_Tail_If_Debug(s);
 
         assert(
             not was_dynamic or (
@@ -1303,7 +1303,7 @@ void Assert_Pointer_Detection_Working(void)
     stale_cell->header.bits =
         NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
         | FLAG_HEART_BYTE(REB_BLANK);
-    ASSERT_CELL_WRITABLE(stale_cell);
+    Assert_Cell_Writable(stale_cell);
     assert(Detect_Rebol_Pointer(stale_cell) == DETECTED_AS_UTF8);
 
     assert(Detect_Rebol_Pointer(rebEND) == DETECTED_AS_END);

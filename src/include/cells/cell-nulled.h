@@ -64,7 +64,7 @@
 //
 
 INLINE bool Is_Nulled(Need(const Value*) v) {
-    ASSERT_CELL_READABLE(v);
+    Assert_Cell_Readable(v);
     return QUOTE_BYTE(v) == ANTIFORM_0
         and HEART_BYTE(v) == REB_WORD
         and Cell_Word_Id(v) == SYM_NULL;

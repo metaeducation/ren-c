@@ -108,8 +108,8 @@
   //    don't mind the cost.  The STATIC_ASSERT_LVALUE() macro catches any
   //    potential violators.
 
-    #define ASSERT_CELL_READABLE(c) do { \
-        STATIC_ASSERT_LVALUE(c);  /* "evil macro" [1] */ \
+    #define Assert_Cell_Readable(c) do { \
+        STATIC_ASSERT_LVALUE(c);  /* ensure "evil macro" used safely [1] */ \
         if ( \
             (FIRST_BYTE(&(c)->header.bits) & ( \
                 NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
@@ -122,14 +122,14 @@
                 printf("Non-node passed to cell read routine\n"); \
             else \
                 printf( \
-                    "ASSERT_CELL_READABLE() on NODE_FLAG_FREE cell\n" \
+                    "Assert_Cell_Readable() on NODE_FLAG_FREE cell\n" \
                 ); \
             panic (c); \
         } \
     } while (0)
 
-    #define ASSERT_CELL_WRITABLE(c) do { \
-        STATIC_ASSERT_LVALUE(c);  /* "evil macro" [1] */ \
+    #define Assert_Cell_Writable(c) do { \
+        STATIC_ASSERT_LVALUE(c);  /* ensure "evil macro" used safely [1] */ \
         if ( \
             (FIRST_BYTE(&(c)->header.bits) & ( \
                 NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
@@ -152,19 +152,19 @@
   #else
     template <typename T>
     T Ensure_Readable(T cell) {
-        ASSERT_CELL_READABLE(cell);
+        Assert_Cell_Readable(cell);
         return cell;
     }
 
     template <typename T>
     T Ensure_Writable(T cell) {
-        ASSERT_CELL_WRITABLE(cell);
+        Assert_Cell_Writable(cell);
         return cell;
     }
   #endif
 #else
-    #define ASSERT_CELL_READABLE(c)    NOOP
-    #define ASSERT_CELL_WRITABLE(c)    NOOP
+    #define Assert_Cell_Readable(c)    NOOP
+    #define Assert_Cell_Writable(c)    NOOP
 
     #define Ensure_Readable(c) (c)
     #define Ensure_Writable(c) (c)
@@ -292,9 +292,9 @@ INLINE Kind VAL_TYPE_UNCHECKED(const Atom* v) {
 // Run the risk of repeating macro args to speed up this critical check.
 //
 #if (! DEBUG_MEMORY_ALIGN)
-    #define ALIGN_CHECK_CELL(c)    NOOP
+    #define Assert_Cell_Aligned(c)    NOOP
 #else
-    #define ALIGN_CHECK_CELL(c) \
+    #define Assert_Cell_Aligned(c) \
         STATIC_ASSERT_LVALUE(c);  /* "evil macro", repeats arguments */ \
         if (i_cast(uintptr_t, (c)) % ALIGN_SIZE != 0) { \
             printf( \
@@ -321,7 +321,7 @@ INLINE Kind VAL_TYPE_UNCHECKED(const Atom* v) {
 // so will Ensure_Writable().
 
 INLINE Cell* Erase_Cell_Untracked(Cell* c) {
-    ALIGN_CHECK_CELL(c);
+    Assert_Cell_Aligned(c);
     c->header.bits = CELL_MASK_0;
     return c;
 }
@@ -369,7 +369,7 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 //    erased after having been moved, because it's the new cell that takes
 //    over the "hot potato" of the error.
 
-#define FRESHEN_CELL(v) do { \
+#define Freshen_Cell_Untracked(v) do { \
     STATIC_ASSERT_LVALUE(v);  /* evil macro [1] */ \
     if (HEART_BYTE(v) == REB_ERROR)  /* must suppress [2] */ \
         assert(QUOTE_BYTE(v) != ANTIFORM_0);\
@@ -377,7 +377,7 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
     (v)->header.bits &= CELL_MASK_PERSIST;  /* Note: no CELL or NODE flags */ \
 } while (0)
 
-#define FRESHEN_MOVED_CELL(v) do {  /* no suppress [3] */ \
+#define Freshen_Moved_Cell_Untracked(v) do {  /* no suppress [3] */ \
     STATIC_ASSERT_LVALUE(v);  /* evil macro [1] */ \
     assert(not ((v)->header.bits & CELL_FLAG_PROTECTED)); \
     (v)->header.bits &= CELL_MASK_PERSIST;  /* Note: no CELL or NODE flags */ \
@@ -387,7 +387,7 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 INLINE void Reset_Antiform_Header_Untracked(Cell* v, uintptr_t flags)
 {
     assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE(ANTIFORM_0));
-    FRESHEN_CELL(v);
+    Freshen_Cell_Untracked(v);
     v->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
         | flags | FLAG_QUOTE_BYTE(ANTIFORM_0));
 }
@@ -395,18 +395,18 @@ INLINE void Reset_Antiform_Header_Untracked(Cell* v, uintptr_t flags)
 INLINE void Reset_Unquoted_Header_Untracked(Cell* v, uintptr_t flags)
 {
     assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE(ANTIFORM_0));
-    FRESHEN_CELL(v);
+    Freshen_Cell_Untracked(v);
     v->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
         | flags | FLAG_QUOTE_BYTE(NOQUOTE_1));
 }
 
-INLINE Value* Freshen_Cell_Untracked(Cell* v) {
-    FRESHEN_CELL(v);
+INLINE Value* Freshen_Cell_Untracked_Inline(Cell* v) {
+    Freshen_Cell_Untracked(v);
     return cast(Value*, v);
 }
 
 #define Freshen_Cell(v) \
-    TRACK(Freshen_Cell_Untracked(v))
+    TRACK(Freshen_Cell_Untracked_Inline(v))
         // ^-- track AFTER reset, can diagnose cell origin in Ensure_Writable()
 
 
@@ -517,7 +517,7 @@ INLINE Value* Freshen_Cell_Untracked(Cell* v) {
 // Interface designed to line up with Derelativize()
 //
 // 1. If you write `Erase_Cell(dest)` followed by `Copy_Cell(dest, src)` the
-//    optimizer seems to notice it doesn't need the masking of FRESHEN_CELL().
+//    optimizer seems to notice it doesn't need the masking of Freshen_Cell().
 //    This was discovered by trying to force callers to pass in an already
 //    freshened cell and seeing things get more complicated for no benefit.
 //
@@ -537,9 +537,9 @@ INLINE void Copy_Cell_Header(
     const Cell* v
 ){
     assert(out != v);  // usually a sign of a mistake; not worth supporting
-    ASSERT_CELL_READABLE(v);
+    Assert_Cell_Readable(v);
 
-    FRESHEN_CELL(out);
+    Freshen_Cell_Untracked(out);
     out->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
         | (v->header.bits & CELL_MASK_COPY));
 
@@ -557,13 +557,13 @@ INLINE Cell* Copy_Cell_Untracked(
     Flags copy_mask  // typically you don't copy UNEVALUATED, PROTECTED, etc
 ){
     assert(out != v);  // usually a sign of a mistake; not worth supporting
-    ASSERT_CELL_READABLE(v);
+    Assert_Cell_Readable(v);
 
-    FRESHEN_CELL(out);  // optimizer seems to skip this mask after erasure [1]
+    Freshen_Cell_Untracked(out);  // optimizer elides this after erasure [1]
     out->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
         | (v->header.bits & copy_mask));
 
-    out->payload = v->payload;  // before init binding anachronism [1]
+    out->payload = v->payload;  // before init binding anachronism [2]
 
     out->extra = v->extra;  // binding or inert bits
 
@@ -630,7 +630,7 @@ INLINE Cell* Move_Cell_Untracked(
     Flags copy_mask
 ){
     Copy_Cell_Untracked(out, v, copy_mask);  // Move_Cell() adds track to `out`
-    FRESHEN_MOVED_CELL(v);  // track to here not useful
+    Freshen_Moved_Cell_Untracked(v);  // track to here not useful
 
   #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use
     v->file = out->file;
