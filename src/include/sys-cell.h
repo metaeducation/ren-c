@@ -1,12 +1,12 @@
 //
-//  File: %sys-value.h
-//  Summary: {any-value? defs AFTER %tmp-internals.h (see: %struct-cell.h)}
+//  File: %sys-cell.h
+//  Summary: "Cell Definitions AFTER %tmp-internals.h}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2020 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -20,17 +20,13 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// This file provides basic accessors for value types.  Because these
-// accessors dereference Value (or Cell) pointers, the inline functions
-// need the complete struct definition available from all the payload types.
-//
 // See notes in %struct-cell.h for the definition of the Cell structure.
 //
-// While some Values are in C stack variables, most reside in the allocated
+// While some cells are in C stack variables, most reside in the allocated
 // memory block for a Rebol array.  The memory block for an array can be
 // resized and require a reallocation, or it may become invalid if the
 // containing series is garbage-collected.  This means that many pointers to
-// cell are movable, and could become invalid if arbitrary user code
+// cells are movable, and could become invalid if arbitrary user code
 // is run...this includes values on the data stack, which is implemented as
 // an array under the hood.  (See %sys-stack.h)
 //
@@ -44,70 +40,6 @@
 // Function invocations keep their arguments in FRAME!s, which can be accessed
 // via ARG() and have stable addresses as long as the function is running.
 //
-
-
-//=//// DEBUG PROBE <== **THIS IS VERY USEFUL** //////////////////////////=//
-//
-// The PROBE macro can be used in debug builds to mold a cell much like the
-// Rebol `probe` operation.  But it's actually polymorphic, and if you have
-// a Series*, Context*, or Array* it can be used with those as well.  In C++,
-// you can even get the same value and type out as you put in...just like in
-// Rebol, permitting things like `return PROBE(Make_Some_Series(...));`
-//
-// In order to make it easier to find out where a piece of debug spew is
-// coming from, the file and line number will be output as well.
-//
-// Note: As a convenience, PROBE also flushes the `stdout` and `stderr` in
-// case the debug build was using printf() to output contextual information.
-//
-
-#if DEBUG_HAS_PROBE
-    #if CPLUSPLUS_11
-        template <
-            typename T,
-            typename std::enable_if<
-                std::is_pointer<T>::value  // assume pointers are Node*
-            >::type* = nullptr
-        >
-        T Probe_Cpp_Helper(T v, const char *expr, const char *file, int line)
-        {
-            Probe_Core_Debug(v, expr, file, line);
-            return v;
-        }
-
-        template <
-            typename T,
-            typename std::enable_if<
-                !std::is_pointer<T>::value  // ordinary << output operator
-            >::type* = nullptr
-        >
-        T Probe_Cpp_Helper(T v, const char *expr, const char *file, int line)
-        {
-            std::stringstream ss;
-            ss << v;
-            printf("PROBE(%s) => %s\n", expr, ss.str().c_str());
-            UNUSED(file);
-            UNUSED(line);
-            return v;
-        }
-
-        #define PROBE(v) \
-            Probe_Cpp_Helper((v), #v, __FILE__, __LINE__)
-    #else
-        #define PROBE(v) \
-            Probe_Core_Debug((v), #v, __FILE__, __LINE__)  // returns void*
-    #endif
-
-    #define WHERE(L) \
-        Where_Core_Debug(L)
-
-#elif !defined(NDEBUG) // don't cause compile time error on PROBE()
-    #define PROBE(v) \
-        do { \
-            printf("DEBUG_HAS_PROBE disabled %s %d\n", __FILE__, __LINE__); \
-            fflush(stdout); \
-        } while (0)
-#endif
 
 
 //=//// CELL VALIDATION (DEBUG BUILD ONLY) ////////////////////////////////=//
@@ -479,21 +411,32 @@ INLINE Value* Freshen_Cell_Untracked(Cell* v) {
 
 
 
-//=////////////////////////////////////////////////////////////////////////=//
-//
-//  RELATIVE AND SPECIFIC VALUES
-//
-//=////////////////////////////////////////////////////////////////////////=//
+//=///// BINDING //////////////////////////////////////////////////////////=//
 //
 // Some value types use their `->extra` field in order to store a pointer to
 // a Node which constitutes their notion of "binding".
 //
-// This can be null (which indicates unbound), to a function's paramlist
-// (which indicates a relative binding), or to a context's varlist (which
-// indicates a specific binding.)
+// This can either be null (a.k.a. UNBOUND), or to a function's paramlist
+// (indicates a relative binding), or to a context's varlist (which indicates
+// a specific binding.)
 //
-// The ordering of %types.r is chosen specially so that all bindable types
-// are at lower values than the unbindable types.
+//  1. Instead of using null for UNBOUND, a special global Stub struct was
+//     experimented with.  It was at a memory location known at compile-time,
+//     and had its ->header and ->info bits set in such a way as to avoid the
+//     need for some conditional checks.  e.g. instead of writing:
+//
+//         if (binding and binding->header.bits & NODE_FLAG_MANAGED) {...}
+//
+//     The special UNBOUND stub set some bits, e.g. pretend to be managed:
+//
+//        if (binding->header.bits & NODE_FLAG_MANAGED) {...}  // UNBOUND ok
+//
+//     Question was whether avoiding the branching involved from the extra
+//     test for null would be worth it for consistent dereferencing ability.
+//     At least on x86/x64, the answer was: No. Maybe even a little slower.
+//     Testing for null pointers the processor has in its hand is very common
+//     and seemed to outweigh the need to dereference all the time.  The
+//     increased clarity of having unbound be nullptr is also in its benefit.
 //
 
 #if DEBUG
@@ -555,46 +498,10 @@ INLINE Value* Freshen_Cell_Untracked(Cell* v) {
       { bh.ref->extra.Any.node = p_cast(Stub*, cast(uintptr_t, 0xDECAFBAD)); }
 #endif
 
-
-//=////////////////////////////////////////////////////////////////////////=//
-//
-//  BINDING
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// Some value types use their `->extra` field in order to store a pointer to
-// a Node which constitutes their notion of "binding".
-//
-// This can either be null (a.k.a. UNBOUND), or to a function's paramlist
-// (indicates a relative binding), or to a context's varlist (which indicates
-// a specific binding.)
-//
-// NOTE: Instead of using null for UNBOUND, a special global Stub struct was
-// experimented with.  It was at a location in memory known at compile time,
-// and it had its ->header and ->info bits set in such a way as to avoid the
-// need for some conditional checks.  e.g. instead of writing:
-//
-//     if (binding and binding->header.bits & NODE_FLAG_MANAGED) {...}
-//
-// The special UNBOUND stub set some bits, such as to pretend to be managed:
-//
-//     if (binding->header.bits & NODE_FLAG_MANAGED) {...}  // incl. UNBOUND
-//
-// Question was whether avoiding the branching involved from the extra test
-// for null would be worth it for a consistent ability to dereference.  At
-// least on x86/x64, the answer was: No.  It was maybe even a little slower.
-// Testing for null pointers the processor has in its hand is very common and
-// seemed to outweigh the need to dereference all the time.  The increased
-// clarity of having unbound be nullptr is also in its benefit.
-//
-// NOTE: The ordering of %types.r is chosen specially so that all bindable
-// types are at lower values than the unbindable types.
-//
-
 #define SPECIFIED \
     x_cast(Specifier*, nullptr)  // x_cast (don't want DEBUG_CHECK_CASTS)
 
-#define UNBOUND nullptr  // not always a Node* (sometimes Context*)
+#define UNBOUND nullptr  // making this a stub did not improve performance [1]
 #define UNSPECIFIED nullptr
 
 
@@ -608,26 +515,8 @@ INLINE Value* Freshen_Cell_Untracked(Cell* v) {
 #define VAL_WORD_INDEX_I32(v)         PAYLOAD(Any, (v)).second.i32
 
 
-INLINE void Copy_Cell_Header(
-    Cell* out,
-    const Cell* v
-){
-    assert(out != v);  // usually a sign of a mistake; not worth supporting
-    ASSERT_CELL_READABLE(v);
-
-    FRESHEN_CELL(out);
-    out->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
-        | (v->header.bits & CELL_MASK_COPY));
-
-  #if DEBUG_TRACK_EXTEND_CELLS
-    out->file = v->file;
-    out->line = v->line;
-    out->tick = TG_tick;  // initialization tick
-    out->touch = v->touch;  // arbitrary debugging use via TOUCH_CELL
-  #endif
-}
-
-
+//=//// COPYING CELLS /////////////////////////////////////////////////////=//
+//
 // Because you cannot assign cells to one another (e.g. `*dest = *src`), a
 // function is used.  This provides an opportunity to check things like moving
 // data into protected locations, and to mask out bits that should not be
@@ -652,7 +541,26 @@ INLINE void Copy_Cell_Header(
 //    will compete with one as (Sink(Value*), const Value*) when the second
 //    argument is Element*, since Element can be passed where Value is taken.
 //    Template magic lets an overload exclude itself to break the contention.
-//
+
+INLINE void Copy_Cell_Header(
+    Cell* out,
+    const Cell* v
+){
+    assert(out != v);  // usually a sign of a mistake; not worth supporting
+    ASSERT_CELL_READABLE(v);
+
+    FRESHEN_CELL(out);
+    out->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
+        | (v->header.bits & CELL_MASK_COPY));
+
+  #if DEBUG_TRACK_EXTEND_CELLS
+    out->file = v->file;
+    out->line = v->line;
+    out->tick = TG_tick;  // initialization tick
+    out->touch = v->touch;  // arbitrary debugging use via TOUCH_CELL
+  #endif
+}
+
 INLINE Cell* Copy_Cell_Untracked(
     Cell* out,
     const Cell* v,
@@ -718,7 +626,7 @@ INLINE Cell* Copy_Cell_Untracked(
 
 
 //=//// CELL MOVEMENT //////////////////////////////////////////////////////=//
-
+//
 // Moving a cell invalidates the old location.  This idea is a potential
 // prelude to being able to do some sort of reference counting on series based
 // on the cells that refer to them tracking when they are overwritten.  One

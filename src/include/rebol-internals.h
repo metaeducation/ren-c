@@ -592,7 +592,12 @@ INLINE void SET_SIGNAL(Flags f) { // used in %sys-series.h
 //=//// STUB-DERIVED STRUCTURE ACCESSORS //////////////////////////////////=//
 
 #include "sys-track.h"
-#include "sys-value.h"  // needs IS_DETAILS() for Derelativize()
+
+#if DEBUG_HAS_PROBE
+    #include "sys-probe.h"  // VERY USEFUL!  See file for details.
+#endif
+
+#include "sys-cell.h"
 
 #include "stubs/stub-series.h"  // needs Is_Cell_Poisoned(), Erase_Cell()
 
