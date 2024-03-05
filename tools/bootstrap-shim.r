@@ -624,7 +624,7 @@ modernize-action: function3 [
     spec [block!]
     body [block!]
 ][
-    last-refine-word: _
+    last-refine-word: null
 
     tryers: copy []
     proxiers: copy []
@@ -632,7 +632,7 @@ modernize-action: function3 [
     spec: collect3 [  ; Note: offers KEEP/ONLY
         while [not tail? spec] [
             if tag? spec/1 [
-                last-refine-word: _
+                last-refine-word: null
                 keep3/only spec/1
                 spec: my next
                 continue
