@@ -1,115 +1,46 @@
-![Ren-C Logo][100]
+## Bootstrap Branch Of Ren-C: **...THAT YOU SHOULD PROBABLY IGNORE**
 
-# Ren-C
-[![Build Status][101]](https://travis-ci.org/metaeducation/ren-c)
+*There's almost no reason you should be looking at this.*
 
+What it is, is a stripped down mess of an ancient version of the executable.
+Its sole use is to do some code generation in the build process for making
+modern executables.
 
-**Ren-C** is an interim fork of the [Apache 2.0 open-sourced][1] [Rebol][2] codebase.
+The reasons why such an old snapshot is used mostly comes down to *speed*.
+At time of writing, the main branch of Ren-C is much slower...due to its
+focus on getting design points correct over premature optimization.  (Also
+some things that make it "slower", e.g. being stackless, makes it viable
+in places like the web browser--where it would require intrusive code
+generation that would slow it down otherwise.)
 
-[1]: http://www.rebol.com/cgi-bin/blog.r?view=0519
-[2]: https://en.wikipedia.org/wiki/Rebol
+Major features in the main branch will never be ported back to this one.
+As a partial list just to give the idea:
 
-The goal of the project isn't to be a "new" language, but to solve many of the outstanding
-design problems historically present in Rebol.  Several of these problems have been solved
-already.  For progress and notes on these issues, a [Trello board][3] is semi-frequently
-updated to reflect a summary of important changes.
+**UTF-8 Everywhere**
 
-[3]: https://trello.com/b/l385BE7a/rebol3-porting-guide-ren-c-branch
+  https://forum.rebol.info/t/realistically-migrating-rebol-to-utf8-everywhere/374
 
-Rather than be a brand or product in its own right, this project intends to provide smooth
-APIs for embedding an interpreter in C programs...hopefully eventually `rebol.exe` itself.
+**Stacklessness**
 
-One of these APIs (libRebol) is "user-friendly" to C programmers, allowing them to avoid the
-low-level concerns of the interpreter and just run snippets of code mixed with values, as
-easily as:
+  https://forum.rebol.info/t/switching-to-stackless-why-this-why-now/1247
 
-    int x = 1020;
-    Value* negate_function = rebRun("get 'negate", END);
+**Isotopes**
 
-    rebRun("print [", rebInteger(x), "+ (2 *", rebEval(negate_function), "3)]", END);
+  https://forum.rebol.info/t/a-justification-of-generalized-isotopes/1918
 
-The other API (libRebolCore) would offer nearly the full range of power that is internally
-offered to the core.  It would allow one to pick apart value cells and write extensions
-that are equally efficient to built-in natives like REDUCE.  This more heavyweight API
-would be used by extensions for which performance is critical.
+**UPARSE**
 
-The current way to explore the new features of Ren-C is using the `r3` console.  It is
-*significantly* enhanced from the open-sourced R3-Alpha...with much of its behavior coming
-from [userspace Rebol code][4] (as opposed to hardcoded C).  In addition to multi-line
-editing and UTF-8 support, it [can be "skinned"][5] and configured in various ways, and
-non-C programmers can easily help contribute to enhancing it.
+  https://forum.rebol.info/t/introducing-the-hackable-usermode-parse-uparse/1529
 
-[4]: https://github.com/metaeducation/ren-c/blob/master/src/os/host-console.r
-[5]: https://github.com/r3n/reboldocs/wiki/User-and-Console
+**Pure Virtual Binding**
 
-A C++ binding is also available, and for those interested in a novel application of this
-code, they might want to see the experimental console based on it and Qt: [Ren Garden][6].
+  https://forum.rebol.info/t/rebol-and-scopes-well-why-not/1751
 
-[6]: http://rencpp.hostilefork.com
+Given how hopelessly behind this snapshot of the interpreter is, features in
+it are mercilessly culled to lower the maintenance footprint when patches
+need to be done.  It is tweaked in various ways to make it more compatible
+with a modern version...but it also has to be able to be built with the
+previous bootstrap executable snapshot.  So it's a balancing act.
 
-In doing this work, the hope is to provide an artifact that would rally common
-usage between the [mainline builds][7], community builds, and those made by
-[Atronix Engineering][8] and [Saphirion AG][9].
-
-[7]: http://rebolsource.net
-[8]: http://www.atronixengineering.com/downloads
-[9]: http://development.saphirion.com/rebol/saphir/
-
-
-## Community
-
-To promote the Rebol community's participation in public forums, development discussion
-for Ren-C generally takes place in the [`Rebol*` StackOverflow Chat][10].
-
-[10]: http://rebolsource.net/go/chat-faq
-
-There is [a Discourse forum][11] available for more long-form discussion.
-
-[11]: https://forum.rebol.info
-
-It is also possible to contact the developers through the [Ren-C GitHub Issues][11]
-page.  This should be limited to questions regarding the Ren-C builds specifically, as
-overall language design wishes and debates are kept in the [`rebol-issues`][12] repository
-of Rebol's GitHub.
-
-[12]: https://github.com/metaeducation/ren-c/issues
-[13]: https://github.com/rebol/rebol-issues/issues
-
-
-## Building
-
-As a design goal, compiling Ren-C depends on [very little beyond ANSI C89][14].  Attempts
-to reign in compiler dependencies have been a large amount of work, and it still supports
-a [number of older platforms][15].  However, if it is compiled with a C++ compiler then
-there is significantly more static analysis at build time, to catch errors.
-
-[14]: https://github.com/metaeducation/ren-c/wiki/On-Building-Ren-C-With-Cpp-Compilers
-[15]: https://github.com/metaeducation/ren-c/blob/master/tools/platforms.r
-
-The open-sourced R3-Alpha was based on a build process that depended on GNU make, and
-needed an existing R3-Alpha executable in order to generate that makefile (as well as other
-generated supporting C files).  This process was recently replaced with a Rebol-only
-building solution (`%rebmake.r`) which requires no other tool, and can spawn compilation
-processes itself.  Yet it still can generate GNU makefiles or NMAKE files if desired.
-
-While this process *works*, it introduced considerable complexity...and needs a relatively
-modern Ren-C build to bootstrap--as opposed to a historical R3-Alpha.  For the moment,
-some usable binaries are committed into the `%make/` directory for 32/64-bit platforms
-on Linux/Mac/Windows.
-
-Building is a matter of picking a config out of the `%make/configs/` directory, or just
-taking the defaults.  Options may be overridden on the command line of %make.r (which
-is a client of Rebmake):
-
-    r3-make make.r CONFIG=configs/vs2017-x64.r DEBUG=asserts
-
-That would use the Windows r3-make tool to build a project for Visual Studio 2017.
-
-*(Because other priorities have taken the focus away from improvements to this build
-process, it would be strongly desirable if community member(s) could get involved to
-help streamline and document it!  Since it's now *all* written in Rebol, that should be
-more possible.)*
-
-
-[100]: https://raw.githubusercontent.com/metaeducation/ren-c/master/ren-c-logo.png
-[101]: https://travis-ci.org/metaeducation/ren-c.svg?branch=master
+Expect the files to be filled with outdated comments, bad code, and outright
+contradictions.  This is a means to an end, and of no interest in itself.
