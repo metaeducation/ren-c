@@ -98,15 +98,15 @@ INLINE bool Is_Antiform_Set_Friendly(const Value* v) {
     return true;
 }
 
-// See Stepper_Executor().  This helps document the places where the primed
+// See Evaluator_Executor().  This helps document the places where the primed
 // result is being pushed, and gives a breakpoint opportunity for it.
 //
-INLINE Atom* Alloc_Stepper_Primed_Result() {
+INLINE Atom* Alloc_Evaluator_Primed_Result() {
     return atom_PUSH();
 }
 
 INLINE void Restart_Evaluator_Level(Level* L) {
-    assert(L->executor == &Evaluator_Executor);
+    assert(L->executor == &Stepper_Executor);
     Level_State_Byte(L) = STATE_0;
 }
 
@@ -134,7 +134,7 @@ INLINE bool Eval_Step_Throws(
 ){
     assert(Not_Feed_Flag(L->feed, NO_LOOKAHEAD));
 
-    assert(L->executor == &Evaluator_Executor);
+    assert(L->executor == &Stepper_Executor);
 
     L->out = out;
     assert(L->baseline.stack_base == TOP_INDEX);
@@ -169,7 +169,7 @@ INLINE bool Reevaluate_In_Sublevel_Throws(
     bool enfix
 ){
     assert(State_Byte_From_Flags(flags) == 0);
-    flags |= FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING);
+    flags |= FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
 
     Level* sub = Make_Level(L->feed, flags);
     Copy_Cell(&sub->u.eval.current, reval);

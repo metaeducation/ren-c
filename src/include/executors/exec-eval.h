@@ -1,6 +1,6 @@
 //
 //  File: %exec-eval.h
-//  Summary: {Flags and Level State for Evaluator_Executor()}
+//  Summary: {Flags and State for Evaluator_Executor() and Stepper_Executor()}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -22,7 +22,7 @@
 // union of the Level.
 //
 
-#define EXECUTOR_EVAL &Evaluator_Executor  // shorthand in Xxx_Executor_Flag()
+#define EXECUTOR_EVAL &Stepper_Executor  // shorthand in Xxx_Executor_Flag()
 
 
 //=//// EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE //////////////////////////=//
@@ -120,7 +120,7 @@
 
 //=//// EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION /////////////////////////////=//
 //
-// If ST_EVALUATOR_LOOKING_AHEAD is being used due to an inert optimization,
+// If ST_STEPPER_LOOKING_AHEAD is being used due to an inert optimization,
 // this flag is set, so that the quoting machinery can realize the lookback
 // quote is not actually too late.
 //
@@ -156,20 +156,20 @@ struct EvaluatorExecutorStateStruct {
 };
 
 
-// The evaluator publishes its internal states in this header file, so that
-// a level can be made with e.g. `FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)`
+// The stepper publishes its internal states in this header file, so that
+// a level can be made with e.g. `FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)`
 // to start in various points of the evaluation process.  When doing so, be
 // sure the expected level variables for that state are initialized.
 //
 enum {
-    ST_EVALUATOR_INITIAL_ENTRY = STATE_0,
+    ST_STEPPER_INITIAL_ENTRY = STATE_0,
 
-    // The evaluator uses REB_XXX types of the current cell being processed
+    // The stepper uses REB_XXX types of the current cell being processed
     // for the STATE byte in those cases.  This is helpful for knowing what
     // the mode of an evaluator level is, and makes the value on hand for
     // easy use in the "hot" level header location.
 
-    ST_EVALUATOR_LOOKING_AHEAD = 100,
-    ST_EVALUATOR_REEVALUATING,
-    ST_EVALUATOR_CALCULATING_INTRINSIC_ARG
+    ST_STEPPER_LOOKING_AHEAD = 100,
+    ST_STEPPER_REEVALUATING,
+    ST_STEPPER_CALCULATING_INTRINSIC_ARG
 };

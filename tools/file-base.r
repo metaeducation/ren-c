@@ -61,7 +61,7 @@ core: [
     [
         evaluator/c-eval.c  #prefer-O2-optimization
     ][
-        evaluator/c-stepper.c  #prefer-O2-optimization
+        evaluator/c-step.c  #prefer-O2-optimization
     ][
         evaluator/c-action.c  #prefer-O2-optimization
     ][

@@ -1066,9 +1066,9 @@ static bool Run_Va_Throws(
     else
         mutable_FEED_SPECIFIER(feed) = Get_Context_From_Stack();
 
-    Init_Void(Alloc_Stepper_Primed_Result());
+    Init_Void(Alloc_Evaluator_Primed_Result());
     Level* L = Make_Level(feed, flags);
-    L->executor = &Stepper_Executor;
+    L->executor = &Evaluator_Executor;
 
     bool threw = Trampoline_Throws(out, L);
 
@@ -1284,10 +1284,10 @@ void API_rebPushContinuation(
     else
         BINDING(block) = Lib_Context;  // [3]
 
-    Init_Void(Alloc_Stepper_Primed_Result());
+    Init_Void(Alloc_Evaluator_Primed_Result());
     Level* L = Make_Level_At(block, flags);
     Push_Level(out, L);
-    L->executor = &Stepper_Executor;
+    L->executor = &Evaluator_Executor;
 }
 
 

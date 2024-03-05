@@ -813,7 +813,7 @@ DECLARE_NATIVE(let)
     assert(Is_Set_Word(SPARE) or Is_Set_Block(SPARE));
 
     Flags flags =
-        FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
+        FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
         | (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
         | (L->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK);
 

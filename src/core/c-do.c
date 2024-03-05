@@ -143,13 +143,13 @@ bool Pushed_Continuation(
 
       case REB_META_BLOCK:
       case REB_BLOCK: {
-        Init_Void(Alloc_Stepper_Primed_Result());
+        Init_Void(Alloc_Evaluator_Primed_Result());
         Level* L = Make_Level_At_Core(branch, branch_specifier, flags);
         if (Cell_Heart_Unchecked(branch) == REB_META_BLOCK) {
             Set_Level_Flag(L, META_RESULT);
             Set_Level_Flag(L, RAISED_RESULT_OK);
         }
-        L->executor = &Stepper_Executor;
+        L->executor = &Evaluator_Executor;
 
         Push_Level(out, L);
         goto pushed_continuation; }  // trampoline handles LEVEL_FLAG_BRANCH

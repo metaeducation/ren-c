@@ -37,7 +37,7 @@
 //
 //  reeval: native [
 //
-//  "Process an evaluated argument *inline* as the evaluator loop would"
+//  "Process an evaluated argument *inline* as an evaluator step would"
 //
 //      return: [any-atom?]
 //      value "BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns..."
@@ -50,7 +50,7 @@ DECLARE_NATIVE(reeval)
 {
     INCLUDE_PARAMS_OF_REEVAL;
 
-    // REEVAL only *acts* variadic, but uses ST_EVALUATOR_REEVALUATING
+    // REEVAL only *acts* variadic, but uses ST_STEPPER_REEVALUATING
     //
     UNUSED(ARG(expressions));
 
@@ -403,13 +403,13 @@ DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
         Flags flags = LEVEL_MASK_NONE;
 
         if (not REF(next))
-            Init_Nihil(Alloc_Stepper_Primed_Result());
+            Init_Nihil(Alloc_Evaluator_Primed_Result());
 
         Level* sub = Make_Level(feed, flags);
         Push_Level(OUT, sub);
 
         if (not REF(next)) {  // plain evaluation to end, maybe invisible
-            sub->executor = &Stepper_Executor;
+            sub->executor = &Evaluator_Executor;
             if (REF(undecayed))
                 return DELEGATE_SUBLEVEL(sub);
 
@@ -481,9 +481,9 @@ DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
         if (Is_Level_At_End(L))
             return VOID;
 
-        Init_Void(Alloc_Stepper_Primed_Result());
+        Init_Void(Alloc_Evaluator_Primed_Result());
         Level* sub = Make_Level(L->feed, LEVEL_MASK_NONE);
-        sub->executor = &Stepper_Executor;
+        sub->executor = &Evaluator_Executor;
         Push_Level(OUT, sub);
         return DELEGATE_SUBLEVEL(sub); }
 

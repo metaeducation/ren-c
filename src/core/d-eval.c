@@ -32,7 +32,7 @@
 //   accidentally carry over from one step to another, so that there will be
 //   a crash instead of a casual reuse.
 //
-// * Evaluator_Exit_Checks_Debug() runs only if Evaluator_Executor() makes
+// * Evaluator_Exit_Checks_Debug() runs only if Stepper_Executor() makes
 //   it to the end without a fail() longjmping out from under it.  It also
 //   checks to make sure the state has balanced, and that the return result is
 //   consistent with the state being returned.
@@ -59,8 +59,8 @@ void Dump_Level_Location(Level* L)
     DECLARE_ATOM (dump);
 
     if (
-        L->executor == &Evaluator_Executor  // looks ahead by one
-        and Level_State_Byte(L) != ST_EVALUATOR_INITIAL_ENTRY  // L->u corrupt
+        L->executor == &Stepper_Executor  // looks ahead by one
+        and Level_State_Byte(L) != ST_STEPPER_INITIAL_ENTRY  // L->u corrupt
     ){
         Derelativize(dump, &L->u.eval.current, L_specifier);
         printf("Dump_Level_Location() current\n");
@@ -264,7 +264,7 @@ void Evaluator_Exit_Checks_Debug(Level* L) {
             | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
         );
 
-        // These are provided as options to Evaluator_Executor, and should not
+        // These are provided as options to Stepper_Executor, and should not
         // change over the course of the evaluation (could check this?)  But in
         // any case they are okay if they are set.
         //

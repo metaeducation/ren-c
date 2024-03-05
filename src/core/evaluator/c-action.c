@@ -667,12 +667,12 @@ Bounce Action_Executor(Level* L)
                 ))
             ){
                 // We need to defer and let the right hand quote that is
-                // quoting leftward win.  We use ST_EVALUATOR_LOOKING_AHEAD
+                // quoting leftward win.  We use ST_STEPPER_LOOKING_AHEAD
                 // to jump into a sublevel where sub->out is the ARG,
                 // and it knows to get the arg from there.
 
                 Flags flags =
-                    FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)  // no FRESHEN()
+                    FLAG_STATE_BYTE(ST_STEPPER_LOOKING_AHEAD)  // no FRESHEN()
                     | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
                     | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
 

@@ -63,7 +63,7 @@
 // evaluated-to branch.
 //
 // So the group branch executor is pushed with the feed of the GROUP! to run.
-// It gives this feed to an Evaluator_Executor(), and then delegates to the
+// It gives this feed to an Stepper_Executor(), and then delegates to the
 // branch returned as a result.
 //
 //////////////////////////////////////////////////////////////////////////////
@@ -97,14 +97,14 @@ Bounce Group_Branch_Executor(Level* level_)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Init_Void(Alloc_Stepper_Primed_Result());
+    Init_Void(Alloc_Evaluator_Primed_Result());
     Level* sub = Make_Level(
         LEVEL->feed,
         ((LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255)))  // take out state 1
             | LEVEL_FLAG_BRANCH)
     );
     Push_Level(SPARE, sub);
-    sub->executor = &Stepper_Executor;
+    sub->executor = &Evaluator_Executor;
 
     STATE = ST_GROUP_BRANCH_RUNNING_GROUP;
     return CATCH_CONTINUE_SUBLEVEL(sub);
@@ -725,7 +725,7 @@ DECLARE_NATIVE(all)
 //
 // 2. The predicate-running condition gets pushed over the "keepalive" stepper,
 //    but we don't want the stepper to take a step before coming back to us.
-//    Temporarily patch out the Evaluator_Executor() so we get control back
+//    Temporarily patch out the Stepper_Executor() so we get control back
 //    without that intermediate step.
 //
 // 3. The only way a falsey evaluation should make it to the end is if a
@@ -808,7 +808,7 @@ DECLARE_NATIVE(all)
 
     Isotopify_If_Falsey(SPARE);  // predicates can approve "falseys" [3]
 
-    SUBLEVEL->executor = &Evaluator_Executor;  // done tunneling [2]
+    SUBLEVEL->executor = &Stepper_Executor;  // done tunneling [2]
     STATE = ST_ALL_EVAL_STEP;
 
     condition = scratch;
@@ -941,7 +941,7 @@ DECLARE_NATIVE(any)
 
     Isotopify_If_Falsey(OUT);  // predicates can approve "falseys" [3]
 
-    SUBLEVEL->executor = &Evaluator_Executor;  // done tunneling [2]
+    SUBLEVEL->executor = &Stepper_Executor;  // done tunneling [2]
     STATE = ST_ANY_EVAL_STEP;
 
     condition = stable_SPARE;
@@ -1083,7 +1083,7 @@ DECLARE_NATIVE(case)
         goto reached_end;
 
     STATE = ST_CASE_CONDITION_EVAL_STEP;
-    SUBLEVEL->executor = &Evaluator_Executor;
+    SUBLEVEL->executor = &Stepper_Executor;
     Restart_Evaluator_Level(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);  // one step to pass predicate [1]
 
@@ -1125,13 +1125,13 @@ DECLARE_NATIVE(case)
             // GET-GROUP! run even on no-match (see IF), but result discarded
         }
 
-        Init_Void(Alloc_Stepper_Primed_Result());
+        Init_Void(Alloc_Evaluator_Primed_Result());
         Level* sub = Make_Level_At_Core(
             branch,  // turning into feed drops cell type, :(...) not special
             Level_Specifier(SUBLEVEL),
             LEVEL_MASK_NONE
         );
-        sub->executor = &Stepper_Executor;
+        sub->executor = &Evaluator_Executor;
 
         STATE = ST_CASE_DISCARDING_GET_GROUP;
         SUBLEVEL->executor = &Just_Use_Out_Executor;
@@ -1295,7 +1295,7 @@ DECLARE_NATIVE(switch)
     }
 
     STATE = ST_SWITCH_EVALUATING_RIGHT;
-    SUBLEVEL->executor = &Evaluator_Executor;
+    SUBLEVEL->executor = &Stepper_Executor;
     Restart_Evaluator_Level(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);  // no direct predicate call [1]
 

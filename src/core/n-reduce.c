@@ -99,7 +99,7 @@ DECLARE_NATIVE(reduce)
         return COPY(v);  // save time if it's something like a TEXT!
 
     Level* sub = Make_End_Level(
-        FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
+        FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
     );
     Push_Level(OUT, sub);
 
@@ -129,7 +129,7 @@ DECLARE_NATIVE(reduce)
     else
         Clear_Cell_Flag(v, NEWLINE_BEFORE);
 
-    SUBLEVEL->executor = &Evaluator_Executor;
+    SUBLEVEL->executor = &Stepper_Executor;
     STATE = ST_REDUCE_EVAL_STEP;
     Restart_Evaluator_Level(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
@@ -299,7 +299,7 @@ DECLARE_NATIVE(reduce_each)
     if (Is_Feed_At_End(SUBLEVEL->feed))
         goto finished;
 
-    SUBLEVEL->executor = &Evaluator_Executor;  // restore from pass through
+    SUBLEVEL->executor = &Stepper_Executor;  // restore from pass through
 
     STATE = ST_REDUCE_EACH_REDUCING_STEP;
     Restart_Evaluator_Level(SUBLEVEL);
@@ -648,12 +648,12 @@ Bounce Composer_Executor(Level* const L)
     if (label)
         Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
 
-    Init_Void(Alloc_Stepper_Primed_Result());
+    Init_Void(Alloc_Evaluator_Primed_Result());
     Level* sublevel = Make_Level(
         subfeed,  // used subfeed so we could skip the label if there was one
         LEVEL_MASK_NONE
     );
-    sublevel->executor = &Stepper_Executor;
+    sublevel->executor = &Evaluator_Executor;
 
     Push_Level(OUT, sublevel);
 

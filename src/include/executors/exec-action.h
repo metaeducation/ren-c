@@ -137,7 +137,7 @@ STATIC_ASSERT(
 // as normal.  There's no good place to hold the memory that one is doing an
 // enfix fulfillment besides a bit on the frame itself.
 //
-// It is also used to indicate to a ST_EVALUATOR_REEVALUATING frame whether
+// It is also used to indicate to a ST_STEPPER_REEVALUATING frame whether
 // to run an ACTION! cell as enfix or not.  The reason this may be overridden
 // on what's in the action can be seen in the DECLARE_NATIVE(shove) code.
 //

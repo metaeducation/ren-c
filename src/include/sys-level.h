@@ -71,10 +71,10 @@ INLINE bool ANY_ESCAPABLE_GET(const Atom* v) {
     INLINE Level* ensure_executor(Executor *executor, Level* L) {
         if (L->executor != executor) {
             if (
-                executor == &Evaluator_Executor
-                and L->executor == &Stepper_Executor
+                executor == &Stepper_Executor
+                and L->executor == &Evaluator_Executor
             ){
-                // See Stepper_Executor(), this is allowed
+                // See Evaluator_Executor(), this is allowed
             }
             else
                 assert(!"Wrong executor for flag tested");
@@ -438,7 +438,7 @@ INLINE Level* Prep_Level_Core(
     Corrupt_Pointer_If_Debug(L->out);
 
     L->varlist = nullptr;
-    L->executor = &Evaluator_Executor;  // compatible default (for now)
+    L->executor = &Stepper_Executor;  // compatible default (for now)
 
     Corrupt_Pointer_If_Debug(L->alloc_value_list);
 
@@ -518,8 +518,7 @@ INLINE Level* Prep_Level_Core(
 //
 // ARG() gives a mutable pointer to the argument's cell.  REF() is typically
 // used with refinements, and gives a const reference where NULLED cells are
-// turned into C nullptr.  This can be helpful for any argument that is
-// optional, as the libRebol API does not accept NULLED cells directly.
+// turned into C nullptr.
 //
 // By contract, Rebol functions are allowed to mutate their arguments and
 // refinements just as if they were locals...guaranteeing only their return
