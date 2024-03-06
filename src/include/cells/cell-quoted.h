@@ -64,6 +64,12 @@ INLINE Count Cell_Num_Quotes(const Cell* v) {
     return (QUOTE_BYTE(v) - NOQUOTE_1) >> 1;
 }
 
+#define Is_Unquoted(v) \
+    (QUOTE_BYTE(Ensure_Readable(v)) == NOQUOTE_1)
+
+#define Is_Quoted(v) \
+    (QUOTE_BYTE(Ensure_Readable(v)) >= ONEQUOTE_3)  // '~a~ quoted, not quasi
+
 // Turns X into 'X, or '''[1 + 2] into '''''(1 + 2), etc.
 //
 INLINE Cell* Quotify_Core(Cell* v, Count depth) {
@@ -159,6 +165,8 @@ INLINE Count Dequotify(Cell* v) {
 // antiforms aren't just not allowed in blocks, they can't be in variables.
 //
 
+INLINE bool Is_Antiform(Need(const Value*) v)
+  { return QUOTE_BYTE(Ensure_Readable(v)) == ANTIFORM_0; }
 
 INLINE bool Is_Antiform_Unstable(Need(const Atom*) v) {
     // Assume Is_Antiform() checked Ensure_Readable()
@@ -197,7 +205,6 @@ INLINE bool Is_Stable(Need(const Atom*) v) {  // repeat for non-inlined speed
 
 #define Not_Stable(atom) (not Is_Stable(atom))
 
-
 #if !defined(NDEBUG)
     #define Assert_Cell_Stable(v) \
         assert(Is_Stable(cast(const Atom*, (v))));
@@ -206,11 +213,34 @@ INLINE bool Is_Stable(Need(const Atom*) v) {  // repeat for non-inlined speed
 #endif
 
 
+//=//// ENSURE THINGS ARE ELEMENTS ////////////////////////////////////////=//
+//
+// An array element can't be an antiform.
+
+INLINE Element* Ensure_Element(const_if_c Atom* cell) {
+    if (QUOTE_BYTE(cell) == ANTIFORM_0)
+        fail (Error_Bad_Antiform(cell));
+    return u_cast(Element*, cell);
+}
+
+#if CPLUSPLUS_11
+    INLINE const Element* Ensure_Element(const Atom* cell)
+      { return Ensure_Element(m_cast(Atom*, cell)); }
+
+  #if DEBUG_USE_CELL_SUBCLASSES
+    void Ensure_Element(const Element*) = delete;
+  #endif
+#endif
+
+
 //=//// QUASIFORM! ////////////////////////////////////////////////////////=//
 
 // * Quasiforms are truthy.  There's a reason for this, because it allows
 //   operations in the ^META domain to easily use functions like ALL and ANY
 //   on the meta values.  (See the FOR-BOTH example.)
+
+#define Is_Quasiform(v) \
+    (QUOTE_BYTE(Ensure_Readable(v)) == QUASIFORM_2)
 
 INLINE Value* Unquasify(Value* v) {
     assert(QUOTE_BYTE(v) == QUASIFORM_2);
@@ -263,6 +293,9 @@ INLINE Element* Concretize(Atom* v) {
 //
 //  https://forum.rebol.info/t/1833
 //
+
+#define Is_Metaform(v) \
+    (QUOTE_BYTE(Ensure_Readable(v)) >= QUASIFORM_2)  // quasi or quoted
 
 INLINE Element* Meta_Quotify(Cell* v) {
     if (QUOTE_BYTE(v) == ANTIFORM_0) {

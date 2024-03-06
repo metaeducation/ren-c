@@ -24,7 +24,7 @@
 // on 64-bit platforms).  Operation will be most efficient with those sizes,
 // and there are checks on boot to ensure that `sizeof(Cell)` is the
 // correct value for the platform.  But from a mechanical standpoint, the
-// system should be *able* to work even if the size is different.
+// system should be *able* to work even if the size is bigger.
 //
 // Of the four 32-or-64-bit slots that each value has, the first is used for
 // the value's "Header".  This includes the data type, such as REB_INTEGER,
@@ -645,11 +645,12 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
 
 //=//// CELL SUBCLASSES FOR QUARANTINING STABLE AND UNSTABLE ANTIFORMS /////=//
 //
-// Systemically, we want to stop antiforms and voids from being put into
-// the array elements of blocks, groups, paths, and tuples.  We also want to
-// keep unstable antiforms out of the values of variables.  To make it easier
-// to do this, the C++ build offers the ability to make `Element` and `Value`
-// subclasess, where an `Atom` can hold potentially any unstable isotope.
+// Systemically, we want to stop antiforms from being put into the array
+// elements of blocks, groups, paths, and tuples.  We also want to prevent
+// unstable antiforms from being the values of variables.  To make it easier
+// to do this, the C++ build offers the ability to make `Element` that
+// can't hold any antiforms, `Value` that can hold stable antiforms, and
+// `Atom` unstable isotopes.
 //
 // * Class Hierarchy: Atom as base, Value derived, Element derived
 //   (upside-down for compile-time error preferences--we want passing an
