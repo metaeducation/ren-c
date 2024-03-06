@@ -49,6 +49,8 @@ void Startup_Data_Stack(REBLEN size)
     DS_Array = Make_Array_Core(1, ARRAY_FLAG_NULLEDS_LEGAL);
     Init_Unreadable(ARR_HEAD(DS_Array));
 
+    DS_Movable_Tail = cast(Value*, ARR_TAIL(DS_Array));
+
     // The END marker will signal DS_PUSH that it has run out of space,
     // and it will perform the allocation at that time.
     //
@@ -299,7 +301,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     REBLEN len_new = len_old + amount;
     REBLEN n;
     for (n = len_old; n < len_new; ++n) {
-        Init_Unreadable(cell);
+        Poison_Cell(cell);
         ++cell;
     }
 
@@ -309,7 +311,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     TERM_ARRAY_LEN(DS_Array, len_new);
     assert(cell == ARR_TAIL(DS_Array));
 
-    Assert_Array(DS_Array);
+    DS_Movable_Tail = cell;
 }
 
 

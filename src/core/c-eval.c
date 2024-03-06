@@ -440,7 +440,6 @@ bool Eval_Core_Throws(Level* const L)
   #endif
 
     assert(TOP_INDEX >= L->stack_base); // REDUCE accrues, APPLY refines...
-    assert(not IS_TRASH_DEBUG(L->out)); // all invisibles preserves output
     assert(L->out != Level_Spare(L)); // overwritten by temporary calculations
 
     // Caching VAL_TYPE_RAW(L->value) in a local can make a slight performance

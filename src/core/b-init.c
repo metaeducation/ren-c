@@ -838,47 +838,47 @@ static void Init_Root_Vars(void)
     Erase_Cell(&PG_Nulled_Cell[0]);
     Erase_Cell(&PG_Nulled_Cell[1]);
     Init_Nulled(&PG_Nulled_Cell[0]);
-    TRASH_CELL_IF_DEBUG(&PG_Nulled_Cell[1]);
+    Poison_Cell(&PG_Nulled_Cell[1]);
 
     Erase_Cell(&PG_Blank_Value[0]);
     Erase_Cell(&PG_Blank_Value[1]);
     Init_Blank(&PG_Blank_Value[0]);
-    TRASH_CELL_IF_DEBUG(&PG_Blank_Value[1]);
+    Poison_Cell(&PG_Blank_Value[1]);
 
     Erase_Cell(&PG_Bar_Value[0]);
     Erase_Cell(&PG_Bar_Value[1]);
     Init_Bar(&PG_Bar_Value[0]);
-    TRASH_CELL_IF_DEBUG(&PG_Bar_Value[1]);
+    Poison_Cell(&PG_Bar_Value[1]);
 
     Erase_Cell(&PG_False_Value[0]);
     Erase_Cell(&PG_False_Value[1]);
     Init_False(&PG_False_Value[0]);
-    TRASH_CELL_IF_DEBUG(&PG_False_Value[1]);
+    Poison_Cell(&PG_False_Value[1]);
 
     Erase_Cell(&PG_True_Value[0]);
     Erase_Cell(&PG_True_Value[1]);
     Init_True(&PG_True_Value[0]);
-    TRASH_CELL_IF_DEBUG(&PG_True_Value[1]);
+    Poison_Cell(&PG_True_Value[1]);
 
     Erase_Cell(&PG_Trash_Value[0]);
     Erase_Cell(&PG_Trash_Value[1]);
     Init_Trash(&PG_Trash_Value[0]);
-    TRASH_CELL_IF_DEBUG(&PG_Trash_Value[1]);
+    Poison_Cell(&PG_Trash_Value[1]);
 
     Erase_Cell(&PG_R_Thrown[0]);
     Erase_Cell(&PG_R_Thrown[1]);
     RESET_CELL(&PG_R_Thrown[0], REB_R_THROWN);
-    TRASH_CELL_IF_DEBUG(&PG_R_Thrown[1]);
+    Poison_Cell(&PG_R_Thrown[1]);
 
     Erase_Cell(&PG_R_Invisible[0]);
     Erase_Cell(&PG_R_Invisible[1]);
     RESET_CELL(&PG_R_Invisible[0], REB_R_INVISIBLE);
-    TRASH_CELL_IF_DEBUG(&PG_R_Invisible[1]);
+    Poison_Cell(&PG_R_Invisible[1]);
 
     Erase_Cell(&PG_R_Immediate[0]);
     Erase_Cell(&PG_R_Immediate[1]);
     RESET_CELL(&PG_R_Immediate[0], REB_R_IMMEDIATE);
-    TRASH_CELL_IF_DEBUG(&PG_R_Immediate[1]);
+    Poison_Cell(&PG_R_Immediate[1]);
 
     Erase_Cell(&PG_R_Redo_Unchecked[0]);
     Erase_Cell(&PG_R_Redo_Unchecked[1]);
@@ -887,7 +887,7 @@ static void Init_Root_Vars(void)
         REB_R_REDO,
         VALUE_FLAG_FALSEY // understood by Eval_Core_Throws() as "unchecked"
     );
-    TRASH_CELL_IF_DEBUG(&PG_R_Redo_Unchecked[1]);
+    Poison_Cell(&PG_R_Redo_Unchecked[1]);
 
     Erase_Cell(&PG_R_Redo_Checked[0]);
     Erase_Cell(&PG_R_Redo_Checked[1]);
@@ -896,12 +896,12 @@ static void Init_Root_Vars(void)
         REB_R_REDO,
         0 // no VALUE_FLAG_FALSEY is taken by Eval_Core_Throws() as "checked"
     );
-    TRASH_CELL_IF_DEBUG(&PG_R_Redo_Checked[1]);
+    Poison_Cell(&PG_R_Redo_Checked[1]);
 
     Erase_Cell(&PG_R_Reference[0]);
     Erase_Cell(&PG_R_Reference[1]);
     RESET_CELL(&PG_R_Reference[0], REB_R_REFERENCE);
-    TRASH_CELL_IF_DEBUG(&PG_R_Reference[1]);
+    Poison_Cell(&PG_R_Reference[1]);
 
     Series* locker = nullptr;
 

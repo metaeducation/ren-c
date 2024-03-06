@@ -1220,6 +1220,7 @@ DECLARE_NATIVE(to_hex)
     else
         fail (Error_Invalid(arg));
 
+    Erase_Cell(OUT);
     if (nullptr == Scan_Issue(OUT, &buffer[0], len))
         fail (Error_Invalid(arg));
 

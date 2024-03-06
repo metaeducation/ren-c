@@ -555,7 +555,6 @@ Value* Alloc_Pairing(void) {
     Value* key = PAIRING_KEY(paired);
 
     Erase_Cell(paired);
-    TRASH_CELL_IF_DEBUG(paired);
 
     // Client will need to put *something* in the key slot (accessed with
     // PAIRING_KEY).  Whatever they end up writing should be acceptable
@@ -565,7 +564,6 @@ Value* Alloc_Pairing(void) {
     // Init_Pairing_Key_Owner is one option.
     //
     Erase_Cell(key);
-    TRASH_CELL_IF_DEBUG(key);
 
     return paired;
 }
@@ -1288,22 +1286,6 @@ void Assert_Pointer_Detection_Working(void)
 
     assert(Detect_Rebol_Pointer(EMPTY_ARRAY) == DETECTED_AS_SERIES);
     assert(Detect_Rebol_Pointer(BLANK_VALUE) == DETECTED_AS_CELL);
-
-    // The system does not really intentionally "free" any cells, but they
-    // can happen in bad memory locations.  Along with CELL_FLAG_PROTECED and
-    // the potential absence of NODE_FLAG_CELL or NODE_FLAG_NODE, they make
-    // four good ways that a random Copy_Cell() might fail in the debug
-    // build.  It could also become useful if one wanted a more "serious"
-    // form of trashing than TRASH_CELL_IF_DEBUG().
-    //
-  #ifdef DEBUG_TRASH_MEMORY
-    DECLARE_VALUE (freed_cell);
-    freed_cell->header.bits =
-        NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
-        | FLAG_KIND_BYTE(REB_T_TRASH)
-        | VALUE_FLAG_FALSEY; // speeds up VAL_TYPE_Debug() check
-    assert(Detect_Rebol_Pointer(freed_cell) == DETECTED_AS_FREED_CELL);
-  #endif
 
     DECLARE_VALUE (end_cell);
     SET_END(end_cell);

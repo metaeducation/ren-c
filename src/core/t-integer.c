@@ -272,6 +272,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
             fail (Error_Out_Of_Range_Raw(value));
         }
 
+        Erase_Cell(out);
         if (!Scan_Hex(out, bp, size, size))
             fail (Error_Bad_Make(REB_INTEGER, value));
 
@@ -305,6 +306,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
                 fail (Error_Overflow_Raw());
             }
         }
+        Erase_Cell(out);
         if (Scan_Integer(out, bp, size))
             goto check_sign;
 

@@ -526,7 +526,7 @@ INLINE void Fetch_Next_In_Level(
 
   #ifdef DEBUG_EXPIRED_LOOKBACK
     if (f->stress) {
-        TRASH_CELL_IF_DEBUG(f->stress);
+        Erase_Cell(f->stress);
         free(f->stress);
         f->stress = nullptr;
     }

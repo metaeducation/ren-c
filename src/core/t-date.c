@@ -439,6 +439,7 @@ REB_R MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
     if (IS_TEXT(arg)) {
         REBSIZ size;
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DATE);
+        Erase_Cell(out);
         if (nullptr == Scan_Date(out, bp, size))
             goto bad_make;
         return out;
@@ -588,7 +589,7 @@ void Pick_Or_Poke_Date(
 
     if (opt_poke == nullptr) {
         assert(opt_out != nullptr);
-        TRASH_CELL_IF_DEBUG(opt_out);
+        Erase_Cell(opt_out);
 
         switch (sym) {
         case SYM_YEAR:

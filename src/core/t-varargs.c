@@ -162,7 +162,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
     const Cell* vararg,
     enum Reb_Vararg_Op op
 ){
-    TRASH_CELL_IF_DEBUG(out);
+    Erase_Cell(out);
 
     const Cell* param = Param_For_Varargs_Maybe_Null(vararg);
     enum Reb_Param_Class pclass =

@@ -81,7 +81,7 @@ INLINE void Free_Value(Value* v)
     assert(Is_Api_Value(v));
 
     Array* a = Singular_From_Cell(v);
-    TRASH_CELL_IF_DEBUG(ARR_SINGLE(a));
+    Poison_Cell(ARR_SINGLE(a));
     GC_Kill_Series(a);
 }
 
@@ -114,7 +114,7 @@ INLINE Array* Alloc_Instruction(void) {
 
 INLINE void Free_Instruction(Array* instruction) {
     assert(WIDE_BYTE_OR_0(instruction) == 0);
-    TRASH_CELL_IF_DEBUG(ARR_SINGLE(instruction));
+    Poison_Cell(ARR_SINGLE(instruction));
     Free_Pooled(SER_POOL, instruction);
 }
 

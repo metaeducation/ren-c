@@ -77,7 +77,7 @@ REBI64 Join_Time(REB_TIMEF *tf, bool neg)
 //
 const Byte *Scan_Time(Value* out, const Byte *cp, REBLEN len)
 {
-    TRASH_CELL_IF_DEBUG(out);
+    assert(Is_Cell_Erased(out));
     cast(void, len); // !!! should len be paid attention to?
 
     bool neg;
@@ -237,6 +237,7 @@ REB_R MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
         REBSIZ size;
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TIME);
 
+        Erase_Cell(out);
         if (Scan_Time(out, bp, size) == nullptr)
             goto no_time;
 

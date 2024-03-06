@@ -213,7 +213,7 @@
             panic (v);
         }
         if (v->header.bits & NODE_FLAG_FREE) {
-            printf("VAL_TYPE() called on invalid cell--marked FREE\n");
+            printf("VAL_TYPE() called on invalid poison cell--marked FREE\n");
             panic (v);
         }
 
@@ -241,10 +241,6 @@
         //
         if (VAL_TYPE_RAW(v) == REB_0_END) {
             printf("VAL_TYPE() called on END marker\n");
-            panic (v);
-        }
-        if (VAL_TYPE_RAW(v) == REB_T_TRASH) {
-            printf("VAL_TYPE() called on trash cell\n");
             panic (v);
         }
 
@@ -495,6 +491,9 @@ INLINE Cell* Erase_Cell_Core(
         Erase_Cell_Core(c)
 #endif
 
+INLINE bool Is_Cell_Erased(const Cell *cell)
+  { return cell->header.bits == CELL_MASK_ERASE; }
+
 
 INLINE void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
     //
@@ -513,42 +512,38 @@ INLINE void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Trash is a cell (marked by NODE_FLAG_CELL) with NODE_FLAG_FREE set.  To
-// prevent it from being inspected while it's in an invalid state, VAL_TYPE
-// used on a trash cell will assert in the debug build.
+// Poison mask has NODE_FLAG_CELL but no NODE_FLAG_NODE, so Ensure_Readable()
+// will fail, and it is CELL_FLAG_PROTECTED so Ensure_Writable() will fail.
+// Nor can it be freshened with Freshen_Cell().  It has to be Erase_Cell()'d.
 //
-// The garbage collector is not tolerant of trash.
-//
+#define CELL_MASK_POISON \
+    (NODE_FLAG_CELL | CELL_FLAG_PROTECTED)
 
-#if defined(DEBUG_TRASH_MEMORY)
-    INLINE void Set_Trash_Debug(
-        Cell* v
+INLINE void Poison_Cell_Core(
+    Cell* v
 
-      #ifdef DEBUG_TRACK_CELLS
-      , const char *file
-      , int line
-      #endif
-    ){
-        ASSERT_CELL_WRITABLE_EVIL_MACRO(v, file, line);
+    #ifdef DEBUG_TRACK_CELLS
+    , const char *file
+    , int line
+    #endif
+){
+    v->header.bits = CELL_MASK_POISON;
 
-        v->header.bits &= CELL_MASK_PERSIST;
-        v->header.bits |= FLAG_KIND_BYTE(REB_T_TRASH)
-            | VALUE_FLAG_FALSEY; // speeds up VAL_TYPE_Debug() check
+    TRACK_CELL_IF_DEBUG(v, file, line);
+}
 
-        TRACK_CELL_IF_DEBUG(v, file, line);
-    }
-
-    #define TRASH_CELL_IF_DEBUG(v) \
-        Set_Trash_Debug((v), __FILE__, __LINE__)
-
-    INLINE bool IS_TRASH_DEBUG(const Cell* v) {
-        assert(v->header.bits & NODE_FLAG_CELL);
-        return VAL_TYPE_RAW(v) == REB_T_TRASH;
-    }
+#ifdef DEBUG_TRACK_CELLS
+    #define Poison_Cell(v) \
+        Poison_Cell_Core((v), __FILE__, __LINE__)
 #else
-    #define TRASH_CELL_IF_DEBUG(v) \
-        NOOP
+    #define Poison_Cell(v) \
+        Poison_Cell_Core(v)
 #endif
+
+INLINE bool Is_Cell_Poisoned(const Cell* v) {
+    assert(v->header.bits & NODE_FLAG_CELL);
+    return v->header.bits == CELL_MASK_POISON;
+}
 
 
 //=////////////////////////////////////////////////////////////////////////=//

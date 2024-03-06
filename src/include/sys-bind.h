@@ -524,7 +524,7 @@ INLINE Value* Sink_Var_May_Fail(
     Specifier* specifier
 ){
     Value* var = Get_Mutable_Var_May_Fail(any_word, specifier);
-    TRASH_CELL_IF_DEBUG(var);
+    Erase_Cell(var);
     return var;
 }
 

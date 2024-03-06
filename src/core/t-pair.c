@@ -64,6 +64,7 @@ REB_R MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
         REBSIZ size;
         Byte *bp = Analyze_String_For_Scan(&size, arg, VAL_LEN_AT(arg));
 
+        Erase_Cell(out);
         if (nullptr == Scan_Pair(out, bp, size))
             goto bad_make;
 

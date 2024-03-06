@@ -102,10 +102,15 @@ INLINE Value* Data_Stack_At(StackIndex i) {
 INLINE Value* PUSH() {
     ++DS_Index;
     ++DS_Movable_Top;
-    if (IS_END(DS_Movable_Top))
+
+    if (DS_Movable_Top == DS_Movable_Tail)
         Expand_Data_Stack_May_Fail(STACK_EXPAND_BASIS);
-    else
-        TRASH_CELL_IF_DEBUG(DS_Movable_Top);
+
+  #if !defined(NDEBUG)
+    assert(Is_Cell_Poisoned(DS_Movable_Top));
+  #endif
+
+    Erase_Cell(DS_Movable_Top);
     return DS_Movable_Top;
 }
 
@@ -126,7 +131,7 @@ INLINE Value* PUSH() {
         (DS_Movable_Top -= (DS_Index - (i)), DS_Index = (i))
 #else
     INLINE void DS_DROP_Core(void) {
-        Init_Unreadable(TOP);  // TRASH makes ASSERT_ARRAY fail
+        Poison_Cell(TOP);  // Note: makes ASSERT_ARRAY fail
         --DS_Index;
         --DS_Movable_Top;
     }

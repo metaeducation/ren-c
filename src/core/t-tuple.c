@@ -72,6 +72,7 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
     if (IS_TEXT(arg) or IS_URL(arg)) {
         REBSIZ size;
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TUPLE);
+        Erase_Cell(out);
         if (Scan_Tuple(out, bp, size) == nullptr)
             fail (Error_Invalid(arg));
         return out;

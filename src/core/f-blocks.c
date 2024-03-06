@@ -394,7 +394,7 @@ Cell* Alloc_Tail_Array(Array* a)
     Expand_Series_Tail(a, 1);
     TERM_ARRAY_LEN(a, Array_Len(a));
     Cell* last = ARR_LAST(a);
-    TRASH_CELL_IF_DEBUG(last); // !!! was an END marker, good enough?
+    Erase_Cell(last);
     return last;
 }
 

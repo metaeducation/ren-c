@@ -757,12 +757,6 @@ union Reb_Value_Payload {
     };
 
 
-#if defined(DEBUG_TRASH_MEMORY)
-    #define REB_T_TRASH \
-        REB_MAX_PLUS_TWO // used in debug build to help identify trash nodes
-#endif
-
-
 //=////////////////////////////////////////////////////////////////////////=//
 //
 //  RELATIVE AND SPECIFIC VALUES (difference enforced in C++ build only)

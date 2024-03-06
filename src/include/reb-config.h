@@ -327,7 +327,7 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
     #define DEBUG_COUNT_TICKS
     #define DEBUG_FRAME_LABELS
     #define DEBUG_UNREADABLE_BLANKS
-    #define DEBUG_TRASH_MEMORY
+    #define DEBUG_POISON_EXCESS_CAPACITY
     #define DEBUG_BALANCE_STATE
 
     // There is a mode where the track payload exists in all cells, making

@@ -177,6 +177,7 @@ REB_R MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
         REBSIZ size;
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DECIMAL);
 
+        Erase_Cell(out);
         if (nullptr == Scan_Decimal(out, bp, size, kind != REB_PERCENT))
             goto bad_make;
 

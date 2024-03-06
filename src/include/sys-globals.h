@@ -222,6 +222,7 @@ TVAR Array* TG_Reuse;
 TVAR Array* DS_Array;
 TVAR StackIndex DS_Index;
 TVAR Value* DS_Movable_Top;
+TVAR Value* DS_Movable_Tail;
 
 TVAR struct Reb_State *Saved_State; // Saved state for Catch (CPU state, etc.)
 

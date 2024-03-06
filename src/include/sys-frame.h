@@ -512,10 +512,8 @@ INLINE void Push_Action(
 
   #if !defined(NDEBUG)
     Cell* prep = ultimate - 1;
-    for (; prep > tail; --prep) {
-        prep->header.bits = FLAG_KIND_BYTE(REB_T_TRASH); // unreadable
-        TRACK_CELL_IF_DEBUG(prep, __FILE__, __LINE__);
-    }
+    for (; prep > tail; --prep)
+        Poison_Cell(prep);
   #endif
 
     L->arg = L->rootvar + 1;

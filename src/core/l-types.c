@@ -42,7 +42,7 @@
 //
 
 #define return_NULL \
-    do { Init_Unreadable(out); return nullptr; } while (1)
+    do { Erase_Cell(out); return nullptr; } while (1)
 
 
 //
@@ -351,7 +351,7 @@ const Byte *Scan_Hex(
     REBLEN minlen,
     REBLEN maxlen
 ) {
-    TRASH_CELL_IF_DEBUG(out);
+    assert(Is_Cell_Erased(out));
 
     if (maxlen > MAX_HEX_LEN)
         return_NULL;
@@ -519,7 +519,7 @@ const Byte *Scan_Decimal(
     REBLEN len,
     bool dec_only
 ) {
-    TRASH_CELL_IF_DEBUG(out);
+    assert(Is_Cell_Erased(out));
 
     Byte buf[MAX_NUM_LEN + 4];
     Byte *ep = buf;
@@ -612,7 +612,7 @@ const Byte *Scan_Integer(
     const Byte *cp,
     REBLEN len
 ) {
-    TRASH_CELL_IF_DEBUG(out);
+    assert(Is_Cell_Erased(out));
 
     // Super-fast conversion of zero and one (most common cases):
     if (len == 1) {
@@ -707,7 +707,7 @@ const Byte *Scan_Money(
     const Byte *cp,
     REBLEN len
 ) {
-    TRASH_CELL_IF_DEBUG(out);
+    assert(Is_Cell_Erased(out));
 
     const Byte *end;
 
@@ -736,7 +736,7 @@ const Byte *Scan_Date(
     const Byte *cp,
     REBLEN len
 ) {
-    TRASH_CELL_IF_DEBUG(out);
+    assert(Is_Cell_Erased(out));
 
     const Byte *end = cp + len;
 
@@ -984,7 +984,7 @@ const Byte *Scan_File(
     const Byte *cp,
     REBLEN len
 ) {
-    TRASH_CELL_IF_DEBUG(out);
+    assert(Is_Cell_Erased(out));
 
     if (*cp == '%') {
         cp++;
@@ -1027,7 +1027,7 @@ const Byte *Scan_Email(
     const Byte *cp,
     REBLEN len
 ) {
-    TRASH_CELL_IF_DEBUG(out);
+    assert(Is_Cell_Erased(out));
 
     String* s = Make_String(len);
     Ucs2(*) up = String_Head(s);
@@ -1112,7 +1112,7 @@ const Byte *Scan_Pair(
     const Byte *cp,
     REBLEN len
 ) {
-    TRASH_CELL_IF_DEBUG(out);
+    assert(Is_Cell_Erased(out));
 
     Byte buf[MAX_NUM_LEN + 4];
 
@@ -1166,7 +1166,7 @@ const Byte *Scan_Tuple(
     const Byte *cp,
     REBLEN len
 ) {
-    TRASH_CELL_IF_DEBUG(out);
+    assert(Is_Cell_Erased(out));
 
     if (len == 0)
         return_NULL;
@@ -1218,7 +1218,7 @@ const Byte *Scan_Binary(
     const Byte *cp,
     REBLEN len
 ) {
-    TRASH_CELL_IF_DEBUG(out);
+    assert(Is_Cell_Erased(out));
 
     REBINT base = 16;
 
@@ -1259,7 +1259,7 @@ const Byte *Scan_Any(
     REBLEN num_bytes,
     enum Reb_Kind type
 ) {
-    TRASH_CELL_IF_DEBUG(out);
+    assert(Is_Cell_Erased(out));
 
     // The range for a curly braced string may span multiple lines, and some
     // files may have CR and LF in the data:

@@ -88,10 +88,12 @@ REB_R MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_WORD);
 
         if (kind == REB_ISSUE) {
+            Erase_Cell(out);
             if (nullptr == Scan_Issue(out, bp, size))
                 fail (Error_Bad_Char_Raw(arg));
         }
         else {
+            Erase_Cell(out);
             if (nullptr == Scan_Any_Word(out, kind, bp, size))
                 fail (Error_Bad_Char_Raw(arg));
         }
@@ -100,6 +102,7 @@ REB_R MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
     else if (IS_CHAR(arg)) {
         Byte buf[8];
         REBLEN len = Encode_UTF8_Char(&buf[0], VAL_CHAR(arg));
+        Erase_Cell(out);
         if (nullptr == Scan_Any_Word(out, kind, &buf[0], len))
             fail (Error_Bad_Char_Raw(arg));
         return out;
