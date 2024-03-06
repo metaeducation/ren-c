@@ -26,23 +26,23 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// This contains the struct definition for the "REBSER" struct Reb_Series.
-// It is a small-ish descriptor for a series (though if the amount of data
-// in the series is small enough, it is embedded into the structure itself.)
+// This contains the struct definition for the StubStruct.  It is a small-ish
+// descriptor for a series (though if the amount of data in the series is
+// small enough, it is embedded into the structure itself.)
 //
-// Every string, block, path, etc. in Rebol has a REBSER.  The implementation
+// Every string, block, path, etc. in Rebol has a Series.  The implementation
 // of them is reused in many places where Rebol needs a general-purpose
 // dynamically growing structure.  It is also used for fixed size structures
 // which would like to participate in garbage collection.
 //
-// The REBSER is fixed-size, and is allocated as a "node" from a memory pool.
-// That pool quickly grants and releases memory ranges that are sizeof(REBSER)
+// The Stub is fixed-size, and is allocated as a "node" from a memory pool.
+// That pool quickly grants and releases memory ranges that are sizeof(Stub)
 // without needing to use malloc() and free() for each individual allocation.
 // These nodes can also be enumerated in the pool without needing the series
 // to be tracked via a linked list or other structure.  The garbage collector
 // is one example of code that performs such an enumeration.
 //
-// A REBSER node pointer will remain valid as long as outstanding references
+// A Stub node pointer will remain valid as long as outstanding references
 // to the series exist in values visible to the GC.  On the other hand, the
 // series's data pointer may be freed and reallocated to respond to the needs
 // of resizing.  (In the future, it may be reallocated just as an idle task
@@ -58,7 +58,7 @@
 //   `struct Reb_Value` must be fully defined before this file can compile.
 //   Hence %sys-rebval.h must already be included.
 //
-// * For the API of operations available on REBSER types, see %sys-series.h
+// * For the API of operations available on Series types, see %sys-series.h
 //
 // * Array is a series that contains Rebol Cells or Values.  It has many
 //   concerns specific to special treatment and handling, in interaction with
@@ -67,7 +67,7 @@
 // * Several related types (REBACT for function, REBCTX for context) are
 //   actually stylized arrays.  They are laid out with special values in their
 //   content (e.g. at the [0] index), or by links to other series in their
-//   `->misc` field of the REBSER node.  Hence series are the basic building
+//   `->misc` field of the Stub node.  Hence series are the basic building
 //   blocks of nearly all variable-size structures in the system.
 //
 
@@ -96,7 +96,7 @@
 
 
 // Detect_Rebol_Pointer() uses the fact that this bit is 0 for series headers
-// to discern between REBSER, Cell, and END.  If push comes to shove that
+// to discern between Stub, Cell, and END.  If push comes to shove that
 // could be done differently, and this bit retaken.
 //
 #define SERIES_FLAG_8_IS_TRUE FLAG_LEFT_BIT(8) // CELL_FLAG_NOT_END
@@ -176,7 +176,7 @@
 //=//// SERIES_FLAG_ALWAYS_DYNAMIC ////////////////////////////////////////=//
 //
 // The optimization which uses small series will fit the data into the series
-// node if it is small enough.  But doing this requires a test on SER_LEN()
+// node if it is small enough.  But doing this requires a test on Series_Len()
 // and SER_DATA_RAW() to see if the small optimization is in effect.  Some
 // code is more interested in the performance gained by being able to assume
 // where to look for the data pointer and the length (e.g. paramlists and
@@ -207,14 +207,14 @@
 // Because there are a lot of different array flags that one might want to
 // check, they are broken into a separate section.  However, note that if you
 // do not know a series is an array you can't check just for this...e.g.
-// an arbitrary REBSER tested for ARRAY_FLAG_VARLIST might alias with a
+// an arbitrary Series tested for ARRAY_FLAG_VARLIST might alias with a
 // UTF-8 symbol string whose symbol number uses that bit (!).
 //
 
 
 //=//// ARRAY_FLAG_FILE_LINE //////////////////////////////////////////////=//
 //
-// The Reb_Series node has two pointers in it, ->link and ->misc, which are
+// The Stub node has two pointers in it, ->link and ->misc, which are
 // used for a variety of purposes (pointing to the keylist for an object,
 // the C code that runs as the dispatcher for a function, etc.)  But for
 // regular source series, they can be used to store the filename and line
@@ -339,7 +339,7 @@
 // Flip_Series_White(), etc.  These let native routines engage in marking
 // and unmarking nodes without potentially wrecking the garbage collector by
 // reusing NODE_FLAG_MARKED.  Purposes could be for recursion protection or
-// other features, to avoid having to make a map from REBSER to bool.
+// other features, to avoid having to make a map from Series to bool.
 //
 // Note: Same bit as NODE_FLAG_MARKED, interesting but irrelevant.
 //
@@ -398,7 +398,7 @@
 #define SERIES_INFO_7_IS_FALSE FLAG_LEFT_BIT(7) // NOT(NODE_FLAG_CELL)
 
 
-//=//// BITS 8-15 ARE FOR SER_WIDE() //////////////////////////////////////=//
+//=//// BITS 8-15 ARE FOR Series_Wide() //////////////////////////////////////=//
 
 // The "width" is the size of the individual elements in the series.  For an
 // ANY-ARRAY this is always 0, to indicate IS_END() for arrays of length 0-1
@@ -412,16 +412,16 @@
     SECOND_BYTE((s)->info.bits)
 
 
-//=//// BITS 16-23 ARE SER_LEN() FOR NON-DYNAMIC SERIES ///////////////////=//
+//=//// BITS 16-23 ARE Series_Len() FOR NON-DYNAMIC SERIES ///////////////////=//
 
 // There is currently no usage of this byte for dynamic series, so it could
 // be used for something else there.  (Or a special value like 255 could be
-// used to indicate dynamic/non-dynamic series, which might speed up SER_LEN()
+// used to indicate dynamic/non-dynamic series, which might speed up Series_Len()
 // and other bit fiddling operations vs. SERIES_INFO_HAS_DYNAMIC).
 //
 // 255 indicates that this series has a dynamically allocated portion.  If it
 // is another value, then it's the length of content which is found directly
-// in the series node's embedded Reb_Series_Content.
+// in the series node's embedded StubContentUnion.
 //
 // (See also: SERIES_FLAG_ALWAYS_DYNAMIC to prevent creating embedded data.)
 //
@@ -494,7 +494,7 @@
 // GC'd and then delegate the job of being canon to another symbol.
 //
 // A canon symbol is unique because it does not need to store a pointer to
-// its canon form.  So it can use the REBSER.misc field for the purpose of
+// its canon form.  So it can use the Stub.misc field for the purpose of
 // holding an index during binding.
 //
 #define STRING_INFO_CANON \
@@ -565,18 +565,18 @@
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// SERIES NODE ("REBSER") STRUCTURE DEFINITION
+// SERIES NODE ("Stub") STRUCTURE DEFINITION
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A REBSER node is the size of two REBVALs, and there are 3 basic layouts
+// A Stub node is the size of two cells, and there are 3 basic layouts
 // which can be overlaid inside the node:
 //
 //      Dynamic: [header [allocation tracking] info link misc]
 //     Singular: [header [cell] info link misc]
 //      Pairing: [[cell] [cell]]
 //
-// `info` is not the start of a "Rebol Node" (REBNODE, e.g. either a REBSER or
+// `info` is not the start of a "Rebol Node" (REBNODE, e.g. either a Stub or
 // a value Cell).  But in the singular case it is positioned right where
 // the next cell after the embedded cell *would* be.  Hence the second byte
 // in the info corresponding to VAL_TYPE() is 0, making it conform to the
@@ -589,7 +589,7 @@
 // between COMPOSE [A (B) C] vs. REDUCE ['A B 'C] such that the memory cost
 // of the array is nearly the same as just having another value in the array.
 //
-// Pair REBSERs are allocated from the REBSER pool instead of their own to
+// Pair nodes are allocated from the Stub pool instead of their own to
 // help exchange a common "currency" of allocation size more efficiently.
 // They are planned for use in the PAIR! and MAP! datatypes, and anticipated
 // to play a crucial part in the API--allowing a persistent handle for a
@@ -602,7 +602,7 @@
 // and sweeping.
 //
 
-struct Reb_Series_Dynamic {
+struct StubDynamicStruct {
     //
     // `data` is the "head" of the series data.  It may not point directly at
     // the memory location that was returned from the allocator if it has
@@ -632,13 +632,13 @@ struct Reb_Series_Dynamic {
 };
 
 
-union Reb_Series_Content {
+union StubContentUnion {
     //
-    // If the series does not fit into the REBSER node, then it must be
+    // If the series does not fit into the Stub node, then it must be
     // dynamically allocated.  This is the tracking structure for that
     // dynamic data allocation.
     //
-    struct Reb_Series_Dynamic dynamic;
+    struct StubDynamicStruct dynamic;
 
     // If LEN_BYTE_OR_255() != 255, 0 or 1 length arrays can be held in
     // the series node.  This trick is accomplished via "implicit termination"
@@ -647,11 +647,11 @@ union Reb_Series_Content {
     //
     union {
         // Due to strict aliasing requirements, this has to be a Cell to
-        // read cell data.  Unfortunately this means Reb_Series_Content can't
+        // read cell data.  Unfortunately this means StubContentUnion can't
         // be copied by simple assignment, because in the C++ build it is
         // disallowed to say (`*value1 = *value2;`).  Use memcpy().
         //
-        Cell values[1];
+        Cell cell;
 
       #if !defined(NDEBUG) // https://en.wikipedia.org/wiki/Type_punning
         char utf8_pun[sizeof(Cell)]; // debug watchlist insight into UTF-8
@@ -661,10 +661,10 @@ union Reb_Series_Content {
 };
 
 #define SER_CELL(s) \
-    (&(s)->content.fixed.values[0]) // unchecked ARR_SINGLE(), used for init
+    (&(s)->content.fixed.cell) // unchecked ARR_SINGLE(), used for init
 
 
-union Reb_Series_Link {
+union StubLinkUnion {
     //
     // If you assign one member in a union and read from another, then that's
     // technically undefined behavior.  But this field is used as the one
@@ -694,7 +694,7 @@ union Reb_Series_Link {
     String* file;
 
     // REBCTX types use this field of their varlist (which is the identity of
-    // an ANY-CONTEXT!) to find their "keylist".  It is stored in the REBSER
+    // an ANY-CONTEXT!) to find their "keylist".  It is stored in the Stub
     // node of the varlist Array vs. in the cell of the ANY-CONTEXT! so
     // that the keylist can be changed without needing to update all the
     // REBVALs for that object.
@@ -751,7 +751,7 @@ union Reb_Series_Link {
 
     // The MAP! datatype uses this.
     //
-    REBSER *hashlist;
+    Series* hashlist;
 
     // The Level's `varlist` field holds a ready-made varlist for a level,
     // which may be reused.  However, when a stack frame is dropped it can
@@ -766,7 +766,7 @@ union Reb_Series_Link {
 // in the series node, and hence visible to all REBVALs that might be
 // referring to the series.
 //
-union Reb_Series_Misc {
+union StubMiscUnion {
     //
     // Used to preload bad data in the debug build; see notes on link.trash
     //
@@ -782,7 +782,7 @@ union Reb_Series_Misc {
 
     // Under UTF-8 everywhere, strings are byte-sized...so the series "size"
     // is actually counting *bytes*, not logical character codepoint units.
-    // SER_SIZE() and SER_LEN() can therefore be different...where SER_LEN()
+    // SER_SIZE() and Series_Len() can therefore be different...where Series_Len()
     // on a string series comes from here, vs. just report the size.
     //
     REBSIZ length;
@@ -790,11 +790,11 @@ union Reb_Series_Misc {
     // When binding words into a context, it's necessary to keep a table
     // mapping those words to indices in the context's keylist.  R3-Alpha
     // had a global "binding table" for the symbols of words, where
-    // those symbols were not garbage collected.  Ren-C uses REBSERs
+    // those symbols were not garbage collected.  Ren-C uses Series
     // to store word symbols, and then has a hash table indexing them.
     //
     // So the "binding table" is chosen to be indices reachable from the
-    // REBSER nodes of the words themselves.  If it were necessary for
+    // Stub nodes of the words themselves.  If it were necessary for
     // multiple clients to have bindings at the same time, this could be
     // done through a pointer that would "pop out" into some kind of
     // linked list.  For now, the binding API just demonstrates having
@@ -846,29 +846,23 @@ union Reb_Series_Misc {
 };
 
 
-struct Reb_Series {
+struct StubStruct {
     //
-    // The low 2 bits in the header must be 00 if this is an "ordinary" REBSER
-    // node.  This allows such nodes to implicitly terminate a "pairing"
-    // REBSER node, that is being used as storage for exactly 2 REBVALs.
-    // As long as there aren't two of those REBSERs sequentially in the pool,
-    // an unused node or a used ordinary one can terminate it.
-    //
-    // The other bit that is checked in the header is the USED bit, which is
+    // The bit that is checked in the header is the USED bit, which is
     // bit #9.  This is set on all REBVALs and also in END marking headers,
     // and should be set in used series nodes.
     //
     // The remaining bits are free, and used to hold SYM values for those
     // words that have them.
     //
-    union Reb_Header header;
+    union HeaderUnion header;
 
     // The `link` field is generally used for pointers to something that
     // when updated, all references to this series would want to be able
     // to see.  This cannot be done (easily) for properties that are held
     // in cells directly.
     //
-    // This field is in the second pointer-sized slot in the REBSER node to
+    // This field is in the second pointer-sized slot in the StubStruct to
     // push the `content` so it is 64-bit aligned on 32-bit platforms.  This
     // is because a cell may be the actual content, and a cell assumes
     // it is on a 64-bit boundary to start with...in order to position its
@@ -876,7 +870,7 @@ struct Reb_Series {
     //
     // Use the LINK() macro to acquire this field...don't access directly.
     //
-    union Reb_Series_Link link_private;
+    union StubLinkUnion link_private;
 
     // `content` is the sizeof(Cell) data for the series, which is thus
     // 4 platform pointers in size.  If the series is small enough, the header
@@ -884,7 +878,7 @@ struct Reb_Series {
     // bits.  If it's too large, it will instead be a pointer and tracking
     // information for another allocation.
     //
-    union Reb_Series_Content content;
+    union StubContentUnion content;
 
     // `info` is the information about the series which needs to be known
     // even if it is not using a dynamic allocation.
@@ -899,7 +893,7 @@ struct Reb_Series {
     // interesting added caching feature or otherwise that would use
     // it, while not making any feature specifically require a 64-bit CPU.
     //
-    union Reb_Header info;
+    union HeaderUnion info;
 
     // This is the second pointer-sized piece of series data that is used
     // for various purposes.  It is similar to ->link, however at some points
@@ -911,11 +905,11 @@ struct Reb_Series {
     // Currently it is assumed no one needs the ->misc while forwarding is in
     // effect...but the MISC() macro checks that.  Don't access this directly.
     //
-    union Reb_Series_Misc misc_private;
+    union StubMiscUnion misc_private;
 
 #if defined(DEBUG_SERIES_ORIGINS) || defined(DEBUG_COUNT_TICKS)
-    intptr_t *guard; // intentionally alloc'd and freed for use by Panic_Series
-    uintptr_t tick; // also maintains sizeof(REBSER) % sizeof(REBI64) == 0
+    intptr_t *guard;  // alloc => immediate free, for use by Panic_Series()
+    uintptr_t tick;  // also maintains sizeof(Stub) % sizeof(REBI64) == 0
 #endif
 };
 
@@ -933,7 +927,7 @@ struct Reb_Series {
 // writing...which would likely be less efficient.
 //
 #if CPLUSPLUS_11
-    INLINE union Reb_Series_Misc& Get_Series_Misc(REBSER *s) {
+    INLINE union StubMiscUnion& Get_Series_Misc(Series* s) {
         return s->misc_private;
     }
 
@@ -945,13 +939,13 @@ struct Reb_Series {
 #endif
 
 struct Reb_Array {
-    struct Reb_Series series; // http://stackoverflow.com/a/9747062
+    struct StubStruct series; // http://stackoverflow.com/a/9747062
 };
 
 #if !defined(DEBUG_CHECK_CASTS) || (! CPLUSPLUS_11)
 
     #define SER(p) \
-        cast(REBSER*, (p))
+        cast(Series*, (p))
 
     #define ARR(p) \
         cast(Array*, (p))
@@ -959,8 +953,8 @@ struct Reb_Array {
 #else
 
     template <class T>
-    inline REBSER *SER(T *p) {
-        constexpr bool derived = std::is_same<T, REBSER>::value
+    inline Series* SER(T *p) {
+        constexpr bool derived = std::is_same<T, Series>::value
             or std::is_same<T, Symbol>::value
             or std::is_same<T, Array>::value
             or std::is_same<T, REBCTX>::value
@@ -971,7 +965,7 @@ struct Reb_Array {
 
         static_assert(
             derived or base,
-            "SER() works on void/REBNOD/REBSER/Symbol/Array/REBCTX/REBACT"
+            "SER() works on void/REBNOD/Series/Symbol/Array/REBCTX/REBACT"
         );
 
         if (base)
@@ -983,7 +977,7 @@ struct Reb_Array {
                 )
             );
 
-        return reinterpret_cast<REBSER*>(p);
+        return reinterpret_cast<Series*>(p);
     }
 
     template <class T>
@@ -992,17 +986,17 @@ struct Reb_Array {
 
         constexpr bool base = std::is_same<T, void>::value
             or std::is_same<T, REBNOD>::value
-            or std::is_same<T, REBSER>::value;
+            or std::is_same<T, Series>::value;
 
         static_assert(
             derived or base,
-            "ARR works on void/REBNOD/REBSER/Array"
+            "ARR works on void/REBNOD/Series/Array"
         );
 
         if (base) {
-            assert(WIDE_BYTE_OR_0(reinterpret_cast<REBSER*>(p)) == 0);
+            assert(WIDE_BYTE_OR_0(reinterpret_cast<Series*>(p)) == 0);
             assert(
-                (reinterpret_cast<REBSER*>(p)->header.bits & (
+                (reinterpret_cast<Series*>(p)->header.bits & (
                     NODE_FLAG_NODE
                         | NODE_FLAG_FREE
                         | NODE_FLAG_CELL
@@ -1069,7 +1063,7 @@ struct Reb_Array {
 
 #define MAX_SERIES_WIDE 0x100
 
-INLINE Byte SER_WIDE(REBSER* s) {
+INLINE Byte Series_Wide(Series* s) {
     //
     // Arrays use 0 width as a strategic choice, so that the second byte of
     // the ->info flags is 0.  See Endlike_Header() for why.
@@ -1087,45 +1081,45 @@ INLINE Byte SER_WIDE(REBSER* s) {
 // Bias is empty space in front of head:
 //
 
-INLINE REBLEN SER_BIAS(REBSER *s) {
+INLINE REBLEN Series_Bias(Series* s) {
     assert(IS_SER_DYNAMIC(s));
     return cast(REBLEN, ((s)->content.dynamic.bias >> 16) & 0xffff);
 }
 
-INLINE REBLEN SER_REST(REBSER *s) {
+INLINE REBLEN Series_Rest(Series* s) {
     if (LEN_BYTE_OR_255(s) == 255)
         return s->content.dynamic.rest;
 
     if (IS_SER_ARRAY(s))
         return 2; // includes info bits acting as trick "terminator"
 
-    assert(sizeof(s->content) % SER_WIDE(s) == 0);
-    return sizeof(s->content) / SER_WIDE(s);
+    assert(sizeof(s->content) % Series_Wide(s) == 0);
+    return sizeof(s->content) / Series_Wide(s);
 }
 
 #define MAX_SERIES_BIAS 0x1000
 
-INLINE void SER_SET_BIAS(REBSER *s, REBLEN bias) {
+INLINE void SER_SET_BIAS(Series* s, REBLEN bias) {
     assert(IS_SER_DYNAMIC(s));
     s->content.dynamic.bias =
         (s->content.dynamic.bias & 0xffff) | (bias << 16);
 }
 
-INLINE void SER_ADD_BIAS(REBSER *s, REBLEN b) {
+INLINE void SER_ADD_BIAS(Series* s, REBLEN b) {
     assert(IS_SER_DYNAMIC(s));
     s->content.dynamic.bias += b << 16;
 }
 
-INLINE void SER_SUB_BIAS(REBSER *s, REBLEN b) {
+INLINE void SER_SUB_BIAS(Series* s, REBLEN b) {
     assert(IS_SER_DYNAMIC(s));
     s->content.dynamic.bias -= b << 16;
 }
 
-INLINE size_t SER_TOTAL(REBSER *s) {
-    return (SER_REST(s) + SER_BIAS(s)) * SER_WIDE(s);
+INLINE size_t SER_TOTAL(Series* s) {
+    return (Series_Rest(s) + Series_Bias(s)) * Series_Wide(s);
 }
 
-INLINE size_t SER_TOTAL_IF_DYNAMIC(REBSER *s) {
+INLINE size_t SER_TOTAL_IF_DYNAMIC(Series* s) {
     if (not IS_SER_DYNAMIC(s))
         return 0;
     return SER_TOTAL(s);

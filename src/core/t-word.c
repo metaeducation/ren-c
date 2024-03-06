@@ -138,7 +138,7 @@ void MF_Word(REB_MOLD *mo, const Cell* v, bool form) {
     const char *head = Symbol_Head(symbol);  // UTF-8
     size_t size = Symbol_Size(symbol);  // number of UTF-8 bytes
 
-    REBSER *s = mo->series;
+    Series* s = mo->series;
 
     switch (VAL_TYPE(v)) {
     case REB_WORD: {
@@ -197,7 +197,7 @@ REB_R PD_Word(
             if (n < 0)
                 return nullptr;
 
-            REBSIZ size = SER_LEN(str);
+            REBSIZ size = Series_Len(str);
             const Byte *bp = cb_cast(Symbol_Head(str));
             REBUNI c;
             do {

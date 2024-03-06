@@ -95,7 +95,7 @@ void Protect_Value(Cell* v, REBFLGS flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Series(REBSER *s, REBLEN index, REBFLGS flags)
+void Protect_Series(Series* s, REBLEN index, REBFLGS flags)
 {
     if (Is_Series_Black(s))
         return; // avoid loop
@@ -404,7 +404,7 @@ DECLARE_NATIVE(locked_q)
 // moment, etc.  Just put a flag at the top level for now, since that is
 // "better than nothing", and revisit later in the design.
 //
-void Ensure_Value_Immutable(const Cell* v, REBSER *opt_locker) {
+void Ensure_Value_Immutable(const Cell* v, Series* opt_locker) {
     if (Is_Value_Immutable(v))
         return;
 
@@ -457,7 +457,7 @@ DECLARE_NATIVE(lock)
 // be made to have a version operating on read only data that reused a
 // subset of the data.  This would use a "slice"; letting one series refer
 // into another, with a different starting point.  That would complicate the
-// garbage collector because multiple REBSER would be referring into the same
+// garbage collector because multiple Stubs would be referring into the same
 // data.  So that's a possibility.
 {
     INCLUDE_PARAMS_OF_LOCK;
@@ -497,7 +497,7 @@ DECLARE_NATIVE(lock)
             fail (Error_Invalid_Type(VAL_TYPE(v))); // not yet implemented
     }
 
-    REBSER *locker = nullptr;
+    Series* locker = nullptr;
     Ensure_Value_Immutable(OUT, locker);
 
     return OUT;

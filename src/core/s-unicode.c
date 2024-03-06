@@ -970,8 +970,8 @@ Binary* Make_Utf8_From_String(String* string) {
     size_t size = Size_As_UTF8(data, String_Len(string));
     Binary* bin = Make_Binary(size);
     REBLEN len = 0;
-    SET_SERIES_LEN(bin, Encode_UTF8(Binary_Head(bin), size, data, &len));
-    assert(SER_LEN(bin) == size);
+    Set_Series_Len(bin, Encode_UTF8(Binary_Head(bin), size, data, &len));
+    assert(Series_Len(bin) == size);
     TERM_SEQUENCE(bin);
     return bin;
 }
@@ -990,9 +990,9 @@ Binary* Make_Utf8_From_Cell_String_At_Limit(
 
     const REBUNI *data = Cell_String_At(any_string);
     size_t size = Size_As_UTF8(data, len);
-    REBSER *bin = Make_Binary(size);
-    SET_SERIES_LEN(bin, Encode_UTF8(Binary_Head(bin), size, data, &len));
-    assert(SER_LEN(bin) == size);
+    Series* bin = Make_Binary(size);
+    Set_Series_Len(bin, Encode_UTF8(Binary_Head(bin), size, data, &len));
+    assert(Series_Len(bin) == size);
     TERM_SEQUENCE(bin);
     return bin;
 }

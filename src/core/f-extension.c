@@ -129,7 +129,7 @@ DECLARE_NATIVE(load_extension)
     //
     Array* details = Cell_Array(ARG(where));
 
-    assert(ARR_LEN(details) == IDX_COLLATOR_MAX);
+    assert(Array_Len(details) == IDX_COLLATOR_MAX);
     PUSH_GC_GUARD(details);
 
     // !!! In the initial design, extensions were distinct from modules, and

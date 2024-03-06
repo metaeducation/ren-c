@@ -634,7 +634,7 @@ Array* Make_Paramlist_Managed_May_Fail(
         }
 
         TERM_ARRAY_LEN(paramlist, num_slots);
-        MANAGE_ARRAY(paramlist);
+        Manage_Series(paramlist);
     }
 
     //=///////////////////////////////////////////////////////////////////=//
@@ -749,7 +749,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             if (definitional_return and src == definitional_return + 2)
                 continue;
 
-            if (SER_LEN(VAL_SERIES(src)) == 0)
+            if (Series_Len(VAL_SERIES(src)) == 0)
                 Init_Nulled(dest);
             else
                 Copy_Cell(dest, src);
@@ -762,7 +762,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             // the top-level META-OF, not the "incidentally" named RETURN
             // parameter in the list
             //
-            if (SER_LEN(VAL_SERIES(definitional_return + 2)) == 0)
+            if (Series_Len(VAL_SERIES(definitional_return + 2)) == 0)
                 Init_Nulled(CTX_VAR(meta, STD_ACTION_META_RETURN_NOTE));
             else {
                 Copy_Cell(
@@ -807,7 +807,7 @@ REBLEN Find_Param_Index(Array* paramlist, Symbol* symbol)
     Symbol* canon = Canon_Symbol(symbol);  // don't recalculate each time
 
     Cell* param = Array_At(paramlist, 1);
-    REBLEN len = ARR_LEN(paramlist);
+    REBLEN len = Array_Len(paramlist);
 
     REBLEN n;
     for (n = 1; n < len; ++n, ++param) {
@@ -966,7 +966,7 @@ REBACT *Make_Action(
         // specialization, see REB_TS_HIDDEN).
         //
         assert(GET_SER_FLAG(opt_exemplar, NODE_FLAG_MANAGED));
-        assert(CTX_LEN(opt_exemplar) == ARR_LEN(paramlist) - 1);
+        assert(CTX_LEN(opt_exemplar) == Array_Len(paramlist) - 1);
 
         LINK(details).specialty = CTX_VARLIST(opt_exemplar);
     }
@@ -1573,7 +1573,7 @@ REB_R Hijacker_Dispatcher(Level* L)
 REB_R Adapter_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
-    assert(ARR_LEN(details) == 2);
+    assert(Array_Len(details) == 2);
 
     Cell* prelude = Array_At(details, 0);
     Value* adaptee = KNOWN(Array_At(details, 1));
@@ -1612,7 +1612,7 @@ REB_R Adapter_Dispatcher(Level* L)
 REB_R Encloser_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
-    assert(ARR_LEN(details) == 2);
+    assert(Array_Len(details) == 2);
 
     Value* inner = KNOWN(Array_At(details, 0)); // same args as f
     assert(IS_ACTION(inner));

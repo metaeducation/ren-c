@@ -209,7 +209,7 @@ DECLARE_NATIVE(bind)
             Cell_Array(v),
             VAL_INDEX(v), // at
             VAL_SPECIFIER(v),
-            ARR_LEN(Cell_Array(v)), // tail
+            Array_Len(Cell_Array(v)), // tail
             0, // extra
             ARRAY_FLAG_FILE_LINE, // flags
             TS_ARRAY // types to copy deeply
@@ -303,7 +303,7 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
             return false;
 
         // Requesting the context of a word that is relatively bound may
-        // result in that word having a FRAME! incarnated as a REBSER node (if
+        // result in that word having a FRAME! incarnated as a Stub node (if
         // it was not already reified.)
         //
         // !!! In the future Reb_Context will refer to a REBNOD*, and only
@@ -931,10 +931,10 @@ DECLARE_NATIVE(free)
     if (ANY_CONTEXT(v) or IS_HANDLE(v))
         fail ("FREE only implemented for ANY-SERIES! at the moment");
 
-    REBSER *s = VAL_SERIES(v);
+    Series* s = VAL_SERIES(v);
     if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE))
         fail ("Cannot FREE already freed series");
-    FAIL_IF_READ_ONLY_SERIES(s);
+    Fail_If_Read_Only_Series(s);
 
     Decay_Series(s);
     return Init_Trash(OUT);  // !!! Should it return freed, not-useful value?
@@ -957,7 +957,7 @@ DECLARE_NATIVE(free_q)
 
     Value* v = ARG(value);
 
-    REBSER *s;
+    Series* s;
     if (ANY_CONTEXT(v))
         s = SER(v->payload.any_context.varlist); // VAL_CONTEXT fails if freed
     else if (IS_HANDLE(v))
@@ -1017,7 +1017,7 @@ DECLARE_NATIVE(as)
         //
         if (ANY_WORD(v)) {
             Symbol* symbol = Cell_Word_Symbol(v);
-            REBSER *string = Make_Sized_String_UTF8(
+            Series* string = Make_Sized_String_UTF8(
                 Symbol_Head(symbol),
                 Symbol_Size(symbol)
             );
@@ -1029,7 +1029,7 @@ DECLARE_NATIVE(as)
         // the UTF-8 bytes in a binary as a WCHAR string.
         //
         if (IS_BINARY(v)) {
-            REBSER *string = Make_Sized_String_UTF8(
+            Series* string = Make_Sized_String_UTF8(
                 cs_cast(Cell_Binary_At(v)),
                 VAL_LEN_AT(v)
             );

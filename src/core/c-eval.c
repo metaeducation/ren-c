@@ -65,7 +65,7 @@
     //
     // *Plus* you can get the initialization tick for nulled cells, BLANK!s,
     // LOGIC!s, and most end markers by looking at the `track` payload of
-    // the cell.  Series contain the `REBSER.tick` where they were created as
+    // the cell.  Series contain the `Stub.tick` where they were created as
     // well.  See also TOUCH_SERIES() and TOUCH_CELL().
     //
     //      *** DON'T COMMIT THIS v-- KEEP IT AT ZERO! ***
@@ -2081,8 +2081,6 @@ bool Eval_Core_Throws(Level* const L)
 //
 // We only set the type, in order to preserve the header bits... (there
 // currently aren't any for ANY-PATH!, but there might be someday.)
-//
-// !!! Aliases a REBSER under two value types, likely bad, see #2233
 //
 //==//////////////////////////////////////////////////////////////////////==//
 

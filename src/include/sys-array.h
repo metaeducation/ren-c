@@ -33,14 +33,14 @@
 //
 // In Ren-C, there is an implicit END marker just past the last cell in the
 // capacity.  Allowing a SET_END() on this position could corrupt the END
-// signaling slot, which only uses a bit out of a Reb_Header sized item to
+// signaling slot, which only uses a bit out of a HeaderUnion sized item to
 // signal.  Use TERM_ARRAY_LEN() to safely terminate arrays and respect not
 // writing if it's past capacity.
 //
-// While many operations are shared in common with REBSER, there is a
+// While many operations are shared in common with Series, there is a
 // (deliberate) type incompatibility introduced.  The type compatibility is
 // implemented in a way that works in C or C++ (though it should be reviewed
-// for strict aliasing compliance).  To get the underlying REBSER of an Array
+// for strict aliasing compliance).  To get the underlying Series of an Array
 // use the SER() operation.
 //
 // An ARRAY is the main place in the system where "relative" values come
@@ -60,16 +60,16 @@
 // valid for writing a full cell.
 
 INLINE Cell* Array_At(Array* a, REBLEN n)
-    { return SER_AT(Cell, cast(REBSER*, a), n); }
+    { return Series_At(Cell, cast(Series*, a), n); }
 
 INLINE Cell* ARR_HEAD(Array* a)
-    { return SER_HEAD(Cell, cast(REBSER*, a)); }
+    { return Series_Head(Cell, cast(Series*, a)); }
 
 INLINE Cell* ARR_TAIL(Array* a)
-    { return SER_TAIL(Cell, cast(REBSER*, a)); }
+    { return Series_Tail(Cell, cast(Series*, a)); }
 
 INLINE Cell* ARR_LAST(Array* a)
-    { return SER_LAST(Cell, cast(REBSER*, a)); }
+    { return Series_Last(Cell, cast(Series*, a)); }
 
 INLINE Cell* ARR_SINGLE(Array* a) {
     assert(not IS_SER_DYNAMIC(a)); // singular test avoided in release build
@@ -83,19 +83,19 @@ INLINE Array* Singular_From_Cell(const Cell* v) {
     Array* singular = ARR( // some checking in debug builds is done by ARR()
         cast(void*,
             cast(Byte*, m_cast(Cell*, v))
-            - offsetof(struct Reb_Series, content)
+            - offsetof(Stub, content)
         )
     );
     assert(not IS_SER_DYNAMIC(singular));
     return singular;
 }
 
-// As with an ordinary REBSER, an Array has separate management of its length
+// As with an ordinary Series, an Array has separate management of its length
 // and its terminator.  Many routines seek to choose the precise moment to
 // sync these independently for performance reasons (for better or worse).
 //
-#define ARR_LEN(a) \
-    SER_LEN(SER(a))
+#define Array_Len(a) \
+    Series_Len(SER(a))
 
 
 // Set length and also terminate.  This routine avoids conditionality in the
@@ -108,8 +108,8 @@ INLINE Array* Singular_From_Cell(const Cell* v) {
 // efficient if they didn't use any "appending" operators to get built.
 //
 INLINE void TERM_ARRAY_LEN(Array* a, REBLEN len) {
-    assert(len < SER_REST(SER(a)));
-    SET_SERIES_LEN(SER(a), len);
+    assert(len < Series_Rest(SER(a)));
+    Set_Series_Len(SER(a), len);
 
   #if !defined(NDEBUG)
     if (NOT_END(Array_At(a, len)))
@@ -119,32 +119,19 @@ INLINE void TERM_ARRAY_LEN(Array* a, REBLEN len) {
 }
 
 INLINE void SET_ARRAY_LEN_NOTERM(Array* a, REBLEN len) {
-    SET_SERIES_LEN(SER(a), len); // call out non-terminating usages
+    Set_Series_Len(SER(a), len); // call out non-terminating usages
 }
 
 INLINE void RESET_ARRAY(Array* a) {
     TERM_ARRAY_LEN(a, 0);
 }
 
-INLINE void TERM_SERIES(REBSER *s) {
+INLINE void TERM_SERIES(Series* s) {
     if (IS_SER_ARRAY(s))
-        TERM_ARRAY_LEN(ARR(s), SER_LEN(s));
+        TERM_ARRAY_LEN(ARR(s), Series_Len(s));
     else
-        memset(SER_AT_RAW(SER_WIDE(s), s, SER_LEN(s)), 0, SER_WIDE(s));
+        memset(Series_Data_At(Series_Wide(s), s, Series_Len(s)), 0, Series_Wide(s));
 }
-
-
-// Setting and getting array flags is common enough to want a macro for it
-// vs. having to extract the ARR_SERIES to do it each time.
-//
-#define IS_ARRAY_MANAGED(a) \
-    IS_SERIES_MANAGED(SER(a))
-
-#define MANAGE_ARRAY(a) \
-    MANAGE_SERIES(SER(a))
-
-#define ENSURE_ARRAY_MANAGED(a) \
-    ENSURE_SERIES_MANAGED(SER(a))
 
 
 //
@@ -170,7 +157,7 @@ INLINE void Deep_Freeze_Array(Array* a) {
     Is_Series_Read_Only(a)
 
 #define FAIL_IF_READ_ONLY_ARRAY(a) \
-    FAIL_IF_READ_ONLY_SERIES(SER(a))
+    Fail_If_Read_Only_Series(SER(a))
 
 
 //
@@ -248,12 +235,12 @@ INLINE void Prep_Array(
 
 
 // Make a series that is the right size to store REBVALs (and marked for the
-// garbage collector to look into recursively).  ARR_LEN() will be 0.
+// garbage collector to look into recursively).  Array_Len() will be 0.
 //
 INLINE Array* Make_Array_Core(REBLEN capacity, REBFLGS flags) {
     const REBLEN wide = sizeof(Cell);
 
-    REBSER *s = Alloc_Series_Node(flags);
+    Series* s = Alloc_Series_Node(flags);
 
     if (
         (flags & SERIES_FLAG_ALWAYS_DYNAMIC) // inlining will constant fold
@@ -295,7 +282,7 @@ INLINE Array* Make_Array_Core(REBLEN capacity, REBFLGS flags) {
         if (SER_FULL(GC_Manuals))
             Extend_Series(GC_Manuals, 8);
 
-        cast(REBSER**, GC_Manuals->content.dynamic.data)[
+        cast(Series**, GC_Manuals->content.dynamic.data)[
             GC_Manuals->content.dynamic.len++
         ] = s; // start out managed to not need to find/remove from this later
     }
@@ -319,7 +306,7 @@ INLINE Array* Make_Array_Core(REBLEN capacity, REBFLGS flags) {
     PG_Reb_Stats->Blocks++;
   #endif
 
-    assert(ARR_LEN(cast(Array*, s)) == 0);
+    assert(Array_Len(cast(Array*, s)) == 0);
     return cast(Array*, s);
 }
 
@@ -363,7 +350,7 @@ INLINE Array* Make_Arr_For_Copy(
 }
 
 
-// A singular array is specifically optimized to hold *one* value in a REBSER
+// A singular array is specifically optimized to hold *one* value in a Stub
 // node directly, and stay fixed at that size.
 //
 // Note ARR_SINGLE() must be overwritten by the caller...it contains an END
@@ -445,7 +432,7 @@ INLINE Array* Copy_Array_At_Extra_Deep_Flags_Managed(
         original,
         index, // at
         specifier,
-        ARR_LEN(original), // tail
+        Array_Len(original), // tail
         extra, // extra
         flags, // note no ARRAY_FLAG_FILE_LINE by default
         TS_SERIES & ~TS_NOT_COPIED // types
@@ -481,7 +468,7 @@ INLINE Array* Copy_Array_At_Extra_Deep_Flags_Managed(
 
 INLINE void INIT_VAL_ARRAY(Cell* v, Array* a) {
     INIT_BINDING(v, UNBOUND);
-    assert(IS_ARRAY_MANAGED(a));
+    assert(Is_Series_Managed(a));
     v->payload.any_series.series = SER(a);
 }
 
@@ -500,7 +487,7 @@ INLINE void INIT_VAL_ARRAY(Cell* v, Array* a) {
 //
 INLINE Array* Cell_Array(const Cell* v) {
     assert(ANY_ARRAY(v));
-    REBSER *s = v->payload.any_series.series;
+    Series* s = v->payload.any_series.series;
     if (s->info.bits & SERIES_INFO_INACCESSIBLE)
         fail (Error_Series_Data_Freed_Raw());
     return ARR(s);
@@ -602,9 +589,9 @@ INLINE bool Is_Doubled_Group(const Cell* group) {
         Assert_Array_Core(s)
 
     #define ASSERT_ARRAY_MANAGED(array) \
-        ASSERT_SERIES_MANAGED(SER(array))
+        Assert_Series_Managed(SER(array))
 
-    INLINE void ASSERT_SERIES(REBSER *s) {
+    INLINE void ASSERT_SERIES(Series* s) {
         if (IS_SER_ARRAY(s))
             Assert_Array_Core(ARR(s));
         else
@@ -612,5 +599,5 @@ INLINE bool Is_Doubled_Group(const Cell* group) {
     }
 
     #define IS_VALUE_IN_ARRAY_DEBUG(a,v) \
-        (ARR_LEN(a) != 0 and (v) >= ARR_HEAD(a) and (v) < ARR_TAIL(a))
+        (Array_Len(a) != 0 and (v) >= ARR_HEAD(a) and (v) < ARR_TAIL(a))
 #endif

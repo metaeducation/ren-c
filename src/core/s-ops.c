@@ -167,7 +167,7 @@ Binary* Temp_UTF8_At_Managed(
     Binary* bin = Make_Utf8_From_Cell_String_At_Limit(str, length_limit);
     assert(BYTE_SIZE(bin));
 
-    MANAGE_SERIES(bin);
+    Manage_Series(bin);
     SET_SER_INFO(bin, SERIES_INFO_FROZEN);
 
     *offset_out = 0;
@@ -182,7 +182,7 @@ Binary* Temp_UTF8_At_Managed(
 //
 // Only valid for BINARY data.
 //
-REBSER *Xandor_Binary(Value* verb, Value* value, Value* arg)
+Series* Xandor_Binary(Value* verb, Value* value, Value* arg)
 {
     Byte *p0 = Cell_Binary_At(value);
     Byte *p1 = Cell_Binary_At(arg);
@@ -203,12 +203,12 @@ REBSER *Xandor_Binary(Value* verb, Value* value, Value* arg)
 
     REBLEN t2 = MAX(t0, t1);
 
-    REBSER *series;
+    Series* series;
     if (IS_BITSET(value)) {
         //
         // Although bitsets and binaries share some implementation here,
         // they have distinct allocation functions...and bitsets need
-        // to set the REBSER.misc.negated union field (BITS_NOT) as
+        // to set the Stub.misc.negated union field (BITS_NOT) as
         // it would be illegal to read it if it were cleared via another
         // element of the union.
         //
@@ -268,12 +268,12 @@ REBSER *Xandor_Binary(Value* verb, Value* value, Value* arg)
 //
 // Only valid for BINARY data.
 //
-REBSER *Complement_Binary(Value* value)
+Series* Complement_Binary(Value* value)
 {
     const Byte *bp = Cell_Binary_At(value);
     REBLEN len = VAL_LEN_AT(value);
 
-    REBSER *bin = Make_Binary(len);
+    Series* bin = Make_Binary(len);
     TERM_SEQUENCE_LEN(bin, len);
 
     Byte *dp = Binary_Head(bin);
@@ -294,7 +294,7 @@ void Shuffle_String(Value* value, bool secure)
 {
     REBLEN n;
     REBLEN k;
-    REBSER *series = VAL_SERIES(value);
+    Series* series = VAL_SERIES(value);
     REBLEN idx     = VAL_INDEX(value);
     REBUNI swap;
 
@@ -313,17 +313,17 @@ void Shuffle_String(Value* value, bool secure)
 //
 // Used to trim off hanging spaces during FORM and MOLD.
 //
-void Trim_Tail(REBSER *src, Byte chr)
+void Trim_Tail(Series* src, Byte chr)
 {
     assert(BYTE_SIZE(src)); // mold buffer
 
     REBLEN tail;
-    for (tail = SER_LEN(src); tail > 0; tail--) {
+    for (tail = Series_Len(src); tail > 0; tail--) {
         REBUNI c = *Binary_At(src, tail - 1);
         if (c != chr)
             break;
     }
-    SET_SERIES_LEN(src, tail);
+    Set_Series_Len(src, tail);
     TERM_SEQUENCE(src);
 }
 
@@ -348,7 +348,7 @@ void Change_Case(Value* out, Value* val, Value* part, bool upper)
 
     // String series:
 
-    FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(val));
+    Fail_If_Read_Only_Series(VAL_SERIES(val));
 
     REBLEN len = Part_Len_May_Modify_Index(val, part);
     REBLEN n = 0;
@@ -400,7 +400,7 @@ Array* Split_Lines(const Value* str)
 {
     StackIndex base = TOP_INDEX;
 
-    REBSER *s = VAL_SERIES(str);
+    Series* s = VAL_SERIES(str);
     REBLEN len = VAL_LEN_AT(str);
     REBLEN i = VAL_INDEX(str);
 

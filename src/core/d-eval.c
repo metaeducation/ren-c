@@ -331,12 +331,12 @@ void Eval_Core_Exit_Checks_Debug(Level* L) {
     }
 
     if (NOT_END(L->value) and not LVL_IS_VALIST(L)) {
-        if (L->source->index > ARR_LEN(L->source->array)) {
+        if (L->source->index > Array_Len(L->source->array)) {
             assert(
                 (L->source->pending != nullptr and IS_END(L->source->pending))
                 or THROWN(L->out)
             );
-            assert(L->source->index == ARR_LEN(L->source->array) + 1);
+            assert(L->source->index == Array_Len(L->source->array) + 1);
         }
     }
 

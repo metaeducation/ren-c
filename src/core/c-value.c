@@ -99,7 +99,7 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
 
     if (containing) {
         printf("Containing pairing for value pointer found, panicking it:\n");
-        Panic_Series_Debug(cast(REBSER*, containing)); // won't pass SER()
+        Panic_Series_Debug(cast(Series*, containing)); // won't pass SER()
     }
 
     printf("No containing series for value...panicking to make stack dump:\n");
@@ -169,7 +169,7 @@ void* Probe_Core_Debug(
         break;
 
     case DETECTED_AS_SERIES: {
-        REBSER *s = m_cast(REBSER*, cast(const REBSER*, p));
+        Series* s = m_cast(Series*, cast(const Series*, p));
 
         ASSERT_SERIES(s); // if corrupt, gives better info than a print crash
 
@@ -177,7 +177,7 @@ void* Probe_Core_Debug(
         // types in terms of sizing, just to know what they are.
 
         if (GET_SER_FLAG(s, SERIES_FLAG_UTF8)) {
-            assert(SER_WIDE(s) == sizeof(Byte));
+            assert(Series_Wide(s) == sizeof(Byte));
             Probe_Print_Helper(p, "Symbol Series", file, line);
 
             const char *head = Symbol_Head(s);  // UTF-8
@@ -185,13 +185,13 @@ void* Probe_Core_Debug(
 
             Append_Utf8_Utf8(mo->series, head, size);
         }
-        else if (SER_WIDE(s) == sizeof(Byte)) {
+        else if (Series_Wide(s) == sizeof(Byte)) {
             Probe_Print_Helper(p, "Byte-Size Series", file, line);
 
             // !!! Duplication of code in MF_Binary
             //
             const bool brk = (Binary_Len(s) > 32);
-            REBSER *enbased = Encode_Base16(Binary_Head(s), Binary_Len(s), brk);
+            Series* enbased = Encode_Base16(Binary_Head(s), Binary_Len(s), brk);
             Append_Unencoded(mo->series, "#{");
             Append_Utf8_Utf8(
                 mo->series,
@@ -200,7 +200,7 @@ void* Probe_Core_Debug(
             Append_Unencoded(mo->series, "}");
             Free_Unmanaged_Series(enbased);
         }
-        else if (SER_WIDE(s) == sizeof(REBUNI)) {
+        else if (Series_Wide(s) == sizeof(REBUNI)) {
             Probe_Print_Helper(p, "REBWCHAR-Size Series", file, line);
             Mold_Text_Series_At(mo, s, 0); // not necessarily TEXT!
         }
@@ -244,7 +244,7 @@ void* Probe_Core_Debug(
         panic (p);
     }
 
-    if (mo->start != SER_LEN(mo->series))
+    if (mo->start != Series_Len(mo->series))
         printf("%s\n", s_cast(Binary_At(mo->series, mo->start)));
     fflush(stdout);
 

@@ -127,22 +127,22 @@ static void Assert_Basics(void)
         panic ("size of Cell is not sizeof(void*) * 4");
 
     #if defined(DEBUG_SERIES_ORIGINS) || defined(DEBUG_COUNT_TICKS)
-        assert(sizeof(REBSER) == sizeof(Cell) * 2 + sizeof(void*) * 2);
+        assert(sizeof(Stub) == sizeof(Cell) * 2 + sizeof(void*) * 2);
     #else
-        assert(sizeof(REBSER) == sizeof(Cell) * 2);
+        assert(sizeof(Stub) == sizeof(Cell) * 2);
     #endif
 
     assert(sizeof(REBEVT) == sizeof(Cell));
   #endif
 
-    // The REBSER is designed to place the `info` bits exactly after a cell
+    // StubStruct is designed to place the `info` bits exactly after a cell
     // so they can do double-duty as also a terminator for that cell when
     // enumerated as an ARRAY.  Put the offest into a variable to avoid the
     // constant-conditional-expression warning.
     //
-    size_t offsetof_REBSER_info = offsetof(REBSER, info);
+    size_t offsetof_stub_info = offsetof(Stub, info);
     if (
-        offsetof_REBSER_info - offsetof(REBSER, content) != sizeof(Cell)
+        offsetof_stub_info - offsetof(Stub, content) != sizeof(Cell)
     ){
         panic ("bad structure alignment for internal array termination");
     }
@@ -262,7 +262,7 @@ static void Startup_Sys(Array* boot_sys) {
 //
 static Array* Startup_Datatypes(Array* boot_types, Array* boot_typespecs)
 {
-    if (ARR_LEN(boot_types) != REB_MAX - 1)
+    if (Array_Len(boot_types) != REB_MAX - 1)
         panic (boot_types); // Every REB_XXX but REB_0 should have a WORD!
 
     Cell* word = ARR_HEAD(boot_types);
@@ -440,7 +440,7 @@ static Value* Make_Locked_Tag(const char *utf8) { // helper
     Value* t = rebText(utf8);
     RESET_VAL_HEADER(t, REB_TAG);
 
-    REBSER *locker = nullptr;
+    Series* locker = nullptr;
     Ensure_Value_Immutable(t, locker);
     return t;
 }
@@ -503,7 +503,7 @@ static void Init_Action_Meta_Shim(void) {
 
     Root_Action_Meta = Init_Object(Alloc_Value(), meta);
 
-    REBSER *locker = nullptr;
+    Series* locker = nullptr;
     Ensure_Value_Immutable(Root_Action_Meta, locker);
 
 }
@@ -903,7 +903,7 @@ static void Init_Root_Vars(void)
     RESET_CELL(&PG_R_Reference[0], REB_R_REFERENCE);
     TRASH_CELL_IF_DEBUG(&PG_R_Reference[1]);
 
-    REBSER *locker = nullptr;
+    Series* locker = nullptr;
 
     Root_Empty_Block = Init_Block(Alloc_Value(), PG_Empty_Array);
     Ensure_Value_Immutable(Root_Empty_Block, locker);
@@ -1433,7 +1433,7 @@ void Startup_Core(void)
     Array* datatypes_catalog = Startup_Datatypes(
         Cell_Array(&boot->types), Cell_Array(&boot->typespecs)
     );
-    MANAGE_ARRAY(datatypes_catalog);
+    Manage_Series(datatypes_catalog);
     PUSH_GC_GUARD(datatypes_catalog);
 
     // !!! REVIEW: Startup_Typesets() uses symbols, data stack, and
@@ -1454,13 +1454,13 @@ void Startup_Core(void)
     // by scanning comments in the C sources for `native: ...` declarations.
     //
     Array* natives_catalog = Startup_Natives(KNOWN(&boot->natives));
-    MANAGE_ARRAY(natives_catalog);
+    Manage_Series(natives_catalog);
     PUSH_GC_GUARD(natives_catalog);
 
     // boot->generics is the list in %generics.r
     //
     Array* generics_catalog = Startup_Generics(KNOWN(&boot->generics));
-    MANAGE_ARRAY(generics_catalog);
+    Manage_Series(generics_catalog);
     PUSH_GC_GUARD(generics_catalog);
 
     // boot->errors is the error definition list from %errors.r

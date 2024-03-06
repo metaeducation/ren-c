@@ -242,7 +242,7 @@ void Debug_Values(const Cell* value, REBLEN count, REBLEN limit)
             Mold_Value(mo, value);
             Throttle_Mold(mo); // not using Pop_Mold(), must do explicitly
 
-            for (i1 = i2 = mo->start; i1 < SER_LEN(mo->series); i1++) {
+            for (i1 = i2 = mo->start; i1 < Series_Len(mo->series); i1++) {
                 uc = GET_ANY_CHAR(mo->series, i1);
                 if (uc < ' ') uc = ' ';
                 if (uc > ' ' || pc > ' ')
@@ -295,7 +295,7 @@ void Debug_Buf_No_Newline(const char *fmt, va_list *vaptr)
     Form_Args_Core(mo, fmt, vaptr);
 
     Debug_String_No_Newline(
-        Binary_At(mo->series, mo->start), SER_LEN(mo->series) - mo->start
+        Binary_At(mo->series, mo->start), Series_Len(mo->series) - mo->start
     );
 
     Drop_Mold(mo);
@@ -451,7 +451,7 @@ Byte *Form_RGB_Utf8(Byte *utf8, const Byte *dp)
 // This is an internal routine used for debugging, which is something like
 // `printf` (it understands %d, %s, %c) but stripped down in features.
 // It also knows how to show Value* values FORMed (%v) or MOLDed (%r),
-// as well as REBSER* or Array* series molded (%m).
+// as well as Series* or Array* series molded (%m).
 //
 // Initially it was considered to be for low-level debug output only.  It
 // was strictly ASCII, and it only supported a fixed-size output destination
@@ -467,7 +467,7 @@ void Form_Args_Core(REB_MOLD *mo, const char *fmt, va_list *vaptr)
     REBINT pad;
     Byte desc;
     Byte padding;
-    REBSER *ser = mo->series;
+    Series* ser = mo->series;
     Byte buf[MAX_SCAN_DECIMAL];
 
     DECLARE_VALUE (value);

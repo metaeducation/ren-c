@@ -27,9 +27,9 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // In order to implement several "tricks", the first pointer-size slots of
-// many datatypes is a `Reb_Header` structure.  The bit layout of this header
+// many datatypes is a `HeaderUnion` structure.  The bit layout of this header
 // is chosen in such a way that not only can Rebol value pointers (Value*)
-// be distinguished from Rebol series pointers (REBSER*), but these can be
+// be distinguished from Rebol series pointers (Series*), but these can be
 // discerned from a valid UTF-8 string just by looking at the first byte.
 //
 // On a semi-superficial level, this permits a kind of dynamic polymorphism,
@@ -38,7 +38,7 @@
 //     Value* value = ...;
 //     panic (value); // can tell this is a value
 //
-//     REBSER *series = ...;
+//     Series* series = ...;
 //     panic (series) // can tell this is a series
 //
 //     const char *utf8 = ...;
@@ -153,7 +153,7 @@
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  NODE HEADER a.k.a `union Reb_Header` (for Cell and REBSER uses)
+//  NODE HEADER a.k.a `union HeaderUnion` (for Cell and Stub uses)
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -169,12 +169,12 @@
 //
 // https://en.wikipedia.org/wiki/UTF-8#Codepage_layout
 //
-// There are applications of Reb_Header as an "implicit terminator".  Such
+// There are applications of HeaderUnion as an "implicit terminator".  Such
 // header patterns don't actually start valid REBNODs, but have a bit pattern
 // able to signal the IS_END() test for Cell.  See Endlike_Header()
 //
 
-union Reb_Header {
+union HeaderUnion {
     //
     // unsigned integer that's the size of a platform pointer (e.g. 32-bits on
     // 32 bit platforms and 64-bits on 64 bit machines).  See macros like
@@ -210,13 +210,13 @@ union Reb_Header {
 
 //=//// NODE_FLAG_FREE (second-leftmost bit) //////////////////////////////=//
 //
-// The second-leftmost bit will be 0 for all Reb_Header in the system that
-// are "valid".  This completes the plan of making sure all Cell and REBSER
+// The second-leftmost bit will be 0 for all HeaderUnion in the system that
+// are "valid".  This completes the plan of making sure all Cell and Stub
 // that are usable will start with the bit pattern 10xxxxxx, which always
 // indicates an invalid leading byte in UTF-8.
 //
 // The exception are freed nodes, but they use 11000000 and 110000001 for
-// freed REBSER nodes and "freed" value nodes (trash).  These are the bytes
+// freed Stub nodes and "freed" value nodes (trash).  These are the bytes
 // 192 and 193, which are specifically illegal in any UTF8 sequence.  So
 // even these cases may be safely distinguished from strings.  See the
 // NODE_FLAG_CELL for why it is chosen to be that 8th bit.
@@ -232,7 +232,7 @@ union Reb_Header {
 // still manually managed...and during the GC's sweeping phase the simple fact
 // that it isn't NODE_FLAG_MARKED won't be enough to consider it for freeing.
 //
-// See MANAGE_SERIES for details on the lifecycle of a series (how it starts
+// See Manage_Series() for details on the lifecycle of a series (how it starts
 // out manually managed, and then must either become managed or be freed
 // before the evaluation that created it ends).
 //
@@ -297,7 +297,7 @@ union Reb_Header {
 //
 // Means the node should be treated as a root for GC purposes.  If the node
 // also has NODE_FLAG_CELL, that means the cell must live in a "pairing"
-// REBSER-sized structure for two cells.  This indicates it is an API handle.
+// Stub-sized structure for two cells.  This indicates it is an API handle.
 //
 // This flag is masked out by CELL_MASK_COPIED, so that when values are moved
 // into or out of API handle cells the flag is left untouched.
@@ -322,8 +322,8 @@ union Reb_Header {
 // Endlike_Header().
 //
 // In the release build, it distinguishes "pairing" nodes (holders for two
-// REBVALs in the same pool as ordinary REBSERs) from an ordinary REBSER node.
-// Plain REBSERs have the cell mask clear, while pairing values have it set.
+// REBVALs in the same pool as ordinary Stubs) from an ordinary Stub node.
+// Plain Stubs have the cell flag clear, while pairing values have it set.
 //
 // The position chosen is not random.  It is picked as the 8th bit from the
 // left so that freed nodes can still express a distinction between
@@ -358,7 +358,7 @@ union Reb_Header {
 //
 
 struct Reb_Node {
-    union Reb_Header header; // leftmost byte FREED_SERIES_BYTE if free
+    union HeaderUnion header; // leftmost byte FREED_SERIES_BYTE if free
 
     struct Reb_Node *next_if_free; // if not free, entire node is available
 

@@ -260,7 +260,7 @@ REBCTX *Get_Context_From_Stack(void)
 //
 void Expand_Data_Stack_May_Fail(REBLEN amount)
 {
-    REBLEN len_old = ARR_LEN(DS_Array);
+    REBLEN len_old = Array_Len(DS_Array);
 
     // The current requests for expansion should only happen when the stack
     // is at its end.  Sanity check that.
@@ -273,7 +273,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     // If adding in the requested amount would overflow the stack limit, then
     // give a data stack overflow error.
     //
-    if (SER_REST(SER(DS_Array)) + amount >= STACK_LIMIT) {
+    if (Series_Rest(SER(DS_Array)) + amount >= STACK_LIMIT) {
         //
         // Because the stack pointer was incremented and hit the END marker
         // before the expansion, we have to decrement it if failing.

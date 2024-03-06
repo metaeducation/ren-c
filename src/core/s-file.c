@@ -50,7 +50,7 @@
 // volume when no root slash was provided.  It was an odd case to support
 // the MSDOS convention of `c:file`.  That is not done here.
 //
-REBSER *To_REBOL_Path(const Cell* string, REBFLGS flags)
+Series* To_REBOL_Path(const Cell* string, REBFLGS flags)
 {
     assert(IS_TEXT(string));
 
@@ -247,7 +247,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
                     // Seek back to the previous slash in the mold buffer and
                     // truncate it there, to trim off one path segment.
                     //
-                    REBLEN n = SER_LEN(mo->series);
+                    REBLEN n = Series_Len(mo->series);
                     if (n > mo->start) {
                         --n;
                         assert(*Binary_At(mo->series, n) == OS_DIR_SEP);
@@ -289,7 +289,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
                 continue;
             }
 
-            REBLEN n = SER_LEN(mo->series);
+            REBLEN n = Series_Len(mo->series);
             if (
                 n > mo->start
                 and *Binary_At(mo->series, n - 1) == OS_DIR_SEP
@@ -327,7 +327,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
     // is included in the filename (move, delete), so it might not be wanted.
     //
     if (flags & REB_FILETOLOCAL_NO_TAIL_SLASH) {
-        REBLEN n = SER_LEN(mo->series);
+        REBLEN n = Series_Len(mo->series);
         if (n > mo->start and *Binary_At(mo->series, n - 1) == OS_DIR_SEP)
             TERM_SEQUENCE_LEN(mo->series, n - 1);
     }
@@ -346,7 +346,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
 // Convert Rebol-format filename to a local-format filename.  This is the
 // opposite operation of To_REBOL_Path.
 //
-REBSER *To_Local_Path(const Cell* file, REBFLGS flags) {
+Series* To_Local_Path(const Cell* file, REBFLGS flags) {
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 

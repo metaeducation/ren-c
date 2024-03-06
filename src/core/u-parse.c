@@ -240,7 +240,7 @@ static bool Subparse_Throws(
     REBLEN collect_tail;
     if (opt_collection) {
         Init_Block(Erase_Cell(Level_Args_Head(L) + 3), opt_collection);
-        collect_tail = ARR_LEN(opt_collection);  // roll back here on failure
+        collect_tail = Array_Len(opt_collection);  // roll back here on failure
     }
     else {
         Init_Nulled(Erase_Cell(Level_Args_Head(L) + 3));
@@ -350,13 +350,13 @@ static void Print_Parse_Index(Level* L) {
     // when seeking a position given in a variable or modifying?
     //
     if (IS_END(L->value)) {
-        if (P_POS >= SER_LEN(P_INPUT))
+        if (P_POS >= Series_Len(P_INPUT))
             Debug_Fmt("[]: ** END **");
         else
             Debug_Fmt("[]: %r", input);
     }
     else {
-        if (P_POS >= SER_LEN(P_INPUT))
+        if (P_POS >= Series_Len(P_INPUT))
             Debug_Fmt("%r: ** END **", P_RULE);
         else
             Debug_Fmt("%r: %r", P_RULE, input);
@@ -467,8 +467,8 @@ REB_R Process_Group_For_Parse(
     // PARSE's own REMOVE/etc.  This is a sketchy idea, but as long as it's
     // allowed, each time arbitrary user code runs, rules have to be adjusted
     //
-    if (P_POS > SER_LEN(P_INPUT))
-        P_POS = SER_LEN(P_INPUT);
+    if (P_POS > Series_Len(P_INPUT))
+        P_POS = Series_Len(P_INPUT);
 
     if (
         IS_NULLED(cell) // even for doubled groups, null evals are discarded
@@ -500,7 +500,7 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
 
     REBLEN flags = P_FIND_FLAGS | AM_FIND_MATCH | AM_FIND_TAIL;
 
-    if (P_POS >= SER_LEN(P_INPUT))
+    if (P_POS >= Series_Len(P_INPUT))
         return END_FLAG;
 
     if (IS_GROUP(rule)) {
@@ -510,7 +510,7 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
             return THROWN_FLAG;
         }
         if (rule == R_INVISIBLE) {
-            assert(P_POS <= SER_LEN(P_INPUT)); // !!! Process_Group ensures
+            assert(P_POS <= Series_Len(P_INPUT)); // !!! Process_Group ensures
             return P_POS;
         }
         // was a doubled group ((...)), use result as rule
@@ -547,7 +547,7 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
             P_INPUT,
             0,
             P_POS,
-            SER_LEN(P_INPUT),
+            Series_Len(P_INPUT),
             1,
             VAL_SERIES(rule),
             VAL_INDEX(rule),
@@ -564,16 +564,16 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
         // !!! The content to be matched does not have the delimiters in the
         // actual series data.  This FORMs it, but could be more optimized.
         //
-        REBSER *formed = Copy_Form_Value(rule, 0);
+        Series* formed = Copy_Form_Value(rule, 0);
         REBLEN index = Find_Str_Str(
             P_INPUT,
             0,
             P_POS,
-            SER_LEN(P_INPUT),
+            Series_Len(P_INPUT),
             1,
             formed,
             0,
-            SER_LEN(formed),
+            Series_Len(formed),
             flags
         );
         Free_Unmanaged_Series(formed);
@@ -670,7 +670,7 @@ static REBIXO Parse_Array_One_Rule_Core(
             return THROWN_FLAG;
         }
         if (rule == R_INVISIBLE) {
-            assert(pos <= ARR_LEN(array)); // !!! Process_Group ensures
+            assert(pos <= Array_Len(array)); // !!! Process_Group ensures
             return pos;
         }
         // was a doubled group ((...)), use result as rule
@@ -798,7 +798,7 @@ static REBIXO To_Thru_Block_Rule(
     DECLARE_VALUE (cell); // holds evaluated rules (use frame cell instead?)
 
     REBLEN pos = P_POS;
-    for (; pos <= SER_LEN(P_INPUT); ++pos) {
+    for (; pos <= Series_Len(P_INPUT); ++pos) {
         const Cell* blk = VAL_ARRAY_HEAD(rule_block);
         for (; NOT_END(blk); blk++) {
             if (IS_BAR(blk))
@@ -822,8 +822,8 @@ static REBIXO To_Thru_Block_Rule(
 
                 if (cmd) {
                     if (cmd == SYM_END) {
-                        if (pos >= SER_LEN(P_INPUT))
-                            return SER_LEN(P_INPUT);
+                        if (pos >= Series_Len(P_INPUT))
+                            return Series_Len(P_INPUT);
                         goto next_alternate_rule;
                     }
                     else if (cmd == SYM_QUOTE) {
@@ -955,13 +955,13 @@ static REBIXO To_Thru_Block_Rule(
                         // !!! This code was adapted from Parse_to, and is
                         // inefficient in the sense that it forms the tag
                         //
-                        REBSER *formed = Copy_Form_Value(rule, 0);
-                        REBLEN len = SER_LEN(formed);
+                        Series* formed = Copy_Form_Value(rule, 0);
+                        REBLEN len = Series_Len(formed);
                         REBLEN i = Find_Str_Str(
                             P_INPUT,
                             0,
                             pos,
-                            SER_LEN(P_INPUT),
+                            Series_Len(P_INPUT),
                             1,
                             formed,
                             0,
@@ -992,7 +992,7 @@ static REBIXO To_Thru_Block_Rule(
                             P_INPUT,
                             0,
                             pos,
-                            SER_LEN(P_INPUT),
+                            Series_Len(P_INPUT),
                             1,
                             VAL_SERIES(rule),
                             VAL_INDEX(rule),
@@ -1058,8 +1058,8 @@ static REBIXO To_Thru_Non_Block_Rule(
         // But also, should there be an option for relative addressing?
         //
         REBLEN i = cast(REBLEN, Int32(rule)) - (is_thru ? 0 : 1);
-        if (i > SER_LEN(P_INPUT))
-            return SER_LEN(P_INPUT);
+        if (i > Series_Len(P_INPUT))
+            return Series_Len(P_INPUT);
         return i;
     }
 
@@ -1067,7 +1067,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         //
         // `TO/THRU END` JUMPS TO END INPUT SERIES (ANY SERIES TYPE)
         //
-        return SER_LEN(P_INPUT);
+        return Series_Len(P_INPUT);
     }
 
     if (IS_SER_ARRAY(P_INPUT)) {
@@ -1087,7 +1087,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         REBLEN i = Find_In_Array(
             ARR(P_INPUT),
             P_POS,
-            SER_LEN(P_INPUT),
+            Series_Len(P_INPUT),
             rule,
             1,
             P_HAS_CASE ? AM_FIND_CASE : 0,
@@ -1108,13 +1108,13 @@ static REBIXO To_Thru_Non_Block_Rule(
     if (ANY_BINSTR(rule)) {
         if (not IS_TEXT(rule) and not IS_BINARY(rule)) {
             // !!! Can this be optimized not to use COPY?
-            REBSER *formed = Copy_Form_Value(rule, 0);
-            REBLEN form_len = SER_LEN(formed);
+            Series* formed = Copy_Form_Value(rule, 0);
+            REBLEN form_len = Series_Len(formed);
             REBLEN i = Find_Str_Str(
                 P_INPUT,
                 0,
                 P_POS,
-                SER_LEN(P_INPUT),
+                Series_Len(P_INPUT),
                 1,
                 formed,
                 0,
@@ -1138,7 +1138,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             P_INPUT,
             0,
             P_POS,
-            SER_LEN(P_INPUT),
+            Series_Len(P_INPUT),
             1,
             VAL_SERIES(rule),
             VAL_INDEX(rule),
@@ -1163,7 +1163,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             P_INPUT,
             0,
             P_POS,
-            SER_LEN(P_INPUT),
+            Series_Len(P_INPUT),
             1,
             (P_FIND_FLAGS & AM_FIND_CASE)
                 ? AM_FIND_CASE
@@ -1184,7 +1184,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             P_INPUT,
             0,
             P_POS,
-            SER_LEN(P_INPUT),
+            Series_Len(P_INPUT),
             1,
             VAL_BITSET(rule),
             (P_FIND_FLAGS & AM_FIND_CASE)
@@ -1265,7 +1265,7 @@ DECLARE_NATIVE(subparse)
     // were not clear; many cases dropped them on the floor in R3-Alpha, and
     // no real resolution exists...see the UNUSED(interrupted) cases.)
     //
-    REBLEN collection_tail = P_COLLECTION ? ARR_LEN(P_COLLECTION) : 0;
+    REBLEN collection_tail = P_COLLECTION ? Array_Len(P_COLLECTION) : 0;
     UNUSED(ARG(collection)); // implicitly accessed as P_COLLECTION
 
     assert(IS_END(P_OUT)); // invariant provided by evaluator
@@ -1842,8 +1842,8 @@ DECLARE_NATIVE(subparse)
             else
                 assert(IS_LIT_PATH(rule));
 
-            if (P_POS > SER_LEN(P_INPUT))
-                P_POS = SER_LEN(P_INPUT);
+            if (P_POS > Series_Len(P_INPUT))
+                P_POS = Series_Len(P_INPUT);
         }
 
         // All cases should have either set `rule` by this point or continued
@@ -1902,15 +1902,15 @@ DECLARE_NATIVE(subparse)
 
                 switch (cmd) {
                 case SYM_SKIP:
-                    i = (P_POS < SER_LEN(P_INPUT))
+                    i = (P_POS < Series_Len(P_INPUT))
                         ? P_POS + 1
                         : END_FLAG;
                     break;
 
                 case SYM_END:
-                    i = (P_POS < SER_LEN(P_INPUT))
+                    i = (P_POS < Series_Len(P_INPUT))
                         ? END_FLAG
-                        : SER_LEN(P_INPUT);
+                        : Series_Len(P_INPUT);
                     break;
 
                 case SYM_TO:
@@ -2101,7 +2101,7 @@ DECLARE_NATIVE(subparse)
             P_POS = cast(REBLEN, i);
         }
 
-        if (P_POS > SER_LEN(P_INPUT))
+        if (P_POS > Series_Len(P_INPUT))
             P_POS = NOT_FOUND;
 
     //==////////////////////////////////////////////////////////////////==//
@@ -2205,13 +2205,13 @@ DECLARE_NATIVE(subparse)
                 }
 
                 if (flags & PF_REMOVE) {
-                    FAIL_IF_READ_ONLY_SERIES(P_INPUT);
+                    Fail_If_Read_Only_Series(P_INPUT);
                     if (count) Remove_Series(P_INPUT, begin, count);
                     P_POS = begin;
                 }
 
                 if (flags & (PF_INSERT | PF_CHANGE)) {
-                    FAIL_IF_READ_ONLY_SERIES(P_INPUT);
+                    Fail_If_Read_Only_Series(P_INPUT);
                     count = (flags & PF_INSERT) ? 0 : count;
                     bool only = false;
 

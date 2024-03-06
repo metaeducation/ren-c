@@ -37,7 +37,7 @@
 // Do set operations on a series.  Case-sensitive if `cased` is TRUE.
 // `skip` is the record size.
 //
-REBSER *Make_Set_Operation_Series(
+Series* Make_Set_Operation_Series(
     const Value* val1,
     const Value* val2,
     REBFLGS flags,
@@ -88,17 +88,17 @@ REBSER *Make_Set_Operation_Series(
 
     REBINT h = 1; // used for both logic true/false and hash check
     bool first_pass = true; // are we in the first pass over the series?
-    REBSER *out_ser;
+    Series* out_ser;
 
     if (ANY_ARRAY(val1)) {
-        REBSER *hser = 0;   // hash table for series
-        REBSER *hret;       // hash table for return series
+        Series* hser = 0;   // hash table for series
+        Series* hret;       // hash table for return series
 
         // The buffer used for building the return series.  This creates
         // a new buffer every time, but reusing one might be slightly more
         // efficient.
         //
-        REBSER *buffer = SER(Make_Array(i));
+        Series* buffer = SER(Make_Array(i));
         hret = Make_Hash_Sequence(i);   // allocated
 
         // Optimization note: !!
@@ -116,7 +116,7 @@ REBSER *Make_Set_Operation_Series(
             // Iterate over first series
             //
             i = VAL_INDEX(val1);
-            for (; i < ARR_LEN(array1); i += skip) {
+            for (; i < Array_Len(array1); i += skip) {
                 Cell* item = Array_At(array1, i);
                 if (flags & SOP_FLAG_CHECK) {
                     h = Find_Key_Hashed(
@@ -144,7 +144,7 @@ REBSER *Make_Set_Operation_Series(
                 }
             }
 
-            if (i != ARR_LEN(array1)) {
+            if (i != Array_Len(array1)) {
                 //
                 // In the current philosophy, the semantics of what to do
                 // with things like `intersect/skip [1 2 3] [7] 2` is too
@@ -189,13 +189,13 @@ REBSER *Make_Set_Operation_Series(
         Push_Mold(mo);
 
         do {
-            REBSER *ser = VAL_SERIES(val1); // val1 and val2 swapped 2nd pass!
+            Series* ser = VAL_SERIES(val1); // val1 and val2 swapped 2nd pass!
             REBUNI uc;
 
             // Iterate over first series
             //
             i = VAL_INDEX(val1);
-            for (; i < SER_LEN(ser); i += skip) {
+            for (; i < Series_Len(ser); i += skip) {
                 uc = GET_ANY_CHAR(ser, i);
                 if (flags & SOP_FLAG_CHECK) {
                     h = (NOT_FOUND != Find_Str_Char(
@@ -219,7 +219,7 @@ REBSER *Make_Set_Operation_Series(
                         mo->series, // ser
                         mo->start, // head
                         mo->start, // index
-                        SER_LEN(mo->series), // tail
+                        Series_Len(mo->series), // tail
                         skip, // skip
                         cased ? AM_FIND_CASE : 0 // flags
                     )
@@ -262,13 +262,13 @@ REBSER *Make_Set_Operation_Series(
         Push_Mold(mo);
 
         do {
-            REBSER *ser = VAL_SERIES(val1); // val1 and val2 swapped 2nd pass!
+            Series* ser = VAL_SERIES(val1); // val1 and val2 swapped 2nd pass!
             REBUNI uc;
 
             // Iterate over first series
             //
             i = VAL_INDEX(val1);
-            for (; i < SER_LEN(ser); i += skip) {
+            for (; i < Series_Len(ser); i += skip) {
                 uc = GET_ANY_CHAR(ser, i);
                 if (flags & SOP_FLAG_CHECK) {
                     h = (NOT_FOUND != Find_Str_Char(
@@ -292,7 +292,7 @@ REBSER *Make_Set_Operation_Series(
                         mo->series, // ser
                         mo->start, // head
                         mo->start, // index
-                        SER_LEN(mo->series), // tail
+                        Series_Len(mo->series), // tail
                         skip, // skip
                         cased ? AM_FIND_CASE : 0 // flags
                     )

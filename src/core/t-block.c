@@ -667,7 +667,7 @@ REB_R PD_Array(
     }
 
     if (opt_setval)
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(pvs->out));
+        Fail_If_Read_Only_Series(VAL_SERIES(pvs->out));
 
     pvs->u.ref.cell = VAL_ARRAY_AT_HEAD(pvs->out, n);
     pvs->u.ref.specifier = VAL_SPECIFIER(pvs->out);
@@ -952,7 +952,7 @@ REBTYPE(Array)
             if (index == 0) Reset_Array(arr);
             else {
                 SET_END(Array_At(arr, index));
-                SET_SERIES_LEN(VAL_SERIES(array), cast(REBLEN, index));
+                Set_Series_Len(VAL_SERIES(array), cast(REBLEN, index));
             }
         }
         RETURN (array);
@@ -1164,7 +1164,7 @@ void Assert_Array_Core(Array* a)
 
     Cell* item = ARR_HEAD(a);
     REBLEN i;
-    for (i = 0; i < ARR_LEN(a); ++i, ++item) {
+    for (i = 0; i < Array_Len(a); ++i, ++item) {
         if (IS_END(item)) {
             printf("Premature array end at index %d\n", cast(int, i));
             panic (a);
@@ -1175,7 +1175,7 @@ void Assert_Array_Core(Array* a)
         panic (item);
 
     if (IS_SER_DYNAMIC(a)) {
-        REBLEN rest = SER_REST(SER(a));
+        REBLEN rest = Series_Rest(SER(a));
         assert(rest > 0 and rest > i);
 
         for (; i < rest - 1; ++i, ++item) {

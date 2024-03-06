@@ -166,13 +166,13 @@ DECLARE_NATIVE(recycle)
       #if defined(NDEBUG)
         fail (Error_Debug_Only_Raw());
       #else
-        REBSER *sweeplist = Make_Series(100, sizeof(REBNOD*));
+        Series* sweeplist = Make_Series(100, sizeof(REBNOD*));
         count = Recycle_Core(false, sweeplist);
-        assert(count == SER_LEN(sweeplist));
+        assert(count == Series_Len(sweeplist));
 
         REBLEN index = 0;
         for (index = 0; index < count; ++index) {
-            REBNOD *node = *SER_AT(REBNOD*, sweeplist, index);
+            REBNOD *node = *Series_At(REBNOD*, sweeplist, index);
             PROBE(node);
             UNUSED(node);
         }
@@ -288,7 +288,7 @@ int ceil_log2(unsigned long long x) {
 //
 //      return: [<opt>]
 //      tick [<maybe> integer!]
-//          {Get from PANIC, Level.tick, REBSER.tick, Cell.extra.tick}
+//          {Get from PANIC, Level.tick, Stuc.tick, Cell.extra.tick}
 //      /relative
 //          {TICK parameter represents a count relative to the current tick}
 //      /compensate

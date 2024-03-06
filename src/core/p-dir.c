@@ -80,7 +80,7 @@ static Array* Read_Dir_May_Fail(struct devreq_file *dir)
                 VAL_SERIES(dir->path),
                 0, // !!! "lowest return index?"
                 VAL_INDEX(dir->path), // first index to examine
-                SER_LEN(VAL_SERIES(dir->path)) + 1, // highest return + 1
+                Series_Len(VAL_SERIES(dir->path)) + 1, // highest return + 1
                 0, // skip
                 AM_FIND_CASE // not relevant
             )
@@ -90,7 +90,7 @@ static Array* Read_Dir_May_Fail(struct devreq_file *dir)
                 VAL_SERIES(dir->path),
                 0, // !!! "lowest return index?"
                 VAL_INDEX(dir->path), // first index to examine
-                SER_LEN(VAL_SERIES(dir->path)) + 1, // highest return + 1
+                Series_Len(VAL_SERIES(dir->path)) + 1, // highest return + 1
                 0, // skip
                 AM_FIND_CASE // not relevant
             )

@@ -57,12 +57,12 @@ struct Reb_Context {
 
         constexpr bool base = std::is_same<T, void>::value
             or std::is_same<T, REBNOD>::value
-            or std::is_same<T, REBSER>::value
+            or std::is_same<T, Series>::value
             or std::is_same<T, Array>::value;
 
         static_assert(
             derived or base,
-            "CTX() works on REBNOD/REBSER/Array/REBCTX"
+            "CTX() works on REBNOD/Series/Array/REBCTX"
         );
 
         if (base)

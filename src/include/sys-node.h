@@ -28,7 +28,7 @@
 //
 // This provides some convenience routines that require more definitions than
 // are available when %sys-rebnod.h is being processed.  (e.g. Cell,
-// REBSER, Level...)
+// Stub, Level...)
 //
 // See %sys-rebnod.h for what a "node" means in this context.
 //
@@ -45,7 +45,7 @@
     INLINE REBNOD *NOD(T *p) {
         constexpr bool derived =
             std::is_same<T, Value>::value
-            or std::is_same<T, REBSER>::value
+            or std::is_same<T, Stub>::value
             or std::is_same<T, Symbol>::value
             or std::is_same<T, Array>::value
             or std::is_same<T, REBCTX>::value
@@ -57,7 +57,7 @@
 
         static_assert(
             derived or base,
-            "NOD() works on void/Value/REBSER/Symbol/Array/REBCTX/REBACT" \
+            "NOD() works on void/Value/Stub/Symbol/Array/REBCTX/REBACT" \
                "/REBMAP/Level"
         );
 
@@ -133,8 +133,8 @@ INLINE void Free_Node(REBLEN pool_id, void *p)
   #ifdef DEBUG_MONITOR_SERIES
     if (
         pool_id == SER_POOL
-        and not (cast(union Reb_Header*, p)->bits & NODE_FLAG_CELL)
-        and GET_SER_INFO(cast(REBSER*, p), SERIES_INFO_MONITOR_DEBUG)
+        and not (cast(union HeaderUnion*, p)->bits & NODE_FLAG_CELL)
+        and GET_SER_INFO(cast(Series*, p), SERIES_INFO_MONITOR_DEBUG)
     ){
         printf("Freeing series %p on tick #%d\n", p, cast(int, TG_Tick));
         fflush(stdout);

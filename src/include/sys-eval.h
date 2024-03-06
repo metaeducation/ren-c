@@ -432,7 +432,7 @@ INLINE void Set_Level_Detected_Fetch(
         // there's an error or need to reify into a value.  For now, do the
         // inefficient thing and manage it.
         //
-        MANAGE_ARRAY(reified);
+        Manage_Series(reified);
 
         L->value = ARR_HEAD(reified);
         L->source->pending = L->value + 1; // may be END
@@ -689,7 +689,7 @@ INLINE void Drop_Level_Unbalanced(Level* L) {
     // exact cycle caused the problem, see BALANCE_CHECK_EVERY_EVALUATION_STEP
     //
     L->state.stack_base = TOP_INDEX; // e.g. Reduce_To_Stack_Throws()
-    L->state.mold_buf_len = SER_LEN(MOLD_BUF); // REMOVE-EACH accumulates
+    L->state.mold_buf_len = Series_Len(MOLD_BUF); // REMOVE-EACH accumulates
     ASSERT_STATE_BALANCED(&L->state);
   #endif
     Drop_Level_Core(L);
@@ -910,7 +910,7 @@ INLINE REBIXO Eval_Array_At_Core(
 
     assert(
         not (flags & DO_FLAG_TO_END)
-        or L->source->index == ARR_LEN(array) + 1
+        or L->source->index == Array_Len(array) + 1
     );
     return L->source->index;
 }
@@ -981,7 +981,7 @@ INLINE void Reify_Va_To_Array_In_Level(
 
     // special array...may contain voids and eval flip is kept
     L->source->array = Pop_Stack_Values_Keep_Eval_Flip(base);
-    MANAGE_ARRAY(L->source->array); // held alive while frame running
+    Manage_Series(L->source->array); // held alive while frame running
     SET_SER_FLAG(L->source->array, ARRAY_FLAG_NULLEDS_LEGAL);
 
     // The array just popped into existence, and it's tied to a running

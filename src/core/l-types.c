@@ -1274,7 +1274,7 @@ const Byte *Scan_Any(
     //
     bool crlf_to_lf = true;
 
-    REBSER *s = Append_UTF8_May_Fail(nullptr, cs_cast(cp), num_bytes, crlf_to_lf);
+    Series* s = Append_UTF8_May_Fail(nullptr, cs_cast(cp), num_bytes, crlf_to_lf);
     Init_Any_Series(out, type, s);
 
     return cp + num_bytes;
@@ -1306,7 +1306,7 @@ DECLARE_NATIVE(scan_net_header)
 
     Value* header = ARG(header);
     REBLEN index = VAL_INDEX(header);
-    REBSER *utf8 = VAL_SERIES(header);
+    Series* utf8 = VAL_SERIES(header);
 
     Byte *cp = Binary_Head(utf8) + index;
 

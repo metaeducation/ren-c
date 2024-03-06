@@ -176,7 +176,7 @@ DECLARE_NATIVE(checksum)
     UNUSED(REF(part)); // checked by if limit is nulled
 
     Byte *data = VAL_RAW_DATA_AT(arg); // after Partial() in case of change
-    REBLEN wide = SER_WIDE(VAL_SERIES(arg));
+    REBLEN wide = Series_Wide(VAL_SERIES(arg));
 
     SymId sym;
     if (REF(method)) {
@@ -219,7 +219,7 @@ DECLARE_NATIVE(checksum)
             if (digests[i].sym != sym)
                 continue;
 
-            REBSER *digest = Make_Series(digests[i].len + 1, sizeof(char));
+            Series* digest = Make_Series(digests[i].len + 1, sizeof(char));
 
             if (not REF(key))
                 digests[i].digest(data, len, Binary_Head(digest));
@@ -514,7 +514,7 @@ DECLARE_NATIVE(enbase)
         bp = Binary_At(temp, offset);
     }
 
-    REBSER *enbased;
+    Series* enbased;
     const bool brk = false;
     switch (base) {
     case 64:
@@ -593,7 +593,7 @@ DECLARE_NATIVE(enhex)
     //
     Byte *dp = Prep_Mold_Overestimated(mo, len * 12);
 
-    REBSER *s = VAL_SERIES(ARG(string));
+    Series* s = VAL_SERIES(ARG(string));
 
     REBLEN i = VAL_INDEX(ARG(string));
     for (; i < len; ++i) {
@@ -702,7 +702,7 @@ DECLARE_NATIVE(enhex)
 
     *dp = '\0';
 
-    SET_SERIES_LEN(mo->series, dp - Binary_Head(mo->series));
+    Set_Series_Len(mo->series, dp - Binary_Head(mo->series));
 
     return Init_Any_Series(
         OUT,
@@ -744,7 +744,7 @@ DECLARE_NATIVE(dehex)
     Byte scan[5];
     REBSIZ scan_size = 0;
 
-    REBSER *s = VAL_SERIES(ARG(string));
+    Series* s = VAL_SERIES(ARG(string));
 
     REBLEN i = VAL_INDEX(ARG(string));
 
@@ -830,7 +830,7 @@ DECLARE_NATIVE(dehex)
 
     *dp = '\0';
 
-    SET_SERIES_LEN(mo->series, dp - Binary_Head(mo->series));
+    Set_Series_Len(mo->series, dp - Binary_Head(mo->series));
 
     return Init_Any_Series(
         OUT,
@@ -861,8 +861,8 @@ DECLARE_NATIVE(deline)
     if (REF(lines))
         return Init_Block(OUT, Split_Lines(val));
 
-    REBSER *s = VAL_SERIES(val);
-    REBLEN len_head = SER_LEN(s);
+    Series* s = VAL_SERIES(val);
+    REBLEN len_head = Series_Len(s);
 
     REBLEN len_at = VAL_LEN_AT(val);
 
@@ -907,7 +907,7 @@ DECLARE_NATIVE(enline)
 
     Value* val = ARG(string);
 
-    REBSER *ser = VAL_SERIES(val);
+    Series* ser = VAL_SERIES(val);
     REBLEN idx = VAL_INDEX(val);
     REBLEN len = VAL_LEN_AT(val);
 
@@ -937,7 +937,7 @@ DECLARE_NATIVE(enline)
     if (delta == 0)
         RETURN (ARG(string)); // nothing to do
 
-    EXPAND_SERIES_TAIL(ser, delta);
+    Expand_Series_Tail(ser, delta);
 
     // !!! After the UTF-8 Everywhere conversion, this will be able to stay
     // a byte-oriented process..because UTF-8 doesn't reuse ASCII chars in
@@ -950,7 +950,7 @@ DECLARE_NATIVE(enline)
     // So sliding is done in full character counts.
 
     REBUNI *up = String_Head(ser); // expand may change the pointer
-    REBLEN tail = SER_LEN(ser); // length after expansion
+    REBLEN tail = Series_Len(ser); // length after expansion
 
     // Add missing CRs
 

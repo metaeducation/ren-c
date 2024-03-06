@@ -244,7 +244,7 @@ static REB_R Transport_Actor(
         Value* port_data = CTX_VAR(ctx, STD_PORT_DATA);
         if (sock->command == RDC_READ) {
             if (ANY_BINSTR(port_data)) {
-                SET_SERIES_LEN(
+                Set_Series_Len(
                     VAL_SERIES(port_data),
                     VAL_LEN_HEAD(port_data) + sock->actual
                 );
@@ -283,7 +283,7 @@ static REB_R Transport_Actor(
         // Setup the read buffer (allocate a buffer if needed):
         //
         Value* port_data = CTX_VAR(ctx, STD_PORT_DATA);
-        REBSER *buffer;
+        Series* buffer;
         if (not IS_TEXT(port_data) and not IS_BINARY(port_data)) {
             buffer = Make_Binary(NET_BUF_SIZE);
             Init_Binary(port_data, buffer);

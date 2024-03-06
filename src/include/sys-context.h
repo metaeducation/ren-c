@@ -71,10 +71,10 @@
 
 // There may not be any dynamic or stack allocation available for a stack
 // allocated context, and in that case it will have to come out of the
-// REBSER node data itself.
+// Stub node data itself.
 //
 INLINE Value* CTX_ARCHETYPE(REBCTX *c) {
-    REBSER *varlist = SER(CTX_VARLIST(c));
+    Series* varlist = SER(CTX_VARLIST(c));
     if (not IS_SER_DYNAMIC(varlist))
         return cast(Value*, &varlist->content.fixed);
 
@@ -124,7 +124,7 @@ INLINE void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, Array* keylist) {
 // requested in context creation).
 //
 #define CTX_LEN(c) \
-    (cast(REBSER*, (c))->content.dynamic.len - 1) // len > 1 => dynamic
+    (cast(Series*, (c))->content.dynamic.len - 1) // len > 1 => dynamic
 
 #define CTX_ROOTKEY(c) \
     cast(Value*, SER(CTX_KEYLIST(c))->content.dynamic.data) // len > 1
@@ -135,7 +135,7 @@ INLINE void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, Array* keylist) {
 // The keys and vars are accessed by positive integers starting at 1
 //
 #define CTX_KEYS_HEAD(c) \
-    SER_AT(Value, SER(CTX_KEYLIST(c)), 1)  // a CTX_KEY is always "specific"
+    Series_At(Value, SER(CTX_KEYLIST(c)), 1)  // a CTX_KEY is always "specific"
 
 INLINE Level* CTX_LEVEL_IF_ON_STACK(REBCTX *c) {
     REBNOD *keysource = LINK(c).keysource;
@@ -158,13 +158,13 @@ INLINE Level* CTX_LEVEL_MAY_FAIL(REBCTX *c) {
 }
 
 #define CTX_VARS_HEAD(c) \
-    SER_AT(Value, SER(CTX_VARLIST(c)), 1)  // may fail() if inaccessible
+    Series_At(Value, SER(CTX_VARLIST(c)), 1)  // may fail() if inaccessible
 
 INLINE Value* CTX_KEY(REBCTX *c, REBLEN n) {
     assert(NOT_SER_FLAG(c, SERIES_INFO_INACCESSIBLE));
     assert(GET_SER_FLAG(c, ARRAY_FLAG_VARLIST));
     assert(n != 0 and n <= CTX_LEN(c));
-    return cast(Value*, cast(REBSER*, CTX_KEYLIST(c))->content.dynamic.data)
+    return cast(Value*, cast(Series*, CTX_KEYLIST(c))->content.dynamic.data)
         + n;
 }
 
@@ -172,7 +172,7 @@ INLINE Value* CTX_VAR(REBCTX *c, REBLEN n) {
     assert(NOT_SER_FLAG(c, SERIES_INFO_INACCESSIBLE));
     assert(GET_SER_FLAG(c, ARRAY_FLAG_VARLIST));
     assert(n != 0 and n <= CTX_LEN(c));
-    return cast(Value*, cast(REBSER*, c)->content.dynamic.data) + n;
+    return cast(Value*, cast(Series*, c)->content.dynamic.data) + n;
 }
 
 INLINE Symbol* CTX_KEY_SPELLING(REBCTX *c, REBLEN n) {
@@ -268,8 +268,8 @@ INLINE Value* Init_Any_Context(
     Extra_Init_Any_Context_Checks_Debug(kind, c);
   #endif
     UNUSED(kind);
-    assert(IS_ARRAY_MANAGED(CTX_VARLIST(c)));
-    assert(IS_ARRAY_MANAGED(CTX_KEYLIST(c)));
+    assert(Is_Series_Managed(CTX_VARLIST(c)));
+    assert(Is_Series_Managed(CTX_KEYLIST(c)));
     return Copy_Cell(out, CTX_ARCHETYPE(c));
 }
 
@@ -401,13 +401,13 @@ INLINE bool Is_Native_Port_Actor(const Value* actor) {
 // instead of needing to push a redundant run of stack-based memory cells.
 //
 INLINE REBCTX *Steal_Context_Vars(REBCTX *c, REBNOD *keysource) {
-    REBSER *stub = SER(c);
+    Series* stub = SER(c);
 
     // Rather than memcpy() and touch up the header and info to remove
     // SERIES_INFO_HOLD put on by Enter_Native(), or NODE_FLAG_MANAGED,
     // etc.--use constant assignments and only copy the remaining fields.
     //
-    REBSER *copy = Alloc_Series_Node(
+    Series* copy = Alloc_Series_Node(
         SERIES_MASK_CONTEXT
             | SERIES_FLAG_FIXED_SIZE
     );
@@ -419,7 +419,7 @@ INLINE REBCTX *Steal_Context_Vars(REBCTX *c, REBNOD *keysource) {
     memcpy(
         cast(char*, &copy->content),
         cast(char*, &stub->content),
-        sizeof(union Reb_Series_Content)
+        sizeof(union StubContentUnion)
     );
     copy->misc_private.meta = nullptr; // let stub have the meta
 

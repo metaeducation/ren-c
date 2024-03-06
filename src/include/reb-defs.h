@@ -129,17 +129,18 @@ typedef struct Reb_Node REBNOD;
 
 //=//// SERIES SUBCLASSES /////////////////////////////////////////////////=//
 //
-// Note that because the Reb_Series structure includes a Reb_Value by value,
+// Note that because the StubStruct includes a Cell by value,
 // the %sys-rebser.h must be included *after* %sys-rebval.h; however the
 // higher level definitions in %sys-series.h are *before* %sys-value.h.
 //
 
-struct Reb_Series;
-typedef struct Reb_Series REBSER;
+struct StubStruct;
+typedef struct StubStruct Stub;
 
-typedef REBSER Binary;
-typedef REBSER Symbol;
-typedef REBSER String;
+typedef struct StubStruct Series;
+typedef Series Binary;
+typedef Series Symbol;
+typedef Series String;
 
 struct Reb_Array;
 typedef struct Reb_Array Array;
@@ -234,7 +235,7 @@ typedef void (*MOLD_HOOK)(REB_MOLD *mo, const Cell* v, bool form);
 
 // These definitions are needed in %sys-rebval.h, and can't be put in
 // %sys-rebact.h because that depends on Reb_Array, which depends on
-// Reb_Series, which depends on values... :-/
+// StubStruct, which depends on values... :-/
 
 // C function implementing a native ACTION!
 //

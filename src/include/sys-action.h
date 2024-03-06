@@ -111,7 +111,7 @@ INLINE Array* ACT_PARAMLIST(REBACT *a) {
 }
 
 #define ACT_ARCHETYPE(a) \
-    cast(Value*, cast(REBSER*, ACT_PARAMLIST(a))->content.dynamic.data)
+    cast(Value*, cast(Series*, ACT_PARAMLIST(a))->content.dynamic.data)
 
 // Functions hold their flags in their canon value, some of which are cached
 // flags put there during Make_Action().
@@ -135,12 +135,12 @@ INLINE Array* ACT_PARAMLIST(REBACT *a) {
 #define IDX_NATIVE_MAX (IDX_NATIVE_CONTEXT + 1)
 
 INLINE Value* ACT_PARAM(REBACT *a, REBLEN n) {
-    assert(n != 0 and n < ARR_LEN(ACT_PARAMLIST(a)));
-    return SER_AT(Value, SER(ACT_PARAMLIST(a)), n);
+    assert(n != 0 and n < Array_Len(ACT_PARAMLIST(a)));
+    return Series_At(Value, SER(ACT_PARAMLIST(a)), n);
 }
 
 #define ACT_NUM_PARAMS(a) \
-    (cast(REBSER*, ACT_PARAMLIST(a))->content.dynamic.len - 1)
+    (cast(Series*, ACT_PARAMLIST(a))->content.dynamic.len - 1)
 
 #define ACT_META(a) \
     MISC(a).meta
@@ -173,7 +173,7 @@ INLINE REBCTX *ACT_EXEMPLAR(REBACT *a) {
 
 INLINE Value* ACT_SPECIALTY_HEAD(REBACT *a) {
     Array* details = ACT_ARCHETYPE(a)->payload.action.details;
-    REBSER *s = SER(LINK(details).specialty);
+    Series* s = SER(LINK(details).specialty);
     return cast(Value*, s->content.dynamic.data) + 1; // skip archetype/root
 }
 
@@ -261,7 +261,7 @@ INLINE void Clear_Action_Cached_Flags(Cell *v) {
 
 INLINE REBACT *VAL_ACTION(const Cell* v) {
     assert(IS_ACTION(v));
-    REBSER *s = SER(v->payload.action.paramlist);
+    Series* s = SER(v->payload.action.paramlist);
     if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return ACT(s);
@@ -317,7 +317,7 @@ INLINE Value* Init_Action_Unbound(
   #if !defined(NDEBUG)
     Extra_Init_Action_Checks_Debug(a);
   #endif
-    ENSURE_ARRAY_MANAGED(ACT_PARAMLIST(a));
+    Force_Series_Managed(ACT_PARAMLIST(a));
     Copy_Cell(out, ACT_ARCHETYPE(a));
     assert(VAL_BINDING(out) == UNBOUND);
     return KNOWN(out);
@@ -331,7 +331,7 @@ INLINE Value* Init_Action_Maybe_Bound(
   #if !defined(NDEBUG)
     Extra_Init_Action_Checks_Debug(a);
   #endif
-    ENSURE_ARRAY_MANAGED(ACT_PARAMLIST(a));
+    Force_Series_Managed(ACT_PARAMLIST(a));
     Copy_Cell(out, ACT_ARCHETYPE(a));
     assert(VAL_BINDING(out) == UNBOUND);
     INIT_BINDING(out, binding);

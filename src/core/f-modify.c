@@ -49,7 +49,7 @@ REBLEN Modify_Array(
 
     assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
 
-    REBLEN tail = ARR_LEN(dst_arr);
+    REBLEN tail = Array_Len(dst_arr);
 
     const Cell* src_rel;
     Specifier* specifier;
@@ -143,7 +143,7 @@ REBLEN Modify_Array(
     // on the target, and the insertion is at the end.
     //
     bool head_newline =
-        (dst_idx == ARR_LEN(dst_arr))
+        (dst_idx == Array_Len(dst_arr))
         and GET_SER_FLAG(dst_arr, ARRAY_FLAG_TAIL_NEWLINE);
 
     if (op != SYM_CHANGE) {
@@ -156,7 +156,7 @@ REBLEN Modify_Array(
         else if (size < dst_len and (flags & AM_PART))
             Remove_Series(SER(dst_arr), dst_idx, dst_len - size);
         else if (size + dst_idx > tail) {
-            EXPAND_SERIES_TAIL(SER(dst_arr), size - (tail - dst_idx));
+            Expand_Series_Tail(SER(dst_arr), size - (tail - dst_idx));
         }
     }
 
@@ -198,7 +198,7 @@ REBLEN Modify_Array(
     // last one might have to be the array flag if at tail.
     //
     if (tail_newline) {
-        if (dst_idx == ARR_LEN(dst_arr))
+        if (dst_idx == Array_Len(dst_arr))
             SET_SER_FLAG(dst_arr, ARRAY_FLAG_TAIL_NEWLINE);
         else
             SET_VAL_FLAG(Array_At(dst_arr, dst_idx), VALUE_FLAG_NEWLINE_BEFORE);
@@ -237,7 +237,7 @@ REBLEN Modify_Binary(
 
     assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
 
-    REBSER *dst_ser = VAL_SERIES(dst_val);
+    Series* dst_ser = VAL_SERIES(dst_val);
     REBLEN dst_idx = VAL_INDEX(dst_val);
 
     // For INSERT/PART and APPEND/PART
@@ -260,7 +260,7 @@ REBLEN Modify_Binary(
     if (IS_VOID(src_val) || limit == 0 || dups < 0)
         return op == SYM_APPEND ? 0 : dst_idx;
 
-    REBLEN tail = SER_LEN(dst_ser);
+    REBLEN tail = Series_Len(dst_ser);
     if (op == SYM_APPEND || dst_idx > tail)
         dst_idx = tail;
 
@@ -268,7 +268,7 @@ REBLEN Modify_Binary(
 
     REBLEN src_idx = 0;
     REBLEN src_len;
-    REBSER *src_ser;
+    Series* src_ser;
     bool needs_free;
     if (IS_INTEGER(src_val)) {
         REBI64 i = VAL_INT64(src_val);
@@ -294,7 +294,7 @@ REBLEN Modify_Binary(
         // which RFC you consider "the UTF-8", max size is either 4 or 6.
         //
         src_ser = Make_Binary(6);
-        SET_SERIES_LEN(
+        Set_Series_Len(
             src_ser,
             Encode_UTF8_Char(Binary_Head(src_ser), VAL_CHAR(src_val))
         );
@@ -319,7 +319,7 @@ REBLEN Modify_Binary(
 
     // Use either new src or the one that was passed:
     if (src_ser != nullptr) {
-        src_len = SER_LEN(src_ser);
+        src_len = Series_Len(src_ser);
     }
     else {
         src_ser = VAL_SERIES(src_val);
@@ -354,7 +354,7 @@ REBLEN Modify_Binary(
         else if (size < dst_len && (flags & AM_PART))
             Remove_Series(dst_ser, dst_idx, dst_len - size);
         else if (size + dst_idx > tail) {
-            EXPAND_SERIES_TAIL(dst_ser, size - (tail - dst_idx));
+            Expand_Series_Tail(dst_ser, size - (tail - dst_idx));
         }
     }
 
@@ -394,7 +394,7 @@ REBLEN Modify_String(
 
     assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
 
-    REBSER *dst_ser = VAL_SERIES(dst_val);
+    Series* dst_ser = VAL_SERIES(dst_val);
     REBLEN dst_idx = VAL_INDEX(dst_val);
 
     // For INSERT/PART and APPEND/PART
@@ -417,25 +417,25 @@ REBLEN Modify_String(
     if (IS_VOID(src_val) || limit == 0 || dups < 0)
         return op == SYM_APPEND ? 0 : dst_idx;
 
-    REBLEN tail = SER_LEN(dst_ser);
+    REBLEN tail = Series_Len(dst_ser);
     if (op == SYM_APPEND or dst_idx > tail)
         dst_idx = tail;
 
     // If the src_val is not a string, then we need to create a string:
 
     REBLEN src_idx = 0;
-    REBSER *src_ser;
+    Series* src_ser;
     REBLEN src_len;
     bool needs_free;
     if (IS_CHAR(src_val)) {
         src_ser = Make_Ser_Codepoint(VAL_CHAR(src_val));
-        src_len = SER_LEN(src_ser);
+        src_len = Series_Len(src_ser);
 
         needs_free = true;
     }
     else if (IS_BLOCK(src_val)) {
         src_ser = Form_Tight_Block(src_val);
-        src_len = SER_LEN(src_ser);
+        src_len = Series_Len(src_ser);
 
         needs_free = true;
     }
@@ -451,7 +451,7 @@ REBLEN Modify_String(
     }
     else {
         src_ser = Copy_Form_Value(src_val, 0);
-        src_len = SER_LEN(src_ser);
+        src_len = Series_Len(src_ser);
 
         needs_free = true;
     }
@@ -490,7 +490,7 @@ REBLEN Modify_String(
         else if (size < dst_len && (flags & AM_PART))
             Remove_Series(dst_ser, dst_idx, dst_len - size);
         else if (size + dst_idx > tail) {
-            EXPAND_SERIES_TAIL(dst_ser, size - (tail - dst_idx));
+            Expand_Series_Tail(dst_ser, size - (tail - dst_idx));
         }
     }
 

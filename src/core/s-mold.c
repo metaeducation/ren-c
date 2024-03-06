@@ -92,8 +92,8 @@
 //
 void Emit(REB_MOLD *mo, const char *fmt, ...)
 {
-    REBSER *s = mo->series;
-    assert(SER_WIDE(s) == 1);
+    Series* s = mo->series;
+    assert(Series_Wide(s) == 1);
 
     va_list va;
     va_start(va, fmt);
@@ -199,8 +199,8 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
 //
 Byte *Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
 {
-    REBLEN tail = SER_LEN(mo->series);
-    EXPAND_SERIES_TAIL(mo->series, num_bytes); // terminates, if guessed right
+    REBLEN tail = Series_Len(mo->series);
+    Expand_Series_Tail(mo->series, num_bytes); // terminates, if guessed right
     return Binary_At(mo->series, tail);
 }
 
@@ -255,7 +255,7 @@ void New_Indented_Line(REB_MOLD *mo)
     // Check output string has content already but no terminator:
     //
     Byte *bp;
-    if (SER_LEN(mo->series) == 0)
+    if (Series_Len(mo->series) == 0)
         bp = nullptr;
     else {
         bp = Binary_Last(mo->series);
@@ -293,11 +293,11 @@ void New_Indented_Line(REB_MOLD *mo)
 //
 //  Find_Pointer_In_Series: C
 //
-REBLEN Find_Pointer_In_Series(REBSER *s, void *p)
+REBLEN Find_Pointer_In_Series(Series* s, void *p)
 {
     REBLEN index = 0;
-    for (; index < SER_LEN(s); ++index) {
-        if (*SER_AT(void*, s, index) == p)
+    for (; index < Series_Len(s); ++index) {
+        if (*Series_At(void*, s, index) == p)
             return index;
     }
     return NOT_FOUND;
@@ -306,22 +306,22 @@ REBLEN Find_Pointer_In_Series(REBSER *s, void *p)
 //
 //  Push_Pointer_To_Series: C
 //
-void Push_Pointer_To_Series(REBSER *s, void *p)
+void Push_Pointer_To_Series(Series* s, void *p)
 {
     if (SER_FULL(s))
         Extend_Series(s, 8);
-    *SER_AT(void*, s, SER_LEN(s)) = p;
-    SET_SERIES_LEN(s, SER_LEN(s) + 1);
+    *Series_At(void*, s, Series_Len(s)) = p;
+    Set_Series_Len(s, Series_Len(s) + 1);
 }
 
 //
 //  Drop_Pointer_From_Series: C
 //
-void Drop_Pointer_From_Series(REBSER *s, void *p)
+void Drop_Pointer_From_Series(Series* s, void *p)
 {
-    assert(p == *SER_AT(void*, s, SER_LEN(s) - 1));
+    assert(p == *Series_At(void*, s, Series_Len(s) - 1));
     UNUSED(p);
-    SET_SERIES_LEN(s, SER_LEN(s) - 1);
+    Set_Series_Len(s, Series_Len(s) - 1);
 
     // !!! Could optimize so mold stack is always dynamic, and just use
     // s->content.dynamic.len--
@@ -404,7 +404,7 @@ void Form_Array_At(
     REBCTX *opt_context
 ) {
     // Form a series (part_mold means mold non-string values):
-    REBINT len = ARR_LEN(array) - index;
+    REBINT len = Array_Len(array) - index;
     if (len < 0)
         len = 0;
 
@@ -424,7 +424,7 @@ void Form_Array_At(
         }
         else {
             // Add a space if needed:
-            if (n < len && SER_LEN(mo->series)
+            if (n < len && Series_Len(mo->series)
                 && *Binary_Last(mo->series) != LF
                 && NOT_MOLD_FLAG(mo, MOLD_FLAG_TIGHT)
             ){
@@ -485,9 +485,9 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
 {
     assert(not THROWN(v)); // !!! Note: Thrown bit is being eliminated
 
-    REBSER *s = mo->series;
-    assert(SER_WIDE(s) == sizeof(Byte));
-    ASSERT_SERIES_TERM(s);
+    Series* s = mo->series;
+    assert(Series_Wide(s) == sizeof(Byte));
+    Assert_Series_Term(s);
 
     if (C_STACK_OVERFLOWING(&s))
         Fail_Stack_Overflow();
@@ -502,7 +502,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
         // the debug build keep going to exercise mold on the data.)
         //
     #ifdef NDEBUG
-        if (SER_LEN(s) >= mo->limit)
+        if (Series_Len(s) >= mo->limit)
             return;
     #endif
     }
@@ -528,7 +528,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
     assert(hook != nullptr); // all types have a hook, even if it just fails
     hook(mo, v, form);
 
-    ASSERT_SERIES_TERM(s);
+    Assert_Series_Term(s);
 }
 
 
@@ -537,7 +537,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
 //
 // Form a value based on the mold opts provided.
 //
-REBSER *Copy_Mold_Or_Form_Value(const Cell* v, REBFLGS opts, bool form)
+Series* Copy_Mold_Or_Form_Value(const Cell* v, REBFLGS opts, bool form)
 {
     DECLARE_MOLD (mo);
     mo->opts = opts;
@@ -634,7 +634,7 @@ bool Form_Reduce_Throws(
 //
 //  Form_Tight_Block: C
 //
-REBSER *Form_Tight_Block(const Value* blk)
+Series* Form_Tight_Block(const Value* blk)
 {
     DECLARE_MOLD (mo);
 
@@ -680,12 +680,12 @@ void Push_Mold(REB_MOLD *mo)
     //
     assert(mo->series == nullptr);
 
-    REBSER *s = mo->series = MOLD_BUF;
-    mo->start = SER_LEN(s);
+    Series* s = mo->series = MOLD_BUF;
+    mo->start = Series_Len(s);
 
-    ASSERT_SERIES_TERM(s);
+    Assert_Series_Term(s);
 
-    if (GET_MOLD_FLAG(mo, MOLD_FLAG_RESERVE) && SER_REST(s) < mo->reserve) {
+    if (GET_MOLD_FLAG(mo, MOLD_FLAG_RESERVE) && Series_Rest(s) < mo->reserve) {
         //
         // Expand will add to the series length, so we set it back.
         //
@@ -695,9 +695,9 @@ void Push_Mold(REB_MOLD *mo)
         // empty buffer after a push.
         //
         Expand_Series(s, mo->start, mo->reserve);
-        SET_SERIES_LEN(s, mo->start);
+        Set_Series_Len(s, mo->start);
     }
-    else if (SER_REST(s) - SER_LEN(s) > MAX_COMMON) {
+    else if (Series_Rest(s) - Series_Len(s) > MAX_COMMON) {
         //
         // If the "extra" space in the series has gotten to be excessive (due
         // to some particularly large mold), back off the space.  But preserve
@@ -706,8 +706,8 @@ void Push_Mold(REB_MOLD *mo)
         //
         Remake_Series(
             s,
-            SER_LEN(s) + MIN_COMMON,
-            SER_WIDE(s),
+            Series_Len(s) + MIN_COMMON,
+            Series_Wide(s),
             NODE_FLAG_NODE // NODE_FLAG_NODE means preserve the data
         );
     }
@@ -752,8 +752,8 @@ void Throttle_Mold(REB_MOLD *mo) {
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_LIMIT))
         return;
 
-    if (SER_LEN(mo->series) > mo->limit) {
-        SET_SERIES_LEN(mo->series, mo->limit - 3); // account for ellipsis
+    if (Series_Len(mo->series) > mo->limit) {
+        Set_Series_Len(mo->series, mo->limit - 3); // account for ellipsis
         Append_Unencoded(mo->series, "..."); // adds a null at the tail
     }
 }
@@ -774,22 +774,22 @@ void Throttle_Mold(REB_MOLD *mo) {
 // it will be copied up to `len`.  If there are not enough characters then
 // the debug build will assert.
 //
-REBSER *Pop_Molded_String_Core(REB_MOLD *mo, REBLEN len)
+Series* Pop_Molded_String_Core(REB_MOLD *mo, REBLEN len)
 {
     assert(mo->series);  // if nullptr there was no Push_Mold()
 
-    ASSERT_SERIES_TERM(mo->series);
+    Assert_Series_Term(mo->series);
     Throttle_Mold(mo);
 
-    assert(SER_LEN(mo->series) >= mo->start);
+    assert(Series_Len(mo->series) >= mo->start);
     if (len == UNKNOWN)
-        len = SER_LEN(mo->series) - mo->start;
+        len = Series_Len(mo->series) - mo->start;
 
-    REBSER *result = Make_Sized_String_UTF8(
+    Series* result = Make_Sized_String_UTF8(
         cs_cast(Binary_At(mo->series, mo->start)),
         len
     );
-    assert(SER_WIDE(result) == sizeof(REBUNI));
+    assert(Series_Wide(result) == sizeof(REBUNI));
 
     // Though the protocol of Mold_Value does terminate, it only does so if
     // it adds content to the buffer.  If we did not terminate when we
@@ -810,15 +810,15 @@ REBSER *Pop_Molded_String_Core(REB_MOLD *mo, REBLEN len)
 // Same as Pop_Molded_String() except gives back the data in UTF8 byte-size
 // series form.
 //
-REBSER *Pop_Molded_UTF8(REB_MOLD *mo)
+Series* Pop_Molded_UTF8(REB_MOLD *mo)
 {
-    assert(SER_LEN(mo->series) >= mo->start);
+    assert(Series_Len(mo->series) >= mo->start);
 
-    ASSERT_SERIES_TERM(mo->series);
+    Assert_Series_Term(mo->series);
     Throttle_Mold(mo);
 
-    REBSER *bytes = Copy_Sequence_At_Len(
-        mo->series, mo->start, SER_LEN(mo->series) - mo->start
+    Series* bytes = Copy_Sequence_At_Len(
+        mo->series, mo->start, Series_Len(mo->series) - mo->start
     );
     assert(BYTE_SIZE(bytes));
 
@@ -844,7 +844,7 @@ REBSER *Pop_Molded_UTF8(REB_MOLD *mo)
 // In its current form, the implementation is not distinguishable from
 // Pop_Molded_UTF8.
 //
-REBSER *Pop_Molded_Binary(REB_MOLD *mo)
+Series* Pop_Molded_Binary(REB_MOLD *mo)
 {
     return Pop_Molded_UTF8(mo);
 }

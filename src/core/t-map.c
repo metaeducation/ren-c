@@ -95,7 +95,7 @@ static REBCTX *Error_Conflicting_Key(const Cell* key, Specifier* specifier)
 //
 REBINT Find_Key_Hashed(
     Array* array,
-    REBSER *hashlist,
+    Series* hashlist,
     const Cell* key, // !!! assumes key is followed by value(s) via ++
     Specifier* specifier,
     REBLEN wide,
@@ -113,8 +113,8 @@ REBINT Find_Key_Hashed(
     // adding skip (and subtracting len when needed) all positions are
     // visited.  1 <= skip < len, and len is prime, so this is guaranteed.
     //
-    REBLEN len = SER_LEN(hashlist);
-    REBLEN *indexes = SER_HEAD(REBLEN, hashlist);
+    REBLEN len = Series_Len(hashlist);
+    REBLEN *indexes = Series_Head(REBLEN, hashlist);
 
     uint32_t hash = Hash_Value(key);
     REBLEN slot = hash % len; // first slot to try for this hash
@@ -204,7 +204,7 @@ REBINT Find_Key_Hashed(
 
     if (mode > 1) { // append new value to the target series
         const Cell* src = key;
-        indexes[slot] = (ARR_LEN(array) / wide) + 1;
+        indexes[slot] = (Array_Len(array) / wide) + 1;
 
         REBLEN index;
         for (index = 0; index < wide; ++src, ++index)
@@ -222,17 +222,17 @@ REBINT Find_Key_Hashed(
 //
 static void Rehash_Map(REBMAP *map)
 {
-    REBSER *hashlist = MAP_HASHLIST(map);
+    Series* hashlist = MAP_HASHLIST(map);
 
     if (!hashlist) return;
 
-    REBLEN *hashes = SER_HEAD(REBLEN, hashlist);
+    REBLEN *hashes = Series_Head(REBLEN, hashlist);
     Array* pairlist = MAP_PAIRLIST(map);
 
     Value* key = KNOWN(ARR_HEAD(pairlist));
     REBLEN n;
 
-    for (n = 0; n < ARR_LEN(pairlist); n += 2, key += 2) {
+    for (n = 0; n < Array_Len(pairlist); n += 2, key += 2) {
         const bool cased = true; // cased=true is always fine
 
         if (IS_NULLED(key + 1)) {
@@ -240,12 +240,12 @@ static void Rehash_Map(REBMAP *map)
             // It's a "zombie", move last key to overwrite it
             //
             Copy_Cell(
-                key, KNOWN(Array_At(pairlist, ARR_LEN(pairlist) - 2))
+                key, KNOWN(Array_At(pairlist, Array_Len(pairlist) - 2))
             );
             Copy_Cell(
-                &key[1], KNOWN(Array_At(pairlist, ARR_LEN(pairlist) - 1))
+                &key[1], KNOWN(Array_At(pairlist, Array_Len(pairlist) - 1))
             );
-            SET_ARRAY_LEN_NOTERM(pairlist, ARR_LEN(pairlist) - 2);
+            SET_ARRAY_LEN_NOTERM(pairlist, Array_Len(pairlist) - 2);
         }
 
         REBLEN hash = Find_Key_Hashed(
@@ -255,8 +255,8 @@ static void Rehash_Map(REBMAP *map)
 
         // discard zombies at end of pairlist
         //
-        while (IS_NULLED(Array_At(pairlist, ARR_LEN(pairlist) - 1))) {
-            SET_ARRAY_LEN_NOTERM(pairlist, ARR_LEN(pairlist) - 2);
+        while (IS_NULLED(Array_At(pairlist, Array_Len(pairlist) - 1))) {
+            SET_ARRAY_LEN_NOTERM(pairlist, Array_Len(pairlist) - 2);
         }
     }
 }
@@ -267,12 +267,12 @@ static void Rehash_Map(REBMAP *map)
 //
 // Expand hash series. Clear it but set its tail.
 //
-void Expand_Hash(REBSER *ser)
+void Expand_Hash(Series* ser)
 {
-    REBINT pnum = Get_Hash_Prime(SER_LEN(ser) + 1);
+    REBINT pnum = Get_Hash_Prime(Series_Len(ser) + 1);
     if (pnum == 0) {
         DECLARE_VALUE (temp);
-        Init_Integer(temp, SER_LEN(ser) + 1);
+        Init_Integer(temp, Series_Len(ser) + 1);
         fail (Error_Size_Limit_Raw(temp));
     }
 
@@ -280,12 +280,12 @@ void Expand_Hash(REBSER *ser)
     Remake_Series(
         ser,
         pnum + 1,
-        SER_WIDE(ser),
+        Series_Wide(ser),
         SERIES_FLAG_POWER_OF_2 // not(NODE_FLAG_NODE) => don't keep data
     );
 
     Clear_Series(ser);
-    SET_SERIES_LEN(ser, pnum);
+    Set_Series_Len(ser, pnum);
 }
 
 
@@ -307,13 +307,13 @@ REBLEN Find_Map_Entry(
 ) {
     assert(not IS_NULLED(key));
 
-    REBSER *hashlist = MAP_HASHLIST(map); // can be null
+    Series* hashlist = MAP_HASHLIST(map); // can be null
     Array* pairlist = MAP_PAIRLIST(map);
 
     assert(hashlist);
 
     // Get hash table, expand it if needed:
-    if (ARR_LEN(pairlist) > SER_LEN(hashlist) / 2) {
+    if (Array_Len(pairlist) > Series_Len(hashlist) / 2) {
         Expand_Hash(hashlist); // modifies size value
         Rehash_Map(map);
     }
@@ -324,7 +324,7 @@ REBLEN Find_Map_Entry(
         pairlist, hashlist, key, key_specifier, wide, cased, mode
     );
 
-    REBLEN *indexes = SER_HEAD(REBLEN, hashlist);
+    REBLEN *indexes = Series_Head(REBLEN, hashlist);
     REBLEN n = indexes[slot];
 
     // n==0 or pairlist[(n-1)*]=~key
@@ -337,7 +337,7 @@ REBLEN Find_Map_Entry(
     // a SET must always be done with an immutable key...because if it were
     // changed, there'd be no notification to rehash the map.
     //
-    REBSER *locker = SER(MAP_PAIRLIST(map));
+    Series* locker = SER(MAP_PAIRLIST(map));
     Ensure_Value_Immutable(key, locker);
 
     // Must set the value:
@@ -358,7 +358,7 @@ REBLEN Find_Map_Entry(
     Append_Value_Core(pairlist, key, key_specifier);
     Append_Value_Core(pairlist, val, val_specifier);
 
-    return (indexes[slot] = (ARR_LEN(pairlist) / 2));
+    return (indexes[slot] = (Array_Len(pairlist) / 2));
 }
 
 
@@ -373,7 +373,7 @@ REB_R PD_Map(
     assert(IS_MAP(pvs->out));
 
     if (opt_setval != nullptr)
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(pvs->out));
+        Fail_If_Read_Only_Series(VAL_SERIES(pvs->out));
 
     // Fetching and setting with path-based access is case-preserving for any
     // initial insertions.  However, the case-insensitivity means that all
@@ -484,7 +484,7 @@ INLINE REBMAP *Copy_Map(REBMAP *map, REBU64 types) {
     // need to be copied deeply.  This is because they are immutable at the
     // time of insertion.
     //
-    assert(ARR_LEN(copy) % 2 == 0); // should be [key value key value]...
+    assert(Array_Len(copy) % 2 == 0); // should be [key value key value]...
 
     Cell* key = ARR_HEAD(copy);
     for (; NOT_END(key); key += 2) {

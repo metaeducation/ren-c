@@ -60,7 +60,7 @@
 //
 // The PROBE macro can be used in debug builds to mold a cell much like the
 // Rebol `probe` operation.  But it's actually polymorphic, and if you have
-// a REBSER*, REBCTX*, or Array* it can be used with those as well.  In C++,
+// a Series*, REBCTX*, or Array* it can be used with those as well.  In C++,
 // you can even get the same value and type out as you put in...just like in
 // Rebol, permitting things like `return PROBE(Make_Some_Series(...));`
 //
@@ -1331,7 +1331,7 @@ INLINE void SET_EVENT_KEY(Cell* v, REBLEN k, REBLEN c) {
 // (indicates a relative binding), or to a context's varlist (which indicates
 // a specific binding.)
 //
-// NOTE: Instead of using null for UNBOUND, a special global REBSER struct was
+// NOTE: Instead of using null for UNBOUND, a special global StubStruct was
 // experimented with.  It was at a location in memory known at compile time,
 // and it had its ->header and ->info bits set in such a way as to avoid the
 // need for some conditional checks.  e.g. instead of writing:

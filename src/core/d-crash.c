@@ -46,7 +46,7 @@
 //
 // Abnormal termination of Rebol.  The debug build is designed to present
 // as much diagnostic information as it can on the passed-in pointer, which
-// includes where a REBSER* was allocated or freed.  Or if a Value* is
+// includes where a Series* was allocated or freed.  Or if a Value* is
 // passed in it tries to say what tick it was initialized on and what series
 // it lives in.  If the pointer is a simple UTF-8 string pointer, then that
 // is delivered as a message.
@@ -59,7 +59,7 @@
 // coverity[+kill]
 //
 ATTRIBUTE_NO_RETURN void Panic_Core(
-    const void *p, // REBSER* (array, context, etc), Value*, or UTF-8 char*
+    const void *p, // Series* (array, context, etc), Value*, or UTF-8 char*
     REBTCK tick,
     const char *file, // UTF8
     int line
@@ -151,7 +151,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         break;
 
     case DETECTED_AS_SERIES: {
-        REBSER *s = m_cast(REBSER*, cast(const REBSER*, p)); // don't mutate
+        Series* s = m_cast(Series*, cast(const Series*, p)); // don't mutate
       #if !defined(NDEBUG)
         #if 0
             //
@@ -170,7 +170,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
                 PROBE(context);
             }
         }
-        Panic_Series_Debug(cast(REBSER*, s));
+        Panic_Series_Debug(cast(Series*, s));
       #else
         UNUSED(s);
         strncat(buf, "valid series", PANIC_BUF_SIZE - strlen(buf));
@@ -181,7 +181,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
       #if defined(NDEBUG)
         strncat(buf, "freed series", PANIC_BUF_SIZE - strlen(buf));
       #else
-        Panic_Series_Debug(m_cast(REBSER*, cast(const REBSER*, p)));
+        Panic_Series_Debug(m_cast(Series*, cast(const Series*, p)));
       #endif
         break;
 

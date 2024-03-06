@@ -380,8 +380,8 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
   #endif
 
     // Cast checks in SER(), NOD(), ARR() are expensive--they make sure that
-    // when you have a void pointer and cast it to a REBSER, that the header
-    // actually is for a REBSER (etc.)  Disable this by default unless you are
+    // when you have a void pointer and cast it to a Series, that the header
+    // actually is for a Series (etc.)  Disable this by default unless you are
     // using address sanitizer, where you expect your executable to be slow.
     //
     #ifdef __SANITIZE_ADDRESS__
@@ -418,7 +418,7 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
 
 #ifdef DEBUG_TRACK_EXTEND_CELLS
     #define DEBUG_TRACK_CELLS
-    #define UNUSUAL_CELL_SIZE // sizeof(Cell)*2 may be > sizeof(REBSER)
+    #define UNUSUAL_CELL_SIZE  // sizeof(Cell)*2 may be > sizeof(Stub)
 #endif
 
 // Option(TYPE*) is a poor-man's implementation of optionals that lets you

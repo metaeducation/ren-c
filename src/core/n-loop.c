@@ -385,7 +385,7 @@ struct Loop_Each_State {
     LOOP_MODE mode; // FOR-EACH, MAP-EACH, EVERY
     REBCTX *pseudo_vars_ctx; // vars made by Virtual_Bind_To_New_Context()
     Value* data; // the data argument passed in
-    REBSER *data_ser; // series data being enumerated (if applicable)
+    Series* data_ser; // series data being enumerated (if applicable)
     REBLEN data_idx; // index into the data for filling current variable
     REBLEN data_len; // length of the data
 };
@@ -712,7 +712,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
         if (took_hold)
             SET_SER_INFO(les.data_ser, SERIES_INFO_HOLD);
 
-        les.data_len = SER_LEN(les.data_ser); // HOLD so length can't change
+        les.data_len = Series_Len(les.data_ser); // HOLD so length can't change
         if (les.data_idx >= les.data_len) {
             assert(IS_VOID(OUT));  // result if loop body never runs
             r = nullptr;
@@ -1106,7 +1106,7 @@ DECLARE_NATIVE(every)
 struct Remove_Each_State {
     Value* out;
     Value* data;
-    REBSER *series;
+    Series* series;
     bool broke; // e.g. a BREAK ran
     const Value* body;
     REBCTX *context;
@@ -1191,10 +1191,10 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
         // into it.  Revisit if this inhibits cool UTF-8 based tricks the
         // mold buffer might do otherwise.
         //
-        REBSER *popped = Pop_Molded_Binary(res->mo);
+        Series* popped = Pop_Molded_Binary(res->mo);
 
-        assert(SER_LEN(popped) <= VAL_LEN_HEAD(res->data));
-        count = VAL_LEN_HEAD(res->data) - SER_LEN(popped);
+        assert(Series_Len(popped) <= VAL_LEN_HEAD(res->data));
+        count = VAL_LEN_HEAD(res->data) - Series_Len(popped);
 
         // We want to swap out the data properties of the series, so the
         // identity of the incoming series is kept but now with different
@@ -1223,10 +1223,10 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
             );
         }
 
-        REBSER *popped = Pop_Molded_String(res->mo);
+        Series* popped = Pop_Molded_String(res->mo);
 
-        assert(SER_LEN(popped) <= VAL_LEN_HEAD(res->data));
-        count = VAL_LEN_HEAD(res->data) - SER_LEN(popped);
+        assert(Series_Len(popped) <= VAL_LEN_HEAD(res->data));
+        count = VAL_LEN_HEAD(res->data) - Series_Len(popped);
 
         // We want to swap out the data properties of the series, so the
         // identity of the incoming series is kept but now with different
@@ -1254,7 +1254,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
 
     REBLEN index = res->start; // declare here, avoid longjmp clobber warnings
 
-    REBLEN len = SER_LEN(res->series); // temp read-only, this won't change
+    REBLEN len = Series_Len(res->series); // temp read-only, this won't change
     while (index < len) {
         assert(res->start == index);
 
@@ -1396,9 +1396,9 @@ DECLARE_NATIVE(remove_each)
     // even if the REMOVE-EACH turns out to be a no-op.
     //
     res.series = VAL_SERIES(res.data);
-    FAIL_IF_READ_ONLY_SERIES(res.series);
+    Fail_If_Read_Only_Series(res.series);
 
-    if (VAL_INDEX(res.data) >= SER_LEN(res.series)) {
+    if (VAL_INDEX(res.data) >= Series_Len(res.series)) {
         //
         // If index is past the series end, then there's nothing removable.
         //

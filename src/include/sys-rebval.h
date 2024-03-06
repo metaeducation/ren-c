@@ -46,7 +46,7 @@
 // (at least until they become arbitrary precision) but it's not enough for
 // a generic BLOCK! or an ACTION! (for instance).  So the remaining bits
 // often will point to one or more Rebol "nodes" (see %sys-series.h for an
-// explanation of REBSER, Array, REBCTX, and REBMAP.)
+// explanation of Series, Array, REBCTX, and REBMAP.)
 //
 // So the next part of the structure is the "Extra".  This is the size of one
 // pointer, which sits immediately after the header (that's also the size of
@@ -243,14 +243,14 @@
 //
 // https://stackoverflow.com/q/51846048
 //
-INLINE union Reb_Header Endlike_Header(uintptr_t bits) {
+INLINE union HeaderUnion Endlike_Header(uintptr_t bits) {
     assert(
         0 == (bits & (
             NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
             | FLAG_SECOND_BYTE(255)
         ))
     );
-    union Reb_Header h;
+    union HeaderUnion h;
     h.bits = bits | NODE_FLAG_NODE;
     return h;
 }
@@ -361,10 +361,10 @@ struct Reb_Series_Payload {
     //
     // `series` represents the actual physical underlying data, which is
     // essentially a vector of equal-sized items.  The length of the item
-    // (the series "width") is kept within the REBSER abstraction.  See the
+    // (the series "width") is kept within the Series abstraction.  See the
     // file %sys-series.h for notes.
     //
-    REBSER *series;
+    Series* series;
 
     // `index` is the 0-based position into the series represented by this
     // ANY-VALUE! (so if it is 0 then that means a Rebol index of 1).
@@ -461,11 +461,11 @@ struct Reb_Context_Payload {
     // element specially.  It stores a copy of the ANY-CONTEXT! value that
     // refers to itself.
     //
-    // The `keylist` is held in the varlist's Reb_Series.link field, and it
+    // The `keylist` is held in the varlist's Stub.link field, and it
     // may be shared with an arbitrary number of other contexts.  Changing
     // the keylist involves making a copy if it is shared.
     //
-    // REB_MODULE depends on a property stored in the "meta" Reb_Series.link
+    // REB_MODULE depends on a property stored in the "meta" Stub.link
     // field of the keylist, which is another object's-worth of data *about*
     // the module's contents (e.g. the processed header)
     //
@@ -532,7 +532,7 @@ struct Reb_Partial_Payload {
 
 
 // Handles hold a pointer and a size...which allows them to stand-in for
-// a binary REBSER.
+// a binary series.
 //
 // Since a function pointer and a data pointer aren't necessarily the same
 // size, the data has to be a union.
@@ -653,9 +653,9 @@ union Reb_Value_Extra {
     unsigned m0:32; // !!! significand, lowest part - see notes on Reb_Money
 
     // There are two types of HANDLE!, and one version leverages the GC-aware
-    // ability of a REBSER to know when no references to the handle exist and
+    // ability of a Stub to know when no references to the handle exist and
     // call a cleanup function.  The GC-aware variant allocates a "singular"
-    // array, which is the exact size of a REBSER and carries the canon data.
+    // array, which is the exact size of a Stub and carries the canon data.
     // If the cheaper kind that's just raw data and no callback, this is null.
     //
     Array* singular;
@@ -717,7 +717,7 @@ union Reb_Value_Payload {
     struct Reb_Value
 #endif
     {
-        union Reb_Header header;
+        union HeaderUnion header;
         union Reb_Value_Extra extra;
         union Reb_Value_Payload payload;
 

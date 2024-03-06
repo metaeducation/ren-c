@@ -69,13 +69,13 @@ INLINE Option(SymId) Symbol_Id(Symbol* str) {
 }
 
 INLINE size_t Symbol_Size(Symbol* str) {
-    return SER_LEN(str); // number of bytes in seris is series length, ATM
+    return Series_Len(str); // number of bytes in seris is series length, ATM
 }
 
 INLINE Symbol* Canon(SymId sym) {
     assert(cast(REBLEN, sym) != 0);
-    assert(cast(REBLEN, sym) < SER_LEN(PG_Symbol_Canons));
-    return *SER_AT(Symbol*, PG_Symbol_Canons, cast(REBLEN, sym));
+    assert(cast(REBLEN, sym) < Series_Len(PG_Symbol_Canons));
+    return *Series_At(Symbol*, PG_Symbol_Canons, cast(REBLEN, sym));
 }
 
 INLINE bool Are_Synonyms(Symbol* s1, Symbol* s2) {
@@ -93,39 +93,39 @@ INLINE bool Are_Synonyms(Symbol* s1, Symbol* s2) {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-INLINE bool Is_Series_Ucs2(REBSER* s) {
+INLINE bool Is_Series_Ucs2(Series* s) {
     //
     // There's no specific flag for UCS-2, but these are the only 2-byte
     // series at the moment.
     //
-    return SER_WIDE(s) == sizeof(REBUNI);
+    return Series_Wide(s) == sizeof(REBUNI);
 }
 
 INLINE REBLEN String_Len(String* s) {
-    assert(SER_WIDE(s) == sizeof(REBUNI));
-    return SER_LEN(s);
+    assert(Series_Wide(s) == sizeof(REBUNI));
+    return Series_Len(s);
 }
 
 INLINE void Set_String_Len(String* s, REBLEN len) {
-    assert(SER_WIDE(s) == sizeof(REBUNI));
-    SET_SERIES_LEN(s, len);
+    assert(Series_Wide(s) == sizeof(REBUNI));
+    Set_Series_Len(s, len);
 }
 
 #define String_At(s,n) \
-    AS_REBCHR(SER_AT(REBUNI, (s), (n)))
+    AS_REBCHR(Series_At(REBUNI, (s), (n)))
 
 #define String_Head(s) \
-    SER_HEAD(REBUNI, (s))
+    Series_Head(REBUNI, (s))
 
 #define String_Tail(s) \
-    SER_TAIL(REBUNI, (s))
+    Series_Tail(REBUNI, (s))
 
 #define String_Last(s) \
-    SER_LAST(REBUNI, (s))
+    Series_Last(REBUNI, (s))
 
 INLINE void Term_String_Len(String* s, REBLEN len) {
-    SET_SERIES_LEN(s, len);
-    *SER_AT(REBUNI, s, len) = '\0';
+    Set_Series_Len(s, len);
+    *Series_At(REBUNI, s, len) = '\0';
 }
 
 #define Cell_String(cell) \
@@ -183,17 +183,17 @@ INLINE REBSIZ VAL_SIZE_LIMIT_AT(
 // create new strings, if possible.
 //
 
-INLINE REBUNI GET_ANY_CHAR(REBSER *s, REBLEN n) {
-    return BYTE_SIZE(s) ? *Binary_At(s, n) : *SER_AT(REBUNI, s, n);
+INLINE REBUNI GET_ANY_CHAR(Series* s, REBLEN n) {
+    return BYTE_SIZE(s) ? *Binary_At(s, n) : *Series_At(REBUNI, s, n);
 }
 
-INLINE void SET_ANY_CHAR(REBSER *s, REBLEN n, REBUNI c) {
+INLINE void SET_ANY_CHAR(Series* s, REBLEN n, REBUNI c) {
     if (BYTE_SIZE(s)) {
         assert(c <= 255);
         *Binary_At(s, n) = c;
     }
     else
-        *SER_AT(REBUNI, s, n) = c;
+        *Series_At(REBUNI, s, n) = c;
 }
 
 #define VAL_ANY_CHAR(v) \
@@ -253,13 +253,13 @@ INLINE const Byte *Back_Scan_UTF8_Char(
 // rebStringXXX() APIs for this).  Note that these routines may fail() if the
 // data they are given is not UTF-8.
 
-INLINE REBSER *Make_String_UTF8(const char *utf8)
+INLINE Series* Make_String_UTF8(const char *utf8)
 {
     const bool crlf_to_lf = false;
     return Append_UTF8_May_Fail(nullptr, utf8, strsize(utf8), crlf_to_lf);
 }
 
-INLINE REBSER *Make_Sized_String_UTF8(const char *utf8, size_t size)
+INLINE Series* Make_Sized_String_UTF8(const char *utf8, size_t size)
 {
     const bool crlf_to_lf = false;
     return Append_UTF8_May_Fail(nullptr, utf8, size, crlf_to_lf);
@@ -285,15 +285,15 @@ INLINE REBINT First_Hash_Candidate_Slot(
 // Copy helpers
 //
 
-INLINE REBSER *Copy_Sequence_At_Position(const Value* v)
+INLINE Series* Copy_Sequence_At_Position(const Value* v)
 {
     return Copy_Sequence_At_Len_Extra(
         VAL_SERIES(v), VAL_INDEX(v), VAL_LEN_AT(v), 0
     );
 }
 
-INLINE REBSER *Copy_Sequence_At_Len(
-    REBSER *s,
+INLINE Series* Copy_Sequence_At_Len(
+    Series* s,
     REBLEN index,
     REBLEN len
 ){

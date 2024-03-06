@@ -83,7 +83,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
             return Init_Logic(OUT, index > tail);
 
         case SYM_FILE: {
-            REBSER *s = VAL_SERIES(value);
+            Series* s = VAL_SERIES(value);
             if (IS_SER_ARRAY(s) and GET_SER_FLAG(s, ARRAY_FLAG_FILE_LINE)) {
                 //
                 // !!! How to tell whether it's a URL! or a FILE! ?
@@ -91,14 +91,14 @@ REB_R Series_Common_Action_Maybe_Unhandled(
                 Scan_File(
                     OUT,
                     cb_cast(Symbol_Head(LINK(s).file)),
-                    SER_LEN(LINK(s).file)
+                    Series_Len(LINK(s).file)
                 );
                 return OUT;
             }
             return nullptr; }
 
         case SYM_LINE: {
-            REBSER *s = VAL_SERIES(value);
+            Series* s = VAL_SERIES(value);
             if (IS_SER_ARRAY(s) and GET_SER_FLAG(s, ARRAY_FLAG_FILE_LINE))
                 return Init_Integer(OUT, MISC(s).line);
             return nullptr; }
@@ -173,7 +173,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
             fail (Error_Bad_Refines_Raw());
         }
 
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(value));
+        Fail_If_Read_Only_Series(VAL_SERIES(value));
 
         REBINT len;
         if (REF(part))
@@ -437,10 +437,10 @@ REBLEN Find_In_Array_Simple(Array* array, REBLEN index, const Cell* target)
 {
     Cell* value = ARR_HEAD(array);
 
-    for (; index < ARR_LEN(array); index++) {
+    for (; index < Array_Len(array); index++) {
         if (0 == Cmp_Value(value + index, target, false))
             return index;
     }
 
-    return ARR_LEN(array);
+    return Array_Len(array);
 }

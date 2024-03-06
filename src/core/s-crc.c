@@ -272,7 +272,7 @@ uint32_t Hash_Value(const Cell* v)
         hash = Hash_Bytes_Or_Uni(
             VAL_RAW_DATA_AT(v),
             VAL_LEN_HEAD(v),
-            SER_WIDE(VAL_SERIES(v))
+            Series_Wide(VAL_SERIES(v))
         );
         break;
 
@@ -295,7 +295,7 @@ uint32_t Hash_Value(const Cell* v)
         // problems.  Do not hash mutable arrays unless you are sure hashings
         // won't cross a mutation.
         //
-        hash = ARR_LEN(Cell_Array(v));
+        hash = Array_Len(Cell_Array(v));
         break;
 
     case REB_DATATYPE: {
@@ -389,7 +389,7 @@ uint32_t Hash_Value(const Cell* v)
 //
 //  Make_Hash_Sequence: C
 //
-REBSER *Make_Hash_Sequence(REBLEN len)
+Series* Make_Hash_Sequence(REBLEN len)
 {
     REBLEN n = Get_Hash_Prime(len * 2); // best when 2X # of keys
     if (n == 0) {
@@ -399,9 +399,9 @@ REBSER *Make_Hash_Sequence(REBLEN len)
         fail (Error_Size_Limit_Raw(temp));
     }
 
-    REBSER *ser = Make_Series(n + 1, sizeof(REBLEN));
+    Series* ser = Make_Series(n + 1, sizeof(REBLEN));
     Clear_Series(ser);
-    SET_SERIES_LEN(ser, n);
+    Set_Series_Len(ser, n);
 
     return ser;
 }
@@ -411,15 +411,15 @@ REBSER *Make_Hash_Sequence(REBLEN len)
 //  Init_Map: C
 //
 // A map has an additional hash element hidden in the ->extra
-// field of the REBSER which needs to be given to memory
+// field of the Stub which needs to be given to memory
 // management as well.
 //
 Value* Init_Map(Cell* out, REBMAP *map)
 {
     if (MAP_HASHLIST(map))
-        ENSURE_SERIES_MANAGED(MAP_HASHLIST(map));
+        Force_Series_Managed(MAP_HASHLIST(map));
 
-    ENSURE_ARRAY_MANAGED(MAP_PAIRLIST(map));
+    Force_Series_Managed(MAP_PAIRLIST(map));
 
     RESET_CELL(out, REB_MAP);
     INIT_BINDING(out, UNBOUND);
@@ -438,17 +438,17 @@ Value* Init_Map(Cell* out, REBMAP *map)
 //
 // Note: hash array contents (indexes) are 1-based!
 //
-REBSER *Hash_Block(const Value* block, REBLEN skip, bool cased)
+Series* Hash_Block(const Value* block, REBLEN skip, bool cased)
 {
     REBLEN n;
-    REBSER *hashlist;
+    Series* hashlist;
     REBLEN *hashes;
     Array* array = Cell_Array(block);
     Cell* value;
 
     // Create the hash array (integer indexes):
     hashlist = Make_Hash_Sequence(VAL_LEN_AT(block));
-    hashes = SER_HEAD(REBLEN, hashlist);
+    hashes = Series_Head(REBLEN, hashlist);
 
     value = Cell_Array_At(block);
     if (IS_END(value))

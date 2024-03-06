@@ -675,11 +675,11 @@ DECLARE_NATIVE(hijack)
         // ARR_SINGLE(info) being correct.  That would mean hijack reversals
         // would need to restore the *exact* capacity.  Review.
 
-        REBLEN details_len = ARR_LEN(hijacker_details);
-        if (SER_REST(SER(victim_details)) < details_len + 1)
-            EXPAND_SERIES_TAIL(
+        REBLEN details_len = Array_Len(hijacker_details);
+        if (Series_Rest(SER(victim_details)) < details_len + 1)
+            Expand_Series_Tail(
                 SER(victim_details),
-                details_len + 1 - SER_REST(SER(victim_details))
+                details_len + 1 - Series_Rest(SER(victim_details))
             );
 
         Cell* src = ARR_HEAD(hijacker_details);
@@ -701,7 +701,7 @@ DECLARE_NATIVE(hijack)
         //
         MISC(victim_details).dispatcher = &Hijacker_Dispatcher;
 
-        if (ARR_LEN(victim_details) < 1)
+        if (Array_Len(victim_details) < 1)
             Alloc_Tail_Array(victim_details);
         Copy_Cell(ARR_HEAD(victim_details), ARG(hijacker));
         TERM_ARRAY_LEN(victim_details, 1);
@@ -801,7 +801,7 @@ DECLARE_NATIVE(tighten)
     // This is why we pass the original in as the "underlying" function,
     // which is used when the frame is being pushed.
     //
-    REBLEN details_len = ARR_LEN(ACT_DETAILS(original));
+    REBLEN details_len = Array_Len(ACT_DETAILS(original));
     REBACT *tightened = Make_Action(
         paramlist,
         ACT_DISPATCHER(original),
@@ -833,7 +833,7 @@ DECLARE_NATIVE(tighten)
 REB_R N_Shot_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
-    assert(ARR_LEN(details) == 1);
+    assert(Array_Len(details) == 1);
 
     Cell* n = ARR_HEAD(details);
     if (VAL_INT64(n) == 0)
@@ -851,7 +851,7 @@ REB_R N_Shot_Dispatcher(Level* L)
 REB_R N_Upshot_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
-    assert(ARR_LEN(details) == 1);
+    assert(Array_Len(details) == 1);
 
     Cell* n = ARR_HEAD(details);
     if (VAL_INT64(n) < 0) {

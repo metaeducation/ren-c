@@ -52,7 +52,7 @@ struct Reb_Event_Payload {
 union Reb_Eventee {
     REBREQ *req; // request (for device events)
 #ifdef REB_DEF
-    REBSER *ser; // port or object
+    Series* ser; // port or object
 #else
     void *ser;
 #endif

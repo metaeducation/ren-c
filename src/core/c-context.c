@@ -32,9 +32,9 @@
 // variable values).  They are used by OBJECT!, PORT!, FRAME!, etc.
 //
 // The REBCTX* is how contexts are passed around as a single pointer.  This
-// pointer is actually just an array REBSER which represents the variable
+// pointer is actually just an array Series which represents the variable
 // values.  The keylist can be reached through the ->link field of that
-// REBSER, and the [0] value of the variable array is an "archetype instance"
+// stub, and the [0] value of the variable array is an "archetype instance"
 // of whatever kind of cell the context represents.
 //
 //
@@ -157,7 +157,7 @@ bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
         else
             LINK(copy).ancestor = LINK(keylist).ancestor;
 
-        MANAGE_ARRAY(copy);
+        Manage_Series(copy);
         INIT_CTX_KEYLIST_UNIQUE(context, copy);
 
         return true;
@@ -171,7 +171,7 @@ bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
     // to mark the flag indicating it's shared.  Extend it directly.
 
     Extend_Series(SER(keylist), delta);
-    TERM_ARRAY_LEN(keylist, ARR_LEN(keylist));
+    TERM_ARRAY_LEN(keylist, Array_Len(keylist));
 
     return false;
 }
@@ -187,7 +187,7 @@ void Expand_Context(REBCTX *context, REBLEN delta)
     // varlist is unique to each object--expand without making a copy.
     //
     Extend_Series(SER(CTX_VARLIST(context)), delta);
-    TERM_ARRAY_LEN(CTX_VARLIST(context), ARR_LEN(CTX_VARLIST(context)));
+    TERM_ARRAY_LEN(CTX_VARLIST(context), Array_Len(CTX_VARLIST(context)));
 
     Expand_Context_Keylist_Core(context, delta);
 }
@@ -224,21 +224,21 @@ Value* Append_Context(
     // Review why this is expanding when the callers are expanding.  Should
     // also check that redundant keys aren't getting added here.
     //
-    EXPAND_SERIES_TAIL(SER(keylist), 1);
+    Expand_Series_Tail(SER(keylist), 1);
     Value* key = Init_Typeset(
         ARR_LAST(keylist), // !!! non-dynamic, could optimize
         TS_VALUE, // !!! Currently not paid attention to
         symbol ? unwrap(symbol) : Cell_Word_Symbol(unwrap(any_word))
     );
     UNUSED(key);
-    TERM_ARRAY_LEN(keylist, ARR_LEN(keylist));
+    TERM_ARRAY_LEN(keylist, Array_Len(keylist));
 
     // Add a slot to the var list
     //
-    EXPAND_SERIES_TAIL(SER(CTX_VARLIST(context)), 1);
+    Expand_Series_Tail(SER(CTX_VARLIST(context)), 1);
 
     Value* value = Init_Trash(ARR_LAST(CTX_VARLIST(context)));
-    TERM_ARRAY_LEN(CTX_VARLIST(context), ARR_LEN(CTX_VARLIST(context)));
+    TERM_ARRAY_LEN(CTX_VARLIST(context), Array_Len(CTX_VARLIST(context)));
 
     if (not any_word)
         assert(symbol);
@@ -341,7 +341,7 @@ void Collect_Start(struct Reb_Collector* collector, REBFLGS flags)
     collector->index = 1;
     INIT_BINDER(&collector->binder);
 
-    assert(ARR_LEN(BUF_COLLECT) == 0); // should be empty
+    assert(Array_Len(BUF_COLLECT) == 0); // should be empty
 }
 
 
@@ -354,7 +354,7 @@ Array* Grab_Collected_Array_Managed(struct Reb_Collector *collector)
 
     // We didn't terminate as we were collecting, so terminate now.
     //
-    TERM_ARRAY_LEN(BUF_COLLECT, ARR_LEN(BUF_COLLECT));
+    TERM_ARRAY_LEN(BUF_COLLECT, Array_Len(BUF_COLLECT));
 
     // If no new words, prior context.  Note length must include the slot
     // for the rootkey...and note also this means the rootkey cell *may*
@@ -380,7 +380,7 @@ void Collect_End(struct Reb_Collector *cl)
 {
     // We didn't terminate as we were collecting, so terminate now.
     //
-    TERM_ARRAY_LEN(BUF_COLLECT, ARR_LEN(BUF_COLLECT));
+    TERM_ARRAY_LEN(BUF_COLLECT, Array_Len(BUF_COLLECT));
 
     // Reset binding table (note BUF_COLLECT may have expanded)
     //
@@ -441,7 +441,7 @@ void Collect_Context_Keys(
     // necessary if duplicates are found, but the actual buffer length will be
     // set correctly by the end.)
     //
-    EXPAND_SERIES_TAIL(SER(BUF_COLLECT), CTX_LEN(context));
+    Expand_Series_Tail(SER(BUF_COLLECT), CTX_LEN(context));
     SET_ARRAY_LEN_NOTERM(BUF_COLLECT, cl->index);
 
     Cell* collect = ARR_TAIL(BUF_COLLECT); // get address *after* expansion
@@ -463,7 +463,7 @@ void Collect_Context_Keys(
         //
         SET_ARRAY_LEN_NOTERM(
             BUF_COLLECT,
-            ARR_LEN(BUF_COLLECT) + (collect - ARR_TAIL(BUF_COLLECT))
+            Array_Len(BUF_COLLECT) + (collect - ARR_TAIL(BUF_COLLECT))
         );
     }
     else {
@@ -474,7 +474,7 @@ void Collect_Context_Keys(
             Add_Binder_Index(&cl->binder, Key_Canon(key), cl->index);
         }
         SET_ARRAY_LEN_NOTERM(
-            BUF_COLLECT, ARR_LEN(BUF_COLLECT) + CTX_LEN(context)
+            BUF_COLLECT, Array_Len(BUF_COLLECT) + CTX_LEN(context)
         );
     }
 
@@ -509,7 +509,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
 
             ++cl->index;
 
-            EXPAND_SERIES_TAIL(SER(BUF_COLLECT), 1);
+            Expand_Series_Tail(SER(BUF_COLLECT), 1);
             if (cl->flags & COLLECT_AS_TYPESET)
                 Init_Typeset(
                     ARR_LAST(BUF_COLLECT),
@@ -627,7 +627,7 @@ Array* Collect_Keylist_Managed(
     // array, otherwise reuse the original
     //
     Array* keylist;
-    if (prior != nullptr and ARR_LEN(CTX_KEYLIST(prior)) == ARR_LEN(BUF_COLLECT))
+    if (prior != nullptr and Array_Len(CTX_KEYLIST(prior)) == Array_Len(BUF_COLLECT))
         keylist = CTX_KEYLIST(prior);
     else
         keylist = Grab_Collected_Array_Managed(cl);
@@ -670,7 +670,7 @@ Array* Collect_Unique_Words_Managed(
     assert(not (flags & COLLECT_AS_TYPESET)); // only used for making keylists
     Collect_Start(cl, flags);
 
-    assert(ARR_LEN(BUF_COLLECT) == 0); // should be empty
+    assert(Array_Len(BUF_COLLECT) == 0); // should be empty
 
     // The way words get "ignored" in the collecting process is to give them
     // dummy bindings so it appears they've "already been collected", but
@@ -798,7 +798,7 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
         COLLECT_ONLY_SET_WORDS | COLLECT_ENSURE_SELF
     );
 
-    REBLEN len = ARR_LEN(keylist);
+    REBLEN len = Array_Len(keylist);
     Array* varlist = Make_Array_Core(
         len,
         SERIES_MASK_CONTEXT
@@ -1047,7 +1047,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
 
     // Collect_Keys_End() terminates, but Collect_Context_Inner_Loop() doesn't.
     //
-    TERM_ARRAY_LEN(BUF_COLLECT, ARR_LEN(BUF_COLLECT));
+    TERM_ARRAY_LEN(BUF_COLLECT, Array_Len(BUF_COLLECT));
 
     // Allocate child (now that we know the correct size).  Obey invariant
     // that keylists are always managed.  The BUF_COLLECT contains only
@@ -1069,7 +1069,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
         LINK(keylist).ancestor = CTX_KEYLIST(parent1);
 
     Array* varlist = Make_Array_Core(
-        ARR_LEN(keylist),
+        Array_Len(keylist),
         SERIES_MASK_CONTEXT
             | NODE_FLAG_MANAGED // rebind below requires managed context
     );
@@ -1099,7 +1099,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
     // Update the child tail before making calls to CTX_VAR(), because the
     // debug build does a length check.
     //
-    TERM_ARRAY_LEN(varlist, ARR_LEN(keylist));
+    TERM_ARRAY_LEN(varlist, Array_Len(keylist));
 
     // Copy parent2 values:
     Value* key = CTX_KEYS_HEAD(parent2);
@@ -1398,8 +1398,8 @@ void Assert_Context_Core(REBCTX *c)
     if (not ANY_CONTEXT(rootvar))
         panic (rootvar);
 
-    REBLEN keys_len = ARR_LEN(keylist);
-    REBLEN vars_len = ARR_LEN(varlist);
+    REBLEN keys_len = Array_Len(keylist);
+    REBLEN vars_len = Array_Len(varlist);
 
     if (keys_len < 1)
         panic (keylist);

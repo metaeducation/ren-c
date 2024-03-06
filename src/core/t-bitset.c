@@ -32,11 +32,11 @@
 
 #define MAX_BITSET 0x7fffffff
 
-INLINE bool BITS_NOT(REBSER *s) {
+INLINE bool BITS_NOT(Series* s) {
     return MISC(s).negated;
 }
 
-INLINE void INIT_BITS_NOT(REBSER *s, bool negated) {
+INLINE void INIT_BITS_NOT(Series* s, bool negated) {
     MISC(s).negated = negated;
 }
 
@@ -62,14 +62,14 @@ REBINT CT_Bitset(const Cell* a, const Cell* b, REBINT mode)
 //
 // len: the # of bits in the bitset.
 //
-REBSER *Make_Bitset(REBLEN len)
+Series* Make_Bitset(REBLEN len)
 {
-    REBSER *ser;
+    Series* ser;
 
     len = (len + 7) / 8;
     ser = Make_Binary(len);
     Clear_Series(ser);
-    SET_SERIES_LEN(ser, len);
+    Set_Series_Len(ser, len);
     INIT_BITS_NOT(ser, false);
 
     return ser;
@@ -85,7 +85,7 @@ void MF_Bitset(REB_MOLD *mo, const Cell* v, bool form)
 
     Pre_Mold(mo, v); // #[bitset! or make bitset!
 
-    REBSER *s = VAL_SERIES(v);
+    Series* s = VAL_SERIES(v);
 
     if (BITS_NOT(s))
         Append_Unencoded(mo->series, "[not bits ");
@@ -117,7 +117,7 @@ REB_R MAKE_Bitset(Value* out, enum Reb_Kind kind, const Value* arg)
     if (len < 0 || len > 0x0FFFFFFF)
         fail (Error_Invalid(arg));
 
-    REBSER *ser = Make_Bitset(len);
+    Series* ser = Make_Bitset(len);
     Init_Bitset(out, ser);
 
     if (IS_INTEGER(arg))
@@ -211,10 +211,10 @@ REBINT Find_Max_Bit(const Cell* val)
 // Check bit indicated. Returns true if set.
 // If uncased is true, try to match either upper or lower case.
 //
-bool Check_Bit(REBSER *bset, REBLEN c, bool uncased)
+bool Check_Bit(Series* bset, REBLEN c, bool uncased)
 {
     REBLEN i, n = c;
-    REBLEN tail = SER_LEN(bset);
+    REBLEN tail = Series_Len(bset);
     bool flag = false;
 
     if (uncased) {
@@ -249,10 +249,10 @@ retry:
 //
 // Set/clear a single bit. Expand if needed.
 //
-void Set_Bit(REBSER *bset, REBLEN n, bool set)
+void Set_Bit(Series* bset, REBLEN n, bool set)
 {
     REBLEN i = n >> 3;
-    REBLEN tail = SER_LEN(bset);
+    REBLEN tail = Series_Len(bset);
     Byte bit;
 
     // Expand if not enough room:
@@ -275,9 +275,9 @@ void Set_Bit(REBSER *bset, REBLEN n, bool set)
 //
 // Set/clear bits indicated by strings and chars and ranges.
 //
-bool Set_Bits(REBSER *bset, const Value* val, bool set)
+bool Set_Bits(Series* bset, const Value* val, bool set)
 {
-    FAIL_IF_READ_ONLY_SERIES(bset);
+    Fail_If_Read_Only_Series(bset);
 
     if (IS_CHAR(val)) {
         Set_Bit(bset, VAL_CHAR(val), set);
@@ -399,7 +399,7 @@ bool Set_Bits(REBSER *bset, const Value* val, bool set)
             if (not IS_BINARY(item))
                 return false;
             REBLEN n = VAL_LEN_AT(item);
-            REBUNI c = SER_LEN(bset);
+            REBUNI c = Series_Len(bset);
             if (n >= c) {
                 Expand_Series(bset, c, (n - c));
                 CLEAR(Binary_At(bset, c), (n - c));
@@ -422,7 +422,7 @@ bool Set_Bits(REBSER *bset, const Value* val, bool set)
 // Check bits indicated by strings and chars and ranges.
 // If uncased is true, try to match either upper or lower case.
 //
-bool Check_Bits(REBSER *bset, const Value* val, bool uncased)
+bool Check_Bits(Series* bset, const Value* val, bool uncased)
 {
     if (IS_CHAR(val))
         return Check_Bit(bset, VAL_CHAR(val), uncased);
@@ -532,7 +532,7 @@ REB_R PD_Bitset(
     const Value* picker,
     const Value* opt_setval
 ){
-    REBSER *ser = VAL_SERIES(pvs->out);
+    Series* ser = VAL_SERIES(pvs->out);
 
     if (opt_setval == nullptr) {
         if (Check_Bits(ser, picker, false))
@@ -559,9 +559,9 @@ REB_R PD_Bitset(
 //
 // Remove extra zero bytes from end of byte string.
 //
-void Trim_Tail_Zeros(REBSER *ser)
+void Trim_Tail_Zeros(Series* ser)
 {
-    REBLEN len = SER_LEN(ser);
+    REBLEN len = Series_Len(ser);
     Byte *bp = Binary_Head(ser);
 
     while (len > 0 && bp[len] == 0)
@@ -570,7 +570,7 @@ void Trim_Tail_Zeros(REBSER *ser)
     if (bp[len] != 0)
         len++;
 
-    SET_SERIES_LEN(ser, len);
+    Set_Series_Len(ser, len);
 }
 
 
@@ -581,7 +581,7 @@ REBTYPE(Bitset)
 {
     Value* value = D_ARG(1);
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
-    REBSER *ser;
+    Series* ser;
 
     // !!! Set_Bits does locked series check--what should the more general
     // responsibility be for checking?
@@ -652,7 +652,7 @@ REBTYPE(Bitset)
         if (IS_NULLED_OR_BLANK(arg)) {
             RETURN (value); // don't fail on read only if it would be a no-op
         }
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(value));
+        Fail_If_Read_Only_Series(VAL_SERIES(value));
 
         bool diff;
         if (BITS_NOT(VAL_SERIES(value)))
@@ -706,7 +706,7 @@ REBTYPE(Bitset)
         return OUT; }
 
     case SYM_CLEAR:
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(value));
+        Fail_If_Read_Only_Series(VAL_SERIES(value));
         Clear_Series(VAL_SERIES(value));
         goto return_bitset;
 

@@ -201,7 +201,7 @@ REBTYPE(Action)
         // whatever underlied the function...even if it was foundational
         // so `underlying = VAL_ACTION(value)`
 
-        REBLEN details_len = ARR_LEN(ACT_DETAILS(act));
+        REBLEN details_len = Array_Len(ACT_DETAILS(act));
         REBACT *proxy = Make_Action(
             proxy_paramlist,
             ACT_DISPATCHER(act),
@@ -266,7 +266,7 @@ REBTYPE(Action)
         //
         case SYM_FILE: {
             Array* details = VAL_ACT_DETAILS(value);
-            if (ARR_LEN(details) < 1)
+            if (Array_Len(details) < 1)
                 return nullptr;
 
             if (not ANY_ARRAY(ARR_HEAD(details)))
@@ -279,13 +279,13 @@ REBTYPE(Action)
             // !!! How to tell whether it's a URL! or a FILE! ?
             //
             Scan_File(
-                OUT, cb_cast(Symbol_Head(LINK(a).file)), SER_LEN(LINK(a).file)
+                OUT, cb_cast(Symbol_Head(LINK(a).file)), Series_Len(LINK(a).file)
             );
             return OUT; }
 
         case SYM_LINE: {
             Array* details = VAL_ACT_DETAILS(value);
-            if (ARR_LEN(details) < 1)
+            if (Array_Len(details) < 1)
                 return nullptr;
 
             if (not ANY_ARRAY(ARR_HEAD(details)))

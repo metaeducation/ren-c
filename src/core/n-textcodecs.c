@@ -223,7 +223,7 @@ static void Encode_Utf16_Core(
 ){
     Ucs2(const*) cp = data;
 
-    REBSER *bin = Make_Binary(sizeof(uint16_t) * len);
+    Series* bin = Make_Binary(sizeof(uint16_t) * len);
     uint16_t* up = cast(uint16_t*, Binary_Head(bin));
 
     REBLEN i = 0;
@@ -251,7 +251,7 @@ static void Encode_Utf16_Core(
 
     up[i] = '\0'; // needs two bytes worth of terminator, not just one.
 
-    SET_SERIES_LEN(bin, len * sizeof(uint16_t));
+    Set_Series_Len(bin, len * sizeof(uint16_t));
     Init_Binary(out, bin);
 }
 

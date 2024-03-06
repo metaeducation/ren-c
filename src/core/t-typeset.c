@@ -105,7 +105,7 @@ void Startup_Typesets(void)
     //
     Root_Typesets = Init_Block(Alloc_Value(), Pop_Stack_Values(base));
 
-    REBSER *locker = nullptr;
+    Series* locker = nullptr;
     Ensure_Value_Immutable(Root_Typesets, locker);
 }
 

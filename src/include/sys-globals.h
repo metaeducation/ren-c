@@ -46,20 +46,20 @@ PVAR REBINT PG_Boot_Level;  // User specified startup level
 
 PVAR REBU64 PG_Mem_Usage;   // Overall memory used
 
-// In Ren-C, words are REBSER nodes (Symbol subtype).  They may be GC'd (unless
+// In Ren-C, words are Series nodes (Symbol subtype).  They may be GC'd (unless
 // they are in the %words.r list, in which case their canon forms are
 // protected in order to do SYM_XXX switch statements in the C source, etc.)
 //
-// There is a global hash table which accelerates finding a word's REBSER
-// node from a UTF-8 source string.  Entries are added to it when new canon
+// There is a global hash table which accelerates finding a word's Series
+// Stub from a UTF-8 source string.  Entries are added to it when new canon
 // forms of words are created, and removed when they are GC'd.  It is scaled
 // according to the total number of canons in the system.
 //
-PVAR Symbol* PG_Symbol_Canons; // Canon symbol pointers for words in %words.r
-PVAR Symbol* PG_Canons_By_Hash; // Canon REBSER pointers indexed by hash
-PVAR REBLEN PG_Num_Canon_Slots_In_Use; // Total canon hash slots (+ deleteds)
+PVAR Symbol* PG_Symbol_Canons;  // Canon symbol pointers for words in %words.r
+PVAR Symbol* PG_Canons_By_Hash;  // Canon symbol pointers indexed by hash
+PVAR REBLEN PG_Num_Canon_Slots_In_Use;  // Total canon hash slots (+ deleteds)
 #if !defined(NDEBUG)
-    PVAR REBLEN PG_Num_Canon_Deleteds; // Deleted canon hash slots "in use"
+    PVAR REBLEN PG_Num_Canon_Deleteds;  // Deleted canon hash slots "in use"
 #endif
 
 PVAR REBCTX *Lib_Context;
@@ -167,18 +167,18 @@ TVAR REBPOL *Mem_Pools;     // Memory pool array
 TVAR bool GC_Recycling;    // True when the GC is in a recycle
 TVAR REBINT GC_Ballast;     // Bytes allocated to force automatic GC
 TVAR bool GC_Disabled;      // true when RECYCLE/OFF is run
-TVAR REBSER *GC_Guarded; // A stack of GC protected series and values
-PVAR REBSER *GC_Mark_Stack; // Series pending to mark their reachables as live
-TVAR REBSER **Prior_Expand; // Track prior series expansions (acceleration)
+TVAR Series* GC_Guarded; // A stack of GC protected series and values
+PVAR Series* GC_Mark_Stack; // Series pending to mark their reachables as live
+TVAR Series* *Prior_Expand; // Track prior series expansions (acceleration)
 
-TVAR REBSER *TG_Mold_Stack; // Used to prevent infinite loop in cyclical molds
+TVAR Series* TG_Mold_Stack; // Used to prevent infinite loop in cyclical molds
 
 TVAR Array* TG_Buf_Collect; // for collecting object keys or words
-TVAR REBSER *TG_Buf_Ucs2; // UCS2 reused buffer
-TVAR REBSER *TG_Byte_Buf; // temporary byte buffer used mainly by raw print
-TVAR REBSER *TG_Mold_Buf; // temporary UTF8 buffer - used mainly by mold
+TVAR Series* TG_Buf_Ucs2; // UCS2 reused buffer
+TVAR Series* TG_Byte_Buf; // temporary byte buffer used mainly by raw print
+TVAR Series* TG_Mold_Buf; // temporary UTF8 buffer - used mainly by mold
 
-TVAR REBSER *GC_Manuals;    // Manually memory managed (not by GC)
+TVAR Series* GC_Manuals;    // Manually memory managed (not by GC)
 
 #if !defined(OS_STACK_GROWS_UP) && !defined(OS_STACK_GROWS_DOWN)
     TVAR bool TG_Stack_Grows_Up; // Will be detected via questionable method

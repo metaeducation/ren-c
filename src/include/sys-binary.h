@@ -31,7 +31,7 @@
 // Is it a byte-sized series?
 //
 #define BYTE_SIZE(s) \
-    (SER_WIDE(s) == 1)
+    (Series_Wide(s) == 1)
 
 
 //
@@ -39,28 +39,28 @@
 //
 
 #define Binary_At(bin,n) \
-    SER_AT(Byte, (bin), (n))
+    Series_At(Byte, (bin), (n))
 
 #define Binary_Head(bin) \
-    SER_HEAD(Byte, (bin))
+    Series_Head(Byte, (bin))
 
 #define Binary_Tail(bin) \
-    SER_TAIL(Byte, (bin))
+    Series_Tail(Byte, (bin))
 
 #define Binary_Last(bin) \
-    SER_LAST(Byte, (bin))
+    Series_Last(Byte, (bin))
 
 INLINE REBLEN Binary_Len(Binary* bin) {
     assert(BYTE_SIZE(bin));
-    return SER_LEN(bin);
+    return Series_Len(bin);
 }
 
 INLINE void TERM_BIN(Binary* bin) {
-    Binary_Head(bin)[SER_LEN(bin)] = 0;
+    Binary_Head(bin)[Series_Len(bin)] = 0;
 }
 
 INLINE void TERM_BIN_LEN(Binary* bin, REBLEN len) {
-    SET_SERIES_LEN(bin, len);
+    Set_Series_Len(bin, len);
     Binary_Head(bin)[len] = 0;
 }
 
@@ -79,7 +79,7 @@ INLINE Byte *Cell_Binary_At(const Cell* v) {
 }
 
 INLINE Byte *Cell_Binary_Tail(const Cell* v) {
-    return SER_TAIL(Byte, VAL_SERIES(v));
+    return Series_Tail(Byte, VAL_SERIES(v));
 }
 
 // !!! RE: VAL_BIN_AT_HEAD() see remarks on VAL_ARRAY_AT_HEAD()

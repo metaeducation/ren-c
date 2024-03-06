@@ -57,7 +57,7 @@ REBREQ *Ensure_Port_State(Value* port, REBLEN device)
 
     if (!IS_BINARY(state)) {
         assert(IS_NULLED(state));
-        REBSER *data = Make_Binary(req_size);
+        Series* data = Make_Binary(req_size);
         CLEAR(Binary_Head(data), req_size);
         TERM_BIN_LEN(data, req_size);
 
@@ -278,7 +278,7 @@ void Sieve_Ports(Array* ports)
     waked = VAL_CONTEXT_VAR(port, STD_PORT_DATA);
     if (!IS_BLOCK(waked)) return;
 
-    for (n = 0; ports and n < ARR_LEN(ports);) {
+    for (n = 0; ports and n < Array_Len(ports);) {
         Cell* val = Array_At(ports, n);
         if (IS_PORT(val)) {
             assert(VAL_LEN_HEAD(waked) != 0);
@@ -373,7 +373,7 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
     }
 
     TERM_ARRAY_LEN(code_arr, code - ARR_HEAD(code_arr));
-    MANAGE_ARRAY(code_arr);
+    Manage_Series(code_arr);
 
     DECLARE_VALUE (first);
     TERM_ARRAY_LEN(path_arr, path - ARR_HEAD(path_arr));
@@ -472,7 +472,7 @@ post_process_output:
             if (not IS_BINARY(OUT))
                 fail ("/STRING or /LINES used on a non-BINARY!/STRING! read");
 
-            REBSER *decoded = Make_Sized_String_UTF8(
+            Series* decoded = Make_Sized_String_UTF8(
                 cs_cast(Cell_Binary_At(OUT)),
                 VAL_LEN_AT(OUT)
             );

@@ -153,7 +153,7 @@ static void Read_File_Port(
 
     REBREQ *req = AS_REBREQ(file);
 
-    REBSER *ser = Make_Binary(len); // read result buffer
+    Series* ser = Make_Binary(len); // read result buffer
     Init_Binary(out, ser);
 
     // Do the read, check for errors:
@@ -162,7 +162,7 @@ static void Read_File_Port(
 
     OS_DO_DEVICE_SYNC(req, RDC_READ);
 
-    SET_SERIES_LEN(ser, req->actual);
+    Set_Series_Len(ser, req->actual);
     TERM_SEQUENCE(ser);
 }
 
@@ -190,9 +190,9 @@ static void Write_File_Port(struct devreq_file *file, Value* data, REBLEN len, b
 
     if (IS_TEXT(data)) {
         bin = Make_Utf8_From_Cell_String_At_Limit(data, len);
-        MANAGE_SERIES(bin);
+        Manage_Series(bin);
         req->common.data = Binary_Head(bin);
-        len = SER_LEN(bin);
+        len = Series_Len(bin);
         req->modes |= RFM_TEXT; // do LF => CR LF, e.g. on Windows
     }
     else {

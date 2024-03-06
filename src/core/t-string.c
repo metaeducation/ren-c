@@ -92,8 +92,8 @@ static void str_to_char(Value* out, Value* val, REBLEN idx)
 
 static void swap_chars(Value* val1, Value* val2)
 {
-    REBSER *s1 = VAL_SERIES(val1);
-    REBSER *s2 = VAL_SERIES(val2);
+    Series* s1 = VAL_SERIES(val1);
+    Series* s2 = VAL_SERIES(val2);
 
     REBUNI c1 = GET_ANY_CHAR(s1, VAL_INDEX(val1));
     REBUNI c2 = GET_ANY_CHAR(s2, VAL_INDEX(val2));
@@ -131,7 +131,7 @@ static void reverse_string(Value* v, REBLEN len)
 
     REBLEN val_len_head = VAL_LEN_HEAD(v);
 
-    REBSER *ser = VAL_SERIES(v);
+    Series* ser = VAL_SERIES(v);
     Ucs2(const*) up = String_Last(ser); // last exists due to len != 0
     REBLEN n;
     for (n = 0; n < len; ++n) {
@@ -166,7 +166,7 @@ static void reverse_string(Value* v, REBLEN len)
 
 
 static REBLEN find_string(
-    REBSER *series,
+    Series* series,
     REBLEN index,
     REBLEN end,
     Value* target,
@@ -267,9 +267,9 @@ static REBLEN find_string(
 }
 
 
-static REBSER *MAKE_TO_String_Common(const Value* arg)
+static Series* MAKE_TO_String_Common(const Value* arg)
 {
-    REBSER *ser;
+    Series* ser;
 
     // MAKE/TO <type> <binary!>
     if (IS_BINARY(arg)) {
@@ -296,9 +296,9 @@ static REBSER *MAKE_TO_String_Common(const Value* arg)
 }
 
 
-static REBSER *Make_Binary_BE64(const Value* arg)
+static Series* Make_Binary_BE64(const Value* arg)
 {
-    REBSER *ser = Make_Binary(8);
+    Series* ser = Make_Binary(8);
 
     Byte *bp = Binary_Head(ser);
 
@@ -333,9 +333,9 @@ static REBSER *Make_Binary_BE64(const Value* arg)
 }
 
 
-static REBSER *make_binary(const Value* arg, bool make)
+static Series* make_binary(const Value* arg, bool make)
 {
-    REBSER *ser;
+    Series* ser;
 
     // MAKE BINARY! 123
     switch (VAL_TYPE(arg)) {
@@ -399,7 +399,7 @@ static REBSER *make_binary(const Value* arg, bool make)
 //  MAKE_String: C
 //
 REB_R MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
-    REBSER *ser; // goto would cross initialization
+    Series* ser; // goto would cross initialization
 
     if (IS_INTEGER(def)) {
         //
@@ -461,7 +461,7 @@ REB_R MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
 //
 REB_R TO_String(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    REBSER *ser;
+    Series* ser;
     if (kind == REB_BINARY)
         ser = make_binary(arg, false);
     else
@@ -565,7 +565,7 @@ static void Sort_String(
     reb_qsort_r(
         VAL_RAW_DATA_AT(string),
         len,
-        size * SER_WIDE(VAL_SERIES(string)),
+        size * Series_Wide(VAL_SERIES(string)),
         &thunk,
         Compare_Chr
     );
@@ -580,7 +580,7 @@ REB_R PD_String(
     const Value* picker,
     const Value* opt_setval
 ){
-    REBSER *ser = VAL_SERIES(pvs->out);
+    Series* ser = VAL_SERIES(pvs->out);
 
     // Note: There was some more careful management of overflow here in the
     // PICK and POKE actions, before unification.  But otherwise the code
@@ -606,7 +606,7 @@ REB_R PD_String(
             if (n < 0)
                 ++n; // Rebol2/Red convention, `pick tail "abc" -1` is #"c"
             n += VAL_INDEX(pvs->out) - 1;
-            if (n < 0 or cast(REBLEN, n) >= SER_LEN(ser))
+            if (n < 0 or cast(REBLEN, n) >= Series_Len(ser))
                 return nullptr;
 
             if (IS_BINARY(pvs->out))
@@ -644,7 +644,7 @@ REB_R PD_String(
         // Because Ren-C unified picking and pathing, this somewhat odd
         // feature is now part of PICKing a string from another string.
 
-        REBSER *copy = Copy_Sequence_At_Position(pvs->out);
+        Series* copy = Copy_Sequence_At_Position(pvs->out);
 
         // This makes sure there's always a "/" at the end of the file before
         // appending new material via a picker:
@@ -653,7 +653,7 @@ REB_R PD_String(
         //     >> (x)/("bar")
         //     == %foo/bar
         //
-        REBLEN len = SER_LEN(copy);
+        REBLEN len = Series_Len(copy);
         if (len == 0)
             Append_Codepoint(copy, '/');
         else {
@@ -687,7 +687,7 @@ REB_R PD_String(
         Append_UTF8_May_Fail(
             copy, // dst
             cs_cast(Binary_At(mo->series, mo->start + skip)), // src
-            SER_LEN(mo->series) - mo->start - skip, // len
+            Series_Len(mo->series) - mo->start - skip, // len
             crlf_to_lf
         );
 
@@ -701,7 +701,7 @@ REB_R PD_String(
 
     // Otherwise, POKE-ing
 
-    FAIL_IF_READ_ONLY_SERIES(ser);
+    Fail_If_Read_Only_Series(ser);
 
     if (not IS_INTEGER(picker))
         return R_UNHANDLED;
@@ -712,7 +712,7 @@ REB_R PD_String(
     if (n < 0)
         ++n;
     n += VAL_INDEX(pvs->out) - 1;
-    if (n < 0 or cast(REBLEN, n) >= SER_LEN(ser))
+    if (n < 0 or cast(REBLEN, n) >= Series_Len(ser))
         fail (Error_Out_Of_Range(picker));
 
     REBINT c;
@@ -762,7 +762,7 @@ typedef struct REB_Str_Flags {
 } REB_STRF;
 
 
-static void Sniff_String(REBSER *ser, REBLEN idx, REB_STRF *sf)
+static void Sniff_String(Series* ser, REBLEN idx, REB_STRF *sf)
 {
     // Scan to find out what special chars the string contains?
 
@@ -895,7 +895,7 @@ Byte *Emit_Uni_Char(Byte *bp, REBUNI chr, bool parened)
 //
 void Mold_Text_Series_At(
     REB_MOLD *mo,
-    REBSER *series,
+    Series* series,
     REBLEN index
 ){
     if (index >= String_Len(series)) {
@@ -1002,7 +1002,7 @@ void Mold_Text_Series_At(
 //
 static void Mold_Url(REB_MOLD *mo, const Cell* v)
 {
-    REBSER *series = VAL_SERIES(v);
+    Series* series = VAL_SERIES(v);
     REBLEN len = VAL_LEN_AT(v);
     Byte *dp = Prep_Mold_Overestimated(mo, len * 4); // 4 bytes max UTF-8
 
@@ -1012,13 +1012,13 @@ static void Mold_Url(REB_MOLD *mo, const Cell* v)
 
     *dp = '\0';
 
-    SET_SERIES_LEN(mo->series, dp - Binary_Head(mo->series)); // correction
+    Set_Series_Len(mo->series, dp - Binary_Head(mo->series)); // correction
 }
 
 
 static void Mold_File(REB_MOLD *mo, const Cell* v)
 {
-    REBSER *series = VAL_SERIES(v);
+    Series* series = VAL_SERIES(v);
     REBLEN len = VAL_LEN_AT(v);
 
     REBLEN estimated_bytes = 4 * len; // UTF-8 characters are max 4 bytes
@@ -1048,7 +1048,7 @@ static void Mold_File(REB_MOLD *mo, const Cell* v)
 
     *dp = '\0';
 
-    SET_SERIES_LEN(mo->series, dp - Binary_Head(mo->series)); // correction
+    Set_Series_Len(mo->series, dp - Binary_Head(mo->series)); // correction
 }
 
 
@@ -1077,7 +1077,7 @@ void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
 
     REBLEN len = VAL_LEN_AT(v);
 
-    REBSER *enbased;
+    Series* enbased;
     switch (Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16)) {
     default:
     case 16: {
@@ -1114,7 +1114,7 @@ void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
 //
 void MF_String(REB_MOLD *mo, const Cell* v, bool form)
 {
-    REBSER *s = mo->series;
+    Series* s = mo->series;
 
     assert(ANY_STRING(v));
 
@@ -1218,7 +1218,7 @@ REBTYPE(String)
                 VAL_INDEX(v) = 0;
             RETURN (v); // don't fail on read only if it would be a no-op
         }
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(v));
+        Fail_If_Read_Only_Series(VAL_SERIES(v));
 
         REBFLGS flags = 0;
         if (REF(part))
@@ -1298,7 +1298,7 @@ REBTYPE(String)
                     // be done of `FIND "<abc...z>" <abc...z>` without having
                     // to create an entire series just for the delimiters.
                     //
-                    REBSER *copy = Copy_Form_Value(arg, 0);
+                    Series* copy = Copy_Form_Value(arg, 0);
                     Init_Text(arg, copy);
                 }
                 len = VAL_LEN_AT(arg);
@@ -1345,7 +1345,7 @@ REBTYPE(String)
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
 
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(v));
+        Fail_If_Read_Only_Series(VAL_SERIES(v));
 
         UNUSED(PAR(series));
 
@@ -1377,7 +1377,7 @@ REBTYPE(String)
             return Init_Any_Series(OUT, VAL_TYPE(v), Make_Binary(0));
         }
 
-        REBSER *ser = VAL_SERIES(v);
+        Series* ser = VAL_SERIES(v);
         index = VAL_INDEX(v);
 
         // if no /PART, just return value, else return string
@@ -1402,7 +1402,7 @@ REBTYPE(String)
         return OUT; }
 
     case SYM_CLEAR: {
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(v));
+        Fail_If_Read_Only_Series(VAL_SERIES(v));
 
         if (index < tail) {
             if (index == 0)
@@ -1429,7 +1429,7 @@ REBTYPE(String)
         REBINT len = Part_Len_May_Modify_Index(v, ARG(limit));
         UNUSED(REF(part)); // checked by if limit is nulled
 
-        REBSER *ser;
+        Series* ser;
         if (IS_BINARY(v))
             ser = Copy_Sequence_At_Len(VAL_SERIES(v), VAL_INDEX(v), len);
         else
@@ -1488,7 +1488,7 @@ REBTYPE(String)
         if (not IS_BINARY(v))
             fail (Error_Invalid(v));
 
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(v));
+        Fail_If_Read_Only_Series(VAL_SERIES(v));
 
         REBINT amount;
         if (IS_INTEGER(arg))
@@ -1545,19 +1545,19 @@ REBTYPE(String)
     //-- Special actions:
 
     case SYM_SWAP: {
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(v));
+        Fail_If_Read_Only_Series(VAL_SERIES(v));
 
         if (VAL_TYPE(v) != VAL_TYPE(arg))
             fail (Error_Not_Same_Type_Raw());
 
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(arg));
+        Fail_If_Read_Only_Series(VAL_SERIES(arg));
 
         if (index < tail && VAL_INDEX(arg) < VAL_LEN_HEAD(arg))
             swap_chars(v, arg);
         RETURN (v); }
 
     case SYM_REVERSE: {
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(v));
+        Fail_If_Read_Only_Series(VAL_SERIES(v));
 
         REBINT len = Part_Len_May_Modify_Index(v, D_ARG(3));
         if (len > 0) {
@@ -1571,7 +1571,7 @@ REBTYPE(String)
     case SYM_SORT: {
         INCLUDE_PARAMS_OF_SORT;
 
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(v));
+        Fail_If_Read_Only_Series(VAL_SERIES(v));
 
         UNUSED(PAR(series));
         UNUSED(REF(skip));
@@ -1599,7 +1599,7 @@ REBTYPE(String)
 
         UNUSED(PAR(value));
 
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(v));
+        Fail_If_Read_Only_Series(VAL_SERIES(v));
 
         if (REF(seed)) {
             //
@@ -1610,12 +1610,12 @@ REBTYPE(String)
             //
             Set_Random(
                 Compute_CRC24(
-                    SER_AT_RAW(
-                        SER_WIDE(VAL_SERIES(v)),
+                    Series_Data_At(
+                        Series_Wide(VAL_SERIES(v)),
                         VAL_SERIES(v),
                         VAL_INDEX(v)
                     ),
-                    VAL_LEN_AT(v) * SER_WIDE(VAL_SERIES(v))
+                    VAL_LEN_AT(v) * Series_Wide(VAL_SERIES(v))
                 )
             );
             return nullptr;

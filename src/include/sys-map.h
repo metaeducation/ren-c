@@ -56,7 +56,7 @@ INLINE Array* MAP_PAIRLIST(REBMAP *m) {
     (LINK(MAP_PAIRLIST(m)).hashlist)
 
 #define MAP_HASHES(m) \
-    SER_HEAD(MAP_HASHLIST(m))
+    Series_Head(MAP_HASHLIST(m))
 
 INLINE REBMAP *MAP(void *p) {
     Array* a = ARR(p);
@@ -68,7 +68,7 @@ INLINE REBMAP *MAP(void *p) {
 INLINE REBMAP *VAL_MAP(const Cell* v) {
     assert(IS_MAP(v));
 
-    REBSER *s = v->payload.any_series.series;
+    Series* s = v->payload.any_series.series;
     if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
 

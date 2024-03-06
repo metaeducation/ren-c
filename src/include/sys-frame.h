@@ -106,7 +106,7 @@ INLINE Array* LVL_ARRAY(Level* L) {
 //
 INLINE REBLEN LVL_INDEX(Level* L) {
     if (IS_END(L->value))
-        return ARR_LEN(L->source->array);
+        return Array_Len(L->source->array);
 
     assert(not LVL_IS_VALIST(L));
     return L->source->index - 1;
@@ -115,7 +115,7 @@ INLINE REBLEN LVL_INDEX(Level* L) {
 INLINE REBLEN LVL_EXPR_INDEX(Level* L) {
     assert(not LVL_IS_VALIST(L));
     return L->expr_index == END_FLAG
-        ? ARR_LEN((L)->source->array)
+        ? Array_Len((L)->source->array)
         : L->expr_index - 1;
 }
 
@@ -160,7 +160,7 @@ INLINE int LVL_LINE(Level* L) {
 // ID ran.  Consider when reviewing the future of ACTION!.
 //
 #define Level_Num_Args(L) \
-    (cast(REBSER*, (L)->varlist)->content.dynamic.len - 1) // minus rootvar
+    (cast(Series*, (L)->varlist)->content.dynamic.len - 1) // minus rootvar
 
 #define Level_Spare(L) \
     cast(Value*, &(L)->spare)
@@ -457,7 +457,7 @@ INLINE void Push_Action(
     // !!! Note: Should pick "smart" size when allocating varlist storage due
     // to potential reuse--but use exact size for *this* action, for now.
     //
-    REBSER *s;
+    Series* s;
     if (not L->varlist) { // usually means first action call in the Level
         s = Alloc_Series_Node(
             SERIES_MASK_CONTEXT
@@ -476,7 +476,7 @@ INLINE void Push_Action(
         if (s->content.dynamic.rest >= num_args + 1 + 1) // +roovar, +end
             goto sufficient_allocation;
 
-        //assert(SER_BIAS(s) == 0);
+        //assert(Series_Bias(s) == 0);
         Free_Unbiased_Series_Data(
             s->content.dynamic.data,
             SER_TOTAL(s)

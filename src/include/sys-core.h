@@ -29,7 +29,7 @@
 // This is the main include file used in the implementation of the core.
 //
 // * It defines all the data types and structures used by the auto-generated
-//   function prototypes.  This includes the obvious REBINT, Value, REBSER.
+//   function prototypes.  This includes the obvious REBINT, Value, Series.
 //   It also includes any enumerated type parameters to functions which are
 //   shared between various C files.
 //
@@ -276,7 +276,7 @@ typedef RebolValue Value;
 #include "sys-rebnod.h"
 
 #include "sys-rebval.h" // Cell and Value structure definitions
-#include "sys-rebser.h" // REBSER series definition (embeds Cell definition)
+#include "sys-rebser.h" // Series Stub definition (embeds Cell definition)
 #include "sys-rebact.h" // REBACT and ACT()
 #include "sys-rebctx.h" // REBCTX and CTX()
 

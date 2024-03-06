@@ -26,8 +26,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// API REBVALs live in singular arrays (which fit inside a REBSER node, that
-// is the size of 2 REBVALs).  But they aren't kept alive by references from
+// API REBVALs live in singular arrays (which fit inside a Stub node, that
+// is the size of 2 cells).  But they aren't kept alive by references from
 // other values, like the way that an Array used by a BLOCK! is kept alive.
 // They are kept alive by being roots (currently implemented with a flag
 // NODE_FLAG_ROOT, but it could also mean living in a distinct pool from
@@ -40,9 +40,9 @@
 // were given back with rebMalloc(), so routines can discern them.
 //
 // MISC() is currently unused, but could serve as a reference count or other
-// purpose.  It's not particularly necessary to have API handles use REBSER
+// purpose.  It's not particularly necessary to have API handles use Stub
 // nodes--though the 2*sizeof(Cell) provides some optimality, and it
-// means that REBSER nodes can be recycled for more purposes.  But it would
+// means that Stub nodes can be recycled for more purposes.  But it would
 // potentially be better to have them in their own pools, because being
 // roots could be discovered without a "pre-pass" in the GC.
 //
@@ -97,7 +97,7 @@ INLINE void Free_Value(Value* v)
 // using these anywhere besides as arguments to a variadic API like rebValue().
 //
 INLINE Array* Alloc_Instruction(void) {
-    REBSER *s = Alloc_Series_Node(
+    Series* s = Alloc_Series_Node(
         SERIES_FLAG_FIXED_SIZE // not tracked as stray manual, but unmanaged
     );
     s->info = Endlike_Header(

@@ -115,7 +115,7 @@ void Bind_Values_Core(
     INIT_BINDER(&binder);
 
     // Associate the canon of a word with an index number.  (This association
-    // is done by poking the index into the REBSER of the series behind the
+    // is done by poking the index into the Stub of the series behind the
     // ANY-WORD!, so it must be cleaned up to not break future bindings.)
 
     REBLEN index = 1;
@@ -448,7 +448,7 @@ void Virtual_Bind_Deep_To_New_Context(
                 Cell_Array(body_in_out),
                 VAL_INDEX(body_in_out), // at
                 VAL_SPECIFIER(body_in_out),
-                ARR_LEN(Cell_Array(body_in_out)), // tail
+                Array_Len(Cell_Array(body_in_out)), // tail
                 0, // extra
                 ARRAY_FLAG_FILE_LINE, // flags
                 TS_ARRAY // types to copy deeply
@@ -594,7 +594,7 @@ void Virtual_Bind_Deep_To_New_Context(
     // things unless they are stack-based.  Virtual bindings will be, but
     // contexts like this won't.
     //
-    MANAGE_ARRAY(CTX_VARLIST(c));
+    Manage_Series(CTX_VARLIST(c));
 
     if (not rebinding)
         return; // nothing else needed to do

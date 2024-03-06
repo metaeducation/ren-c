@@ -639,7 +639,7 @@ DECLARE_NATIVE(enbin)
     // with BigNum conversions as well).  Improvements welcome, but trying
     // to be correct for starters...
 
-    REBSER* bin = Make_Binary(num_bytes);
+    Series* bin = Make_Binary(num_bytes);
 
     REBINT delta = little ? 1 : -1;
     Byte* bp = Binary_Head(bin);

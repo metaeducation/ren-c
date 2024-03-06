@@ -32,7 +32,7 @@
 // comments and notes which will help understand it.
 //
 // What characterizes the external API is that it is not necessary to #include
-// the extensive definitions of `struct REBSER` or the APIs for dealing with
+// the extensive definitions of StubStruct/ValueStruct or APIs for dealing with
 // all the internal details (e.g. PUSH_GC_GUARD(), which are easy to get
 // wrong).  Not only does this simplify the interface, but it also means that
 // the C code using the library isn't competing as much for definitions in
@@ -89,7 +89,7 @@ void API_rebEnterApi_internal(void) {
 //=//// SERIES-BACKED ALLOCATORS //////////////////////////////////////////=//
 //
 // These are replacements for malloc(), realloc(), and free() which use a
-// byte-sized REBSER as the backing store for the data.
+// byte-sized Binary series as the backing store for the data.
 //
 // One benefit of using a series is that it offers more options for automatic
 // memory management (such as being freed in case of a fail(), vs. leaked as
@@ -98,7 +98,7 @@ void API_rebEnterApi_internal(void) {
 // It also has the benefit of helping interface with client code that has
 // been stylized to use malloc()-ish hooks to produce data, when the eventual
 // target of that data is a Rebol series.  It does this without exposing
-// REBSER* internals to the external API, by allowing one to "rebRepossess()"
+// Series* internals to the external API, by allowing one to "rebRepossess()"
 // the underlying series as a BINARY! Value*.
 //
 
@@ -120,13 +120,13 @@ void API_rebEnterApi_internal(void) {
 //   for the size of any fundamental type".  See notes on ALIGN_SIZE.
 //
 // !!! rebAlignedMalloc() could exist to take an alignment, which could save
-// on wasted bytes when ALIGN_SIZE > sizeof(REBSER*)...or work with "weird"
+// on wasted bytes when ALIGN_SIZE > sizeof(Series*)...or work with "weird"
 // large fundamental types that need more alignment than ALIGN_SIZE.
 //
 void *API_rebMalloc(size_t size)
 {
-    REBSER *s = Make_Series_Core(
-        ALIGN_SIZE // stores REBSER* (must be at least big enough for void*)
+    Series* s = Make_Series_Core(
+        ALIGN_SIZE // stores Series* (must be at least big enough for void*)
             + size // for the actual data capacity (may be 0...see notes)
             + 1, // for termination (even BINARY! has this, review necessity)
         sizeof(Byte), // rebRepossess() only creates binary series ATM
@@ -136,9 +136,9 @@ void *API_rebMalloc(size_t size)
 
     Byte *ptr = Binary_Head(s) + ALIGN_SIZE;
 
-    REBSER **ps = (cast(REBSER**, ptr) - 1);
+    Series* *ps = (cast(Series**, ptr) - 1);
     *ps = s; // save self in bytes *right before* data
-    POISON_MEMORY(ps, sizeof(REBSER*)); // let ASAN catch underruns
+    POISON_MEMORY(ps, sizeof(Series*)); // let ASAN catch underruns
 
     // !!! The data is uninitialized, and if it is turned into a BINARY! via
     // rebRepossess() before all bytes are assigned initialized, it could be
@@ -182,10 +182,10 @@ void *API_rebRealloc(void *ptr, size_t new_size)
     if (not ptr) // C realloc() accepts null
         return rebMalloc(new_size);
 
-    REBSER **ps = cast(REBSER**, ptr) - 1;
-    UNPOISON_MEMORY(ps, sizeof(REBSER*)); // need to underrun to fetch `s`
+    Series* *ps = cast(Series**, ptr) - 1;
+    UNPOISON_MEMORY(ps, sizeof(Series*)); // need to underrun to fetch `s`
 
-    REBSER *s = *ps;
+    Series* s = *ps;
 
     REBLEN old_size = Binary_Len(s) - ALIGN_SIZE;
 
@@ -211,10 +211,10 @@ void API_rebFree(void *ptr)
     if (not ptr)
         return;
 
-    REBSER **ps = cast(REBSER**, ptr) - 1;
-    UNPOISON_MEMORY(ps, sizeof(REBSER*)); // need to underrun to fetch `s`
+    Series* *ps = cast(Series**, ptr) - 1;
+    UNPOISON_MEMORY(ps, sizeof(Series*)); // need to underrun to fetch `s`
 
-    REBSER *s = *ps;
+    Series* s = *ps;
     if (s->header.bits & NODE_FLAG_CELL) {
         rebJumps(
             "PANIC [",
@@ -256,11 +256,11 @@ void API_rebFree(void *ptr)
 //
 RebolValue* API_rebRepossess(void *ptr, size_t size)
 {
-    REBSER **ps = cast(REBSER**, ptr) - 1;
-    UNPOISON_MEMORY(ps, sizeof(REBSER*)); // need to underrun to fetch `s`
+    Series* *ps = cast(Series**, ptr) - 1;
+    UNPOISON_MEMORY(ps, sizeof(Series*)); // need to underrun to fetch `s`
 
-    REBSER *s = *ps;
-    assert(not IS_SERIES_MANAGED(s));
+    Series* s = *ps;
+    assert(not Is_Series_Managed(s));
 
     if (size > Binary_Len(s) - ALIGN_SIZE)
         fail ("Attempt to rebRepossess() more than rebMalloc() capacity");
@@ -272,14 +272,14 @@ RebolValue* API_rebRepossess(void *ptr, size_t size)
         //
         // Dynamic series have the concept of a "bias", which is unused
         // allocated capacity at the head of a series.  Bump the "bias" to
-        // treat the embedded REBSER* (aligned to REBI64) as unused capacity.
+        // treat the embedded Series* (aligned to REBI64) as unused capacity.
         //
         SER_SET_BIAS(s, ALIGN_SIZE);
         s->content.dynamic.data += ALIGN_SIZE;
         s->content.dynamic.rest -= ALIGN_SIZE;
     }
     else {
-        // Data is in REBSER node itself, no bias.  Just slide the bytes down.
+        // Data is in Stub node itself, no bias.  Just slide the bytes down.
         //
         memmove( // src overlaps destination, can't use memcpy()
             Binary_Head(s),
@@ -1137,7 +1137,7 @@ unsigned int API_rebSpellIntoW(
     unsigned int buf_chars, // chars buf can hold (not including terminator)
     const RebolValue* v
 ){
-    REBSER *s;
+    Series* s;
     REBLEN index;
     REBLEN len;
     if (ANY_STRING(v)) {
@@ -1151,7 +1151,7 @@ unsigned int API_rebSpellIntoW(
         Symbol* symbol = Cell_Word_Symbol(v);
         s = Make_Sized_String_UTF8(Symbol_Head(symbol), Symbol_Size(symbol));
         index = 0;
-        len = SER_LEN(s);
+        len = Series_Len(s);
     }
 
     if (not buf) { // querying for size
@@ -1282,7 +1282,7 @@ unsigned char *API_rebBytes(
 //
 RebolValue* API_rebBinary(const void *bytes, size_t size)
 {
-    REBSER *bin = Make_Binary(size);
+    Series* bin = Make_Binary(size);
     memcpy(Binary_Head(bin), bytes, size);
     TERM_BIN_LEN(bin, size);
 
@@ -1373,7 +1373,7 @@ RebolValue* API_rebManage(RebolValue* v)
     Array* a = Singular_From_Cell(v);
     assert(GET_SER_FLAG(a, NODE_FLAG_ROOT));
 
-    if (IS_ARRAY_MANAGED(a))
+    if (Is_Series_Managed(a))
         fail ("Attempt to rebManage() a handle that's already managed.");
 
     SET_SER_FLAG(a, NODE_FLAG_MANAGED);
@@ -1401,7 +1401,7 @@ void API_rebUnmanage(void *p)
     Array* a = Singular_From_Cell(v);
     assert(GET_SER_FLAG(a, NODE_FLAG_ROOT));
 
-    if (not IS_ARRAY_MANAGED(a))
+    if (not Is_Series_Managed(a))
         fail ("Attempt to rebUnmanage() a handle with indefinite lifetime.");
 
     // It's not safe to convert the average series that might be referred to

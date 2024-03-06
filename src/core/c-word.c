@@ -121,8 +121,8 @@ static void Expand_Word_Table(void)
     // The only full list of canon words available is the old hash table.
     // Hold onto it while creating the new hash table.
 
-    REBLEN old_num_slots = SER_LEN(PG_Canons_By_Hash);
-    Symbol** old_canons_by_hash = SER_HEAD(Symbol*, PG_Canons_By_Hash);
+    REBLEN old_num_slots = Series_Len(PG_Canons_By_Hash);
+    Symbol** old_canons_by_hash = Series_Head(Symbol*, PG_Canons_By_Hash);
 
     REBLEN num_slots = Get_Hash_Prime(old_num_slots + 1);
     if (num_slots == 0) { // larger than hash prime table
@@ -131,17 +131,17 @@ static void Expand_Word_Table(void)
         fail (Error_Size_Limit_Raw(temp));
     }
 
-    assert(SER_WIDE(PG_Canons_By_Hash) == sizeof(Symbol*));
+    assert(Series_Wide(PG_Canons_By_Hash) == sizeof(Symbol*));
 
-    REBSER *ser = Make_Series_Core(
+    Series* ser = Make_Series_Core(
         num_slots, sizeof(Symbol*), SERIES_FLAG_POWER_OF_2
     );
     Clear_Series(ser);
-    SET_SERIES_LEN(ser, num_slots);
+    Set_Series_Len(ser, num_slots);
 
     // Rehash all the symbols:
 
-    Symbol** new_canons_by_hash = SER_HEAD(Symbol*, ser);
+    Symbol** new_canons_by_hash = Series_Head(Symbol*, ser);
 
     REBLEN old_slot;
     for (old_slot = 0; old_slot != old_num_slots; ++old_slot) {
@@ -203,13 +203,13 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
     // actually kept larger than that, but to be on the right side of theory,
     // the table is always checked for expansion needs *before* the search.)
     //
-    REBLEN num_slots = SER_LEN(PG_Canons_By_Hash);
+    REBLEN num_slots = Series_Len(PG_Canons_By_Hash);
     if (PG_Num_Canon_Slots_In_Use > num_slots / 2) {
         Expand_Word_Table();
-        num_slots = SER_LEN(PG_Canons_By_Hash); // got larger
+        num_slots = Series_Len(PG_Canons_By_Hash); // got larger
     }
 
-    Symbol** canons_by_hash = SER_HEAD(Symbol*, PG_Canons_By_Hash);
+    Symbol** canons_by_hash = Series_Head(Symbol*, PG_Canons_By_Hash);
 
     REBLEN skip; // how many slots to skip when occupied candidates found
     REBLEN slot = First_Hash_Candidate_Slot(
@@ -272,7 +272,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
 
   new_interning:;
 
-    // If possible, the allocation should be fit into a REBSER node with no
+    // If possible, the allocation should be fit into a Stub node with no
     // separate allocation.  Because automatically doing this is a new
     // feature, double check with an assert that the behavior matches.
     //
@@ -345,7 +345,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
     // be no clear contract on the return result--as it wouldn't be possible
     // to know if a shared instance had been managed by someone else or not.
     //
-    MANAGE_SERIES(intern);
+    Manage_Series(intern);
     return intern;
 }
 
@@ -359,11 +359,11 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
 //
 void GC_Kill_Interning(Symbol* intern)
 {
-    REBSER *synonym = LINK(intern).synonym;
+    Series* synonym = LINK(intern).synonym;
 
     // Note synonym and intern may be the same here.
     //
-    REBSER *temp = synonym;
+    Series* temp = synonym;
     while (LINK(temp).synonym != intern)
         temp = LINK(temp).synonym;
     LINK(temp).synonym = synonym; // cut intern out of chain (or no-op)
@@ -374,8 +374,8 @@ void GC_Kill_Interning(Symbol* intern)
     assert(MISC(intern).bind_index.high == 0); // shouldn't GC during binds?
     assert(MISC(intern).bind_index.low == 0);
 
-    REBLEN num_slots = SER_LEN(PG_Canons_By_Hash);
-    Symbol** canons_by_hash = SER_HEAD(Symbol*, PG_Canons_By_Hash);
+    REBLEN num_slots = Series_Len(PG_Canons_By_Hash);
+    Symbol** canons_by_hash = Series_Head(Symbol*, PG_Canons_By_Hash);
 
     REBLEN skip;
     REBLEN slot = First_Hash_Candidate_Slot(
@@ -495,7 +495,7 @@ void Startup_Interning(void)
         n, sizeof(Symbol*), SERIES_FLAG_POWER_OF_2
     );
     Clear_Series(PG_Canons_By_Hash);  // all slots start at nullptr
-    SET_SERIES_LEN(PG_Canons_By_Hash, n);
+    Set_Series_Len(PG_Canons_By_Hash, n);
 }
 
 
@@ -517,7 +517,7 @@ void Startup_Interning(void)
 void Startup_Symbols(Array* words)
 {
     PG_Symbol_Canons = Make_Series_Core(
-        1 + ARR_LEN(words), // 1 + => extra trash at head for SYM_0
+        1 + Array_Len(words), // 1 + => extra trash at head for SYM_0
         sizeof(Symbol*),
         SERIES_FLAG_FIXED_SIZE // can't ever add more SYM_XXX lookups
     );
@@ -529,7 +529,7 @@ void Startup_Symbols(Array* words)
     //
     REBLEN sym = SYM_0;
     TRASH_POINTER_IF_DEBUG(
-        *SER_AT(Symbol*, PG_Symbol_Canons, sym)
+        *Series_At(Symbol*, PG_Symbol_Canons, sym)
     );
 
     Cell* word = ARR_HEAD(words);
@@ -537,7 +537,7 @@ void Startup_Symbols(Array* words)
         Symbol* canon = VAL_STORED_CANON(word);
 
         sym = sym + 1;
-        *SER_AT(Symbol*, PG_Symbol_Canons, sym) = canon;
+        *Series_At(Symbol*, PG_Symbol_Canons, sym) = canon;
 
         // More code was loaded than just the word list, and it might have
         // included alternate-case forms of the %words.r words.  Walk any
@@ -557,10 +557,10 @@ void Startup_Symbols(Array* words)
         } while (name != canon); // circularly linked list, stop on a cycle
     }
 
-    *SER_AT(Symbol*, PG_Symbol_Canons, sym) = nullptr;  // terminate
+    *Series_At(Symbol*, PG_Symbol_Canons, sym) = nullptr;  // terminate
 
-    SET_SERIES_LEN(PG_Symbol_Canons, 1 + cast(REBLEN, sym));
-    assert(SER_LEN(PG_Symbol_Canons) == 1 + ARR_LEN(words));
+    Set_Series_Len(PG_Symbol_Canons, 1 + cast(REBLEN, sym));
+    assert(Series_Len(PG_Symbol_Canons) == 1 + Array_Len(words));
 
     // Do some sanity checks.  !!! Fairly critical, is debug-only appropriate?
 
@@ -603,8 +603,8 @@ void Shutdown_Interning(void)
         fflush(stdout);
 
         REBLEN slot;
-        for (slot = 0; slot < SER_LEN(PG_Canons_By_Hash); ++slot) {
-            Symbol* canon = *SER_AT(Symbol*, PG_Canons_By_Hash, slot);
+        for (slot = 0; slot < Series_Len(PG_Canons_By_Hash); ++slot) {
+            Symbol* canon = *Series_At(Symbol*, PG_Canons_By_Hash, slot);
             if (canon and canon != DELETED_CANON)
                 panic (canon);
         }

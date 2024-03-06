@@ -45,7 +45,7 @@ Array* Copy_Array_At_Extra_Shallow(
     REBLEN extra,
     REBFLGS flags
 ){
-    REBLEN len = ARR_LEN(original);
+    REBLEN len = Array_Len(original);
 
     if (index > len)
         return Make_Arr_For_Copy(extra, flags, original);
@@ -80,11 +80,11 @@ Array* Copy_Array_At_Max_Shallow(
 ){
     const REBFLGS flags = 0;
 
-    if (index > ARR_LEN(original))
+    if (index > Array_Len(original))
         return Make_Arr_For_Copy(0, flags, original);
 
-    if (index + max > ARR_LEN(original))
-        max = ARR_LEN(original) - index;
+    if (index + max > Array_Len(original))
+        max = Array_Len(original) - index;
 
     Array* copy = Make_Arr_For_Copy(max, flags, original);
 
@@ -163,7 +163,7 @@ void Clonify_Values_Len_Managed(
             //
             // Objects and series get shallow copied at minimum
             //
-            REBSER *series;
+            Series* series;
             if (ANY_CONTEXT(v)) {
                 v->payload.any_context.varlist = CTX_VARLIST(
                     Copy_Context_Shallow_Managed(VAL_CONTEXT(v))
@@ -256,7 +256,7 @@ static Array* Copy_Array_Core_Managed_Inner_Loop(
     REBFLGS flags,
     REBU64 types
 ){
-    assert(index <= tail and tail <= ARR_LEN(original));
+    assert(index <= tail and tail <= Array_Len(original));
     assert(flags & NODE_FLAG_MANAGED);
 
     REBLEN len = tail - index;
@@ -275,7 +275,7 @@ static Array* Copy_Array_Core_Managed_Inner_Loop(
 
     if (types != 0)
         Clonify_Values_Len_Managed(
-            ARR_HEAD(copy), SPECIFIED, ARR_LEN(copy), types
+            ARR_HEAD(copy), SPECIFIED, Array_Len(copy), types
         );
 
     return copy;
@@ -303,7 +303,7 @@ Array* Copy_Array_Core_Managed(
     if (index > tail) // !!! should this be asserted?
         index = tail;
 
-    if (index > ARR_LEN(original)) // !!! should this be asserted?
+    if (index > Array_Len(original)) // !!! should this be asserted?
         return Make_Array_Core(extra, flags | NODE_FLAG_MANAGED);
 
     return Copy_Array_Core_Managed_Inner_Loop(
@@ -342,7 +342,7 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
 ){
     const REBFLGS flags = NODE_FLAG_MANAGED;
 
-    Array* copy = Make_Arr_For_Copy(ARR_LEN(original), flags, original);
+    Array* copy = Make_Arr_For_Copy(Array_Len(original), flags, original);
     Cell* src = ARR_HEAD(original);
     Cell* dest = ARR_HEAD(copy);
 
@@ -376,7 +376,7 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
 
     }
 
-    TERM_ARRAY_LEN(copy, ARR_LEN(original));
+    TERM_ARRAY_LEN(copy, Array_Len(original));
 
     return copy;
 }
@@ -394,8 +394,8 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
 //
 Cell* Alloc_Tail_Array(Array* a)
 {
-    EXPAND_SERIES_TAIL(SER(a), 1);
-    TERM_ARRAY_LEN(a, ARR_LEN(a));
+    Expand_Series_Tail(SER(a), 1);
+    TERM_ARRAY_LEN(a, Array_Len(a));
     Cell* last = ARR_LAST(a);
     TRASH_CELL_IF_DEBUG(last); // !!! was an END marker, good enough?
     return last;

@@ -173,12 +173,12 @@ static void Append_To_Context(REBCTX *context, Value* arg)
         Symbol* canon = VAL_WORD_CANON(word);
 
         if (Try_Add_Binder_Index(
-            &collector.binder, canon, ARR_LEN(BUF_COLLECT))
+            &collector.binder, canon, Array_Len(BUF_COLLECT))
         ){
             //
             // Wasn't already collected...so we added it...
             //
-            EXPAND_SERIES_TAIL(SER(BUF_COLLECT), 1);
+            Expand_Series_Tail(SER(BUF_COLLECT), 1);
             Init_Typeset(
                 ARR_LAST(BUF_COLLECT),
                 TS_VALUE, // !!! Currently ignored
@@ -189,13 +189,13 @@ static void Append_To_Context(REBCTX *context, Value* arg)
             break; // fix bug#708
     }
 
-    TERM_ARRAY_LEN(BUF_COLLECT, ARR_LEN(BUF_COLLECT));
+    TERM_ARRAY_LEN(BUF_COLLECT, Array_Len(BUF_COLLECT));
 
     // Append new words to obj
     //
     REBLEN len; // goto crosses initialization
     len = CTX_LEN(context) + 1;
-    Expand_Context(context, ARR_LEN(BUF_COLLECT) - len);
+    Expand_Context(context, Array_Len(BUF_COLLECT) - len);
 
     Cell* collect_key;
     for (
@@ -448,7 +448,7 @@ REB_R PD_Context(
 //
 DECLARE_NATIVE(meta_of)
 //
-// See notes accompanying the `meta` field in the REBSER definition.
+// See notes accompanying the `meta` field in the StubStruct definition.
 {
     INCLUDE_PARAMS_OF_META_OF;
 
@@ -481,7 +481,7 @@ DECLARE_NATIVE(meta_of)
 //
 DECLARE_NATIVE(set_meta)
 //
-// See notes accompanying the `meta` field in the REBSER definition.
+// See notes accompanying the `meta` field in the StubStruct definition.
 {
     INCLUDE_PARAMS_OF_SET_META;
 
@@ -556,7 +556,7 @@ REBCTX *Copy_Context_Core_Managed(REBCTX *original, REBU64 types)
 
     // Reuse the keylist of the original.  (If the context of the source or
     // the copy are expanded, the sharing is unlinked and a copy is made).
-    // This goes into the ->link field of the REBSER node.
+    // This goes into the ->link field of the Stub node.
     //
     INIT_CTX_KEYLIST_SHARED(copy, CTX_KEYLIST(original));
 
@@ -591,7 +591,7 @@ REBCTX *Copy_Context_Core_Managed(REBCTX *original, REBU64 types)
 //
 void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 {
-    REBSER *out = mo->series;
+    Series* out = mo->series;
 
     REBCTX *c = VAL_CONTEXT(v);
 
@@ -629,7 +629,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
         // Remove the final newline...but only if WE added to the buffer
         //
         if (had_output) {
-            SET_SERIES_LEN(out, SER_LEN(out) - 1);
+            Set_Series_Len(out, Series_Len(out) - 1);
             TERM_SEQUENCE(out);
         }
 

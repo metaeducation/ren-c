@@ -477,11 +477,11 @@ static const Byte *Scan_Quote_Push_Mold(
         //
         // https://stackoverflow.com/a/9533324/211160
         //
-        if (SER_LEN(mo->series) + 4 >= SER_REST(mo->series)) // incl term
+        if (Series_Len(mo->series) + 4 >= Series_Rest(mo->series)) // incl term
             Extend_Series(mo->series, 4);
 
         REBLEN encoded_len = Encode_UTF8_Char(Binary_Tail(mo->series), chr);
-        SET_SERIES_LEN(mo->series, SER_LEN(mo->series) + encoded_len);
+        Set_Series_Len(mo->series, Series_Len(mo->series) + encoded_len);
     }
 
     src++; // Skip ending quote or brace.
@@ -574,11 +574,11 @@ const Byte *Scan_Item_Push_Mold(
         //
         // https://stackoverflow.com/a/9533324/211160
         //
-        if (SER_LEN(mo->series) + 4 >= SER_REST(mo->series)) // incl term
+        if (Series_Len(mo->series) + 4 >= Series_Rest(mo->series)) // incl term
             Extend_Series(mo->series, 4);
 
         REBLEN encoded_len = Encode_UTF8_Char(Binary_Tail(mo->series), c);
-        SET_SERIES_LEN(mo->series, SER_LEN(mo->series) + encoded_len);
+        Set_Series_Len(mo->series, Series_Len(mo->series) + encoded_len);
     }
 
     if (*bp != '\0' and *bp == opt_term)
@@ -1000,7 +1000,7 @@ acquisition_loop:
             }
 
             if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
-                REBSER *locker = nullptr;
+                Series* locker = nullptr;
                 Ensure_Value_Immutable(TOP, locker);
             }
 
@@ -1048,7 +1048,7 @@ acquisition_loop:
             }
 
             if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
-                REBSER *locker = nullptr;
+                Series* locker = nullptr;
                 Ensure_Value_Immutable(TOP, locker);
             }
 
@@ -2162,7 +2162,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         case TOKEN_STRING: {
             // During scan above, string was stored in MOLD_BUF (UTF-8)
             //
-            REBSER *s = Pop_Molded_String(mo);
+            Series* s = Pop_Molded_String(mo);
             Init_Text(PUSH(), s);
             break; }
 
@@ -2213,7 +2213,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             //
             Bind_Values_All_Deep(ARR_HEAD(array), Lib_Context);
 
-            if (ARR_LEN(array) == 0 or not IS_WORD(ARR_HEAD(array))) {
+            if (Array_Len(array) == 0 or not IS_WORD(ARR_HEAD(array))) {
                 DECLARE_VALUE (temp);
                 Init_Block(temp, array);
                 fail (Error_Malconstruct_Raw(temp));
@@ -2228,7 +2228,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
 
                 MAKE_HOOK hook = Make_Hooks[kind];
 
-                if (hook == nullptr or ARR_LEN(array) != 2) {
+                if (hook == nullptr or Array_Len(array) != 2) {
                     DECLARE_VALUE (temp);
                     Init_Block(temp, array);
                     fail (Error_Malconstruct_Raw(temp));
@@ -2261,7 +2261,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 DROP_GC_GUARD(cell);
             }
             else {
-                if (ARR_LEN(array) != 1) {
+                if (Array_Len(array) != 1) {
                     DECLARE_VALUE (temp);
                     Init_Block(temp, array);
                     fail (Error_Malconstruct_Raw(temp));
@@ -2432,7 +2432,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         SET_VAL_FLAG(TOP, VALUE_FLAG_EVAL_FLIP);
 
         if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
-            REBSER *locker = nullptr;
+            Series* locker = nullptr;
             Ensure_Value_Immutable(TOP, locker);
         }
 
@@ -2498,7 +2498,7 @@ void Scan_To_Stack_Relaxed(SCAN_STATE *ss) {
         // and if this becomes a problem, implement ss->limit.
         //
         REBLEN limit = ss->begin - ss_before.begin;
-        REBSER *bin = Make_Binary(limit);
+        Series* bin = Make_Binary(limit);
         memcpy(Binary_Head(bin), ss_before.begin, limit);
         TERM_BIN_LEN(bin, limit);
 

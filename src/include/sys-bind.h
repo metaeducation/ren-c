@@ -29,7 +29,7 @@
 // R3-Alpha had a per-thread "bind table"; a large and sparsely populated hash
 // into which index numbers would be placed, for what index those words would
 // have as keys or parameters.  Ren-C's strategy is that binding information
-// is wedged into REBSER nodes that represent the canon words themselves.
+// is wedged into Stub nodes that represent the canon words themselves.
 //
 // This would create problems if multiple threads were trying to bind at the
 // same time.  While threading was never realized in R3-Alpha, Ren-C doesn't
@@ -156,7 +156,7 @@ struct Reb_Binder {
     //
     // The C++ debug build can help us make sure that no binder ever fails to
     // get an INIT_BINDER() and SHUTDOWN_BINDER() pair called on it, which
-    // would leave lingering binding values on REBSER nodes.
+    // would leave lingering binding values on Symbol stubs.
     //
     bool initialized;
     Reb_Binder () { initialized = false; }

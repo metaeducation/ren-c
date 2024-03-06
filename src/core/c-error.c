@@ -48,14 +48,14 @@ void Snap_State_Core(struct Reb_State *s)
     // length of the collect buffer to tell if a later fail() happens in
     // the middle of a Collect_Keys.)
     //
-    assert(ARR_LEN(BUF_COLLECT) == 0);
+    assert(Array_Len(BUF_COLLECT) == 0);
 
-    s->guarded_len = SER_LEN(GC_Guarded);
+    s->guarded_len = Series_Len(GC_Guarded);
     s->level = TOP_LEVEL;
 
-    s->manuals_len = SER_LEN(GC_Manuals);
-    s->mold_buf_len = SER_LEN(MOLD_BUF);
-    s->mold_loop_tail = ARR_LEN(TG_Mold_Stack);
+    s->manuals_len = Series_Len(GC_Manuals);
+    s->mold_buf_len = Series_Len(MOLD_BUF);
+    s->mold_loop_tail = Array_Len(TG_Mold_Stack);
 
     // !!! Is this initialization necessary?
     s->error = nullptr;
@@ -85,29 +85,29 @@ void Assert_State_Balanced_Debug(
 
     assert(s->level == TOP_LEVEL);
 
-    assert(ARR_LEN(BUF_COLLECT) == 0);
+    assert(Array_Len(BUF_COLLECT) == 0);
 
-    if (s->guarded_len != SER_LEN(GC_Guarded)) {
+    if (s->guarded_len != Series_Len(GC_Guarded)) {
         printf(
             "PUSH_GC_GUARD()x%d without DROP_GC_GUARD()\n",
-            cast(int, SER_LEN(GC_Guarded) - s->guarded_len)
+            cast(int, Series_Len(GC_Guarded) - s->guarded_len)
         );
-        REBNOD *guarded = *SER_AT(
+        REBNOD *guarded = *Series_At(
             REBNOD*,
             GC_Guarded,
-            SER_LEN(GC_Guarded) - 1
+            Series_Len(GC_Guarded) - 1
         );
         panic_at (guarded, file, line);
     }
 
     // !!! Note that this inherits a test that uses GC_Manuals->content.xxx
-    // instead of SER_LEN().  The idea being that although some series
+    // instead of Series_Len().  The idea being that although some series
     // are able to fit in the series node, the GC_Manuals wouldn't ever
     // pay for that check because it would always be known not to.  Review
     // this in general for things that may not need "series" overhead,
     // e.g. a contiguous pointer stack.
     //
-    if (s->manuals_len > SER_LEN(GC_Manuals)) {
+    if (s->manuals_len > Series_Len(GC_Manuals)) {
         //
         // Note: Should this ever actually happen, panic() on the series won't
         // do any real good in helping debug it.  You'll probably need to
@@ -116,21 +116,21 @@ void Assert_State_Balanced_Debug(
         //
         panic_at ("manual series freed outside checkpoint", file, line);
     }
-    else if (s->manuals_len < SER_LEN(GC_Manuals)) {
+    else if (s->manuals_len < Series_Len(GC_Manuals)) {
         printf(
-            "Make_Series()x%d w/o Free_Unmanaged_Series or MANAGE_SERIES\n",
-            cast(int, SER_LEN(GC_Manuals) - s->manuals_len)
+            "Make_Series()x%d w/o Free_Unmanaged_Series()/Manage_Series()\n",
+            cast(int, Series_Len(GC_Manuals) - s->manuals_len)
         );
-        REBSER *manual = *(SER_AT(
-            REBSER*,
+        Series* manual = *(Series_At(
+            Series*,
             GC_Manuals,
-            SER_LEN(GC_Manuals) - 1
+            Series_Len(GC_Manuals) - 1
         ));
         panic_at (manual, file, line);
     }
 
-    assert(s->mold_buf_len == SER_LEN(MOLD_BUF));
-    assert(s->mold_loop_tail == ARR_LEN(TG_Mold_Stack));
+    assert(s->mold_buf_len == Series_Len(MOLD_BUF));
+    assert(s->mold_loop_tail == Array_Len(TG_Mold_Stack));
 
     assert(s->error == nullptr);  // !!! necessary?
 }
@@ -168,7 +168,7 @@ void Trapped_Helper(struct Reb_State *s)
     // We can tell if that's necessary by whether there is anything
     // accumulated in the collect buffer.
     //
-    if (ARR_LEN(BUF_COLLECT) != 0)
+    if (Array_Len(BUF_COLLECT) != 0)
         Collect_End(nullptr);  // !!! No binder, review implications
 
     // Free any manual series that were extant at the time of the error
@@ -176,15 +176,15 @@ void Trapped_Helper(struct Reb_State *s)
     // any arglist series in call frames that have been wiped off the stack.
     // (Closure series will be managed.)
     //
-    assert(SER_LEN(GC_Manuals) >= s->manuals_len);
-    while (SER_LEN(GC_Manuals) != s->manuals_len) {
+    assert(Series_Len(GC_Manuals) >= s->manuals_len);
+    while (Series_Len(GC_Manuals) != s->manuals_len) {
         // Freeing the series will update the tail...
         Free_Unmanaged_Series(
-            *SER_AT(REBSER*, GC_Manuals, SER_LEN(GC_Manuals) - 1)
+            *Series_At(Series*, GC_Manuals, Series_Len(GC_Manuals) - 1)
         );
     }
 
-    SET_SERIES_LEN(GC_Guarded, s->guarded_len);
+    Set_Series_Len(GC_Guarded, s->guarded_len);
     TG_Top_Level = s->level;
     TERM_SEQUENCE_LEN(MOLD_BUF, s->mold_buf_len);
 
@@ -198,7 +198,7 @@ void Trapped_Helper(struct Reb_State *s)
     TG_Pushing_Mold = false;
   #endif
 
-    SET_SERIES_LEN(TG_Mold_Stack, s->mold_loop_tail);
+    Set_Series_Len(TG_Mold_Stack, s->mold_loop_tail);
 
     Saved_State = s->last_state;
 }
@@ -264,7 +264,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         break; }
 
     case DETECTED_AS_SERIES: {
-        REBSER *s = m_cast(REBSER*, cast(const REBSER*, p)); // don't mutate
+        Series* s = m_cast(Series*, cast(const Series*, p)); // don't mutate
         if (NOT_SER_FLAG(s, ARRAY_FLAG_VARLIST))
             panic (s);
         error = CTX(s);
@@ -1351,11 +1351,11 @@ void Shutdown_Stackoverflow(void)
 //
 static void Mold_Value_Limit(REB_MOLD *mo, Cell* v, REBLEN len)
 {
-    REBLEN start = SER_LEN(mo->series);
+    REBLEN start = Series_Len(mo->series);
     Mold_Value(mo, v);
 
-    if (SER_LEN(mo->series) - start > len) {
-        SET_SERIES_LEN(mo->series, start + len);
+    if (Series_Len(mo->series) - start > len) {
+        Set_Series_Len(mo->series, start + len);
         Append_Unencoded(mo->series, "...");
     }
 }

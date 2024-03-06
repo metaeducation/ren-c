@@ -1469,9 +1469,9 @@ DECLARE_NATIVE(call)
     // they are not read-only, before we try appending to them.
     //
     if (IS_TEXT(ARG(out)) or IS_BINARY(ARG(out)))
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(ARG(out)));
+        Fail_If_Read_Only_Series(VAL_SERIES(ARG(out)));
     if (IS_TEXT(ARG(err)) or IS_BINARY(ARG(err)))
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(ARG(err)));
+        Fail_If_Read_Only_Series(VAL_SERIES(ARG(err)));
 
     char *os_input;
     REBLEN input_len;

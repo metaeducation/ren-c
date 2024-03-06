@@ -95,7 +95,7 @@ INLINE bool Is_Block_Style_Varargs(
     *shared_out = KNOWN(ARR_HEAD(array1));
     assert(
         IS_END(*shared_out)
-        or (IS_BLOCK(*shared_out) and ARR_LEN(array1) == 1)
+        or (IS_BLOCK(*shared_out) and Array_Len(array1) == 1)
     );
 
     return true;

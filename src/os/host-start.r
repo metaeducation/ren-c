@@ -618,7 +618,7 @@ host-start: function [
 
     ; Taking a command-line `--breakpoint NNN` parameter is helpful if a
     ; problem is reproducible, and you have a tick count in hand from a
-    ; panic(), REBSER.tick, Level.tick, Cell.extra.tick, etc.  But there's
+    ; panic(), Stub.tick, Level.tick, Cell.extra.tick, etc.  But there's
     ; an entanglement issue, as any otherwise-deterministic tick from a prior
     ; run would be thrown off by the **ticks added by the userspace parameter
     ; processing of the command-line for `--breakpoint`**!  :-/

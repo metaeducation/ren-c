@@ -33,7 +33,7 @@
 //
 // Additionally, Ren-C added the idea of a garbage collector callback for
 // "Managed" handles.  This is implemented by means of making the handle cost
-// a single REBSER node shared among its instances, which is a "singular"
+// a single Stub node shared among its instances, which is a "singular"
 // Array containing a canon value of the handle itself.  When there are no
 // references left to the handle and the GC runs, it will run a hook stored
 // in the ->misc field of the singular array.

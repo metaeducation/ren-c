@@ -73,7 +73,7 @@
 
 // See Endlike_Header() for why these are chosen the way they are.  This
 // means that the Level->flags field can function as an implicit END for
-// Level->cell, as well as be distinguished from a Value*, a REBSER*, or
+// Level->cell, as well as be distinguished from a Value*, a Series*, or
 // a UTF8 string.
 //
 #define DO_FLAG_0_IS_TRUE FLAG_LEFT_BIT(0) // NODE_FLAG_NODE
@@ -481,11 +481,11 @@ struct LevelStruct {
     // `flags`
     //
     // These are DO_FLAG_XXX or'd together--see their documentation above.
-    // A Reb_Header is used so that it can implicitly terminate `shove`,
+    // A HeaderUnion is used so that it can implicitly terminate `shove`,
     // which isn't necessarily that useful...but putting it after `cell`
     // would throw off the alignment for shove.
     //
-    union Reb_Header flags; // See Endlike_Header()
+    union HeaderUnion flags; // See Endlike_Header()
 
     // `prior`
     //

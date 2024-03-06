@@ -287,11 +287,11 @@ REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 Value* Init_Any_Series_At_Core(
     Cell* out, // allows Cell slot as input, but will be filled w/Value
     enum Reb_Kind type,
-    REBSER *series,
+    Series* series,
     REBLEN index,
     REBNOD *binding
 ) {
-    ENSURE_SERIES_MANAGED(series);
+    Force_Series_Managed(series);
 
     // !!! Binaries are zero-terminated in modern Ren-C, so they can alias
     // as TEXT! if they are valid UTF-8.  That is not possible in this older
@@ -301,7 +301,7 @@ Value* Init_Any_Series_At_Core(
     //     Make a binary string series. For byte, C, and UTF8 strings.
     //     Add 1 extra for terminator.
     //
-    ASSERT_SERIES_TERM(series);
+    Assert_Series_Term(series);
 
     RESET_CELL(out, type);
     out->payload.any_series.series = series;
@@ -310,10 +310,10 @@ Value* Init_Any_Series_At_Core(
 
   #if !defined(NDEBUG)
     if (ANY_STRING(out)) {
-        if (SER_WIDE(series) != 2)
+        if (Series_Wide(series) != 2)
             panic(series);
     } else if (IS_BINARY(out)) {
-        if (SER_WIDE(series) != 1)
+        if (Series_Wide(series) != 1)
             panic(series);
     }
   #endif

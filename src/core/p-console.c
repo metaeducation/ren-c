@@ -86,8 +86,8 @@ static REB_R Console_Actor(Level* level_, Value* port, Value* verb)
         if (not IS_BINARY(data))
             Init_Binary(data, Make_Binary(OUT_BUF_SIZE));
 
-        REBSER *ser = VAL_SERIES(data);
-        SET_SERIES_LEN(ser, 0);
+        Series* ser = VAL_SERIES(data);
+        Set_Series_Len(ser, 0);
         TERM_SERIES(ser);
 
         req->common.data = Binary_Head(ser);

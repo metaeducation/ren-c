@@ -60,17 +60,17 @@ struct Reb_Action {
 
         constexpr bool base = std::is_same<T, void>::value
             or std::is_same<T, REBNOD>::value
-            or std::is_same<T, REBSER>::value
+            or std::is_same<T, Stub>::value
             or std::is_same<T, Array>::value;
 
         static_assert(
             derived or base,
-            "ACT() works on void/REBNOD/REBSER/Array/REBACT"
+            "ACT() works on void/REBNOD/Stub/Array/REBACT"
         );
 
         if (base)
             assert(
-                SERIES_MASK_ACTION == (cast(REBSER*, p)->header.bits & (
+                SERIES_MASK_ACTION == (cast(Series*, p)->header.bits & (
                     SERIES_MASK_ACTION
                         | NODE_FLAG_FREE
                         | NODE_FLAG_CELL

@@ -325,7 +325,7 @@ REBCTX *Make_Context_For_Action(
         opt_binder
     );
 
-    MANAGE_ARRAY(CTX_VARLIST(exemplar)); // !!! was needed before, review
+    Manage_Series(CTX_VARLIST(exemplar)); // !!! was needed before, review
     Drop_Data_Stack_To(lowest_stackindex);
     return exemplar;
 }
@@ -388,7 +388,7 @@ bool Specialize_Action_Throws(
         lowest_stackindex,
         opt_def ? &binder : nullptr
     );
-    MANAGE_ARRAY(CTX_VARLIST(exemplar)); // destined to be managed, guarded
+    Manage_Series(CTX_VARLIST(exemplar)); // destined to be managed, guarded
 
     if (opt_def) { // code that fills the frame...fully or partially
         //
@@ -665,7 +665,7 @@ bool Specialize_Action_Throws(
         paramlist_base,
         SERIES_MASK_ACTION
     );
-    MANAGE_ARRAY(paramlist);
+    Manage_Series(paramlist);
     Cell* rootparam = ARR_HEAD(paramlist);
     rootparam->payload.action.paramlist = paramlist;
 
@@ -1031,7 +1031,7 @@ DECLARE_NATIVE(does)
     // is optimized to not run the block with the DO native...hence a
     // HIJACK of DO won't be triggered by invocations of the first form.
     //
-    MANAGE_ARRAY(paramlist);
+    Manage_Series(paramlist);
     REBACT *doer = Make_Action(
         paramlist,
         &Block_Dispatcher, // **SEE COMMENTS**, not quite like plain DO!
@@ -1044,7 +1044,7 @@ DECLARE_NATIVE(does)
     // things invariant we have to lock it.
     //
     Cell* body = ARR_HEAD(ACT_DETAILS(doer));
-    REBSER *locker = nullptr;
+    Series* locker = nullptr;
     Ensure_Value_Immutable(value, locker);
     Copy_Cell(body, value);
 

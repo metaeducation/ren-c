@@ -120,7 +120,7 @@ void Dump_Bytes(Byte *bp, REBLEN limit)
 //
 //  Dump_Series: C
 //
-void Dump_Series(REBSER *s, const char *memo)
+void Dump_Series(Series* s, const char *memo)
 {
     printf("Dump_Series(%s) @ %p\n", memo, cast(void*, s));
     fflush(stdout);
@@ -128,12 +128,12 @@ void Dump_Series(REBSER *s, const char *memo)
     if (s == nullptr)
         return;
 
-    printf(" wide: %d\n", SER_WIDE(s));
+    printf(" wide: %d\n", Series_Wide(s));
     printf(" size: %ld\n", cast(unsigned long, SER_TOTAL_IF_DYNAMIC(s)));
     if (IS_SER_DYNAMIC(s))
-        printf(" bias: %d\n", cast(int, SER_BIAS(s)));
-    printf(" tail: %d\n", cast(int, SER_LEN(s)));
-    printf(" rest: %d\n", cast(int, SER_REST(s)));
+        printf(" bias: %d\n", cast(int, Series_Bias(s)));
+    printf(" tail: %d\n", cast(int, Series_Len(s)));
+    printf(" rest: %d\n", cast(int, Series_Rest(s)));
 
     // flags includes len if non-dynamic
     printf(" flags: %lx\n", cast(unsigned long, s->header.bits));
@@ -144,9 +144,9 @@ void Dump_Series(REBSER *s, const char *memo)
     fflush(stdout);
 
     if (IS_SER_ARRAY(s))
-        Dump_Values(ARR_HEAD(ARR(s)), SER_LEN(s));
+        Dump_Values(ARR_HEAD(ARR(s)), Series_Len(s));
     else
-        Dump_Bytes(SER_DATA_RAW(s), (SER_LEN(s) + 1) * SER_WIDE(s));
+        Dump_Bytes(SER_DATA_RAW(s), (Series_Len(s) + 1) * Series_Wide(s));
 
     fflush(stdout);
 }
@@ -226,7 +226,7 @@ void Dump_Info(void)
 
     printf("    Ballast: %d\n", cast(int, GC_Ballast));
     printf("    Disable: %s\n", GC_Disabled ? "yes" : "no");
-    printf("    Guarded Nodes: %d\n", cast(int, SER_LEN(GC_Guarded)));
+    printf("    Guarded Nodes: %d\n", cast(int, Series_Len(GC_Guarded)));
     fflush(stdout);
 }
 

@@ -29,25 +29,25 @@
 // Note: the word "Series" is overloaded in Rebol to refer to two related but
 // distinct concepts:
 //
-// * The internal system datatype, also known as a REBSER.  It's a low-level
+// * The internal system datatype, also known as a Stub.  It's a low-level
 //   implementation of something similar to a vector or an array in other
 //   languages.  It is an abstraction which represents a contiguous region
 //   of memory containing equally-sized elements.
 //
 // * The user-level value type ANY-SERIES!.  This might be more accurately
-//   called ITERATOR!, because it includes both a pointer to a REBSER of
+//   called ITERATOR!, because it includes both a pointer to a Stub of
 //   data and an index offset into that data.  Attempts to reconcile all
 //   the naming issues from historical Rebol have not yielded a satisfying
 //   alternative, so the ambiguity has stuck.
 //
 // This file regards the first meaning of the word "series" and covers the
-// low-level implementation details of a REBSER and its subclasses.  For info
+// low-level implementation details of a Stub and its subclasses.  For info
 // about the higher-level ANY-SERIES! value type and its embedded index,
 // see %sys-value.h in the definition of `struct Reb_Any_Series`.
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A REBSER is a contiguous-memory structure with an optimization of behaving
+// A Series is a contiguous-memory structure with an optimization of behaving
 // like a kind of "double-ended queue".  It is able to reserve capacity at
 // both the tail and the head, and when data is taken from the head it will
 // retain that capacity...reusing it on later insertions at the head.
@@ -58,29 +58,29 @@
 // must be subtracted completely to free the pointer using the address
 // originally given by the allocator.
 //
-// The element size in a REBSER is known as the "width".  It is designed
+// The element size in a Series is known as the "width".  It is designed
 // to support widths of elements up to 255 bytes.  (See note on SER_FREED
 // about accomodating 256-byte elements.)
 //
 // REBSERs may be either manually memory managed or delegated to the garbage
 // collector.  Free_Unmanaged_Series() may only be called on manual series.
-// See MANAGE_SERIES()/PUSH_GC_GUARD() for remarks on how to work safely
+// See Manage_Series()/PUSH_GC_GUARD() for remarks on how to work safely
 // with pointers to garbage-collected series, to avoid having them be GC'd
 // out from under the code while working with them.
 //
 // Series subclasses Array, REBCTX, REBACT, REBMAP are defined which are
-// type-incompatible with REBSER for safety.  (In C++ they would be derived
+// type-incompatible with Series for safety.  (In C++ they would be derived
 // classes, so common operations would not require casting...but it is seen
 // as worthwhile to offer some protection even compiling as C.)  The
 // subclasses are explained where they are defined in separate header files.
 //
 // Notes:
 //
-// * For the struct definition of REBSER, see %sys-rebser.h
+// * For the struct definition underlying Series, see Stub in %sys-rebser.h
 //
 // * It is desirable to have series subclasses be different types, even though
 //   there are some common routines for processing them.  e.g. not every
-//   function that would take a REBSER* would actually be handled in the same
+//   function that would take a Series* would actually be handled in the same
 //   way for a Array*.  Plus, just because a REBCTX* is implemented as a
 //   Array* with a link to another Array* doesn't mean most clients should
 //   be accessing the array--in a C++ build this would mean it would have some
@@ -100,7 +100,7 @@
 //
 #if defined(DEBUG_SERIES_ORIGINS) || defined(DEBUG_COUNT_TICKS)
     INLINE void Touch_Series_Debug(void *p) {
-        REBSER *s = SER(p); // allow Array, REBCTX, REBACT...
+        Series* s = SER(p); // allow Array, REBCTX, REBACT...
 
       #if defined(DEBUG_SERIES_ORIGINS)
         s->guard = cast(intptr_t*, malloc(sizeof(*s->guard)));
@@ -142,12 +142,12 @@
 // "content", there's room for a length in the node.
 //
 
-INLINE REBLEN SER_LEN(REBSER* s) {
+INLINE REBLEN Series_Len(Series* s) {
     Byte len_byte = LEN_BYTE_OR_255(s);
     return len_byte == 255 ? s->content.dynamic.len : len_byte;
 }
 
-INLINE void SET_SERIES_LEN(REBSER *s, REBLEN len) {
+INLINE void Set_Series_Len(Series* s, REBLEN len) {
     if (LEN_BYTE_OR_255(s) == 255)
         s->content.dynamic.len = len;
     else {
@@ -161,7 +161,7 @@ INLINE void SET_SERIES_LEN(REBSER *s, REBLEN len) {
 // for instance a generic debugging routine might just want a byte pointer
 // but have no element type pointer to pass in.
 //
-INLINE Byte *SER_DATA_RAW(REBSER *s) {
+INLINE Byte *SER_DATA_RAW(Series* s) {
     // if updating, also update manual inlining in SER_AT_RAW
 
     // The VAL_CONTEXT(), VAL_SERIES(), Cell_Array() extractors do the failing
@@ -174,19 +174,19 @@ INLINE Byte *SER_DATA_RAW(REBSER *s) {
         : cast(Byte*, &s->content);
 }
 
-INLINE Byte *SER_AT_RAW(Byte w, REBSER *s, REBLEN i) {
+INLINE Byte *Series_Data_At(Byte w, Series* s, REBLEN i) {
   #if !defined(NDEBUG)
-    if (w != SER_WIDE(s)) {
+    if (w != Series_Wide(s)) {
         //
         // This is usually a sign that the series was GC'd, as opposed to the
         // caller passing in the wrong width (freeing sets width to 0).  But
         // give some debug tracking either way.
         //
-        Byte wide = SER_WIDE(s);
+        Byte wide = Series_Wide(s);
         if (wide == 0)
             printf("SER_AT_RAW asked on freed series\n");
         else
-            printf("SER_AT_RAW asked %d on width=%d\n", w, SER_WIDE(s));
+            printf("SER_AT_RAW asked %d on width=%d\n", w, Series_Wide(s));
         panic (s);
     }
     // The VAL_CONTEXT(), VAL_SERIES(), Cell_Array() extractors do the failing
@@ -209,73 +209,73 @@ INLINE Byte *SER_AT_RAW(Byte w, REBSER *s, REBLEN i) {
 // to that type.
 //
 // Note that series indexing in C is zero based.  So as far as SERIES is
-// concerned, `SER_HEAD(t, s)` is the same as `SER_AT(t, s, 0)`
+// concerned, `Series_Head(t, s)` is the same as `Series_At(t, s, 0)`
 //
 // Use C-style cast instead of cast() macro, as it will always be safe and
 // this is used very frequently.
 
-#define SER_AT(t,s,i) \
-    ((t*)SER_AT_RAW(sizeof(t), (s), (i)))
+#define Series_At(t,s,i) \
+    ((t*)Series_Data_At(sizeof(t), (s), (i)))
 
-#define SER_HEAD(t,s) \
-    SER_AT(t, (s), 0)
+#define Series_Head(t,s) \
+    Series_At(t, (s), 0)
 
-INLINE Byte *SER_TAIL_RAW(size_t w, REBSER *s) {
-    return SER_AT_RAW(w, s, SER_LEN(s));
+INLINE Byte *Series_Data_Tail(size_t w, Series* s) {
+    return Series_Data_At(w, s, Series_Len(s));
 }
 
-#define SER_TAIL(t,s) \
-    ((t*)SER_TAIL_RAW(sizeof(t), (s)))
+#define Series_Tail(t,s) \
+    ((t*)Series_Data_Tail(sizeof(t), (s)))
 
-INLINE Byte *SER_LAST_RAW(size_t w, REBSER *s) {
-    assert(SER_LEN(s) != 0);
-    return SER_AT_RAW(w, s, SER_LEN(s) - 1);
+INLINE Byte *Series_Data_Last(size_t w, Series* s) {
+    assert(Series_Len(s) != 0);
+    return Series_Data_At(w, s, Series_Len(s) - 1);
 }
 
-#define SER_LAST(t,s) \
-    ((t*)SER_LAST_RAW(sizeof(t), (s)))
+#define Series_Last(t,s) \
+    ((t*)Series_Data_Last(sizeof(t), (s)))
 
 
 #define SER_FULL(s) \
-    (SER_LEN(s) + 1 >= SER_REST(s))
+    (Series_Len(s) + 1 >= Series_Rest(s))
 
 #define SER_AVAIL(s) \
-    (SER_REST(s) - (SER_LEN(s) + 1)) // space available (minus terminator)
+    (Series_Rest(s) - (Series_Len(s) + 1)) // space available (minus terminator)
 
-#define SER_FITS(s,n) \
-    ((SER_LEN(s) + (n) + 1) <= SER_REST(s))
+#define Series_Fits(s,n) \
+    ((Series_Len(s) + (n) + 1) <= Series_Rest(s))
 
 
 //
 // Optimized expand when at tail (but, does not reterminate)
 //
 
-INLINE void EXPAND_SERIES_TAIL(REBSER *s, REBLEN delta) {
-    if (SER_FITS(s, delta))
-        SET_SERIES_LEN(s, SER_LEN(s) + delta);
+INLINE void Expand_Series_Tail(Series* s, REBLEN delta) {
+    if (Series_Fits(s, delta))
+        Set_Series_Len(s, Series_Len(s) + delta);
     else
-        Expand_Series(s, SER_LEN(s), delta);
+        Expand_Series(s, Series_Len(s), delta);
 }
 
 //
 // Termination
 //
 
-INLINE void TERM_SEQUENCE(REBSER *s) {
+INLINE void TERM_SEQUENCE(Series* s) {
     assert(not IS_SER_ARRAY(s));
-    memset(SER_AT_RAW(SER_WIDE(s), s, SER_LEN(s)), 0, SER_WIDE(s));
+    memset(Series_Data_At(Series_Wide(s), s, Series_Len(s)), 0, Series_Wide(s));
 }
 
-INLINE void TERM_SEQUENCE_LEN(REBSER *s, REBLEN len) {
-    SET_SERIES_LEN(s, len);
+INLINE void TERM_SEQUENCE_LEN(Series* s, REBLEN len) {
+    Set_Series_Len(s, len);
     TERM_SEQUENCE(s);
 }
 
 #ifdef NDEBUG
-    #define ASSERT_SERIES_TERM(s) \
+    #define Assert_Series_Term(s) \
         NOOP
 #else
-    #define ASSERT_SERIES_TERM(s) \
+    #define Assert_Series_Term(s) \
         Assert_Series_Term_Core(s)
 #endif
 
@@ -293,16 +293,16 @@ INLINE void TERM_SEQUENCE_LEN(REBSER *s, REBLEN len) {
 // When a series is allocated by the Make_Series() routine, it is not initially
 // visible to the garbage collector.  To keep from leaking it, then it must
 // be either freed with Free_Unmanaged_Series or delegated to the GC to manage
-// with MANAGE_SERIES.
+// with Manage_Series().
 //
 // (In debug builds, there is a test at the end of every Rebol function
 // dispatch that checks to make sure one of those two things happened for any
 // series allocated during the call.)
 //
-// The implementation of MANAGE_SERIES is shallow--it only sets a bit on that
+// The implementation of Manage_Series() is shallow--it only sets a bit on that
 // *one* series, not any series referenced by values inside of it.  This
 // means that you cannot build a hierarchical structure that isn't visible
-// to the GC and then do a single MANAGE_SERIES call on the root to hand it
+// to the GC and then do a single Manage_Series() call on the root to hand it
 // over to the garbage collector.  While it would be technically possible to
 // deeply walk the structure, the efficiency gained from pre-building the
 // structure with the managed bit set is significant...so that's how deep
@@ -312,24 +312,26 @@ INLINE void TERM_SEQUENCE_LEN(REBSER *s, REBLEN len) {
 // reachable by the GC, it will raise an alert.)
 //
 
-INLINE bool IS_SERIES_MANAGED(REBSER *s) {
-    return did (s->header.bits & NODE_FLAG_MANAGED);
+#define Is_Series_Managed(s) \
+    (did (SER(s)->header.bits & NODE_FLAG_MANAGED))
+
+#define Manage_Series(s) \
+    Manage_Series_Core(SER(s))
+
+INLINE void Force_Series_Managed_Core(Series* s) {
+    if (not Is_Series_Managed(s))
+        Manage_Series(s);
 }
 
-#define MANAGE_SERIES(s) \
-    Manage_Series(s)
-
-INLINE void ENSURE_SERIES_MANAGED(REBSER *s) {
-    if (not IS_SERIES_MANAGED(s))
-        MANAGE_SERIES(s);
-}
+#define Force_Series_Managed(s) \
+    Force_Series_Managed_Core(SER(s))
 
 #ifdef NDEBUG
-    #define ASSERT_SERIES_MANAGED(s) \
+    #define Assert_Series_Managed(s) \
         NOOP
 #else
-    INLINE void ASSERT_SERIES_MANAGED(REBSER *s) {
-        if (not IS_SERIES_MANAGED(s))
+    INLINE void Assert_Series_Managed(Series* s) {
+        if (not Is_Series_Managed(s))
             panic (s);
     }
 #endif
@@ -361,15 +363,15 @@ INLINE void ENSURE_SERIES_MANAGED(REBSER *s) {
 // are and asserts it's 0 by the time each evaluation ends, to ensure balance.
 //
 
-INLINE bool Is_Series_Black(REBSER *s) {
+INLINE bool Is_Series_Black(Series* s) {
     return GET_SER_INFO(s, SERIES_INFO_BLACK);
 }
 
-INLINE bool Is_Series_White(REBSER *s) {
+INLINE bool Is_Series_White(Series* s) {
     return NOT_SER_INFO(s, SERIES_INFO_BLACK);
 }
 
-INLINE void Flip_Series_To_Black(REBSER *s) {
+INLINE void Flip_Series_To_Black(Series* s) {
     assert(NOT_SER_INFO(s, SERIES_INFO_BLACK));
     SET_SER_INFO(s, SERIES_INFO_BLACK);
 #if !defined(NDEBUG)
@@ -377,7 +379,7 @@ INLINE void Flip_Series_To_Black(REBSER *s) {
 #endif
 }
 
-INLINE void Flip_Series_To_White(REBSER *s) {
+INLINE void Flip_Series_To_White(Series* s) {
     assert(GET_SER_INFO(s, SERIES_INFO_BLACK));
     CLEAR_SER_INFO(s, SERIES_INFO_BLACK);
 #if !defined(NDEBUG)
@@ -390,17 +392,17 @@ INLINE void Flip_Series_To_White(REBSER *s) {
 // Freezing and Locking
 //
 
-INLINE void Freeze_Sequence(REBSER *s) { // there is no unfreeze!
+INLINE void Freeze_Sequence(Series* s) { // there is no unfreeze!
     assert(not IS_SER_ARRAY(s)); // use Deep_Freeze_Array
     SET_SER_INFO(s, SERIES_INFO_FROZEN);
 }
 
-INLINE bool Is_Series_Frozen(REBSER *s) {
+INLINE bool Is_Series_Frozen(Series* s) {
     assert(not IS_SER_ARRAY(s)); // use Is_Array_Deeply_Frozen
     return GET_SER_INFO(s, SERIES_INFO_FROZEN);
 }
 
-INLINE bool Is_Series_Read_Only(REBSER *s) { // may be temporary...
+INLINE bool Is_Series_Read_Only(Series* s) { // may be temporary...
     return did (
         s->info.bits &
         (SERIES_INFO_FROZEN | SERIES_INFO_HOLD | SERIES_INFO_PROTECTED)
@@ -414,7 +416,7 @@ INLINE bool Is_Series_Read_Only(REBSER *s) { // may be temporary...
 // but if only one error is to be reported then this is probably the right
 // priority ordering.
 //
-INLINE void FAIL_IF_READ_ONLY_SERIES(REBSER *s) {
+INLINE void Fail_If_Read_Only_Series(Series* s) {
     if (Is_Series_Read_Only(s)) {
         if (GET_SER_INFO(s, SERIES_INFO_AUTO_LOCKED))
             fail (Error_Series_Auto_Locked_Raw());
@@ -438,7 +440,7 @@ INLINE void FAIL_IF_READ_ONLY_SERIES(REBSER *s) {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // The garbage collector can run anytime the evaluator runs (and also when
-// ports are used).  So if a series has had MANAGE_SERIES run on it, the
+// ports are used).  So if a series has had Manage_Series() run on it, the
 // potential exists that any C pointers that are outstanding may "go bad"
 // if the series wasn't reachable from the root set.  This is important to
 // remember any time a pointer is held across a call that runs arbitrary
@@ -473,7 +475,7 @@ INLINE void FAIL_IF_READ_ONLY_SERIES(REBSER *s) {
         const char *file,
         int line
     ){
-        if (n != *SER_LAST(REBNOD*, GC_Guarded))
+        if (n != *Series_Last(REBNOD*, GC_Guarded))
             panic_at (n, file, line);
         GC_Guarded->content.dynamic.len--;
     }
@@ -489,17 +491,17 @@ INLINE void FAIL_IF_READ_ONLY_SERIES(REBSER *s) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-INLINE REBSER *VAL_SERIES(const Cell* v) {
+INLINE Series* VAL_SERIES(const Cell* v) {
     assert(ANY_SERIES(v) or IS_MAP(v));  // !!! gcc 5.4 -O2 bug
-    REBSER *s = v->payload.any_series.series;
+    Series* s = v->payload.any_series.series;
     if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return s;
 }
 
-INLINE void INIT_VAL_SERIES(Cell* v, REBSER *s) {
+INLINE void INIT_VAL_SERIES(Cell* v, Series* s) {
     assert(not IS_SER_ARRAY(s));
-    assert(IS_SERIES_MANAGED(s));
+    assert(Is_Series_Managed(s));
     v->payload.any_series.series = s;
 }
 
@@ -520,7 +522,7 @@ INLINE void INIT_VAL_SERIES(Cell* v, REBSER *s) {
 #endif
 
 #define VAL_LEN_HEAD(v) \
-    SER_LEN(VAL_SERIES(v))
+    Series_Len(VAL_SERIES(v))
 
 INLINE REBLEN VAL_LEN_AT(const Cell* v) {
     if (VAL_INDEX(v) >= VAL_LEN_HEAD(v))
@@ -529,7 +531,7 @@ INLINE REBLEN VAL_LEN_AT(const Cell* v) {
 }
 
 INLINE Byte *VAL_RAW_DATA_AT(const Cell* v) {
-    return SER_AT_RAW(SER_WIDE(VAL_SERIES(v)), VAL_SERIES(v), VAL_INDEX(v));
+    return Series_Data_At(Series_Wide(VAL_SERIES(v)), VAL_SERIES(v), VAL_INDEX(v));
 }
 
 #define Init_Any_Series_At(v,t,s,i) \
@@ -561,11 +563,11 @@ INLINE Byte *VAL_RAW_DATA_AT(const Cell* v) {
 // is a particularly efficient default state, so separating the dynamic
 // allocation into a separate routine is not a huge cost.
 //
-INLINE REBSER *Alloc_Series_Node(REBFLGS flags) {
+INLINE Series* Alloc_Series_Node(REBFLGS flags) {
     assert(not (flags & NODE_FLAG_CELL));
 
-    REBSER *s = cast(REBSER*, Make_Node(SER_POOL));
-    if ((GC_Ballast -= sizeof(REBSER)) <= 0)
+    Series* s = cast(Series*, Make_Node(SER_POOL));
+    if ((GC_Ballast -= sizeof(Stub)) <= 0)
         SET_SIGNAL(SIG_RECYCLE);
 
     // Out of the 8 platform pointers that comprise a series node, only 3
@@ -577,7 +579,7 @@ INLINE REBSER *Alloc_Series_Node(REBFLGS flags) {
     TRASH_POINTER_IF_DEBUG(LINK(s).trash); // #2
   #if !defined(NDEBUG)
     memset(cast(char*, &s->content.fixed), 0xBD, sizeof(s->content)); // #3-#6
-    memset(&s->info, 0xAE, sizeof(s->info)); // #7, caller sets SER_WIDE()
+    memset(&s->info, 0xAE, sizeof(s->info)); // #7, caller sets Series_Wide()
   #endif
     TRASH_POINTER_IF_DEBUG(MISC(s).trash); // #8
 
@@ -606,7 +608,7 @@ INLINE REBLEN FIND_POOL(size_t size) {
 }
 
 
-// Allocates element array for an already allocated REBSER node structure.
+// Allocates element array for an already allocated Stub node structure.
 // Resets the bias and tail to zero, and sets the new width.  Flags like
 // SERIES_FLAG_FIXED_SIZE are left as they were, and other fields in the
 // series structure are untouched.
@@ -614,15 +616,15 @@ INLINE REBLEN FIND_POOL(size_t size) {
 // This routine can thus be used for an initial construction or an operation
 // like expansion.
 //
-INLINE bool Did_Series_Data_Alloc(REBSER *s, REBLEN length) {
+INLINE bool Did_Series_Data_Alloc(Series* s, REBLEN length) {
     //
     // Currently once a series becomes dynamic, it never goes back.  There is
     // no shrinking process that will pare it back to fit completely inside
-    // the REBSER node.
+    // the Stub node.
     //
     assert(IS_SER_DYNAMIC(s)); // caller sets
 
-    Byte wide = SER_WIDE(s);
+    Byte wide = Series_Wide(s);
     assert(wide != 0);
 
     REBLEN size; // size of allocation (possibly bigger than we need)
@@ -701,7 +703,7 @@ INLINE bool Did_Series_Data_Alloc(REBSER *s, REBLEN length) {
 // Small series will be allocated from a memory pool.
 // Large series will be allocated from system memory.
 //
-INLINE REBSER *Make_Series_Core(
+INLINE Series* Make_Series_Core(
     REBLEN capacity,
     Byte wide,
     REBFLGS flags
@@ -716,7 +718,7 @@ INLINE REBSER *Make_Series_Core(
     // non-zero second byte.  However, it obeys the fixed info bits for now.
     // (It technically doesn't need to.)
     //
-    REBSER *s = Alloc_Series_Node(flags);
+    Series* s = Alloc_Series_Node(flags);
     s->info.bits =
         SERIES_INFO_0_IS_TRUE
         // not SERIES_INFO_1_IS_FALSE
@@ -728,7 +730,7 @@ INLINE REBSER *Make_Series_Core(
         or (capacity * wide > sizeof(s->content))
     ){
         //
-        // Data won't fit in a REBSER node, needs a dynamic allocation.  The
+        // Data won't fit in a Stub node, needs a dynamic allocation.  The
         // capacity given back as the ->rest may be larger than the requested
         // size, because the memory pool reports the full rounded allocation.
 
@@ -751,7 +753,7 @@ INLINE REBSER *Make_Series_Core(
         if (SER_FULL(GC_Manuals))
             Extend_Series(GC_Manuals, 8);
 
-        cast(REBSER**, GC_Manuals->content.dynamic.data)[
+        cast(Series**, GC_Manuals->content.dynamic.data)[
             GC_Manuals->content.dynamic.len++
         ] = s; // start out managed to not need to find/remove from this later
     }

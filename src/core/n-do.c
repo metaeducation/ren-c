@@ -772,7 +772,7 @@ DECLARE_NATIVE(applique)
         L->stack_base,  // lowest_stackindex of refinements to weave in
         &binder
     );
-    MANAGE_ARRAY(CTX_VARLIST(exemplar)); // binding code into it
+    Manage_Series(CTX_VARLIST(exemplar)); // binding code into it
 
     // Bind any SET-WORD!s in the supplied code block into the FRAME!, so
     // e.g. APPLY 'APPEND [VALUE: 10]` will set VALUE in exemplar to 10.
