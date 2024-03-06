@@ -60,7 +60,7 @@
 //
 ATTRIBUTE_NO_RETURN void Panic_Core(
     const void *p, // Series* (array, context, etc), Value*, or UTF-8 char*
-    REBTCK tick,
+    Tick tick,
     const char *file, // UTF8
     int line
 ){
@@ -277,7 +277,7 @@ DECLARE_NATIVE(panic)
   #ifdef DEBUG_COUNT_TICKS
     Panic_Core(p, level_->tick, file_utf8, LVL_LINE(level_));
   #else
-    const REBTCK tick = 0;
+    const Tick tick = 0;
     Panic_Core(p, tick, file_utf8, LVL_LINE(level_));
   #endif
 }
@@ -314,7 +314,7 @@ DECLARE_NATIVE(panic_value)
         ARG(value), level_->tick, file_utf8, LVL_LINE(level_)
     );
   #else
-    const REBTCK tick = 0;
+    const Tick tick = 0;
     Panic_Core(ARG(value), tick, file_utf8, LVL_LINE(level_));
   #endif
 }

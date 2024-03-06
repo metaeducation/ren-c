@@ -357,7 +357,7 @@ INLINE void Set_Level_Detected_Fetch(
 
         SCAN_STATE ss;
         String* filename = nullptr;
-        const REBLIN start_line = 1;
+        const LineNumber start_line = 1;
         Init_Va_Scan_State_Core(
             &ss,
             filename,

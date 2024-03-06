@@ -455,7 +455,7 @@ void Set_Location_Of_Error(
     }
     if (L != BOTTOM_LEVEL) {
         Option(String*) file = LINK(L->source->array).file;
-        REBLIN line = MISC(L->source->array).line;
+        LineNumber line = MISC(L->source->array).line;
 
         if (file)
             Init_File(&vars->file, unwrap(file));

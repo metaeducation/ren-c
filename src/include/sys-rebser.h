@@ -778,7 +778,7 @@ union StubMiscUnion {
     // have some bits taken out of it, vs. being a full 32-bit integer on
     // 32-bit platforms or 64-bit integer on 64-bit platforms.
     //
-    REBLIN line;
+    LineNumber line;
 
     // Under UTF-8 everywhere, strings are byte-sized...so the series "size"
     // is actually counting *bytes*, not logical character codepoint units.

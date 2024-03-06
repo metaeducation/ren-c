@@ -790,7 +790,7 @@ REBTYPE(Context)
             return Init_File(OUT, unwrap(file)); }
 
           case SYM_LINE: {
-            REBLIN line = LVL_LINE(L);
+            LineNumber line = LVL_LINE(L);
             if (line == 0)
                 return nullptr;
             return Init_Integer(OUT, line); }

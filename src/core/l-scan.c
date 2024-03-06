@@ -1747,7 +1747,7 @@ scanword:
 void Init_Va_Scan_State_Core(
     SCAN_STATE *ss,
     Option(String*) file,
-    REBLIN line,
+    LineNumber line,
     const Byte *opt_begin, // preload the scanner outside the va_list
     va_list *vaptr
 ){
@@ -1794,7 +1794,7 @@ void Init_Va_Scan_State_Core(
 void Init_Scan_State(
     SCAN_STATE *ss,
     Option(String*) file,
-    REBLIN line,
+    LineNumber line,
     const Byte *utf8,
     REBLEN limit
 ){
@@ -2621,7 +2621,7 @@ Array* Scan_Va_Managed(
 ){
     StackIndex base = TOP_INDEX;
 
-    const REBLIN start_line = 1;
+    const LineNumber start_line = 1;
 
     va_list va;
     va_start(va, filename);
@@ -2674,7 +2674,7 @@ Array* Scan_UTF8_Managed(
     REBLEN size
 ){
     SCAN_STATE ss;
-    const REBLIN start_line = 1;
+    const LineNumber start_line = 1;
     Init_Scan_State(&ss, filename, start_line, utf8, size);
 
     StackIndex base = TOP_INDEX;
@@ -2703,7 +2703,7 @@ REBINT Scan_Header(const Byte *utf8, REBLEN len)
 {
     SCAN_STATE ss;
     String* filename = nullptr;
-    const REBLIN start_line = 1;
+    const LineNumber start_line = 1;
     Init_Scan_State(&ss, filename, start_line, utf8, len);
 
     REBINT result = Scan_Head(&ss);
@@ -2783,7 +2783,7 @@ DECLARE_NATIVE(transcode)
         ? Cell_String(ARG(file_name))
         : nullptr;
 
-    REBLIN start_line;
+    LineNumber start_line;
     if (REF(line)) {
         Value* ival;
         if (IS_WORD(ARG(line_number)))  // get mutable, to fail early
@@ -2889,7 +2889,7 @@ const Byte *Scan_Any_Word(
 ) {
     SCAN_STATE ss;
     String* filename = nullptr;
-    const REBLIN start_line = 1;
+    const LineNumber start_line = 1;
     Init_Scan_State(&ss, filename, start_line, utf8, len);
 
     DECLARE_MOLD (mo);

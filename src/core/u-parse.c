@@ -1281,7 +1281,7 @@ DECLARE_NATIVE(subparse)
   #endif
 
   #if defined(DEBUG_COUNT_TICKS)
-    REBTCK tick = TG_Tick; // helpful to cache for visibility also
+    Tick tick = TG_Tick; // helpful to cache for visibility also
   #endif
 
     DECLARE_VALUE (save);

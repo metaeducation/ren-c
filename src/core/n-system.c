@@ -329,7 +329,7 @@ DECLARE_NATIVE(c_debug_break_at)
         //
         // https://math.stackexchange.com/q/2521219/
         //
-        REBTCK one = 1; // MSVC gives misguided warning for cast(REBTCK, 1)
+        Tick one = 1; // MSVC gives misguided warning for cast(Tick, 1)
         TG_Tick =
             (one << (ceil_log2(TG_Tick) + 1))
             + VAL_INT64(ARG(tick))

@@ -191,8 +191,8 @@ TVAR uintptr_t TG_Stack_Limit;    // Limit address for CPU stack.
     // used for many purposes...including setting breakpoints in routines
     // other than Do_Next that are contingent on a certain "tick" elapsing.
     //
-    TVAR REBTCK TG_Tick; // expressions, EVAL moments, PARSE steps bump this
-    TVAR REBTCK TG_Break_At_Tick; // runtime break tick set by C-DEBUG_BREAK
+    TVAR Tick TG_Tick; // expressions, EVAL moments, PARSE steps bump this
+    TVAR Tick TG_Break_At_Tick; // runtime break tick set by C-DEBUG_BREAK
 #endif
 
 #if !defined(NDEBUG)

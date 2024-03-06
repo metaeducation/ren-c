@@ -436,7 +436,7 @@ bool Eval_Core_Throws(Level* const L)
     bool threw = false;
 
   #if defined(DEBUG_COUNT_TICKS)
-    REBTCK tick = L->tick = TG_Tick; // snapshot start tick
+    Tick tick = L->tick = TG_Tick; // snapshot start tick
   #endif
 
     assert(TOP_INDEX >= L->stack_base); // REDUCE accrues, APPLY refines...
