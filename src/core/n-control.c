@@ -227,7 +227,7 @@ bool Either_Test_Core_Throws(
             fail ("No tests found BLOCK! passed to EITHER-TEST.");
         }
 
-        REBSPC *specifier = VAL_SPECIFIER(test);
+        Specifier* specifier = VAL_SPECIFIER(test);
         for (; NOT_END(item); ++item) {
             const Cell* var
                 = IS_WORD(item)

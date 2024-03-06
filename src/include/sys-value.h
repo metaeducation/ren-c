@@ -1354,7 +1354,7 @@ INLINE void SET_EVENT_KEY(Cell* v, REBLEN k, REBLEN c) {
 //
 
 #define SPECIFIED \
-    cast(REBSPC*, 0) // cast() doesn't like nullptr, fix
+    cast(Specifier*, 0) // cast() doesn't like nullptr, fix
 
 #define UNBOUND \
    cast(REBNOD*, 0) // cast() doesn't like nullptr, fix

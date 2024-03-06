@@ -282,7 +282,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             //
             Value* typeset;
             if (IS_TYPESET(TOP)) {
-                REBSPC *derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
+                Specifier* derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
                 Init_Block(
                     PUSH(),
                     Copy_Array_At_Deep_Managed(
@@ -311,7 +311,7 @@ Array* Make_Paramlist_Managed_May_Fail(
                 if (Cell_Array(TOP - 1) != EMPTY_ARRAY)
                     fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
 
-                REBSPC *derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
+                Specifier* derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
                 Init_Block(
                     TOP - 1,
                     Copy_Array_At_Deep_Managed(
@@ -325,7 +325,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             // Turn block into typeset for parameter at current index.
             // Leaves VAL_TYPESET_SYM as-is.
             //
-            REBSPC *derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
+            Specifier* derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
             Update_Typeset_Bits_Core(
                 typeset,
                 VAL_ARRAY_HEAD(item),
@@ -1039,7 +1039,7 @@ REBCTX *Make_Expired_Level_Ctx_Managed(REBACT *a)
 //
 void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
 {
-    REBSPC *binding = VAL_BINDING(action);
+    Specifier* binding = VAL_BINDING(action);
     REBACT *a = VAL_ACTION(action);
 
     // A Hijacker *might* not need to splice itself in with a dispatcher.
@@ -1712,7 +1712,7 @@ bool Get_If_Word_Or_Path_Throws(
     Value* out,
     Symbol* *opt_name_out,
     const Cell* v,
-    REBSPC *specifier,
+    Specifier* specifier,
     bool push_refinements
 ) {
     if (IS_WORD(v)) {
@@ -1720,7 +1720,7 @@ bool Get_If_Word_Or_Path_Throws(
         Move_Opt_Var_May_Fail(out, v, specifier);
     }
     else if (IS_PATH(v)) {
-        REBSPC *derived = Derive_Specifier(specifier, v);
+        Specifier* derived = Derive_Specifier(specifier, v);
         if (Eval_Path_Throws_Core(
             out,
             opt_name_out, // requesting says we run functions (not GET-PATH!)

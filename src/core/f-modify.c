@@ -52,7 +52,7 @@ REBLEN Modify_Array(
     REBLEN tail = ARR_LEN(dst_arr);
 
     const Cell* src_rel;
-    REBSPC *specifier;
+    Specifier* specifier;
 
     if (IS_VOID(src_val) and op == SYM_CHANGE) {
         //

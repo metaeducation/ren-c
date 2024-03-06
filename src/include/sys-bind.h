@@ -53,23 +53,23 @@
 
 #ifdef NDEBUG
     #define SPC(p) \
-        cast(REBSPC*, (p)) // makes UNBOUND look like SPECIFIED
+        cast(Specifier*, (p))  // makes UNBOUND look like SPECIFIED
 
     #define VAL_SPECIFIER(v) \
         SPC(v->extra.binding)
 #else
-    INLINE REBSPC* SPC(void *p) {
-        assert(p != SPECIFIED); // use SPECIFIED, not SPC(SPECIFIED)
+    INLINE Specifier* SPC(void *p) {
+        assert(p != SPECIFIED);  // use SPECIFIED, not SPC(SPECIFIED)
 
         REBCTX *c = CTX(p);
         assert(CTX_TYPE(c) == REB_FRAME);
 
         // Note: May be managed or unamanged.
 
-        return cast(REBSPC*, c);
+        return cast(Specifier*, c);
     }
 
-    INLINE REBSPC *VAL_SPECIFIER(const Value* v) {
+    INLINE Specifier* VAL_SPECIFIER(const Value* v) {
         assert(ANY_ARRAY(v));
         if (not v->extra.binding)
             return SPECIFIED;
@@ -81,7 +81,7 @@
         //
         REBCTX *c = CTX(v->extra.binding);
         assert(CTX_TYPE(c) == REB_FRAME); // may be inaccessible
-        return cast(REBSPC*, c);
+        return cast(Specifier*, c);
     }
 #endif
 
@@ -310,7 +310,7 @@ struct Reb_Collector {
 // would fail later, but given that the Level's captured binding can outlive
 // the frame that might lose important functionality.
 //
-INLINE REBNOD *SPC_BINDING(REBSPC *specifier)
+INLINE REBNOD *SPC_BINDING(Specifier* specifier)
 {
     assert(specifier != UNBOUND);
     Value* rootvar = CTX_ARCHETYPE(CTX(specifier)); // works even if Decay()d
@@ -362,7 +362,7 @@ INLINE REBNOD *SPC_BINDING(REBSPC *specifier)
 //
 INLINE REBCTX *Get_Var_Context(
     const Cell* any_word,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     assert(ANY_WORD(any_word));
 
@@ -445,7 +445,7 @@ INLINE REBCTX *Get_Var_Context(
 
 INLINE const Value* Get_Opt_Var_May_Fail(
     const Cell* any_word,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     if (not VAL_BINDING(any_word))
         fail (Error_Not_Bound_Raw(KNOWN(any_word)));
@@ -459,7 +459,7 @@ INLINE const Value* Get_Opt_Var_May_Fail(
 
 INLINE const Value* Try_Get_Opt_Var(
     const Cell* any_word,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     if (not VAL_BINDING(any_word))
         return nullptr;
@@ -474,14 +474,14 @@ INLINE const Value* Try_Get_Opt_Var(
 INLINE void Move_Opt_Var_May_Fail(
     Value* out,
     const Cell* any_word,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     Copy_Cell(out, Get_Opt_Var_May_Fail(any_word, specifier));
 }
 
 INLINE Value* Get_Mutable_Var_May_Fail(
     const Cell* any_word,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     if (not VAL_BINDING(any_word))
         fail (Error_Not_Bound_Raw(KNOWN(any_word)));
@@ -513,7 +513,7 @@ INLINE Value* Get_Mutable_Var_May_Fail(
 
 INLINE Value* Sink_Var_May_Fail(
     const Cell* any_word,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     Value* var = Get_Mutable_Var_May_Fail(any_word, specifier);
     TRASH_CELL_IF_DEBUG(var);
@@ -549,7 +549,7 @@ INLINE Value* Sink_Var_May_Fail(
 INLINE Value* Derelativize(
     Cell* out, // relative destinations are overwritten with specified value
     const Cell* v,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     Move_Value_Header(out, v);
     out->payload = v->payload;
@@ -634,7 +634,7 @@ INLINE Value* Derelativize(
 // to use Derelativize.  Juse Copy_Cell() if your source is a Value!
 //
 #if CPLUSPLUS_11
-    Value* Derelativize(Cell* dest, const Value* v, REBSPC *specifier);
+    Value* Derelativize(Cell* dest, const Value* v, Specifier* specifier);
 #endif
 
 
@@ -660,7 +660,7 @@ INLINE Value* Derelativize(
 // would need such derivation.
 //
 
-INLINE REBSPC *Derive_Specifier(REBSPC *parent, const Cell* item) {
+INLINE Specifier* Derive_Specifier(Specifier* parent, const Cell* item) {
     if (IS_SPECIFIC(item))
         return VAL_SPECIFIER(KNOWN(item));;
     return parent;

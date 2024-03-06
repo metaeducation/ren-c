@@ -885,7 +885,7 @@ REBCTX *Error_User(const char *utf8) {
 //
 //  Error_Need_Non_End_Core: C
 //
-REBCTX *Error_Need_Non_End_Core(const Cell* target, REBSPC *specifier) {
+REBCTX *Error_Need_Non_End_Core(const Cell* target, Specifier* specifier) {
     assert(IS_SET_WORD(target) or IS_SET_PATH(target));
 
     DECLARE_VALUE (specific);
@@ -897,7 +897,7 @@ REBCTX *Error_Need_Non_End_Core(const Cell* target, REBSPC *specifier) {
 //
 //  Error_Need_Non_Trash_Core: C
 //
-REBCTX *Error_Need_Non_Trash_Core(const Cell* target, REBSPC *specifier) {
+REBCTX *Error_Need_Non_Trash_Core(const Cell* target, Specifier* specifier) {
     assert(ANY_WORD(target) or ANY_PATH(target));
 
     DECLARE_VALUE (specific);
@@ -1035,7 +1035,7 @@ REBCTX *Error_Invalid(const Value* value)
 //
 //  Error_Invalid_Core: C
 //
-REBCTX *Error_Invalid_Core(const Cell* value, REBSPC *specifier)
+REBCTX *Error_Invalid_Core(const Cell* value, Specifier* specifier)
 {
     DECLARE_VALUE (specific);
     Derelativize(specific, value, specifier);
@@ -1047,7 +1047,7 @@ REBCTX *Error_Invalid_Core(const Cell* value, REBSPC *specifier)
 //
 //  Error_Bad_Func_Def_Core: C
 //
-REBCTX *Error_Bad_Func_Def_Core(const Cell* item, REBSPC *specifier)
+REBCTX *Error_Bad_Func_Def_Core(const Cell* item, Specifier* specifier)
 {
     DECLARE_VALUE (specific);
     Derelativize(specific, item, specifier);
@@ -1088,7 +1088,7 @@ REBCTX *Error_Bad_Refine_Revoke(const Cell* param, const Value* arg)
 //
 //  Error_No_Value_Core: C
 //
-REBCTX *Error_No_Value_Core(const Cell* target, REBSPC *specifier) {
+REBCTX *Error_No_Value_Core(const Cell* target, Specifier* specifier) {
     DECLARE_VALUE (specified);
     Derelativize(specified, target, specifier);
 

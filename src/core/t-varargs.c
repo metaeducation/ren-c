@@ -53,7 +53,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
     Value* out,
     enum Reb_Vararg_Op op,
     const Cell* opt_look, // the first value in the varargs input
-    REBSPC *specifier,
+    Specifier* specifier,
     enum Reb_Param_Class pclass
 ){
     if (IS_END(opt_look)) {

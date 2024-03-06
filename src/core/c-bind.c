@@ -325,7 +325,7 @@ void Rebind_Values_Deep(
             // binding pointer (in the function's value cell) is changed to
             // be this object.
             //
-            REBSPC *binding = VAL_BINDING(v);
+            Specifier* binding = VAL_BINDING(v);
             if (binding == UNBOUND) {
                 //
                 // Leave non bindings alone.  Hence, unlike in R3-Alpha, an
@@ -402,7 +402,7 @@ void Virtual_Bind_Deep_To_New_Context(
         fail (Error_Invalid(spec));
 
     const Cell* item;
-    REBSPC *specifier;
+    Specifier* specifier;
     bool rebinding;
     if (IS_BLOCK(spec)) {
         item = Cell_Array_At(spec);

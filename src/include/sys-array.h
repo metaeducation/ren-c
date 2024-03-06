@@ -437,7 +437,7 @@ enum {
 INLINE Array* Copy_Array_At_Extra_Deep_Flags_Managed(
     Array* original, // ^-- not a macro because original mentioned twice
     REBLEN index,
-    REBSPC *specifier,
+    Specifier* specifier,
     REBLEN extra,
     REBFLGS flags
 ){

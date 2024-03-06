@@ -148,7 +148,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         // paths should be part of the MOLDing logic -or- a path with embedded
         // line markers should use construction syntax to preserve them.
 
-        REBSPC *derived = Derive_Specifier(VAL_SPECIFIER(arg), any_array);
+        Specifier* derived = Derive_Specifier(VAL_SPECIFIER(arg), any_array);
         return Init_Any_Series_At_Core(
             out,
             kind,
@@ -799,7 +799,7 @@ REBTYPE(Array)
         return r;
 
     Array* arr = Cell_Array(array);
-    REBSPC *specifier = VAL_SPECIFIER(array);
+    Specifier* specifier = VAL_SPECIFIER(array);
 
     Option(SymId) sym = Cell_Word_Id(verb);
     switch (sym) {

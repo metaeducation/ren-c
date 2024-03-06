@@ -41,7 +41,7 @@
 Array* Copy_Array_At_Extra_Shallow(
     Array* original,
     REBLEN index,
-    REBSPC *specifier,
+    Specifier* specifier,
     REBLEN extra,
     REBFLGS flags
 ){
@@ -75,7 +75,7 @@ Array* Copy_Array_At_Extra_Shallow(
 Array* Copy_Array_At_Max_Shallow(
     Array* original,
     REBLEN index,
-    REBSPC *specifier,
+    Specifier* specifier,
     REBLEN max
 ){
     const REBFLGS flags = 0;
@@ -108,7 +108,7 @@ Array* Copy_Array_At_Max_Shallow(
 //
 Array* Copy_Values_Len_Extra_Shallow_Core(
     const Cell* head,
-    REBSPC *specifier,
+    Specifier* specifier,
     REBLEN len,
     REBLEN extra,
     REBFLGS flags
@@ -148,7 +148,7 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
 //
 void Clonify_Values_Len_Managed(
     Cell* head,
-    REBSPC *specifier,
+    Specifier* specifier,
     REBLEN len,
     REBU64 types
 ) {
@@ -172,7 +172,7 @@ void Clonify_Values_Len_Managed(
             }
             else {
                 if (IS_SER_ARRAY(VAL_SERIES(v))) {
-                    REBSPC *derived = Derive_Specifier(specifier, v);
+                    Specifier* derived = Derive_Specifier(specifier, v);
                     series = SER(
                         Copy_Array_At_Extra_Shallow(
                             Cell_Array(v),
@@ -208,7 +208,7 @@ void Clonify_Values_Len_Managed(
             // specificity through to the new values.
             //
             if (types & FLAGIT_KIND(VAL_TYPE(v)) & TS_ARRAYS_OBJ) {
-                REBSPC *derived = Derive_Specifier(specifier, v);
+                Specifier* derived = Derive_Specifier(specifier, v);
                 Clonify_Values_Len_Managed(
                      ARR_HEAD(ARR(series)),
                      derived,
@@ -250,7 +250,7 @@ void Clonify_Values_Len_Managed(
 static Array* Copy_Array_Core_Managed_Inner_Loop(
     Array* original,
     REBLEN index,
-    REBSPC *specifier,
+    Specifier* specifier,
     REBLEN tail,
     REBLEN extra, // currently no one uses--would it also apply deep (?)
     REBFLGS flags,
@@ -294,7 +294,7 @@ static Array* Copy_Array_Core_Managed_Inner_Loop(
 Array* Copy_Array_Core_Managed(
     Array* original,
     REBLEN index,
-    REBSPC *specifier,
+    Specifier* specifier,
     REBLEN tail,
     REBLEN extra,
     REBFLGS flags,

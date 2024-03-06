@@ -162,7 +162,7 @@ bool Match_For_Compose(const Cell* group, const Value* pattern) {
 bool Compose_To_Stack_Throws(
     Value* out, // if return result is true, will hold the thrown value
     const Cell* any_array, // the template
-    REBSPC *specifier, // specifier for relative any_array value
+    Specifier* specifier, // specifier for relative any_array value
     const Value* pattern, // e.g. if '*, only match `(* ... *)`
     bool deep, // recurse into sub-blocks
     bool only // pattern matches that return blocks are kept as blocks
@@ -183,7 +183,7 @@ bool Compose_To_Stack_Throws(
 
         bool splice = not only; // can force no splice if override via ((...))
 
-        REBSPC *match_specifier = nullptr;
+        Specifier* match_specifier = nullptr;
         const Cell* match = nullptr;
 
         if (not IS_GROUP(L->value)) {
@@ -366,13 +366,13 @@ enum FLATTEN_LEVEL {
 
 static void Flatten_Core(
     Cell* head,
-    REBSPC *specifier,
+    Specifier* specifier,
     enum FLATTEN_LEVEL level
 ) {
     Cell* item = head;
     for (; NOT_END(item); ++item) {
         if (IS_BLOCK(item) and level != FLATTEN_NOT) {
-            REBSPC *derived = Derive_Specifier(specifier, item);
+            Specifier* derived = Derive_Specifier(specifier, item);
             Flatten_Core(
                 Cell_Array_At(item),
                 derived,

@@ -685,7 +685,7 @@ bool Eval_Core_Throws(Level* const L)
         ){
             assert(not current_gotten); // no caching for paths
 
-            REBSPC *derived = Derive_Specifier(L->specifier, current);
+            Specifier* derived = Derive_Specifier(L->specifier, current);
 
             Cell* path_at = Cell_Array_At(current);
             const Value* var_at = Try_Get_Opt_Var(path_at, derived);
@@ -1889,7 +1889,7 @@ bool Eval_Core_Throws(Level* const L)
         //
         Array* array = Cell_Array(current); // array of the GROUP!
         REBLEN index = VAL_INDEX(current); // index may not be @ head
-        REBSPC *derived = Derive_Specifier(L->specifier, current);
+        Specifier* derived = Derive_Specifier(L->specifier, current);
 
         // We want `3 = (1 + 2 ()) 4` to not treat the 1 + 2 as "stale", thus
         // skipping it and trying to compare `3 = 4`.  But `3 = () 1 + 2`

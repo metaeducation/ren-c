@@ -151,7 +151,7 @@ Value* Init_Typeset(Cell* out, REBU64 bits, Symbol* opt_name)
 bool Update_Typeset_Bits_Core(
     Cell* typeset,
     const Cell* head,
-    REBSPC *specifier
+    Specifier* specifier
 ) {
     assert(IS_TYPESET(typeset));
     VAL_TYPESET_BITS(typeset) = 0;

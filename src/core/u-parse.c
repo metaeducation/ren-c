@@ -169,9 +169,9 @@ static bool Subparse_Throws(
     bool *interrupted_out,
     Value* out,
     Cell* input,
-    REBSPC *input_specifier,
+    Specifier* input_specifier,
     const Cell* rules,
-    REBSPC *rules_specifier,
+    Specifier* rules_specifier,
     Array* opt_collection,
     REBFLGS flags
 ){
@@ -404,7 +404,7 @@ static void Set_Parse_Series(
 static const Cell* Get_Parse_Value(
     Value* cell,
     const Cell* rule,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     if (IS_WORD(rule)) {
         if (VAL_CMD(rule))  // includes IS_BAR()...also a "command"
@@ -458,7 +458,7 @@ REB_R Process_Group_For_Parse(
     const Cell* group
 ){
     assert(IS_GROUP(group));
-    REBSPC *derived = Derive_Specifier(P_RULE_SPECIFIER, group);
+    Specifier* derived = Derive_Specifier(P_RULE_SPECIFIER, group);
 
     if (Do_At_Throws(cell, Cell_Array(group), VAL_INDEX(group), derived))
         return R_THROWN;
@@ -2243,7 +2243,7 @@ DECLARE_NATIVE(subparse)
                     //
                     DECLARE_VALUE (evaluated);
                     if (IS_GROUP(rule)) {
-                        REBSPC *derived = Derive_Specifier(
+                        Specifier* derived = Derive_Specifier(
                             P_RULE_SPECIFIER,
                             rule
                         );

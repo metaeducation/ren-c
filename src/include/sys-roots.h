@@ -128,5 +128,5 @@ INLINE void Free_Instruction(Array* instruction) {
 //
 // But assuming errors don't happen that often, it's cleaner to have one call.
 //
-INLINE Value* rebSpecific(const Cell* v, REBSPC *specifier)
+INLINE Value* rebSpecific(const Cell* v, Specifier* specifier)
     { return Derelativize(Alloc_Value(), v, specifier);}

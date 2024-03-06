@@ -112,7 +112,7 @@ static bool Set_Event_Var(Value* event, const Value* word, const Value* val)
 //
 //  Set_Event_Vars: C
 //
-void Set_Event_Vars(Value* evt, Cell* blk, REBSPC *specifier)
+void Set_Event_Vars(Value* evt, Cell* blk, Specifier* specifier)
 {
     DECLARE_VALUE (var);
     DECLARE_VALUE (val);

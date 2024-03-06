@@ -251,7 +251,7 @@ INLINE void Push_Level_At(
     Level* L,
     Array* array,
     REBLEN index,
-    REBSPC *specifier,
+    Specifier* specifier,
     REBFLGS flags
 ){
     L->flags = Endlike_Header(flags);
@@ -874,7 +874,7 @@ INLINE REBIXO Eval_Array_At_Core(
     const Cell* opt_first, // non-array element to kick off execution with
     Array* array,
     REBLEN index,
-    REBSPC *specifier, // must match array, but also opt_first if relative
+    Specifier* specifier, // must match array, but also opt_first if relative
     REBFLGS flags // DO_FLAG_TO_END, DO_FLAG_EXPLICIT_EVALUATE, etc.
 ){
     DECLARE_LEVEL (L);
@@ -1084,7 +1084,7 @@ INLINE REBIXO Eval_Va_Core(
 INLINE bool Eval_Value_Core_Throws(
     Value* out,
     const Cell* value, // e.g. a BLOCK! here would just evaluate to itself!
-    REBSPC *specifier
+    Specifier* specifier
 ){
     REBIXO indexor = Eval_Array_At_Core(
         SET_END(out), // start with END to detect no actual eval product

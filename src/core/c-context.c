@@ -915,7 +915,7 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
 REBCTX *Construct_Context_Managed(
     enum Reb_Kind kind,
     Cell* head, // !!! Warning: modified binding
-    REBSPC *specifier,
+    Specifier* specifier,
     REBCTX *opt_parent
 ) {
     REBCTX *context = Make_Selfish_Context_Detect_Managed(

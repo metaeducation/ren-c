@@ -459,7 +459,7 @@ DECLARE_NATIVE(collect_words)
 INLINE void Get_Opt_Polymorphic_May_Fail(
     Value* out,
     const Cell* v,
-    REBSPC *specifier,
+    Specifier* specifier,
     bool any
 ){
     if (IS_BAR(v)) {
@@ -569,9 +569,9 @@ DECLARE_NATIVE(get_p)
 //
 INLINE void Set_Opt_Polymorphic_May_Fail(
     const Cell* target,
-    REBSPC *target_specifier,
+    Specifier* target_specifier,
     const Cell* value,
-    REBSPC *value_specifier,
+    Specifier* value_specifier,
     bool enfix
 ){
     if (enfix and not IS_ACTION(value))

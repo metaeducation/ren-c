@@ -85,7 +85,7 @@
 INLINE bool Get_Path_Throws_Core(
     Value* out,
     const Cell* any_path,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     return Eval_Path_Throws_Core(
         out,
@@ -102,7 +102,7 @@ INLINE bool Get_Path_Throws_Core(
 INLINE void Get_Path_Core(
     Value* out,
     const Cell* any_path,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     assert(ANY_PATH(any_path)); // *could* work on ANY_ARRAY(), actually
 
@@ -123,7 +123,7 @@ INLINE void Get_Path_Core(
 INLINE bool Set_Path_Throws_Core(
     Value* out,
     const Cell* any_path,
-    REBSPC *specifier,
+    Specifier* specifier,
     const Value* setval
 ){
     assert(ANY_PATH(any_path)); // *could* work on ANY_ARRAY(), actually
@@ -142,7 +142,7 @@ INLINE bool Set_Path_Throws_Core(
 
 INLINE void Set_Path_Core(
     const Cell* any_path,
-    REBSPC *specifier,
+    Specifier* specifier,
     const Value* setval,
     bool enfix
 ){

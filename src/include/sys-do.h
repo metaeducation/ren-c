@@ -39,7 +39,7 @@ INLINE bool Do_At_Throws(
     Value* out,
     Array* array,
     REBLEN index,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     return THROWN_FLAG == Eval_Array_At_Core(
         Init_Void(out),

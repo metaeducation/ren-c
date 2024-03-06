@@ -566,7 +566,7 @@ bool Form_Reduce_Throws(
     Value* out,
     Array* array,
     REBLEN index,
-    REBSPC *specifier,
+    Specifier* specifier,
     const Value* delimiter
 ){
     assert(

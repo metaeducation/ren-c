@@ -535,7 +535,7 @@ struct LevelStruct {
     // It may be nullptr if it's known that there are no relatively bound
     // words that will be encountered from the source--as in va_list calls.
     //
-    REBSPC *specifier;
+    Specifier* specifier;
 
     // `value`
     //
@@ -758,7 +758,7 @@ struct LevelStruct {
     //
     struct {
         Cell* cell;
-        REBSPC *specifier;
+        Specifier* specifier;
     } ref;
 
     // Used to slip cell to re-evaluate into Eval_Core_Throws()

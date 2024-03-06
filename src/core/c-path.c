@@ -100,7 +100,7 @@ bool Next_Path_Throws(REBPVS *pvs)
         if (pvs->flags.bits & DO_FLAG_NO_PATH_GROUPS)
             fail ("GROUP! in PATH! used with GET or SET (use REDUCE/EVAL)");
 
-        REBSPC *derived = Derive_Specifier(pvs->specifier, pvs->value);
+        Specifier* derived = Derive_Specifier(pvs->specifier, pvs->value);
         if (Do_At_Throws(
             PVS_PICKER(pvs),
             Cell_Array(pvs->value),
@@ -296,7 +296,7 @@ bool Eval_Path_Throws_Core(
     Symbol* *label_out,
     Array* array,
     REBLEN index,
-    REBSPC *specifier,
+    Specifier* specifier,
     const Value* opt_setval, // Note: may be the same as out!
     REBFLGS flags
 ){
@@ -376,7 +376,7 @@ bool Eval_Path_Throws_Core(
         if (pvs->flags.bits & DO_FLAG_NO_PATH_GROUPS)
             fail ("GROUP! in PATH! used with GET or SET (use REDUCE/EVAL)");
 
-        REBSPC *derived = Derive_Specifier(pvs->specifier, pvs->value);
+        Specifier* derived = Derive_Specifier(pvs->specifier, pvs->value);
         if (Do_At_Throws(
             pvs->out,
             Cell_Array(pvs->value),
@@ -496,7 +496,7 @@ bool Eval_Path_Throws_Core(
 // were `get x` would look up a variable but `get 3` would give you 3.
 // At time of writing it seems to appear in only two places.
 //
-void Get_Simple_Value_Into(Value* out, const Cell* val, REBSPC *specifier)
+void Get_Simple_Value_Into(Value* out, const Cell* val, Specifier* specifier)
 {
     if (IS_WORD(val) or IS_GET_WORD(val))
         Move_Opt_Var_May_Fail(out, val, specifier);

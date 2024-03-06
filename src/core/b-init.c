@@ -539,7 +539,7 @@ static void Shutdown_Action_Meta_Shim(void) {
 //
 Value* Make_Native(
     Cell* *item, // the item will be advanced as necessary
-    REBSPC *specifier,
+    Specifier* specifier,
     REBNAT dispatcher,
     Value* module
 ){
@@ -672,7 +672,7 @@ static Array* Startup_Natives(const Value* boot_natives)
 
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
     Cell* item = Cell_Array_At(boot_natives);
-    REBSPC *specifier = VAL_SPECIFIER(boot_natives);
+    Specifier* specifier = VAL_SPECIFIER(boot_natives);
 
     // Although the natives are not being "executed", there are typesets
     // being built from the specs.  So to process `foo: native [x [integer!]]`
@@ -736,7 +736,7 @@ static Array* Startup_Generics(const Value* boot_generics)
 {
     assert(VAL_INDEX(boot_generics) == 0); // should be at head, sanity check
     Cell* head = Cell_Array_At(boot_generics);
-    REBSPC *specifier = VAL_SPECIFIER(boot_generics);
+    Specifier* specifier = VAL_SPECIFIER(boot_generics);
 
     // Add SET-WORD!s that are top-level in the generics block to the lib
     // context, so there is a variable for each action.  This means that the

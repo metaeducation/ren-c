@@ -58,7 +58,7 @@ REBMAP *Make_Map(REBLEN capacity)
 }
 
 
-static REBCTX *Error_Conflicting_Key(const Cell* key, REBSPC *specifier)
+static REBCTX *Error_Conflicting_Key(const Cell* key, Specifier* specifier)
 {
     DECLARE_VALUE (specific);
     Derelativize(specific, key, specifier);
@@ -97,7 +97,7 @@ REBINT Find_Key_Hashed(
     Array* array,
     REBSER *hashlist,
     const Cell* key, // !!! assumes key is followed by value(s) via ++
-    REBSPC *specifier,
+    Specifier* specifier,
     REBLEN wide,
     bool cased,
     Byte mode
@@ -300,9 +300,9 @@ void Expand_Hash(REBSER *ser)
 REBLEN Find_Map_Entry(
     REBMAP *map,
     const Cell* key,
-    REBSPC *key_specifier,
+    Specifier* key_specifier,
     const Cell* val,
-    REBSPC *val_specifier,
+    Specifier* val_specifier,
     bool cased // case-sensitive if true
 ) {
     assert(not IS_NULLED(key));
@@ -418,7 +418,7 @@ static void Append_Map(
     REBMAP *map,
     Array* array,
     REBLEN index,
-    REBSPC *specifier,
+    Specifier* specifier,
     REBLEN len
 ) {
     Cell* item = Array_At(array, index);
@@ -518,7 +518,7 @@ REB_R TO_Map(Value* out, enum Reb_Kind kind, const Value* arg)
         Array* array = Cell_Array(arg);
         REBLEN len = VAL_ARRAY_LEN_AT(arg);
         REBLEN index = VAL_INDEX(arg);
-        REBSPC *specifier = VAL_SPECIFIER(arg);
+        Specifier* specifier = VAL_SPECIFIER(arg);
 
         REBMAP *map = Make_Map(len / 2); // [key value key value...] + END
         Append_Map(map, array, index, specifier, len);
