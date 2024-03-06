@@ -201,7 +201,7 @@ static void Protect_Word_Value(Value* word, REBFLGS flags)
 //
 // Common arguments between protect and unprotect:
 //
-static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
+static REB_R Protect_Unprotect_Core(Level* level_, REBFLGS flags)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 
@@ -311,7 +311,7 @@ DECLARE_NATIVE(protect)
     else
         flags |= PROT_WORD; // there is no unhide
 
-    return Protect_Unprotect_Core(frame_, flags);
+    return Protect_Unprotect_Core(level_, flags);
 }
 
 
@@ -345,7 +345,7 @@ DECLARE_NATIVE(unprotect)
     if (REF(hide))
         fail ("Cannot un-hide an object field once hidden");
 
-    return Protect_Unprotect_Core(frame_, PROT_WORD);
+    return Protect_Unprotect_Core(level_, PROT_WORD);
 }
 
 

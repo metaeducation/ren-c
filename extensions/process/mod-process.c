@@ -169,7 +169,7 @@ INLINE void Fail_Terminate_Failed(DWORD err) { // from GetLastError()
 // Return -1 on error.
 //
 int OS_Create_Process(
-    REBFRM *frame_, // stopgap: allows access to CALL's ARG() and REF()
+    Level* level_, // stopgap: allows access to CALL's ARG() and REF()
     const WCHAR *call,
     int argc,
     const WCHAR * argv[],
@@ -811,7 +811,7 @@ INLINE bool Set_Nonblocking_Fails(int fd) {
 // This uses 'execvp' which is "POSIX.1 conforming, UNIX compatible"
 //
 int OS_Create_Process(
-    REBFRM *frame_, // stopgap: allows access to CALL's ARG() and REF()
+    Level* level_, // stopgap: allows access to CALL's ARG() and REF()
     const char *call,
     int argc,
     const char* argv[],
@@ -1462,7 +1462,7 @@ DECLARE_NATIVE(call)
 {
     PROCESS_INCLUDE_PARAMS_OF_CALL;
 
-    UNUSED(REF(shell)); // looked at via frame_ by OS_Create_Process
+    UNUSED(REF(shell)); // looked at via level_ by OS_Create_Process
     UNUSED(REF(console)); // same
 
     // Make sure that if the output or error series are STRING! or BINARY!,
@@ -1617,7 +1617,7 @@ DECLARE_NATIVE(call)
     uint32_t err_len = 0;
 
     REBINT r = OS_Create_Process(
-        frame_,
+        level_,
         cast(const OSCHR*, cmd),
         argc,
         cast(const OSCHR**, argv),
@@ -1897,7 +1897,7 @@ DECLARE_NATIVE(terminate)
 
   #else
 
-    UNUSED(frame_);
+    UNUSED(level_);
     fail ("terminate is not implemented for this platform");
 
   #endif

@@ -2568,7 +2568,7 @@ void Scan_To_Stack_Relaxed(SCAN_STATE *ss) {
 // This routine would create a new structure on the scanning stack.  Putting
 // what would be local variables for each level into a structure helps with
 // reflection, allowing for better introspection and error messages.  (This
-// is similar to the benefits of Reb_Frame.)
+// is similar to the benefits of LevelStruct.)
 //
 static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char)
 {

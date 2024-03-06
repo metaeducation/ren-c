@@ -1450,8 +1450,8 @@ void Assert_Context_Core(REBCTX *c)
             panic (rootvar);
         }
 
-        REBFRM *f = CTX_FRAME_IF_ON_STACK(c);
-        if (f != nullptr) {
+        Level* L = CTX_LEVEL_IF_ON_STACK(c);
+        if (L != nullptr) {
             //
             // If the frame is on the stack, the phase should be something
             // with the same underlying function as the rootkey.

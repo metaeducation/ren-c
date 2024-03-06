@@ -102,33 +102,33 @@ INLINE bool Is_Block_Style_Varargs(
 }
 
 
-INLINE bool Is_Frame_Style_Varargs_Maybe_Null(
-    REBFRM **f_out,
+INLINE bool Is_Level_Style_Varargs_Maybe_Null(
+    Level** L_out,
     const Cell* vararg
 ){
     assert(IS_VARARGS(vararg));
 
     if (not (vararg->extra.binding->header.bits & ARRAY_FLAG_VARLIST)) {
-        *f_out = nullptr; // avoid compiler warning in -Og build
+        *L_out = nullptr; // avoid compiler warning in -Og build
         return false; // it's a block varargs, made via MAKE VARARGS!
     }
 
     // "Ordinary" case... use the original frame implied by the VARARGS!
     // (so long as it is still live on the stack)
 
-    *f_out = CTX_FRAME_IF_ON_STACK(CTX(vararg->extra.binding));
+    *L_out = CTX_LEVEL_IF_ON_STACK(CTX(vararg->extra.binding));
     return true;
 }
 
 
-INLINE bool Is_Frame_Style_Varargs_May_Fail(
-    REBFRM **f_out,
+INLINE bool Is_Level_Style_Varargs_May_Fail(
+    Level** L_out,
     const Cell* vararg
 ){
-    if (not Is_Frame_Style_Varargs_Maybe_Null(f_out, vararg))
+    if (not Is_Level_Style_Varargs_Maybe_Null(L_out, vararg))
         return false;
 
-    if (not *f_out)
+    if (not *L_out)
         fail (Error_Frame_Not_On_Stack_Raw());
 
     return true;

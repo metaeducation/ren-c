@@ -573,7 +573,7 @@ DEVICE_CMD Modify_Socket(REBREQ *sock)
 {
     assert(sock->command == RDC_MODIFY);
 
-    REBFRM *frame_ = FRM(cast(void*, sock->common.data));
+    Level* level_ = LVL(cast(void*, sock->common.data));
     int result = 0;
 
     switch (sock->flags) {

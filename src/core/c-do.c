@@ -27,7 +27,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // These are the "slightly more user-friendly" interfaces to the evaluator
-// from %c-eval.c.  These routines will do the setup of the Reb_Frame state
+// from %c-eval.c.  These routines will do the setup of the Level state
 // for you.
 //
 // Even "friendlier" interfaces are available as macros on top of these.
@@ -35,4 +35,3 @@
 //
 
 #include "sys-core.h"
-

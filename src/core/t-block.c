@@ -212,9 +212,9 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         }
         else {
             REBCTX *context = CTX(arg->extra.binding);
-            REBFRM *param_frame = CTX_FRAME_MAY_FAIL(context);
+            Level* param_level = CTX_LEVEL_MAY_FAIL(context);
 
-            Value* param = ACT_PARAMS_HEAD(FRM_PHASE(param_frame))
+            Value* param = ACT_PARAMS_HEAD(Level_Phase(param_level))
                 + arg->payload.varargs.param_offset;
 
             if (TYPE_CHECK(param, REB_MAX_NULLED))
@@ -794,7 +794,7 @@ REBTYPE(Array)
 
     // Common operations for any series type (length, head, etc.)
     //
-    REB_R r = Series_Common_Action_Maybe_Unhandled(frame_, verb);
+    REB_R r = Series_Common_Action_Maybe_Unhandled(level_, verb);
     if (r != R_UNHANDLED)
         return r;
 
@@ -1142,7 +1142,7 @@ REBTYPE(Array)
     // The symbol-based action dispatch is more open-ended.  Trying this
     // to see how it works.
 
-    return T_Port(frame_, verb);
+    return T_Port(level_, verb);
 }
 
 

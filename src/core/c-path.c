@@ -122,7 +122,7 @@ bool Next_Path_Throws(REBPVS *pvs)
     if (IS_NULLED(PVS_PICKER(pvs)))
         fail (Error_No_Value_Core(pvs->value, pvs->specifier));
 
-    Fetch_Next_In_Frame(nullptr, pvs); // may be at end
+    Fetch_Next_In_Level(nullptr, pvs); // may be at end
 
     if (IS_END(pvs->value) and PVS_IS_SET_PATH(pvs)) {
         const Value* r = hook(
@@ -327,12 +327,12 @@ bool Eval_Path_Throws_Core(
         return false;
     }
 
-    DECLARE_FRAME (pvs);
+    DECLARE_LEVEL (pvs);
 
-    Push_Frame_At(pvs, array, index, specifier, flags);
+    Push_Level_At(pvs, array, index, specifier, flags);
     assert(NOT_END(pvs->value)); // tested 0-length path previously
 
-    // Push_Frame_At sets the output to the global unwritable END cell, so we
+    // Push_Level_At sets the output to the global unwritable END cell, so we
     // have to wait for this point to set to the output cell we want.
     //
     pvs->out = out;
@@ -395,7 +395,7 @@ bool Eval_Path_Throws_Core(
     if (IS_NULLED(pvs->out))
         fail (Error_No_Value_Core(pvs->value, pvs->specifier));
 
-    Fetch_Next_In_Frame(nullptr, pvs);
+    Fetch_Next_In_Level(nullptr, pvs);
 
     if (IS_END(pvs->value)) {
         // If it was a single element path, return the value rather than
@@ -476,12 +476,12 @@ bool Eval_Path_Throws_Core(
     if (label_out)
         *label_out = pvs->opt_label;
 
-    Abort_Frame(pvs);
+    Abort_Level(pvs);
     assert(not THROWN(out));
     return false;
 
   return_thrown:;
-    Abort_Frame(pvs);
+    Abort_Level(pvs);
     assert(THROWN(out));
     return true; // thrown
 }
@@ -585,10 +585,10 @@ DECLARE_NATIVE(pick)
     if (IS_PORT(location)) {
         DECLARE_VALUE (word);
         Init_Word(word, Canon(SYM_PICK));
-        return Do_Port_Action(frame_, location, word);
+        return Do_Port_Action(level_, location, word);
     }
 
-    DECLARE_FRAME (pvs);
+    DECLARE_LEVEL (pvs);
     pvs->flags = Endlike_Header(DO_MASK_NONE);
 
     Copy_Cell(OUT, location);
@@ -666,10 +666,10 @@ DECLARE_NATIVE(poke)
     if (IS_PORT(location)) {
         DECLARE_VALUE (word);
         Init_Word(word, Canon(SYM_POKE));
-        return Do_Port_Action(frame_, location, word);
+        return Do_Port_Action(level_, location, word);
     }
 
-    DECLARE_FRAME (pvs);
+    DECLARE_LEVEL (pvs);
     pvs->flags = Endlike_Header(DO_MASK_NONE);
 
     Copy_Cell(OUT, location);

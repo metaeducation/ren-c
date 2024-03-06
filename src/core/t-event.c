@@ -242,7 +242,7 @@ REB_R PD_Event(
 //
 REBTYPE(Event)
 {
-    UNUSED(frame_);
+    UNUSED(level_);
 
     fail (Error_Illegal_Action(REB_EVENT, verb));
 }

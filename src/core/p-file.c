@@ -255,7 +255,7 @@ static void Set_Seek(struct devreq_file *file, Value* arg)
 //
 // Internal port handler for files.
 //
-static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
+static REB_R File_Actor(Level* level_, Value* port, Value* verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
     Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
@@ -374,7 +374,7 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
         // assuming the frame is the same for APPEND and WRITE (which is what
         // R3-Alpha did).  Review.
         //
-        return Retrigger_Append_As_Write(frame_);
+        return Retrigger_Append_As_Write(level_);
 
     case SYM_WRITE: {
         INCLUDE_PARAMS_OF_WRITE;

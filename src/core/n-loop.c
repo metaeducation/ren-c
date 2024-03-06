@@ -627,7 +627,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 // likely be factored in a better way...pushing more per-native code into the
 // natives themselves.
 //
-static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
+static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
 {
     INCLUDE_PARAMS_OF_FOR_EACH; // MAP-EACH & EVERY must have same interface
 
@@ -1062,7 +1062,7 @@ DECLARE_NATIVE(cycle)
 //
 DECLARE_NATIVE(for_each)
 {
-    return Loop_Each(frame_, LOOP_FOR_EACH);
+    return Loop_Each(level_, LOOP_FOR_EACH);
 }
 
 
@@ -1083,7 +1083,7 @@ DECLARE_NATIVE(for_each)
 //
 DECLARE_NATIVE(every)
 {
-    return Loop_Each(frame_, LOOP_EVERY);
+    return Loop_Each(level_, LOOP_EVERY);
 }
 
 
@@ -1500,7 +1500,7 @@ DECLARE_NATIVE(remove_each)
 //
 DECLARE_NATIVE(map_each)
 {
-    return Loop_Each(frame_, LOOP_MAP_EACH);
+    return Loop_Each(level_, LOOP_MAP_EACH);
 }
 
 
@@ -1650,7 +1650,7 @@ DECLARE_NATIVE(for_next)
 // Common code for UNTIL & UNTIL-NOT (same frame param layout)
 //
 INLINE REB_R Until_Core(
-    REBFRM *frame_,
+    Level* level_,
     bool trigger // body keeps running so until evaluation matches this
 ){
     INCLUDE_PARAMS_OF_UNTIL;
@@ -1693,7 +1693,7 @@ INLINE REB_R Until_Core(
 //
 DECLARE_NATIVE(until)
 {
-    return Until_Core(frame_, true); // run loop until result IS_TRUTHY()
+    return Until_Core(level_, true); // run loop until result IS_TRUTHY()
 }
 
 
@@ -1711,14 +1711,14 @@ DECLARE_NATIVE(until_not)
 //
 // Faster than running NOT, and doesn't need groups for `until [...not (x =`
 {
-    return Until_Core(frame_, false); // run loop until result IS_FALSEY()
+    return Until_Core(level_, false); // run loop until result IS_FALSEY()
 }
 
 
 // Common code for WHILE & WHILE-NOT
 //
 INLINE REB_R While_Core(
-    REBFRM *frame_,
+    Level* level_,
     bool trigger // body keeps running so long as condition matches
 ){
     INCLUDE_PARAMS_OF_WHILE;
@@ -1775,7 +1775,7 @@ INLINE REB_R While_Core(
 //
 DECLARE_NATIVE(while)
 {
-    return While_Core(frame_, true); // run loop while condition IS_TRUTHY()
+    return While_Core(level_, true); // run loop while condition IS_TRUTHY()
 }
 
 
@@ -1794,5 +1794,5 @@ DECLARE_NATIVE(while_not)
 //
 // Faster than running NOT, and doesn't need groups for `while [not (x =`
 {
-    return While_Core(frame_, false); // run loop while condition IS_FALSEY()
+    return While_Core(level_, false); // run loop while condition IS_FALSEY()
 }

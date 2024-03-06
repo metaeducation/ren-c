@@ -479,14 +479,14 @@ DECLARE_NATIVE(all)
 {
     INCLUDE_PARAMS_OF_ALL;
 
-    DECLARE_FRAME (f);
-    Push_Frame(f, ARG(block));
+    DECLARE_LEVEL (L);
+    Push_Level(L, ARG(block));
 
     Init_Void(OUT);  // default return result
 
-    while (NOT_END(f->value)) {
-        if (Eval_Step_Maybe_Stale_Throws(OUT, f)) {
-            Abort_Frame(f);
+    while (NOT_END(L->value)) {
+        if (Eval_Step_Maybe_Stale_Throws(OUT, L)) {
+            Abort_Level(L);
             return R_THROWN;
         }
 
@@ -494,7 +494,7 @@ DECLARE_NATIVE(all)
             not IS_VOID(OUT)
             and IS_FALSEY(OUT)
         ){ // any false/blank/null will trigger failure
-            Abort_Frame(f);
+            Abort_Level(L);
             return nullptr;
         }
 
@@ -503,7 +503,7 @@ DECLARE_NATIVE(all)
         OUT->header.bits &= ~OUT_MARKED_STALE;
     }
 
-    Drop_Frame(f);
+    Drop_Level(L);
     return OUT; // successful ALL when the last OUT assignment is truthy
 }
 
@@ -523,14 +523,14 @@ DECLARE_NATIVE(any)
 {
     INCLUDE_PARAMS_OF_ANY;
 
-    DECLARE_FRAME (f);
-    Push_Frame(f, ARG(block));
+    DECLARE_LEVEL (L);
+    Push_Level(L, ARG(block));
 
     Init_Void(OUT);  // default return result
 
-    while (NOT_END(f->value)) {
-        if (Eval_Step_Maybe_Stale_Throws(OUT, f)) {
-            Abort_Frame(f);
+    while (NOT_END(L->value)) {
+        if (Eval_Step_Maybe_Stale_Throws(OUT, L)) {
+            Abort_Level(L);
             return R_THROWN;
         }
 
@@ -538,7 +538,7 @@ DECLARE_NATIVE(any)
             not IS_VOID(OUT)
             and IS_TRUTHY(OUT)
         ){ // successful ANY returns the value
-            Abort_Frame(f);
+            Abort_Level(L);
             return OUT;
         }
 
@@ -547,7 +547,7 @@ DECLARE_NATIVE(any)
         OUT->header.bits &= ~OUT_MARKED_STALE;
     }
 
-    Drop_Frame(f);
+    Drop_Level(L);
     return nullptr;
 }
 
@@ -570,19 +570,19 @@ DECLARE_NATIVE(none)
 {
     INCLUDE_PARAMS_OF_NONE;
 
-    DECLARE_FRAME (f);
-    Push_Frame(f, ARG(block));
+    DECLARE_LEVEL (L);
+    Push_Level(L, ARG(block));
 
     Init_Nulled(OUT); // default return result
 
-    while (NOT_END(f->value)) {
-        if (Eval_Step_Maybe_Stale_Throws(OUT, f)) {
-            Abort_Frame(f);
+    while (NOT_END(L->value)) {
+        if (Eval_Step_Maybe_Stale_Throws(OUT, L)) {
+            Abort_Level(L);
             return R_THROWN;
         }
 
         if (IS_TRUTHY(OUT)) { // any true results mean failure
-            Abort_Frame(f);
+            Abort_Level(L);
             return nullptr;
         }
 
@@ -591,7 +591,7 @@ DECLARE_NATIVE(none)
         OUT->header.bits &= ~OUT_MARKED_STALE;
     }
 
-    Drop_Frame(f);
+    Drop_Level(L);
     return Init_Bar(OUT); // truthy, but doesn't suggest LOGIC! on failure
 }
 
@@ -600,36 +600,36 @@ DECLARE_NATIVE(none)
 // returns values as-is, e.g. `choose [true [print "hi"]]` => `[print "hi]`
 //
 static REB_R Case_Choose_Core_May_Throw(
-    REBFRM *frame_,
+    Level* level_,
     bool choose // do not evaluate branches, just "choose" them
 ){
     INCLUDE_PARAMS_OF_CASE;
 
     Value* block = ARG(cases); // for CHOOSE, it's "choices" not "cases"
 
-    DECLARE_FRAME (f);
-    Push_Frame(f, block); // array GC safe now, can re-use `block` cell
+    DECLARE_LEVEL (L);
+    Push_Level(L, block); // array GC safe now, can re-use `block` cell
 
     Init_Nulled(OUT); // default return result
 
-    DECLARE_VALUE (cell); // unsafe to use ARG() slots as frame's f->out
+    DECLARE_VALUE (cell); // unsafe to use ARG() slots as frame's L->out
     SET_END(cell);
     PUSH_GC_GUARD(cell);
 
-    while (NOT_END(f->value)) {
+    while (NOT_END(L->value)) {
 
         // Perform 1 EVALUATE's worth of evaluation on a "condition" to test
         // Will consume any pending "invisibles" (COMMENT, ELIDE, DUMP...)
 
-        if (Eval_Step_Throws(SET_END(cell), f)) {
+        if (Eval_Step_Throws(SET_END(cell), L)) {
             DROP_GC_GUARD(cell);
             Copy_Cell(OUT, cell);
-            Abort_Frame(f);
+            Abort_Level(L);
             return R_THROWN;
         }
 
         if (IS_END(cell)) {  // !!! R3C patch for permissive invisibility
-            if (IS_END(f->value))
+            if (IS_END(L->value))
                 break;
             continue;
         }
@@ -639,23 +639,23 @@ static REB_R Case_Choose_Core_May_Throw(
         //     case [1 > 2 [...] 3 > 4 [...] 10 + 20] = 30
         //     choose [1 > 2 (literal group) 3 > 4 <tag> 10 + 20] = 30
         //
-        if (IS_END(f->value)) {
+        if (IS_END(L->value)) {
             DROP_GC_GUARD(cell);
-            Drop_Frame(f);
+            Drop_Level(L);
             return Copy_Cell(OUT, cell);
         }
 
         if (IS_FALSEY(cell)) {  // not a matching condition
             if (choose) {
-                Fetch_Next_In_Frame(nullptr, f); // skip next, whatever it is
+                Fetch_Next_In_Level(nullptr, L); // skip next, whatever it is
                 continue;
             }
 
             // Even if branch is being skipped, it gets an evaluation--like
             // how `if false (print "A" [print "B"])` prints A, but not B.
             //
-            if (Eval_Step_Throws(SET_END(cell), f)) {
-                Abort_Frame(f);
+            if (Eval_Step_Throws(SET_END(cell), L)) {
+                Abort_Level(L);
                 // preserving `out` value (may be previous match)
                 DROP_GC_GUARD(cell);
                 return Copy_Cell(OUT, cell);
@@ -670,55 +670,55 @@ static REB_R Case_Choose_Core_May_Throw(
             // ** Script Error: if does not allow tag! for its branch argument
             //
             if (not IS_BLOCK(cell) and not IS_ACTION(cell))
-                fail (Error_Invalid_Core(cell, f->specifier));
+                fail (Error_Invalid_Core(cell, L->specifier));
 
             continue;
         }
 
         if (choose) {
-            Derelativize(OUT, f->value, f->specifier); // null not possible
-            Fetch_Next_In_Frame(nullptr, f); // keep matching if /ALL
+            Derelativize(OUT, L->value, L->specifier); // null not possible
+            Fetch_Next_In_Level(nullptr, L); // keep matching if /ALL
         }
         else {
             // Note: we are preserving `cell` to pass to an arity-1 ACTION!
 
-            if (Eval_Step_Throws(SET_END(OUT), f)) {
+            if (Eval_Step_Throws(SET_END(OUT), L)) {
                 DROP_GC_GUARD(cell);
-                Abort_Frame(f);
+                Abort_Level(L);
                 return R_THROWN;
             }
 
-            f->gotten = nullptr; // can't hold onto cache, running user code
+            L->gotten = nullptr; // can't hold onto cache, running user code
 
             Copy_Cell(block, OUT); // can't evaluate into ARG(block)
             if (IS_BLOCK(block)) {
                 if (Do_Any_Array_At_Throws(OUT, block)) {
-                    Abort_Frame(f);
+                    Abort_Level(L);
                     DROP_GC_GUARD(cell);
                     return R_THROWN;
                 }
             }
             else if (IS_ACTION(OUT)) {
                 if (Do_Branch_With_Throws(OUT, block, cell)) {
-                    Abort_Frame(f);
+                    Abort_Level(L);
                     DROP_GC_GUARD(cell);
                     return R_THROWN;
                 }
             } else
-                fail (Error_Invalid_Core(OUT, f->specifier));
+                fail (Error_Invalid_Core(OUT, L->specifier));
 
             Trashify_Branched(OUT);  // null is reserved for no branch taken
         }
 
         if (not REF(all)) {
             DROP_GC_GUARD(cell);
-            Abort_Frame(f);
+            Abort_Level(L);
             return OUT;
         }
     }
 
     DROP_GC_GUARD(cell);
-    Drop_Frame(f);
+    Drop_Level(L);
     return OUT;
 }
 
@@ -739,7 +739,7 @@ static REB_R Case_Choose_Core_May_Throw(
 DECLARE_NATIVE(case)
 {
     const bool choose = false; // jsut a plain CASE
-    return Case_Choose_Core_May_Throw(frame_, choose);
+    return Case_Choose_Core_May_Throw(level_, choose);
 }
 
 
@@ -764,7 +764,7 @@ DECLARE_NATIVE(choose)
 // instead of /LAST helps reinforce that *all the conditions* are evaluated.
 {
     const bool choose = true; // do a CHOOSE as opposed to a CASE
-    return Case_Choose_Core_May_Throw(frame_, choose);
+    return Case_Choose_Core_May_Throw(level_, choose);
 }
 
 
@@ -802,26 +802,26 @@ DECLARE_NATIVE(switch)
         );
     UNUSED(ARG(default_branch));
 
-    DECLARE_FRAME (f);
-    Push_Frame(f, ARG(cases));
+    DECLARE_LEVEL (L);
+    Push_Level(L, ARG(cases));
 
     Value* value = ARG(value);
 
     Init_Nulled(OUT); // used for "fallout"
 
-    while (NOT_END(f->value)) {
+    while (NOT_END(L->value)) {
         //
         // If a branch is seen at this point, it doesn't correspond to any
         // condition to match.  If no more tests are run, let it suppress the
         // feature of the last value "falling out" the bottom of the switch
         //
-        if (IS_BLOCK(f->value)) {
+        if (IS_BLOCK(L->value)) {
             Init_Nulled(OUT);
-            Fetch_Next_In_Frame(nullptr, f);
+            Fetch_Next_In_Level(nullptr, L);
             continue;
         }
 
-        if (IS_ACTION(f->value)) {
+        if (IS_ACTION(L->value)) {
             //
             // It's a literal ACTION!, e.g. one composed in the block:
             //
@@ -839,15 +839,15 @@ DECLARE_NATIVE(switch)
         }
 
         if (REF(quote))
-            Quote_Next_In_Frame(OUT, f);
+            Quote_Next_In_Level(OUT, L);
         else {
-            if (Eval_Step_Throws(SET_END(OUT), f)) {
-                Abort_Frame(f);
+            if (Eval_Step_Throws(SET_END(OUT), L)) {
+                Abort_Level(L);
                 return R_THROWN;
             }
 
             if (IS_END(OUT)) {
-                assert(IS_END(f->value));
+                assert(IS_END(L->value));
                 Init_Nulled(OUT);
                 break;
             }
@@ -872,38 +872,38 @@ DECLARE_NATIVE(switch)
         // Skip ahead to try and find a block, to treat as code for the match
 
         while (true) {
-            if (IS_END(f->value)) {
-                Drop_Frame(f);
+            if (IS_END(L->value)) {
+                Drop_Level(L);
                 return OUT; // last test "falls out", might be void
             }
-            if (IS_BLOCK(f->value))
+            if (IS_BLOCK(L->value))
                 break;
-            if (IS_ACTION(f->value))
+            if (IS_ACTION(L->value))
                 goto action_not_supported; // literal action
-            Fetch_Next_In_Frame(nullptr, f);
+            Fetch_Next_In_Level(nullptr, L);
         }
 
         if (Do_At_Throws( // it's a match, so run the BLOCK!
             OUT,
-            Cell_Array(f->value),
-            VAL_INDEX(f->value),
-            f->specifier
+            Cell_Array(L->value),
+            VAL_INDEX(L->value),
+            L->specifier
         )){
-            Abort_Frame(f);
+            Abort_Level(L);
             return R_THROWN;
         }
 
         Trashify_Branched(OUT);  // null is reserved for no branch run
 
         if (not REF(all)) {
-            Abort_Frame(f);
+            Abort_Level(L);
             return OUT;
         }
 
-        Fetch_Next_In_Frame(nullptr, f); // keep matching if /ALL
+        Fetch_Next_In_Level(nullptr, L); // keep matching if /ALL
     }
 
-    Drop_Frame(f);
+    Drop_Level(L);
     return OUT; // last test "falls out" or last match if /ALL, may be void
 }
 
@@ -932,7 +932,7 @@ DECLARE_NATIVE(default)
 
     if (IS_NULLED(target)) { // e.g. `case [... default [...]]`
         UNUSED(ARG(look));
-        if (NOT_END(frame_->value)) // !!! shortcut using variadic for now
+        if (NOT_END(level_->value)) // !!! shortcut using variadic for now
             fail ("DEFAULT usage with no left hand side must be at <end>");
 
         if (Do_Branch_Throws(OUT, ARG(branch)))

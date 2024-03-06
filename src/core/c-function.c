@@ -835,7 +835,7 @@ REBLEN Find_Param_Index(Array* paramlist, Symbol* symbol)
 // Create an archetypal form of a function, given C code implementing a
 // dispatcher that will be called by Eval_Core.  Dispatchers are of the form:
 //
-//     const Value* Dispatcher(REBFRM *f) {...}
+//     const Value* Dispatcher(Level* L) {...}
 //
 // The REBACT returned is "archetypal" because individual REBVALs which hold
 // the same REBACT may differ in a per-cell "binding".  (This is how one
@@ -961,8 +961,8 @@ REBACT *Make_Action(
     if (not opt_exemplar) {
         //
         // No exemplar is used as a cue to set the "specialty" to paramlist,
-        // so that Push_Action() can assign f->special directly from it in
-        // dispatch, and be equal to f->param.
+        // so that Push_Action() can assign L->special directly from it in
+        // dispatch, and be equal to L->param.
         //
         LINK(details).specialty = paramlist;
     }
@@ -994,7 +994,7 @@ REBACT *Make_Action(
 
 
 //
-//  Make_Expired_Frame_Ctx_Managed: C
+//  Make_Expired_Level_Ctx_Managed: C
 //
 // FUNC/PROC bodies contain relative words and relative arrays.  Arrays from
 // this relativized body may only be put into a specified Value once they
@@ -1008,7 +1008,7 @@ REBACT *Make_Action(
 // There could be an additional "archetype" state for the relative binding
 // machinery.  But making a one-off expired frame is an inexpensive option.
 //
-REBCTX *Make_Expired_Frame_Ctx_Managed(REBACT *a)
+REBCTX *Make_Expired_Level_Ctx_Managed(REBACT *a)
 {
     // Since passing SERIES_MASK_CONTEXT includes SERIES_FLAG_ALWAYS_DYNAMIC,
     // don't pass it in to the allocation...it needs to be set, but will be
@@ -1137,7 +1137,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
         RESET_VAL_HEADER_EXTRA(out, REB_BLOCK, 0);
         INIT_VAL_ARRAY(out, maybe_fake_body);
         VAL_INDEX(out) = 0;
-        INIT_BINDING(out, Make_Expired_Frame_Ctx_Managed(a));
+        INIT_BINDING(out, Make_Expired_Level_Ctx_Managed(a));
         return;
     }
 
@@ -1248,13 +1248,13 @@ REBACT *Make_Interpreted_Action_May_Fail(
     else { // body not empty, pick dispatcher based on output disposition
 
         if (GET_VAL_FLAG(value, ACTION_FLAG_INVISIBLE))
-            ACT_DISPATCHER(a) = &Elider_Dispatcher; // no f->out mutation
+            ACT_DISPATCHER(a) = &Elider_Dispatcher; // no L->out mutation
         else if (GET_VAL_FLAG(value, ACTION_FLAG_TRASHER))
-            ACT_DISPATCHER(a) = &Trasher_Dispatcher; // forces f->out trash
+            ACT_DISPATCHER(a) = &Trasher_Dispatcher; // forces L->out trash
         else if (GET_VAL_FLAG(value, ACTION_FLAG_RETURN))
-            ACT_DISPATCHER(a) = &Returner_Dispatcher; // type checks f->out
+            ACT_DISPATCHER(a) = &Returner_Dispatcher; // type checks L->out
         else
-            ACT_DISPATCHER(a) = &Unchecked_Dispatcher; // unchecked f->out
+            ACT_DISPATCHER(a) = &Unchecked_Dispatcher; // unchecked L->out
 
         copy = Copy_And_Bind_Relative_Deep_Managed(
             code, // new copy has locals bound relatively to the new action
@@ -1317,7 +1317,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
 //
 REBTYPE(Fail)
 {
-    UNUSED(frame_);
+    UNUSED(level_);
     UNUSED(verb);
 
     fail ("Datatype does not have a dispatcher registered.");
@@ -1345,17 +1345,17 @@ REBTYPE(Fail)
 // https://en.wikipedia.org/wiki/Multiple_dispatch
 // https://en.wikipedia.org/wiki/Generic_function
 //
-REB_R Generic_Dispatcher(REBFRM *f)
+REB_R Generic_Dispatcher(Level* L)
 {
-    Array* details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(Level_Phase(L));
 
-    enum Reb_Kind kind = VAL_TYPE(FRM_ARG(f, 1));
+    enum Reb_Kind kind = VAL_TYPE(Level_Arg(L, 1));
     Value* verb = KNOWN(ARR_HEAD(details));
     assert(IS_WORD(verb));
     assert(kind < REB_MAX);
 
     GENERIC_HOOK hook = Generic_Hooks[kind];
-    return hook(f, verb);
+    return hook(L, verb);
 }
 
 
@@ -1367,9 +1367,9 @@ REB_R Generic_Dispatcher(REBFRM *f)
 // it sounds, because you can make fast stub actions that only cost if they
 // are HIJACK'd (e.g. ASSERT is done this way).
 //
-REB_R Null_Dispatcher(REBFRM *f)
+REB_R Null_Dispatcher(Level* L)
 {
-    Array* details = ACT_DETAILS(FRM_PHASE_OR_DUMMY(f));
+    Array* details = ACT_DETAILS(LVL_PHASE_OR_DUMMY(L));
     assert(VAL_LEN_AT(ARR_HEAD(details)) == 0);
     UNUSED(details);
 
@@ -1382,13 +1382,13 @@ REB_R Null_Dispatcher(REBFRM *f)
 //
 // Analogue to Null_Dispatcher() for `func [return: <void> ...] []`.
 //
-REB_R Trash_Dispatcher(REBFRM *f)
+REB_R Trash_Dispatcher(Level* L)
 {
-    Array* details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(Level_Phase(L));
     assert(VAL_LEN_AT(ARR_HEAD(details)) == 0);
     UNUSED(details);
 
-    return Init_Trash(f->out);
+    return Init_Trash(L->out);
 }
 
 
@@ -1397,15 +1397,15 @@ REB_R Trash_Dispatcher(REBFRM *f)
 //
 // Dispatcher used by TYPECHECKER generator for when argument is a datatype.
 //
-REB_R Datatype_Checker_Dispatcher(REBFRM *f)
+REB_R Datatype_Checker_Dispatcher(Level* L)
 {
-    Array* details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* datatype = ARR_HEAD(details);
     assert(IS_DATATYPE(datatype));
 
     return Init_Logic(
-        f->out,
-        VAL_TYPE(FRM_ARG(f, 1)) == VAL_TYPE_KIND(datatype)
+        L->out,
+        VAL_TYPE(Level_Arg(L, 1)) == VAL_TYPE_KIND(datatype)
     );
 }
 
@@ -1415,13 +1415,13 @@ REB_R Datatype_Checker_Dispatcher(REBFRM *f)
 //
 // Dispatcher used by TYPECHECKER generator for when argument is a typeset.
 //
-REB_R Typeset_Checker_Dispatcher(REBFRM *f)
+REB_R Typeset_Checker_Dispatcher(Level* L)
 {
-    Array* details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* typeset = ARR_HEAD(details);
     assert(IS_TYPESET(typeset));
 
-    return Init_Logic(f->out, TYPE_CHECK(typeset, VAL_TYPE(FRM_ARG(f, 1))));
+    return Init_Logic(L->out, TYPE_CHECK(typeset, VAL_TYPE(Level_Arg(L, 1))));
 }
 
 
@@ -1432,16 +1432,16 @@ REB_R Typeset_Checker_Dispatcher(REBFRM *f)
 // (whose body is a block that runs through DO []).  There is no return type
 // checking done on these simple functions.
 //
-REB_R Unchecked_Dispatcher(REBFRM *f)
+REB_R Unchecked_Dispatcher(Level* L)
 {
-    Array* details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* body = ARR_HEAD(details);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
-    if (Do_At_Throws(f->out, Cell_Array(body), 0, SPC(f->varlist)))
+    if (Do_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
         return R_THROWN;
 
-    return f->out;
+    return L->out;
 }
 
 
@@ -1452,16 +1452,16 @@ REB_R Unchecked_Dispatcher(REBFRM *f)
 // Pushing that code into the dispatcher means there's no need to do flag
 // testing in the main loop.
 //
-REB_R Trasher_Dispatcher(REBFRM *f)
+REB_R Trasher_Dispatcher(Level* L)
 {
-    Array* details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* body = ARR_HEAD(details);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
-    if (Do_At_Throws(f->out, Cell_Array(body), 0, SPC(f->varlist)))
+    if (Do_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
         return R_THROWN;
 
-    return Init_Trash(f->out);
+    return Init_Trash(L->out);
 }
 
 
@@ -1472,15 +1472,15 @@ REB_R Trasher_Dispatcher(REBFRM *f)
 // correct.  (Note that natives do not get this type checking, and they
 // probably shouldn't pay for it except in the debug build.)
 //
-REB_R Returner_Dispatcher(REBFRM *f)
+REB_R Returner_Dispatcher(Level* L)
 {
-    REBACT *phase = FRM_PHASE(f);
+    REBACT *phase = Level_Phase(L);
     Array* details = ACT_DETAILS(phase);
 
     Cell* body = ARR_HEAD(details);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
-    if (Do_At_Throws(f->out, Cell_Array(body), 0, SPC(f->varlist)))
+    if (Do_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
         return R_THROWN;
 
     Value* typeset = ACT_PARAM(phase, ACT_NUM_PARAMS(phase));
@@ -1490,10 +1490,10 @@ REB_R Returner_Dispatcher(REBFRM *f)
     // local uses them for the return types of a "virtual" definitional return
     // if the parameter is PARAM_CLASS_RETURN_1.
     //
-    if (not TYPE_CHECK(typeset, VAL_TYPE(f->out)))
-        fail (Error_Bad_Return_Type(f, VAL_TYPE(f->out)));
+    if (not TYPE_CHECK(typeset, VAL_TYPE(L->out)))
+        fail (Error_Bad_Return_Type(L, VAL_TYPE(L->out)));
 
-    return f->out;
+    return L->out;
 }
 
 
@@ -1505,9 +1505,9 @@ REB_R Returner_Dispatcher(REBFRM *f)
 // doesn't disrupt the chain of evaluation any more than if the call were not
 // there.  (The call can have side effects, however.)
 //
-REB_R Elider_Dispatcher(REBFRM *f)
+REB_R Elider_Dispatcher(Level* L)
 {
-    Array* details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(Level_Phase(L));
 
     Cell* body = ARR_HEAD(details);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
@@ -1518,8 +1518,8 @@ REB_R Elider_Dispatcher(REBFRM *f)
     DECLARE_VALUE (dummy);
     SET_END(dummy);
 
-    if (Do_At_Throws(dummy, Cell_Array(body), 0, SPC(f->varlist))) {
-        Copy_Cell(f->out, dummy); // can't return a local variable
+    if (Do_At_Throws(dummy, Cell_Array(body), 0, SPC(L->varlist))) {
+        Copy_Cell(L->out, dummy); // can't return a local variable
         return R_THROWN;
     }
 
@@ -1533,9 +1533,9 @@ REB_R Elider_Dispatcher(REBFRM *f)
 // This is a specialized version of Elider_Dispatcher() for when the body of
 // a function is empty.  This helps COMMENT and functions like it run faster.
 //
-REB_R Commenter_Dispatcher(REBFRM *f)
+REB_R Commenter_Dispatcher(Level* L)
 {
-    Array* details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* body = ARR_HEAD(details);
     assert(VAL_LEN_AT(body) == 0);
     UNUSED(body);
@@ -1556,18 +1556,18 @@ REB_R Commenter_Dispatcher(REBFRM *f)
 // and a "shim" is needed...since something like an ADAPT or SPECIALIZE
 // or a MAKE FRAME! might depend on the existing paramlist shape.
 //
-REB_R Hijacker_Dispatcher(REBFRM *f)
+REB_R Hijacker_Dispatcher(Level* L)
 {
-    Array* details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* hijacker = ARR_HEAD(details);
 
     // We need to build a new frame compatible with the hijacker, and
     // transform the parameters we've gathered to be compatible with it.
     //
-    if (Redo_Action_Throws(f, VAL_ACTION(hijacker)))
+    if (Redo_Action_Throws(L, VAL_ACTION(hijacker)))
         return R_THROWN;
 
-    return f->out;
+    return L->out;
 }
 
 
@@ -1576,9 +1576,9 @@ REB_R Hijacker_Dispatcher(REBFRM *f)
 //
 // Dispatcher used by ADAPT.
 //
-REB_R Adapter_Dispatcher(REBFRM *f)
+REB_R Adapter_Dispatcher(Level* L)
 {
-    Array* details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(Level_Phase(L));
     assert(ARR_LEN(details) == 2);
 
     Cell* prelude = Array_At(details, 0);
@@ -1588,7 +1588,7 @@ REB_R Adapter_Dispatcher(REBFRM *f)
     // does throw--including a RETURN--that means the adapted function will
     // not be run.
     //
-    // We can't do the prelude into f->out in the case that this is an
+    // We can't do the prelude into L->out in the case that this is an
     // adaptation of an invisible (e.g. DUMP).  Would be nice to use the frame
     // spare cell but can't as Fetch_Next() uses it.
 
@@ -1597,14 +1597,14 @@ REB_R Adapter_Dispatcher(REBFRM *f)
         dummy,
         Cell_Array(prelude),
         VAL_INDEX(prelude),
-        SPC(f->varlist)
+        SPC(L->varlist)
     )){
-        Copy_Cell(f->out, dummy);
+        Copy_Cell(L->out, dummy);
         return R_THROWN;
     }
 
-    FRM_PHASE(f) = VAL_ACTION(adaptee);
-    FRM_BINDING(f) = VAL_BINDING(adaptee);
+    Level_Phase(L) = VAL_ACTION(adaptee);
+    LVL_BINDING(L) = VAL_BINDING(adaptee);
 
     return R_REDO_CHECKED; // the redo will use the updated phase/binding
 }
@@ -1615,9 +1615,9 @@ REB_R Adapter_Dispatcher(REBFRM *f)
 //
 // Dispatcher used by ENCLOSE.
 //
-REB_R Encloser_Dispatcher(REBFRM *f)
+REB_R Encloser_Dispatcher(Level* L)
 {
-    Array* details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(Level_Phase(L));
     assert(ARR_LEN(details) == 2);
 
     Value* inner = KNOWN(Array_At(details, 0)); // same args as f
@@ -1630,12 +1630,12 @@ REB_R Encloser_Dispatcher(REBFRM *f)
     // call to the encloser.  If it isn't managed, there's no worries about
     // user handles on it...so just take it.  Otherwise, "steal" its vars.
     //
-    REBCTX *c = Steal_Context_Vars(CTX(f->varlist), NOD(FRM_PHASE(f)));
+    REBCTX *c = Steal_Context_Vars(CTX(L->varlist), NOD(Level_Phase(L)));
     LINK(c).keysource = NOD(VAL_ACTION(inner));
 
-    assert(GET_SER_INFO(f->varlist, SERIES_INFO_INACCESSIBLE)); // look dead
+    assert(GET_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE)); // look dead
 
-    // f->varlist may or may not have wound up being managed.  It was not
+    // L->varlist may or may not have wound up being managed.  It was not
     // allocated through the usual mechanisms, so if unmanaged it's not in
     // the tracking list Init_Any_Context() expects.  Just fiddle the bit.
     //
@@ -1648,7 +1648,7 @@ REB_R Encloser_Dispatcher(REBFRM *f)
     rootvar->payload.any_context.phase = VAL_ACTION(inner);
     INIT_BINDING_MAY_MANAGE(rootvar, VAL_BINDING(inner));
 
-    Copy_Cell(FRM_CELL(f), rootvar); // user may DO this, or not...
+    Copy_Cell(Level_Spare(L), rootvar); // user may DO this, or not...
 
     // We don't actually know how long the frame we give back is going to
     // live, or who it might be given to.  And it may contain things like
@@ -1661,13 +1661,13 @@ REB_R Encloser_Dispatcher(REBFRM *f)
     // Note that since varlists aren't added to the manual series list, the
     // bit must be tweaked vs. using ENSURE_ARRAY_MANAGED.
     //
-    SET_SER_FLAG(f->varlist, NODE_FLAG_MANAGED);
+    SET_SER_FLAG(L->varlist, NODE_FLAG_MANAGED);
 
     const bool fully = true;
-    if (Apply_Only_Throws(f->out, fully, outer, FRM_CELL(f), rebEND))
+    if (Apply_Only_Throws(L->out, fully, outer, Level_Spare(L), rebEND))
         return R_THROWN;
 
-    return f->out;
+    return L->out;
 }
 
 
@@ -1676,9 +1676,9 @@ REB_R Encloser_Dispatcher(REBFRM *f)
 //
 // Dispatcher used by CHAIN.
 //
-REB_R Chainer_Dispatcher(REBFRM *f)
+REB_R Chainer_Dispatcher(Level* L)
 {
-    Array* details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(Level_Phase(L));
     Array* pipeline = Cell_Array(ARR_HEAD(details));
 
     // The post-processing pipeline has to be "pushed" so it is not forgotten.
@@ -1693,8 +1693,8 @@ REB_R Chainer_Dispatcher(REBFRM *f)
 
     // Extract the first function, itself which might be a chain.
     //
-    FRM_PHASE(f) = VAL_ACTION(chained);
-    FRM_BINDING(f) = VAL_BINDING(chained);
+    Level_Phase(L) = VAL_ACTION(chained);
+    LVL_BINDING(L) = VAL_BINDING(chained);
 
     return R_REDO_UNCHECKED; // signatures should match
 }

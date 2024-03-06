@@ -62,7 +62,7 @@ DECLARE_NATIVE(reeval)
     //
     UNUSED(ARG(expressions));
 
-    DECLARE_SUBFRAME (child, frame_);
+    DECLARE_SUBLEVEL (child, level_);
 
     // We need a way to slip the value through to the evaluator.  Can't run
     // it from the frame's cell.
@@ -77,7 +77,7 @@ DECLARE_NATIVE(reeval)
 
     Init_Trash(OUT);  // !!! R3C patch, better than error on `reeval :elide`
 
-    if (Eval_Step_In_Subframe_Throws(OUT, frame_, flags, child))
+    if (Eval_Step_In_Subframe_Throws(OUT, level_, flags, child))
         return R_THROWN;
 
     return OUT;
@@ -156,8 +156,8 @@ DECLARE_NATIVE(eval_enfix)
 {
     INCLUDE_PARAMS_OF_EVAL_ENFIX;
 
-    REBFRM *f;
-    if (not Is_Frame_Style_Varargs_May_Fail(&f, ARG(rest))) {
+    Level* L;
+    if (not Is_Level_Style_Varargs_May_Fail(&L, ARG(rest))) {
         //
         // It wouldn't be *that* hard to support block-style varargs, but as
         // this routine is a hack to implement ME, don't make it any longer
@@ -166,10 +166,10 @@ DECLARE_NATIVE(eval_enfix)
         fail ("EVAL-ENFIX is not made to support MAKE VARARGS! [...] rest");
     }
 
-    if (IS_END(f->value)) // no PATH! yet...
+    if (IS_END(L->value)) // no PATH! yet...
         fail ("ME and MY hit end of input");
 
-    DECLARE_SUBFRAME (child, f); // saves DSP before refinement push
+    DECLARE_SUBLEVEL (child, L); // saves DSP before refinement push
 
     const bool push_refinements = true;
     Symbol* opt_label;
@@ -177,8 +177,8 @@ DECLARE_NATIVE(eval_enfix)
     if (Get_If_Word_Or_Path_Throws(
         temp,
         &opt_label,
-        f->value,
-        f->specifier,
+        L->value,
+        L->specifier,
         push_refinements
     )){
         RETURN (temp);
@@ -188,13 +188,13 @@ DECLARE_NATIVE(eval_enfix)
         fail ("ME and MY only work if right hand WORD! is an ACTION!");
 
     // Here we do something devious.  We subvert the system by setting
-    // f->gotten to an enfixed version of the function even if it is
+    // L->gotten to an enfixed version of the function even if it is
     // not enfixed.  This lets us slip in a first argument to a function
     // *as if* it were enfixed, e.g. `series: my next`.
     //
     SET_VAL_FLAG(temp, VALUE_FLAG_ENFIXED);
     PUSH_GC_GUARD(temp);
-    f->gotten = temp;
+    L->gotten = temp;
 
     // !!! If we were to give an error on using ME with non-enfix or MY with
     // non-prefix, we'd need to know the fetched enfix state.  At the moment,
@@ -208,7 +208,7 @@ DECLARE_NATIVE(eval_enfix)
     //
     DECLARE_VALUE (word);
     Init_Word(word, opt_label);
-    f->value = word;
+    L->value = word;
 
     // Simulate as if the passed-in value was calculated into the output slot,
     // which is where enfix functions usually find their left hand values.
@@ -220,19 +220,19 @@ DECLARE_NATIVE(eval_enfix)
     // the assertions in Eval_Core.
     //
     // Note that while f may have a "prior" already, its prior will become
-    // this frame...so when it asserts about "f->prior->deferred" it means
+    // this frame...so when it asserts about "L->prior->deferred" it means
     // the frame of EVAL-ENFIX that is invoking it.
     //
-    assert(IS_POINTER_TRASH_DEBUG(FS_TOP->u.defer.arg));
-    FS_TOP->u.defer.arg = m_cast(Value*, BLANK_VALUE); // !!! signal our hack
+    assert(IS_POINTER_TRASH_DEBUG(TOP_LEVEL->u.defer.arg));
+    TOP_LEVEL->u.defer.arg = m_cast(Value*, BLANK_VALUE); // !!! signal our hack
 
     REBFLGS flags = DO_FLAG_FULFILLING_ARG | DO_FLAG_POST_SWITCH;
-    if (Eval_Step_In_Subframe_Throws(OUT, f, flags, child)) {
+    if (Eval_Step_In_Subframe_Throws(OUT, L, flags, child)) {
         DROP_GC_GUARD(temp);
         return R_THROWN;
     }
 
-    TRASH_POINTER_IF_DEBUG(FS_TOP->u.defer.arg);
+    TRASH_POINTER_IF_DEBUG(TOP_LEVEL->u.defer.arg);
 
     DROP_GC_GUARD(temp);
     return OUT;
@@ -331,19 +331,19 @@ DECLARE_NATIVE(do)
             return OUT;
         }
 
-        REBFRM *f;
-        if (not Is_Frame_Style_Varargs_May_Fail(&f, source))
+        Level* L;
+        if (not Is_Level_Style_Varargs_May_Fail(&L, source))
             panic (source); // Frame is the only other type
 
         // By definition, we are in the middle of a function call in the frame
         // the varargs came from.  It's still on the stack, and we don't want
         // to disrupt its state.  Use a subframe.
         //
-        DECLARE_SUBFRAME (child, f);
+        DECLARE_SUBLEVEL (child, L);
         REBFLGS flags = 0;
         Init_Trash(OUT);
-        while (NOT_END(f->value)) {
-            if (Eval_Step_In_Subframe_Throws(OUT, f, flags, child))
+        while (NOT_END(L->value)) {
+            if (Eval_Step_In_Subframe_Throws(OUT, L, flags, child))
                 return R_THROWN;
         }
 
@@ -410,7 +410,7 @@ DECLARE_NATIVE(do)
         REBCTX *c = VAL_CONTEXT(source); // checks for INACCESSIBLE
         REBACT *phase = VAL_PHASE(source);
 
-        if (CTX_FRAME_IF_ON_STACK(c)) // see REDO for tail-call recursion
+        if (CTX_LEVEL_IF_ON_STACK(c)) // see REDO for tail-call recursion
             fail ("Use REDO to restart a running FRAME! (not DO)");
 
         // To DO a FRAME! will "steal" its data.  If a user wishes to use a
@@ -418,17 +418,17 @@ DECLARE_NATIVE(do)
         // data is stolen from the copy.  This allows for efficient reuse of
         // the context's memory in the cases where a copy isn't needed.
 
-        DECLARE_END_FRAME (f);
-        f->out = OUT;
-        Push_Frame_At_End(
-            f,
+        DECLARE_END_LEVEL (L);
+        L->out = OUT;
+        Push_Level_At_End(
+            L,
             DO_FLAG_FULLY_SPECIALIZED | DO_FLAG_PROCESS_ACTION
         );
 
         assert(CTX_KEYS_HEAD(c) == ACT_PARAMS_HEAD(phase));
-        f->param = CTX_KEYS_HEAD(c);
+        L->param = CTX_KEYS_HEAD(c);
         REBCTX *stolen = Steal_Context_Vars(c, NOD(phase));
-        LINK(stolen).keysource = NOD(f); // changes CTX_KEYS_HEAD() result
+        LINK(stolen).keysource = NOD(L); // changes CTX_KEYS_HEAD() result
 
         // Its data stolen, the context's node should now be GC'd when
         // references in other FRAME! value cells have all gone away.
@@ -436,28 +436,28 @@ DECLARE_NATIVE(do)
         assert(GET_SER_FLAG(c, NODE_FLAG_MANAGED));
         assert(GET_SER_INFO(c, SERIES_INFO_INACCESSIBLE));
 
-        f->varlist = CTX_VARLIST(stolen);
-        f->rootvar = CTX_ARCHETYPE(stolen);
-        f->arg = f->rootvar + 1;
-        //f->param set above
-        f->special = f->arg;
+        L->varlist = CTX_VARLIST(stolen);
+        L->rootvar = CTX_ARCHETYPE(stolen);
+        L->arg = L->rootvar + 1;
+        //L->param set above
+        L->special = L->arg;
 
-        assert(FRM_PHASE(f) == phase);
-        FRM_BINDING(f) = VAL_BINDING(source); // !!! should archetype match?
+        assert(Level_Phase(L) == phase);
+        LVL_BINDING(L) = VAL_BINDING(source); // !!! should archetype match?
 
         Symbol* opt_label = nullptr;
-        Begin_Action(f, opt_label, ORDINARY_ARG);
+        Begin_Action(L, opt_label, ORDINARY_ARG);
 
-        bool threw = Eval_Core_Throws(f);
+        bool threw = Eval_Core_Throws(L);
 
-        Drop_Frame(f);
+        Drop_Level(L);
 
         if (threw)
             return R_THROWN; // prohibits recovery from exits
 
-        assert(IS_END(f->value)); // we started at END_FLAG, can only throw
+        assert(IS_END(L->value)); // we started at END_FLAG, can only throw
 
-        return f->out; }
+        return L->out; }
 
     default:
         break;
@@ -568,21 +568,21 @@ DECLARE_NATIVE(evaluate)
             RETURN (source); // original VARARGS! will have updated position
         }
 
-        REBFRM *f;
-        if (not Is_Frame_Style_Varargs_May_Fail(&f, source))
+        Level* L;
+        if (not Is_Level_Style_Varargs_May_Fail(&L, source))
             panic (source); // Frame is the only other type
 
         // By definition, we are in the middle of a function call in the frame
         // the varargs came from.  It's still on the stack, and we don't want
         // to disrupt its state.  Use a subframe.
         //
-        DECLARE_SUBFRAME (child, f);
+        DECLARE_SUBLEVEL (child, L);
         REBFLGS flags = 0;
-        if (IS_END(f->value))
+        if (IS_END(L->value))
             return nullptr;
 
         DECLARE_VALUE (temp);
-        if (Eval_Step_In_Subframe_Throws(SET_END(temp), f, flags, child))
+        if (Eval_Step_In_Subframe_Throws(SET_END(temp), L, flags, child))
             RETURN (temp);
 
         if (IS_END(temp))
@@ -659,8 +659,8 @@ DECLARE_NATIVE(redo)
 
     REBCTX *c = VAL_CONTEXT(restartee);
 
-    REBFRM *f = CTX_FRAME_IF_ON_STACK(c);
-    if (f == nullptr)
+    Level* L = CTX_LEVEL_IF_ON_STACK(c);
+    if (L == nullptr)
         fail ("Use DO to start a not-currently running FRAME! (not REDO)");
 
     // If we were given a sibling to restart, make sure it is frame compatible
@@ -676,7 +676,7 @@ DECLARE_NATIVE(redo)
     //
     if (REF(other)) {
         Value* sibling = ARG(sibling);
-        if (FRM_UNDERLYING(f) != ACT_UNDERLYING(VAL_ACTION(sibling)))
+        if (LVL_UNDERLYING(L) != ACT_UNDERLYING(VAL_ACTION(sibling)))
             fail ("/OTHER function passed to REDO has incompatible FRAME!");
 
         restartee->payload.any_context.phase = VAL_ACTION(sibling);
@@ -736,8 +736,8 @@ DECLARE_NATIVE(applique)
 
     Value* applicand = ARG(applicand);
 
-    DECLARE_END_FRAME (f); // captures f->dsp
-    f->out = OUT;
+    DECLARE_END_LEVEL (L); // captures f->dsp
+    L->out = OUT;
 
     // Argument can be a literal action (APPLY :APPEND) or a WORD!/PATH!.
     // If it is a path, we push the refinements to the stack so they can
@@ -769,7 +769,7 @@ DECLARE_NATIVE(applique)
     INIT_BINDER(&binder);
     REBCTX *exemplar = Make_Context_For_Action_Int_Partials(
         applicand,
-        f->dsp_orig, // lowest_ordered_dsp of refinements to weave in
+        L->dsp_orig, // lowest_ordered_dsp of refinements to weave in
         &binder
     );
     MANAGE_ARRAY(CTX_VARLIST(exemplar)); // binding code into it
@@ -811,22 +811,22 @@ DECLARE_NATIVE(applique)
     DROP_GC_GUARD(exemplar);
 
     assert(CTX_KEYS_HEAD(exemplar) == ACT_PARAMS_HEAD(VAL_ACTION(applicand)));
-    f->param = CTX_KEYS_HEAD(exemplar);
+    L->param = CTX_KEYS_HEAD(exemplar);
     REBCTX *stolen = Steal_Context_Vars(
         exemplar,
         NOD(VAL_ACTION(applicand))
     );
-    LINK(stolen).keysource = NOD(f); // changes CTX_KEYS_HEAD result
+    LINK(stolen).keysource = NOD(L); // changes CTX_KEYS_HEAD result
 
     if (def_threw) {
         Free_Unmanaged_Array(CTX_VARLIST(stolen)); // could TG_Reuse it
         RETURN (temp);
     }
 
-    Push_Frame_At_End(f, DO_FLAG_PROCESS_ACTION);
+    Push_Level_At_End(L, DO_FLAG_PROCESS_ACTION);
 
     if (REF(opt))
-        f->u.defer.arg = nullptr; // needed if !(DO_FLAG_FULLY_SPECIALIZED)
+        L->u.defer.arg = nullptr; // needed if !(DO_FLAG_FULLY_SPECIALIZED)
     else {
         //
         // If nulls are taken literally as null arguments, then no arguments
@@ -834,28 +834,28 @@ DECLARE_NATIVE(applique)
         // on the stack isn't needed.  Eval_Core_Throws() will just treat a
         // slot with an INTEGER! for a refinement as if it were "true".
         //
-        f->flags.bits |= DO_FLAG_FULLY_SPECIALIZED;
+        L->flags.bits |= DO_FLAG_FULLY_SPECIALIZED;
         DS_DROP_TO(lowest_ordered_dsp); // zero refinements on stack, now
     }
 
-    f->varlist = CTX_VARLIST(stolen);
-    f->rootvar = CTX_ARCHETYPE(stolen);
-    f->arg = f->rootvar + 1;
-    // f->param assigned above
-    f->special = f->arg; // signal only type-check the existing data
-    FRM_PHASE(f) = VAL_ACTION(applicand);
-    FRM_BINDING(f) = VAL_BINDING(applicand);
+    L->varlist = CTX_VARLIST(stolen);
+    L->rootvar = CTX_ARCHETYPE(stolen);
+    L->arg = L->rootvar + 1;
+    // L->param assigned above
+    L->special = L->arg; // signal only type-check the existing data
+    Level_Phase(L) = VAL_ACTION(applicand);
+    LVL_BINDING(L) = VAL_BINDING(applicand);
 
-    Begin_Action(f, opt_label, ORDINARY_ARG);
-    assert(IS_POINTER_TRASH_DEBUG(f->u.defer.arg)); // see Eval_Core_Throws()
+    Begin_Action(L, opt_label, ORDINARY_ARG);
+    assert(IS_POINTER_TRASH_DEBUG(L->u.defer.arg)); // see Eval_Core_Throws()
 
-    bool action_threw = Eval_Core_Throws(f);
+    bool action_threw = Eval_Core_Throws(L);
 
-    Drop_Frame(f);
+    Drop_Level(L);
 
     if (action_threw)
         return R_THROWN;
 
-    assert(IS_END(f->value)); // we started at END_FLAG, can only throw
+    assert(IS_END(L->value)); // we started at END_FLAG, can only throw
     return OUT;
 }

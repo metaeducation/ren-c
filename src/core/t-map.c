@@ -407,7 +407,7 @@ REB_R PD_Map(
     if (IS_NULLED(val)) // zombie entry, means unused
         return nullptr;
 
-    return Copy_Cell(pvs->out, val); // RETURN (...) uses `frame_`, not `pvs`
+    return Copy_Cell(pvs->out, val); // RETURN (...) uses `level_`, not `pvs`
 }
 
 

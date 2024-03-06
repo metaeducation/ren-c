@@ -79,7 +79,7 @@ static void Query_Net(Value* out, Value* port, struct devreq_net *sock)
 //  Transport_Actor: C
 //
 static REB_R Transport_Actor(
-    REBFRM *frame_,
+    Level* level_,
     Value* port,
     Value* verb,
     enum Transport_Types proto
@@ -485,18 +485,18 @@ static REB_R Transport_Actor(
 //
 //  TCP_Actor: C
 //
-static REB_R TCP_Actor(REBFRM *frame_, Value* port, Value* verb)
+static REB_R TCP_Actor(Level* level_, Value* port, Value* verb)
 {
-    return Transport_Actor(frame_, port, verb, TRANSPORT_TCP);
+    return Transport_Actor(level_, port, verb, TRANSPORT_TCP);
 }
 
 
 //
 //  UDP_Actor: C
 //
-static REB_R UDP_Actor(REBFRM *frame_, Value* port, Value* verb)
+static REB_R UDP_Actor(Level* level_, Value* port, Value* verb)
 {
-    return Transport_Actor(frame_, port, verb, TRANSPORT_UDP);
+    return Transport_Actor(level_, port, verb, TRANSPORT_UDP);
 }
 
 
@@ -570,7 +570,7 @@ DECLARE_NATIVE(set_udp_multicast)
 
     REBREQ *sock = Ensure_Port_State(ARG(port), RDI_NET);
 
-    sock->common.data = cast(Byte*, frame_);
+    sock->common.data = cast(Byte*, level_);
 
     // sock->command is going to just be RDC_MODIFY, so all there is to go
     // by is the data and flags.  Since RFC3171 specifies IPv4 multicast
@@ -605,7 +605,7 @@ DECLARE_NATIVE(set_udp_ttl)
 
     REBREQ *sock = Ensure_Port_State(ARG(port), RDI_NET);
 
-    sock->common.data = cast(Byte*, frame_);
+    sock->common.data = cast(Byte*, level_);
 
     // sock->command is going to just be RDC_MODIFY, so all there is to go
     // by is the data and flags.  Since RFC2365 specifies IPv4 multicast

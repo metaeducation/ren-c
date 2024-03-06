@@ -699,7 +699,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 // ordinary object if it's OPEN? it doesn't know how to do that.
 //
 REB_R Context_Common_Action_Maybe_Unhandled(
-    REBFRM *frame_,
+    Level* level_,
     Value* verb
 ){
     Value* value = D_ARG(1);
@@ -764,7 +764,7 @@ REB_R Context_Common_Action_Maybe_Unhandled(
 //
 REBTYPE(Context)
 {
-    REB_R r = Context_Common_Action_Maybe_Unhandled(frame_, verb);
+    REB_R r = Context_Common_Action_Maybe_Unhandled(level_, verb);
     if (r != R_UNHANDLED)
         return r;
 
@@ -780,28 +780,28 @@ REBTYPE(Context)
         if (VAL_TYPE(value) != REB_FRAME)
             break;
 
-        REBFRM *f = CTX_FRAME_MAY_FAIL(c);
+        Level* L = CTX_LEVEL_MAY_FAIL(c);
 
         switch (sym) {
           case SYM_FILE: {
-            Option(String*) file = FRM_FILE(f);
+            Option(String*) file = File_Of_Level(L);
             if (not file)
                 return nullptr;
             return Init_Word(OUT, unwrap(file)); }
 
           case SYM_LINE: {
-            REBLIN line = FRM_LINE(f);
+            REBLIN line = LVL_LINE(L);
             if (line == 0)
                 return nullptr;
             return Init_Integer(OUT, line); }
 
           case SYM_LABEL: {
-            if (not f->opt_label)
+            if (not L->opt_label)
                 return nullptr;
-            return Init_Word(OUT, f->opt_label); }
+            return Init_Word(OUT, L->opt_label); }
 
           case SYM_NEAR:
-            return Init_Near_For_Frame(OUT, f);
+            return Init_Near_For_Frame(OUT, L);
 
           case SYM_ACTION: {
             return Init_Action_Maybe_Bound(
@@ -814,15 +814,15 @@ REBTYPE(Context)
             //
             // Only want action frames (though `pending? = true` ones count).
             //
-            assert(FRM_PHASE_OR_DUMMY(f) != PG_Dummy_Action); // not exposed
-            REBFRM *parent = f;
-            while ((parent = parent->prior) != FS_BOTTOM) {
-                if (not Is_Action_Frame(parent))
+            assert(LVL_PHASE_OR_DUMMY(L) != PG_Dummy_Action); // not exposed
+            Level* parent = L;
+            while ((parent = parent->prior) != BOTTOM_LEVEL) {
+                if (not Is_Action_Level(parent))
                     continue;
-                if (FRM_PHASE_OR_DUMMY(parent) == PG_Dummy_Action)
+                if (LVL_PHASE_OR_DUMMY(parent) == PG_Dummy_Action)
                     continue;
 
-                REBCTX* ctx_parent = Context_For_Frame_May_Manage(parent);
+                REBCTX* ctx_parent = Context_For_Level_May_Manage(parent);
                 RETURN (CTX_ARCHETYPE(ctx_parent));
             }
             return nullptr; }

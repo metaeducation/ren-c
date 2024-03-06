@@ -32,7 +32,7 @@
 //
 // Eval_Core_Throws() is written so that a longjmp to a failure handler above
 // it can do cleanup safely even though intermediate stacks have vanished.
-// This is because Push_Frame and Drop_Frame maintain an independent global
+// This is because Push_Level and Drop_Level maintain an independent global
 // list of the frames in effect, so that the Fail_Core() routine can unwind
 // all the associated storage and structures for each frame.
 //
@@ -72,8 +72,8 @@
 #define DO_MASK_NONE 0
 
 // See Endlike_Header() for why these are chosen the way they are.  This
-// means that the Reb_Frame->flags field can function as an implicit END for
-// Reb_Frame->cell, as well as be distinguished from a Value*, a REBSER*, or
+// means that the Level->flags field can function as an implicit END for
+// Level->cell, as well as be distinguished from a Value*, a REBSER*, or
 // a UTF8 string.
 //
 #define DO_FLAG_0_IS_TRUE FLAG_LEFT_BIT(0) // NODE_FLAG_NODE
@@ -127,7 +127,7 @@
 //
 // Function dispatchers have a special return value used by EVAL, which tells
 // it to use the frame's cell as the head of the next evaluation (before
-// what f->value would have ordinarily run.)  It used to have another mode
+// what L->value would have ordinarily run.)  It used to have another mode
 // which was able to request the frame to change its DO_FLAG_EXPLICIT_EVALUATE
 // state for the duration of the next evaluation...a feature that was used
 // by EVAL/ONLY.  The somewhat obscure feature was used to avoid needing to
@@ -145,7 +145,7 @@
 // This jump allows a deferred lookback to compensate for the lack of the
 // evaluator's ability to (easily) be psychic about when it is gathering the
 // last argument of a function.  It allows re-entery to argument gathering at
-// the point after the switch() statement, with a preloaded f->out.
+// the point after the switch() statement, with a preloaded L->out.
 //
 #define DO_FLAG_POST_SWITCH \
     FLAG_LEFT_BIT(5)
@@ -234,7 +234,7 @@
 
 //=//// DO_FLAG_PARSE_FRAME ///////////////////////////////////////////////=//
 //
-// This flag is set when a REBFRM* is being used to hold the state of the
+// This flag is set when a Level* is being used to hold the state of the
 // PARSE stack.  One application of knowing this is that PARSE wasn't really
 // written to use frames, and doesn't follow the same rules as the evaluator;
 // so the debugging checks have to be more lax;
@@ -293,7 +293,7 @@
 
 //=//// DO_FLAG_FULLY_SPECIALIZED /////////////////////////////////////////=//
 //
-// When a null is seen in f->special, the question is whether that is an
+// When a null is seen in L->special, the question is whether that is an
 // intentional "null specialization" or if it means the argument should be
 // gathered normally (if applicable), as it would in a typical invocation.
 // If the frame is considered fully specialized (as with DO F) then there
@@ -330,7 +330,7 @@
 // arguments at the callsite can't be gathered in sequence.  Revisiting them
 // will be necessary.  This flag is set while they are revisited, which is
 // important not only for Eval_Core_Throws() to know, but also the GC...since
-// it means it must protect *all* of the arguments--not just up thru f->param.
+// it means it must protect *all* of the arguments--not just up thru L->param.
 //
 #define DO_FLAG_DOING_PICKUPS \
     FLAG_LEFT_BIT(27)
@@ -401,7 +401,7 @@
     ((k) >= REB_BLOCK)
 
 
-struct Reb_Frame_Source {
+struct Reb_Level_Source {
     //
     // A frame may be sourced from a va_list of pointers, or not.  If this is
     // nullptr it's assumed that the values are sourced from a simple array.
@@ -424,13 +424,13 @@ struct Reb_Frame_Source {
     // `index`
     //
     // This holds the index of the *next* item in the array to fetch as
-    // f->value for processing.  It's invalid if the frame is for a C va_list.
+    // L->value for processing.  It's invalid if the frame is for a C va_list.
     //
     REBLEN index;
 };
 
 
-// NOTE: The ordering of the fields in `Reb_Frame` are specifically done so
+// NOTE: The ordering of the fields in LevelStruct are specifically done so
 // as to accomplish correct 64-bit alignment of pointers on 64-bit systems.
 //
 // Because performance in the core evaluator loop is system-critical, this
@@ -439,21 +439,21 @@ struct Reb_Frame_Source {
 // If modifying the structure, be sensitive to this issue--and that the
 // layout of this structure is mirrored in Ren-Cpp.
 //
-struct Reb_Frame {
+struct LevelStruct {
     //
-    // `cell`
+    // `spare`
     //
-    // The frame's cell is used for different purposes.  PARSE uses it as a
+    // The frame's spare is used for different purposes.  PARSE uses it as a
     // scratch storage space.  Path evaluation uses it as where the calculated
     // "picker" goes (so if `foo/(1 + 2)`, the 3 would be stored there to be
     // used to pick the next value in the chain).
     //
     // Eval_Core_Throws() uses it to implement the SHOVE() operation, which
     // needs a calculated ACTION! value (including binding) to have a stable
-    // location which f->gotten can point to during arbitrary left-hand-side
+    // location which L->gotten can point to during arbitrary left-hand-side
     // evaluations.
     //
-    Cell cell;
+    Cell spare;
 
     // `shove`
     //
@@ -473,7 +473,7 @@ struct Reb_Frame {
     // In addition, the need to run arbitrary code on the left means there
     // could be multiple shoves in effect.  This requires a GC-safe cell which
     // can't really be used for anything else.  However, there's no need to
-    // initialize it until f->gotten indicates it...which only happens with
+    // initialize it until L->gotten indicates it...which only happens with
     // shove operations.
     //
     Cell shove;
@@ -490,10 +490,10 @@ struct Reb_Frame {
     // `prior`
     //
     // The prior call frame.  This never needs to be checked against nullptr,
-    // because the bottom of the stack is FS_BOTTOM which is allocated at
+    // because the bottom of the stack is BOTTOM_LEVEL which is allocated at
     // startup and never used to run code.
     //
-    struct Reb_Frame *prior;
+    Level* prior;
 
     // `dsp_orig`
     //
@@ -520,12 +520,12 @@ struct Reb_Frame {
     // arbitrary Value*s through a variable argument list on the C stack.
     // This means no array needs to be dynamically allocated (though some
     // conditions require the va_list to be converted to an array, see notes
-    // on Reify_Va_To_Array_In_Frame().)
+    // on Reify_Va_To_Array_In_Level().)
     //
     // Since frames may share source information, this needs to be done with
     // a dereference.
     //
-    struct Reb_Frame_Source *source;
+    struct Reb_Level_Source *source;
 
     // `specifier`
     //
@@ -541,7 +541,7 @@ struct Reb_Frame {
     //
     // This is the "prefetched" value being processed.  Entry points to the
     // evaluator must load a first value pointer into it...which for any
-    // successive evaluations will be updated via Fetch_Next_In_Frame()--which
+    // successive evaluations will be updated via Fetch_Next_In_Level()--which
     // retrieves values from arrays or va_lists.  But having the caller pass
     // in the initial value gives the option of that value being out of band.
     //
@@ -585,18 +585,18 @@ struct Reb_Frame {
 
     // `original`
     //
-    // If a function call is currently in effect, FRM_PHASE() is how you get
+    // If a function call is currently in effect, Level_Phase() is how you get
     // at the curren function being run.  Because functions are identified and
     // passed by a platform pointer as their paramlist Array*, you must use
-    // `ACT_ARCHETYPE(FRM_PHASE(f))` to get a pointer to a canon cell
+    // `ACT_ARCHETYPE(Level_Phase(L))` to get a pointer to a canon cell
     // representing that function (to examine its value flags, for instance).
     //
     // !!! ACTION_FLAG_XXX should probably be used for frequently checks.
     //
     // Compositions of functions (adaptations, specializations, hijacks, etc)
-    // update the FRAME!'s payload in the f->varlist archetype to say what
+    // update the FRAME!'s payload in the L->varlist archetype to say what
     // the current "phase" is.  The reason it is updated there instead of
-    // as a REBFRM field is because specifiers use it.  Similarly, that is
+    // as a LevelStruct field is because specifiers use it.  Similarly, that is
     // where the binding is stored.
     //
     REBACT *original;
@@ -618,7 +618,7 @@ struct Reb_Frame {
     // ultimately usable as an ordinary CTX_VARLIST() for a FRAME! value, it
     // is different because it is built progressively, with random bits in
     // its pending capacity that are specifically accounted for by the GC...
-    // which limits its marking up to the progress point of `f->param`.
+    // which limits its marking up to the progress point of `L->param`.
     //
     // It starts out unmanaged, so that if no usages by the user specifically
     // ask for a FRAME! value, and the REBCTX* isn't needed to store in a
@@ -652,7 +652,7 @@ struct Reb_Frame {
     //
     // If arguments are actually being fulfilled into the slots, those
     // slots start out as trash.  Yet the GC has access to the frame list,
-    // so it can examine f->arg and avoid trying to protect the random
+    // so it can examine L->arg and avoid trying to protect the random
     // bits that haven't been fulfilled yet.
     //
     Value* arg;
@@ -772,7 +772,7 @@ struct Reb_Frame {
     //
     // `tick` [DEBUG]
     //
-    // The expression evaluation "tick" where the Reb_Frame is starting its
+    // The expression evaluation "tick" where the Level is starting its
     // processing.  This is helpful for setting breakpoints on certain ticks
     // in reproducible situations.
     //
@@ -798,9 +798,9 @@ struct Reb_Frame {
     // series to a file and line number associated with their creation,
     // either their source code or some trace back to the code that generated
     // them.  As the feature gets better, it will certainly be useful to be
-    // able to quickly see the information in the debugger for f->source.
+    // able to quickly see the information in the debugger for L->source.
     //
-    REBUNI* file;  // is wide char, unfortunately, in this old branch
+    REBUNI* file_ucs2;  // is wide char, unfortunately, in this old branch
     int line;
   #endif
 
@@ -817,14 +817,14 @@ struct Reb_Frame {
 
   #if defined(DEBUG_EXPIRED_LOOKBACK)
     //
-    // On each call to Fetch_Next_In_Frame, it's possible to ask it to give
+    // On each call to Fetch_Next_In_Level, it's possible to ask it to give
     // a pointer to a cell with equivalent data to what was previously in
-    // f->value, but that might not be f->value.  So for all practical
-    // purposes, one is to assume that the f->value pointer died after the
+    // L->value, but that might not be L->value.  So for all practical
+    // purposes, one is to assume that the L->value pointer died after the
     // fetch.  If clients are interested in doing "lookback" and examining
     // two values at the same time (or doing a GC and expecting to still
-    // have the old f->current work), then they must not use the old f->value
-    // but request the lookback pointer from Fetch_Next_In_Frame().
+    // have the old f->current work), then they must not use the old L->value
+    // but request the lookback pointer from Fetch_Next_In_Level().
     //
     // To help stress this invariant, frames will forcibly expire value
     // cells, handing out disposable lookback pointers on each eval.
@@ -840,7 +840,7 @@ struct Reb_Frame {
 // so this macro sets that up for you, the same way DECLARE_VALUE does.  The
 // optimizer should eliminate the extra pointer.
 //
-// Just to simplify matters, the frame cell is set to a bit pattern the GC
+// Just to simplify matters, the frame spare is set to a bit pattern the GC
 // will accept.  It would need stack preparation anyway, and this simplifies
 // the invariant so if a recycle happens before Eval_Core_Throws() gets to its
 // body, it's always set to something.  Using an unreadable blank means we
@@ -848,42 +848,42 @@ struct Reb_Frame {
 // value between evaluations; it's not cleared.
 //
 
-#define DECLARE_FRAME_CORE(name, source_ptr) \
-    REBFRM name##struct; \
-    name##struct.source = (source_ptr); \
-    REBFRM * const name = &name##struct; \
-    Erase_Cell(&name->cell); \
-    Init_Unreadable(&name->cell); \
+#define DECLARE_LEVEL_CORE(name, source_ptr) \
+    Level name##_struct; \
+    name##_struct.source = (source_ptr); \
+    Level* const name = &name##_struct; \
+    Erase_Cell(&name->spare); \
+    Init_Unreadable(&name->spare); \
     name->dsp_orig = DSP;
 
-#define DECLARE_FRAME(name) \
-    struct Reb_Frame_Source name##source; \
-    DECLARE_FRAME_CORE(name, &name##source)
+#define DECLARE_LEVEL(name) \
+    struct Reb_Level_Source name##source; \
+    DECLARE_LEVEL_CORE(name, &name##source)
 
-#define DECLARE_END_FRAME(name) \
-    DECLARE_FRAME_CORE(name, &TG_Frame_Source_End)
+#define DECLARE_END_LEVEL(name) \
+    DECLARE_LEVEL_CORE(name, &TG_Level_Source_End)
 
-#define DECLARE_SUBFRAME(name, parent) \
-    DECLARE_FRAME_CORE(name, (parent)->source)
+#define DECLARE_SUBLEVEL(name, parent) \
+    DECLARE_LEVEL_CORE(name, (parent)->source)
 
 
-#define FS_TOP (TG_Top_Frame + 0) // avoid assign to FS_TOP via + 0
-#define FS_BOTTOM (TG_Bottom_Frame + 0) // avoid assign to FS_BOTTOM via + 0
+#define TOP_LEVEL (TG_Top_Level + 0)  // avoid assign to via + 0
+#define BOTTOM_LEVEL (TG_Bottom_Level + 0)  // avoid assign via + 0
 
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// SPECIAL VALUE MODES FOR (REBFRM*)->REFINE
+// SPECIAL VALUE MODES FOR (Level*)->REFINE
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// f->refine is a bit tricky.  If it IS_LOGIC() and TRUE, then this means that
+// L->refine is a bit tricky.  If it IS_LOGIC() and TRUE, then this means that
 // a refinement is active but revokable, having its arguments gathered.  So
-// it actually points to the f->arg of the active refinement slot.  If
+// it actually points to the L->arg of the active refinement slot.  If
 // evaluation of an argument in this state produces no value, the refinement
 // must be revoked, and its value mutated to be FALSE.
 //
-// But all the other values that f->refine can hold are read-only pointers
+// But all the other values that L->refine can hold are read-only pointers
 // that signal something about the argument gathering state:
 //
 // * If NULL, then refinements are being skipped, and the following arguments
@@ -916,7 +916,7 @@ struct Reb_Frame {
 // These special values are all pointers to read-only cells, but are cast to
 // mutable in order to be held in the same pointer that might write to a
 // refinement to revoke it.  Note that since literal pointers are used, tests
-// like `f->refine == BLANK_VALUE` are faster than `IS_BLANK(f->refine)`.
+// like `L->refine == BLANK_VALUE` are faster than `IS_BLANK(L->refine)`.
 //
 // !!! ^-- While that's presumably true, it would be worth testing if a
 // dereference of the single byte via VAL_TYPE() is ever faster.
@@ -943,17 +943,17 @@ struct Reb_Frame {
 
 #if !defined(DEBUG_CHECK_CASTS) || (! CPLUSPLUS_11)
 
-    #define FRM(p) \
-        cast(REBFRM*, (p)) // FRM() just does a cast (maybe with added checks)
+    #define LVL(p) \
+        cast(Level*, (p))  // LVL() just does a cast (maybe with added checks)
 
 #else
 
     template <class T>
-    inline REBFRM *FRM(T *p) {
+    inline Level* LVL(T *p) {
         constexpr bool base = std::is_same<T, void>::value
             or std::is_same<T, REBNOD>::value;
 
-        static_assert(base, "FRM() works on void/REBNOD");
+        static_assert(base, "LVL() works on void/REBNOD");
 
         if (base)
             assert(
@@ -964,7 +964,7 @@ struct Reb_Frame {
                 )
             );
 
-        return reinterpret_cast<REBFRM*>(p);
+        return reinterpret_cast<Level*>(p);
     }
 
 #endif

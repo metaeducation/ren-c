@@ -629,7 +629,7 @@ void INIT_WORD_INDEX_Extra_Checks_Debug(Cell* v, REBLEN i)
     REBNOD *binding = VAL_BINDING(v);
     Array* keysource;
     if (NOT_SER_FLAG(binding, NODE_FLAG_MANAGED))
-        keysource = ACT_PARAMLIST(FRM_PHASE(FRM(LINK(binding).keysource)));
+        keysource = ACT_PARAMLIST(Level_Phase(LVL(LINK(binding).keysource)));
     else if (GET_SER_FLAG(binding, ARRAY_FLAG_PARAMLIST))
         keysource = ACT_PARAMLIST(ACT(binding));
     else

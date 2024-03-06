@@ -89,13 +89,13 @@ INLINE void CATCH_THROWN(Cell* arg_out, Value* thrown) {
 //=////////////////////////////////////////////////////////////////////////=//
 
 
-INLINE bool FRM_IS_VALIST(REBFRM *f) {
-    return f->source->vaptr != nullptr;
+INLINE bool LVL_IS_VALIST(Level* L) {
+    return L->source->vaptr != nullptr;
 }
 
-INLINE Array* FRM_ARRAY(REBFRM *f) {
-    assert(IS_END(f->value) or not FRM_IS_VALIST(f));
-    return f->source->array;
+INLINE Array* LVL_ARRAY(Level* L) {
+    assert(IS_END(L->value) or not LVL_IS_VALIST(L));
+    return L->source->array;
 }
 
 // !!! Though the evaluator saves its `index`, the index is not meaningful
@@ -104,22 +104,22 @@ INLINE Array* FRM_ARRAY(REBFRM *f) {
 // convert these cases to ordinary arrays before running them, in order
 // to accurately present any errors.
 //
-INLINE REBLEN FRM_INDEX(REBFRM *f) {
-    if (IS_END(f->value))
-        return ARR_LEN(f->source->array);
+INLINE REBLEN LVL_INDEX(Level* L) {
+    if (IS_END(L->value))
+        return ARR_LEN(L->source->array);
 
-    assert(not FRM_IS_VALIST(f));
-    return f->source->index - 1;
+    assert(not LVL_IS_VALIST(L));
+    return L->source->index - 1;
 }
 
-INLINE REBLEN FRM_EXPR_INDEX(REBFRM *f) {
-    assert(not FRM_IS_VALIST(f));
-    return f->expr_index == END_FLAG
-        ? ARR_LEN((f)->source->array)
-        : f->expr_index - 1;
+INLINE REBLEN LVL_EXPR_INDEX(Level* L) {
+    assert(not LVL_IS_VALIST(L));
+    return L->expr_index == END_FLAG
+        ? ARR_LEN((L)->source->array)
+        : L->expr_index - 1;
 }
 
-INLINE Option(String*) FRM_FILE(REBFRM *f) {
+INLINE Option(String*) File_Of_Level(Level* L) {
     //
     // !!! the rebValue function could be a variadic macro in C99 or higher, as
     // `rebValueFileLine(__FILE__, __LINE__, ...`.  This could let the file and
@@ -128,68 +128,62 @@ INLINE Option(String*) FRM_FILE(REBFRM *f) {
     // be kept as a UTF-8 string inside the frame without needing interning
     // as a series.  But for now, just signal that it came from C code.
     //
-    if (not f->source->array)
+    if (not L->source->array)
         return nullptr;
 
-    if (NOT_SER_FLAG(f->source->array, ARRAY_FLAG_FILE_LINE))
+    if (NOT_SER_FLAG(L->source->array, ARRAY_FLAG_FILE_LINE))
         return nullptr;
 
-    Option(String*) file = LINK(f->source->array).file;
+    Option(String*) file = LINK(L->source->array).file;
     if (file)
         assert(Is_Series_Ucs2(unwrap(file)));
 
     return try_unwrap(file);
 }
 
-INLINE int FRM_LINE(REBFRM *f) {
-    if (not f->source->array)
+INLINE int LVL_LINE(Level* L) {
+    if (not L->source->array)
         return 0;
 
-    if (NOT_SER_FLAG(f->source->array, ARRAY_FLAG_FILE_LINE))
+    if (NOT_SER_FLAG(L->source->array, ARRAY_FLAG_FILE_LINE))
         return 0;
 
-    return MISC(SER(f->source->array)).line;
+    return MISC(SER(L->source->array)).line;
 }
 
-#define FRM_OUT(f) \
-    (f)->out
 
-
-// Note about FRM_NUM_ARGS: A native should generally not detect the arity it
+// Note about Level_Num_Args: A native should generally not detect the arity it
 // was invoked with, (and it doesn't make sense as most implementations get
 // the full list of arguments and refinements).  However, ACTION! dispatch
 // has several different argument counts piping through a switch, and often
 // "cheats" by using the arity instead of being conditional on which action
 // ID ran.  Consider when reviewing the future of ACTION!.
 //
-#define FRM_NUM_ARGS(f) \
-    (cast(REBSER*, (f)->varlist)->content.dynamic.len - 1) // minus rootvar
+#define Level_Num_Args(L) \
+    (cast(REBSER*, (L)->varlist)->content.dynamic.len - 1) // minus rootvar
 
-#define FRM_CELL(f) \
-    cast(Value*, &(f)->cell)
+#define Level_Spare(L) \
+    cast(Value*, &(L)->spare)
 
-#define FRM_SHOVE(f) \
-    cast(Value*, &(f)->shove)
+#define Level_Shove(L) \
+    cast(Value*, &(L)->shove)
 
-INLINE bool Is_Frame_Gotten_Shoved(REBFRM *f) {
-    if (f->gotten != FRM_SHOVE(f))
+INLINE bool Is_Level_Gotten_Shoved(Level* L) {
+    if (L->gotten != Level_Shove(L))
         return false;
-    assert(GET_VAL_FLAG(f->gotten, VALUE_FLAG_ENFIXED));
+    assert(GET_VAL_FLAG(L->gotten, VALUE_FLAG_ENFIXED));
     return true; // see DECLARE_NATIVE(shove)
 }
 
-#define FRM_PRIOR(f) \
-    ((f)->prior + 0) // prevent assignment via this macro
-
-#define FRM_PHASE_OR_DUMMY(f) \
-    f->rootvar->payload.any_context.phase
+#define LVL_PHASE_OR_DUMMY(L) \
+    L->rootvar->payload.any_context.phase
 
 #if defined(NDEBUG) or !defined(__cplusplus)
-    #define FRM_PHASE(f) \
-        FRM_PHASE_OR_DUMMY(f)
+    #define Level_Phase(L) \
+        LVL_PHASE_OR_DUMMY(L)
 #else
     // The C++ debug build adds a check that a frame is not uing a tricky
-    // noop dispatcher, when access to the phase is gotten with FRM_PHASE().
+    // noop dispatcher, when access to the phase is gotten with Level_Phase().
     // This trick lets the sunk cost of calling a dispatcher be used instead
     // of a separate flag checked on every evaluator cycle.  This is so that
     // routines like `MAYBE PARSE "AAA" [SOME "A"]` can build the parse frame
@@ -199,37 +193,37 @@ INLINE bool Is_Frame_Gotten_Shoved(REBFRM *f) {
     //
     // Any manipulations aware of this hack need to access the field directly.
     //
-    INLINE REBACT* &FRM_PHASE(REBFRM *f) {
-        REBACT* &phase = FRM_PHASE_OR_DUMMY(f);
+    INLINE REBACT* &Level_Phase(Level* L) {
+        REBACT* &phase = LVL_PHASE_OR_DUMMY(L);
         assert(phase != PG_Dummy_Action);
         return phase;
     }
 #endif
 
-#define FRM_BINDING(f) \
-    f->rootvar->extra.binding
+#define LVL_BINDING(L) \
+    L->rootvar->extra.binding
 
-#define FRM_UNDERLYING(f) \
-    ACT_UNDERLYING((f)->original)
+#define LVL_UNDERLYING(L) \
+    ACT_UNDERLYING((L)->original)
 
-#define FRM_DSP_ORIG(f) \
-    ((f)->dsp_orig + 0) // prevent assignment via this macro
+#define LVL_DSP_ORIG(L) \
+    ((L)->dsp_orig + 0) // prevent assignment via this macro
 
 
 // ARGS is the parameters and refinements
 // 1-based indexing into the arglist (0 slot is for FRAME! value)
 
-#define FRM_ARGS_HEAD(f) \
-    ((f)->rootvar + 1)
+#define Level_Args_Head(L) \
+    ((L)->rootvar + 1)
 
 #ifdef NDEBUG
-    #define FRM_ARG(f,n) \
-        ((f)->rootvar + (n))
+    #define Level_Arg(L,n) \
+        ((L)->rootvar + (n))
 #else
-    INLINE Value* FRM_ARG(REBFRM *f, REBLEN n) {
-        assert(n != 0 and n <= FRM_NUM_ARGS(f));
+    INLINE Value* Level_Arg(Level* L, REBLEN n) {
+        assert(n != 0 and n <= Level_Num_Args(L));
 
-        Value* var = f->rootvar + n; // 1-indexed
+        Value* var = L->rootvar + n; // 1-indexed
         assert(not IS_RELATIVE(cast(Cell*, var)));
         return var;
     }
@@ -237,20 +231,20 @@ INLINE bool Is_Frame_Gotten_Shoved(REBFRM *f) {
 
 
 // Quick access functions from natives (or compatible functions that name a
-// Reb_Frame pointer `frame_`) to get some of the common public fields.
+// LevelStruct pointer `level_`) to get some of the common public fields.
 //
 #if REBOL_LEVEL_SHORTHAND_MACROS
-    #define D_FRAME     frame_
-    #define OUT         FRM_OUT(frame_)       // GC-safe slot for output value
-    #define D_ARGC      FRM_NUM_ARGS(frame_)  // count of args+refinements/args
-    #define D_ARG(n)    FRM_ARG(frame_, (n))  // pass 1 for first arg
+    #define D_FRAME     level_
+    #define OUT         level_->out       // GC-safe slot for output value
+    #define D_ARGC      Level_Num_Args(level_)  // count of args+refinements/args
+    #define D_ARG(n)    Level_Arg(level_, (n))  // pass 1 for first arg
 
     #define RETURN(v) \
         return Copy_Cell(OUT, (v))
 #endif
 
-INLINE bool Is_Action_Frame(REBFRM *f) {
-    if (f->original != nullptr) {
+INLINE bool Is_Action_Level(Level* L) {
+    if (L->original != nullptr) {
         //
         // Do not count as a function frame unless its gotten to the point
         // of pushing arguments.
@@ -260,36 +254,36 @@ INLINE bool Is_Action_Frame(REBFRM *f) {
     return false;
 }
 
-// While a function frame is fulfilling its arguments, the `f->param` will
+// While a function frame is fulfilling its arguments, the `L->param` will
 // be pointing to a typeset.  The invariant that is maintained is that
-// `f->param` will *not* be a typeset when the function is actually in the
+// `L->param` will *not* be a typeset when the function is actually in the
 // process of running.  (So no need to set/clear/test another "mode".)
 //
-INLINE bool Is_Action_Frame_Fulfilling(REBFRM *f)
+INLINE bool Is_Action_Level_Fulfilling(Level* L)
 {
-    assert(Is_Action_Frame(f));
-    return NOT_END(f->param);
+    assert(Is_Action_Level(L));
+    return NOT_END(L->param);
 }
 
 
-INLINE void Get_Frame_Label_Or_Blank(Value* out, REBFRM *f) {
-    assert(Is_Action_Frame(f));
-    if (f->opt_label != nullptr)
-        Init_Word(out, f->opt_label); // invoked via WORD! or PATH!
+INLINE void Get_Level_Label_Or_Blank(Value* out, Level* L) {
+    assert(Is_Action_Level(L));
+    if (L->opt_label != nullptr)
+        Init_Word(out, L->opt_label); // invoked via WORD! or PATH!
     else
         Init_Blank(out); // anonymous invocation
 }
 
-INLINE const char* Frame_Label_Or_Anonymous_UTF8(REBFRM *f) {
-    assert(Is_Action_Frame(f));
-    if (f->opt_label != nullptr)
-        return Symbol_Head(f->opt_label);
+INLINE const char* Frame_Label_Or_Anonymous_UTF8(Level* L) {
+    assert(Is_Action_Level(L));
+    if (L->opt_label != nullptr)
+        return Symbol_Head(L->opt_label);
     return "[anonymous]";
 }
 
-INLINE void SET_FRAME_VALUE(REBFRM *f, const Cell* value) {
-    assert(not f->gotten); // is fetched f->value, we'd be invalidating it!
-    f->value = value;
+INLINE void SET_FRAME_VALUE(Level* L, const Cell* value) {
+    assert(not L->gotten); // is fetched L->value, we'd be invalidating it!
+    L->value = value;
 }
 
 
@@ -301,8 +295,8 @@ INLINE void SET_FRAME_VALUE(REBFRM *f, const Cell* value) {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // These accessors are what is behind the INCLUDE_PARAMS_OF_XXX macros that
-// are used in natives.  They capture the implicit Reb_Frame* passed to every
-// DECLARE_NATIVE ('frame_') and read the information out cleanly, like this:
+// are used in natives.  They capture the implicit Level* passed to every
+// DECLARE_NATIVE ('level_') and read the information out cleanly, like this:
 //
 //     PARAM(1, foo);
 //     REFINE(2, bar);
@@ -343,10 +337,10 @@ INLINE void SET_FRAME_VALUE(REBFRM *f, const Cell* value) {
         static const int p_##name = n
 
     #define ARG(name) \
-        FRM_ARG(frame_, (p_##name))
+        Level_Arg(level_, (p_##name))
 
     #define PAR(name) \
-        ACT_PARAM(FRM_PHASE(frame_), (p_##name)) /* a TYPESET! */
+        ACT_PARAM(Level_Phase(level_), (p_##name)) /* a TYPESET! */
 
     #define REF(name) \
         (not IS_BLANK(ARG(name))) /* should be faster than IS_FALSEY() */
@@ -369,20 +363,20 @@ INLINE void SET_FRAME_VALUE(REBFRM *f, const Cell* value) {
     #define PARAM(n,name) \
         struct Native_Param p_##name; \
         p_##name.num = (n); \
-        p_##name.kind_cache = VAL_TYPE(FRM_ARG(frame_, (n))); \
-        p_##name.arg = FRM_ARG(frame_, (n)); \
+        p_##name.kind_cache = VAL_TYPE(Level_Arg(level_, (n))); \
+        p_##name.arg = Level_Arg(level_, (n)); \
 
     #define REFINE(n,name) \
         struct Native_Refine p_##name; \
         p_##name.num = (n); \
-        p_##name.used_cache = IS_TRUTHY(FRM_ARG(frame_, (n))); \
-        p_##name.arg = FRM_ARG(frame_, (n)); \
+        p_##name.used_cache = IS_TRUTHY(Level_Arg(level_, (n))); \
+        p_##name.arg = Level_Arg(level_, (n)); \
 
     #define ARG(name) \
-        FRM_ARG(frame_, (p_##name).num)
+        Level_Arg(level_, (p_##name).num)
 
     #define PAR(name) \
-        ACT_PARAM(FRM_PHASE(frame_), (p_##name).num) /* a TYPESET! */
+        ACT_PARAM(Level_Phase(level_), (p_##name).num) /* a TYPESET! */
 
     #define REF(name) \
         ((p_##name).used_cache /* used_cache use stops REF() on PARAM()s */ \
@@ -407,24 +401,24 @@ INLINE void SET_FRAME_VALUE(REBFRM *f, const Cell* value) {
 // is itself a bit dodgy to tell a priori if a dispatcher is native or not.
 // This way there is no test and only natives pay the cost of flag setting.
 //
-INLINE void Enter_Native(REBFRM *f) {
-    SET_SER_INFO(f->varlist, SERIES_INFO_HOLD); // may or may not be managed
+INLINE void Enter_Native(Level* L) {
+    SET_SER_INFO(L->varlist, SERIES_INFO_HOLD); // may or may not be managed
 }
 
 
 INLINE void Begin_Action(
-    REBFRM *f,
+    Level* L,
     Symbol* opt_label,
     Value* mode // LOOKBACK_ARG or ORDINARY_ARG or END
 ){
-    assert(not f->original);
-    f->original = FRM_PHASE_OR_DUMMY(f);
+    assert(not L->original);
+    L->original = LVL_PHASE_OR_DUMMY(L);
 
-    assert(IS_POINTER_TRASH_DEBUG(f->opt_label)); // only valid w/REB_ACTION
+    assert(IS_POINTER_TRASH_DEBUG(L->opt_label)); // only valid w/REB_ACTION
     assert(not opt_label or GET_SER_FLAG(opt_label, SERIES_FLAG_UTF8));
-    f->opt_label = opt_label;
+    L->opt_label = opt_label;
   #if defined(DEBUG_FRAME_LABELS) // helpful for looking in the debugger
-    f->label_utf8 = cast(const char*, Frame_Label_Or_Anonymous_UTF8(f));
+    L->label_utf8 = cast(const char*, Frame_Label_Or_Anonymous_UTF8(L));
   #endif
 
     assert(
@@ -432,7 +426,7 @@ INLINE void Begin_Action(
         or mode == ORDINARY_ARG
         or mode == END_NODE
     );
-    f->refine = mode;
+    L->refine = mode;
 }
 
 
@@ -440,7 +434,7 @@ INLINE void Begin_Action(
 // values behind ARG(name), REF(name), D_ARG(3),  etc.)
 //
 // This only allocates space for the arguments, it does not initialize.
-// Eval_Core initializes as it goes, and updates f->param so the GC knows how
+// Eval_Core initializes as it goes, and updates L->param so the GC knows how
 // far it has gotten so as not to see garbage.  APPLY has different handling
 // when it has to build the frame for the user to write to before running;
 // so Eval_Core only checks the arguments, and does not fulfill them.
@@ -456,18 +450,18 @@ INLINE void Begin_Action(
 // cached during the creation process.
 //
 INLINE void Push_Action(
-    REBFRM *f,
+    Level* L,
     REBACT *act,
     REBNOD *binding
 ){
-    f->param = ACT_PARAMS_HEAD(act); // Specializations hide some params...
+    L->param = ACT_PARAMS_HEAD(act); // Specializations hide some params...
     REBLEN num_args = ACT_NUM_PARAMS(act); // ...so see REB_TS_HIDDEN
 
     // !!! Note: Should pick "smart" size when allocating varlist storage due
     // to potential reuse--but use exact size for *this* action, for now.
     //
     REBSER *s;
-    if (not f->varlist) { // usually means first action call in the REBFRM
+    if (not L->varlist) { // usually means first action call in the Level
         s = Alloc_Series_Node(
             SERIES_MASK_CONTEXT
                 | SERIES_FLAG_FIXED_SIZE // FRAME!s don't expand ATM
@@ -476,12 +470,12 @@ INLINE void Push_Action(
             FLAG_WIDE_BYTE_OR_0(0) // signals array, also implicit terminator
                 | FLAG_LEN_BYTE_OR_255(255) // signals dynamic
         );
-        s->link_private.keysource = NOD(f); // maps varlist back to f
+        s->link_private.keysource = NOD(L); // maps varlist back to f
         s->misc_private.meta = nullptr; // GC will sees this
-        f->varlist = ARR(s);
+        L->varlist = ARR(s);
     }
     else {
-        s = SER(f->varlist);
+        s = SER(L->varlist);
         if (s->content.dynamic.rest >= num_args + 1 + 1) // +roovar, +end
             goto sufficient_allocation;
 
@@ -495,27 +489,27 @@ INLINE void Push_Action(
     if (not Did_Series_Data_Alloc(s, num_args + 1 + 1)) // +rootvar, +end
         fail ("Out of memory in Push_Action()");
 
-    f->rootvar = cast(Value*, s->content.dynamic.data);
-    f->rootvar->header.bits =
+    L->rootvar = cast(Value*, s->content.dynamic.data);
+    L->rootvar->header.bits =
         NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_STACK
         | CELL_FLAG_PROTECTED // cell payload/binding tweaked, not by user
         | FLAG_KIND_BYTE(REB_FRAME);
-    TRACK_CELL_IF_DEBUG(f->rootvar, __FILE__, __LINE__);
-    f->rootvar->payload.any_context.varlist = f->varlist;
+    TRACK_CELL_IF_DEBUG(L->rootvar, __FILE__, __LINE__);
+    L->rootvar->payload.any_context.varlist = L->varlist;
 
   sufficient_allocation:
 
-    f->rootvar->payload.any_context.phase = act; // FRM_PHASE() (can be dummy)
-    f->rootvar->extra.binding = binding; // FRM_BINDING()
+    L->rootvar->payload.any_context.phase = act; // Level_Phase() (can be dummy)
+    L->rootvar->extra.binding = binding; // LVL_BINDING()
 
     s->content.dynamic.len = num_args + 1;
-    Cell* tail = ARR_TAIL(f->varlist);
+    Cell* tail = ARR_TAIL(L->varlist);
     tail->header.bits = NODE_FLAG_STACK | FLAG_KIND_BYTE(REB_0);
     TRACK_CELL_IF_DEBUG(tail, __FILE__, __LINE__);
 
     // Current invariant for all arrays (including fixed size), last cell in
     // the allocation is an end.
-    Cell* ultimate = Array_At(f->varlist, s->content.dynamic.rest - 1);
+    Cell* ultimate = Array_At(L->varlist, s->content.dynamic.rest - 1);
     ultimate->header = Endlike_Header(0); // unreadable
     TRACK_CELL_IF_DEBUG(ultimate, __FILE__, __LINE__);
 
@@ -527,7 +521,7 @@ INLINE void Push_Action(
     }
   #endif
 
-    f->arg = f->rootvar + 1;
+    L->arg = L->rootvar + 1;
 
     // Each layer of specialization of a function can only add specializations
     // of arguments which have not been specialized already.  For efficiency,
@@ -535,37 +529,37 @@ INLINE void Push_Action(
     // specialization together.  This means only the outermost specialization
     // is needed to fill the specialized slots contributed by later phases.
     //
-    // f->special here will either equal f->param (to indicate normal argument
+    // L->special here will either equal L->param (to indicate normal argument
     // fulfillment) or the head of the "exemplar".  To speed this up, the
     // absence of a cached exemplar just means that the "specialty" holds the
     // paramlist... this means no conditional code is needed here.
     //
-    f->special = ACT_SPECIALTY_HEAD(act);
+    L->special = ACT_SPECIALTY_HEAD(act);
 
-    f->u.defer.arg = nullptr;
+    L->u.defer.arg = nullptr;
 
-    assert(NOT_SER_FLAG(f->varlist, NODE_FLAG_MANAGED));
-    assert(NOT_SER_INFO(f->varlist, SERIES_INFO_INACCESSIBLE));
+    assert(NOT_SER_FLAG(L->varlist, NODE_FLAG_MANAGED));
+    assert(NOT_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE));
 }
 
 
-INLINE void Drop_Action(REBFRM *f) {
-    assert(NOT_SER_INFO(f->varlist, FRAME_INFO_FAILED));
+INLINE void Drop_Action(Level* L) {
+    assert(NOT_SER_INFO(L->varlist, FRAME_INFO_FAILED));
 
     assert(
-        not f->opt_label
-        or GET_SER_FLAG(f->opt_label, SERIES_FLAG_UTF8)
+        not L->opt_label
+        or GET_SER_FLAG(L->opt_label, SERIES_FLAG_UTF8)
     );
 
-    if (not (f->flags.bits & DO_FLAG_FULFILLING_ARG))
-        f->flags.bits &= ~DO_FLAG_BARRIER_HIT;
+    if (not (L->flags.bits & DO_FLAG_FULFILLING_ARG))
+        L->flags.bits &= ~DO_FLAG_BARRIER_HIT;
 
     assert(
-        GET_SER_INFO(f->varlist, SERIES_INFO_INACCESSIBLE)
-        or LINK(f->varlist).keysource == NOD(f)
+        GET_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE)
+        or LINK(L->varlist).keysource == NOD(L)
     );
 
-    if (GET_SER_INFO(f->varlist, SERIES_INFO_INACCESSIBLE)) {
+    if (GET_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE)) {
         //
         // If something like Encloser_Dispatcher() runs, it might steal the
         // variables from a context to give them to the user, leaving behind
@@ -573,17 +567,17 @@ INLINE void Drop_Action(REBFRM *f) {
         // therefore useless.  It served a purpose by being non-null during
         // the call, however, up to this moment.
         //
-        if (GET_SER_FLAG(f->varlist, NODE_FLAG_MANAGED))
-            f->varlist = nullptr; // references exist, let a new one alloc
+        if (GET_SER_FLAG(L->varlist, NODE_FLAG_MANAGED))
+            L->varlist = nullptr; // references exist, let a new one alloc
         else {
             // This node could be reused vs. calling Make_Node() on the next
             // action invocation...but easier for the moment to let it go.
             //
-            Free_Node(SER_POOL, f->varlist);
-            f->varlist = nullptr;
+            Free_Node(SER_POOL, L->varlist);
+            L->varlist = nullptr;
         }
     }
-    else if (GET_SER_FLAG(f->varlist, NODE_FLAG_MANAGED)) {
+    else if (GET_SER_FLAG(L->varlist, NODE_FLAG_MANAGED)) {
         //
         // The varlist wound up getting referenced in a cell that will outlive
         // this Drop_Action().  The pointer needed to stay working up until
@@ -596,14 +590,14 @@ INLINE void Drop_Action(REBFRM *f) {
         // call.  That's done by making an adjusted copy of the stub, which
         // steals its dynamic memory (by setting the stub not HAS_DYNAMIC).
         //
-        f->varlist = CTX_VARLIST(
+        L->varlist = CTX_VARLIST(
             Steal_Context_Vars(
-                CTX(f->varlist),
-                NOD(f->original) // degrade keysource from f
+                CTX(L->varlist),
+                NOD(L->original) // degrade keysource from f
             )
         );
-        assert(NOT_SER_FLAG(f->varlist, NODE_FLAG_MANAGED));
-        LINK(f->varlist).keysource = NOD(f);
+        assert(NOT_SER_FLAG(L->varlist, NODE_FLAG_MANAGED));
+        LINK(L->varlist).keysource = NOD(L);
     }
     else {
         // We can reuse the varlist and its data allocation, which may be
@@ -612,8 +606,8 @@ INLINE void Drop_Action(REBFRM *f) {
         // But no series bits we didn't set should be set...and right now,
         // only Enter_Native() sets HOLD.  Clear that.
         //
-        CLEAR_SER_INFO(f->varlist, SERIES_INFO_HOLD);
-        assert(0 == (SER(f->varlist)->info.bits & ~( // <- note bitwise not
+        CLEAR_SER_INFO(L->varlist, SERIES_INFO_HOLD);
+        assert(0 == (SER(L->varlist)->info.bits & ~( // <- note bitwise not
             SERIES_INFO_0_IS_TRUE // parallels NODE_FLAG_NODE
             | FLAG_WIDE_BYTE_OR_0(0) // don't mask out wide (0 for arrays))
             | FLAG_LEN_BYTE_OR_255(255) // mask out non-dynamic-len (dynamic)
@@ -621,35 +615,35 @@ INLINE void Drop_Action(REBFRM *f) {
     }
 
   #if !defined(NDEBUG)
-    if (f->varlist) {
-        assert(NOT_SER_INFO(f->varlist, SERIES_INFO_INACCESSIBLE));
-        assert(NOT_SER_FLAG(f->varlist, NODE_FLAG_MANAGED));
+    if (L->varlist) {
+        assert(NOT_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE));
+        assert(NOT_SER_FLAG(L->varlist, NODE_FLAG_MANAGED));
 
-        Value* rootvar = cast(Value*, ARR_HEAD(f->varlist));
+        Value* rootvar = cast(Value*, ARR_HEAD(L->varlist));
         assert(IS_FRAME(rootvar));
-        assert(rootvar->payload.any_context.varlist == f->varlist);
+        assert(rootvar->payload.any_context.varlist == L->varlist);
         TRASH_POINTER_IF_DEBUG(rootvar->payload.any_context.phase);
         TRASH_POINTER_IF_DEBUG(rootvar->extra.binding);
     }
   #endif
 
-    f->original = nullptr; // signal an action is no longer running
+    L->original = nullptr; // signal an action is no longer running
 
-    TRASH_POINTER_IF_DEBUG(f->opt_label);
+    TRASH_POINTER_IF_DEBUG(L->opt_label);
   #if defined(DEBUG_FRAME_LABELS)
-    TRASH_POINTER_IF_DEBUG(f->label_utf8);
+    TRASH_POINTER_IF_DEBUG(L->label_utf8);
   #endif
 }
 
 
 //
-//  Context_For_Frame_May_Manage: C
+//  Context_For_Level_May_Manage: C
 //
-INLINE REBCTX *Context_For_Frame_May_Manage(REBFRM *f)
+INLINE REBCTX *Context_For_Level_May_Manage(Level* L)
 {
-    assert(not Is_Action_Frame_Fulfilling(f));
-    SET_SER_FLAG(f->varlist, NODE_FLAG_MANAGED);
-    return CTX(f->varlist);
+    assert(not Is_Action_Level_Fulfilling(L));
+    SET_SER_FLAG(L->varlist, NODE_FLAG_MANAGED);
+    return CTX(L->varlist);
 }
 
 

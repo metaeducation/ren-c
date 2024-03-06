@@ -283,7 +283,7 @@ e1/emit {
      */
     #undef DECLARE_NATIVE
     #define DECLARE_NATIVE(n) \
-        Value* N_${MOD}_##n(REBFRM *frame_)
+        Value* N_${MOD}_##n(Level* level_)
 
     /*
      * Forward-declare DECLARE_NATIVE() dispatcher prototypes

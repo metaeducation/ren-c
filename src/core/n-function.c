@@ -74,7 +74,7 @@ void Make_Thrown_Unwind_Value(
     Value* out,
     const Value* level, // FRAME!, ACTION! (or INTEGER! relative to frame)
     const Value* value,
-    REBFRM *frame // required if level is INTEGER! or ACTION!
+    Level* base // required if level is INTEGER! or ACTION!
 ) {
     Copy_Cell(out, NAT_VALUE(unwind));
 
@@ -86,20 +86,20 @@ void Make_Thrown_Unwind_Value(
         if (count <= 0)
             fail (Error_Invalid_Exit_Raw());
 
-        REBFRM *f = frame->prior;
-        for (; true; f = f->prior) {
-            if (f == FS_BOTTOM)
+        Level* L = base->prior;
+        for (; true; L = L->prior) {
+            if (L == BOTTOM_LEVEL)
                 fail (Error_Invalid_Exit_Raw());
 
-            if (not Is_Action_Frame(f))
+            if (not Is_Action_Level(L))
                 continue; // only exit functions
 
-            if (Is_Action_Frame_Fulfilling(f))
+            if (Is_Action_Level_Fulfilling(L))
                 continue; // not ready to exit
 
             --count;
             if (count == 0) {
-                INIT_BINDING(out, f->varlist);
+                INIT_BINDING(out, L->varlist);
                 break;
             }
         }
@@ -107,19 +107,19 @@ void Make_Thrown_Unwind_Value(
     else {
         assert(IS_ACTION(level));
 
-        REBFRM *f = frame->prior;
-        for (; true; f = f->prior) {
-            if (f == FS_BOTTOM)
+        Level* L = base->prior;
+        for (; true; L = L->prior) {
+            if (L == BOTTOM_LEVEL)
                 fail (Error_Invalid_Exit_Raw());
 
-            if (not Is_Action_Frame(f))
+            if (not Is_Action_Level(L))
                 continue; // only exit functions
 
-            if (Is_Action_Frame_Fulfilling(f))
+            if (Is_Action_Level_Fulfilling(L))
                 continue; // not ready to exit
 
-            if (VAL_ACTION(level) == f->original) {
-                INIT_BINDING(out, f->varlist);
+            if (VAL_ACTION(level) == L->original) {
+                INIT_BINDING(out, L->varlist);
                 break;
             }
         }
@@ -154,7 +154,7 @@ DECLARE_NATIVE(unwind)
 
     UNUSED(REF(with)); // implied by non-null value
 
-    Make_Thrown_Unwind_Value(OUT, ARG(level), ARG(value), frame_);
+    Make_Thrown_Unwind_Value(OUT, ARG(level), ARG(value), level_);
     return R_THROWN;
 }
 
@@ -172,27 +172,27 @@ DECLARE_NATIVE(return)
 {
     INCLUDE_PARAMS_OF_RETURN;
 
-    REBFRM *f = frame_; // implicit parameter to DECLARE_NATIVE()
+    Level* L = level_; // implicit parameter to DECLARE_NATIVE()
 
     // The frame this RETURN is being called from may well not be the target
     // function of the return (that's why it's a "definitional return").  The
     // binding field of the frame contains a copy of whatever the binding was
     // in the specific ACTION! value that was invoked.
     //
-    REBFRM *target_frame;
-    REBNOD *f_binding = FRM_BINDING(f);
-    if (not f_binding)
+    Level* target_level;
+    REBNOD *L_binding = LVL_BINDING(L);
+    if (not L_binding)
         fail (Error_Return_Archetype_Raw()); // must have binding to jump to
 
-    assert(f_binding->header.bits & ARRAY_FLAG_VARLIST);
-    target_frame = CTX_FRAME_MAY_FAIL(CTX(f_binding));
+    assert(L_binding->header.bits & ARRAY_FLAG_VARLIST);
+    target_level = CTX_LEVEL_MAY_FAIL(CTX(L_binding));
 
-    // !!! We only have a REBFRM via the binding.  We don't have distinct
+    // !!! We only have a Level* via the binding.  We don't have distinct
     // knowledge about exactly which "phase" the original RETURN was
     // connected to.  As a practical matter, it can only return from the
     // current phase (what other option would it have, any other phase is
     // either not running yet or has already finished!).  But this means the
-    // `target_frame->phase` may be somewhat incidental to which phase the
+    // `target_level->phase` may be somewhat incidental to which phase the
     // RETURN originated from...and if phases were allowed different return
     // typesets, then that means the typechecking could be somewhat random.
     //
@@ -204,7 +204,7 @@ DECLARE_NATIVE(return)
     // that an ENCLOSE'd function can't return any types the original function
     // could not.  :-(
     //
-    REBACT *target_fun = FRM_UNDERLYING(target_frame);
+    REBACT *target_fun = LVL_UNDERLYING(target_level);
 
     Value* v = ARG(value);
 
@@ -236,13 +236,13 @@ DECLARE_NATIVE(return)
         // itself...implicating the frame (in a way parallel to this native).
         //
         if (not TYPE_CHECK(typeset, VAL_TYPE(v)))
-            fail (Error_Bad_Return_Type(target_frame, VAL_TYPE(v)));
+            fail (Error_Bad_Return_Type(target_level, VAL_TYPE(v)));
     }
 
-    assert(f_binding->header.bits & ARRAY_FLAG_VARLIST);
+    assert(L_binding->header.bits & ARRAY_FLAG_VARLIST);
 
     Copy_Cell(OUT, NAT_VALUE(unwind)); // see also Make_Thrown_Unwind_Value
-    INIT_BINDING_MAY_MANAGE(OUT, f_binding);
+    INIT_BINDING_MAY_MANAGE(OUT, L_binding);
 
     CONVERT_NAME_TO_THROWN(OUT, v);
     return R_THROWN;
@@ -830,9 +830,9 @@ DECLARE_NATIVE(tighten)
 
 
 
-REB_R N_Shot_Dispatcher(REBFRM *f)
+REB_R N_Shot_Dispatcher(Level* L)
 {
-    Array* details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(Level_Phase(L));
     assert(ARR_LEN(details) == 1);
 
     Cell* n = ARR_HEAD(details);
@@ -840,17 +840,17 @@ REB_R N_Shot_Dispatcher(REBFRM *f)
         return nullptr; // always return null once 0 is reached
     --VAL_INT64(n);
 
-    Value* code = FRM_ARG(f, 1);
-    if (Do_Branch_Throws(f->out, code))
+    Value* code = Level_Arg(L, 1);
+    if (Do_Branch_Throws(L->out, code))
         return R_THROWN;
 
-    return Trashify_Branched(f->out);
+    return Trashify_Branched(L->out);
 }
 
 
-REB_R N_Upshot_Dispatcher(REBFRM *f)
+REB_R N_Upshot_Dispatcher(Level* L)
 {
-    Array* details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(Level_Phase(L));
     assert(ARR_LEN(details) == 1);
 
     Cell* n = ARR_HEAD(details);
@@ -859,11 +859,11 @@ REB_R N_Upshot_Dispatcher(REBFRM *f)
         return nullptr; // return null until 0 is reached
     }
 
-    Value* code = FRM_ARG(f, 1);
-    if (Do_Branch_Throws(f->out, code))
+    Value* code = Level_Arg(L, 1);
+    if (Do_Branch_Throws(L->out, code))
         return R_THROWN;
 
-    return Trashify_Branched(f->out);
+    return Trashify_Branched(L->out);
 }
 
 

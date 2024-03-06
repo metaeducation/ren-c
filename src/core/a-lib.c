@@ -424,8 +424,8 @@ long API_rebTick(void)
 //
 RebolValue* API_rebArg(const void *p, va_list *vaptr)
 {
-    REBFRM *f = FS_TOP;
-    REBACT *act = FRM_PHASE(f);
+    Level* L = TOP_LEVEL;
+    REBACT *act = Level_Phase(L);
 
     // !!! Currently the JavaScript wrappers do not do the right thing for
     // taking just a `const char*`, so this falsely is a variadic to get the
@@ -442,7 +442,7 @@ RebolValue* API_rebArg(const void *p, va_list *vaptr)
     );
 
     Value* param = ACT_PARAMS_HEAD(act);
-    Value* arg = FRM_ARGS_HEAD(f);
+    Value* arg = Level_Args_Head(L);
     for (; NOT_END(param); ++param, ++arg) {
         if (Are_Synonyms(Cell_Parameter_Symbol(param), symbol))
             return Copy_Cell(Alloc_Value(), arg);
@@ -820,43 +820,43 @@ RebolValue* API_rebRescue(
     // so it has to be an "action frame".  Improve mechanic later, but for
     // now pretend to be applying a dummy native.
     //
-    DECLARE_END_FRAME (f);
-    f->out = m_cast(Value*, END_NODE); // should not be written
+    DECLARE_END_LEVEL (L);
+    L->out = m_cast(Value*, END_NODE); // should not be written
 
     Symbol* opt_label = nullptr;
-    Push_Frame_At_End(f, DO_MASK_NONE); // not FULLY_SPECIALIZED
+    Push_Level_At_End(L, DO_MASK_NONE); // not FULLY_SPECIALIZED
 
-    Reuse_Varlist_If_Available(f); // needed to attach API handles to
-    Push_Action(f, PG_Dummy_Action, UNBOUND);
-    Begin_Action(f, opt_label, m_cast(Value*, END_NODE));
-    assert(IS_END(f->arg));
-    f->param = END_NODE; // signal all arguments gathered
-    assert(f->refine == END_NODE); // passed to Begin_Action();
-    f->arg = m_cast(Value*, END_NODE);
-    f->special = END_NODE;
+    Reuse_Varlist_If_Available(L); // needed to attach API handles to
+    Push_Action(L, PG_Dummy_Action, UNBOUND);
+    Begin_Action(L, opt_label, m_cast(Value*, END_NODE));
+    assert(IS_END(L->arg));
+    L->param = END_NODE; // signal all arguments gathered
+    assert(L->refine == END_NODE); // passed to Begin_Action();
+    L->arg = m_cast(Value*, END_NODE);
+    L->special = END_NODE;
 
     // The first time through the following code 'error' will be null, but...
     // `fail` can longjmp here, so 'error' won't be null *if* that happens!
     //
     if (error_ctx) {
-        assert(f->varlist); // action must be running
-        Array* stub = f->varlist; // will be stubbed, with info bits reset
-        Drop_Action(f);
+        assert(L->varlist); // action must be running
+        Array* stub = L->varlist; // will be stubbed, with info bits reset
+        Drop_Action(L);
         SET_SER_INFO(stub, FRAME_INFO_FAILED); // signal API leaks ok
-        Abort_Frame(f);
+        Abort_Level(L);
         return Init_Error(Alloc_Value(), error_ctx);
     }
 
     Value* result = (*dangerous)(opaque);
 
-    Drop_Action(f);
+    Drop_Action(L);
 
     // !!! To abstract how the system deals with exception handling, the
     // rebRescue() routine started being used in lieu of PUSH_TRAP/DROP_TRAP
     // internally to the system.  Some of these system routines accumulate
-    // stack state, so Drop_Frame_Unbalanced() must be used.
+    // stack state, so Drop_Level_Unbalanced() must be used.
     //
-    Drop_Frame_Unbalanced(f);
+    Drop_Level_Unbalanced(L);
 
     DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
 
@@ -1378,7 +1378,7 @@ RebolValue* API_rebManage(RebolValue* v)
 
     SET_SER_FLAG(a, NODE_FLAG_MANAGED);
     assert(not LINK(a).owner);
-    LINK(a).owner = NOD(Context_For_Frame_May_Manage(FS_TOP));
+    LINK(a).owner = NOD(Context_For_Level_May_Manage(TOP_LEVEL));
 
     return v;
 }
@@ -1490,47 +1490,47 @@ intptr_t API_rebPromise(const void *p, va_list *vaptr)
 
     // !!! The following code is derived from Eval_Va_Core()
 
-    DECLARE_FRAME (f);
-    f->flags = Endlike_Header(flags); // read by Set_Frame_Detected_Fetch
+    DECLARE_LEVEL (L);
+    L->flags = Endlike_Header(flags); // read by Set_Level_Detected_Fetch
 
-    f->source->index = TRASHED_INDEX; // avoids warning in release build
-    f->source->array = nullptr;
-    f->source->vaptr = vaptr;
-    f->source->pending = END_NODE; // signal next fetch comes from va_list
+    L->source->index = TRASHED_INDEX; // avoids warning in release build
+    L->source->array = nullptr;
+    L->source->vaptr = vaptr;
+    L->source->pending = END_NODE; // signal next fetch comes from va_list
 
   #if defined(DEBUG_UNREADABLE_BLANKS)
     //
-    // We reuse logic in Fetch_Next_In_Frame() and Set_Frame_Detected_Fetch()
-    // but the previous f->value will be tested for NODE_FLAG_ROOT.
+    // We reuse logic in Fetch_Next_In_Level() and Set_Level_Detected_Fetch()
+    // but the previous L->value will be tested for NODE_FLAG_ROOT.
     //
     DECLARE_VALUE (junk);
-    f->value = Init_Unreadable(junk); // shows where garbage came from
+    L->value = Init_Unreadable(junk); // shows where garbage came from
   #else
-    f->value = BLANK_VALUE; // less informative but faster to initialize
+    L->value = BLANK_VALUE; // less informative but faster to initialize
   #endif
 
-    Set_Frame_Detected_Fetch(nullptr, f, p);
+    Set_Level_Detected_Fetch(nullptr, L, p);
 
-    f->out = m_cast(Value*, END_NODE);
-    f->specifier = SPECIFIED; // relative values not allowed in va_lists
-    f->gotten = nullptr;
+    L->out = m_cast(Value*, END_NODE);
+    L->specifier = SPECIFIED; // relative values not allowed in va_lists
+    L->gotten = nullptr;
 
     const bool truncated = false;
-    Reify_Va_To_Array_In_Frame(f, truncated);
+    Reify_Va_To_Array_In_Level(L, truncated);
 
     // The array is managed, but let's unmanage it so it doesn't get GC'd and
     // use it as the ID of the table entry for the promise.
     //
-    assert(GET_SER_FLAG(f->source->array, NODE_FLAG_MANAGED));
-    CLEAR_SER_FLAG(f->source->array, NODE_FLAG_MANAGED);
+    assert(GET_SER_FLAG(L->source->array, NODE_FLAG_MANAGED));
+    CLEAR_SER_FLAG(L->source->array, NODE_FLAG_MANAGED);
 
     EM_ASM_({
         setTimeout(function() { // evaluate the code w/no other code on GUI
             _API_rebPromise_callback($0); // for emscripten_sleep_with_yield()
         }, 0);
-    }, f->source->array);
+    }, L->source->array);
 
-    return cast(intptr_t, f->source->array);
+    return cast(intptr_t, L->source->array);
   #endif
 }
 

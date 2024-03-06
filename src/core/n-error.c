@@ -40,7 +40,7 @@
 // This is the code which is protected by the exception mechanism.  See the
 // rebRescue() API for more information.
 //
-static const Value* Trap_Dangerous(REBFRM *frame_) {
+static const Value* Trap_Dangerous(Level* level_) {
     INCLUDE_PARAMS_OF_TRAP;
     UNUSED(ARG(result));
     UNUSED(ARG(valid));
@@ -88,8 +88,8 @@ DECLARE_NATIVE(trap)
 {
     INCLUDE_PARAMS_OF_TRAP;
 
-    Value* error = rebRescue(cast(REBDNG*, &Trap_Dangerous), frame_);
-    UNUSED(ARG(code));  // gets used by the above call, via the frame_ pointer
+    Value* error = rebRescue(cast(REBDNG*, &Trap_Dangerous), level_);
+    UNUSED(ARG(code));  // gets used by the above call, via the level_ pointer
 
     if (not error) {  // code didn't fail() or throw
         if (REF(result))
@@ -110,7 +110,7 @@ DECLARE_NATIVE(trap)
 }
 
 
-static Value* Entrap_Dangerous(REBFRM *frame_) {
+static Value* Entrap_Dangerous(Level* level_) {
     INCLUDE_PARAMS_OF_ENTRAP;
 
     if (Do_Branch_Throws(OUT, ARG(code))) {
@@ -143,8 +143,8 @@ DECLARE_NATIVE(entrap)
 {
     INCLUDE_PARAMS_OF_ENTRAP;
 
-    REB_R error = rebRescue(cast(REBDNG*, &Entrap_Dangerous), frame_);
-    UNUSED(ARG(code)); // gets used by the above call, via the frame_ pointer
+    REB_R error = rebRescue(cast(REBDNG*, &Entrap_Dangerous), level_);
+    UNUSED(ARG(code)); // gets used by the above call, via the level_ pointer
 
     if (error)
         return error;
@@ -180,7 +180,7 @@ DECLARE_NATIVE(set_location_of_error)
         context = VAL_CONTEXT(location);
     }
 
-    REBFRM *where = CTX_FRAME_MAY_FAIL(context);
+    Level* where = CTX_LEVEL_MAY_FAIL(context);
 
     REBCTX *error = VAL_CONTEXT(ARG(error));
     Set_Location_Of_Error(error, where);

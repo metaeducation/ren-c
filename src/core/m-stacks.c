@@ -81,32 +81,32 @@ void Shutdown_Data_Stack(void)
 
 
 //
-//  Startup_Frame_Stack: C
+//  Startup_Level_Stack: C
 //
 // We always push one unused frame at the top of the stack.  This way, it is
-// not necessary for unused frames to check if `f->prior` is null; it may be
+// not necessary for unused frames to check if `L->prior` is null; it may be
 // assumed that it never is.
 //
-void Startup_Frame_Stack(void)
+void Startup_Level_Stack(void)
 {
   #if !defined(NDEBUG) // see Startup_Trash_Debug() for explanation
-    assert(IS_POINTER_TRASH_DEBUG(TG_Top_Frame));
-    assert(IS_POINTER_TRASH_DEBUG(TG_Bottom_Frame));
-    TG_Top_Frame = TG_Bottom_Frame = nullptr;
+    assert(IS_POINTER_TRASH_DEBUG(TG_Top_Level));
+    assert(IS_POINTER_TRASH_DEBUG(TG_Bottom_Level));
+    TG_Top_Level = TG_Bottom_Level = nullptr;
   #endif
 
-    TG_Frame_Source_End.index = 0;
-    TG_Frame_Source_End.vaptr = nullptr;
-    TG_Frame_Source_End.array = EMPTY_ARRAY; // for HOLD flag in Push_Frame
-    TRASH_POINTER_IF_DEBUG(TG_Frame_Source_End.pending);
+    TG_Level_Source_End.index = 0;
+    TG_Level_Source_End.vaptr = nullptr;
+    TG_Level_Source_End.array = EMPTY_ARRAY; // for HOLD flag in Push_Level
+    TRASH_POINTER_IF_DEBUG(TG_Level_Source_End.pending);
 
-    REBFRM *f = ALLOC(REBFRM); // needs dynamic allocation
-    Erase_Cell(FRM_CELL(f));
-    Init_Unreadable(FRM_CELL(f));
+    Level* L = ALLOC(Level); // needs dynamic allocation
+    Erase_Cell(Level_Spare(L));
+    Init_Unreadable(Level_Spare(L));
 
-    f->out = m_cast(Value*, END_NODE); // should not be written
-    f->source = &TG_Frame_Source_End;
-    Push_Frame_At_End(f, DO_MASK_NONE);
+    L->out = m_cast(Value*, END_NODE); // should not be written
+    L->source = &TG_Level_Source_End;
+    Push_Level_At_End(L, DO_MASK_NONE);
 
     // It's too early to be using Make_Paramlist_Managed_May_Fail()
     //
@@ -135,55 +135,55 @@ void Startup_Frame_Stack(void)
     //
     Init_Block(ARR_HEAD(ACT_DETAILS(PG_Dummy_Action)), EMPTY_ARRAY);
 
-    Reuse_Varlist_If_Available(f); // needed to attach API handles to
-    Push_Action(f, PG_Dummy_Action, UNBOUND);
+    Reuse_Varlist_If_Available(L); // needed to attach API handles to
+    Push_Action(L, PG_Dummy_Action, UNBOUND);
 
     Symbol* opt_label = nullptr;
-    Begin_Action(f, opt_label, m_cast(Value*, END_NODE));
-    assert(IS_END(f->arg));
-    f->param = END_NODE; // signal all arguments gathered
-    assert(f->refine == END_NODE); // passed to Begin_Action();
-    f->arg = m_cast(Value*, END_NODE);
-    f->special = END_NODE;
+    Begin_Action(L, opt_label, m_cast(Value*, END_NODE));
+    assert(IS_END(L->arg));
+    L->param = END_NODE; // signal all arguments gathered
+    assert(L->refine == END_NODE); // passed to Begin_Action();
+    L->arg = m_cast(Value*, END_NODE);
+    L->special = END_NODE;
 
-    TRASH_POINTER_IF_DEBUG(f->prior); // help catch enumeration past FS_BOTTOM
-    TG_Bottom_Frame = f;
+    TRASH_POINTER_IF_DEBUG(L->prior); // help catch enumeration past BOTTOM_LEVEL
+    TG_Bottom_Level = L;
 
-    assert(FS_TOP == f and FS_BOTTOM == f);
+    assert(TOP_LEVEL == L and BOTTOM_LEVEL == L);
 }
 
 
 //
-//  Shutdown_Frame_Stack: C
+//  Shutdown_Level_Stack: C
 //
-void Shutdown_Frame_Stack(void)
+void Shutdown_Level_Stack(void)
 {
-    assert(FS_TOP == FS_BOTTOM);
+    assert(TOP_LEVEL == BOTTOM_LEVEL);
 
     // To stop enumerations from using nullptr to stop the walk, and not count
     // the bottom frame as a "real stack level", it had a trash pointer put
     // in the debug build.  Restore it to a typical null before the drop.
     //
-    assert(IS_POINTER_TRASH_DEBUG(TG_Bottom_Frame->prior));
-    TG_Bottom_Frame->prior = nullptr;
+    assert(IS_POINTER_TRASH_DEBUG(TG_Bottom_Level->prior));
+    TG_Bottom_Level->prior = nullptr;
 
-    REBFRM *f = FS_TOP;
-    Drop_Action(f);
+    Level* L = TOP_LEVEL;
+    Drop_Action(L);
 
     // There's a Catch-22 on checking the balanced state for outstanding
     // manual series allocations, e.g. it can't check *before* the mold buffer
     // is freed because it would look like it was a leaked series, but it
     // can't check *after* because the mold buffer balance check would crash.
     //
-    Drop_Frame_Core(f); // can't be Drop_Frame() or Drop_Frame_Unbalanced()
+    Drop_Level_Core(L); // can't be Drop_Level() or Drop_Level_Unbalanced()
 
-    assert(not FS_TOP);
-    FREE(REBFRM, f);
+    assert(not TOP_LEVEL);
+    FREE(Level, L);
 
-    TG_Top_Frame = nullptr;
-    TG_Bottom_Frame = nullptr;
+    TG_Top_Level = nullptr;
+    TG_Bottom_Level = nullptr;
 
-    PG_Dummy_Action = nullptr; // was GC protected as FS_BOTTOM's f->original
+    PG_Dummy_Action = nullptr; // was GC protected as BOTTOM_LEVEL's L->original
 }
 
 
@@ -200,10 +200,10 @@ void Shutdown_Frame_Stack(void)
 //
 REBCTX *Get_Context_From_Stack(void)
 {
-    REBFRM *f = FS_TOP;
+    Level* L = TOP_LEVEL;
     REBACT *phase;
     while (true) {
-        if (f == FS_BOTTOM) {
+        if (L == BOTTOM_LEVEL) {
             //
             // Special case, no natives are in effect, so basically API code
             // running directly from an `int main()`.  This is dangerous, as
@@ -214,14 +214,14 @@ REBCTX *Get_Context_From_Stack(void)
             return VAL_CONTEXT(Get_System(SYS_CONTEXTS, CTX_USER));
         }
 
-        phase = FRM_PHASE_OR_DUMMY(f);
+        phase = LVL_PHASE_OR_DUMMY(L);
         if (phase == PG_Dummy_Action) {
             //
             // Some frames are set up just to catch failures, but aren't
             // tied to a function call themselves.  Ignore them (unless they
-            // are FS_BOTTOM, handled above.)
+            // are BOTTOM_LEVEL, handled above.)
             //
-            f = f->prior;
+            L = L->prior;
             continue;
         }
 

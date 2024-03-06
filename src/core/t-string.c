@@ -1183,7 +1183,7 @@ REBTYPE(String)
 
     // Common operations for any series type (length, head, etc.)
     //
-    REB_R r = Series_Common_Action_Maybe_Unhandled(frame_, verb);
+    REB_R r = Series_Common_Action_Maybe_Unhandled(level_, verb);
     if (r != R_UNHANDLED)
         return r;
 
@@ -1642,7 +1642,7 @@ REBTYPE(String)
         // Let the port system try the action, e.g. OPEN %foo.txt
         //
         if ((IS_FILE(v) or IS_URL(v)))
-            return T_Port(frame_, verb);
+            return T_Port(level_, verb);
     }
 
     fail (Error_Illegal_Action(VAL_TYPE(v), verb));

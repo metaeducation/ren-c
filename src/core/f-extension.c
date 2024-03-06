@@ -85,7 +85,7 @@ DECLARE_NATIVE(builtin_extensions)
 // function merely returns the built-in extensions, which can be loaded with
 // the LOAD-EXTENSION function.
 {
-    UNUSED(frame_);
+    UNUSED(level_);
 
     // Call the generator functions for each builtin extension to get back
     // all the collated information that would be needed to initialize and

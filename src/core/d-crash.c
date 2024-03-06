@@ -107,7 +107,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     // Address Sanitizer gives a reasonable idea of the stack.
     //
     Dump_Info();
-    Dump_Stack(FS_TOP, 0);
+    Dump_Stack(TOP_LEVEL, 0);
   #endif
 
   #if !defined(NDEBUG) && defined(HAVE_EXECINFO_AVAILABLE)
@@ -265,7 +265,7 @@ DECLARE_NATIVE(panic)
     // the dump would be the one that would queue up right to the exact moment
     // *before* the PANIC ACTION! was invoked.
 
-    Option(String*) file = FRM_FILE(frame_);
+    Option(String*) file = File_Of_Level(level_);
     const char* file_utf8;
     if (file) {
         Binary* bin = Make_Utf8_From_String(unwrap(file));  // leak ok, panic
@@ -275,10 +275,10 @@ DECLARE_NATIVE(panic)
       file_utf8 = "(anonymous)";
 
   #ifdef DEBUG_COUNT_TICKS
-    Panic_Core(p, frame_->tick, file_utf8, FRM_LINE(frame_));
+    Panic_Core(p, level_->tick, file_utf8, LVL_LINE(level_));
   #else
     const REBTCK tick = 0;
-    Panic_Core(p, tick, file_utf8, FRM_LINE(frame_));
+    Panic_Core(p, tick, file_utf8, LVL_LINE(level_));
   #endif
 }
 
@@ -296,7 +296,7 @@ DECLARE_NATIVE(panic_value)
 {
     INCLUDE_PARAMS_OF_PANIC_VALUE;
 
-    Option(String*) file = FRM_FILE(frame_);
+    Option(String*) file = File_Of_Level(level_);
     const char* file_utf8;
     if (file) {
         Binary* bin = Make_Utf8_From_String(unwrap(file));  // leak ok, panic
@@ -311,10 +311,10 @@ DECLARE_NATIVE(panic_value)
     // is the exact moment before the PANIC-VALUE ACTION! was invoked.
     //
     Panic_Core(
-        ARG(value), frame_->tick, file_utf8, FRM_LINE(frame_)
+        ARG(value), level_->tick, file_utf8, LVL_LINE(level_)
     );
   #else
     const REBTCK tick = 0;
-    Panic_Core(ARG(value), tick, file_utf8, FRM_LINE(frame_));
+    Panic_Core(ARG(value), tick, file_utf8, LVL_LINE(level_));
   #endif
 }

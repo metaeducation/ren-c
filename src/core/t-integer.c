@@ -415,7 +415,7 @@ REBTYPE(Integer)
                 Copy_Cell(val2, val);
                 Copy_Cell(val, OUT);
                 GENERIC_HOOK hook = Generic_Hooks[VAL_TYPE(val)];
-                return hook(frame_, verb); }
+                return hook(level_, verb); }
 
             // Only type valid to subtract from, divide into, is decimal/money:
             case SYM_SUBTRACT:
@@ -426,20 +426,20 @@ REBTYPE(Integer)
             case SYM_POWER:
                 if (IS_DECIMAL(val2) || IS_PERCENT(val2)) {
                     Init_Decimal(val, cast(REBDEC, num)); // convert main arg
-                    return T_Decimal(frame_, verb);
+                    return T_Decimal(level_, verb);
                 }
                 if (IS_MONEY(val2)) {
                     Init_Money(val, int_to_deci(VAL_INT64(val)));
-                    return T_Money(frame_, verb);
+                    return T_Money(level_, verb);
                 }
                 if (n > 0) {
                     if (IS_TIME(val2)) {
                         VAL_NANO(val) = SEC_TIME(VAL_INT64(val));
                         CHANGE_VAL_TYPE_BITS(val, REB_TIME);
-                        return T_Time(frame_, verb);
+                        return T_Time(level_, verb);
                     }
                     if (IS_DATE(val2))
-                        return T_Date(frame_, verb);
+                        return T_Date(level_, verb);
                 }
 
             default:
@@ -486,7 +486,7 @@ REBTYPE(Integer)
     case SYM_POWER:
         Init_Decimal(D_ARG(1), cast(REBDEC, num));
         Init_Decimal(D_ARG(2), cast(REBDEC, arg));
-        return T_Decimal(frame_, verb);
+        return T_Decimal(level_, verb);
 
     case SYM_REMAINDER:
         if (arg == 0)

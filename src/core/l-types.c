@@ -217,7 +217,7 @@ DECLARE_NATIVE(to)
 //
 REBTYPE(Unhooked)
 {
-    UNUSED(frame_);
+    UNUSED(level_);
     UNUSED(verb);
 
     fail ("Datatype does not have its REBTYPE() handler loaded by extension");
@@ -232,7 +232,7 @@ REBTYPE(Unhooked)
 // The series common code is in Series_Common_Action_Maybe_Unhandled(), but
 // that is only called from series.  Handle a few extra cases here.
 //
-REB_R Reflect_Core(REBFRM *frame_)
+REB_R Reflect_Core(Level* level_)
 {
     INCLUDE_PARAMS_OF_REFLECT;
 
@@ -272,7 +272,7 @@ REB_R Reflect_Core(REBFRM *frame_)
     GENERIC_HOOK hook = Generic_Hooks[kind];
     DECLARE_VALUE (verb);
     Init_Word(verb, Canon(SYM_REFLECT));
-    return hook(frame_, verb);
+    return hook(level_, verb);
 }
 
 
@@ -295,7 +295,7 @@ DECLARE_NATIVE(reflect)
 // it is its own native.  Consider giving it its own dispatcher as well, as
 // the question of exactly what a "REFLECT" or "OF" actually *is*.
 {
-    return Reflect_Core(frame_);
+    return Reflect_Core(level_);
 }
 
 
@@ -329,7 +329,7 @@ DECLARE_NATIVE(of)
     Copy_Cell(ARG(property), ARG(value));
     Copy_Cell(ARG(value), temp);
 
-    return Reflect_Core(frame_);
+    return Reflect_Core(level_);
 }
 
 

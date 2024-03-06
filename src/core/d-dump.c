@@ -236,11 +236,11 @@ void Dump_Info(void)
 //
 // Prints stack counting levels from the passed in number.  Pass 0 to start.
 //
-void Dump_Stack(REBFRM *f, REBLEN level)
+void Dump_Stack(Level* L, REBLEN level)
 {
     printf("\n");
 
-    if (f == FS_BOTTOM) {
+    if (L == BOTTOM_LEVEL) {
         printf("*STACK[] - NO FRAMES*\n");
         fflush(stdout);
         return;
@@ -249,11 +249,11 @@ void Dump_Stack(REBFRM *f, REBLEN level)
     printf(
         "STACK[%d](%s) - %d\n",
         cast(int, level),
-        Frame_Label_Or_Anonymous_UTF8(f),
-        VAL_TYPE_RAW(f->value)
+        Frame_Label_Or_Anonymous_UTF8(L),
+        VAL_TYPE_RAW(L->value)
     );
 
-    if (not Is_Action_Frame(f)) {
+    if (not Is_Action_Level(L)) {
         printf("(no function call pending or in progress)\n");
         fflush(stdout);
         return;
@@ -267,8 +267,8 @@ void Dump_Stack(REBFRM *f, REBLEN level)
     fflush(stdout);
 
     REBINT n = 1;
-    Value* arg = FRM_ARG(f, 1);
-    Value* param = ACT_PARAMS_HEAD(FRM_PHASE(f));
+    Value* arg = Level_Arg(L, 1);
+    Value* param = ACT_PARAMS_HEAD(Level_Phase(L));
 
     for (; NOT_END(param); ++param, ++arg, ++n) {
         if (IS_NULLED(arg))
@@ -284,8 +284,8 @@ void Dump_Stack(REBFRM *f, REBLEN level)
             );
     }
 
-    if (f->prior != FS_BOTTOM)
-        Dump_Stack(f->prior, level + 1);
+    if (L->prior != BOTTOM_LEVEL)
+        Dump_Stack(L->prior, level + 1);
 }
 
 

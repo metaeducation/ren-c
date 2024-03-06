@@ -46,7 +46,7 @@ struct Reb_State {
 
     REBDSP dsp;
     struct Reb_Chunk *top_chunk;
-    REBFRM *frame;
+    Level* level;
     REBLEN guarded_len;
     REBCTX *error;
 

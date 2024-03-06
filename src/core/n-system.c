@@ -288,7 +288,7 @@ int ceil_log2(unsigned long long x) {
 //
 //      return: [<opt>]
 //      tick [<maybe> integer!]
-//          {Get from PANIC, REBFRM.tick, REBSER.tick, Cell.extra.tick}
+//          {Get from PANIC, Level.tick, REBSER.tick, Cell.extra.tick}
 //      /relative
 //          {TICK parameter represents a count relative to the current tick}
 //      /compensate
@@ -338,7 +338,7 @@ DECLARE_NATIVE(c_debug_break_at)
     }
 
     if (REF(relative))
-        TG_Break_At_Tick = frame_->tick + 1 + VAL_INT64(ARG(tick));
+        TG_Break_At_Tick = level_->tick + 1 + VAL_INT64(ARG(tick));
     else
         TG_Break_At_Tick = VAL_INT64(ARG(tick));
     return nullptr;
@@ -374,7 +374,7 @@ DECLARE_NATIVE(c_debug_break)
     // Queue it so the break happens right before the MOLD, not after it
     // happened and has been passed as an argument.
     //
-    TG_Break_At_Tick = frame_->tick + 1;
+    TG_Break_At_Tick = level_->tick + 1;
 
     return R_INVISIBLE;
   #else

@@ -170,10 +170,10 @@ struct Reb_Collector;
 // helpful for the moment to give them a different name.
 //
 
-struct Reb_Frame;
+struct LevelStruct;
 
-typedef struct Reb_Frame REBFRM;
-typedef struct Reb_Frame REBPVS;
+typedef struct LevelStruct Level;
+typedef struct LevelStruct REBPVS;
 
 struct Reb_State;
 
@@ -238,20 +238,20 @@ typedef void (*MOLD_HOOK)(REB_MOLD *mo, const Cell* v, bool form);
 
 // C function implementing a native ACTION!
 //
-typedef REB_R (*REBNAT)(REBFRM *frame_);
+typedef REB_R (*REBNAT)(Level* level_);
 #define DECLARE_NATIVE(n) \
-    REB_R N_##n(REBFRM *frame_)
+    REB_R N_##n(Level* level_)
 
 // Generic hooks: implementing a "verb" ACTION! for a particular
 // type (or class of types).
 //
-typedef REB_R (*GENERIC_HOOK)(REBFRM *frame_, Value* verb);
+typedef REB_R (*GENERIC_HOOK)(Level* level_, Value* verb);
 #define REBTYPE(n) \
-    REB_R T_##n(REBFRM *frame_, Value* verb)
+    REB_R T_##n(Level* level_, Value* verb)
 
 // Port hook: for implementing generic ACTION!s on a PORT! class
 //
-typedef REB_R (*PORT_HOOK)(REBFRM *frame_, Value* port, Value* verb);
+typedef REB_R (*PORT_HOOK)(Level* level_, Value* port, Value* verb);
 
 // Path evaluator function
 //
@@ -280,7 +280,7 @@ enum Reb_Vararg_Op {
 // Ucs2(*) is defined in %sys-scan.h, along with SCAN_STATE, and both are
 // referenced by internal API functions.
 //
-// (Note: %sys-do.h needs to call into the scanner if Fetch_Next_In_Frame() is
+// (Note: %sys-do.h needs to call into the scanner if Fetch_Next_In_Level() is
 // to be inlined at all--at its many time-critical callsites--so the scanner
 // has to be in the internal API)
 //

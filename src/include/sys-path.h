@@ -80,7 +80,7 @@
     (PVS_OPT_SETVAL(pvs) != nullptr)
 
 #define PVS_PICKER(pvs) \
-    FRM_CELL(pvs)
+    Level_Spare(pvs)
 
 INLINE bool Get_Path_Throws_Core(
     Value* out,

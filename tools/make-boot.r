@@ -870,7 +870,7 @@ e-boot/emit {
     EXTERN_C const Byte Native_Specs[];
 
     /*
-     * Raw C function pointers for natives, take REBFRM* and return Value*.
+     * Raw C function pointers for natives, take Level* and return Value*.
      */
     EXTERN_C const REBLEN Num_Natives;
     EXTERN_C const REBNAT Native_C_Funcs[];

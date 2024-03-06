@@ -625,7 +625,7 @@ REBTYPE(Time)
             Copy_Cell(D_ARG(3), val); // (temporary location for swap)
             Copy_Cell(D_ARG(1), arg);
             Copy_Cell(D_ARG(2), D_ARG(3));
-            return T_Date(frame_, verb);
+            return T_Date(level_, verb);
         }
         fail (Error_Math_Args(REB_TIME, verb));
     }

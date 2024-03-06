@@ -317,33 +317,33 @@ void Sieve_Ports(Array* ports)
 //     foo: func [a /b c] [...]  =>  bar: func [/b d e] [...]
 //                    foo/b 1 2  =>  bar/b 1 2
 //
-bool Redo_Action_Throws(REBFRM *f, REBACT *run)
+bool Redo_Action_Throws(Level* L, REBACT *run)
 {
-    Array* code_arr = Make_Array(FRM_NUM_ARGS(f)); // max, e.g. no refines
+    Array* code_arr = Make_Array(Level_Num_Args(L)); // max, e.g. no refines
     Cell* code = ARR_HEAD(code_arr);
 
     // The first element of our path will be the ACTION!, followed by its
     // refinements...which in the worst case, all args will be refinements:
     //
-    Array* path_arr = Make_Array(FRM_NUM_ARGS(f) + 1);
+    Array* path_arr = Make_Array(Level_Num_Args(L) + 1);
     Cell* path = ARR_HEAD(path_arr);
     Init_Action_Unbound(path, run); // !!! What if there's a binding?
     ++path;
 
-    assert(IS_END(f->param)); // okay to reuse, if it gets put back...
-    f->param = ACT_PARAMS_HEAD(FRM_PHASE(f));
-    f->arg = FRM_ARGS_HEAD(f);
-    f->special = ACT_SPECIALTY_HEAD(FRM_PHASE(f));
+    assert(IS_END(L->param)); // okay to reuse, if it gets put back...
+    L->param = ACT_PARAMS_HEAD(Level_Phase(L));
+    L->arg = Level_Args_Head(L);
+    L->special = ACT_SPECIALTY_HEAD(Level_Phase(L));
 
     bool ignoring = false;
 
-    for (; NOT_END(f->param); ++f->param, ++f->arg, ++f->special) {
-        if (Is_Param_Hidden(f->param))
+    for (; NOT_END(L->param); ++L->param, ++L->arg, ++L->special) {
+        if (Is_Param_Hidden(L->param))
             continue; // !!! is this still relevant?
-        if (GET_VAL_FLAG(f->special, ARG_MARKED_CHECKED))
+        if (GET_VAL_FLAG(L->special, ARG_MARKED_CHECKED))
             continue; // a parameter that was "specialized out" of this phase
 
-        enum Reb_Param_Class pclass = VAL_PARAM_CLASS(f->param);
+        enum Reb_Param_Class pclass = VAL_PARAM_CLASS(L->param);
 
         if (
             pclass == PARAM_CLASS_LOCAL
@@ -353,14 +353,14 @@ bool Redo_Action_Throws(REBFRM *f, REBACT *run)
         }
 
         if (pclass == PARAM_CLASS_REFINEMENT) {
-            if (IS_BLANK(f->arg)) {
+            if (IS_BLANK(L->arg)) {
                 ignoring = true; // don't add to PATH!
                 continue;
             }
 
-            assert(IS_REFINEMENT(f->arg));
+            assert(IS_REFINEMENT(L->arg));
             ignoring = false;
-            Init_Word(path, Cell_Parameter_Symbol(f->param));
+            Init_Word(path, Cell_Parameter_Symbol(L->param));
             ++path;
             continue;
         }
@@ -368,7 +368,7 @@ bool Redo_Action_Throws(REBFRM *f, REBACT *run)
         if (ignoring)
             continue;
 
-        Copy_Cell(code, f->arg);
+        Copy_Cell(code, L->arg);
         ++code;
     }
 
@@ -384,7 +384,7 @@ bool Redo_Action_Throws(REBFRM *f, REBACT *run)
     // args, as they were evaluated the first time around.
     //
     REBIXO indexor = Eval_Array_At_Core(
-        SET_END(f->out),
+        SET_END(L->out),
         first, // path not in array, will be "virtual" first element
         code_arr,
         0, // index
@@ -393,7 +393,7 @@ bool Redo_Action_Throws(REBFRM *f, REBACT *run)
             | DO_FLAG_NO_RESIDUE // raise an error if all args not consumed
     );
 
-    if (IS_END(f->out))
+    if (IS_END(L->out))
         fail ("Redo_Action_Throws() was either empty or all COMMENTs/ELIDEs");
 
     return indexor == THROWN_FLAG;
@@ -409,7 +409,7 @@ bool Redo_Action_Throws(REBFRM *f, REBACT *run)
 // NOTE: stack must already be setup correctly for action, and
 // the caller must cleanup the stack.
 //
-REB_R Do_Port_Action(REBFRM *frame_, Value* port, Value* verb)
+REB_R Do_Port_Action(Level* level_, Value* port, Value* verb)
 {
     FAIL_IF_BAD_PORT(port);
 
@@ -424,7 +424,7 @@ REB_R Do_Port_Action(REBFRM *frame_, Value* port, Value* verb)
     // it's some other kind of handle value this could crash.
     //
     if (Is_Native_Port_Actor(actor)) {
-        r = cast(PORT_HOOK, VAL_HANDLE_CFUNC(actor))(frame_, port, verb);
+        r = cast(PORT_HOOK, VAL_HANDLE_CFUNC(actor))(level_, port, verb);
         goto post_process_output;
     }
 
@@ -444,10 +444,10 @@ REB_R Do_Port_Action(REBFRM *frame_, Value* port, Value* verb)
     if (n == 0 or not IS_ACTION(action = VAL_CONTEXT_VAR(actor, n)))
         fail (Error_No_Port_Action_Raw(verb));
 
-    if (Redo_Action_Throws(frame_, VAL_ACTION(action)))
+    if (Redo_Action_Throws(level_, VAL_ACTION(action)))
         return R_THROWN;
 
-    r = OUT; // result should be in frame_->out
+    r = OUT; // result should be in level_->out
 
     // !!! READ's /LINES and /STRING refinements are something that should
     // work regardless of data source.  But R3-Alpha only implemented it in

@@ -91,7 +91,7 @@ INLINE REBCTX *VAL_WORD_CONTEXT(const Value* v) {
     REBNOD *binding = VAL_BINDING(v);
     assert(
         GET_SER_FLAG(binding, NODE_FLAG_MANAGED)
-        or IS_END(FRM(LINK(binding).keysource)->param) // not fulfilling
+        or IS_END(LVL(LINK(binding).keysource)->param) // not fulfilling
     );
     binding->header.bits |= NODE_FLAG_MANAGED; // !!! review managing needs
     return CTX(binding);
@@ -99,7 +99,7 @@ INLINE REBCTX *VAL_WORD_CONTEXT(const Value* v) {
 
 INLINE void INIT_WORD_INDEX(Cell* v, REBLEN i) {
   #if !defined(NDEBUG)
-    INIT_WORD_INDEX_Extra_Checks_Debug(v, i); // not inline, needs FRM_PHASE()
+    INIT_WORD_INDEX_Extra_Checks_Debug(v, i); // not inline, needs Level_Phase()
   #endif
     v->payload.any_word.index = cast(REBINT, i);
 }

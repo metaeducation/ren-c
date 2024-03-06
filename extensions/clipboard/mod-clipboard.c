@@ -50,7 +50,7 @@
 // depends on the development of a coherent port model.
 //
 static REB_R Clipboard_Actor(
-    REBFRM *frame_,
+    Level* level_,
     Value* port,
     Value* verb
 ){

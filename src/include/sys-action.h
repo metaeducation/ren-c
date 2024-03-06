@@ -40,7 +40,7 @@
 // An arbitrary cell pointer may be returned from a native--in which case it
 // will be checked to see if it is thrown and processed if it is, or checked
 // to see if it's an unmanaged API handle and released if it is...ultimately
-// putting the cell into f->out.
+// putting the cell into L->out.
 //
 // However, pseudotypes can be used to indicate special instructions to the
 // evaluator.
@@ -63,7 +63,7 @@
     cast(Value*, &PG_R_Invisible)
 
 // If Eval_Core gets back an REB_R_REDO from a dispatcher, it will re-execute
-// the f->phase in the frame.  This function may be changed by the dispatcher
+// the L->phase in the frame.  This function may be changed by the dispatcher
 // from what was originally called.
 //
 // If VALUE_FLAG_FALSEY is not set on the cell, then the types will be checked
@@ -160,7 +160,7 @@ INLINE Value* ACT_PARAM(REBACT *a, REBLEN n) {
 
 // An efficiency trick makes functions that do not have exemplars NOT store
 // nullptr in the LINK(info).specialty node in that case--instead the params.
-// This makes Push_Action() slightly faster in assigning f->special.
+// This makes Push_Action() slightly faster in assigning L->special.
 //
 INLINE REBCTX *ACT_EXEMPLAR(REBACT *a) {
     Array* details = ACT_ARCHETYPE(a)->payload.action.details;

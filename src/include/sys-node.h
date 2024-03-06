@@ -28,7 +28,7 @@
 //
 // This provides some convenience routines that require more definitions than
 // are available when %sys-rebnod.h is being processed.  (e.g. Cell,
-// REBSER, REBFRM...)
+// REBSER, Level...)
 //
 // See %sys-rebnod.h for what a "node" means in this context.
 //
@@ -51,14 +51,14 @@
             or std::is_same<T, REBCTX>::value
             or std::is_same<T, REBACT>::value
             or std::is_same<T, REBMAP>::value
-            or std::is_same<T, REBFRM>::value;
+            or std::is_same<T, Level>::value;
 
         constexpr bool base = std::is_same<T, void>::value;
 
         static_assert(
             derived or base,
             "NOD() works on void/Value/REBSER/Symbol/Array/REBCTX/REBACT" \
-               "/REBMAP/REBFRM"
+               "/REBMAP/Level"
         );
 
         if (not p) { // !!! include a static check for nullptr/0?

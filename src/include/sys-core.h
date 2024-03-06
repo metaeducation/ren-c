@@ -247,7 +247,7 @@ typedef RebolValue Value;
     do { \
         printf("BREAK_ON_TICK() @ tick %ld\n", cast(long int, TG_Tick)); \
         fflush(stdout); \
-        Dump_Frame_Location(nullptr, FS_TOP); \
+        Dump_Level_Location(nullptr, TOP_LEVEL); \
         debug_break(); /* see %debug_break.h */ \
     } while (false)
 
@@ -281,7 +281,7 @@ typedef RebolValue Value;
 #include "sys-rebctx.h" // REBCTX and CTX()
 
 #include "sys-state.h"
-#include "sys-rebfrm.h" // `REBFRM` definition (also used by value)
+#include "sys-rebfrm.h" // `Level` definition (also used by value)
 #include "sys-indexor.h" // REBIXO definition
 
 #include "sys-mold.h"

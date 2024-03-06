@@ -309,7 +309,7 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
         // !!! In the future Reb_Context will refer to a REBNOD*, and only
         // be reified based on the properties of the cell into which it is
         // moved (e.g. OUT would be examined here to determine if it would
-        // have a longer lifetime than the REBFRM* or other node)
+        // have a longer lifetime than the Level* or other node)
         //
         REBCTX *c = VAL_WORD_CONTEXT(v);
         Copy_Cell(out, CTX_ARCHETYPE(c));
@@ -335,10 +335,10 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
     //
     if (IS_FRAME(out)) {
         REBCTX *c = VAL_CONTEXT(out);
-        REBFRM *f = CTX_FRAME_IF_ON_STACK(c);
-        if (f) {
-            out->payload.any_context.phase = FRM_PHASE(f);
-            INIT_BINDING(out, FRM_BINDING(f));
+        Level* L = CTX_LEVEL_IF_ON_STACK(c);
+        if (L) {
+            out->payload.any_context.phase = Level_Phase(L);
+            INIT_BINDING(out, LVL_BINDING(L));
         }
         else {
             // !!! Assume the canon FRAME! value in varlist[0] is useful?

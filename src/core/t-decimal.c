@@ -362,7 +362,7 @@ REBTYPE(Decimal)
             Copy_Cell(D_ARG(2), D_ARG(1));
             Copy_Cell(D_ARG(1), OUT);
             GENERIC_HOOK hook = Generic_Hooks[VAL_TYPE(D_ARG(1))];
-            return hook(frame_, verb);
+            return hook(level_, verb);
         }
 
         // If the type of the second arg is something we can handle:
@@ -384,7 +384,7 @@ REBTYPE(Decimal)
             }
             else if (type == REB_MONEY) {
                 Init_Money(val, decimal_to_deci(VAL_DECIMAL(val)));
-                return T_Money(frame_, verb);
+                return T_Money(level_, verb);
             }
             else if (type == REB_CHAR) {
                 d2 = cast(REBDEC, VAL_CHAR(arg));

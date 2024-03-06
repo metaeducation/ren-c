@@ -35,7 +35,7 @@
 //
 //  DNS_Actor: C
 //
-static REB_R DNS_Actor(REBFRM *frame_, Value* port, Value* verb)
+static REB_R DNS_Actor(Level* level_, Value* port, Value* verb)
 {
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 

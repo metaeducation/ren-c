@@ -577,16 +577,16 @@ bool Form_Reduce_Throws(
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 
-    DECLARE_FRAME (f);
-    Push_Frame_At(f, array, index, specifier, DO_MASK_NONE);
+    DECLARE_LEVEL (L);
+    Push_Level_At(L, array, index, specifier, DO_MASK_NONE);
 
     bool pending = false; // pending delimiter output, *if* more non-nulls
     bool nothing = true; // any elements seen so far have been null or blank
 
-    while (NOT_END(f->value)) {
-        if (Eval_Step_Throws(SET_END(out), f)) {
+    while (NOT_END(L->value)) {
+        if (Eval_Step_Throws(SET_END(out), L)) {
             Drop_Mold(mo);
-            Abort_Frame(f);
+            Abort_Level(L);
             return true;
         }
 
@@ -620,7 +620,7 @@ bool Form_Reduce_Throws(
         }
     }
 
-    Drop_Frame(f);
+    Drop_Level(L);
 
     if (nothing)
         Init_Nulled(out);

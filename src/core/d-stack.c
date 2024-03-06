@@ -98,16 +98,16 @@ void Collapsify_Array(Array* array, REBSPC *specifier, REBLEN limit)
 // onto these values for the purposes of better error messages (at the cost
 // of performance).
 //
-Value* Init_Near_For_Frame(Cell* out, REBFRM *f)
+Value* Init_Near_For_Frame(Cell* out, Level* L)
 {
     REBLEN dsp_start = DSP;
 
-    if (NOT_END(f->value) and FRM_IS_VALIST(f)) {
+    if (NOT_END(L->value) and LVL_IS_VALIST(L)) {
         //
         // Traversing a C va_arg, so reify into a (truncated) array.
         //
         const bool truncated = true;
-        Reify_Va_To_Array_In_Frame(f, truncated);
+        Reify_Va_To_Array_In_Level(L, truncated);
     }
 
     // Get at most 6 values out of the array.  Ideally 3 before and after
@@ -125,7 +125,7 @@ Value* Init_Near_For_Frame(Cell* out, REBFRM *f)
     }
     */
 
-    REBINT start = FRM_INDEX(f) - 3;
+    REBINT start = LVL_INDEX(L) - 3;
     if (start > 0) {
         DS_PUSH_TRASH;
         Init_Word(DS_TOP, Canon(SYM_ELLIPSIS));
@@ -134,26 +134,26 @@ Value* Init_Near_For_Frame(Cell* out, REBFRM *f)
         start = 0;
 
     REBLEN count = 0;
-    Cell* item = Array_At(FRM_ARRAY(f), start);
+    Cell* item = Array_At(LVL_ARRAY(L), start);
     for (; NOT_END(item) and count < 6; ++item, ++count) {
         DS_PUSH_TRASH;
         if (IS_NULLED(item)) {
             //
             // If a va_list is used to do a non-evaluative call (something
             // like R3-Alpha's APPLY/ONLY) then nulled cells are currently
-            // allowed.  Reify_Va_To_Array_In_Frame() may come along and
+            // allowed.  Reify_Va_To_Array_In_Level() may come along and
             // make a special block containing nulls, which we don't want
             // to expose in a user-visible block.  Since this array is just
             // for display purposes and is "lossy" (as evidenced by the ...)
             // substitute a placeholder to avoid crashing the GC.
             //
-            assert(GET_SER_FLAG(FRM_ARRAY(f), ARRAY_FLAG_NULLEDS_LEGAL));
+            assert(GET_SER_FLAG(LVL_ARRAY(L), ARRAY_FLAG_NULLEDS_LEGAL));
             Init_Word(DS_TOP, Canon(SYM__TNULL_T));  // ~null~ WORD!
         }
         else
-            Derelativize(DS_TOP, item, f->specifier);
+            Derelativize(DS_TOP, item, L->specifier);
 
-        if (count == FRM_INDEX(f) - start - 1) {
+        if (count == LVL_INDEX(L) - start - 1) {
             //
             // Leave a marker at the point of the error, currently `~~`.
             // (Formerly it was ?? but that is now being actually used).
@@ -178,7 +178,7 @@ Value* Init_Near_For_Frame(Cell* out, REBFRM *f)
     // yet.  This needs some way of differentiation, consider it.
     //
     /*
-    if (Is_Action_Frame(f) and Is_Action_Frame_Fulfilling(f)) {
+    if (Is_Action_Level(L) and Is_Action_Level_Fulfilling(L)) {
         ???
     }
     */
@@ -190,8 +190,8 @@ Value* Init_Near_For_Frame(Cell* out, REBFRM *f)
     //
     Collapsify_Array(near, SPECIFIED, 3);
 
-    if (ANY_ARRAY_KIND(VAL_TYPE_RAW(f->value)))
-        Init_Any_Array(out, VAL_TYPE(f->value), near);
+    if (ANY_ARRAY_KIND(VAL_TYPE_RAW(L->value)))
+        Init_Any_Array(out, VAL_TYPE(L->value), near);
     else
         Init_Block(out, near);
 
@@ -204,11 +204,11 @@ Value* Init_Near_For_Frame(Cell* out, REBFRM *f)
 //
 bool Is_Context_Running_Or_Pending(REBCTX *frame_ctx)
 {
-    REBFRM *f = CTX_FRAME_IF_ON_STACK(frame_ctx);
-    if (not f)
+    Level* L = CTX_LEVEL_IF_ON_STACK(frame_ctx);
+    if (not L)
         return false;
 
-    if (Is_Action_Frame_Fulfilling(f))
+    if (Is_Action_Level_Fulfilling(L))
         return false;
 
     return true;
@@ -229,9 +229,9 @@ DECLARE_NATIVE(running_q)
 
     REBCTX *frame_ctx = VAL_CONTEXT(ARG(frame));
 
-    REBFRM *f = CTX_FRAME_MAY_FAIL(frame_ctx);
+    Level* L = CTX_LEVEL_MAY_FAIL(frame_ctx);
 
-    if (Is_Action_Frame_Fulfilling(f))
+    if (Is_Action_Level_Fulfilling(L))
         return Init_False(OUT);
 
     return Init_True(OUT);
@@ -252,9 +252,9 @@ DECLARE_NATIVE(pending_q)
 
     REBCTX *frame_ctx = VAL_CONTEXT(ARG(frame));
 
-    REBFRM *f = CTX_FRAME_MAY_FAIL(frame_ctx);
+    Level* L = CTX_LEVEL_MAY_FAIL(frame_ctx);
 
-    if (Is_Action_Frame_Fulfilling(f))
+    if (Is_Action_Level_Fulfilling(L))
         return Init_True(OUT);
 
     return Init_False(OUT);

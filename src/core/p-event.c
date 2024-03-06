@@ -132,7 +132,7 @@ Value* Find_Last_Event(REBINT model, REBINT type)
 //
 // Internal port handler for events.
 //
-static REB_R Event_Actor(REBFRM *frame_, Value* port, Value* verb)
+static REB_R Event_Actor(Level* level_, Value* port, Value* verb)
 {
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
@@ -194,7 +194,7 @@ static REB_R Event_Actor(REBFRM *frame_, Value* port, Value* verb)
         Copy_Cell(save_port, D_ARG(1));
         Copy_Cell(D_ARG(1), state);
 
-        REB_R r = T_Array(frame_, verb);
+        REB_R r = T_Array(level_, verb);
         SET_SIGNAL(SIG_EVENT_PORT);
         if (
             Cell_Word_Id(verb) == SYM_INSERT

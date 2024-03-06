@@ -182,14 +182,14 @@
 // place setjmp goes to could be not where you want to goto."
 //
 // !!! An assertion that you don't try to push a trap with no saved state
-// unless FS_TOP == FS_BOTTOM is commented out for this moment, because a
+// unless TOP_LEVEL == BOTTOM_LEVEL is commented out for this moment, because a
 // top level rebValue() currently executes and then runs a trap inside of it.
 // The API model is still being worked out, and so this is tolerated while
 // the code settles--until the right answer can be seen more clearly.
 //
 #define PUSH_TRAP(e,s) \
     do { \
-        /* assert(Saved_State or (DSP == 0 and FS_TOP == FS_BOTTOM)); */ \
+        /* assert(Saved_State or (DSP == 0 and TOP_LEVEL == BOTTOM_LEVEL)); */ \
         if (Saved_State == nullptr) \
             Set_Stack_Limit(s); \
         Snap_State_Core(s); \

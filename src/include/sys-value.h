@@ -1426,9 +1426,9 @@ INLINE void INIT_BINDING_MAY_MANAGE(Cell* out, REBNOD* binding) {
         return;
     }
 
-    REBFRM *f = FRM(LINK(binding).keysource);
-    assert(IS_END(f->param)); // cannot manage frame varlist in mid fulfill!
-    UNUSED(f); // !!! not actually used yet, coming soon
+    Level* L = LVL(LINK(binding).keysource);
+    assert(IS_END(L->param)); // cannot manage frame varlist in mid fulfill!
+    UNUSED(L); // !!! not actually used yet, coming soon
 
     binding->header.bits |= NODE_FLAG_MANAGED; // burdens the GC, now...
     out->extra.binding = binding;

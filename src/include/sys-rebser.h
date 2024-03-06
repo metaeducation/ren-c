@@ -457,7 +457,7 @@
 // stack level popped (there's no data to lookup for words bound to it).
 //
 // !!! This is currently redundant with checking if a CONTEXT_INFO_STACK
-// series has its `misc.f` (REBFRM) nulled out, but it means both can be
+// series has its `misc.L` (Level) nulled out, but it means both can be
 // tested at the same time with a single bit.
 //
 // !!! It is conceivable that there would be other cases besides frames that
@@ -700,13 +700,13 @@ union Reb_Series_Link {
     // REBVALs for that object.
     //
     // It may be a simple Array* -or- in the case of the varlist of a running
-    // FRAME! on the stack, it points to a REBFRM*.  If it's a FRAME! that
+    // FRAME! on the stack, it points to a Level*.  If it's a FRAME! that
     // is not running on the stack, it will be the function paramlist of the
-    // actual phase that function is for.  Since REBFRM* all start with a
+    // actual phase that function is for.  Since Level* all start with a
     // leading cell, this means NODE_FLAG_CELL can be used on the node to
-    // discern the case where it can be cast to a REBFRM* vs. Array*.
+    // discern the case where it can be cast to a Level* vs. Array*.
     //
-    // (Note: FRAME!s used to use a field `misc.f` to track the associated
+    // (Note: FRAME!s used to use a field `misc.L` to track the associated
     // frame...but that prevented the ability to SET-META on a frame.  While
     // that feature may not be essential, it seems awkward to not allow it
     // since it's allowed for other ANY-CONTEXT!s.  Also, it turns out that
@@ -745,7 +745,7 @@ union Reb_Series_Link {
     // specialized values (e.g. an "exemplar"), with ARRAY_FLAG_VARLIST set.
     // Or just hold the paramlist.  This speeds up Push_Action() because
     // if this were `REBCTX *exemplar;` then it would have to test it for null
-    // explicitly to default f->special to f->param.
+    // explicitly to default L->special to L->param.
     //
     Array* specialty;
 
@@ -753,7 +753,7 @@ union Reb_Series_Link {
     //
     REBSER *hashlist;
 
-    // The REBFRM's `varlist` field holds a ready-made varlist for a frame,
+    // The Level's `varlist` field holds a ready-made varlist for a level,
     // which may be reused.  However, when a stack frame is dropped it can
     // only be reused by putting it in a place that future pushes can find
     // it.  This is used to link a varlist into the reusable list.

@@ -531,9 +531,9 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
                 //
             }
             else {
-                struct Reb_Frame *f = CTX_FRAME_IF_ON_STACK(context);
-                if (f) // comes from execution, not MAKE FRAME!
-                    assert(VAL_BINDING(v) == FRM_BINDING(f));
+                Level* L = CTX_LEVEL_IF_ON_STACK(context);
+                if (L) // comes from execution, not MAKE FRAME!
+                    assert(VAL_BINDING(v) == LVL_BINDING(L));
             }
         }
       #endif
@@ -555,7 +555,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         assert(VAL_CONTEXT(archetype) == context);
       #endif
 
-        // Note: for VAL_CONTEXT_FRAME, the FRM_CALL is either on the stack
+        // Note: for VAL_CONTEXT_FRAME, the LVL_CALL is either on the stack
         // (in which case it's already taken care of for marking) or it
         // has gone bad, in which case it should be ignored.
 
@@ -819,11 +819,11 @@ static void Reify_Any_C_Valist_Frames(void)
     //
     ASSERT_NO_GC_MARKS_PENDING();
 
-    REBFRM *f = FS_TOP;
-    for (; f != FS_BOTTOM; f = f->prior) {
-        if (NOT_END(f->value) and FRM_IS_VALIST(f)) {
+    Level* L = TOP_LEVEL;
+    for (; L != BOTTOM_LEVEL; L = L->prior) {
+        if (NOT_END(L->value) and LVL_IS_VALIST(L)) {
             const bool truncated = true;
-            Reify_Va_To_Array_In_Frame(f, truncated);
+            Reify_Va_To_Array_In_Level(L, truncated);
         }
     }
 }
@@ -893,7 +893,7 @@ static void Mark_Root_Series(void)
                     GC_Kill_Series(s);
                     continue;
                 }
-                else // note that Mark_Frame_Stack_Deep() will mark the owner
+                else // note that Mark_Level_Stack_Deep() will mark the owner
                     s->header.bits |= NODE_FLAG_MARKED;
 
                 // Note: Eval_Core_Throws() might target API cells, uses END
@@ -917,12 +917,12 @@ static void Mark_Root_Series(void)
 
             if (IS_SER_ARRAY(s)) {
                 if (s->header.bits & NODE_FLAG_MANAGED)
-                    continue; // BLOCK!, Mark_Frame_Stack_Deep() etc. mark it
+                    continue; // BLOCK!, Mark_Level_Stack_Deep() etc. mark it
 
                 if (s->header.bits & ARRAY_FLAG_VARLIST) {
                     //
                     // Legal when unmanaged varlists are held onto by
-                    // REBFRM*, and marked by them.  We check for that by
+                    // Level*, and marked by them.  We check for that by
                     // whether the keysource points to a frame (cell bit
                     // set in node).
                     //
@@ -1064,7 +1064,7 @@ static void Mark_Guarded_Nodes(void)
 
 
 //
-//  Mark_Frame_Stack_Deep: C
+//  Mark_Level_Stack_Deep: C
 //
 // Mark values being kept live by all call frames.  If a function is running,
 // then this will keep the function itself live, as well as the arguments.
@@ -1081,101 +1081,101 @@ static void Mark_Guarded_Nodes(void)
 // This should be called at the top level, and not from inside a
 // Propagate_All_GC_Marks().  All marks will be propagated.
 //
-static void Mark_Frame_Stack_Deep(void)
+static void Mark_Level_Stack_Deep(void)
 {
-    REBFRM *f = FS_TOP;
+    Level* L = TOP_LEVEL;
 
-    while (true) { // mark all frames (even FS_BOTTOM)
+    while (true) { // mark all frames (even BOTTOM_LEVEL)
         //
         // Should have taken care of reifying all the VALIST on the stack
         // earlier in the recycle process (don't want to create new arrays
         // once the recycling has started...)
         //
-        assert(not f->source->vaptr or IS_POINTER_TRASH_DEBUG(f->source->vaptr));
+        assert(not L->source->vaptr or IS_POINTER_TRASH_DEBUG(L->source->vaptr));
 
-        // Note: f->source->pending should either live in f->source->array, or
+        // Note: L->source->pending should either live in L->source->array, or
         // it may be trash (e.g. if it's an apply).  GC can ignore it.
         //
-        if (f->source->array)
-            Queue_Mark_Array_Deep(f->source->array);
+        if (L->source->array)
+            Queue_Mark_Array_Deep(L->source->array);
 
         // END is possible, because the frame could be sitting at the end of
         // a block when a function runs, e.g. `do [zero-arity]`.  That frame
         // will stay on the stack while the zero-arity function is running.
         // The array still might be used in an error, so can't GC it.
         //
-        Queue_Mark_Opt_End_Cell_Deep(f->value);
+        Queue_Mark_Opt_End_Cell_Deep(L->value);
 
-        // If f->gotten is set, it usually shouldn't need markeding because
-        // it's fetched via f->value and so would be kept alive by it.  Any
+        // If L->gotten is set, it usually shouldn't need markeding because
+        // it's fetched via L->value and so would be kept alive by it.  Any
         // code that a frame runs that might disrupt that relationship so it
-        // would fetch differently should have meant clearing f->gotten.
+        // would fetch differently should have meant clearing L->gotten.
         //
         // However, the SHOVE operation is special, and puts an enfix ACTION!
-        // into the frame's `shove` cell and points f->gotten to that.  It
+        // into the frame's `shove` cell and points L->gotten to that.  It
         // needs to be marked here.
         //
-        if (not f->gotten)
+        if (not L->gotten)
             NOOP;
-        else if (f->gotten == FRM_SHOVE(f)) {
-            assert(GET_VAL_FLAG(FRM_SHOVE(f), VALUE_FLAG_ENFIXED));
-            Queue_Mark_Value_Deep(FRM_SHOVE(f));
+        else if (L->gotten == Level_Shove(L)) {
+            assert(GET_VAL_FLAG(Level_Shove(L), VALUE_FLAG_ENFIXED));
+            Queue_Mark_Value_Deep(Level_Shove(L));
         }
         else
             assert(
-                IS_POINTER_TRASH_DEBUG(f->gotten)
-                or f->gotten == Try_Get_Opt_Var(f->value, f->specifier)
+                IS_POINTER_TRASH_DEBUG(L->gotten)
+                or L->gotten == Try_Get_Opt_Var(L->value, L->specifier)
             );
 
         if (
-            f->specifier != SPECIFIED
-            and (f->specifier->header.bits & NODE_FLAG_MANAGED)
+            L->specifier != SPECIFIED
+            and (L->specifier->header.bits & NODE_FLAG_MANAGED)
         ){
-            Queue_Mark_Context_Deep(CTX(f->specifier));
+            Queue_Mark_Context_Deep(CTX(L->specifier));
         }
 
-        Queue_Mark_Opt_End_Cell_Deep(f->out); // END legal, but not nullptr
+        Queue_Mark_Opt_End_Cell_Deep(L->out); // END legal, but not nullptr
 
         // Frame temporary cell should always contain initialized bits, as
-        // DECLARE_FRAME sets it up and no one is supposed to trash it.
+        // DECLARE_LEVEL sets it up and no one is supposed to trash it.
         //
-        Queue_Mark_Opt_End_Cell_Deep(FRM_CELL(f));
+        Queue_Mark_Opt_End_Cell_Deep(Level_Spare(L));
 
-        if (not Is_Action_Frame(f)) {
+        if (not Is_Action_Level(L)) {
             //
             // Consider something like `eval copy the (recycle)`, because
             // while evaluating the group it has no anchor anywhere in the
-            // root set and could be GC'd.  The Reb_Frame's array ref is it.
+            // root set and could be GC'd.  The Level's array ref is it.
             //
             goto propagate_and_continue;
         }
 
-        Queue_Mark_Action_Deep(f->original);  // never nullptr
-        if (f->opt_label)  // will be nullptr if no symbol
-            Mark_Rebser_Only(f->opt_label);
+        Queue_Mark_Action_Deep(L->original);  // never nullptr
+        if (L->opt_label)  // will be nullptr if no symbol
+            Mark_Rebser_Only(L->opt_label);
 
         // refine and special can be used to GC protect an arbitrary value
         // while a function is running, currently.  nullptr is permitted as
         // well for flexibility (e.g. path frames use nullptr to indicate no
         // set value on a path)
         //
-        if (f->refine)
-            Queue_Mark_Opt_End_Cell_Deep(f->refine);
-        if (f->special)
-            Queue_Mark_Opt_End_Cell_Deep(f->special);
+        if (L->refine)
+            Queue_Mark_Opt_End_Cell_Deep(L->refine);
+        if (L->special)
+            Queue_Mark_Opt_End_Cell_Deep(L->special);
 
-        if (f->varlist and GET_SER_FLAG(f->varlist, NODE_FLAG_MANAGED)) {
+        if (L->varlist and GET_SER_FLAG(L->varlist, NODE_FLAG_MANAGED)) {
             //
             // If the context is all set up with valid values and managed,
             // then it can just be marked normally...no need to do custom
             // partial parameter traversal.
             //
-            assert(IS_END(f->param)); // done walking
-            Queue_Mark_Context_Deep(CTX(f->varlist));
+            assert(IS_END(L->param)); // done walking
+            Queue_Mark_Context_Deep(CTX(L->varlist));
             goto propagate_and_continue;
         }
 
-        if (f->varlist and GET_SER_INFO(f->varlist, SERIES_INFO_INACCESSIBLE)) {
+        if (L->varlist and GET_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE)) {
             //
             // This happens in Encloser_Dispatcher(), where it can capture a
             // varlist that may not be managed (e.g. if there were no ADAPTs
@@ -1187,33 +1187,33 @@ static void Mark_Frame_Stack_Deep(void)
         // Mark arguments as used, but only as far as parameter filling has
         // gotten (may be garbage bits past that).  Could also be an END value
         // of an in-progress arg fulfillment, but in that case it is protected
-        // by the *evaluating frame's f->out* (!)
+        // by the *evaluating frame's L->out* (!)
         //
         // Refinements need special treatment, and also consideration of if
         // this is the "doing pickups" or not.  If doing pickups then skip the
         // cells for pending refinement arguments.
         //
         REBACT *phase; // goto would cross initialization
-        phase = FRM_PHASE_OR_DUMMY(f);
+        phase = LVL_PHASE_OR_DUMMY(L);
         Value* param;
         if (phase == PG_Dummy_Action)
-            param = ACT_PARAMS_HEAD(f->original); // no phases will run
+            param = ACT_PARAMS_HEAD(L->original); // no phases will run
         else
             param = ACT_PARAMS_HEAD(phase);
 
         Value* arg;
-        for (arg = FRM_ARGS_HEAD(f); NOT_END(param); ++param, ++arg) {
-            if (param == f->param) {
+        for (arg = Level_Args_Head(L); NOT_END(param); ++param, ++arg) {
+            if (param == L->param) {
                 //
-                // When param and f->param match, that means that arg is the
-                // output slot for some other frame's f->out.  Let that frame
+                // When param and L->param match, that means that arg is the
+                // output slot for some other frame's L->out.  Let that frame
                 // do the marking (which tolerates END, an illegal state for
                 // prior arg slots we've visited...unless deferred!)
 
                 // If we're not doing "pickups" then the cell slots after
                 // this one have not been initialized, not even to trash.
                 //
-                if (not (f->flags.bits & DO_FLAG_DOING_PICKUPS))
+                if (not (L->flags.bits & DO_FLAG_DOING_PICKUPS))
                     break;
 
                 // But since we *are* doing pickups, we must have initialized
@@ -1227,17 +1227,17 @@ static void Mark_Frame_Stack_Deep(void)
             // to put END markers into a cell that's behind the current param,
             // so that's a case where an END might be seen.
             //
-            assert(NOT_END(arg) or arg == f->u.defer.arg);
+            assert(NOT_END(arg) or arg == L->u.defer.arg);
             Queue_Mark_Opt_End_Cell_Deep(arg);
         }
 
       propagate_and_continue:;
 
         Propagate_All_GC_Marks();
-        if (f == FS_BOTTOM)
+        if (L == BOTTOM_LEVEL)
             break;
 
-        f = f->prior;
+        L = L->prior;
     }
 }
 
@@ -1509,7 +1509,7 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
 
         Mark_Guarded_Nodes();
 
-        Mark_Frame_Stack_Deep();
+        Mark_Level_Stack_Deep();
 
         Propagate_All_GC_Marks();
 

@@ -96,7 +96,7 @@ emit-include-params-macro: function [
     e/emit [prefix word items] {
         #define $<PREFIX>INCLUDE_PARAMS_OF_${WORD} \
             $[Items]; \
-            Enter_Native(frame_);
+            Enter_Native(level_);
     }
     e/emit newline
 ]

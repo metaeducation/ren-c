@@ -199,20 +199,20 @@ TVAR uintptr_t TG_Stack_Limit;    // Limit address for CPU stack.
     TVAR intptr_t TG_Num_Black_Series;
 #endif
 
-// Each time Eval_Core is called a Reb_Frame* is pushed to the "frame stack".
+// Each time Eval_Core is called a LevelStruct is pushed to the "level stack".
 // Some pushed entries will represent groups or paths being executed, and
 // some will represent functions that are gathering arguments...hence they
 // have been "pushed" but are not yet actually running.  This stack must
 // be filtered to get an understanding of something like a "backtrace of
 // currently running functions".
 //
-TVAR REBFRM *TG_Top_Frame;
-TVAR REBFRM *TG_Bottom_Frame;
-TVAR struct Reb_Frame_Source TG_Frame_Source_End;
+TVAR Level* TG_Top_Level;
+TVAR Level* TG_Bottom_Level;
+TVAR struct Reb_Level_Source TG_Level_Source_End;
 
 
-// When Drop_Frame() happens, it may have an allocated varlist Array that
-// can be reused by the next Push_Frame().  Reusing this has a significant
+// When Drop_Level() happens, it may have an allocated varlist Array that
+// can be reused by the next Push_Level().  Reusing this has a significant
 // performance impact, as opposed to paying for freeing the memory when a
 // frame is dropped and then reallocating it when the next one is pushed.
 //

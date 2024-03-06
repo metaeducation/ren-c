@@ -72,7 +72,7 @@ INLINE Value* Alloc_Value(void)
     Value* v = KNOWN(ARR_SINGLE(a));
     v->header.bits |= NODE_FLAG_ROOT; // it's trash (can't use SET_VAL_FLAGS)
 
-    LINK(a).owner = NOD(Context_For_Frame_May_Manage(FS_TOP));
+    LINK(a).owner = NOD(Context_For_Level_May_Manage(TOP_LEVEL));
     return v;
 }
 

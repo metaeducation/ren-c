@@ -183,7 +183,7 @@ INLINE void Deep_Freeze_Array(Array* a) {
 // Performance-wise, the prep process requires writing one `uintptr_t`-sized
 // header field per cell.  For fully optimum efficiency, clients filling
 // arrays can initialize the bits as part of filling in cells vs. using
-// Prep_Array.  This is done by the evaluator when building the f->varlist for
+// Prep_Array.  This is done by the evaluator when building the L->varlist for
 // a frame (it's walking the parameters anyway).  However, this is usually
 // not necessary--and sacrifices generality for code that wants to work just
 // as well on stack values and heap values.
@@ -305,11 +305,11 @@ INLINE Array* Make_Array_Core(REBLEN capacity, REBFLGS flags) {
     //
     if (flags & ARRAY_FLAG_FILE_LINE) { // most callsites const fold this
         if (
-            FS_TOP->source->array and
-            GET_SER_FLAG(FS_TOP->source->array, ARRAY_FLAG_FILE_LINE)
+            TOP_LEVEL->source->array and
+            GET_SER_FLAG(TOP_LEVEL->source->array, ARRAY_FLAG_FILE_LINE)
         ){
-            LINK(s).file = LINK(FS_TOP->source->array).file;
-            MISC(s).line = MISC(FS_TOP->source->array).line;
+            LINK(s).file = LINK(TOP_LEVEL->source->array).file;
+            MISC(s).line = MISC(TOP_LEVEL->source->array).line;
         }
         else
             CLEAR_SER_FLAG(s, ARRAY_FLAG_FILE_LINE);

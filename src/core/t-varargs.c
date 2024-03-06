@@ -168,9 +168,9 @@ bool Do_Vararg_Op_Maybe_End_Throws(
     enum Reb_Param_Class pclass =
         (param == nullptr) ? PARAM_CLASS_HARD_QUOTE :  VAL_PARAM_CLASS(param);
 
-    REBFRM *opt_vararg_frame;
+    Level* opt_vararg_level;
 
-    REBFRM *f;
+    Level* L;
     Value* shared;
     if (Is_Block_Style_Varargs(&shared, vararg)) {
         //
@@ -179,7 +179,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         // MAKE ANY-ARRAY! on a varargs (which reified the varargs into an
         // array during that creation, flattening its entire output).
 
-        opt_vararg_frame = nullptr;
+        opt_vararg_level = nullptr;
 
         if (Vararg_Op_If_No_Advance_Handled(
             out,
@@ -209,9 +209,9 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         switch (pclass) {
         case PARAM_CLASS_NORMAL:
         case PARAM_CLASS_TIGHT: {
-            DECLARE_FRAME (f_temp);
-            Push_Frame_At(
-                f_temp,
+            DECLARE_LEVEL (L_temp);
+            Push_Level_At(
+                L_temp,
                 Cell_Array(shared),
                 VAL_INDEX(shared),
                 VAL_SPECIFIER(shared),
@@ -223,14 +223,14 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             // Note: Eval_Step_In_Subframe_Throws() is not needed here because
             // this is a single use frame, whose state can be overwritten.
             //
-            if (Eval_Step_Throws(SET_END(out), f_temp)) {
-                Abort_Frame(f_temp);
+            if (Eval_Step_Throws(SET_END(out), L_temp)) {
+                Abort_Level(L_temp);
                 return true;
             }
 
             if (
-                IS_END(f_temp->value)
-                or (f_temp->flags.bits & DO_FLAG_BARRIER_HIT)
+                IS_END(L_temp->value)
+                or (L_temp->flags.bits & DO_FLAG_BARRIER_HIT)
             ){
                 SET_END(shared);
             }
@@ -239,11 +239,11 @@ bool Do_Vararg_Op_Maybe_End_Throws(
                 // be ready to use again we're throwing it away, and need to
                 // effectively "undo the prefetch" by taking it down by 1.
                 //
-                assert(f_temp->source->index > 0);
-                VAL_INDEX(shared) = f_temp->source->index - 1; // all sharings
+                assert(L_temp->source->index > 0);
+                VAL_INDEX(shared) = L_temp->source->index - 1; // all sharings
             }
 
-            Drop_Frame(f_temp);
+            Drop_Level(L_temp);
             break; }
 
         case PARAM_CLASS_HARD_QUOTE:
@@ -272,7 +272,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         if (NOT_END(shared) && VAL_INDEX(shared) >= VAL_LEN_HEAD(shared))
             SET_END(shared); // signal end to all varargs sharing value
     }
-    else if (Is_Frame_Style_Varargs_May_Fail(&f, vararg)) {
+    else if (Is_Level_Style_Varargs_May_Fail(&L, vararg)) {
         //
         // "Ordinary" case... use the original frame implied by the VARARGS!
         // (so long as it is still live on the stack)
@@ -282,15 +282,15 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         //
         assert(NOT_VAL_FLAG(vararg, VARARGS_FLAG_ENFIXED));
 
-        opt_vararg_frame = f;
+        opt_vararg_level = L;
 
         if (Vararg_Op_If_No_Advance_Handled(
             out,
             op,
-            (f->flags.bits & DO_FLAG_BARRIER_HIT)
+            (L->flags.bits & DO_FLAG_BARRIER_HIT)
                 ? END_NODE
-                : f->value, // might be END
-            f->specifier,
+                : L->value, // might be END
+            L->specifier,
             pclass
         )){
             goto type_check_and_return;
@@ -302,48 +302,48 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         //
         switch (pclass) {
         case PARAM_CLASS_NORMAL: {
-            DECLARE_SUBFRAME (child, f);
+            DECLARE_SUBLEVEL (child, L);
             if (Eval_Step_In_Subframe_Throws(
                 SET_END(out),
-                f,
+                L,
                 DO_FLAG_FULFILLING_ARG,
                 child
             )){
                 return true;
             }
-            f->gotten = nullptr; // cache must be forgotten...
+            L->gotten = nullptr; // cache must be forgotten...
             break; }
 
         case PARAM_CLASS_TIGHT: {
-            DECLARE_FRAME_CORE (child, f->source);
+            DECLARE_LEVEL_CORE (child, L->source);
             if (Eval_Step_In_Subframe_Throws(
                 SET_END(out),
-                f,
+                L,
                 DO_FLAG_FULFILLING_ARG | DO_FLAG_NO_LOOKAHEAD,
                 child
             )){
                 return true;
             }
-            f->gotten = nullptr; // cache must be forgotten...
+            L->gotten = nullptr; // cache must be forgotten...
             break; }
 
         case PARAM_CLASS_HARD_QUOTE:
-            Quote_Next_In_Frame(out, f);
+            Quote_Next_In_Level(out, L);
             break;
 
         case PARAM_CLASS_SOFT_QUOTE:
-            if (IS_QUOTABLY_SOFT(f->value)) {
+            if (IS_QUOTABLY_SOFT(L->value)) {
                 if (Eval_Value_Core_Throws(
                     SET_END(out),
-                    f->value,
-                    f->specifier
+                    L->value,
+                    L->specifier
                 )){
                     return true;
                 }
-                Fetch_Next_In_Frame(nullptr, f);
+                Fetch_Next_In_Level(nullptr, L);
             }
             else // not a soft-"exception" case, quote ordinarily
-                Quote_Next_In_Frame(out, f);
+                Quote_Next_In_Level(out, L);
             break;
 
         default:
@@ -367,14 +367,14 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         //
         // !!! Array-based varargs only store the parameter list they are
         // stamped with, not the frame.  This is because storing non-reified
-        // types in payloads is unsafe...only safe to store REBFRM* in a
+        // types in payloads is unsafe...only safe to store Level* in a
         // binding.  So that means only one frame can be pointed to per
         // vararg.  Revisit the question of how to give better errors.
         //
-        if (opt_vararg_frame == nullptr)
+        if (opt_vararg_level == nullptr)
             fail (Error_Invalid(out));
 
-        fail (Error_Arg_Type(opt_vararg_frame, param, VAL_TYPE(out)));
+        fail (Error_Arg_Type(opt_vararg_level, param, VAL_TYPE(out)));
     }
 
     // Note: may be at end now, but reflect that at *next* call
@@ -645,7 +645,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
 
     Append_Unencoded(mo->series, " => ");
 
-    REBFRM *f;
+    Level* L;
     Value* shared;
     if (Is_Block_Style_Varargs(&shared, v)) {
         if (IS_END(shared))
@@ -657,17 +657,17 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
         else
             Append_Unencoded(mo->series, "[...]"); // can't look ahead
     }
-    else if (Is_Frame_Style_Varargs_Maybe_Null(&f, v)) {
-        if (f == nullptr)
+    else if (Is_Level_Style_Varargs_Maybe_Null(&L, v)) {
+        if (L == nullptr)
             Append_Unencoded(mo->series, "!!!");
-        else if (IS_END(f->value) or (f->flags.bits & DO_FLAG_BARRIER_HIT))
+        else if (IS_END(L->value) or (L->flags.bits & DO_FLAG_BARRIER_HIT))
             Append_Unencoded(mo->series, "[]");
         else if (pclass == PARAM_CLASS_HARD_QUOTE) {
             Append_Unencoded(mo->series, "[");
-            Mold_Value(mo, f->value); // one value can be shown if hard quoted
+            Mold_Value(mo, L->value); // one value can be shown if hard quoted
             Append_Unencoded(mo->series, " ...]");
         }
-        else if (IS_BAR(f->value))
+        else if (IS_BAR(L->value))
             Append_Unencoded(mo->series, "[]");
         else
             Append_Unencoded(mo->series, "[...]");

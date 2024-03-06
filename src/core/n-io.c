@@ -243,10 +243,10 @@ DECLARE_NATIVE(new_line_q)
     const Cell* item;
 
     if (IS_VARARGS(pos)) {
-        REBFRM *f;
+        Level* L;
         Value* shared;
-        if (Is_Frame_Style_Varargs_May_Fail(&f, pos)) {
-            if (not f->source->array) {
+        if (Is_Level_Style_Varargs_May_Fail(&L, pos)) {
+            if (not L->source->array) {
                 //
                 // C va_args input to frame, as from the API, but not in the
                 // process of using string components which *might* have
@@ -256,12 +256,12 @@ DECLARE_NATIVE(new_line_q)
                 //    bool case_one = rebDid("new-line?", "[\n]");
                 //    bool case_two = rebDid(new_line_q, "[\n]");
                 //
-                assert(f->source->index == TRASHED_INDEX);
+                assert(L->source->index == TRASHED_INDEX);
                 return Init_Logic(OUT, false);
             }
 
-            arr = f->source->array;
-            item = f->value;
+            arr = L->source->array;
+            item = L->value;
         }
         else if (Is_Block_Style_Varargs(&shared, pos)) {
             arr = Cell_Array(shared);
@@ -577,7 +577,7 @@ DECLARE_NATIVE(wake_up)
         //
         DECLARE_VALUE (verb);
         Init_Word(verb, Canon(SYM_ON_WAKE_UP));
-        const Value* r = Do_Port_Action(frame_, ARG(port), verb);
+        const Value* r = Do_Port_Action(level_, ARG(port), verb);
         assert(IS_BAR(r));
         UNUSED(r);
     }

@@ -225,7 +225,7 @@ void MF_Handle(REB_MOLD *mo, const Cell* v, bool form)
 //
 REBTYPE(Handle)
 {
-    UNUSED(frame_);
+    UNUSED(level_);
 
     fail (Error_Illegal_Action(REB_HANDLE, verb));
 }

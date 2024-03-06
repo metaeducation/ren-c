@@ -75,7 +75,7 @@ INLINE bool IS_QUOTABLY_SOFT(const Cell* v) {
 //
 // This API is used internally in the implementation of Eval_Core.  It does
 // not speak in terms of arrays or indices, it works entirely by setting
-// up a call frame (f), and threading that frame's state through successive
+// up a call frame (L), and threading that frame's state through successive
 // operations, vs. setting it up and disposing it on each EVALUATE step.
 //
 // Like higher level APIs that move through the input series, this low-level
@@ -87,24 +87,24 @@ INLINE bool IS_QUOTABLY_SOFT(const Cell* v) {
 //
 // One invariant of access is that the input may only advance.  Before any
 // operations are called, any low-level client must have already seeded
-// f->value with a valid "fetched" Value*.
+// L->value with a valid "fetched" Value*.
 //
 // This privileged level of access can be used by natives that feel they can
 // optimize performance by working with the evaluator directly.
 //
 
-INLINE void Push_Frame_Core(REBFRM *f)
+INLINE void Push_Level_Core(Level* L)
 {
     // All calls to a Eval_Core_Throws() are assumed to happen at the same C
     // stack level for a pushed frame (though this is not currently enforced).
     // Hence it's sufficient to check for C stack overflow only once, e.g.
     // not on each Eval_Step_Throws() for `reduce [a | b | ... | z]`.
     //
-    if (C_STACK_OVERFLOWING(&f))
+    if (C_STACK_OVERFLOWING(&L))
         Fail_Stack_Overflow();
 
-    assert(SECOND_BYTE(f->flags) == 0); // END signal
-    assert(not (f->flags.bits & NODE_FLAG_CELL));
+    assert(SECOND_BYTE(L->flags) == 0); // END signal
+    assert(not (L->flags.bits & NODE_FLAG_CELL));
 
     // Though we can protect the value written into the target pointer 'out'
     // from GC during the course of evaluation, we can't protect the
@@ -118,7 +118,7 @@ INLINE void Push_Frame_Core(REBFRM *f)
   #ifdef STRESS_CHECK_DO_OUT_POINTER
     REBNOD *containing;
     if (
-        did (containing = Try_Find_Containing_Node_Debug(f->out))
+        did (containing = Try_Find_Containing_Node_Debug(L->out))
         and not (containing->header.bits & NODE_FLAG_CELL)
         and NOT_SER_FLAG(containing, SERIES_FLAG_DONT_RELOCATE)
     ){
@@ -126,7 +126,7 @@ INLINE void Push_Frame_Core(REBFRM *f)
         panic (containing);
     }
   #else
-    assert(not IN_DATA_STACK_DEBUG(f->out));
+    assert(not IN_DATA_STACK_DEBUG(L->out));
   #endif
 
   #ifdef DEBUG_EXPIRED_LOOKBACK
@@ -143,17 +143,17 @@ INLINE void Push_Frame_Core(REBFRM *f)
     // argument slot.  :-/
     //
   #if !defined(NDEBUG)
-    REBFRM *ftemp = FS_TOP;
-    for (; ftemp != FS_BOTTOM; ftemp = ftemp->prior) {
-        if (not Is_Action_Frame(ftemp))
+    Level* L_temp = TOP_LEVEL;
+    for (; L_temp != BOTTOM_LEVEL; L_temp = L_temp->prior) {
+        if (not Is_Action_Level(L_temp))
             continue;
-        if (Is_Action_Frame_Fulfilling(ftemp))
+        if (Is_Action_Level_Fulfilling(L_temp))
             continue;
-        if (GET_SER_INFO(ftemp->varlist, SERIES_INFO_INACCESSIBLE))
+        if (GET_SER_INFO(L_temp->varlist, SERIES_INFO_INACCESSIBLE))
             continue; // Encloser_Dispatcher() reuses args from up stack
         assert(
-            f->out < FRM_ARGS_HEAD(ftemp)
-            or f->out >= FRM_ARGS_HEAD(ftemp) + FRM_NUM_ARGS(ftemp)
+            L->out < Level_Args_Head(L_temp)
+            or L->out >= Level_Args_Head(L_temp) + Level_Num_Args(L_temp)
         );
     }
   #endif
@@ -162,41 +162,41 @@ INLINE void Push_Frame_Core(REBFRM *f)
     // function call is actually in progress, or if eval_type is just
     // REB_ACTION but doesn't have valid args/state.  The original action is a
     // good choice because it is only affected by the function call case,
-    // see Is_Action_Frame_Fulfilling().
+    // see Is_Action_Level_Fulfilling().
     //
-    f->original = nullptr;
+    L->original = nullptr;
 
-    if (not (f->flags.bits & DO_FLAG_REEVALUATE_CELL))
-        TRASH_POINTER_IF_DEBUG(f->u.defer.arg);
-    TRASH_POINTER_IF_DEBUG(f->u.defer.param);
-    TRASH_POINTER_IF_DEBUG(f->u.defer.refine);
+    if (not (L->flags.bits & DO_FLAG_REEVALUATE_CELL))
+        TRASH_POINTER_IF_DEBUG(L->u.defer.arg);
+    TRASH_POINTER_IF_DEBUG(L->u.defer.param);
+    TRASH_POINTER_IF_DEBUG(L->u.defer.refine);
 
-    TRASH_POINTER_IF_DEBUG(f->opt_label);
+    TRASH_POINTER_IF_DEBUG(L->opt_label);
   #if defined(DEBUG_FRAME_LABELS)
-    TRASH_POINTER_IF_DEBUG(f->label_utf8);
+    TRASH_POINTER_IF_DEBUG(L->label_utf8);
   #endif
 
   #if !defined(NDEBUG)
     //
-    // !!! TBD: the relevant file/line update when f->source->array changes
+    // !!! TBD: the relevant file/line update when L->source->array changes
     //
-    Option(String*) file = FRM_FILE(f);
+    Option(String*) file = File_Of_Level(L);
     if (file)
-        f->file = String_Head(unwrap(file));  // UCS-2 sadly, in old branch
+        L->file_ucs2 = String_Head(unwrap(file));  // sadly UCS-2 in old branch
     else
-        f->file = nullptr;
-    f->line = FRM_LINE(f);
+        L->file_ucs2 = nullptr;
+    L->line = LVL_LINE(L);
   #endif
 
-    f->prior = TG_Top_Frame;
-    TG_Top_Frame = f;
+    L->prior = TG_Top_Level;
+    TG_Top_Level = L;
 
-    TRASH_POINTER_IF_DEBUG(f->varlist); // must Try_Reuse_Varlist() or fill in
+    TRASH_POINTER_IF_DEBUG(L->varlist); // must Try_Reuse_Varlist() or fill in
 
     // If the source for the frame is a Array*, then we want to temporarily
     // lock that array against mutations.
     //
-    if (FRM_IS_VALIST(f)) {
+    if (LVL_IS_VALIST(L)) {
         //
         // There's nothing to put a hold on while it's a va_list-based frame.
         // But a GC might occur and "Reify" it, in which case the array
@@ -204,83 +204,83 @@ INLINE void Push_Frame_Core(REBFRM *f)
         // the frame is finished.
     }
     else {
-        if (GET_SER_INFO(f->source->array, SERIES_INFO_HOLD))
+        if (GET_SER_INFO(L->source->array, SERIES_INFO_HOLD))
             NOOP; // already temp-locked
         else {
-            SET_SER_INFO(f->source->array, SERIES_INFO_HOLD);
-            f->flags.bits |= DO_FLAG_TOOK_FRAME_HOLD;
+            SET_SER_INFO(L->source->array, SERIES_INFO_HOLD);
+            L->flags.bits |= DO_FLAG_TOOK_FRAME_HOLD;
         }
     }
 
   #if defined(DEBUG_BALANCE_STATE)
-    SNAP_STATE(&f->state); // to make sure stack balances, etc.
-    f->state.dsp = f->dsp_orig;
+    SNAP_STATE(&L->state); // to make sure stack balances, etc.
+    L->state.dsp = L->dsp_orig;
   #endif
 }
 
 // Pretend the input source has ended; used with REB_E_PROCESS_ACTION.
 //
-INLINE void Push_Frame_At_End(REBFRM *f, REBFLGS flags) {
-    f->flags = Endlike_Header(flags);
+INLINE void Push_Level_At_End(Level* L, REBFLGS flags) {
+    L->flags = Endlike_Header(flags);
 
-    assert(f->source == &TG_Frame_Source_End); // see DECLARE_END_FRAME
-    f->gotten = nullptr;
-    SET_FRAME_VALUE(f, END_NODE);
-    f->specifier = SPECIFIED;
+    assert(L->source == &TG_Level_Source_End); // see DECLARE_END_LEVEL
+    L->gotten = nullptr;
+    SET_FRAME_VALUE(L, END_NODE);
+    L->specifier = SPECIFIED;
 
-    Push_Frame_Core(f);
+    Push_Level_Core(L);
 }
 
-INLINE void UPDATE_EXPRESSION_START(REBFRM *f) {
-    f->expr_index = f->source->index; // this is garbage if DO_FLAG_VA_LIST
+INLINE void UPDATE_EXPRESSION_START(Level* L) {
+    L->expr_index = L->source->index; // this is garbage if DO_FLAG_VA_LIST
 }
 
-INLINE void Reuse_Varlist_If_Available(REBFRM *f) {
-    assert(IS_POINTER_TRASH_DEBUG(f->varlist));
+INLINE void Reuse_Varlist_If_Available(Level* L) {
+    assert(IS_POINTER_TRASH_DEBUG(L->varlist));
     if (not TG_Reuse)
-        f->varlist = nullptr;
+        L->varlist = nullptr;
     else {
-        f->varlist = TG_Reuse;
+        L->varlist = TG_Reuse;
         TG_Reuse = LINK(TG_Reuse).reuse;
-        f->rootvar = cast(Value*, SER(f->varlist)->content.dynamic.data);
-        LINK(f->varlist).keysource = NOD(f);
+        L->rootvar = cast(Value*, SER(L->varlist)->content.dynamic.data);
+        LINK(L->varlist).keysource = NOD(L);
     }
 }
 
-INLINE void Push_Frame_At(
-    REBFRM *f,
+INLINE void Push_Level_At(
+    Level* L,
     Array* array,
     REBLEN index,
     REBSPC *specifier,
     REBFLGS flags
 ){
-    f->flags = Endlike_Header(flags);
+    L->flags = Endlike_Header(flags);
 
-    f->gotten = nullptr; // Eval_Core_Throws() must fetch for REB_WORD, etc.
-    SET_FRAME_VALUE(f, Array_At(array, index));
+    L->gotten = nullptr; // Eval_Core_Throws() must fetch for REB_WORD, etc.
+    SET_FRAME_VALUE(L, Array_At(array, index));
 
-    f->source->vaptr = nullptr;
-    f->source->array = array;
-    f->source->index = index + 1;
-    f->source->pending = f->value + 1;
+    L->source->vaptr = nullptr;
+    L->source->array = array;
+    L->source->index = index + 1;
+    L->source->pending = L->value + 1;
 
-    f->specifier = specifier;
+    L->specifier = specifier;
 
     // Frames are pushed to reuse for several sequential operations like
     // ANY, ALL, CASE, REDUCE.  It is allowed to change the output cell for
     // each evaluation.  But the GC expects initialized bits in the output
     // slot at all times; use an unwritable END until the first eval call.
     //
-    f->out = m_cast(Value*, END_NODE);
+    L->out = m_cast(Value*, END_NODE);
 
-    Push_Frame_Core(f);
-    Reuse_Varlist_If_Available(f);
+    Push_Level_Core(L);
+    Reuse_Varlist_If_Available(L);
 }
 
-INLINE void Push_Frame(REBFRM *f, const Value* v)
+INLINE void Push_Level(Level* L, const Value* v)
 {
-    Push_Frame_At(
-        f, Cell_Array(v), VAL_INDEX(v), VAL_SPECIFIER(v), DO_MASK_NONE
+    Push_Level_At(
+        L, Cell_Array(v), VAL_INDEX(v), VAL_SPECIFIER(v), DO_MASK_NONE
     );
 }
 
@@ -292,63 +292,63 @@ INLINE void Push_Frame(REBFRM *f, const Value* v)
 // code has to be factored out (because a C va_list cannot have its first
 // parameter in the variadic).
 //
-INLINE void Set_Frame_Detected_Fetch(
+INLINE void Set_Level_Detected_Fetch(
     const Cell* *opt_lookback,
-    REBFRM *f,
+    Level* L,
     const void *p
 ){
-    // This is the last chance we'll have to see f->value.  So if we are
+    // This is the last chance we'll have to see L->value.  So if we are
     // supposed to be freeing it or releasing it, then it must be proxied
     // into a place where the data will be safe long enough for lookback.
 
-    if (NOT_VAL_FLAG(f->value, NODE_FLAG_ROOT)) {
+    if (NOT_VAL_FLAG(L->value, NODE_FLAG_ROOT)) {
         if (opt_lookback)
-            *opt_lookback = f->value; // non-API values must be stable/GC-safe
+            *opt_lookback = L->value; // non-API values must be stable/GC-safe
         goto detect;
     }
 
     Array* a; // ^--goto
-    a = Singular_From_Cell(f->value);
+    a = Singular_From_Cell(L->value);
     if (NOT_SER_INFO(a, SERIES_INFO_API_RELEASE)) {
         if (opt_lookback)
-            *opt_lookback = f->value; // keep-alive API value or instruction
+            *opt_lookback = L->value; // keep-alive API value or instruction
         goto detect;
     }
 
     if (opt_lookback) {
         //
-        // Eval_Core_Throws() is wants the old f->value, but we're going to
+        // Eval_Core_Throws() is wants the old L->value, but we're going to
         // free it.  It has to be kept alive -and- kept safe from GC.  e.g.
         //
         //     Value* word = rebValue("make word! {hello}");
         //     rebValue(rebR(word), "-> (recycle :the)");
         //
         // The `current` cell the evaluator is looking at is the WORD!, then
-        // f->value receives the "shove" `->`.  The shove runs the code in
+        // L->value receives the "shove" `->`.  The shove runs the code in
         // the GROUP!.  But there are no other references to `hello` after
         // the Free_Value() done by rebR(), so it's a candidate for recycle,
         // which would mean shoving a bad `current` as the arg to `:the`
         //
-        // The FRM_CELL(f) is used as the GC-safe location proxied to.
+        // The Level_Spare(L) is used as the GC-safe location proxied to.
         //
-        Copy_Cell(FRM_CELL(f), KNOWN(f->value));
-        if (GET_VAL_FLAG(f->value, VALUE_FLAG_EVAL_FLIP))
-            SET_VAL_FLAG(FRM_CELL(f), VALUE_FLAG_EVAL_FLIP);
-        *opt_lookback = FRM_CELL(f);
+        Copy_Cell(Level_Spare(L), KNOWN(L->value));
+        if (GET_VAL_FLAG(L->value, VALUE_FLAG_EVAL_FLIP))
+            SET_VAL_FLAG(Level_Spare(L), VALUE_FLAG_EVAL_FLIP);
+        *opt_lookback = Level_Spare(L);
     }
 
     if (GET_SER_INFO(a, SERIES_INFO_API_INSTRUCTION))
-        Free_Instruction(Singular_From_Cell(f->value));
+        Free_Instruction(Singular_From_Cell(L->value));
     else
-        rebRelease(cast(const Value*, f->value));
+        rebRelease(cast(const Value*, L->value));
 
 
   detect:;
 
     if (not p) { // libRebol's null/<opt> (IS_NULLED prohibited below)
 
-        f->source->array = nullptr;
-        f->value = NULLED_CELL;
+        L->source->array = nullptr;
+        L->value = NULLED_CELL;
 
     } else switch (Detect_Rebol_Pointer(p)) {
 
@@ -363,7 +363,7 @@ INLINE void Set_Frame_Detected_Fetch(
             filename,
             start_line,
             cast(const Byte*, p),
-            f->source->vaptr
+            L->source->vaptr
         );
 
         // !!! In the working definition, the "topmost level" of a variadic
@@ -411,17 +411,17 @@ INLINE void Set_Frame_Detected_Fetch(
         // !!! for now, assume scan went to the end; ultimately it would need
         // to pass the "source".
         //
-        f->source->vaptr = nullptr;
+        L->source->vaptr = nullptr;
 
         if (DSP == dsp_orig) {
             //
             // This happens when somone says rebValue(..., "", ...) or similar,
             // and gets an empty array from a string scan.  It's not legal
-            // to put an END in f->value, and it's unknown if the variadic
+            // to put an END in L->value, and it's unknown if the variadic
             // feed is actually over so as to put null... so get another
             // value out of the va_list and keep going.
             //
-            p = va_arg(*f->source->vaptr, const void*);
+            p = va_arg(*L->source->vaptr, const void*);
             goto detect;
         }
 
@@ -434,12 +434,12 @@ INLINE void Set_Frame_Detected_Fetch(
         //
         MANAGE_ARRAY(reified);
 
-        f->value = ARR_HEAD(reified);
-        f->source->pending = f->value + 1; // may be END
-        f->source->array = reified;
-        f->source->index = 1;
+        L->value = ARR_HEAD(reified);
+        L->source->pending = L->value + 1; // may be END
+        L->source->array = reified;
+        L->source->index = 1;
 
-        assert(GET_SER_FLAG(f->source->array, ARRAY_FLAG_NULLEDS_LEGAL));
+        assert(GET_SER_FLAG(L->source->array, ARRAY_FLAG_NULLEDS_LEGAL));
         break; }
 
       case DETECTED_AS_SERIES: { // "instructions" like rebEval(), rebUneval()
@@ -451,7 +451,7 @@ INLINE void Set_Frame_Detected_Fetch(
         //
         assert(GET_SER_INFO(instruction, SERIES_INFO_API_INSTRUCTION));
         assert(NOT_SER_FLAG(instruction, NODE_FLAG_MANAGED));
-        f->value = ARR_SINGLE(instruction);
+        L->value = ARR_SINGLE(instruction);
         break; }
 
       case DETECTED_AS_FREED_SERIES:
@@ -465,12 +465,12 @@ INLINE void Set_Frame_Detected_Fetch(
         // If the cell is in an API holder with SERIES_INFO_API_RELEASE then
         // it will be released on the *next* call (see top of function)
 
-        f->source->array = nullptr;
-        f->value = cell; // note that END is detected separately
+        L->source->array = nullptr;
+        L->value = cell; // note that END is detected separately
         assert(
-            not IS_RELATIVE(f->value) or (
-                IS_NULLED(f->value)
-                and (f->flags.bits & DO_FLAG_EXPLICIT_EVALUATE)
+            not IS_RELATIVE(L->value) or (
+                IS_NULLED(L->value)
+                and (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE)
             )
         );
         break; }
@@ -479,14 +479,14 @@ INLINE void Set_Frame_Detected_Fetch(
         //
         // We're at the end of the variadic input, so end of the line.
         //
-        f->value = END_NODE;
-        TRASH_POINTER_IF_DEBUG(f->source->pending);
+        L->value = END_NODE;
+        TRASH_POINTER_IF_DEBUG(L->source->pending);
 
         // The va_end() is taken care of here, or if there is a throw/fail it
-        // is taken care of by Abort_Frame_Core()
+        // is taken care of by Abort_Level_Core()
         //
-        va_end(*f->source->vaptr);
-        f->source->vaptr = nullptr;
+        va_end(*L->source->vaptr);
+        L->source->vaptr = nullptr;
 
         // !!! Error reporting expects there to be an array.  The whole story
         // of errors when there's a va_list is not told very well, and what
@@ -494,8 +494,8 @@ INLINE void Set_Frame_Detected_Fetch(
         // are reified from the beginning, else there's not going to be
         // a way to present errors in context.  Fake an empty array for now.
         //
-        f->source->array = EMPTY_ARRAY;
-        f->source->index = 0;
+        L->source->array = EMPTY_ARRAY;
+        L->source->index = 0;
         break; }
 
       case DETECTED_AS_FREED_CELL:
@@ -508,21 +508,21 @@ INLINE void Set_Frame_Detected_Fetch(
 
 
 //
-// Fetch_Next_In_Frame() (see notes above)
+// Fetch_Next_In_Level() (see notes above)
 //
 // Once a va_list is "fetched", it cannot be "un-fetched".  Hence only one
-// unit of fetch is done at a time, into f->value.  f->source->pending thus
+// unit of fetch is done at a time, into L->value.  L->source->pending thus
 // must hold a signal that data remains in the va_list and it should be
 // consulted further.  That signal is an END marker.
 //
-// More generally, an END marker in f->source->pending for this routine is a
+// More generally, an END marker in L->source->pending for this routine is a
 // signal that the vaptr (if any) should be consulted next.
 //
-INLINE void Fetch_Next_In_Frame(
+INLINE void Fetch_Next_In_Level(
     const Cell* *opt_lookback,
-    REBFRM *f
+    Level* L
 ){
-    assert(NOT_END(f->value)); // caller should test this first
+    assert(NOT_END(L->value)); // caller should test this first
 
   #ifdef DEBUG_EXPIRED_LOOKBACK
     if (f->stress) {
@@ -532,16 +532,16 @@ INLINE void Fetch_Next_In_Frame(
     }
   #endif
 
-    // We are changing f->value, and thus by definition any f->gotten value
+    // We are changing L->value, and thus by definition any L->gotten value
     // will be invalid.  It might be "wasteful" to always set this to END,
     // especially if it's going to be overwritten with the real fetch...but
-    // at a source level, having every call to Fetch_Next_In_Frame have to
-    // explicitly set f->gotten to null is overkill.  Could be split into
-    // a version that just trashes f->gotten in the debug build vs. END.
+    // at a source level, having every call to Fetch_Next_In_Level have to
+    // explicitly set L->gotten to null is overkill.  Could be split into
+    // a version that just trashes L->gotten in the debug build vs. END.
     //
-    f->gotten = nullptr;
+    L->gotten = nullptr;
 
-    if (NOT_END(f->source->pending)) {
+    if (NOT_END(L->source->pending)) {
         //
         // We assume the ->pending value lives in a source array, and can
         // just be incremented since the array has SERIES_INFO_HOLD while it
@@ -549,40 +549,40 @@ INLINE void Fetch_Next_In_Frame(
         // means the release build doesn't need to call Array_At().
         //
         assert(
-            f->source->array // incrementing plain array of cells
-            or f->source->pending == Array_At(f->source->array, f->source->index)
+            L->source->array // incrementing plain array of cells
+            or L->source->pending == Array_At(L->source->array, L->source->index)
         );
 
         if (opt_lookback)
-            *opt_lookback = f->value; // must be non-movable, GC-safe
+            *opt_lookback = L->value; // must be non-movable, GC-safe
 
-        f->value = f->source->pending;
+        L->value = L->source->pending;
 
-        ++f->source->pending; // might be becoming an END marker, here
-        ++f->source->index;
+        ++L->source->pending; // might be becoming an END marker, here
+        ++L->source->index;
     }
-    else if (not f->source->vaptr) {
+    else if (not L->source->vaptr) {
         //
         // The frame was either never variadic, or it was but got spooled into
-        // an array by Reify_Va_To_Array_In_Frame().  The first END we hit
+        // an array by Reify_Va_To_Array_In_Level().  The first END we hit
         // is the full stop end.
         //
         if (opt_lookback)
-            *opt_lookback = f->value; // all values would have been spooled
+            *opt_lookback = L->value; // all values would have been spooled
 
-        f->value = END_NODE;
-        TRASH_POINTER_IF_DEBUG(f->source->pending);
+        L->value = END_NODE;
+        TRASH_POINTER_IF_DEBUG(L->source->pending);
 
-        ++f->source->index; // for consistency in index termination state
+        ++L->source->index; // for consistency in index termination state
 
-        if (f->flags.bits & DO_FLAG_TOOK_FRAME_HOLD) {
-            assert(GET_SER_INFO(f->source->array, SERIES_INFO_HOLD));
-            CLEAR_SER_INFO(f->source->array, SERIES_INFO_HOLD);
+        if (L->flags.bits & DO_FLAG_TOOK_FRAME_HOLD) {
+            assert(GET_SER_INFO(L->source->array, SERIES_INFO_HOLD));
+            CLEAR_SER_INFO(L->source->array, SERIES_INFO_HOLD);
 
             // !!! Future features may allow you to move on to another array.
             // If so, the "hold" bit would need to be reset like this.
             //
-            f->flags.bits &= ~DO_FLAG_TOOK_FRAME_HOLD;
+            L->flags.bits &= ~DO_FLAG_TOOK_FRAME_HOLD;
         }
     }
     else {
@@ -590,9 +590,9 @@ INLINE void Fetch_Next_In_Frame(
         // and handled in different ways.  Notably, a UTF-8 string can be
         // differentiated and loaded.
         //
-        const void *p = va_arg(*f->source->vaptr, const void*);
-        f->source->index = TRASHED_INDEX; // avoids warning in release build
-        Set_Frame_Detected_Fetch(opt_lookback, f, p);
+        const void *p = va_arg(*L->source->vaptr, const void*);
+        L->source->index = TRASHED_INDEX; // avoids warning in release build
+        Set_Level_Detected_Fetch(opt_lookback, L, p);
     }
 
   #ifdef DEBUG_EXPIRED_LOOKBACK
@@ -605,25 +605,25 @@ INLINE void Fetch_Next_In_Frame(
 }
 
 
-INLINE void Quote_Next_In_Frame(Value* dest, REBFRM *f) {
-    Derelativize(dest, f->value, f->specifier);
-    Fetch_Next_In_Frame(nullptr, f);
+INLINE void Quote_Next_In_Level(Value* dest, Level* L) {
+    Derelativize(dest, L->value, L->specifier);
+    Fetch_Next_In_Level(nullptr, L);
 }
 
 
-INLINE void Abort_Frame(REBFRM *f) {
-    if (f->varlist and NOT_SER_FLAG(f->varlist, NODE_FLAG_MANAGED))
-        GC_Kill_Series(SER(f->varlist)); // not alloc'd with manuals tracking
-    TRASH_POINTER_IF_DEBUG(f->varlist);
+INLINE void Abort_Level(Level* L) {
+    if (L->varlist and NOT_SER_FLAG(L->varlist, NODE_FLAG_MANAGED))
+        GC_Kill_Series(SER(L->varlist)); // not alloc'd with manuals tracking
+    TRASH_POINTER_IF_DEBUG(L->varlist);
 
-    // Abort_Frame() handles any work that wouldn't be done done naturally by
+    // Abort_Level() handles any work that wouldn't be done done naturally by
     // feeding a frame to its natural end.
     //
-    if (IS_END(f->value))
+    if (IS_END(L->value))
         goto pop;
 
-    if (FRM_IS_VALIST(f)) {
-        assert(not (f->flags.bits & DO_FLAG_TOOK_FRAME_HOLD));
+    if (LVL_IS_VALIST(L)) {
+        assert(not (L->flags.bits & DO_FLAG_TOOK_FRAME_HOLD));
 
         // Aborting valist frames is done by just feeding all the values
         // through until the end.  This is assumed to do any work, such
@@ -644,84 +644,84 @@ INLINE void Abort_Frame(REBFRM *f) {
         // any faster...they're usually reified into an array anyway, so
         // the frame processing the array will take the other branch.
 
-        while (NOT_END(f->value))
-            Fetch_Next_In_Frame(nullptr, f);
+        while (NOT_END(L->value))
+            Fetch_Next_In_Level(nullptr, L);
     }
     else {
-        if (f->flags.bits & DO_FLAG_TOOK_FRAME_HOLD) {
+        if (L->flags.bits & DO_FLAG_TOOK_FRAME_HOLD) {
             //
             // The frame was either never variadic, or it was but got spooled
-            // into an array by Reify_Va_To_Array_In_Frame()
+            // into an array by Reify_Va_To_Array_In_Level()
             //
-            assert(GET_SER_INFO(f->source->array, SERIES_INFO_HOLD));
-            CLEAR_SER_INFO(f->source->array, SERIES_INFO_HOLD);
+            assert(GET_SER_INFO(L->source->array, SERIES_INFO_HOLD));
+            CLEAR_SER_INFO(L->source->array, SERIES_INFO_HOLD);
         }
     }
 
 pop:;
 
-    assert(TG_Top_Frame == f);
-    TG_Top_Frame = f->prior;
+    assert(TG_Top_Level == L);
+    TG_Top_Level = L->prior;
 }
 
 
-INLINE void Drop_Frame_Core(REBFRM *f) {
+INLINE void Drop_Level_Core(Level* L) {
   #if defined(DEBUG_EXPIRED_LOOKBACK)
     free(f->stress);
   #endif
 
-    if (f->varlist) {
-        assert(NOT_SER_FLAG(f->varlist, NODE_FLAG_MANAGED));
-        LINK(f->varlist).reuse = TG_Reuse;
-        TG_Reuse = f->varlist;
+    if (L->varlist) {
+        assert(NOT_SER_FLAG(L->varlist, NODE_FLAG_MANAGED));
+        LINK(L->varlist).reuse = TG_Reuse;
+        TG_Reuse = L->varlist;
     }
-    TRASH_POINTER_IF_DEBUG(f->varlist);
+    TRASH_POINTER_IF_DEBUG(L->varlist);
 
-    assert(TG_Top_Frame == f);
-    TG_Top_Frame = f->prior;
+    assert(TG_Top_Level == L);
+    TG_Top_Level = L->prior;
 }
 
-INLINE void Drop_Frame_Unbalanced(REBFRM *f) {
+INLINE void Drop_Level_Unbalanced(Level* L) {
   #if defined(DEBUG_BALANCE_STATE)
     //
     // To avoid slowing down the debug build a lot, Eval_Core_Throws() doesn't
     // check this every cycle, just on drop.  But if it's hard to find which
     // exact cycle caused the problem, see BALANCE_CHECK_EVERY_EVALUATION_STEP
     //
-    f->state.dsp = DSP; // e.g. Reduce_To_Stack_Throws() doesn't want check
-    f->state.mold_buf_len = SER_LEN(MOLD_BUF); // REMOVE-EACH accumulates
-    ASSERT_STATE_BALANCED(&f->state);
+    L->state.dsp = DSP; // e.g. Reduce_To_Stack_Throws() doesn't want check
+    L->state.mold_buf_len = SER_LEN(MOLD_BUF); // REMOVE-EACH accumulates
+    ASSERT_STATE_BALANCED(&L->state);
   #endif
-    Drop_Frame_Core(f);
+    Drop_Level_Core(L);
 }
 
-INLINE void Drop_Frame(REBFRM *f)
+INLINE void Drop_Level(Level* L)
 {
-    if (f->flags.bits & DO_FLAG_TO_END)
-        assert(IS_END(f->value) or THROWN(f->out));
+    if (L->flags.bits & DO_FLAG_TO_END)
+        assert(IS_END(L->value) or THROWN(L->out));
 
-    assert(DSP == f->dsp_orig); // Drop_Frame_Core() does not check
-    Drop_Frame_Unbalanced(f);
+    assert(DSP == L->dsp_orig); // Drop_Level_Core() does not check
+    Drop_Level_Unbalanced(L);
 }
 
 
 // This is a very light wrapper over Eval_Core_Throws(), which is used with
-// Push_Frame_At() for operations like ANY or REDUCE that wish to perform
+// Push_Level_At() for operations like ANY or REDUCE that wish to perform
 // several successive operations on an array, without creating a new frame
 // each time.
 //
 INLINE bool Eval_Step_Throws(
     Value* out,
-    REBFRM *f
+    Level* L
 ){
     assert(IS_END(out));
 
-    assert(not (f->flags.bits & (DO_FLAG_TO_END | DO_FLAG_NO_LOOKAHEAD)));
-    uintptr_t prior_flags = f->flags.bits;
+    assert(not (L->flags.bits & (DO_FLAG_TO_END | DO_FLAG_NO_LOOKAHEAD)));
+    uintptr_t prior_flags = L->flags.bits;
 
-    f->out = out;
-    f->dsp_orig = DSP;
-    bool threw = Eval_Core_Throws(f);  // should already be pushed
+    L->out = out;
+    L->dsp_orig = DSP;
+    bool threw = Eval_Core_Throws(L);  // should already be pushed
 
     // The & on the following line is purposeful.  See Init_Endlike_Header.
     // DO_FLAG_NO_LOOKAHEAD may be set by an operation like ELIDE.
@@ -729,7 +729,7 @@ INLINE bool Eval_Step_Throws(
     // Since this routine is used by BLOCK!-style varargs, it must retain
     // knowledge of if BAR! was hit.
     //
-    (&f->flags)->bits = prior_flags | (f->flags.bits & DO_FLAG_BARRIER_HIT);
+    (&L->flags)->bits = prior_flags | (L->flags.bits & DO_FLAG_BARRIER_HIT);
 
     return threw;
 }
@@ -742,17 +742,17 @@ INLINE bool Eval_Step_Throws(
 //
 INLINE bool Eval_Step_Maybe_Stale_Throws(
     Value* out,
-    REBFRM *f
+    Level* L
 ){
     assert(NOT_END(out));
 
-    assert(not (f->flags.bits & (DO_FLAG_TO_END | DO_FLAG_NO_LOOKAHEAD)));
-    uintptr_t prior_flags = f->flags.bits;
-    f->flags.bits |= DO_FLAG_PRESERVE_STALE;
+    assert(not (L->flags.bits & (DO_FLAG_TO_END | DO_FLAG_NO_LOOKAHEAD)));
+    uintptr_t prior_flags = L->flags.bits;
+    L->flags.bits |= DO_FLAG_PRESERVE_STALE;
 
-    f->out = out;
-    f->dsp_orig = DSP;
-    bool threw = Eval_Core_Throws(f);  // should already be pushed
+    L->out = out;
+    L->dsp_orig = DSP;
+    bool threw = Eval_Core_Throws(L);  // should already be pushed
 
     // The & on the following line is purposeful.  See Init_Endlike_Header.
     // DO_FLAG_NO_LOOKAHEAD may be set by an operation like ELIDE.
@@ -760,13 +760,13 @@ INLINE bool Eval_Step_Maybe_Stale_Throws(
     // Since this routine is used by BLOCK!-style varargs, it must retain
     // knowledge of if BAR! was hit.
     //
-    (&f->flags)->bits = prior_flags | (f->flags.bits & DO_FLAG_BARRIER_HIT);
+    (&L->flags)->bits = prior_flags | (L->flags.bits & DO_FLAG_BARRIER_HIT);
 
     return threw;
 }
 
 
-// Bit heavier wrapper of Eval_Core_Throws() than Eval_Step_In_Frame_Throws().
+// Bit heavier wrapper of Eval_Core_Throws() than Eval_Step_In_Level_Throws().
 // It also reuses the frame...but has to clear and restore the frame's
 // flags.  It is currently used only by SET-WORD! and SET-PATH!.
 //
@@ -775,15 +775,15 @@ INLINE bool Eval_Step_Maybe_Stale_Throws(
 // the SET-WORD! needs to be put back in place before returning, so that the
 // set knows where to write.  The caller handles this with the data stack.
 //
-INLINE bool Eval_Step_Mid_Frame_Throws(REBFRM *f, REBFLGS flags) {
-    assert(f->dsp_orig == DSP);
+INLINE bool Eval_Step_Mid_Level_Throws(Level* L, REBFLGS flags) {
+    assert(L->dsp_orig == DSP);
 
-    REBFLGS prior_flags = f->flags.bits;
-    f->flags = Endlike_Header(flags);
+    REBFLGS prior_flags = L->flags.bits;
+    L->flags = Endlike_Header(flags);
 
-    bool threw = Eval_Core_Throws(f); // should already be pushed
+    bool threw = Eval_Core_Throws(L); // should already be pushed
 
-    f->flags.bits = prior_flags; // e.g. restore DO_FLAG_TO_END
+    L->flags.bits = prior_flags; // e.g. restore DO_FLAG_TO_END
     return threw;
 }
 
@@ -792,8 +792,8 @@ INLINE bool Eval_Step_Mid_Frame_Throws(REBFRM *f, REBFLGS flags) {
 // state which would be overwritten in the parent frame.  For the moment,
 // that only happens if a function call is in effect -or- if a SET-WORD! or
 // SET-PATH! are running with an expiring `current` in effect.  Else it is
-// more efficient to call Eval_Step_In_Frame_Throws(), or the also lighter
-// Eval_Step_In_Mid_Frame_Throws().
+// more efficient to call Eval_Step_In_Level_Throws(), or the also lighter
+// Eval_Step_In_Mid_Level_Throws().
 //
 // !!! This operation used to try and optimize some cases without using a
 // subframe.  But checking for whether an optimization would be legal or not
@@ -808,9 +808,9 @@ INLINE bool Eval_Step_Mid_Frame_Throws(REBFRM *f, REBFLGS flags) {
 //
 INLINE bool Eval_Step_In_Subframe_Throws(
     Value* out,
-    REBFRM *higher, // may not be direct parent (not child->prior upon push!)
+    Level* higher,  // may not be direct parent (not child->prior upon push!)
     REBFLGS flags,
-    REBFRM *child // passed w/dsp_orig preload, refinements can be on stack
+    Level* child  // passed w/dsp_orig preload, refinements can be on stack
 ){
     child->out = out;
 
@@ -821,8 +821,8 @@ INLINE bool Eval_Step_In_Subframe_Throws(
     child->gotten = higher->gotten;
     child->specifier = higher->specifier;
 
-    // f->gotten is never marked for GC, because it should never be kept
-    // alive across arbitrary evaluations (f->value should keep it alive).
+    // L->gotten is never marked for GC, because it should never be kept
+    // alive across arbitrary evaluations (L->value should keep it alive).
     // We'll write it back with an updated value from the child after the
     // call, and no one should be able to read it until then (e.g. the caller
     // can't be a variadic frame that is executing yet)
@@ -840,14 +840,14 @@ INLINE bool Eval_Step_In_Subframe_Throws(
     // be the ->prior, so it's important not to corrupt it based on assuming
     // it is the variadic frame.
     //
-    Push_Frame_Core(child);
+    Push_Level_Core(child);
     Reuse_Varlist_If_Available(child);
     bool threw = Eval_Core_Throws(child);
-    Drop_Frame(child);
+    Drop_Level(child);
 
     assert(
         IS_END(child->value)
-        or FRM_IS_VALIST(child)
+        or LVL_IS_VALIST(child)
         or old_index != child->source->index
         or (flags & DO_FLAG_REEVALUATE_CELL)
         or threw
@@ -877,47 +877,47 @@ INLINE REBIXO Eval_Array_At_Core(
     REBSPC *specifier, // must match array, but also opt_first if relative
     REBFLGS flags // DO_FLAG_TO_END, DO_FLAG_EXPLICIT_EVALUATE, etc.
 ){
-    DECLARE_FRAME (f);
-    f->flags = Endlike_Header(flags); // SET_FRAME_VALUE() *could* use
+    DECLARE_LEVEL (L);
+    L->flags = Endlike_Header(flags); // SET_FRAME_VALUE() *could* use
 
-    f->source->vaptr = nullptr;
-    f->source->array = array;
-    f->gotten = nullptr; // SET_FRAME_VALUE() asserts this is nullptr
+    L->source->vaptr = nullptr;
+    L->source->array = array;
+    L->gotten = nullptr; // SET_FRAME_VALUE() asserts this is nullptr
     if (opt_first) {
-        SET_FRAME_VALUE(f, opt_first);
-        f->source->index = index;
-        f->source->pending = Array_At(array, index);
-        assert(NOT_END(f->value));
+        SET_FRAME_VALUE(L, opt_first);
+        L->source->index = index;
+        L->source->pending = Array_At(array, index);
+        assert(NOT_END(L->value));
     }
     else {
-        SET_FRAME_VALUE(f, Array_At(array, index));
-        f->source->index = index + 1;
-        f->source->pending = f->value + 1;
-        if (IS_END(f->value))
+        SET_FRAME_VALUE(L, Array_At(array, index));
+        L->source->index = index + 1;
+        L->source->pending = L->value + 1;
+        if (IS_END(L->value))
             return END_FLAG;
     }
 
-    f->out = out;
-    f->specifier = specifier;
+    L->out = out;
+    L->specifier = specifier;
 
-    Push_Frame_Core(f);
-    Reuse_Varlist_If_Available(f);
-    bool threw = Eval_Core_Throws(f);
-    Drop_Frame(f);
+    Push_Level_Core(L);
+    Reuse_Varlist_If_Available(L);
+    bool threw = Eval_Core_Throws(L);
+    Drop_Level(L);
 
     if (threw)
         return THROWN_FLAG;
 
     assert(
         not (flags & DO_FLAG_TO_END)
-        or f->source->index == ARR_LEN(array) + 1
+        or L->source->index == ARR_LEN(array) + 1
     );
-    return f->source->index;
+    return L->source->index;
 }
 
 
 //
-//  Reify_Va_To_Array_In_Frame: C
+//  Reify_Va_To_Array_In_Level: C
 //
 // For performance and memory usage reasons, a variadic C function call that
 // wants to invoke the evaluator with just a comma-delimited list of Value*
@@ -939,63 +939,63 @@ INLINE REBIXO Eval_Array_At_Core(
 // (unless told that it's not truncated, e.g. a debug mode that calls it
 // before any items are consumed).
 //
-INLINE void Reify_Va_To_Array_In_Frame(
-    REBFRM *f,
+INLINE void Reify_Va_To_Array_In_Level(
+    Level* L,
     bool truncated
 ) {
     REBDSP dsp_orig = DSP;
 
-    assert(FRM_IS_VALIST(f));
+    assert(LVL_IS_VALIST(L));
 
     if (truncated) {
         DS_PUSH_TRASH;
         Init_Word(DS_TOP, Canon(SYM___OPTIMIZED_OUT__));
     }
 
-    if (NOT_END(f->value)) {
-        assert(f->source->pending == END_NODE);
+    if (NOT_END(L->value)) {
+        assert(L->source->pending == END_NODE);
 
         do {
             // may be a NULLED cell.  Preserve VALUE_FLAG_EVAL_FLIP flag.
-            DS_PUSH_RELVAL_KEEP_EVAL_FLIP(f->value, f->specifier);
-            Fetch_Next_In_Frame(nullptr, f);
-        } while (NOT_END(f->value));
+            DS_PUSH_RELVAL_KEEP_EVAL_FLIP(L->value, L->specifier);
+            Fetch_Next_In_Level(nullptr, L);
+        } while (NOT_END(L->value));
 
         if (truncated)
-            f->source->index = 2; // skip the --optimized-out--
+            L->source->index = 2; // skip the --optimized-out--
         else
-            f->source->index = 1; // position at start of the extracted values
+            L->source->index = 1; // position at start of the extracted values
     }
     else {
-        assert(IS_POINTER_TRASH_DEBUG(f->source->pending));
+        assert(IS_POINTER_TRASH_DEBUG(L->source->pending));
 
         // Leave at end of frame, but give back the array to serve as
         // notice of the truncation (if it was truncated)
         //
-        f->source->index = 0;
+        L->source->index = 0;
     }
 
-    assert(not f->source->vaptr); // feeding forward should have called va_end
+    assert(not L->source->vaptr); // feeding forward should have called va_end
 
     // special array...may contain voids and eval flip is kept
-    f->source->array = Pop_Stack_Values_Keep_Eval_Flip(dsp_orig);
-    MANAGE_ARRAY(f->source->array); // held alive while frame running
-    SET_SER_FLAG(f->source->array, ARRAY_FLAG_NULLEDS_LEGAL);
+    L->source->array = Pop_Stack_Values_Keep_Eval_Flip(dsp_orig);
+    MANAGE_ARRAY(L->source->array); // held alive while frame running
+    SET_SER_FLAG(L->source->array, ARRAY_FLAG_NULLEDS_LEGAL);
 
     // The array just popped into existence, and it's tied to a running
     // frame...so safe to say we're holding it.  (This would be more complex
     // if we reused the empty array if dsp_orig == DSP, since someone else
     // might have a hold on it...not worth the complexity.)
     //
-    SET_SER_INFO(f->source->array, SERIES_INFO_HOLD);
-    f->flags.bits |= DO_FLAG_TOOK_FRAME_HOLD;
+    SET_SER_INFO(L->source->array, SERIES_INFO_HOLD);
+    L->flags.bits |= DO_FLAG_TOOK_FRAME_HOLD;
 
     if (truncated)
-        SET_FRAME_VALUE(f, Array_At(f->source->array, 1)); // skip `--optimized--`
+        SET_FRAME_VALUE(L, Array_At(L->source->array, 1)); // skip `--optimized--`
     else
-        SET_FRAME_VALUE(f, ARR_HEAD(f->source->array));
+        SET_FRAME_VALUE(L, ARR_HEAD(L->source->array));
 
-    f->source->pending = f->value + 1;
+    L->source->pending = L->value + 1;
 }
 
 
@@ -1006,7 +1006,7 @@ INLINE void Reify_Va_To_Array_In_Frame(
 // by commas).  Uses same method to do so as functions like printf() do.
 //
 // The evaluator has a common means of fetching values out of both arrays
-// and C va_lists via Fetch_Next_In_Frame(), so this code can behave the
+// and C va_lists via Fetch_Next_In_Level(), so this code can behave the
 // same as if the passed in values came from an array.  However, when values
 // originate from C they often have been effectively evaluated already, so
 // it's desired that WORD!s or PATH!s not execute as they typically would
@@ -1025,54 +1025,54 @@ INLINE REBIXO Eval_Va_Core(
     va_list *vaptr,
     REBFLGS flags
 ){
-    DECLARE_FRAME (f);
-    f->flags = Endlike_Header(flags); // read by Set_Frame_Detected_Fetch
+    DECLARE_LEVEL (L);
+    L->flags = Endlike_Header(flags); // read by Set_Level_Detected_Fetch
 
-    f->source->index = TRASHED_INDEX; // avoids warning in release build
-    f->source->array = nullptr;
-    f->source->vaptr = vaptr;
-    f->source->pending = END_NODE; // signal next fetch comes from va_list
+    L->source->index = TRASHED_INDEX; // avoids warning in release build
+    L->source->array = nullptr;
+    L->source->vaptr = vaptr;
+    L->source->pending = END_NODE; // signal next fetch comes from va_list
 
   #if defined(DEBUG_UNREADABLE_BLANKS)
     //
-    // We reuse logic in Fetch_Next_In_Frame() and Set_Frame_Detected_Fetch()
-    // but the previous f->value will be tested for NODE_FLAG_ROOT.
+    // We reuse logic in Fetch_Next_In_Level() and Set_Level_Detected_Fetch()
+    // but the previous L->value will be tested for NODE_FLAG_ROOT.
     //
     DECLARE_VALUE (junk);
-    f->value = Init_Unreadable(junk); // shows where garbage came from
+    L->value = Init_Unreadable(junk); // shows where garbage came from
   #else
-    f->value = BLANK_VALUE; // less informative but faster to initialize
+    L->value = BLANK_VALUE; // less informative but faster to initialize
   #endif
 
     if (opt_first)
-        Set_Frame_Detected_Fetch(nullptr, f, opt_first);
+        Set_Level_Detected_Fetch(nullptr, L, opt_first);
     else
-        Fetch_Next_In_Frame(nullptr, f);
+        Fetch_Next_In_Level(nullptr, L);
 
-    if (IS_END(f->value))
+    if (IS_END(L->value))
         return END_FLAG;
 
-    f->out = out;
-    f->specifier = SPECIFIED; // relative values not allowed in va_lists
-    f->gotten = nullptr;
+    L->out = out;
+    L->specifier = SPECIFIED; // relative values not allowed in va_lists
+    L->gotten = nullptr;
 
-    Push_Frame_Core(f);
-    Reuse_Varlist_If_Available(f);
-    bool threw = Eval_Core_Throws(f);
-    Drop_Frame(f); // will va_end() if not reified during evaluation
+    Push_Level_Core(L);
+    Reuse_Varlist_If_Available(L);
+    bool threw = Eval_Core_Throws(L);
+    Drop_Level(L); // will va_end() if not reified during evaluation
 
     if (threw)
         return THROWN_FLAG;
 
     if (
         (flags & DO_FLAG_TO_END) // not just an EVALUATE, but a full DO
-        or (f->out->header.bits & OUT_MARKED_STALE) // just ELIDEs and COMMENTs
+        or (L->out->header.bits & OUT_MARKED_STALE) // just ELIDEs and COMMENTs
     ){
-        assert(IS_END(f->value));
+        assert(IS_END(L->value));
         return END_FLAG;
     }
 
-    if ((flags & DO_FLAG_NO_RESIDUE) and NOT_END(f->value))
+    if ((flags & DO_FLAG_NO_RESIDUE) and NOT_END(L->value))
         fail (Error_Apply_Too_Many_Raw());
 
     return VA_LIST_FLAG; // frame may be at end, next call might just END_FLAG
@@ -1109,13 +1109,13 @@ INLINE bool Eval_Value_Core_Throws(
 // so the dispatcher can write things like `return rebValue(...);` and not
 // encounter a leak.
 //
-INLINE void Handle_Api_Dispatcher_Result(REBFRM *f, const Value* r) {
-    assert(not THROWN(r)); // only f->out can return thrown cells
+INLINE void Handle_Api_Dispatcher_Result(Level* L, const Value* r) {
+    assert(not THROWN(r)); // only L->out can return thrown cells
 
   #if !defined(NDEBUG)
     if (NOT_VAL_FLAG(r, NODE_FLAG_ROOT)) {
         printf("dispatcher returned non-API value not in OUT\n");
-        printf("during ACTION!: %s\n", f->label_utf8);
+        printf("during ACTION!: %s\n", L->label_utf8);
         printf("`return OUT;` or use `RETURN (non_api_cell);`\n");
         panic(r);
     }
@@ -1124,7 +1124,7 @@ INLINE void Handle_Api_Dispatcher_Result(REBFRM *f, const Value* r) {
     if (IS_NULLED(r))
         assert(!"Dispatcher returned nulled cell, not C nullptr for API use");
 
-    Copy_Cell(f->out, r);
+    Copy_Cell(L->out, r);
     if (NOT_VAL_FLAG(r, NODE_FLAG_MANAGED))
         rebRelease(r);
 }

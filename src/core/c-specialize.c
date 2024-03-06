@@ -33,7 +33,7 @@
 //
 // The method used is to store a FRAME! in the specialization's ACT_BODY.
 // It contains non-null values for any arguments that have been specialized.
-// Eval_Core_Throws() heeds these when walking parameters (see `f->special`),
+// Eval_Core_Throws() heeds these when walking parameters (see `L->special`),
 // and processes slots with nulls in them normally.
 //
 // Code is shared between the SPECIALIZE native and specialization of a
@@ -503,7 +503,7 @@ bool Specialize_Action_Throws(
                 if (partial_dsp == 0)
                     goto unspecialized_arg_but_may_evoke;
 
-                // Though Make_Frame_For_Specialization() knew this slot was
+                // Though Make_Level_For_Specialization() knew this slot was
                 // partial when it ran, user code might have run to fill in
                 // all the null arguments.  We need to know the stack position
                 // of the ordering, to BLANK! it from the partial stack if so.
@@ -834,19 +834,19 @@ bool Specialize_Action_Throws(
 //
 // The evaluator does not do any special "running" of a specialized frame.
 // All of the contribution that the specialization had to make was taken care
-// of when Eval_Core_Throws() used f->special to fill from the exemplar.  So
+// of when Eval_Core_Throws() used L->special to fill from the exemplar.  So
 // all this does is change the phase and binding to match the function this
 // layer was specializing.
 //
-REB_R Specializer_Dispatcher(REBFRM *f)
+REB_R Specializer_Dispatcher(Level* L)
 {
-    Array* details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(Level_Phase(L));
 
     Value* exemplar = KNOWN(ARR_HEAD(details));
     assert(IS_FRAME(exemplar));
 
-    FRM_PHASE(f) = exemplar->payload.any_context.phase;
-    FRM_BINDING(f) = VAL_BINDING(exemplar);
+    Level_Phase(L) = exemplar->payload.any_context.phase;
+    LVL_BINDING(L) = VAL_BINDING(exemplar);
 
     return R_REDO_UNCHECKED; // redo uses the updated phase and binding
 }
@@ -927,17 +927,17 @@ DECLARE_NATIVE(specialize)
 // (Luckily these copies are often not needed, such as when the DOES is not
 // used in a method... -AND- it only needs to be made once.)
 //
-REB_R Block_Dispatcher(REBFRM *f)
+REB_R Block_Dispatcher(Level* L)
 {
-    Array* details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* block = ARR_HEAD(details);
     assert(IS_BLOCK(block));
 
     if (IS_SPECIFIC(block)) {
-        if (FRM_BINDING(f) == UNBOUND) {
-            if (Do_Any_Array_At_Throws(f->out, KNOWN(block)))
+        if (LVL_BINDING(L) == UNBOUND) {
+            if (Do_Any_Array_At_Throws(L->out, KNOWN(block)))
                 return R_THROWN;
-            return f->out;
+            return L->out;
         }
 
         // Until "virtual binding" is implemented, we would lose f->binding's
@@ -959,7 +959,7 @@ REB_R Block_Dispatcher(REBFRM *f)
 
         Array* body_array = Copy_And_Bind_Relative_Deep_Managed(
             KNOWN(block),
-            ACT_PARAMLIST(FRM_PHASE(f)),
+            ACT_PARAMLIST(Level_Phase(L)),
             TS_WORD
         );
 
@@ -976,7 +976,7 @@ REB_R Block_Dispatcher(REBFRM *f)
         //
         INIT_VAL_ARRAY(block, body_array);
         VAL_INDEX(block) = 0;
-        INIT_BINDING(block, FRM_PHASE(f)); // relative binding
+        INIT_BINDING(block, Level_Phase(L)); // relative binding
 
         // Block is now a relativized copy; we won't do this again.
     }
@@ -984,148 +984,15 @@ REB_R Block_Dispatcher(REBFRM *f)
     assert(IS_RELATIVE(block));
 
     if (Do_At_Throws(
-        f->out,
+        L->out,
         Cell_Array(block),
         VAL_INDEX(block),
-        SPC(f->varlist)
+        SPC(L->varlist)
     )){
         return R_THROWN;
     }
 
-    return f->out;
-}
-
-
-//
-//  Make_Invocation_Frame_Throws: C
-//
-// Logic shared currently by DOES and MATCH to build a single executable
-// frame from feeding forward a VARARGS! parameter.  A bit like being able to
-// call EVALUATE via Eval_Core_Throws() yet introspect the evaluator step.
-//
-bool Make_Invocation_Frame_Throws(
-    Value* out, // in case there is a throw
-    REBFRM *f,
-    Value* *first_arg_ptr, // returned so that MATCH can steal it
-    const Value* action,
-    Value* varargs,
-    REBDSP lowest_ordered_dsp
-){
-    assert(IS_ACTION(action));
-    assert(IS_VARARGS(varargs));
-
-    // !!! The vararg's frame is not really a parent, but try to stay
-    // consistent with the naming in subframe code copy/pasted for now...
-    //
-    REBFRM *parent;
-    if (not Is_Frame_Style_Varargs_May_Fail(&parent, varargs))
-        fail (
-            "Currently MAKE FRAME! on a VARARGS! only works with a varargs"
-            " which is tied to an existing, running frame--not one that is"
-            " being simulated from a BLOCK! (e.g. MAKE VARARGS! [...])"
-        );
-
-    assert(Is_Action_Frame(parent));
-
-    // Slip the REBFRM a dsp_orig which may be lower than the DSP captured by
-    // DECLARE_FRAME().  This way, it will see any pushes done during a
-    // path resolution as ordered refinements to use.
-    //
-    f->dsp_orig = lowest_ordered_dsp;
-
-    // === FIRST PART OF CODE FROM DO_SUBFRAME ===
-    f->out = out;
-
-    f->source = parent->source;
-    f->value = parent->value;
-    f->gotten = parent->gotten;
-    f->specifier = parent->specifier;
-    TRASH_POINTER_IF_DEBUG(parent->gotten);
-
-    // Just do one step of the evaluator, so no DO_FLAG_TO_END.  Specifically,
-    // it is desired that any voids encountered be processed as if they are
-    // not specialized...and gather at the callsite if necessary.
-    //
-    f->flags = Endlike_Header(DO_MASK_NONE | DO_FLAG_PROCESS_ACTION);
-
-    Push_Frame_Core(f);
-    Reuse_Varlist_If_Available(f);
-
-    // === END FIRST PART OF CODE FROM DO_SUBFRAME ===
-
-    Symbol* opt_label = nullptr; // !!! for now
-    Push_Action(f, VAL_ACTION(action), VAL_BINDING(action));
-    Begin_Action(f, opt_label, ORDINARY_ARG);
-
-    // !!! A hack here is needed to slip in a lie to make the dispatcher not
-    // run the action, but rather to throw back to us.
-    //
-    assert(FRM_BINDING(f) == VAL_BINDING(action));
-    assert(FRM_PHASE(f) == VAL_ACTION(action));
-    FRM_PHASE_OR_DUMMY(f) = PG_Dummy_Action;
-    bool threw = Eval_Core_Throws(f);
-    FRM_PHASE_OR_DUMMY(f) = VAL_ACTION(action);
-    FRM_BINDING(f) = VAL_BINDING(action); // can change during invoke
-
-    // The function did not actually execute, so no SPC(f) was never handed
-    // out...the varlist should never have gotten managed.  So this context
-    // can theoretically just be put back into the reuse list, or managed
-    // and handed out for other purposes by the caller.
-    //
-    assert(NOT_SER_FLAG(f->varlist, NODE_FLAG_MANAGED));
-
-    parent->value = f->value;
-    parent->gotten = f->gotten;
-    assert(parent->specifier == f->specifier); // !!! can't change?
-
-    if (f->flags.bits & DO_FLAG_BARRIER_HIT)
-        parent->flags.bits |= DO_FLAG_BARRIER_HIT;
-
-    if (threw)
-        return true;
-
-    assert(IS_NULLED(f->out)); // guaranteed by dummy, for the skipped action
-
-    // === END SECOND PART OF CODE FROM DO_SUBFRAME ===
-
-    *first_arg_ptr = nullptr;
-
-    Value* refine = nullptr;
-    Value* param = CTX_KEYS_HEAD(CTX(f->varlist));
-    Value* arg = CTX_VARS_HEAD(CTX(f->varlist));
-    for (; NOT_END(param); ++param, ++arg) {
-        enum Reb_Param_Class pclass = VAL_PARAM_CLASS(param);
-        switch (pclass) {
-        case PARAM_CLASS_REFINEMENT:
-            refine = param;
-            break;
-
-        case PARAM_CLASS_NORMAL:
-        case PARAM_CLASS_TIGHT:
-        case PARAM_CLASS_HARD_QUOTE:
-        case PARAM_CLASS_SOFT_QUOTE:
-            if (not refine or VAL_LOGIC(refine)) {
-                *first_arg_ptr = arg;
-                goto found_first_arg_ptr;
-            }
-            break;
-
-        case PARAM_CLASS_LOCAL:
-        case PARAM_CLASS_RETURN:
-            break;
-
-        default:
-            panic ("Unknown PARAM_CLASS");
-        }
-    }
-
-    fail ("ACTION! has no args to MAKE FRAME! from...");
-
-found_first_arg_ptr:
-
-    // DS_DROP_TO(lowest_ordered_dsp);
-
-    return false;
+    return L->out;
 }
 
 

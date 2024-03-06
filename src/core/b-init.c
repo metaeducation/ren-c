@@ -1210,10 +1210,10 @@ static Value* Startup_Mezzanine(BOOT_BLK *boot);
 //
 static void Startup_Trash_Debug(void)
 {
-    assert(not TG_Top_Frame);
-    TRASH_POINTER_IF_DEBUG(TG_Top_Frame);
-    assert(not TG_Bottom_Frame);
-    TRASH_POINTER_IF_DEBUG(TG_Bottom_Frame);
+    assert(not TG_Top_Level);
+    TRASH_POINTER_IF_DEBUG(TG_Top_Level);
+    assert(not TG_Bottom_Level);
+    TRASH_POINTER_IF_DEBUG(TG_Bottom_Level);
 
     // ...add more on a case-by-case basis if the case seems helpful...
 }
@@ -1343,7 +1343,7 @@ void Startup_Core(void)
     Startup_Mold(MIN_COMMON / 4);
 
     Startup_Data_Stack(STACK_MIN / 4);
-    Startup_Frame_Stack();  // uses FRM_FILE() currently
+    Startup_Level_Stack();  // uses File_Of_Level() currently
 
     Startup_Api();
 
@@ -1506,7 +1506,7 @@ void Startup_Core(void)
 
     PG_Boot_Phase = BOOT_MEZZ;
 
-    assert(DSP == 0 and FS_TOP == FS_BOTTOM);
+    assert(DSP == 0 and TOP_LEVEL == BOTTOM_LEVEL);
 
     Value* error = rebRescue(cast(REBDNG*, &Startup_Mezzanine), boot);
     if (error) {
@@ -1529,7 +1529,7 @@ void Startup_Core(void)
         panic (error);
     }
 
-    assert(DSP == 0 and FS_TOP == FS_BOTTOM);
+    assert(DSP == 0 and TOP_LEVEL == BOTTOM_LEVEL);
 
     DROP_GC_GUARD(boot_array);
 
@@ -1614,7 +1614,7 @@ void Shutdown_Core(void)
     Shutdown_Action_Spec_Tags();
     Shutdown_Root_Vars();
 
-    Shutdown_Frame_Stack();
+    Shutdown_Level_Stack();
 
     const bool shutdown = true; // go ahead and free all managed series
     Recycle_Core(shutdown, nullptr);

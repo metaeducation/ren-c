@@ -29,7 +29,7 @@
 //
 // Due to the length of Eval_Core_Throws() and debug checks it already has,
 // some debug-only routines are separated out here.  (Note that these are in
-// addition to the checks already done by Push_Frame() and Drop_Frame() time)
+// addition to the checks already done by Push_Level() and Drop_Level() time)
 //
 // * Eval_Core_Expression_Checks_Debug() runs before each full "expression"
 //   is evaluated, e.g. before each EVALUATE step.  It makes sure the state
@@ -52,37 +52,37 @@
 #if defined(DEBUG_COUNT_TICKS) && defined(DEBUG_HAS_PROBE)
 
 //
-//  Dump_Frame_Location: C
+//  Dump_Level_Location: C
 //
-void Dump_Frame_Location(const Cell* current, REBFRM *f)
+void Dump_Level_Location(const Cell* current, Level* L)
 {
     DECLARE_VALUE (dump);
 
     if (current) {
-        Derelativize(dump, current, f->specifier);
-        printf("Dump_Frame_Location() current\n");
+        Derelativize(dump, current, L->specifier);
+        printf("Dump_Level_Location() current\n");
         PROBE(dump);
     }
 
-    if (IS_END(f->value)) {
-        printf("...then Dump_Frame_Location() is at end of array\n");
-        if (not current and not f->value) { // well, that wasn't informative
-            if (not f->prior)
+    if (IS_END(L->value)) {
+        printf("...then Dump_Level_Location() is at end of array\n");
+        if (not current and not L->value) { // well, that wasn't informative
+            if (not L->prior)
                 printf("...and no parent frame, so you're out of luck\n");
             else {
                 printf("...dumping parent in case that's more useful?\n");
-                Dump_Frame_Location(nullptr, f->prior);
+                Dump_Level_Location(nullptr, L->prior);
             }
         }
     }
     else {
-        Derelativize(dump, f->value, f->specifier);
-        printf("Dump_Frame_Location() next\n");
+        Derelativize(dump, L->value, L->specifier);
+        printf("Dump_Level_Location() next\n");
         PROBE(dump);
 
-        printf("Dump_Frame_Location() rest\n");
+        printf("Dump_Level_Location() rest\n");
 
-        if (FRM_IS_VALIST(f)) {
+        if (LVL_IS_VALIST(L)) {
             //
             // NOTE: This reifies the va_list in the frame, and hence has side
             // effects.  It may need to be commented out if the problem you
@@ -90,15 +90,15 @@ void Dump_Frame_Location(const Cell* current, REBFRM *f)
             // specifically related to va_list frame processing.
             //
             const bool truncated = true;
-            Reify_Va_To_Array_In_Frame(f, truncated);
+            Reify_Va_To_Array_In_Level(L, truncated);
         }
 
         Init_Any_Series_At_Core(
             dump,
             REB_BLOCK,
-            SER(f->source->array),
-            cast(REBLEN, f->source->index),
-            f->specifier
+            SER(L->source->array),
+            cast(REBLEN, L->source->index),
+            L->specifier
         );
         PROBE(dump);
     }
@@ -112,30 +112,30 @@ void Dump_Frame_Location(const Cell* current, REBFRM *f)
 // These are checks common to Expression and Exit checks (hence also common
 // to the "end of Start" checks, since that runs on the first expression)
 //
-static void Eval_Core_Shared_Checks_Debug(REBFRM *f) {
+static void Eval_Core_Shared_Checks_Debug(Level* L) {
     //
     // The state isn't actually guaranteed to balance overall until a frame
     // is completely dropped.  This is because a frame may be reused over
     // multiple calls by something like REDUCE or FORM, accumulating items
-    // on the data stack or mold stack/etc.  See Drop_Frame() for the actual
+    // on the data stack or mold stack/etc.  See Drop_Level() for the actual
     // balance check.
 
-    assert(f == FS_TOP);
-    assert(DSP == f->dsp_orig);
+    assert(L == TOP_LEVEL);
+    assert(DSP == L->dsp_orig);
 
-    assert(not (f->flags.bits & DO_FLAG_FINAL_DEBUG));
+    assert(not (L->flags.bits & DO_FLAG_FINAL_DEBUG));
 
-    if (f->source->array) {
-        assert(not IS_POINTER_TRASH_DEBUG(f->source->array));
+    if (L->source->array) {
+        assert(not IS_POINTER_TRASH_DEBUG(L->source->array));
         assert(
-            f->source->index != TRASHED_INDEX
-            and f->source->index != END_FLAG_PRIVATE // ...special case use!
-            and f->source->index != THROWN_FLAG_PRIVATE // ...don't use these
-            and f->source->index != VA_LIST_FLAG_PRIVATE // ...usually...
+            L->source->index != TRASHED_INDEX
+            and L->source->index != END_FLAG_PRIVATE // ...special case use!
+            and L->source->index != THROWN_FLAG_PRIVATE // ...don't use these
+            and L->source->index != VA_LIST_FLAG_PRIVATE // ...usually...
         ); // END, THROWN, VA_LIST only used by wrappers
     }
     else
-        assert(f->source->index == TRASHED_INDEX);
+        assert(L->source->index == TRASHED_INDEX);
 
     // If this fires, it means that Flip_Series_To_White was not called an
     // equal number of times after Flip_Series_To_Black, which means that
@@ -144,29 +144,29 @@ static void Eval_Core_Shared_Checks_Debug(REBFRM *f) {
     assert(TG_Num_Black_Series == 0);
 
     // We only have a label if we are in the middle of running a function,
-    // and if we're not running a function then f->original should be null.
+    // and if we're not running a function then L->original should be null.
     //
-    assert(not f->original);
-    assert(IS_POINTER_TRASH_DEBUG(f->opt_label));
+    assert(not L->original);
+    assert(IS_POINTER_TRASH_DEBUG(L->opt_label));
 
-    if (f->varlist) {
-        assert(NOT_SER_FLAG(f->varlist, NODE_FLAG_MANAGED));
-        assert(NOT_SER_INFO(f->varlist, SERIES_INFO_INACCESSIBLE));
+    if (L->varlist) {
+        assert(NOT_SER_FLAG(L->varlist, NODE_FLAG_MANAGED));
+        assert(NOT_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE));
     }
 
     //=//// ^-- ABOVE CHECKS *ALWAYS* APPLY ///////////////////////////////=//
 
-    if (IS_END(f->value))
+    if (IS_END(L->value))
         return;
 
-    if (NOT_END(f->out) and THROWN(f->out))
+    if (NOT_END(L->out) and THROWN(L->out))
         return;
 
     //=//// v-- BELOW CHECKS ONLY APPLY IN EXITS CASE WITH MORE CODE //////=//
 
-    assert(NOT_END(f->value));
-    assert(not THROWN(f->value));
-    assert(f->value != f->out);
+    assert(NOT_END(L->value));
+    assert(not THROWN(L->value));
+    assert(L->value != L->out);
 
     //=//// ^-- ADD CHECKS EARLIER THAN HERE IF THEY SHOULD ALWAYS RUN ////=//
 }
@@ -181,11 +181,11 @@ static void Eval_Core_Shared_Checks_Debug(REBFRM *f) {
 // making the code shareable allows code paths that jump to later spots
 // in the switch (vs. starting at the top) to reuse the work.
 //
-void Eval_Core_Expression_Checks_Debug(REBFRM *f) {
+void Eval_Core_Expression_Checks_Debug(Level* L) {
 
-    assert(f == FS_TOP); // should be topmost frame, still
+    assert(L == TOP_LEVEL);  // should be topmost frame, still
 
-    Eval_Core_Shared_Checks_Debug(f);
+    Eval_Core_Shared_Checks_Debug(L);
 
     // The previous frame doesn't know *what* code is going to be running,
     // and it can shake up data pointers arbitrarily.  Any cache of a fetched
@@ -195,14 +195,14 @@ void Eval_Core_Expression_Checks_Debug(REBFRM *f) {
     // the debug build with trash pointer.
     //
     assert(
-        IS_POINTER_TRASH_DEBUG(f->prior->gotten)
-        or not f->prior->gotten
+        IS_POINTER_TRASH_DEBUG(L->prior->gotten)
+        or not L->prior->gotten
     );
 
-    if (f->gotten) {
-        if (not Is_Frame_Gotten_Shoved(f)) {
-            assert(IS_WORD(f->value));
-            assert(Try_Get_Opt_Var(f->value, f->specifier) == f->gotten);
+    if (L->gotten) {
+        if (not Is_Level_Gotten_Shoved(L)) {
+            assert(IS_WORD(L->value));
+            assert(Try_Get_Opt_Var(L->value, L->specifier) == L->gotten);
         }
     }
 
@@ -210,24 +210,24 @@ void Eval_Core_Expression_Checks_Debug(REBFRM *f) {
     assert(Is_Unreadable_Debug(&TG_Thrown_Arg)); // no evals between throws
   #endif
 
-    // Trash fields that GC won't be seeing unless Is_Action_Frame()
+    // Trash fields that GC won't be seeing unless Is_Action_Level()
     //
-    TRASH_POINTER_IF_DEBUG(f->param);
-    TRASH_POINTER_IF_DEBUG(f->arg);
-    TRASH_POINTER_IF_DEBUG(f->special);
-    TRASH_POINTER_IF_DEBUG(f->refine);
+    TRASH_POINTER_IF_DEBUG(L->param);
+    TRASH_POINTER_IF_DEBUG(L->arg);
+    TRASH_POINTER_IF_DEBUG(L->special);
+    TRASH_POINTER_IF_DEBUG(L->refine);
 
     assert(
-        not f->varlist
-        or NOT_SER_INFO(f->varlist, SERIES_INFO_INACCESSIBLE)
+        not L->varlist
+        or NOT_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE)
     );
 
     // Mutate va_list sources into arrays at fairly random moments in the
     // debug build.  It should be able to handle it at any time.
     //
-    if (FRM_IS_VALIST(f) and SPORADICALLY(50)) {
+    if (LVL_IS_VALIST(L) and SPORADICALLY(50)) {
         const bool truncated = true;
-        Reify_Va_To_Array_In_Frame(f, truncated);
+        Reify_Va_To_Array_In_Level(L, truncated);
     }
 }
 
@@ -235,21 +235,21 @@ void Eval_Core_Expression_Checks_Debug(REBFRM *f) {
 //
 //  Do_Process_Action_Checks_Debug: C
 //
-void Do_Process_Action_Checks_Debug(REBFRM *f) {
+void Do_Process_Action_Checks_Debug(Level* L) {
 
-    assert(IS_FRAME(f->rootvar));
-    assert(f->arg == f->rootvar + 1);
+    assert(IS_FRAME(L->rootvar));
+    assert(L->arg == L->rootvar + 1);
 
-    // See FRM_PHASE() for why it's not allowed when dummy is the dispatcher
+    // See Level_Phase() for why it's not allowed when dummy is the dispatcher
     //
-    REBACT *phase = f->rootvar->payload.any_context.phase;
+    REBACT *phase = L->rootvar->payload.any_context.phase;
     if (phase == PG_Dummy_Action)
         return;
 
-    //=//// v-- BELOW CHECKS ONLY APPLY WHEN FRM_PHASE() is VALID ////////=//
+    //=//// v-- BELOW CHECKS ONLY APPLY WHEN Level_Phase() is VALID ////////=//
 
     assert(GET_SER_FLAG(phase, ARRAY_FLAG_PARAMLIST));
-    if (f->param != ACT_PARAMS_HEAD(phase)) {
+    if (L->param != ACT_PARAMS_HEAD(phase)) {
         //
         // !!! When you MAKE FRAME! 'APPEND/ONLY, it will create a frame
         // with a keylist that has /ONLY hidden.  But there's no new ACTION!
@@ -261,37 +261,37 @@ void Do_Process_Action_Checks_Debug(REBFRM *f) {
         // and this check is here pending a more elegant sorting of this.
         //
         assert(
-            FRM_PHASE(f->prior) == NAT_ACTION(do)
-            or FRM_PHASE(f->prior) == NAT_ACTION(applique)
+            Level_Phase(L->prior) == NAT_ACTION(do)
+            or Level_Phase(L->prior) == NAT_ACTION(applique)
         );
     }
 
-    if (f->refine == ORDINARY_ARG) {
-        if (not (f->out->header.bits & OUT_MARKED_STALE))
+    if (L->refine == ORDINARY_ARG) {
+        if (not (L->out->header.bits & OUT_MARKED_STALE))
             assert(GET_ACT_FLAG(phase, ACTION_FLAG_INVISIBLE));
     }
     else
-        assert(f->refine == LOOKBACK_ARG);
+        assert(L->refine == LOOKBACK_ARG);
 }
 
 
 //
 //  Do_After_Action_Checks_Debug: C
 //
-void Do_After_Action_Checks_Debug(REBFRM *f) {
-    assert(NOT_END(f->out));
-    assert(not THROWN(f->out));
+void Do_After_Action_Checks_Debug(Level* L) {
+    assert(NOT_END(L->out));
+    assert(not THROWN(L->out));
 
-    if (GET_SER_INFO(f->varlist, SERIES_INFO_INACCESSIBLE)) // e.g. ENCLOSE
+    if (GET_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE)) // e.g. ENCLOSE
         return;
 
-    // See FRM_PHASE() for why it's not allowed when DEFER-0 is the dispatcher
+    // See Level_Phase() for why it's not allowed when DEFER-0 is the dispatcher
     //
-    REBACT *phase = FRM_PHASE_OR_DUMMY(f);
+    REBACT *phase = LVL_PHASE_OR_DUMMY(L);
     if (phase == PG_Dummy_Action)
         return;
 
-    //=//// v-- BELOW CHECKS ONLY APPLY WHEN FRM_PHASE() is VALID ////////=//
+    //=//// v-- BELOW CHECKS ONLY APPLY WHEN Level_Phase() is VALID ////////=//
 
     // Usermode functions check the return type via Returner_Dispatcher(),
     // with everything else assumed to return the correct type.  But this
@@ -302,14 +302,14 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
         Value* typeset = ACT_PARAM(phase, ACT_NUM_PARAMS(phase));
         assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
         if (
-            not TYPE_CHECK(typeset, VAL_TYPE(f->out))
+            not TYPE_CHECK(typeset, VAL_TYPE(L->out))
             and not (
                 GET_ACT_FLAG(phase, ACTION_FLAG_INVISIBLE)
-                and IS_NULLED(f->out) // this happens with `do [return]`
+                and IS_NULLED(L->out) // this happens with `do [return]`
             )
         ){
             printf("Native code violated return type contract!\n");
-            panic (Error_Bad_Return_Type(f, VAL_TYPE(f->out)));
+            panic (Error_Bad_Return_Type(L, VAL_TYPE(L->out)));
         }
     }
 }
@@ -318,40 +318,40 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
 //
 //  Eval_Core_Exit_Checks_Debug: C
 //
-void Eval_Core_Exit_Checks_Debug(REBFRM *f) {
-    Eval_Core_Shared_Checks_Debug(f);
+void Eval_Core_Exit_Checks_Debug(Level* L) {
+    Eval_Core_Shared_Checks_Debug(L);
 
-    if (f->gotten) {
-        if (f->gotten == FRM_SHOVE(f->prior))
-            assert(GET_VAL_FLAG(FRM_SHOVE(f->prior), VALUE_FLAG_ENFIXED));
+    if (L->gotten) {
+        if (L->gotten == Level_Shove(L->prior))
+            assert(GET_VAL_FLAG(Level_Shove(L->prior), VALUE_FLAG_ENFIXED));
         else {
-            assert(IS_WORD(f->value));
-            assert(Try_Get_Opt_Var(f->value, f->specifier) == f->gotten);
+            assert(IS_WORD(L->value));
+            assert(Try_Get_Opt_Var(L->value, L->specifier) == L->gotten);
         }
     }
 
-    if (NOT_END(f->value) and not FRM_IS_VALIST(f)) {
-        if (f->source->index > ARR_LEN(f->source->array)) {
+    if (NOT_END(L->value) and not LVL_IS_VALIST(L)) {
+        if (L->source->index > ARR_LEN(L->source->array)) {
             assert(
-                (f->source->pending != nullptr and IS_END(f->source->pending))
-                or THROWN(f->out)
+                (L->source->pending != nullptr and IS_END(L->source->pending))
+                or THROWN(L->out)
             );
-            assert(f->source->index == ARR_LEN(f->source->array) + 1);
+            assert(L->source->index == ARR_LEN(L->source->array) + 1);
         }
     }
 
-    if (f->flags.bits & DO_FLAG_TO_END)
-        assert(THROWN(f->out) or IS_END(f->value));
+    if (L->flags.bits & DO_FLAG_TO_END)
+        assert(THROWN(L->out) or IS_END(L->value));
 
     // We'd like `do [1 + comment "foo"]` to act identically to `do [1 +]`
     // (as opposed to `do [1 + ()]`).  Eval_Core_Throws() thus distinguishes
     // an END for a fully "invisible" evaluation, as opposed to void.  This
     // distinction is only offered internally, at the moment.
     //
-    if (NOT_END(f->out))
-        assert(VAL_TYPE(f->out) <= REB_MAX_NULLED);
+    if (NOT_END(L->out))
+        assert(VAL_TYPE(L->out) <= REB_MAX_NULLED);
 
-    f->flags.bits |= DO_FLAG_FINAL_DEBUG;
+    L->flags.bits |= DO_FLAG_FINAL_DEBUG;
 }
 
 #endif

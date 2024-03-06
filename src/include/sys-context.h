@@ -90,7 +90,7 @@ INLINE Value* CTX_ARCHETYPE(REBCTX *c) {
 //
 INLINE Array* CTX_KEYLIST(REBCTX *c) {
     if (not (LINK(c).keysource->header.bits & NODE_FLAG_CELL))
-        return ARR(LINK(c).keysource); // not a REBFRM, so use keylist
+        return ARR(LINK(c).keysource); // not a Level, so use keylist
 
     // If the context in question is a FRAME! value, then the ->phase
     // of the frame presents the "view" of which keys should be visible at
@@ -137,7 +137,7 @@ INLINE void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, Array* keylist) {
 #define CTX_KEYS_HEAD(c) \
     SER_AT(Value, SER(CTX_KEYLIST(c)), 1)  // a CTX_KEY is always "specific"
 
-INLINE REBFRM *CTX_FRAME_IF_ON_STACK(REBCTX *c) {
+INLINE Level* CTX_LEVEL_IF_ON_STACK(REBCTX *c) {
     REBNOD *keysource = LINK(c).keysource;
     if (not (keysource->header.bits & NODE_FLAG_CELL))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
@@ -145,16 +145,16 @@ INLINE REBFRM *CTX_FRAME_IF_ON_STACK(REBCTX *c) {
     assert(NOT_SER_INFO(CTX_VARLIST(c), SERIES_INFO_INACCESSIBLE));
     assert(IS_FRAME(CTX_ARCHETYPE(c)));
 
-    REBFRM *f = FRM(keysource);
-    assert(f->original); // inline Is_Action_Frame() to break dependency
-    return f;
+    Level* L = LVL(keysource);
+    assert(L->original); // inline Is_Action_Level() to break dependency
+    return L;
 }
 
-INLINE REBFRM *CTX_FRAME_MAY_FAIL(REBCTX *c) {
-    REBFRM *f = CTX_FRAME_IF_ON_STACK(c);
-    if (not f)
+INLINE Level* CTX_LEVEL_MAY_FAIL(REBCTX *c) {
+    Level* L = CTX_LEVEL_IF_ON_STACK(c);
+    if (not L)
         fail (Error_Frame_Not_On_Stack_Raw());
-    return f;
+    return L;
 }
 
 #define CTX_VARS_HEAD(c) \
@@ -445,7 +445,7 @@ INLINE REBCTX *Steal_Context_Vars(REBCTX *c, REBNOD *keysource) {
     INIT_BINDING(single, VAL_BINDING(rootvar));
     single->payload.any_context.varlist = ARR(stub);
     TRASH_POINTER_IF_DEBUG(single->payload.any_context.phase);
-    /* single->payload.any_context.phase = f->original; */ // !!! needed?
+    /* single->payload.any_context.phase = L->original; */ // !!! needed?
 
     rootvar->payload.any_context.varlist = ARR(copy);
 

@@ -41,7 +41,7 @@
 // index manipulation, and things like LENGTH/etc.
 //
 REB_R Series_Common_Action_Maybe_Unhandled(
-    REBFRM *frame_,
+    Level* level_,
     Value* verb
 ){
     Value* value = D_ARG(1);

@@ -40,20 +40,20 @@ bool Reduce_To_Stack_Throws(
 ){
     REBDSP dsp_orig = DSP;
 
-    DECLARE_FRAME (f);
-    Push_Frame(f, any_array);
+    DECLARE_LEVEL (L);
+    Push_Level(L, any_array);
 
-    while (NOT_END(f->value)) {
-        bool line = GET_VAL_FLAG(f->value, VALUE_FLAG_NEWLINE_BEFORE);
+    while (NOT_END(L->value)) {
+        bool line = GET_VAL_FLAG(L->value, VALUE_FLAG_NEWLINE_BEFORE);
 
-        if (Eval_Step_Throws(SET_END(out), f)) {
+        if (Eval_Step_Throws(SET_END(out), L)) {
             DS_DROP_TO(dsp_orig);
-            Abort_Frame(f);
+            Abort_Level(L);
             return true;
         }
 
         if (IS_END(out)) { // e.g. `reduce [comment "hi"]`
-            assert(IS_END(f->value));
+            assert(IS_END(L->value));
             break;
         }
 
@@ -70,7 +70,7 @@ bool Reduce_To_Stack_Throws(
         }
     }
 
-    Drop_Frame_Unbalanced(f); // Drop_Frame() asserts on accumulation
+    Drop_Level_Unbalanced(L); // Drop_Level() asserts on accumulation
     return false;
 }
 
@@ -169,15 +169,15 @@ bool Compose_To_Stack_Throws(
 ){
     REBDSP dsp_orig = DSP;
 
-    DECLARE_FRAME (f);
-    Push_Frame_At(
-        f, Cell_Array(any_array), VAL_INDEX(any_array), specifier, DO_MASK_NONE
+    DECLARE_LEVEL (L);
+    Push_Level_At(
+        L, Cell_Array(any_array), VAL_INDEX(any_array), specifier, DO_MASK_NONE
     );
 
-    while (NOT_END(f->value)) {
-        if (not ANY_ARRAY(f->value)) { // non-arrays don't substitute/recurse
-            DS_PUSH_RELVAL(f->value, specifier); // preserves newline flag
-            Fetch_Next_In_Frame(nullptr, f);
+    while (NOT_END(L->value)) {
+        if (not ANY_ARRAY(L->value)) { // non-arrays don't substitute/recurse
+            DS_PUSH_RELVAL(L->value, specifier); // preserves newline flag
+            Fetch_Next_In_Level(nullptr, L);
             continue;
         }
 
@@ -186,14 +186,14 @@ bool Compose_To_Stack_Throws(
         REBSPC *match_specifier = nullptr;
         const Cell* match = nullptr;
 
-        if (not IS_GROUP(f->value)) {
+        if (not IS_GROUP(L->value)) {
             //
             // Don't compose at this level, but may need to walk deeply to
             // find compositions inside it if /DEEP and it's an array
         }
         else {
-            if (Is_Doubled_Group(f->value)) { // non-spliced compose, if match
-                Cell* inner = Cell_Array_At(f->value);
+            if (Is_Doubled_Group(L->value)) { // non-spliced compose, if match
+                Cell* inner = Cell_Array_At(L->value);
                 if (Match_For_Compose(inner, pattern)) {
                     splice = false;
                     match = inner;
@@ -201,14 +201,14 @@ bool Compose_To_Stack_Throws(
                 }
             }
             else { // plain compose, if match
-                if (Match_For_Compose(f->value, pattern)) {
-                    match = f->value;
+                if (Match_For_Compose(L->value, pattern)) {
+                    match = L->value;
                     match_specifier = specifier;
                 }
             }
         }
 
-        if (match) { // only f->value if pattern is just [] or (), else deeper
+        if (match) { // only L->value if pattern is just [] or (), else deeper
             REBIXO indexor = Eval_Array_At_Core(
                 Init_Void(out), // want empty () to vanish as a VOID would
                 nullptr, // no opt_first
@@ -220,7 +220,7 @@ bool Compose_To_Stack_Throws(
 
             if (indexor == THROWN_FLAG) {
                 DS_DROP_TO(dsp_orig);
-                Abort_Frame(f);
+                Abort_Level(L);
                 return true;
             }
 
@@ -243,7 +243,7 @@ bool Compose_To_Stack_Throws(
                     // value spliced in (it may have its own newline flag)
                     //
                     DS_PUSH_RELVAL(push, VAL_SPECIFIER(out));
-                    if (GET_VAL_FLAG(f->value, VALUE_FLAG_NEWLINE_BEFORE))
+                    if (GET_VAL_FLAG(L->value, VALUE_FLAG_NEWLINE_BEFORE))
                         SET_VAL_FLAG(DS_TOP, VALUE_FLAG_NEWLINE_BEFORE);
 
                     while (++push, NOT_END(push))
@@ -255,7 +255,7 @@ bool Compose_To_Stack_Throws(
                 // compose/only [([a b c]) unmerged] => [[a b c] unmerged]
 
                 DS_PUSH(out); // Note: not legal to eval to stack direct!
-                if (GET_VAL_FLAG(f->value, VALUE_FLAG_NEWLINE_BEFORE))
+                if (GET_VAL_FLAG(L->value, VALUE_FLAG_NEWLINE_BEFORE))
                     SET_VAL_FLAG(DS_TOP, VALUE_FLAG_NEWLINE_BEFORE);
             }
 
@@ -269,42 +269,42 @@ bool Compose_To_Stack_Throws(
             REBDSP dsp_deep = DSP;
             if (Compose_To_Stack_Throws(
                 out,
-                f->value,
+                L->value,
                 specifier,
                 pattern,
                 true, // deep (guaranteed true if we get here)
                 only
             )){
                 DS_DROP_TO(dsp_orig); // drop to outer DSP (@ function start)
-                Abort_Frame(f);
+                Abort_Level(L);
                 return true;
             }
 
             REBFLGS flags = NODE_FLAG_MANAGED | ARRAY_FLAG_FILE_LINE;
-            if (GET_SER_FLAG(Cell_Array(f->value), ARRAY_FLAG_TAIL_NEWLINE))
+            if (GET_SER_FLAG(Cell_Array(L->value), ARRAY_FLAG_TAIL_NEWLINE))
                 flags |= ARRAY_FLAG_TAIL_NEWLINE;
 
             Array* popped = Pop_Stack_Values_Core(dsp_deep, flags);
             DS_PUSH_TRASH;
             Init_Any_Array(
                 DS_TOP,
-                VAL_TYPE(f->value),
+                VAL_TYPE(L->value),
                 popped // can't push and pop in same step, need this variable!
             );
 
-            if (GET_VAL_FLAG(f->value, VALUE_FLAG_NEWLINE_BEFORE))
+            if (GET_VAL_FLAG(L->value, VALUE_FLAG_NEWLINE_BEFORE))
                 SET_VAL_FLAG(DS_TOP, VALUE_FLAG_NEWLINE_BEFORE);
         }
         else {
             // compose [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7] ;-- non-deep
             //
-            DS_PUSH_RELVAL(f->value, specifier); // preserves newline flag
+            DS_PUSH_RELVAL(L->value, specifier); // preserves newline flag
         }
 
-        Fetch_Next_In_Frame(nullptr, f);
+        Fetch_Next_In_Level(nullptr, L);
     }
 
-    Drop_Frame_Unbalanced(f); // Drop_Frame() asesrts on stack accumulation
+    Drop_Level_Unbalanced(L); // Drop_Level() asesrts on stack accumulation
     return false;
 }
 

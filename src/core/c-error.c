@@ -51,7 +51,7 @@ void Snap_State_Core(struct Reb_State *s)
     assert(ARR_LEN(BUF_COLLECT) == 0);
 
     s->guarded_len = SER_LEN(GC_Guarded);
-    s->frame = FS_TOP;
+    s->level = TOP_LEVEL;
 
     s->manuals_len = SER_LEN(GC_Manuals);
     s->mold_buf_len = SER_LEN(MOLD_BUF);
@@ -83,7 +83,7 @@ void Assert_State_Balanced_Debug(
         panic_at (nullptr, file, line);
     }
 
-    assert(s->frame == FS_TOP);
+    assert(s->level == TOP_LEVEL);
 
     assert(ARR_LEN(BUF_COLLECT) == 0);
 
@@ -185,7 +185,7 @@ void Trapped_Helper(struct Reb_State *s)
     }
 
     SET_SERIES_LEN(GC_Guarded, s->guarded_len);
-    TG_Top_Frame = s->frame;
+    TG_Top_Level = s->level;
     TERM_SEQUENCE_LEN(MOLD_BUF, s->mold_buf_len);
 
   #if !defined(NDEBUG)
@@ -297,21 +297,21 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // to C_STACK_OVERFLOWING.  (See notes on the sketchiness in general of
     // the way R3-Alpha handles stack overflows, and alternative plans.)
     //
-    REBFRM *f = FS_TOP;
-    while (f != Saved_State->frame) {
-        if (Is_Action_Frame(f)) {
-            assert(f->varlist); // action must be running
-            Array* stub = f->varlist; // will be stubbed, info bits reset
-            Drop_Action(f);
+    Level* L = TOP_LEVEL;
+    while (L != Saved_State->level) {
+        if (Is_Action_Level(L)) {
+            assert(L->varlist); // action must be running
+            Array* stub = L->varlist; // will be stubbed, info bits reset
+            Drop_Action(L);
             SET_SER_INFO(stub, FRAME_INFO_FAILED); // API leaks o.k.
         }
 
-        REBFRM *prior = f->prior;
-        Abort_Frame(f); // will call va_end() if variadic frame
-        f = prior;
+        Level* prior = L->prior;
+        Abort_Level(L); // will call va_end() if variadic frame
+        L = prior;
     }
 
-    TG_Top_Frame = f; // TG_Top_Frame is writable FS_TOP
+    TG_Top_Level = L;  // TG_Top_Level is writable TOP_LEVEL
 
     Saved_State->error = error;
 
@@ -332,10 +332,10 @@ REBLEN Stack_Depth(void)
 {
     REBLEN depth = 0;
 
-    REBFRM *f = FS_TOP;
-    while (f) {
-        if (Is_Action_Frame(f))
-            if (not Is_Action_Frame_Fulfilling(f)) {
+    Level* L = TOP_LEVEL;
+    while (L) {
+        if (Is_Action_Level(L))
+            if (not Is_Action_Level_Fulfilling(L)) {
                 //
                 // We only count invoked functions (not group or path
                 // evaluations or "pending" functions that are building their
@@ -344,7 +344,7 @@ REBLEN Stack_Depth(void)
                 ++depth;
             }
 
-        f = FRM_PRIOR(f);
+        L = L->prior;
     }
 
     return depth;
@@ -403,7 +403,7 @@ const Value* Find_Error_For_Sym(SymId id_sym)
 //
 void Set_Location_Of_Error(
     REBCTX *error,
-    REBFRM *where // must be valid and executing on the stack
+    Level* where // must be valid and executing on the stack
 ) {
     assert(where != nullptr);
 
@@ -414,20 +414,20 @@ void Set_Location_Of_Error(
     // WHERE is a backtrace in the form of a block of label words, that start
     // from the top of stack and go downward.
     //
-    REBFRM *f = where;
-    for (; f != FS_BOTTOM; f = f->prior) {
+    Level* L = where;
+    for (; L != BOTTOM_LEVEL; L = L->prior) {
         //
         // Only invoked functions (not pending functions, groups, etc.)
         //
-        if (not Is_Action_Frame(f))
+        if (not Is_Action_Level(L))
             continue;
-        if (Is_Action_Frame_Fulfilling(f))
+        if (Is_Action_Level_Fulfilling(L))
             continue;
-        if (f->original == PG_Dummy_Action)
+        if (L->original == PG_Dummy_Action)
             continue;
 
         DS_PUSH_TRASH;
-        Get_Frame_Label_Or_Blank(DS_TOP, f);
+        Get_Level_Label_Or_Blank(DS_TOP, L);
     }
     Init_Block(&vars->where, Pop_Stack_Values(dsp_orig));
 
@@ -439,9 +439,9 @@ void Set_Location_Of_Error(
     // Try to fill in the file and line information of the error from the
     // stack, looking for arrays with ARRAY_FLAG_FILE_LINE.
     //
-    f = where;
-    for (; f != FS_BOTTOM; f = f->prior) {
-        if (not f->source->array) {
+    L = where;
+    for (; L != BOTTOM_LEVEL; L = L->prior) {
+        if (not L->source->array) {
             //
             // !!! We currently skip any calls from C (e.g. rebValue()) and look
             // for calls from Rebol files for the file and line.  However,
@@ -450,13 +450,13 @@ void Set_Location_Of_Error(
             //
             continue;
         }
-        if (NOT_SER_FLAG(f->source->array, ARRAY_FLAG_FILE_LINE))
+        if (NOT_SER_FLAG(L->source->array, ARRAY_FLAG_FILE_LINE))
             continue;
         break;
     }
-    if (f != FS_BOTTOM) {
-        Option(String*) file = LINK(f->source->array).file;
-        REBLIN line = MISC(f->source->array).line;
+    if (L != BOTTOM_LEVEL) {
+        Option(String*) file = LINK(L->source->array).file;
+        REBLIN line = MISC(L->source->array).line;
 
         if (file)
             Init_File(&vars->file, unwrap(file));
@@ -638,7 +638,7 @@ bool Make_Error_Object_Throws(
         }
     }
 
-    Set_Location_Of_Error(error, FS_TOP);
+    Set_Location_Of_Error(error, TOP_LEVEL);
 
     Init_Error(out, error);
     return false;
@@ -820,7 +820,7 @@ REBCTX *Make_Error_Managed_Core(
     Copy_Cell(&vars->id, id);
     Copy_Cell(&vars->type, type);
 
-    Set_Location_Of_Error(error, FS_TOP);
+    Set_Location_Of_Error(error, TOP_LEVEL);
     return error;
 }
 
@@ -944,7 +944,7 @@ REBCTX *Error_Bad_Func_Def(const Value* spec, const Value* body)
 //
 //  Error_No_Arg: C
 //
-REBCTX *Error_No_Arg(REBFRM *f, const Cell* param)
+REBCTX *Error_No_Arg(Level* L, const Cell* param)
 {
     assert(IS_TYPESET(param));
 
@@ -952,7 +952,7 @@ REBCTX *Error_No_Arg(REBFRM *f, const Cell* param)
     Init_Word(param_word, Cell_Parameter_Symbol(param));
 
     DECLARE_VALUE (label);
-    Get_Frame_Label_Or_Blank(label, f);
+    Get_Level_Label_Or_Blank(label, L);
 
     return Error_No_Arg_Raw(label, param_word);
 }
@@ -990,7 +990,7 @@ REBCTX *Error_No_Relative_Core(const Cell* any_word)
 //  Error_Not_Varargs: C
 //
 REBCTX *Error_Not_Varargs(
-    REBFRM *f,
+    Level* L,
     const Cell* param,
     enum Reb_Kind kind
 ){
@@ -1008,7 +1008,7 @@ REBCTX *Error_Not_Varargs(
         Cell_Parameter_Symbol(param)
     );
 
-    return Error_Arg_Type(f, honest_param, kind);
+    return Error_Arg_Type(L, honest_param, kind);
 }
 
 
@@ -1061,8 +1061,8 @@ REBCTX *Error_Bad_Func_Def_Core(const Cell* item, REBSPC *specifier)
 //
 // We may have to search for the refinement, so we always do (speed of error
 // creation not considered that relevant to the evaluator, being overshadowed
-// by the error handling).  See the remarks about the state of f->refine in
-// the Reb_Frame definition.
+// by the error handling).  See the remarks about the state of L->refine in
+// the LevelStruct definition.
 //
 REBCTX *Error_Bad_Refine_Revoke(const Cell* param, const Value* arg)
 {
@@ -1197,7 +1197,7 @@ REBCTX *Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 // a type different than the arg given (which had `arg_type`)
 //
 REBCTX *Error_Arg_Type(
-    REBFRM *f,
+    Level* L,
     const Cell* param,
     enum Reb_Kind actual
 ) {
@@ -1207,7 +1207,7 @@ REBCTX *Error_Arg_Type(
     Init_Word(param_word, Cell_Parameter_Symbol(param));
 
     DECLARE_VALUE (label);
-    Get_Frame_Label_Or_Blank(label, f);
+    Get_Level_Label_Or_Blank(label, L);
 
     if (actual != REB_MAX_NULLED)
         return Error_Expect_Arg_Raw(
@@ -1226,9 +1226,9 @@ REBCTX *Error_Arg_Type(
 //
 //  Error_Bad_Return_Type: C
 //
-REBCTX *Error_Bad_Return_Type(REBFRM *f, enum Reb_Kind kind) {
+REBCTX *Error_Bad_Return_Type(Level* L, enum Reb_Kind kind) {
     DECLARE_VALUE (label);
-    Get_Frame_Label_Or_Blank(label, f);
+    Get_Level_Label_Or_Blank(label, L);
 
     if (kind == REB_MAX_NULLED)
         return Error_Needs_Return_Opt_Raw(label);
