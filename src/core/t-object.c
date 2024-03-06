@@ -570,15 +570,15 @@ Bounce MAKE_Frame(
         return OUT;
     }
 
-    StackIndex lowest_ordered_stackindex = TOP_INDEX;  // for refinements
+    StackIndex lowest_stackindex = TOP_INDEX;  // for refinements
 
     if (not Is_Frame(arg))
         return RAISE(Error_Bad_Make(kind, arg));
 
     Context* exemplar = Make_Context_For_Action(
-        arg, // being used here as input (e.g. the ACTION!)
-        lowest_ordered_stackindex, // will weave in any refinements pushed
-        nullptr // no binder needed, not running any code
+        arg,  // being used here as input (e.g. the ACTION!)
+        lowest_stackindex,  // will weave in any refinements pushed
+        nullptr  // no binder needed, not running any code
     );
 
     // See notes in %c-specialize.c about the special encoding used to

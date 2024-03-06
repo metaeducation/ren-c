@@ -161,13 +161,13 @@ void Unplug_Stack(
 
         // We make the baseline stack pointers in each level relative to the
         // base level, with that level as if it were 0.  When the level
-        // gets plugged in again, we'll add the new base's dsp back in.
+        // gets plugged in again, we'll add the new base's stackindex back in.
         //
         // !!! This may confuse a fail() if it expects to climb the stack and
-        // see all the L->baseline.dsp be sane.  But as far as interim state
-        // is concerned, there's no good number to put here...leaving it as
-        // it was would be wrong too.  This might suggest an EVAL_FLAG for
-        // "don't believe the dsp".  Tricky.
+        // see all the L->baseline.stack_base be sane.  But as far as interim
+        // state is concerned, there's no good number to put here...leaving it
+        // as it was would be wrong too.  This might suggest an EVAL_FLAG for
+        // "don't believe the stack_base".  Tricky.
         //
         temp->baseline.stack_base -= base->baseline.stack_base;
 

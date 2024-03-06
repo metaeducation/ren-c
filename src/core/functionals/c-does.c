@@ -70,7 +70,7 @@ DECLARE_NATIVE(does)
 
     Context* exemplar = Make_Context_For_Action(
         Lib(DO),
-        TOP_INDEX,  // lower dsp would be if we wanted to add refinements
+        TOP_INDEX,  // lower stackindex would be if wanting to add refinements
         nullptr  // don't set up a binder; just poke specializee in frame
     );
     assert(Is_Node_Managed(CTX_VARLIST(exemplar)));

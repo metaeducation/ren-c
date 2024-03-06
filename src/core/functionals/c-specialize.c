@@ -85,10 +85,10 @@ Bounce Specializer_Dispatcher(Level* L)
 //
 Context* Make_Context_For_Action_Push_Partials(
     const Value* action,  // need ->binding, so can't just be a Action*
-    StackIndex lowest_ordered_stackindex,  // caller can add refinements
+    StackIndex lowest_stackindex,  // caller can add refinements
     Option(struct Reb_Binder*) binder
 ){
-    StackIndex highest_ordered_stackindex = TOP_INDEX;
+    StackIndex highest_stackindex = TOP_INDEX;
 
     Action* act = VAL_ACTION(action);
 
@@ -160,8 +160,8 @@ Context* Make_Context_For_Action_Push_Partials(
 
         // Check the passed-in refinements on the stack for usage.
         //
-        StackIndex stackindex = highest_ordered_stackindex;
-        for (; stackindex != lowest_ordered_stackindex; --stackindex) {
+        StackIndex stackindex = highest_stackindex;
+        for (; stackindex != lowest_stackindex; --stackindex) {
             StackValue(*) ordered = Data_Stack_At(stackindex);
             if (Cell_Word_Symbol(ordered) != symbol)
                 continue;  // just continuing this loop
@@ -206,17 +206,17 @@ Context* Make_Context_For_Action_Push_Partials(
 //
 Context* Make_Context_For_Action(
     const Value* action, // need ->binding, so can't just be a Action*
-    StackIndex lowest_ordered_stackindex,
+    StackIndex lowest_stackindex,
     Option(struct Reb_Binder*) binder
 ){
     Context* exemplar = Make_Context_For_Action_Push_Partials(
         action,
-        lowest_ordered_stackindex,
+        lowest_stackindex,
         binder
     );
 
     Manage_Series(CTX_VARLIST(exemplar));  // !!! was needed before, review
-    Drop_Data_Stack_To(lowest_ordered_stackindex);
+    Drop_Data_Stack_To(lowest_stackindex);
     return exemplar;
 }
 
@@ -232,13 +232,13 @@ Context* Make_Context_For_Action(
 // The caller may provide information on the order in which refinements are
 // to be specialized, using the data stack.  These refinements should be
 // pushed in the *reverse* order of their invocation, so append/dup/part
-// has /DUP at TOP, and /PART under it.  List stops at lowest_ordered_dsp.
+// has /DUP at TOP, and /PART under it.  List stops at lowest_stackindex.
 //
 bool Specialize_Action_Throws(
     Sink(Value*) out,
     Value* specializee,
     Option(Value*) def,  // !!! REVIEW: binding modified directly, not copied
-    StackIndex lowest_ordered_stackindex
+    StackIndex lowest_stackindex
 ){
     assert(out != specializee);
 
@@ -250,11 +250,11 @@ bool Specialize_Action_Throws(
 
     // This produces a context where partially specialized refinement slots
     // will be on the stack (including any we are adding "virtually", from
-    // the current TOP_INDEX down to the lowest_ordered_dsp).
+    // the current TOP_INDEX down to the lowest_stackindex).
     //
     Context* exemplar = Make_Context_For_Action_Push_Partials(
         specializee,
-        lowest_ordered_stackindex,
+        lowest_stackindex,
         def ? &binder : nullptr
     );
     Manage_Series(CTX_VARLIST(exemplar)); // destined to be managed, guarded
@@ -295,7 +295,7 @@ bool Specialize_Action_Throws(
         Drop_GC_Guard(exemplar);
 
         if (threw) {
-            Drop_Data_Stack_To(lowest_ordered_stackindex);
+            Drop_Data_Stack_To(lowest_stackindex);
             return true;
         }
 
@@ -308,7 +308,7 @@ bool Specialize_Action_Throws(
 
     Value* arg = CTX_VARS_HEAD(exemplar);
 
-    StackIndex ordered_stackindex = lowest_ordered_stackindex;
+    StackIndex ordered_stackindex = lowest_stackindex;
 
     // If you specialize out the first argument of an enfixed function, then
     // it ceases being enfix.
@@ -382,7 +382,7 @@ bool Specialize_Action_Throws(
         );
 
         while (ordered_stackindex != TOP_INDEX) {
-            ++ordered_stackindex;
+            ordered_stackindex += 1;
             StackValue(*) ordered = Data_Stack_At(ordered_stackindex);
             if (not BINDING(ordered)) {  // specialize :print/asdf
                 Refinify_Pushed_Refinement(ordered);
@@ -403,7 +403,7 @@ bool Specialize_Action_Throws(
                 );
             }
         }
-        Drop_Data_Stack_To(lowest_ordered_stackindex);
+        Drop_Data_Stack_To(lowest_stackindex);
 
         if (Array_Len(partials) == 0) {
             Free_Unmanaged_Series(partials);

@@ -660,7 +660,7 @@ DECLARE_NATIVE(applique)
 
     Context* exemplar = Make_Context_For_Action_Push_Partials(  // [1]
         op,
-        STACK_BASE,  // lowest_ordered_dsp of refinements to weave in
+        STACK_BASE,  // lowest_stackindex of refinements to weave in
         nullptr  // no binder needed
     );
     Manage_Series(CTX_VARLIST(exemplar));
@@ -772,7 +772,7 @@ DECLARE_NATIVE(apply)
     INIT_BINDER(&binder);*/
     Context* exemplar = Make_Context_For_Action_Push_Partials(  // [2]
         op,
-        STACK_BASE, // lowest_ordered_dsp of refinements to weave in
+        STACK_BASE,  // lowest_stackindex of refinements to weave in
         nullptr /* &binder */
     );
     Manage_Series(CTX_VARLIST(exemplar)); // Putting into a frame

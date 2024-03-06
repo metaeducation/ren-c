@@ -1252,8 +1252,8 @@ Bounce Stepper_Executor(Level* L)
       //
       // 3. @xxx indicates a desire for a "circled" result.  By default, the
       //    ordinary return result will be returned.  (While checking we set
-      //    dsp_circled when we see `[@ ...]: ...` to give an error if more
-      //    than one return were circled.)
+      //    stackindex_circled when we see `[@ ...]: ...` to give an error if
+      //    more than one return were circled.)
       //
       // 4. ^xxx indicate a desire to get a "meta" result.
       //
