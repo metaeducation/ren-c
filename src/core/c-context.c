@@ -337,7 +337,7 @@ REBCTX *Copy_Context_Shallow_Extra_Managed(REBCTX *src, REBLEN extra) {
 void Collect_Start(struct Reb_Collector* collector, REBFLGS flags)
 {
     collector->flags = flags;
-    collector->dsp_orig = DSP;
+    collector->base = TOP_INDEX;
     collector->index = 1;
     INIT_BINDER(&collector->binder);
 
@@ -962,7 +962,7 @@ REBCTX *Construct_Context_Managed(
 //
 Array* Context_To_Array(REBCTX *context, REBINT mode)
 {
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     Value* key = CTX_KEYS_HEAD(context);
     Value* var = CTX_VARS_HEAD(context);
@@ -973,9 +973,8 @@ Array* Context_To_Array(REBCTX *context, REBINT mode)
     for (; NOT_END(key); n++, key++, var++) {
         if (not Is_Param_Hidden(key)) {
             if (mode & 1) {
-                DS_PUSH_TRASH;
                 Init_Any_Word_Bound(
-                    DS_TOP,
+                    PUSH(),
                     (mode & 2) ? REB_SET_WORD : REB_WORD,
                     Key_Symbol(key),
                     context,
@@ -983,7 +982,7 @@ Array* Context_To_Array(REBCTX *context, REBINT mode)
                 );
 
                 if (mode & 2)
-                    SET_VAL_FLAG(DS_TOP, VALUE_FLAG_NEWLINE_BEFORE);
+                    SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
             }
             if (mode & 2) {
                 //
@@ -994,13 +993,13 @@ Array* Context_To_Array(REBCTX *context, REBINT mode)
                 if (IS_NULLED(var))
                     fail (Error_Null_Object_Block_Raw());
 
-                DS_PUSH(var);
+                Copy_Cell(PUSH(), var);
             }
         }
     }
 
     return Pop_Stack_Values_Core(
-        dsp_orig,
+        base,
         did (mode & 2) ? ARRAY_FLAG_TAIL_NEWLINE : 0
     );
 }

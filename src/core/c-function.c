@@ -38,7 +38,7 @@
 //
 Array* List_Func_Words(const Cell* func, bool pure_locals)
 {
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     Value* param = VAL_ACT_PARAMS_HEAD(func);
     for (; NOT_END(param); param++) {
@@ -81,11 +81,10 @@ Array* List_Func_Words(const Cell* func, bool pure_locals)
             DEAD_END;
         }
 
-        DS_PUSH_TRASH;
-        Init_Any_Word(DS_TOP, kind, Cell_Parameter_Symbol(param));
+        Init_Any_Word(PUSH(), kind, Cell_Parameter_Symbol(param));
     }
 
-    return Pop_Stack_Values(dsp_orig);
+    return Pop_Stack_Values(base);
 }
 
 
@@ -175,10 +174,10 @@ Array* Make_Paramlist_Managed_May_Fail(
     }
   #endif
 
-    REBDSP dsp_orig = DSP;
-    assert(DS_TOP == DS_AT(dsp_orig));
+    StackIndex base = TOP_INDEX;
+    assert(TOP == Data_Stack_At(base));
 
-    REBDSP definitional_return_dsp = 0;
+    StackIndex return_stackindex = 0;
 
     // As we go through the spec block, we push TYPESET! BLOCK! TEXT! triples.
     // These will be split out into separate arrays after the process is done.
@@ -188,10 +187,9 @@ Array* Make_Paramlist_Managed_May_Fail(
     // the function description--it will be extracted from the slot before
     // it is turned into a rootkey for param_notes.
     //
-    DS_PUSH_TRASH; // paramlist[0] will become ACT_ARCHETYPE()
-    Init_Unreadable(DS_TOP);
-    DS_PUSH(EMPTY_BLOCK); // param_types[0] (to be OBJECT! canon value, if any)
-    DS_PUSH(EMPTY_TEXT); // param_notes[0] (holds description, then canon)
+    Init_Unreadable(PUSH());  // paramlist[0] will become ACT_ARCHETYPE()
+    Copy_Cell(PUSH(), EMPTY_BLOCK);  // param_types[0] (to be OBJECT! canon)
+    Copy_Cell(PUSH(), EMPTY_TEXT); // param_notes[0] (description, then canon)
 
     bool has_description = false;
     bool has_types = false;
@@ -218,19 +216,18 @@ Array* Make_Paramlist_Managed_May_Fail(
             if (mode == SPEC_MODE_WITH)
                 continue;
 
-            if (IS_TYPESET(DS_TOP))
-                DS_PUSH(EMPTY_BLOCK); // need a block to be in position
+            if (IS_TYPESET(TOP))
+                Copy_Cell(PUSH(), EMPTY_BLOCK);  // need block in position
 
-            if (IS_BLOCK(DS_TOP)) { // we're in right spot to push notes/title
-                DS_PUSH_TRASH;
-                Init_Text(DS_TOP, Copy_String_At_Len(item, -1));
+            if (IS_BLOCK(TOP)) { // we're in right spot to push notes/title
+                Init_Text(PUSH(), Copy_String_At_Len(item, -1));
             }
             else { // !!! A string was already pushed.  Should we append?
-                assert(IS_TEXT(DS_TOP));
-                Init_Text(DS_TOP, Copy_String_At_Len(item, -1));
+                assert(IS_TEXT(TOP));
+                Init_Text(TOP, Copy_String_At_Len(item, -1));
             }
 
-            if (DS_TOP == DS_AT(dsp_orig + 3))
+            if (TOP == Data_Stack_At(base + 3))
                 has_description = true;
             else
                 has_notes = true;
@@ -265,7 +262,7 @@ Array* Make_Paramlist_Managed_May_Fail(
 
         if (IS_BLOCK(item)) {
           process_typeset_block:
-            if (IS_BLOCK(DS_TOP)) // two blocks of types!
+            if (IS_BLOCK(TOP)) // two blocks of types!
                 fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
 
             // You currently can't say `<local> x [integer!]`, because they
@@ -284,11 +281,10 @@ Array* Make_Paramlist_Managed_May_Fail(
             // Save the block for parameter types.
             //
             Value* typeset;
-            if (IS_TYPESET(DS_TOP)) {
+            if (IS_TYPESET(TOP)) {
                 REBSPC *derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
-                DS_PUSH_TRASH;
                 Init_Block(
-                    DS_TOP,
+                    PUSH(),
                     Copy_Array_At_Deep_Managed(
                         Cell_Array(item),
                         VAL_INDEX(item),
@@ -296,28 +292,28 @@ Array* Make_Paramlist_Managed_May_Fail(
                     )
                 );
 
-                typeset = DS_TOP - 1; // volatile if you DS_PUSH!
+                typeset = TOP - 1;  // volatile if you PUSH()!
             }
             else {
-                assert(IS_TEXT(DS_TOP)); // !!! are blocks after notes good?
+                assert(IS_TEXT(TOP)); // !!! are blocks after notes good?
 
-                if (IS_BLANK_RAW(DS_TOP - 2)) {
+                if (IS_BLANK_RAW(TOP - 2)) {
                     //
                     // No parameters pushed, e.g. func [[integer!] {<-- bad}]
                     //
                     fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
                 }
 
-                assert(IS_TYPESET(DS_TOP - 2));
-                typeset = DS_TOP - 2;
+                assert(IS_TYPESET(TOP - 2));
+                typeset = TOP - 2;
 
-                assert(IS_BLOCK(DS_TOP - 1));
-                if (Cell_Array(DS_TOP - 1) != EMPTY_ARRAY)
+                assert(IS_BLOCK(TOP - 1));
+                if (Cell_Array(TOP - 1) != EMPTY_ARRAY)
                     fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
 
                 REBSPC *derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
                 Init_Block(
-                    DS_TOP - 1,
+                    TOP - 1,
                     Copy_Array_At_Deep_Managed(
                         Cell_Array(item),
                         VAL_INDEX(item),
@@ -372,11 +368,11 @@ Array* Make_Paramlist_Managed_May_Fail(
         // In rhythm of TYPESET! BLOCK! TEXT! we want to be on a string spot
         // at the time of the push of each new typeset.
         //
-        if (IS_TYPESET(DS_TOP))
-            DS_PUSH(EMPTY_BLOCK);
-        if (IS_BLOCK(DS_TOP))
-            DS_PUSH(EMPTY_TEXT);
-        assert(IS_TEXT(DS_TOP));
+        if (IS_TYPESET(TOP))
+            Copy_Cell(PUSH(), EMPTY_BLOCK);
+        if (IS_BLOCK(TOP))
+            Copy_Cell(PUSH(), EMPTY_TEXT);
+        assert(IS_TEXT(TOP));
 
         // Non-annotated arguments disallow ACTION!, TRASH and NULL.  Not
         // having to worry about ACTION! and NULL means by default, code
@@ -389,9 +385,8 @@ Array* Make_Paramlist_Managed_May_Fail(
         // If the typeset bits contain REB_MAX_NULLED, that indicates <opt>.
         // But Is_Param_Endable() indicates <end>.
         //
-        DS_PUSH_TRASH;
         Value* typeset = Init_Typeset(
-            DS_TOP, // volatile if you DS_PUSH!
+            PUSH(),  // volatile if you PUSH() again
             (flags & MKF_ANY_VALUE)
                 ? TS_OPT_VALUE
                 : TS_VALUE & ~(
@@ -412,13 +407,13 @@ Array* Make_Paramlist_Managed_May_Fail(
         // (despite violating the "pure locals are NULL" premise)
         //
         if (Symbol_Id(canon) == SYM_RETURN) {
-            if (definitional_return_dsp != 0) {
+            if (return_stackindex != 0) {
                 DECLARE_VALUE (word);
                 Init_Word(word, canon);
                 fail (Error_Dup_Vars_Raw(word)); // most dup checks done later
             }
             if (IS_SET_WORD(item))
-                definitional_return_dsp = DSP; // RETURN: explicitly tolerated
+                return_stackindex = TOP_INDEX;  // RETURN: explicitly tolerated
             else
                 flags &= ~(MKF_RETURN | MKF_FAKE_RETURN);
         }
@@ -433,7 +428,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             // !!! If you write something like `func [x <with> x] [...]` that
             // should be sanity checked with an error...TBD.
             //
-            DS_DROP; // forge the typeset, used in `definitional_return` case
+            DROP(); // forge the typeset, used in `definitional_return` case
             continue;
         }
 
@@ -495,11 +490,11 @@ Array* Make_Paramlist_Managed_May_Fail(
 
     // Go ahead and flesh out the TYPESET! BLOCK! TEXT! triples.
     //
-    if (IS_TYPESET(DS_TOP))
-        DS_PUSH(EMPTY_BLOCK);
-    if (IS_BLOCK(DS_TOP))
-        DS_PUSH(EMPTY_TEXT);
-    assert((DSP - dsp_orig) % 3 == 0); // must be a multiple of 3
+    if (IS_TYPESET(TOP))
+        Copy_Cell(PUSH(), EMPTY_BLOCK);
+    if (IS_BLOCK(TOP))
+        Copy_Cell(PUSH(), EMPTY_TEXT);
+    assert((TOP_INDEX - base) % 3 == 0);  // must be a multiple of 3
 
     // Definitional RETURN slots must have their argument value fulfilled with
     // an ACTION! specific to the action called on *every instantiation*.
@@ -514,23 +509,22 @@ Array* Make_Paramlist_Managed_May_Fail(
     // slot--these mechanisms should have some review.
 
     if (flags & MKF_RETURN) {
-        if (definitional_return_dsp == 0) { // no explicit RETURN: pure local
+        if (return_stackindex == 0) {  // no explicit RETURN: pure local
             //
             // While default arguments disallow ACTION!, TRASH, and NULL...
             // they are allowed to return anything.  Generally speaking, the
             // checks are on the input side, not the output.
             //
-            DS_PUSH_TRASH;
-            Init_Typeset(DS_TOP, TS_OPT_VALUE, Canon(SYM_RETURN));
-            INIT_VAL_PARAM_CLASS(DS_TOP, PARAM_CLASS_RETURN);
-            definitional_return_dsp = DSP;
+            Init_Typeset(PUSH(), TS_OPT_VALUE, Canon(SYM_RETURN));
+            INIT_VAL_PARAM_CLASS(TOP, PARAM_CLASS_RETURN);
+            return_stackindex = TOP_INDEX;
 
-            DS_PUSH(EMPTY_BLOCK);
-            DS_PUSH(EMPTY_TEXT);
+            Copy_Cell(PUSH(), EMPTY_BLOCK);
+            Copy_Cell(PUSH(), EMPTY_TEXT);
             // no need to move it--it's already at the tail position
         }
         else {
-            Value* param = DS_AT(definitional_return_dsp);
+            Value* param = Data_Stack_At(return_stackindex);
             assert(VAL_PARAM_CLASS(param) == PARAM_CLASS_LOCAL);
             INIT_VAL_PARAM_CLASS(param, PARAM_CLASS_RETURN);
 
@@ -542,22 +536,22 @@ Array* Make_Paramlist_Managed_May_Fail(
 
     // Slots, which is length +1 (includes the rootvar or rootparam)
     //
-    REBLEN num_slots = (DSP - dsp_orig) / 3;
+    REBLEN num_slots = (TOP_INDEX - base) / 3;
 
     // If we pushed a typeset for a return and it's a native, it actually
     // doesn't want a RETURN: key in the frame in release builds.  We'll omit
     // from the copy.
     //
-    if (definitional_return_dsp != 0 and (flags & MKF_FAKE_RETURN))
+    if (return_stackindex != 0 and (flags & MKF_FAKE_RETURN))
         --num_slots;
 
     // There should be no more pushes past this point, so a stable pointer
     // into the stack for the definitional return can be found.
     //
     Value* definitional_return =
-        definitional_return_dsp == 0
+        return_stackindex == 0
             ? nullptr
-            : DS_AT(definitional_return_dsp);
+            : Data_Stack_At(return_stackindex);
 
     // Must make the function "paramlist" even if "empty", for identity.
     //
@@ -587,9 +581,9 @@ Array* Make_Paramlist_Managed_May_Fail(
 
         Symbol* duplicate = nullptr;
 
-        Value* src = DS_AT(dsp_orig + 1) + 3;
+        Value* src = Data_Stack_At(base + 1) + 3;
 
-        for (; src <= DS_TOP; src += 3) {
+        for (; src <= TOP; src += 3) {
             assert(IS_TYPESET(src));
             if (not Try_Add_Binder_Index(&binder, Cell_Param_Canon(src), 1020))
                 duplicate = Cell_Parameter_Symbol(src);
@@ -621,8 +615,8 @@ Array* Make_Paramlist_Managed_May_Fail(
 
         // Must remove binder indexes for all words, even if about to fail
         //
-        src = DS_AT(dsp_orig + 1) + 3;
-        for (; src <= DS_TOP; src += 3, ++dest) {
+        src = Data_Stack_At(base + 1) + 3;
+        for (; src <= TOP; src += 3, ++dest) {
             if (
                 Remove_Binder_Index_Else_0(&binder, Cell_Param_Canon(src))
                 == 0
@@ -662,10 +656,10 @@ Array* Make_Paramlist_Managed_May_Fail(
     // slot, the third cell we pushed onto the stack.  Extract it if so.
     //
     if (has_description) {
-        assert(IS_TEXT(DS_AT(dsp_orig + 3)));
+        assert(IS_TEXT(Data_Stack_At(base + 3)));
         Copy_Cell(
             CTX_VAR(meta, STD_ACTION_META_DESCRIPTION),
-            DS_AT(dsp_orig + 3)
+            Data_Stack_At(base + 3)
         );
     }
 
@@ -686,9 +680,9 @@ Array* Make_Paramlist_Managed_May_Fail(
 
         Value* dest = rootvar + 1;
 
-        Value* src = DS_AT(dsp_orig + 2);
+        Value* src = Data_Stack_At(base + 2);
         src += 3;
-        for (; src <= DS_TOP; src += 3) {
+        for (; src <= TOP; src += 3) {
             assert(IS_BLOCK(src));
             if (definitional_return and src == definitional_return + 1)
                 continue;
@@ -748,9 +742,9 @@ Array* Make_Paramlist_Managed_May_Fail(
 
         Value* dest = rootvar + 1;
 
-        Value* src = DS_AT(dsp_orig + 3);
+        Value* src = Data_Stack_At(base + 3);
         src += 3;
-        for (; src <= DS_TOP; src += 3) {
+        for (; src <= TOP; src += 3) {
             assert(IS_TEXT(src));
             if (definitional_return and src == definitional_return + 2)
                 continue;
@@ -793,7 +787,7 @@ Array* Make_Paramlist_Managed_May_Fail(
 
     // With all the values extracted from stack to array, restore stack pointer
     //
-    DS_DROP_TO(dsp_orig);
+    Drop_Data_Stack_To(base);
 
     return paramlist;
 }
@@ -1688,7 +1682,7 @@ REB_R Chainer_Dispatcher(Level* L)
     Value* chained = KNOWN(ARR_LAST(pipeline));
     for (; chained != ARR_HEAD(pipeline); --chained) {
         assert(IS_ACTION(chained));
-        DS_PUSH(KNOWN(chained));
+        Copy_Cell(PUSH(), KNOWN(chained));
     }
 
     // Extract the first function, itself which might be a chain.

@@ -321,14 +321,14 @@ DECLARE_NATIVE(chain)
     if (REF(quote))
         chainees = COPY_ANY_ARRAY_AT_DEEP_MANAGED(pipeline);
     else {
-        REBDSP dsp_orig = DSP;
+        StackIndex base = TOP_INDEX;
         if (Reduce_To_Stack_Throws(out, pipeline))
             return out;
 
         // No more evaluations *should* run before putting this array in a
         // GC-safe spot, but leave unmanaged anyway.
         //
-        chainees = Pop_Stack_Values(dsp_orig); // no NODE_FLAG_MANAGED
+        chainees = Pop_Stack_Values(base); // no NODE_FLAG_MANAGED
     }
 
     Value* first = KNOWN(ARR_HEAD(chainees));

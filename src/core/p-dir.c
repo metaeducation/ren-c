@@ -49,7 +49,7 @@ static Array* Read_Dir_May_Fail(struct devreq_file *dir)
     req->modes |= RFM_DIR;
     req->common.data = cast(Byte*, &file);
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     while (true) {
         OS_DO_DEVICE_SYNC(req, RDC_READ);
@@ -57,8 +57,7 @@ static Array* Read_Dir_May_Fail(struct devreq_file *dir)
         if (req->flags & RRF_DONE)
             break;
 
-        DS_PUSH_TRASH;
-        Copy_Cell(DS_TOP, file.path);
+        Copy_Cell(PUSH(), file.path);
 
         // Assume the file.devreq gets blown away on each loop, so there's
         // nowhere to free the file->path unless we do it here.
@@ -100,7 +99,7 @@ static Array* Read_Dir_May_Fail(struct devreq_file *dir)
         // no matches found, but not an error
     }
 
-    return Pop_Stack_Values(dsp_orig);
+    return Pop_Stack_Values(base);
 }
 
 

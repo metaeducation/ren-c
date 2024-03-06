@@ -33,10 +33,10 @@
 //
 // * Eval_Core_Expression_Checks_Debug() runs before each full "expression"
 //   is evaluated, e.g. before each EVALUATE step.  It makes sure the state
-//   balanced completely--so no DS_PUSH that wasn't balanced by a DS_POP
-//   or DS_DROP (for example).  It also trashes variables in the frame which
-//   might accidentally carry over from one step to another, so that there
-//   will be a crash instead of a casual reuse.
+//   balanced completely--so no PUSH() that wasn't balanced by a DROP().  It
+//   also trashes variables in the frame which might accidentally carry over
+//   from one step to another, so that there will be a crash instead of a
+//   casual reuse.
 //
 // * Eval_Core_Exit_Checks_Debug() runs if the Eval_Core_Throws() call makes
 //   it to the end without a fail() longjmping out from under it.  It also
@@ -121,7 +121,7 @@ static void Eval_Core_Shared_Checks_Debug(Level* L) {
     // balance check.
 
     assert(L == TOP_LEVEL);
-    assert(DSP == L->dsp_orig);
+    assert(TOP_INDEX == L->stack_base);
 
     assert(not (L->flags.bits & DO_FLAG_FINAL_DEBUG));
 

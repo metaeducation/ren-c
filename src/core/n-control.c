@@ -170,7 +170,7 @@ bool Either_Test_Core_Throws(
         const bool push_refinements = false;
 
         Symbol* opt_label = nullptr;
-        REBDSP lowest_ordered_dsp = DSP;
+        StackIndex lowest_stackindex = TOP_INDEX;
         if (Get_If_Word_Or_Path_Throws(
             out,
             &opt_label,
@@ -181,8 +181,8 @@ bool Either_Test_Core_Throws(
             return true;
         }
 
-        assert(lowest_ordered_dsp == DSP); // would have made specialization
-        UNUSED(lowest_ordered_dsp);
+        assert(lowest_stackindex == TOP_INDEX);  // would've specialized
+        UNUSED(lowest_stackindex);
 
         Copy_Cell(test, out);
 

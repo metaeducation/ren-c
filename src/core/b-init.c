@@ -764,16 +764,16 @@ static Array* Startup_Generics(const Value* boot_generics)
     if (0 != strcmp("open", Symbol_Head(Canon(SYM_OPEN))))
         panic (Canon(SYM_OPEN));
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     Cell* item = head;
     for (; NOT_END(item); ++item)
         if (IS_SET_WORD(item)) {
-            DS_PUSH_RELVAL(item, specifier);
-            CHANGE_VAL_TYPE_BITS(DS_TOP, REB_WORD); // change pushed to WORD!
+            Derelativize(PUSH(), item, specifier);
+            CHANGE_VAL_TYPE_BITS(TOP, REB_WORD); // change pushed to WORD!
         }
 
-    return Pop_Stack_Values(dsp_orig); // catalog of generics
+    return Pop_Stack_Values(base);  // catalog of generics
 }
 
 
@@ -1506,7 +1506,7 @@ void Startup_Core(void)
 
     PG_Boot_Phase = BOOT_MEZZ;
 
-    assert(DSP == 0 and TOP_LEVEL == BOTTOM_LEVEL);
+    assert(TOP_INDEX == 0 and TOP_LEVEL == BOTTOM_LEVEL);
 
     Value* error = rebRescue(cast(REBDNG*, &Startup_Mezzanine), boot);
     if (error) {
@@ -1529,7 +1529,7 @@ void Startup_Core(void)
         panic (error);
     }
 
-    assert(DSP == 0 and TOP_LEVEL == BOTTOM_LEVEL);
+    assert(TOP_INDEX == 0 and TOP_LEVEL == BOTTOM_LEVEL);
 
     DROP_GC_GUARD(boot_array);
 

@@ -1553,7 +1553,7 @@ DECLARE_NATIVE(subparse)
                         // !!! There is no GET-BLOCK! or GET-GROUP! in R3C.
                         // The change was made later.
                         //
-                        /*REBDSP dsp_orig = DSP;
+                        /*StackIndex base = TOP_INDEX;
                         assert(IS_END(P_OUT));  // should be true until finish
                         if (Reduce_To_Stack_Throws(
                             P_OUT,
@@ -1564,26 +1564,26 @@ DECLARE_NATIVE(subparse)
                         }
                         SET_END(P_OUT);  // since we didn't throw, put it back
 
-                        if (DSP == dsp_orig) {
+                        if (TOP_INDEX == base) {
                             // Nothing to add
                         }
                         else if (only) {
                             Init_Block(
                                 Alloc_Tail_Array(P_COLLECTION),
-                                Pop_Stack_Values(dsp_orig)
+                                Pop_Stack_Values(base)
                             );
                         }
                         else {
-                            Value* stacked = DS_AT(dsp_orig);
+                            Value* stacked = Data_Stack_At(base);
                             do {
                                 ++stacked;
                                 Copy_Cell(
                                     Alloc_Tail_Array(P_COLLECTION),
                                     stacked
                                 );
-                            } while (stacked != DS_TOP);
+                            } while (stacked != TOP);
                         }
-                        DS_DROP_TO(dsp_orig);
+                        Drop_Data_Stack_To(base);
 
                         // Don't touch P_POS, we didn't consume anything from
                         // the input series.

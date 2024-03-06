@@ -194,7 +194,7 @@ DECLARE_NATIVE(load_extension)
     Init_Any_Context(module, REB_MODULE, module_ctx);
     PUSH_GC_GUARD(module);
 
-    REBDSP dsp_orig = DSP; // for accumulating exports
+    StackIndex base = TOP_INDEX; // for accumulating exports
 
     Cell* item = ARR_HEAD(specs);
     REBLEN i;
@@ -235,14 +235,13 @@ DECLARE_NATIVE(load_extension)
         // the list of the exports and pass it to the module code.
         //
         if (is_export) {
-            DS_PUSH_TRASH;
-            Init_Word(DS_TOP, Cell_Word_Symbol(name));
-            if (0 == Try_Bind_Word(module_ctx, DS_TOP))
+            Init_Word(PUSH(), Cell_Word_Symbol(name));
+            if (0 == Try_Bind_Word(module_ctx, TOP))
                 panic ("Couldn't bind word just added -- problem");
         }
     }
 
-    Array* exports_arr = Pop_Stack_Values(dsp_orig);
+    Array* exports_arr = Pop_Stack_Values(base);
     DECLARE_VALUE (exports);
     Init_Block(exports, exports_arr);
     PUSH_GC_GUARD(exports);

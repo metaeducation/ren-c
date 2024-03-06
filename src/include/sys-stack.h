@@ -26,7 +26,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// The data stack (DS_) is for pushing one individual cell at a time.  The
+// The data stack is for pushing one individual cell at a time.  The
 // values can then be popped in a Last-In-First-Out way.  It is also possible
 // to mark a stack position, do any number of pushes, and then ask for the
 // range of values pushed since the mark to be placed into an Array of cells.
@@ -51,30 +51,28 @@
 // push is tested to see if an expansion is needed, a trick is used.  This
 // trick is to grow the stack in blocks, and always maintain that the block
 // has an END marker at its point of capacity--and ensure that there are no
-// end markers between the DSP and that capacity.  This way, if a push runs
-// up against an END it knows to do an expansion.
+// end markers between the TOP_INDEX and that capacity.  This way, if a push
+// runs up against an END it knows to do an expansion.
 //
 
-// DSP stands for "(D)ata (S)tack "(P)osition", and is the index of the top
-// of the data stack (last valid item in the underlying array)
-//
-#define DSP \
-    cast(REBDSP, DS_Index) // cast helps stop ++DSP, etc.
+#define TOP_INDEX \
+    cast(StackIndex, DS_Index) // cast helps stop ++TOP_INDEX, etc.
 
-// DS_TOP is the most recently pushed item.
+// TOP is the most recently pushed item.
 //
-#define DS_TOP \
-    cast(Value*, DS_Movable_Top) // cast helps stop ++DS_TOP, etc.
+#define TOP \
+    cast(Value*, DS_Movable_Top) // cast helps stop ++TOP, etc.
 
-// DS_AT accesses value at given stack location.  It is allowed to point at
-// a stack location that is an end, e.g. DS_AT(dsp + 1), because that location
-// may be used as the start of a copy which is ultimately of length 0.
+// Data_Stack_At()accesses value at given stack location.  It is allowed to
+// point at a stack location that is an end, e.g. Data_Stack_At(TOP_INDEX + 1),
+// because that location may be used as the start of a copy which is
+// ultimately of length 0.
 //
-INLINE Value* DS_AT(REBDSP d) {
-    Value* at = KNOWN(ARR_HEAD(DS_Array) + d);
+INLINE Value* Data_Stack_At(StackIndex i) {
+    Value* at = KNOWN(ARR_HEAD(DS_Array) + i);
     assert(
-        ((at->header.bits & NODE_FLAG_CELL) and d <= (DSP + 1))
-        or (not (SECOND_BYTE(at->header) != REB_0 and d == (DSP + 1)))
+        ((at->header.bits & NODE_FLAG_CELL) and i <= (TOP_INDEX + 1))
+        or (not (SECOND_BYTE(at->header) != REB_0 and i == (TOP_INDEX + 1)))
     );
     return at;
 }
@@ -99,19 +97,21 @@ INLINE Value* DS_AT(REBDSP d) {
 
 #define STACK_EXPAND_BASIS 128
 
-// Note: DS_Movable_Top is DS_TOP, but it asserts on ENDs...
+// Note: DS_Movable_Top is TOP, but it asserts on ENDs...
 //
-#define DS_PUSH_TRASH \
-    (++DS_Index, ++DS_Movable_Top, IS_END(DS_Movable_Top) \
-        ? Expand_Data_Stack_May_Fail(STACK_EXPAND_BASIS) \
-        : TRASH_CELL_IF_DEBUG(DS_Movable_Top)) \
-
-#define DS_PUSH(v) \
-    (DS_PUSH_TRASH, Copy_Cell(DS_TOP, (v))) \
+INLINE Value* PUSH() {
+    ++DS_Index;
+    ++DS_Movable_Top;
+    if (IS_END(DS_Movable_Top))
+        Expand_Data_Stack_May_Fail(STACK_EXPAND_BASIS);
+    else
+        TRASH_CELL_IF_DEBUG(DS_Movable_Top);
+    return DS_Movable_Top;
+}
 
 
 //
-// POPPING
+// DROPPING/POPPING
 //
 // Since it's known that END markers were never pushed, a pop can just leave
 // whatever bits had been previously pushed, dropping only the index.  The
@@ -119,29 +119,29 @@ INLINE Value* DS_AT(REBDSP d) {
 //
 
 #ifdef NDEBUG
-    #define DS_DROP \
+    #define DROP() \
         (--DS_Index, --DS_Movable_Top)
 
-    #define DS_DROP_TO(dsp) \
-        (DS_Movable_Top -= (DS_Index - (dsp)), DS_Index = (dsp))
+    #define Drop_Data_Stack_To(i) \
+        (DS_Movable_Top -= (DS_Index - (i)), DS_Index = (i))
 #else
     INLINE void DS_DROP_Core(void) {
-        Init_Unreadable(DS_TOP); // TRASH makes ASSERT_ARRAY fail
+        Init_Unreadable(TOP);  // TRASH makes ASSERT_ARRAY fail
         --DS_Index;
         --DS_Movable_Top;
     }
 
-    #define DS_DROP \
+    #define DROP() \
         DS_DROP_Core()
 
-    INLINE void DS_DROP_TO_Core(REBDSP dsp) {
-        assert(DSP >= dsp);
-        while (DSP != dsp)
-            DS_DROP;
+    INLINE void DS_DROP_TO_Core(StackIndex i) {
+        assert(TOP_INDEX >= i);
+        while (TOP_INDEX != i)
+            DROP();
     }
 
-    #define DS_DROP_TO(dsp) \
-        DS_DROP_TO_Core(dsp)
+    #define Drop_Data_Stack_To(i) \
+        DS_DROP_TO_Core(i)
 #endif
 
 // If Pop_Stack_Values_Core is used ARRAY_FLAG_FILE_LINE, it means the system
@@ -150,11 +150,12 @@ INLINE Value* DS_AT(REBDSP d) {
 // ARRAY_FLAG_PARAMLIST or ARRAY_FLAG_VARLIST--it's assumed that you don't
 // want to do this, because the ->link and ->misc fields have other uses.
 //
-#define Pop_Stack_Values(dsp) \
-    Pop_Stack_Values_Core((dsp), ARRAY_FLAG_FILE_LINE)
+#define Pop_Stack_Values(base) \
+    Pop_Stack_Values_Core((base), ARRAY_FLAG_FILE_LINE)
 
-#define Pop_Stack_Values_Keep_Eval_Flip(dsp) \
-    Pop_Stack_Values_Core((dsp), ARRAY_FLAG_FILE_LINE | ARRAY_FLAG_NULLEDS_LEGAL)
+#define Pop_Stack_Values_Keep_Eval_Flip(base) \
+    Pop_Stack_Values_Core((base), \
+        ARRAY_FLAG_FILE_LINE | ARRAY_FLAG_NULLEDS_LEGAL)
 
 
 //=////////////////////////////////////////////////////////////////////////=//

@@ -827,7 +827,7 @@ union Reb_Series_Misc {
     // the forwarding entry.  Then the index of the forwarding entry is put
     // here.  At the end of the copy, all the ->misc fields are restored.
     //
-    REBDSP forwarding;
+    StackIndex forwarding;
 
     // native dispatcher code, see Reb_Function's body_holder
     //

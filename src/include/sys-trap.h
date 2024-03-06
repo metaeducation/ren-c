@@ -189,9 +189,10 @@
 //
 #define PUSH_TRAP(e,s) \
     do { \
-        /* assert(Saved_State or (DSP == 0 and TOP_LEVEL == BOTTOM_LEVEL)); */ \
-        if (Saved_State == nullptr) \
+        if (Saved_State == nullptr) { \
+            /* assert(TOP_INDEX == 0 and TOP_LEVEL == BOTTOM_LEVEL)); */ \
             Set_Stack_Limit(s); \
+        } \
         Snap_State_Core(s); \
         (s)->last_state = Saved_State; \
         Saved_State = (s); \

@@ -42,7 +42,7 @@
 //
 void Snap_State_Core(struct Reb_State *s)
 {
-    s->dsp = DSP;
+    s->stack_base = TOP_INDEX;
 
     // There should not be a Collect_Keys in progress.  (We use a non-zero
     // length of the collect buffer to tell if a later fail() happens in
@@ -75,10 +75,10 @@ void Assert_State_Balanced_Debug(
     const char *file,
     int line
 ){
-    if (s->dsp != DSP) {
+    if (s->stack_base != TOP_INDEX) {
         printf(
-            "DS_PUSH()x%d without DS_POP/DS_DROP\n",
-            cast(int, DSP - s->dsp)
+            "PUSH()x%d without DROP()\n",
+            cast(int, TOP_INDEX - s->stack_base)
         );
         panic_at (nullptr, file, line);
     }
@@ -161,7 +161,7 @@ void Trapped_Helper(struct Reb_State *s)
 
     // Restore Rebol data stack pointer at time of Push_Trap
     //
-    DS_DROP_TO(s->dsp);
+    Drop_Data_Stack_To(s->stack_base);
 
     // If we were in the middle of a Collect_Keys and an error occurs, then
     // the binding lookup table has entries in it that need to be zeroed out.
@@ -407,7 +407,7 @@ void Set_Location_Of_Error(
 ) {
     assert(where != nullptr);
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     ERROR_VARS *vars = ERR_VARS(error);
 
@@ -426,10 +426,9 @@ void Set_Location_Of_Error(
         if (L->original == PG_Dummy_Action)
             continue;
 
-        DS_PUSH_TRASH;
-        Get_Level_Label_Or_Blank(DS_TOP, L);
+        Get_Level_Label_Or_Blank(PUSH(), L);
     }
-    Init_Block(&vars->where, Pop_Stack_Values(dsp_orig));
+    Init_Block(&vars->where, Pop_Stack_Values(base));
 
     // Nearby location of the error.  Reify any valist that is running,
     // so that the error has an array to present.

@@ -526,7 +526,7 @@ struct Reb_Varargs_Payload {
     FLAG_LEFT_BIT(TYPE_SPECIFIC_BIT + 1)
 
 struct Reb_Partial_Payload {
-    REBDSP dsp; // the DSP of this partial slot (if ordered on the stack)
+    StackIndex stackindex;  // for this partial slot (if ordered on the stack)
     REBLEN index; // maps to the index of this parameter in the paramlist
 };
 

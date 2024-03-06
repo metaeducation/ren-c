@@ -44,7 +44,7 @@ struct Reb_State {
 
     struct Reb_State *last_state;
 
-    REBDSP dsp;
+    StackIndex stack_base;
     struct Reb_Chunk *top_chunk;
     Level* level;
     REBLEN guarded_len;

@@ -398,7 +398,7 @@ void Change_Case(Value* out, Value* val, Value* part, bool upper)
 //
 Array* Split_Lines(const Value* str)
 {
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     REBSER *s = VAL_SERIES(str);
     REBLEN len = VAL_LEN_AT(str);
@@ -416,16 +416,15 @@ Array* Split_Lines(const Value* str)
 
     while (i != len) {
         if (c == LF or c == CR) {
-            DS_PUSH_TRASH;
             Init_Text(
-                DS_TOP,
+                PUSH(),
                 Copy_Sequence_At_Len(
                     s,
                     AS_REBUNI(start) - String_Head(s),
                     AS_REBUNI(up) - AS_REBUNI(start) - 1
                 )
             );
-            SET_VAL_FLAG(DS_TOP, VALUE_FLAG_NEWLINE_BEFORE);
+            SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
             start = up;
             if (c == CR) {
                 up = Ucs2_Next(&c, up);
@@ -451,17 +450,16 @@ Array* Split_Lines(const Value* str)
         up = Ucs2_Back(nullptr, up); // back up
 
     if (AS_REBUNI(up) > AS_REBUNI(start)) {
-        DS_PUSH_TRASH;
         Init_Text(
-            DS_TOP,
+            PUSH(),
             Copy_Sequence_At_Len(
                 s,
                 AS_REBUNI(start) - String_Head(s),
                 AS_REBUNI(up) - AS_REBUNI(start) // no -1, backed up if '\n'
             )
         );
-        SET_VAL_FLAG(DS_TOP, VALUE_FLAG_NEWLINE_BEFORE);
+        SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
     }
 
-    return Pop_Stack_Values_Core(dsp_orig, ARRAY_FLAG_TAIL_NEWLINE);
+    return Pop_Stack_Values_Core(base, ARRAY_FLAG_TAIL_NEWLINE);
 }

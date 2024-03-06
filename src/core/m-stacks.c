@@ -64,7 +64,7 @@ void Startup_Data_Stack(REBLEN size)
 
     // Now drop the hypothetical thing pushed that triggered the expand.
     //
-    DS_DROP;
+    DROP();
 }
 
 
@@ -73,7 +73,7 @@ void Startup_Data_Stack(REBLEN size)
 //
 void Shutdown_Data_Stack(void)
 {
-    assert(DSP == 0);
+    assert(TOP_INDEX == 0);
     Assert_Unreadable_If_Debug(ARR_HEAD(DS_Array));
 
     Free_Unmanaged_Array(DS_Array);
@@ -255,9 +255,8 @@ REBCTX *Get_Context_From_Stack(void)
 //
 // WARNING: This will invalidate any extant pointers to REBVALs living in
 // the stack.  It is for this reason that stack access should be done by
-// REBDSP "data stack pointers" and not by Value* across *any* operation
-// which could do a push or pop.  (Currently stable w.r.t. pop but there may
-// be compaction at some point.)
+// StackIndex and not by Value* across *any* operation which could do a push
+// or pop.  (Currently stable w.r.t. pop but there may be compaction.)
 //
 void Expand_Data_Stack_May_Fail(REBLEN amount)
 {
@@ -286,7 +285,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     Extend_Series(SER(DS_Array), amount);
 
     // Update the pointer used for fast access to the top of the stack that
-    // likely was moved by the above allocation (needed before using DS_TOP)
+    // likely was moved by the above allocation (needed before using TOP)
     //
     DS_Movable_Top = cast(Value*, Array_At(DS_Array, DS_Index));
 
@@ -319,16 +318,16 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
 //
 // Pops computed values from the stack to make a new ARRAY.
 //
-Array* Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
+Array* Pop_Stack_Values_Core(StackIndex base, REBFLGS flags)
 {
     Array* array = Copy_Values_Len_Shallow_Core(
-        DS_AT(dsp_start + 1), // start somewhere in the stack, end at DS_TOP
-        SPECIFIED, // data stack should be fully specified--no relative values
-        DSP - dsp_start, // len
+        Data_Stack_At(base + 1),  // start somewhere in the stack, end at TOP
+        SPECIFIED,  // data stack should be fully specified--no relative values
+        TOP_INDEX - base,  // len
         flags
     );
 
-    DS_DROP_TO(dsp_start);
+    Drop_Data_Stack_To(base);
     return array;
 }
 
@@ -339,9 +338,9 @@ Array* Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
 // Pops computed values from the stack into an existing ANY-ARRAY.  The
 // index of that array will be updated to the insertion tail (/INTO protocol)
 //
-void Pop_Stack_Values_Into(Value* into, REBDSP dsp_start) {
-    REBLEN len = DSP - dsp_start;
-    Value* values = KNOWN(Array_At(DS_Array, dsp_start + 1));
+void Pop_Stack_Values_Into(Value* into, StackIndex base) {
+    REBLEN len = TOP_INDEX - base;
+    Value* values = KNOWN(Array_At(DS_Array, base + 1));
 
     assert(ANY_ARRAY(into));
     FAIL_IF_READ_ONLY_ARRAY(Cell_Array(into));
@@ -353,5 +352,5 @@ void Pop_Stack_Values_Into(Value* into, REBDSP dsp_start) {
         len // multiplied by width (sizeof(Cell)) in Insert_Series
     );
 
-    DS_DROP_TO(dsp_start);
+    Drop_Data_Stack_To(base);
 }

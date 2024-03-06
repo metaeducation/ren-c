@@ -495,14 +495,14 @@ struct LevelStruct {
     //
     Level* prior;
 
-    // `dsp_orig`
+    // `base`
     //
     // The data stack pointer captured on entry to the evaluation.  It is used
     // by debug checks to make sure the data stack stays balanced after each
     // sub-operation.  It's also used to measure how many refinements have
     // been pushed to the data stack by a path evaluation.
     //
-    uintptr_t dsp_orig; // type is REBDSP, but enforce alignment here
+    uintptr_t stack_base;  // type is StackIndex, but enforce alignment here
 
     // `out`
     //
@@ -854,7 +854,7 @@ struct LevelStruct {
     Level* const name = &name##_struct; \
     Erase_Cell(&name->spare); \
     Init_Unreadable(&name->spare); \
-    name->dsp_orig = DSP;
+    name->stack_base = TOP_INDEX;
 
 #define DECLARE_LEVEL(name) \
     struct Reb_Level_Source name##source; \

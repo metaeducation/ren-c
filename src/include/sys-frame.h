@@ -206,9 +206,6 @@ INLINE bool Is_Level_Gotten_Shoved(Level* L) {
 #define LVL_UNDERLYING(L) \
     ACT_UNDERLYING((L)->original)
 
-#define LVL_DSP_ORIG(L) \
-    ((L)->dsp_orig + 0) // prevent assignment via this macro
-
 
 // ARGS is the parameters and refinements
 // 1-based indexing into the arglist (0 slot is for FRAME! value)

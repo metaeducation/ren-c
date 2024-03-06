@@ -352,8 +352,7 @@ REB_R PD_Action(
     if (not IS_WORD(picker) and not IS_REFINEMENT(picker))
         fail (Error_Bad_Refine_Raw(picker));
 
-    DS_PUSH_TRASH;
-    Init_Issue(DS_TOP, VAL_WORD_CANON(picker)); // canonize just once
+    Init_Issue(PUSH(), VAL_WORD_CANON(picker));  // canonize just once
 
     // Leave the function value as is in pvs->out
     //

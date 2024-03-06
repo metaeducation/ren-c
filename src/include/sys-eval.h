@@ -214,7 +214,7 @@ INLINE void Push_Level_Core(Level* L)
 
   #if defined(DEBUG_BALANCE_STATE)
     SNAP_STATE(&L->state); // to make sure stack balances, etc.
-    L->state.dsp = L->dsp_orig;
+    L->state.stack_base = L->stack_base;
   #endif
 }
 
@@ -353,7 +353,7 @@ INLINE void Set_Level_Detected_Fetch(
     } else switch (Detect_Rebol_Pointer(p)) {
 
       case DETECTED_AS_UTF8: {
-        REBDSP dsp_orig = DSP;
+        StackIndex base = TOP_INDEX;
 
         SCAN_STATE ss;
         String* filename = nullptr;
@@ -413,7 +413,7 @@ INLINE void Set_Level_Detected_Fetch(
         //
         L->source->vaptr = nullptr;
 
-        if (DSP == dsp_orig) {
+        if (TOP_INDEX == base) {
             //
             // This happens when somone says rebValue(..., "", ...) or similar,
             // and gets an empty array from a string scan.  It's not legal
@@ -425,7 +425,7 @@ INLINE void Set_Level_Detected_Fetch(
             goto detect;
         }
 
-        Array* reified = Pop_Stack_Values_Keep_Eval_Flip(dsp_orig);
+        Array* reified = Pop_Stack_Values_Keep_Eval_Flip(base);
 
         // !!! We really should be able to free this array without managing it
         // when we're done with it, though that can get a bit complicated if
@@ -688,7 +688,7 @@ INLINE void Drop_Level_Unbalanced(Level* L) {
     // check this every cycle, just on drop.  But if it's hard to find which
     // exact cycle caused the problem, see BALANCE_CHECK_EVERY_EVALUATION_STEP
     //
-    L->state.dsp = DSP; // e.g. Reduce_To_Stack_Throws() doesn't want check
+    L->state.stack_base = TOP_INDEX; // e.g. Reduce_To_Stack_Throws()
     L->state.mold_buf_len = SER_LEN(MOLD_BUF); // REMOVE-EACH accumulates
     ASSERT_STATE_BALANCED(&L->state);
   #endif
@@ -700,7 +700,7 @@ INLINE void Drop_Level(Level* L)
     if (L->flags.bits & DO_FLAG_TO_END)
         assert(IS_END(L->value) or THROWN(L->out));
 
-    assert(DSP == L->dsp_orig); // Drop_Level_Core() does not check
+    assert(TOP_INDEX == L->stack_base);  // Drop_Level_Core() does not check
     Drop_Level_Unbalanced(L);
 }
 
@@ -720,7 +720,7 @@ INLINE bool Eval_Step_Throws(
     uintptr_t prior_flags = L->flags.bits;
 
     L->out = out;
-    L->dsp_orig = DSP;
+    L->stack_base = TOP_INDEX;
     bool threw = Eval_Core_Throws(L);  // should already be pushed
 
     // The & on the following line is purposeful.  See Init_Endlike_Header.
@@ -751,7 +751,7 @@ INLINE bool Eval_Step_Maybe_Stale_Throws(
     L->flags.bits |= DO_FLAG_PRESERVE_STALE;
 
     L->out = out;
-    L->dsp_orig = DSP;
+    L->stack_base = TOP_INDEX;
     bool threw = Eval_Core_Throws(L);  // should already be pushed
 
     // The & on the following line is purposeful.  See Init_Endlike_Header.
@@ -776,7 +776,7 @@ INLINE bool Eval_Step_Maybe_Stale_Throws(
 // set knows where to write.  The caller handles this with the data stack.
 //
 INLINE bool Eval_Step_Mid_Level_Throws(Level* L, REBFLGS flags) {
-    assert(L->dsp_orig == DSP);
+    assert(L->stack_base == TOP_INDEX);
 
     REBFLGS prior_flags = L->flags.bits;
     L->flags = Endlike_Header(flags);
@@ -810,7 +810,7 @@ INLINE bool Eval_Step_In_Subframe_Throws(
     Value* out,
     Level* higher,  // may not be direct parent (not child->prior upon push!)
     REBFLGS flags,
-    Level* child  // passed w/dsp_orig preload, refinements can be on stack
+    Level* child  // passed w/base preload, refinements can be on stack
 ){
     child->out = out;
 
@@ -943,21 +943,23 @@ INLINE void Reify_Va_To_Array_In_Level(
     Level* L,
     bool truncated
 ) {
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     assert(LVL_IS_VALIST(L));
 
-    if (truncated) {
-        DS_PUSH_TRASH;
-        Init_Word(DS_TOP, Canon(SYM___OPTIMIZED_OUT__));
-    }
+    if (truncated)
+        Init_Word(PUSH(), Canon(SYM___OPTIMIZED_OUT__));
 
     if (NOT_END(L->value)) {
         assert(L->source->pending == END_NODE);
 
         do {
             // may be a NULLED cell.  Preserve VALUE_FLAG_EVAL_FLIP flag.
-            DS_PUSH_RELVAL_KEEP_EVAL_FLIP(L->value, L->specifier);
+            //
+            Derelativize(PUSH(), L->value, L->specifier);
+            if (GET_VAL_FLAG(L->value, VALUE_FLAG_EVAL_FLIP))
+                SET_VAL_FLAG(TOP, VALUE_FLAG_EVAL_FLIP);
+
             Fetch_Next_In_Level(nullptr, L);
         } while (NOT_END(L->value));
 
@@ -978,13 +980,13 @@ INLINE void Reify_Va_To_Array_In_Level(
     assert(not L->source->vaptr); // feeding forward should have called va_end
 
     // special array...may contain voids and eval flip is kept
-    L->source->array = Pop_Stack_Values_Keep_Eval_Flip(dsp_orig);
+    L->source->array = Pop_Stack_Values_Keep_Eval_Flip(base);
     MANAGE_ARRAY(L->source->array); // held alive while frame running
     SET_SER_FLAG(L->source->array, ARRAY_FLAG_NULLEDS_LEGAL);
 
     // The array just popped into existence, and it's tied to a running
     // frame...so safe to say we're holding it.  (This would be more complex
-    // if we reused the empty array if dsp_orig == DSP, since someone else
+    // if we reused the empty array if base == TOP_INDEX, since someone else
     // might have a hold on it...not worth the complexity.)
     //
     SET_SER_INFO(L->source->array, SERIES_INFO_HOLD);

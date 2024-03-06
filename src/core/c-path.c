@@ -338,7 +338,7 @@ bool Eval_Path_Throws_Core(
     pvs->out = out;
     SET_END(out);
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     assert(
         not opt_setval
@@ -415,15 +415,15 @@ bool Eval_Path_Throws_Core(
         goto return_not_thrown;
     }
 
-    if (dsp_orig != DSP) {
+    if (base != TOP_INDEX) {
         //
         // To make things easier for processing, reverse any refinements
         // pushed as ISSUE!s (we needed to evaluate them in forward order).
         // This way we can just pop them as we go, and know if they weren't
-        // all consumed if not back to `dsp_orig` by the end.
+        // all consumed if not back to `base` by the end.
 
-        Value* bottom = DS_AT(dsp_orig + 1);
-        Value* top = DS_TOP;
+        Value* bottom = Data_Stack_At(base + 1);
+        Value* top = TOP;
 
         while (top > bottom) {
             assert(IS_ISSUE(bottom) and not IS_WORD_BOUND(bottom));
@@ -463,7 +463,7 @@ bool Eval_Path_Throws_Core(
                 pvs->out,
                 pvs->opt_label,
                 nullptr,  // opt_def
-                dsp_orig // first_refine_dsp
+                base // first_refine_dsp
             )){
                 panic ("REFINE-only specializations should not THROW");
             }

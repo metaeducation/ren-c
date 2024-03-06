@@ -83,7 +83,7 @@ REBINT CT_Typeset(const Cell* a, const Cell* b, REBINT mode)
 //
 void Startup_Typesets(void)
 {
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     REBINT n;
     for (n = 0; Typesets[n].sym != 0; n++) {
@@ -92,19 +92,18 @@ void Startup_Typesets(void)
         // the typesets, rather an extra data field used when the typeset is
         // in a context key slot to identify that field's name
         //
-        DS_PUSH_TRASH;
-        Init_Typeset(DS_TOP, Typesets[n].bits, nullptr);
+        Init_Typeset(PUSH(), Typesets[n].bits, nullptr);
 
         Copy_Cell(
             Append_Context(Lib_Context, nullptr, Canon(Typesets[n].sym)),
-            DS_TOP
+            TOP
         );
     }
 
     // !!! Why does the system access the typesets through Lib_Context, vs.
     // using the Root_Typesets?
     //
-    Root_Typesets = Init_Block(Alloc_Value(), Pop_Stack_Values(dsp_orig));
+    Root_Typesets = Init_Block(Alloc_Value(), Pop_Stack_Values(base));
 
     REBSER *locker = nullptr;
     Ensure_Value_Immutable(Root_Typesets, locker);
@@ -253,21 +252,20 @@ REB_R TO_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 Array* Typeset_To_Array(const Value* tset)
 {
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     REBINT n;
     for (n = 1; n < REB_MAX_NULLED; ++n) {
         if (TYPE_CHECK(tset, cast(enum Reb_Kind, n))) {
-            DS_PUSH_TRASH;
             if (n == REB_MAX_NULLED) {
-                Copy_Cell(DS_TOP, Root_Opt_Tag);
+                Copy_Cell(PUSH(), Root_Opt_Tag);
             }
             else
-                Init_Datatype(DS_TOP, cast(enum Reb_Kind, n));
+                Init_Datatype(PUSH(), cast(enum Reb_Kind, n));
         }
     }
 
-    return Pop_Stack_Values(dsp_orig);
+    return Pop_Stack_Values(base);
 }
 
 

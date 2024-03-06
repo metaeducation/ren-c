@@ -220,7 +220,7 @@ TVAR Array* TG_Reuse;
 
 //-- Evaluation stack:
 TVAR Array* DS_Array;
-TVAR REBDSP DS_Index;
+TVAR StackIndex DS_Index;
 TVAR Value* DS_Movable_Top;
 
 TVAR struct Reb_State *Saved_State; // Saved state for Catch (CPU state, etc.)

@@ -972,8 +972,7 @@ acquisition_loop:
             if (not (ss->opts & SCAN_FLAG_NULLEDS_LEGAL))
                 fail ("can't splice null in ANY-ARRAY!...use rebUneval()");
 
-            DS_PUSH_TRASH;
-            Init_Nulled(DS_TOP); // convert to cell void for evaluator
+            Init_Nulled(PUSH());  // convert to cell null for evaluator
 
         } else switch (Detect_Rebol_Pointer(p)) {
 
@@ -984,29 +983,28 @@ acquisition_loop:
         case DETECTED_AS_CELL: {
             const Value* splice = cast(const Value*, p);
             if (IS_NULLED(splice))
-                fail ("VOID cell leaked to API, see NULLIZE() in C sources");
+                fail ("NULL cell leaked to API, see NULLIZE() in C sources");
 
-            DS_PUSH_TRASH;
-            Copy_Cell(DS_TOP, splice);
+            Copy_Cell(PUSH(), splice);
 
             // !!! The needs of rebValue() are such that it wants to preserve
             // the non-user-visible EVAL_FLIP bit, which is usually not copied
             // by Copy_Cell.
             //
             if (GET_VAL_FLAG(splice, VALUE_FLAG_EVAL_FLIP))
-                SET_VAL_FLAG(DS_TOP, VALUE_FLAG_EVAL_FLIP);
+                SET_VAL_FLAG(TOP, VALUE_FLAG_EVAL_FLIP);
 
             if (ss->newline_pending) {
                 ss->newline_pending = false;
-                SET_VAL_FLAG(DS_TOP, VALUE_FLAG_NEWLINE_BEFORE);
+                SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
             }
 
             if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
                 REBSER *locker = nullptr;
-                Ensure_Value_Immutable(DS_TOP, locker);
+                Ensure_Value_Immutable(TOP, locker);
             }
 
-            if (Is_Api_Value(splice)) { // moved to DS_TOP, can release *now*
+            if (Is_Api_Value(splice)) { // moved to TOP, can release *now*
                 Array* a = Singular_From_Cell(splice);
                 if (GET_SER_INFO(a, SERIES_INFO_API_RELEASE))
                     rebRelease(m_cast(Value*, splice)); // !!! m_cast
@@ -1025,9 +1023,8 @@ acquisition_loop:
                 if (not (ss->opts & SCAN_FLAG_NULLEDS_LEGAL))
                     fail ("can only use rebEval() at top level of run");
 
-                DS_PUSH_TRASH;
-                Copy_Cell(DS_TOP, single);
-                SET_VAL_FLAG(DS_TOP, VALUE_FLAG_EVAL_FLIP);
+                Copy_Cell(PUSH(), single);
+                SET_VAL_FLAG(TOP, VALUE_FLAG_EVAL_FLIP);
             }
             else { // rebUneval()
                 assert(
@@ -1042,18 +1039,17 @@ acquisition_loop:
                     )
                 );
 
-                DS_PUSH_TRASH;
-                Copy_Cell(DS_TOP, single);
+                Copy_Cell(PUSH(), single);
             }
 
             if (ss->newline_pending) {
                 ss->newline_pending = false;
-                SET_VAL_FLAG(DS_TOP, VALUE_FLAG_NEWLINE_BEFORE);
+                SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
             }
 
             if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
                 REBSER *locker = nullptr;
-                Ensure_Value_Immutable(DS_TOP, locker);
+                Ensure_Value_Immutable(TOP, locker);
             }
 
             Free_Instruction(instruction);
@@ -1953,20 +1949,17 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             continue;
 
         case TOKEN_BAR:
-            DS_PUSH_TRASH;
-            Init_Bar(DS_TOP);
+            Init_Bar(PUSH());
             ++bp;
             break;
 
         case TOKEN_LIT_BAR:
-            DS_PUSH_TRASH;
-            Init_Lit_Bar(DS_TOP);
+            Init_Lit_Bar(PUSH());
             ++bp;
             break;
 
         case TOKEN_BLANK:
-            DS_PUSH_TRASH;
-            Init_Blank(DS_TOP);
+            Init_Blank(PUSH());
             ++bp;
             break;
 
@@ -1984,9 +1977,8 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 ++ss->begin;
                 ++bp;
                 ++ep;
-                DS_PUSH_TRASH;
                 Init_Any_Array(
-                    DS_TOP,
+                    PUSH(),
                     ss->token == TOKEN_LIT ? REB_LIT_PATH : REB_GET_PATH,
                     Make_Array(0)
                 );
@@ -2024,19 +2016,16 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             Symbol* symbol = Intern_UTF8_Managed(bp, len);
             enum Reb_Kind kind = KIND_OF_WORD_FROM_TOKEN(ss->token);
 
-            DS_PUSH_TRASH;
-            Init_Any_Word(DS_TOP, kind, symbol);
+            Init_Any_Word(PUSH(), kind, symbol);
             break; }
 
         case TOKEN_REFINE: {
             Symbol* symbol = Intern_UTF8_Managed(bp + 1, len - 1);
-            DS_PUSH_TRASH;
-            Init_Refinement(DS_TOP, symbol);
+            Init_Refinement(PUSH(), symbol);
             break; }
 
         case TOKEN_ISSUE:
-            DS_PUSH_TRASH;
-            if (ep != Scan_Issue(DS_TOP, bp + 1, len - 1))
+            if (ep != Scan_Issue(PUSH(), bp + 1, len - 1))
                 fail (Error_Syntax(ss));
             break;
 
@@ -2048,9 +2037,8 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
 
             ep = ss->end;
 
-            DS_PUSH_TRASH;
             Init_Any_Array(
-                DS_TOP,
+                PUSH(),
                 (ss->token == TOKEN_BLOCK_BEGIN) ? REB_BLOCK : REB_GROUP,
                 array
             );
@@ -2062,8 +2050,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 // If not in the process of scanning a path, this is a 0
                 // element path, so push it.
                 //
-                DS_PUSH_TRASH;
-                Init_Path(DS_TOP, Make_Array(0));
+                Init_Path(PUSH(), Make_Array(0));
             }
             break;
 
@@ -2091,8 +2078,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
 
         case TOKEN_INTEGER:     // or start of DATE
             if (*ep != '/' or ss->mode_char == '/') {
-                DS_PUSH_TRASH;
-                if (ep != Scan_Integer(DS_TOP, bp, len))
+                if (ep != Scan_Integer(PUSH(), bp, len))
                     fail (Error_Syntax(ss));
             }
             else {              // A / and not in block
@@ -2100,8 +2086,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 while (*ep == '/' or IS_LEX_NOT_DELIMIT(*ep))
                     ++ep;
                 len = cast(REBLEN, ep - bp);
-                DS_PUSH_TRASH;
-                if (ep != Scan_Date(DS_TOP, bp, len))
+                if (ep != Scan_Date(PUSH(), bp, len))
                     fail (Error_Syntax(ss));
 
                 // !!! used to just set ss->begin to ep...which tripped up an
@@ -2118,13 +2103,12 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             if (*ep == '/')
                 fail (Error_Syntax(ss));
 
-            DS_PUSH_TRASH;
-            if (ep != Scan_Decimal(DS_TOP, bp, len, false))
+            if (ep != Scan_Decimal(PUSH(), bp, len, false))
                 fail (Error_Syntax(ss));
 
             if (bp[len - 1] == '%') {
-                RESET_VAL_HEADER(DS_TOP, REB_PERCENT);
-                VAL_DECIMAL(DS_TOP) /= 100.0;
+                RESET_VAL_HEADER(TOP, REB_PERCENT);
+                VAL_DECIMAL(TOP) /= 100.0;
             }
             break;
 
@@ -2135,8 +2119,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 fail (Error_Syntax(ss));
             }
 
-            DS_PUSH_TRASH;
-            if (ep != Scan_Money(DS_TOP, bp, len))
+            if (ep != Scan_Money(PUSH(), bp, len))
                 fail (Error_Syntax(ss));
             break;
 
@@ -2145,14 +2128,12 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 bp[len - 1] == ':'
                 and ss->mode_char == '/' // could be path/10: set
             ){
-                DS_PUSH_TRASH;
-                if (ep - 1 != Scan_Integer(DS_TOP, bp, len - 1))
+                if (ep - 1 != Scan_Integer(PUSH(), bp, len - 1))
                     fail (Error_Syntax(ss));
                 ss->end--;  // put ':' back on end but not beginning
                 break;
             }
-            DS_PUSH_TRASH;
-            if (ep != Scan_Time(DS_TOP, bp, len))
+            if (ep != Scan_Time(PUSH(), bp, len))
                 fail (Error_Syntax(ss));
             break;
 
@@ -2167,70 +2148,59 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 }
                 ss->begin = ep;  // End point extended to cover time
             }
-            DS_PUSH_TRASH;
-            if (ep != Scan_Date(DS_TOP, bp, len))
+            if (ep != Scan_Date(PUSH(), bp, len))
                 fail (Error_Syntax(ss));
             break;
 
         case TOKEN_CHAR:
-            DS_PUSH_TRASH;
             bp += 2; // skip #", and subtract 1 from ep for "
-            if (ep - 1 != Scan_UTF8_Char_Escapable(&VAL_CHAR(DS_TOP), bp))
+            if (ep - 1 != Scan_UTF8_Char_Escapable(&VAL_CHAR(PUSH()), bp))
                 fail (Error_Syntax(ss));
-            RESET_VAL_HEADER(DS_TOP, REB_CHAR);
+            RESET_VAL_HEADER(TOP, REB_CHAR);
             break;
 
         case TOKEN_STRING: {
             // During scan above, string was stored in MOLD_BUF (UTF-8)
             //
             REBSER *s = Pop_Molded_String(mo);
-            DS_PUSH_TRASH;
-            Init_Text(DS_TOP, s);
+            Init_Text(PUSH(), s);
             break; }
 
         case TOKEN_BINARY:
-            DS_PUSH_TRASH;
-            if (ep != Scan_Binary(DS_TOP, bp, len))
+            if (ep != Scan_Binary(PUSH(), bp, len))
                 fail (Error_Syntax(ss));
             break;
 
         case TOKEN_PAIR:
-            DS_PUSH_TRASH;
-            if (ep != Scan_Pair(DS_TOP, bp, len))
+            if (ep != Scan_Pair(PUSH(), bp, len))
                 fail (Error_Syntax(ss));
             break;
 
         case TOKEN_TUPLE:
-            DS_PUSH_TRASH;
-            if (ep != Scan_Tuple(DS_TOP, bp, len))
+            if (ep != Scan_Tuple(PUSH(), bp, len))
                 fail (Error_Syntax(ss));
             break;
 
         case TOKEN_FILE:
-            DS_PUSH_TRASH;
-            if (ep != Scan_File(DS_TOP, bp, len))
+            if (ep != Scan_File(PUSH(), bp, len))
                 fail (Error_Syntax(ss));
             break;
 
         case TOKEN_EMAIL:
-            DS_PUSH_TRASH;
-            if (ep != Scan_Email(DS_TOP, bp, len))
+            if (ep != Scan_Email(PUSH(), bp, len))
                 fail (Error_Syntax(ss));
             break;
 
         case TOKEN_URL:
-            DS_PUSH_TRASH;
-            if (ep != Scan_URL(DS_TOP, bp, len))
+            if (ep != Scan_URL(PUSH(), bp, len))
                 fail (Error_Syntax(ss));
             break;
 
         case TOKEN_TAG:
-            DS_PUSH_TRASH;
-
             // The Scan_Any routine (only used here for tag) doesn't
             // know where the tag ends, so it scans the len.
             //
-            if (ep - 1 != Scan_Any(DS_TOP, bp + 1, len - 2, REB_TAG))
+            if (ep - 1 != Scan_Any(PUSH(), bp + 1, len - 2, REB_TAG))
                 fail (Error_Syntax(ss));
             break;
 
@@ -2269,7 +2239,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 // the scanner is a questionable idea, but at the very least
                 // `array` must be guarded, and a data stack cell can't be
                 // used as the destination...because a raw pointer into the
-                // data stack could go bad on any DS_PUSH or DS_DROP.
+                // data stack could go bad on any DS_PUSH or DROP().
                 //
                 DECLARE_VALUE (cell);
                 Init_Unreadable(cell);
@@ -2287,8 +2257,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 }
                 DROP_GC_GUARD(array);
 
-                DS_PUSH_TRASH;
-                Copy_Cell(DS_TOP, cell);
+                Copy_Cell(PUSH(), cell);
                 DROP_GC_GUARD(cell);
             }
             else {
@@ -2307,24 +2276,20 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             #if !defined(NDEBUG)
                 case SYM_NONE:
                     // Should be under a LEGACY flag...
-                    DS_PUSH_TRASH;
-                    Init_Blank(DS_TOP);
+                    Init_Blank(PUSH());
                     break;
             #endif
 
                 case SYM_FALSE:
-                    DS_PUSH_TRASH;
-                    Init_False(DS_TOP);
+                    Init_False(PUSH());
                     break;
 
                 case SYM_TRUE:
-                    DS_PUSH_TRASH;
-                    Init_True(DS_TOP);
+                    Init_True(PUSH());
                     break;
 
                 case SYM_TRASH:
-                    DS_PUSH_TRASH;
-                    Init_Trash(DS_TOP);
+                    Init_Trash(PUSH());
                     break;
 
                 default: {
@@ -2347,15 +2312,15 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         // the lib context (which we do not expand) and any positive numbers
         // are into the user context (which we will expand).
         //
-        if (ss->binder and ANY_WORD(DS_TOP)) {
-            Symbol* canon = VAL_WORD_CANON(DS_TOP);
+        if (ss->binder and ANY_WORD(TOP)) {
+            Symbol* canon = VAL_WORD_CANON(TOP);
             REBINT n = Get_Binder_Index_Else_0(ss->binder, canon);
             if (n > 0) {
                 //
                 // Exists in user context at the given positive index.
                 //
-                INIT_BINDING(DS_TOP, ss->context);
-                INIT_WORD_INDEX(DS_TOP, n);
+                INIT_BINDING(TOP, ss->context);
+                INIT_WORD_INDEX(TOP, n);
             }
             else if (n < 0) {
                 //
@@ -2364,13 +2329,13 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 //
                 Expand_Context(ss->context, 1);
                 Move_Var( // preserve enfix state
-                    Append_Context(ss->context, DS_TOP, nullptr),
+                    Append_Context(ss->context, TOP, nullptr),
                     CTX_VAR(ss->lib, -n) // -n is positive
                 );
                 REBINT check = Remove_Binder_Index_Else_0(ss->binder, canon);
                 assert(check == n); // n is negative
                 UNUSED(check);
-                Add_Binder_Index(ss->binder, canon, VAL_WORD_INDEX(DS_TOP));
+                Add_Binder_Index(ss->binder, canon, VAL_WORD_INDEX(TOP));
             }
             else {
                 // Doesn't exist in either lib or user, create a new binding
@@ -2378,8 +2343,8 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 // and isolation, but going with it for the API for now).
                 //
                 Expand_Context(ss->context, 1);
-                Append_Context(ss->context, DS_TOP, nullptr);
-                Add_Binder_Index(ss->binder, canon, VAL_WORD_INDEX(DS_TOP));
+                Append_Context(ss->context, TOP, nullptr);
+                Add_Binder_Index(ss->binder, canon, VAL_WORD_INDEX(TOP));
             }
         }
 
@@ -2412,12 +2377,12 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                     1,
                     NODE_FLAG_MANAGED | ARRAY_FLAG_FILE_LINE
                 );
-                Append_Value(arr, DS_TOP);
-                DS_DROP;
+                Append_Value(arr, TOP);
+                DROP();
             }
             else {
               #if !defined(NDEBUG)
-                REBDSP dsp_check = DSP;
+                StackIndex check = TOP_INDEX;
               #endif
 
                 // When `mode_char` is '/', the scan needs to steal the last
@@ -2427,32 +2392,30 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 arr = Scan_Array(ss, '/');
 
               #if !defined(NDEBUG)
-                assert(DSP == dsp_check - 1); // should only take one!
+                assert(TOP_INDEX == check - 1);  // should only take one!
               #endif
             }
 
-            DS_PUSH_TRASH; // now push a path to take the stolen token's place
-
             if (ss->token == TOKEN_LIT) {
-                RESET_VAL_HEADER(DS_TOP, REB_LIT_PATH);
+                RESET_VAL_HEADER(PUSH(), REB_LIT_PATH);
                 CHANGE_VAL_TYPE_BITS(ARR_HEAD(arr), REB_WORD);
             }
             else if (IS_GET_WORD(ARR_HEAD(arr))) {
                 if (ss->begin and *ss->end == ':')
                     fail (Error_Syntax(ss));
-                RESET_VAL_HEADER(DS_TOP, REB_GET_PATH);
+                RESET_VAL_HEADER(PUSH(), REB_GET_PATH);
                 CHANGE_VAL_TYPE_BITS(ARR_HEAD(arr), REB_WORD);
             }
             else {
                 if (ss->begin and *ss->end == ':') {
-                    RESET_VAL_HEADER(DS_TOP, REB_SET_PATH);
+                    RESET_VAL_HEADER(PUSH(), REB_SET_PATH);
                     ss->begin = ++ss->end;
                 }
                 else
-                    RESET_VAL_HEADER(DS_TOP, REB_PATH);
+                    RESET_VAL_HEADER(PUSH(), REB_PATH);
             }
-            INIT_VAL_ARRAY(DS_TOP, arr);
-            VAL_INDEX(DS_TOP) = 0;
+            INIT_VAL_ARRAY(TOP, arr);
+            VAL_INDEX(TOP) = 0;
             ss->token = TOKEN_PATH;
         }
 
@@ -2466,11 +2429,11 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         // not legal in ordinary user arrays--just as voids aren't--only in
         // arrays which are internally held by the evaluator)
         //
-        SET_VAL_FLAG(DS_TOP, VALUE_FLAG_EVAL_FLIP);
+        SET_VAL_FLAG(TOP, VALUE_FLAG_EVAL_FLIP);
 
         if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
             REBSER *locker = nullptr;
-            Ensure_Value_Immutable(DS_TOP, locker);
+            Ensure_Value_Immutable(TOP, locker);
         }
 
         // Set the newline on the new value, indicating molding should put a
@@ -2480,7 +2443,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         //
         if (ss->newline_pending) {
             ss->newline_pending = false;
-            SET_VAL_FLAG(DS_TOP, VALUE_FLAG_NEWLINE_BEFORE);
+            SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
         }
 
         // Added for TRANSCODE/NEXT (LOAD/NEXT is deprecated, see #1703)
@@ -2556,8 +2519,7 @@ void Scan_To_Stack_Relaxed(SCAN_STATE *ss) {
     // interface should be (perhaps raise an error parameterized by the
     // partial scanned data plus the error raised?)
     //
-    DS_PUSH_TRASH;
-    Copy_Cell(DS_TOP, error);
+    Copy_Cell(PUSH(), error);
     rebRelease(error);
 }
 
@@ -2586,12 +2548,12 @@ static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char)
     // scanned it is *retroactively* decided to begin picking up more items
     // in the path.  Hence, we take over one pushed item from the caller.
     //
-    REBDSP dsp_orig;
+    StackIndex base;
     if (mode_char == '/') {
-        assert(DSP > 0);
-        dsp_orig = DSP - 1;
+        assert(TOP_INDEX > 0);
+        base = TOP_INDEX - 1;
     } else
-        dsp_orig = DSP;
+        base = TOP_INDEX;
 
     child.mode_char = mode_char;
     if (child.opts & SCAN_FLAG_RELAX)
@@ -2600,7 +2562,7 @@ static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char)
         Scan_To_Stack(&child);
 
     Array* a = Pop_Stack_Values_Core(
-        dsp_orig,
+        base,
         NODE_FLAG_MANAGED
             | (child.newline_pending ? ARRAY_FLAG_TAIL_NEWLINE : 0)
     );
@@ -2657,7 +2619,7 @@ Array* Scan_Va_Managed(
     String* filename, // NOTE: va_start must get last parameter before ...
     ...
 ){
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     const REBLIN start_line = 1;
 
@@ -2676,7 +2638,7 @@ Array* Scan_Va_Managed(
     // since we're setting the file and line information from scan state.)
     //
     Array* a = Pop_Stack_Values_Core(
-        dsp_orig,
+        base,
         ARRAY_FLAG_NULLEDS_LEGAL | NODE_FLAG_MANAGED
             | (ss.newline_pending ? ARRAY_FLAG_TAIL_NEWLINE : 0)
     );
@@ -2715,11 +2677,11 @@ Array* Scan_UTF8_Managed(
     const REBLIN start_line = 1;
     Init_Scan_State(&ss, filename, start_line, utf8, size);
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
     Scan_To_Stack(&ss);
 
     Array* a = Pop_Stack_Values_Core(
-        dsp_orig,
+        base,
         NODE_FLAG_MANAGED
             | (ss.newline_pending ? ARRAY_FLAG_TAIL_NEWLINE : 0)
     );
@@ -2858,7 +2820,7 @@ DECLARE_NATIVE(transcode)
     //
     // Return a block of the results, so [1] and [[1]] in those cases.
     //
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
     if (REF(relax)) {
         ss.opts |= SCAN_FLAG_RELAX;
         Scan_To_Stack_Relaxed(&ss);
@@ -2890,17 +2852,17 @@ DECLARE_NATIVE(transcode)
         rebRelease(source);  // release temporary binary created
 
     if (REF(next)) {
-        if (DSP == dsp_orig)
+        if (TOP_INDEX == base)
             return nullptr;
 
-        assert(DSP == dsp_orig + 1);
-        Copy_Cell(OUT, DS_TOP);
-        DS_DROP;
+        assert(TOP_INDEX == base + 1);
+        Copy_Cell(OUT, TOP);
+        DROP();
         return OUT;
     }
 
     Array* a = Pop_Stack_Values_Core(
-        dsp_orig,
+        base,
         NODE_FLAG_MANAGED
             | (ss.newline_pending ? ARRAY_FLAG_TAIL_NEWLINE : 0)
     );

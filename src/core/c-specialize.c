@@ -97,7 +97,7 @@
 // It is able to take in more specialized refinements on the stack.  These
 // will be ordered *after* partial specializations in the function already.
 // The caller passes in the stack pointer of the lowest priority refinement,
-// which goes up to DSP for the highest of those added specializations.
+// which goes up to TOP_INDEX for the highest of those added specializations.
 //
 // Since this is walking the parameters to make the frame already--and since
 // we don't want to bind to anything specialized out (including the ad-hoc
@@ -110,11 +110,11 @@
 //     specialize 'append/dup [dup: false] ; Note DUP: isn't frame /DUP
 //
 REBCTX *Make_Context_For_Action_Int_Partials(
-    const Value* action, // need ->binding, so can't just be a REBACT*
-    REBDSP lowest_ordered_dsp, // caller can add refinement specializations
+    const Value* action,   // need ->binding, so can't just be a REBACT*
+    StackIndex lowest_stackindex, // caller can add refinement specializations
     struct Reb_Binder *opt_binder
 ){
-    REBDSP highest_ordered_dsp = DSP;
+    StackIndex highest_stackindex = TOP_INDEX;  // highest ordered refinement
 
     REBACT *act = VAL_ACTION(action);
 
@@ -182,14 +182,13 @@ REBCTX *Make_Context_For_Action_Int_Partials(
         // -but- have an ISSUE! in them we need to push to the stack.
         // (they're in *reverse* order of use).  Or they may be specialized
         // and have a NULL in them pushed by an earlier slot.  Refinements
-        // in use must be turned into INTEGER! partials, to point to the DSP
-        // of their stack order.
+        // in use must be turned into INTEGER! partials, to point to the
+        // StackIndex of their stack order.
 
         if (IS_ISSUE(special)) {
             REBLEN partial_index = VAL_WORD_INDEX(special);
-            DS_PUSH_TRASH;
             Init_Any_Word_Bound( // push an ISSUE! to data stack
-                DS_TOP,
+                PUSH(),
                 REB_ISSUE,
                 VAL_STORED_CANON(special),
                 exemplar,
@@ -212,7 +211,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
                     )
                 );
 
-                Init_Integer(passed, DSP);
+                Init_Integer(passed, TOP_INDEX);
                 SET_VAL_FLAG(passed, ARG_MARKED_CHECKED); // passed, not arg
 
                 if (partial_index == index)
@@ -225,13 +224,13 @@ REBCTX *Make_Context_For_Action_Int_Partials(
             // pushes since the call began.
             //
             canon = Cell_Param_Canon(param);
-            REBDSP dsp = DSP;
-            for (; dsp != highest_ordered_dsp; --dsp) {
-                Value* ordered = DS_AT(dsp);
+            StackIndex stackindex = TOP_INDEX;
+            for (; stackindex != highest_stackindex; --stackindex) {
+                Value* ordered = Data_Stack_At(stackindex);
                 assert(IS_WORD_BOUND(ordered));
                 if (VAL_WORD_INDEX(ordered) == index) { // prescient push
                     assert(canon == VAL_STORED_CANON(ordered));
-                    Init_Integer(arg, dsp);
+                    Init_Integer(arg, stackindex);
                     SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
                     goto continue_specialized;
                 }
@@ -258,9 +257,9 @@ REBCTX *Make_Context_For_Action_Int_Partials(
         //
         //     specialize 'append/only [only: false] ; won't disable only
         {
-            REBDSP dsp = highest_ordered_dsp;
-            for (; dsp != lowest_ordered_dsp; --dsp) {
-                Value* ordered = DS_AT(dsp);
+            StackIndex stackindex = highest_stackindex;
+            for (; stackindex != lowest_stackindex; --stackindex) {
+                Value* ordered = Data_Stack_At(stackindex);
                 if (VAL_STORED_CANON(ordered) != canon)
                     continue; // just continuing this loop
 
@@ -273,7 +272,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
                 // bound into this frame--even before the specialization
                 // based on the outcome of that code has been calculated.
                 //
-                Init_Integer(arg, dsp);
+                Init_Integer(arg, stackindex);
                 SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
                 goto continue_specialized;
             }
@@ -312,22 +311,22 @@ REBCTX *Make_Context_For_Action_Int_Partials(
 // !!! The ultimate concept is that it would be possible for a FRAME! to
 // preserve ordering information such that an ACTION! could be made from it.
 // Right now the information is the stack ordering numbers of the refinements
-// which to make it usable should be relative to the lowest ordered DSP and
-// not absolute.
+// which to make it usable should be relative to the lowest ordered stackindex
+// and not absolute.
 //
 REBCTX *Make_Context_For_Action(
     const Value* action, // need ->binding, so can't just be a REBACT*
-    REBDSP lowest_ordered_dsp,
+    StackIndex lowest_stackindex,
     struct Reb_Binder *opt_binder
 ){
     REBCTX *exemplar = Make_Context_For_Action_Int_Partials(
         action,
-        lowest_ordered_dsp,
+        lowest_stackindex,
         opt_binder
     );
 
     MANAGE_ARRAY(CTX_VARLIST(exemplar)); // !!! was needed before, review
-    DS_DROP_TO(lowest_ordered_dsp);
+    Drop_Data_Stack_To(lowest_stackindex);
     return exemplar;
 }
 
@@ -337,11 +336,11 @@ REBCTX *Make_Context_For_Action(
 // the partials.  Better to do it with a macro than repeat the code.  :-/
 //
 #define FINALIZE_REFINE_IF_FULFILLED \
-    assert(evoked != refine or evoked->payload.partial.dsp == 0); \
+    assert(evoked != refine or evoked->payload.partial.stackindex == 0); \
     if (VAL_TYPE_RAW(refine) == REB_X_PARTIAL) { \
         if (not GET_VAL_FLAG(refine, PARTIAL_FLAG_SAW_NULL_ARG)) { \
-            if (refine->payload.partial.dsp != 0) \
-                Init_Blank(DS_AT(refine->payload.partial.dsp)); /* full! */ \
+            if (refine->payload.partial.stackindex != 0) \
+    /* full! */ Init_Blank(Data_Stack_At(refine->payload.partial.stackindex)); \
             else if (refine == evoked) \
                 evoked = nullptr;  /* allow other evoke to be last partial! */ \
         } \
@@ -359,14 +358,14 @@ REBCTX *Make_Context_For_Action(
 // The caller may provide information on the order in which refinements are
 // to be specialized, using the data stack.  These refinements should be
 // pushed in the *reverse* order of their invocation, so append/dup/part
-// has /DUP at DS_TOP, and /PART under it.  List stops at lowest_ordered_dsp.
+// has /DUP at TOP, and /PART under it.  List stops at lowest_stackindex.
 //
 bool Specialize_Action_Throws(
     Value* out,
     Value* specializee,
     Symbol* opt_specializee_name,
     Value* opt_def, // !!! REVIEW: binding modified directly (not copied)
-    REBDSP lowest_ordered_dsp
+    StackIndex lowest_stackindex
 ){
     assert(out != specializee);
 
@@ -379,14 +378,14 @@ bool Specialize_Action_Throws(
     // This produces a context where partially specialized refinement slots
     // will be INTEGER! pointing into the stack at the partial order
     // position. (This takes into account any we are adding "virtually", from
-    // the current DSP down to the lowest_ordered_dsp).
+    // the current TOP_INDEX down to the lowest_stackindex).
     //
     // Note that REB_X_PARTIAL can't be used in slots yet, because the GC
     // will be able to see this frame (code runs bound into it).
     //
     REBCTX *exemplar = Make_Context_For_Action_Int_Partials(
         specializee,
-        lowest_ordered_dsp,
+        lowest_stackindex,
         opt_def ? &binder : nullptr
     );
     MANAGE_ARRAY(CTX_VARLIST(exemplar)); // destined to be managed, guarded
@@ -439,7 +438,7 @@ bool Specialize_Action_Throws(
         DROP_GC_GUARD(exemplar);
 
         if (threw) {
-            DS_DROP_TO(lowest_ordered_dsp);
+            Drop_Data_Stack_To(lowest_stackindex);
             return true;
         }
     }
@@ -450,8 +449,8 @@ bool Specialize_Action_Throws(
     // The same walk used for that is used to link and process REB_X_PARTIAL
     // arguments for whether they become fully specialized or not.
 
-    REBDSP dsp_paramlist = DSP;
-    DS_PUSH(ACT_ARCHETYPE(unspecialized));
+    StackIndex paramlist_base = TOP_INDEX;
+    Copy_Cell(PUSH(), ACT_ARCHETYPE(unspecialized));
 
     Value* param = rootkey + 1;
     Value* arg = CTX_VARS_HEAD(exemplar);
@@ -486,7 +485,8 @@ bool Specialize_Action_Throws(
                 // partials are checked to see if they become complete anyway,
                 // use the same mechanic for voids.
 
-                REBDSP partial_dsp = IS_NULLED(refine) ? 0 : VAL_INT32(refine);
+                StackIndex partial_stackindex =
+                    IS_NULLED(refine) ? 0 : VAL_INT32(refine);
 
                 if (not first_partial)
                     first_partial = refine;
@@ -494,13 +494,13 @@ bool Specialize_Action_Throws(
                     last_partial->extra.next_partial = refine;
 
                 RESET_CELL(refine, REB_X_PARTIAL);
-                refine->payload.partial.dsp = partial_dsp;
+                refine->payload.partial.stackindex = partial_stackindex;
                 refine->payload.partial.index = index;
                 TRASH_POINTER_IF_DEBUG(refine->extra.next_partial);
 
                 last_partial = refine;
 
-                if (partial_dsp == 0)
+                if (partial_stackindex == 0)
                     goto unspecialized_arg_but_may_evoke;
 
                 // Though Make_Level_For_Specialization() knew this slot was
@@ -555,7 +555,7 @@ bool Specialize_Action_Throws(
                 goto unspecialized_arg;
             }
 
-            if (refine->payload.partial.dsp != 0) // started true
+            if (refine->payload.partial.stackindex != 0)  // started true
                 goto specialized_arg;
 
             if (evoked == refine)
@@ -571,7 +571,7 @@ bool Specialize_Action_Throws(
                 fail (Error_Ambiguous_Partial_Raw());
 
             // added at `unspecialized_but_may_evoke` unhidden, now hide it
-            TYPE_SET(DS_TOP, REB_TS_HIDDEN);
+            TYPE_SET(TOP, REB_TS_HIDDEN);
 
             evoked = refine;  // gets reset to nullptr if ends up fulfilled
             SET_VAL_FLAG(refine, PARTIAL_FLAG_IN_USE);
@@ -610,7 +610,7 @@ bool Specialize_Action_Throws(
             last_partial->extra.next_partial = refine;
 
         RESET_CELL_EXTRA(refine, REB_X_PARTIAL, PARTIAL_FLAG_IN_USE);
-        refine->payload.partial.dsp = 0; // no ordered position on stack
+        refine->payload.partial.stackindex = 0;  // no ordered stack position
         refine->payload.partial.index = index - (arg - refine);
         TRASH_POINTER_IF_DEBUG(refine->extra.next_partial);
 
@@ -622,12 +622,12 @@ bool Specialize_Action_Throws(
 
     unspecialized_arg_but_may_evoke:;
 
-        assert(refine->payload.partial.dsp == 0);
+        assert(refine->payload.partial.stackindex == 0);
 
     unspecialized_arg:;
 
         assert(NOT_VAL_FLAG(arg, ARG_MARKED_CHECKED));
-        DS_PUSH(param); // if evoked, will get DS_DROP'd from the paramlist
+        Copy_Cell(PUSH(), param);  // if evoked, DROP'd from the paramlist
         continue;
 
     specialized_arg:;
@@ -651,8 +651,8 @@ bool Specialize_Action_Throws(
         // for enumeration in the evaluator to line up with the frame values
         // of the underlying function.
 
-        DS_PUSH(param);
-        TYPE_SET(DS_TOP, REB_TS_HIDDEN);
+        Copy_Cell(PUSH(), param);
+        TYPE_SET(TOP, REB_TS_HIDDEN);
         continue;
     }
 
@@ -662,7 +662,7 @@ bool Specialize_Action_Throws(
     }
 
     Array* paramlist = Pop_Stack_Values_Core(
-        dsp_paramlist,
+        paramlist_base,
         SERIES_MASK_ACTION
     );
     MANAGE_ARRAY(paramlist);
@@ -693,8 +693,8 @@ bool Specialize_Action_Throws(
     // pushed the end result will be a stack with the highest priority
     // refinements at the top.
     //
-    Value* ordered = DS_AT(lowest_ordered_dsp);
-    while (ordered != DS_TOP) {
+    Value* ordered = Data_Stack_At(lowest_stackindex);
+    while (ordered != TOP) {
         if (IS_BLANK(ordered + 1)) // blanked when seen no longer partial
             ++ordered;
         else
@@ -707,7 +707,7 @@ bool Specialize_Action_Throws(
         Value* next_partial = partial->extra.next_partial; // overwritten
 
         if (NOT_VAL_FLAG(partial, PARTIAL_FLAG_IN_USE)) {
-            if (ordered == DS_TOP)
+            if (ordered == TOP)
                 Init_Nulled(partial); // no more partials coming
             else {
                 Init_Trash(partial);  // still partials to go, signal pre-empt
@@ -745,7 +745,7 @@ bool Specialize_Action_Throws(
             goto continue_loop;
         }
 
-        if (ordered == DS_TOP) { // some partials fully specialized
+        if (ordered == TOP) { // some partials fully specialized
             Init_Nulled(partial);
             goto continue_loop;
         }
@@ -763,7 +763,7 @@ bool Specialize_Action_Throws(
         );
         SET_VAL_FLAG(partial, ARG_MARKED_CHECKED);
 
-        while (ordered != DS_TOP) {
+        while (ordered != TOP) {
             if (IS_BLANK(ordered + 1))
                 ++ordered; // loop invariant, no BLANK! in next stack
             else
@@ -780,9 +780,9 @@ bool Specialize_Action_Throws(
     // Everything should have balanced out for a valid specialization
     //
     assert(not evoked);
-    if (ordered != DS_TOP)
+    if (ordered != TOP)
         fail (Error_Bad_Refine_Raw(ordered)); // specialize 'print/asdf
-    DS_DROP_TO(lowest_ordered_dsp);
+    Drop_Data_Stack_To(lowest_stackindex);
 
     // See %sysobj.r for `specialized-meta:` object template
 
@@ -870,7 +870,7 @@ DECLARE_NATIVE(specialize)
 
     Value* specializee = ARG(specializee);
 
-    REBDSP lowest_ordered_dsp = DSP;
+    StackIndex lowest_stackindex = TOP_INDEX;
 
     // Any partial refinement specializations are pushed to the stack, and
     // gives ordering information that TRUE assigned in a code block can't.
@@ -900,7 +900,7 @@ DECLARE_NATIVE(specialize)
         specializee,
         opt_name,
         ARG(def),
-        lowest_ordered_dsp
+        lowest_stackindex
     )){
         // e.g. `specialize 'append/dup [value: throw 10]`
         //

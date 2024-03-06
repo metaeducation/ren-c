@@ -169,7 +169,7 @@ DECLARE_NATIVE(eval_enfix)
     if (IS_END(L->value)) // no PATH! yet...
         fail ("ME and MY hit end of input");
 
-    DECLARE_SUBLEVEL (child, L); // saves DSP before refinement push
+    DECLARE_SUBLEVEL (child, L);  // saves TOP_INDEX before refinement push
 
     const bool push_refinements = true;
     Symbol* opt_label;
@@ -736,14 +736,14 @@ DECLARE_NATIVE(applique)
 
     Value* applicand = ARG(applicand);
 
-    DECLARE_END_LEVEL (L); // captures f->dsp
+    DECLARE_END_LEVEL (L);  // captures L->stack_base as current TOP_INDEX
     L->out = OUT;
 
     // Argument can be a literal action (APPLY :APPEND) or a WORD!/PATH!.
     // If it is a path, we push the refinements to the stack so they can
     // be taken into account, e.g. APPLY 'APPEND/ONLY/DUP pushes /ONLY, /DUP
     //
-    REBDSP lowest_ordered_dsp = DSP;
+    StackIndex lowest_stackindex = TOP_INDEX;
     Symbol* opt_label;
     if (Get_If_Word_Or_Path_Throws(
         OUT,
@@ -769,7 +769,7 @@ DECLARE_NATIVE(applique)
     INIT_BINDER(&binder);
     REBCTX *exemplar = Make_Context_For_Action_Int_Partials(
         applicand,
-        L->dsp_orig, // lowest_ordered_dsp of refinements to weave in
+        L->stack_base,  // lowest_stackindex of refinements to weave in
         &binder
     );
     MANAGE_ARRAY(CTX_VARLIST(exemplar)); // binding code into it
@@ -835,7 +835,7 @@ DECLARE_NATIVE(applique)
         // slot with an INTEGER! for a refinement as if it were "true".
         //
         L->flags.bits |= DO_FLAG_FULLY_SPECIALIZED;
-        DS_DROP_TO(lowest_ordered_dsp); // zero refinements on stack, now
+        Drop_Data_Stack_To(lowest_stackindex);  // zero refinements on stack, now
     }
 
     L->varlist = CTX_VARLIST(stolen);

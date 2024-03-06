@@ -978,14 +978,14 @@ static void Mark_Root_Series(void)
 // test is concerned to indicate unused capacity.  So the values are good
 // for the testing purpose, yet the GC doesn't want to consider those to be
 // "live" references.  So rather than to a full Queue_Mark_Array_Deep() on
-// the capacity of the data stack's underlying array, it begins at DS_TOP.
+// the capacity of the data stack's underlying array, it begins at TOP.
 //
 static void Mark_Data_Stack(void)
 {
     Value* head = KNOWN(ARR_HEAD(DS_Array));
     Assert_Unreadable_If_Debug(head);
 
-    Value* stackval = DS_TOP;
+    Value* stackval = TOP;
     for (; stackval != head; --stackval)
         Queue_Mark_Value_Deep(stackval);
 
@@ -1675,7 +1675,7 @@ void Push_Guard_Node(const REBNOD *node)
 //
 Array* Snapshot_All_Actions(void)
 {
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     REBSEG *seg;
     for (seg = Mem_Pools[SER_POOL].segs; seg != nullptr; seg = seg->next) {
@@ -1693,14 +1693,14 @@ Array* Snapshot_All_Actions(void)
                 if (GET_SER_FLAG(s, ARRAY_FLAG_PARAMLIST)) {
                     Value* v = KNOWN(ARR_HEAD(ARR(s)));
                     assert(IS_ACTION(v));
-                    DS_PUSH(v);
+                    Copy_Cell(PUSH(), v);
                 }
                 break;
             }
         }
     }
 
-    return Pop_Stack_Values(dsp_orig);
+    return Pop_Stack_Values(base);
 }
 
 

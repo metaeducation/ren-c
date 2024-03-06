@@ -458,7 +458,7 @@ DECLARE_NATIVE(wait)
     if (not IS_BLOCK(ARG(value)))
         val = ARG(value);
     else {
-        REBDSP dsp_orig = DSP;
+        StackIndex base = TOP_INDEX;
         if (Reduce_To_Stack_Throws(OUT, ARG(value)))
             return R_THROWN;
 
@@ -466,7 +466,7 @@ DECLARE_NATIVE(wait)
         // it, which ends up being put into a value and becomes managed.  So
         // it has to be protected.
         //
-        ports = Pop_Stack_Values(dsp_orig);
+        ports = Pop_Stack_Values(base);
 
         for (val = ARR_HEAD(ports); NOT_END(val); val++) { // find timeout
             if (Pending_Port(KNOWN(val)))

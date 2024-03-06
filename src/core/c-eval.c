@@ -423,9 +423,9 @@ INLINE void Expire_Out_Cell_Unless_Invisible(Level* L) {
 //     L->gotten
 //     Must be either be the Get_Var() lookup of L->value, or END
 //
-//     L->dsp_orig
+//     L->stack_base
 //     Must be set to the base stack location of the operation (this may be
-//     a deeper stack level than current DSP if this is an apply, and
+//     a deeper stack level than current TOP_INDEX if this is an apply, and
 //     refinements were preloaded onto the stack)
 //
 // More detailed assertions of the preconditions, postconditions, and state
@@ -439,7 +439,7 @@ bool Eval_Core_Throws(Level* const L)
     REBTCK tick = L->tick = TG_Tick; // snapshot start tick
   #endif
 
-    assert(DSP >= L->dsp_orig); // REDUCE accrues, APPLY adds refinements, >=
+    assert(TOP_INDEX >= L->stack_base); // REDUCE accrues, APPLY refines...
     assert(not IS_TRASH_DEBUG(L->out)); // all invisibles preserves output
     assert(L->out != Level_Spare(L)); // overwritten by temporary calculations
 
@@ -803,7 +803,7 @@ bool Eval_Core_Throws(Level* const L)
         Do_Process_Action_Checks_Debug(L);
       #endif
 
-        assert(DSP >= L->dsp_orig); // path processing may push REFINEMENT!s
+        assert(TOP_INDEX >= L->stack_base);  // path process may push refines
         assert(L->refine == LOOKBACK_ARG or L->refine == ORDINARY_ARG);
 
         TRASH_POINTER_IF_DEBUG(current); // shouldn't be used below
@@ -864,7 +864,7 @@ bool Eval_Core_Throws(Level* const L)
 
             if (pclass == PARAM_CLASS_REFINEMENT) {
                 if (L->flags.bits & DO_FLAG_DOING_PICKUPS) {
-                    if (DSP != L->dsp_orig)
+                    if (TOP_INDEX != L->stack_base)
                         goto next_pickup;
 
                     L->param = END_NODE; // don't need L->param in paramlist
@@ -873,7 +873,7 @@ bool Eval_Core_Throws(Level* const L)
 
                 TRASH_POINTER_IF_DEBUG(L->refine); // must update to new value
 
-                Value* ordered = DS_TOP;
+                Value* ordered = TOP;
                 Symbol* param_canon = Cell_Param_Canon(L->param); // #2258
 
                 if (L->special == L->param) // acquire all args at callsite
@@ -935,10 +935,9 @@ bool Eval_Core_Throws(Level* const L)
                     REBLEN partial_index = VAL_WORD_INDEX(L->special);
                     Symbol* partial_canon = VAL_STORED_CANON(L->special);
 
-                    DS_PUSH_TRASH;
-                    Init_Issue(DS_TOP, partial_canon);
-                    INIT_BINDING(DS_TOP, L->varlist);
-                    DS_TOP->payload.any_word.index = partial_index;
+                    Init_Issue(PUSH(), partial_canon);
+                    INIT_BINDING(TOP, L->varlist);
+                    TOP->payload.any_word.index = partial_index;
 
                     L->refine = SKIPPING_REFINEMENT_ARGS;
                     goto used_refinement;
@@ -954,14 +953,14 @@ bool Eval_Core_Throws(Level* const L)
 
               unspecialized_refinement:;
 
-                if (L->dsp_orig == DSP) // no refinements left on stack
+                if (L->stack_base == TOP_INDEX)  // no refines left on stack
                     goto unused_refinement;
 
                 if (IS_ACTION(ordered)) {
                     // chained function to call later
                 }
                 else if (VAL_STORED_CANON(ordered) == param_canon) {
-                    DS_DROP; // we're lucky: this was next refinement used
+                    DROP(); // we're lucky: this was next refinement used
                     L->refine = L->arg; // remember so we can revoke!
                     goto used_refinement;
                 }
@@ -970,7 +969,7 @@ bool Eval_Core_Throws(Level* const L)
 
               unspecialized_refinement_must_pickup:; // fulfill on 2nd pass
 
-                for (; ordered != DS_AT(L->dsp_orig); --ordered) {
+                for (; ordered != Data_Stack_At(L->stack_base); --ordered) {
                     if (IS_ACTION(ordered))
                         continue;  // chained function to call later
 
@@ -1266,7 +1265,7 @@ bool Eval_Core_Throws(Level* const L)
                     DO_FLAG_FULFILLING_ARG
                     | (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
 
-                DECLARE_SUBLEVEL (child, L); // capture DSP *now*
+                DECLARE_SUBLEVEL (child, L);  // capture TOP_INDEX *now*
 
                 if (Is_Level_Gotten_Shoved(L)) {
                     Erase_Cell(Level_Shove(child));
@@ -1316,7 +1315,7 @@ bool Eval_Core_Throws(Level* const L)
                 REBFLGS flags = DO_FLAG_FULFILLING_ARG
                     | (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
 
-                DECLARE_SUBLEVEL (child, L); // capture DSP *now*
+                DECLARE_SUBLEVEL (child, L);  // capture TOP_INDEX *now*
                 SET_END(L->arg); // Finalize_Arg() sets to Endish_Nulled
                 if (Eval_Step_In_Subframe_Throws(L->arg, L, flags, child)) {
                     Copy_Cell(L->out, L->arg);
@@ -1437,22 +1436,22 @@ bool Eval_Core_Throws(Level* const L)
         // second time through, and we were just jumping up to check the
         // parameters in response to a R_REDO_CHECKED; if so, skip this.
         //
-        if (DSP != L->dsp_orig and IS_ISSUE(DS_TOP)) {
+        if (TOP_INDEX != L->stack_base and IS_ISSUE(TOP)) {
 
           next_pickup:;
 
-            assert(IS_ISSUE(DS_TOP));
+            assert(IS_ISSUE(TOP));
 
-            if (not IS_WORD_BOUND(DS_TOP)) { // the loop didn't index it
-                CHANGE_VAL_TYPE_BITS(DS_TOP, REB_REFINEMENT);
-                fail (Error_Bad_Refine_Raw(DS_TOP)); // so duplicate or junk
+            if (not IS_WORD_BOUND(TOP)) { // the loop didn't index it
+                CHANGE_VAL_TYPE_BITS(TOP, REB_REFINEMENT);
+                fail (Error_Bad_Refine_Raw(TOP)); // so duplicate or junk
             }
 
             // Level_Args_Head() offsets are 0-based, while index is 1-based.
             // But +1 is okay, because we want the slots after the refinement.
             //
             REBINT offset =
-                VAL_WORD_INDEX(DS_TOP) - (L->arg - Level_Args_Head(L));
+                VAL_WORD_INDEX(TOP) - (L->arg - Level_Args_Head(L));
             L->param += offset;
             L->arg += offset;
             L->special += offset;
@@ -1466,10 +1465,10 @@ bool Eval_Core_Throws(Level* const L)
                 )
             );
 
-            assert(VAL_STORED_CANON(DS_TOP) == Cell_Param_Canon(L->param - 1));
+            assert(VAL_STORED_CANON(TOP) == Cell_Param_Canon(L->param - 1));
             assert(VAL_PARAM_CLASS(L->param - 1) == PARAM_CLASS_REFINEMENT);
 
-            DS_DROP;
+            DROP();
             L->flags.bits |= DO_FLAG_DOING_PICKUPS;
             goto process_args_for_pickup_or_to_end;
         }
@@ -1705,7 +1704,7 @@ bool Eval_Core_Throws(Level* const L)
         // the result of a CHAIN) we can run those chained functions in the
         // same Level, for efficiency.
         //
-        while (DSP != L->dsp_orig) {
+        while (TOP_INDEX != L->stack_base) {
             //
             // We want to keep the label that the function was invoked with,
             // because the other phases in the chain are implementation
@@ -1716,8 +1715,8 @@ bool Eval_Core_Throws(Level* const L)
             //
             Symbol* opt_label = L->opt_label;
             Drop_Action(L);
-            Push_Action(L, VAL_ACTION(DS_TOP), VAL_BINDING(DS_TOP));
-            DS_DROP;
+            Push_Action(L, VAL_ACTION(TOP), VAL_BINDING(TOP));
+            DROP();
 
             // We use the same mechanism as enfix operations do...give the
             // next chain step its first argument coming from L->out
@@ -2537,7 +2536,7 @@ bool Eval_Core_Throws(Level* const L)
   abort_action:;
 
     Drop_Action(L);
-    DS_DROP_TO(L->dsp_orig); // any unprocessed refinements or chains on stack
+    Drop_Data_Stack_To(L->stack_base);  // unprocessed refinements or chains on stack
 
   return_thrown:;
 

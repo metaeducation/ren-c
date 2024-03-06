@@ -38,7 +38,7 @@ bool Reduce_To_Stack_Throws(
     Value* out,
     Value* any_array
 ){
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     DECLARE_LEVEL (L);
     Push_Level(L, any_array);
@@ -47,7 +47,7 @@ bool Reduce_To_Stack_Throws(
         bool line = GET_VAL_FLAG(L->value, VALUE_FLAG_NEWLINE_BEFORE);
 
         if (Eval_Step_Throws(SET_END(out), L)) {
-            DS_DROP_TO(dsp_orig);
+            Drop_Data_Stack_To(base);
             Abort_Level(L);
             return true;
         }
@@ -64,9 +64,9 @@ bool Reduce_To_Stack_Throws(
             // ignore
         }
         else {
-            DS_PUSH(out);
+            Copy_Cell(PUSH(), out);
             if (line)
-                SET_VAL_FLAG(DS_TOP, VALUE_FLAG_NEWLINE_BEFORE);
+                SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
         }
     }
 
@@ -93,7 +93,7 @@ DECLARE_NATIVE(reduce)
     Value* value = ARG(value);
 
     if (IS_BLOCK(value) or IS_GROUP(value)) {
-        REBDSP dsp_orig = DSP;
+        StackIndex base = TOP_INDEX;
 
         if (Reduce_To_Stack_Throws(OUT, value))
             return R_THROWN;
@@ -105,7 +105,7 @@ DECLARE_NATIVE(reduce)
         return Init_Any_Array(
             OUT,
             VAL_TYPE(value),
-            Pop_Stack_Values_Core(dsp_orig, pop_flags)
+            Pop_Stack_Values_Core(base, pop_flags)
         );
     }
 
@@ -167,7 +167,7 @@ bool Compose_To_Stack_Throws(
     bool deep, // recurse into sub-blocks
     bool only // pattern matches that return blocks are kept as blocks
 ){
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     DECLARE_LEVEL (L);
     Push_Level_At(
@@ -176,7 +176,7 @@ bool Compose_To_Stack_Throws(
 
     while (NOT_END(L->value)) {
         if (not ANY_ARRAY(L->value)) { // non-arrays don't substitute/recurse
-            DS_PUSH_RELVAL(L->value, specifier); // preserves newline flag
+            Derelativize(PUSH(), L->value, specifier);  // preserves newline
             Fetch_Next_In_Level(nullptr, L);
             continue;
         }
@@ -219,7 +219,7 @@ bool Compose_To_Stack_Throws(
             );
 
             if (indexor == THROWN_FLAG) {
-                DS_DROP_TO(dsp_orig);
+                Drop_Data_Stack_To(base);
                 Abort_Level(L);
                 return true;
             }
@@ -242,21 +242,21 @@ bool Compose_To_Stack_Throws(
                     // Only proxy newline flag from the template on *first*
                     // value spliced in (it may have its own newline flag)
                     //
-                    DS_PUSH_RELVAL(push, VAL_SPECIFIER(out));
+                    Derelativize(PUSH(), push, VAL_SPECIFIER(out));
                     if (GET_VAL_FLAG(L->value, VALUE_FLAG_NEWLINE_BEFORE))
-                        SET_VAL_FLAG(DS_TOP, VALUE_FLAG_NEWLINE_BEFORE);
+                        SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
 
                     while (++push, NOT_END(push))
-                        DS_PUSH_RELVAL(push, VAL_SPECIFIER(out));
+                        Derelativize(PUSH(), push, VAL_SPECIFIER(out));
                 }
             }
             else {
                 // compose [(1 + 2) inserts as-is] => [3 inserts as-is]
                 // compose/only [([a b c]) unmerged] => [[a b c] unmerged]
 
-                DS_PUSH(out); // Note: not legal to eval to stack direct!
+                Copy_Cell(PUSH(), out);  // Not legal to eval to stack direct!
                 if (GET_VAL_FLAG(L->value, VALUE_FLAG_NEWLINE_BEFORE))
-                    SET_VAL_FLAG(DS_TOP, VALUE_FLAG_NEWLINE_BEFORE);
+                    SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
             }
 
           #ifdef DEBUG_UNREADABLE_BLANKS
@@ -266,7 +266,7 @@ bool Compose_To_Stack_Throws(
         else if (deep) {
             // compose/deep [does [(1 + 2)] nested] => [does [3] nested]
 
-            REBDSP dsp_deep = DSP;
+            StackIndex deep_base = TOP_INDEX;
             if (Compose_To_Stack_Throws(
                 out,
                 L->value,
@@ -275,7 +275,7 @@ bool Compose_To_Stack_Throws(
                 true, // deep (guaranteed true if we get here)
                 only
             )){
-                DS_DROP_TO(dsp_orig); // drop to outer DSP (@ function start)
+                Drop_Data_Stack_To(base); // drop to outer stack (@ function start)
                 Abort_Level(L);
                 return true;
             }
@@ -284,21 +284,20 @@ bool Compose_To_Stack_Throws(
             if (GET_SER_FLAG(Cell_Array(L->value), ARRAY_FLAG_TAIL_NEWLINE))
                 flags |= ARRAY_FLAG_TAIL_NEWLINE;
 
-            Array* popped = Pop_Stack_Values_Core(dsp_deep, flags);
-            DS_PUSH_TRASH;
+            Array* popped = Pop_Stack_Values_Core(deep_base, flags);
             Init_Any_Array(
-                DS_TOP,
+                PUSH(),
                 VAL_TYPE(L->value),
                 popped // can't push and pop in same step, need this variable!
             );
 
             if (GET_VAL_FLAG(L->value, VALUE_FLAG_NEWLINE_BEFORE))
-                SET_VAL_FLAG(DS_TOP, VALUE_FLAG_NEWLINE_BEFORE);
+                SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
         }
         else {
             // compose [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7] ;-- non-deep
             //
-            DS_PUSH_RELVAL(L->value, specifier); // preserves newline flag
+            Derelativize(PUSH(), L->value, L->specifier);  // preserves newline
         }
 
         Fetch_Next_In_Level(nullptr, L);
@@ -330,7 +329,7 @@ DECLARE_NATIVE(compose)
 {
     INCLUDE_PARAMS_OF_COMPOSE;
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     if (Compose_To_Stack_Throws(
         OUT,
@@ -353,7 +352,7 @@ DECLARE_NATIVE(compose)
     return Init_Any_Array(
         OUT,
         VAL_TYPE(ARG(value)),
-        Pop_Stack_Values_Core(dsp_orig, flags)
+        Pop_Stack_Values_Core(base, flags)
     );
 }
 
@@ -381,7 +380,7 @@ static void Flatten_Core(
             );
         }
         else
-            DS_PUSH_RELVAL(item, specifier);
+            Derelativize(PUSH(), item, specifier);
     }
 }
 
@@ -402,7 +401,7 @@ DECLARE_NATIVE(flatten)
 {
     INCLUDE_PARAMS_OF_FLATTEN;
 
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     Flatten_Core(
         Cell_Array_At(ARG(block)),
@@ -410,5 +409,5 @@ DECLARE_NATIVE(flatten)
         REF(deep) ? FLATTEN_DEEP : FLATTEN_ONCE
     );
 
-    return Init_Block(OUT, Pop_Stack_Values(dsp_orig));
+    return Init_Block(OUT, Pop_Stack_Values(base));
 }

@@ -269,7 +269,7 @@ REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         // as a way to support usermode authoring of things like MATCH.
         // For now just support ACTION! (or path/word to specify an action)
         //
-        REBDSP lowest_ordered_dsp = DSP;
+        StackIndex lowest_stackindex = TOP_INDEX;
 
         Symbol* opt_label;
         if (Get_If_Word_Or_Path_Throws(
@@ -286,9 +286,9 @@ REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
             fail (Error_Bad_Make(kind, arg));
 
         REBCTX *exemplar = Make_Context_For_Action(
-            out, // being used here as input (e.g. the ACTION!)
-            lowest_ordered_dsp, // will weave in the refinements pushed
-            nullptr // no binder needed, not running any code
+            out,  // being used here as input (e.g. the ACTION!)
+            lowest_stackindex,  // will weave in the refinements pushed
+            nullptr  // no binder needed, not running any code
         );
 
         // See notes in %c-specialize.c about the special encoding used to

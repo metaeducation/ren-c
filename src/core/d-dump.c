@@ -220,7 +220,7 @@ void Dump_Info(void)
     printf("    Dose:    %d\n", cast(int, Eval_Dose));
     printf("    Signals: %lx\n", cast(unsigned long, Eval_Signals));
     printf("    Sigmask: %lx\n", cast(unsigned long, Eval_Sigmask));
-    printf("    DSP:     %ld\n", cast(unsigned long, DSP));
+    printf("    TOP_INDEX: %ld\n", cast(unsigned long, TOP_INDEX));
 
     printf("Memory/GC:\n");
 

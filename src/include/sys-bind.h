@@ -292,7 +292,7 @@ enum {
 
 struct Reb_Collector {
     REBFLGS flags;
-    REBDSP dsp_orig;
+    StackIndex base;
     struct Reb_Binder binder;
     REBLEN index;
 };
@@ -636,21 +636,6 @@ INLINE Value* Derelativize(
 #if CPLUSPLUS_11
     Value* Derelativize(Cell* dest, const Value* v, REBSPC *specifier);
 #endif
-
-
-#define DS_PUSH_RELVAL(v,specifier) \
-    (DS_PUSH_TRASH, Derelativize(DS_TOP, (v), (specifier)))
-
-INLINE void DS_PUSH_RELVAL_KEEP_EVAL_FLIP(
-    const Cell* v,
-    REBSPC *specifier
-){
-    DS_PUSH_TRASH;
-    bool flip = GET_VAL_FLAG(v, VALUE_FLAG_EVAL_FLIP);
-    Derelativize(DS_TOP, v, specifier);
-    if (flip)
-        SET_VAL_FLAG(DS_TOP, VALUE_FLAG_EVAL_FLIP);
-}
 
 
 //=////////////////////////////////////////////////////////////////////////=//

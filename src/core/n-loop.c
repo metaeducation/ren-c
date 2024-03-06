@@ -600,7 +600,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             if (IS_VOID(les->out))  // vanish result
                 Init_Trash(les->out);  // nulled is used to signal breaking only
             else
-                DS_PUSH(les->out); // anything not null is added to the result
+                Copy_Cell(PUSH(), les->out);  // not void, added to the result
             break;
         }
     } while (more_data and not broke);
@@ -655,7 +655,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
     // Currently the data stack is only used by MAP-EACH to accumulate results
     // but it's faster to just save it than test the loop mode.
     //
-    REBDSP dsp_orig = DSP;
+    StackIndex base = TOP_INDEX;
 
     // Extract the series and index being enumerated, based on data type
 
@@ -739,14 +739,14 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
 
     if (r == R_THROWN) { // generic THROW/RETURN/QUIT (not BREAK/CONTINUE)
         if (mode == LOOP_MAP_EACH)
-            DS_DROP_TO(dsp_orig);
+            Drop_Data_Stack_To(base);
         return R_THROWN;
     }
 
     if (r) {
         assert(IS_ERROR(r));
         if (mode == LOOP_MAP_EACH)
-            DS_DROP_TO(dsp_orig);
+            Drop_Data_Stack_To(base);
         rebJumps ("FAIL", rebR(r));
     }
 
@@ -775,7 +775,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
 
       case LOOP_MAP_EACH:
         if (IS_NULLED(OUT)) { // e.g. there was a BREAK...*must* return null
-            DS_DROP_TO(dsp_orig);
+            Drop_Data_Stack_To(base);
             return nullptr;
         }
 
@@ -783,7 +783,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
         // paralleling some changes to COLLECT, it may be better if the body
         // never runs it returns blank (?)
         //
-        return Init_Block(OUT, Pop_Stack_Values(dsp_orig));
+        return Init_Block(OUT, Pop_Stack_Values(base));
     }
 
     DEAD_END; // all branches handled in enum switch

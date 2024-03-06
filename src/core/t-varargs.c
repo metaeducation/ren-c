@@ -533,7 +533,7 @@ REBTYPE(Varargs)
             return OUT;
         }
 
-        REBDSP dsp_orig = DSP;
+        StackIndex base = TOP_INDEX;
 
         REBINT limit;
         if (IS_INTEGER(ARG(limit))) {
@@ -557,12 +557,12 @@ REBTYPE(Varargs)
             }
             if (IS_END(OUT))
                 break;
-            DS_PUSH(OUT);
+            Copy_Cell(PUSH(), OUT);
         }
 
         // !!! What if caller wanted a REB_GROUP, REB_PATH, or an /INTO?
         //
-        return Init_Block(OUT, Pop_Stack_Values(dsp_orig)); }
+        return Init_Block(OUT, Pop_Stack_Values(base)); }
 
     default:
         break;

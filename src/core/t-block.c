@@ -221,7 +221,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
                 fail (Error_Null_Vararg_Array_Raw());
         }
 
-        REBDSP dsp_orig = DSP;
+        StackIndex base = TOP_INDEX;
 
         do {
             if (Do_Vararg_Op_Maybe_End_Throws(
@@ -229,32 +229,32 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
                 arg,
                 VARARG_OP_TAKE
             )){
-                DS_DROP_TO(dsp_orig);
+                Drop_Data_Stack_To(base);
                 return R_THROWN;
             }
 
             if (IS_END(out))
                 break;
 
-            DS_PUSH(out);
+            Copy_Cell(PUSH(), out);
         } while (true);
 
-        return Init_Any_Array(out, kind, Pop_Stack_Values(dsp_orig));
+        return Init_Any_Array(out, kind, Pop_Stack_Values(base));
     }
     else if (IS_ACTION(arg)) {
         //
         // !!! Experimental behavior; if action can run as arity-0, then
         // invoke it so long as it doesn't return null, collecting values.
         //
-        REBDSP dsp_orig = DSP;
+        StackIndex base = TOP_INDEX;
         while (true) {
             Value* generated = rebValue(rebEval(arg));
             if (not generated)
                 break;
-            DS_PUSH(generated);
+            Copy_Cell(PUSH(), generated);
             rebRelease(generated);
         }
-        return Init_Any_Array(out, kind, Pop_Stack_Values(dsp_orig));
+        return Init_Any_Array(out, kind, Pop_Stack_Values(base));
     }
 
   bad_make:;
