@@ -271,7 +271,9 @@
 // borderline assert doesn't wind up taking up 20% of the debug's runtime.
 //
 #if DEBUG
-    #define CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(flag) \
+    #define CHECK_AND_EXTRACT_VALUE_FLAG_DEBUG(flag) \
+      do { \
+        STATIC_ASSERT_LVALUE(flag); \
         enum Reb_Kind category = cast(enum Reb_Kind, SECOND_BYTE(&flag)); \
         assert(kind < REB_MAX_PLUS_MAX); /* see REB_MAX_PLUS_MAX */ \
         if (category != REB_0) { \
@@ -284,29 +286,30 @@
                     assert(false); \
             } \
             SECOND_BYTE(&flag) = 0; \
-        }
+        } \
+      } while (0);
 #else
-    #define CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(flag) \
+    #define CHECK_AND_EXTRACT_VALUE_FLAG_DEBUG(flag) \
         USED(kind);
 #endif
 
 INLINE void SET_VAL_FLAG(Cell* v, uintptr_t f) {
     enum Reb_Kind kind = VAL_TYPE_RAW(v); \
-    CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
+    CHECK_AND_EXTRACT_VALUE_FLAG_DEBUG(f);
     assert(f and (f & (f - 1)) == 0);  // checks that only one bit is set
     v->header.bits |= f;
 }
 
 INLINE bool GET_VAL_FLAG(const Cell* v, uintptr_t f) {
     enum Reb_Kind kind = VAL_TYPE_RAW(v); \
-    CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
+    CHECK_AND_EXTRACT_VALUE_FLAG_DEBUG(f);
     assert(f and (f & (f - 1)) == 0);  // checks that only one bit is set
     return did (v->header.bits & f);
 }
 
 INLINE void CLEAR_VAL_FLAG(Cell* v, uintptr_t f) {
     enum Reb_Kind kind = VAL_TYPE_RAW(v); \
-    CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
+    CHECK_AND_EXTRACT_VALUE_FLAG_DEBUG(f);
     assert(f and (f & (f - 1)) == 0);  // checks that only one bit is set
     v->header.bits &= ~f;
 }
@@ -335,8 +338,9 @@ INLINE void CLEAR_VAL_FLAG(Cell* v, uintptr_t f) {
     // adds up very quickly of getting the 3 parameters passed in.  Run the
     // risk of repeating macro arguments to speed up this critical test.
     //
-    #define ASSERT_CELL_WRITABLE_EVIL_MACRO(c,file,line) \
+    #define Assert_Cell_Writable(c,file,line) \
         do { \
+            STATIC_ASSERT_LVALUE(c);  /* evil macro, ensures used correctly */ \
             if (not ((c)->header.bits & NODE_FLAG_CELL)) { \
                 printf("Non-cell passed to cell writing routine\n"); \
                 panic_at ((c), (file), (line)); \
@@ -352,7 +356,7 @@ INLINE void CLEAR_VAL_FLAG(Cell* v, uintptr_t f) {
             } \
         } while (0)
 #else
-    #define ASSERT_CELL_WRITABLE_EVIL_MACRO(c,file,line) \
+    #define Assert_Cell_Writable(c,file,line) \
         NOOP
 #endif
 
@@ -383,14 +387,14 @@ INLINE Value* RESET_VAL_HEADER_EXTRA_Core(
   , int line
   #endif
 ){
-    ASSERT_CELL_WRITABLE_EVIL_MACRO(v, file, line);
+    Assert_Cell_Writable(v, file, line);
 
     // The debug build puts some extra type information onto flags
     // which needs to be cleared out.  (e.g. ACTION_FLAG_XXX has the bit
     // pattern for REB_ACTION inside of it, to help make sure that flag
     // doesn't get used with things that aren't actions.)
     //
-    CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(extra);
+    CHECK_AND_EXTRACT_VALUE_FLAG_DEBUG(extra);
 
     v->header.bits &= CELL_MASK_PERSIST;
     v->header.bits |= FLAG_KIND_BYTE(kind) | extra;
@@ -450,15 +454,22 @@ INLINE Value* RESET_VAL_HEADER_EXTRA_Core(
 // for such central routines the overhead of passing 3 args is on the radar.
 // Run the risk of repeating macro args to speed up this critical check.
 //
-#define ALIGN_CHECK_CELL_EVIL_MACRO(c,file,line) \
-    if (cast(uintptr_t, (c)) % ALIGN_SIZE != 0) { \
-        printf( \
-            "Cell address %p not aligned to %d bytes\n", \
-            cast(const void*, (c)), \
-            cast(int, ALIGN_SIZE) \
-        ); \
-        panic_at ((c), file, line); \
-    }
+#ifdef DEBUG_MEMORY_ALIGN
+    #define Assert_Cell_Aligned(c) \
+      do { \
+        STATIC_ASSERT_LVALUE(c);  /* evil macro, make sure used safely */ \
+        if (cast(uintptr_t, (c)) % ALIGN_SIZE != 0) { \
+            printf( \
+                "Cell address %p not aligned to %d bytes\n", \
+                cast(const void*, (c)), \
+                cast(int, ALIGN_SIZE) \
+            ); \
+            panic_at ((c), file, line); \
+        } \
+      } while (0)
+#else
+    #define Assert_Cell_Aligned(c)  NOOP
+#endif
 
 #define CELL_MASK_ERASE \
     (NODE_FLAG_NODE | NODE_FLAG_CELL)
@@ -474,9 +485,7 @@ INLINE Cell* Erase_Cell_Core(
   , int line
   #endif
 ){
-  #ifdef DEBUG_MEMORY_ALIGN
-    ALIGN_CHECK_CELL_EVIL_MACRO(c, file, line);
-  #endif
+    Assert_Cell_Aligned(c);
 
     c->header.bits = CELL_MASK_ERASE;
     TRACK_CELL_IF_DEBUG(cast(Cell*, c), file, line);
@@ -501,7 +510,7 @@ INLINE void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
     // the type and bits (e.g. changing ANY-WORD! to another ANY-WORD!).
     // Otherwise the value-specific flags might be misinterpreted.
     //
-    ASSERT_CELL_WRITABLE_EVIL_MACRO(v, __FILE__, __LINE__);
+    Assert_Cell_Writable(v, __FILE__, __LINE__);
     KIND_BYTE(v) = kind;
 }
 
@@ -577,7 +586,7 @@ INLINE bool Is_Cell_Poisoned(const Cell* v) {
       , int line
       #endif
     ){
-        ASSERT_CELL_WRITABLE_EVIL_MACRO(v, file, line);
+        Assert_Cell_Writable(v, file, line);
 
         SECOND_BYTE(&v->header) = REB_0_END;  // only line in release build
         v->header.bits |= VALUE_FLAG_FALSEY;  // speeds VAL_TYPE_Debug() check
@@ -1394,7 +1403,7 @@ INLINE void Move_Value_Header(Cell* out, const Cell* v)
     assert(NOT_END(v)); // SET_END() is the only way to write an end
     assert(VAL_TYPE_RAW(v) <= REB_MAX_NULLED); // don't move pseudotypes
 
-    ASSERT_CELL_WRITABLE_EVIL_MACRO(out, __FILE__, __LINE__);
+    Assert_Cell_Writable(out, __FILE__, __LINE__);
 
     out->header.bits &= CELL_MASK_PERSIST;
     out->header.bits |= v->header.bits & CELL_MASK_COPY;
@@ -1477,7 +1486,7 @@ INLINE void Blit_Cell(Cell* out, const Cell* v)
     assert(out != v); // usually a sign of a mistake; not worth supporting
     assert(NOT_END(v));
 
-    ASSERT_CELL_WRITABLE_EVIL_MACRO(out, __FILE__, __LINE__);
+    Assert_Cell_Writable(out, __FILE__, __LINE__);
 
     // Examine just the cell's preparation bits.  Are they identical?  If so,
     // we are not losing any information by blindly copying the header in
