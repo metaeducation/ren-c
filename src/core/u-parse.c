@@ -1671,7 +1671,7 @@ DECLARE_NATIVE(subparse)
                         // be used by the Copy_Cell() inlined here.  Get
                         // past that by initializing it.
                         //
-                        thrown_arg->extra.trash = thrown_arg; // local trash
+                        thrown_arg->extra.corrupt = thrown_arg;  // local junk
 
                         CONVERT_NAME_TO_THROWN(P_OUT, thrown_arg);
                         return R_THROWN;

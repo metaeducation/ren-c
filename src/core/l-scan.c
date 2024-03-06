@@ -692,8 +692,8 @@ static REBCTX *Error_Syntax(SCAN_STATE *ss) {
     // to get almost as much brevity and not much less clarity than bp and
     // ep, while avoiding the possibility of the state getting out of sync?
     //
-    assert(ss->begin != nullptr and not IS_POINTER_TRASH_DEBUG(ss->begin));
-    assert(ss->end != nullptr and not IS_POINTER_TRASH_DEBUG(ss->end));
+    assert(ss->begin != nullptr and not Is_Pointer_Corrupt_Debug(ss->begin));
+    assert(ss->end != nullptr and not Is_Pointer_Corrupt_Debug(ss->end));
     assert(ss->end >= ss->begin);
 
     DECLARE_VALUE (token_name);
@@ -799,7 +799,7 @@ static REBCTX *Error_Mismatch(SCAN_STATE *ss, char wanted, char seen) {
 //
 static REBLEN Prescan_Token(SCAN_STATE *ss)
 {
-    assert(IS_POINTER_TRASH_DEBUG(ss->end)); // prescan only uses ->begin
+    assert(Is_Pointer_Corrupt_Debug(ss->end)); // prescan only uses ->begin
 
     const Byte *cp = ss->begin;
     REBLEN flags = 0;
@@ -945,7 +945,7 @@ static void Locate_Token_May_Push_Mold(
     SCAN_STATE *ss
 ) {
 #if !defined(NDEBUG)
-    TRASH_POINTER_IF_DEBUG(ss->end);
+    Corrupt_Pointer_If_Debug(ss->end);
     ss->token = TOKEN_MAX; // trash token to help ensure it's recalculated
 #endif
 
@@ -1192,7 +1192,7 @@ acquisition_loop:
                     fail (Error_Syntax(ss));
                 }
                 ss->begin = cp;
-                TRASH_POINTER_IF_DEBUG(ss->end);
+                Corrupt_Pointer_If_Debug(ss->end);
                 flags = Prescan_Token(ss);
                 ss->begin--;
                 ss->token = TOKEN_REFINE;
@@ -1218,7 +1218,7 @@ acquisition_loop:
             // there's more content yet to come.
             //
             ss->begin = nullptr;
-            TRASH_POINTER_IF_DEBUG(ss->end);
+            Corrupt_Pointer_If_Debug(ss->end);
             goto acquisition_loop;
 
         case LEX_DELIMIT_UTF8_ERROR:
@@ -1756,7 +1756,7 @@ void Init_Va_Scan_State_Core(
     ss->vaptr = vaptr;
 
     ss->begin = opt_begin; // if nullptr Locate_Token does first fetch from vaptr
-    TRASH_POINTER_IF_DEBUG(ss->end);
+    Corrupt_Pointer_If_Debug(ss->end);
 
     // !!! Splicing REBVALs into a scan as it goes creates complexities for
     // error messages based on line numbers.  Fortunately the splice of a
@@ -1808,7 +1808,7 @@ void Init_Scan_State(
 
     ss->vaptr = nullptr; // signal Locate_Token to not use vaptr
     ss->begin = utf8;
-    TRASH_POINTER_IF_DEBUG(ss->end);
+    Corrupt_Pointer_If_Debug(ss->end);
 
     ss->start_line_head = ss->line_head = utf8;
 
@@ -2504,7 +2504,7 @@ void Scan_To_Stack_Relaxed(SCAN_STATE *ss) {
 
         SET_SER_FLAG(bin, SERIES_FLAG_DONT_RELOCATE); // Binary_Head() is cached
         ss_before.begin = Binary_Head(bin);
-        TRASH_POINTER_IF_DEBUG(ss_before.end);
+        Corrupt_Pointer_If_Debug(ss_before.end);
 
         Scan_To_Stack(&ss_before); // !!! Shouldn't error...check that?
 

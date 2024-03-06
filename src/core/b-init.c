@@ -1211,9 +1211,9 @@ static Value* Startup_Mezzanine(BOOT_BLK *boot);
 static void Startup_Trash_Debug(void)
 {
     assert(not TG_Top_Level);
-    TRASH_POINTER_IF_DEBUG(TG_Top_Level);
+    Corrupt_Pointer_If_Debug(TG_Top_Level);
     assert(not TG_Bottom_Level);
-    TRASH_POINTER_IF_DEBUG(TG_Bottom_Level);
+    Corrupt_Pointer_If_Debug(TG_Bottom_Level);
 
     // ...add more on a case-by-case basis if the case seems helpful...
 }

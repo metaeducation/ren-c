@@ -588,12 +588,12 @@ union Reb_Value_Extra {
     // The release build doesn't put anything in the ->extra field by default,
     // so sensitive compilers notice when cells are moved without that
     // initialization.  Rather than disable the warning, this can be used to
-    // put some junk into, but TRASH_POINTER_IF_DEBUG() won't subvert the
+    // put some junk into, but Corrupt_Pointer_If_Debug() won't subvert the
     // warning.  So just poke whatever pointer is at hand that is likely to
     // already be in a register and not meaningful (e.g. nullptr is a bad
     // value, because that could look like a valid non-binding)
     //
-    void *trash;
+    void *corrupt;
 
     // The binding will be either a REBACT (relative to a function) or a
     // REBCTX (specific to a context), or simply a plain Array such as

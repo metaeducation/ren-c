@@ -449,9 +449,9 @@ bool Eval_Core_Throws(Level* const L)
     enum Reb_Kind eval_type;
 
     const Value* current_gotten;
-    TRASH_POINTER_IF_DEBUG(current_gotten);
+    Corrupt_Pointer_If_Debug(current_gotten);
     const Cell* current;
-    TRASH_POINTER_IF_DEBUG(current);
+    Corrupt_Pointer_If_Debug(current);
 
     // Given how the evaluator is written, it's inevitable that there will
     // have to be a test for points to `goto` before running normal eval.
@@ -484,7 +484,7 @@ bool Eval_Core_Throws(Level* const L)
         }
 
         current = L->u.reval.value;
-        TRASH_POINTER_IF_DEBUG(L->u.defer.arg); // same memory location
+        Corrupt_Pointer_If_Debug(L->u.defer.arg); // same memory location
         current_gotten = nullptr;
         eval_type = VAL_TYPE(current);
 
@@ -805,8 +805,8 @@ bool Eval_Core_Throws(Level* const L)
         assert(TOP_INDEX >= L->stack_base);  // path process may push refines
         assert(L->refine == LOOKBACK_ARG or L->refine == ORDINARY_ARG);
 
-        TRASH_POINTER_IF_DEBUG(current); // shouldn't be used below
-        TRASH_POINTER_IF_DEBUG(current_gotten);
+        Corrupt_Pointer_If_Debug(current); // shouldn't be used below
+        Corrupt_Pointer_If_Debug(current_gotten);
 
         L->flags.bits &= ~DO_FLAG_DOING_PICKUPS;
 
@@ -870,7 +870,7 @@ bool Eval_Core_Throws(Level* const L)
                     goto arg_loop_and_any_pickups_done;
                 }
 
-                TRASH_POINTER_IF_DEBUG(L->refine); // must update to new value
+                Corrupt_Pointer_If_Debug(L->refine); // must update to new value
 
                 Value* ordered = TOP;
                 Symbol* param_canon = Cell_Param_Canon(L->param); // #2258
@@ -998,7 +998,7 @@ bool Eval_Core_Throws(Level* const L)
 
               used_refinement:;
 
-                assert(not IS_POINTER_TRASH_DEBUG(L->refine)); // must be set
+                assert(not Is_Pointer_Corrupt_Debug(L->refine)); // must be set
                 Init_Refinement(L->arg, Cell_Parameter_Symbol(L->param));
                 SET_VAL_FLAG(L->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
@@ -1291,8 +1291,8 @@ bool Eval_Core_Throws(Level* const L)
                 );
 
                 L->u.defer.arg = nullptr;
-                TRASH_POINTER_IF_DEBUG(L->u.defer.param);
-                TRASH_POINTER_IF_DEBUG(L->u.defer.refine);
+                Corrupt_Pointer_If_Debug(L->u.defer.param);
+                Corrupt_Pointer_If_Debug(L->u.defer.refine);
             }
 
     //=//// ERROR ON END MARKER, BAR! IF APPLICABLE //////////////////////=//
@@ -1403,7 +1403,7 @@ bool Eval_Core_Throws(Level* const L)
                 or not (L->flags.bits & DO_FLAG_FULLY_SPECIALIZED) // ...this!
             );
 
-            assert(not IS_POINTER_TRASH_DEBUG(L->u.defer.arg));
+            assert(not Is_Pointer_Corrupt_Debug(L->u.defer.arg));
             if (L->u.defer.arg)
                 continue; // don't do typechecking on this *yet*...
 
@@ -1477,7 +1477,7 @@ bool Eval_Core_Throws(Level* const L)
         assert(IS_END(L->param)); // signals !Is_Action_Level_Fulfilling()
 
         if (not In_Typecheck_Mode(L)) { // was fulfilling...
-            assert(not IS_POINTER_TRASH_DEBUG(L->u.defer.arg));
+            assert(not Is_Pointer_Corrupt_Debug(L->u.defer.arg));
             if (L->u.defer.arg) {
                 //
                 // We deferred typechecking, but still need to do it...
@@ -1488,10 +1488,10 @@ bool Eval_Core_Throws(Level* const L)
                     L->u.defer.arg,
                     L->u.defer.refine
                 );
-                TRASH_POINTER_IF_DEBUG(L->u.defer.param);
-                TRASH_POINTER_IF_DEBUG(L->u.defer.refine);
+                Corrupt_Pointer_If_Debug(L->u.defer.param);
+                Corrupt_Pointer_If_Debug(L->u.defer.refine);
             }
-            TRASH_POINTER_IF_DEBUG(L->u.defer.arg);
+            Corrupt_Pointer_If_Debug(L->u.defer.arg);
         }
 
     //==////////////////////////////////////////////////////////////////==//
@@ -1511,7 +1511,7 @@ bool Eval_Core_Throws(Level* const L)
         );
 
         Expire_Out_Cell_Unless_Invisible(L);
-        assert(IS_POINTER_TRASH_DEBUG(L->u.defer.arg));
+        assert(Is_Pointer_Corrupt_Debug(L->u.defer.arg));
 
         if (not Is_Level_Gotten_Shoved(L))
             L->gotten = nullptr; // arbitrary code changes fetched variables
@@ -1640,7 +1640,7 @@ bool Eval_Core_Throws(Level* const L)
           redo_checked:; // R_REDO_CHECKED
 
             Expire_Out_Cell_Unless_Invisible(L);
-            assert(IS_POINTER_TRASH_DEBUG(L->u.defer.arg));
+            assert(Is_Pointer_Corrupt_Debug(L->u.defer.arg));
 
             L->param = ACT_PARAMS_HEAD(Level_Phase(L));
             L->arg = Level_Args_Head(L);
@@ -2285,7 +2285,7 @@ bool Eval_Core_Throws(Level* const L)
 
   post_switch:;
 
-    assert(IS_POINTER_TRASH_DEBUG(L->u.defer.arg));
+    assert(Is_Pointer_Corrupt_Debug(L->u.defer.arg));
 
 //=//// IF NOT A WORD!, IT DEFINITELY STARTS A NEW EXPRESSION /////////////=//
 

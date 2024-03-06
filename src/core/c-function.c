@@ -941,7 +941,7 @@ REBACT *Make_Action(
 
     MISC(details).dispatcher = dispatcher; // level of indirection, hijackable
 
-    assert(IS_POINTER_TRASH_DEBUG(LINK(paramlist).trash));
+    assert(Is_Pointer_Corrupt_Debug(LINK(paramlist).corrupt));
 
     if (opt_underlying)
         LINK(paramlist).underlying = opt_underlying;

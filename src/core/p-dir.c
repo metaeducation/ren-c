@@ -43,7 +43,7 @@ static Array* Read_Dir_May_Fail(struct devreq_file *dir)
     struct devreq_file file;
     CLEARS(&file);
 
-    TRASH_POINTER_IF_DEBUG(file.path); // file is output (not input)
+    Corrupt_Pointer_If_Debug(file.path); // file is output (not input)
 
     REBREQ *req = AS_REBREQ(dir);
     req->modes |= RFM_DIR;

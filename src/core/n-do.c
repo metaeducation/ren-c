@@ -223,7 +223,7 @@ DECLARE_NATIVE(eval_enfix)
     // this frame...so when it asserts about "L->prior->deferred" it means
     // the frame of EVAL-ENFIX that is invoking it.
     //
-    assert(IS_POINTER_TRASH_DEBUG(TOP_LEVEL->u.defer.arg));
+    assert(Is_Pointer_Corrupt_Debug(TOP_LEVEL->u.defer.arg));
     TOP_LEVEL->u.defer.arg = m_cast(Value*, BLANK_VALUE); // !!! signal our hack
 
     REBFLGS flags = DO_FLAG_FULFILLING_ARG | DO_FLAG_POST_SWITCH;
@@ -232,7 +232,7 @@ DECLARE_NATIVE(eval_enfix)
         return R_THROWN;
     }
 
-    TRASH_POINTER_IF_DEBUG(TOP_LEVEL->u.defer.arg);
+    Corrupt_Pointer_If_Debug(TOP_LEVEL->u.defer.arg);
 
     DROP_GC_GUARD(temp);
     return OUT;
@@ -847,7 +847,7 @@ DECLARE_NATIVE(applique)
     LVL_BINDING(L) = VAL_BINDING(applicand);
 
     Begin_Action(L, opt_label, ORDINARY_ARG);
-    assert(IS_POINTER_TRASH_DEBUG(L->u.defer.arg)); // see Eval_Core_Throws()
+    assert(Is_Pointer_Corrupt_Debug(L->u.defer.arg)); // see Eval_Core_Throws()
 
     bool action_threw = Eval_Core_Throws(L);
 

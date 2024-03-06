@@ -163,8 +163,8 @@ INLINE void Init_Handle_Managed_Common(
     // the same union member, so trashing them both is semi-superfluous, but
     // serves a commentary purpose here.
     //
-    TRASH_POINTER_IF_DEBUG(v->payload.handle.data.pointer);
-    TRASH_CFUNC_IF_DEBUG(v->payload.handle.data.cfunc);
+    Corrupt_Pointer_If_Debug(v->payload.handle.data.pointer);
+    Corrupt_CFunction_If_Debug(v->payload.handle.data.cfunc);
 
     // Don't fill the handle properties in the instance if it's the managed
     // form.  This way, you can set the properties in the canon value and
@@ -173,7 +173,7 @@ INLINE void Init_Handle_Managed_Common(
     //
     RESET_CELL(out, REB_HANDLE);
     out->extra.singular = singular;
-    TRASH_POINTER_IF_DEBUG(out->payload.handle.data.pointer);
+    Corrupt_Pointer_If_Debug(out->payload.handle.data.pointer);
 }
 
 INLINE Value* Init_Handle_Managed(
@@ -184,7 +184,7 @@ INLINE Value* Init_Handle_Managed(
 ){
     Init_Handle_Managed_Common(out, length, cleaner);
 
-    // Leave the non-singular cfunc as trash; clients should not be using
+    // Leave the non-singular cfunc as corrupt; clients should not be using
     //
     RESET_VAL_HEADER_EXTRA(out, REB_HANDLE, 0);
 
@@ -201,7 +201,7 @@ INLINE Value* Init_Handle_Managed_Cfunc(
 ){
     Init_Handle_Managed_Common(out, length, cleaner);
 
-    // Leave the non-singular cfunc as trash; clients should not be using
+    // Leave the non-singular cfunc as corrupt; clients should not be using
     //
     RESET_VAL_HEADER_EXTRA(out, REB_HANDLE, HANDLE_FLAG_CFUNC);
 

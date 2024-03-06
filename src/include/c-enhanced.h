@@ -541,7 +541,7 @@
 // would prefer to intercept accesses as if they were freed.)
 //
 // Also, in order to overwrite a pointer with garbage, the historical method
-// of using 0xBADF00D or 0xDECAFBAD is formalized with TRASH_POINTER_IF_DEBUG.
+// of using 0xBADF00D or 0xDECAFBAD is formalized with Corrupt_Pointer_If_Debug.
 // This makes the instances easier to find and standardizes how it is done.
 //
 #if __has_feature(address_sanitizer)
@@ -575,47 +575,47 @@
 #endif
 
 #ifdef NDEBUG
-    #define TRASH_POINTER_IF_DEBUG(p) \
+    #define Corrupt_Pointer_If_Debug(p) \
         NOOP
 
-    #define TRASH_CFUNC_IF_DEBUG(p) \
+    #define Corrupt_CFunction_If_Debug(p) \
         NOOP
 #else
     #if defined(__cplusplus) // needed even if not C++11
         template<class T>
-        INLINE void TRASH_POINTER_IF_DEBUG(T* &p) {
+        INLINE void Corrupt_Pointer_If_Debug(T* &p) {
             p = reinterpret_cast<T*>(static_cast<uintptr_t>(0xDECAFBAD));
         }
 
         template<class T>
-        INLINE void TRASH_CFUNC_IF_DEBUG(T* &p) {
+        INLINE void Corrupt_CFunction_If_Debug(T* &p) {
             p = reinterpret_cast<T*>(static_cast<uintptr_t>(0xDECAFBAD));
         }
 
         template<class T>
-        INLINE bool IS_POINTER_TRASH_DEBUG(T* p) {
+        INLINE bool Is_Pointer_Corrupt_Debug(T* p) {
             return (
                 p == reinterpret_cast<T*>(static_cast<uintptr_t>(0xDECAFBAD))
             );
         }
 
         template<class T>
-        INLINE bool IS_CFUNC_TRASH_DEBUG(T* p) {
+        INLINE bool Is_CFunction_Corrupt_Debug(T* p) {
             return (
                 p == reinterpret_cast<T*>(static_cast<uintptr_t>(0xDECAFBAD))
             );
         }
     #else
-        #define TRASH_POINTER_IF_DEBUG(p) \
+        #define Corrupt_Pointer_If_Debug(p) \
             ((p) = cast(void*, cast(uintptr_t, 0xDECAFBAD)))
 
-        #define TRASH_CFUNC_IF_DEBUG(p) \
+        #define Corrupt_CFunction_If_Debug(p) \
             ((p) = cast(CFUNC*, cast(uintptr_t, 0xDECAFBAD)))
 
-        #define IS_POINTER_TRASH_DEBUG(p) \
+        #define Is_Pointer_Corrupt_Debug(p) \
             ((p) == cast(void*, cast(uintptr_t, 0xDECAFBAD)))
 
-        #define IS_CFUNC_TRASH_DEBUG(p) \
+        #define Is_CFunction_Corrupt_Debug(p) \
             ((p) == cast(CFUNC*, cast(uintptr_t, 0xDECAFBAD)))
     #endif
 #endif
@@ -685,7 +685,7 @@
         if (zero)
             v = nullptr; // do null half the time, deterministic
         else
-            TRASH_POINTER_IF_DEBUG(v); // trash the other half of the time
+            Corrupt_Pointer_If_Debug(v); // trash the other half of the time
         zero = not zero;
     }
 

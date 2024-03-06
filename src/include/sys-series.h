@@ -571,13 +571,13 @@ INLINE Series* Alloc_Series_Node(REBFLGS flags) {
     // or array of length 0!  Two are set here, the third (info) should be
     // set by the caller.
     //
-    s->header.bits = NODE_FLAG_NODE | flags | SERIES_FLAG_8_IS_TRUE; // #1
-    TRASH_POINTER_IF_DEBUG(LINK(s).trash); // #2
+    s->header.bits = NODE_FLAG_NODE | flags | SERIES_FLAG_8_IS_TRUE;  // #1
+    Corrupt_Pointer_If_Debug(LINK(s).corrupt);  // #2
   #if !defined(NDEBUG)
-    memset(cast(char*, &s->content.fixed), 0xBD, sizeof(s->content)); // #3-#6
-    memset(&s->info, 0xAE, sizeof(s->info)); // #7, caller sets Series_Wide()
+    memset(cast(char*, &s->content.fixed), 0xBD, sizeof(s->content));  // #3-#6
+    memset(&s->info, 0xAE, sizeof(s->info));  // #7, caller sets Series_Wide()
   #endif
-    TRASH_POINTER_IF_DEBUG(MISC(s).trash); // #8
+    Corrupt_Pointer_If_Debug(MISC(s).corrupt);  // #8
 
     // Note: This series will not participate in management tracking!
     // See NODE_FLAG_MANAGED handling in Make_Array_Core() and Make_Series_Core().

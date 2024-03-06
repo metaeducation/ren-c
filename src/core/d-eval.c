@@ -126,7 +126,7 @@ static void Eval_Core_Shared_Checks_Debug(Level* L) {
     assert(not (L->flags.bits & DO_FLAG_FINAL_DEBUG));
 
     if (L->source->array) {
-        assert(not IS_POINTER_TRASH_DEBUG(L->source->array));
+        assert(not Is_Pointer_Corrupt_Debug(L->source->array));
         assert(
             L->source->index != TRASHED_INDEX
             and L->source->index != END_FLAG_PRIVATE // ...special case use!
@@ -147,7 +147,7 @@ static void Eval_Core_Shared_Checks_Debug(Level* L) {
     // and if we're not running a function then L->original should be null.
     //
     assert(not L->original);
-    assert(IS_POINTER_TRASH_DEBUG(L->opt_label));
+    assert(Is_Pointer_Corrupt_Debug(L->opt_label));
 
     if (L->varlist) {
         assert(NOT_SER_FLAG(L->varlist, NODE_FLAG_MANAGED));
@@ -195,7 +195,7 @@ void Eval_Core_Expression_Checks_Debug(Level* L) {
     // the debug build with trash pointer.
     //
     assert(
-        IS_POINTER_TRASH_DEBUG(L->prior->gotten)
+        Is_Pointer_Corrupt_Debug(L->prior->gotten)
         or not L->prior->gotten
     );
 
@@ -212,10 +212,10 @@ void Eval_Core_Expression_Checks_Debug(Level* L) {
 
     // Trash fields that GC won't be seeing unless Is_Action_Level()
     //
-    TRASH_POINTER_IF_DEBUG(L->param);
-    TRASH_POINTER_IF_DEBUG(L->arg);
-    TRASH_POINTER_IF_DEBUG(L->special);
-    TRASH_POINTER_IF_DEBUG(L->refine);
+    Corrupt_Pointer_If_Debug(L->param);
+    Corrupt_Pointer_If_Debug(L->arg);
+    Corrupt_Pointer_If_Debug(L->special);
+    Corrupt_Pointer_If_Debug(L->refine);
 
     assert(
         not L->varlist

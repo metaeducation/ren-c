@@ -1154,8 +1154,8 @@ void GC_Kill_Series(Series* s)
     s->info.bits = FLAG_WIDE_BYTE_OR_0(77); // corrupt Series_Wide()
   #endif
 
-    TRASH_POINTER_IF_DEBUG(MISC(s).trash);
-    TRASH_POINTER_IF_DEBUG(LINK(s).trash);
+    Corrupt_Pointer_If_Debug(MISC(s).corrupt);
+    Corrupt_Pointer_If_Debug(LINK(s).corrupt);
 
     Free_Pooled(SER_POOL, s);
 

@@ -496,7 +496,7 @@ bool Specialize_Action_Throws(
                 RESET_CELL(refine, REB_X_PARTIAL);
                 refine->payload.partial.stackindex = partial_stackindex;
                 refine->payload.partial.index = index;
-                TRASH_POINTER_IF_DEBUG(refine->extra.next_partial);
+                Corrupt_Pointer_If_Debug(refine->extra.next_partial);
 
                 last_partial = refine;
 
@@ -612,7 +612,7 @@ bool Specialize_Action_Throws(
         RESET_CELL_EXTRA(refine, REB_X_PARTIAL, PARTIAL_FLAG_IN_USE);
         refine->payload.partial.stackindex = 0;  // no ordered stack position
         refine->payload.partial.index = index - (arg - refine);
-        TRASH_POINTER_IF_DEBUG(refine->extra.next_partial);
+        Corrupt_Pointer_If_Debug(refine->extra.next_partial);
 
         last_partial = refine;
 

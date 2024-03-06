@@ -417,7 +417,7 @@ INLINE REBCTX *Steal_Context_Vars(REBCTX *c, Node* keysource) {
         FLAG_WIDE_BYTE_OR_0(0) // implicit termination, and indicates array
             | FLAG_LEN_BYTE_OR_255(255) // indicates dynamic (varlist rule)
     );
-    TRASH_POINTER_IF_DEBUG(copy->link_private.keysource); // needs update
+    Corrupt_Pointer_If_Debug(copy->link_private.keysource); // needs update
     memcpy(
         cast(char*, &copy->content),
         cast(char*, &stub->content),
@@ -446,7 +446,7 @@ INLINE REBCTX *Steal_Context_Vars(REBCTX *c, Node* keysource) {
         NODE_FLAG_NODE | NODE_FLAG_CELL | FLAG_KIND_BYTE(REB_FRAME);
     INIT_BINDING(single, VAL_BINDING(rootvar));
     single->payload.any_context.varlist = ARR(stub);
-    TRASH_POINTER_IF_DEBUG(single->payload.any_context.phase);
+    Corrupt_Pointer_If_Debug(single->payload.any_context.phase);
     /* single->payload.any_context.phase = L->original; */ // !!! needed?
 
     rootvar->payload.any_context.varlist = ARR(copy);

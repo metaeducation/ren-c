@@ -167,13 +167,13 @@ INLINE void Push_Level_Core(Level* L)
     L->original = nullptr;
 
     if (not (L->flags.bits & DO_FLAG_REEVALUATE_CELL))
-        TRASH_POINTER_IF_DEBUG(L->u.defer.arg);
-    TRASH_POINTER_IF_DEBUG(L->u.defer.param);
-    TRASH_POINTER_IF_DEBUG(L->u.defer.refine);
+        Corrupt_Pointer_If_Debug(L->u.defer.arg);
+    Corrupt_Pointer_If_Debug(L->u.defer.param);
+    Corrupt_Pointer_If_Debug(L->u.defer.refine);
 
-    TRASH_POINTER_IF_DEBUG(L->opt_label);
+    Corrupt_Pointer_If_Debug(L->opt_label);
   #if defined(DEBUG_FRAME_LABELS)
-    TRASH_POINTER_IF_DEBUG(L->label_utf8);
+    Corrupt_Pointer_If_Debug(L->label_utf8);
   #endif
 
   #if !defined(NDEBUG)
@@ -191,7 +191,7 @@ INLINE void Push_Level_Core(Level* L)
     L->prior = TG_Top_Level;
     TG_Top_Level = L;
 
-    TRASH_POINTER_IF_DEBUG(L->varlist); // must Try_Reuse_Varlist() or fill in
+    Corrupt_Pointer_If_Debug(L->varlist); // must Try_Reuse_Varlist() or fill in
 
     // If the source for the frame is a Array*, then we want to temporarily
     // lock that array against mutations.
@@ -236,7 +236,7 @@ INLINE void UPDATE_EXPRESSION_START(Level* L) {
 }
 
 INLINE void Reuse_Varlist_If_Available(Level* L) {
-    assert(IS_POINTER_TRASH_DEBUG(L->varlist));
+    assert(Is_Pointer_Corrupt_Debug(L->varlist));
     if (not TG_Reuse)
         L->varlist = nullptr;
     else {
@@ -480,7 +480,7 @@ INLINE void Set_Level_Detected_Fetch(
         // We're at the end of the variadic input, so end of the line.
         //
         L->value = END_NODE;
-        TRASH_POINTER_IF_DEBUG(L->source->pending);
+        Corrupt_Pointer_If_Debug(L->source->pending);
 
         // The va_end() is taken care of here, or if there is a throw/fail it
         // is taken care of by Abort_Level_Core()
@@ -571,7 +571,7 @@ INLINE void Fetch_Next_In_Level(
             *opt_lookback = L->value; // all values would have been spooled
 
         L->value = END_NODE;
-        TRASH_POINTER_IF_DEBUG(L->source->pending);
+        Corrupt_Pointer_If_Debug(L->source->pending);
 
         ++L->source->index; // for consistency in index termination state
 
@@ -614,7 +614,7 @@ INLINE void Quote_Next_In_Level(Value* dest, Level* L) {
 INLINE void Abort_Level(Level* L) {
     if (L->varlist and NOT_SER_FLAG(L->varlist, NODE_FLAG_MANAGED))
         GC_Kill_Series(L->varlist);  // not alloc'd with manuals tracking
-    TRASH_POINTER_IF_DEBUG(L->varlist);
+    Corrupt_Pointer_If_Debug(L->varlist);
 
     // Abort_Level() handles any work that wouldn't be done done naturally by
     // feeding a frame to its natural end.
@@ -675,7 +675,7 @@ INLINE void Drop_Level_Core(Level* L) {
         LINK(L->varlist).reuse = TG_Reuse;
         TG_Reuse = L->varlist;
     }
-    TRASH_POINTER_IF_DEBUG(L->varlist);
+    Corrupt_Pointer_If_Debug(L->varlist);
 
     assert(TG_Top_Level == L);
     TG_Top_Level = L->prior;
@@ -828,7 +828,7 @@ INLINE bool Eval_Step_In_Subframe_Throws(
     // can't be a variadic frame that is executing yet)
     //
   #if !defined(NDEBUG)
-    TRASH_POINTER_IF_DEBUG(higher->gotten);
+    Corrupt_Pointer_If_Debug(higher->gotten);
     REBLEN old_index = higher->source->index;
   #endif
 
@@ -969,7 +969,7 @@ INLINE void Reify_Va_To_Array_In_Level(
             L->source->index = 1; // position at start of the extracted values
     }
     else {
-        assert(IS_POINTER_TRASH_DEBUG(L->source->pending));
+        assert(Is_Pointer_Corrupt_Debug(L->source->pending));
 
         // Leave at end of frame, but give back the array to serve as
         // notice of the truncation (if it was truncated)

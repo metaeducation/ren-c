@@ -528,7 +528,7 @@ void Startup_Symbols(Array* words)
     // prohibited to canonize SYM_0, and trash the Symbol* in the [0] slot.
     //
     REBLEN sym = SYM_0;
-    TRASH_POINTER_IF_DEBUG(
+    Corrupt_Pointer_If_Debug(
         *Series_At(Symbol*, PG_Symbol_Canons, sym)
     );
 

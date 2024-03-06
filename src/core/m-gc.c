@@ -432,11 +432,11 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
                 //
                 if (GET_VAL_FLAG(v, HANDLE_FLAG_CFUNC))
                     assert(
-                        IS_CFUNC_TRASH_DEBUG(v->payload.handle.data.cfunc)
+                        Is_CFunction_Corrupt_Debug(v->payload.handle.data.cfunc)
                     );
                 else
                     assert(
-                        IS_POINTER_TRASH_DEBUG(v->payload.handle.data.pointer)
+                        Is_Pointer_Corrupt_Debug(v->payload.handle.data.pointer)
                     );
             }
         #endif
@@ -623,7 +623,7 @@ static void Propagate_All_GC_Marks(void)
         // Termination is not required in the release build (the length is
         // enough to know where it ends).  But overwrite with trash in debug.
         //
-        TRASH_POINTER_IF_DEBUG(
+        Corrupt_Pointer_If_Debug(
             *Series_At(Array*, GC_Mark_Stack, Series_Len(GC_Mark_Stack))
         );
 
@@ -1004,7 +1004,7 @@ static void Mark_Data_Stack(void)
 static void Mark_Symbol_Series(void)
 {
     Symbol* *canon = Series_Head(Symbol*, PG_Symbol_Canons);
-    assert(IS_POINTER_TRASH_DEBUG(*canon)); // SYM_0 is for all non-builtin words
+    assert(Is_Pointer_Corrupt_Debug(*canon)); // SYM_0 is for all non-builtin words
     ++canon;
     for (; *canon != nullptr; ++canon)
         Mark_Rebser_Only(*canon);
@@ -1092,7 +1092,7 @@ static void Mark_Level_Stack_Deep(void)
         // earlier in the recycle process (don't want to create new arrays
         // once the recycling has started...)
         //
-        assert(not L->source->vaptr or IS_POINTER_TRASH_DEBUG(L->source->vaptr));
+        assert(not L->source->vaptr or Is_Pointer_Corrupt_Debug(L->source->vaptr));
 
         // Note: L->source->pending should either live in L->source->array, or
         // it may be trash (e.g. if it's an apply).  GC can ignore it.
@@ -1124,7 +1124,7 @@ static void Mark_Level_Stack_Deep(void)
         }
         else
             assert(
-                IS_POINTER_TRASH_DEBUG(L->gotten)
+                Is_Pointer_Corrupt_Debug(L->gotten)
                 or L->gotten == Try_Get_Opt_Var(L->value, L->specifier)
             );
 

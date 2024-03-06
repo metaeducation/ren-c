@@ -1436,7 +1436,7 @@ DECLARE_NATIVE(remove_each)
         // left behind).  But worth testing the technique of marking in case
         // it's ever required for other scenarios.
         //
-        TRASH_POINTER_IF_DEBUG(res.mo);
+        Corrupt_Pointer_If_Debug(res.mo);
     }
     else {
         // We're going to generate a new data allocation, but then swap its

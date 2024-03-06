@@ -668,11 +668,11 @@ union StubLinkUnion {
     //
     // If you assign one member in a union and read from another, then that's
     // technically undefined behavior.  But this field is used as the one
-    // that is "trashed" in the debug build when the series is created, and
+    // that is "corrupted" in the debug build when the series is created, and
     // hopefully it will lead to the other fields reading garbage (vs. zero)
     //
   #if !defined(NDEBUG)
-    void *trash;
+    void *corrupt;
   #endif
 
     // API handles use "singular" format arrays (see notes on that), which
@@ -768,10 +768,10 @@ union StubLinkUnion {
 //
 union StubMiscUnion {
     //
-    // Used to preload bad data in the debug build; see notes on link.trash
+    // Used to preload bad data in the debug build; see notes on link.corrupt
     //
   #if !defined(NDEBUG)
-    void *trash;
+    void *corrupt;
   #endif
 
     // Ordinary source series store the line number here.  It perhaps could
