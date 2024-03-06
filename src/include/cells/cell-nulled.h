@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -38,6 +38,7 @@
 // null to a void:
 //
 //    >> maybe find [c d] 'e
+//    == ~void~  ; anti
 //
 //    >> append [a b] maybe find [c d] 'e
 //    == [a b]

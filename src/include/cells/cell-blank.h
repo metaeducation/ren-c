@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -43,6 +43,17 @@
 //    >> append [d e] spread fourth [a b c _]
 //    == [d e]
 //
+// The antiform of BLANK! is called "trash", and it is used for the state of
+// an unset variable.  The quasiform of BLANK! is a tilde (instead of ~_~)
+//
+//    >> x: anti _
+//
+//    >> unset? 'x
+//    == ~true~  ; anti
+//
+//    >> meta get/any 'x
+//    == ~
+//
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // * A speculative feature for blanks is to consider them as spaces when
@@ -56,10 +67,6 @@
 //
 //   There are benefits and drawbacks to being casual about tihs conversion,
 //   so at time of writing, it's not certain if this will be kept.
-//
-// * Some alternative placeholder values are quoted voids (represented by a
-//   lone apostrophe) and quasi voids (represented by a lone tilde).  These
-//   have different behavior, e.g. SPREAD of a ~ is an error
 //
 
 INLINE Element* Init_Blank_Untracked(Cell* out, Byte quote_byte) {
@@ -88,7 +95,7 @@ INLINE Element* Init_Blank_Untracked(Cell* out, Byte quote_byte) {
 
 //=//// '~' ISOTOPE (a.k.a. TRASH) ////////////////////////////////////////=//
 //
-// Picking antiform  as the contents of unset variables has many benefits
+// Picking antiform as the contents of unset variables has many benefits
 // over choosing something like an `~unset~` or `~trash~` antiforms:
 //
 //  * Reduces noise when looking at a list of variables to see which are unset
@@ -115,4 +122,4 @@ INLINE Element* Init_Blank_Untracked(Cell* out, Byte quote_byte) {
 #define Init_Meta_Of_Trash(out)     Init_Quasi_Blank(out)
 
 #define TRASH_CELL \
-    cast(const Value*, &PG_Trash_Cell)  // Note that Lib(TRASH) is a function
+    cast(const Value*, &PG_Trash_Cell)  // Lib(TRASH) would be a function

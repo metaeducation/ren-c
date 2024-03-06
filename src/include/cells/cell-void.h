@@ -21,23 +21,25 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // VOID is the result of branching constructs that don't take a branch, and if
-// code evaluates to void then there will be no `==` in the console.
+// code evaluates to void then there will be no `==` in the console.  It is
+// the antiform of the WORD! "void":
 //
 //     >> if false [<d>]
+//     == ~void~  ; anti
 //
 //     >> if true [<d>]
 //     == <d>
 //
-// However, its implementation is the WORD! antiform of "void", so you can
-// reveal that with a META operation:
-//
-//     >> meta if false [<d>]
-//     == ~void~
-//
-// Array operations that try to add voids will be no-ops instead of errors:
+// Many operations that try to add voids will be no-ops instead of errors:
 //
 //     >> append [a b c] if false [<d>]
 //     == [a b c]
+//
+// Other operations will use the "void-in, null out" convention to permit
+// opting out:
+//
+//     >> to-word! if false ["abc"]
+//     == ~null~  ; anti
 //
 
 INLINE bool Is_Void(Need(const Value*) v) {
@@ -72,17 +74,20 @@ INLINE bool Is_Quasi_Void(const Cell* v) {
     Is_Quasi_Void(v)
 
 
-//=//// "HEAVY VOIDS" (BLOCK! Antiform Pack with ['] in it) ////////////////=//
+//=//// "HEAVY VOIDS" (BLOCK! Antiform Pack with ~void~ in it) ////////////=//
 //
 // This is a way of making it so that branches which evaluate to void can
 // carry the void intent, while being in a parameter pack--which is not
 // considered a candidate for running ELSE branches:
 //
 //     >> if false [<a>]
-//     ; void (will trigger ELSE)
+//     == ~void~  ; anti (will trigger ELSE)
 //
 //     >> if true []
 //     == ~[~void~]~  ; anti (will trigger THEN, not ELSE)
+//
+// Heavy voids will decay when passed as normal parameters to functions that
+// do not specifically take pack isotopes:
 //
 //     >> append [a b c] if false [<a>]
 //     == [a b c]
@@ -90,7 +95,7 @@ INLINE bool Is_Quasi_Void(const Cell* v) {
 //     >> append [a b c] if true []
 //     == [a b c]
 //
-// ("Heavy Nulls" are an analogous concept for NULL.)
+// ("Heavy Nulls" are an analogous concept for ~null~.)
 //
 
 #define Init_Heavy_Void(out) \
