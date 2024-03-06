@@ -814,21 +814,6 @@ union StubMiscUnion {
     //
     REBCTX *meta;
 
-    // When copying arrays, it's necessary to keep a map from source series
-    // to their corresponding new copied series.  This allows multiple
-    // appearances of the same identities in the source to give corresponding
-    // appearances of the same *copied* identity in the target, and also is
-    // integral to avoiding problems with cyclic structures.
-    //
-    // As with the `bind_index` above, the cheapest way to build such a map is
-    // to put the forward into the series node itself.  However, when copying
-    // a generic series the bits are all used up.  So the ->misc field is
-    // temporarily "co-opted"...its content taken out of the node and put into
-    // the forwarding entry.  Then the index of the forwarding entry is put
-    // here.  At the end of the copy, all the ->misc fields are restored.
-    //
-    StackIndex forwarding;
-
     // native dispatcher code, see Reb_Function's body_holder
     //
     REBNAT dispatcher;
@@ -896,14 +881,7 @@ struct StubStruct {
     union HeaderUnion info;
 
     // This is the second pointer-sized piece of series data that is used
-    // for various purposes.  It is similar to ->link, however at some points
-    // it can be temporarily "corrupted", since copying extracts it into a
-    // forwarding entry and co-opts `misc.forwarding` to point to that entry.
-    // It can be recovered...but one must know one is copying and go through
-    // the forwarding.
-    //
-    // Currently it is assumed no one needs the ->misc while forwarding is in
-    // effect...but the MISC() macro checks that.  Don't access this directly.
+    // for various purposes.
     //
     union StubMiscUnion misc_private;
 
@@ -913,30 +891,10 @@ struct StubStruct {
 #endif
 };
 
+// These macros are superfluous here, but do more in modern builds.
 
-// No special assertion needed for link at this time, since it is never
-// co-opted for other purposes.
-//
-#define LINK(s) \
-    (s)->link_private
-
-
-// Currently only the C++ build does the check that ->misc is not being used
-// at a time when it is forwarded out for copying.  If the C build were to
-// do it, then it would be forced to go through a pointer access to do any
-// writing...which would likely be less efficient.
-//
-#if CPLUSPLUS_11
-    INLINE union StubMiscUnion& Get_Series_Misc(Series* s) {
-        return s->misc_private;
-    }
-
-    #define MISC(s) \
-        Get_Series_Misc(s)
-#else
-    #define MISC(s) \
-        (s)->misc_private
-#endif
+#define LINK(s)     (s)->link_private
+#define MISC(s)     (s)->misc_private
 
 
 //=//// SERIES SUBCLASSES /////////////////////////////////////////////////=//
