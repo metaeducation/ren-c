@@ -276,11 +276,11 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
     // separate allocation.  Because automatically doing this is a new
     // feature, double check with an assert that the behavior matches.
     //
-    Symbol* intern = Make_Series_Core(
+    Symbol* intern = cast(Symbol*, Make_Series_Core(
         size + 1,
         sizeof(Byte),
         SERIES_FLAG_UTF8 | SERIES_FLAG_FIXED_SIZE
-    );
+    ));
 
     // The incoming string isn't always null terminated, e.g. if you are
     // interning `foo` in `foo: bar + 1` it would be colon-terminated.
@@ -359,7 +359,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
 //
 void GC_Kill_Interning(Symbol* intern)
 {
-    Series* synonym = LINK(intern).synonym;
+    Symbol* synonym = LINK(intern).synonym;
 
     // Note synonym and intern may be the same here.
     //
@@ -626,7 +626,7 @@ void Shutdown_Interning(void)
 void INIT_WORD_INDEX_Extra_Checks_Debug(Cell* v, REBLEN i)
 {
     assert(IS_WORD_BOUND(v));
-    REBNOD *binding = VAL_BINDING(v);
+    Stub* binding = VAL_BINDING(v);
     Array* keysource;
     if (NOT_SER_FLAG(binding, NODE_FLAG_MANAGED))
         keysource = ACT_PARAMLIST(Level_Phase(LVL(LINK(binding).keysource)));

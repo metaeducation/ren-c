@@ -678,7 +678,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
             les.data_idx = VAL_INDEX(les.data);
         }
         else if (ANY_CONTEXT(les.data)) {
-            les.data_ser = SER(CTX_VARLIST(VAL_CONTEXT(les.data)));
+            les.data_ser = CTX_VARLIST(VAL_CONTEXT(les.data));
             les.data_idx = 1;
         }
         else if (IS_MAP(les.data)) {
@@ -696,7 +696,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
             //
             switch (VAL_TYPE_KIND(les.data)) {
               case REB_ACTION:
-                les.data_ser = SER(Snapshot_All_Actions());
+                les.data_ser = Snapshot_All_Actions();
                 assert(NOT_SER_FLAG(les.data_ser, NODE_FLAG_MANAGED));
                 les.data_idx = 0;
                 break;
@@ -733,7 +733,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
         CLEAR_SER_INFO(les.data_ser, SERIES_INFO_HOLD);
 
     if (IS_DATATYPE(les.data))
-        Free_Unmanaged_Array(ARR(les.data_ser)); // temp array of instances
+        Free_Unmanaged_Series(ARR(les.data_ser)); // temp array of instances
 
     //=//// NOW FINISH UP /////////////////////////////////////////////////=//
 

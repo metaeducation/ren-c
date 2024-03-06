@@ -683,7 +683,7 @@ union StubLinkUnion {
     // it is.  If it's an array-type series, it is either the varlist of
     // the owning frame *or* the EMPTY_ARRAY (to avoid a nullptr check)
     //
-    REBNOD *owner;
+    REBCTX* owner;
 
     // Ordinary source series use their ->link field to point to an
     // interned file name string from which the code was loaded.  If a
@@ -715,11 +715,11 @@ union StubLinkUnion {
     // anyway, and it's a faster test to check this for NODE_FLAG_CELL than to
     // separately extract the CTX_TYPE() and treat frames differently.)
     //
-    // It is done as a base-class REBNOD* as opposed to a union in order to
+    // It is done as a base-class Node* as opposed to a union in order to
     // not run afoul of C's rules, by which you cannot assign one member of
     // a union and then read from another.
     //
-    REBNOD *keysource;
+    Node* keysource;
 
     // On the keylist of an object, this points at a keylist which has the
     // same number of keys or fewer, which represents an object which this
@@ -918,7 +918,7 @@ struct StubStruct {
 // co-opted for other purposes.
 //
 #define LINK(s) \
-    SER(s)->link_private
+    (s)->link_private
 
 
 // Currently only the C++ build does the check that ->misc is not being used
@@ -932,15 +932,39 @@ struct StubStruct {
     }
 
     #define MISC(s) \
-        Get_Series_Misc(SER(s))
+        Get_Series_Misc(s)
 #else
     #define MISC(s) \
-        SER(s)->misc_private
+        (s)->misc_private
 #endif
 
-struct Reb_Array {
-    struct StubStruct series; // http://stackoverflow.com/a/9747062
-};
+
+//=//// SERIES SUBCLASSES /////////////////////////////////////////////////=//
+
+typedef struct StubStruct Series;
+
+#if CPLUSPLUS_11
+    struct Binary : public Series {};
+    struct String : public Series {};  // derives from Binary in main branch
+    struct Symbol : public Binary {};  // derives from String in main branch
+
+    struct Array : public Series {};
+
+    struct REBCTX : public Stub {};
+    struct REBACT : public Stub {};
+    struct REBMAP : public Stub {};
+#else
+    typedef Series Binary;
+    typedef Series String;
+    typedef Series Symbol;
+
+    typedef Series Array;
+
+    typedef Series REBCTX;
+    typedef Series REBACT;
+    typedef Series REBMAP;
+#endif
+
 
 #if !defined(DEBUG_CHECK_CASTS) || (! CPLUSPLUS_11)
 
@@ -954,23 +978,16 @@ struct Reb_Array {
 
     template <class T>
     inline Series* SER(T *p) {
-        constexpr bool derived = std::is_same<T, Series>::value
-            or std::is_same<T, Symbol>::value
-            or std::is_same<T, Array>::value
-            or std::is_same<T, REBCTX>::value
-            or std::is_same<T, REBACT>::value;
-
-        constexpr bool base = std::is_same<T, void>::value
-            or std::is_same<T, REBNOD>::value;
+        constexpr bool base = std::is_same<T, void>::value;
 
         static_assert(
-            derived or base,
-            "SER() works on void/REBNOD/Series/Symbol/Array/REBCTX/REBACT"
+            base,
+            "SER() works on void"
         );
 
         if (base)
             assert(
-                (reinterpret_cast<REBNOD*>(p)->header.bits & (
+                (reinterpret_cast<Series*>(p)->header.bits & (
                     NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
                 )) == (
                     NODE_FLAG_NODE
@@ -985,12 +1002,12 @@ struct Reb_Array {
         constexpr bool derived = std::is_same<T, Array>::value;
 
         constexpr bool base = std::is_same<T, void>::value
-            or std::is_same<T, REBNOD>::value
+            or std::is_same<T, Node>::value
             or std::is_same<T, Series>::value;
 
         static_assert(
             derived or base,
-            "ARR works on void/REBNOD/Series/Array"
+            "ARR works on void/Node/Series/Array"
         );
 
         if (base) {
@@ -1017,16 +1034,16 @@ struct Reb_Array {
 //
 
 #define SET_SER_FLAG(s,f) \
-    cast(void, SER(s)->header.bits |= (f))
+    cast(void, (s)->header.bits |= (f))
 
 #define CLEAR_SER_FLAG(s,f) \
-    cast(void, SER(s)->header.bits &= ~(f))
+    cast(void, (s)->header.bits &= ~(f))
 
 #define GET_SER_FLAG(s,f) \
-    (did (SER(s)->header.bits & (f))) // !!! ensure it's just one flag?
+    (did ((s)->header.bits & (f))) // !!! ensure it's just one flag?
 
 #define NOT_SER_FLAG(s,f) \
-    (not (SER(s)->header.bits & (f)))
+    (not ((s)->header.bits & (f)))
 
 
 //
@@ -1034,23 +1051,23 @@ struct Reb_Array {
 //
 
 #define SET_SER_INFO(s,f) \
-    cast(void, SER(s)->info.bits |= (f))
+    cast(void, (s)->info.bits |= (f))
 
 #define CLEAR_SER_INFO(s,f) \
-    cast(void, SER(s)->info.bits &= ~(f))
+    cast(void, (s)->info.bits &= ~(f))
 
 #define GET_SER_INFO(s,f) \
-    (did (SER(s)->info.bits & (f)))
+    (did ((s)->info.bits & (f)))
 
 #define NOT_SER_INFO(s,f) \
-    (not (SER(s)->info.bits & (f)))
+    (not ((s)->info.bits & (f)))
 
 
 #define IS_SER_ARRAY(s) \
-    (WIDE_BYTE_OR_0(SER(s)) == 0)
+    (WIDE_BYTE_OR_0(s) == 0)
 
 #define IS_SER_DYNAMIC(s) \
-    (LEN_BYTE_OR_255(SER(s)) == 255)
+    (LEN_BYTE_OR_255(s) == 255)
 
 // These are series implementation details that should not be used by most
 // code.  But in order to get good inlining, they have to be in the header

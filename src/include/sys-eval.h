@@ -116,11 +116,11 @@ INLINE void Push_Level_Core(Level* L)
     // !!! A non-contiguous data stack which is not a series is a possibility.
     //
   #ifdef STRESS_CHECK_DO_OUT_POINTER
-    REBNOD *containing;
+    Node* containing;
     if (
         did (containing = Try_Find_Containing_Node_Debug(L->out))
-        and not (containing->header.bits & NODE_FLAG_CELL)
-        and NOT_SER_FLAG(containing, SERIES_FLAG_DONT_RELOCATE)
+        and Is_Node_A_Stub(containing)
+        and NOT_SER_FLAG(SER(containing), SERIES_FLAG_DONT_RELOCATE)
     ){
         printf("Request for ->out location in movable series memory\n");
         panic (containing);
@@ -242,8 +242,8 @@ INLINE void Reuse_Varlist_If_Available(Level* L) {
     else {
         L->varlist = TG_Reuse;
         TG_Reuse = LINK(TG_Reuse).reuse;
-        L->rootvar = cast(Value*, SER(L->varlist)->content.dynamic.data);
-        LINK(L->varlist).keysource = NOD(L);
+        L->rootvar = cast(Value*, L->varlist->content.dynamic.data);
+        LINK(L->varlist).keysource = L;  // carries NODE_FLAG_CELL
     }
 }
 
@@ -613,7 +613,7 @@ INLINE void Quote_Next_In_Level(Value* dest, Level* L) {
 
 INLINE void Abort_Level(Level* L) {
     if (L->varlist and NOT_SER_FLAG(L->varlist, NODE_FLAG_MANAGED))
-        GC_Kill_Series(SER(L->varlist)); // not alloc'd with manuals tracking
+        GC_Kill_Series(L->varlist);  // not alloc'd with manuals tracking
     TRASH_POINTER_IF_DEBUG(L->varlist);
 
     // Abort_Level() handles any work that wouldn't be done done naturally by

@@ -92,8 +92,8 @@ void Assert_State_Balanced_Debug(
             "PUSH_GC_GUARD()x%d without DROP_GC_GUARD()\n",
             cast(int, Series_Len(GC_Guarded) - s->guarded_len)
         );
-        REBNOD *guarded = *Series_At(
-            REBNOD*,
+        Node* guarded = *Series_At(
+            Node*,
             GC_Guarded,
             Series_Len(GC_Guarded) - 1
         );

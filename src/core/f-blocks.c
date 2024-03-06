@@ -168,19 +168,17 @@ void Clonify_Values_Len_Managed(
                 v->payload.any_context.varlist = CTX_VARLIST(
                     Copy_Context_Shallow_Managed(VAL_CONTEXT(v))
                 );
-                series = SER(CTX_VARLIST(VAL_CONTEXT(v)));
+                series = CTX_VARLIST(VAL_CONTEXT(v));
             }
             else {
                 if (IS_SER_ARRAY(VAL_SERIES(v))) {
                     Specifier* derived = Derive_Specifier(specifier, v);
-                    series = SER(
-                        Copy_Array_At_Extra_Shallow(
-                            Cell_Array(v),
-                            0, // !!! what if VAL_INDEX() is nonzero?
-                            derived,
-                            0,
-                            NODE_FLAG_MANAGED
-                        )
+                    series = Copy_Array_At_Extra_Shallow(
+                        Cell_Array(v),
+                        0, // !!! what if VAL_INDEX() is nonzero?
+                        derived,
+                        0,
+                        NODE_FLAG_MANAGED
                     );
 
                     INIT_VAL_ARRAY(v, ARR(series)); // copies args
@@ -360,11 +358,10 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
         Move_Value_Header(dest, src);
 
         if (ANY_ARRAY(src)) {
-            dest->payload.any_series.series = SER(
+            dest->payload.any_series.series =
                 Copy_Rerelativized_Array_Deep_Managed(
                     Cell_Array(src), before, after
-                )
-            );
+                );
             dest->payload.any_series.index = src->payload.any_series.index;
             INIT_BINDING(dest, after); // relative binding
         }
@@ -394,7 +391,7 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
 //
 Cell* Alloc_Tail_Array(Array* a)
 {
-    Expand_Series_Tail(SER(a), 1);
+    Expand_Series_Tail(a, 1);
     TERM_ARRAY_LEN(a, Array_Len(a));
     Cell* last = ARR_LAST(a);
     TRASH_CELL_IF_DEBUG(last); // !!! was an END marker, good enough?
@@ -407,10 +404,10 @@ Cell* Alloc_Tail_Array(Array* a)
 //
 void Uncolor_Array(Array* a)
 {
-    if (Is_Series_White(SER(a)))
+    if (Is_Series_White(a))
         return; // avoid loop
 
-    Flip_Series_To_White(SER(a));
+    Flip_Series_To_White(a);
 
     Cell* val;
     for (val = ARR_HEAD(a); NOT_END(val); ++val)

@@ -180,7 +180,7 @@ DECLARE_NATIVE(return)
     // in the specific ACTION! value that was invoked.
     //
     Level* target_level;
-    REBNOD *L_binding = LVL_BINDING(L);
+    Stub* L_binding = LVL_BINDING(L);
     if (not L_binding)
         fail (Error_Return_Archetype_Raw()); // must have binding to jump to
 
@@ -676,10 +676,10 @@ DECLARE_NATIVE(hijack)
         // would need to restore the *exact* capacity.  Review.
 
         REBLEN details_len = Array_Len(hijacker_details);
-        if (Series_Rest(SER(victim_details)) < details_len + 1)
+        if (Series_Rest(victim_details) < details_len + 1)
             Expand_Series_Tail(
-                SER(victim_details),
-                details_len + 1 - Series_Rest(SER(victim_details))
+                victim_details,
+                details_len + 1 - Series_Rest(victim_details)
             );
 
         Cell* src = ARR_HEAD(hijacker_details);

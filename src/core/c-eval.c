@@ -1552,7 +1552,7 @@ bool Eval_Core_Throws(Level* const L)
             if (IS_ACTION(L->out)) {
                 if (
                     VAL_ACTION(L->out) == NAT_ACTION(unwind)
-                    and VAL_BINDING(L->out) == NOD(L->varlist)
+                    and VAL_BINDING(L->out) == L->varlist
                 ){
                     // Eval_Core catches unwinds to the current frame, so throws
                     // where the "/name" is the JUMP native with a binding to
@@ -1569,7 +1569,7 @@ bool Eval_Core_Throws(Level* const L)
                 }
                 else if (
                     VAL_ACTION(L->out) == NAT_ACTION(redo)
-                    and VAL_BINDING(L->out) == NOD(L->varlist)
+                    and VAL_BINDING(L->out) == L->varlist
                 ){
                     // This was issued by REDO, and should be a FRAME! with
                     // the phase and binding we are to resume with.
@@ -2329,7 +2329,7 @@ bool Eval_Core_Throws(Level* const L)
         // a separate dispatch like PS_Xxx()...but it just performs division
         // compatibly with history.
 
-        REBNOD *binding = nullptr;
+        Stub* binding = nullptr;
         Push_Action(L, NAT_ACTION(path_0), binding);
 
         Symbol* opt_label = nullptr;

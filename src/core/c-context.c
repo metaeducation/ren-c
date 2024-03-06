@@ -170,7 +170,7 @@ bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
     // context, and no INIT_CTX_KEYLIST_SHARED was used by another context
     // to mark the flag indicating it's shared.  Extend it directly.
 
-    Extend_Series(SER(keylist), delta);
+    Extend_Series(keylist, delta);
     TERM_ARRAY_LEN(keylist, Array_Len(keylist));
 
     return false;
@@ -186,7 +186,7 @@ void Expand_Context(REBCTX *context, REBLEN delta)
 {
     // varlist is unique to each object--expand without making a copy.
     //
-    Extend_Series(SER(CTX_VARLIST(context)), delta);
+    Extend_Series(CTX_VARLIST(context), delta);
     TERM_ARRAY_LEN(CTX_VARLIST(context), Array_Len(CTX_VARLIST(context)));
 
     Expand_Context_Keylist_Core(context, delta);
@@ -224,7 +224,7 @@ Value* Append_Context(
     // Review why this is expanding when the callers are expanding.  Should
     // also check that redundant keys aren't getting added here.
     //
-    Expand_Series_Tail(SER(keylist), 1);
+    Expand_Series_Tail(keylist, 1);
     Value* key = Init_Typeset(
         ARR_LAST(keylist), // !!! non-dynamic, could optimize
         TS_VALUE, // !!! Currently not paid attention to
@@ -235,7 +235,7 @@ Value* Append_Context(
 
     // Add a slot to the var list
     //
-    Expand_Series_Tail(SER(CTX_VARLIST(context)), 1);
+    Expand_Series_Tail(CTX_VARLIST(context), 1);
 
     Value* value = Init_Trash(ARR_LAST(CTX_VARLIST(context)));
     TERM_ARRAY_LEN(CTX_VARLIST(context), Array_Len(CTX_VARLIST(context)));
@@ -265,7 +265,7 @@ Value* Append_Context(
 //
 REBCTX *Copy_Context_Shallow_Extra_Managed(REBCTX *src, REBLEN extra) {
     assert(GET_SER_FLAG(src, ARRAY_FLAG_VARLIST));
-    ASSERT_ARRAY_MANAGED(CTX_KEYLIST(src));
+    Assert_Series_Managed(CTX_KEYLIST(src));
 
     // Note that keylists contain only typesets (hence no relative values),
     // and no varlist is part of a function body.  All the values here should
@@ -441,7 +441,7 @@ void Collect_Context_Keys(
     // necessary if duplicates are found, but the actual buffer length will be
     // set correctly by the end.)
     //
-    Expand_Series_Tail(SER(BUF_COLLECT), CTX_LEN(context));
+    Expand_Series_Tail(BUF_COLLECT, CTX_LEN(context));
     SET_ARRAY_LEN_NOTERM(BUF_COLLECT, cl->index);
 
     Cell* collect = ARR_TAIL(BUF_COLLECT); // get address *after* expansion
@@ -509,7 +509,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
 
             ++cl->index;
 
-            Expand_Series_Tail(SER(BUF_COLLECT), 1);
+            Expand_Series_Tail(BUF_COLLECT, 1);
             if (cl->flags & COLLECT_AS_TYPESET)
                 Init_Typeset(
                     ARR_LAST(BUF_COLLECT),
@@ -1373,7 +1373,7 @@ void Startup_Collector(void)
 //
 void Shutdown_Collector(void)
 {
-    Free_Unmanaged_Array(TG_Buf_Collect);
+    Free_Unmanaged_Series(TG_Buf_Collect);
     TG_Buf_Collect = nullptr;
 }
 
@@ -1387,7 +1387,7 @@ void Assert_Context_Core(REBCTX *c)
 {
     Array* varlist = CTX_VARLIST(c);
 
-    if (not (SER(varlist)->header.bits & SERIES_MASK_CONTEXT))
+    if (not (varlist->header.bits & SERIES_MASK_CONTEXT))
         panic (varlist);
 
     Array* keylist = CTX_KEYLIST(c);

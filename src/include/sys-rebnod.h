@@ -365,6 +365,7 @@ union HeaderUnion {
 //
 #define NODE_FLAG_NODE \
     FLAG_LEFT_BIT(0)
+#define NODE_BYTEMASK_0x80_NODE 0x80
 
 
 //=//// NODE_FLAG_FREE (second-leftmost bit) //////////////////////////////=//
@@ -382,6 +383,7 @@ union HeaderUnion {
 //
 #define NODE_FLAG_FREE \
     FLAG_LEFT_BIT(1)
+#define NODE_BYTEMASK_0x40_FREE 0x40
 
 
 //=//// NODE_FLAG_MANAGED (third-leftmost bit) ////////////////////////////=//
@@ -402,6 +404,7 @@ union HeaderUnion {
 //
 #define NODE_FLAG_MANAGED \
     FLAG_LEFT_BIT(2)
+#define NODE_BYTEMASK_0x20_MANAGED 0x20
 
 
 //=//// NODE_FLAG_MARKED (fourth-leftmost bit) ////////////////////////////=//
@@ -440,6 +443,7 @@ union HeaderUnion {
 //
 #define NODE_FLAG_MARKED \
     FLAG_LEFT_BIT(3)
+#define NODE_BYTEMASK_0x10_MARKED 0x10
 
 #define ARG_MARKED_CHECKED NODE_FLAG_MARKED
 #define OUT_MARKED_STALE NODE_FLAG_MARKED
@@ -492,6 +496,7 @@ union HeaderUnion {
 //
 #define NODE_FLAG_CELL \
     FLAG_LEFT_BIT(7)
+#define NODE_BYTEMASK_0x01_CELL 0x01
 
 
 // There are two special invalid bytes in UTF8 which have a leading "110"
@@ -501,6 +506,10 @@ union HeaderUnion {
 //
 #define FREED_SERIES_BYTE 192
 #define FREED_CELL_BYTE 193
+
+
+#define NODE_BYTE(n) \
+    FIRST_BYTE(n)
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -516,12 +525,12 @@ union HeaderUnion {
 // pointer slot right after the header for its linked list of free nodes.
 //
 
-struct Reb_Node {
+struct PoolUnitStruct {
     union HeaderUnion header; // leftmost byte FREED_SERIES_BYTE if free
 
-    struct Reb_Node *next_if_free; // if not free, entire node is available
+    struct PoolUnitStruct* next_if_free; // if not free, unit is available
 
-    // Size of a node must be a multiple of 64-bits.  This is because there
+    // Size of a unit must be a multiple of 64-bits.  This is because there
     // must be a baseline guarantee for node allocations to be able to know
     // where 64-bit alignment boundaries are.
     //
@@ -529,13 +538,11 @@ struct Reb_Node {
 };
 
 #ifdef NDEBUG
-    #define IS_FREE_NODE(p) \
-        (did (cast(struct Reb_Node*, (p))->header.bits & NODE_FLAG_FREE))
+    #define IS_FREE_NODE(n) \
+        (did (NODE_BYTE(n) & NODE_BYTEMASK_0x40_FREE))
 #else
-    INLINE bool IS_FREE_NODE(void *p) {
-        struct Reb_Node *n = cast(struct Reb_Node*, p);
-
-        if (not (n->header.bits & NODE_FLAG_FREE))
+    INLINE bool IS_FREE_NODE(Node* n) {
+        if (not (NODE_BYTE(n) & NODE_BYTEMASK_0x40_FREE))
             return false;
 
         assert(

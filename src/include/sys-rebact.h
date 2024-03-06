@@ -29,11 +29,6 @@
 //
 
 
-struct Reb_Action {
-    struct Reb_Array paramlist;
-};
-
-
 // Includes SERIES_FLAG_ALWAYS_DYNAMIC because an action's paramlist is always
 // allocated dynamically, in order to make access to the archetype and the
 // parameters faster than Array_At().  See code for ACT_PARAM(), etc.
@@ -59,13 +54,13 @@ struct Reb_Action {
         constexpr bool derived = std::is_same<REBACT, void>::value;
 
         constexpr bool base = std::is_same<T, void>::value
-            or std::is_same<T, REBNOD>::value
+            or std::is_same<T, Node>::value
             or std::is_same<T, Stub>::value
             or std::is_same<T, Array>::value;
 
         static_assert(
             derived or base,
-            "ACT() works on void/REBNOD/Stub/Array/REBACT"
+            "ACT() works on void/Node/Stub/Array/REBACT"
         );
 
         if (base)

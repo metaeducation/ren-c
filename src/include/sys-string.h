@@ -128,8 +128,10 @@ INLINE void Term_String_Len(String* s, REBLEN len) {
     *Series_At(REBUNI, s, len) = '\0';
 }
 
-#define Cell_String(cell) \
-    VAL_SERIES(cell)
+INLINE String* Cell_String(const Cell* cell) {
+    assert(ANY_STRING(cell));
+    return cast(String*, VAL_SERIES(cell));
+}
 
 #define Cell_String_Head(v) \
     String_Head(Cell_String(v))
@@ -253,13 +255,13 @@ INLINE const Byte *Back_Scan_UTF8_Char(
 // rebStringXXX() APIs for this).  Note that these routines may fail() if the
 // data they are given is not UTF-8.
 
-INLINE Series* Make_String_UTF8(const char *utf8)
+INLINE String* Make_String_UTF8(const char *utf8)
 {
     const bool crlf_to_lf = false;
     return Append_UTF8_May_Fail(nullptr, utf8, strsize(utf8), crlf_to_lf);
 }
 
-INLINE Series* Make_Sized_String_UTF8(const char *utf8, size_t size)
+INLINE String* Make_Sized_String_UTF8(const char *utf8, size_t size)
 {
     const bool crlf_to_lf = false;
     return Append_UTF8_May_Fail(nullptr, utf8, size, crlf_to_lf);

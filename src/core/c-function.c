@@ -847,7 +847,7 @@ REBACT *Make_Action(
     REBCTX *opt_exemplar, // if provided, should be consistent w/next level
     REBLEN details_capacity // desired capacity of the ACT_DETAILS() array
 ){
-    ASSERT_ARRAY_MANAGED(paramlist);
+    Assert_Series_Managed(paramlist);
 
     Cell* rootparam = ARR_HEAD(paramlist);
     assert(VAL_TYPE_RAW(rootparam) == REB_ACTION); // !!! not fully formed...
@@ -1624,8 +1624,8 @@ REB_R Encloser_Dispatcher(Level* L)
     // call to the encloser.  If it isn't managed, there's no worries about
     // user handles on it...so just take it.  Otherwise, "steal" its vars.
     //
-    REBCTX *c = Steal_Context_Vars(CTX(L->varlist), NOD(Level_Phase(L)));
-    LINK(c).keysource = NOD(VAL_ACTION(inner));
+    REBCTX *c = Steal_Context_Vars(CTX(L->varlist), Level_Phase(L));
+    LINK(c).keysource = VAL_ACTION(inner);
 
     assert(GET_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE)); // look dead
 

@@ -54,7 +54,7 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
     fflush(stdout);
     fflush(stderr);
 
-    REBNOD *containing = Try_Find_Containing_Node_Debug(v);
+    Node* containing = Try_Find_Containing_Node_Debug(v);
 
     switch (VAL_TYPE_RAW(v)) {
     case REB_MAX_NULLED:
@@ -92,18 +92,18 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
     printf("Kind=%d\n", cast(int, VAL_TYPE_RAW(v)));
     fflush(stdout);
 
-    if (containing and not (containing->header.bits & NODE_FLAG_CELL)) {
+    if (containing and Is_Node_A_Stub(containing)) {
         printf("Containing series for value pointer found, panicking it:\n");
         Panic_Series_Debug(SER(containing));
     }
 
     if (containing) {
         printf("Containing pairing for value pointer found, panicking it:\n");
-        Panic_Series_Debug(cast(Series*, containing)); // won't pass SER()
+        Panic_Value_Debug(VAL(containing));  // won't pass SER()
     }
 
     printf("No containing series for value...panicking to make stack dump:\n");
-    Panic_Series_Debug(SER(EMPTY_ARRAY));
+    Panic_Series_Debug(EMPTY_ARRAY);
 }
 
 #endif // !defined(NDEBUG)
@@ -171,7 +171,7 @@ void* Probe_Core_Debug(
     case DETECTED_AS_SERIES: {
         Series* s = m_cast(Series*, cast(const Series*, p));
 
-        ASSERT_SERIES(s); // if corrupt, gives better info than a print crash
+        Assert_Series(s); // if corrupt, gives better info than a print crash
 
         // This routine is also a little catalog of the outlying series
         // types in terms of sizing, just to know what they are.
@@ -179,19 +179,25 @@ void* Probe_Core_Debug(
         if (GET_SER_FLAG(s, SERIES_FLAG_UTF8)) {
             assert(Series_Wide(s) == sizeof(Byte));
             Probe_Print_Helper(p, "Symbol Series", file, line);
+            Symbol* sym = cast(Symbol*, p);
 
-            const char *head = Symbol_Head(s);  // UTF-8
-            size_t size = Symbol_Size(s);  // number of UTF-8 bytes
+            const char *head = Symbol_Head(sym);  // UTF-8
+            size_t size = Symbol_Size(sym);  // number of UTF-8 bytes
 
             Append_Utf8_Utf8(mo->series, head, size);
         }
         else if (Series_Wide(s) == sizeof(Byte)) {
             Probe_Print_Helper(p, "Byte-Size Series", file, line);
+            Binary* bin = cast(Binary*, p);
 
             // !!! Duplication of code in MF_Binary
             //
-            const bool brk = (Binary_Len(s) > 32);
-            Series* enbased = Encode_Base16(Binary_Head(s), Binary_Len(s), brk);
+            const bool brk = (Binary_Len(bin) > 32);
+            Binary* enbased = Encode_Base16(
+                Binary_Head(bin),
+                Binary_Len(bin),
+                brk
+            );
             Append_Unencoded(mo->series, "#{");
             Append_Utf8_Utf8(
                 mo->series,
@@ -202,7 +208,9 @@ void* Probe_Core_Debug(
         }
         else if (Series_Wide(s) == sizeof(REBUNI)) {
             Probe_Print_Helper(p, "REBWCHAR-Size Series", file, line);
-            Mold_Text_Series_At(mo, s, 0); // not necessarily TEXT!
+            String* str = cast(String*, p);
+
+            Mold_Text_Series_At(mo, str, 0); // might be TAG! etc, not TEXT!
         }
         else if (IS_SER_ARRAY(s)) {
             if (GET_SER_FLAG(s, ARRAY_FLAG_VARLIST)) {

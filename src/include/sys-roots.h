@@ -36,7 +36,7 @@
 // The API value content is in the single cell, with LINK().owner holding
 // a REBCTX* of the FRAME! that controls its lifetime, or EMPTY_ARRAY.  This
 // link field exists in the pointer immediately prior to the Value*, which
-// means it can be sniffed as a REBNOD* and distinguished from handles that
+// means it can be sniffed as a Node* and distinguished from handles that
 // were given back with rebMalloc(), so routines can discern them.
 //
 // MISC() is currently unused, but could serve as a reference count or other
@@ -72,7 +72,7 @@ INLINE Value* Alloc_Value(void)
     Value* v = KNOWN(ARR_SINGLE(a));
     v->header.bits |= NODE_FLAG_ROOT; // it's trash (can't use SET_VAL_FLAGS)
 
-    LINK(a).owner = NOD(Context_For_Level_May_Manage(TOP_LEVEL));
+    LINK(a).owner = Context_For_Level_May_Manage(TOP_LEVEL);
     return v;
 }
 
@@ -82,7 +82,7 @@ INLINE void Free_Value(Value* v)
 
     Array* a = Singular_From_Cell(v);
     TRASH_CELL_IF_DEBUG(ARR_SINGLE(a));
-    GC_Kill_Series(SER(a));
+    GC_Kill_Series(a);
 }
 
 
@@ -113,9 +113,9 @@ INLINE Array* Alloc_Instruction(void) {
 }
 
 INLINE void Free_Instruction(Array* instruction) {
-    assert(WIDE_BYTE_OR_0(SER(instruction)) == 0);
+    assert(WIDE_BYTE_OR_0(instruction) == 0);
     TRASH_CELL_IF_DEBUG(ARR_SINGLE(instruction));
-    Free_Node(SER_POOL, instruction);
+    Free_Pooled(SER_POOL, instruction);
 }
 
 

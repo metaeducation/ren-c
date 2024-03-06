@@ -68,7 +68,7 @@ void Bind_Values_Inner_Loop(
                 // We're overwriting any previous binding, which may have
                 // been relative.
 
-                INIT_BINDING_MAY_MANAGE(v, NOD(context));
+                INIT_BINDING_MAY_MANAGE(v, context);
                 INIT_WORD_INDEX(v, n);
             }
             else if (type_bit & add_midstream_types) {
@@ -152,7 +152,7 @@ void Unbind_Values_Core(Cell* head, REBCTX *context, bool deep)
     for (; NOT_END(v); ++v) {
         if (
             ANY_WORD(v)
-            and (not context or VAL_BINDING(v) == NOD(context))
+            and (not context or VAL_BINDING(v) == context)
         ){
             Unbind_Any_Word(v);
         }
@@ -306,7 +306,7 @@ void Rebind_Values_Deep(
         if (ANY_ARRAY(v)) {
             Rebind_Values_Deep(src, dst, Cell_Array_At(v), opt_binder);
         }
-        else if (ANY_WORD(v) and VAL_BINDING(v) == NOD(src)) {
+        else if (ANY_WORD(v) and VAL_BINDING(v) == src) {
             INIT_BINDING(v, dst);
 
             if (opt_binder != nullptr) {

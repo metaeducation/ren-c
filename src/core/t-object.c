@@ -178,7 +178,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
             //
             // Wasn't already collected...so we added it...
             //
-            Expand_Series_Tail(SER(BUF_COLLECT), 1);
+            Expand_Series_Tail(BUF_COLLECT, 1);
             Init_Typeset(
                 ARR_LAST(BUF_COLLECT),
                 TS_VALUE, // !!! Currently ignored
@@ -591,7 +591,7 @@ REBCTX *Copy_Context_Core_Managed(REBCTX *original, REBU64 types)
 //
 void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 {
-    Series* out = mo->series;
+    Binary* out = mo->series;
 
     REBCTX *c = VAL_CONTEXT(v);
 
@@ -787,7 +787,7 @@ REBTYPE(Context)
             Option(String*) file = File_Of_Level(L);
             if (not file)
                 return nullptr;
-            return Init_Word(OUT, unwrap(file)); }
+            return Init_File(OUT, unwrap(file)); }
 
           case SYM_LINE: {
             REBLIN line = LVL_LINE(L);

@@ -39,11 +39,6 @@
     (NODE_FLAG_NODE | SERIES_FLAG_ALWAYS_DYNAMIC | ARRAY_FLAG_VARLIST)
 
 
-struct Reb_Context {
-    struct Reb_Array varlist; // keylist is held in ->link.keylist
-};
-
-
 #if !defined(DEBUG_CHECK_CASTS) || (! CPLUSPLUS_11)
 
     #define CTX(p) \
@@ -56,18 +51,18 @@ struct Reb_Context {
         constexpr bool derived = std::is_same<T, REBCTX>::value;
 
         constexpr bool base = std::is_same<T, void>::value
-            or std::is_same<T, REBNOD>::value
+            or std::is_same<T, Node>::value
             or std::is_same<T, Series>::value
             or std::is_same<T, Array>::value;
 
         static_assert(
             derived or base,
-            "CTX() works on REBNOD/Series/Array/REBCTX"
+            "CTX() works on Node/Series/Array/REBCTX"
         );
 
         if (base)
             assert(
-                (reinterpret_cast<REBNOD*>(p)->header.bits & (
+                (reinterpret_cast<Series*>(p)->header.bits & (
                     NODE_FLAG_NODE | ARRAY_FLAG_VARLIST
                         | NODE_FLAG_FREE
                         | NODE_FLAG_CELL

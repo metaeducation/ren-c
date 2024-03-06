@@ -99,9 +99,7 @@
 // enable it only comes automatically with address sanitizer.
 //
 #if defined(DEBUG_SERIES_ORIGINS) || defined(DEBUG_COUNT_TICKS)
-    INLINE void Touch_Series_Debug(void *p) {
-        Series* s = SER(p); // allow Array, REBCTX, REBACT...
-
+    INLINE void Touch_Series_Debug(Series* s) {
       #if defined(DEBUG_SERIES_ORIGINS)
         s->guard = cast(intptr_t*, malloc(sizeof(*s->guard)));
         free(s->guard);
@@ -123,10 +121,14 @@
 
 
 #if defined(DEBUG_MONITOR_SERIES)
-    INLINE void MONITOR_SERIES(void *p) {
-        printf("Adding monitor to %p on tick #%d\n", p, cast(int, TG_Tick));
+    INLINE void MONITOR_SERIES(Stub* stub) {
+        printf(
+            "Adding monitor to %p on tick #%d\n",
+            cast(void*, stub),
+            cast(int, TG_Tick)
+        );
         fflush(stdout);
-        SET_SER_INFO(p, SERIES_INFO_MONITOR_DEBUG);
+        SET_SER_INFO(stub, SERIES_INFO_MONITOR_DEBUG);
     }
 #endif
 
@@ -313,18 +315,12 @@ INLINE void TERM_SEQUENCE_LEN(Series* s, REBLEN len) {
 //
 
 #define Is_Series_Managed(s) \
-    (did (SER(s)->header.bits & NODE_FLAG_MANAGED))
+    (did ((s)->header.bits & NODE_FLAG_MANAGED))
 
-#define Manage_Series(s) \
-    Manage_Series_Core(SER(s))
-
-INLINE void Force_Series_Managed_Core(Series* s) {
+INLINE void Force_Series_Managed(Series* s) {
     if (not Is_Series_Managed(s))
         Manage_Series(s);
 }
-
-#define Force_Series_Managed(s) \
-    Force_Series_Managed_Core(SER(s))
 
 #ifdef NDEBUG
     #define Assert_Series_Managed(s) \
@@ -459,29 +455,29 @@ INLINE void Fail_If_Read_Only_Series(Series* s) {
 //
 
 #define PUSH_GC_GUARD(p) \
-    Push_Guard_Node(NOD(p))
+    Push_Guard_Node(p)
 
 #ifdef NDEBUG
-    INLINE void Drop_Guard_Node(REBNOD *n) {
+    INLINE void Drop_Guard_Node(Node* n) {
         UNUSED(n);
         GC_Guarded->content.dynamic.len--;
     }
 
     #define DROP_GC_GUARD(p) \
-        Drop_Guard_Node(NOD(p))
+        Drop_Guard_Node(p)
 #else
     INLINE void Drop_Guard_Node_Debug(
-        REBNOD *n,
+        const Node* n,
         const char *file,
         int line
     ){
-        if (n != *Series_Last(REBNOD*, GC_Guarded))
+        if (n != *Series_Last(const Node*, GC_Guarded))
             panic_at (n, file, line);
         GC_Guarded->content.dynamic.len--;
     }
 
     #define DROP_GC_GUARD(p) \
-        Drop_Guard_Node_Debug(NOD(p), __FILE__, __LINE__)
+        Drop_Guard_Node_Debug((p), __FILE__, __LINE__)
 #endif
 
 
@@ -566,7 +562,7 @@ INLINE Byte *VAL_RAW_DATA_AT(const Cell* v) {
 INLINE Series* Alloc_Series_Node(REBFLGS flags) {
     assert(not (flags & NODE_FLAG_CELL));
 
-    Series* s = cast(Series*, Make_Node(SER_POOL));
+    Series* s = cast(Series*, Alloc_Pooled(SER_POOL));
     if ((GC_Ballast -= sizeof(Stub)) <= 0)
         SET_SIGNAL(SIG_RECYCLE);
 
@@ -632,7 +628,7 @@ INLINE bool Did_Series_Data_Alloc(Series* s, REBLEN length) {
     REBLEN pool_num = FIND_POOL(length * wide);
     if (pool_num < SYSTEM_POOL) {
         // ...there is a pool designated for allocations of this size range
-        s->content.dynamic.data = cast(char*, Make_Node(pool_num));
+        s->content.dynamic.data = cast(char*, Alloc_Pooled(pool_num));
         if (not s->content.dynamic.data)
             return false;
 

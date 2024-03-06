@@ -27,11 +27,11 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // In R3-Alpha, the memory pool details were not exported to most of the
-// system.  However, Make_Node() takes a pool ID, so things that want to make
+// system.  However, Alloc_Pooled() takes a pool ID, so things that want to make
 // nodes need to know about SER_POOL.  And in order to take advantage of
 // inlining, the system has to put a lot of things in header files.  Not
 // being able to do so leads to a lot of pushing and popping overhead for
-// parameters to commonly called routines (e.g. Make_Node())
+// parameters to commonly called routines (e.g. Alloc_Pooled())
 //
 // Hence if there are rules on which file is supposed to be calling which,
 // those should be implemented in %source-analysis.r.
@@ -58,8 +58,8 @@ typedef struct rebol_mem_spec {
 //
 struct rebol_mem_pool {
     REBSEG *segs; // first memory segment
-    REBNOD *first; // first free node in pool
-    REBNOD *last; // last free node in pool
+    PoolUnit* first; // first free unit in pool
+    PoolUnit* last; // last free node in pool
     REBLEN wide; // size of allocation unit
     REBLEN units; // units per segment allocation
     REBLEN free; // number of units remaining

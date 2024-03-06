@@ -125,20 +125,20 @@ void API_rebEnterApi_internal(void) {
 //
 void *API_rebMalloc(size_t size)
 {
-    Series* s = Make_Series_Core(
+    Binary* bin = cast(Binary*, Make_Series_Core(
         ALIGN_SIZE // stores Series* (must be at least big enough for void*)
             + size // for the actual data capacity (may be 0...see notes)
             + 1, // for termination (even BINARY! has this, review necessity)
         sizeof(Byte), // rebRepossess() only creates binary series ATM
         SERIES_FLAG_DONT_RELOCATE // direct data pointer is being handed back!
             | SERIES_FLAG_ALWAYS_DYNAMIC // rebRepossess() needs bias field
-    );
+    ));
 
-    Byte *ptr = Binary_Head(s) + ALIGN_SIZE;
+    Byte *ptr = Binary_Head(bin) + ALIGN_SIZE;
 
-    Series* *ps = (cast(Series**, ptr) - 1);
-    *ps = s; // save self in bytes *right before* data
-    POISON_MEMORY(ps, sizeof(Series*)); // let ASAN catch underruns
+    Binary* *ps = (cast(Binary**, ptr) - 1);
+    *ps = bin;  // save self in bytes *right before* data
+    POISON_MEMORY(ps, sizeof(Binary*));  // let ASAN catch underruns
 
     // !!! The data is uninitialized, and if it is turned into a BINARY! via
     // rebRepossess() before all bytes are assigned initialized, it could be
@@ -152,7 +152,7 @@ void *API_rebMalloc(size_t size)
     // promise--and leave it uninitialized so that address sanitizer notices
     // when bytes are used that haven't been assigned.
     //
-    TERM_BIN_LEN(s, ALIGN_SIZE + size);
+    TERM_BIN_LEN(bin, ALIGN_SIZE + size);
 
     return ptr;
 }
@@ -182,12 +182,12 @@ void *API_rebRealloc(void *ptr, size_t new_size)
     if (not ptr) // C realloc() accepts null
         return rebMalloc(new_size);
 
-    Series* *ps = cast(Series**, ptr) - 1;
-    UNPOISON_MEMORY(ps, sizeof(Series*)); // need to underrun to fetch `s`
+    Binary* *ps = cast(Binary**, ptr) - 1;
+    UNPOISON_MEMORY(ps, sizeof(Binary*)); // need to underrun to fetch `s`
 
-    Series* s = *ps;
+    Binary* bin = *ps;
 
-    REBLEN old_size = Binary_Len(s) - ALIGN_SIZE;
+    REBLEN old_size = Binary_Len(bin) - ALIGN_SIZE;
 
     // !!! It's less efficient to create a new series with another call to
     // rebMalloc(), but simpler for the time being.  Switch to do this with
@@ -195,7 +195,7 @@ void *API_rebRealloc(void *ptr, size_t new_size)
     //
     void *reallocated = rebMalloc(new_size);
     memcpy(reallocated, ptr, old_size < new_size ? old_size : new_size);
-    Free_Unmanaged_Series(s);
+    Free_Unmanaged_Series(bin);
 
     return reallocated;
 }
@@ -256,40 +256,40 @@ void API_rebFree(void *ptr)
 //
 RebolValue* API_rebRepossess(void *ptr, size_t size)
 {
-    Series* *ps = cast(Series**, ptr) - 1;
-    UNPOISON_MEMORY(ps, sizeof(Series*)); // need to underrun to fetch `s`
+    Binary* *ps = cast(Binary**, ptr) - 1;
+    UNPOISON_MEMORY(ps, sizeof(Binary*));  // need to underrun to fetch `s`
 
-    Series* s = *ps;
-    assert(not Is_Series_Managed(s));
+    Binary* bin = *ps;
+    assert(not Is_Series_Managed(bin));
 
-    if (size > Binary_Len(s) - ALIGN_SIZE)
+    if (size > Binary_Len(bin) - ALIGN_SIZE)
         fail ("Attempt to rebRepossess() more than rebMalloc() capacity");
 
-    assert(GET_SER_FLAG(s, SERIES_FLAG_DONT_RELOCATE));
-    CLEAR_SER_FLAG(s, SERIES_FLAG_DONT_RELOCATE);
+    assert(GET_SER_FLAG(bin, SERIES_FLAG_DONT_RELOCATE));
+    CLEAR_SER_FLAG(bin, SERIES_FLAG_DONT_RELOCATE);
 
-    if (IS_SER_DYNAMIC(s)) {
+    if (IS_SER_DYNAMIC(bin)) {
         //
         // Dynamic series have the concept of a "bias", which is unused
         // allocated capacity at the head of a series.  Bump the "bias" to
         // treat the embedded Series* (aligned to REBI64) as unused capacity.
         //
-        SER_SET_BIAS(s, ALIGN_SIZE);
-        s->content.dynamic.data += ALIGN_SIZE;
-        s->content.dynamic.rest -= ALIGN_SIZE;
+        SER_SET_BIAS(bin, ALIGN_SIZE);
+        bin->content.dynamic.data += ALIGN_SIZE;
+        bin->content.dynamic.rest -= ALIGN_SIZE;
     }
     else {
         // Data is in Stub node itself, no bias.  Just slide the bytes down.
         //
         memmove( // src overlaps destination, can't use memcpy()
-            Binary_Head(s),
-            Binary_Head(s) + ALIGN_SIZE,
+            Binary_Head(bin),
+            Binary_Head(bin) + ALIGN_SIZE,
             size
         );
     }
 
-    TERM_BIN_LEN(s, size);
-    return Init_Binary(Alloc_Value(), s);
+    TERM_BIN_LEN(bin, size);
+    return Init_Binary(Alloc_Value(), bin);
 }
 
 
@@ -1282,7 +1282,7 @@ unsigned char *API_rebBytes(
 //
 RebolValue* API_rebBinary(const void *bytes, size_t size)
 {
-    Series* bin = Make_Binary(size);
+    Binary* bin = Make_Binary(size);
     memcpy(Binary_Head(bin), bytes, size);
     TERM_BIN_LEN(bin, size);
 
@@ -1378,7 +1378,7 @@ RebolValue* API_rebManage(RebolValue* v)
 
     SET_SER_FLAG(a, NODE_FLAG_MANAGED);
     assert(not LINK(a).owner);
-    LINK(a).owner = NOD(Context_For_Level_May_Manage(TOP_LEVEL));
+    LINK(a).owner = Context_For_Level_May_Manage(TOP_LEVEL);
 
     return v;
 }
@@ -1391,8 +1391,8 @@ RebolValue* API_rebManage(RebolValue* v)
 //
 void API_rebUnmanage(void *p)
 {
-    REBNOD *nod = NOD(p);
-    if (not (nod->header.bits & NODE_FLAG_CELL))
+    Node* nod = p;
+    if (Is_Node_A_Stub(nod))
         fail ("rebUnmanage() not yet implemented for rebMalloc() data");
 
     Value* v = cast(Value*, nod);
@@ -1412,7 +1412,7 @@ void API_rebUnmanage(void *p)
     //
     CLEAR_SER_FLAG(a, NODE_FLAG_MANAGED);
     assert(GET_SER_FLAG(LINK(a).owner, ARRAY_FLAG_VARLIST));
-    LINK(a).owner = UNBOUND;
+    LINK(a).owner = nullptr;
 }
 
 

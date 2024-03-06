@@ -152,7 +152,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         return Init_Any_Series_At_Core(
             out,
             kind,
-            SER(Cell_Array(any_array)),
+            Cell_Array(any_array),
             index,
             derived
         );
@@ -810,7 +810,7 @@ REBTYPE(Array)
         if (REF(deep))
             fail (Error_Bad_Refines_Raw());
 
-        FAIL_IF_READ_ONLY_ARRAY(arr);
+        Fail_If_Read_Only_Series(arr);
 
         REBLEN len;
         if (REF(part)) {
@@ -840,7 +840,7 @@ REBTYPE(Array)
         else
             Derelativize(OUT, &ARR_HEAD(arr)[index], specifier);
 
-        Remove_Series(SER(arr), index, len);
+        Remove_Series(arr, index, len);
         return OUT; }
 
     //-- Search:
@@ -917,7 +917,7 @@ REBTYPE(Array)
                 VAL_INDEX(array) = 0;
             RETURN (array); // don't fail on read only if it would be a no-op
         }
-        FAIL_IF_READ_ONLY_ARRAY(arr);
+        Fail_If_Read_Only_Series(arr);
 
         REBLEN index = VAL_INDEX(array);
 
@@ -946,7 +946,7 @@ REBTYPE(Array)
         return OUT; }
 
       case SYM_CLEAR: {
-        FAIL_IF_READ_ONLY_ARRAY(arr);
+        Fail_If_Read_Only_Series(arr);
         REBLEN index = VAL_INDEX(array);
         if (index < VAL_LEN_HEAD(array)) {
             if (index == 0) Reset_Array(arr);
@@ -999,8 +999,8 @@ REBTYPE(Array)
         if (not ANY_ARRAY(arg))
             fail (Error_Invalid(arg));
 
-        FAIL_IF_READ_ONLY_ARRAY(arr);
-        FAIL_IF_READ_ONLY_ARRAY(Cell_Array(arg));
+        Fail_If_Read_Only_Series(arr);
+        Fail_If_Read_Only_Series(Cell_Array(arg));
 
         REBLEN index = VAL_INDEX(array);
 
@@ -1022,7 +1022,7 @@ REBTYPE(Array)
     }
 
     case SYM_REVERSE: {
-        FAIL_IF_READ_ONLY_ARRAY(arr);
+        Fail_If_Read_Only_Series(arr);
 
         REBLEN len = Part_Len_May_Modify_Index(array, D_ARG(3));
         if (len == 0)
@@ -1083,7 +1083,7 @@ REBTYPE(Array)
         UNUSED(REF(skip)); // checks size as void
         UNUSED(REF(compare)); // checks comparator as void
 
-        FAIL_IF_READ_ONLY_ARRAY(arr);
+        Fail_If_Read_Only_Series(arr);
 
         Sort_Block(
             array,
@@ -1157,7 +1157,7 @@ void Assert_Array_Core(Array* a)
     // we don't use ASSERT_SERIES the macro here, because that checks to
     // see if the series is an array...and if so, would call this routine
     //
-    Assert_Series_Core(SER(a));
+    Assert_Series_Core(a);
 
     if (not IS_SER_ARRAY(a))
         panic (a);
@@ -1175,7 +1175,7 @@ void Assert_Array_Core(Array* a)
         panic (item);
 
     if (IS_SER_DYNAMIC(a)) {
-        REBLEN rest = Series_Rest(SER(a));
+        REBLEN rest = Series_Rest(a);
         assert(rest > 0 and rest > i);
 
         for (; i < rest - 1; ++i, ++item) {

@@ -176,6 +176,15 @@ typedef RebolValue Value;
 //
 #include "reb-defs.h"
 
+// Ucs2(*) is defined in %sys-scan.h, along with SCAN_STATE, and both are
+// referenced by internal API functions.
+//
+// (Note: %sys-do.h needs to call into the scanner if Fetch_Next_In_Level() is
+// to be inlined at all--at its many time-critical callsites--so the scanner
+// has to be in the internal API)
+//
+#include "sys-scan.h"
+
 
 //=////////////////////////////////////////////////////////////////////////=//
 //

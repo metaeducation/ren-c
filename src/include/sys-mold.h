@@ -28,7 +28,7 @@
 //
 
 struct rebol_mold {
-    Series* series;     // destination series (uni)
+    Binary* series;     // destination series (uni)
     REBLEN start;       // index where this mold starts within series
     REBFLGS opts;        // special option flags
     REBLEN limit;       // how many characters before cutting off with "..."

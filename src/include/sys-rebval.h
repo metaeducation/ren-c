@@ -619,7 +619,7 @@ union Reb_Value_Extra {
     // coming.  It can be an ordinary singular array which was created with
     // MAKE VARARGS! and has its index updated for all shared instances.
     //
-    REBNOD* binding;
+    Stub* binding;
 
     // See REB_X_PARTIAL.
     //

@@ -38,10 +38,9 @@
 // writing if it's past capacity.
 //
 // While many operations are shared in common with Series, there is a
-// (deliberate) type incompatibility introduced.  The type compatibility is
-// implemented in a way that works in C or C++ (though it should be reviewed
-// for strict aliasing compliance).  To get the underlying Series of an Array
-// use the SER() operation.
+// (deliberate) type incompatibility introduced in the C++ build, where
+// Array is derived from Series.  So you can pass an Array to functions that
+// expect Series, but not vice-versa.
 //
 // An ARRAY is the main place in the system where "relative" values come
 // from, because all relative words are created during the copy of the
@@ -73,7 +72,7 @@ INLINE Cell* ARR_LAST(Array* a)
 
 INLINE Cell* ARR_SINGLE(Array* a) {
     assert(not IS_SER_DYNAMIC(a)); // singular test avoided in release build
-    return cast(Cell*, &SER(a)->content.fixed);
+    return cast(Cell*, &a->content.fixed);
 }
 
 // It's possible to calculate the array from just a cell if you know it's a
@@ -95,7 +94,7 @@ INLINE Array* Singular_From_Cell(const Cell* v) {
 // sync these independently for performance reasons (for better or worse).
 //
 #define Array_Len(a) \
-    Series_Len(SER(a))
+    Series_Len(a)
 
 
 // Set length and also terminate.  This routine avoids conditionality in the
@@ -108,8 +107,8 @@ INLINE Array* Singular_From_Cell(const Cell* v) {
 // efficient if they didn't use any "appending" operators to get built.
 //
 INLINE void TERM_ARRAY_LEN(Array* a, REBLEN len) {
-    assert(len < Series_Rest(SER(a)));
-    Set_Series_Len(SER(a), len);
+    assert(len < Series_Rest(a));
+    Set_Series_Len(a, len);
 
   #if !defined(NDEBUG)
     if (NOT_END(Array_At(a, len)))
@@ -119,7 +118,7 @@ INLINE void TERM_ARRAY_LEN(Array* a, REBLEN len) {
 }
 
 INLINE void SET_ARRAY_LEN_NOTERM(Array* a, REBLEN len) {
-    Set_Series_Len(SER(a), len); // call out non-terminating usages
+    Set_Series_Len(a, len);  // call out non-terminating usages
 }
 
 INLINE void RESET_ARRAY(Array* a) {
@@ -146,7 +145,7 @@ INLINE bool Is_Array_Deeply_Frozen(Array* a) {
 
 INLINE void Deep_Freeze_Array(Array* a) {
     Protect_Series(
-        SER(a),
+        a,
         0, // start protection at index 0
         PROT_DEEP | PROT_SET | PROT_FREEZE
     );
@@ -156,8 +155,6 @@ INLINE void Deep_Freeze_Array(Array* a) {
 #define Is_Array_Shallow_Read_Only(a) \
     Is_Series_Read_Only(a)
 
-#define FAIL_IF_READ_ONLY_ARRAY(a) \
-    Fail_If_Read_Only_Series(SER(a))
 
 
 //
@@ -190,7 +187,7 @@ INLINE void Prep_Array(
         // expansion and un-prepping them on every shrink.
         //
         REBLEN n;
-        for (n = 0; n < SER(a)->content.dynamic.rest - 1; ++n, ++prep)
+        for (n = 0; n < a->content.dynamic.rest - 1; ++n, ++prep)
             Erase_Cell(prep);
     }
     else {
@@ -207,7 +204,7 @@ INLINE void Prep_Array(
         prep->header = Endlike_Header(0); // unwritable
         TRACK_CELL_IF_DEBUG(prep, __FILE__, __LINE__);
       #if !defined(NDEBUG)
-        while (n < SER(a)->content.dynamic.rest) { // no -1 (n is 1-based)
+        while (n < a->content.dynamic.rest) { // no -1 (n is 1-based)
             ++n;
             ++prep;
             prep->header.bits = FLAG_KIND_BYTE(REB_T_TRASH); // unreadable
@@ -219,7 +216,7 @@ INLINE void Prep_Array(
         // It may not be necessary, but doing it for now to have an easier
         // invariant to work with.  Review.
         //
-        prep = Array_At(a, SER(a)->content.dynamic.rest - 1);
+        prep = Array_At(a, a->content.dynamic.rest - 1);
         // fallthrough
     }
 
@@ -361,7 +358,7 @@ INLINE Array* Make_Arr_For_Copy(
 INLINE Array* Alloc_Singular(REBFLGS flags) {
     assert(not (flags & SERIES_FLAG_ALWAYS_DYNAMIC));
     Array* a = Make_Array_Core(1, flags | SERIES_FLAG_FIXED_SIZE);
-    LEN_BYTE_OR_255(SER(a)) = 1; // non-dynamic length (defaulted to 0)
+    LEN_BYTE_OR_255(a) = 1; // non-dynamic length (defaulted to 0)
     return a;
 }
 
@@ -439,10 +436,6 @@ INLINE Array* Copy_Array_At_Extra_Deep_Flags_Managed(
     );
 }
 
-#define Free_Unmanaged_Array(a) \
-    Free_Unmanaged_Series(SER(a))
-
-
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -469,7 +462,7 @@ INLINE Array* Copy_Array_At_Extra_Deep_Flags_Managed(
 INLINE void INIT_VAL_ARRAY(Cell* v, Array* a) {
     INIT_BINDING(v, UNBOUND);
     assert(Is_Series_Managed(a));
-    v->payload.any_series.series = SER(a);
+    v->payload.any_series.series = a;
 }
 
 // These array operations take the index position into account.  The use
@@ -516,7 +509,7 @@ INLINE Cell* VAL_ARRAY_TAIL(const Cell* v) {
     Array_At(Cell_Array(v), (n))
 
 #define Init_Any_Array_At(v,t,a,i) \
-    Init_Any_Series_At((v), (t), SER(a), (i))
+    Init_Any_Series_At((v), (t), (a), (i))
 
 #define Init_Any_Array(v,t,a) \
     Init_Any_Array_At((v), (t), (a), 0)
@@ -576,22 +569,16 @@ INLINE bool Is_Doubled_Group(const Cell* group) {
 
 
 #ifdef NDEBUG
-    #define ASSERT_ARRAY(s) \
+    #define Assert_Array(s) \
         NOOP
 
-    #define ASSERT_ARRAY_MANAGED(array) \
-        NOOP
-
-    #define ASSERT_SERIES(s) \
+    #define Assert_Series(s) \
         NOOP
 #else
-    #define ASSERT_ARRAY(s) \
+    #define Assert_Array(s) \
         Assert_Array_Core(s)
 
-    #define ASSERT_ARRAY_MANAGED(array) \
-        Assert_Series_Managed(SER(array))
-
-    INLINE void ASSERT_SERIES(Series* s) {
+    INLINE void Assert_Series(Series* s) {
         if (IS_SER_ARRAY(s))
             Assert_Array_Core(ARR(s));
         else

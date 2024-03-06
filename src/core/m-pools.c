@@ -420,32 +420,32 @@ void Fill_Pool(REBPOL *pool)
 
     // Can't use NOD() here because it tests for NOT(NODE_FLAG_FREE)
     //
-    REBNOD *node = cast(REBNOD*, seg + 1);
+    PoolUnit* unit = cast(PoolUnit*, seg + 1);
 
     if (not pool->first) {
         assert(not pool->last);
-        pool->first = node;
+        pool->first = unit;
     }
     else {
         assert(pool->last);
-        pool->last->next_if_free = node;
+        pool->last->next_if_free = unit;
     }
 
     while (true) {
-        FIRST_BYTE(node) = FREED_SERIES_BYTE;
+        FIRST_BYTE(unit) = FREED_SERIES_BYTE;
 
         if (--units == 0) {
-            node->next_if_free = nullptr;
+            unit->next_if_free = nullptr;
             break;
         }
 
         // Can't use NOD() here because it tests for NODE_FLAG_FREE
         //
-        node->next_if_free = cast(REBNOD*, cast(Byte*, node) + pool->wide);
-        node = node->next_if_free;
+        unit->next_if_free = cast(PoolUnit*, cast(Byte*, unit) + pool->wide);
+        unit = unit->next_if_free;
     }
 
-    pool->last = node;
+    pool->last = unit;
 }
 
 
@@ -458,7 +458,7 @@ void Fill_Pool(REBPOL *pool)
 // a data pointer lives in.  It returns nullptr if it can't find one.  It's very
 // slow, because it has to look at all the series.  Use sparingly!
 //
-REBNOD *Try_Find_Containing_Node_Debug(const void *p)
+Node* Try_Find_Containing_Node_Debug(const void *p)
 {
     REBSEG *seg;
 
@@ -471,7 +471,7 @@ REBNOD *Try_Find_Containing_Node_Debug(const void *p)
 
             if (s->header.bits & NODE_FLAG_CELL) {  // a "pairing"
                 if (p >= cast(void*, s) and p < cast(void*, s + 1))
-                    return NOD(s);  // Stub slots are sizeof(Cell) * 2
+                    return s;  // Stub slots are (sizeof(Cell) * 2)
                 continue;
             }
 
@@ -480,7 +480,7 @@ REBNOD *Try_Find_Containing_Node_Debug(const void *p)
                     p >= cast(void*, &s->content)
                     && p < cast(void*, &s->content + 1)
                 ){
-                    return NOD(s);
+                    return s;
                 }
                 continue;
             }
@@ -511,7 +511,7 @@ REBNOD *Try_Find_Containing_Node_Debug(const void *p)
             if (p < cast(void*, s->content.dynamic.data)) {
                 printf("Pointer found in freed head capacity of series\n");
                 fflush(stdout);
-                return NOD(s);
+                return s;
             }
 
             if (p >= cast(void*,
@@ -520,10 +520,10 @@ REBNOD *Try_Find_Containing_Node_Debug(const void *p)
             )) {
                 printf("Pointer found in freed tail capacity of series\n");
                 fflush(stdout);
-                return NOD(s);
+                return s;
             }
 
-            return NOD(s);
+            return s;
         }
     }
 
@@ -551,7 +551,7 @@ REBNOD *Try_Find_Containing_Node_Debug(const void *p)
 // handlers based on PUSH_TRAP().
 //
 Value* Alloc_Pairing(void) {
-    Value* paired = cast(Value*, Make_Node(PAR_POOL)); // 2x Cell size
+    Value* paired = cast(Value*, Alloc_Pooled(PAR_POOL)); // 2x Cell size
     Value* key = PAIRING_KEY(paired);
 
     Erase_Cell(paired);
@@ -603,7 +603,7 @@ void Unmanage_Pairing(Value* paired) {
 void Free_Pairing(Value* paired) {
     assert(NOT_VAL_FLAG(paired, NODE_FLAG_MANAGED));
     Series* s = cast(Series*, paired);
-    Free_Node(SER_POOL, s);
+    Free_Pooled(SER_POOL, s);
 
   #if !defined(NDEBUG)
     #if defined(DEBUG_COUNT_TICKS)
@@ -638,16 +638,16 @@ void Free_Unbiased_Series_Data(char *unbiased, REBLEN total)
         // free nodes have significance to their headers.  Use a cast and not
         // NOD() because that assumes not (NODE_FLAG_FREE)
         //
-        REBNOD *node = cast(REBNOD*, unbiased);
+        PoolUnit* unit = cast(PoolUnit*, unbiased);
 
         assert(Mem_Pools[pool_num].wide >= total);
 
         pool = &Mem_Pools[pool_num];
-        node->next_if_free = pool->first;
-        pool->first = node;
+        unit->next_if_free = pool->first;
+        pool->first = unit;
         pool->free++;
 
-        FIRST_BYTE(node) = FREED_SERIES_BYTE;
+        FIRST_BYTE(unit) = FREED_SERIES_BYTE;
     }
     else {
         FREE_N(char, total, unbiased);
@@ -1051,7 +1051,7 @@ void Decay_Series(Series* s)
     assert(NOT_SER_INFO(s, SERIES_INFO_INACCESSIBLE));
 
     if (GET_SER_FLAG(s, SERIES_FLAG_UTF8))
-        GC_Kill_Interning(s); // needs special handling to adjust canons
+        GC_Kill_Interning(cast(Symbol*, s));  // needs to adjust canons
 
     // Remove series from expansion list, if found:
     REBLEN n;
@@ -1159,7 +1159,7 @@ void GC_Kill_Series(Series* s)
     TRASH_POINTER_IF_DEBUG(MISC(s).trash);
     TRASH_POINTER_IF_DEBUG(LINK(s).trash);
 
-    Free_Node(SER_POOL, s);
+    Free_Pooled(SER_POOL, s);
 
     // GC may no longer be necessary:
     if (GC_Ballast > 0) CLR_SIGNAL(SIG_RECYCLE);
@@ -1252,7 +1252,7 @@ void Free_Unmanaged_Series(Series* s)
 // series in user-visible cells should be managed.  Doing otherwise requires
 // careful hooks into Copy_Cell() and Derelativize().
 //
-void Manage_Series_Core(Series* s)
+void Manage_Series(Series* s)
 {
   #if !defined(NDEBUG)
     if (Is_Series_Managed(s)) {
@@ -1371,9 +1371,9 @@ REBLEN Check_Memory_Debug(void)
     for (pool_num = 0; pool_num != SYSTEM_POOL; pool_num++) {
         REBLEN pool_free_nodes = 0;
 
-        REBNOD *node = Mem_Pools[pool_num].first;
-        for (; node != nullptr; node = node->next_if_free) {
-            assert(IS_FREE_NODE(node));
+        PoolUnit* unit = Mem_Pools[pool_num].first;
+        for (; unit != nullptr; unit = unit->next_if_free) {
+            assert(IS_FREE_NODE(unit));
 
             ++pool_free_nodes;
 
@@ -1381,15 +1381,15 @@ REBLEN Check_Memory_Debug(void)
             seg = Mem_Pools[pool_num].segs;
             for (; seg != nullptr; seg = seg->next) {
                 if (
-                    cast(uintptr_t, node) > cast(uintptr_t, seg)
+                    cast(uintptr_t, unit) > cast(uintptr_t, seg)
                     and (
-                        cast(uintptr_t, node)
+                        cast(uintptr_t, unit)
                         < cast(uintptr_t, seg) + cast(uintptr_t, seg->size)
                     )
                 ){
                     if (found) {
                         printf("node belongs to more than one segment\n");
-                        panic (node);
+                        panic (unit);
                     }
 
                     found = true;
@@ -1398,7 +1398,7 @@ REBLEN Check_Memory_Debug(void)
 
             if (not found) {
                 printf("node does not belong to one of the pool's segments\n");
-                panic (node);
+                panic (unit);
             }
         }
 

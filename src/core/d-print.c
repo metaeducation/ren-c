@@ -467,7 +467,7 @@ void Form_Args_Core(REB_MOLD *mo, const char *fmt, va_list *vaptr)
     REBINT pad;
     Byte desc;
     Byte padding;
-    Series* ser = mo->series;
+    Binary* ser = mo->series;
     Byte buf[MAX_SCAN_DECIMAL];
 
     DECLARE_VALUE (value);

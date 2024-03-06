@@ -2498,7 +2498,7 @@ void Scan_To_Stack_Relaxed(SCAN_STATE *ss) {
         // and if this becomes a problem, implement ss->limit.
         //
         REBLEN limit = ss->begin - ss_before.begin;
-        Series* bin = Make_Binary(limit);
+        Binary* bin = Make_Binary(limit);
         memcpy(Binary_Head(bin), ss_before.begin, limit);
         TERM_BIN_LEN(bin, limit);
 
@@ -2592,7 +2592,7 @@ static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char)
 //
 //  Scan_Va_Managed: C
 //
-// Variadic form of source scanning.  Due to the nature of REBNOD (see
+// Variadic form of source scanning.  Due to the nature of Nodes (see
 // %sys-node.h), it's possible to feed the scanner with a list of pointers
 // that may be to UTF-8 strings or to Rebol values.  The behavior is to
 // "splice" in the values at the point in the scan that they occur, e.g.

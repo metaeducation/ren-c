@@ -219,7 +219,7 @@ DECLARE_NATIVE(checksum)
             if (digests[i].sym != sym)
                 continue;
 
-            Series* digest = Make_Series(digests[i].len + 1, sizeof(char));
+            Binary* digest = Make_Binary(digests[i].len + 1);
 
             if (not REF(key))
                 digests[i].digest(data, len, Binary_Head(digest));
@@ -514,7 +514,7 @@ DECLARE_NATIVE(enbase)
         bp = Binary_At(temp, offset);
     }
 
-    Series* enbased;
+    Binary* enbased;
     const bool brk = false;
     switch (base) {
     case 64:
@@ -861,7 +861,7 @@ DECLARE_NATIVE(deline)
     if (REF(lines))
         return Init_Block(OUT, Split_Lines(val));
 
-    Series* s = VAL_SERIES(val);
+    String* s = Cell_String(val);
     REBLEN len_head = Series_Len(s);
 
     REBLEN len_at = VAL_LEN_AT(val);

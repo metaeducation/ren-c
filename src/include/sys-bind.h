@@ -106,8 +106,8 @@
 //
 INLINE bool Is_Overriding_Context(REBCTX *stored, REBCTX *override)
 {
-    REBNOD *stored_source = LINK(stored).keysource;
-    REBNOD *temp = LINK(override).keysource;
+    Node* stored_source = LINK(stored).keysource;
+    Node* temp = LINK(override).keysource;
 
     // FRAME! "keylists" are actually paramlists, and the LINK.underlying
     // field is used in paramlists (precluding a LINK.ancestor).  Plus, since
@@ -120,19 +120,27 @@ INLINE bool Is_Overriding_Context(REBCTX *stored, REBCTX *override)
     // !!! Note that in virtual binding, something like a FOR-EACH would
     // wind up overriding words bound to FRAME!s, even though not "derived".
     //
-    if (stored_source->header.bits & ARRAY_FLAG_PARAMLIST)
+    if (
+        Is_Node_A_Stub(stored_source)
+        and SER(stored_source)->header.bits & ARRAY_FLAG_PARAMLIST
+    ){
         return false;
-    if (temp->header.bits & ARRAY_FLAG_PARAMLIST)
+    }
+    if (
+        Is_Node_A_Stub(temp)
+        and SER(temp)->header.bits & ARRAY_FLAG_PARAMLIST
+    ){
         return false;
+    }
 
     while (true) {
         if (temp == stored_source)
             return true;
 
-        if (NOD(LINK(temp).ancestor) == temp)
+        if (LINK(SER(temp)).ancestor == temp)
             break;
 
-        temp = NOD(LINK(temp).ancestor);
+        temp = LINK(SER(temp)).ancestor;
     }
 
     return false;
@@ -310,7 +318,7 @@ struct Reb_Collector {
 // would fail later, but given that the Level's captured binding can outlive
 // the frame that might lose important functionality.
 //
-INLINE REBNOD *SPC_BINDING(Specifier* specifier)
+INLINE Stub* SPC_BINDING(Specifier* specifier)
 {
     assert(specifier != UNBOUND);
     Value* rootvar = CTX_ARCHETYPE(CTX(specifier)); // works even if Decay()d
@@ -366,7 +374,7 @@ INLINE REBCTX *Get_Var_Context(
 ){
     assert(ANY_WORD(any_word));
 
-    REBNOD *binding = VAL_BINDING(any_word);
+    Stub* binding = VAL_BINDING(any_word);
     assert(binding); // caller should check so context won't be null
 
     REBCTX *c;
@@ -393,7 +401,7 @@ INLINE REBCTX *Get_Var_Context(
             //
         }
         else {
-            REBNOD *f_binding = SPC_BINDING(specifier); // can't fail()
+            Stub* f_binding = SPC_BINDING(specifier);  // can't fail()
             if (f_binding and Is_Overriding_Context(c, CTX(f_binding))) {
                 //
                 // The specifier binding overrides--because what's happening
@@ -430,7 +438,7 @@ INLINE REBCTX *Get_Var_Context(
         // identity of the derived function would not match up with the body
         // it intended to reuse.
         //
-        assert(binding == NOD(ACT_UNDERLYING(VAL_ACTION(CTX_ROOTKEY(c)))));
+        assert(binding == ACT_UNDERLYING(VAL_ACTION(CTX_ROOTKEY(c))));
     }
 
   #ifdef DEBUG_BINDING_NAME_MATCH // this is expensive, and hasn't happened
@@ -559,7 +567,7 @@ INLINE Value* Derelativize(
         return KNOWN(out);
     }
 
-    REBNOD *binding = v->extra.binding;
+    Stub* binding = v->extra.binding;
 
     if (not binding) {
         out->extra.binding = UNBOUND;
@@ -590,7 +598,7 @@ INLINE Value* Derelativize(
         // then adding in the new relativism).
         //
         Value* rootkey = CTX_ROOTKEY(CTX(specifier));
-        if (binding != NOD(ACT_UNDERLYING(VAL_ACTION(rootkey)))) {
+        if (binding != ACT_UNDERLYING(VAL_ACTION(rootkey))) {
             printf("Function mismatch in specific binding, expected:\n");
             PROBE(ACT_ARCHETYPE(ACT(binding)));
             printf("Panic on relative value\n");
@@ -601,7 +609,7 @@ INLINE Value* Derelativize(
         INIT_BINDING_MAY_MANAGE(out, specifier);
     }
     else if (specifier and (binding->header.bits & ARRAY_FLAG_VARLIST)) {
-        REBNOD *f_binding = SPC_BINDING(specifier); // can't fail(), see notes
+        Stub* f_binding = SPC_BINDING(specifier);  // can't fail(), see notes
 
         if (
             f_binding

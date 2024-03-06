@@ -34,15 +34,22 @@
 //
 
 
+#define Is_Node_A_Cell(n) \
+    (did (NODE_BYTE(n) & NODE_BYTEMASK_0x01_CELL))
+
+#define Is_Node_A_Stub(n) \
+    (not (NODE_BYTE(n) & NODE_BYTEMASK_0x01_CELL))
+
+
 #if !defined(DEBUG_CHECK_CASTS) || (! CPLUSPLUS_11)
 
     #define NOD(p) \
-        cast(REBNOD*, (p)) // NOD() just does a cast (maybe with added checks)
+        cast(Node*, (p)) // NOD() just does a cast (maybe with added checks)
 
 #else
 
     template <typename T>
-    INLINE REBNOD *NOD(T *p) {
+    INLINE Node* NOD(T *p) {
         constexpr bool derived =
             std::is_same<T, Value>::value
             or std::is_same<T, Stub>::value
@@ -62,23 +69,23 @@
         );
 
         if (not p) { // !!! include a static check for nullptr/0?
-            assert(!"Use cast(REBNOD*, x) and not NOD(x) on null pointers");
+            assert(!"Use cast(Node*, x) and not NOD(x) on null pointers");
         }
         else if (base)
             assert(
-                (reinterpret_cast<REBNOD*>(p)->header.bits & (
-                    NODE_FLAG_NODE | NODE_FLAG_FREE
+                (NODE_BYTE(p) & (
+                    NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_FREE
                 )) == (
-                    NODE_FLAG_NODE
+                    NODE_BYTEMASK_0x80_NODE
                 )
             );
 
-        return reinterpret_cast<REBNOD*>(p);
+        return reinterpret_cast<Node*>(p);
     }
 #endif
 
 
-// Allocate a node from a pool.  Returned node will not be zero-filled, but
+// Allocate a unit from a pool.  Returned unit will not be zero-filled, but
 // the header will have NODE_FLAG_FREE set when it is returned (client is
 // responsible for changing that if they plan to enumerate the pool and
 // distinguish free nodes from non-free ones.)
@@ -88,7 +95,7 @@
 // is required for correct functioning of some types.  (See notes on
 // alignment in %sys-rebval.h.)
 //
-INLINE void *Make_Node(REBLEN pool_id)
+INLINE void *Alloc_Pooled(REBLEN pool_id)
 {
     REBPOL *pool = &Mem_Pools[pool_id];
     if (not pool->first) // pool has run out of nodes
@@ -96,31 +103,31 @@ INLINE void *Make_Node(REBLEN pool_id)
 
     assert(pool->first);
 
-    REBNOD *node = pool->first;
+    PoolUnit* unit = pool->first;
 
-    pool->first = node->next_if_free;
-    if (node == pool->last)
+    pool->first = unit->next_if_free;
+    if (unit == pool->last)
         pool->last = nullptr;
 
     pool->free--;
 
   #ifdef DEBUG_MEMORY_ALIGN
-    if (cast(uintptr_t, node) % sizeof(REBI64) != 0) {
+    if (cast(uintptr_t, unit) % sizeof(REBI64) != 0) {
         printf(
             "Node address %p not aligned to %d bytes\n",
-            cast(void*, node),
+            cast(void*, unit),
             cast(int, sizeof(REBI64))
         );
         printf("Pool address is %p and pool-first is %p\n",
             cast(void*, pool),
             cast(void*, pool->first)
         );
-        panic (node);
+        panic (unit);
     }
   #endif
 
-    assert(IS_FREE_NODE(node)); // client needs to change to non-free
-    return cast(void*, node);
+    assert(IS_FREE_NODE(unit));  // client needs to change to non-free
+    return cast(void*, unit);
 }
 
 
@@ -128,7 +135,7 @@ INLINE void *Make_Node(REBLEN pool_id)
 // have NODE_FLAG_FREE...which will identify the node as not in use to anyone
 // who enumerates the nodes in the pool (such as the garbage collector).
 //
-INLINE void Free_Node(REBLEN pool_id, void *p)
+INLINE void Free_Pooled(REBLEN pool_id, void *p)
 {
   #ifdef DEBUG_MONITOR_SERIES
     if (
@@ -141,15 +148,15 @@ INLINE void Free_Node(REBLEN pool_id, void *p)
     }
   #endif
 
-    REBNOD *node = NOD(p);
+    PoolUnit* unit = cast(PoolUnit*, p);
 
-    FIRST_BYTE(node) = FREED_SERIES_BYTE;
+    FIRST_BYTE(unit) = FREED_SERIES_BYTE;
 
     REBPOL *pool = &Mem_Pools[pool_id];
 
   #ifdef NDEBUG
-    node->next_if_free = pool->first;
-    pool->first = node;
+    unit->next_if_free = pool->first;
+    pool->first = unit;
   #else
     // !!! In R3-Alpha, the most recently freed node would become the first
     // node to hand out.  This is a simple and likely good strategy for
@@ -165,9 +172,9 @@ INLINE void Free_Node(REBLEN pool_id, void *p)
 
     assert(pool->last);
 
-    pool->last->next_if_free = node;
-    pool->last = node;
-    node->next_if_free = nullptr;
+    pool->last->next_if_free = unit;
+    pool->last = unit;
+    unit->next_if_free = nullptr;
   #endif
 
     pool->free++;

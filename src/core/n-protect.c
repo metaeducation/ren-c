@@ -84,7 +84,7 @@ void Protect_Value(Cell* v, REBFLGS flags)
     if (ANY_SERIES(v))
         Protect_Series(VAL_SERIES(v), VAL_INDEX(v), flags);
     else if (IS_MAP(v))
-        Protect_Series(SER(MAP_PAIRLIST(VAL_MAP(v))), 0, flags);
+        Protect_Series(MAP_PAIRLIST(VAL_MAP(v)), 0, flags);
     else if (ANY_CONTEXT(v))
         Protect_Context(VAL_CONTEXT(v), flags);
 }
@@ -131,7 +131,7 @@ void Protect_Series(Series* s, REBLEN index, REBFLGS flags)
 //
 void Protect_Context(REBCTX *c, REBFLGS flags)
 {
-    if (Is_Series_Black(SER(c)))
+    if (Is_Series_Black(CTX_VARLIST(c)))
         return; // avoid loop
 
     if (flags & PROT_SET) {
@@ -150,7 +150,7 @@ void Protect_Context(REBCTX *c, REBFLGS flags)
     if (not (flags & PROT_DEEP))
         return;
 
-    Flip_Series_To_Black(SER(CTX_VARLIST(c))); // for recursion
+    Flip_Series_To_Black(CTX_VARLIST(c));  // for recursion
 
     Value* var = CTX_VARS_HEAD(c);
     for (; NOT_END(var); ++var)

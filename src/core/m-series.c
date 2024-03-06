@@ -110,7 +110,7 @@ void Append_Values_Len(Array* a, const Value* head, REBLEN len)
 
     // updates tail, which could move data storage.
     //
-    Expand_Series_Tail(SER(a), len);
+    Expand_Series_Tail(a, len);
 
     // `char*` casts needed: https://stackoverflow.com/q/57721104
     memcpy(
@@ -324,7 +324,7 @@ void Reset_Sequence(Series* s)
 void Reset_Array(Array* a)
 {
     if (IS_SER_DYNAMIC(a))
-        Unbias_Series(SER(a), false);
+        Unbias_Series(a, false);
     TERM_ARRAY_LEN(a, 0);
 }
 

@@ -110,7 +110,7 @@ typedef REBWCHAR REBUNI;
 //=//// MEMORY POOLS //////////////////////////////////////////////////////=//
 //
 typedef struct rebol_mem_pool REBPOL;
-typedef struct Reb_Node REBNOD;
+typedef struct PoolUnitStruct PoolUnit;
 
 
 //=//// RELATIVE VALUES ///////////////////////////////////////////////////=//
@@ -137,28 +137,38 @@ typedef struct Reb_Node REBNOD;
 struct StubStruct;
 typedef struct StubStruct Stub;
 
-typedef struct StubStruct Series;
-typedef Series Binary;
-typedef Series Symbol;
-typedef Series String;
+typedef Stub Series;
 
-struct Reb_Array;
-typedef struct Reb_Array Array;
+#if CPLUSPLUS_11
+    struct Binary;
+    struct Symbol;
+    struct String;
 
-struct Reb_Context;
-typedef struct Reb_Context REBCTX;
+    struct Array;
 
-struct Reb_Action;
-typedef struct Reb_Action REBACT;
+    struct REBCTX;
+    struct REBACT;
+    struct REBMAP;
+#else
+    typedef Series Binary;
+    typedef Series Symbol;
+    typedef Series String;
 
-struct Reb_Map;
-typedef struct Reb_Map REBMAP;
+    typedef Series Array;
+
+    typedef Series REBCTX;
+    typedef Series REBACT;
+    typedef Series REBMAP;
+#endif
+
+
 
 
 //=//// BINDING ///////////////////////////////////////////////////////////=//
 
-struct Reb_Node;
-typedef struct Reb_Node Specifier;
+typedef void Node;
+
+typedef Stub Specifier;
 
 struct Reb_Binder;
 struct Reb_Collector;
@@ -234,7 +244,7 @@ typedef void (*MOLD_HOOK)(REB_MOLD *mo, const Cell* v, bool form);
 
 
 // These definitions are needed in %sys-rebval.h, and can't be put in
-// %sys-rebact.h because that depends on Reb_Array, which depends on
+// %sys-rebact.h because that depends on Array, which depends on
 // StubStruct, which depends on values... :-/
 
 // C function implementing a native ACTION!
@@ -276,16 +286,6 @@ enum Reb_Vararg_Op {
     VARARG_OP_FIRST, // "lookahead"
     VARARG_OP_TAKE // doesn't modify underlying data stream--advances index
 };
-
-
-// Ucs2(*) is defined in %sys-scan.h, along with SCAN_STATE, and both are
-// referenced by internal API functions.
-//
-// (Note: %sys-do.h needs to call into the scanner if Fetch_Next_In_Level() is
-// to be inlined at all--at its many time-critical callsites--so the scanner
-// has to be in the internal API)
-//
-#include "sys-scan.h"
 
 
 //=//// DEVICE REQUEST ////////////////////////////////////////////////////=//

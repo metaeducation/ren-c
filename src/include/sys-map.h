@@ -43,13 +43,10 @@
 // objects with hidden fields, locals in paramlists, etc.
 //
 
-struct Reb_Map {
-    struct Reb_Array pairlist; // hashlist is held in ->link.hashlist
-};
 
 INLINE Array* MAP_PAIRLIST(REBMAP *m) {
-    assert(GET_SER_FLAG(&(m)->pairlist, ARRAY_FLAG_PAIRLIST));
-    return (&(m)->pairlist);
+    assert(GET_SER_FLAG(m, ARRAY_FLAG_PAIRLIST));
+    return cast(Array*, m);
 }
 
 #define MAP_HASHLIST(m) \

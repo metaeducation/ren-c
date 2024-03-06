@@ -98,7 +98,7 @@ Series* Make_Set_Operation_Series(
         // a new buffer every time, but reusing one might be slightly more
         // efficient.
         //
-        Series* buffer = SER(Make_Array(i));
+        Array* buffer = Make_Array(i);
         hret = Make_Hash_Sequence(i);   // allocated
 
         // Optimization note: !!
@@ -176,8 +176,8 @@ Series* Make_Set_Operation_Series(
         // The buffer may have been allocated too large, so copy it at the
         // used capacity size
         //
-        out_ser = SER(Copy_Array_Shallow(ARR(buffer), SPECIFIED));
-        Free_Unmanaged_Array(ARR(buffer));
+        out_ser = Copy_Array_Shallow(ARR(buffer), SPECIFIED);
+        Free_Unmanaged_Series(ARR(buffer));
     }
     else if (ANY_STRING(val1)) {
         DECLARE_MOLD (mo);

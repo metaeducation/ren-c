@@ -88,7 +88,7 @@ INLINE Option(SymId) Cell_Word_Id(const Cell* v) {
 
 INLINE REBCTX *VAL_WORD_CONTEXT(const Value* v) {
     assert(IS_WORD_BOUND(v));
-    REBNOD *binding = VAL_BINDING(v);
+    Stub* binding = VAL_BINDING(v);
     assert(
         GET_SER_FLAG(binding, NODE_FLAG_MANAGED)
         or IS_END(LVL(LINK(binding).keysource)->param) // not fulfilling

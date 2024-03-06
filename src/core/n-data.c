@@ -286,11 +286,11 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
 {
     switch (VAL_TYPE(v)) {
     case REB_ACTION: {
-        REBNOD *n = VAL_BINDING(v); // see METHOD... RETURNs also have binding
-        if (not n)
+        Stub *binding = VAL_BINDING(v); // see METHOD, RETURNs also have it
+        if (not binding)
             return false;
 
-        Init_Frame(out, CTX(n));
+        Init_Frame(out, CTX(binding));
         break; }
 
     case REB_WORD:
@@ -306,7 +306,7 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
         // result in that word having a FRAME! incarnated as a Stub node (if
         // it was not already reified.)
         //
-        // !!! In the future Reb_Context will refer to a REBNOD*, and only
+        // !!! In the future Reb_Context will refer to a Node*, and only
         // be reified based on the properties of the cell into which it is
         // moved (e.g. OUT would be examined here to determine if it would
         // have a longer lifetime than the Level* or other node)
@@ -959,11 +959,11 @@ DECLARE_NATIVE(free_q)
 
     Series* s;
     if (ANY_CONTEXT(v))
-        s = SER(v->payload.any_context.varlist); // VAL_CONTEXT fails if freed
+        s = v->payload.any_context.varlist;  // VAL_CONTEXT fails if freed
     else if (IS_HANDLE(v))
-        s = SER(v->extra.singular);
+        s = v->extra.singular;
     else if (ANY_SERIES(v))
-        s = v->payload.any_series.series; // VAL_SERIES fails if freed
+        s = v->payload.any_series.series;  // VAL_SERIES fails if freed
     else
         return Init_False(OUT);
 

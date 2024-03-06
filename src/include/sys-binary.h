@@ -38,6 +38,12 @@
 // BIN_XXX: Binary or byte-size string seres macros
 //
 
+INLINE Binary* Cell_Binary(const Cell* cell) {
+    Series* s = VAL_SERIES(cell);
+    assert(Series_Wide(s) == 1);
+    return cast(Binary*, s);
+}
+
 #define Binary_At(bin,n) \
     Series_At(Byte, (bin), (n))
 

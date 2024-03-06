@@ -951,16 +951,18 @@ struct LevelStruct {
     template <class T>
     inline Level* LVL(T *p) {
         constexpr bool base = std::is_same<T, void>::value
-            or std::is_same<T, REBNOD>::value;
+            or std::is_same<T, Node>::value;
 
-        static_assert(base, "LVL() works on void/REBNOD");
+        static_assert(base, "LVL() works on void/Node");
 
         if (base)
             assert(
-                (reinterpret_cast<REBNOD*>(p)->header.bits & (
-                    NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
+                (NODE_BYTE(p) & (
+                    NODE_BYTEMASK_0x80_NODE
+                    | NODE_BYTEMASK_0x40_FREE
+                    | NODE_BYTEMASK_0x01_CELL
                 )) == (
-                    NODE_FLAG_NODE | NODE_FLAG_CELL
+                    NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x01_CELL
                 )
             );
 

@@ -148,7 +148,7 @@ INLINE int LVL_LINE(Level* L) {
     if (NOT_SER_FLAG(L->source->array, ARRAY_FLAG_FILE_LINE))
         return 0;
 
-    return MISC(SER(L->source->array)).line;
+    return MISC(L->source->array).line;
 }
 
 
@@ -449,7 +449,7 @@ INLINE void Begin_Action(
 INLINE void Push_Action(
     Level* L,
     REBACT *act,
-    REBNOD *binding
+    Stub* binding
 ){
     L->param = ACT_PARAMS_HEAD(act); // Specializations hide some params...
     REBLEN num_args = ACT_NUM_PARAMS(act); // ...so see REB_TS_HIDDEN
@@ -472,7 +472,7 @@ INLINE void Push_Action(
         L->varlist = ARR(s);
     }
     else {
-        s = SER(L->varlist);
+        s = L->varlist;
         if (s->content.dynamic.rest >= num_args + 1 + 1) // +roovar, +end
             goto sufficient_allocation;
 
@@ -553,7 +553,7 @@ INLINE void Drop_Action(Level* L) {
 
     assert(
         GET_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE)
-        or LINK(L->varlist).keysource == NOD(L)
+        or LINK(L->varlist).keysource == L
     );
 
     if (GET_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE)) {
@@ -567,10 +567,10 @@ INLINE void Drop_Action(Level* L) {
         if (GET_SER_FLAG(L->varlist, NODE_FLAG_MANAGED))
             L->varlist = nullptr; // references exist, let a new one alloc
         else {
-            // This node could be reused vs. calling Make_Node() on the next
+            // This node could be reused vs. calling Alloc_Pooled() on the next
             // action invocation...but easier for the moment to let it go.
             //
-            Free_Node(SER_POOL, L->varlist);
+            Free_Pooled(SER_POOL, L->varlist);
             L->varlist = nullptr;
         }
     }
@@ -590,11 +590,11 @@ INLINE void Drop_Action(Level* L) {
         L->varlist = CTX_VARLIST(
             Steal_Context_Vars(
                 CTX(L->varlist),
-                NOD(L->original) // degrade keysource from f
+                L->original  // degrade keysource from L
             )
         );
         assert(NOT_SER_FLAG(L->varlist, NODE_FLAG_MANAGED));
-        LINK(L->varlist).keysource = NOD(L);
+        LINK(L->varlist).keysource = L;  // carries NODE_FLAG_CELL
     }
     else {
         // We can reuse the varlist and its data allocation, which may be
@@ -604,7 +604,7 @@ INLINE void Drop_Action(Level* L) {
         // only Enter_Native() sets HOLD.  Clear that.
         //
         CLEAR_SER_INFO(L->varlist, SERIES_INFO_HOLD);
-        assert(0 == (SER(L->varlist)->info.bits & ~( // <- note bitwise not
+        assert(0 == (L->varlist->info.bits & ~( // <- note bitwise not
             SERIES_INFO_0_IS_TRUE // parallels NODE_FLAG_NODE
             | FLAG_WIDE_BYTE_OR_0(0) // don't mask out wide (0 for arrays))
             | FLAG_LEN_BYTE_OR_255(255) // mask out non-dynamic-len (dynamic)

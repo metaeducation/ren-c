@@ -166,13 +166,13 @@ DECLARE_NATIVE(recycle)
       #if defined(NDEBUG)
         fail (Error_Debug_Only_Raw());
       #else
-        Series* sweeplist = Make_Series(100, sizeof(REBNOD*));
+        Series* sweeplist = Make_Series(100, sizeof(Node*));
         count = Recycle_Core(false, sweeplist);
         assert(count == Series_Len(sweeplist));
 
         REBLEN index = 0;
         for (index = 0; index < count; ++index) {
-            REBNOD *node = *Series_At(REBNOD*, sweeplist, index);
+            Node* node = *Series_At(Node*, sweeplist, index);
             PROBE(node);
             UNUSED(node);
         }
@@ -237,14 +237,14 @@ DECLARE_NATIVE(check)
     // !!! Should call generic ASSERT_VALUE macro with more cases
     //
     if (ANY_SERIES(value)) {
-        ASSERT_SERIES(VAL_SERIES(value));
+        Assert_Series(VAL_SERIES(value));
     }
     else if (ANY_CONTEXT(value)) {
         ASSERT_CONTEXT(VAL_CONTEXT(value));
     }
     else if (IS_ACTION(value)) {
-        ASSERT_ARRAY(VAL_ACT_PARAMLIST(value));
-        ASSERT_ARRAY(VAL_ACT_DETAILS(value));
+        Assert_Array(VAL_ACT_PARAMLIST(value));
+        Assert_Array(VAL_ACT_DETAILS(value));
     }
 
     return Init_True(OUT);

@@ -141,7 +141,7 @@ void MF_Action(REB_MOLD *mo, const Cell* v, bool form)
     //
     Array* words_list = List_Func_Words(v, true); // show pure locals
     Mold_Array_At(mo, words_list, 0, "[]");
-    Free_Unmanaged_Array(words_list);
+    Free_Unmanaged_Series(words_list);
 
     // !!! Previously, ACTION! would mold the body out.  This created a large
     // amount of output, and also many function variations do not have
@@ -278,9 +278,7 @@ REBTYPE(Action)
 
             // !!! How to tell whether it's a URL! or a FILE! ?
             //
-            Scan_File(
-                OUT, cb_cast(Symbol_Head(LINK(a).file)), Series_Len(LINK(a).file)
-            );
+            Init_File(OUT, LINK(a).file);
             return OUT; }
 
         case SYM_LINE: {

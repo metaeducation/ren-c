@@ -423,7 +423,7 @@ Value* Init_Map(Cell* out, REBMAP *map)
 
     RESET_CELL(out, REB_MAP);
     INIT_BINDING(out, UNBOUND);
-    out->payload.any_series.series = SER(MAP_PAIRLIST(map));
+    out->payload.any_series.series = MAP_PAIRLIST(map);
     out->payload.any_series.index = 0;
 
     return KNOWN(out);

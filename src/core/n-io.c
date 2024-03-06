@@ -182,7 +182,7 @@ DECLARE_NATIVE(new_line)
     Value* pos = ARG(position);
     Array* a = Cell_Array(pos);
 
-    FAIL_IF_READ_ONLY_ARRAY(a);
+    Fail_If_Read_Only_Series(a);
 
     Copy_Cell(OUT, pos); // always returns the input position
 
@@ -477,7 +477,7 @@ DECLARE_NATIVE(wait)
         }
         if (IS_END(val)) {
             if (n == 0) {
-                Free_Unmanaged_Array(ports);
+                Free_Unmanaged_Series(ports);
                 return nullptr; // has no pending ports!
             }
             timeout = ALL_BITS; // no timeout provided

@@ -175,14 +175,14 @@ static const Byte Enbase64[64] =
 //
 //  Decode_Base2: C
 //
-static Series* Decode_Base2(const Byte **src, REBLEN len, Byte delim)
+static Binary* Decode_Base2(const Byte **src, REBLEN len, Byte delim)
 {
     Byte *bp;
     const Byte *cp;
     REBLEN count = 0;
     REBLEN accum = 0;
     Byte lex;
-    Series* ser;
+    Binary* ser;
 
     ser = Make_Binary(len >> 3);
     bp = Binary_Head(ser);
@@ -225,7 +225,7 @@ err:
 //
 //  Decode_Base16: C
 //
-static Series* Decode_Base16(const Byte **src, REBLEN len, Byte delim)
+static Binary* Decode_Base16(const Byte **src, REBLEN len, Byte delim)
 {
     Byte *bp;
     const Byte *cp;
@@ -233,7 +233,7 @@ static Series* Decode_Base16(const Byte **src, REBLEN len, Byte delim)
     REBLEN accum = 0;
     Byte lex;
     REBINT val;
-    Series* ser;
+    Binary* ser;
 
     ser = Make_Binary(len / 2);
     bp = Binary_Head(ser);
@@ -270,14 +270,14 @@ err:
 //
 //  Decode_Base64: C
 //
-static Series* Decode_Base64(const Byte **src, REBLEN len, Byte delim)
+static Binary* Decode_Base64(const Byte **src, REBLEN len, Byte delim)
 {
     Byte *bp;
     const Byte *cp;
     REBLEN flip = 0;
     REBLEN accum = 0;
     Byte lex;
-    Series* ser;
+    Binary* ser;
 
     // Allocate buffer large enough to hold result:
     // Accounts for e bytes decoding into 3 bytes.
@@ -357,7 +357,7 @@ const Byte *Decode_Binary(
     REBINT base,
     Byte delim
 ) {
-    Series* ser = 0;
+    Binary* ser = 0;
 
     switch (base) {
     case 64:
@@ -384,11 +384,11 @@ const Byte *Decode_Binary(
 //
 // Base2 encode a range of arbitrary bytes into a byte-sized ASCII series.
 //
-Series* Encode_Base2(const Byte *src, REBLEN len, bool brk)
+Binary* Encode_Base2(const Byte *src, REBLEN len, bool brk)
 {
     // Account for binary digits, lines, and extra syntax ("slop factor")
     //
-    Series* s = Make_Binary(8 * len + 2 * (len / 8) + 4);
+    Binary* s = Make_Binary(8 * len + 2 * (len / 8) + 4);
     Byte *dest = Binary_Head(s);
 
     if (len == 0) { // return empty series if input was zero length
@@ -427,11 +427,11 @@ Series* Encode_Base2(const Byte *src, REBLEN len, bool brk)
 //
 // Base16 encode a range of arbitrary bytes into a byte-sized ASCII series.
 //
-Series* Encode_Base16(const Byte *src, REBLEN len, bool brk)
+Binary* Encode_Base16(const Byte *src, REBLEN len, bool brk)
 {
     // Account for hex digits, lines, and extra syntax ("slop factor")
     //
-    Series* s = Make_Binary(len * 2 + len / 32 + 32);
+    Binary* s = Make_Binary(len * 2 + len / 32 + 32);
     Byte *dest = Binary_Head(s);
 
     if (len == 0) { // return empty series if input was zero length
@@ -465,11 +465,11 @@ Series* Encode_Base16(const Byte *src, REBLEN len, bool brk)
 //
 // Base64 encode a range of arbitrary bytes into a byte-sized ASCII series.
 //
-Series* Encode_Base64(const Byte *src, REBLEN len, bool brk)
+Binary* Encode_Base64(const Byte *src, REBLEN len, bool brk)
 {
     // Account for base64 digits, lines, and extra syntax ("slop factor")
     //
-    Series* s = Make_Binary(4 * len / 3 + 2 * (len / 32) + 5);
+    Binary* s = Make_Binary(4 * len / 3 + 2 * (len / 32) + 5);
     Byte *dest = Binary_Head(s);
 
     if (len == 0) { // return empty series if input was zero length

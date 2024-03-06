@@ -148,15 +148,15 @@ REBLEN Modify_Array(
 
     if (op != SYM_CHANGE) {
         // Always expand dst_arr for INSERT and APPEND actions:
-        Expand_Series(SER(dst_arr), dst_idx, size);
+        Expand_Series(dst_arr, dst_idx, size);
     }
     else {
         if (size > dst_len)
-            Expand_Series(SER(dst_arr), dst_idx, size - dst_len);
+            Expand_Series(dst_arr, dst_idx, size - dst_len);
         else if (size < dst_len and (flags & AM_PART))
-            Remove_Series(SER(dst_arr), dst_idx, dst_len - size);
+            Remove_Series(dst_arr, dst_idx, dst_len - size);
         else if (size + dst_idx > tail) {
-            Expand_Series_Tail(SER(dst_arr), size - (tail - dst_idx));
+            Expand_Series_Tail(dst_arr, size - (tail - dst_idx));
         }
     }
 
@@ -214,7 +214,7 @@ REBLEN Modify_Array(
         SET_VAL_FLAG(ARR_HEAD(dst_arr), VALUE_FLAG_NEWLINE_BEFORE);
     }
 
-    ASSERT_ARRAY(dst_arr);
+    Assert_Array(dst_arr);
 
     return tail;
 }
@@ -268,7 +268,7 @@ REBLEN Modify_Binary(
 
     REBLEN src_idx = 0;
     REBLEN src_len;
-    Series* src_ser;
+    Binary* src_ser;
     bool needs_free;
     if (IS_INTEGER(src_val)) {
         REBI64 i = VAL_INT64(src_val);
@@ -322,7 +322,7 @@ REBLEN Modify_Binary(
         src_len = Series_Len(src_ser);
     }
     else {
-        src_ser = VAL_SERIES(src_val);
+        src_ser = Cell_Binary(src_val);
         src_idx = VAL_INDEX(src_val);
         src_len = VAL_LEN_AT(src_val);
         assert(needs_free == false);
@@ -336,7 +336,9 @@ REBLEN Modify_Binary(
     // (Note: It may be possible to optimize special cases like append !!)
     if (dst_ser == src_ser) {
         assert(!needs_free);
-        src_ser = Copy_Sequence_At_Len(src_ser, src_idx, src_len);
+        src_ser = cast(Binary*,
+            Copy_Sequence_At_Len(src_ser, src_idx, src_len)
+        );
         needs_free = true;
         src_idx = 0;
     }
@@ -424,7 +426,7 @@ REBLEN Modify_String(
     // If the src_val is not a string, then we need to create a string:
 
     REBLEN src_idx = 0;
-    Series* src_ser;
+    String* src_ser;
     REBLEN src_len;
     bool needs_free;
     if (IS_CHAR(src_val)) {
@@ -443,7 +445,7 @@ REBLEN Modify_String(
         ANY_STRING(src_val)
         and not (IS_TAG(src_val) or (flags & AM_LINE))
     ){
-        src_ser = VAL_SERIES(src_val);
+        src_ser = Cell_String(src_val);
         src_idx = VAL_INDEX(src_val);
         src_len = VAL_LEN_AT(src_val);
 
@@ -465,7 +467,9 @@ REBLEN Modify_String(
     //
     if (dst_ser == src_ser) {
         assert(!needs_free);
-        src_ser = Copy_Sequence_At_Len(src_ser, src_idx, src_len);
+        src_ser = cast(String*,
+            Copy_Sequence_At_Len(src_ser, src_idx, src_len)
+        );
         needs_free = true;
         src_idx = 0;
     }

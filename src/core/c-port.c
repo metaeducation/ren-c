@@ -57,7 +57,7 @@ REBREQ *Ensure_Port_State(Value* port, REBLEN device)
 
     if (!IS_BINARY(state)) {
         assert(IS_NULLED(state));
-        Series* data = Make_Binary(req_size);
+        Binary* data = Make_Binary(req_size);
         CLEAR(Binary_Head(data), req_size);
         TERM_BIN_LEN(data, req_size);
 
@@ -286,7 +286,7 @@ void Sieve_Ports(Array* ports)
                 Find_In_Array_Simple(Cell_Array(waked), 0, val)
                 == VAL_LEN_HEAD(waked) // `=len` means not found
             ) {
-                Remove_Series(SER(ports), n, 1);
+                Remove_Series(ports, n, 1);
                 continue;
             }
         }

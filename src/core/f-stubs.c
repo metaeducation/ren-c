@@ -289,7 +289,7 @@ Value* Init_Any_Series_At_Core(
     enum Reb_Kind type,
     Series* series,
     REBLEN index,
-    REBNOD *binding
+    Stub* binding
 ) {
     Force_Series_Managed(series);
 
@@ -344,7 +344,7 @@ void Set_Tuple(Value* value, Byte *bytes, REBLEN len)
 // !!! Overlaps with ASSERT_CONTEXT, review folding them together.
 //
 void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
-    assert(SER(c)->header.bits & SERIES_MASK_CONTEXT);
+    assert(CTX_VARLIST(c)->header.bits & SERIES_MASK_CONTEXT);
 
     Value* archetype = CTX_ARCHETYPE(c);
     assert(VAL_CONTEXT(archetype) == c);
@@ -382,7 +382,7 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
     // Keylists are uniformly managed, or certain routines would return
     // "sometimes managed, sometimes not" keylists...a bad invariant.
     //
-    ASSERT_ARRAY_MANAGED(CTX_KEYLIST(c));
+    Assert_Series_Managed(CTX_KEYLIST(c));
 }
 
 
@@ -392,7 +392,7 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
 // !!! Overlaps with ASSERT_ACTION, review folding them together.
 //
 void Extra_Init_Action_Checks_Debug(REBACT *a) {
-    assert(SER(a)->header.bits & SERIES_MASK_ACTION);
+    assert(ACT_PARAMLIST(a)->header.bits & SERIES_MASK_ACTION);
 
     Value* archetype = ACT_ARCHETYPE(a);
     assert(VAL_ACTION(archetype) == a);

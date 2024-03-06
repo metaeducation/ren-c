@@ -187,7 +187,7 @@ INLINE void Queue_Mark_Context_Deep(REBCTX *c) { // ARRAY_FLAG_VARLIST
     Array* varlist = CTX_VARLIST(c);
     assert(
         GET_SER_INFO(varlist, SERIES_INFO_INACCESSIBLE)
-        or SERIES_MASK_CONTEXT == (SER(varlist)->header.bits & (
+        or SERIES_MASK_CONTEXT == (varlist->header.bits & (
             SERIES_MASK_CONTEXT // these should be set, not the others
                 | ARRAY_FLAG_PAIRLIST
                 | ARRAY_FLAG_PARAMLIST
@@ -201,7 +201,7 @@ INLINE void Queue_Mark_Context_Deep(REBCTX *c) { // ARRAY_FLAG_VARLIST
 INLINE void Queue_Mark_Action_Deep(REBACT *a) { // ARRAY_FLAG_PARAMLIST
     Array* paramlist = ACT_PARAMLIST(a);
     assert(
-        SERIES_MASK_ACTION == (SER(paramlist)->header.bits & (
+        SERIES_MASK_ACTION == (paramlist->header.bits & (
             SERIES_MASK_ACTION // these should be set, not the others
                 | ARRAY_FLAG_PAIRLIST
                 | ARRAY_FLAG_VARLIST
@@ -215,7 +215,7 @@ INLINE void Queue_Mark_Action_Deep(REBACT *a) { // ARRAY_FLAG_PARAMLIST
 INLINE void Queue_Mark_Map_Deep(REBMAP *m) { // ARRAY_FLAG_PAIRLIST
     Array* pairlist = MAP_PAIRLIST(m);
     assert(
-        ARRAY_FLAG_PAIRLIST == (SER(pairlist)->header.bits & (
+        ARRAY_FLAG_PAIRLIST == (pairlist->header.bits & (
             ARRAY_FLAG_VARLIST | ARRAY_FLAG_PAIRLIST | ARRAY_FLAG_PARAMLIST
             | ARRAY_FLAG_FILE_LINE
         ))
@@ -225,7 +225,7 @@ INLINE void Queue_Mark_Map_Deep(REBMAP *m) { // ARRAY_FLAG_PAIRLIST
 }
 
 INLINE void Queue_Mark_Binding_Deep(const Cell* v) {
-    REBNOD *binding = VAL_BINDING(v);
+    Stub* binding = VAL_BINDING(v);
     if (not binding)
         return;
 
@@ -254,7 +254,7 @@ INLINE void Queue_Mark_Binding_Deep(const Cell* v) {
 //
 INLINE void Queue_Mark_Singular_Array(Array* a) {
     assert(
-        0 == (SER(a)->header.bits & (
+        0 == (a->header.bits & (
             ARRAY_FLAG_VARLIST | ARRAY_FLAG_PAIRLIST | ARRAY_FLAG_PARAMLIST
             | ARRAY_FLAG_FILE_LINE
         ))
@@ -416,7 +416,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
             // data for the handle lives in that shared location.  There is
             // nothing the GC needs to see inside a handle.
             //
-            SER(singular)->header.bits |= NODE_FLAG_MARKED;
+            singular->header.bits |= NODE_FLAG_MARKED;
 
         #if !defined(NDEBUG)
             assert(Array_Len(singular) == 1);
@@ -630,7 +630,7 @@ static void Propagate_All_GC_Marks(void)
         // We should have marked this series at queueing time to keep it from
         // being doubly added before the queue had a chance to be processed
          //
-        assert(SER(a)->header.bits & NODE_FLAG_MARKED);
+        assert(a->header.bits & NODE_FLAG_MARKED);
 
     #ifdef HEAVY_CHECKS
         //
@@ -638,14 +638,14 @@ static void Propagate_All_GC_Marks(void)
         // managed will go through, so it's a good time to assert properties
         // about the array.
         //
-        ASSERT_ARRAY(a);
+        Assert_Array(a);
     #else
         //
         // For a lighter check, make sure it's marked as a value-bearing array
         // and that it hasn't been freed.
         //
         assert(IS_SER_ARRAY(a));
-        assert(not IS_FREE_NODE(SER(a)));
+        assert(not IS_FREE_NODE(a));
     #endif
 
         Cell* v;
@@ -693,8 +693,8 @@ static void Propagate_All_GC_Marks(void)
             // because of the potential for overflowing the C stack with calls
             // to Queue_Mark_Context_Deep.
 
-            REBNOD *keysource = LINK(a).keysource;
-            if (keysource->header.bits & NODE_FLAG_CELL) {
+            Node* keysource = LINK(a).keysource;
+            if (not Is_Node_A_Stub(keysource)) {
                 //
                 // Must be a FRAME! and it must be on the stack running.  If
                 // it has stopped running, then the keylist must be set to
@@ -875,7 +875,8 @@ static void Mark_Root_Series(void)
                 if (not (s->header.bits & NODE_FLAG_MANAGED))
                     assert(not LINK(s).owner);
                 else if (
-                    SER(LINK(s).owner)->info.bits & SERIES_INFO_INACCESSIBLE
+                    CTX_VARLIST(LINK(s).owner)->info.bits
+                    & SERIES_INFO_INACCESSIBLE
                 ){
                     if (NOT_SER_INFO(LINK(s).owner, FRAME_INFO_FAILED)) {
                         //
@@ -926,7 +927,7 @@ static void Mark_Root_Series(void)
                     // whether the keysource points to a frame (cell bit
                     // set in node).
                     //
-                    assert(LINK(s).keysource->header.bits & NODE_FLAG_CELL);
+                    assert(not Is_Node_A_Stub(LINK(s).keysource));
                     continue;
                 }
 
@@ -1040,19 +1041,19 @@ static void Mark_Natives(void)
 //
 static void Mark_Guarded_Nodes(void)
 {
-    REBNOD **np = Series_Head(REBNOD*, GC_Guarded);
+    Node** np = Series_Head(Node*, GC_Guarded);
     REBLEN n = Series_Len(GC_Guarded);
     for (; n > 0; --n, ++np) {
-        REBNOD *node = *np;
-        if (node->header.bits & NODE_FLAG_CELL) {
+        Node* node = *np;
+        if (Is_Node_A_Cell(node)) {
             //
             // !!! What if someone tried to GC_GUARD a managed pairing?
             //
             Queue_Mark_Opt_End_Cell_Deep(cast(Value*, node));
         }
         else { // a series
-            assert(node->header.bits & NODE_FLAG_MANAGED);
             Series* s = cast(Series*, node);
+            assert(s->header.bits & NODE_FLAG_MANAGED);
             if (IS_SER_ARRAY(s))
                 Queue_Mark_Array_Subclass_Deep(ARR(s));
             else
@@ -1314,7 +1315,7 @@ static REBLEN Sweep_Series(void)
                 //
                 if (s->header.bits & NODE_FLAG_CELL) {
                     assert(not (s->header.bits & NODE_FLAG_ROOT));
-                    Free_Node(SER_POOL, s); // Free_Pairing is for manuals
+                    Free_Pooled(SER_POOL, s); // Free_Pairing is for manuals
                 }
                 else
                     GC_Kill_Series(s);
@@ -1367,7 +1368,7 @@ static REBLEN Sweep_Series(void)
             if (v->header.bits & NODE_FLAG_MARKED)
                 v->header.bits &= ~NODE_FLAG_MARKED;
             else {
-                Free_Node(PAR_POOL, v); // Free_Pairing is for manuals
+                Free_Pooled(PAR_POOL, v); // Free_Pairing is for manuals
                 ++count;
             }
         }
@@ -1385,7 +1386,7 @@ static REBLEN Sweep_Series(void)
 //
 REBLEN Fill_Sweeplist(Series* sweeplist)
 {
-    assert(Series_Wide(sweeplist) == sizeof(REBNOD*));
+    assert(Series_Wide(sweeplist) == sizeof(Node*));
     assert(Series_Len(sweeplist) == 0);
 
     REBLEN count = 0;
@@ -1402,7 +1403,7 @@ REBLEN Fill_Sweeplist(Series* sweeplist)
                     s->header.bits &= ~NODE_FLAG_MARKED;
                 else {
                     Expand_Series_Tail(sweeplist, 1);
-                    *Series_At(REBNOD*, sweeplist, count) = NOD(s);
+                    *Series_At(Node*, sweeplist, count) = s;
                     ++count;
                 }
                 break;
@@ -1412,14 +1413,14 @@ REBLEN Fill_Sweeplist(Series* sweeplist)
                 // It's a cell which is managed where the value is not an END.
                 // This is a managed pairing, so mark bit should be heeded.
                 //
-                // !!! It is a REBNOD, but *not* a "series".
+                // !!! It is a Node, but *not* a "Stub".
                 //
                 assert(Is_Series_Managed(s));
                 if (s->header.bits & NODE_FLAG_MARKED)
                     s->header.bits &= ~NODE_FLAG_MARKED;
                 else {
                     Expand_Series_Tail(sweeplist, 1);
-                    *Series_At(REBNOD*, sweeplist, count) = NOD(s);
+                    *Series_At(Node*, sweeplist, count) = s;
                     ++count;
                 }
                 break;
@@ -1490,7 +1491,7 @@ REBLEN Recycle_Core(bool shutdown, Series* sweeplist)
     while (TG_Reuse) {
         Array* varlist = TG_Reuse;
         TG_Reuse = LINK(TG_Reuse).reuse;
-        GC_Kill_Series(SER(varlist)); // no track for Free_Unmanaged_Series()
+        GC_Kill_Series(varlist);  // no track for Free_Unmanaged_Series()
     }
 
     // MARKING PHASE: the "root set" from which we determine the liveness
@@ -1614,10 +1615,10 @@ REBLEN Recycle(void)
 //
 //  Push_Guard_Node: C
 //
-void Push_Guard_Node(const REBNOD *node)
+void Push_Guard_Node(const Node* node)
 {
   #if !defined(NDEBUG)
-    if (node->header.bits & NODE_FLAG_CELL) {
+    if (Is_Node_A_Cell(node)) {
         //
         // It is a value.  Cheap check: require that it already contain valid
         // data when the guard call is made (even if GC isn't necessarily
@@ -1639,7 +1640,7 @@ void Push_Guard_Node(const REBNOD *node)
         // being able to resize and reallocate the data pointer.  But this is
         // a somewhat expensive check, so only feasible to run occasionally.
         //
-        REBNOD *containing = Try_Find_Containing_Node_Debug(value);
+        Node* containing = Try_Find_Containing_Node_Debug(value);
         if (containing)
             panic (containing);
       #endif
@@ -1656,7 +1657,7 @@ void Push_Guard_Node(const REBNOD *node)
         Extend_Series(GC_Guarded, 8);
 
     *Series_At(
-        const REBNOD*,
+        const Node*,
         GC_Guarded,
         Series_Len(GC_Guarded)
     ) = node;
@@ -1718,7 +1719,7 @@ void Startup_GC(void)
 
     // Temporary series and values protected from GC. Holds node pointers.
     //
-    GC_Guarded = Make_Series(15, sizeof(REBNOD*));
+    GC_Guarded = Make_Series(15, sizeof(Node*));
 
     // The marking queue used in lieu of recursion to ensure that deeply
     // nested structures don't cause the C stack to overflow.

@@ -40,10 +40,10 @@
 // as UTF-8 data later, e.g. `as word! binary`, since it would be too late
 // to give them that capacity after-the-fact to enable this.
 //
-Series* Make_Binary(REBLEN capacity)
+Binary* Make_Binary(REBLEN capacity)
 {
-    Series* bin = Make_Series(capacity + 1, sizeof(Byte));
-    TERM_SEQUENCE(bin);
+    Binary* bin = cast(Binary*, Make_Series(capacity + 1, sizeof(Byte)));
+    TERM_BIN(bin);
     return bin;
 }
 
@@ -55,9 +55,9 @@ Series* Make_Binary(REBLEN capacity)
 //
 String* Make_String(REBLEN capacity)
 {
-    Series* ser = Make_Series(capacity + 1, sizeof(REBUNI));
-    TERM_SEQUENCE(ser);
-    return ser;
+    String* str = cast(String*, Make_Series(capacity + 1, sizeof(REBUNI)));
+    TERM_SEQUENCE(str);
+    return str;
 }
 
 
@@ -160,7 +160,7 @@ Series* Append_Unencoded(Series* dst, const char *src)
 //
 // Append a non-encoded character to a string.
 //
-Series* Append_Codepoint(Series* dst, REBUNI codepoint)
+String* Append_Codepoint(String* dst, REBUNI codepoint)
 {
     assert(Series_Wide(dst) == sizeof(REBUNI)); // invariant for "Latin1 Nowhere"
 
@@ -180,7 +180,7 @@ Series* Append_Codepoint(Series* dst, REBUNI codepoint)
 //
 // Encode a codepoint onto a UTF-8 binary series.
 //
-Series* Append_Utf8_Codepoint(Series* dst, uint32_t codepoint)
+Binary* Append_Utf8_Codepoint(Binary* dst, uint32_t codepoint)
 {
     assert(Series_Wide(dst) == sizeof(Byte));
 
@@ -197,7 +197,7 @@ Series* Append_Utf8_Codepoint(Series* dst, uint32_t codepoint)
 //
 // Create a string that holds a single codepoint.
 //
-Series* Make_Ser_Codepoint(REBLEN codepoint)
+String* Make_Ser_Codepoint(REBLEN codepoint)
 {
     assert(codepoint < (1 << 16));
 
@@ -287,7 +287,7 @@ void Append_Int_Pad(Series* dst, REBINT num, REBINT digs)
 //
 // `dst = nullptr` means make a new string.
 //
-Series* Append_UTF8_May_Fail(
+String* Append_UTF8_May_Fail(
     String* dst,
     const char *utf8,
     size_t size,
@@ -370,9 +370,9 @@ Series* Append_UTF8_May_Fail(
 //
 // WARNING: returns BYTE_BUF, not a copy!
 //
-Series* Join_Binary(const Value* blk, REBINT limit)
+Binary* Join_Binary(const Value* blk, REBINT limit)
 {
-    Series* series = BYTE_BUF;
+    Binary* series = BYTE_BUF;
 
     REBLEN tail = 0;
 

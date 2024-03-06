@@ -298,7 +298,7 @@ static Series* MAKE_TO_String_Common(const Value* arg)
 
 static Series* Make_Binary_BE64(const Value* arg)
 {
-    Series* ser = Make_Binary(8);
+    Binary* ser = Make_Binary(8);
 
     Byte *bp = Binary_Head(ser);
 
@@ -644,7 +644,7 @@ REB_R PD_String(
         // Because Ren-C unified picking and pathing, this somewhat odd
         // feature is now part of PICKing a string from another string.
 
-        Series* copy = Copy_Sequence_At_Position(pvs->out);
+        String* copy = cast(String*, Copy_Sequence_At_Position(pvs->out));
 
         // This makes sure there's always a "/" at the end of the file before
         // appending new material via a picker:
@@ -762,14 +762,14 @@ typedef struct REB_Str_Flags {
 } REB_STRF;
 
 
-static void Sniff_String(Series* ser, REBLEN idx, REB_STRF *sf)
+static void Sniff_String(String* str, REBLEN idx, REB_STRF *sf)
 {
     // Scan to find out what special chars the string contains?
 
-    Ucs2(const*) up = String_At(ser, idx);
+    Ucs2(const*) up = String_At(str, idx);
 
     REBLEN n;
-    for (n = idx; n < String_Len(ser); n++) {
+    for (n = idx; n < String_Len(str); n++) {
         REBUNI c;
         up = Ucs2_Next(&c, up);
 
@@ -895,23 +895,23 @@ Byte *Emit_Uni_Char(Byte *bp, REBUNI chr, bool parened)
 //
 void Mold_Text_Series_At(
     REB_MOLD *mo,
-    Series* series,
+    String* str,
     REBLEN index
 ){
-    if (index >= String_Len(series)) {
+    if (index >= String_Len(str)) {
         Append_Unencoded(mo->series, "\"\"");
         return;
     }
 
-    REBLEN len_at = String_Len(series) - index;
+    REBLEN len_at = String_Len(str) - index;
 
     REB_STRF sf;
     CLEARS(&sf);
-    Sniff_String(series, index, &sf);
+    Sniff_String(str, index, &sf);
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED))
         sf.paren = 0;
 
-    Ucs2(const*) up = String_At(series, index);
+    Ucs2(const*) up = String_At(str, index);
 
     // If it is a short quoted string, emit it as "string"
     //
@@ -925,7 +925,7 @@ void Mold_Text_Series_At(
         *dp++ = '"';
 
         REBLEN n;
-        for (n = index; n < String_Len(series); n++) {
+        for (n = index; n < String_Len(str); n++) {
             REBUNI c;
             up = Ucs2_Next(&c, up);
             dp = Emit_Uni_Char(
@@ -955,7 +955,7 @@ void Mold_Text_Series_At(
     *dp++ = '{';
 
     REBLEN n;
-    for (n = index; n < String_Len(series); n++) {
+    for (n = index; n < String_Len(str); n++) {
         REBUNI c;
         up = Ucs2_Next(&c, up);
 
@@ -1077,7 +1077,7 @@ void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
 
     REBLEN len = VAL_LEN_AT(v);
 
-    Series* enbased;
+    Binary* enbased;
     switch (Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16)) {
     default:
     case 16: {
@@ -1099,7 +1099,11 @@ void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
     }
 
     Append_Unencoded(mo->series, "#{");
-    Append_Utf8_Utf8(mo->series, cs_cast(Binary_Head(enbased)), Binary_Len(enbased));
+    Append_Utf8_Utf8(
+        mo->series,
+        cs_cast(Binary_Head(enbased)),
+        Binary_Len(enbased)
+    );
     Append_Unencoded(mo->series, "}");
 
     Free_Unmanaged_Series(enbased);
@@ -1114,7 +1118,7 @@ void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
 //
 void MF_String(REB_MOLD *mo, const Cell* v, bool form)
 {
-    Series* s = mo->series;
+    Binary* s = mo->series;
 
     assert(ANY_STRING(v));
 
@@ -1122,7 +1126,7 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
     //
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) && VAL_INDEX(v) != 0) {
         Pre_Mold(mo, v); // e.g. #[file! part
-        Mold_Text_Series_At(mo, VAL_SERIES(v), 0);
+        Mold_Text_Series_At(mo, Cell_String(v), 0);
         Post_Mold(mo, v);
         return;
     }
@@ -1141,7 +1145,7 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
 
     switch (VAL_TYPE(v)) {
     case REB_TEXT:
-        Mold_Text_Series_At(mo, VAL_SERIES(v), VAL_INDEX(v));
+        Mold_Text_Series_At(mo, Cell_String(v), VAL_INDEX(v));
         break;
 
     case REB_FILE:

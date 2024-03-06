@@ -92,7 +92,7 @@
 //
 void Emit(REB_MOLD *mo, const char *fmt, ...)
 {
-    Series* s = mo->series;
+    Binary* s = mo->series;
     assert(Series_Wide(s) == 1);
 
     va_list va;
@@ -485,7 +485,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
 {
     assert(not THROWN(v)); // !!! Note: Thrown bit is being eliminated
 
-    Series* s = mo->series;
+    Binary* s = mo->series;
     assert(Series_Wide(s) == sizeof(Byte));
     Assert_Series_Term(s);
 
@@ -537,7 +537,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
 //
 // Form a value based on the mold opts provided.
 //
-Series* Copy_Mold_Or_Form_Value(const Cell* v, REBFLGS opts, bool form)
+String* Copy_Mold_Or_Form_Value(const Cell* v, REBFLGS opts, bool form)
 {
     DECLARE_MOLD (mo);
     mo->opts = opts;
@@ -634,7 +634,7 @@ bool Form_Reduce_Throws(
 //
 //  Form_Tight_Block: C
 //
-Series* Form_Tight_Block(const Value* blk)
+String* Form_Tight_Block(const Value* blk)
 {
     DECLARE_MOLD (mo);
 
@@ -680,7 +680,7 @@ void Push_Mold(REB_MOLD *mo)
     //
     assert(mo->series == nullptr);
 
-    Series* s = mo->series = MOLD_BUF;
+    Binary* s = mo->series = MOLD_BUF;
     mo->start = Series_Len(s);
 
     Assert_Series_Term(s);
@@ -774,7 +774,7 @@ void Throttle_Mold(REB_MOLD *mo) {
 // it will be copied up to `len`.  If there are not enough characters then
 // the debug build will assert.
 //
-Series* Pop_Molded_String_Core(REB_MOLD *mo, REBLEN len)
+String* Pop_Molded_String_Core(REB_MOLD *mo, REBLEN len)
 {
     assert(mo->series);  // if nullptr there was no Push_Mold()
 
@@ -785,7 +785,7 @@ Series* Pop_Molded_String_Core(REB_MOLD *mo, REBLEN len)
     if (len == UNKNOWN)
         len = Series_Len(mo->series) - mo->start;
 
-    Series* result = Make_Sized_String_UTF8(
+    String* result = Make_Sized_String_UTF8(
         cs_cast(Binary_At(mo->series, mo->start)),
         len
     );

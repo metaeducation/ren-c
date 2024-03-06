@@ -53,7 +53,7 @@ void Startup_Data_Stack(REBLEN size)
     // and it will perform the allocation at that time.
     //
     TERM_ARRAY_LEN(DS_Array, 1);
-    ASSERT_ARRAY(DS_Array);
+    Assert_Array(DS_Array);
 
     // Reuse the expansion logic that happens on a DS_PUSH to get the
     // initial stack size.  It requires you to be on an END to run.
@@ -76,7 +76,7 @@ void Shutdown_Data_Stack(void)
     assert(TOP_INDEX == 0);
     Assert_Unreadable_If_Debug(ARR_HEAD(DS_Array));
 
-    Free_Unmanaged_Array(DS_Array);
+    Free_Unmanaged_Series(DS_Array);
 }
 
 
@@ -273,7 +273,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     // If adding in the requested amount would overflow the stack limit, then
     // give a data stack overflow error.
     //
-    if (Series_Rest(SER(DS_Array)) + amount >= STACK_LIMIT) {
+    if (Series_Rest(DS_Array) + amount >= STACK_LIMIT) {
         //
         // Because the stack pointer was incremented and hit the END marker
         // before the expansion, we have to decrement it if failing.
@@ -282,7 +282,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
         Fail_Stack_Overflow(); // !!! Should this be a "data stack" message?
     }
 
-    Extend_Series(SER(DS_Array), amount);
+    Extend_Series(DS_Array, amount);
 
     // Update the pointer used for fast access to the top of the stack that
     // likely was moved by the above allocation (needed before using TOP)
@@ -309,7 +309,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     TERM_ARRAY_LEN(DS_Array, len_new);
     assert(cell == ARR_TAIL(DS_Array));
 
-    ASSERT_ARRAY(DS_Array);
+    Assert_Array(DS_Array);
 }
 
 
@@ -343,10 +343,10 @@ void Pop_Stack_Values_Into(Value* into, StackIndex base) {
     Value* values = KNOWN(Array_At(DS_Array, base + 1));
 
     assert(ANY_ARRAY(into));
-    FAIL_IF_READ_ONLY_ARRAY(Cell_Array(into));
+    Fail_If_Read_Only_Series(Cell_Array(into));
 
     VAL_INDEX(into) = Insert_Series(
-        SER(Cell_Array(into)),
+        Cell_Array(into),
         VAL_INDEX(into),
         cast(Byte*, values), // stack only holds fully specified REBVALs
         len // multiplied by width (sizeof(Cell)) in Insert_Series

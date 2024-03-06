@@ -337,7 +337,7 @@ REBLEN Find_Map_Entry(
     // a SET must always be done with an immutable key...because if it were
     // changed, there'd be no notification to rehash the map.
     //
-    Series* locker = SER(MAP_PAIRLIST(map));
+    Series* locker = MAP_PAIRLIST(map);
     Ensure_Value_Immutable(key, locker);
 
     // Must set the value:
@@ -789,7 +789,7 @@ REBTYPE(Map)
         if (IS_NULLED_OR_BLANK(arg))
             RETURN (val); // don't fail on read only if it would be a no-op
 
-        FAIL_IF_READ_ONLY_ARRAY(MAP_PAIRLIST(map));
+        Fail_If_Read_Only_Series(MAP_PAIRLIST(map));
 
         UNUSED(PAR(series));
         UNUSED(PAR(value)); // handled as arg
@@ -822,7 +822,7 @@ REBTYPE(Map)
     case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
 
-        FAIL_IF_READ_ONLY_ARRAY(MAP_PAIRLIST(map));
+        Fail_If_Read_Only_Series(MAP_PAIRLIST(map));
 
         UNUSED(PAR(series));
 
@@ -863,7 +863,7 @@ REBTYPE(Map)
         return Init_Map(OUT, Copy_Map(map, types)); }
 
     case SYM_CLEAR:
-        FAIL_IF_READ_ONLY_ARRAY(MAP_PAIRLIST(map));
+        Fail_If_Read_Only_Series(MAP_PAIRLIST(map));
 
         Reset_Array(MAP_PAIRLIST(map));
 

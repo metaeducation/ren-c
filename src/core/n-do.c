@@ -427,8 +427,8 @@ DECLARE_NATIVE(do)
 
         assert(CTX_KEYS_HEAD(c) == ACT_PARAMS_HEAD(phase));
         L->param = CTX_KEYS_HEAD(c);
-        REBCTX *stolen = Steal_Context_Vars(c, NOD(phase));
-        LINK(stolen).keysource = NOD(L); // changes CTX_KEYS_HEAD() result
+        REBCTX *stolen = Steal_Context_Vars(c, phase);
+        LINK(stolen).keysource = L;  // changes CTX_KEYS_HEAD() result
 
         // Its data stolen, the context's node should now be GC'd when
         // references in other FRAME! value cells have all gone away.
@@ -686,7 +686,7 @@ DECLARE_NATIVE(redo)
     // Phase needs to always be initialized in FRAME! values.
     //
     assert(
-        SER(ACT_PARAMLIST(restartee->payload.any_context.phase))->header.bits
+        ACT_PARAMLIST(restartee->payload.any_context.phase)->header.bits
         & ARRAY_FLAG_PARAMLIST
     );
 
@@ -814,12 +814,12 @@ DECLARE_NATIVE(applique)
     L->param = CTX_KEYS_HEAD(exemplar);
     REBCTX *stolen = Steal_Context_Vars(
         exemplar,
-        NOD(VAL_ACTION(applicand))
+        VAL_ACTION(applicand)
     );
-    LINK(stolen).keysource = NOD(L); // changes CTX_KEYS_HEAD result
+    LINK(stolen).keysource = L;  // changes CTX_KEYS_HEAD result
 
     if (def_threw) {
-        Free_Unmanaged_Array(CTX_VARLIST(stolen)); // could TG_Reuse it
+        Free_Unmanaged_Series(CTX_VARLIST(stolen)); // could TG_Reuse it
         RETURN (temp);
     }
 

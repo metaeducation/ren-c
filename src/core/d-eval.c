@@ -96,7 +96,7 @@ void Dump_Level_Location(const Cell* current, Level* L)
         Init_Any_Series_At_Core(
             dump,
             REB_BLOCK,
-            SER(L->source->array),
+            L->source->array,
             cast(REBLEN, L->source->index),
             L->specifier
         );

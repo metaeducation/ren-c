@@ -55,8 +55,8 @@ PVAR REBU64 PG_Mem_Usage;   // Overall memory used
 // forms of words are created, and removed when they are GC'd.  It is scaled
 // according to the total number of canons in the system.
 //
-PVAR Symbol* PG_Symbol_Canons;  // Canon symbol pointers for words in %words.r
-PVAR Symbol* PG_Canons_By_Hash;  // Canon symbol pointers indexed by hash
+PVAR Series* PG_Symbol_Canons;  // Canon symbol pointers for words in %words.r
+PVAR Series* PG_Canons_By_Hash;  // Canon symbol pointers indexed by hash
 PVAR REBLEN PG_Num_Canon_Slots_In_Use;  // Total canon hash slots (+ deleteds)
 #if !defined(NDEBUG)
     PVAR REBLEN PG_Num_Canon_Deleteds;  // Deleted canon hash slots "in use"
@@ -174,9 +174,9 @@ TVAR Series* *Prior_Expand; // Track prior series expansions (acceleration)
 TVAR Series* TG_Mold_Stack; // Used to prevent infinite loop in cyclical molds
 
 TVAR Array* TG_Buf_Collect; // for collecting object keys or words
-TVAR Series* TG_Buf_Ucs2; // UCS2 reused buffer
-TVAR Series* TG_Byte_Buf; // temporary byte buffer used mainly by raw print
-TVAR Series* TG_Mold_Buf; // temporary UTF8 buffer - used mainly by mold
+TVAR String* TG_Buf_Ucs2; // UCS2 reused buffer
+TVAR Binary* TG_Byte_Buf; // temporary byte buffer used mainly by raw print
+TVAR Binary* TG_Mold_Buf; // temporary UTF8 buffer - used mainly by mold
 
 TVAR Series* GC_Manuals;    // Manually memory managed (not by GC)
 

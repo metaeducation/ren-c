@@ -640,7 +640,7 @@ INLINE void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Some value types use their `->extra` field in order to store a pointer to
-// a REBNOD which constitutes their notion of "binding".
+// a Node which constitutes their notion of "binding".
 //
 // This can be null (which indicates unbound), to a function's paramlist
 // (which indicates a relative binding), or to a context's varlist (which
@@ -1325,7 +1325,7 @@ INLINE void SET_EVENT_KEY(Cell* v, REBLEN k, REBLEN c) {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Some value types use their `->extra` field in order to store a pointer to
-// a REBNOD which constitutes their notion of "binding".
+// a Node which constitutes their notion of "binding".
 //
 // This can either be null (a.k.a. UNBOUND), or to a function's paramlist
 // (indicates a relative binding), or to a context's varlist (which indicates
@@ -1357,17 +1357,16 @@ INLINE void SET_EVENT_KEY(Cell* v, REBLEN k, REBLEN c) {
     cast(Specifier*, 0) // cast() doesn't like nullptr, fix
 
 #define UNBOUND \
-   cast(REBNOD*, 0) // cast() doesn't like nullptr, fix
+   cast(Stub*, 0) // cast() doesn't like nullptr, fix
 
-INLINE REBNOD *VAL_BINDING(const Cell* v) {
+INLINE Stub* VAL_BINDING(const Cell* v) {
     assert(Is_Bindable(v));
     return v->extra.binding;
 }
 
-INLINE void INIT_BINDING(Cell* v, void *p) {
+INLINE void INIT_BINDING(Cell* v, Stub* binding) {
     assert(Is_Bindable(v)); // works on partially formed values
 
-    REBNOD *binding = cast(REBNOD*, p);
     v->extra.binding = binding;
 
   #if !defined(NDEBUG)
@@ -1389,7 +1388,7 @@ INLINE void INIT_BINDING(Cell* v, void *p) {
         // Can only store unmanaged pointers in stack cells (and only if the
         // lifetime of the stack entry is guaranteed to outlive the binding)
         //
-        assert(CTX(p));
+        assert(CTX(binding));
     }
   #endif
 }
@@ -1416,7 +1415,7 @@ INLINE void Move_Value_Header(Cell* out, const Cell* v)
 // If the cell we're writing into is a stack cell, there's a chance that
 // management/reification of the binding can be avoided.
 //
-INLINE void INIT_BINDING_MAY_MANAGE(Cell* out, REBNOD* binding) {
+INLINE void INIT_BINDING_MAY_MANAGE(Cell* out, Stub* binding) {
     if (not binding) {
         out->extra.binding = nullptr; // unbound
         return;

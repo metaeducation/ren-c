@@ -990,7 +990,7 @@ Binary* Make_Utf8_From_Cell_String_At_Limit(
 
     const REBUNI *data = Cell_String_At(any_string);
     size_t size = Size_As_UTF8(data, len);
-    Series* bin = Make_Binary(size);
+    Binary* bin = Make_Binary(size);
     Set_Series_Len(bin, Encode_UTF8(Binary_Head(bin), size, data, &len));
     assert(Series_Len(bin) == size);
     TERM_SEQUENCE(bin);

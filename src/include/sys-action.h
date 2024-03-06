@@ -106,8 +106,8 @@
 
 
 INLINE Array* ACT_PARAMLIST(REBACT *a) {
-    assert(GET_SER_FLAG(&a->paramlist, ARRAY_FLAG_PARAMLIST));
-    return &a->paramlist;
+    assert(GET_SER_FLAG(a, ARRAY_FLAG_PARAMLIST));
+    return cast(Array*, a);
 }
 
 #define ACT_ARCHETYPE(a) \
@@ -136,7 +136,7 @@ INLINE Array* ACT_PARAMLIST(REBACT *a) {
 
 INLINE Value* ACT_PARAM(REBACT *a, REBLEN n) {
     assert(n != 0 and n < Array_Len(ACT_PARAMLIST(a)));
-    return Series_At(Value, SER(ACT_PARAMLIST(a)), n);
+    return Series_At(Value, ACT_PARAMLIST(a), n);
 }
 
 #define ACT_NUM_PARAMS(a) \
@@ -173,7 +173,7 @@ INLINE REBCTX *ACT_EXEMPLAR(REBACT *a) {
 
 INLINE Value* ACT_SPECIALTY_HEAD(REBACT *a) {
     Array* details = ACT_ARCHETYPE(a)->payload.action.details;
-    Series* s = SER(LINK(details).specialty);
+    Array* s = LINK(details).specialty;
     return cast(Value*, s->content.dynamic.data) + 1; // skip archetype/root
 }
 
@@ -182,7 +182,7 @@ INLINE Value* ACT_SPECIALTY_HEAD(REBACT *a) {
 // Value* should be okay.
 //
 #define ACT_PARAMS_HEAD(a) \
-    (cast(Value*, SER(ACT_PARAMLIST(a))->content.dynamic.data) + 1)
+    (cast(Value*, ACT_PARAMLIST(a)->content.dynamic.data) + 1)
 
 
 
@@ -261,7 +261,7 @@ INLINE void Clear_Action_Cached_Flags(Cell *v) {
 
 INLINE REBACT *VAL_ACTION(const Cell* v) {
     assert(IS_ACTION(v));
-    Series* s = SER(v->payload.action.paramlist);
+    Series* s = v->payload.action.paramlist;
     if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return ACT(s);
@@ -326,7 +326,7 @@ INLINE Value* Init_Action_Unbound(
 INLINE Value* Init_Action_Maybe_Bound(
     Cell* out,
     REBACT *a,
-    REBNOD *binding // allowed to be UNBOUND
+    Stub* binding // allowed to be UNBOUND
 ){
   #if !defined(NDEBUG)
     Extra_Init_Action_Checks_Debug(a);

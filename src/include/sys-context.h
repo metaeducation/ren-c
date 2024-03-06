@@ -65,8 +65,10 @@
     #define ASSERT_CONTEXT(c) Assert_Context_Core(c)
 #endif
 
-#define CTX_VARLIST(c) \
-    (&(c)->varlist)
+INLINE Array* CTX_VARLIST(REBCTX* c) {
+    assert(GET_SER_FLAG(c, ARRAY_FLAG_VARLIST));
+    return cast(Array*, c);
+}
 
 
 // There may not be any dynamic or stack allocation available for a stack
@@ -74,7 +76,7 @@
 // Stub node data itself.
 //
 INLINE Value* CTX_ARCHETYPE(REBCTX *c) {
-    Series* varlist = SER(CTX_VARLIST(c));
+    Array* varlist = CTX_VARLIST(c);
     if (not IS_SER_DYNAMIC(varlist))
         return cast(Value*, &varlist->content.fixed);
 
@@ -89,8 +91,8 @@ INLINE Value* CTX_ARCHETYPE(REBCTX *c) {
 // possible--even in an unoptimized build.
 //
 INLINE Array* CTX_KEYLIST(REBCTX *c) {
-    if (not (LINK(c).keysource->header.bits & NODE_FLAG_CELL))
-        return ARR(LINK(c).keysource); // not a Level, so use keylist
+    if (Is_Node_A_Stub(LINK(c).keysource))
+        return ARR(LINK(c).keysource);  // not a Level, so use keylist
 
     // If the context in question is a FRAME! value, then the ->phase
     // of the frame presents the "view" of which keys should be visible at
@@ -107,12 +109,12 @@ INLINE Array* CTX_KEYLIST(REBCTX *c) {
 
 INLINE void INIT_CTX_KEYLIST_SHARED(REBCTX *c, Array* keylist) {
     SET_SER_INFO(keylist, SERIES_INFO_SHARED_KEYLIST);
-    LINK(c).keysource = NOD(keylist);
+    LINK(c).keysource = keylist;
 }
 
 INLINE void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, Array* keylist) {
     assert(NOT_SER_INFO(keylist, SERIES_INFO_SHARED_KEYLIST));
-    LINK(c).keysource = NOD(keylist);
+    LINK(c).keysource = keylist;
 }
 
 // Navigate from context to context components.  Note that the context's
@@ -127,7 +129,7 @@ INLINE void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, Array* keylist) {
     (cast(Series*, (c))->content.dynamic.len - 1) // len > 1 => dynamic
 
 #define CTX_ROOTKEY(c) \
-    cast(Value*, SER(CTX_KEYLIST(c))->content.dynamic.data) // len > 1
+    cast(Value*, CTX_KEYLIST(c)->content.dynamic.data) // len > 1
 
 #define CTX_TYPE(c) \
     VAL_TYPE(CTX_ARCHETYPE(c))
@@ -135,11 +137,11 @@ INLINE void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, Array* keylist) {
 // The keys and vars are accessed by positive integers starting at 1
 //
 #define CTX_KEYS_HEAD(c) \
-    Series_At(Value, SER(CTX_KEYLIST(c)), 1)  // a CTX_KEY is always "specific"
+    Series_At(Value, CTX_KEYLIST(c), 1)  // a CTX_KEY is always "specific"
 
 INLINE Level* CTX_LEVEL_IF_ON_STACK(REBCTX *c) {
-    REBNOD *keysource = LINK(c).keysource;
-    if (not (keysource->header.bits & NODE_FLAG_CELL))
+    Node* keysource = LINK(c).keysource;
+    if (Is_Node_A_Stub(keysource))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
 
     assert(NOT_SER_INFO(CTX_VARLIST(c), SERIES_INFO_INACCESSIBLE));
@@ -158,7 +160,7 @@ INLINE Level* CTX_LEVEL_MAY_FAIL(REBCTX *c) {
 }
 
 #define CTX_VARS_HEAD(c) \
-    Series_At(Value, SER(CTX_VARLIST(c)), 1)  // may fail() if inaccessible
+    Series_At(Value, CTX_VARLIST(c), 1)  // may fail() if inaccessible
 
 INLINE Value* CTX_KEY(REBCTX *c, REBLEN n) {
     assert(NOT_SER_FLAG(c, SERIES_INFO_INACCESSIBLE));
@@ -188,11 +190,11 @@ INLINE Option(SymId) CTX_KEY_SYM(REBCTX *c, REBLEN n) {
 }
 
 #define FAIL_IF_READ_ONLY_CONTEXT(c) \
-    FAIL_IF_READ_ONLY_ARRAY(CTX_VARLIST(c))
+    Fail_If_Read_Only_Series(CTX_VARLIST(c))
 
 INLINE void FREE_CONTEXT(REBCTX *c) {
-    Free_Unmanaged_Array(CTX_KEYLIST(c));
-    Free_Unmanaged_Array(CTX_VARLIST(c));
+    Free_Unmanaged_Series(CTX_KEYLIST(c));
+    Free_Unmanaged_Series(CTX_VARLIST(c));
 }
 
 
@@ -400,8 +402,8 @@ INLINE bool Is_Native_Port_Actor(const Value* actor) {
 // filled-in heap memory can be directly used as the args for the invocation,
 // instead of needing to push a redundant run of stack-based memory cells.
 //
-INLINE REBCTX *Steal_Context_Vars(REBCTX *c, REBNOD *keysource) {
-    Series* stub = SER(c);
+INLINE REBCTX *Steal_Context_Vars(REBCTX *c, Node* keysource) {
+    Series* stub = c;
 
     // Rather than memcpy() and touch up the header and info to remove
     // SERIES_INFO_HOLD put on by Enter_Native(), or NODE_FLAG_MANAGED,
