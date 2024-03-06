@@ -73,11 +73,8 @@
 #define FLAG_KIND_BYTE(kind) \
     FLAG_SECOND_BYTE(kind)
 
-#define const_KIND_BYTE(v) \
-    const_SECOND_BYTE((v)->header)
-
 #define KIND_BYTE(v) \
-    SECOND_BYTE((v)->header)
+    SECOND_BYTE(&(v)->header.bits)
 
 
 // v-- BEGIN GENERAL CELL BITS HERE, third byte in the header
@@ -223,11 +220,8 @@
 
 // v-- BEGIN PER-TYPE CUSTOM BITS HERE, fourth byte in the header
 
-#define const_CUSTOM_BYTE(v) \
-    const_FOURTH_BYTE((v)->header)
-
 #define CUSTOM_BYTE(v) \
-    FOURTH_BYTE((v)->header)
+    FOURTH_BYTE(&(v)->header)
 
 #define TYPE_SPECIFIC_BIT (24)
 

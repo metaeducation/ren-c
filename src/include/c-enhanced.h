@@ -312,6 +312,7 @@
      * Plain 'cast' can do everything else (except remove volatile)
      * The 'c_cast' helper ensures you're ONLY adding [C]onst to a value
      */
+    #define x_cast(t,v)     ((t)(v))
     #define m_cast(t,v)     ((t)(v))
     #define cast(t,v)       ((t)(v))
     #define c_cast(t,v)     ((t)(v))
@@ -329,6 +330,25 @@
     #define cast(t,v)       ((t)(v))
     #define c_cast(t,v)     const_cast<t>(v)
 #else
+    template<typename TQP>
+    struct x_cast_pointer_helper {
+        typedef typename std::remove_pointer<TQP>::type TQ;
+        typedef typename std::add_const<TQ>::type TC;
+        typedef typename std::add_pointer<TC>::type type;
+    };
+
+    template<typename T>
+    struct x_cast_helper {
+        typedef typename std::conditional<
+            std::is_pointer<T>::value,
+            typename x_cast_pointer_helper<T>::type,
+            T
+        >::type type;
+    };
+
+    #define x_cast(T,v) \
+       (const_cast<T>((typename x_cast_helper<T>::type)(v)))
+
     /* __cplusplus >= 201103L has C++11's type_traits, where we get some
      * actual power.  cast becomes a reinterpret_cast for pointers and a
      * static_cast otherwise.  We ensure c_cast added a const and m_cast
@@ -725,145 +745,6 @@
         memset(&v, 123, sizeof(TRR));
     }
 #endif
-
-
-//=//// BYTE-ORDER SENSITIVE BIT FLAGS & MASKING //////////////////////////=//
-//
-// These macros are for purposefully arranging bit flags with respect to the
-// "leftmost" and "rightmost" bytes of the underlying platform, when encoding
-// them into an unsigned integer the size of a platform pointer:
-//
-//     uintptr_t flags = FLAG_LEFT_BIT(0);
-//     unsigned char *ch = (unsigned char*)&flags;
-//
-// In the code above, the leftmost bit of the flags has been set to 1,
-// resulting in `ch == 128` on all supported platforms.
-//
-// These can form *compile-time constants*, which can be singly assigned to
-// a uintptr_t in one instruction.  Quantities smaller than a byte can be
-// mixed in on with bytes:
-//
-//    uintptr_t flags
-//        = FLAG_LEFT_BIT(0) | FLAG_LEFT_BIT(1) | FLAG_SECOND_BYTE(13);
-//
-// They can be masked or shifted out efficiently:
-//
-//    unsigned int left = LEFT_N_BITS(flags, 3); // == 6 (binary `110`)
-//    unsigned int right = SECOND_BYTE(flags); // == 13
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// Note: It is simpler to not worry about the underlying bytes and just use
-// ordinary bit masking.  But this is used for an important feature (the
-// discernment of a `void*` to a cell from that of a valid UTF-8 string).
-// Other tools that might be tried with this all have downsides:
-//
-// * bitfields arranged in a `union` with integers have no layout guarantee
-// * `#pragma pack` is not standard C98 or C99...nor is any #pragma
-// * `char[4]` or `char[8]` targets don't usually assign in one instruction
-//
-
-#define PLATFORM_BITS \
-    (sizeof(uintptr_t) * 8)
-
-#if defined(ENDIAN_BIG) // Byte w/most significant bit first
-
-    #define FLAG_LEFT_BIT(n) \
-        ((uintptr_t)1 << (PLATFORM_BITS - (n) - 1)) // 63,62,61..or..32,31,30
-
-    #define FLAG_FIRST_BYTE(b) \
-        ((uintptr_t)(b) << (24 + (PLATFORM_BITS - 8)))
-
-    #define FLAG_SECOND_BYTE(b) \
-        ((uintptr_t)(b) << (16 + (PLATFORM_BITS - 8)))
-
-    #define FLAG_THIRD_BYTE(b) \
-        ((uintptr_t)(b) << (8 + (PLATFORM_BITS - 32)))
-
-    #define FLAG_FOURTH_BYTE(b) \
-        ((uintptr_t)(b) << (0 + (PLATFORM_BITS - 32)))
-
-    #define FLAG_FIRST_UINT16(u16) \
-        ((uintptr_t)(u16) << (16 + (PLATFORM_BITS - 32)))
-
-    #define FLAG_SECOND_UINT16(u16) \
-        ((uintptr_t)(u16) << (0 + (PLATFORM_BITS - 32)))
-
-#elif defined(ENDIAN_LITTLE) // Byte w/least significant bit first (e.g. x86)
-
-    #define FLAG_LEFT_BIT(n) \
-        ((uintptr_t)1 << (7 + ((n) / 8) * 8 - (n) % 8)) // 7,6,..0|15,14..8|..
-
-    #define FLAG_FIRST_BYTE(b) \
-        ((uintptr_t)(b))
-
-    #define FLAG_SECOND_BYTE(b) \
-        ((uintptr_t)(b) << 8)
-
-    #define FLAG_THIRD_BYTE(b) \
-        ((uintptr_t)(b) << 16)
-
-    #define FLAG_FOURTH_BYTE(b) \
-        ((uintptr_t)(b) << 24)
-
-    #define FLAG_FIRST_UINT16(u16) \
-        ((uintptr_t)(u16))
-
-    #define FLAG_SECOND_UINT16(u16) \
-        ((uintptr_t)(u16) << 16)
-#else
-    // !!! There are macro hacks which can actually make reasonable guesses
-    // at endianness, and should possibly be used in the config if nothing is
-    // specified explicitly.
-    //
-    // http://stackoverflow.com/a/2100549/211160
-    //
-    #error "ENDIAN_BIG or ENDIAN_LITTLE must be defined"
-#endif
-
-// `unsigned char` is used below, as opposed to `uint8_t`, to coherently
-// access the bytes despite being written via a `uintptr_t`, due to the strict
-// aliasing exemption for character types.
-
-#define FIRST_BYTE(flags) \
-    ((unsigned char*)&(flags))[0]
-
-#define SECOND_BYTE(flags) \
-    ((unsigned char*)&(flags))[1]
-
-#define THIRD_BYTE(flags) \
-    ((unsigned char*)&(flags))[2]
-
-#define FOURTH_BYTE(flags) \
-    ((unsigned char*)&(flags))[3]
-
-#define const_FIRST_BYTE(flags) \
-    ((const unsigned char*)&(flags))[0]
-
-#define const_SECOND_BYTE(flags) \
-    ((const unsigned char*)&(flags))[1]
-
-#define const_THIRD_BYTE(flags) \
-    ((const unsigned char*)&(flags))[2]
-
-#define const_FOURTH_BYTE(flags) \
-    ((const unsigned char*)&(flags))[3]
-
-#define FIRST_UINT16(flags) \
-    ((uint16_t*)&(flags))[0]
-
-#define SECOND_UINT16(flags) \
-    ((uint16_t*)&(flags))[1]
-
-#define const_FIRST_UINT16(flags) \
-    ((const uint16_t*)&(flags))[0]
-
-#define const_SECOND_UINT16(flags) \
-    ((const uint16_t*)&(flags))[1]
-
-
-// !!! SECOND_UINT32 should be defined on 64-bit platforms, for any enhanced
-// features that might be taken advantage of when that storage is available.
 
 
 //=//// MIN AND MAX ///////////////////////////////////////////////////////=//

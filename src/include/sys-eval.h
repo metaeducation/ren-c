@@ -103,7 +103,7 @@ INLINE void Push_Level_Core(Level* L)
     if (C_STACK_OVERFLOWING(&L))
         Fail_Stack_Overflow();
 
-    assert(SECOND_BYTE(L->flags) == 0); // END signal
+    assert(SECOND_BYTE(&L->flags) == 0); // END signal
     assert(not (L->flags.bits & NODE_FLAG_CELL));
 
     // Though we can protect the value written into the target pointer 'out'

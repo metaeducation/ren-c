@@ -409,7 +409,7 @@
     FLAG_SECOND_BYTE(wide)
 
 #define WIDE_BYTE_OR_0(s) \
-    SECOND_BYTE((s)->info.bits)
+    SECOND_BYTE(&(s)->info.bits)
 
 
 //=//// BITS 16-23 ARE Series_Len() FOR NON-DYNAMIC SERIES ///////////////////=//
@@ -433,7 +433,7 @@
     const_THIRD_BYTE((s)->info)
 
 #define LEN_BYTE_OR_255(s) \
-    THIRD_BYTE((s)->info)
+    THIRD_BYTE(&(s)->info)
 
 
 //=//// SERIES_INFO_AUTO_LOCKED ///////////////////////////////////////////=//

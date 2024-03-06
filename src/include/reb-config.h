@@ -385,7 +385,9 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
     // using address sanitizer, where you expect your executable to be slow.
     //
     #ifdef __SANITIZE_ADDRESS__
+      #if CPLUSPLUS_11
         #define DEBUG_CHECK_CASTS
+      #endif
 
         // Both Valgrind and Address Sanitizer can provide the call stack at
         // the moment of allocation when a freed pointer is used.  This is

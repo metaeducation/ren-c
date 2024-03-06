@@ -178,7 +178,7 @@
 //
 
 #define VAL_TYPE_RAW(v) \
-    cast(enum Reb_Kind, const_KIND_BYTE(v))
+    cast(enum Reb_Kind, KIND_BYTE(v))
 
 #define FLAGIT_KIND(t) \
     (cast(REBU64, 1) << (t)) // makes a 64-bit bitflag
@@ -276,7 +276,7 @@
 //
 #if DEBUG
     #define CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(flag) \
-        enum Reb_Kind category = cast(enum Reb_Kind, SECOND_BYTE(flag)); \
+        enum Reb_Kind category = cast(enum Reb_Kind, SECOND_BYTE(&flag)); \
         assert(kind < REB_MAX_PLUS_MAX); /* see REB_MAX_PLUS_MAX */ \
         if (category != REB_0) { \
             if (kind != category) { \
@@ -287,7 +287,7 @@
                 else \
                     assert(false); \
             } \
-            SECOND_BYTE(flag) = 0; \
+            SECOND_BYTE(&flag) = 0; \
         }
 #else
     #define CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(flag) \
@@ -584,8 +584,8 @@ INLINE void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
     ){
         ASSERT_CELL_WRITABLE_EVIL_MACRO(v, file, line);
 
-        SECOND_BYTE(v->header) = REB_0_END; // only line in release build
-        v->header.bits |= VALUE_FLAG_FALSEY; // speeds VAL_TYPE_Debug() check
+        SECOND_BYTE(&v->header) = REB_0_END;  // only line in release build
+        v->header.bits |= VALUE_FLAG_FALSEY;  // speeds VAL_TYPE_Debug() check
 
         TRACK_CELL_IF_DEBUG(v, file, line);
         return cast(Value*, v);
@@ -595,7 +595,7 @@ INLINE void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
         SET_END_Debug((v), __FILE__, __LINE__)
 #else
     INLINE Value* SET_END(Cell* v) {
-        SECOND_BYTE(v->header) = REB_0_END; // needs to be a prepared cell
+        SECOND_BYTE(&v->header) = REB_0_END;  // needs to be a prepared cell
         return cast(Value*, v);
     }
 #endif

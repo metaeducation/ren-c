@@ -226,8 +226,8 @@ INLINE enum Reb_Param_Class VAL_PARAM_CLASS(const Cell* v) {
     assert(IS_TYPESET(v));
     return cast(
         enum Reb_Param_Class,
-        const_CUSTOM_BYTE(v)
-        /* (const_CUSTOM_BYTE(v) & PCLASS_BYTE_MASK) */ // resurrect if needed
+        CUSTOM_BYTE(v)
+        /* (CUSTOM_BYTE(v) & PCLASS_BYTE_MASK) */ // resurrect if needed
     );
 }
 

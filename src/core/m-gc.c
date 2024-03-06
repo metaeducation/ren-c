@@ -1268,7 +1268,7 @@ static REBLEN Sweep_Series(void)
         Series* s = cast(Series*, seg + 1);
         REBLEN n;
         for (n = Mem_Pools[SER_POOL].units; n > 0; --n, ++s) {
-            switch (FIRST_BYTE(s->header) >> 4) {
+            switch (FIRST_BYTE(&s->header) >> 4) {
             case 0:
             case 1: // 0x1
             case 2: // 0x2
@@ -1336,7 +1336,7 @@ static REBLEN Sweep_Series(void)
             case 12:
                 // 0x8 + 0x4: free node, uses special illegal UTF-8 byte
                 //
-                assert(FIRST_BYTE(s->header) == FREED_SERIES_BYTE);
+                assert(FIRST_BYTE(&s->header) == FREED_SERIES_BYTE);
                 break;
 
             case 13:
@@ -1356,7 +1356,7 @@ static REBLEN Sweep_Series(void)
     for (seg = Mem_Pools[PAR_POOL].segs; seg != nullptr; seg = seg->next) {
         Value* v = cast(Value*, seg + 1);
         if (v->header.bits & NODE_FLAG_FREE) {
-            assert(FIRST_BYTE(v->header) == FREED_SERIES_BYTE);
+            assert(FIRST_BYTE(&v->header) == FREED_SERIES_BYTE);
             continue;
         }
 
@@ -1395,7 +1395,7 @@ REBLEN Fill_Sweeplist(Series* sweeplist)
         Series* s = cast(Series*, seg + 1);
         REBLEN n;
         for (n = Mem_Pools[SER_POOL].units; n > 0; --n, ++s) {
-            switch (FIRST_BYTE(s->header) >> 4) {
+            switch (FIRST_BYTE(&s->header) >> 4) {
             case 9: // 0x8 + 0x1
                 assert(Is_Series_Managed(s));
                 if (s->header.bits & NODE_FLAG_MARKED)

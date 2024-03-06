@@ -115,7 +115,7 @@ INLINE void TERM_ARRAY_LEN(Array* a, REBLEN len) {
     if (NOT_END(Array_At(a, len)))
         ASSERT_CELL_WRITABLE_EVIL_MACRO(Array_At(a, len), __FILE__, __LINE__);
   #endif
-    SECOND_BYTE(Array_At(a, len)->header.bits) = REB_0_END;
+    SECOND_BYTE(&Array_At(a, len)->header.bits) = REB_0_END;
 }
 
 INLINE void SET_ARRAY_LEN_NOTERM(Array* a, REBLEN len) {

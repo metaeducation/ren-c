@@ -432,7 +432,7 @@ void Fill_Pool(REBPOL *pool)
     }
 
     while (true) {
-        FIRST_BYTE(node->header) = FREED_SERIES_BYTE;
+        FIRST_BYTE(node) = FREED_SERIES_BYTE;
 
         if (--units == 0) {
             node->next_if_free = nullptr;
@@ -647,7 +647,7 @@ void Free_Unbiased_Series_Data(char *unbiased, REBLEN total)
         pool->first = node;
         pool->free++;
 
-        FIRST_BYTE(node->header) = FREED_SERIES_BYTE;
+        FIRST_BYTE(node) = FREED_SERIES_BYTE;
     }
     else {
         FREE_N(char, total, unbiased);
@@ -1279,9 +1279,9 @@ void Manage_Series_Core(Series* s)
 void Assert_Pointer_Detection_Working(void)
 {
     uintptr_t cell_flag = NODE_FLAG_CELL;
-    assert(FIRST_BYTE(cell_flag) == 0x1);
+    assert(FIRST_BYTE(&cell_flag) == 0x1);
     uintptr_t protected_flag = CELL_FLAG_PROTECTED;
-    assert(THIRD_BYTE(protected_flag) == 0x80);
+    assert(THIRD_BYTE(&protected_flag) == 0x80);
 
     assert(Detect_Rebol_Pointer("") == DETECTED_AS_UTF8);
     assert(Detect_Rebol_Pointer("asdf") == DETECTED_AS_UTF8);

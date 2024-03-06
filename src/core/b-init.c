@@ -95,9 +95,9 @@ static void Assert_Basics(void)
     REBFLGS flags
         = FLAG_LEFT_BIT(5) | FLAG_SECOND_BYTE(21) | FLAG_SECOND_UINT16(1975);
 
-    Byte m = FIRST_BYTE(flags); // 6th bit from left set (0b00000100 is 4)
-    Byte d = SECOND_BYTE(flags);
-    uint16_t y = SECOND_UINT16(flags);
+    Byte m = FIRST_BYTE(&flags); // 6th bit from left set (0b00000100 is 4)
+    Byte d = SECOND_BYTE(&flags);
+    uint16_t y = SECOND_UINT16(&flags);
     if (m != 4 or d != 21 or y != 1975) {
         printf("m = %u, d = %u, y = %u\n", m, d, y);
         panic ("Bad composed integer assignment for byte-ordering macro.");
