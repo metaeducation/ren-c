@@ -67,7 +67,7 @@ DECLARE_NATIVE(generate)
 
     // uuid.data* is in litte endian
     // the string form is in big endian
-    Series* ser = Make_Binary(16);
+    Binary* ser = Make_Binary(16);
     *Binary_At(ser, 0) = cast(char*, &uuid.Data1)[3];
     *Binary_At(ser, 1) = cast(char*, &uuid.Data1)[2];
     *Binary_At(ser, 2) = cast(char*, &uuid.Data1)[1];
@@ -90,7 +90,7 @@ DECLARE_NATIVE(generate)
     CFUUIDBytes bytes = CFUUIDGetUUIDBytes(newId);
     CFRelease(newId);
 
-    Series* ser = Make_Binary(16);
+    Binary* ser = Make_Binary(16);
     *Binary_At(ser, 0) = bytes.byte0;
     *Binary_At(ser, 1) = bytes.byte1;
     *Binary_At(ser, 2) = bytes.byte2;

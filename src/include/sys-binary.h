@@ -39,22 +39,23 @@
 //
 
 INLINE Binary* Cell_Binary(const Cell* cell) {
+    assert(IS_BINARY(cell));
     Series* s = VAL_SERIES(cell);
     assert(Series_Wide(s) == 1);
     return cast(Binary*, s);
 }
 
-#define Binary_At(bin,n) \
-    Series_At(Byte, (bin), (n))
+INLINE Byte* Binary_At(Binary* bin, REBLEN n)
+  { return Series_At(Byte, bin, n); }
 
-#define Binary_Head(bin) \
-    Series_Head(Byte, (bin))
+INLINE Byte* Binary_Head(Binary* bin)
+  { return Series_Head(Byte, bin); }
 
-#define Binary_Tail(bin) \
-    Series_Tail(Byte, (bin))
+INLINE Byte* Binary_Tail(Binary* bin)
+  { return Series_Tail(Byte, bin); }
 
-#define Binary_Last(bin) \
-    Series_Last(Byte, (bin))
+INLINE Byte* Binary_Last(Binary* bin)
+  { return Series_Last(Byte, bin); }
 
 INLINE REBLEN Binary_Len(Binary* bin) {
     assert(BYTE_SIZE(bin));
@@ -78,20 +79,20 @@ INLINE void Term_Binary_Len(Binary* bin, REBLEN len) {
 //=////////////////////////////////////////////////////////////////////////=//
 
 #define Cell_Binary_Head(v) \
-    Binary_Head(VAL_SERIES(v))
+    Binary_Head(Cell_Binary(v))
 
 INLINE Byte *Cell_Binary_At(const Cell* v) {
-    return Binary_At(VAL_SERIES(v), VAL_INDEX(v));
+    return Binary_At(Cell_Binary(v), VAL_INDEX(v));
 }
 
 INLINE Byte *Cell_Binary_Tail(const Cell* v) {
-    return Series_Tail(Byte, VAL_SERIES(v));
+    return Series_Tail(Byte, Cell_Binary(v));
 }
 
 // !!! RE: Cell_Binary_At_Head() see remarks on Cell_Array_At_Head()
 //
 #define Cell_Binary_At_Head(v,n) \
-    Binary_At(VAL_SERIES(v), (n))
+    Binary_At(Cell_Binary(v), (n))
 
 #define VAL_BYTE_SIZE(v) \
     BYTE_SIZE(VAL_SERIES(v))

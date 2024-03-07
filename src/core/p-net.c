@@ -283,14 +283,13 @@ static REB_R Transport_Actor(
         // Setup the read buffer (allocate a buffer if needed):
         //
         Value* port_data = CTX_VAR(ctx, STD_PORT_DATA);
-        Series* buffer;
+        Binary* buffer;
         if (not IS_TEXT(port_data) and not IS_BINARY(port_data)) {
             buffer = Make_Binary(NET_BUF_SIZE);
             Init_Binary(port_data, buffer);
         }
         else {
-            buffer = VAL_SERIES(port_data);
-            assert(BYTE_SIZE(buffer));
+            buffer = Cell_Binary(port_data);
 
             if (SER_AVAIL(buffer) < NET_BUF_SIZE/2)
                 Extend_Series(buffer, NET_BUF_SIZE);

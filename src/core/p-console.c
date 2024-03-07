@@ -86,7 +86,7 @@ static REB_R Console_Actor(Level* level_, Value* port, Value* verb)
         if (not IS_BINARY(data))
             Init_Binary(data, Make_Binary(OUT_BUF_SIZE));
 
-        Series* ser = VAL_SERIES(data);
+        Binary* ser = Cell_Binary(data);
         Set_Series_Len(ser, 0);
         TERM_SERIES(ser);
 

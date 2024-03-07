@@ -875,7 +875,7 @@ static REBIXO To_Thru_Block_Rule(
                 }
             }
             else if (P_TYPE == REB_BINARY) {
-                Byte ch1 = *Binary_At(P_INPUT, pos);
+                Byte ch1 = *Binary_At(Cell_Binary(P_INPUT_VALUE), pos);
 
                 // Handle special string types:
                 if (IS_CHAR(rule)) {
@@ -898,7 +898,7 @@ static REBIXO To_Thru_Block_Rule(
                         }
 
                         if (0 == Compare_Bytes(
-                            Binary_At(P_INPUT, pos),
+                            Binary_At(Cell_Binary(P_INPUT_VALUE), pos),
                             Cell_Binary_At(rule),
                             len,
                             false

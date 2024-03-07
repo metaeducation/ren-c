@@ -1306,7 +1306,7 @@ DECLARE_NATIVE(scan_net_header)
 
     Value* header = ARG(header);
     REBLEN index = VAL_INDEX(header);
-    Series* utf8 = VAL_SERIES(header);
+    Binary* utf8 = Cell_Binary(header);
 
     Byte *cp = Binary_Head(utf8) + index;
 

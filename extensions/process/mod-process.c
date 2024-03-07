@@ -1654,7 +1654,7 @@ DECLARE_NATIVE(call)
     }
     else if (IS_BINARY(ARG(out))) {
         if (output_len > 0) {
-            Append_Unencoded_Len(VAL_SERIES(ARG(out)), os_output, output_len);
+            Append_Unencoded_Len(Cell_Binary(ARG(out)), os_output, output_len);
             free(os_output);
         }
     }
@@ -1666,7 +1666,7 @@ DECLARE_NATIVE(call)
         }
     } else if (IS_BINARY(ARG(err))) {
         if (err_len > 0) {
-            Append_Unencoded_Len(VAL_SERIES(ARG(err)), os_err, err_len);
+            Append_Unencoded_Len(Cell_Binary(ARG(err)), os_err, err_len);
             free(os_err);
         }
     }

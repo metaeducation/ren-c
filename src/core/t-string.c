@@ -196,7 +196,7 @@ static REBLEN find_string(
             && !(flags & ~(AM_FIND_CASE|AM_FIND_MATCH))
         ) {
             return Find_Byte_Str(
-                series,
+                cast(Binary*, series),
                 start,
                 Cell_Binary_At(target),
                 target_len,
@@ -221,7 +221,7 @@ static REBLEN find_string(
     else if (IS_BINARY(target)) {
         const bool uncase = false;
         return Find_Byte_Str(
-            series,
+            cast(Binary*, series),
             start,
             Cell_Binary_At(target),
             target_len,
@@ -296,7 +296,7 @@ static Series* MAKE_TO_String_Common(const Value* arg)
 }
 
 
-static Series* Make_Binary_BE64(const Value* arg)
+static Binary* Make_Binary_BE64(const Value* arg)
 {
     Binary* ser = Make_Binary(8);
 
@@ -333,9 +333,9 @@ static Series* Make_Binary_BE64(const Value* arg)
 }
 
 
-static Series* make_binary(const Value* arg, bool make)
+static Binary* make_binary(const Value* arg, bool make)
 {
-    Series* ser;
+    Binary* ser;
 
     // MAKE BINARY! 123
     switch (VAL_TYPE(arg)) {
@@ -362,7 +362,10 @@ static Series* make_binary(const Value* arg, bool make)
 
     case REB_BLOCK:
         // Join_Binary returns a shared buffer, so produce a copy:
-        ser = Copy_Sequence_Core(Join_Binary(arg, -1), SERIES_FLAGS_NONE);
+        ser = cast(
+            Binary*,
+            Copy_Sequence_Core(Join_Binary(arg, -1), SERIES_FLAGS_NONE)
+        );
         break;
 
     // MAKE/TO BINARY! <tuple!>
@@ -610,7 +613,7 @@ REB_R PD_String(
                 return nullptr;
 
             if (IS_BINARY(pvs->out))
-                Init_Integer(pvs->out, *Binary_At(ser, n));
+                Init_Integer(pvs->out, *Binary_At(cast(Binary*, ser), n));
             else
                 Init_Char(pvs->out, GET_ANY_CHAR(ser, n));
 
@@ -740,7 +743,7 @@ REB_R PD_String(
         if (c > 0xff)
             fail (Error_Out_Of_Range(opt_setval));
 
-        Binary_Head(ser)[n] = cast(Byte, c);
+        Binary_Head(cast(Binary*, ser))[n] = cast(Byte, c);
         return R_INVISIBLE;
     }
 
@@ -1339,7 +1342,7 @@ REBTYPE(String)
                 return nullptr;
 
             if (IS_BINARY(v)) {
-                Init_Integer(v, *Binary_At(VAL_SERIES(v), ret));
+                Init_Integer(v, *Binary_At(Cell_Binary(v), ret));
             }
             else
                 str_to_char(v, v, ret);

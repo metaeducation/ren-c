@@ -72,7 +72,7 @@ INLINE Cell* Array_Last(Array* a)
 
 INLINE Cell* ARR_SINGLE(Array* a) {
     assert(not IS_SER_DYNAMIC(a)); // singular test avoided in release build
-    return cast(Cell*, &a->content.fixed);
+    return &a->content.fixed.cell;
 }
 
 // It's possible to calculate the array from just a cell if you know it's a

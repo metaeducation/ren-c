@@ -240,8 +240,14 @@ REBINT Compare_UTF8(const Byte *s1, const Byte *s2, REBSIZ l2)
 //
 // NOTE: Series tail must be > index.
 //
-REBLEN Find_Byte_Str(Series* series, REBLEN index, Byte *b2, REBLEN l2, bool uncase, bool match)
-{
+REBLEN Find_Byte_Str(
+    Binary* series,
+    REBLEN index,
+    Byte *b2,
+    REBLEN l2,
+    bool uncase,
+    bool match
+){
     Byte *b1;
     Byte *e1;
     REBLEN l1;
@@ -249,10 +255,10 @@ REBLEN Find_Byte_Str(Series* series, REBLEN index, Byte *b2, REBLEN l2, bool unc
     REBLEN n;
 
     // The pattern empty or is longer than the target:
-    if (l2 == 0 || (l2 + index) > Series_Len(series)) return NOT_FOUND;
+    if (l2 == 0 || (l2 + index) > Binary_Len(series)) return NOT_FOUND;
 
     b1 = Binary_At(series, index);
-    l1 = Series_Len(series) - index;
+    l1 = Binary_Len(series) - index;
 
     e1 = b1 + (match ? 1 : l1 - (l2 - 1));
 
@@ -471,7 +477,7 @@ REBLEN Find_Str_Char(
     // use optimized C library functions if possible.
     //
     if (BYTE_SIZE(series)) {
-        Byte *bp = Binary_Head(series);
+        Byte *bp = Binary_Head(cast(Binary*, series));
         Byte breakset[3];
 
         // We need to cover when the lowercase or uppercase variant of a

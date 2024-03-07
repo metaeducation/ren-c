@@ -90,7 +90,9 @@ void MF_Bitset(REB_MOLD *mo, const Cell* v, bool form)
     if (BITS_NOT(s))
         Append_Unencoded(mo->series, "[not bits ");
 
-    MF_Binary(mo, v, false); // false = mold, don't form
+    DECLARE_VALUE (alias);
+    Init_Binary(alias, s);  // MF_Binary expects positional BINARY!
+    MF_Binary(mo, alias, false); // false = mold, don't form
 
     if (BITS_NOT(s))
         Append_Utf8_Codepoint(mo->series, ']');

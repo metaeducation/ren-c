@@ -184,11 +184,19 @@ Binary* Temp_UTF8_At_Managed(
 //
 Binary* Xandor_Binary(Value* verb, Value* value, Value* arg)
 {
-    Byte *p0 = Cell_Binary_At(value);
-    Byte *p1 = Cell_Binary_At(arg);
+    Byte *p0 = IS_BINARY(value)
+        ? Cell_Binary_At(value)
+        : Binary_Head(Cell_Bitset(value));
+    Byte *p1 = IS_BINARY(arg)
+        ? Cell_Binary_At(arg)
+        : Binary_Head(Cell_Bitset(arg));
 
-    REBLEN t0 = VAL_LEN_AT(value);
-    REBLEN t1 = VAL_LEN_AT(arg);
+    REBLEN t0 = IS_BINARY(value)
+        ? VAL_LEN_AT(value)
+        : Binary_Len(Cell_Bitset(value));
+    REBLEN t1 = IS_BINARY(arg)
+        ? VAL_LEN_AT(arg)
+        : Binary_Len(Cell_Bitset(arg));
 
     REBLEN mt = MIN(t0, t1); // smaller array size
 
@@ -273,8 +281,8 @@ Series* Complement_Binary(Value* value)
     const Byte *bp = Cell_Binary_At(value);
     REBLEN len = VAL_LEN_AT(value);
 
-    Series* bin = Make_Binary(len);
-    TERM_SEQUENCE_LEN(bin, len);
+    Binary* bin = Make_Binary(len);
+    Term_Binary_Len(bin, len);
 
     Byte *dp = Binary_Head(bin);
     for (; len > 0; len--, ++bp, ++dp)
@@ -313,18 +321,15 @@ void Shuffle_String(Value* value, bool secure)
 //
 // Used to trim off hanging spaces during FORM and MOLD.
 //
-void Trim_Tail(Series* src, Byte chr)
+void Trim_Tail(Binary* src, Byte chr)
 {
-    assert(BYTE_SIZE(src)); // mold buffer
-
     REBLEN tail;
-    for (tail = Series_Len(src); tail > 0; tail--) {
+    for (tail = Binary_Len(src); tail > 0; tail--) {
         REBUNI c = *Binary_At(src, tail - 1);
         if (c != chr)
             break;
     }
-    Set_Series_Len(src, tail);
-    TERM_SEQUENCE(src);
+    Term_Binary_Len(src, tail);
 }
 
 

@@ -237,7 +237,7 @@ REBLEN Modify_Binary(
 
     assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
 
-    Series* dst_ser = VAL_SERIES(dst_val);
+    Binary* dst_ser = Cell_Binary(dst_val);
     REBLEN dst_idx = VAL_INDEX(dst_val);
 
     // For INSERT/PART and APPEND/PART

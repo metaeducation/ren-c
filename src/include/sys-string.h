@@ -186,13 +186,13 @@ INLINE REBSIZ VAL_SIZE_LIMIT_AT(
 //
 
 INLINE REBUNI GET_ANY_CHAR(Series* s, REBLEN n) {
-    return BYTE_SIZE(s) ? *Binary_At(s, n) : *Series_At(REBUNI, s, n);
+    return BYTE_SIZE(s) ? *Series_At(Byte, s, n) : *Series_At(REBUNI, s, n);
 }
 
 INLINE void SET_ANY_CHAR(Series* s, REBLEN n, REBUNI c) {
     if (BYTE_SIZE(s)) {
         assert(c <= 255);
-        *Binary_At(s, n) = c;
+        *Series_At(Byte, s, n) = c;
     }
     else
         *Series_At(REBUNI, s, n) = c;

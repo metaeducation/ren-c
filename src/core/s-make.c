@@ -67,12 +67,12 @@ String* Make_String(REBLEN capacity)
 // Create a string series from the given bytes.
 // Source is always latin-1 valid. Result is always 8bit.
 //
-Series* Copy_Bytes(const Byte *src, REBINT len)
+Binary* Copy_Bytes(const Byte *src, REBINT len)
 {
     if (len < 0)
         len = LEN_BYTES(src);
 
-    Series* dst = Make_Binary(len);
+    Binary* dst = Make_Binary(len);
     memcpy(Binary_Head(dst), src, len);
     TERM_SEQUENCE_LEN(dst, len);
 
@@ -121,7 +121,7 @@ Series* Copy_String_At_Len(const Cell* src, REBINT limit)
 // Append unencoded data to a byte string, using plain memcpy().  If dst is
 // nullptr, a new byte-sized series will be created and returned.
 //
-Series* Append_Unencoded_Len(Series* dst, const char *src, REBLEN len)
+Binary* Append_Unencoded_Len(Binary* dst, const char *src, REBLEN len)
 {
     REBLEN tail;
     if (dst == nullptr) {
@@ -132,8 +132,6 @@ Series* Append_Unencoded_Len(Series* dst, const char *src, REBLEN len)
         tail = Series_Len(dst);
         Expand_Series_Tail(dst, len);
     }
-
-    assert(BYTE_SIZE(dst));
 
     memcpy(Binary_At(dst, tail), src, len);
     TERM_SEQUENCE(dst);
@@ -149,7 +147,7 @@ Series* Append_Unencoded_Len(Series* dst, const char *src, REBLEN len)
 //
 // !!! Should be in a header file so it can be inlined.
 //
-Series* Append_Unencoded(Series* dst, const char *src)
+Binary* Append_Unencoded(Binary* dst, const char *src)
 {
     return Append_Unencoded_Len(dst, src, strlen(src));
 }
@@ -217,7 +215,7 @@ String* Make_Ser_Codepoint(REBLEN codepoint)
 // !!! Currently does the same thing as Append_Unencoded_Len.  Should it
 // check the bytes to make sure they're actually UTF8?
 //
-void Append_Utf8_Utf8(Series* dst, const char *utf8, size_t size)
+void Append_Utf8_Utf8(Binary* dst, const char *utf8, size_t size)
 {
     Append_Unencoded_Len(dst, utf8, size);
 }
@@ -230,19 +228,14 @@ void Append_Utf8_Utf8(Series* dst, const char *utf8, size_t size)
 //
 // !!! Used only with mold series at the moment.
 //
-void Append_Utf8_String(Series* dst, const Cell* src, REBLEN length_limit)
+void Append_Utf8_String(Binary* dst, const Cell* src, REBLEN length_limit)
 {
-    assert(
-        Series_Wide(dst) == sizeof(Byte)
-        && Series_Wide(VAL_SERIES(src)) == sizeof(REBUNI)
-    );
-
     REBSIZ offset;
     REBSIZ size;
     Binary* temp = Temp_UTF8_At_Managed(&offset, &size, src, length_limit);
 
-    REBLEN tail = Series_Len(dst);
-    Expand_Series(dst, tail, size); // tail changed too
+    REBLEN tail = Binary_Len(dst);
+    Expand_Series(dst, tail, size);  // tail changed too
 
     memcpy(Binary_At(dst, tail), Binary_At(temp, offset), size);
 }
@@ -253,7 +246,7 @@ void Append_Utf8_String(Series* dst, const Cell* src, REBLEN length_limit)
 //
 // Append an integer string.
 //
-void Append_Int(Series* dst, REBINT num)
+void Append_Int(Binary* dst, REBINT num)
 {
     Byte buf[32];
 
@@ -267,7 +260,7 @@ void Append_Int(Series* dst, REBINT num)
 //
 // Append an integer string.
 //
-void Append_Int_Pad(Series* dst, REBINT num, REBINT digs)
+void Append_Int_Pad(Binary* dst, REBINT num, REBINT digs)
 {
     Byte buf[32];
     if (digs > 0)

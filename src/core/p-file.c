@@ -153,7 +153,7 @@ static void Read_File_Port(
 
     REBREQ *req = AS_REBREQ(file);
 
-    Series* ser = Make_Binary(len); // read result buffer
+    Binary* ser = Make_Binary(len);  // read result buffer
     Init_Binary(out, ser);
 
     // Do the read, check for errors:
