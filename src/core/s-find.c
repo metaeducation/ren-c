@@ -618,7 +618,7 @@ REBLEN Find_Str_Bitset(
     REBLEN index,
     REBLEN tail,
     REBINT skip,
-    Series* bset,
+    Binary* bset,
     REBLEN flags
 ) {
     bool uncase = not (flags & AM_FIND_CASE); // case insensitive

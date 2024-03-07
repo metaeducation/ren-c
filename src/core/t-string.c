@@ -258,7 +258,7 @@ static REBLEN find_string(
             index,
             end,
             skip,
-            VAL_SERIES(target),
+            Cell_Bitset(target),
             flags
         );
     }

@@ -586,7 +586,7 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
         // Check the current character against a character set, advance matches
         //
         if (Check_Bit(
-            VAL_SERIES(rule), GET_ANY_CHAR(P_INPUT, P_POS), not P_HAS_CASE
+            Cell_Bitset(rule), GET_ANY_CHAR(P_INPUT, P_POS), not P_HAS_CASE
         )) {
             return P_POS + 1;
         }
@@ -943,7 +943,7 @@ static REBIXO To_Thru_Block_Rule(
                 }
                 // bitset
                 else if (IS_BITSET(rule)) {
-                    if (Check_Bit(VAL_SERIES(rule), ch, not P_HAS_CASE)) {
+                    if (Check_Bit(Cell_Bitset(rule), ch, not P_HAS_CASE)) {
                         if (is_thru)
                             return pos + 1;
                         return pos;
@@ -1186,7 +1186,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             P_POS,
             Series_Len(P_INPUT),
             1,
-            VAL_BITSET(rule),
+            Cell_Bitset(rule),
             (P_FIND_FLAGS & AM_FIND_CASE)
                 ? AM_FIND_CASE
                 : 0

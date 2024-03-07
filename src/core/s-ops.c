@@ -182,7 +182,7 @@ Binary* Temp_UTF8_At_Managed(
 //
 // Only valid for BINARY data.
 //
-Series* Xandor_Binary(Value* verb, Value* value, Value* arg)
+Binary* Xandor_Binary(Value* verb, Value* value, Value* arg)
 {
     Byte *p0 = Cell_Binary_At(value);
     Byte *p1 = Cell_Binary_At(arg);
@@ -203,7 +203,7 @@ Series* Xandor_Binary(Value* verb, Value* value, Value* arg)
 
     REBLEN t2 = MAX(t0, t1);
 
-    Series* series;
+    Binary* series;
     if (IS_BITSET(value)) {
         //
         // Although bitsets and binaries share some implementation here,
