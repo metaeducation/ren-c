@@ -400,7 +400,7 @@ Array* Split_Lines(const Value* str)
 {
     StackIndex base = TOP_INDEX;
 
-    Series* s = VAL_SERIES(str);
+    String* s = Cell_String(str);
     REBLEN len = VAL_LEN_AT(str);
     REBLEN i = VAL_INDEX(str);
 

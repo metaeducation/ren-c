@@ -111,17 +111,17 @@ INLINE void Set_String_Len(String* s, REBLEN len) {
     Set_Series_Len(s, len);
 }
 
-#define String_At(s,n) \
-    AS_REBCHR(Series_At(REBUNI, (s), (n)))
+INLINE Ucs2(*) String_At(String* s, REBLEN n)
+  { return Series_At(REBUNI, (s), (n)); }
 
-#define String_Head(s) \
-    Series_Head(REBUNI, (s))
+INLINE REBUNI* String_Head(String* s)
+  { return Series_Head(REBUNI, s); }
 
-#define String_Tail(s) \
-    Series_Tail(REBUNI, (s))
+INLINE REBUNI* String_Tail(String* s)
+  { return Series_Tail(REBUNI, s); }
 
-#define String_Last(s) \
-    Series_Last(REBUNI, (s))
+INLINE REBUNI* String_Last(String* s)
+  { return Series_Last(REBUNI, s); }
 
 INLINE void Term_String_Len(String* s, REBLEN len) {
     Set_Series_Len(s, len);

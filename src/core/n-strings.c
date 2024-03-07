@@ -907,7 +907,7 @@ DECLARE_NATIVE(enline)
 
     Value* val = ARG(string);
 
-    Series* ser = VAL_SERIES(val);
+    String* ser = Cell_String(val);
     REBLEN idx = VAL_INDEX(val);
     REBLEN len = VAL_LEN_AT(val);
 

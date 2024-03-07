@@ -567,7 +567,7 @@ REBLEN Find_Str_Char(
         }
     }
     else {
-        REBUNI *up = String_Head(series);
+        REBUNI *up = String_Head(cast(String*, series));
         while (true) {
             if (up[index] == casings[0] || up[index] == casings[1])
                 goto return_index;

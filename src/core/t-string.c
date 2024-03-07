@@ -131,7 +131,7 @@ static void reverse_string(Value* v, REBLEN len)
 
     REBLEN val_len_head = VAL_LEN_HEAD(v);
 
-    Series* ser = VAL_SERIES(v);
+    String* ser = Cell_String(v);
     Ucs2(const*) up = String_Last(ser); // last exists due to len != 0
     REBLEN n;
     for (n = 0; n < len; ++n) {
