@@ -113,7 +113,7 @@ REBTYPE(Datatype)
             assert(Key_Id(key) == SYM_SELF);
             ++key; ++var;
 
-            Cell* item = ARR_HEAD(
+            Cell* item = Array_Head(
                 VAL_TYPE_SPEC(CTX_VAR(Lib_Context, SYM_FROM_KIND(kind)))
             );
 

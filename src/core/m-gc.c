@@ -651,7 +651,7 @@ static void Propagate_All_GC_Marks(void)
         Cell* v;
 
         if (GET_SER_FLAG(a, ARRAY_FLAG_PARAMLIST)) {
-            v = ARR_HEAD(a); // archetype
+            v = Array_Head(a); // archetype
             assert(IS_ACTION(v));
             assert(not v->extra.binding); // archetypes have no binding
 
@@ -715,7 +715,7 @@ static void Propagate_All_GC_Marks(void)
                 }
                 else {
                     assert(NOT_SER_FLAG(keylist, ARRAY_FLAG_PARAMLIST));
-                    Assert_Unreadable_If_Debug(ARR_HEAD(keylist));
+                    Assert_Unreadable_If_Debug(Array_Head(keylist));
 
                     Array* ancestor = LINK(keylist).ancestor;
                     Queue_Mark_Array_Subclass_Deep(ancestor); // maybe keylist
@@ -752,7 +752,7 @@ static void Propagate_All_GC_Marks(void)
             //
             assert(NOT_SER_INFO(a, SERIES_INFO_INACCESSIBLE));
 
-            v = ARR_HEAD(a);
+            v = Array_Head(a);
         }
         else {
             // Users can free the data of a plain array with FREE, leaving
@@ -764,7 +764,7 @@ static void Propagate_All_GC_Marks(void)
             if (GET_SER_INFO(a, SERIES_INFO_INACCESSIBLE))
                 continue;
 
-            v = ARR_HEAD(a);
+            v = Array_Head(a);
         }
 
         for (; NOT_END(v); ++v) {
@@ -951,7 +951,7 @@ static void Mark_Root_Series(void)
                 if (GET_SER_FLAG(s, ARRAY_FLAG_FILE_LINE))
                     LINK(s).file->header.bits |= NODE_FLAG_MARKED;
 
-                Cell* item = ARR_HEAD(cast(Array*, s));
+                Cell* item = Array_Head(cast(Array*, s));
                 for (; NOT_END(item); ++item)
                     Queue_Mark_Value_Deep(item);
             }
@@ -983,7 +983,7 @@ static void Mark_Root_Series(void)
 //
 static void Mark_Data_Stack(void)
 {
-    Value* head = KNOWN(ARR_HEAD(DS_Array));
+    Value* head = KNOWN(Array_Head(DS_Array));
     Assert_Unreadable_If_Debug(head);
 
     Value* stackval = TOP;
@@ -1692,7 +1692,7 @@ Array* Snapshot_All_Actions(void)
                 //
                 assert(Is_Series_Managed(s));
                 if (GET_SER_FLAG(s, ARRAY_FLAG_PARAMLIST)) {
-                    Value* v = KNOWN(ARR_HEAD(ARR(s)));
+                    Value* v = KNOWN(Array_Head(ARR(s)));
                     assert(IS_ACTION(v));
                     Copy_Cell(PUSH(), v);
                 }

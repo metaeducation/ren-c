@@ -468,7 +468,7 @@ DECLARE_NATIVE(wait)
         //
         ports = Pop_Stack_Values(base);
 
-        for (val = ARR_HEAD(ports); NOT_END(val); val++) { // find timeout
+        for (val = Array_Head(ports); NOT_END(val); val++) { // find timeout
             if (Pending_Port(KNOWN(val)))
                 ++n;
 
@@ -533,7 +533,7 @@ DECLARE_NATIVE(wait)
     Sieve_Ports(ports);
 
     if (not REF(all)) {
-        val = ARR_HEAD(ports);
+        val = Array_Head(ports);
         if (not IS_PORT(val))
             return nullptr;
 

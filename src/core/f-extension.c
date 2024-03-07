@@ -177,7 +177,7 @@ DECLARE_NATIVE(load_extension)
     // This is something that raises questions, but go ahead and bind them
     // into lib for the time being (don't add any new words).
     //
-    Bind_Values_Deep(ARR_HEAD(specs), Lib_Context);
+    Bind_Values_Deep(Array_Head(specs), Lib_Context);
 
     // Some of the things being tacked on here (like the DLL info etc.) should
     // reside in the META OF portion, vs. being in-band in the module itself.
@@ -196,7 +196,7 @@ DECLARE_NATIVE(load_extension)
 
     StackIndex base = TOP_INDEX; // for accumulating exports
 
-    Cell* item = ARR_HEAD(specs);
+    Cell* item = Array_Head(specs);
     REBLEN i;
     for (i = 0; i < num_natives; ++i) {
         //

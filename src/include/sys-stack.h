@@ -69,7 +69,7 @@
 // ultimately of length 0.
 //
 INLINE Value* Data_Stack_At(StackIndex i) {
-    Value* at = KNOWN(ARR_HEAD(DS_Array) + i);
+    Value* at = KNOWN(Array_Head(DS_Array) + i);
     assert(
         ((at->header.bits & NODE_FLAG_CELL) and i <= (TOP_INDEX + 1))
         or (not (SECOND_BYTE(&at->header) != REB_0 and i == (TOP_INDEX + 1)))

@@ -90,7 +90,7 @@ Value* Append_Event(void)
     }
     TERM_ARRAY_LEN(Cell_Array(state), VAL_LEN_HEAD(state) + 1);
 
-    return Init_Blank(ARR_LAST(Cell_Array(state)));
+    return Init_Blank(Array_Last(Cell_Array(state)));
 }
 
 

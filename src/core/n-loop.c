@@ -1274,7 +1274,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
             if (ANY_ARRAY(res->data))
                 Derelativize(
                     var,
-                    VAL_ARRAY_AT_HEAD(res->data, index),
+                    Cell_Array_At_Head(res->data, index),
                     VAL_SPECIFIER(res->data)
                 );
             else if (IS_BINARY(res->data))
@@ -1317,7 +1317,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
 
             do {
                 assert(res->start <= len);
-                VAL_ARRAY_AT_HEAD(res->data, res->start)->header.bits
+                Cell_Array_At_Head(res->data, res->start)->header.bits
                     |= NODE_FLAG_MARKED;
                 ++res->start;
             } while (res->start != index);

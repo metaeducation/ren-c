@@ -47,7 +47,7 @@
 //
 void Collapsify_Array(Array* array, Specifier* specifier, REBLEN limit)
 {
-    Cell* item = ARR_HEAD(array);
+    Cell* item = Array_Head(array);
     for (; NOT_END(item); ++item) {
         if (ANY_ARRAY(item) and VAL_LEN_AT(item) > limit) {
             Specifier* derived = Derive_Specifier(specifier, item);

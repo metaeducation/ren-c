@@ -191,7 +191,7 @@ REBTYPE(Action)
             SPECIFIED, // !!! Note: not actually "deep", just typesets
             SERIES_MASK_ACTION
         );
-        ARR_HEAD(proxy_paramlist)->payload.action.paramlist
+        Array_Head(proxy_paramlist)->payload.action.paramlist
             = proxy_paramlist;
         MISC(proxy_paramlist).meta = ACT_META(act);
 
@@ -213,8 +213,8 @@ REBTYPE(Action)
         // A new body_holder was created inside Make_Action().  Rare case
         // where we can bit-copy a possibly-relative value.
         //
-        Cell* src = ARR_HEAD(ACT_DETAILS(act));
-        Cell* dest = ARR_HEAD(ACT_DETAILS(proxy));
+        Cell* src = Array_Head(ACT_DETAILS(act));
+        Cell* dest = Array_Head(ACT_DETAILS(proxy));
         for (; NOT_END(src); ++src, ++dest)
             Blit_Cell(dest, src);
         TERM_ARRAY_LEN(ACT_DETAILS(proxy), details_len);
@@ -248,7 +248,7 @@ REBTYPE(Action)
             // that symbol out before giving it back.
             //
             Value* param = VAL_ACT_PARAMS_HEAD(value);
-            Value* typeset = KNOWN(ARR_HEAD(copy));
+            Value* typeset = KNOWN(Array_Head(copy));
             for (; NOT_END(param); param++, typeset++) {
                 assert(Cell_Parameter_Symbol(param) != nullptr);
                 Copy_Cell(typeset, param);
@@ -269,10 +269,10 @@ REBTYPE(Action)
             if (Array_Len(details) < 1)
                 return nullptr;
 
-            if (not ANY_ARRAY(ARR_HEAD(details)))
+            if (not ANY_ARRAY(Array_Head(details)))
                 return nullptr;
 
-            Array* a = Cell_Array(ARR_HEAD(details));
+            Array* a = Cell_Array(Array_Head(details));
             if (NOT_SER_FLAG(a, ARRAY_FLAG_FILE_LINE))
                 return nullptr;
 
@@ -286,10 +286,10 @@ REBTYPE(Action)
             if (Array_Len(details) < 1)
                 return nullptr;
 
-            if (not ANY_ARRAY(ARR_HEAD(details)))
+            if (not ANY_ARRAY(Array_Head(details)))
                 return nullptr;
 
-            Array* a = Cell_Array(ARR_HEAD(details));
+            Array* a = Cell_Array(Array_Head(details));
             if (NOT_SER_FLAG(a, ARRAY_FLAG_FILE_LINE))
                 return nullptr;
 

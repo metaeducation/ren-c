@@ -144,7 +144,7 @@ void Dump_Series(Series* s, const char *memo)
     fflush(stdout);
 
     if (IS_SER_ARRAY(s))
-        Dump_Values(ARR_HEAD(ARR(s)), Series_Len(s));
+        Dump_Values(Array_Head(ARR(s)), Series_Len(s));
     else
         Dump_Bytes(SER_DATA_RAW(s), (Series_Len(s) + 1) * Series_Wide(s));
 

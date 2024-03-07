@@ -431,7 +431,7 @@ chkDecimal:
 //
 REBLEN Find_In_Array_Simple(Array* array, REBLEN index, const Cell* target)
 {
-    Cell* value = ARR_HEAD(array);
+    Cell* value = Array_Head(array);
 
     for (; index < Array_Len(array); index++) {
         if (0 == Cmp_Value(value + index, target, false))

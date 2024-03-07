@@ -669,7 +669,7 @@ REB_R PD_Array(
     if (opt_setval)
         Fail_If_Read_Only_Series(VAL_SERIES(pvs->out));
 
-    pvs->u.ref.cell = VAL_ARRAY_AT_HEAD(pvs->out, n);
+    pvs->u.ref.cell = Cell_Array_At_Head(pvs->out, n);
     pvs->u.ref.specifier = VAL_SPECIFIER(pvs->out);
     return R_REFERENCE;
 }
@@ -689,7 +689,7 @@ Cell* Pick_Block(Value* out, const Value* block, const Value* picker)
         return nullptr;
     }
 
-    Cell* slot = VAL_ARRAY_AT_HEAD(block, n);
+    Cell* slot = Cell_Array_At_Head(block, n);
     Derelativize(out, slot, VAL_SPECIFIER(block));
     return slot;
 }
@@ -838,7 +838,7 @@ REBTYPE(Array)
                 OUT, Copy_Array_At_Max_Shallow(arr, index, specifier, len)
             );
         else
-            Derelativize(OUT, &ARR_HEAD(arr)[index], specifier);
+            Derelativize(OUT, &Array_Head(arr)[index], specifier);
 
         Remove_Series(arr, index, len);
         return OUT; }
@@ -1037,7 +1037,7 @@ REBTYPE(Array)
         // on the next element and putting them on the previous element.
 
         bool line_back;
-        if (back == ARR_LAST(arr)) // !!! review tail newline handling
+        if (back == Array_Last(arr)) // !!! review tail newline handling
             line_back = GET_SER_FLAG(arr, ARRAY_FLAG_TAIL_NEWLINE);
         else
             line_back = GET_VAL_FLAG(back + 1, VALUE_FLAG_NEWLINE_BEFORE);
@@ -1162,7 +1162,7 @@ void Assert_Array_Core(Array* a)
     if (not IS_SER_ARRAY(a))
         panic (a);
 
-    Cell* item = ARR_HEAD(a);
+    Cell* item = Array_Head(a);
     REBLEN i;
     for (i = 0; i < Array_Len(a); ++i, ++item) {
         if (IS_END(item)) {

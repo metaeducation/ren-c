@@ -121,7 +121,7 @@ REBLEN Modify_Array(
                 0, // extra
                 NODE_FLAG_MANAGED // !!! Worth it to not manage and free?
             );
-            src_rel = ARR_HEAD(copy);
+            src_rel = Array_Head(copy);
             specifier = SPECIFIED; // copy already specified it
         }
         else {
@@ -167,14 +167,14 @@ REBLEN Modify_Array(
         REBINT index = 0;
         for (; index < ilen; ++index, ++dst_idx) {
             Derelativize(
-                ARR_HEAD(dst_arr) + dst_idx,
+                Array_Head(dst_arr) + dst_idx,
                 src_rel + index,
                 specifier
             );
 
             if (dup_index == 0 and index == 0 and head_newline) {
                 SET_VAL_FLAG(
-                    ARR_HEAD(dst_arr) + dst_idx,
+                    Array_Head(dst_arr) + dst_idx,
                     VALUE_FLAG_NEWLINE_BEFORE
                 );
 
@@ -187,7 +187,7 @@ REBLEN Modify_Array(
 
             if (dup_index > 0 and index == 0 and tail_newline) {
                 SET_VAL_FLAG(
-                    ARR_HEAD(dst_arr) + dst_idx,
+                    Array_Head(dst_arr) + dst_idx,
                     VALUE_FLAG_NEWLINE_BEFORE
                 );
             }
@@ -211,7 +211,7 @@ REBLEN Modify_Array(
         // newline.  This allows `x: copy [] | append/line x [a b c]` to give
         // a more common result.  The head line can be removed easily.
         //
-        SET_VAL_FLAG(ARR_HEAD(dst_arr), VALUE_FLAG_NEWLINE_BEFORE);
+        SET_VAL_FLAG(Array_Head(dst_arr), VALUE_FLAG_NEWLINE_BEFORE);
     }
 
     Assert_Array(dst_arr);

@@ -226,7 +226,7 @@ Value* Append_Context(
     //
     Expand_Series_Tail(keylist, 1);
     Value* key = Init_Typeset(
-        ARR_LAST(keylist), // !!! non-dynamic, could optimize
+        Array_Last(keylist), // !!! non-dynamic, could optimize
         TS_VALUE, // !!! Currently not paid attention to
         symbol ? unwrap(symbol) : Cell_Word_Symbol(unwrap(any_word))
     );
@@ -237,7 +237,7 @@ Value* Append_Context(
     //
     Expand_Series_Tail(CTX_VARLIST(context), 1);
 
-    Value* value = Init_Trash(ARR_LAST(CTX_VARLIST(context)));
+    Value* value = Init_Trash(Array_Last(CTX_VARLIST(context)));
     TERM_ARRAY_LEN(CTX_VARLIST(context), Array_Len(CTX_VARLIST(context)));
 
     if (not any_word)
@@ -386,8 +386,8 @@ void Collect_End(struct Reb_Collector *cl)
     //
     Cell* v =
         (cl == nullptr or (cl->flags & COLLECT_AS_TYPESET))
-            ? ARR_HEAD(BUF_COLLECT) + 1
-            : ARR_HEAD(BUF_COLLECT);
+            ? Array_Head(BUF_COLLECT) + 1
+            : Array_Head(BUF_COLLECT);
     for (; NOT_END(v); ++v) {
         Symbol* canon =
             (cl == nullptr or (cl->flags & COLLECT_AS_TYPESET))
@@ -444,7 +444,7 @@ void Collect_Context_Keys(
     Expand_Series_Tail(BUF_COLLECT, CTX_LEN(context));
     SET_ARRAY_LEN_NOTERM(BUF_COLLECT, cl->index);
 
-    Cell* collect = ARR_TAIL(BUF_COLLECT); // get address *after* expansion
+    Cell* collect = Array_Tail(BUF_COLLECT); // get address *after* expansion
 
     if (check_dups) {
         for (; NOT_END(key); key++) {
@@ -463,7 +463,7 @@ void Collect_Context_Keys(
         //
         SET_ARRAY_LEN_NOTERM(
             BUF_COLLECT,
-            Array_Len(BUF_COLLECT) + (collect - ARR_TAIL(BUF_COLLECT))
+            Array_Len(BUF_COLLECT) + (collect - Array_Tail(BUF_COLLECT))
         );
     }
     else {
@@ -512,12 +512,12 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
             Expand_Series_Tail(BUF_COLLECT, 1);
             if (cl->flags & COLLECT_AS_TYPESET)
                 Init_Typeset(
-                    ARR_LAST(BUF_COLLECT),
+                    Array_Last(BUF_COLLECT),
                     TS_VALUE, // !!! Not used at the moment
                     Cell_Word_Symbol(v)
                 );
             else
-                Init_Word(ARR_LAST(BUF_COLLECT), Cell_Word_Symbol(v));
+                Init_Word(Array_Last(BUF_COLLECT), Cell_Word_Symbol(v));
 
             continue;
         }
@@ -573,7 +573,7 @@ Array* Collect_Keylist_Managed(
     // Leave the [0] slot blank while collecting (ROOTKEY/ROOTPARAM), but
     // valid (but "unreadable") bits so that the copy will still work.
     //
-    Init_Unreadable(ARR_HEAD(BUF_COLLECT));
+    Init_Unreadable(Array_Head(BUF_COLLECT));
     SET_ARRAY_LEN_NOTERM(BUF_COLLECT, 1);
 
     if (flags & COLLECT_ENSURE_SELF) {
@@ -636,7 +636,7 @@ Array* Collect_Keylist_Managed(
     // but it's set to an unreadable blank at the moment just to make sure it
     // doesn't get used on accident.
     //
-    Assert_Unreadable_If_Debug(ARR_HEAD(keylist));
+    Assert_Unreadable_If_Debug(Array_Head(keylist));
 
     Collect_End(cl);
     return keylist;
@@ -835,7 +835,7 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
 
     // context[0] is an instance value of the OBJECT!/PORT!/ERROR!/MODULE!
     //
-    Value* var = RESET_CELL(ARR_HEAD(varlist), kind);
+    Value* var = RESET_CELL(Array_Head(varlist), kind);
     var->payload.any_context.varlist = varlist;
     var->payload.any_context.phase = nullptr;
     INIT_BINDING(var, UNBOUND);
@@ -1032,7 +1032,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
     // Leave the [0] slot blank while collecting (ROOTKEY/ROOTPARAM), but
     // valid (but "unreadable") bits so that the copy will still work.
     //
-    Init_Unreadable(ARR_HEAD(BUF_COLLECT));
+    Init_Unreadable(Array_Head(BUF_COLLECT));
     SET_ARRAY_LEN_NOTERM(BUF_COLLECT, 1);
 
     // Setup binding table and BUF_COLLECT with parent1 words.  Don't bother
@@ -1061,7 +1061,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
         SPECIFIED,
         NODE_FLAG_MANAGED
     );
-    Init_Unreadable(ARR_HEAD(keylist)); // Currently no rootkey usage
+    Init_Unreadable(Array_Head(keylist)); // Currently no rootkey usage
 
     if (parent1 == nullptr)
         LINK(keylist).ancestor = keylist;
@@ -1083,7 +1083,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
     // the parent was an ERROR! so will the child be.  This is a new idea,
     // so review consequences.
     //
-    Value* rootvar = RESET_CELL(ARR_HEAD(varlist), CTX_TYPE(parent1));
+    Value* rootvar = RESET_CELL(Array_Head(varlist), CTX_TYPE(parent1));
     rootvar->payload.any_context.varlist = varlist;
     rootvar->payload.any_context.phase = nullptr;
     INIT_BINDING(rootvar, UNBOUND);

@@ -184,7 +184,7 @@ static void Assert_Basics(void)
 //
 static void Startup_Base(Array* boot_base)
 {
-    Cell* head = ARR_HEAD(boot_base);
+    Cell* head = Array_Head(boot_base);
 
     // By this point, the Lib_Context contains basic definitions for things
     // like true, false, the natives, and the generics.  But before deeply
@@ -229,7 +229,7 @@ static void Startup_Base(Array* boot_base)
 // done by delegating it to Rebol can use a function in sys as a service.
 //
 static void Startup_Sys(Array* boot_sys) {
-    Cell* head = ARR_HEAD(boot_sys);
+    Cell* head = Array_Head(boot_sys);
 
     // Add all new top-level SET-WORD! found in the sys boot-block to Lib,
     // and then bind deeply all words to Lib and Sys.  See Startup_Base() notes
@@ -265,7 +265,7 @@ static Array* Startup_Datatypes(Array* boot_types, Array* boot_typespecs)
     if (Array_Len(boot_types) != REB_MAX - 1)
         panic (boot_types); // Every REB_XXX but REB_0 should have a WORD!
 
-    Cell* word = ARR_HEAD(boot_types);
+    Cell* word = Array_Head(boot_types);
 
     if (Cell_Word_Id(word) != SYM_ACTION_X)
         panic (word); // First type should be ACTION!
@@ -573,8 +573,8 @@ Value* Make_Native(
         if (
             not IS_PATH(*item)
             or VAL_LEN_HEAD(*item) != 2
-            or not IS_WORD(ARR_HEAD(Cell_Array(*item)))
-            or Cell_Word_Id(ARR_HEAD(Cell_Array(*item))) != SYM_NATIVE
+            or not IS_WORD(Array_Head(Cell_Array(*item)))
+            or Cell_Word_Id(Array_Head(Cell_Array(*item))) != SYM_NATIVE
             or not IS_WORD(Array_At(Cell_Array(*item), 1))
             or Cell_Word_Id(Array_At(Cell_Array(*item), 1)) != SYM_BODY
         ){
@@ -1401,7 +1401,7 @@ void Startup_Core(void)
     rebRelease(filename);  // must release API handle
     rebFree(utf8); // don't need decompressed text after it's scanned
 
-    BOOT_BLK *boot = cast(BOOT_BLK*, VAL_ARRAY_HEAD(ARR_HEAD(boot_array)));
+    BOOT_BLK *boot = cast(BOOT_BLK*, VAL_ARRAY_HEAD(Array_Head(boot_array)));
 
     Startup_Symbols(Cell_Array(&boot->words));
 

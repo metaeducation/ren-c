@@ -1340,7 +1340,7 @@ DECLARE_NATIVE(scan_net_header)
 
         cp++;
         // Search if word already present:
-        for (item = ARR_HEAD(result); NOT_END(item); item += 2) {
+        for (item = Array_Head(result); NOT_END(item); item += 2) {
             assert(IS_TEXT(item + 1) || IS_BLOCK(item + 1));
             if (Are_Synonyms(Cell_Word_Symbol(item), name)) {
                 // Does it already use a block?

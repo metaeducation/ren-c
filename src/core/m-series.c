@@ -403,7 +403,7 @@ void Assert_Series_Term_Core(Series* s)
         //
         // END values aren't canonized to zero bytes, check IS_END explicitly
         //
-        Cell* tail = ARR_TAIL(ARR(s));
+        Cell* tail = Array_Tail(ARR(s));
         if (NOT_END(tail))
             panic (tail);
     }

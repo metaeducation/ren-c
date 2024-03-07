@@ -628,7 +628,7 @@ DECLARE_NATIVE(enbin)
             "fail {Second element of ENBIN settings must be + or +/-}",
         "]"
     );
-    Cell* third = VAL_ARRAY_AT_HEAD(settings, index + 2);
+    Cell* third = Cell_Array_At_Head(settings, index + 2);
     if (not IS_INTEGER(third))
         fail ("Third element of ENBIN settings must be an integer}");
     REBINT num_bytes = VAL_INT32(third);
@@ -735,7 +735,7 @@ DECLARE_NATIVE(debin)
         "]"
     );
     REBLEN num_bytes;
-    Cell* third = VAL_ARRAY_AT_HEAD(settings, index + 2);
+    Cell* third = Cell_Array_At_Head(settings, index + 2);
     if (IS_END(third))
         num_bytes = VAL_LEN_AT(ARG(binary));
     else {

@@ -697,12 +697,12 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
     }
 #else
     INLINE const Value* KNOWN(const Cell* v) {
-        assert(IS_END(v) or IS_SPECIFIC(v)); // END for KNOWN(ARR_HEAD()), etc.
+        assert(IS_END(v) or IS_SPECIFIC(v)); // END for KNOWN(Array_Head()), etc.
         return cast(const Value*, v);
     }
 
     INLINE Value* KNOWN(Cell* v) {
-        assert(IS_END(v) or IS_SPECIFIC(v)); // END for KNOWN(ARR_HEAD()), etc.
+        assert(IS_END(v) or IS_SPECIFIC(v)); // END for KNOWN(Array_Head()), etc.
         return cast(Value*, v);
     }
 #endif

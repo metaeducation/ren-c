@@ -65,7 +65,7 @@
 INLINE uintptr_t VAL_HANDLE_LEN(const Cell* v) {
     assert(IS_HANDLE(v));
     if (v->extra.singular)
-        return ARR_HEAD(v->extra.singular)->payload.handle.length;
+        return Array_Head(v->extra.singular)->payload.handle.length;
     else
         return v->payload.handle.length;
 }
@@ -74,7 +74,7 @@ INLINE void *VAL_HANDLE_VOID_POINTER(const Cell* v) {
     assert(IS_HANDLE(v));
     assert(NOT_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
     if (v->extra.singular)
-        return ARR_HEAD(v->extra.singular)->payload.handle.data.pointer;
+        return Array_Head(v->extra.singular)->payload.handle.data.pointer;
     else
         return v->payload.handle.data.pointer;
 }
@@ -86,7 +86,7 @@ INLINE CFUNC *VAL_HANDLE_CFUNC(const Cell* v) {
     assert(IS_HANDLE(v));
     assert(GET_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
     if (v->extra.singular)
-        return ARR_HEAD(v->extra.singular)->payload.handle.data.cfunc;
+        return Array_Head(v->extra.singular)->payload.handle.data.cfunc;
     else
         return v->payload.handle.data.cfunc;
 }
@@ -100,7 +100,7 @@ INLINE CLEANUP_CFUNC *VAL_HANDLE_CLEANER(const Cell* v) {
 INLINE void SET_HANDLE_LEN(Cell* v, uintptr_t length) {
     assert(IS_HANDLE(v));
     if (v->extra.singular)
-        ARR_HEAD(v->extra.singular)->payload.handle.length = length;
+        Array_Head(v->extra.singular)->payload.handle.length = length;
     else
         v->payload.handle.length = length;
 }
@@ -109,7 +109,7 @@ INLINE void SET_HANDLE_POINTER(Cell* v, void *pointer) {
     assert(IS_HANDLE(v));
     assert(NOT_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
     if (v->extra.singular)
-        ARR_HEAD(v->extra.singular)->payload.handle.data.pointer = pointer;
+        Array_Head(v->extra.singular)->payload.handle.data.pointer = pointer;
     else
         v->payload.handle.data.pointer = pointer;
 }
@@ -118,7 +118,7 @@ INLINE void SET_HANDLE_CFUNC(Cell* v, CFUNC *cfunc) {
     assert(IS_HANDLE(v));
     assert(GET_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
     if (v->extra.singular)
-        ARR_HEAD(v->extra.singular)->payload.handle.data.cfunc = cfunc;
+        Array_Head(v->extra.singular)->payload.handle.data.cfunc = cfunc;
     else
         v->payload.handle.data.cfunc = cfunc;
 }
@@ -155,7 +155,7 @@ INLINE void Init_Handle_Managed_Common(
     Array* singular = Alloc_Singular(NODE_FLAG_MANAGED);
     MISC(singular).cleaner = cleaner;
 
-    Cell* v = ARR_HEAD(singular);
+    Cell* v = Array_Head(singular);
     v->extra.singular = singular;
     v->payload.handle.length = length;
 
@@ -188,8 +188,8 @@ INLINE Value* Init_Handle_Managed(
     //
     RESET_VAL_HEADER_EXTRA(out, REB_HANDLE, 0);
 
-    RESET_VAL_HEADER(ARR_HEAD(out->extra.singular), REB_HANDLE);
-    ARR_HEAD(out->extra.singular)->payload.handle.data.pointer = pointer;
+    RESET_VAL_HEADER(Array_Head(out->extra.singular), REB_HANDLE);
+    Array_Head(out->extra.singular)->payload.handle.data.pointer = pointer;
     return KNOWN(out);
 }
 
@@ -206,10 +206,10 @@ INLINE Value* Init_Handle_Managed_Cfunc(
     RESET_VAL_HEADER_EXTRA(out, REB_HANDLE, HANDLE_FLAG_CFUNC);
 
     RESET_VAL_HEADER_EXTRA(
-        ARR_HEAD(out->extra.singular),
+        Array_Head(out->extra.singular),
         REB_HANDLE,
         HANDLE_FLAG_CFUNC
     );
-    ARR_HEAD(out->extra.singular)->payload.handle.data.cfunc = cfunc;
+    Array_Head(out->extra.singular)->payload.handle.data.cfunc = cfunc;
     return KNOWN(out);
 }

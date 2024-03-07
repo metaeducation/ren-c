@@ -2211,15 +2211,15 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             // just Lib_Context?  Not binding would break functions entirely,
             // but they can't round-trip anyway.  See #2262.
             //
-            Bind_Values_All_Deep(ARR_HEAD(array), Lib_Context);
+            Bind_Values_All_Deep(Array_Head(array), Lib_Context);
 
-            if (Array_Len(array) == 0 or not IS_WORD(ARR_HEAD(array))) {
+            if (Array_Len(array) == 0 or not IS_WORD(Array_Head(array))) {
                 DECLARE_VALUE (temp);
                 Init_Block(temp, array);
                 fail (Error_Malconstruct_Raw(temp));
             }
 
-            Option(SymId) id = Cell_Word_Id(ARR_HEAD(array));
+            Option(SymId) id = Cell_Word_Id(Array_Head(array));
             if (not id)
                 fail (Error_Syntax(ss));
 
@@ -2398,13 +2398,13 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
 
             if (ss->token == TOKEN_LIT) {
                 RESET_VAL_HEADER(PUSH(), REB_LIT_PATH);
-                CHANGE_VAL_TYPE_BITS(ARR_HEAD(arr), REB_WORD);
+                CHANGE_VAL_TYPE_BITS(Array_Head(arr), REB_WORD);
             }
-            else if (IS_GET_WORD(ARR_HEAD(arr))) {
+            else if (IS_GET_WORD(Array_Head(arr))) {
                 if (ss->begin and *ss->end == ':')
                     fail (Error_Syntax(ss));
                 RESET_VAL_HEADER(PUSH(), REB_GET_PATH);
-                CHANGE_VAL_TYPE_BITS(ARR_HEAD(arr), REB_WORD);
+                CHANGE_VAL_TYPE_BITS(Array_Head(arr), REB_WORD);
             }
             else {
                 if (ss->begin and *ss->end == ':') {

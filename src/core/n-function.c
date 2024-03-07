@@ -292,7 +292,7 @@ DECLARE_NATIVE(typechecker)
         nullptr, // no specialization exemplar (or inherited exemplar)
         1 // details array capacity
     );
-    Copy_Cell(ARR_HEAD(ACT_DETAILS(typechecker)), type);
+    Copy_Cell(Array_Head(ACT_DETAILS(typechecker)), type);
 
     return Init_Action_Unbound(OUT, typechecker);
 }
@@ -331,7 +331,7 @@ DECLARE_NATIVE(chain)
         chainees = Pop_Stack_Values(base); // no NODE_FLAG_MANAGED
     }
 
-    Value* first = KNOWN(ARR_HEAD(chainees));
+    Value* first = KNOWN(Array_Head(chainees));
 
     // !!! Current validation is that all are functions.  Should there be other
     // checks?  (That inputs match outputs in the chain?)  Should it be
@@ -348,11 +348,11 @@ DECLARE_NATIVE(chain)
     // a compatible interface with the first function in the chain.
     //
     Array* paramlist = Copy_Array_Shallow_Flags(
-        VAL_ACT_PARAMLIST(ARR_HEAD(chainees)),
+        VAL_ACT_PARAMLIST(Array_Head(chainees)),
         SPECIFIED,
         SERIES_MASK_ACTION | NODE_FLAG_MANAGED // flags not auto-copied
     );
-    ARR_HEAD(paramlist)->payload.action.paramlist = paramlist;
+    Array_Head(paramlist)->payload.action.paramlist = paramlist;
 
     // Initialize the "meta" information, which is used by HELP.  Because it
     // has a link to the "chainees", it is not necessary to copy parameter
@@ -378,7 +378,7 @@ DECLARE_NATIVE(chain)
         ACT_EXEMPLAR(VAL_ACTION(first)), // same exemplar as first action
         1 // details array capacity
     );
-    Init_Block(ARR_HEAD(ACT_DETAILS(chain)), chainees);
+    Init_Block(Array_Head(ACT_DETAILS(chain)), chainees);
 
     return Init_Action_Unbound(out, chain);
 }
@@ -427,7 +427,7 @@ DECLARE_NATIVE(adapt)
         SPECIFIED,
         SERIES_MASK_ACTION | NODE_FLAG_MANAGED
     );
-    ARR_HEAD(paramlist)->payload.action.paramlist = paramlist;
+    Array_Head(paramlist)->payload.action.paramlist = paramlist;
 
     // See %sysobj.r for `adapted-meta:` object template
 
@@ -537,7 +537,7 @@ DECLARE_NATIVE(enclose)
         SPECIFIED,
         SERIES_MASK_ACTION | NODE_FLAG_MANAGED
     );
-    Value* rootparam = KNOWN(ARR_HEAD(paramlist));
+    Value* rootparam = KNOWN(Array_Head(paramlist));
     rootparam->payload.action.paramlist = paramlist;
 
     // !!! We don't want to inherit the flags of the original action, such
@@ -682,8 +682,8 @@ DECLARE_NATIVE(hijack)
                 details_len + 1 - Series_Rest(victim_details)
             );
 
-        Cell* src = ARR_HEAD(hijacker_details);
-        Cell* dest = ARR_HEAD(victim_details);
+        Cell* src = Array_Head(hijacker_details);
+        Cell* dest = Array_Head(victim_details);
         for (; NOT_END(src); ++src, ++dest)
             Blit_Cell(dest, src);
         TERM_ARRAY_LEN(victim_details, details_len);
@@ -703,7 +703,7 @@ DECLARE_NATIVE(hijack)
 
         if (Array_Len(victim_details) < 1)
             Alloc_Tail_Array(victim_details);
-        Copy_Cell(ARR_HEAD(victim_details), ARG(hijacker));
+        Copy_Cell(Array_Head(victim_details), ARG(hijacker));
         TERM_ARRAY_LEN(victim_details, 1);
     }
 
@@ -780,7 +780,7 @@ DECLARE_NATIVE(tighten)
             INIT_VAL_PARAM_CLASS(param, PARAM_CLASS_TIGHT);
     }
 
-    Cell* rootparam = ARR_HEAD(paramlist);
+    Cell* rootparam = Array_Head(paramlist);
     Clear_Action_Cached_Flags(rootparam);
     rootparam->payload.action.paramlist = paramlist;
     INIT_BINDING(rootparam, UNBOUND);
@@ -815,8 +815,8 @@ DECLARE_NATIVE(tighten)
     // on the source and target are the same, and it preserves relative
     // value information (rarely what you meant, but it's meant here).
     //
-    Cell* src = ARR_HEAD(ACT_DETAILS(original));
-    Cell* dest = ARR_HEAD(ACT_DETAILS(tightened));
+    Cell* src = Array_Head(ACT_DETAILS(original));
+    Cell* dest = Array_Head(ACT_DETAILS(tightened));
     for (; NOT_END(src); ++src, ++dest)
         Blit_Cell(dest, src);
     TERM_ARRAY_LEN(ACT_DETAILS(tightened), details_len);
@@ -835,7 +835,7 @@ REB_R N_Shot_Dispatcher(Level* L)
     Array* details = ACT_DETAILS(Level_Phase(L));
     assert(Array_Len(details) == 1);
 
-    Cell* n = ARR_HEAD(details);
+    Cell* n = Array_Head(details);
     if (VAL_INT64(n) == 0)
         return nullptr; // always return null once 0 is reached
     --VAL_INT64(n);
@@ -853,9 +853,9 @@ REB_R N_Upshot_Dispatcher(Level* L)
     Array* details = ACT_DETAILS(Level_Phase(L));
     assert(Array_Len(details) == 1);
 
-    Cell* n = ARR_HEAD(details);
+    Cell* n = Array_Head(details);
     if (VAL_INT64(n) < 0) {
-        ++VAL_INT64(ARR_HEAD(details));
+        ++VAL_INT64(Array_Head(details));
         return nullptr; // return null until 0 is reached
     }
 
@@ -910,7 +910,7 @@ DECLARE_NATIVE(n_shot)
         nullptr, // no specialization exemplar (or inherited exemplar)
         1 // details array capacity
     );
-    Init_Integer(ARR_HEAD(ACT_DETAILS(n_shot)), n);
+    Init_Integer(Array_Head(ACT_DETAILS(n_shot)), n);
 
     return Init_Action_Unbound(OUT, n_shot);
 }

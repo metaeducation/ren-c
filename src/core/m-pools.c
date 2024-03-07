@@ -1076,7 +1076,7 @@ void Decay_Series(Series* s)
             // `char*` casts needed: https://stackoverflow.com/q/57721104
             memcpy(
                 cast(char*, &s->content.fixed),
-                cast(char*, ARR_HEAD(ARR(s))),
+                cast(char*, Array_Head(ARR(s))),
                 sizeof(Cell)
             );
         }
@@ -1110,7 +1110,7 @@ void Decay_Series(Series* s)
         // opposed to the specific singular made for the handle's GC awareness)
 
         if (IS_SER_ARRAY(s)) {
-            Cell* v = ARR_HEAD(ARR(s));
+            Cell* v = Array_Head(ARR(s));
             if (NOT_END(v) and VAL_TYPE_RAW(v) == REB_HANDLE) {
                 if (v->extra.singular == ARR(s)) {
                     //

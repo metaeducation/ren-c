@@ -320,13 +320,13 @@ void Sieve_Ports(Array* ports)
 bool Redo_Action_Throws(Level* L, REBACT *run)
 {
     Array* code_arr = Make_Array(Level_Num_Args(L)); // max, e.g. no refines
-    Cell* code = ARR_HEAD(code_arr);
+    Cell* code = Array_Head(code_arr);
 
     // The first element of our path will be the ACTION!, followed by its
     // refinements...which in the worst case, all args will be refinements:
     //
     Array* path_arr = Make_Array(Level_Num_Args(L) + 1);
-    Cell* path = ARR_HEAD(path_arr);
+    Cell* path = Array_Head(path_arr);
     Init_Action_Unbound(path, run); // !!! What if there's a binding?
     ++path;
 
@@ -372,11 +372,11 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
         ++code;
     }
 
-    TERM_ARRAY_LEN(code_arr, code - ARR_HEAD(code_arr));
+    TERM_ARRAY_LEN(code_arr, code - Array_Head(code_arr));
     Manage_Series(code_arr);
 
     DECLARE_VALUE (first);
-    TERM_ARRAY_LEN(path_arr, path - ARR_HEAD(path_arr));
+    TERM_ARRAY_LEN(path_arr, path - Array_Head(path_arr));
     Init_Path(first, path_arr);
     SET_VAL_FLAG(first, VALUE_FLAG_EVAL_FLIP); // make the PATH! invoke action
 

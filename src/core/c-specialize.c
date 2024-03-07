@@ -124,7 +124,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
         SERIES_MASK_CONTEXT
     );
 
-    Value* rootvar = RESET_CELL(ARR_HEAD(varlist), REB_FRAME);
+    Value* rootvar = RESET_CELL(Array_Head(varlist), REB_FRAME);
     rootvar->payload.any_context.varlist = varlist;
     rootvar->payload.any_context.phase = VAL_ACTION(action);
     INIT_BINDING(rootvar, VAL_BINDING(action));
@@ -666,7 +666,7 @@ bool Specialize_Action_Throws(
         SERIES_MASK_ACTION
     );
     Manage_Series(paramlist);
-    Cell* rootparam = ARR_HEAD(paramlist);
+    Cell* rootparam = Array_Head(paramlist);
     rootparam->payload.action.paramlist = paramlist;
 
     // PARAM_CLASS_REFINEMENT slots which started partially specialized (or
@@ -819,7 +819,7 @@ bool Specialize_Action_Throws(
     // that binding has to be UNBOUND).  It also remembers the original
     // action in the phase, so Specializer_Dispatcher() knows what to call.
     //
-    Cell* body = ARR_HEAD(ACT_DETAILS(specialized));
+    Cell* body = Array_Head(ACT_DETAILS(specialized));
     Copy_Cell(body, CTX_ARCHETYPE(exemplar));
     INIT_BINDING(body, VAL_BINDING(specializee));
     body->payload.any_context.phase = unspecialized;
@@ -842,7 +842,7 @@ REB_R Specializer_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
 
-    Value* exemplar = KNOWN(ARR_HEAD(details));
+    Value* exemplar = KNOWN(Array_Head(details));
     assert(IS_FRAME(exemplar));
 
     Level_Phase(L) = exemplar->payload.any_context.phase;
@@ -930,7 +930,7 @@ DECLARE_NATIVE(specialize)
 REB_R Block_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
-    Cell* block = ARR_HEAD(details);
+    Cell* block = Array_Head(details);
     assert(IS_BLOCK(block));
 
     if (IS_SPECIFIC(block)) {
@@ -1043,7 +1043,7 @@ DECLARE_NATIVE(does)
     // Block_Dispatcher() *may* copy at an indeterminate time, so to keep
     // things invariant we have to lock it.
     //
-    Cell* body = ARR_HEAD(ACT_DETAILS(doer));
+    Cell* body = Array_Head(ACT_DETAILS(doer));
     Series* locker = nullptr;
     Ensure_Value_Immutable(value, locker);
     Copy_Cell(body, value);

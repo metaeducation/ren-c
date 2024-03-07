@@ -532,7 +532,7 @@ void Startup_Symbols(Array* words)
         *Series_At(Symbol*, PG_Symbol_Canons, sym)
     );
 
-    Cell* word = ARR_HEAD(words);
+    Cell* word = Array_Head(words);
     for (; NOT_END(word); ++word) {
         Symbol* canon = VAL_STORED_CANON(word);
 

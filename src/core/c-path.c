@@ -523,7 +523,7 @@ void Get_Simple_Value_Into(Value* out, const Cell* val, Specifier* specifier)
 REBCTX *Resolve_Path(const Value* path, REBLEN *index_out)
 {
     Array* array = Cell_Array(path);
-    Cell* picker = ARR_HEAD(array);
+    Cell* picker = Array_Head(array);
 
     if (IS_END(picker) or not ANY_WORD(picker))
         return nullptr;  // !!! only handles heads of paths that are ANY-WORD!

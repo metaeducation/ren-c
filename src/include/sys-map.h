@@ -74,7 +74,7 @@ INLINE REBMAP *VAL_MAP(const Cell* v) {
 
 INLINE REBLEN Length_Map(REBMAP *map)
 {
-    Value* v = KNOWN(ARR_HEAD(MAP_PAIRLIST(map)));
+    Value* v = KNOWN(Array_Head(MAP_PAIRLIST(map)));
 
     REBLEN count = 0;
     for (; NOT_END(v); v += 2) {

@@ -559,7 +559,7 @@ Array* Make_Paramlist_Managed_May_Fail(
 
     if (true) {
         Value* canon = RESET_CELL_EXTRA(
-            ARR_HEAD(paramlist),
+            Array_Head(paramlist),
             REB_ACTION,
             header_bits
         );
@@ -673,7 +673,7 @@ Array* Make_Paramlist_Managed_May_Fail(
         MISC(types_varlist).meta = nullptr;  // GC sees this, must initialize
         INIT_CTX_KEYLIST_SHARED(CTX(types_varlist), paramlist);
 
-        Value* rootvar = RESET_CELL(ARR_HEAD(types_varlist), REB_FRAME);
+        Value* rootvar = RESET_CELL(Array_Head(types_varlist), REB_FRAME);
         rootvar->payload.any_context.varlist = types_varlist; // canon FRAME!
         rootvar->payload.any_context.phase = ACT(paramlist);
         INIT_BINDING(rootvar, UNBOUND);
@@ -735,7 +735,7 @@ Array* Make_Paramlist_Managed_May_Fail(
         MISC(notes_varlist).meta = nullptr;  // GC sees this, must initialize
         INIT_CTX_KEYLIST_SHARED(CTX(notes_varlist), paramlist);
 
-        Value* rootvar = RESET_CELL(ARR_HEAD(notes_varlist), REB_FRAME);
+        Value* rootvar = RESET_CELL(Array_Head(notes_varlist), REB_FRAME);
         rootvar->payload.any_context.varlist = notes_varlist; // canon FRAME!
         rootvar->payload.any_context.phase = ACT(paramlist);
         INIT_BINDING(rootvar, UNBOUND);
@@ -849,7 +849,7 @@ REBACT *Make_Action(
 ){
     Assert_Series_Managed(paramlist);
 
-    Cell* rootparam = ARR_HEAD(paramlist);
+    Cell* rootparam = Array_Head(paramlist);
     assert(VAL_TYPE_RAW(rootparam) == REB_ACTION); // !!! not fully formed...
     assert(rootparam->payload.action.paramlist == paramlist);
     assert(rootparam->extra.binding == UNBOUND); // archetype
@@ -1049,7 +1049,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
     // the top of the returned body?
     //
     while (ACT_DISPATCHER(a) == &Hijacker_Dispatcher) {
-        a = VAL_ACTION(ARR_HEAD(ACT_DETAILS(a)));
+        a = VAL_ACTION(Array_Head(ACT_DETAILS(a)));
         // !!! Review what should happen to binding
     }
 
@@ -1071,7 +1071,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
         // Interpreted code, the body is a block with some bindings relative
         // to the action.
 
-        Cell* body = ARR_HEAD(details);
+        Cell* body = Array_Head(details);
 
         // The ACTION_FLAG_LEAVE/ACTION_FLAG_RETURN tricks for definitional
         // scoping make it seem like a generator authored more code in the
@@ -1140,14 +1140,14 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
         // The FRAME! stored in the body for the specialization has a phase
         // which is actually the function to be run.
         //
-        Value* frame = KNOWN(ARR_HEAD(details));
+        Value* frame = KNOWN(Array_Head(details));
         assert(IS_FRAME(frame));
         Copy_Cell(out, frame);
         return;
     }
 
     if (ACT_DISPATCHER(a) == &Generic_Dispatcher) {
-        Value* verb = KNOWN(ARR_HEAD(details));
+        Value* verb = KNOWN(Array_Head(details));
         assert(IS_WORD(verb));
         Copy_Cell(out, verb);
         return;
@@ -1257,7 +1257,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
         );
     }
 
-    Cell* body = RESET_CELL(ARR_HEAD(ACT_DETAILS(a)), REB_BLOCK);
+    Cell* body = RESET_CELL(Array_Head(ACT_DETAILS(a)), REB_BLOCK);
     INIT_VAL_ARRAY(body, copy);
     VAL_INDEX(body) = 0;
     INIT_BINDING(body, a); // Record that block is relative to a function
@@ -1344,7 +1344,7 @@ REB_R Generic_Dispatcher(Level* L)
     Array* details = ACT_DETAILS(Level_Phase(L));
 
     enum Reb_Kind kind = VAL_TYPE(Level_Arg(L, 1));
-    Value* verb = KNOWN(ARR_HEAD(details));
+    Value* verb = KNOWN(Array_Head(details));
     assert(IS_WORD(verb));
     assert(kind < REB_MAX);
 
@@ -1364,7 +1364,7 @@ REB_R Generic_Dispatcher(Level* L)
 REB_R Null_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(LVL_PHASE_OR_DUMMY(L));
-    assert(VAL_LEN_AT(ARR_HEAD(details)) == 0);
+    assert(VAL_LEN_AT(Array_Head(details)) == 0);
     UNUSED(details);
 
     return nullptr;
@@ -1379,7 +1379,7 @@ REB_R Null_Dispatcher(Level* L)
 REB_R Trash_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
-    assert(VAL_LEN_AT(ARR_HEAD(details)) == 0);
+    assert(VAL_LEN_AT(Array_Head(details)) == 0);
     UNUSED(details);
 
     return Init_Trash(L->out);
@@ -1394,7 +1394,7 @@ REB_R Trash_Dispatcher(Level* L)
 REB_R Datatype_Checker_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
-    Cell* datatype = ARR_HEAD(details);
+    Cell* datatype = Array_Head(details);
     assert(IS_DATATYPE(datatype));
 
     return Init_Logic(
@@ -1412,7 +1412,7 @@ REB_R Datatype_Checker_Dispatcher(Level* L)
 REB_R Typeset_Checker_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
-    Cell* typeset = ARR_HEAD(details);
+    Cell* typeset = Array_Head(details);
     assert(IS_TYPESET(typeset));
 
     return Init_Logic(L->out, TYPE_CHECK(typeset, VAL_TYPE(Level_Arg(L, 1))));
@@ -1429,7 +1429,7 @@ REB_R Typeset_Checker_Dispatcher(Level* L)
 REB_R Unchecked_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
-    Cell* body = ARR_HEAD(details);
+    Cell* body = Array_Head(details);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     if (Do_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
@@ -1449,7 +1449,7 @@ REB_R Unchecked_Dispatcher(Level* L)
 REB_R Trasher_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
-    Cell* body = ARR_HEAD(details);
+    Cell* body = Array_Head(details);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     if (Do_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
@@ -1471,7 +1471,7 @@ REB_R Returner_Dispatcher(Level* L)
     REBACT *phase = Level_Phase(L);
     Array* details = ACT_DETAILS(phase);
 
-    Cell* body = ARR_HEAD(details);
+    Cell* body = Array_Head(details);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     if (Do_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
@@ -1503,7 +1503,7 @@ REB_R Elider_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
 
-    Cell* body = ARR_HEAD(details);
+    Cell* body = Array_Head(details);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     // !!! It would be nice to use the frame's spare "cell" for the thrownaway
@@ -1530,7 +1530,7 @@ REB_R Elider_Dispatcher(Level* L)
 REB_R Commenter_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
-    Cell* body = ARR_HEAD(details);
+    Cell* body = Array_Head(details);
     assert(VAL_LEN_AT(body) == 0);
     UNUSED(body);
     return R_INVISIBLE;
@@ -1553,7 +1553,7 @@ REB_R Commenter_Dispatcher(Level* L)
 REB_R Hijacker_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
-    Cell* hijacker = ARR_HEAD(details);
+    Cell* hijacker = Array_Head(details);
 
     // We need to build a new frame compatible with the hijacker, and
     // transform the parameters we've gathered to be compatible with it.
@@ -1673,14 +1673,14 @@ REB_R Encloser_Dispatcher(Level* L)
 REB_R Chainer_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
-    Array* pipeline = Cell_Array(ARR_HEAD(details));
+    Array* pipeline = Cell_Array(Array_Head(details));
 
     // The post-processing pipeline has to be "pushed" so it is not forgotten.
     // Go in reverse order, so the function to apply last is at the bottom of
     // the stack.
     //
-    Value* chained = KNOWN(ARR_LAST(pipeline));
-    for (; chained != ARR_HEAD(pipeline); --chained) {
+    Value* chained = KNOWN(Array_Last(pipeline));
+    for (; chained != Array_Head(pipeline); --chained) {
         assert(IS_ACTION(chained));
         Copy_Cell(PUSH(), KNOWN(chained));
     }

@@ -1562,7 +1562,7 @@ DECLARE_NATIVE(call)
 
         int i;
         for (i = 0; i < argc; i ++) {
-            Cell* param = VAL_ARRAY_AT_HEAD(block, i);
+            Cell* param = Cell_Array_At_Head(block, i);
             if (IS_TEXT(param)) {
                 argv[i] = rebValSpellingAllocOS(KNOWN(param));
             }

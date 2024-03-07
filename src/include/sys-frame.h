@@ -500,7 +500,7 @@ INLINE void Push_Action(
     L->rootvar->extra.binding = binding; // LVL_BINDING()
 
     s->content.dynamic.len = num_args + 1;
-    Cell* tail = ARR_TAIL(L->varlist);
+    Cell* tail = Array_Tail(L->varlist);
     tail->header.bits = NODE_FLAG_STACK | FLAG_KIND_BYTE(REB_0);
     TRACK_CELL_IF_DEBUG(tail, __FILE__, __LINE__);
 
@@ -614,7 +614,7 @@ INLINE void Drop_Action(Level* L) {
         assert(NOT_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE));
         assert(NOT_SER_FLAG(L->varlist, NODE_FLAG_MANAGED));
 
-        Value* rootvar = cast(Value*, ARR_HEAD(L->varlist));
+        Value* rootvar = cast(Value*, Array_Head(L->varlist));
         assert(IS_FRAME(rootvar));
         assert(rootvar->payload.any_context.varlist == L->varlist);
         Corrupt_Pointer_If_Debug(rootvar->payload.any_context.phase);

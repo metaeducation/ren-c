@@ -229,7 +229,7 @@ static void Rehash_Map(REBMAP *map)
     REBLEN *hashes = Series_Head(REBLEN, hashlist);
     Array* pairlist = MAP_PAIRLIST(map);
 
-    Value* key = KNOWN(ARR_HEAD(pairlist));
+    Value* key = KNOWN(Array_Head(pairlist));
     REBLEN n;
 
     for (n = 0; n < Array_Len(pairlist); n += 2, key += 2) {
@@ -486,7 +486,7 @@ INLINE REBMAP *Copy_Map(REBMAP *map, REBU64 types) {
     //
     assert(Array_Len(copy) % 2 == 0); // should be [key value key value]...
 
-    Cell* key = ARR_HEAD(copy);
+    Cell* key = Array_Head(copy);
     for (; NOT_END(key); key += 2) {
         assert(Is_Value_Immutable(key)); // immutable key
 
@@ -551,8 +551,8 @@ Array* Map_To_Array(REBMAP *map, REBINT what)
     REBLEN count = Length_Map(map);
     Array* a = Make_Array(count * ((what == 0) ? 2 : 1));
 
-    Value* dest = KNOWN(ARR_HEAD(a));
-    Value* val = KNOWN(ARR_HEAD(MAP_PAIRLIST(map)));
+    Value* dest = KNOWN(Array_Head(a));
+    Value* val = KNOWN(Array_Head(MAP_PAIRLIST(map)));
     for (; NOT_END(val); val += 2) {
         assert(NOT_END(val + 1));
         if (not IS_NULLED(val + 1)) {
@@ -567,7 +567,7 @@ Array* Map_To_Array(REBMAP *map, REBINT what)
         }
     }
 
-    TERM_ARRAY_LEN(a, cast(Cell*, dest) - ARR_HEAD(a));
+    TERM_ARRAY_LEN(a, cast(Cell*, dest) - Array_Head(a));
     assert(IS_END(dest));
     return a;
 }
@@ -584,7 +584,7 @@ REBCTX *Alloc_Context_From_Map(REBMAP *map)
     // a bit haphazard to have `make object! make map! [x 10 <y> 20]` and
     // just throw out the <y> 20 case...
 
-    Value* mval = KNOWN(ARR_HEAD(MAP_PAIRLIST(map)));
+    Value* mval = KNOWN(Array_Head(MAP_PAIRLIST(map)));
     REBLEN count = 0;
 
     for (; NOT_END(mval); mval += 2) {
@@ -599,7 +599,7 @@ REBCTX *Alloc_Context_From_Map(REBMAP *map)
     Value* key = CTX_KEYS_HEAD(context);
     Value* var = CTX_VARS_HEAD(context);
 
-    mval = KNOWN(ARR_HEAD(MAP_PAIRLIST(map)));
+    mval = KNOWN(Array_Head(MAP_PAIRLIST(map)));
 
     for (; NOT_END(mval); mval += 2) {
         assert(NOT_END(mval + 1));
@@ -652,7 +652,7 @@ void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
     //
     mo->indent++;
 
-    Cell* key = ARR_HEAD(MAP_PAIRLIST(m));
+    Cell* key = Array_Head(MAP_PAIRLIST(m));
     for (; NOT_END(key); key += 2) {
         assert(NOT_END(key + 1)); // value slot must not be END
         if (IS_NULLED(key + 1))

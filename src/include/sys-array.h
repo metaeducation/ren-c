@@ -61,13 +61,13 @@
 INLINE Cell* Array_At(Array* a, REBLEN n)
     { return Series_At(Cell, cast(Series*, a), n); }
 
-INLINE Cell* ARR_HEAD(Array* a)
+INLINE Cell* Array_Head(Array* a)
     { return Series_Head(Cell, cast(Series*, a)); }
 
-INLINE Cell* ARR_TAIL(Array* a)
+INLINE Cell* Array_Tail(Array* a)
     { return Series_Tail(Cell, cast(Series*, a)); }
 
-INLINE Cell* ARR_LAST(Array* a)
+INLINE Cell* Array_Last(Array* a)
     { return Series_Last(Cell, cast(Series*, a)); }
 
 INLINE Cell* ARR_SINGLE(Array* a) {
@@ -181,7 +181,7 @@ INLINE void Prep_Array(
 ){
     assert(IS_SER_DYNAMIC(a));
 
-    Cell* prep = ARR_HEAD(a);
+    Cell* prep = Array_Head(a);
 
     if (NOT_SER_FLAG(a, SERIES_FLAG_FIXED_SIZE)) {
         //
@@ -255,7 +255,7 @@ INLINE Array* Make_Array_Core(REBLEN capacity, REBFLGS flags) {
             fail (Error_No_Memory(capacity * wide));
 
         Prep_Array(ARR(s), capacity);
-        SET_END(ARR_HEAD(ARR(s)));
+        SET_END(Array_Head(ARR(s)));
 
       #if !defined(NDEBUG)
         PG_Reb_Stats->Series_Memory += capacity * wide;
@@ -489,14 +489,14 @@ INLINE Array* Cell_Array(const Cell* v) {
 }
 
 #define VAL_ARRAY_HEAD(v) \
-    ARR_HEAD(Cell_Array(v))
+    Array_Head(Cell_Array(v))
 
 INLINE Cell* VAL_ARRAY_TAIL(const Cell* v) {
     return Array_At(Cell_Array(v), VAL_ARRAY_LEN_AT(v));
 }
 
 
-// !!! VAL_ARRAY_AT_HEAD() is a leftover from the old definition of
+// !!! Cell_Array_At_Head() is a leftover from the old definition of
 // Cell_Array_At().  Unlike SKIP in Rebol, this definition did *not* take
 // the current index position of the value into account.  It rather extracted
 // the array, counted rom the head, and disregarded the index entirely.
@@ -507,7 +507,7 @@ INLINE Cell* VAL_ARRAY_TAIL(const Cell* v) {
 // head because it's taking an index.  So  it looks weird enough to suggest
 // looking here for what the story is.
 //
-#define VAL_ARRAY_AT_HEAD(v,n) \
+#define Cell_Array_At_Head(v,n) \
     Array_At(Cell_Array(v), (n))
 
 #define Init_Any_Array_At(v,t,a,i) \
@@ -588,5 +588,5 @@ INLINE bool Is_Doubled_Group(const Cell* group) {
     }
 
     #define IS_VALUE_IN_ARRAY_DEBUG(a,v) \
-        (Array_Len(a) != 0 and (v) >= ARR_HEAD(a) and (v) < ARR_TAIL(a))
+        (Array_Len(a) != 0 and (v) >= Array_Head(a) and (v) < Array_Tail(a))
 #endif

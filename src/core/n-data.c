@@ -214,7 +214,7 @@ DECLARE_NATIVE(bind)
             ARRAY_FLAG_FILE_LINE, // flags
             TS_ARRAY // types to copy deeply
         );
-        at = ARR_HEAD(copy);
+        at = Array_Head(copy);
         Init_Any_Array(OUT, VAL_TYPE(v), copy);
     }
     else {
@@ -517,7 +517,7 @@ DECLARE_NATIVE(get)
     }
 
     Array* results = Make_Array(VAL_LEN_AT(source));
-    Value* dest = KNOWN(ARR_HEAD(results));
+    Value* dest = KNOWN(Array_Head(results));
     Cell* item = Cell_Array_At(source);
 
     for (; NOT_END(item); ++item, ++dest) {
@@ -768,7 +768,7 @@ DECLARE_NATIVE(in)
             for (i = VAL_INDEX(val); i < VAL_LEN_HEAD(val); i++) {
                 Get_Simple_Value_Into(
                     safe,
-                    VAL_ARRAY_AT_HEAD(val, i),
+                    Cell_Array_At_Head(val, i),
                     VAL_SPECIFIER(val)
                 );
 

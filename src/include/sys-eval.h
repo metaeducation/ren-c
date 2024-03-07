@@ -434,7 +434,7 @@ INLINE void Set_Level_Detected_Fetch(
         //
         Manage_Series(reified);
 
-        L->value = ARR_HEAD(reified);
+        L->value = Array_Head(reified);
         L->source->pending = L->value + 1; // may be END
         L->source->array = reified;
         L->source->index = 1;
@@ -995,7 +995,7 @@ INLINE void Reify_Va_To_Array_In_Level(
     if (truncated)
         SET_FRAME_VALUE(L, Array_At(L->source->array, 1)); // skip `--optimized--`
     else
-        SET_FRAME_VALUE(L, ARR_HEAD(L->source->array));
+        SET_FRAME_VALUE(L, Array_Head(L->source->array));
 
     L->source->pending = L->value + 1;
 }

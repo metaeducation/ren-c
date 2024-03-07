@@ -276,7 +276,7 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
     for (; NOT_END(param); param++, index++)
         Add_Binder_Index(&binder, Key_Canon(param), index);
 
-    Bind_Relative_Inner_Loop(&binder, ARR_HEAD(copy), paramlist, bind_types);
+    Bind_Relative_Inner_Loop(&binder, Array_Head(copy), paramlist, bind_types);
 
     // Reset binding table
     //
@@ -601,7 +601,7 @@ void Virtual_Bind_Deep_To_New_Context(
 
     if (not duplicate) {
         //
-        // This is effectively `Bind_Values_Deep(ARR_HEAD(body_out), context)`
+        // This is effectively `Bind_Values_Deep(Array_Head(body_out), context)`
         // but we want to reuse the binder we had anyway for detecting the
         // duplicates.
         //

@@ -92,7 +92,7 @@ INLINE bool Is_Block_Style_Varargs(
     // array with one BLOCK!, that is the actual array and index to advance.
     //
     Array* array1 = ARR(vararg->extra.binding);
-    *shared_out = KNOWN(ARR_HEAD(array1));
+    *shared_out = KNOWN(Array_Head(array1));
     assert(
         IS_END(*shared_out)
         or (IS_BLOCK(*shared_out) and Array_Len(array1) == 1)

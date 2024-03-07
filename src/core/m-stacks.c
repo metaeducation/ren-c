@@ -47,9 +47,9 @@ void Startup_Data_Stack(REBLEN size)
     // are building a context varlist or similar.
     //
     DS_Array = Make_Array_Core(1, ARRAY_FLAG_NULLEDS_LEGAL);
-    Init_Unreadable(ARR_HEAD(DS_Array));
+    Init_Unreadable(Array_Head(DS_Array));
 
-    DS_Movable_Tail = cast(Value*, ARR_TAIL(DS_Array));
+    DS_Movable_Tail = cast(Value*, Array_Tail(DS_Array));
 
     // The END marker will signal DS_PUSH that it has run out of space,
     // and it will perform the allocation at that time.
@@ -76,7 +76,7 @@ void Startup_Data_Stack(REBLEN size)
 void Shutdown_Data_Stack(void)
 {
     assert(TOP_INDEX == 0);
-    Assert_Unreadable_If_Debug(ARR_HEAD(DS_Array));
+    Assert_Unreadable_If_Debug(Array_Head(DS_Array));
 
     Free_Unmanaged_Series(DS_Array);
 }
@@ -118,7 +118,7 @@ void Startup_Level_Stack(void)
     );
     MISC(paramlist).meta = nullptr;
 
-    Value* archetype = RESET_CELL(ARR_HEAD(paramlist), REB_ACTION);
+    Value* archetype = RESET_CELL(Array_Head(paramlist), REB_ACTION);
     archetype->extra.binding = UNBOUND;
     archetype->payload.action.paramlist = paramlist;
     TERM_ARRAY_LEN(paramlist, 1);
@@ -135,7 +135,7 @@ void Startup_Level_Stack(void)
     // source.  The user shouldn't get PG_Dummy_Action in their hands to ask
     // for SOURCE of, but still, the Null_Dispatcher() has asserts.
     //
-    Init_Block(ARR_HEAD(ACT_DETAILS(PG_Dummy_Action)), EMPTY_ARRAY);
+    Init_Block(Array_Head(ACT_DETAILS(PG_Dummy_Action)), EMPTY_ARRAY);
 
     Reuse_Varlist_If_Available(L); // needed to attach API handles to
     Push_Action(L, PG_Dummy_Action, UNBOUND);
@@ -269,8 +269,8 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     //
     assert(len_old == DS_Index);
     assert(IS_END(DS_Movable_Top));
-    assert(DS_Movable_Top == KNOWN(ARR_TAIL(DS_Array)));
-    assert(DS_Movable_Top - KNOWN(ARR_HEAD(DS_Array)) == cast(int, len_old));
+    assert(DS_Movable_Top == KNOWN(Array_Tail(DS_Array)));
+    assert(DS_Movable_Top - KNOWN(Array_Head(DS_Array)) == cast(int, len_old));
 
     // If adding in the requested amount would overflow the stack limit, then
     // give a data stack overflow error.
@@ -309,7 +309,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     // stack push would need to expand.
     //
     TERM_ARRAY_LEN(DS_Array, len_new);
-    assert(cell == ARR_TAIL(DS_Array));
+    assert(cell == Array_Tail(DS_Array));
 
     DS_Movable_Tail = cell;
 }

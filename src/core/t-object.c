@@ -153,7 +153,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
     // Leave the [0] slot blank while collecting (ROOTKEY/ROOTPARAM), but
     // valid (but "unreadable") bits so that the copy will still work.
     //
-    Init_Unreadable(ARR_HEAD(BUF_COLLECT));
+    Init_Unreadable(Array_Head(BUF_COLLECT));
     SET_ARRAY_LEN_NOTERM(BUF_COLLECT, 1);
 
     // Setup binding table with obj words.  Binding table is empty so don't
@@ -180,7 +180,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
             //
             Expand_Series_Tail(BUF_COLLECT, 1);
             Init_Typeset(
-                ARR_LAST(BUF_COLLECT),
+                Array_Last(BUF_COLLECT),
                 TS_VALUE, // !!! Currently ignored
                 Cell_Word_Symbol(word)
             );
@@ -532,7 +532,7 @@ REBCTX *Copy_Context_Core_Managed(REBCTX *original, REBU64 types)
         SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED,
         nullptr // original_array, N/A because LINK()/MISC() used otherwise
     );
-    Value* dest = KNOWN(ARR_HEAD(varlist)); // all context vars are SPECIFIED
+    Value* dest = KNOWN(Array_Head(varlist)); // all context vars are SPECIFIED
 
     // The type information and fields in the rootvar (at head of the varlist)
     // get filled in with a copy, but the varlist needs to be updated in the

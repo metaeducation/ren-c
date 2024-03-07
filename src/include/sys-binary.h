@@ -88,7 +88,7 @@ INLINE Byte *Cell_Binary_Tail(const Cell* v) {
     return Series_Tail(Byte, VAL_SERIES(v));
 }
 
-// !!! RE: VAL_BIN_AT_HEAD() see remarks on VAL_ARRAY_AT_HEAD()
+// !!! RE: VAL_BIN_AT_HEAD() see remarks on Cell_Array_At_Head()
 //
 #define VAL_BIN_AT_HEAD(v,n) \
     Binary_At(VAL_SERIES(v), (n))
