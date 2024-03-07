@@ -280,7 +280,7 @@ DECLARE_NATIVE(checksum)
                 FREE_N(char, digests[i].ctxsize(), ctx);
             }
 
-            TERM_BIN_LEN(digest, digests[i].len);
+            Term_Binary_Len(digest, digests[i].len);
             return Init_Binary(OUT, digest);
         }
 
@@ -1036,7 +1036,7 @@ DECLARE_NATIVE(entab)
         }
     }
 
-    TERM_BIN_LEN(mo->series, dp - Binary_Head(mo->series));
+    Term_Binary_Len(mo->series, dp - Binary_Head(mo->series));
 
     return Init_Any_Series(OUT, VAL_TYPE(val), Pop_Molded_String(mo));
 }
@@ -1115,7 +1115,7 @@ DECLARE_NATIVE(detab)
         dp += Encode_UTF8_Char(dp, c);
     }
 
-    TERM_BIN_LEN(mo->series, dp - Binary_Head(mo->series));
+    Term_Binary_Len(mo->series, dp - Binary_Head(mo->series));
 
     return Init_Any_Series(OUT, VAL_TYPE(val), Pop_Molded_String(mo));
 }

@@ -797,7 +797,7 @@ String* Pop_Molded_String_Core(REB_MOLD *mo, REBLEN len)
     // whatever value in the terminator spot was there.  This could be
     // addressed by making no-op molds terminate.
     //
-    TERM_BIN_LEN(mo->series, mo->start);
+    Term_Binary_Len(mo->series, mo->start);
 
     mo->series = nullptr;  // indicates mold is not currently pushed
     return result;
@@ -828,7 +828,7 @@ Series* Pop_Molded_UTF8(REB_MOLD *mo)
     // whatever value in the terminator spot was there.  This could be
     // addressed by making no-op molds terminate.
     //
-    TERM_BIN_LEN(mo->series, mo->start);
+    Term_Binary_Len(mo->series, mo->start);
 
     mo->series = nullptr;  // indicates mold is not currently pushed
     return bytes;
@@ -886,7 +886,7 @@ void Drop_Mold_Core(REB_MOLD *mo, bool not_pushed_ok)
     //
     NOTE_SERIES_MAYBE_TERM(mo->series);
 
-    TERM_BIN_LEN(mo->series, mo->start); // see Pop_Molded_String() notes
+    Term_Binary_Len(mo->series, mo->start); // see Pop_Molded_String() notes
 
     mo->series = nullptr;  // indicates mold is not currently pushed
 }

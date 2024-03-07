@@ -286,7 +286,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
     // interning `foo` in `foo: bar + 1` it would be colon-terminated.
     //
     memcpy(Binary_Head(intern), utf8, size);
-    TERM_BIN_LEN(intern, size);
+    Term_Binary_Len(intern, size);
 
     if (not canon) { // no canon found, so this interning must become canon
         if (deleted_slot) {

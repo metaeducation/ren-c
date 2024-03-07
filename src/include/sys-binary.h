@@ -61,11 +61,11 @@ INLINE REBLEN Binary_Len(Binary* bin) {
     return Series_Len(bin);
 }
 
-INLINE void TERM_BIN(Binary* bin) {
+INLINE void Term_Binary(Binary* bin) {
     Binary_Head(bin)[Series_Len(bin)] = 0;
 }
 
-INLINE void TERM_BIN_LEN(Binary* bin, REBLEN len) {
+INLINE void Term_Binary_Len(Binary* bin, REBLEN len) {
     Set_Series_Len(bin, len);
     Binary_Head(bin)[len] = 0;
 }

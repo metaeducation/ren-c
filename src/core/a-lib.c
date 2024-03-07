@@ -152,7 +152,7 @@ void *API_rebMalloc(size_t size)
     // promise--and leave it uninitialized so that address sanitizer notices
     // when bytes are used that haven't been assigned.
     //
-    TERM_BIN_LEN(bin, ALIGN_SIZE + size);
+    Term_Binary_Len(bin, ALIGN_SIZE + size);
 
     return ptr;
 }
@@ -288,7 +288,7 @@ RebolValue* API_rebRepossess(void *ptr, size_t size)
         );
     }
 
-    TERM_BIN_LEN(bin, size);
+    Term_Binary_Len(bin, size);
     return Init_Binary(Alloc_Value(), bin);
 }
 
@@ -1284,7 +1284,7 @@ RebolValue* API_rebBinary(const void *bytes, size_t size)
 {
     Binary* bin = Make_Binary(size);
     memcpy(Binary_Head(bin), bytes, size);
-    TERM_BIN_LEN(bin, size);
+    Term_Binary_Len(bin, size);
 
     return Init_Binary(Alloc_Value(), bin);
 }

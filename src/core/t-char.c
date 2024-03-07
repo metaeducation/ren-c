@@ -161,7 +161,7 @@ void MF_Char(REB_MOLD *mo, const Cell* v, bool form)
 
         Set_Series_Len(out, bp - Binary_Head(out));
     }
-    TERM_BIN(out);
+    Term_Binary(out);
 }
 
 

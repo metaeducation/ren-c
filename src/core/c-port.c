@@ -59,7 +59,7 @@ REBREQ *Ensure_Port_State(Value* port, REBLEN device)
         assert(IS_NULLED(state));
         Binary* data = Make_Binary(req_size);
         CLEAR(Binary_Head(data), req_size);
-        TERM_BIN_LEN(data, req_size);
+        Term_Binary_Len(data, req_size);
 
         REBREQ *req = cast(REBREQ*, Binary_Head(data));
         req->port_ctx = ctx;

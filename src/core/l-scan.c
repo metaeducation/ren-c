@@ -429,12 +429,12 @@ static const Byte *Scan_Quote_Push_Mold(
         switch (chr) {
 
         case 0:
-            TERM_BIN(mo->series);
+            Term_Binary(mo->series);
             return nullptr; // Scan_state shows error location.
 
         case '^':
             if ((src = Scan_UTF8_Char_Escapable(&chr, src)) == nullptr) {
-                TERM_BIN(mo->series);
+                Term_Binary(mo->series);
                 return nullptr;
             }
             --src;
@@ -455,7 +455,7 @@ static const Byte *Scan_Quote_Push_Mold(
             // fall thru
         case LF:
             if (term == '"') {
-                TERM_BIN(mo->series);
+                Term_Binary(mo->series);
                 return nullptr;
             }
             lines++;
@@ -465,7 +465,7 @@ static const Byte *Scan_Quote_Push_Mold(
         default:
             if (chr >= 0x80) {
                 if ((src = Back_Scan_UTF8_Char(&chr, src, nullptr)) == nullptr) {
-                    TERM_BIN(mo->series);
+                    Term_Binary(mo->series);
                     return nullptr;
                 }
             }
@@ -488,7 +488,7 @@ static const Byte *Scan_Quote_Push_Mold(
 
     ss->line += lines;
 
-    TERM_BIN(mo->series);
+    Term_Binary(mo->series);
     return src;
 }
 
@@ -584,7 +584,7 @@ const Byte *Scan_Item_Push_Mold(
     if (*bp != '\0' and *bp == opt_term)
         ++bp;
 
-    TERM_BIN(mo->series);
+    Term_Binary(mo->series);
 
     return bp;
 }
@@ -2500,7 +2500,7 @@ void Scan_To_Stack_Relaxed(SCAN_STATE *ss) {
         REBLEN limit = ss->begin - ss_before.begin;
         Binary* bin = Make_Binary(limit);
         memcpy(Binary_Head(bin), ss_before.begin, limit);
-        TERM_BIN_LEN(bin, limit);
+        Term_Binary_Len(bin, limit);
 
         SET_SER_FLAG(bin, SERIES_FLAG_DONT_RELOCATE); // Binary_Head() is cached
         ss_before.begin = Binary_Head(bin);

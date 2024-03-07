@@ -277,7 +277,7 @@ REBLEN Modify_Binary(
 
         src_ser = Make_Binary(1);
         *Binary_Head(src_ser) = cast(Byte, i);
-        TERM_BIN_LEN(src_ser, 1);
+        Term_Binary_Len(src_ser, 1);
         needs_free = true;
         limit = -1;
     }

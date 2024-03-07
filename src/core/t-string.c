@@ -328,7 +328,7 @@ static Series* Make_Binary_BE64(const Value* arg)
     #error "Unsupported CPU endian"
 #endif
 
-    TERM_BIN_LEN(ser, 8);
+    Term_Binary_Len(ser, 8);
     return ser;
 }
 
@@ -936,7 +936,7 @@ void Mold_Text_Series_At(
         *dp++ = '"';
         *dp = '\0';
 
-        TERM_BIN_LEN(mo->series, dp - Binary_Head(mo->series));
+        Term_Binary_Len(mo->series, dp - Binary_Head(mo->series));
         return;
     }
 
@@ -983,7 +983,7 @@ void Mold_Text_Series_At(
     *dp++ = '}';
     *dp = '\0';
 
-    TERM_BIN_LEN(mo->series, dp - Binary_Head(mo->series));
+    Term_Binary_Len(mo->series, dp - Binary_Head(mo->series));
 }
 
 

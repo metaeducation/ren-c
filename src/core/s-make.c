@@ -43,7 +43,7 @@
 Binary* Make_Binary(REBLEN capacity)
 {
     Binary* bin = cast(Binary*, Make_Series(capacity + 1, sizeof(Byte)));
-    TERM_BIN(bin);
+    Term_Binary(bin);
     return bin;
 }
 
@@ -187,7 +187,7 @@ Binary* Append_Utf8_Codepoint(Binary* dst, uint32_t codepoint)
     REBLEN tail = Series_Len(dst);
     Expand_Series_Tail(dst, 4); // !!! Conservative, assume long codepoint
     tail += Encode_UTF8_Char(Binary_At(dst, tail), codepoint); // 1 to 4 bytes
-    TERM_BIN_LEN(dst, tail);
+    Term_Binary_Len(dst, tail);
     return dst;
 }
 

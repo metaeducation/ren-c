@@ -691,7 +691,7 @@ DECLARE_NATIVE(enbin)
             "]"
         );
 
-    TERM_BIN_LEN(bin, num_bytes);
+    Term_Binary_Len(bin, num_bytes);
     return Init_Binary(OUT, bin);
 }
 

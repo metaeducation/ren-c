@@ -81,7 +81,7 @@ DECLARE_NATIVE(generate)
 
     memcpy(Binary_At(ser, 8), uuid.Data4, 8);
 
-    TERM_BIN_LEN(ser, 16);
+    Term_Binary_Len(ser, 16);
 
     Init_Binary(OUT, ser);
 
@@ -108,7 +108,7 @@ DECLARE_NATIVE(generate)
     *Binary_At(ser, 14) = bytes.byte14;
     *Binary_At(ser, 15) = bytes.byte15;
 
-    TERM_BIN_LEN(ser, 16);
+    Term_Binary_Len(ser, 16);
 
     Init_Binary(OUT, ser);
 
