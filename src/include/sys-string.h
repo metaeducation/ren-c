@@ -139,8 +139,8 @@ INLINE String* Cell_String(const Cell* cell) {
 #define Cell_String_Tail(v) \
     String_Tail(Cell_String(v))
 
-INLINE REBUNI *Cell_String_At(const Cell* v) {
-    return AS_REBUNI(String_At(Cell_String(v), VAL_INDEX(v)));
+INLINE Ucs2(*) Cell_String_At(const Cell* v) {
+    return String_At(Cell_String(v), VAL_INDEX(v));
 }
 
 INLINE REBSIZ VAL_SIZE_LIMIT_AT(
@@ -167,8 +167,8 @@ INLINE REBSIZ VAL_SIZE_LIMIT_AT(
     }
 
     return (
-        cast(const Byte*, AS_REBUNI(tail))
-        - cast(const Byte*, AS_REBUNI(at))
+        cast(const Byte*, tail)
+        - cast(const Byte*, at)
     );
 }
 

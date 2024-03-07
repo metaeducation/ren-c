@@ -314,168 +314,61 @@ extern const Byte Lex_Map[256];
 //
 // R3-Alpha historically expected constant character widths in strings, of
 // either 1 or 2 bytes per character.  This idea of varying the storage widths
-// is being replaced by embracing the concept of "UTF-8 Everywhere":
+// was replaced in modern Ren-C by embracing the concept of "UTF-8 Everywhere":
 //
 // http://utf8everywhere.org
 //
-// In order to assist in retrofitting code under the old expectations, the C++
-// build uses a class that disables the ability to directly increment or
-// decrement pointers to REBCHR without going through helper routines.  To get
-// this checking, raw pointers cannot be used.  So a technique described here
-// was used to create the Ucs2(*) macro to be used in place of REBUNI*:
-//
-// http://blog.hostilefork.com/kinda-smart-pointers-in-c/
+// This bootstrap build snapshot was captured at a transitional moment when
+// UTF-8 Everywhere was just getting started, and so helper classes were
+// developed to avoid naive traversals.
 //
 // So for instance: instead of simply saying:
 //
 //     REBUNI *ptr = String_Head(string_series);
 //     REBUNI c = *ptr++;
 //
-// ...one must instead write:
+// ...the idea is you would write:
 //
 //     Ucs2(*) ptr = CHR_HEAD(string_series);
 //     ptr = Ucs2_Next(&c, ptr); // ++ptr or ptr[n] will error in C++ build
 //
-// The code that runs behind the scenes is currently equivalent to the pointer
-// incrementing and decrementing.  But it will become typical UTF-8 forward
-// and backward scanning code after the conversion.
+// There was significantly more work after this point to get UTF-8 Everywhere
+// going, and it will never be patched into this bootstrap build.  So this
+// really is just all ripped down to being a synonym for REBUNI, a UCS-2
+// character codepoint.  See the main branch for the much more interesting
+// and useful final product this was aiming at.
 //
+// The Ucs2(*) syntax is kept just to help porting any small bits of code
+// that mention Utf8(*) backwards into the bootstrap executable, should that
+// ever need to happen.
 
-#if CPLUSPLUS_11
-    template<class T>
-    class RebchrPtr;
+#define Ucs2(x) REBWCHAR x
 
-    template<>
-    class RebchrPtr<const void*> {
-    protected:
-        REBWCHAR *p;
+#define Codepoint_At(p) \
+    (*p)
 
-    public:
-        RebchrPtr () {}
-        RebchrPtr (const REBWCHAR *p) : p (const_cast<REBWCHAR *>(p)) {}
+INLINE Ucs2(*) Ucs2_Back(
+    REBWCHAR *codepoint_out,
+    Ucs2(const*) p
+){
+    if (codepoint_out != nullptr)
+        *codepoint_out = *p;
+    return m_cast(Ucs2(*), p - 1); // don't write if input was const!
+}
 
-        RebchrPtr back(REBWCHAR *codepoint_out) {
-            if (codepoint_out != nullptr)
-                *codepoint_out = *p;
-            return p - 1;
-        }
+INLINE Ucs2(*) Ucs2_Next(
+    REBWCHAR *codepoint_out,
+    Ucs2(const*) p
+){
+    if (codepoint_out != nullptr)
+        *codepoint_out = *p;
+    return m_cast(Ucs2(*), p + 1);
+}
 
-        RebchrPtr next(REBWCHAR *codepoint_out) {
-            if (codepoint_out != nullptr)
-                *codepoint_out = *p;
-            return p + 1;
-        }
-
-        REBWCHAR code() {
-            REBWCHAR temp;
-            next(&temp);
-            return temp;
-        }
-
-        const REBWCHAR *as_rebuni() {
-            return p;
-        }
-
-        bool operator==(const RebchrPtr<const void*> &other) {
-            return p == other.p;
-        }
-
-        bool operator!=(const RebchrPtr<const void*> &other) {
-            return !(*this == other);
-        }
-    };
-
-    template<>
-    class RebchrPtr<void *> : public RebchrPtr<const void *> {
-
-    public:
-        RebchrPtr () : RebchrPtr<const void*>() {}
-        RebchrPtr (REBWCHAR *p) : RebchrPtr<const void*> (p) {}
-
-        RebchrPtr back(REBWCHAR *codepoint_out) {
-            if (codepoint_out != nullptr)
-                *codepoint_out = *p;
-            return p - 1;
-        }
-
-        RebchrPtr next(REBWCHAR *codepoint_out) {
-            if (codepoint_out != nullptr)
-                *codepoint_out = *p;
-            return p + 1;
-        }
-
-        RebchrPtr write(REBWCHAR codepoint) {
-            *p = codepoint;
-            return p + 1;
-        }
-
-        REBWCHAR *as_rebuni() {
-            return p;
-        }
-
-        static RebchrPtr<const void *> as_rebchr(const REBWCHAR *p) {
-            return p;
-        }
-
-        static RebchrPtr<void *> as_rebchr(REBWCHAR *p) {
-            return p;
-        }
-    };
-
-    #define Ucs2(x) RebchrPtr<void x>
-
-    #define Codepoint_At(p) \
-        (p).code()
-
-    #define Ucs2_Back(codepoint_out, p) \
-        (p).back(codepoint_out)
-
-    #define Ucs2_Next(codepoint_out, p) \
-        (p).next(codepoint_out)
-
-    #define Write_Codepoint(p, codepoint) \
-        (p).write(codepoint)
-
-    #define AS_REBUNI(p) \
-        (p).as_rebuni()
-
-    #define AS_REBCHR(p) \
-        RebchrPtr<void *>::as_rebchr(p)
-#else
-    #define Ucs2(x) REBWCHAR x
-
-    #define Codepoint_At(p) \
-        (*p)
-
-    INLINE Ucs2(*) Ucs2_Back(
-        REBWCHAR *codepoint_out,
-        Ucs2(const*) p
-    ){
-        if (codepoint_out != nullptr)
-            *codepoint_out = *p;
-        return m_cast(Ucs2(*), p - 1); // don't write if input was const!
-    }
-
-    INLINE Ucs2(*) Ucs2_Next(
-        REBWCHAR *codepoint_out,
-        Ucs2(const*) p
-    ){
-        if (codepoint_out != nullptr)
-            *codepoint_out = *p;
-        return m_cast(Ucs2(*), p + 1);
-    }
-
-    INLINE Ucs2(*) Write_Codepoint(Ucs2(*) p, REBWCHAR codepoint) {
-        *p = codepoint;
-        return p + 1;
-    }
-
-    #define AS_REBUNI(p) \
-        (p)
-
-    #define AS_REBCHR(p) \
-        (p)
-#endif
+INLINE Ucs2(*) Write_Codepoint(Ucs2(*) p, REBWCHAR codepoint) {
+    *p = codepoint;
+    return p + 1;
+}
 
 #ifdef ITOA64 // Integer to ascii conversion
     #define INT_TO_STR(n,s) \

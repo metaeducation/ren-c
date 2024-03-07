@@ -264,7 +264,7 @@ REBTYPE(Char)
         fail (Error_Illegal_Action(REB_CHAR, verb));
     }
 
-    if (chr < 0 || chr > 0xffff) // DEBUG_UTF8_EVERYWHERE
+    if (chr < 0 || chr > 0xffff)  // see main branch build for UTF-8 Everywhere
         fail (Error_Type_Limit_Raw(Datatype_From_Kind(REB_CHAR)));
 
     return Init_Char(OUT, cast(REBUNI, chr));

@@ -425,8 +425,8 @@ Array* Split_Lines(const Value* str)
                 PUSH(),
                 Copy_Sequence_At_Len(
                     s,
-                    AS_REBUNI(start) - String_Head(s),
-                    AS_REBUNI(up) - AS_REBUNI(start) - 1
+                    start - String_Head(s),
+                    up - start - 1
                 )
             );
             SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
@@ -454,13 +454,13 @@ Array* Split_Lines(const Value* str)
     if (c == CR or c == LF)
         up = Ucs2_Back(nullptr, up); // back up
 
-    if (AS_REBUNI(up) > AS_REBUNI(start)) {
+    if (up > start) {
         Init_Text(
             PUSH(),
             Copy_Sequence_At_Len(
                 s,
-                AS_REBUNI(start) - String_Head(s),
-                AS_REBUNI(up) - AS_REBUNI(start) // no -1, backed up if '\n'
+                start - String_Head(s),
+                up - start  // no -1, backed up if '\n'
             )
         );
         SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);

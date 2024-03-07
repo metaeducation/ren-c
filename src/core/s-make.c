@@ -108,7 +108,7 @@ Series* Copy_String_At_Len(const Cell* src, REBINT limit)
     assert(length_limit * 2 == size); // !!! Temporary
 
     String* dst = Make_String(size / 2);
-    memcpy(AS_REBUNI(String_At(dst, 0)), Cell_String_At(src), size);
+    memcpy(String_At(dst, 0), Cell_String_At(src), size);
     TERM_SEQUENCE_LEN(dst, length_limit);
 
     return dst;
@@ -339,7 +339,7 @@ String* Append_UTF8_May_Fail(
         Expand_Series_Tail(dst, num_codepoints);
     }
 
-    REBUNI *dp = AS_REBUNI(String_At(dst, old_len));
+    Ucs2(*) dp = String_At(dst, old_len);
     Set_Series_Len(dst, old_len + num_codepoints); // counted down to 0 below
 
     for (; num_codepoints > 0; --num_codepoints)

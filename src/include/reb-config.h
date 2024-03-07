@@ -400,11 +400,6 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
         //
         #define DEBUG_SERIES_ORIGINS
     #endif
-
-    // !!! Due to the massive change of UTF8-Everywhere, it motivates some
-    // particularly strong checks.
-    //
-    #define DEBUG_UTF8_EVERYWHERE
 #endif
 
 
