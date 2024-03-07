@@ -118,7 +118,7 @@ DECLARE_NATIVE(write_stdout)
         // from UTF-8 to wide characters, or not having CR turned into CR LF
         // sequences).
         //
-        Prin_OS_String(VAL_BIN_HEAD(v), VAL_LEN_AT(v), OPT_ENC_RAW);
+        Prin_OS_String(Cell_Binary_Head(v), VAL_LEN_AT(v), OPT_ENC_RAW);
     }
     else if (IS_CHAR(v)) {
         //

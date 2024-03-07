@@ -295,7 +295,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
     if (IS_BINARY(val)) {
         REBLEN i = VAL_INDEX(val);
 
-        Byte *bp = VAL_BIN_HEAD(val);
+        Byte *bp = Cell_Binary_Head(val);
         for (; i != VAL_LEN_HEAD(val); i++)
             Set_Bit(bset, bp[i], set);
 
@@ -432,7 +432,7 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
 
     if (IS_BINARY(val)) {
         REBLEN i = VAL_INDEX(val);
-        Byte *bp = VAL_BIN_HEAD(val);
+        Byte *bp = Cell_Binary_Head(val);
         for (; i != VAL_LEN_HEAD(val); ++i)
             if (Check_Bit(bset, bp[i], uncased))
                 return true;

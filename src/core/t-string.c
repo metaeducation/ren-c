@@ -378,7 +378,7 @@ static Series* make_binary(const Value* arg, bool make)
 
     // MAKE/TO BINARY! <bitset!>
     case REB_BITSET:
-        ser = Copy_Bytes(VAL_BIN_HEAD(arg), VAL_LEN_HEAD(arg));
+        ser = Copy_Bytes(Cell_Binary_Head(arg), VAL_LEN_HEAD(arg));
         break;
 
     case REB_MONEY:
@@ -1515,7 +1515,7 @@ REBTYPE(String)
         while (amount != 0) {
             REBLEN wheel = VAL_LEN_HEAD(v) - 1;
             while (true) {
-                Byte *b = VAL_BIN_AT_HEAD(v, wheel);
+                Byte *b = Cell_Binary_At_Head(v, wheel);
                 if (amount > 0) {
                     if (*b == 255) {
                         if (wheel == VAL_INDEX(v))
@@ -1630,7 +1630,7 @@ REBTYPE(String)
                 return nullptr;
             index += (REBLEN)Random_Int(REF(secure)) % (tail - index);
             if (IS_BINARY(v)) // same as PICK
-                return Init_Integer(OUT, *VAL_BIN_AT_HEAD(v, index));
+                return Init_Integer(OUT, *Cell_Binary_At_Head(v, index));
 
             str_to_char(OUT, v, index);
             return OUT;

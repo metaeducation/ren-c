@@ -1272,6 +1272,6 @@ DECLARE_NATIVE(invalid_utf8_q)
         return nullptr;
 
     Copy_Cell(OUT, arg);
-    VAL_INDEX(OUT) = bp - VAL_BIN_HEAD(arg);
+    VAL_INDEX(OUT) = bp - Cell_Binary_Head(arg);
     return OUT;
 }

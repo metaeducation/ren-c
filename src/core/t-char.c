@@ -72,7 +72,7 @@ REB_R MAKE_Char(Value* out, enum Reb_Kind kind, const Value* arg)
         return Init_Char(out, n); }
 
       case REB_BINARY: {
-        const Byte *bp = VAL_BIN_HEAD(arg);
+        const Byte *bp = Cell_Binary_Head(arg);
         REBSIZ len = VAL_LEN_AT(arg);
         if (len == 0)
             goto bad_make;

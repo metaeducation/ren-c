@@ -109,7 +109,7 @@ static REB_R DNS_Actor(Level* level_, Value* port, Value* verb)
                 memcpy(&(DEVREQ_NET(sock)->remote_ip), VAL_TUPLE(tmp), 4);
             }
             else // lookup string's IP address
-                sock->common.data = VAL_BIN_HEAD(arg);
+                sock->common.data = Cell_Binary_Head(arg);
         }
         else
             fail (Error_On_Port(SYM_INVALID_SPEC, port, -10));

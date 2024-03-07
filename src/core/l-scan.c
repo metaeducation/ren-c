@@ -2837,14 +2837,14 @@ DECLARE_NATIVE(transcode)
         Copy_Cell(nvar, ARG(source));
         if (IS_TEXT(ARG(source))) {
             assert(VAL_INDEX(source) == 0);  // binary converted
-            Byte* bp = VAL_BIN_HEAD(source);
+            Byte* bp = Cell_Binary_Head(source);
             for (; bp < ss.end; ++bp) {
                 if (not Is_Continuation_Byte(*bp))
                     ++VAL_INDEX(nvar);  // bump ahead for each utf8 codepoint
             }
         }
         else {
-            VAL_INDEX(nvar) = ss.end - VAL_BIN_HEAD(nvar);  // binary advance
+            VAL_INDEX(nvar) = ss.end - Cell_Binary_Head(nvar);  // binary advance
         }
     }
 
