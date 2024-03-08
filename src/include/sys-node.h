@@ -37,7 +37,7 @@
 //    needs to fiddle with the marked flag bit even on series that are
 //    conceptually immutable, and the managed bit needs to be set on bindings
 //    where the reference is const.  If you're changing something from a Cell
-//    to a  Stub--or otherwise--you have much bigger concerns regarding safety
+//    to a Stub--or otherwise--you have much bigger concerns regarding safety
 //    and unsafety than C-level constness!
 //
 #if !defined(HEAVY_NODE_BYTE_CHECK)  // [1]
@@ -59,11 +59,11 @@
 #define Is_Node_A_Cell(n)   (did (NODE_BYTE(n) & NODE_BYTEMASK_0x01_CELL))
 #define Is_Node_A_Stub(n)   (not Is_Node_A_Cell(n))
 
-// !!! There's currently no generic way to tell if a node is a level.  It has
+// !!! There's currently no generic way to tell if a node is a Level.  It has
 // the cell flag set in its header, and uses all the other flags.  It's a lie
 // to say it's a stub or a cell in any case--even if the layout were changed
 // so the leading area was an actual stub or a cell with a special flavor or
-// heart byte.  It hasn't been a problem because places levels can be seen
+// heart byte.  It hasn't been a problem because places Level can be seen
 // can't generally hold cells, so the single flag is enough.  Calling out
 // this test helps find places that rely on that behavior.
 //
@@ -384,7 +384,7 @@ INLINE void Free_Pooled(PoolId pool_id, void* p)
 // MISC() to be able to put type checking onto the extraction of a node
 // subclass, while not causing errors if used as the left-hand side of an
 // assignment (on a possibly uninitialized piece of data).  This means you
-// don't need to have separate macros like:
+// don't need to have separate macros:
 //
 //    LINK(Property, s) = foo;
 //    bar = LINK(Property, s);

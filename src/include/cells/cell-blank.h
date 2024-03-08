@@ -92,10 +92,9 @@ INLINE Element* Init_Blank_Untracked(Cell* out, Byte quote_byte) {
     TRACK(Init_Blank_Untracked((out), QUASIFORM_2))
 
 
-
-//=//// '~' ISOTOPE (a.k.a. TRASH) ////////////////////////////////////////=//
+//=//// '~' ANTIFORM (a.k.a. TRASH) ///////////////////////////////////////=//
 //
-// Picking antiform as the contents of unset variables has many benefits
+// Picking antiform blank as the contents of unset variables has many benefits
 // over choosing something like an `~unset~` or `~trash~` antiforms:
 //
 //  * Reduces noise when looking at a list of variables to see which are unset

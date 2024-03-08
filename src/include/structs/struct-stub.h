@@ -40,8 +40,7 @@
 // must be subtracted completely to free the pointer using the address
 // originally given by the allocator.
 //
-// The Series is fixed-size, and is allocated as a "stub" from a memory pool.
-// That pool quickly grants and releases memory ranges that are sizeof(Stub)
+// A pool quickly grants and releases memory ranges that are sizeof(Stub)
 // without needing to use malloc() and free() for each individual allocation.
 // These nodes can also be enumerated in the pool without needing the series
 // to be tracked via a linked list or other structure.  The garbage collector
@@ -65,13 +64,11 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * For the forward declarations of series subclasses, see %reb-defs.h
-//
-// * Because a series contains a union member that embeds a Cell directly,
+// * Because a Stub contains a union member that embeds a Cell directly,
 //   `Cell` must be fully defined before this file can compile.  Hence
 //   %struct-cell.h must already be included.
 //
-// * For the API of operations available on Series types, see %sys-series.h
+// * For the API of operations available on Series types, see %stub-series.h
 //
 // * Array* is a series that contains Rebol cells.  It has many concerns
 //   specific to special treatment and handling, in interaction with the
@@ -84,9 +81,10 @@
 //   blocks of nearly all variable-size structures in the system.
 //
 // * The element size in a series is known as the "width".  R3-Alpha used a
-//   byte for this to get from 0-255.  Ren-C uses that byte for the "flavor"
-//   of the series (a unique name distinguishing series "type" in a way
-//   parallel to cell "type") and then maps from flavor to size.
+//   byte for this to get from element sizes ranging from 0-255 bytes.  Ren-C
+//   uses that byte for the "flavor" of the stub (a name distinguishing
+//   the stub in a way parallel to a cell's "heart") and then maps from flavor
+//   to size.
 //
 
 
@@ -114,8 +112,8 @@
 
 //=//// SERIES_FLAG_LINK_NODE_NEEDS_MARK //////////////////////////////////=//
 //
-// This indicates that a series's LINK() field is the `custom` node element,
-// and should be marked (if not null).
+// This indicates that a series's LINK() field is the `any.node`, and should
+// be marked (if not null).
 //
 // Note: Even if this flag is not set, *link.any might still be a node*...
 // just not one that should be marked.
@@ -126,8 +124,8 @@
 
 //=//// SERIES_FLAG_MISC_NODE_NEEDS_MARK //////////////////////////////////=//
 //
-// This indicates that a series's MISC() field is the `custom` node element,
-// and should be marked (if not null).
+// This indicates that a series's MISC() field is the `any.node`, and should
+// be marked (if not null).
 //
 // Note: Even if this flag is not set, *misc.any might still be a node*...
 // just not one that should be marked.
@@ -142,7 +140,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Series have two places to store bits...in the "header" and in the "info".
+// Series have two places to store flags...in the "header" and in the "info".
 // The following are the SERIES_FLAG_XXX that are used in the header, while
 // the SERIES_INFO_XXX flags will be found in the info.
 //
@@ -238,12 +236,6 @@
 // uses the cell content for an arbitrary value (e.g. API handles).  The
 // space for the INFO bits is thus sometimes claimed for a node ("INODE"),
 // which may need marking.
-//
-// !!! Future plans involve being able to dynamically switch out the info
-// bits for a node, e.g. to hold a lock.  Then the info bits would be moved
-// to the lock--which might itself be a feed or level (to avoid making a new
-// identity).  Those features are just ideas for the moment, but if they came
-// to pass this bit would also be synonymous with SERIES_FLAG_HOLD.
 //
 #define SERIES_FLAG_INFO_NODE_NEEDS_MARK \
     FLAG_LEFT_BIT(12)
@@ -628,7 +620,7 @@ union StubLinkUnion {
 
 
 // The `misc` field is an extra pointer-sized piece of data which is resident
-// in the series node, and hence visible to all REBVALs that might be
+// in the series node, and hence visible to all Cells that might be
 // referring to the series.
 //
 union StubMiscUnion {

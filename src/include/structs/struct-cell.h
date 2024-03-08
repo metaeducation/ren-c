@@ -26,19 +26,34 @@
 // correct value for the platform.  But from a mechanical standpoint, the
 // system should be *able* to work even if the size is bigger.
 //
-// Of the four 32-or-64-bit slots that each value has, the first is used for
-// the value's "Header".  This includes the data type, such as REB_INTEGER,
-// REB_BLOCK, REB_TEXT, etc.  Then there are flags which are for general
-// purposes that could apply equally well to any type of value (including
-// whether the value should have a new-line after it when molded out during
-// display of its containing array).
+// Of the four 32-or-64-bit slots that each value has, the first slot is used
+// for the value's "Header":
 //
-// Obviously, an arbitrary long string won't fit into the remaining 3*32 bits,
-// or even 3*64 bits!  You can fit the data for an INTEGER or DECIMAL in that
-// (at least until they become arbitrary precision) but it's not enough for
-// a generic BLOCK! or an ACTION! (for instance).  So the remaining bits
-// often will point to one or more Rebol "nodes" (see %sys-series.h for an
-// explanation of Series*, Array*, Context*, and Map*.)
+// * NODE_BYTE: the first byte is a set of flags specially chosen to not
+//   collide with the leading byte of a valid UTF-8 sequence.  The flags
+//   establish whether this is a Cell or a "Stub", among other features.
+//   See %struct-node.h for explanations of these flags.
+//
+// * HEART_BYTE: the second byte indicates what type of information the other
+//   3 slots in the cell describe.  It corresponds to a datatype, such as
+//   REB_INTEGER, REB_BLOCK, REB_TEXT, tec.
+//
+// * QUOTE_BYTE: the third byte indicates how quoted something is, or if it
+//   is a quaisform or antiform.  See %sys-quoted.h for more on how the byte
+//   is interpreted.
+//
+// * The fourth byte contains other cell flags.  Some of them apply to any
+//   cell type (such as whether the cell should have a new-line after it when
+//   molded out during display of its containing array), and others have a
+//   different purpose depending on what the HEART_BYTE is.
+//
+// As for the other 3 slots...obviously, an arbitrary long string won't fit
+// into the remaining 3*32 bits, or even 3*64 bits!  You can fit the data for
+// an INTEGER! or DECIMAL! in that (at least until they become arbitrary
+// precision) but it's not enough for a generic BLOCK!, FRAME!, TEXT!, etc.
+// So these slots are often used to point to one or more Rebol "stubs" (see
+// %sys-stub.h for an explanation of stubs, which are the base class of
+// things like Series*, Array*, Context*, and Map*.)
 //
 // So the next part of the structure is the "Extra".  This is the size of one
 // pointer, which sits immediately after the header (that's also the size of
@@ -57,9 +72,7 @@
 //
 // * Forward declarations are in %reb-defs.h
 //
-// * See %struct-node.h for an explanation of FLAG_LEFT_BIT.  This file defines
-//   those flags which are common to every value of every type.  Due to their
-//   scarcity, they are chosen carefully.
+// * See %struct-node.h for an explanation of FLAG_LEFT_BIT.
 //
 
 typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
