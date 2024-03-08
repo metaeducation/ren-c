@@ -1181,15 +1181,15 @@ void Set_Stack_Limit(void *base) {
     uintptr_t bounds = cast(uintptr_t, STACK_BOUNDS);
 
   #if defined(OS_STACK_GROWS_UP)
-    TG_Stack_Limit = cast(uintptr_t, base) + bounds;
+    TG_Stack_Limit = i_cast(uintptr_t, base) + bounds;
   #elif defined(OS_STACK_GROWS_DOWN)
-    TG_Stack_Limit = cast(uintptr_t, base) - bounds;
+    TG_Stack_Limit = i_cast(uintptr_t, base) - bounds;
   #else
     TG_Stack_Grows_Up = Guess_If_Stack_Grows_Up(nullptr);
     if (TG_Stack_Grows_Up)
-        TG_Stack_Limit = cast(uintptr_t, base) + bounds;
+        TG_Stack_Limit = i_cast(uintptr_t, base) + bounds;
     else
-        TG_Stack_Limit = cast(uintptr_t, base) - bounds;
+        TG_Stack_Limit = i_cast(uintptr_t, base) - bounds;
   #endif
 }
 

@@ -458,7 +458,7 @@ INLINE Value* RESET_VAL_HEADER_EXTRA_Core(
     #define Assert_Cell_Aligned(c) \
       do { \
         STATIC_ASSERT_LVALUE(c);  /* evil macro, make sure used safely */ \
-        if (cast(uintptr_t, (c)) % ALIGN_SIZE != 0) { \
+        if (i_cast(uintptr_t, (c)) % ALIGN_SIZE != 0) { \
             printf( \
                 "Cell address %p not aligned to %d bytes\n", \
                 cast(const void*, (c)), \
@@ -1358,10 +1358,10 @@ INLINE void SET_EVENT_KEY(Cell* v, REBLEN k, REBLEN c) {
 //
 
 #define SPECIFIED \
-    cast(Specifier*, 0) // cast() doesn't like nullptr, fix
+    cast(Specifier*, nullptr)
 
 #define UNBOUND \
-   cast(Stub*, 0) // cast() doesn't like nullptr, fix
+   cast(Stub*, nullptr)
 
 INLINE Stub* VAL_BINDING(const Cell* v) {
     assert(Is_Bindable(v));

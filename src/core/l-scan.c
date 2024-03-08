@@ -1016,7 +1016,7 @@ acquisition_loop:
             //
             // An "instruction", currently just rebEval() and rebUneval().
 
-            Array* instruction = cast(Array*, c_cast(void*, p));
+            Array* instruction = cast(Array*, m_cast(void*, p));
             Value* single = KNOWN(ARR_SINGLE(instruction));
 
             if (GET_VAL_FLAG(single, VALUE_FLAG_EVAL_FLIP)) { // rebEval()

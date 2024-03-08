@@ -142,6 +142,12 @@ gen-obj: func [
     ; suggest you use static_cast instead.  This complicates the `cast` macro
     ; tricks, which just use reinterpret_cast.
     ;
+    append flags <msc:/wd4946>
+
+    ; There's a warning on reinterpret_cast between related classes, trying to
+    ; suggest you use static_cast instead.  This complicates the `cast` macro
+    ; tricks, which just use reinterpret_cast.
+    ;
     append flags <msc:/wd5045>
 
     ; !!! Using MSVC 2019 to try and build an upgraded MSVC 2017 solution
@@ -839,6 +845,10 @@ append app-config/cflags degrade switch user-config/rigorous [
             ; codebase being built as C++, so there shouldn't be throws.
             ;
             <msc:/wd5039>
+
+            ; Implicit conversion from `int` to `REBD32`, possible loss.
+            ;
+            <msc:/wd5219>
 
             ; const variable is not used, triggers in MS's type_traits
             ;

@@ -182,9 +182,24 @@
 // create compile-time errors for any C construction that isn't being used
 // in the way one might want.
 //
+// 1. The type trait is_explicitly_convertible() is useful, but it was taken
+//    out of GCC.  This uses a simple implementation that was considered to
+//    be buggy for esoteric reasons, but is good enough for our purposes.
+//
+//    https://stackoverflow.com/a/16944130
+//
+//    Note this is not defined in the `std::` namespace since it is a shim.
+//
 #if CPLUSPLUS_11
     #include <type_traits>
+
+  namespace shim {
+    template<typename _From, typename _To>
+    struct is_explicitly_convertible : public std::is_constructible<_To, _From>
+      { };
+  }
 #endif
+
 
 
 //=//// STATIC ASSERT FOR C ///////////////////////////////////////////////=//
@@ -291,38 +306,88 @@
 
 //=//// CASTING MACROS ////////////////////////////////////////////////////=//
 //
-// The following code and explanation is from "Casts for the Masses (in C)":
+// This code is based on ideas in "Casts for the Masses (in C)":
 //
-// http://blog.hostilefork.com/c-casts-for-the-masses/
+//   http://blog.hostilefork.com/c-casts-for-the-masses/
 //
-// But debug builds don't inline functions--not even no-op ones whose sole
-// purpose is static analysis.  This means the cast macros add a headache when
-// stepping through the debugger, and also they consume a measurable amount
-// of runtime.  Hence we sacrifice cast checking in the debug builds...and the
-// release C++ builds on Travis are relied upon to do the proper optimizations
-// as well as report any static analysis errors.
+// It provides easier-to-spot variants of the parentheses cast, which when
+// built under C++ can be made to implement the macros with safer and
+// narrower implementations:
 //
-// !!! C++14 gcc release builds seem to trigger bad behavior on cast() to
-// a CFUNC*, and non-C++14 builds are allowing cast of `const void*` to
-// non-const `char` with plain `cast()`.  Investigate as time allows.
+//   * Plain 'cast' is reinterpret_cast for pointers, static_cast otherwise
+//   * The 'm_cast' is when getting [M]utablity on a const is okay
+//   * The 'c_cast' helper ensures you're ONLY adding [C]onst to a value
+//
+// Additionally there is x_cast(), for cases where you don't know if your
+// input pointer is const or not, and want to cast to a mutable pointer.
+// C++ doesn't let you use old-style casts to accomplish this, so it has to
+// be done using two casts and type_traits magic.
+//
+// These casts should not cost anything at runtime--unless non-constexpr
+// helpers are invoked.  Those are only used in the codebase for debug
+// features in the C++ builds, and release builds do not use them.
+//
+// 1. The C preprocessor doesn't know about templates, so it parses things
+//    like FOO(something<a,b>) as taking "something<a" and "b>".  This is a
+//    headache for implementing the macros, but also if a macro produces a
+//    comma and gets passed to another macro.  To work around it, we wrap
+//    the product of the macro containing commas in parentheses.
+//
+#define u_cast(T,v) \
+    ((T)(v))  // unchecked cast, use e.g. when casting a fresh allocation
 
-#if (! CPLUSPLUS_11) || !defined(NDEBUG)
-    /* These macros are easier-to-spot variants of the parentheses cast.
-     * The 'm_cast' is when getting [M]utablity on a const is okay (RARELY!)
-     * Plain 'cast' can do everything else (except remove volatile)
-     * The 'c_cast' helper ensures you're ONLY adding [C]onst to a value
-     */
-    #define x_cast(t,v)     ((t)(v))
-    #define m_cast(t,v)     ((t)(v))
-    #define cast(t,v)       ((t)(v))
-    #define c_cast(t,v)     ((t)(v))
-    /*
-     * Q: Why divide roles?  A: Frequently, input to cast is const but you
-     * "just forget" to include const in the result type, gaining mutable
-     * access.  Stray writes to that can cause even time-traveling bugs, with
-     * effects *before* that write is made...due to "undefined behavior".
-     */
+#if (! CPLUSPLUS_11)
+    #define cast(T,v)       ((T)(v))  /* pointer-to-ptr, integral-to-int */
+    #define m_cast(T,v)     ((T)(v))  /* add mutability to pointer type only */
+    #define x_cast(T,v)     ((T)(v))  /* pointer cast that drops mutability */
+    #define c_cast(T,v)     ((T)(v))  /* mirror constness of input on output */
+    #define p_cast(T,v)     ((T)(v))  /* non-pointer to pointer */
+    #define i_cast(T,v)     ((T)(v))  /* non-integral to integral */
+    #define rr_cast(T,v)    ((T)(v))  /* simplifying remove-reference cast */
 #else
+    template<typename V, typename T>
+    struct cast_helper {
+        template<typename V_ = V, typename T_ = T>
+        static constexpr typename std::enable_if<
+            not shim::is_explicitly_convertible<V_,T_>::value and (
+                (std::is_arithmetic<V_>::value or std::is_enum<V_>::value)
+                and (std::is_arithmetic<T_>::value or std::is_enum<T_>::value)
+            ),
+        T>::type convert(V_ v) { return static_cast<T>(v); }
+
+        template<typename V_ = V, typename T_ = T>
+        static constexpr typename std::enable_if<
+            not shim::is_explicitly_convertible<V_,T_>::value and (
+                std::is_pointer<V_>::value and std::is_pointer<T_>::value
+            ),
+        T>::type convert(V_ v) { return reinterpret_cast<T>(v); }
+
+        template<typename V_ = V, typename T_ = T>
+        static constexpr typename std::enable_if<
+            shim::is_explicitly_convertible<V_,T_>::value,
+        T>::type convert(V_ v) { return static_cast<T>(v); }
+    };
+
+    template<typename V>
+    struct cast_helper<V,void>
+      { static void convert(V v) { (void)(v);} };  // void can't be constexpr
+
+    #define cast(T,v) \
+        (cast_helper<typename std::remove_reference< \
+            decltype(v)>::type, T>::convert(v))  // outer parens [1]
+
+    template<typename T, typename V>
+    constexpr T m_cast_helper(V v) {
+        static_assert(not std::is_const<T>::value,
+            "invalid m_cast() - requested a const type for output result");
+        static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
+            "invalid m_cast() - input and output have mismatched volatility");
+        return const_cast<T>(v);
+    }
+
+    #define m_cast(T,v) \
+        m_cast_helper<T>(v)
+
     template<typename TQP>
     struct x_cast_pointer_helper {
         typedef typename std::remove_pointer<TQP>::type TQ;
@@ -342,51 +407,62 @@
     #define x_cast(T,v) \
        (const_cast<T>((typename x_cast_helper<T>::type)(v)))
 
-    /* __cplusplus >= 201103L has C++11's type_traits, where we get some
-     * actual power.  cast becomes a reinterpret_cast for pointers and a
-     * static_cast otherwise.  We ensure c_cast added a const and m_cast
-     * removed one, and that neither affected volatility.
-     */
-    template<typename T, typename V>
-    T m_cast_helper(V v) {
-        static_assert(!std::is_const<T>::value,
-            "invalid m_cast() - requested a const type for output result");
-        static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
-            "invalid m_cast() - input and output have mismatched volatility");
-        return const_cast<T>(v);
+    template<typename TP, typename VQPR>
+    struct c_cast_helper {
+        typedef typename std::remove_reference<VQPR>::type VQP;
+        typedef typename std::remove_pointer<VQP>::type VQ;
+        typedef typename std::remove_pointer<TP>::type T;
+        typedef typename std::add_const<T>::type TC;
+        typedef typename std::add_pointer<TC>::type TCP;
+        typedef typename std::conditional<
+            std::is_const<VQ>::value,
+            TCP,
+            TP
+        >::type type;
+    };
+
+    #define c_cast(TP,v) \
+        (cast_helper< \
+            decltype(v), typename c_cast_helper<TP,decltype(v)>::type \
+        >::convert(v))  // outer parens [1]
+
+    template<typename TP, typename V>
+    constexpr TP p_cast_helper(V v) {
+        static_assert(std::is_pointer<TP>::value,
+            "invalid p_cast() - target type must be pointer");
+        static_assert(not std::is_pointer<V>::value,
+            "invalid p_cast() - source type can't be pointer");
+        return reinterpret_cast<TP>(static_cast<uintptr_t>(v));
     }
-    /* reinterpret_cast for pointer to pointer casting (non-class source)*/
-    template<typename T, typename V,
-        typename std::enable_if<
-            !std::is_class<V>::value
-            && (std::is_pointer<V>::value || std::is_pointer<T>::value)
-        >::type* = nullptr>
-                T cast_helper(V v) { return reinterpret_cast<T>(v); }
-    /* static_cast for non-pointer to non-pointer casting (non-class source) */
-    template<typename T, typename V,
-        typename std::enable_if<
-            !std::is_class<V>::value
-            && (!std::is_pointer<V>::value && !std::is_pointer<T>::value)
-        >::type* = nullptr>
-                T cast_helper(V v) { return static_cast<T>(v); }
-    /* use static_cast on all classes, to go through their cast operators */
-    template<typename T, typename V,
-        typename std::enable_if<
-            std::is_class<V>::value
-        >::type* = nullptr>
-                T cast_helper(V v) { return static_cast<T>(v); }
+
+    #define p_cast(TP,v) \
+        p_cast_helper<TP>(v)
+
     template<typename T, typename V>
-    T c_cast_helper(V v) {
-        static_assert(!std::is_const<T>::value,
-            "invalid c_cast() - did not request const type for output result");
-        static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
-            "invalid c_cast() - input and output have mismatched volatility");
-        return const_cast<T>(v);
+    constexpr T i_cast_helper(V v) {
+        static_assert(std::is_integral<T>::value,
+            "invalid i_cast() - target type must be integral");
+        static_assert(not std::is_integral<V>::value,
+            "invalid i_cast() - source type can't be integral");
+        return reinterpret_cast<T>(v);
     }
-    #define m_cast(t, v)    m_cast_helper<t>(v)
-    #define cast(t, v)      cast_helper<t>(v)
-    #define c_cast(t, v)    c_cast_helper<t>(v)
+
+    #define i_cast(T,v) \
+        i_cast_helper<T>(v)
+
+    template<typename V>
+    struct rr_cast_helper {
+        typedef typename std::conditional<
+            std::is_reference<V>::value,
+            typename std::remove_reference<V>::type,
+            V
+        >::type type;
+    };
+
+    #define rr_cast(v) \
+        static_cast<typename rr_cast_helper<decltype(v)>::type>(v)
 #endif
+
 
 
 //=//// nullptr SHIM FOR C ////////////////////////////////////////////////=//

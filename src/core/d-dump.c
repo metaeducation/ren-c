@@ -68,7 +68,7 @@ void Dump_Bytes(Byte *bp, REBLEN limit)
     for (; l < max_lines; l++) {
         Byte *cp = buf;
 
-        cp = Form_Hex_Pad(cp, cast(uintptr_t, bp), 8);
+        cp = Form_Hex_Pad(cp, i_cast(uintptr_t, bp), 8);
 
         *cp++ = ':';
         *cp++ = ' ';

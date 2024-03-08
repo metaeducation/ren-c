@@ -179,7 +179,7 @@ void* Probe_Core_Debug(
         if (GET_SER_FLAG(s, SERIES_FLAG_UTF8)) {
             assert(Series_Wide(s) == sizeof(Byte));
             Probe_Print_Helper(p, "Symbol Series", file, line);
-            Symbol* sym = cast(Symbol*, p);
+            Symbol* sym = cast(Symbol*, m_cast(void*, p));
 
             const char *head = Symbol_Head(sym);  // UTF-8
             size_t size = Symbol_Size(sym);  // number of UTF-8 bytes
@@ -188,7 +188,7 @@ void* Probe_Core_Debug(
         }
         else if (Series_Wide(s) == sizeof(Byte)) {
             Probe_Print_Helper(p, "Byte-Size Series", file, line);
-            Binary* bin = cast(Binary*, p);
+            Binary* bin = cast(Binary*, m_cast(void*, p));
 
             // !!! Duplication of code in MF_Binary
             //
@@ -208,7 +208,7 @@ void* Probe_Core_Debug(
         }
         else if (Series_Wide(s) == sizeof(REBUNI)) {
             Probe_Print_Helper(p, "REBWCHAR-Size Series", file, line);
-            String* str = cast(String*, p);
+            String* str = cast(String*, m_cast(void*, p));
 
             Mold_Text_Series_At(mo, str, 0); // might be TAG! etc, not TEXT!
         }

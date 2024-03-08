@@ -112,7 +112,7 @@ INLINE void *Alloc_Pooled(REBLEN pool_id)
     pool->free--;
 
   #ifdef DEBUG_MEMORY_ALIGN
-    if (cast(uintptr_t, unit) % sizeof(REBI64) != 0) {
+    if (i_cast(uintptr_t, unit) % sizeof(REBI64) != 0) {
         printf(
             "Node address %p not aligned to %d bytes\n",
             cast(void*, unit),

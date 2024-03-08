@@ -335,7 +335,7 @@ uint32_t Hash_Value(const Cell* v)
         // immutable once created, it is legal to put them in hashes.  The
         // VAL_ACT is the paramlist series, guaranteed unique per function
         //
-        hash = cast(REBLEN, cast(uintptr_t, VAL_ACTION(v)) >> 4);
+        hash = cast(REBLEN, i_cast(uintptr_t, VAL_ACTION(v)) >> 4);
         break;
 
     case REB_FRAME:
@@ -355,7 +355,7 @@ uint32_t Hash_Value(const Cell* v)
         // However, since it was historically allowed it is allowed for
         // all ANY-CONTEXT! types at the moment.
         //
-        hash = cast(uint32_t, cast(uintptr_t, VAL_CONTEXT(v)) >> 4);
+        hash = cast(uint32_t, i_cast(uintptr_t, VAL_CONTEXT(v)) >> 4);
         break;
 
     case REB_MAP:
@@ -365,7 +365,7 @@ uint32_t Hash_Value(const Cell* v)
         // (Again this will just find the map by identity, not by comparing
         // the values of one against the values of the other...)
         //
-        hash = cast(uint32_t, cast(uintptr_t, VAL_MAP(v)) >> 4);
+        hash = cast(uint32_t, i_cast(uintptr_t, VAL_MAP(v)) >> 4);
         break;
 
     case REB_EVENT:
