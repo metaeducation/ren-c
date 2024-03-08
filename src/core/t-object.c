@@ -1338,7 +1338,7 @@ REBTYPE(Frame)
                 OUT,
                 VAL_FRAME_PHASE(frame),  // just a Action*, no binding
                 VAL_FRAME_LABEL(frame),
-                VAL_FRAME_BINDING(frame)  // e.g. where RETURN returns to
+                VAL_FRAME_TARGET(frame)  // e.g. where RETURN returns to
             );
         } */
 
@@ -1350,7 +1350,7 @@ REBTYPE(Frame)
                 ARG(value),
                 CTX_FRAME_PHASE(c),
                 VAL_FRAME_LABEL(frame),
-                VAL_FRAME_BINDING(frame)
+                VAL_FRAME_TARGET(frame)
             );
             goto handle_reflect_action;
         }
@@ -1449,7 +1449,7 @@ REBTYPE(Frame)
             //
             Reset_Unquoted_Header_Untracked(TRACK(OUT), CELL_MASK_FRAME);
             INIT_VAL_CONTEXT_VARLIST(OUT, ACT_PARAMLIST(act));
-            BINDING(OUT) = VAL_FRAME_BINDING(frame);
+            INIT_VAL_FRAME_TARGET(OUT, VAL_FRAME_TARGET(frame));
             INIT_VAL_FRAME_PHASE_OR_LABEL(OUT, act);
             return OUT; }
 
@@ -1568,7 +1568,7 @@ REBTYPE(Frame)
             OUT,
             proxy,
             VAL_FRAME_LABEL(frame),  // keep symbol (if any) from original
-            VAL_FRAME_BINDING(frame)  // same (e.g. RETURN to same frame)
+            VAL_FRAME_TARGET(frame)  // same (e.g. RETURN to same frame)
         ); }
 
 
@@ -1635,7 +1635,7 @@ static bool Same_Action(const Cell* a, const Cell* b)
         // paramlist, but the binding is different in the cell instances
         // in order to know where to "exit from".
         //
-        return VAL_FRAME_BINDING(a) == VAL_FRAME_BINDING(b);
+        return VAL_FRAME_TARGET(a) == VAL_FRAME_TARGET(b);
     }
 
     return false;

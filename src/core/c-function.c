@@ -840,7 +840,7 @@ Phase* Make_Action(
 //
 void Get_Maybe_Fake_Action_Body(Sink(Value*) out, const Value* action)
 {
-    Context* binding = VAL_FRAME_BINDING(action);
+    Option(Context*) target = VAL_FRAME_TARGET(action);
     Action* a = VAL_ACTION(action);
 
     // A Hijacker *might* not need to splice itself in with a dispatcher.
@@ -854,10 +854,10 @@ void Get_Maybe_Fake_Action_Body(Sink(Value*) out, const Value* action)
         // !!! Review what should happen to binding
     }
 
-    // !!! Should the binding make a difference in the returned body?  It is
+    // !!! Should the target make a difference in the returned body?  It is
     // exposed programmatically via CONTEXT OF.
     //
-    UNUSED(binding);
+    UNUSED(target);
 
     if (
         ACT_DISPATCHER(a) == &Func_Dispatcher

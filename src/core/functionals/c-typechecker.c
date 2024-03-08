@@ -247,7 +247,7 @@ bool Typecheck_Atom_Core(
                 &Action_Executor,
                 FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
             );
-            Push_Action(L, VAL_ACTION(test), VAL_FRAME_BINDING(test));
+            Push_Action(L, VAL_ACTION(test), VAL_FRAME_TARGET(test));
             Begin_Prefix_Action(L, VAL_FRAME_LABEL(test));
 
             const Key* key = L->u.action.key;

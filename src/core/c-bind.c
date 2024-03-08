@@ -437,12 +437,12 @@ Option(Series*) Get_Word_Container(
             Level* level = CTX_LEVEL_IF_ON_STACK(cast(Context*, specifier));
             if (not level)
                 goto next_virtual;
-            Context* object = Level_Binding(level);
+            Option(Context*) object = Level_Target(level);
             if (not object)
                 goto next_virtual;
 
             REBLEN len = Find_Symbol_In_Context(
-                CTX_ARCHETYPE(object),
+                CTX_ARCHETYPE(unwrap(object)),
                 symbol,
                 true
             );
@@ -450,7 +450,7 @@ Option(Series*) Get_Word_Container(
                 goto next_virtual;
 
             *index_out = len;
-            return object;
+            return unwrap(object);
           }
         }
 
@@ -1151,15 +1151,15 @@ void Rebind_Values_Deep(
             // binding pointer (in the function's value cell) is changed to
             // be this object.
             //
-            Context* stored = VAL_FRAME_BINDING(v);
-            if (stored == UNBOUND) {
+            Option(Context*) stored = VAL_FRAME_TARGET(v);
+            if (not stored) {
                 //
                 // Leave NULL bindings alone.  Hence, unlike in R3-Alpha, an
                 // ordinary FUNC won't forward its references.  An explicit
                 // BIND to an object must be performed, or METHOD should be
                 // used to do it implicitly.
             }
-            else if (REB_FRAME == CTX_TYPE(stored)) {
+            else if (REB_FRAME == CTX_TYPE(unwrap(stored))) {
                 //
                 // Leave bindings to frame alone, e.g. RETURN's definitional
                 // reference...may be an unnecessary optimization as they
@@ -1167,8 +1167,8 @@ void Rebind_Values_Deep(
                 // frames" (would that ever make sense?)
             }
             else {
-                if (Is_Overriding_Context(stored, to))
-                    INIT_VAL_FRAME_BINDING(v, to);
+                if (Is_Overriding_Context(unwrap(stored), to))
+                    INIT_VAL_FRAME_TARGET(v, to);
                 else {
                     // Could be bound to a reified frame context, or just
                     // to some other object not related to this derivation.

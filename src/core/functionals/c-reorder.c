@@ -80,7 +80,7 @@ Bounce Reorderer_Dispatcher(Level* L) {
     Value* reorderee = Details_At(details, IDX_REORDERER_REORDEREE);
 
     INIT_LVL_PHASE(L, ACT_IDENTITY(VAL_ACTION(reorderee)));
-    INIT_LVL_BINDING(L, VAL_FRAME_BINDING(reorderee));
+    INIT_LVL_TARGET(L, VAL_FRAME_TARGET(reorderee));
 
     return BOUNCE_REDO_UNCHECKED;  // exemplar unchanged; known to be valid
 }

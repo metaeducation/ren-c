@@ -1078,7 +1078,7 @@ Bounce Action_Executor(Level* L)
     if (Is_Frame(label)) {
         if (
             VAL_ACTION(label) == VAL_ACTION(Lib(REDO))  // REDO [1]
-            and VAL_FRAME_BINDING(label) == cast(Context*, L->varlist)
+            and VAL_FRAME_TARGET(label) == cast(Context*, L->varlist)
         ){
             CATCH_THROWN(OUT, level_);
             assert(Is_Logic(OUT));  // signal if we want to gather args or not
@@ -1148,7 +1148,7 @@ Bounce Action_Executor(Level* L)
 void Push_Action(
     Level* L,
     Action* act,
-    Context* binding  // actions may only be bound to contexts ATM
+    Option(Context*) target  // actions may only be linked to contexts ATM
 ){
     assert(L->executor == &Action_Executor);
 
@@ -1188,13 +1188,13 @@ void Push_Action(
     L->rootvar->header.bits =
         NODE_FLAG_NODE
             | NODE_FLAG_CELL
-            | CELL_FLAG_PROTECTED  // payload/binding tweaked, but not by user
+            | CELL_FLAG_PROTECTED  // payload/target tweaked, but not by user
             | CELL_MASK_FRAME
             | FLAG_QUOTE_BYTE(NOQUOTE_1);
     INIT_VAL_CONTEXT_VARLIST(L->rootvar, L->varlist);
 
     INIT_VAL_FRAME_PHASE(L->rootvar, ACT_IDENTITY(act));  // Level_Phase()
-    INIT_VAL_FRAME_BINDING(L->rootvar, binding);  // Level_Binding()
+    INIT_VAL_FRAME_TARGET(L->rootvar, target);  // Level_Target()
 
     s->content.dynamic.used = num_args + 1;
 

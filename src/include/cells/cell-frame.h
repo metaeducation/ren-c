@@ -36,32 +36,6 @@ INLINE void INIT_VAL_ACTION_LABEL(
 }
 
 
-//=//// FRAME BINDING /////////////////////////////////////////////////////=//
-//
-// Only FRAME! contexts store bindings at this time.  The reason is that a
-// unique binding can be stored by individual ACTION! values, so when you make
-// a frame out of an action it has to preserve that binding.
-//
-// Note: The presence of bindings in non-archetype values makes it possible
-// for FRAME! values that have phases to carry the binding of that phase.
-// This is a largely unexplored feature, but is used in REDO scenarios where
-// a running frame gets re-executed.  More study is needed.
-//
-
-INLINE Context* VAL_FRAME_BINDING(const Cell* v) {
-    assert(HEART_BYTE(v) == REB_FRAME);
-    return cast(Context*, BINDING(v));
-}
-
-INLINE void INIT_VAL_FRAME_BINDING(
-    Cell* v,
-    Context* binding
-){
-    assert(HEART_BYTE(v) == REB_FRAME);
-    BINDING(v) = binding;
-}
-
-
 // Only the archetype should be asked if it is native (because the archetype
 // guides interpretation of the details array).
 //
@@ -78,7 +52,7 @@ INLINE Element* Init_Frame_Details_Core(
     Sink(Element*) out,
     Phase* a,
     Option(const Symbol*) label,
-    Option(Context*) binding
+    Option(Context*) target
 ){
   #if !defined(NDEBUG)
     Extra_Init_Frame_Details_Checks_Debug(a);
@@ -88,7 +62,7 @@ INLINE Element* Init_Frame_Details_Core(
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_FRAME);
     INIT_VAL_ACTION_DETAILS(out, a);
     INIT_VAL_ACTION_LABEL(out, label);
-    INIT_VAL_FRAME_BINDING(out, try_unwrap(binding));
+    INIT_VAL_FRAME_TARGET(out, try_unwrap(target));
 
     return out;
 }

@@ -169,6 +169,32 @@ INLINE Context* CTX_FRAME_BINDING(Context* c) {
     return cast(Context*, BINDING(archetype));
 }
 
+//=//// FRAME TARGET //////////////////////////////////////////////////////=//
+//
+// A FRAME! cell can store a context as a target.  RETURN here would store
+// the action that the return will return from.  A METHOD will store the
+// object that the method is linked to.  Since it is per-cell, the same
+// archetypal actoin can be specialized to many different targets.
+//
+// Note: The presence of targets in non-archetype values makes it possible
+// for FRAME! values that have phases to carry the binding of that phase.
+// This is a largely unexplored feature, but is used in REDO scenarios where
+// a running frame gets re-executed.  More study is needed.
+//
+
+INLINE Option(Context*) VAL_FRAME_TARGET(const Cell* v) {
+    assert(HEART_BYTE(v) == REB_FRAME);
+    return cast(Context*, m_cast(Node*, EXTRA(Any, v).node));
+}
+
+INLINE void INIT_VAL_FRAME_TARGET(
+    Cell* v,
+    Option(Context*) target
+){
+    assert(HEART_BYTE(v) == REB_FRAME);
+    EXTRA(Any, v).node = try_unwrap(target);
+}
+
 INLINE void INIT_VAL_CONTEXT_ROOTVAR_Core(
     Cell* out,
     Heart heart,
@@ -195,21 +221,21 @@ INLINE void INIT_VAL_FRAME_ROOTVAR_Core(
     Cell* out,
     Array* varlist,
     Phase* phase,
-    Context* binding  // allowed to be UNBOUND
+    Option(Context*) target
 ){
     assert(out == Array_Head(varlist));
     assert(phase != nullptr);
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_FRAME);
     INIT_VAL_CONTEXT_VARLIST(out, varlist);
-    BINDING(out) = binding;
+    INIT_VAL_FRAME_TARGET(out, target);
     INIT_VAL_FRAME_PHASE_OR_LABEL(out, phase);
   #if !defined(NDEBUG)
     out->header.bits |= CELL_FLAG_PROTECTED;
   #endif
 }
 
-#define INIT_VAL_FRAME_ROOTVAR(out,varlist,phase,binding) \
-    INIT_VAL_FRAME_ROOTVAR_Core(TRACK(out), (varlist), (phase), (binding))
+#define INIT_VAL_FRAME_ROOTVAR(out,varlist,phase,target) \
+    INIT_VAL_FRAME_ROOTVAR_Core(TRACK(out), (varlist), (phase), (target))
 
 
 //=//// CONTEXT KEYLISTS //////////////////////////////////////////////////=//

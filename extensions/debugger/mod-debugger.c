@@ -210,7 +210,7 @@ DECLARE_NATIVE(resume)
         resume,
         Level_Phase(LEVEL),
         Level_Label(LEVEL),
-        Level_Binding(LEVEL)
+        Level_Target(LEVEL)
     );
 
     // We don't want to run the expression yet.  If we tried to run code from

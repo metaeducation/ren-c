@@ -172,7 +172,7 @@ Bounce Chainer_Dispatcher(Level* const L)
         sub,
         ACT_IDENTITY(VAL_ACTION(chained))  // has varlist already [3]
     );
-    INIT_LVL_BINDING(sub, VAL_FRAME_BINDING(chained));
+    INIT_LVL_TARGET(sub, VAL_FRAME_TARGET(chained));
 
     sub->u.action.original = VAL_ACTION(chained);
     sub->label = VAL_FRAME_LABEL(chained);
@@ -208,7 +208,7 @@ Bounce Chainer_Dispatcher(Level* const L)
     ++VAL_INDEX_RAW(pipeline_at);
 
     Restart_Action_Level(sub);  // see notes
-    Push_Action(sub, VAL_ACTION(chained), VAL_FRAME_BINDING(chained));
+    Push_Action(sub, VAL_ACTION(chained), VAL_FRAME_TARGET(chained));
 
     Begin_Prefix_Action(sub, VAL_FRAME_LABEL(chained));
 

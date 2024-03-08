@@ -207,7 +207,7 @@ Script: [
     alias-constrains:   [{AS constrains unlocked input, so must be mutable}]
 
     nothing-to-take:    {Can't TAKE, no value available (consider TRY TAKE)}
-    unbound-archetype:  {Archetypal function called with no binding}
+    archetype-invoked:  {Archetypal function invoked, no target context}
 
     parse3-rule:        {PARSE3 - invalid rule or usage of rule}
     parse3-end:         {PARSE3 - unexpected end of rule}

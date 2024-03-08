@@ -298,7 +298,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             if (CTX_TYPE(context) == REB_FRAME) {
                 Level* L = CTX_LEVEL_IF_ON_STACK(context);
                 if (L)  // comes from execution, not MAKE FRAME!
-                    assert(VAL_FRAME_BINDING(v) == Level_Binding(L));
+                    assert(VAL_FRAME_TARGET(v) == Level_Target(L));
             }
             else
                 assert(IS_LET(Singular_From_Cell(v)));
@@ -480,7 +480,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
     if (IS_DETAILS(a)) {
         const Element* archetype = Array_Head(a);
         assert(Is_Frame(archetype));
-        assert(VAL_FRAME_BINDING(archetype) == UNBOUND);
+        assert(not VAL_FRAME_TARGET(archetype));
 
         // These queueings cannot be done in Queue_Mark_Function_Deep
         // because of the potential for overflowing the C stack with calls

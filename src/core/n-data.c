@@ -179,7 +179,7 @@ DECLARE_NATIVE(bind)
     // FRAME! that they intend to return from.)
     //
     if (REB_FRAME == Cell_Heart(v)) {
-        INIT_VAL_FRAME_BINDING(v, VAL_CONTEXT(context));
+        INIT_VAL_FRAME_TARGET(v, VAL_CONTEXT(context));
         return COPY(v);
     }
 
@@ -403,14 +403,6 @@ DECLARE_NATIVE(use)
 bool Did_Get_Binding_Of(Sink(Value*) out, const Value* v)
 {
     switch (VAL_TYPE(v)) {
-    case REB_FRAME: {
-        Context* binding = VAL_FRAME_BINDING(v); // e.g. METHOD, RETURNs
-        if (not binding)
-            return false;
-
-        Init_Frame(out, binding, ANONYMOUS);  // !!! Review ANONYMOUS
-        break; }
-
     case REB_WORD:
     case REB_SET_WORD:
     case REB_GET_WORD:
@@ -467,12 +459,12 @@ bool Did_Get_Binding_Of(Sink(Value*) out, const Value* v)
         Level* L = CTX_LEVEL_IF_ON_STACK(c);
         if (L) {
             INIT_VAL_FRAME_PHASE(out, Level_Phase(L));
-            INIT_VAL_FRAME_BINDING(out, Level_Binding(L));
+            INIT_VAL_FRAME_TARGET(out, Level_Target(L));
         }
         else {
             // !!! Assume the canon FRAME! value in varlist[0] is useful?
             //
-            assert(VAL_FRAME_BINDING(out) == UNBOUND); // canon, no binding
+            assert(not VAL_FRAME_TARGET(out));  // canon, no binding
         }
     }
 
@@ -2354,7 +2346,7 @@ DECLARE_NATIVE(as)
             OUT,
             VAL_FRAME_PHASE(v),
             ANONYMOUS,  // see note, we might have stored this in varlist slot
-            VAL_FRAME_BINDING(v)
+            VAL_FRAME_TARGET(v)
         );
       }
 

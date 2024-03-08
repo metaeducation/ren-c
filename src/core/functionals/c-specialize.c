@@ -60,7 +60,7 @@ Bounce Specializer_Dispatcher(Level* L)
     Context* exemplar = ACT_EXEMPLAR(Level_Phase(L));
 
     INIT_LVL_PHASE(L, CTX_FRAME_PHASE(exemplar));
-    INIT_LVL_BINDING(L, CTX_FRAME_BINDING(exemplar));
+    INIT_LVL_TARGET(L, CTX_FRAME_BINDING(exemplar));
 
     return BOUNCE_REDO_UNCHECKED; // redo uses the updated phase and binding
 }
@@ -103,7 +103,7 @@ Context* Make_Context_For_Action_Push_Partials(
         rootvar,
         varlist,
         ACT_IDENTITY(VAL_ACTION(action)),
-        VAL_FRAME_BINDING(action)
+        VAL_FRAME_TARGET(action)
     );
 
     // If there is a PARTIALS list, then push its refinements.
