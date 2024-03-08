@@ -354,8 +354,10 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 #define Poison_Cell(v) \
     (TRACK(Erase_Cell(v))->header.bits = CELL_MASK_POISON)
 
-#define Is_Cell_Poisoned(v) \
-    ((v)->header.bits == CELL_MASK_POISON)
+INLINE bool Is_Cell_Poisoned(const Cell* cell) {
+    assert(Is_Cell_Erased(cell) or (cell->header.bits & NODE_FLAG_CELL));
+    return cell->header.bits == CELL_MASK_POISON;
+}
 
 
 //=//// CELL HEADERS AND PREPARATION //////////////////////////////////////=//
