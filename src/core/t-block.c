@@ -280,12 +280,12 @@ Bounce MAKE_Array(
             //
             // A vararg created from a block AND never passed as an argument
             // so no typeset or quoting settings available.  Can't produce
-            // any voids, because the data source is a block.
+            // any antiforms, because the data source is a block.
             //
-            assert(not IS_VARLIST(VAL_VARARGS_BINDING(arg)));
+            assert(not IS_VARLIST(VAL_VARARGS_SOURCE(arg)));
         }
         else {
-            Context* context = cast(Context*, VAL_VARARGS_BINDING(arg));
+            Context* context = cast(Context*, VAL_VARARGS_SOURCE(arg));
             Level* param_level = CTX_LEVEL_MAY_FAIL(context);
 
             Value* param = Array_Head(

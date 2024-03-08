@@ -40,7 +40,7 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * If the extra->binding of the varargs is not UNBOUND, it represents the
+// * If the extra->node of the varargs is not nullptr, it represents the
 //   frame in which this VARARGS! was tied to a parameter.  This 0-based
 //   offset can be used to find the param the varargs is tied to, in order
 //   to know whether it is quoted or not (and its name for error delivery).
@@ -52,23 +52,23 @@
 #define INIT_VAL_VARARGS_PHASE          Init_Cell_Node2
 #define VAL_VARARGS_PHASE(v)            cast(Action*, Cell_Node2(v))
 
-INLINE Array* VAL_VARARGS_BINDING(const Cell* v) {
+INLINE Array* VAL_VARARGS_SOURCE(const Cell* v) {
     assert(Cell_Heart(v) == REB_VARARGS);
-    return cast(Array*, BINDING(v));  // may be varlist or plain array
+    return cast(Array*, m_cast(Node*, EXTRA(Any, v).node));
 }
 
-INLINE void INIT_VAL_VARARGS_BINDING(
+INLINE void INIT_VAL_VARARGS_SOURCE(
     Cell* v,
-    Array* binding  // either an array or a frame varlist
+    Array* source  // either an array or a frame varlist
 ){
     assert(Cell_Heart(v) == REB_VARARGS);
-    BINDING(v) = binding;
+    EXTRA(Any, v).node = source;
 }
 
 
 INLINE Element* Init_Varargs_Untyped_Normal(Sink(Element*) out, Level* L) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_VARARGS);
-    BINDING(out) = L->varlist;  // frame-based VARARGS!
+    INIT_VAL_VARARGS_SOURCE(out, L->varlist);  // frame-based VARARGS!
     UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
     INIT_VAL_VARARGS_PHASE(out, nullptr);  // set in typecheck
     return out;
@@ -90,7 +90,7 @@ INLINE Element* Init_Varargs_Untyped_Enfix(
     }
 
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_VARARGS);
-    INIT_VAL_VARARGS_BINDING(out, feed);
+    INIT_VAL_VARARGS_SOURCE(out, feed);
     UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
     INIT_VAL_VARARGS_PHASE(out, nullptr);  // set in typecheck
     return out;
@@ -103,8 +103,8 @@ INLINE bool Is_Block_Style_Varargs(
 ){
     assert(Cell_Heart(vararg) == REB_VARARGS);
 
-    Array* binding = cast(Array*, BINDING(vararg));
-    if (IS_VARLIST(binding)) {
+    Array* source = VAL_VARARGS_SOURCE(vararg);
+    if (IS_VARLIST(source)) {
         *shared_out = nullptr;  // avoid compiler warning in -Og build
         return false;  // it's an ordinary vararg, representing a FRAME!
     }
@@ -113,7 +113,7 @@ INLINE bool Is_Block_Style_Varargs(
     // filled by the evaluator on a <variadic> parameter.  Should be a singular
     // array with one BLOCK!, that is the actual array and index to advance.
     //
-    Array* array1 = binding;
+    Array* array1 = source;
     *shared_out = cast(Element*, Stub_Cell(array1));
     assert(Is_Cell_Poisoned(*shared_out) or Is_Block(*shared_out));
 
@@ -127,12 +127,12 @@ INLINE bool Is_Level_Style_Varargs_Maybe_Null(
 ){
     assert(Cell_Heart(vararg) == REB_VARARGS);
 
-    Array* binding = cast(Array*, BINDING(vararg));
-    if (IS_VARLIST(binding)) {
+    Array* source = VAL_VARARGS_SOURCE(vararg);
+    if (IS_VARLIST(source)) {
         // "Ordinary" case... use the original level implied by the VARARGS!
         // (so long as it is still live on the stack)
 
-        *L_out = CTX_LEVEL_IF_ON_STACK(cast(Context*, binding));
+        *L_out = CTX_LEVEL_IF_ON_STACK(cast(Context*, source));
         return true;
     }
 
@@ -210,7 +210,7 @@ INLINE const Param* Param_For_Varargs_Maybe_Null(
     // A vararg created from a block AND never passed as an argument so no
     // typeset or quoting settings available.  Treat as "normal" parameter.
     //
-    assert(not IS_VARLIST(BINDING(v)));
+    assert(not IS_VARLIST(VAL_VARARGS_SOURCE(v)));
     return nullptr;
 }
 

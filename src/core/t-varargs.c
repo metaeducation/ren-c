@@ -384,7 +384,7 @@ Bounce MAKE_Varargs(
         Reset_Unquoted_Header_Untracked(TRACK(OUT), CELL_MASK_VARARGS);
         INIT_VAL_VARARGS_PHASE(OUT, nullptr);
         UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(OUT));  // corrupts in C++11
-        INIT_VAL_VARARGS_BINDING(OUT, array1);
+        INIT_VAL_VARARGS_SOURCE(OUT, array1);
 
         return OUT;
     }
@@ -539,9 +539,9 @@ REBINT CT_Varargs(const Cell* a, const Cell* b, bool strict)
     // expired varargs, because the expired stub should be kept alive as
     // long as its identity is needed).
     //
-    if (VAL_VARARGS_BINDING(a) == VAL_VARARGS_BINDING(b))
+    if (VAL_VARARGS_SOURCE(a) == VAL_VARARGS_SOURCE(b))
         return 0;
-    return VAL_VARARGS_BINDING(a) > VAL_VARARGS_BINDING(b) ? 1 : -1;
+    return VAL_VARARGS_SOURCE(a) > VAL_VARARGS_SOURCE(b) ? 1 : -1;
 }
 
 
