@@ -57,7 +57,7 @@
 //    feature in the future again.  So since Set_Series_Bias() uses bit masks
 //    on an existing value, clear out the whole value for starters.
 //
-bool Did_Series_Data_Alloc(Series* s, REBLEN capacity) {
+bool Did_Series_Data_Alloc(Stub* s, REBLEN capacity) {
     assert(Get_Series_Flag(s, DYNAMIC));  // once set, never shrinks [1]
 
     Byte wide = Series_Wide(s);

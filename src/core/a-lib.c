@@ -2211,9 +2211,9 @@ RebolValue* API_rebRescueWith(
             // state) won't be covered by this, and must be unmanaged.
 
           proxy_result: {
-            Array* a = Singular_From_Cell(result);
-            Unlink_Api_Handle_From_Level(a);  // e.g. linked to f
-            Link_Api_Handle_To_Level(a, dummy->prior);  // link to caller
+            Stub* stub = Singular_From_Cell(result);
+            Unlink_Api_Handle_From_Level(stub);  // e.g. linked to f
+            Link_Api_Handle_To_Level(stub, dummy->prior);  // link to caller
           }
         }
     }
@@ -2355,9 +2355,9 @@ RebolNodeInternal* rebDERELATIVIZE(
     Specifier* specifier
 ){
     Value* v = Derelativize(Alloc_Value(), cell, specifier);
-    Array* a = Singular_From_Cell(v);
-    Set_Subclass_Flag(API, a, RELEASE);
-    return cast(RebolNodeInternal*, a);  // cast needed in C
+    Stub* stub = Singular_From_Cell(v);
+    Set_Subclass_Flag(API, stub, RELEASE);
+    return cast(RebolNodeInternal*, stub);  // cast needed in C
 }
 
 
@@ -2427,12 +2427,12 @@ RebolNodeInternal* API_rebRELEASING(RebolValue* v)
     if (not Is_Api_Value(v))
         fail ("Cannot apply rebR() to non-API value");
 
-    Array* a = Singular_From_Cell(v);
-    if (Get_Subclass_Flag(API, a, RELEASE))
+    Stub* stub = Singular_From_Cell(v);
+    if (Get_Subclass_Flag(API, stub, RELEASE))
         fail ("Cannot apply rebR() more than once to the same API value");
 
-    Set_Subclass_Flag(API, a, RELEASE);
-    return cast(RebolNodeInternal*, a);  // cast needed in C
+    Set_Subclass_Flag(API, stub, RELEASE);
+    return cast(RebolNodeInternal*, stub);  // cast needed in C
 }
 
 
@@ -2523,14 +2523,14 @@ RebolValue* API_rebManage(RebolValue* v)
 
     assert(Is_Api_Value(v));
 
-    Array* a = Singular_From_Cell(v);
-    assert(Is_Node_Root_Bit_Set(a));
+    Stub* stub = Singular_From_Cell(v);
+    assert(Is_Node_Root_Bit_Set(stub));
 
-    if (Is_Node_Managed(a))
+    if (Is_Node_Managed(stub))
         fail ("Attempt to rebManage() an API value that's already managed.");
 
-    Set_Node_Managed_Bit(a);
-    Link_Api_Handle_To_Level(a, TOP_LEVEL);
+    Set_Node_Managed_Bit(stub);
+    Link_Api_Handle_To_Level(stub, TOP_LEVEL);
 
     return v;
 }
@@ -2552,10 +2552,10 @@ void API_rebUnmanage(void *p)
     Value* v = cast(Value*, n);
     assert(Is_Api_Value(v));
 
-    Array* a = Singular_From_Cell(v);
-    assert(Is_Node_Root_Bit_Set(a));
+    Stub* stub = Singular_From_Cell(v);
+    assert(Is_Node_Root_Bit_Set(stub));
 
-    if (Not_Node_Managed(a))
+    if (Not_Node_Managed(stub))
         fail ("Attempt to rebUnmanage() API value with indefinite lifetime.");
 
     // It's not safe to convert the average series that might be referred to
@@ -2564,8 +2564,8 @@ void API_rebUnmanage(void *p)
     // pointers to its cell being held by client C code only.  It's at their
     // own risk to do this, and not use those pointers after a free.
     //
-    Clear_Node_Managed_Bit(a);
-    Unlink_Api_Handle_From_Level(a);
+    Clear_Node_Managed_Bit(stub);
+    Unlink_Api_Handle_From_Level(stub);
 }
 
 
@@ -2840,8 +2840,8 @@ DECLARE_NATIVE(api_transient)
 
     Value* v = Copy_Cell(Alloc_Value(), ARG(value));
     rebUnmanage(v);  // has to survive the API-TRANSIENT's frame
-    Array* a = Singular_From_Cell(v);
-    Set_Subclass_Flag(API, a, RELEASE);
+    Stub* stub = Singular_From_Cell(v);
+    Set_Subclass_Flag(API, stub, RELEASE);
 
     // Regarding adddresses in WASM:
     //
@@ -2855,7 +2855,7 @@ DECLARE_NATIVE(api_transient)
     // :-/  Well, which is it?  R3-Alpha integers were signed 64-bit, Ren-C is
     // targeting arbitrary precision...use signed as status quo for now.
     //
-    return Init_Integer(level_->out, i_cast(intptr_t, a));
+    return Init_Integer(level_->out, i_cast(intptr_t, stub));
 }
 
 

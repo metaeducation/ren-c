@@ -94,7 +94,7 @@ INLINE bool Has_File_Line(const Array* a) {
 #define Array_Tail(a)           Series_Tail(Element, (a))
 #define Array_Last(a)           Series_Last(Element, (a))
 
-INLINE Value* Stub_Cell(const_if_c Series* s) {
+INLINE Value* Stub_Cell(const_if_c Stub* s) {
     assert(Not_Series_Flag(s, DYNAMIC));
     assert(Is_Series_Array(s));
     return x_cast(Value*, &s->content.fixed.cell);
@@ -109,11 +109,11 @@ INLINE Value* Stub_Cell(const_if_c Series* s) {
 #endif
 
 
-// It's possible to calculate the array from just a cell if you know it's a
-// cell living in a singular array.
+// It's possible to calculate the stub from just a cell if you know it's a
+// cell living in the stub.
 //
-INLINE Array* Singular_From_Cell(const Cell* v) {
-    Array* singular = cast(Array*,  // DEBUG_CHECK_CASTS checks Array
+INLINE Stub* Singular_From_Cell(const Cell* v) {
+    Stub* singular = cast(Stub*,  // DEBUG_CHECK_CASTS checks Array
         cast(void*,
             cast(Byte*, m_cast(Cell*, v))
             - offsetof(Stub, content)
