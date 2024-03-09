@@ -105,7 +105,7 @@ static void Check_Basics(void)
     // info field is set--which helps catch a few stray reads or writes.
 
   blockscope {
-    Size offset = offsetof(Stub, info.flags);  // variable avoids warning
+    Size offset = offsetof(Stub, info);  // variable avoids warning
     if (offset - offsetof(Stub, content) != sizeof(Cell))
         panic ("bad structure alignment for internal array termination"); }
 

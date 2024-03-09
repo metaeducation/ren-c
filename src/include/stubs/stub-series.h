@@ -259,11 +259,11 @@
 //
 #if (! CPLUSPLUS_11)
     #define SERIES_INFO(s) \
-        x_cast(Series*, ensure(const Series*, (s)))->info.flags.bits  // [1]
+        x_cast(Series*, ensure(const Series*, (s)))->info.any.flags  // [1]
 #else
     INLINE uintptr_t &SERIES_INFO(const Series* s) {
         assert(Not_Series_Flag(s, INFO_NODE_NEEDS_MARK));  // [2]
-        return m_cast(Series*, s)->info.flags.bits;  // [1]
+        return m_cast(Series*, s)->info.any.flags;  // [1]
     }
 #endif
 
@@ -281,15 +281,15 @@
 
 #if (! DEBUG) || (! CPLUSPLUS_11)
     #define INODE(Field, s) \
-        *x_cast(INODE_##Field##_TYPE*, m_cast(Node**, &(s)->info.node))
+        *x_cast(INODE_##Field##_TYPE*, m_cast(Node**, &(s)->info.any.node))
 #else
     #define INODE(Field, s) \
         NodeHolder<INODE_##Field##_TYPE>( \
-            ensure_flavor(HAS_INODE_##Field, (s))->info.node)
+            ensure_flavor(HAS_INODE_##Field, (s))->info.any.node)
 #endif
 
 #define node_INODE(Field, s) \
-    *m_cast(Node**, &(s)->info.node)  // const ok for strict alias
+    *m_cast(Node**, &(s)->info.any.node)  // const ok for strict alias
 
 
 //=//// SERIES CAPACITY AND TOTAL SIZE /////////////////////////////////////=//
@@ -749,10 +749,10 @@ INLINE Stub* Prep_Stub(void *preallocated, Flags flags) {
     s->leader.bits = NODE_FLAG_NODE | flags;  // #1
 
   #if !defined(NDEBUG)
-    SafeCorrupt_Pointer_Debug(s->link.corrupt);  // #2
+    SafeCorrupt_Pointer_Debug(s->link.any.corrupt);  // #2
     Mem_Fill(&s->content.fixed, 0xBD, sizeof(s->content));  // #3 - #6
-    SafeCorrupt_Pointer_Debug(s->info.corrupt);  // #7
-    SafeCorrupt_Pointer_Debug(s->link.corrupt);  // #8
+    SafeCorrupt_Pointer_Debug(s->info.any.corrupt);  // #7
+    SafeCorrupt_Pointer_Debug(s->misc.any.corrupt);  // #8
 
   #if DEBUG_SERIES_ORIGINS
     s->guard = nullptr;  // so Touch_Stub_Debug() can tell data is invalid
@@ -804,7 +804,7 @@ INLINE Series* Make_Series_Into(
     SERIES_INFO(s) = SERIES_INFO_MASK_NONE;
   #else
     if (flags & SERIES_FLAG_INFO_NODE_NEEDS_MARK)
-        Corrupt_Pointer_If_Debug(s->info.node);
+        Corrupt_Pointer_If_Debug(s->info.any.node);
     else
         SERIES_INFO(s) = SERIES_INFO_MASK_NONE;
   #endif

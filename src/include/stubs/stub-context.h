@@ -529,10 +529,10 @@ INLINE Context* Steal_Context_Vars(Context* c, Node* keysource) {
     Set_Series_Inaccessible(stub);  // Make unusable [2]
   #if DEBUG
     FLAVOR_BYTE(stub) = FLAVOR_CORRUPT;
-    Corrupt_Pointer_If_Debug(stub->link.corrupt);
-    Corrupt_Pointer_If_Debug(stub->misc.corrupt);
+    Corrupt_Pointer_If_Debug(stub->link.any.corrupt);
+    Corrupt_Pointer_If_Debug(stub->misc.any.corrupt);
     Corrupt_If_Debug(stub->content);
-    Corrupt_Pointer_If_Debug(stub->info.corrupt);
+    Corrupt_Pointer_If_Debug(stub->info.any.corrupt);
   #endif
 
     return cast(Context*, copy);

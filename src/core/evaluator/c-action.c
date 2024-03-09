@@ -1165,7 +1165,7 @@ void Push_Action(
             | SERIES_FLAG_FIXED_SIZE  // FRAME!s don't expand ATM
             // not managed by default, see Force_Level_Varlist_Managed()
     );
-    SERIES_INFO(s) = SERIES_INFO_MASK_NONE;
+    s->info.any.flags = SERIES_INFO_MASK_NONE;
     INIT_BONUS_KEYSOURCE(x_cast(Array*, s), L);  // maps varlist back to L
     MISC(VarlistAdjunct, s) = nullptr;
     LINK(Patches, s) = nullptr;

@@ -1222,9 +1222,9 @@ void GC_Kill_Stub(Stub* s)
     Touch_Stub_If_Debug(s);
 
   #if !defined(NDEBUG)
-    FreeCorrupt_Pointer_Debug(s->info.node);
+    FreeCorrupt_Pointer_Debug(s->info.any.node);
     // The spot LINK occupies will be used by Free_Pooled() to link the freelist
-    FreeCorrupt_Pointer_Debug(s->misc.corrupt);
+    FreeCorrupt_Pointer_Debug(s->misc.any.corrupt);
   #endif
 
     Free_Pooled(STUB_POOL, s);

@@ -266,7 +266,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(const Series* s)
     // if it's available for non-info uses, it is always a live marked node.
 
     if (Get_Series_Flag(s, INFO_NODE_NEEDS_MARK) and node_INODE(Node, s))
-        Queue_Mark_Node_Deep(&m_cast(Series*, s)->info.node);
+        Queue_Mark_Node_Deep(&m_cast(Series*, s)->info.any.node);
 
     if (IS_KEYLIST(s)) {
         //

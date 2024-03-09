@@ -593,15 +593,6 @@ union StubContentUnion {
 
 union StubLinkUnion {
     //
-    // If you assign one member in a union and read from another, then that's
-    // technically undefined behavior.  But this field is used as the one
-    // that is "corrupted" in the debug build when the series is created, and
-    // hopefully it will lead to the other fields reading garbage (vs. zero)
-    //
-  #if !defined(NDEBUG)
-    void *corrupt;
-  #endif
-
     // For LIBRARY!, the file descriptor.  This is set to NULL when the
     // library is not loaded.
     //
@@ -625,12 +616,6 @@ union StubLinkUnion {
 //
 union StubMiscUnion {
     //
-    // Used to preload bad data in the debug build; see notes on link.corrupt
-    //
-  #if !defined(NDEBUG)
-    void *corrupt;
-  #endif
-
     // See ARRAY_FLAG_FILE_LINE.  Ordinary source series store the line number
     // here.  It perhaps could have some bits taken out of it, vs. being a
     // full 32-bit integer on 32-bit platforms or 64-bit integer on 64-bit
@@ -676,11 +661,7 @@ union StubInfoUnion {
     // Using a union lets us see the underlying `uintptr_t` type-punned in
     // debug builds as bytes/bits.
     //
-    union HeaderUnion flags;
-
-    const Node* node;
-
-    void* corrupt;
+    union AnyUnion any;
 };
 
 

@@ -410,7 +410,9 @@ struct BytesExtraStruct {
 };
 
 union AnyUnion {  // needed to beat strict aliasing, used in payload
-    bool flag;  // "wasteful" to just use for one flag, but fast to read/write
+    bool bit;  // "wasteful" to just use for one flag, but fast to read/write
+
+    Flags flags;
 
     intptr_t i;
     int_fast32_t i32;
