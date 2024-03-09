@@ -743,7 +743,7 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
     RESET_CELL_EXTRA((out), REB_MAX_NULLED, VALUE_FLAG_FALSEY)
 
 // !!! A theory was that the "evaluated" flag would help a function that took
-// both <opt> and <end>, which are converted to nulls, distinguish what kind
+// both ~null~ and <end>, which are converted to nulls, distinguish what kind
 // of null it is.  This may or may not be a good idea, but unevaluating it
 // here just to make a note of the concept, and tag it via the callsites.
 //

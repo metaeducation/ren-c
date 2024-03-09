@@ -364,7 +364,7 @@ for-each x targets [
 ;;;; GO!
 
 set-exec-path: func [
-    return: <void>
+    return: [~]
     tool [object!]
     path
 ][
@@ -1045,7 +1045,7 @@ for-each [label list] reduce [
 ]
 
 add-project-flags: func [
-    return: <void>
+    return: [~]
     project [object!]
     /I includes
     /D definitions
@@ -1307,7 +1307,7 @@ prep: make rebmake/entry-class [
 ; this will make sure `%objs/generic/` is in there.
 
 add-new-obj-folders: function [
-    return: <void>
+    return: [~]
     objs
     folders
     <local>

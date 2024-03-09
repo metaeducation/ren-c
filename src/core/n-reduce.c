@@ -81,7 +81,7 @@ bool Reduce_To_Stack_Throws(
 //  {Evaluates expressions, keeping each result (DO only gives last result)}
 //
 //      return: "New array or value"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //      value "GROUP! and BLOCK! evaluate each item, single values evaluate"
 //          [any-value!]
 //  ]

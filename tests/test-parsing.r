@@ -15,7 +15,7 @@ Rebol [
 
 do %line-numberq.r
 
-null-to-blank: func [x [<opt> any-value!]] [either null? x [_] [:x]]
+null-to-blank: func [x [~null~ any-value!]] [either null? x [_] [:x]]
 
 do %../tools/parsing-tools.reb
 do %../tools/text-lines.reb
@@ -82,7 +82,7 @@ make object! [
     ]
 
     set 'collect-tests function [
-        return: <void>
+        return: [~]
         collected-tests [block!]
             {collect the tests here (modified)}
         test-file [file!]

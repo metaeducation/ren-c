@@ -25,7 +25,7 @@
     (did match2: enclose specialize 'either-test [
         branch: [null] ;-- runs on test failure
     ] function [
-        return: [<opt> any-value!]
+        return: [~null~ any-value!]
         f [frame!]
     ][
         arg: :f/arg else [

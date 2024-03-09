@@ -176,7 +176,7 @@ round: generic [
 
 random: generic [
     {Returns a random value of the same datatype; or shuffles series.}
-    return: [<opt> any-value!]
+    return: [~null~ any-value!]
     value   {Maximum value of result (modified when series)}
     /seed   {Restart or randomize}
     /secure {Returns a cryptographically secure random number}
@@ -197,7 +197,7 @@ even?: generic [
 
 skip: generic [
     {Returns the series forward or backward from the current position.}
-    return: [<opt> blank! any-series! port!]
+    return: [~null~ blank! any-series! port!]
         {Input skipped by the given offset, clipped to head/tail if not /ONLY}
     series [blank! any-series! port!]
     offset [any-number! logic! pair!]
@@ -207,7 +207,7 @@ skip: generic [
 
 at: generic [
     {Returns the series at the specified index.}
-    return: [<opt> blank! any-series! port!]
+    return: [~null~ blank! any-series! port!]
         {Input at the given index, clipped to head/tail if not /ONLY}
     series [blank! any-series! port!]
     index [any-number! logic! pair!]
@@ -221,7 +221,7 @@ at: generic [
 find: generic [
     {Searches for the position where a matching value is found}
     return: {position found, else blank (void if series is itself blank)}
-        [<opt> any-series! blank! bar!]
+        [~null~ any-series! blank! bar!]
     series [<maybe> blank! any-series! any-context! map! bitset! typeset!]
     value [any-value!]
     /part {Limits the search to a given length or position}
@@ -238,7 +238,7 @@ find: generic [
 
 select: generic [
     {Searches for a value; returns the value that follows, else void.}
-    return: [<opt> any-value!]
+    return: [~null~ any-value!]
     series [<maybe> blank! any-series! any-context! map!]
     value [any-value!]
     /part {Limits the search to a given length or position}
@@ -261,10 +261,10 @@ select: generic [
 ;
 put: generic [
     {Replaces the value following a key, and returns the new value.}
-    return: [<opt> any-value!]
+    return: [~null~ any-value!]
     series [map!]
     key [any-value!]
-    value [<opt> any-value!]
+    value [~null~ any-value!]
     /case {Perform a case-sensitive search}
 ]
 
@@ -274,7 +274,7 @@ copy: generic [
     {Copies a series, object, or other value.}
 
     return: {Return type will match the input type, or void if blank}
-        [<opt> any-value!]
+        [~null~ any-value!]
     value {If an ANY-SERIES!, it is only copied from its current position}
         [<maybe> any-value!]
     /part {Limits to a given length or position}
@@ -287,7 +287,7 @@ copy: generic [
 take: generic [
     {Removes and returns one or more elements}
 
-    return: [<opt> any-value!]
+    return: [~null~ any-value!]
     series [<maybe> blank! any-series! port! blank! varargs!]
         {At position (modified)}
     /part {Specifies a length or end position}
@@ -301,10 +301,10 @@ take: generic [
 ;
 insert: generic [
     {Inserts element(s); for series, returns just past the insert.}
-    return: {Just past the insert (<opt> needed for COLLECT/KEEP, see notes)}
-        [<opt> any-value!]
+    return: {Just past the insert (~null~ needed for COLLECT/KEEP, see notes)}
+        [~null~ any-value!]
     series [any-series! port! map! object! bitset! port!] {At position (modified)}
-    value [void! any-value!] {The value to insert}
+    value [~void~ any-value!] {The value to insert}
     /part {Limits to a given length or position}
     limit [any-number! any-series! pair!]
     /only {Only insert a block as a single value (not the contents of the block)}
@@ -320,7 +320,7 @@ append: generic [
     {Inserts element(s) at tail; for series, returns head.}
     series [any-series! port! map! object! module! bitset!]
         {Any position (modified)}
-    value [void! any-value!] {The value to insert}
+    value [~void~ any-value!] {The value to insert}
     /part {Limits to a given length or position}
     limit [any-number! any-series! pair!]
     /only {Only insert a block as a single value (not the contents of the block)}
@@ -335,7 +335,7 @@ append: generic [
 change: generic [
     {Replaces element(s); returns just past the change.}
     series [any-series! port!]{At position (modified)}
-    value [void! any-value!] {The new value}
+    value [~void~ any-value!] {The new value}
     /part {Limits the amount to change to a given length or position}
     limit [any-number! any-series! pair!]
     /only {Only change a block as a single value (not the contents of the block)}
@@ -410,13 +410,13 @@ open: generic [
 
 close: generic [
     {Closes a port/library.}
-    return: [<opt> any-value!]
+    return: [~null~ any-value!]
     port [port!]
 ]
 
 read: generic [
     {Read from a file, URL, or other port.}
-    return: [<opt> binary! text! block! port!]
+    return: [~null~ binary! text! block! port!]
         "null on (some) failures !!! REVIEW as part of port model review"
     source [port! file! url! block!]
     /part {Partial read a given number of units (source relative)}
@@ -446,7 +446,7 @@ write: generic [
 
 query: generic [
     {Returns information about a port, file, or URL.}
-    return: [<opt> object!]
+    return: [~null~ object!]
     target [port! file! url! block!]
     /mode "Get mode information"
     field [word! blank!] "blank will return valid modes for port type"
@@ -470,7 +470,7 @@ modify: generic [
 ;
 on-wake-up: generic [
     {Updates external and internal states (normally after read/write).}
-    return: [<opt>]
+    return: [~null~]
     port [port!]
 ]
 

@@ -137,7 +137,7 @@ sym-n: 1
 boot-words: copy []
 add-sym: function [
     {Add SYM_XXX to enumeration}
-    return: [<opt> integer!]
+    return: [~null~ integer!]
     word [word!]
     /exists "return ID of existing SYM_XXX constant if already exists"
     <with> sym-n
@@ -551,7 +551,7 @@ ob: make object! boot-sysobj
 make-obj-defs: function [
     {Given a Rebol OBJECT!, write C structs that can access its raw variables}
 
-    return: <void>
+    return: [~]
     e [object!]
        {The emitter to write definitions to}
     obj

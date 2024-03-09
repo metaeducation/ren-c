@@ -239,7 +239,7 @@ DECLARE_NATIVE(bind)
 //
 //  {Defines words local to a block.}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //      vars [block! word!]
 //          {Local word(s) to the block}
 //      body [block!]
@@ -364,7 +364,7 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
 //
 //  "Test if an optional cell contains a value (e.g. `value? null` is FALSE)"
 //
-//      optional [<opt> any-value!]
+//      optional [~null~ any-value!]
 //  ]
 //
 DECLARE_NATIVE(value_q)
@@ -380,7 +380,7 @@ DECLARE_NATIVE(value_q)
 //
 //  "Test if value can be put in a block (e.g. `element? null` is FALSE)"
 //
-//      optional [<opt> any-value!]
+//      optional [~null~ any-value!]
 //  ]
 //
 DECLARE_NATIVE(element_q)
@@ -497,7 +497,7 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
 //
 //  {Gets the value of a word or path, or block of words/paths.}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //      source [<maybe> any-word! any-path! block!]
 //          {Word or path to get, or block of words or paths}
 //      /any "Retrieve ANY-VALUE! (e.g. do not error on trash)"
@@ -540,7 +540,7 @@ DECLARE_NATIVE(get)
 //
 //  {Gets the value of a word or path, allows trash}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //      source "Word or path to get"
 //          [<maybe> <dequote> any-word! any-path!]
 //  ]
@@ -614,11 +614,11 @@ INLINE void Set_Opt_Polymorphic_May_Fail(
 //
 //  {Sets a word, path, or block of words and paths to specified value(s).}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //          {Will be the values set to, or void if any set values are void}
 //      target [<maybe> any-word! any-path! block!]
 //          {Word or path, or block of words and paths}
-//      value [<opt> any-value!]
+//      value [~null~ any-value!]
 //          "Value or block of values"
 //      /single "If target and value are blocks, set each to the same value"
 //      /some "blank values (or values past end of block) are not set."
@@ -709,7 +709,7 @@ DECLARE_NATIVE(set)
 //
 //  {Absence of a value, used to opt out of many routines (appending, etc.)}
 //
-//      return: [void!]
+//      return: [~void~]
 //  ]
 //
 DECLARE_NATIVE(void) {
@@ -725,7 +725,7 @@ DECLARE_NATIVE(void) {
 //  {Convert nulls to voids, pass through most other values}
 //
 //      return: [any-value!]
-//      optional [<opt> any-value!]
+//      optional [~null~ any-value!]
 //  ]
 //
 DECLARE_NATIVE(maybe)
@@ -744,7 +744,7 @@ DECLARE_NATIVE(maybe)
 //
 //  "Returns the word or block bound into the given context."
 //
-//      return: [<opt> any-word! block! group!]
+//      return: [~null~ any-word! block! group!]
 //      context [any-context! block!]
 //      word [any-word! block! group!] "(modified if series)"
 //  ]
@@ -891,8 +891,8 @@ DECLARE_NATIVE(enfixed_q)
 //
 //  {Function for returning the same value that it got in (identity function)}
 //
-//      return: [<opt> any-value!]
-//      value [<end> <opt> any-value!]
+//      return: [~null~ any-value!]
+//      value [<end> ~null~ any-value!]
 //          {!!! <end> flag is hack to limit enfix reach to the left}
 //  ]
 //
@@ -976,7 +976,7 @@ DECLARE_NATIVE(free_q)
 //
 //  {Aliases underlying data of one series to act as another of same class}
 //
-//      return: [<opt> any-series! any-word!]
+//      return: [~null~ any-series! any-word!]
 //      type [datatype!]
 //      value [<maybe> any-series! any-word!]
 //  ]
@@ -1222,8 +1222,8 @@ DECLARE_NATIVE(unset_q)
 //  "Returns value passed in without evaluation."
 //
 //      return: {The input value, verbatim--unless /SOFT and soft quoted type}
-//          [<opt> any-value!]
-//      :value {Value to literalize, <opt> is impossible (see UNEVAL)}
+//          [~null~ any-value!]
+//      :value {Value to literalize, ~null~ is impossible (see UNEVAL)}
 //          [any-value!]
 //      /soft {Evaluate if a GROUP!, GET-WORD!, or GET-PATH!}
 //  ]
@@ -1247,7 +1247,7 @@ DECLARE_NATIVE(the)
 //
 //  "Generator for the absence of a value"
 //
-//      return: [<opt>]
+//      return: [~null~]
 //  ]
 //
 DECLARE_NATIVE(null)
@@ -1264,7 +1264,7 @@ DECLARE_NATIVE(null)
 //  "Tells you if the argument is not a value"
 //
 //      return: [logic!]
-//      optional [<opt> any-value!]
+//      optional [~null~ any-value!]
 //  ][
 //      null = type of :optional
 //  ]
@@ -1283,7 +1283,7 @@ DECLARE_NATIVE(null_q)
 //  "Turn nulls into voids, passing through all other values"
 //
 //      return: [any-value!]
-//      optional [<opt> any-value!]
+//      optional [~null~ any-value!]
 //  ]
 //
 DECLARE_NATIVE(trashify)
@@ -1302,7 +1302,7 @@ DECLARE_NATIVE(trashify)
 //
 //  "Returns TRUE if argument is either a BLANK! or NULL"
 //
-//      value [<opt> any-value!]
+//      value [~null~ any-value!]
 //  ][
 //      did any [
 //          unset? 'value
@@ -1325,7 +1325,7 @@ DECLARE_NATIVE(nothing_q)
 //
 //  "Returns TRUE if a value is passed in and it isn't NULL or a BLANK!"
 //
-//      value [<opt> any-value!]
+//      value [~null~ any-value!]
 //  ][
 //      all [
 //          set? 'value

@@ -409,7 +409,7 @@
 )
 
 [#539 (
-    f: func [return: <void>] [
+    f: func [return: [~]] [
         use [x] [return] ;-- https://github.com/metaeducation/ren-c/issues/755
         42
     ]

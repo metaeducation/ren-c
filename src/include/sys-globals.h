@@ -114,10 +114,10 @@ PVAR Value PG_R_Thrown[2]; // has "pseudotype" REB_R_THROWN
 PVAR Value* Root_System;
 PVAR Value* Root_Typesets;
 
-PVAR Value* Root_Void_Tag; // used with RETURN: <void> to suppress results
+PVAR Value* Root_Here_Tag; // used in modern parse as `pos: <here>`
 PVAR Value* Root_With_Tag; // overrides locals gathering (can disable RETURN)
 PVAR Value* Root_Ellipsis_Tag; // marks variadic argument <...>
-PVAR Value* Root_Opt_Tag; // marks optional argument (can be NULL)
+PVAR Value* Root_Any_Tag; // may be implemented in parse as SKIP replacement
 PVAR Value* Root_End_Tag; // marks endable argument (NULL if at end of input)
 PVAR Value* Root_Maybe_Tag; // marks that passing void won't run the action
 PVAR Value* Root_Local_Tag; // marks beginning of a list of "pure locals"

@@ -111,7 +111,7 @@
     ok? trap [reeval (func [x [<end>]] []) end 1 2 3]
 )
 (
-    error? trap [reeval (func [x [<opt>]] []) end 1 2 3]
+    error? trap [reeval (func [x [~null~]] []) end 1 2 3]
 )
 
 (
@@ -131,24 +131,24 @@
 [
     (
         left-normal: enfix right-normal:
-            <- func [return: [<opt> bar!] x [bar!]] [:x]
+            <- func [return: [~null~ bar!] x [bar!]] [:x]
         left-normal*: enfix right-normal*:
-            <- func [return: [<opt> bar!] x [bar! <end>]] [:x]
+            <- func [return: [~null~ bar!] x [bar! <end>]] [:x]
 
         left-tight: enfix right-tight:
-            <- func [return: [<opt> bar!] #x [bar!]] [:x]
+            <- func [return: [~null~ bar!] #x [bar!]] [:x]
         left-tight*: enfix right-tight*:
-            <- func [return: [<opt> bar!] #x [bar! <end>]] [:x]
+            <- func [return: [~null~ bar!] #x [bar! <end>]] [:x]
 
         left-soft: enfix right-soft:
-            <- func [return: [<opt> bar!] 'x [bar!]] [:x]
+            <- func [return: [~null~ bar!] 'x [bar!]] [:x]
         left-soft*: enfix right-soft*:
-            <- func [return: [<opt> bar!] 'x [bar! <end>]] [:x]
+            <- func [return: [~null~ bar!] 'x [bar! <end>]] [:x]
 
         left-hard: enfix right-hard:
-            <- func [return: [<opt> bar!] :x [bar!]] [:x]
+            <- func [return: [~null~ bar!] :x [bar!]] [:x]
         left-hard*: enfix right-hard*:
-            <- func [return: [<opt> bar!] :x [bar! <end>]] [:x]
+            <- func [return: [~null~ bar!] :x [bar! <end>]] [:x]
 
         true
     )
@@ -191,24 +191,24 @@
 [
     (
         left-normal: enfix right-normal:
-            <- func [return: [<opt> bar!] x [bar! <...>]] [take x]
+            <- func [return: [~null~ bar!] x [bar! <...>]] [take x]
         left-normal*: enfix right-normal*:
-            <- func [return: [<opt> bar!] x [bar! <...> <end>]] [take x]
+            <- func [return: [~null~ bar!] x [bar! <...> <end>]] [take x]
 
         left-tight: enfix right-tight:
-            <- func [return: [<opt> bar!] #x [bar! <...>]] [take x]
+            <- func [return: [~null~ bar!] #x [bar! <...>]] [take x]
         left-tight*: enfix right-tight*:
-            <- func [return: [<opt> bar!] #x [bar! <...> <end>]] [take x]
+            <- func [return: [~null~ bar!] #x [bar! <...> <end>]] [take x]
 
         left-soft: enfix right-soft:
-            <- func [return: [<opt> bar!] 'x [bar! <...>]] [take x]
+            <- func [return: [~null~ bar!] 'x [bar! <...>]] [take x]
         left-soft*: enfix right-soft*:
-            <- func [return: [<opt> bar!] 'x [bar! <...> <end>]] [take x]
+            <- func [return: [~null~ bar!] 'x [bar! <...> <end>]] [take x]
 
         left-hard: enfix right-hard:
-            <- func [return: [<opt> bar!] :x [bar! <...>]] [take x]
+            <- func [return: [~null~ bar!] :x [bar! <...>]] [take x]
         left-hard*: enfix right-hard*:
-            <- func [return: [<opt> bar!] :x [bar! <...> <end>]] [take x]
+            <- func [return: [~null~ bar!] :x [bar! <...> <end>]] [take x]
 
         true
     )

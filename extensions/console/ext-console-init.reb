@@ -88,7 +88,7 @@ console!: make object! [
     info: to-text #{e29398} ;-- info "(i)" symbol
     greeting: _
 
-    print-prompt: func [return: <void>] [
+    print-prompt: func [return: [~]] [
         ;
         ; !!! Previously the HOST-CONSOLE hook explicitly took an (optional)
         ; FRAME! where a debug session was focused and a stack depth integer,
@@ -126,7 +126,7 @@ console!: make object! [
         write-stdout space
     ]
 
-    print-result: function [return: <void> v [<opt> any-value!]]  [
+    print-result: function [return: [~] v [~null~ any-value!]]  [
 
         if trash? last-result: get/any 'v [
             ;
@@ -197,7 +197,7 @@ console!: make object! [
         {Receives line input, parse/transform, send back to CONSOLE eval}
 
         return: "null if canceled, otherwise processed text line input"
-            [<opt> text!]
+            [~null~ text!]
     ][
         ask text!
     ]
@@ -251,7 +251,7 @@ console!: make object! [
 
     add-shortcut: func [
         {Add/Change console shortcut}
-        return: <void>
+        return: [~]
         name [any-word!] "Shortcut name"
         block [block!] "Command(s) expanded to"
     ][
@@ -263,7 +263,7 @@ console!: make object! [
 start-console: function [
     "Called when a REPL is desired after command-line processing, vs quitting"
 
-    return: <void>
+    return: [~]
     <static>
         o (system/options) ;-- shorthand since options are often read/written
 ][
@@ -369,7 +369,7 @@ ext-console-impl: function [
     prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
         [blank! block! group!]
     result "Result from evaluating PRIOR in a 1-element BLOCK!, or error/null"
-        [<opt> block! error!]
+        [~null~ block! error!]
     resumable "Is the RESUME function allowed to exit this console"
         [logic!]
 ][
@@ -737,7 +737,7 @@ ext-console-impl: function [
 
 why: function [
     "Explain the last error in more detail."
-    return: <void>
+    return: [~]
     'err [<end> word! path! error!] "Optional error value"
 ][
     err: default [system/state/last-error]

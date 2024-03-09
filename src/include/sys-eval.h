@@ -345,7 +345,7 @@ INLINE void Set_Level_Detected_Fetch(
 
   detect:;
 
-    if (not p) { // libRebol's null/<opt> (IS_NULLED prohibited below)
+    if (not p) { // libRebol's null/~null~ (IS_NULLED prohibited below)
 
         L->source->array = nullptr;
         L->value = NULLED_CELL;

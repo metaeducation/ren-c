@@ -58,7 +58,7 @@ static const Value* Trap_Dangerous(Level* level_) {
 //  {Tries to DO a block, trapping raised errors}
 //
 //      return: "ERROR! if raised, else null (ANY-VALUE! for ENCLOSE & CHAIN)"
-//          [<opt> error! any-value!]  ; see note about why ANY-VALUE!
+//          [~null~ error! any-value!]  ; see note about why ANY-VALUE!
 //      code "Code to execute and monitor"
 //          [block! action!]
 //      /result "Optional output result of the evaluation if not an error"
@@ -134,7 +134,7 @@ static Value* Entrap_Dangerous(Level* level_) {
 //  {DO a block and put result in a 1-item BLOCK!, unless error is raised}
 //
 //      return: "ERROR! if raised, null if null, or result in a BLOCK!"
-//          [<opt> block! error!]
+//          [~null~ block! error!]
 //      code "Code to execute and monitor"
 //          [block! action!]
 //  ]
@@ -158,7 +158,7 @@ DECLARE_NATIVE(entrap)
 //
 //  {Sets the WHERE, NEAR, FILE, and LINE fields of an error}
 //
-//      return: [<opt>]
+//      return: [~null~]
 //      error [error!]
 //      location [frame! any-word!]
 //  ]

@@ -12,7 +12,7 @@
 ;
 (did redbol-apply: function [
     {APPLY interface is still evolving, see https://trello.com/c/P2HCcu0V}
-    return: [<opt> any-value!]
+    return: [~null~ any-value!]
     action [action!]
     block [block!]
     /only
@@ -124,8 +124,8 @@
 
 (
     trash? redbol-apply func [
-        return: [<opt> any-value!]
-        x [<opt> any-value!]
+        return: [~null~ any-value!]
+        x [~null~ any-value!]
     ][
         get/any 'x
     ][
@@ -134,8 +134,8 @@
 )
 (
     trash? redbol-apply func [
-        return: [<opt> any-value!]
-        'x [<opt> any-value!]
+        return: [~null~ any-value!]
+        'x [~null~ any-value!]
     ][
         get/any 'x
     ][
@@ -144,8 +144,8 @@
 )
 (
     trash? redbol-apply func [
-        return: [<opt> any-value!]
-        x [<opt> any-value!]
+        return: [~null~ any-value!]
+        x [~null~ any-value!]
     ][
         return get/any 'x
     ][
@@ -154,8 +154,8 @@
 )
 (
     trash? redbol-apply func [
-        return: [<opt> any-value!]
-        'x [<opt> any-value!]
+        return: [~null~ any-value!]
+        'x [~null~ any-value!]
     ][
         return get/any 'x
     ][
@@ -163,19 +163,19 @@
     ]
 )
 (
-    error? redbol-apply func ['x [<opt> any-value!]] [
+    error? redbol-apply func ['x [~null~ any-value!]] [
         return get 'x
     ][
         make error! ""
     ]
 )
 (
-    error? redbol-apply/only func [x [<opt> any-value!]] [
+    error? redbol-apply/only func [x [~null~ any-value!]] [
         return get 'x
     ] head of insert copy [] make error! ""
 )
 (
-    error? redbol-apply/only func ['x [<opt> any-value!]] [
+    error? redbol-apply/only func ['x [~null~ any-value!]] [
         return get 'x
     ] head of insert copy [] make error! ""
 )
@@ -190,7 +190,7 @@
 (
     use [x] [
         x: null
-        strict-equal? first [:x] redbol-apply/only func ['x [<opt> any-value!]] [
+        strict-equal? first [:x] redbol-apply/only func ['x [~null~ any-value!]] [
             return get 'x
         ] [:x]
     ]
@@ -202,7 +202,7 @@
 (
     use [x] [
         x: null
-        strict-equal? 'x redbol-apply/only func ['x [<opt> any-value!]] [
+        strict-equal? 'x redbol-apply/only func ['x [~null~ any-value!]] [
             return get 'x
         ] [x]
     ]

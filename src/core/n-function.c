@@ -165,7 +165,7 @@ DECLARE_NATIVE(unwind)
 //  {RETURN, giving a result to the caller}
 //
 //      value "If no argument is given, result will be a trash"
-//          [<end> <opt> any-value!]
+//          [<end> ~null~ any-value!]
 //  ]
 //
 DECLARE_NATIVE(return)
@@ -232,7 +232,7 @@ DECLARE_NATIVE(return)
         // !!! In the userspace formulation of this abstraction, it indicates
         // it's not RETURN's type signature that is constrained, as if it were
         // then RETURN would be implicated in the error.  Instead, RETURN must
-        // take [<opt> any-value!] as its argument, and then report the error
+        // take [~null~ any-value!] as its argument, and then report the error
         // itself...implicating the frame (in a way parallel to this native).
         //
         if (not TYPE_CHECK(typeset, VAL_TYPE(v)))
@@ -275,7 +275,7 @@ DECLARE_NATIVE(typechecker)
 
     Value* param = Init_Typeset(
         Alloc_Tail_Array(paramlist),
-        TS_OPT_VALUE, // Allow null (e.g. <opt>), returns false
+        TS_OPT_VALUE, // Allow null (e.g. ~null~), returns false
         Canon(SYM_VALUE)
     );
     INIT_VAL_PARAM_CLASS(param, PARAM_CLASS_NORMAL);
@@ -592,7 +592,7 @@ DECLARE_NATIVE(enclose)
 //
 //  {Cause all existing references to an ACTION! to invoke another ACTION!}
 //
-//      return: [<opt> action!]
+//      return: [~null~ action!]
 //          {The hijacked action value, null if self-hijack (no-op)}
 //      victim [action! word! path!]
 //          {Action value whose references are to be affected.}

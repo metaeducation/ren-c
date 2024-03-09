@@ -45,10 +45,10 @@
 //
 //  {Process received value *inline* as the evaluator loop would.}
 //
-//      return: [<opt> any-value!]
-//      value [<opt> any-value!]
+//      return: [~null~ any-value!]
+//      value [~null~ any-value!]
 //          {BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns...}
-//      expressions [<opt> any-value! <...>]
+//      expressions [~null~ any-value! <...>]
 //          {Depending on VALUE, more expressions may be consumed}
 //      /only
 //          {Suppress evaluation on any ensuing arguments value consumes}
@@ -89,7 +89,7 @@ DECLARE_NATIVE(reeval)
 //
 //  {Shove a left hand parameter into an ACTION!, effectively making it enfix}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //          "REVIEW: How might this handle shoving enfix invisibles?"
 //      :left [<...> <end> any-value!]
 //          "Requests parameter convention based on enfixee's first argument"
@@ -123,8 +123,8 @@ DECLARE_NATIVE(shove)
 //
 //  {Service routine for implementing ME (needs review/generalization)}
 //
-//      return: [<opt> any-value!]
-//      left [<opt> any-value!]
+//      return: [~null~ any-value!]
+//      left [~null~ any-value!]
 //          {Value to preload as the left hand-argument (won't reevaluate)}
 //      rest [varargs!]
 //          {The code stream to execute (head element must be enfixed)}
@@ -244,7 +244,7 @@ DECLARE_NATIVE(eval_enfix)
 //
 //  {Evaluates a block of source code (directly or fetched according to type)}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //      source [
 //          <maybe> ;-- useful for `do maybe ...` scenarios when no match
 //          block! ;-- source code in block form
@@ -472,7 +472,7 @@ DECLARE_NATIVE(do)
 //
 //  {Perform a single evaluator step, returning the next source position}
 //
-//      return: [<opt> block! group! varargs!]
+//      return: [~null~ block! group! varargs!]
 //      source [
 //          <maybe> ;-- useful for `do maybe ...` scenarios when no match
 //          block! ;-- source code in block form
@@ -604,7 +604,7 @@ DECLARE_NATIVE(evaluate)
 //
 //  {If an evaluatable source has pending invisibles, execute and advance}
 //
-//      return: [<opt> block! group! varargs!]
+//      return: [~null~ block! group! varargs!]
 //      source [block! group!]
 //  ]
 //
@@ -629,7 +629,7 @@ DECLARE_NATIVE(sync_invisibles)
 //  {Restart a frame's action from the top with its current state}
 //
 //      return: "Does not return at all (either errors or restarts)"
-//          [<opt>]
+//          [~null~]
 //      restartee "Frame to restart, or bound word (e.g. REDO 'RETURN)"
 //          [frame! any-word!]
 //      /other "Restart in a frame-compatible function (sibling tail-call)"
@@ -711,7 +711,7 @@ DECLARE_NATIVE(redo)
 //
 //  {Invoke an ACTION! with all required arguments specified}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //      applicand "Literal action, or location to find one (preserves name)"
 //          [action! word! path!]
 //      def "Frame definition block (will be bound and evaluated)"

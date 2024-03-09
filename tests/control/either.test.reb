@@ -78,7 +78,7 @@
 
     (
         takes-2-logics: func [x [logic!] y [logic!]] [x]
-        infix-voider: enfix func [return: [<opt>] x y] []
+        infix-voider: enfix func [return: [~null~] x y] []
         true
     )
 

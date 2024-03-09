@@ -32,7 +32,7 @@ REBOL [
 
 finish-init-core: func [
     "Completes the boot sequence for Ren-C core."
-    return: <void>
+    return: [~]
     boot-mezz [block!]
         {Mezzanine code loaded as part of the boot block in Startup_Core()}
     <local> tmp ;-- need to get JOIN, SYSTEM, and other bits for COMPOSE

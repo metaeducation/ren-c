@@ -32,7 +32,7 @@ make object! compose [
     allowed-flags: _
 
     process-vector: function [
-        return: <void>
+        return: [~]
         flags [block!]
         source [text!]
         <with> test-failures successes skipped
@@ -88,7 +88,7 @@ make object! compose [
     total-tests: 0
 
     process-tests: function [
-        return: <void>
+        return: [~]
         test-sources [block!]
         emit-test [action!]
     ][

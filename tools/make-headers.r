@@ -43,7 +43,7 @@ e-syms: make-emitter "Function Symbols" output-dir/core/tmp-symbols.c
 prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
 
 emit-proto: func [
-    return: <void>
+    return: [~]
     proto
 ][
     any [
@@ -114,7 +114,7 @@ emit-proto: func [
 ]
 
 process-conditional: function [
-    return: <void>
+    return: [~]
     directive
     dir-position
     emitter [object!]
@@ -135,7 +135,7 @@ process-conditional: function [
     ]
 ]
 
-emit-directive: function [return: <void> directive] [
+emit-directive: function [return: [~] directive] [
     process-conditional directive proto-parser/parse.position e-funcs
     process-conditional directive proto-parser/parse.position e-syms
 ]
@@ -281,7 +281,7 @@ sys-globals.parser: context [
     parse.position: _
     id: _
 
-    process: func [return: <void> text] [
+    process: func [return: [~] text] [
         parse text grammar/rule ;-- Review: no END (return result unused?)
     ]
 

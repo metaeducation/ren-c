@@ -250,7 +250,7 @@ INLINE void Finalize_Arg(
             return;
         }
 
-        // fall through to check arg for if <opt> is ok
+        // fall through to check arg for if ~null~ is ok
         //
         assert(refine == ORDINARY_ARG or refine == LOOKBACK_ARG);
     }

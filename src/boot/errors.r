@@ -125,7 +125,7 @@ Script: [
     bad-func-def:       [{invalid function definition:} :arg1]
     bad-func-arg:       [{function argument} :arg1 {is not valid}]
 
-    needs-return-opt:   [:arg1 {can't return null (see RETURN: [<opt> ...])}]
+    needs-return-opt:   [:arg1 {can't return null (see RETURN: [~null~ ...])}]
     needs-return-value: [:arg1 {can't return trash (see RETURN: [trash!])}]
     bad-return-type:    [:arg1 {doesn't have RETURN: enabled for} :arg2]
 
@@ -135,7 +135,7 @@ Script: [
     argument-revoked:   [:arg1 {refinement revoked, cannot supply} :arg2]
     bad-refine-revoke:  [:arg1 {refinement in use, can't be revoked by} :arg2]
     non-logic-refine:   [:arg1 {refinement must be LOGIC!, not} :arg2]
-    refinement-arg-opt: [{refinement arguments cannot be <opt>}]
+    refinement-arg-opt: [{refinement arguments cannot be ~null~}]
     ambiguous-partial:  {Ambiguous partial (try SPECIALIZE-ing a PATH!)}
 
     bad-field-set:      [{cannot set} :arg1 {field to} :arg2 {datatype}]
@@ -195,7 +195,7 @@ Script: [
     varargs-no-look:    {VARARGS! may only lookahead by 1 if "hard quoted"}
     varargs-take-last:  {VARARGS! does not support TAKE-ing only /LAST item}
 
-    null-vararg-array:  {Can't MAKE ANY-ARRAY! from VARARGS! that allow <opt>}
+    null-vararg-array:  {Can't MAKE ANY-ARRAY! from VARARGS! that allow ~null~}
     null-object-block:  {Can't create block from object if it has null values}
 
     conflicting-key:    [:arg1 {key conflicts; use SELECT or PUT with /CASE}]

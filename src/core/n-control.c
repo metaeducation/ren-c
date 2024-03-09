@@ -57,8 +57,8 @@
 //  {When TO LOGIC! CONDITION is true, execute branch}
 //
 //      return: "null if branch not run, otherwise branch result"
-//          [<opt> any-value!]
-//      condition [<opt> any-value!]
+//          [~null~ any-value!]
+//      condition [~null~ any-value!]
 //      branch "If arity-1 ACTION!, receives the evaluated condition"
 //          [block! action!]
 //  ]
@@ -83,8 +83,8 @@ DECLARE_NATIVE(if)
 //  {When TO LOGIC! CONDITION is false, execute branch}
 //
 //      return: "null if branch not run, otherwise branch result"
-//          [<opt> any-value!]
-//      condition [<opt> any-value!]
+//          [~null~ any-value!]
+//      condition [~null~ any-value!]
 //      branch [block! action!]
 //  ]
 //
@@ -107,9 +107,9 @@ DECLARE_NATIVE(if_not)
 //
 //  {Choose a branch to execute, based on TO-LOGIC of the CONDITION value}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //          "Returns null if either branch returns null (unlike IF...ELSE)"
-//      condition [<opt> any-value!]
+//      condition [~null~ any-value!]
 //      true-branch "If arity-1 ACTION!, receives the evaluated condition"
 //          [block! action!]
 //      false-branch [block! action!]
@@ -229,10 +229,26 @@ bool Either_Test_Core_Throws(
 
         Specifier* specifier = VAL_SPECIFIER(test);
         for (; NOT_END(item); ++item) {
-            const Cell* var
-                = IS_WORD(item)
-                    ? Get_Opt_Var_May_Fail(item, specifier)
-                    : item;
+            const Cell* var;
+            if (not IS_WORD(item))
+                var = item;
+            else {
+                if (Cell_Word_Id(item) == SYM__TNULL_T) {
+                    if (IS_NULLED(arg)) {
+                        Init_True(out);
+                        return false;
+                    }
+                    continue;
+                }
+                if (Cell_Word_Id(item) == SYM__TVOID_T) {
+                    if (IS_VOID(arg)) {
+                        Init_True(out);
+                        return false;
+                    }
+                    continue;
+                }
+                var = Get_Opt_Var_May_Fail(item, specifier);
+            }
 
             if (IS_DATATYPE(var)) {
                 if (VAL_TYPE_KIND(var) == VAL_TYPE(arg)) {
@@ -245,16 +261,6 @@ bool Either_Test_Core_Throws(
                     Init_True(out);
                     return false;
                 }
-            }
-            else if (IS_TAG(var)) {
-                if (0 == Compare_String_Vals(item, Root_Opt_Tag, true)) {
-                    if (IS_NULLED(arg)) {
-                        Init_True(out);
-                        return false;
-                    }
-                }
-                else
-                    fail (arg);
             }
             else
                 fail (Error_Invalid_Type(VAL_TYPE(var)));
@@ -276,14 +282,14 @@ bool Either_Test_Core_Throws(
 //  {If argument passes test, return it as-is, otherwise take the branch}
 //
 //      return: "Input argument if it matched, or branch result"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //      test "Typeset membership, LOGIC! to test for truth, filter function"
 //          [
 //              word! path! action! ;-- arity-1 filter function, opt named
 //              datatype! typeset! block! ;-- typeset specification forms
 //              logic! ;-- tests TO-LOGIC compatibility
 //          ]
-//      arg [<opt> any-value!]
+//      arg [~null~ any-value!]
 //      branch "If arity-1 ACTION!, receives the non-matching argument"
 //          [block! action!]
 //  ]
@@ -311,9 +317,9 @@ DECLARE_NATIVE(either_test)
 //  {If input is not null, return that value, otherwise evaluate the branch}
 //
 //      return: "Input value if not null, or branch result (possibly null)"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //      left "Run branch if this is null or void"
-//          [<opt> void! any-value!]
+//          [~null~ ~void~ any-value!]
 //      branch [block! action!]
 //  ]
 //
@@ -338,9 +344,9 @@ DECLARE_NATIVE(else)
 //  {If input is null, return null, otherwise evaluate the branch}
 //
 //      return: "null if input is null, or branch result (voided if null)"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //      left "Run branch if this is not null or void"
-//          [<opt> void! any-value!]
+//          [~null~ ~void~ any-value!]
 //      branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [block! action!]
 //  ]
@@ -366,9 +372,9 @@ DECLARE_NATIVE(then)
 //  {For non-null input, evaluate and discard branch (like a pass-thru THEN)}
 //
 //      return: "The same value as input, regardless of if branch runs"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //      left "Run branch if this is not null or void"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //      branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [block! action!]
 //  ]
@@ -394,12 +400,12 @@ DECLARE_NATIVE(also)
 //  {Check value using tests (match types, TRUE or FALSE, or filter action)}
 //
 //      return: "Input if it matched, otherwise null (void if falsey match)"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //      test "Typeset membership, LOGIC! to test for truth, filter function"
 //          [
 //              datatype! typeset! block! logic! action! ;-- like EITHER-TEST
 //          ]
-//      value [<opt> any-value!]
+//      value [~null~ any-value!]
 //  ]
 //
 DECLARE_NATIVE(match)
@@ -430,11 +436,11 @@ DECLARE_NATIVE(match)
 //  {Make sure a value does NOT match a type constraint (see also: ENSURE)}
 //
 //      return: "Input value if it passes the type test"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //      test "The test to apply (limited to DATATYPE! and NULL at this time)"
-//          [<opt> datatype!]
+//          [~null~ datatype!]
 //      value "Value to test (will either be returned as result or error)"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 // ]
 //
 DECLARE_NATIVE(non)
@@ -470,7 +476,7 @@ DECLARE_NATIVE(non)
 //  {Short-circuiting variant of AND, using a block of expressions as input}
 //
 //      return: "Product of last evaluation if all truthy, else null"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //      block "Block of expressions"
 //          [block!]
 //  ]
@@ -514,7 +520,7 @@ DECLARE_NATIVE(all)
 //  {Short-circuiting version of OR, using a block of expressions as input}
 //
 //      return: "First truthy evaluative result, or null if all falsey"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //      block "Block of expressions"
 //          [block!]
 //  ]
@@ -558,7 +564,7 @@ DECLARE_NATIVE(any)
 //  {Short circuiting version of NOR, using a block of expressions as input}
 //
 //      return: "BAR! if all expressions are falsey, null if any are truthy"
-//          [<opt> bar!]
+//          [~null~ bar!]
 //      block "Block of expressions."
 //          [block!]
 //  ]
@@ -728,7 +734,7 @@ static REB_R Case_Choose_Core_May_Throw(
 //
 //  {Evaluates each condition, and when true, evaluates what follows it}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //          "Last matched case evaluation, or null if no cases matched"
 //      cases [block!]
 //          "Block of cases (conditions followed by branches)"
@@ -748,7 +754,7 @@ DECLARE_NATIVE(case)
 //
 //  {Evaluates each condition, and gives back the value that follows it}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //          "Last matched choice value, or void if no choices matched"
 //      choices [block!]
 //          "Evaluate all choices (do not stop at first TRUTHY? choice)"
@@ -774,9 +780,9 @@ DECLARE_NATIVE(choose)
 //  {Selects a choice and evaluates the block that follows it.}
 //
 //      return: "Last case evaluation, or null if no cases matched"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //      value "Target value"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //      cases "Block of cases (comparison lists followed by block branches)"
 //          [block!]
 //      /all "Evaluate all matches (not just first one)"
@@ -914,7 +920,7 @@ DECLARE_NATIVE(switch)
 //  {Set word or path to a default value if it is not set yet or blank.}
 //
 //      return: "Former value or branch result, can only be null if no target"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //     :target "Word or path which might be set--no target always branches"
 //          [<skip> set-word! set-path!]
 //      branch "If target not set already, this is evaluated and stored there"
@@ -976,7 +982,7 @@ DECLARE_NATIVE(default)
 //  {Catches a throw from a block and returns its value.}
 //
 //      return: "Thrown value, or BLOCK! with value and name (if /NAME, /ANY)"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //      block "Block to evaluate"
 //          [block!]
 //      /result "Optional evaluation result if not thrown"
@@ -1121,7 +1127,7 @@ DECLARE_NATIVE(catch)
 //  "Throws control back to a previous catch."
 //
 //      value "Value returned from catch"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //      /name "Throws to a named catch"
 //      name-value [word! action! object!]
 //  ]

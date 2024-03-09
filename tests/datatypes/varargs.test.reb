@@ -19,7 +19,7 @@
 )
 
 (
-    f: func [args [any-value! <opt> <...>]] [
+    f: func [args [any-value! ~null~ <...>]] [
        b: take args
        either tail? args [b] ["not at end"]
     ]

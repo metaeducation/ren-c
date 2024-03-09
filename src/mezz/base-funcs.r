@@ -19,7 +19,7 @@ REBOL [
 assert: func [
     {Ensure conditions are conditionally true if hooked by debugging}
 
-    return: <void>
+    return: [~]
     conditions [block!]
         {Block of conditions to evaluate and test for logical truth}
 ][
@@ -33,9 +33,9 @@ assert: func [
 so: enfix func [
     {Postfix assertion which won't keep running if left expression is false}
 
-    return: <void>
+    return: [~]
     condition "Condition to test (voids are treated as false)"
-        [<opt> any-value!]
+        [~null~ any-value!]
 ][
     if not opt condition [
         fail/where ["Postfix 'SO assertion' failed"] 'condition
@@ -45,9 +45,9 @@ so: enfix func [
 was: func [
     {Return a variable's value prior to an assignment, then do the assignment}
 
-    return: [<opt> any-value!]
+    return: [~null~ any-value!]
         {Value of the following SET-WORD! or SET-PATH! before assignment}
-    evaluation [<opt> any-value! <...>]
+    evaluation [~null~ any-value! <...>]
         {Used to take the assigned value}
     :look [set-word! set-path! <...>]
 ][
@@ -243,7 +243,7 @@ dig-action-meta-fields: function [value [action!]] [
         ]
     ]
 
-    underlying: ensure [<opt> action!] any [
+    underlying: ensure [~null~ action!] any [
         get 'meta/specializee
         get 'meta/adaptee
         all [block? :meta/chainees | first meta/chainees]
@@ -263,23 +263,23 @@ dig-action-meta-fields: function [value [action!]] [
     ]
 
     return construct system/standard/action-meta [
-        description: ensure [<opt> text!] any [
+        description: ensure [~null~ text!] any [
             select meta 'description
             copy maybe select maybe fields 'description
         ]
-        return-type: ensure [<opt> block!] any [
+        return-type: ensure [~null~ block!] any [
             select meta 'return-type
             copy maybe select maybe fields 'return-type
         ]
-        return-note: ensure [<opt> text!] any [
+        return-note: ensure [~null~ text!] any [
             select meta 'return-note
             copy maybe select maybe fields 'return-note
         ]
-        parameter-types: ensure [<opt> frame!] any [
+        parameter-types: ensure [~null~ frame!] any [
             select meta 'parameter-types
             inherit-frame maybe get maybe 'parameter-types
         ]
-        parameter-notes: ensure [<opt> frame!] any [
+        parameter-notes: ensure [~null~ frame!] any [
             select meta 'parameter-notes
             inherit-frame maybe get maybe 'parameter-notes
         ]
@@ -459,7 +459,7 @@ ensure: redescribe [
     {Pass through value if it matches test, otherwise trigger a FAIL}
 ](
     specialize 'either-test [
-        branch: func [arg [<opt> any-value!]] [
+        branch: func [arg [~null~ any-value!]] [
             ;
             ; !!! Can't use FAIL/WHERE until there is a good way to SPECIALIZE
             ; a conditional with a branch referring to invocation parameters:
@@ -478,7 +478,7 @@ really: func [
     {FAIL if value is null, otherwise pass it through}
 
     return: [any-value!]
-    value [any-value!] ;-- always checked for null, since no <opt>
+    value [any-value!] ;-- always checked for null, since no ~null~
 ][
     :value
 ]
@@ -490,7 +490,7 @@ attempt: func [
     {Tries to evaluate a block and returns result or NULL on error.}
 
     return: "null on error, if code runs and produces null it becomes void"
-        [<opt> any-value!]
+        [~null~ any-value!]
     code [block! action!]
 ][
     trap [
@@ -668,7 +668,7 @@ lambda: function [
     ]
 ]
 
-reify: func [value [<opt> void! trash! any-value!]] [
+reify: func [value [~null~ ~void~ trash! any-value!]] [
     case [
         void? :value [return '~void~]
         trash? :value [return '~]
@@ -702,7 +702,7 @@ invisible-eval-all: func [
 
     return: []
         {Returns nothing, not even void ("invisible function", like COMMENT)}
-    expressions [<opt> any-value! <...>]
+    expressions [~null~ any-value! <...>]
         {Any number of expressions on the right.}
 ][
     do expressions
@@ -711,9 +711,9 @@ invisible-eval-all: func [
 right-bar: func [
     {Evaluates to first expression on right, discarding ensuing expressions.}
 
-    return: [<opt> any-value!]
+    return: [~null~ any-value!]
         {Evaluative result of first of the following expressions.}
-    expressions [<opt> any-value! <...>]
+    expressions [~null~ any-value! <...>]
         {Any number of expression.}
     <local> right
 ][
@@ -725,8 +725,8 @@ right-bar: func [
 once-bar: func [
     {Expression barrier that's willing to only run one expression after it}
 
-    return: [<opt> any-value!]
-    right [<opt> <end> any-value! <...>]
+    return: [~null~ any-value!]
+    right [~null~ <end> any-value! <...>]
     :lookahead [any-value! <...>]
     look:
 ][
@@ -830,10 +830,10 @@ module: func [
     for-each [var types] [
         spec object!
         body block!
-        spec/name [<opt> word!]
-        spec/type [<opt> word!]
-        spec/version [<opt> tuple!]
-        spec/options [<opt> block!]
+        spec/name [~null~ word!]
+        spec/type [~null~ word!]
+        spec/version [~null~ tuple!]
+        spec/options [~null~ block!]
     ][
         do compose [ensure ((types)) (var)] ;-- names to show if fails
     ]

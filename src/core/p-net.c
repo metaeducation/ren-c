@@ -534,7 +534,7 @@ DECLARE_NATIVE(get_udp_actor_handle)
 //
 //  {Join (or leave) an IPv4 multicast group}
 //
-//      return: [<opt>]
+//      return: [~null~]
 //      port [port!]
 //          {An open UDP port}
 //      group [tuple!]
@@ -591,7 +591,7 @@ DECLARE_NATIVE(set_udp_multicast)
 //
 //  {Set the TTL of a UDP port}
 //
-//      return: [<opt>]
+//      return: [~null~]
 //      port [port!]
 //          {An open UDP port}
 //      ttl [integer!]

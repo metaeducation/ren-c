@@ -33,7 +33,7 @@ dump: function [
         ]
     ]
 
-    val-to-text: function [return: [text!] val [<opt> any-value!]] [
+    val-to-text: function [return: [text!] val [~null~ any-value!]] [
         case [
             null? val ["// null"]
             object? :val [unspaced ["make object! [" (dump-obj val) "]"]]
@@ -41,7 +41,7 @@ dump: function [
         ]
     ]
 
-    dump-one: function [return: <void> item] [
+    dump-one: function [return: [~] item] [
         switch type of item [
             refinement! ;-- treat as label, /a no shift and shorter than "a"
             text! [ ;-- good for longer labeling when you need spaces/etc.
@@ -130,7 +130,7 @@ dumps: enfix function [
     :value "If issue, create non-specialized dumper...#on or #off by default"
         [issue! text! integer! word! set-word! set-path! group! block!]
     extra "Optional variadic data for SET-WORD!, e.g. `dv: dump var: 1 + 2`"
-        [<opt> any-value! <...>]
+        [~null~ any-value! <...>]
 ][
     if issue? value [
         d: specialize 'dump-to-newline [sigil: as text! name]
@@ -183,7 +183,7 @@ dumps: enfix function [
 ;
 dump-obj: function [
     "Returns a block of information about an object or port."
-    return: [<opt> block!]
+    return: [~null~ block!]
     obj [object! port!]
     /match "Include only those that match a string or datatype" pat
 ][
@@ -280,7 +280,7 @@ dump-obj: function [
 
     return: []
     left "Enfix required for 'fully invisible' enfix behavior (ignored)"
-        [<opt> <end> any-value!]
+        [~null~ <end> any-value!]
     :args [any-value! <...>]
 ][
     while [(not new-line? args) and [value: take args]] [

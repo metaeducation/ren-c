@@ -365,7 +365,7 @@ DECLARE_NATIVE(rsa)
 //  "Update DH object with new DH private/public key pair."
 //
 //      return: "No result, object's PRIV-KEY and PUB-KEY members updated"
-//          [<opt>]
+//          [~null~]
 //      obj [object!]
 //         "(modified) Diffie-Hellman object, with generator(g) / modulus(p)"
 //  ]

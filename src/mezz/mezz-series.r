@@ -37,10 +37,10 @@ last?: single?: func [
 
 extend: func [
     "Extend an object, map, or block type with word and value pair."
-    return: [<opt> any-value!]
+    return: [~null~ any-value!]
     obj [object! map! block! group!] {object to extend (modified)}
     word [any-word!]
-    val [<opt> any-value!]
+    val [~null~ any-value!]
 ][
     append obj reduce [to-set-word word :val]
     :val
@@ -93,9 +93,9 @@ replace: function [
     target "Series to replace within (modified)"
         [any-series!]
     pattern "Value to be replaced (converted if necessary)"
-        [void! any-value!]
+        [~void~ any-value!]
     replacement "Value to replace with (called each time if a function)"
-        [void! any-value!]
+        [~void~ any-value!]
 
     ; !!! Note these refinments alias ALL, CASE, TAIL natives!
     /all "Replace all occurrences"
@@ -467,7 +467,7 @@ collect-with: func [
     "Evaluate body, and return block of values collected via keep function."
 
     return: "result block, or null if no KEEPs (prevent nulls with KEEP [])"
-        [<opt> block!]
+        [~null~ block!]
     'name [word! lit-word!]
         "Name to which keep function will be assigned (<local> if word!)"
     body [block!]
@@ -606,7 +606,7 @@ format: function [
 
 printf: func [
     "Formatted print."
-    return: <void>
+    return: [~]
     fmt "Format"
     val "Value or block of values"
 ][
@@ -625,7 +625,7 @@ split: function [
     series "The series to split"
         [<maybe> any-series!]
     dlm "Split size, delimiter(s) (if all integer block), or block rule(s)"
-        [void! block! integer! char! bitset! text!]
+        [~void~ block! integer! char! bitset! text!]
     /into "If dlm is integer, split in n pieces (vs. pieces of length n)"
 ][
     if void? dlm [  ; nothing to split by

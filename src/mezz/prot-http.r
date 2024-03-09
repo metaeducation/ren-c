@@ -741,7 +741,7 @@ sys/make-scheme [
                 error: _
                 close?: no
                 info: construct port/scheme/info [type: 'file]
-                awake: ensure [<opt> action!] :port/awake
+                awake: ensure [~null~ action!] :port/awake
             ]
             port/state/connection: conn: make port! compose [
                 scheme: (

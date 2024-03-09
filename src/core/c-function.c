@@ -246,14 +246,6 @@ Array* Make_Paramlist_Managed_May_Fail(
                 mode = SPEC_MODE_LOCAL;
                 continue;
             }
-            else if (0 == Compare_String_Vals(item, Root_Void_Tag, true)) {
-                header_bits |= ACTION_FLAG_TRASHER;  // use Trasher_Dispatcher()
-
-                // Fake as if they said [trash!] !!! make more efficient
-                //
-                item = Get_System(SYS_STANDARD, STD_PROC_RETURN_TYPE);
-                goto process_typeset_block;
-            }
             else
                 fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
         }
@@ -262,6 +254,20 @@ Array* Make_Paramlist_Managed_May_Fail(
 
         if (IS_BLOCK(item)) {
           process_typeset_block:
+
+            if (
+                VAL_ARRAY_LEN_AT(item) == 1
+                and IS_WORD(Cell_Array_At(item))
+                and Cell_Word_Id(Cell_Array_At(item)) == SYM_TILDE
+            ){
+                header_bits |= ACTION_FLAG_TRASHER;  // Trasher_Dispatcher()
+
+                // Fake as if they said [trash!]
+                //
+                item = Get_System(SYS_STANDARD, STD_PROC_RETURN_TYPE);
+                goto process_typeset_block;
+            }
+
             if (IS_BLOCK(TOP)) // two blocks of types!
                 fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
 
@@ -333,7 +339,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             );
 
             // Refinements and refinement arguments cannot be specified as
-            // <opt>.  Although refinement arguments may be void, they are
+            // ~null~.  Although refinement arguments may be void, they are
             // not "passed in" that way...the refinement is inactive.
             //
             if (refinement_seen) {
@@ -381,8 +387,8 @@ Array* Make_Paramlist_Managed_May_Fail(
         // an input parameter...because it faces problems being used in
         // SPECIALIZE and other scenarios.
         //
-        // Note there are currently two ways to get NULL: <opt> and <end>.
-        // If the typeset bits contain REB_MAX_NULLED, that indicates <opt>.
+        // Note there are currently two ways to get NULL: ~null~ and <end>.
+        // If the typeset bits contain REB_MAX_NULLED, that indicates ~null~.
         // But Is_Param_Endable() indicates <end>.
         //
         Value* typeset = Init_Typeset(
@@ -1177,7 +1183,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
 // acting more like:
 //
 //     return: make action! [
-//         [{Returns a value from a function.} value [<opt> any-value!]]
+//         [{Returns a value from a function.} value [~null~ any-value!]]
 //         [unwind/with (binding of 'return) :value]
 //     ]
 //     (body goes here)
@@ -1374,7 +1380,7 @@ REB_R Null_Dispatcher(Level* L)
 //
 //  Trash_Dispatcher: C
 //
-// Analogue to Null_Dispatcher() for `func [return: <void> ...] []`.
+// Analogue to Null_Dispatcher() for `func [return: [~] ...] []`.
 //
 REB_R Trash_Dispatcher(Level* L)
 {

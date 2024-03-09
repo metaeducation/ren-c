@@ -102,7 +102,7 @@ boot-banner: [
 
 about: function [
     "Information about REBOL"
-    return: <void>
+    return: [~]
 ][
     print make-banner boot-banner
 ]
@@ -118,7 +118,7 @@ about: function [
 ;
 usage: function [
     "Prints command-line arguments."
-    return: <void>
+    return: [~]
 ][
 ;       --cgi (-c)       Load CGI utiliy module and modes
 ;       --version tuple  Script must be this version or greater
@@ -166,16 +166,16 @@ usage: function [
 
 license: function [
     "Prints the REBOL/core license agreement."
-    return: <void>
+    return: [~]
 ][
     print system/license
 ]
 
 host-script-pre-load: function [
     {Code registered as a hook when a module or script are loaded}
-    return: <void>
+    return: [~]
     is-module [logic!]
-    hdr [<opt> object!]
+    hdr [~null~ object!]
         {Header object (will be blank for DO of BINARY! with no header)}
 ][
     ; Print out the script info
@@ -383,7 +383,7 @@ host-start: function [
         {Convert string path to absolute dir! path}
 
         return: "Null if not found"
-            [<opt> file!]
+            [~null~ file!]
         dir [<maybe> text!]
     ][
         return all [
@@ -395,7 +395,7 @@ host-start: function [
 
     get-home-path: function [
         {Return HOME path (e.g. $HOME on *nix)}
-        return: [<opt> file!]
+        return: [~null~ file!]
     ][
         get-env: attempt [:system/modules/Process/get-env] or [
             loud-print [
@@ -417,7 +417,7 @@ host-start: function [
 
     get-resources-path: function [
         {Return platform specific resources path.}
-        return: [<opt> file!]
+        return: [~null~ file!]
     ][
         ;; lives under systems/options/home
 

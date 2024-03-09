@@ -90,7 +90,7 @@ for-each-line: function [
 lines-exceeding: function [ ;-- !!! Doesn't appear used, except in tests (?)
     {Return the line numbers of lines exceeding line-length.}
 
-    return: [<opt> block!]
+    return: [~null~ block!]
         "Returns null if no lines (is this better than returning []?)"
     line-length [integer!]
     text [text!]
@@ -118,7 +118,7 @@ lines-exceeding: function [ ;-- !!! Doesn't appear used, except in tests (?)
 text-line-of: function [
     {Returns line number of position within text}
 
-    return: [<opt> integer!]
+    return: [~null~ integer!]
         "Line 0 does not exist, and no counting is performed for empty text"
     position [text! binary!]
         "Position, where newline is considered the last character of a line"

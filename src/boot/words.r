@@ -41,6 +41,7 @@ none
 ; These aren't "quasiforms" in the bootstrap executable, they're words...but
 ; they're used in function specs and other places.
 ;
+~
 ~void~
 ~null~
 

@@ -119,7 +119,7 @@ proto-parser: context [
     data: _
     eoh: _ ; End of file header.
 
-    process: func [return: <void> text] [
+    process: func [return: [~] text] [
         parse/match text [grammar/rule]
     ]
 

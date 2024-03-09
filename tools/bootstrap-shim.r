@@ -146,7 +146,7 @@ opt: func [] [fail/where "Use REIFY instead of OPT for bootstrap" 'return]
 
 trash: :void
 trash!: :void!
-void!: <opt>
+void!: func [] [fail/where "No VOID! in bootstrap-shim" 'return]
 void: :null
 
 reify: func [value [<opt> any-value!]] [
@@ -258,7 +258,15 @@ modernize-action: function [
     blankers: copy []
     spec: collect [
         iterate spec [
-            ;
+            all [
+                spec/1 = the return:
+                spec/2 = [~]
+            ] then [
+                spec: next spec
+                keep [return: <void>]
+                continue
+            ]
+
             ; Find ANY-WORD!s (args/locals)
             ;
             if keep w: match any-word! spec/1 [
@@ -272,11 +280,18 @@ modernize-action: function [
                 ; Substitute BLANK! for any <maybe> found, and save some code
                 ; to inject for that parameter to return null if it's blank
                 ;
-                if find (maybe+ match block! spec/1) <maybe> [
-                    keep/only replace copy spec/1 <maybe> 'blank!
-                    append blankers compose [
-                        if blank? (as get-word! w) [return null]
+                if block? spec/1 [
+                    typespec: copy spec/1
+                    replace/all typespec '~null~ <opt>
+                    replace/all typespec '~void~ <opt>
+                    if find typespec <maybe> [
+                        replace typespec <maybe> 'blank!
+                        append blankers compose [
+                            if blank? (as get-word! w) [return null]
+                        ]
+                        continue
                     ]
+                    keep/only typespec
                     continue
                 ]
             ]

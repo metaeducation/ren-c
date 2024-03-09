@@ -28,16 +28,16 @@ spec-of: function [
     ]
 
     return collect [
-        keep/line maybe ensure [<opt> text!] any [
+        keep/line maybe ensure [~null~ text!] any [
             select maybe meta 'description
             select maybe original-meta 'description
         ]
 
-        return-type: ensure [<opt> block!] any [
+        return-type: ensure [~null~ block!] any [
             select maybe meta 'return-type
             select maybe original-meta 'return-type
         ]
-        return-note: ensure [<opt> text!] any [
+        return-note: ensure [~null~ text!] any [
             select maybe meta 'return-note
             select maybe original-meta 'return-note
         ]
@@ -47,11 +47,11 @@ spec-of: function [
             ]
         ]
 
-        types: ensure [<opt> frame!] any [
+        types: ensure [~null~ frame!] any [
             select maybe meta 'parameter-types
             select maybe original-meta 'parameter-types
         ]
-        notes: ensure [<opt> frame!] any [
+        notes: ensure [~null~ frame!] any [
             select maybe meta 'parameter-notes
             select maybe original-meta 'parameter-notes
         ]
@@ -90,7 +90,7 @@ title-of: function [
 browse: function [
     "stub function for browse* in extensions/process/ext-process-init.reb"
 
-    return: <void>
+    return: [~]
     location [<maybe> url! file!]
 ][
     print "Browse needs redefining"
@@ -99,7 +99,7 @@ browse: function [
 help: function [
     "Prints information about words and values (if no args, general help)."
 
-    return: <void>
+    return: [~]
     :topic [<end> any-value!]
         "WORD! whose value to explain, or other HELP target (try HELP HELP)"
     /doc
@@ -349,16 +349,16 @@ help: function [
     ;
     meta: meta-of :value
 
-    original-name: (ensure [<opt> word!] any [
+    original-name: (ensure [~null~ word!] any [
         select maybe meta 'specializee-name
         select maybe meta 'adaptee-name
     ]) also lambda name [
         uppercase mold name
     ]
 
-    specializee: ensure [<opt> action!] select maybe meta 'specializee
-    adaptee: ensure [<opt> action!] select maybe meta 'adaptee
-    chainees: ensure [<opt> block!] select maybe meta 'chainees
+    specializee: ensure [~null~ action!] select maybe meta 'specializee
+    adaptee: ensure [~null~ action!] select maybe meta 'adaptee
+    chainees: ensure [~null~ block!] select maybe meta 'chainees
 
     classification: case [
         :specializee [
@@ -392,10 +392,10 @@ help: function [
 
     print-args: function [list /indent-words] [
         for-each param list [
-            type: ensure [<opt> block!] (
+            type: ensure [~null~ block!] (
                 select maybe fields/parameter-types to-word param
             )
-            note: ensure [<opt> text!] (
+            note: ensure [~null~ text!] (
                 select maybe fields/parameter-notes to-word param
             )
 
@@ -440,7 +440,7 @@ help: function [
 source: function [
     "Prints the source code for an ACTION! (if available)"
 
-    return: <void>
+    return: [~]
     'arg [word! path! action! tag!]
 ][
     switch type of :arg [
@@ -508,7 +508,7 @@ source: function [
 what: function [
     {Prints a list of known actions}
 
-    return: <void>
+    return: [~]
     'name [<end> word! lit-word!]
         "Optional module name"
     /args
@@ -561,7 +561,7 @@ say-browser: does [
 ]
 
 
-bugs: func [return: <void>] [
+bugs: func [return: [~]] [
     "View bug database."
 ][
     say-browser
@@ -571,7 +571,7 @@ bugs: func [return: <void>] [
 
 chat: func [
     "Open REBOL/ren-c developers chat forum"
-    return: <void>
+    return: [~]
 ][
     say-browser
     browse http://chat.stackoverflow.com/rooms/291/rebol
@@ -582,7 +582,7 @@ chat: func [
 require-commit: function [
     "checks current commit against required commit"
 
-    return: <void>
+    return: [~]
     commit [text!]
 ][
     c: select system/script/header 'commit else [return]

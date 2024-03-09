@@ -64,7 +64,7 @@ bar: '|
 
 ~: func [
     "Function returning trash result (alternative for `#[trash]`)"
-    return: <void>
+    return: [~]
 ][
     ;-- Note: actually *faster* than a native, due to Void_Dispatcher()
 ]

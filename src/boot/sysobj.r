@@ -154,7 +154,7 @@ standard: construct [] [
 
     func-body: [
         return: make action! [
-            [{Returns a value from an action} value [<opt> <end> any-value!]]
+            [{Returns a value from an action} value [~null~ <end> any-value!]]
             [unwind/with (binding of 'return) either end? 'value [] [:value]]
         ] #BODY
     ]
@@ -163,7 +163,7 @@ standard: construct [] [
 
     proc-body: [
         return: make action! [
-            [{Returns a value from an action} value [<opt> <end> any-value!]]
+            [{Returns a value from an action} value [~null~ <end> any-value!]]
             [unwind/with (binding of 'return) either end? 'value [] [:value]]
         ] #BODY
         void
@@ -172,7 +172,7 @@ standard: construct [] [
     ; !!! The PORT! and actor code is deprecated, but this bridges it so
     ; it doesn't have to build a spec by hand.
     ;
-    port-actor-spec: [port-actor-parameter [<opt> any-value!]]
+    port-actor-spec: [port-actor-parameter [~null~ any-value!]]
 
     ; !!! The %sysobj.r initialization currently runs natives (notably the
     ; natives for making objects, and here using COMMENT because it can).

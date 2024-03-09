@@ -80,7 +80,7 @@ ask: function [
     {Inputs a line of text from the console. New-line character is removed.}
 
     return: "Null if the input was aborted (via ESCAPE, Ctrl-D, etc.)"
-        [<opt> text!]
+        [~null~ text!]
     question "Prompt to user"
         [datatype! any-series!]
 ][
@@ -162,7 +162,7 @@ confirm: function [
 list-dir: function [
     "Print contents of a directory (ls)."
 
-    return: <void>
+    return: [~]
     'path [<end> file! word! path! text!]
         "Accepts %file, :variables, and just words (as dirs)"
     /l "Line of info format"
@@ -240,7 +240,7 @@ undirize: function [
 
 in-dir: function [
     "Evaluate a block while in a directory."
-    return: [<opt> any-value!]
+    return: [~null~ any-value!]
     dir [file!]
         "Directory to change to (changed back after)"
     block [block!]
@@ -306,7 +306,7 @@ to-relative-file: function [
 detab-file: function [
     "detabs a disk file"
 
-    return: <void>
+    return: [~]
     filename [file!]
 ][
     write filename detab to text! read filename
@@ -316,7 +316,7 @@ detab-file: function [
 set-net: function [
     {sets the system/user/identity email smtp pop3 esmtp-usr esmtp-pass fqdn}
 
-    return: <void>
+    return: [~]
     bl [block!]
 ][
     if 6 <> length of bl [fail "Needs all 6 parameters for set-net"]

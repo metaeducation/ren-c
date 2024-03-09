@@ -238,7 +238,7 @@ load-header: function [
     return reduce [
         ensure object! hdr
         elide (
-            ensure [<opt> block!] hdr/options
+            ensure [~null~ block!] hdr/options
         )
         ensure [binary! block!] rest
         ensure binary! end
@@ -352,7 +352,7 @@ load: function [
         if word? hdr [cause-error 'syntax hdr source]
     ]
 
-    ensure [<opt> object!] hdr
+    ensure [~null~ object!] hdr
     ensure [binary! block! text!] data
 
     ;-- Convert code to block, insert header if requested:

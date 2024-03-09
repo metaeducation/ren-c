@@ -91,7 +91,7 @@ count: func [s c /local n] [
 ]
 
 emit-proto: func [
-    return: <void>
+    return: [~]
     proto
 ][
     if all [

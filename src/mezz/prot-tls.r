@@ -190,7 +190,7 @@ make-tls-error: func [
 parse-asn: function [
     {Create a legible Rebol-structured BLOCK! from an ASN.1 BINARY! encoding}
 
-    return: [<opt> block!]
+    return: [~null~ block!]
     data [binary!]
 
     <static>
@@ -316,7 +316,7 @@ parse-asn: function [
 ;
 
 update-state: function [
-    return: <void>
+    return: [~]
     ctx [object!]
     new [tag! issue!] "new state, ISSUE! is a (potentially) terminal state"
     direction [word!] "READ or WRITE"
@@ -367,7 +367,7 @@ update-write-state: specialize 'update-state [
 ;
 
 client-hello: function [
-    return: <void>
+    return: [~]
     ctx [object!]
     /version "TLS version to request (default is minimum 1.0, maximum 1.2)"
     ver "If block, lowest and highest version to allow"
@@ -533,7 +533,7 @@ client-hello: function [
 
 
 client-key-exchange: function [
-    return: <void>
+    return: [~]
     ctx [object!]
 ][
     switch ctx/key-method [
@@ -624,7 +624,7 @@ client-key-exchange: function [
 
 
 change-cipher-spec: function [
-    return: <void>
+    return: [~]
     ctx [object!]
 ][
     emit ctx [
@@ -637,7 +637,7 @@ change-cipher-spec: function [
 
 
 encrypted-handshake-msg: function [
-    return: <void>
+    return: [~]
     ctx [object!]
     unencrypted [binary!]
 ][
@@ -653,7 +653,7 @@ encrypted-handshake-msg: function [
 
 
 application-data: function [
-    return: <void>
+    return: [~]
     ctx [object!]
     unencrypted [binary! text!]
 ][
@@ -1329,7 +1329,7 @@ make-master-secret: function [
 
 
 do-commands: function [
-    return: <void>
+    return: [~]
     ctx [object!]
     commands [block!]
     /no-wait
@@ -1382,7 +1382,7 @@ do-commands: function [
 
 
 tls-init: function [
-    return: <void>
+    return: [~]
     ctx [object!]
 ][
     ctx/seq-num-r: 0
@@ -1586,7 +1586,7 @@ sys/make-scheme [
             return port
         ]
 
-        write: func [port [port!] value [<opt> any-value!]] [
+        write: func [port [port!] value [~null~ any-value!]] [
             if find [#encrypted-handshake #application] port/state/mode [
                 do-commands/no-wait port/state compose [
                     #application (value)

@@ -798,7 +798,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
 //
 //  {Evaluate a block over a range of values. (See also: REPEAT)}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //      'word [word!]
 //          "Variable to hold current value"
 //      start [any-series! any-number!]
@@ -877,7 +877,7 @@ DECLARE_NATIVE(for)
 //  "Evaluates a block for periodic values in a series"
 //
 //      return: "Last body result, or null if BREAK"
-//          [<opt> void! any-value!]
+//          [~null~ ~void~ any-value!]
 //      'word "Variable set to each position in the series at skip distance"
 //          [word! lit-word! blank!]
 //      series "The series to iterate over"
@@ -974,7 +974,7 @@ DECLARE_NATIVE(for_skip)
 //  {End the current iteration of CYCLE and return a value (nulls allowed)}
 //
 //      value "If no argument is provided, assume trash"
-//          [<opt> <end> any-value!]
+//          [~null~ <end> any-value!]
 //  ]
 //
 DECLARE_NATIVE(stop)
@@ -1011,7 +1011,7 @@ DECLARE_NATIVE(stop)
 //
 //  "Evaluates a block endlessly, until a BREAK or a STOP is hit"
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //          {Null if BREAK, or non-null value passed to STOP}
 //      body [block! action!]
 //          "Block or action to evaluate each time"
@@ -1053,7 +1053,7 @@ DECLARE_NATIVE(cycle)
 //
 //  "Evaluates a block for each value(s) in a series."
 //
-//      return: [<opt> void! any-value!]
+//      return: [~null~ ~void~ any-value!]
 //          {Last body result, or null if BREAK}
 //      'vars [word! lit-word! block!]
 //          "Word or block of words to set each time, no new var if LIT-WORD!"
@@ -1074,7 +1074,7 @@ DECLARE_NATIVE(for_each)
 //
 //  {Iterate and return false if any previous body evaluations were false}
 //
-//      return: [<opt> void! any-value!]
+//      return: [~null~ ~void~ any-value!]
 //          {null on BREAK, blank on empty, false or the last truthy value}
 //      'vars [word! block!]
 //          "Word or block of words to set each time (local)"
@@ -1373,7 +1373,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
 //
 //  {Removes values for each block that returns true.}
 //
-//      return: [<opt> integer!]
+//      return: [~null~ integer!]
 //          {Number of removed series items, or null if BREAK}
 //      'vars [word! block!]
 //          "Word or block of words to set each time (local)"
@@ -1496,7 +1496,7 @@ DECLARE_NATIVE(remove_each)
 //
 //  {Evaluate a block for each value(s) in a series and collect as a block.}
 //
-//      return: [<opt> void! block!]
+//      return: [~null~ ~void~ block!]
 //          {Collected block (BREAK/WITH can add a final result to block)}
 //      'vars [word! block!]
 //          "Word or block of words to set each time (local)"
@@ -1517,7 +1517,7 @@ DECLARE_NATIVE(map_each)
 //
 //  "Evaluates a block a specified number of times."
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //          {Last body result, or null if BREAK}
 //      count [<maybe> any-number! logic!]
 //          "Repetitions (true loops infinitely, false doesn't run)"
@@ -1573,7 +1573,7 @@ DECLARE_NATIVE(repeat)
 //
 //  {Evaluates a block a number of times.}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //          {Last body result or null if BREAK}
 //      'word [word!]
 //          "Word to set each time"
@@ -1619,7 +1619,7 @@ DECLARE_NATIVE(count_up)
 //
 //  {Evaluates a block over a series.}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //          {Last body result or BREAK value}
 //      'word [word!]
 //          "Word to set each time"
@@ -1694,7 +1694,7 @@ INLINE REB_R Until_Core(
 //
 //  "Evaluates the body until it evaluates to a conditionally true value"
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //          {Last body result or BREAK value.}
 //      body [block! action!]
 //  ]
@@ -1710,7 +1710,7 @@ DECLARE_NATIVE(until)
 //
 //  "Evaluates the body until it evaluates to a conditionally false value"
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //          {Last body result or BREAK value.}
 //      body [block! action!]
 //  ]
@@ -1775,7 +1775,7 @@ INLINE REB_R While_Core(
 //
 //  {While a condition is conditionally true, evaluates the body.}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //          "Last body result, or null if BREAK"
 //      condition [block! action!]
 //      body [block! action!]
@@ -1792,7 +1792,7 @@ DECLARE_NATIVE(while)
 //
 //  {While a condition is conditionally false, evaluate the body.}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //          "Last body result, or null if BREAK"
 //      condition [block! action!]
 //      body [block! action!]

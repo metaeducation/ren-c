@@ -161,6 +161,14 @@ bool Update_Typeset_Bits_Core(
         const Cell* item;
 
         if (IS_WORD(maybe_word)) {
+            if (Cell_Word_Id(maybe_word) == SYM__TNULL_T) {  // ~null~
+                TYPE_SET(typeset, REB_MAX_NULLED);
+                continue;
+            }
+            else if (Cell_Word_Id(maybe_word) == SYM__TVOID_T) {  // ~void~
+                TYPE_SET(typeset, REB_VOID);
+                continue;
+            }
             item = Get_Opt_Var_May_Fail(maybe_word, specifier);
             if (not item)
                 fail (Error_No_Value_Core(maybe_word, specifier));
@@ -183,13 +191,6 @@ bool Update_Typeset_Bits_Core(
             }
             else if (0 == Compare_String_Vals(item, Root_Maybe_Tag, true)) {
                 TYPE_SET(typeset, REB_TS_NOOP_IF_VOID);
-            }
-            else if (0 == Compare_String_Vals(item, Root_Opt_Tag, true)) {
-                //
-                // !!! Review if this makes sense to allow with MAKE TYPESET!
-                // instead of just function specs.
-                //
-                TYPE_SET(typeset, REB_MAX_NULLED);
             }
             else if (0 == Compare_String_Vals(item, Root_Skip_Tag, true)) {
                 if (VAL_PARAM_CLASS(typeset) != PARAM_CLASS_HARD_QUOTE)
@@ -258,7 +259,10 @@ Array* Typeset_To_Array(const Value* tset)
     for (n = 1; n < REB_MAX_NULLED; ++n) {
         if (TYPE_CHECK(tset, cast(enum Reb_Kind, n))) {
             if (n == REB_MAX_NULLED) {
-                Copy_Cell(PUSH(), Root_Opt_Tag);
+                Init_Word(PUSH(), Canon(SYM__TNULL_T));
+            }
+            else if (n == REB_VOID) {
+                Init_Word(PUSH(), Canon(SYM__TVOID_T));
             }
             else
                 Init_Datatype(PUSH(), cast(enum Reb_Kind, n));
@@ -287,7 +291,7 @@ void MF_Typeset(REB_MOLD *mo, const Cell* v, bool form)
         //
         // Note that although REB_MAX_NULLED is used as an implementation detail
         // for special typesets in function paramlists or context keys to
-        // indicate <opt>-style optionality, the "absence of a type" is not
+        // indicate ~null~-style optionality, the "absence of a type" is not
         // generally legal in user typesets.  Only legal "key" typesets
         // (that have symbols).
         //

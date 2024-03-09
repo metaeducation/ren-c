@@ -82,7 +82,7 @@ REB_R MAKE_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  {Constructs or allocates the specified datatype.}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //          {Constructed value, or NULL if BLANK! input}
 //      type [<maybe> any-value!]
 //          {The datatype -or- an examplar value of the type to construct}
@@ -179,7 +179,7 @@ REB_R TO_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 //  {Converts to a specified datatype, copying any underying data}
 //
 //      return: "VALUE converted to TYPE, null if type or value are blank"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //      type [<maybe> datatype!]
 //      value [<maybe> any-value!]
 //  ]
@@ -281,9 +281,9 @@ REB_R Reflect_Core(Level* level_)
 //
 //  {Returns specific details about a datatype.}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //      value "Accepts NULL so REFLECT () 'TYPE can be returned as NULL"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //      property [word!]
 //          "Such as: type, length, spec, body, words, values, title"
 //  ]
@@ -304,10 +304,10 @@ DECLARE_NATIVE(reflect)
 //
 //  {Infix form of REFLECT which quotes its left (X OF Y => REFLECT Y 'X)}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //      'property [word!]
 //      value "Accepts NULL so TYPE OF () can be returned as NULL"
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //  ]
 //
 DECLARE_NATIVE(of)

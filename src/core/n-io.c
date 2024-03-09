@@ -39,7 +39,7 @@
 //
 //  "Converts a value to a human-readable string."
 //
-//      value [<opt> any-value!]
+//      value [~null~ any-value!]
 //          "The value to form"
 //  ]
 //
@@ -99,7 +99,7 @@ DECLARE_NATIVE(mold)
 //
 //  "Write text to standard output, or raw BINARY! (for control codes / CGI)"
 //
-//      return: [<opt> trash!]
+//      return: [~null~ trash!]
 //      value [<maybe> text! char! binary!]
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
@@ -440,7 +440,7 @@ REBLEN Milliseconds_From_Value(const Cell* v) {
 //
 //  "Waits for a duration, port, or both."
 //
-//      value [<opt> any-number! time! port! block!]
+//      value [~null~ any-number! time! port! block!]
 //      /all "Returns all in a block"
 //      /only "only check for ports given in the block to this function"
 //  ]
@@ -604,7 +604,7 @@ DECLARE_NATIVE(wake_up)
 //
 //  {Converts a local system file path TEXT! to a Rebol FILE! path.}
 //
-//      return: [<opt> file!]
+//      return: [~null~ file!]
 //          {The returned value should be a valid natural FILE! literal}
 //      path [<maybe> text! file!]
 //          {Path to convert (by default, only TEXT! for type safety)}
@@ -645,7 +645,7 @@ DECLARE_NATIVE(local_to_file)
 //
 //  {Converts a Rebol FILE! path to TEXT! of the local system file path}
 //
-//      return: [<opt> text!]
+//      return: [~null~ text!]
 //          {A TEXT! like "\foo\bar" is not a "natural" FILE! %\foo\bar}
 //      path [<maybe> file! text!]
 //          {Path to convert (by default, only FILE! for type safety)}

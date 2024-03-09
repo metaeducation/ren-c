@@ -116,7 +116,7 @@ DECLARE_NATIVE(exit_rebol)
 //
 //  "Recycles unused memory."
 //
-//      return: [<opt> integer!]
+//      return: [~null~ integer!]
 //          {Number of series nodes recycled (if applicable)}
 //      /off
 //          "Disable auto-recycling"
@@ -208,7 +208,7 @@ DECLARE_NATIVE(recycle)
 //
 //  "Run an integrity check on a value in debug builds of the interpreter"
 //
-//      value [<opt> any-value!]
+//      value [~null~ any-value!]
 //          {System will terminate abnormally if this value is corrupt.}
 //  ]
 //
@@ -286,7 +286,7 @@ int ceil_log2(unsigned long long x) {
 //
 //  {Break at known evaluation point (only use when running under C debugger}
 //
-//      return: [<opt>]
+//      return: [~null~]
 //      tick [<maybe> integer!]
 //          {Get from PANIC, Level.tick, Stuc.tick, Cell.extra.tick}
 //      /relative
@@ -388,7 +388,7 @@ DECLARE_NATIVE(c_debug_break)
 //
 //  "This is a place to put test code in debug builds."
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //          {For maximum freedom, can be anything}
 //      :value [<end> any-value!]
 //          {An argument (which test code may or may not use)}

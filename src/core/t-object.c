@@ -442,7 +442,7 @@ REB_R PD_Context(
 //
 //  {Get a reference to the "meta" context associated with a value.}
 //
-//      return: [<opt> any-context!]
+//      return: [~null~ any-context!]
 //      value [<maybe> action! any-context!]
 //  ]
 //
@@ -474,9 +474,9 @@ DECLARE_NATIVE(meta_of)
 //
 //  {Set "meta" object associated with all references to a value.}
 //
-//      return: [<opt> any-context!]
+//      return: [~null~ any-context!]
 //      value [action! any-context!]
-//      meta [<opt> any-context!]
+//      meta [~null~ any-context!]
 //  ]
 //
 DECLARE_NATIVE(set_meta)

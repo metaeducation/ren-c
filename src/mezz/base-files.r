@@ -18,7 +18,7 @@ REBOL [
 
 info?: function [
     {Returns an info object about a file or url.}
-    return: [<opt> object! word!]
+    return: [~null~ object! word!]
     target [file! url!]
     /only {for urls, returns 'file or blank}
 ][
@@ -41,7 +41,7 @@ info?: function [
 
 exists?: func [
     {Returns the type of a file or URL if it exists, otherwise blank.}
-    return: [<opt> word!]
+    return: [~null~ word!]
         "FILE, DIR, or null"
     target [file! url!]
 ][
@@ -54,7 +54,7 @@ exists?: func [
 
 size-of: size?: function [
     {Returns the size of a file.}
-    return: [<opt> integer!]
+    return: [~null~ integer!]
     target [file! url!]
 ][
     all [
@@ -65,7 +65,7 @@ size-of: size?: function [
 
 modified?: function [
     {Returns the last modified date of a file.}
-    return: [<opt> date!]
+    return: [~null~ date!]
     target [file! url!]
 ][
     all [
@@ -76,7 +76,7 @@ modified?: function [
 
 suffix-of: function [
     "Return the file suffix of a filename or url. Else, null."
-    return: [<opt> file!]
+    return: [~null~ file!]
     path [file! url! text!]
 ][
     all [
@@ -166,7 +166,7 @@ delete-dir: func [
 script?: func [
     {Checks file, url, or text string for a valid script header.}
 
-    return: [<opt> binary!]
+    return: [~null~ binary!]
     source [file! url! binary! text!]
 ][
     switch type of source [
@@ -185,7 +185,7 @@ script?: func [
 
 file-type?: function [
     "Return the identifying word for a specific file type (or null)"
-    return: [<opt> word!]
+    return: [~null~ word!]
     file [file! url!]
 ][
     all [
@@ -196,7 +196,7 @@ file-type?: function [
 
 split-path: func [
     "Splits and returns dir component, variable for filename optionally set"
-    return: [<opt> file!]
+    return: [~null~ file!]
     location [<maybe> file! url! text!]
     /file  ; no multi-return, simulate it
         farg [any-word! any-path!]

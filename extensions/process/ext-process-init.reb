@@ -14,7 +14,7 @@ REBOL [
 browse*: function [
     "Open web browser to a URL or local file."
 
-    return: <void>
+    return: [~]
     location [<maybe> url! file!]
 ][
     ; Note that GET-OS-BROWSERS uses the Windows registry convention of having

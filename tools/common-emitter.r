@@ -232,7 +232,7 @@ make-emitter: function [
         emit: function [
             {Write data to the emitter using CSCAPE templating (see HELP)}
 
-            return: <void>
+            return: [~]
             :look [any-value! <...>]
             data [text! char! <...>]
             <with> buf-emit
@@ -259,7 +259,7 @@ make-emitter: function [
         ]
 
         write-emitted: function [
-            return: <void>
+            return: [~]
             /tabbed
             <with> file buf-emit
         ][

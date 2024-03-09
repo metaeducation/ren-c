@@ -564,8 +564,8 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
 //  {TRUE if the values are equal}
 //
 //      return: [logic!]
-//      value1 [<opt> any-value!]
-//      value2 [<opt> any-value!]
+//      value1 [~null~ any-value!]
+//      value2 [~null~ any-value!]
 //  ]
 //
 DECLARE_NATIVE(equal_q)
@@ -585,8 +585,8 @@ DECLARE_NATIVE(equal_q)
 //  {TRUE if the values are not equal}
 //
 //      return: [logic!]
-//      value1 [<opt> any-value!]
-//      value2 [<opt> any-value!]
+//      value1 [~null~ any-value!]
+//      value2 [~null~ any-value!]
 //  ]
 //
 DECLARE_NATIVE(not_equal_q)
@@ -606,8 +606,8 @@ DECLARE_NATIVE(not_equal_q)
 //  {TRUE if the values are strictly equal}
 //
 //      return: [logic!]
-//      value1 [<opt> any-value!]
-//      value2 [<opt> any-value!]
+//      value1 [~null~ any-value!]
+//      value2 [~null~ any-value!]
 //  ]
 //
 DECLARE_NATIVE(strict_equal_q)
@@ -627,8 +627,8 @@ DECLARE_NATIVE(strict_equal_q)
 //  {TRUE if the values are not strictly equal}
 //
 //      return: [logic!]
-//      value1 [<opt> any-value!]
-//      value2 [<opt> any-value!]
+//      value1 [~null~ any-value!]
+//      value2 [~null~ any-value!]
 //  ]
 //
 DECLARE_NATIVE(strict_not_equal_q)
@@ -648,8 +648,8 @@ DECLARE_NATIVE(strict_not_equal_q)
 //  {TRUE if the values are identical}
 //
 //      return: [logic!]
-//      value1 [<opt> any-value!]
-//      value2 [<opt> any-value!]
+//      value1 [~null~ any-value!]
+//      value2 [~null~ any-value!]
 //  ]
 //
 DECLARE_NATIVE(same_q)

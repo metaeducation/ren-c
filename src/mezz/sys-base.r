@@ -41,10 +41,10 @@ script-pre-load-hook: _
 ;
 do*: function [
     {SYS: Called by system for DO on datatypes that require special handling.}
-    return: [<opt> any-value!]
+    return: [~null~ any-value!]
     source [file! url! text! binary! tag!]
         {Files, urls and modules evaluate as scripts, other strings don't.}
-    arg [<opt> any-value!]
+    arg [~null~ any-value!]
         "Args passed as system/script/args to a script (normally a string)"
     only [logic!]
         "Do not catch quits...propagate them."
@@ -90,7 +90,7 @@ do*: function [
     original-script: null
 
     finalizer: func [
-        value [<opt> any-value!]
+        value [~null~ any-value!]
         /quit
         <with> return
     ][
@@ -124,7 +124,7 @@ do*: function [
     ; of the returned result to avoid LOCKing it when the code array is locked
     ; because even with series not at their head, LOCK NEXT CODE will lock it.
     ;
-    hdr: ensure [<opt> object!] degrade take code
+    hdr: ensure [~null~ object!] degrade take code
     is-module: 'module = select maybe hdr 'type
 
     if text? source and [not is-module] [

@@ -967,7 +967,7 @@ acquisition_loop:
 
         const void *p = va_arg(*ss->vaptr, const void*);
 
-        if (not p) { // libRebol representation of <opt>/nullptr
+        if (not p) { // libRebol representation of ~null~/nullptr
 
             if (not (ss->opts & SCAN_FLAG_NULLEDS_LEGAL))
                 fail ("can't splice null in ANY-ARRAY!...use rebUneval()");
@@ -2753,7 +2753,7 @@ void Shutdown_Scanner(void)
 //
 //  {Translates UTF-8 binary source to values. Returns [value binary].}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //      source [<maybe> binary! text!]
 //          "Must be Unicode UTF-8 encoded"
 //      /next

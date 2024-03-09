@@ -448,16 +448,16 @@ static Value* Make_Locked_Tag(const char *utf8) { // helper
 //
 //  Init_Action_Spec_Tags: C
 //
-// FUNC and PROC search for these tags, like <opt> and <local>.  They are
+// FUNC and PROC search for these tags, like ~null~ and <local>.  They are
 // natives and run during bootstrap, so these string comparisons are
 // needed.
 //
 static void Init_Action_Spec_Tags(void)
 {
-    Root_Void_Tag = Make_Locked_Tag("void");
+    Root_Here_Tag = Make_Locked_Tag("here");
     Root_With_Tag = Make_Locked_Tag("with");
     Root_Ellipsis_Tag = Make_Locked_Tag("...");
-    Root_Opt_Tag = Make_Locked_Tag("opt");
+    Root_Any_Tag = Make_Locked_Tag("any");
     Root_End_Tag = Make_Locked_Tag("end");
     Root_Maybe_Tag = Make_Locked_Tag("maybe");
     Root_Local_Tag = Make_Locked_Tag("local");
@@ -466,10 +466,10 @@ static void Init_Action_Spec_Tags(void)
 
 static void Shutdown_Action_Spec_Tags(void)
 {
-    rebRelease(Root_Void_Tag);
+    rebRelease(Root_Here_Tag);
     rebRelease(Root_With_Tag);
     rebRelease(Root_Ellipsis_Tag);
-    rebRelease(Root_Opt_Tag);
+    rebRelease(Root_Any_Tag);
     rebRelease(Root_End_Tag);
     rebRelease(Root_Maybe_Tag);
     rebRelease(Root_Local_Tag);
@@ -1419,7 +1419,7 @@ void Startup_Core(void)
     // basic words need to be defined.  For instance: You can't run %sysobj.r
     // unless `true` and `false` have been added to the Lib_Context--they'd be
     // undefined.  And while analyzing the function specs during the
-    // definition of natives, things like the <opt> tag are needed as a basis
+    // definition of natives, things like the ~null~ tag are needed as a basis
     // for comparison to see if a usage matches that.
 
     // !!! Have MAKE-BOOT compute # of words

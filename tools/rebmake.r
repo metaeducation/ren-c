@@ -70,7 +70,7 @@ ends-with?: func [
 ]
 
 filter-flag: function [
-    return: [<opt> text! file!]
+    return: [~null~ text! file!]
     flag [tag! text! file!]
         {If TAG! then must be <prefix:flag>, e.g. <gnu:-Wno-unknown-warning>}
     prefix [text!]
@@ -284,7 +284,7 @@ application-class: make project-class [
     searches: _
     ldflags: _
 
-    link: method [return: <void>] [
+    link: method [return: [~]] [
         linker/link output depends ldflags
     ]
 
@@ -307,7 +307,7 @@ dynamic-library-class: make project-class [
 
     searches: _
     ldflags: _
-    link: method [return: <void>] [
+    link: method [return: [~]] [
         linker/link output depends ldflags
     ]
 
@@ -342,7 +342,7 @@ compiler-class: make object! [
     version: _
     exec-file: _
     compile: method [
-        return: <void>
+        return: [~]
         output [file!]
         source [file!]
         include [file! block!]
@@ -666,10 +666,10 @@ linker-class: make object! [
     id: _ ;flag prefix
     version: _
     link: method [][
-        return: <void>
+        return: [~]
     ]
     commands: method [
-        return: [<opt> block!]
+        return: [~null~ block!]
         output [file!]
         depends [block! blank!]
         searches [block! blank!]
@@ -734,7 +734,7 @@ ld: make linker-class [
     ]
 
     accept: method [
-        return: [<opt> text!]
+        return: [~null~ text!]
         dep [object!]
     ][
         degrade switch dep/class [
@@ -845,7 +845,7 @@ llvm-link: make linker-class [
     ]
 
     accept: method [
-        return: [<opt> text!]
+        return: [~null~ text!]
         dep [object!]
     ][
         degrade switch dep/class [
@@ -928,7 +928,7 @@ link: make linker-class [
     ]
 
     accept: method [
-        return: [<opt> text!]
+        return: [~null~ text!]
         dep [object!]
     ][
         degrade switch dep/class [
@@ -1022,7 +1022,7 @@ object-file-class: make object! [
     generated?: false
     depends: _
 
-    compile: method [return: <void>] [
+    compile: method [return: [~]] [
         compiler/compile
     ]
 
@@ -1144,7 +1144,7 @@ generator-class: make object! [
         {Substitute variables in the command with its value}
         {(will recursively substitute if the value has variables)}
 
-        return: [<opt> object! any-string!]
+        return: [~null~ object! any-string!]
         cmd [object! any-string!]
         <static>
         letter (charset [#"a" - #"z" #"A" - #"Z"])
@@ -1182,7 +1182,7 @@ generator-class: make object! [
     ]
 
     prepare: method [
-        return: <void>
+        return: [~]
         solution [object!]
     ][
         if find words-of solution 'output [
@@ -1206,7 +1206,7 @@ generator-class: make object! [
     ]
 
     flip-flag: method [
-        return: <void>
+        return: [~]
         project [object!]
         to [logic!]
     ][
@@ -1224,7 +1224,7 @@ generator-class: make object! [
     ]
 
     setup-output: method [
-        return: <void>
+        return: [~]
         project [object!]
     ][
         if not suffix: find reduce [
@@ -1274,7 +1274,7 @@ generator-class: make object! [
 
     setup-outputs: method [
         {Set the output/implib for the project tree}
-        return: <void>
+        return: [~]
         project [object!]
     ][
         ;print ["Setting outputs for:"]
@@ -1391,7 +1391,7 @@ makefile: make generator-class [
     ]
 
     emit: method [
-        return: <void>
+        return: [~]
         buf [binary!]
         project [object!]
         /parent parent-object
@@ -1467,7 +1467,7 @@ makefile: make generator-class [
     ]
 
     generate: method [
-        return: <void>
+        return: [~]
         output [file!]
         solution [object!]
     ][
@@ -1520,7 +1520,7 @@ Execution: make generator-class [
     gen-cmd-strip: :host/gen-cmd-strip
 
     run-target: method [
-        return: <void>
+        return: [~]
         target [object!]
         /cwd dir [file!]
     ][
@@ -1554,7 +1554,7 @@ Execution: make generator-class [
     ]
 
     run: method [
-        return: <void>
+        return: [~]
         project [object!]
         /parent p-project
     ][

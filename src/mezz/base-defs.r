@@ -35,8 +35,8 @@ probe: func [
     {Debug print a molded value and returns that same value.}
 
     return: "Same as the input value"
-        [<opt> any-value!]
-    value [<opt> any-value!]
+        [~null~ any-value!]
+    value [~null~ any-value!]
 ][
     case [
         trash? :value [write-stdout "~  ; anti"]
@@ -53,7 +53,7 @@ probe: func [
 
 set/enfix the enfix: func [
     "Convenience version of SET/ENFIX, e.g `+: enfix :add`"
-    return: <void> "`x: y: enfix :z` wouldn't enfix x, so returns void"
+    return: [~] "`x: y: enfix :z` wouldn't enfix x, so returns void"
     :target [set-word! set-path!]
     action [action!]
 ][
@@ -68,7 +68,7 @@ comment: enfix func [
 
     return: []
         {The evaluator will skip over the result (not seen, not even void)}
-    #returned [<opt> <end> any-value!]
+    #returned [~null~ <end> any-value!]
         {The returned value.} ;-- by protocol of enfixed `return: []`
     :discarded [block! any-string! binary! any-scalar!]
         "Literal value to be ignored." ;-- `comment print "hi"` disallowed
@@ -80,7 +80,7 @@ elide: func [
 
     return: []
         {The evaluator will skip over the result (not seen, not even void)}
-    discarded [<opt> any-value!]
+    discarded [~null~ any-value!]
         {Evaluated value to be ignored.}
 ][
 ]
@@ -108,7 +108,7 @@ uneval: func [
 
     return: {`(null)` if null, or `(the ...)` where ... is passed-in cell}
         [group!]
-    optional [<opt> any-value!]
+    optional [~null~ any-value!]
 ][
     case [
         void? :optional [the (void)]
@@ -148,7 +148,7 @@ newlined: chain [
         ]
     ]
         |
-    func [t [<opt> text!]] [
+    func [t [~null~ text!]] [
         if null? t [return null]
         append t newline ;; Terminal newline is POSIX standard, more useful
     ]
@@ -189,7 +189,7 @@ open?: specialize 'reflect [property: 'open?]
 empty?: func [
     {TRUE if empty or BLANK!, or if series is at or beyond its tail.}
     return: [logic!]
-    series [any-series! object! port! bitset! map! blank! void!]
+    series [any-series! object! port! bitset! map! blank! ~void~]
 ][
     did any [void? series | blank? series | tail? series]
 ]
@@ -226,7 +226,7 @@ make: enclose 'lib/make func [f] [
 
 reeval func [
     {Make fast type testing functions (variadic to quote "top-level" words)}
-    return: <void>
+    return: [~]
     'set-word... [tag! set-word! <...>]
     <local>
         set-word type-name tester meta
@@ -307,7 +307,7 @@ print: func [
     {Textually output spaced line (evaluating elements if a block)}
 
     return: "NULL if blank input or effectively empty block, otherwise trash"
-        [<opt> trash!]
+        [~null~ trash!]
     line "Line of text or block, blank or [] has NO output, newline allowed"
         [<maybe> char! text! block!]
 ][
@@ -356,7 +356,7 @@ immediate!: make typeset! [
 
 ok?: func [
     "Returns TRUE on all values that are not ERROR!"
-    value [<opt> any-value!]
+    value [~null~ any-value!]
 ][
     not error? :value
 ]

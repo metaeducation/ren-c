@@ -110,7 +110,7 @@ save: function [
             method: null
         ]
 
-        length: ensure [<opt> integer!] select header-data 'length
+        length: ensure [~null~ integer!] select header-data 'length
         header-data: body-of header-data
     ]
 

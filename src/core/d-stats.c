@@ -40,7 +40,7 @@
 //
 //  {Provides status and statistics information about the interpreter.}
 //
-//      return: [<opt> time! integer!]
+//      return: [~null~ time! integer!]
 //      /show
 //          "Print formatted results to console"
 //      /profile

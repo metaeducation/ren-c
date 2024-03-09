@@ -102,8 +102,8 @@ static struct {
 //  {Joins a block of values into TEXT! with delimiters}
 //
 //      return: "Null if blank input or block's contents are all null"
-//          [<opt> text!]
-//      delimiter [<opt> void! char! text!]
+//          [~null~ text!]
+//      delimiter [~null~ ~void~ char! text!]
 //      line "Will be copied if already a text value"
 //          [<maybe> text! block!]
 //      /tail "Include delimiter at tail of result (if non-NULL)"
@@ -1233,7 +1233,7 @@ DECLARE_NATIVE(to_hex)
 //
 //  {Find a script header within a binary string. Returns starting position.}
 //
-//      return: [<opt> binary!]
+//      return: [~null~ binary!]
 //      script [binary!]
 //  ]
 //

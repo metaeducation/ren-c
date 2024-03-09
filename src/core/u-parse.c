@@ -1210,7 +1210,7 @@ static REBIXO To_Thru_Non_Block_Rule(
 //
 //  {Internal support function for PARSE (acts as variadic to consume rules)}
 //
-//      return: [<opt> integer!]
+//      return: [~null~ integer!]
 //      input [any-series!]
 //      find-flags [integer!]
 //      collection "Array into which any KEEP values are collected"
@@ -2365,7 +2365,7 @@ DECLARE_NATIVE(subparse)
 //  "Parse series according to grammar rules"
 //
 //      return: "Input series if /MATCH, otherwise synthesized result"  ; [1]
-//          [<opt> any-value!]
+//          [~null~ any-value!]
 //      input "Input series to parse"
 //          [<maybe> any-series!]
 //      rules "Rules to parse by"

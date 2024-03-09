@@ -42,7 +42,7 @@ do join tools-dir %common-parsers.r
 do join tools-dir %text-lines.reb
 do join tools-dir %read-deep.reb
 
-null-to-blank: func [x [<opt> any-value!]] [either null? x [_] [:x]]
+null-to-blank: func [x [~null~ any-value!]] [either null? x [_] [:x]]
 
 ; rebsource is organised along the lines of a context sensitive vocabulary.
 ;
@@ -97,7 +97,7 @@ rebsource: context [
     log-emit: function [
         {Append a COMPOSE'd block to a log block, clearing any new-line flags}
 
-        return: <void>
+        return: [~]
         log [block!]
         label [tag!]
         body [block!]
@@ -123,7 +123,7 @@ rebsource: context [
 
         file: function [
             {Analyse a file returning facts.}
-            return: [<opt> block!]
+            return: [~null~ block!]
             file
         ][
             all [
@@ -178,7 +178,7 @@ rebsource: context [
                     emit <eof-eol-missing> [(file)]
                 ]
 
-                emit-proto: function [return: <void> proto] [
+                emit-proto: function [return: [~] proto] [
                     if not block? proto-parser/data [return]
 
                     do in c-parser-extension [
@@ -396,7 +396,7 @@ rebsource: context [
 
         source-files-seq: function [
             {Take next file from a sequence that is represented by a queue.}
-            return: [<opt> file!]
+            return: [~null~ file!]
             queue [block!]
         ][
             item: ensure file! take queue

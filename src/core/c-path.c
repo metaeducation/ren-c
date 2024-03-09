@@ -556,7 +556,7 @@ REBCTX *Resolve_Path(const Value* path, REBLEN *index_out)
 //
 //  {Perform a path picking operation, same as `:(:location)/(:picker)`}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //          {Picked value, or null if picker can't fulfill the request}
 //      location [any-value!]
 //      picker [any-value!]
@@ -639,13 +639,13 @@ DECLARE_NATIVE(pick)
 //
 //  {Perform a path poking operation, same as `(:location)/(:picker): :value`}
 //
-//      return: [<opt> any-value!]
+//      return: [~null~ any-value!]
 //          {Same as value}
 //      location [any-value!]
 //          {(modified)}
 //      picker
 //          {Index offset, symbol, or other value to use as index}
-//      value [<opt> any-value!]
+//      value [~null~ any-value!]
 //          {The new value}
 //  ]
 //
@@ -713,8 +713,8 @@ DECLARE_NATIVE(poke)
 //
 //  {Temporary native in lieu of PD_Xxx() dispatch so `/` performs division}
 //
-//      #left [<opt> any-value!]
-//      #right [<opt> any-value!]
+//      #left [~null~ any-value!]
+//      #right [~null~ any-value!]
 //  ]
 //
 DECLARE_NATIVE(path_0)

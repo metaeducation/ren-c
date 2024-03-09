@@ -57,7 +57,7 @@ map-each-api: func [code [block!]] [
     ]
 ]
 
-emit-proto: func [return: <void> proto] [
+emit-proto: func [return: [~] proto] [
     header: proto-parser/data
 
     all [
