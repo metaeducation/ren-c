@@ -56,38 +56,22 @@
 
 
 #ifdef NDEBUG
-    #define SPC(p) \
-        cast(Specifier*, (p)) // makes UNBOUND look like SPECIFIED
-
     #define Cell_Specifier(v) \
-        SPC(BINDING(v))
+        BINDING(v)
 #else
-    INLINE Specifier* SPC(void *p) {
-        assert(p != SPECIFIED); // use SPECIFIED, not SPC(SPECIFIED)
-
-        Context* c = cast(Context*, p);
-        assert(CTX_TYPE(c) == REB_FRAME);
-
-        // Note: May be managed or unamanged.
-
-        return x_cast(Specifier*, c);
-    }
-
     INLINE Specifier* Cell_Specifier(const Cell* v) {
-        assert(Any_Arraylike(v));
-
-        Array* a = cast(Array*, BINDING(v));
-        if (not a)
+        Stub* s = BINDING(v);
+        if (not s)
             return SPECIFIED;
 
-        if (IS_LET(a) or IS_USE(a))
-            return cast(Specifier*, a);  // virtual bind
+        if (IS_LET(s) or IS_USE(s))
+            return s;  // virtual bind
 
         assert(
-            CTX_TYPE(cast(Context*, a)) == REB_FRAME
-            or CTX_TYPE(cast(Context*, a)) == REB_MODULE
+            CTX_TYPE(cast(Context*, s)) == REB_FRAME
+            or CTX_TYPE(cast(Context*, s)) == REB_MODULE
         );
-        return cast(Specifier*, a);
+        return cast(Specifier*, s);
     }
 #endif
 

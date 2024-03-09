@@ -83,7 +83,7 @@ enum {
 //    !!! The flag is new, as a gambit to try and avoid copying frames for
 //    DO-ing just in order to expire the old identity.  Under development.
 //
-// 3. The function did not actually execute, so no SPC(L) was never handed
+// 3. The function did not actually execute, so L->varlist was never handed
 //    out...the varlist should never have gotten managed.  So this context
 //    can theoretically just be put back into the reuse list, or managed
 //    and handed out for other purposes.  Caller's choice.

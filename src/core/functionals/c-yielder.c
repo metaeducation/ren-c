@@ -114,7 +114,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     return CONTINUE_CORE(
         OUT,  // body evaluative result
         ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES,  // can't resume after failure
-        SPC(L->varlist), body
+        cast(Context*, L->varlist), body
     );
 
 } resume_body: {  ////////////////////////////////////////////////////////////
