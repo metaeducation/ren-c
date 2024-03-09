@@ -349,14 +349,14 @@ INLINE size_t Series_Total(const Series* s)
 //
 
 #if (! CPLUSPLUS_11)
-    #define Series_Bonus(s) \
+    #define SERIES_BONUS(s) \
         (s)->content.dynamic.bonus.node
 #else
-    INLINE const Node* const &Series_Bonus(const Series* s) {
+    INLINE const Node* const &SERIES_BONUS(const Series* s) {
         assert(Get_Series_Flag(s, DYNAMIC));
         return s->content.dynamic.bonus.node;
     }
-    INLINE const Node* &Series_Bonus(Series* s) {
+    INLINE const Node* &SERIES_BONUS(Series* s) {
         assert(Get_Series_Flag(s, DYNAMIC));
         return s->content.dynamic.bonus.node;
     }
@@ -364,15 +364,15 @@ INLINE size_t Series_Total(const Series* s)
 
 #if (! DEBUG) || (! CPLUSPLUS_11)
     #define BONUS(Field, s) \
-        *x_cast(BONUS_##Field##_TYPE*, m_cast(Node**, &Series_Bonus(s)))
+        *x_cast(BONUS_##Field##_TYPE*, m_cast(Node**, &SERIES_BONUS(s)))
 #else
     #define BONUS(Field, s) \
         NodeHolder<BONUS_##Field##_TYPE>( \
-            Series_Bonus(ensure_flavor(HAS_BONUS_##Field, (s))))
+            SERIES_BONUS(ensure_flavor(HAS_BONUS_##Field, (s))))
 #endif
 
 #define node_BONUS(Field, s) \
-    *m_cast(Node**, &Series_Bonus(s))  // const ok for strict alias
+    *m_cast(Node**, &SERIES_BONUS(s))  // const ok for strict alias
 
 
 //=//// SERIES "TOUCH" FOR DEBUGGING ///////////////////////////////////////=//
