@@ -256,17 +256,17 @@ default-combinators: make map! reduce [
 
     === BASIC KEYWORDS ===
 
-    'opt combinator [
+    'try combinator [
         {If applying parser fails, succeed and return NULL; don't advance input}
         return: "PARSER's result if it succeeds, otherwise NULL"
             [any-value? pack?]
         parser [action?]
         <local> result'
     ][
-        fail "OPT combinator replaced in UPARSE by TRY"
+        fail "TRY combinator changed back to OPTIONAL (or abbreviate as OPT)"
     ]
 
-    'try combinator [
+    'optional combinator [
         {If applying parser fails, succeed and return NULL; don't advance input}
         return: "PARSER's result if it succeeds, otherwise NULL"
             [any-value? pack?]
@@ -2586,6 +2586,12 @@ default-combinators: make map! reduce [
 ; work for OBJECT!.
 
 default-combinators.(tuple!): default-combinators.(word!)
+
+
+=== ABBREVIATIONS ===
+
+default-combinators.opt: default-combinators.optional
+default-combinators.try: default-combinators.optional  ; deprecated
 
 
 === COMPATIBILITY FOR NON-TAG KEYWORD FORMS ===
