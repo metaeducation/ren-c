@@ -69,7 +69,7 @@ if trap [
 ]
 
 
-; The snapshotted Ren-C (and R3C) existed before [~] was a legal return.
+; The bootstrap executable does not have SPREAD (or isotopes, generally)
 ;
 ; What this really means is that we are only catering the shim code to the
 ; snapshot.  (It would be possible to rig up shim code for pretty much any
@@ -77,7 +77,7 @@ if trap [
 ; obvious reward.)
 ;
 trap [
-    func [return: [~]] ["This definition should fail in old Ren-C"]
+    spread []
 ] then [
     ; Fall through to the body of this file, we are shimming version ~8994d23
 ] else [
@@ -285,7 +285,7 @@ unquasi: func3 [v <local> spelling] [
 and: enfix :lib3/and [assert [not block? right] right: as block! :right]
 or: enfix :lib3/or [assert [not block? right] right: as block! :right]
 
-to-logic: func3 [return: [logic!] optional [<opt> any-value!]] [
+to-logic: func3 [return: [logic!] optional [~null~ any-value!]] [
     case [
         void? :optional [fail "Can't turn void (null proxied) TO-LOGIC"]
         null? :optional [false]
@@ -332,7 +332,7 @@ reify-logic: func3 [logic [logic!]] [
 set '^break does [does [:break]]
 set '^continue does [does [:continue]]
 
-quote: func3 [x [<opt> any-value!]] [  ; see the more general UNEVAL
+quote: func3 [x [~null~ any-value!]] [  ; see the more general UNEVAL
     switch kind of x [
         word! [to lit-word! x]  ; to lit-word! not legal in new EXE
         path! [to lit-path! x]  ; to lit-path! not legal in new EXE
@@ -343,7 +343,7 @@ quote: func3 [x [<opt> any-value!]] [  ; see the more general UNEVAL
     ]
 ]
 
-blank-to-void: func3 [x [<opt> any-value!]] [
+blank-to-void: func3 [x [~null~ any-value!]] [
     either blank? :x [void] [:x]
 ]
 
@@ -366,7 +366,7 @@ set '&refinement? refinement!  ; modern refinement is PATH! constraint
 element?: :any-value?  ; used to exclude null
 any-value?: func3 [x] [true]  ; now inclusive of null
 
-matches: func3 [x [<opt> datatype! typeset! block!]] [
+matches: func3 [x [~null~ datatype! typeset! block!]] [
     if :x [if block? x [make typeset! x] else [x]]
 ]
 
@@ -386,15 +386,18 @@ matches: func3 [x [<opt> datatype! typeset! block!]] [
 ; bootstrap executable can build itself with the prior bootstrap executable.
 ; These few shims have worked well enough.
 
-spread: func3 [x [<opt> blank! block!]] [
+spread: func3 [
+    return: [~void~ ~null~ block!]
+    x [~null~ blank! block!]
+][
     case [
         null? :x [return null]
-        blank? :x [return blank]
+        blank? :x [return void]
         true [reduce [#splice! x]]
     ]
 ]
 
-append: func3 [series value [<opt> any-value!] /line <local> only] [
+append: func3 [series value [any-value!] /line <local> only] [
     any [
         object? series
         map? series
@@ -427,7 +430,7 @@ append: func3 [series value [<opt> any-value!] /line <local> only] [
     append3/(blank-to-void only)/(blank-to-void line) series :value
 ]
 
-insert: func3 [series value [<opt> any-value!] /line <local> only] [
+insert: func3 [series value [any-value!] /line <local> only] [
     only: 'only
     case [
         logic? :value [fail/where "INSERT LOGIC! LOGIC-TO-WORD, REIFY" 'value]
@@ -447,7 +450,7 @@ insert: func3 [series value [<opt> any-value!] /line <local> only] [
     insert3/(blank-to-void only)/(blank-to-void line) series :value
 ]
 
-change: func3 [series value [<opt> any-value!] /line <local> only] [
+change: func3 [series value [any-value!] /line <local> only] [
     only: 'only
     case [
         logic? :value [fail/where "CHANGE LOGIC! LOGIC-TO-WORD, REIFY" 'value]
@@ -475,7 +478,7 @@ join: func3 [
 ]
 
 collect*: func3 [  ; variant giving NULL if no actual material kept
-    return: [<opt> block!]
+    return: [~null~ block!]
     body [block!]
     <local> out keeper
 ][
@@ -608,8 +611,7 @@ modernize-typespec: function3 [
     types [block!]
 ][
     types: copy types
-    replace types '~null~ <opt>
-    replace types 'any-value? [<opt> any-value!]
+    replace types 'any-value? [~null~ any-value!]
     replace types 'any-string? 'any-string!
     replace types 'element? 'any-value!
     replace types 'action? 'action!
@@ -680,13 +682,10 @@ modernize-action: function3 [
                 if set-word? w [
                     assert [w = first [return:]]
                     keep3 spec/1, spec: my next
-                    if [~] = spec/1 [keep3/only [trash!] spec: my next]
                     if tail? spec [continue]
                     if text? spec/1 [keep3 spec/1, spec: my next]
                     if block? spec/1 [
-                        keep3/only append3 modernize-typespec spec/1 [
-                            <opt> blank!  ; e.g. <maybe> may return "null" blank
-                        ]
+                        keep3/only modernize-typespec spec/1
                         spec: my next
                     ]
                     if tail? spec [continue]
@@ -731,9 +730,6 @@ modernize-action: function3 [
                     continue
                 ]
 
-                ; Substitute <opt> for any <maybe> found, and save some code
-                ; to inject for that parameter to return null if it's null
-                ;
                 if types: match block! spec/1 [
                     types: modernize-typespec types
                     keep3/only types
@@ -827,7 +823,7 @@ mold: adapt :lib/mold [  ; update so MOLD SPREAD works
     ]
 ]
 
-noquote: func3 [x [<opt> any-value!]] [
+noquote: func3 [x [~null~ any-value!]] [
     switch kind of :x [
         lit-word! [return to word! x]
         lit-path! [return to path! x]
