@@ -461,7 +461,7 @@ struct LevelStruct {
     // need further evaluation if tight or enfix normal--in to act as the left
     // hand side of an operation, e.g.:
     //
-    //      add 1 2 -> lib/(print "Hi!" first [multiply]) 10
+    //      add 1 2 >- lib/(print "Hi!" first [multiply]) 10
     //
     // The right side of the operator can do arbitrary evaluation, producing
     // a synthetic ACTION! as the target.  To make matters worse, once this

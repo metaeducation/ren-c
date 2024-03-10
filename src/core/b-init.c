@@ -410,14 +410,16 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
         ">",
 
         "<=", // less than or equal !!! https://forum.rebol.info/t/349/11
-        "=>", // Lambda function, quotes optional left argument
+        "=>", // unused at present
 
         ">=", // greater than or equal to
         "=<", // equal to or less than
 
         "<>", // not equal (the chosen meaning, as opposed to "empty tag")
 
-        "->", // enfix path op, "SHOVE": https://trello.com/c/Kg9A45b5
+        ">-", // enfix path op, "SHOVE": https://trello.com/c/Kg9A45b5
+
+        "->", // lambda function
         "<-", // Non-null implicit GROUP! begin, e.g. `7 = 1 + <- 2 * 3`
 
         "|>", // Evaluate to next single expression, but do ones afterward

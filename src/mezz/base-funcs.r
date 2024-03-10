@@ -645,7 +645,7 @@ infix?: redescribe [
 )
 
 
-;-- => cannot be loaded by R3-Alpha, or even earlier Ren-C
+;-- -> cannot be loaded by R3-Alpha, or even earlier Ren-C
 ;
 lambda: function [
     {Convenience variadic wrapper for MAKE ACTION!}

@@ -1376,6 +1376,13 @@ acquisition_loop:
                 ss->token = TOKEN_WORD;
                 return; // "<|" and "<-"
             }
+            if (
+                cp[0] == '>' and (cp[1] == '-' or cp[1] == '|')
+                and (IS_LEX_DELIMIT(cp[2]) or IS_LEX_ANY_SPACE(cp[2]))
+            ){
+                ss->token = TOKEN_WORD;
+                return; // ">|" and ">-"
+            }
             if (GET_LEX_VALUE(*cp) == LEX_SPECIAL_GREATER) {
                 ss->token = TOKEN_WORD;
                 fail (Error_Syntax(ss));

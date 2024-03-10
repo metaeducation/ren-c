@@ -610,7 +610,7 @@ bool Eval_Core_Throws(Level* const L)
             fail ("SHOVE only accepts WORD!, PATH!, GROUP!, or ACTION!");
 
         // Even if the function isn't enfix, say it is.  This permits things
-        // like `5 + 5 -> subtract 7` to give 3.
+        // like `5 + 5 >- subtract 7` to give 3.
         //
         SET_VAL_FLAG(Level_Shove(L), VALUE_FLAG_ENFIXED);
         L->gotten = Level_Shove(L);
@@ -1970,7 +1970,7 @@ bool Eval_Core_Throws(Level* const L)
                 GET_VAL_FLAG(L->out, ACTION_FLAG_INVISIBLE)
                 or GET_VAL_FLAG(L->out, VALUE_FLAG_ENFIXED)
             ){
-                fail ("Use `->` to shove left enfix operands into PATH!s");
+                fail ("Use `>-` to shove left enfix operands into PATH!s");
             }
 
             Push_Action(L, VAL_ACTION(L->out), VAL_BINDING(L->out));
@@ -2291,15 +2291,15 @@ bool Eval_Core_Throws(Level* const L)
 
     // For long-pondered technical reasons, only WORD! is able to dispatch
     // enfix.  If it's necessary to dispatch an enfix function via path, then
-    // a word must be used to do it, e.g. `x: -> lib/method [...] [...]`.
+    // a word must be used to do it, e.g. `x: >- lib/method [...] [...]`.
     // That word can be an action with a variadic left argument, that can
     // decide what parameter convention to use to the left based on what it
     // sees to the right.
 
     if (Is_Level_Gotten_Shoved(L)) {
         //
-        // Tried to SHOVE, and didn't hit a situation like `add -> + 1`.  So
-        // now the shoving process falls through, as in `10 -> + 1`.
+        // Tried to SHOVE, and didn't hit a situation like `add >- + 1`.  So
+        // now the shoving process falls through, as in `10 >- + 1`.
         //
         assert(NOT_VAL_FLAG(L->gotten, ACTION_FLAG_QUOTES_FIRST_ARG));
         goto post_switch_shove_gotten;
