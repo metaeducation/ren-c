@@ -538,20 +538,6 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
 ]
 
 
-; Lambda was redefined to `->` to match Haskell/Elm vs. `=>` for JavaScript.
-; It is lighter to look at, but also if the symbol `<=` is deemed to be
-; "less than or equal" there's no real reason why `=>` shouldn't be "equal
-; or greater".  So it's more consistent to make the out-of-the-box definition
-; not try to suggest `<=` and `=>` are "arrows".
-;
-; !!! Due to scanner problems in the bootstrap build inherited from R3-Alpha,
-; and a notion that ENFIX is applied to SET-WORD!s not ACTION!s (which was
-; later overturned), remapping lambda to `->` is complicated.
-;
-eval compose3 [(to set-word! first [->]) enfix :lambda]
-unset first [=>]
-
-
 ; Enfixedness was conceived as not a property of an action itself, but of a
 ; particular relationship between a word and an action.  While this had some
 ; benefits, it became less and less relevant in a world of "opportunistic
