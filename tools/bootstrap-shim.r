@@ -175,17 +175,19 @@ trap [
 eval: :do
 
 for-each [alias] [  ; SET-WORD!s for readability + findability [1]
-    func3:
-    function3:
-    append3:
-    change3:
-    insert3:
-    join3:
-    compose3:
-    split-path3:
-    transcode3:
-    collect3:
-    compose3:
+    func3:                      ; FUNC refinements are their own args, more...
+    function3:                  ; no FUNCTION at present (TBD: FUNC synonym)
+    append3:                    ; APPEND handles splices
+    change3:                    ; CHANGE handles splices
+    insert3:                    ; INSERT handles splices
+    join3:                      ; JOIN handles splices
+    compose3:                   ; COMPOSE processes splices
+    split-path3:                ; bootstrap uses SPLIT-PATH3 not SPLIT-PATH
+    transcode3:                 ; bootstrap uses TRANSCODE3 not TRANSCODE
+    collect3:                   ; COLLECT's KEEP processes splices
+    mold3:                      ; MOLD takes splices instead of MOLD/ONLY
+    and3:                       ; AND takes GROUP!s on right (not BLOCK!)
+    or3:                        ; OR takes GROUP!s on right (not BLOCK!)
 ][
     ; Assign the alias what the existing version (minus the terminal "3") is
     ; (e.g. func3: :func)
@@ -284,8 +286,8 @@ unquasi: func3 [v <local> spelling] [
 ; hand side, but a GROUP! would be run.  That was deemed ugly, so group
 ; now short-circuits.
 ;
-and: enfix :lib3/and [assert [not block? right] right: as block! :right]
-or: enfix :lib3/or [assert [not block? right] right: as block! :right]
+and: enfix :and3 [assert [not block? right] right: as block! :right]
+or: enfix :or3 [assert [not block? right] right: as block! :right]
 
 to-logic: func3 [return: [logic!] optional [~null~ any-value!]] [
     case [
@@ -491,7 +493,7 @@ collect*: func3 [  ; variant giving NULL if no actual material kept
         series: <replaced>
     ]
 
-    lib/reeval func3 [keep [action!] <with> return] body :keeper
+    reeval func3 [keep [action!] <with> return] body :keeper
 
     :out
 ]
@@ -569,11 +571,11 @@ collect-lets: func3 [
             item/1 = 'let [
                 item: next item
                 if match [set-word! word! block!] item/1 [
-                    lib/append lets item/1
+                    append3 lets item/1
                 ]
             ]
             match [block! group!] item/1 [
-                lib/append lets collect-lets item/1
+                append3 lets collect-lets item/1
             ]
         ]
     ]
