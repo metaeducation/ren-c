@@ -51,7 +51,7 @@ REBOL [
 if trap [
     :import/into  ; no /INTO means error here, so old r3 without import shim
 ][
-    ; Don't use <{...}> in this error message, because if this message is
+    ; Don't use -{...}- in this error message, because if this message is
     ; being reported then this interpreter will think that's a tag.
 
     print ""
@@ -61,7 +61,7 @@ if trap [
     print "    r3 --import import-shim.r make.r"
     print ""
     print "...instead of just `r3 make.r`.  Otherwise make.r can't use things"
-    print "like <{...}> strings in older Ren-C."
+    print "like -{...}- strings in older Ren-C."
     print ""
     print "(See %import-shim.r for more details)"
     print ""
@@ -161,59 +161,61 @@ trap [
 ]
 
 
-=== "GIVE SHORT NAMES THAT CALL OUT BOOTSTRAP EXE'S VERSIONS OF FUNCTIONS" ===
+=== "SHORT NAMES FOR LIB3/XXX, CATCH USES OF SHIMMED FUNCTIONS BEFORE SHIM" ===
 
 ; The shims use the functions in the bootstrap EXE's lib to make forwards
-; compatible variations.  But it's not obvious to a reader that something like
-; `lib/func` isn't the same as `func`.  These names help point it out what's
-; happening more clearly (the 3 in the name means "sorta like R3-Alpha")
+; compatible variations.  But it's easy while editing this file to get
+; confused and use the wrong version--possibly before it has been defined.
+; This defaults all the functions that need shims to errors, and offer a
+; shorter name for lib3 variants while doing so (e.g. FUNC3 for LIB3/FUNC)
 ;
-; 1. THIS IS WEIRD TO WORK AROUND BOOTSTRAP EXE'S UNRELIABLE CONTEXT EXPANSION.
-;    When you do things like `system/contexts/user/(word): does ["hi"]` it
-;    causes crashes sometimes, and having the load process see SET-WORD!s at
-;    the top level seems to work around it.
-;
-;    (Using SET-WORD!s here also helps searchability if you're looking for
-;    where `func3: ...` is set.)
+; 1. Using SET-WORD!s here also helps searchability if you're looking for
+;    where `func3: ...` is defined.
 
 eval: :do
 
-aliases: lib3/reeval lib3/func [:item [any-value! <...>]] [  ; very weird [1]
-    lib3/collect [while [item/1 != #end] [keep/only take item]]
-    ]
-    func3: func: *
-    function3: function: *
-    append3: append: *
-    change3: change: *
-    insert3: insert: *
-    join3: join: *
-    compose3: compose: *
-    split-path3: split-path: *
-    transcode3: transcode: *
+for-each [alias] [  ; SET-WORD!s for readability + findability [1]
+    func3:
+    function3:
+    append3:
+    change3:
+    insert3:
+    join3:
+    compose3:
+    split-path3:
+    transcode3:
+    collect3:
+    compose3:
+][
+    ; Assign the alias what the existing version (minus the terminal "3") is
+    ; (e.g. func3: :func)
+    ;
+    name: copy as text! alias
+    assert [#"3" = take/last name]
+    name: to word! name
+    lib3/append system/contexts/user reduce [alias :lib3/(name)]
 
-    collect3: collect: (adapt :lib3/collect [  ; to make KEEP3 obvious
-        body: lib3/compose [
-            keep3: :keep  ; help point out keep3 will splice blocks, has /ONLY
-            keep []  ; bootstrap workaround: force block result even w/no keeps
-            lib3/unset 'keep
-            (body)  ; compose3 will splice the body in here
-        ]
-    ])
-#end
-
-lib3/for-each [alias name shim] aliases [
-    set alias either group? shim [
-        eval shim
-    ][
-        get (lib3/in lib3 name)
-    ]
-
-    ; Manually expanding contexts this way seems a bit buggy in bootstrap EXE
-    ; Appending the word first, and setting via a PATH! seems okay.
+    ; Make calling the undecorated version an error, until it becomes shimmed
+    ; (e.g. func: does [fail ...])
     ;
     error: spaced [(mold name) "not shimmed yet, see" as word! (mold alias)]
-    set name lib3/func [] lib3/compose [
+    system/contexts/user/(name): lib3/func [] lib3/compose [
         fail/where (error) 'return
+    ]
+]
+
+
+=== "MAKE THE KEEP IN COLLECT3 OBVIOUS AS KEEP3" ===
+
+; Even if you see you are using the COLLECT3 version of COLLECT, it's easy
+; to not remember that the KEEP is the kind that takes /ONLY.  Renaming the
+; keeper to KEEP3 makes that clearer.
+
+collect3: adapt :collect3 [
+    body: compose3 [
+        keep3: :keep  ; help point out keep3 will splice blocks, has /ONLY
+        keep: ~
+        (body)  ; splices block body because it's COMPOSE3
     ]
 ]
 
@@ -294,12 +296,6 @@ to-logic: func3 [return: [logic!] optional [~null~ any-value!]] [
     ]
 ]
 
-
-; We don't have antiforms in the bootstrap build.  But if a branch produces
-; NULL it will yield a "VOID!" (kind of like the quasiform ~)  Turn these
-; into NULL, and trust that the current build will catch cases of something
-; like a PRINT being turned into a NULL.
-;
 unrun: func3 [] [
     fail/where "No UNRUN in bootstrap, but could be done w/make FRAME!" 'return
 ]
