@@ -700,12 +700,6 @@ modernize-action: function3 [
                     keep3/only spec/1
                 ]
 
-                if spec/1 = [~] [
-                    keep3/only <void>  ; old cue for returning garbage
-                    spec: my next
-                    continue
-                ]
-
                 if spec/1 = [nihil?] [
                     keep3/only []  ; old cue for invisibility
                     spec: my next
