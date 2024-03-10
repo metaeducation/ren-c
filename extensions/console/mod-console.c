@@ -277,8 +277,11 @@ DECLARE_NATIVE(console)
             // crash.  Pass it back something that looks like an instruction
             // it might have generated (a BLOCK!) asking itself to crash.
 
-            if (no_recover)
-                rebJumps("PANIC", trapped);
+            if (no_recover) {
+                rebElide("print {** CONSOLE INTERNAL ERROR **}");
+                rebElide("print mold", trapped);
+                rebJumps("panic", trapped);
+            }
 
             code = rebValue("[#host-console-error]");
             result = trapped;
