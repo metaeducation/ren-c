@@ -1257,7 +1257,7 @@ static REBLEN Sweep_Series(void)
 
     // Optimization here depends on SWITCH of a bank of 4 bits.
     //
-    static_assert_c(
+    STATIC_ASSERT(
         NODE_FLAG_MARKED == FLAG_LEFT_BIT(3) // 0x1 after right shift
         and (NODE_FLAG_MANAGED == FLAG_LEFT_BIT(2)) // 0x2 after right shift
         and (NODE_FLAG_FREE == FLAG_LEFT_BIT(1)) // 0x4 after right shift

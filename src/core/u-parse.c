@@ -153,8 +153,8 @@ enum parse_flags {
 };
 
 // Note: clang complains if `cast(int, ...)` used here, though gcc doesn't
-static_assert_c((int)AM_FIND_CASE == (int)PF_FIND_CASE);
-static_assert_c((int)AM_FIND_MATCH == (int)PF_FIND_MATCH);
+STATIC_ASSERT((int)AM_FIND_CASE == (int)PF_FIND_CASE);
+STATIC_ASSERT((int)AM_FIND_MATCH == (int)PF_FIND_MATCH);
 
 #define PF_FIND_MASK \
     (PF_FIND_ONLY | PF_FIND_CASE | PF_FIND_LAST | PF_FIND_REVERSE \
