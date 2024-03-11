@@ -19,7 +19,7 @@ line-number?: func [
 ] [
     line-number: 1
     t: head of s
-    parse t [
+    parse2 t [
         any [
             (if greater-or-equal? index? t index? s [return line-number])
             [[CR LF | CR | LF] (line-number: me + 1) | skip] t:

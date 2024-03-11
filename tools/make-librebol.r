@@ -78,7 +78,7 @@ emit-proto: func [return: [~] proto] [
     ]
 
     paramlist: collect [
-        parse/match proto [
+        parse2/match proto [
             copy returns to "API_" "API_" copy name to "(" skip
             ["void)" | some [ ;-- C void, or at least one parameter expected
                 [copy param to "," skip | copy param to ")" to end] (

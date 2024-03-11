@@ -38,7 +38,10 @@ REBOL [
 ;
 
 do <../../tools/common.r>
+
+parse: :parse/redbol  ; uses Redbol parsing conventions in common-parsers.r
 do join tools-dir %common-parsers.r
+
 do join tools-dir %text-lines.reb
 do join tools-dir %read-deep.reb
 
@@ -161,7 +164,7 @@ rebsource: context [
 
                 parse/case data [
                     some [
-                        position:
+                        position:  ; <here>
                         malloc-check
                         | c-pp-token
                     ]
@@ -186,7 +189,7 @@ rebsource: context [
                             all [
                                 parse/match last-func-end [
                                     function-spacing-rule
-                                    position:
+                                    position:  ; <here>
                                     to end
                                 ]
                                 same? position proto-parser/parse.position
@@ -323,9 +326,13 @@ rebsource: context [
 
             parse/case data [
 
-                last-pos:
+                last-pos:  ; <here>
 
-                opt [bol: skip (line: 1) :bol]
+                opt [
+                    bol:  ; <here>
+                    skip (line: 1)
+                    :bol
+                ]
 
                 any [
                     to stop-char

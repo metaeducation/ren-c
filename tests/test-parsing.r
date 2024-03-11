@@ -17,7 +17,28 @@ do %line-numberq.r
 
 null-to-blank: func [x [~null~ any-value!]] [either null? x [_] [:x]]
 
-do %../tools/parsing-tools.reb
+parse2: :parse/redbol
+
+parsing-at: func [  ; redefined here for <here> usage in regular PARSE
+    {Defines a rule which evaluates a block for the next input position, fails otherwise.}
+    'word [word!] {Word set to input position (will be local).}
+    block [block!]
+        {Block to evaluate. Return next input position, or blank/false.}
+    /end {Drop the default tail check (allows evaluation at the tail).}
+] [
+    use [result position][
+        block: compose/only [null-to-blank (as group! block)]
+        if not end [
+            block: compose/deep [either not tail? (word) [(block)] [_]]
+        ]
+        block: compose/deep [result: either position: (block) [[:position]] [[end skip]]]
+        use compose [(word)] compose/deep [
+            [(as set-word! :word) <here>
+            (as group! block) result]
+        ]
+    ]
+]
+
 do %../tools/text-lines.reb
 
 whitespace: charset [#"^A" - #" " "^(7F)^(A0)"]
@@ -36,7 +57,7 @@ make object! [
 
     set 'test-source-rule [
         any [
-            position:
+            position: <here>
 
             ["{" | {"}] (
                 ; handle string using TRANSCODE
@@ -165,7 +186,7 @@ make object! [
         ]
 
         token: [
-            position:
+            position: <here>
 
             (type: value: _)
 
@@ -194,14 +215,14 @@ make object! [
         ]
 
         emit-token: [
-            token-end: (
+            token-end: <here> (
                 comment [
                     prin "emit: " probe compose [
                         (type) (to text! copy/part position token-end)
                     ]
                 ]
             )
-            position: (type: value: _)
+            position: <here> (type: value: _)
         ]
 
         rule: [any token end]

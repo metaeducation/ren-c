@@ -294,7 +294,7 @@ trim: function [
             remove [any LF]
 
             (indent: 0)
-            s: some rule e:
+            s: <here> some rule e: <here>
             (indent: (index of e) - (index of s))
 
             to end  ; !!! was just END, but didn't check success

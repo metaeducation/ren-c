@@ -282,7 +282,7 @@ sys-globals.parser: context [
     id: _
 
     process: func [return: [~] text] [
-        parse text grammar/rule ;-- Review: no END (return result unused?)
+        parse2 text grammar/rule ;-- Review: no END (return result unused?)
     ]
 
     grammar: context bind [
@@ -361,7 +361,7 @@ iterate generic-list [
 ]
 
 native-list: load output-dir/boot/tmp-natives.r
-parse/match native-list [
+parse2/match native-list [
     some [
         opt 'export
         set name: set-word! (name: to-word name)
@@ -394,11 +394,11 @@ e-strings/emit {
 }
 for-each line read/lines %a-constants.c [
     case [
-        parse/match line ["#define" to end] [
+        parse2/match line ["#define" to end] [
             e-strings/emit line
             e-strings/emit newline
         ]
-        parse/match line [to {const } copy constd to { =} to end] [
+        parse2/match line [to {const } copy constd to { =} to end] [
             e-strings/emit {
                 extern $<Constd>;
             }

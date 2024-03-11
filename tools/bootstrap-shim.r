@@ -84,6 +84,12 @@ trap [
         either any [blank? :x null? :x] [void] [:x]
     ]
 
+    parse2: :parse/redbol  ; no `pos: <here>`, etc.
+
+    parse: func [] [
+        fail/where "Use PARSE2 in Bootstrap" 'return
+    ]
+
     quit/with system/options/path  ; see [1]
 ]
 
@@ -122,7 +128,7 @@ lib-read: copy :lib/read
 lib/read: read: enclose :lib-read function [f [frame!]] [
     saved-source: :f/source
     if e: trap [bin: do f] [
-        parse e/message [
+        parse2 e/message [
             [
                 {The system cannot find the } ["file" | "path"] { specified.}
                 | "No such file or directory"  ; Linux
@@ -215,7 +221,7 @@ load: func [source /all /header] [  ; can't ENCLOSE, does not take TAG!
 ; PARSE/MATCH switches in a mode to give you the input, or null on failure.
 ; Result is given as void to prepare for the arbitrary synthesized result.
 ;
-parse: func [input rules /case /match] [
+parse2: func [input rules /case /match] [
     f: make frame! :lib/parse
     f/input: input
     f/rules: rules
@@ -228,6 +234,10 @@ parse: func [input rules /case /match] [
         fail "Error: PARSE rules did not match (or did not reach end)"
     ]
     return void
+]
+
+parse: func [] [
+    fail/where "Use PARSE2 in Bootstrap" 'return
 ]
 
 ; Older Ren-C considers nulled variables to be "unset".
@@ -358,7 +368,7 @@ split-path: lib/func [
 ][
     if null? :location [return null]
     pos: _
-    parse location [
+    parse2 location [
         [#"/" | 1 2 #"." opt #"/"] end (dir: dirize location) |
         pos: any [thru #"/" [end | pos:]] (
             all [

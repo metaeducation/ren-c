@@ -24,7 +24,7 @@ emit-native-proto: function [
 
     all [
         block? proto-parser/data
-        parse/match proto-parser/data [
+        parse2/match proto-parser/data [
             opt 'export
             set name: set-word!
             opt 'enfix

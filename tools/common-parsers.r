@@ -61,7 +61,7 @@ decode-key-value-text: function [
 
     meta: copy []
 
-    parse/match text data-fields else [
+    parse2/match text data-fields else [
         fail [
             {Expected key value format on line} (text-line-of position)
             {and lines must end with newline.}
@@ -93,7 +93,7 @@ load-until-blank: function [
         opt wsp opt [1 2 newline] position: to end
     ]
 
-    either parse/match text rule [
+    either parse2/match text rule [
         values: load copy/part text position
         reduce [values position]
     ][
@@ -120,7 +120,7 @@ proto-parser: context [
     eoh: _ ; End of file header.
 
     process: func [return: [~] text] [
-        parse/match text [grammar/rule]
+        parse2/match text [grammar/rule]
     ]
 
     grammar: context bind [
@@ -176,7 +176,7 @@ proto-parser: context [
                 ; EMIT-PROTO doesn't want to see extra whitespace (such as
                 ; when individual parameters are on their own lines).
                 ;
-                parse proto collapse-whitespace
+                parse2 proto collapse-whitespace
                 proto: trim proto
                 assert [find proto "("]
 
@@ -207,7 +207,7 @@ proto-parser: context [
         is-fileheader: parsing-at position [
             null-to-blank all [
                 lines: attempt [decode-lines lines {//} { }]
-                parse/match lines [copy data to {=///} to end]
+                parse2/match lines [copy data to {=///} to end]
                 data: attempt [load-until-blank trim/auto data]
                 data: attempt [
                     if set-word? first data/1 [data/1] else [_]
@@ -291,7 +291,7 @@ rewrite-if-directives: function [
     position
 ][
     until [
-        parse position [
+        parse2 position [
             (rewritten: false)
             some [
                 [

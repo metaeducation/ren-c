@@ -57,8 +57,8 @@ files: copy []
 
 rule: ['+ set scannable [word! | path!] (append files to-file scannable) | skip]
 
-parse file-base/os [some rule]
-parse os-specific-objs [some rule]
+parse2 file-base/os [some rule]
+parse2 os-specific-objs [some rule]
 
 proto-count: 0
 

@@ -437,7 +437,7 @@ for-each-system: function [
         ldflags: _
     ]
 
-    parse/match systems in s [ some [
+    parse2/match systems in s [ some [
         set platform-name set-word! (
             platform-name: to-word platform-name
         )

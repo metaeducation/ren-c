@@ -111,13 +111,13 @@
 )]
 [#1068 #1066 (
     a-value: first ['a/b]
-    parse :a-value [b-value: to end]
+    parse :a-value [b-value: <here> to end]
     strict-equal? :a-value :b-value
 )]
 ; symmetry
 (
     a-value: first ['a/b]
-    parse :a-value [b-value: to end]
+    parse :a-value [b-value: <here> to end]
     equal? strict-equal? :a-value :b-value strict-equal? :b-value :a-value
 )
 (not strict-equal? [] blank)
@@ -125,35 +125,35 @@
 (equal? strict-equal? [] blank strict-equal? blank [])
 [#1068 #1066 (
     a-value: first [()]
-    parse a-value [b-value:]
+    parse a-value [b-value: <here>]
     strict-equal? a-value b-value
 )]
 ; symmetry
 (
     a-value: first [()]
-    parse a-value [b-value:]
+    parse a-value [b-value: <here>]
     equal? strict-equal? a-value b-value strict-equal? b-value a-value
 )
 [#1068 #1066 (
     a-value: 'a/b
-    parse a-value [b-value: to end]
+    parse a-value [b-value: <here> to end]
     strict-equal? :a-value :b-value
 )]
 ; symmetry
 (
     a-value: 'a/b
-    parse a-value [b-value: to end]
+    parse a-value [b-value: <here> to end]
     equal? strict-equal? :a-value :b-value strict-equal? :b-value :a-value
 )
 [#1068 #1066 (
     a-value: first [a/b:]
-    parse :a-value [b-value: to end]
+    parse :a-value [b-value: <here> to end]
     strict-equal? :a-value :b-value
 )]
 ; symmetry
 (
     a-value: first [a/b:]
-    parse :a-value [b-value: to end]
+    parse :a-value [b-value: <here> to end]
     equal? strict-equal? :a-value :b-value strict-equal? :b-value :a-value
 )
 (not strict-equal? any-number! integer!)

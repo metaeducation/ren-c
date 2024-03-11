@@ -34,7 +34,7 @@ space: charset " ^-^/^M"
 
 ;comment out unneeded headers
 comment-out-includes: [
-    pos: {#include}
+    pos: <here> {#include}
     [
         [
             some space [

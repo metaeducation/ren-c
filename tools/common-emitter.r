@@ -52,7 +52,7 @@ cscape: function [
     num-text: to text! num ;-- CHANGE won't take GROUP! to evaluate, #1279
 
     list: collect [
-        parse string [(col: 0) start: any [
+        parse2 string [(col: 0) start: any [
             [
                 (prefix: _ suffix: _) finish:
 
@@ -161,7 +161,7 @@ cscape: function [
     ; whitespace is all that ends up on them.  If the user doesn't want the
     ; intelligence, they should use "".
     ;
-    parse string [
+    parse2 string [
         (nonwhite: removed: false) start-line:
         while [
             space
@@ -211,11 +211,11 @@ make-emitter: function [
 
     split-path/file file the stem:
 
-    temporary: did any [temporary | parse/match stem ["tmp-" to end]]
+    temporary: did any [temporary | parse2/match stem ["tmp-" to end]]
 
-    is-c: did parse/match stem [thru [".c" | ".h" | ".inc"]]
+    is-c: did parse2/match stem [thru [".c" | ".h" | ".inc"]]
 
-    is-js: did parse/match stem [thru ".js" end]
+    is-js: did parse2/match stem [thru ".js" end]
 
     e: make object! compose [
         ;

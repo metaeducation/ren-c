@@ -111,13 +111,13 @@
 )
 [#1068 #1066 (
     a-value: first ['a/b]
-    parse :a-value [b-value: to end]
+    parse :a-value [b-value: <here> to end]
     same? :a-value :b-value
 )]
 ; symmetry
 (
     a-value: first ['a/b]
-    parse :a-value [b-value: to end]
+    parse :a-value [b-value: <here> to end]
     equal? same? :a-value :b-value same? :b-value :a-value
 )
 (not same? [] blank)
@@ -125,35 +125,35 @@
 (equal? same? [] blank same? blank [])
 [#1068 #1066 (
     a-value: first [()]
-    parse a-value [b-value:]
+    parse a-value [b-value: <here>]
     same? a-value b-value
 )]
 ; symmetry
 (
     a-value: first [()]
-    parse a-value [b-value:]
+    parse a-value [b-value: <here>]
     equal? same? a-value b-value same? b-value a-value
 )
 [#1068 #1066 (
     a-value: 'a/b
-    parse a-value [b-value: to end]
+    parse a-value [b-value: <here> to end]
     same? :a-value :b-value
 )]
 ; symmetry
 (
     a-value: 'a/b
-    parse a-value [b-value: to end]
+    parse a-value [b-value: <here> to end]
     equal? same? :a-value :b-value same? :b-value :a-value
 )
 [#1068 #1066 (
     a-value: first [a/b:]
-    parse :a-value [b-value: to end]
+    parse :a-value [b-value: <here> to end]
     same? :a-value :b-value
 )]
 ; symmetry
 (
     a-value: first [a/b:]
-    parse :a-value [b-value: to end]
+    parse :a-value [b-value: <here> to end]
     equal? same? :a-value :b-value same? :b-value :a-value
 )
 (not same? any-number! integer!)

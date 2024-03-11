@@ -205,7 +205,7 @@ split-path: func [
     pos: null
     parse location [
         [#"/" | 1 2 #"." opt #"/"] end (dir: dirize location) |
-        pos: any [thru #"/" [end | pos:]] (
+        pos: <here> any [thru #"/" [end | pos: <here>]] (
             all [
                 empty? dir: copy/part location at head of location index of pos
                     |

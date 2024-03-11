@@ -376,7 +376,7 @@ set-exec-path: func [
     ]
 ]
 
-parse user-config/toolset [
+parse2 user-config/toolset [
     any [
         'gcc opt set cc-exec [file! | blank!] (
             rebmake/default-compiler: rebmake/gcc

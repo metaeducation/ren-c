@@ -33,7 +33,8 @@ parsing-at: func [
         ]
         block: compose/deep [result: either position: (block) [[:position]] [[end skip]]]
         use compose [(word)] compose/deep [
-            [(as set-word! :word) (as group! block) result]
+            [(as set-word! :word) ; <here> implicit
+            (as group! block) result]
         ]
     ]
 ]

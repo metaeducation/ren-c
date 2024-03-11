@@ -78,7 +78,7 @@ filter-flag: function [
 ][
     if not tag? flag [return flag] ;-- no filtering
 
-    parse/match to text! flag [
+    parse2/match to text! flag [
         copy header: to ":"
         ":" copy option: to end
     ] else [
@@ -381,7 +381,7 @@ gcc: make compiler-class [
         attempt [
             exec-file: path: default ["gcc"]
             call/output reduce [path "--version"] version
-            parse/match version [
+            parse2/match version [
                 {gcc (GCC)} space
                 copy major: some digit #"."
                 copy minor: some digit #"."
@@ -1164,7 +1164,7 @@ generator-class: make object! [
         stop: false
         while [not stop][
             stop: true
-            parse/match cmd [
+            parse2/match cmd [
                 while [
                     change [
                         [

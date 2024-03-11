@@ -30,31 +30,31 @@
 ; SET-WORD! (store current input position)
 
 (
-    res: did parse/match ser: [x y] [pos: skip skip]
+    res: did parse/match ser: [x y] [pos: <here> skip skip]
     all [res | pos = ser]
 )
 (
-    res: did parse/match ser: [x y] [skip pos: skip]
+    res: did parse/match ser: [x y] [skip pos: <here> skip]
     all [res | pos = next ser]
 )
 (
-    res: did parse/match ser: [x y] [skip skip pos:]
+    res: did parse/match ser: [x y] [skip skip pos: <here>]
     all [res | pos = tail of ser]
 )
 [#2130 (
-    res: did parse/match ser: [x] [set val pos: word!]
+    res: did parse/match ser: [x] [set val pos: <here> word!]
     all [res | val = 'x | pos = ser]
 )]
 [#2130 (
-    res: did parse/match ser: [x] [set val: pos: word!]
+    res: did parse/match ser: [x] [set val: pos: <here> word!]
     all [res | val = 'x | pos = ser]
 )]
 [#2130 (
-    res: did parse/match ser: "foo" [copy val pos: skip]
+    res: did parse/match ser: "foo" [copy val pos: <here> skip]
     all [not res | val = "f" | pos = ser]
 )]
 [#2130 (
-    res: did parse/match ser: "foo" [copy val: pos: skip]
+    res: did parse/match ser: "foo" [copy val: pos: <here> skip]
     all [not res | val = "f" | pos = ser]
 )]
 
@@ -146,7 +146,7 @@
     c: ["a" | "b"]
     a2: [any [b e: (d: [:e]) then fail | [c | (d: [fail]) fail]] d]
     a4: [any [b then e: (d: [:e]) fail | [c | (d: [fail]) fail]] d]
-    equal? parse/match "aaaaabc" a2 parse/match "aaaaabc" a4
+    equal? parse/match/redbol "aaaaabc" a2 parse/match/redbol "aaaaabc" a4
 )]
 
 ; NOT rule
@@ -215,22 +215,22 @@
 ; Should return the same series type as input (Rebol2 did not do this)
 (
     a-value: first ['a/b]
-    parse/match a-value [b-value:]
+    parse/match a-value [b-value: <here>]
     same? a-value b-value
 )
 (
     a-value: first [()]
-    parse/match a-value [b-value:]
+    parse/match a-value [b-value: <here>]
     same? a-value b-value
 )
 (
     a-value: 'a/b
-    parse/match a-value [b-value:]
+    parse/match a-value [b-value: <here>]
     same? a-value b-value
 )
 (
     a-value: first [a/b:]
-    parse/match a-value [b-value:]
+    parse/match a-value [b-value: <here>]
     same? a-value b-value
 )
 

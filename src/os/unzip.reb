@@ -393,7 +393,7 @@ ctx-zip: context [
                     info name
                 )
                 extrafield-length skip
-                data: compressed-size skip
+                data: <here> compressed-size skip
                 (
                     uncompressed-data: catch [
 

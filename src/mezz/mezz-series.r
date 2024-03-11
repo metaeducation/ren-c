@@ -308,7 +308,7 @@ reword: function [
 
     rule: [
         ; Begin marking text to copy verbatim to output
-        a:
+        a: <here>
 
         any [
             ; Seek to the prefix.  Note that the prefix may be BLANK!, in
@@ -317,7 +317,7 @@ reword: function [
             to prefix
 
             ; End marking text to copy verbatim to output
-            b:
+            b: <here>
 
             ; Consume the prefix (again, this could be a no-op, which means
             ; there's no guarantee we'll be at the start of a match for
@@ -342,7 +342,7 @@ reword: function [
                     )
 
                     ; Restart mark of text to copy verbatim to output
-                    a:
+                    a: <here>
                 ]
                     |
                 ; Because we might not be at the head of an any-keyword rule
@@ -669,7 +669,7 @@ split: function [
             ensure [bitset! text! char! block!] dlm
 
             [
-                any [mk1: some [mk2: dlm break | skip] (
+                any [mk1: <here> some [mk2: <here> dlm break | skip] (
                     keep/only copy/part mk1 mk2
                 )]
                 end

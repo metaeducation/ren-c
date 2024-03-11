@@ -585,7 +585,6 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
             return END_FLAG;
         return index; }
 
-    case REB_TAG:
     case REB_FILE: {
         //
         // !!! The content to be matched does not have the delimiters in the
@@ -1760,19 +1759,40 @@ DECLARE_NATIVE(subparse)
                 // word: - set a variable to the series at current index
                 if (IS_SET_WORD(rule)) {
                     //
-                    // !!! Review meaning of marking the parse in a slot that
-                    // is a target of a rule, e.g. `thru pos: xxx` #
+                    // Marking the parse in a slot that is a target of a
+                    // rule, e.g. `thru pos: xxx`, handled by UPARSE so go
+                    // ahead and allow it here.
                     //
                     // https://github.com/rebol/rebol-issues/issues/2269
                     //
-                    // if (P_FLAGS & PF_STATE_MASK != 0)
-                    //     fail (Error_Parse_Rule());
+                    /* if (P_FLAGS & PF_STATE_MASK != 0)
+                        fail (Error_Parse_Rule()); */
 
                     Copy_Cell(
                         Sink_Var_May_Fail(rule, P_RULE_SPECIFIER),
                         P_INPUT_VALUE
                     );
+
                     FETCH_NEXT_RULE(L);
+
+                    bool strict = true;
+                    bool here_tag = false;
+                    if (
+                        NOT_END(P_RULE)
+                        and IS_TAG(P_RULE)
+                        and (0 == Compare_String_Vals(
+                            P_RULE,
+                            Root_Here_Tag,
+                            strict
+                        ))
+                    ){
+                        here_tag = true;
+                        FETCH_NEXT_RULE(L);
+                    }
+
+                    if (not (P_FLAGS & PF_REDBOL) and not here_tag)
+                        fail ("SET-WORD! needs <here> unless PARSE/REDBOL");
+
                     continue;
                 }
 

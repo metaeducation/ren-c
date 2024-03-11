@@ -184,7 +184,7 @@ binary-to-c: function [
     ]
 
     ;-- Sanity check (should be one more byte in source than commas out)
-    parse out [
+    parse2 out [
         (comma-count: 0)
         some [thru "," (comma-count: comma-count + 1)]
         to end
