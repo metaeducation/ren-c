@@ -78,9 +78,9 @@ trap [
     func [i [<maybe> integer!]] [...]
 ] else [
     nulled?: func [var [word! path!]] [return null = get var]
-    null-to-blank: func [x [<opt> any-value!]] [either null? :x [_] [:x]]
+    null-to-blank: func [x [~null~ any-value!]] [either null? :x [_] [:x]]
 
-    maybe-: maybe+: func [x [<opt> any-value!]] [  ; see [2]
+    maybe-: maybe+: func [x [~null~ any-value!]] [  ; see [2]
         either any [blank? :x null? :x] [void] [:x]
     ]
 
