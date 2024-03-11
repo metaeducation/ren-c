@@ -87,8 +87,8 @@
 #define P_INPUT_SPECIFIER   VAL_SPECIFIER(P_INPUT_VALUE)
 #define P_POS               VAL_INDEX(P_INPUT_VALUE)
 
-#define P_FIND_FLAGS        VAL_INT64(Level_Args_Head(L) + 1)
-#define P_HAS_CASE          (did (P_FIND_FLAGS & AM_FIND_CASE))
+#define P_FLAGS             VAL_INT64(Level_Args_Head(L) + 1)
+#define P_HAS_CASE          (did (P_FLAGS & AM_FIND_CASE))
 
 #define P_NUM_QUOTES_VALUE  (L->rootvar + 3)
 #define P_NUM_QUOTES        VAL_INT32(P_NUM_QUOTES_VALUE)
@@ -124,17 +124,43 @@
 // See the notes on `flags` in the main parse loop for how these work.
 //
 enum parse_flags {
-    PF_SET = 1 << 0,
-    PF_COPY = 1 << 1,
-    PF_NOT = 1 << 2,
-    PF_NOT2 = 1 << 3,
-    PF_THEN = 1 << 4,
-    PF_AHEAD = 1 << 5,
-    PF_REMOVE = 1 << 6,
-    PF_INSERT = 1 << 7,
-    PF_CHANGE = 1 << 8,
-    PF_WHILE = 1 << 9
+    //
+    // In R3-Alpha, the "parse->flags" (persistent across an iteration) were
+    // distinct from the "flags" (per recursion, zeroed on each loop).  The
+    // former had undocumented overlap with the values of AM_FIND_XXX flags.
+    //
+    // They are unified in Ren-C, with the overlap asserted.
+    //
+    PF_FIND_ONLY = 1 << 0,
+    PF_FIND_CASE = 1 << 1,
+    PF_FIND_LAST = 1 << 2,
+    PF_FIND_REVERSE = 1 << 3,
+    PF_FIND_TAIL = 1 << 4,
+    PF_FIND_MATCH = 1 << 5,
+
+    PF_SET = 1 << 6,
+    PF_COPY = 1 << 7,
+    PF_NOT = 1 << 8,
+    PF_NOT2 = 1 << 9,
+    PF_THEN = 1 << 10,
+    PF_AHEAD = 1 << 11,
+    PF_REMOVE = 1 << 12,
+    PF_INSERT = 1 << 13,
+    PF_CHANGE = 1 << 14,
+    PF_WHILE = 1 << 15,
+
+    PF_REDBOL = 1 << 16  // use Rebol2/Red-style rules
 };
+
+// Note: clang complains if `cast(int, ...)` used here, though gcc doesn't
+static_assert_c((int)AM_FIND_CASE == (int)PF_FIND_CASE);
+static_assert_c((int)AM_FIND_MATCH == (int)PF_FIND_MATCH);
+
+#define PF_FIND_MASK \
+    (PF_FIND_ONLY | PF_FIND_CASE | PF_FIND_LAST | PF_FIND_REVERSE \
+        | PF_FIND_TAIL | PF_FIND_MATCH)
+
+#define PF_STATE_MASK (~PF_FIND_MASK & ~PF_REDBOL)
 
 
 // In %words.r, the parse words are lined up in order so they can be quickly
@@ -228,6 +254,7 @@ static bool Subparse_Throws(
     // case-insensitive bytes for ASCII characters.
     //
     Erase_Cell(Level_Args_Head(L) + 1);
+    assert((flags & PF_STATE_MASK) == 0);  // no "parse state" flags allowed
     Init_Integer(Level_Args_Head(L) + 1, flags);
 
     // Need to track NUM-QUOTES somewhere that it can be read from the frame
@@ -381,10 +408,10 @@ static void Set_Parse_Series(
             ? VAL_LEN_HEAD(any_series)
             : VAL_INDEX(any_series);
 
-    if (IS_BINARY(any_series) || (P_FIND_FLAGS & AM_FIND_CASE))
-        P_FIND_FLAGS |= AM_FIND_CASE;
+    if (IS_BINARY(any_series) || (P_FLAGS & AM_FIND_CASE))
+        P_FLAGS |= AM_FIND_CASE;
     else
-        P_FIND_FLAGS &= ~AM_FIND_CASE;
+        P_FLAGS &= ~AM_FIND_CASE;
 }
 
 
@@ -498,7 +525,7 @@ REB_R Process_Group_For_Parse(
 static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
     assert(IS_END(P_OUT));
 
-    REBLEN flags = P_FIND_FLAGS | AM_FIND_MATCH | AM_FIND_TAIL;
+    REBLEN flags = (P_FLAGS & PF_FIND_MASK) | AM_FIND_MATCH | AM_FIND_TAIL;
 
     if (P_POS >= Series_Len(P_INPUT))
         return END_FLAG;
@@ -607,7 +634,7 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
             rule,
             P_RULE_SPECIFIER,
             P_COLLECTION,
-            P_FIND_FLAGS
+            (P_FLAGS & PF_FIND_MASK) | (P_FLAGS & PF_REDBOL)
         )) {
             Copy_Cell(P_OUT, subresult);
             return THROWN_FLAG;
@@ -723,7 +750,7 @@ static REBIXO Parse_Array_One_Rule_Core(
             rule,
             P_RULE_SPECIFIER,
             P_COLLECTION,
-            P_FIND_FLAGS
+            (P_FLAGS & PF_FIND_MASK) | (P_FLAGS & PF_REDBOL)
         )) {
             Copy_Cell(P_OUT, subresult);
             return THROWN_FLAG;
@@ -966,7 +993,7 @@ static REBIXO To_Thru_Block_Rule(
                             formed,
                             0,
                             len,
-                            AM_FIND_MATCH | P_FIND_FLAGS
+                            AM_FIND_MATCH | (P_FLAGS & PF_FIND_MASK)
                         );
                         Free_Unmanaged_Series(formed);
                         if (i != NOT_FOUND) {
@@ -997,7 +1024,7 @@ static REBIXO To_Thru_Block_Rule(
                             VAL_SERIES(rule),
                             VAL_INDEX(rule),
                             len,
-                            AM_FIND_MATCH | P_FIND_FLAGS
+                            AM_FIND_MATCH | (P_FLAGS & PF_FIND_MASK)
                         );
 
                         if (i != NOT_FOUND) {
@@ -1090,7 +1117,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             Series_Len(P_INPUT),
             rule,
             1,
-            P_HAS_CASE ? AM_FIND_CASE : 0,
+            (P_FLAGS & AM_FIND_CASE),
             1
         );
 
@@ -1119,9 +1146,7 @@ static REBIXO To_Thru_Non_Block_Rule(
                 formed,
                 0,
                 form_len,
-                (P_FIND_FLAGS & AM_FIND_CASE)
-                    ? AM_FIND_CASE
-                    : 0
+                (P_FLAGS & AM_FIND_CASE)
             );
             Free_Unmanaged_Series(formed);
 
@@ -1143,9 +1168,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             VAL_SERIES(rule),
             VAL_INDEX(rule),
             VAL_LEN_AT(rule),
-            (P_FIND_FLAGS & AM_FIND_CASE)
-                ? AM_FIND_CASE
-                : 0
+            (P_FLAGS & AM_FIND_CASE)
         );
 
         if (i == NOT_FOUND)
@@ -1165,9 +1188,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             P_POS,
             Series_Len(P_INPUT),
             1,
-            (P_FIND_FLAGS & AM_FIND_CASE)
-                ? AM_FIND_CASE
-                : 0
+            (P_FLAGS & AM_FIND_CASE)
         );
 
         if (i == NOT_FOUND)
@@ -1187,9 +1208,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             Series_Len(P_INPUT),
             1,
             Cell_Bitset(rule),
-            (P_FIND_FLAGS & AM_FIND_CASE)
-                ? AM_FIND_CASE
-                : 0
+            (P_FLAGS & AM_FIND_CASE)
         );
 
         if (i == NOT_FOUND)
@@ -1302,7 +1321,8 @@ DECLARE_NATIVE(subparse)
     // a lot of edge cases like `while |` where this method isn't set up
     // to notice a "grammar error".  It could use review.
     //
-    REBFLGS flags = 0;
+    assert((P_FLAGS & PF_STATE_MASK) == 0);
+
     const Cell* set_or_copy_word = nullptr;
 
     REBINT mincount = 1; // min pattern count
@@ -1406,7 +1426,7 @@ DECLARE_NATIVE(subparse)
                     switch (cmd) {
                     // Note: mincount = maxcount = 1 on entry
                     case SYM_WHILE:
-                        flags |= PF_WHILE;
+                        P_FLAGS |= PF_WHILE;
                         // falls through
                     case SYM_ANY:
                         mincount = 0;
@@ -1422,10 +1442,10 @@ DECLARE_NATIVE(subparse)
                         continue;
 
                     case SYM_COPY:
-                        flags |= PF_COPY;
+                        P_FLAGS |= PF_COPY;
                         goto set_or_copy_pre_rule;
                     case SYM_SET:
-                        flags |= PF_SET;
+                        P_FLAGS |= PF_SET;
                         // falls through
                     set_or_copy_pre_rule:
                         FETCH_NEXT_RULE(L);
@@ -1440,29 +1460,29 @@ DECLARE_NATIVE(subparse)
                         continue;
 
                     case SYM_NOT:
-                        flags |= PF_NOT;
-                        flags ^= PF_NOT2;
+                        P_FLAGS |= PF_NOT;
+                        P_FLAGS ^= PF_NOT2;
                         FETCH_NEXT_RULE(L);
                         continue;
 
                     case SYM_AND:
                     case SYM_AHEAD:
-                        flags |= PF_AHEAD;
+                        P_FLAGS |= PF_AHEAD;
                         FETCH_NEXT_RULE(L);
                         continue;
 
                     case SYM_THEN:
-                        flags |= PF_THEN;
+                        P_FLAGS |= PF_THEN;
                         FETCH_NEXT_RULE(L);
                         continue;
 
                     case SYM_REMOVE:
-                        flags |= PF_REMOVE;
+                        P_FLAGS |= PF_REMOVE;
                         FETCH_NEXT_RULE(L);
                         continue;
 
                     case SYM_INSERT:
-                        flags |= PF_INSERT;
+                        P_FLAGS |= PF_INSERT;
                         FETCH_NEXT_RULE(L);
                         goto post_match_processing;
 
@@ -1492,7 +1512,7 @@ DECLARE_NATIVE(subparse)
                         P_RULE,
                         P_RULE_SPECIFIER,
                         collection,
-                        P_FIND_FLAGS
+                        (P_FLAGS & PF_FIND_MASK) | (P_FLAGS & PF_REDBOL)
                     );
 
                     DROP_GC_GUARD(collection);
@@ -1650,7 +1670,7 @@ DECLARE_NATIVE(subparse)
                     continue; }
 
                     case SYM_CHANGE:
-                        flags |= PF_CHANGE;
+                        P_FLAGS |= PF_CHANGE;
                         FETCH_NEXT_RULE(L);
                         continue;
 
@@ -1745,7 +1765,8 @@ DECLARE_NATIVE(subparse)
                     //
                     // https://github.com/rebol/rebol-issues/issues/2269
                     //
-                    // if (flags != 0) fail (Error_Parse_Rule());
+                    // if (P_FLAGS & PF_STATE_MASK != 0)
+                    //     fail (Error_Parse_Rule());
 
                     Copy_Cell(
                         Sink_Var_May_Fail(rule, P_RULE_SPECIFIER),
@@ -1778,7 +1799,7 @@ DECLARE_NATIVE(subparse)
                     // rule or not.  So only reset the begin position if the
                     // seek appears to be a "separate rule" in its own right.
                     //
-                    if (flags == 0)
+                    if ((P_FLAGS & PF_STATE_MASK) == 0)
                         begin = P_POS;
 
                     FETCH_NEXT_RULE(L);
@@ -1852,7 +1873,7 @@ DECLARE_NATIVE(subparse)
 
         // Counter? 123
         if (IS_INTEGER(rule)) { // Specify count or range count
-            flags |= PF_WHILE;
+            P_FLAGS |= PF_WHILE;
             mincount = maxcount = Int32s(rule, 0);
 
             FETCH_NEXT_RULE(L);
@@ -1993,7 +2014,7 @@ DECLARE_NATIVE(subparse)
                         subrule,
                         P_RULE_SPECIFIER,
                         P_COLLECTION,
-                        P_FIND_FLAGS
+                        (P_FLAGS & PF_FIND_MASK) | (P_FLAGS & PF_REDBOL)
                     )) {
                         Copy_Cell(P_OUT, P_CELL);
                         return R_THROWN;
@@ -2027,7 +2048,7 @@ DECLARE_NATIVE(subparse)
                     rule,
                     P_RULE_SPECIFIER,
                     P_COLLECTION,
-                    P_FIND_FLAGS
+                    (P_FLAGS & PF_FIND_MASK) | (P_FLAGS & PF_REDBOL)
                 )) {
                     Copy_Cell(P_OUT, P_CELL);
                     return R_THROWN;
@@ -2076,7 +2097,7 @@ DECLARE_NATIVE(subparse)
                 if (count < 0)
                     count = INT32_MAX; // the forever case
 
-                if (i == P_POS and not (flags & PF_WHILE)) {
+                if (i == P_POS and not (P_FLAGS & PF_WHILE)) {
                     //
                     // input did not advance
 
@@ -2117,16 +2138,16 @@ DECLARE_NATIVE(subparse)
         // with bar e.g. `[a | b | c]`.
 
     post_match_processing:
-        if (flags) {
-            if (flags & PF_NOT) {
-                if ((flags & PF_NOT2) and P_POS != NOT_FOUND)
+        if (P_FLAGS & PF_STATE_MASK) {
+            if (P_FLAGS & PF_NOT) {
+                if ((P_FLAGS & PF_NOT2) and P_POS != NOT_FOUND)
                     P_POS = NOT_FOUND;
                 else
                     P_POS = begin;
             }
 
             if (P_POS == NOT_FOUND) {
-                if (flags & PF_THEN) {
+                if (P_FLAGS & PF_THEN) {
                     FETCH_TO_BAR_OR_END(L);
                     if (NOT_END(P_RULE))
                         FETCH_NEXT_RULE(L);
@@ -2137,7 +2158,7 @@ DECLARE_NATIVE(subparse)
                 //
                 count = (begin > P_POS) ? 0 : P_POS - begin;
 
-                if (flags & PF_COPY) {
+                if (P_FLAGS & PF_COPY) {
                     DECLARE_VALUE (temp);
                     if (ANY_ARRAY(P_INPUT_VALUE)) {
                         Init_Any_Array(
@@ -2175,7 +2196,7 @@ DECLARE_NATIVE(subparse)
                         temp
                     );
                 }
-                else if (flags & PF_SET) {
+                else if (P_FLAGS & PF_SET) {
                     if (IS_SER_ARRAY(P_INPUT)) {
                         if (count != 0)
                             Derelativize(
@@ -2204,15 +2225,15 @@ DECLARE_NATIVE(subparse)
                     }
                 }
 
-                if (flags & PF_REMOVE) {
+                if (P_FLAGS & PF_REMOVE) {
                     Fail_If_Read_Only_Series(P_INPUT);
                     if (count) Remove_Series(P_INPUT, begin, count);
                     P_POS = begin;
                 }
 
-                if (flags & (PF_INSERT | PF_CHANGE)) {
+                if (P_FLAGS & (PF_INSERT | PF_CHANGE)) {
                     Fail_If_Read_Only_Series(P_INPUT);
-                    count = (flags & PF_INSERT) ? 0 : count;
+                    count = (P_FLAGS & PF_INSERT) ? 0 : count;
                     bool only = false;
 
                     if (IS_END(L->value))
@@ -2264,7 +2285,7 @@ DECLARE_NATIVE(subparse)
                         DECLARE_VALUE (specified);
                         Derelativize(specified, rule, P_RULE_SPECIFIER);
 
-                        REBLEN mod_flags = (flags & PF_INSERT) ? 0 : AM_PART;
+                        REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
                         if (
                             not only and
                             Splices_Into_Type_Without_Only(P_TYPE, specified)
@@ -2272,7 +2293,7 @@ DECLARE_NATIVE(subparse)
                             mod_flags |= AM_SPLICE;
                         }
                         P_POS = Modify_Array(
-                            (flags & PF_CHANGE)
+                            (P_FLAGS & PF_CHANGE)
                                 ? SYM_CHANGE
                                 : SYM_INSERT,
                             ARR(P_INPUT),
@@ -2295,12 +2316,12 @@ DECLARE_NATIVE(subparse)
 
                         P_POS = begin;
 
-                        REBLEN mod_flags = (flags & PF_INSERT) ? 0 : AM_PART;
+                        REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
 
                         if (P_TYPE == REB_BINARY)
                             P_POS = Modify_Binary(
                                 P_INPUT_VALUE,
-                                (flags & PF_CHANGE)
+                                (P_FLAGS & PF_CHANGE)
                                     ? SYM_CHANGE
                                     : SYM_INSERT,
                                 specified,
@@ -2311,7 +2332,7 @@ DECLARE_NATIVE(subparse)
                         else {
                             P_POS = Modify_String(
                                 P_INPUT_VALUE,
-                                (flags & PF_CHANGE)
+                                (P_FLAGS & PF_CHANGE)
                                     ? SYM_CHANGE
                                     : SYM_INSERT,
                                 specified,
@@ -2323,11 +2344,11 @@ DECLARE_NATIVE(subparse)
                     }
                 }
 
-                if (flags & PF_AHEAD)
+                if (P_FLAGS & PF_AHEAD)
                     P_POS = begin;
             }
 
-            flags = 0;
+            P_FLAGS &= ~(PF_STATE_MASK);
             set_or_copy_word = nullptr;
         }
 
@@ -2372,6 +2393,7 @@ DECLARE_NATIVE(subparse)
 //          [<maybe> block!]
 //      /case "Uses case-sensitive comparison"
 //      /match "Return PARSE input instead of synthesized result"
+//      /redbol "Use Rebol2/Red-style rules vs. UPARSE-style rules"
 //  ]
 //
 DECLARE_NATIVE(parse)
@@ -2402,7 +2424,8 @@ DECLARE_NATIVE(parse)
         rules,
         SPECIFIED, // rules is a non-relative Value
         nullptr,  // start out with no COLLECT in effect, so no P_COLLECTION
-        REF(case) or IS_BINARY(ARG(input)) ? AM_FIND_CASE : 0
+        (REF(case) or IS_BINARY(ARG(input)) ? AM_FIND_CASE : 0)
+            | (REF(redbol) ? PF_REDBOL : 0)
         //
         // We always want "case-sensitivity" on binary bytes, vs. treating
         // as case-insensitive bytes for ASCII characters.
