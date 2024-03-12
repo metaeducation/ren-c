@@ -200,7 +200,9 @@ for-each [alias] [  ; SET-WORD!s for readability + findability [1]
     ; Make calling the undecorated version an error, until it becomes shimmed
     ; (e.g. func: does [fail ...])
     ;
-    error: spaced [(mold name) "not shimmed yet, see" as word! (mold alias)]
+    error: spaced [
+        (lib/mold name) "not shimmed yet, see" as word! (lib/mold alias)
+    ]
     system/contexts/user/(name): lib3/func [] lib3/compose [
         fail/where (error) 'return
     ]
