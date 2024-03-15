@@ -872,7 +872,7 @@ for-each [sw-cat list] boot-errors [
         f-name: uppercase/part to-c-name id 1
         parse2 f-name [
             opt some [
-                "_" w:  ; <here>
+                "_" w: <here>
                 (uppercase/part w 1)
                 |
                 skip

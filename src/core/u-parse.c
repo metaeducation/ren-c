@@ -849,7 +849,7 @@ static REBIXO To_Thru_Block_Rule(
                     rule = cast(Element*, cell);
                 }
             }
-            else if (Is_Tag(rule) and not (P_FLAGS & PF_REDBOL)) {
+            else if (Is_Tag(rule)) {
                 bool strict = true;
                 if (0 == CT_String(rule, Root_End_Tag, strict)) {
                     if (VAL_INDEX(iter) >= P_INPUT_LEN)
@@ -1072,7 +1072,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         return P_INPUT_LEN;
     }
 
-    if (kind == REB_TAG and not (P_FLAGS & PF_REDBOL)) {
+    if (kind == REB_TAG) {
         bool strict = true;
         if (0 == CT_String(rule, Root_End_Tag, strict)) {
             return P_INPUT_LEN;
@@ -2063,34 +2063,19 @@ DECLARE_NATIVE(subparse)
             );
             goto pre_rule;
         }
-        else if (Is_Word(P_RULE)) {
-            DECLARE_VALUE (temp);
-            const Element* gotten = Get_Parse_Value(
-                temp,
-                P_RULE,
-                P_RULE_SPECIFIER
-            );
-            bool strict = true;
-            if (
-                Is_Tag(gotten)
-                and 0 == CT_String(gotten, Root_Here_Tag, strict)
-            ){
-                FETCH_NEXT_RULE(L);
-            }
-            // fall through
-        }
-        else if (Is_Tag(P_RULE)) {
+
+        if (Is_Tag(P_RULE)) {
             bool strict = true;
             if (0 == CT_String(P_RULE, Root_Here_Tag, strict))
                 FETCH_NEXT_RULE(L);
+            else
+                fail ("SET-WORD! works with <HERE> tag in PARSE2/PARSE3");
 
-            // fall through
+            Handle_Mark_Rule(L, set_or_copy_word, P_RULE_SPECIFIER);
+            goto pre_rule;
         }
-        else
-            fail ("PARSE SET-WORD! use with <HERE>, COLLECT, ACROSS");
 
-        Handle_Mark_Rule(L, set_or_copy_word, P_RULE_SPECIFIER);
-        goto pre_rule;
+        fail ("PARSE SET-WORD! use with <HERE>, COLLECT, ACROSS");
     }
     else if (Any_Path(rule)) {
         fail ("Use TUPLE! a.b.c instead of PATH! a/b/c");
@@ -2140,9 +2125,6 @@ DECLARE_NATIVE(subparse)
         break;
 
       case REB_TAG: {  // tag combinator in UPARSE, matches in UPARSE2
-        if (P_FLAGS & PF_REDBOL)
-            break;  // gets treated as literal item
-
         bool strict = true;
         if (0 == CT_String(rule, Root_Here_Tag, strict)) {
             FETCH_NEXT_RULE(L);  // not being assigned w/set-word!, no-op

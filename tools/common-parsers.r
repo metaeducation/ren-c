@@ -46,7 +46,7 @@ load-until-blank: func [
 
     parse2 text [
         some [not terminator rebol-value]
-        opt wsp opt [newline opt newline] position:  ; <here>
+        opt wsp opt [newline opt newline] position: <here>
         to end
     ] then [
         values: load copy/part text position
@@ -87,10 +87,10 @@ export proto-parser: context [
     grammar: context bind [
 
         rule: [
-            parse-position:  ; <here>
+            parse-position: <here>
             opt fileheader
             opt some [
-                parse-position:  ; <here>
+                parse-position: <here>
                 segment
             ]
         ]
@@ -99,7 +99,7 @@ export proto-parser: context [
             (data: null)
             doubleslashed-lines
             and is-fileheader
-            eoh:  ; <here>
+            eoh: <here>
             (
                 emit-fileheader data
             )

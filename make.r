@@ -1154,7 +1154,7 @@ parse2 user-config/toolset [
             ]
         )
     ]
-    pos:  ; <here>
+    pos: <here>
 ] else [
     fail ["failed to parse toolset at:" mold pos]
 ]

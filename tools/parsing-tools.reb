@@ -51,7 +51,7 @@ export parsing-at: func [
             ]
         ]
         use compose [(word)] reduce [compose [
-            (as set-word! word)  ; <here>
+            (as set-word! word) <here>
             (as group! code) result
         ]]
     ]

@@ -27,9 +27,9 @@ decode-lines: func [
 
     let [pos rest]
     let line-rule: [
-        pos:  ; <here>
+        pos: <here>
         pattern
-        rest:  ; <here>
+        rest: <here>
         (rest: remove/part pos rest)
         :rest  ; seek
         thru newline
@@ -59,7 +59,7 @@ encode-lines: func [
     let pos
     parse2 text [
         opt some [
-            thru newline, pos:  ; <here>
+            thru newline, pos: <here>
             [
                 newline (pos: insert pos line-prefix)
               | (pos: insert pos bol)
@@ -125,14 +125,14 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
 
     parse2 text [
         opt some [
-            bol:  ; <here>
+            bol: <here>
             to newline
-            eol:  ; <here>
+            eol: <here>
             skip
             count-line-rule
         ]
-        bol:  ; <here>
-        skip, to end, eol:  ; <here>
+        bol: <here>
+        skip, to end, eol: <here>
         count-line-rule
     ]
 
@@ -155,7 +155,7 @@ text-line-of: func [
 
     parse2 text [
         opt some [
-            to newline cursor:  ; <here>
+            to newline cursor: <here>
 
             ; IF deprecated in Ren-C, but :(...) with logic not available
             ; in the bootstrap build.
@@ -185,13 +185,13 @@ text-location-of: func [
     let eol
 
     let advance-rule: [
-        eol:  ; <here>
+        eol: <here>
         skip (line: line + 1)
     ]
     let cursor
     parse2 text [
         opt some [
-            to newline cursor:  ; <here>
+            to newline cursor: <here>
 
             ; !!! IF is deprecated in PARSE, but this code is expected to work
             ; in bootstrap.

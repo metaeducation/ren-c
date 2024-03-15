@@ -236,7 +236,7 @@ sys-globals-parser: context [
 
         rule: [
             opt some [
-                parse-position:  ; <here>
+                parse-position: <here>
                 segment
             ]
         ]

@@ -68,11 +68,11 @@ export cscape: func [
     let num-text: to text! num  ; CHANGE won't take GROUP! to evaluate, #1279
 
     let list: collect* [
-        parse2 string [(col: 0), start:  ; <here>
+        parse2 string [(col: 0), start: <here>
         opt some [
             [
                 (prefix: null suffix: null)
-                finish:  ; <here>
+                finish: <here>
 
                 "${" change [copy expr: [to "}"]] (num-text) skip (
                     mode: #cname
@@ -120,7 +120,7 @@ export cscape: func [
                 |
             newline
             (col: 0 prefix: null suffix: null)
-            start:  ; <here>
+            start: <here>
                 |
             skip (col: col + 1)
         ]]
@@ -249,7 +249,7 @@ export cscape: func [
     let start-line
     let end-line
     parse2 string [
-        (allwhite: true seen-void: false) start-line:  ; <here>
+        (allwhite: true seen-void: false) start-line: <here>
         opt some [
             space
             |
@@ -258,13 +258,13 @@ export cscape: func [
                 ; PARSE arity-1 IF deprecated in Ren-C, but :(...) with logic
                 ; not available in the bootstrap build.
                 ;
-                end-line:  ; <here>
+                end-line: <here>
                 (if allwhite and (seen-void) and (end-line != next start-line) [
                     insert kill-lines start-line  ; back to front for delete
                     insert kill-lines end-line
                 ])
             ]
-            (allwhite: true seen-void: false) start-line:  ; <here>
+            (allwhite: true seen-void: false) start-line: <here>
             |
             [
                 void-marker  ; e.g. "!?*VOID*?!"

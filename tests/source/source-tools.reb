@@ -204,7 +204,7 @@ export analyse: context [
                         all [
                             parse2 last-func-end [
                                 function-spacing-rule
-                                position:  ; <here>
+                                position: <here>
                                 to end  ; accept (true)
                                 |
                                 end skip  ; accept (false)
