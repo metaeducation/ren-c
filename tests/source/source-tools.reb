@@ -37,9 +37,10 @@ REBOL [
 ; This script makes some assumptions about the structure of the repo.
 ;
 
+parse2: :parse/redbol  ; uses Redbol parsing conventions in common-parsers.r
+
 do <../../tools/common.r>
 
-parse: :parse/redbol  ; uses Redbol parsing conventions in common-parsers.r
 do join tools-dir %common-parsers.r
 
 do join tools-dir %text-lines.reb
@@ -162,7 +163,7 @@ rebsource: context [
                     )
                 ]
 
-                parse/case data [
+                parse2/case data [
                     some [
                         position:  ; <here>
                         malloc-check
@@ -187,7 +188,7 @@ rebsource: context [
                     do in c-parser-extension [
                         if last-func-end [
                             all [
-                                parse/match last-func-end [
+                                parse2/match last-func-end [
                                     function-spacing-rule
                                     position:  ; <here>
                                     to end
@@ -204,7 +205,7 @@ rebsource: context [
                         ]
                     ]
 
-                    parse/match proto-parser/data [
+                    parse2/match proto-parser/data [
                         opt 'export
                         set name: set-word! (name: to-word name)
                         opt 'enfix
@@ -324,7 +325,7 @@ rebsource: context [
             over-max-len: copy []
             inconsistent-eol: copy []
 
-            parse/case data [
+            parse2/case data [
 
                 last-pos:  ; <here>
 
