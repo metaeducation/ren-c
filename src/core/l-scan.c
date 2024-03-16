@@ -2839,10 +2839,12 @@ DECLARE_NATIVE(transcode)
         Value* ivar = Get_Mutable_Var_May_Fail(ARG(line_number), SPECIFIED);
         Init_Integer(ivar, ss.line);
     }
-    if (REF(next)) {
+    if (REF(next) and TOP_INDEX != base) {
         Value* nvar = Get_Mutable_Var_May_Fail(ARG(next_arg), SPECIFIED);
         Copy_Cell(nvar, ARG(source));
         if (IS_TEXT(ARG(source))) {
+            assert(ss.end <= Cell_Binary_Tail(source));
+            assert(ss.end >= Cell_Binary_Head(source));
             assert(VAL_INDEX(source) == 0);  // binary converted
             Byte* bp = Cell_Binary_Head(source);
             for (; bp < ss.end; ++bp) {
