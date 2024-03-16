@@ -26,8 +26,6 @@ if trap [:import/into] [  ; See %import-shim.r
 
 import <bootstrap-shim.r>
 
-seek: []  ; Temporary measure, SEEK as no-op in bootstrap
-
 export parsing-at: func [
     {Make rule that evaluates a block for next input position, fails otherwise}
     return: [block!]
@@ -45,7 +43,7 @@ export parsing-at: func [
         ]
         code: compose [
             result: either position: (spread code) [
-                [:position]  ; seek
+                [seek position]
             ][
                 [end skip]
             ]

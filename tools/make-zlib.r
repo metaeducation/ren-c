@@ -297,7 +297,7 @@ fix-kr: func [
 
                 check-point: skip check-point length-diff
             )
-            :check-point  ; seek
+            seek check-point
             | skip
         ]
         <end> | (fail)

@@ -1973,15 +1973,7 @@ DECLARE_NATIVE(subparse)
                 goto handle_set;
             }
             else if (Is_Get_Word(rule)) {
-                //
-                // :word - change the index for the series to a new position
-                //
-                if (P_FLAGS & PF_REDBOL) {
-                    Handle_Seek_Rule_Dont_Update_Begin(L, rule, P_RULE_SPECIFIER);
-                    FETCH_NEXT_RULE(L);
-                    goto pre_rule;
-                }
-                fail ("GET-WORD! in PARSE is reserved (unless using PARSE2)");
+                fail ("GET-WORD! in modern PARSE is reserved (use SEEK)");
             }
             else {
                 assert(Is_Word(rule));  // word - some other variable

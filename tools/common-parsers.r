@@ -261,7 +261,7 @@ export rewrite-if-directives: func [
                     | change ["#elif" thru newline "#endif"] ("#endif")
                     | change ["#else" thru newline "#endif"] ("#endif")
                 ] (rewritten: true)
-                :position  ; seek
+                seek position
 
               | thru newline
             ]

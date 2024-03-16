@@ -46,7 +46,7 @@ export test-source-rule: [
             ]
         )
             |
-        ["{" | {"}] :position  ; seek
+        ["{" | {"}] seek position
         break
             |
         "[" test-source-rule "]"  ; plain BLOCK! in code for a test
@@ -60,10 +60,10 @@ export test-source-rule: [
         ; too far".  It's either a syntax error, or the closing bracket of
         ; a multi-test block.
         ;
-        "]", :position  ; seek
+        "]", seek position
         break
             |
-        ")", :position  ; seek
+        ")", seek position
         break
             |
         skip

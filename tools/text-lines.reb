@@ -31,7 +31,7 @@ decode-lines: func [
         pattern
         rest: <here>
         (rest: remove/part pos rest)
-        :rest  ; seek
+        seek rest
         thru newline
     ]
     parse2 text [opt some line-rule] else [
@@ -64,7 +64,7 @@ encode-lines: func [
                 newline (pos: insert pos line-prefix)
               | (pos: insert pos bol)
             ]
-            :pos  ; seek
+            seek pos
         ]
     ]
 
