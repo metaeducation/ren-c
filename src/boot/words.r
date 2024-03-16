@@ -197,6 +197,7 @@ reject
 while
 return
 limit
+seek
 ??
 accept
 break

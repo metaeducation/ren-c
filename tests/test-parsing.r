@@ -31,7 +31,7 @@ parsing-at: func [  ; redefined here for <here> usage in regular PARSE
         if not end [
             block: compose/deep [either not tail? (word) [(block)] [_]]
         ]
-        block: compose/deep [result: either position: (block) [[:position]] [[end skip]]]
+        block: compose/deep [result: either position: (block) [[seek position]] [[end skip]]]
         use compose [(word)] compose/deep [
             [(as set-word! :word) <here>
             (as group! block) result]
@@ -66,11 +66,11 @@ make object! [
                 ] then [
                     [end skip]
                 ] else [
-                    [:position]
+                    [seek position]
                 ]
             ) success-rule
                 |
-            ["{" | {"}] :position break
+            ["{" | {"}] seek position break
                 |
             "[" test-source-rule "]" ;-- plain BLOCK! in code for a test
                 |
@@ -83,9 +83,9 @@ make object! [
             ; too far".  It's either a syntax error, or the closing bracket of
             ; a multi-test block.
             ;
-            "]" :position break
+            "]" seek position break
                 |
-            ")" :position break
+            ")" seek position break
                 |
             skip
         ]
@@ -255,7 +255,7 @@ make object! [
                 [
                     position: "%"
                     (value: transcode/next position the next-position:)
-                    :next-position
+                    seek next-position
                         |
                     ; dialect failure?
                     some whitespace
@@ -293,9 +293,9 @@ make object! [
                     "system/version:" to end (guard: _)
                         |
                     (fail "collect-logs - log file parsing problem")
-                ] position: guard break ; Break when error detected.
+                ] position: <here> guard break ; Break when error detected.
                     |
-                :position
+                seek position
             ]
         ]
     ]

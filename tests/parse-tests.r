@@ -256,6 +256,10 @@
     did parse/match ["a" "aa" "aaa"] [some [into [((count: count + 1)) "a"]]]
 )
 
+(did parse/match "aaabbb" [some "a" foo: <here> some "b" seek foo some "b"])
+
+(did parse/redbol/match "aaabbb" [some "a" foo: some "b" :foo some "b"])
+
 
 ; COLLECT and KEEP keywords
 ;

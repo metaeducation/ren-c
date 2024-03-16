@@ -201,7 +201,7 @@ make object! compose [
 
                         ] position: guard break
                             |
-                        :position
+                        seek position
                     ]
                 ] else [
                     fail "do-recover log file parsing problem"

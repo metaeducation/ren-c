@@ -1423,6 +1423,12 @@ DECLARE_NATIVE(subparse)
                 if (cmd <= SYM_BREAK) { // optimization
 
                     switch (cmd) {
+
+                    case SYM_SEEK:  // modern variant on GET-WORD! in PARSE
+                        FETCH_NEXT_RULE(L);
+                        rule = P_RULE;
+                        goto seek_rule;
+
                     // Note: mincount = maxcount = 1 on entry
                     case SYM_WHILE:
                         P_FLAGS |= PF_WHILE;
@@ -1798,6 +1804,10 @@ DECLARE_NATIVE(subparse)
 
                 // :word - change the index for the series to a new position
                 if (IS_GET_WORD(rule)) {
+                    if (not (P_FLAGS & PF_REDBOL))
+                        fail ("Use SEEK vs. GET-WORD! unless PARSE/REDBOL");
+
+                  seek_rule: ;
                     DECLARE_VALUE (temp);
                     Move_Opt_Var_May_Fail(temp, rule, P_RULE_SPECIFIER);
                     if (not ANY_SERIES(temp)) { // #1263
