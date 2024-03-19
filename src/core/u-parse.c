@@ -93,10 +93,6 @@
 #define P_NUM_QUOTES_VALUE  (L->rootvar + 3)
 #define P_NUM_QUOTES        VAL_INT32(P_NUM_QUOTES_VALUE)
 
-#define P_COLLECTION_VALUE  (L->rootvar + 4)
-#define P_COLLECTION \
-    (IS_NULLED(P_COLLECTION_VALUE) ? nullptr : Cell_Array(P_COLLECTION_VALUE))
-
 #define P_OUT (L->out)
 
 #define P_CELL Level_Spare(L)
@@ -198,7 +194,6 @@ static bool Subparse_Throws(
     Specifier* input_specifier,
     const Cell* rules,
     Specifier* rules_specifier,
-    Array* opt_collection,
     REBFLGS flags
 ){
     assert(ANY_ARRAY(rules));
@@ -261,24 +256,11 @@ static bool Subparse_Throws(
     //
     Init_Nulled(Erase_Cell(Level_Args_Head(L) + 2));
 
-    // If there's an array for collecting into, there has to be some way of
-    // passing it between frames.
-    //
-    REBLEN collect_tail;
-    if (opt_collection) {
-        Init_Block(Erase_Cell(Level_Args_Head(L) + 3), opt_collection);
-        collect_tail = Array_Len(opt_collection);  // roll back here on failure
-    }
-    else {
-        Init_Nulled(Erase_Cell(Level_Args_Head(L) + 3));
-        collect_tail = 0;
-    }
-
   #if defined(NDEBUG)
-    assert(ACT_NUM_PARAMS(NAT_ACTION(subparse)) == 4); // elides RETURN:
+    assert(ACT_NUM_PARAMS(NAT_ACTION(subparse)) == 3); // elides RETURN:
   #else
-    assert(ACT_NUM_PARAMS(NAT_ACTION(subparse)) == 5); // checks RETURN:
-    Init_Nulled(Erase_Cell(Level_Args_Head(L) + 4));
+    assert(ACT_NUM_PARAMS(NAT_ACTION(subparse)) == 4); // checks RETURN:
+    Init_Nulled(Erase_Cell(Level_Args_Head(L) + 3));
   #endif
 
     // !!! By calling the subparse native here directly from its C function
@@ -290,9 +272,6 @@ static bool Subparse_Throws(
 
     Drop_Action(L);
     Drop_Level(L);
-
-    if ((r == R_THROWN or IS_NULLED(out)) and opt_collection)
-        TERM_ARRAY_LEN(opt_collection, collect_tail);  // roll back on abort
 
     if (r == R_THROWN) {
         //
@@ -632,7 +611,6 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
             SPECIFIED,
             rule,
             P_RULE_SPECIFIER,
-            P_COLLECTION,
             (P_FLAGS & PF_FIND_MASK) | (P_FLAGS & PF_REDBOL)
         )) {
             Copy_Cell(P_OUT, subresult);
@@ -748,7 +726,6 @@ static REBIXO Parse_Array_One_Rule_Core(
             SPECIFIED,
             rule,
             P_RULE_SPECIFIER,
-            P_COLLECTION,
             (P_FLAGS & PF_FIND_MASK) | (P_FLAGS & PF_REDBOL)
         )) {
             Copy_Cell(P_OUT, subresult);
@@ -787,21 +764,6 @@ static REBIXO Parse_Array_One_Rule_Core(
 //
 INLINE REBIXO Parse_Array_One_Rule(Level* L, const Cell* rule) {
     return Parse_Array_One_Rule_Core(L, P_POS, rule);
-}
-
-
-// !!! R3C does not have the Parse_One_Rule() restructuring.  This shim
-// routine works around that.
-//
-static REBIXO Parse_One_Rule(
-    Level* L,
-    REBLEN pos,
-    const Cell* rule
-){
-    if (ANY_ARRAY(P_INPUT_VALUE))
-        return Parse_Array_One_Rule_Core(L, pos, rule);
-
-    return Parse_String_One_Rule(L, rule);
 }
 
 
@@ -1231,8 +1193,6 @@ static REBIXO To_Thru_Non_Block_Rule(
 //      return: [~null~ integer!]
 //      input [any-series!]
 //      find-flags [integer!]
-//      collection "Array into which any KEEP values are collected"
-//          [blank! any-series!]
 //      <local> num-quotes
 //  ]
 //
@@ -1272,19 +1232,6 @@ DECLARE_NATIVE(subparse)
 
     Set_Parse_Series(L, ARG(input));  // doesn't reset, just checks
     UNUSED(ARG(num_quotes));  // Set_Parse_Series sets this
-
-    // Every time we hit an alternate rule match (with |), we have to reset
-    // any of the collected values.  Remember the tail when we started.
-    //
-    // !!! Could use the VAL_INDEX() of ARG(collect) for this
-    //
-    // !!! How this interplays with throws that might be caught before the
-    // COLLECT's stack level is not clear (mostly because ACCEPT and REJECT
-    // were not clear; many cases dropped them on the floor in R3-Alpha, and
-    // no real resolution exists...see the UNUSED(interrupted) cases.)
-    //
-    REBLEN collection_tail = P_COLLECTION ? Array_Len(P_COLLECTION) : 0;
-    UNUSED(ARG(collection)); // implicitly accessed as P_COLLECTION
 
     assert(IS_END(P_OUT)); // invariant provided by evaluator
 
@@ -1490,189 +1437,6 @@ DECLARE_NATIVE(subparse)
                         P_FLAGS |= PF_INSERT;
                         FETCH_NEXT_RULE(L);
                         goto post_match_processing;
-
-
-                  case SYM_COLLECT: {
-                    FETCH_NEXT_RULE(L);
-                    if (not (Is_Word(P_RULE) or Is_Set_Word(P_RULE)))
-                        fail (Error_Parse_Command(L));
-
-                    FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, f);
-                    if (not Is_Block(P_RULE))
-                        fail (Error_Parse_Variable(L));
-
-                    Array* collection = Make_Array_Core(
-                        10,  // !!! how big?
-                        NODE_FLAG_MANAGED
-                    );
-                    PUSH_GC_GUARD(collection);
-
-                    bool interrupted;
-                    assert(IS_END(P_OUT));  // invariant until finished
-                    bool threw = Subparse_Throws(
-                        &interrupted,
-                        P_OUT,
-                        P_INPUT_VALUE, // affected by P_POS assignment above
-                        SPECIFIED,
-                        P_RULE,
-                        P_RULE_SPECIFIER,
-                        collection,
-                        (P_FLAGS & PF_FIND_MASK) | (P_FLAGS & PF_REDBOL)
-                    );
-
-                    DROP_GC_GUARD(collection);
-                    UNUSED(interrupted);  // !!! ignore ACCEPT/REJECT (?)
-
-                    if (threw)
-                        return R_THROWN;
-
-                    if (IS_NULLED(P_OUT)) {  // match of rule failed
-                        SET_END(P_OUT);  // restore invariant
-                        goto next_alternate;  // backtrack collect, seek |
-                    }
-                    P_POS = VAL_INT32(P_OUT);
-                    SET_END(P_OUT);  // restore invariant
-
-                    Init_Block(
-                        Sink_Var_May_Fail(
-                            set_or_copy_word,
-                            P_RULE_SPECIFIER
-                        ),
-                        collection
-                    );
-
-                    FETCH_NEXT_RULE(L);
-                    continue; }
-
-                  case SYM_KEEP: {
-                    if (not P_COLLECTION)
-                        fail ("Used PARSE KEEP with no COLLECT in effect");
-
-                    FETCH_NEXT_RULE(L);  // e.g. skip the KEEP word!
-
-                    // !!! We follow the R3-Alpha principle of not using
-                    // PATH! dispatch here, so it's `keep only` instead of
-                    // `keep/only`.  But is that any good?  Review.
-                    //
-                    bool only;
-                    if (Is_Word(P_RULE) and Cell_Word_Id(P_RULE) == SYM_ONLY) {
-                        only = true;
-                        FETCH_NEXT_RULE(L);
-                    }
-                    else
-                        only = false;
-
-                    REBLEN pos_before = P_POS;
-
-                    rule = Get_Parse_Value(save, P_RULE, P_RULE_SPECIFIER);
-
-                    bool reduce_instead = false;  // was IS_GET_BLOCK()
-                    if (reduce_instead) {
-                        //
-                        // Experimental use of GET-BLOCK! to mean ordinary
-                        // evaluation of material that is not matched as
-                        // a PARSE rule.  It does a REDUCE instead of a plain
-                        // DO in order to more parallel the evaluator behavior
-                        // of a GET-BLOCK!, which is probably the best idea.
-                        //
-                        // !!! There is no GET-BLOCK! or GET-GROUP! in R3C.
-                        // The change was made later.
-                        //
-                        /*StackIndex base = TOP_INDEX;
-                        assert(IS_END(P_OUT));  // should be true until finish
-                        if (Reduce_To_Stack_Throws(
-                            P_OUT,
-                            rule,
-                            P_RULE_SPECIFIER
-                        )){
-                            return R_THROWN;
-                        }
-                        SET_END(P_OUT);  // since we didn't throw, put it back
-
-                        if (TOP_INDEX == base) {
-                            // Nothing to add
-                        }
-                        else if (only) {
-                            Init_Block(
-                                Alloc_Tail_Array(P_COLLECTION),
-                                Pop_Stack_Values(base)
-                            );
-                        }
-                        else {
-                            Value* stacked = Data_Stack_At(base);
-                            do {
-                                ++stacked;
-                                Copy_Cell(
-                                    Alloc_Tail_Array(P_COLLECTION),
-                                    stacked
-                                );
-                            } while (stacked != TOP);
-                        }
-                        Drop_Data_Stack_To(base);
-
-                        // Don't touch P_POS, we didn't consume anything from
-                        // the input series.
-                        */
-                        fail ("No GET-BLOCK! in R3C");
-                    }
-                    else {
-                        // !!! R3-Alpha parse had a weird way of doing things
-                        // like `set x some integer!` which doesn't generalize
-                        // easily.  The "Parse_One_Rule" will allow us to do
-                        // `keep integer!` but not `keep some integer!`...you
-                        // have to do `keep [some integer!]`.  This should be
-                        // reviewed as part of a general PARSE overhaul--it's
-                        // much clearer and better checked than in R3-Alpha.
-
-                        REBIXO ixo = Parse_One_Rule(L, P_POS, rule);
-                        if (ixo == THROWN_FLAG)
-                            return R_THROWN;
-
-                        if (ixo == END_FLAG)  // match of rule failed
-                            goto next_alternate;  // backtrack collect, seek |
-
-                        P_POS = cast(REBLEN, ixo);
-                        assert(P_POS >= pos_before);  // 0 or more matches
-
-                        Array* target;
-                        if (P_POS == pos_before and not only) {
-                            target = nullptr;
-                        }
-                        if (not IS_SER_ARRAY(P_INPUT)) {  // TEXT!, etc.
-                            target = nullptr;  // not an array, one item
-                            Init_Any_Series(
-                                Alloc_Tail_Array(P_COLLECTION),
-                                P_TYPE,
-                                Copy_Sequence_At_Len(
-                                    P_INPUT,
-                                    pos_before,
-                                    P_POS - pos_before
-                                )
-                            );
-                        }
-                        else if (only) {  // taken to mean "add as one block"
-                            target = Make_Array_Core(
-                                P_POS - pos_before,
-                                NODE_FLAG_MANAGED
-                            );
-                            Init_Block(Alloc_Tail_Array(P_COLLECTION), target);
-                        }
-                        else
-                            target = P_COLLECTION;
-
-                        if (target) {
-                            REBLEN n;
-                            for (n = pos_before; n < P_POS; ++n)
-                                Derelativize(
-                                    Alloc_Tail_Array(target),
-                                    Array_At(ARR(P_INPUT), n),
-                                    P_INPUT_SPECIFIER
-                                );
-                        }
-                    }
-
-                    FETCH_NEXT_RULE(L);
-                    continue; }
 
                     case SYM_CHANGE:
                         P_FLAGS |= PF_CHANGE;
@@ -2043,7 +1807,6 @@ DECLARE_NATIVE(subparse)
                         P_INPUT_SPECIFIER, // val was taken from P_INPUT
                         subrule,
                         P_RULE_SPECIFIER,
-                        P_COLLECTION,
                         (P_FLAGS & PF_FIND_MASK) | (P_FLAGS & PF_REDBOL)
                     )) {
                         Copy_Cell(P_OUT, P_CELL);
@@ -2077,7 +1840,6 @@ DECLARE_NATIVE(subparse)
                     SPECIFIED,
                     rule,
                     P_RULE_SPECIFIER,
-                    P_COLLECTION,
                     (P_FLAGS & PF_FIND_MASK) | (P_FLAGS & PF_REDBOL)
                 )) {
                     Copy_Cell(P_OUT, P_CELL);
@@ -2389,9 +2151,6 @@ DECLARE_NATIVE(subparse)
 
           next_alternate:;
 
-            if (P_COLLECTION)
-                TERM_ARRAY_LEN(P_COLLECTION, collection_tail);
-
             FETCH_TO_BAR_OR_END(L);
             if (IS_END(P_RULE)) // no alternate rule
                 return Init_Nulled(OUT);
@@ -2453,7 +2212,6 @@ DECLARE_NATIVE(parse)
         SPECIFIED, // input is a non-relative Value
         rules,
         SPECIFIED, // rules is a non-relative Value
-        nullptr,  // start out with no COLLECT in effect, so no P_COLLECTION
         (REF(case) or Is_Binary(ARG(input)) ? AM_FIND_CASE : 0)
             | (REF(redbol) ? PF_REDBOL : 0)
         //
