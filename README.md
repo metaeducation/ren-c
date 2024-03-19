@@ -44,3 +44,18 @@ previous bootstrap executable snapshot.  So it's a balancing act.
 
 Expect the files to be filled with outdated comments, bad code, and outright
 contradictions.  This is a means to an end, and of no interest in itself.
+
+## If Using Address Sanitizer, Disable UseAfterReturn Check
+
+GCC 13 and Clang 15 turn on the UseAfterReturn stack check by default.  This
+makes C stack frames allocate at arbitrary addresses, interfering with the
+method of detecting stack overflows used by the bootstrap executable:
+
+  https://github.com/google/sanitizers/wiki/AddressSanitizerUseAfterReturn
+
+You must turn it off, e.g. with an environment variable:
+
+    $ export ASAN_OPTIONS=detect_stack_use_after_return=0
+
+(Modern Ren-C is "stackless", and does not use techniques beyond the C standard
+to try and guess about what addresses are getting near a stack overflow.)
