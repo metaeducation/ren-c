@@ -106,7 +106,6 @@
     INCLUDE_PARAMS_OF_SUBPARSE; \
     USED(ARG(input)); \
     USED(ARG(flags)); \
-    USED(ARG(collection)); \
     USED(ARG(num_quotes)); \
     USED(ARG(position)); \
     USED(ARG(save)); \
@@ -126,12 +125,6 @@
 #define P_INPUT_LEN         Cell_Series_Len_Head(ARG(input))
 
 #define P_FLAGS             mutable_VAL_INT64(ARG(flags))
-
-#define P_COLLECTION \
-    (Is_Nulled(ARG(collection)) \
-        ? nullptr \
-        : Cell_Array_Known_Mutable(ARG(collection)) \
-    )
 
 #define P_NUM_QUOTES        VAL_INT32(ARG(num_quotes))
 
@@ -244,7 +237,6 @@ static bool Subparse_Throws(
     const Cell* input,
     Specifier* input_specifier,
     Level* const L,
-    Option(Array*) collection,
     Flags flags
 ){
     assert(Any_Series_Kind(Cell_Heart(input)));
@@ -272,19 +264,6 @@ static bool Subparse_Throws(
     assert((flags & PF_STATE_MASK) == 0);  // no "parse state" flags allowed
     Init_Integer(Erase_Cell(ARG(flags)), flags);
 
-    // If there's an array for collecting into, there has to be some way of
-    // passing it between frames.
-    //
-    REBLEN collect_tail;
-    if (collection) {
-        Init_Block(Erase_Cell(ARG(collection)), unwrap(collection));
-        collect_tail = Array_Len(unwrap(collection));  // rollback here on fail
-    }
-    else {
-        Init_Nulled(Erase_Cell(ARG(collection)));
-        collect_tail = 0;
-    }
-
     // Locals in frame would be unset on entry if called by action dispatch.
     //
     Init_Trash(Erase_Cell(ARG(num_quotes)));
@@ -301,9 +280,6 @@ static bool Subparse_Throws(
     Bounce b = N_subparse(L);
 
     Drop_Action(L);
-
-    if ((b == BOUNCE_THROWN or Is_Nulled(out)) and collection)
-        Set_Series_Len(unwrap(collection), collect_tail);  // abort rollback
 
     if (b == BOUNCE_THROWN) {
         Drop_Level(L);
@@ -626,7 +602,6 @@ static REBIXO Parse_One_Rule(
             ARG(position),  // affected by P_POS assignment above
             SPECIFIED,
             sub,
-            P_COLLECTION,
             (P_FLAGS & PF_FIND_MASK)
                 | (P_FLAGS & PF_REDBOL)
         )){
@@ -1267,8 +1242,6 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
 //      return: [~null~ integer!]
 //      input [any-series? any-array? quoted?]
 //      flags [integer!]
-//      /collection "Array into which any KEEP values are collected"
-//          [any-series?]
 //      <local> position num-quotes save lookback
 //  ]
 //
@@ -1329,19 +1302,6 @@ DECLARE_NATIVE(subparse)
 
     assert(Is_Trash(ARG(position)));
     Copy_Cell(ARG(position), ARG(input));
-
-    // Every time we hit an alternate rule match (with |), we have to reset
-    // any of the collected values.  Remember the tail when we started.
-    //
-    // !!! Could use the VAL_INDEX() of ARG(collect) for this
-    //
-    // !!! How this interplays with throws that might be caught before the
-    // COLLECT's stack level is not clear (mostly because ACCEPT and REJECT
-    // were not clear; many cases dropped them on the floor in R3-Alpha, and
-    // no real resolution exists...see the UNUSED(interrupted) cases.)
-    //
-    REBLEN collection_tail = P_COLLECTION ? Array_Len(P_COLLECTION) : 0;
-    UNUSED(ARG(collection));  // implicitly accessed as P_COLLECTION
 
     assert(Is_Fresh(OUT));  // invariant provided by parse3
 
@@ -1652,154 +1612,6 @@ DECLARE_NATIVE(subparse)
                 FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
-              case SYM_COLLECT:
-                fail ("COLLECT should only follow a SET-WORD! in PARSE");
-
-              case SYM_KEEP: {
-                if (not P_COLLECTION)
-                    fail ("Used PARSE KEEP with no COLLECT in effect");
-
-                FETCH_NEXT_RULE(L);  // e.g. skip the KEEP word!
-
-                REBLEN pos_before = P_POS;
-
-                rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
-
-                // If you say KEEP (whatever) then that acts like /ONLY did
-                // and KEEP SPREAD (whatever) will splice
-                //
-                bool spread;
-                if (Is_Word(rule) and Cell_Word_Id(rule) == SYM_SPREAD) {
-                    spread = true;
-                    FETCH_NEXT_RULE(L);  // e.g. skip the SPREAD
-                    rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
-                }
-                else
-                    spread = false;
-
-                if (Is_Group(rule)) {
-                    //
-                    // !!! GROUP! means ordinary evaluation of material
-                    // that is not matched as a PARSE rule; this is an idea
-                    // which is generalized in UPARSE
-                    //
-                    if (Do_Any_Array_At_Throws(
-                        OUT,
-                        rule,
-                        rule_specifier()
-                    )){
-                        goto return_thrown;
-                    }
-
-                    if (Is_Void(OUT))
-                        fail (Error_Bad_Void());
-
-                    if (spread) {
-                        if (not Is_Block(OUT))
-                            fail ("SPREAD only works with BLOCK! in PARSE3");
-
-                        rebElide(
-                            Canon(APPEND), ARG(collection),
-                                Canon(SPREAD), rebQ(OUT)
-                        );
-                    }
-                    else
-                        rebElide(Canon(APPEND), ARG(collection), rebQ(OUT));
-
-                    Freshen_Cell(OUT);  // since we didn't throw, put it back
-
-                    // Don't touch P_POS, we didn't consume anything from
-                    // the input series but just fabricated EVAL material.
-
-                    FETCH_NEXT_RULE(L);
-                }
-                else {  // Ordinary rule (may be block, may not be)
-
-                    Level* sub = Make_Level(
-                        &Action_Executor,  // !!! Parser_Executor?
-                        L->feed,
-                        LEVEL_MASK_NONE
-                    );
-
-                    bool interrupted;
-                    assert(Is_Fresh(OUT));  // invariant until finished
-                    bool threw = Subparse_Throws(
-                        &interrupted,
-                        OUT,
-                        ARG(position),
-                        SPECIFIED,
-                        sub,
-                        P_COLLECTION,
-                        (P_FLAGS & PF_FIND_MASK) | PF_ONE_RULE
-                            | (P_FLAGS & PF_REDBOL)
-                    );
-
-                    UNUSED(interrupted);  // !!! ignore ACCEPT/REJECT (?)
-
-                    if (threw)
-                        goto return_thrown;
-
-                    if (Is_Nulled(OUT)) {  // match of rule failed
-                        Freshen_Cell(OUT);  // restore invariant
-                        goto next_alternate;  // backtrack collect, seek |
-                    }
-                    REBLEN pos_after = VAL_INT32(OUT);
-                    Freshen_Cell(OUT);  // restore invariant
-
-                    assert(pos_after >= pos_before);  // 0 or more matches
-
-                    Array* target;
-                    if (pos_after == pos_before and spread) {
-                        target = nullptr;
-                    }
-                    else if (Any_String_Kind(P_HEART)) {
-                        target = nullptr;
-                        Init_Any_String(
-                            Alloc_Tail_Array(P_COLLECTION),
-                            P_HEART,
-                            Copy_String_At_Limit(
-                                ARG(position),
-                                pos_after - pos_before
-                            )
-                        );
-                    }
-                    else if (not Is_Series_Array(P_INPUT)) {  // BINARY! (?)
-                        target = nullptr;  // not an array, one item
-                        Init_Series_Cell(
-                            Alloc_Tail_Array(P_COLLECTION),
-                            P_HEART,
-                            Copy_Binary_At_Len(
-                                P_INPUT,
-                                pos_before,
-                                pos_after - pos_before
-                            )
-                        );
-                    }
-                    else if (not spread) {  // taken to mean "add as one block"
-                        target = Make_Array_Core(
-                            pos_after - pos_before,
-                            NODE_FLAG_MANAGED
-                        );
-                        Init_Block(Alloc_Tail_Array(P_COLLECTION), target);
-                    }
-                    else
-                        target = P_COLLECTION;
-
-                    if (target) {
-                        REBLEN n;
-                        for (n = pos_before; n < pos_after; ++n) {
-                            Derelativize(
-                                Alloc_Tail_Array(target),
-                                Array_At(P_INPUT_ARRAY, n),
-                                P_INPUT_SPECIFIER
-                            );
-                        }
-                    }
-
-                    P_POS = pos_after;  // continue from end of kept data
-                }
-                goto pre_rule; }
-
               case SYM_NOT_1:  // see TO-C-NAME
                 P_FLAGS |= PF_NOT;
                 P_FLAGS ^= PF_NOT2;
@@ -2005,56 +1817,6 @@ DECLARE_NATIVE(subparse)
             P_FLAGS |= PF_COPY;
             goto pre_rule;
         }
-        else if (
-            Is_Word(P_RULE)
-            and Cell_Word_Id(P_RULE) == SYM_COLLECT
-        ){
-            FETCH_NEXT_RULE(L);
-
-            Array* collection = Make_Array_Core(
-                10,  // !!! how big?
-                NODE_FLAG_MANAGED
-            );
-            Push_GC_Guard(collection);
-
-            Level* sub = Make_Level(
-                &Action_Executor,  // !!! Parser_Executor?
-                L->feed,
-                LEVEL_MASK_NONE
-            );
-
-            bool interrupted;
-            assert(Is_Fresh(OUT));  // invariant until finished
-            bool threw = Subparse_Throws(
-                &interrupted,
-                OUT,
-                ARG(position),  // affected by P_POS assignment above
-                SPECIFIED,
-                sub,
-                collection,
-                (P_FLAGS & PF_FIND_MASK) | PF_ONE_RULE
-                    | (P_FLAGS & PF_REDBOL)
-            );
-
-            Drop_GC_Guard(collection);
-            UNUSED(interrupted);  // !!! ignore ACCEPT/REJECT (?)
-
-            if (threw)
-                goto return_thrown;
-
-            if (Is_Nulled(OUT)) {  // match of rule failed
-                Freshen_Cell(OUT);  // restore invariant
-                goto next_alternate;  // backtrack collect, seek |
-            }
-            P_POS = VAL_INT32(OUT);
-            Freshen_Cell(OUT);  // restore invariant
-
-            Init_Block(
-                Sink_Word_May_Fail(set_or_copy_word, P_RULE_SPECIFIER),
-                collection
-            );
-            goto pre_rule;
-        }
 
         if (Is_Tag(P_RULE)) {
             bool strict = true;
@@ -2067,7 +1829,7 @@ DECLARE_NATIVE(subparse)
             goto pre_rule;
         }
 
-        fail ("PARSE SET-WORD! use with <HERE>, COLLECT, ACROSS");
+        fail ("PARSE SET-WORD! use with <HERE>, ACROSS");
     }
     else if (Any_Path(rule)) {
         fail ("Use TUPLE! a.b.c instead of PATH! a/b/c");
@@ -2278,7 +2040,6 @@ DECLARE_NATIVE(subparse)
                     into,
                     P_INPUT_SPECIFIER,  // harmless if specified API value
                     sub,
-                    P_COLLECTION,
                     (P_FLAGS & PF_FIND_MASK)  // PF_ONE_RULE?
                         | (P_FLAGS & PF_REDBOL)
                 )){
@@ -2322,7 +2083,6 @@ DECLARE_NATIVE(subparse)
                 ARG(position),
                 SPECIFIED,
                 sub,
-                P_COLLECTION,
                 (P_FLAGS & PF_FIND_MASK)  // no PF_ONE_RULE
                     | (P_FLAGS & PF_REDBOL)
             )){
@@ -2480,8 +2240,7 @@ DECLARE_NATIVE(subparse)
                 }
 
                 // !!! As we are losing the datatype here, it doesn't make
-                // sense to carry forward the quoting on the input.  It
-                // is collecting items in a neutral container.  It is less
+                // sense to carry forward the quoting on the input.  It is not
                 // obvious what marking a position should do.
             }
             else if (P_FLAGS & PF_SET) {
@@ -2651,21 +2410,8 @@ DECLARE_NATIVE(subparse)
     }
 
     if (Is_Nulled(ARG(position))) {
-
-      next_alternate:
-
-        // If this is just one step, e.g.:
-        //
-        //     collect x keep some "a" | keep some "b"
-        //
-        // COLLECT asked for one step, and the first keep asked for one
-        // step.  So that second KEEP applies only to some outer collect.
-        //
         if (P_FLAGS & PF_ONE_RULE)
             goto return_null;
-
-        if (P_COLLECTION)
-            Set_Series_Len(P_COLLECTION, collection_tail);
 
         FETCH_TO_BAR_OR_END(L);
         if (P_AT_END)  // no alternate rule
@@ -2691,16 +2437,9 @@ DECLARE_NATIVE(subparse)
     return Init_Integer(OUT, P_POS);  // !!! return switched input series??
 
   return_null:
-    if (not Is_Nulled(ARG(collection)))  // fail -> drop COLLECT additions
-      Set_Series_Len(P_COLLECTION, collection_tail);
-
     return Init_Nulled(OUT);
 
   return_thrown:
-    if (not Is_Nulled(ARG(collection)))  // throw -> drop COLLECT additions
-        if (VAL_THROWN_LABEL(LEVEL) != Lib(PARSE_BREAK))  // ...unless
-            Set_Series_Len(P_COLLECTION, collection_tail);
-
     return THROWN;
 }
 
@@ -2752,32 +2491,6 @@ DECLARE_NATIVE(parse3)
 
     assert(Any_Series(input));
 
-    const Element* rules_tail;
-    const Element* rules_at = Cell_Array_At(&rules_tail, rules);
-
-    // !!! Look for the special pattern `parse ... [collect [x]]` and delegate
-    // to a fabricated `parse [temp: collect [x]]` so we can return temp.
-    // This hack is just to give a sense of the coming benefit of synthesized
-    // parse rules.
-    if (
-        rules_at != rules_tail
-        and rules_at + 1 != rules_tail
-        and rules_at + 2 == rules_tail
-        and Is_Word(rules_at) and Cell_Word_Id(rules_at) == SYM_COLLECT
-        and Is_Block(rules_at + 1)
-    ){
-        Context* frame_ctx = Context_For_Level_May_Manage(level_);
-        DECLARE_ATOM (specific);
-        Derelativize(specific, rules_at + 1, P_RULE_SPECIFIER);
-        return rebValue(
-            "let temp: null",
-            "let f: copy @", CTX_ARCHETYPE(frame_ctx),
-            "f.rules: [temp: collect", specific, "]",
-            "eval f",
-            "temp"
-        );
-    }
-
     if (not Any_Series_Kind(Cell_Heart(input)))
         fail ("PARSE input must be an ANY-SERIES? (use AS BLOCK! for PATH!)");
 
@@ -2793,7 +2506,6 @@ DECLARE_NATIVE(parse3)
         Freshen_Cell(OUT),
         input, SPECIFIED,
         sub,
-        nullptr,  // start out with no COLLECT in effect, so no P_COLLECTION
         (REF(case) ? AM_FIND_CASE : 0) | (REF(redbol) ? PF_REDBOL : 0)
         //
         // We always want "case-sensitivity" on binary bytes, vs. treating

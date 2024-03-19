@@ -218,7 +218,6 @@
 
 %parse/parse.test.reb
 %parse/parse3.test.reb
-%parse/parse3-collect.test.reb
 %parse/parse-accept.test.reb
 %parse/parse-accumulate.test.reb
 %parse/parse-across.test.reb

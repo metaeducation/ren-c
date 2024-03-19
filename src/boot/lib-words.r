@@ -61,8 +61,6 @@ set  ; must be first first (SYM_SET referred to by GET_VAR() in %u-parse.c)
 let
 copy  ; `copy x rule` deprecated, use `x: across rule` for this intent
 across
-collect  ; Variant in Red, but Ren-C's acts SET-like, suggested by @rgchris
-keep
 some
 any  ; no longer a parse keyword, use TRY SOME FURTHER for precise meaning
 further  ; https://forum.rebol.info/t/1593
