@@ -255,9 +255,6 @@ REBINT Compare_Arrays_At_Indexes(
     REBLEN t_index,
     bool is_case
 ){
-    if (C_STACK_OVERFLOWING(&is_case))
-        Fail_Stack_Overflow();
-
     if (s_array == t_array and s_index == t_index)
          return 0;
 

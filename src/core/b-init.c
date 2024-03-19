@@ -153,32 +153,6 @@ static void Check_Basics(void)
 
 
 //
-//  Set_Stack_Limit: C
-//
-// See C_STACK_OVERFLOWING for remarks on this **non-standard** technique of
-// stack overflow detection.  Note that each thread would have its own stack
-// address limits, so this has to be updated for threading.
-//
-// Currently, this is called every time RESCUE_SCOPE() is used when Saved_State
-// is NULL, and hopefully only one instance of it per thread will be in effect
-// (otherwise, the bounds would add and be useless).
-//
-void Set_Stack_Limit(void *base, uintptr_t bounds) {
-  #if defined(OS_STACK_GROWS_UP)
-    g_ts.C_stack_limit_addr = i_cast(uintptr_t, base) + bounds;
-  #elif defined(OS_STACK_GROWS_DOWN)
-    g_ts.C_stack_limit_addr = i_cast(uintptr_t, base) - bounds;
-  #else
-    g_ts.C_stack_grows_up = Guess_If_Stack_Grows_Up(NULL);
-    if (g_ts.C_stack_grows_up)
-        g_ts.C_stack_limit_addr = i_cast(uintptr_t, base) + bounds;
-    else
-        g_ts.C_stack_limit_addr = i_cast(uintptr_t, base) - bounds;
-  #endif
-}
-
-
-//
 //  Startup_Lib: C
 //
 // Since no good literal form exists, the %sysobj.r file uses the words.  They
@@ -650,17 +624,6 @@ void Startup_Core(void)
   #if DEBUG_COUNT_TICKS
     TG_tick = 0;
   #endif
-
-//=//// INITIALIZE STACK MARKER METRICS ///////////////////////////////////=//
-
-    // !!! See notes on Set_Stack_Limit() about the dodginess of this.
-    // Although the system is largely transitioned to a "stackless" approach,
-    // this mechanism is still hanging around to protect against deep
-    // recursions in some functions--like molding or comparison--which are
-    // not currently using the trampoline in their implementation.
-
-    int dummy;  // variable whose address acts as base of stack for below code
-    Set_Stack_Limit(&dummy, DEFAULT_STACK_BOUNDS);
 
 //=//// INITIALIZE BASIC DIAGNOSTICS //////////////////////////////////////=//
 

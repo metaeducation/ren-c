@@ -79,9 +79,6 @@ DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
 //
 REBINT CT_Array(const Cell* a, const Cell* b, bool strict)
 {
-    if (C_STACK_OVERFLOWING(&strict))
-        Fail_Stack_Overflow();
-
     return Compare_Arrays_At_Indexes(
         Cell_Array(a),
         VAL_INDEX(a),

@@ -400,9 +400,6 @@ void Mold_Or_Form_Cell(
     String* s = mo->series;
     Assert_Series_Term_If_Needed(s);
 
-    if (C_STACK_OVERFLOWING(&s))
-        Fail_Stack_Overflow();
-
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT)) {
         //
         // It's hard to detect the exact moment of tripping over the length

@@ -375,19 +375,6 @@ INLINE void Push_Level(
     Atom* out,  // typecheck prohibits passing `unstable` Cell* for output
     Level* L
 ){
-    // All calls through to Eval_Core() are assumed to happen at the same C
-    // stack level for a pushed Level (though this is not currently enforced).
-    // Hence it's sufficient to check for C stack overflow only once, e.g.
-    // not on each Eval_Step() for `reduce [a | b | ... | z]`.
-    //
-    // !!! This method is being replaced by "stackless", as there is no
-    // reliable platform independent method for detecting stack overflows.
-    //
-    if (C_STACK_OVERFLOWING(&L)) {
-        Free_Level_Internal(L);  // not in stack, feed + level wouldn't free
-        Fail_Stack_Overflow();
-    }
-
     // Levels are pushed to reuse for several sequential operations like
     // ANY, ALL, CASE, REDUCE.  It is allowed to change the output cell for
     // each evaluation.  But the GC expects initialized bits in the output

@@ -343,8 +343,16 @@ export platform-definitions: make object! [
     LLC: "HAS_LL_CONSTS"          ; supports e.g. 0xffffffffffffffffLL
     ;LL?: null                    ; might have LL consts, reb-config.h checks
 
-    ; See C_STACK_OVERFLOWING for an explanation of the dodgy technique used
-    ; to try and preempt a C stackoverflow crash with a trappable error.
+    ; Prior to the interpreter being "stackless", the OS direction of stack
+    ; growth was used to pre-emptively guess at stack overflows.  This is
+    ; outside of the C standard, and even if you think you know the growth
+    ; direction of an architecture compilers can subvert it, such as with the
+    ; address sanitizer feature:
+    ;
+    ; https://github.com/google/sanitizers/wiki/AddressSanitizerUseAfterReturn
+    ;
+    ; Hence this information is now hard to act on.  But since the note had
+    ; been made on the existing architectures, keep the note for now.
     ;
     SGD: "OS_STACK_GROWS_DOWN"    ; most widespread choice in C compilers
     ;SGU: "OS_STACK_GROWS_UP"     ; rarer (Debian HPPA, some emscripten/wasm)

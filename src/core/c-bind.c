@@ -961,9 +961,6 @@ void Clonify_And_Bind_Relative(
     Option(struct Reb_Binder*) binder,
     Option(Action*) relative
 ){
-    if (C_STACK_OVERFLOWING(&relative))
-        Fail_Stack_Overflow();
-
     assert(flags & NODE_FLAG_MANAGED);
 
     Heart heart = Cell_Heart_Unchecked(v);

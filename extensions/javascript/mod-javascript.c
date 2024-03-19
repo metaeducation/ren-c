@@ -1120,26 +1120,6 @@ DECLARE_NATIVE(js_trace)
 }
 
 
-//
-//  export js-stacklimit: native [
-//
-//  "Internal tracing tool reporting the stack level and how long to limit"
-//
-//      return: [block!]
-//  ]
-//
-DECLARE_NATIVE(js_stacklimit)
-{
-    INCLUDE_PARAMS_OF_JS_STACKLIMIT;
-
-    StackIndex base = TOP_INDEX;
-
-    Init_Integer(PUSH(), i_cast(intptr_t, &base));  // local pointer
-    Init_Integer(PUSH(), g_ts.C_stack_limit_addr);
-    return Init_Block(OUT, Pop_Stack_Values(base));
-}
-
-
 // !!! Need shutdown, but there's currently no module shutdown
 //
 // https://forum.rebol.info/t/960
