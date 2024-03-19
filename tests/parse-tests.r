@@ -292,3 +292,22 @@
 ;    parse/match [1 2 3] [collect x [keep only :[[a b c]]]]
 ;    x = [[[a b c]]]
 ;])
+
+
+; The idea of being able to return a value from a parse is implemented via
+; the ACCEPT combinator in UPARSE.  This was added to PARSE3.
+(
+    30 = parse "aaa" [some "a" accept (10 + 20)]
+)
+(
+    pos: parse "abbbbbc" ["a" some ["b"] accept <here>]
+    "c" = pos
+)
+(
+    pos: parse "abbbbc" ["ab" some ["bc" | "b"] accept <here>]
+    "" = pos
+)
+(
+    pos: parse "abc10def" ["abc" "10" accept <here>]
+    "def" = pos
+)

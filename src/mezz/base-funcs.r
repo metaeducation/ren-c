@@ -187,7 +187,7 @@ function: func [
         ]
         (var: _)
     |
-        end accept
+        end accept <here>
     |
         other: (
             print mold other/1

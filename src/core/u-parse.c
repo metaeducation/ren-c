@@ -294,7 +294,7 @@ static bool Subparse_Throws(
                 return false;
             }
 
-            if (VAL_ACTION(out) == NAT_ACTION(parse_accept)) {
+            if (VAL_ACTION(out) == NAT_ACTION(parse_break)) {
                 CATCH_THROWN(out, out);
                 assert(Is_Integer(out));
                 *interrupted_out = true;
@@ -1443,7 +1443,45 @@ DECLARE_NATIVE(subparse)
                         FETCH_NEXT_RULE(L);
                         continue;
 
-                    case SYM_ACCEPT:
+                    case SYM_ACCEPT: {
+                        //
+                        // ACCEPT means different things in Rebol2/Red (synonym
+                        // for BREAK) where in UPARSE it means RETURN.
+                        //
+                        FETCH_NEXT_RULE(L);
+                        if (IS_END(P_RULE))
+                            fail ("PARSE3 ACCEPT requires argument");
+
+                        DECLARE_VALUE (thrown_arg);
+                        if (Is_Tag(P_RULE)) {
+                            bool strict = true;
+                            if (0 == Compare_String_Vals(
+                                P_RULE,
+                                Root_Here_Tag,
+                                strict
+                            )){
+                                Copy_Cell(thrown_arg, P_INPUT_VALUE);
+                            }
+                            else
+                                fail ("PARSE3 ACCEPT TAG! only works with <here>");
+                        }
+                        else if (Is_Group(P_RULE)) {
+                            if (Eval_Value_Core_Throws(
+                                thrown_arg,
+                                P_RULE,
+                                P_RULE_SPECIFIER
+                            )){
+                                Copy_Cell(P_OUT, thrown_arg);
+                                return R_THROWN;
+                            }
+                        }
+                        else
+                            fail ("PARSE3 ACCEPT only works with GROUP! and <here>");
+
+                        Copy_Cell(P_OUT, NAT_VALUE(parse_accept));
+                        CONVERT_NAME_TO_THROWN(P_OUT, thrown_arg);
+                        return R_THROWN; }
+
                     case SYM_BREAK: {
                         //
                         // This has to be throw-style, because it's not enough
@@ -1452,7 +1490,7 @@ DECLARE_NATIVE(subparse)
                         //
                         DECLARE_VALUE (thrown_arg);
                         Init_Integer(thrown_arg, P_POS);
-                        Copy_Cell(P_OUT, NAT_VALUE(parse_accept));
+                        Copy_Cell(P_OUT, NAT_VALUE(parse_break));
 
                         // Unfortunately, when the warnings are set all the
                         // way high for uninitialized variable use, the
@@ -2219,8 +2257,19 @@ DECLARE_NATIVE(parse)
         // as case-insensitive bytes for ASCII characters.
     )){
         // Any PARSE-specific THROWs (where a PARSE directive jumped the
-        // stack) should be handled here.  However, RETURN was eliminated,
-        // in favor of enforcing a more clear return value protocol for PARSE
+        // stack) should be handled here.  ACCEPT is one example.
+
+        assert(THROWN(OUT));
+        if (Is_Action(OUT)) {
+            if (
+                VAL_ACTION(OUT) == NAT_ACTION(parse_accept)
+                // !!! no binding check that it's this parse, not definitional
+                // (but it's an outdated PARSE so not worth worrying about)
+            ){
+                CATCH_THROWN(OUT, OUT);
+                return OUT;
+            }
+        }
 
         return R_THROWN;
     }
@@ -2249,7 +2298,7 @@ DECLARE_NATIVE(parse)
 //
 //  parse-accept: native [
 //
-//  "Accept the current parse rule (Internal Implementation Detail ATM)."
+//  "Accept a value as parse product (Internal Implementation Detail ATM)."
 //
 //  ]
 //
@@ -2277,4 +2326,21 @@ DECLARE_NATIVE(parse_reject)
 {
     UNUSED(level_);
     fail ("PARSE-REJECT is for internal PARSE use only");
+}
+
+
+//
+//  parse-break: native [
+//
+//  "Break the current parse loop (Internal Implementation Detail ATM)."
+//
+//  ]
+//
+DECLARE_NATIVE(parse_break)
+//
+// !!! This was not created for user usage, but rather as a label for the
+// internal throw used to indicate "break".
+{
+    UNUSED(level_);
+    fail ("PARSE-BREAK is for internal PARSE use only");
 }
