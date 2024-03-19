@@ -1689,7 +1689,7 @@ DECLARE_NATIVE(subparse)
 
                 DECLARE_ATOM (thrown_arg);
                 if (Is_Tag(P_RULE)) {
-                    if (rebDid(P_RULE, "= <here>"))
+                    if (rebUnboxLogic(P_RULE, "= <here>"))
                         Copy_Cell(thrown_arg, ARG(position));
                     else
                         fail ("PARSE3 ACCEPT TAG! only works with <here>");
