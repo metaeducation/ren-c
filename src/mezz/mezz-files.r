@@ -56,7 +56,7 @@ clean-path: function [
                     append out #"/"
                 ]
             )
-            | copy f [to #"/" | to end] (
+            | f: across [to #"/" | to end] (
                 if count > 0 [
                     count: me - 1
                 ] else [

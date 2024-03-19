@@ -179,6 +179,7 @@ subparse ;-- recursions of parse use this for DECLARE_NATIVE(subparse) in backtr
 ;
 set  ; must be first first (SYM_SET referred to by GET_VAR() in %u-parse.c)
 copy
+across
 some
 any
 opt

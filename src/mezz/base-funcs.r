@@ -99,18 +99,18 @@ function: func [
         <void> (append new-spec <void>)
     |
         if (var) [
-            set var: any-word! (
+            var: any-word! (
                 append exclusions var ;-- exclude args/refines
                 append new-spec var
             )
         |
-            set other: [block! | text!] (
+            other: [block! | text!] (
                 append/only new-spec other ;-- spec notes or data type blocks
             )
         ]
     |
         if (not var) [
-            set var: set-word! ( ;-- locals legal anywhere
+            var: set-word! ( ;-- locals legal anywhere
                 append exclusions var
                 append new-spec var
                 var: _
@@ -136,7 +136,7 @@ function: func [
         fail ;-- failing here means rolling over to next rule
     |
         <local>
-        any [set var: word! (other: _) opt set other: group! (
+        any [var: word! (other: _) opt other: group! (
             append new-spec as set-word! var
             append exclusions var
             if other [
@@ -155,7 +155,7 @@ function: func [
             ]
         )
         any [
-            set other: [object! | word! | path!] (
+            other: [object! | word! | path!] (
                 if not object? other [other: ensure any-context! get other]
                 bind new-body other
                 for-each [key val] other [
@@ -165,7 +165,7 @@ function: func [
         ]
     |
         <with> any [
-            set other: [word! | path!] (append exclusions other)
+            other: [word! | path!] (append exclusions other)
         |
             text! ;-- skip over as commentary
         ]
@@ -178,7 +178,7 @@ function: func [
             ]
         )
         any [
-            set var: word! (other: _) opt set other: group! (
+            var: word! (other: _) opt other: group! (
                 append exclusions var
                 append statics compose [
                     (as set-word! var) ((other))
@@ -351,7 +351,7 @@ redescribe: function [
 
     parse spec [
         opt [
-            set description: text! (
+            description: text! (
                 either all [equal? description {} | not meta] [
                     ; No action needed (no meta to delete old description in)
                 ][
@@ -365,14 +365,14 @@ redescribe: function [
             )
         ]
         any [
-            set param: [word! | get-word! | lit-word! | refinement! | set-word!]
+            param: [word! | get-word! | lit-word! | refinement! | set-word!]
 
             ; It's legal for the redescribe to name a parameter just to
             ; show it's there for descriptive purposes without adding notes.
             ; But if {} is given as the notes, that's seen as a request
             ; to delete a note.
             ;
-            opt [[set note: text!] (
+            opt [note: text! (
                 on-demand-meta
                 either equal? param (the return:) [
                     meta/return-note: all [
@@ -863,13 +863,13 @@ module: func [
         parse body [while [
             to 'export remove skip opt remove 'hidden opt
             [
-                set w any-word! (
+                w: any-word! (
                     if not find spec/exports w: to word! w [
                         append spec/exports w
                     ]
                 )
             |
-                set w block! (
+                w: block! (
                     append spec/exports collect-words/ignore w spec/exports
                 )
             ]
@@ -884,13 +884,13 @@ module: func [
         parse body [while [
             to 'hidden remove skip opt
             [
-                set w any-word! (
+                w: any-word! (
                     if not find select spec 'exports w: to word! w [
                         append hidden w
                     ]
                 )
             |
-                set w block! (
+                w: block! (
                     append hidden collect-words/ignore w select spec 'exports
                 )
             ]

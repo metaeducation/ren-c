@@ -155,7 +155,7 @@ make object! [
         ]
 
         single-test: [
-            copy vector ["(" test-source-rule ")"] (
+            vector: across ["(" test-source-rule ")"] (
                 type: in types 'tst
                 append/only collected-tests flags
                 append collected-tests vector
@@ -261,7 +261,7 @@ make object! [
                     some whitespace
                     {"} thru {"}
                         |
-                    copy last-vector ["(" test-source-rule ")"]
+                    last-vector: across ["(" test-source-rule ")"]
                     any whitespace
                     [
                         end (
@@ -269,7 +269,7 @@ make object! [
                             fail "log incomplete!"
                         )
                             |
-                        {"} copy value to {"} skip
+                        {"} value: across to {"} skip
                         ; test result found
                         (
                             parse value [

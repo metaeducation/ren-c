@@ -363,32 +363,32 @@ ctx-zip: context [
                 to local-file-sig 4 skip
                 (num-entries: me + 1)
                 2 skip ; version
-                copy flags: 2 skip
+                flags: across 2 skip
                     (if not zero? flags/1 and+ 1 [return false])
-                copy method-number: 2 skip (
+                method-number: across 2 skip (
                     method-number: get-ishort method-number
                     method: select [0 store 8 deflate] method-number else [
                         method-number
                     ]
                 )
-                copy time: 2 skip (time: get-msdos-time time)
-                copy date: 2 skip (
+                time: across 2 skip (time: get-msdos-time time)
+                date: across 2 skip (
                     date: get-msdos-date date
                     date/time: time
                     date: date - now/zone
                 )
-                copy crc: 4 skip (   ; crc-32
+                crc: across 4 skip (   ; crc-32
                     crc: get-ilong crc
                 )
-                copy compressed-size: 4 skip
+                compressed-size: across 4 skip
                     (compressed-size: get-ilong compressed-size)
-                copy uncompressed-size-raw: 4 skip
+                uncompressed-size-raw: across 4 skip
                     (uncompressed-size: get-ilong uncompressed-size-raw)
-                copy name-length: 2 skip
+                name-length: across 2 skip
                     (name-length: get-ishort name-length)
-                copy extrafield-length: 2 skip
+                extrafield-length: across 2 skip
                     (extrafield-length: get-ishort extrafield-length)
-                copy name: name-length skip (
+                name: across name-length skip (
                     name: to-file name
                     info name
                 )

@@ -319,8 +319,8 @@ help: function [
     refinements: _ ;-- refinements and refinement arguments
 
     parse words of :value [
-        copy args any [word! | get-word! | lit-word! | issue!]
-        copy refinements any [
+        args: across any [word! | get-word! | lit-word! | issue!]
+        refinements: across any [
             refinement! | word! | get-word! | lit-word! | issue!
         ]
     ]

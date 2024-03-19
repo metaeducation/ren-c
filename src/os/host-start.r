@@ -57,9 +57,9 @@ make-banner: function [
     parse fmt [
         some [
             [
-                set a: text! (s: format ["**  " 68 "**"] a)
-              | '= set a: [text! | word! | set-word!] [
-                        b:
+                a: text! (s: format ["**  " 68 "**"] a)
+              | '= a: [text! | word! | set-word!] [
+                        b: <here>
                           path! (b: get b/1)
                         | word! (b: get b/1)
                         | block! (b: spaced b/1)
@@ -603,7 +603,7 @@ host-start: function [
                 ;-- No window; not currently applicable
             )
         |
-            [copy cli-option: [["--" | "-" | "+"] to end ]] (
+            [cli-option: across [["--" | "-" | "+"] to end ]] (
                 die [
                     "Unknown command line option:" cli-option LF
                     {!! For a full list of command-line options use: --help}

@@ -1337,23 +1337,23 @@ do-commands: function [
     clear ctx/msg
     parse commands [
         some [
-            set cmd: [
-                <client-hello> (
+            [
+                cmd: <client-hello> (
                     client-hello/version ctx [1.0 1.2] ;-- min/max versioning
                 )
-                | <client-key-exchange> (
+                | cmd: <client-key-exchange> (
                     client-key-exchange ctx
                 )
-                | <change-cipher-spec> (
+                | cmd: <change-cipher-spec> (
                     change-cipher-spec ctx
                 )
-                | <finished> (
+                | cmd: <finished> (
                     encrypted-handshake-msg ctx finished ctx
                 )
-                | #application set arg: [text! | binary!] (
+                | cmd: #application arg: [text! | binary!] (
                     application-data ctx arg
                 )
-                | <close-notify> (
+                | cmd: <close-notify> (
                     alert-close-notify ctx
                 )
             ] (

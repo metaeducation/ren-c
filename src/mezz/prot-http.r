@@ -29,15 +29,15 @@ alpha: charset [#"a" - #"z" #"A" - #"Z"]
 idate-to-date: function [return: [date!] date [text!]] [
     parse/match date [
         5 skip
-        copy day: 2 digit
+        day: across 2 digit
         space
-        copy month: 3 alpha
+        month: across 3 alpha
         space
-        copy year: 4 digit
+        year: across 4 digit
         space
-        copy time: to space
+        time: across to space
         space
-        copy zone: to end
+        zone: acorss to end
     ] else [
         fail ["Invalid idate:" date]
     ]
@@ -269,11 +269,11 @@ parse-write-dialect: func [port block <local> spec debug] [
     parse block [
         opt ['headers (spec/debug: true)]
         opt ['no-redirect (spec/follow: 'ok)]
-        [set block word! (spec/method: block) | (spec/method: 'post)]
-        opt [set block [file! | url!] (spec/path: block)]
-        [set block block! (spec/headers: block) | (spec/headers: [])]
+        [block: word! (spec/method: block) | (spec/method: 'post)]
+        opt [block: [file! | url!] (spec/path: block)]
+        [block: block! (spec/headers: block) | (spec/headers: [])]
         [
-            set block [any-string! | binary!] (spec/content: block)
+            block: [any-string! | binary!] (spec/content: block)
             | (spec/content: blank)
         ]
     ]
@@ -574,7 +574,10 @@ check-data: function [
             out: port/data
 
             while [parse/match data [
-                copy chunk-size some hex-digits thru crlfbin mk1: to end
+                chunk-size: across some hex-digits
+                thru crlfbin
+                mk1: <here>
+                to end
             ]][
                 ; The chunk size is in the byte stream as ASCII chars
                 ; forming a hex string.  ISSUE! can decode that.
@@ -586,7 +589,7 @@ check-data: function [
                     parse/match mk1 [
                         crlfbin (trailer: "") to end
                             |
-                        copy trailer to crlf2bin to end
+                        trailer: across to crlf2bin to end
                     ] then [
                         trailer: construct/only [] trailer
                         append headers body-of trailer
@@ -601,7 +604,12 @@ check-data: function [
                     break
                 ]
                 else [
-                    parse/match mk1 [chunk-size skip mk2: crlfbin to end] else [
+                    parse/match mk1 [
+                        chunk-size skip
+                        mk2: <here>
+                        crlfbin
+                        to end
+                    ] else [
                         break
                     ]
 

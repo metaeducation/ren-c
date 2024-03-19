@@ -94,13 +94,13 @@ make object! compose [
     ][
         parse test-sources [
             any [
-                set flags: block! set value: skip (
+                flags: block! value: skip (
                     emit-test flags to text! value
                 )
                     |
-                set value: file! (log ["^/" mold value "^/^/"])
+                value: file! (log ["^/" mold value "^/^/"])
                     |
-                'dialect set value: text! (
+                'dialect value: text! (
                     log [value]
                     set 'dialect-failures (dialect-failures + 1)
                 )
@@ -157,14 +157,14 @@ make object! compose [
                             position: "%" (
                                 value: transcode/next position 'next-position
                             )
-                            :next-position
+                            seek next-position
                                 |
                             ; dialect failure?
                             some whitespace
                             {"} thru {"}
                             (dialect-failures: dialect-failures + 1)
                                 |
-                            copy last-vector ["(" test-source-rule ")"]
+                            last-vector: across ["(" test-source-rule ")"]
                             any whitespace
                             [
                                 end (
@@ -199,7 +199,7 @@ make object! compose [
                             to end
                             (last-vector: guard: _)
 
-                        ] position: guard break
+                        ] position: <seek> guard break
                             |
                         seek position
                     ]

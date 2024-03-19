@@ -477,7 +477,7 @@ ext-console-impl: function [
     ;
     directives: collect [
         if block? prior [
-            parse prior [opt some [set i: issue! (keep i)] to end]
+            parse prior [opt some [i: issue! (keep i)] to end]
         ]
     ]
 

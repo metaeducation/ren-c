@@ -511,12 +511,12 @@ load-module: function [
 
             parse/match source [
                 any [
-                    tmp:
-                    set name opt set-word!
-                    set mod [
+                    tmp: <here>
+                    name: opt set-word!
+                    mod: [
                         word! | module! | file! | url! | text! | binary!
                     ]
-                    set ver opt tuple! (
+                    ver: opt tuple! (
                         append data reduce [mod ver if name [to word! name]]
                     )
                 ]

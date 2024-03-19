@@ -211,8 +211,8 @@ reword: function [
         null [prefix: "$"]
         block! [
             parse/match delimiters [
-                set prefix delimiter-types
-                set suffix opt delimiter-types
+                prefix: delimiter-types
+                suffix: opt delimiter-types
             ] else [
                 fail ["Invalid /ESCAPE delimiter block" delimiters]
             ]
@@ -656,11 +656,11 @@ split: function [
                 if zero? piece-size [piece-size: 1]
 
                 [
-                    count [copy series piece-size skip (keep/only series)]
-                    copy series to end (keep/only series)
+                    count [series: across piece-size skip (keep/only series)]
+                    series: across to end (keep/only series)
                 ]
             ] else [
-                [any [copy series 1 size skip (keep/only series)] end]
+                [any [series: across 1 size skip (keep/only series)] end]
             ]
         ] else [
             ; A block that is not all integers, e.g. not `[1 1 1]`, acts as a

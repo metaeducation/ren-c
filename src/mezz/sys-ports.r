@@ -101,7 +101,7 @@ make-port*: function [
         ; Scheme://user-host-part
         [
             ; scheme name: [//]
-            copy s1 some scheme-char ":" opt "//" ( ; "//" is optional ("URN")
+            s1: across some scheme-char ":" opt "//" (  ; "//" optional ("URN")
                 append out compose [
                     scheme: (to lit-word! to text! s1)
                 ]
@@ -109,16 +109,16 @@ make-port*: function [
 
             ; optional user [:pass]
             opt [
-                copy s1 some user-char
-                opt [":" copy s2 to "@" (emit pass s2)]
+                s1: across some user-char
+                opt [":" s2: across to "@" (emit pass s2)]
                 "@" (emit user s1)
             ]
 
             ; optional host [:port]
             opt [
-                copy s1 any user-char
+                s1: across any user-char
                 opt [
-                    ":" copy s2 digits (
+                    ":" s2: across digits (
                         append out compose [
                             port-id: (to-integer/unsigned s2)
                         ]
@@ -154,10 +154,10 @@ make-port*: function [
         ]
 
         ; optional path
-        opt [copy s1 some path-char (emit path s1)]
+        opt [s1: across some path-char (emit path s1)]
 
         ; optional bookmark
-        opt ["#" copy s1 some path-char (emit tag s1)]
+        opt ["#" s1: across some path-char (emit tag s1)]
 
         end
     ]
@@ -291,7 +291,7 @@ init-schemes: func [
         info: system/standard/file-info ; for C enums
         init: func [port <local> path] [
             if url? port/spec/ref [
-                parse port/spec/ref [thru #":" 0 2 slash path:]
+                parse port/spec/ref [thru #":" 0 2 slash path: <here>]
                 append port/spec compose [path: (to file! path)]
             ]
             return

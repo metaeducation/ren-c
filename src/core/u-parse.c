@@ -1394,11 +1394,19 @@ DECLARE_NATIVE(subparse)
                         continue;
 
                     case SYM_COPY:
+                        if (not (P_FLAGS & PF_REDBOL))
+                            fail ("Use ACROSS instead of COPY unless /REDBOL");
+
                         P_FLAGS |= PF_COPY;
                         goto set_or_copy_pre_rule;
+
                     case SYM_SET:
+                        if (not (P_FLAGS & PF_REDBOL))
+                            fail ("Use SET-WORD! vs. SET unless /REDBOL");
+
                         P_FLAGS |= PF_SET;
-                        // falls through
+                        goto set_or_copy_pre_rule;
+
                     set_or_copy_pre_rule:
                         FETCH_NEXT_RULE(L);
 
@@ -1409,7 +1417,47 @@ DECLARE_NATIVE(subparse)
                             fail (Error_Parse_Command(L));
 
                         FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, f);
-                        continue;
+
+                        if (not (P_FLAGS & PF_SET))
+                            continue;
+
+                        // !!! Bootstrap handling of SET and SET-WORD! is much
+                        // worse than UPARSE, because R3-Alpha's conception of
+                        // SET wasn't based on synthesized combinator products.
+                        //
+                        // Compromise with a really weak handling of special
+                        // cases, but other than that you just get one unit
+                        // of series content matched.
+                        //
+                    handle_set:
+                        if (Is_Group(P_RULE)) {
+                            if (Eval_Value_Core_Throws(
+                                P_OUT,
+                                P_RULE,
+                                P_RULE_SPECIFIER
+                            )){
+                                return R_THROWN;
+                            }
+                            Value* var = Sink_Var_May_Fail(
+                                set_or_copy_word, P_RULE_SPECIFIER
+                            );
+                            Copy_Cell(var, P_OUT);
+                            FETCH_NEXT_RULE(L);
+                            P_FLAGS &= ~PF_SET;
+                            continue;
+                        }
+
+                        if (
+                            Is_Word(P_RULE)
+                            and Cell_Word_Id(P_RULE) == SYM_ACROSS
+                        ){
+                            FETCH_NEXT_RULE(L);
+                            P_FLAGS &= ~PF_SET;
+                            P_FLAGS |= PF_COPY;
+                            continue;
+                        }
+
+                        continue;  // use old weak interpretation of SET
 
                     case SYM_NOT:
                         P_FLAGS |= PF_NOT;
@@ -1576,15 +1624,11 @@ DECLARE_NATIVE(subparse)
                     /* if (P_FLAGS & PF_STATE_MASK != 0)
                         fail (Error_Parse_Rule()); */
 
-                    Copy_Cell(
-                        Sink_Var_May_Fail(rule, P_RULE_SPECIFIER),
-                        P_INPUT_VALUE
-                    );
+                    set_or_copy_word = rule;
 
                     FETCH_NEXT_RULE(L);
 
                     bool strict = true;
-                    bool here_tag = false;
                     if (
                         NOT_END(P_RULE)
                         and Is_Tag(P_RULE)
@@ -1593,15 +1637,25 @@ DECLARE_NATIVE(subparse)
                             Root_Here_Tag,
                             strict
                         ))
-                    ){
-                        here_tag = true;
+                    ){  // tolerate POS: <HERE> whether in Redbol or not
+                        Copy_Cell(
+                            Sink_Var_May_Fail(rule, P_RULE_SPECIFIER),
+                            P_INPUT_VALUE
+                        );
                         FETCH_NEXT_RULE(L);
+                        continue;
                     }
 
-                    if (not (P_FLAGS & PF_REDBOL) and not here_tag)
-                        fail ("SET-WORD! needs <here> unless PARSE/REDBOL");
+                    if (P_FLAGS & PF_REDBOL) {  // POS: captures input position
+                        Copy_Cell(
+                            Sink_Var_May_Fail(rule, P_RULE_SPECIFIER),
+                            P_INPUT_VALUE
+                        );
+                        continue;
+                    }
 
-                    continue;
+                    P_FLAGS |= PF_SET;
+                    goto handle_set;
                 }
 
                 // :word - change the index for the series to a new position
@@ -2186,8 +2240,6 @@ DECLARE_NATIVE(subparse)
             //
             // If a rule fails but "falls through", there may still be other
             // options later in the block to consider separated by |.
-
-          next_alternate:;
 
             FETCH_TO_BAR_OR_END(L);
             if (IS_END(P_RULE)) // no alternate rule
