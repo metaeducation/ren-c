@@ -55,14 +55,14 @@ REB_R MAKE_Port(Value* out, enum Reb_Kind kind, const Value* arg)
     const bool fully = true; // error if not all arguments consumed
 
     Value* make_port_helper = CTX_VAR(Sys_Context, SYS_CTX_MAKE_PORT_P);
-    assert(IS_ACTION(make_port_helper));
+    assert(Is_Action(make_port_helper));
 
     assert(not IS_NULLED(arg)); // would need to DEVOID it otherwise
     if (Apply_Only_Throws(out, fully, make_port_helper, arg, rebEND))
         fail (Error_No_Catch_For_Throw(out));
 
-    // !!! Shouldn't this be testing for !IS_PORT( ) ?
-    if (IS_BLANK(out))
+    // !!! Shouldn't this be testing for !Is_Port( ) ?
+    if (Is_Blank(out))
         fail (Error_Invalid_Spec_Raw(arg));
 
     return out;
@@ -77,7 +77,7 @@ REB_R TO_Port(Value* out, enum Reb_Kind kind, const Value* arg)
     assert(kind == REB_PORT);
     UNUSED(kind);
 
-    if (!IS_OBJECT(arg))
+    if (!Is_Object(arg))
         fail (Error_Bad_Make(REB_PORT, arg));
 
     // !!! cannot convert TO a PORT! without copying the whole context...
@@ -114,12 +114,12 @@ REB_R Retrigger_Append_As_Write(Level* level_) {
     // `append %foo.txt "data"` you get `%foo.txtdata`.  Some actions are like
     // this, e.g. PICK, where they can't do the automatic conversion.
     //
-    assert(IS_PORT(ARG(series))); // !!! poorly named
+    assert(Is_Port(ARG(series))); // !!! poorly named
     UNUSED(ARG(series));
     if (not (
-        IS_BINARY(ARG(value))
-        or IS_TEXT(ARG(value))
-        or IS_BLOCK(ARG(value)))
+        Is_Binary(ARG(value))
+        or Is_Text(ARG(value))
+        or Is_Block(ARG(value)))
     ){
         fail (Error_Invalid(ARG(value)));
     }
@@ -157,7 +157,7 @@ REBTYPE(Port)
     //
     // https://github.com/metaeducation/ren-c/issues/311
     //
-    if (not IS_PORT(D_ARG(1))) {
+    if (not Is_Port(D_ARG(1))) {
         switch (Cell_Word_Id(verb)) {
 
         case SYM_READ:
@@ -173,7 +173,7 @@ REBTYPE(Port)
             // what value points to.
             //
             const Value* made = rebValue("make port!", D_ARG(1));
-            assert(IS_PORT(made));
+            assert(Is_Port(made));
             Copy_Cell(D_ARG(1), made);
             rebRelease(made);
             break; }
@@ -189,7 +189,7 @@ REBTYPE(Port)
         }
     }
 
-    if (not IS_PORT(D_ARG(1)))
+    if (not Is_Port(D_ARG(1)))
         fail (Error_Illegal_Action(VAL_TYPE(D_ARG(1)), verb));
 
     Value* port = D_ARG(1);

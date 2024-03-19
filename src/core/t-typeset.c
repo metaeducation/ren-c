@@ -153,14 +153,14 @@ bool Update_Typeset_Bits_Core(
     const Cell* head,
     Specifier* specifier
 ) {
-    assert(IS_TYPESET(typeset));
+    assert(Is_Typeset(typeset));
     VAL_TYPESET_BITS(typeset) = 0;
 
     const Cell* maybe_word = head;
     for (; NOT_END(maybe_word); ++maybe_word) {
         const Cell* item;
 
-        if (IS_WORD(maybe_word)) {
+        if (Is_Word(maybe_word)) {
             if (Cell_Word_Id(maybe_word) == SYM__TNULL_T) {  // ~null~
                 TYPE_SET(typeset, REB_MAX_NULLED);
                 continue;
@@ -182,7 +182,7 @@ bool Update_Typeset_Bits_Core(
         // set typeset flags as a parameter.  Default to always for now.
         //
         const bool keywords = true;
-        if (keywords and IS_TAG(item)) {
+        if (keywords and Is_Tag(item)) {
             if (0 == Compare_String_Vals(item, Root_Ellipsis_Tag, true)) {
                 TYPE_SET(typeset, REB_TS_VARIADIC);
             }
@@ -200,11 +200,11 @@ bool Update_Typeset_Bits_Core(
                 TYPE_SET(typeset, REB_TS_ENDABLE); // skip => null
             }
         }
-        else if (IS_DATATYPE(item)) {
+        else if (Is_Datatype(item)) {
             assert(VAL_TYPE_KIND(item) != REB_0);
             TYPE_SET(typeset, VAL_TYPE_KIND(item));
         }
-        else if (IS_TYPESET(item)) {
+        else if (Is_Typeset(item)) {
             VAL_TYPESET_BITS(typeset) |= VAL_TYPESET_BITS(item);
         }
         else
@@ -223,10 +223,10 @@ REB_R MAKE_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
     assert(kind == REB_TYPESET);
     UNUSED(kind);
 
-    if (IS_TYPESET(arg))
+    if (Is_Typeset(arg))
         return Copy_Cell(out, arg);
 
-    if (!IS_BLOCK(arg)) goto bad_make;
+    if (!Is_Block(arg)) goto bad_make;
 
     Init_Typeset(out, 0, nullptr);
     Update_Typeset_Bits_Core(out, Cell_Array_At(arg), VAL_SPECIFIER(arg));
@@ -350,7 +350,7 @@ REBTYPE(Typeset)
     switch (Cell_Word_Id(verb)) {
 
     case SYM_FIND:
-        if (not IS_DATATYPE(arg))
+        if (not Is_Datatype(arg))
             fail (Error_Invalid(arg));
 
         if (TYPE_CHECK(val, VAL_TYPE_KIND(arg)))
@@ -361,10 +361,10 @@ REBTYPE(Typeset)
     case SYM_INTERSECT:
     case SYM_UNION:
     case SYM_DIFFERENCE:
-        if (IS_DATATYPE(arg)) {
+        if (Is_Datatype(arg)) {
             VAL_TYPESET_BITS(arg) = FLAGIT_KIND(VAL_TYPE(arg));
         }
-        else if (not IS_TYPESET(arg))
+        else if (not Is_Typeset(arg))
             fail (Error_Invalid(arg));
 
         if (Cell_Word_Id(verb) == SYM_UNION)

@@ -196,9 +196,9 @@ REB_R MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
     default:
         if (ANY_ARRAY(arg) && VAL_ARRAY_LEN_AT(arg) == 2) {
             Cell* item = Cell_Array_At(arg);
-            if (IS_INTEGER(item))
+            if (Is_Integer(item))
                 d = cast(REBDEC, VAL_INT64(item));
-            else if (IS_DECIMAL(item) || IS_PERCENT(item))
+            else if (Is_Decimal(item) || Is_Percent(item))
                 d = VAL_DECIMAL(item);
             else
                 fail (Error_Invalid_Core(item, VAL_SPECIFIER(arg)));
@@ -206,9 +206,9 @@ REB_R MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
             ++item;
 
             REBDEC exp;
-            if (IS_INTEGER(item))
+            if (Is_Integer(item))
                 exp = cast(REBDEC, VAL_INT64(item));
-            else if (IS_DECIMAL(item) || IS_PERCENT(item))
+            else if (Is_Decimal(item) || Is_Percent(item))
                 exp = VAL_DECIMAL(item);
             else
                 fail (Error_Invalid_Core(item, VAL_SPECIFIER(arg)));
@@ -310,7 +310,7 @@ void MF_Decimal(REB_MOLD *mo, const Cell* v, bool form)
         REBINT len = Emit_Decimal(
             buf,
             VAL_DECIMAL(v),
-            IS_PERCENT(v) ? DEC_MOLD_PERCENT : 0,
+            Is_Percent(v) ? DEC_MOLD_PERCENT : 0,
             GET_MOLD_FLAG(mo, MOLD_FLAG_COMMA_PT) ? ',' : '.',
             mo->digits
         );
@@ -380,7 +380,7 @@ REBTYPE(Decimal)
                 d2 = VAL_DECIMAL(arg);
                 if (sym == SYM_DIVIDE)
                     type = REB_DECIMAL;
-                else if (not IS_PERCENT(val))
+                else if (not Is_Percent(val))
                     type = VAL_TYPE(val);
             }
             else if (type == REB_MONEY) {
@@ -489,19 +489,19 @@ REBTYPE(Decimal)
 
         arg = ARG(scale);
         if (REF(to)) {
-            if (IS_MONEY(arg))
+            if (Is_Money(arg))
                 return Init_Money(OUT, Round_Deci(
                     decimal_to_deci(d1), flags, VAL_MONEY_AMOUNT(arg)
                 ));
 
-            if (IS_TIME(arg))
+            if (Is_Time(arg))
                 fail (Error_Invalid(arg));
 
             d1 = Round_Dec(d1, flags, Dec64(arg));
-            if (IS_INTEGER(arg))
+            if (Is_Integer(arg))
                 return Init_Integer(OUT, cast(REBI64, d1));
 
-            if (IS_PERCENT(arg))
+            if (Is_Percent(arg))
                 type = REB_PERCENT;
         }
         else

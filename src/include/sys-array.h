@@ -549,12 +549,12 @@ INLINE bool Splices_Into_Type_Without_Only(
     // are similar to APPEND/INSERT/CHANGE in their concerns, and *have*
     // an /ONLY option.
     //
-    if (IS_TRASH(arg))
+    if (Is_Trash(arg))
         fail ("Cannot put trash (~) into arrays");
 
     assert(ANY_ARRAY_KIND(array_kind));
-    return IS_GROUP(arg)
-        or IS_BLOCK(arg)
+    return Is_Group(arg)
+        or Is_Block(arg)
         or (ANY_PATH(arg) and ANY_PATH_KIND(array_kind));
 }
 
@@ -562,7 +562,7 @@ INLINE bool Splices_Into_Type_Without_Only(
 // Checks to see if a GROUP! is like ((...)) or (...), used by COMPOSE & PARSE
 //
 INLINE bool Is_Doubled_Group(const Cell* group) {
-    assert(IS_GROUP(group));
+    assert(Is_Group(group));
     Cell* inner = Cell_Array_At(group);
     if (VAL_TYPE_RAW(inner) != REB_GROUP or VAL_LEN_AT(group) != 1)
         return false; // plain (...) GROUP!

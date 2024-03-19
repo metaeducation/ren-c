@@ -47,7 +47,7 @@
     #define DBL_EPSILON 2.2204460492503131E-16
 #endif
 
-#define AS_DECIMAL(n) (IS_INTEGER(n) ? (REBDEC)VAL_INT64(n) : VAL_DECIMAL(n))
+#define AS_DECIMAL(n) (Is_Integer(n) ? (REBDEC)VAL_INT64(n) : VAL_DECIMAL(n))
 
 enum {SINE, COSINE, TANGENT};
 
@@ -668,7 +668,7 @@ DECLARE_NATIVE(same_q)
     if (VAL_TYPE(value1) != VAL_TYPE(value2))
         return Init_False(OUT); // can't be "same" value if not same type
 
-    if (IS_BITSET(value1)) {
+    if (Is_Bitset(value1)) {
         //
         // BITSET! only has a series, no index.
         //
@@ -697,7 +697,7 @@ DECLARE_NATIVE(same_q)
         return Init_True(OUT);
     }
 
-    if (IS_MAP(value1)) {
+    if (Is_Map(value1)) {
         //
         // MAP! will be the same if the map pointer matches.
         //
@@ -717,7 +717,7 @@ DECLARE_NATIVE(same_q)
         return Init_True(OUT);
     }
 
-    if (IS_DECIMAL(value1) || IS_PERCENT(value1)) {
+    if (Is_Decimal(value1) || Is_Percent(value1)) {
         //
         // The tolerance on strict-equal? for decimals is apparently not
         // a requirement of exactly the same bits.
@@ -733,7 +733,7 @@ DECLARE_NATIVE(same_q)
         return Init_False(OUT);
     }
 
-    if (IS_MONEY(value1)) {
+    if (Is_Money(value1)) {
         //
         // There is apparently a distinction between "strict equal" and "same"
         // when it comes to the MONEY! type:
@@ -854,7 +854,7 @@ DECLARE_NATIVE(maximum)
     const Value* value1 = ARG(value1);
     const Value* value2 = ARG(value2);
 
-    if (IS_PAIR(value1) || IS_PAIR(value2)) {
+    if (Is_Pair(value1) || Is_Pair(value2)) {
         Min_Max_Pair(OUT, value1, value2, true);
     }
     else {
@@ -888,7 +888,7 @@ DECLARE_NATIVE(minimum)
     const Value* value1 = ARG(value1);
     const Value* value2 = ARG(value2);
 
-    if (IS_PAIR(ARG(value1)) || IS_PAIR(ARG(value2))) {
+    if (Is_Pair(ARG(value1)) || Is_Pair(ARG(value2))) {
         Min_Max_Pair(OUT, ARG(value1), ARG(value2), false);
     }
     else {

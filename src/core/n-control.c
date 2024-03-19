@@ -186,7 +186,7 @@ bool Either_Test_Core_Throws(
 
         Copy_Cell(test, out);
 
-        if (not IS_ACTION(test))
+        if (not Is_Action(test))
             fail ("EITHER-TEST only takes WORD! and PATH! for ACTION! vars");
         goto handle_action; }
 
@@ -203,7 +203,7 @@ bool Either_Test_Core_Throws(
             return true;
         }
 
-        if (IS_TRASH(out))
+        if (Is_Trash(out))
             fail (Error_Trash_Conditional_Raw());
 
         Init_Logic(out, IS_TRUTHY(out));
@@ -230,7 +230,7 @@ bool Either_Test_Core_Throws(
         Specifier* specifier = VAL_SPECIFIER(test);
         for (; NOT_END(item); ++item) {
             const Cell* var;
-            if (not IS_WORD(item))
+            if (not Is_Word(item))
                 var = item;
             else {
                 if (Cell_Word_Id(item) == SYM__TNULL_T) {
@@ -241,7 +241,7 @@ bool Either_Test_Core_Throws(
                     continue;
                 }
                 if (Cell_Word_Id(item) == SYM__TVOID_T) {
-                    if (IS_VOID(arg)) {
+                    if (Is_Void(arg)) {
                         Init_True(out);
                         return false;
                     }
@@ -250,13 +250,13 @@ bool Either_Test_Core_Throws(
                 var = Get_Opt_Var_May_Fail(item, specifier);
             }
 
-            if (IS_DATATYPE(var)) {
+            if (Is_Datatype(var)) {
                 if (VAL_TYPE_KIND(var) == VAL_TYPE(arg)) {
                     Init_True(out);
                     return false;
                 }
             }
-            else if (IS_TYPESET(var)) {
+            else if (Is_Typeset(var)) {
                 if (TYPE_CHECK(var, VAL_TYPE(arg))) {
                     Init_True(out);
                     return false;
@@ -328,7 +328,7 @@ DECLARE_NATIVE(else)
     INCLUDE_PARAMS_OF_ELSE; // faster than EITHER-TEST specialized w/`VALUE?`
 
     Value* left = ARG(left);
-    if (not IS_NULLED(left) and not IS_VOID(left))
+    if (not IS_NULLED(left) and not Is_Void(left))
         RETURN (left);
 
     if (Do_Branch_With_Throws(OUT, ARG(branch), NULLED_CELL))
@@ -356,7 +356,7 @@ DECLARE_NATIVE(then)
     INCLUDE_PARAMS_OF_THEN; // faster than EITHER-TEST specialized w/`NULL?`
 
     Value* left = ARG(left);
-    if (IS_NULLED(left) or IS_VOID(left))
+    if (IS_NULLED(left) or Is_Void(left))
         return nullptr;  // left didn't run, so signal THEN didn't run either
 
     if (Do_Branch_With_Throws(OUT, ARG(branch), left))
@@ -384,7 +384,7 @@ DECLARE_NATIVE(also)
     INCLUDE_PARAMS_OF_ALSO; // `then func [x] [(...) :x]` => `also [...]`
 
     Value* left = ARG(left);
-    if (IS_NULLED(left) or IS_VOID(left))
+    if (IS_NULLED(left) or Is_Void(left))
         return nullptr;
 
     if (Do_Branch_With_Throws(OUT, ARG(branch), left))
@@ -459,7 +459,7 @@ DECLARE_NATIVE(non)
             fail ("NON expected value to not be NULL, but it was");
     }
     else if (VAL_TYPE_KIND(test) == REB_TRASH) {  // specialize common case
-        if (IS_TRASH(value))
+        if (Is_Trash(value))
             fail ("NON expected value to not be trash, but it was");
     }
     else if (not TYPE_CHECK(value, VAL_TYPE_KIND(test))) {
@@ -497,7 +497,7 @@ DECLARE_NATIVE(all)
         }
 
         if (
-            not IS_VOID(OUT)
+            not Is_Void(OUT)
             and IS_FALSEY(OUT)
         ){ // any false/blank/null will trigger failure
             Abort_Level(L);
@@ -541,7 +541,7 @@ DECLARE_NATIVE(any)
         }
 
         if (
-            not IS_VOID(OUT)
+            not Is_Void(OUT)
             and IS_TRUTHY(OUT)
         ){ // successful ANY returns the value
             Abort_Level(L);
@@ -675,7 +675,7 @@ static REB_R Case_Choose_Core_May_Throw(
             // >> if false <some-tag>
             // ** Script Error: if does not allow tag! for its branch argument
             //
-            if (not IS_BLOCK(cell) and not IS_ACTION(cell))
+            if (not Is_Block(cell) and not Is_Action(cell))
                 fail (Error_Invalid_Core(cell, L->specifier));
 
             continue;
@@ -697,14 +697,14 @@ static REB_R Case_Choose_Core_May_Throw(
             L->gotten = nullptr; // can't hold onto cache, running user code
 
             Copy_Cell(block, OUT); // can't evaluate into ARG(block)
-            if (IS_BLOCK(block)) {
+            if (Is_Block(block)) {
                 if (Do_Any_Array_At_Throws(OUT, block)) {
                     Abort_Level(L);
                     DROP_GC_GUARD(cell);
                     return R_THROWN;
                 }
             }
-            else if (IS_ACTION(OUT)) {
+            else if (Is_Action(OUT)) {
                 if (Do_Branch_With_Throws(OUT, block, cell)) {
                     Abort_Level(L);
                     DROP_GC_GUARD(cell);
@@ -821,13 +821,13 @@ DECLARE_NATIVE(switch)
         // condition to match.  If no more tests are run, let it suppress the
         // feature of the last value "falling out" the bottom of the switch
         //
-        if (IS_BLOCK(L->value)) {
+        if (Is_Block(L->value)) {
             Init_Nulled(OUT);
             Fetch_Next_In_Level(nullptr, L);
             continue;
         }
 
-        if (IS_ACTION(L->value)) {
+        if (Is_Action(L->value)) {
             //
             // It's a literal ACTION!, e.g. one composed in the block:
             //
@@ -882,9 +882,9 @@ DECLARE_NATIVE(switch)
                 Drop_Level(L);
                 return OUT; // last test "falls out", might be void
             }
-            if (IS_BLOCK(L->value))
+            if (Is_Block(L->value))
                 break;
-            if (IS_ACTION(L->value))
+            if (Is_Action(L->value))
                 goto action_not_supported; // literal action
             Fetch_Next_In_Level(nullptr, L);
         }
@@ -947,17 +947,17 @@ DECLARE_NATIVE(default)
         return OUT; // NULL is okay in this case
     }
 
-    if (IS_SET_WORD(target))
+    if (Is_Set_Word(target))
         Move_Opt_Var_May_Fail(OUT, target, SPECIFIED);
     else {
-        assert(IS_SET_PATH(target));
+        assert(Is_Set_Path(target));
         Get_Path_Core(OUT, target, SPECIFIED); // will fail() on GROUP!s
     }
 
     if (
         not IS_NULLED(OUT)
-        and not IS_TRASH(OUT)
-        and (not IS_BLANK(OUT) or REF(only))
+        and not Is_Trash(OUT)
+        and (not Is_Blank(OUT) or REF(only))
     ){
         return OUT;  // count it as "already set"
     }
@@ -966,10 +966,10 @@ DECLARE_NATIVE(default)
         return R_THROWN;
 
     const bool enfix = false;
-    if (IS_SET_WORD(target))
+    if (Is_Set_Word(target))
         Copy_Cell(Sink_Var_May_Fail(target, SPECIFIED), OUT);
     else {
-        assert(IS_SET_PATH(target));
+        assert(Is_Set_Path(target));
         Set_Path_Core(target, SPECIFIED, OUT, enfix);
     }
     return OUT;
@@ -1029,14 +1029,14 @@ DECLARE_NATIVE(catch)
     }
 
     if (REF(any) and not (
-        IS_ACTION(OUT)
+        Is_Action(OUT)
         and VAL_ACT_DISPATCHER(OUT) == &N_quit
     )){
         goto was_caught;
     }
 
     if (REF(quit) and (
-        IS_ACTION(OUT)
+        Is_Action(OUT)
         and VAL_ACT_DISPATCHER(OUT) == &N_quit
     )){
         goto was_caught;
@@ -1053,7 +1053,7 @@ DECLARE_NATIVE(catch)
         // !!! The reason we're copying isn't so the VALUE_FLAG_THROWN bit
         // won't confuse the equality comparison...but would it have?
 
-        if (IS_BLOCK(ARG(names))) {
+        if (Is_Block(ARG(names))) {
             //
             // Test all the words in the block for a match to catch
 
@@ -1062,7 +1062,7 @@ DECLARE_NATIVE(catch)
                 //
                 // !!! Should we test a typeset for illegal name types?
                 //
-                if (IS_BLOCK(candidate))
+                if (Is_Block(candidate))
                     fail (Error_Invalid(ARG(names)));
 
                 Derelativize(temp1, candidate, VAL_SPECIFIER(ARG(names)));
@@ -1089,7 +1089,7 @@ DECLARE_NATIVE(catch)
     else {
         // Return THROW's arg only if it did not have a /NAME supplied
         //
-        if (IS_BLANK(OUT) and (REF(any) or not REF(quit)))
+        if (Is_Blank(OUT) and (REF(any) or not REF(quit)))
             goto was_caught;
     }
 

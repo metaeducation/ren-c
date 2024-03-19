@@ -219,11 +219,11 @@ INLINE void Finalize_Arg(
         or refine == LOOKBACK_ARG // check arg type
         or refine == ARG_TO_UNUSED_REFINEMENT // ensure arg null
         or refine == ARG_TO_REVOKED_REFINEMENT // ensure arg null
-        or IS_REFINEMENT(refine) // ensure arg not null
+        or Is_Refinement(refine) // ensure arg not null
     );
 
-    if (IS_NULLED(arg) or IS_VOID(arg)) {
-        if (IS_REFINEMENT(refine)) {
+    if (IS_NULLED(arg) or Is_Void(arg)) {
+        if (Is_Refinement(refine)) {
             //
             // We can only revoke the refinement if this is the 1st
             // refinement arg.  If it's a later arg, then the first
@@ -262,7 +262,7 @@ INLINE void Finalize_Arg(
             fail (Error_Bad_Refine_Revoke(param, arg));
     }
 
-    if (IS_VOID(arg) and TYPE_CHECK(param, REB_TS_NOOP_IF_VOID)) {
+    if (Is_Void(arg) and TYPE_CHECK(param, REB_TS_NOOP_IF_VOID)) {
         SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
         LVL_PHASE_OR_DUMMY(L_state) = PG_Dummy_Action;
         return;
@@ -280,7 +280,7 @@ INLINE void Finalize_Arg(
     // Varargs are odd, because the type checking doesn't actually check the
     // types inside the parameter--it always has to be a VARARGS!.
     //
-    if (not IS_VARARGS(arg))
+    if (not Is_Varargs(arg))
         fail (Error_Not_Varargs(L_state, param, VAL_TYPE(arg)));
 
     // While "checking" the variadic argument we actually re-stamp it with
@@ -570,7 +570,7 @@ bool Eval_Core_Throws(Level* const L)
         Erase_Cell(Level_Shove(L));
 
         Symbol* opt_label = nullptr;
-        if (IS_WORD(L->value) or IS_PATH(L->value)) {
+        if (Is_Word(L->value) or Is_Path(L->value)) {
             //
             // We've only got one shot for the value.  If we don't push the
             // refinements here, we'll lose them.  Start by biting the
@@ -587,7 +587,7 @@ bool Eval_Core_Throws(Level* const L)
                 goto return_thrown;
             }
         }
-        else if (IS_GROUP(L->value)) {
+        else if (Is_Group(L->value)) {
             REBIXO indexor = Eval_Array_At_Core(
                 SET_END(Level_Shove(L)),
                 nullptr, // opt_first (null means nothing, not nulled cell)
@@ -603,7 +603,7 @@ bool Eval_Core_Throws(Level* const L)
             if (IS_END(Level_Shove(L))) // !!! need SHOVE frame for type error
                 fail ("GROUP! passed to SHOVE did not evaluate to content");
         }
-        else if (IS_ACTION(L->value)) {
+        else if (Is_Action(L->value)) {
             Copy_Cell(Level_Shove(L), KNOWN(L->value));
         }
         else
@@ -646,7 +646,7 @@ bool Eval_Core_Throws(Level* const L)
 
         if (
             current_gotten
-            and IS_ACTION(current_gotten)
+            and Is_Action(current_gotten)
             and NOT_VAL_FLAG(current_gotten, VALUE_FLAG_ENFIXED)
             and GET_VAL_FLAG(current_gotten, ACTION_FLAG_QUOTES_FIRST_ARG)
         ){
@@ -680,7 +680,7 @@ bool Eval_Core_Throws(Level* const L)
         //
         if (
             VAL_LEN_AT(current) > 0
-            and IS_WORD(Cell_Array_At(current))
+            and Is_Word(Cell_Array_At(current))
         ){
             assert(not current_gotten); // no caching for paths
 
@@ -691,7 +691,7 @@ bool Eval_Core_Throws(Level* const L)
 
             if (
                 var_at
-                and IS_ACTION(var_at)
+                and Is_Action(var_at)
                 and NOT_VAL_FLAG(var_at, VALUE_FLAG_ENFIXED)
                 and GET_VAL_FLAG(var_at, ACTION_FLAG_QUOTES_FIRST_ARG)
             ){
@@ -887,7 +887,7 @@ bool Eval_Core_Throws(Level* const L)
                     goto unspecialized_refinement; // second most common
                 }
 
-                if (IS_BLANK(L->special)) // either specialized or not...
+                if (Is_Blank(L->special)) // either specialized or not...
                     goto unused_refinement; // will get ARG_MARKED_CHECKED
 
                 // If arguments in the frame haven't already gone through
@@ -908,7 +908,7 @@ bool Eval_Core_Throws(Level* const L)
                     goto used_refinement;
                 }
 
-                if (IS_REFINEMENT(L->special)) {
+                if (Is_Refinement(L->special)) {
                     assert(
                         Cell_Word_Symbol(L->special)
                         == Cell_Parameter_Symbol(L->param)
@@ -922,7 +922,7 @@ bool Eval_Core_Throws(Level* const L)
                 // in taking arguments at the callsite than the current
                 // refinement, if it's in use due to a PATH! invocation.
                 //
-                if (IS_TRASH(L->special))
+                if (Is_Trash(L->special))
                     goto unspecialized_refinement_must_pickup; // defer this
 
                 // A "typechecked" ISSUE! with binding indicates a partial
@@ -930,7 +930,7 @@ bool Eval_Core_Throws(Level* const L)
                 // to top of stack, hence HIGHER priority for fulfilling
                 // @ the callsite than any refinements added by a PATH!.
                 //
-                if (IS_ISSUE(L->special)) {
+                if (Is_Issue(L->special)) {
                     REBLEN partial_index = VAL_WORD_INDEX(L->special);
                     Symbol* partial_canon = VAL_STORED_CANON(L->special);
 
@@ -942,7 +942,7 @@ bool Eval_Core_Throws(Level* const L)
                     goto used_refinement;
                 }
 
-                assert(IS_INTEGER(L->special)); // DO FRAME! leaves these
+                assert(Is_Integer(L->special)); // DO FRAME! leaves these
 
                 assert(L->flags.bits & DO_FLAG_FULLY_SPECIALIZED);
                 L->refine = L->arg; // remember so we can revoke!
@@ -955,7 +955,7 @@ bool Eval_Core_Throws(Level* const L)
                 if (L->stack_base == TOP_INDEX)  // no refines left on stack
                     goto unused_refinement;
 
-                if (IS_ACTION(ordered)) {
+                if (Is_Action(ordered)) {
                     // chained function to call later
                 }
                 else if (VAL_STORED_CANON(ordered) == param_canon) {
@@ -969,7 +969,7 @@ bool Eval_Core_Throws(Level* const L)
               unspecialized_refinement_must_pickup:; // fulfill on 2nd pass
 
                 for (; ordered != Data_Stack_At(L->stack_base); --ordered) {
-                    if (IS_ACTION(ordered))
+                    if (Is_Action(ordered))
                         continue;  // chained function to call later
 
                     if (VAL_STORED_CANON(ordered) != param_canon)
@@ -1065,7 +1065,7 @@ bool Eval_Core_Throws(Level* const L)
                     //
                     assert(
                         not Is_Param_Variadic(L->param)
-                        or IS_VARARGS(L->special)
+                        or Is_Varargs(L->special)
                     );
 
                     Copy_Cell(L->arg, L->special); // won't copy the bit
@@ -1177,7 +1177,7 @@ bool Eval_Core_Throws(Level* const L)
                             goto abort_action;
                         }
                     }
-                    else if (IS_BAR(L->out)) {
+                    else if (Is_Bar(L->out)) {
                         //
                         // Hard quotes take BAR!s but they should look like an
                         // <end> to a soft quote.
@@ -1243,7 +1243,7 @@ bool Eval_Core_Throws(Level* const L)
 
     //=//// AFTER THIS, PARAMS CONSUME FROM CALLSITE IF NOT APPLY ////////=//
 
-            assert(L->refine == ORDINARY_ARG or IS_REFINEMENT(L->refine));
+            assert(L->refine == ORDINARY_ARG or Is_Refinement(L->refine));
 
     //=//// START BY HANDLING ANY DEFERRED ENFIX PROCESSING //////////////=//
 
@@ -1363,7 +1363,7 @@ bool Eval_Core_Throws(Level* const L)
     //=//// SOFT QUOTED ARG-OR-REFINEMENT-ARG  ////////////////////////////=//
 
               case PARAM_CLASS_SOFT_QUOTE:
-                if (IS_BAR(L->value)) { // BAR! stops a soft quote
+                if (Is_Bar(L->value)) { // BAR! stops a soft quote
                     L->flags.bits |= DO_FLAG_BARRIER_HIT;
                     Fetch_Next_In_Level(nullptr, L);
                     SET_END(L->arg);
@@ -1435,11 +1435,11 @@ bool Eval_Core_Throws(Level* const L)
         // second time through, and we were just jumping up to check the
         // parameters in response to a R_REDO_CHECKED; if so, skip this.
         //
-        if (TOP_INDEX != L->stack_base and IS_ISSUE(TOP)) {
+        if (TOP_INDEX != L->stack_base and Is_Issue(TOP)) {
 
           next_pickup:;
 
-            assert(IS_ISSUE(TOP));
+            assert(Is_Issue(TOP));
 
             if (not IS_WORD_BOUND(TOP)) { // the loop didn't index it
                 CHANGE_VAL_TYPE_BITS(TOP, REB_REFINEMENT);
@@ -1457,7 +1457,7 @@ bool Eval_Core_Throws(Level* const L)
 
             L->refine = L->arg - 1; // this refinement may still be revoked
             assert(
-                IS_REFINEMENT(L->refine)
+                Is_Refinement(L->refine)
                 and (
                     Cell_Word_Symbol(L->refine)
                     == Cell_Parameter_Symbol(L->param - 1)
@@ -1548,7 +1548,7 @@ bool Eval_Core_Throws(Level* const L)
             //
           case REB_R_THROWN:
             assert(THROWN(L->out));
-            if (IS_ACTION(L->out)) {
+            if (Is_Action(L->out)) {
                 if (
                     VAL_ACTION(L->out) == NAT_ACTION(unwind)
                     and VAL_BINDING(L->out) == L->varlist
@@ -1574,7 +1574,7 @@ bool Eval_Core_Throws(Level* const L)
                     // the phase and binding we are to resume with.
                     //
                     CATCH_THROWN(L->out, L->out);
-                    assert(IS_FRAME(L->out));
+                    assert(Is_Frame(L->out));
 
                     // !!! We are reusing the frame and may be jumping to an
                     // "earlier phase" of a composite function, or even to
@@ -1750,7 +1750,7 @@ bool Eval_Core_Throws(Level* const L)
         if (not current_gotten)
             current_gotten = Get_Opt_Var_May_Fail(current, L->specifier);
 
-        if (IS_ACTION(current_gotten)) { // before IS_NULLED() is common case
+        if (Is_Action(current_gotten)) { // before IS_NULLED() is common case
             Push_Action(
                 L,
                 VAL_ACTION(current_gotten),
@@ -1772,7 +1772,7 @@ bool Eval_Core_Throws(Level* const L)
             goto process_action;
         }
 
-        if (IS_TRASH(current_gotten))  // need `:x` if `x` is unset
+        if (Is_Trash(current_gotten))  // need `:x` if `x` is unset
             fail (Error_Need_Non_Trash_Core(current, L->specifier));
 
         Copy_Cell(L->out, current_gotten);
@@ -1955,10 +1955,10 @@ bool Eval_Core_Throws(Level* const L)
             goto return_thrown;
         }
 
-        if (IS_TRASH(L->out))  // need GET/ANY if path is trash
+        if (Is_Trash(L->out))  // need GET/ANY if path is trash
             fail (Error_Need_Non_Trash_Core(current, L->specifier));
 
-        if (IS_ACTION(L->out)) {
+        if (Is_Action(L->out)) {
             //
             // !!! While it is (or would be) possible to fetch an enfix or
             // invisible function from a PATH!, at this point it would be too
@@ -2390,7 +2390,7 @@ bool Eval_Core_Throws(Level* const L)
 
         if (
             L->gotten
-            and IS_ACTION(VAL(L->gotten))
+            and Is_Action(VAL(L->gotten))
             and GET_VAL_FLAG(VAL(L->gotten), ACTION_FLAG_INVISIBLE)
         ){
             // Even if not EVALUATE, we do not want START_NEW_EXPRESSION on
@@ -2515,14 +2515,14 @@ bool Eval_Core_Throws(Level* const L)
 
     Push_Action(L, VAL_ACTION(L->gotten), VAL_BINDING(L->gotten));
 
-    if (IS_WORD(L->value))
+    if (Is_Word(L->value))
         Begin_Action(L, Cell_Word_Symbol(L->value), LOOKBACK_ARG);
     else {
         // Should be a SHOVE.  There needs to be a way to telegraph the label
         // on the value if it was a PATH! to here.
         //
         assert(Is_Level_Gotten_Shoved(L));
-        assert(IS_PATH(L->value) or IS_GROUP(L->value) or IS_ACTION(L->value));
+        assert(Is_Path(L->value) or Is_Group(L->value) or Is_Action(L->value));
         Symbol* opt_label = nullptr;
         Begin_Action(L, opt_label, LOOKBACK_ARG);
     }

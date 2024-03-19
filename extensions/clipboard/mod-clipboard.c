@@ -32,7 +32,6 @@
 
 #ifdef TO_WINDOWS
     #include <windows.h>
-    #undef IS_ERROR
     #undef OUT  // %minwindef.h defines this, we have a better use for it
     #undef VOID  // %winnt.h defines this, we have a better use for it
 #endif

@@ -80,7 +80,7 @@ INLINE bool Is_Block_Style_Varargs(
     Value* *shared_out,
     const Cell* vararg
 ){
-    assert(IS_VARARGS(vararg));
+    assert(Is_Varargs(vararg));
 
     if (vararg->extra.binding->header.bits & ARRAY_FLAG_VARLIST) {
         *shared_out = nullptr; // avoid compiler warning in -Og build
@@ -95,7 +95,7 @@ INLINE bool Is_Block_Style_Varargs(
     *shared_out = KNOWN(Array_Head(array1));
     assert(
         IS_END(*shared_out)
-        or (IS_BLOCK(*shared_out) and Array_Len(array1) == 1)
+        or (Is_Block(*shared_out) and Array_Len(array1) == 1)
     );
 
     return true;
@@ -106,7 +106,7 @@ INLINE bool Is_Level_Style_Varargs_Maybe_Null(
     Level** L_out,
     const Cell* vararg
 ){
-    assert(IS_VARARGS(vararg));
+    assert(Is_Varargs(vararg));
 
     if (not (vararg->extra.binding->header.bits & ARRAY_FLAG_VARLIST)) {
         *L_out = nullptr; // avoid compiler warning in -Og build
@@ -136,7 +136,7 @@ INLINE bool Is_Level_Style_Varargs_May_Fail(
 
 
 INLINE const Value* Param_For_Varargs_Maybe_Null(const Cell* v) {
-    assert(IS_VARARGS(v));
+    assert(Is_Varargs(v));
 
     REBACT *phase = v->payload.varargs.phase;
     if (phase) {

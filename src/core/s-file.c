@@ -52,7 +52,7 @@
 //
 Series* To_REBOL_Path(const Cell* string, REBFLGS flags)
 {
-    assert(IS_TEXT(string));
+    assert(Is_Text(string));
 
     DECLARE_MOLD (mo);
     Push_Mold(mo);
@@ -140,7 +140,7 @@ restart:;
 // buffer (e.g. for further appending or just counting the number of bytes)
 //
 void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
-    assert(IS_FILE(file));
+    assert(Is_File(file));
 
     Ucs2(const*) up = Cell_String_At(file);
     REBLEN len = VAL_LEN_AT(file);

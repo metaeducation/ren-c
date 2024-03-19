@@ -34,10 +34,6 @@
 #include <process.h>
 #include <assert.h>
 
-#ifdef IS_ERROR
-#undef IS_ERROR //winerror.h defines this, so undef it to avoid the warning
-#endif
-
 #define REBOL_LEVEL_SHORTHAND_MACROS 0  // Windows defines OUT, IN
 #include "sys-core.h"
 

@@ -201,7 +201,7 @@ void Eval_Core_Expression_Checks_Debug(Level* L) {
 
     if (L->gotten) {
         if (not Is_Level_Gotten_Shoved(L)) {
-            assert(IS_WORD(L->value));
+            assert(Is_Word(L->value));
             assert(Try_Get_Opt_Var(L->value, L->specifier) == L->gotten);
         }
     }
@@ -237,7 +237,7 @@ void Eval_Core_Expression_Checks_Debug(Level* L) {
 //
 void Do_Process_Action_Checks_Debug(Level* L) {
 
-    assert(IS_FRAME(L->rootvar));
+    assert(Is_Frame(L->rootvar));
     assert(L->arg == L->rootvar + 1);
 
     // See Level_Phase() for why it's not allowed when dummy is the dispatcher
@@ -325,7 +325,7 @@ void Eval_Core_Exit_Checks_Debug(Level* L) {
         if (L->gotten == Level_Shove(L->prior))
             assert(GET_VAL_FLAG(Level_Shove(L->prior), VALUE_FLAG_ENFIXED));
         else {
-            assert(IS_WORD(L->value));
+            assert(Is_Word(L->value));
             assert(Try_Get_Opt_Var(L->value, L->specifier) == L->gotten);
         }
     }

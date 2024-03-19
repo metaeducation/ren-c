@@ -145,7 +145,7 @@ INLINE Level* CTX_LEVEL_IF_ON_STACK(REBCTX *c) {
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
 
     assert(NOT_SER_INFO(CTX_VARLIST(c), SERIES_INFO_INACCESSIBLE));
-    assert(IS_FRAME(CTX_ARCHETYPE(c)));
+    assert(Is_Frame(CTX_ARCHETYPE(c)));
 
     Level* L = LVL(keysource);
     assert(L->original); // inline Is_Action_Level() to break dependency
@@ -374,19 +374,19 @@ INLINE void FAIL_IF_BAD_PORT(Value* port) {
     REBCTX *ctx = VAL_CONTEXT(port);
     if (
         CTX_LEN(ctx) < (STD_PORT_MAX - 1)
-        or not IS_OBJECT(CTX_VAR(ctx, STD_PORT_SPEC))
+        or not Is_Object(CTX_VAR(ctx, STD_PORT_SPEC))
     ){
         fail (Error_Invalid_Port_Raw());
     }
 }
 
 // It's helpful to show when a test for a native port actor is being done,
-// rather than just having the code say IS_HANDLE().
+// rather than just having the code say Is_Handle().
 //
 INLINE bool Is_Native_Port_Actor(const Value* actor) {
-    if (IS_HANDLE(actor))
+    if (Is_Handle(actor))
         return true;
-    assert(IS_OBJECT(actor));
+    assert(Is_Object(actor));
     return false;
 }
 

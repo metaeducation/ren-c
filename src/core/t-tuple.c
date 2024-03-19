@@ -53,7 +53,7 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
     assert(kind == REB_TUPLE);
     UNUSED(kind);
 
-    if (IS_TUPLE(arg))
+    if (Is_Tuple(arg))
         return Copy_Cell(out, arg);
 
     RESET_CELL(out, REB_TUPLE);
@@ -69,7 +69,7 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
     // All attempts to convert a URL!-flavored IP address failed.  Taking
     // URL! here fixes it, though there are still open questions.
     //
-    if (IS_TEXT(arg) or IS_URL(arg)) {
+    if (Is_Text(arg) or Is_Url(arg)) {
         REBSIZ size;
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TUPLE);
         Erase_Cell(out);
@@ -87,10 +87,10 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
         for (; NOT_END(item); ++item, ++vp, ++len) {
             if (len >= MAX_TUPLE)
                 goto bad_make;
-            if (IS_INTEGER(item)) {
+            if (Is_Integer(item)) {
                 n = Int32(item);
             }
-            else if (IS_CHAR(item)) {
+            else if (Is_Char(item)) {
                 n = VAL_CHAR(item);
             }
             else
@@ -109,7 +109,7 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
 
     REBLEN alen;
 
-    if (IS_ISSUE(arg)) {
+    if (Is_Issue(arg)) {
         Symbol* symbol = Cell_Word_Symbol(arg);
         const Byte *ap = cb_cast(Symbol_Head(symbol));
         size_t size = Symbol_Size(symbol); // UTF-8 len
@@ -128,7 +128,7 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
             ap += 2;
         }
     }
-    else if (IS_BINARY(arg)) {
+    else if (Is_Binary(arg)) {
         Byte *ap = Cell_Binary_At(arg);
         REBLEN len = VAL_LEN_AT(arg);
         if (len > MAX_TUPLE) len = MAX_TUPLE;
@@ -230,9 +230,9 @@ void Poke_Tuple_Immediate(
         fail (Error_Out_Of_Range(picker));
 
     REBINT i;
-    if (IS_INTEGER(poke) || IS_DECIMAL(poke))
+    if (Is_Integer(poke) || Is_Decimal(poke))
         i = Int32(poke);
-    else if (IS_BLANK(poke)) {
+    else if (Is_Blank(poke)) {
         n--;
         CLEAR(dat + n, MAX_TUPLE - n);
         VAL_TUPLE_LEN(value) = n;
@@ -326,7 +326,7 @@ REBTYPE(Tuple)
     REBINT  a;
     REBDEC  dec;
 
-    assert(IS_TUPLE(value));
+    assert(Is_Tuple(value));
 
     Byte *vp = VAL_TUPLE(value);
     len = VAL_TUPLE_LEN(value);
@@ -349,17 +349,17 @@ REBTYPE(Tuple)
     ){
         assert(vp);
 
-        if (IS_INTEGER(arg)) {
+        if (Is_Integer(arg)) {
             dec = -207.6382; // unused but avoid maybe uninitialized warning
             a = VAL_INT32(arg);
             ap = 0;
         }
-        else if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
+        else if (Is_Decimal(arg) || Is_Percent(arg)) {
             dec = VAL_DECIMAL(arg);
             a = cast(REBINT, dec);
             ap = 0;
         }
-        else if (IS_TUPLE(arg)) {
+        else if (Is_Tuple(arg)) {
             dec = -251.8517; // unused but avoid maybe uninitialized warning
             ap = VAL_TUPLE(arg);
             alen = VAL_TUPLE_LEN(arg);
@@ -381,14 +381,14 @@ REBTYPE(Tuple)
             case SYM_SUBTRACT: v -= a; break;
 
             case SYM_MULTIPLY:
-                if (IS_DECIMAL(arg) || IS_PERCENT(arg))
+                if (Is_Decimal(arg) || Is_Percent(arg))
                     v = cast(REBINT, v * dec);
                 else
                     v *= a;
                 break;
 
             case SYM_DIVIDE:
-                if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
+                if (Is_Decimal(arg) || Is_Percent(arg)) {
                     if (dec == 0.0)
                         fail (Error_Zero_Divide_Raw());
 
@@ -503,7 +503,7 @@ REBTYPE(Tuple)
         if (action == A_PICK)
             return Init_Integer(OUT, vp[a-1]);
         // Poke:
-        if (not IS_INTEGER(D_ARG(3)))
+        if (not Is_Integer(D_ARG(3)))
             fail (Error_Invalid(D_ARG(3)));
         v = VAL_INT32(D_ARG(3));
         if (v < 0)

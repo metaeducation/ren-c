@@ -96,7 +96,7 @@ DECLARE_NATIVE(builtin_extensions)
     for (i = 0; i != NUM_BUILTIN_EXTENSIONS; ++i) {
         COLLATE_CFUNC *collator = Builtin_Extension_Collators[i];
         Value* details = (*collator)();
-        assert(IS_BLOCK(details) and VAL_LEN_AT(details) == IDX_COLLATOR_MAX);
+        assert(Is_Block(details) and VAL_LEN_AT(details) == IDX_COLLATOR_MAX);
         Copy_Cell(Alloc_Tail_Array(list), details);
         rebRelease(details);
     }
@@ -205,7 +205,7 @@ DECLARE_NATIVE(load_extension)
         // normal module export...also Make_Native() doesn't understand it
         //
         bool is_export;
-        if (IS_WORD(item) and Cell_Word_Id(item) == SYM_EXPORT) {
+        if (Is_Word(item) and Cell_Word_Id(item) == SYM_EXPORT) {
             is_export = true;
             ++item;
         }
@@ -213,7 +213,7 @@ DECLARE_NATIVE(load_extension)
             is_export = false;
 
         Cell* name = item;
-        if (not IS_SET_WORD(name))
+        if (not Is_Set_Word(name))
             panic (name);
 
         // We want to create the native from the spec and naming, and make

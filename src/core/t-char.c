@@ -193,7 +193,7 @@ REBTYPE(Char)
         // R3-Alpha chose to return INTEGER! and gave a signed difference, so
         // the above would give -1.
         //
-        if (IS_CHAR(D_ARG(2))) {
+        if (Is_Char(D_ARG(2))) {
             Init_Integer(OUT, chr - arg);
             return OUT;
         }

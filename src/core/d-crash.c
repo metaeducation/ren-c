@@ -192,7 +192,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         UNUSED(v);
         strncat(buf, "value", PANIC_BUF_SIZE - strlen(buf));
       #else
-        if (NOT_END(v) and IS_ERROR(v)) {
+        if (NOT_END(v) and Is_Error(v)) {
             printf("...panicking on an ERROR! value...");
             PROBE(v);
         }
@@ -248,7 +248,7 @@ DECLARE_NATIVE(panic)
     // string cell...but panic() on UTF-8 character data assumes you mean to
     // report the contained message.  PANIC-VALUE for the latter intent.
     //
-    if (IS_TEXT(v)) {
+    if (Is_Text(v)) {
         REBSIZ offset;
         REBSIZ size;
         Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
@@ -256,7 +256,7 @@ DECLARE_NATIVE(panic)
         p = Binary_At(temp, offset); // UTF-8 data
     }
     else {
-        assert(IS_ERROR(v));
+        assert(Is_Error(v));
         p = VAL_CONTEXT(v);
     }
 

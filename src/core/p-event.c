@@ -75,11 +75,11 @@ REBREQ *req;        //!!! move this global
 Value* Append_Event(void)
 {
     Value* port = Get_System(SYS_PORTS, PORTS_SYSTEM);
-    if (!IS_PORT(port)) return 0; // verify it is a port object
+    if (!Is_Port(port)) return 0; // verify it is a port object
 
     // Get queue block:
     Value* state = VAL_CONTEXT_VAR(port, STD_PORT_STATE);
-    if (!IS_BLOCK(state)) return 0;
+    if (!Is_Block(state)) return 0;
 
     // Append to tail if room:
     if (SER_FULL(VAL_SERIES(state))) {
@@ -107,11 +107,11 @@ Value* Find_Last_Event(REBINT model, REBINT type)
     Value* state;
 
     port = Get_System(SYS_PORTS, PORTS_SYSTEM);
-    if (!IS_PORT(port)) return nullptr;  // verify it is a port object
+    if (!Is_Port(port)) return nullptr;  // verify it is a port object
 
     // Get queue block:
     state = VAL_CONTEXT_VAR(port, STD_PORT_STATE);
-    if (!IS_BLOCK(state)) return nullptr;
+    if (!Is_Block(state)) return nullptr;
 
     value = VAL_ARRAY_TAIL(state) - 1;
     for (; value >= VAL_ARRAY_HEAD(state); --value) {
@@ -141,12 +141,12 @@ static REB_R Event_Actor(Level* level_, Value* port, Value* verb)
     REBCTX *ctx = VAL_CONTEXT(port);
     Value* state = CTX_VAR(ctx, STD_PORT_STATE);
     Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
-    if (!IS_OBJECT(spec))
+    if (!Is_Object(spec))
         fail (Error_Invalid_Spec_Raw(spec));
 
     // Get or setup internal state data:
     //
-    if (!IS_BLOCK(state))
+    if (!Is_Block(state))
         Init_Block(state, Make_Array(EVENTS_CHUNK - 1));
 
     switch (Cell_Word_Id(verb)) {
@@ -173,12 +173,12 @@ static REB_R Event_Actor(Level* level_, Value* port, Value* verb)
 
     // Normal block actions done on events:
     case SYM_POKE:
-        if (!IS_EVENT(D_ARG(3)))
+        if (!Is_Event(D_ARG(3)))
             fail (Error_Invalid(D_ARG(3)));
         goto act_blk;
     case SYM_INSERT:
     case SYM_APPEND:
-        if (!IS_EVENT(arg))
+        if (!Is_Event(arg))
             fail (Error_Invalid(arg));
         // falls through
     case SYM_PICK: {

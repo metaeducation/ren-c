@@ -184,7 +184,7 @@ DECLARE_NATIVE(eval_enfix)
         RETURN (temp);
     }
 
-    if (not IS_ACTION(temp))
+    if (not Is_Action(temp))
         fail ("ME and MY only work if right hand WORD! is an ACTION!");
 
     // Here we do something devious.  We subvert the system by setting
@@ -358,7 +358,7 @@ DECLARE_NATIVE(do)
         // See code called in system/intrinsic/do*
         //
         Value* sys_do_helper = CTX_VAR(Sys_Context, SYS_CTX_DO_P);
-        assert(IS_ACTION(sys_do_helper));
+        assert(Is_Action(sys_do_helper));
 
         UNUSED(REF(args)); // detected via `value? :arg`
 
@@ -647,11 +647,11 @@ DECLARE_NATIVE(redo)
     INCLUDE_PARAMS_OF_REDO;
 
     Value* restartee = ARG(restartee);
-    if (not IS_FRAME(restartee)) {
+    if (not Is_Frame(restartee)) {
         if (not Did_Get_Binding_Of(OUT, restartee))
             fail ("No context found from restartee in REDO");
 
-        if (not IS_FRAME(OUT))
+        if (not Is_Frame(OUT))
             fail ("Context of restartee in REDO is not a FRAME!");
 
         Copy_Cell(restartee, OUT);
@@ -755,7 +755,7 @@ DECLARE_NATIVE(applique)
         return R_THROWN;
     }
 
-    if (not IS_ACTION(OUT))
+    if (not Is_Action(OUT))
         fail (Error_Invalid(applicand));
     Copy_Cell(applicand, OUT);
 

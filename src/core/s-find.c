@@ -162,7 +162,7 @@ REBINT Compare_Uni_Str(
 //
 REBINT Compare_String_Vals(const Cell* v1, const Cell* v2, bool uncase)
 {
-    assert(not IS_BINARY(v1) and not IS_BINARY(v2));
+    assert(not Is_Binary(v1) and not Is_Binary(v2));
 
     REBLEN l1  = VAL_LEN_AT(v1);
     REBLEN l2  = VAL_LEN_AT(v2);

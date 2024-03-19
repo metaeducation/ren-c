@@ -100,7 +100,7 @@ Array* List_Func_Typesets(Value* func)
     Value* typeset = VAL_ACT_PARAMS_HEAD(func);
 
     for (; NOT_END(typeset); typeset++) {
-        assert(IS_TYPESET(typeset));
+        assert(Is_Typeset(typeset));
 
         Value* value = Copy_Cell(Alloc_Tail_Array(array), typeset);
 
@@ -207,7 +207,7 @@ Array* Make_Paramlist_Managed_May_Fail(
 
     //=//// STRING! FOR FUNCTION DESCRIPTION OR PARAMETER NOTE ////////////=//
 
-        if (IS_TEXT(item)) {
+        if (Is_Text(item)) {
             //
             // Consider `[<with> some-extern "description of that extern"]` to
             // be purely commentary for the implementation, and don't include
@@ -216,14 +216,14 @@ Array* Make_Paramlist_Managed_May_Fail(
             if (mode == SPEC_MODE_WITH)
                 continue;
 
-            if (IS_TYPESET(TOP))
+            if (Is_Typeset(TOP))
                 Copy_Cell(PUSH(), EMPTY_BLOCK);  // need block in position
 
-            if (IS_BLOCK(TOP)) { // we're in right spot to push notes/title
+            if (Is_Block(TOP)) { // we're in right spot to push notes/title
                 Init_Text(PUSH(), Copy_String_At_Len(item, -1));
             }
             else { // !!! A string was already pushed.  Should we append?
-                assert(IS_TEXT(TOP));
+                assert(Is_Text(TOP));
                 Init_Text(TOP, Copy_String_At_Len(item, -1));
             }
 
@@ -237,7 +237,7 @@ Array* Make_Paramlist_Managed_May_Fail(
 
     //=//// TOP-LEVEL SPEC TAGS LIKE <local>, <with> etc. /////////////////=//
 
-        if (IS_TAG(item) and (flags & MKF_KEYWORDS)) {
+        if (Is_Tag(item) and (flags & MKF_KEYWORDS)) {
             if (0 == Compare_String_Vals(item, Root_With_Tag, true)) {
                 mode = SPEC_MODE_WITH;
                 continue;
@@ -252,12 +252,12 @@ Array* Make_Paramlist_Managed_May_Fail(
 
     //=//// BLOCK! OF TYPES TO MAKE TYPESET FROM (PLUS PARAMETER TAGS) ////=//
 
-        if (IS_BLOCK(item)) {
+        if (Is_Block(item)) {
           process_typeset_block:
 
             if (
                 VAL_ARRAY_LEN_AT(item) == 1
-                and IS_WORD(Cell_Array_At(item))
+                and Is_Word(Cell_Array_At(item))
                 and Cell_Word_Id(Cell_Array_At(item)) == SYM_TILDE
             ){
                 header_bits |= ACTION_FLAG_TRASHER;  // Trasher_Dispatcher()
@@ -268,7 +268,7 @@ Array* Make_Paramlist_Managed_May_Fail(
                 goto process_typeset_block;
             }
 
-            if (IS_BLOCK(TOP)) // two blocks of types!
+            if (Is_Block(TOP)) // two blocks of types!
                 fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
 
             // You currently can't say `<local> x [integer!]`, because they
@@ -287,7 +287,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             // Save the block for parameter types.
             //
             Value* typeset;
-            if (IS_TYPESET(TOP)) {
+            if (Is_Typeset(TOP)) {
                 Specifier* derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
                 Init_Block(
                     PUSH(),
@@ -301,7 +301,7 @@ Array* Make_Paramlist_Managed_May_Fail(
                 typeset = TOP - 1;  // volatile if you PUSH()!
             }
             else {
-                assert(IS_TEXT(TOP)); // !!! are blocks after notes good?
+                assert(Is_Text(TOP)); // !!! are blocks after notes good?
 
                 if (IS_BLANK_RAW(TOP - 2)) {
                     //
@@ -310,10 +310,10 @@ Array* Make_Paramlist_Managed_May_Fail(
                     fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
                 }
 
-                assert(IS_TYPESET(TOP - 2));
+                assert(Is_Typeset(TOP - 2));
                 typeset = TOP - 2;
 
-                assert(IS_BLOCK(TOP - 1));
+                assert(Is_Block(TOP - 1));
                 if (Cell_Array(TOP - 1) != EMPTY_ARRAY)
                     fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
 
@@ -362,10 +362,10 @@ Array* Make_Paramlist_Managed_May_Fail(
         // behind a /local, but this feature has no parallel in Ren-C.
         //
         if (mode != SPEC_MODE_NORMAL) {
-            if (IS_REFINEMENT(item)) {
+            if (Is_Refinement(item)) {
                 mode = SPEC_MODE_NORMAL;
             }
-            else if (not IS_WORD(item) and not IS_SET_WORD(item))
+            else if (not Is_Word(item) and not Is_Set_Word(item))
                 fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
         }
 
@@ -374,11 +374,11 @@ Array* Make_Paramlist_Managed_May_Fail(
         // In rhythm of TYPESET! BLOCK! TEXT! we want to be on a string spot
         // at the time of the push of each new typeset.
         //
-        if (IS_TYPESET(TOP))
+        if (Is_Typeset(TOP))
             Copy_Cell(PUSH(), EMPTY_BLOCK);
-        if (IS_BLOCK(TOP))
+        if (Is_Block(TOP))
             Copy_Cell(PUSH(), EMPTY_TEXT);
-        assert(IS_TEXT(TOP));
+        assert(Is_Text(TOP));
 
         // Non-annotated arguments disallow ACTION!, TRASH and NULL.  Not
         // having to worry about ACTION! and NULL means by default, code
@@ -418,13 +418,13 @@ Array* Make_Paramlist_Managed_May_Fail(
                 Init_Word(word, canon);
                 fail (Error_Dup_Vars_Raw(word)); // most dup checks done later
             }
-            if (IS_SET_WORD(item))
+            if (Is_Set_Word(item))
                 return_stackindex = TOP_INDEX;  // RETURN: explicitly tolerated
             else
                 flags &= ~(MKF_RETURN | MKF_FAKE_RETURN);
         }
 
-        if (mode == SPEC_MODE_WITH and not IS_SET_WORD(item)) {
+        if (mode == SPEC_MODE_WITH and not Is_Set_Word(item)) {
             //
             // Because FUNC does not do any locals gathering by default, the
             // main purpose of <with> is for instructing it not to do the
@@ -496,9 +496,9 @@ Array* Make_Paramlist_Managed_May_Fail(
 
     // Go ahead and flesh out the TYPESET! BLOCK! TEXT! triples.
     //
-    if (IS_TYPESET(TOP))
+    if (Is_Typeset(TOP))
         Copy_Cell(PUSH(), EMPTY_BLOCK);
-    if (IS_BLOCK(TOP))
+    if (Is_Block(TOP))
         Copy_Cell(PUSH(), EMPTY_TEXT);
     assert((TOP_INDEX - base) % 3 == 0);  // must be a multiple of 3
 
@@ -590,7 +590,7 @@ Array* Make_Paramlist_Managed_May_Fail(
         Value* src = Data_Stack_At(base + 1) + 3;
 
         for (; src <= TOP; src += 3) {
-            assert(IS_TYPESET(src));
+            assert(Is_Typeset(src));
             if (not Try_Add_Binder_Index(&binder, Cell_Param_Canon(src), 1020))
                 duplicate = Cell_Parameter_Symbol(src);
 
@@ -662,7 +662,7 @@ Array* Make_Paramlist_Managed_May_Fail(
     // slot, the third cell we pushed onto the stack.  Extract it if so.
     //
     if (has_description) {
-        assert(IS_TEXT(Data_Stack_At(base + 3)));
+        assert(Is_Text(Data_Stack_At(base + 3)));
         Copy_Cell(
             CTX_VAR(meta, STD_ACTION_META_DESCRIPTION),
             Data_Stack_At(base + 3)
@@ -689,7 +689,7 @@ Array* Make_Paramlist_Managed_May_Fail(
         Value* src = Data_Stack_At(base + 2);
         src += 3;
         for (; src <= TOP; src += 3) {
-            assert(IS_BLOCK(src));
+            assert(Is_Block(src));
             if (definitional_return and src == definitional_return + 1)
                 continue;
 
@@ -751,7 +751,7 @@ Array* Make_Paramlist_Managed_May_Fail(
         Value* src = Data_Stack_At(base + 3);
         src += 3;
         for (; src <= TOP; src += 3) {
-            assert(IS_TEXT(src));
+            assert(Is_Text(src));
             if (definitional_return and src == definitional_return + 2)
                 continue;
 
@@ -1123,7 +1123,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
             // a GROUP!.
 
             Cell* slot = Array_At(maybe_fake_body, real_body_index); // #BODY
-            assert(IS_ISSUE(slot));
+            assert(Is_Issue(slot));
 
             RESET_VAL_HEADER_EXTRA(slot, REB_GROUP, 0); // clear VAL_FLAG_LINE
             INIT_VAL_ARRAY(slot, Cell_Array(body));
@@ -1147,14 +1147,14 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
         // which is actually the function to be run.
         //
         Value* frame = KNOWN(Array_Head(details));
-        assert(IS_FRAME(frame));
+        assert(Is_Frame(frame));
         Copy_Cell(out, frame);
         return;
     }
 
     if (ACT_DISPATCHER(a) == &Generic_Dispatcher) {
         Value* verb = KNOWN(Array_Head(details));
-        assert(IS_WORD(verb));
+        assert(Is_Word(verb));
         Copy_Cell(out, verb);
         return;
     }
@@ -1206,7 +1206,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
     const Value* code,
     REBFLGS mkf_flags // MKF_RETURN, etc.
 ) {
-    assert(IS_BLOCK(spec) and IS_BLOCK(code));
+    assert(Is_Block(spec) and Is_Block(code));
 
     REBACT *a = Make_Action(
         Make_Paramlist_Managed_May_Fail(spec, mkf_flags),
@@ -1351,7 +1351,7 @@ REB_R Generic_Dispatcher(Level* L)
 
     enum Reb_Kind kind = VAL_TYPE(Level_Arg(L, 1));
     Value* verb = KNOWN(Array_Head(details));
-    assert(IS_WORD(verb));
+    assert(Is_Word(verb));
     assert(kind < REB_MAX);
 
     GENERIC_HOOK hook = Generic_Hooks[kind];
@@ -1401,7 +1401,7 @@ REB_R Datatype_Checker_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* datatype = Array_Head(details);
-    assert(IS_DATATYPE(datatype));
+    assert(Is_Datatype(datatype));
 
     return Init_Logic(
         L->out,
@@ -1419,7 +1419,7 @@ REB_R Typeset_Checker_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* typeset = Array_Head(details);
-    assert(IS_TYPESET(typeset));
+    assert(Is_Typeset(typeset));
 
     return Init_Logic(L->out, TYPE_CHECK(typeset, VAL_TYPE(Level_Arg(L, 1))));
 }
@@ -1436,7 +1436,7 @@ REB_R Unchecked_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* body = Array_Head(details);
-    assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
+    assert(Is_Block(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     if (Do_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
         return R_THROWN;
@@ -1456,7 +1456,7 @@ REB_R Trasher_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* body = Array_Head(details);
-    assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
+    assert(Is_Block(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     if (Do_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
         return R_THROWN;
@@ -1478,7 +1478,7 @@ REB_R Returner_Dispatcher(Level* L)
     Array* details = ACT_DETAILS(phase);
 
     Cell* body = Array_Head(details);
-    assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
+    assert(Is_Block(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     if (Do_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
         return R_THROWN;
@@ -1510,7 +1510,7 @@ REB_R Elider_Dispatcher(Level* L)
     Array* details = ACT_DETAILS(Level_Phase(L));
 
     Cell* body = Array_Head(details);
-    assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
+    assert(Is_Block(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     // !!! It would be nice to use the frame's spare "cell" for the thrownaway
     // result, but Fetch_Next code expects to use the cell.
@@ -1621,9 +1621,9 @@ REB_R Encloser_Dispatcher(Level* L)
     assert(Array_Len(details) == 2);
 
     Value* inner = KNOWN(Array_At(details, 0)); // same args as f
-    assert(IS_ACTION(inner));
+    assert(Is_Action(inner));
     Value* outer = KNOWN(Array_At(details, 1)); // takes 1 arg (a FRAME!)
-    assert(IS_ACTION(outer));
+    assert(Is_Action(outer));
 
     // We want to call OUTER with a FRAME! value that will dispatch to INNER
     // when (and if) it runs DO on it.  That frame is the one built for this
@@ -1687,7 +1687,7 @@ REB_R Chainer_Dispatcher(Level* L)
     //
     Value* chained = KNOWN(Array_Last(pipeline));
     for (; chained != Array_Head(pipeline); --chained) {
-        assert(IS_ACTION(chained));
+        assert(Is_Action(chained));
         Copy_Cell(PUSH(), KNOWN(chained));
     }
 
@@ -1721,11 +1721,11 @@ bool Get_If_Word_Or_Path_Throws(
     Specifier* specifier,
     bool push_refinements
 ) {
-    if (IS_WORD(v)) {
+    if (Is_Word(v)) {
         *opt_name_out = Cell_Word_Symbol(v);
         Move_Opt_Var_May_Fail(out, v, specifier);
     }
-    else if (IS_PATH(v)) {
+    else if (Is_Path(v)) {
         Specifier* derived = Derive_Specifier(specifier, v);
         if (Eval_Path_Throws_Core(
             out,

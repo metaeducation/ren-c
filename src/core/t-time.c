@@ -263,7 +263,7 @@ REB_R MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
             goto no_time;
 
         Cell* item = Cell_Array_At(arg);
-        if (not IS_INTEGER(item))
+        if (not Is_Integer(item))
             goto no_time;
 
         bool neg;
@@ -280,7 +280,7 @@ REB_R MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
             goto no_time;
 
         if (NOT_END(++item)) {
-            if (not IS_INTEGER(item))
+            if (not Is_Integer(item))
                 goto no_time;
 
             if ((i = Int32(item)) < 0)
@@ -291,7 +291,7 @@ REB_R MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
                 goto no_time;
 
             if (NOT_END(++item)) {
-                if (IS_INTEGER(item)) {
+                if (Is_Integer(item)) {
                     if ((i = Int32(item)) < 0)
                         goto no_time;
 
@@ -299,7 +299,7 @@ REB_R MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
                     if (secs > MAX_SECONDS)
                         goto no_time;
                 }
-                else if (IS_DECIMAL(item)) {
+                else if (Is_Decimal(item)) {
                     if (
                         secs + cast(REBI64, VAL_DECIMAL(item)) + 1
                         > MAX_SECONDS
@@ -315,7 +315,7 @@ REB_R MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
         }
 
         REBI64 nano = secs * SEC_SEC;
-        if (IS_DECIMAL(item))
+        if (Is_Decimal(item))
             nano += DEC_TO_SECS(VAL_DECIMAL(item));
 
         if (neg)
@@ -365,7 +365,7 @@ REBINT Cmp_Time(const Cell* v1, const Cell* v2)
 void Pick_Time(Value* out, const Value* value, const Value* picker)
 {
     REBINT i;
-    if (IS_WORD(picker)) {
+    if (Is_Word(picker)) {
         switch (Cell_Word_Id(picker)) {
         case SYM_HOUR:   i = 0; break;
         case SYM_MINUTE: i = 1; break;
@@ -374,7 +374,7 @@ void Pick_Time(Value* out, const Value* value, const Value* picker)
             fail (Error_Invalid(picker));
         }
     }
-    else if (IS_INTEGER(picker))
+    else if (Is_Integer(picker))
         i = VAL_INT32(picker) - 1;
     else
         fail (Error_Invalid(picker));
@@ -410,7 +410,7 @@ void Poke_Time_Immediate(
     const Value* poke
 ) {
     REBINT i;
-    if (IS_WORD(picker)) {
+    if (Is_Word(picker)) {
         switch (Cell_Word_Id(picker)) {
         case SYM_HOUR:   i = 0; break;
         case SYM_MINUTE: i = 1; break;
@@ -419,7 +419,7 @@ void Poke_Time_Immediate(
             fail (Error_Invalid(picker));
         }
     }
-    else if (IS_INTEGER(picker))
+    else if (Is_Integer(picker))
         i = VAL_INT32(picker) - 1;
     else
         fail (Error_Invalid(picker));
@@ -428,9 +428,9 @@ void Poke_Time_Immediate(
     Split_Time(VAL_NANO(value), &tf); // loses sign
 
     REBINT n;
-    if (IS_INTEGER(poke) || IS_DECIMAL(poke))
+    if (Is_Integer(poke) || Is_Decimal(poke))
         n = Int32s(poke, 0);
-    else if (IS_BLANK(poke))
+    else if (Is_Blank(poke))
         n = 0;
     else
         fail (Error_Invalid(poke));
@@ -443,7 +443,7 @@ void Poke_Time_Immediate(
         tf.m = n;
         break;
     case 2:
-        if (IS_DECIMAL(poke)) {
+        if (Is_Decimal(poke)) {
             REBDEC f = VAL_DECIMAL(poke);
             if (f < 0.0)
                 fail (Error_Out_Of_Range(poke));
@@ -665,10 +665,10 @@ REBTYPE(Time)
 
             if (REF(to)) {
                 arg = ARG(scale);
-                if (IS_TIME(arg)) {
+                if (Is_Time(arg)) {
                     secs = Round_Int(secs, flags, VAL_NANO(arg));
                 }
-                else if (IS_DECIMAL(arg)) {
+                else if (Is_Decimal(arg)) {
                     VAL_DECIMAL(arg) = Round_Dec(
                         cast(REBDEC, secs),
                         flags,
@@ -679,7 +679,7 @@ REBTYPE(Time)
                     Copy_Cell(OUT, ARG(scale));
                     return OUT;
                 }
-                else if (IS_INTEGER(arg)) {
+                else if (Is_Integer(arg)) {
                     VAL_INT64(arg) = Round_Int(secs, 1, Int32(arg) * SEC_SEC) / SEC_SEC;
                     RESET_VAL_HEADER(arg, REB_INTEGER);
                     Copy_Cell(OUT, ARG(scale));

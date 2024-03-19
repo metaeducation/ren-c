@@ -412,7 +412,7 @@ void Form_Array_At(
     for (n = 0; n < len;) {
         Cell* item = Array_At(array, index + n);
         Value* wval = nullptr;
-        if (opt_context && (IS_WORD(item) || IS_GET_WORD(item))) {
+        if (opt_context && (Is_Word(item) || Is_Get_Word(item))) {
             wval = Select_Canon_In_Context(opt_context, VAL_WORD_CANON(item));
             if (wval)
                 item = wval;
@@ -570,8 +570,8 @@ bool Form_Reduce_Throws(
     const Value* delimiter
 ){
     assert(
-        IS_NULLED(delimiter) or IS_VOID(delimiter)
-        or IS_CHAR(delimiter) or IS_TEXT(delimiter)
+        IS_NULLED(delimiter) or Is_Void(delimiter)
+        or Is_Char(delimiter) or Is_Text(delimiter)
     );
 
     DECLARE_MOLD (mo);
@@ -596,20 +596,20 @@ bool Form_Reduce_Throws(
         if (IS_NULLED(out))
             fail (Error_Need_Non_Null_Raw());
 
-        if (IS_VOID(out))
+        if (Is_Void(out))
             continue; // opt-out and maybe keep option open to return NULL
 
         nothing = false;
 
-        if (IS_BLANK(out)) {  // acting like a space character seems useful
+        if (Is_Blank(out)) {  // acting like a space character seems useful
             Append_Utf8_Codepoint(mo->series, ' ');
             pending = false;
         }
-        else if (IS_CHAR(out)) { // no delimit on CHAR! (e.g. space, newline)
+        else if (Is_Char(out)) { // no delimit on CHAR! (e.g. space, newline)
             Append_Utf8_Codepoint(mo->series, VAL_CHAR(out));
             pending = false;
         }
-        else if (IS_NULLED(delimiter) or IS_VOID(delimiter))
+        else if (IS_NULLED(delimiter) or Is_Void(delimiter))
             Form_Value(mo, out);
         else {
             if (pending)

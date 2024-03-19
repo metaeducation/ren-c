@@ -132,7 +132,7 @@ void MF_Money(REB_MOLD *mo, const Cell* v, bool form)
 //
 void Bin_To_Money_May_Fail(Value* result, const Value* val)
 {
-    if (not IS_BINARY(val))
+    if (not Is_Binary(val))
         fail (Error_Invalid(val));
 
     REBLEN len = VAL_LEN_AT(val);
@@ -149,15 +149,15 @@ void Bin_To_Money_May_Fail(Value* result, const Value* val)
 
 static Value* Math_Arg_For_Money(Value* store, Value* arg, Value* verb)
 {
-    if (IS_MONEY(arg))
+    if (Is_Money(arg))
         return arg;
 
-    if (IS_INTEGER(arg)) {
+    if (Is_Integer(arg)) {
         Init_Money(store, int_to_deci(VAL_INT64(arg)));
         return store;
     }
 
-    if (IS_DECIMAL(arg) or IS_PERCENT(arg)) {
+    if (Is_Decimal(arg) or Is_Percent(arg)) {
         Init_Money(store, decimal_to_deci(VAL_DECIMAL(arg)));
         return store;
     }
@@ -239,11 +239,11 @@ REBTYPE(Money)
 
         DECLARE_VALUE (temp);
         if (REF(to)) {
-            if (IS_INTEGER(scale))
+            if (Is_Integer(scale))
                 Init_Money(temp, int_to_deci(VAL_INT64(scale)));
-            else if (IS_DECIMAL(scale) or IS_PERCENT(scale))
+            else if (Is_Decimal(scale) or Is_Percent(scale))
                 Init_Money(temp, decimal_to_deci(VAL_DECIMAL(scale)));
-            else if (IS_MONEY(scale))
+            else if (Is_Money(scale))
                 Copy_Cell(temp, scale);
             else
                 fail (Error_Invalid(scale));
@@ -258,13 +258,13 @@ REBTYPE(Money)
         ));
 
         if (REF(to)) {
-            if (IS_DECIMAL(scale) or IS_PERCENT(scale)) {
+            if (Is_Decimal(scale) or Is_Percent(scale)) {
                 REBDEC dec = deci_to_decimal(VAL_MONEY_AMOUNT(OUT));
                 RESET_CELL(OUT, VAL_TYPE(scale));
                 VAL_DECIMAL(OUT) = dec;
                 return OUT;
             }
-            if (IS_INTEGER(scale)) {
+            if (Is_Integer(scale)) {
                 REBI64 i64 = deci_to_int(VAL_MONEY_AMOUNT(OUT));
                 return Init_Integer(OUT, i64);
             }

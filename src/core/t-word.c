@@ -99,7 +99,7 @@ REB_R MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
         }
         return out;
     }
-    else if (IS_CHAR(arg)) {
+    else if (Is_Char(arg)) {
         Byte buf[8];
         REBLEN len = Encode_UTF8_Char(&buf[0], VAL_CHAR(arg));
         Erase_Cell(out);
@@ -107,10 +107,10 @@ REB_R MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
             fail (Error_Bad_Char_Raw(arg));
         return out;
     }
-    else if (IS_DATATYPE(arg)) {
+    else if (Is_Datatype(arg)) {
         return Init_Any_Word(out, kind, Canon(VAL_TYPE_SYM(arg)));
     }
-    else if (IS_LOGIC(arg)) {
+    else if (Is_Logic(arg)) {
         return Init_Any_Word(
             out,
             kind,
@@ -195,7 +195,7 @@ REB_R PD_Word(
     Symbol* str = Cell_Word_Symbol(pvs->out);
 
     if (not opt_setval) { // PICK-ing
-        if (IS_INTEGER(picker)) {
+        if (Is_Integer(picker)) {
             REBINT n = Int32(picker) - 1;
             if (n < 0)
                 return nullptr;

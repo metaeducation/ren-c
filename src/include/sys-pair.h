@@ -54,25 +54,25 @@ INLINE Value* PAIRING_KEY(Value* paired) {
     ((v)->payload.pair)
 
 INLINE REBDEC VAL_PAIR_X_DEC(const Cell* v) {
-    if (IS_INTEGER(VAL_PAIR_FIRST(v)))
+    if (Is_Integer(VAL_PAIR_FIRST(v)))
         return VAL_INT64(VAL_PAIR_FIRST(v));
     return VAL_DECIMAL(VAL_PAIR_FIRST(v));
 }
 
 INLINE REBDEC VAL_PAIR_Y_DEC(const Cell* v) {
-    if (IS_INTEGER(VAL_PAIR_SECOND(v)))
+    if (Is_Integer(VAL_PAIR_SECOND(v)))
         return VAL_INT64(VAL_PAIR_SECOND(v));
     return VAL_DECIMAL(VAL_PAIR_SECOND(v));
 }
 
 INLINE REBI64 VAL_PAIR_X_INT(const Cell* v) {
-    if (IS_INTEGER(VAL_PAIR_FIRST(v)))
+    if (Is_Integer(VAL_PAIR_FIRST(v)))
         return VAL_INT64(VAL_PAIR_FIRST(v));
     return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_FIRST(v)));
 }
 
 INLINE REBI64 VAL_PAIR_Y_INT(const Cell* v) {
-    if (IS_INTEGER(VAL_PAIR_SECOND(v)))
+    if (Is_Integer(VAL_PAIR_SECOND(v)))
         return VAL_INT64(VAL_PAIR_SECOND(v));
     return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_SECOND(v)));
 }
@@ -101,8 +101,8 @@ INLINE Value* Init_Pair(
     const Value* second
 ){
     RESET_CELL(out, REB_PAIR);
-    assert(IS_INTEGER(first) or IS_DECIMAL(first));
-    assert(IS_INTEGER(second) or IS_DECIMAL(second));
+    assert(Is_Integer(first) or Is_Decimal(first));
+    assert(Is_Integer(second) or Is_Decimal(second));
     out->payload.pair = Alloc_Pairing();
     Copy_Cell(PAIRING_KEY(out->payload.pair), first);
     Copy_Cell(out->payload.pair, second);

@@ -33,7 +33,6 @@
     #include <process.h>
     #include <shlobj.h>
 
-    #undef IS_ERROR //winerror.h defines, Rebol has a different meaning
     #undef OUT  // %minwindef.h defines this, we have a better use for it
     #undef VOID  // %winnt.h defines this, we have a better use for it
 #else
@@ -453,7 +452,7 @@ int OS_Create_Process(
         DWORD err_size = 0;
 
         if (hInputWrite != nullptr && input_len > 0) {
-            if (IS_TEXT(ARG(in))) {
+            if (Is_Text(ARG(in))) {
                 DWORD dest_len = 0;
                 /* convert input encoding from UNICODE to OEM */
                 // !!! Is cast to WCHAR here legal?
@@ -486,7 +485,7 @@ int OS_Create_Process(
                     }
                 }
             } else {
-                assert(IS_BINARY(ARG(in)));
+                assert(Is_Binary(ARG(in)));
                 handles[count ++] = hInputWrite;
             }
         }
@@ -636,7 +635,7 @@ int OS_Create_Process(
         CloseHandle(pi.hThread);
         CloseHandle(pi.hProcess);
 
-        if (IS_TEXT(ARG(out)) and *output and *output_len > 0) {
+        if (Is_Text(ARG(out)) and *output and *output_len > 0) {
             /* convert to wide char string */
             int dest_len = 0;
             WCHAR *dest = nullptr;
@@ -659,7 +658,7 @@ int OS_Create_Process(
             *output_len = dest_len;
         }
 
-        if (IS_TEXT(ARG(err)) && *err != nullptr && *err_len > 0) {
+        if (Is_Text(ARG(err)) && *err != nullptr && *err_len > 0) {
             /* convert to wide char string */
             int dest_len = 0;
             WCHAR *dest = nullptr;
@@ -729,17 +728,17 @@ cleanup:
     if (hErrorRead != nullptr)
         CloseHandle(hErrorRead);
 
-    if (IS_FILE(ARG(err))) {
+    if (Is_File(ARG(err))) {
         CloseHandle(si.hStdError);
     }
 
 error_error:
-    if (IS_FILE(ARG(out))) {
+    if (Is_File(ARG(out))) {
         CloseHandle(si.hStdOutput);
     }
 
 output_error:
-    if (IS_FILE(ARG(in))) {
+    if (Is_File(ARG(in))) {
         CloseHandle(si.hStdInput);
     }
 
@@ -861,17 +860,17 @@ int OS_Create_Process(
     int stderr_pipe[] = {-1, -1};
     int info_pipe[] = {-1, -1};
 
-    if (IS_TEXT(ARG(in)) or IS_BINARY(ARG(in))) {
+    if (Is_Text(ARG(in)) or Is_Binary(ARG(in))) {
         if (Open_Pipe_Fails(stdin_pipe))
             goto stdin_pipe_err;
     }
 
-    if (IS_TEXT(ARG(out)) or IS_BINARY(ARG(out))) {
+    if (Is_Text(ARG(out)) or Is_Binary(ARG(out))) {
         if (Open_Pipe_Fails(stdout_pipe))
             goto stdout_pipe_err;
     }
 
-    if (IS_TEXT(ARG(err)) or IS_BINARY(ARG(err))) {
+    if (Is_Text(ARG(err)) or Is_Binary(ARG(err))) {
         if (Open_Pipe_Fails(stderr_pipe))
             goto stdout_pipe_err;
     }
@@ -888,13 +887,13 @@ int OS_Create_Process(
         //
         // http://stackoverflow.com/questions/15126925/
 
-        if (IS_TEXT(ARG(in)) or IS_BINARY(ARG(in))) {
+        if (Is_Text(ARG(in)) or Is_Binary(ARG(in))) {
             close(stdin_pipe[W]);
             if (dup2(stdin_pipe[R], STDIN_FILENO) < 0)
                 goto child_error;
             close(stdin_pipe[R]);
         }
-        else if (IS_FILE(ARG(in))) {
+        else if (Is_File(ARG(in))) {
             char *local_utf8 = rebSpell("file-to-local", ARG(in));
 
             int fd = open(local_utf8, O_RDONLY);
@@ -907,7 +906,7 @@ int OS_Create_Process(
                 goto child_error;
             close(fd);
         }
-        else if (IS_BLANK(ARG(in))) {
+        else if (Is_Blank(ARG(in))) {
             int fd = open("/dev/null", O_RDONLY);
             if (fd < 0)
                 goto child_error;
@@ -920,13 +919,13 @@ int OS_Create_Process(
             // inherit stdin from the parent
         }
 
-        if (IS_TEXT(ARG(out)) or IS_BINARY(ARG(out))) {
+        if (Is_Text(ARG(out)) or Is_Binary(ARG(out))) {
             close(stdout_pipe[R]);
             if (dup2(stdout_pipe[W], STDOUT_FILENO) < 0)
                 goto child_error;
             close(stdout_pipe[W]);
         }
-        else if (IS_FILE(ARG(out))) {
+        else if (Is_File(ARG(out))) {
             char *local_utf8 = rebSpell("file-to-local", ARG(out));
 
             int fd = open(local_utf8, O_CREAT | O_WRONLY, 0666);
@@ -939,7 +938,7 @@ int OS_Create_Process(
                 goto child_error;
             close(fd);
         }
-        else if (IS_BLANK(ARG(out))) {
+        else if (Is_Blank(ARG(out))) {
             int fd = open("/dev/null", O_WRONLY);
             if (fd < 0)
                 goto child_error;
@@ -952,13 +951,13 @@ int OS_Create_Process(
             // inherit stdout from the parent
         }
 
-        if (IS_TEXT(ARG(err)) or IS_BINARY(ARG(err))) {
+        if (Is_Text(ARG(err)) or Is_Binary(ARG(err))) {
             close(stderr_pipe[R]);
             if (dup2(stderr_pipe[W], STDERR_FILENO) < 0)
                 goto child_error;
             close(stderr_pipe[W]);
         }
-        else if (IS_FILE(ARG(err))) {
+        else if (Is_File(ARG(err))) {
             char *local_utf8 = rebSpell("file-to-local", ARG(err));
 
             int fd = open(local_utf8, O_CREAT | O_WRONLY, 0666);
@@ -971,7 +970,7 @@ int OS_Create_Process(
                 goto child_error;
             close(fd);
         }
-        else if (IS_BLANK(ARG(err))) {
+        else if (Is_Blank(ARG(err))) {
             int fd = open("/dev/null", O_WRONLY);
             if (fd < 0)
                 goto child_error;
@@ -1468,9 +1467,9 @@ DECLARE_NATIVE(call)
     // Make sure that if the output or error series are STRING! or BINARY!,
     // they are not read-only, before we try appending to them.
     //
-    if (IS_TEXT(ARG(out)) or IS_BINARY(ARG(out)))
+    if (Is_Text(ARG(out)) or Is_Binary(ARG(out)))
         Fail_If_Read_Only_Series(VAL_SERIES(ARG(out)));
-    if (IS_TEXT(ARG(err)) or IS_BINARY(ARG(err)))
+    if (Is_Text(ARG(err)) or Is_Binary(ARG(err)))
         Fail_If_Read_Only_Series(VAL_SERIES(ARG(err)));
 
     char *os_input;
@@ -1513,9 +1512,9 @@ DECLARE_NATIVE(call)
     if (
         REF(wait)
         or (
-            IS_TEXT(ARG(in)) or IS_BINARY(ARG(in))
-            or IS_TEXT(ARG(out)) or IS_BINARY(ARG(out))
-            or IS_TEXT(ARG(err)) or IS_BINARY(ARG(err))
+            Is_Text(ARG(in)) or Is_Binary(ARG(in))
+            or Is_Text(ARG(out)) or Is_Binary(ARG(out))
+            or Is_Text(ARG(err)) or Is_Binary(ARG(err))
         ) // I/O redirection implies /WAIT
     ){
         flag_wait = true;
@@ -1531,7 +1530,7 @@ DECLARE_NATIVE(call)
     int argc;
     const OSCHR **argv;
 
-    if (IS_TEXT(ARG(command))) {
+    if (Is_Text(ARG(command))) {
         // `call {foo bar}` => execute %"foo bar"
 
         // !!! Interpreting string case as an invocation of %foo with argument
@@ -1548,7 +1547,7 @@ DECLARE_NATIVE(call)
         argv[0] = rebValSpellingAllocOS(ARG(command));
         argv[1] = nullptr;
     }
-    else if (IS_BLOCK(ARG(command))) {
+    else if (Is_Block(ARG(command))) {
         // `call ["foo" "bar"]` => execute %foo with arg "bar"
 
         cmd = nullptr;
@@ -1563,10 +1562,10 @@ DECLARE_NATIVE(call)
         int i;
         for (i = 0; i < argc; i ++) {
             Cell* param = Cell_Array_At_Head(block, i);
-            if (IS_TEXT(param)) {
+            if (Is_Text(param)) {
                 argv[i] = rebValSpellingAllocOS(KNOWN(param));
             }
-            else if (IS_FILE(param)) {
+            else if (Is_File(param)) {
               #ifdef OS_WIDE_CHAR
                 argv[i] = rebSpellW("file-to-local", KNOWN(param));
               #else
@@ -1578,7 +1577,7 @@ DECLARE_NATIVE(call)
         }
         argv[argc] = nullptr;
     }
-    else if (IS_FILE(ARG(command))) {
+    else if (Is_File(ARG(command))) {
         // `call %"foo bar"` => execute %"foo bar"
 
         cmd = nullptr;
@@ -1626,10 +1625,10 @@ DECLARE_NATIVE(call)
         &exit_code,
         os_input,
         input_len,
-        IS_TEXT(ARG(out)) or IS_BINARY(ARG(out)) ? &os_output : nullptr,
-        IS_TEXT(ARG(out)) or IS_BINARY(ARG(out)) ? &output_len : nullptr,
-        IS_TEXT(ARG(err)) or IS_BINARY(ARG(err)) ? &os_err : nullptr,
-        IS_TEXT(ARG(err)) or IS_BINARY(ARG(err)) ? &err_len : nullptr
+        Is_Text(ARG(out)) or Is_Binary(ARG(out)) ? &os_output : nullptr,
+        Is_Text(ARG(out)) or Is_Binary(ARG(out)) ? &output_len : nullptr,
+        Is_Text(ARG(err)) or Is_Binary(ARG(err)) ? &os_err : nullptr,
+        Is_Text(ARG(err)) or Is_Binary(ARG(err)) ? &err_len : nullptr
     );
 
     // Call may not succeed if r != 0, but we still have to run cleanup
@@ -1646,25 +1645,25 @@ DECLARE_NATIVE(call)
 
     rebFree(m_cast(OSCHR**, argv));
 
-    if (IS_TEXT(ARG(out))) {
+    if (Is_Text(ARG(out))) {
         if (output_len > 0) {
             Append_OS_Str(ARG(out), os_output, output_len);
             free(os_output);
         }
     }
-    else if (IS_BINARY(ARG(out))) {
+    else if (Is_Binary(ARG(out))) {
         if (output_len > 0) {
             Append_Unencoded_Len(Cell_Binary(ARG(out)), os_output, output_len);
             free(os_output);
         }
     }
 
-    if (IS_TEXT(ARG(err))) {
+    if (Is_Text(ARG(err))) {
         if (err_len > 0) {
             Append_OS_Str(ARG(err), os_err, err_len);
             free(os_err);
         }
-    } else if (IS_BINARY(ARG(err))) {
+    } else if (Is_Binary(ARG(err))) {
         if (err_len > 0) {
             Append_Unencoded_Len(Cell_Binary(ARG(err)), os_err, err_len);
             free(os_err);

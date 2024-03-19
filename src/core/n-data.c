@@ -33,10 +33,10 @@
 
 static bool Check_Char_Range(const Value* val, REBINT limit)
 {
-    if (IS_CHAR(val))
+    if (Is_Char(val))
         return not (VAL_CHAR(val) > limit);
 
-    if (IS_INTEGER(val))
+    if (Is_Integer(val))
         return not (VAL_INT64(val) > limit);
 
     assert(ANY_STRING(val));
@@ -105,8 +105,8 @@ DECLARE_NATIVE(as_pair)
     Value* y = ARG(y);
 
     if (
-        not (IS_INTEGER(x) or IS_DECIMAL(x))
-        or not (IS_INTEGER(y) or IS_DECIMAL(y))
+        not (Is_Integer(x) or Is_Decimal(x))
+        or not (Is_Integer(y) or Is_Decimal(y))
     ){
         fail ("PAIR! must currently have INTEGER! or DECIMAL! x and y values");
     }
@@ -182,7 +182,7 @@ DECLARE_NATIVE(bind)
 
         // not in context, bind/new means add it if it's not.
         //
-        if (REF(new) or (IS_SET_WORD(v) and REF(set))) {
+        if (REF(new) or (Is_Set_Word(v) and REF(set))) {
             Append_Context(context, v, nullptr);
             RETURN (v);
         }
@@ -195,7 +195,7 @@ DECLARE_NATIVE(bind)
     // binding pointer is also used in cases like RETURN to link them to the
     // FRAME! that they intend to return from.)
     //
-    if (IS_ACTION(v)) {
+    if (Is_Action(v)) {
         Copy_Cell(OUT, v);
         INIT_BINDING(OUT, context);
         return OUT;
@@ -333,7 +333,7 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
     // !!! This may not be the correct answer, but it seems to work in
     // practice...keep an eye out for counterexamples.
     //
-    if (IS_FRAME(out)) {
+    if (Is_Frame(out)) {
         REBCTX *c = VAL_CONTEXT(out);
         Level* L = CTX_LEVEL_IF_ON_STACK(c);
         if (L) {
@@ -462,7 +462,7 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
     Specifier* specifier,
     bool any
 ){
-    if (IS_BAR(v)) {
+    if (Is_Bar(v)) {
         //
         // `a: 10 | b: 20 | get [a | b]` will give back `[10 | 20]`.
         // While seemingly not a very useful feature standalone, this
@@ -471,7 +471,7 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
         //
         Init_Bar(out);
     }
-    else if (IS_VOID(v)) {
+    else if (Is_Void(v)) {
         Init_Nulled(out);  // may be turned to trash after loop, or error
     }
     else if (ANY_WORD(v)) {
@@ -487,7 +487,7 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
     else
         fail (Error_Invalid_Core(v, specifier));
 
-    if (not any and IS_TRASH(out))
+    if (not any and Is_Trash(out))
         fail (Error_Need_Non_Trash_Core(v, specifier));
 }
 
@@ -511,7 +511,7 @@ DECLARE_NATIVE(get)
 
     Value* source = ARG(source);
 
-    if (not IS_BLOCK(source)) {
+    if (not Is_Block(source)) {
         Get_Opt_Polymorphic_May_Fail(OUT, source, SPECIFIED, REF(any));
         return OUT;
     }
@@ -574,10 +574,10 @@ INLINE void Set_Opt_Polymorphic_May_Fail(
     Specifier* value_specifier,
     bool enfix
 ){
-    if (enfix and not IS_ACTION(value))
+    if (enfix and not Is_Action(value))
         fail ("Attempt to SET/ENFIX on a non-ACTION!");
 
-    if (IS_BAR(target)) {
+    if (Is_Bar(target)) {
         //
         // Just skip it, e.g. `set [a | b] [1 2 3]` sets a to 1, and b
         // to 3, but drops the 2.  This functionality was achieved
@@ -655,13 +655,13 @@ DECLARE_NATIVE(set)
 
     UNUSED(REF(any));  // !!!provided for bootstrap at this time
 
-    if (not IS_BLOCK(target)) {
+    if (not Is_Block(target)) {
         assert(ANY_WORD(target) or ANY_PATH(target));
 
         Set_Opt_Polymorphic_May_Fail(
             target,
             SPECIFIED,
-            IS_BLANK(value) and REF(some) ? NULLED_CELL : value,
+            Is_Blank(value) and REF(some) ? NULLED_CELL : value,
             SPECIFIED,
             REF(enfix)
         );
@@ -672,7 +672,7 @@ DECLARE_NATIVE(set)
     const Cell* item = Cell_Array_At(target);
 
     const Cell* v;
-    if (IS_BLOCK(value) and not REF(single))
+    if (Is_Block(value) and not REF(single))
         v = Cell_Array_At(value);
     else
         v = value;
@@ -685,7 +685,7 @@ DECLARE_NATIVE(set)
         if (REF(some)) {
             if (IS_END(v))
                 break; // won't be setting any further values
-            if (IS_BLANK(v))
+            if (Is_Blank(v))
                 continue; // /SOME means treat blanks as no-ops
         }
 
@@ -693,7 +693,7 @@ DECLARE_NATIVE(set)
             item,
             VAL_SPECIFIER(target),
             IS_END(v) ? BLANK_VALUE : v, // R3-Alpha/Red blank after END
-            (IS_BLOCK(value) and not REF(single))
+            (Is_Block(value) and not REF(single))
                 ? VAL_SPECIFIER(value)
                 : SPECIFIED,
             REF(enfix)
@@ -761,8 +761,8 @@ DECLARE_NATIVE(in)
 
     DECLARE_VALUE (safe);
 
-    if (IS_BLOCK(val) || IS_GROUP(val)) {
-        if (IS_WORD(word)) {
+    if (Is_Block(val) || Is_Group(val)) {
+        if (Is_Word(word)) {
             const Value* v;
             REBLEN i;
             for (i = VAL_INDEX(val); i < VAL_LEN_HEAD(val); i++) {
@@ -773,7 +773,7 @@ DECLARE_NATIVE(in)
                 );
 
                 v = safe;
-                if (IS_OBJECT(v)) {
+                if (Is_Object(v)) {
                     REBCTX *context = VAL_CONTEXT(v);
                     REBLEN index = Find_Canon_In_Context(
                         context, VAL_WORD_CANON(word), false
@@ -797,7 +797,7 @@ DECLARE_NATIVE(in)
     REBCTX *context = VAL_CONTEXT(val);
 
     // Special form: IN object block
-    if (IS_BLOCK(word) or IS_GROUP(word)) {
+    if (Is_Block(word) or Is_Group(word)) {
         Bind_Values_Deep(VAL_ARRAY_HEAD(word), context);
         RETURN (word);
     }
@@ -837,7 +837,7 @@ DECLARE_NATIVE(resolve)
 {
     INCLUDE_PARAMS_OF_RESOLVE;
 
-    if (IS_INTEGER(ARG(from))) {
+    if (Is_Integer(ARG(from))) {
         // check range and sign
         Int32s(ARG(from), 1);
     }
@@ -872,7 +872,7 @@ DECLARE_NATIVE(enfixed_q)
     if (ANY_WORD(source)) {
         const Value* var = Get_Opt_Var_May_Fail(source, SPECIFIED);
 
-        assert(NOT_VAL_FLAG(var, VALUE_FLAG_ENFIXED) or IS_ACTION(var));
+        assert(NOT_VAL_FLAG(var, VALUE_FLAG_ENFIXED) or Is_Action(var));
         return Init_Logic(OUT, GET_VAL_FLAG(var, VALUE_FLAG_ENFIXED));
     }
     else {
@@ -880,7 +880,7 @@ DECLARE_NATIVE(enfixed_q)
 
         DECLARE_VALUE (temp);
         Get_Path_Core(temp, source, SPECIFIED);
-        assert(NOT_VAL_FLAG(temp, VALUE_FLAG_ENFIXED) or IS_ACTION(temp));
+        assert(NOT_VAL_FLAG(temp, VALUE_FLAG_ENFIXED) or Is_Action(temp));
         return Init_Logic(OUT, GET_VAL_FLAG(temp, VALUE_FLAG_ENFIXED));
     }
 }
@@ -928,7 +928,7 @@ DECLARE_NATIVE(free)
 
     Value* v = ARG(memory);
 
-    if (ANY_CONTEXT(v) or IS_HANDLE(v))
+    if (ANY_CONTEXT(v) or Is_Handle(v))
         fail ("FREE only implemented for ANY-SERIES! at the moment");
 
     Series* s = VAL_SERIES(v);
@@ -960,7 +960,7 @@ DECLARE_NATIVE(free_q)
     Series* s;
     if (ANY_CONTEXT(v))
         s = v->payload.any_context.varlist;  // VAL_CONTEXT fails if freed
-    else if (IS_HANDLE(v))
+    else if (Is_Handle(v))
         s = v->extra.singular;
     else if (ANY_SERIES(v))
         s = v->payload.any_series.series;  // VAL_SERIES fails if freed
@@ -1028,7 +1028,7 @@ DECLARE_NATIVE(as)
         // !!! Similarly, until UTF-8 Everywhere, we can't actually alias
         // the UTF-8 bytes in a binary as a WCHAR string.
         //
-        if (IS_BINARY(v)) {
+        if (Is_Binary(v)) {
             Series* string = Make_Sized_String_UTF8(
                 cs_cast(Cell_Binary_At(v)),
                 VAL_LEN_AT(v)
@@ -1091,7 +1091,7 @@ DECLARE_NATIVE(as)
         // wait to implement the logic until the appropriate time...just lock
         // the binary for now.
         //
-        if (IS_BINARY(v)) {
+        if (Is_Binary(v)) {
             Freeze_Sequence(VAL_SERIES(v));
             return Init_Any_Word(
                 OUT,
@@ -1172,11 +1172,11 @@ DECLARE_NATIVE(aliases_q)
 INLINE bool Is_Set(const Value* location)
 {
     if (ANY_WORD(location))
-        return not IS_TRASH(Get_Opt_Var_May_Fail(location, SPECIFIED));
+        return not Is_Trash(Get_Opt_Var_May_Fail(location, SPECIFIED));
 
     DECLARE_VALUE (temp); // result may be generated
     Get_Path_Core(temp, location, SPECIFIED);
-    return not IS_TRASH(temp);
+    return not Is_Trash(temp);
 }
 
 

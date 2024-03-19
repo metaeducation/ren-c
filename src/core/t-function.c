@@ -32,7 +32,7 @@
 
 static bool Same_Action(const Cell* a1, const Cell* a2)
 {
-    assert(IS_ACTION(a1) && IS_ACTION(a2));
+    assert(Is_Action(a1) && Is_Action(a2));
 
     if (VAL_ACT_PARAMLIST(a1) == VAL_ACT_PARAMLIST(a2)) {
         assert(VAL_ACT_DETAILS(a1) == VAL_ACT_DETAILS(a2));
@@ -75,10 +75,10 @@ REB_R MAKE_Action(Value* out, enum Reb_Kind kind, const Value* arg)
     UNUSED(kind);
 
     if (
-        not IS_BLOCK(arg)
+        not Is_Block(arg)
         or VAL_LEN_AT(arg) != 2
-        or not IS_BLOCK(Cell_Array_At(arg))
-        or not IS_BLOCK(Cell_Array_At(arg) + 1)
+        or not Is_Block(Cell_Array_At(arg))
+        or not Is_Block(Cell_Array_At(arg) + 1)
     ){
         fail (Error_Bad_Make(REB_ACTION, arg));
     }
@@ -328,9 +328,9 @@ REB_R PD_Action(
 ){
     UNUSED(opt_setval);
 
-    assert(IS_ACTION(pvs->out));
+    assert(Is_Action(pvs->out));
 
-    if (IS_VOID(picker)) {
+    if (Is_Void(picker)) {
         //
         // Leave the function value as-is, and continue processing.  This
         // enables things like `append/(if only [/only])/dup`...
@@ -347,7 +347,7 @@ REB_R PD_Action(
     // general path mechanic before reaching this dispatch.  So if it's not
     // a word/refinement or or one of those that evaluated it, then error.
     //
-    if (not IS_WORD(picker) and not IS_REFINEMENT(picker))
+    if (not Is_Word(picker) and not Is_Refinement(picker))
         fail (Error_Bad_Refine_Raw(picker));
 
     Init_Issue(PUSH(), VAL_WORD_CANON(picker));  // canonize just once

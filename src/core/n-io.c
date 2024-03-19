@@ -85,7 +85,7 @@ DECLARE_NATIVE(mold)
 
     Push_Mold(mo);
 
-    if (REF(only) and IS_BLOCK(ARG(value)))
+    if (REF(only) and Is_Block(ARG(value)))
         SET_MOLD_FLAG(mo, MOLD_FLAG_ONLY);
 
     Mold_Value(mo, ARG(value));
@@ -110,7 +110,7 @@ DECLARE_NATIVE(write_stdout)
 
     Value* v = ARG(value);
 
-    if (IS_BINARY(v)) {
+    if (Is_Binary(v)) {
         //
         // It is sometimes desirable to write raw binary data to stdout.  e.g.
         // e.g. CGI scripts may be hooked up to stream data for a download,
@@ -120,7 +120,7 @@ DECLARE_NATIVE(write_stdout)
         //
         Prin_OS_String(Cell_Binary_Head(v), VAL_LEN_AT(v), OPT_ENC_RAW);
     }
-    else if (IS_CHAR(v)) {
+    else if (Is_Char(v)) {
         //
         // Useful for `write-stdout newline`, etc.
         //
@@ -142,7 +142,7 @@ DECLARE_NATIVE(write_stdout)
         // it may be that the print layer runs arbitrary Rebol code that
         // might move that buffer.
         //
-        assert(IS_TEXT(v));
+        assert(Is_Text(v));
 
         REBSIZ offset;
         REBSIZ size;
@@ -242,7 +242,7 @@ DECLARE_NATIVE(new_line_q)
     Array* arr;
     const Cell* item;
 
-    if (IS_VARARGS(pos)) {
+    if (Is_Varargs(pos)) {
         Level* L;
         Value* shared;
         if (Is_Level_Style_Varargs_May_Fail(&L, pos)) {
@@ -271,7 +271,7 @@ DECLARE_NATIVE(new_line_q)
             panic ("Bad VARARGS!");
     }
     else {
-        assert(IS_GROUP(pos) or IS_BLOCK(pos));
+        assert(Is_Group(pos) or Is_Block(pos));
         arr = Cell_Array(pos);
         item = Cell_Array_At(pos);
     }
@@ -327,7 +327,7 @@ DECLARE_NATIVE(now)
     // However OS-level date and time is plugged into the system, it needs to
     // have enough granularity to give back date, time, and time zone.
     //
-    assert(IS_DATE(timestamp));
+    assert(Is_Date(timestamp));
     assert(GET_VAL_FLAG(timestamp, DATE_FLAG_HAS_TIME));
     assert(GET_VAL_FLAG(timestamp, DATE_FLAG_HAS_ZONE));
 
@@ -455,7 +455,7 @@ DECLARE_NATIVE(wait)
 
 
     Cell* val;
-    if (not IS_BLOCK(ARG(value)))
+    if (not Is_Block(ARG(value)))
         val = ARG(value);
     else {
         StackIndex base = TOP_INDEX;
@@ -472,7 +472,7 @@ DECLARE_NATIVE(wait)
             if (Pending_Port(KNOWN(val)))
                 ++n;
 
-            if (IS_INTEGER(val) or IS_DECIMAL(val) or IS_TIME(val))
+            if (Is_Integer(val) or Is_Decimal(val) or Is_Time(val))
                 break;
         }
         if (IS_END(val)) {
@@ -519,7 +519,7 @@ DECLARE_NATIVE(wait)
     if (Wait_Ports_Throws(OUT, ports, timeout, REF(only)))
         return R_THROWN;
 
-    assert(IS_LOGIC(OUT));
+    assert(Is_Logic(OUT));
 
     if (IS_FALSEY(OUT)) { // timeout
         Sieve_Ports(nullptr);  // just reset the waked list
@@ -534,7 +534,7 @@ DECLARE_NATIVE(wait)
 
     if (not REF(all)) {
         val = Array_Head(ports);
-        if (not IS_PORT(val))
+        if (not Is_Port(val))
             return nullptr;
 
         Copy_Cell(OUT, KNOWN(val));
@@ -578,20 +578,20 @@ DECLARE_NATIVE(wake_up)
         DECLARE_VALUE (verb);
         Init_Word(verb, Canon(SYM_ON_WAKE_UP));
         const Value* r = Do_Port_Action(level_, ARG(port), verb);
-        assert(IS_BAR(r));
+        assert(Is_Bar(r));
         UNUSED(r);
     }
 
     bool woke_up = true; // start by assuming success
 
     Value* awake = CTX_VAR(ctx, STD_PORT_AWAKE);
-    if (IS_ACTION(awake)) {
+    if (Is_Action(awake)) {
         const bool fully = true; // error if not all arguments consumed
 
         if (Apply_Only_Throws(OUT, fully, awake, ARG(event), rebEND))
             fail (Error_No_Catch_For_Throw(OUT));
 
-        if (not (IS_LOGIC(OUT) and VAL_LOGIC(OUT)))
+        if (not (Is_Logic(OUT) and VAL_LOGIC(OUT)))
             woke_up = false;
     }
 
@@ -619,7 +619,7 @@ DECLARE_NATIVE(local_to_file)
     INCLUDE_PARAMS_OF_LOCAL_TO_FILE;
 
     Value* path = ARG(path);
-    if (IS_FILE(path)) {
+    if (Is_File(path)) {
         if (not REF(pass))
             fail ("LOCAL-TO-FILE only passes through FILE! if /PASS used");
 
@@ -664,7 +664,7 @@ DECLARE_NATIVE(file_to_local)
     INCLUDE_PARAMS_OF_FILE_TO_LOCAL;
 
     Value* path = ARG(path);
-    if (IS_TEXT(path)) {
+    if (Is_Text(path)) {
         if (not REF(pass))
             fail ("FILE-TO-LOCAL only passes through STRING! if /PASS used");
 
@@ -701,7 +701,7 @@ DECLARE_NATIVE(what_dir)
 {
     Value* current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
-    if (IS_FILE(current_path) || IS_NULLED(current_path)) {
+    if (Is_File(current_path) || IS_NULLED(current_path)) {
         //
         // !!! Because of the need to track a notion of "current path" which
         // could be a URL! as well as a FILE!, the state is stored in the
@@ -715,7 +715,7 @@ DECLARE_NATIVE(what_dir)
         Copy_Cell(current_path, refresh);
         rebRelease(refresh);
     }
-    else if (not IS_URL(current_path)) {
+    else if (not Is_Url(current_path)) {
         //
         // Lousy error, but ATM the user can directly edit system/options.
         // They shouldn't be able to (or if they can, it should be validated)
@@ -751,7 +751,7 @@ DECLARE_NATIVE(change_dir)
     Value* arg = ARG(path);
     Value* current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
-    if (IS_URL(arg)) {
+    if (Is_Url(arg)) {
         // There is no directory listing protocol for HTTP (although this
         // needs to be methodized to work for SFTP etc.)  So this takes
         // your word for it for the moment that it's a valid "directory".
@@ -759,7 +759,7 @@ DECLARE_NATIVE(change_dir)
         // !!! Should it at least check for a trailing `/`?
     }
     else {
-        assert(IS_FILE(arg));
+        assert(Is_File(arg));
 
         bool success = OS_SET_CURRENT_DIR(arg);
 

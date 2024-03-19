@@ -52,7 +52,7 @@ REB_R MAKE_Integer(Value* out, enum Reb_Kind kind, const Value* arg)
     assert(kind == REB_INTEGER);
     UNUSED(kind);
 
-    if (IS_LOGIC(arg)) {
+    if (Is_Logic(arg)) {
         //
         // !!! Due to Rebol's policies on conditional truth and falsehood,
         // it refuses to say TO FALSE is 0.  MAKE has shades of meaning
@@ -121,22 +121,22 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
     // !!! Code extracted from REBTYPE(Integer)'s A_MAKE and A_TO cases
     // Use SWITCH instead of IF chain? (was written w/ANY_STR test)
 
-    if (IS_INTEGER(value)) {
+    if (Is_Integer(value)) {
         Copy_Cell(out, value);
         goto check_sign;
     }
-    if (IS_DECIMAL(value) || IS_PERCENT(value)) {
+    if (Is_Decimal(value) || Is_Percent(value)) {
         if (VAL_DECIMAL(value) < MIN_D64 || VAL_DECIMAL(value) >= MAX_D64)
             fail (Error_Overflow_Raw());
 
         Init_Integer(out, cast(REBI64, VAL_DECIMAL(value)));
         goto check_sign;
     }
-    else if (IS_MONEY(value)) {
+    else if (Is_Money(value)) {
         Init_Integer(out, deci_to_int(VAL_MONEY_AMOUNT(value)));
         goto check_sign;
     }
-    else if (IS_BINARY(value)) { // must be before ANY_STRING() test...
+    else if (Is_Binary(value)) { // must be before ANY_STRING() test...
 
         // Rebol3 creates 8-byte big endian for signed 64-bit integers.
         // Rebol2 created 4-byte big endian for signed 32-bit integers.
@@ -255,7 +255,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         Init_Integer(out, i);
         return;
     }
-    else if (IS_ISSUE(value)) {
+    else if (Is_Issue(value)) {
         //
         // Like converting a binary, except uses a string of codepoints
         // from the word name conversion.  Does not allow for signed
@@ -312,7 +312,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
 
         fail (Error_Bad_Make(REB_INTEGER, value));
     }
-    else if (IS_LOGIC(value)) {
+    else if (Is_Logic(value)) {
         //
         // Rebol's choice is that no integer is uniquely representative of
         // "falsehood" condition, e.g. `if 0 [print "this prints"]`.  So to
@@ -320,11 +320,11 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         //
         fail (Error_Bad_Make(REB_INTEGER, value));
     }
-    else if (IS_CHAR(value)) {
+    else if (Is_Char(value)) {
         Init_Integer(out, VAL_CHAR(value)); // always unsigned
         return;
     }
-    else if (IS_TIME(value)) {
+    else if (Is_Time(value)) {
         Init_Integer(out, SECS_FROM_NANO(VAL_NANO(value))); // always unsigned
         return;
     }
@@ -401,9 +401,9 @@ REBTYPE(Integer)
     ){
         Value* val2 = D_ARG(2);
 
-        if (IS_INTEGER(val2))
+        if (Is_Integer(val2))
             arg = VAL_INT64(val2);
-        else if (IS_CHAR(val2))
+        else if (Is_Char(val2))
             arg = VAL_CHAR(val2);
         else {
             // Decimal or other numeric second argument:
@@ -426,21 +426,21 @@ REBTYPE(Integer)
             case SYM_DIVIDE:
             case SYM_REMAINDER:
             case SYM_POWER:
-                if (IS_DECIMAL(val2) || IS_PERCENT(val2)) {
+                if (Is_Decimal(val2) || Is_Percent(val2)) {
                     Init_Decimal(val, cast(REBDEC, num)); // convert main arg
                     return T_Decimal(level_, verb);
                 }
-                if (IS_MONEY(val2)) {
+                if (Is_Money(val2)) {
                     Init_Money(val, int_to_deci(VAL_INT64(val)));
                     return T_Money(level_, verb);
                 }
                 if (n > 0) {
-                    if (IS_TIME(val2)) {
+                    if (Is_Time(val2)) {
                         VAL_NANO(val) = SEC_TIME(VAL_INT64(val));
                         CHANGE_VAL_TYPE_BITS(val, REB_TIME);
                         return T_Time(level_, verb);
                     }
-                    if (IS_DATE(val2))
+                    if (Is_Date(val2))
                         return T_Date(level_, verb);
                 }
 
@@ -542,14 +542,14 @@ REBTYPE(Integer)
 
         Value* val2 = ARG(scale);
         if (REF(to)) {
-            if (IS_MONEY(val2))
+            if (Is_Money(val2))
                 return Init_Money(
                     OUT,
                     Round_Deci(
                         int_to_deci(num), flags, VAL_MONEY_AMOUNT(val2)
                     )
                 );
-            if (IS_DECIMAL(val2) || IS_PERCENT(val2)) {
+            if (Is_Decimal(val2) || Is_Percent(val2)) {
                 REBDEC dec = Round_Dec(
                     cast(REBDEC, num), flags, VAL_DECIMAL(val2)
                 );
@@ -557,7 +557,7 @@ REBTYPE(Integer)
                 VAL_DECIMAL(OUT) = dec;
                 return OUT;
             }
-            if (IS_TIME(val2))
+            if (Is_Time(val2))
                 fail (Error_Invalid(val2));
             arg = VAL_INT64(val2);
         }
@@ -629,7 +629,7 @@ DECLARE_NATIVE(enbin)
         "]"
     );
     Cell* third = Cell_Array_At_Head(settings, index + 2);
-    if (not IS_INTEGER(third))
+    if (not Is_Integer(third))
         fail ("Third element of ENBIN settings must be an integer}");
     REBINT num_bytes = VAL_INT32(third);
     if (num_bytes <= 0)
@@ -739,7 +739,7 @@ DECLARE_NATIVE(debin)
     if (IS_END(third))
         num_bytes = VAL_LEN_AT(ARG(binary));
     else {
-        if (not IS_INTEGER(third))
+        if (not Is_Integer(third))
             fail ("Third element of DEBIN settings must be an integer}");
         num_bytes = VAL_INT32(third);
         if (VAL_LEN_AT(ARG(binary)) != num_bytes)

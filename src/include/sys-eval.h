@@ -63,7 +63,7 @@
 // !!! Find a better place for this!
 //
 INLINE bool IS_QUOTABLY_SOFT(const Cell* v) {
-    return IS_GROUP(v) or IS_GET_WORD(v) or IS_GET_PATH(v);
+    return Is_Group(v) or Is_Get_Word(v) or Is_Get_Path(v);
 }
 
 

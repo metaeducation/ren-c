@@ -166,13 +166,13 @@ REBCTX *Make_Context_For_Action_Int_Partials(
 
     //=//// REFINEMENT PARAMETER HANDLING /////////////////////////////////=//
 
-        if (IS_BLANK(special)) { // specialized BLANK! => "disabled"
+        if (Is_Blank(special)) { // specialized BLANK! => "disabled"
             Init_Blank(arg);
             SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
             goto continue_specialized;
         }
 
-        if (IS_REFINEMENT(special)) { // specialized REFINEMENT! => "in use"
+        if (Is_Refinement(special)) { // specialized REFINEMENT! => "in use"
             Init_Refinement(arg, Cell_Parameter_Symbol(param));
             SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
             goto continue_specialized;
@@ -185,7 +185,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
         // in use must be turned into INTEGER! partials, to point to the
         // StackIndex of their stack order.
 
-        if (IS_ISSUE(special)) {
+        if (Is_Issue(special)) {
             REBLEN partial_index = VAL_WORD_INDEX(special);
             Init_Any_Word_Bound( // push an ISSUE! to data stack
                 PUSH(),
@@ -244,7 +244,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
             special == param
             or IS_NULLED(special)
             or (
-                IS_TRASH(special)
+                Is_Trash(special)
                 and GET_VAL_FLAG(special, ARG_MARKED_CHECKED)
             )
         );
@@ -471,7 +471,7 @@ bool Specialize_Action_Throws(
             if (
                 IS_NULLED(refine)
                 or (
-                    IS_INTEGER(refine)
+                    Is_Integer(refine)
                     and GET_VAL_FLAG(refine, ARG_MARKED_CHECKED)
                 )
             ){
@@ -515,7 +515,7 @@ bool Specialize_Action_Throws(
             assert(
                 NOT_VAL_FLAG(refine, ARG_MARKED_CHECKED)
                 or (
-                    IS_REFINEMENT(refine)
+                    Is_Refinement(refine)
                     and (
                         Cell_Word_Symbol(refine)
                         == Cell_Parameter_Symbol(param)
@@ -578,9 +578,9 @@ bool Specialize_Action_Throws(
             goto specialized_arg;
         }
 
-        assert(IS_BLANK(refine) or IS_REFINEMENT(refine));
+        assert(Is_Blank(refine) or Is_Refinement(refine));
 
-        if (IS_BLANK(refine)) {
+        if (Is_Blank(refine)) {
             //
             // `specialize 'append [dup: false count: 10]` is not legal.
             //
@@ -695,7 +695,7 @@ bool Specialize_Action_Throws(
     //
     Value* ordered = Data_Stack_At(lowest_stackindex);
     while (ordered != TOP) {
-        if (IS_BLANK(ordered + 1)) // blanked when seen no longer partial
+        if (Is_Blank(ordered + 1)) // blanked when seen no longer partial
             ++ordered;
         else
             break;
@@ -764,7 +764,7 @@ bool Specialize_Action_Throws(
         SET_VAL_FLAG(partial, ARG_MARKED_CHECKED);
 
         while (ordered != TOP) {
-            if (IS_BLANK(ordered + 1))
+            if (Is_Blank(ordered + 1))
                 ++ordered; // loop invariant, no BLANK! in next stack
             else
                 break;
@@ -843,7 +843,7 @@ REB_R Specializer_Dispatcher(Level* L)
     Array* details = ACT_DETAILS(Level_Phase(L));
 
     Value* exemplar = KNOWN(Array_Head(details));
-    assert(IS_FRAME(exemplar));
+    assert(Is_Frame(exemplar));
 
     Level_Phase(L) = exemplar->payload.any_context.phase;
     LVL_BINDING(L) = VAL_BINDING(exemplar);
@@ -891,7 +891,7 @@ DECLARE_NATIVE(specialize)
     // Note: Even if there was a PATH! doesn't mean there were refinements
     // used, e.g. `specialize 'lib/append [...]`.
 
-    if (not IS_ACTION(OUT))
+    if (not Is_Action(OUT))
         fail (Error_Invalid(specializee));
     Copy_Cell(specializee, OUT); // Frees OUT, and GC safe (in ARG slot)
 
@@ -931,7 +931,7 @@ REB_R Block_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* block = Array_Head(details);
-    assert(IS_BLOCK(block));
+    assert(Is_Block(block));
 
     if (IS_SPECIFIC(block)) {
         if (LVL_BINDING(L) == UNBOUND) {

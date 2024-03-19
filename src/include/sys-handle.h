@@ -63,7 +63,7 @@
 
 
 INLINE uintptr_t VAL_HANDLE_LEN(const Cell* v) {
-    assert(IS_HANDLE(v));
+    assert(Is_Handle(v));
     if (v->extra.singular)
         return Array_Head(v->extra.singular)->payload.handle.length;
     else
@@ -71,7 +71,7 @@ INLINE uintptr_t VAL_HANDLE_LEN(const Cell* v) {
 }
 
 INLINE void *VAL_HANDLE_VOID_POINTER(const Cell* v) {
-    assert(IS_HANDLE(v));
+    assert(Is_Handle(v));
     assert(NOT_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
     if (v->extra.singular)
         return Array_Head(v->extra.singular)->payload.handle.data.pointer;
@@ -83,7 +83,7 @@ INLINE void *VAL_HANDLE_VOID_POINTER(const Cell* v) {
     cast(t *, VAL_HANDLE_VOID_POINTER(v))
 
 INLINE CFUNC *VAL_HANDLE_CFUNC(const Cell* v) {
-    assert(IS_HANDLE(v));
+    assert(Is_Handle(v));
     assert(GET_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
     if (v->extra.singular)
         return Array_Head(v->extra.singular)->payload.handle.data.cfunc;
@@ -92,13 +92,13 @@ INLINE CFUNC *VAL_HANDLE_CFUNC(const Cell* v) {
 }
 
 INLINE CLEANUP_CFUNC *VAL_HANDLE_CLEANER(const Cell* v) {
-    assert(IS_HANDLE(v));
+    assert(Is_Handle(v));
     Array* singular = v->extra.singular;
     return singular != nullptr ? MISC(singular).cleaner : nullptr;
 }
 
 INLINE void SET_HANDLE_LEN(Cell* v, uintptr_t length) {
-    assert(IS_HANDLE(v));
+    assert(Is_Handle(v));
     if (v->extra.singular)
         Array_Head(v->extra.singular)->payload.handle.length = length;
     else
@@ -106,7 +106,7 @@ INLINE void SET_HANDLE_LEN(Cell* v, uintptr_t length) {
 }
 
 INLINE void SET_HANDLE_POINTER(Cell* v, void *pointer) {
-    assert(IS_HANDLE(v));
+    assert(Is_Handle(v));
     assert(NOT_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
     if (v->extra.singular)
         Array_Head(v->extra.singular)->payload.handle.data.pointer = pointer;
@@ -115,7 +115,7 @@ INLINE void SET_HANDLE_POINTER(Cell* v, void *pointer) {
 }
 
 INLINE void SET_HANDLE_CFUNC(Cell* v, CFUNC *cfunc) {
-    assert(IS_HANDLE(v));
+    assert(Is_Handle(v));
     assert(GET_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
     if (v->extra.singular)
         Array_Head(v->extra.singular)->payload.handle.data.cfunc = cfunc;

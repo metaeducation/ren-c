@@ -158,7 +158,7 @@ REBINT Find_Key_Hashed(
             if (VAL_TYPE(k) == VAL_TYPE(key)) {
                 if (0 == Compare_String_Vals(k, key, false))
                     FOUND_EXACT;
-                else if (not cased and not IS_BINARY(key))
+                else if (not cased and not Is_Binary(key))
                     if (0 == Compare_String_Vals(k, key, true))
                         FOUND_SYNONYM;
             }
@@ -178,7 +178,7 @@ REBINT Find_Key_Hashed(
                 if (0 == Cmp_Value(k, key, true))
                     FOUND_EXACT;
                 else if (not cased)
-                    if (IS_CHAR(k) && 0 == Cmp_Value(k, key, false))
+                    if (Is_Char(k) && 0 == Cmp_Value(k, key, false))
                         FOUND_SYNONYM; // CHAR! is only non-STRING!/WORD! case
             }
             if (wide > 1 && IS_NULLED(k + 1) && zombie_slot == -1)
@@ -370,7 +370,7 @@ REB_R PD_Map(
     const Value* picker,
     const Value* opt_setval
 ){
-    assert(IS_MAP(pvs->out));
+    assert(Is_Map(pvs->out));
 
     if (opt_setval != nullptr)
         Fail_If_Read_Only_Series(VAL_SERIES(pvs->out));
@@ -511,7 +511,7 @@ REB_R TO_Map(Value* out, enum Reb_Kind kind, const Value* arg)
     assert(kind == REB_MAP);
     UNUSED(kind);
 
-    if (IS_BLOCK(arg) || IS_GROUP(arg)) {
+    if (Is_Block(arg) || Is_Group(arg)) {
         //
         // make map! [word val word val]
         //
@@ -525,7 +525,7 @@ REB_R TO_Map(Value* out, enum Reb_Kind kind, const Value* arg)
         Rehash_Map(map);
         return Init_Map(out, map);
     }
-    else if (IS_MAP(arg)) {
+    else if (Is_Map(arg)) {
         //
         // Values are not copied deeply by default.
         //
@@ -803,7 +803,7 @@ REBTYPE(Map)
             fail (Error_Bad_Refines_Raw());
         }
 
-        if (not IS_BLOCK(arg))
+        if (not Is_Block(arg))
             fail (Error_Invalid(arg));
 
         REBLEN len = Part_Len_May_Modify_Index(arg, ARG(limit));
@@ -854,7 +854,7 @@ REBTYPE(Map)
             types |= REF(types) ? 0 : TS_CLONE;
 
         if (REF(types)) {
-            if (IS_DATATYPE(ARG(kinds)))
+            if (Is_Datatype(ARG(kinds)))
                 types |= FLAGIT_KIND(VAL_TYPE(ARG(kinds)));
             else
                 types |= VAL_TYPESET_BITS(ARG(kinds));

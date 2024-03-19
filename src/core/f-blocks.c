@@ -411,7 +411,7 @@ void Uncolor_Array(Array* a)
 
     Cell* val;
     for (val = Array_Head(a); NOT_END(val); ++val)
-        if (ANY_ARRAY(val) or IS_MAP(val) or ANY_CONTEXT(val))
+        if (ANY_ARRAY(val) or Is_Map(val) or ANY_CONTEXT(val))
             Uncolor(val);
 }
 
@@ -427,7 +427,7 @@ void Uncolor(Cell* v)
 
     if (ANY_ARRAY(v))
         array = Cell_Array(v);
-    else if (IS_MAP(v))
+    else if (Is_Map(v))
         array = MAP_PAIRLIST(VAL_MAP(v));
     else if (ANY_CONTEXT(v))
         array = CTX_VARLIST(VAL_CONTEXT(v));

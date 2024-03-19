@@ -298,7 +298,7 @@ INLINE void SET_FRAME_VALUE(Level* L, const Cell* value) {
 //     PARAM(1, foo);
 //     REFINE(2, bar);
 //
-//     if (IS_INTEGER(ARG(foo)) and REF(bar)) { ... }
+//     if (Is_Integer(ARG(foo)) and REF(bar)) { ... }
 //
 // Though REF can only be used with a REFINE() declaration, ARG can be used
 // with either.  By contract, Rebol functions are allowed to mutate their
@@ -340,7 +340,7 @@ INLINE void SET_FRAME_VALUE(Level* L, const Cell* value) {
         ACT_PARAM(Level_Phase(level_), (p_##name)) /* a TYPESET! */
 
     #define REF(name) \
-        (not IS_BLANK(ARG(name))) /* should be faster than IS_FALSEY() */
+        (not Is_Blank(ARG(name))) /* should be faster than IS_FALSEY() */
 #else
     struct Native_Param {
         int num;
@@ -377,8 +377,8 @@ INLINE void SET_FRAME_VALUE(Level* L, const Cell* value) {
 
     #define REF(name) \
         ((p_##name).used_cache /* used_cache use stops REF() on PARAM()s */ \
-            ? not IS_BLANK(ARG(name)) \
-            : not IS_BLANK(ARG(name)))
+            ? not Is_Blank(ARG(name)) \
+            : not Is_Blank(ARG(name)))
 #endif
 
 
@@ -615,7 +615,7 @@ INLINE void Drop_Action(Level* L) {
         assert(NOT_SER_FLAG(L->varlist, NODE_FLAG_MANAGED));
 
         Value* rootvar = cast(Value*, Array_Head(L->varlist));
-        assert(IS_FRAME(rootvar));
+        assert(Is_Frame(rootvar));
         assert(rootvar->payload.any_context.varlist == L->varlist);
         Corrupt_Pointer_If_Debug(rootvar->payload.any_context.phase);
         Corrupt_Pointer_If_Debug(rootvar->extra.binding);
@@ -643,6 +643,6 @@ INLINE REBCTX *Context_For_Level_May_Manage(Level* L)
 
 
 INLINE REBACT *VAL_PHASE(Value* frame) {
-    assert(IS_FRAME(frame));
+    assert(Is_Frame(frame));
     return frame->payload.any_context.phase;
 }

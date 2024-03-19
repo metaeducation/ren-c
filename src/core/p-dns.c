@@ -92,11 +92,11 @@ static REB_R DNS_Actor(Level* level_, Value* port, Value* verb)
         // lookup.  The scheme handler may pass in either a TUPLE! or a string
         // that scans to a tuple, at this time (currently uses a string)
         //
-        if (IS_TUPLE(arg)) {
+        if (Is_Tuple(arg)) {
             sock->modes |= RST_REVERSE;
             memcpy(&(DEVREQ_NET(sock)->remote_ip), VAL_TUPLE(arg), 4);
         }
-        else if (IS_TEXT(arg)) {
+        else if (Is_Text(arg)) {
             REBSIZ offset;
             REBSIZ size;
             Binary* temp = Temp_UTF8_At_Managed(

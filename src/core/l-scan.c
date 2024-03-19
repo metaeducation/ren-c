@@ -1029,10 +1029,10 @@ acquisition_loop:
             else { // rebUneval()
                 assert(
                     (
-                        IS_ACTION(single)
+                        Is_Action(single)
                         and VAL_ACTION(single) == NAT_ACTION(null)
                     ) or (
-                        IS_GROUP(single) and (
+                        Is_Group(single) and (
                             GET_SER_INFO(Cell_Array(single), SERIES_INFO_HOLD)
                             or GET_SER_INFO(Cell_Array(single), SERIES_INFO_FROZEN)
                         )
@@ -2220,7 +2220,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             //
             Bind_Values_All_Deep(Array_Head(array), Lib_Context);
 
-            if (Array_Len(array) == 0 or not IS_WORD(Array_Head(array))) {
+            if (Array_Len(array) == 0 or not Is_Word(Array_Head(array))) {
                 DECLARE_VALUE (temp);
                 Init_Block(temp, array);
                 fail (Error_Malconstruct_Raw(temp));
@@ -2407,7 +2407,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 RESET_VAL_HEADER(PUSH(), REB_LIT_PATH);
                 CHANGE_VAL_TYPE_BITS(Array_Head(arr), REB_WORD);
             }
-            else if (IS_GET_WORD(Array_Head(arr))) {
+            else if (Is_Get_Word(Array_Head(arr))) {
                 if (ss->begin and *ss->end == ':')
                     fail (Error_Syntax(ss));
                 RESET_VAL_HEADER(PUSH(), REB_GET_PATH);
@@ -2779,7 +2779,7 @@ DECLARE_NATIVE(transcode)
     INCLUDE_PARAMS_OF_TRANSCODE;
 
     Value* source;
-    if (IS_TEXT(ARG(source)))
+    if (Is_Text(ARG(source)))
         source = rebValue("to binary!", ARG(source));
     else
         source = ARG(source);
@@ -2793,12 +2793,12 @@ DECLARE_NATIVE(transcode)
     LineNumber start_line;
     if (REF(line)) {
         Value* ival;
-        if (IS_WORD(ARG(line_number)))  // get mutable, to fail early
+        if (Is_Word(ARG(line_number)))  // get mutable, to fail early
             ival = Get_Mutable_Var_May_Fail(ARG(line_number), SPECIFIED);
         else
             ival = ARG(line_number);
 
-        if (not IS_INTEGER(ival))
+        if (not Is_Integer(ival))
             fail (ARG(line_number));
 
         start_line = VAL_INT32(ival);
@@ -2835,14 +2835,14 @@ DECLARE_NATIVE(transcode)
     else
         Scan_To_Stack(&ss);
 
-    if (IS_WORD(ARG(line_number))) {
+    if (Is_Word(ARG(line_number))) {
         Value* ivar = Get_Mutable_Var_May_Fail(ARG(line_number), SPECIFIED);
         Init_Integer(ivar, ss.line);
     }
     if (REF(next) and TOP_INDEX != base) {
         Value* nvar = Get_Mutable_Var_May_Fail(ARG(next_arg), SPECIFIED);
         Copy_Cell(nvar, ARG(source));
-        if (IS_TEXT(ARG(source))) {
+        if (Is_Text(ARG(source))) {
             assert(ss.end <= Cell_Binary_Tail(source));
             assert(ss.end >= Cell_Binary_Head(source));
             assert(VAL_INDEX(source) == 0);  // binary converted
@@ -2857,7 +2857,7 @@ DECLARE_NATIVE(transcode)
         }
     }
 
-    if (IS_TEXT(ARG(source)))
+    if (Is_Text(ARG(source)))
         rebRelease(source);  // release temporary binary created
 
     if (REF(next)) {

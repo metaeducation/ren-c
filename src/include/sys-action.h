@@ -260,7 +260,7 @@ INLINE void Clear_Action_Cached_Flags(Cell *v) {
 
 
 INLINE REBACT *VAL_ACTION(const Cell* v) {
-    assert(IS_ACTION(v));
+    assert(Is_Action(v));
     Series* s = v->payload.action.paramlist;
     if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
@@ -280,17 +280,17 @@ INLINE REBACT *VAL_ACTION(const Cell* v) {
     ACT_PARAM(VAL_ACTION(v), n)
 
 INLINE Array* VAL_ACT_DETAILS(const Cell* v) {
-    assert(IS_ACTION(v));
+    assert(Is_Action(v));
     return v->payload.action.details;
 }
 
 INLINE REBNAT VAL_ACT_DISPATCHER(const Cell* v) {
-    assert(IS_ACTION(v));
+    assert(Is_Action(v));
     return MISC(v->payload.action.details).dispatcher;
 }
 
 INLINE REBCTX *VAL_ACT_META(const Cell* v) {
-    assert(IS_ACTION(v));
+    assert(Is_Action(v));
     return MISC(v->payload.action.paramlist).meta;
 }
 

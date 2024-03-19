@@ -343,7 +343,16 @@ lowercase-of: func [
     lowercase form string
 ]
 
-propercase: func [value] [uppercase/part (copy value) 1]
+propercase: func [text [text!]] [
+    assert [not empty? text]
+    change text uppercase text/1
+    pos: next text
+    while [pos: any [find pos "_" find pos "-"]] [
+        if not pos: next pos [break]
+        change pos uppercase pos/1
+    ]
+    return text
+]
 
 propercase-of: func [
     {Make a copy of a string with just the first character uppercase}

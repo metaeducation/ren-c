@@ -132,10 +132,10 @@ INLINE bool Do_Branch_Core_Throws(
 ){
     assert(branch != out and condition != out);
 
-    if (IS_BLOCK(branch))
+    if (Is_Block(branch))
         return Do_Any_Array_At_Throws(out, branch);
 
-    assert(IS_ACTION(branch));
+    assert(Is_Action(branch));
     return Apply_Only_Throws(
         out,
         false, // !fully, e.g. arity-0 functions can ignore condition

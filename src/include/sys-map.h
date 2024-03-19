@@ -63,7 +63,7 @@ INLINE REBMAP *MAP(void *p) {
 
 
 INLINE REBMAP *VAL_MAP(const Cell* v) {
-    assert(IS_MAP(v));
+    assert(Is_Map(v));
 
     Series* s = v->payload.any_series.series;
     if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE))

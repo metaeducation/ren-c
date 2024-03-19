@@ -54,7 +54,7 @@ REBLEN Modify_Array(
     const Cell* src_rel;
     Specifier* specifier;
 
-    if (IS_VOID(src_val) and op == SYM_CHANGE) {
+    if (Is_Void(src_val) and op == SYM_CHANGE) {
         //
         // Tweak requests to CHANGE to a null to be a deletion; basically
         // what happens with an empty block.
@@ -63,7 +63,7 @@ REBLEN Modify_Array(
         src_val = EMPTY_BLOCK;
     }
 
-    if (IS_VOID(src_val) or dups <= 0) {
+    if (Is_Void(src_val) or dups <= 0) {
         // If they are effectively asking for "no action" then all we have
         // to do is return the natural index result for the operation.
         // (APPEND will return 0, insert the tail of the insertion...so index)
@@ -248,7 +248,7 @@ REBLEN Modify_Binary(
     else
         limit = -1;
 
-    if (IS_VOID(src_val) and op == SYM_CHANGE) {
+    if (Is_Void(src_val) and op == SYM_CHANGE) {
         //
         // Tweak requests to CHANGE to a null to be a deletion; basically
         // what happens with an empty binary.
@@ -257,7 +257,7 @@ REBLEN Modify_Binary(
         src_val = EMPTY_BINARY;
     }
 
-    if (IS_VOID(src_val) || limit == 0 || dups < 0)
+    if (Is_Void(src_val) || limit == 0 || dups < 0)
         return op == SYM_APPEND ? 0 : dst_idx;
 
     REBLEN tail = Series_Len(dst_ser);
@@ -270,7 +270,7 @@ REBLEN Modify_Binary(
     REBLEN src_len;
     Binary* src_ser;
     bool needs_free;
-    if (IS_INTEGER(src_val)) {
+    if (Is_Integer(src_val)) {
         REBI64 i = VAL_INT64(src_val);
         if (i > 255 || i < 0)
             fail ("Inserting out-of-range INTEGER! into BINARY!");
@@ -281,12 +281,12 @@ REBLEN Modify_Binary(
         needs_free = true;
         limit = -1;
     }
-    else if (IS_BLOCK(src_val)) {
+    else if (Is_Block(src_val)) {
         src_ser = Join_Binary(src_val, limit); // NOTE: shared FORM buffer
         needs_free = false;
         limit = -1;
     }
-    else if (IS_CHAR(src_val)) {
+    else if (Is_Char(src_val)) {
         //
         // "UTF-8 was originally specified to allow codepoints with up to
         // 31 bits (or 6 bytes). But with RFC3629, this was reduced to 4
@@ -310,7 +310,7 @@ REBLEN Modify_Binary(
         needs_free = true;
         limit = -1;
     }
-    else if (IS_BINARY(src_val)) {
+    else if (Is_Binary(src_val)) {
         src_ser = nullptr;
         needs_free = false;
     }
@@ -407,7 +407,7 @@ REBLEN Modify_String(
     else
         limit = -1;
 
-    if (IS_VOID(src_val) and op == SYM_CHANGE) {
+    if (Is_Void(src_val) and op == SYM_CHANGE) {
         //
         // Tweak requests to CHANGE to a null to be a deletion; basically
         // what happens with an empty string.
@@ -416,7 +416,7 @@ REBLEN Modify_String(
         src_val = EMPTY_TEXT;
     }
 
-    if (IS_VOID(src_val) || limit == 0 || dups < 0)
+    if (Is_Void(src_val) || limit == 0 || dups < 0)
         return op == SYM_APPEND ? 0 : dst_idx;
 
     REBLEN tail = Series_Len(dst_ser);
@@ -429,13 +429,13 @@ REBLEN Modify_String(
     String* src_ser;
     REBLEN src_len;
     bool needs_free;
-    if (IS_CHAR(src_val)) {
+    if (Is_Char(src_val)) {
         src_ser = Make_Ser_Codepoint(VAL_CHAR(src_val));
         src_len = Series_Len(src_ser);
 
         needs_free = true;
     }
-    else if (IS_BLOCK(src_val)) {
+    else if (Is_Block(src_val)) {
         src_ser = Form_Tight_Block(src_val);
         src_len = Series_Len(src_ser);
 
@@ -443,7 +443,7 @@ REBLEN Modify_String(
     }
     else if (
         ANY_STRING(src_val)
-        and not (IS_TAG(src_val) or (flags & AM_LINE))
+        and not (Is_Tag(src_val) or (flags & AM_LINE))
     ){
         src_ser = Cell_String(src_val);
         src_idx = VAL_INDEX(src_val);

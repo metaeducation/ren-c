@@ -52,8 +52,7 @@
 //
 //     /* #include any non-Rebol windows dependencies here */
 //
-//     #undef IS_ERROR // means something different
-//     #undef max // same
+//     #undef max // means something different
 //     #undef min // same
 //
 //     #include "sys-core.h"

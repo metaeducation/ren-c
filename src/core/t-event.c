@@ -72,7 +72,7 @@ static bool Set_Event_Var(Value* event, const Value* word, const Value* val)
 {
     switch (Cell_Word_Id(word)) {
     case SYM_TYPE: {
-        if (!IS_WORD(val) && !IS_LIT_WORD(val))
+        if (!Is_Word(val) && !Is_Lit_Word(val))
             return false;
         Option(SymId) id = Cell_Word_Id(val);
         if (id == SYM_0)
@@ -81,11 +81,11 @@ static bool Set_Event_Var(Value* event, const Value* word, const Value* val)
         return true; }
 
     case SYM_PORT:
-        if (IS_PORT(val)) {
+        if (Is_Port(val)) {
             VAL_EVENT_MODEL(event) = EVM_PORT;
             VAL_EVENT_SER(event) = CTX_VARLIST(VAL_CONTEXT(val));
         }
-        else if (IS_OBJECT(val)) {
+        else if (Is_Object(val)) {
             VAL_EVENT_MODEL(event) = EVM_OBJECT;
             VAL_EVENT_SER(event) = CTX_VARLIST(VAL_CONTEXT(val));
         }
@@ -94,7 +94,7 @@ static bool Set_Event_Var(Value* event, const Value* word, const Value* val)
         break;
 
     case SYM_CODE:
-        if (IS_INTEGER(val)) {
+        if (Is_Integer(val)) {
             VAL_EVENT_DATA(event) = VAL_INT32(val);
         }
         else
@@ -121,7 +121,7 @@ void Set_Event_Vars(Value* evt, Cell* blk, Specifier* specifier)
         Derelativize(var, blk, specifier);
         ++blk;
 
-        if (not IS_SET_WORD(var))
+        if (not Is_Set_Word(var))
             fail (Error_Invalid(var));
 
         if (IS_END(blk))
@@ -181,7 +181,7 @@ REB_R MAKE_Event(Value* out, enum Reb_Kind kind, const Value* arg) {
     assert(kind == REB_EVENT);
     UNUSED(kind);
 
-    if (not IS_BLOCK(arg))
+    if (not Is_Block(arg))
         fail (Error_Unexpected_Type(REB_EVENT, VAL_TYPE(arg)));
 
     RESET_CELL(out, REB_EVENT);
@@ -215,9 +215,9 @@ REB_R PD_Event(
     const Value* picker,
     const Value* opt_setval
 ){
-    if (IS_WORD(picker)) {
+    if (Is_Word(picker)) {
         if (opt_setval == nullptr) {
-            if (IS_BLANK(Get_Event_Var(
+            if (Is_Blank(Get_Event_Var(
                 pvs->out, pvs->out, VAL_WORD_CANON(picker)
             ))){
                 return R_UNHANDLED;
@@ -268,7 +268,7 @@ void MF_Event(REB_MOLD *mo, const Cell* v, bool form)
 
     for (field = 0; fields[field] != SYM_0; field++) {
         Get_Event_Var(var, v, Canon(fields[field]));
-        if (IS_BLANK(var))
+        if (Is_Blank(var))
             continue;
 
         New_Indented_Line(mo);
@@ -276,7 +276,7 @@ void MF_Event(REB_MOLD *mo, const Cell* v, bool form)
         Symbol* canon = Canon(fields[field]);
         Append_Utf8_Utf8(mo->series, Symbol_Head(canon), Symbol_Size(canon));
         Append_Unencoded(mo->series, ": ");
-        if (IS_WORD(var))
+        if (Is_Word(var))
             Append_Utf8_Codepoint(mo->series, '\'');
         Mold_Value(mo, var);
     }

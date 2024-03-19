@@ -78,10 +78,10 @@ void Make_Thrown_Unwind_Value(
 ) {
     Copy_Cell(out, NAT_VALUE(unwind));
 
-    if (IS_FRAME(level)) {
+    if (Is_Frame(level)) {
         INIT_BINDING(out, VAL_CONTEXT(level));
     }
-    else if (IS_INTEGER(level)) {
+    else if (Is_Integer(level)) {
         REBLEN count = VAL_INT32(level);
         if (count <= 0)
             fail (Error_Invalid_Exit_Raw());
@@ -105,7 +105,7 @@ void Make_Thrown_Unwind_Value(
         }
     }
     else {
-        assert(IS_ACTION(level));
+        assert(Is_Action(level));
 
         Level* L = base->prior;
         for (; true; L = L->prior) {
@@ -285,7 +285,7 @@ DECLARE_NATIVE(typechecker)
 
     REBACT *typechecker = Make_Action(
         paramlist,
-        IS_DATATYPE(type)
+        Is_Datatype(type)
             ? &Datatype_Checker_Dispatcher
             : &Typeset_Checker_Dispatcher,
         nullptr, // no underlying action (use paramlist)
@@ -339,7 +339,7 @@ DECLARE_NATIVE(chain)
     //
     Value* check = first;
     while (NOT_END(check)) {
-        if (not IS_ACTION(check))
+        if (not Is_Action(check))
             fail (Error_Invalid(check));
         ++check;
     }
@@ -414,7 +414,7 @@ DECLARE_NATIVE(adapt)
         return R_THROWN;
     }
 
-    if (not IS_ACTION(OUT))
+    if (not Is_Action(OUT))
         fail (Error_Invalid(adaptee));
     Copy_Cell(adaptee, OUT); // Frees OUT, and GC safe (in ARG slot)
 
@@ -508,7 +508,7 @@ DECLARE_NATIVE(enclose)
         return R_THROWN;
     }
 
-    if (not IS_ACTION(OUT))
+    if (not Is_Action(OUT))
         fail (Error_Invalid(inner));
     Copy_Cell(inner, OUT); // Frees OUT, and GC safe (in ARG slot)
 
@@ -524,7 +524,7 @@ DECLARE_NATIVE(enclose)
         return R_THROWN;
     }
 
-    if (not IS_ACTION(OUT))
+    if (not Is_Action(OUT))
         fail (Error_Invalid(outer));
     Copy_Cell(outer, OUT); // Frees OUT, and GC safe (in ARG slot)
 
@@ -623,7 +623,7 @@ DECLARE_NATIVE(hijack)
         return R_THROWN;
     }
 
-    if (not IS_ACTION(OUT))
+    if (not Is_Action(OUT))
         fail ("Victim of HIJACK must be an ACTION!");
     Copy_Cell(ARG(victim), OUT); // Frees up OUT
     REBACT *victim = VAL_ACTION(ARG(victim)); // GC safe (in ARG slot)
@@ -639,7 +639,7 @@ DECLARE_NATIVE(hijack)
         return R_THROWN;
     }
 
-    if (not IS_ACTION(OUT))
+    if (not Is_Action(OUT))
         fail ("Hijacker in HIJACK must be an ACTION!");
     Copy_Cell(ARG(hijacker), OUT); // Frees up OUT
     REBACT *hijacker = VAL_ACTION(ARG(hijacker)); // GC safe (in ARG slot)

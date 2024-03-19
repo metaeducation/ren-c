@@ -98,10 +98,10 @@ DECLARE_NATIVE(trap)
         return nullptr;
     }
 
-    if (IS_TRASH(error))  // signal used to indicate a throw
+    if (Is_Trash(error))  // signal used to indicate a throw
         return R_THROWN;
 
-    assert(IS_ERROR(error));
+    assert(Is_Error(error));
 
     if (REF(result))  // error case voids result to minimize likely use
         rebElide(NAT_VALUE(set), ARG(valid), TRASH_VALUE);
@@ -170,13 +170,13 @@ DECLARE_NATIVE(set_location_of_error)
     Value* location = ARG(location);
 
     REBCTX *context;
-    if (IS_WORD(location)) {
+    if (Is_Word(location)) {
         if (not IS_WORD_BOUND(location))
             fail ("SET-LOCATION-OF-ERROR requires bound WORD!");
         context = VAL_WORD_CONTEXT(location);
     }
     else {
-        assert(IS_FRAME(location));
+        assert(Is_Frame(location));
         context = VAL_CONTEXT(location);
     }
 

@@ -50,9 +50,6 @@
 // !!! Modern Ren-C's crypt module does not use %sys-core.h, it uses %rebol.h,
 // so these conflicts don't happen.
 //
-#ifdef IS_ERROR
-    #undef IS_ERROR //winerror.h defines this, so undef it to avoid the warning
-#endif
 #ifdef OUT
     #undef OUT  // %minwindef.h defines this, we have a better use for it
 #endif
@@ -554,14 +551,14 @@ DECLARE_NATIVE(aes)
     if (REF(key)) {
         uint8_t iv[AES_IV_SIZE];
 
-        if (IS_BINARY(ARG(iv))) {
+        if (Is_Binary(ARG(iv))) {
             if (VAL_LEN_AT(ARG(iv)) < AES_IV_SIZE)
                 fail ("Length of initialization vector less than AES size");
 
             memcpy(iv, Cell_Binary_At(ARG(iv)), AES_IV_SIZE);
         }
         else {
-            assert(IS_BLANK(ARG(iv)));
+            assert(Is_Blank(ARG(iv)));
             memset(iv, 0, AES_IV_SIZE);
         }
 
@@ -615,7 +612,7 @@ DECLARE_NATIVE(sha256)
 
     Byte *bp;
     REBSIZ size;
-    if (IS_TEXT(data)) {
+    if (Is_Text(data)) {
         REBSIZ offset;
         Binary* temp = Temp_UTF8_At_Managed(
             &offset, &size, data, VAL_LEN_AT(data)
@@ -623,7 +620,7 @@ DECLARE_NATIVE(sha256)
         bp = Binary_At(temp, offset);
     }
     else {
-        assert(IS_BINARY(data));
+        assert(Is_Binary(data));
 
         bp = Cell_Binary_At(data);
         size = VAL_LEN_AT(data);

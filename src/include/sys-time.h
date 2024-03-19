@@ -63,14 +63,14 @@
 #else
     INLINE REBI64 VAL_NANO(const Cell* v) {
         assert(
-            IS_TIME(v) or (IS_DATE(v) and GET_VAL_FLAG(v, DATE_FLAG_HAS_TIME))
+            Is_Time(v) or (Is_Date(v) and GET_VAL_FLAG(v, DATE_FLAG_HAS_TIME))
         );
         return v->payload.time.nanoseconds;
     }
 
     INLINE REBI64 &VAL_NANO(Cell* v) {
         assert(
-            IS_TIME(v) or (IS_DATE(v) and GET_VAL_FLAG(v, DATE_FLAG_HAS_TIME))
+            Is_Time(v) or (Is_Date(v) and GET_VAL_FLAG(v, DATE_FLAG_HAS_TIME))
         );
         return v->payload.time.nanoseconds;
     }
@@ -154,12 +154,12 @@ INLINE Value* Init_Time_Nanoseconds(Cell* v, REBI64 nanoseconds) {
 // VAL_ZONE() as an lvalue, because it is a bit field.
 //
 INLINE int VAL_ZONE(const Cell* v) {
-    assert(IS_DATE(v) && GET_VAL_FLAG(v, DATE_FLAG_HAS_ZONE));
+    assert(Is_Date(v) && GET_VAL_FLAG(v, DATE_FLAG_HAS_ZONE));
     return v->extra.date.date.zone;
 }
 
 INLINE void INIT_VAL_ZONE(Cell* v, int zone) {
-    assert(IS_DATE(v) && GET_VAL_FLAG(v, DATE_FLAG_HAS_ZONE));
+    assert(Is_Date(v) && GET_VAL_FLAG(v, DATE_FLAG_HAS_ZONE));
     v->extra.date.date.zone = zone;
 }
 

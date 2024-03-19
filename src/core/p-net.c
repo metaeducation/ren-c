@@ -133,7 +133,7 @@ static REB_R Transport_Actor(
             Value* local_id = Obj_Value(spec, STD_PORT_SPEC_NET_LOCAL_ID);
             if (IS_NULLED(local_id))
                 DEVREQ_NET(sock)->local_port = 0; // let the system pick
-            else if (IS_INTEGER(local_id))
+            else if (Is_Integer(local_id))
                 DEVREQ_NET(sock)->local_port = VAL_INT32(local_id);
             else
                 fail ("local-id field of PORT! spec must be BLANK!/INTEGER!");
@@ -143,7 +143,7 @@ static REB_R Transport_Actor(
             sock->flags |= RRF_OPEN;
 
             // Lookup host name (an extra TCP device step):
-            if (IS_TEXT(arg)) {
+            if (Is_Text(arg)) {
                 REBSIZ offset;
                 REBSIZ size;
                 Binary* temp = Temp_UTF8_At_Managed(
@@ -153,7 +153,7 @@ static REB_R Transport_Actor(
 
                 sock->common.data = Binary_At(temp, offset);
                 DEVREQ_NET(sock)->remote_port =
-                    IS_INTEGER(port_id) ? VAL_INT32(port_id) : 80;
+                    Is_Integer(port_id) ? VAL_INT32(port_id) : 80;
 
                 // Note: sets remote_ip field
                 //
@@ -167,16 +167,16 @@ static REB_R Transport_Actor(
 
                 RETURN (port);
             }
-            else if (IS_TUPLE(arg)) { // Host IP specified:
+            else if (Is_Tuple(arg)) { // Host IP specified:
                 DEVREQ_NET(sock)->remote_port =
-                    IS_INTEGER(port_id) ? VAL_INT32(port_id) : 80;
+                    Is_Integer(port_id) ? VAL_INT32(port_id) : 80;
                 memcpy(&(DEVREQ_NET(sock)->remote_ip), VAL_TUPLE(arg), 4);
                 goto open_socket_actions;
             }
-            else if (IS_BLANK(arg)) { // No host, must be a LISTEN socket:
+            else if (Is_Blank(arg)) { // No host, must be a LISTEN socket:
                 sock->modes |= RST_LISTEN;
                 DEVREQ_NET(sock)->local_port =
-                    IS_INTEGER(port_id) ? VAL_INT32(port_id) : 8000;
+                    Is_Integer(port_id) ? VAL_INT32(port_id) : 8000;
 
                 // When a client connection gets accepted, a port gets added
                 // to a BLOCK! of connections.
@@ -284,7 +284,7 @@ static REB_R Transport_Actor(
         //
         Value* port_data = CTX_VAR(ctx, STD_PORT_DATA);
         Binary* buffer;
-        if (not IS_TEXT(port_data) and not IS_BINARY(port_data)) {
+        if (not Is_Text(port_data) and not Is_Binary(port_data)) {
             buffer = Make_Binary(NET_BUF_SIZE);
             Init_Binary(port_data, buffer);
         }
@@ -360,7 +360,7 @@ static REB_R Transport_Actor(
         // Setup the write:
 
         Binary* temp;
-        if (IS_BINARY(data)) {
+        if (Is_Binary(data)) {
             temp = nullptr;
             sock->common.data = Cell_Binary_At(data);
             sock->length = len;

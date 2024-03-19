@@ -677,7 +677,7 @@ Array* Collect_Unique_Words_Managed(
     // not actually add them to the collection.  Then, duplicates don't cause
     // an error...so they will just be skipped when encountered.
     //
-    if (IS_BLOCK(ignore)) {
+    if (Is_Block(ignore)) {
         Cell* item = Cell_Array_At(ignore);
         for (; NOT_END(item); ++item) {
             assert(ANY_WORD(item)); // pre-pass checked this
@@ -715,7 +715,7 @@ Array* Collect_Unique_Words_Managed(
 
     Array* array = Grab_Collected_Array_Managed(cl);
 
-    if (IS_BLOCK(ignore)) {
+    if (Is_Block(ignore)) {
         Cell* item = Cell_Array_At(ignore);
         for (; NOT_END(item); ++item) {
             assert(ANY_WORD(item));
@@ -931,13 +931,13 @@ REBCTX *Construct_Context_Managed(
 
     const Cell* value = head;
     for (; NOT_END(value); value += 2) {
-        if (not IS_SET_WORD(value))
+        if (not Is_Set_Word(value))
             fail (Error_Invalid_Type(VAL_TYPE(value)));
 
         if (IS_END(value + 1))
             fail ("Unexpected end in context spec block.");
 
-        if (IS_SET_WORD(value + 1))
+        if (Is_Set_Word(value + 1))
             fail (Error_Invalid_Type(VAL_TYPE(value + 1))); // TBD: support
 
         Value* var = Sink_Var_May_Fail(value, specifier);
@@ -1158,7 +1158,7 @@ void Resolve_Context(
     FAIL_IF_READ_ONLY_CONTEXT(target);
 
     REBLEN i;
-    if (IS_INTEGER(only_words)) { // Must be: 0 < i <= tail
+    if (Is_Integer(only_words)) { // Must be: 0 < i <= tail
         i = VAL_INT32(only_words);
         if (i == 0)
             i = 1;
@@ -1183,11 +1183,11 @@ void Resolve_Context(
             Add_Binder_Index(&binder, Key_Canon(key), -1);
         n = CTX_LEN(target);
     }
-    else if (IS_BLOCK(only_words)) {
+    else if (Is_Block(only_words)) {
         // Limit exports to only these words:
         Cell* word = Cell_Array_At(only_words);
         for (; NOT_END(word); word++) {
-            if (IS_WORD(word) or IS_SET_WORD(word)) {
+            if (Is_Word(word) or Is_Set_Word(word)) {
                 Add_Binder_Index(&binder, VAL_WORD_CANON(word), -1);
                 n++;
             }
@@ -1236,7 +1236,7 @@ void Resolve_Context(
             // "the remove succeeded, so it's marked as set now" (old comment)
             if (
                 NOT_VAL_FLAG(var, CELL_FLAG_PROTECTED)
-                and (all or IS_TRASH(var))
+                and (all or Is_Trash(var))
             ){
                 if (m < 0)
                     Init_Trash(var);  // treat as undefined in source context
@@ -1271,10 +1271,10 @@ void Resolve_Context(
             for (key = CTX_KEY(target, i); NOT_END(key); key++)
                 Remove_Binder_Index_Else_0(&binder, Key_Canon(key));
         }
-        else if (IS_BLOCK(only_words)) {
+        else if (Is_Block(only_words)) {
             Cell* word = Cell_Array_At(only_words);
             for (; NOT_END(word); word++) {
-                if (IS_WORD(word) or IS_SET_WORD(word))
+                if (Is_Word(word) or Is_Set_Word(word))
                     Remove_Binder_Index_Else_0(&binder, VAL_WORD_CANON(word));
             }
         }
@@ -1426,16 +1426,16 @@ void Assert_Context_Core(REBCTX *c)
         // PORT! etc. may be more interesting than BLANK.  But it uses that
         // for now--unreadable.
         //
-        if (IS_FRAME(rootvar))
+        if (Is_Frame(rootvar))
             panic (c);
     }
-    else if (IS_ACTION(rootkey)) {
+    else if (Is_Action(rootkey)) {
         //
         // At the moment, only FRAME! is able to reuse an ACTION!'s keylist.
         // There may be reason to relax this, if you wanted to make an
         // ordinary object that was a copy of a FRAME! but not a FRAME!.
         //
-        if (not IS_FRAME(rootvar))
+        if (not Is_Frame(rootvar))
             panic (rootvar);
 
         // In a FRAME!, the keylist is for the underlying function.  So to
@@ -1476,7 +1476,7 @@ void Assert_Context_Core(REBCTX *c)
             panic (c);
         }
 
-        if (not IS_TYPESET(key))
+        if (not Is_Typeset(key))
             panic (key);
 
         if (IS_END(var)) {

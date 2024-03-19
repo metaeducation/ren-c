@@ -105,13 +105,13 @@ DECLARE_NATIVE(make)
     Value* arg = ARG(def);
 
     enum Reb_Kind kind;
-    if (IS_DATATYPE(type))
+    if (Is_Datatype(type))
         kind = VAL_TYPE_KIND(type);
     else
         kind = VAL_TYPE(type);
 
 #if !defined(NDEBUG)
-    if (IS_EVENT(type)) {
+    if (Is_Event(type)) {
         //
         // !!! It seems that EVENTs had some kind of inheritance mechanism, by
         // which you would write:
@@ -894,7 +894,7 @@ const Byte *Scan_Date(
         cp = Scan_Time(out, cp, 0);
         if (
             cp == nullptr
-            or not IS_TIME(out)
+            or not Is_Time(out)
             or VAL_NANO(out) < 0
             or VAL_NANO(out) >= SECS_TO_NANO(24 * 60 * 60)
         ){
@@ -957,7 +957,7 @@ const Byte *Scan_Date(
     }
 
 end_date:
-    assert(IS_DATE(out)); // don't reset header here; overwrites flags
+    assert(Is_Date(out)); // don't reset header here; overwrites flags
     VAL_YEAR(out)  = year;
     VAL_MONTH(out) = month;
     VAL_DAY(out) = day;
@@ -1341,10 +1341,10 @@ DECLARE_NATIVE(scan_net_header)
         cp++;
         // Search if word already present:
         for (item = Array_Head(result); NOT_END(item); item += 2) {
-            assert(IS_TEXT(item + 1) || IS_BLOCK(item + 1));
+            assert(Is_Text(item + 1) || Is_Block(item + 1));
             if (Are_Synonyms(Cell_Word_Symbol(item), name)) {
                 // Does it already use a block?
-                if (IS_BLOCK(item + 1)) {
+                if (Is_Block(item + 1)) {
                     // Block of values already exists:
                     val = Init_Unreadable(
                         Alloc_Tail_Array(Cell_Array(item + 1))

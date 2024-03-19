@@ -135,7 +135,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
         return;
     }
 
-    if (not IS_BLOCK(arg))
+    if (not Is_Block(arg))
         fail (Error_Invalid(arg));
 
     // Process word/value argument block:
@@ -165,7 +165,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
 
     Cell* word;
     for (word = item; NOT_END(word); word += 2) {
-        if (!IS_WORD(word) && !IS_SET_WORD(word)) {
+        if (!Is_Word(word) && !Is_Set_Word(word)) {
             error = Error_Invalid_Core(word, VAL_SPECIFIER(arg));
             goto collect_end;
         }
@@ -203,7 +203,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
         NOT_END(collect_key);
         ++collect_key
     ){
-        assert(IS_TYPESET(collect_key));
+        assert(Is_Typeset(collect_key));
         Append_Context(context, nullptr, Key_Symbol(collect_key));
     }
 
@@ -282,7 +282,7 @@ REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
             return out; // !!! no explicit Throws() protocol, review
         }
 
-        if (not IS_ACTION(out))
+        if (not Is_Action(out))
             fail (Error_Bad_Make(kind, arg));
 
         REBCTX *exemplar = Make_Context_For_Action(
@@ -298,7 +298,7 @@ REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         return Init_Frame(out, exemplar);
     }
 
-    if (kind == REB_OBJECT && IS_BLOCK(arg)) {
+    if (kind == REB_OBJECT && Is_Block(arg)) {
         //
         // Simple object creation with no evaluation, so all values are
         // handled "as-is".  Should have a spec block and a body block.
@@ -309,8 +309,8 @@ REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
 
         if (
             VAL_LEN_AT(arg) != 2
-            || !IS_BLOCK(Cell_Array_At(arg)) // spec
-            || !IS_BLOCK(Cell_Array_At(arg) + 1) // body
+            || !Is_Block(Cell_Array_At(arg)) // spec
+            || !Is_Block(Cell_Array_At(arg) + 1) // body
         ) {
             fail (Error_Bad_Make(kind, arg));
         }
@@ -369,7 +369,7 @@ REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
     }
 
     // make object! map!
-    if (IS_MAP(arg)) {
+    if (Is_Map(arg)) {
         REBCTX *c = Alloc_Context_From_Map(VAL_MAP(arg));
         return Init_Any_Context(out, kind, c);
     }
@@ -415,7 +415,7 @@ REB_R PD_Context(
 ){
     REBCTX *c = VAL_CONTEXT(pvs->out);
 
-    if (not IS_WORD(picker))
+    if (not Is_Word(picker))
         return R_UNHANDLED;
 
     const bool always = false;
@@ -455,7 +455,7 @@ DECLARE_NATIVE(meta_of)
     Value* v = ARG(value);
 
     REBCTX *meta;
-    if (IS_ACTION(v))
+    if (Is_Action(v))
         meta = VAL_ACT_META(v);
     else {
         assert(ANY_CONTEXT(v));
@@ -499,7 +499,7 @@ DECLARE_NATIVE(set_meta)
 
     Value* v = ARG(value);
 
-    if (IS_ACTION(v))
+    if (Is_Action(v))
         MISC(VAL_ACT_PARAMLIST(v)).meta = meta;
     else {
         assert(ANY_CONTEXT(v));
@@ -727,7 +727,7 @@ REB_R Context_Common_Action_Maybe_Unhandled(
             // the intersection of some "new" stuff with some crufty R3-Alpha
             // reflection abilities.
             //
-            if (IS_FRAME(value))
+            if (Is_Frame(value))
                 return Init_Block(
                     OUT,
                     List_Func_Words(ACT_ARCHETYPE(ACT(CTX_KEYLIST(c))), true)
@@ -838,7 +838,7 @@ REBTYPE(Context)
             RETURN (value); // don't fail on read only if it would be a no-op
 
         FAIL_IF_READ_ONLY_CONTEXT(c);
-        if (not IS_OBJECT(value) and not IS_MODULE(value))
+        if (not Is_Object(value) and not Is_Module(value))
             fail (Error_Illegal_Action(VAL_TYPE(value), verb));
         Append_To_Context(c, arg);
         RETURN (value);
@@ -855,7 +855,7 @@ REBTYPE(Context)
 
         REBU64 types;
         if (REF(types)) {
-            if (IS_DATATYPE(ARG(kinds)))
+            if (Is_Datatype(ARG(kinds)))
                 types = FLAGIT_KIND(VAL_TYPE_KIND(ARG(kinds)));
             else
                 types = VAL_TYPESET_BITS(ARG(kinds));
@@ -873,7 +873,7 @@ REBTYPE(Context)
 
       case SYM_SELECT:
       case SYM_FIND: {
-        if (not IS_WORD(arg))
+        if (not Is_Word(arg))
             return nullptr;
 
         REBLEN n = Find_Canon_In_Context(c, VAL_WORD_CANON(arg), false);
@@ -930,12 +930,12 @@ DECLARE_NATIVE(construct)
     enum Reb_Kind target;
     REBCTX *context;
 
-    if (IS_EVENT(spec)) {
+    if (Is_Event(spec)) {
         //
         // !!! The 2-argument form of MAKE-ing an event is just a shorthand
         // for copy-and-apply.  Could be user code.
         //
-        if (!IS_BLOCK(body))
+        if (!Is_Block(body))
             fail (Error_Bad_Make(REB_EVENT, body));
 
         Copy_Cell(OUT, spec); // !!! very "shallow" clone of the event
@@ -950,7 +950,7 @@ DECLARE_NATIVE(construct)
         parent = VAL_CONTEXT(spec);
         target = VAL_TYPE(spec);
     }
-    else if (IS_DATATYPE(spec)) {
+    else if (Is_Datatype(spec)) {
         //
         // Should this be supported, or just assume OBJECT! ?  There are
         // problems trying to create a FRAME! without a function (for
@@ -960,7 +960,7 @@ DECLARE_NATIVE(construct)
         fail ("DATATYPE! not supported for SPEC of CONSTRUCT");
     }
     else {
-        assert(IS_BLOCK(spec));
+        assert(Is_Block(spec));
         target = REB_OBJECT;
     }
 
@@ -988,7 +988,7 @@ DECLARE_NATIVE(construct)
     //
     if (
         (target == REB_OBJECT or target == REB_MODULE)
-        and (IS_BLOCK(body) or IS_BLANK(body))
+        and (Is_Block(body) or Is_Blank(body))
     ){
 
         // First we scan the object for top-level set words in
@@ -998,14 +998,14 @@ DECLARE_NATIVE(construct)
         context = Make_Selfish_Context_Detect_Managed(
             target, // type
             // scan for toplevel set-words
-            IS_BLANK(body)
+            Is_Blank(body)
                 ? cast(const Cell*, END_NODE) // gcc/g++ 2.95 needs (bug)
                 : Cell_Array_At(body),
             parent
         );
         Init_Object(OUT, context);
 
-        if (!IS_BLANK(body)) {
+        if (!Is_Blank(body)) {
             //
             // !!! This binds the actual body data, not a copy of it.  See
             // Virtual_Bind_Deep_To_New_Context() for future directions.
@@ -1026,7 +1026,7 @@ DECLARE_NATIVE(construct)
     //
     // !!! As with most R3-Alpha concepts, this needs review.
     //
-    if ((target == REB_OBJECT) && parent && IS_OBJECT(body)) {
+    if ((target == REB_OBJECT) && parent && Is_Object(body)) {
         //
         // !!! Again, the presumption that the result of a merge is to
         // be selfish should not be hardcoded in the C, but part of

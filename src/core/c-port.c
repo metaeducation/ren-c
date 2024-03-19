@@ -55,7 +55,7 @@ REBREQ *Ensure_Port_State(Value* port, REBLEN device)
     Value* state = CTX_VAR(ctx, STD_PORT_STATE);
     REBLEN req_size = dev->req_size;
 
-    if (!IS_BINARY(state)) {
+    if (!Is_Binary(state)) {
         assert(IS_NULLED(state));
         Binary* data = Make_Binary(req_size);
         CLEAR(Binary_Head(data), req_size);
@@ -86,9 +86,9 @@ bool Pending_Port(Value* port)
     Value* state;
     REBREQ *req;
 
-    if (IS_PORT(port)) {
+    if (Is_Port(port)) {
         state = CTX_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
-        if (IS_BINARY(state)) {
+        if (Is_Binary(state)) {
             req = cast(REBREQ*, Cell_Binary_Head(state));
             if (not (req->flags & RRF_PENDING))
                 return false;
@@ -110,17 +110,17 @@ REBINT Awake_System(Array* ports, bool only)
 {
     // Get the system port object:
     Value* port = Get_System(SYS_PORTS, PORTS_SYSTEM);
-    if (!IS_PORT(port))
+    if (!Is_Port(port))
         return -10; // verify it is a port object
 
     // Get wait queue block (the state field):
     Value* state = VAL_CONTEXT_VAR(port, STD_PORT_STATE);
-    if (!IS_BLOCK(state))
+    if (!Is_Block(state))
         return -10;
 
     // Get waked queue block:
     Value* waked = VAL_CONTEXT_VAR(port, STD_PORT_DATA);
-    if (!IS_BLOCK(waked))
+    if (!Is_Block(waked))
         return -10;
 
     // If there is nothing new to do, return now:
@@ -129,7 +129,7 @@ REBINT Awake_System(Array* ports, bool only)
 
     // Get the system port AWAKE function:
     Value* awake = VAL_CONTEXT_VAR(port, STD_PORT_AWAKE);
-    if (not IS_ACTION(awake))
+    if (not Is_Action(awake))
         return -1;
 
     DECLARE_VALUE (tmp);
@@ -167,7 +167,7 @@ REBINT Awake_System(Array* ports, bool only)
 
     // Awake function returns 1 for end of WAIT:
     //
-    return (IS_LOGIC(result) and VAL_LOGIC(result)) ? 1 : 0;
+    return (Is_Logic(result) and VAL_LOGIC(result)) ? 1 : 0;
 }
 
 
@@ -232,7 +232,7 @@ bool Wait_Ports_Throws(
             if (wt > MAX_WAIT_MS) wt = MAX_WAIT_MS;
         }
         Value* pump = Get_System(SYS_PORTS, PORTS_PUMP);
-        if (not IS_BLOCK(pump))
+        if (not Is_Block(pump))
             fail ("system/ports/pump must be a block");
 
         DECLARE_VALUE (result);
@@ -274,13 +274,13 @@ void Sieve_Ports(Array* ports)
     REBLEN n;
 
     port = Get_System(SYS_PORTS, PORTS_SYSTEM);
-    if (!IS_PORT(port)) return;
+    if (!Is_Port(port)) return;
     waked = VAL_CONTEXT_VAR(port, STD_PORT_DATA);
-    if (!IS_BLOCK(waked)) return;
+    if (!Is_Block(waked)) return;
 
     for (n = 0; ports and n < Array_Len(ports);) {
         Cell* val = Array_At(ports, n);
-        if (IS_PORT(val)) {
+        if (Is_Port(val)) {
             assert(VAL_LEN_HEAD(waked) != 0);
             if (
                 Find_In_Array_Simple(Cell_Array(waked), 0, val)
@@ -353,12 +353,12 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
         }
 
         if (pclass == PARAM_CLASS_REFINEMENT) {
-            if (IS_BLANK(L->arg)) {
+            if (Is_Blank(L->arg)) {
                 ignoring = true; // don't add to PATH!
                 continue;
             }
 
-            assert(IS_REFINEMENT(L->arg));
+            assert(Is_Refinement(L->arg));
             ignoring = false;
             Init_Word(path, Cell_Parameter_Symbol(L->param));
             ++path;
@@ -428,7 +428,7 @@ REB_R Do_Port_Action(Level* level_, Value* port, Value* verb)
         goto post_process_output;
     }
 
-    if (not IS_OBJECT(actor))
+    if (not Is_Object(actor))
         fail (Error_Invalid_Actor_Raw());
 
     // Dispatch object function:
@@ -441,7 +441,7 @@ REB_R Do_Port_Action(Level* level_, Value* port, Value* verb)
     );
 
     Value* action;
-    if (n == 0 or not IS_ACTION(action = VAL_CONTEXT_VAR(actor, n)))
+    if (n == 0 or not Is_Action(action = VAL_CONTEXT_VAR(actor, n)))
         fail (Error_No_Port_Action_Raw(verb));
 
     if (Redo_Action_Throws(level_, VAL_ACTION(action)))
@@ -468,8 +468,8 @@ post_process_output:
 
         assert(r == OUT);
 
-        if ((REF(string) or REF(lines)) and not IS_TEXT(OUT)) {
-            if (not IS_BINARY(OUT))
+        if ((REF(string) or REF(lines)) and not Is_Text(OUT)) {
+            if (not Is_Binary(OUT))
                 fail ("/STRING or /LINES used on a non-BINARY!/STRING! read");
 
             Series* decoded = Make_Sized_String_UTF8(
@@ -480,7 +480,7 @@ post_process_output:
         }
 
         if (REF(lines)) { // caller wants a BLOCK! of STRING!s, not one string
-            assert(IS_TEXT(OUT));
+            assert(Is_Text(OUT));
 
             DECLARE_VALUE (temp);
             Copy_Cell(temp, OUT);

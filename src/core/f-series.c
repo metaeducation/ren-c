@@ -119,7 +119,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
             // `skip x logic` means `either logic [skip x] [x]` (this is
             // reversed from R3-Alpha and Rebol2, which skipped when false)
             //
-            if (IS_LOGIC(arg)) {
+            if (Is_Logic(arg)) {
                 if (VAL_LOGIC(arg))
                     i = cast(REBI64, index) + 1;
                 else
@@ -184,7 +184,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
         RETURN (value); }
 
     case SYM_INTERSECT: {
-        if (IS_BINARY(value))
+        if (Is_Binary(value))
             return R_UNHANDLED; // !!! unhandled; use bitwise math, for now
 
         INCLUDE_PARAMS_OF_INTERSECT;
@@ -204,7 +204,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
         ); }
 
     case SYM_UNION: {
-        if (IS_BINARY(value))
+        if (Is_Binary(value))
             return R_UNHANDLED; // !!! unhandled; use bitwise math, for now
 
         INCLUDE_PARAMS_OF_UNION;
@@ -224,7 +224,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
         ); }
 
     case SYM_DIFFERENCE: {
-        if (IS_BINARY(value))
+        if (Is_Binary(value))
             return R_UNHANDLED; // !!! unhandled; use bitwise math, for now
 
         INCLUDE_PARAMS_OF_DIFFERENCE;
@@ -323,7 +323,7 @@ REBINT Cmp_Value(const Cell* s, const Cell* t, bool is_case)
 
     switch(VAL_TYPE(s)) {
     case REB_INTEGER:
-        if (IS_DECIMAL(t)) {
+        if (Is_Decimal(t)) {
             d1 = cast(REBDEC, VAL_INT64(s));
             d2 = VAL_DECIMAL(t);
             goto chkDecimal;
@@ -341,13 +341,13 @@ REBINT Cmp_Value(const Cell* s, const Cell* t, bool is_case)
     case REB_PERCENT:
     case REB_DECIMAL:
     case REB_MONEY:
-        if (IS_MONEY(s))
+        if (Is_Money(s))
             d1 = deci_to_decimal(VAL_MONEY_AMOUNT(s));
         else
             d1 = VAL_DECIMAL(s);
-        if (IS_INTEGER(t))
+        if (Is_Integer(t))
             d2 = cast(REBDEC, VAL_INT64(t));
-        else if (IS_MONEY(t))
+        else if (Is_Money(t))
             d2 = deci_to_decimal(VAL_MONEY_AMOUNT(t));
         else
             d2 = VAL_DECIMAL(t);

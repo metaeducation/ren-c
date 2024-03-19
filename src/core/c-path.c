@@ -93,10 +93,10 @@ bool Next_Path_Throws(REBPVS *pvs)
     PATH_HOOK hook = Path_Hooks[VAL_TYPE(pvs->out)];
     assert(hook != nullptr);  // &PD_Fail is used instead of nullptr
 
-    if (IS_GET_WORD(pvs->value)) { // e.g. object/:field
+    if (Is_Get_Word(pvs->value)) { // e.g. object/:field
         Move_Opt_Var_May_Fail(PVS_PICKER(pvs), pvs->value, pvs->specifier);
     }
-    else if (IS_GROUP(pvs->value)) { // object/(expr) case:
+    else if (Is_Group(pvs->value)) { // object/(expr) case:
         if (pvs->flags.bits & DO_FLAG_NO_PATH_GROUPS)
             fail ("GROUP! in PATH! used with GET or SET (use REDUCE/EVAL)");
 
@@ -152,7 +152,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             Copy_Cell(pvs->u.ref.cell, PVS_OPT_SETVAL(pvs));
 
             if (pvs->flags.bits & DO_FLAG_SET_PATH_ENFIXED) {
-                assert(IS_ACTION(PVS_OPT_SETVAL(pvs)));
+                assert(Is_Action(PVS_OPT_SETVAL(pvs)));
                 SET_VAL_FLAG(pvs->u.ref.cell, VALUE_FLAG_ENFIXED);
             }
             break; }
@@ -255,7 +255,7 @@ bool Next_Path_Throws(REBPVS *pvs)
     // be captured the first time the function is seen, otherwise it would
     // capture the last refinement's name, so check label for non-nullptr.
     //
-    if (IS_ACTION(pvs->out) and IS_WORD(PVS_PICKER(pvs))) {
+    if (Is_Action(pvs->out) and Is_Word(PVS_PICKER(pvs))) {
         if (not pvs->opt_label)
             pvs->opt_label = Cell_Word_Symbol(PVS_PICKER(pvs));
     }
@@ -278,7 +278,7 @@ bool Next_Path_Throws(REBPVS *pvs)
 // If label_sym is passed in as being non-null, then the caller is implying
 // readiness to process a path which may be a function with refinements.
 // These refinements will be left in order on the data stack in the case
-// that `out` comes back as IS_ACTION().  If it is nullptr then a new ACTION!
+// that `out` comes back as Is_Action().  If it is nullptr then a new ACTION!
 // will be allocated, in the style of the REFINE native, which will have the
 // behavior of refinement partial specialization.
 //
@@ -354,7 +354,7 @@ bool Eval_Path_Throws_Core(
     // Seed the path evaluation process by looking up the first item (to
     // get a datatype to dispatch on for the later path items)
     //
-    if (IS_WORD(pvs->value)) {
+    if (Is_Word(pvs->value)) {
         //
         // Remember the actual location of this variable, not just its value,
         // in case we need to do R_IMMEDIATE writeback (e.g. month/day: 1)
@@ -363,14 +363,14 @@ bool Eval_Path_Throws_Core(
 
         Copy_Cell(pvs->out, KNOWN(pvs->u.ref.cell));
 
-        if (IS_ACTION(pvs->out)) {
+        if (Is_Action(pvs->out)) {
             if (GET_VAL_FLAG(pvs->u.ref.cell, VALUE_FLAG_ENFIXED))
                 SET_VAL_FLAG(pvs->out, VALUE_FLAG_ENFIXED);
 
             pvs->opt_label = Cell_Word_Symbol(pvs->value);
         }
     }
-    else if (IS_GROUP(pvs->value)) {
+    else if (Is_Group(pvs->value)) {
         pvs->u.ref.cell = nullptr; // nowhere to R_IMMEDIATE write back to
 
         if (pvs->flags.bits & DO_FLAG_NO_PATH_GROUPS)
@@ -426,8 +426,8 @@ bool Eval_Path_Throws_Core(
         Value* top = TOP;
 
         while (top > bottom) {
-            assert(IS_ISSUE(bottom) and not IS_WORD_BOUND(bottom));
-            assert(IS_ISSUE(top) and not IS_WORD_BOUND(top));
+            assert(Is_Issue(bottom) and not IS_WORD_BOUND(bottom));
+            assert(Is_Issue(top) and not IS_WORD_BOUND(top));
 
             // It's faster to just swap the spellings.  (If binding
             // mattered, we'd need to swap the whole cells).
@@ -441,7 +441,7 @@ bool Eval_Path_Throws_Core(
             bottom++;
         }
 
-        assert(IS_ACTION(pvs->out));
+        assert(Is_Action(pvs->out));
 
         if (pvs->flags.bits & DO_FLAG_PUSH_PATH_REFINEMENTS) {
             //
@@ -498,9 +498,9 @@ bool Eval_Path_Throws_Core(
 //
 void Get_Simple_Value_Into(Value* out, const Cell* val, Specifier* specifier)
 {
-    if (IS_WORD(val) or IS_GET_WORD(val))
+    if (Is_Word(val) or Is_Get_Word(val))
         Move_Opt_Var_May_Fail(out, val, specifier);
-    else if (IS_PATH(val) or IS_GET_PATH(val))
+    else if (Is_Path(val) or Is_Get_Path(val))
         Get_Path_Core(out, val, specifier);
     else
         Derelativize(out, val, specifier);
@@ -534,7 +534,7 @@ REBCTX *Resolve_Path(const Value* path, REBLEN *index_out)
     if (IS_END(picker))
         return nullptr;  // !!! does not handle single-element paths
 
-    while (ANY_CONTEXT(var) and IS_WORD(picker)) {
+    while (ANY_CONTEXT(var) and Is_Word(picker)) {
         REBLEN i = Find_Canon_In_Context(
             VAL_CONTEXT(var), VAL_WORD_CANON(picker), false
         );
@@ -582,7 +582,7 @@ DECLARE_NATIVE(pick)
     // Use a symbol-based call to bounce the frame to the port, which should
     // be a compatible frame with the historical "action".
     //
-    if (IS_PORT(location)) {
+    if (Is_Port(location)) {
         DECLARE_VALUE (word);
         Init_Word(word, Canon(SYM_PICK));
         return Do_Port_Action(level_, location, word);
@@ -663,7 +663,7 @@ DECLARE_NATIVE(poke)
     // Use a symbol-based call to bounce the frame to the port, which should
     // be a compatible frame with the historical "action".
     //
-    if (IS_PORT(location)) {
+    if (Is_Port(location)) {
         DECLARE_VALUE (word);
         Init_Word(word, Canon(SYM_POKE));
         return Do_Port_Action(level_, location, word);

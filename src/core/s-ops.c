@@ -184,17 +184,17 @@ Binary* Temp_UTF8_At_Managed(
 //
 Binary* Xandor_Binary(Value* verb, Value* value, Value* arg)
 {
-    Byte *p0 = IS_BINARY(value)
+    Byte *p0 = Is_Binary(value)
         ? Cell_Binary_At(value)
         : Binary_Head(Cell_Bitset(value));
-    Byte *p1 = IS_BINARY(arg)
+    Byte *p1 = Is_Binary(arg)
         ? Cell_Binary_At(arg)
         : Binary_Head(Cell_Bitset(arg));
 
-    REBLEN t0 = IS_BINARY(value)
+    REBLEN t0 = Is_Binary(value)
         ? VAL_LEN_AT(value)
         : Binary_Len(Cell_Bitset(value));
-    REBLEN t1 = IS_BINARY(arg)
+    REBLEN t1 = Is_Binary(arg)
         ? VAL_LEN_AT(arg)
         : Binary_Len(Cell_Bitset(arg));
 
@@ -212,7 +212,7 @@ Binary* Xandor_Binary(Value* verb, Value* value, Value* arg)
     REBLEN t2 = MAX(t0, t1);
 
     Binary* series;
-    if (IS_BITSET(value)) {
+    if (Is_Bitset(value)) {
         //
         // Although bitsets and binaries share some implementation here,
         // they have distinct allocation functions...and bitsets need
@@ -220,7 +220,7 @@ Binary* Xandor_Binary(Value* verb, Value* value, Value* arg)
         // it would be illegal to read it if it were cleared via another
         // element of the union.
         //
-        assert(IS_BITSET(arg));
+        assert(Is_Bitset(arg));
         series = Make_Bitset(t2 * 8);
     }
     else {
@@ -342,7 +342,7 @@ void Change_Case(Value* out, Value* val, Value* part, bool upper)
 {
     Copy_Cell(out, val);
 
-    if (IS_CHAR(val)) {
+    if (Is_Char(val)) {
         REBUNI c = VAL_CHAR(val);
         if (c < UNICODE_CASES) {
             c = upper ? UP_CASE(c) : LO_CASE(c);

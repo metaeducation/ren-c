@@ -322,7 +322,7 @@ INLINE Stub* SPC_BINDING(Specifier* specifier)
 {
     assert(specifier != UNBOUND);
     Value* rootvar = CTX_ARCHETYPE(CTX(specifier)); // works even if Decay()d
-    assert(IS_FRAME(rootvar));
+    assert(Is_Frame(rootvar));
     return rootvar->extra.binding;
 }
 
@@ -625,7 +625,7 @@ INLINE Value* Derelativize(
     else { // no potential override
         assert(
             (binding->header.bits & ARRAY_FLAG_VARLIST)
-            or IS_VARARGS(v) // BLOCK! style varargs use binding to hold array
+            or Is_Varargs(v) // BLOCK! style varargs use binding to hold array
         );
         INIT_BINDING_MAY_MANAGE(out, binding);
     }

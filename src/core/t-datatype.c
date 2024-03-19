@@ -45,7 +45,7 @@ REBINT CT_Datatype(const Cell* a, const Cell* b, REBINT mode)
 //  MAKE_Datatype: C
 //
 REB_R MAKE_Datatype(Value* out, enum Reb_Kind kind, const Value* arg) {
-    if (IS_WORD(arg)) {
+    if (Is_Word(arg)) {
         Option(SymId) sym = Cell_Word_Id(arg);
         if (not sym or unwrap(sym) >= SYM_FROM_KIND(REB_MAX))
             goto bad_make;

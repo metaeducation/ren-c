@@ -378,7 +378,7 @@ const Value* Find_Error_For_Sym(SymId id_sym)
         for (; n <= CTX_LEN(category); ++n) {
             if (Are_Synonyms(CTX_KEY_SPELLING(category, n), id_canon)) {
                 Value* message = CTX_VAR(category, n);
-                assert(IS_BLOCK(message) or IS_TEXT(message));
+                assert(Is_Block(message) or Is_Text(message));
                 return message;
             }
         }
@@ -495,7 +495,7 @@ bool Make_Error_Object_Throws(
     REBCTX *error;
     ERROR_VARS *vars; // C struct mirroring fixed portion of error fields
 
-    if (IS_ERROR(arg) or IS_OBJECT(arg)) {
+    if (Is_Error(arg) or Is_Object(arg)) {
         // Create a new error object from another object, including any
         // non-standard fields.  WHERE: and NEAR: will be overridden if
         // used.  If ID:, TYPE:, or CODE: were used in a way that would
@@ -505,7 +505,7 @@ bool Make_Error_Object_Throws(
         error = Merge_Contexts_Selfish_Managed(root_error, VAL_CONTEXT(arg));
         vars = ERR_VARS(error);
     }
-    else if (IS_BLOCK(arg)) {
+    else if (Is_Block(arg)) {
         // If a block, then effectively MAKE OBJECT! on it.  Afterward,
         // apply the same logic as if an OBJECT! had been passed in above.
 
@@ -534,7 +534,7 @@ bool Make_Error_Object_Throws(
 
         vars = ERR_VARS(error);
     }
-    else if (IS_TEXT(arg)) {
+    else if (Is_Text(arg)) {
         //
         // String argument to MAKE ERROR! makes a custom error from user:
         //
@@ -565,7 +565,7 @@ bool Make_Error_Object_Throws(
     // traffic cones to make it easy to pick and choose what parts to excise
     // or tighten in an error enhancement upgrade.
 
-    if (IS_WORD(&vars->type) and IS_WORD(&vars->id)) {
+    if (Is_Word(&vars->type) and Is_Word(&vars->id)) {
         // If there was no CODE: supplied but there was a TYPE: and ID: then
         // this may overlap a combination used by Rebol where we wish to
         // fill in the code.  (No fast lookup for this, must search.)
@@ -577,7 +577,7 @@ bool Make_Error_Object_Throws(
             = Select_Canon_In_Context(categories, VAL_WORD_CANON(&vars->type));
 
         if (category) {
-            assert(IS_OBJECT(category));
+            assert(Is_Object(category));
             assert(CTX_KEY_SYM(VAL_CONTEXT(category), 1) == SYM_SELF);
 
             // Find correct message for ID: (if any)
@@ -587,7 +587,7 @@ bool Make_Error_Object_Throws(
             );
 
             if (message) {
-                assert(IS_TEXT(message) or IS_BLOCK(message));
+                assert(Is_Text(message) or Is_Block(message));
 
                 if (not IS_NULLED(&vars->message))
                     fail (Error_Invalid_Error_Raw(arg));
@@ -625,11 +625,11 @@ bool Make_Error_Object_Throws(
         // good for general purposes.
 
         if (not (
-            (IS_WORD(&vars->id) or IS_NULLED(&vars->id))
-            and (IS_WORD(&vars->type) or IS_NULLED(&vars->type))
+            (Is_Word(&vars->id) or IS_NULLED(&vars->id))
+            and (Is_Word(&vars->type) or IS_NULLED(&vars->type))
             and (
-                IS_BLOCK(&vars->message)
-                or IS_TEXT(&vars->message)
+                Is_Block(&vars->message)
+                or Is_Text(&vars->message)
                 or IS_NULLED(&vars->message)
             )
         )){
@@ -702,17 +702,17 @@ REBCTX *Make_Error_Managed_Core(
     assert(message);
 
     REBLEN expected_args = 0;
-    if (IS_BLOCK(message)) { // GET-WORD!s in template should match va_list
+    if (Is_Block(message)) { // GET-WORD!s in template should match va_list
         Cell* temp = VAL_ARRAY_HEAD(message);
         for (; NOT_END(temp); ++temp) {
-            if (IS_GET_WORD(temp))
+            if (Is_Get_Word(temp))
                 ++expected_args;
             else
-                assert(IS_TEXT(temp));
+                assert(Is_Text(temp));
         }
     }
     else // Just a string, no arguments expected.
-        assert(IS_TEXT(message));
+        assert(Is_Text(message));
 
     REBCTX *error;
     if (expected_args == 0) {
@@ -751,13 +751,13 @@ REBCTX *Make_Error_Managed_Core(
         // the extra "arguments" of the __FILE__ and __LINE__
         //
         const Cell* temp =
-            IS_TEXT(message)
+            Is_Text(message)
                 ? cast(const Cell*, END_NODE) // gcc/g++ 2.95 needs (bug)
                 : VAL_ARRAY_HEAD(message);
     #endif
 
         for (; NOT_END(temp); ++temp) {
-            if (IS_GET_WORD(temp)) {
+            if (Is_Get_Word(temp)) {
                 const void *p = va_arg(*vaptr, const void*);
 
                 // !!! Variadic Error() predates rebNull...but should possibly
@@ -886,7 +886,7 @@ REBCTX *Error_User(const char *utf8) {
 //  Error_Need_Non_End_Core: C
 //
 REBCTX *Error_Need_Non_End_Core(const Cell* target, Specifier* specifier) {
-    assert(IS_SET_WORD(target) or IS_SET_PATH(target));
+    assert(Is_Set_Word(target) or Is_Set_Path(target));
 
     DECLARE_VALUE (specific);
     Derelativize(specific, target, specifier);
@@ -945,7 +945,7 @@ REBCTX *Error_Bad_Func_Def(const Value* spec, const Value* body)
 //
 REBCTX *Error_No_Arg(Level* L, const Cell* param)
 {
-    assert(IS_TYPESET(param));
+    assert(Is_Typeset(param));
 
     DECLARE_VALUE (param_word);
     Init_Word(param_word, Cell_Parameter_Symbol(param));
@@ -1065,7 +1065,7 @@ REBCTX *Error_Bad_Func_Def_Core(const Cell* item, Specifier* specifier)
 //
 REBCTX *Error_Bad_Refine_Revoke(const Cell* param, const Value* arg)
 {
-    assert(IS_TYPESET(param));
+    assert(Is_Typeset(param));
 
     DECLARE_VALUE (param_name);
     Init_Word(param_name, Cell_Parameter_Symbol(param));
@@ -1145,7 +1145,7 @@ REBCTX *Error_Out_Of_Range(const Value* arg)
 //
 REBCTX *Error_Protected_Key(Value* key)
 {
-    assert(IS_TYPESET(key));
+    assert(Is_Typeset(key));
 
     DECLARE_VALUE (key_name);
     Init_Word(key_name, Key_Symbol(key));
@@ -1159,7 +1159,7 @@ REBCTX *Error_Protected_Key(Value* key)
 //
 REBCTX *Error_Illegal_Action(enum Reb_Kind type, Value* verb)
 {
-    assert(IS_WORD(verb));
+    assert(Is_Word(verb));
     return Error_Cannot_Use_Raw(verb, Datatype_From_Kind(type));
 }
 
@@ -1169,7 +1169,7 @@ REBCTX *Error_Illegal_Action(enum Reb_Kind type, Value* verb)
 //
 REBCTX *Error_Math_Args(enum Reb_Kind type, Value* verb)
 {
-    assert(IS_WORD(verb));
+    assert(Is_Word(verb));
     return Error_Not_Related_Raw(verb, Datatype_From_Kind(type));
 }
 
@@ -1200,7 +1200,7 @@ REBCTX *Error_Arg_Type(
     const Cell* param,
     enum Reb_Kind actual
 ) {
-    assert(IS_TYPESET(param));
+    assert(Is_Typeset(param));
 
     DECLARE_VALUE (param_word);
     Init_Word(param_word, Cell_Parameter_Symbol(param));
@@ -1380,14 +1380,14 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
     if (IS_NULLED(&vars->type))
         Emit(mo, "** S", RM_ERROR_LABEL);
     else {
-        assert(IS_WORD(&vars->type));
+        assert(Is_Word(&vars->type));
         Emit(mo, "** W S", &vars->type, RM_ERROR_LABEL);
     }
 
     // Append: error message ARG1, ARG2, etc.
-    if (IS_BLOCK(&vars->message))
+    if (Is_Block(&vars->message))
         Form_Array_At(mo, Cell_Array(&vars->message), 0, error);
-    else if (IS_TEXT(&vars->message))
+    else if (Is_Text(&vars->message))
         Form_Value(mo, &vars->message);
     else
         Append_Unencoded(mo->series, RM_BAD_ERROR_FORMAT);
@@ -1396,7 +1396,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
     Value* where = KNOWN(&vars->where);
     if (
         not IS_NULLED(where)
-        and not (IS_BLOCK(where) and VAL_LEN_AT(where) == 0)
+        and not (Is_Block(where) and VAL_LEN_AT(where) == 0)
     ){
         Append_Utf8_Codepoint(mo->series, '\n');
         Append_Unencoded(mo->series, RM_ERROR_WHERE);
@@ -1409,7 +1409,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
         Append_Utf8_Codepoint(mo->series, '\n');
         Append_Unencoded(mo->series, RM_ERROR_NEAR);
 
-        if (IS_TEXT(nearest)) {
+        if (Is_Text(nearest)) {
             //
             // !!! The scanner puts strings into the near information in order
             // to say where the file and line of the scan problem was.  This
@@ -1436,7 +1436,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
     if (not IS_NULLED(file)) {
         Append_Utf8_Codepoint(mo->series, '\n');
         Append_Unencoded(mo->series, RM_ERROR_FILE);
-        if (IS_FILE(file))
+        if (Is_File(file))
             Form_Value(mo, file);
         else
             Append_Unencoded(mo->series, RM_BAD_ERROR_FORMAT);
@@ -1447,7 +1447,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
     if (not IS_NULLED(line)) {
         Append_Utf8_Codepoint(mo->series, '\n');
         Append_Unencoded(mo->series, RM_ERROR_LINE);
-        if (IS_INTEGER(line))
+        if (Is_Integer(line))
             Form_Value(mo, line);
         else
             Append_Unencoded(mo->series, RM_BAD_ERROR_FORMAT);

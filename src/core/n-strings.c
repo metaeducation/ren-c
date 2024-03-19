@@ -114,10 +114,10 @@ DECLARE_NATIVE(delimit)
     INCLUDE_PARAMS_OF_DELIMIT;
 
     Value* line = ARG(line);
-    if (IS_TEXT(line))
+    if (Is_Text(line))
         return rebValue("copy", line);  // !!! Review performance
 
-    assert(IS_BLOCK(line));
+    assert(Is_Block(line));
 
     if (Form_Reduce_Throws(
         OUT,
@@ -132,7 +132,7 @@ DECLARE_NATIVE(delimit)
     if (IS_NULLED(OUT) or not REF(tail))
         return OUT;
 
-    assert(IS_TEXT(OUT));
+    assert(Is_Text(OUT));
 
     return rebValue("append", OUT, ARG(delimiter));
 }
@@ -232,12 +232,12 @@ DECLARE_NATIVE(checksum)
 
                 Byte *keycp;
                 REBSIZ keylen;
-                if (IS_BINARY(key)) {
+                if (Is_Binary(key)) {
                     keycp = Cell_Binary_At(key);
                     keylen = VAL_LEN_AT(key);
                 }
                 else {
-                    assert(IS_TEXT(key));
+                    assert(Is_Text(key));
 
                     REBSIZ offset;
                     Binary* temp = Temp_UTF8_At_Managed(
@@ -333,7 +333,7 @@ DECLARE_NATIVE(deflate)
 
     REBSIZ size;
     Byte *bp;
-    if (IS_BINARY(data)) {
+    if (Is_Binary(data)) {
         bp = Cell_Binary_At(data);
         size = len; // width = sizeof(Byte), so limit = len
     }
@@ -503,7 +503,7 @@ DECLARE_NATIVE(enbase)
 
     REBSIZ size;
     Byte *bp;
-    if (IS_BINARY(v)) {
+    if (Is_Binary(v)) {
         bp = Cell_Binary_At(v);
         size = VAL_LEN_AT(v);
     }
@@ -1196,13 +1196,13 @@ DECLARE_NATIVE(to_hex)
     else
         len = -1;
 
-    if (IS_INTEGER(arg)) {
+    if (Is_Integer(arg)) {
         if (len < 0 || len > MAX_HEX_LEN)
             len = MAX_HEX_LEN;
 
         Form_Hex_Pad(buf, VAL_INT64(arg), len);
     }
-    else if (IS_TUPLE(arg)) {
+    else if (Is_Tuple(arg)) {
         REBINT n;
         if (
             len < 0

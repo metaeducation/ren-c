@@ -68,13 +68,13 @@ REBINT CT_Array(const Cell* a, const Cell* b, REBINT mode)
 //     MAKE_Lit_Path
 //
 REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
-    if (IS_INTEGER(arg) or IS_DECIMAL(arg)) {
+    if (Is_Integer(arg) or Is_Decimal(arg)) {
         //
         // `make block! 10` => creates array with certain initial capacity
         //
         return Init_Any_Array(out, kind, Make_Array(Int32s(arg, 0)));
     }
-    else if (IS_TEXT(arg)) {
+    else if (Is_Text(arg)) {
         //
         // `make block! "a <b> #c"` => `[a <b> #c]`, scans as code (unbound)
         //
@@ -130,7 +130,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         if (
             VAL_ARRAY_LEN_AT(arg) != 2
             || !ANY_ARRAY(Cell_Array_At(arg))
-            || !IS_INTEGER(Cell_Array_At(arg) + 1)
+            || !Is_Integer(Cell_Array_At(arg) + 1)
         ) {
             goto bad_make;
         }
@@ -157,14 +157,14 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
             derived
         );
     }
-    else if (IS_TYPESET(arg)) {
+    else if (Is_Typeset(arg)) {
         //
         // !!! Should MAKE GROUP! and MAKE PATH! from a TYPESET! work like
         // MAKE BLOCK! does?  Allow it for now.
         //
         return Init_Any_Array(out, kind, Typeset_To_Array(arg));
     }
-    else if (IS_BINARY(arg)) {
+    else if (Is_Binary(arg)) {
         //
         // `to block! #{00BDAE....}` assumes the binary data is UTF8, and
         // goes directly to the scanner to make an unbound code array.
@@ -176,13 +176,13 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
             Scan_UTF8_Managed(filename, Cell_Binary_At(arg), VAL_LEN_AT(arg))
         );
     }
-    else if (IS_MAP(arg)) {
+    else if (Is_Map(arg)) {
         return Init_Any_Array(out, kind, Map_To_Array(VAL_MAP(arg), 0));
     }
     else if (ANY_CONTEXT(arg)) {
         return Init_Any_Array(out, kind, Context_To_Array(VAL_CONTEXT(arg), 3));
     }
-    else if (IS_VARARGS(arg)) {
+    else if (Is_Varargs(arg)) {
         //
         // Converting a VARARGS! to an ANY-ARRAY! involves spooling those
         // varargs to the end and making an array out of that.  It's not known
@@ -241,7 +241,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
 
         return Init_Any_Array(out, kind, Pop_Stack_Values(base));
     }
-    else if (IS_ACTION(arg)) {
+    else if (Is_Action(arg)) {
         //
         // !!! Experimental behavior; if action can run as arity-0, then
         // invoke it so long as it doesn't return null, collecting values.
@@ -366,30 +366,30 @@ REBLEN Find_In_Array(
 
     // Find a datatype in block
     //
-    if (IS_DATATYPE(target) || IS_TYPESET(target)) {
+    if (Is_Datatype(target) || Is_Typeset(target)) {
         for (; index >= start && index < end; index += skip) {
             Cell* item = Array_At(array, index);
 
-            if (IS_DATATYPE(target)) {
+            if (Is_Datatype(target)) {
                 if (VAL_TYPE(item) == VAL_TYPE_KIND(target))
                     return index;
                 if (
-                    IS_DATATYPE(item)
+                    Is_Datatype(item)
                     && VAL_TYPE_KIND(item) == VAL_TYPE_KIND(target)
                 ){
                     return index;
                 }
             }
-            else if (IS_TYPESET(target)) {
+            else if (Is_Typeset(target)) {
                 if (TYPE_CHECK(target, VAL_TYPE(item)))
                     return index;
                 if (
-                    IS_DATATYPE(item)
+                    Is_Datatype(item)
                     && TYPE_CHECK(target, VAL_TYPE_KIND(item))
                 ){
                     return index;
                 }
-                if (IS_TYPESET(item) && EQUAL_TYPESET(item, target))
+                if (Is_Typeset(item) && EQUAL_TYPESET(item, target))
                     return index;
             }
             if (flags & AM_FIND_MATCH)
@@ -469,17 +469,17 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
 
     REBINT tristate = -1;
 
-    if (IS_LOGIC(result)) {
+    if (Is_Logic(result)) {
         if (VAL_LOGIC(result))
             tristate = 1;
     }
-    else if (IS_INTEGER(result)) {
+    else if (Is_Integer(result)) {
         if (VAL_INT64(result) > 0)
             tristate = 1;
         else if (VAL_INT64(result) == 0)
             tristate = 0;
     }
-    else if (IS_DECIMAL(result)) {
+    else if (Is_Decimal(result)) {
         if (VAL_DECIMAL(result) > 0)
             tristate = 1;
         else if (VAL_DECIMAL(result) == 0)
@@ -520,11 +520,11 @@ static void Sort_Block(
     flags.reverse = rev;
     flags.all = all; // !!! not used?
 
-    if (IS_ACTION(compv)) {
+    if (Is_Action(compv)) {
         flags.comparator = compv;
         flags.offset = 0;
     }
-    else if (IS_INTEGER(compv)) {
+    else if (Is_Integer(compv)) {
         flags.comparator = nullptr;
         flags.offset = Int32(compv) - 1;
     }
@@ -610,7 +610,7 @@ REB_R PD_Array(
 ){
     REBINT n;
 
-    if (IS_INTEGER(picker) or IS_DECIMAL(picker)) { // #2312
+    if (Is_Integer(picker) or Is_Decimal(picker)) { // #2312
         n = Int32(picker);
         if (n == 0)
             return nullptr; // Rebol2/Red convention: 0 is not a pick
@@ -618,7 +618,7 @@ REB_R PD_Array(
             ++n; // Rebol2/Red convention: `pick tail [a b c] -1` is `c`
         n += VAL_INDEX(pvs->out) - 1;
     }
-    else if (IS_WORD(picker)) {
+    else if (Is_Word(picker)) {
         //
         // Linear search to case-insensitive find ANY-WORD! matching the canon
         // and return the item after it.  Default to out of range.
@@ -635,7 +635,7 @@ REB_R PD_Array(
             }
         }
     }
-    else if (IS_LOGIC(picker)) {
+    else if (Is_Logic(picker)) {
         //
         // !!! PICK in R3-Alpha historically would use a logic TRUE to get
         // the first element in an array, and a logic FALSE to get the second.
@@ -700,7 +700,7 @@ Cell* Pick_Block(Value* out, const Value* block, const Value* picker)
 //
 void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
 {
-    if (form && (IS_BLOCK(v) || IS_GROUP(v))) {
+    if (form && (Is_Block(v) || Is_Group(v))) {
         Form_Array_At(mo, Cell_Array(v), VAL_INDEX(v), 0);
         return;
     }
@@ -975,7 +975,7 @@ REBTYPE(Array)
             types |= REF(types) ? 0 : TS_STD_SERIES;
 
         if (REF(types)) {
-            if (IS_DATATYPE(ARG(kinds)))
+            if (Is_Datatype(ARG(kinds)))
                 types |= FLAGIT_KIND(VAL_TYPE(ARG(kinds)));
             else
                 types |= VAL_TYPESET_BITS(ARG(kinds));

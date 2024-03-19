@@ -83,7 +83,7 @@ void Protect_Value(Cell* v, REBFLGS flags)
 {
     if (ANY_SERIES(v))
         Protect_Series(VAL_SERIES(v), VAL_INDEX(v), flags);
-    else if (IS_MAP(v))
+    else if (Is_Map(v))
         Protect_Series(MAP_PAIRLIST(VAL_MAP(v)), 0, flags);
     else if (ANY_CONTEXT(v))
         Protect_Context(VAL_CONTEXT(v), flags);
@@ -216,12 +216,12 @@ static REB_R Protect_Unprotect_Core(Level* level_, REBFLGS flags)
     //if (REF(words))
     //  flags |= PROT_WORDS;
 
-    if (IS_WORD(value) || IS_PATH(value)) {
+    if (Is_Word(value) || Is_Path(value)) {
         Protect_Word_Value(value, flags); // will unmark if deep
         RETURN (ARG(value));
     }
 
-    if (IS_BLOCK(value)) {
+    if (Is_Block(value)) {
         if (REF(words)) {
             Cell* val;
             for (val = Cell_Array_At(value); NOT_END(val); val++) {
@@ -238,7 +238,7 @@ static REB_R Protect_Unprotect_Core(Level* level_, REBFLGS flags)
             DECLARE_VALUE (safe);
 
             for (item = Cell_Array_At(value); NOT_END(item); ++item) {
-                if (IS_WORD(item)) {
+                if (Is_Word(item)) {
                     //
                     // Since we *are* PROTECT we allow ourselves to get mutable
                     // references to even protected values to protect them.
@@ -248,7 +248,7 @@ static REB_R Protect_Unprotect_Core(Level* level_, REBFLGS flags)
                         Get_Opt_Var_May_Fail(item, VAL_SPECIFIER(value))
                     );
                 }
-                else if (IS_PATH(value)) {
+                else if (Is_Path(value)) {
                     Get_Path_Core(safe, value, SPECIFIED);
                     var = safe;
                 }
@@ -354,12 +354,12 @@ DECLARE_NATIVE(unprotect)
 //
 bool Is_Value_Immutable(const Cell* v) {
     if (
-        IS_BLANK(v)
-        || IS_BAR(v)
-        || IS_LIT_BAR(v)
+        Is_Blank(v)
+        || Is_Bar(v)
+        || Is_Lit_Bar(v)
         || ANY_SCALAR(v)
         || ANY_WORD(v)
-        || IS_ACTION(v) // paramlist is identity, hash
+        || Is_Action(v) // paramlist is identity, hash
     ){
         return true;
     }

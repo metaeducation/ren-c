@@ -316,7 +316,7 @@ void Rebind_Values_Deep(
                 );
             }
         }
-        else if (IS_ACTION(v)) {
+        else if (Is_Action(v)) {
             //
             // !!! This is a new take on R3-Alpha's questionable feature of
             // deep copying function bodies and rebinding them when a
@@ -395,24 +395,24 @@ void Virtual_Bind_Deep_To_New_Context(
     REBCTX **context_out,
     const Value* spec
 ) {
-    assert(IS_BLOCK(body_in_out));
+    assert(Is_Block(body_in_out));
 
-    REBLEN num_vars = IS_BLOCK(spec) ? VAL_LEN_AT(spec) : 1;
+    REBLEN num_vars = Is_Block(spec) ? VAL_LEN_AT(spec) : 1;
     if (num_vars == 0)
         fail (Error_Invalid(spec));
 
     const Cell* item;
     Specifier* specifier;
     bool rebinding;
-    if (IS_BLOCK(spec)) {
+    if (Is_Block(spec)) {
         item = Cell_Array_At(spec);
         specifier = VAL_SPECIFIER(spec);
 
         rebinding = false;
         for (; NOT_END(item); ++item) {
-            if (IS_WORD(item))
+            if (Is_Word(item))
                 rebinding = true;
-            else if (not IS_LIT_WORD(item)) {
+            else if (not Is_Lit_Word(item)) {
                 //
                 // Better to fail here, because if we wait until we're in
                 // the middle of building the context, the managed portion
@@ -428,7 +428,7 @@ void Virtual_Bind_Deep_To_New_Context(
     else {
         item = spec;
         specifier = SPECIFIED;
-        rebinding = IS_WORD(item);
+        rebinding = Is_Word(item);
     }
 
     // If we need to copy the body, do that *first*, because copying can
@@ -482,7 +482,7 @@ void Virtual_Bind_Deep_To_New_Context(
 
     REBLEN index = 1;
     while (index <= num_vars) {
-        if (IS_WORD(item)) {
+        if (Is_Word(item)) {
             Init_Typeset(
                 key,
                 TS_VALUE, // !!! Currently not paid attention to
@@ -514,7 +514,7 @@ void Virtual_Bind_Deep_To_New_Context(
             }
         }
         else {
-            assert(IS_LIT_WORD(item)); // checked previously
+            assert(Is_Lit_Word(item)); // checked previously
 
             // A LIT-WORD! indicates that we wish to use the original binding.
             // So `for-each 'x [1 2 3] [...]` will actually set that x

@@ -122,10 +122,10 @@ REB_R MAKE_Bitset(Value* out, enum Reb_Kind kind, const Value* arg)
     Binary* ser = Make_Bitset(len);
     Init_Bitset(out, ser);
 
-    if (IS_INTEGER(arg))
+    if (Is_Integer(arg))
         return out; // allocated at a size, no contents.
 
-    if (IS_BINARY(arg)) {
+    if (Is_Binary(arg)) {
         memcpy(Binary_Head(ser), Cell_Binary_At(arg), len/8 + 1);
         return out;
     }
@@ -281,12 +281,12 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
 {
     Fail_If_Read_Only_Series(bset);
 
-    if (IS_CHAR(val)) {
+    if (Is_Char(val)) {
         Set_Bit(bset, VAL_CHAR(val), set);
         return true;
     }
 
-    if (IS_INTEGER(val)) {
+    if (Is_Integer(val)) {
         REBLEN n = Int32s(val, 0);
         if (n > MAX_BITSET)
             return false;
@@ -294,7 +294,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
         return true;
     }
 
-    if (IS_BINARY(val)) {
+    if (Is_Binary(val)) {
         REBLEN i = VAL_INDEX(val);
 
         Byte *bp = Cell_Binary_Head(val);
@@ -323,7 +323,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
 
     if (
         NOT_END(item)
-        && IS_WORD(item)
+        && Is_Word(item)
         && Cell_Word_Id(item) == SYM_NOT
     ){
         INIT_BITS_NOT(bset, true);
@@ -339,11 +339,11 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
             REBUNI c = VAL_CHAR(item);
             if (
                 NOT_END(item + 1)
-                && IS_WORD(item + 1)
+                && Is_Word(item + 1)
                 && Cell_Word_Id(item + 1) == SYM_HYPHEN
             ){
                 item += 2;
-                if (IS_CHAR(item)) {
+                if (Is_Char(item)) {
                     REBLEN n = VAL_CHAR(item);
                     if (n < c)
                         fail (Error_Past_End_Raw());
@@ -364,12 +364,12 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
                 return false;
             if (
                 NOT_END(item + 1)
-                && IS_WORD(item + 1)
+                && Is_Word(item + 1)
                 && Cell_Word_Id(item + 1) == SYM_HYPHEN
             ){
                 REBUNI c = n;
                 item += 2;
-                if (IS_INTEGER(item)) {
+                if (Is_Integer(item)) {
                     n = Int32s(KNOWN(item), 0);
                     if (n < c)
                         fail (Error_Past_End_Raw());
@@ -395,10 +395,10 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
 
         case REB_WORD: {
             // Special: BITS #{000...}
-            if (not IS_WORD(item) or Cell_Word_Id(item) != SYM_BITS)
+            if (not Is_Word(item) or Cell_Word_Id(item) != SYM_BITS)
                 return false;
             item++;
-            if (not IS_BINARY(item))
+            if (not Is_Binary(item))
                 return false;
             REBLEN n = VAL_LEN_AT(item);
             REBUNI c = Series_Len(bset);
@@ -426,13 +426,13 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
 //
 bool Check_Bits(Binary* bset, const Value* val, bool uncased)
 {
-    if (IS_CHAR(val))
+    if (Is_Char(val))
         return Check_Bit(bset, VAL_CHAR(val), uncased);
 
-    if (IS_INTEGER(val))
+    if (Is_Integer(val))
         return Check_Bit(bset, Int32s(val, 0), uncased);
 
-    if (IS_BINARY(val)) {
+    if (Is_Binary(val)) {
         REBLEN i = VAL_INDEX(val);
         Byte *bp = Cell_Binary_Head(val);
         for (; i != VAL_LEN_HEAD(val); ++i)
@@ -466,9 +466,9 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
 
         case REB_CHAR: {
             REBUNI c = VAL_CHAR(item);
-            if (IS_WORD(item + 1) && Cell_Word_Id(item + 1) == SYM_HYPHEN) {
+            if (Is_Word(item + 1) && Cell_Word_Id(item + 1) == SYM_HYPHEN) {
                 item += 2;
-                if (IS_CHAR(item)) {
+                if (Is_Char(item)) {
                     REBLEN n = VAL_CHAR(item);
                     if (n < c)
                         fail (Error_Past_End_Raw());
@@ -488,10 +488,10 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
             REBLEN n = Int32s(KNOWN(item), 0);
             if (n > 0xffff)
                 return false;
-            if (IS_WORD(item + 1) && Cell_Word_Id(item + 1) == SYM_HYPHEN) {
+            if (Is_Word(item + 1) && Cell_Word_Id(item + 1) == SYM_HYPHEN) {
                 REBUNI c = n;
                 item += 2;
-                if (IS_INTEGER(item)) {
+                if (Is_Integer(item)) {
                     n = Int32s(KNOWN(item), 0);
                     if (n < c)
                         fail (Error_Past_End_Raw());
@@ -717,7 +717,7 @@ REBTYPE(Bitset)
     case SYM_INTERSECT:
     case SYM_UNION:
     case SYM_DIFFERENCE:
-        if (!IS_BITSET(arg) && !IS_BINARY(arg))
+        if (!Is_Bitset(arg) && !Is_Binary(arg))
             fail (Error_Math_Args(VAL_TYPE(arg), verb));
         ser = Xandor_Binary(verb, value, arg);
         Trim_Tail_Zeros(ser);

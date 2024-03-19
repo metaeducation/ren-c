@@ -58,13 +58,13 @@ REBINT CT_String(const Cell* a, const Cell* b, REBINT mode)
 {
     REBINT num;
 
-    if (IS_BINARY(a)) {
-        if (not IS_BINARY(b))
+    if (Is_Binary(a)) {
+        if (not Is_Binary(b))
             fail ("Can't compare binary to string, use AS STRING/BINARY!");
 
         num = Compare_Binary_Vals(a, b);
     }
-    else if (IS_BINARY(b))
+    else if (Is_Binary(b))
         fail ("Can't compare binary to string, use AS STRING!/BINARY!");
     else
         num = Compare_String_Vals(a, b, mode != 1);
@@ -218,7 +218,7 @@ static REBLEN find_string(
             );
         }
     }
-    else if (IS_BINARY(target)) {
+    else if (Is_Binary(target)) {
         const bool uncase = false;
         return Find_Byte_Str(
             cast(Binary*, series),
@@ -229,7 +229,7 @@ static REBLEN find_string(
             did (flags & AM_FIND_MATCH)
         );
     }
-    else if (IS_CHAR(target)) {
+    else if (Is_Char(target)) {
         return Find_Str_Char(
             VAL_CHAR(target),
             series,
@@ -240,7 +240,7 @@ static REBLEN find_string(
             flags
         );
     }
-    else if (IS_INTEGER(target)) {
+    else if (Is_Integer(target)) {
         return Find_Str_Char(
             cast(REBUNI, VAL_INT32(target)),
             series,
@@ -251,7 +251,7 @@ static REBLEN find_string(
             flags
         );
     }
-    else if (IS_BITSET(target)) {
+    else if (Is_Bitset(target)) {
         return Find_Str_Bitset(
             series,
             start,
@@ -272,7 +272,7 @@ static Series* MAKE_TO_String_Common(const Value* arg)
     Series* ser;
 
     // MAKE/TO <type> <binary!>
-    if (IS_BINARY(arg)) {
+    if (Is_Binary(arg)) {
         ser = Make_Sized_String_UTF8(
             cs_cast(Cell_Binary_At(arg)), VAL_LEN_AT(arg)
         );
@@ -286,7 +286,7 @@ static Series* MAKE_TO_String_Common(const Value* arg)
         ser = Copy_Mold_Value(arg, MOLD_FLAG_0);
     }
     // MAKE/TO <type> #"A"
-    else if (IS_CHAR(arg)) {
+    else if (Is_Char(arg)) {
         ser = Make_Ser_Codepoint(VAL_CHAR(arg));
     }
     else
@@ -305,7 +305,7 @@ static Binary* Make_Binary_BE64(const Value* arg)
     REBI64 i;
     REBDEC d;
     const Byte *cp;
-    if (IS_INTEGER(arg)) {
+    if (Is_Integer(arg)) {
         assert(sizeof(REBI64) == 8);
         i = VAL_INT64(arg);
         cp = cast(const Byte*, &i);
@@ -404,7 +404,7 @@ static Binary* make_binary(const Value* arg, bool make)
 REB_R MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
     Series* ser; // goto would cross initialization
 
-    if (IS_INTEGER(def)) {
+    if (Is_Integer(def)) {
         //
         // !!! R3-Alpha tolerated decimal, e.g. `make text! 3.14`, which
         // is semantically nebulous (round up, down?) and generally bad.
@@ -414,7 +414,7 @@ REB_R MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
         else
             return Init_Any_Series(out, kind, Make_String(Int32s(def, 0)));
     }
-    else if (IS_BLOCK(def)) {
+    else if (Is_Block(def)) {
         //
         // The construction syntax for making strings or binaries that are
         // preloaded with an offset into the data is #[binary [#{0001} 2]].
@@ -430,11 +430,11 @@ REB_R MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
         Cell* any_binstr = Cell_Array_At(def);
         if (!ANY_BINSTR(any_binstr))
             goto bad_make;
-        if (IS_BINARY(any_binstr) != (kind == REB_BINARY))
+        if (Is_Binary(any_binstr) != (kind == REB_BINARY))
             goto bad_make;
 
         Cell* index = Cell_Array_At(def) + 1;
-        if (!IS_INTEGER(index))
+        if (!Is_Integer(index))
             goto bad_make;
 
         REBINT i = Int32(index) - 1 + VAL_INDEX(any_binstr);
@@ -602,7 +602,7 @@ REB_R PD_String(
     */
 
     if (opt_setval == nullptr) {  // PICK-ing
-        if (IS_INTEGER(picker) or IS_DECIMAL(picker)) { // #2312
+        if (Is_Integer(picker) or Is_Decimal(picker)) { // #2312
             REBINT n = Int32(picker);
             if (n == 0)
                 return nullptr; // Rebol2/Red convention, 0 is bad pick
@@ -612,7 +612,7 @@ REB_R PD_String(
             if (n < 0 or cast(REBLEN, n) >= Series_Len(ser))
                 return nullptr;
 
-            if (IS_BINARY(pvs->out))
+            if (Is_Binary(pvs->out))
                 Init_Integer(pvs->out, *Binary_At(cast(Binary*, ser), n));
             else
                 Init_Char(pvs->out, GET_ANY_CHAR(ser, n));
@@ -621,8 +621,8 @@ REB_R PD_String(
         }
 
         if (
-            IS_BINARY(pvs->out)
-            or not (IS_WORD(picker) or ANY_STRING(picker))
+            Is_Binary(pvs->out)
+            or not (Is_Word(picker) or ANY_STRING(picker))
         ){
             return R_UNHANDLED;
         }
@@ -706,7 +706,7 @@ REB_R PD_String(
 
     Fail_If_Read_Only_Series(ser);
 
-    if (not IS_INTEGER(picker))
+    if (not Is_Integer(picker))
         return R_UNHANDLED;
 
     REBINT n = Int32(picker);
@@ -719,12 +719,12 @@ REB_R PD_String(
         fail (Error_Out_Of_Range(picker));
 
     REBINT c;
-    if (IS_CHAR(opt_setval)) {
+    if (Is_Char(opt_setval)) {
         c = VAL_CHAR(opt_setval);
         if (c > MAX_CHAR)
             return R_UNHANDLED;
     }
-    else if (IS_INTEGER(opt_setval)) {
+    else if (Is_Integer(opt_setval)) {
         c = Int32(opt_setval);
         if (c > MAX_CHAR || c < 0)
             return R_UNHANDLED;
@@ -739,7 +739,7 @@ REB_R PD_String(
     else
         return R_UNHANDLED;
 
-    if (IS_BINARY(pvs->out)) {
+    if (Is_Binary(pvs->out)) {
         if (c > 0xff)
             fail (Error_Out_Of_Range(opt_setval));
 
@@ -1137,7 +1137,7 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
     // The R3-Alpha forming logic was that every string type besides TAG!
     // would form with no delimiters, e.g. `form #foo` is just foo
     //
-    if (form and not IS_TAG(v)) {
+    if (form and not Is_Tag(v)) {
         REBSIZ offset;
         REBSIZ size;
         Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
@@ -1184,7 +1184,7 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
 REBTYPE(String)
 {
     Value* v = D_ARG(1);
-    assert(IS_BINARY(v) || ANY_STRING(v));
+    assert(Is_Binary(v) || ANY_STRING(v));
 
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
@@ -1233,7 +1233,7 @@ REBTYPE(String)
         if (REF(line))
             flags |= AM_LINE;
 
-        if (IS_BINARY(v)) {
+        if (Is_Binary(v)) {
             if (REF(line))
                 fail ("APPEND+INSERT+CHANGE cannot use /LINE with BINARY!");
 
@@ -1279,13 +1279,13 @@ REBTYPE(String)
         );
 
         REBINT len;
-        if (IS_BINARY(v)) {
+        if (Is_Binary(v)) {
             flags |= AM_FIND_CASE;
 
-            if (!IS_BINARY(arg) && !IS_INTEGER(arg) && !IS_BITSET(arg))
+            if (!Is_Binary(arg) && !Is_Integer(arg) && !Is_Bitset(arg))
                 fail (Error_Not_Same_Type_Raw());
 
-            if (IS_INTEGER(arg)) {
+            if (Is_Integer(arg)) {
                 if (VAL_INT64(arg) < 0 || VAL_INT64(arg) > 255)
                     fail (Error_Out_Of_Range(arg));
                 len = 1;
@@ -1294,10 +1294,10 @@ REBTYPE(String)
                 len = VAL_LEN_AT(arg);
         }
         else {
-            if (IS_CHAR(arg) or IS_BITSET(arg))
+            if (Is_Char(arg) or Is_Bitset(arg))
                 len = 1;
             else {
-                if (not IS_TEXT(arg)) {
+                if (not Is_Text(arg)) {
                     //
                     // !! This FORM creates a temporary value that is handed
                     // over to the GC.  Not only could the temporary value be
@@ -1341,7 +1341,7 @@ REBTYPE(String)
             if (ret >= cast(REBLEN, tail))
                 return nullptr;
 
-            if (IS_BINARY(v)) {
+            if (Is_Binary(v)) {
                 Init_Integer(v, *Binary_At(Cell_Binary(v), ret));
             }
             else
@@ -1390,14 +1390,14 @@ REBTYPE(String)
         // if no /PART, just return value, else return string
         //
         if (not REF(part)) {
-            if (IS_BINARY(v))
+            if (Is_Binary(v))
                 Init_Integer(OUT, *Cell_Binary_At(v));
             else
                 str_to_char(OUT, v, VAL_INDEX(v));
         }
         else {
             enum Reb_Kind kind = VAL_TYPE(v);
-            if (IS_BINARY(v)) {
+            if (Is_Binary(v)) {
                 Init_Binary(
                     OUT,
                     Copy_Sequence_At_Len(VAL_SERIES(v), VAL_INDEX(v), len)
@@ -1437,7 +1437,7 @@ REBTYPE(String)
         UNUSED(REF(part)); // checked by if limit is nulled
 
         Series* ser;
-        if (IS_BINARY(v))
+        if (Is_Binary(v))
             ser = Copy_Sequence_At_Len(VAL_SERIES(v), VAL_INDEX(v), len);
         else
             ser = Copy_String_At_Len(v, len);
@@ -1448,7 +1448,7 @@ REBTYPE(String)
     case SYM_INTERSECT:
     case SYM_UNION:
     case SYM_DIFFERENCE: {
-        if (not IS_BINARY(arg))
+        if (not Is_Binary(arg))
             fail (Error_Invalid(arg));
 
         if (VAL_INDEX(v) > VAL_LEN_HEAD(v))
@@ -1463,7 +1463,7 @@ REBTYPE(String)
             Xandor_Binary(verb, v, arg)); }
 
     case SYM_COMPLEMENT: {
-        if (not IS_BINARY(v))
+        if (not Is_Binary(v))
             fail (Error_Invalid(v));
 
         return Init_Any_Series(OUT, VAL_TYPE(v), Complement_Binary(v)); }
@@ -1492,15 +1492,15 @@ REBTYPE(String)
 
     case SYM_SUBTRACT:
     case SYM_ADD: {
-        if (not IS_BINARY(v))
+        if (not Is_Binary(v))
             fail (Error_Invalid(v));
 
         Fail_If_Read_Only_Series(VAL_SERIES(v));
 
         REBINT amount;
-        if (IS_INTEGER(arg))
+        if (Is_Integer(arg))
             amount = VAL_INT32(arg);
-        else if (IS_BINARY(arg))
+        else if (Is_Binary(arg))
             fail (Error_Invalid(arg)); // should work
         else
             fail (Error_Invalid(arg)); // what about other types?
@@ -1568,7 +1568,7 @@ REBTYPE(String)
 
         REBINT len = Part_Len_May_Modify_Index(v, D_ARG(3));
         if (len > 0) {
-            if (IS_BINARY(v))
+            if (Is_Binary(v))
                 reverse_binary(v, len);
             else
                 reverse_string(v, len);
@@ -1632,7 +1632,7 @@ REBTYPE(String)
             if (index >= tail)
                 return nullptr;
             index += (REBLEN)Random_Int(REF(secure)) % (tail - index);
-            if (IS_BINARY(v)) // same as PICK
+            if (Is_Binary(v)) // same as PICK
                 return Init_Integer(OUT, *Cell_Binary_At_Head(v, index));
 
             str_to_char(OUT, v, index);
@@ -1648,7 +1648,7 @@ REBTYPE(String)
     default:
         // Let the port system try the action, e.g. OPEN %foo.txt
         //
-        if ((IS_FILE(v) or IS_URL(v)))
+        if ((Is_File(v) or Is_Url(v)))
             return T_Port(level_, verb);
     }
 

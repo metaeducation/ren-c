@@ -37,7 +37,7 @@
 REBINT CT_Pair(const Cell* a, const Cell* b, REBINT mode)
 {
     if (mode >= 0) return Cmp_Pair(a, b) == 0; // works for INTEGER=0 too (spans x y)
-    if (IS_PAIR(b) && 0 == VAL_INT64(b)) { // for negative? and positive?
+    if (Is_Pair(b) && 0 == VAL_INT64(b)) { // for negative? and positive?
         if (mode == -1)
             return (VAL_PAIR_X_DEC(a) >= 0 || VAL_PAIR_Y_DEC(a) >= 0); // not LT
         return (VAL_PAIR_X_DEC(a) > 0 && VAL_PAIR_Y_DEC(a) > 0); // NOT LTE
@@ -54,10 +54,10 @@ REB_R MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
     assert(kind == REB_PAIR);
     UNUSED(kind);
 
-    if (IS_PAIR(arg))
+    if (Is_Pair(arg))
         return Copy_Cell(out, arg);
 
-    if (IS_TEXT(arg)) {
+    if (Is_Text(arg)) {
         //
         // -1234567890x-1234567890
         //
@@ -74,7 +74,7 @@ REB_R MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
     const Cell* x;
     const Cell* y;
 
-    if (IS_BLOCK(arg)) {
+    if (Is_Block(arg)) {
         if (VAL_LEN_AT(arg) != 2)
             goto bad_make;
 
@@ -87,8 +87,8 @@ REB_R MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
     }
 
     if (
-        not (IS_INTEGER(x) or IS_DECIMAL(x))
-        or not (IS_INTEGER(y) or IS_DECIMAL(y))
+        not (Is_Integer(x) or Is_Decimal(x))
+        or not (Is_Integer(y) or Is_Decimal(y))
     ){
         goto bad_make;
     }
@@ -137,22 +137,22 @@ void Min_Max_Pair(Value* out, const Value* a, const Value* b, bool maxed)
 
     float ax;
     float ay;
-    if (IS_PAIR(a)) {
+    if (Is_Pair(a)) {
         ax = VAL_PAIR_X_DEC(a);
         ay = VAL_PAIR_Y_DEC(a);
     }
-    else if (IS_INTEGER(a))
+    else if (Is_Integer(a))
         ax = ay = cast(REBDEC, VAL_INT64(a));
     else
         fail (Error_Invalid(a));
 
     float bx;
     float by;
-    if (IS_PAIR(b)) {
+    if (Is_Pair(b)) {
         bx = VAL_PAIR_X_DEC(b);
         by = VAL_PAIR_Y_DEC(b);
     }
-    else if (IS_INTEGER(b))
+    else if (Is_Integer(b))
         bx = by = cast(REBDEC, VAL_INT64(b));
     else
         fail (Error_Invalid(b));
@@ -174,7 +174,7 @@ REB_R PD_Pair(
 ){
     REBINT n = 0;
 
-    if (IS_WORD(picker)) {
+    if (Is_Word(picker)) {
         if (Cell_Word_Id(picker) == SYM_X)
             n = 1;
         else if (Cell_Word_Id(picker) == SYM_Y)
@@ -182,7 +182,7 @@ REB_R PD_Pair(
         else
             return R_UNHANDLED;
     }
-    else if (IS_INTEGER(picker)) {
+    else if (Is_Integer(picker)) {
         n = Int32(picker);
         if (n != 1 && n != 2)
             return R_UNHANDLED;
@@ -202,7 +202,7 @@ REB_R PD_Pair(
     // efficiently than a 2-element block, for example).  But only INTEGER!
     // and DECIMAL! are currently allowed.
     //
-    if (not IS_INTEGER(opt_setval) and not IS_DECIMAL(opt_setval))
+    if (not Is_Integer(opt_setval) and not Is_Decimal(opt_setval))
         return R_UNHANDLED;
 
     if (n == 1)
@@ -258,7 +258,7 @@ REBTYPE(Pair)
       case SYM_MULTIPLY:
       case SYM_DIVIDE:
       case SYM_REMAINDER: {  // !!! Longer list?
-        if (IS_PAIR(D_ARG(2))) {
+        if (Is_Pair(D_ARG(2))) {
             first2 = VAL_PAIR_FIRST(D_ARG(2));
             second2 = VAL_PAIR_SECOND(D_ARG(2));
         }

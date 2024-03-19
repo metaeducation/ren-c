@@ -192,7 +192,7 @@ void Dump_Values(Cell* vp, REBLEN count)
             *cp++ = ' ';
         }
         n = 0;
-        if (IS_WORD(val) || IS_GET_WORD(val) || IS_SET_WORD(val)) {
+        if (Is_Word(val) || Is_Get_Word(val) || Is_Set_Word(val)) {
             const char *name_utf8 = Symbol_Head(Cell_Word_Symbol(val));
             n = snprintf(
                 s_cast(cp), sizeof(buf) - (cp - buf), " (%s)", name_utf8
@@ -314,7 +314,7 @@ DECLARE_NATIVE(dump)
 
     PROBE(v);
     printf("=> ");
-    if (IS_WORD(v)) {
+    if (Is_Word(v)) {
         const Value* var = Try_Get_Opt_Var(v, SPECIFIED);
         if (not var) {
             PROBE("\\unbound\\");

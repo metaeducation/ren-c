@@ -43,17 +43,17 @@ REBINT Get_Num_From_Arg(const Value* val)
 {
     REBINT n;
 
-    if (IS_INTEGER(val)) {
+    if (Is_Integer(val)) {
         if (VAL_INT64(val) > INT32_MAX or VAL_INT64(val) < INT32_MIN)
             fail (Error_Out_Of_Range(val));
         n = VAL_INT32(val);
     }
-    else if (IS_DECIMAL(val) or IS_PERCENT(val)) {
+    else if (Is_Decimal(val) or Is_Percent(val)) {
         if (VAL_DECIMAL(val) > INT32_MAX or VAL_DECIMAL(val) < INT32_MIN)
             fail (Error_Out_Of_Range(val));
         n = cast(REBINT, VAL_DECIMAL(val));
     }
-    else if (IS_LOGIC(val))
+    else if (Is_Logic(val))
         n = (VAL_LOGIC(val) ? 1 : 2);
     else
         fail (Error_Invalid(val));
@@ -82,14 +82,14 @@ REBINT Float_Int16(REBD32 f)
 //
 REBINT Int32(const Cell* val)
 {
-    if (IS_DECIMAL(val)) {
+    if (Is_Decimal(val)) {
         if (VAL_DECIMAL(val) > INT32_MAX or VAL_DECIMAL(val) < INT32_MIN)
             goto out_of_range;
 
         return cast(REBINT, VAL_DECIMAL(val));
     }
 
-    assert(IS_INTEGER(val));
+    assert(Is_Integer(val));
 
     if (VAL_INT64(val) > INT32_MAX or VAL_INT64(val) < INT32_MIN)
         goto out_of_range;
@@ -114,14 +114,14 @@ REBINT Int32s(const Cell* val, REBINT sign)
 {
     REBINT n;
 
-    if (IS_DECIMAL(val)) {
+    if (Is_Decimal(val)) {
         if (VAL_DECIMAL(val) > INT32_MAX or VAL_DECIMAL(val) < INT32_MIN)
             goto out_of_range;
 
         n = cast(REBINT, VAL_DECIMAL(val));
     }
     else {
-        assert(IS_INTEGER(val));
+        assert(Is_Integer(val));
 
         if (VAL_INT64(val) > INT32_MAX)
             goto out_of_range;
@@ -148,11 +148,11 @@ out_of_range:
 //
 REBI64 Int64(const Value* val)
 {
-    if (IS_INTEGER(val))
+    if (Is_Integer(val))
         return VAL_INT64(val);
-    if (IS_DECIMAL(val) or IS_PERCENT(val))
+    if (Is_Decimal(val) or Is_Percent(val))
         return cast(REBI64, VAL_DECIMAL(val));
-    if (IS_MONEY(val))
+    if (Is_Money(val))
         return deci_to_int(VAL_MONEY_AMOUNT(val));
 
     fail (Error_Invalid(val));
@@ -164,11 +164,11 @@ REBI64 Int64(const Value* val)
 //
 REBDEC Dec64(const Value* val)
 {
-    if (IS_DECIMAL(val) or IS_PERCENT(val))
+    if (Is_Decimal(val) or Is_Percent(val))
         return VAL_DECIMAL(val);
-    if (IS_INTEGER(val))
+    if (Is_Integer(val))
         return cast(REBDEC, VAL_INT64(val));
-    if (IS_MONEY(val))
+    if (Is_Money(val))
         return deci_to_decimal(VAL_MONEY_AMOUNT(val));
 
     fail (Error_Invalid(val));
@@ -187,7 +187,7 @@ REBDEC Dec64(const Value* val)
 REBI64 Int64s(const Value* val, REBINT sign)
 {
     REBI64 n;
-    if (IS_DECIMAL(val)) {
+    if (Is_Decimal(val)) {
         if (
             VAL_DECIMAL(val) > cast(REBDEC, INT64_MAX)
             or VAL_DECIMAL(val) < cast(REBDEC, INT64_MIN)
@@ -222,7 +222,7 @@ const Value* Datatype_From_Kind(enum Reb_Kind kind)
 {
     assert(kind > REB_0 and kind < REB_MAX);
     Value* type = CTX_VAR(Lib_Context, SYM_FROM_KIND(kind));
-    assert(IS_DATATYPE(type));
+    assert(Is_Datatype(type));
     return type;
 }
 
@@ -261,7 +261,7 @@ Value* Get_System(REBLEN i1, REBLEN i2)
 
     obj = CTX_VAR(VAL_CONTEXT(Root_System), i1);
     if (i2 == 0) return obj;
-    assert(IS_OBJECT(obj));
+    assert(Is_Object(obj));
     return CTX_VAR(VAL_CONTEXT(obj), i2);
 }
 
@@ -274,7 +274,7 @@ Value* Get_System(REBLEN i1, REBLEN i2)
 REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 {
     Value* val = Get_System(i1, i2);
-    if (IS_INTEGER(val)) return VAL_INT32(val);
+    if (Is_Integer(val)) return VAL_INT32(val);
     return default_int;
 }
 
@@ -312,7 +312,7 @@ Value* Init_Any_Series_At_Core(
     if (ANY_STRING(out)) {
         if (Series_Wide(series) != 2)
             panic(series);
-    } else if (IS_BINARY(out)) {
+    } else if (Is_Binary(out)) {
         if (Series_Wide(series) != 1)
             panic(series);
     }
@@ -369,7 +369,7 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
     // sure it's null at this point in time.
     //
     if (CTX_TYPE(c) == REB_FRAME) {
-        assert(IS_ACTION(CTX_ROOTKEY(c)));
+        assert(Is_Action(CTX_ROOTKEY(c)));
         assert(archetype->payload.any_context.phase);
     }
     else {
@@ -429,7 +429,7 @@ static REBLEN Part_Len_Core(
         return VAL_LEN_AT(series); // leave index alone, use plain length
 
     REBI64 len;
-    if (IS_INTEGER(limit) or IS_DECIMAL(limit))
+    if (Is_Integer(limit) or Is_Decimal(limit))
         len = Int32(limit); // may be positive or negative
     else {
         assert(ANY_SERIES(limit)); // must be same series (same series, even)
@@ -524,7 +524,7 @@ REBLEN Part_Len_Append_Insert_May_Modify_Index(
     if (IS_NULLED(limit))
         return 1;
 
-    if (IS_INTEGER(limit) or IS_DECIMAL(limit))
+    if (Is_Integer(limit) or Is_Decimal(limit))
         return Part_Len_Core(value, limit);
 
     fail ("Invalid /PART specified for non-series APPEND/INSERT argument");

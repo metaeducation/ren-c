@@ -60,7 +60,7 @@ bool Reduce_To_Stack_Throws(
         if (IS_NULLED(out))
             fail (Error_Need_Non_Null_Raw());
 
-        if (IS_VOID(out)) {
+        if (Is_Void(out)) {
             // ignore
         }
         else {
@@ -92,7 +92,7 @@ DECLARE_NATIVE(reduce)
 
     Value* value = ARG(value);
 
-    if (IS_BLOCK(value) or IS_GROUP(value)) {
+    if (Is_Block(value) or Is_Group(value)) {
         StackIndex base = TOP_INDEX;
 
         if (Reduce_To_Stack_Throws(OUT, value))
@@ -137,9 +137,9 @@ bool Match_For_Compose(const Cell* group, const Value* pattern) {
 
     Cell* first = Cell_Array_At(group);
     Cell* last = VAL_ARRAY_TAIL(group) - 1;
-    if (IS_BAR(first) != IS_BAR(last))
+    if (Is_Bar(first) != Is_Bar(last))
         fail ("Pattern for COMPOSE must be on both ends of GROUP!");
-    if (not IS_BAR(first))
+    if (not Is_Bar(first))
         return false; // leave as-is
     if (first == last) // e.g. (*), needs to be at least (* *)
         fail ("Two patterns, not one, must appear used in COMPOSE of GROUP!");
@@ -186,7 +186,7 @@ bool Compose_To_Stack_Throws(
         Specifier* match_specifier = nullptr;
         const Cell* match = nullptr;
 
-        if (not IS_GROUP(L->value)) {
+        if (not Is_Group(L->value)) {
             //
             // Don't compose at this level, but may need to walk deeply to
             // find compositions inside it if /DEEP and it's an array
@@ -227,12 +227,12 @@ bool Compose_To_Stack_Throws(
             if (IS_NULLED(out))
                 fail (Error_Need_Non_Null_Raw());
 
-            if (IS_VOID(out)) {
+            if (Is_Void(out)) {
                 //
                 // compose [("voids *vanish*!" null)] => []
                 // compose [(elide "so do 'empty' composes")] => []
             }
-            else if (splice and IS_BLOCK(out)) {
+            else if (splice and Is_Block(out)) {
                 //
                 // compose [not-only ([a b]) merges] => [not-only a b merges]
 
@@ -371,7 +371,7 @@ static void Flatten_Core(
 ) {
     Cell* item = head;
     for (; NOT_END(item); ++item) {
-        if (IS_BLOCK(item) and level != FLATTEN_NOT) {
+        if (Is_Block(item) and level != FLATTEN_NOT) {
             Specifier* derived = Derive_Specifier(specifier, item);
             Flatten_Core(
                 Cell_Array_At(item),

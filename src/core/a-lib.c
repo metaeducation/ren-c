@@ -540,7 +540,7 @@ void API_rebJumps(const void *p, va_list *vaptr)
 //
 RebolValue* API_rebValueInline(const RebolValue* array)
 {
-    if (not IS_BLOCK(array) and not IS_GROUP(array))
+    if (not Is_Block(array) and not Is_Group(array))
         fail ("rebValueInline() only supports BLOCK! and GROUP!");
 
     DECLARE_VALUE (group);
@@ -1219,7 +1219,7 @@ size_t API_rebBytesInto(
     size_t buf_size,
     const RebolValue* binary
 ){
-    if (not IS_BINARY(binary))
+    if (not Is_Binary(binary))
         fail ("rebBytesInto() only works on BINARY!");
 
     REBLEN size = VAL_LEN_AT(binary);
@@ -1266,7 +1266,7 @@ unsigned char *API_rebBytes(
         return result;
     }
 
-    if (IS_BINARY(series)) {
+    if (Is_Binary(series)) {
         *size_out = rebBytesInto(nullptr, 0, series);
         Byte *result = rebAllocN(Byte, (*size_out + 1));
         rebBytesInto(result, *size_out, series);
@@ -1737,7 +1737,6 @@ void *API_rebDeflateDetectAlloc(
 // wide availability.
 //
 #ifdef TO_WINDOWS
-    #undef IS_ERROR // windows has its own meaning for this.
     #include <windows.h>
 #else
     #include <errno.h>

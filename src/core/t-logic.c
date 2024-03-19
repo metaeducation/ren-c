@@ -229,7 +229,7 @@ DECLARE_NATIVE(and)
     Value* right = ARG(right);
 
     if (IS_FALSEY(left)) {
-        if (IS_GROUP(right)) { // no need to evaluate right if BLOCK!
+        if (Is_Group(right)) { // no need to evaluate right if BLOCK!
             if (Do_Any_Array_At_Throws(OUT, right))
                 return R_THROWN;
         }
@@ -262,7 +262,7 @@ DECLARE_NATIVE(or)
     Value* right = ARG(right);
 
     if (IS_TRUTHY(left)) {
-        if (IS_GROUP(right)) { // no need to evaluate right if BLOCK!
+        if (Is_Group(right)) { // no need to evaluate right if BLOCK!
             if (Do_Any_Array_At_Throws(OUT, right))
                 return R_THROWN;
         }
@@ -367,12 +367,12 @@ REB_R MAKE_Logic(Value* out, enum Reb_Kind kind, const Value* arg) {
     //
     if (
         IS_FALSEY(arg)
-        || (IS_INTEGER(arg) && VAL_INT64(arg) == 0)
+        || (Is_Integer(arg) && VAL_INT64(arg) == 0)
         || (
-            (IS_DECIMAL(arg) || IS_PERCENT(arg))
+            (Is_Decimal(arg) || Is_Percent(arg))
             && (VAL_DECIMAL(arg) == 0.0)
         )
-        || (IS_MONEY(arg) && deci_is_zero(VAL_MONEY_AMOUNT(arg)))
+        || (Is_Money(arg) && deci_is_zero(VAL_MONEY_AMOUNT(arg)))
     ){
         return Init_False(out);
     }
@@ -398,10 +398,10 @@ REB_R TO_Logic(Value* out, enum Reb_Kind kind, const Value* arg) {
 
 INLINE bool Math_Arg_For_Logic(Value* arg)
 {
-    if (IS_LOGIC(arg))
+    if (Is_Logic(arg))
         return VAL_LOGIC(arg);
 
-    if (IS_BLANK(arg))
+    if (Is_Blank(arg))
         return false;
 
     fail (Error_Unexpected_Type(REB_LOGIC, VAL_TYPE(arg)));

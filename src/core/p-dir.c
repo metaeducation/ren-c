@@ -136,16 +136,16 @@ static REB_R Dir_Actor(Level* level_, Value* port, Value* verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
     Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
-    if (not IS_OBJECT(spec))
+    if (not Is_Object(spec))
         fail (Error_Invalid_Spec_Raw(spec));
 
     Value* path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
     if (path == nullptr)
         fail (Error_Invalid_Spec_Raw(spec));
 
-    if (IS_URL(path))
+    if (Is_Url(path))
         path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
-    else if (not IS_FILE(path))
+    else if (not Is_File(path))
         fail (Error_Invalid_Spec_Raw(path));
 
     Value* state = CTX_VAR(ctx, STD_PORT_STATE); // BLOCK! means port open
@@ -169,11 +169,11 @@ static REB_R Dir_Actor(Level* level_, Value* port, Value* verb)
 
         switch (property) {
         case SYM_LENGTH: {
-            REBLEN len = IS_BLOCK(state) ? VAL_ARRAY_LEN_AT(state) : 0;
+            REBLEN len = Is_Block(state) ? VAL_ARRAY_LEN_AT(state) : 0;
             return Init_Integer(OUT, len); }
 
         case SYM_OPEN_Q:
-            return Init_Logic(OUT, IS_BLOCK(state));
+            return Init_Logic(OUT, Is_Block(state));
 
         default:
             break;
@@ -196,7 +196,7 @@ static REB_R Dir_Actor(Level* level_, Value* port, Value* verb)
         UNUSED(PAR(string)); // handled in dispatcher
         UNUSED(PAR(lines)); // handled in dispatcher
 
-        if (not IS_BLOCK(state)) {     // !!! ignores /SKIP and /PART, for now
+        if (not Is_Block(state)) {     // !!! ignores /SKIP and /PART, for now
             Init_Dir_Path(&dir, path, POL_READ);
             Init_Block(OUT, Read_Dir_May_Fail(&dir));
         }
@@ -219,7 +219,7 @@ static REB_R Dir_Actor(Level* level_, Value* port, Value* verb)
         return OUT; }
 
     case SYM_CREATE: {
-        if (IS_BLOCK(state))
+        if (Is_Block(state))
             fail (Error_Already_Open_Raw(path));
     create:
         Init_Dir_Path(&dir, path, POL_WRITE); // Sets RFM_DIR too
@@ -242,7 +242,7 @@ static REB_R Dir_Actor(Level* level_, Value* port, Value* verb)
     case SYM_RENAME: {
         INCLUDE_PARAMS_OF_RENAME;
 
-        if (IS_BLOCK(state))
+        if (Is_Block(state))
             fail (Error_Already_Open_Raw(path));
 
         Init_Dir_Path(&dir, path, POL_WRITE); // Sets RFM_DIR
@@ -295,7 +295,7 @@ static REB_R Dir_Actor(Level* level_, Value* port, Value* verb)
         }
 
         // !! If open fails, what if user does a READ w/o checking for error?
-        if (IS_BLOCK(state))
+        if (Is_Block(state))
             fail (Error_Already_Open_Raw(path));
 
         if (REF(new))

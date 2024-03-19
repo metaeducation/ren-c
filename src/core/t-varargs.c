@@ -61,7 +61,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         return true;
     }
 
-    if (IS_BAR(opt_look)) {
+    if (Is_Bar(opt_look)) {
         //
         // Only hard quotes are allowed to see BAR! (and if they do, they
         // are *encouraged* to test the evaluated bit and error on literals,
@@ -86,7 +86,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
 
     if (
         (pclass == PARAM_CLASS_NORMAL || pclass == PARAM_CLASS_TIGHT)
-        && IS_WORD(opt_look)
+        && Is_Word(opt_look)
     ){
         // When a variadic argument is being TAKE-n, deferred left hand side
         // argument needs to be seen as end of variadic input.  Otherwise,
@@ -359,7 +359,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         return false;
 
     if (op == VARARG_OP_TAIL_Q) {
-        assert(IS_LOGIC(out));
+        assert(Is_Logic(out));
         return false;
     }
 
@@ -449,7 +449,7 @@ REB_R PD_Varargs(
 ){
     UNUSED(opt_setval);
 
-    if (not IS_INTEGER(picker))
+    if (not Is_Integer(picker))
         fail (Error_Invalid(picker));
 
     if (VAL_INT32(picker) != 1)
@@ -502,7 +502,7 @@ REBTYPE(Varargs)
                 assert(false);
                 return R_THROWN;
             }
-            assert(IS_LOGIC(OUT));
+            assert(Is_Logic(OUT));
             return OUT; }
 
         default:
@@ -536,12 +536,12 @@ REBTYPE(Varargs)
         StackIndex base = TOP_INDEX;
 
         REBINT limit;
-        if (IS_INTEGER(ARG(limit))) {
+        if (Is_Integer(ARG(limit))) {
             limit = VAL_INT32(ARG(limit));
             if (limit < 0)
                 limit = 0;
         }
-        else if (IS_BAR(ARG(limit))) {
+        else if (Is_Bar(ARG(limit))) {
             limit = 0; // not used, but avoid maybe uninitalized warning
         }
         else
@@ -652,7 +652,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
             Append_Unencoded(mo->series, "[]");
         else if (pclass == PARAM_CLASS_HARD_QUOTE)
             Mold_Value(mo, shared); // full feed can be shown if hard quoted
-        else if (IS_BAR(Cell_Array_At(shared)))
+        else if (Is_Bar(Cell_Array_At(shared)))
             Append_Unencoded(mo->series, "[]"); // simulate end appearance
         else
             Append_Unencoded(mo->series, "[...]"); // can't look ahead
@@ -667,7 +667,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
             Mold_Value(mo, L->value); // one value can be shown if hard quoted
             Append_Unencoded(mo->series, " ...]");
         }
-        else if (IS_BAR(L->value))
+        else if (Is_Bar(L->value))
             Append_Unencoded(mo->series, "[]");
         else
             Append_Unencoded(mo->series, "[...]");

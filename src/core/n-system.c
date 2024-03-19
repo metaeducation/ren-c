@@ -242,7 +242,7 @@ DECLARE_NATIVE(check)
     else if (ANY_CONTEXT(value)) {
         ASSERT_CONTEXT(VAL_CONTEXT(value));
     }
-    else if (IS_ACTION(value)) {
+    else if (Is_Action(value)) {
         Assert_Array(VAL_ACT_PARAMLIST(value));
         Assert_Array(VAL_ACT_DETAILS(value));
     }

@@ -208,7 +208,7 @@ static void Startup_Base(Array* boot_base)
     if (Do_At_Throws(result, boot_base, 0, SPECIFIED))
         panic (result);
 
-    if (not IS_BLANK(result))
+    if (not Is_Blank(result))
         panic (result);
 }
 
@@ -243,7 +243,7 @@ static void Startup_Sys(Array* boot_sys) {
     if (Do_At_Throws(result, boot_sys, 0, SPECIFIED))
         panic (result);
 
-    if (not IS_BLANK(result))
+    if (not Is_Blank(result))
         panic (result);
 }
 
@@ -432,7 +432,7 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
     for (i = 0; names[i] != nullptr; ++i) {
         Symbol* str = Intern_UTF8_Managed(cb_cast(names[i]), strlen(names[i]));
         Value* val = Append_Context(Lib_Context, nullptr, str);
-        assert(IS_TRASH(val));  // functions will fill in
+        assert(Is_Trash(val));  // functions will fill in
         UNUSED(val);
     }
 }
@@ -549,14 +549,14 @@ Value* Make_Native(
 
     // Get the name the native will be started at with in Lib_Context
     //
-    if (not IS_SET_WORD(*item))
+    if (not Is_Set_Word(*item))
         panic (*item);
 
     Value* name = KNOWN(*item);
     ++*item;
 
     bool enfix;
-    if (IS_WORD(*item) and Cell_Word_Id(*item) == SYM_ENFIX) {
+    if (Is_Word(*item) and Cell_Word_Id(*item) == SYM_ENFIX) {
         enfix = true;
         ++*item;
     }
@@ -566,18 +566,18 @@ Value* Make_Native(
     // See if it's being invoked with NATIVE or NATIVE/BODY
     //
     bool has_body;
-    if (IS_WORD(*item)) {
+    if (Is_Word(*item)) {
         if (Cell_Word_Id(*item) != SYM_NATIVE)
             panic (*item);
         has_body = false;
     }
     else {
         if (
-            not IS_PATH(*item)
+            not Is_Path(*item)
             or VAL_LEN_HEAD(*item) != 2
-            or not IS_WORD(Array_Head(Cell_Array(*item)))
+            or not Is_Word(Array_Head(Cell_Array(*item)))
             or Cell_Word_Id(Array_Head(Cell_Array(*item))) != SYM_NATIVE
-            or not IS_WORD(Array_At(Cell_Array(*item), 1))
+            or not Is_Word(Array_At(Cell_Array(*item), 1))
             or Cell_Word_Id(Array_At(Cell_Array(*item), 1)) != SYM_BODY
         ){
             panic (*item);
@@ -588,7 +588,7 @@ Value* Make_Native(
 
     Value* spec = KNOWN(*item);
     ++*item;
-    if (not IS_BLOCK(spec))
+    if (not Is_Block(spec))
         panic (spec);
 
     // With the components extracted, generate the native and add it to
@@ -618,7 +618,7 @@ Value* Make_Native(
     // body cell for later lookup.
     //
     if (has_body) {
-        if (not IS_BLOCK(*item))
+        if (not Is_Block(*item))
             panic (*item);
 
         Derelativize(Array_At(details, IDX_NATIVE_BODY), *item, specifier);
@@ -693,7 +693,7 @@ static Array* Startup_Natives(const Value* boot_natives)
             panic (item);
 
         Value* name = KNOWN(item);
-        assert(IS_SET_WORD(name));
+        assert(Is_Set_Word(name));
 
         Value* native = Make_Native(
             &item,
@@ -758,7 +758,7 @@ static Array* Startup_Generics(const Value* boot_generics)
     if (Do_Any_Array_At_Throws(result, boot_generics))
         panic (result);
 
-    if (not IS_BLANK(result))
+    if (not Is_Blank(result))
         panic (result);
 
     // Sanity check the symbol transformation
@@ -770,7 +770,7 @@ static Array* Startup_Generics(const Value* boot_generics)
 
     Cell* item = head;
     for (; NOT_END(item); ++item)
-        if (IS_SET_WORD(item)) {
+        if (Is_Set_Word(item)) {
             Derelativize(PUSH(), item, specifier);
             CHANGE_VAL_TYPE_BITS(TOP, REB_WORD); // change pushed to WORD!
         }
@@ -991,7 +991,7 @@ static void Init_System_Object(
     DECLARE_VALUE (result);
     if (Do_Any_Array_At_Throws(result, boot_sysobj_spec))
         panic (result);
-    if (not IS_BLANK(result))
+    if (not Is_Blank(result))
         panic (result);
 
     // Create a global value for it.  (This is why we are able to say `system`
@@ -1039,7 +1039,7 @@ static void Init_System_Object(
     // up its archetype so that it is an actual ERROR!.
     //
     Value* std_error = Get_System(SYS_STANDARD, STD_ERROR);
-    assert(IS_OBJECT(std_error));
+    assert(Is_Object(std_error));
     CHANGE_VAL_TYPE_BITS(std_error, REB_ERROR);
     CHANGE_VAL_TYPE_BITS(CTX_ARCHETYPE(VAL_CONTEXT(std_error)), REB_ERROR);
     assert(CTX_KEY_SYM(VAL_CONTEXT(std_error), 1) == SYM_SELF);
@@ -1556,7 +1556,7 @@ static Value* Startup_Mezzanine(BOOT_BLK *boot)
     Startup_Sys(Cell_Array(&boot->sys));
 
     Value* finish_init = CTX_VAR(Sys_Context, SYS_CTX_FINISH_INIT_CORE);
-    assert(IS_ACTION(finish_init));
+    assert(Is_Action(finish_init));
 
     // The FINISH-INIT-CORE function should likely do very little.  But right
     // now it is where the user context is created from the lib context (a
@@ -1574,7 +1574,7 @@ static Value* Startup_Mezzanine(BOOT_BLK *boot)
         fail (Error_No_Catch_For_Throw(result));
     }
 
-    if (not IS_TRASH(result))
+    if (not Is_Trash(result))
         panic (result); // FINISH-INIT-CORE is a PROCEDURE, returns void
 
     return nullptr;

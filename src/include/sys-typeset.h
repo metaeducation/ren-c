@@ -223,7 +223,7 @@ enum Reb_Param_Class {
 #define PCLASS_BYTE_MASK 0x07 // for 3 bits, 0x00000111
 
 INLINE enum Reb_Param_Class VAL_PARAM_CLASS(const Cell* v) {
-    assert(IS_TYPESET(v));
+    assert(Is_Typeset(v));
     return cast(
         enum Reb_Param_Class,
         CUSTOM_BYTE(v)
@@ -345,12 +345,12 @@ static_assert(0 < 8 - PCLASS_NUM_BITS, "TYPESET_FLAG_XXX too high");
 // Name should be nullptr unless typeset in object keylist or func paramlist
 
 INLINE void INIT_TYPESET_NAME(Cell* typeset, Symbol* symbol) {
-    assert(IS_TYPESET(typeset));
+    assert(Is_Typeset(typeset));
     typeset->extra.key_symbol = symbol;
 }
 
 INLINE Symbol* Key_Symbol(const Cell* typeset) {
-    assert(IS_TYPESET(typeset));
+    assert(Is_Typeset(typeset));
     return typeset->extra.key_symbol;
 }
 

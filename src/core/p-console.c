@@ -83,7 +83,7 @@ static REB_R Console_Actor(Level* level_, Value* port, Value* verb)
         // If no buffer, create a buffer:
         //
         Value* data = CTX_VAR(ctx, STD_PORT_DATA);
-        if (not IS_BINARY(data))
+        if (not Is_Binary(data))
             Init_Binary(data, Make_Binary(OUT_BUF_SIZE));
 
         Binary* ser = Cell_Binary(data);

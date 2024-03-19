@@ -239,7 +239,7 @@ INLINE void Queue_Mark_Binding_Deep(const Cell* v) {
         // It's a context, any reasonable added check?
     }
     else {
-        assert(IS_VARARGS(v));
+        assert(Is_Varargs(v));
         assert(IS_SER_ARRAY(binding));
         assert(not IS_SER_DYNAMIC(binding)); // singular
     }
@@ -421,7 +421,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         #if !defined(NDEBUG)
             assert(Array_Len(singular) == 1);
             Cell* single = ARR_SINGLE(singular);
-            assert(IS_HANDLE(single));
+            assert(Is_Handle(single));
             assert(single->extra.singular == v->extra.singular);
             if (v != single) {
                 //
@@ -652,7 +652,7 @@ static void Propagate_All_GC_Marks(void)
 
         if (GET_SER_FLAG(a, ARRAY_FLAG_PARAMLIST)) {
             v = Array_Head(a); // archetype
-            assert(IS_ACTION(v));
+            assert(Is_Action(v));
             assert(not v->extra.binding); // archetypes have no binding
 
             // These queueings cannot be done in Queue_Mark_Function_Deep
@@ -703,11 +703,11 @@ static void Propagate_All_GC_Marks(void)
                 // There's nothing to mark for GC since the frame is on the
                 // stack, which should preserve the function paramlist.
                 //
-                assert(IS_FRAME(v));
+                assert(Is_Frame(v));
             }
             else {
                 Array* keylist = ARR(keysource);
-                if (IS_FRAME(v)) {
+                if (Is_Frame(v)) {
                     assert(GET_SER_FLAG(keylist, ARRAY_FLAG_PARAMLIST));
 
                     // Frames use paramlists as their "keylist", there is no
@@ -1693,7 +1693,7 @@ Array* Snapshot_All_Actions(void)
                 assert(Is_Series_Managed(s));
                 if (GET_SER_FLAG(s, ARRAY_FLAG_PARAMLIST)) {
                     Value* v = KNOWN(Array_Head(ARR(s)));
-                    assert(IS_ACTION(v));
+                    assert(Is_Action(v));
                     Copy_Cell(PUSH(), v);
                 }
                 break;

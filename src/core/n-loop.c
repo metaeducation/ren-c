@@ -52,7 +52,7 @@ bool Catching_Break_Or_Continue(Value* val, bool *broke)
 
     // Throw /NAME-s used by CONTINUE and BREAK are the actual native
     // function values of the routines themselves.
-    if (not IS_ACTION(val))
+    if (not Is_Action(val))
         return false;
 
     if (VAL_ACT_DISPATCHER(val) == &N_break) {
@@ -261,7 +261,7 @@ static REB_R Loop_Integer_Common(
         }
         Trashify_Branched(out);  // null->BREAK, void->empty
 
-        if (not IS_INTEGER(var))
+        if (not Is_Integer(var))
             fail (Error_Invalid_Type(VAL_TYPE(var)));
 
         if (REB_I64_ADD_OF(*state, bump, state))
@@ -286,25 +286,25 @@ static REB_R Loop_Number_Common(
     Init_Void(out); // result if body never runs
 
     REBDEC s;
-    if (IS_INTEGER(start))
+    if (Is_Integer(start))
         s = cast(REBDEC, VAL_INT64(start));
-    else if (IS_DECIMAL(start) or IS_PERCENT(start))
+    else if (Is_Decimal(start) or Is_Percent(start))
         s = VAL_DECIMAL(start);
     else
         fail (Error_Invalid(start));
 
     REBDEC e;
-    if (IS_INTEGER(end))
+    if (Is_Integer(end))
         e = cast(REBDEC, VAL_INT64(end));
-    else if (IS_DECIMAL(end) or IS_PERCENT(end))
+    else if (Is_Decimal(end) or Is_Percent(end))
         e = VAL_DECIMAL(end);
     else
         fail (Error_Invalid(end));
 
     REBDEC b;
-    if (IS_INTEGER(bump))
+    if (Is_Integer(bump))
         b = cast(REBDEC, VAL_INT64(bump));
-    else if (IS_DECIMAL(bump) or IS_PERCENT(bump))
+    else if (Is_Decimal(bump) or Is_Percent(bump))
         b = VAL_DECIMAL(bump);
     else
         fail (Error_Invalid(bump));
@@ -345,7 +345,7 @@ static REB_R Loop_Number_Common(
         }
         Trashify_Branched(out);  // null->BREAK, void->empty
 
-        if (not IS_DECIMAL(var))
+        if (not Is_Decimal(var))
             fail (Error_Invalid_Type(VAL_TYPE(var)));
 
         *state += b;
@@ -374,7 +374,7 @@ Value* Real_Var_From_Pseudo(Value* pseudo_var) {
     // expand and invalidate the location.  (The `context` for fabricated
     // variables is locked at fixed size.)
     //
-    assert(IS_LIT_WORD(pseudo_var));
+    assert(Is_Lit_Word(pseudo_var));
     return Get_Mutable_Var_May_Fail(pseudo_var, SPECIFIED);
 }
 
@@ -593,14 +593,14 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
           case LOOP_EVERY:
             no_falseys = no_falseys and (
-                IS_VOID(les->out) or IS_TRUTHY(les->out)
+                Is_Void(les->out) or IS_TRUTHY(les->out)
             );
             break;
 
           case LOOP_MAP_EACH:
             if (IS_NULLED(les->out))  // null body is error now
                 fail (Error_Need_Non_Null_Raw());
-            if (IS_VOID(les->out))  // vanish result
+            if (Is_Void(les->out))  // vanish result
                 Init_Trash(les->out);  // nulled is used to signal breaking only
             else
                 Copy_Cell(PUSH(), les->out);  // not void, added to the result
@@ -642,7 +642,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
     les.data = ARG(data);
     les.body = ARG(body);
 
-    if (IS_BLANK(les.data)) {
+    if (Is_Blank(les.data)) {
         if (mode == LOOP_MAP_EACH)
             return Init_Block(OUT, Make_Array(0));
         return OUT;
@@ -665,7 +665,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
     REB_R r;
 
     bool took_hold;
-    if (IS_ACTION(les.data)) {
+    if (Is_Action(les.data)) {
         //
         // The value is generated each time by calling the data action.
         // Assign values to avoid compiler warnings.
@@ -684,11 +684,11 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
             les.data_ser = CTX_VARLIST(VAL_CONTEXT(les.data));
             les.data_idx = 1;
         }
-        else if (IS_MAP(les.data)) {
+        else if (Is_Map(les.data)) {
             les.data_ser = VAL_SERIES(les.data);
             les.data_idx = 0;
         }
-        else if (IS_DATATYPE(les.data)) {
+        else if (Is_Datatype(les.data)) {
             //
             // !!! e.g. `for-each act action! [...]` enumerating the list of
             // all actions in the system.  This is not something that it's
@@ -717,7 +717,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
 
         les.data_len = Series_Len(les.data_ser); // HOLD so length can't change
         if (les.data_idx >= les.data_len) {
-            assert(IS_VOID(OUT));  // result if loop body never runs
+            assert(Is_Void(OUT));  // result if loop body never runs
             r = nullptr;
             goto cleanup;
         }
@@ -735,7 +735,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
     if (took_hold) // release read-only lock
         CLEAR_SER_INFO(les.data_ser, SERIES_INFO_HOLD);
 
-    if (IS_DATATYPE(les.data))
+    if (Is_Datatype(les.data))
         Free_Unmanaged_Series(ARR(les.data_ser)); // temp array of instances
 
     //=//// NOW FINISH UP /////////////////////////////////////////////////=//
@@ -747,7 +747,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
     }
 
     if (r) {
-        assert(IS_ERROR(r));
+        assert(Is_Error(r));
         if (mode == LOOP_MAP_EACH)
             Drop_Data_Stack_To(base);
         rebJumps ("FAIL", rebR(r));
@@ -773,7 +773,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
         // any other value is the last body result, and is truthy
         // only illegal value here is trash (would cause error if body gave it)
         //
-        assert(not IS_TRASH(OUT));
+        assert(not Is_Trash(OUT));
         return OUT;
 
       case LOOP_MAP_EACH:
@@ -826,16 +826,16 @@ DECLARE_NATIVE(for)
     Value* var = CTX_VAR(context, 1); // not movable, see #2274
 
     if (
-        IS_INTEGER(ARG(start))
-        and IS_INTEGER(ARG(end))
-        and IS_INTEGER(ARG(bump))
+        Is_Integer(ARG(start))
+        and Is_Integer(ARG(end))
+        and Is_Integer(ARG(bump))
     ){
         return Loop_Integer_Common(
             OUT,
             var,
             ARG(body),
             VAL_INT64(ARG(start)),
-            IS_DECIMAL(ARG(end))
+            Is_Decimal(ARG(end))
                 ? cast(REBI64, VAL_DECIMAL(ARG(end)))
                 : VAL_INT64(ARG(end)),
             VAL_INT64(ARG(bump))
@@ -896,7 +896,7 @@ DECLARE_NATIVE(for_skip)
 
     Init_Void(OUT);  // result if body never runs, like `while [null] [...]`
 
-    if (IS_BLANK(series))
+    if (Is_Blank(series))
         return OUT;
 
     REBINT skip = Int32(ARG(skip));
@@ -1026,7 +1026,7 @@ DECLARE_NATIVE(cycle)
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke)) {
                 if (
-                    IS_ACTION(OUT)
+                    Is_Action(OUT)
                     and VAL_ACT_DISPATCHER(OUT) == &N_stop
                 ){
                     // See notes on STOP for why CYCLE is unique among loop
@@ -1174,7 +1174,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
         assert(count == 0);
         assert(len == VAL_LEN_HEAD(res->data));
     }
-    else if (IS_BINARY(res->data)) {
+    else if (Is_Binary(res->data)) {
         if (res->broke) { // leave data unchanged
             Drop_Mold(res->mo);
             return 0;
@@ -1280,7 +1280,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
                     Cell_Array_At_Head(res->data, index),
                     VAL_SPECIFIER(res->data)
                 );
-            else if (IS_BINARY(res->data))
+            else if (Is_Binary(res->data))
                 Init_Integer(
                     var,
                     cast(REBI64, Series_Head(Byte, res->series)[index])
@@ -1308,13 +1308,13 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
                 // CONTINUE - res->out may not be void if /WITH refinement used
             }
         }
-        if (IS_TRASH(res->out))
+        if (Is_Trash(res->out))
             fail (Error_Trash_Conditional_Raw());  // neither true nor false
 
         if (ANY_ARRAY(res->data)) {
             if (
                 IS_NULLED(res->out)
-                or IS_VOID(res->out)
+                or Is_Void(res->out)
                 or IS_FALSEY(res->out)
             ){
                 res->start = index;
@@ -1331,7 +1331,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
         else {
             if (
                 not IS_NULLED(res->out)
-                and not IS_VOID(res->out)
+                and not Is_Void(res->out)
                 and IS_TRUTHY(res->out)
             ){
                 res->start = index;
@@ -1340,7 +1340,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
 
             do {
                 assert(res->start <= len);
-                if (IS_BINARY(res->data)) {
+                if (Is_Binary(res->data)) {
                     Append_Unencoded_Len(
                         res->mo->series,
                         cs_cast(
@@ -1390,11 +1390,11 @@ DECLARE_NATIVE(remove_each)
     struct Remove_Each_State res;
     res.data = ARG(data);
 
-    if (IS_BLANK(res.data))
+    if (Is_Blank(res.data))
         return Init_Integer(OUT, 0);
 
     if (not (
-        ANY_ARRAY(res.data) or ANY_STRING(res.data) or IS_BINARY(res.data)
+        ANY_ARRAY(res.data) or ANY_STRING(res.data) or Is_Binary(res.data)
     )){
         fail (Error_Invalid(res.data));
     }
@@ -1480,7 +1480,7 @@ DECLARE_NATIVE(remove_each)
         return R_THROWN;
 
     if (r) {
-        assert(IS_ERROR(r));
+        assert(Is_Error(r));
         rebJumps("FAIL", rebR(r));
     }
 
@@ -1532,13 +1532,13 @@ DECLARE_NATIVE(repeat)
     Init_Void(OUT);  // result if body never runs, like `while [null] [...]`
 
     if (IS_FALSEY(ARG(count))) {
-        assert(IS_LOGIC(ARG(count))); // is false...opposite of infinite loop
+        assert(Is_Logic(ARG(count))); // is false...opposite of infinite loop
         return OUT;
     }
 
     REBI64 count;
 
-    if (IS_LOGIC(ARG(count))) {
+    if (Is_Logic(ARG(count))) {
         assert(VAL_LOGIC(ARG(count)) == true);
 
         // Run forever, and as a micro-optimization don't handle specially
@@ -1561,7 +1561,7 @@ DECLARE_NATIVE(repeat)
         Trashify_Branched(OUT);  // null->BREAK, blank->empty
     }
 
-    if (IS_LOGIC(ARG(count)))
+    if (Is_Logic(ARG(count)))
         goto restart; // "infinite" loop exhausted MAX_I64 steps (rare case)
 
     return OUT;
@@ -1589,7 +1589,7 @@ DECLARE_NATIVE(count_up)
 
     Value* value = ARG(value);
 
-    if (IS_DECIMAL(value) or IS_PERCENT(value))
+    if (Is_Decimal(value) or Is_Percent(value))
         Init_Integer(value, Int64(value));
 
     REBCTX *context;
@@ -1635,7 +1635,7 @@ DECLARE_NATIVE(for_next)
 
     Value* value = ARG(value);
 
-    if (IS_DECIMAL(value) or IS_PERCENT(value))
+    if (Is_Decimal(value) or Is_Percent(value))
         Init_Integer(value, Int64(value));
 
     REBCTX *context;
@@ -1674,15 +1674,15 @@ INLINE REB_R Until_Core(
             if (broke)
                 return Init_Nulled(OUT);
 
-            if (IS_VOID(OUT))  // e.g. CONTINUE and no /WITH
+            if (Is_Void(OUT))  // e.g. CONTINUE and no /WITH
                 goto skip_check;
         }
         else { // didn't throw, see above about null difference from CONTINUE
-            if (IS_TRASH(OUT))
+            if (Is_Trash(OUT))
                 fail (Error_Trash_Conditional_Raw());
         }
 
-        if (not IS_VOID(OUT) and IS_TRUTHY(OUT) == trigger)
+        if (not Is_Void(OUT) and IS_TRUTHY(OUT) == trigger)
             return OUT;
 
     } while (true);
@@ -1744,7 +1744,7 @@ INLINE REB_R While_Core(
             return R_THROWN; // don't see BREAK/CONTINUE in the *condition*
         }
 
-        if (IS_TRASH(cell))
+        if (Is_Trash(cell))
             fail (Error_Trash_Conditional_Raw());  // neither truthy nor falsey
 
         if (IS_TRUTHY(cell) != trigger) {

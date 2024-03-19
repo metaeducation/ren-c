@@ -102,7 +102,7 @@ void Query_File_Or_Dir(Value* out, Value* port, struct devreq_file *file)
     Copy_Cell(CTX_VAR(ctx, STD_FILE_INFO_DATE), timestamp);
     rebRelease(timestamp);
 
-    assert(IS_FILE(file->path));
+    assert(Is_File(file->path));
     Copy_Cell(CTX_VAR(ctx, STD_FILE_INFO_NAME), file->path);
 
     Copy_Cell(out, info);
@@ -145,7 +145,7 @@ static void Read_File_Port(
     REBFLGS flags,
     REBLEN len
 ) {
-    assert(IS_FILE(path));
+    assert(Is_File(path));
 
     UNUSED(path);
     UNUSED(flags);
@@ -175,7 +175,7 @@ static void Write_File_Port(struct devreq_file *file, Value* data, REBLEN len, b
     Binary* bin;
     REBREQ *req = AS_REBREQ(file);
 
-    if (IS_BLOCK(data)) {
+    if (Is_Block(data)) {
         // Form the values of the block
         // !! Could be made more efficient if we broke the FORM
         // into 32K chunks for writing.
@@ -188,7 +188,7 @@ static void Write_File_Port(struct devreq_file *file, Value* data, REBLEN len, b
         len = VAL_LEN_HEAD(data);
     }
 
-    if (IS_TEXT(data)) {
+    if (Is_Text(data)) {
         bin = Make_Utf8_From_Cell_String_At_Limit(data, len);
         Manage_Series(bin);
         req->common.data = Binary_Head(bin);
@@ -259,16 +259,16 @@ static REB_R File_Actor(Level* level_, Value* port, Value* verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
     Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
-    if (!IS_OBJECT(spec))
+    if (!Is_Object(spec))
         fail (Error_Invalid_Spec_Raw(spec));
 
     Value* path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
     if (path == nullptr)
         fail (Error_Invalid_Spec_Raw(spec));
 
-    if (IS_URL(path))
+    if (Is_Url(path))
         path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
-    else if (!IS_FILE(path))
+    else if (!Is_File(path))
         fail (Error_Invalid_Spec_Raw(path));
 
     REBREQ *req = Ensure_Port_State(port, RDI_FILE);

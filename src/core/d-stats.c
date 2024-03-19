@@ -80,7 +80,7 @@ DECLARE_NATIVE(stats)
 #else
     if (REF(profile)) {
         Copy_Cell(OUT, Get_System(SYS_STANDARD, STD_STATS));
-        if (IS_OBJECT(OUT)) {
+        if (Is_Object(OUT)) {
             Value* stats = VAL_CONTEXT_VAR(OUT, 1);
 
             RESET_CELL(stats, REB_TIME);

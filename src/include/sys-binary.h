@@ -39,7 +39,7 @@
 //
 
 INLINE Binary* Cell_Binary(const Cell* cell) {
-    assert(IS_BINARY(cell));
+    assert(Is_Binary(cell));
     Series* s = VAL_SERIES(cell);
     assert(Series_Wide(s) == 1);
     return cast(Binary*, s);

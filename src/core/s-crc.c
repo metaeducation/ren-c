@@ -259,7 +259,7 @@ uint32_t Hash_Value(const Cell* v)
     case REB_TIME:
     case REB_DATE:
         hash = cast(REBLEN, VAL_NANO(v) ^ (VAL_NANO(v) / SEC_SEC));
-        if (IS_DATE(v))
+        if (Is_Date(v))
             hash ^= VAL_DATE(v).bits;
         break;
 

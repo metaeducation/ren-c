@@ -787,7 +787,7 @@ INLINE const Value* NULLIZE(const Value* cell)
     RESET_CELL((out), REB_TRASH)
 
 INLINE Value* Trashify_Branched(Value* cell) {
-    if (IS_NULLED(cell) or IS_VOID(cell))
+    if (IS_NULLED(cell) or Is_Void(cell))
         Init_Trash(cell);
     return cell;
 }
@@ -856,7 +856,7 @@ INLINE Value* Trashify_Branched(Value* cell) {
 // will behave neutrally as far as the garbage collector is concerned, so
 // it can be used as a placeholder for a value that will be filled in at
 // some later time--spanning an evaluation.  But if the special IS_UNREADABLE
-// checks are not used, it will not respond to IS_BLANK() and will also
+// checks are not used, it will not respond to Is_Blank() and will also
 // refuse VAL_TYPE() checks.  This is useful anytime a placeholder is needed
 // in a slot temporarily where the code knows it's supposed to come back and
 // fill in the correct thing later...where the asserts serve as a reminder
@@ -902,10 +902,10 @@ INLINE Value* Trashify_Branched(Value* cell) {
         Init_Blank(v)
 
     #define IS_BLANK_RAW(v) \
-        IS_BLANK(v)
+        Is_Blank(v)
 
     #define Assert_Unreadable_If_Debug(v) \
-        assert(IS_BLANK(v)) // would have to be a blank even if not unreadable
+        assert(Is_Blank(v)) // would have to be a blank even if not unreadable
 
     #define Assert_Readable_If_Debug(v) \
         NOOP
@@ -936,9 +936,9 @@ INLINE Value* Trashify_Branched(Value* cell) {
 INLINE bool IS_TRUTHY(const Cell* v) {
     if (GET_VAL_FLAG(v, VALUE_FLAG_FALSEY))
         return false;
-    if (IS_TRASH(v))
+    if (Is_Trash(v))
         fail (Error_Trash_Conditional_Raw());
-    if (IS_VOID(v))
+    if (Is_Void(v))
         fail (Error_Void_Conditional_Raw());
     return true;
 }
@@ -957,7 +957,7 @@ INLINE bool IS_TRUTHY(const Cell* v) {
     Init_Logic((out), false)
 
 INLINE bool VAL_LOGIC(const Cell* v) {
-    assert(IS_LOGIC(v));
+    assert(Is_Logic(v));
     return NOT_VAL_FLAG((v), VALUE_FLAG_FALSEY);
 }
 
@@ -1038,11 +1038,11 @@ INLINE Value* Init_Char(Cell* out, REBUNI uni) {
     // allows an assert, but also lvalue: `VAL_INT64(v) = xxx`
     //
     INLINE REBI64 & VAL_INT64(Cell* v) { // C++ reference type
-        assert(IS_INTEGER(v));
+        assert(Is_Integer(v));
         return v->payload.integer;
     }
     INLINE REBI64 VAL_INT64(const Cell* v) {
-        assert(IS_INTEGER(v));
+        assert(Is_Integer(v));
         return v->payload.integer;
     }
 #endif
@@ -1096,11 +1096,11 @@ INLINE Byte VAL_UINT8(const Cell* v) {
     // allows an assert, but also lvalue: `VAL_DECIMAL(v) = xxx`
     //
     INLINE REBDEC & VAL_DECIMAL(Cell* v) { // C++ reference type
-        assert(IS_DECIMAL(v) or IS_PERCENT(v));
+        assert(Is_Decimal(v) or Is_Percent(v));
         return v->payload.decimal;
     }
     INLINE REBDEC VAL_DECIMAL(const Cell* v) {
-        assert(IS_DECIMAL(v) or IS_PERCENT(v));
+        assert(Is_Decimal(v) or Is_Percent(v));
         return v->payload.decimal;
     }
 #endif
@@ -1195,32 +1195,32 @@ INLINE Value* Init_Money(Cell* out, deci amount) {
     // C++ build can give const-correctness so you don't change read-only data
 
     INLINE const Byte *VAL_TUPLE(const Cell* v) {
-        assert(IS_TUPLE(v));
+        assert(Is_Tuple(v));
         return v->payload.tuple.tuple + 1;
     }
 
     INLINE Byte *VAL_TUPLE(Cell* v) {
-        assert(IS_TUPLE(v));
+        assert(Is_Tuple(v));
         return v->payload.tuple.tuple + 1;
     }
 
     INLINE const Byte *VAL_TUPLE_DATA(const Cell* v) {
-        assert(IS_TUPLE(v));
+        assert(Is_Tuple(v));
         return v->payload.tuple.tuple;
     }
 
     INLINE Byte *VAL_TUPLE_DATA(Cell* v) {
-        assert(IS_TUPLE(v));
+        assert(Is_Tuple(v));
         return v->payload.tuple.tuple;
     }
 
     INLINE Byte VAL_TUPLE_LEN(const Cell* v) {
-        assert(IS_TUPLE(v));
+        assert(Is_Tuple(v));
         return v->payload.tuple.tuple[0];
     }
 
     INLINE Byte &VAL_TUPLE_LEN(Cell* v) {
-        assert(IS_TUPLE(v));
+        assert(Is_Tuple(v));
         return v->payload.tuple.tuple[0];
     }
 #endif
@@ -1384,7 +1384,7 @@ INLINE void INIT_BINDING(Cell* v, Stub* binding) {
             binding->header.bits & ARRAY_FLAG_VARLIST // specific
             or binding->header.bits & ARRAY_FLAG_PARAMLIST // relative
             or (
-                IS_VARARGS(v) and not IS_SER_DYNAMIC(binding)
+                Is_Varargs(v) and not IS_SER_DYNAMIC(binding)
             ) // varargs from MAKE VARARGS! [...], else is a varlist
         );
     }

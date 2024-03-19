@@ -488,7 +488,7 @@ INLINE void Fail_If_Read_Only_Series(Series* s) {
 //=////////////////////////////////////////////////////////////////////////=//
 
 INLINE Series* VAL_SERIES(const Cell* v) {
-    assert(ANY_SERIES(v) or IS_MAP(v));  // !!! gcc 5.4 -O2 bug
+    assert(ANY_SERIES(v) or Is_Map(v));  // !!! gcc 5.4 -O2 bug
     Series* s = v->payload.any_series.series;
     if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
@@ -548,7 +548,7 @@ INLINE Byte *VAL_RAW_DATA_AT(const Cell* v) {
 //
 
 INLINE Binary* Cell_Bitset(const Cell* cell) {
-    assert(IS_BITSET(cell));
+    assert(Is_Bitset(cell));
     Series* s = VAL_SERIES(cell);
     assert(Series_Wide(s) == 1);
     return cast(Binary*, s);

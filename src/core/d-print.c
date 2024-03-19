@@ -94,7 +94,7 @@ void Print_OS_Line(void)
 
     Value* result = OS_DO_DEVICE(Req_SIO, RDC_WRITE);
     assert(result != nullptr);
-    assert(not IS_ERROR(result));
+    assert(not Is_Error(result));
     rebRelease(result);
 }
 

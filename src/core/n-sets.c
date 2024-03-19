@@ -72,8 +72,8 @@ Series* Make_Set_Operation_Series(
         }
         else {
             // Binaries only operate with other binaries
-            assert(IS_BINARY(val1));
-            if (not IS_BINARY(val2))
+            assert(Is_Binary(val1));
+            if (not Is_Binary(val2))
                 fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
         }
     }
@@ -246,7 +246,7 @@ Series* Make_Set_Operation_Series(
         out_ser = Pop_Molded_String(mo);
     }
     else {
-        assert(IS_BINARY(val1) and IS_BINARY(val2));
+        assert(Is_Binary(val1) and Is_Binary(val2));
 
         DECLARE_MOLD (mo);
 
@@ -349,7 +349,7 @@ DECLARE_NATIVE(exclude)
     Value* val1 = ARG(series);
     Value* val2 = ARG(exclusions);
 
-    if (IS_BITSET(val1) || IS_BITSET(val2)) {
+    if (Is_Bitset(val1) || Is_Bitset(val2)) {
         if (VAL_TYPE(val1) != VAL_TYPE(val2))
             fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
 
@@ -358,7 +358,7 @@ DECLARE_NATIVE(exclude)
         return Init_Bitset(OUT, Xandor_Binary(verb, val1, val2));
     }
 
-    if (IS_TYPESET(val1) || IS_TYPESET(val2)) {
+    if (Is_Typeset(val1) || Is_Typeset(val2)) {
         if (VAL_TYPE(val1) != VAL_TYPE(val2))
             fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
 
@@ -400,7 +400,7 @@ DECLARE_NATIVE(unique)
 
     Value* val = ARG(series);
 
-    if (IS_BITSET(val) or IS_TYPESET(val))
+    if (Is_Bitset(val) or Is_Typeset(val))
         return val; // bitsets & typesets already unique (by definition)
 
     return Init_Any_Series(

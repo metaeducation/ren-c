@@ -877,7 +877,7 @@ struct LevelStruct {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// L->refine is a bit tricky.  If it IS_LOGIC() and TRUE, then this means that
+// L->refine is a bit tricky.  If it Is_Logic() and TRUE, then this means that
 // a refinement is active but revokable, having its arguments gathered.  So
 // it actually points to the L->arg of the active refinement slot.  If
 // evaluation of an argument in this state produces no value, the refinement
@@ -916,7 +916,7 @@ struct LevelStruct {
 // These special values are all pointers to read-only cells, but are cast to
 // mutable in order to be held in the same pointer that might write to a
 // refinement to revoke it.  Note that since literal pointers are used, tests
-// like `L->refine == BLANK_VALUE` are faster than `IS_BLANK(L->refine)`.
+// like `L->refine == BLANK_VALUE` are faster than `Is_Blank(L->refine)`.
 //
 // !!! ^-- While that's presumably true, it would be worth testing if a
 // dereference of the single byte via VAL_TYPE() is ever faster.

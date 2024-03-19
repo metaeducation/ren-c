@@ -32,8 +32,6 @@
     #define _WIN32_WINNT 0x0501 // Minimum API target: WinXP
     #include <windows.h>
 
-    #undef IS_ERROR // %windows.h defines this, but so does %sys-core.h
-
     #undef OUT  // %minwindef.h defines this, we have a better use for it
     #undef VOID  // %winnt.h defines this, we have a better use for it
 #else
