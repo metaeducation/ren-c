@@ -246,58 +246,6 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 
 
 //
-// Compare_Arrays_At_Indexes: C
-//
-REBINT Compare_Arrays_At_Indexes(
-    const Array* s_array,
-    REBLEN s_index,
-    const Array* t_array,
-    REBLEN t_index,
-    bool is_case
-){
-    if (s_array == t_array and s_index == t_index)
-         return 0;
-
-    const Element* s_tail = Array_Tail(s_array);
-    const Element* t_tail = Array_Tail(t_array);
-    const Element* s = Array_At(s_array, s_index);
-    const Element* t = Array_At(t_array, t_index);
-
-    if (s == s_tail or t == t_tail)
-        goto diff_of_ends;
-
-    while (
-        VAL_TYPE(s) == VAL_TYPE(t)
-        or (Any_Number(s) and Any_Number(t))
-    ){
-        REBINT diff;
-        if ((diff = Cmp_Value(s, t, is_case)) != 0)
-            return diff;
-
-        s++;
-        t++;
-
-        if (s == s_tail or t == t_tail)
-            goto diff_of_ends;
-    }
-
-    return VAL_TYPE(s) > VAL_TYPE(t) ? 1 : -1;
-
-  diff_of_ends:
-    //
-    // Treat end as if it were a REB_xxx type of 0, so all other types would
-    // compare larger than it.
-    //
-    if (s == s_tail) {
-        if (t == t_tail)
-            return 0;
-        return -1;
-    }
-    return 1;
-}
-
-
-//
 //  Cmp_Value: C
 //
 // Compare two values and return the difference.

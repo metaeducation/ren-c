@@ -79,13 +79,56 @@ DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
 //
 REBINT CT_Array(const Cell* a, const Cell* b, bool strict)
 {
-    return Compare_Arrays_At_Indexes(
-        Cell_Array(a),
-        VAL_INDEX(a),
-        Cell_Array(b),
-        VAL_INDEX(b),
-        strict
-    );
+    const Array* a_array = Cell_Array(a);
+    const Array* b_array = Cell_Array(b);
+    REBLEN a_index = VAL_INDEX(a);
+    REBLEN b_index = VAL_INDEX(b);
+
+    if (a_array == b_array) {
+        if (a_index == b_index)
+            return 0;
+
+        if (a_index > b_index)
+            return 1;
+        return -1;
+    }
+
+    const Element* a_tail = Array_Tail(a_array);
+    const Element* b_tail = Array_Tail(b_array);
+    const Element* a_item = Array_At(a_array, a_index);
+    const Element* b_item = Array_At(b_array, b_index);
+
+    if (a_item == a_tail or b_item == b_tail)
+        goto diff_of_ends;
+
+    while (
+        VAL_TYPE(a_item) == VAL_TYPE(b_item)
+        or (Any_Number(a_item) and Any_Number(b_item))
+    ){
+        REBINT diff;
+        if ((diff = Cmp_Value(a_item, b_item, strict)) != 0)
+            return diff;
+
+        ++a_item;
+        ++b_item;
+
+        if (a_item == a_tail or b_item == b_tail)
+            goto diff_of_ends;
+    }
+
+    return VAL_TYPE(a_item) > VAL_TYPE(b_item) ? 1 : -1;
+
+  diff_of_ends:
+    //
+    // Treat end as if it were a REB_xxx type of 0, so all other types would
+    // compare larger than it.
+    //
+    if (a_item == a_tail) {
+        if (b_item == b_tail)
+            return 0;
+        return -1;
+    }
+    return 1;
 }
 
 
