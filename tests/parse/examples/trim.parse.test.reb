@@ -117,17 +117,17 @@ utrim: func [
     ; /ALL just removes all whitespace entirely.  No subtlety needed.
     ;
     if all_TRIM [
-        parse series [try some [remove rule | <any> | <end> stop]]
+        parse series [opt some [remove rule | <any> | <end> stop]]
         return series
     ]
 
     case/all [
         head_TRIM [
-            parse series [try remove [some rule] to <end>]
+            parse series [opt remove [some rule] to <end>]
         ]
 
         tail_TRIM [
-            parse series [try some [remove [some rule <end>] | <any>]]  ; #2289
+            parse series [opt some [remove [some rule <end>] | <any>]]  ; #2289
         ]
     ] then [
         return series
@@ -139,7 +139,7 @@ utrim: func [
     ; with leading and trailing whitespace removed.
     ;
     if lines [
-        parse series [try some [change [some rule] (space) <any> | <any>]]
+        parse series [opt some [change [some rule] (space) <any> | <any>]]
         if space = first series [take series]
         if space = last series [take/last series]
         return series
@@ -153,21 +153,21 @@ utrim: func [
     if auto [
         parse- series [
             ; Don't count empty lines, (e.g. utrim/auto {^/^/^/    asdf})
-            try remove [some LF]
+            opt remove [some LF]
 
-            indent: measure try some rule  ; length of spaces and tabs
+            indent: measure opt some rule  ; length of spaces and tabs
         ]
     ]
 
-    let line-start-rule: [try remove repeat (indent) rule]
+    let line-start-rule: [opt remove repeat (indent) rule]
 
     parse series [
         line-start-rule
-        try some [
+        opt some [
             not <end>
                 ||
-            ahead [try some rule [newline | <end>]]
-            remove [try some rule]
+            ahead [opt some rule [newline | <end>]]
+            remove [opt some rule]
             newline line-start-rule
                 |
             <any>
@@ -178,8 +178,8 @@ utrim: func [
     ; in R3-Alpha and Red leaves at most one newline at the end.
     ;
     parse series [
-        try remove some newline
-        try some [newline remove [some newline <end>] | <any>]
+        opt remove some newline
+        opt some [newline remove [some newline <end>] | <any>]
     ]
 
     return series

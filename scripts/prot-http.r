@@ -172,12 +172,12 @@ parse-write-dialect: func [
 ][
     let spec: port.spec
     parse block [
-        try ['headers (spec.debug: true)]  ; may leave debug as-is
-        try ['no-redirect (spec.follow: 'ok)]  ; may leave follow as-is
+        opt ['headers (spec.debug: true)]  ; may leave debug as-is
+        opt ['no-redirect (spec.follow: 'ok)]  ; may leave follow as-is
         spec.method: [word! | ('post)]
-        try [spec.path: [file! | url!]]
+        opt [spec.path: [file! | url!]]
         spec.headers: [block! | ([])]
-        spec.content: try [&any-string? | binary!]
+        spec.content: opt [&any-string? | binary!]
         <end>
     ]
 ]
@@ -231,7 +231,7 @@ check-response: func [
             )
         ]
         if headers.last-modified [
-            info.date: try attempt [idate-to-date headers.last-modified]
+            info.date: try idate-to-date headers.last-modified
         ]
         remove/part conn.data d2
         state.mode: <reading-data>

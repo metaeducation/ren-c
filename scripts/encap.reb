@@ -608,13 +608,13 @@ pe-format: context [
             | skip
         ]
         block-rule: [
-            ahead group! into [try some group-rule]
-            | ahead block! into [try some block-rule]
+            ahead group! into [opt some group-rule]
+            | ahead block! into [opt some block-rule]
             | word: set-word! (find-a-word word)
             | skip
         ]
 
-        parse3 rule [try some block-rule]
+        parse3 rule [opt some block-rule]
 
         set name make object! append def '~
         return overbind (get name) rule
@@ -1009,7 +1009,7 @@ pe-format: context [
 
         ; Check if there's section name conflicts
 
-        let target-sec: try catch [
+        let target-sec: catch [
             for-each sec sections [
                 if section-name = to text! trim/with sec.name #{00} [
                     throw sec

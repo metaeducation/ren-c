@@ -110,7 +110,7 @@ func: func* [
     loc: null
     with-return: null
 
-    parse3 spec [try some [
+    parse3 spec [opt some [
         :(if var '[  ; so long as we haven't reached any <local> or <with> etc.
             var: [&any-word? | &any-path? | quoted!] (
                 append new-spec var
@@ -145,7 +145,7 @@ func: func* [
         false  ; failing here means rolling over to next rule
     |
         '<local> (append new-spec <local>)
-        try some [var: word! other: try group! (
+        opt some [var: word! other: opt group! (
             append new-spec var
             if other [
                 defaulters: default [inside body copy '[]]
@@ -161,7 +161,7 @@ func: func* [
                 copy/deep body
             ]
         )
-        try some [
+        opt some [
             other: [object! | word! | tuple!] (
                 if not object? other [
                     other: ensure [any-context?] get inside spec other
@@ -170,7 +170,7 @@ func: func* [
             )
         ]
     |
-        '<with> try some [
+        '<with> opt some [
             other: [word! | path!] (
                 ;
                 ; Definitional returns need to be signaled even if FUNC, so
@@ -193,8 +193,8 @@ func: func* [
                 copy/deep body
             ]
         )
-        try some [
-            var: word! (other: null) try other: group! (
+        opt some [
+            var: word!, other: opt group! (
                 append statics (as set-word! var)
                 append statics ((bindable other) else '~)  ; !!! ignore binding
             )

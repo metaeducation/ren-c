@@ -23,7 +23,7 @@
 ]
 
 (
-    "a" == parse "aaa" [some ["a", elide try stop "b"]]
+    "a" == parse "aaa" [some ["a", elide opt stop "b"]]
 )
 
 ; https://github.com/Oldes/Rebol-issues/issues/967

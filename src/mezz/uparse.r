@@ -78,8 +78,8 @@ Rebol [
 ;
 ; One of the parameter types that can be given to these functions are another
 ; parser, to combine them (hence "parser combinator").  So you can take a
-; combinator like TRY and parameterize it with SOME which is parameterized
-; with "A", to get a composite parser that implements `try some "a"`.
+; combinator like OPT and parameterize it with SOME which is parameterized
+; with "A", to get a composite parser that implements `opt some "a"`.
 ;
 ; But if a parameter to a combinator is marked as quoted, then that will take
 ; a value from the callsite literally.
@@ -1052,7 +1052,7 @@ default-combinators: make map! reduce [
 
     === ACCUMULATE ===
 
-    ; The pattern of `collect [try some keep [...]]` is common, and actually
+    ; The pattern of `collect [opt some keep [...]]` is common, and actually
     ; kind of easy to mess up by writing COLLECT KEEP SOME or just forgetting
     ; the KEEP entirely.
     ;

@@ -85,7 +85,7 @@
         ws: to-bitset unspaced [tab newline CR SP]
         abc: charset ["a" "b" "c"]
         rls: ["a", some ws, b: across some abc, some ws, "c"]
-        rla: ["a", try some ws, b: across some abc, try some ws, "c"]
+        rla: ["a", opt some ws, b: across some abc, opt some ws, "c"]
         true
     )
 
@@ -98,13 +98,13 @@
 
 [#1298 (
     cset: charset [#"^(01)" - #"^(FF)"]
-    "a" = parse "a" ["a" elide try some cset]
+    "a" = parse "a" ["a" elide opt some cset]
 )(
     cset: charset [# - #"^(FE)"]
-    null = parse "a" ["a" try some cset]
+    null = parse "a" ["a" opt some cset]
 )(
     cset: charset [# - #"^(FF)"]
-    "a" = parse "a" ["a" elide try some cset]
+    "a" = parse "a" ["a" elide opt some cset]
 )]
 
 [

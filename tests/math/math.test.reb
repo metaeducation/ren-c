@@ -35,7 +35,7 @@
 
     expression  ([
         term (expr-val: term-val)
-        try some [
+        opt some [
             ['+ (expr-op: 'add) | '- (expr-op: 'subtract)]
             term (expr-val: compose [(expr-op) (expr-val) (term-val)])
         ]
@@ -48,7 +48,7 @@
 
     term ([
         pow (term-val: power-val)
-        try some [
+        opt some [
             ['* (term-op: 'multiply) | slash (term-op: 'divide)]
             pow (term-val: compose [(term-op) (term-val) (power-val)])
         ]
@@ -58,7 +58,7 @@
 
     pow ([
         unary (power-val: unary-val)
-        try ['** unary (power-val: compose [power (power-val) (unary-val)])]
+        opt ['** unary (power-val: compose [power (power-val) (unary-val)])]
     ])
 
     unary-val (null)
@@ -69,9 +69,9 @@
 
     unary ([
         (post-uop: pre-uop: [])
-        try ['- (pre-uop: 'negate)]
+        opt ['- (pre-uop: 'negate)]
         primary
-        try ['! (post-uop: 'factorial)]
+        opt ['! (post-uop: 'factorial)]
         (unary-val: compose [(post-uop) (pre-uop) (prim-val)])
     ])
 
@@ -81,7 +81,7 @@
         set prim-val &any-number?
         | set prim-val [word! | path!] (prim-val: reduce [prim-val])
             ; might be a funtion call, looking for arguments
-            try some [
+            opt some [
                 nested-expression (append prim-val take nested-expr-val)
             ]
         | ahead group! into nested-expression (prim-val: take nested-expr-val)

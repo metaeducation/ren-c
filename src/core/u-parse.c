@@ -1557,15 +1557,11 @@ DECLARE_NATIVE(subparse)
                 FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
-              case SYM_OPT:
-                goto try_or_opt;
-
               case SYM_TRY:
-                if (P_FLAGS & PF_REDBOL)
-                    fail ("Please use OPT instead of TRY in PARSE2");
-                goto try_or_opt;
+                fail ("Please use OPT or OPTIONAL instead of TRY in PARSE");
 
-              try_or_opt:
+              case SYM_OPT:
+              case SYM_OPTIONAL:
                 P_FLAGS |= PF_OPTIONAL;
                 mincount = 0;
                 FETCH_NEXT_RULE(L);

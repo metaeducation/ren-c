@@ -39,7 +39,7 @@
             [block!]
     ]) lambda [f [frame!]] [
         let def: f.default
-        eval f else (try def)
+        eval f else (maybe def)
     ]
     true)
 

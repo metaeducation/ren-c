@@ -137,7 +137,7 @@
     ~parse-incomplete~ !! (parse #{0A0A0B0A0B0B0B0A} [some [#{0A} | #"^L"]])
 
     (#{0A} == parse #{0A0A} [some [#{0A}]])
-    (null = parse #{0A0A} [some [#{0A}] try some [#{0B}]])
+    (null = parse #{0A0A} [some [#{0A}] opt some [#{0B}]])
     (#{0B} == parse #{0A0A0B0B} [repeat 2 #{0A} repeat 2 #{0B}])
 
     ~parse-mismatch~ !! (parse #{0A0A0B0B} [repeat 2 #{0A} repeat 3 #{0B}])

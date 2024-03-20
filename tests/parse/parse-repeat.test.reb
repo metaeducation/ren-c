@@ -97,18 +97,18 @@
 
 ; Opt out completely
 [
-    ("a" == parse "aaaaaaa" [repeat (_) "b", try some "a"])
-    ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat (_) "b", try some "a"])
-    ("a" == parse "aa" [repeat (_) "b", try some "a"])
-    (null = parse "" [repeat (_) "b", try some "a"])
+    ("a" == parse "aaaaaaa" [repeat (_) "b", opt some "a"])
+    ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat (_) "b", opt some "a"])
+    ("a" == parse "aa" [repeat (_) "b", opt some "a"])
+    (null = parse "" [repeat (_) "b", opt some "a"])
 ]
 
 ; Opt out completely, block form
 [
-    ("a" == parse "aaaaaaa" [repeat ([_ _]) "b", try some "a"])
-    ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ _]) "b", try some "a"])
-    ("a" == parse "aa" [repeat ([_ _]) "b", try some "a"])
-    (null = parse "" [repeat ([_ _]) "b", try some "a"])
+    ("a" == parse "aaaaaaa" [repeat ([_ _]) "b", opt some "a"])
+    ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ _]) "b", opt some "a"])
+    ("a" == parse "aa" [repeat ([_ _]) "b", opt some "a"])
+    (null = parse "" [repeat ([_ _]) "b", opt some "a"])
 ]
 
 ; Minimum but no maximum

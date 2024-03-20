@@ -6,10 +6,10 @@
 ; but removed input etc. would create an issue.  FURTHER takes the test
 ; for advancement out and makes it usable with any rule.
 
-~parse-mismatch~ !! (parse "" [further [try "a" try "b"] ("at least one")])
-("at least 1" = parse "a" [further [try "a" try "b"] ("at least 1")])
-("at least 1" = parse "a" [further [try "a" try "b"] ("at least 1")])
-("at least 1" = parse "ab" [further [try "a" try "b"] ("at least 1")])
+~parse-mismatch~ !! (parse "" [further [opt "a" opt "b"] ("at least one")])
+("at least 1" = parse "a" [further [opt "a" opt "b"] ("at least 1")])
+("at least 1" = parse "a" [further [opt "a" opt "b"] ("at least 1")])
+("at least 1" = parse "ab" [further [opt "a" opt "b"] ("at least 1")])
 
 (void? parse "" [repeat (#) some further [to <end>]])
 
@@ -17,7 +17,7 @@
     ~parse-incomplete~ !! (parse "bx" [some further [not "b" | <any>]])
 ]
 
-; Only SOME is needed in Red, but try SOME FURTHER is needed here.  But the
+; Only SOME is needed in Red, while OPT SOME FURTHER is needed here.  But the
 ; reasoning is good for why UPARSE operates how it does.
 ;
 ; "It's a really convoluted way of thinking of what you're doing here as
@@ -28,13 +28,13 @@
 ;  like that?  Why use alternates instead of just saying it's zero-or-more
 ;  #"^L", then followed by a single not #{0B}?"
 [
-    ('a == parse [a a] [try some further ['c | not 'b] repeat 2 <any>])
-    (#a == parse "aa" [try some further [#c | not #b] repeat 2 <any>])
-    (10 == parse #{0A0A} [try some further [#"^L" | not #{0B}] repeat 2 <any>])
+    ('a == parse [a a] [opt some further ['c | not 'b] repeat 2 <any>])
+    (#a == parse "aa" [opt some further [#c | not #b] repeat 2 <any>])
+    (10 == parse #{0A0A} [opt some further [#"^L" | not #{0B}] repeat 2 <any>])
 
     ; Saner way to write it... no need for FURTHER.
     ;
-    ('a == parse [a a] [try some 'c, not 'b, repeat 2 <any>])
-    (#a == parse "aa" [try some #c, not #b, repeat 2 <any>])
-    (10 == parse #{0A0A} [try some #"^L", not #{0B}, repeat 2 <any>])
+    ('a == parse [a a] [opt some 'c, not 'b, repeat 2 <any>])
+    (#a == parse "aa" [opt some #c, not #b, repeat 2 <any>])
+    (10 == parse #{0A0A} [opt some #"^L", not #{0B}, repeat 2 <any>])
 ]

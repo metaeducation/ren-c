@@ -222,9 +222,9 @@ export analyse: context [
                 ]
 
                 if (parse3 proto-parser.data [
-                    try 'export
+                    opt 'export
                     name: set-word! (name: to-word name)
-                    try 'enfix
+                    opt 'enfix
                     [
                         'native
                         | 'native/combinator
@@ -356,13 +356,13 @@ export analyse: context [
 
             last-pos: <here>
 
-            try [
+            opt [
                 bol: <here>
                 skip (line: 1)
                 seek bol
             ]
 
-            try some [
+            opt some [
                 to stop-char
                 position: <here>
                 [
@@ -406,7 +406,7 @@ export analyse: context [
             not equal? 10 last data ; Check for newline.
         ] then [
             emit <eof-eol-missing> [
-                    (file) (reduce [try text-line-of tail of to text! data])
+                    (file) (reduce [text-line-of tail of to text! data])
             ]
         ]
 
@@ -473,7 +473,7 @@ c-parser-extension: context bind bind [
 
     append grammar.format-func-section [  ; spread loses binding
         last-func-end: <here>
-        try some [nl | eol | wsp]
+        opt some [nl | eol | wsp]
     ]
 
     append grammar.other-segment $(

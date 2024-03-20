@@ -567,7 +567,7 @@ ext-console-impl: func [
         let i
         if block? prior [
             parse3 prior [
-                try some [i: issue! (keep i)]
+                opt some [i: issue! (keep i)]
                 accept (true)
             ]
         ]

@@ -85,7 +85,7 @@
 
     let rule: [
         let a: <here>  ; Begin marking text to copy verbatim to output
-        try some [
+        opt some [
             to prefix  ; seek to prefix (may be void, this could be a no-op)
             let b: <here>  ; End marking text to copy verbatim to output
             prefix  ; consume prefix (if no-op, may not be at start of match)

@@ -101,7 +101,7 @@ clean-path: func [
     let count: 0
     let part
     parse3 reverse target [
-        try some [not <end> [
+        opt some [not <end> [
             "../"
             (count: me + 1)
             |
@@ -188,8 +188,8 @@ ask: func [
         type-block! [type: question]  ; `ask text!` has no prompt (like INPUT)
         block! [
             parse question [
-                try prompt: text!
-                try let word: *in* word! (type: ensure type-block! get word)
+                opt prompt: text!
+                opt let word: *in* word! (type: ensure type-block! get word)
             ] except [
                 fail "ASK currently only supports [{Prompt:} type-block!]"
             ]

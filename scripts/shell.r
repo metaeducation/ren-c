@@ -132,9 +132,9 @@ shell: func [
 
         let splice?: <default>
         switch/type item [
-            group! [splice?: false, item: try eval inside code item]
+            group! [splice?: false, item: eval inside code item]
 
-            get-group! [splice?: true, item: try eval inside code item]
+            get-group! [splice?: true, item: eval inside code item]
             get-block! [splice?: true, item: as block! inside code item]
         ]
         let needs-quotes?: func [return: [logic?] item] [

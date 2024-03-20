@@ -5,13 +5,13 @@
 (
     x: ~
     all [
-        "a" == parse "aaa" [x: try some "b", some "a"]
+        "a" == parse "aaa" [x: opt some "b", some "a"]
         x = null
     ]
 )(
     x: ~
     all [
-        "a" == parse "aaa" [x: try some "a"]
+        "a" == parse "aaa" [x: opt some "a"]
         x = "a"
     ]
 )
@@ -118,45 +118,45 @@
 (#c == parse "baaac" [<any> some [#a] #c])
 
 
-; TRY SOME or MAYBE SOME tests (which used to be WHILE)
+; OPT SOME or MAYBE SOME tests (which used to be WHILE)
 
 (
     x: ~
     all [
-        "a" == parse "aaa" [x: try some "b", try some "a"]
+        "a" == parse "aaa" [x: opt some "b", opt some "a"]
         null? x
     ]
 )
 
 [
-    (null = parse [] [try some 'a])
-    (null = parse [] [try some 'b])
-    ('a == parse [a] [try some 'a])
+    (null = parse [] [opt some 'a])
+    (null = parse [] [opt some 'b])
+    ('a == parse [a] [opt some 'a])
 
-    ~parse-incomplete~ !! (parse [a] [try some 'b])
+    ~parse-incomplete~ !! (parse [a] [opt some 'b])
 
-    ('a == parse [a] [try some 'b <any>])
-    ('b == parse [a b a b] [try some ['b | 'a]])
+    ('a == parse [a] [opt some 'b <any>])
+    ('b == parse [a b a b] [opt some ['b | 'a]])
 ]
 
 [(
     x: ~
     all [
-        "a" == parse "aaa" [x: try some "a"]
+        "a" == parse "aaa" [x: opt some "a"]
         x = "a"
     ]
 )]
 
 [
-    (null = parse "a" ["a" try some "b"])
-    (null = parse "a" ["a" [try "b"]])
-    ('~null~ = parse "a" ["a" ^[try some "b"]])
+    (null = parse "a" ["a" opt some "b"])
+    (null = parse "a" ["a" [opt "b"]])
+    ('~null~ = parse "a" ["a" ^[opt some "b"]])
 ]
 
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
 (
     i: 1
-    try parse "a" [try some [
+    try parse "a" [opt some [
         (
             i: i + 1
             j: if i = 2 [[<end> <any>]]
@@ -169,54 +169,54 @@
 [#1268 (
     i: 0
     <infinite?> = catch [
-        parse "a" [try some [(i: i + 1, if i > 100 [throw <infinite?>])]]
+        parse "a" [opt some [(i: i + 1, if i > 100 [throw <infinite?>])]]
     ]
 )(
     i: 0
     all [
-        raised? parse "a" [try some [(i: i + 1, j: if i = 2 [[false]]) j]]
+        raised? parse "a" [opt some [(i: i + 1, j: if i = 2 [[false]]) j]]
         i == 2
     ]
 )]
 
 
 [
-    (null = parse "" [try some #a])
-    (null = parse "" [try some #b])
-    (#a == parse "a" [try some #a])
-    ~parse-incomplete~ !! (parse "a" [try some #b])
-    (#a == parse "a" [try some #b <any>])
-    (#b == parse "abab" [try some [#b | #a]])
+    (null = parse "" [opt some #a])
+    (null = parse "" [opt some #b])
+    (#a == parse "a" [opt some #a])
+    ~parse-incomplete~ !! (parse "a" [opt some #b])
+    (#a == parse "a" [opt some #b <any>])
+    (#b == parse "abab" [opt some [#b | #a]])
 ]
 
-; WHILE tests from %parse-test.red, rethought as TRY SOME
+; WHILE tests from %parse-test.red, rethought as OPT SOME
 [
     (
         x: blank
         true
     )
     (#{06} == parse #{020406} [
-        try some [x: across <any> :(even? first x)]
+        opt some [x: across <any> :(even? first x)]
     ])
 
     ~parse-mismatch~ !! (parse #{01} [x: across <any> :(even? first x)])
     ~parse-mismatch~ !! (parse #{0105} [some [x: across <any> :(even? first x)]])
 
-    (null = parse #{} [try some #{0A}])
-    (null = parse #{} [try some #{0B}])
-    (#{0A} == parse #{0A} [try some #{0A}])
+    (null = parse #{} [opt some #{0A}])
+    (null = parse #{} [opt some #{0B}])
+    (#{0A} == parse #{0A} [opt some #{0A}])
 
-    ~parse-incomplete~ !! (parse #{0A} [try some #{0B}])
+    ~parse-incomplete~ !! (parse #{0A} [opt some #{0B}])
 
-    (10 == parse #{0A} [try some #{0B} <any>])
-    (#{0B} == parse #{0A0B0A0B} [try some [#{0B} | #{0A}]])
+    (10 == parse #{0A} [opt some #{0B} <any>])
+    (#{0B} == parse #{0A0B0A0B} [opt some [#{0B} | #{0A}]])
 
-    ~parse-mismatch~ !! (parse #{0A} [try some #{0A} #{0A}])
+    ~parse-mismatch~ !! (parse #{0A} [opt some #{0A} #{0A}])
 
     (1 == parse #{01} [ahead [#{0A} | #"^A"] <any>])
 ]
 
 [
-    ('a == parse [a a] [try some 'a])
-    (null == parse [a a] [try some 'a, try some 'b])
+    ('a == parse [a a] [opt some 'a])
+    (null == parse [a a] [opt some 'a, opt some 'b])
 ]

@@ -5,10 +5,10 @@
 [
     (circled: lambda [block [block!] <local> result] [
         parse block [
-            result: try thru subparse group! [
+            result: opt thru subparse group! [
                 <any> <end> | (fail "Circled Items Must Be Singular")
             ]
-            try [thru group! (fail "Only One Circle")]
+            opt [thru group! (fail "Only One Circle")]
             accept (result)
         ]
     ], true)

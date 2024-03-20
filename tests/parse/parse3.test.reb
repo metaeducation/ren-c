@@ -315,7 +315,7 @@
 )]
 [#1268 (
     i: 0
-    parse3 "a" [some [try "a" (i: i + 1, j: if i = 2 [[fail]]) j]]
+    parse3 "a" [some [opt "a" (i: i + 1, j: if i = 2 [[fail]]) j]]
     i == 2
 )]
 
@@ -430,7 +430,7 @@
     i: 1
     all [
         raised? parse3 "a" [
-            some [try "a" (i: i + 1 j: if i = 2 [[<end> skip]]) j]
+            some [opt "a" (i: i + 1 j: if i = 2 [[<end> skip]]) j]
         ]
         i == 2
     ]
@@ -617,23 +617,23 @@
 ;
 [
     (
-        parse3 "" [try some further [to <end>]]
+        parse3 "" [opt some further [to <end>]]
         true
     )
 
     ~parse3-incomplete~ !! (
-        parse3 "" [further [try "a" try "b"] ("at least one")]
+        parse3 "" [further [opt "a" opt "b"] ("at least one")]
     )
     (
-        parse3 "a" [further [try "a" try "b"] ("at least 1")]
+        parse3 "a" [further [opt "a" opt "b"] ("at least 1")]
         true
     )
     (
-        parse3 "a" [further [try "a" try "b"] ("at least 1")]
+        parse3 "a" [further [opt "a" opt "b"] ("at least 1")]
         true
     )
     (
-        parse3 "ab" [further [try "a" try "b"] ("at least 1")]
+        parse3 "ab" [further [opt "a" opt "b"] ("at least 1")]
         true
     )
 ]
@@ -665,7 +665,7 @@
             keep 'fail
         ]
         parse3 data (compose/deep [
-            try some [(spread rules)]  ; could also be `try some [rules]`
+            opt some [(spread rules)]  ; could also be `opt some [rules]`
         ]) except [
             return <outlier>
         ]
@@ -813,15 +813,15 @@
 
 [#1298 (
     cset: charset [#"^(01)" - #"^(FF)"]
-    parse3 "a" ["a" try some cset]
+    parse3 "a" ["a" opt some cset]
     true
 )(
     cset: charset [# - #"^(FE)"]
-    parse3 "a" ["a" try some cset]
+    parse3 "a" ["a" opt some cset]
     true
 )(
     cset: charset [# - #"^(FF)"]
-    parse3 "a" ["a" try some cset]
+    parse3 "a" ["a" opt some cset]
     true
 )]
 

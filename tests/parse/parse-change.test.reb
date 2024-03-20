@@ -30,7 +30,7 @@
 (
     s: {a}
     all [
-        raised? parse s [try change "b" ("x")]
+        raised? parse s [opt change "b" ("x")]
         s = {a}
     ]
 )
@@ -39,7 +39,7 @@
     s: {aba}
     all [
         '~change~ = ^ parse s [some [
-            try change "b" ("x")
+            opt change "b" ("x")
             elide <any>
         ]]
         s = {axa}

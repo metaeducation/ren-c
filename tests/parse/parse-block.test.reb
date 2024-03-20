@@ -76,7 +76,7 @@
     (
         x: ~
         all [
-            null == parse [1] [x: [integer! try text!]]
+            null == parse [1] [x: [integer! opt text!]]
             x = null
         ]
     )

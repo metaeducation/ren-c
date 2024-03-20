@@ -488,7 +488,7 @@ c99: func [
 
         let option
         let option-with-arg-rule: [
-            try space option: across to [space | <end>] (
+            opt space option: across to [space | <end>] (
                 ;
                 ; If you do something like `option {-DSTDIO_H="stdio.h"}, TCC
                 ; seems to process it like `-DSTDIO_H=stdio.h` which won't
@@ -528,17 +528,17 @@ c99: func [
             option-no-arg-rule
             |
             "-I"  ; add directory to search for #include files
-            try space temp: across to [space | <end>] (
+            opt space temp: across to [space | <end>] (
                 keep spread compose [include-path (temp)]
             )
             |
             "-L"  ; add directory to search for library files
-            try space temp: across to [space | <end>] (
+            opt space temp: across to [space | <end>] (
                 keep spread compose [library-path (temp)]
             )
             |
             "-l"  ; add library (-llibrary means search for "liblibrary.a")
-            try space temp: across to [space | <end>] (
+            opt space temp: across to [space | <end>] (
                 keep spread compose [library (temp)]
             )
             |
@@ -546,7 +546,7 @@ c99: func [
             option-with-arg-rule
             |
             "-o"  ; output file (else default should be "a.out")
-            try space outfile: across to [space | <end>] (  ; overwrites a.out
+            opt space outfile: across to [space | <end>] (  ; overwrites a.out
                 keep spread compose [output-file (outfile)]
             )
             |

@@ -19,7 +19,7 @@
 )(
     x: ~
     all [
-        null == parse [] [x: [try integer!]]
+        null == parse [] [x: [opt integer!]]
         x = null
     ]
 )(
@@ -31,7 +31,7 @@
 )(
     x: ~
     all [
-        null == parse [] [x: try [integer!]]
+        null == parse [] [x: opt [integer!]]
         x = null
     ]
 )
@@ -45,7 +45,7 @@
 
 
 ; SET-WORD! rules that do not match should not disrupt the variable, but if
-; TRY is used with it then that indicates it should be set to NULL.
+; OPT is used with it then that indicates it should be set to NULL.
 [(
     t: "t"
     i: "i"
@@ -58,7 +58,7 @@
     t: "t"
     i: "i"
     all [
-        <foo> == parse [<foo>] [i: try integer!, t: tag!]
+        <foo> == parse [<foo>] [i: opt integer!, t: tag!]
         i = null
         t = <foo>
     ]

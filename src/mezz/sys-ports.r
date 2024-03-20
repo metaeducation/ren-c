@@ -146,12 +146,12 @@ make-port*: func [
         ; Required scheme name, but "//" is optional (without it is a "URN")
         ; https://en.wikipedia.org/wiki/Uniform_Resource_Name
         ;
-        emit scheme: [as/ (word!) across some scheme-char] ":" try "//"
+        emit scheme: [as/ (word!) across some scheme-char] ":" opt "//"
 
         ; optional user [:pass] @
         [
             emit user: across some user-char
-            emit pass: try [":", across to "@"]
+            emit pass: opt [":", across to "@"]
             "@"
             |
             emit user: (null)
@@ -173,7 +173,7 @@ make-port*: func [
                 ; IP-address style, make a TUPLE!
                 ;
                 to/ (tuple!) across [
-                    try some [some digit "."], some digit
+                    opt some [some digit "."], some digit
                     not host-char  ; don't match "1.2.3.4a" as IP address
                 ]
                     |
@@ -185,12 +185,12 @@ make-port*: func [
                 ;
                 ahead [":" | <end>] (null)
             ]
-            emit port-id: try [":", to/ (integer!) across digits]
+            emit port-id: opt [":", to/ (integer!) across digits]
         ]
 
-        emit path: try [across some path-char]  ; optional path
+        emit path: opt [across some path-char]  ; optional path
 
-        emit tag: try ["#", across to <end>]  ; optional bookmark ("tag")
+        emit tag: opt ["#", across to <end>]  ; optional bookmark ("tag")
 
         emit ref: as/ (url!) <input>  ; alway save original URL for reference
     ]

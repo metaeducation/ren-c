@@ -26,7 +26,7 @@
 
 ~parse-mismatch~ !! (parse [x] ['x blank])
 ('_ = parse [x _] ['x _])
-('x == parse [x] [try blank 'x <end>])
+('x == parse [x] [opt blank 'x <end>])
 
 ~parse-mismatch~ !! (parse [] [blank blank blank])
 

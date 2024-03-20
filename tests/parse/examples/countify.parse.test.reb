@@ -17,7 +17,7 @@
             keep 'false
         ]
         parse data (compose/deep [
-            try some [(spread rules)]  ; could also be `try some [rules]`
+            opt some [(spread rules)]  ; could also be `opt some [rules]`
         ]) except [
             return <outlier>
         ]

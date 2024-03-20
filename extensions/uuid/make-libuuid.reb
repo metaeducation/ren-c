@@ -55,7 +55,7 @@ fix-randutils-c: func [
         add-config-h
         insert {^/#include <errno.h>^/}
 
-        try some [
+        opt some [
             comment-out-includes
 
             ; randutils.c:137:12: error:
@@ -100,7 +100,7 @@ fix-gen_uuid-c: func [
     parse3 text [
         add-config-h
 
-        try some [
+        opt some [
             ;comment out unneeded headers
             comment-out-includes
 

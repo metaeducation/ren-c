@@ -409,7 +409,7 @@ make-state-updater: func [
     parse transdialect [
         some [
             left: state-rule '-> right: [
-                subparse block! [try some state-rule, <subinput>]
+                subparse block! [opt some state-rule, <subinput>]
                 | across state-rule  ; ACROSS because we want BLOCK! (length 1)
             ]
             (append transitions spread reduce [left right])

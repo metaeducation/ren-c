@@ -42,7 +42,7 @@
         function-rule: [
            subparse group! [
                let code: word!
-               try some [integer! | function-rule]
+               opt some [integer! | function-rule]
                (keep code)
            ]
         ]

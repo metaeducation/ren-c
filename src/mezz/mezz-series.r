@@ -265,7 +265,7 @@ reword: func [
 
     let rule: [
         let a: <here>  ; Begin marking text to copy verbatim to output
-        try some [
+        opt some [
             to prefix  ; seek to prefix (may be void, this could be a no-op)
             let b: <here>  ; End marking text to copy verbatim to output
             prefix  ; consume prefix (if void, may not be at start of match)
@@ -560,15 +560,15 @@ split: func [
 
                 [
                     repeat (count) [
-                        series: across try [repeat (piece-size) skip] (
+                        series: across opt [repeat (piece-size) skip] (
                             keep series
                         )
                     ]
                     series: across to <end> (keep series)
                 ]
             ] else [
-                [try some [
-                    series: across [skip, repeat (size - 1) try skip] (
+                [opt some [
+                    series: across [skip, repeat (size - 1) opt skip] (
                         keep series
                     )
                 ]]
@@ -578,9 +578,9 @@ split: func [
             let mk1
             let mk2
             [
-                try some [not <end> [
+                opt some [not <end> [
                     mk1: <here>
-                    try some [mk2: <here>, [dlm | <end>] break | skip]
+                    opt some [mk2: <here>, [dlm | <end>] break | skip]
                     (keep copy/part mk1 mk2)
                 ]]
                 <end>
@@ -592,7 +592,7 @@ split: func [
                 some [not <end> [
                     mk1: across [to dlm | to <end>]
                     (keep mk1)
-                    try thru dlm
+                    opt thru dlm
                 ]]
             ]
         ]
@@ -603,7 +603,7 @@ split: func [
             some [not <end> [
                 mk1: across [to (<*> dlm) | to <end>]
                 (keep mk1)
-                try thru (<*> dlm)
+                opt thru (<*> dlm)
             ]]
         ]
     ]]

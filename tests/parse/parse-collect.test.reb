@@ -493,7 +493,7 @@ https://github.com/metaeducation/ren-c/issues/935
                 some [
                     keep integer!
                     | p: <here>, block!, seek (p), subparse &any-series? [
-                        keep collect [try some [
+                        keep collect [opt some [
                             keep integer! keep ('+)
                             | <any> keep (foo '-)
                         ]]
@@ -540,7 +540,7 @@ https://github.com/metaeducation/ren-c/issues/939
     out: ""
     rule: [
         (clear out)
-        try some [keep across to vowel skip 1 keep (#"-")]
+        opt some [keep across to vowel skip 1 keep (#"-")]
         keep across to <end>
     ]
     true

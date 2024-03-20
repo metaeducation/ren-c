@@ -75,7 +75,7 @@ make-file-block-parts: func [
     last-was-slash: false
 
     return collect [iterate block [
-        item: either group? block.1 [try eval inside block block.1] [block.1]
+        item: either group? block.1 [eval inside block block.1] [block.1]
 
         item: predicate item
 

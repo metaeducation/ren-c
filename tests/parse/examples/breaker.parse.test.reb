@@ -6,7 +6,7 @@
         let inner
         return parse text [collect while [not <end>] [
             (capturing: false)
-            try keep between <here> ["$(" (capturing: true) | <end>]
+            opt keep between <here> ["$(" (capturing: true) | <end>]
             :(if capturing '[
                 inner: between <here> ")"
                 keep (as word! inner)

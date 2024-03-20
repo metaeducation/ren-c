@@ -4,8 +4,8 @@
 
 [
     (
-        nanb: [#a try nanb #b]
-        nbnc: [#b try nbnc #c]
+        nanb: [#a opt nanb #b]
+        nbnc: [#b opt nbnc #c]
         nanbnc: [ahead [nanb #c] some #a nbnc]
         true
     )

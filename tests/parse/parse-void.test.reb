@@ -86,16 +86,16 @@
 
 ; Rules that may have a behavior -or- don't advance and always succeed are
 ; tricky to use.  But UPARSE does have some tools for it.  Here's a sample of
-; how you might mix MAYBE, FURTHER, SOME, and TRY.
+; how you might mix FURTHER, SOME, and OPT.
 
 (
     prefix: null
     suffix: ")"
 
     ")" = parse "aaa)))" [
-        try some further :(maybe prefix)
+        opt some further :(maybe prefix)
         some "a"
-        try some further :(maybe suffix)
+        opt some further :(maybe suffix)
      ]
 )
 

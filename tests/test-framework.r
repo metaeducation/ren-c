@@ -170,11 +170,11 @@ run-test-cluster: func [
         ;        2 = 1 + 1
         ;     )]
         ;
-        try some [url! | issue!]
+        opt some [url! | issue!]
 
         (expected-id: null)  ; default expects a true result, not error w/id
 
-        try [
+        opt [
             expected-id: quasiform! [(expected-id: unquasi expected-id)
                 '!! ahead group!
                 | (fail "~error-id~ must be followed by !! and a GROUP!")
@@ -203,7 +203,7 @@ process-tests: func [
     let body
     let collected
     parse3 test-sources [
-        try some [
+        opt some [
             flags: block! value: block! (
                 handler flags value  ; flags ignored atm
             )
@@ -315,8 +315,8 @@ export do-recover: func [
     else [
         parse3 read log-file [
             (last-vector: null)
-            try some [
-                try some whitespace
+            opt some [
+                opt some whitespace
                 [
                     position: <here>
 
@@ -348,7 +348,7 @@ export do-recover: func [
                                 "succeeded" <end>
                                 (successes: me + 1)
                                     |
-                                "failed" try ["," to <end>]  ; error msg
+                                "failed" opt ["," to <end>]  ; error msg
                                 (test-failures: me + 1)
                                     |
                                 "crashed" <end>

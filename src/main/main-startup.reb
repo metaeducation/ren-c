@@ -504,7 +504,7 @@ main-startup: func [
 
     let param
 
-    o.args: copy parse3/case argv [try some [ ; COPY to drop processed argv
+    o.args: copy parse3/case argv [opt some [ ; COPY to drop processed argv
 
         ; Double-dash means end of command line arguments, and the rest of the
         ; arguments are going to be positional.  In Rebol's case, that means a
