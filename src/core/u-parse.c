@@ -646,8 +646,12 @@ static REBIXO Parse_One_Rule(
                 return pos + 1;  // type was in typeset
             return END_FLAG; }
 
-          default:
+          case REB_TEXT:
+          case REB_ISSUE:
             break;
+
+          default:
+            fail ("Unknown value type for match in ANY-ARRAY!");
         }
 
         // !!! R3-Alpha said "Match with some other value"... is this a good
