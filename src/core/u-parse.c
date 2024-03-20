@@ -743,8 +743,12 @@ static REBIXO Parse_Array_One_Rule_Core(
         assert(index >= 0);
         return cast(REBLEN, index); }
 
-    default:
+    case REB_TEXT:
+    case REB_ISSUE:
         break;
+
+    default:
+        fail ("Unknown value type for match in ANY-ARRAY!");
     }
 
     // !!! R3-Alpha said "Match with some other value"... is this a good

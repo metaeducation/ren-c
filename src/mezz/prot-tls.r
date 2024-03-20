@@ -1338,22 +1338,22 @@ do-commands: function [
     parse commands [
         some [
             [
-                cmd: <client-hello> (
+                cmd: the <client-hello> (
                     client-hello/version ctx [1.0 1.2] ;-- min/max versioning
                 )
-                | cmd: <client-key-exchange> (
+                | cmd: the <client-key-exchange> (
                     client-key-exchange ctx
                 )
-                | cmd: <change-cipher-spec> (
+                | cmd: the <change-cipher-spec> (
                     change-cipher-spec ctx
                 )
-                | cmd: <finished> (
+                | cmd: the <finished> (
                     encrypted-handshake-msg ctx finished ctx
                 )
-                | cmd: #application arg: [text! | binary!] (
+                | cmd: the #application arg: [text! | binary!] (
                     application-data ctx arg
                 )
-                | cmd: <close-notify> (
+                | cmd: the <close-notify> (
                     alert-close-notify ctx
                 )
             ] (

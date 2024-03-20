@@ -96,7 +96,7 @@ function: func [
     ; !!! REVIEW: ignore self too if binding object?
     ;
     parse spec [any [
-        <void> (append new-spec <void>)
+        the <void> (append new-spec <void>)
     |
         if (var) [
             var: any-word! (
@@ -135,7 +135,7 @@ function: func [
         (var: _) ;-- everything below this line resets var
         fail ;-- failing here means rolling over to next rule
     |
-        <local>
+        the <local>
         any [var: word! (other: _) opt other: group! (
             append new-spec as set-word! var
             append exclusions var
@@ -148,7 +148,7 @@ function: func [
         )]
         (var: _) ;-- don't consider further GROUP!s or variables
     |
-        <in> (
+        the <in> (
             new-body: default [
                 append exclusions 'self
                 copy/deep body
@@ -164,13 +164,13 @@ function: func [
             )
         ]
     |
-        <with> any [
+        the <with> any [
             other: [word! | path!] (append exclusions other)
         |
             text! ;-- skip over as commentary
         ]
     |
-        <static> (
+        the <static> (
             statics: default [copy []]
             new-body: default [
                 append exclusions 'self
