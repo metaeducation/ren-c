@@ -316,7 +316,7 @@ rebsource: context [
                     ]
                     line: 1 + line
                 )
-                bol:
+                bol: <here>
             ]
 
             tabbed: copy []
@@ -325,29 +325,29 @@ rebsource: context [
             over-max-len: copy []
             inconsistent-eol: copy []
 
-            parse2/case data [
+            parse/case data [
 
-                last-pos:  ; <here>
+                last-pos: <here>
 
                 opt [
-                    bol:  ; <here>
+                    bol: <here>
                     skip (line: 1)
-                    :bol
+                    seek bol
                 ]
 
-                any [
+                opt some [
                     to stop-char
-                    position:
+                    position: <here>
                     [
                         eol count-line
                         | #"^-" (append tabbed line)
-                        | wsp and [line-ending | alt-ending] (
+                        | wsp ahead [line-ending | alt-ending] (
                             append whitespace-at-eol line
                         )
                         | skip
                     ]
                 ]
-                position:
+                position: <here>
 
                 to end
             ]
@@ -435,7 +435,7 @@ rebsource: context [
 
         lbrace: [and punctuator "{"]
         rbrace: [and punctuator "}"]
-        braced: [lbrace any [braced | not rbrace skip] rbrace]
+        braced: [lbrace opt some [braced | not rbrace skip] rbrace]
 
         function-spacing-rule: (
             bind/copy standard/function-spacing c.lexical/grammar
@@ -445,7 +445,7 @@ rebsource: context [
 
         append grammar/format-func-section [
             last-func-end:
-            any [nl | eol | wsp]
+            opt some [nl | eol | wsp]
         ]
 
         append/only grammar/other-segment the (

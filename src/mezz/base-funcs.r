@@ -95,7 +95,7 @@ function: func [
     ;
     ; !!! REVIEW: ignore self too if binding object?
     ;
-    parse spec [any [
+    parse spec [opt some [
         the <void> (append new-spec <void>)
     |
         if (var) [
@@ -136,7 +136,7 @@ function: func [
         fail ;-- failing here means rolling over to next rule
     |
         the <local>
-        any [var: word! (other: _) opt other: group! (
+        opt some [var: word! (other: _) opt other: group! (
             append new-spec as set-word! var
             append exclusions var
             if other [
@@ -154,7 +154,7 @@ function: func [
                 copy/deep body
             ]
         )
-        any [
+        opt some [
             other: [object! | word! | path!] (
                 if not object? other [other: ensure any-context! get other]
                 bind new-body other
@@ -164,7 +164,7 @@ function: func [
             )
         ]
     |
-        the <with> any [
+        the <with> opt some [
             other: [word! | path!] (append exclusions other)
         |
             text! ;-- skip over as commentary
@@ -177,7 +177,7 @@ function: func [
                 copy/deep body
             ]
         )
-        any [
+        opt some [
             var: word! (other: _) opt other: group! (
                 append exclusions var
                 append statics compose [
@@ -364,7 +364,7 @@ redescribe: function [
                 ]
             )
         ]
-        any [
+        opt some [
             param: [word! | get-word! | lit-word! | refinement! | set-word!]
 
             ; It's legal for the redescribe to name a parameter just to

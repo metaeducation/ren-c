@@ -261,7 +261,7 @@ trim: function [
 
     case/all [
         head_TRIM [
-            parse series [remove [any rule] to end]
+            parse series [remove [opt some rule] to end]
         ]
 
         tail_TRIM [
@@ -291,7 +291,7 @@ trim: function [
     if auto [
         parse/match series [  ; !!! May not succeed, rules can mismatch
             ; Don't count empty lines, (e.g. trim/auto {^/^/^/    asdf})
-            remove [any LF]
+            remove [opt some LF]
 
             (indent: 0)
             s: <here> some rule e: <here>
@@ -302,15 +302,15 @@ trim: function [
     ]
 
     line-start-rule: compose/deep [
-        remove [(if indent [[1 indent]] else ['any]) rule]
+        remove [(if indent [[1 indent]] else [[opt some]]) rule]
     ]
 
     parse series [
         line-start-rule
-        any [
+        opt some [
             while [
-                ahead [any rule [newline | end]]
-                remove [any rule]
+                ahead [opt some rule [newline | end]]
+                remove [opt some rule]
                 [newline line-start-rule]
                     |
                 skip
@@ -322,7 +322,7 @@ trim: function [
     ; in R3-Alpha and Red leaves at most one newline at the end.
     ;
     parse series [
-        remove [any newline]
+        remove [opt some newline]
         while [newline remove [some newline end] | skip]
     ]
 

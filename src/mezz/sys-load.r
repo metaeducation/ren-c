@@ -510,7 +510,7 @@ load-module: function [
             data: make block! length of source
 
             parse/match source [
-                any [
+                opt some [
                     tmp: <here>
                     name: opt set-word!
                     mod: [

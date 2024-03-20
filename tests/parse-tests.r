@@ -96,7 +96,7 @@
 (
     i: 0
     parse/match "a." [
-        any [thru "a" (i: i + 1 j: if i > 1 [[end skip]]) j]
+        opt some [thru "a" (i: i + 1 j: if i > 1 [[end skip]]) j]
     ]
     i == 1
 )
@@ -133,7 +133,7 @@
 )]
 [#1268 (
     i: 0
-    parse/match "a" [any [(i: i + 1)]]
+    parse/match "a" [opt some [(i: i + 1)]]
     i == 1
 )]
 [#1268 (
@@ -147,8 +147,8 @@
 [#1267 (
     b: "abc"
     c: ["a" | "b"]
-    a2: [any [b e: (d: [:e]) then fail | [c | (d: [fail]) fail]] d]
-    a4: [any [b then e: (d: [:e]) fail | [c | (d: [fail]) fail]] d]
+    a2: [opt some [b e: (d: [:e]) then fail | [c | (d: [fail]) fail]] d]
+    a4: [opt some [b then e: (d: [:e]) fail | [c | (d: [fail]) fail]] d]
     equal? parse/match/redbol "aaaaabc" a2 parse/match/redbol "aaaaabc" a4
 )]
 
@@ -240,7 +240,7 @@
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
 (
     i: 1
-    parse/match "a" [any [(i: i + 1 j: if i = 2 [[end skip]]) j]]
+    parse/match "a" [opt some [(i: i + 1 j: if i = 2 [[end skip]]) j]]
     i == 2
 )
 

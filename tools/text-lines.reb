@@ -21,7 +21,7 @@ decode-lines: function [
     pattern: compose/only [(line-prefix)]
     if not empty? indent [append pattern compose/only [opt (indent)]]
     line: [pos: pattern rest: (rest: remove/part pos rest) :rest thru newline]
-    parse2/match text [any line] else [
+    parse2/match text [opt some line] else [
         fail [
             {Expected line} (reify text-line-of text pos)
             {to begin with} (mold line-prefix)
@@ -44,9 +44,10 @@ encode-lines: func [
     ; Encode newlines.
     bol: join line-prefix indent
     parse2 text [
-        any [
-            thru newline pos:
-            [newline (pos: insert pos line-prefix) | (pos: insert pos bol)] :pos
+        opt some [
+            thru newline pos:  ; <here>
+            [newline (pos: insert pos line-prefix) | (pos: insert pos bol)]
+            :pos  ; SEEK
         ]
         to end  ; !!! Was just plain END, but did not check completion!
     ]
@@ -107,8 +108,16 @@ lines-exceeding: function [ ;-- !!! Doesn't appear used, except in tests (?)
     ]
 
     parse2/match text [  ; doesn't succeed, /MATCH suppresses error
-        any [bol: to newline eol: skip count-line]
-        bol: skip to end eol: count-line
+        opt [
+            bol:  ; <here>
+            to newline
+            eol:  ; <here>
+            skip count-line
+        ]
+        bol:  ; <here>
+        skip to end
+        eol:  ; <here>
+        count-line
         to end  ; !!! Said plain END here, but didn't check...parse mismatches!
     ]
 
@@ -130,8 +139,8 @@ text-line-of: function [
     advance: [skip (line: line + 1)]
 
     parse2/match text [  ; doesn't succeed e.g. TEXT-LINE-OF {}
-        any [
-            to newline cursor:
+        opt some [
+            to newline cursor:  ; <here>
             if (lesser? index of cursor idx)
             advance
         ]
@@ -159,8 +168,8 @@ text-location-of: function [
     advance: [eol: skip (line: line + 1)]
 
     parse2 text [
-        any [
-            to newline cursor:
+        opt some [
+            to newline cursor:  ; <here>
             if (lesser? index of cursor idx)
             advance
         ]

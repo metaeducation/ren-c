@@ -310,7 +310,7 @@ reword: function [
         ; Begin marking text to copy verbatim to output
         a: <here>
 
-        any [
+        opt some [
             ; Seek to the prefix.  Note that the prefix may be BLANK!, in
             ; which case this is a no-op.
             ;
@@ -660,7 +660,7 @@ split: function [
                     series: across to end (keep/only series)
                 ]
             ] else [
-                [any [series: across 1 size skip (keep/only series)] end]
+                [opt some [series: across 1 size skip (keep/only series)] end]
             ]
         ] else [
             ; A block that is not all integers, e.g. not `[1 1 1]`, acts as a
@@ -669,7 +669,7 @@ split: function [
             ensure [bitset! text! char! block!] dlm
 
             [
-                any [mk1: <here> some [mk2: <here> dlm break | skip] (
+                opt some [mk1: <here> some [mk2: <here> dlm break | skip] (
                     keep/only copy/part mk1 mk2
                 )]
                 end

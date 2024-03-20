@@ -52,9 +52,12 @@ cscape: function [
     num-text: to text! num ;-- CHANGE won't take GROUP! to evaluate, #1279
 
     list: collect [
-        parse2 string [(col: 0) start: any [
+        parse2 string [
+          (col: 0)
+          start:  ; <here>
+          opt some [
             [
-                (prefix: _ suffix: _) finish:
+                (prefix: _ suffix: _) finish:  ; <here>
 
                 "${" change [copy expr: [to "}"]] num-text skip (
                     mode: #cname
@@ -87,7 +90,7 @@ cscape: function [
                 num-text: to text! num
             )
                 |
-            newline (col: 0 prefix: _ suffix: _) start:
+            newline (col: 0 prefix: _ suffix: _) start:  ; <here>
                 |
             skip (col: col + 1)
         ]]

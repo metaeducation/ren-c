@@ -116,7 +116,7 @@ make-port*: function [
 
             ; optional host [:port]
             opt [
-                s1: across any user-char
+                s1: across opt some user-char
                 opt [
                     ":" s2: across digits (
                         append out compose [

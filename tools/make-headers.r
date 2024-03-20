@@ -288,7 +288,7 @@ sys-globals.parser: context [
     grammar: context bind [
 
         rule: [
-            any [
+            opt some [
                 parse.position:
                 segment
             ]
@@ -297,7 +297,7 @@ sys-globals.parser: context [
         segment: [
             (id: _)
             span-comment
-            | line-comment any [newline line-comment] newline
+            | line-comment opt some [newline line-comment] newline
             | opt wsp directive
             | declaration
             | other-segment
@@ -314,7 +314,7 @@ sys-globals.parser: context [
         directive: [
             copy data [
                 ["#ifndef" | "#ifdef" | "#if" | "#else" | "#elif" | "#endif"]
-                any [not newline c-pp-token]
+                opt some [not newline c-pp-token]
             ] eol
             (
                 process-conditional data parse.position e-syms

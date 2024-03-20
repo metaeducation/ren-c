@@ -56,7 +56,7 @@ make object! [
     ;; even if that text is invalid rebol syntax.
 
     set 'test-source-rule [
-        any [
+        opt some [
             position: <here>
 
             ["{" | {"}] (
@@ -143,7 +143,7 @@ make object! [
             ]
         ]
 
-        any-wsp: [any [wsp emit-token]]
+        any-wsp: [opt some [wsp emit-token]]
 
         single-value: parsing-at x [
             trap [
@@ -164,7 +164,7 @@ make object! [
 
         grouped-tests: [
             "[" (type: in types 'grpb) emit-token
-            any [
+            opt some [
                 any-wsp single-value
                 [
                     if (tag? value) (
@@ -181,7 +181,7 @@ make object! [
                 if (text? value) (type: in types 'str)
                 emit-token
             ]
-            any [any-wsp single-test emit-token]
+            opt some [any-wsp single-test emit-token]
             any-wsp "]" (type: in types 'grpe) emit-token
         ]
 
@@ -225,7 +225,7 @@ make object! [
             position: <here> (type: value: _)
         ]
 
-        rule: [any token end]
+        rule: [opt some token end]
 
         parse/match test-sources rule else [
             append collected-tests reduce [
@@ -250,8 +250,8 @@ make object! [
 
         parse log-contents [
             (guard: [end skip])
-            any [
-                any whitespace
+            opt some [
+                opt some whitespace
                 [
                     position: "%"
                     (value: transcode/next position the next-position:)
@@ -262,7 +262,7 @@ make object! [
                     {"} thru {"}
                         |
                     last-vector: across ["(" test-source-rule ")"]
-                    any whitespace
+                    opt some whitespace
                     [
                         end (
                             ; crash found

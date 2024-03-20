@@ -442,7 +442,7 @@ for-each-system: function [
             platform-name: to-word platform-name
         )
         set platform-number integer!
-        any [
+        opt some [
             set id tuple!
             [quote _ (
                 os: _
@@ -461,16 +461,16 @@ for-each-system: function [
                     build-label: to-word build-label
                 )
             ]
-            copy definitions [any issue!] (
+            copy definitions [opt some issue!] (
                 definitions: map-each x definitions [to-word x]
             )
-            copy cflags [any tag!] (
+            copy cflags [opt some tag!] (
                 cflags: map-each x cflags [to-word to-text x]
             )
-            copy ldflags [any refinement!] (
+            copy ldflags [opt some refinement!] (
                 ldflags: map-each x ldflags [to-word x]
             )
-            copy libraries [any file!] (
+            copy libraries [opt some file!] (
                 libraries: map-each x libraries [to-word to-text x]
             )
 

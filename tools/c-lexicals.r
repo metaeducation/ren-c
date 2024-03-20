@@ -59,7 +59,7 @@ c.lexical: context [
         ;
         ; -- A.1.3 Identifiers
 
-        identifier: [id.nondigit any id.char]
+        identifier: [id.nondigit opt some id.char]
         id.nondigit: [nondigit | universal-character-name]
 
         ;
@@ -91,7 +91,7 @@ c.lexical: context [
         ]
 
         hexadecimal-escape-sequence: [
-            {\x} hexadecimal-digit any hexadecimal-digit
+            {\x} hexadecimal-digit opt some hexadecimal-digit
         ]
 
         octal-escape-sequence: [#"\" 1 3 octal-digit]
@@ -100,7 +100,7 @@ c.lexical: context [
         ; -- A.1.6 String literals
 
         string-literal: [
-            opt encoding-prefix #"^"" any s-char #"^""
+            opt encoding-prefix #"^"" opt some s-char #"^""
         ]
         encoding-prefix: [{u8} | #"L" | #"u" | #"U"]
         s-char: [s-char.cs | escape-sequence]
@@ -126,7 +126,7 @@ c.lexical: context [
 
         pp-number: [
             [digit | #"." digit]
-            any [
+            opt some [
                 digit
                 | id.nondigit
                 | #"."

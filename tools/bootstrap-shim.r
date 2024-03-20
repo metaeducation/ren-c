@@ -370,7 +370,7 @@ split-path: lib/func [
     pos: _
     parse2 location [
         [#"/" | 1 2 #"." opt #"/"] end (dir: dirize location) |
-        pos: any [thru #"/" [end | pos:]] (
+        pos: opt some [thru #"/" [end | pos:]] (
             all [
                 empty? dir: copy/part location at head of location index of pos
                     |

@@ -93,7 +93,7 @@ make object! compose [
         emit-test [action!]
     ][
         parse test-sources [
-            any [
+            opt some [
                 flags: block! value: skip (
                     emit-test flags to text! value
                 )
@@ -151,8 +151,8 @@ make object! compose [
                         last-vector: _
                         guard: [end skip]
                     )
-                    any [
-                        any whitespace
+                    opt some [
+                        opt some whitespace
                         [
                             position: "%" (
                                 value: transcode/next position 'next-position
@@ -165,7 +165,7 @@ make object! compose [
                             (dialect-failures: dialect-failures + 1)
                                 |
                             last-vector: across ["(" test-source-rule ")"]
-                            any whitespace
+                            opt some whitespace
                             [
                                 end (
                                     ; crash found

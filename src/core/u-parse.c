@@ -1386,11 +1386,21 @@ DECLARE_NATIVE(subparse)
                     // Note: mincount = maxcount = 1 on entry
                     case SYM_WHILE:
                         P_FLAGS |= PF_WHILE;
-                        // falls through
-                    case SYM_ANY:
                         mincount = 0;
-                        // falls through
+                        goto handle_loop;
+
+                    case SYM_ANY:
+                        if (not (P_FLAGS & PF_REDBOL))
+                            fail (
+                                "Please replace PARSE's ANY with OPT SOME"
+                                " -- it's being reclaimed for a new construct"
+                                " https://forum.rebol.info/t/1540/12 (or use PARSE2)"
+                            );
+                        mincount = 0;
+                        goto handle_loop;
+
                     case SYM_SOME:
+                    handle_loop:
                         maxcount = INT32_MAX;
                         FETCH_NEXT_RULE(L);
                         continue;

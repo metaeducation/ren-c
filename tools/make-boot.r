@@ -673,7 +673,7 @@ for-each [sw-cat list] boot-errors [
 
         arity: 0
         if block? message [ ;-- can have N GET-WORD! substitution slots
-            parse2 message [any [get-word! (arity: arity + 1) | skip]]
+            parse2 message [opt some [get-word! (arity: arity + 1) | skip]]
         ] else [
             ensure text! message ;-- textual message, no arguments
         ]
@@ -682,7 +682,7 @@ for-each [sw-cat list] boot-errors [
         ;
         f-name: uppercase/part to-c-name id 1
         parse2 f-name [
-            any ["_" w: (uppercase/part w 1) | skip]
+            opt some ["_" w: (uppercase/part w 1) | skip]
         ]
 
         if arity = 0 [

@@ -30,7 +30,7 @@ decode-key-value-text: function [
 ][
 
     data-fields: [
-        any [
+        opt some [
             position:
             data-field
             | newline
@@ -39,16 +39,21 @@ decode-key-value-text: function [
     ]
 
     data-field: [
-        data-field-name eof: [
-            #" " to newline any [
+        data-field-name eof:  ; <here>
+          [
+            #" " to newline opt some [
                 newline not data-field-name not newline to newline
             ]
-            | any [1 2 newline 2 20 #" " to newline]
-        ] eol: (emit-meta) newline
+            | opt some [1 2 newline 2 20 #" " to newline]
+        ]
+        eol:  ; <here>
+        (emit-meta) newline
     ]
 
     data-field-char: charset [#"A" - #"Z" #"a" - #"z"]
-    data-field-name: [some data-field-char any [#" " some data-field-char] #":"]
+    data-field-name: [
+        some data-field-char opt some [#" " some data-field-char] #":"
+    ]
 
     emit-meta: func [<local> key] [
         key: replace/all copy/part position eof #" " #"-"
@@ -127,7 +132,7 @@ proto-parser: context [
 
         rule: [
             parse.position: opt fileheader
-            any [parse.position: segment]
+            opt some [parse.position: segment]
         ]
 
         fileheader: [
@@ -144,7 +149,7 @@ proto-parser: context [
             (proto.id: proto.arg.1: _)
             format-func-section
             | span-comment
-            | line-comment any [newline line-comment] newline
+            | line-comment opt some [newline line-comment] newline
             | opt wsp directive
             | other-segment
         ]
@@ -152,7 +157,7 @@ proto-parser: context [
         directive: [
             copy data [
                 ["#ifndef" | "#ifdef" | "#if" | "#else" | "#elif" | "#endif"]
-                any [not newline c-pp-token]
+                opt some [not newline c-pp-token]
             ] eol
             (
                 emit-directive data
@@ -170,7 +175,7 @@ proto-parser: context [
         format-func-section: copy/deep [
             doubleslashed-lines
             and is-intro
-            function-proto any white-space
+            function-proto opt some white-space
             function-body
             (
                 ; EMIT-PROTO doesn't want to see extra whitespace (such as
@@ -272,13 +277,13 @@ proto-parser: context [
                     ]
                 ]
                 "("
-                any white-space
+                opt some white-space
                 opt [
                     not typemacro-parentheses
                     not ")"
                     copy proto.arg.1 identifier
                 ]
-                any [typemacro-parentheses | not ")" [white-space | skip]]
+                opt some [typemacro-parentheses | not ")" [white-space | skip]]
                 ")"
             ]
         ]
