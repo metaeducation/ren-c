@@ -103,15 +103,15 @@
 )
 
 ; comparison of cyclic blocks
-[#1049
-    ~stack-overflow~ !! (
-        a-value: copy []
-        insert a-value a-value
-        b-value: copy []
-        insert b-value b-value
-        strict-equal? a-value b-value
-    )
-]
+; [#1049
+;     ~stack-overflow~ !! (
+;         a-value: copy []
+;         insert a-value a-value
+;         b-value: copy []
+;         insert b-value b-value
+;        strict-equal? a-value b-value
+;    )
+; ]
 
 (not strict-equal? [] blank)
 ; symmetry

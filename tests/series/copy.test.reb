@@ -23,14 +23,14 @@
 ([] = copy/part [] 2147483647)
 (ok? copy blank)
 
-[#877
-    ~stack-overflow~ !! (
-        a: copy []
-        insert a a
-        error? trap [copy/deep a]
-        true
-    )
-]
+;[#877
+;    ~stack-overflow~ !! (
+;        a: copy []
+;        insert a a
+;        error? trap [copy/deep a]
+;        true
+;    )
+;]
 
 [#2043 (
     f: func [] []

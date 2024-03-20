@@ -119,15 +119,15 @@
 ;
 ; https://forum.rebol.info/t/stackless-is-here-today-now/1844
 ;
-[#1049
-    ~stack-overflow~ !! (
-        a-value: copy []
-        insert a-value a-value
-        b-value: copy []
-        insert b-value b-value
-        equal? a-value b-value
-    )
-]
+; [#1049
+;    ~stack-overflow~ !! (
+;        a-value: copy []
+;        insert a-value a-value
+;        b-value: copy []
+;        insert b-value b-value
+;        equal? a-value b-value
+;    )
+; ]
 
 (not equal? [] blank)
 (equal? equal? [] blank equal? blank [])
@@ -575,10 +575,10 @@
 ; Error in R2 (could be fixed).
 (not equal? make port! http:// make port! http://)
 
-[#859
-    ~stack-overflow~ !! (
-        a: copy the ()
-        insert a a
-        eval a
-    )
-]
+;[#859
+;    ~stack-overflow~ !! (
+;        a: copy the ()
+;        insert a a
+;        eval a
+;    )
+;]

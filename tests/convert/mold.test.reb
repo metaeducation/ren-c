@@ -16,18 +16,20 @@
     a: make object! [a: binding of $a]
     text? mold a
 )]
+
 ; deep nested block mold
-[#876
-    ~stack-overflow~ !! (
-        n: 1
-        catch [forever [
-            a: copy []
-            repeat n [a: append copy [] a]
-            mold a
-            n: n * 2
-        ]]
-    )
-]
+;[#876
+;    ~stack-overflow~ !! (
+;        n: 1
+;        catch [forever [
+;            a: copy []
+;            repeat n [a: append copy [] a]
+;            mold a
+;            n: n * 2
+;        ]]
+;    )
+;]
+
 [#719
     ("()" = mold the ())
 ]

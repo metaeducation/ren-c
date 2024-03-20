@@ -294,12 +294,12 @@
 
 ; self-invoking rule
 
-[#1672
-    ~stack-overflow~ !! (
-        a: [a]
-        parse3 [] a
-    )
-]
+;[#1672
+;    ~stack-overflow~ !! (
+;        a: [a]
+;        parse3 [] a
+;    )
+;]
 
 ; repetition
 

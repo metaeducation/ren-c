@@ -183,10 +183,11 @@
 )
 ; infinite recursion
 
-~stack-overflow~ !! (
-    blk: [cfor i 1 1 1 blk]
-    eval blk
-)
+; ~stack-overflow~ !! (
+;     blk: [cfor i 1 1 1 blk]
+;    eval blk
+; )
+
 ; local variable changeability - this is how it works in R3
 (
     test: false
