@@ -814,7 +814,10 @@ static REBIXO To_Thru_Block_Rule(
                             return Series_Len(P_INPUT);
                         goto next_alternate_rule;
                     }
-                    else if (cmd == SYM_QUOTE) {
+                    else if (cmd == SYM_THE or cmd == SYM_QUOTE) {
+                        if (cmd == SYM_QUOTE and not (P_FLAGS & PF_REDBOL))
+                            fail ("Use THE and not QUOTE unless PARSE/REDBOL");
+
                         rule = ++blk; // next rule is the quoted value
                         if (IS_END(rule))
                             fail (Error_Parse_Rule());
@@ -1840,7 +1843,15 @@ DECLARE_NATIVE(subparse)
                         i = To_Thru_Non_Block_Rule(L, subrule, is_thru);
                     break; }
 
-                case SYM_QUOTE: {
+                case SYM_QUOTE:
+                    if (not (P_FLAGS & PF_REDBOL))
+                        fail ("THE and not QUOTE unless using PARSE/REDBOL");
+                    goto literal_match;
+
+                case SYM_THE:
+                    goto literal_match;
+
+                literal_match: {
                     if (not IS_SER_ARRAY(P_INPUT))
                         fail (Error_Parse_Rule()); // see #2253
 

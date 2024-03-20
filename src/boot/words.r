@@ -206,7 +206,7 @@ skip
 to
 thru
 quote
-do
+the
 into
 only
 end  ; must be last (SYM_END referred to by GET_VAR() in %u-parse.c)
