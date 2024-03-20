@@ -205,9 +205,9 @@ export analyse: context [
                             parse2 last-func-end [
                                 function-spacing-rule
                                 position: <here>
-                                to end  ; accept (true)
+                                accept (true)
                                 |
-                                end skip  ; accept (false)
+                                accept (null)
                             ]
                             same? position proto-parser.parse-position
                         ] else [
@@ -221,7 +221,7 @@ export analyse: context [
 
                 if (parse3 proto-parser.data [
                     try 'export
-                    set name: set-word! (name: to-word name)
+                    name: set-word! (name: to-word name)
                     try 'enfix
                     [
                         'native

@@ -115,7 +115,7 @@ export proto-parser: context [
         ]
 
         directive: [
-            copy data [
+            data: across [
                 ["#ifndef" | "#ifdef" | "#if" | "#else" | "#elif" | "#endif"]
                 opt some [not newline c-pp-token]
             ] eol
@@ -167,12 +167,12 @@ export proto-parser: context [
 
         function-body: #"{"
 
-        doubleslashed-lines: [copy lines some ["//" thru newline]]
+        doubleslashed-lines: [lines: across some ["//" thru newline]]
 
         is-fileheader: parsing-at position [
             all [  ; note: not LOGIC!, a series
                 lines: attempt [decode-lines lines {//} { }]
-                parse2 lines [copy data to {=///} to end]
+                parse2 lines [data: across to {=///} to end]
                 data: attempt [load-until-blank trim/auto data]
                 data: attempt [
                     if set-word? first data/1 [data/1] else [false]
@@ -222,13 +222,13 @@ export proto-parser: context [
         ]
 
         function-proto: [
-            copy proto [
+            proto: across [
                 not white-space
                 some [
                     typemacro-parentheses
                     | [
                         not "(" not "="
-                        [white-space | copy proto-id identifier | skip]
+                        [white-space | proto-id: across identifier | skip]
                     ]
                 ]
                 "("
@@ -236,7 +236,7 @@ export proto-parser: context [
                 opt [
                     not typemacro-parentheses
                     not ")"
-                    copy proto-arg-1 identifier
+                    proto-arg-1: across identifier
                 ]
                 opt some [typemacro-parentheses | not ")" [white-space | skip]]
                 ")"

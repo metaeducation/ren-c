@@ -117,11 +117,11 @@ export collect-tests: func [
             ;
             ;    ~bad-pick~ !! (pick #{00} 'x)
             [
-                set expected: quasiform! ['!! | (fail "!! must follow ~error-id~")]
+                expected: quasiform! ['!! | (fail "!! must follow ~error-id~")]
                 |
                 (expected: null)
             ]
-            set group: group! (
+            group: group! (
                 keep flags, flags: copy []
 
                 ; Treat a top level group (...) as if you wrote [(...)].
@@ -136,7 +136,7 @@ export collect-tests: func [
             ; runs all groups that start newlines as tests...interleaved
             ; with whatever other code there is.
             ;
-            set item block! (
+            item: block! (
                 keep flags, flags: copy []
                 keep/line item
             )
@@ -155,7 +155,7 @@ export collect-tests: func [
             ; the feature will shape up to be, but there were stray tags,
             ; so just collect them... nothing looks at them right now.
             ;
-            set item tag! (
+            item: tag! (
                 append flags item
             )
             |
@@ -163,7 +163,7 @@ export collect-tests: func [
             ; another file, to sub-factor tests.  Right now the top level
             ; %core-tests.r is the only one that accepts subfiles.
             ;
-            set item file! (
+            item: file! (
                 let referenced-file: item
 
                 change-dir maybe split-path file
@@ -173,7 +173,7 @@ export collect-tests: func [
             |
             ; New feature: test generation and collection
             ;
-            '@collect-tests, set body block! (
+            '@collect-tests, body: block! (
                 keep @collect-tests
                 keep body
             )
@@ -220,7 +220,7 @@ export collect-logs: func [
                 some whitespace
                 {"} thru {"}
                     |
-                copy last-vector ["(" test-source-rule ")"]
+                last-vector: across ["(" test-source-rule ")"]
                 try some whitespace
                 [
                     <end> (

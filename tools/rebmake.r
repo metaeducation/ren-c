@@ -83,8 +83,8 @@ filter-flag: func [
     let header
     let option
     parse2 to text! flag [
-        copy header to ":"
-        ":" copy option to end
+        header: across to ":"
+        ":" option: across to end
     ] else [
         fail ["Tag must be <prefix:flag> ->" (flag)]
     ]
@@ -146,7 +146,7 @@ pkg-config: func [  ; !!! Note: Does not appear to be used
     parse2 x [
         some [
             thru dlm
-            copy item: to [dlm | end] (
+            item: across to [dlm | end] (
                 ;dump item
                 append ret to file! item
             )
@@ -472,9 +472,9 @@ gcc: make compiler-class [
             let letter: charset [#"a" - #"z" #"A" - #"Z"]
             parse2 version [
                 "gcc (" some [letter | digit | #"_"] ")" space
-                copy major: some digit "."
-                copy minor: some digit "."
-                copy macro: some digit
+                major: across some digit "."
+                minor: across some digit "."
+                macro: across some digit
                 to end
             ] then [
                 version: reduce [  ; !!! It appears this is not used (?)
@@ -1262,8 +1262,8 @@ generator-class: make object! [
                 opt some [
                     change [
                         [
-                            "$(" copy name: some [letter | digit | #"_"] ")"
-                            | "$" copy name: letter
+                            "$(" name: across some [letter | digit | #"_"] ")"
+                            | "$" name: across letter
                         ] (
                             val: localize select vars name
                             stop: false

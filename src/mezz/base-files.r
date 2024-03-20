@@ -205,8 +205,8 @@ split-path: func [
     <local> text directory
 ][
     parse3 as text! target [
-        copy directory try some thru "/"
-        copy filename thru <end>
+        directory: across opt some thru "/"
+        filename: across thru <end>
     ]
     if empty? directory [
         directory: null

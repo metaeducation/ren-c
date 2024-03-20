@@ -37,7 +37,7 @@ capitalize: func [
 iso-3166-table: make map! 512
 parse3 cnt [
     some [
-        copy name to ";"
+        name: across to ";"
         ";" copy code-2 to "^/" (
             append iso-3166-table spread compose [
                 (to text! code-2) (to text! capitalize name)

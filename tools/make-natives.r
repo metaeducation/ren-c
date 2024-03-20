@@ -246,7 +246,7 @@ blockrule: ["[" any [blockrule | not "]" skip] "]"]
 parse2 stripped-generics [
     some newline  ; skip newlines
     opt some [
-        copy proto [
+        proto: across [
             thru ":" space "generic" space blockrule
         ]
         (emit-include-params-macro e-params proto)

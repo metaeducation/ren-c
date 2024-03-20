@@ -59,7 +59,7 @@
         if n = 1 [continue]
 
         parse3 (append copy "" codepoint-to-char n - 1) [
-            set c any-char <end>
+            c: any-char <end>
         ]
         if c != codepoint-to-char n - 1 [fail "Char didn't match"]
     ]
@@ -188,19 +188,19 @@
     pos = tail of ser
 )
 [#2130 (
-    parse3 ser: [x] [pos: <here>, set val word!]
+    parse3 ser: [x] [pos: <here>, val: word!]
     all [val = 'x, pos = ser]
 )]
 [#2130 (
-    parse3 ser: [x] [pos: <here>, set val: word!]
+    parse3 ser: [x] [pos: <here>, val: word!]
     all [val = 'x, pos = ser]
 )]
 [#2130 (
-    res: validate3 ser: "foo" [pos: <here>, copy val skip]
+    res: validate3 ser: "foo" [pos: <here>, val: across skip]
     all [res = null, val = "f", pos = ser]
 )]
 [#2130 (
-    res: validate3 ser: "foo" [pos: <here>, copy val: skip]
+    res: validate3 ser: "foo" [pos: <here>, val: across skip]
     all [res = null, val = "f", pos = ser]
 )]
 
@@ -246,7 +246,7 @@
 
 [#682 (
     t: null
-    parse3 "<tag>text</tag>" [thru '<tag> copy t to '</tag> '</tag>]
+    parse3 "<tag>text</tag>" [thru '<tag> t: across to '</tag> '</tag>]
     t == "text"
 )]
 
@@ -504,7 +504,7 @@
 ; Quote level is not retained by captured content
 ;
 (
-    pos: parse3 [''[1 + 2]] [into [copy x to <end>], accept <here>]
+    pos: parse3 [''[1 + 2]] [into [x: across to <end>], accept <here>]
     all [
         [] == pos
         x == [1 + 2]
@@ -533,7 +533,7 @@
 (
     parse3 "aabbcc" [
         some "a", x: <here>, some "b", y: <here>
-        seek x, copy z to <end>
+        seek x, z: across to <end>
     ]
     all [
         x = "bbcc"
@@ -542,7 +542,7 @@
     ]
 )(
     pos: 5
-    parse3 "123456789" [seek pos copy nums to <end>]
+    parse3 "123456789" [seek pos nums: across to <end>]
     nums = "56789"
 )
 
@@ -597,7 +597,7 @@
 
 (
     test: to-binary {The C😺T Test}
-    parse3 test [to {c😺t} copy x to space to <end>]
+    parse3 test [to {c😺t} x: across to space to <end>]
     all [
         x = #{43F09F98BA54}
         "C😺T" = to-text x
@@ -752,16 +752,16 @@
 ; A SET of zero elements gives NULL, a SET of > 1 elements is an error
 [(
     x: <before>
-    parse3 [1] [set x try text! integer!]
+    parse3 [1] [x: opt text! integer!]
     x = null
 )(
     x: <before>
-    parse3 ["a" 1] [set x some text! integer!]
+    parse3 ["a" 1] [x: some text! integer!]
     x = "a"
 )(
     x: <before>
     e: sys.util.rescue [
-        parse3 ["a" "b" 1] [set x some text! integer!]
+        parse3 ["a" "b" 1] [x: some text! integer!]
     ]
     all [
         e.id = 'parse3-multi-set
@@ -800,12 +800,12 @@
 
 [#1244
     (all [
-        raised? parse3 a: "12" [remove copy v skip]
+        raised? parse3 a: "12" [remove v: across skip]
         a = "2"
         v = "1"
     ])
     (all [
-        raised? parse3 a: "12" [remove [copy v skip]]
+        raised? parse3 a: "12" [remove [v: across skip]]
         a = "2"
         v = "1"
     ])
@@ -832,22 +832,19 @@
     )
 ]
 
-; Compatibility Redbol PARSE allows things like set-word and get-word for mark
-; and seek functionality, uses plain END and not <end>, etc.
-;
-(did parse3/redbol "aaa" [pos: some "a" to end :pos 3 "a"])
+~parse3-multi-set~ !! (parse3 "aaa" [pos: some "a"])
 
 ; Parsing URL!s and ANY-SEQUENCE? is read-only
 [(
-    parse3 http://example.com ["http:" some "/" copy name to "." ".com"]
+    parse3 http://example.com ["http:" some "/" name: across to "." ".com"]
     name = "example"
 )(
-    parse3 'abc.<def>.<ghi>.jkl [word! copy tags some tag! word!]
+    parse3 'abc.<def>.<ghi>.jkl [word! tags: across some tag! word!]
     tags = [<def> <ghi>]
 )]
 
 ; The idea of being able to return a value from a parse is implemented via
 ; the ACCEPT combinator in UPARSE.  This was added to PARSE3.
 (
-    30 = parse "aaa" [some "a" accept (10 + 20)]
+    30 = parse3 "aaa" [some "a" accept (10 + 20)]
 )

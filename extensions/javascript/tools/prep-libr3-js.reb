@@ -393,7 +393,7 @@ for-each-api [
     ]
 
     no-reb-name: null
-    parse2 name ["reb" copy no-reb-name to end] else [
+    parse2 name ["reb" no-reb-name: across to end] else [
         fail ["API name must start with `reb`" name]
     ]
 

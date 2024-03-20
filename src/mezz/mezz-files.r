@@ -117,7 +117,7 @@ clean-path: func [
                 ]
             )
             |
-            copy part: [to "/" | to <end>] (
+            part: across [to "/" | to <end>] (
                 either count > 0 [
                     count: me - 1
                 ][

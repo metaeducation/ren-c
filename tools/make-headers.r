@@ -251,7 +251,9 @@ sys-globals-parser: context [
         ]
 
         declaration: [
-            some [opt wsp [copy id identifier | not #";" punctuator] ] #";" thru newline (
+            some [
+                opt wsp [id: across identifier | not #";" punctuator]
+            ] #";" thru newline (
                 ;
                 ; !!! Not used now, but previously was for user natives:
                 ;
@@ -264,7 +266,7 @@ sys-globals-parser: context [
         ]
 
         directive: [
-            copy data [
+            data: across [
                 ["#ifndef" | "#ifdef" | "#if" | "#else" | "#elif" | "#endif"]
                 opt some [not newline c-pp-token]
             ] eol
@@ -306,7 +308,7 @@ for-each line read/lines %a-constants.c [
             e-strings/emit line
             e-strings/emit newline
         ]
-        parse2 line [to {const } copy constd to { =} to end] [
+        parse2 line [to {const } constd: across to { =} to end] [
             e-strings/emit [constd {
                 extern $<Constd>;
             }]

@@ -51,8 +51,8 @@ make-banner: func [
     parse3 fmt [
         some [
             [
-                set a: text! (s: format ["**  " 68 "**"] a)
-              | '= set a: [text! | word! | set-word!] [
+                a: text! (s: format ["**  " 68 "**"] a)
+              | '= a: [text! | word! | set-word!] [
                         b: <here>
                           tuple! (b: get b.1)
                         | word! (b: get b.1)
@@ -525,13 +525,13 @@ main-startup: func [
             o.cgi: true
         )
     |
-        "--debug" [set param text! | (param-missing "DEBUG")] (
+        "--debug" [param: text! | (param-missing "DEBUG")] (
             ; was coerced to BLOCK! before, but what did this do?
             ;
             o.debug: to-logic param
         )
     |
-        "--do" [set param text! | (param-missing "DO")] (
+        "--do" [param: text! | (param-missing "DO")] (
             ;
             ; A string of code to run, e.g. `r3 --do "print {Hello}"`
             ;
@@ -555,7 +555,7 @@ main-startup: func [
             quit-when-done: default [true]
         )
     |
-        "--import" [set param text! | (param-missing "IMPORT")] (
+        "--import" [param: text! | (param-missing "IMPORT")] (
             lib.import local-to-file param
         )
     |
@@ -567,13 +567,13 @@ main-startup: func [
             o.quiet: true
         )
     |
-        "--resources" [set param text! | (param-missing "RESOURCES")] (
+        "--resources" [param: text! | (param-missing "RESOURCES")] (
             o.resources: (to-dir param) else [
                 die "RESOURCES directory not found"
             ]
         )
     |
-        "--suppress" [set param text! | (param-missing "SUPPRESS")] (
+        "--suppress" [param: text! | (param-missing "SUPPRESS")] (
             o.suppress: if param = "*" [
                 ; suppress all known start-up files
                 [%rebol.reb %user.reb %console-skin.reb]
@@ -582,7 +582,7 @@ main-startup: func [
             ]
         )
     |
-        "--script" [set param text! | (param-missing "SCRIPT")] (
+        "--script" [param: text! | (param-missing "SCRIPT")] (
             o.script: param
             quit-when-done: default [true]  ; overrides blank, not false
 
@@ -594,7 +594,7 @@ main-startup: func [
         ; work.  The code is loaded from the file and run as a string, not
         ; through the DO %FILE mechanics that change the directory.
         ;
-        "--fragment" [set param text! | (param-missing "FRAGMENT")] (
+        "--fragment" [param: text! | (param-missing "FRAGMENT")] (
             let code: read local-to-file param
             is-script-implicit: false  ; must use --script
 
@@ -634,12 +634,12 @@ main-startup: func [
             ; No window; not currently applicable
         )
     |
-        [let cli-option copy cli-option: [["--" | "-" | "+"] to <end>] (
+        let cli-option: [["--" | "-" | "+"] to <end>] (
             die [
                 "Unknown command line option:" cli-option LF
                 {!! For a full list of command-line options use: --help}
             ]
-        )]
+        )
     |
         accept <here>  ; rest of command line arguments
     ]]

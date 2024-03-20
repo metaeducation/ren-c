@@ -13,7 +13,7 @@ sys.util.make-scheme [
     info: system.standard.file-info ; for C enums
     init: func [return: [~] port <local> path] [
         if url? port.spec.ref [
-            parse3 port.spec.ref [thru #":" 0 2 slash path:]
+            parse3 port.spec.ref [thru #":" 0 2 slash path: <here>]
             append port.spec spread compose [path: (to file! path)]
         ]
     ]

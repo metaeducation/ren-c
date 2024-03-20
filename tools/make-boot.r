@@ -158,16 +158,16 @@ for-each-datatype: func [
     parse2 type-table [some [not end
         opt some tag!  ; <TYPE!> or </TYPE!> used by FOR-EACH-TYPERANGE
 
-        set name* word!
-        set description* text!
-        [set antiname* quasiform! | (antiname*: null)]
-        [set cellmask* group!]
-        [set is-unstable* issue! | (is-unstable*: null)]
-        [set typesets* block!]
-        [and block! into [
-            set class* [word! | '- | '? | quote 0]
-            set make* [word! | '* | '+ | '- | '? | quote 0]
-            set mold* [word! | '+ | '- | '? | quote 0]
+        name*: word!
+        description*: text!
+        [antiname*: quasiform! | (antiname*: null)]
+        [cellmask*: group!]
+        [is-unstable*: issue! | (is-unstable*: null)]
+        [typesets*: block!]
+        [ahead block! into [
+            class*: [word! | '- | '? | quote 0]
+            make*: [word! | '* | '+ | '- | '? | quote 0]
+            mold*: [word! | '+ | '- | '? | quote 0]
         ] (
             name*: to text! name*
             set var make object! [
@@ -214,7 +214,7 @@ for-each-typerange: func [
     heart*: 1  ; 0 is reserved
     while [true] [  ; need to be in loop for BREAK to work
         parse2 type-table [some [
-            opt some [set name* tag! (
+            opt some [name*: tag! (
                 name*: to text! name*
                 lowercase name*
                 starting: not (#"/" = first name*)
@@ -248,7 +248,7 @@ for-each-typerange: func [
                     eval body  ; no support for BREAK/CONTINUE in bootstrap
                 ]
             )]
-            [set name* word! (if not blank? types* [
+            [name*: word! (if not blank? types* [
                 name*: to text! name*
                 assert [#"?" <> last name*]
                 append types* to text! name*

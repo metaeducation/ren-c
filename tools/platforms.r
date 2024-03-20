@@ -480,32 +480,32 @@ export for-each-platform: func [
     ]
 
     parse2 platforms overbind p [ some [
-        set name set-word! (
+        name: set-word! (
             name: to-word name
         )
-        set number integer!
+        number: integer!
         opt some [
-            set id tuple!
+            id: tuple!
             [
                 blank! (os: os-name: os-base: null)
                     |
-                set os path! (os-name: os/1, os-base: os/2)
+                os: path! (os-name: os/1, os-base: os/2)
             ]
             [
                 blank! (build-label: null)
                     |
-                set build-label text! (build-label: to-word build-label)
+                build-label: text! (build-label: to-word build-label)
             ]
-            copy definitions [opt some issue!] (
+            definitions: across [opt some issue!] (
                 definitions: map-each x definitions [to-word x]
             )
-            copy cflags [opt some tag!] (
+            cflags: across [opt some tag!] (
                 cflags: map-each x cflags [to-word to-text x]
             )
-            copy ldflags [opt some &refinement?] (
+            ldflags: across [opt some &refinement?] (
                 ldflags: map-each x ldflags [to-word x]
             )
-            copy libraries [opt some file!] (
+            libraries: across [opt some file!] (
                 libraries: map-each x libraries [to-word to-text x]
             )
 

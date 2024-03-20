@@ -112,22 +112,22 @@ func: func* [
 
     parse3 spec [try some [
         :(if var '[  ; so long as we haven't reached any <local> or <with> etc.
-            set var: [&any-word? | &any-path? | quoted!] (
+            var: [&any-word? | &any-path? | quoted!] (
                 append new-spec var
             )
             |
-            set other: block! (
+            other: block! (
                 append new-spec other  ; data type blocks
             )
             |
-            copy other some text! (
+            other: across some text! (
                 append new-spec spaced other  ; spec notes
             )
         ] else [
             [false]
         ])
     |
-        set other: group! (
+        other: group! (
             if not var [
                 fail [
                     ; <where> spec
@@ -145,7 +145,7 @@ func: func* [
         false  ; failing here means rolling over to next rule
     |
         '<local> (append new-spec <local>)
-        try some [set var: word! set other: try group! (
+        try some [var: word! other: try group! (
             append new-spec var
             if other [
                 defaulters: default [inside body copy '[]]
@@ -162,7 +162,7 @@ func: func* [
             ]
         )
         try some [
-            set other: [object! | word! | tuple!] (
+            other: [object! | word! | tuple!] (
                 if not object? other [
                     other: ensure [any-context?] get inside spec other
                 ]
@@ -171,7 +171,7 @@ func: func* [
         ]
     |
         '<with> try some [
-            set other: [word! | path!] (
+            other: [word! | path!] (
                 ;
                 ; Definitional returns need to be signaled even if FUNC, so
                 ; the FUNC* doesn't automatically generate one.
@@ -194,7 +194,7 @@ func: func* [
             ]
         )
         try some [
-            set var: word! (other: null) try set other: group! (
+            var: word! (other: null) try other: group! (
                 append statics (as set-word! var)
                 append statics ((bindable other) else '~)  ; !!! ignore binding
             )

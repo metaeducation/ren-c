@@ -128,9 +128,9 @@ elf-format: context [
 
     header-rule: [
         #{7F} "ELF"
-        set EI_CLASS skip (bits: either EI_CLASS = 1 [32] [64])
-        set EI_DATA skip (endian: either EI_DATA = 1 ['little] ['big])
-        set EI_VERSION skip (assert [EI_VERSION = 1])
+        EI_CLASS: skip (bits: either EI_CLASS = 1 [32] [64])
+        EI_DATA: skip (endian: either EI_DATA = 1 ['little] ['big])
+        EI_VERSION: skip (assert [EI_VERSION = 1])
         skip  ; EI_OSABI
         skip  ; EI_ABIVERSION
         7 skip  ; EI_PAD
@@ -543,8 +543,8 @@ pe-format: context [
     err: null
     fail-at: ~
 
-    u16-le: [copy buf 2 skip (u16: debin [LE + 2] buf)]
-    u32-le: [copy buf 4 skip (u32: debin [LE + 4] buf)]
+    u16-le: [buf: across 2 skip (u16: debin [LE + 2] buf)]
+    u32-le: [buf: across 4 skip (u32: debin [LE + 4] buf)]
 
     ; Note: `uintptr-64-le` uses a signed interpretation (+/-) even though it
     ; is supposed to be an unsigned integer the size of a platform pointer in
@@ -555,9 +555,9 @@ pe-format: context [
     ; (as this code does), the negative interpretation when the high bit is
     ; set won't cause a problem.
     ;
-    uintptr-32-le: [copy buf 4 skip (uintptr: debin [LE + 4] buf)]
+    uintptr-32-le: [buf: across 4 skip (uintptr: debin [LE + 4] buf)]
     uintptr-64-le: [
-        copy buf 8 skip
+        buf: across 8 skip
         (uintptr: debin [LE +/- 8] buf)  ; See note above for why +/-
     ]
 
@@ -602,7 +602,7 @@ pe-format: context [
         let word
         let block-rule
         let group-rule: [
-            set word set-word!
+            word: set-word!
             (find-a-word word)
             | ahead block! into block-rule  ; recursively look into the array
             | skip
@@ -610,7 +610,7 @@ pe-format: context [
         block-rule: [
             ahead group! into [try some group-rule]
             | ahead block! into [try some block-rule]
-            | ['copy | 'set] set word word! (find-a-word word)
+            | word: set-word! (find-a-word word)
             | skip
         ]
 
@@ -638,10 +638,10 @@ pe-format: context [
         u16-le (cs: u16)
         u16-le (reloc-pos: u16)
         u16-le (n-overlay: u16)
-        copy reserved1 4 u16-le
+        reserved1: across 4 u16-le
         u16-le (oem-id: u16)
         u16-le (oem-info: u16)
-        copy reserved2 10 u16-le
+        reserved2: across 10 u16-le
         u32-le (e-lfanew: u32)
     ]
 
@@ -685,8 +685,8 @@ pe-format: context [
              | fail-at: <here>, (err: 'missing-image-signature) fail
         ]
         u16-le (signature-value: u16)
-        copy major-linker-version skip  ; 1 byte
-        copy minor-linker-version skip  ; 1 byte
+        major-linker-version: across skip  ; 1 byte
+        minor-linker-version: across skip  ; 1 byte
         u32-le (size-of-code: u32)
         u32-le (size-of-initialized-data: u32)
         u32-le (size-of-uninialized-data: u32)
@@ -748,12 +748,12 @@ pe-format: context [
 
     section: ~
     section-rule: gen-rule $section [
-        copy name [8 skip]  ; 8 bytes
+        name: across [8 skip]  ; 8 bytes
         u32-le (virtual-size: u32)
         u32-le (virtual-offset: u32)
         u32-le (physical-size: u32)
         u32-le (physical-offset: u32)
-        copy reserved [12 skip]  ; 12 bytes
+        reserved: across [12 skip]  ; 12 bytes
         u32-le (flags: u32)
         (append sections copy ensure object! section)
     ]

@@ -92,9 +92,9 @@ emit-proto: func [return: [~] proto] [
 
     paramlist: collect [
         parse2 proto [
-            copy return-type to "API_" "API_" copy name to "(" skip
+            return-type: across to "API_" "API_" name: across to "(" skip
             ["void)" | some [  ; C void, or at least one parameter expected
-                [copy param to "," skip | copy param to ")" to end] (
+                [param: across to "," skip | param: across to ")" to end] (
                     ;
                     ; Separate type from parameter name.  Step backwards from
                     ; the tail to find space, or non-letter/digit/underscore.
@@ -142,7 +142,7 @@ emit-proto: func [return: [~] proto] [
 
             "RebolSpecifier**" 'specifier_ref
 
-            copy paramlist: to "const void*"  ; signal start of variadic
+            paramlist: across to "const void*"  ; signal start of variadic
 
             "const void*" 'p
             "void*" 'vaptr

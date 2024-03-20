@@ -109,7 +109,7 @@ fix-gen_uuid-c: func [
 
             ; comment out uuid_generate_md5, we don't need this
             | change [
-                copy definition: [
+                definition: across [
                     {void uuid_generate_md5(} thru "^}"
                   ]
                   (target: unspaced [{#if 0^/} to text! definition {^/#endif^/}])
@@ -118,7 +118,7 @@ fix-gen_uuid-c: func [
 
             ; comment out uuid_generate_sha1, we don't need this
             | change [
-                copy definition: [
+                definition: across [
                     {void uuid_generate_sha1(} thru "^}"
                   ]
                   (target: unspaced [{#if 0^/} to text! definition {^/#endif^/}])
@@ -127,7 +127,7 @@ fix-gen_uuid-c: func [
 
             ; comment out unused variable variant_bits
             | change [
-                copy unused: [
+                unused: across [
                     {static unsigned char variant_bits[]}
                   ]
                   (target: unspaced [{//} _ to text! unused])

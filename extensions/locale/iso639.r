@@ -28,13 +28,13 @@ parse3 cnt [
 
         ; 2-letter code
         ;
-        "|" try [
-            copy code-2 2 lower
+        "|" opt [
+            code-2: across 2 lower
         ]
 
         ; Language name in English
         ;
-        "|" copy name to "|" (
+        "|" name: across to "|" (
             if code-2 [
                 append iso-639-table spread compose [
                     (to text! code-2) (to text! name)

@@ -74,12 +74,12 @@ export cscape: func [
                 (prefix: null suffix: null)
                 finish: <here>
 
-                "${" change [copy expr: [to "}"]] (num-text) skip (
+                "${" change [expr: across to "}"] (num-text) skip (
                     mode: #cname
                     pattern: unspaced ["${" num "}"]
                 )
                     |
-                "$<" change [copy expr: [to ">"]] (num-text) skip (
+                "$<" change [expr: across to ">"] (num-text) skip (
                     mode: #unspaced
                     pattern: unspaced ["$<" num ">"]
                     if space = last expr [  ; add space at end [1]
@@ -97,18 +97,18 @@ export cscape: func [
                 )
                     |
                 (prefix: copy/part start finish)
-                "$[" change [copy expr: [to "]"]] (num-text) skip (
+                "$[" change [expr: across to "]"] (num-text) skip (
                     mode: #delimit
                     pattern: unspaced ["$[" num "]"]
                 )
-                copy suffix: to newline
+                suffix: across to newline
                     |
                 (prefix: copy/part start finish)
-                "$(" change [copy expr: [to ")"]] (num-text) skip (
+                "$(" change [expr: across to ")"] (num-text) skip (
                     mode: #delimit
                     pattern: unspaced ["$(" num ")"]
                 )
-                copy suffix: remove to newline
+                suffix: across remove to newline
             ] (
                 keep compose [
                     (pattern else ['~null~]) (col) (mode) (expr)

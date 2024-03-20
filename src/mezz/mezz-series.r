@@ -190,8 +190,8 @@ reword: func [
 
         block? escape [
             parse3 escape [
-                set prefix delimiter-types
-                [<end> | set suffix delimiter-types]
+                prefix: delimiter-types
+                [<end> | suffix: delimiter-types]
             ] except [
                 fail ["Invalid /ESCAPE delimiter block" escape]
             ]
@@ -560,15 +560,15 @@ split: func [
 
                 [
                     repeat (count) [
-                        copy series try [repeat (piece-size) skip] (
+                        series: across try [repeat (piece-size) skip] (
                             keep series
                         )
                     ]
-                    copy series to <end> (keep series)
+                    series: across to <end> (keep series)
                 ]
             ] else [
                 [try some [
-                    copy series [skip, repeat (size - 1) try skip] (
+                    series: across [skip, repeat (size - 1) try skip] (
                         keep series
                     )
                 ]]
@@ -590,7 +590,7 @@ split: func [
             let mk1
             [
                 some [not <end> [
-                    copy mk1: [to dlm | to <end>]
+                    mk1: across [to dlm | to <end>]
                     (keep mk1)
                     try thru dlm
                 ]]
@@ -601,7 +601,7 @@ split: func [
         let mk1
         compose/deep <*> [
             some [not <end> [
-                copy mk1: [to (<*> dlm) | to <end>]
+                mk1: across [to (<*> dlm) | to <end>]
                 (keep mk1)
                 try thru (<*> dlm)
             ]]

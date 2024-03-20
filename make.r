@@ -835,7 +835,7 @@ parse-ext-build-spec: func [
         config: null  ; default for locals in modern Ren-C
         parse2 ext/options [
             opt some [
-                word! block! opt text! set config group!
+                word! block! opt text! config: group!
             ]
         ] else [
             fail ["Could not parse extension build spec" mold spec]
@@ -1128,25 +1128,25 @@ set-exec-path: func [
 
 parse2 user-config/toolset [
     opt some [
-        'gcc opt set cc-exec [file! | text! | blank!] (
+        'gcc opt cc-exec: [file! | text! | blank!] (
             rebmake/default-compiler: rebmake/gcc
         )
-        | 'clang opt set cc-exec [file! | text! | blank!] (
+        | 'clang opt cc-exec: [file! | text! | blank!] (
             rebmake/default-compiler: rebmake/clang
         )
-        | 'cl opt set cc-exec [file! | text! | blank!] (
+        | 'cl opt cc-exec: [file! | text! | blank!] (
             rebmake/default-compiler: rebmake/cl
         )
-        | 'ld opt set linker-exec [file! | text! | blank!] (
+        | 'ld opt linker-exec: [file! | text! | blank!] (
             rebmake/default-linker: rebmake/ld
         )
-        | 'llvm-link opt set linker-exec [file! | text! | blank!] (
+        | 'llvm-link opt linker-exec: [file! | text! | blank!] (
             rebmake/default-linker: rebmake/llvm-link
         )
-        | 'link opt set linker-exec [file! | text! | blank!] (
+        | 'link opt linker-exec: [file! | text! | blank!] (
             rebmake/default-linker: rebmake/link
         )
-        | 'strip opt set strip-exec [file! | text! | blank!] (
+        | 'strip opt strip-exec: [file! | text! | blank!] (
             rebmake/default-strip: rebmake/strip
             rebmake/default-strip/options: [<gnu:-S> <gnu:-x> <gnu:-X>]
             if get 'strip-exec [

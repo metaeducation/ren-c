@@ -73,7 +73,7 @@
     )
 
     (
-        parse3 t [to braille copy b to newline to <end>]
+        parse3 t [to braille b: across to newline to <end>]
         b = braille
     )
 ]

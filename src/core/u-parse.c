@@ -172,7 +172,7 @@ enum parse_flags {
     PF_FIND_MATCH = 1 << 2,
 
     PF_SET = 1 << 3,
-    PF_COPY = 1 << 4,
+    PF_ACROSS = 1 << 4,
     PF_NOT = 1 << 5,
     PF_NOT2 = 1 << 6,  // #1246
     PF_7 = 1 << 7,
@@ -182,7 +182,7 @@ enum parse_flags {
     PF_CHANGE = 1 << 11,
     PF_LOOPING = 1 << 12,
     PF_FURTHER = 1 << 13,  // must advance parse input to count as a match
-    PF_TRY = 1 << 14,  // want NULL (not no-op) if no matches
+    PF_OPTIONAL = 1 << 14,  // want NULL (not no-op) if no matches
 
     PF_ONE_RULE = 1 << 15,  // signal to only run one step of the parse
 
@@ -1320,7 +1320,7 @@ DECLARE_NATIVE(subparse)
     // The loop iterates across each Element's worth of "rule" in the rule
     // block.  Some of these rules just set `flags` and `continue`, so that
     // the flags will apply to the next rule item.  If the flag is PF_SET
-    // or PF_COPY, then the `set_or_copy_word` pointers will be assigned
+    // or PF_ACROSS, then the `set_or_copy_word` pointers will be assigned
     // at the same time as the active target of the COPY or SET.
     //
     // !!! This flagging process--established by R3-Alpha--is efficient
@@ -1558,8 +1558,6 @@ DECLARE_NATIVE(subparse)
                 goto pre_rule;
 
               case SYM_OPT:
-                if (not (P_FLAGS & PF_REDBOL))
-                    fail ("Please use TRY instead of OPT in PARSE3");
                 goto try_or_opt;
 
               case SYM_TRY:
@@ -1568,22 +1566,18 @@ DECLARE_NATIVE(subparse)
                 goto try_or_opt;
 
               try_or_opt:
-                P_FLAGS |= PF_TRY;
+                P_FLAGS |= PF_OPTIONAL;
                 mincount = 0;
                 FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
               case SYM_COPY:
-                P_FLAGS |= PF_COPY;
-                goto set_or_copy_pre_rule;
+                fail ("COPY not supported in PARSE3 (use SET-WORD!+ACROSS)");
 
               case SYM_SET:
-                P_FLAGS |= PF_SET;
-                goto set_or_copy_pre_rule;
+                fail ("SET not supported in PARSE3 (use SET-WORD!)");
 
               case SYM_LET:
-              set_or_copy_pre_rule:
-
                 FETCH_NEXT_RULE(L);
 
                 if (not (Is_Word(P_RULE) or Is_Set_Word(P_RULE)))
@@ -1680,11 +1674,6 @@ DECLARE_NATIVE(subparse)
                 // ACCEPT means different things in Rebol2/Red (synonym for
                 // BREAK) where in UPARSE it means RETURN.
                 //
-                if (P_FLAGS & PF_REDBOL)
-                    goto handle_break;
-
-              handle_accept:
-
                 FETCH_NEXT_RULE(L);
 
                 DECLARE_ATOM (thrown_arg);
@@ -1704,7 +1693,6 @@ DECLARE_NATIVE(subparse)
                 Init_Thrown_With_Label(LEVEL, thrown_arg, Lib(PARSE_ACCEPT));
                 goto return_thrown; }
 
-              handle_break:
               case SYM_BREAK: {
                 //
                 // This has to be throw-style, because it's not enough
@@ -1738,8 +1726,6 @@ DECLARE_NATIVE(subparse)
                 goto pre_rule;
 
               case SYM_RETURN:
-                if (P_FLAGS & PF_REDBOL)
-                    goto handle_accept;
                 fail ("RETURN keyword switched to ACCEPT in PARSE3/UPARSE");
 
               case SYM_SEEK: {
@@ -1775,13 +1761,6 @@ DECLARE_NATIVE(subparse)
                 //
                 // https://github.com/rebol/rebol-issues/issues/2269
 
-                if (P_FLAGS & PF_REDBOL) {
-                    set_or_copy_word = Copy_Cell(LOCAL(lookback), rule);
-                    FETCH_NEXT_RULE(L);
-                    Handle_Mark_Rule(L, set_or_copy_word, P_RULE_SPECIFIER);
-                    goto pre_rule;
-                }
-
                 goto handle_set;
             }
             else if (Is_Get_Word(rule)) {
@@ -1807,17 +1786,14 @@ DECLARE_NATIVE(subparse)
         set_or_copy_word = Copy_Cell(LOCAL(lookback), rule);
         FETCH_NEXT_RULE(L);
 
-        // As an interim measure, permit `pos: <here>` to act as
-        // setting the position, just as `pos:` did historically.
-        // This will change to be generic SET after this has had some
-        // time to settle.  Allows also `here: <here>` with `pos: here`
-        //
         if (Is_Word(P_RULE) and Cell_Word_Id(P_RULE) == SYM_ACROSS) {
             FETCH_NEXT_RULE(L);
-            P_FLAGS |= PF_COPY;
+            P_FLAGS |= PF_ACROSS;
             goto pre_rule;
         }
 
+        // Permit `pos: <here>` to act as setting the position
+        //
         if (Is_Tag(P_RULE)) {
             bool strict = true;
             if (0 == CT_String(P_RULE, Root_Here_Tag, strict))
@@ -1829,7 +1805,8 @@ DECLARE_NATIVE(subparse)
             goto pre_rule;
         }
 
-        fail ("PARSE SET-WORD! use with <HERE>, ACROSS");
+        P_FLAGS |= PF_SET;
+        goto pre_rule;
     }
     else if (Any_Path(rule)) {
         fail ("Use TUPLE! a.b.c instead of PATH! a/b/c");
@@ -2195,7 +2172,7 @@ DECLARE_NATIVE(subparse)
             //
             count = (begin > P_POS) ? 0 : P_POS - begin;
 
-            if (P_FLAGS & PF_COPY) {
+            if (P_FLAGS & PF_ACROSS) {
                 Value* sink = Sink_Word_May_Fail(
                     set_or_copy_word,
                     P_RULE_SPECIFIER
@@ -2259,7 +2236,7 @@ DECLARE_NATIVE(subparse)
                     // Note: It should be `x: opt group!` but R3-Alpha parse
                     // is hard to get composability on such things.
                     //
-                    if (P_FLAGS & PF_TRY)  // don't just leave alone
+                    if (P_FLAGS & PF_OPTIONAL)  // don't just leave alone
                         Init_Nulled(
                             Sink_Word_May_Fail(
                                 set_or_copy_word,

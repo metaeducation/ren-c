@@ -204,11 +204,11 @@ process-tests: func [
     let collected
     parse3 test-sources [
         try some [
-            set flags: block! set value: block! (
+            flags: block! value: block! (
                 handler flags value  ; flags ignored atm
             )
                 |
-            set test-file: file! (
+            test-file: file! (
                 log ["^/" mold test-file "^/^/"]
                 ;
                 ; We'd like tests to be able to live anywhere on disk
@@ -221,12 +221,12 @@ process-tests: func [
                 change-dir split-path test-file
             )
                 |
-            'dialect set value: text! (  ; bad parse of test file itself
+            'dialect value: text! (  ; bad parse of test file itself
                 log [value]
                 set $dialect-failures (dialect-failures + 1)
             )
                 |
-            'collect-tests set body: block! (
+            'collect-tests body: block! (
                 log ["@collect-tests" space mold body]
 
                 let [_ collected]: module null compose/deep [collect [
@@ -332,8 +332,8 @@ export do-recover: func [
                     {"} thru {"}
                     (dialect-failures: dialect-failures + 1)
                         |
-                    copy last-vector ["(" test-source-rule ")"]
-                    try some whitespace
+                    last-vector: across ["(" test-source-rule ")"]
+                    opt some whitespace
                     [
                         <end> (
                             ; crash found

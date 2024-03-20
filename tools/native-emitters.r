@@ -67,10 +67,10 @@ export extract-native-protos: func [
     return collect [
         parse2 read/string c-source-file [opt some [
             "//" newline
-            "//" space space copy proto [
+            "//" space space proto: across [
                 (exported: false)
                 opt ["export" space (exported: true)]
-                ahead not space copy name to ":" skip space
+                ahead not space name: across to ":" skip space
                 opt ["enfix" space]
                 ["native" (native-type: 'normal)
                     opt ["/combinator" (native-type: 'combinator)]
@@ -121,7 +121,7 @@ export emit-include-params-macro: func [
     let native-name: ~
     parse2 proto [
         opt some newline  ; stripload preserves newlines
-        opt ["export" space] copy native-name to ":" to end
+        opt ["export" space] native-name: across to ":" to end
     ] else [
         fail "Could not extract native name in emit-include-params-macro"
     ]
