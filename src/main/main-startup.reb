@@ -54,9 +54,9 @@ make-banner: func [
                 a: text! (s: format ["**  " 68 "**"] a)
               | '= a: [text! | word! | set-word!] [
                         b: <here>
-                          tuple! (b: get b.1)
-                        | word! (b: get b.1)
-                        | block! (b: spaced b.1)
+                          tuple! (b: get $b.1)
+                        | word! (b: get $b.1)
+                        | block! (b: spaced $b.1)
                         | text! (b: b.1)
                     ]
                     (
@@ -398,7 +398,7 @@ main-startup: func [
             return null
         ]
 
-        return try to-dir any [
+        return to-dir maybe any [
             get-env 'HOME
             all [
                 let homedrive: get-env 'HOMEDRIVE
