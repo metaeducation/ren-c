@@ -1463,8 +1463,8 @@ DECLARE_NATIVE(subparse)
               case SYM_WHILE:
                 if (not (P_FLAGS & PF_REDBOL)) {
                     fail (
-                        "Please replace PARSE3's WHILE with TRY SOME -or-"
-                        " TRY FURTHER SOME--it's being reclaimed as arity-2."
+                        "Please replace PARSE3's WHILE with OPT SOME -or-"
+                        " OPT FURTHER SOME--it's being reclaimed as arity-2."
                         " https://forum.rebol.info/t/1540/12 (or use PARSE2)"
                     );
                 }
@@ -1497,7 +1497,7 @@ DECLARE_NATIVE(subparse)
                     goto run_while_rule;
                 }
                 fail (
-                    "Please replace PARSE's ANY with TRY SOME"
+                    "Please replace PARSE's ANY with OPT SOME"
                     " -- it's being reclaimed for a new construct"
                     " https://forum.rebol.info/t/1540/12 (or use PARSE2)"
                 );
@@ -1929,7 +1929,9 @@ DECLARE_NATIVE(subparse)
                     i = To_Thru_Non_Block_Rule(L, subrule, is_thru);
                 break; }
 
-              case SYM_QUOTE:  // temporarily behaving like LIT for bootstrap
+              case SYM_QUOTE:
+                fail ("Use THE instead of QUOTE in PARSE3 for literal match");
+
               case SYM_THE: {
                 if (not Is_Series_Array(P_INPUT))
                     fail (Error_Parse3_Rule());  // see #2253

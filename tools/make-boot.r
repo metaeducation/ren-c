@@ -165,9 +165,9 @@ for-each-datatype: func [
         [is-unstable*: issue! | (is-unstable*: null)]
         [typesets*: block!]
         [ahead block! into [
-            class*: [word! | '- | '? | quote 0]
-            make*: [word! | '* | '+ | '- | '? | quote 0]
-            mold*: [word! | '+ | '- | '? | quote 0]
+            class*: [word! | '- | '? | the 0]
+            make*: [word! | '* | '+ | '- | '? | the 0]
+            mold*: [word! | '+ | '- | '? | the 0]
         ] (
             name*: to text! name*
             set var make object! [
