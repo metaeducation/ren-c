@@ -648,7 +648,8 @@ static REBIXO Parse_One_Rule(
 
           case REB_TEXT:
           case REB_ISSUE:
-            break;
+          case REB_BLANK:
+            break;  // all interpreted literally
 
           default:
             fail ("Unknown value type for match in ANY-ARRAY!");
@@ -1021,12 +1022,6 @@ static REBIXO To_Thru_Non_Block_Rule(
 
     Kind kind = VAL_TYPE(rule);
     assert(kind != REB_BLOCK);
-
-    // R3-Alpha does not support `TO []` or `THRU []` as a no-op, so we fall
-    // back on not recognizing blanks literally in Redbol mode.
-    //
-    if (kind == REB_BLANK and (P_FLAGS & PF_REDBOL))
-        return P_POS;  // make it a no-op
 
     if (kind == REB_WORD and Cell_Word_Id(rule) == SYM_END)
         fail ("Use <end> instead of END in PARSE3");
