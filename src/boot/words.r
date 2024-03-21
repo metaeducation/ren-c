@@ -182,6 +182,7 @@ copy
 across
 some
 any
+repeat
 opt
 not
 and

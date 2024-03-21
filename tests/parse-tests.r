@@ -87,7 +87,7 @@
 
 [#682 (
     t: _
-    parse/match "<tag>text</tag>" [thru <tag> t: across to </tag>]
+    parse/match "<tag>text</tag>" [thru "<tag>" t: across to "</tag>"]
     t == "text"
 )]
 
@@ -108,8 +108,8 @@
     (did parse/match "abcd" [to "d" skip])
 ]
 
-[#1959
-    (did parse/match "<abcd>" [thru <abcd>])
+[#1959  ; TAG! no longer matches in string, interpreted as combinator
+    (did parse/match "<abcd>" [thru "<abcd>"])
 ]
 [#1959
     (did parse/match [a b c d] [thru 'd])
@@ -128,7 +128,7 @@
 ; repetition
 
 [#1280 (
-    parse/match "" [(i: 0) 3 [["a" |] (i: i + 1)]]
+    parse/match "" [(i: 0) repeat 3 [["a" |] (i: i + 1)]]
     i == 3
 )]
 
@@ -164,10 +164,10 @@
     (did parse/match "1" [not [not "1"] "1"])
 ]
 [#1246
-    (not parse/match "" [not 0 "a"])
+    (not parse/match "" [not repeat 0 "a"])
 ]
 [#1246
-    (not parse/match "" [not [0 "a"]])
+    (not parse/match "" [not [repeat 0 "a"]])
 ]
 [#1240
     (did parse/match "" [not "a"])
@@ -255,12 +255,6 @@
 (did parse/match "aaabbb" [(([some "a"])) (([some "b"]))])
 (did parse/match "aaabbb" [(([some "a"])) ((if false [some "c"])) (([some "b"]))])
 (did parse/match "aaa" [(('some)) "a"])
-(not parse/match "aaa" [((1 + 1)) "a"])
-(did parse/match "aaa" [((1 + 2)) "a"])
-(
-    count: 0
-    did parse/match ["a" "aa" "aaa"] [some [into [((count: count + 1)) "a"]]]
-)
 
 (did parse/match "aaabbb" [some "a" foo: <here> some "b" seek foo some "b"])
 

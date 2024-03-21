@@ -360,40 +360,40 @@ ctx-zip: context [
         parse source [
             to local-file-sig
             some [
-                to local-file-sig 4 skip
+                to local-file-sig repeat 4 skip
                 (num-entries: me + 1)
-                2 skip ; version
-                flags: across 2 skip
+                repeat 2 skip ; version
+                flags: across repeat 2 skip
                     (if not zero? flags/1 and+ 1 [return false])
-                method-number: across 2 skip (
+                method-number: across repeat 2 skip (
                     method-number: get-ishort method-number
                     method: select [0 store 8 deflate] method-number else [
                         method-number
                     ]
                 )
-                time: across 2 skip (time: get-msdos-time time)
-                date: across 2 skip (
+                time: across repeat 2 skip (time: get-msdos-time time)
+                date: across repeat 2 skip (
                     date: get-msdos-date date
                     date/time: time
                     date: date - now/zone
                 )
-                crc: across 4 skip (   ; crc-32
+                crc: across repeat 4 skip (   ; crc-32
                     crc: get-ilong crc
                 )
-                compressed-size: across 4 skip
+                compressed-size: across repeat 4 skip
                     (compressed-size: get-ilong compressed-size)
-                uncompressed-size-raw: across 4 skip
+                uncompressed-size-raw: across repeat 4 skip
                     (uncompressed-size: get-ilong uncompressed-size-raw)
-                name-length: across 2 skip
+                name-length: across repeat 2 skip
                     (name-length: get-ishort name-length)
-                extrafield-length: across 2 skip
+                extrafield-length: across repeat 2 skip
                     (extrafield-length: get-ishort extrafield-length)
-                name: across name-length skip (
+                name: across repeat (name-length) skip (
                     name: to-file name
                     info name
                 )
-                extrafield-length skip
-                data: <here> compressed-size skip
+                repeat (extrafield-length) skip
+                data: <here> repeat (compressed-size) skip
                 (
                     uncompressed-data: catch [
 

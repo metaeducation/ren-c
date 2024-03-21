@@ -656,11 +656,17 @@ split: function [
                 if zero? piece-size [piece-size: 1]
 
                 [
-                    count [series: across piece-size skip (keep/only series)]
+                    repeat (count) [
+                        series: across repeat (piece-size) skip
+                        (keep/only series)
+                    ]
                     series: across to <end> (keep/only series)
                 ]
             ] else [
-                [opt some [series: across 1 size skip (keep/only series)] <end>]
+                [opt some [
+                    series: across repeat (reduce [1 size]) skip
+                    (keep/only series)
+                ] <end>]
             ]
         ] else [
             ; A block that is not all integers, e.g. not `[1 1 1]`, acts as a

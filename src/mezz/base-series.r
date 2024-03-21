@@ -301,8 +301,16 @@ trim: function [
         ]
     ]
 
-    line-start-rule: compose/deep [
-        remove [(if indent [[1 indent]] else [[opt some]]) rule]
+    line-start-rule: case [
+        not indent [
+            [opt remove some rule]
+        ]
+        indent < 1 [
+            []
+        ]
+        true [
+            [remove repeat (reduce [1 indent]) rule]
+        ]
     ]
 
     parse series [

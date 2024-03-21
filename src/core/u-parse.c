@@ -1434,6 +1434,60 @@ DECLARE_NATIVE(subparse)
                         mincount = 0;
                         goto handle_loop;
 
+                    case SYM_REPEAT:
+                        if (P_FLAGS & PF_REDBOL)
+                            fail ("REPEAT not available in /REDBOL PARSE mode");
+
+                        // !!! OPT REPEAT (N) RULE can't work because OPT is
+                        // done by making the minimum number of match counts
+                        // zero.  But unfortunately if that rule isn't in a
+                        // BLOCK! then the 0 repeat rule transfers onto the
+                        // rule... making it act like `REPEAT (N) OPT RULE`
+                        // which is not the same.
+                        //
+
+                        if (mincount != 1 or maxcount != 1)
+                            fail (
+                                "Old PARSE REPEAT does not mix with ranges or OPT"
+                                " so put a block around the REPEAT!"
+                            );
+
+                        FETCH_NEXT_RULE(L);
+                        if (Is_Group(P_RULE)) {
+                            if (Eval_Value_Core_Throws(OUT, P_RULE, P_RULE_SPECIFIER))
+                                return R_THROWN;
+                        }
+                        else {
+                            Derelativize(OUT, P_RULE, P_RULE_SPECIFIER);
+                        }
+
+                        if (Is_Integer(OUT)) {
+                            mincount = Int32s(OUT, 0);
+                            maxcount = Int32s(OUT, 0);
+                        } else {
+                            if (
+                                not Is_Block(OUT)
+                                or not (
+                                    VAL_LEN_AT(OUT) == 2
+                                    and Is_Integer(Cell_Array_At(OUT))
+                                    and Is_Integer(Cell_Array_At(OUT) + 1)
+                                )
+                            ){
+                                fail ("REPEAT takes INTEGER! or length 2 BLOCK! range");
+                            }
+
+                            mincount = Int32s(Cell_Array_At(OUT), 0);
+                            maxcount = Int32s(Cell_Array_At(OUT) + 1, 0);
+
+                            if (maxcount < mincount)
+                                fail ("REPEAT range can't have lower max than minimum");
+                        }
+
+                        SET_END(OUT);
+
+                        FETCH_NEXT_RULE(L);
+                        continue;
+
                     case SYM_SOME:
                     handle_loop:
                         maxcount = INT32_MAX;
@@ -1811,6 +1865,12 @@ DECLARE_NATIVE(subparse)
 
         // Counter? 123
         if (Is_Integer(rule)) { // Specify count or range count
+            if (not (P_FLAGS & PF_REDBOL))
+                fail (
+                    "[1 2 rule] now illegal https://forum.rebol.info/t/1578/6"
+                    " (or use PARSE/REDBOL)"
+                );
+
             P_FLAGS |= PF_WHILE;
             mincount = maxcount = Int32s(rule, 0);
 
