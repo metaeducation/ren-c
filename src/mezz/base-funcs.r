@@ -860,7 +860,7 @@ module: func [
         ]
 
         ; Note: 'export overrides 'hidden, silently for now
-        parse body [while [
+        parse body [opt some [
             to 'export remove skip opt remove 'hidden opt
             [
                 w: any-word! (
@@ -881,7 +881,7 @@ module: func [
     if find body 'hidden [
         hidden: make block! 10
         ; Note: Exports are not hidden, silently for now
-        parse body [while [
+        parse body [opt some [
             to 'hidden remove skip opt
             [
                 w: any-word! (

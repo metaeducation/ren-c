@@ -255,7 +255,7 @@ trim: function [
     ; /ALL just removes all whitespace entirely.  No subtlety needed.
     ;
     if all_TRIM [
-        parse series [while [remove rule | skip | <end> break]]
+        parse series [opt some [remove rule | skip | <end> break]]
         return series
     ]
 
@@ -265,7 +265,7 @@ trim: function [
         ]
 
         tail_TRIM [
-            parse series [while [remove [some rule <end>] | skip]] ;-- #2289
+            parse series [opt some [remove [some rule <end>] | skip]] ;-- #2289
         ]
     ] then [
         return series
@@ -277,7 +277,7 @@ trim: function [
     ; with leading and trailing whitespace removed.
     ;
     if lines [
-        parse series [while [change [some rule] space skip | skip]]
+        parse series [opt some [change [some rule] space skip | skip]]
         if first series = space [take series]
         if last series = space [take/last series]
         return series
@@ -308,13 +308,11 @@ trim: function [
     parse series [
         line-start-rule
         opt some [
-            while [
-                ahead [opt some rule [newline | <end>]]
-                remove [opt some rule]
-                [newline line-start-rule]
-                    |
-                skip
-            ]
+            ahead [opt some rule [newline | <end>]]
+            remove [opt some rule]
+            [newline line-start-rule]
+                |
+            skip
         ]
     ]
 
@@ -323,7 +321,7 @@ trim: function [
     ;
     parse series [
         remove [opt some newline]
-        while [newline remove [some newline <end>] | skip]
+        opt some [newline remove [some newline <end>] | skip]
     ]
 
     return series

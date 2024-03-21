@@ -131,14 +131,17 @@
     parse/match "" [(i: 0) 3 [["a" |] (i: i + 1)]]
     i == 3
 )]
+
+; Infinite loop in modern Ren-C (no progress requirement without FURTHER)
+;[#1268 (
+;    i: 0
+;    parse/match "a" [opt some [(i: i + 1)]]
+;    i == 1
+;)]
+
 [#1268 (
     i: 0
-    parse/match "a" [opt some [(i: i + 1)]]
-    i == 1
-)]
-[#1268 (
-    i: 0
-    parse/match "a" [while [(i: i + 1 j: if i = 2 [[fail]]) j]]
+    parse/match "a" [opt some [(i: i + 1 j: if i = 2 [[fail]]) j]]
     i == 2
 )]
 

@@ -1412,6 +1412,14 @@ DECLARE_NATIVE(subparse)
 
                     // Note: mincount = maxcount = 1 on entry
                     case SYM_WHILE:
+                        if (not (P_FLAGS & PF_REDBOL))
+                            fail (
+                                "Please replace PARSE3's WHILE with OPT SOME (no"
+                                " progress requirement any longer).  FURTHER can"
+                                " be added to PARSE3 if it's really needed."
+                                " https://forum.rebol.info/t/1540/12"
+                            );
+
                         P_FLAGS |= PF_WHILE;
                         mincount = 0;
                         goto handle_loop;
@@ -2052,14 +2060,23 @@ DECLARE_NATIVE(subparse)
                 if (count < 0)
                     count = INT32_MAX; // the forever case
 
-                if (i == P_POS and not (P_FLAGS & PF_WHILE)) {
-                    //
-                    // input did not advance
-
-                    if (count < mincount) {
-                        P_POS = NOT_FOUND; // was not enough
+                // !!! This code pertained to a characteristic of R3-Alpha's
+                // SOME and ANY which required advancement.  WHILE was needed
+                // for a rule to succeed even if it did not advance, which
+                // meant it had to be used with things like REMOVE.  Modern
+                // UPARSE does not have an implicit advancement rule, it is
+                // done explicitly with FURTHER.  Patching bootstrap PARSE3
+                // to support FURTHER wouldn't be hard, but it does not seem
+                // to be necessary...instead just removing the progress
+                // requirement.  Review the question.
+                //
+                if (P_FLAGS & PF_REDBOL) {
+                    if (i == P_POS and not (P_FLAGS & PF_WHILE)) {
+                        if (count < mincount) {
+                            P_POS = NOT_FOUND; // was not enough
+                        }
+                        break;
                     }
-                    break;
                 }
             }
             else {

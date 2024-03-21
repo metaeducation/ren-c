@@ -48,7 +48,7 @@ clean-path: function [
     count: 0 ; back dir counter
 
     parse reverse file [
-        some [
+        some [not <end> [
             "../" (count: me + 1)
             | "./"
             | #"/" (
@@ -65,7 +65,7 @@ clean-path: function [
                     ]
                 ]
             )
-        ]
+        ]]
     ]
 
     if (#"/" = last out) and [#"/" <> last file] [
