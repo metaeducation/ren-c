@@ -1,30 +1,30 @@
 ; Is PARSE working at all?
 
-(did parse/match "abc" ["abc" end])
+(did parse/match "abc" ["abc" <end>])
 
 ; Blank and empty block case handling
 
-(did parse/match [] [end])
+(did parse/match [] [<end>])
 (did parse/match [] [[[]]])
-(did parse/match [_ _ _] [_ _ _ end])
-(not parse/match [x] [end])
+(did parse/match [_ _ _] [_ _ _ <end>])
+(not parse/match [x] [<end>])
 (not parse/match [x] [_ _ _])
-(not parse/match [x] [[[]] end])
-(did parse/match [_ _ _] [[[_ _ _] end]])
-(did parse/match [x _] ['x _ end])
-(did parse/match [_ x] [_ 'x end])
+(not parse/match [x] [[[]] <end>])
+(did parse/match [_ _ _] [[[_ _ _] <end>]])
+(did parse/match [x _] ['x _ <end>])
+(did parse/match [_ x] [_ 'x <end>])
 (did parse/match [x] [[] 'x []])
 
 (did parse/match "" [])
-(did parse/match "" [[[]] end])
-(did parse/match "   " [_ _ _ end])
-(not parse/match "x" [end])
-(not parse/match "x" [_ _ _ end])
+(did parse/match "" [[[]] <end>])
+(did parse/match "   " [_ _ _ <end>])
+(not parse/match "x" [<end>])
+(not parse/match "x" [_ _ _ <end>])
 (not parse/match "x" [[[]]])
-(did parse/match "   " [[[_ _ _] end]])
-(did parse/match "x " ["x" _ end])
+(did parse/match "   " [[[_ _ _] <end>]])
+(did parse/match "x " ["x" _ <end>])
 (did parse/match " x" [_ "x"])
-(did parse/match "x" [[] "x" [] end])
+(did parse/match "x" [[] "x" [] <end>])
 
 
 ; SET-WORD! (store current input position)
@@ -96,7 +96,7 @@
 (
     i: 0
     parse/match "a." [
-        opt some [thru "a" (i: i + 1 j: if i > 1 [[end skip]]) j]
+        opt some [thru "a" (i: i + 1 j: if i > 1 [[<end> skip]]) j]
     ]
     i == 1
 )
@@ -121,7 +121,7 @@
 ; self-invoking rule
 
 [#1672 (
-    a: [a end]
+    a: [a <end>]
     error? trap [parse/match [] a]
 )]
 
@@ -240,7 +240,7 @@
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
 (
     i: 1
-    parse/match "a" [opt some [(i: i + 1 j: if i = 2 [[end skip]]) j]]
+    parse/match "a" [opt some [(i: i + 1 j: if i = 2 [[<end> skip]]) j]]
     i == 2
 )
 

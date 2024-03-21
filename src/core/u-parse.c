@@ -809,11 +809,24 @@ static REBIXO To_Thru_Block_Rule(
                     continue;
             }
 
+            if (Is_Tag(rule)) {  // support <end> tag
+                bool strict = true;
+                if (0 != Compare_String_Vals(rule, Root_End_Tag, strict))
+                    fail ("<end> is only tag in To_Thru_Non_Block_Rule()");
+
+                if (pos >= Series_Len(P_INPUT))
+                    return Series_Len(P_INPUT);
+                goto next_alternate_rule;
+            }
+
             if (Is_Word(rule)) {
                 Option(SymId) cmd = VAL_CMD(rule);
 
                 if (cmd) {
                     if (cmd == SYM_END) {
+                        if (not (P_FLAGS & PF_REDBOL))
+                            fail ("Use <end> instead of END outside PARSE2");
+
                         if (pos >= Series_Len(P_INPUT))
                             return Series_Len(P_INPUT);
                         goto next_alternate_rule;
@@ -1059,10 +1072,24 @@ static REBIXO To_Thru_Non_Block_Rule(
     }
 
     if (Is_Word(rule) and Cell_Word_Id(rule) == SYM_END) {
-        //
+        if (not (P_FLAGS & PF_REDBOL))
+            fail ("Use <end> instead of END outside PARSE2");
+
         // `TO/THRU END` JUMPS TO END INPUT SERIES (ANY SERIES TYPE)
         //
         return Series_Len(P_INPUT);
+    }
+
+    if (Is_Tag(rule)) {
+        bool strict = true;
+        if (0 == Compare_String_Vals(rule, Root_End_Tag, strict)) {
+            return Series_Len(P_INPUT);
+        }
+        else if (0 == Compare_String_Vals(rule, Root_Here_Tag, strict)) {
+            fail ("TO/THRU <here> isn't supported in PARSE3");
+        }
+        else
+            fail ("TAG! combinator must be <here> or <end> ATM");
     }
 
     if (IS_SER_ARRAY(P_INPUT)) {
@@ -1795,6 +1822,19 @@ DECLARE_NATIVE(subparse)
                 rule = Get_Parse_Value(save, P_RULE, P_RULE_SPECIFIER);
             }
         }
+        else if (Is_Tag(rule)) {
+            bool strict = true;
+            if (0 == Compare_String_Vals(rule, Root_End_Tag, strict)) {
+                FETCH_NEXT_RULE(L);
+                begin = P_POS;
+                goto handle_end;
+            }
+            if (0 == Compare_String_Vals(rule, Root_Here_Tag, strict)) {
+                fail ("<here> tag would be no-op in this position");
+            }
+            fail ("Only TAG! combinators PARSE3 supports are <here> and <end>");
+        }
+
         // else fall through on other values and words
 
     //==////////////////////////////////////////////////////////////////==//
@@ -1832,10 +1872,9 @@ DECLARE_NATIVE(subparse)
                     break;
 
                 case SYM_END:
-                    i = (P_POS < Series_Len(P_INPUT))
-                        ? END_FLAG
-                        : Series_Len(P_INPUT);
-                    break;
+                    if (not (P_FLAGS & PF_REDBOL))
+                        fail ("Use <end> instead of END outside PARSE2");
+                    goto handle_end;
 
                 case SYM_TO:
                 case SYM_THRU: {
@@ -1981,6 +2020,13 @@ DECLARE_NATIVE(subparse)
                     break;
                 }
             }
+            else if (false) {
+              handle_end:
+                count = 0;
+                i = (P_POS < Series_Len(P_INPUT))
+                    ? END_FLAG
+                    : Series_Len(P_INPUT);
+            }
             else {
                 // Parse according to datatype
 
@@ -1995,7 +2041,7 @@ DECLARE_NATIVE(subparse)
             if (i == THROWN_FLAG)
                 return R_THROWN;
 
-            // Necessary for special cases like: some [to end]
+            // Necessary for special cases like: some [to <end>]
             // i: indicates new index or failure of the match, but
             // that does not mean failure of the rule, because optional
             // matches can still succeed, if if the last match failed.

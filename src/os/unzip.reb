@@ -471,7 +471,7 @@ ctx-zip: context [
                     ]
                 )
             ]
-            to end
+            to <end>
         ]
         info ["^/"
             "Files/Dirs unarchived: " num-entries "^/"

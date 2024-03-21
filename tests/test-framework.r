@@ -149,7 +149,7 @@ make object! compose [
                 parse/match read log-file [
                     (
                         last-vector: _
-                        guard: [end skip]
+                        guard: [<end> skip]
                     )
                     opt some [
                         opt some whitespace
@@ -167,7 +167,7 @@ make object! compose [
                             last-vector: across ["(" test-source-rule ")"]
                             opt some whitespace
                             [
-                                end (
+                                <end> (
                                     ; crash found
                                     crashes: crashes + 1
                                     log [{ "crashed"^/}]
@@ -196,7 +196,7 @@ make object! compose [
                             ]
                                 |
                             "system/version:"
-                            to end
+                            to <end>
                             (last-vector: guard: _)
 
                         ] position: <seek> guard break

@@ -47,7 +47,7 @@ handle-request: function [config req] [
     parse to-text req ["get " ["/ " | uri: across to " "]]
     uri: default ["index.html"]
     print ["URI:" uri]
-    parse uri [some [thru "."] ext: across to end (type: mime-map/:ext)]
+    parse uri [some [thru "."] ext: across to <end> (type: mime-map/:ext)]
     type: default ["application/octet-stream"]
     if not exists? file: config/root/:uri [return error-response 404 uri]
     if error? trap [data: read file] [return error-response 400 uri]

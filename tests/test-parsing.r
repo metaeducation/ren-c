@@ -31,7 +31,7 @@ parsing-at: func [  ; redefined here for <here> usage in regular PARSE
         if not end [
             block: compose/deep [either not tail? (word) [(block)] [_]]
         ]
-        block: compose/deep [result: either position: (block) [[seek position]] [[end skip]]]
+        block: compose/deep [result: either position: (block) [[seek position]] [[<end> skip]]]
         use compose [(word)] compose/deep [
             [(as set-word! :word) <here>
             (as group! block) result]
@@ -64,7 +64,7 @@ make object! [
                 success-rule: trap [
                     transcode/next position 'position
                 ] then [
-                    [end skip]
+                    [<end> skip]
                 ] else [
                     [seek position]
                 ]
@@ -76,7 +76,7 @@ make object! [
                 |
             "(" test-source-rule ")" ;-- plain GROUP! in code for a test
                 |
-            ";" [thru newline | to end]
+            ";" [thru newline | to <end>]
                 |
             ;
             ; If we see a closing bracket out of turn, that means we've "gone
@@ -139,7 +139,7 @@ make object! [
             [
                 some whitespace (type: in types 'wsp)
                 |
-                ";" [thru newline | to end] (type: in types 'cmt)
+                ";" [thru newline | to <end>] (type: in types 'cmt)
             ]
         ]
 
@@ -196,7 +196,7 @@ make object! [
                 |
             grouped-tests (flags: copy [])
                 |
-            end (type: in types 'end) emit-token break
+            <end> (type: in types 'end) emit-token break
                 |
             single-value
             [
@@ -225,7 +225,7 @@ make object! [
             position: <here> (type: value: _)
         ]
 
-        rule: [opt some token end]
+        rule: [opt some token <end>]
 
         parse/match test-sources rule else [
             append collected-tests reduce [
@@ -249,7 +249,7 @@ make object! [
         ]
 
         parse log-contents [
-            (guard: [end skip])
+            (guard: [<end> skip])
             opt some [
                 opt some whitespace
                 [
@@ -264,7 +264,7 @@ make object! [
                     last-vector: across ["(" test-source-rule ")"]
                     opt some whitespace
                     [
-                        end (
+                        <end> (
                             ; crash found
                             fail "log incomplete!"
                         )
@@ -290,7 +290,7 @@ make object! [
                         )
                     ]
                         |
-                    "system/version:" to end (guard: _)
+                    "system/version:" to <end> (guard: _)
                         |
                     (fail "collect-logs - log file parsing problem")
                 ] position: <here> guard break ; Break when error detected.

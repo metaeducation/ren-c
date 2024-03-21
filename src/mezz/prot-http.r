@@ -37,7 +37,7 @@ idate-to-date: function [return: [date!] date [text!]] [
         space
         time: across to space
         space
-        zone: acorss to end
+        zone: across to <end>
     ] else [
         fail ["Invalid idate:" date]
     ]
@@ -577,7 +577,7 @@ check-data: function [
                 chunk-size: across some hex-digits
                 thru crlfbin
                 mk1: <here>
-                to end
+                to <end>
             ]][
                 ; The chunk size is in the byte stream as ASCII chars
                 ; forming a hex string.  ISSUE! can decode that.
@@ -587,9 +587,9 @@ check-data: function [
 
                 if chunk-size = 0 [
                     parse/match mk1 [
-                        crlfbin (trailer: "") to end
+                        crlfbin (trailer: "") to <end>
                             |
-                        trailer: across to crlf2bin to end
+                        trailer: across to crlf2bin to <end>
                     ] then [
                         trailer: construct/only [] trailer
                         append headers body-of trailer
@@ -608,7 +608,7 @@ check-data: function [
                         chunk-size skip
                         mk2: <here>
                         crlfbin
-                        to end
+                        to <end>
                     ] else [
                         break
                     ]

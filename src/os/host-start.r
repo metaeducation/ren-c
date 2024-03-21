@@ -500,7 +500,7 @@ host-start: function [
 
         is-option: did parse/match/case argv/1 [
 
-            ["--" end] (
+            ["--" <end>] (
                 ; Double-dash means end of command line arguments, and the
                 ; rest of the arguments are going to be positional.  In
                 ; Rebol's case, that means a file to run and its arguments
@@ -512,26 +512,26 @@ host-start: function [
                 take argv
             ) fail
         |
-            "--about" end (
+            "--about" <end> (
                 o/about: true   ;; show full banner (ABOUT) on startup
             )
         |
-            "--breakpoint" end (
+            "--breakpoint" <end> (
                 c-debug-break-at to-integer param-or-die "BREAKPOINT"
             )
         |
-            ["--cgi" | "-c"] end (
+            ["--cgi" | "-c"] <end> (
                 o/quiet: true
                 o/cgi: true
             )
         |
-            "--debug" end (
+            "--debug" <end> (
                 ;-- was coerced to BLOCK! before, but what did this do?
                 ;
                 o/debug: to logic! param-or-die "DEBUG"
             )
         |
-            "--do" end (
+            "--do" <end> (
                 ;
                 ; A string of code to run, e.g. `r3 --do "print {Hello}"`
                 ;
@@ -542,36 +542,36 @@ host-start: function [
                 emit [do/only ((| param-or-die "DO" |))]
             )
         |
-            ["--halt" | "-h"] end (
+            ["--halt" | "-h"] <end> (
                 quit-when-done: false ;-- overrides true
             )
         |
-            ["--help" | "-?"] end (
+            ["--help" | "-?"] <end> (
                 usage
                 quit-when-done: default [true]
             )
         |
-            "--import" end (
+            "--import" <end> (
                 lib/import local-to-file param-or-die "IMPORT"
             )
         |
-            ["--quiet" | "-q"] end (
+            ["--quiet" | "-q"] <end> (
                 o/quiet: true
             )
         |
-            "-cs" end (
+            "-cs" <end> (
                 ; every tutorial on Rebol CGI shows these flags.
                 o/quiet: true
                 o/cgi: true
             )
         |
-            "--resources" end (
+            "--resources" <end> (
                 o/resources: to-dir param-or-die "RESOURCES" or [
                     die "RESOURCES directory not found"
                 ]
             )
         |
-            "--suppress" end (
+            "--suppress" <end> (
                 param: param-or-die "SUPPRESS"
                 o/suppress: if param = "*" [
                     ;; suppress all known start-up files
@@ -581,29 +581,29 @@ host-start: function [
                 ]
             )
         |
-            "--script" end (
+            "--script" <end> (
                 o/script: local-to-file param-or-die "SCRIPT"
                 quit-when-done: default [true] ;-- overrides blank, not false
             )
         |
-            ["-t" | "--trace"] end (
+            ["-t" | "--trace"] <end> (
                 trace on ;-- did they mean trace just the script/DO code?
             )
         |
-            "--verbose" end (
+            "--verbose" <end> (
                 o/verbose: true
             )
         |
-            ["-v" | "-V" | "--version"] end (
+            ["-v" | "-V" | "--version"] <end> (
                 boot-print ["Rebol 3" system/version] ;-- version tuple
                 quit-when-done: default [true]
             )
         |
-            "-w" end (
+            "-w" <end> (
                 ;-- No window; not currently applicable
             )
         |
-            [cli-option: across [["--" | "-" | "+"] to end ]] (
+            [cli-option: across [["--" | "-" | "+"] to <end>]] (
                 die [
                     "Unknown command line option:" cli-option LF
                     {!! For a full list of command-line options use: --help}

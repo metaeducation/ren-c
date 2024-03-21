@@ -349,7 +349,7 @@ rebsource: context [
                 ]
                 position: <here>
 
-                to end
+                to <end>
             ]
 
             if not empty? over-std-len [
@@ -416,7 +416,7 @@ rebsource: context [
             ] else [
                 split-path/file item the filename:
                 any [
-                    parse/match filename ["tmp-" to end]
+                    parse/match filename ["tmp-" to <end>]
                     not find extensions extension-of item
                 ] then [
                     item: null

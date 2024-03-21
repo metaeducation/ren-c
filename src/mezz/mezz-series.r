@@ -355,7 +355,7 @@ reword: function [
 
         ; Seek to end, just so rule succeeds
         ;
-        to end
+        to <end>
 
         ; Finalize the output, such that any remainder is transferred verbatim
         ;
@@ -657,10 +657,10 @@ split: function [
 
                 [
                     count [series: across piece-size skip (keep/only series)]
-                    series: across to end (keep/only series)
+                    series: across to <end> (keep/only series)
                 ]
             ] else [
-                [opt some [series: across 1 size skip (keep/only series)] end]
+                [opt some [series: across 1 size skip (keep/only series)] <end>]
             ]
         ] else [
             ; A block that is not all integers, e.g. not `[1 1 1]`, acts as a
@@ -672,7 +672,7 @@ split: function [
                 opt some [mk1: <here> some [mk2: <here> dlm break | skip] (
                     keep/only copy/part mk1 mk2
                 )]
-                end
+                <end>
             ]
         ]
     ]

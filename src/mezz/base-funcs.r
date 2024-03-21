@@ -187,7 +187,7 @@ function: func [
         ]
         (var: _)
     |
-        end accept <here>
+        <end> accept <here>
     |
         other: (
             print mold other/1
@@ -873,7 +873,7 @@ module: func [
                     append spec/exports collect-words/ignore w spec/exports
                 )
             ]
-        ] to end]
+        ] to <end>]
     ]
 
     ; Collect 'hidden keyword words, removing the keywords. Ignore exports.
@@ -894,7 +894,7 @@ module: func [
                     append hidden collect-words/ignore w select spec 'exports
                 )
             ]
-        ] to end]
+        ] to <end>]
     ]
 
     ; Add hidden words next to the context (performance):

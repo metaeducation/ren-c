@@ -204,8 +204,8 @@ split-path: func [
 ][
     pos: null
     parse location [
-        [#"/" | 1 2 #"." opt #"/"] end (dir: dirize location) |
-        pos: <here> opt some [thru #"/" [end | pos: <here>]] (
+        [#"/" | 1 2 #"." opt #"/"] <end> (dir: dirize location) |
+        pos: <here> opt some [thru #"/" [<end> | pos: <here>]] (
             all [
                 empty? dir: copy/part location at head of location index of pos
                     |
@@ -213,7 +213,7 @@ split-path: func [
             ]
             all [find [%. %..] pos: to file! pos insert tail of pos #"/"]
         )
-        to end  ; !!! was plain END, but was unchecked and didn't reach it!
+        to <end>  ; !!! was plain <end>, but was unchecked and didn't reach it!
     ]
     set (maybe farg) pos
     return dir
