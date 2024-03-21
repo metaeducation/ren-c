@@ -28,7 +28,7 @@ c-lexical: import <c-lexicals.r>
 import <text-lines.reb>
 import <parsing-tools.reb>
 
-load-until-blank: func [
+load-until-double-newline: func [
     {Load rebol values from text until double newline.}
     text [text!]
     /next {Return values and next position.}
@@ -38,8 +38,7 @@ load-until-blank: func [
 
     let res: null  ; !!! collect as SET-WORD!s for locals, evolving...
     let rebol-value: parsing-at x [
-        attempt [transcode3/next x inside [] 'res]
-        res
+        attempt [transcode3/next x inside [] 'res] then [res] else [null]
     ]
 
     let terminator: [opt wsp newline opt wsp newline]
@@ -173,7 +172,7 @@ export proto-parser: context [
             all [  ; note: not LOGIC!, a series
                 lines: attempt [decode-lines lines {//} { }]
                 parse2 lines [data: across to {=///} to <end>]
-                data: attempt [load-until-blank trim/auto data]
+                data: attempt [load-until-double-newline trim/auto data]
                 data: attempt [
                     if set-word? first data/1 [data/1] else [false]
                 ]
@@ -190,7 +189,7 @@ export proto-parser: context [
         is-intro: parsing-at position [
             all [
                 lines: attempt [decode-lines lines {//} { }]
-                data: load-until-blank lines
+                data: load-until-double-newline lines
 
                 any [
                     set-word? first data/1

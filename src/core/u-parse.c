@@ -1445,27 +1445,13 @@ DECLARE_NATIVE(subparse)
 
             switch (cmd) {
               case SYM_WHILE:
-                if (not (P_FLAGS & PF_REDBOL)) {
-                    fail (
-                        "Please replace PARSE3's WHILE with OPT SOME -or-"
-                        " OPT FURTHER SOME--it's being reclaimed as arity-2."
-                        " https://forum.rebol.info/t/1540/12 (or use PARSE2)"
-                    );
-                }
-
-              run_while_rule:
-                P_FLAGS |= PF_LOOPING;
-                assert(mincount == 1 and maxcount == 1);  // true on entry
-                mincount = 0;
-                maxcount = INT32_MAX;
-                FETCH_NEXT_RULE(L);
-                P_FLAGS |= PF_LOOPING;
-                goto pre_rule;
+                fail (
+                    "Please replace PARSE3's WHILE with OPT SOME -or-"
+                    " OPT FURTHER SOME--it's being reclaimed as arity-2."
+                    " https://forum.rebol.info/t/1540/12 (or use PARSE2)"
+                );
 
               case SYM_SOME:
-                if (P_FLAGS & PF_REDBOL) {
-                    P_FLAGS |= PF_FURTHER;
-                }
                 assert(
                     (mincount == 1 or mincount == 0)  // could be OPT SOME
                     and maxcount == 1
@@ -1476,10 +1462,6 @@ DECLARE_NATIVE(subparse)
                 goto pre_rule;
 
               case SYM_ANY:
-                if (P_FLAGS & PF_REDBOL) {
-                    P_FLAGS |= PF_FURTHER;
-                    goto run_while_rule;
-                }
                 fail (
                     "Please replace PARSE's ANY with OPT SOME"
                     " -- it's being reclaimed for a new construct"

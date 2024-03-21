@@ -103,8 +103,7 @@ strip-commas-and-downgrade-strings: lib3/func [
     pushed: copy []  ; <Q>uoted or <B>raced string delimiter stack
 
     rule: [
-        ; Bootstrap WHILE: https://github.com/rebol/rebol-issues/issues/1401
-        while [
+        opt some [
             "^^{"  ; (actually `^{`) escaped brace, never count
             |
             "^^}"  ; (actually `^}`) escaped brace, never count

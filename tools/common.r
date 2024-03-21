@@ -374,8 +374,7 @@ export stripload: func [
         ;
         if (empty? pushed)  ; string not in effect, okay to proceed
 
-        ; Bootstrap WHILE: https://github.com/rebol/rebol-issues/issues/1401
-        while [
+        opt some [
             remove [some space]
             |
             ahead ";" remove [to [newline | <end>]]
@@ -383,8 +382,7 @@ export stripload: func [
     ]
 
     let rule: [
-        ; Bootstrap WHILE: https://github.com/rebol/rebol-issues/issues/1401
-        while [
+        opt some [
             newline [opt some [comment-or-space-rule remove newline]]
             |
             [ahead [opt some space ";"]] comment-or-space-rule
