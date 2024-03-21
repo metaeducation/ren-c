@@ -123,7 +123,7 @@
         bool operator!=(NOT_FOUND_t const &rhs) const = delete;
 
     public:
-        REBIXO () {} // simulate C uninitialization
+        REBIXO () = default;  // simulate C uninitialization
         REBIXO (REBLEN bits) : bits (bits) {
             assert(bits != ((REBLEN)-1)); // not with REBIXO!
         }
