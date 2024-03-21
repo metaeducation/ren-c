@@ -84,7 +84,7 @@ filter-flag: func [
     let option
     parse2 to text! flag [
         header: across to ":"
-        ":" option: across to end
+        ":" option: across to <end>
     ] else [
         fail ["Tag must be <prefix:flag> ->" (flag)]
     ]
@@ -146,12 +146,12 @@ pkg-config: func [  ; !!! Note: Does not appear to be used
     parse2 x [
         some [
             thru dlm
-            item: across to [dlm | end] (
+            item: across to [dlm | <end>] (
                 ;dump item
                 append ret to file! item
             )
         ]
-        end
+        <end>
     ]
     return ret
 ]
@@ -475,7 +475,7 @@ gcc: make compiler-class [
                 major: across some digit "."
                 minor: across some digit "."
                 macro: across some digit
-                to end
+                to <end>
             ] then [
                 version: reduce [  ; !!! It appears this is not used (?)
                     to integer! major

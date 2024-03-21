@@ -94,7 +94,7 @@ emit-proto: func [return: [~] proto] [
         parse2 proto [
             return-type: across to "API_" "API_" name: across to "(" skip
             ["void)" | some [  ; C void, or at least one parameter expected
-                [param: across to "," skip | param: across to ")" to end] (
+                [param: across to "," skip | param: across to ")" to <end>] (
                     ;
                     ; Separate type from parameter name.  Step backwards from
                     ; the tail to find space, or non-letter/digit/underscore.

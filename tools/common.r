@@ -220,7 +220,7 @@ export binary-to-c: func [
     parse2 out [
         (comma-count: 0)
         some [thru "," (comma-count: comma-count + 1)]
-        to end
+        to <end>
     ]
     assert [(comma-count + 1) = data-len]
 
@@ -378,7 +378,7 @@ export stripload: func [
         while [
             remove [some space]
             |
-            ahead ";" remove [to [newline | end]]
+            ahead ";" remove [to [newline | <end>]]
         ]
     ]
 

@@ -274,7 +274,7 @@ export cscape: func [
                 skip
             ]
         ]
-        end
+        <end>
     ]
 
     for-each [start end] kill-lines [
@@ -316,12 +316,12 @@ export make-emitter: func [
 
     temporary: to-logic any [
         temporary
-        parse2 stem ["tmp-" to end]
+        parse2 stem ["tmp-" to <end>]
     ]
 
-    let is-c: did parse2 stem [thru [".c" | ".h" | ".inc"] end]
+    let is-c: did parse2 stem [thru [".c" | ".h" | ".inc"] <end>]
 
-    let is-js: did parse2 stem [thru ".js" end]
+    let is-js: did parse2 stem [thru ".js" <end>]
 
     let e: make object! compose [
         ;

@@ -759,7 +759,7 @@ static REBIXO To_Thru_Block_Rule(
     DECLARE_VALUE (cell);  // holds evaluated rules (use frame cell instead?)
 
     // Note: This enumeration goes through <= P_INPUT_LEN, because the
-    // block rule might be something like `to [{a} | end]`.  e.g. being
+    // block rule might be something like `to [{a} | <end>]`.  e.g. being
     // positioned on the end cell or null terminator of a string may match.
     //
     DECLARE_ATOM (iter);
@@ -793,27 +793,13 @@ static REBIXO To_Thru_Block_Rule(
                 Option(SymId) cmd = VAL_CMD(rule);
 
                 if (cmd) {
-                    if (cmd == SYM_END) {
-                        if (not (P_FLAGS & PF_REDBOL))
-                            fail ("Use <end> instead of END outside PARSE2");
+                    if (cmd == SYM_END)
+                        fail ("Use <end> instead of END in PARSE3");
 
-                        if (VAL_INDEX(iter) >= P_INPUT_LEN)
-                            return P_INPUT_LEN;
-                        goto next_alternate_rule;
-                    }
-                    else if (
-                        cmd == SYM_QUOTE // temporarily same for bootstrap
-                    ){
-                        if (not (P_FLAGS & PF_REDBOL))
-                            fail ("Use THE instead of QUOTE outside PARSE2");
+                    if (cmd == SYM_QUOTE)
+                        fail ("Use THE instead of QUOTE outside PARSE2");
 
-                        rule = ++blk;  // next rule is the literal value
-                        if (rule == blk_tail)
-                            fail (Error_Parse3_Rule());
-                    }
-                    else if (
-                        cmd == SYM_THE // temporarily same for bootstrap
-                    ){
+                    if (cmd == SYM_THE) {
                         rule = ++blk;  // next rule is the literal value
                         if (rule == blk_tail)
                             fail (Error_Parse3_Rule());
@@ -1042,14 +1028,8 @@ static REBIXO To_Thru_Non_Block_Rule(
     if (kind == REB_BLANK and (P_FLAGS & PF_REDBOL))
         return P_POS;  // make it a no-op
 
-    if (kind == REB_WORD and Cell_Word_Id(rule) == SYM_END) {
-        if (not (P_FLAGS & PF_REDBOL))
-            fail ("Use <end> instead of END outside PARSE2");
-
-        // `TO/THRU END` JUMPS TO END INPUT SERIES (ANY SERIES TYPE)
-        //
-        return P_INPUT_LEN;
-    }
+    if (kind == REB_WORD and Cell_Word_Id(rule) == SYM_END)
+        fail ("Use <end> instead of END in PARSE3");
 
     if (kind == REB_TAG) {
         bool strict = true;
@@ -1909,9 +1889,7 @@ DECLARE_NATIVE(subparse)
                 break;
 
               case SYM_END:
-                if (not (P_FLAGS & PF_REDBOL))
-                    fail ("Use <end> instead of END outside PARSE2");
-                goto handle_end;
+                fail ("Use <end> instead of END in PARSE3");
 
               case SYM_TO:
               case SYM_THRU: {

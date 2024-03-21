@@ -128,7 +128,7 @@ strip-commas-and-downgrade-strings: lib3/func [
             |
             skip
         ]
-        end
+        <end>
     ]
 
     lib3/parse source rule else [

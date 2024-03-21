@@ -132,7 +132,7 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
             count-line-rule
         ]
         bol: <here>
-        skip, to end, eol: <here>
+        skip, to <end>, eol: <here>
         count-line-rule
     ]
 

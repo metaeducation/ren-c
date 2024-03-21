@@ -47,7 +47,7 @@ load-until-blank: func [
     parse2 text [
         some [not terminator rebol-value]
         opt wsp opt [newline opt newline] position: <here>
-        to end
+        to <end>
     ] then [
         values: load copy/part text position
         return reduce [values position]
@@ -57,7 +57,7 @@ load-until-blank: func [
 ]
 
 
-collapse-whitespace: [some [change some white-space (space) | skip] end]
+collapse-whitespace: [some [change some white-space (space) | skip] <end>]
 bind collapse-whitespace c-lexical/grammar
 
 
@@ -172,7 +172,7 @@ export proto-parser: context [
         is-fileheader: parsing-at position [
             all [  ; note: not LOGIC!, a series
                 lines: attempt [decode-lines lines {//} { }]
-                parse2 lines [data: across to {=///} to end]
+                parse2 lines [data: across to {=///} to <end>]
                 data: attempt [load-until-blank trim/auto data]
                 data: attempt [
                     if set-word? first data/1 [data/1] else [false]
@@ -265,7 +265,7 @@ export rewrite-if-directives: func [
 
               | thru newline
             ]
-            end
+            <end>
         ]
         not rewritten
     ]

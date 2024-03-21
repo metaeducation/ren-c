@@ -95,7 +95,7 @@ parse2 script-name [
     change "mod-" ("ext-")
     to "."
     change "." ("-init.")
-    change ["c" end | "cpp" end] ("reb")
+    change ["c" <end> | "cpp" <end>] ("reb")
 ] else [
     fail [
         "Extension main file should have naming pattern %mod-xxx.c(pp),"
@@ -109,7 +109,7 @@ parse2 inc-name [
     change "mod-" ("tmp-mod-")
     to "."
     change "." ("-init.")
-    change ["c" end | "cpp" end] ("c")  ; !!! Keep as .cpp if it is?
+    change ["c" <end> | "cpp" <end>] ("c")  ; !!! Keep as .cpp if it is?
 ] else [
     fail [
         "Extension main file should have naming pattern %mod-xxx.c(pp),"

@@ -121,7 +121,7 @@ export emit-include-params-macro: func [
     let native-name: ~
     parse2 proto [
         opt some newline  ; stripload preserves newlines
-        opt ["export" space] native-name: across to ":" to end
+        opt ["export" space] native-name: across to ":" to <end>
     ] else [
         fail "Could not extract native name in emit-include-params-macro"
     ]

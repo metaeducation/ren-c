@@ -45,10 +45,10 @@ ndk-version: make object! [major: minor: patch: null]
     use [major minor patch] [
         parse2 as text! read (join ndk-root %source.properties) [
             thru "Pkg.Revision = "
-            copy major: to "." skip (major: to integer! major)
-            copy minor: to "." skip (minor: to integer! minor)
-            copy patch: to [end | newline] (patch: to integer! patch)
-            to end
+            major: across to "." skip (major: to integer! major)
+            minor: across to "." skip (minor: to integer! minor)
+            patch: across to [<end> | newline] (patch: to integer! patch)
+            to <end>
         ] else [
             fail "Can't parse source.properties in ANDROID_NDK_ROOT directory"
         ]
