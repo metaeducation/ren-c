@@ -304,7 +304,7 @@
 ; repetition
 
 [#1280 (
-    parse3 "" [(i: 0) 3 [["a" |] (i: i + 1)]]
+    parse3 "" [(i: 0) repeat 3 [["a" |] (i: i + 1)]]
     i == 3
 )]
 [#1268 (
@@ -331,10 +331,10 @@
         true
     )
     ~parse3-incomplete~ !! (
-        parse3 "" [not 0 "a"]
+        parse3 "" [not repeat 0 "a"]
     )
     ~parse3-incomplete~ !! (
-        parse3 "" [not [0 "a"]]
+        parse3 "" [not [repeat 0 "a"]]
     )
 ]
 
@@ -454,15 +454,15 @@
     true
 )
 ~parse3-incomplete~ !! (
-    parse3 "aaa" [:(1 + 1) "a"]
+    parse3 "aaa" [repeat (1 + 1) "a"]
 )
 (
-    parse3 "aaa" [:(1 + 2) "a"]
+    parse3 "aaa" [repeat (1 + 2) "a"]
     true
 )
 (
     count: 0
-    parse3 ["a" "aa" "aaa"] [some [into [:(count: count + 1) "a"]]]
+    parse3 ["a" "aa" "aaa"] [some [into [repeat (count: count + 1) "a"]]]
     true
 )
 
@@ -514,7 +514,7 @@
 ; Limited support for @word
 (
     block: [some rule]
-    parse3 [[some rule] [some rule]] [2 @block]
+    parse3 [[some rule] [some rule]] [repeat 2 @block]
     true
 )
 (

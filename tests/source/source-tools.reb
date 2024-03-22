@@ -68,7 +68,7 @@ standard: context [
     ; from final right brace of leading function
     ; to intro comment of following function.
     ;
-    function-spacing: [3 eol]
+    function-spacing: [repeat 3 eol]
 ]
 
 ; Source paths are recursively read.

@@ -1479,12 +1479,13 @@ DECLARE_NATIVE(subparse)
                     );
 
                 FETCH_NEXT_RULE(L);
-                if (not Is_Group(P_RULE))
-                    fail ("Old PARSE REPEAT requires GROUP! for times count");
-
                 assert(Is_Fresh(OUT));
-                if (Eval_Value_Throws(OUT, P_RULE, P_RULE_SPECIFIER))
-                    goto return_thrown;
+                if (Is_Group(P_RULE)) {
+                    if (Eval_Value_Throws(OUT, P_RULE, P_RULE_SPECIFIER))
+                        goto return_thrown;
+                } else {
+                    Derelativize(OUT, P_RULE, P_RULE_SPECIFIER);
+                }
 
                 if (Is_Integer(OUT)) {
                     mincount = Int32s(stable_OUT, 0);
@@ -1793,24 +1794,10 @@ DECLARE_NATIVE(subparse)
         goto process_group;  // GROUP! can make WORD! that fetches GROUP!
 
       case REB_INTEGER:  // Specify repeat count
-        mincount = maxcount = Int32s(rule, 0);
-
-        FETCH_NEXT_RULE(L);
-        if (P_AT_END)
-            fail (Error_Parse3_End());
-
-        rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
-
-        if (Is_Integer(rule)) {
-            if (P_FLAGS & PF_REDBOL)
-                maxcount = Int32s(rule, 0);
-            else
-                fail (
-                    "[1 2 rule] now illegal https://forum.rebol.info/t/1578/6"
-                    " (or use PARSE2)"
-                );
-        }
-        break;
+        fail (
+            "[1 2 rule] now illegal https://forum.rebol.info/t/1578/6"
+            " (use REPEAT)"
+        );
 
       case REB_TAG: {  // tag combinator in UPARSE, matches in UPARSE2
         bool strict = true;
