@@ -243,7 +243,7 @@ for-each info all-protos [
 
 blockrule: ["[" opt some [blockrule | not "]" skip] "]"]
 
-parse2 stripped-generics [
+parse3 stripped-generics [
     some newline  ; skip newlines
     opt some [
         proto: across [

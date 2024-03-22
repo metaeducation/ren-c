@@ -1723,7 +1723,7 @@ default-combinators: make map! reduce [
     ;
     ; It is possible to break this regularity with quoted/skippable combinator
     ; arguments.  And it's necessary to do so for the Redbol emulation.  See
-    ; the INTEGER! combinator used in PARSE2 for this "dirty" technique.
+    ; the INTEGER! combinator used in UPARSE2 for this "dirty" technique.
     ;
     ; Note that REPEAT allows the use of BLANK! to opt out of an iteration.
 

@@ -34,7 +34,7 @@ decode-lines: func [
         seek rest
         thru newline
     ]
-    parse2 text [opt some line-rule] else [
+    parse3/match text [opt some line-rule] else [
         fail [
             {Expected line} (try text-line-of text pos)
             {to begin with} (mold line-prefix)
@@ -57,7 +57,7 @@ encode-lines: func [
     ; Encode newlines.
     let bol: join line-prefix indent
     let pos
-    parse2 text [
+    parse3 text [
         opt some [
             thru newline, pos: <here>
             [
@@ -66,6 +66,7 @@ encode-lines: func [
             ]
             seek pos
         ]
+        to <end>
     ]
 
     ; Indent head if original text did not start with a newline.
@@ -123,7 +124,7 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
         )
     ]
 
-    parse2 text [
+    parse3 text [
         opt some [
             bol: <here>
             to newline
@@ -153,7 +154,7 @@ text-line-of: func [
 
     let advance-rule: [skip (line: line + 1)]
 
-    parse2 text [
+    parse3 text [
         opt some [
             to newline cursor: <here>
 
@@ -165,6 +166,7 @@ text-line-of: func [
             advance-rule
         ]
         advance-rule
+        to <end>
     ]
 
     if zero? line [return null]
@@ -189,7 +191,7 @@ text-location-of: func [
         skip (line: line + 1)
     ]
     let cursor
-    parse2 text [
+    parse3 text [
         opt some [
             to newline cursor: <here>
 
@@ -201,6 +203,7 @@ text-location-of: func [
             advance-rule
         ]
         advance-rule
+        to <end>
     ]
 
     if zero? line [line: null] else [

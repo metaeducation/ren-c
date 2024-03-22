@@ -833,7 +833,7 @@ parse-ext-build-spec: func [
     if has ext 'options [
         ensure block! ext/options
         config: null  ; default for locals in modern Ren-C
-        parse2 ext/options [
+        parse3/match ext/options [
             opt some [
                 word! block! opt text! config: group!
             ]
@@ -1126,7 +1126,7 @@ set-exec-path: func [
     ]
 ]
 
-parse2 user-config/toolset [
+parse3/match user-config/toolset [
     opt some [
         'gcc opt cc-exec: [file! | text! | blank!] (
             rebmake/default-compiler: rebmake/gcc

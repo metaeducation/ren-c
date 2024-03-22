@@ -155,7 +155,7 @@ for-each-datatype: func [
     completed* running* is-unstable* decorated
 ][
     heart*: 1  ; 0 is reserved
-    parse2 type-table [some [not <end>
+    parse3/match type-table [some [not <end>
         opt some tag!  ; <TYPE!> or </TYPE!> used by FOR-EACH-TYPERANGE
 
         name*: word!
@@ -213,7 +213,7 @@ for-each-typerange: func [
 
     heart*: 1  ; 0 is reserved
     while [true] [  ; need to be in loop for BREAK to work
-        parse2 type-table [some [
+        parse3/match type-table [some [
             opt some [name*: tag! (
                 name*: to text! name*
                 lowercase name*
@@ -224,7 +224,7 @@ for-each-typerange: func [
                 ; The name ANY-META-VALUE! is used to produce functions like
                 ; ANY_META() in the C code.  Extract relevant name part.
                 ;
-                parse2 name* [
+                parse3/match name* [
                     opt remove "any-"
                     to "?"  ; once dropped -VALUE from e.g. ANY-META-VALUE?
                     remove "?"
@@ -862,7 +862,7 @@ for-each [sw-cat list] boot-errors [
 
         arity: 0
         if block? message [  ; can have N GET-WORD! substitution slots
-            parse2 message [opt some [get-word! (arity: arity + 1) | skip]]
+            parse3 message [opt some [get-word! (arity: arity + 1) | skip]]
         ] else [
             ensure text! message  ; textual message, no arguments
         ]
@@ -870,7 +870,7 @@ for-each [sw-cat list] boot-errors [
         ; Camel Case and make legal for C (e.g. "not-found*" => "Not_Found_P")
         ;
         f-name: uppercase/part to-c-name id 1
-        parse2 f-name [
+        parse3 f-name [
             opt some [
                 "_" w: <here>
                 (uppercase/part w 1)

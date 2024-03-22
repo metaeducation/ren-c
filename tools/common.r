@@ -217,7 +217,7 @@ export binary-to-c: func [
 
     ; Sanity check (should be one more byte in source than commas out)
     let comma-count
-    parse2 out [
+    parse3 out [
         (comma-count: 0)
         some [thru "," (comma-count: comma-count + 1)]
         to <end>
@@ -461,13 +461,13 @@ export stripload: func [
         if not let hdr: copy/part (next find text "[") (find text "^/]") [
             fail ["Couldn't locate header in STRIPLOAD of" file]
         ]
-        parse2 hdr rule else [
+        parse3/match hdr rule else [
             fail ["STRIPLOAD failed to munge header of" file]
         ]
         set header hdr
     ]
 
-    parse2 contents rule else [
+    parse3/match contents rule else [
         fail ["STRIPLOAD failed to munge contents of" file]
     ]
 

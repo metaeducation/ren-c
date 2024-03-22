@@ -82,7 +82,7 @@ filter-flag: func [
 
     let header
     let option
-    parse2 to text! flag [
+    parse3/match to text! flag [
         header: across to ":"
         ":" option: across to <end>
     ] else [
@@ -143,7 +143,7 @@ pkg-config: func [  ; !!! Note: Does not appear to be used
 
     let ret: make block! 1
     let item
-    parse2 x [
+    parse3 x [
         some [
             thru dlm
             item: across to [dlm | <end>] (
@@ -151,7 +151,6 @@ pkg-config: func [  ; !!! Note: Does not appear to be used
                 append ret to file! item
             )
         ]
-        <end>
     ]
     return ret
 ]
@@ -470,7 +469,7 @@ gcc: make compiler-class [
             exec-file: exec: default ["gcc"]
             call/output [(exec) "--version"] version
             let letter: charset [#"a" - #"z" #"A" - #"Z"]
-            parse2 version [
+            parse3/match version [
                 "gcc (" some [letter | digit | #"_"] ")" space
                 major: across some digit "."
                 minor: across some digit "."
@@ -1258,7 +1257,7 @@ generator-class: make object! [
         let val
         while [not stop][
             stop: true
-            parse2 cmd [
+            parse3/match cmd [
                 opt some [
                     change [
                         [

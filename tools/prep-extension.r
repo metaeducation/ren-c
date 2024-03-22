@@ -90,7 +90,7 @@ c-src: join repo-dir (as file! ensure text! args/SRC)
 print ["building" m-name "from" c-src]
 
 script-name: copy c-src
-parse2 script-name [
+parse3/match script-name [
     some [thru "/"]
     change "mod-" ("ext-")
     to "."
@@ -105,7 +105,7 @@ parse2 script-name [
 
 split-path3/file c-src inside [] 'inc-name
 is-cpp: false
-parse2 inc-name [
+parse3/match inc-name [
     change "mod-" ("tmp-mod-")
     to "."
     change "." ("-init.")
@@ -247,8 +247,9 @@ e1/emit newline
 
 if use-librebol [
     for-each info all-protos [
-        parse2 info/proto [
+        parse3 info/proto [
             opt ["export" space] proto-name: across to ":"
+            to <end>
         ]
         proto-name: to-c-name proto-name
 

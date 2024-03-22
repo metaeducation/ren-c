@@ -43,7 +43,7 @@ load-until-double-newline: func [
 
     let terminator: [opt wsp newline opt wsp newline]
 
-    parse2 text [
+    parse3/match text [
         some [not terminator rebol-value]
         opt wsp opt [newline opt newline] position: <here>
         to <end>
@@ -80,7 +80,7 @@ export proto-parser: context [
     count: ~
 
     process: func [return: [~] text] [
-        parse2 text grammar/rule
+        parse3 text grammar/rule
     ]
 
     grammar: context bind [
@@ -140,7 +140,7 @@ export proto-parser: context [
                 ; EMIT-PROTO doesn't want to see extra whitespace (such as
                 ; when individual parameters are on their own lines).
                 ;
-                parse2 proto collapse-whitespace
+                parse3 proto collapse-whitespace
                 proto: trim proto
                 assert [find proto "("]
 
@@ -171,7 +171,7 @@ export proto-parser: context [
         is-fileheader: parsing-at position [
             all [  ; note: not LOGIC!, a series
                 lines: attempt [decode-lines lines {//} { }]
-                parse2 lines [data: across to {=///} to <end>]
+                parse3/match lines [data: across to {=///} to <end>]
                 data: attempt [load-until-double-newline trim/auto data]
                 data: attempt [
                     if set-word? first data/1 [data/1] else [false]
@@ -252,7 +252,7 @@ export rewrite-if-directives: func [
 ][
     until [
         let rewritten
-        parse2 position [
+        parse3/match position [
             (rewritten: false)
             some [
                 [

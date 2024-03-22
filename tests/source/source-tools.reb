@@ -52,8 +52,6 @@ import %% (repo-dir)/tools/read-deep.reb
 logfn: func [message][print mold new-line/all compose message false]
 log: :logfn
 
-parse2: :parse3/redbol
-
 standard: context [
     ;
     ; Not counting newline, lines should be no longer than this.
@@ -177,7 +175,7 @@ export analyse: context [
                 )
             ]
 
-            parse2/case data [
+            parse3/case data [
                 some [
                     position: <here>
                     malloc-check
@@ -204,7 +202,7 @@ export analyse: context [
                 eval overbind c-parser-extension [
                     if last-func-end [
                         all [
-                            parse2 last-func-end [
+                            parse3 last-func-end [
                                 function-spacing-rule
                                 position: <here>
                                 accept (true)

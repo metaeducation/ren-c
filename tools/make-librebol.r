@@ -91,7 +91,7 @@ emit-proto: func [return: [~] proto] [
     ]
 
     paramlist: collect [
-        parse2 proto [
+        parse3/match proto [
             return-type: across to "API_" "API_" name: across to "(" skip
             ["void)" | some [  ; C void, or at least one parameter expected
                 [param: across to "," skip | param: across to ")" to <end>] (
@@ -129,7 +129,7 @@ emit-proto: func [return: [~] proto] [
     ]
 
     if is-variadic: did find paramlist 'vaptr [
-        parse2 paramlist [  ; Note: block! parsing
+        parse3/match paramlist [  ; Note: block! parsing
             ;
             ; Any generalized "modes" or "flags" should come first, which
             ; facilitates C99 macros that want two places to splice arguments:

@@ -479,7 +479,7 @@ export for-each-platform: func [
         ldflags: null
     ]
 
-    parse2 platforms overbind p [ some [
+    parse3/match platforms overbind p [ some [
         name: set-word! (
             name: to-word name
         )

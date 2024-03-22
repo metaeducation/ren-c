@@ -65,7 +65,7 @@ export extract-native-protos: func [
     <local> proto name exported
 ][
     return collect [
-        parse2 read/string c-source-file [opt some [
+        parse3 read/string c-source-file [opt some [
             "//" newline
             "//" space space proto: across [
                 (exported: false)
@@ -119,7 +119,7 @@ export emit-include-params-macro: func [
     let seen-refinement: false
 
     let native-name: ~
-    parse2 proto [
+    parse3/match proto [
         opt some newline  ; stripload preserves newlines
         opt ["export" space] native-name: across to ":" to <end>
     ] else [

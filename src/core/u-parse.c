@@ -186,9 +186,7 @@ enum parse_flags {
 
     PF_ONE_RULE = 1 << 15,  // signal to only run one step of the parse
 
-    PF_REDBOL = 1 << 16,  // use Rebol2/Red-style rules
-
-    PF_MAX = PF_REDBOL
+    PF_MAX = PF_ONE_RULE
 };
 
 STATIC_ASSERT(PF_MAX <= INT32_MAX);  // needs to fit in VAL_INTEGER()
@@ -200,7 +198,7 @@ STATIC_ASSERT((int)AM_FIND_MATCH == (int)PF_FIND_MATCH);
 #define PF_FIND_MASK \
     (PF_FIND_CASE | PF_FIND_MATCH)
 
-#define PF_STATE_MASK (~PF_FIND_MASK & ~PF_ONE_RULE & ~PF_REDBOL)
+#define PF_STATE_MASK (~PF_FIND_MASK & ~PF_ONE_RULE)
 
 
 // In %words.r, the parse words are lined up in order so they can be quickly
@@ -603,7 +601,6 @@ static REBIXO Parse_One_Rule(
             SPECIFIED,
             sub,
             (P_FLAGS & PF_FIND_MASK)
-                | (P_FLAGS & PF_REDBOL)
         )){
             return THROWN_FLAG;
         }
@@ -798,7 +795,7 @@ static REBIXO To_Thru_Block_Rule(
                         fail ("Use <end> instead of END in PARSE3");
 
                     if (cmd == SYM_QUOTE)
-                        fail ("Use THE instead of QUOTE outside PARSE2");
+                        fail ("Use THE instead of QUOTE in PARSE3");
 
                     if (cmd == SYM_THE) {
                         rule = ++blk;  // next rule is the literal value
@@ -1443,7 +1440,7 @@ DECLARE_NATIVE(subparse)
                 fail (
                     "Please replace PARSE3's WHILE with OPT SOME -or-"
                     " OPT FURTHER SOME--it's being reclaimed as arity-2."
-                    " https://forum.rebol.info/t/1540/12 (or use PARSE2)"
+                    " https://forum.rebol.info/t/1540/12"
                 );
 
               case SYM_SOME:
@@ -1458,9 +1455,9 @@ DECLARE_NATIVE(subparse)
 
               case SYM_ANY:
                 fail (
-                    "Please replace PARSE's ANY with OPT SOME"
+                    "Please replace PARSE3's ANY with OPT SOME"
                     " -- it's being reclaimed for a new construct"
-                    " https://forum.rebol.info/t/1540/12 (or use PARSE2)"
+                    " https://forum.rebol.info/t/1540/12"
                 );
 
               case SYM_REPEAT:
@@ -1757,7 +1754,7 @@ DECLARE_NATIVE(subparse)
             if (0 == CT_String(P_RULE, Root_Here_Tag, strict))
                 FETCH_NEXT_RULE(L);
             else
-                fail ("SET-WORD! works with <HERE> tag in PARSE2/PARSE3");
+                fail ("SET-WORD! works with <HERE> tag in PARSE3");
 
             Handle_Mark_Rule(L, set_or_copy_word, P_RULE_SPECIFIER);
             goto pre_rule;
@@ -1962,7 +1959,6 @@ DECLARE_NATIVE(subparse)
                     P_INPUT_SPECIFIER,  // harmless if specified API value
                     sub,
                     (P_FLAGS & PF_FIND_MASK)  // PF_ONE_RULE?
-                        | (P_FLAGS & PF_REDBOL)
                 )){
                     goto return_thrown;
                 }
@@ -2005,7 +2001,6 @@ DECLARE_NATIVE(subparse)
                 SPECIFIED,
                 sub,
                 (P_FLAGS & PF_FIND_MASK)  // no PF_ONE_RULE
-                    | (P_FLAGS & PF_REDBOL)
             )){
                 return THROWN;
             }
@@ -2378,8 +2373,8 @@ DECLARE_NATIVE(subparse)
 //      rules "Rules to parse by"
 //          [<maybe> block!]
 //      /case "Uses case-sensitive comparison"
+//      /match "Return PARSE input instead of synthesized result"
 //      /relax "Don't require reaching the tail of the input for success"
-//      /redbol "Use Rebol2/Red-style rules vs. UPARSE-style rules"
 //  ]
 //
 DECLARE_NATIVE(parse3)
@@ -2427,7 +2422,7 @@ DECLARE_NATIVE(parse3)
         Freshen_Cell(OUT),
         input, SPECIFIED,
         sub,
-        (REF(case) ? AM_FIND_CASE : 0) | (REF(redbol) ? PF_REDBOL : 0)
+        (REF(case) ? AM_FIND_CASE : 0)
         //
         // We always want "case-sensitivity" on binary bytes, vs. treating
         // as case-insensitive bytes for ASCII characters.
@@ -2447,7 +2442,7 @@ DECLARE_NATIVE(parse3)
     }
 
     if (Is_Nulled(OUT)) {  // a match failed (but may be at end of input)
-        if (REF(redbol))
+        if (REF(match))
             return nullptr;
         return RAISE(Error_Parse3_Incomplete_Raw());
     }
@@ -2456,13 +2451,16 @@ DECLARE_NATIVE(parse3)
     assert(index <= Cell_Series_Len_Head(input));
 
     if (index != Cell_Series_Len_Head(input)) {  // didn't reach end of input
-        if (REF(redbol))
+        if (REF(match))
             return nullptr;
         if (not REF(relax))
             return RAISE(Error_Parse3_Incomplete_Raw());
     }
 
-    return TRASH;
+    if (REF(match))
+        return COPY(ARG(input));
+
+    return TRASH;  // no synthesized result in PARSE3 unless ACCEPT
 }
 
 

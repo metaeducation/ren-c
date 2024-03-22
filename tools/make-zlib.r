@@ -70,7 +70,7 @@ disable-user-includes: func [
     ]
 
     for-next line-iter lines [
-        parse2 line-iter/1 [
+        parse3/meatch line-iter/1 [
             opt some space {#}
             opt some space {include}
             some space, include-rule, to <end>
@@ -174,7 +174,7 @@ fix-kr: func [
     let param-ser
     let param-spec
     let check-point
-    parse2 source bind copy/deep [
+    parse3 source bind copy/deep [
         opt some [
             fn: across identifier
             opt some white-space
@@ -199,7 +199,7 @@ fix-kr: func [
                 let length-diff: length-diff - param-len
 
                 let param-block: make block! 8
-                parse2 params [
+                parse3 params [
                     opt some white-space
                     name: across identifier (
                         append param-block spread reduce [name _]
@@ -223,7 +223,7 @@ fix-kr: func [
                 let single-param-start
                 let spec-type
                 let param-end
-                parse2 param-spec [
+                parse3 param-spec [
                     opt some white-space
                     some [
                         (typed?: true)
@@ -309,7 +309,7 @@ fix-kr: func [
 fix-const-char: func [
     source
 ][
-    parse2 source bind copy/deep [
+    parse3 source bind copy/deep [
         opt some [
             "strm" opt some white-space "->" opt some white-space
             "msg" opt some white-space "=" opt some white-space
@@ -317,7 +317,6 @@ fix-const-char: func [
                 opt some white-space "*" opt some white-space ")"
             | skip
         ]
-        <end> | (fail)
     ] c-lexical.grammar
     return source
 ]

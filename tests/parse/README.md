@@ -45,8 +45,5 @@ As it matures, more of it will be written as native code.  It is MUCH more
 flexible and extensible than PARSE3, and is ultimately what will take the
 name PARSE in Ren-C.
 
-PARSE2 is an emulation of Rebol2/Red parse conventions via UPARSE's mechanics
-for extensibility.  This behavior is largely compatible with PARSE3; however
-PARSE3 is being gradually migrated to match more of UPARSE's conventions in
-order to ease migration (since no significant R3-Alpha codebases exist, the
-PARSE2 code should be used by anyone who wants historical behavior).
+See the Redbol module for PARSE2, which is an emulation of Rebol2/Red parse
+conventions implemented using UPARSE's mechanics for extensibility.

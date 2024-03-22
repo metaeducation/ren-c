@@ -103,18 +103,14 @@ trap [
     ; bootstrap executable.  In these cases, the modern EXE is shimmed to act
     ; like the old one, offering the function under the name with a number.
     ;
-    ; Note that the bootstrap strategy is to base the code on Rebol2-style
-    ; PARSE, which UPARSE should be able to emulate.  While it has the rules
-    ; of Rebol2 PARSE, the result is null on failure to be ELSE-triggering.
-    ; In the distant future, modern EXE bootstrap should use UPARSE-based code
-    ; of Redbol's PARSE2.  For now, it relies on hacks to make PARSE3 act
-    ; in a legacy way.
+    ; Note that bootstrap uses PARSE3, which is not as powerful as PARSE, but
+    ; has been brought up to date from R3-Alpha to the conventions of UPARSE.
+    ; It is more brittle and less composable, but it is available in the
+    ; bootstrap executable..and much faster (at time of writing) than UPARSE.
 
     export parse: func [] [
-        fail/where "Use PARSE2 in Bootstrap Process, not UPARSE/PARSE" 'return
+        fail/where "Use PARSE3 in Bootstrap Process, not UPARSE/PARSE" 'return
     ]
-
-    export parse2: :parse3/redbol
 
     export split-path3: enclose (
         augment :split-path [/file [any-word? any-path?]]
@@ -230,13 +226,10 @@ collect3: adapt :collect3 [
 ; can't be emulated by older executables.  Here we raise errors in the old
 ; executable on any undecorated functions that have no emulation equivalent.
 
-parse2: :lib/parse/match
+parse3: :lib/parse
 
 parse: does [
-    fail "Only PARSE2 is available in bootstrap executable, not PARSE"
-]
-parse3: does [
-    fail "Only PARSE2 is available in bootstrap executable, not PARSE3"
+    fail "Only PARSE3 is available in bootstrap executable, not PARSE"
 ]
 
 split-path: func3 [] [

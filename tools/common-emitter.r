@@ -68,8 +68,8 @@ export cscape: func [
     let num-text: to text! num  ; CHANGE won't take GROUP! to evaluate, #1279
 
     let list: collect* [
-        parse2 string [(col: 0), start: <here>
-        opt some [
+        parse3 string [(col: 0), start: <here>
+          opt some [
             [
                 (prefix: null suffix: null)
                 finish: <here>
@@ -124,7 +124,7 @@ export cscape: func [
                 |
             skip (col: col + 1)
         ]]
-    ] else [
+    ] else [  ; COLLECT* was NULL, so no substitutions
         return string
     ]
 
@@ -248,7 +248,7 @@ export cscape: func [
     let seen-void
     let start-line
     let end-line
-    parse2 string [
+    parse3 string [
         (allwhite: true seen-void: false) start-line: <here>
         opt some [
             space
@@ -274,7 +274,6 @@ export cscape: func [
                 skip
             ]
         ]
-        <end>
     ]
 
     for-each [start end] kill-lines [
@@ -316,12 +315,12 @@ export make-emitter: func [
 
     temporary: to-logic any [
         temporary
-        parse2 stem ["tmp-" to <end>]
+        parse3/match stem ["tmp-" to <end>]
     ]
 
-    let is-c: did parse2 stem [thru [".c" | ".h" | ".inc"] <end>]
+    let is-c: did parse3/match stem [thru [".c" | ".h" | ".inc"] <end>]
 
-    let is-js: did parse2 stem [thru ".js" <end>]
+    let is-js: did parse3/match stem [thru ".js" <end>]
 
     let e: make object! compose [
         ;
