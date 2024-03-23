@@ -14,8 +14,8 @@
         wa: ['a]
         'a == parse [a] [optional wa]
     )
-    ('a == parse [a] [optional <any>])
-    ('c == parse [a b c] [<any> opt 'b <any>])
+    ('a == parse [a] [optional one])
+    ('c == parse [a b c] [one opt 'b one])
 ]
 
 [
@@ -28,8 +28,8 @@
         wa: [#a]
         #a == parse "a" [optional wa]
     )
-    (#a == parse "a" [opt <any>])
-    (#c == parse "abc" [<any> opt #b <any>])
+    (#a == parse "a" [opt one])
+    (#c == parse "abc" [<next> opt #b one])
 ]
 
 [
@@ -42,8 +42,8 @@
         wa: [#{0A}]
         #{0A} == parse #{0A} [optional wa]
     )
-    (10 == parse #{0A} [optional <any>])
-    (12 == parse #{0A0B0C} [<any> opt #{0B} <any>])
+    (10 == parse #{0A} [optional one])
+    (12 == parse #{0A0B0C} [one opt #{0B} one])
 ]
 
 [https://gitter.im/red/bugs?at=638e27b34cb5585f9666500d (

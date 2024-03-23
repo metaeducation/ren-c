@@ -33,15 +33,15 @@
 )]
 
 (all [
-    [x y] = res: parse ser: [x y] [pos: <here>, elide [<any>, <any>]]
+    [x y] = res: parse ser: [x y] [pos: <here>, elide [one, one]]
     pos = ser
 ])
 (all [
-    [y] == res: parse ser: [x y] [<any>, pos: <here>, elide <any>]
+    [y] == res: parse ser: [x y] [one, pos: <here>, elide one]
     pos = next ser
 ])
 (all [
-    [] == res: parse ser: [x y] [<any>, <any>, pos: <here>]
+    [] == res: parse ser: [x y] [one, one, pos: <here>]
     pos = tail of ser
 ])
 [#2130 (
@@ -54,7 +54,7 @@
     all [
         true = res: parse ser: "foo" [
             pos: <here>
-            val: across <any>
+            val: across one
             accept (true)
         ]
         val = "f"

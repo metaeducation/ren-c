@@ -131,7 +131,7 @@
     (
         res: 0
         all [
-            'b == parse [a a b] [<any> res: 'a <any>]
+            'b == parse [a a b] [one res: 'a one]
             res = 'a
         ]
     )

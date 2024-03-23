@@ -57,13 +57,13 @@
 )
 
 (
-    "b" == parse ["b" 3 "b" "b" "b"] [rule: <any>, repeat integer! rule]
+    "b" == parse ["b" 3 "b" "b" "b"] [rule: one, repeat integer! rule]
 )
 
 ; Plain loops that never actually run their body give back a match that is
 ; a void, as do 0-iteration REPEAT and INTEGER! rules.
 [
-    (void? parse "" [repeat 0 <any>])
+    (void? parse "" [repeat 0 one])
 
     (void? parse "a" ["a" repeat (0) "b"])
     (void' = parse "a" ["a" ^[repeat (0) "b"]])
@@ -164,24 +164,24 @@
 ]
 
 [https://github.com/red/red/issues/564
-    ~parse-incomplete~ !! (parse [a] [repeat 0 <any>])
-    ('a == parse [a] [repeat 0 <any> 'a])
+    ~parse-incomplete~ !! (parse [a] [repeat 0 one])
+    ('a == parse [a] [repeat 0 one 'a])
     (
         z: ~
         all [
-            raised? parse [a] [z: across repeat 0 <any>]
+            raised? parse [a] [z: across repeat 0 one]
             z = []
         ]
     )
 ]
 
 [https://github.com/red/red/issues/564
-    ~parse-incomplete~ !! (parse "a" [repeat 0 <any>])
-    (#a == parse "a" [repeat 0 <any> #a])
+    ~parse-incomplete~ !! (parse "a" [repeat 0 one])
+    (#a == parse "a" [repeat 0 one #a])
     (
         z: ~
         all [
-            raised? parse "a" [z: across repeat 0 <any>]
+            raised? parse "a" [z: across repeat 0 one]
             z = ""
         ]
     )

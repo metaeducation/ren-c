@@ -21,14 +21,14 @@
 
 [#1240
     ('~not~ == meta parse "" [not "a"])
-    ('~not~ == meta parse "" [not <any>])
+    ('~not~ == meta parse "" [not <next>])
     ('~not~ == meta parse "" [not false])
 ]
 
 [
     ~parse-mismatch~ !! (parse [] [not <end>])
-    ~parse-mismatch~ !! (parse [a] [not <any>])
-    ~parse-mismatch~ !! (parse [a] [not <any> <any>])
+    ~parse-mismatch~ !! (parse [a] [not <next>])
+    ~parse-mismatch~ !! (parse [a] [not one one])
 
     ('a == parse [a] [not 'b 'a])
     ('a == parse [a] [not ['b] 'a])
@@ -43,8 +43,8 @@
 
 [
     ~parse-mismatch~ !! (parse "" [not <end>])
-    ~parse-mismatch~ !! (parse "a" [not <any>])
-    ~parse-mismatch~ !! (parse "a" [not <any> <any>])
+    ~parse-mismatch~ !! (parse "a" [not one])
+    ~parse-mismatch~ !! (parse "a" [not <next> <next>])
 
     (#a == parse "a" [not #b #a])
     (#a == parse "a" [not [#b] #a])
@@ -59,8 +59,8 @@
 
 [
     ~parse-mismatch~ !! (parse #{} [not <end>])
-    ~parse-mismatch~ !! (parse #{0A} [not <any>])
-    ~parse-mismatch~ !! (parse #{0A} [not <any> <any>])
+    ~parse-mismatch~ !! (parse #{0A} [not one])
+    ~parse-mismatch~ !! (parse #{0A} [not <next> one])
 
     (#{0A} == parse #{0A} [not #{0B} #{0A}])
     (#{0A} == parse #{0A} [not [#{0B}] #{0A}])

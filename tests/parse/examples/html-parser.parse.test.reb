@@ -25,7 +25,7 @@
                 |
                 "</" thru ">" stop
                 |
-                "<" name: across to ">" <any>
+                "<" name: across to ">" <next>
                 keep (load-value name) opt keep rule
                 |
                 str: across to "<" keep (str)

@@ -105,33 +105,33 @@
     (#{0A} == parse #{0A0A} [repeat ([2 3]) #{0A}])
 
     ~parse-mismatch~ !! (parse #{0A0A} [repeat ([3 4]) #{0A}])
-    ~parse-incomplete~ !! (parse #{0A0A} [repeat ([1 1]) <any>])
+    ~parse-incomplete~ !! (parse #{0A0A} [repeat ([1 1]) one])
 
-    (10 == parse #{0A0A} [repeat ([1 2]) <any>])
-    (10 == parse #{0A0A} [repeat ([2 2]) <any>])
-    (10 == parse #{0A0A} [repeat ([2 3]) <any>])
+    (10 == parse #{0A0A} [repeat ([1 2]) one])
+    (10 == parse #{0A0A} [repeat ([2 2]) one])
+    (10 == parse #{0A0A} [repeat ([2 3]) one])
 
-    ~parse-mismatch~ !! (parse #{0A0A} [repeat ([3 4]) <any>])
+    ~parse-mismatch~ !! (parse #{0A0A} [repeat ([3 4]) one])
     ~parse-incomplete~ !! (parse #{0A0A} [repeat 1 #{0A}])
 
     (#{0A} == parse #{0A0A} [repeat 2 #{0A}])
 
     ~parse-mismatch~ !! (parse #{0A0A} [repeat 3 #{0A}])
-    ~parse-incomplete~ !! (parse #{0A0A} [repeat 1 <any>])
+    ~parse-incomplete~ !! (parse #{0A0A} [repeat 1 one])
 
-    (10 == parse #{0A0A} [repeat 2 <any>])
+    (10 == parse #{0A0A} [repeat 2 one])
 
-    ~parse-mismatch~ !! (parse #{0A0A} [repeat 3 <any>])
+    ~parse-mismatch~ !! (parse #{0A0A} [repeat 3 one])
 
-    (10 == parse #{0A} [<any>])
-    (11 == parse #{0A0B} [<any> <any>])
-    (11 == parse #{0A0B} [<any> [<any>]])
-    (11 == parse #{0A0B} [[<any>] [<any>]])
+    (10 == parse #{0A} [one])
+    (11 == parse #{0A0B} [one one])
+    (11 == parse #{0A0B} [one [one]])
+    (11 == parse #{0A0B} [[one] [one]])
     (#{0A} == parse #{0A0A} [some [#{0A}]])
 
     ~parse-mismatch~ !! (parse #{0A0A} [some [#{0A}] #{0B}])
 
-    (10 == parse #{0A0A0B0A0B0B0B0A} [some [<any>]])
+    (10 == parse #{0A0A0B0A0B0B0B0A} [some [one]])
     (#{0A} == parse #{0A0A0B0A0B0B0B0A} [some [#{0A} | #{0B}]])
 
     ~parse-incomplete~ !! (parse #{0A0A0B0A0B0B0B0A} [some [#{0A} | #"^L"]])
@@ -146,7 +146,7 @@
 
     ~parse-mismatch~ !! (parse #{0A0A0B0B} [some #{0A} some #"^L"])
 
-    (#"^L" == parse #{0B0A0A0A0C} [<any> some [#{0A}] #"^L"])
+    (#"^L" == parse #{0B0A0A0A0C} [<next> some [#{0A}] #"^L"])
 ]
 
 
@@ -159,7 +159,7 @@
     (
         res: ~
         all [
-            10 == parse #{0A} [res: <any>]
+            10 == parse #{0A} [res: one]
             res = 10
         ]
     )
@@ -220,14 +220,14 @@
         wa: [#{0A}]
         res: ~
         all [
-            11 == parse #{0A0A0B} [<any> res: #{0A} <any>]
+            11 == parse #{0A0A0B} [<next> res: #{0A} one]
             res = #{0A}
         ]
     )
     (
         res: ~
         all [
-            11 == parse #{0A0A0B} [<any> res: [#{0A} | #{0B}] <any>]
+            11 == parse #{0A0A0B} [<next> res: [#{0A} | #{0B}] one]
             res = #{0A}
         ]
     )
@@ -241,7 +241,7 @@
     (
         res: ~
         all [
-            #"^L" == parse #{0B0A0A0A0C} [<any> res: some #{0A} #"^L"]
+            #"^L" == parse #{0B0A0A0A0C} [<next> res: some #{0A} #"^L"]
             res = #{0A}
         ]
     )
@@ -249,7 +249,7 @@
         wa: [#{0A}]
         res: ~
         all [
-            #"^L" == parse #{0B0A0A0A0C} [<any> res: some wa #"^L"]
+            #"^L" == parse #{0B0A0A0A0C} [<next> res: some wa #"^L"]
             res = #{0A}
         ]
     )

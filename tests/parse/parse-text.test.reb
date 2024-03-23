@@ -155,12 +155,12 @@
         true
     )
 
-    (#. == parse str [thru "amet" <any>])
+    (#. == parse str [thru "amet" one])
     (
         res: ~
         all [
             "dolor" == parse str [
-                thru "ipsum" <any> res: across to #" " to <end>
+                thru "ipsum" one res: across to #" " to <end>
             ]
             res = "dolor"
         ]

@@ -19,7 +19,7 @@
         ")" == parse str [
             "("
             change [to ")"] spread collect [
-                some ["a" keep ("A") | <any>]
+                some ["a" keep ("A") | <next>]
             ]
             ")"
         ]
@@ -40,7 +40,7 @@
     all [
         '~change~ = ^ parse s [some [
             opt change "b" ("x")
-            elide <any>
+            elide one
         ]]
         s = {axa}
     ]
@@ -77,7 +77,7 @@
     ])
     (
         b: ["long long long string" "long long long string" 1]
-        '~change~ == meta parse copy "." [change <any> (spread b)]
+        '~change~ == meta parse copy "." [change one (spread b)]
     )
 ]
 
@@ -85,18 +85,18 @@
 ; TEXT! change tests from %parse-test.red
 [
     (all [
-        '~change~ == meta parse str: "1" [change <any> (#a)]
+        '~change~ == meta parse str: "1" [change one (#a)]
         str = "a"
     ])
     (all [
-        '~change~ == meta parse str: "123" [change [repeat 3 <any>] (#a)]
+        '~change~ == meta parse str: "123" [change [repeat 3 one] (#a)]
         str = "a"
     ])
     (
         alpha: charset [#a - #z]
         all [
             #3 == parse str: "1a2b3" [
-                some [change alpha (#.) | <any>]
+                some [change alpha (#.) | one]
             ]
             str = "1.2.3"
         ]
@@ -106,12 +106,12 @@
         str = "99"
     ])
     (all [
-        '~change~ == meta parse str: "test" [some [change #t (#o) | <any>]]
+        '~change~ == meta parse str: "test" [some [change #t (#o) | one]]
         str = "oeso"
     ])
     (all [
         #4 == parse str: "12abc34" [
-            some [to alpha change [some alpha] ("zzzz")] repeat 2 <any>
+            some [to alpha change [some alpha] ("zzzz")] repeat 2 one
         ]
         str = "12zzzz34"
     ])
@@ -121,7 +121,7 @@
 ; BINARY! change tests from %parse-test.red
 [
     (all [
-        '~change~ == meta parse bin: #{01} [change <any> (#{0A})]
+        '~change~ == meta parse bin: #{01} [change one (#{0A})]
         bin = #{0A}
     ])
     (all [
@@ -132,7 +132,7 @@
         digit: charset [1 - 9]
         all [
             '~change~ == meta parse bin: #{010A020B03} [
-                some [change digit (#{00}) | <any>]
+                some [change digit (#{00}) | <next>]
             ]
             bin = #{000A000B00}
         ]
@@ -143,13 +143,13 @@
     ])
     (all [
         239 == parse bin: #{BEADBEEF} [
-            some [change #{BE} (#{DE}) | <any>]
+            some [change #{BE} (#{DE}) | one]
         ]
         bin = #{DEADDEEF}
     ])
     (all [
         14 == parse bin: #{0A0B0C03040D0E} [
-            some [to digit change [some digit] (#{BEEF})] repeat 2 <any>
+            some [to digit change [some digit] (#{BEEF})] repeat 2 one
         ]
         bin = #{0A0B0CBEEF0D0E}
     ])

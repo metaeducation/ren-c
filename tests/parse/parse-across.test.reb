@@ -40,7 +40,7 @@
     (
         res: ~
         all [
-            [a] == parse [a] [res: across <any>]
+            [a] == parse [a] [res: across one]
             res = [a]
         ]
     )
@@ -91,14 +91,14 @@
     (
         res: ~
         all [
-            'b == parse [a a b] [<any> res: across 'a <any>]
+            'b == parse [a a b] [<next> res: across 'a one]
             res = [a]
         ]
     )
     (
         res: ~
         all [
-            'b == parse [a a b] [<any> res: across ['a | 'b] <any>]
+            'b == parse [a a b] [<next> res: across ['a | 'b] one]
             res = [a]
         ]
     )
@@ -139,49 +139,49 @@
     (
         v: '~before~
         all [
-            raised? parse/part input [v: across repeat 3 <any>] 2
+            raised? parse/part input [v: across repeat 3 one] 2
             v = '~before~
         ]
     )
     (
         v: ~
         all [
-            [h 5 #l] == parse/part input [v: across repeat 3 <any>] 3
+            [h 5 #l] == parse/part input [v: across repeat 3 one] 3
             v = [h 5 #l]
         ]
     )
     (
         v: ~
         all [
-            raised? parse/part input [v: across repeat 3 <any>] 4
+            raised? parse/part input [v: across repeat 3 one] 4
             v = [h 5 #l]
         ]
     )
     (
         v: ~
         all [
-            "l" == parse/part input [v: across repeat 3 <any> <any>] 4
+            "l" == parse/part input [v: across repeat 3 one one] 4
             v = [h 5 #l]
         ]
     )
     (
         v: ~
         all [
-            [5 #l "l"] == parse/part next input [v: across repeat 3 <any>] 3
+            [5 #l "l"] == parse/part next input [v: across repeat 3 one] 3
             v = [5 #l "l"]
         ]
     )
     (
         v: '~before~
         all [
-            raised? parse/part input [v: across to 'o <any>] 3
+            raised? parse/part input [v: across to 'o one] 3
             v = '~before~
         ]
     )
     (
         v: ~
         all [
-            'o == parse/part input [v: across to 'o <any>] 5
+            'o == parse/part input [v: across to 'o one] 5
             v = [h 5 #l "l"]
         ]
     )
@@ -202,21 +202,21 @@
     (
         v: '~before~
         all [
-            raised? parse/part input [v: across repeat 3 <any>] skip input 2
+            raised? parse/part input [v: across repeat 3 one] skip input 2
             v = '~before~
         ]
     )
     (
         v: ~
         all [
-            [h 5 #l] == parse/part input [v: across repeat 3 <any>] skip input 3
+            [h 5 #l] == parse/part input [v: across repeat 3 one] skip input 3
             v = [h 5 #l]
         ]
     )
     (
         v: ~
         all [
-            raised? parse/part input [v: across repeat 3 <any>] skip input 4
+            raised? parse/part input [v: across repeat 3 one] skip input 4
             v = [h 5 #l]
         ]
     )
@@ -224,7 +224,7 @@
         v: ~
         all [
             "l" == parse/part input [
-                v: across repeat 3 <any> <any>
+                v: across repeat 3 one one
             ] skip input 4
             v = [h 5 #l]
         ]
@@ -233,7 +233,7 @@
         v: ~
         all [
             [5 #l "l"] == parse/part next input [
-                v: across repeat 3 <any>
+                v: across repeat 3 one
             ] skip input 4
             v = [5 #l "l"]
         ]
@@ -241,14 +241,14 @@
     (
         v: '~before~
         all [
-            raised? parse/part input [v: across to 'o <any>] skip input 3
+            raised? parse/part input [v: across to 'o one] skip input 3
             v = '~before~
         ]
     )
     (
         v: ~
         all [
-            'o == parse/part input [v: across to 'o <any>] skip input 5
+            'o == parse/part input [v: across to 'o one] skip input 5
             v = [h 5 #l "l"]
         ]
     )
@@ -274,7 +274,7 @@
     (
         res: ~
         all [
-            "a" == parse "a" [res: across <any>]
+            "a" == parse "a" [res: across one]
             res = "a"
         ]
     )
@@ -334,14 +334,14 @@
     (
         res: ~
         all [
-            #b == parse "aab" [<any> res: across #a <any>]
+            #b == parse "aab" [<next> res: across #a one]
             res = "a"
         ]
     )
     (
         res: ~
         all [
-            #b == parse "aab" [<any> res: across [#a | #b] <any>]
+            #b == parse "aab" [<next> res: across [#a | #b] one]
             res = "a"
         ]
     )
@@ -366,49 +366,49 @@
     (
         v: '~before~
         all [
-            raised? parse/part input [v: across repeat 3 <any>] 2
+            raised? parse/part input [v: across repeat 3 one] 2
             v = '~before~
         ]
     )
     (
         v: ~
         all [
-            "hel" == parse/part input [v: across repeat 3 <any>] 3
+            "hel" == parse/part input [v: across repeat 3 one] 3
             v = "hel"
         ]
     )
     (
         v: ~
         all [
-            raised? parse/part input [v: across repeat 3 <any>] 4
+            raised? parse/part input [v: across repeat 3 one] 4
             v = "hel"
         ]
     )
     (
         v: ~
         all [
-            #l == parse/part input [v: across repeat 3 <any> <any>] 4
+            #l == parse/part input [v: across repeat 3 one one] 4
             v = "hel"
         ]
     )
     (
         v: ~
         all [
-            "ell" == parse/part next input [v: across repeat 3 <any>] 3
+            "ell" == parse/part next input [v: across repeat 3 one] 3
             v = "ell"
         ]
     )
     (
         v: '~before~
         all [
-            raised? parse/part input [v: across to #o <any>] 3
+            raised? parse/part input [v: across to #o one] 3
             v = '~before~
         ]
     )
     (
         v: ~
         all [
-            #o == parse/part input [v: across to #o <any>] 5
+            #o == parse/part input [v: across to #o one] 5
             v = "hell"
         ]
     )
@@ -443,28 +443,28 @@
     (
         v: '~before~
         all [
-            raised? parse/part input [v: across repeat 3 <any>] skip input 2
+            raised? parse/part input [v: across repeat 3 one] skip input 2
             v = '~before~
         ]
     )
     (
         v: ~
         all [
-            "hel" == parse/part input [v: across repeat 3 <any>] skip input 3
+            "hel" == parse/part input [v: across repeat 3 one] skip input 3
             v = "hel"
         ]
     )
     (
         v: ~
         all [
-            raised? parse/part input [v: across repeat 3 <any>] skip input 4
+            raised? parse/part input [v: across repeat 3 one] skip input 4
             v = "hel"
         ]
     )
     (
         v: ~
         all [
-            #l == parse/part input [v: across skip 3, <any>] skip input 4
+            #l == parse/part input [v: across skip 3, one] skip input 4
             v = "hel"
         ]
     )
@@ -478,14 +478,14 @@
     (
         v: '~before~
         all [
-            raised? parse/part input [v: across to #o <any>] skip input 3
+            raised? parse/part input [v: across to #o one] skip input 3
             v = '~before~
         ]
     )
     (
         v: ~
         all [
-            #o == parse/part input [v: across to #o <any>] skip input 5
+            #o == parse/part input [v: across to #o one] skip input 5
             v = "hell"
         ]
     )
@@ -525,7 +525,7 @@
     (
         res: ~
         all [
-            #{0A} == parse #{0A} [res: across <any>]
+            #{0A} == parse #{0A} [res: across one]
             res = #{0A}
         ]
     )
@@ -569,14 +569,14 @@
     (
         res: ~
         all [
-            11 == parse #{0A0A0B} [<any> res: across #{0A} <any>]
+            11 == parse #{0A0A0B} [<next> res: across #{0A} one]
             res = #{0A}
         ]
     )
     (
         res: ~
         all [
-            11 == parse #{0A0A0B} [<any> res: across [#{0A} | #{0B}] <any>]
+            11 == parse #{0A0A0B} [<next> res: across [#{0A} | #{0B}] one]
             res = #{0A}
         ]
     )
@@ -617,7 +617,7 @@
     (
         v: '~before~
         all [
-            raised? parse/part input [v: across repeat 3 <any>] 2
+            raised? parse/part input [v: across repeat 3 one] 2
             v = '~before~
         ]
     )
@@ -631,14 +631,14 @@
     (
         v: ~
         all [
-            raised? parse/part input [v: across repeat 3 <any>] 4
+            raised? parse/part input [v: across repeat 3 one] 4
             v = #{DEADBE}
         ]
     )
     (
         v: ~
         all [
-            239 == parse/part input [v: across skip 3, <any>] 4
+            239 == parse/part input [v: across skip 3, one] 4
             v = #{DEADBE}
         ]
     )
@@ -652,14 +652,14 @@
     (
         v: '~before~
         all [
-            raised? parse/part input [v: across to #o <any>] 3
+            raised? parse/part input [v: across to #o one] 3
             v = '~before~
         ]
     )
     (
         v: ~
         all [
-            239 == parse/part input [v: across to #{EF} <any>] 5
+            239 == parse/part input [v: across to #{EF} one] 5
             v = #{DEADBE}
         ]
     )
@@ -708,14 +708,14 @@
     (
         v: ~
         all [
-            raised? parse/part input [v: across repeat 3 <any>] skip input 4
+            raised? parse/part input [v: across repeat 3 one] skip input 4
             v = #{DEADBE}
         ]
     )
     (
         v: ~
         all [
-            239 == parse/part input [v: across skip 3, <any>] skip input 4
+            239 == parse/part input [v: across skip 3, one] skip input 4
             v = #{DEADBE}
         ]
     )
@@ -729,14 +729,14 @@
     (
         v: '~before~
         all [
-            raised? parse/part input [v: across to #o <any>] skip input 3
+            raised? parse/part input [v: across to #o one] skip input 3
             v = '~before~
         ]
     )
     (
         v: ~
         all [
-            239 == parse/part input [v: across to #{EF} <any>] skip input 5
+            239 == parse/part input [v: across to #{EF} one] skip input 5
             v = #{DEADBE}
         ]
     )

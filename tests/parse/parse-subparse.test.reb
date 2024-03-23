@@ -45,7 +45,7 @@
 
 (
     all [
-        "aaa" == parse ["aaa"] [subparse <any> [x: across some "a"]]
+        "aaa" == parse ["aaa"] [subparse one [x: across some "a"]]
         x = "aaa"
     ]
 )
@@ -131,7 +131,7 @@
 ; Manual SUBPARSE via a recursion
 [
     ("test" = parse [a "test"] [
-        'a s: text! (assert [#t == parse s [repeat 4 <any>]])
+        'a s: text! (assert [#t == parse s [repeat 4 one]])
     ])
 ]
 

@@ -10,18 +10,18 @@
     (void? parse [a] [to <end>])
     ~parse-incomplete~ !! (parse [a] [to 'a])
     ~parse-mismatch~ !! (parse [a] [to 'a <end>])
-    ('a == parse [a] [to 'a <any>])
-    ('b == parse [a b] [to 'b <any>])
-    ('b == parse [a a a b] [to 'b <any>])
-    ('a == parse [a a b a] [<any> to 'b repeat 2 <any>])
+    ('a == parse [a] [to 'a one])
+    ('b == parse [a b] [to 'b one])
+    ('b == parse [a a a b] [to 'b one])
+    ('a == parse [a a b a] [<next> to 'b repeat 2 one])
     ~parse-incomplete~ !! (parse [a] [to ['a]])
     ~parse-mismatch~ !! (parse [a] [to ['a] <end>])
-    ('a == parse [a] [to ['a] <any>])
-    ('b == parse [a b] [to ['b] <any>])
-    ('b == parse [a a a b] [to ['b] <any>])
-    ('a == parse [a a b a] [<any> to ['b] repeat 2 <any>])
-    ('c == parse [z z a b c] [to ['c | 'b | 'a] repeat 3 <any>])
-    ('c == parse [z z a b c] [to ['a | 'b | 'c] repeat 3 <any>])
+    ('a == parse [a] [to ['a] one])
+    ('b == parse [a b] [to ['b] one])
+    ('b == parse [a a a b] [to ['b] one])
+    ('a == parse [a a b a] [one to ['b] repeat 2 one])
+    ('c == parse [z z a b c] [to ['c | 'b | 'a] repeat 3 one])
+    ('c == parse [z z a b c] [to ['a | 'b | 'c] repeat 3 one])
     ~parse-mismatch~ !! (parse [] [to 'a])
     ~parse-mismatch~ !! (parse [] [to ['a]])
 ]
@@ -31,16 +31,16 @@
     (void? parse "a" [to <end>])
     ~parse-incomplete~ !! (parse "a" [to #a])
     ~parse-mismatch~ !! (parse "a" [to #a <end>])
-    (#b == parse "ab" [to #a repeat 2 <any>])
-    (#a == parse "a" [to #a <any>])
+    (#b == parse "ab" [to #a repeat 2 one])
+    (#a == parse "a" [to #a one])
     (#a == parse "aaab" [to #a to <end>])
     ~parse-incomplete~ !! (parse "a" [to [#a]])
     ~parse-mismatch~ !! (parse "a" [to [#a] <end>])
-    (#a == parse "a" [to [#a] <any>])
+    (#a == parse "a" [to [#a] one])
     (#a == parse "aaab" [to [#a] to <end>])
-    (#b == parse "ab" [to [#a] repeat 2 <any>])
-    (#c == parse "zzabc" [to [#c | #b | #a] repeat 3 <any>])
-    (#c == parse "zzabc" [to [#a | #b | #c] repeat 3 <any>])
+    (#b == parse "ab" [to [#a] repeat 2 one])
+    (#c == parse "zzabc" [to [#c | #b | #a] repeat 3 one])
+    (#c == parse "zzabc" [to [#a | #b | #c] repeat 3 one])
     ~parse-mismatch~ !! (parse "" [to "a"])
     ~parse-mismatch~ !! (parse "" [to #a])
     ~parse-mismatch~ !! (parse "" [to ["a"]])
@@ -60,12 +60,12 @@
 )]
 
 [#1959
-    ("d" == parse "abcd" [to "d" elide <any>])
-    ('d == parse [a b c d] [to 'd <any>])
+    ("d" == parse "abcd" [to "d" elide one])
+    ('d == parse [a b c d] [to 'd one])
 ]
 
 [#1457
-    (#a == parse "ba" compose [to (charset "a") <any>])
+    (#a == parse "ba" compose [to (charset "a") one])
     ~parse-mismatch~ !! (parse "ba" compose [to (charset "a") "ba"])
 ]
 
@@ -74,9 +74,9 @@
 ]
 
 [https://github.com/red/red/issues/2818
-    (#c == parse "abc" [to [s: <here> "bc"] repeat 2 <any>])
-    (#c == parse "abc" [to [s: <here> () "bc"] repeat 2 <any>])
-    (#c == parse "abc" [to [s: <here> (123) "bc"] repeat 2 <any>])
+    (#c == parse "abc" [to [s: <here> "bc"] repeat 2 one])
+    (#c == parse "abc" [to [s: <here> () "bc"] repeat 2 one])
+    (#c == parse "abc" [to [s: <here> (123) "bc"] repeat 2 one])
 ]
 
 [
@@ -89,15 +89,15 @@
     (void? parse #{0A} [to <end>])
     ~parse-incomplete~ !! (parse #{0A} [to #{0A}])
     ~parse-mismatch~ !! (parse #{0A} [to #{0A} <end>])
-    (10 == parse #{0A} [to #{0A} <any>])
-    (11 == parse #{0A0B} [to #{0A} repeat 2 <any>])
+    (10 == parse #{0A} [to #{0A} one])
+    (11 == parse #{0A0B} [to #{0A} repeat 2 one])
     (#{0A} == parse #{0A0A0A0B} [to #{0A} to <end>])
     ~parse-incomplete~ !! (parse #{0A} [to [#{0A}]])
     ~parse-mismatch~ !! (parse #{0A} [to [#{0A}] <end>])
-    (10 == parse #{0A} [to [#{0A}] <any>])
-    (11 == parse #{0A0B} [to [#{0A}] repeat 2 <any>])
-    (12 == parse #{99990A0B0C} [to [#"^L" | #{0B} | #{0A}] repeat 3 <any>])
-    (12 == parse #{99990A0B0C} [to [#{0A} | #{0B} | #"^L"] repeat 3 <any>])
+    (10 == parse #{0A} [to [#{0A}] one])
+    (11 == parse #{0A0B} [to [#{0A}] repeat 2 one])
+    (12 == parse #{99990A0B0C} [to [#"^L" | #{0B} | #{0A}] repeat 3 one])
+    (12 == parse #{99990A0B0C} [to [#{0A} | #{0B} | #"^L"] repeat 3 one])
     (#{0A} == parse #{0A0A0A0B} [to [#{0A}] to <end>])
     ~parse-mismatch~ !! (parse #{} [to #{0A}])
     ~parse-mismatch~ !! (parse #{} [to #"^/"])

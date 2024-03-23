@@ -247,6 +247,7 @@
 %parse/parse-measure.test.reb
 %parse/parse-meta-xxx.test.reb
 %parse/parse-not.test.reb
+%parse/parse-one.test.reb
 %parse/parse-optional.test.reb
 %parse/parse-path.test.reb
 %parse/parse-phase.test.reb
@@ -260,7 +261,6 @@
 %parse/parse-some.test.reb
 %parse/parse-stop.test.reb
 %parse/parse-subparse.test.reb
-%parse/parse-tag-any.test.reb
 %parse/parse-tag-end.test.reb
 %parse/parse-tag-here.test.reb
 %parse/parse-tag-index.test.reb

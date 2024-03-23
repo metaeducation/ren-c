@@ -105,7 +105,7 @@
             )
             a: <here>  ; Restart mark of text to copy verbatim to output
                 |
-            <any>  ; if wasn't at match, keep the SOME rule scanning ahead
+            <next>  ; if wasn't at match, keep the SOME rule scanning ahead
         ]
         to <end>  ; Seek to end, just so rule succeeds
         (append out a)  ; finalize output - transfer any remainder verbatim

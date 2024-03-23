@@ -74,11 +74,11 @@
 [
     (
         word: 'xxx
-        obj: parse "a" [gather [emit (word): <any>]]
+        obj: parse "a" [gather [emit (word): one]]
         obj.xxx = #a
     )(
         word: @xxx
-        obj: parse "a" [gather [emit (word): <any>]]
+        obj: parse "a" [gather [emit (word): one]]
         obj.xxx = #a
     )
 ]

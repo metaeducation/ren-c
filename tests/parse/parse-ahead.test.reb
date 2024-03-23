@@ -6,13 +6,13 @@
 [
     ~???~ !! (parse [] [ahead])
     ('a == parse [a] [ahead 'a 'a])
-    (1 == parse [1] [ahead [block! | integer!] <any>])
+    (1 == parse [1] [ahead [block! | integer!] one])
 ]
 
 [
     ~???~ !! (parse "" [ahead])
     (#a == parse "a" [ahead #a #a])
-    (#1 == parse "1" [ahead [#a | #1] <any>])
+    (#1 == parse "1" [ahead [#a | #1] one])
 ]
 
 [#1238

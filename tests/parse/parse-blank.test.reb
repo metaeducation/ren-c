@@ -16,7 +16,7 @@
 ;    >> did parse [x <y> "z"] [_ _ _]
 ;    == ~true~  ; anti
 ;
-; ...but the <any> tag combinator serves this purpose more literately.)
+; ...but the ONE combinator serves this purpose more literately.)
 ;
 
 (

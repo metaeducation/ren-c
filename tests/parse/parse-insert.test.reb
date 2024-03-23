@@ -9,7 +9,7 @@
     cfor n 2 50 1 [
         sub: copy/part s n
         parse sub [some [
-            remove <any>
+            remove one
             insert ("-")
         ]]
         if sub != copy/part t n [fail "Incorrect Replacement"]
@@ -35,7 +35,7 @@
         blk = [1]
     ])
     (all [
-        'a == parse blk: [a a] [<any> insert (the b) <any>]
+        'a == parse blk: [a a] [<next> insert (the b) one]
         blk = [a b a]
     ])
     (all [
@@ -88,7 +88,7 @@
         str = "1"
     ])
     (all [
-        #a == parse str: "aa" [<any> insert (#b) <any>]
+        #a == parse str: "aa" [<next> insert (#b) one]
         str = "aba"
     ])
     (all [
@@ -99,7 +99,7 @@
     ])
     (all [
         '~remove~ == meta parse str: "test" [
-            some [<any> p: <here> insert (#_)] seek (p) remove <any>
+            some [<next> p: <here> insert (#_)] seek (p) remove one
         ]
         str = "t_e_s_t"
     ])
@@ -112,7 +112,7 @@
         bin = #{01}
     ])
     (all [
-        10 == parse bin: #{0A0A} [<any> insert (#{0B}) <any>]
+        10 == parse bin: #{0A0A} [<next> insert (#{0B}) one]
         bin = #{0A0B0A}
     ])
     (all [
@@ -123,7 +123,7 @@
     ])
     (all [
         '~remove~ == meta parse bin: #{DEADBEEF} [
-            some [<any> p: <here> insert (#)] seek (p) remove <any>
+            some [<next> p: <here> insert (#)] seek (p) remove one
         ]
         bin = #{DE00AD00BE00EF}
     ])

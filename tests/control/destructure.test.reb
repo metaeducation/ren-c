@@ -18,7 +18,7 @@
 ])
 
 (
-    block: [#stuff 1000 a 20 <any> #other "items"]
+    block: [#stuff 1000 a 20 <tag> #other "items"]
 
     1020 = destructure block [
         x: [integer!] y: [integer!]

@@ -8,14 +8,14 @@
 (
     x: 10
     all [
-        #a = parse "a" [let x: <any> (x)]
+        #a = parse "a" [let x: one (x)]
         x = 10
     ]
 )
 (
     x: 10
     all [
-        #a = parse "a" [let x: <any> [[(x)]]]
+        #a = parse "a" [let x: one [[(x)]]]
         x = 10
     ]
 )
@@ -24,14 +24,14 @@
 (
     rule: "golden"
     all [
-        'b = parse [['a 'b] a b] [let rule: <any> rule]
+        'b = parse [['a 'b] a b] [let rule: one, rule]
         rule = "golden"
     ]
 )
 (
     rule: "golden"
     all [
-        'b = parse [['a 'b] a b] [let rule: <any> [[rule]]]
+        'b = parse [['a 'b] a b] [let rule: one [[rule]]]
         rule = "golden"
     ]
 )

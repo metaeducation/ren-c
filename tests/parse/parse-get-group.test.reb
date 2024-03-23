@@ -55,16 +55,16 @@
     (
         x: ~
         "6" == parse "246" [some [
-            x: across <any> :(even? load-value x)
+            x: across one :(even? load-value x)
         ]]
     )
     ~parse-mismatch~ !! (
         x: ~
-        parse "1" [x: across <any> :(even? load-value x)]
+        parse "1" [x: across one :(even? load-value x)]
     )
     ~parse-mismatch~ !! (
         x: ~
-        parse "15" [some [x: across <any> :(even? load-value x)]]
+        parse "15" [some [x: across one :(even? load-value x)]]
     )
 ]
 
@@ -94,8 +94,8 @@
             s [text!]
         ][
             r: [
-                l: across <any> (l: load-value l)
-                x: across repeat (l) <any>
+                l: across one (l: load-value l)
+                x: across repeat (l) one
                 [
                     #","
                     | #"]" :(f x)

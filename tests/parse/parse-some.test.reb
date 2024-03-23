@@ -64,7 +64,7 @@
     (
         res: ~
         all [
-            'c == parse [b a a a c] [<any> res: some 'a 'c]
+            'c == parse [b a a a c] [<next> res: some 'a 'c]
             res = 'a
         ]
     )
@@ -72,7 +72,7 @@
         res: ~
         wa: ['a]
         all [
-            'c == parse [b a a a c] [<any> res: some wa 'c]
+            'c == parse [b a a a c] [<next> res: some wa 'c]
             res = 'a
         ]
     )
@@ -83,7 +83,7 @@
 
     ~parse-mismatch~ !! (parse [a a] [some ['a] 'b])
 
-    ('a == parse [a a b a b b b a] [some [<any>]])
+    ('a == parse [a a b a b b b a] [some [one]])
     ('a == parse [a a b a b b b a] [some ['a | 'b]])
 
     ~parse-incomplete~ !! (parse [a a b a b b b a] [some ['a | 'c]])
@@ -92,7 +92,7 @@
 
     ~parse-mismatch~ !! (parse [a a b b] [some 'a some 'c])
 
-    ('c == parse [b a a a c] [<any> some ['a] 'c])
+    ('c == parse [b a a a c] [<next> some ['a] 'c])
 ]
 
 [
@@ -100,7 +100,7 @@
 
     ~parse-mismatch~ !! (parse "aa" [some [#a] #b])
 
-    (#a == parse "aababbba" [some [<any>]])
+    (#a == parse "aababbba" [some [one]])
     ("a" == parse "aababbba" [some ["a" | "b"]])
 
     ~parse-incomplete~ !! (parse "aababbba" [some ["a" | #c]])
@@ -115,7 +115,7 @@
     (void? parse [1] [some further [to [<end>]]])
 ]
 
-(#c == parse "baaac" [<any> some [#a] #c])
+(#c == parse "baaac" [one some [#a] #c])
 
 
 ; OPT SOME or MAYBE SOME tests (which used to be WHILE)
@@ -135,7 +135,7 @@
 
     ~parse-incomplete~ !! (parse [a] [opt some 'b])
 
-    ('a == parse [a] [opt some 'b <any>])
+    ('a == parse [a] [opt some 'b one])
     ('b == parse [a b a b] [opt some ['b | 'a]])
 ]
 
@@ -159,7 +159,7 @@
     try parse "a" [opt some [
         (
             i: i + 1
-            j: if i = 2 [[<end> <any>]]
+            j: if i = 2 [[<end> <next>]]
         )
         j
     ]]
@@ -185,7 +185,7 @@
     (null = parse "" [opt some #b])
     (#a == parse "a" [opt some #a])
     ~parse-incomplete~ !! (parse "a" [opt some #b])
-    (#a == parse "a" [opt some #b <any>])
+    (#a == parse "a" [opt some #b one])
     (#b == parse "abab" [opt some [#b | #a]])
 ]
 
@@ -196,11 +196,11 @@
         true
     )
     (#{06} == parse #{020406} [
-        opt some [x: across <any> :(even? first x)]
+        opt some [x: across one :(even? first x)]
     ])
 
-    ~parse-mismatch~ !! (parse #{01} [x: across <any> :(even? first x)])
-    ~parse-mismatch~ !! (parse #{0105} [some [x: across <any> :(even? first x)]])
+    ~parse-mismatch~ !! (parse #{01} [x: across one :(even? first x)])
+    ~parse-mismatch~ !! (parse #{0105} [some [x: across one :(even? first x)]])
 
     (null = parse #{} [opt some #{0A}])
     (null = parse #{} [opt some #{0B}])
@@ -208,12 +208,12 @@
 
     ~parse-incomplete~ !! (parse #{0A} [opt some #{0B}])
 
-    (10 == parse #{0A} [opt some #{0B} <any>])
+    (10 == parse #{0A} [opt some #{0B} one])
     (#{0B} == parse #{0A0B0A0B} [opt some [#{0B} | #{0A}]])
 
     ~parse-mismatch~ !! (parse #{0A} [opt some #{0A} #{0A}])
 
-    (1 == parse #{01} [ahead [#{0A} | #"^A"] <any>])
+    (1 == parse #{01} [ahead [#{0A} | #"^A"] one])
 ]
 
 [

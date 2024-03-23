@@ -129,7 +129,7 @@
     (
         res: ~
         all [
-            'b == parse [a a b] [<any> res: ['a | 'b] <any>]
+            'b == parse [a a b] [<next> res: ['a | 'b] one]
             res = 'a
         ]
     )

@@ -1629,7 +1629,7 @@ do-commands: func [
 
     parse commands [
         some [
-            let cmd: ahead <any>
+            let cmd: ahead one
             [
                 '<client-hello> (
                     client-hello/version ctx [1.0 1.2]  ; min/max versioning

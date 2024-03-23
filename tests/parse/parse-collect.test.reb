@@ -23,9 +23,9 @@
     ~parse-incomplete~ !! (parse "1" [collect []])
     ~parse-incomplete~ !! (parse #{01} [collect []])
 
-    ([1] = parse [1] [collect [keep <any>]])
-    ([#1] = parse "1" [collect [keep <any>]])
-    ([1] = parse #{01} [collect [keep <any>]])
+    ([1] = parse [1] [collect [keep one]])
+    ([#1] = parse "1" [collect [keep one]])
+    ([1] = parse #{01} [collect [keep one]])
 
     ([1 2 3] = parse [1 2 3] [collect [some [keep integer!]]])
     (
@@ -43,7 +43,7 @@
             collect [some [
                 keep [v: digit, :(even? load-value as text! v)]
                 |
-                <any>
+                <next>
             ]]
         ]
     )
@@ -53,7 +53,7 @@
             collect [some [
                 keep [v: digit, :(even? v)]
                 |
-                <any>
+                <next>
             ]]
         ]
     )
@@ -85,13 +85,13 @@
     (
         alpha: charset [#a - #z]
         ["abc" "def"] = parse "abc|def" [
-            collect [some [keep across some alpha | <any>]]
+            collect [some [keep across some alpha | <next>]]
         ]
     )
     (
         digit: charset [0 - 9]
         [#{010203} #{040506}] = parse #{01020311040506} [
-            collect [some [keep across some digit | <any>]]
+            collect [some [keep across some digit | <next>]]
         ]
     )
 ]
@@ -124,21 +124,21 @@
     (
         a: ~
         all [
-            [1] == parse [1] [a: collect [keep <any>]]
+            [1] == parse [1] [a: collect [keep one]]
             a = [1]
         ]
     )
     (
         a: ~
         all [
-            [#1] == parse "1" [a: collect [keep <any>]]
+            [#1] == parse "1" [a: collect [keep one]]
             a = [#1]
         ]
     )
     (
         a: ~
         all [
-            [1] == parse #{01} [a: collect [keep <any>]]
+            [1] == parse #{01} [a: collect [keep one]]
             a = [1]
         ]
     )
@@ -203,7 +203,7 @@
     all [
         [#a <kept> #a <kept> #a <kept>] == parse "aaa" [x: collect [some [
             keep (if false [<not kept>])
-            keep <any>
+            keep one
             keep (if true [<kept>])
         ]]]
         x = [#a <kept> #a <kept> #a <kept>]
@@ -386,19 +386,19 @@ https://github.com/metaeducation/ren-c/issues/935
 [
     (
         [2] = parse [1 2 3] [
-            collect [some [keep [v: integer! :(even? v)] | <any>]]
+            collect [some [keep [v: integer! :(even? v)] | <next>]]
         ]
     )
     (
         [3 4 8] = parse [a 3 4 t "test" 8] [
-            collect [some [keep integer! | <any>]]
+            collect [some [keep integer! | <next>]]
         ]
     )
     (
         list: ~
         all [
             [3 4 8] == parse [a 3 4 t "test" 8] [
-                list: collect [some [keep integer! | <any>]]
+                list: collect [some [keep integer! | <next>]]
             ]
             list = [3 4 8]
         ]
@@ -408,29 +408,29 @@ https://github.com/metaeducation/ren-c/issues/935
 ; Note difference between KEEP ACROSS SOME and KEEP SOME.
 [
     (
-        [[b b b]] = parse [a b b b] [collect [<any>, keep across some 'b]]
+        [[b b b]] = parse [a b b b] [collect [<next>, keep across some 'b]]
     )
     (
-        [b b b] = parse [a b b b] [collect [<any>, keep spread across some 'b]]
+        [b b b] = parse [a b b b] [collect [<next>, keep spread across some 'b]]
     )
     (
-        [b] = parse [a b b b] [collect [<any>, keep some 'b]]
+        [b] = parse [a b b b] [collect [<next>, keep some 'b]]
     )
 ]
 
 [https://github.com/red/red/issues/567
     (
-        ["12"] = parse "12" [collect [keep value: across repeat 2 <any>]]
+        ["12"] = parse "12" [collect [keep value: across repeat 2 one]]
     )
 ]
 
 [https://github.com/red/red/issues/569
     (
         size: 1
-        ["1"] = parse "1" [collect [keep value: across repeat (size) <any>]]
+        ["1"] = parse "1" [collect [keep value: across repeat (size) one]]
     )(
         size: 2
-        ["12"] = parse "12" [collect [keep value: across repeat (size) <any>]]
+        ["12"] = parse "12" [collect [keep value: across repeat (size) one]]
     )
 ]
 
@@ -455,7 +455,7 @@ https://github.com/metaeducation/ren-c/issues/935
         partition3108: func [elems [block!] size [integer!]] [
             return parse elems [
                 collect some [not <end> ||
-                    keep across repeat (size) <any>
+                    keep across repeat (size) one
                     | keep spread collect keep across to <end>
                 ]        ; |------ this -----| spread collect keep is superflous
             ]
@@ -466,7 +466,7 @@ https://github.com/metaeducation/ren-c/issues/935
         partition3108: func [elems [block!] size [integer!]] [
             return parse elems [
                 collect some [not <end> ||
-                    keep across repeat (size) <any>
+                    keep across repeat (size) one
                     | keep across to <end>  ; equivalent, shorter
                 ]
             ]
@@ -495,10 +495,10 @@ https://github.com/metaeducation/ren-c/issues/935
                     | p: <here>, block!, seek (p), subparse &any-series? [
                         keep collect [opt some [
                             keep integer! keep ('+)
-                            | <any> keep (foo '-)
+                            | <next> keep (foo '-)
                         ]]
                     ]
-                    | <any>
+                    | <next>
                 ]
             ]
         ]

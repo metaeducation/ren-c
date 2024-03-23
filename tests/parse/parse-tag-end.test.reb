@@ -5,7 +5,6 @@
 ; example, or begin and end, etc.)
 ;
 ; It vanishes, because this is the overwhelmingly most useful behavior.
-; e.g. recognizing a single element in a block can be done with [<any> <end>].
 
 
 ; BLOCK! end tests from %parse-test.red
@@ -14,11 +13,11 @@
         block: [a]
         'a = parse block ['a <end>]
     )
-    ('a == parse [a] [<any> <end>])
+    ('a == parse [a] [one <end>])
     (void? parse [] [<end>])
 
     ~parse-mismatch~ !! (parse [a b] ['a <end>])
-    ~parse-mismatch~ !! (parse [a b] [<any> <end>])
+    ~parse-mismatch~ !! (parse [a b] [one <end>])
 
     (
         be6: ~
@@ -35,11 +34,11 @@
         text: "a"
         #a == parse text [#a <end>]
     )
-    (#a == parse "a" [<any> <end>])
+    (#a == parse "a" [one <end>])
     (void? parse "" [<end>])
 
     ~parse-mismatch~ !! (parse "ab" [#a <end>])
-    ~parse-mismatch~ !! (parse "ab" [<any> <end>])
+    ~parse-mismatch~ !! (parse "ab" [one <end>])
 
     (
         be6: ~
@@ -56,11 +55,11 @@
         binary: #{0A}
         #{0A} == parse #{0A} [#{0A} <end>]
     )
-    (10 == parse #{0A} [<any> <end>])
+    (10 == parse #{0A} [one <end>])
     (void? parse #{} [<end>])
 
     ~parse-mismatch~ !! (parse #{0A0B} [#{0A} <end>])
-    ~parse-mismatch~ !! (parse #{0A0B} [<any> <end>])
+    ~parse-mismatch~ !! (parse #{0A0B} [one <end>])
 
     (
         be6: ~

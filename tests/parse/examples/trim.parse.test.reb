@@ -117,7 +117,7 @@ utrim: func [
     ; /ALL just removes all whitespace entirely.  No subtlety needed.
     ;
     if all_TRIM [
-        parse series [opt some [remove rule | <any> | <end> stop]]
+        parse series [opt some [remove rule | <next> | stop]]
         return series
     ]
 
@@ -127,7 +127,7 @@ utrim: func [
         ]
 
         tail_TRIM [
-            parse series [opt some [remove [some rule <end>] | <any>]]  ; #2289
+            parse series [opt some [remove [some rule <end>] | <next>]]  ; #2289
         ]
     ] then [
         return series
@@ -139,7 +139,7 @@ utrim: func [
     ; with leading and trailing whitespace removed.
     ;
     if lines [
-        parse series [opt some [change [some rule] (space) <any> | <any>]]
+        parse series [opt some [change [some rule] (space) <next> | <next>]]
         if space = first series [take series]
         if space = last series [take/last series]
         return series
@@ -170,7 +170,7 @@ utrim: func [
             remove [opt some rule]
             newline line-start-rule
                 |
-            <any>
+            <next>
         ]
     ]
 
@@ -179,7 +179,7 @@ utrim: func [
     ;
     parse series [
         opt remove some newline
-        opt some [newline remove [some newline <end>] | <any>]
+        opt some [newline remove [some newline <end>] | <next>]
     ]
 
     return series

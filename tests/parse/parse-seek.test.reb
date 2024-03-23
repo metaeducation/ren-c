@@ -36,11 +36,11 @@
 ;
 [#1965
     ("cd" == parse "abcd" [seek (3) "cd"])
-    ("d" == parse "abcd" [seek (3) <any> "d"])
-    (#d == parse "abcd" [seek (4) <any>])
+    ("d" == parse "abcd" [seek (3) <next> "d"])
+    (#d == parse "abcd" [seek (4) one])
     ("" == parse "abcd" [seek (5)])
     ("abcd" == parse "abcd" ["ab" seek (1) "abcd"])
-    ("bcd" == parse "abcd" ["ab" seek (1) <any> "bcd"])
+    ("bcd" == parse "abcd" ["ab" seek (1) <next> "bcd"])
 ]
 
 ; !!! What to do about out-of-range seeks?  It was tolerated historically but

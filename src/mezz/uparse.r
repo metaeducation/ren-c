@@ -791,18 +791,6 @@ default-combinators: make map! reduce [
         return head of input  ; !!! What if SUBPARSE series not at head?
     ]
 
-    <any> combinator [  ; historically called "SKIP"
-        {Match one series item in input, succeeding so long as it's not at END}
-        return: "One element of series input"
-            [element?]
-    ][
-        if tail? input [
-            return raise "PARSE position at tail, <any> has no item to match"
-        ]
-        remainder: next input
-        return input.1
-    ]
-
     === ACROSS (COPY?) ===
 
     ; Historically Rebol used COPY to mean "match across a span of rules and
@@ -870,7 +858,7 @@ default-combinators: make map! reduce [
     ;          subparse (content) [some 'any]
     ;     ]
     ;
-    ; arity-1 INTO may still be useful as a shorthand for SUBPARSE <ANY>, but
+    ; arity-1 INTO may still be useful as a shorthand for SUBPARSE ONE, but
     ; it's also a little bit obtuse when read in context.
 
     'subparse combinator [
@@ -1780,7 +1768,7 @@ default-combinators: make map! reduce [
 
         append state.loops binding of $return
 
-        result': void'  ; `repeat (0) <any>` => void intent
+        result': void'  ; `repeat (0) one` => void intent
 
         count-up i max [  ; will count infinitely if max is #
             ;
@@ -2161,6 +2149,30 @@ default-combinators: make map! reduce [
             return raise "Attempt to SKIP past end of parse input"
         ]
         return nihil
+    ]
+
+    'one combinator [  ; historically used "SKIP" for this
+        "Match one series item in input, succeeding so long as it's not at END"
+        return: "One element of series input"
+            [element?]
+    ][
+        if tail? input [
+            return raise "PARSE position at tail, ONE has no item to match"
+        ]
+        remainder: next input
+        return input.1
+    ]
+
+    <next> combinator [  ; historically used "SKIP" for this, also
+        "Give next position in input, succeeding so long as it's not at END"
+        return: "One element of series input"
+            [element?]
+    ][
+        if tail? input [
+            return raise "PARSE position at tail, <NEXT> can't advance position"
+        ]
+        remainder: next input
+        return remainder
     ]
 
     === FRAME! COMBINATOR ===
