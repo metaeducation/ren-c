@@ -129,11 +129,11 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
             bol: <here>
             to newline
             eol: <here>
-            skip
+            one
             count-line-rule
         ]
         bol: <here>
-        skip, to <end>, eol: <here>
+        one, to <end>, eol: <here>
         count-line-rule
     ]
 
@@ -152,7 +152,7 @@ text-line-of: func [
     let idx: index of position
     let line: 0
 
-    let advance-rule: [skip (line: line + 1)]
+    let advance-rule: [one (line: line + 1)]
 
     parse3 text [
         opt some [
@@ -188,7 +188,7 @@ text-location-of: func [
 
     let advance-rule: [
         eol: <here>
-        skip (line: line + 1)
+        one (line: line + 1)
     ]
     let cursor
     parse3 text [

@@ -128,67 +128,67 @@ elf-format: context [
 
     header-rule: [
         #{7F} "ELF"
-        EI_CLASS: skip (bits: either EI_CLASS = 1 [32] [64])
-        EI_DATA: skip (endian: either EI_DATA = 1 ['little] ['big])
-        EI_VERSION: skip (assert [EI_VERSION = 1])
-        skip  ; EI_OSABI
-        skip  ; EI_ABIVERSION
-        repeat 7 skip  ; EI_PAD
-        repeat 2 skip  ; e_type
-        repeat 2 skip  ; e_machine
-        repeat 4 skip  ; e_version
+        EI_CLASS: one (bits: either EI_CLASS = 1 [32] [64])
+        EI_DATA: one (endian: either EI_DATA = 1 ['little] ['big])
+        EI_VERSION: one (assert [EI_VERSION = 1])
+        one  ; EI_OSABI
+        one  ; EI_ABIVERSION
+        repeat 7 one  ; EI_PAD
+        repeat 2 one  ; e_type
+        repeat 2 one  ; e_machine
+        repeat 4 one  ; e_version
         [
             :(bits = 32) [
-                repeat 4 skip ; e_entry
-                begin: <here>, repeat 4 skip (handler e_phoff 4)
-                begin: <here>, repeat 4 skip (handler e_shoff 4)
+                repeat 4 one ; e_entry
+                begin: <here>, repeat 4 one (handler e_phoff 4)
+                begin: <here>, repeat 4 one (handler e_shoff 4)
             ]
         |
             :(bits = 64) [
-                repeat 8 skip ; e_entry
-                begin: <here>, repeat 8 skip (handler e_phoff 8)
-                begin: <here>, repeat 8 skip (handler e_shoff 8)
+                repeat 8 one ; e_entry
+                begin: <here>, repeat 8 one (handler e_phoff 8)
+                begin: <here>, repeat 8 one (handler e_shoff 8)
             ]
         ]
-        repeat 4 skip  ; e_flags
-        repeat 2 skip  ; e_ehsize
-        begin: <here>, repeat 2 skip (handler e_phentsize 2)
-        begin: <here>, repeat 2 skip (handler e_phnum 2)
-        begin: <here>, repeat 2 skip (handler e_shentsize 2)
-        begin: <here>, repeat 2 skip (handler e_shnum 2)
-        begin: <here>, repeat 2 skip (handler e_shstrndx 2)
+        repeat 4 one  ; e_flags
+        repeat 2 one  ; e_ehsize
+        begin: <here>, repeat 2 one (handler e_phentsize 2)
+        begin: <here>, repeat 2 one (handler e_phnum 2)
+        begin: <here>, repeat 2 one (handler e_shentsize 2)
+        begin: <here>, repeat 2 one (handler e_shnum 2)
+        begin: <here>, repeat 2 one (handler e_shstrndx 2)
 
         (mode: null)
     ]
 
     program-header-rule: [
-        begin: <here>, repeat 4 skip (handler p_type 4)
+        begin: <here>, repeat 4 one (handler p_type 4)
         [
             :(bits = 32) [
-                begin: <here>, repeat 4 skip (handler p_offset 4)
-                repeat 4 skip  ; p_vaddr
-                repeat 4 skip  ; p_paddr
-                begin: <here>, repeat 4 skip (handler p_filesz 4)
-                repeat 4 skip  ; p_memsz
+                begin: <here>, repeat 4 one (handler p_offset 4)
+                repeat 4 one  ; p_vaddr
+                repeat 4 one  ; p_paddr
+                begin: <here>, repeat 4 one (handler p_filesz 4)
+                repeat 4 one  ; p_memsz
             ]
         |
             :(bits = 64) [
-                repeat 4 skip  ; p_flags, different position in 64-bit
-                begin: <here>, repeat 8 skip (handler p_offset 8)
-                repeat 8 skip  ; p_vaddr
-                repeat 8 skip  ; p_paddr
-                begin: <here>, repeat 8 skip (handler p_filesz 8)
-                repeat 8 skip  ; p_memsz
+                repeat 4 one  ; p_flags, different position in 64-bit
+                begin: <here>, repeat 8 one (handler p_offset 8)
+                repeat 8 one  ; p_vaddr
+                repeat 8 one  ; p_paddr
+                begin: <here>, repeat 8 one (handler p_filesz 8)
+                repeat 8 one  ; p_memsz
             ]
         ]
         [
             :(bits = 32) [
-                repeat 4 skip  ; p_flags, different position in 32-bit
-                repeat 4 skip  ; p_align
+                repeat 4 one  ; p_flags, different position in 32-bit
+                repeat 4 one  ; p_align
             ]
         |
             :(bits = 64) [
-                repeat 8 skip  ; p_align
+                repeat 8 one  ; p_align
             ]
         ]
 
@@ -196,34 +196,34 @@ elf-format: context [
     ]
 
     section-header-rule: [
-        begin: <here>, repeat 4 skip (handler sh_name 4)
-        begin: <here>, repeat 4 skip (handler sh_type 4)
+        begin: <here>, repeat 4 one (handler sh_name 4)
+        begin: <here>, repeat 4 one (handler sh_type 4)
         [
             :(bits = 32) [
-                begin: <here>, repeat 4 skip (handler sh_flags 4)
-                begin: <here>, repeat 4 skip (handler sh_addr 4)
-                begin: <here>, repeat 4 skip (handler sh_offset 4)
-                begin: <here>, repeat 4 skip (handler sh_size 4)
+                begin: <here>, repeat 4 one (handler sh_flags 4)
+                begin: <here>, repeat 4 one (handler sh_addr 4)
+                begin: <here>, repeat 4 one (handler sh_offset 4)
+                begin: <here>, repeat 4 one (handler sh_size 4)
             ]
         |
             :(bits = 64) [
-                begin: <here>, repeat 8 skip (handler sh_flags 8)
-                begin: <here>, repeat 8 skip (handler sh_addr 8)
-                begin: <here>, repeat 8 skip (handler sh_offset 8)
-                begin: <here>, repeat 8 skip (handler sh_size 8)
+                begin: <here>, repeat 8 one (handler sh_flags 8)
+                begin: <here>, repeat 8 one (handler sh_addr 8)
+                begin: <here>, repeat 8 one (handler sh_offset 8)
+                begin: <here>, repeat 8 one (handler sh_size 8)
             ]
         ]
-        begin: <here>, repeat 4 skip (handler sh_link 4)
-        begin: <here>, repeat 4 skip (handler sh_info 4)
+        begin: <here>, repeat 4 one (handler sh_link 4)
+        begin: <here>, repeat 4 one (handler sh_info 4)
         [
             :(bits = 32) [
-                begin: <here>, repeat 4 skip (handler sh_addralign 4)
-                begin: <here>, repeat 4 skip (handler sh_entsize 4)
+                begin: <here>, repeat 4 one (handler sh_addralign 4)
+                begin: <here>, repeat 4 one (handler sh_entsize 4)
             ]
         |
             :(bits = 64) [
-                begin: <here>, repeat 8 skip (handler sh_addralign 8)
-                begin: <here>, repeat 8 skip (handler sh_entsize 8)
+                begin: <here>, repeat 8 one (handler sh_addralign 8)
+                begin: <here>, repeat 8 one (handler sh_entsize 8)
             ]
         ]
 
@@ -543,8 +543,8 @@ pe-format: context [
     err: null
     fail-at: ~
 
-    u16-le: [buf: across repeat 2 skip (u16: debin [LE + 2] buf)]
-    u32-le: [buf: across repeat 4 skip (u32: debin [LE + 4] buf)]
+    u16-le: [buf: across repeat 2 one (u16: debin [LE + 2] buf)]
+    u32-le: [buf: across repeat 4 one (u32: debin [LE + 4] buf)]
 
     ; Note: `uintptr-64-le` uses a signed interpretation (+/-) even though it
     ; is supposed to be an unsigned integer the size of a platform pointer in
@@ -555,9 +555,9 @@ pe-format: context [
     ; (as this code does), the negative interpretation when the high bit is
     ; set won't cause a problem.
     ;
-    uintptr-32-le: [buf: across repeat 4 skip (uintptr: debin [LE + 4] buf)]
+    uintptr-32-le: [buf: across repeat 4 one (uintptr: debin [LE + 4] buf)]
     uintptr-64-le: [
-        buf: across repeat 8 skip
+        buf: across repeat 8 one
         (uintptr: debin [LE +/- 8] buf)  ; See note above for why +/-
     ]
 
@@ -605,13 +605,13 @@ pe-format: context [
             word: set-word!
             (find-a-word word)
             | ahead block! into block-rule  ; recursively look into the array
-            | skip
+            | one
         ]
         block-rule: [
             ahead group! into [opt some group-rule]
             | ahead block! into [opt some block-rule]
             | word: set-word! (find-a-word word)
-            | skip
+            | one
         ]
 
         parse3 rule [opt some block-rule]
@@ -685,8 +685,8 @@ pe-format: context [
              | fail-at: <here>, (err: 'missing-image-signature) fail
         ]
         u16-le (signature-value: u16)
-        major-linker-version: across skip  ; 1 byte
-        minor-linker-version: across skip  ; 1 byte
+        major-linker-version: across one  ; 1 byte binary
+        minor-linker-version: across one  ; 1 byte binary
         u32-le (size-of-code: u32)
         u32-le (size-of-initialized-data: u32)
         u32-le (size-of-uninialized-data: u32)
@@ -748,12 +748,12 @@ pe-format: context [
 
     section: ~
     section-rule: gen-rule $section [
-        name: across [repeat 8 skip]  ; 8 bytes
+        name: across [repeat 8 one]  ; 8 bytes
         u32-le (virtual-size: u32)
         u32-le (virtual-offset: u32)
         u32-le (physical-size: u32)
         u32-le (physical-offset: u32)
-        reserved: across [repeat 12 skip]  ; 12 bytes
+        reserved: across [repeat 12 one]  ; 12 bytes
         u32-le (flags: u32)
         (append sections copy ensure object! section)
     ]
@@ -765,7 +765,7 @@ pe-format: context [
     exe-rule: [
         DOS-header-rule
         pos: <here>, (garbage: DOS-header.e-lfanew + 1 - index of pos)
-        repeat (garbage) skip
+        repeat (garbage) one
         PE-header-rule
         COFF-header-rule
         PE-optional-header-rule

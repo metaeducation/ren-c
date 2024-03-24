@@ -70,7 +70,7 @@ export extract-native-protos: func [
             "//" space space proto: across [
                 (exported: false)
                 opt ["export" space (exported: true)]
-                ahead not space name: across to ":" skip space
+                ahead not space name: across to ":" one space
                 opt ["enfix" space]
                 ["native" (native-type: 'normal)
                     opt ["/combinator" (native-type: 'combinator)]
@@ -93,7 +93,7 @@ export extract-native-protos: func [
                 |
             thru newline
                 |
-            skip  ; in case file doesn't end in newline
+            one  ; in case file doesn't end in newline
         ]]
     ]
 ]

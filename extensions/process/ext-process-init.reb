@@ -92,9 +92,9 @@ parse-command-to-argv*: func [
     command [text!]
 ][
     let quoted-shell-item-rule: [  ; Note: OPT because "" is legal as an arg
-        opt some [{\"} | not {"} skip]  ; escaped quotes and nonquotes
+        opt some [{\"} | not {"} one]  ; escaped quotes and nonquotes
     ]
-    let unquoted-shell-item-rule: [some [not space skip]]
+    let unquoted-shell-item-rule: [some [not space one]]
 
     let result: parse command [
         collect [

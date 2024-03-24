@@ -176,15 +176,15 @@
 ; SET-WORD! (store current input position)
 
 (
-    parse3 ser: [x y] [pos: <here>, skip, skip]
+    parse3 ser: [x y] [pos: <here>, one, one]
     pos = ser
 )
 (
-    parse3 ser: [x y] [skip, pos: <here>, skip]
+    parse3 ser: [x y] [one, pos: <here>, one]
     pos = next ser
 )
 (
-    parse3 ser: [x y] [skip, skip, pos: <here>]
+    parse3 ser: [x y] [one, one, pos: <here>]
     pos = tail of ser
 )
 [#2130 (
@@ -196,11 +196,11 @@
     all [val = 'x, pos = ser]
 )]
 [#2130 (
-    res: validate3 ser: "foo" [pos: <here>, val: across skip]
+    res: validate3 ser: "foo" [pos: <here>, val: across one]
     all [res = null, val = "f", pos = ser]
 )]
 [#2130 (
-    res: validate3 ser: "foo" [pos: <here>, val: across skip]
+    res: validate3 ser: "foo" [pos: <here>, val: across one]
     all [res = null, val = "f", pos = ser]
 )]
 
@@ -221,11 +221,11 @@
 
 [#1965
     (
-        parse3 "abcd" [seek 3 skip "d"]
+        parse3 "abcd" [seek 3 one "d"]
         true
     )
     (
-        parse3 "abcd" [seek 4 skip]
+        parse3 "abcd" [seek 4 one]
         true
     )
     (
@@ -237,7 +237,7 @@
         true
     )
     (
-        parse3 "abcd" ["ab" seek 1 skip "bcd"]
+        parse3 "abcd" ["ab" seek 1 one "bcd"]
         true
     )
 ]
@@ -255,7 +255,7 @@
 (
     i: 0
     parse3 "a" [
-        some [thru "a" (i: i + 1, j: if i > 1 [<end> skip]) j]
+        some [thru "a" (i: i + 1, j: if i > 1 [<end> one]) j]
     ]
     i == 1
 )
@@ -268,7 +268,7 @@
 ]
 [#1959
     (
-        parse3 "abcd" [to "d" skip]
+        parse3 "abcd" [to "d" one]
         true
     )
 ]
@@ -287,7 +287,7 @@
 ]
 [#1959
     (
-        parse3 [a b c d] [to 'd skip]
+        parse3 [a b c d] [to 'd one]
         true
     )
 ]
@@ -344,7 +344,7 @@
         true
     )
     (
-        parse3 "" [not skip]
+        parse3 "" [not one]
         true
     )
     (
@@ -362,10 +362,10 @@
         true
     )
     ~parse3-incomplete~ !! (
-        parse3 "a" compose [thru (charset "a") skip]
+        parse3 "a" compose [thru (charset "a") one]
     )
     (
-        parse3 "ba" compose [to (charset "a") skip]
+        parse3 "ba" compose [to (charset "a") one]
         true
     )
     ~parse3-incomplete~ !! (
@@ -387,7 +387,7 @@
 
 [https://github.com/metaeducation/ren-c/issues/377 (
     o: make object! [a: 1]
-    parse3 s: "a" [o.a: <here>, skip]
+    parse3 s: "a" [o.a: <here>, one]
     o.a = s
 )]
 
@@ -430,7 +430,7 @@
     i: 1
     all [
         raised? parse3 "a" [
-            some [opt "a" (i: i + 1 j: if i = 2 [[<end> skip]]) j]
+            some [opt "a" (i: i + 1 j: if i = 2 [[<end> one]]) j]
         ]
         i == 2
     ]
@@ -607,7 +607,7 @@
 
 (
     parse3 text: "a ^/ " [
-        some [newline remove [to <end>] | "a" [remove [to newline]] | skip]
+        some [newline remove [to <end>] | "a" [remove [to newline]] | one]
     ]
     text = "a^/"
 )
@@ -644,7 +644,7 @@
     cfor n 2 50 1 [
         sub: copy/part s n
         parse3 sub [some [
-            remove skip
+            remove one
             insert ("-")
         ]]
         if sub != copy/part t n [fail "Incorrect Replacement"]
@@ -771,11 +771,11 @@
 
 [#1251
     (
-        parse3 e: "a" [remove skip insert ("xxx")]
+        parse3 e: "a" [remove one insert ("xxx")]
         e = "xxx"
     )
     (
-        parse3 e: "a" [[remove skip] insert ("xxx")]
+        parse3 e: "a" [[remove one] insert ("xxx")]
         e = "xxx"
     )
 ]
@@ -800,12 +800,12 @@
 
 [#1244
     (all [
-        raised? parse3 a: "12" [remove v: across skip]
+        raised? parse3 a: "12" [remove v: across one]
         a = "2"
         v = "1"
     ])
     (all [
-        raised? parse3 a: "12" [remove [v: across skip]]
+        raised? parse3 a: "12" [remove [v: across one]]
         a = "2"
         v = "1"
     ])

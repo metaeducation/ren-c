@@ -519,7 +519,7 @@ read-body: func [
                 ; Loop until enough data is gathered.
                 ;
                 while [not validate3 mk1 [
-                    repeat (chunk-size) skip, mk2: <here>, crlfbin, to <end>
+                    repeat (chunk-size) one, mk2: <here>, crlfbin, to <end>
                 ]][
                     read conn
                 ]

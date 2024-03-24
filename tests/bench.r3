@@ -177,13 +177,13 @@ rule: either deep [[
 any [
 set elem set-word! (
 insert tail words to word! :elem
-) | here: [block! | paren!] :here into rule | skip
+) | here: [block! | paren!] :here into rule | one
 ]
 ]] [[
 any [
 set elem set-word! (
 insert tail words to word! :elem
-) | skip
+) | one
 ]
 ]]
 parse3 block rule
@@ -221,10 +221,10 @@ spec [block!]
 ] [
 locals: make block! 16
 item-rule: either args [[
-&refinement? to <end> (item-rule: [<end> skip]) |
-set item &any-word? (insert tail locals to word! :item) | skip
+&refinement? to <end> (item-rule: [<end> one]) |
+set item &any-word? (insert tail locals to word! :item) | one
 ]] [[
-set item &any-word? (insert tail locals to word! :item) | skip
+set item &any-word? (insert tail locals to word! :item) | one
 ]]
 parse3 spec [any item-rule]
 locals

@@ -326,7 +326,7 @@ trim: func [
     ; /ALL just removes all whitespace entirely.  No subtlety needed.
     ;
     if all_TRIM [
-        parse3 series [opt some [remove rule | skip | <end> break]]
+        parse3 series [opt some [remove rule | one | <end> break]]
         return series
     ]
 
@@ -336,7 +336,7 @@ trim: func [
         ]
 
         tail_TRIM [
-            parse3 series [opt some [remove [some rule <end>] | skip]]  ; #2289
+            parse3 series [opt some [remove [some rule <end>] | one]]  ; #2289
         ]
     ] then [
         return series
@@ -348,7 +348,7 @@ trim: func [
     ; with leading and trailing whitespace removed.
     ;
     if lines [
-        parse3 series [opt some [change [some rule] (space) skip | skip]]
+        parse3 series [opt some [change [some rule] (space) one | one]]
         if space = first series [take series]
         if space = last series [take/last series]
         return series
@@ -385,7 +385,7 @@ trim: func [
             remove [opt some rule]
             newline line-start-rule
                 |
-            skip
+            one
         ]]
     ]
 
@@ -394,7 +394,7 @@ trim: func [
     ;
     parse3 series [
         opt remove [some newline]
-        opt some [newline remove [some newline <end>] | skip]
+        opt some [newline remove [some newline <end>] | one]
     ]
 
     return series

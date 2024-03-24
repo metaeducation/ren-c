@@ -66,7 +66,7 @@ export test-source-rule: [
         ")", seek position
         break
             |
-        skip
+        one
     ]
 ]
 
@@ -228,7 +228,7 @@ export collect-logs: func [
                         fail "log incomplete!"
                     )
                         |
-                    {"} copy value to {"} skip
+                    {"} copy value to {"} one
                     ; test result found
                     (
                         parse3 value [

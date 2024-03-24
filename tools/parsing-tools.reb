@@ -45,7 +45,7 @@ export parsing-at: func [
             result: either position: (spread code) [
                 [seek position]
             ][
-                [<end> skip]
+                [<end> one]
             ]
         ]
         use compose [(word)] reduce [compose [

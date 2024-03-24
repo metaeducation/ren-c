@@ -298,7 +298,7 @@ fix-kr: func [
                 check-point: skip check-point length-diff
             )
             seek check-point
-            | skip
+            | one
         ]
         <end> | (fail)
     ] c-lexical.grammar
@@ -315,7 +315,7 @@ fix-const-char: func [
             "msg" opt some white-space "=" opt some white-space
             "(" opt some white-space, change "char" ("z_const char")
                 opt some white-space "*" opt some white-space ")"
-            | skip
+            | one
         ]
     ] c-lexical.grammar
     return source

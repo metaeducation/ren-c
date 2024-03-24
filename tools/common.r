@@ -404,7 +404,7 @@ export stripload: func [
                 ]
             )
             |
-            skip
+            one
         ]
     ]
 

@@ -341,7 +341,7 @@ export do-recover: func [
                             log [{ "crashed"^/}]
                         )
                             |
-                        {"} copy value to {"} skip
+                        {"} value: across to {"} one
                         ; test result found
                         (
                             parse3 value [

@@ -125,7 +125,7 @@ strip-commas-and-downgrade-strings: lib3/func [
             ;
             ahead ", " if (empty? pushed) remove ","
             |
-            skip
+            one
         ]
         <end>
     ]

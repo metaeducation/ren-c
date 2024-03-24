@@ -56,7 +56,7 @@ load-until-double-newline: func [
 ]
 
 
-collapse-whitespace: [some [change some white-space (space) | skip] <end>]
+collapse-whitespace: [some [change some white-space (space) | one] <end>]
 bind collapse-whitespace c-lexical/grammar
 
 
@@ -227,7 +227,7 @@ export proto-parser: context [
                     typemacro-parentheses
                     | [
                         not "(" not "="
-                        [white-space | proto-id: across identifier | skip]
+                        [white-space | proto-id: across identifier | one]
                     ]
                 ]
                 "("
@@ -237,7 +237,7 @@ export proto-parser: context [
                     not ")"
                     proto-arg-1: across identifier
                 ]
-                opt some [typemacro-parentheses | not ")" [white-space | skip]]
+                opt some [typemacro-parentheses | not ")" [white-space | one]]
                 ")"
             ]
         ]

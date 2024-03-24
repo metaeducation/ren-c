@@ -290,7 +290,7 @@ reword: func [
                     a: <here>  ; Restart mark of text to copy verbatim to output
                 ]
                     |
-                skip  ; if wasn't at match, keep the ANY rule scanning ahead
+                one  ; if wasn't at match, keep the ANY rule scanning ahead
             ]
         ]
         to <end>  ; Seek to end, just so rule succeeds
@@ -560,7 +560,7 @@ split: func [
 
                 [
                     repeat (count) [
-                        series: across opt [repeat (piece-size) skip] (
+                        series: across opt [repeat (piece-size) one] (
                             keep series
                         )
                     ]
@@ -568,7 +568,7 @@ split: func [
                 ]
             ] else [
                 [opt some [
-                    series: across [skip, repeat (size - 1) opt skip] (
+                    series: across [one, repeat (size - 1) opt one] (
                         keep series
                     )
                 ]]
@@ -580,7 +580,7 @@ split: func [
             [
                 opt some [not <end> [
                     mk1: <here>
-                    opt some [mk2: <here>, [dlm | <end>] break | skip]
+                    opt some [mk2: <here>, [dlm | <end>] break | one]
                     (keep copy/part mk1 mk2)
                 ]]
                 <end>

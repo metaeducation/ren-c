@@ -1268,7 +1268,7 @@ generator-class: make object! [
                             stop: false
                         )
                     ] (val)
-                    | skip
+                    | one
                 ]
             ] else [
                 fail ["failed to do var substitution:" cmd]

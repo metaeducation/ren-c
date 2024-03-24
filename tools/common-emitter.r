@@ -74,12 +74,12 @@ export cscape: func [
                 (prefix: null suffix: null)
                 finish: <here>
 
-                "${" change [expr: across to "}"] (num-text) skip (
+                "${" change [expr: across to "}"] (num-text) one (
                     mode: #cname
                     pattern: unspaced ["${" num "}"]
                 )
                     |
-                "$<" change [expr: across to ">"] (num-text) skip (
+                "$<" change [expr: across to ">"] (num-text) one (
                     mode: #unspaced
                     pattern: unspaced ["$<" num ">"]
                     if space = last expr [  ; add space at end [1]
@@ -97,14 +97,14 @@ export cscape: func [
                 )
                     |
                 (prefix: copy/part start finish)
-                "$[" change [expr: across to "]"] (num-text) skip (
+                "$[" change [expr: across to "]"] (num-text) one (
                     mode: #delimit
                     pattern: unspaced ["$[" num "]"]
                 )
                 suffix: across to newline
                     |
                 (prefix: copy/part start finish)
-                "$(" change [expr: across to ")"] (num-text) skip (
+                "$(" change [expr: across to ")"] (num-text) one (
                     mode: #delimit
                     pattern: unspaced ["$(" num ")"]
                 )
@@ -122,7 +122,7 @@ export cscape: func [
             (col: 0 prefix: null suffix: null)
             start: <here>
                 |
-            skip (col: col + 1)
+            one (col: col + 1)
         ]]
     ] else [  ; COLLECT* was NULL, so no substitutions
         return string
@@ -271,7 +271,7 @@ export cscape: func [
                 (seen-void: true)
                 |
                 (allwhite: false)  ; has something not a newline or space in it
-                skip
+                one
             ]
         ]
     ]

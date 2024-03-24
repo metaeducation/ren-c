@@ -38,7 +38,7 @@ comment-out-includes: [
             some space [
                 exclude-headers
             ] (insert pos {//} pos: skip pos 2)
-            | skip
+            | one
         ] (pos: skip pos 8)
     ] seek pos
 ]
@@ -68,7 +68,7 @@ fix-randutils-c: func [
             ;
             | change {"PRIu64"} {" PRIu64 "}
 
-            | skip
+            | one
         ]
 
         <end>
@@ -133,7 +133,7 @@ fix-gen_uuid-c: func [
                   (target: unspaced [{//} _ to text! unused])
                 ] target
 
-            | skip
+            | one
         ]
 
         <end>

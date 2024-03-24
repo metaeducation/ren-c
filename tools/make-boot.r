@@ -862,7 +862,7 @@ for-each [sw-cat list] boot-errors [
 
         arity: 0
         if block? message [  ; can have N GET-WORD! substitution slots
-            parse3 message [opt some [get-word! (arity: arity + 1) | skip]]
+            parse3 message [opt some [get-word! (arity: arity + 1) | one]]
         ] else [
             ensure text! message  ; textual message, no arguments
         ]
@@ -875,7 +875,7 @@ for-each [sw-cat list] boot-errors [
                 "_" w: <here>
                 (uppercase/part w 1)
                 |
-                skip
+                one
             ]
         ]
 

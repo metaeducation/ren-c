@@ -45,8 +45,8 @@ ndk-version: make object! [major: minor: patch: null]
     use [major minor patch] [
         parse3/match as text! read (join ndk-root %source.properties) [
             thru "Pkg.Revision = "
-            major: across to "." skip (major: to integer! major)
-            minor: across to "." skip (minor: to integer! minor)
+            major: across to "." one (major: to integer! major)
+            minor: across to "." one (minor: to integer! minor)
             patch: across to [<end> | newline] (patch: to integer! patch)
             to <end>
         ] else [

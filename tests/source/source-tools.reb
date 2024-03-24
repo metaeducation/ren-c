@@ -356,7 +356,7 @@ export analyse: context [
 
             opt [
                 bol: <here>
-                skip (line: 1)
+                one (line: 1)
                 seek bol
             ]
 
@@ -369,7 +369,7 @@ export analyse: context [
                     | wsp and [line-ending | alt-ending] (
                         append whitespace-at-eol line
                     )
-                    | skip
+                    | one
                 ]
             ]
             position: <here>
@@ -461,7 +461,7 @@ c-parser-extension: context bind bind [
 
     lbrace: [and punctuator "{"]
     rbrace: [and punctuator "}"]
-    braced: [lbrace opt some [braced | not rbrace skip] rbrace]
+    braced: [lbrace opt some [braced | not rbrace one] rbrace]
 
     function-spacing-rule: (
         bind/copy standard.function-spacing c-lexical.grammar

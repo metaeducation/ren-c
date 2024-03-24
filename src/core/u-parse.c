@@ -1839,11 +1839,14 @@ DECLARE_NATIVE(subparse)
 
         REBIXO i;  // temp index point
 
-        if (Is_Word(rule)) {  // could be literal BLANK!, now SYM_SKIP
+        if (Is_Word(rule)) {
             Option(SymId) cmd = VAL_CMD(rule);
 
             switch (cmd) {
               case SYM_SKIP:
+                fail ("Use ONE instead of SKIP in PARSE3");
+
+              case SYM_ONE:
                 i = (P_POS < cast(REBIDX, P_INPUT_LEN))
                     ? cast(REBLEN, P_POS + 1)
                     : END_FLAG;
