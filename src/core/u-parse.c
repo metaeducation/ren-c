@@ -1561,11 +1561,25 @@ DECLARE_NATIVE(subparse)
                 FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
-              case SYM_NOT_1:  // see TO-C-NAME
+              case SYM_NOT_1: {  // see TO-C-NAME
                 P_FLAGS |= PF_NOT;
                 P_FLAGS ^= PF_NOT2;
                 FETCH_NEXT_RULE(L);
-                goto pre_rule;
+                bool strict = false;
+                if (not (
+                    Is_Word(P_RULE)
+                    and Cell_Word_Id(P_RULE) == SYM_AHEAD
+                ) and not (
+                    Is_Tag(P_RULE)
+                    and 0 == CT_String(
+                        P_RULE,
+                        Root_End_Tag,
+                        strict
+                    )
+                )){
+                    fail ("NOT must be NOT AHEAD or NOT <end> in PARSE3");
+                }
+                goto pre_rule; }
 
               case SYM_AND_1:  // see TO-C-NAME
               case SYM_AHEAD:

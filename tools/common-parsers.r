@@ -44,7 +44,7 @@ load-until-double-newline: func [
     let terminator: [opt wsp newline opt wsp newline]
 
     parse3/match text [
-        some [not terminator rebol-value]
+        some [not ahead terminator rebol-value]
         opt wsp opt [newline opt newline] position: <here>
         to <end>
     ] then [
@@ -116,7 +116,7 @@ export proto-parser: context [
         directive: [
             data: across [
                 ["#ifndef" | "#ifdef" | "#if" | "#else" | "#elif" | "#endif"]
-                opt some [not newline c-pp-token]
+                opt some [not ahead newline c-pp-token]
             ] eol
             (
                 emit-directive data
@@ -222,22 +222,24 @@ export proto-parser: context [
 
         function-proto: [
             proto: across [
-                not white-space
+                not ahead white-space
                 some [
                     typemacro-parentheses
                     | [
-                        not "(" not "="
+                        not ahead "(" not ahead "="
                         [white-space | proto-id: across identifier | one]
                     ]
                 ]
                 "("
                 opt some white-space
                 opt [
-                    not typemacro-parentheses
-                    not ")"
+                    not ahead typemacro-parentheses
+                    not ahead ")"
                     proto-arg-1: across identifier
                 ]
-                opt some [typemacro-parentheses | not ")" [white-space | one]]
+                opt some [
+                    typemacro-parentheses | not ahead ")" [white-space | one]
+                ]
                 ")"
             ]
         ]

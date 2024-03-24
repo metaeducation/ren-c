@@ -70,7 +70,7 @@ export extract-native-protos: func [
             "//" space space proto: across [
                 (exported: false)
                 opt ["export" space (exported: true)]
-                ahead not space name: across to ":" one space
+                not ahead space name: across to ":" one space
                 opt ["enfix" space]
                 ["native" (native-type: 'normal)
                     opt ["/combinator" (native-type: 'combinator)]

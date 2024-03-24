@@ -252,7 +252,7 @@ sys-globals-parser: context [
 
         declaration: [
             some [
-                opt wsp [id: across identifier | not #";" punctuator]
+                opt wsp [id: across identifier | not ahead #";" punctuator]
             ] #";" thru newline (
                 ;
                 ; !!! Not used now, but previously was for user natives:
@@ -268,7 +268,7 @@ sys-globals-parser: context [
         directive: [
             data: across [
                 ["#ifndef" | "#ifdef" | "#if" | "#else" | "#elif" | "#endif"]
-                opt some [not newline c-pp-token]
+                opt some [not ahead newline c-pp-token]
             ] eol
             (
                 ; Here is where it would call processing of conditional data

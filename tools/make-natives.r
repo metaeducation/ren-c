@@ -241,7 +241,7 @@ for-each info all-protos [
     emit-include-params-macro e-params info/proto
 ]
 
-blockrule: ["[" opt some [blockrule | not "]" one] "]"]
+blockrule: ["[" opt some [blockrule | not ahead "]" one] "]"]
 
 parse3 stripped-generics [
     some newline  ; skip newlines

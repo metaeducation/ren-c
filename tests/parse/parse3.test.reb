@@ -323,32 +323,32 @@
 
 [#1246
     (
-        parse3 "1" [not not "1" "1"]
+        parse3 "1" [not ahead not ahead "1" "1"]
         true
     )
     (
-        parse3 "1" [not [not "1"] "1"]
+        parse3 "1" [not ahead [not ahead "1"] "1"]
         true
     )
     ~parse3-incomplete~ !! (
-        parse3 "" [not repeat 0 "a"]
+        parse3 "" [not ahead repeat 0 "a"]
     )
     ~parse3-incomplete~ !! (
-        parse3 "" [not [repeat 0 "a"]]
+        parse3 "" [not ahead [repeat 0 "a"]]
     )
 ]
 
 [#1240
     (
-        parse3 "" [not "a"]
+        parse3 "" [not ahead "a"]
         true
     )
     (
-        parse3 "" [not one]
+        parse3 "" [not ahead one]
         true
     )
     (
-        parse3 "" [not fail]
+        parse3 "" [not ahead fail]
         true
     )
 ]
