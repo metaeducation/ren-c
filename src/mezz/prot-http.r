@@ -28,12 +28,12 @@ digit: charset [#"0" - #"9"]
 alpha: charset [#"a" - #"z" #"A" - #"Z"]
 idate-to-date: function [return: [date!] date [text!]] [
     parse/match date [
-        5 skip
-        day: across 2 digit
+        repeat 5 one
+        day: across repeat 2 digit
         space
-        month: across 3 alpha
+        month: across repeat 3 alpha
         space
-        year: across 4 digit
+        year: across repeat 4 digit
         space
         time: across to space
         space
@@ -605,7 +605,7 @@ check-data: function [
                 ]
                 else [
                     parse/match mk1 [
-                        chunk-size skip
+                        chunk-size one
                         mk2: <here>
                         crlfbin
                         to <end>

@@ -1934,6 +1934,12 @@ DECLARE_NATIVE(subparse)
 
                 switch (cmd) {
                 case SYM_SKIP:
+                    if (not (P_FLAGS & PF_REDBOL))
+                        fail ("Use ONE instead of SKIP outside PARSE2");
+                    goto handle_one;
+
+                case SYM_ONE:
+                handle_one:
                     i = (P_POS < Series_Len(P_INPUT))
                         ? P_POS + 1
                         : END_FLAG;

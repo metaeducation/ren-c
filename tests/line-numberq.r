@@ -22,7 +22,7 @@ line-number?: func [
     parse2 t [
         opt some [
             (if greater-or-equal? index? t index? s [return line-number])
-            [[CR LF | CR | LF] (line-number: me + 1) | skip] t:
+            [[CR LF | CR | LF] (line-number: me + 1) | one] t:
         ]
     ]
 ]

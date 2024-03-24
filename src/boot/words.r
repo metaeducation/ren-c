@@ -204,6 +204,7 @@ break
 ; ^--prep words above
 ; v--match words below
 skip
+one
 to
 thru
 quote

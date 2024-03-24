@@ -331,7 +331,7 @@ rebsource: context [
 
                 opt [
                     bol: <here>
-                    skip (line: 1)
+                    one (line: 1)
                     seek bol
                 ]
 
@@ -344,7 +344,7 @@ rebsource: context [
                         | wsp ahead [line-ending | alt-ending] (
                             append whitespace-at-eol line
                         )
-                        | skip
+                        | one
                     ]
                 ]
                 position: <here>

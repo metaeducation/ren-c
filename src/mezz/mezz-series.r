@@ -349,7 +349,7 @@ reword: function [
                 ; failure to find a match at this point needs to SKIP to keep
                 ; the ANY rule scanning forward.
                 ;
-                skip
+                one
             ]
         ]
 
@@ -657,14 +657,14 @@ split: function [
 
                 [
                     repeat (count) [
-                        series: across repeat (piece-size) skip
+                        series: across repeat (piece-size) one
                         (keep/only series)
                     ]
                     series: across to <end> (keep/only series)
                 ]
             ] else [
                 [opt some [
-                    series: across repeat (reduce [1 size]) skip
+                    series: across repeat (reduce [1 size]) one
                     (keep/only series)
                 ] <end>]
             ]
@@ -675,7 +675,7 @@ split: function [
             ensure [bitset! text! char! block!] dlm
 
             [
-                opt some [mk1: <here> some [mk2: <here> dlm break | skip] (
+                opt some [mk1: <here> some [mk2: <here> dlm break | one] (
                     keep/only copy/part mk1 mk2
                 )]
                 <end>

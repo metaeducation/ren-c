@@ -30,15 +30,15 @@
 ; SET-WORD! (store current input position)
 
 (
-    res: did parse/match ser: [x y] [pos: <here> skip skip]
+    res: did parse/match ser: [x y] [pos: <here> one one]
     all [res | pos = ser]
 )
 (
-    res: did parse/match ser: [x y] [skip pos: <here> skip]
+    res: did parse/match ser: [x y] [one pos: <here> one]
     all [res | pos = next ser]
 )
 (
-    res: did parse/match ser: [x y] [skip skip pos: <here>]
+    res: did parse/match ser: [x y] [one one pos: <here>]
     all [res | pos = tail of ser]
 )
 
@@ -53,11 +53,11 @@
 ;    all [res | val = 'x | pos = ser]
 ; )]
 ; [#2130 (
-;    res: did parse/match ser: "foo" [val: across pos: <here> skip]
+;    res: did parse/match ser: "foo" [val: across pos: <here> one]
 ;    all [not res | val = "f" | pos = ser]
 ; )]
 ; [#2130 (
-;    res: did parse/match ser: "foo" [val: across pos: <here> skip]
+;    res: did parse/match ser: "foo" [val: across pos: <here> one]
 ;    all [not res | val = "f" | pos = ser]
 ; )]
 
@@ -96,7 +96,7 @@
 (
     i: 0
     parse/match "a." [
-        opt some [thru "a" (i: i + 1 j: if i > 1 [[<end> skip]]) j]
+        opt some [thru "a" (i: i + 1 j: if i > 1 [[<end> one]]) j]
     ]
     i == 1
 )
@@ -105,7 +105,7 @@
     (did parse/match "abcd" [thru "d"])
 ]
 [#1959
-    (did parse/match "abcd" [to "d" skip])
+    (did parse/match "abcd" [to "d" one])
 ]
 
 [#1959  ; TAG! no longer matches in string, interpreted as combinator
@@ -115,7 +115,7 @@
     (did parse/match [a b c d] [thru 'd])
 ]
 [#1959
-    (did parse/match [a b c d] [to 'd skip])
+    (did parse/match [a b c d] [to 'd one])
 ]
 
 ; self-invoking rule
@@ -173,7 +173,7 @@
     (did parse/match "" [not "a"])
 ]
 [#1240
-    (did parse/match "" [not skip])
+    (did parse/match "" [not one])
 ]
 [#1240
     (did parse/match "" [not fail])
@@ -186,10 +186,10 @@
     (did parse/match "a" compose [thru (charset "a")])
 ]
 [#1457
-    (not parse/match "a" compose [thru (charset "a") skip])
+    (not parse/match "a" compose [thru (charset "a") one])
 ]
 [#1457
-    (did parse/match "ba" compose [to (charset "a") skip])
+    (did parse/match "ba" compose [to (charset "a") one])
 ]
 [#1457
     (not parse/match "ba" compose [to (charset "a") "ba"])
@@ -204,7 +204,7 @@
 (
     https://github.com/metaeducation/ren-c/issues/377
     o: make object! [a: 1]
-    parse/match s: "a" [o/a: skip]
+    parse/match s: "a" [o/a: one]
     o/a = s
 )
 
@@ -243,7 +243,7 @@
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
 (
     i: 1
-    parse/match "a" [opt some [(i: i + 1 j: if i = 2 [[<end> skip]]) j]]
+    parse/match "a" [opt some [(i: i + 1 j: if i = 2 [[<end> one]]) j]]
     i == 2
 )
 

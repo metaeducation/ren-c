@@ -31,7 +31,7 @@ parsing-at: func [  ; redefined here for <here> usage in regular PARSE
         if not end [
             block: compose/deep [either not tail? (word) [(block)] [_]]
         ]
-        block: compose/deep [result: either position: (block) [[seek position]] [[<end> skip]]]
+        block: compose/deep [result: either position: (block) [[seek position]] [[<end> one]]]
         use compose [(word)] compose/deep [
             [(as set-word! :word) <here>
             (as group! block) result]
@@ -64,7 +64,7 @@ make object! [
                 success-rule: trap [
                     transcode/next position 'position
                 ] then [
-                    [<end> skip]
+                    [<end> one]
                 ] else [
                     [seek position]
                 ]
@@ -87,7 +87,7 @@ make object! [
                 |
             ")" seek position break
                 |
-            skip
+            one
         ]
     ]
 
@@ -249,7 +249,7 @@ make object! [
         ]
 
         parse log-contents [
-            (guard: [<end> skip])
+            (guard: [<end> one])
             opt some [
                 opt some whitespace
                 [
@@ -269,7 +269,7 @@ make object! [
                             fail "log incomplete!"
                         )
                             |
-                        {"} value: across to {"} skip
+                        {"} value: across to {"} one
                         ; test result found
                         (
                             parse value [

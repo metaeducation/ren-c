@@ -94,7 +94,7 @@ make object! compose [
     ][
         parse test-sources [
             opt some [
-                flags: block! value: skip (
+                flags: block! value: one (
                     emit-test flags to text! value
                 )
                     |
@@ -149,7 +149,7 @@ make object! compose [
                 parse/match read log-file [
                     (
                         last-vector: _
-                        guard: [<end> skip]
+                        guard: [<end> one]
                     )
                     opt some [
                         opt some whitespace
@@ -174,7 +174,7 @@ make object! compose [
                                     guard: _
                                 )
                                     |
-                                {"} copy value to {"} skip
+                                {"} value: across to {"} one
                                 ; test result found
                                 (
                                     parse value [

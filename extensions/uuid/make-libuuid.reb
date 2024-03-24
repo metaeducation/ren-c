@@ -40,7 +40,7 @@ comment-out-includes: [
             some space [
                 exclude-headers
             ] (insert pos {//} pos: skip pos 2)
-            | skip
+            | one
         ] (pos: skip pos 8)
     ] :pos
 ]
@@ -70,7 +70,7 @@ fix-randutils.c: func [
             ;
             | change {"PRIu64"} {" PRIu64 "}
 
-            | skip
+            | one
         ]
     ]
 
@@ -130,7 +130,7 @@ fix-gen_uuid.c: function [
                   (target: unspaced [{// } to text! unused])
                 ] target
 
-            | skip
+            | one
         ]
     ]
     cnt
