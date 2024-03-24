@@ -1565,11 +1565,27 @@ DECLARE_NATIVE(subparse)
 
                         continue;  // use old weak interpretation of SET
 
-                    case SYM_NOT:
+                    case SYM_NOT: {
                         P_FLAGS |= PF_NOT;
                         P_FLAGS ^= PF_NOT2;
                         FETCH_NEXT_RULE(L);
-                        continue;
+                        bool strict = true;
+                        if (not (P_FLAGS & PF_REDBOL)) {
+                            if (not (
+                                Is_Word(P_RULE)
+                                and Cell_Word_Id(P_RULE) == SYM_AHEAD
+                            ) and not (
+                                Is_Tag(P_RULE)
+                                and 0 == Compare_String_Vals(
+                                    P_RULE,
+                                    Root_End_Tag,
+                                    strict
+                                )
+                            )){
+                                fail ("NOT must be NOT AHEAD/<end> in PARSE3");
+                            }
+                        }
+                        continue; }
 
                     case SYM_AND:
                     case SYM_AHEAD:

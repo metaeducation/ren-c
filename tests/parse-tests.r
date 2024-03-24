@@ -54,11 +54,11 @@
 ; )]
 ; [#2130 (
 ;    res: did parse/match ser: "foo" [val: across pos: <here> one]
-;    all [not res | val = "f" | pos = ser]
+;    all [not ahead res | val = "f" | pos = ser]
 ; )]
 ; [#2130 (
 ;    res: did parse/match ser: "foo" [val: across pos: <here> one]
-;    all [not res | val = "f" | pos = ser]
+;    all [not ahead res | val = "f" | pos = ser]
 ; )]
 
 ; TO/THRU integer!
@@ -158,25 +158,25 @@
 ; NOT rule
 
 [#1246
-    (did parse/match "1" [not not "1" "1"])
+    (did parse/match "1" [not ahead not ahead "1" "1"])
 ]
 [#1246
-    (did parse/match "1" [not [not "1"] "1"])
+    (did parse/match "1" [not ahead [not ahead "1"] "1"])
 ]
 [#1246
-    (not parse/match "" [not repeat 0 "a"])
+    (not parse/match "" [not ahead repeat 0 "a"])
 ]
 [#1246
-    (not parse/match "" [not [repeat 0 "a"]])
+    (not parse/match "" [not ahead [repeat 0 "a"]])
 ]
 [#1240
-    (did parse/match "" [not "a"])
+    (did parse/match "" [not ahead "a"])
 ]
 [#1240
-    (did parse/match "" [not one])
+    (did parse/match "" [not ahead one])
 ]
 [#1240
-    (did parse/match "" [not fail])
+    (did parse/match "" [not ahead fail])
 ]
 
 
