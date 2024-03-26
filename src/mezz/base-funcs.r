@@ -37,7 +37,7 @@ so: enfix func [
     condition "Condition to test (voids are treated as false)"
         [~null~ any-value!]
 ][
-    if not opt condition [
+    any [condition false] else [
         fail/where ["Postfix 'SO assertion' failed"] 'condition
     ]
 ]
