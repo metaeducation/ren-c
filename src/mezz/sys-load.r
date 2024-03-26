@@ -566,11 +566,11 @@ load-module: function [
     ]
 
     if version and [ver > modver] [
-        cause-error 'syntax 'needs reduce [name ver]
+        cause-error 'syntax 'needs reduce [reify name ver]
     ]
 
     ; If no further processing is needed, shortcut return
-    if (not override?) and [any [mod delay]] [return reduce [name mod]]
+    if (not override?) and [any [mod delay]] [return reduce [reify name mod]]
 
     ; If /delay, save the intermediate form
     if delay [
@@ -606,7 +606,7 @@ load-module: function [
         if pos [
             pos/2: mod ; replace delayed module
         ] else [
-            append system/modules reduce [name mod]
+            append system/modules reduce [reify name mod]
         ]
 
         all [
@@ -618,7 +618,7 @@ load-module: function [
     ]
 
     reduce [
-        name
+        reify name
         match module! mod
         ensure integer! line
     ]
