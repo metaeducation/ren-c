@@ -35,20 +35,7 @@ save: function [
         {Provide a REBOL header block (or output non-code datatypes)}
     header-data [block! object! logic!]
         {Header block, object, or TRUE (header is in value)}
-    /all ;-- renamed to `all_SAVE` to avoid ambiguity with native
-        {Save in serialized format}
-    /length
-        {Save the length of the script content in the header}
-    /compress
-        {Save in a compressed format or not}
-    method [logic! word!]
-        {true = compressed, false = not, 'script = encoded string}
 ][
-    ; Recover common natives for words used as refinements.
-    all_SAVE: all
-    all: :lib/all
-
-    method: default [null]
     header-data: default [null]
 
     ;-- Special datatypes use codecs directly (e.g. PNG image file):
@@ -60,12 +47,6 @@ save: function [
     ] then [
         ; We have a codec.  Will check for valid type.
         return write where encode type :value
-    ]
-
-    ;-- Compressed scripts and script lengths require a header:
-    any [length method] then [
-        header: true
-        header-data: default [[]]
     ]
 
     ;-- Handle the header object:
@@ -82,67 +63,20 @@ save: function [
         header-data: if object? :header-data [
             trim :header-data ;; clean out words set to blank
         ] else [
-            has/only :header-data ;; does not use STANDARD/HEADER
+            make object! :header-data ;; does not use STANDARD/HEADER
         ]
 
-        if compress [ ; Make the header option match
-            case [
-                not method [
-                    remove maybe find maybe select header-data 'options 'compress
-                ]
-                not block? select header-data 'options [
-                    append header-data reduce ['options copy [compress]]
-                ]
-                not find header-data/options 'compress [
-                    append header-data/options 'compress
-                ]
-            ]
-        ]
-
-        if length [
-            ; any truthy value will work, but this uses #[true].
-            ;
-            append header-data compose [length: (true)]
-        ]
-
-        compress: did find maybe (select header-data 'options) 'compress
-        if not compress [
-            method: null
-        ]
-
-        length: ensure [~null~ integer!] select header-data 'length
         header-data: body-of header-data
     ]
 
-    ; !!! Maybe /all should be the default?  See #2159
-    data: either all_SAVE [mold/all/only :value] [
-        mold/only :value
-    ]
+    data: mold/only :value
 
     ; mold does not append a newline? Nope.
     append data newline
 
     case/all [
-        tmp: find maybe header-data 'checksum [
-            ; Checksum uncompressed data, if requested
-            change next tmp checksum/secure data: to-binary data
-        ]
-
-        compress [
-            ; Compress the data if necessary
-            data: gzip data
-        ]
-
-        method = 'script [
-            data: mold64 data ; File content is encoded as base-64
-        ]
-
         not binary? data [
             data: to-binary data
-        ]
-
-        length [
-            change find/tail header-data 'length (length of data)
         ]
 
         header-data [

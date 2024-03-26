@@ -85,50 +85,24 @@ export-words: func [
 
 
 load-header: function [
-    {Loads script header object and body binary (not loaded).}
+    {Decodes script header object and body binary (not loaded)}
 
-    return: "[header OBJECT!, body BINARY!, end] or error WORD!"
+    return: "[header OBJECT!, body BINARY!] or error WORD!"
         [block! word!]
     source "Source code (text! will be UTF-8 encoded)"
         [binary! text!]
     line-var [word!]
 
-    /only "Only process header, don't decompress body"
     /required "Script header is required"
 
     <static>
     non-ws (make bitset! [not 1 - 32])
 ][
-    ; This function decodes the script header from the script body.  It checks
-    ; the header 'compress and 'content options, and supports length-specified
-    ; or script-in-a-block embedding.
-    ;
-    ; It will set the 'content field to the binary source if 'content is true.
-    ; The 'content will be set to the source at the position of the beginning
-    ; of the script header, skipping anything before it. For multi-scripts it
-    ; doesn't copy the portion of the content that relates to the current
-    ; script, or at all, so be careful with the source data you get.
-    ;
-    ; If the 'compress option is set then the body will be decompressed.
-    ; Binary vs. script encoded compression will be autodetected.
-    ;
-    ; Normally, returns the header object, the body text (as binary), and the
-    ; the end of the script or script-in-a-block. The end position can be used
-    ; to determine where to stop decoding the body text. After the end is the
-    ; rest of the binary data, which can contain anything you like. This can
-    ; support multiple scripts in the same binary data, multi-scripts.
-    ;
-    ; If not /only and the script is embedded in a block and not compressed
-    ; then the body text will be a decoded block instead of binary, to avoid
-    ; the overhead of decoding the body twice.
-    ;
     ; Syntax errors are returned as words:
     ;    no-header
     ;    bad-header
     ;    bad-compress
     ;
-    end: _ ;-- locals are now void by default, added after that change
-
     if binary? source [
         ;
         ; Used to "assert this was UTF-8", which was a weak check.
@@ -144,8 +118,6 @@ load-header: function [
             reduce [
                 '~null~  ;-- no header object
                 tmp  ;-- body text
-                1  ;-- line number
-                tail of tmp  ;-- end of script
             ]
         ]
     ]
@@ -183,66 +155,11 @@ load-header: function [
         set line-var (get line-var) + 1
     ]
 
-    if integer? tmp: select hdr 'length [
-        end: skip rest tmp
-    ]
+    ensure object! hdr
+    ensure [~null~ block!] hdr/options
+    ensure [binary! block!] rest
 
-    end: default [tail of data]
-
-    if only [
-        ; decompress not done
-        return reduce [hdr rest end]
-    ]
-
-    if :key = 'rebol [
-        ; regular script, binary or script encoded compression supported
-        case [
-            find maybe hdr/options 'compress [
-                rest: any [
-                    attempt [
-                        ; Raw bits.  whitespace *could* be tolerated; if
-                        ; you know the kind of compression and are looking
-                        ; for its signature (gzip is 0x1f8b)
-                        ;
-                        gunzip/part rest end
-                    ]
-                    attempt [
-                        ; BINARY! literal ("'SCRIPT encoded").  Since it
-                        ; uses transcode, leading whitespace and comments
-                        ; are tolerated before the literal.
-                        ;
-                        gunzip first transcode/next rest 'dummy
-                    ]
-                ] or [
-                    return 'bad-compress
-                ]
-            ] ; else assumed not compressed
-        ]
-    ] else [
-        ; block-embedded script, only script compression, ignore hdr/length
-
-        ; decode embedded script
-        rest: skip first set [data: end:] transcode/next data 'dummy 2
-
-        case [
-            find maybe hdr/options 'compress [ ; script encoded only
-                rest: attempt [gunzip first rest] or [
-                    return 'bad-compress
-                ]
-            ]
-        ]
-    ]
-
-    ; Return a BLOCK! with 4 elements in it
-    ;
-    return reduce [
-        ensure object! hdr
-        elide (
-            ensure [~null~ block!] hdr/options
-        )
-        ensure [binary! block!] rest
-        ensure binary! end
-    ]
+    return reduce [hdr rest]
 ]
 
 
