@@ -111,8 +111,8 @@ export cscape: func [
                 suffix: across remove to newline
             ] (
                 keep compose [
-                    (pattern else ['~null~]) (col) (mode) (expr)
-                    (prefix else ['~null~]) (suffix else ['~null~])
+                    (reify pattern) (col) (mode) (expr)
+                    (reify prefix) (reify suffix)
                 ]
                 num: num + 1
                 num-text: to text! num
@@ -239,9 +239,10 @@ export cscape: func [
     ; whitespace is all that ends up on them.  If the user doesn't want the
     ; intelligence, they should use "".
     ;
-    ; !!! REMOVE was buggy and unpredictable in R3-Alpha PARSE, and the
-    ; bootstrap executable inherited that.  Collect a list of lines to kill
-    ; and do it in a phase after the parse.  (Probably just don't use PARSE.)
+    ; !!! REMOVE was buggy and unpredictable in R3-Alpha PARSE.  This may be
+    ; fixed in the modern bootstrap executable, but this code does not
+    ; reflect that.  It collects a list of lines to kill and does it in a
+    ; phase after the parse.
     ;
     let kill-lines: copy []
     let allwhite
