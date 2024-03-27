@@ -335,10 +335,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         //
         assert(
             NOT_SER_INFO(symbol, STRING_INFO_CANON)
-            or (
-                MISC(symbol).bind_index.high == 0
-                and MISC(symbol).bind_index.low == 0
-            )
+            or MISC(symbol).bind_index.other == 0
         );
 
         Queue_Mark_Binding_Deep(v);

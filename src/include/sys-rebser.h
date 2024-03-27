@@ -792,20 +792,22 @@ union StubMiscUnion {
     // had a global "binding table" for the symbols of words, where
     // those symbols were not garbage collected.  Ren-C uses Series
     // to store word symbols, and then has a hash table indexing them.
-    //
     // So the "binding table" is chosen to be indices reachable from the
-    // Stub nodes of the words themselves.  If it were necessary for
-    // multiple clients to have bindings at the same time, this could be
-    // done through a pointer that would "pop out" into some kind of
-    // linked list.  For now, the binding API just demonstrates having
-    // up to 2 different indices in effect at once.
+    // Stub nodes of the words themselves.
     //
-    // Note that binding indices can be negative, so the sign can be used
+    // !!! This technique is modified heavily in modern Ren-C with what is
+    // known as "sea of words", where variables are free-floating stubs
+    // reachable from the symbol stubs.  That is more complex than this old
+    // bootstrap executable can accomplish, so instead stubs just store a
+    // transient index for a binder, as well as a persistent index for where
+    // things are in lib.
+    //
+    // !!! Note that binding indices can be negative, so the sign can be used
     // to encode a property of that particular binding.
     //
     struct {
-        int high:16;
-        int low:16;
+        int lib:16;
+        int other:16;
     } bind_index;
 
     // ACTION! paramlists and ANY-CONTEXT! varlists can store a "meta"

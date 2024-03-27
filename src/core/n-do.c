@@ -766,7 +766,7 @@ DECLARE_NATIVE(applique)
     // were pushed during the Get of the ACTION!.
     //
     struct Reb_Binder binder;
-    INIT_BINDER(&binder);
+    INIT_BINDER(&binder, nullptr);
     REBCTX *exemplar = Make_Context_For_Action_Int_Partials(
         applicand,
         L->stack_base,  // lowest_stackindex of refinements to weave in

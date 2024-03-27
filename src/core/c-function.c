@@ -583,7 +583,7 @@ Array* Make_Paramlist_Managed_May_Fail(
         // is over to do the duplicate checks--it can fail.)
         //
         struct Reb_Binder binder;
-        INIT_BINDER(&binder);
+        INIT_BINDER(&binder, nullptr);
 
         Symbol* duplicate = nullptr;
 

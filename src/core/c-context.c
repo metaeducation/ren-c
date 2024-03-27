@@ -216,6 +216,12 @@ Value* Append_Context(
     Option(Symbol*) symbol
 ) {
     Array* keylist = CTX_KEYLIST(context);
+    if (any_word) {
+        assert(not symbol);
+        symbol = Cell_Word_Symbol(unwrap(any_word));
+    }
+    else
+        assert(symbol);
 
     // Add the key to key list
     //
@@ -228,7 +234,7 @@ Value* Append_Context(
     Value* key = Init_Typeset(
         Array_Last(keylist), // !!! non-dynamic, could optimize
         TS_VALUE, // !!! Currently not paid attention to
-        symbol ? unwrap(symbol) : Cell_Word_Symbol(unwrap(any_word))
+        unwrap(symbol)
     );
     UNUSED(key);
     TERM_ARRAY_LEN(keylist, Array_Len(keylist));
@@ -236,22 +242,25 @@ Value* Append_Context(
     // Add a slot to the var list
     //
     Expand_Series_Tail(CTX_VARLIST(context), 1);
+    REBLEN len = Array_Len(CTX_VARLIST(context)); // length we just bumped
+    REBLEN index = len - 1;
 
     Value* value = Init_Trash(Array_Last(CTX_VARLIST(context)));
-    TERM_ARRAY_LEN(CTX_VARLIST(context), Array_Len(CTX_VARLIST(context)));
+    TERM_ARRAY_LEN(CTX_VARLIST(context), len);
 
-    if (not any_word)
-        assert(symbol);
-    else {
+    if (any_word) {
+        //
         // We want to not just add a key/value pairing to the context, but we
         // want to bind a word while we are at it.  Make sure symbol is valid.
         //
-        assert(not symbol);
-
-        REBLEN len = CTX_LEN(context); // length we just bumped
         INIT_BINDING(unwrap(any_word), context);
-        INIT_WORD_INDEX(unwrap(any_word), len);
+        INIT_WORD_INDEX(unwrap(any_word), index);
     }
+
+    // Make sure fast cache of index in lib in canon symbol is up to date
+    //
+    if (context == Lib_Context)
+        MISC(Canon_Symbol(unwrap(symbol))).bind_index.lib = index;
 
     return value;  // location we just added (void cell)
 }
@@ -339,7 +348,7 @@ void Collect_Start(struct Reb_Collector* collector, REBFLGS flags)
     collector->flags = flags;
     collector->base = TOP_INDEX;
     collector->index = 1;
-    INIT_BINDER(&collector->binder);
+    INIT_BINDER(&collector->binder, nullptr);
 
     assert(Array_Len(BUF_COLLECT) == 0); // should be empty
 }
@@ -405,12 +414,8 @@ void Collect_End(struct Reb_Collector *cl)
         // which thread had the error to roll back any binding structures.
         // For now just zero it out based on the collect buffer.
         //
-        assert(
-            MISC(canon).bind_index.high != 0
-            or MISC(canon).bind_index.low != 0
-        );
-        MISC(canon).bind_index.high = 0;
-        MISC(canon).bind_index.low = 0;
+        assert(MISC(canon).bind_index.other != 0);
+        MISC(canon).bind_index.other = 0;
     }
 
     SET_ARRAY_LEN_NOTERM(BUF_COLLECT, 0);
@@ -1169,7 +1174,7 @@ void Resolve_Context(
         i = 0;
 
     struct Reb_Binder binder;
-    INIT_BINDER(&binder);
+    INIT_BINDER(&binder, nullptr);  // don't use lib context speedup
 
     Value* key;
     Value* var;

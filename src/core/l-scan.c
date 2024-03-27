@@ -2329,19 +2329,15 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 INIT_BINDING(TOP, ss->context);
                 INIT_WORD_INDEX(TOP, n);
             }
-            else if (n < 0) {
+            else if (MISC(canon).bind_index.lib) {
                 //
-                // Index is the negative of where the value exists in lib.
                 // A proxy needs to be imported from lib to context.
                 //
                 Expand_Context(ss->context, 1);
                 Move_Var( // preserve enfix state
                     Append_Context(ss->context, TOP, nullptr),
-                    CTX_VAR(ss->lib, -n) // -n is positive
+                    CTX_VAR(ss->lib, MISC(canon).bind_index.lib)
                 );
-                REBINT check = Remove_Binder_Index_Else_0(ss->binder, canon);
-                assert(check == n); // n is negative
-                UNUSED(check);
                 Add_Binder_Index(ss->binder, canon, VAL_WORD_INDEX(TOP));
             }
             else {

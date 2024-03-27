@@ -112,7 +112,7 @@ void Bind_Values_Core(
     REBFLGS flags // see %sys-core.h for BIND_DEEP, etc.
 ) {
     struct Reb_Binder binder;
-    INIT_BINDER(&binder);
+    INIT_BINDER(&binder, context);
 
     // Associate the canon of a word with an index number.  (This association
     // is done by poking the index into the Stub of the series behind the
@@ -267,7 +267,7 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
     );
 
     struct Reb_Binder binder;
-    INIT_BINDER(&binder);
+    INIT_BINDER(&binder, nullptr);
 
     // Setup binding table from the argument word list
     //
@@ -473,7 +473,7 @@ void Virtual_Bind_Deep_To_New_Context(
     //
     struct Reb_Binder binder;
     if (rebinding)
-        INIT_BINDER(&binder);
+        INIT_BINDER(&binder, *context_out);
 
     Symbol* duplicate = nullptr;
 
@@ -643,15 +643,11 @@ void Virtual_Bind_Deep_To_New_Context(
 // series nodes that store UTF-8 data for words.  This creates a mapping from
 // canon word spellings to signed integers.
 //
-// For the purposes of binding to the user and lib contexts relatively
-// quickly, this sets up that global binding table for all lib context words
-// at negative integers, and all user context words at positive ones.
-//
 void Init_Interning_Binder(
     struct Reb_Binder *binder,
     REBCTX *ctx // location to bind into (in addition to lib)
 ){
-    INIT_BINDER(binder);
+    INIT_BINDER(binder, ctx);
 
     Value* key;
     REBINT index;
@@ -662,22 +658,6 @@ void Init_Interning_Binder(
     index = 1;
     for (; NOT_END(key); ++key, ++index)
         Add_Binder_Index(binder, Key_Canon(key), index); // positives
-
-    // For all the keys that aren't in the supplied context but *are* in lib,
-    // use a negative index to locate its position in lib.  Its meaning can be
-    // "imported" from there to the context, and adjusted in the binder to the
-    // new positive index.
-    //
-    if (ctx != Lib_Context) {
-        key = CTX_KEYS_HEAD(Lib_Context);
-        index = 1;
-        for (; NOT_END(key); ++key, ++index) {
-            Symbol* canon = Key_Canon(key);
-            REBINT n = Get_Binder_Index_Else_0(binder, canon);
-            if (n == 0)
-                Add_Binder_Index(binder, canon, -index);
-        }
-    }
 }
 
 
@@ -700,19 +680,6 @@ void Shutdown_Interning_Binder(struct Reb_Binder *binder, REBCTX *ctx)
         REBINT n = Remove_Binder_Index_Else_0(binder, Key_Canon(key));
         assert(n == index);
         UNUSED(n);
-    }
-
-    // The lib context keys may have been imported, so you won't necessarily
-    // find them in the list any more.
-    //
-    if (ctx != Lib_Context) {
-        key = CTX_KEYS_HEAD(Lib_Context);
-        index = 1;
-        for (; NOT_END(key); ++key, ++index) {
-            REBINT n = Remove_Binder_Index_Else_0(binder, Key_Canon(key));
-            assert(n == 0 or n == -index);
-            UNUSED(n);
-        }
     }
 
     SHUTDOWN_BINDER(binder);

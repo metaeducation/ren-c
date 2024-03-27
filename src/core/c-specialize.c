@@ -371,7 +371,7 @@ bool Specialize_Action_Throws(
 
     struct Reb_Binder binder;
     if (opt_def)
-        INIT_BINDER(&binder);
+        INIT_BINDER(&binder, nullptr);
 
     REBACT *unspecialized = VAL_ACTION(specializee);
 

@@ -306,16 +306,11 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
 
         // Canon symbols don't need to cache a canon pointer to themselves.
         // So instead that slot is reserved for tracking associated information
-        // for the canon word, e.g. the current bind index.  Because this
-        // may be used by several threads, it would likely have to be an
-        // atomic pointer that would "pop out" to a structure, but for now
-        // it is just randomized to keep its information in high bits or low
-        // bits as a poor-man's demo that there is an infrastructure in place
-        // for sharing (start with 2, grow to N based on the functions for
-        // 2 being in place)
+        // for the canon word, e.g. the current bind index.  Also the index
+        // in lib (if any) is cached.
         //
-        MISC(intern).bind_index.high = 0;
-        MISC(intern).bind_index.low = 0;
+        MISC(intern).bind_index.other = 0;
+        MISC(intern).bind_index.lib = 0;
 
         // leave header.bits as 0 for SYM_0 as answer to Cell_Word_Id()
         // Startup_Symbols() tags values from %words.r after the fact.
@@ -371,8 +366,7 @@ void GC_Kill_Interning(Symbol* intern)
     if (NOT_SER_INFO(intern, STRING_INFO_CANON))
         return; // for non-canon forms, removing from chain is all you need
 
-    assert(MISC(intern).bind_index.high == 0); // shouldn't GC during binds?
-    assert(MISC(intern).bind_index.low == 0);
+    assert(MISC(intern).bind_index.other == 0); // shouldn't GC during binds?
 
     REBLEN num_slots = Series_Len(PG_Canons_By_Hash);
     Symbol** canons_by_hash = Series_Head(Symbol*, PG_Canons_By_Hash);
@@ -403,8 +397,8 @@ void GC_Kill_Interning(Symbol* intern)
     #endif
         canons_by_hash[slot] = synonym;
         SET_SER_INFO(synonym, STRING_INFO_CANON);
-        MISC(synonym).bind_index.low = 0;
-        MISC(synonym).bind_index.high = 0;
+        MISC(synonym).bind_index.lib = MISC(intern).bind_index.lib;
+        MISC(synonym).bind_index.other = 0;
     }
     else {
         // This canon form must be removed from the hash table.  Ripple the

@@ -155,7 +155,7 @@ enum {
 
 
 struct Reb_Binder {
-    bool high;
+    REBCTX *context;
   #if !defined(NDEBUG)
     REBLEN count;
   #endif
@@ -173,8 +173,8 @@ struct Reb_Binder {
 };
 
 
-INLINE void INIT_BINDER(struct Reb_Binder *binder) {
-    binder->high = true; // !!! what about `did (SPORADICALLY(2))` to test?
+INLINE void INIT_BINDER(struct Reb_Binder *binder, REBCTX *context) {
+    binder->context = context;
 
   #if !defined(NDEBUG)
     binder->count = 0;
@@ -208,16 +208,15 @@ INLINE bool Try_Add_Binder_Index(
 ){
     assert(index != 0);
     assert(GET_SER_INFO(canon, STRING_INFO_CANON));
-    if (binder->high) {
-        if (MISC(canon).bind_index.high != 0)
-            return false;
-        MISC(canon).bind_index.high = index;
+
+    if (binder->context == Lib_Context) {
+        assert(MISC(canon).bind_index.lib == index);
+        return true;
     }
-    else {
-        if (MISC(canon).bind_index.low != 0)
-            return false;
-        MISC(canon).bind_index.low = index;
-    }
+
+    if (MISC(canon).bind_index.other != 0)
+        return false;
+    MISC(canon).bind_index.other = index;
 
   #if !defined(NDEBUG)
     ++binder->count;
@@ -243,10 +242,10 @@ INLINE REBINT Get_Binder_Index_Else_0( // 0 if not present
 ){
     assert(GET_SER_INFO(canon, STRING_INFO_CANON));
 
-    if (binder->high)
-        return MISC(canon).bind_index.high;
-    else
-        return MISC(canon).bind_index.low;
+    if (binder->context == Lib_Context)
+        return MISC(canon).bind_index.lib;
+
+    return MISC(canon).bind_index.other;
 }
 
 
@@ -256,19 +255,13 @@ INLINE REBINT Remove_Binder_Index_Else_0( // return old value if there
 ){
     assert(GET_SER_INFO(canon, STRING_INFO_CANON));
 
-    REBINT old_index;
-    if (binder->high) {
-        old_index = MISC(canon).bind_index.high;
-        if (old_index == 0)
-            return 0;
-        MISC(canon).bind_index.high = 0;
-    }
-    else {
-        old_index = MISC(canon).bind_index.low;
-        if (old_index == 0)
-            return 0;
-        MISC(canon).bind_index.low = 0;
-    }
+    if (binder->context == Lib_Context)
+        return MISC(canon).bind_index.lib;
+
+    REBINT old_index = MISC(canon).bind_index.other;
+    if (old_index == 0)
+        return 0;
+    MISC(canon).bind_index.other = 0;
 
   #if !defined(NDEBUG)
     assert(binder->count > 0);
