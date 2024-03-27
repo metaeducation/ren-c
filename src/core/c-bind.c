@@ -118,11 +118,16 @@ void Bind_Values_Core(
     // is done by poking the index into the Stub of the series behind the
     // ANY-WORD!, so it must be cleaned up to not break future bindings.)
 
-    REBLEN index = 1;
-    Value* key = CTX_KEYS_HEAD(context);
-    for (; index <= CTX_LEN(context); key++, index++)
-        if (not Is_Param_Unbindable(key))
-            Add_Binder_Index(&binder, Key_Canon(key), index);
+    if (context == Lib_Context) {
+        // bind indices cached in canon symbol bind_index.lib
+    }
+    else {
+        REBLEN index = 1;
+        Value* key = CTX_KEYS_HEAD(context);
+        for (; index <= CTX_LEN(context); key++, index++)
+            if (not Is_Param_Unbindable(key))
+                Add_Binder_Index(&binder, Key_Canon(key), index);
+    }
 
     Bind_Values_Inner_Loop(
         &binder, head, context, bind_types, add_midstream_types, flags
@@ -130,10 +135,15 @@ void Bind_Values_Core(
 
     // Reset all the binder indices to zero, balancing out what was added.
 
-    key = CTX_KEYS_HEAD(context);
-    for (; NOT_END(key); key++)
-        if (not Is_Param_Unbindable(key))
-            Remove_Binder_Index(&binder, Key_Canon(key));
+    if (context == Lib_Context) {
+        // leave bind indices cached in canon symbol bind_index.lib
+    }
+    else {
+        Value* key = CTX_KEYS_HEAD(context);
+        for (; NOT_END(key); key++)
+            if (not Is_Param_Unbindable(key))
+                Remove_Binder_Index(&binder, Key_Canon(key));
+    }
 
     SHUTDOWN_BINDER(&binder);
 }
@@ -648,16 +658,15 @@ void Init_Interning_Binder(
     REBCTX *ctx // location to bind into (in addition to lib)
 ){
     INIT_BINDER(binder, ctx);
-
-    Value* key;
-    REBINT index;
-
-    // Use positive numbers for all the keys in the context.
-    //
-    key = CTX_KEYS_HEAD(ctx);
-    index = 1;
-    for (; NOT_END(key); ++key, ++index)
-        Add_Binder_Index(binder, Key_Canon(key), index); // positives
+    if (ctx == Lib_Context) {
+        // indices already cached in bind_index.lib
+    }
+    else {
+        Value* key = CTX_KEYS_HEAD(ctx);
+        REBINT index = 1;
+        for (; NOT_END(key); ++key, ++index)
+            Add_Binder_Index(binder, Key_Canon(key), index);
+    }
 }
 
 
@@ -665,21 +674,21 @@ void Init_Interning_Binder(
 //  Shutdown_Interning_Binder: C
 //
 // This will remove the bindings added in Init_Interning_Binder, along with
-// any other bindings which were incorporated along the way to positives.
+// any other bindings which were incorporated along the way.
 //
 void Shutdown_Interning_Binder(struct Reb_Binder *binder, REBCTX *ctx)
 {
-    Value* key;
-    REBINT index;
-
-    // All of the user context keys should be positive, and removable
-    //
-    key = CTX_KEYS_HEAD(ctx);
-    index = 1;
-    for (; NOT_END(key); ++key, ++index) {
-        REBINT n = Remove_Binder_Index_Else_0(binder, Key_Canon(key));
-        assert(n == index);
-        UNUSED(n);
+    if (ctx == Lib_Context) {
+        // indices cached in bind_index.lib, don't need removing
+    }
+    else {
+        Value* key = CTX_KEYS_HEAD(ctx);
+        REBINT index = 1;
+        for (; NOT_END(key); ++key, ++index) {
+            REBINT n = Remove_Binder_Index_Else_0(binder, Key_Canon(key));
+            assert(n == index);
+            UNUSED(n);
+        }
     }
 
     SHUTDOWN_BINDER(binder);
