@@ -127,7 +127,12 @@ bool Pushed_Continuation(
         goto pushed_continuation;
     }
 
-    switch (VAL_TYPE(branch)) {
+    if (Is_Void(branch)) {  // if false [...] else (void) => IF product
+        if (out != with)
+            Copy_Cell(out, with);
+        goto just_use_out;
+    }
+    else switch (VAL_TYPE(branch)) {
       case REB_BLANK:
         if (flags & LEVEL_FLAG_BRANCH)
             Init_Heavy_Null(out);

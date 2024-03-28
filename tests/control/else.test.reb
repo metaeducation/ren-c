@@ -136,3 +136,11 @@
     (foo else [true])
     (1020 = (1000 + 20 elide-if-void (foo then [fail [~unreachable~]])))
 ]
+
+; https://forum.rebol.info/t/2176
+[
+    (null = (null else (void)))
+    (void = (null else (void)))
+
+    (3 = (if true [1 + 2] then (void)))
+]

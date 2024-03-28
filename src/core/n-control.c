@@ -101,8 +101,8 @@ Bounce Group_Branch_Executor(Level* level_)
     Level* sub = Make_Level(
         &Evaluator_Executor,
         LEVEL->feed,
-        ((LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255)))  // take out state 1
-            | LEVEL_FLAG_BRANCH)
+        LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255))  // take out state 1
+            & (~ LEVEL_FLAG_BRANCH)  // take off branch flag
     );
     Push_Level(SPARE, sub);
 
