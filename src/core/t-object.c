@@ -981,7 +981,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
             if (Is_Antiform(e.var)) {
                 fail (Error_Bad_Antiform(e.var));  // can't FORM antiforms
             }
-            else if (not Is_Blank(e.var))
+            else
                 Mold_Value(mo, cast(Element*, e.var));
 
             Append_Codepoint(mo->series, LF);
@@ -1017,10 +1017,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
         Mold_Value(mo, set_word);
         Append_Codepoint(mo->series, ' ');
 
-        if (Is_Void(e.var)) {
-            Append_Ascii(s, "'");
-        }
-        else if (Is_Antiform(e.var)) {
+        if (Is_Antiform(e.var)) {
             assert(Is_Antiform_Stable(cast(Atom*, e.var)));  // extra check
 
             DECLARE_ATOM (reified);
