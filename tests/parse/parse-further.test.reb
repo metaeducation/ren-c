@@ -14,7 +14,7 @@
 (void? parse "" [repeat (#) some further [to <end>]])
 
 [https://github.com/red/red/issues/3927
-    ~parse-incomplete~ !! (parse "bx" [some further [not "b" | one]])
+    ~parse-incomplete~ !! (parse "bx" [some further [not ahead "b" | one]])
 ]
 
 ; Only SOME is needed in Red, while OPT SOME FURTHER is needed here.  But the
@@ -28,13 +28,15 @@
 ;  like that?  Why use alternates instead of just saying it's zero-or-more
 ;  #"^L", then followed by a single not #{0B}?"
 [
-    ('a == parse [a a] [opt some further ['c | not 'b] repeat 2 one])
-    (#a == parse "aa" [opt some further [#c | not #b] repeat 2 one])
-    (10 == parse #{0A0A} [opt some further [#"^L" | not #{0B}] repeat 2 one])
+    ('a == parse [a a] [opt some further ['c | not ahead 'b] repeat 2 one])
+    (#a == parse "aa" [opt some further [#c | not ahead #b] repeat 2 one])
+    (10 == parse #{0A0A} [
+        opt some further [#"^L" | not ahead #{0B}] repeat 2 one]
+    )
 
     ; Saner way to write it... no need for FURTHER.
     ;
-    ('a == parse [a a] [opt some 'c, not 'b, repeat 2 one])
-    (#a == parse "aa" [opt some #c, not #b, repeat 2 one])
-    (10 == parse #{0A0A} [opt some #"^L", not #{0B}, repeat 2 one])
+    ('a == parse [a a] [opt some 'c, not ahead 'b, repeat 2 one])
+    (#a == parse "aa" [opt some #c, not ahead #b, repeat 2 one])
+    (10 == parse #{0A0A} [opt some #"^L", not ahead #{0B}, repeat 2 one])
 ]

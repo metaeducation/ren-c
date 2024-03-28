@@ -245,6 +245,14 @@ combinator?: func [
     ]
 ]
 
+negatable-parser?: func [
+    return: [logic?]
+    frame [<unrun> frame!]
+][
+    return did find words of frame 'negated
+]
+
+
 block-combinator: ~  ; need in variable for recursion implementing "..."
 
 ; !!! We use a MAP! here instead of an OBJECT! because if it were MAKE OBJECT!
@@ -254,6 +262,44 @@ block-combinator: ~  ; need in variable for recursion implementing "..."
 ; need to have answers.
 ;
 default-combinators: make map! reduce [
+
+    === NOT COMBINATOR ===
+
+    ; Historical Redbol PARSE considered NOT a synonym for NOT AHEAD.  But
+    ; the concept behind UPARSE's NOT is that some parsers can be "negated",
+    ; which allows them to actually advance and consume input:
+    ;
+    ;     >> parse ["a"] [not ahead integer!, text!]
+    ;     == "a"
+    ;
+    ;     >> parse ["a"] [not integer!]
+    ;     == "a"
+    ;
+    ;     >> parse ["a"] [not some integer!]
+    ;     ** Error: SOME combinator cannot be negated with NOT
+    ;
+    ; The approach has some weaknesses, e.g. the BLOCK! combinator isn't
+    ; negatable so `not [integer!]` isn't legal but `not integer!` is.  But
+    ; the usefulness is high enough that it's believed worth it.
+
+    'not combinator [
+        {If the parser argument is negatable, invoke it in the negated sense}
+        return: [any-value? pack?]
+        parser [action?]
+        /negated
+    ][
+        if negated [  ; NOT NOT, e.g. call parser without negating it
+            return [@ remainder]: parser input except e -> [
+                return raise e
+            ]
+        ]
+        if not negatable-parser? :parser [
+            fail "NOT called on non-negatable combinator"
+        ]
+        return [@ remainder]: parser/negated input except e -> [
+            return raise e
+        ]
+    ]
 
     === BASIC KEYWORDS ===
 
@@ -297,25 +343,20 @@ default-combinators: make map! reduce [
         return spread result'  ; was unquoted above
     ]
 
-    'not combinator [
-        {Fail if the parser rule given succeeds, else continue}
-        return: [~not~]
-        parser [action?]
-    ][
-        [@ remainder]: parser input except [  ; don't care about result
-            remainder: input  ; parser failed, so NOT reports success
-            return ~not~  ; clearer than returning NULL
-        ]
-        return raise "Parser called by NOT succeeded, so NOT fails"
-    ]
-
     'ahead combinator [
         {Leave the parse position at the same location, but fail if no match}
         return: "parser result if success, NULL if failure"
             [any-value? pack?]
         parser [action?]
+        /negated
     ][
-        remainder: input
+        remainder: input  ; never advances
+        if negated [
+            parser input except e -> [
+                return ~not~
+            ]
+            return raise "Negated parser passed to AHEAD succeded"
+        ]
         return parser input  ; don't care about what parser's remainder is
     ]
 
@@ -746,9 +787,16 @@ default-combinators: make map! reduce [
         {Only match if the input is at the end}
         return: "Invisible"
             [nihil?]
+        /negated
     ][
+        remainder: input  ; never advances
         if tail? input [
-            remainder: input
+            if negated [
+                return raise "PARSE position at <end> (but parser negated)"
+            ]
+            return nihil
+        ]
+        if negated [
             return nihil
         ]
         return raise "PARSE position not at <end>"
@@ -1247,16 +1295,36 @@ default-combinators: make map! reduce [
         return: "The token matched against (not input value)"
             [issue!]
         value [issue!]
+        /negated
     ][
+        if tail? input [
+            return raise "ISSUE! cannot match at end of input"
+        ]
         case [
             any-array? input [
-                if input.1 == value [
-                    remainder: next input
+                remainder: next input
+                if value == input.1 [
+                    if negated [
+                        return raise "ISSUE! matched, but combinator negated"
+                    ]
+                    return input.1
+                ]
+                if negated [
                     return input.1
                 ]
                 return raise "Value at parse position does not match ISSUE!"
             ]
             any-string? input [
+                if negated [
+                    if (not char? value) [
+                        fail "NOT ISSUE! with strings is only for single char"
+                    ]
+                    if input.1 = value [
+                        return raise "Negated ISSUE! char matched at string"
+                    ]
+                    remainder: next input
+                    return input.1
+                ]
                 [_ remainder]: find/match/case input value else [
                     return raise [
                         "String at parse position does not match ISSUE!"
@@ -1266,6 +1334,16 @@ default-combinators: make map! reduce [
             ]
             true [
                 assert [binary? input]
+                if negated [
+                    if (not char? value) or (255 < codepoint of value) [
+                        fail "NOT ISSUE! with blobs is only for single byte"
+                    ]
+                    if input.1 = codepoint of value [
+                        return raise "Negated ISSUE! char matched at blob"
+                    ]
+                    remainder: next input
+                    return codepoint-to-char input.1
+                ]
                 [_ remainder]: find/match/case input value else [
                     return raise [
                         "Binary at parse position does not match ISSUE!"
@@ -1530,7 +1608,8 @@ default-combinators: make map! reduce [
         return: "The matched value"
             [nihil? element? splice?]  ; !!! splice b.c. called by @(...)
         @pending [blank! block!]
-        value [quoted? quasi?]
+        value [quoted?]
+        /negated
         <local> comb neq?
     ][
         ; It is legal to say:
@@ -1550,14 +1629,23 @@ default-combinators: make map! reduce [
         if any-array? input [
             neq?: either state.case [:strict-not-equal?] [:not-equal?]
             if quoted? value [
+                remainder: next input
+                pending: _
                 if neq? input.1 unquote value [
+                    if negated [
+                        return input.1
+                    ]
                     return raise [
                         "Value at parse position wasn't unquote of QUOTED! item"
                     ]
                 ]
-                remainder: next input
-                pending: _
+                if negated [
+                    return raise "Negated QUOTED! parser matched item"
+                ]
                 return unquote value
+            ]
+            if negated [
+                fail "QUOTED! combinator can't be negated matching splices"
             ]
             if not splice? unmeta value [
                 fail "Only antiform matched against array content is splice"
@@ -1573,6 +1661,10 @@ default-combinators: make map! reduce [
             remainder: input
             pending: _
             return unmeta value
+        ]
+
+        if negated [
+            fail "QUOTED! combinator can only be negated for List input"
         ]
 
         if any-string? input [
@@ -1794,15 +1886,26 @@ default-combinators: make map! reduce [
         return: "Matched or synthesized value"
             [element?]
         value [type-block!]
+        /negated
         <local> item error
     ][
         either any-array? input [
             if value <> type of maybe input.1 [
-                return raise "Value at parse position did not match datatype"
+                if negated [
+                    remainder: next input
+                    return input.1
+                ]
+                return raise "Value at parse position did not match TYPE-BLOCK!"
+            ]
+            if negated [
+                return raise "Value at parse position matched TYPE-BLOCK!"
             ]
             remainder: next input
             return input.1
         ][
+            if negated [
+                fail "TYPE-BLOCK! only supported negated for array input"
+            ]
             [item remainder]: transcode/one input except e -> [return raise e]
 
             ; If TRANSCODE knew what kind of item we were looking for, it could
@@ -1850,15 +1953,26 @@ default-combinators: make map! reduce [
         return: "Matched or synthesized value"
             [element?]
         value [type-word!]
+        /negated
         <local> item error
     ][
         either any-array? input [
             match value input.1 else [
-                return raise "Value at parse position did not match TYPE-BLOCK!"
+                if negated [
+                    remainder: next input
+                    return input.1
+                ]
+                return raise "Value at parse position did not match TYPE-WORD!"
+            ]
+            if negated [
+                return raise "Value at parse position matched TYPE-WORD!"
             ]
             remainder: next input
             return input.1
         ][
+            if negated [
+                fail "TYPE-WORD! only supported negated for array input"
+            ]
             [item remainder]: transcode/one input except e -> [return raise e]
 
             ; If TRANSCODE knew what kind of item we were looking for, it could
@@ -1868,7 +1982,7 @@ default-combinators: make map! reduce [
             ; has some type sniffing in their fast lexer, review relevance.
             ;
             match value item else [
-                return raise "Could not TRANSCODE the TYPE-BLOCK! from input"
+                return raise "Could not TRANSCODE the TYPE-WORD! from input"
             ]
             return item
         ]

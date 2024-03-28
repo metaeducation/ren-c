@@ -174,7 +174,7 @@ make-port*: func [
                 ;
                 to/ (tuple!) across [
                     opt some [some digit "."], some digit
-                    not host-char  ; don't match "1.2.3.4a" as IP address
+                    not ahead host-char  ; don't match "1.2.3.4a" as IP address
                 ]
                     |
                 ; Ordinary "foo.bar.com" style, just give it back as TEXT!
