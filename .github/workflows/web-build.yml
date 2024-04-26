@@ -458,7 +458,7 @@ jobs:
       uses: cypress-io/github-action@v6
       with:
         working-directory: tests/cypress
-        browser: firefox
+        browser: chrome
         config-file: cypress.config.js
         record: true
       env:  # [1]
