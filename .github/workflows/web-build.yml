@@ -431,6 +431,20 @@ jobs:
           ]
 
 
+    # NPM insists on there being a package-lock.json file, if not you get:
+    #
+    #    "Error: Action failed. Missing package manager lockfile."
+    #
+    # While there may be good reasons for Node.js codebases to commit these
+    # lock files to their repositories, this is not a Node.js project.  Make
+    # the lock file as part of the test process.
+    #
+    - name: Create package-lock.json file in Cypress test directory
+      run: |
+        cd tests/cypress
+        npm install
+
+
     # The Marionette test process has been replaced with Cypress, which
     # can run multiple browsers.  See results here:
     #

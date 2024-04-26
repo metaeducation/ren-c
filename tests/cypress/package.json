@@ -17,6 +17,6 @@
   },
   "homepage": "https://github.com/metaeducation/ren-c/",
   "devDependencies": {
-    "cypress": "^13.0.0"
+    "cypress": "13.8.1"
   }
 }
