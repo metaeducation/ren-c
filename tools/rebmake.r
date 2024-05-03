@@ -1583,7 +1583,7 @@ Execution: make generator-class [
                 ]
                 run-target make entry-class [
                     target: project/output
-                    depends: join project/depends objs
+                    depends: append copy project/depends objs
                     commands: reduce [project/command]
                 ]
             ]
