@@ -861,7 +861,7 @@ module: func [
 
         ; Note: 'export overrides 'hidden, silently for now
         parse body [opt some [
-            to 'export remove skip opt remove 'hidden opt
+            to 'export remove one opt remove 'hidden opt
             [
                 w: any-word! (
                     if not find spec/exports w: to word! w [
@@ -882,7 +882,7 @@ module: func [
         hidden: make block! 10
         ; Note: Exports are not hidden, silently for now
         parse body [opt some [
-            to 'hidden remove skip opt
+            to 'hidden remove one opt
             [
                 w: any-word! (
                     if not find select spec 'exports w: to word! w [
