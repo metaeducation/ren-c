@@ -750,18 +750,9 @@ function: does [
     fail "gathering FUNCTION deprecated (will be synonym for FUNC, eventually)"
 ]
 
-
 meth: enfix adapt :lib/meth [set [spec body] modernize-action spec body]
 method: func3 [] [
     fail/where "METHOD deprecated temporarily, use METH" 'return
-]
-
-trim: adapt :trim [  ; there's a bug in TRIM/AUTO in 8994d23
-    if auto [
-        while [(not tail? series) and (series/1 = LF)] [
-            take series
-        ]
-    ]
 ]
 
 call*: adapt 'call [
