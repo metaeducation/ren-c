@@ -7,6 +7,13 @@ REBOL [
     License: {Apache 2.0}
 ]
 
+export call*: adapt 'call-internal* [
+    if block? command [command: compose command]
+]
+
+export call: specialize :call* [wait: true]
+
+
 ; CALL is a native built by the C code, BROWSE depends on using that, as well
 ; as some potentially OS-specific detection on how to launch URLs (e.g. looks
 ; at registry keys on Windows)
@@ -28,7 +35,7 @@ browse*: function [
             location
         ]
         trap [
-            call/shell command ; don't use /WAIT
+            call*/shell command ; don't use /WAIT
             return
         ] then [
             ;-- Just keep trying

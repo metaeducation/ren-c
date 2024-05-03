@@ -9,7 +9,7 @@
 (
     ; small - note Windows doesn't do BLOCK! arg to CALL (argv style) yet
 
-    call/shell/wait/output spaced [
+    call/shell/output spaced [
         (file-to-local system/options/boot)
         {--suppress "*" call/print.reb 100}
     ] data: copy {}
@@ -19,7 +19,7 @@
 (
     ; medium - note Windows doesn't do BLOCK! arg to CALL (argv style) yet
 
-    call/shell/wait/output spaced [
+    call/shell/output spaced [
         (file-to-local system/options/boot)
         {--suppress "*" call/print.reb 9000}
     ] data: copy {}
@@ -29,7 +29,7 @@
 (
     ; large - note Windows doesn't do BLOCK! arg to CALL (argv style) yet
 
-    call/shell/wait/output spaced [
+    call/shell/output spaced [
         (file-to-local system/options/boot)
         {--suppress "*" call/print.reb 80000}
     ] data: copy {}
@@ -41,7 +41,7 @@
 (
     (not exists? %/usr/bin/git) or [
         data: copy {}
-        call/wait/output compose [
+        call/output compose [
             %/usr/bin/git "log" (spaced [
                 "--pretty=format:'["
                     "commit: {%h}"

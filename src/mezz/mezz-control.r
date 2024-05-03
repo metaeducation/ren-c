@@ -11,19 +11,6 @@ REBOL [
     }
 ]
 
-launch: func [
-    {Runs a script as a separate process; return immediately.}
-
-    script [<maybe> file! text!] "The name of the script"
-    /args arg [text! block!] "Arguments to the script"
-    /wait "Wait for the process to terminate"
-][
-    if file? script [script: file-to-local clean-path script]
-    args: reduce [file-to-local system/options/boot script]
-    if set? 'arg [append args arg]
-    either wait [call/wait args] [call args]
-]
-
 wrap: func [
     "Evaluates a block, wrapping all set-words as locals."
     body [block!] "Block to evaluate"

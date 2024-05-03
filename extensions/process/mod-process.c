@@ -182,7 +182,7 @@ int OS_Create_Process(
     char **err,
     uint32_t *err_len
 ) {
-    PROCESS_INCLUDE_PARAMS_OF_CALL;
+    PROCESS_INCLUDE_PARAMS_OF_CALL_INTERNAL_P;
 
     UNUSED(ARG(command)); // turned into `call` and `argv/argc` by CALL
     UNUSED(REF(wait)); // covered by flag_wait
@@ -824,7 +824,8 @@ int OS_Create_Process(
     char **err,
     uint32_t *err_len
 ){
-    PROCESS_INCLUDE_PARAMS_OF_CALL;
+    PROCESS_INCLUDE_PARAMS_OF_CALL_INTERNAL_P;
+    UNUSED(REF(relax));  // handled by CALL_INTERNAL*
 
     UNUSED(ARG(command)); // translated into call and argc/argv
     UNUSED(REF(wait)); // flag_wait controls this
@@ -1427,7 +1428,7 @@ stdin_pipe_err:
 
 
 //
-//  export call: native [
+//  export call-internal*: native [
 //
 //  "Run another program; return immediately (unless /WAIT)."
 //
@@ -1451,15 +1452,16 @@ stdin_pipe_err:
 //      /error
 //          "Redirects stderr to err (if blank, /dev/null)"
 //      err [text! binary! file! blank!]
-//  ]
+//      /relax "If exit code is non-zero, return the integer vs. raising error"
 //  ]
 //
-DECLARE_NATIVE(call)
+DECLARE_NATIVE(call_internal_p)
 //
 // !!! Parameter usage may require WAIT mode even if not explicitly requested.
-// /WAIT should be default, with /ASYNC (or otherwise) as exception!
+// /WAIT is CALL wrapper default, see CALL* and CALL!
 {
-    PROCESS_INCLUDE_PARAMS_OF_CALL;
+    PROCESS_INCLUDE_PARAMS_OF_CALL_INTERNAL_P;
+    UNUSED(REF(relax));  // handled by CALL_INTERNAL_P
 
     UNUSED(REF(shell)); // looked at via level_ by OS_Create_Process
     UNUSED(REF(console)); // same
@@ -1692,8 +1694,21 @@ DECLARE_NATIVE(call)
     // We may have waited even if they didn't ask us to explicitly, but
     // we only return a process ID if /WAIT was not explicitly used
     //
-    if (REF(wait))
-        return Init_Integer(OUT, exit_code);
+    if (REF(wait)) {
+        //
+        // !!! should REF(relax) and exit_code == 0 return trash instead of 0?
+        // it would be less visually noisy in the console.
+        //
+        if (REF(relax) or exit_code == 0)
+            return Init_Integer(OUT, exit_code);
+
+        rebJumps (
+            "fail ["
+                "{CALL without /RELAX got nonzero exit code:}",
+                rebI(exit_code),
+            "]"
+        );
+    }
 
     return Init_Integer(OUT, pid);
 }
