@@ -755,11 +755,6 @@ method: func3 [] [
     fail/where "METHOD deprecated temporarily, use METH" 'return
 ]
 
-call*: adapt 'call [
-    if block? command [command: compose command]
-]
-call: specialize :call* [wait: true]
-
 mold: adapt :lib/mold [  ; update so MOLD SPREAD works
     if all [
         block? value
