@@ -170,6 +170,8 @@ trim: function [
     all_TRIM: :all
     all: :lib/all
 
+    with: either with [str] [null]  ; make refinement match new interpreter
+
     ; ACTION!s in the new object will still refer to fields in the original
     ; object.  That was true in R3-Alpha as well.  Fixing this would require
     ; new kinds of binding overrides.  The feature itself is questionable.
@@ -182,7 +184,7 @@ trim: function [
         ]
         trimmed: make (type of series) collect [
             for-each [key val] series [
-                if something? :val [keep key]
+                if not blank? :val [keep key]
             ]
         ]
         for-each [key val] series [
@@ -203,7 +205,7 @@ trim: function [
             rule: blank!
 
             if not any [head_TRIM tail_TRIM] [
-                head_TRIM: tail_TRIM: true ;-- plain TRIM => TRIM/HEAD/TAIL
+                head_TRIM: tail_TRIM: true  ; plain TRIM => TRIM/HEAD/TAIL
             ]
         ]
 
@@ -224,10 +226,11 @@ trim: function [
                 fail "Invalid refinements for TRIM of STRING!"
             ]
 
-            rule: either with [
-                either bitset? str [str] [charset str]
-            ][
-                charset reduce [space tab]
+            rule: case [
+                null? with [charset reduce [space tab]]
+                bitset? with [with]
+            ] else [
+                charset with
             ]
 
             if any [all_TRIM lines head_TRIM tail_TRIM] [append rule newline]
@@ -238,14 +241,15 @@ trim: function [
                 fail "Invalid refinements for TRIM of BINARY!"
             ]
 
-            rule: either with [
-                either bitset? str [str] [charset str]
-            ][
-                #{00}
+            rule: case [
+                not with [#{00}]
+                bitset? with [with]
+            ] else [
+                charset with
             ]
 
             if not any [head_TRIM tail_TRIM] [
-                head_TRIM: tail_TRIM: true ;-- plain TRIM => TRIM/HEAD/TAIL
+                head_TRIM: tail_TRIM: true  ; plain TRIM => TRIM/HEAD/TAIL
             ]
         ]
     ] else [
@@ -277,58 +281,50 @@ trim: function [
     ; with leading and trailing whitespace removed.
     ;
     if lines [
-        parse series [opt some [change [some rule] space one | one]]
-        if first series = space [take series]
-        if last series = space [take/last series]
+        parse series [opt some [change [some rule] (space) one | one]]
+        if space = first series [take series]
+        if space = last series [take/last series]
         return series
     ]
 
     ; TRIM/AUTO measures first line indentation and removes indentation on
-    ; later lines relative to that.  Only makes sense for ANY-STRING!, though
+    ; later lines relative to that.  Only makes sense for ANY-STRING?, though
     ; a concept like "lines" could apply to a BLOCK! of BLOCK!s.
     ;
-    indent: _
+    indent: null
     if auto [
-        parse/match series [  ; !!! May not succeed, rules can mismatch
+        parse series [
             ; Don't count empty lines, (e.g. trim/auto {^/^/^/    asdf})
-            remove [opt some LF]
+            opt remove some LF
 
             (indent: 0)
-            s: <here> some rule e: <here>
+            s: <here> opt some rule e: <here>
             (indent: (index of e) - (index of s))
 
-            to <end>  ; !!! was just <end>, but didn't check success
+            accept (true)  ; don't need to reach end
         ]
     ]
 
-    line-start-rule: case [
-        not indent [
-            [opt remove some rule]
-        ]
-        indent < 1 [
-            []
-        ]
-        true [
-            [remove repeat (reduce [1 indent]) rule]
-        ]
+    line-start-rule: compose [
+        remove (if indent [[opt [repeat (indent) rule]]] else [[opt some rule]])
     ]
 
     parse series [
         line-start-rule
-        opt some [
+        opt some [not <end> [
             ahead [opt some rule [newline | <end>]]
             remove [opt some rule]
-            [newline line-start-rule]
+            newline line-start-rule
                 |
             one
-        ]
+        ]]
     ]
 
     ; While trimming with /TAIL takes out any number of newlines, plain TRIM
     ; in R3-Alpha and Red leaves at most one newline at the end.
     ;
     parse series [
-        remove [opt some newline]
+        opt remove [some newline]
         opt some [newline remove [some newline <end>] | one]
     ]
 
