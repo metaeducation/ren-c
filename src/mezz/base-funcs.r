@@ -668,6 +668,25 @@ lambda: function [
     ]
 ]
 
+find-reverse: specialize :find [
+    reverse: true
+
+    ; !!! Specialize out /SKIP because it was not compatible--R3-Alpha
+    ; and Red both say `find/skip tail "abcd" "bc" -1` is none.
+    ;
+    skip: false
+]
+
+find-last: specialize :find [
+    ;
+    ; New builds do FIND-LAST in terms of /SKIP of -1 and starting from the
+    ; tail.  But in this bootstrap build (find/reverse tail "abcd" "bc") is
+    ; null, and fixing that code is not worth it.  So we define FIND-LAST
+    ; as simply still using the /LAST refinement.
+    ;
+    last: true
+]
+
 reify: func [value [~null~ ~void~ trash! any-value!]] [
     case [
         void? :value [return '~void~]
