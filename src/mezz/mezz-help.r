@@ -449,10 +449,10 @@ source: func [
     ]
 
     case [
-        match [text! url!] f [
+        match [text! url!] :f [
             print f
         ]
-        not frame? f [
+        not frame? (unrun :f) [
             print [
                 name "is" an any [mold kind of :f, "VOID"]
                 "and not a FRAME!"
@@ -467,7 +467,7 @@ source: func [
     ; from combining the the ADJUNCT-OF information.
 
     write-stdout unspaced [
-        mold name ":" _ "make action! [" _ mold spec-of f
+        mold name ":" _ "make action! [" _ mold spec-of :f
     ]
 
     ; While all interfaces as far as invocation is concerned has been unified
@@ -475,7 +475,7 @@ source: func [
     ; some kind of displayable "source" would have to depend on the dispatcher
     ; used.  For the moment, BODY OF hands back limited information.  Review.
     ;
-    let body: body of f
+    let body: body of :f
     switch/type body [
         block! [  ; FUNC, FUNCTION, PROC, PROCEDURE or (DOES of a BLOCK!)
             print [mold body "]"]
