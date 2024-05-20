@@ -87,12 +87,12 @@ Rebol [
 ; A special COMBINATOR generator is used.  This saves on repetition of
 ; parameters and also lets the engine get its hooks into the execution of
 ; parsers...for instance to diagnose the furthest point the parsing reached.
-
+;
 ; !!! COMBINATOR is used so heavily that having it be usermode makes UPARSE
-; prohibitively slow.  So it was made native.  However the usermode version is
-; kept as a proof of concept that a user *could* have made such a thing.  It
-; should be swapped in occasionally in the tests to overwrite the native
-; version just to keep tabs on it.
+; prohibitively slow.  The ultimate goal is to have native and usermode
+; implementations both exist, with the usermode version being swappable in as
+; proof of concept that nothing is being done by the native that the user
+; could not have done...just more slowly.
 ;
 ; We would like it to be possible to write an "easy" combinator that does not
 ; do piping of the pending elements, but takes it for granted as coming from
