@@ -174,8 +174,6 @@ ldflags: compose [
     ;
     {-s WASM=1}
 
-    {-s DEMANGLE_SUPPORT=0}  ; C++ build does all exports as C, not needed
-
     (spread switch abrupt-failure-model [
         #uses-try-catch [[
             {-fwasm-exceptions}  ; needed in cflags *and* ldflags
