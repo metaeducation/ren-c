@@ -410,7 +410,7 @@ Option(Stub*) Get_Word_Container(
             ){
                 assert(VAL_WORD_INDEX_I32(any_word) <= 0);
                 if (VAL_WORD_INDEX_I32(any_word) == 0)
-                    goto check_method_members;
+                    goto next_virtual;
                 *index_out = -(VAL_WORD_INDEX_I32(any_word));
                 return CTX_VARLIST(ctx);
             }
@@ -433,25 +433,7 @@ Option(Stub*) Get_Word_Container(
                 }
             }
 
-          check_method_members: {
-            Level* level = CTX_LEVEL_IF_ON_STACK(cast(Context*, specifier));
-            if (not level)
-                goto next_virtual;
-            Option(Context*) object = Level_Coupling(level);
-            if (not object)
-                goto next_virtual;
-
-            REBLEN len = Find_Symbol_In_Context(
-                CTX_ARCHETYPE(unwrap object),
-                symbol,
-                true
-            );
-            if (len == 0)
-                goto next_virtual;
-
-            *index_out = len;
-            return unwrap object;
-          }
+          goto next_virtual;
         }
 
         if (IS_LET(specifier)) {
@@ -459,6 +441,15 @@ Option(Stub*) Get_Word_Container(
                 *index_out = INDEX_PATCHED;
                 return specifier;
             }
+            goto next_virtual;
+        }
+
+        assert(IS_USE(specifier));
+
+        if (  // some USEs only affect SET-WORD!s
+            Get_Cell_Flag(Stub_Cell(specifier), USE_NOTE_SET_WORDS)
+            and REB_SET_WORD != Cell_Heart(any_word)
+        ){
             goto next_virtual;
         }
 
@@ -473,8 +464,8 @@ Option(Stub*) Get_Word_Container(
             goto next_virtual;
         }
 
-        Stub* overbind = BINDING(Stub_Cell(specifier));
-        if (not IS_VARLIST(overbind)) {  // a patch-formed LET overload
+        if (Is_Word(Stub_Cell(specifier))) {  // a patch-formed LET overload
+            Stub* overbind = BINDING(Stub_Cell(specifier));
             if (INODE(LetSymbol, overbind) == symbol) {
                 *index_out = INDEX_PATCHED;
                 return overbind;
@@ -482,14 +473,7 @@ Option(Stub*) Get_Word_Container(
             goto next_virtual;
         }
 
-        if (
-            Is_Set_Word(Stub_Cell(specifier))
-            and REB_SET_WORD != Cell_Heart(any_word)  // "affected"
-        ){
-            goto next_virtual;
-        }
-
-        Context* overload = cast(Context*, overbind);
+        Context* overload = VAL_CONTEXT(Stub_Cell(specifier));
 
         REBLEN index = 1;
         const Key* key_tail;
@@ -1121,77 +1105,6 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
 
     SHUTDOWN_BINDER(&binder);
     return copy;
-}
-
-
-//
-//  Rebind_Values_Deep: C
-//
-// Rebind all words that reference src target to dst target.
-// Rebind is always deep.
-//
-void Rebind_Values_Deep(
-    Value* head,
-    const Value* tail,
-    Context* from,
-    Context* to,
-    Option(struct Reb_Binder*) binder
-) {
-    Value* v = head;
-    for (; v != tail; ++v) {
-        if (Is_Action(v)) {
-            //
-            // !!! This is a new take on R3-Alpha's questionable feature of
-            // deep copying function bodies and rebinding them when a
-            // derived object was made.  Instead, if a function is bound to
-            // a "base class" of the object we are making, that function's
-            // binding pointer (in the function's value cell) is changed to
-            // be this object.
-            //
-            Option(Context*) stored = VAL_FRAME_COUPLING(v);
-            if (not stored) {
-                //
-                // Leave NULL bindings alone.  Hence, unlike in R3-Alpha, an
-                // ordinary FUNC won't forward its references.  An explicit
-                // BIND to an object must be performed, or METHOD should be
-                // used to do it implicitly.
-            }
-            else if (REB_FRAME == CTX_TYPE(unwrap stored)) {
-                //
-                // Leave bindings to frame alone, e.g. RETURN's definitional
-                // reference...may be an unnecessary optimization as they
-                // wouldn't match any derivation since there are no "derived
-                // frames" (would that ever make sense?)
-            }
-            else {
-                if (Is_Overriding_Context(unwrap stored, to))
-                    INIT_VAL_FRAME_COUPLING(v, to);
-                else {
-                    // Could be bound to a reified frame context, or just
-                    // to some other object not related to this derivation.
-                }
-            }
-        }
-        else if (Is_Antiform(v))
-            NOOP;
-        else if (Any_Arraylike(v)) {
-            const Element* sub_tail;
-            Element* sub_at = Cell_Array_At_Mutable_Hack(&sub_tail, v);
-            Rebind_Values_Deep(sub_at, sub_tail, from, to, binder);
-        }
-        else if (Any_Wordlike(v) and BINDING(v) == from) {
-            BINDING(v) = to;
-
-            if (binder) {
-                REBLEN index = Get_Binder_Index_Else_0(
-                    unwrap binder,
-                    Cell_Word_Symbol(v)
-                );
-                assert(index != 0);
-                INIT_VAL_WORD_INDEX(v, index);
-            }
-        }
-    }
 }
 
 

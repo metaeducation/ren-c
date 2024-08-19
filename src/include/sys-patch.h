@@ -77,126 +77,87 @@
 
 
 //
-// Shared routine that handles linking the patch into the context's variant
-// list, and bumping the meta out of the misc into the misc if needed.
+// Make_Use_Core: C
+//
+// Handles linking a "USE" stub into the specifier chain.  Some specifiers
+// have a ->next pointer available in them which they can use without a
+// separate allocation, but if that pointer is already occupied then a
+// USE stub has to be created to give it a place to put another chain's
+// next pointer.
+//
+// 1. It's possible for a user to try and doubly virtual bind things...but
+//    for the moment assume it only happens on accident and alert us to it.
+//    Over the long run, this needs to be legal, though.
+//
+// 2. INODE is not used yet (likely application: symbol for patches that
+//    represent lets).  Consider uses in patches that represent objects.  So
+//    no FLEX_FLAG_INFO_NODE_NEEDS_MARK yet.
+//
+// 3. MISC is a node, but it's used for linking patches to variants with
+//    different chains underneath them...and shouldn't keep that alternate
+//    version alive.  So no FLEX_FLAG_MISC_NODE_NEEDS_MARK.
+//
+// 4. There's currently no way to ask for the "binding of" a LET and get an
+//    answer for what the context is.  It's a free-floating stub that you
+//    can't pass as the Varlist to Init_Any_Context().  So the only way to
+//    refer to it in a cell--a way that the GC keeps it alive--is to refer
+//    to it via a WORD!.  This all needs review, but it's what we do for now.
+//
+// 5. The way it is designed, the list of use/lets terminates in either a
+//    nullptr or a context pointer that represents the specifying frame for
+//    the chain.  So we can simply point to the existing specifier...whether
+//    it is a use, a let, a frame context, or nullptr.
+//
+// 6. In the past, "Variant" was a circularly linked list of variations of this
+//    USE with different NextVirtual() data.  The idea was to assist in
+//    avoiding creating unnecessary duplicate chains.  Decay_Flex() would
+//    remove patches from the list during GC.  But see the notes on the
+//    Variant definition for why it was removed.
 //
 INLINE Stub* Make_Use_Core(
     Stub* binding,  // must be a varlist or a LET patch
     Specifier* next,
     Heart affected
 ){
-    assert(affected == REB_WORD or affected == REB_SET_WORD);
-    if (IS_VARLIST(binding)) {
-        if (
-            REB_MODULE != CTX_TYPE(cast(Context*, binding))
-            and CTX_LEN(cast(Context*, binding)) == 0  // nothing to bind to
-        ){
-            return next;
-        }
-    }
-    else
-        assert(IS_LET(binding));
+    if (next and IS_USE(next))
+        assert(BINDING(Stub_Cell(next)) != binding);  // eventually legal? [1]
 
-    // It's possible for a user to try and doubly virtual bind things...but
-    // for the moment assume it only happens on accident and alert us to it.
-    // Over the long run, this needs to be legal, though.
-    //
-    if (next and IS_USE(next)) {
-        assert(BINDING(Stub_Cell(next)) != binding);
-    }
-
-    // A virtual bind patch array is a singular node holding an ANY-WORD?
-    // bound to the OBJECT! being virtualized against.  The reason for holding
-    // the WORD! instead of the OBJECT! in the array cell are:
-    //
-    // * Gives more header information than storing information already
-    //   available in the archetypal context.  So we can assume things like
-    //   a SET-WORD! means "only virtual bind the set-words".
-    //
-    // * Can be used to bind to the last word in the context at the time of
-    //   the virtual bind.  This allows for expansion.  The problem with
-    //   just using however-many-items-are-current is that it would mean
-    //   the extant cached virtual index information could not be trusted.
-    //   This gives reproducible effects on when you'll get hits or misses
-    //   instead of being subject to the whim of internal cache state.
-    //
-    // * If something changes the CTX_TYPE() that doesn't have to be reflected
-    //   here.  This is a rare case, but happens with MAKE ERROR! in startup
-    //   because the standard error object starts life as an object.  (This
-    //   mechanism needs revisiting, but it's just another reason.)
-    //
-    Array* use = Alloc_Singular(
-        //
-        // INODE is not used yet (likely application: symbol for patches that
-        // represent lets).  Consider uses in patches that represent objects.
-        // So no FLEX_FLAG_INFO_NODE_NEEDS_MARK yet.
-        //
-        // MISC is a node, but it's used for linking patches to variants
-        // with different chains underneath them...and shouldn't keep that
-        // alternate version alive.  So no FLEX_FLAG_MISC_NODE_NEEDS_MARK.
-        //
+    Stub* use = Alloc_Singular(
         FLAG_FLAVOR(USE)
             | NODE_FLAG_MANAGED
             | FLEX_FLAG_LINK_NODE_NEEDS_MARK
+            /* FLEX_FLAG_INFO_NODE_NEEDS_MARK */  // inode not yet used [2]
+            /* FLEX_FLAG_MISC_NODE_NEEDS_MARK */  // node, but not marked [3]
     );
 
-    if (
-        IS_VARLIST(binding)
-        and CTX_TYPE(cast(Context*, binding)) == REB_MODULE
-    ){
-        //
-        // Modules have a hash table so they can be searched somewhat quickly
-        // for keys.  But keys can be added and removed without a good way
-        // of telling the historical order.  Punt on figuring out the answer
-        // for it and just let virtual binds see the latest situation.
-        //
+    if (IS_VARLIST(binding)) {
         Init_Context_Cell(
             Stub_Cell(use),
-            REB_MODULE,
+            CTX_TYPE(cast(Context*, binding)),
             cast(Context*, binding)
         );
     }
     else {
-        const Symbol* symbol;  // can't use ?: with INODE
-        if (IS_VARLIST(binding)) {
-            symbol = KEY_SYMBOL(CTX_KEY(cast(Context*, binding), 1));
-            Init_Any_Word_Bound_Untracked(  // arbitrary word
-                TRACK(Stub_Cell(use)),
-                affected,
-                symbol,
-                binding,
-                1  // arbitrary first word
-            );
-        }
-        else {
-            symbol = INODE(LetSymbol, binding);
-            Init_Any_Word_Bound_Untracked(  // arbitrary word
-                TRACK(Stub_Cell(use)),
-                affected,
-                symbol,
-                binding,
-                INDEX_PATCHED  // the only word in the LET
-            );
-        }
+        assert(IS_LET(binding));
+
+        const Symbol* symbol = INODE(LetSymbol, binding);
+        Init_Any_Word_Bound_Untracked(  // no reified object for LETs [4]
+            TRACK(Stub_Cell(use)),
+            REB_WORD,
+            symbol,
+            binding,
+            INDEX_PATCHED  // the only word in the LET
+        );
     }
 
-    // The way it is designed, the list of use/lets terminates in either a
-    // nullptr or a context pointer that represents the specifying frame for
-    // the chain.  So we can simply point to the existing specifier...whether
-    // it is a use, a let, a frame context, or nullptr.
-    //
-    LINK(NextUse, use) = next;
+    if (affected == REB_SET_WORD)
+        Set_Cell_Flag(Stub_Cell(use), USE_NOTE_SET_WORDS);
+    else
+        assert(affected == REB_WORD);
 
-    // A circularly linked list of variations of this use with different
-    // NextVirtual() data is maintained, to assist in avoiding creating
-    // unnecessary duplicates.  Decay_Flex() will remove this patch from the
-    // list when it is being GC'd.
-    //
-    // !!! This feature was removed for the moment, see notes on Variant.
-    //
-    MISC(Variant, use) = nullptr;
-
-    INODE(UseReserved, use) = nullptr;  // no application yet
+    LINK(NextUse, use) = next;  // may be use, let, frame context, nullptr [5]
+    MISC(Variant, use) = nullptr;  // "Variant" feature removed for now [6]
+    INODE(UseReserved, use) = nullptr;  // no application yet [2]
 
     return use;
 }

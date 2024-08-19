@@ -296,9 +296,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         //
         if (BINDING(v) != UNBOUND) {
             if (CTX_TYPE(context) == REB_FRAME) {
-                Level* L = CTX_LEVEL_IF_ON_STACK(context);
+                // !!! Needs review
+                /*Level* L = CTX_LEVEL_IF_ON_STACK(context);
                 if (L)  // comes from execution, not MAKE FRAME!
-                    assert(VAL_FRAME_COUPLING(v) == Level_Coupling(L));
+                    assert(VAL_FRAME_COUPLING(v) == Level_Coupling(L)); */
             }
             else
                 assert(IS_LET(Singular_From_Cell(v)));

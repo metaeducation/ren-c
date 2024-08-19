@@ -746,9 +746,50 @@ bool Get_Var_Push_Refinements_Throws(
             // is considered "Listlike", can answer Cell_List_At()
         }
         else switch (Flex_Flavor(x_cast(Flex*, node1))) {
-          case FLAVOR_SYMBOL:
-            if (Get_Cell_Flag(var, REFINEMENT_LIKE))  // `/a` or `.a`
+          case FLAVOR_SYMBOL: {
+            if (Not_Cell_Flag(var, REFINEMENT_LIKE))  // `a.`
                 goto get_source;
+
+            // search specifier path for first FRAME!
+            //
+            Specifier* specifier = var_specifier;
+            for (; specifier != nullptr; specifier = NextVirtual(specifier)) {
+                Context* ctx_frame;
+                if (IS_VARLIST(specifier)) {  // ordinary FUNC specifier
+                    ctx_frame = cast(Context*, specifier);
+                    if (CTX_TYPE(ctx_frame) != REB_FRAME)
+                        continue;
+                }
+                else if (IS_USE(specifier)) {  // e.g. LAMBDA or DOES uses this
+                    if (not Is_Frame(Stub_Cell(specifier)))
+                        continue;
+                    ctx_frame = VAL_CONTEXT(Stub_Cell(specifier));
+                }
+                else
+                    continue;
+
+                Level* level = CTX_LEVEL_IF_ON_STACK(ctx_frame);
+                if (not level)
+                    fail (".field access only in running functions");
+                Context* context = maybe Level_Coupling(level);
+                if (not context)
+                    fail (".field object used on frame with no coupling");
+
+                REBLEN len = Find_Symbol_In_Context(
+                    CTX_ARCHETYPE(context),
+                    x_cast(Symbol*, node1),
+                    true
+                );
+                if (len == 0)
+                    fail (".field name not found in coupled object");
+
+                Copy_Cell(out, CTX_VAR(context, len));
+
+                if (Is_Action(out))  // if method in object, tell it object
+                    INIT_VAL_FRAME_COUPLING(out, context);
+
+                return false;
+            }
 
             fail ("No self object to use with .field style access"); }
 

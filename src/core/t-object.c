@@ -1574,7 +1574,10 @@ REBTYPE(Frame)
 }
 
 
-static bool Same_Action(const Cell* a, const Cell* b)
+// Temporarily unused... COUPLING is being worked on and breaking CATCH/QUIT
+// in comparisons, when actions are used for identity.
+//
+/*static bool Same_Action(const Cell* a, const Cell* b)
 {
     assert(Cell_Heart(a) == REB_FRAME and Cell_Heart(b) == REB_FRAME);
     if (not Is_Frame_Details(a) or not Is_Frame_Details(b))
@@ -1591,7 +1594,7 @@ static bool Same_Action(const Cell* a, const Cell* b)
     }
 
     return false;
-}
+}*/
 
 
 //
@@ -1604,9 +1607,10 @@ REBINT CT_Frame(const Cell* a, const Cell* b, bool strict)
     if (Is_Frame_Details(a)) {
         if (not Is_Frame_Details(b))
             return -1;
-        if (Same_Action(a, b))
+        /*if (Same_Action(a, b))
+            return 0; */  // REVIEW: Coupling, interferes with CATCH/QUIT
+        if (VAL_ACTION(a) == VAL_ACTION(b))
             return 0;
-        assert(VAL_ACTION(a) != VAL_ACTION(b));
         return a > b ? 1 : -1;  // !!! Review arbitrary ordering
     }
 

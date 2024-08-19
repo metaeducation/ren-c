@@ -757,20 +757,13 @@ eval-all: func [
 <|: runs tweak copy unrun get $eval-all 'postpone 'on
 |>: runs tweak enfix copy get $shove 'postpone 'on
 
-
-meth: enfix func [
-    {FUNC variant that creates an ACTION! implicitly coupled to a context}
-
-    return: [action?]
-    :member [set-word! set-path!]
-    spec [block!]
-    body [block!]
-][
-    let coupling: binding of member else [
-        fail [member "must be bound to an ANY-CONTEXT? to use METHOD"]
-    ]
-    return set member couple (func spec body) coupling
-]
+; Currently, METH is just a synonym for FUNC as a way of annotating that you
+; are using the `.field` notation and as such depend on the function invocation
+; being coupled with an object.  This coupling can be done explicitly by the
+; user with COUPLE or an implicit coupling will be supplied when a function
+; is invoked from a TUPLE! where an object is on the left hand side.
+;
+meth: :func
 
 
 cause-error: func [

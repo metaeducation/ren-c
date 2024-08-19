@@ -441,8 +441,6 @@ Bounce MAKE_Error(
         //
         Init_Error(OUT, e);
 
-        Rebind_Context_Deep(root_error, e, nullptr);  // NULL=>no more binds
-
         DECLARE_VALUE (virtual_arg);
         Copy_Cell(virtual_arg, arg);
         Virtual_Bind_Deep_To_Existing_Context(

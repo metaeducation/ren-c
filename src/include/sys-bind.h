@@ -162,59 +162,6 @@ INLINE Value* Derelativize_Untracked(
         cast(const Cell*, ensure(const Cell*, (in))), (specifier)))
 
 
-// Tells whether when an ACTION! has a binding to a context, if that binding
-// should override the stored binding in a WORD! being looked up.
-//
-//    o1: make object! [a: 10 f: does [print a]]
-//    o2: make o1 [a: 20 b: 22]
-//    o3: make o2 [b: 30]
-//
-// In the scenario above, when calling `f` bound to o2 stored in o2, or the
-// call to `f` bound to o3 and stored in o3, the `a` in the relevant objects
-// must be found from the override.  This is done by checking to see if a
-// walk from the derived keylist makes it down to the keylist for a.
-//
-// Note that if a new keylist is not made, it's not possible to determine a
-// "parent/child" relationship.  There is no information stored which could
-// tell that o3 was made from o2 vs. vice-versa.  The only thing that happens
-// is at MAKE-time, o3 put its binding into any functions bound to o2 or o1,
-// thus getting its overriding behavior.
-//
-INLINE bool Is_Overriding_Context(Context* stored, Context* override)
-{
-    Node* stored_source = BONUS(KeySource, CTX_VARLIST(stored));
-    Node* temp = BONUS(KeySource, CTX_VARLIST(override));
-
-    // FRAME! "keylists" are actually paramlists, and the LINK.underlying
-    // field is used in paramlists (precluding a LINK.ancestor).  Plus, since
-    // frames are tied to a function they invoke, they cannot be expanded.
-    // For now, deriving from FRAME! is just disabled.
-    //
-    // Use a faster check for REB_FRAME than CTX_TYPE() == REB_FRAME, since
-    // we were extracting keysources anyway.
-    //
-    // !!! Note that in virtual binding, something like a FOR-EACH would
-    // wind up overriding words bound to FRAME!s, even though not "derived".
-    //
-    if (Is_Node_A_Cell(stored_source))
-        return false;
-    if (Is_Node_A_Cell(temp))
-        return false;
-
-    while (true) {
-        if (temp == stored_source)
-            return true;
-
-        if (LINK(Ancestor, x_cast(Series*, temp)) == temp)
-            break;
-
-        temp = LINK(Ancestor, x_cast(Series*, temp));
-    }
-
-    return false;
-}
-
-
 // Modes allowed by Bind related functions:
 enum {
     BIND_0 = 0, // Only bind the words found in the context.

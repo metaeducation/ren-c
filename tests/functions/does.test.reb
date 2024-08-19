@@ -54,36 +54,30 @@
     )
 ]
 
-; !!! The following tests were designed before the creation of METHOD, at a
-; time when DOES was expected to obey the same derived binding mechanics that
-; FUNC [] would have.  (See notes on its implementation about how that is
-; tricky, as it tries to optimize the case of when it's just a EVAL of a BLOCK!
-; with no need for relativization.)  At time of writing there is no arity-1
-; METHOD-analogue to DOES.
 (
     o1: make object! [
         a: 10
-        b: bind (does [if ok [a]]) binding of $b
-    ]
-    o2: make o1 [a: 20]
-    o2.b = 20
-)(
-    o1: make object! [
-        a: 10
-        b: bind (does [f: does [a] f]) binding of $b
+        b: does [if ok [.a]]
     ]
     o2: make o1 [a: 20]
 
-    o2.b = 20
+    o2/b = 20
 )(
     o1: make object! [
         a: 10
-        b: bind (does [f: lambda [] [a] f]) binding of $b
-        bind :b binding of $b
+        b: does [f: does [.a] f]
     ]
     o2: make o1 [a: 20]
 
-    o2.b = 20
+    o2/b = 20
+)(
+    o1: make object! [
+        a: 10
+        b: does [f: lambda [] [.a] f]
+    ]
+    o2: make o1 [a: 20]
+
+    o2/b = 20
 )(
     o1: make object! [
         a: 10
@@ -91,5 +85,5 @@
     ]
     o2: make o1 [a: 20]
 
-    o2.b = 20
+    o2/b = 20
 )

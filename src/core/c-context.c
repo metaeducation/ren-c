@@ -571,23 +571,6 @@ Array* Collect_Unique_Words_Managed(
 
 
 //
-//  Rebind_Context_Deep: C
-//
-// Clone old context to new context knowing
-// which types of values need to be copied, deep copied, and rebound.
-//
-void Rebind_Context_Deep(
-    Context* source,
-    Context* dest,
-    Option(struct Reb_Binder*) binder
-){
-    const Value* tail = Series_Tail(Value, CTX_VARLIST(dest));
-    Value* head = Series_Head(Value, CTX_VARLIST(dest));
-    Rebind_Values_Deep(head, tail, source, dest, binder);
-}
-
-
-//
 //  Make_Context_Detect_Managed: C
 //
 // Create a context by detecting top-level set-words in an array of values.
@@ -672,9 +655,6 @@ Context* Make_Context_Detect_Managed(
             Clonify(dest, flags, deeply);
         }
     }
-
-    if (parent)  // v-- passing in nullptr to indicate no more binds
-        Rebind_Context_Deep(unwrap parent, context, nullptr);
 
     Assert_Context(context);
 
