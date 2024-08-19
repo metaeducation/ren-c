@@ -1705,62 +1705,53 @@ void MF_Frame(REB_MOLD *mo, const Cell* v, bool form) {
 //
 //  construct: native [
 //
-//  "Creates an ANY-CONTEXT? instance"
+//  "Creates an OBJECT! from a spec that is not bound into the object"
 //
-//      return: [~null~ any-context?]
-//      spec [<maybe> block!]
-//          "Object specification block (bindings modified)"
-//      /only "Values are kept as-is"
+//      return: [~null~ object!]
+//      spec "Object spec block, top-level SET-WORD!s will be object keys"
+//          [<maybe> block! the-block!]
 //      /with "Use a parent/prototype context"
-//          [any-context?]
+//          [object!]
 //  ]
 //
 DECLARE_NATIVE(construct)
 //
-// !!! This assumes you want a SELF defined.  The entire concept of SELF
-// needs heavy review.
+// 1. In R3-Alpha you could do:
 //
-// !!! This mutates the bindings of the spec block passed in, should it
-// be making a copy instead (at least by default, perhaps with performance
-// junkies saying `construct/rebind` or something like that?
+//      construct/only [a: b: 1 + 2 d: a e:]
 //
-// !!! /ONLY should be done with a "predicate", e.g. `construct .quote [...]`
+//    This would yield `a` and `b` set to 1, while `+` and `2` would be
+//    ignored, `d` will be the word `a` (where it is bound to the `a`
+//    of the object being synthesized) and `e` would be left as it was.
+//    Ren-C doesn't allow any discarding...a SET-WORD! must be followed
+//    either by another SET-WORD! or a single array element followed by
+//    another SET-WORD!, the end of the array, or a COMMA!.
 {
     INCLUDE_PARAMS_OF_CONSTRUCT;
 
+    enum {
+        ST_CONSTRUCT_INITIAL_ENTRY = STATE_0,
+        ST_CONSTRUCT_EVAL_STEP
+    };
+
+    switch (STATE) {
+      case ST_CONSTRUCT_INITIAL_ENTRY: goto initial_entry;
+      case ST_CONSTRUCT_EVAL_STEP: goto eval_step_result_in_spare;
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
     Value* spec = ARG(spec);
+
     Context* parent = REF(with)
         ? VAL_CONTEXT(ARG(with))
         : nullptr;
 
-    // This parallels the code originally in CONSTRUCT.  Run it if the /ONLY
-    // refinement was passed in.
-    //
-  blockscope {
     const Element* tail;
-    Element* at = Cell_Array_At_Mutable_Hack(&tail, spec);
-    if (REF(only)) {
-        Init_Object(
-            OUT,
-            Construct_Context_Managed(
-                REB_OBJECT,
-                at,  // warning: modifies binding!
-                tail,
-                Cell_Specifier(spec),
-                parent
-            )
-        );
-        return OUT;
-    }
-  }
+    const Element* at = Cell_Array_At(&tail, spec);
 
-    // Scan the object for top-level set words in order to make an
-    // appropriately sized context.
-    //
-    const Element* tail;
-    Element* at = Cell_Array_At_Ensure_Mutable(&tail, spec);
-
-    Context* ctx = Make_Context_Detect_Managed(
+    Context* ctx = Make_Context_Detect_Managed(  // scan top-level SET-WORD!s
         parent ? CTX_TYPE(parent) : REB_OBJECT,  // !!! Presume object?
         at,
         tail,
@@ -1768,13 +1759,72 @@ DECLARE_NATIVE(construct)
     );
     Init_Object(OUT, ctx);  // GC protects context
 
-    // !!! This binds the actual body data, not a copy of it.  See
-    // Virtual_Bind_Deep_To_New_Context() for future directions.
-    //
-    Bind_Values_Deep(at, tail, CTX_ARCHETYPE(ctx));
+    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    if (Do_Any_Array_At_Throws(SPARE, spec, SPECIFIED)) // eval result ignored
-        return THROWN;
+    if (Is_The_Block(spec))
+        flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
+    else
+        assert(Is_Block(spec));
+
+    Level* sub = Make_Level_At(&Stepper_Executor, spec, flags);
+    Push_Level(SPARE, sub);
+
+} continue_processing_spec: {  ////////////////////////////////////////////////
+
+    while (Not_Level_At_End(SUBLEVEL)) {
+        const Element* at = At_Level(SUBLEVEL);
+        if (Is_Comma(at)) {
+            Fetch_Next_In_Feed(SUBLEVEL->feed);
+            continue;
+        }
+
+        if (not Is_Set_Word(at))
+            fail (Error_Invalid_Type(VAL_TYPE(at)));
+
+        do {  // keep pushing SET-WORD!s so `construct [a: b: 1]` works
+            assert(Is_Set_Word(at));
+            Copy_Cell(PUSH(), at);
+
+            Fetch_Next_In_Feed(SUBLEVEL->feed);
+
+            if (Is_Level_At_End(SUBLEVEL))
+                fail ("Unexpected end after SET-WORD! in CONTEXT");
+
+            at = At_Level(SUBLEVEL);
+            if (Is_Comma(at))
+                fail ("Unexpected COMMA! after SET-WORD! in CONTEXT");
+
+        } while (Is_Set_Word(at));
+
+        STATE = ST_CONSTRUCT_EVAL_STEP;
+        return CONTINUE_SUBLEVEL(SUBLEVEL);
+    }
+
+    Drop_Level(SUBLEVEL);
 
     return OUT;
-}
+
+} eval_step_result_in_spare: {  ///////////////////////////////////////////////
+
+    Context* ctx = VAL_CONTEXT(OUT);
+
+    while (TOP_INDEX != BASELINE->stack_base) {
+        assert(Is_Set_Word(TOP));
+
+        REBINT len = Find_Symbol_In_Context(
+            CTX_ARCHETYPE(ctx),
+            Cell_Word_Symbol(TOP),
+            true
+        );
+        assert(len != 0);  // created a key for every SET-WORD! above!
+
+        Copy_Cell(CTX_VAR(ctx, len), stable_SPARE);
+
+        DROP();
+    }
+
+    assert(STATE == ST_CONSTRUCT_EVAL_STEP);
+    Restart_Stepper_Level(SUBLEVEL);
+
+    goto continue_processing_spec;
+}}

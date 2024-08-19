@@ -1287,34 +1287,24 @@ Context* Startup_Errors(const Element* boot_errors)
     }
   #endif
 
-    const Element* errors_tail;
-    Element* errors_head
-        = Cell_Array_At_Known_Mutable(&errors_tail, boot_errors);
-
     assert(VAL_INDEX(boot_errors) == 0);
-    Context* catalog = Construct_Context_Managed(
-        REB_OBJECT,
-        errors_head,  // modifies bindings
-        errors_tail,
-        Cell_Specifier(boot_errors),
-        nullptr
-    );
+
+    Context* catalog;
+
+  blockscope {
+    Value* temp = rebValue(Canon(CONSTRUCT), Canon(INERT), boot_errors);
+    catalog = VAL_CONTEXT(temp);
+    rebRelease(temp);
+  }
 
     // Morph blocks into objects for all error categories.
     //
     const Element* category_tail = Array_Tail(CTX_VARLIST(catalog));
     Value* category = CTX_VARS_HEAD(catalog);
     for (; category != category_tail; ++category) {
-        const Element* tail;
-        Element* head = Cell_Array_At_Known_Mutable(&tail, category);
-        Context* error = Construct_Context_Managed(
-            REB_OBJECT,
-            head,  // modifies bindings
-            tail,
-            SPECIFIED, // source array not in a function body
-            nullptr
-        );
-        Init_Object(category, error);
+        Value* error = rebValue(Canon(CONSTRUCT), Canon(INERT), category);
+        Copy_Cell(category, error);  // actually an OBJECT! :-/
+        rebRelease(error);
     }
 
     return catalog;

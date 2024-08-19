@@ -462,13 +462,13 @@
 ; Structural equality requires equality of the object's fields.
 ;
 [#1133 (
-    a-value: construct/only [
+    a-value: construct @[
         a: 1 b: 1.0 c: $1 d: 1%
         e: [a 'a :a a: /a #"a" #{00}]
         f: ["a" #a http://a a@a.com <a>]
         g: :a/b/(c: 'd/e/f)/(b/d: [:f/g h/i])
     ]
-    b-value: construct/only [
+    b-value: construct @[
         a: 1 b: 1.0 c: $1 d: 1%
         e: [a 'a :a a: /a #"a" #{00}]
         f: ["a" #a http://a a@a.com <a>]
@@ -476,13 +476,13 @@
     ]
     equal? a-value b-value
 )(
-    a-value: construct/only [
+    a-value: construct @[
         a: 1 b: 1.0 c: $1 d: 1%
         e: [a 'a :a a: /a #"a" #{00}]
         f: ["a" #a http://a a@a.com <a>]
         g: :a/b/(c: 'd/e/f)/(b/d: [:f/g h/i])
     ]
-    b-value: construct/only [
+    b-value: construct @[
         a: 1 b: 1.0 c: $1 d: 1%
         e: [a 'a :a a: /a #"a" #{00}]
         f: ["a" #a http://a a@a.com <a>]
@@ -496,13 +496,13 @@
             true
         ]
 )(
-    a-value: construct/only [
+    a-value: construct @[
         a: 1 b: 1.0 c: $1 d: 1%
         e: [a 'a :a a: /a #"a" #{00}]
         f: ["a" #a http://a a@a.com <a>]
         g: :a/b/(c: 'd/e/f)/(b/d: [:f/g h/i])
     ]
-    b-value: construct/only compose [
+    b-value: construct compose @[
         a: 1.0 b: $1 c: 100% d: 0.01
         e: [/a a 'a :a a: #"A" (next #{0000})]
         f: [#a <A> http://A a@A.com "A"]

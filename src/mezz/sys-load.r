@@ -136,7 +136,7 @@ load-header: func [
         return null
     ]
 
-    hdr: construct/with/only hdr system.standard.header except [
+    hdr: construct/with (inert hdr) system.standard.header except [
         return raise "bad-header"
     ]
 

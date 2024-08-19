@@ -96,7 +96,7 @@ module: func [
     ;
     if block? spec [
         ;; !!! unbind/deep spec
-        spec: construct/with/only spec system.standard.header
+        spec: construct/with (inert spec) system.standard.header
     ]
 
     if spec [  ; Validate the important fields of the header, if there is one

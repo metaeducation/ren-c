@@ -223,7 +223,7 @@ check-response: func [
         assert [binary? d1]
         d1: scan-net-header d1
 
-        info.headers: headers: construct/with/only d1 http-response-headers
+        info.headers: headers: construct/with (inert d1) http-response-headers
         info.name: to file! any [spec.path %/]
         if headers.content-length [
             info.size: (
