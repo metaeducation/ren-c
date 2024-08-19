@@ -75,9 +75,9 @@ Bounce MAKE_Integer(
         // weirder should probably leave it as is.
     }
     else {
-        Context* error = Maybe_Value_To_Int64(OUT, arg, false);
+        Option(Context*) error = Trap_Value_To_Int64(OUT, arg, false);
         if (error)
-            return RAISE(error);
+            return RAISE(unwrap error);
     }
 
     return OUT;
@@ -97,9 +97,9 @@ Bounce TO_Integer(Level* level_, Kind kind, const Value* arg)
             "Use CODEPOINT OF for INTEGER! from single-character ISSUE!"
         );
 
-    Context* error = Maybe_Value_To_Int64(OUT, arg, false);
+    Option(Context*) error = Trap_Value_To_Int64(OUT, arg, false);
     if (error)
-        return RAISE(error);
+        return RAISE(unwrap error);
 
     return OUT;
 }
@@ -147,7 +147,7 @@ void Hex_String_To_Integer(Value* out, const Value* value)
 //
 // If a type is added or removed, update DECLARE_NATIVE(to_integer)'s spec
 //
-Context* Maybe_Value_To_Int64(
+Option(Context*) Trap_Value_To_Int64(
     Sink(Value*) out,
     const Value* value,
     bool no_sign

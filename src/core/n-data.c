@@ -2124,9 +2124,9 @@ DECLARE_NATIVE(as)
 
       case REB_ISSUE: {
         if (Is_Integer(v)) {
-            Context* error = Maybe_Init_Char(OUT, VAL_UINT32(v));
+            Option(Context*) error = Trap_Init_Char(OUT, VAL_UINT32(v));
             if (error)
-                return RAISE(error);
+                return RAISE(unwrap error);
             return OUT;
         }
 

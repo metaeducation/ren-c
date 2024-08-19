@@ -620,10 +620,10 @@ RebolValue* API_rebChar(uint32_t codepoint)
     ENTER_API;
 
     Value* v = Alloc_Value();
-    Context* error = Maybe_Init_Char(v, codepoint);
+    Option(Context*) error = Trap_Init_Char(v, codepoint);
     if (error) {
         rebRelease(v);
-        fail (error);
+        fail (unwrap error);
     }
     return v;
 }

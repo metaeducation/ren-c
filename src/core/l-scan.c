@@ -2309,9 +2309,9 @@ Bounce Scanner_Executor(Level* const L) {
         if (ep - 1 != Scan_UTF8_Char_Escapable(&uni, bp))
             return RAISE(Error_Syntax(ss, level->token));
 
-        Context* error = Maybe_Init_Char(PUSH(), uni);
+        Option(Context*) error = Trap_Init_Char(PUSH(), uni);
         if (error)
-            return DROP(), RAISE(error);
+            return DROP(), RAISE(unwrap error);
         break; }
 
       case TOKEN_STRING:  // UTF-8 pre-scanned above, and put in mold buffer

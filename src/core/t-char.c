@@ -108,9 +108,9 @@ Bounce MAKE_Issue(
       case REB_INTEGER:
       case REB_DECIMAL: {
         REBINT n = Int32(arg);
-        Context* error = Maybe_Init_Char(OUT, n);
+        Option(Context*) error = Trap_Init_Char(OUT, n);
         if (error)
-            return RAISE(error);
+            return RAISE(unwrap error);
         return OUT; }
 
       case REB_BINARY: {
@@ -134,9 +134,9 @@ Bounce MAKE_Issue(
             if (size != 0)
                 return MAKE_String(level_, REB_ISSUE, nullptr, arg);
         }
-        Context* error = Maybe_Init_Char(OUT, c);
+        Option(Context*) error = Trap_Init_Char(OUT, c);
         if (error)
-            return RAISE(error);
+            return RAISE(unwrap error);
         return OUT; }
 
       case REB_TEXT:
@@ -171,7 +171,9 @@ DECLARE_NATIVE(codepoint_to_char)
 
     uint32_t c = VAL_UINT32(ARG(codepoint));
 
-    Maybe_Init_Char(OUT, c);
+    Option(Context*) error = Trap_Init_Char(OUT, c);
+    if (error)
+        fail (unwrap error);
     return OUT;
 }
 
@@ -507,9 +509,9 @@ REBTYPE(Issue)
     if (chr < 0)
         return RAISE(Error_Type_Limit_Raw(Datatype_From_Kind(REB_ISSUE)));
 
-    Context* error = Maybe_Init_Char(OUT, cast(Codepoint, chr));
+    Option(Context*) error = Trap_Init_Char(OUT, cast(Codepoint, chr));
     if (error)
-        return RAISE(error);
+        return RAISE(unwrap error);
     return OUT;
 }
 

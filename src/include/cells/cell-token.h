@@ -157,7 +157,7 @@ INLINE Element* Init_Char_Unchecked_Untracked(Sink(Element*) out, Codepoint c) {
 #define Init_Char_Unchecked(out,c) \
     TRACK(Init_Char_Unchecked_Untracked((out), (c)))
 
-INLINE Context* Maybe_Init_Char_Untracked(Cell* out, uint32_t c) {
+INLINE Option(Context*) Trap_Init_Char_Untracked(Cell* out, uint32_t c) {
     if (c > MAX_UNI) {
         DECLARE_ATOM (temp);
         return Error_Codepoint_Too_High_Raw(Init_Integer(temp, c));
@@ -171,8 +171,8 @@ INLINE Context* Maybe_Init_Char_Untracked(Cell* out, uint32_t c) {
     return nullptr;
 }
 
-#define Maybe_Init_Char(out,c) \
-    Maybe_Init_Char_Untracked(TRACK(out), (c))
+#define Trap_Init_Char(out,c) \
+    Trap_Init_Char_Untracked(TRACK(out), (c))
 
 
 //=//// "BLACKHOLE" (Empty ISSUE!, a.k.a. CODEPOINT 0) ////////////////////=//
