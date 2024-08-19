@@ -101,14 +101,17 @@ bool Pushed_Continuation(
     Atom* out,
     Flags flags,  // LEVEL_FLAG_BRANCH, etc. for pushed levels
     Specifier* branch_specifier,  // before branch forces non-empty variadic call
-    const Atom* branch,
+    const Value* branch,
     Option(const Atom*) with  // can be same as out or not GC-safe, may copy
 ){
     assert(branch != out);  // it's legal for `with` to be the same as out
     assert(not with or unwrap(with) == out or not Is_Api_Value(unwrap(with)));
 
-    if (Is_Action(branch))
+    if (Is_Action(branch))  // antiform frames are legal
         goto handle_action;
+
+    if (Is_Antiform(branch))  // no other antiforms can be branches
+        fail (Error_Bad_Antiform(branch));
 
     if (Is_Group(branch) or Is_Get_Group(branch)) {  // [2] for GET-GROUP!
         assert(flags & LEVEL_FLAG_BRANCH);  // needed for trick
@@ -127,12 +130,7 @@ bool Pushed_Continuation(
         goto pushed_continuation;
     }
 
-    if (Is_Void(branch)) {  // if false [...] else (void) => IF product
-        if (out != with)
-            Copy_Cell(out, with);
-        goto just_use_out;
-    }
-    else switch (VAL_TYPE(branch)) {
+    switch (VAL_TYPE(branch)) {
       case REB_BLANK:
         if (flags & LEVEL_FLAG_BRANCH)
             Init_Heavy_Null(out);

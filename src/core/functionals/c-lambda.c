@@ -83,7 +83,7 @@ Bounce Lambda_Dispatcher(Level* const L)
         OUT,
         LEVEL_MASK_NONE,
         SPECIFIED,
-        SPARE
+        stable_SPARE
     );
 }
 
@@ -113,7 +113,7 @@ Bounce Lambda_Unoptimized_Dispatcher(Level* const L)
         OUT,  // output
         LEVEL_MASK_NONE,  // flags
         SPECIFIED,  // branch specifier
-        SPARE  // branch
+        stable_SPARE  // branch
     );
 }
 

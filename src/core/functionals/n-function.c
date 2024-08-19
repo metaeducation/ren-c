@@ -141,7 +141,7 @@ Bounce Func_Dispatcher(Level* const L)
         OUT,  // body evaluative result discarded [1]
         LEVEL_MASK_NONE,  // no DISPATCHER_CATCHES, RETURN is responsible
         SPECIFIED,
-        SPARE
+        stable_SPARE
     );
 
 } body_finished_without_returning: {  ////////////////////////////////////////

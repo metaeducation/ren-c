@@ -105,7 +105,7 @@ Bounce Adapter_Dispatcher(Level* const L)
         OUT,  // result discarded [1]
         LEVEL_MASK_NONE,  // plain result
         SPECIFIED,
-        SPARE
+        stable_SPARE
     );
 
 } run_adaptee_in_same_frame: {  //////////////////////////////////////////////

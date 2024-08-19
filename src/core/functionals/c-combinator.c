@@ -318,7 +318,7 @@ void Push_Parser_Sublevel(
     Copy_Cell(CTX_VAR(ctx, IDX_COMBINATOR_PARAM_REMAINDER), remainder);
     Copy_Cell(CTX_VAR(ctx, IDX_COMBINATOR_PARAM_INPUT), input);
 
-    DECLARE_ATOM (temp);  // can't overwrite spare
+    DECLARE_ELEMENT (temp);  // can't overwrite spare
     Init_Frame(temp, ctx, ANONYMOUS);
 
     bool pushed = Pushed_Continuation(

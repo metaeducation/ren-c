@@ -111,13 +111,15 @@ Bounce Group_Branch_Executor(Level* level_)
 
 } group_result_in_spare: {  //////////////////////////////////////////////////
 
+    Decay_If_Unstable(SPARE);
+
     if (Any_Group(SPARE))
         fail (Error_Bad_Branch_Type_Raw());  // stop infinite recursion (good?)
 
     const Atom* with = Is_Fresh(OUT) ? nullptr : OUT;  // with here [1]
 
     assert(Is_Level_At_End(LEVEL));
-    return DELEGATE_BRANCH(OUT, SPARE, with);  // couldn't do (OUT, OUT, SPARE)
+    return DELEGATE_BRANCH(OUT, stable_SPARE, with);  // (OUT, OUT, SPARE) bad
 }}
 
 
