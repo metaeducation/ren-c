@@ -200,7 +200,7 @@ DECLARE_NATIVE(shove)
     Flags flags = FLAG_STATE_BYTE(ST_ACTION_INITIAL_ENTRY_ENFIX);
 
     Level* sub = Make_Level(&Action_Executor, level_->feed, flags);
-    Push_Action(sub, VAL_ACTION(shovee), VAL_FRAME_TARGET(shovee));
+    Push_Action(sub, VAL_ACTION(shovee), VAL_FRAME_COUPLING(shovee));
     Begin_Action_Core(sub, label, enfix);
 
     Push_Level(OUT, sub);
@@ -584,11 +584,11 @@ DECLARE_NATIVE(redo)
         }
 
         INIT_LVL_PHASE(L, ACT_IDENTITY(VAL_ACTION(sibling)));
-        INIT_LVL_TARGET(L, VAL_FRAME_TARGET(sibling));
+        INIT_LVL_COUPLING(L, VAL_FRAME_COUPLING(sibling));
     }
     else {
         INIT_LVL_PHASE(L, VAL_FRAME_PHASE(restartee));
-        INIT_LVL_TARGET(L, VAL_FRAME_TARGET(restartee));
+        INIT_LVL_COUPLING(L, VAL_FRAME_COUPLING(restartee));
     }
 
     Action* redo_action = u_cast(Action*, Level_Phase(L));
@@ -608,7 +608,7 @@ DECLARE_NATIVE(redo)
     }
 
     Copy_Cell(SPARE, Lib(REDO));  // label used for throw
-    INIT_VAL_FRAME_TARGET(SPARE, c);  // target has restartee as varlist
+    INIT_VAL_FRAME_COUPLING(SPARE, c);  // coupling has restartee as varlist
 
     const Value* gather_args = Lib(FALSE);
     return Init_Thrown_With_Label(LEVEL, gather_args, stable_SPARE);
@@ -979,7 +979,7 @@ DECLARE_NATIVE(run)
     Push_Action(
         sub,
         VAL_ACTION(action),
-        VAL_FRAME_TARGET(action)
+        VAL_FRAME_COUPLING(action)
     );
     Begin_Prefix_Action(sub, VAL_FRAME_LABEL(action));
 

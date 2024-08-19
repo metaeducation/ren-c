@@ -107,12 +107,12 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     if (error_on_deferred)  // can't deal with ELSE/THEN [1]
         L->flags.bits |= ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX;
 
-    Push_Action(L, VAL_ACTION(action), VAL_FRAME_TARGET(action));
+    Push_Action(L, VAL_ACTION(action), VAL_FRAME_COUPLING(action));
     Begin_Prefix_Action(L, VAL_FRAME_LABEL(action));
 
     Set_Executor_Flag(ACTION, L, FULFILL_ONLY);  // Push_Action() won't allow
 
-    assert(Level_Target(L) == VAL_FRAME_TARGET(action));  // no invocation
+    assert(Level_Coupling(L) == VAL_FRAME_COUPLING(action));  // no invocation
 
     if (Trampoline_With_Top_As_Root_Throws())
         return L;
@@ -130,7 +130,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
         L,
         ACT_IDENTITY(VAL_ACTION(action))
     );
-    INIT_LVL_TARGET(L, VAL_FRAME_TARGET(action));
+    INIT_LVL_COUPLING(L, VAL_FRAME_COUPLING(action));
 
     assert(Not_Node_Managed(L->varlist));  // shouldn't be [3]
 
@@ -232,7 +232,7 @@ bool Init_Invokable_From_Feed_Throws(
     // make its nodes, so manual ones don't wind up in the tracking list.
     //
     Action* act = VAL_ACTION(action);
-    assert(Level_Target(L) == VAL_FRAME_TARGET(action));
+    assert(Level_Coupling(L) == VAL_FRAME_COUPLING(action));
 
     assert(Not_Node_Managed(L->varlist));
 
@@ -334,7 +334,7 @@ Bounce Reframer_Dispatcher(Level* const L)
     Move_Cell(arg, stable_SPARE);
 
     INIT_LVL_PHASE(L, ACT_IDENTITY(VAL_ACTION(shim)));
-    INIT_LVL_TARGET(L, VAL_FRAME_TARGET(shim));
+    INIT_LVL_COUPLING(L, VAL_FRAME_COUPLING(shim));
 
     return BOUNCE_REDO_CHECKED;  // the redo will use the updated phase & binding
 }

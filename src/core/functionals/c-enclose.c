@@ -136,7 +136,7 @@ Bounce Encloser_Dispatcher(Level* const L)
 
     Element* rootvar = CTX_ROOTVAR(c);  // don't phase run encloser again [2]
     INIT_VAL_FRAME_PHASE(rootvar, ACT_IDENTITY(VAL_ACTION(inner)));
-    INIT_VAL_FRAME_TARGET(rootvar, VAL_FRAME_TARGET(inner));
+    INIT_VAL_FRAME_COUPLING(rootvar, VAL_FRAME_COUPLING(inner));
 
     assert(Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED));
     Clear_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED);  // [3]

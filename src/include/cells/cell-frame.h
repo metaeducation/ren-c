@@ -52,7 +52,7 @@ INLINE Element* Init_Frame_Details_Core(
     Sink(Element*) out,
     Phase* a,
     Option(const Symbol*) label,
-    Option(Context*) target
+    Option(Context*) coupling
 ){
   #if !defined(NDEBUG)
     Extra_Init_Frame_Details_Checks_Debug(a);
@@ -62,13 +62,13 @@ INLINE Element* Init_Frame_Details_Core(
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_FRAME);
     INIT_VAL_ACTION_DETAILS(out, a);
     INIT_VAL_ACTION_LABEL(out, label);
-    INIT_VAL_FRAME_TARGET(out, maybe target);
+    INIT_VAL_FRAME_COUPLING(out, coupling);
 
     return out;
 }
 
-#define Init_Frame_Details(out,a,label,binding) \
-    TRACK(Init_Frame_Details_Core((out), (a), (label), (binding)))
+#define Init_Frame_Details(out,a,label,coupling) \
+    TRACK(Init_Frame_Details_Core((out), (a), (label), (coupling)))
 
 
 

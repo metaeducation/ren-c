@@ -840,7 +840,7 @@ Phase* Make_Action(
 //
 void Get_Maybe_Fake_Action_Body(Sink(Value*) out, const Value* action)
 {
-    Option(Context*) target = VAL_FRAME_TARGET(action);
+    Option(Context*) coupling = VAL_FRAME_COUPLING(action);
     Action* a = VAL_ACTION(action);
 
     // A Hijacker *might* not need to splice itself in with a dispatcher.
@@ -854,10 +854,10 @@ void Get_Maybe_Fake_Action_Body(Sink(Value*) out, const Value* action)
         // !!! Review what should happen to binding
     }
 
-    // !!! Should the target make a difference in the returned body?  It is
-    // exposed programmatically via CONTEXT OF.
+    // !!! Should the coupling make a difference in the returned body?  It is
+    // exposed programmatically via COUPLING OF.
     //
-    UNUSED(target);
+    UNUSED(coupling);
 
     if (
         ACT_DISPATCHER(a) == &Func_Dispatcher
@@ -1028,4 +1028,37 @@ DECLARE_NATIVE(tweak)
         ACT_IDENTITY(act)->leader.bits &= ~flag;
 
     return Actionify(Copy_Cell(OUT, ARG(frame)));;
+}
+
+
+//
+//  couple: native [
+//
+//  "Associate an ACTION! with OBJECT! to use for `.field` member references"
+//
+//      return: [action? frame!]
+//      action [action? frame!]
+//      coupling [~null~ object! frame!]
+//  ]
+//
+DECLARE_NATIVE(couple)
+//
+// !!! Should this require an /OVERRIDE if the action already has a non-null
+// coupling in its cell?
+{
+    INCLUDE_PARAMS_OF_COUPLE;
+
+    Value* action_or_frame = ARG(action);  // could also be a FRAME!
+    Value* coupling = ARG(coupling);
+
+    assert(Cell_Heart(action_or_frame) == REB_FRAME);
+
+    if (Is_Nulled(coupling))
+        INIT_VAL_FRAME_COUPLING(action_or_frame, nullptr);
+    else {
+        assert(Is_Object(coupling) or Is_Frame(coupling));
+        INIT_VAL_FRAME_COUPLING(action_or_frame, VAL_CONTEXT(coupling));
+    }
+
+    return COPY(action_or_frame);
 }

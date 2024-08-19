@@ -182,12 +182,12 @@ INLINE Context* CTX_FRAME_BINDING(Context* c) {
 // a running frame gets re-executed.  More study is needed.
 //
 
-INLINE Option(Context*) VAL_FRAME_TARGET(const Cell* v) {
+INLINE Option(Context*) VAL_FRAME_COUPLING(const Cell* v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     return cast(Context*, m_cast(Node*, EXTRA(Any, v).node));
 }
 
-INLINE void INIT_VAL_FRAME_TARGET(
+INLINE void INIT_VAL_FRAME_COUPLING(
     Cell* v,
     Option(Context*) target
 ){
@@ -221,13 +221,13 @@ INLINE void INIT_VAL_FRAME_ROOTVAR_Core(
     Cell* out,
     Array* varlist,
     Phase* phase,
-    Option(Context*) target
+    Option(Context*) coupling
 ){
     assert(out == Array_Head(varlist));
     assert(phase != nullptr);
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_FRAME);
     INIT_VAL_CONTEXT_VARLIST(out, varlist);
-    INIT_VAL_FRAME_TARGET(out, target);
+    INIT_VAL_FRAME_COUPLING(out, coupling);
     INIT_VAL_FRAME_PHASE_OR_LABEL(out, phase);
   #if !defined(NDEBUG)
     out->header.bits |= CELL_FLAG_PROTECTED;

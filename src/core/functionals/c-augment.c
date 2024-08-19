@@ -143,7 +143,7 @@ DECLARE_NATIVE(augment)
         Array_Head(paramlist),
         paramlist,
         ACT_IDENTITY(VAL_ACTION(ARG(original))),
-        VAL_FRAME_TARGET(ARG(original))
+        VAL_FRAME_COUPLING(ARG(original))
     );
 
     Phase* augmentated = Make_Action(

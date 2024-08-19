@@ -53,7 +53,7 @@ void Prep_Action_Level(
     const Cell* action,
     Option(const Atom*) with
 ){
-    Push_Action(L, VAL_ACTION(action), VAL_FRAME_TARGET(action));
+    Push_Action(L, VAL_ACTION(action), VAL_FRAME_COUPLING(action));
     Begin_Prefix_Action(L, VAL_FRAME_LABEL(action));
 
     const Key* key = L->u.action.key;
@@ -167,7 +167,7 @@ bool Pushed_Continuation(
         );
 
         const Value* action = Lib(REDUCE);
-        Push_Action(L, VAL_ACTION(action), VAL_FRAME_TARGET(action));
+        Push_Action(L, VAL_ACTION(action), VAL_FRAME_COUPLING(action));
         Begin_Prefix_Action(L, VAL_FRAME_LABEL(action));
 
         const Key* key = L->u.action.key;
@@ -217,7 +217,7 @@ bool Pushed_Continuation(
         INIT_BONUS_KEYSOURCE(varlist, L);
 
         assert(Level_Phase(L) == CTX_FRAME_PHASE(c));
-        INIT_LVL_TARGET(L, VAL_FRAME_TARGET(branch));
+        INIT_LVL_COUPLING(L, VAL_FRAME_COUPLING(branch));
 
         L->u.action.original = Level_Phase(L);
 

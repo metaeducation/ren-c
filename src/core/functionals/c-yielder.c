@@ -183,7 +183,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     // Now that the last call's context varlist is pointing at our current
     // invocation level, we point the other way from the level to the
     // varlist.  We also update the cached pointer to the rootvar of that
-    // frame (used to speed up Level_Phase() and Level_Target())
+    // frame (used to speed up Level_Phase() and Level_Coupling())
     //
     L->varlist = CTX_VARLIST(last_yielder_context);  // rootvar must match
     L->rootvar = m_cast(Element*, CTX_ARCHETYPE(last_yielder_context));
@@ -355,7 +355,7 @@ DECLARE_NATIVE(yield)
     assert(Level_Phase(level_) == ACT_IDENTITY(VAL_ACTION(Lib(YIELD))));
     Level* yield_level = level_;  // ...make synonyms more obvious
 
-    Context* yielder_context = maybe Level_Target(yield_level);
+    Context* yielder_context = maybe Level_Coupling(yield_level);
     if (not yielder_context)
         fail ("Must have yielder to jump to");
 

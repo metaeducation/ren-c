@@ -101,11 +101,11 @@ DECLARE_NATIVE(definitional_break)
 
     Level* break_level = LEVEL;  // Level of this BREAK call
 
-    Option(Context*) target = Level_Target(break_level);  // see definition
-    if (not target)
+    Option(Context*) coupling = Level_Coupling(break_level);
+    if (not coupling)
         fail (Error_Archetype_Invoked_Raw());
 
-    Level* loop_level = CTX_LEVEL_MAY_FAIL(unwrap target);
+    Level* loop_level = CTX_LEVEL_MAY_FAIL(unwrap coupling);
 
     Init_Action(
         SPARE,  // use as label for throw
@@ -145,11 +145,11 @@ DECLARE_NATIVE(definitional_continue)
 
     Level* continue_level = LEVEL;  // Level of this CONTINUE call
 
-    Option(Context*) target = Level_Target(continue_level);  // see definition
-    if (not target)
+    Option(Context*) coupling = Level_Coupling(continue_level);
+    if (not coupling)
         fail (Error_Archetype_Invoked_Raw());
 
-    Level* loop_level = CTX_LEVEL_MAY_FAIL(unwrap target);
+    Level* loop_level = CTX_LEVEL_MAY_FAIL(unwrap coupling);
 
     Init_Action(
         SPARE,  // use as label for throw
@@ -662,11 +662,11 @@ DECLARE_NATIVE(definitional_stop)  // See CYCLE for notes about STOP
 
     Level* stop_level = LEVEL;  // Level of this STOP call
 
-    Option(Context*) target = Level_Target(stop_level);  // see definition
-    if (not target)
+    Option(Context*) coupling = Level_Coupling(stop_level);
+    if (not coupling)
         fail (Error_Archetype_Invoked_Raw());
 
-    Level* loop_level = CTX_LEVEL_MAY_FAIL(unwrap target);
+    Level* loop_level = CTX_LEVEL_MAY_FAIL(unwrap coupling);
 
     Init_Action(
         SPARE,  // use as label for throw
@@ -1705,7 +1705,7 @@ DECLARE_NATIVE(map_each)
     Quotify(ARG(data), 1);
 
     INIT_LVL_PHASE(LEVEL, ACT_IDENTITY(VAL_ACTION(Lib(MAP))));
-    // INIT_LVL_TARGET ?
+    // INIT_LVL_COUPLING ?
 
     Dispatcher* dispatcher = ACT_DISPATCHER(VAL_ACTION(Lib(MAP)));
     return dispatcher(LEVEL);

@@ -785,7 +785,7 @@ DECLARE_NATIVE(combinatorize)
 
     Action* act = VAL_ACTION(ARG(c));
     Option(const Symbol*) label = VAL_FRAME_LABEL(ARG(c));
-    Option(Context*) target = VAL_FRAME_TARGET(ARG(c));
+    Option(Context*) coupling = VAL_FRAME_COUPLING(ARG(c));
 
     Value* rule_start = ARG(rule_start);
     Copy_Cell(rule_start, ARG(rules));
@@ -824,7 +824,7 @@ DECLARE_NATIVE(combinatorize)
 
     Init_Frame(OUT, s.ctx, label);
     Actionify(OUT);
-    UNUSED(target);  // !!! should be put in there somewhere
+    UNUSED(coupling);  // !!! should be put in there somewhere
 
     return Proxy_Multi_Returns(level_);
 }

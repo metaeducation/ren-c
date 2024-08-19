@@ -731,19 +731,17 @@ eval-all: func [
 
 
 meth: enfix func [
-    {FUNC variant that creates an ACTION! implicitly bound in a context}
+    {FUNC variant that creates an ACTION! implicitly coupled to a context}
 
     return: [action?]
     :member [set-word! set-path!]
     spec [block!]
     body [block!]
 ][
-    let context: binding of member else [
+    let coupling: binding of member else [
         fail [member "must be bound to an ANY-CONTEXT? to use METHOD"]
     ]
-    return set member runs bind (  ; !!! BIND doesn't take ACTION! as antiform
-        func spec body
-    ) context
+    return set member couple (func spec body) coupling
 ]
 
 

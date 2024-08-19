@@ -109,7 +109,7 @@ DECLARE_NATIVE(as_pair)
 //
 //      return: [frame! action? any-array? any-path? any-word? quoted?]
 //      value "Value whose binding is to be set (modified) (returned)"
-//          [frame! action? any-array? any-path? any-word? quoted?]
+//          [any-array? any-path? any-word? quoted?]
 //      target "Target context or a word whose binding should be the target"
 //          [any-word? any-context?]
 //      /copy "Bind and return a deep copy of a block, don't modify original"
@@ -171,16 +171,6 @@ DECLARE_NATIVE(bind)
         }
 
         fail (Error_Not_In_Context_Raw(v));
-    }
-
-    // Binding an ACTION! to a context means it will obey derived binding
-    // relative to that context.  See METHOD for usage.  (Note that the same
-    // binding pointer is also used in cases like RETURN to link them to the
-    // FRAME! that they intend to return from.)
-    //
-    if (REB_FRAME == Cell_Heart(v)) {
-        INIT_VAL_FRAME_TARGET(v, VAL_CONTEXT(context));
-        return COPY(v);
     }
 
     if (not Any_Arraylike(v))  // QUOTED? could have wrapped any type
@@ -459,12 +449,12 @@ bool Did_Get_Binding_Of(Sink(Value*) out, const Value* v)
         Level* L = CTX_LEVEL_IF_ON_STACK(c);
         if (L) {
             INIT_VAL_FRAME_PHASE(out, Level_Phase(L));
-            INIT_VAL_FRAME_TARGET(out, Level_Target(L));
+            INIT_VAL_FRAME_COUPLING(out, Level_Coupling(L));
         }
         else {
             // !!! Assume the canon FRAME! value in varlist[0] is useful?
             //
-            assert(not VAL_FRAME_TARGET(out));  // canon, no binding
+            assert(not VAL_FRAME_COUPLING(out));  // canon, no binding
         }
     }
 
@@ -2346,7 +2336,7 @@ DECLARE_NATIVE(as)
             OUT,
             VAL_FRAME_PHASE(v),
             ANONYMOUS,  // see note, we might have stored this in varlist slot
-            VAL_FRAME_TARGET(v)
+            VAL_FRAME_COUPLING(v)
         );
       }
 

@@ -591,11 +591,11 @@ DECLARE_NATIVE(definitional_return)
 
     Level* return_level = LEVEL;  // Level of this RETURN call
 
-    Option(Context*) target = Level_Target(return_level);
-    if (not target)
+    Option(Context*) coupling = Level_Coupling(return_level);
+    if (not coupling)
         fail (Error_Archetype_Invoked_Raw());
 
-    Level* target_level = CTX_LEVEL_MAY_FAIL(unwrap target);
+    Level* target_level = CTX_LEVEL_MAY_FAIL(unwrap coupling);
 
     if (not REF(run)) {  // plain simple RETURN (not weird tail-call)
         if (
@@ -680,7 +680,7 @@ DECLARE_NATIVE(definitional_return)
         Push_Action(
             target_level,
             VAL_ACTION(atom),
-            VAL_FRAME_TARGET(atom)
+            VAL_FRAME_COUPLING(atom)
         );
         Begin_Prefix_Action(target_level, VAL_FRAME_LABEL(atom));
 

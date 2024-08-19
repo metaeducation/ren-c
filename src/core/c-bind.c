@@ -437,7 +437,7 @@ Option(Series*) Get_Word_Container(
             Level* level = CTX_LEVEL_IF_ON_STACK(cast(Context*, specifier));
             if (not level)
                 goto next_virtual;
-            Option(Context*) object = Level_Target(level);
+            Option(Context*) object = Level_Coupling(level);
             if (not object)
                 goto next_virtual;
 
@@ -1148,7 +1148,7 @@ void Rebind_Values_Deep(
             // binding pointer (in the function's value cell) is changed to
             // be this object.
             //
-            Option(Context*) stored = VAL_FRAME_TARGET(v);
+            Option(Context*) stored = VAL_FRAME_COUPLING(v);
             if (not stored) {
                 //
                 // Leave NULL bindings alone.  Hence, unlike in R3-Alpha, an
@@ -1165,7 +1165,7 @@ void Rebind_Values_Deep(
             }
             else {
                 if (Is_Overriding_Context(unwrap stored, to))
-                    INIT_VAL_FRAME_TARGET(v, to);
+                    INIT_VAL_FRAME_COUPLING(v, to);
                 else {
                     // Could be bound to a reified frame context, or just
                     // to some other object not related to this derivation.

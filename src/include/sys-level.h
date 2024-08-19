@@ -240,17 +240,17 @@ INLINE LineNumber LineNumber_Of_Level(Level* L) {
 INLINE void INIT_LVL_PHASE(Level* L, Phase* phase)  // check types
   { INIT_VAL_FRAME_PHASE_OR_LABEL(L->rootvar, phase); }  // ...only
 
-INLINE void INIT_LVL_TARGET(Level* L, Option(Context*) target)
-  { INIT_VAL_FRAME_TARGET(L->rootvar, target); }  // also fast
+INLINE void INIT_LVL_COUPLING(Level* L, Option(Context*) coupling)
+  { INIT_VAL_FRAME_COUPLING(L->rootvar, coupling); }  // also fast
 
 // Each ACTION! cell for things like RETURN/BREAK/CONTINUE has a piece of
-// information in it that can can be unique (the target).  When invoked, that
-// target is held in the Level*.  Generic dispatchers for things like RETURN
-// interprets that target as the FRAME! which the instance is specifically
+// information in it that can can be unique (the "coupling").  When invoked,
+// coupling is held in the Level*.  Generic dispatchers for things like RETURN
+// interprets that coupling as the FRAME! which the instance is specifically
 // intended to return from (break out of, etc.)
 //
-#define Level_Target(L) \
-    VAL_FRAME_TARGET((L)->rootvar)
+#define Level_Coupling(L) \
+    VAL_FRAME_COUPLING((L)->rootvar)
 
 INLINE Option(const Symbol*) Level_Label(Level* L) {
     assert(Is_Action_Level(L));
