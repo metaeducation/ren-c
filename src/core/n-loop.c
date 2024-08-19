@@ -105,7 +105,7 @@ DECLARE_NATIVE(definitional_break)
     if (not target)
         fail (Error_Archetype_Invoked_Raw());
 
-    Level* loop_level = CTX_LEVEL_MAY_FAIL(unwrap(target));
+    Level* loop_level = CTX_LEVEL_MAY_FAIL(unwrap target);
 
     Init_Action(
         SPARE,  // use as label for throw
@@ -149,7 +149,7 @@ DECLARE_NATIVE(definitional_continue)
     if (not target)
         fail (Error_Archetype_Invoked_Raw());
 
-    Level* loop_level = CTX_LEVEL_MAY_FAIL(unwrap(target));
+    Level* loop_level = CTX_LEVEL_MAY_FAIL(unwrap target);
 
     Init_Action(
         SPARE,  // use as label for throw
@@ -666,7 +666,7 @@ DECLARE_NATIVE(definitional_stop)  // See CYCLE for notes about STOP
     if (not target)
         fail (Error_Archetype_Invoked_Raw());
 
-    Level* loop_level = CTX_LEVEL_MAY_FAIL(unwrap(target));
+    Level* loop_level = CTX_LEVEL_MAY_FAIL(unwrap target);
 
     Init_Action(
         SPARE,  // use as label for throw

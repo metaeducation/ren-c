@@ -70,7 +70,7 @@ void Prep_Action_Level(
         if (not arg)
             break;
 
-        Copy_Cell(arg, unwrap(with));  // do not decay [1]
+        Copy_Cell(arg, unwrap with);  // do not decay [1]
 
         if (Cell_ParamClass(param) == PARAMCLASS_META)
             Meta_Quotify(arg);
@@ -105,7 +105,7 @@ bool Pushed_Continuation(
     Option(const Atom*) with  // can be same as out or not GC-safe, may copy
 ){
     assert(branch != out);  // it's legal for `with` to be the same as out
-    assert(not with or unwrap(with) == out or not Is_Api_Value(unwrap(with)));
+    assert(not with or (unwrap with) == out or not Is_Api_Value(unwrap with));
 
     if (Is_Action(branch))  // antiform frames are legal
         goto handle_action;
@@ -125,7 +125,7 @@ bool Pushed_Continuation(
         if (with == nullptr)
             Freshen_Cell(out);
         else
-            Copy_Cell(out, unwrap(with));  // need lifetime preserved
+            Copy_Cell(out, unwrap with);  // need lifetime preserved
         Push_Level(out, grouper);
         goto pushed_continuation;
     }

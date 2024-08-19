@@ -311,7 +311,7 @@ INLINE const Byte* Back_Scan_UTF8_Char(
     uint_fast8_t trail = g_trailing_bytes_for_utf8[*source];
 
     if (size) {  // Check that we have enough valid source bytes
-        if (cast(uint_fast8_t, trail + 1) > *unwrap(size))
+        if (cast(uint_fast8_t, trail + 1) > *(unwrap size))
             return nullptr;
     }
     else if (trail != 0) {
@@ -342,7 +342,7 @@ INLINE const Byte* Back_Scan_UTF8_Char(
         return nullptr;  // UTF-16 surrogate values illegal in UTF-8
 
     if (size)
-        *unwrap(size) -= trail;
+        *(unwrap size) -= trail;
 
     if (*out == 0)  // string types disallow internal 0 bytes in Ren-C [1]
         return nullptr;

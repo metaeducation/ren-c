@@ -520,7 +520,7 @@ Bounce MAKE_Date(
 ){
     assert(kind == REB_DATE);
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
 
     if (Is_Date(arg))
         return Copy_Cell(OUT, arg);
@@ -705,7 +705,7 @@ void Pick_Or_Poke_Date(
 
     if (not opt_poke) {
         assert(opt_out);
-        Value* out = unwrap(opt_out);
+        Value* out = unwrap opt_out;
 
         switch (sym) {
           case SYM_YEAR:
@@ -805,7 +805,7 @@ void Pick_Or_Poke_Date(
     }
     else {
         assert(not opt_out);
-        const Value* poke = unwrap(opt_poke);
+        const Value* poke = unwrap opt_poke;
 
         // Here the desire is to modify the incoming date directly.  This is
         // done by changing the components that need to change which were

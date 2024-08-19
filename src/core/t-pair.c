@@ -54,7 +54,7 @@ Bounce MAKE_Pair(
 ){
     assert(kind == REB_PAIR);
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
 
     if (Is_Pair(arg))
         return Copy_Cell(OUT, arg);

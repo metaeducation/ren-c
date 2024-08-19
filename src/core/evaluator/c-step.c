@@ -324,18 +324,18 @@ Bounce Stepper_Executor(Level* L)
 
         if (
             not L_next_gotten
-            or not Is_Action(unwrap(L_next_gotten))
+            or not Is_Action(unwrap L_next_gotten)
         ){
             goto give_up_backward_quote_priority;  // note only ACTION! is ENFIXED
         }
     } else
         goto give_up_backward_quote_priority;
 
-    if (Not_Enfixed(unwrap(L_next_gotten)))
+    if (Not_Enfixed(unwrap L_next_gotten))
         goto give_up_backward_quote_priority;
 
   blockscope {
-    Action* enfixed = VAL_ACTION(unwrap(L_next_gotten));
+    Action* enfixed = VAL_ACTION(unwrap L_next_gotten);
     Array* paramlist = ACT_PARAMLIST(enfixed);
 
     if (Not_Subclass_Flag(VARLIST, paramlist, PARAMLIST_QUOTES_FIRST))
@@ -431,8 +431,8 @@ Bounce Stepper_Executor(Level* L)
     Push_Level(OUT, sub);
     Push_Action(
         sub,
-        VAL_ACTION(unwrap(L_current_gotten)),
-        VAL_FRAME_TARGET(unwrap(L_current_gotten))
+        VAL_ACTION(unwrap L_current_gotten),
+        VAL_FRAME_TARGET(unwrap L_current_gotten)
     );
     if (Is_Word(L_current))
         Begin_Enfix_Action(sub, Cell_Word_Symbol(L_current));
@@ -636,10 +636,10 @@ Bounce Stepper_Executor(Level* L)
         if (not L_current_gotten)
             L_current_gotten = Lookup_Word_May_Fail(L_current, L_specifier);
 
-        if (Is_Action(unwrap(L_current_gotten))) {
-            Action* action = VAL_ACTION(unwrap(L_current_gotten));
+        if (Is_Action(unwrap L_current_gotten)) {
+            Action* action = VAL_ACTION(unwrap L_current_gotten);
 
-            if (Is_Enfixed(unwrap(L_current_gotten))) {
+            if (Is_Enfixed(unwrap L_current_gotten)) {
                 if (
                     Get_Action_Flag(action, POSTPONES_ENTIRELY)
                     or Get_Action_Flag(action, DEFERS_LOOKBACK)
@@ -654,10 +654,10 @@ Bounce Stepper_Executor(Level* L)
             }
 
             Option(Context*) target = VAL_FRAME_TARGET(
-                unwrap(L_current_gotten)
+                unwrap L_current_gotten
             );
             const Symbol* label = Cell_Word_Symbol(L_current);  // use WORD!
-            bool enfixed = Is_Enfixed(unwrap(L_current_gotten));
+            bool enfixed = Is_Enfixed(unwrap L_current_gotten);
             if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE)) {
                 if (enfixed) {
                     assert(false);  // !!! want OUT as *right* hand side...
@@ -676,7 +676,7 @@ Bounce Stepper_Executor(Level* L)
                 and Not_Level_At_End(L)  // can't do <end>, fallthru to error
                 and not SPORADICALLY(10)  // debug build bypass every 10th call
             ){
-                Copy_Meta_Cell(CURRENT, unwrap(L_current_gotten));
+                Copy_Meta_Cell(CURRENT, unwrap L_current_gotten);
                 INIT_VAL_ACTION_LABEL(CURRENT, label);  // use the word
                 Param* param = ACT_PARAM(action, 2);
                 Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
@@ -700,13 +700,13 @@ Bounce Stepper_Executor(Level* L)
         }
 
         if (
-            Is_Antiform(unwrap(L_current_gotten))  // checked second
-            and not Is_Antiform_Get_Friendly(unwrap(L_current_gotten))
+            Is_Antiform(unwrap L_current_gotten)  // checked second
+            and not Is_Antiform_Get_Friendly(unwrap L_current_gotten)
         ){
-            fail (Error_Bad_Word_Get(L_current, unwrap(L_current_gotten)));
+            fail (Error_Bad_Word_Get(L_current, unwrap L_current_gotten));
         }
 
-        Copy_Cell(OUT, unwrap(L_current_gotten));
+        Copy_Cell(OUT, unwrap L_current_gotten);
         break;
 
 
@@ -795,7 +795,7 @@ Bounce Stepper_Executor(Level* L)
         if (not L_current_gotten)
             L_current_gotten = Lookup_Word_May_Fail(L_current, L_specifier);
 
-        Copy_Cell(OUT, unwrap(L_current_gotten));
+        Copy_Cell(OUT, unwrap L_current_gotten);
 
         if (STATE == REB_META_WORD)
             Meta_Quotify(OUT);
@@ -1799,10 +1799,10 @@ Bounce Stepper_Executor(Level* L)
     if (
         not L_next_gotten
         or (
-            not (Is_Word(L_next) and Is_Action(unwrap(L_next_gotten)))
+            not (Is_Word(L_next) and Is_Action(unwrap L_next_gotten))
             and not Is_Frame(L_next)
         )
-        or Not_Enfixed(unwrap(L_next_gotten))
+        or Not_Enfixed(unwrap L_next_gotten)
     ){
       lookback_quote_too_late: // run as if starting new expression
 
@@ -1818,7 +1818,7 @@ Bounce Stepper_Executor(Level* L)
   //=//// IS WORD ENFIXEDLY TIED TO A FUNCTION (MAY BE "INVISIBLE") ///////=//
 
   blockscope {
-    Action* enfixed = VAL_ACTION(unwrap(L_next_gotten));
+    Action* enfixed = VAL_ACTION(unwrap L_next_gotten);
     Array* paramlist = ACT_PARAMLIST(enfixed);
 
     if (Get_Subclass_Flag(VARLIST, paramlist, PARAMLIST_QUOTES_FIRST)) {
@@ -1947,7 +1947,7 @@ Bounce Stepper_Executor(Level* L)
 
     Level* sub = Make_Action_Sublevel(L);
     Push_Level(OUT, sub);
-    Push_Action(sub, enfixed, VAL_FRAME_TARGET(unwrap(L_next_gotten)));
+    Push_Action(sub, enfixed, VAL_FRAME_TARGET(unwrap L_next_gotten));
     Begin_Enfix_Action(
         sub,
         Is_Frame(L_next) ? VAL_FRAME_LABEL(L_next) : Cell_Word_Symbol(L_next)

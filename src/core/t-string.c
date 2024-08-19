@@ -343,7 +343,7 @@ Bounce MAKE_String(
     Heart heart = cast(Heart, k);
 
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(heart, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(heart, unwrap parent));
 
     if (Is_Integer(def)) {  // new string with given integer capacity
         //
@@ -1077,7 +1077,7 @@ REBTYPE(String)
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(  // does read-only check
             v,
-            unwrap(id),
+            unwrap id,
             arg,
             flags,
             len,

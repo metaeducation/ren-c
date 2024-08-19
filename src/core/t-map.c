@@ -289,21 +289,21 @@ REBLEN Find_Map_Entry(
     if (n) {  // re-set it:
         Copy_Cell(
             Series_At(Value, pairlist, ((n - 1) * 2) + 1),
-            Is_Void(unwrap(val)) ? ZOMBIE_CELL : unwrap(val)
+            Is_Void(unwrap val) ? ZOMBIE_CELL : unwrap val
         );
         return n;
     }
 
-    if (Is_Void(unwrap(val)))
+    if (Is_Void(unwrap val))
         return 0;  // trying to remove non-existing key
 
-    assert(not Is_Antiform(unwrap(val)));
+    assert(not Is_Antiform(unwrap val));
 
     // Create new entry.  Note that it does not copy underlying series (e.g.
     // the data of a string), which is why the immutability test is necessary
     //
     Append_Value(pairlist, key);
-    Append_Value(pairlist, c_cast(Element*, unwrap(val)));  // val not void
+    Append_Value(pairlist, c_cast(Element*, unwrap val));  // val not void
 
     return (indexes[slot] = (Array_Len(pairlist) / 2));
 }
@@ -353,7 +353,7 @@ Bounce MAKE_Map(
     const Value* arg
 ){
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
 
     if (Any_Number(arg)) {
         return Init_Map(OUT, Make_Map(Int32s(arg, 0)));

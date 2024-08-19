@@ -101,7 +101,7 @@ const Byte* Analyze_String_For_Scan(
     } while (len > 0 and not IS_SPACE(c = Codepoint_At(up)));
 
     if (size_out)  // give back byte size before trailing spaces
-        *unwrap(size_out) = up - at_index;
+        *(unwrap size_out) = up - at_index;
 
     // Rest better be just spaces
     //

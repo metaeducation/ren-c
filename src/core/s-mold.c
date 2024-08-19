@@ -325,10 +325,10 @@ void Form_Array_At(
         const Element* item = Array_At(array, index + n);
         Value* wval = nullptr;
         if (context and (Is_Word(item) or Is_Get_Word(item))) {
-            wval = try_unwrap(Select_Symbol_In_Context(
-                CTX_ARCHETYPE(unwrap(context)),
+            wval = maybe Select_Symbol_In_Context(
+                CTX_ARCHETYPE(unwrap context),
                 Cell_Word_Symbol(item)
-            ));
+            );
             if (wval) {
                 if (relax and (Is_Antiform(wval)))
                     item = Copy_Meta_Cell(safe, wval);

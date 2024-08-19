@@ -474,7 +474,7 @@ int64_t Add_Max(Option(Heart) heart, int64_t n, int64_t m, int64_t maxi)
     int64_t r = n + m;
     if (r < -maxi or r > maxi) {
         if (heart)
-            fail (Error_Type_Limit_Raw(Datatype_From_Kind(unwrap(heart))));
+            fail (Error_Type_Limit_Raw(Datatype_From_Kind(unwrap heart)));
         r = r > 0 ? maxi : -maxi;
     }
     return r;

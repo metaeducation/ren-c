@@ -94,7 +94,7 @@ void *Try_Alloc_Core(size_t size)
     // notice memory usage limit exceeded *before* the allocation is performed
 
     g_mem.usage += size;
-    if (g_mem.usage_limit and g_mem.usage > unwrap(g_mem.usage_limit)) {
+    if (g_mem.usage_limit and g_mem.usage > unwrap g_mem.usage_limit) {
         g_mem.usage -= size;
     }
 

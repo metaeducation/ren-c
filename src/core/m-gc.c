@@ -878,7 +878,7 @@ static void Mark_Level_Stack_Deep(void)
         );
 
         if (L->label) { // nullptr if anonymous
-            const Symbol* sym = unwrap(L->label);
+            const Symbol* sym = unwrap L->label;
             if (not Is_Node_Marked(sym))
                 Queue_Unmarked_Accessible_Series_Deep(sym);
         }

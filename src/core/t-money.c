@@ -82,7 +82,7 @@ Bounce MAKE_Money(
 ){
     assert(kind == REB_MONEY);
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
 
     if (Is_Logic(arg)) {
         return Init_Money(OUT, int_to_deci(Cell_Logic(arg) ? 1 : 0));

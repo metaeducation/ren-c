@@ -468,13 +468,13 @@ DECLARE_NATIVE(set_env)
 
     if (not SetEnvironmentVariable(
         key_wide,
-        try_unwrap(val_wide)  // null means unset the environment variable
+        maybe val_wide  // null means unset the environment variable
     )){
         Value* error = rebError_OS(GetLastError());
         rebJumps ("fail", rebR(error));
     }
 
-    rebFree(try_unwrap(val_wide));
+    rebFree(maybe val_wide);  // nulls no-op for rebFree()
     rebFree(key_wide);
   #else
     char *key_utf8 = rebSpell(variable);

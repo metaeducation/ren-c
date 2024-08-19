@@ -291,7 +291,7 @@ INLINE Option(const String*) Cell_Parameter_String(const Cell* param) {
 
 INLINE void Set_Parameter_String(Cell* param, Option(const String*) string) {
     assert(HEART_BYTE(param) == REB_PARAMETER);
-    Init_Cell_Node2(param, try_unwrap(string));
+    Init_Cell_Node2(param, maybe string);
 }
 
 

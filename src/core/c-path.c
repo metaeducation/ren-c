@@ -211,7 +211,7 @@ Bounce MAKE_Path(
     Heart heart = cast(Heart, k);
 
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(heart, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(heart, unwrap parent));
 
     if (not Is_Block(arg))
         fail (Error_Bad_Make(heart, arg)); // "make path! 0" has no meaning

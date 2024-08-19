@@ -178,7 +178,7 @@ Bounce Chainer_Dispatcher(Level* const L)
     sub->label = VAL_FRAME_LABEL(chained);
   #if !defined(NDEBUG)
     sub->label_utf8 = sub->label
-        ? String_UTF8(unwrap(sub->label))
+        ? String_UTF8(unwrap sub->label)
         : "(anonymous)";
   #endif
 

@@ -79,11 +79,11 @@ INLINE Element* Init_Varargs_Untyped_Enfix(
     Option(const Value*) left
 ){
     Array* feed;
-    if (not left or Is_Void(unwrap(left)))
+    if (not left or Is_Void(unwrap left))
         feed = EMPTY_ARRAY;
     else {
         Array* singular = Alloc_Singular(NODE_FLAG_MANAGED);
-        Copy_Cell(Stub_Cell(singular), unwrap(left));
+        Copy_Cell(Stub_Cell(singular), unwrap left);
 
         feed = Alloc_Singular(FLAG_FLAVOR(FEED) | NODE_FLAG_MANAGED);
         Init_Block(Stub_Cell(feed), singular);  // index 0

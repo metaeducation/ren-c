@@ -120,13 +120,13 @@ INLINE Size Cell_String_Size_Limit_At(
     REBLEN len_at = Cell_String_Len_At(v);
     if (cast(REBLEN, limit) >= len_at) {  // UNLIMITED casts to large unsigned
         if (length_out)
-            *unwrap(length_out) = len_at;
+            *(unwrap length_out) = len_at;
         tail = Cell_String_Tail(v);  // byte count known (fast)
     }
     else {
         assert(limit >= 0);
         if (length_out)
-            *unwrap(length_out) = limit;
+            *(unwrap length_out) = limit;
         tail = at;
         for (; limit > 0; --limit)
             tail = Skip_Codepoint(tail);

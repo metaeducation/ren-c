@@ -98,7 +98,7 @@ Bounce MAKE_Bitset(
 ){
     assert(kind == REB_BITSET);
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
 
     REBINT len = Find_Max_Bit(arg);
     if (len == NOT_FOUND)

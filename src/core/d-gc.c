@@ -143,7 +143,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case REB_PARAMETER: {
         if (Cell_Parameter_Spec(v))
-            assert(Is_Node_Marked(unwrap(Cell_Parameter_Spec(v))));
+            assert(Is_Node_Marked(unwrap Cell_Parameter_Spec(v)));
         break; }
 
       case REB_BITSET: {

@@ -128,7 +128,7 @@ bool Typecheck_Atom_Core(
     bool match_all;
 
     if (Cell_Heart(tests) == REB_PARAMETER) {  // usually antiform
-        const Array* array = try_unwrap(Cell_Parameter_Spec(tests));
+        const Array* array = maybe Cell_Parameter_Spec(tests);
         if (array == nullptr)
             return true;  // implicitly all is permitted
         item = Array_Head(array);
@@ -415,7 +415,7 @@ bool Typecheck_Coerce_Argument(
     }
 
   blockscope {
-    const Array* spec = try_unwrap(Cell_Parameter_Spec(param));
+    const Array* spec = maybe Cell_Parameter_Spec(param);
     const Byte* optimized = spec->misc.any.at_least_4;
     const Byte* optimized_tail = optimized + sizeof(spec->misc.any.at_least_4);
 

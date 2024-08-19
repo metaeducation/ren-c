@@ -96,7 +96,7 @@ Bounce MAKE_Word(
     Heart heart = cast(Heart, k);
 
     if (parent)
-        fail (Error_Bad_Make_Parent(heart, unwrap(parent)));
+        fail (Error_Bad_Make_Parent(heart, unwrap parent));
 
     if (Any_Word(arg)) {
         //
@@ -329,7 +329,7 @@ REBTYPE(Word)
             Option(Sigil) sigil = Sigil_Of_Any_Word_Kind(heart);
             if (not sigil)
                 return Init_Nulled(OUT);
-            return Init_Sigil(OUT, unwrap(sigil)); }
+            return Init_Sigil(OUT, unwrap sigil); }
 
           default:
             break;

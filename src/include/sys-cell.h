@@ -183,12 +183,12 @@
 //
 INLINE void Init_Cell_Node1(Cell* v, Option(const Node*) node) {
     assert(v->header.bits & CELL_FLAG_FIRST_IS_NODE);
-    PAYLOAD(Any, v).first.node = try_unwrap(node);
+    PAYLOAD(Any, v).first.node = maybe node;
 }
 
 INLINE void Init_Cell_Node2(Cell* v, Option(const Node*) node) {
     assert(v->header.bits & CELL_FLAG_SECOND_IS_NODE);
-    PAYLOAD(Any, v).second.node = try_unwrap(node);
+    PAYLOAD(Any, v).second.node = maybe node;
 }
 
 #define Cell_Node1(v) \
@@ -475,7 +475,7 @@ INLINE Value* Freshen_Cell_Untracked_Inline(Cell* v) {
 
         template<typename T>
         void operator=(Option(T) right) {
-            ref->extra.Any.node = try_unwrap(right);
+            ref->extra.Any.node = maybe right;
             Assert_Cell_Binding_Valid(ref);
         }
 

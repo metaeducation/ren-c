@@ -98,7 +98,7 @@ DECLARE_NATIVE(delimit)
         Push_Mold(mo);
 
         if (REF(head) and delimiter)
-            Form_Value(mo, unwrap(delimiter));
+            Form_Value(mo, unwrap delimiter);
 
         // Note: This path used to shortcut with running TO TEXT! if not using
         // /HEAD or /TAIL options, but it's probably break-even to invoke the
@@ -107,7 +107,7 @@ DECLARE_NATIVE(delimit)
         Form_Value(mo, cast(Element*, line));
 
         if (REF(tail) and delimiter)
-            Form_Value(mo, unwrap(delimiter));
+            Form_Value(mo, unwrap delimiter);
 
         return Init_Text(OUT, Pop_Molded_String(mo));
     }
@@ -128,7 +128,7 @@ DECLARE_NATIVE(delimit)
     // (will be thrown away if the block turns out to make nothing)
     //
     if (REF(head) and delimiter)
-        Form_Value(mo, unwrap(delimiter));
+        Form_Value(mo, unwrap delimiter);
 
     bool pending = false;  // pending delimiter output, *if* more non-nulls
     bool nothing = true;  // any elements seen so far have been null or blank
@@ -169,7 +169,7 @@ DECLARE_NATIVE(delimit)
         }
         else {
             if (pending and delimiter)
-                Form_Value(mo, unwrap(delimiter));
+                Form_Value(mo, unwrap delimiter);
 
             if (Is_Quoted(OUT)) {
                 Unquotify(OUT, 1);
@@ -189,7 +189,7 @@ DECLARE_NATIVE(delimit)
     }
     else {
         if (REF(tail) and delimiter)
-            Form_Value(mo, unwrap(delimiter));
+            Form_Value(mo, unwrap delimiter);
         Init_Text(OUT, Pop_Molded_String(mo));
     }
 

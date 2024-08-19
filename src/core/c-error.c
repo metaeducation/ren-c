@@ -410,7 +410,7 @@ Bounce MAKE_Error(
     UNUSED(kind);
 
     if (parent)  // !!! Should probably be able to work!
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        fail (Error_Bad_Make_Parent(kind, unwrap parent));
 
     // Frame from the error object template defined in %sysobj.r
     //
@@ -504,22 +504,22 @@ Bounce MAKE_Error(
         );
 
         if (category) {
-            assert(Is_Object(unwrap(category)));
+            assert(Is_Object(unwrap category));
 
             // Find correct message for ID: (if any)
 
             Option(Value*) message = Select_Symbol_In_Context(
-                unwrap(category),
+                unwrap category,
                 Cell_Word_Symbol(&vars->id)
             );
 
             if (message) {
-                assert(Is_Text(unwrap(message)) or Is_Block(unwrap(message)));
+                assert(Is_Text(unwrap message) or Is_Block(unwrap message));
 
                 if (not Is_Nulled(&vars->message))
                     return RAISE(Error_Invalid_Error_Raw(arg));
 
-                Copy_Cell(&vars->message, unwrap(message));
+                Copy_Cell(&vars->message, unwrap message);
             }
             else {
                 // At the moment, we don't let the user make a user-ID'd
@@ -850,7 +850,7 @@ Context* Error_No_Arg(Option(const Symbol*) label, const Symbol* symbol)
 
     DECLARE_ATOM (label_word);
     if (label)
-        Init_Word(label_word, unwrap(label));
+        Init_Word(label_word, unwrap label);
     else
         Init_Nulled(label_word);
 
@@ -918,7 +918,7 @@ Context* Error_Invalid_Arg(Level* L, const Param* param)
     if (not L->label)
         Init_Nulled(label);
     else
-        Init_Word(label, unwrap(L->label));
+        Init_Word(label, unwrap L->label);
 
     DECLARE_ATOM (param_name);
     Init_Word(param_name, KEY_SYMBOL(ACT_KEY(Level_Phase(L), index)));
@@ -1085,14 +1085,14 @@ Context* Error_Arg_Type(
 
     DECLARE_ATOM (label);
     if (name)
-        Init_Word(label, unwrap(name));
+        Init_Word(label, unwrap name);
     else
         Init_Nulled(label);
 
     DECLARE_ATOM (spec);
     Option(const Array*) param_array = Cell_Parameter_Spec(param);
     if (param_array)
-        Init_Block(spec, unwrap(param_array));
+        Init_Block(spec, unwrap param_array);
     else
         Init_Block(spec, EMPTY_ARRAY);
 
@@ -1141,7 +1141,7 @@ Context* Error_No_Logic_Typecheck(Option(const Symbol*) label)
 {
     DECLARE_ATOM (name);
     if (label)
-        Init_Word(name, unwrap(label));
+        Init_Word(name, unwrap label);
     else
         Init_Nulled(name);
 
@@ -1156,7 +1156,7 @@ Context* Error_No_Arg_Typecheck(Option(const Symbol*) label)
 {
     DECLARE_ATOM (name);
     if (label)
-        Init_Word(name, unwrap(label));
+        Init_Word(name, unwrap label);
     else
         Init_Nulled(name);
 

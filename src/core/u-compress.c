@@ -190,7 +190,7 @@ Byte* Compress_Alloc_Core(
 
     assert(strm.total_out == buf_size - strm.avail_out);
     if (size_out)
-        *unwrap(size_out) = strm.total_out;
+        *(unwrap size_out) = strm.total_out;
 
   #if !defined(NDEBUG)
     //

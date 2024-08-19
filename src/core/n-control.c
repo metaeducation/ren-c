@@ -270,11 +270,11 @@ static Bounce Then_Else_Isotopic_Object_Helper(
   handle_lazy_object: {  /////////////////////////////////////////////////////
 
     Option(Value*) then_hook = Select_Symbol_In_Context(in, Canon(THEN));
-    if (then_hook and Is_Void(unwrap(then_hook)))
+    if (then_hook and Is_Void(unwrap then_hook))
         then_hook = nullptr;  // can be unset by Debranch_Output()
 
     Option(Value*) else_hook = Select_Symbol_In_Context(in, Canon(ELSE));
-    if (else_hook and Is_Void(unwrap(else_hook)))
+    if (else_hook and Is_Void(unwrap else_hook))
         else_hook = nullptr;  // can be unset by Debranch_Output()
 
     if (not then_hook and not else_hook) {  // !!! should it always take THEN?
@@ -301,7 +301,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
             Copy_Cell(OUT, in);  // pass lazy object thru to ELSEs
             return OUT;
         }
-        hook = unwrap(then_hook);
+        hook = unwrap then_hook;
     }
     else {
         if (not else_hook) {
@@ -309,7 +309,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
             Copy_Cell(OUT, in);  // pass lazy object thru to THENs (?)
             return OUT;
         }
-        hook = unwrap(else_hook);
+        hook = unwrap else_hook;
     }
 
     STATE = ST_THENABLE_RUNNING_BRANCH;
@@ -1654,7 +1654,7 @@ void Debranch_Output(Atom* out) {
             for (i = 0; i < 2; ++i) {
                 Option(Value*) hook = Select_Symbol_In_Context(out, syms[i]);
                 if (hook)
-                    Init_Void(unwrap(hook));
+                    Init_Void(unwrap hook);
             }
         }
     }
@@ -1683,7 +1683,7 @@ bool Pushed_Decaying_Level(Atom* out, const Atom* obj, Flags flags) {
         out,
         flags,
         SPECIFIED,
-        unwrap(decayer),
+        unwrap decayer,
         nullptr  // no arguments to decay--must answer in isolation
     );
     if (not pushed)

@@ -78,7 +78,7 @@ INLINE void INIT_VAL_FRAME_LABEL(
 ){
     assert(Cell_Heart(v) == REB_FRAME);
     Assert_Cell_Writable(v);  // No label in archetype
-    INIT_VAL_FRAME_PHASE_OR_LABEL(v, try_unwrap(label));
+    INIT_VAL_FRAME_PHASE_OR_LABEL(v, maybe label);
 }
 
 

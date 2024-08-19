@@ -241,7 +241,7 @@ Bounce MAKE_Time(
 ){
     assert(kind == REB_TIME);
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        fail (Error_Bad_Make_Parent(kind, unwrap parent));
 
     switch (VAL_TYPE(arg)) {
     case REB_TIME: // just copy it (?)

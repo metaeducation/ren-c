@@ -52,7 +52,7 @@ Bounce MAKE_Integer(
 ){
     assert(kind == REB_INTEGER);
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
 
     if (Is_Logic(arg)) {
         //

@@ -102,7 +102,7 @@ Bounce MAKE_Issue(
     UNUSED(k);
 
     if (parent)
-        fail (Error_Bad_Make_Parent(REB_ISSUE, unwrap(parent)));
+        fail (Error_Bad_Make_Parent(REB_ISSUE, unwrap parent));
 
     switch(VAL_TYPE(arg)) {
       case REB_INTEGER:

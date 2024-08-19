@@ -125,7 +125,7 @@ void Dump_Stack(Level* L)
     else if (not L->label)
         label = "<anonymous>";
     else
-        label = String_UTF8(unwrap(L->label));
+        label = String_UTF8(unwrap L->label);
 
     printf("LABEL: %s @ FILE: %s @ LINE: %" PRIuPTR "\n",  // uintptr_t format
         label,
@@ -163,7 +163,7 @@ DECLARE_NATIVE(dump)
     PROBE(v);
     printf("=> ");
     if (Is_Word(v)) {
-        const Value* var = try_unwrap(Lookup_Word(v, SPECIFIED));
+        const Value* var = maybe Lookup_Word(v, SPECIFIED);
         if (not var) {
             PROBE("\\unbound\\");
         }

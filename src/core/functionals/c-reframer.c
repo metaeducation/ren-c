@@ -156,7 +156,7 @@ bool Init_Invokable_From_Feed_Throws(
     Feed* feed,
     bool error_on_deferred  // if not planning to keep running, can't ELSE/THEN
 ){
-    const Element* v = first ? unwrap(first) : Try_At_Feed(feed);
+    const Element* v = first ? unwrap first : Try_At_Feed(feed);
 
     // !!! The case of `([x]: @)` wants to make something which when it
     // evaluates becomes invisible.  There's no QUOTED? value that can do
@@ -410,7 +410,7 @@ DECLARE_NATIVE(reframer)
     if (not Typecheck_Coerce_Argument(param, SPARE)) {
         DECLARE_ATOM (label_word);
         if (label)
-            Init_Word(label_word, unwrap(label));
+            Init_Word(label_word, unwrap label);
         else
             Init_Blank(label_word);
 
@@ -443,7 +443,7 @@ DECLARE_NATIVE(reframer)
     SHUTDOWN_BINDER(&binder);
 
     if (error)  // once binder is cleaned up, safe to raise errors
-        fail (unwrap(error));
+        fail (unwrap error);
   }
 
     // We need the dispatcher to be willing to start the reframing step even

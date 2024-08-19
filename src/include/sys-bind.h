@@ -117,9 +117,8 @@ INLINE Value* Derelativize_Untracked(
         }
         else {
             REBLEN index;
-            Series* s = try_unwrap(
-                Get_Word_Container(&index, v, specifier, ATTACH_READ)
-            );
+            Series* s =
+                maybe Get_Word_Container(&index, v, specifier, ATTACH_READ);
             if (not s) {
                 out->extra = v->extra;
             }
@@ -451,8 +450,11 @@ INLINE const Value* Lookup_Word_May_Fail(
     Specifier* specifier
 ){
     REBLEN index;
-    Series* s = try_unwrap(
-        Get_Word_Container(&index, any_word, specifier, ATTACH_READ)
+    Series* s = maybe Get_Word_Container(
+        &index,
+        any_word,
+        specifier,
+        ATTACH_READ
     );
     if (not s)
         fail (Error_Not_Bound_Raw(any_word));
@@ -472,8 +474,11 @@ INLINE Option(const Value*) Lookup_Word(
     Specifier* specifier
 ){
     REBLEN index;
-    Series* s = try_unwrap(
-        Get_Word_Container(&index, any_word, specifier, ATTACH_READ)
+    Series* s = maybe Get_Word_Container(
+        &index,
+        any_word,
+        specifier,
+        ATTACH_READ
     );
     if (not s or index == INDEX_ATTACHED)
         return nullptr;
@@ -513,8 +518,11 @@ INLINE Value* Lookup_Mutable_Word_May_Fail(
     Specifier* specifier
 ){
     REBLEN index;
-    Series* s = try_unwrap(
-        Get_Word_Container(&index, any_word, specifier, ATTACH_WRITE)
+    Series* s = maybe Get_Word_Container(
+        &index,
+        any_word,
+        specifier,
+        ATTACH_WRITE
     );
     if (not s)
         fail (Error_Not_Bound_Raw(any_word));

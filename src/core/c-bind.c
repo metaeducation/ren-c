@@ -188,7 +188,7 @@ void Unbind_Values_Core(
     for (; v != tail; ++v) {
         if (
             Any_Wordlike(v)
-            and (not context or BINDING(v) == unwrap(context))
+            and (not context or BINDING(v) == unwrap context)
         ){
             Unbind_Any_Word(v);
         }
@@ -211,11 +211,11 @@ bool Try_Bind_Word(const Value* context, Value* word)
 {
     const bool strict = true;
     if (Is_Module(context)) {
-        Stub* patch = try_unwrap(MOD_PATCH(
+        Stub* patch = maybe MOD_PATCH(
             VAL_CONTEXT(context),
             Cell_Word_Symbol(word),
             strict
-        ));
+        );
         if (not patch)
             return false;
         INIT_VAL_WORD_INDEX(word, INDEX_PATCHED);
@@ -442,7 +442,7 @@ Option(Series*) Get_Word_Container(
                 goto next_virtual;
 
             REBLEN len = Find_Symbol_In_Context(
-                CTX_ARCHETYPE(unwrap(object)),
+                CTX_ARCHETYPE(unwrap object),
                 symbol,
                 true
             );
@@ -450,7 +450,7 @@ Option(Series*) Get_Word_Container(
                 goto next_virtual;
 
             *index_out = len;
-            return unwrap(object);
+            return unwrap object;
           }
         }
 
@@ -970,9 +970,9 @@ void Clonify_And_Bind_Relative(
         and Any_Wordlike(v)
         and IS_WORD_UNBOUND(v)  // use unbound words as "in frame" cache [1]
     ){
-        REBINT n = Get_Binder_Index_Else_0(unwrap(binder), Cell_Word_Symbol(v));
+        REBINT n = Get_Binder_Index_Else_0(unwrap binder, Cell_Word_Symbol(v));
         VAL_WORD_INDEX_I32(v) = -(n);  // negative or zero signals unbound [2]
-        BINDING(v) = unwrap(relative);
+        BINDING(v) = unwrap relative;
     }
     else if (deeply and (Any_Series_Kind(heart) or Any_Sequence_Kind(heart))) {
         //
@@ -1156,7 +1156,7 @@ void Rebind_Values_Deep(
                 // BIND to an object must be performed, or METHOD should be
                 // used to do it implicitly.
             }
-            else if (REB_FRAME == CTX_TYPE(unwrap(stored))) {
+            else if (REB_FRAME == CTX_TYPE(unwrap stored)) {
                 //
                 // Leave bindings to frame alone, e.g. RETURN's definitional
                 // reference...may be an unnecessary optimization as they
@@ -1164,7 +1164,7 @@ void Rebind_Values_Deep(
                 // frames" (would that ever make sense?)
             }
             else {
-                if (Is_Overriding_Context(unwrap(stored), to))
+                if (Is_Overriding_Context(unwrap stored, to))
                     INIT_VAL_FRAME_TARGET(v, to);
                 else {
                     // Could be bound to a reified frame context, or just
@@ -1184,7 +1184,7 @@ void Rebind_Values_Deep(
 
             if (binder) {
                 REBLEN index = Get_Binder_Index_Else_0(
-                    unwrap(binder),
+                    unwrap binder,
                     Cell_Word_Symbol(v)
                 );
                 assert(index != 0);

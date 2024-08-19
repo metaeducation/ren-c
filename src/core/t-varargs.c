@@ -55,7 +55,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         return true;
     }
 
-    const Element* look = unwrap(opt_look);
+    const Element* look = unwrap opt_look;
 
     if (pclass == PARAMCLASS_NORMAL and Is_Comma(look)) {
         Init_For_Vararg_End(out, op);  // non-quoted COMMA!
@@ -75,7 +75,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         // Look ahead, and if actively bound see if it's to an enfix function
         // and the rules apply.
 
-        const Value* child_gotten = try_unwrap(Lookup_Word(look, specifier));
+        const Value* child_gotten = maybe Lookup_Word(look, specifier);
 
         if (child_gotten and Is_Action(child_gotten)) {
             if (Is_Enfixed(child_gotten)) {
@@ -339,7 +339,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 fail (out);
 
             fail (Error_Phase_Arg_Type(
-                unwrap(vararg_level), key, param, Stable_Unchecked(out))
+                unwrap vararg_level, key, param, Stable_Unchecked(out))
             );
         }
     }
@@ -361,7 +361,7 @@ Bounce MAKE_Varargs(
 ){
     assert(kind == REB_VARARGS);
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
 
     // With MAKE VARARGS! on an ANY-ARRAY?, the array is the backing store
     // (shared) that the varargs interface cannot affect, but changes to

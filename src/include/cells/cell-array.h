@@ -54,7 +54,7 @@ INLINE const Element* Cell_Array_Len_At(
         assert(Any_Sequence_Kind(Cell_Heart(v)));
         assert(VAL_INDEX_RAW(v) == 0);
         if (len_at_out)
-            *unwrap(len_at_out) = PAIRING_LEN;
+            *(unwrap len_at_out) = PAIRING_LEN;
         return c_cast(Element*, node);
     }
     const Array* arr = c_cast(Array*, node);
@@ -63,7 +63,7 @@ INLINE const Element* Cell_Array_Len_At(
     if (i < 0 or i > cast(REBIDX, len))
         fail (Error_Index_Out_Of_Range_Raw());
     if (len_at_out)  // inlining should remove this if() for Cell_Array_At()
-        *unwrap(len_at_out) = len - i;
+        *(unwrap len_at_out) = len - i;
     return Array_At(arr, i);
 }
 
@@ -76,7 +76,7 @@ INLINE const Element* Cell_Array_At(
         assert(Any_Sequence_Kind(Cell_Heart(v)));
         const Element* elem = c_cast(Element*, node);
         if (tail_out)
-            *unwrap(tail_out) = Pairing_Tail(elem);
+            *(unwrap tail_out) = Pairing_Tail(elem);
         return elem;
     }
     const Array* arr = c_cast(Array*, node);
@@ -86,7 +86,7 @@ INLINE const Element* Cell_Array_At(
         fail (Error_Index_Out_Of_Range_Raw());
     const Element* at = Array_At(arr, i);
     if (tail_out)  // inlining should remove this if() for no tail
-        *unwrap(tail_out) = at + (len - i);
+        *(unwrap tail_out) = at + (len - i);
     return at;
 }
 

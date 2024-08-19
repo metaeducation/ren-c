@@ -184,7 +184,7 @@ INLINE const char* File_UTF8_Of_Level(Level* L) {
     // !!! Note: Too early in boot at the moment to use Canon(ANONYMOUS).
     //
     Option(const String*) str = File_Of_Level(L);
-    return str ? String_UTF8(unwrap(str)) : "~anonymous~";
+    return str ? String_UTF8(unwrap str) : "~anonymous~";
 }
 
 INLINE LineNumber LineNumber_Of_Level(Level* L) {
@@ -310,7 +310,7 @@ INLINE Context* Context_For_Level_May_Manage(Level* L) {
 INLINE void Get_Level_Label_Or_Nulled(Sink(Value*) out, Level* L) {
     assert(Is_Action_Level(L));
     if (L->label)
-        Init_Word(out, unwrap(L->label));  // WORD!, PATH!, or stored invoke
+        Init_Word(out, unwrap L->label);  // WORD!, PATH!, or stored invoke
     else
         Init_Nulled(out);  // anonymous invocation
 }
@@ -318,7 +318,7 @@ INLINE void Get_Level_Label_Or_Nulled(Sink(Value*) out, Level* L) {
 INLINE const char* Level_Label_Or_Anonymous_UTF8(Level* L) {
     assert(Is_Action_Level(L));
     if (L->label)
-        return String_UTF8(unwrap(L->label));
+        return String_UTF8(unwrap L->label);
     return "[anonymous]";
 }
 

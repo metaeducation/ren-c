@@ -1550,7 +1550,7 @@ Value* ODBC_Column_To_Rebol_Value(
 
       case SQL_C_BINARY:
         if (allocated)
-            return rebRepossess(unwrap(allocated), len);
+            return rebRepossess(unwrap allocated, len);
         return rebSizedBinary(col->buffer, len);
 
     // There's no guarantee that CHAR fields contain valid UTF-8, but we
@@ -1748,7 +1748,7 @@ DECLARE_NATIVE(copy_odbc)
                     hstmt,
                     column_index,
                     col->c_type,
-                    unwrap(allocated),
+                    unwrap allocated,
                     len,  // amount of space in buffer
                     &len_check
                 );

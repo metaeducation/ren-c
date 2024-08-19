@@ -189,7 +189,7 @@ INLINE void Finalize_Variadic_Feed(Feed* feed) {
     assert(Is_Feed_At_End(feed));  // must spool, regardless of throw/fail!
 
     if (FEED_VAPTR(feed))
-        va_end(*unwrap(FEED_VAPTR(feed)));  // *ALL* valist get here [1]
+        va_end(*(unwrap FEED_VAPTR(feed)));  // *ALL* valist get here [1]
     else
         assert(FEED_PACKED(feed));
 
@@ -368,7 +368,7 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
         // common) can go into feed->fetched and not make an array at all.
         //
         Specifier* specifier = FEED_SPECIFIER(feed);
-        Array* reified = try_unwrap(Try_Scan_Variadic_Feed_Utf8_Managed(feed));
+        Array* reified = maybe Try_Scan_Variadic_Feed_Utf8_Managed(feed);
 
         if (not reified) {  // rebValue("", ...) [1]
             if (Is_Feed_At_End(feed))
@@ -397,7 +397,7 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
 } detect_again: {  ///////////////////////////////////////////////////////////
 
     if (FEED_VAPTR(feed))
-        feed->p = va_arg(*unwrap(FEED_VAPTR(feed)), const void*);
+        feed->p = va_arg(*(unwrap FEED_VAPTR(feed)), const void*);
     else
         feed->p = *FEED_PACKED(feed)++;
 
@@ -456,7 +456,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
         // differentiated and loaded.
         //
         if (FEED_VAPTR(feed)) {
-            feed->p = va_arg(*unwrap(FEED_VAPTR(feed)), const void*);
+            feed->p = va_arg(*(unwrap FEED_VAPTR(feed)), const void*);
         }
         else {
             // C++ variadics use an ordinary packed array of pointers, because
@@ -636,7 +636,7 @@ INLINE Feed* Prep_Array_Feed(
     Feed* feed = Prep_Feed_Common(preallocated, flags);
 
     if (first) {
-        feed->p = unwrap(first);
+        feed->p = unwrap first;
         Init_Array_Cell_At_Core(
             FEED_SINGLE(feed), REB_BLOCK, array, index, specifier
         );
@@ -717,7 +717,7 @@ INLINE Feed* Prep_Variadic_Feed(
         feed->p = *FEED_PACKED(feed)++;
     }
     else {
-        FEED_VAPTR_POINTER(feed) = unwrap(vaptr);
+        FEED_VAPTR_POINTER(feed) = unwrap vaptr;
         FEED_PACKED(feed) = nullptr;
         feed->p = p;
     }

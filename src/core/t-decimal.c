@@ -153,7 +153,7 @@ Bounce MAKE_Decimal(
     Heart heart = cast(Heart, k);
 
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(heart, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(heart, unwrap parent));
 
     REBDEC d;
 

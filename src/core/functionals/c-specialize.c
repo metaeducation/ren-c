@@ -108,7 +108,7 @@ Context* Make_Context_For_Action_Push_Partials(
 
     // If there is a PARTIALS list, then push its refinements.
     //
-    Array* partials = try_unwrap(ACT_PARTIALS(act));
+    Array* partials = maybe ACT_PARTIALS(act);
     if (partials) {
         const Element* word_tail = Array_Tail(partials);
         const Element* word = Array_Head(partials);
@@ -144,7 +144,7 @@ Context* Make_Context_For_Action_Push_Partials(
 
             Copy_Cell(arg, param);
             if (binder)
-                Add_Binder_Index(unwrap(binder), symbol, index);
+                Add_Binder_Index(unwrap binder, symbol, index);
 
             continue;
         }
@@ -268,7 +268,7 @@ bool Specialize_Action_Throws(
         // in, but this is likely the more useful behavior.
         //
         Virtual_Bind_Deep_To_Existing_Context(
-            unwrap(def),
+            unwrap def,
             exemplar,
             &binder,
             REB_SET_WORD
@@ -291,7 +291,7 @@ bool Specialize_Action_Throws(
         // Run block and ignore result (unless it is thrown)
         //
         Push_GC_Guard(exemplar);
-        bool threw = Do_Any_Array_At_Throws(out, unwrap(def), SPECIFIED);
+        bool threw = Do_Any_Array_At_Throws(out, unwrap def, SPECIFIED);
         Drop_GC_Guard(exemplar);
 
         if (threw) {
@@ -525,8 +525,8 @@ void For_Each_Unspecialized_Param(
         Flags flags = 0;
 
         if (partials) {  // even normal parameters can appear in partials
-            const Cell* partial_tail = Array_Tail(unwrap(partials));
-            const Cell* partial = Array_Head(unwrap(partials));
+            const Cell* partial_tail = Array_Tail(unwrap partials);
+            const Cell* partial = Array_Head(unwrap partials);
             for (; partial != partial_tail; ++partial) {
                 if (Are_Synonyms(
                     Cell_Word_Symbol(partial),
@@ -547,13 +547,13 @@ void For_Each_Unspecialized_Param(
     // Now jump around and take care of the partial refinements.
 
     if (partials) {
-        assert(Array_Len(unwrap(partials)) > 0);  // no partials means no array
+        assert(Array_Len(unwrap partials) > 0);  // no partials means no array
 
         // the highest priority are at *top* of stack, so we have to go
         // "downward" in the push order...e.g. the reverse of the array.
 
-        Cell* partial = Array_Tail(unwrap(partials));
-        Cell* head = Array_Head(unwrap(partials));
+        Cell* partial = Array_Tail(unwrap partials);
+        Cell* head = Array_Head(unwrap partials);
         for (; partial-- != head; ) {
             const Key* key = ACT_KEY(act, VAL_WORD_INDEX(partial));
             const Param* param = ACT_PARAM(act, VAL_WORD_INDEX(partial));
@@ -582,8 +582,8 @@ void For_Each_Unspecialized_Param(
         }
 
         if (partials) {
-            const Cell* partial_tail = Array_Tail(unwrap(partials));
-            const Cell* partial = Array_Head(unwrap(partials));
+            const Cell* partial_tail = Array_Tail(unwrap partials);
+            const Cell* partial = Array_Head(unwrap partials);
             for (; partial != partial_tail; ++partial) {
                 if (Are_Synonyms(
                     Cell_Word_Symbol(partial),
@@ -702,7 +702,7 @@ Value* First_Unspecialized_Arg(Option(const Param* *) param_out, Level* L)
     Phase* phase = Level_Phase(L);
     const Param* param = First_Unspecialized_Param(nullptr, phase);
     if (param_out)
-        *unwrap(param_out) = param;
+        *(unwrap param_out) = param;
 
     if (param == nullptr)
         return nullptr;

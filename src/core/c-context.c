@@ -214,8 +214,8 @@ static Value* Append_Context_Core(
         MISC(Hitch, updating) = patch;
 
         if (any_word) {  // bind word while we're at it
-            INIT_VAL_WORD_INDEX(unwrap(any_word), INDEX_PATCHED);
-            BINDING(unwrap(any_word)) = patch;
+            INIT_VAL_WORD_INDEX(unwrap any_word, INDEX_PATCHED);
+            BINDING(unwrap any_word) = patch;
         }
 
         return Stub_Cell(patch);
@@ -241,8 +241,8 @@ static Value* Append_Context_Core(
 
     if (any_word) {
         REBLEN len = CTX_LEN(context);  // length we just bumped
-        INIT_VAL_WORD_INDEX(unwrap(any_word), len);
-        BINDING(unwrap(any_word)) = context;
+        INIT_VAL_WORD_INDEX(unwrap any_word, len);
+        BINDING(unwrap any_word) = context;
     }
 
     return cast(Value*, value);  // location we just added (void cell)
@@ -317,7 +317,7 @@ void Collect_Context_Keys(
     const Key* key = CTX_KEYS(&tail, context);
 
     if (duplicate)
-        *unwrap(duplicate) = nullptr;
+        *(unwrap duplicate) = nullptr;
 
     for (; key != tail; ++key) {
         const Symbol* symbol = KEY_SYMBOL(key);
@@ -326,8 +326,8 @@ void Collect_Context_Keys(
             symbol,
             Collector_Index_If_Pushed(cl)
         )){
-            if (duplicate and not *unwrap(duplicate))  // returns first dup
-                *unwrap(duplicate) = symbol;
+            if (duplicate and not *(unwrap duplicate))  // returns first dup
+                *(unwrap duplicate) = symbol;
 
             continue;  // don't collect if already in bind table
         }
@@ -418,12 +418,12 @@ KeyList* Collect_KeyList_Managed(
 
     if (prior) {
         const Symbol* duplicate;
-        Collect_Context_Keys(&duplicate, cl, unwrap(prior));
+        Collect_Context_Keys(&duplicate, cl, unwrap prior);
         assert(not duplicate);  // context should have had all unique keys
     }
 
     if (head)
-        Collect_Inner_Loop(cl, unwrap(head), unwrap(tail));
+        Collect_Inner_Loop(cl, unwrap head, unwrap tail);
     else
         assert(not tail);
 
@@ -434,8 +434,8 @@ KeyList* Collect_KeyList_Managed(
     // array, otherwise reuse the original
     //
     KeyList* keylist;
-    if (prior and CTX_LEN(unwrap(prior)) == num_collected)
-        keylist = CTX_KEYLIST(unwrap(prior));
+    if (prior and CTX_LEN(unwrap prior) == num_collected)
+        keylist = CTX_KEYLIST(unwrap prior);
     else {
         keylist = Make_Series(KeyList,
             num_collected,  // no terminator
@@ -634,7 +634,7 @@ Context* Make_Context_Detect_Managed(
         LINK(Ancestor, keylist) = keylist;
     }
     else {
-        if (keylist == CTX_KEYLIST(unwrap(parent))) {
+        if (keylist == CTX_KEYLIST(unwrap parent)) {
             INIT_CTX_KEYLIST_SHARED(context, keylist);
 
             // We leave the ancestor link as-is in the shared keylist--so
@@ -644,7 +644,7 @@ Context* Make_Context_Detect_Managed(
         }
         else {
             INIT_CTX_KEYLIST_UNIQUE(context, keylist);
-            LINK(Ancestor, keylist) = CTX_KEYLIST(unwrap(parent));
+            LINK(Ancestor, keylist) = CTX_KEYLIST(unwrap parent);
         }
     }
 
@@ -663,7 +663,7 @@ Context* Make_Context_Detect_Managed(
         //
         Value* dest = CTX_VARS_HEAD(context);
         const Value* src_tail;
-        Value* src = CTX_VARS(&src_tail, unwrap(parent));
+        Value* src = CTX_VARS(&src_tail, unwrap parent);
         for (; src != src_tail; ++dest, ++src) {
             Flags flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
             assert(Is_Trash(dest));
@@ -674,7 +674,7 @@ Context* Make_Context_Detect_Managed(
     }
 
     if (parent)  // v-- passing in nullptr to indicate no more binds
-        Rebind_Context_Deep(unwrap(parent), context, nullptr);
+        Rebind_Context_Deep(unwrap parent, context, nullptr);
 
     Assert_Context(context);
 

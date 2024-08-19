@@ -30,7 +30,7 @@ INLINE void INIT_VAL_ACTION_LABEL(
 ){
     Assert_Cell_Writable(v);  // archetype R/O
     if (label)
-        INIT_VAL_ACTION_PARTIALS_OR_LABEL(v, unwrap(label));
+        INIT_VAL_ACTION_PARTIALS_OR_LABEL(v, unwrap label);
     else
         INIT_VAL_ACTION_PARTIALS_OR_LABEL(v, ANONYMOUS);
 }
@@ -62,7 +62,7 @@ INLINE Element* Init_Frame_Details_Core(
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_FRAME);
     INIT_VAL_ACTION_DETAILS(out, a);
     INIT_VAL_ACTION_LABEL(out, label);
-    INIT_VAL_FRAME_TARGET(out, try_unwrap(target));
+    INIT_VAL_FRAME_TARGET(out, maybe target);
 
     return out;
 }

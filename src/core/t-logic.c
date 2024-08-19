@@ -309,7 +309,7 @@ Bounce MAKE_Antiform(
 ){
     assert(kind == REB_ANTIFORM);
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
 
     return Quotify(Copy_Cell(OUT, arg), 1);
 }

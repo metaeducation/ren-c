@@ -608,7 +608,7 @@ Bounce Composer_Executor(Level* const L)
         // find compositions if /DEEP and it's an array
     }
     else {  // plain compose, if match
-        if (not label or Match_For_Compose(at, unwrap(label))) {
+        if (not label or Match_For_Compose(at, unwrap label)) {
             match = at;
             match_specifier = L_specifier;
         }

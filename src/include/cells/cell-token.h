@@ -318,9 +318,9 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
         }
 
         if (length_out)
-            *unwrap(length_out) = len;
+            *(unwrap length_out) = len;
         if (size_out)
-            *unwrap(size_out) = size;
+            *(unwrap size_out) = size;
         return cast(Utf8(const*), PAYLOAD(Bytes, v).at_least_8);
     }
 
@@ -330,9 +330,9 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
     if (heart == REB_ISSUE or heart == REB_URL) {  // no index
         utf8 = String_Head(s);
         if (size_out)
-            *unwrap(size_out) = Series_Used(s);
+            *(unwrap size_out) = Series_Used(s);
         if (length_out)
-            *unwrap(length_out) = s->misc.length;
+            *(unwrap length_out) = s->misc.length;
     }
     else {
         utf8 = Cell_String_At(v);
@@ -340,7 +340,7 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
         if (size_out or length_out) {
             Size utf8_size = Cell_String_Size_Limit_At(length_out, v, limit);
             if (size_out)
-                *unwrap(size_out) = utf8_size;
+                *(unwrap size_out) = utf8_size;
             // length_out handled by Cell_String_Size_Limit_At, even if nullptr
         }
     }

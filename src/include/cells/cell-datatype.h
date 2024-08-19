@@ -77,9 +77,9 @@ INLINE Kind VAL_TYPE_KIND(const Cell* v) {
     if (not Is_Word(item))
         fail ("Type blocks only allowed WORD! items for now");
     Option(SymId) id = Cell_Word_Id(item);
-    if (not id or not IS_KIND_SYM(unwrap(id)))
+    if (not id or not IS_KIND_SYM(unwrap id))
         fail ("Type blocks only allowed builtin types for now");
-    return cast(Kind, unwrap(id));
+    return cast(Kind, unwrap id);
 }
 
 

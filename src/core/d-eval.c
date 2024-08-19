@@ -141,7 +141,7 @@ static void Evaluator_Shared_Checks_Debug(Level* L)
 
     // We only have a label if we are in the middle of running a function.
     //
-    assert(Is_Pointer_Corrupt_Debug(unwrap(L->label)));
+    assert(Is_Pointer_Corrupt_Debug(unwrap L->label));
 
     if (L->varlist)
         assert(Not_Node_Managed(L->varlist));

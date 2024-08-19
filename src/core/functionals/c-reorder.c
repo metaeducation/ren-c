@@ -225,7 +225,7 @@ DECLARE_NATIVE(reorder)
     SHUTDOWN_BINDER(&binder);
 
     if (error)  // *now* it's safe to fail...
-        fail (unwrap(error));
+        fail (unwrap error);
 
     Array* partials = Pop_Stack_Values_Core(
         base,

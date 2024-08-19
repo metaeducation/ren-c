@@ -694,7 +694,7 @@ static void Update_Error_Near_For_Line(
     Init_Text(&vars->nearest, Pop_Molded_String(mo));
 
     if (ss->file)
-        Init_File(&vars->file, unwrap(ss->file));
+        Init_File(&vars->file, unwrap ss->file);
     else
         Init_Nulled(x_cast(Value*, &vars->file));
 
@@ -1049,7 +1049,7 @@ static Token Maybe_Locate_Token_May_Push_Mold(
             if (not v)
                 goto get_next_variadic_pointer;
 
-            Copy_Cell(PUSH(), unwrap(v));
+            Copy_Cell(PUSH(), unwrap v);
             if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING)) {
                 Clear_Scan_Executor_Flag(L, NEWLINE_PENDING);
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);
@@ -1082,7 +1082,7 @@ static Token Maybe_Locate_Token_May_Push_Mold(
       get_next_variadic_pointer:
 
         if (FEED_VAPTR(L->feed))
-            L->feed->p = va_arg(*unwrap(FEED_VAPTR(L->feed)), const void*);
+            L->feed->p = va_arg(*(unwrap FEED_VAPTR(L->feed)), const void*);
         else
             L->feed->p = *FEED_PACKED(L->feed)++;
     }
@@ -1761,7 +1761,7 @@ void Init_Scan_Level(
 ){
     level->ss = ss;
 
-    ss->begin = try_unwrap(bp);  // Locate_Token's first fetch from vaptr
+    ss->begin = maybe bp;  // Locate_Token's first fetch from vaptr
     Corrupt_Pointer_If_Debug(ss->end);
 
     ss->file = file;
@@ -2111,7 +2111,7 @@ Bounce Scanner_Executor(Level* const L) {
         // Tag array with line where the beginning bracket/group/etc. was found
         //
         a->misc.line = ss->line;
-        LINK(Filename, a) = try_unwrap(ss->file);
+        LINK(Filename, a) = maybe ss->file;
         Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
         Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
 
@@ -2400,7 +2400,7 @@ Bounce Scanner_Executor(Level* const L) {
         // Tag array with line where the beginning bracket/group/etc. was found
         //
         array->misc.line = ss->line;
-        LINK(Filename, array) = try_unwrap(ss->file);
+        LINK(Filename, array) = maybe ss->file;
         Set_Array_Flag(array, HAS_FILE_LINE_UNMASKED);
         Set_Series_Flag(array, LINK_NODE_NEEDS_MARK);
 
@@ -2692,7 +2692,7 @@ Bounce Scanner_Executor(Level* const L) {
         ){
             Array* a = cast(Array*, Cell_Node1(TOP));
             a->misc.line = ss->line;
-            LINK(Filename, a) = try_unwrap(ss->file);
+            LINK(Filename, a) = maybe ss->file;
             Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
             Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
 
@@ -2762,7 +2762,7 @@ Bounce Scanner_Executor(Level* const L) {
             return DROP(), RAISE(Error_Syntax(ss, level->token));
 
         HEART_BYTE(TOP) = Sigilize_Any_Plain_Kind(
-            unwrap(level->sigil_pending),
+            unwrap level->sigil_pending,
             heart
         );
 
@@ -2873,7 +2873,7 @@ Array* Scan_UTF8_Managed(
     Array* a = Pop_Stack_Values_Core(base, flags);
 
     a->misc.line = 1;
-    LINK(Filename, a) = try_unwrap(file);
+    LINK(Filename, a) = maybe file;
     Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
     Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
 
@@ -2979,7 +2979,7 @@ DECLARE_NATIVE(transcode)
     Option(const String*) file;
     if (REF(file)) {
         file = Cell_String(ARG(file));
-        Freeze_Series(unwrap(file));  // freezes vs. interning [2]
+        Freeze_Series(unwrap file);  // freezes vs. interning [2]
     }
     else
         file = ANONYMOUS;
@@ -3067,7 +3067,7 @@ DECLARE_NATIVE(transcode)
         Array* a = Pop_Stack_Values_Core(STACK_BASE, flags);
 
         a->misc.line = ss->line;
-        LINK(Filename, a) = try_unwrap(ss->file);
+        LINK(Filename, a) = maybe ss->file;
         a->leader.bits |= ARRAY_MASK_HAS_FILE_LINE;
 
         Init_Block(OUT, a);

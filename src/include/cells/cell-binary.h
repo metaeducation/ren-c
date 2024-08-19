@@ -22,7 +22,7 @@ INLINE const Byte* Cell_Binary_Size_At(
     if (i < 0 or i > cast(REBIDX, size))
         fail (Error_Index_Out_Of_Range_Raw());
     if (size_at_out)
-        *unwrap(size_at_out) = size - i;
+        *(unwrap size_at_out) = size - i;
     return Binary_At(bin, i);
 }
 

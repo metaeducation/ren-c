@@ -154,7 +154,7 @@ Bounce MAKE_Array(
     assert(Any_Array_Kind(heart));
 
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(heart, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(heart, unwrap parent));
 
     if (Is_Integer(arg) or Is_Decimal(arg)) {
         //
@@ -880,7 +880,7 @@ REBTYPE(Array)
                 : Sigil_Of_Any_Group_Kind(heart);
             if (not sigil)
                 return Init_Nulled(OUT);
-            return Init_Sigil(OUT, unwrap(sigil)); }
+            return Init_Sigil(OUT, unwrap sigil); }
 
           default:
             break;
@@ -1105,7 +1105,7 @@ REBTYPE(Array)
         VAL_INDEX_RAW(OUT) = Modify_Array(
             arr,
             index,
-            unwrap(id),
+            unwrap id,
             arg,
             flags,
             len,

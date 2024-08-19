@@ -595,7 +595,7 @@ DECLARE_NATIVE(definitional_return)
     if (not target)
         fail (Error_Archetype_Invoked_Raw());
 
-    Level* target_level = CTX_LEVEL_MAY_FAIL(unwrap(target));
+    Level* target_level = CTX_LEVEL_MAY_FAIL(unwrap target);
 
     if (not REF(run)) {  // plain simple RETURN (not weird tail-call)
         if (

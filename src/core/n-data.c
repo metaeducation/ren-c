@@ -700,7 +700,7 @@ bool Get_Var_Push_Refinements_Throws(
     if (Is_Void(var)) {
         Init_Nulled(out);  // "void in, null out" get variable convention
         if (steps_out and steps_out != GROUPS_OK)
-            Init_Nulled(unwrap(steps_out));
+            Init_Nulled(unwrap steps_out);
         return false;
     }
 
@@ -712,8 +712,8 @@ bool Get_Var_Push_Refinements_Throws(
             //
             // set the steps out *first* before overwriting out
             //
-            Derelativize(unwrap(steps_out), var, var_specifier);
-            HEART_BYTE(unwrap(steps_out)) = REB_THE_WORD;
+            Derelativize(unwrap steps_out, var, var_specifier);
+            HEART_BYTE(unwrap steps_out) = REB_THE_WORD;
         }
 
         Copy_Cell(
@@ -739,7 +739,7 @@ bool Get_Var_Push_Refinements_Throws(
         Drop_GC_Guard(safe);
 
         if (steps_out and steps_out != GROUPS_OK)
-            Init_Trash(unwrap(steps_out));  // !!! What to return?
+            Init_Trash(unwrap steps_out);  // !!! What to return?
 
         Move_Cell(out, Decay_If_Unstable(result));
         return threw;
@@ -863,7 +863,7 @@ bool Get_Var_Push_Refinements_Throws(
 
     if (steps_out and steps_out != GROUPS_OK) {
         Array* a = Pop_Stack_Values(base);
-        Init_Array_Cell(unwrap(steps_out), REB_THE_BLOCK, a);
+        Init_Array_Cell(unwrap steps_out, REB_THE_BLOCK, a);
     }
     else
         Drop_Data_Stack_To(base);
@@ -1280,7 +1280,7 @@ bool Set_Var_Core_Updater_Throws(
 
     if (Is_Void(var)) {
         if (steps_out and steps_out != GROUPS_OK)
-            Init_Nulled(unwrap(steps_out));
+            Init_Nulled(unwrap steps_out);
         return false;
     }
 
@@ -1318,12 +1318,12 @@ bool Set_Var_Core_Updater_Throws(
 
         if (steps_out and steps_out != GROUPS_OK) {
             if (steps_out != var)  // could be true if GROUP eval
-                Derelativize(unwrap(steps_out), var, var_specifier);
+                Derelativize(unwrap steps_out, var, var_specifier);
 
             // If the variable is a compressed path form like `a.` then turn
             // it into a plain word.
             //
-            HEART_BYTE(unwrap(steps_out)) = REB_WORD;
+            HEART_BYTE(unwrap steps_out) = REB_WORD;
         }
         return false;  // did not throw
     }
@@ -1498,7 +1498,7 @@ bool Set_Var_Core_Updater_Throws(
     Drop_GC_Guard(writeback);
 
     if (steps_out and steps_out != GROUPS_OK)
-        Init_Block(unwrap(steps_out), Pop_Stack_Values(base));
+        Init_Block(unwrap steps_out, Pop_Stack_Values(base));
     else
         Drop_Data_Stack_To(base);
 

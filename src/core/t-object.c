@@ -531,7 +531,7 @@ Bounce MAKE_Frame(
     const Value* arg
 ){
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
 
     // MAKE FRAME! on a VARARGS! was an experiment designed before REFRAMER
     // existed, to allow writing things like REQUOTE.  It's still experimental
@@ -628,7 +628,7 @@ Bounce MAKE_Context(
     }
 
     Option(Context*) parent_ctx = parent
-        ? VAL_CONTEXT(unwrap(parent))
+        ? VAL_CONTEXT(unwrap parent)
         : nullptr;
 
     if (Is_Block(arg)) {
@@ -674,7 +674,7 @@ Bounce MAKE_Context(
     }
 
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(heart, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(heart, unwrap parent));
 
     // make object! map!
     if (Is_Map(arg)) {
@@ -1315,7 +1315,7 @@ REBTYPE(Frame)
             //
             Option(const Symbol*) label = VAL_FRAME_LABEL(frame);
             if (label)
-                return Init_Word(OUT, unwrap(label));
+                return Init_Word(OUT, unwrap label);
 
             // If the frame is executing, we can look at the label in the
             // Level*, which will tell us what the overall execution label
@@ -1359,7 +1359,7 @@ REBTYPE(Frame)
             Option(const String*) file = File_Of_Level(L);
             if (not file)
                 return nullptr;
-            return Init_File(OUT, unwrap(file)); }
+            return Init_File(OUT, unwrap file); }
 
           case SYM_LINE: {
             LineNumber line = LineNumber_Of_Level(L);
@@ -1370,7 +1370,7 @@ REBTYPE(Frame)
           case SYM_LABEL: {
             if (not L->label)
                 return nullptr;
-            return Init_Word(OUT, unwrap(L->label)); }
+            return Init_Word(OUT, unwrap L->label); }
 
           case SYM_NEAR:
             return Init_Near_For_Level(OUT, L);
@@ -1413,7 +1413,7 @@ REBTYPE(Frame)
             Option(const Symbol*) label = VAL_FRAME_LABEL(frame);
             if (not label)
                 return nullptr;
-            return Init_Word(OUT, unwrap(label)); }
+            return Init_Word(OUT, unwrap label); }
 
           case SYM_WORDS:
           case SYM_PARAMETERS: {
@@ -1677,7 +1677,7 @@ void MF_Frame(REB_MOLD *mo, const Cell* v, bool form) {
     Option(const Symbol*) label = VAL_FRAME_LABEL(v);
     if (label) {
         Append_Codepoint(mo->series, '{');
-        Append_Spelling(mo->series, unwrap(label));
+        Append_Spelling(mo->series, unwrap label);
         Append_Ascii(mo->series, "} ");
     }
 

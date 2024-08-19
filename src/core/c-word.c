@@ -107,7 +107,7 @@ uint32_t Get_Hash_Prime_May_Fail(uint32_t minimum)
         Init_Integer(temp, minimum);
         fail (Error_Size_Limit_Raw(temp));
     }
-    return unwrap(prime);
+    return unwrap prime;
 }
 
 
@@ -291,7 +291,7 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
   new_interning: {
 
     Binary* s = cast(Binary*, Make_Series_Into(
-        preallocated ? unwrap(preallocated) : Alloc_Stub(),
+        preallocated ? unwrap preallocated : Alloc_Stub(),
         utf8_size + 1,  // small sizes fit in a Stub (no dynamic allocation)
         SERIES_MASK_SYMBOL
     ));
@@ -531,7 +531,7 @@ void Startup_Symbols(void)
 
         assert(SECOND_UINT16(&canon->info) == 0);
         SET_SECOND_UINT16(&canon->info, id);  // store ID in canon [2]
-        assert(id == unwrap(Symbol_Id(canon)));
+        assert(id == unwrap Symbol_Id(canon));
 
         id = cast(SymId, cast(uint16_t, id) + 1);
     }

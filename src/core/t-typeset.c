@@ -36,12 +36,11 @@ REBINT CT_Parameter(const Cell* a, const Cell* b, bool strict)
     assert(Cell_Heart(b) == REB_PARAMETER);
 
     if (
-        try_unwrap(Cell_Parameter_Spec(a))
-        != try_unwrap(Cell_Parameter_Spec(b))
+        Cell_Parameter_Spec(a) != Cell_Parameter_Spec(b)
     ){
         if (
-            try_unwrap(Cell_Parameter_Spec(a))
-            > try_unwrap(Cell_Parameter_Spec(b))
+            maybe Cell_Parameter_Spec(a)
+            > maybe Cell_Parameter_Spec(b)
         ){
             return 1;
         }
@@ -49,12 +48,11 @@ REBINT CT_Parameter(const Cell* a, const Cell* b, bool strict)
     }
 
     if (
-        try_unwrap(Cell_Parameter_String(a))
-        != try_unwrap(Cell_Parameter_String(b))
+        Cell_Parameter_String(a) != Cell_Parameter_String(b)
     ){
         if (
-            try_unwrap(Cell_Parameter_String(a))
-            > try_unwrap(Cell_Parameter_String(b))
+            maybe Cell_Parameter_String(a)
+            > maybe Cell_Parameter_String(b)
         ){
             return 1;
         }
@@ -253,7 +251,7 @@ void Set_Parameter_Spec(
 
         const Value* lookup;
         if (Cell_Heart(item) == REB_WORD) {  // allow abstraction [3]
-            lookup = try_unwrap(Lookup_Word(item, spec_specifier));
+            lookup = maybe Lookup_Word(item, spec_specifier);
             if (not lookup)  // not even bound to anything
                 fail (item);
             if (Is_Trash(lookup)) {  // bound but not set
@@ -400,7 +398,7 @@ void MF_Parameter(REB_MOLD *mo, const Cell* v, bool form)
     DECLARE_ELEMENT(temp);
     Option(const Array*) param_array = Cell_Parameter_Spec(v);
     if (param_array)
-        Init_Block(temp, unwrap(param_array));
+        Init_Block(temp, unwrap param_array);
     else
         Init_Block(temp, EMPTY_ARRAY);
 
@@ -439,13 +437,13 @@ REBTYPE(Parameter)
             Option(const String*) string = Cell_Parameter_String(param);
             if (not string)
                 return nullptr;
-            return Init_Text(OUT, unwrap(string)); }
+            return Init_Text(OUT, unwrap string); }
 
           case SYM_SPEC: {
             Option(const Array*) spec = Cell_Parameter_Spec(param);
             if (not spec)
                 return nullptr;
-            return Init_Block(OUT, unwrap(spec)); }
+            return Init_Block(OUT, unwrap spec); }
 
           case SYM_TYPE:
             return nullptr;  // TBD

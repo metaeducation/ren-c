@@ -195,7 +195,7 @@ Bounce MAKE_Binary(
     assert(kind == REB_BINARY);
 
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        fail (Error_Bad_Make_Parent(kind, unwrap parent));
 
     if (Is_Integer(def)) {
         //
@@ -439,7 +439,7 @@ REBTYPE(Binary)
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(
             v,
-            unwrap(id),
+            unwrap id,
             ARG(value),
             flags,
             len,

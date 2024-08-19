@@ -355,7 +355,7 @@ DECLARE_NATIVE(yield)
     assert(Level_Phase(level_) == ACT_IDENTITY(VAL_ACTION(Lib(YIELD))));
     Level* yield_level = level_;  // ...make synonyms more obvious
 
-    Context* yielder_context = try_unwrap(Level_Target(yield_level));
+    Context* yielder_context = maybe Level_Target(yield_level);
     if (not yielder_context)
         fail ("Must have yielder to jump to");
 

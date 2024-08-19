@@ -43,7 +43,7 @@ Bounce MAKE_Sequence(
 
     assert(kind == REB_TUPLE);
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
 
     if (Is_Tuple(arg))
         return Copy_Cell(OUT, arg);
@@ -363,7 +363,7 @@ REBTYPE(Sequence)
                 : Sigil_Of_Any_Path_Kind(heart);
             if (not sigil)
                 return Init_Nulled(OUT);
-            return Init_Sigil(OUT, unwrap(sigil)); }
+            return Init_Sigil(OUT, unwrap sigil); }
 
           case SYM_INDEX:  // Note: not legal, paths always at head, no index
           default:

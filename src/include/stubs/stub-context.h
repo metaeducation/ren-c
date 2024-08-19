@@ -192,7 +192,7 @@ INLINE void INIT_VAL_FRAME_TARGET(
     Option(Context*) target
 ){
     assert(HEART_BYTE(v) == REB_FRAME);
-    EXTRA(Any, v).node = try_unwrap(target);
+    EXTRA(Any, v).node = maybe target;
 }
 
 INLINE void INIT_VAL_CONTEXT_ROOTVAR_Core(
@@ -374,7 +374,7 @@ INLINE Option(Stub*) MOD_PATCH(Context* c, const Symbol* sym, bool strict) {
 }
 
 INLINE Value* MOD_VAR(Context* c, const Symbol* sym, bool strict) {
-    Stub* patch = try_unwrap(MOD_PATCH(c, sym, strict));
+    Stub* patch = maybe MOD_PATCH(c, sym, strict);
     if (not patch)
         return nullptr;
     return cast(Value*, Stub_Cell(patch));

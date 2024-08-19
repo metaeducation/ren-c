@@ -51,7 +51,7 @@ Bounce MAKE_Port(
 ){
     assert(kind == REB_PORT);
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
 
     if (rebRunThrows(
         cast(Value*, OUT),  // <-- output cell
