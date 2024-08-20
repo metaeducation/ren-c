@@ -141,10 +141,17 @@
     ([(1 + 2) 7] = apply :compose [[(1 + 2) (<*> 3 + 4)] /label first [<*>]])
 ]
 
-; APPLY is called by the evaluator when it gets a slash-terminated path that
-; is followed by a BLOCK!
+; APPLY is called by the evaluator when it sees a :: SIGIL!, using whatever
+; is on the left as the action.
 [
-    ([a b c [d e] [d e]] = append/ [[a b c] [d e] /dup 2])
+    ([a b c [d e] [d e]] = append :: [[a b c] [d e] /dup 2])
+    ([a b c e f e f] = append :: [/dup 2 [a b c] spread [e f]])
 
-    ~expect-arg~ !! (mold/ 1)
+    ; !!! More complex forms not implemented yet, just WORD!, but will be
+    ;
+    ; ([a b c [e f] [e f]] = append/dup :: [[a b c] [e f] 2])
+
+    ~???~ !! (:: [a b c])  ; must be used as infix operator
+
+    ~expect-arg~ !! (mold :: 1)
 ]

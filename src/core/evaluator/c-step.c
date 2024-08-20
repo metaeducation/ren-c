@@ -320,6 +320,12 @@ Bounce Stepper_Executor(Level* L)
     assert(not L_next_gotten);  // Fetch_Next_In_Feed() cleared it
 
     if (VAL_TYPE_UNCHECKED(L_next) == REB_WORD) {  // right's kind
+        //
+        // !!! Using L_specifier here instead of FEED_SPECIFIER(L->feed)
+        // seems to break `let x: me + 1`, due to something about the
+        // conditionality on reevaluation.  L_specifier's conditionality
+        // should be reviewed for relevance in the modern binding model.
+        //
         L_next_gotten = Lookup_Word(L_next, FEED_SPECIFIER(L->feed));
 
         if (
@@ -328,7 +334,34 @@ Bounce Stepper_Executor(Level* L)
         ){
             goto give_up_backward_quote_priority;  // note only ACTION! is ENFIXED
         }
-    } else
+    }
+    else if (
+        VAL_TYPE_UNCHECKED(L_next) == REB_SIGIL
+        and Cell_Sigil(L_next) == SIGIL_SET  // `append :: [...]` is APPLY
+    ){
+        if (not Is_Word(L_current))
+            fail ("Using :: for APPLY requires WORD! on left for now");
+
+        if (not L_current_gotten)
+            L_current_gotten = Lookup_Word(L_current, L_specifier);
+
+        Copy_Cell(SPARE, unwrap L_current_gotten);
+
+        Fetch_Next_In_Feed(L->feed);  // L_next = L->feed->p = whats after ::
+
+        if (Is_Level_At_End(L))
+            fail ("Using :: for APPLY cannot have END on right");
+
+        STATE = REB_FRAME;  // bounces back to do lookahead
+        rebPushContinuation(
+            cast(Value*, OUT),  // API won't take Atom(*)
+            LEVEL_MASK_NONE,
+            Canon(APPLY), rebQ(SPARE), rebDERELATIVIZE(L_next, L_specifier)
+        );
+        Fetch_Next_In_Feed(L->feed);
+        return BOUNCE_CONTINUE;
+    }
+    else
         goto give_up_backward_quote_priority;
 
     if (Not_Enfixed(unwrap L_next_gotten))
@@ -553,7 +586,18 @@ Bounce Stepper_Executor(Level* L)
     //     >> @ abc
     //     == abc
     //
-    // 1. There's a twist, that @ can actually handle antiforms if they are
+    // :: is an infix apply operator:
+    //
+    //     >> append :: [[a b c] spread [d e] /dup 2]
+    //     == [a b c d e d e]
+    //
+    // : has no use at time of writing.
+    //
+    // 1. Because :: is an infix operator that quotes its left-hand side, it
+    //    is handled during the pre-lookahead for quoting.  Look for SIGIL_SET
+    //    much earlier in this function.
+    //
+    // 2. There's a twist, that @ can actually handle antiforms if they are
     //    coming in via an API feed.  This is a convenience so you can write:
     //
     //        rebElide("append block maybe @", value_might_be_null);
@@ -566,7 +610,7 @@ Bounce Stepper_Executor(Level* L)
       case REB_SIGIL: {
         switch (Cell_Sigil(L_current)) {
           case SIGIL_SET:  // ::
-            fail ("No evaluator behavior defined for :: yet");
+            fail (":: must be used as an infix operator");  // too late [1]
 
           case SIGIL_GET:  // :
             fail ("No evaluator behavior defined for : yet");
@@ -937,7 +981,9 @@ Bounce Stepper_Executor(Level* L)
             L_current,
             Cell_Sequence_Len(L_current) - 1
         );
-        bool applying = Is_Blank(SPARE);  // terminal slash is APPLY
+        bool terminal_slash = Is_Blank(SPARE);
+        if (terminal_slash)
+            fail ("Terminal slashes in paths are being reviewed.");
 
         if (Get_Path_Push_Refinements_Throws(
             SPARE,
@@ -970,27 +1016,13 @@ Bounce Stepper_Executor(Level* L)
             fail ("Use `>-` to shove left enfix operands into PATH!s");
         }
 
-        if (not applying) {
-            Level* sub = Make_Action_Sublevel(L);
-            sub->baseline.stack_base = BASELINE->stack_base;  // refinements
+        Level* sub = Make_Action_Sublevel(L);
+        sub->baseline.stack_base = BASELINE->stack_base;  // refinements
 
-            Push_Level(OUT, sub);
-            Push_Action(sub, VAL_ACTION(SPARE), VAL_FRAME_COUPLING(SPARE));
-            Begin_Prefix_Action(sub, VAL_FRAME_LABEL(SPARE));
-            goto process_action;
-        }
-
-        if (Is_Level_At_End(L))
-            fail ("Terminal-Slash Action Invocation Needs APPLY argument");
-
-        STATE = REB_FRAME;  // bounces back to do lookahead
-        rebPushContinuation(
-            cast(Value*, OUT),  // API won't take Atom(*)
-            LEVEL_MASK_NONE,
-            Canon(APPLY), rebQ(SPARE), rebDERELATIVIZE(L_next, L_specifier)
-        );
-        Fetch_Next_In_Feed(L->feed);
-        return BOUNCE_CONTINUE; }
+        Push_Level(OUT, sub);
+        Push_Action(sub, VAL_ACTION(SPARE), VAL_FRAME_COUPLING(SPARE));
+        Begin_Prefix_Action(sub, VAL_FRAME_LABEL(SPARE));
+        goto process_action; }
 
 
     //=//// SET-PATH! /////////////////////////////////////////////////////=//
@@ -1801,6 +1833,7 @@ Bounce Stepper_Executor(Level* L)
         or (
             not (Is_Word(L_next) and Is_Action(unwrap L_next_gotten))
             and not Is_Frame(L_next)
+            and not Is_Sigil(L_next)
         )
         or Not_Enfixed(unwrap L_next_gotten)
     ){

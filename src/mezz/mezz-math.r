@@ -82,7 +82,7 @@ extreme-of: func [
     if 1 > skip [cause-error 'script 'out-of-range skip]
     let spot: series
     iterate-skip series skip [
-        if (comparator/ [first series first spot]) [spot: series]
+        if (comparator :: [first series first spot]) [spot: series]
     ]
     return spot
 ]
