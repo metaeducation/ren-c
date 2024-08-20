@@ -6,7 +6,7 @@ REBOL [
         Rebol 3 Language Interpreter and Run-time Environment
         "Ren-C" branch @ https://github.com/metaeducation/ren-c
 
-        Copyright 2012-2022 Ren-C Open Source Contributors
+        Copyright 2012-2024 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
     License: {

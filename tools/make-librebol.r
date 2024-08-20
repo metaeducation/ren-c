@@ -787,7 +787,7 @@ e-lib/emit [ver {
         #define LIBREBOL_PREFIX(api_name) API_##api_name
 
         /*
-         * Extern prototypes for RL_XXX, don't call these functions directly.
+         * Extern prototypes for API_XXX, don't call these functions directly.
          * They use vaptr instead of `...`, and may not do all the proper
          * exception/longjmp handling needed.
          */
@@ -902,8 +902,8 @@ e-lib/emit [ver {
      * be turned into rebI(...) to produce a RebolValue, instead of giving
      * an invalid type error.
      *
-     * These are converters are predefined, but you can add your own, like
-     * this one for converting std::string to TEXT!:
+     * These converters are predefined, but you can add your own, like this
+     * one for converting std::string to TEXT!:
      *
      *    #include <string>
      *
