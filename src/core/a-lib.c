@@ -1217,7 +1217,7 @@ RebolValue* API_rebValue(
 // Just scans the source given into a BLOCK! without executing it.
 //
 RebolValue* API_rebTranscodeInto(
-    RebolSpecifier** specifier_ref,
+    RebolSpecifier** specifier_ref,  // Note: corrupt on purpose in debug build
     RebolValue* out,
     const void* p, void* vaptr
 ){
@@ -1230,7 +1230,7 @@ RebolValue* API_rebTranscodeInto(
     Add_Feed_Reference(feed);
     Sync_Feed_At_Cell_Or_End_May_Fail(feed);
 
-    UNUSED(specifier_ref);  // transcode does not need specifier
+    UNUSED(specifier_ref);  // transcode should not heed specifier
 
     StackIndex base = TOP_INDEX;
     while (Not_Feed_At_End(feed)) {
@@ -1245,12 +1245,6 @@ RebolValue* API_rebTranscodeInto(
         Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED)
     );
 
-    Virtual_Bind_Deep_To_Existing_Context(
-        out,
-        Get_Context_From_Stack(),
-        nullptr,
-        REB_WORD
-    );
     return out;
 }
 
@@ -1260,11 +1254,17 @@ RebolValue* API_rebTranscodeInto(
 //
 // Helper for when variadic code wants to run as its own stack level.
 //
-// 1. We don't call `rebTranscodeInto()` here, because that would package
+// 1. The TRANSCODE operation does not heed binding, but it follows the
+//    regular pattern of parameterization in the auto-generated API.
+//
+// 2. We don't call `rebTranscodeInto()` here, because that would package
 //    up an arbitrary number of variadic parameters that are meant to
 //    be things like Value* and UTF8.  But we have exactly 3 parameters
 //    in hand, and want to pass them directly to the implementation routine,
 //    as they're encodings of variadic parameters--not the actual parameters!
+//
+// 3. TRANSCODE does not put any binding in the block it takes, so we have
+//    to apply the specifier here.
 //
 void API_rebPushContinuation(
     RebolSpecifier** specifier_ref,
@@ -1275,7 +1275,14 @@ void API_rebPushContinuation(
     ENTER_API;
 
     DECLARE_VALUE (block);
-    API_rebTranscodeInto(specifier_ref, block, p, vaptr);  // use "API_" [1]
+    RebolSpecifier** dummy_ref = nullptr;  // transcode ignores [1]
+    Corrupt_Pointer_If_Debug(dummy_ref);
+    API_rebTranscodeInto(dummy_ref, block, p, vaptr);  // use "API_" [2]
+
+    if (specifier_ref)
+        BINDING(block) = *cast(Specifier**, specifier_ref);  // [3]
+    else
+        BINDING(block) = Lib_Context;  // [3]
 
     Init_Void(PUSH());  // primed result
     Level* L = Make_Level_At(block, flags);
