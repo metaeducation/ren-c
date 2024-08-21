@@ -398,7 +398,7 @@ DECLARE_NATIVE(open_connection)
     INCLUDE_PARAMS_OF_OPEN_CONNECTION;
 
     // We treat ODBC's SQLWCHAR type (wide SQL char) as 2 bytes per wchar, even
-    //on  platforms where wchar_t is larger.  This gives unixODBC compatibility:
+    // on platforms where wchar_t is larger.  This gives unixODBC compatibility:
     //
     // https://stackoverflow.com/a/7552533/211160
     //
@@ -862,7 +862,7 @@ SQLRETURN Get_ODBC_Catalog(
   blockscope {
     int index;
     for (index = 2; index != 6; ++index) {
-        pattern[index - 2] = rebSpellWide(  // gives nullptr if BLANK!
+        pattern[index - 2] = rebSpellWideMaybe(  // returns nullptr if NULL
             "ensure [~null~ text!]",
                 "pick ensure block!", block, rebI(index)
         );
