@@ -313,7 +313,7 @@ DECLARE_NATIVE(do)
 //      ]
 //      /next "Do one step of evaluation"
 //          [word! tuple!]  ; !!! does not use multi-return, see 1
-//      /undecayed "Do not decay result"
+//      /undecayed "Don't convert NIHIL or COMMA! antiforms to VOID"
 //  ]
 //
 DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
@@ -524,10 +524,8 @@ DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
 } result_in_out: {  //////////////////////////////////////////////////////////
 
     if (not REF(undecayed)) {
-        if (Is_Nihil(OUT))
+        if (Is_Elision(OUT))
             Init_Void(OUT);
-        else
-            Decay_If_Unstable(OUT);
     }
 
     return OUT;

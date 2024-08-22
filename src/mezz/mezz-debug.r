@@ -19,30 +19,15 @@ verify: func [
         [block!]
     /handler "Optional code to run if the assertion fails, receives condition"
         [<unrun> block! frame!]
-    <local> pos result'
+    <local> pos result
 ][
     while [
-        ; If asserting on a multi-return, we want to assert based only on the
-        ; first item.  But some evaluations (like of a COMMA!) return nihil...
-        ; an empty parameter pack with no values at all.  The leading slash
-        ; means we consider the result to be optional.  If we instead wrote:
-        ;
-        ;    result': ^ evaluate/next conditions $pos
-        ;
-        ; ...then if the eval step produced multiple returns (like for instance
-        ; FIND does) we'd have a meta-PACK! and have to write code to decay
-        ; it ourselves.
-        ;
-        ; Using a meta-value here is a way of reacting to unstable isotopes,
-        ; could also put that responsibility onto the access points.  Review.
-        ;
-        [^/result']: evaluate/next/undecayed conditions $pos
+        result: evaluate/next conditions $pos
         pos
     ][
-        any [
-            null? result'  ; ~null~ antiform, no first item to unpack
-            '~true~ = result'  ; truthy
-            non quasiform! result' then [result' <> null']
+        all [
+            not void? :result
+            not :result
 
             if handler [  ; may or may-not take two arguments
                 let reaction: ^ if block? handler [
@@ -50,7 +35,7 @@ verify: func [
                 ] else [
                     apply/relax handler [  ; arity 0 or 1 is okay
                         copy/part conditions pos
-                        unmeta result'
+                        result
                     ]
                 ]
 
@@ -59,18 +44,14 @@ verify: func [
                 ; write simple handlers that just print you a message...like
                 ; some context for the assert.
                 ;
-                reaction = '~ignore~
+                reaction != '~ignore~
             ]
-        ] else [
+        ] then [
             fail 'conditions make error! [
                 type: 'Script
                 id: 'assertion-failure
                 arg1: compose [
-                    (spread copy/part conditions pos) ** (case [
-                        null' = result' ['~null~]
-                        '~false~ = result' ['~false~]  ; antiform false
-                        antiword? result' [result']  ; non-~true~ antiform
-                    ])
+                    (spread copy/part conditions pos) ** (reify result)
                 ]
             ]
         ]

@@ -218,10 +218,10 @@ emit: func [
             code: my next
         ]
         else [
-            let result': ^ evaluate/next code $code
+            let result: evaluate/next code $code
             if code [
-                if result' = void' [continue]  ; invisible
-                append ctx.msg ensure binary! unmeta result'
+                if void? :result [continue]  ; invisible
+                append ctx.msg ensure binary! :result
             ]
         ]
     ]
