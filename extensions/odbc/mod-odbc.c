@@ -682,7 +682,7 @@ SQLRETURN ODBC_BindParameter(
         *cast(SQLDOUBLE*, p->buffer) = rebUnboxDecimal(v);
         break; }
 
-      case SQL_C_TYPE_TIME: {  // // TIME! (fractions not preserved)
+      case SQL_C_TYPE_TIME: {  // TIME! (fractions not preserved)
         sql_type = SQL_TYPE_TIME;
         p->buffer_size = sizeof(TIME_STRUCT);
         p->buffer = rebAllocN(char, p->buffer_size);
