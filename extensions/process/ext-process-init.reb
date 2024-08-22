@@ -69,6 +69,17 @@ call*: adapt :call-internal* [
 ; non-zero exit codes.  Use the /RELAX option to get it to return an integer.
 ; Nice default!
 ;
+; 1. Since CALL without /RELAX will raise a definitional error on non-zero
+;    exit codes, you don't have to worry about checking the result...but also
+;    you won't get any information by checking the result.  Comparisons with
+;    trash are disallowed in order to help draw attention to misunderstandings
+;    of this kind, so we return trash to take advantage of that:
+;
+;      https://forum.rebol.info/t/2068/2
+;
+;    It also means things like (call/shell "dir") won't put `== 0` after the
+;    result when shown in the terminal.
+;
 call: enclose (
     augment (specialize :call* [wait: #]) [
         /relax "If exit code is non-zero, return the integer vs. raising error"
@@ -76,8 +87,11 @@ call: enclose (
 ) func [f [frame!]] [
     let relax: f.relax
     let result: eval f
-    if relax or (result = 0) [
+    if relax [
         return result
+    ]
+    if result = 0 [
+        return ~  ;  avoid `if 1 = call/shell "dir" [...]`, see [1]
     ]
     return raise make error! compose [
         message: ["Process returned non-zero exit code:" exit-code]
