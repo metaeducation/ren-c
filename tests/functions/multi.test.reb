@@ -200,17 +200,13 @@
     ])
 ]
 
-; quasiform values in SET-BLOCK! on meta-values allow upacking errors
+; Raised errors in PACKs are not legal or supported in practice.
 [
     ~zero-divide~ !! (
-        [e]: pack [1 / 0]  ; should ~e~ have meaning, e.g. give plain error?
+        pack [1 / 0]
     )
     ~zero-divide~ !! (
         [^e]: pack [1 / 0]
-    )
-    (
-        [~^e~]: pack [1 / 0]
-        (unquasi e).id = 'zero-divide
     )
 ]
 

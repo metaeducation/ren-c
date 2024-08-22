@@ -195,19 +195,31 @@ DECLARE_NATIVE(quote)
 
 
 //
-//  meta: native/intrinsic [
+//  meta: native [
 //
 //  "antiforms -> quasiforms, adds a quote to rest (behavior of ^^)"
 //
-//      return: [quoted? quasi?]
-//      ^atom
+//      return: "Returns plain ERROR! if /EXCEPT used with raised error"
+//          [quoted? quasi? error!]
+//      ^atom [any-atom?]
+//      /except "If argument is antiform ERROR!, give back as plain ERROR!"
 //  ]
 //
-DECLARE_INTRINSIC(meta)
+DECLARE_NATIVE(meta)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_META;
 
-    Copy_Cell(out, arg);  // arg was already ^META, no need to Meta_Quotify()
+    Value* meta = ARG(atom); // arg already ^META, no need to Meta_Quotify()
+
+    if (Is_Meta_Of_Raised(meta)) {
+        if (not REF(except))
+            fail (VAL_CONTEXT(ARG(atom)));
+
+        QUOTE_BYTE(meta) = NOQUOTE_1;
+        return COPY(meta);  // no longer meta, just a plain ERROR!
+    }
+
+    return COPY(meta);
 }
 
 
@@ -523,10 +535,9 @@ DECLARE_NATIVE(pack)
 //        >> pack [1 + 2, comment "hi", if false [1020]]
 //        == ~[3 ~[]~ ']
 //
-//    Note that raised errors are also tolerated, so `pack [1 / 0]` works.
-//    This is leveraged in situations like this one from MAXMATCH-D:
+// 3. Raised errors are not tolerated as things to pack.  This is by design:
 //
-//        [~^e~ remainder]: parser input except e -> [pack [raise e, null]]
+//        https://forum.rebol.info/t/2206
 {
     INCLUDE_PARAMS_OF_PACK;
 
@@ -545,8 +556,8 @@ DECLARE_NATIVE(pack)
 
     if (rebRunThrows(
         cast(Value*, SPARE),  // output cell
-        Canon(QUASI), "reduce/predicate",
-            v, rebQ(Lib(META))  // commas excluded [2]
+        Canon(QUASI), "reduce/predicate",  // commas excluded by /PREDICATE [2]
+            v, rebQ(Lib(META))  // not META/EXCEPT, so raised errors fail [3]
     )){
         return THROWN;
     }

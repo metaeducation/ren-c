@@ -14,21 +14,19 @@
 )
 
 (
-    metaraise: chain [:raise :meta]
+    metaraise: chain [:raise :meta/except]
     e: metaraise ~test~
     all [
-        quasi? e
-        error? e: unquasi e
+        error? e
         e.id = 'test
     ]
 )
 
 (
-    metatranscode: chain [:transcode :meta]
+    metatranscode: chain [:transcode :meta/except]
     e: metatranscode "1&e"
     all [
-        quasi? e
-        error? e: unquasi e
+        error? e
         e.id = 'scan-invalid
     ]
 )

@@ -22,21 +22,17 @@
            [any-value? pack?]
         parser1 [action?]
         parser2 [action?]
-        <local> result1' result2' remainder1 remainder2
+        <local> error1 error2 result1' result2' remainder1 remainder2
     ][
-        [~^result1'~ remainder1]: parser1 input except e -> [
-            pack [raise e, null]
-        ]
-        [~^result2'~ remainder2]: parser2 input except e -> [
-            pack [raise e, null]
-        ]
-        if raised? unmeta result2' [  ; parser2 didn't succeed
-            if raised? unmeta result1' [
-                return unmeta result1'  ; neither succeeded
+        error1: trap [[^result1' remainder1]: parser1 input]
+        error2: trap [[^result2' remainder2]: parser2 input]
+        if error2 [  ; parser2 didn't succeed
+            if error1 [
+                return raise error1  ; neither succeeded
             ]
         ] else [  ; parser2 succeeded
             any [
-                raised? unmeta result1'
+                error1
                 (index of remainder1) < (index of remainder2)
             ] then [
                 remainder: remainder2
@@ -89,7 +85,7 @@
     ;
     ; If a parser is successful its results are kept, if it fails then
     ; not.  This does not account for the potential subtlety that the
-    ; cretor of MAXMATCH might have wanted the less matching combinator
+    ; creator of MAXMATCH might have wanted the less matching combinator
     ; to have its accrued results disregarded.  That requires using the
     ; manual rollback interface.
 
@@ -202,21 +198,19 @@
         @pending [blank! block!]
         parser1 [action?]
         parser2 [action?]
-        <local> result1' result2' remainder1 remainder2 pending1 pending2
+        <local>
+            error1 error2 result1' result2'
+            remainder1 remainder2 pending1 pending2
     ][
-        [~^result1'~ remainder1 pending1]: parser1 input except e -> [
-            pack [raise e, null, null]
-        ]
-        [~^result2'~ remainder2 pending2]: parser2 input except e -> [
-            pack [raise e, null, null]
-        ]
-        if raised? unmeta result2' [  ; parser2 didn't succeed
-            if raised? unmeta result1' [
-                return unmeta result1'  ; neither succeeded
+        error1: trap [[^result1' remainder1 pending1]: parser1 input]
+        error2: trap [[^result2' remainder2 pending2]: parser2 input]
+        if error2 [  ; parser2 didn't succeed
+            if error1 [
+                return raise error1  ; neither succeeded
             ]
         ] else [  ; parser2 succeeded
             any [
-                raised? unmeta result1'
+                error1
                 (index of remainder1) < (index of remainder2)
             ] then [
                 remainder: remainder2
