@@ -326,7 +326,16 @@ DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
 //    going to be done on some kind of "evaluator state"--not just a block,
 //    that state should be updated.
 //
-// 2. We want EVALUATE to treat all ANY-ARRAY? the same.  (e.g. a ^[1 + 2] just
+// 2. It might seem that since EVAL [] is VOID, that EVAL/NEXT [] should
+//    produce a VOID.  But in practice, there's an empty step at the end
+//    of every enumeration, e.g. EVAL [1 + 2 10 + 20] goes through three
+//    steps, where the third step is []... and if we were to say that "step"
+//    produced anything, it would be NIHIL...because that step does not
+//    contribute to the output (the result is 30).  But producing NIHIL
+//    is a nuisance.  We instead give back TRASH and hope the caller checks
+//    the position being NULL to know that result doesn't count.
+//
+// 3. We want EVALUATE to treat all ANY-ARRAY? the same.  (e.g. a ^[1 + 2] just
 //    does the same thing as [1 + 2] and gives 3, not '3)  Rather than mutate
 //    the cell to plain BLOCK! and pass it to CONTINUE_CORE(), we initialize
 //    a feed from the array directly.
@@ -383,18 +392,21 @@ DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
   #endif
 
     if (Any_Array(source)) {
-        if (Cell_Series_Len_At(source) == 0) {  // `eval []` is void
-            if (REF(next))
+        if (Cell_Series_Len_At(source) == 0) {
+            if (REF(next)) {  // `eval/next []` doesn't "count" [2]
                 rebElide(Canon(SET), rebQ(rest_var), rebQ(nullptr));
-
-            if (REF(undecayed))
-                Init_Nihil(OUT);
-            else
-                Init_Void(OUT);
+                Init_Trash(OUT);
+            }
+            else {
+                if (REF(undecayed))
+                    Init_Nihil(OUT);  // undecayed allows vanishing
+                else
+                    Init_Void(OUT);  // `eval []` is ~void~
+            }
             return Proxy_Multi_Returns(level_);
         }
 
-        Feed* feed = Make_At_Feed_Core(  // use feed [2]
+        Feed* feed = Make_At_Feed_Core(  // use feed [3]
             source,
             SPECIFIED
         );

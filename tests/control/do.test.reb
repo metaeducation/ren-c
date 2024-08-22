@@ -240,7 +240,7 @@
 )
 (
     all [
-        nihil? evaluate/next/undecayed [] $pos
+        trash? evaluate/next/undecayed [] $pos
         pos = null
     ]
 )
