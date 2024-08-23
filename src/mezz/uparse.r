@@ -1906,7 +1906,7 @@ default-combinators: make map! reduce [
             if negated [
                 fail "TYPE-BLOCK! only supported negated for array input"
             ]
-            [item remainder]: transcode/one input except e -> [return raise e]
+            [remainder item]: transcode/next input except e -> [return raise e]
 
             ; If TRANSCODE knew what kind of item we were looking for, it could
             ; shortcut this.  Since it doesn't, we might waste time and memory
@@ -1934,7 +1934,7 @@ default-combinators: make map! reduce [
             remainder: next input
             return input.1
         ][
-            [item remainder]: transcode/one input except e -> [return raise e]
+            [remainder item]: transcode/next input except e -> [return raise e]
 
             ; If TRANSCODE knew what kind of item we were looking for, it could
             ; shortcut this.  Since it doesn't, we might waste time and memory
@@ -1973,7 +1973,7 @@ default-combinators: make map! reduce [
             if negated [
                 fail "TYPE-WORD! only supported negated for array input"
             ]
-            [item remainder]: transcode/one input except e -> [return raise e]
+            [remainder item]: transcode/next input except e -> [return raise e]
 
             ; If TRANSCODE knew what kind of item we were looking for, it could
             ; shortcut this.  Since it doesn't, we might waste time and memory

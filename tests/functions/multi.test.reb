@@ -99,12 +99,12 @@
 
 [(
     all [
-        'abc = [_ rest]: transcode/one "abc def"
+        'abc = [rest @]: transcode/next "abc def"
         rest = " def"
     ]
 )(
     all [
-        'abc = [(void) rest]: transcode/one "abc def"
+        'abc = [rest @(void)]: transcode/next "abc def"
         rest = " def"
     ]
 )(
@@ -117,16 +117,16 @@
     (
         a: b: ~
         all [
-            (the 'A) = [^a ^b]: transcode/one "A B"
+            (the '{ B}) = [^b ^a]: transcode/next "A B"
             a = the 'A
             b = the '{ B}
         ]
     )(
         a: b: ~
         all [
-            (the 'A) = [^ ^b]: transcode/one "A B"
-            ^a = '~
-            b = the '{ B}
+            (the '{ B}) = [^ ^a]: transcode/next "A B"
+            a = the 'A
+            unset? $b
         ]
     )
 ]
@@ -137,15 +137,15 @@
     (
         value: rest: ~
         all [
-            <item!> = [value /rest]: transcode/one "ab cd" then [<item!>]
-            value = <item!>
-            rest = null
+            "fake" = [rest /value]: transcode/next "ab cd" then ["fake"]
+            value = null
+            rest = "fake"
         ]
     )
     (
         value: rest: ~
         all [
-            <item!> = ([value /rest]: transcode/one "ab cd") then [<item!>]
+            <item!> = ([rest /value]: transcode/next "ab cd") then [<item!>]
             value = 'ab
             rest = " cd"
         ]
@@ -188,7 +188,7 @@
 ; You can use a @ without a variable to get a return result
 ;
 (all [
-    " cd" = [item @]: transcode/one "ab cd"
+    " cd" = [@ item]: transcode/next "ab cd"
     item = 'ab
 ])
 

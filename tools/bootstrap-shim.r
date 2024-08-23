@@ -124,16 +124,19 @@ trap [
         fail/where "Use SPLIT-PATH3 in Bootstrap (no multi-return)" 'return
     ]
 
-    export transcode3: enclose (augment :transcode [/next [word!]]) func [f] [
-        let next: f.next  ; note: contention with NEXT series verb
-        f.one: all [next make issue! 0]  ; # is invalid issue in bootstrap
-        let result: ^ (eval f except e -> [return raise e])
-        if result = null' [return null]
-        set maybe next unmeta second unquasi result
-        return unmeta first unquasi result
-    ]
-    export transcode: func [] [
-        fail/where "Use TRANSCODE3 in Bootstrap (no multi-return)" 'return
+    export transcode: enclose (
+        augment :lib.transcode [/next3 [word!] "set to transcoded value"]
+    ) func [f] [
+        if f.next [  ; no multi-return in bootstrap
+            fail/where "Use TRANSCODE/NEXT3 in Bootstrap" 'return
+        ]
+        if not f.next3 [
+            return do f
+        ]
+        f.next: make issue! 0  ; # is invalid issue in bootstrap
+        let dummy
+        block: compose [dummy (f.next3)]  ; SET-BLOCK, @, invalid in bootstrap
+        return eval compose [(as set-block! block) eval f]
     ]
 
     export cscape-inside: :inside  ; modern string interpolation tool
@@ -179,7 +182,6 @@ for-each [alias] [  ; SET-WORD!s for readability + findability [1]
     join3:                      ; JOIN handles splices
     compose3:                   ; COMPOSE processes splices
     split-path3:                ; bootstrap uses SPLIT-PATH3 not SPLIT-PATH
-    transcode3:                 ; bootstrap uses TRANSCODE3 not TRANSCODE
     collect3:                   ; COLLECT's KEEP processes splices
     mold3:                      ; MOLD takes splices instead of MOLD/ONLY
     and3:                       ; AND takes GROUP!s on right (not BLOCK!)
@@ -236,8 +238,16 @@ split-path: func3 [] [
     fail/where "Use SPLIT-PATH3 in Bootstrap (no multi-return)" 'return
 ]
 
-transcode: func3 [] [
-    fail/where "Use TRANSCODE3 in Bootstrap (no multi-return)" 'return
+transcode: func3 [source /next3 next3-arg [word!] <local> pos value] [
+    if not next3 [
+        return lib/transcode source
+    ]
+    value: lib/transcode/next source 'pos
+    set next3-arg value
+    if not value [
+        return null
+    ]
+    return pos
 ]
 
 

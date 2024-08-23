@@ -38,7 +38,7 @@ export test-source-rule: [
 
         ["{" | {"}] :(  ; handle string using TRANSCODE, see note
             trap [
-                [_ position]: transcode/one position
+                [position _]: transcode/next position
             ] then [
                 [false]  ; result for :() is rule to say stop the parse
             ] else [

@@ -2906,13 +2906,11 @@ void Shutdown_Scanner(void)
 //
 //  "Translates UTF-8 source (from a text or binary) to values"
 //
-//      return: "Transcoded value (or block of values)"
-//          [~null~ element?]
-//      @rest "Remainder of input after transcoding (series tail if not /ONE)"
-//          [text! binary!]
+//      return: "Transcoded elements block, or ~[remainder element]~ if /NEXT"
+//          [~null~ element? pack?]
 //      source "If BINARY!, must be UTF-8 encoded"
 //          [text! binary!]
-//      /one "Translate one value and give back next position"
+//      /next "Translate one value and give back next position"
 //      /file "File to be associated with BLOCK!s and GROUP!s in source"
 //          [file! url!]
 //      /line "Line number for start of scan, word variable will be updated"
@@ -2923,7 +2921,7 @@ DECLARE_NATIVE(transcode)
 {
     INCLUDE_PARAMS_OF_TRANSCODE;
 
-    Value* source = ARG(source);
+    Element* source = Ensure_Element(ARG(source));
 
     Size size;
     const Byte* bp = Cell_Bytes_At(&size, source);
@@ -3018,7 +3016,7 @@ DECLARE_NATIVE(transcode)
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
         | LEVEL_FLAG_RAISED_RESULT_OK;  // want to pass on definitional error
 
-    if (REF(one))
+    if (REF(next))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
 
     Level* sub = Make_Level(&Scanner_Executor, feed, flags);
@@ -3051,7 +3049,7 @@ DECLARE_NATIVE(transcode)
         return OUT;  // the raised error
     }
 
-    if (REF(one)) {
+    if (REF(next)) {
         if (TOP_INDEX == STACK_BASE)
             Init_Nulled(OUT);
         else {
@@ -3082,10 +3080,18 @@ DECLARE_NATIVE(transcode)
             return THROWN;
     }
 
+    if (not REF(next)) {
+        assert(Is_Block(OUT));  // should be single block result
+        return OUT;
+    }
+
+    if (Is_Nulled(OUT))  // no more Elements were left to transcode
+        return nullptr;  // must return pure null for THEN/ELSE to work right
+
     // Return the input BINARY! or TEXT! advanced by how much the transcode
     // operation consumed.
     //
-    Value* rest = ARG(rest);
+    Element* rest = cast(Element*, SPARE);
     Copy_Cell(rest, source);
 
     if (Is_Binary(source)) {
@@ -3114,10 +3120,13 @@ DECLARE_NATIVE(transcode)
             VAL_INDEX_RAW(rest) += Binary_Tail(Cell_String(source)) - bp;
     }
 
-    if (Is_Nulled(OUT))
-        return nullptr;  // don't proxy multi-returns
+    Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);  // /NEXT multi-return
+    Set_Series_Len(pack, 2);
 
-    return Proxy_Multi_Returns(level_);
+    Copy_Meta_Cell(Array_At(pack, 0), rest);
+    Copy_Meta_Cell(Array_At(pack, 1), OUT);
+
+    return Init_Pack(OUT, pack);
 }}
 
 

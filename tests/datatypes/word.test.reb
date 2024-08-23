@@ -174,14 +174,14 @@
         let unescaped-in-path: quoted? str
         str: noquote str
 
-        [word pos]: transcode/one str
+        [pos word]: transcode/next str
         assert [pos = ""]
 
         assert [word = to word! str]
         assert [str = as text! word]
 
         if unescaped-in-path [
-            [path pos]: transcode/one unspaced ["a/" str "/b"]
+            [pos path]: transcode/next unspaced ["a/" str "/b"]
             assert [pos = ""]
             assert [path = compose $a/(word)/b]
         ] else [
@@ -189,27 +189,27 @@
             ; there are higher priorities than rewriting the scanner.
             ;
             comment [
-                [path pos]: transcode/one unspaced ["a/|" str "|/b"]
+                [pos path]: transcode/next unspaced ["a/|" str "|/b"]
             ]
         ]
 
-        [block pos]: transcode/one unspaced ["[" str "]"]
+        [pos block]: transcode/next unspaced ["[" str "]"]
         assert [pos = ""]
         assert [block = reduce [word]]
 
-        [q pos]: transcode/one unspaced ["'" str]
+        [pos q]: transcode/next unspaced ["'" str]
         assert [pos = ""]
         assert [q = quote word]
 
-        [s pos]: transcode/one unspaced [str ":"]
+        [pos s]: transcode/next unspaced [str ":"]
         assert [pos = ""]
         assert [s = as set-word! word]
 
-        [g pos]: transcode/one unspaced [":" str]
+        [pos g]: transcode/next unspaced [":" str]
         assert [pos = ""]
         assert [g = as get-word! word]
 
-        [l pos]: transcode/one unspaced ["^^" str]
+        [pos l]: transcode/next unspaced ["^^" str]
         assert [pos = ""]
         assert [l = as get-word! word]
     ]

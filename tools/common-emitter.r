@@ -157,7 +157,7 @@ export cscape: func [
             ;
             ; !!! Needs LOAD-ALL shim hack for bootstrap since /ALL deprecated
             ;
-            let code: transcode3 lowercase expr
+            let code: transcode lowercase expr
 
             code: cscape-inside template code
 

@@ -24,30 +24,28 @@
     new-line? result
 ])
 
-; If TRANSCODE returns null, there is no POS so you have to make it optional
-; (unless you don't expect it to return null)
 (
     all [
-        1 = [value /pos]: transcode/one "1 [2] <3>"
+        1 = [pos @value]: transcode/next "1 [2] <3>"
         value = 1
         pos = " [2] <3>"
 
-        [2] = [value /pos]: transcode/one pos
+        [2] = [pos @value]: transcode/next pos
         value = [2]
         pos = " <3>"
 
-        <3> = [value /pos]: transcode/one pos
+        <3> = [pos @value]: transcode/next pos
         value = <3>
         pos = ""
 
-        null = [value /pos]: transcode/one pos
-        value = null
+        null? [pos /value]: transcode/next pos
+        null? value
         pos = null
     ]
 )
 
 (
-    [value /pos]: transcode/one "[^M^/ a] b c" except e -> [
+    [pos-or-logic /value]: transcode/next "[^M^/ a] b c" except e -> [
         e.id = 'illegal-cr
     ]
 )
@@ -56,7 +54,7 @@
     str: "Cat😺: [😺 😺] (😺)"
 
     all [
-        'Cat😺: = [value pos]: transcode/one str
+        'Cat😺: = [pos @value]: transcode/next str
         set-word? value
         value = 'Cat😺:
         pos = " [😺 😺] (😺)"
@@ -73,7 +71,7 @@
     bin =  #{436174F09F98BA3A205BF09F98BA20F09F98BA5D2028F09F98BA29}
 
     all [
-        'Cat😺: = [value pos]: transcode/one bin
+        'Cat😺: = [pos @value]: transcode/next bin
         set-word? value
         value = 'Cat😺:
         pos = #{205BF09F98BA20F09F98BA5D2028F09F98BA29}
@@ -86,14 +84,14 @@
 )
 
 [
-    ([abc def] = [_ _]: transcode "abc def")
-    ('abc = [_ _]: transcode/one "abc def")
-    (raised? [_ _]: transcode/one "3o4")
-    ('scan-invalid = pick trap [[_ _]: transcode/one "3o4"] 'id)
+    ([abc def] = [_]: transcode "abc def")
+    ('abc = [_ @]: transcode/next "abc def")
+    (raised? [_ @]: transcode/next "3o4")
+    ('scan-invalid = pick trap [[_ _]: transcode/next "3o4"] 'id)
 ]
 
 (
-    [v p]: transcode/one to binary! "7-Feb-2021/23:00"
+    [p v]: transcode/next to binary! "7-Feb-2021/23:00"
     [7-Feb-2021/23:00 #{}] = reduce [v p]
 )
 

@@ -118,7 +118,7 @@ for-each [name value] options [
                 ;
                 ; Note: Inherits may be a good non-config-specific feature.
                 ;
-                let temp: transcode3 read file
+                let temp: transcode read file
                 assert ['REBOL = first temp]
                 config: select ensure block! second temp 'Inherits
             ]

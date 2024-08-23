@@ -59,7 +59,7 @@
 )]
 
 (
-    [d n]: transcode/one "1975-04-21/10:20:03.04"
+    [n d]: transcode/next "1975-04-21/10:20:03.04"
     all [
         date? d
         n = ""
