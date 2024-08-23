@@ -41,7 +41,7 @@
                 blank? block.1 [block: skip block 1]
 
                 match word! p.1 [
-                    if not (var: evaluate/next block $block, block) [
+                    if not [block /var]: evaluate/next block [
                         break  ; out of args, assume remaining unspecialized
                     ]
                     frame.(p.1): get/any $var

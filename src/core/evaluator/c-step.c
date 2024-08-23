@@ -1737,7 +1737,7 @@ Bounce Stepper_Executor(Level* L)
     // We're sitting at what "looks like the end" of an evaluation step.
     // But we still have to consider enfix.  e.g.
     //
-    //    val: evaluate/next [1 + 2 * 3] $pos
+    //    [pos val]: evaluate/next [1 + 2 * 3]
     //
     // We want that to give a position of [] and `val = 9`.  The evaluator
     // cannot just dispatch on REB_INTEGER in the switch() above, give you 1,

@@ -228,11 +228,11 @@
 ; evaluate block tests
 (
     success: false
-    evaluate/next [success: true success: false] $pos
+    pos: evaluate/next [success: true success: false]
     success and (pos = [success: false])
 )
 (
-    value: evaluate/next [1 2] $b
+    [b value]: evaluate/next [1 2]
     all [
         1 = value
         [2] = b
@@ -240,17 +240,54 @@
 )
 (
     all [
-        trash? evaluate/next/undecayed [] $pos
+        [pos /value]: evaluate/next/undecayed []
         pos = null
+        null? value
     ]
 )
 (
-    value: evaluate/next [trap [1 / 0]] $pos
+    [pos value]: evaluate/next [trap [1 / 0]]
     all [
         error? value
         pos = []
     ]
 )
+
+; META/EXCEPT: intercept errors
+[
+    (
+        result': meta/except eval [1 + 2 1 / 0]
+        all [
+            error? result'
+            result'.id = 'zero-divide
+        ]
+    )
+    ~zero-divide~ !! (  ; full eval can only trap last error (is that correct?)
+        result': meta/except eval [1 / 0 1 + 2]
+    )
+    (
+        [pos result']: meta/except eval/next [1 / 0 1 + 2]
+        all [
+            error? result'
+            result'.id = 'zero-divide
+            pos = [1 + 2]
+        ]
+    )
+    (
+        block: [1 + 2 1 / 0 10 + 20]
+        [3 ~zero-divide~ 30] = collect [
+            while [[block /result']: eval/next/entrap block] [
+                if error? result' [
+                    keep quasi result'.id
+                ] else [
+                    keep unmeta result'
+                ]
+            ]
+        ]
+    )
+]
+
+
 (
     f1: func [return: [integer!]] [evaluate [return 1 2] 2]
     1 = f1

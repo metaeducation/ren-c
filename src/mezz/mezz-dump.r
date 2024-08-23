@@ -90,8 +90,7 @@ dump: func [
     let swp
     case [
         swp: match [set-word! set-path!] :value [  ; `dump x: 1 + 2`
-            let pos
-            let result: evaluate/next extra $pos
+            let [pos result]: evaluate/next extra
             set swp :result
             print [swp, result]
         ]
@@ -99,7 +98,7 @@ dump: func [
         let b: match block! value [
             while [not tail? b] [
                 if swp: match [set-word! set-path!] :b.1 [  ; `dump [x: 1 + 2]`
-                    result: evaluate/next b $b
+                    [b result]: evaluate/next b
                     print [swp, result]
                 ] else [
                     dump-one b.1

@@ -218,8 +218,8 @@ emit: func [
             code: my next
         ]
         else [
-            let result: evaluate/next code $code
-            if code [
+            let result
+            if [code /result]: evaluate/next code [
                 if void? :result [continue]  ; invisible
                 append ctx.msg ensure binary! :result
             ]

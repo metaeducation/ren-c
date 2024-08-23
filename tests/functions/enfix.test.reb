@@ -61,9 +61,9 @@
         var: ~
         block: [<tag> lefty "hi"]
         all [
-            <tag> = evaluate/next block $block
+            <tag> = [block @]: evaluate/next block
             [lefty "hi"] = block
-            [_ "hi"] = evaluate/next block $block
+            [_ "hi"] = [block @]: evaluate/next block
             [] = block
         ]
     )
@@ -75,9 +75,9 @@
         unset $var
         block: [the 1 lefty "hi"]
         all [
-            1 = evaluate/next block $block
+            1 = [block @]: evaluate/next block
             [lefty "hi"] = block
-            [_ "hi"] = evaluate/next block $block
+            [_ "hi"] = [block @]: evaluate/next block
             [] = block
         ]
     )
@@ -220,13 +220,13 @@
         foo: func [] [
             fail "foo should not run, it's prefix and runs on *next* step"]
         all [
-            1020 == evaluate/next [1020 foo 304] $pos
+            1020 == [pos @]: evaluate/next [1020 foo 304]
             pos == [foo 304]
         ]
     )(
         enfoo: enfix func [] [return <enfoo>]
         all [
-            <enfoo> == evaluate/next [1020 enfoo 304] $pos
+            <enfoo> == [pos @]: evaluate/next [1020 enfoo 304]
             pos = [304]
         ]
         comment "0-arity function, but enfixed so runs in *same* step"
@@ -241,7 +241,7 @@
             return #ignored
         ]
         all [
-            #ignored == var: evaluate/next [ignored ifoo 304] $pos
+            #ignored == [pos @var]: evaluate/next [ignored ifoo 304]
             var == #ignored
             pos = [ifoo 304]
             null? ignored
@@ -260,7 +260,7 @@
             return #ignored
         ]
         all [
-            var: evaluate/next [ignored enifoo 304] $pos
+            [pos var]: evaluate/next [ignored enifoo 304]
             pos = [enifoo 304]
             var == #ignored
             null? ignored
@@ -268,7 +268,7 @@
     )(
         enifoo: enfix lambda ['i [<skip> integer!]] [compose $<enifoo>/(i)]
         all [
-            var: evaluate/next [1020 enifoo 304] $pos
+            [pos var]: evaluate/next [1020 enifoo 304]
             pos = [304]
             var == '<enifoo>/1020
         ]
@@ -281,7 +281,7 @@
     (
         bar: func [return: [nihil?]] [bar: null, return nihil]
         all [
-            var: evaluate/next [1020 bar 304] $pos
+            [pos var]: evaluate/next [1020 bar 304]
             pos = [bar 304]
             var == 1020
             action? :bar
@@ -292,7 +292,7 @@
     )(
         enbar: enfix func [left] [enbar: null, return left]
         all [
-            var: evaluate/next [1020 enbar 304] $pos
+            [pos var]: evaluate/next [1020 enbar 304]
             pos = [304]
             var == 1020
             null? enbar
@@ -307,7 +307,7 @@
             return #ignored
         ]
         all [
-            var: evaluate/next [ignored ibar 304] $pos
+            [pos var]: evaluate/next [ignored ibar 304]
             pos = [ibar 304]
             var == #ignored
             null? ignored
@@ -327,7 +327,7 @@
             return #kept
         ]
         all [
-            var: evaluate/next [kept enibar 304] $pos
+            [pos var]: evaluate/next [kept enibar 304]
             pos = [enibar 304]
             var == #kept
             null? kept
@@ -338,7 +338,7 @@
             return i
         ]
         all [
-            var: evaluate/next [1020 enibar 304] $pos
+            [pos var]: evaluate/next [1020 enibar 304]
             pos = [304]
             var == 1020
             null? enibar

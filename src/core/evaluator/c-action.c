@@ -567,7 +567,7 @@ Bounce Action_Executor(Level* L)
 
   //=//// REGULAR ARG-OR-REFINEMENT-ARG (consumes 1 EVALUATE's worth) /////=//
 
-          case PARAMCLASS_OUTPUT:  // e.g. evaluate/next [1 + 2] 'var
+          case PARAMCLASS_OUTPUT:  // e.g. evaluate/next [1 + 2]
             goto output_from_feed;
 
         output_from_feed:

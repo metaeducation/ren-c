@@ -302,8 +302,8 @@ DECLARE_NATIVE(do)
 //
 //  "Perform a single evaluator step, returning the next source position"
 //
-//      return: "Value from the step"
-//          [any-atom?]
+//      return: "Evaluation product, or ~[position product]~ pack if /NEXT"
+//          [any-atom?]  ; /NEXT changes primary return product [1]
 //      source [
 //          <maybe>  ; useful for `evaluate maybe ...` scenarios
 //          any-array?  ; source code
@@ -311,31 +311,31 @@ DECLARE_NATIVE(do)
 //          error!  ; raise the error
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
-//      /next "Do one step of evaluation"
-//          [word! tuple!]  ; !!! does not use multi-return, see 1
+//      /next "Do one step of evaluation (return null position if at tail)"
 //      /undecayed "Don't convert NIHIL or COMMA! antiforms to VOID"
 //  ]
 //
 DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
 //
-// 1. Having a function like EVALUATE itself be multi-return is a pain, as
-//    it is trying to return a result that can itself be a multi-return.
-//    This is the nature of anything that does proxying.  It's *technically*
-//    possible for a caller to pick parameter packs out of parameter packs,
-//    but inconvenient.  Especially considering that stepwise evaluation is
-//    going to be done on some kind of "evaluator state"--not just a block,
-//    that state should be updated.
+// 1. When operating stepwise, the primary result shifts to be the position,
+//    to be more useful for knowing if there are more steps to take.  It also
+//    helps prevent misunderstandings if the first value of a multi-return
+//    cannot itself be a multi-return pack:
 //
-// 2. It might seem that since EVAL [] is VOID, that EVAL/NEXT [] should
-//    produce a VOID.  But in practice, there's an empty step at the end
+//      https://forum.rebol.info/t/re-imagining-eval-next/767
+//
+// 2. This may be the only GC reference holding the array, don't lose it!
+//
+// 3. It might seem that since EVAL [] is VOID, that EVAL/NEXT [] should
+//    produce a VOID.  But in practice, there's a dummy step at the end
 //    of every enumeration, e.g. EVAL [1 + 2 10 + 20] goes through three
 //    steps, where the third step is []... and if we were to say that "step"
 //    produced anything, it would be NIHIL...because that step does not
 //    contribute to the output (the result is 30).  But producing NIHIL
-//    is a nuisance.  We instead give back TRASH and hope the caller checks
-//    the position being NULL to know that result doesn't count.
+//    is a nuisance, and the caller would have to check the result position
+//    being NULL regardless.  We instead set the product to TRASH.
 //
-// 3. We want EVALUATE to treat all ANY-ARRAY? the same.  (e.g. a ^[1 + 2] just
+// 4. We want EVALUATE to treat all ANY-ARRAY? the same.  (e.g. a ^[1 + 2] just
 //    does the same thing as [1 + 2] and gives 3, not '3)  Rather than mutate
 //    the cell to plain BLOCK! and pass it to CONTINUE_CORE(), we initialize
 //    a feed from the array directly.
@@ -354,14 +354,13 @@ DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
 //
 // 7. FAIL is the preferred operation for triggering errors, as it has a
 //    natural behavior for blocks passed to construct readable messages and
-//    "FAIL X" more clearly communicates a failure than "DO X".  But DO of an
-//    ERROR! would have to raise an error anyway, so it might as well raise the
-//    one it is given.
+//    "FAIL X" more clearly communicates a failure than "EVAL X".  But EVAL of
+//    an ERROR! would have to raise an error anyway, so it might as well use
+//    the one it is given.
 {
     INCLUDE_PARAMS_OF_EVAL;
 
-    Value* rest_var = ARG(next);
-    Value* source = ARG(source);  // may be only GC reference, don't lose it!
+    Element* source = Ensure_Element(ARG(source));  // hold for GC [2]
 
     enum {
         ST_EVALUATE_INITIAL_ENTRY = STATE_0,
@@ -384,7 +383,6 @@ DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Deactivate_If_Action(source);
     Tweak_Non_Const_To_Explicitly_Mutable(source);
 
   #if !defined(NDEBUG)
@@ -393,26 +391,24 @@ DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
 
     if (Any_Array(source)) {
         if (Cell_Series_Len_At(source) == 0) {
-            if (REF(next)) {  // `eval/next []` doesn't "count" [2]
-                rebElide(Canon(SET), rebQ(rest_var), rebQ(nullptr));
-                Init_Trash(OUT);
-            }
-            else {
-                if (REF(undecayed))
-                    Init_Nihil(OUT);  // undecayed allows vanishing
-                else
-                    Init_Void(OUT);  // `eval []` is ~void~
-            }
-            return Proxy_Multi_Returns(level_);
+            if (REF(next))  // `eval/next []` doesn't "count" [3]
+                return nullptr;  // need pure null for THEN/ELSE to work right
+
+            if (REF(undecayed))
+                Init_Nihil(OUT);  // undecayed allows vanishing
+            else
+                Init_Void(OUT);  // `eval []` is ~void~
+
+            return OUT;
         }
 
-        Feed* feed = Make_At_Feed_Core(  // use feed [3]
+        Feed* feed = Make_At_Feed_Core(  // use feed, ignore type [4]
             source,
             SPECIFIED
         );
         assert(Not_Feed_At_End(feed));
 
-        Flags flags = LEVEL_MASK_NONE;
+        Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;
 
         if (not REF(next))
             Init_Nihil(Alloc_Evaluator_Primed_Result());
@@ -519,13 +515,24 @@ DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
     Drop_Level(SUBLEVEL);
 
     BINDING(source) = specifier;  // integrate LETs [6]
-    rebElide(Canon(SET), rebQ(rest_var), source);
 
 } result_in_out: {  //////////////////////////////////////////////////////////
 
     if (not REF(undecayed)) {
         if (Is_Elision(OUT))
             Init_Void(OUT);
+    }
+
+    if (REF(next)) {
+        if (Is_Raised(OUT))  // can't put raised errors in PACK!s
+            fail (VAL_CONTEXT(OUT));
+
+        Array *pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
+        Set_Series_Len(pack, 2);
+        Copy_Meta_Cell(Array_At(pack, 0), source);  // pack wants META values
+        Copy_Meta_Cell(Array_At(pack, 1), OUT);
+
+        Init_Pack(OUT, pack);
     }
 
     return OUT;

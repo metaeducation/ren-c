@@ -7,13 +7,13 @@
 
 [
     (parse-evaluate: combinator [
-        {Run the evaluator one step to advance input, and produce a result}
+        "Run the evaluator one step to advance input, and produce a result"
         return: "Result of one evaluation step"
             [any-value?]
     ][
-        if tail? input [return raise "PARSE-EVALUATE attempted at series tail"]
-
-        return evaluate/next input $remainder
+        return [remainder @]: evaluate/next input else [
+            raise "PARSE-EVALUATE attempted at series tail"
+        ]
     ]
     true)
 

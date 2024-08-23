@@ -21,10 +21,7 @@ verify: func [
         [<unrun> block! frame!]
     <local> pos result
 ][
-    while [
-        result: evaluate/next conditions $pos
-        pos
-    ][
+    while [[pos /result]: evaluate/next conditions] [
         all [
             not void? :result
             not :result
