@@ -267,6 +267,31 @@ Bounce Reflect_Core(Level* level_)
       case SYM_QUOTES:
         return Init_Integer(OUT, Cell_Num_Quotes(v));
 
+      case SYM_SIGIL: {
+        Sigil sigil;
+        if (Is_Quoted(v))
+            sigil = SIGIL_QUOTE;
+        else if (Is_Quasiform(v))
+            sigil = SIGIL_QUASI;
+        else {
+            Kind k = VAL_TYPE(v);
+            if (Any_Set_Kind(k))
+                sigil = SIGIL_SET;
+            else if (Any_Get_Kind(k))
+                sigil = SIGIL_GET;
+            else if (Any_Meta_Kind(k))
+                sigil = SIGIL_META;
+            else if (Any_Type_Kind(k))
+                sigil = SIGIL_TYPE;
+            else if (Any_The_Kind(k))
+                sigil = SIGIL_THE;
+            else if (Any_Var_Kind(k))
+                sigil = SIGIL_VAR;
+            else
+                return nullptr;
+        }
+        return Init_Sigil(OUT, sigil); }
+
       default:
         // !!! Are there any other universal reflectors?
         break;

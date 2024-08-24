@@ -40,6 +40,8 @@ enum SigilEnum {
     SIGIL_TYPE = 4,     // &
     SIGIL_THE = 5,      // @
     SIGIL_VAR = 6,      // $
+    SIGIL_QUOTE = 7,    // '
+    SIGIL_QUASI = 8,    // ~~
     SIGIL_MAX
 };
 typedef enum SigilEnum Sigil;

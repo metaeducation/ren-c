@@ -356,15 +356,6 @@ REBTYPE(Sequence)
           case SYM_LENGTH:
             return Init_Integer(OUT, Cell_Sequence_Len(sequence));
 
-          case SYM_SIGIL: {
-            Heart heart = Cell_Heart_Ensure_Noquote(sequence);
-            Option(Sigil) sigil = Any_Tuple_Kind(heart)
-                ? Sigil_Of_Any_Tuple_Kind(heart)
-                : Sigil_Of_Any_Path_Kind(heart);
-            if (not sigil)
-                return Init_Nulled(OUT);
-            return Init_Sigil(OUT, unwrap sigil); }
-
           case SYM_INDEX:  // Note: not legal, paths always at head, no index
           default:
             break;

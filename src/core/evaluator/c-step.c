@@ -240,6 +240,7 @@ Bounce Stepper_Executor(Level* L)
         L_current_gotten = nullptr;  // !!! allow/require to be passe in?
         goto evaluate; }
 
+      intrinsic_arg_in_spare:
       case ST_STEPPER_CALCULATING_INTRINSIC_ARG : {
         Action* action = VAL_ACTION(L_current);
         assert(IS_DETAILS(action));
@@ -581,10 +582,15 @@ Bounce Stepper_Executor(Level* L)
     //
     // & acts like TYPE OF
     //
-    // @ acts like THE:
+    // @ acts like THE (literal, but bound):
     //
-    //     >> @ abc
+    //     >> abc: 10
+    //
+    //     >> word: @ abc
     //     == abc
+    //
+    //     >> get word
+    //     == 10
     //
     // :: is an infix apply operator:
     //
@@ -592,6 +598,17 @@ Bounce Stepper_Executor(Level* L)
     //     == [a b c d e d e]
     //
     // : has no use at time of writing.
+    //
+    // ' acts like JUST (literal, no added binding)
+    //
+    //      >> abc: 10
+    //
+    //      >> word: ' abc
+    //
+    //      >> get word
+    //      ** Script Error: abc word is not bound to a context
+    //
+    // ~~ has no use at time of writing.
     //
     // 1. Because :: is an infix operator that quotes its left-hand side, it
     //    is handled during the pre-lookahead for quoting.  Look for SIGIL_SET
@@ -604,24 +621,51 @@ Bounce Stepper_Executor(Level* L)
     //
     //     ...instead of:
     //
-    //         rebElide("append block maybe", rebQ(value_might_be_null));
+    //        rebElide("append block maybe", rebQ(value_might_be_null));
     //
+    //    If you consider the API to be equivalent to TRANSCODE-ing the
+    //    given material into a BLOCK! and then EVAL-ing it, then this is
+    //    creating an impossible situation of having an antiform in the
+    //    block.  But the narrow exception limited to seeing such a sequence
+    //    in the evaluator is considered worth it:
+    //
+    //      https://forum.rebol.info/t/why-isnt-a-precise-synonym-for-the/2215
+    //
+    // 3. We know all feed items with FEED_NOTE_META were synthesized in the
+    //    feed and so it should be safe to tweak the flag.  Doing so lets us
+    //    use The_Next_In_Feed() and Just_Next_In_Feed() which use At_Feed()
+    //    that will error on FEED_NOTE_META to prevent the suspended-animation
+    //    antiforms from being seen by any other part of the code.
 
       case REB_SIGIL: {
-        switch (Cell_Sigil(L_current)) {
+        Sigil sigil = Cell_Sigil(L_current);
+        switch (sigil) {
           case SIGIL_SET:  // ::
             fail (":: must be used as an infix operator");  // too late [1]
 
           case SIGIL_GET:  // :
             fail ("No evaluator behavior defined for : yet");
 
-          case SIGIL_THE: {  // @
-            if (Is_Feed_At_End(L->feed))  // no literal to take if `(@)`
+          case SIGIL_QUOTE:
+          case SIGIL_THE: {
+            if (Is_Feed_At_End(L->feed))  // no literal to take if (@), (')
                 fail (Error_Need_Non_End(L_current));
 
-            Copy_At_Feed_Antiforms_Ok(OUT, L->feed);  // special API trick [1]
+            assert(Not_Feed_Flag(L->feed, NEEDS_SYNC));
+            const Element* elem = c_cast(Element*, L->feed->p);
 
-            Fetch_Next_In_Feed(L->feed);  // !!! review enfix interop
+            bool antiform = Get_Cell_Flag(elem, FEED_NOTE_META);  // [2]
+            Clear_Cell_Flag(m_cast(Element*, elem), FEED_NOTE_META);  // [3]
+
+            if (sigil == SIGIL_THE)
+                The_Next_In_Feed(L->out, L->feed);  // !!! review enfix interop
+            else {
+                assert(sigil == SIGIL_QUOTE);
+                Just_Next_In_Feed(L->out, L->feed);  // !!! review enfix
+            }
+
+            if (antiform)  // exception [2]
+                Meta_Unquotify_Known_Stable(cast(Element*, L->out));
             break; }
 
           case SIGIL_META:  // ^
@@ -632,6 +676,9 @@ Bounce Stepper_Executor(Level* L)
                 goto sigil_rightside_in_out;
 
             return CATCH_CONTINUE_SUBLEVEL(right); }
+
+          case SIGIL_QUASI:  // ~~
+            fail ("No evaluator behavior defined for ~~ yet");
 
           default:
             assert(false);
@@ -724,8 +771,22 @@ Bounce Stepper_Executor(Level* L)
                 INIT_VAL_ACTION_LABEL(CURRENT, label);  // use the word
                 Param* param = ACT_PARAM(action, 2);
                 Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
-                if (Cell_ParamClass(param) == PARAMCLASS_META)
+
+                switch (Cell_ParamClass(param)) {
+                  case PARAMCLASS_NORMAL:
+                    break;
+
+                  case PARAMCLASS_META:
                     flags |= LEVEL_FLAG_RAISED_RESULT_OK;
+                    break;
+
+                  case PARAMCLASS_HARD:
+                    Just_Next_In_Feed(SPARE, L->feed);
+                    goto intrinsic_arg_in_spare;
+
+                  default:
+                    fail ("Unsupported parameter convention for intrinsic");
+                }
 
                 Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-enfix call
 

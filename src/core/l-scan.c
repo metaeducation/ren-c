@@ -2028,15 +2028,15 @@ Bounce Scanner_Executor(Level* const L) {
             or *ep == ']' or *ep == ')'
             or *ep == ';'
         ){
-            // !!! At one point the ['''] would be a "triple-quoted void", but
-            // it should either be illegal or be what triple-quoted blanks
-            // look like.  The question of if ['] is better than ['_] as the
-            // representation for quoted blanks was considered, but it's no
-            // good for parse [_ _ _] [some '], hence it needs to error.
-            //
+            assert(len > 0);
             assert(level->quotes_pending == 0);
-            /* Quotify(Init_Blank(PUSH()), len); */
-            return RAISE(Error_Syntax(ss, level->token));
+
+            // A single ' is the SIGIL_QUOTE
+            // If you have something like '' then that is quoted quote SIGIL!
+            // The number of quote levels is len - 1
+            //
+            Init_Sigil(PUSH(), SIGIL_QUOTE);
+            Quotify(TOP, len - 1);
         }
         else
             level->quotes_pending = len;  // apply quoting to next token
@@ -2050,8 +2050,21 @@ Bounce Scanner_Executor(Level* const L) {
 
         assert(not level->quasi_pending);
 
-        if (*ep == '~')
+        if (*ep == '~') {
+            if (
+                IS_LEX_ANY_SPACE(ep[1])
+                or ep[1] == ']' or ep[1] == ')'
+            ){
+                Init_Sigil(PUSH(), SIGIL_QUASI);  // it's ~~
+                Quotify(TOP, level->quotes_pending);
+                level->quotes_pending = 0;
+
+                ss->begin = ep + 1;
+                Corrupt_Pointer_If_Debug(ss->end);
+                goto loop;
+            }
             return RAISE(Error_Syntax(ss, level->token));
+        }
 
         if (
             IS_LEX_ANY_SPACE(*ep)

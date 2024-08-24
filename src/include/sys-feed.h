@@ -124,19 +124,6 @@ INLINE const Element* At_Feed(Feed* feed) {
     return elem;
 }
 
-INLINE const Value* Copy_At_Feed_Antiforms_Ok(Sink(Value*) out, Feed* feed) {
-    assert(Not_Feed_Flag(feed, NEEDS_SYNC));
-    assert(feed->p != &PG_Feed_At_End);
-
-    const Element* elem = c_cast(Element*, feed->p);
-    Copy_Cell(out, elem);
-
-    if (Get_Cell_Flag(elem, FEED_NOTE_META))
-        Meta_Unquotify_Known_Stable(out);
-
-    return out;
-}
-
 INLINE const Element* Try_At_Feed(Feed* feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
     if (feed->p == &PG_Feed_At_End)
@@ -510,7 +497,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
 }
 
 
-// This code is shared by Literal_Next_In_Feed(), and used without a feed
+// This code is shared by The_Next_In_Feed(), and used without a feed
 // advancement in the inert branch of the evaluator.  So for something like
 // `repeat 2 [append [] 10]`, the steps are:
 //
@@ -534,8 +521,15 @@ INLINE void Inertly_Derelativize_Inheriting_Const(
         out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);
 }
 
-INLINE void Literal_Next_In_Feed(Sink(Element*) out, Feed* feed) {
+INLINE void The_Next_In_Feed(Sink(Element*) out, Feed* feed) {
     Inertly_Derelativize_Inheriting_Const(out, At_Feed(feed), feed);
+    Fetch_Next_In_Feed(feed);
+}
+
+INLINE void Just_Next_In_Feed(Sink(Element*) out, Feed* feed) {
+    Copy_Cell(out, At_Feed(feed));
+    if (Not_Cell_Flag(At_Feed(feed), EXPLICITLY_MUTABLE))
+        out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);
     Fetch_Next_In_Feed(feed);
 }
 

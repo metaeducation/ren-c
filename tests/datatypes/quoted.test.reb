@@ -272,9 +272,8 @@
     ]
 )
 
-; Once representations of quoted void, quotes of nothingness are now illegal.
 [
-    ~scan-invalid~ !! (transcode "['] = reduce ['']")
-    ~scan-invalid~ !! (transcode "[''] = reduce [''']")
-    ~scan-invalid~ !! (transcode "[' '' ''' ''''] = reduce ['' ''' '''' ''''']")
+    (do "Rebol [] ['] = reduce ['']")
+    (do "Rebol [] [''] = reduce [''']")
+    (do "Rebol [] [' '' ''' ''''] = reduce ['' ''' '''' ''''']")
 ]

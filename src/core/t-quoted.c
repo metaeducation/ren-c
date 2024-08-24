@@ -139,7 +139,7 @@ REBTYPE(Quoted)
 //
 //  the: native [
 //
-//  "Returns value passed in without evaluation"
+//  "Returns value passed in without evaluation, but with binding"
 //
 //      return: "Input value, verbatim--unless /SOFT and soft quoted type"
 //          [any-value?]
@@ -151,7 +151,9 @@ DECLARE_NATIVE(the)
 //
 // Note: THE is not a perfect synonym for the action assigned to @ as far as
 // the API is concerned, because the evaluator has special handling for
-// isotopes.
+// antiforms:
+//
+//   https://forum.rebol.info/t/why-isnt-a-precise-synonym-for-the/2215
 {
     INCLUDE_PARAMS_OF_THE;
 
@@ -166,6 +168,26 @@ DECLARE_NATIVE(the)
     Copy_Cell(OUT, v);
 
     return OUT;
+}
+
+
+//
+//  just: native/intrinsic [
+//
+//  "Returns value passed in without evaluation, and no additional binding"
+//
+//      return: "Input value, verbatim"
+//          [any-value?]
+//      'value [element?]
+//  ]
+//
+DECLARE_INTRINSIC(just)
+//
+// Note: JUST/SOFT doesn't make any sense, it cannot evaluate without binding.
+{
+    UNUSED(phase);
+
+    Copy_Cell(out, arg);
 }
 
 

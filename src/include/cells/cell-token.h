@@ -251,6 +251,8 @@ INLINE bool Is_Blackhole(const Atom* v) {
 INLINE Element* Init_Sigil(Sink(Element*) out, Sigil sigil) {
     if (sigil == SIGIL_SET)
         Init_Issue_Utf8(out, cb_cast("::"), 2, 2);  // codepoints 2, size 2
+    else if (sigil == SIGIL_QUASI)
+        Init_Issue_Utf8(out, cb_cast("~~"), 2, 2);  // codepoints 2, size 2
     else {
         Codepoint c;
         switch (sigil) {
@@ -259,6 +261,7 @@ INLINE Element* Init_Sigil(Sink(Element*) out, Sigil sigil) {
           case SIGIL_TYPE:  c = '&';    break;
           case SIGIL_THE:   c = '@';    break;
           case SIGIL_VAR:   c = '$';    break;
+          case SIGIL_QUOTE: c = '\'';   break;
           default:
             assert(false);
             c = 0;  // silence warning

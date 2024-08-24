@@ -598,7 +598,7 @@ Bounce Action_Executor(Level* L)
             // a non-void causes a later assert.  Review.
             //
             if (Not_Parameter_Flag(PARAM, SKIPPABLE))
-                Literal_Next_In_Feed(ARG, L->feed);
+                The_Next_In_Feed(ARG, L->feed);
             else {
                 Derelativize(SPARE, L_next, L_specifier);
                 if (not Typecheck_Atom(PARAM, SPARE)) {
@@ -606,7 +606,7 @@ Bounce Action_Executor(Level* L)
                     Init_Nulled(ARG);  // not actually an ~end~ (?)
                     goto continue_fulfilling;
                 }
-                Literal_Next_In_Feed(ARG, L->feed);
+                The_Next_In_Feed(ARG, L->feed);
             }
 
             // Have to account for enfix deferrals in cases like:
@@ -644,7 +644,7 @@ Bounce Action_Executor(Level* L)
 
           case PARAMCLASS_SOFT:
           case PARAMCLASS_MEDIUM:
-            Literal_Next_In_Feed(ARG, L->feed);
+            The_Next_In_Feed(ARG, L->feed);
 
             // See remarks on Lookahead_To_Sync_Enfix_Defer_Flag().  We
             // have to account for enfix deferrals in cases like:

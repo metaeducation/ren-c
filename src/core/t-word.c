@@ -324,13 +324,6 @@ REBTYPE(Word)
 
             return OUT; }
 
-          case SYM_SIGIL: {
-            Heart heart = Cell_Heart_Ensure_Noquote(v);
-            Option(Sigil) sigil = Sigil_Of_Any_Word_Kind(heart);
-            if (not sigil)
-                return Init_Nulled(OUT);
-            return Init_Sigil(OUT, unwrap sigil); }
-
           default:
             break;
         }

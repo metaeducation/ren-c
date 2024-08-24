@@ -290,7 +290,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             break; }
 
         case PARAMCLASS_HARD:
-            Literal_Next_In_Feed(out, L->feed);
+            The_Next_In_Feed(out, L->feed);
             break;
 
         case PARAMCLASS_MEDIUM:  // !!! Review nuance
@@ -306,7 +306,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 Fetch_Next_In_Feed(L->feed);
             }
             else // not a soft-"exception" case, quote ordinarily
-                Literal_Next_In_Feed(out, L->feed);
+                The_Next_In_Feed(out, L->feed);
             break;
 
         default:

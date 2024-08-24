@@ -85,38 +85,11 @@ INLINE bool Bindable_Heart_Is_Any_Array(Heart heart) {
 
 #define Any_Get_Kind Any_Get_Value_Kind
 #define Any_Set_Kind Any_Set_Value_Kind
+#define Any_Type_Kind Any_Type_Value_Kind
 #define Any_Meta_Kind Any_Meta_Value_Kind
 #define Any_The_Kind Any_The_Value_Kind
 #define Any_Plain_Kind Any_Plain_Value_Kind
 #define Any_Var_Kind Any_Var_Value_Kind
-
-
-//=//// SIGIL EXTRACTION //////////////////////////////////////////////////=//
-
-INLINE Option(Sigil) Sigil_Of_Any_Word_Kind(Byte k) {
-    assert(Any_Word_Kind(k));
-    return cast(Sigil, k - REB_WORD);
-}
-
-INLINE Option(Sigil) Sigil_Of_Any_Tuple_Kind(Byte k) {
-    assert(Any_Tuple_Kind(k));
-    return cast(Sigil, k - REB_TUPLE);
-}
-
-INLINE Option(Sigil) Sigil_Of_Any_Path_Kind(Byte k) {
-    assert(Any_Path_Kind(k));
-    return cast(Sigil, k - REB_PATH);
-}
-
-INLINE Option(Sigil) Sigil_Of_Any_Block_Kind(Byte k) {
-    assert(Any_Block_Kind(k));
-    return cast(Sigil, k - REB_BLOCK);
-}
-
-INLINE Option(Sigil) Sigil_Of_Any_Group_Kind(Byte k) {
-    assert(Any_Group_Kind(k));
-    return cast(Sigil, k - REB_GROUP);
-}
 
 
 //=//// SIGIL TRANSFORMATION //////////////////////////////////////////////=//
