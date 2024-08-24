@@ -488,7 +488,7 @@ default-combinators: make map! reduce [
 
     'break combinator [
         {Break an iterated construct like SOME or REPEAT, failing the match}
-        return: []  ; divergent
+        return: []
         <local> f
     ][
         f: take/last state.loops except [
@@ -501,7 +501,7 @@ default-combinators: make map! reduce [
 
     'stop combinator [
         {Break an iterated construct like SOME or REPEAT, succeeding the match}
-        return: []  ; divergent
+        return: []
         parser [<end> action?]
         <local> f result'
     ][
@@ -535,7 +535,7 @@ default-combinators: make map! reduce [
 
     'accept combinator [
         {Return a value explicitly from the parse, terminating early}
-        return: []  ; divergent
+        return: []
         parser [action?]
         <local> value'
     ][
@@ -848,7 +848,7 @@ default-combinators: make map! reduce [
 
     'copy combinator [
         {Disabled combinator, included to help guide to use ACROSS}
-        return: []  ; divergent
+        return: []
     ][
         fail [
             "Transitionally (maybe permanently?) the COPY function in UPARSE"
@@ -1209,7 +1209,7 @@ default-combinators: make map! reduce [
 
     'set combinator [
         {Disabled combinator, included to help guide to use SET-WORD!}
-        return: []  ; divergent
+        return: []
     ][
         fail [
             "The SET keyword in UPARSE is done with SET-WORD!, and if SET does"
@@ -1557,7 +1557,7 @@ default-combinators: make map! reduce [
     ; that they don't exist.
 
     get-block! combinator [
-        return: []  ; divergent
+        return: []
         value [get-block!]
     ][
         fail "No current meaning for GET-BLOCK! combinator"
@@ -2672,7 +2672,7 @@ default-combinators: make map! reduce [
     ; processed as a rule.  For the moment it quotes it for convenience.
 
     'fail combinator [
-        return: []  ; divergent
+        return: []
         'reason [the-block!]
         <local> e
     ][

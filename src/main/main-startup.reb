@@ -246,7 +246,7 @@ main-startup: func [
     return: func [
         {Hooked RETURN function which finalizes any gathered EMIT lines}
 
-        return: []  ; !!! syntax for divergent functions?
+        return: []
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
             [integer! tag! group! type-block!]
         <with> instruction prior

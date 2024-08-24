@@ -202,7 +202,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 //
 //  "Terminate abnormally with a message, optionally diagnosing a value cell"
 //
-//      return: []  ; !!! notation for divergent functions?
+//      return: []
 //      reason "Cause of the panic"
 //          [any-value?]
 //      /value "Interpret reason as a value cell to debug dump, vs. a message"
@@ -279,7 +279,7 @@ DECLARE_NATIVE(raise_p)
 //
 //  "Early-boot version of FAIL (overridden by more complex usermode version)"
 //
-//      return: []  ; !!! Notation for divergent function?
+//      return: []
 //      'blame [<skip> quoted?]
 //      reason [any-value?]  ; permissive to avoid callsite error
 //      /where [frame! any-word?]

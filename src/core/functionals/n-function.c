@@ -475,7 +475,7 @@ Bounce Init_Thrown_Unwind_Value(
 //
 //  "Jump up the stack to return from a specific frame or call"
 //
-//      return: []  ; "divergent"
+//      return: []
 //      level "Frame or index to exit from"
 //          [frame! integer!]
 //      ^result "Result for enclosing state"
@@ -554,7 +554,7 @@ bool Typecheck_Coerce_Return(
 //
 //  "RETURN, giving a result to the caller"
 //
-//      return: []  ; "divergent"
+//      return: []
 //      ^value [any-atom?]
 //      /only "Don't proxy output variables, return argument without typecheck"
 //      /run "Reuse stack level for another call (<redo> uses locals/args too)"

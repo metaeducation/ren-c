@@ -2486,7 +2486,7 @@ DECLARE_NATIVE(parse3)
 //
 //  "Accept argument as parse result (Internal Implementation Detail ATM)"
 //
-//      return: []  ; !!! Notation for divergent function?
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(parse_accept)
@@ -2503,7 +2503,7 @@ DECLARE_NATIVE(parse_accept)
 //
 //  "Break the current parse rule (Internal Implementation Detail ATM)"
 //
-//      return: []  ; !!! Notation for divergent function?
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(parse_break)
@@ -2520,7 +2520,7 @@ DECLARE_NATIVE(parse_break)
 //
 //  "Reject the current parse rule (Internal Implementation Detail ATM)"
 //
-//      return: []  ; !!! Notation for divergent function?
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(parse_reject)

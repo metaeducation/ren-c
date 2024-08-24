@@ -1601,7 +1601,7 @@ DECLARE_NATIVE(catch)
 //
 //  "Throws control back to a previous catch"
 //
-//      return: []  ; !!! notation for divergent function?
+//      return: []
 //      ^value "Value returned from catch"
 //          [any-atom?]
 //      /name "Throws to a named catch"

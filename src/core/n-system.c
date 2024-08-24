@@ -30,7 +30,7 @@
 //
 //  "Stops evaluation and returns to the input prompt"
 //
-//      return: []  ; !!! notation for divergent functions?
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(halt)
@@ -46,7 +46,7 @@ DECLARE_NATIVE(halt)
 //
 //  "Stop evaluating and return control to command shell or calling script"
 //
-//      return: []  ; !!! Notation for divergent functions?
+//      return: []
 //      /with "See: http://en.wikipedia.org/wiki/Exit_status"
 //          [any-value?]
 //  ]
@@ -77,7 +77,7 @@ DECLARE_NATIVE(quit)
 //
 //  "Stop the current Rebol interpreter (cannot be caught by CATCH/QUIT)"
 //
-//      return: []  ; !!! Notation for divergent functions?
+//      return: []
 //      status "See: http://en.wikipedia.org/wiki/Exit_status"
 //          [~null~ <end> integer!]
 //  ]

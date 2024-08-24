@@ -767,15 +767,12 @@ cause-error: func [
 ; definition which runs if a FAIL happens before this point, which panics and
 ; gives more debug information.
 ;
-; !!! Should there be a special bit or dispatcher used on the FAIL to ensure
-; it does not continue running?  `return: <divergent>`?
-;
 ; Though HIJACK would have to be aware of it and preserve the rule.
 ;
 raise: func [
     {Interrupts execution by reporting an error (a TRAP can intercept it).}
 
-    return: []  ; !!! notation for divergent function?
+    return: []
     'blame "Point to variable or parameter to blame"
         [<skip> quoted?]
     reason "ERROR! value, ID, URL, message text, or failure spec"

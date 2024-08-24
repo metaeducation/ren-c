@@ -88,7 +88,7 @@ bool Try_Catch_Break_Or_Continue(
 //
 //  "Exit the current iteration of a loop and stop iterating further"
 //
-//      return: []  ; "divergent"
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(definitional_break)
@@ -123,7 +123,7 @@ DECLARE_NATIVE(definitional_break)
 //
 //  "Throws control back to top of loop for next iteration"
 //
-//      return: []  ; "divergent"
+//      return: []
 //      /with "Act as if loop body finished with this value"
 //          [any-value?]
 //  ]
@@ -647,7 +647,7 @@ DECLARE_NATIVE(for_skip)
 //
 //  "End the current iteration of CYCLE, optionally returning a value"
 //
-//      return: []  ; !!! Notation for divergent functions?s
+//      return: []
 //      /with "Act as if loop body finished with this value"
 //          [any-value?]
 //  ]
