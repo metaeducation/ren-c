@@ -158,6 +158,7 @@ else [
         <gnu:-Wno-redundant-decls>  ; `environ`, `uv__static_assert`
         <gnu:-Wno-logical-op>  ; logical OR of equal expressions
         <gnu:-Wno-pedantic>  ; casts object pointers to functions
+        <gnu:-Wno-dangling-pointer>  ; queue in %async.c
     ]
 ]
 
