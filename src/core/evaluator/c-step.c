@@ -1532,9 +1532,6 @@ Bounce Stepper_Executor(Level* L)
             if (var_heart == REB_BLANK)  // [_ ...]:
                 goto circled_check;
 
-            if (Is_Void(SPARE) and is_optional)
-                Init_Nulled(SPARE);
-
             if (
                 Is_Antiform(SPARE) and not Is_Antiform_Set_Friendly(stable_SPARE)
             ){
