@@ -2018,14 +2018,10 @@ DECLARE_NATIVE(as)
     if (new_heart == Cell_Heart_Ensure_Noquote(v))
         return COPY(v);
 
-    switch (new_heart) {
-      case REB_INTEGER: {
-        if (not IS_CHAR(v))
-            fail ("AS INTEGER! only supports what-were-CHAR! issues ATM");
-        return Init_Integer(OUT, Cell_Codepoint(v)); }
+    if (Any_Array_Kind(new_heart)) {
 
-      case REB_BLOCK:
-      case REB_GROUP:
+  //=//// CONVERSION TO ANY-ARRAY! ////////////////////////////////////////=//
+
         if (Any_Sequence(v)) {  // internals vary based on optimization
             if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
                 fail ("Array Conversions of byte-oriented sequences TBD");
@@ -2072,17 +2068,11 @@ DECLARE_NATIVE(as)
             goto bad_cast;
 
         goto adjust_v_heart;
+    }
+    else if (Any_Sequence_Kind(new_heart)) {
 
-      case REB_TUPLE:
-      case REB_GET_TUPLE:
-      case REB_SET_TUPLE:
-      case REB_META_TUPLE:
-      case REB_THE_TUPLE:
-      case REB_PATH:
-      case REB_GET_PATH:
-      case REB_SET_PATH:
-      case REB_META_PATH:
-      case REB_THE_PATH:
+  //=//// CONVERSION TO ANY-SEQUENCE! /////////////////////////////////////=//
+
         if (Any_Array(v)) {
             //
             // Even if we optimize the array, we don't want to give the
@@ -2111,74 +2101,11 @@ DECLARE_NATIVE(as)
         }
 
         goto bad_cast;
+    }
+    else if (Any_Word_Kind(new_heart)) {
 
-      case REB_ISSUE: {
-        if (Is_Integer(v)) {
-            Option(Context*) error = Trap_Init_Char(OUT, VAL_UINT32(v));
-            if (error)
-                return RAISE(unwrap error);
-            return OUT;
-        }
+  //=//// CONVERSION TO ANY-WORD! /////////////////////////////////////////=//
 
-        if (Any_String(v)) {
-            REBLEN len;
-            Size utf8_size = Cell_String_Size_Limit_At(&len, v, UNLIMITED);
-
-            if (utf8_size + 1 <= sizeof(PAYLOAD(Bytes, v).at_least_8)) {
-                //
-                // Payload can fit in a single issue cell.
-                //
-                Reset_Unquoted_Header_Untracked(
-                    TRACK(OUT),
-                    FLAG_HEART_BYTE(REB_ISSUE) | CELL_MASK_NO_NODES
-                );
-                memcpy(
-                    PAYLOAD(Bytes, OUT).at_least_8,
-                    Cell_String_At(v),
-                    utf8_size + 1  // copy the '\0' terminator
-                );
-                EXTRA(Bytes, OUT).at_least_4[IDX_EXTRA_USED] = utf8_size;
-                EXTRA(Bytes, OUT).at_least_4[IDX_EXTRA_LEN] = len;
-            }
-            else {
-                if (not Try_As_String(
-                    OUT,
-                    REB_TEXT,
-                    v,
-                    0,  // no quotes
-                    STRMODE_ALL_CODEPOINTS  // See AS-TEXT/STRICT for stricter
-                )){
-                    goto bad_cast;
-                }
-                Freeze_Series(Cell_Series(OUT));  // must be frozen
-            }
-            HEART_BYTE(OUT) = REB_ISSUE;
-            return OUT;
-        }
-
-        goto bad_cast; }
-
-      case REB_TEXT:
-      case REB_TAG:
-      case REB_FILE:
-      case REB_URL:
-      case REB_EMAIL:
-        if (not Try_As_String(
-            OUT,
-            new_heart,
-            v,
-            0,  // no quotes
-            STRMODE_ALL_CODEPOINTS  // See AS-TEXT/STRICT for stricter
-        )){
-            goto bad_cast;
-        }
-        return OUT;
-
-      case REB_WORD:
-      case REB_GET_WORD:
-      case REB_SET_WORD:
-      case REB_META_WORD:
-      case REB_THE_WORD: {
         if (Is_Issue(v)) {
             if (Get_Cell_Flag(v, STRINGLIKE_HAS_NODE)) {
                 //
@@ -2290,7 +2217,75 @@ DECLARE_NATIVE(as)
 
         if (not Any_Word(v))
             goto bad_cast;
-        goto adjust_v_heart; }
+        goto adjust_v_heart;
+    }
+    else switch (new_heart) {
+      case REB_INTEGER: {
+        if (not IS_CHAR(v))
+            fail ("AS INTEGER! only supports what-were-CHAR! issues ATM");
+        return Init_Integer(OUT, Cell_Codepoint(v)); }
+
+      case REB_ISSUE: {
+        if (Is_Integer(v)) {
+            Option(Context*) error = Trap_Init_Char(OUT, VAL_UINT32(v));
+            if (error)
+                return RAISE(unwrap error);
+            return OUT;
+        }
+
+        if (Any_String(v)) {
+            REBLEN len;
+            Size utf8_size = Cell_String_Size_Limit_At(&len, v, UNLIMITED);
+
+            if (utf8_size + 1 <= sizeof(PAYLOAD(Bytes, v).at_least_8)) {
+                //
+                // Payload can fit in a single issue cell.
+                //
+                Reset_Unquoted_Header_Untracked(
+                    TRACK(OUT),
+                    FLAG_HEART_BYTE(REB_ISSUE) | CELL_MASK_NO_NODES
+                );
+                memcpy(
+                    PAYLOAD(Bytes, OUT).at_least_8,
+                    Cell_String_At(v),
+                    utf8_size + 1  // copy the '\0' terminator
+                );
+                EXTRA(Bytes, OUT).at_least_4[IDX_EXTRA_USED] = utf8_size;
+                EXTRA(Bytes, OUT).at_least_4[IDX_EXTRA_LEN] = len;
+            }
+            else {
+                if (not Try_As_String(
+                    OUT,
+                    REB_TEXT,
+                    v,
+                    0,  // no quotes
+                    STRMODE_ALL_CODEPOINTS  // See AS-TEXT/STRICT for stricter
+                )){
+                    goto bad_cast;
+                }
+                Freeze_Series(Cell_Series(OUT));  // must be frozen
+            }
+            HEART_BYTE(OUT) = REB_ISSUE;
+            return OUT;
+        }
+
+        goto bad_cast; }
+
+      case REB_TEXT:
+      case REB_TAG:
+      case REB_FILE:
+      case REB_URL:
+      case REB_EMAIL:
+        if (not Try_As_String(
+            OUT,
+            new_heart,
+            v,
+            0,  // no quotes
+            STRMODE_ALL_CODEPOINTS  // See AS-TEXT/STRICT for stricter
+        )){
+            goto bad_cast;
+        }
+        return OUT;
 
       case REB_BINARY: {
         if (Is_Issue(v)) {
