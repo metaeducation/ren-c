@@ -234,14 +234,14 @@ uint32_t Hash_Value(const Cell* cell)
             goto hash_any_word;
 
           case FLAVOR_ARRAY:
-            goto hash_any_array;
+            goto hash_any_list;
 
           default:
             panic (nullptr);
         }
         break; }
 
-      hash_any_array:
+      hash_any_list:
         //
       case REB_GROUP:
       case REB_SET_GROUP:
@@ -415,7 +415,7 @@ Series* Hash_Block(const Value* block, REBLEN skip, bool cased)
     Series* hashlist = Make_Hash_Series(Cell_Series_Len_At(block));
 
     const Element* tail;
-    const Element* value = Cell_Array_At(&tail, block);
+    const Element* value = Cell_List_At(&tail, block);
     if (value == tail)
         return hashlist;
 

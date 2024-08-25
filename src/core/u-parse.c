@@ -131,8 +131,8 @@
 #define P_POS               VAL_INDEX_UNBOUNDED(ARG(position))
 
 // !!! The way that PARSE works, it will sometimes run the thing it finds
-// in the array...but if it's a WORD! or PATH! it will look it up and run
-// the result.  When it's in the array, the specifier for that array needs
+// in the list...but if it's a WORD! or PATH! it will look it up and run
+// the result.  When it's in the list, the specifier for that list needs
 // to be applied to it.  But when the value has been fetched, that specifier
 // shouldn't be used again...because virtual binding isn't supposed to
 // carry through references.  The hack to get virtual binding running is to
@@ -461,7 +461,7 @@ bool Process_Group_For_Parse_Throws(
 
   blockscope {
     Atom* atom_out = out;
-    if (Do_Any_Array_At_Throws(atom_out, group, derived))
+    if (Do_Any_List_At_Throws(atom_out, group, derived))
         return true;
 
     if (Is_Group(group)) {
@@ -831,8 +831,8 @@ static REBIXO To_Thru_Block_Rule(
                 fail ("Use TUPLE! a.b.c instead of PATH! a/b/c");
 
             // Try to match it:
-            if (Any_Array_Kind(P_HEART) or Any_Sequence_Kind(P_HEART)) {
-                if (Any_Array(rule))
+            if (Any_List_Kind(P_HEART) or Any_Sequence_Kind(P_HEART)) {
+                if (Any_List(rule))
                     fail (Error_Parse3_Rule());
 
                 REBIXO ixo = Parse_One_Rule(level_, VAL_INDEX(iter), rule);
@@ -1216,7 +1216,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
 //  "Internal support function for PARSE (acts as variadic to consume rules)"
 //
 //      return: [~null~ integer!]
-//      input [any-series? any-array? quoted?]
+//      input [any-series? any-list? quoted?]
 //      flags [integer!]
 //      <local> position num-quotes save lookback
 //  ]
@@ -1492,15 +1492,15 @@ DECLARE_NATIVE(subparse)
                         not Is_Block(OUT)
                         or not (
                             Cell_Series_Len_At(OUT) == 2
-                            and Is_Integer(Cell_Array_Item_At(OUT))
-                            and Is_Integer(Cell_Array_Item_At(OUT) + 1)
+                            and Is_Integer(Cell_List_Item_At(OUT))
+                            and Is_Integer(Cell_List_Item_At(OUT) + 1)
                         )
                     ){
                         fail ("REPEAT takes INTEGER! or length 2 BLOCK! range");
                     }
 
-                    mincount = Int32s(Cell_Array_Item_At(OUT), 0);
-                    maxcount = Int32s(Cell_Array_Item_At(OUT) + 1, 0);
+                    mincount = Int32s(Cell_List_Item_At(OUT), 0);
+                    maxcount = Int32s(Cell_List_Item_At(OUT) + 1, 0);
 
                     if (maxcount < mincount)
                         fail ("REPEAT range can't have lower max than minimum");
@@ -1622,7 +1622,7 @@ DECLARE_NATIVE(subparse)
                     fail (Error_Parse3_Rule());
 
                 DECLARE_ATOM (condition);
-                if (Do_Any_Array_At_Throws(  // note: might GC
+                if (Do_Any_List_At_Throws(  // note: might GC
                     condition,
                     P_RULE,
                     P_RULE_SPECIFIER
@@ -2133,13 +2133,13 @@ DECLARE_NATIVE(subparse)
                     set_or_copy_word,
                     P_RULE_SPECIFIER
                 );
-                if (Any_Array_Kind(P_HEART)) {
+                if (Any_List_Kind(P_HEART)) {
                     //
                     // Act like R3-Alpha in preserving GROUP! vs. BLOCK!
                     // distinction (which Rebol2 did not).  But don't keep
                     // SET-XXX! or GET-XXX! (like how quoting is not kept)
                     //
-                    Init_Array_Cell(
+                    Init_Any_List(
                         sink,
                         Any_Group_Kind(P_HEART) ? REB_GROUP : REB_BLOCK,
                         Copy_Array_At_Max_Shallow(
@@ -2282,7 +2282,7 @@ DECLARE_NATIVE(subparse)
 
               blockscope {
                 Atom* atom_evaluated = evaluated;
-                if (Do_Any_Array_At_Throws(
+                if (Do_Any_List_At_Throws(
                     atom_evaluated,
                     rule,
                     derived
@@ -2295,7 +2295,7 @@ DECLARE_NATIVE(subparse)
 
                 if (Is_Series_Array(P_INPUT)) {
                     REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
-                    if (not only and Any_Array(evaluated))
+                    if (not only and Any_List(evaluated))
                         mod_flags |= AM_SPLICE;
 
                     // Note: We could check for mutability at the start

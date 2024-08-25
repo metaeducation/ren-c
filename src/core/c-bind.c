@@ -100,9 +100,9 @@ void Bind_Values_Inner_Loop(
           }
         }
         else if (flags & BIND_DEEP) {
-            if (Any_Arraylike(v)) {
+            if (Any_Listlike(v)) {
                 const Element* sub_tail;
-                Element* sub_at = Cell_Array_At_Mutable_Hack(&sub_tail, v);
+                Element* sub_at = Cell_List_At_Mutable_Hack(&sub_tail, v);
                 Bind_Values_Inner_Loop(
                     binder,
                     sub_at,
@@ -192,9 +192,9 @@ void Unbind_Values_Core(
         ){
             Unbind_Any_Word(v);
         }
-        else if (Any_Arraylike(v) and deep) {
+        else if (Any_Listlike(v) and deep) {
             const Element* sub_tail;
-            Element* sub_at = Cell_Array_At_Mutable_Hack(&sub_tail, v);
+            Element* sub_at = Cell_List_At_Mutable_Hack(&sub_tail, v);
             Unbind_Values_Core(sub_at, sub_tail, context, true);
         }
     }
@@ -649,7 +649,7 @@ DECLARE_NATIVE(let)
     if (
         Is_Group(vars) or Is_Set_Group(vars)
     ){
-        if (Do_Any_Array_At_Throws(SPARE, vars, SPECIFIED))
+        if (Do_Any_List_At_Throws(SPARE, vars, SPECIFIED))
             return THROWN;
 
         if (Is_Quoted(SPARE))  // should (let 'x: <whatever>) be legal? [3]
@@ -710,7 +710,7 @@ DECLARE_NATIVE(let)
         assert(Is_Block(vars) or Is_Set_Block(vars));
 
         const Element* tail;
-        const Element* item = Cell_Array_At(&tail, vars);
+        const Element* item = Cell_List_At(&tail, vars);
         Specifier* item_specifier = Cell_Specifier(vars);
 
         StackIndex base = TOP_INDEX;
@@ -729,7 +729,7 @@ DECLARE_NATIVE(let)
             }
 
             if (Is_Group(temp)) {  // evaluate non-QUOTED? groups in LET block
-                if (Do_Any_Array_At_Throws(OUT, temp, item_specifier))
+                if (Do_Any_List_At_Throws(OUT, temp, item_specifier))
                     return THROWN;
 
                 if (Is_Void(OUT)) {
@@ -775,7 +775,7 @@ DECLARE_NATIVE(let)
             where = stable_OUT;
 
         if (altered) {  // elements altered, can't reuse input block rebound
-            Init_Array_Cell(
+            Init_Any_List(
                 where,  // may be SPARE, and vars may point to it
                 Cell_Heart_Ensure_Noquote(vars),
                 Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED)
@@ -856,8 +856,8 @@ DECLARE_NATIVE(let)
 //
 //  "Experimental function for adding a new variable binding"
 //
-//      return: [frame! any-array?]
-//      environment [frame! any-array?]
+//      return: [frame! any-list?]
+//      environment [frame! any-list?]
 //      word [any-word?]
 //      value [any-value?]
 //  ]
@@ -882,7 +882,7 @@ DECLARE_NATIVE(add_let_binding)
         if (before)
             Set_Node_Managed_Bit(before);
     } else {
-        assert(Any_Array(env));
+        assert(Any_List(env));
         before = Cell_Specifier(env);
     }
 
@@ -991,7 +991,7 @@ void Clonify_And_Bind_Relative(
             deep = cast(Element*, copy);
             deep_tail = cast(Element*, Pairing_Tail(copy));
         }
-        else if (Any_Arraylike(v)) {  // ruled out pairlike sequences above...
+        else if (Any_Listlike(v)) {  // ruled out pairlike sequences above...
             Array* copy = Copy_Array_At_Extra_Shallow(
                 Cell_Array(v),
                 0,  // !!! what if VAL_INDEX() is nonzero?
@@ -1235,7 +1235,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
     //
     if (Is_Group(spec)) {
         DECLARE_ATOM (temp);
-        if (Do_Any_Array_At_Throws(temp, spec, SPECIFIED))
+        if (Do_Any_List_At_Throws(temp, spec, SPECIFIED))
             fail (Error_No_Catch_For_Throw(TOP_LEVEL));
         Decay_If_Unstable(temp);
         Move_Cell(spec, cast(Value*, temp));
@@ -1252,7 +1252,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
     bool rebinding;
     if (Is_Block(spec)) {  // walk the block for errors BEFORE making binder
         specifier = Cell_Specifier(spec);
-        item = Cell_Array_At(&tail, spec);
+        item = Cell_List_At(&tail, spec);
 
         const Element* check = item;
 
@@ -1476,7 +1476,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
 //  Virtual_Bind_Deep_To_Existing_Context: C
 //
 void Virtual_Bind_Deep_To_Existing_Context(
-    Value* any_array,
+    Value* list,
     Context* context,
     struct Reb_Binder *binder,
     Heart affected
@@ -1496,7 +1496,7 @@ void Virtual_Bind_Deep_To_Existing_Context(
     //
     Bind_Values_Inner_Loop(
         &binder,
-        Cell_Array_At_Mutable_Hack(ARG(def)),  // mutates bindings
+        Cell_List_At_Mutable_Hack(ARG(def)),  // mutates bindings
         exemplar,
         FLAGIT_KIND(REB_SET_WORD),  // types to bind (just set-word!),
         0,  // types to "add midstream" to binding as we go (nothing)
@@ -1504,9 +1504,9 @@ void Virtual_Bind_Deep_To_Existing_Context(
     );
  */
 
-    BINDING(any_array) = Make_Use_Core(
+    BINDING(list) = Make_Use_Core(
         context,
-        Cell_Specifier(any_array),
+        Cell_Specifier(list),
         affected
     );
 }
@@ -1546,7 +1546,7 @@ void Assert_Cell_Binding_Valid_Core(const Cell* cell)
         and CTX_TYPE(cast(Context*, binding)) == REB_MODULE
     ){
         if (not (
-            Any_Array_Kind(heart)
+            Any_List_Kind(heart)
             or Any_Sequence_Kind(heart)
             or heart == REB_COMMA  // feed cells, use for specifier ATM
         )){

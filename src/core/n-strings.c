@@ -154,8 +154,8 @@ DECLARE_NATIVE(delimit)
         if (Is_Antiform(OUT))
             return RAISE(Error_Bad_Antiform(OUT));
 
-        if (Any_Array(OUT))  // guessing a behavior is bad [2]
-            fail ("Desired array rendering in DELIMIT not known");
+        if (Any_List(OUT))  // guessing a behavior is bad [2]
+            fail ("Desired list rendering in DELIMIT not known");
 
         nothing = false;
 

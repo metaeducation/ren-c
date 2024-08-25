@@ -223,7 +223,7 @@ void Uncolor_Array(const Array* a)
     const Element* tail = Array_Tail(a);
     const Element* v = Array_Head(a);
     for (; v != tail; ++v) {
-        if (Any_Path(v) or Any_Array(v) or Is_Map(v) or Any_Context(v))
+        if (Any_Path(v) or Any_List(v) or Is_Map(v) or Any_Context(v))
             Uncolor(v);
     }
 }
@@ -239,7 +239,7 @@ void Uncolor(const Value* v)
     if (Is_Antiform(v))
         return;
 
-    if (Any_Array(v))
+    if (Any_List(v))
         Uncolor_Array(Cell_Array(v));
     else if (Any_Path(v)) {
         REBLEN len = Cell_Sequence_Len(v);

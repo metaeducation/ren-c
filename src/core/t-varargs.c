@@ -19,7 +19,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// The VARARGS! data type implements an abstraction layer over an eval levle
+// The VARARGS! data type implements an abstraction layer over an eval level
 // or arbitrary array of values.  All copied instances of a REB_VARARGS value
 // remain in sync as values are TAKE-d out of them.  Once they report
 // reaching a TAIL? they will always report TAIL?...until the call that
@@ -151,17 +151,17 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     Element* shared;
     if (Is_Block_Style_Varargs(&shared, vararg)) {
         //
-        // We are processing an ANY-ARRAY?-based varargs, which came from
-        // either a MAKE VARARGS! on an ANY-ARRAY? value -or- from a
-        // MAKE ANY-ARRAY? on a varargs (which reified the varargs into an
-        // array during that creation, flattening its entire output).
+        // We are processing an ANY-LIST?-based varargs, which came from
+        // either a MAKE VARARGS! on an ANY-LIST? value -or- from a
+        // MAKE ANY-LIST? on a varargs (which reified the varargs into an
+        // list during that creation, flattening its entire output).
 
         vararg_level = nullptr;
 
         if (Vararg_Op_If_No_Advance_Handled(
             out,
             op,
-            Is_Cell_Poisoned(shared) ? nullptr : Cell_Array_Item_At(shared),
+            Is_Cell_Poisoned(shared) ? nullptr : Cell_List_Item_At(shared),
             Is_Cell_Poisoned(shared) ? SPECIFIED : Cell_Specifier(shared),
             pclass
         )){
@@ -213,7 +213,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         case PARAMCLASS_HARD:
             Derelativize(
                 out,
-                Cell_Array_Item_At(shared),
+                Cell_List_Item_At(shared),
                 Cell_Specifier(shared)
             );
             VAL_INDEX_UNBOUNDED(shared) += 1;
@@ -223,9 +223,9 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             fail ("Variadic medium parameters not yet implemented");
 
         case PARAMCLASS_SOFT:
-            if (ANY_ESCAPABLE_GET(Cell_Array_Item_At(shared))) {
+            if (ANY_ESCAPABLE_GET(Cell_List_Item_At(shared))) {
                 if (Eval_Value_Throws(
-                    out, Cell_Array_Item_At(shared), Cell_Specifier(shared)
+                    out, Cell_List_Item_At(shared), Cell_Specifier(shared)
                 )){
                     return true;
                 }
@@ -233,7 +233,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             else { // not a soft-"exception" case, quote ordinarily
                 Derelativize(
                     out,
-                    Cell_Array_Item_At(shared),
+                    Cell_List_Item_At(shared),
                     Cell_Specifier(shared)
                 );
             }
@@ -363,14 +363,14 @@ Bounce MAKE_Varargs(
     if (parent)
         return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
 
-    // With MAKE VARARGS! on an ANY-ARRAY?, the array is the backing store
+    // With MAKE VARARGS! on an ANY-LIST?, the array is the backing store
     // (shared) that the varargs interface cannot affect, but changes to
     // the array will change the varargs.
     //
-    if (Any_Array(arg)) {
+    if (Any_List(arg)) {
         //
         // Make a single-element array to hold a reference+index to the
-        // incoming ANY-ARRAY?.  This level of indirection means all
+        // incoming ANY-LIST?.  This level of indirection means all
         // VARARGS! copied from this will update their indices together.
         // By protocol, if the array is exhausted then the shared element
         // should be an END marker (not an array at its end)

@@ -208,7 +208,7 @@ static void Process_Block_Helper(
     );
 
     const Element* tail;
-    const Element* text = Cell_Array_At(&tail, block);
+    const Element* text = Cell_List_At(&tail, block);
     for (; text != tail; ++text)
         Process_Text_Helper_Core(some_tcc_api, state, text, label);
 
@@ -481,7 +481,7 @@ DECLARE_NATIVE(compile_p)
 
     if (REF(files)) {
         const Element* tail;
-        const Element* item = Cell_Array_At(&tail, compilables);
+        const Element* item = Cell_List_At(&tail, compilables);
         for (; item != tail; ++item) {
             if (not Is_Text(item))
                 fail ("If COMPILE*/FILES, compilables must be TEXT! paths");
@@ -509,7 +509,7 @@ DECLARE_NATIVE(compile_p)
         Push_Mold(mo);
 
         const Element* tail;
-        const Element* item = Cell_Array_At(&tail, compilables);
+        const Element* item = Cell_List_At(&tail, compilables);
         for (; item != tail; ++item) {
             if (Is_Frame(item)) {
                 assert(Is_User_Native(VAL_ACTION(item)));
@@ -558,7 +558,7 @@ DECLARE_NATIVE(compile_p)
             else {
                 // COMPILE should've vetted the list to only TEXT! and ACTION!
                 //
-                fail ("COMPILE input array must contain TEXT! and ACTION!s");
+                fail ("COMPILE input list must contain TEXT! and ACTION!s");
             }
         }
 

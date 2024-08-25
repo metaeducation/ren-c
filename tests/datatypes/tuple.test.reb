@@ -4,7 +4,7 @@
 (not tuple? 1)
 (tuple! = kind of 1.2.3)
 
-; Test that scanner compacted forms match forms built from arrays
+; Test that scanner compacted forms match forms built from lists
 ;
 (1.2.3 = to tuple! [1 2 3])
 ;(1x2 = to tuple! [1 2])  ; !!! TBD when unified with pairs

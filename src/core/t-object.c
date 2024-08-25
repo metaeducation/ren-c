@@ -32,7 +32,7 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
     assert(Is_Group(block));
 
     const Element* tail;
-    const Element* item = Cell_Array_At(&tail, block);
+    const Element* item = Cell_List_At(&tail, block);
 
     struct Reb_Collector collector;
     //
@@ -617,8 +617,8 @@ Bounce MAKE_Context(
     Heart heart = cast(Heart, k);
 
     if (heart == REB_MODULE) {
-        if (not Any_Array(arg))
-            return RAISE("Currently only (MAKE MODULE! any-array) is allowed");
+        if (not Any_List(arg))
+            return RAISE("Currently only (MAKE MODULE! LIST) is allowed");
 
         assert(not parent);
 
@@ -633,7 +633,7 @@ Bounce MAKE_Context(
 
     if (Is_Block(arg)) {
         const Element* tail;
-        const Element* at = Cell_Array_At(&tail, arg);
+        const Element* at = Cell_List_At(&tail, arg);
 
         Context* ctx = Make_Context_Detect_Managed(
             heart,
@@ -654,7 +654,7 @@ Bounce MAKE_Context(
         );
 
         DECLARE_ATOM (dummy);
-        if (Do_Any_Array_At_Throws(dummy, virtual_arg, SPECIFIED))
+        if (Do_Any_List_At_Throws(dummy, virtual_arg, SPECIFIED))
             return BOUNCE_THROWN;
 
         return OUT;
@@ -1461,7 +1461,7 @@ REBTYPE(Frame)
             // it returns for FILE OF and LINE OF.
 
             Details* details = Phase_Details(act);
-            if (Array_Len(details) < 1 or not Any_Array(Array_Head(details)))
+            if (Array_Len(details) < 1 or not Any_List(Array_Head(details)))
                 return nullptr;
 
             const Array* a = Cell_Array(Array_Head(details));
@@ -1749,7 +1749,7 @@ DECLARE_NATIVE(construct)
         : nullptr;
 
     const Element* tail;
-    const Element* at = Cell_Array_At(&tail, spec);
+    const Element* at = Cell_List_At(&tail, spec);
 
     Context* ctx = Make_Context_Detect_Managed(  // scan top-level SET-WORD!s
         parent ? CTX_TYPE(parent) : REB_OBJECT,  // !!! Presume object?

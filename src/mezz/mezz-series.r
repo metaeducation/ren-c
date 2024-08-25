@@ -325,7 +325,7 @@ move: func [
     part: take/part source part
     insert either to [at head of source offset] [
         lib.skip source offset
-    ] either any-array? source [spread part] [part]
+    ] either any-list? source [spread part] [part]
 ]
 
 
@@ -613,7 +613,7 @@ split: func [
     ; or where the dlm was a char/string/charset and it was the last char
     ; (so we want to append an empty field that the above rule misses).
     ;
-    let fill-val: does [copy either any-array? series [[]] [""]]
+    let fill-val: does [copy either any-list? series [[]] [""]]
     let add-fill-val: does [append result fill-val]
     if integer? dlm [
         if into [

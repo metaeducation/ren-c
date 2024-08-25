@@ -26,7 +26,7 @@
 // value one must request a "lookback" at the time of advancing the feed.
 //
 // One reason for the feed's strict nature is that it offers an interface not
-// just to Rebol BLOCK!s and other arrays, but also to variadic lists such
+// just to Rebol BLOCK!s and other lists, but also to variadic lists such
 // as C's va_list...in a system which also allows the mixure of portions of
 // UTF-8 string source text.  C's va_list does not retain a memory of the
 // past, so once va_arg() is called it forgets the previous value...and
@@ -370,7 +370,7 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
         Finalize_Variadic_Feed(feed);
 
         feed->p = Array_Head(reified);
-        Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, reified, 1);
+        Init_Any_List_At(FEED_SINGLE(feed), REB_BLOCK, reified, 1);
         mutable_FEED_SPECIFIER(feed) = specifier;
         break; }
 
@@ -503,7 +503,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
 //
 //    1. REPEAT defines its body parameter as <const>
 //
-//    2. When REPEAT runs Do_Any_Array_At_Throws() on the const ARG(body), the
+//    2. When REPEAT runs Do_Any_List_At_Throws() on the const ARG(body), the
 //       feed gets FEED_FLAG_CONST due to the CELL_FLAG_CONST.
 //
 //    3. The argument to append is handled by the inert processing branch
@@ -631,7 +631,7 @@ INLINE Feed* Prep_Array_Feed(
 
     if (first) {
         feed->p = unwrap first;
-        Init_Array_Cell_At_Core(
+        Init_Any_List_At_Core(
             FEED_SINGLE(feed), REB_BLOCK, array, index, specifier
         );
     }
@@ -639,7 +639,7 @@ INLINE Feed* Prep_Array_Feed(
         feed->p = Array_At(array, index);
         if (feed->p == Array_Tail(array))
             feed->p = &PG_Feed_At_End;
-        Init_Array_Cell_At_Core(
+        Init_Any_List_At_Core(
             FEED_SINGLE(feed), REB_BLOCK, array, index + 1, specifier
         );
     }
@@ -739,35 +739,35 @@ INLINE Feed* Prep_Variadic_Feed(
 
 INLINE Feed* Prep_At_Feed(
     void *preallocated,
-    const Cell* any_array,  // array is extracted and HOLD put on
+    const Cell* list,  // array is extracted and HOLD put on
     Specifier* specifier,
     Flags parent_flags  // only reads FEED_FLAG_CONST out of this
 ){
     STATIC_ASSERT(CELL_FLAG_CONST == FEED_FLAG_CONST);
 
     Flags flags;
-    if (Get_Cell_Flag(any_array, EXPLICITLY_MUTABLE))
+    if (Get_Cell_Flag(list, EXPLICITLY_MUTABLE))
         flags = FEED_MASK_DEFAULT;  // override const from parent level
     else
         flags = FEED_MASK_DEFAULT
             | (parent_flags & FEED_FLAG_CONST)  // inherit
-            | (any_array->header.bits & CELL_FLAG_CONST);  // heed
+            | (list->header.bits & CELL_FLAG_CONST);  // heed
 
     return Prep_Array_Feed(
         preallocated,
         nullptr,  // `first` = nullptr, don't inject arbitrary 1st element
-        Cell_Array(any_array),
-        VAL_INDEX(any_array),
-        Derive_Specifier(specifier, any_array),
+        Cell_Array(list),
+        VAL_INDEX(list),
+        Derive_Specifier(specifier, list),
         flags
     );
 }
 
-#define Make_At_Feed_Core(any_array,specifier) \
+#define Make_At_Feed_Core(list,specifier) \
     Prep_At_Feed( \
         Alloc_Feed(), \
-        (any_array), (specifier), TOP_LEVEL->feed->flags.bits \
+        (list), (specifier), TOP_LEVEL->feed->flags.bits \
     );
 
-#define Make_At_Feed(name,any_array) \
-    Make_At_Feed_Core(name, (any_array), SPECIFIED)
+#define Make_At_Feed(name,list) \
+    Make_At_Feed_Core(name, (list), SPECIFIED)

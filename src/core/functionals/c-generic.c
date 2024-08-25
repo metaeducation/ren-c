@@ -28,7 +28,7 @@
 // such actions for that type.
 //
 // (e.g. APPEND [a b c] [d] would look at the type of the first argument,
-// notice it was a BLOCK!, and call the common C function for arrays with an
+// notice it was a BLOCK!, and call the common C function for lists with an
 // append instruction--where that instruction also handles insert, length,
 // etc. for BLOCK!s.)
 //
@@ -129,7 +129,7 @@ Array* Startup_Generics(const Element* boot_generics)
 {
     assert(VAL_INDEX(boot_generics) == 0); // should be at head, sanity check
     const Element* tail;
-    Element* head = Cell_Array_At_Known_Mutable(&tail, boot_generics);
+    Element* head = Cell_List_At_Known_Mutable(&tail, boot_generics);
     Specifier* specifier = Cell_Specifier(boot_generics);
 
     // Add SET-WORD!s that are top-level in the generics block to the lib
@@ -139,7 +139,7 @@ Array* Startup_Generics(const Element* boot_generics)
     Bind_Values_Set_Midstream_Shallow(head, tail, Lib_Context_Value);
 
     DECLARE_ATOM (discarded);
-    if (Do_Any_Array_At_Throws(discarded, boot_generics, SPECIFIED))
+    if (Do_Any_List_At_Throws(discarded, boot_generics, SPECIFIED))
         panic (discarded);
     if (not Is_Anti_Word_With_Id(discarded, SYM_DONE))
         panic (discarded);

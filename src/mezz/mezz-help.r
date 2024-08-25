@@ -56,7 +56,7 @@ description-of: func [
         v: unrun v
     ]
     return (switch/type :v [
-        &any-array? [spaced ["array of length:" length of v]]
+        &any-list? [spaced ["list of length:" length of v]]
         type-block! [
             mold v
         ]
@@ -156,7 +156,7 @@ help: func [
     ;
     if match [group! get-word! get-path! get-tuple!] topic [
         topic: reeval topic else [
-            print "NULL is a non-valued state that cannot be put in arrays"
+            print "NULL is a non-valued state that cannot be put in lists"
             return ~
         ]
     ]

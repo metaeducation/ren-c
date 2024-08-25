@@ -65,8 +65,8 @@ Series* Make_Set_Operation_Series(
     if (val2) {
         assert(Any_Series(val2));
 
-        if (Any_Array(val1)) {
-            if (!Any_Array(val2))
+        if (Any_List(val1)) {
+            if (!Any_List(val2))
                 fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
 
             // As long as they're both arrays, we're willing to do:
@@ -106,7 +106,7 @@ Series* Make_Set_Operation_Series(
     bool first_pass = true; // are we in the first pass over the series?
     Series* out_ser;
 
-    if (Any_Array(val1)) {
+    if (Any_List(val1)) {
         Series* hser = 0;   // hash table for series
         Series* hret;       // hash table for return series
 

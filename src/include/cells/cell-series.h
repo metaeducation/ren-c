@@ -86,7 +86,7 @@ INLINE void INIT_SPECIFIER(Cell* v, Stub* binding) {
         IS_DETAILS(binding)  // relative
         or IS_VARLIST(binding)  // specific
         or (
-            Any_Array_Kind(HEART_BYTE(v))
+            Any_List_Kind(HEART_BYTE(v))
             and (IS_LET(binding) or IS_USE(binding)) // virtual
         ) or (
             HEART_BYTE(v) == REB_VARARGS and Not_Series_Flag(binding, DYNAMIC)
@@ -117,7 +117,7 @@ INLINE Element* Init_Series_Cell_At_Core(
 
     Assert_Series_Term_If_Needed(s);  // even binaries [1]
 
-    if (Any_Array_Kind(heart)) {
+    if (Any_List_Kind(heart)) {
         assert(Series_Flavor(s) == FLAVOR_ARRAY);  // no antiforms or voids [2]
     }
     else if (Any_String_Kind(heart))

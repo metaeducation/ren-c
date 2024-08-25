@@ -581,7 +581,7 @@ unzip: func [
                     num-errors: me + 1
                 ]
 
-                either any-array? where [
+                either any-list? where [
                     where: insert where name
                     where: insert where all [
                         #"/" = last name

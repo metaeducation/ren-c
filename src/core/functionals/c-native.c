@@ -281,7 +281,7 @@ Array* Startup_Natives(const Element* boot_natives)
 
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
     const Element* tail;
-    Element* item = Cell_Array_At_Known_Mutable(&tail, boot_natives);
+    Element* item = Cell_List_At_Known_Mutable(&tail, boot_natives);
     Specifier* specifier = Cell_Specifier(boot_natives);
 
     // !!! We could avoid this by making NATIVE a specialization of a NATIVE*
@@ -337,10 +337,10 @@ Array* Startup_Natives(const Element* boot_natives)
     Bind_Values_Set_Midstream_Shallow(item, tail, Lib_Context_Value);
 
     DECLARE_ATOM (skipped);
-    Init_Array_Cell_At(skipped, REB_BLOCK, Cell_Array(boot_natives), 3);
+    Init_Any_List_At(skipped, REB_BLOCK, Cell_Array(boot_natives), 3);
 
     DECLARE_ATOM (discarded);
-    if (Do_Any_Array_At_Throws(discarded, skipped, specifier))
+    if (Do_Any_List_At_Throws(discarded, skipped, specifier))
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
     if (not Is_Anti_Word_With_Id(discarded, SYM_DONE))
         panic (discarded);

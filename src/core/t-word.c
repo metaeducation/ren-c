@@ -195,12 +195,12 @@ Bounce TO_Word(Level* level_, Kind k, const Value* arg)
         return OUT;
     }
 
-    if (Any_Array(arg)) {
+    if (Any_List(arg)) {
         if (Cell_Series_Len_At(arg) != 1)
-            return RAISE("Can't TO ANY-WORD? on array with length > 1");
-        const Element* item = Cell_Array_Len_At(nullptr, arg);
+            return RAISE("Can't TO ANY-WORD? on list with length > 1");
+        const Element* item = Cell_List_Len_At(nullptr, arg);
         if (not Is_Word(item))
-            return RAISE("TO ANY-WORD? requires array with one word in it");
+            return RAISE("TO ANY-WORD? requires list with one word in it");
         Copy_Cell(OUT, item);
         HEART_BYTE(OUT) = heart;
         return OUT;

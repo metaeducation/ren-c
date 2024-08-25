@@ -28,9 +28,9 @@
 
 
 //
-//  Try_Init_Any_Sequence_At_Arraylike: C
+//  Try_Init_Any_Sequence_At_Listlike: C
 //
-Value* Try_Init_Any_Sequence_At_Arraylike(
+Value* Try_Init_Any_Sequence_At_Listlike(
     Sink(Value*) out,  // NULL if array too short, violating value otherwise
     Heart heart,
     const Array* a,
@@ -314,7 +314,7 @@ Bounce TO_Sequence(Level* level_, Kind k, const Value* arg) {
         return rebValue(
             "as", Datatype_From_Kind(heart),
                 "parse3 let v: load @", arg, "[",
-                    "[&any-sequence? | &any-array?] <end> accept (first v)",
+                    "[&any-sequence? | &any-list?] <end> accept (first v)",
                     "| accept (v)",  // try to convert whatever other block
                 "]"
         );
@@ -349,7 +349,7 @@ Bounce TO_Sequence(Level* level_, Kind k, const Value* arg) {
         return RAISE(Error_Sequence_Too_Short_Raw());
 
     if (len == 2) {
-        const Element* at = Cell_Array_Item_At(arg);
+        const Element* at = Cell_List_Item_At(arg);
         if (not Try_Init_Any_Sequence_Pairlike(
             OUT,
             heart,
@@ -371,7 +371,7 @@ Bounce TO_Sequence(Level* level_, Kind k, const Value* arg) {
         Freeze_Array_Shallow(a);
         Force_Series_Managed(a);
 
-        if (not Try_Init_Any_Sequence_Arraylike(OUT, heart, a))
+        if (not Try_Init_Any_Sequence_Listlike(OUT, heart, a))
             return RAISE(Error_Bad_Sequence_Init(stable_OUT));
     }
 

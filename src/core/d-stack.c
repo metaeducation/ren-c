@@ -44,7 +44,7 @@ void Collapsify_Array(Array* array, REBLEN limit)
     const Element* tail = Array_Tail(array);
     Element* item = Array_Head(array);
     for (; item != tail; ++item) {
-        if (Any_Array(item) and Cell_Series_Len_At(item) > limit) {
+        if (Any_List(item) and Cell_Series_Len_At(item) > limit) {
             Array* copy = Copy_Array_At_Max_Shallow(
                 Cell_Array(item),
                 VAL_INDEX(item),
@@ -56,7 +56,7 @@ void Collapsify_Array(Array* array, REBLEN limit)
             Collapsify_Array(copy, limit);
 
             Heart heart = Cell_Heart_Ensure_Noquote(item);  // !!! Quoteds?
-            Init_Array_Cell_At(item, heart, copy, 0);  // at 0 now
+            Init_Any_List_At(item, heart, copy, 0);  // at 0 now
             assert(Not_Cell_Flag(item, NEWLINE_BEFORE));  // gets cleared
         }
     }

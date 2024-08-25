@@ -27,7 +27,7 @@
 // the point of a running evaluation (as well as to safely check for when
 // that call is no longer on the stack, and can't provide data.)
 //
-// A second VARARGS! form is implemented as a thin proxy over an ANY-ARRAY?.
+// A second VARARGS! form is implemented as a thin proxy over an ANY-LIST?.
 // This mimics the interface of feeding forward through those arguments, to
 // allow for "parameter packs" that can be passed to variadic functions.
 //
@@ -35,7 +35,7 @@
 // another, they are still maintained in sync.  TAKE-ing a vararg off of one
 // is reflected in the others.  This means that the array index position of
 // the vararg is located through the level pointer.  If there is no level,
-// then a single element array (the `array`) holds an ANY-ARRAY? value that
+// then a single element array (the `array`) holds an ANY-LIST? value that
 // is shared between the instances, to reflect the state.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//

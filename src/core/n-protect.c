@@ -303,7 +303,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
     if (Is_Block(value)) {
         if (REF(words)) {
             const Element* tail;
-            const Element* item = Cell_Array_At(&tail, value);
+            const Element* item = Cell_List_At(&tail, value);
             for (; item != tail; ++item) {
                 DECLARE_VALUE (word); // need binding, can't pass Cell
                 Derelativize(word, item, Cell_Specifier(value));
@@ -314,7 +314,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
         if (REF(values)) {
             Value* var;
             const Element* tail;
-            const Element* item = Cell_Array_At(&tail, value);
+            const Element* item = Cell_List_At(&tail, value);
 
             DECLARE_VALUE (safe);
 
@@ -528,7 +528,7 @@ void Force_Value_Frozen_Core(
     if (heart == REB_FRAME and Is_Frame_Details(v))
         return;  // special form, immutable
 
-    if (Any_Array_Kind(heart)) {
+    if (Any_List_Kind(heart)) {
         const Array* a = Cell_Array(v);
         if (deep)
             Freeze_Array_Deep(a);

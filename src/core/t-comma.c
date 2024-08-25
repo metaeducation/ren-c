@@ -50,7 +50,7 @@ void MF_Comma(REB_MOLD *mo, const Cell* v, bool form)
 //
 //  CT_Comma: C
 //
-// Must have a comparison function, otherwise SORT would not work on arrays
+// Must have a comparison function, otherwise SORT would not work on lists
 // with commas in them.
 //
 REBINT CT_Comma(const Cell* a, const Cell* b, bool strict)

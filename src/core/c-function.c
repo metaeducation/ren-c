@@ -166,7 +166,7 @@ void Push_Keys_And_Parameters_May_Fail(
     enum Reb_Spec_Mode mode = SPEC_MODE_DEFAULT;
 
     const Element* tail;
-    const Element* item = Cell_Array_At(&tail, spec);
+    const Element* item = Cell_List_At(&tail, spec);
 
     for (; item != tail; ++item) {
 

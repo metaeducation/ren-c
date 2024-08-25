@@ -136,7 +136,7 @@ DECLARE_NATIVE(reorder)
 
     StackIndex base = TOP_INDEX;
 
-    // We proceed through the array, and remove the binder indices as we go.
+    // We proceed through the list, and remove the binder indices as we go.
     // This lets us check for double uses or use of words that aren't in the
     // spec, and a final pass can check to make sure all mandatory parameters
     // have been spoken for in the order.
@@ -145,7 +145,7 @@ DECLARE_NATIVE(reorder)
     // be pushed.
     //
     const Element* item;  // starts as tail
-    const Element* at = Cell_Array_At(&item, ARG(ordering));
+    const Element* at = Cell_List_At(&item, ARG(ordering));
     for (; at != item--; ) {
         const Symbol* symbol = Cell_Word_Symbol(item);
 

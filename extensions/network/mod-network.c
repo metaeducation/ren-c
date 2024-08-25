@@ -1191,7 +1191,7 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
 
         REBLEN num_pending = 0;
         const Element* tail;
-        val = Cell_Array_At(&tail, ports);
+        val = Cell_List_At(&tail, ports);
         for (; val != tail; ++val) {  // find timeout
             if (Is_Port(val))
                 ++num_pending;

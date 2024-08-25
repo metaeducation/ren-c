@@ -989,7 +989,7 @@ DECLARE_NATIVE(swap_contents)
 {
     INCLUDE_PARAMS_OF_SWAP_CONTENTS;
 
-    if (Any_Array(ARG(series1)) != Any_Array(ARG(series2)))
+    if (Any_List(ARG(series1)) != Any_List(ARG(series2)))
         fail ("Can only SWAP-CONTENTS of arrays with other arrays");
 
     // !!! This is a conservative check, as some binaries could be swapped

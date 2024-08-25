@@ -94,7 +94,7 @@ bool Do_Breakpoint_Throws(
 
     assert(Is_Meta_Group(inst));
 
-    bool threw = Do_Any_Array_At_Throws(out, inst, SPECIFIED);
+    bool threw = Do_Any_List_At_Throws(out, inst, SPECIFIED);
 
     rebRelease(inst);
 
@@ -195,8 +195,8 @@ DECLARE_NATIVE(resume)
     INCLUDE_PARAMS_OF_RESUME;
 
     Value* expr = ARG(expression);
-    if (Is_Nulled(expr))  // e.g. <end> (actuall null not legal)
-        Init_Array_Cell(expr, REB_META_GROUP, EMPTY_ARRAY);
+    if (Is_Nulled(expr))  // e.g. <end> (actually null not legal)
+        Init_Any_List(expr, REB_META_GROUP, EMPTY_ARRAY);
     else {
         assert(Is_Block(expr));
         HEART_BYTE(expr) = REB_META_GROUP;

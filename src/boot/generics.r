@@ -133,17 +133,17 @@ intersect: generic [
 
     return: [
         logic? integer! char? tuple!  ; math
-        any-array? any-string? bitset!  ; sets
+        any-list? any-string? bitset!  ; sets
         binary!  ; ???
     ]
     value1 [
         logic? integer! char? tuple!  ; math
-        any-array? any-string? bitset!  ; sets
+        any-list? any-string? bitset!  ; sets
         binary!  ; ???
     ]
     value2 [
         logic? integer! char? tuple!  ; math
-        any-array? any-string? bitset!  ; sets
+        any-list? any-string? bitset!  ; sets
         binary!  ; ???
     ]
     /case "Uses case-sensitive comparison"
@@ -156,17 +156,17 @@ union: generic [
 
     return: [
         logic? integer! char? tuple!  ; math
-        any-array? any-string? bitset!  ; sets
+        any-list? any-string? bitset!  ; sets
         binary!  ; ???
     ]
     value1 [
         logic? integer! char? tuple!  ; math
-        any-array? any-string? bitset!  ; sets
+        any-list? any-string? bitset!  ; sets
         binary!  ; ???
     ]
     value2 [
         logic? integer! char? tuple!  ; math
-        any-array? any-string? bitset!  ; sets
+        any-list? any-string? bitset!  ; sets
         binary!  ; ???
     ]
     /case "Use case-sensitive comparison"
@@ -179,19 +179,19 @@ difference: generic [
 
     return: [
         logic? integer! char? tuple!
-        any-array? any-string? bitset!
+        any-list? any-string? bitset!
         binary!
         time!  ; !!! Under review, this really doesn't fit
     ]
     value1 [
         logic? integer! char? tuple!  ; math
-        any-array? any-string? bitset!  ; sets
+        any-list? any-string? bitset!  ; sets
         binary!  ; ???
         date!  ; !!! Under review, this really doesn't fit
     ]
     value2 [
         logic? integer! char? tuple!  ; math
-        any-array? any-string? bitset!  ; sets
+        any-list? any-string? bitset!  ; sets
         binary!  ; ???
         date!  ; !!! Under review, this really doesn't fit
     ]
@@ -203,11 +203,11 @@ difference: generic [
 exclude: generic [
     {Returns the first data set less the second data set.}
 
-    return: [any-array? any-string? binary! bitset!]
+    return: [any-list? any-string? binary! bitset!]
     data "original data"
-        [any-array? any-string? binary! bitset!]
+        [any-list? any-string? binary! bitset!]
     exclusions "data to exclude from series"
-        [any-array? any-string? binary! bitset!]
+        [any-list? any-string? binary! bitset!]
     /case "Uses case-sensitive comparison"
     /skip "Treat the series as records of fixed size"
         [integer!]
@@ -237,8 +237,8 @@ complement: generic [
 unique: generic [
     {Returns the data set with duplicates removed}
 
-    return: [any-array? any-string? binary! bitset!]
-    series [any-array? any-string? binary! bitset!]
+    return: [any-list? any-string? binary! bitset!]
+    series [any-list? any-string? binary! bitset!]
     <local> dummy  ; unused, makes frame-compatible with INTERSECT/UNIQUE/etc.
     /case "Use case-sensitive comparison (except bitsets)"
     /skip "Treat the series as records of fixed size"
@@ -444,7 +444,7 @@ insert: generic [
         [any-number? any-series? pair!]
     /dup "Duplicates the insert a specified number of times"
         [any-number? pair!]
-    /line "Data should be its own line (use as formatting cue if ANY-ARRAY?)"
+    /line "Data should be its own line (use as formatting cue if ANY-LIST?)"
 ]
 
 ; !!! INSERT, APPEND, CHANGE expect to have compatible frames...same params
@@ -462,7 +462,7 @@ append: generic [
         [any-number? any-series? pair!]
     /dup "Duplicates the insert a specified number of times"
         [any-number? pair!]
-    /line "Data should be its own line (use as formatting cue if ANY-ARRAY?)"
+    /line "Data should be its own line (use as formatting cue if ANY-LIST?)"
 ]
 
 ; !!! INSERT, APPEND, CHANGE expect to have compatible frames...same params
@@ -480,7 +480,7 @@ change: generic [
         [any-number? any-series? pair!]
     /dup "Duplicates the change a specified number of times"
         [any-number? pair!]
-    /line "Data should be its own line (use as formatting cue if ANY-ARRAY?)"
+    /line "Data should be its own line (use as formatting cue if ANY-LIST?)"
 ]
 
 remove: generic [

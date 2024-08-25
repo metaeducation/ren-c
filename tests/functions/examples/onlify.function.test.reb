@@ -17,7 +17,7 @@ onlify: func [
             /only "Use value literally (don't splice blocks or unquote)"
         ]
     ) compose/deep [
-        all [not only, any-array? series, any-array? (param)] then [
+        all [not only, any-list? series, any-list? (param)] then [
             set/any $(param) spread (param)
         ]
         ; ...fall through to normal handling

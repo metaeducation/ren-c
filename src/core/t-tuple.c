@@ -99,12 +99,12 @@ Bounce MAKE_Sequence(
         return Init_Tuple_Bytes(OUT, buf, size);
     }
 
-    if (Any_Array(arg)) {
+    if (Any_List(arg)) {
         REBLEN len = 0;
         REBINT n;
 
         const Element* tail;
-        const Element* item = Cell_Array_At(&tail, arg);
+        const Element* item = Cell_List_At(&tail, arg);
 
         Byte buf[MAX_TUPLE];
         Byte* vp = buf;
@@ -367,13 +367,13 @@ REBTYPE(Sequence)
         // /DEEP copy of a path may copy groups that are mutable.
         //
       case SYM_COPY: {
-        if (not Any_Arraylike(sequence))
+        if (not Any_Listlike(sequence))
             return Copy_Cell(level_->out, sequence);
 
         Heart heart = Cell_Heart_Ensure_Noquote(sequence);
         HEART_BYTE(sequence) = REB_BLOCK;
 
-        Atom* r = Atom_From_Bounce(T_Array(level_, verb));
+        Atom* r = Atom_From_Bounce(T_List(level_, verb));
         assert(Cell_Heart(r) == REB_BLOCK);
 
         if (r != OUT)

@@ -146,7 +146,7 @@ DECLARE_NATIVE(lambda)
     const Element* item_tail;
     const Element* item;
     if (Is_Block(spec)) {
-        item = Cell_Array_At(&item_tail, spec);
+        item = Cell_List_At(&item_tail, spec);
     }
     else if (
         Is_Word(spec)

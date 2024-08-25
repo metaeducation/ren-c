@@ -150,8 +150,8 @@ INLINE Context* Error_Bad_Sequence_Init(const Value* v) {
 
 //=//// UNCOMPRESSED ARRAY SEQUENCE FORM //////////////////////////////////=//
 
-#define Try_Init_Any_Sequence_Arraylike(out,heart,a) \
-    Try_Init_Any_Sequence_At_Arraylike((out), (heart), (a), 0)
+#define Try_Init_Any_Sequence_Listlike(out,heart,a) \
+    Try_Init_Any_Sequence_At_Listlike((out), (heart), (a), 0)
 
 
 //=//// ALL-BLANK! SEQUENCE OPTIMIZATION //////////////////////////////////=//
@@ -458,7 +458,7 @@ INLINE Value* Try_Pop_Sequence_Or_Element_Or_Nulled(
 
     Array* a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
     Freeze_Array_Shallow(a);
-    if (not Try_Init_Any_Sequence_Arraylike(out, heart, a))
+    if (not Try_Init_Any_Sequence_Listlike(out, heart, a))
         return nullptr;
 
     return out;

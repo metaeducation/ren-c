@@ -101,7 +101,7 @@ DECLARE_NATIVE(make)
     Value* arg = ARG(def);
 
     // See notes in DECLARE_NATIVE(do) for why this is the easiest way to pass
-    // a flag to Do_Any_Array(), to help us discern the likes of:
+    // a flag to Do_Any_List(), to help us discern the likes of:
     //
     //     foo: does [make object! [x: [1 2 3]]]  ; x inherits frame const
     //

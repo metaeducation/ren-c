@@ -427,7 +427,7 @@ Bounce MAKE_Error(
         // code in REBTYPE(Context) and code in DECLARE_NATIVE(construct))
 
         const Element* tail;
-        const Element* head = Cell_Array_At(&tail, arg);
+        const Element* head = Cell_List_At(&tail, arg);
 
         e = Make_Context_Detect_Managed(
             REB_ERROR, // type
@@ -453,7 +453,7 @@ Bounce MAKE_Error(
         );
 
         DECLARE_ATOM (evaluated);
-        if (Do_Any_Array_At_Throws(evaluated, virtual_arg, SPECIFIED))
+        if (Do_Any_List_At_Throws(evaluated, virtual_arg, SPECIFIED))
             return BOUNCE_THROWN;
 
         vars = ERR_VARS(e);
@@ -641,7 +641,7 @@ Context* Make_Error_Managed_Core(
     REBLEN expected_args = 0;
     if (Is_Block(message)) { // GET-WORD!s in template should match va_list
         const Element* tail;
-        const Element* temp = Cell_Array_At(&tail, message);
+        const Element* temp = Cell_List_At(&tail, message);
         for (; temp != tail; ++temp) {
             if (Is_Get_Word(temp))
                 ++expected_args;
@@ -669,7 +669,7 @@ Context* Make_Error_Managed_Core(
     //
     if (not Is_Text(message)) {
         const Element* msg_tail;
-        const Element* msg_item = Cell_Array_At(&msg_tail, message);
+        const Element* msg_item = Cell_List_At(&msg_tail, message);
 
         for (; msg_item != msg_tail; ++msg_item) {
             if (not Is_Get_Word(msg_item))
@@ -1449,7 +1449,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
             //
             Append_String(mo->series, nearest);
         }
-        else if (Any_Array(nearest) or Any_Path(nearest))
+        else if (Any_List(nearest) or Any_Path(nearest))
             Mold_Value_Limit(mo, cast(Element*, nearest), 60);
         else
             Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);

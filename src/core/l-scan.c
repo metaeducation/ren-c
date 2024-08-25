@@ -935,7 +935,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 // conclusion at a delimiter.  The calculated token will be returned.
 //
 // The TOKEN_XXX type returned will correspond directly to a Rebol datatype
-// if it isn't an ANY-ARRAY? (e.g. TOKEN_INTEGER for INTEGER! or TOKEN_STRING
+// if it isn't an ANY-LIST? (e.g. TOKEN_INTEGER for INTEGER! or TOKEN_STRING
 // for STRING!).  When a block or group delimiter is found it will indicate
 // that, e.g. TOKEN_BLOCK_BEGIN will be returned to indicate the scanner
 // should recurse... or TOKEN_GROUP_END which will signal the end of a level
@@ -943,7 +943,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 //
 // TOKEN_END is returned if end of input is reached.
 //
-// Newlines that should be internal to a non-ANY-ARRAY? type are included in
+// Newlines that should be internal to a non-ANY-LIST? type are included in
 // the scanned range between the `begin` and `end`.  But newlines that are
 // found outside of a string are returned as TOKEN_NEWLINE.  (These are used
 // to set the CELL_FLAG_NEWLINE_BEFORE bits on the next value.)
@@ -2135,7 +2135,7 @@ Bounce Scanner_Executor(Level* const L) {
             *ss->end == ':'  // `...(foo):` or `...[bar]:`
             and not Is_Dot_Or_Slash(level->mode)  // leave `:` for SET-PATH!
         ){
-            Init_Array_Cell(
+            Init_Any_List(
                 PUSH(),
                 Sigilize_Any_Plain_Kind(SIGIL_SET, heart),
                 a
@@ -2144,7 +2144,7 @@ Bounce Scanner_Executor(Level* const L) {
             ++ss->end;
         }
         else
-            Init_Array_Cell(PUSH(), heart, a);
+            Init_Any_List(PUSH(), heart, a);
         ep = ss->end;
         break; }
 
@@ -2643,7 +2643,7 @@ Bounce Scanner_Executor(Level* const L) {
                 // the scanner, but still pretty cool we can do it this way.)
                 //
                 DECLARE_ATOM (items);
-                Init_Array_Cell(
+                Init_Any_List(
                     items,
                     REB_THE_BLOCK,  // don't want to evaluate
                     Pop_Stack_Values(stackindex_path_head - 1)

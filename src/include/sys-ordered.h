@@ -71,7 +71,7 @@ INLINE bool Bindable_Heart_Is_Any_Word(Heart heart) {
     return heart < REB_TUPLE;
 }
 
-INLINE bool Bindable_Heart_Is_Any_Array(Heart heart) {
+INLINE bool Bindable_Heart_Is_Any_List(Heart heart) {
     assert(heart >= REB_WORD);  // inlined Is_Bindable_Heart()
     return heart >= REB_BLOCK;
 }

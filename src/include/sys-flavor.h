@@ -106,7 +106,7 @@ enum StubFlavorEnum {
     //
     FLAVOR_DETAILS,
 
-    // The concept of "Virtual Binding" is that instances of ANY-ARRAY? values
+    // The concept of "Virtual Binding" is that instances of ANY-LIST? values
     // can carry along a collection of contexts that override the bindings of
     // words that are encountered.  This collection is done by means of
     // "lets" that make a linked list of overrides.

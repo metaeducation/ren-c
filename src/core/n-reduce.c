@@ -32,7 +32,7 @@
 //
 //  "Evaluates expressions, keeping each result (EVAL only gives last result)"
 //
-//      return: "New array or value"
+//      return: "New list or value"
 //          [element?]
 //      value "GROUP! and BLOCK! evaluate each item, single values evaluate"
 //          [<maybe> element?]
@@ -80,9 +80,9 @@ DECLARE_NATIVE(reduce)
 
     switch (STATE) {
       case ST_REDUCE_INITIAL_ENTRY:
-        if (Any_Array(v))
-            goto initial_entry_any_array;
-        goto initial_entry_non_array;  // semantics in question [1]
+        if (Any_List(v))
+            goto initial_entry_list;
+        goto initial_entry_non_list;  // semantics in question [1]
 
       case ST_REDUCE_EVAL_STEP:
         goto reduce_step_result_in_out;
@@ -93,7 +93,7 @@ DECLARE_NATIVE(reduce)
       default: assert(false);
     }
 
-  initial_entry_non_array: {  /////////////////////////////////////////////////
+  initial_entry_non_list: {  /////////////////////////////////////////////////
 
     if (Any_Inert(v))
         return COPY(v);  // save time if it's something like a TEXT!
@@ -110,7 +110,7 @@ DECLARE_NATIVE(reduce)
 
     return DELEGATE_SUBLEVEL(sub);
 
-} initial_entry_any_array: {  ////////////////////////////////////////////////
+} initial_entry_list: {  /////////////////////////////////////////////////////
 
     Level* sub = Make_Level_At(
         &Stepper_Executor,
@@ -183,7 +183,7 @@ DECLARE_NATIVE(reduce)
 
     if (Is_Splice(OUT)) {
         const Element* tail;
-        const Element* at = Cell_Array_At(&tail, OUT);
+        const Element* at = Cell_List_At(&tail, OUT);
         bool newline = Get_Cell_Flag(v, NEWLINE_BEFORE);
         for (; at != tail; ++at) {
             Derelativize(PUSH(), at, Cell_Specifier(OUT));
@@ -214,7 +214,7 @@ DECLARE_NATIVE(reduce)
     if (Get_Array_Flag(Cell_Array(v), NEWLINE_AT_TAIL))
         pop_flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
-    Init_Array_Cell(
+    Init_Any_List(
         OUT,
         Cell_Heart_Ensure_Noquote(v),
         Pop_Stack_Values_Core(STACK_BASE, pop_flags)
@@ -374,7 +374,7 @@ bool Match_For_Compose(const Cell* group, const Element* label) {
     if (Cell_Series_Len_At(group) == 0) // you have a pattern, so leave `()` as-is
         return false;
 
-    const Element* first = Cell_Array_Item_At(group);
+    const Element* first = Cell_List_Item_At(group);
     if (VAL_TYPE(first) != VAL_TYPE(label))
         return false;
 
@@ -475,7 +475,7 @@ static Atom* Finalize_Composer_Level(
     if (Get_Array_Flag(Cell_Array(composee), NEWLINE_AT_TAIL))
         flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;  // proxy newline flag [3]
 
-    Init_Array_Cell(
+    Init_Any_List(
         out,
         heart,
         Pop_Stack_Values_Core(L->baseline.stack_base, flags)
@@ -592,7 +592,7 @@ Bounce Composer_Executor(Level* const L)
 
     const Element* at = At_Level(L);
 
-    if (not Any_Arraylike(at)) {  // won't substitute/recurse
+    if (not Any_Listlike(at)) {  // won't substitute/recurse
         Copy_Cell(PUSH(), at);  // keep newline flag
         goto handle_next_item;
     }
@@ -733,7 +733,7 @@ Bounce Composer_Executor(Level* const L)
     assert(Is_Splice(OUT));  // GROUP! at "quoting level -1" means splice
 
     const Element* push_tail;
-    const Element* push = Cell_Array_At(&push_tail, OUT);
+    const Element* push = Cell_List_At(&push_tail, OUT);
     if (push != push_tail) {
         Copy_Cell(PUSH(), push);
         if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))
@@ -795,14 +795,14 @@ Bounce Composer_Executor(Level* const L)
 //
 //  compose: native [
 //
-//  "Evaluates only contents of GROUP!-delimited expressions in an array"
+//  "Evaluates only contents of GROUP!-delimited expressions in the argument"
 //
-//      return: [blackhole? any-array? any-sequence? any-word? action?]
+//      return: [blackhole? any-list? any-sequence? any-word? action?]
 //      'label "Distinguish compose groups, e.g. [(plain) (<*> composed)]"
 //          [<skip> tag! file!]
 //      value "The template to fill in (no-op if WORD!, ACTION?, BLACKHOLE!)"
-//          [blackhole? any-array? any-sequence? any-word? action?]
-//      /deep "Compose deeply into nested arrays"
+//          [blackhole? any-list? any-sequence? any-word? action?]
+//      /deep "Compose deeply into nested lists and sequences"
 //      /predicate "Function to run on composed slots (default: META)"
 //          [<unrun> frame!]
 //  ]
@@ -855,7 +855,7 @@ DECLARE_NATIVE(compose)
     if (Is_Raised(OUT))  // sublevel was killed
         return OUT;
 
-    if (Any_Arraylike(OUT))
+    if (Any_Listlike(OUT))
         BINDING(OUT) = BINDING(v);
 
     return OUT;
@@ -881,7 +881,7 @@ static void Flatten_Core(
             Specifier* derived = Derive_Specifier(specifier, item);
 
             const Element* sub_tail;
-            Element* sub = Cell_Array_At_Ensure_Mutable(&sub_tail, item);
+            Element* sub = Cell_List_At_Ensure_Mutable(&sub_tail, item);
             Flatten_Core(
                 sub,
                 sub_tail,
@@ -914,7 +914,7 @@ DECLARE_NATIVE(flatten)
     StackIndex base = TOP_INDEX;
 
     const Element* tail;
-    Element* at = Cell_Array_At_Ensure_Mutable(&tail, ARG(block));
+    Element* at = Cell_List_At_Ensure_Mutable(&tail, ARG(block));
     Flatten_Core(
         at,
         tail,

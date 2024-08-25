@@ -151,7 +151,7 @@ void Set_Parameter_Spec(
     }
 
     const Element* tail;
-    const Element* item = Cell_Array_At(&tail, spec);
+    const Element* item = Cell_List_At(&tail, spec);
 
     Length len = tail - item;
 

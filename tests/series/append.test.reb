@@ -43,7 +43,7 @@
 ([a b c d/e/f] = append copy [a b c] 'd/e/f)
 ('(a b c d/e/f) = append copy '(a b c) 'd/e/f)
 
-; BLOCKIFY gives alias of the original underlying array identify if there
+; BLOCKIFY gives alias of the original underlying list identify if there
 ; was one, or efficiently uses a virtual immutable container of size 1
 [
     (

@@ -6,7 +6,7 @@
 ; filtered by other combinators to extract data from.
 ;
 ; Most combinators allow the bubbling up to happen automatically--where every
-; successful parser they call will contribute its results to the growing array
+; successful parser they call will contribute its results to the growing list
 ; in the order the parsers were called.  This is not good enough for some
 ; combinators (like BLOCK!) which have higher-level concepts than the mere
 ; success of individual parsers to decide what is kept.  (e.g. a parser must
@@ -267,7 +267,7 @@
     ])
 ]
 
-; Collecting non-array series fragments
+; Collecting non-list series fragments
 [
     (all [
         pos: parse- "aaabbb" [x: collect [keep [across some "a"]]]

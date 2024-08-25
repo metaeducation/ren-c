@@ -172,7 +172,7 @@ REBINT Find_Max_Bit(const Value* val)
 
     case REB_BLOCK: {
         const Element* tail;
-        const Element* item = Cell_Array_At(&tail, val);
+        const Element* item = Cell_List_At(&tail, val);
         for (; item != tail; ++item) {
             REBINT n = Find_Max_Bit(item);
             if (n != NOT_FOUND and cast(REBLEN, n) > maxi)
@@ -296,11 +296,11 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
         return true;
     }
 
-    if (!Any_Array(val))
+    if (!Any_List(val))
         fail (Error_Invalid_Type(VAL_TYPE(val)));
 
     const Element* tail;
-    const Element* item = Cell_Array_At(&tail, val);
+    const Element* item = Cell_List_At(&tail, val);
 
     if (
         item != tail
@@ -441,13 +441,13 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
         return false;
     }
 
-    if (!Any_Array(val))
+    if (!Any_List(val))
         fail (Error_Invalid_Type(VAL_TYPE(val)));
 
     // Loop through block of bit specs
 
     const Element* tail;
-    const Element* item = Cell_Array_At(&tail, val);
+    const Element* item = Cell_List_At(&tail, val);
     for (; item != tail; item++) {
 
         switch (VAL_TYPE(item)) {

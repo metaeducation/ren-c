@@ -7,7 +7,7 @@ Rebol [
         This shim redefines IMPORT and EXPORT for the bootstrap executable:
 
         * It preprocesses the source, so that -{...}- strings are turned into
-          legacy {...} strings.  ({...} are FENCE! arrays in modern Ren-C)
+          legacy {...} strings.  ({...} are FENCE! lists in modern Ren-C)
 
         * It removes commas from non-strings in source, so that commas can be
           used in boostrap code.  This doesn't act as expression barriers, but

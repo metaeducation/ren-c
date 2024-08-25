@@ -180,16 +180,16 @@ INLINE bool Reevaluate_In_Sublevel_Throws(
 }
 
 
-INLINE bool Eval_Step_In_Any_Array_At_Throws(
+INLINE bool Eval_Step_In_Any_List_At_Throws(
     Atom* out,
     REBLEN *index_out,
-    const Cell* any_array,  // Note: legal to have any_array = out
+    const Cell* list,  // Note: legal to have list = out
     Specifier* specifier,
     Flags flags
 ){
     assert(Is_Cell_Erased(out));
 
-    Feed* feed = Make_At_Feed_Core(any_array, specifier);
+    Feed* feed = Make_At_Feed_Core(list, specifier);
 
     if (Is_Feed_At_End(feed)) {
         *index_out = 0xDECAFBAD;  // avoid compiler warning

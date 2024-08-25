@@ -73,7 +73,7 @@ INLINE Kind VAL_TYPE_KIND(const Cell* v) {
     assert(Cell_Heart(v) == REB_TYPE_BLOCK);
     if (Cell_Series_Len_At(v) != 1)
         fail ("Type blocks only allowed one element for now");
-    const Element* item = Cell_Array_At(nullptr, v);
+    const Element* item = Cell_List_At(nullptr, v);
     if (not Is_Word(item))
         fail ("Type blocks only allowed WORD! items for now");
     Option(SymId) id = Cell_Word_Id(item);
@@ -93,7 +93,7 @@ INLINE Value* Init_Builtin_Datatype_Untracked(
     Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
 
     Init_Word(Stub_Cell(a), Canon_Symbol(cast(SymId, kind)));
-    return Init_Array_Cell(out, REB_TYPE_BLOCK, a);
+    return Init_Any_List(out, REB_TYPE_BLOCK, a);
 }
 
 #define Init_Builtin_Datatype(out,kind) \

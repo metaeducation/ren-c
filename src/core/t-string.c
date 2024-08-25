@@ -398,7 +398,7 @@ Bounce MAKE_String(
         // to produce #{abcd2}.  That behavior is not available in Ren-C.
 
         REBLEN len;
-        const Element* first = Cell_Array_Len_At(&len, def);
+        const Element* first = Cell_List_Len_At(&len, def);
 
         if (len != 2)
             goto bad_make;
@@ -1072,7 +1072,7 @@ REBTYPE(String)
         else if (Is_Antiform(arg)) {  // only SPLICE! in typecheck
             fail (Error_Bad_Antiform(arg));  // ...but that doesn't filter yet
         }
-        else if (Any_Array(arg))
+        else if (Any_List(arg))
             fail (ARG(value));  // error on `append "abc" [d e]` w/o SPREAD
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(  // does read-only check

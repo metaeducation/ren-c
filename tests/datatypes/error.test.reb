@@ -148,7 +148,7 @@
 
 ; #60, #1135
 ; This tests the NEAR positioning, though really only a few elements of
-; the array are mirrored into the error.  This happens to go to the limit of
+; the list are mirrored into the error.  This happens to go to the limit of
 ; 3, and shows that the infix expression start was known to the error.
 ;
 ; !!! This used to use `/` instead of divide, but a period of time where

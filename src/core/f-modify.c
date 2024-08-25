@@ -75,7 +75,7 @@ REBLEN Modify_Array(
 
     // Check /PART, compute LEN:
     if (flags & AM_SPLICE) {
-        assert(Any_Array(src_val));
+        assert(Any_List(src_val));
 
         REBLEN len_at = Cell_Series_Len_At(src_val);
         ilen = len_at;
@@ -98,7 +98,7 @@ REBLEN Modify_Array(
                 tail_newline = false;
             else {
                 const Cell* tail_cell
-                    = Cell_Array_Item_At(src_val) + ilen;
+                    = Cell_List_Item_At(src_val) + ilen;
                 tail_newline = Get_Cell_Flag(tail_cell, NEWLINE_BEFORE);
             }
         }
@@ -114,7 +114,7 @@ REBLEN Modify_Array(
             src_rel = Array_Head(copy);
         }
         else {
-            src_rel = Cell_Array_At(nullptr, src_val);  // may be tail
+            src_rel = Cell_List_At(nullptr, src_val);  // may be tail
         }
     }
     else {
@@ -187,7 +187,7 @@ REBLEN Modify_Array(
 
     if (flags & AM_LINE) {
         //
-        // !!! Testing this heuristic: if someone adds a line to an array
+        // !!! Testing this heuristic: if someone adds a line to a list
         // with the /LINE flag explicitly, force the head element to have a
         // newline.  This allows `x: copy [] | append/line x [a b c]` to give
         // a more common result.  The head line can be removed easily.
@@ -468,7 +468,7 @@ REBLEN Modify_String_Or_Binary(
             // for operations like TO TEXT! of a BLOCK! are unclear...
             //
             const Element* item_tail;
-            const Element* item = Cell_Array_At(&item_tail, src);
+            const Element* item = Cell_List_At(&item_tail, src);
             for (; item != item_tail; ++item)
                 Form_Value(mo, item);
             goto use_mold_buffer;

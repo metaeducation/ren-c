@@ -232,7 +232,7 @@ Script: [
     varargs-no-look:    {VARARGS! may only lookahead by 1 if "hard quoted"}
     varargs-take-last:  {VARARGS! does not support TAKE-ing only /LAST item}
 
-    null-vararg-array:  {Can't MAKE ANY-ARRAY? from VARARGS! allowing ~null~}
+    null-vararg-list:   {Can't MAKE ANY-LIST? from VARARGS! allowing ~null~}
     null-object-block:  {Can't create block from object if it has null values}
 
     conflicting-key:    [:arg1 {key conflicts; use SELECT or PUT with /CASE}]

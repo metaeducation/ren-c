@@ -357,88 +357,88 @@ pair        "two dimensional point or size"
 </ANY-SEQUENCE?>
 
 
-<ANY-ARRAY?>
+<ANY-LIST?>
 
   <ANY-BLOCK?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
-    block       "array of values that blocks evaluation unless DO is used"
+    block       "list of elements that blocks evaluation unless EVAL is used"
     ~pack~      (CELL_FLAG_FIRST_IS_NODE)
     #unstable   [any-series? any-branch? any-plain-value?]
-                [array       *       *]
+                [list        *       *]
 
-    set-block   "array of values that will element-wise SET if evaluated"
+    set-block   "list of elements that unpack the right hand side in evaluation"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-series? any-set-value?]
-                [array       *       *]
+                [list        *       *]
 
-    get-block   "array of values that is reduced if evaluated"
+    get-block   "list of elements that are reduced if evaluated"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-series? any-branch? any-get-value?]
-                [array       *       *]
+                [list        *       *]
 
     meta-block  "block that evaluates to produce a quoted block"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-series? any-branch? any-meta-value?]
-                [array       *       *]
+                [list        *       *]
 
     type-block  "alternative inert form of block"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-series? any-branch? any-type-value?]
-                [array       *       *]
+                [list        *       *]
 
     the-block   "alternative inert form of block"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-series? any-branch? any-the-value?]
-                [array       *       *]
+                [list        *       *]
 
     var-block   "block that evaluates to the bound version of the block"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-series? any-branch? any-var-value?]
-                [array       *       *]
+                [list        *       *]
 
   </ANY-BLOCK?>
 
 
   <ANY-GROUP?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
-    group       "array that evaluates expressions as an isolated group"
+    group       "list that evaluates expressions as an isolated group"
     ~splice~    (CELL_FLAG_FIRST_IS_NODE)
                 [any-series? any-branch? any-plain-value?]
-                [array       *       *]
+                [list        *       *]
 
-    set-group   "array that evaluates and runs SET on the resulting word/path"
+    set-group   "list that evaluates and runs SET on the result"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-series? any-set-value?]
-                [array       *       *]
+                [list        *       *]
 
-    get-group   "array that evaluates and runs GET on the resulting word/path"
+    get-group   "list that evaluates and runs GET on the resulting word/path"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-series? any-get-value?]
-                [array       *       *]
+                [list        *       *]
 
-    meta-group  "group that quotes product or turns quasiforms to antiforms"
+    meta-group  "group that quotes product or turns antiforms to quasiforms"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-series? any-meta-value?]
-                [array       *       *]
+                [list        *       *]
 
     type-group  "inert form of group"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-series? any-type-value?]
-                [array       *       *]
+                [list        *       *]
 
     the-group   "inert form of group"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-series? any-the-value?]
-                [array       *       *]
+                [list        *       *]
 
     var-group   "group that evaluates to the bound version of the group"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-series? any-var-value?]
-                [array       *       *]
+                [list        *       *]
 
   </ANY-GROUP?>
 
-</ANY-ARRAY?>
+</ANY-LIST?>
 
 </BINDABLE?>
 

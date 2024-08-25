@@ -11,9 +11,9 @@
 utrim: func [
     {Removes spaces from strings or blanks from blocks or objects.}
 
-    return: [any-string? any-array? binary! any-context?]
+    return: [any-string? any-list? binary! any-context?]
     series "Series (modified) or object (made)"
-        [any-string? any-array? binary! any-context?]
+        [any-string? any-list? binary! any-context?]
     /head "Removes only from the head"
     /tail "Removes only from the tail"
     /auto "Auto indents lines relative to first line"
@@ -52,7 +52,7 @@ utrim: func [
 
     let rule
     case [
-        any-array? series [
+        any-list? series [
             if any [auto lines with] [
                 ;
                 ; Note: /WITH might be able to work, e.g. if it were a MAP!

@@ -333,7 +333,7 @@ REBINT Cmp_Value(const Cell* s, const Cell* t, bool strict)
       case REB_THE_GROUP:
       case REB_TYPE_GROUP:
       case REB_VAR_GROUP:
-        return CT_Array(s, t, strict);
+        return CT_List(s, t, strict);
 
       case REB_PATH:
       case REB_SET_PATH:

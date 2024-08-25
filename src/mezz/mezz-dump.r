@@ -296,7 +296,7 @@ summarize-obj: func [
         value: try take args
     ]] [
         all [
-            any-array? value
+            any-list? value
             contains-newline value
             return nihil
         ]

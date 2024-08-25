@@ -434,7 +434,7 @@ REBTYPE(Binary)
         else if (Is_Antiform(arg)) {  // only SPLICE! in typecheck
             fail (Error_Bad_Antiform(arg));  // ...but that doesn't filter yet
         }
-        else if (Any_Array(arg) or Any_Sequence(arg))
+        else if (Any_List(arg) or Any_Sequence(arg))
             fail (ARG(value));
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(
@@ -899,7 +899,7 @@ DECLARE_NATIVE(enbin)
 
     Value* settings = rebValue("compose", ARG(settings));
     if (Cell_Series_Len_At(settings) != 3)
-        fail ("ENBIN requires array of length 3 for settings for now");
+        fail ("ENBIN requires list of length 3 for settings for now");
     bool little = rebUnboxLogic(
         "switch first", settings, "[",
             "'BE [false] 'LE [true]",
@@ -1008,7 +1008,7 @@ DECLARE_NATIVE(debin)
 
     REBLEN arity = Cell_Series_Len_At(settings);
     if (arity != 2 and arity != 3)
-        fail("DEBIN requires array of length 2 or 3 for settings for now");
+        fail("DEBIN requires list of length 2 or 3 for settings for now");
     bool little = rebUnboxLogic(
         "switch first", settings, "[",
             "'BE [false] 'LE [true]",

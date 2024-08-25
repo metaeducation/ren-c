@@ -66,7 +66,7 @@
     ('a/b//[d] = join 'a/b// [d])
 ]
 
-; BLANK! when joining BINARY! or ANY-STRING? should be ignored, but ANY-ARRAY?
+; BLANK! when joining BINARY! or ANY-STRING? should be ignored, but ANY-LIST?
 ; has to keep them.
 [
     (#{1020} = join #{10} spread [_ #{20} _])

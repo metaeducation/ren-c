@@ -441,7 +441,7 @@ DECLARE_INTRINSIC(unmeta_p)
 //
 //      return: "Antiform of GROUP! or unquoted value (pass null and void)"
 //          [~null~ ~void~ element? splice?]
-//      value [~null~ ~void~ blank! any-array? quoted? quasi?]  ; see [3]
+//      value [~null~ ~void~ blank! any-list? quoted? quasi?]  ; see [3]
 //  ]
 //
 DECLARE_INTRINSIC(spread)
@@ -470,7 +470,7 @@ DECLARE_INTRINSIC(spread)
 {
     UNUSED(phase);
 
-    if (Any_Array(arg)) {  // most common case
+    if (Any_List(arg)) {  // most common case
         Copy_Cell(out, arg);
         HEART_BYTE(out) = REB_GROUP;
         QUOTE_BYTE(out) = ANTIFORM_0;
@@ -534,7 +534,7 @@ DECLARE_NATIVE(lazy)
 //
 //  pack: native [
 //
-//  "Create a pack of arguments from an array"
+//  "Create a pack of arguments from a list"
 //
 //      return: "Antiform of BLOCK!"
 //          [pack?]
@@ -567,7 +567,7 @@ DECLARE_NATIVE(pack)
 
     if (Is_The_Block(v)) {
         const Element* tail;
-        const Element* at = Cell_Array_At(&tail, v);
+        const Element* at = Cell_List_At(&tail, v);
         for (; at != tail; ++at)
             Copy_Meta_Cell(PUSH(), at);
 

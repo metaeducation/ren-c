@@ -356,7 +356,7 @@ DECLARE_NATIVE(unload_extension)
 //  Extend_Generics_Someday: C
 //
 // !!! R3-Alpha's "generics" (like APPEND or TAKE) dispatched to code based on
-// the first argument.  So APPEND to a BLOCK! would call the array dispatcher,
+// the first argument.  So APPEND to a BLOCK! would call the list dispatcher,
 // while APPEND to a GOB! would call the gob dispatcher.  The list of legal
 // datatypes that could be operated on was fixed as part of the declaration
 // in %generics.r (though R3-Alpha called them "actions").

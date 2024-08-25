@@ -291,7 +291,7 @@ bool Specialize_Action_Throws(
         // Run block and ignore result (unless it is thrown)
         //
         Push_GC_Guard(exemplar);
-        bool threw = Do_Any_Array_At_Throws(out, unwrap def, SPECIFIED);
+        bool threw = Do_Any_List_At_Throws(out, unwrap def, SPECIFIED);
         Drop_GC_Guard(exemplar);
 
         if (threw) {

@@ -105,11 +105,11 @@ DECLARE_NATIVE(as_pair)
 //
 //  bind: native [
 //
-//  "Binds words or words in arrays to the specified context"
+//  "Binds words or words in lists to the specified context"
 //
-//      return: [frame! action? any-array? any-path? any-word? quoted?]
+//      return: [frame! action? any-list? any-path? any-word? quoted?]
 //      value "Value whose binding is to be set (modified) (returned)"
-//          [any-array? any-path? any-word? quoted?]
+//          [any-list? any-path? any-word? quoted?]
 //      target "Target context or a word whose binding should be the target"
 //          [any-word? any-context?]
 //      /copy "Bind and return a deep copy of a block, don't modify original"
@@ -173,7 +173,7 @@ DECLARE_NATIVE(bind)
         fail (Error_Not_In_Context_Raw(v));
     }
 
-    if (not Any_Arraylike(v))  // QUOTED? could have wrapped any type
+    if (not Any_Listlike(v))  // QUOTED? could have wrapped any type
         fail (Error_Invalid_Arg(level_, PARAM(value)));
 
     Element* at;
@@ -190,12 +190,12 @@ DECLARE_NATIVE(bind)
         );
         at = Array_Head(copy);
         tail = Array_Tail(copy);
-        Init_Array_Cell(OUT, Cell_Heart_Ensure_Noquote(v), copy);
+        Init_Any_List(OUT, Cell_Heart_Ensure_Noquote(v), copy);
         BINDING(OUT) = BINDING(v);
     }
     else {
         Ensure_Mutable(v);  // use IN for virtual binding
-        at = Cell_Array_At_Mutable_Hack(&tail, v);  // !!! only *after* index!
+        at = Cell_List_At_Mutable_Hack(&tail, v);  // !!! only *after* index!
         Copy_Cell(OUT, v);
     }
 
@@ -217,7 +217,7 @@ DECLARE_NATIVE(bind)
 //  "Returns a view of the input bound virtually to the context"
 //
 //      return: [~null~ any-value?]
-//      context [any-context? any-array?]
+//      context [any-context? any-list?]
 //      value [<maybe> any-value?]  ; QUOTED? support?
 //  ]
 //
@@ -232,7 +232,7 @@ DECLARE_NATIVE(inside)
     if (Any_Context(context))
         specifier = VAL_CONTEXT(context);
     else {
-        assert(Any_Array(context));
+        assert(Any_List(context));
         specifier = BINDING(context);
     }
 
@@ -248,7 +248,7 @@ DECLARE_NATIVE(inside)
 //
 //      return: [~null~ any-value?]
 //      context [any-context?]
-//      value [<maybe> any-array?]  ; QUOTED? support?
+//      value [<maybe> any-list?]  ; QUOTED? support?
 //  ]
 //
 DECLARE_NATIVE(overbind)
@@ -309,10 +309,10 @@ DECLARE_NATIVE(has)
 //
 //  "Remove a virtual binding from a value"
 //
-//      return: [~null~ any-word? any-array?]
+//      return: [~null~ any-word? any-list?]
 //      context "If integer, then removes that number of virtual bindings"
 //          [integer! any-context?]
-//      value [<const> <maybe> any-word? any-array?]  ; QUOTED? support?
+//      value [<const> <maybe> any-word? any-list?]  ; QUOTED? support?
 //  ]
 //
 DECLARE_NATIVE(without)
@@ -342,7 +342,7 @@ DECLARE_NATIVE(without)
         );
     }
 
-    assert(Any_Array(v));
+    assert(Any_List(v));
     Virtual_Bind_Deep_To_Existing_Context(v, ctx, nullptr, REB_WORD);
     return COPY(v);
 }
@@ -380,7 +380,7 @@ DECLARE_NATIVE(use)
     );
     UNUSED(context);  // managed, but [1]
 
-    if (Do_Any_Array_At_Throws(OUT, body, SPECIFIED))
+    if (Do_Any_List_At_Throws(OUT, body, SPECIFIED))
         return THROWN;
 
     return OUT;
@@ -591,7 +591,7 @@ DECLARE_NATIVE(unbind)
         assert(Is_Block(word));
 
         const Element* tail;
-        Element* at = Cell_Array_At_Ensure_Mutable(&tail, word);
+        Element* at = Cell_List_At_Ensure_Mutable(&tail, word);
         Option(Context*) context = nullptr;
         Unbind_Values_Core(at, tail, context, REF(deep));
     }
@@ -605,8 +605,8 @@ DECLARE_NATIVE(unbind)
 //
 //  "Remove Tip Binding of a Value"
 //
-//      return: [any-array? any-word?]
-//      value [any-array? any-word?]
+//      return: [any-list? any-word?]
+//      value [any-list? any-word?]
 //  ]
 //
 DECLARE_NATIVE(bindable)
@@ -618,7 +618,7 @@ DECLARE_NATIVE(bindable)
     if (Any_Word(v))
         Unbind_Any_Word(v);
     else {
-        assert(Any_Array(v));
+        assert(Any_List(v));
 
         BINDING(v) = UNBOUND;
     }
@@ -654,7 +654,7 @@ DECLARE_NATIVE(collect_words)
         flags |= COLLECT_DEEP;
 
     const Element* tail;
-    const Element* at = Cell_Array_At(&tail, ARG(block));
+    const Element* at = Cell_List_At(&tail, ARG(block));
     return Init_Block(
         OUT,
         Collect_Unique_Words_Managed(at, tail, flags, ARG(ignore))
@@ -681,7 +681,7 @@ bool Get_Var_Push_Refinements_Throws(
         if (steps_out != GROUPS_OK)
             fail ("GET-VAR on GROUP! with steps doesn't have answer ATM");
 
-        if (Do_Any_Array_At_Throws(out, var, var_specifier))
+        if (Do_Any_List_At_Throws(out, var, var_specifier))
             return true;
 
         return false;
@@ -743,7 +743,7 @@ bool Get_Var_Push_Refinements_Throws(
 
         const Node* node1 = Cell_Node1(var);
         if (Is_Node_A_Cell(node1)) { // pair compressed
-            // is considered "arraylike", can answer Cell_Array_At()
+            // is considered "Listlike", can answer Cell_List_At()
         }
         else switch (Series_Flavor(x_cast(Series*, node1))) {
           case FLAVOR_SYMBOL:
@@ -765,7 +765,7 @@ bool Get_Var_Push_Refinements_Throws(
         }
 
         const Element* tail;
-        const Element* head = Cell_Array_At(&tail, var);
+        const Element* head = Cell_List_At(&tail, var);
         const Element* at;
         Specifier* at_specifier = Derive_Specifier(var_specifier, var);
         for (at = head; at != tail; ++at) {
@@ -775,7 +775,7 @@ bool Get_Var_Push_Refinements_Throws(
 
               blockscope {
                 Atom* atom_out = out;
-                if (Do_Any_Array_At_Throws(atom_out, at, at_specifier)) {
+                if (Do_Any_List_At_Throws(atom_out, at, at_specifier)) {
                     Drop_Data_Stack_To(base);
                     return true;
                 }
@@ -800,7 +800,7 @@ bool Get_Var_Push_Refinements_Throws(
     else if (Is_The_Block(var)) {
         Specifier* at_specifier = Derive_Specifier(var_specifier, var);
         const Element* tail;
-        const Element* head = Cell_Array_At(&tail, var);
+        const Element* head = Cell_List_At(&tail, var);
         const Element* at;
         for (at = head; at != tail; ++at)
             Derelativize(PUSH(), at, at_specifier);
@@ -853,7 +853,7 @@ bool Get_Var_Push_Refinements_Throws(
 
     if (steps_out and steps_out != GROUPS_OK) {
         Array* a = Pop_Stack_Values(base);
-        Init_Array_Cell(unwrap steps_out, REB_THE_BLOCK, a);
+        Init_Any_List(unwrap steps_out, REB_THE_BLOCK, a);
     }
     else
         Drop_Data_Stack_To(base);
@@ -937,7 +937,7 @@ bool Get_Path_Push_Refinements_Throws(
 
     const Node* node1 = Cell_Node1(path);
     if (Is_Node_A_Cell(node1)) {
-        // pairing, but "arraylike", so Cell_Array_At() will work on it
+        // pairing, but "Listlike", so Cell_List_At() will work on it
     }
     else switch (Series_Flavor(c_cast(Series*, node1))) {
       case FLAVOR_SYMBOL : {
@@ -970,7 +970,7 @@ bool Get_Path_Push_Refinements_Throws(
     }
 
     const Element* tail;
-    const Element* head = Cell_Array_At(&tail, path);
+    const Element* head = Cell_List_At(&tail, path);
     while (Is_Blank(head)) {
         ++head;
         if (head == tail)
@@ -1140,7 +1140,7 @@ bool Get_Path_Push_Refinements_Throws(
 //
 //  resolve: native [
 //
-//  "Produce an invariant array structure for doing multiple GET or SET from"
+//  "Produce an invariant list structure for doing multiple GET or SET from"
 //
 //      return: [the-word! the-tuple! the-block!]
 //      @value [any-value?]
@@ -1260,7 +1260,7 @@ bool Set_Var_Core_Updater_Throws(
         if (not steps_out)
             fail (Error_Bad_Get_Group_Raw(var));
 
-        if (Do_Any_Array_At_Throws(temp, var, var_specifier))
+        if (Do_Any_List_At_Throws(temp, var, var_specifier))
             return true;
 
         Move_Cell(out, Decay_If_Unstable(temp));  // replacing if spare was var
@@ -1331,7 +1331,7 @@ bool Set_Var_Core_Updater_Throws(
 
         const Node* node1 = Cell_Node1(var);
         if (Is_Node_A_Cell(node1)) {  // pair optimization
-            // pairings considered "arraylike", handled by Cell_Array_At()
+            // pairings considered "Listlike", handled by Cell_List_At()
         }
         else switch (Series_Flavor(c_cast(Series*, node1))) {
           case FLAVOR_SYMBOL: {
@@ -1353,7 +1353,7 @@ bool Set_Var_Core_Updater_Throws(
         }
 
         const Element* tail;
-        const Element* head = Cell_Array_At(&tail, var);
+        const Element* head = Cell_List_At(&tail, var);
         const Element* at;
         Specifier* at_specifier = Derive_Specifier(var_specifier, var);
         for (at = head; at != tail; ++at) {
@@ -1361,7 +1361,7 @@ bool Set_Var_Core_Updater_Throws(
                 if (not steps_out)
                     fail (Error_Bad_Get_Group_Raw(var));
 
-                if (Do_Any_Array_At_Throws(temp, at, at_specifier)) {
+                if (Do_Any_List_At_Throws(temp, at, at_specifier)) {
                     Drop_Data_Stack_To(base);
                     return true;
                 }
@@ -1382,7 +1382,7 @@ bool Set_Var_Core_Updater_Throws(
     }
     else if (Is_The_Block(var)) {
         const Element* tail;
-        const Element* head = Cell_Array_At(&tail, var);
+        const Element* head = Cell_List_At(&tail, var);
         const Element* at;
         Specifier* at_specifier = Derive_Specifier(var_specifier, var);
         for (at = head; at != tail; ++at)
@@ -1658,7 +1658,7 @@ DECLARE_NATIVE(proxy_exports)
     Context* source = VAL_CONTEXT(ARG(source));
 
     const Element* tail;
-    const Element* v = Cell_Array_At(&tail, ARG(exports));
+    const Element* v = Cell_List_At(&tail, ARG(exports));
     for (; v != tail; ++v) {
         if (not Is_Word(v))
             fail (ARG(exports));
@@ -1819,7 +1819,7 @@ DECLARE_NATIVE(free_q)
     // If the node is not a series (e.g. a pairing), it cannot be freed (as
     // a freed version of a pairing is the same size as the pairing).
     //
-    // !!! Technically speaking a PAIR! could be freed as an array could, it
+    // !!! Technically speaking a PAIR! could be freed as ANY-LIST? could, it
     // would mean converting the node.  Review.
     //
     if (n == nullptr or Is_Node_A_Cell(n))
@@ -2018,7 +2018,7 @@ DECLARE_NATIVE(as)
     if (new_heart == Cell_Heart_Ensure_Noquote(v))
         return COPY(v);
 
-    if (Any_Array_Kind(new_heart)) {
+    if (Any_List_Kind(new_heart)) {
 
   //=//// CONVERSION TO ANY-ARRAY! ////////////////////////////////////////=//
 
@@ -2064,7 +2064,7 @@ DECLARE_NATIVE(as)
                 assert(false);
             }
         }
-        else if (not Any_Array(v))
+        else if (not Any_List(v))
             goto bad_cast;
 
         goto adjust_v_heart;
@@ -2073,7 +2073,7 @@ DECLARE_NATIVE(as)
 
   //=//// CONVERSION TO ANY-SEQUENCE! /////////////////////////////////////=//
 
-        if (Any_Array(v)) {
+        if (Any_List(v)) {
             //
             // Even if we optimize the array, we don't want to give the
             // impression that we would not have frozen it.
@@ -2081,7 +2081,7 @@ DECLARE_NATIVE(as)
             if (not Is_Array_Frozen_Shallow(Cell_Array(v)))
                 Freeze_Array_Shallow(Cell_Array_Ensure_Mutable(v));
 
-            if (Try_Init_Any_Sequence_At_Arraylike(
+            if (Try_Init_Any_Sequence_At_Listlike(
                 OUT,  // if failure, nulled if too short...else bad element
                 new_heart,
                 Cell_Array(v),
@@ -2452,7 +2452,7 @@ DECLARE_INTRINSIC(any_value_q)
 //
 //  element?: native/intrinsic [
 //
-//  "Tells you if the argument is storable in an array"
+//  "Tells you if the argument is storable in a list"
 //
 //      return: [logic?]
 //      value
@@ -2703,7 +2703,7 @@ DECLARE_NATIVE(light) {
         return UNMETA(v);
 
     Length len;
-    const Cell* first = Cell_Array_Len_At(&len, v);
+    const Cell* first = Cell_List_Len_At(&len, v);
 
     if (len != 1)
         return UNMETA(v);

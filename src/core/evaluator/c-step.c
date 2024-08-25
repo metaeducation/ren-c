@@ -1369,7 +1369,7 @@ Bounce Stepper_Executor(Level* L)
             fail ("SET-BLOCK! must not be empty for now.");
 
         const Element* tail;
-        const Element* check = Cell_Array_At(&tail, L_current);
+        const Element* check = Cell_List_At(&tail, L_current);
         Specifier* check_specifier = Derive_Specifier(L_specifier, L_current);
 
         // we've extracted the array at and tail, can reuse current now
@@ -1410,7 +1410,7 @@ Bounce Stepper_Executor(Level* L)
                 or heart == REB_THE_GROUP
                 or heart == REB_META_GROUP
             ){
-                if (Do_Any_Array_At_Throws(SPARE, CURRENT, SPECIFIED)) {
+                if (Do_Any_List_At_Throws(SPARE, CURRENT, SPECIFIED)) {
                     Drop_Data_Stack_To(BASELINE->stack_base);
                     goto return_thrown;
                 }
@@ -1510,7 +1510,7 @@ Bounce Stepper_Executor(Level* L)
             Init_Nihil(OUT);
 
         if (Is_Pack(OUT)) {  // antiform block
-            pack_meta_at = Cell_Array_At(&pack_meta_tail, OUT);
+            pack_meta_at = Cell_List_At(&pack_meta_tail, OUT);
 
             pack_array = Cell_Array(OUT);
             Push_GC_Guard(pack_array);

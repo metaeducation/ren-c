@@ -1,6 +1,6 @@
 ; %parse-blank.test.reb
 ;
-; BLANK! matches blanks in arrays literally.  This is helpful in particular
+; BLANK! matches blanks in lists literally.  This is helpful in particular
 ; with breaking down paths with empty slots:
 ;
 ;    >> refinement-rule: [subparse path! [_ word!]]

@@ -1410,7 +1410,7 @@ DECLARE_NATIVE(remove_each)
     REBLEN start = VAL_INDEX(data);
 
     DECLARE_MOLD (mo);
-    if (Any_Array(data)) {
+    if (Any_List(data)) {
         //
         // We're going to use NODE_FLAG_MARKED on the elements of data's
         // array for those items we wish to remove later.  [2]
@@ -1445,7 +1445,7 @@ DECLARE_NATIVE(remove_each)
                 continue;  // the `for` loop setting variables
             }
 
-            if (Any_Array(data))
+            if (Any_List(data))
                 Derelativize(
                     var,
                     Array_At(Cell_Array(data), index),
@@ -1465,7 +1465,7 @@ DECLARE_NATIVE(remove_each)
             ++index;
         }
 
-        if (Do_Any_Array_At_Throws(OUT, body, SPECIFIED)) {
+        if (Do_Any_List_At_Throws(OUT, body, SPECIFIED)) {
             if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking)) {
                 threw = true;
                 goto finalize_remove_each;
@@ -1508,7 +1508,7 @@ DECLARE_NATIVE(remove_each)
             goto finalize_remove_each;
         }
 
-        if (Any_Array(data)) {
+        if (Any_List(data)) {
             if (keep) {
                 start = index;
                 continue;  // keeping, don't mark for culling
@@ -1558,10 +1558,10 @@ DECLARE_NATIVE(remove_each)
     assert(Get_Series_Info(series, HOLD));
     Clear_Series_Info(series, HOLD);
 
-    if (Any_Array(data)) {
+    if (Any_List(data)) {
         if (not threw and breaking) {  // clean marks, don't remove
             const Element* tail;
-            Element* temp = Cell_Array_At_Known_Mutable(&tail, data);
+            Element* temp = Cell_List_At_Known_Mutable(&tail, data);
             for (; temp != tail; ++temp) {
                 if (Get_Cell_Flag(temp, NOTE_REMOVE))
                     Clear_Cell_Flag(temp, NOTE_REMOVE);
@@ -1570,7 +1570,7 @@ DECLARE_NATIVE(remove_each)
         }
 
         const Element* tail;
-        Element* dest = Cell_Array_At_Known_Mutable(&tail, data);
+        Element* dest = Cell_List_At_Known_Mutable(&tail, data);
         Element* src = dest;
 
         // avoid blitting cells onto themselves by making the first thing we
@@ -1693,7 +1693,7 @@ DECLARE_NATIVE(map_each)
     UNUSED(PARAM(vars));
     UNUSED(PARAM(body));
 
-    if (Is_Blank(ARG(data)))  // should have same result as empty array data
+    if (Is_Blank(ARG(data)))  // should have same result as empty list
         return Init_Block(OUT, Make_Array(0));
 
     // The theory is that MAP would use a dialect on BLOCK! arguments for data
@@ -1827,7 +1827,7 @@ DECLARE_NATIVE(map)
     if (Is_Splice(SPARE)) {
         Quasify_Antiform(SPARE);
         const Element* tail;
-        const Element* v = Cell_Array_At(&tail, SPARE);
+        const Element* v = Cell_List_At(&tail, SPARE);
         for (; v != tail; ++v)
             Derelativize(PUSH(), v, Cell_Specifier(SPARE));
     }

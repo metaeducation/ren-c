@@ -752,7 +752,7 @@ ext-console-impl: func [
         ; get poked into the LET F virtual bind element.  But once that's
         ; there, it causes contention with code composed in with binding
         ; from another function...such as `system.console.print-gap` if that
-        ; array has its own binding on it.  Putting this code in a group
+        ; list has its own binding on it.  Putting this code in a group
         ; to limit the LET binding is a lousy workaround for the general
         ; issue--but it needs deeper thought.
         ;

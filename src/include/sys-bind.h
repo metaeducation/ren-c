@@ -41,7 +41,7 @@
 //
 //     ANY-WORD?: binding is the word's binding
 //
-//     ANY-ARRAY?: binding is the relativization or specifier for the REBVALs
+//     ANY-LIST?: binding is the relativization or specifier for the REBVALs
 //     which can be found in the frame (for recursive resolution of ANY-WORD?s)
 //
 //     ACTION!: binding is the instance data for archetypal invocation, so
@@ -87,7 +87,7 @@
 
 INLINE Specifier* Derive_Specifier(
     Specifier* parent,
-    const Cell* any_array
+    const Cell* list
 );
 
 INLINE Value* Derelativize_Untracked(
@@ -128,8 +128,8 @@ INLINE Value* Derelativize_Untracked(
             }
         }
     }
-    else if (Bindable_Heart_Is_Any_Array(heart)) {  // any-block? or any-group?
-      any_arraylike:
+    else if (Bindable_Heart_Is_Any_List(heart)) {  // any-block? or any-group?
+      any_listlike:
         if (binding) {  // currently not overriding (review: hole punch)
             assert(not IS_DETAILS(binding));  // shouldn't be relativized
             out->extra = v->extra;
@@ -140,14 +140,14 @@ INLINE Value* Derelativize_Untracked(
     else if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE)) {
         out->extra = v->extra;  // packed numeric sequence, 1.2.3 or similar
     }
-    else {  // any-path? or any-tuple?, may be wordlike or arraylike
+    else {  // any-path? or any-tuple?, may be wordlike or listlike
         Node* node1 = Cell_Node1(v);
         if (Is_Node_A_Cell(node1))  // x.y pairing
-            goto any_arraylike;
+            goto any_listlike;
         Stub* stub1 = cast(Stub*, node1);
         if (FLAVOR_SYMBOL == Series_Flavor(stub1))  // x. or /x, wordlike
             goto any_wordlike;
-        goto any_arraylike;
+        goto any_listlike;
     }
 
     return cast(Value*, out);
@@ -618,16 +618,16 @@ INLINE Option(Context*) SPC_FRAME_CTX(Specifier* specifier)
 }
 
 
-// An ANY-ARRAY? cell has a pointer's-worth of spare space in it, which is
+// An ANY-LIST? cell has a pointer's-worth of spare space in it, which is
 // used to keep track of the information required to further resolve the
-// words and arrays that reside in it.
+// words and lists that reside in it.
 //
 INLINE Specifier* Derive_Specifier(
     Specifier* specifier,
-    const Cell* any_array
+    const Cell* list
 ){
-    if (BINDING(any_array) != UNBOUND)
-        return BINDING(any_array);
+    if (BINDING(list) != UNBOUND)
+        return BINDING(list);
 
     return specifier;
 }

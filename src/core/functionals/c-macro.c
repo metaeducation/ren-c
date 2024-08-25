@@ -74,7 +74,7 @@ void Splice_Block_Into_Feed(Feed* feed, const Value* splice) {
         MISC(Pending, saved) = At_Feed(feed);
     }
 
-    feed->p = Cell_Array_Item_At(splice);
+    feed->p = Cell_List_Item_At(splice);
     Copy_Cell(FEED_SINGLE(feed), splice);
     ++VAL_INDEX_UNBOUNDED(FEED_SINGLE(feed));
 
@@ -127,7 +127,7 @@ Bounce Macro_Dispatcher(Level* const L)
     // Must catch RETURN ourselves, as letting it bubble up to generic UNWIND
     // handling would return a BLOCK! instead of splice it.
     //
-    if (Do_Any_Array_At_Throws(OUT, SPARE, SPECIFIED)) {
+    if (Do_Any_List_At_Throws(OUT, SPARE, SPECIFIED)) {
         const Value* label = VAL_THROWN_LABEL(L);
         if (
             Is_Frame(label)  // catch UNWIND here [2]
@@ -189,7 +189,7 @@ DECLARE_NATIVE(macro)
 //
 //  inline: native [
 //
-//  "Inject an array of content into the execution stream, or single value"
+//  "Inject a list of content into the execution stream, or single value"
 //
 //      return: [any-value?]
 //      splice "If quoted single value, if blank no insertion (e.g. invisible)"

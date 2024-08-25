@@ -442,7 +442,7 @@ main-startup: func [
 
     ; Process the option syntax out of the command line args in order to get
     ; the intended arguments.  TAKEs each option string as it goes so the
-    ; array remainder can act as the args.
+    ; block remainder can act as the args.
 
     ; The host executable may have initialized system.options.boot, using
     ; a platform-specific method, since argv[0] is *not* always exe path:

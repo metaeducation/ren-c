@@ -158,7 +158,7 @@ Array* Expanded_Combinator_Spec(const Value* original)
     StackIndex base = TOP_INDEX;
 
     const Element* tail;
-    const Element* item = Cell_Array_At(&tail, original);
+    const Element* item = Cell_List_At(&tail, original);
     Specifier* specifier = Cell_Specifier(original);
 
     if (Is_Text(item)) {
@@ -388,7 +388,7 @@ DECLARE_NATIVE(opt_combinator)
 //
 //  text!-combinator: native/combinator [
 //
-//  {Match a TEXT! value as an array item or at current position of bin/string}
+//  {Match a TEXT! value as a list item or at current position of bin/string}
 //
 //      return: "The rule series matched against (not input value)"
 //          [~null~ text!]
@@ -405,9 +405,9 @@ DECLARE_NATIVE(text_x_combinator)
     Value* v = ARG(value);
     Value* input = ARG(input);
 
-    if (Any_Array(input)) {
+    if (Any_List(input)) {
         const Element* tail;
-        const Element* at = Cell_Array_At(&tail, input);
+        const Element* at = Cell_List_At(&tail, input);
         if (at == tail)  // no item to match against
             return nullptr;
         if (Cmp_Value(at, v, true) != 0)  // not case-insensitive equal
@@ -438,7 +438,7 @@ DECLARE_NATIVE(text_x_combinator)
     VAL_INDEX_UNBOUNDED(input) += len;
     Set_Var_May_Fail(ARG(remainder), SPECIFIED, input);
 
-    // If not an array, we have return the rule on match since there's
+    // If not a list, we have return the rule on match since there's
     // no isolated value to capture.
 
     return COPY(v);
@@ -677,7 +677,7 @@ static bool Combinator_Param_Hook(
         // !!! <skip>-able parameters would be useful as well.
         //
         const Element* tail;
-        const Element* item = Cell_Array_At(&tail, ARG(rules));
+        const Element* item = Cell_List_At(&tail, ARG(rules));
 
         if (
             item == tail
@@ -706,7 +706,7 @@ static bool Combinator_Param_Hook(
         // Need to make PARSIFY a native!  Work around it for now...
         //
         const Element* tail;
-        const Element* item = Cell_Array_At(&tail, ARG(rules));
+        const Element* item = Cell_List_At(&tail, ARG(rules));
         if (
             item == tail
             or (Is_Comma(item) or IS_BAR(item) or IS_BAR_BAR(item))

@@ -69,7 +69,7 @@ void MF_Blank(REB_MOLD *mo, const Cell* v, bool form)
 //
 //  CT_Blank: C
 //
-// Must have a comparison function, otherwise SORT would not work on arrays
+// Must have a comparison function, otherwise SORT would not work on lists
 // with blanks in them.
 //
 REBINT CT_Blank(const Cell* a, const Cell* b, bool strict)

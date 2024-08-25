@@ -484,7 +484,7 @@ static void Init_System_Object(
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
     const Element* spec_tail;
     Element* spec_head
-        = Cell_Array_At_Known_Mutable(&spec_tail, boot_sysobj_spec);
+        = Cell_List_At_Known_Mutable(&spec_tail, boot_sysobj_spec);
 
     // Create the system object from the sysobj block (defined in %sysobj.r)
     //
@@ -521,7 +521,7 @@ static void Init_System_Object(
     // Evaluate the block (will eval CONTEXTs within).
     //
     DECLARE_ATOM (result);
-    if (Do_Any_Array_At_Throws(result, sysobj_spec_virtual, SPECIFIED))
+    if (Do_Any_List_At_Throws(result, sysobj_spec_virtual, SPECIFIED))
         panic (result);
     if (not Is_Anti_Word_With_Id(result, SYM_DONE))  // ~done~ sanity check
         panic (result);

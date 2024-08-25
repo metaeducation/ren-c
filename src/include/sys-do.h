@@ -49,24 +49,24 @@
 
 
 
-INLINE bool Do_Any_Array_At_Core_Throws(
+INLINE bool Do_Any_List_At_Core_Throws(
     Atom* out,
     Flags flags,
-    const Cell* any_array,
+    const Cell* list,
     Specifier* specifier
 ){
     Init_Void(Alloc_Evaluator_Primed_Result());
     Level* L = Make_Level_At_Core(
         &Evaluator_Executor,
-        any_array, specifier,
+        list, specifier,
         flags
     );
 
     return Trampoline_Throws(out, L);
 }
 
-#define Do_Any_Array_At_Throws(out,any_array,specifier) \
-    Do_Any_Array_At_Core_Throws(out, LEVEL_MASK_NONE, (any_array), (specifier))
+#define Do_Any_List_At_Throws(out,list,specifier) \
+    Do_Any_List_At_Core_Throws(out, LEVEL_MASK_NONE, (list), (specifier))
 
 
 

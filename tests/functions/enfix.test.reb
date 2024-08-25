@@ -156,7 +156,7 @@
 )
 
 
-; Right enfix always wins over left, unless the right is at array end
+; Right enfix always wins over left, unless the right is at list end
 
 ((the ->-) = first [->-])
 ((the ->- the) = 'the)

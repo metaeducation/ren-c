@@ -210,7 +210,7 @@ struct FeedStruct {
     //
     // This is used for relatively bound words to be looked up to become
     // specific.  Typically the specifier is extracted from the payload of the
-    // ANY-ARRAY? value that provided the source.array for the call to DO.
+    // ANY-LIST? value that provided the source.array for the call to DO.
     // It may also be NULL if it is known that there are no relatively bound
     // words that will be encountered from the source--as in va_list calls.
     //

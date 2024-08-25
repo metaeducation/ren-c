@@ -420,7 +420,7 @@ append: func3 [series value [any-value!] /line <local> only] [
         block? :value [
             if #splice! = (first value) [
                 value: second value
-                if not any-array? series [  ; itemwise appends for strings/etc.
+                if not any-list? series [  ; itemwise appends for strings/etc.
                     for-each item value [
                         append series item
                     ]
@@ -440,7 +440,7 @@ insert: func3 [series value [any-value!] /line <local> only] [
         block? :value [
             if #splice! = (first value) [
                 value: second value
-                if not any-array? series [  ; itemwise appends for strings/etc.
+                if not any-list? series [  ; itemwise appends for strings/etc.
                     for-each item value [
                         series: insert series item
                     ]
@@ -460,7 +460,7 @@ change: func3 [series value [any-value!] /line <local> only] [
         block? :value [
             if #splice! = (first value) [
                 value: second value
-                if not any-array? series [
+                if not any-list? series [
                     fail ["CHANGE to SPLICE not currently in shim"]
                 ]
                 only: _
@@ -567,11 +567,11 @@ empty-or-null?: :empty?
 
 collect-lets: func3 [
     return: [block!]
-    array [block! group!]
+    list [block! group!]
     <local> lets
 ][
     lets: copy []
-    for-next item array [
+    for-next item list [
         case [
             item/1 = 'let [
                 item: next item

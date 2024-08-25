@@ -141,14 +141,14 @@ bool Typecheck_Atom_Core(
         return Is_Stable(v) and (VAL_TYPE(v) == VAL_TYPE_KIND(tests));
 
       case REB_BLOCK:
-        item = Cell_Array_At(&tail, tests);
+        item = Cell_List_At(&tail, tests);
         derived = Derive_Specifier(tests_specifier, tests);
         match_all = false;
         break;
 
       case REB_GROUP:
       case REB_TYPE_GROUP:
-        item = Cell_Array_At(&tail, tests);
+        item = Cell_List_At(&tail, tests);
         derived = Derive_Specifier(tests_specifier, tests);
         match_all = true;
         break;

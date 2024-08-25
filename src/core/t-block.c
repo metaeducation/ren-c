@@ -70,14 +70,14 @@ DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
 
 
 //
-//  CT_Array: C
+//  CT_List: C
 //
-// "Compare Type" dispatcher for arrays.
+// "Compare Type" dispatcher for ANY-BLOCK?, ANY-GROUP?
 //
 // !!! Should CT_Path() delegate to this when it detects it has two arrays
 // to compare?  That requires canonization assurance.
 //
-REBINT CT_Array(const Cell* a, const Cell* b, bool strict)
+REBINT CT_List(const Cell* a, const Cell* b, bool strict)
 {
     const Array* a_array = Cell_Array(a);
     const Array* b_array = Cell_Array(b);
@@ -133,7 +133,7 @@ REBINT CT_Array(const Cell* a, const Cell* b, bool strict)
 
 
 //
-//  MAKE_Array: C
+//  MAKE_List: C
 //
 // "Make Type" dispatcher for the following subtypes:
 //
@@ -144,14 +144,14 @@ REBINT CT_Array(const Cell* a, const Cell* b, bool strict)
 //     MAKE_Get_Path
 //     MAKE_Lit_Path
 //
-Bounce MAKE_Array(
+Bounce MAKE_List(
     Level* level_,
     Kind k,
     Option(const Value*) parent,
     const Value* arg
 ){
     Heart heart = cast(Heart, k);
-    assert(Any_Array_Kind(heart));
+    assert(Any_List_Kind(heart));
 
     if (parent)
         return RAISE(Error_Bad_Make_Parent(heart, unwrap parent));
@@ -160,7 +160,7 @@ Bounce MAKE_Array(
         //
         // `make block! 10` => creates array with certain initial capacity
         //
-        return Init_Array_Cell(OUT, heart, Make_Array(Int32s(arg, 0)));
+        return Init_Any_List(OUT, heart, Make_Array(Int32s(arg, 0)));
     }
     else if (Is_Text(arg)) {
         //
@@ -170,14 +170,14 @@ Bounce MAKE_Array(
         Utf8(const*) utf8 = Cell_Utf8_Size_At(&size, arg);
 
         Option(const String*) file = ANONYMOUS;
-        Init_Array_Cell(
+        Init_Any_List(
             OUT,
             heart,
             Scan_UTF8_Managed(file, utf8, size)
         );
         return OUT;
     }
-    else if (Any_Array(arg)) {
+    else if (Any_List(arg)) {
         //
         // !!! Ren-C unified MAKE and construction syntax, see #2263.  This is
         // now a questionable idea, as MAKE and TO have their roles defined
@@ -209,42 +209,42 @@ Bounce MAKE_Array(
         // instead of just [a b c] as the construction spec.
         //
         REBLEN len;
-        const Element* at = Cell_Array_Len_At(&len, arg);
+        const Element* at = Cell_List_Len_At(&len, arg);
 
-        if (len != 2 or not Any_Array(at) or not Is_Integer(at + 1))
+        if (len != 2 or not Any_List(at) or not Is_Integer(at + 1))
             goto bad_make;
 
-        const Cell* any_array = at;
-        REBINT index = VAL_INDEX(any_array) + Int32(at + 1) - 1;
+        const Cell* list = at;
+        REBINT index = VAL_INDEX(list) + Int32(at + 1) - 1;
 
-        if (index < 0 or index > cast(REBINT, Cell_Series_Len_Head(any_array)))
+        if (index < 0 or index > cast(REBINT, Cell_Series_Len_Head(list)))
             goto bad_make;
 
         // !!! Previously this code would clear line break options on path
         // elements, using `Clear_Cell_Flag(..., CELL_FLAG_LINE)`.  But if
-        // arrays are allowed to alias each others contents, the aliasing
+        // lists are allowed to alias each others contents, the aliasing
         // via MAKE shouldn't modify the store.  Line marker filtering out of
         // paths should be part of the MOLDing logic -or- a path with embedded
         // line markers should use construction syntax to preserve them.
 
-        Specifier* derived = Derive_Specifier(Cell_Specifier(arg), any_array);
+        Specifier* derived = Derive_Specifier(Cell_Specifier(arg), list);
         return Init_Series_Cell_At_Core(
             OUT,
             heart,
-            Cell_Array(any_array),
+            Cell_Array(list),
             index,
             derived
         );
     }
-    else if (Any_Array(arg)) {
+    else if (Any_List(arg)) {
         //
         // `to group! [1 2 3]` etc. -- copy the array data at the index
         // position and change the type.  (Note: MAKE does not copy the
         // data, but aliases it under a new kind.)
         //
         REBLEN len;
-        const Element* at = Cell_Array_Len_At(&len, arg);
-        return Init_Array_Cell(
+        const Element* at = Cell_List_Len_At(&len, arg);
+        return Init_Any_List(
             OUT,
             heart,
             Copy_Values_Len_Shallow(at, len)
@@ -252,13 +252,13 @@ Bounce MAKE_Array(
     }
     else if (Is_Text(arg)) {
         //
-        // `to block! "some string"` historically scans the source, so you
-        // get an unbound code array.
+        // `to block! "some string"` historically runs TRANSCODE, so you
+        // get unbound code.
         //
         Size utf8_size;
         Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, arg);
         Option(const String*) file = ANONYMOUS;
-        return Init_Array_Cell(
+        return Init_Any_List(
             OUT,
             heart,
             Scan_UTF8_Managed(file, utf8, utf8_size)
@@ -267,20 +267,20 @@ Bounce MAKE_Array(
     else if (Is_Binary(arg)) {
         //
         // `to block! #{00BDAE....}` assumes the binary data is UTF8, and
-        // goes directly to the scanner to make an unbound code array.
+        // uses TRANSCODE to make unbound code.
         //
         Option(const String*) file = ANONYMOUS;
 
         Size size;
         const Byte* at = Cell_Binary_Size_At(&size, arg);
-        return Init_Array_Cell(
+        return Init_Any_List(
             OUT,
             heart,
             Scan_UTF8_Managed(file, at, size)
         );
     }
     else if (Is_Map(arg)) {
-        return Init_Array_Cell(OUT, heart, Map_To_Array(VAL_MAP(arg), 0));
+        return Init_Any_List(OUT, heart, Map_To_Array(VAL_MAP(arg), 0));
     }
     else if (Is_Frame(arg)) {
         //
@@ -295,14 +295,14 @@ Bounce MAKE_Array(
             Copy_Cell(PUSH(), generated);
             rebRelease(generated);
         }
-        return Init_Array_Cell(OUT, heart, Pop_Stack_Values(base));
+        return Init_Any_List(OUT, heart, Pop_Stack_Values(base));
     }
     else if (Any_Context(arg)) {
-        return Init_Array_Cell(OUT, heart, Context_To_Array(arg, 3));
+        return Init_Any_List(OUT, heart, Context_To_Array(arg, 3));
     }
     else if (Is_Varargs(arg)) {
         //
-        // Converting a VARARGS! to an ANY-ARRAY? involves spooling those
+        // Converting a VARARGS! to an ANY-LIST? involves spooling those
         // varargs to the end and making an array out of that.  It's not known
         // how many elements that will be, so they're gathered to the data
         // stack to find the size, then an array made.  Note that | will stop
@@ -337,7 +337,7 @@ Bounce MAKE_Array(
                 param += VAL_VARARGS_SIGNED_PARAM_INDEX(arg);
 
             if (Typecheck_Atom(param, Lib(NULL)))
-                return RAISE(Error_Null_Vararg_Array_Raw());
+                return RAISE(Error_Null_Vararg_List_Raw());
         }
 
         StackIndex base = TOP_INDEX;
@@ -358,7 +358,7 @@ Bounce MAKE_Array(
             Move_Cell(PUSH(), Decay_If_Unstable(OUT));
         } while (true);
 
-        return Init_Array_Cell(OUT, heart, Pop_Stack_Values(base));
+        return Init_Any_List(OUT, heart, Pop_Stack_Values(base));
     }
 
   bad_make:
@@ -368,9 +368,9 @@ Bounce MAKE_Array(
 
 
 //
-//  TO_Array: C
+//  TO_List: C
 //
-Bounce TO_Array(Level* level_, Kind k, const Value* arg) {
+Bounce TO_List(Level* level_, Kind k, const Value* arg) {
     Heart heart = cast(Heart, k);
 
     if (Any_Sequence(arg)) {
@@ -385,12 +385,12 @@ Bounce TO_Array(Level* level_, Kind k, const Value* arg) {
                 i
             );
         }
-        return Init_Array_Cell(OUT, heart, Pop_Stack_Values(base));
+        return Init_Any_List(OUT, heart, Pop_Stack_Values(base));
     }
-    else if (Any_Array(arg)) {
+    else if (Any_List(arg)) {
         Length len;
-        const Element* at = Cell_Array_Len_At(&len, arg);
-        return Init_Array_Cell(
+        const Element* at = Cell_List_Len_At(&len, arg);
+        return Init_Any_List(
             OUT,
             heart,
             Copy_Values_Len_Shallow(at, len)
@@ -401,7 +401,7 @@ Bounce TO_Array(Level* level_, Kind k, const Value* arg) {
         //
         Array* single = Alloc_Singular(NODE_FLAG_MANAGED);
         Copy_Cell(Stub_Cell(single), arg);
-        return Init_Array_Cell(OUT, heart, single);
+        return Init_Any_List(OUT, heart, single);
     }
 }
 
@@ -450,7 +450,7 @@ REBINT Find_In_Array(
 
             REBLEN count = 0;
             const Element* other_tail;
-            const Element* other = Cell_Array_At(&other_tail, pattern);
+            const Element* other = Cell_List_At(&other_tail, pattern);
             for (; other != other_tail; ++other, ++item) {
                 if (
                     item == item_tail or
@@ -680,7 +680,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
 
         const Symbol* symbol = Cell_Word_Symbol(picker);
         const Element* tail;
-        const Element* item = Cell_Array_At(&tail, v);
+        const Element* item = Cell_List_At(&tail, v);
         REBLEN index = VAL_INDEX(v);
         for (; item != tail; ++item, ++index) {
             if (Any_Word(item) and Are_Synonyms(symbol, Cell_Word_Symbol(item))) {
@@ -692,9 +692,9 @@ static REBINT Try_Get_Array_Index_From_Picker(
     else if (Is_Logic(picker)) {
         //
         // !!! PICK in R3-Alpha historically would use a logic TRUE to get
-        // the first element in an array, and a logic FALSE to get the second.
-        // It did this regardless of how many elements were in the array.
-        // (For safety, it has been suggested arrays > length 2 should fail).
+        // the first element in a list, and a logic FALSE to get the second.
+        // It did this regardless of how many elements were in the list.
+        // (For safety, it has been suggested lists > length 2 should fail).
         //
         if (Cell_Logic(picker))
             n = VAL_INDEX(v);
@@ -706,7 +706,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
     }
     else {
         // For other values, act like a SELECT and give the following item.
-        // (Note Find_In_Array_Simple returns the array length if missed,
+        // (Note Find_In_Array_Simple returns the list length if missed,
         // so adding one will be out of bounds.)
 
         n = 1 + Find_In_Array_Simple(
@@ -742,9 +742,9 @@ bool Did_Pick_Block(
 
 
 //
-//  MF_Array: C
+//  MF_List: C
 //
-void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
+void MF_List(REB_MOLD *mo, const Cell* v, bool form)
 {
     // Routine may be called on value that reports REB_QUOTED, even if it
     // has no additional payload and is aliasing the cell itself.  Checking
@@ -843,7 +843,7 @@ void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
             break;
 
           default:
-            panic ("Unknown array heart passed to MF_Array");
+            panic ("Unknown list heart passed to MF_List");
         }
 
         Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
@@ -857,13 +857,13 @@ void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
 //
 //  REBTYPE: C
 //
-// Implementation of type dispatch for ANY-ARRAY? (ANY-BLOCK? and ANY-GROUP?)
+// Implementation of type dispatch for ANY-LIST? (ANY-BLOCK? and ANY-GROUP?)
 //
-REBTYPE(Array)
+REBTYPE(List)
 {
-    Value* array = D_ARG(1);
+    Value* list = D_ARG(1);
 
-    Specifier* specifier = Cell_Specifier(array);
+    Specifier* specifier = Cell_Specifier(list);
 
     Option(SymId) id = Symbol_Id(verb);
 
@@ -882,14 +882,14 @@ REBTYPE(Array)
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
-        REBINT n = Try_Get_Array_Index_From_Picker(array, picker);
-        if (n < 0 or n >= cast(REBINT, Cell_Series_Len_Head(array)))
+        REBINT n = Try_Get_Array_Index_From_Picker(list, picker);
+        if (n < 0 or n >= cast(REBINT, Cell_Series_Len_Head(list)))
             return nullptr;
 
-        const Element* at = Array_At(Cell_Array(array), n);
+        const Element* at = Array_At(Cell_Array(list), n);
 
         Copy_Cell(OUT, at);
-        Inherit_Const(stable_OUT, array);
+        Inherit_Const(stable_OUT, list);
         return OUT; }
 
 
@@ -914,11 +914,11 @@ REBTYPE(Array)
         // memory may have moved!  There's no way to guarantee semantics
         // of an update if we don't lock the array for the poke duration.
         //
-        REBINT n = Try_Get_Array_Index_From_Picker(array, picker);
-        if (n < 0 or n >= cast(REBINT, Cell_Series_Len_Head(array)))
+        REBINT n = Try_Get_Array_Index_From_Picker(list, picker);
+        if (n < 0 or n >= cast(REBINT, Cell_Series_Len_Head(list)))
             fail (Error_Out_Of_Range(picker));
 
-        Array* mut_arr = Cell_Array_Ensure_Mutable(array);
+        Array* mut_arr = Cell_Array_Ensure_Mutable(list);
         Element* at = Array_At(mut_arr, n);
         Copy_Cell(at, c_cast(Element*, setval));
 
@@ -943,23 +943,23 @@ REBTYPE(Array)
         if (REF(deep))
             fail (Error_Bad_Refines_Raw());
 
-        Array* arr = Cell_Array_Ensure_Mutable(array);
+        Array* arr = Cell_Array_Ensure_Mutable(list);
 
         REBLEN len;
         if (REF(part)) {
-            len = Part_Len_May_Modify_Index(array, ARG(part));
+            len = Part_Len_May_Modify_Index(list, ARG(part));
             if (len == 0)
                 return Init_Block(OUT, Make_Array(0)); // new empty block
         }
         else
             len = 1;
 
-        REBLEN index = VAL_INDEX(array); // Partial() can change index
+        REBLEN index = VAL_INDEX(list); // Partial() can change index
 
         if (REF(last))
-            index = Cell_Series_Len_Head(array) - len;
+            index = Cell_Series_Len_Head(list) - len;
 
-        if (index >= Cell_Series_Len_Head(array)) {
+        if (index >= Cell_Series_Len_Head(list)) {
             if (not REF(part))
                 return RAISE(Error_Nothing_To_Take_Raw());
 
@@ -993,10 +993,10 @@ REBTYPE(Array)
             | (REF(case) ? AM_FIND_CASE : 0)
         );
 
-        REBLEN limit = Part_Tail_May_Modify_Index(array, ARG(part));
+        REBLEN limit = Part_Tail_May_Modify_Index(list, ARG(part));
 
-        const Array* arr = Cell_Array(array);
-        REBLEN index = VAL_INDEX(array);
+        const Array* arr = Cell_Array(list);
+        REBLEN index = VAL_INDEX(list);
 
         REBINT skip;
         if (REF(skip)) {
@@ -1026,10 +1026,10 @@ REBTYPE(Array)
         UNUSED(find);
 
         if (id == SYM_FIND) {
-            Copy_Cell(ARG(tail), array);
+            Copy_Cell(ARG(tail), list);
             VAL_INDEX_RAW(ARG(tail)) = ret + len;
 
-            Copy_Cell(OUT, array);
+            Copy_Cell(OUT, list);
             VAL_INDEX_RAW(OUT) = ret;
 
             return Proxy_Multi_Returns(level_);
@@ -1041,7 +1041,7 @@ REBTYPE(Array)
 
             Derelativize(OUT, Array_At(arr, ret), specifier);
         }
-        return Inherit_Const(stable_OUT, array); }
+        return Inherit_Const(stable_OUT, list); }
 
     //-- Modification:
       case SYM_APPEND:
@@ -1055,7 +1055,7 @@ REBTYPE(Array)
 
         REBLEN len; // length of target
         if (id == SYM_CHANGE)
-            len = Part_Len_May_Modify_Index(array, ARG(part));
+            len = Part_Len_May_Modify_Index(list, ARG(part));
         else
             len = Part_Limit_Append_Insert(ARG(part));
 
@@ -1064,16 +1064,16 @@ REBTYPE(Array)
         //
         if (Is_Void(arg) and len == 0) {
             if (id == SYM_APPEND)  // append always returns head
-                VAL_INDEX_RAW(array) = 0;
-            return COPY(array);  // don't fail on read only if would be a no-op
+                VAL_INDEX_RAW(list) = 0;
+            return COPY(list);  // don't fail on read only if would be a no-op
         }
 
-        Array* arr = Cell_Array_Ensure_Mutable(array);
-        REBLEN index = VAL_INDEX(array);
+        Array* arr = Cell_Array_Ensure_Mutable(list);
+        REBLEN index = VAL_INDEX(list);
 
         Flags flags = 0;
 
-        Copy_Cell(OUT, array);
+        Copy_Cell(OUT, list);
 
         if (Is_Void(arg)) {
             // not necessarily a no-op (e.g. CHANGE can erase)
@@ -1102,16 +1102,16 @@ REBTYPE(Array)
         return OUT; }
 
       case SYM_CLEAR: {
-        Array* arr = Cell_Array_Ensure_Mutable(array);
-        REBLEN index = VAL_INDEX(array);
+        Array* arr = Cell_Array_Ensure_Mutable(list);
+        REBLEN index = VAL_INDEX(list);
 
-        if (index < Cell_Series_Len_Head(array)) {
+        if (index < Cell_Series_Len_Head(list)) {
             if (index == 0)
                 Reset_Array(arr);
             else
                 Set_Series_Len(arr, cast(REBLEN, index));
         }
-        return COPY(array);
+        return COPY(list);
     }
 
     //-- Creation:
@@ -1120,10 +1120,10 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_COPY;
         UNUSED(PARAM(value));
 
-        REBLEN tail = Part_Tail_May_Modify_Index(array, ARG(part));
+        REBLEN tail = Part_Tail_May_Modify_Index(list, ARG(part));
 
-        const Array* arr = Cell_Array(array);
-        REBLEN index = VAL_INDEX(array);
+        const Array* arr = Cell_Array(list);
+        REBLEN index = VAL_INDEX(list);
 
         Flags flags = ARRAY_MASK_HAS_FILE_LINE;
 
@@ -1131,7 +1131,7 @@ REBTYPE(Array)
         // input value was const and we don't copy some types deeply, those
         // types should retain the constness intended for them.
         //
-        flags |= (array->header.bits & ARRAY_FLAG_CONST_SHALLOW);
+        flags |= (list->header.bits & ARRAY_FLAG_CONST_SHALLOW);
 
         Array* copy = Copy_Array_Core_Managed(
             arr,
@@ -1142,27 +1142,27 @@ REBTYPE(Array)
             did REF(deep)
         );
 
-        Init_Array_Cell(OUT, Cell_Heart_Ensure_Noquote(array), copy);
-        INIT_SPECIFIER(OUT, Cell_Specifier(array));
+        Init_Any_List(OUT, Cell_Heart_Ensure_Noquote(list), copy);
+        INIT_SPECIFIER(OUT, Cell_Specifier(list));
         return OUT; }
 
     //-- Special actions:
 
       case SYM_SWAP: {
         Value* arg = D_ARG(2);
-        if (not Any_Array(arg))
+        if (not Any_List(arg))
             fail (arg);
 
-        REBLEN index = VAL_INDEX(array);
+        REBLEN index = VAL_INDEX(list);
 
         if (
-            index < Cell_Series_Len_Head(array)
+            index < Cell_Series_Len_Head(list)
             and VAL_INDEX(arg) < Cell_Series_Len_Head(arg)
         ){
             // Cell bits can be copied within the same array
             //
-            Element* a = Cell_Array_At_Ensure_Mutable(nullptr, array);
-            Element* b = Cell_Array_At_Ensure_Mutable(nullptr, arg);
+            Element* a = Cell_List_At_Ensure_Mutable(nullptr, list);
+            Element* b = Cell_List_At_Ensure_Mutable(nullptr, arg);
             Element temp;
             temp.header = a->header;
             temp.payload = a->payload;
@@ -1170,18 +1170,18 @@ REBTYPE(Array)
             Copy_Cell(a, b);
             Copy_Cell(b, &temp);
         }
-        return COPY(array); }
+        return COPY(list); }
 
       case SYM_REVERSE: {
         INCLUDE_PARAMS_OF_REVERSE;
         UNUSED(ARG(series));  // covered by `v`
 
-        Array* arr = Cell_Array_Ensure_Mutable(array);
-        REBLEN index = VAL_INDEX(array);
+        Array* arr = Cell_Array_Ensure_Mutable(list);
+        REBLEN index = VAL_INDEX(list);
 
-        REBLEN len = Part_Len_May_Modify_Index(array, ARG(part));
+        REBLEN len = Part_Len_May_Modify_Index(list, ARG(part));
         if (len == 0)
-            return COPY(array); // !!! do 1-element reversals update newlines?
+            return COPY(list); // !!! do 1-element reversals update newlines?
 
         Cell* front = Array_At(arr, index);
         Cell* back = front + len - 1;
@@ -1247,13 +1247,13 @@ REBTYPE(Array)
             else
                 Clear_Cell_Flag(back, NEWLINE_BEFORE);
         }
-        return COPY(array); }
+        return COPY(list); }
 
       case SYM_SORT: {
         INCLUDE_PARAMS_OF_SORT;
         UNUSED(PARAM(series));  // covered by `v`
 
-        Array* arr = Cell_Array_Ensure_Mutable(array);
+        Array* arr = Cell_Array_Ensure_Mutable(list);
 
         struct sort_flags flags;
         flags.cased = REF(case);
@@ -1276,12 +1276,12 @@ REBTYPE(Array)
             flags.offset = 0;
         }
 
-        Copy_Cell(OUT, array);  // save array before messing with index
+        Copy_Cell(OUT, list);  // save list before messing with index
 
-        REBLEN len = Part_Len_May_Modify_Index(array, ARG(part));
+        REBLEN len = Part_Len_May_Modify_Index(list, ARG(part));
         if (len <= 1)
             return OUT;
-        REBLEN index = VAL_INDEX(array);  // ^-- may have been modified
+        REBLEN index = VAL_INDEX(list);  // ^-- may have been modified
 
         // Skip factor:
         REBLEN skip;
@@ -1307,29 +1307,29 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_RANDOM;
         UNUSED(PARAM(value));  // covered by `v`
 
-        REBLEN index = VAL_INDEX(array);
+        REBLEN index = VAL_INDEX(list);
 
         if (REF(seed))
             fail (Error_Bad_Refines_Raw());
 
-        if (REF(only)) { // pick an element out of the array
-            if (index >= Cell_Series_Len_Head(array))
+        if (REF(only)) { // pick an element out of the list
+            if (index >= Cell_Series_Len_Head(list))
                 return nullptr;
 
             Init_Integer(
                 ARG(seed),
                 1 + (Random_Int(REF(secure))
-                    % (Cell_Series_Len_Head(array) - index))
+                    % (Cell_Series_Len_Head(list) - index))
             );
 
-            if (not Did_Pick_Block(OUT, array, ARG(seed)))
+            if (not Did_Pick_Block(OUT, list, ARG(seed)))
                 return nullptr;
-            return Inherit_Const(stable_OUT, array);
+            return Inherit_Const(stable_OUT, list);
         }
 
-        Array* arr = Cell_Array_Ensure_Mutable(array);
-        Shuffle_Array(arr, VAL_INDEX(array), REF(secure));
-        return COPY(array); }
+        Array* arr = Cell_Array_Ensure_Mutable(list);
+        Shuffle_Array(arr, VAL_INDEX(list), REF(secure));
+        return COPY(list); }
 
     // !!! The ability to transform some BLOCK!s into PORT!s for some actions
     // was hardcoded in a fairly ad-hoc way in R3-Alpha, which was based on

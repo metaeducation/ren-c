@@ -425,7 +425,7 @@ Bounce TO_Map(Level* level_, Kind kind, const Value* arg)
         //
         REBLEN len = Cell_Series_Len_At(arg);
         const Element* tail;
-        const Element* at = Cell_Array_At(&tail, arg);
+        const Element* at = Cell_List_At(&tail, arg);
 
         Map* map = Make_Map(len / 2); // [key value key value...] + END
         Append_Map(map, at, tail, len);
@@ -684,7 +684,7 @@ REBTYPE(Map)
 
         REBLEN len = Part_Len_May_Modify_Index(value, ARG(part));
         const Element* tail;
-        const Element* at = Cell_Array_At(&tail, value);  // w/modified index
+        const Element* at = Cell_List_At(&tail, value);  // w/modified index
 
         Append_Map(m, at, tail, len);
 

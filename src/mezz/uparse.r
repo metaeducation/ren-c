@@ -328,8 +328,8 @@ default-combinators: make map! reduce [
     ]
 
     'spread combinator [
-        {Return antiform group for array arguments}
-        return: "Splice antiform if input is array"
+        {Return antiform group for list arguments}
+        return: "Splice antiform if input is list"
             [~null~ ~void~ element? splice?]
         parser [action?]
         <local> result'
@@ -337,8 +337,8 @@ default-combinators: make map! reduce [
         [^result' remainder]: parser input except e -> [
             return raise e
         ]
-        if (not quoted? result') or (not any-array? result': unquote result') [
-            fail "SPREAD only accepts ANY-ARRAY? and QUOTED!"
+        if (not quoted? result') or (not any-list? result': unquote result') [
+            fail "SPREAD only accepts ANY-LIST? and QUOTED!"
         ]
         return spread result'  ; was unquoted above
     ]
@@ -837,7 +837,7 @@ default-combinators: make map! reduce [
         [^ remainder]: parser input except e -> [
             return raise e
         ]
-        if any-array? input [
+        if any-list? input [
             return as block! copy/part input remainder
         ]
         if any-string? input [
@@ -880,7 +880,7 @@ default-combinators: make map! reduce [
     ;
     ; Because any value-bearing rule can be used, GROUP! rules are also legal,
     ; which lets you break the rules up for legibility (and avoids interpreting
-    ; arrays as rules themselves)
+    ; lists as rules themselves)
     ;
     ;     parse [| | any any any | | |] [
     ;          content: between some '| some '|
@@ -925,7 +925,7 @@ default-combinators: make map! reduce [
             return raise "Need SERIES! or SEQUENCE! input for use with SUBPARSE"
         ]
 
-        ; If the entirety of the item at the input array is matched by the
+        ; If the entirety of the item at the list is matched by the
         ; supplied parser rule, then we advance past the item.
         ;
         [^result' subseries]: subparser subseries except e -> [return raise e]
@@ -970,7 +970,7 @@ default-combinators: make map! reduce [
             return raise "Need SERIES! or SEQUENCE! input for use with VALIDATE"
         ]
 
-        ; If the entirety of the item at the input array is matched by the
+        ; If the entirety of the item at the input list is matched by the
         ; supplied parser rule, then we advance past the item.
         ;
         [_ subremainder]: subparser subseries except e -> [
@@ -1005,10 +1005,10 @@ default-combinators: make map! reduce [
 
         ; PENDING can be NULL or a block full of items that may or may
         ; not be intended for COLLECT.  Right now the logic is that all QUOTED!
-        ; items are intended for collect, extract those from the pending array.
+        ; items are intended for collect, extract those from the pending list.
         ;
         ; !!! More often than not a COLLECT probably is going to be getting an
-        ; array of all QUOTED! items.  If so, there's probably no great reason
+        ; list of all QUOTED! items.  If so, there's probably no great reason
         ; to do a new allocation...instead the quoteds should be mutated into
         ; unquoted forms.  Punt on such optimizations for now.
         ;
@@ -1248,7 +1248,7 @@ default-combinators: make map! reduce [
         <local> neq?
     ][
         case [
-            any-array? input [
+            any-list? input [
                 neq?: either state.case [:strict-not-equal?] [:not-equal?]
                 if neq? input.1 value [
                     return raise "Value at parse position does not match TEXT!"
@@ -1301,7 +1301,7 @@ default-combinators: make map! reduce [
             return raise "ISSUE! cannot match at end of input"
         ]
         case [
-            any-array? input [
+            any-list? input [
                 remainder: next input
                 if value == input.1 [
                     if negated [
@@ -1367,7 +1367,7 @@ default-combinators: make map! reduce [
         value [binary!]
     ][
         case [
-            any-array? input [
+            any-list? input [
                 if input.1 = value [
                     remainder: next input
                     return input.1
@@ -1441,7 +1441,7 @@ default-combinators: make map! reduce [
         return: "Result of evaluating the group (invisible if <delay>)"
             [any-value? pack?]
         @pending [blank! block!]
-        value [any-array?]  ; allow any array to use this "EVAL combinator"
+        value [any-list?]  ; allow any array to use this "EVAL combinator"
     ][
         remainder: input
 
@@ -1497,7 +1497,7 @@ default-combinators: make map! reduce [
             [any-value? pack?]
         @pending [blank! block!]   ; we retrigger combinator; it may KEEP, etc.
 
-        value [any-array?]  ; allow any array to use this "REPARSE-COMBINATOR"
+        value [any-list?]  ; allow any array to use this "REPARSE-COMBINATOR"
         <local> r comb
     ][
         ; !!! The rules of what are allowed or not when triggering through
@@ -1576,7 +1576,7 @@ default-combinators: make map! reduce [
         value [bitset!]
     ][
         case [
-            any-array? input [
+            any-list? input [
                 if input.1 = value [
                     remainder: next input
                     return input.1
@@ -1601,7 +1601,7 @@ default-combinators: make map! reduce [
 
     === QUOTED! COMBINATOR ===
 
-    ; When used with ANY-ARRAY? input, recognizes values literally.  When used
+    ; When used with ANY-LIST? input, recognizes values literally.  When used
     ; with ANY-STRING? it will convert the value to a string before matching.
 
     quoted! combinator [
@@ -1626,7 +1626,7 @@ default-combinators: make map! reduce [
             return nihil  ; act invisibly
         ]
 
-        if any-array? input [
+        if any-list? input [
             neq?: either state.case [:strict-not-equal?] [:not-equal?]
             if quoted? value [
                 remainder: next input
@@ -1648,7 +1648,7 @@ default-combinators: make map! reduce [
                 fail "QUOTED! combinator can't be negated matching splices"
             ]
             if not splice? unmeta value [
-                fail "Only antiform matched against array content is splice"
+                fail "Only antiform matched against list content is splice"
             ]
             for-each item unquasi value [
                 if neq? input.1 item [
@@ -1726,22 +1726,22 @@ default-combinators: make map! reduce [
     ; the full word "space" or use an ugly abbreviation like "sp"
 
     blank! combinator [
-        return: "BLANK! if matched in array or space character in strings"
+        return: "BLANK! if matched in list or space character in strings"
             [blank! char?]
         value [blank!]
     ][
         remainder: next input  ; if we consume an item, we'll consume just one
-        if any-array? input [
+        if any-list? input [
             if blank? input.1 [
                 return blank
             ]
-            return raise "BLANK! rule found next input in array was not a blank"
+            return raise "BLANK! rule found next input in list was not a blank"
         ]
         if any-string? input [
             if input.1 = space [
                 return space
             ]
-            return raise "BLANK! rule found next input in array was not space"
+            return raise "BLANK! rule found next input in list was not space"
         ]
         assert [binary? input]
         if input.1 = 32 [  ; codepoint of space, crucially single byte for test
@@ -1868,7 +1868,7 @@ default-combinators: make map! reduce [
 
     === TYPE-XXX! COMBINATORS ===
 
-    ; Traditionally you could only use a datatype with ANY-ARRAY? types,
+    ; Traditionally you could only use a datatype with ANY-LIST? types,
     ; but since Ren-C uses UTF-8 Everywhere it makes it practical to merge in
     ; transcoding:
     ;
@@ -1889,7 +1889,7 @@ default-combinators: make map! reduce [
         /negated
         <local> item error
     ][
-        either any-array? input [
+        either any-list? input [
             if value <> type of maybe input.1 [
                 if negated [
                     remainder: next input
@@ -1927,7 +1927,7 @@ default-combinators: make map! reduce [
         value [type-group!]
         <local> item error
     ][
-        either any-array? input [
+        either any-list? input [
             match value input.1 else [
                 return raise "Value at parse position did not match TYPE-GROUP!"
             ]
@@ -1956,7 +1956,7 @@ default-combinators: make map! reduce [
         /negated
         <local> item error
     ][
-        either any-array? input [
+        either any-list? input [
             match value input.1 else [
                 if negated [
                     remainder: next input
@@ -3077,10 +3077,10 @@ parse*: func [
     ;
     rules: inside rules bindable reduce ['phase bindable rules]
 
-    ; There's no first-class ENVIRONMENT! type, so arrays are used as a
+    ; There's no first-class ENVIRONMENT! type, so lists are used as a
     ; surrogate for exposing their specifiers.  When the environment is
     ; expanded (e.g. by LET) the rules block in effect is changed to a block
-    ; with the same contents (array/position) but a different specifier.
+    ; with the same contents (array+position) but a different specifier.
     ;
     env: rules
 
@@ -3164,7 +3164,7 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
             return raise e
         ]
         if not empty? pending [
-            fail "PARSE completed, but pending array was not empty"
+            fail "PARSE completed, but pending list was not empty"
         ]
         return unmeta synthesized'
     ]
@@ -3180,7 +3180,7 @@ parse-: (comment [redescribe [  ; redescribe not working at the moment (?)
             return null
         ]
         if not empty? pending [
-            fail "PARSE completed, but pending array was not empty"
+            fail "PARSE completed, but pending list was not empty"
         ]
         return heavy unmeta synthesized'
     ]

@@ -1023,7 +1023,7 @@ RebolValue* API_rebArg(
 //
 //   However, there's a special meaning given to `p` when vaptr is null.
 //   In that case, p is no longer the first variadic argument but a pointer
-//   to a packed array of `const void*`.  This method is preferred by the
+//   to a packed C array of `const void*`.  This method is preferred by the
 //   C++ build, because using variadic templates it can recursively process
 //   the arguments and pack them into that array...doing additional type
 //   checking and conversions.
@@ -2439,7 +2439,7 @@ RebolNodeInternal* API_rebRELEASING(RebolValue* v)
 //
 //  rebINLINE: API
 //
-// This will splice an array, single value, or no-op into the execution feed.
+// This will splice a list, single value, or no-op into the execution feed.
 //
 RebolNodeInternal* API_rebINLINE(const RebolValue* v)
 {
@@ -2938,7 +2938,7 @@ RebolSpecifier** API_rebAllocSpecifierRefFromLevel_internal(
 // any startup code.  This allows extensions which are built into an
 // executable to do deferred loading.
 //
-// !!! For starters, this just returns an array of the values...but this is
+// !!! For starters, this just returns a block of the values...but this is
 // the same array that would be used as the Phase_Details() of an action.  So
 // it could return a generator ACTION!.
 //

@@ -85,7 +85,7 @@ join: func [
         type-block!
         any-string? issue! url!
         any-sequence?
-        any-array?
+        any-list?
         binary!
     ]
     value [~void~ element? splice?]
@@ -100,7 +100,7 @@ join: func [
             fail "JOIN with base as type only takes BLOCK! arguments"
         ]
         kind: base
-        if (any-sequence? first value) or (any-array? first value) [
+        if (any-sequence? first value) or (any-list? first value) [
             base: reduce [spread as block! first value]
             value: next value
         ] else [
@@ -220,9 +220,9 @@ charset: func [
 trim: func [
     {Removes spaces from strings or blanks from blocks or objects.}
 
-    return: [any-string? any-array? binary! any-context?]
+    return: [any-string? any-list? binary! any-context?]
     series "Series (modified) or object (made)"
-        [any-string? any-array? binary! any-context?]
+        [any-string? any-list? binary! any-context?]
     /head "Removes only from the head"
     /tail "Removes only from the tail"
     /auto "Auto indents lines relative to first line"
@@ -261,7 +261,7 @@ trim: func [
 
     let rule
     case [
-        any-array? series [
+        any-list? series [
             if any [auto lines with] [
                 ;
                 ; Note: /WITH might be able to work, e.g. if it were a MAP!

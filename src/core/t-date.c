@@ -533,7 +533,7 @@ Bounce MAKE_Date(
         return OUT;
     }
 
-    if (Any_Array(arg))
+    if (Any_List(arg))
         goto make_from_array;
 
     goto bad_make;
@@ -541,7 +541,7 @@ Bounce MAKE_Date(
   make_from_array: {  ////////////////////////////////////////////////////////
 
     const Element* tail;
-    const Element* item = Cell_Array_At(&tail, arg);
+    const Element* item = Cell_List_At(&tail, arg);
 
     if (item == tail or not Is_Integer(item))
         goto bad_make;

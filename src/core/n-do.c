@@ -147,7 +147,7 @@ DECLARE_NATIVE(shove)
         Move_Cell(shovee, cast(Value*, OUT));
     }
     else if (Is_Group(At_Level(L))) {
-        if (Do_Any_Array_At_Throws(OUT, At_Level(L), Level_Specifier(L)))
+        if (Do_Any_List_At_Throws(OUT, At_Level(L), Level_Specifier(L)))
             return THROWN;
 
         Move_Cell(shovee, Decay_If_Unstable(OUT));
@@ -306,7 +306,7 @@ DECLARE_NATIVE(do)
 //          [any-atom?]  ; /NEXT changes primary return product [1]
 //      source [
 //          <maybe>  ; useful for `evaluate maybe ...` scenarios
-//          any-array?  ; source code
+//          any-list?  ; source code
 //          <unrun> frame!  ; invoke the frame (no arguments, see RUN)
 //          error!  ; raise the error
 //          varargs!  ; simulates as if frame! or block! is being executed
@@ -335,7 +335,7 @@ DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
 //    is a nuisance, and the caller would have to check the result position
 //    being NULL regardless.  We instead set the product to TRASH.
 //
-// 4. We want EVALUATE to treat all ANY-ARRAY? the same.  (e.g. a ^[1 + 2] just
+// 4. We want EVALUATE to treat all ANY-LIST? the same.  (e.g. a ^[1 + 2] just
 //    does the same thing as [1 + 2] and gives 3, not '3)  Rather than mutate
 //    the cell to plain BLOCK! and pass it to CONTINUE_CORE(), we initialize
 //    a feed from the array directly.
@@ -389,7 +389,7 @@ DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
     Set_Cell_Flag(ARG(source), PROTECTED);
   #endif
 
-    if (Any_Array(source)) {
+    if (Any_List(source)) {
         if (Cell_Series_Len_At(source) == 0) {
             if (REF(next))  // `eval/next []` doesn't "count" [3]
                 return nullptr;  // need pure null for THEN/ELSE to work right
@@ -463,7 +463,7 @@ DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
             // array during execution, there will be problems if it is TAKE'n
             // or DO'd while this operation is in progress.
             //
-            if (Do_Any_Array_At_Throws(OUT, position, SPECIFIED)) {
+            if (Do_Any_List_At_Throws(OUT, position, SPECIFIED)) {
                 //
                 // !!! A BLOCK! varargs doesn't technically need to "go bad"
                 // on a throw, since the block is still around.  But a FRAME!

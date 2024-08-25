@@ -7,9 +7,9 @@
     PG_Empty_Array // Note: initialized from Cell_Array(Root_Empty_Block)
 
 
-INLINE bool Any_Arraylike(const Cell* v) {
+INLINE bool Any_Listlike(const Cell* v) {
     // called by core code, sacrifice Ensure_Readable() checks
-    if (Any_Array_Kind(Cell_Heart_Unchecked(v)))
+    if (Any_List_Kind(Cell_Heart_Unchecked(v)))
         return true;
     if (not Any_Sequence_Kind(Cell_Heart_Unchecked(v)))
         return false;
@@ -17,12 +17,12 @@ INLINE bool Any_Arraylike(const Cell* v) {
         return false;
     const Node* node1 = Cell_Node1(v);
     if (Is_Node_A_Cell(node1))
-        return true;  // Cell_Array_At() works, but Cell_Array() won't work!
+        return true;  // Cell_List_At() works, but Cell_Array() won't work!
     return Series_Flavor(u_cast(const Series*, node1)) == FLAVOR_ARRAY;
 }
 
 INLINE const Array* Cell_Array(const Cell* v) {
-    assert(Any_Arraylike(v));
+    assert(Any_Listlike(v));
     assert(Is_Node_A_Stub(Cell_Node1(v)));  // not a pairing arraylike!
     if (Not_Node_Accessible(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());
@@ -45,7 +45,7 @@ INLINE const Array* Cell_Array(const Cell* v) {
 // of bounds of the data.  If a function can deal with such out of bounds
 // arrays meaningfully, it should work with VAL_INDEX_UNBOUNDED().
 //
-INLINE const Element* Cell_Array_Len_At(
+INLINE const Element* Cell_List_Len_At(
     Option(Length*) len_at_out,
     const Cell* v
 ){
@@ -62,12 +62,12 @@ INLINE const Element* Cell_Array_Len_At(
     Length len = Array_Len(arr);
     if (i < 0 or i > cast(REBIDX, len))
         fail (Error_Index_Out_Of_Range_Raw());
-    if (len_at_out)  // inlining should remove this if() for Cell_Array_At()
+    if (len_at_out)  // inlining should remove this if() for Cell_List_At()
         *(unwrap len_at_out) = len - i;
     return Array_At(arr, i);
 }
 
-INLINE const Element* Cell_Array_At(
+INLINE const Element* Cell_List_At(
     Option(const Element**) tail_out,
     const Cell* v
 ){
@@ -90,19 +90,19 @@ INLINE const Element* Cell_Array_At(
     return at;
 }
 
-INLINE const Element* Cell_Array_Item_At(const Cell* v) {
+INLINE const Element* Cell_List_Item_At(const Cell* v) {
     const Element* tail;
-    const Element* item = Cell_Array_At(&tail, v);
+    const Element* item = Cell_List_At(&tail, v);
     assert(item != tail);  // should be a valid value
     return item;
 }
 
 
-#define Cell_Array_At_Ensure_Mutable(tail_out,v) \
-    m_cast(Element*, Cell_Array_At((tail_out), Ensure_Mutable(v)))
+#define Cell_List_At_Ensure_Mutable(tail_out,v) \
+    m_cast(Element*, Cell_List_At((tail_out), Ensure_Mutable(v)))
 
-#define Cell_Array_At_Known_Mutable(tail_out,v) \
-    m_cast(Element*, Cell_Array_At((tail_out), Known_Mutable(v)))
+#define Cell_List_At_Known_Mutable(tail_out,v) \
+    m_cast(Element*, Cell_List_At((tail_out), Known_Mutable(v)))
 
 
 // !!! R3-Alpha introduced concepts of immutable series with PROTECT, but
@@ -114,16 +114,16 @@ INLINE const Element* Cell_Array_Item_At(const Cell* v) {
 // some of the thinking on this topic.  Until it's solved, binding-related
 // calls to this function get mutable access on non-mutable series.  :-/
 //
-#define Cell_Array_At_Mutable_Hack(tail_out,v) \
-    m_cast(Element*, Cell_Array_At((tail_out), (v)))
+#define Cell_List_At_Mutable_Hack(tail_out,v) \
+    m_cast(Element*, Cell_List_At((tail_out), (v)))
 
 
-//=//// ANY-ARRAY? INITIALIZER HELPERS ////////////////////////////////////=//
+//=//// ANY-LIST? INITIALIZER HELPERS ////////////////////////////////////=//
 //
 // Declaring as inline with type signature ensures you use a Array* to
 // initialize, and the C++ build can also validate managed consistent w/const.
 
-INLINE Value* Init_Array_Cell_At_Core(
+INLINE Element* Init_Any_List_At_Core(
     Cell* out,
     Heart heart,
     const_if_c Array* array,
@@ -140,7 +140,7 @@ INLINE Value* Init_Array_Cell_At_Core(
 }
 
 #if CPLUSPLUS_11
-    INLINE Value* Init_Array_Cell_At_Core(
+    INLINE Element* Init_Any_List_At_Core(
         Cell* out,
         Heart heart,
         const Array* array,  // all const arrays should be already managed
@@ -151,14 +151,14 @@ INLINE Value* Init_Array_Cell_At_Core(
     }
 #endif
 
-#define Init_Array_Cell_At(v,t,a,i) \
-    Init_Array_Cell_At_Core((v), (t), (a), (i), UNBOUND)
+#define Init_Any_List_At(v,t,a,i) \
+    Init_Any_List_At_Core((v), (t), (a), (i), UNBOUND)
 
-#define Init_Array_Cell(v,t,a) \
-    Init_Array_Cell_At((v), (t), (a), 0)
+#define Init_Any_List(v,t,a) \
+    Init_Any_List_At((v), (t), (a), 0)
 
-#define Init_Block(v,s)     Init_Array_Cell((v), REB_BLOCK, (s))
-#define Init_Group(v,s)     Init_Array_Cell((v), REB_GROUP, (s))
+#define Init_Block(v,a)     Init_Any_List((v), REB_BLOCK, (a))
+#define Init_Group(v,a)     Init_Any_List((v), REB_GROUP, (a))
 
 
 INLINE Cell* Init_Relative_Block_At(
@@ -235,7 +235,7 @@ INLINE bool Is_Nihil(Need(const Atom*) v) {
     if (not Is_Pack(v))
         return false;
     const Element* tail;
-    const Element* at = Cell_Array_At(&tail, v);
+    const Element* at = Cell_List_At(&tail, v);
     return tail == at;
 }
 
@@ -243,7 +243,7 @@ INLINE bool Is_Meta_Of_Nihil(const Cell* v) {
     if (not Is_Meta_Of_Pack(v))
         return false;
     const Element* tail;
-    const Element* at = Cell_Array_At(&tail, v);
+    const Element* at = Cell_List_At(&tail, v);
     return tail == at;
 }
 
@@ -266,7 +266,7 @@ INLINE bool Is_Meta_Of_Nihil(const Cell* v) {
 //
 
 INLINE Value* Splicify(Need(Value*) v) {
-    assert(Any_Array(v) and QUOTE_BYTE(v) == NOQUOTE_1);
+    assert(Any_List(v) and QUOTE_BYTE(v) == NOQUOTE_1);
     QUOTE_BYTE(v) = ANTIFORM_0;
     HEART_BYTE(v) = REB_GROUP;
     return v;
