@@ -185,7 +185,7 @@ REB_R MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
         break; }
 
     case REB_BINARY:
-        if (VAL_LEN_AT(arg) < 8)
+        if (Cell_Series_Len_At(arg) < 8)
             fail (Error_Invalid(arg));
 
         Init_Decimal_Bits(out, Cell_Binary_At(arg)); // makes REB_DECIMAL

@@ -557,7 +557,7 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
             1,
             Cell_Flex(rule),
             VAL_INDEX(rule),
-            VAL_LEN_AT(rule),
+            Cell_Series_Len_At(rule),
             flags
         );
         if (index == NOT_FOUND)
@@ -898,7 +898,7 @@ static REBIXO To_Thru_Block_Rule(
                 }
                 else if (Is_Binary(rule)) {
                     if (ch1 == *Cell_Binary_At(rule)) {
-                        REBLEN len = VAL_LEN_AT(rule);
+                        REBLEN len = Cell_Series_Len_At(rule);
                         if (len == 1) {
                             if (is_thru)
                                 return pos + 1;
@@ -989,7 +989,7 @@ static REBIXO To_Thru_Block_Rule(
                     if (!P_HAS_CASE) ch2 = UP_CASE(ch2);
 
                     if (ch == ch2) {
-                        REBLEN len = VAL_LEN_AT(rule);
+                        REBLEN len = Cell_Series_Len_At(rule);
                         if (len == 1) {
                             if (is_thru)
                                 return pos + 1;
@@ -1162,7 +1162,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             1,
             Cell_Flex(rule),
             VAL_INDEX(rule),
-            VAL_LEN_AT(rule),
+            Cell_Series_Len_At(rule),
             (P_FLAGS & AM_FIND_CASE)
         );
 
@@ -1170,7 +1170,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             return END_FLAG;
 
         if (is_thru)
-            return i + VAL_LEN_AT(rule);
+            return i + Cell_Series_Len_At(rule);
 
         return i;
     }
@@ -1468,7 +1468,7 @@ DECLARE_NATIVE(subparse)
                             if (
                                 not Is_Block(OUT)
                                 or not (
-                                    VAL_LEN_AT(OUT) == 2
+                                    Cell_Series_Len_At(OUT) == 2
                                     and Is_Integer(Cell_Array_At(OUT))
                                     and Is_Integer(Cell_Array_At(OUT) + 1)
                                 )

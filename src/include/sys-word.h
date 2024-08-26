@@ -93,7 +93,7 @@ INLINE REBCTX *VAL_WORD_CONTEXT(const Value* v) {
         Get_Flex_Flag(binding, NODE_FLAG_MANAGED)
         or IS_END(LVL(LINK(binding).keysource)->param) // not fulfilling
     );
-    binding->header.bits |= NODE_FLAG_MANAGED; // !!! review managing needs
+    binding->leader.bits |= NODE_FLAG_MANAGED; // !!! review managing needs
     return CTX(binding);
 }
 

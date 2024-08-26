@@ -82,7 +82,7 @@ INLINE bool Is_Block_Style_Varargs(
 ){
     assert(Is_Varargs(vararg));
 
-    if (vararg->extra.binding->header.bits & ARRAY_FLAG_VARLIST) {
+    if (vararg->extra.binding->leader.bits & ARRAY_FLAG_VARLIST) {
         *shared_out = nullptr; // avoid compiler warning in -Og build
         return false; // it's an ordinary vararg, representing a FRAME!
     }
@@ -108,7 +108,7 @@ INLINE bool Is_Level_Style_Varargs_Maybe_Null(
 ){
     assert(Is_Varargs(vararg));
 
-    if (not (vararg->extra.binding->header.bits & ARRAY_FLAG_VARLIST)) {
+    if (not (vararg->extra.binding->leader.bits & ARRAY_FLAG_VARLIST)) {
         *L_out = nullptr; // avoid compiler warning in -Og build
         return false; // it's a block varargs, made via MAKE VARARGS!
     }
@@ -147,6 +147,6 @@ INLINE const Value* Param_For_Varargs_Maybe_Null(const Cell* v) {
     // A vararg created from a block AND never passed as an argument so no
     // typeset or quoting settings available.  Treat as "normal" parameter.
     //
-    assert(not (v->extra.binding->header.bits & ARRAY_FLAG_VARLIST));
+    assert(not (v->extra.binding->leader.bits & ARRAY_FLAG_VARLIST));
     return nullptr;
 }

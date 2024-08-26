@@ -679,7 +679,7 @@ bool Eval_Core_Throws(Level* const L)
         // For now, see comments in the WORD branch above for more details.
         //
         if (
-            VAL_LEN_AT(current) > 0
+            Cell_Series_Len_At(current) > 0
             and Is_Word(Cell_Array_At(current))
         ){
             assert(not current_gotten); // no caching for paths
@@ -1939,7 +1939,7 @@ bool Eval_Core_Throws(Level* const L)
         // switch statement along with enfix, so if we see it here that means
         // there was nothing to the left.
         //
-        if (VAL_LEN_AT(current) == 0)
+        if (Cell_Series_Len_At(current) == 0)
             fail ("Empty path must have left argument for 'split' behavior");
 
         Symbol* opt_label;
@@ -2312,7 +2312,7 @@ bool Eval_Core_Throws(Level* const L)
 
     if (eval_type == REB_PATH) {
         if (
-            VAL_LEN_AT(L->value) != 0
+            Cell_Series_Len_At(L->value) != 0
             or (L->flags.bits & DO_FLAG_NO_LOOKAHEAD)
             or not EVALUATING(L->value)
         ){

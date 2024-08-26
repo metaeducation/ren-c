@@ -64,7 +64,7 @@ Flex* To_REBOL_Path(const Cell* string, REBFLGS flags)
 
 restart:;
     Ucs2(const*) up = Cell_String_At(string);
-    REBLEN len = VAL_LEN_AT(string);
+    REBLEN len = Cell_Series_Len_At(string);
 
     REBUNI c = '\0'; // for test after loop (in case loop does not run)
 
@@ -143,7 +143,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
     assert(Is_File(file));
 
     Ucs2(const*) up = Cell_String_At(file);
-    REBLEN len = VAL_LEN_AT(file);
+    REBLEN len = Cell_Series_Len_At(file);
 
     REBLEN i = 0;
 

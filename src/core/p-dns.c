@@ -100,7 +100,7 @@ static REB_R DNS_Actor(Level* level_, Value* port, Value* verb)
             REBSIZ offset;
             REBSIZ size;
             Blob* temp = Temp_UTF8_At_Managed(
-                &offset, &size, arg, VAL_LEN_AT(arg)
+                &offset, &size, arg, Cell_Series_Len_At(arg)
             );
 
             DECLARE_VALUE (tmp);

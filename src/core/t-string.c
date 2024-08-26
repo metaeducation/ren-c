@@ -274,7 +274,7 @@ static Flex* MAKE_TO_String_Common(const Value* arg)
     // MAKE/TO <type> <binary!>
     if (Is_Binary(arg)) {
         flex = Make_Sized_String_UTF8(
-            cs_cast(Cell_Binary_At(arg)), VAL_LEN_AT(arg)
+            cs_cast(Cell_Binary_At(arg)), Cell_Series_Len_At(arg)
         );
     }
     // MAKE/TO <type> <any-string>
@@ -347,7 +347,7 @@ static Blob* make_binary(const Value* arg, bool make)
 
     // MAKE/TO BINARY! BINARY!
     case REB_BINARY:
-        flex = Copy_Bytes(Cell_Binary_At(arg), VAL_LEN_AT(arg));
+        flex = Copy_Bytes(Cell_Binary_At(arg), Cell_Series_Len_At(arg));
         break;
 
     // MAKE/TO BINARY! <any-string>
@@ -357,7 +357,7 @@ static Blob* make_binary(const Value* arg, bool make)
     case REB_URL:
     case REB_TAG:
 //  case REB_ISSUE:
-        flex = Make_Utf8_From_Cell_String_At_Limit(arg, VAL_LEN_AT(arg));
+        flex = Make_Utf8_From_Cell_String_At_Limit(arg, Cell_Series_Len_At(arg));
         break;
 
     case REB_BLOCK:
@@ -438,7 +438,7 @@ REB_R MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
             goto bad_make;
 
         REBINT i = Int32(index) - 1 + VAL_INDEX(any_binstr);
-        if (i < 0 || i > cast(REBINT, VAL_LEN_AT(any_binstr)))
+        if (i < 0 || i > cast(REBINT, Cell_Series_Len_At(any_binstr)))
             goto bad_make;
 
         return Init_Any_Series_At(out, kind, Cell_Flex(any_binstr), i);
@@ -1006,7 +1006,7 @@ void Mold_Text_Series_At(
 static void Mold_Url(REB_MOLD *mo, const Cell* v)
 {
     Flex* series = Cell_Flex(v);
-    REBLEN len = VAL_LEN_AT(v);
+    REBLEN len = Cell_Series_Len_At(v);
     Byte *dp = Prep_Mold_Overestimated(mo, len * 4); // 4 bytes max UTF-8
 
     REBLEN n;
@@ -1022,7 +1022,7 @@ static void Mold_Url(REB_MOLD *mo, const Cell* v)
 static void Mold_File(REB_MOLD *mo, const Cell* v)
 {
     Flex* series = Cell_Flex(v);
-    REBLEN len = VAL_LEN_AT(v);
+    REBLEN len = Cell_Series_Len_At(v);
 
     REBLEN estimated_bytes = 4 * len; // UTF-8 characters are max 4 bytes
 
@@ -1061,7 +1061,7 @@ static void Mold_Tag(REB_MOLD *mo, const Cell* v)
 
     REBSIZ offset;
     REBSIZ size;
-    Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
+    Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
     Append_Utf8_Utf8(mo->series, cs_cast(Blob_At(temp, offset)), size);
 
     Append_Utf8_Codepoint(mo->series, '>');
@@ -1078,7 +1078,7 @@ void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) && VAL_INDEX(v) != 0)
         Pre_Mold(mo, v); // #[binary!
 
-    REBLEN len = VAL_LEN_AT(v);
+    REBLEN len = Cell_Series_Len_At(v);
 
     Blob* enbased;
     switch (Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16)) {
@@ -1140,7 +1140,7 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
     if (form and not Is_Tag(v)) {
         REBSIZ offset;
         REBSIZ size;
-        Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
+        Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
 
         Append_Utf8_Utf8(mo->series, cs_cast(Blob_At(temp, offset)), size);
         return;
@@ -1152,7 +1152,7 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
         break;
 
     case REB_FILE:
-        if (VAL_LEN_AT(v) == 0) {
+        if (Cell_Series_Len_At(v) == 0) {
             Append_Unencoded(s, "%\"\"");
             break;
         }
@@ -1291,7 +1291,7 @@ REBTYPE(String)
                 len = 1;
             }
             else
-                len = VAL_LEN_AT(arg);
+                len = Cell_Series_Len_At(arg);
         }
         else {
             if (Is_Char(arg) or Is_Bitset(arg))
@@ -1308,7 +1308,7 @@ REBTYPE(String)
                     Flex* copy = Copy_Form_Value(arg, 0);
                     Init_Text(arg, copy);
                 }
-                len = VAL_LEN_AT(arg);
+                len = Cell_Series_Len_At(arg);
             }
         }
 
@@ -1512,7 +1512,7 @@ REBTYPE(String)
             Copy_Cell(OUT, v);
             return OUT;
         }
-        else if (VAL_LEN_AT(v) == 0) // add/subtract to #{} otherwise
+        else if (Cell_Series_Len_At(v) == 0) // add/subtract to #{} otherwise
             fail (Error_Overflow_Raw());
 
         while (amount != 0) {
@@ -1622,7 +1622,7 @@ REBTYPE(String)
                         Cell_Flex(v),
                         VAL_INDEX(v)
                     ),
-                    VAL_LEN_AT(v) * Flex_Wide(Cell_Flex(v))
+                    Cell_Series_Len_At(v) * Flex_Wide(Cell_Flex(v))
                 )
             );
             return nullptr;

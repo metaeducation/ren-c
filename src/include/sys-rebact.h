@@ -65,7 +65,7 @@
 
         if (base)
             assert(
-                SERIES_MASK_ACTION == (cast(Flex*, p)->header.bits & (
+                SERIES_MASK_ACTION == (cast(Flex*, p)->leader.bits & (
                     SERIES_MASK_ACTION
                         | NODE_FLAG_FREE
                         | NODE_FLAG_CELL

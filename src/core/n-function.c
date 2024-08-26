@@ -184,7 +184,7 @@ DECLARE_NATIVE(return)
     if (not L_binding)
         fail (Error_Return_Archetype_Raw()); // must have binding to jump to
 
-    assert(L_binding->header.bits & ARRAY_FLAG_VARLIST);
+    assert(L_binding->leader.bits & ARRAY_FLAG_VARLIST);
     target_level = CTX_LEVEL_MAY_FAIL(CTX(L_binding));
 
     // !!! We only have a Level* via the binding.  We don't have distinct
@@ -239,7 +239,7 @@ DECLARE_NATIVE(return)
             fail (Error_Bad_Return_Type(target_level, VAL_TYPE(v)));
     }
 
-    assert(L_binding->header.bits & ARRAY_FLAG_VARLIST);
+    assert(L_binding->leader.bits & ARRAY_FLAG_VARLIST);
 
     Copy_Cell(OUT, NAT_VALUE(unwind)); // see also Make_Thrown_Unwind_Value
     INIT_BINDING_MAY_MANAGE(OUT, L_binding);

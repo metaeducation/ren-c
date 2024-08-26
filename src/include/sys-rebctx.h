@@ -62,7 +62,7 @@
 
         if (base)
             assert(
-                (reinterpret_cast<Flex*>(p)->header.bits & (
+                (reinterpret_cast<Flex*>(p)->leader.bits & (
                     NODE_FLAG_NODE | ARRAY_FLAG_VARLIST
                         | NODE_FLAG_FREE
                         | NODE_FLAG_CELL

@@ -251,7 +251,7 @@ DECLARE_NATIVE(panic)
     if (Is_Text(v)) {
         REBSIZ offset;
         REBSIZ size;
-        Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
+        Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
 
         p = Blob_At(temp, offset); // UTF-8 data
     }

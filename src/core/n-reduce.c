@@ -132,7 +132,7 @@ bool Match_For_Compose(const Cell* group, const Value* pattern) {
     if (IS_NULLED(pattern))
         return true;
 
-    if (VAL_LEN_AT(group) == 0) // you have a pattern, so leave `()` as-is
+    if (Cell_Series_Len_At(group) == 0) // you have a pattern, so leave `()` as-is
         return false;
 
     Cell* first = Cell_Array_At(group);

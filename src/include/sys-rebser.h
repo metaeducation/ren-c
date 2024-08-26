@@ -74,20 +74,20 @@
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// FLEX <<HEADER>> FLAGS
+// FLEX <<LEADER>> FLAGS
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A Flex has two places to store bits...in the "header" and in the "info".
+// A Flex has two places to store bits...in the "leader" and in the "info".
 // The following are the FLEX_FLAG_XXX and ARRAY_FLAG_XXX etc. that are used
-// in the header, while the FLEX_INFO_XXX flags will be found in the info.
+// in the leader, while the FLEX_INFO_XXX flags will be found in the info.
 //
 // ** Make_Flex() takes FLEX_FLAG_XXX as a parameter, so anything that
 // controls series creation should be a _FLAG_ as opposed to an _INFO_! **
 //
 // (Other general rules might be that bits that are to be tested or set as
 // a group should be in the same flag group.  Perhaps things that don't change
-// for the lifetime of the Flex might prefer header to the info, too?
+// for the lifetime of the Flex might prefer leader to the info, too?
 // Such things might help with caching.)
 //
 
@@ -95,11 +95,11 @@
     0 // helps locate places that want to say "no flags"
 
 
-// Detect_Rebol_Pointer() uses the fact that this bit is 0 for series headers
+// Detect_Rebol_Pointer() uses the fact that this bit is 0 for series leaders
 // to discern between Stub, Cell, and END.  If push comes to shove that
 // could be done differently, and this bit retaken.
 //
-#define FLEX_FLAG_8_IS_TRUE FLAG_LEFT_BIT(8) // CELL_FLAG_NOT_END
+#define FLEX_FLAG_8_IS_TRUE FLAG_LEFT_BIT(8)  // CELL_FLAG_NOT_END
 
 
 //=//// FLEX_FLAG_FIXED_SIZE ////////////////////////////////////////////=//
@@ -367,7 +367,7 @@
 
 //=//// FLEX_INFO_HOLD //////////////////////////////////////////////////=//
 //
-// Set in the header whenever some stack-based operation wants a temporary
+// Set in the Stub whenever some stack-based operation wants a temporary
 // hold on a Flex, to give it a protected state.  This will happen with a
 // DO, or PARSE, or enumerations.  Even REMOVE-EACH will transition the Flex
 // it is operating on into a HOLD state while the removal signals are being
@@ -575,8 +575,8 @@
 // A Stub Node is the size of two Cells, and there are 3 basic layouts
 // which can be overlaid inside the node:
 //
-//      Dynamic: [header [allocation tracking] info link misc]
-//     Singular: [header [cell] info link misc]
+//      Dynamic: [leader [allocation tracking] info link misc]
+//     Singular: [leader [cell] info link misc]
 //      Pairing: [[cell] [cell]]
 //
 // `info` is not the start of a "Rebol Node" (REBNODE, e.g. either a Stub or
@@ -838,14 +838,14 @@ union StubMiscUnion {
 
 struct StubStruct {
     //
-    // The bit that is checked in the header is the USED bit, which is
-    // bit #9.  This is set on all REBVALs and also in END marking headers,
+    // The bit that is checked in the leader is the USED bit, which is
+    // bit #9.  This is set on all Cells and also in END marking headers,
     // and should be set in used series nodes.
     //
     // The remaining bits are free, and used to hold SYM values for those
     // words that have them.
     //
-    union HeaderUnion header;
+    union HeaderUnion leader;
 
     // The `link` field is generally used for pointers to something that
     // when updated, all references to this series would want to be able
@@ -950,7 +950,7 @@ typedef struct StubStruct Flex;
 
         if (base)
             assert(
-                (reinterpret_cast<Flex*>(p)->header.bits & (
+                (reinterpret_cast<Flex*>(p)->leader.bits & (
                     NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
                 )) == (
                     NODE_FLAG_NODE
@@ -976,7 +976,7 @@ typedef struct StubStruct Flex;
         if (base) {
             assert(WIDE_BYTE_OR_0(reinterpret_cast<Flex*>(p)) == 0);
             assert(
-                (reinterpret_cast<Flex*>(p)->header.bits & (
+                (reinterpret_cast<Flex*>(p)->leader.bits & (
                     NODE_FLAG_NODE
                         | NODE_FLAG_FREE
                         | NODE_FLAG_CELL
@@ -993,24 +993,24 @@ typedef struct StubStruct Flex;
 
 
 //
-// Flex header FLAGs (distinct from INFO bits)
+// Flex leader FLAGs (distinct from INFO bits)
 //
 
 #define Set_Flex_Flag(s,f) \
-    cast(void, (s)->header.bits |= (f))
+    cast(void, (s)->leader.bits |= (f))
 
 #define Clear_Flex_Flag(s,f) \
-    cast(void, (s)->header.bits &= ~(f))
+    cast(void, (s)->leader.bits &= ~(f))
 
 #define Get_Flex_Flag(s,f) \
-    (did ((s)->header.bits & (f))) // !!! ensure it's just one flag?
+    (did ((s)->leader.bits & (f))) // !!! ensure it's just one flag?
 
 #define Not_Flex_Flag(s,f) \
-    (not ((s)->header.bits & (f)))
+    (not ((s)->leader.bits & (f)))
 
 
 //
-// Flex INFO bits (distinct from header FLAGs)
+// Flex INFO bits (distinct from leader FLAGs)
 //
 
 #define Set_Flex_Info(s,f) \

@@ -313,7 +313,7 @@ DECLARE_NATIVE(decode_utf16le)
     INCLUDE_PARAMS_OF_DECODE_UTF16LE;
 
     Byte *data = Cell_Binary_At(ARG(data));
-    REBLEN len = VAL_LEN_AT(ARG(data));
+    REBLEN len = Cell_Series_Len_At(ARG(data));
 
     const bool little_endian = true;
 
@@ -322,7 +322,7 @@ DECLARE_NATIVE(decode_utf16le)
     // Drop byte-order marker, if present
     //
     if (
-        VAL_LEN_AT(OUT) > 0
+        Cell_Series_Len_At(OUT) > 0
         && GET_ANY_CHAR(Cell_Flex(OUT), VAL_INDEX(OUT)) == 0xFEFF
     ){
         Remove_Flex(Cell_Flex(OUT), VAL_INDEX(OUT), 1);
@@ -352,7 +352,7 @@ DECLARE_NATIVE(encode_utf16le)
     Encode_Utf16_Core(
         OUT,
         Cell_String_At(ARG(text)),
-        VAL_LEN_AT(ARG(text)),
+        Cell_Series_Len_At(ARG(text)),
         little_endian
     );
     return OUT;
@@ -398,7 +398,7 @@ DECLARE_NATIVE(decode_utf16be)
     INCLUDE_PARAMS_OF_DECODE_UTF16BE;
 
     Byte *data = Cell_Binary_At(ARG(data));
-    REBLEN len = VAL_LEN_AT(ARG(data));
+    REBLEN len = Cell_Series_Len_At(ARG(data));
 
     const bool little_endian = false;
 
@@ -407,7 +407,7 @@ DECLARE_NATIVE(decode_utf16be)
     // Drop byte-order marker, if present
     //
     if (
-        VAL_LEN_AT(OUT) > 0
+        Cell_Series_Len_At(OUT) > 0
         && GET_ANY_CHAR(Cell_Flex(OUT), VAL_INDEX(OUT)) == 0xFEFF
     ){
         Remove_Flex(Cell_Flex(OUT), VAL_INDEX(OUT), 1);
@@ -438,7 +438,7 @@ DECLARE_NATIVE(encode_utf16be)
     Encode_Utf16_Core(
         OUT,
         Cell_String_At(ARG(text)),
-        VAL_LEN_AT(ARG(text)),
+        Cell_Series_Len_At(ARG(text)),
         little_endian
     );
     return OUT;

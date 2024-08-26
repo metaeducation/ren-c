@@ -270,7 +270,7 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
         Cell_Array(body),
         VAL_INDEX(body), // at
         VAL_SPECIFIER(body),
-        VAL_LEN_AT(body), // tail
+        Cell_Series_Len_At(body), // tail
         0, // extra
         ARRAY_FLAG_FILE_LINE, // ask to preserve file and line info
         TS_SERIES & ~TS_NOT_COPIED // types to copy deeply
@@ -407,7 +407,7 @@ void Virtual_Bind_Deep_To_New_Context(
 ) {
     assert(Is_Block(body_in_out));
 
-    REBLEN num_vars = Is_Block(spec) ? VAL_LEN_AT(spec) : 1;
+    REBLEN num_vars = Is_Block(spec) ? Cell_Series_Len_At(spec) : 1;
     if (num_vars == 0)
         fail (Error_Invalid(spec));
 

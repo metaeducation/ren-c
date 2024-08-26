@@ -82,9 +82,9 @@ Flex* Make_Set_Operation_Flex(
     // will be allocated at this size, but copied out at the exact size of
     // the actual result.
     //
-    REBLEN i = VAL_LEN_AT(val1);
+    REBLEN i = Cell_Series_Len_At(val1);
     if (flags & SOP_FLAG_BOTH)
-        i += VAL_LEN_AT(val2);
+        i += Cell_Series_Len_At(val2);
 
     REBINT h = 1; // used for both logic true/false and hash check
     bool first_pass = true; // are we in the first pass over the series?

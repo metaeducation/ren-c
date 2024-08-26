@@ -469,7 +469,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
             if (IS_FREE_NODE(s))
                 continue;
 
-            if (s->header.bits & NODE_FLAG_CELL) {  // a "pairing"
+            if (s->leader.bits & NODE_FLAG_CELL) {  // a "pairing"
                 if (p >= cast(void*, s) and p < cast(void*, s + 1))
                     return s;  // Stub slots are (sizeof(Cell) * 2)
                 continue;
@@ -1003,7 +1003,7 @@ void Remake_Flex(Flex* s, REBLEN units, Byte wide, REBFLGS flags)
     }
 
     WIDE_BYTE_OR_0(s) = wide;
-    s->header.bits |= flags;
+    s->leader.bits |= flags;
 
     // !!! Currently the remake won't make a series that fits in the size of
     // a Stub.  All series code needs a general audit, so that should be one
@@ -1261,7 +1261,7 @@ void Manage_Flex(Flex* s)
     }
   #endif
 
-    s->header.bits |= NODE_FLAG_MANAGED;
+    s->leader.bits |= NODE_FLAG_MANAGED;
 
     Untrack_Manual_Flex(s);
 }

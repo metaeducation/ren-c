@@ -308,7 +308,7 @@ REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         // generator if the make def is not the [[spec][body]] format.
 
         if (
-            VAL_LEN_AT(arg) != 2
+            Cell_Series_Len_At(arg) != 2
             || !Is_Block(Cell_Array_At(arg)) // spec
             || !Is_Block(Cell_Array_At(arg) + 1) // body
         ) {

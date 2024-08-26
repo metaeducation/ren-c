@@ -147,7 +147,7 @@ static REB_R Transport_Actor(
                 REBSIZ offset;
                 REBSIZ size;
                 Blob* temp = Temp_UTF8_At_Managed(
-                    &offset, &size, arg, VAL_LEN_AT(arg)
+                    &offset, &size, arg, Cell_Series_Len_At(arg)
                 );
                 Push_GC_Guard(temp);
 
@@ -350,7 +350,7 @@ static REB_R Transport_Actor(
         // Determine length. Clip /PART to size of string if needed.
         Value* data = ARG(data);
 
-        REBLEN len = VAL_LEN_AT(data);
+        REBLEN len = Cell_Series_Len_At(data);
         if (REF(part)) {
             REBLEN n = Int32s(ARG(limit), 0);
             if (n <= len)

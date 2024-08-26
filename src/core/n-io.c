@@ -118,7 +118,7 @@ DECLARE_NATIVE(write_stdout)
         // from UTF-8 to wide characters, or not having CR turned into CR LF
         // sequences).
         //
-        Prin_OS_String(Cell_Binary_Head(v), VAL_LEN_AT(v), OPT_ENC_RAW);
+        Prin_OS_String(Cell_Binary_Head(v), Cell_Series_Len_At(v), OPT_ENC_RAW);
     }
     else if (Is_Char(v)) {
         //
@@ -146,7 +146,7 @@ DECLARE_NATIVE(write_stdout)
 
         REBSIZ offset;
         REBSIZ size;
-        Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
+        Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
         Push_GC_Guard(temp);
 
         Prin_OS_String(Blob_At(temp, offset), size, OPT_ENC_0);
@@ -628,7 +628,7 @@ DECLARE_NATIVE(local_to_file)
             Copy_Sequence_At_Len( // Copy (callers frequently modify result)
                 Cell_Flex(path),
                 VAL_INDEX(path),
-                VAL_LEN_AT(path)
+                Cell_Series_Len_At(path)
             )
         );
     }
@@ -673,7 +673,7 @@ DECLARE_NATIVE(file_to_local)
             Copy_Sequence_At_Len( // Copy (callers frequently modify result)
                 Cell_Flex(path),
                 VAL_INDEX(path),
-                VAL_LEN_AT(path)
+                Cell_Series_Len_At(path)
             )
         );
     }

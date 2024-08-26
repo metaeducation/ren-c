@@ -367,7 +367,7 @@ Blob* Join_Binary(const Value* blk, REBINT limit)
     REBLEN tail = 0;
 
     if (limit < 0)
-        limit = VAL_LEN_AT(blk);
+        limit = Cell_Series_Len_At(blk);
 
     Set_Flex_Len(series, 0);
 
@@ -382,7 +382,7 @@ Blob* Join_Binary(const Value* blk, REBINT limit)
             break;
 
         case REB_BINARY: {
-            REBLEN len = VAL_LEN_AT(val);
+            REBLEN len = Cell_Series_Len_At(val);
             Expand_Flex_Tail(series, len);
             memcpy(Blob_At(series, tail), Cell_Binary_At(val), len);
             break; }
@@ -392,7 +392,7 @@ Blob* Join_Binary(const Value* blk, REBINT limit)
         case REB_EMAIL:
         case REB_URL:
         case REB_TAG: {
-            REBLEN val_len = VAL_LEN_AT(val);
+            REBLEN val_len = Cell_Series_Len_At(val);
             size_t val_size = Size_As_UTF8(Cell_String_At(val), val_len);
 
             Expand_Flex_Tail(series, val_size);

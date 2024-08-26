@@ -1390,7 +1390,7 @@ void Assert_Context_Core(REBCTX *c)
 {
     Array* varlist = CTX_VARLIST(c);
 
-    if (not (varlist->header.bits & SERIES_MASK_CONTEXT))
+    if (not (varlist->leader.bits & SERIES_MASK_CONTEXT))
         panic (varlist);
 
     Array* keylist = CTX_KEYLIST(c);

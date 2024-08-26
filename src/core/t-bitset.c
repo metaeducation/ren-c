@@ -183,7 +183,7 @@ REBINT Find_Max_Bit(const Cell* val)
         break; }
 
     case REB_BINARY:
-        maxi = VAL_LEN_AT(val) * 8 - 1;
+        maxi = Cell_Series_Len_At(val) * 8 - 1;
         if (maxi < 0) maxi = 0;
         break;
 
@@ -400,7 +400,7 @@ bool Set_Bits(Blob* bset, const Value* val, bool set)
             item++;
             if (not Is_Binary(item))
                 return false;
-            REBLEN n = VAL_LEN_AT(item);
+            REBLEN n = Cell_Series_Len_At(item);
             REBUNI c = Flex_Len(bset);
             if (n >= c) {
                 Expand_Flex(bset, c, (n - c));

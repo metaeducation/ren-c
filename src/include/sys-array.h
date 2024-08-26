@@ -475,7 +475,7 @@ INLINE void INIT_VAL_ARRAY(Cell* v, Array* a) {
     Array_At(Cell_Array(v), VAL_INDEX(v))
 
 #define VAL_ARRAY_LEN_AT(v) \
-    VAL_LEN_AT(v)
+    Cell_Series_Len_At(v)
 
 // These operations do not need to take the value's index position into
 // account; they strictly operate on the array series
@@ -564,7 +564,7 @@ INLINE bool Splices_Into_Type_Without_Only(
 INLINE bool Is_Doubled_Group(const Cell* group) {
     assert(Is_Group(group));
     Cell* inner = Cell_Array_At(group);
-    if (VAL_TYPE_RAW(inner) != REB_GROUP or VAL_LEN_AT(group) != 1)
+    if (VAL_TYPE_RAW(inner) != REB_GROUP or Cell_Series_Len_At(group) != 1)
         return false; // plain (...) GROUP!
     return true; // a ((...)) GROUP!, inject as rule
 }

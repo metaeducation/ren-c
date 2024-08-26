@@ -1396,7 +1396,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
     Value* where = KNOWN(&vars->where);
     if (
         not IS_NULLED(where)
-        and not (Is_Block(where) and VAL_LEN_AT(where) == 0)
+        and not (Is_Block(where) and Cell_Series_Len_At(where) == 0)
     ){
         Append_Utf8_Codepoint(mo->series, '\n');
         Append_Unencoded(mo->series, RM_ERROR_WHERE);

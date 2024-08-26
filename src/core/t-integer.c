@@ -161,7 +161,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         // interface could support BigNums in the future.
 
         Byte *bp = Cell_Binary_At(value);
-        REBLEN n = VAL_LEN_AT(value);
+        REBLEN n = Cell_Series_Len_At(value);
         bool negative;
         REBINT fill;
 
@@ -286,7 +286,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
     }
     else if (ANY_STRING(value)) {
         REBSIZ size;
-        const REBLEN max_len = VAL_LEN_AT(value); // e.g. "no maximum"
+        const REBLEN max_len = Cell_Series_Len_At(value); // e.g. "no maximum"
         Byte *bp = Analyze_String_For_Scan(&size, value, max_len);
         if (
             memchr(bp, '.', size)
@@ -613,7 +613,7 @@ DECLARE_NATIVE(enbin)
     INCLUDE_PARAMS_OF_ENBIN;
 
     Value* settings = rebValue("compose", ARG(settings));
-    if (VAL_LEN_AT(settings) != 3)
+    if (Cell_Series_Len_At(settings) != 3)
         fail ("ENBIN requires array of length 3 for settings for now");
     bool little = rebDid(
         "switch first", settings, "[",
@@ -719,7 +719,7 @@ DECLARE_NATIVE(debin)
     INCLUDE_PARAMS_OF_DEBIN;
 
     Value* settings = rebValue("compose", ARG(settings));
-    if (VAL_LEN_AT(settings) != 2 and VAL_LEN_AT(settings) != 3)
+    if (Cell_Series_Len_At(settings) != 2 and Cell_Series_Len_At(settings) != 3)
         fail("DEBIN requires array of length 2 or 3 for settings for now");
     bool little = rebDid(
         "switch first", settings, "[",
@@ -737,12 +737,12 @@ DECLARE_NATIVE(debin)
     REBLEN num_bytes;
     Cell* third = Cell_Array_At_Head(settings, index + 2);
     if (IS_END(third))
-        num_bytes = VAL_LEN_AT(ARG(binary));
+        num_bytes = Cell_Series_Len_At(ARG(binary));
     else {
         if (not Is_Integer(third))
             fail ("Third element of DEBIN settings must be an integer}");
         num_bytes = VAL_INT32(third);
-        if (VAL_LEN_AT(ARG(binary)) != num_bytes)
+        if (Cell_Series_Len_At(ARG(binary)) != num_bytes)
             fail ("Input binary is longer than number of bytes to DEBIN");
     }
     if (num_bytes <= 0) {

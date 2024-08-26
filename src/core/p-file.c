@@ -417,7 +417,7 @@ static REB_R File_Actor(Level* level_, Value* port, Value* verb)
             Set_Seek(file, ARG(index));
 
         // Determine length. Clip /PART to size of string if needed.
-        REBLEN len = VAL_LEN_AT(data);
+        REBLEN len = Cell_Series_Len_At(data);
         if (REF(part)) {
             REBLEN n = Int32s(ARG(limit), 0);
             if (n <= len) len = n;

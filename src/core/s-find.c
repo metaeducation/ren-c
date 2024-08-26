@@ -42,15 +42,11 @@
 //
 REBINT Compare_Binary_Vals(const Cell* v1, const Cell* v2)
 {
-    REBLEN l1 = VAL_LEN_AT(v1);
-    REBLEN l2 = VAL_LEN_AT(v2);
+    REBLEN l1 = Cell_Series_Len_At(v1);
+    REBLEN l2 = Cell_Series_Len_At(v2);
     REBLEN len = MIN(l1, l2);
     REBINT n;
 
-    // Image is not "byte size" (note multiplied by 4 above) but still calls
-    // binary compare...can't use VAL_BIN_AT as long as it does, because
-    // that asserts BYTE_SIZE().
-    //
     n = memcmp(
         Flex_Data_At(Flex_Wide(Cell_Flex(v1)), Cell_Flex(v1), VAL_INDEX(v1)),
         Flex_Data_At(Flex_Wide(Cell_Flex(v2)), Cell_Flex(v2), VAL_INDEX(v2)),
@@ -164,8 +160,8 @@ REBINT Compare_String_Vals(const Cell* v1, const Cell* v2, bool uncase)
 {
     assert(not Is_Binary(v1) and not Is_Binary(v2));
 
-    REBLEN l1  = VAL_LEN_AT(v1);
-    REBLEN l2  = VAL_LEN_AT(v2);
+    REBLEN l1  = Cell_Series_Len_At(v1);
+    REBLEN l2  = Cell_Series_Len_At(v2);
     REBLEN len = MIN(l1, l2);
 
     REBINT n = Compare_Uni_Str(Cell_String_At(v1), Cell_String_At(v2), len, uncase);

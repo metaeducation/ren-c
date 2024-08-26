@@ -326,8 +326,8 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
         // If the canon form had a SYM_XXX for quick comparison of %words.r
         // words in C switch statements, the synonym inherits that number.
         //
-        SET_SECOND_UINT16(&intern->header, 0);
-        SET_SECOND_UINT16(&intern->header, Symbol_Id(canon));
+        SET_SECOND_UINT16(&intern->leader, 0);
+        SET_SECOND_UINT16(&intern->leader, Symbol_Id(canon));
     }
 
   #if !defined(NDEBUG)
@@ -543,8 +543,8 @@ void Startup_Symbols(Array* words)
             // Could probably use less than 16 bits, but 8 is insufficient.
             // (length %words.r > 256)
             //
-            assert(SECOND_UINT16(&name->header) == 0);
-            SET_SECOND_UINT16(&name->header, sym);
+            assert(SECOND_UINT16(&name->leader) == 0);
+            SET_SECOND_UINT16(&name->leader, sym);
             assert(Symbol_Id(name) == cast(SymId, sym));
 
             name = LINK(name).synonym;

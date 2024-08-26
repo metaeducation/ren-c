@@ -173,7 +173,7 @@ static REB_R Clipboard_Actor(
 
         // Handle /part refinement:
         //
-        REBINT len = VAL_LEN_AT(arg);
+        REBINT len = Cell_Series_Len_At(arg);
         if (REF(part) and VAL_INT32(ARG(limit)) < len)
             len = VAL_INT32(ARG(limit));
 

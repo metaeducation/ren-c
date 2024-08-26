@@ -313,7 +313,7 @@ INLINE void Term_Non_Array_Flex_Len(Flex* s, REBLEN len) {
 //
 
 #define Is_Flex_Managed(s) \
-    (did ((s)->header.bits & NODE_FLAG_MANAGED))
+    (did ((s)->leader.bits & NODE_FLAG_MANAGED))
 
 INLINE void Force_Flex_Managed(Flex* s) {
     if (not Is_Flex_Managed(s))
@@ -513,7 +513,7 @@ INLINE void Set_Cell_Flex(Cell* v, Flex* s) {
 #define VAL_LEN_HEAD(v) \
     Flex_Len(Cell_Flex(v))
 
-INLINE REBLEN VAL_LEN_AT(const Cell* v) {
+INLINE REBLEN Cell_Series_Len_At(const Cell* v) {
     if (VAL_INDEX(v) >= VAL_LEN_HEAD(v))
         return 0; // avoid negative index
     return VAL_LEN_HEAD(v) - VAL_INDEX(v); // take current index into account
@@ -568,7 +568,7 @@ INLINE Flex* Alloc_Flex_Stub(REBFLGS flags) {
     // or array of length 0!  Two are set here, the third (info) should be
     // set by the caller.
     //
-    s->header.bits = NODE_FLAG_NODE | flags | FLEX_FLAG_8_IS_TRUE;  // #1
+    s->leader.bits = NODE_FLAG_NODE | flags | FLEX_FLAG_8_IS_TRUE;  // #1
     Corrupt_Pointer_If_Debug(LINK(s).corrupt);  // #2
   #if !defined(NDEBUG)
     memset(cast(char*, &s->content.fixed), 0xBD, sizeof(s->content));  // #3-#6

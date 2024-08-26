@@ -474,7 +474,7 @@ post_process_output:
 
             Flex* decoded = Make_Sized_String_UTF8(
                 cs_cast(Cell_Binary_At(OUT)),
-                VAL_LEN_AT(OUT)
+                Cell_Series_Len_At(OUT)
             );
             Init_Text(OUT, decoded);
         }

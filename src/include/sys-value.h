@@ -1338,11 +1338,11 @@ INLINE void SET_EVENT_KEY(Cell* v, REBLEN k, REBLEN c) {
 // and it had its ->header and ->info bits set in such a way as to avoid the
 // need for some conditional checks.  e.g. instead of writing:
 //
-//     if (binding and binding->header.bits & NODE_FLAG_MANAGED) {...}
+//     if (binding and binding->leader.bits & NODE_FLAG_MANAGED) {...}
 //
 // The special UNBOUND node set some bits, such as to pretend to be managed:
 //
-//     if (binding->header.bits & NODE_FLAG_MANAGED) {...} // incl. UNBOUND
+//     if (binding->leader.bits & NODE_FLAG_MANAGED) {...} // incl. UNBOUND
 //
 // Question was whether avoiding the branching involved from the extra test
 // for null would be worth it for a consistent ability to dereference.  At
@@ -1375,12 +1375,12 @@ INLINE void INIT_BINDING(Cell* v, Stub* binding) {
     if (not binding)
         return; // e.g. UNBOUND
 
-    assert(not (binding->header.bits & NODE_FLAG_CELL)); // not currently used
+    assert(not (binding->leader.bits & NODE_FLAG_CELL)); // not currently used
 
-    if (binding->header.bits & NODE_FLAG_MANAGED) {
+    if (binding->leader.bits & NODE_FLAG_MANAGED) {
         assert(
-            binding->header.bits & ARRAY_FLAG_VARLIST // specific
-            or binding->header.bits & ARRAY_FLAG_PARAMLIST // relative
+            binding->leader.bits & ARRAY_FLAG_VARLIST // specific
+            or binding->leader.bits & ARRAY_FLAG_PARAMLIST // relative
             or (
                 Is_Varargs(v) and not Is_Flex_Dynamic(binding)
             ) // varargs from MAKE VARARGS! [...], else is a varlist
@@ -1431,7 +1431,7 @@ INLINE void INIT_BINDING_MAY_MANAGE(Cell* out, Stub* binding) {
     assert(IS_END(L->param)); // cannot manage frame varlist in mid fulfill!
     UNUSED(L); // !!! not actually used yet, coming soon
 
-    binding->header.bits |= NODE_FLAG_MANAGED; // burdens the GC, now...
+    binding->leader.bits |= NODE_FLAG_MANAGED; // burdens the GC, now...
     out->extra.binding = binding;
 }
 

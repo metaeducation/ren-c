@@ -93,7 +93,7 @@ REBLEN Modify_Array(
         if (op != SYM_CHANGE and (flags & AM_PART))
             ilen = dst_len;
         else
-            ilen = VAL_LEN_AT(src_val);
+            ilen = Cell_Series_Len_At(src_val);
 
         if (not tail_newline) {
             Cell* tail_cell = Cell_Array_At(src_val) + ilen;
@@ -302,7 +302,7 @@ REBLEN Modify_Binary(
         limit = -1;
     }
     else if (ANY_STRING(src_val)) {
-        REBLEN len_at = VAL_LEN_AT(src_val);
+        REBLEN len_at = Cell_Series_Len_At(src_val);
         if (limit >= 0 && len_at > cast(REBLEN, limit))
             src_ser = Make_Utf8_From_Cell_String_At_Limit(src_val, limit);
         else
@@ -324,7 +324,7 @@ REBLEN Modify_Binary(
     else {
         src_ser = Cell_Blob(src_val);
         src_idx = VAL_INDEX(src_val);
-        src_len = VAL_LEN_AT(src_val);
+        src_len = Cell_Series_Len_At(src_val);
         assert(needs_free == false);
     }
 
@@ -447,7 +447,7 @@ REBLEN Modify_String(
     ){
         src_ser = Cell_String(src_val);
         src_idx = VAL_INDEX(src_val);
-        src_len = VAL_LEN_AT(src_val);
+        src_len = Cell_Series_Len_At(src_val);
 
         needs_free = false;
     }

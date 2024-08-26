@@ -1370,7 +1370,7 @@ REB_R Generic_Dispatcher(Level* L)
 REB_R Null_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(LVL_PHASE_OR_DUMMY(L));
-    assert(VAL_LEN_AT(Array_Head(details)) == 0);
+    assert(Cell_Series_Len_At(Array_Head(details)) == 0);
     UNUSED(details);
 
     return nullptr;
@@ -1385,7 +1385,7 @@ REB_R Null_Dispatcher(Level* L)
 REB_R Nothing_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
-    assert(VAL_LEN_AT(Array_Head(details)) == 0);
+    assert(Cell_Series_Len_At(Array_Head(details)) == 0);
     UNUSED(details);
 
     return Init_Nothing(L->out);
@@ -1537,7 +1537,7 @@ REB_R Commenter_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* body = Array_Head(details);
-    assert(VAL_LEN_AT(body) == 0);
+    assert(Cell_Series_Len_At(body) == 0);
     UNUSED(body);
     return R_INVISIBLE;
 }

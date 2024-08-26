@@ -76,7 +76,7 @@ REB_R MAKE_Action(Value* out, enum Reb_Kind kind, const Value* arg)
 
     if (
         not Is_Block(arg)
-        or VAL_LEN_AT(arg) != 2
+        or Cell_Series_Len_At(arg) != 2
         or not Is_Block(Cell_Array_At(arg))
         or not Is_Block(Cell_Array_At(arg) + 1)
     ){

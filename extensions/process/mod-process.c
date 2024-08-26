@@ -1555,7 +1555,7 @@ DECLARE_NATIVE(call_internal_p)
         cmd = nullptr;
 
         Value* block = ARG(command);
-        argc = VAL_LEN_AT(block);
+        argc = Cell_Series_Len_At(block);
         if (argc == 0)
             fail (Error_Too_Short_Raw());
 

@@ -215,7 +215,7 @@ void API_rebFree(void *ptr)
     UNPOISON_MEMORY(ps, sizeof(Blob*)); // need to underrun to fetch `s`
 
     Blob* s = *ps;
-    if (s->header.bits & NODE_FLAG_CELL) {
+    if (Is_Node_A_Cell(s)) {
         rebJumps(
             "PANIC [",
                 "{rebFree() mismatched with allocator!}"
@@ -224,7 +224,7 @@ void API_rebFree(void *ptr)
         );
     }
 
-    assert(BYTE_SIZE(s));
+    assert(Flex_Wide(s) == 1);
 
     Free_Unmanaged_Flex(s);
 }
@@ -1073,7 +1073,7 @@ size_t API_rebSpellInto(
     if (ANY_STRING(v)) {
         REBSIZ offset;
         Blob* temp = Temp_UTF8_At_Managed(
-            &offset, &utf8_size, v, VAL_LEN_AT(v)
+            &offset, &utf8_size, v, Cell_Series_Len_At(v)
         );
         utf8 = cs_cast(Blob_At(temp, offset));
     }
@@ -1143,7 +1143,7 @@ unsigned int API_rebSpellIntoW(
     if (ANY_STRING(v)) {
         s = Cell_Flex(v);
         index = VAL_INDEX(v);
-        len = VAL_LEN_AT(v);
+        len = Cell_Series_Len_At(v);
     }
     else {
         assert(ANY_WORD(v));
@@ -1222,7 +1222,7 @@ size_t API_rebBytesInto(
     if (not Is_Binary(binary))
         fail ("rebBytesInto() only works on BINARY!");
 
-    REBLEN size = VAL_LEN_AT(binary);
+    REBLEN size = Cell_Series_Len_At(binary);
 
     if (not buf) {
         assert(buf_size == 0);

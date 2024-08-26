@@ -70,7 +70,7 @@ Byte *Analyze_String_For_Scan(
 ){
     Ucs2(const*) up = Cell_String_At(any_string);
     REBLEN index = VAL_INDEX(any_string);
-    REBLEN len = VAL_LEN_AT(any_string);
+    REBLEN len = Cell_Series_Len_At(any_string);
     if (len == 0)
         fail (Error_Past_End_Raw());
 
@@ -124,7 +124,7 @@ Byte *Analyze_String_For_Scan(
 
     REBSIZ offset;
     Blob* temp = Temp_UTF8_At_Managed(
-        &offset, opt_size_out, reindexed, VAL_LEN_AT(reindexed)
+        &offset, opt_size_out, reindexed, Cell_Series_Len_At(reindexed)
     );
 
     return Blob_At(temp, offset);
@@ -162,7 +162,7 @@ Blob* Temp_UTF8_At_Managed(
     }
 #endif
 
-    assert(length_limit <= VAL_LEN_AT(str));
+    assert(length_limit <= Cell_Series_Len_At(str));
 
     Blob* bin = Make_Utf8_From_Cell_String_At_Limit(str, length_limit);
     assert(BYTE_SIZE(bin));
@@ -192,10 +192,10 @@ Blob* Xandor_Binary(Value* verb, Value* value, Value* arg)
         : Blob_Head(Cell_Bitset(arg));
 
     REBLEN t0 = Is_Binary(value)
-        ? VAL_LEN_AT(value)
+        ? Cell_Series_Len_At(value)
         : Blob_Len(Cell_Bitset(value));
     REBLEN t1 = Is_Binary(arg)
-        ? VAL_LEN_AT(arg)
+        ? Cell_Series_Len_At(arg)
         : Blob_Len(Cell_Bitset(arg));
 
     REBLEN mt = MIN(t0, t1); // smaller array size
@@ -279,7 +279,7 @@ Blob* Xandor_Binary(Value* verb, Value* value, Value* arg)
 Flex* Complement_Binary(Value* value)
 {
     const Byte *bp = Cell_Binary_At(value);
-    REBLEN len = VAL_LEN_AT(value);
+    REBLEN len = Cell_Series_Len_At(value);
 
     Blob* bin = Make_Blob(len);
     Term_Blob_Len(bin, len);
@@ -306,7 +306,7 @@ void Shuffle_String(Value* value, bool secure)
     REBLEN idx     = VAL_INDEX(value);
     REBUNI swap;
 
-    for (n = VAL_LEN_AT(value); n > 1;) {
+    for (n = Cell_Series_Len_At(value); n > 1;) {
         k = idx + (REBLEN)Random_Int(secure) % n;
         n--;
         swap = GET_ANY_CHAR(series, k);
@@ -406,7 +406,7 @@ Array* Split_Lines(const Value* str)
     StackIndex base = TOP_INDEX;
 
     String* s = Cell_String(str);
-    REBLEN len = VAL_LEN_AT(str);
+    REBLEN len = Cell_Series_Len_At(str);
     REBLEN i = VAL_INDEX(str);
 
     Ucs2(const*) start = Cell_String_At(str);

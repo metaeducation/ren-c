@@ -616,7 +616,7 @@ DECLARE_NATIVE(sync_invisibles)
     // an adaptation of Eval_Core_Throws() with some kind of mode flag, and
     // would take some redesign to do efficiently.
 
-    if (VAL_LEN_AT(ARG(source)) == 0)
+    if (Cell_Series_Len_At(ARG(source)) == 0)
         return nullptr;
 
     RETURN (ARG(source));
@@ -686,7 +686,7 @@ DECLARE_NATIVE(redo)
     // Phase needs to always be initialized in FRAME! values.
     //
     assert(
-        ACT_PARAMLIST(restartee->payload.any_context.phase)->header.bits
+        ACT_PARAMLIST(restartee->payload.any_context.phase)->leader.bits
         & ARRAY_FLAG_PARAMLIST
     );
 

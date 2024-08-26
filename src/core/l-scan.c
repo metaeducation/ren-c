@@ -2810,7 +2810,7 @@ DECLARE_NATIVE(transcode)
         filename,
         start_line,
         Cell_Binary_At(source),
-        VAL_LEN_AT(source)
+        Cell_Series_Len_At(source)
     );
 
     if (REF(next3))

@@ -84,7 +84,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         REBSIZ offset;
         REBSIZ size;
         Blob* temp = Temp_UTF8_At_Managed(
-            &offset, &size, arg, VAL_LEN_AT(arg)
+            &offset, &size, arg, Cell_Series_Len_At(arg)
         );
         Push_GC_Guard(temp);
         Option(String*) filename = nullptr;
@@ -173,7 +173,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         return Init_Any_Array(
             out,
             kind,
-            Scan_UTF8_Managed(filename, Cell_Binary_At(arg), VAL_LEN_AT(arg))
+            Scan_UTF8_Managed(filename, Cell_Binary_At(arg), Cell_Series_Len_At(arg))
         );
     }
     else if (Is_Map(arg)) {
@@ -573,7 +573,7 @@ void Shuffle_Block(Value* value, bool secure)
     //
     Cell swap;
 
-    for (n = VAL_LEN_AT(value); n > 1;) {
+    for (n = Cell_Series_Len_At(value); n > 1;) {
         k = idx + (REBLEN)Random_Int(secure) % n;
         n--;
 
@@ -761,11 +761,11 @@ void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
             sep = nullptr;
         }
 
-        if (VAL_LEN_AT(v) == 0 and sep[0] == '/')
+        if (Cell_Series_Len_At(v) == 0 and sep[0] == '/')
             Append_Utf8_Codepoint(mo->series, '/'); // 0-arity path is `/`
         else {
             Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
-            if (VAL_LEN_AT(v) == 1 and sep [0] == '/')
+            if (Cell_Series_Len_At(v) == 1 and sep [0] == '/')
                 Append_Utf8_Codepoint(mo->series, '/'); // 1-arity path `foo/`
         }
 

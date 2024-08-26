@@ -344,7 +344,7 @@ void Set_Tuple(Value* value, Byte *bytes, REBLEN len)
 // !!! Overlaps with ASSERT_CONTEXT, review folding them together.
 //
 void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
-    assert(CTX_VARLIST(c)->header.bits & SERIES_MASK_CONTEXT);
+    assert(CTX_VARLIST(c)->leader.bits & SERIES_MASK_CONTEXT);
 
     Value* archetype = CTX_ARCHETYPE(c);
     assert(VAL_CONTEXT(archetype) == c);
@@ -392,7 +392,7 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
 // !!! Overlaps with ASSERT_ACTION, review folding them together.
 //
 void Extra_Init_Action_Checks_Debug(REBACT *a) {
-    assert(ACT_PARAMLIST(a)->header.bits & SERIES_MASK_ACTION);
+    assert(ACT_PARAMLIST(a)->leader.bits & SERIES_MASK_ACTION);
 
     Value* archetype = ACT_ARCHETYPE(a);
     assert(VAL_ACTION(archetype) == a);
@@ -426,7 +426,7 @@ static REBLEN Part_Len_Core(
     const Value* limit // /PART (number, position in value, or NULLED cell)
 ){
     if (IS_NULLED(limit)) // limit is nulled when /PART refinement unused
-        return VAL_LEN_AT(series); // leave index alone, use plain length
+        return Cell_Series_Len_At(series); // leave index alone, use plain length
 
     REBI64 len;
     if (Is_Integer(limit) or Is_Decimal(limit))
@@ -446,7 +446,7 @@ static REBLEN Part_Len_Core(
     // Restrict length to the size available
     //
     if (len >= 0) {
-        REBINT maxlen = cast(REBINT, VAL_LEN_AT(series));
+        REBINT maxlen = cast(REBINT, Cell_Series_Len_At(series));
         if (len > maxlen)
             len = maxlen;
     }

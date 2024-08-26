@@ -403,7 +403,7 @@ ATTRIBUTE_NO_RETURN void Panic_Flex_Debug(Flex* s)
     fflush(stdout);
     fflush(stderr);
 
-    if (s->header.bits & NODE_FLAG_MANAGED)
+    if (s->leader.bits & NODE_FLAG_MANAGED)
         fprintf(stderr, "managed");
     else
         fprintf(stderr, "unmanaged");
@@ -412,7 +412,7 @@ ATTRIBUTE_NO_RETURN void Panic_Flex_Debug(Flex* s)
 
   #if defined(DEBUG_COUNT_TICKS)
     fprintf(stderr, " was likely ");
-    if (s->header.bits & NODE_FLAG_FREE)
+    if (s->leader.bits & NODE_FLAG_FREE)
         fprintf(stderr, "freed");
     else
         fprintf(stderr, "created");
