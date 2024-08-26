@@ -54,7 +54,7 @@ void Startup_Data_Stack(REBLEN size)
     // The END marker will signal DS_PUSH that it has run out of space,
     // and it will perform the allocation at that time.
     //
-    TERM_ARRAY_LEN(DS_Array, 1);
+    Term_Array_Len(DS_Array, 1);
     Assert_Array(DS_Array);
 
     // Reuse the expansion logic that happens on a DS_PUSH to get the
@@ -78,7 +78,7 @@ void Shutdown_Data_Stack(void)
     assert(TOP_INDEX == 0);
     Assert_Unreadable_If_Debug(Array_Head(DS_Array));
 
-    Free_Unmanaged_Series(DS_Array);
+    Free_Unmanaged_Flex(DS_Array);
 }
 
 
@@ -121,7 +121,7 @@ void Startup_Level_Stack(void)
     Value* archetype = RESET_CELL(Array_Head(paramlist), REB_ACTION);
     archetype->extra.binding = UNBOUND;
     archetype->payload.action.paramlist = paramlist;
-    TERM_ARRAY_LEN(paramlist, 1);
+    Term_Array_Len(paramlist, 1);
 
     PG_Dummy_Action = Make_Action(
         paramlist,
@@ -275,7 +275,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     // If adding in the requested amount would overflow the stack limit, then
     // give a data stack overflow error.
     //
-    if (Series_Rest(DS_Array) + amount >= STACK_LIMIT) {
+    if (Flex_Rest(DS_Array) + amount >= STACK_LIMIT) {
         //
         // Because the stack pointer was incremented and hit the END marker
         // before the expansion, we have to decrement it if failing.
@@ -284,7 +284,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
         Fail_Stack_Overflow(); // !!! Should this be a "data stack" message?
     }
 
-    Extend_Series(DS_Array, amount);
+    Extend_Flex(DS_Array, amount);
 
     // Update the pointer used for fast access to the top of the stack that
     // likely was moved by the above allocation (needed before using TOP)
@@ -308,7 +308,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     // Update the end marker to serve as the indicator for when the next
     // stack push would need to expand.
     //
-    TERM_ARRAY_LEN(DS_Array, len_new);
+    Term_Array_Len(DS_Array, len_new);
     assert(cell == Array_Tail(DS_Array));
 
     DS_Movable_Tail = cell;
@@ -345,13 +345,13 @@ void Pop_Stack_Values_Into(Value* into, StackIndex base) {
     Value* values = KNOWN(Array_At(DS_Array, base + 1));
 
     assert(ANY_ARRAY(into));
-    Fail_If_Read_Only_Series(Cell_Array(into));
+    Fail_If_Read_Only_Flex(Cell_Array(into));
 
-    VAL_INDEX(into) = Insert_Series(
+    VAL_INDEX(into) = Insert_Flex(
         Cell_Array(into),
         VAL_INDEX(into),
         cast(Byte*, values), // stack only holds fully specified REBVALs
-        len // multiplied by width (sizeof(Cell)) in Insert_Series
+        len // multiplied by width (sizeof(Cell)) in Insert_Flex
     );
 
     Drop_Data_Stack_To(base);

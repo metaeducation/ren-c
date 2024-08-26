@@ -137,11 +137,11 @@ INLINE void *Alloc_Pooled(REBLEN pool_id)
 //
 INLINE void Free_Pooled(REBLEN pool_id, void *p)
 {
-  #ifdef DEBUG_MONITOR_SERIES
+  #ifdef DEBUG_MONITOR_FLEX
     if (
-        pool_id == SER_POOL
+        pool_id == STUB_POOL
         and not (cast(union HeaderUnion*, p)->bits & NODE_FLAG_CELL)
-        and GET_SER_INFO(cast(Series*, p), SERIES_INFO_MONITOR_DEBUG)
+        and Get_Flex_Info(cast(Flex*, p), FLEX_INFO_MONITOR_DEBUG)
     ){
         printf("Freeing series %p on tick #%d\n", p, cast(int, TG_Tick));
         fflush(stdout);
@@ -150,7 +150,7 @@ INLINE void Free_Pooled(REBLEN pool_id, void *p)
 
     PoolUnit* unit = cast(PoolUnit*, p);
 
-    FIRST_BYTE(unit) = FREED_SERIES_BYTE;
+    FIRST_BYTE(unit) = FREED_FLEX_BYTE;
 
     REBPOL *pool = &Mem_Pools[pool_id];
 
@@ -203,7 +203,7 @@ enum Reb_Pointer_Detect {
     DETECTED_AS_UTF8 = 0,
 
     DETECTED_AS_SERIES = 1,
-    DETECTED_AS_FREED_SERIES = 2,
+    DETECTED_AS_FREED_FLEX = 2,
 
     DETECTED_AS_CELL = 3,
     DETECTED_AS_FREED_CELL = 4,
@@ -254,8 +254,8 @@ INLINE enum Reb_Pointer_Detect Detect_Rebol_Pointer(const void *p) {
     // the illegal 192 and 193 bytes which represent freed series and cells.
 
     case 12: // 0b1100
-        if (bp[0] == FREED_SERIES_BYTE)
-            return DETECTED_AS_FREED_SERIES;
+        if (bp[0] == FREED_FLEX_BYTE)
+            return DETECTED_AS_FREED_FLEX;
 
         if (bp[0] == FREED_CELL_BYTE)
             return DETECTED_AS_FREED_CELL;

@@ -73,7 +73,7 @@
 
 // See Endlike_Header() for why these are chosen the way they are.  This
 // means that the Level->flags field can function as an implicit END for
-// Level->cell, as well as be distinguished from a Value*, a Series*, or
+// Level->cell, as well as be distinguished from a Value*, a Flex*, or
 // a UTF8 string.
 //
 #define DO_FLAG_0_IS_TRUE FLAG_LEFT_BIT(0) // NODE_FLAG_NODE
@@ -178,7 +178,7 @@
 // While R3-Alpha permitted modifications of an array while it was being
 // executed, Ren-C does not.  It takes a temporary read-only "hold" if the
 // source is not already read only, and sets it back when Eval_Core is
-// finished (or on errors).  See SERIES_INFO_HOLD for more about this.
+// finished (or on errors).  See FLEX_INFO_HOLD for more about this.
 //
 #define DO_FLAG_TOOK_FRAME_HOLD \
     FLAG_LEFT_BIT(16)

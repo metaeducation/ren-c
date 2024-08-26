@@ -86,12 +86,12 @@ static REB_R Console_Actor(Level* level_, Value* port, Value* verb)
         if (not Is_Binary(data))
             Init_Binary(data, Make_Blob(OUT_BUF_SIZE));
 
-        Blob* ser = Cell_Blob(data);
-        Set_Series_Len(ser, 0);
-        TERM_SERIES(ser);
+        Blob* flex = Cell_Blob(data);
+        Set_Flex_Len(flex, 0);
+        Term_Flex(flex);
 
-        req->common.data = Blob_Head(ser);
-        req->length = SER_AVAIL(ser);
+        req->common.data = Blob_Head(flex);
+        req->length = Flex_Available_Space(flex);
 
         OS_DO_DEVICE_SYNC(req, RDC_READ);
 

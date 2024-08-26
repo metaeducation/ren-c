@@ -63,8 +63,8 @@
 // about accomodating 256-byte elements.)
 //
 // REBSERs may be either manually memory managed or delegated to the garbage
-// collector.  Free_Unmanaged_Series() may only be called on manual series.
-// See Manage_Series()/PUSH_GC_GUARD() for remarks on how to work safely
+// collector.  Free_Unmanaged_Flex() may only be called on manual series.
+// See Manage_Flex()/Push_GC_Guard() for remarks on how to work safely
 // with pointers to garbage-collected series, to avoid having them be GC'd
 // out from under the code while working with them.
 //
@@ -80,7 +80,7 @@
 //
 // * It is desirable to have series subclasses be different types, even though
 //   there are some common routines for processing them.  e.g. not every
-//   function that would take a Series* would actually be handled in the same
+//   function that would take a Flex* would actually be handled in the same
 //   way for a Array*.  Plus, just because a REBCTX* is implemented as a
 //   Array* with a link to another Array* doesn't mean most clients should
 //   be accessing the array--in a C++ build this would mean it would have some
@@ -98,9 +98,9 @@
 // This works with Address Sanitizer or with Valgrind, but the config flag to
 // enable it only comes automatically with address sanitizer.
 //
-#if defined(DEBUG_SERIES_ORIGINS) || defined(DEBUG_COUNT_TICKS)
-    INLINE void Touch_Series_Debug(Series* s) {
-      #if defined(DEBUG_SERIES_ORIGINS)
+#if defined(DEBUG_FLEX_ORIGINS) || defined(DEBUG_COUNT_TICKS)
+    INLINE void Touch_Flex(Flex* s) {
+      #if defined(DEBUG_FLEX_ORIGINS)
         s->guard = cast(intptr_t*, malloc(sizeof(*s->guard)));
         free(s->guard);
       #endif
@@ -112,23 +112,21 @@
       #endif
     }
 
-    #define TOUCH_SERIES_IF_DEBUG(s) \
-        Touch_Series_Debug(s)
+    #define Touch_Flex_If_Debug(s) Touch_Flex(s)
 #else
-    #define TOUCH_SERIES_IF_DEBUG(s) \
-        NOOP
+    #define Touch_Flex_If_Debug(s) NOOP
 #endif
 
 
-#if defined(DEBUG_MONITOR_SERIES)
-    INLINE void MONITOR_SERIES(Stub* stub) {
+#if defined(DEBUG_MONITOR_FLEX)
+    INLINE void Monitor_Series(Stub* stub) {
         printf(
             "Adding monitor to %p on tick #%d\n",
             cast(void*, stub),
             cast(int, TG_Tick)
         );
         fflush(stdout);
-        SET_SER_INFO(stub, SERIES_INFO_MONITOR_DEBUG);
+        Set_Flex_Info(stub, FLEX_INFO_MONITOR_DEBUG);
     }
 #endif
 
@@ -144,12 +142,12 @@
 // "content", there's room for a length in the node.
 //
 
-INLINE REBLEN Series_Len(Series* s) {
+INLINE REBLEN Flex_Len(Flex* s) {
     Byte len_byte = LEN_BYTE_OR_255(s);
     return len_byte == 255 ? s->content.dynamic.len : len_byte;
 }
 
-INLINE void Set_Series_Len(Series* s, REBLEN len) {
+INLINE void Set_Flex_Len(Flex* s, REBLEN len) {
     if (LEN_BYTE_OR_255(s) == 255)
         s->content.dynamic.len = len;
     else {
@@ -163,41 +161,41 @@ INLINE void Set_Series_Len(Series* s, REBLEN len) {
 // for instance a generic debugging routine might just want a byte pointer
 // but have no element type pointer to pass in.
 //
-INLINE Byte *SER_DATA_RAW(Series* s) {
+INLINE Byte *Flex_Data(Flex* s) {
     // if updating, also update manual inlining in SER_AT_RAW
 
-    // The VAL_CONTEXT(), VAL_SERIES(), Cell_Array() extractors do the failing
+    // The VAL_CONTEXT(), Cell_Flex(), Cell_Array() extractors do the failing
     // upon extraction--that's meant to catch it before it gets this far.
     //
-    assert(not (s->info.bits & SERIES_INFO_INACCESSIBLE));
+    assert(not (s->info.bits & FLEX_INFO_INACCESSIBLE));
 
     return LEN_BYTE_OR_255(s) == 255
         ? cast(Byte*, s->content.dynamic.data)
         : cast(Byte*, &s->content);
 }
 
-INLINE Byte *Series_Data_At(Byte w, Series* s, REBLEN i) {
+INLINE Byte *Flex_Data_At(Byte w, Flex* s, REBLEN i) {
   #if !defined(NDEBUG)
-    if (w != Series_Wide(s)) {
+    if (w != Flex_Wide(s)) {
         //
         // This is usually a sign that the series was GC'd, as opposed to the
         // caller passing in the wrong width (freeing sets width to 0).  But
         // give some debug tracking either way.
         //
-        Byte wide = Series_Wide(s);
+        Byte wide = Flex_Wide(s);
         if (wide == 0)
-            printf("SER_AT_RAW asked on freed series\n");
+            printf("Flex_Data_At() asked on freed series\n");
         else
-            printf("SER_AT_RAW asked %d on width=%d\n", w, Series_Wide(s));
+            printf("Flex_Data_At() asked %d on width=%d\n", w, Flex_Wide(s));
         panic (s);
     }
-    // The VAL_CONTEXT(), VAL_SERIES(), Cell_Array() extractors do the failing
+    // The VAL_CONTEXT(), Cell_Flex(), Cell_Array() extractors do the failing
     // upon extraction--that's meant to catch it before it gets this far.
     //
-    assert(not (s->info.bits & SERIES_INFO_INACCESSIBLE));
+    assert(not (s->info.bits & FLEX_INFO_INACCESSIBLE));
   #endif
 
-    return ((w) * (i)) + ( // v-- inlining of SER_DATA_RAW
+    return ((w) * (i)) + ( // v-- inlining of Flex_Data
         (LEN_BYTE_OR_255(s) == 255)
             ? cast(Byte*, s->content.dynamic.data)
             : cast(Byte*, &s->content)
@@ -211,79 +209,79 @@ INLINE Byte *Series_Data_At(Byte w, Series* s, REBLEN i) {
 // to that type.
 //
 // Note that series indexing in C is zero based.  So as far as SERIES is
-// concerned, `Series_Head(t, s)` is the same as `Series_At(t, s, 0)`
+// concerned, `Flex_Head(t, s)` is the same as `Flex_At(t, s, 0)`
 //
 // Use C-style cast instead of cast() macro, as it will always be safe and
 // this is used very frequently.
 
-#define Series_At(t,s,i) \
-    ((t*)Series_Data_At(sizeof(t), (s), (i)))
+#define Flex_At(t,s,i) \
+    ((t*)Flex_Data_At(sizeof(t), (s), (i)))
 
-#define Series_Head(t,s) \
-    Series_At(t, (s), 0)
+#define Flex_Head(t,s) \
+    Flex_At(t, (s), 0)
 
-INLINE Byte *Series_Data_Tail(size_t w, Series* s) {
-    return Series_Data_At(w, s, Series_Len(s));
+INLINE Byte *Series_Data_Tail(size_t w, Flex* s) {
+    return Flex_Data_At(w, s, Flex_Len(s));
 }
 
-#define Series_Tail(t,s) \
+#define Flex_Tail(t,s) \
     ((t*)Series_Data_Tail(sizeof(t), (s)))
 
-INLINE Byte *Series_Data_Last(size_t w, Series* s) {
-    assert(Series_Len(s) != 0);
-    return Series_Data_At(w, s, Series_Len(s) - 1);
+INLINE Byte *Series_Data_Last(size_t w, Flex* s) {
+    assert(Flex_Len(s) != 0);
+    return Flex_Data_At(w, s, Flex_Len(s) - 1);
 }
 
 #define Series_Last(t,s) \
     ((t*)Series_Data_Last(sizeof(t), (s)))
 
 
-#define SER_FULL(s) \
-    (Series_Len(s) + 1 >= Series_Rest(s))
+#define Is_Flex_Full(s) \
+    (Flex_Len(s) + 1 >= Flex_Rest(s))
 
-#define SER_AVAIL(s) \
-    (Series_Rest(s) - (Series_Len(s) + 1)) // space available (minus terminator)
+#define Flex_Available_Space(s) \
+    (Flex_Rest(s) - (Flex_Len(s) + 1)) // space available (minus terminator)
 
-#define Series_Fits(s,n) \
-    ((Series_Len(s) + (n) + 1) <= Series_Rest(s))
+#define Flex_Fits(s,n) \
+    ((Flex_Len(s) + (n) + 1) <= Flex_Rest(s))
 
 
 //
 // Optimized expand when at tail (but, does not reterminate)
 //
 
-INLINE void Expand_Series_Tail(Series* s, REBLEN delta) {
-    if (Series_Fits(s, delta))
-        Set_Series_Len(s, Series_Len(s) + delta);
+INLINE void Expand_Flex_Tail(Flex* s, REBLEN delta) {
+    if (Flex_Fits(s, delta))
+        Set_Flex_Len(s, Flex_Len(s) + delta);
     else
-        Expand_Series(s, Series_Len(s), delta);
+        Expand_Flex(s, Flex_Len(s), delta);
 }
 
 //
 // Termination
 //
 
-INLINE void TERM_SEQUENCE(Series* s) {
-    assert(not IS_SER_ARRAY(s));
-    memset(Series_Data_At(Series_Wide(s), s, Series_Len(s)), 0, Series_Wide(s));
+INLINE void Term_Non_Array_Flex(Flex* s) {
+    assert(not Is_Flex_Array(s));
+    memset(Flex_Data_At(Flex_Wide(s), s, Flex_Len(s)), 0, Flex_Wide(s));
 }
 
-INLINE void TERM_SEQUENCE_LEN(Series* s, REBLEN len) {
-    Set_Series_Len(s, len);
-    TERM_SEQUENCE(s);
+INLINE void Term_Non_Array_Flex_Len(Flex* s, REBLEN len) {
+    Set_Flex_Len(s, len);
+    Term_Non_Array_Flex(s);
 }
 
 #ifdef NDEBUG
-    #define Assert_Series_Term(s) \
+    #define Assert_Flex_Term(s) \
         NOOP
 #else
-    #define Assert_Series_Term(s) \
-        Assert_Series_Term_Core(s)
+    #define Assert_Flex_Term(s) \
+        Assert_Flex_Term_Core(s)
 #endif
 
 // Just a No-Op note to point out when a series may-or-may-not be terminated
 //
-#define NOTE_SERIES_MAYBE_TERM(s) NOOP
+#define Note_Flex_Maybe_Term(s) NOOP
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -292,19 +290,19 @@ INLINE void TERM_SEQUENCE_LEN(Series* s, REBLEN len) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// When a series is allocated by the Make_Series() routine, it is not initially
+// When a series is allocated by the Make_Flex() routine, it is not initially
 // visible to the garbage collector.  To keep from leaking it, then it must
-// be either freed with Free_Unmanaged_Series or delegated to the GC to manage
-// with Manage_Series().
+// be either freed with Free_Unmanaged_Flex or delegated to the GC to manage
+// with Manage_Flex().
 //
 // (In debug builds, there is a test at the end of every Rebol function
 // dispatch that checks to make sure one of those two things happened for any
 // series allocated during the call.)
 //
-// The implementation of Manage_Series() is shallow--it only sets a bit on that
+// The implementation of Manage_Flex() is shallow--it only sets a bit on that
 // *one* series, not any series referenced by values inside of it.  This
 // means that you cannot build a hierarchical structure that isn't visible
-// to the GC and then do a single Manage_Series() call on the root to hand it
+// to the GC and then do a single Manage_Flex() call on the root to hand it
 // over to the garbage collector.  While it would be technically possible to
 // deeply walk the structure, the efficiency gained from pre-building the
 // structure with the managed bit set is significant...so that's how deep
@@ -314,20 +312,19 @@ INLINE void TERM_SEQUENCE_LEN(Series* s, REBLEN len) {
 // reachable by the GC, it will raise an alert.)
 //
 
-#define Is_Series_Managed(s) \
+#define Is_Flex_Managed(s) \
     (did ((s)->header.bits & NODE_FLAG_MANAGED))
 
-INLINE void Force_Series_Managed(Series* s) {
-    if (not Is_Series_Managed(s))
-        Manage_Series(s);
+INLINE void Force_Flex_Managed(Flex* s) {
+    if (not Is_Flex_Managed(s))
+        Manage_Flex(s);
 }
 
 #ifdef NDEBUG
-    #define Assert_Series_Managed(s) \
-        NOOP
+    #define Assert_Flex_Managed(s) NOOP
 #else
-    INLINE void Assert_Series_Managed(Series* s) {
-        if (not Is_Series_Managed(s))
+    INLINE void Assert_Flex_Managed(Flex* s) {
+        if (not Is_Flex_Managed(s))
             panic (s);
     }
 #endif
@@ -335,7 +332,7 @@ INLINE void Force_Series_Managed(Series* s) {
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// SERIES COLORING API
+// FLEX COLORING API
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -343,7 +340,7 @@ INLINE void Force_Series_Managed(Series* s) {
 // other bit-twiddling tasks when the GC wasn't running.  This is an
 // unusually dangerous thing to be doing...because leaving a stray mark on
 // during some other traversal could lead the GC to think it had marked
-// things reachable from that series when it had not--thus freeing something
+// things reachable from that Flex when it had not--thus freeing something
 // that was still in use.
 //
 // While leaving a stray mark on is a bug either way, GC bugs are particularly
@@ -354,33 +351,31 @@ INLINE void Force_Series_Managed(Series* s) {
 //
 // Ren-C keeps the term "mark" for the GC, since that's standard nomenclature.
 // A lot of basic words are taken other places for other things (tags, flags)
-// so this just goes with a series "color" of black or white, with white as
-// the default.  The debug build keeps a count of how many black series there
+// so this just goes with a Flex "color" of black or white, with white as
+// the default.  The debug build keeps a count of how many black Flexes there
 // are and asserts it's 0 by the time each evaluation ends, to ensure balance.
 //
 
-INLINE bool Is_Series_Black(Series* s) {
-    return GET_SER_INFO(s, SERIES_INFO_BLACK);
+INLINE bool Is_Flex_Black(Flex* s)
+  { return Get_Flex_Info(s, FLEX_INFO_BLACK); }
+
+INLINE bool Is_Flex_White(Flex* s)
+ { return Not_Flex_Info(s, FLEX_INFO_BLACK); }
+
+INLINE void Flip_Flex_To_Black(Flex* s) {
+    assert(Not_Flex_Info(s, FLEX_INFO_BLACK));
+    Set_Flex_Info(s, FLEX_INFO_BLACK);
+  #if !defined(NDEBUG)
+    ++TG_Num_Black_Flex;
+  #endif
 }
 
-INLINE bool Is_Series_White(Series* s) {
-    return NOT_SER_INFO(s, SERIES_INFO_BLACK);
-}
-
-INLINE void Flip_Series_To_Black(Series* s) {
-    assert(NOT_SER_INFO(s, SERIES_INFO_BLACK));
-    SET_SER_INFO(s, SERIES_INFO_BLACK);
-#if !defined(NDEBUG)
-    ++TG_Num_Black_Series;
-#endif
-}
-
-INLINE void Flip_Series_To_White(Series* s) {
-    assert(GET_SER_INFO(s, SERIES_INFO_BLACK));
-    CLEAR_SER_INFO(s, SERIES_INFO_BLACK);
-#if !defined(NDEBUG)
-    --TG_Num_Black_Series;
-#endif
+INLINE void Flip_Flex_To_White(Flex* s) {
+    assert(Get_Flex_Info(s, FLEX_INFO_BLACK));
+    Clear_Flex_Info(s, FLEX_INFO_BLACK);
+  #if !defined(NDEBUG)
+    --TG_Num_Black_Flex;
+  #endif
 }
 
 
@@ -388,20 +383,20 @@ INLINE void Flip_Series_To_White(Series* s) {
 // Freezing and Locking
 //
 
-INLINE void Freeze_Sequence(Series* s) { // there is no unfreeze!
-    assert(not IS_SER_ARRAY(s)); // use Deep_Freeze_Array
-    SET_SER_INFO(s, SERIES_INFO_FROZEN);
+INLINE void Freeze_Non_Array_Flex(Flex* s) { // there is no unfreeze!
+    assert(not Is_Flex_Array(s)); // use Deep_Freeze_Array
+    Set_Flex_Info(s, FLEX_INFO_FROZEN);
 }
 
-INLINE bool Is_Series_Frozen(Series* s) {
-    assert(not IS_SER_ARRAY(s)); // use Is_Array_Deeply_Frozen
-    return GET_SER_INFO(s, SERIES_INFO_FROZEN);
+INLINE bool Is_Flex_Frozen(Flex* s) {
+    assert(not Is_Flex_Array(s)); // use Is_Array_Deeply_Frozen
+    return Get_Flex_Info(s, FLEX_INFO_FROZEN);
 }
 
-INLINE bool Is_Series_Read_Only(Series* s) { // may be temporary...
+INLINE bool Is_Flex_Read_Only(Flex* s) { // may be temporary...
     return did (
         s->info.bits &
-        (SERIES_INFO_FROZEN | SERIES_INFO_HOLD | SERIES_INFO_PROTECTED)
+        (FLEX_INFO_FROZEN | FLEX_INFO_HOLD | FLEX_INFO_PROTECTED)
     );
 }
 
@@ -412,18 +407,18 @@ INLINE bool Is_Series_Read_Only(Series* s) { // may be temporary...
 // but if only one error is to be reported then this is probably the right
 // priority ordering.
 //
-INLINE void Fail_If_Read_Only_Series(Series* s) {
-    if (Is_Series_Read_Only(s)) {
-        if (GET_SER_INFO(s, SERIES_INFO_AUTO_LOCKED))
+INLINE void Fail_If_Read_Only_Flex(Flex* s) {
+    if (Is_Flex_Read_Only(s)) {
+        if (Get_Flex_Info(s, FLEX_INFO_AUTO_LOCKED))
             fail (Error_Series_Auto_Locked_Raw());
 
-        if (GET_SER_INFO(s, SERIES_INFO_HOLD))
+        if (Get_Flex_Info(s, FLEX_INFO_HOLD))
             fail (Error_Series_Held_Raw());
 
-        if (GET_SER_INFO(s, SERIES_INFO_FROZEN))
+        if (Get_Flex_Info(s, FLEX_INFO_FROZEN))
             fail (Error_Series_Frozen_Raw());
 
-        assert(GET_SER_INFO(s, SERIES_INFO_PROTECTED));
+        assert(Get_Flex_Info(s, FLEX_INFO_PROTECTED));
         fail (Error_Series_Protected_Raw());
     }
 }
@@ -431,12 +426,12 @@ INLINE void Fail_If_Read_Only_Series(Series* s) {
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  GUARDING SERIES FROM GARBAGE COLLECTION
+//  GUARDING NODES FROM GARBAGE COLLECTION
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // The garbage collector can run anytime the evaluator runs (and also when
-// ports are used).  So if a series has had Manage_Series() run on it, the
+// ports are used).  So if a series has had Manage_Flex() run on it, the
 // potential exists that any C pointers that are outstanding may "go bad"
 // if the series wasn't reachable from the root set.  This is important to
 // remember any time a pointer is held across a call that runs arbitrary
@@ -454,8 +449,7 @@ INLINE void Fail_If_Read_Only_Series(Series* s) {
 // before a command ends.
 //
 
-#define PUSH_GC_GUARD(p) \
-    Push_Guard_Node(p)
+#define Push_GC_Guard(p) Push_Guard_Node(p)
 
 #ifdef NDEBUG
     INLINE void Drop_Guard_Node(Node* n) {
@@ -463,8 +457,7 @@ INLINE void Fail_If_Read_Only_Series(Series* s) {
         GC_Guarded->content.dynamic.len--;
     }
 
-    #define DROP_GC_GUARD(p) \
-        Drop_Guard_Node(p)
+    #define Drop_GC_Guard(p) Drop_Guard_Node(p)
 #else
     INLINE void Drop_Guard_Node_Debug(
         const Node* n,
@@ -476,7 +469,7 @@ INLINE void Fail_If_Read_Only_Series(Series* s) {
         GC_Guarded->content.dynamic.len--;
     }
 
-    #define DROP_GC_GUARD(p) \
+    #define Drop_GC_Guard(p) \
         Drop_Guard_Node_Debug((p), __FILE__, __LINE__)
 #endif
 
@@ -487,17 +480,17 @@ INLINE void Fail_If_Read_Only_Series(Series* s) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-INLINE Series* VAL_SERIES(const Cell* v) {
+INLINE Flex* Cell_Flex(const Cell* v) {
     assert(ANY_SERIES(v) or Is_Map(v));  // !!! gcc 5.4 -O2 bug
-    Series* s = v->payload.any_series.series;
-    if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE))
+    Flex* s = v->payload.any_series.series;
+    if (Get_Flex_Info(s, FLEX_INFO_INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return s;
 }
 
-INLINE void INIT_VAL_SERIES(Cell* v, Series* s) {
-    assert(not IS_SER_ARRAY(s));
-    assert(Is_Series_Managed(s));
+INLINE void Set_Cell_Flex(Cell* v, Flex* s) {
+    assert(not Is_Flex_Array(s));
+    assert(Is_Flex_Managed(s));
     v->payload.any_series.series = s;
 }
 
@@ -518,7 +511,7 @@ INLINE void INIT_VAL_SERIES(Cell* v, Series* s) {
 #endif
 
 #define VAL_LEN_HEAD(v) \
-    Series_Len(VAL_SERIES(v))
+    Flex_Len(Cell_Flex(v))
 
 INLINE REBLEN VAL_LEN_AT(const Cell* v) {
     if (VAL_INDEX(v) >= VAL_LEN_HEAD(v))
@@ -527,7 +520,7 @@ INLINE REBLEN VAL_LEN_AT(const Cell* v) {
 }
 
 INLINE Byte *VAL_RAW_DATA_AT(const Cell* v) {
-    return Series_Data_At(Series_Wide(VAL_SERIES(v)), VAL_SERIES(v), VAL_INDEX(v));
+    return Flex_Data_At(Flex_Wide(Cell_Flex(v)), Cell_Flex(v), VAL_INDEX(v));
 }
 
 #define Init_Any_Series_At(v,t,s,i) \
@@ -549,8 +542,8 @@ INLINE Byte *VAL_RAW_DATA_AT(const Cell* v) {
 
 INLINE Blob* Cell_Bitset(const Cell* cell) {
     assert(Is_Bitset(cell));
-    Series* s = VAL_SERIES(cell);
-    assert(Series_Wide(s) == 1);
+    Flex* s = Cell_Flex(cell);
+    assert(Flex_Wide(s) == 1);
     return cast(Blob*, s);
 }
 
@@ -563,10 +556,10 @@ INLINE Blob* Cell_Bitset(const Cell* cell) {
 // is a particularly efficient default state, so separating the dynamic
 // allocation into a separate routine is not a huge cost.
 //
-INLINE Series* Alloc_Series_Node(REBFLGS flags) {
+INLINE Flex* Alloc_Flex_Stub(REBFLGS flags) {
     assert(not (flags & NODE_FLAG_CELL));
 
-    Series* s = cast(Series*, Alloc_Pooled(SER_POOL));
+    Flex* s = cast(Flex*, Alloc_Pooled(STUB_POOL));
     if ((GC_Ballast -= sizeof(Stub)) <= 0)
         SET_SIGNAL(SIG_RECYCLE);
 
@@ -575,19 +568,19 @@ INLINE Series* Alloc_Series_Node(REBFLGS flags) {
     // or array of length 0!  Two are set here, the third (info) should be
     // set by the caller.
     //
-    s->header.bits = NODE_FLAG_NODE | flags | SERIES_FLAG_8_IS_TRUE;  // #1
+    s->header.bits = NODE_FLAG_NODE | flags | FLEX_FLAG_8_IS_TRUE;  // #1
     Corrupt_Pointer_If_Debug(LINK(s).corrupt);  // #2
   #if !defined(NDEBUG)
     memset(cast(char*, &s->content.fixed), 0xBD, sizeof(s->content));  // #3-#6
-    memset(&s->info, 0xAE, sizeof(s->info));  // #7, caller sets Series_Wide()
+    memset(&s->info, 0xAE, sizeof(s->info));  // #7, caller sets Flex_Wide()
   #endif
     Corrupt_Pointer_If_Debug(MISC(s).corrupt);  // #8
 
     // Note: This series will not participate in management tracking!
-    // See NODE_FLAG_MANAGED handling in Make_Array_Core() and Make_Series_Core().
+    // See NODE_FLAG_MANAGED handling in Make_Array_Core() and Make_Flex_Core().
 
   #if !defined(NDEBUG)
-    TOUCH_SERIES_IF_DEBUG(s); // tag current C stack as series origin in ASAN
+    Touch_Flex_If_Debug(s); // tag current C stack as series origin in ASAN
     PG_Reb_Stats->Series_Made++;
   #endif
 
@@ -610,21 +603,21 @@ INLINE REBLEN FIND_POOL(size_t size) {
 
 // Allocates element array for an already allocated Stub node structure.
 // Resets the bias and tail to zero, and sets the new width.  Flags like
-// SERIES_FLAG_FIXED_SIZE are left as they were, and other fields in the
+// FLEX_FLAG_FIXED_SIZE are left as they were, and other fields in the
 // series structure are untouched.
 //
 // This routine can thus be used for an initial construction or an operation
 // like expansion.
 //
-INLINE bool Did_Series_Data_Alloc(Series* s, REBLEN length) {
+INLINE bool Did_Flex_Data_Alloc(Flex* s, REBLEN length) {
     //
     // Currently once a series becomes dynamic, it never goes back.  There is
     // no shrinking process that will pare it back to fit completely inside
     // the Stub node.
     //
-    assert(IS_SER_DYNAMIC(s)); // caller sets
+    assert(Is_Flex_Dynamic(s)); // caller sets
 
-    Byte wide = Series_Wide(s);
+    Byte wide = Flex_Wide(s);
     assert(wide != 0);
 
     REBLEN size; // size of allocation (possibly bigger than we need)
@@ -642,7 +635,7 @@ INLINE bool Did_Series_Data_Alloc(Series* s, REBLEN length) {
         assert(size >= length * wide);
 
         // We don't round to power of 2 for allocations in memory pools
-        CLEAR_SER_FLAG(s, SERIES_FLAG_POWER_OF_2);
+        Clear_Flex_Flag(s, FLEX_FLAG_POWER_OF_2);
     }
     else {
         // ...the allocation is too big for a pool.  But instead of just
@@ -651,7 +644,7 @@ INLINE bool Did_Series_Data_Alloc(Series* s, REBLEN length) {
         // boundaries (or choose a power of 2, if requested).
 
         size = length * wide;
-        if (GET_SER_FLAG(s, SERIES_FLAG_POWER_OF_2)) {
+        if (Get_Flex_Flag(s, FLEX_FLAG_POWER_OF_2)) {
             REBLEN len = 2048;
             while (len < size)
                 len *= 2;
@@ -661,7 +654,7 @@ INLINE bool Did_Series_Data_Alloc(Series* s, REBLEN length) {
             // divisibility by the item width.
             //
             if (size % wide == 0)
-                CLEAR_SER_FLAG(s, SERIES_FLAG_POWER_OF_2);
+                Clear_Flex_Flag(s, FLEX_FLAG_POWER_OF_2);
         }
 
         s->content.dynamic.data = ALLOC_N(char, size);
@@ -673,7 +666,7 @@ INLINE bool Did_Series_Data_Alloc(Series* s, REBLEN length) {
     }
 
     // Note: Bias field may contain other flags at some point.  Because
-    // SER_SET_BIAS() uses bit masking on an existing value, we are sure
+    // Set_Flex_Bias() uses bit masking on an existing value, we are sure
     // here to clear out the whole value for starters.
     //
     s->content.dynamic.bias = 0;
@@ -694,7 +687,7 @@ INLINE bool Did_Series_Data_Alloc(Series* s, REBLEN length) {
     if ((GC_Ballast -= size) <= 0)
         SET_SIGNAL(SIG_RECYCLE);
 
-    assert(SER_TOTAL(s) == size);
+    assert(Flex_Total(s) == size);
     return true;
 }
 
@@ -703,7 +696,7 @@ INLINE bool Did_Series_Data_Alloc(Series* s, REBLEN length) {
 // Small series will be allocated from a memory pool.
 // Large series will be allocated from system memory.
 //
-INLINE Series* Make_Series_Core(
+INLINE Flex* Make_Flex_Core(
     REBLEN capacity,
     Byte wide,
     REBFLGS flags
@@ -718,15 +711,15 @@ INLINE Series* Make_Series_Core(
     // non-zero second byte.  However, it obeys the fixed info bits for now.
     // (It technically doesn't need to.)
     //
-    Series* s = Alloc_Series_Node(flags);
+    Flex* s = Alloc_Flex_Stub(flags);
     s->info.bits =
-        SERIES_INFO_0_IS_TRUE
-        // not SERIES_INFO_1_IS_FALSE
-        // not SERIES_INFO_7_IS_FALSE
+        FLEX_INFO_0_IS_TRUE
+        // not FLEX_INFO_1_IS_FALSE
+        // not FLEX_INFO_7_IS_FALSE
         | FLAG_WIDE_BYTE_OR_0(wide);
 
     if (
-        (flags & SERIES_FLAG_ALWAYS_DYNAMIC) // inlining will constant fold
+        (flags & FLEX_FLAG_ALWAYS_DYNAMIC) // inlining will constant fold
         or (capacity * wide > sizeof(s->content))
     ){
         //
@@ -735,7 +728,7 @@ INLINE Series* Make_Series_Core(
         // size, because the memory pool reports the full rounded allocation.
 
         LEN_BYTE_OR_255(s) = 255; // alloc caller sets
-        if (not Did_Series_Data_Alloc(s, capacity))
+        if (not Did_Flex_Data_Alloc(s, capacity))
             fail (Error_No_Memory(capacity * wide));
 
       #if !defined(NDEBUG)
@@ -745,15 +738,15 @@ INLINE Series* Make_Series_Core(
 
     // It is more efficient if you know a series is going to become managed to
     // create it in the managed state.  But be sure no evaluations are called
-    // before it's made reachable by the GC, or use PUSH_GC_GUARD().
+    // before it's made reachable by the GC, or use Push_GC_Guard().
     //
     // !!! Code duplicated in Make_Array_Core() ATM.
     //
     if (not (flags & NODE_FLAG_MANAGED)) {
-        if (SER_FULL(GC_Manuals))
-            Extend_Series(GC_Manuals, 8);
+        if (Is_Flex_Full(GC_Manuals))
+            Extend_Flex(GC_Manuals, 8);
 
-        cast(Series**, GC_Manuals->content.dynamic.data)[
+        cast(Flex**, GC_Manuals->content.dynamic.data)[
             GC_Manuals->content.dynamic.len++
         ] = s; // start out managed to not need to find/remove from this later
     }
@@ -763,8 +756,8 @@ INLINE Series* Make_Series_Core(
 
 // !!! When series are made they are not terminated, which means that though
 // they are empty they may not be "valid".  Should this be called Alloc_Ser()?
-// Is Make_Series() needed or are there few enough calls it should always take
+// Is Make_Flex() needed or are there few enough calls it should always take
 // the flags and not have a _Core() variant?
 //
-#define Make_Series(capacity, wide) \
-    Make_Series_Core((capacity), (wide), SERIES_FLAGS_NONE)
+#define Make_Flex(capacity, wide) \
+    Make_Flex_Core((capacity), (wide), FLEX_FLAGS_NONE)

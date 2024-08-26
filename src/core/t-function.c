@@ -141,7 +141,7 @@ void MF_Action(REB_MOLD *mo, const Cell* v, bool form)
     //
     Array* words_list = List_Func_Words(v, true); // show pure locals
     Mold_Array_At(mo, words_list, 0, "[]");
-    Free_Unmanaged_Series(words_list);
+    Free_Unmanaged_Flex(words_list);
 
     // !!! Previously, ACTION! would mold the body out.  This created a large
     // amount of output, and also many function variations do not have
@@ -217,7 +217,7 @@ REBTYPE(Action)
         Cell* dest = Array_Head(ACT_DETAILS(proxy));
         for (; NOT_END(src); ++src, ++dest)
             Blit_Cell(dest, src);
-        TERM_ARRAY_LEN(ACT_DETAILS(proxy), details_len);
+        Term_Array_Len(ACT_DETAILS(proxy), details_len);
 
         return Init_Action_Maybe_Bound(OUT, proxy, VAL_BINDING(value)); }
 
@@ -254,7 +254,7 @@ REBTYPE(Action)
                 Copy_Cell(typeset, param);
                 INIT_TYPESET_NAME(typeset, nullptr);
             }
-            TERM_ARRAY_LEN(copy, VAL_ACT_NUM_PARAMS(value));
+            Term_Array_Len(copy, VAL_ACT_NUM_PARAMS(value));
             assert(IS_END(typeset));
 
             return Init_Block(OUT, copy);
@@ -273,7 +273,7 @@ REBTYPE(Action)
                 return nullptr;
 
             Array* a = Cell_Array(Array_Head(details));
-            if (NOT_SER_FLAG(a, ARRAY_FLAG_FILE_LINE))
+            if (Not_Flex_Flag(a, ARRAY_FLAG_FILE_LINE))
                 return nullptr;
 
             // !!! How to tell whether it's a URL! or a FILE! ?
@@ -290,7 +290,7 @@ REBTYPE(Action)
                 return nullptr;
 
             Array* a = Cell_Array(Array_Head(details));
-            if (NOT_SER_FLAG(a, ARRAY_FLAG_FILE_LINE))
+            if (Not_Flex_Flag(a, ARRAY_FLAG_FILE_LINE))
                 return nullptr;
 
             return Init_Integer(OUT, MISC(a).line); }

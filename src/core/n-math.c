@@ -672,7 +672,7 @@ DECLARE_NATIVE(same_q)
         //
         // BITSET! only has a series, no index.
         //
-        if (VAL_SERIES(value1) != VAL_SERIES(value2))
+        if (Cell_Flex(value1) != Cell_Flex(value2))
             return Init_False(OUT);
         return Init_True(OUT);
     }
@@ -681,7 +681,7 @@ DECLARE_NATIVE(same_q)
         //
         // ANY-SERIES! can only be the same if pointers and indices match.
         //
-        if (VAL_SERIES(value1) != VAL_SERIES(value2))
+        if (Cell_Flex(value1) != Cell_Flex(value2))
             return Init_False(OUT);
         if (VAL_INDEX(value1) != VAL_INDEX(value2))
             return Init_False(OUT);

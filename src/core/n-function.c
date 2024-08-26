@@ -676,17 +676,17 @@ DECLARE_NATIVE(hijack)
         // would need to restore the *exact* capacity.  Review.
 
         REBLEN details_len = Array_Len(hijacker_details);
-        if (Series_Rest(victim_details) < details_len + 1)
-            Expand_Series_Tail(
+        if (Flex_Rest(victim_details) < details_len + 1)
+            Expand_Flex_Tail(
                 victim_details,
-                details_len + 1 - Series_Rest(victim_details)
+                details_len + 1 - Flex_Rest(victim_details)
             );
 
         Cell* src = Array_Head(hijacker_details);
         Cell* dest = Array_Head(victim_details);
         for (; NOT_END(src); ++src, ++dest)
             Blit_Cell(dest, src);
-        TERM_ARRAY_LEN(victim_details, details_len);
+        Term_Array_Len(victim_details, details_len);
     }
     else {
         // A mismatch means there could be someone out there pointing at this
@@ -704,7 +704,7 @@ DECLARE_NATIVE(hijack)
         if (Array_Len(victim_details) < 1)
             Alloc_Tail_Array(victim_details);
         Copy_Cell(Array_Head(victim_details), ARG(hijacker));
-        TERM_ARRAY_LEN(victim_details, 1);
+        Term_Array_Len(victim_details, 1);
     }
 
     // !!! What should be done about MISC(victim_paramlist).meta?  Leave it
@@ -819,7 +819,7 @@ DECLARE_NATIVE(tighten)
     Cell* dest = Array_Head(ACT_DETAILS(tightened));
     for (; NOT_END(src); ++src, ++dest)
         Blit_Cell(dest, src);
-    TERM_ARRAY_LEN(ACT_DETAILS(tightened), details_len);
+    Term_Array_Len(ACT_DETAILS(tightened), details_len);
 
     return Init_Action_Maybe_Bound(
         OUT,

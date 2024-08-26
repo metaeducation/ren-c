@@ -91,7 +91,7 @@ INLINE bool Is_Block_Style_Varargs(
     // filled by the evaluator on a <...> parameter.  Should be a singular
     // array with one BLOCK!, that is the actual array and index to advance.
     //
-    Array* array1 = ARR(vararg->extra.binding);
+    Array* array1 = cast_Array(vararg->extra.binding);
     *shared_out = KNOWN(Array_Head(array1));
     assert(
         IS_END(*shared_out)

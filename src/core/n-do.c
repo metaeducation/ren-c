@@ -193,7 +193,7 @@ DECLARE_NATIVE(eval_enfix)
     // *as if* it were enfixed, e.g. `series: my next`.
     //
     SET_VAL_FLAG(temp, VALUE_FLAG_ENFIXED);
-    PUSH_GC_GUARD(temp);
+    Push_GC_Guard(temp);
     L->gotten = temp;
 
     // !!! If we were to give an error on using ME with non-enfix or MY with
@@ -228,13 +228,13 @@ DECLARE_NATIVE(eval_enfix)
 
     REBFLGS flags = DO_FLAG_FULFILLING_ARG | DO_FLAG_POST_SWITCH;
     if (Eval_Step_In_Subframe_Throws(OUT, L, flags, child)) {
-        DROP_GC_GUARD(temp);
+        Drop_GC_Guard(temp);
         return R_THROWN;
     }
 
     Corrupt_Pointer_If_Debug(TOP_LEVEL->u.defer.arg);
 
-    DROP_GC_GUARD(temp);
+    Drop_GC_Guard(temp);
     return OUT;
 }
 
@@ -433,8 +433,8 @@ DECLARE_NATIVE(do)
         // Its data stolen, the context's node should now be GC'd when
         // references in other FRAME! value cells have all gone away.
         //
-        assert(GET_SER_FLAG(c, NODE_FLAG_MANAGED));
-        assert(GET_SER_INFO(c, SERIES_INFO_INACCESSIBLE));
+        assert(Get_Flex_Flag(c, NODE_FLAG_MANAGED));
+        assert(Get_Flex_Info(c, FLEX_INFO_INACCESSIBLE));
 
         L->varlist = CTX_VARLIST(stolen);
         L->rootvar = CTX_ARCHETYPE(stolen);
@@ -772,7 +772,7 @@ DECLARE_NATIVE(applique)
         L->stack_base,  // lowest_stackindex of refinements to weave in
         &binder
     );
-    Manage_Series(CTX_VARLIST(exemplar)); // binding code into it
+    Manage_Flex(CTX_VARLIST(exemplar)); // binding code into it
 
     // Bind any SET-WORD!s in the supplied code block into the FRAME!, so
     // e.g. APPLY 'APPEND [VALUE: 10]` will set VALUE in exemplar to 10.
@@ -805,10 +805,10 @@ DECLARE_NATIVE(applique)
 
     // Run the bound code, ignore evaluative result (unless thrown)
     //
-    PUSH_GC_GUARD(exemplar);
+    Push_GC_Guard(exemplar);
     DECLARE_VALUE (temp);
     bool def_threw = Do_Any_Array_At_Throws(temp, ARG(def));
-    DROP_GC_GUARD(exemplar);
+    Drop_GC_Guard(exemplar);
 
     assert(CTX_KEYS_HEAD(exemplar) == ACT_PARAMS_HEAD(VAL_ACTION(applicand)));
     L->param = CTX_KEYS_HEAD(exemplar);
@@ -819,7 +819,7 @@ DECLARE_NATIVE(applique)
     LINK(stolen).keysource = L;  // changes CTX_KEYS_HEAD result
 
     if (def_threw) {
-        Free_Unmanaged_Series(CTX_VARLIST(stolen)); // could TG_Reuse it
+        Free_Unmanaged_Flex(CTX_VARLIST(stolen)); // could TG_Reuse it
         RETURN (temp);
     }
 

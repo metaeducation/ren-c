@@ -323,7 +323,7 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
     #endif
 
     #define DEBUG_HAS_PROBE
-    #define DEBUG_MONITOR_SERIES
+    #define DEBUG_MONITOR_FLEX
     #define DEBUG_COUNT_TICKS
     #define DEBUG_FRAME_LABELS
     #define DEBUG_UNREADABLE_BLANKS
@@ -379,7 +379,7 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
     #define DEBUG_BINDING_NAME_MATCH
   #endif
 
-    // Cast checks in SER(), NOD(), ARR() are expensive--they make sure that
+    // Cast checks in cast_Flex(), NOD(), cast_Array() are expensive--they make sure that
     // when you have a void pointer and cast it to a Series, that the header
     // actually is for a Series (etc.)  Disable this by default unless you are
     // using address sanitizer, where you expect your executable to be slow.
@@ -391,14 +391,14 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
 
         // Both Valgrind and Address Sanitizer can provide the call stack at
         // the moment of allocation when a freed pointer is used.  This is
-        // exploited by Touch_Series() to use a bogus allocation to help
+        // exploited by Touch_Flex() to use a bogus allocation to help
         // mark series origins that can later be used by `panic()`.  However,
         // the feature is a waste if you're not using such tools.
         //
         // If you plan to use Valgrind with this, you'll have to set it
         // explicitly...only Address Sanitizer can be detected here.
         //
-        #define DEBUG_SERIES_ORIGINS
+        #define DEBUG_FLEX_ORIGINS
     #endif
 #endif
 

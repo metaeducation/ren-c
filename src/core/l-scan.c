@@ -477,11 +477,11 @@ static const Byte *Scan_Quote_Push_Mold(
         //
         // https://stackoverflow.com/a/9533324/211160
         //
-        if (Series_Len(mo->series) + 4 >= Series_Rest(mo->series)) // incl term
-            Extend_Series(mo->series, 4);
+        if (Flex_Len(mo->series) + 4 >= Flex_Rest(mo->series)) // incl term
+            Extend_Flex(mo->series, 4);
 
         REBLEN encoded_len = Encode_UTF8_Char(Blob_Tail(mo->series), chr);
-        Set_Series_Len(mo->series, Series_Len(mo->series) + encoded_len);
+        Set_Flex_Len(mo->series, Flex_Len(mo->series) + encoded_len);
     }
 
     src++; // Skip ending quote or brace.
@@ -574,11 +574,11 @@ const Byte *Scan_Item_Push_Mold(
         //
         // https://stackoverflow.com/a/9533324/211160
         //
-        if (Series_Len(mo->series) + 4 >= Series_Rest(mo->series)) // incl term
-            Extend_Series(mo->series, 4);
+        if (Flex_Len(mo->series) + 4 >= Flex_Rest(mo->series)) // incl term
+            Extend_Flex(mo->series, 4);
 
         REBLEN encoded_len = Encode_UTF8_Char(Blob_Tail(mo->series), c);
-        Set_Series_Len(mo->series, Series_Len(mo->series) + encoded_len);
+        Set_Flex_Len(mo->series, Flex_Len(mo->series) + encoded_len);
     }
 
     if (*bp != '\0' and *bp == opt_term)
@@ -1000,13 +1000,13 @@ acquisition_loop:
             }
 
             if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
-                Series* locker = nullptr;
+                Flex* locker = nullptr;
                 Ensure_Value_Immutable(TOP, locker);
             }
 
             if (Is_Api_Value(splice)) { // moved to TOP, can release *now*
                 Array* a = Singular_From_Cell(splice);
-                if (GET_SER_INFO(a, SERIES_INFO_API_RELEASE))
+                if (Get_Flex_Info(a, FLEX_INFO_API_RELEASE))
                     rebRelease(m_cast(Value*, splice)); // !!! m_cast
             }
 
@@ -1033,8 +1033,8 @@ acquisition_loop:
                         and VAL_ACTION(single) == NAT_ACTION(null)
                     ) or (
                         Is_Group(single) and (
-                            GET_SER_INFO(Cell_Array(single), SERIES_INFO_HOLD)
-                            or GET_SER_INFO(Cell_Array(single), SERIES_INFO_FROZEN)
+                            Get_Flex_Info(Cell_Array(single), FLEX_INFO_HOLD)
+                            or Get_Flex_Info(Cell_Array(single), FLEX_INFO_FROZEN)
                         )
                     )
                 );
@@ -1048,7 +1048,7 @@ acquisition_loop:
             }
 
             if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
-                Series* locker = nullptr;
+                Flex* locker = nullptr;
                 Ensure_Value_Immutable(TOP, locker);
             }
 
@@ -1777,7 +1777,7 @@ void Init_Va_Scan_State_Core(
     ss->start_line = ss->line = line;
 
     if (file)
-        assert(Is_Series_Ucs2(unwrap(file)));
+        assert(Is_Flex_Ucs2(unwrap(file)));
     ss->file = file;
 
     ss->newline_pending = false;
@@ -1824,7 +1824,7 @@ void Init_Scan_State(
     ss->newline_pending = false;
 
     if (file)
-        assert(Is_Series_Ucs2(unwrap(file)));
+        assert(Is_Flex_Ucs2(unwrap(file)));
     ss->file = file;
 
     ss->opts = 0;
@@ -2169,7 +2169,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         case TOKEN_STRING: {
             // During scan above, string was stored in MOLD_BUF (UTF-8)
             //
-            Series* s = Pop_Molded_String(mo);
+            Flex* s = Pop_Molded_String(mo);
             Init_Text(PUSH(), s);
             break; }
 
@@ -2250,9 +2250,9 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 //
                 DECLARE_VALUE (cell);
                 Init_Unreadable(cell);
-                PUSH_GC_GUARD(cell);
+                Push_GC_Guard(cell);
 
-                PUSH_GC_GUARD(array);
+                Push_GC_Guard(array);
                 const Value* r = hook(cell, kind, KNOWN(Array_At(array, 1)));
                 if (r == R_THROWN) { // !!! good argument for not using MAKE
                     assert(false);
@@ -2262,10 +2262,10 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                     assert(false);
                     fail ("MAKE during construction syntax not out cell");
                 }
-                DROP_GC_GUARD(array);
+                Drop_GC_Guard(array);
 
                 Copy_Cell(PUSH(), cell);
-                DROP_GC_GUARD(cell);
+                Drop_GC_Guard(cell);
             }
             else {
                 if (Array_Len(array) != 1) {
@@ -2435,7 +2435,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         SET_VAL_FLAG(TOP, VALUE_FLAG_EVAL_FLIP);
 
         if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
-            Series* locker = nullptr;
+            Flex* locker = nullptr;
             Ensure_Value_Immutable(TOP, locker);
         }
 
@@ -2505,13 +2505,13 @@ void Scan_To_Stack_Relaxed(SCAN_STATE *ss) {
         memcpy(Blob_Head(bin), ss_before.begin, limit);
         Term_Blob_Len(bin, limit);
 
-        SET_SER_FLAG(bin, SERIES_FLAG_DONT_RELOCATE); // Blob_Head() is cached
+        Set_Flex_Flag(bin, FLEX_FLAG_DONT_RELOCATE); // Blob_Head() is cached
         ss_before.begin = Blob_Head(bin);
         Corrupt_Pointer_If_Debug(ss_before.end);
 
         Scan_To_Stack(&ss_before); // !!! Shouldn't error...check that?
 
-        Free_Unmanaged_Series(bin);
+        Free_Unmanaged_Flex(bin);
     }
 
     ss->begin = ss->end; // skip malformed token
@@ -2574,7 +2574,7 @@ static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char)
     //
     MISC(a).line = ss->line;
     LINK(a).file = try_unwrap(ss->file);
-    SET_SER_FLAG(a, ARRAY_FLAG_FILE_LINE);
+    Set_Flex_Flag(a, ARRAY_FLAG_FILE_LINE);
 
     // The only variables that should actually be written back into the
     // parent ss are those reflecting an update in the "feed" of data.
@@ -2648,7 +2648,7 @@ Array* Scan_Va_Managed(
 
     MISC(a).line = ss.line;
     LINK(a).file = try_unwrap(ss.file);
-    SET_SER_FLAG(a, ARRAY_FLAG_FILE_LINE);
+    Set_Flex_Flag(a, ARRAY_FLAG_FILE_LINE);
 
     // !!! While in practice every system has va_end() as a no-op, it's not
     // necessarily true from a standards point of view:
@@ -2691,7 +2691,7 @@ Array* Scan_UTF8_Managed(
 
     MISC(a).line = ss.line;
     LINK(a).file = try_unwrap(ss.file);
-    SET_SER_FLAG(a, ARRAY_FLAG_FILE_LINE);
+    Set_Flex_Flag(a, ARRAY_FLAG_FILE_LINE);
 
     return a;
 }
@@ -2746,7 +2746,7 @@ void Startup_Scanner(void)
 //
 void Shutdown_Scanner(void)
 {
-    Free_Unmanaged_Series(TG_Buf_Ucs2);
+    Free_Unmanaged_Flex(TG_Buf_Ucs2);
     TG_Buf_Ucs2 = nullptr;
 }
 
@@ -2875,7 +2875,7 @@ DECLARE_NATIVE(transcode)
     );
     MISC(a).line = ss.line;
     LINK(a).file = try_unwrap(ss.file);
-    SET_SER_FLAG(a, ARRAY_FLAG_FILE_LINE);
+    Set_Flex_Flag(a, ARRAY_FLAG_FILE_LINE);
 
     return Init_Block(OUT, a);
 }

@@ -83,11 +83,11 @@ static bool Set_Event_Var(Value* event, const Value* word, const Value* val)
     case SYM_PORT:
         if (Is_Port(val)) {
             VAL_EVENT_MODEL(event) = EVM_PORT;
-            VAL_EVENT_SER(event) = CTX_VARLIST(VAL_CONTEXT(val));
+            VAL_EVENT_FLEX(event) = CTX_VARLIST(VAL_CONTEXT(val));
         }
         else if (Is_Object(val)) {
             VAL_EVENT_MODEL(event) = EVM_OBJECT;
-            VAL_EVENT_SER(event) = CTX_VARLIST(VAL_CONTEXT(val));
+            VAL_EVENT_FLEX(event) = CTX_VARLIST(VAL_CONTEXT(val));
         }
         else
             return false;
@@ -153,10 +153,10 @@ static Value* Get_Event_Var(Cell* out, const Cell* v, Symbol* name)
 
     case SYM_PORT: {
         if (IS_EVENT_MODEL(v, EVM_PORT))
-            return Init_Port(out, CTX(VAL_EVENT_SER(v)));
+            return Init_Port(out, CTX(VAL_EVENT_FLEX(v)));
 
         if (IS_EVENT_MODEL(v, EVM_OBJECT))
-            return Init_Object(out, CTX(VAL_EVENT_SER(v)));
+            return Init_Object(out, CTX(VAL_EVENT_FLEX(v)));
 
         if (IS_EVENT_MODEL(v, EVM_CALLBACK))
             return Copy_Cell(out, Get_System(SYS_PORTS, PORTS_CALLBACK));

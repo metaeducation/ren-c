@@ -1274,7 +1274,7 @@ const Byte *Scan_Any(
     //
     bool crlf_to_lf = true;
 
-    Series* s = Append_UTF8_May_Fail(nullptr, cs_cast(cp), num_bytes, crlf_to_lf);
+    Flex* s = Append_UTF8_May_Fail(nullptr, cs_cast(cp), num_bytes, crlf_to_lf);
     Init_Any_Series(out, type, s);
 
     return cp + num_bytes;

@@ -95,7 +95,7 @@ static REBCTX *Error_Conflicting_Key(const Cell* key, Specifier* specifier)
 //
 REBINT Find_Key_Hashed(
     Array* array,
-    Series* hashlist,
+    Flex* hashlist,
     const Cell* key, // !!! assumes key is followed by value(s) via ++
     Specifier* specifier,
     REBLEN wide,
@@ -113,8 +113,8 @@ REBINT Find_Key_Hashed(
     // adding skip (and subtracting len when needed) all positions are
     // visited.  1 <= skip < len, and len is prime, so this is guaranteed.
     //
-    REBLEN len = Series_Len(hashlist);
-    REBLEN *indexes = Series_Head(REBLEN, hashlist);
+    REBLEN len = Flex_Len(hashlist);
+    REBLEN *indexes = Flex_Head(REBLEN, hashlist);
 
     uint32_t hash = Hash_Value(key);
     REBLEN slot = hash % len; // first slot to try for this hash
@@ -222,11 +222,11 @@ REBINT Find_Key_Hashed(
 //
 static void Rehash_Map(REBMAP *map)
 {
-    Series* hashlist = MAP_HASHLIST(map);
+    Flex* hashlist = MAP_HASHLIST(map);
 
     if (!hashlist) return;
 
-    REBLEN *hashes = Series_Head(REBLEN, hashlist);
+    REBLEN *hashes = Flex_Head(REBLEN, hashlist);
     Array* pairlist = MAP_PAIRLIST(map);
 
     Value* key = KNOWN(Array_Head(pairlist));
@@ -267,25 +267,25 @@ static void Rehash_Map(REBMAP *map)
 //
 // Expand hash series. Clear it but set its tail.
 //
-void Expand_Hash(Series* ser)
+void Expand_Hash(Flex* flex)
 {
-    REBINT pnum = Get_Hash_Prime(Series_Len(ser) + 1);
+    REBINT pnum = Get_Hash_Prime(Flex_Len(flex) + 1);
     if (pnum == 0) {
         DECLARE_VALUE (temp);
-        Init_Integer(temp, Series_Len(ser) + 1);
+        Init_Integer(temp, Flex_Len(flex) + 1);
         fail (Error_Size_Limit_Raw(temp));
     }
 
-    assert(not IS_SER_ARRAY(ser));
-    Remake_Series(
-        ser,
+    assert(not Is_Flex_Array(flex));
+    Remake_Flex(
+        flex,
         pnum + 1,
-        Series_Wide(ser),
-        SERIES_FLAG_POWER_OF_2 // not(NODE_FLAG_NODE) => don't keep data
+        Flex_Wide(flex),
+        FLEX_FLAG_POWER_OF_2 // not(NODE_FLAG_NODE) => don't keep data
     );
 
-    Clear_Series(ser);
-    Set_Series_Len(ser, pnum);
+    Clear_Flex(flex);
+    Set_Flex_Len(flex, pnum);
 }
 
 
@@ -307,13 +307,13 @@ REBLEN Find_Map_Entry(
 ) {
     assert(not IS_NULLED(key));
 
-    Series* hashlist = MAP_HASHLIST(map); // can be null
+    Flex* hashlist = MAP_HASHLIST(map); // can be null
     Array* pairlist = MAP_PAIRLIST(map);
 
     assert(hashlist);
 
     // Get hash table, expand it if needed:
-    if (Array_Len(pairlist) > Series_Len(hashlist) / 2) {
+    if (Array_Len(pairlist) > Flex_Len(hashlist) / 2) {
         Expand_Hash(hashlist); // modifies size value
         Rehash_Map(map);
     }
@@ -324,7 +324,7 @@ REBLEN Find_Map_Entry(
         pairlist, hashlist, key, key_specifier, wide, cased, mode
     );
 
-    REBLEN *indexes = Series_Head(REBLEN, hashlist);
+    REBLEN *indexes = Flex_Head(REBLEN, hashlist);
     REBLEN n = indexes[slot];
 
     // n==0 or pairlist[(n-1)*]=~key
@@ -337,7 +337,7 @@ REBLEN Find_Map_Entry(
     // a SET must always be done with an immutable key...because if it were
     // changed, there'd be no notification to rehash the map.
     //
-    Series* locker = MAP_PAIRLIST(map);
+    Flex* locker = MAP_PAIRLIST(map);
     Ensure_Value_Immutable(key, locker);
 
     // Must set the value:
@@ -373,7 +373,7 @@ REB_R PD_Map(
     assert(Is_Map(pvs->out));
 
     if (opt_setval != nullptr)
-        Fail_If_Read_Only_Series(VAL_SERIES(pvs->out));
+        Fail_If_Read_Only_Flex(Cell_Flex(pvs->out));
 
     // Fetching and setting with path-based access is case-preserving for any
     // initial insertions.  However, the case-insensitivity means that all
@@ -466,15 +466,15 @@ REB_R MAKE_Map(Value* out, enum Reb_Kind kind, const Value* arg)
 
 INLINE REBMAP *Copy_Map(REBMAP *map, REBU64 types) {
     Array* copy = Copy_Array_Shallow(MAP_PAIRLIST(map), SPECIFIED);
-    SET_SER_FLAG(copy, ARRAY_FLAG_PAIRLIST);
+    Set_Flex_Flag(copy, ARRAY_FLAG_PAIRLIST);
 
     // So long as the copied pairlist is the same array size as the original,
     // a literal copy of the hashlist can still be used, as a start (needs
     // its own copy so new map's hashes will reflect its own mutations)
     //
-    LINK(copy).hashlist = Copy_Sequence_Core(
+    LINK(copy).hashlist = Copy_Non_Array_Flex_Core(
         MAP_HASHLIST(map),
-        SERIES_FLAGS_NONE // !!! No NODE_FLAG_MANAGED?
+        FLEX_FLAGS_NONE // !!! No NODE_FLAG_MANAGED?
     );
 
     if (types == 0)
@@ -567,7 +567,7 @@ Array* Map_To_Array(REBMAP *map, REBINT what)
         }
     }
 
-    TERM_ARRAY_LEN(a, cast(Cell*, dest) - Array_Head(a));
+    Term_Array_Len(a, cast(Cell*, dest) - Array_Head(a));
     assert(IS_END(dest));
     return a;
 }
@@ -618,8 +618,8 @@ REBCTX *Alloc_Context_From_Map(REBMAP *map)
         }
     }
 
-    TERM_ARRAY_LEN(CTX_VARLIST(context), count + 1);
-    TERM_ARRAY_LEN(CTX_KEYLIST(context), count + 1);
+    Term_Array_Len(CTX_VARLIST(context), count + 1);
+    Term_Array_Len(CTX_KEYLIST(context), count + 1);
     assert(IS_END(key));
     assert(IS_END(var));
 
@@ -635,12 +635,12 @@ void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
     REBMAP *m = VAL_MAP(v);
 
     // Prevent endless mold loop:
-    if (Find_Pointer_In_Series(TG_Mold_Stack, m) != NOT_FOUND) {
+    if (Find_Pointer_In_Flex(TG_Mold_Stack, m) != NOT_FOUND) {
         Append_Unencoded(mo->series, "...]");
         return;
     }
 
-    Push_Pointer_To_Series(TG_Mold_Stack, m);
+    Push_Pointer_To_Flex(TG_Mold_Stack, m);
 
     if (not form) {
         Pre_Mold(mo, v);
@@ -673,7 +673,7 @@ void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
 
     End_Mold(mo);
 
-    Drop_Pointer_From_Series(TG_Mold_Stack, m);
+    Drop_Pointer_From_Flex(TG_Mold_Stack, m);
 }
 
 
@@ -789,7 +789,7 @@ REBTYPE(Map)
         if (IS_NULLED_OR_BLANK(arg))
             RETURN (val); // don't fail on read only if it would be a no-op
 
-        Fail_If_Read_Only_Series(MAP_PAIRLIST(map));
+        Fail_If_Read_Only_Flex(MAP_PAIRLIST(map));
 
         UNUSED(PAR(series));
         UNUSED(PAR(value)); // handled as arg
@@ -822,7 +822,7 @@ REBTYPE(Map)
     case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
 
-        Fail_If_Read_Only_Series(MAP_PAIRLIST(map));
+        Fail_If_Read_Only_Flex(MAP_PAIRLIST(map));
 
         UNUSED(PAR(series));
 
@@ -863,14 +863,14 @@ REBTYPE(Map)
         return Init_Map(OUT, Copy_Map(map, types)); }
 
     case SYM_CLEAR:
-        Fail_If_Read_Only_Series(MAP_PAIRLIST(map));
+        Fail_If_Read_Only_Flex(MAP_PAIRLIST(map));
 
         Reset_Array(MAP_PAIRLIST(map));
 
         // !!! Review: should the space for the hashlist be reclaimed?  This
         // clears all the indices but doesn't scale back the size.
         //
-        Clear_Series(MAP_HASHLIST(map));
+        Clear_Flex(MAP_HASHLIST(map));
 
         return Init_Map(OUT, map);
 

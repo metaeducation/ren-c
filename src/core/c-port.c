@@ -286,7 +286,7 @@ void Sieve_Ports(Array* ports)
                 Find_In_Array_Simple(Cell_Array(waked), 0, val)
                 == VAL_LEN_HEAD(waked) // `=len` means not found
             ) {
-                Remove_Series(ports, n, 1);
+                Remove_Flex(ports, n, 1);
                 continue;
             }
         }
@@ -372,11 +372,11 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
         ++code;
     }
 
-    TERM_ARRAY_LEN(code_arr, code - Array_Head(code_arr));
-    Manage_Series(code_arr);
+    Term_Array_Len(code_arr, code - Array_Head(code_arr));
+    Manage_Flex(code_arr);
 
     DECLARE_VALUE (first);
-    TERM_ARRAY_LEN(path_arr, path - Array_Head(path_arr));
+    Term_Array_Len(path_arr, path - Array_Head(path_arr));
     Init_Path(first, path_arr);
     SET_VAL_FLAG(first, VALUE_FLAG_EVAL_FLIP); // make the PATH! invoke action
 
@@ -472,7 +472,7 @@ post_process_output:
             if (not Is_Binary(OUT))
                 fail ("/STRING or /LINES used on a non-BINARY!/STRING! read");
 
-            Series* decoded = Make_Sized_String_UTF8(
+            Flex* decoded = Make_Sized_String_UTF8(
                 cs_cast(Cell_Binary_At(OUT)),
                 VAL_LEN_AT(OUT)
             );

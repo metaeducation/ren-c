@@ -66,7 +66,7 @@
 #endif
 
 INLINE Array* CTX_VARLIST(REBCTX* c) {
-    assert(GET_SER_FLAG(c, ARRAY_FLAG_VARLIST));
+    assert(Get_Flex_Flag(c, ARRAY_FLAG_VARLIST));
     return cast(Array*, c);
 }
 
@@ -77,13 +77,13 @@ INLINE Array* CTX_VARLIST(REBCTX* c) {
 //
 INLINE Value* CTX_ARCHETYPE(REBCTX *c) {
     Array* varlist = CTX_VARLIST(c);
-    if (not IS_SER_DYNAMIC(varlist))
+    if (not Is_Flex_Dynamic(varlist))
         return cast(Value*, &varlist->content.fixed);
 
     // If a context has its data freed, it must be converted into non-dynamic
     // form if it wasn't already (e.g. if it wasn't a FRAME!)
     //
-    assert(NOT_SER_INFO(varlist, SERIES_INFO_INACCESSIBLE));
+    assert(Not_Flex_Info(varlist, FLEX_INFO_INACCESSIBLE));
     return cast(Value*, varlist->content.dynamic.data);
 }
 
@@ -92,7 +92,7 @@ INLINE Value* CTX_ARCHETYPE(REBCTX *c) {
 //
 INLINE Array* CTX_KEYLIST(REBCTX *c) {
     if (Is_Node_A_Stub(LINK(c).keysource))
-        return ARR(LINK(c).keysource);  // not a Level, so use keylist
+        return cast_Array(LINK(c).keysource);  // not a Level, so use keylist
 
     // If the context in question is a FRAME! value, then the ->phase
     // of the frame presents the "view" of which keys should be visible at
@@ -108,12 +108,12 @@ INLINE Array* CTX_KEYLIST(REBCTX *c) {
 }
 
 INLINE void INIT_CTX_KEYLIST_SHARED(REBCTX *c, Array* keylist) {
-    SET_SER_INFO(keylist, SERIES_INFO_SHARED_KEYLIST);
+    Set_Flex_Info(keylist, FLEX_INFO_SHARED_KEYLIST);
     LINK(c).keysource = keylist;
 }
 
 INLINE void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, Array* keylist) {
-    assert(NOT_SER_INFO(keylist, SERIES_INFO_SHARED_KEYLIST));
+    assert(Not_Flex_Info(keylist, FLEX_INFO_SHARED_KEYLIST));
     LINK(c).keysource = keylist;
 }
 
@@ -126,7 +126,7 @@ INLINE void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, Array* keylist) {
 // requested in context creation).
 //
 #define CTX_LEN(c) \
-    (cast(Series*, (c))->content.dynamic.len - 1) // len > 1 => dynamic
+    (cast(Flex*, (c))->content.dynamic.len - 1) // len > 1 => dynamic
 
 #define CTX_ROOTKEY(c) \
     cast(Value*, CTX_KEYLIST(c)->content.dynamic.data) // len > 1
@@ -137,14 +137,14 @@ INLINE void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, Array* keylist) {
 // The keys and vars are accessed by positive integers starting at 1
 //
 #define CTX_KEYS_HEAD(c) \
-    Series_At(Value, CTX_KEYLIST(c), 1)  // a CTX_KEY is always "specific"
+    Flex_At(Value, CTX_KEYLIST(c), 1)  // a CTX_KEY is always "specific"
 
 INLINE Level* CTX_LEVEL_IF_ON_STACK(REBCTX *c) {
     Node* keysource = LINK(c).keysource;
     if (Is_Node_A_Stub(keysource))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
 
-    assert(NOT_SER_INFO(CTX_VARLIST(c), SERIES_INFO_INACCESSIBLE));
+    assert(Not_Flex_Info(CTX_VARLIST(c), FLEX_INFO_INACCESSIBLE));
     assert(Is_Frame(CTX_ARCHETYPE(c)));
 
     Level* L = LVL(keysource);
@@ -160,21 +160,21 @@ INLINE Level* CTX_LEVEL_MAY_FAIL(REBCTX *c) {
 }
 
 #define CTX_VARS_HEAD(c) \
-    Series_At(Value, CTX_VARLIST(c), 1)  // may fail() if inaccessible
+    Flex_At(Value, CTX_VARLIST(c), 1)  // may fail() if inaccessible
 
 INLINE Value* CTX_KEY(REBCTX *c, REBLEN n) {
-    assert(NOT_SER_FLAG(c, SERIES_INFO_INACCESSIBLE));
-    assert(GET_SER_FLAG(c, ARRAY_FLAG_VARLIST));
+    assert(Not_Flex_Flag(c, FLEX_INFO_INACCESSIBLE));
+    assert(Get_Flex_Flag(c, ARRAY_FLAG_VARLIST));
     assert(n != 0 and n <= CTX_LEN(c));
-    return cast(Value*, cast(Series*, CTX_KEYLIST(c))->content.dynamic.data)
+    return cast(Value*, cast(Flex*, CTX_KEYLIST(c))->content.dynamic.data)
         + n;
 }
 
 INLINE Value* CTX_VAR(REBCTX *c, REBLEN n) {
-    assert(NOT_SER_FLAG(c, SERIES_INFO_INACCESSIBLE));
-    assert(GET_SER_FLAG(c, ARRAY_FLAG_VARLIST));
+    assert(Not_Flex_Flag(c, FLEX_INFO_INACCESSIBLE));
+    assert(Get_Flex_Flag(c, ARRAY_FLAG_VARLIST));
     assert(n != 0 and n <= CTX_LEN(c));
-    return cast(Value*, cast(Series*, c)->content.dynamic.data) + n;
+    return cast(Value*, cast(Flex*, c)->content.dynamic.data) + n;
 }
 
 INLINE Symbol* CTX_KEY_SPELLING(REBCTX *c, REBLEN n) {
@@ -190,11 +190,11 @@ INLINE Option(SymId) CTX_KEY_SYM(REBCTX *c, REBLEN n) {
 }
 
 #define FAIL_IF_READ_ONLY_CONTEXT(c) \
-    Fail_If_Read_Only_Series(CTX_VARLIST(c))
+    Fail_If_Read_Only_Flex(CTX_VARLIST(c))
 
 INLINE void FREE_CONTEXT(REBCTX *c) {
-    Free_Unmanaged_Series(CTX_KEYLIST(c));
-    Free_Unmanaged_Series(CTX_VARLIST(c));
+    Free_Unmanaged_Flex(CTX_KEYLIST(c));
+    Free_Unmanaged_Flex(CTX_VARLIST(c));
 }
 
 
@@ -210,7 +210,7 @@ INLINE void FREE_CONTEXT(REBCTX *c) {
 //
 
 INLINE void FAIL_IF_INACCESSIBLE_CTX(REBCTX *c) {
-    if (GET_SER_INFO(c, SERIES_INFO_INACCESSIBLE)) {
+    if (Get_Flex_Info(c, FLEX_INFO_INACCESSIBLE)) {
         if (CTX_TYPE(c) == REB_FRAME)
             fail (Error_Do_Expired_Frame_Raw()); // !!! different error?
         fail (Error_Series_Data_Freed_Raw());
@@ -270,8 +270,8 @@ INLINE Value* Init_Any_Context(
     Extra_Init_Any_Context_Checks_Debug(kind, c);
   #endif
     UNUSED(kind);
-    assert(Is_Series_Managed(CTX_VARLIST(c)));
-    assert(Is_Series_Managed(CTX_KEYLIST(c)));
+    assert(Is_Flex_Managed(CTX_VARLIST(c)));
+    assert(Is_Flex_Managed(CTX_KEYLIST(c)));
     return Copy_Cell(out, CTX_ARCHETYPE(c));
 }
 
@@ -308,7 +308,7 @@ INLINE Value* Init_Any_Context(
 // careful not to do any evaluations or trigger GC until it's well formed)
 //
 #define Alloc_Context(kind,capacity) \
-    Alloc_Context_Core((kind), (capacity), SERIES_FLAGS_NONE)
+    Alloc_Context_Core((kind), (capacity), FLEX_FLAGS_NONE)
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -326,7 +326,7 @@ INLINE void Deep_Freeze_Context(REBCTX *c) {
 }
 
 INLINE bool Is_Context_Deeply_Frozen(REBCTX *c) {
-    return GET_SER_INFO(c, SERIES_INFO_FROZEN);
+    return Get_Flex_Info(c, FLEX_INFO_FROZEN);
 }
 
 
@@ -403,15 +403,15 @@ INLINE bool Is_Native_Port_Actor(const Value* actor) {
 // instead of needing to push a redundant run of stack-based memory cells.
 //
 INLINE REBCTX *Steal_Context_Vars(REBCTX *c, Node* keysource) {
-    Series* stub = c;
+    Flex* stub = c;
 
     // Rather than memcpy() and touch up the header and info to remove
-    // SERIES_INFO_HOLD put on by Enter_Native(), or NODE_FLAG_MANAGED,
+    // FLEX_INFO_HOLD put on by Enter_Native(), or NODE_FLAG_MANAGED,
     // etc.--use constant assignments and only copy the remaining fields.
     //
-    Series* copy = Alloc_Series_Node(
+    Flex* copy = Alloc_Flex_Stub(
         SERIES_MASK_CONTEXT
-            | SERIES_FLAG_FIXED_SIZE
+            | FLEX_FLAG_FIXED_SIZE
     );
     copy->info = Endlike_Header(
         FLAG_WIDE_BYTE_OR_0(0) // implicit termination, and indicates array
@@ -436,7 +436,7 @@ INLINE REBCTX *Steal_Context_Vars(REBCTX *c, Node* keysource) {
     // after this returns (hence they need to cache the varlist first).
     //
     stub->info = Endlike_Header(
-        SERIES_INFO_INACCESSIBLE // args memory now "stolen" by copy
+        FLEX_INFO_INACCESSIBLE // args memory now "stolen" by copy
             | FLAG_WIDE_BYTE_OR_0(0) // width byte is 0 for array series
             | FLAG_LEN_BYTE_OR_255(1) // not dynamic any more, new len is 1
     );
@@ -445,11 +445,11 @@ INLINE REBCTX *Steal_Context_Vars(REBCTX *c, Node* keysource) {
     single->header.bits =
         NODE_FLAG_NODE | NODE_FLAG_CELL | FLAG_KIND_BYTE(REB_FRAME);
     INIT_BINDING(single, VAL_BINDING(rootvar));
-    single->payload.any_context.varlist = ARR(stub);
+    single->payload.any_context.varlist = cast_Array(stub);
     Corrupt_Pointer_If_Debug(single->payload.any_context.phase);
     /* single->payload.any_context.phase = L->original; */ // !!! needed?
 
-    rootvar->payload.any_context.varlist = ARR(copy);
+    rootvar->payload.any_context.varlist = cast_Array(copy);
 
     // Disassociate the stub from the frame, by degrading the link field
     // to a keylist.  !!! Review why this was needed, vs just nullptr

@@ -98,7 +98,7 @@ REBLEN Modify_Array(
         if (not tail_newline) {
             Cell* tail_cell = Cell_Array_At(src_val) + ilen;
             if (IS_END(tail_cell)) {
-                tail_newline = GET_SER_FLAG(
+                tail_newline = Get_Flex_Flag(
                     Cell_Array(src_val),
                     ARRAY_FLAG_TAIL_NEWLINE
                 );
@@ -144,19 +144,19 @@ REBLEN Modify_Array(
     //
     bool head_newline =
         (dst_idx == Array_Len(dst_arr))
-        and GET_SER_FLAG(dst_arr, ARRAY_FLAG_TAIL_NEWLINE);
+        and Get_Flex_Flag(dst_arr, ARRAY_FLAG_TAIL_NEWLINE);
 
     if (op != SYM_CHANGE) {
         // Always expand dst_arr for INSERT and APPEND actions:
-        Expand_Series(dst_arr, dst_idx, size);
+        Expand_Flex(dst_arr, dst_idx, size);
     }
     else {
         if (size > dst_len)
-            Expand_Series(dst_arr, dst_idx, size - dst_len);
+            Expand_Flex(dst_arr, dst_idx, size - dst_len);
         else if (size < dst_len and (flags & AM_PART))
-            Remove_Series(dst_arr, dst_idx, dst_len - size);
+            Remove_Flex(dst_arr, dst_idx, dst_len - size);
         else if (size + dst_idx > tail) {
-            Expand_Series_Tail(dst_arr, size - (tail - dst_idx));
+            Expand_Flex_Tail(dst_arr, size - (tail - dst_idx));
         }
     }
 
@@ -181,7 +181,7 @@ REBLEN Modify_Array(
                 // The array flag is not cleared until the loop actually
                 // makes a value that will carry on the bit.
                 //
-                CLEAR_SER_FLAG(dst_arr, ARRAY_FLAG_TAIL_NEWLINE);
+                Clear_Flex_Flag(dst_arr, ARRAY_FLAG_TAIL_NEWLINE);
                 continue;
             }
 
@@ -199,7 +199,7 @@ REBLEN Modify_Array(
     //
     if (tail_newline) {
         if (dst_idx == Array_Len(dst_arr))
-            SET_SER_FLAG(dst_arr, ARRAY_FLAG_TAIL_NEWLINE);
+            Set_Flex_Flag(dst_arr, ARRAY_FLAG_TAIL_NEWLINE);
         else
             SET_VAL_FLAG(Array_At(dst_arr, dst_idx), VALUE_FLAG_NEWLINE_BEFORE);
     }
@@ -260,7 +260,7 @@ REBLEN Modify_Binary(
     if (Is_Void(src_val) || limit == 0 || dups < 0)
         return op == SYM_APPEND ? 0 : dst_idx;
 
-    REBLEN tail = Series_Len(dst_ser);
+    REBLEN tail = Flex_Len(dst_ser);
     if (op == SYM_APPEND || dst_idx > tail)
         dst_idx = tail;
 
@@ -294,7 +294,7 @@ REBLEN Modify_Binary(
         // which RFC you consider "the UTF-8", max size is either 4 or 6.
         //
         src_ser = Make_Blob(6);
-        Set_Series_Len(
+        Set_Flex_Len(
             src_ser,
             Encode_UTF8_Char(Blob_Head(src_ser), VAL_CHAR(src_val))
         );
@@ -319,7 +319,7 @@ REBLEN Modify_Binary(
 
     // Use either new src or the one that was passed:
     if (src_ser != nullptr) {
-        src_len = Series_Len(src_ser);
+        src_len = Flex_Len(src_ser);
     }
     else {
         src_ser = Cell_Blob(src_val);
@@ -349,14 +349,14 @@ REBLEN Modify_Binary(
 
     if (op != SYM_CHANGE) {
         // Always expand dst_ser for INSERT and APPEND actions:
-        Expand_Series(dst_ser, dst_idx, size);
+        Expand_Flex(dst_ser, dst_idx, size);
     } else {
         if (size > dst_len)
-            Expand_Series(dst_ser, dst_idx, size - dst_len);
+            Expand_Flex(dst_ser, dst_idx, size - dst_len);
         else if (size < dst_len && (flags & AM_PART))
-            Remove_Series(dst_ser, dst_idx, dst_len - size);
+            Remove_Flex(dst_ser, dst_idx, dst_len - size);
         else if (size + dst_idx > tail) {
-            Expand_Series_Tail(dst_ser, size - (tail - dst_idx));
+            Expand_Flex_Tail(dst_ser, size - (tail - dst_idx));
         }
     }
 
@@ -370,10 +370,10 @@ REBLEN Modify_Binary(
         dst_idx += src_len;
     }
 
-    TERM_SEQUENCE(dst_ser);
+    Term_Non_Array_Flex(dst_ser);
 
     if (needs_free) // didn't use original data as-is
-        Free_Unmanaged_Series(src_ser);
+        Free_Unmanaged_Flex(src_ser);
 
     return (op == SYM_APPEND) ? 0 : dst_idx;
 }
@@ -419,7 +419,7 @@ REBLEN Modify_String(
     if (Is_Void(src_val) || limit == 0 || dups < 0)
         return op == SYM_APPEND ? 0 : dst_idx;
 
-    REBLEN tail = Series_Len(dst_ser);
+    REBLEN tail = Flex_Len(dst_ser);
     if (op == SYM_APPEND or dst_idx > tail)
         dst_idx = tail;
 
@@ -431,13 +431,13 @@ REBLEN Modify_String(
     bool needs_free;
     if (Is_Char(src_val)) {
         src_ser = Make_Ser_Codepoint(VAL_CHAR(src_val));
-        src_len = Series_Len(src_ser);
+        src_len = Flex_Len(src_ser);
 
         needs_free = true;
     }
     else if (Is_Block(src_val)) {
         src_ser = Form_Tight_Block(src_val);
-        src_len = Series_Len(src_ser);
+        src_len = Flex_Len(src_ser);
 
         needs_free = true;
     }
@@ -453,7 +453,7 @@ REBLEN Modify_String(
     }
     else {
         src_ser = Copy_Form_Value(src_val, 0);
-        src_len = Series_Len(src_ser);
+        src_len = Flex_Len(src_ser);
 
         needs_free = true;
     }
@@ -486,15 +486,15 @@ REBLEN Modify_String(
 
     if (op != SYM_CHANGE) {
         // Always expand dst_ser for INSERT and APPEND actions:
-        Expand_Series(dst_ser, dst_idx, size);
+        Expand_Flex(dst_ser, dst_idx, size);
     }
     else {
         if (size > dst_len)
-            Expand_Series(dst_ser, dst_idx, size - dst_len);
+            Expand_Flex(dst_ser, dst_idx, size - dst_len);
         else if (size < dst_len && (flags & AM_PART))
-            Remove_Series(dst_ser, dst_idx, dst_len - size);
+            Remove_Flex(dst_ser, dst_idx, dst_len - size);
         else if (size + dst_idx > tail) {
-            Expand_Series_Tail(dst_ser, size - (tail - dst_idx));
+            Expand_Flex_Tail(dst_ser, size - (tail - dst_idx));
         }
     }
 
@@ -509,10 +509,10 @@ REBLEN Modify_String(
         dst_idx += src_len;
     }
 
-    TERM_SEQUENCE(dst_ser);
+    Term_Non_Array_Flex(dst_ser);
 
     if (needs_free) // didn't use original data as-is
-        Free_Unmanaged_Series(src_ser);
+        Free_Unmanaged_Flex(src_ser);
 
     return (op == SYM_APPEND) ? 0 : dst_idx;
 }

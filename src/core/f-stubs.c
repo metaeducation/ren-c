@@ -287,11 +287,11 @@ REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 Value* Init_Any_Series_At_Core(
     Cell* out, // allows Cell slot as input, but will be filled w/Value
     enum Reb_Kind type,
-    Series* series,
+    Flex* series,
     REBLEN index,
     Stub* binding
 ) {
-    Force_Series_Managed(series);
+    Force_Flex_Managed(series);
 
     // !!! Binaries are zero-terminated in modern Ren-C, so they can alias
     // as TEXT! if they are valid UTF-8.  That is not possible in this older
@@ -301,7 +301,7 @@ Value* Init_Any_Series_At_Core(
     //     Make a binary string series. For byte, C, and UTF8 strings.
     //     Add 1 extra for terminator.
     //
-    Assert_Series_Term(series);
+    Assert_Flex_Term(series);
 
     RESET_CELL(out, type);
     out->payload.any_series.series = series;
@@ -310,10 +310,10 @@ Value* Init_Any_Series_At_Core(
 
   #if !defined(NDEBUG)
     if (ANY_STRING(out)) {
-        if (Series_Wide(series) != 2)
+        if (Flex_Wide(series) != 2)
             panic(series);
     } else if (Is_Binary(out)) {
-        if (Series_Wide(series) != 1)
+        if (Flex_Wide(series) != 1)
             panic(series);
     }
   #endif
@@ -357,7 +357,7 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
 
     Array* varlist = CTX_VARLIST(c);
     Array* keylist = CTX_KEYLIST(c);
-    assert(NOT_SER_FLAG(keylist, ARRAY_FLAG_FILE_LINE));
+    assert(Not_Flex_Flag(keylist, ARRAY_FLAG_FILE_LINE));
 
     assert(
         not MISC(varlist).meta
@@ -382,7 +382,7 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
     // Keylists are uniformly managed, or certain routines would return
     // "sometimes managed, sometimes not" keylists...a bad invariant.
     //
-    Assert_Series_Managed(CTX_KEYLIST(c));
+    Assert_Flex_Managed(CTX_KEYLIST(c));
 }
 
 
@@ -398,7 +398,7 @@ void Extra_Init_Action_Checks_Debug(REBACT *a) {
     assert(VAL_ACTION(archetype) == a);
 
     Array* paramlist = ACT_PARAMLIST(a);
-    assert(NOT_SER_FLAG(paramlist, ARRAY_FLAG_FILE_LINE));
+    assert(Not_Flex_Flag(paramlist, ARRAY_FLAG_FILE_LINE));
 
     // !!! Currently only a context can serve as the "meta" information,
     // though the interface may expand.
@@ -435,7 +435,7 @@ static REBLEN Part_Len_Core(
         assert(ANY_SERIES(limit)); // must be same series (same series, even)
         if (
             VAL_TYPE(series) != VAL_TYPE(limit) // !!! should AS be tolerated?
-            or VAL_SERIES(series) != VAL_SERIES(limit)
+            or Cell_Flex(series) != Cell_Flex(limit)
         ){
             fail (Error_Invalid_Part_Raw(limit));
         }

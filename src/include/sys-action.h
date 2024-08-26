@@ -106,12 +106,12 @@
 
 
 INLINE Array* ACT_PARAMLIST(REBACT *a) {
-    assert(GET_SER_FLAG(a, ARRAY_FLAG_PARAMLIST));
+    assert(Get_Flex_Flag(a, ARRAY_FLAG_PARAMLIST));
     return cast(Array*, a);
 }
 
 #define ACT_ARCHETYPE(a) \
-    cast(Value*, cast(Series*, ACT_PARAMLIST(a))->content.dynamic.data)
+    cast(Value*, cast(Flex*, ACT_PARAMLIST(a))->content.dynamic.data)
 
 // Functions hold their flags in their canon value, some of which are cached
 // flags put there during Make_Action().
@@ -136,11 +136,11 @@ INLINE Array* ACT_PARAMLIST(REBACT *a) {
 
 INLINE Value* ACT_PARAM(REBACT *a, REBLEN n) {
     assert(n != 0 and n < Array_Len(ACT_PARAMLIST(a)));
-    return Series_At(Value, ACT_PARAMLIST(a), n);
+    return Flex_At(Value, ACT_PARAMLIST(a), n);
 }
 
 #define ACT_NUM_PARAMS(a) \
-    (cast(Series*, ACT_PARAMLIST(a))->content.dynamic.len - 1)
+    (cast(Flex*, ACT_PARAMLIST(a))->content.dynamic.len - 1)
 
 #define ACT_META(a) \
     MISC(a).meta
@@ -165,7 +165,7 @@ INLINE Value* ACT_PARAM(REBACT *a, REBLEN n) {
 INLINE REBCTX *ACT_EXEMPLAR(REBACT *a) {
     Array* details = ACT_ARCHETYPE(a)->payload.action.details;
     Array* specialty = LINK(details).specialty;
-    if (GET_SER_FLAG(specialty, ARRAY_FLAG_VARLIST))
+    if (Get_Flex_Flag(specialty, ARRAY_FLAG_VARLIST))
         return CTX(specialty);
 
     return nullptr;
@@ -261,8 +261,8 @@ INLINE void Clear_Action_Cached_Flags(Cell *v) {
 
 INLINE REBACT *VAL_ACTION(const Cell* v) {
     assert(Is_Action(v));
-    Series* s = v->payload.action.paramlist;
-    if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE))
+    Flex* s = v->payload.action.paramlist;
+    if (Get_Flex_Info(s, FLEX_INFO_INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return ACT(s);
 }
@@ -317,7 +317,7 @@ INLINE Value* Init_Action_Unbound(
   #if !defined(NDEBUG)
     Extra_Init_Action_Checks_Debug(a);
   #endif
-    Force_Series_Managed(ACT_PARAMLIST(a));
+    Force_Flex_Managed(ACT_PARAMLIST(a));
     Copy_Cell(out, ACT_ARCHETYPE(a));
     assert(VAL_BINDING(out) == UNBOUND);
     return KNOWN(out);
@@ -331,7 +331,7 @@ INLINE Value* Init_Action_Maybe_Bound(
   #if !defined(NDEBUG)
     Extra_Init_Action_Checks_Debug(a);
   #endif
-    Force_Series_Managed(ACT_PARAMLIST(a));
+    Force_Flex_Managed(ACT_PARAMLIST(a));
     Copy_Cell(out, ACT_ARCHETYPE(a));
     assert(VAL_BINDING(out) == UNBOUND);
     INIT_BINDING(out, binding);

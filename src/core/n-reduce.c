@@ -99,7 +99,7 @@ DECLARE_NATIVE(reduce)
             return R_THROWN;
 
         REBFLGS pop_flags = NODE_FLAG_MANAGED | ARRAY_FLAG_FILE_LINE;
-        if (GET_SER_FLAG(Cell_Array(value), ARRAY_FLAG_TAIL_NEWLINE))
+        if (Get_Flex_Flag(Cell_Array(value), ARRAY_FLAG_TAIL_NEWLINE))
             pop_flags |= ARRAY_FLAG_TAIL_NEWLINE;
 
         return Init_Any_Array(
@@ -281,7 +281,7 @@ bool Compose_To_Stack_Throws(
             }
 
             REBFLGS flags = NODE_FLAG_MANAGED | ARRAY_FLAG_FILE_LINE;
-            if (GET_SER_FLAG(Cell_Array(L->value), ARRAY_FLAG_TAIL_NEWLINE))
+            if (Get_Flex_Flag(Cell_Array(L->value), ARRAY_FLAG_TAIL_NEWLINE))
                 flags |= ARRAY_FLAG_TAIL_NEWLINE;
 
             Array* popped = Pop_Stack_Values_Core(deep_base, flags);
@@ -346,7 +346,7 @@ DECLARE_NATIVE(compose)
     // flags.  Borrow the one for the tail directly from the input Array.
     //
     REBFLGS flags = NODE_FLAG_MANAGED | ARRAY_FLAG_FILE_LINE;
-    if (GET_SER_FLAG(Cell_Array(ARG(value)), ARRAY_FLAG_TAIL_NEWLINE))
+    if (Get_Flex_Flag(Cell_Array(ARG(value)), ARRAY_FLAG_TAIL_NEWLINE))
         flags |= ARRAY_FLAG_TAIL_NEWLINE;
 
     return Init_Any_Array(

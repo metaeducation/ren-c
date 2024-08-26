@@ -166,18 +166,18 @@ DECLARE_NATIVE(recycle)
       #if defined(NDEBUG)
         fail (Error_Debug_Only_Raw());
       #else
-        Series* sweeplist = Make_Series(100, sizeof(Node*));
+        Flex* sweeplist = Make_Flex(100, sizeof(Node*));
         count = Recycle_Core(false, sweeplist);
-        assert(count == Series_Len(sweeplist));
+        assert(count == Flex_Len(sweeplist));
 
         REBLEN index = 0;
         for (index = 0; index < count; ++index) {
-            Node* node = *Series_At(Node*, sweeplist, index);
+            Node* node = *Flex_At(Node*, sweeplist, index);
             PROBE(node);
             UNUSED(node);
         }
 
-        Free_Unmanaged_Series(sweeplist);
+        Free_Unmanaged_Flex(sweeplist);
 
         REBLEN recount = Recycle_Core(false, nullptr);
         assert(recount == count);
@@ -237,7 +237,7 @@ DECLARE_NATIVE(check)
     // !!! Should call generic ASSERT_VALUE macro with more cases
     //
     if (ANY_SERIES(value)) {
-        Assert_Series(VAL_SERIES(value));
+        Assert_Flex(Cell_Flex(value));
     }
     else if (ANY_CONTEXT(value)) {
         ASSERT_CONTEXT(VAL_CONTEXT(value));

@@ -681,7 +681,7 @@ DEVICE_CMD Accept_Socket(REBREQ *req)
 
     REBCTX *listener = CTX(req->port_ctx);
     REBCTX *connection = Copy_Context_Shallow_Managed(listener);
-    PUSH_GC_GUARD(connection);
+    Push_GC_Guard(connection);
 
     Init_Nulled(CTX_VAR(connection, STD_PORT_DATA));  // just to be sure.
     Init_Nulled(CTX_VAR(connection, STD_PORT_STATE));  // just to be sure.
@@ -712,7 +712,7 @@ DEVICE_CMD Accept_Socket(REBREQ *req)
         CTX_ARCHETYPE(connection)  // will GC protect during run
     );
 
-    DROP_GC_GUARD(connection);
+    Drop_GC_Guard(connection);
 
     // We've added the new PORT! for the connection, but the client has to
     // find out about it and get an `accept` event.  Signal that.

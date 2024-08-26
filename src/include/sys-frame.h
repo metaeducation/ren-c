@@ -131,12 +131,12 @@ INLINE Option(String*) File_Of_Level(Level* L) {
     if (not L->source->array)
         return nullptr;
 
-    if (NOT_SER_FLAG(L->source->array, ARRAY_FLAG_FILE_LINE))
+    if (Not_Flex_Flag(L->source->array, ARRAY_FLAG_FILE_LINE))
         return nullptr;
 
     Option(String*) file = LINK(L->source->array).file;
     if (file)
-        assert(Is_Series_Ucs2(unwrap(file)));
+        assert(Is_Flex_Ucs2(unwrap(file)));
 
     return try_unwrap(file);
 }
@@ -145,7 +145,7 @@ INLINE int LVL_LINE(Level* L) {
     if (not L->source->array)
         return 0;
 
-    if (NOT_SER_FLAG(L->source->array, ARRAY_FLAG_FILE_LINE))
+    if (Not_Flex_Flag(L->source->array, ARRAY_FLAG_FILE_LINE))
         return 0;
 
     return MISC(L->source->array).line;
@@ -160,7 +160,7 @@ INLINE int LVL_LINE(Level* L) {
 // ID ran.  Consider when reviewing the future of ACTION!.
 //
 #define Level_Num_Args(L) \
-    (cast(Series*, (L)->varlist)->content.dynamic.len - 1) // minus rootvar
+    (cast(Flex*, (L)->varlist)->content.dynamic.len - 1) // minus rootvar
 
 #define Level_Spare(L) \
     cast(Value*, &(L)->spare)
@@ -399,7 +399,7 @@ INLINE void SET_FRAME_VALUE(Level* L, const Cell* value) {
 // This way there is no test and only natives pay the cost of flag setting.
 //
 INLINE void Enter_Native(Level* L) {
-    SET_SER_INFO(L->varlist, SERIES_INFO_HOLD); // may or may not be managed
+    Set_Flex_Info(L->varlist, FLEX_INFO_HOLD); // may or may not be managed
 }
 
 
@@ -412,7 +412,7 @@ INLINE void Begin_Action(
     L->original = LVL_PHASE_OR_DUMMY(L);
 
     assert(Is_Pointer_Corrupt_Debug(L->opt_label)); // only valid w/REB_ACTION
-    assert(not opt_label or GET_SER_FLAG(opt_label, SERIES_FLAG_UTF8));
+    assert(not opt_label or Get_Flex_Flag(opt_label, FLEX_FLAG_UTF8));
     L->opt_label = opt_label;
   #if defined(DEBUG_FRAME_LABELS) // helpful for looking in the debugger
     L->label_utf8 = cast(const char*, Frame_Label_Or_Anonymous_UTF8(L));
@@ -457,11 +457,11 @@ INLINE void Push_Action(
     // !!! Note: Should pick "smart" size when allocating varlist storage due
     // to potential reuse--but use exact size for *this* action, for now.
     //
-    Series* s;
+    Flex* s;
     if (not L->varlist) { // usually means first action call in the Level
-        s = Alloc_Series_Node(
+        s = Alloc_Flex_Stub(
             SERIES_MASK_CONTEXT
-                | SERIES_FLAG_FIXED_SIZE // FRAME!s don't expand ATM
+                | FLEX_FLAG_FIXED_SIZE // FRAME!s don't expand ATM
         );
         s->info = Endlike_Header(
             FLAG_WIDE_BYTE_OR_0(0) // signals array, also implicit terminator
@@ -469,21 +469,21 @@ INLINE void Push_Action(
         );
         s->link_private.keysource = NOD(L); // maps varlist back to f
         s->misc_private.meta = nullptr; // GC will sees this
-        L->varlist = ARR(s);
+        L->varlist = cast_Array(s);
     }
     else {
         s = L->varlist;
         if (s->content.dynamic.rest >= num_args + 1 + 1) // +roovar, +end
             goto sufficient_allocation;
 
-        //assert(Series_Bias(s) == 0);
-        Free_Unbiased_Series_Data(
+        //assert(Flex_Bias(s) == 0);
+        Free_Unbiased_Flex_Data(
             s->content.dynamic.data,
-            SER_TOTAL(s)
+            Flex_Total(s)
         );
     }
 
-    if (not Did_Series_Data_Alloc(s, num_args + 1 + 1)) // +rootvar, +end
+    if (not Did_Flex_Data_Alloc(s, num_args + 1 + 1)) // +rootvar, +end
         fail ("Out of memory in Push_Action()");
 
     L->rootvar = cast(Value*, s->content.dynamic.data);
@@ -533,28 +533,28 @@ INLINE void Push_Action(
 
     L->u.defer.arg = nullptr;
 
-    assert(NOT_SER_FLAG(L->varlist, NODE_FLAG_MANAGED));
-    assert(NOT_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE));
+    assert(Not_Flex_Flag(L->varlist, NODE_FLAG_MANAGED));
+    assert(Not_Flex_Info(L->varlist, FLEX_INFO_INACCESSIBLE));
 }
 
 
 INLINE void Drop_Action(Level* L) {
-    assert(NOT_SER_INFO(L->varlist, FRAME_INFO_FAILED));
+    assert(Not_Flex_Info(L->varlist, FRAME_INFO_FAILED));
 
     assert(
         not L->opt_label
-        or GET_SER_FLAG(L->opt_label, SERIES_FLAG_UTF8)
+        or Get_Flex_Flag(L->opt_label, FLEX_FLAG_UTF8)
     );
 
     if (not (L->flags.bits & DO_FLAG_FULFILLING_ARG))
         L->flags.bits &= ~DO_FLAG_BARRIER_HIT;
 
     assert(
-        GET_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE)
+        Get_Flex_Info(L->varlist, FLEX_INFO_INACCESSIBLE)
         or LINK(L->varlist).keysource == L
     );
 
-    if (GET_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE)) {
+    if (Get_Flex_Info(L->varlist, FLEX_INFO_INACCESSIBLE)) {
         //
         // If something like Encloser_Dispatcher() runs, it might steal the
         // variables from a context to give them to the user, leaving behind
@@ -562,17 +562,17 @@ INLINE void Drop_Action(Level* L) {
         // therefore useless.  It served a purpose by being non-null during
         // the call, however, up to this moment.
         //
-        if (GET_SER_FLAG(L->varlist, NODE_FLAG_MANAGED))
+        if (Get_Flex_Flag(L->varlist, NODE_FLAG_MANAGED))
             L->varlist = nullptr; // references exist, let a new one alloc
         else {
             // This node could be reused vs. calling Alloc_Pooled() on the next
             // action invocation...but easier for the moment to let it go.
             //
-            Free_Pooled(SER_POOL, L->varlist);
+            Free_Pooled(STUB_POOL, L->varlist);
             L->varlist = nullptr;
         }
     }
-    else if (GET_SER_FLAG(L->varlist, NODE_FLAG_MANAGED)) {
+    else if (Get_Flex_Flag(L->varlist, NODE_FLAG_MANAGED)) {
         //
         // The varlist wound up getting referenced in a cell that will outlive
         // this Drop_Action().  The pointer needed to stay working up until
@@ -591,7 +591,7 @@ INLINE void Drop_Action(Level* L) {
                 L->original  // degrade keysource from L
             )
         );
-        assert(NOT_SER_FLAG(L->varlist, NODE_FLAG_MANAGED));
+        assert(Not_Flex_Flag(L->varlist, NODE_FLAG_MANAGED));
         LINK(L->varlist).keysource = L;  // carries NODE_FLAG_CELL
     }
     else {
@@ -601,9 +601,9 @@ INLINE void Drop_Action(Level* L) {
         // But no series bits we didn't set should be set...and right now,
         // only Enter_Native() sets HOLD.  Clear that.
         //
-        CLEAR_SER_INFO(L->varlist, SERIES_INFO_HOLD);
+        Clear_Flex_Info(L->varlist, FLEX_INFO_HOLD);
         assert(0 == (L->varlist->info.bits & ~( // <- note bitwise not
-            SERIES_INFO_0_IS_TRUE // parallels NODE_FLAG_NODE
+            FLEX_INFO_0_IS_TRUE // parallels NODE_FLAG_NODE
             | FLAG_WIDE_BYTE_OR_0(0) // don't mask out wide (0 for arrays))
             | FLAG_LEN_BYTE_OR_255(255) // mask out non-dynamic-len (dynamic)
         )));
@@ -611,8 +611,8 @@ INLINE void Drop_Action(Level* L) {
 
   #if !defined(NDEBUG)
     if (L->varlist) {
-        assert(NOT_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE));
-        assert(NOT_SER_FLAG(L->varlist, NODE_FLAG_MANAGED));
+        assert(Not_Flex_Info(L->varlist, FLEX_INFO_INACCESSIBLE));
+        assert(Not_Flex_Flag(L->varlist, NODE_FLAG_MANAGED));
 
         Value* rootvar = cast(Value*, Array_Head(L->varlist));
         assert(Is_Frame(rootvar));
@@ -637,7 +637,7 @@ INLINE void Drop_Action(Level* L) {
 INLINE REBCTX *Context_For_Level_May_Manage(Level* L)
 {
     assert(not Is_Action_Level_Fulfilling(L));
-    SET_SER_FLAG(L->varlist, NODE_FLAG_MANAGED);
+    Set_Flex_Flag(L->varlist, NODE_FLAG_MANAGED);
     return CTX(L->varlist);
 }
 

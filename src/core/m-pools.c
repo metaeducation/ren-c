@@ -298,12 +298,12 @@ void Startup_Pools(REBINT scale)
     // As a trick to keep this series from trying to track itself, say it's
     // managed, then sneak the flag off.
     //
-    GC_Manuals = Make_Series_Core(15, sizeof(Series* ), NODE_FLAG_MANAGED);
-    CLEAR_SER_FLAG(GC_Manuals, NODE_FLAG_MANAGED);
+    GC_Manuals = Make_Flex_Core(15, sizeof(Flex* ), NODE_FLAG_MANAGED);
+    Clear_Flex_Flag(GC_Manuals, NODE_FLAG_MANAGED);
 
-    Prior_Expand = ALLOC_N(Series*, MAX_EXPAND_LIST);
-    CLEAR(Prior_Expand, sizeof(Series*) * MAX_EXPAND_LIST);
-    Prior_Expand[0] = (Series*)1;
+    Prior_Expand = ALLOC_N(Flex*, MAX_EXPAND_LIST);
+    CLEAR(Prior_Expand, sizeof(Flex*) * MAX_EXPAND_LIST);
+    Prior_Expand[0] = (Flex*)1;
 }
 
 
@@ -314,21 +314,21 @@ void Startup_Pools(REBINT scale)
 //
 void Shutdown_Pools(void)
 {
-    // Can't use Free_Unmanaged_Series() because GC_Manuals couldn't be put in
+    // Can't use Free_Unmanaged_Flex() because GC_Manuals couldn't be put in
     // the manuals list...
     //
-    GC_Kill_Series(GC_Manuals);
+    GC_Kill_Flex(GC_Manuals);
 
   #if !defined(NDEBUG)
-    REBSEG *debug_seg = Mem_Pools[SER_POOL].segs;
+    REBSEG *debug_seg = Mem_Pools[STUB_POOL].segs;
     for(; debug_seg != nullptr; debug_seg = debug_seg->next) {
-        Series* series = cast(Series*, debug_seg + 1);
+        Flex* series = cast(Flex*, debug_seg + 1);
         REBLEN n;
-        for (n = Mem_Pools[SER_POOL].units; n > 0; n--, series++) {
+        for (n = Mem_Pools[STUB_POOL].units; n > 0; n--, series++) {
             if (IS_FREE_NODE(series))
                 continue;
 
-            assert(NOT_SER_FLAG(series, NODE_FLAG_MANAGED));
+            assert(Not_Flex_Flag(series, NODE_FLAG_MANAGED));
             printf("At least one leaked series at shutdown...\n");
             panic (series);
         }
@@ -354,7 +354,7 @@ void Shutdown_Pools(void)
     FREE_N(Byte, (4 * MEM_BIG_SIZE) + 1, PG_Pool_Map);
 
     // !!! Revisit location (just has to be after all series are freed)
-    FREE_N(Series*, MAX_EXPAND_LIST, Prior_Expand);
+    FREE_N(Flex*, MAX_EXPAND_LIST, Prior_Expand);
 
   #if !defined(NDEBUG)
     FREE(REB_STATS, PG_Reb_Stats);
@@ -432,7 +432,7 @@ void Fill_Pool(REBPOL *pool)
     }
 
     while (true) {
-        FIRST_BYTE(unit) = FREED_SERIES_BYTE;
+        FIRST_BYTE(unit) = FREED_FLEX_BYTE;
 
         if (--units == 0) {
             unit->next_if_free = nullptr;
@@ -462,10 +462,10 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
 {
     REBSEG *seg;
 
-    for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
-        Series* s = cast(Series*, seg + 1);
+    for (seg = Mem_Pools[STUB_POOL].segs; seg; seg = seg->next) {
+        Flex* s = cast(Flex*, seg + 1);
         REBLEN n;
-        for (n = Mem_Pools[SER_POOL].units; n > 0; --n, ++s) {
+        for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
             if (IS_FREE_NODE(s))
                 continue;
 
@@ -475,7 +475,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
                 continue;
             }
 
-            if (not IS_SER_DYNAMIC(s)) {
+            if (not Is_Flex_Dynamic(s)) {
                 if (
                     p >= cast(void*, &s->content)
                     && p < cast(void*, &s->content + 1)
@@ -486,7 +486,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
             }
 
             if (p < cast(void*,
-                s->content.dynamic.data - (Series_Wide(s) * Series_Bias(s))
+                s->content.dynamic.data - (Flex_Wide(s) * Flex_Bias(s))
             )) {
                 // The memory lies before the series data allocation.
                 //
@@ -494,7 +494,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
             }
 
             if (p >= cast(void*, s->content.dynamic.data
-                + (Series_Wide(s) * Series_Rest(s))
+                + (Flex_Wide(s) * Flex_Rest(s))
             )) {
                 // The memory lies after the series capacity.
                 //
@@ -516,7 +516,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
 
             if (p >= cast(void*,
                 s->content.dynamic.data
-                + (Series_Wide(s) * Series_Len(s))
+                + (Flex_Wide(s) * Flex_Len(s))
             )) {
                 printf("Pointer found in freed tail capacity of series\n");
                 fflush(stdout);
@@ -600,8 +600,8 @@ void Unmanage_Pairing(Value* paired) {
 //
 void Free_Pairing(Value* paired) {
     assert(NOT_VAL_FLAG(paired, NODE_FLAG_MANAGED));
-    Series* s = cast(Series*, paired);
-    Free_Pooled(SER_POOL, s);
+    Flex* s = cast(Flex*, paired);
+    Free_Pooled(STUB_POOL, s);
 
   #if !defined(NDEBUG)
     #if defined(DEBUG_COUNT_TICKS)
@@ -612,10 +612,10 @@ void Free_Pairing(Value* paired) {
 
 
 //
-//  Free_Unbiased_Series_Data: C
+//  Free_Unbiased_Flex_Data: C
 //
 // Routines that are part of the core series implementation
-// call this, including Expand_Series.  It requires a low-level
+// call this, including Expand_Flex.  It requires a low-level
 // awareness that the series data pointer cannot be freed
 // without subtracting out the "biasing" which skips the pointer
 // ahead to account for unused capacity at the head of the
@@ -624,7 +624,7 @@ void Free_Pairing(Value* paired) {
 // !!! Ideally this wouldn't be exported, but series data is now used to hold
 // function arguments.
 //
-void Free_Unbiased_Series_Data(char *unbiased, REBLEN total)
+void Free_Unbiased_Flex_Data(char *unbiased, REBLEN total)
 {
     REBLEN pool_num = FIND_POOL(total);
     REBPOL *pool;
@@ -645,7 +645,7 @@ void Free_Unbiased_Series_Data(char *unbiased, REBLEN total)
         pool->first = unit;
         pool->free++;
 
-        FIRST_BYTE(unit) = FREED_SERIES_BYTE;
+        FIRST_BYTE(unit) = FREED_FLEX_BYTE;
     }
     else {
         FREE_N(char, total, unbiased);
@@ -656,9 +656,9 @@ void Free_Unbiased_Series_Data(char *unbiased, REBLEN total)
 
 
 //
-//  Expand_Series: C
+//  Expand_Flex: C
 //
-// Expand a series at a particular index point by `delta` units.
+// Expand a Flex at a particular index point by `delta` units.
 //
 //     index - where space is expanded (but not cleared)
 //     delta - number of UNITS to expand (keeping terminator)
@@ -672,20 +672,20 @@ void Free_Unbiased_Series_Data(char *unbiased, REBLEN total)
 //             |    |
 //             data index
 //
-// If the series has enough space within it, then it will be used,
-// otherwise the series data will be reallocated.
+// If the Flex has enough space within it, then it will be used,
+// otherwise the Flex data will be reallocated.
 //
 // When expanded at the head, if bias space is available, it will
 // be used (if it provides enough space).
 //
 // !!! It seems the original intent of this routine was
 // to be used with a group of other routines that were "Noterm"
-// and do not terminate.  However, Expand_Series assumed that
+// and do not terminate.  However, Expand_Flex assumed that
 // the capacity of the original series was at least (tail + 1)
 // elements, and would include the terminator when "sliding"
 // the data in the update.  This makes the other Noterm routines
 // seem a bit high cost for their benefit.  If this were to be
-// changed to Expand_Series_Noterm it would put more burden
+// changed to Expand_Flex_Noterm it would put more burden
 // on the clients...for a *potential* benefit in being able to
 // write just an END marker into the terminal Cell vs. copying
 // the entire value cell.  (Of course, with a good memcpy it
@@ -694,33 +694,35 @@ void Free_Unbiased_Series_Data(char *unbiased, REBLEN total)
 // was already terminated.  That way our "slide" of the data via
 // memcpy will keep it terminated.
 //
-// WARNING: never use direct pointers into the series data, as the
-// series data can be relocated in memory.
+// WARNING: never use direct pointers into the Flex data, as the
+// Flex data can be relocated in memory.
 //
-void Expand_Series(Series* s, REBLEN index, REBLEN delta)
+void Expand_Flex(Flex* s, REBLEN index, REBLEN delta)
 {
-    assert(index <= Series_Len(s));
-    if (delta & 0x80000000) fail (Error_Past_End_Raw()); // 2GB max
+    assert(index <= Flex_Len(s));
+    if (delta & 0x80000000)
+        fail (Error_Past_End_Raw()); // 2GB max
 
-    if (delta == 0) return;
+    if (delta == 0)
+        return;
 
-    REBLEN len_old = Series_Len(s);
+    REBLEN len_old = Flex_Len(s);
 
-    Byte wide = Series_Wide(s);
+    Byte wide = Flex_Wide(s);
 
-    const bool was_dynamic = IS_SER_DYNAMIC(s);
+    const bool was_dynamic = Is_Flex_Dynamic(s);
 
-    if (was_dynamic and index == 0 and Series_Bias(s) >= delta) {
+    if (was_dynamic and index == 0 and Flex_Bias(s) >= delta) {
 
     //=//// HEAD INSERTION OPTIMIZATION ///////////////////////////////////=//
 
         s->content.dynamic.data -= wide * delta;
         s->content.dynamic.len += delta;
         s->content.dynamic.rest += delta;
-        SER_SUB_BIAS(s, delta);
+        Subtract_Flex_Bias(s, delta);
 
       #if !defined(NDEBUG)
-        if (IS_SER_ARRAY(s)) {
+        if (Is_Flex_Array(s)) {
             //
             // When the bias region was marked, it was made "unsettable" if
             // this was a debug build.  Now that the memory is included in
@@ -731,7 +733,7 @@ void Expand_Series(Series* s, REBLEN index, REBLEN delta)
             // but when it is this will be useful.
             //
             for (index = 0; index < delta; index++)
-                Erase_Cell(Array_At(ARR(s), index));
+                Erase_Cell(Array_At(cast_Array(s), index));
         }
       #endif
         return;
@@ -741,33 +743,33 @@ void Expand_Series(Series* s, REBLEN index, REBLEN delta)
 
     REBLEN start = index * wide;
     REBLEN extra = delta * wide;
-    REBLEN size = Series_Len(s) * wide;
+    REBLEN size = Flex_Len(s) * wide;
 
     // + wide for terminator
-    if ((size + extra + wide) <= Series_Rest(s) * Series_Wide(s)) {
+    if ((size + extra + wide) <= Flex_Rest(s) * Flex_Wide(s)) {
         //
         // No expansion was needed.  Slide data down if necessary.  Note that
         // the tail is not moved and instead the termination is done
-        // separately with TERM_SERIES (in case it reaches an implicit
+        // separately with Term_Flex (in case it reaches an implicit
         // termination that is not a full-sized cell).
 
         memmove(
-            SER_DATA_RAW(s) + start + extra,
-            SER_DATA_RAW(s) + start,
+            Flex_Data(s) + start + extra,
+            Flex_Data(s) + start,
             size - start
         );
 
-        Set_Series_Len(s, len_old + delta);
+        Set_Flex_Len(s, len_old + delta);
         assert(
             not was_dynamic or (
-                SER_TOTAL(s) > ((Series_Len(s) + Series_Bias(s)) * wide)
+                Flex_Total(s) > ((Flex_Len(s) + Flex_Bias(s)) * wide)
             )
         );
 
-        TERM_SERIES(s);
+        Term_Flex(s);
 
       #if !defined(NDEBUG)
-        if (IS_SER_ARRAY(s)) {
+        if (Is_Flex_Array(s)) {
             //
             // The opened up area needs to be set to "settable" trash in the
             // debug build.  This takes care of making "unsettable" values
@@ -780,7 +782,7 @@ void Expand_Series(Series* s, REBLEN index, REBLEN delta)
             //
             while (delta != 0) {
                 --delta;
-                Erase_Cell(Array_At(ARR(s), index + delta));
+                Erase_Cell(Array_At(cast_Array(s), index + delta));
             }
         }
       #endif
@@ -790,7 +792,7 @@ void Expand_Series(Series* s, REBLEN index, REBLEN delta)
 
 //=//// INSUFFICIENT CAPACITY, NEW ALLOCATION REQUIRED ////////////////////=//
 
-    if (GET_SER_FLAG(s, SERIES_FLAG_FIXED_SIZE))
+    if (Get_Flex_Flag(s, FLEX_FLAG_FIXED_SIZE))
         fail (Error_Locked_Series_Raw());
 
   #ifndef NDEBUG
@@ -813,7 +815,7 @@ void Expand_Series(Series* s, REBLEN index, REBLEN delta)
     REBLEN n_found;
     for (n_found = 0; n_found < MAX_EXPAND_LIST; n_found++) {
         if (Prior_Expand[n_found] == s) {
-            x = Series_Len(s) + delta + 1; // Double the size
+            x = Flex_Len(s) + delta + 1; // Double the size
             break;
         }
         if (!Prior_Expand[n_found])
@@ -839,8 +841,8 @@ void Expand_Series(Series* s, REBLEN index, REBLEN delta)
     char *data_old;
     if (was_dynamic) {
         data_old = s->content.dynamic.data;
-        bias_old = Series_Bias(s);
-        size_old = SER_TOTAL(s);
+        bias_old = Flex_Bias(s);
+        size_old = Flex_Total(s);
     }
     else {
         // `char*` casts needed: https://stackoverflow.com/q/57721104
@@ -856,13 +858,13 @@ void Expand_Series(Series* s, REBLEN index, REBLEN delta)
     // expanding if a fixed size allocation was sufficient.
 
     LEN_BYTE_OR_255(s) = 255; // series alloc caller sets
-    SET_SER_FLAG(s, SERIES_FLAG_POWER_OF_2);
-    if (not Did_Series_Data_Alloc(s, len_old + delta + x))
+    Set_Flex_Flag(s, FLEX_FLAG_POWER_OF_2);
+    if (not Did_Flex_Data_Alloc(s, len_old + delta + x))
         fail (Error_No_Memory((len_old + delta + x) * wide));
 
-    assert(IS_SER_DYNAMIC(s));
-    if (IS_SER_ARRAY(s))
-        Prep_Array(ARR(s), 0); // capacity doesn't matter it will prep
+    assert(Is_Flex_Dynamic(s));
+    if (Is_Flex_Array(s))
+        Prep_Array(cast_Array(s), 0); // capacity doesn't matter it will prep
 
     // If necessary, add series to the recently expanded list
     //
@@ -882,37 +884,37 @@ void Expand_Series(Series* s, REBLEN index, REBLEN delta)
     );
     s->content.dynamic.len = len_old + delta;
 
-    TERM_SERIES(s);
+    Term_Flex(s);
 
     if (was_dynamic) {
         //
         // We have to de-bias the data pointer before we can free it.
         //
-        assert(Series_Bias(s) == 0); // should be reset
-        Free_Unbiased_Series_Data(data_old - (wide * bias_old), size_old);
+        assert(Flex_Bias(s) == 0); // should be reset
+        Free_Unbiased_Flex_Data(data_old - (wide * bias_old), size_old);
     }
 
   #if !defined(NDEBUG)
     PG_Reb_Stats->Series_Expanded++;
   #endif
 
-    assert(NOT_SER_FLAG(s, NODE_FLAG_MARKED));
+    assert(Not_Flex_Flag(s, NODE_FLAG_MARKED));
 }
 
 
 //
-//  Swap_Series_Content: C
+//  Swap_Flex_Content: C
 //
 // Retain the identity of the two series but do a low-level swap of their
 // content with each other.
 //
-void Swap_Series_Content(Series* a, Series* b)
+void Swap_Flex_Content(Flex* a, Flex* b)
 {
     // While the data series underlying a string may change widths over the
     // lifetime of that string node, there's not really any reasonable case
     // for mutating an array node into a non-array or vice versa.
     //
-    assert(IS_SER_ARRAY(a) == IS_SER_ARRAY(b));
+    assert(Is_Flex_Array(a) == Is_Flex_Array(b));
 
     // There are bits in the ->info and ->header which pertain to the content,
     // which includes whether the series is dynamic or if the data lives in
@@ -949,31 +951,31 @@ void Swap_Series_Content(Series* a, Series* b)
 
 
 //
-//  Remake_Series: C
+//  Remake_Flex: C
 //
-// Reallocate a series as a given maximum size.  Content in the retained
+// Reallocate a Flex as a given maximum size.  Content in the retained
 // portion of the length will be preserved if NODE_FLAG_NODE is passed in.
 //
-void Remake_Series(Series* s, REBLEN units, Byte wide, REBFLGS flags)
+void Remake_Flex(Flex* s, REBLEN units, Byte wide, REBFLGS flags)
 {
     // !!! This routine is being scaled back in terms of what it's allowed to
     // do for the moment; so the method of passing in flags is a bit strange.
     //
-    assert((flags & ~(NODE_FLAG_NODE | SERIES_FLAG_POWER_OF_2)) == 0);
+    assert((flags & ~(NODE_FLAG_NODE | FLEX_FLAG_POWER_OF_2)) == 0);
 
     bool preserve = did (flags & NODE_FLAG_NODE);
 
-    REBLEN len_old = Series_Len(s);
-    Byte wide_old = Series_Wide(s);
+    REBLEN len_old = Flex_Len(s);
+    Byte wide_old = Flex_Wide(s);
 
   #if !defined(NDEBUG)
     if (preserve)
         assert(wide == wide_old); // can't change width if preserving
   #endif
 
-    assert(NOT_SER_FLAG(s, SERIES_FLAG_FIXED_SIZE));
+    assert(Not_Flex_Flag(s, FLEX_FLAG_FIXED_SIZE));
 
-    bool was_dynamic = IS_SER_DYNAMIC(s);
+    bool was_dynamic = Is_Flex_Dynamic(s);
 
     REBINT bias_old;
     REBINT size_old;
@@ -987,8 +989,8 @@ void Remake_Series(Series* s, REBLEN units, Byte wide, REBFLGS flags)
     if (was_dynamic) {
         assert(s->content.dynamic.data != nullptr);
         data_old = s->content.dynamic.data;
-        bias_old = Series_Bias(s);
-        size_old = SER_TOTAL(s);
+        bias_old = Flex_Bias(s);
+        size_old = Flex_Total(s);
     }
     else {
         // `char*` casts needed: https://stackoverflow.com/q/57721104
@@ -1008,14 +1010,14 @@ void Remake_Series(Series* s, REBLEN units, Byte wide, REBFLGS flags)
     // of the things considered.
 
     LEN_BYTE_OR_255(s) = 255; // series alloc caller sets
-    if (not Did_Series_Data_Alloc(s, units + 1)) {
+    if (not Did_Flex_Data_Alloc(s, units + 1)) {
         // Put series back how it was (there may be extant references)
         s->content.dynamic.data = cast(char*, data_old);
         fail (Error_No_Memory((units + 1) * wide));
     }
-    assert(IS_SER_DYNAMIC(s));
-    if (IS_SER_ARRAY(s))
-        Prep_Array(ARR(s), 0); // capacity doesn't matter, it will prep
+    assert(Is_Flex_Dynamic(s));
+    if (Is_Flex_Array(s))
+        Prep_Array(cast_Array(s), 0); // capacity doesn't matter, it will prep
 
     if (preserve) {
         // Preserve as much data as possible (if it was requested, some
@@ -1031,24 +1033,24 @@ void Remake_Series(Series* s, REBLEN units, Byte wide, REBFLGS flags)
     } else
         s->content.dynamic.len = 0;
 
-    if (IS_SER_ARRAY(s))
-        TERM_ARRAY_LEN(ARR(s), Series_Len(s));
+    if (Is_Flex_Array(s))
+        Term_Array_Len(cast_Array(s), Flex_Len(s));
     else
-        TERM_SEQUENCE(s);
+        Term_Non_Array_Flex(s);
 
     if (was_dynamic)
-        Free_Unbiased_Series_Data(data_old - (wide_old * bias_old), size_old);
+        Free_Unbiased_Flex_Data(data_old - (wide_old * bias_old), size_old);
 }
 
 
 //
-//  Decay_Series: C
+//  Decay_Flex: C
 //
-void Decay_Series(Series* s)
+void Decay_Flex(Flex* s)
 {
-    assert(NOT_SER_INFO(s, SERIES_INFO_INACCESSIBLE));
+    assert(Not_Flex_Info(s, FLEX_INFO_INACCESSIBLE));
 
-    if (GET_SER_FLAG(s, SERIES_FLAG_UTF8))
+    if (Get_Flex_Flag(s, FLEX_FLAG_UTF8))
         GC_Kill_Interning(cast(Symbol*, s));  // needs to adjust canons
 
     // Remove series from expansion list, if found:
@@ -1057,10 +1059,10 @@ void Decay_Series(Series* s)
         if (Prior_Expand[n] == s) Prior_Expand[n] = 0;
     }
 
-    if (IS_SER_DYNAMIC(s)) {
-        Byte wide = Series_Wide(s);
-        REBLEN bias = Series_Bias(s);
-        REBLEN total = (bias + Series_Rest(s)) * wide;
+    if (Is_Flex_Dynamic(s)) {
+        Byte wide = Flex_Wide(s);
+        REBLEN bias = Flex_Bias(s);
+        REBLEN total = (bias + Flex_Rest(s)) * wide;
         char *unbiased = s->content.dynamic.data - (wide * bias);
 
         // !!! Contexts and actions keep their archetypes, for now, in the
@@ -1070,18 +1072,18 @@ void Decay_Series(Series* s)
         // possibility exists for the other array with a "canon" [0]
         //
         if (
-            GET_SER_FLAG(s, ARRAY_FLAG_VARLIST)
-            or GET_SER_FLAG(s, ARRAY_FLAG_PARAMLIST)
+            Get_Flex_Flag(s, ARRAY_FLAG_VARLIST)
+            or Get_Flex_Flag(s, ARRAY_FLAG_PARAMLIST)
         ){
             // `char*` casts needed: https://stackoverflow.com/q/57721104
             memcpy(
                 cast(char*, &s->content.fixed),
-                cast(char*, Array_Head(ARR(s))),
+                cast(char*, Array_Head(cast_Array(s))),
                 sizeof(Cell)
             );
         }
 
-        Free_Unbiased_Series_Data(unbiased, total);
+        Free_Unbiased_Flex_Data(unbiased, total);
 
         // !!! This indicates reclaiming of the space, not for the series
         // nodes themselves...have they never been accounted for, e.g. in
@@ -1109,10 +1111,10 @@ void Decay_Series(Series* s)
         // singular array that happened to contain a handle, otherwise, as
         // opposed to the specific singular made for the handle's GC awareness)
 
-        if (IS_SER_ARRAY(s)) {
-            Cell* v = Array_Head(ARR(s));
+        if (Is_Flex_Array(s)) {
+            Cell* v = Array_Head(cast_Array(s));
             if (NOT_END(v) and VAL_TYPE_RAW(v) == REB_HANDLE) {
-                if (v->extra.singular == ARR(s)) {
+                if (v->extra.singular == cast_Array(s)) {
                     //
                     // Some handles use the managed form just because they
                     // want changes to the pointer in one instance to be seen
@@ -1127,18 +1129,18 @@ void Decay_Series(Series* s)
         }
     }
 
-    SET_SER_INFO(s, SERIES_INFO_INACCESSIBLE);
+    Set_Flex_Info(s, FLEX_INFO_INACCESSIBLE);
 }
 
 
 //
-//  GC_Kill_Series: C
+//  GC_Kill_Flex: C
 //
 // Only the garbage collector should be calling this routine.
 // It frees a series even though it is under GC management,
 // because the GC has figured out no references exist.
 //
-void GC_Kill_Series(Series* s)
+void GC_Kill_Flex(Flex* s)
 {
   #if !defined(NDEBUG)
     if (IS_FREE_NODE(s)) {
@@ -1147,17 +1149,17 @@ void GC_Kill_Series(Series* s)
     }
   #endif
 
-    if (NOT_SER_INFO(s, SERIES_INFO_INACCESSIBLE))
-        Decay_Series(s);
+    if (Not_Flex_Info(s, FLEX_INFO_INACCESSIBLE))
+        Decay_Flex(s);
 
   #if !defined(NDEBUG)
-    s->info.bits = FLAG_WIDE_BYTE_OR_0(77); // corrupt Series_Wide()
+    s->info.bits = FLAG_WIDE_BYTE_OR_0(77); // corrupt Flex_Wide()
   #endif
 
     Corrupt_Pointer_If_Debug(MISC(s).corrupt);
     Corrupt_Pointer_If_Debug(LINK(s).corrupt);
 
-    Free_Pooled(SER_POOL, s);
+    Free_Pooled(STUB_POOL, s);
 
     // GC may no longer be necessary:
     if (GC_Ballast > 0) CLR_SIGNAL(SIG_RECYCLE);
@@ -1172,10 +1174,10 @@ void GC_Kill_Series(Series* s)
 }
 
 
-INLINE void Untrack_Manual_Series(Series* s)
+INLINE void Untrack_Manual_Flex(Flex* s)
 {
-    Series* * const last_ptr
-        = &cast(Series**, GC_Manuals->content.dynamic.data)[
+    Flex* * const last_ptr
+        = &cast(Flex**, GC_Manuals->content.dynamic.data)[
             GC_Manuals->content.dynamic.len - 1
         ];
 
@@ -1187,12 +1189,12 @@ INLINE void Untrack_Manual_Series(Series* s)
         // to that position to preserve it when we chop off the tail
         // (instead of keeping the series we want to free).
         //
-        Series* *current_ptr = last_ptr - 1;
+        Flex* *current_ptr = last_ptr - 1;
         while (*current_ptr != s) {
           #if !defined(NDEBUG)
             if (
                 current_ptr
-                <= cast(Series**, GC_Manuals->content.dynamic.data)
+                <= cast(Flex**, GC_Manuals->content.dynamic.data)
             ){
                 printf("Series not in list of last manually added series\n");
                 panic(s);
@@ -1210,50 +1212,50 @@ INLINE void Untrack_Manual_Series(Series* s)
 
 
 //
-//  Free_Unmanaged_Series: C
+//  Free_Unmanaged_Flex: C
 //
-// Returns series node and data to memory pools for reuse.
+// Releases Flex Stub and data to memory pools for reuse.
 //
-void Free_Unmanaged_Series(Series* s)
+void Free_Unmanaged_Flex(Flex* s)
 {
   #if !defined(NDEBUG)
     if (IS_FREE_NODE(s)) {
-        printf("Trying to Free_Umanaged_Series() on already freed series\n");
+        printf("Trying to Free_Unmanaged_Flex() on already freed Flex\n");
         panic (s); // erroring here helps not conflate with tracking problems
     }
 
-    if (Is_Series_Managed(s)) {
-        printf("Trying to Free_Unmanaged_Series() on a GC-managed series\n");
+    if (Is_Flex_Managed(s)) {
+        printf("Trying to Free_Unmanaged_Flex() on a GC-managed Flex\n");
         panic (s);
     }
   #endif
 
-    Untrack_Manual_Series(s);
-    GC_Kill_Series(s); // with bookkeeping done, use same routine as GC
+    Untrack_Manual_Flex(s);
+    GC_Kill_Flex(s); // with bookkeeping done, use same routine as GC
 }
 
 
 //
-//  Manage_Series: C
+//  Manage_Flex: C
 //
-// If NODE_FLAG_MANAGED is not explicitly passed to Make_Ser_Core, a
-// series will be manually memory-managed by default.  Thus, you don't need
-// to worry about the series being freed out from under you while building it,
-// and can call Free_Unmanaged_Series() on it if you are done with it.
+// If NODE_FLAG_MANAGED is not explicitly passed to Make_Flex_Core(), a
+// Flex will be manually memory-managed by default.  Thus, you don't need
+// to worry about the Flex being freed out from under you while building it,
+// and can call Free_Unmanaged_Flex() on it if you are done with it.
 //
-// Rather than free a series, this function can be used--which will transition
-// a manually managed series to be one managed by the GC.  There is no way to
-// transition back--once a series has become managed, only the GC can free it.
+// Rather than free a Flex, this function can be used--which will transition
+// a manually managed Flex to be one managed by the GC.  There is no way to
+// transition back--once a Flex has become managed, only the GC can free it.
 //
-// Putting series into a value cell (by using Init_String(), etc.) will
+// Putting Flex into a Cell Payload (by using Init_String(), etc.) will
 // implicitly ensure it is managed, as it is generally the case that all
 // series in user-visible cells should be managed.  Doing otherwise requires
 // careful hooks into Copy_Cell() and Derelativize().
 //
-void Manage_Series(Series* s)
+void Manage_Flex(Flex* s)
 {
   #if !defined(NDEBUG)
-    if (Is_Series_Managed(s)) {
+    if (Is_Flex_Managed(s)) {
         printf("Attempt to manage already managed series\n");
         panic (s);
     }
@@ -1261,7 +1263,7 @@ void Manage_Series(Series* s)
 
     s->header.bits |= NODE_FLAG_MANAGED;
 
-    Untrack_Manual_Series(s);
+    Untrack_Manual_Flex(s);
 }
 
 
@@ -1299,10 +1301,10 @@ void Assert_Pointer_Detection_Working(void)
     //
     assert(not (END_NODE->header.bits & NODE_FLAG_MANAGED));
 
-    Series* ser = Make_Series(1, sizeof(char));
-    assert(Detect_Rebol_Pointer(ser) == DETECTED_AS_SERIES);
-    Free_Unmanaged_Series(ser);
-    assert(Detect_Rebol_Pointer(ser) == DETECTED_AS_FREED_SERIES);
+    Flex* flex = Make_Flex(1, sizeof(char));
+    assert(Detect_Rebol_Pointer(flex) == DETECTED_AS_SERIES);
+    Free_Unmanaged_Flex(flex);
+    assert(Detect_Rebol_Pointer(flex) == DETECTED_AS_FREED_FLEX);
 }
 
 
@@ -1321,28 +1323,28 @@ void Assert_Pointer_Detection_Working(void)
 REBLEN Check_Memory_Debug(void)
 {
     REBSEG *seg;
-    for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
-        Series* s = cast(Series*, seg + 1);
+    for (seg = Mem_Pools[STUB_POOL].segs; seg; seg = seg->next) {
+        Flex* s = cast(Flex*, seg + 1);
 
         REBLEN n;
-        for (n = Mem_Pools[SER_POOL].units; n > 0; --n, ++s) {
+        for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
             if (IS_FREE_NODE(s))
                 continue;
 
-            if (GET_SER_FLAG(s, NODE_FLAG_CELL))
+            if (Get_Flex_Flag(s, NODE_FLAG_CELL))
                 continue; // a pairing
 
-            if (not IS_SER_DYNAMIC(s))
+            if (not Is_Flex_Dynamic(s))
                 continue; // data lives in the series node itself
 
-            if (Series_Rest(s) == 0)
+            if (Flex_Rest(s) == 0)
                 panic (s); // zero size allocations not legal
 
-            REBLEN pool_num = FIND_POOL(SER_TOTAL(s));
-            if (pool_num >= SER_POOL)
+            REBLEN pool_num = FIND_POOL(Flex_Total(s));
+            if (pool_num >= STUB_POOL)
                 continue; // size doesn't match a known pool
 
-            if (Mem_Pools[pool_num].wide != SER_TOTAL(s))
+            if (Mem_Pools[pool_num].wide != Flex_Total(s))
                 panic (s);
         }
     }
@@ -1395,27 +1397,27 @@ REBLEN Check_Memory_Debug(void)
 
 
 //
-//  Dump_All_Series_Of_Size: C
+//  Dump_All_Flex_Of_Size: C
 //
-void Dump_All_Series_Of_Size(REBLEN size)
+void Dump_All_Flex_Of_Size(REBLEN size)
 {
     REBLEN count = 0;
 
     REBSEG *seg;
-    for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
-        Series* s = cast(Series*, seg + 1);
+    for (seg = Mem_Pools[STUB_POOL].segs; seg; seg = seg->next) {
+        Flex* s = cast(Flex*, seg + 1);
         REBLEN n;
-        for (n = Mem_Pools[SER_POOL].units; n > 0; --n, ++s) {
+        for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
             if (IS_FREE_NODE(s))
                 continue;
 
-            if (Series_Wide(s) == size) {
+            if (Flex_Wide(s) == size) {
                 ++count;
                 printf(
                     "%3d %4d %4d\n",
                     cast(int, count),
-                    cast(int, Series_Len(s)),
-                    cast(int, Series_Rest(s))
+                    cast(int, Flex_Len(s)),
+                    cast(int, Flex_Rest(s))
                 );
             }
             fflush(stdout);
@@ -1425,31 +1427,31 @@ void Dump_All_Series_Of_Size(REBLEN size)
 
 
 //
-//  Dump_Series_In_Pool: C
+//  Dump_Flex_In_Pool: C
 //
-// Dump all series in pool @pool_id, UNKNOWN (-1) for all pools
+// Dump all Flex in pool @pool_id, UNKNOWN (-1) for all pools
 //
-void Dump_Series_In_Pool(REBLEN pool_id)
+void Dump_Flex_In_Pool(REBLEN pool_id)
 {
     REBSEG *seg;
-    for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
-        Series* s = cast(Series*, seg + 1);
+    for (seg = Mem_Pools[STUB_POOL].segs; seg; seg = seg->next) {
+        Flex* s = cast(Flex*, seg + 1);
         REBLEN n = 0;
-        for (n = Mem_Pools[SER_POOL].units; n > 0; --n, ++s) {
+        for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
             if (IS_FREE_NODE(s))
                 continue;
 
-            if (GET_SER_FLAG(s, NODE_FLAG_CELL))
+            if (Get_Flex_Flag(s, NODE_FLAG_CELL))
                 continue; // pairing
 
             if (
                 pool_id == UNKNOWN
                 or (
-                    IS_SER_DYNAMIC(s)
-                    and pool_id == FIND_POOL(SER_TOTAL(s))
+                    Is_Flex_Dynamic(s)
+                    and pool_id == FIND_POOL(Flex_Total(s))
                 )
             ){
-                Dump_Series(s, "Dump_Series_In_Pool");
+                Dump_Flex(s, "Dump_Flex_In_Pool");
             }
 
         }
@@ -1510,13 +1512,13 @@ void Dump_Pools(void)
 
 
 //
-//  Inspect_Series: C
+//  Inspect_Flex: C
 //
 // !!! This is an old routine which was exposed through STATS to "expert
 // users".  Its purpose is to calculate the total amount of memory currently
 // in use by series, but it could also print out a breakdown of categories.
 //
-REBU64 Inspect_Series(bool show)
+REBU64 Inspect_Flex(bool show)
 {
     REBLEN segs = 0;
     REBLEN tot = 0;
@@ -1535,15 +1537,15 @@ REBU64 Inspect_Series(bool show)
     REBU64 tot_size = 0;
 
     REBSEG *seg;
-    for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
+    for (seg = Mem_Pools[STUB_POOL].segs; seg; seg = seg->next) {
 
         seg_size += seg->size;
         segs++;
 
-        Series* s = cast(Series*, seg + 1);
+        Flex* s = cast(Flex*, seg + 1);
 
         REBLEN n;
-        for (n = Mem_Pools[SER_POOL].units; n > 0; n--) {
+        for (n = Mem_Pools[STUB_POOL].units; n > 0; n--) {
             if (IS_FREE_NODE(s)) {
                 ++fre;
                 continue;
@@ -1551,26 +1553,26 @@ REBU64 Inspect_Series(bool show)
 
             ++tot;
 
-            if (GET_SER_FLAG(s, NODE_FLAG_CELL))
+            if (Get_Flex_Flag(s, NODE_FLAG_CELL))
                 continue;
 
-            tot_size += SER_TOTAL_IF_DYNAMIC(s); // else 0
+            tot_size += Flex_Total_If_Dynamic(s); // else 0
 
-            if (IS_SER_ARRAY(s)) {
+            if (Is_Flex_Array(s)) {
                 blks++;
-                blk_size += SER_TOTAL_IF_DYNAMIC(s);
+                blk_size += Flex_Total_If_Dynamic(s);
             }
-            else if (Series_Wide(s) == 1) {
+            else if (Flex_Wide(s) == 1) {
                 strs++;
-                str_size += SER_TOTAL_IF_DYNAMIC(s);
+                str_size += Flex_Total_If_Dynamic(s);
             }
-            else if (Series_Wide(s) == sizeof(REBUNI)) {
+            else if (Flex_Wide(s) == sizeof(REBUNI)) {
                 unis++;
-                uni_size += SER_TOTAL_IF_DYNAMIC(s);
+                uni_size += Flex_Total_If_Dynamic(s);
             }
-            else if (Series_Wide(s)) {
+            else if (Flex_Wide(s)) {
                 odds++;
-                odd_size += SER_TOTAL_IF_DYNAMIC(s);
+                odd_size += Flex_Total_If_Dynamic(s);
             }
 
             ++s;
@@ -1586,7 +1588,7 @@ REBU64 Inspect_Series(bool show)
     }
 
     if (show) {
-        printf("Series Memory Info:\n");
+        printf("Flex Memory Info:\n");
         printf("  Cell size = %lu\n", cast(unsigned long, sizeof(Cell)));
         printf("  Stub size = %lu\n", cast(unsigned long, sizeof(Stub)));
         printf(

@@ -83,8 +83,8 @@ REB_R Series_Common_Action_Maybe_Unhandled(
             return Init_Logic(OUT, index > tail);
 
         case SYM_FILE: {
-            Series* s = VAL_SERIES(value);
-            if (IS_SER_ARRAY(s) and GET_SER_FLAG(s, ARRAY_FLAG_FILE_LINE)) {
+            Flex* s = Cell_Flex(value);
+            if (Is_Flex_Array(s) and Get_Flex_Flag(s, ARRAY_FLAG_FILE_LINE)) {
                 //
                 // !!! How to tell whether it's a URL! or a FILE! ?
                 //
@@ -94,8 +94,8 @@ REB_R Series_Common_Action_Maybe_Unhandled(
             return nullptr; }
 
         case SYM_LINE: {
-            Series* s = VAL_SERIES(value);
-            if (IS_SER_ARRAY(s) and GET_SER_FLAG(s, ARRAY_FLAG_FILE_LINE))
+            Flex* s = Cell_Flex(value);
+            if (Is_Flex_Array(s) and Get_Flex_Flag(s, ARRAY_FLAG_FILE_LINE))
                 return Init_Integer(OUT, MISC(s).line);
             return nullptr; }
 
@@ -169,7 +169,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
             fail (Error_Bad_Refines_Raw());
         }
 
-        Fail_If_Read_Only_Series(VAL_SERIES(value));
+        Fail_If_Read_Only_Flex(Cell_Flex(value));
 
         REBINT len;
         if (REF(part))
@@ -179,7 +179,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
 
         index = cast(REBINT, VAL_INDEX(value));
         if (index < tail and len != 0)
-            Remove_Series(VAL_SERIES(value), VAL_INDEX(value), len);
+            Remove_Flex(Cell_Flex(value), VAL_INDEX(value), len);
 
         RETURN (value); }
 
@@ -194,7 +194,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
         return Init_Any_Series(
             OUT,
             VAL_TYPE(value),
-            Make_Set_Operation_Series(
+            Make_Set_Operation_Flex(
                 value,
                 ARG(value2),
                 SOP_FLAG_CHECK,
@@ -214,7 +214,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
         return Init_Any_Series(
             OUT,
             VAL_TYPE(value),
-            Make_Set_Operation_Series(
+            Make_Set_Operation_Flex(
                 value,
                 ARG(value2),
                 SOP_FLAG_BOTH,
@@ -234,7 +234,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
         return Init_Any_Series(
             OUT,
             VAL_TYPE(value),
-            Make_Set_Operation_Series(
+            Make_Set_Operation_Flex(
                 value,
                 ARG(value2),
                 SOP_FLAG_BOTH | SOP_FLAG_CHECK | SOP_FLAG_INVERT,
@@ -266,7 +266,7 @@ REBINT Cmp_Array(const Cell* sval, const Cell* tval, bool is_case)
         Fail_Stack_Overflow();
 
     if (
-        VAL_SERIES(sval) == VAL_SERIES(tval)
+        Cell_Flex(sval) == Cell_Flex(tval)
         and VAL_INDEX(sval) == VAL_INDEX(tval)
     ){
          return 0;

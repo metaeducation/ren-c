@@ -55,8 +55,8 @@ PVAR REBU64 PG_Mem_Usage;   // Overall memory used
 // forms of words are created, and removed when they are GC'd.  It is scaled
 // according to the total number of canons in the system.
 //
-PVAR Series* PG_Symbol_Canons;  // Canon symbol pointers for words in %words.r
-PVAR Series* PG_Canons_By_Hash;  // Canon symbol pointers indexed by hash
+PVAR Flex* PG_Symbol_Canons;  // Canon symbol pointers for words in %words.r
+PVAR Flex* PG_Canons_By_Hash;  // Canon symbol pointers indexed by hash
 PVAR REBLEN PG_Num_Canon_Slots_In_Use;  // Total canon hash slots (+ deleteds)
 #if !defined(NDEBUG)
     PVAR REBLEN PG_Num_Canon_Deleteds;  // Deleted canon hash slots "in use"
@@ -167,18 +167,18 @@ TVAR REBPOL *Mem_Pools;     // Memory pool array
 TVAR bool GC_Recycling;    // True when the GC is in a recycle
 TVAR REBINT GC_Ballast;     // Bytes allocated to force automatic GC
 TVAR bool GC_Disabled;      // true when RECYCLE/OFF is run
-TVAR Series* GC_Guarded; // A stack of GC protected series and values
-PVAR Series* GC_Mark_Stack; // Series pending to mark their reachables as live
-TVAR Series* *Prior_Expand; // Track prior series expansions (acceleration)
+TVAR Flex* GC_Guarded; // A stack of GC protected series and values
+PVAR Flex* GC_Mark_Stack; // Series pending to mark their reachables as live
+TVAR Flex* *Prior_Expand; // Track prior series expansions (acceleration)
 
-TVAR Series* TG_Mold_Stack; // Used to prevent infinite loop in cyclical molds
+TVAR Flex* TG_Mold_Stack; // Used to prevent infinite loop in cyclical molds
 
 TVAR Array* TG_Buf_Collect; // for collecting object keys or words
 TVAR String* TG_Buf_Ucs2; // UCS2 reused buffer
 TVAR Blob* TG_Byte_Buf; // temporary byte buffer used mainly by raw print
 TVAR Blob* TG_Mold_Buf; // temporary UTF8 buffer - used mainly by mold
 
-TVAR Series* GC_Manuals;    // Manually memory managed (not by GC)
+TVAR Flex* GC_Manuals;    // Manually memory managed (not by GC)
 
 #if !defined(OS_STACK_GROWS_UP) && !defined(OS_STACK_GROWS_DOWN)
     TVAR bool TG_Stack_Grows_Up; // Will be detected via questionable method
@@ -196,7 +196,7 @@ TVAR uintptr_t TG_Stack_Limit;    // Limit address for CPU stack.
 #endif
 
 #if !defined(NDEBUG)
-    TVAR intptr_t TG_Num_Black_Series;
+    TVAR intptr_t TG_Num_Black_Flex;
 #endif
 
 // Each time Eval_Core is called a LevelStruct is pushed to the "level stack".

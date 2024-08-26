@@ -1470,9 +1470,9 @@ DECLARE_NATIVE(call_internal_p)
     // they are not read-only, before we try appending to them.
     //
     if (Is_Text(ARG(out)) or Is_Binary(ARG(out)))
-        Fail_If_Read_Only_Series(VAL_SERIES(ARG(out)));
+        Fail_If_Read_Only_Flex(Cell_Flex(ARG(out)));
     if (Is_Text(ARG(err)) or Is_Binary(ARG(err)))
-        Fail_If_Read_Only_Series(VAL_SERIES(ARG(err)));
+        Fail_If_Read_Only_Flex(Cell_Flex(ARG(err)));
 
     char *os_input;
     REBLEN input_len;

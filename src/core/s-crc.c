@@ -272,7 +272,7 @@ uint32_t Hash_Value(const Cell* v)
         hash = Hash_Bytes_Or_Uni(
             VAL_RAW_DATA_AT(v),
             VAL_LEN_HEAD(v),
-            Series_Wide(VAL_SERIES(v))
+            Flex_Wide(Cell_Flex(v))
         );
         break;
 
@@ -389,7 +389,7 @@ uint32_t Hash_Value(const Cell* v)
 //
 //  Make_Hash_Sequence: C
 //
-Series* Make_Hash_Sequence(REBLEN len)
+Flex* Make_Hash_Sequence(REBLEN len)
 {
     REBLEN n = Get_Hash_Prime(len * 2); // best when 2X # of keys
     if (n == 0) {
@@ -399,11 +399,11 @@ Series* Make_Hash_Sequence(REBLEN len)
         fail (Error_Size_Limit_Raw(temp));
     }
 
-    Series* ser = Make_Series(n + 1, sizeof(REBLEN));
-    Clear_Series(ser);
-    Set_Series_Len(ser, n);
+    Flex* flex = Make_Flex(n + 1, sizeof(REBLEN));
+    Clear_Flex(flex);
+    Set_Flex_Len(flex, n);
 
-    return ser;
+    return flex;
 }
 
 
@@ -417,9 +417,9 @@ Series* Make_Hash_Sequence(REBLEN len)
 Value* Init_Map(Cell* out, REBMAP *map)
 {
     if (MAP_HASHLIST(map))
-        Force_Series_Managed(MAP_HASHLIST(map));
+        Force_Flex_Managed(MAP_HASHLIST(map));
 
-    Force_Series_Managed(MAP_PAIRLIST(map));
+    Force_Flex_Managed(MAP_PAIRLIST(map));
 
     RESET_CELL(out, REB_MAP);
     INIT_BINDING(out, UNBOUND);
@@ -438,17 +438,17 @@ Value* Init_Map(Cell* out, REBMAP *map)
 //
 // Note: hash array contents (indexes) are 1-based!
 //
-Series* Hash_Block(const Value* block, REBLEN skip, bool cased)
+Flex* Hash_Block(const Value* block, REBLEN skip, bool cased)
 {
     REBLEN n;
-    Series* hashlist;
+    Flex* hashlist;
     REBLEN *hashes;
     Array* array = Cell_Array(block);
     Cell* value;
 
     // Create the hash array (integer indexes):
     hashlist = Make_Hash_Sequence(VAL_LEN_AT(block));
-    hashes = Series_Head(REBLEN, hashlist);
+    hashes = Flex_Head(REBLEN, hashlist);
 
     value = Cell_Array_At(block);
     if (IS_END(value))

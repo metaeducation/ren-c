@@ -66,50 +66,50 @@ DECLARE_NATIVE(generate)
 
     // uuid.data* is in litte endian
     // the string form is in big endian
-    Blob* ser = Make_Blob(16);
-    *Blob_At(ser, 0) = cast(char*, &uuid.Data1)[3];
-    *Blob_At(ser, 1) = cast(char*, &uuid.Data1)[2];
-    *Blob_At(ser, 2) = cast(char*, &uuid.Data1)[1];
-    *Blob_At(ser, 3) = cast(char*, &uuid.Data1)[0];
+    Blob* flex = Make_Blob(16);
+    *Blob_At(flex, 0) = cast(char*, &uuid.Data1)[3];
+    *Blob_At(flex, 1) = cast(char*, &uuid.Data1)[2];
+    *Blob_At(flex, 2) = cast(char*, &uuid.Data1)[1];
+    *Blob_At(flex, 3) = cast(char*, &uuid.Data1)[0];
 
-    *Blob_At(ser, 4) = cast(char*, &uuid.Data2)[1];
-    *Blob_At(ser, 5) = cast(char*, &uuid.Data2)[0];
+    *Blob_At(flex, 4) = cast(char*, &uuid.Data2)[1];
+    *Blob_At(flex, 5) = cast(char*, &uuid.Data2)[0];
 
-    *Blob_At(ser, 6) = cast(char*, &uuid.Data3)[1];
-    *Blob_At(ser, 7) = cast(char*, &uuid.Data3)[0];
+    *Blob_At(flex, 6) = cast(char*, &uuid.Data3)[1];
+    *Blob_At(flex, 7) = cast(char*, &uuid.Data3)[0];
 
-    memcpy(Blob_At(ser, 8), uuid.Data4, 8);
+    memcpy(Blob_At(flex, 8), uuid.Data4, 8);
 
-    Term_Blob_Len(ser, 16);
+    Term_Blob_Len(flex, 16);
 
-    Init_Binary(OUT, ser);
+    Init_Binary(OUT, flex);
 
 #elif defined(TO_OSX)
     CFUUIDRef newId = CFUUIDCreate(nullptr);
     CFUUIDBytes bytes = CFUUIDGetUUIDBytes(newId);
     CFRelease(newId);
 
-    Blob* ser = Make_Blob(16);
-    *Blob_At(ser, 0) = bytes.byte0;
-    *Blob_At(ser, 1) = bytes.byte1;
-    *Blob_At(ser, 2) = bytes.byte2;
-    *Blob_At(ser, 3) = bytes.byte3;
-    *Blob_At(ser, 4) = bytes.byte4;
-    *Blob_At(ser, 5) = bytes.byte5;
-    *Blob_At(ser, 6) = bytes.byte6;
-    *Blob_At(ser, 7) = bytes.byte7;
-    *Blob_At(ser, 8) = bytes.byte8;
-    *Blob_At(ser, 9) = bytes.byte9;
-    *Blob_At(ser, 10) = bytes.byte10;
-    *Blob_At(ser, 11) = bytes.byte11;
-    *Blob_At(ser, 12) = bytes.byte12;
-    *Blob_At(ser, 13) = bytes.byte13;
-    *Blob_At(ser, 14) = bytes.byte14;
-    *Blob_At(ser, 15) = bytes.byte15;
+    Blob* flex = Make_Blob(16);
+    *Blob_At(flex, 0) = bytes.byte0;
+    *Blob_At(flex, 1) = bytes.byte1;
+    *Blob_At(flex, 2) = bytes.byte2;
+    *Blob_At(flex, 3) = bytes.byte3;
+    *Blob_At(flex, 4) = bytes.byte4;
+    *Blob_At(flex, 5) = bytes.byte5;
+    *Blob_At(flex, 6) = bytes.byte6;
+    *Blob_At(flex, 7) = bytes.byte7;
+    *Blob_At(flex, 8) = bytes.byte8;
+    *Blob_At(flex, 9) = bytes.byte9;
+    *Blob_At(flex, 10) = bytes.byte10;
+    *Blob_At(flex, 11) = bytes.byte11;
+    *Blob_At(flex, 12) = bytes.byte12;
+    *Blob_At(flex, 13) = bytes.byte13;
+    *Blob_At(flex, 14) = bytes.byte14;
+    *Blob_At(flex, 15) = bytes.byte15;
 
-    Term_Blob_Len(ser, 16);
+    Term_Blob_Len(flex, 16);
 
-    Init_Binary(OUT, ser);
+    Init_Binary(OUT, flex);
 
 #elif defined(TO_LINUX)
     uuid_t uuid;

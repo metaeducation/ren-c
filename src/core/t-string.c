@@ -85,15 +85,15 @@ REBINT CT_String(const Cell* a, const Cell* b, REBINT mode)
 static void str_to_char(Value* out, Value* val, REBLEN idx)
 {
     // Note: out may equal val, do assignment in two steps
-    REBUNI codepoint = GET_ANY_CHAR(VAL_SERIES(val), idx);
+    REBUNI codepoint = GET_ANY_CHAR(Cell_Flex(val), idx);
     Init_Char(out, codepoint);
 }
 
 
 static void swap_chars(Value* val1, Value* val2)
 {
-    Series* s1 = VAL_SERIES(val1);
-    Series* s2 = VAL_SERIES(val2);
+    Flex* s1 = Cell_Flex(val1);
+    Flex* s2 = Cell_Flex(val2);
 
     REBUNI c1 = GET_ANY_CHAR(s1, VAL_INDEX(val1));
     REBUNI c2 = GET_ANY_CHAR(s2, VAL_INDEX(val2));
@@ -131,8 +131,8 @@ static void reverse_string(Value* v, REBLEN len)
 
     REBLEN val_len_head = VAL_LEN_HEAD(v);
 
-    String* ser = Cell_String(v);
-    Ucs2(const*) up = String_Last(ser); // last exists due to len != 0
+    String* flex = Cell_String(v);
+    Ucs2(const*) up = String_Last(flex); // last exists due to len != 0
     REBLEN n;
     for (n = 0; n < len; ++n) {
         REBUNI c;
@@ -166,7 +166,7 @@ static void reverse_string(Value* v, REBLEN len)
 
 
 static REBLEN find_string(
-    Series* series,
+    Flex* series,
     REBLEN index,
     REBLEN end,
     Value* target,
@@ -211,7 +211,7 @@ static REBLEN find_string(
                 index,
                 end,
                 skip,
-                VAL_SERIES(target),
+                Cell_Flex(target),
                 VAL_INDEX(target),
                 target_len,
                 flags & (AM_FIND_MATCH|AM_FIND_CASE)
@@ -267,40 +267,40 @@ static REBLEN find_string(
 }
 
 
-static Series* MAKE_TO_String_Common(const Value* arg)
+static Flex* MAKE_TO_String_Common(const Value* arg)
 {
-    Series* ser;
+    Flex* flex;
 
     // MAKE/TO <type> <binary!>
     if (Is_Binary(arg)) {
-        ser = Make_Sized_String_UTF8(
+        flex = Make_Sized_String_UTF8(
             cs_cast(Cell_Binary_At(arg)), VAL_LEN_AT(arg)
         );
     }
     // MAKE/TO <type> <any-string>
     else if (ANY_STRING(arg)) {
-        ser = Copy_String_At_Len(arg, -1);
+        flex = Copy_String_At_Len(arg, -1);
     }
     // MAKE/TO <type> <any-word>
     else if (ANY_WORD(arg)) {
-        ser = Copy_Mold_Value(arg, MOLD_FLAG_0);
+        flex = Copy_Mold_Value(arg, MOLD_FLAG_0);
     }
     // MAKE/TO <type> #"A"
     else if (Is_Char(arg)) {
-        ser = Make_Ser_Codepoint(VAL_CHAR(arg));
+        flex = Make_Ser_Codepoint(VAL_CHAR(arg));
     }
     else
-        ser = Copy_Form_Value(arg, MOLD_FLAG_TIGHT);
+        flex = Copy_Form_Value(arg, MOLD_FLAG_TIGHT);
 
-    return ser;
+    return flex;
 }
 
 
 static Blob* Make_Blob_BE64(const Value* arg)
 {
-    Blob* ser = Make_Blob(8);
+    Blob* flex = Make_Blob(8);
 
-    Byte *bp = Blob_Head(ser);
+    Byte *bp = Blob_Head(flex);
 
     REBI64 i;
     REBDEC d;
@@ -328,26 +328,26 @@ static Blob* Make_Blob_BE64(const Value* arg)
     #error "Unsupported CPU endian"
 #endif
 
-    Term_Blob_Len(ser, 8);
-    return ser;
+    Term_Blob_Len(flex, 8);
+    return flex;
 }
 
 
 static Blob* make_binary(const Value* arg, bool make)
 {
-    Blob* ser;
+    Blob* flex;
 
     // MAKE BINARY! 123
     switch (VAL_TYPE(arg)) {
     case REB_INTEGER:
     case REB_DECIMAL:
-        if (make) ser = Make_Blob(Int32s(arg, 0));
-        else ser = Make_Blob_BE64(arg);
+        if (make) flex = Make_Blob(Int32s(arg, 0));
+        else flex = Make_Blob_BE64(arg);
         break;
 
     // MAKE/TO BINARY! BINARY!
     case REB_BINARY:
-        ser = Copy_Bytes(Cell_Binary_At(arg), VAL_LEN_AT(arg));
+        flex = Copy_Bytes(Cell_Binary_At(arg), VAL_LEN_AT(arg));
         break;
 
     // MAKE/TO BINARY! <any-string>
@@ -357,44 +357,44 @@ static Blob* make_binary(const Value* arg, bool make)
     case REB_URL:
     case REB_TAG:
 //  case REB_ISSUE:
-        ser = Make_Utf8_From_Cell_String_At_Limit(arg, VAL_LEN_AT(arg));
+        flex = Make_Utf8_From_Cell_String_At_Limit(arg, VAL_LEN_AT(arg));
         break;
 
     case REB_BLOCK:
         // Join_Binary returns a shared buffer, so produce a copy:
-        ser = cast(
+        flex = cast(
             Blob*,
-            Copy_Sequence_Core(Join_Binary(arg, -1), SERIES_FLAGS_NONE)
+            Copy_Non_Array_Flex_Core(Join_Binary(arg, -1), FLEX_FLAGS_NONE)
         );
         break;
 
     // MAKE/TO BINARY! <tuple!>
     case REB_TUPLE:
-        ser = Copy_Bytes(VAL_TUPLE(arg), VAL_TUPLE_LEN(arg));
+        flex = Copy_Bytes(VAL_TUPLE(arg), VAL_TUPLE_LEN(arg));
         break;
 
     // MAKE/TO BINARY! <char!>
     case REB_CHAR:
-        ser = Make_Blob(6);
-        TERM_SEQUENCE_LEN(ser, Encode_UTF8_Char(Blob_Head(ser), VAL_CHAR(arg)));
+        flex = Make_Blob(6);
+        Term_Non_Array_Flex_Len(flex, Encode_UTF8_Char(Blob_Head(flex), VAL_CHAR(arg)));
         break;
 
     // MAKE/TO BINARY! <bitset!>
     case REB_BITSET:
-        ser = Copy_Bytes(Cell_Binary_Head(arg), VAL_LEN_HEAD(arg));
+        flex = Copy_Bytes(Cell_Binary_Head(arg), VAL_LEN_HEAD(arg));
         break;
 
     case REB_MONEY:
-        ser = Make_Blob(12);
-        deci_to_binary(Blob_Head(ser), VAL_MONEY_AMOUNT(arg));
-        TERM_SEQUENCE_LEN(ser, 12);
+        flex = Make_Blob(12);
+        deci_to_binary(Blob_Head(flex), VAL_MONEY_AMOUNT(arg));
+        Term_Non_Array_Flex_Len(flex, 12);
         break;
 
     default:
-        ser = 0;
+        flex = 0;
     }
 
-    return ser;
+    return flex;
 }
 
 
@@ -402,7 +402,7 @@ static Blob* make_binary(const Value* arg, bool make)
 //  MAKE_String: C
 //
 REB_R MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
-    Series* ser; // goto would cross initialization
+    Flex* flex; // goto would cross initialization
 
     if (Is_Integer(def)) {
         //
@@ -441,18 +441,18 @@ REB_R MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
         if (i < 0 || i > cast(REBINT, VAL_LEN_AT(any_binstr)))
             goto bad_make;
 
-        return Init_Any_Series_At(out, kind, VAL_SERIES(any_binstr), i);
+        return Init_Any_Series_At(out, kind, Cell_Flex(any_binstr), i);
     }
 
     if (kind == REB_BINARY)
-        ser = make_binary(def, true);
+        flex = make_binary(def, true);
     else
-        ser = MAKE_TO_String_Common(def);
+        flex = MAKE_TO_String_Common(def);
 
-    if (!ser)
+    if (!flex)
         goto bad_make;
 
-    return Init_Any_Series_At(out, kind, ser, 0);
+    return Init_Any_Series_At(out, kind, flex, 0);
 
   bad_make:
     fail (Error_Bad_Make(kind, def));
@@ -464,16 +464,16 @@ REB_R MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
 //
 REB_R TO_String(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    Series* ser;
+    Flex* flex;
     if (kind == REB_BINARY)
-        ser = make_binary(arg, false);
+        flex = make_binary(arg, false);
     else
-        ser = MAKE_TO_String_Common(arg);
+        flex = MAKE_TO_String_Common(arg);
 
-    if (ser == nullptr)
+    if (flex == nullptr)
         fail (Error_Invalid(arg));
 
-    return Init_Any_Series(out, kind, ser);
+    return Init_Any_Series(out, kind, flex);
 }
 
 
@@ -568,7 +568,7 @@ static void Sort_String(
     reb_qsort_r(
         VAL_RAW_DATA_AT(string),
         len,
-        size * Series_Wide(VAL_SERIES(string)),
+        size * Flex_Wide(Cell_Flex(string)),
         &thunk,
         Compare_Chr
     );
@@ -583,7 +583,7 @@ REB_R PD_String(
     const Value* picker,
     const Value* opt_setval
 ){
-    Series* ser = VAL_SERIES(pvs->out);
+    Flex* flex = Cell_Flex(pvs->out);
 
     // Note: There was some more careful management of overflow here in the
     // PICK and POKE actions, before unification.  But otherwise the code
@@ -609,13 +609,13 @@ REB_R PD_String(
             if (n < 0)
                 ++n; // Rebol2/Red convention, `pick tail "abc" -1` is #"c"
             n += VAL_INDEX(pvs->out) - 1;
-            if (n < 0 or cast(REBLEN, n) >= Series_Len(ser))
+            if (n < 0 or cast(REBLEN, n) >= Flex_Len(flex))
                 return nullptr;
 
             if (Is_Binary(pvs->out))
-                Init_Integer(pvs->out, *Blob_At(cast(Blob*, ser), n));
+                Init_Integer(pvs->out, *Blob_At(cast(Blob*, flex), n));
             else
-                Init_Char(pvs->out, GET_ANY_CHAR(ser, n));
+                Init_Char(pvs->out, GET_ANY_CHAR(flex, n));
 
             return pvs->out;
         }
@@ -656,7 +656,7 @@ REB_R PD_String(
         //     >> (x)/("bar")
         //     == %foo/bar
         //
-        REBLEN len = Series_Len(copy);
+        REBLEN len = Flex_Len(copy);
         if (len == 0)
             Append_Codepoint(copy, '/');
         else {
@@ -690,7 +690,7 @@ REB_R PD_String(
         Append_UTF8_May_Fail(
             copy, // dst
             cs_cast(Blob_At(mo->series, mo->start + skip)), // src
-            Series_Len(mo->series) - mo->start - skip, // len
+            Flex_Len(mo->series) - mo->start - skip, // len
             crlf_to_lf
         );
 
@@ -704,7 +704,7 @@ REB_R PD_String(
 
     // Otherwise, POKE-ing
 
-    Fail_If_Read_Only_Series(ser);
+    Fail_If_Read_Only_Flex(flex);
 
     if (not Is_Integer(picker))
         return R_UNHANDLED;
@@ -715,7 +715,7 @@ REB_R PD_String(
     if (n < 0)
         ++n;
     n += VAL_INDEX(pvs->out) - 1;
-    if (n < 0 or cast(REBLEN, n) >= Series_Len(ser))
+    if (n < 0 or cast(REBLEN, n) >= Flex_Len(flex))
         fail (Error_Out_Of_Range(picker));
 
     REBINT c;
@@ -734,7 +734,7 @@ REB_R PD_String(
         if (i >= VAL_LEN_HEAD(opt_setval))
             fail (Error_Invalid(opt_setval));
 
-        c = GET_ANY_CHAR(VAL_SERIES(opt_setval), i);
+        c = GET_ANY_CHAR(Cell_Flex(opt_setval), i);
     }
     else
         return R_UNHANDLED;
@@ -743,11 +743,11 @@ REB_R PD_String(
         if (c > 0xff)
             fail (Error_Out_Of_Range(opt_setval));
 
-        Blob_Head(cast(Blob*, ser))[n] = cast(Byte, c);
+        Blob_Head(cast(Blob*, flex))[n] = cast(Byte, c);
         return R_INVISIBLE;
     }
 
-    SET_ANY_CHAR(ser, n, c);
+    SET_ANY_CHAR(flex, n, c);
 
     return R_INVISIBLE;
 }
@@ -1005,7 +1005,7 @@ void Mold_Text_Series_At(
 //
 static void Mold_Url(REB_MOLD *mo, const Cell* v)
 {
-    Series* series = VAL_SERIES(v);
+    Flex* series = Cell_Flex(v);
     REBLEN len = VAL_LEN_AT(v);
     Byte *dp = Prep_Mold_Overestimated(mo, len * 4); // 4 bytes max UTF-8
 
@@ -1015,13 +1015,13 @@ static void Mold_Url(REB_MOLD *mo, const Cell* v)
 
     *dp = '\0';
 
-    Set_Series_Len(mo->series, dp - Blob_Head(mo->series)); // correction
+    Set_Flex_Len(mo->series, dp - Blob_Head(mo->series)); // correction
 }
 
 
 static void Mold_File(REB_MOLD *mo, const Cell* v)
 {
-    Series* series = VAL_SERIES(v);
+    Flex* series = Cell_Flex(v);
     REBLEN len = VAL_LEN_AT(v);
 
     REBLEN estimated_bytes = 4 * len; // UTF-8 characters are max 4 bytes
@@ -1051,7 +1051,7 @@ static void Mold_File(REB_MOLD *mo, const Cell* v)
 
     *dp = '\0';
 
-    Set_Series_Len(mo->series, dp - Blob_Head(mo->series)); // correction
+    Set_Flex_Len(mo->series, dp - Blob_Head(mo->series)); // correction
 }
 
 
@@ -1109,7 +1109,7 @@ void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
     );
     Append_Unencoded(mo->series, "}");
 
-    Free_Unmanaged_Series(enbased);
+    Free_Unmanaged_Flex(enbased);
 
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) && VAL_INDEX(v) != 0)
         Post_Mold(mo, v);
@@ -1225,7 +1225,7 @@ REBTYPE(String)
                 VAL_INDEX(v) = 0;
             RETURN (v); // don't fail on read only if it would be a no-op
         }
-        Fail_If_Read_Only_Series(VAL_SERIES(v));
+        Fail_If_Read_Only_Flex(Cell_Flex(v));
 
         REBFLGS flags = 0;
         if (REF(part))
@@ -1305,7 +1305,7 @@ REBTYPE(String)
                     // be done of `FIND "<abc...z>" <abc...z>` without having
                     // to create an entire series just for the delimiters.
                     //
-                    Series* copy = Copy_Form_Value(arg, 0);
+                    Flex* copy = Copy_Form_Value(arg, 0);
                     Init_Text(arg, copy);
                 }
                 len = VAL_LEN_AT(arg);
@@ -1322,7 +1322,7 @@ REBTYPE(String)
             skip = 1;
 
         REBLEN ret = find_string(
-            VAL_SERIES(v), index, tail, arg, len, flags, skip
+            Cell_Flex(v), index, tail, arg, len, flags, skip
         );
 
         if (ret >= cast(REBLEN, tail))
@@ -1352,7 +1352,7 @@ REBTYPE(String)
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
 
-        Fail_If_Read_Only_Series(VAL_SERIES(v));
+        Fail_If_Read_Only_Flex(Cell_Flex(v));
 
         UNUSED(PAR(series));
 
@@ -1384,7 +1384,7 @@ REBTYPE(String)
             return Init_Any_Series(OUT, VAL_TYPE(v), Make_Blob(0));
         }
 
-        Series* ser = VAL_SERIES(v);
+        Flex* flex = Cell_Flex(v);
         index = VAL_INDEX(v);
 
         // if no /PART, just return value, else return string
@@ -1400,22 +1400,22 @@ REBTYPE(String)
             if (Is_Binary(v)) {
                 Init_Binary(
                     OUT,
-                    Copy_Sequence_At_Len(VAL_SERIES(v), VAL_INDEX(v), len)
+                    Copy_Sequence_At_Len(Cell_Flex(v), VAL_INDEX(v), len)
                 );
             } else
                 Init_Any_Series(OUT, kind, Copy_String_At_Len(v, len));
         }
-        Remove_Series(ser, VAL_INDEX(v), len);
+        Remove_Flex(flex, VAL_INDEX(v), len);
         return OUT; }
 
     case SYM_CLEAR: {
-        Fail_If_Read_Only_Series(VAL_SERIES(v));
+        Fail_If_Read_Only_Flex(Cell_Flex(v));
 
         if (index < tail) {
             if (index == 0)
-                Reset_Sequence(VAL_SERIES(v));
+                Reset_Non_Array_Flex(Cell_Flex(v));
             else
-                TERM_SEQUENCE_LEN(VAL_SERIES(v), cast(REBLEN, index));
+                Term_Non_Array_Flex_Len(Cell_Flex(v), cast(REBLEN, index));
         }
         RETURN (v); }
 
@@ -1436,12 +1436,12 @@ REBTYPE(String)
         REBINT len = Part_Len_May_Modify_Index(v, ARG(limit));
         UNUSED(REF(part)); // checked by if limit is nulled
 
-        Series* ser;
+        Flex* flex;
         if (Is_Binary(v))
-            ser = Copy_Sequence_At_Len(VAL_SERIES(v), VAL_INDEX(v), len);
+            flex = Copy_Sequence_At_Len(Cell_Flex(v), VAL_INDEX(v), len);
         else
-            ser = Copy_String_At_Len(v, len);
-        return Init_Any_Series(OUT, VAL_TYPE(v), ser); }
+            flex = Copy_String_At_Len(v, len);
+        return Init_Any_Series(OUT, VAL_TYPE(v), flex); }
 
     //-- Bitwise:
 
@@ -1495,7 +1495,7 @@ REBTYPE(String)
         if (not Is_Binary(v))
             fail (Error_Invalid(v));
 
-        Fail_If_Read_Only_Series(VAL_SERIES(v));
+        Fail_If_Read_Only_Flex(Cell_Flex(v));
 
         REBINT amount;
         if (Is_Integer(arg))
@@ -1552,19 +1552,19 @@ REBTYPE(String)
     //-- Special actions:
 
     case SYM_SWAP: {
-        Fail_If_Read_Only_Series(VAL_SERIES(v));
+        Fail_If_Read_Only_Flex(Cell_Flex(v));
 
         if (VAL_TYPE(v) != VAL_TYPE(arg))
             fail (Error_Not_Same_Type_Raw());
 
-        Fail_If_Read_Only_Series(VAL_SERIES(arg));
+        Fail_If_Read_Only_Flex(Cell_Flex(arg));
 
         if (index < tail && VAL_INDEX(arg) < VAL_LEN_HEAD(arg))
             swap_chars(v, arg);
         RETURN (v); }
 
     case SYM_REVERSE: {
-        Fail_If_Read_Only_Series(VAL_SERIES(v));
+        Fail_If_Read_Only_Flex(Cell_Flex(v));
 
         REBINT len = Part_Len_May_Modify_Index(v, D_ARG(3));
         if (len > 0) {
@@ -1578,7 +1578,7 @@ REBTYPE(String)
     case SYM_SORT: {
         INCLUDE_PARAMS_OF_SORT;
 
-        Fail_If_Read_Only_Series(VAL_SERIES(v));
+        Fail_If_Read_Only_Flex(Cell_Flex(v));
 
         UNUSED(PAR(series));
         UNUSED(REF(skip));
@@ -1606,7 +1606,7 @@ REBTYPE(String)
 
         UNUSED(PAR(value));
 
-        Fail_If_Read_Only_Series(VAL_SERIES(v));
+        Fail_If_Read_Only_Flex(Cell_Flex(v));
 
         if (REF(seed)) {
             //
@@ -1617,12 +1617,12 @@ REBTYPE(String)
             //
             Set_Random(
                 Compute_CRC24(
-                    Series_Data_At(
-                        Series_Wide(VAL_SERIES(v)),
-                        VAL_SERIES(v),
+                    Flex_Data_At(
+                        Flex_Wide(Cell_Flex(v)),
+                        Cell_Flex(v),
                         VAL_INDEX(v)
                     ),
-                    VAL_LEN_AT(v) * Series_Wide(VAL_SERIES(v))
+                    VAL_LEN_AT(v) * Flex_Wide(Cell_Flex(v))
                 )
             );
             return nullptr;

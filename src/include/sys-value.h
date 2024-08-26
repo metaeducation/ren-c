@@ -43,8 +43,8 @@
 // A cell in a C stack variable does not have to worry about its memory
 // address becoming invalid--but by default the garbage collector does not
 // know that value exists.  So while the address may be stable, any series
-// it has in the payload might go bad.  Use PUSH_GC_GUARD() to protect a
-// stack variable's payload, and then DROP_GC_GUARD() when the protection
+// it has in the payload might go bad.  Use Push_GC_Guard() to protect a
+// stack variable's payload, and then Drop_GC_Guard() when the protection
 // is not needed.  (You must always drop the most recently pushed guard.)
 //
 // Function invocations keep their arguments in FRAME!s, which can be accessed
@@ -60,9 +60,9 @@
 //
 // The PROBE macro can be used in debug builds to mold a cell much like the
 // Rebol `probe` operation.  But it's actually polymorphic, and if you have
-// a Series*, REBCTX*, or Array* it can be used with those as well.  In C++,
+// a Flex*, REBCTX*, or Array* it can be used with those as well.  In C++,
 // you can even get the same value and type out as you put in...just like in
-// Rebol, permitting things like `return PROBE(Make_Some_Series(...));`
+// Rebol, permitting things like `return PROBE(Make_Some_Flex(...));`
 //
 // In order to make it easier to find out where a piece of debug spew is
 // coming from, the file and line number will be output as well.
@@ -663,7 +663,7 @@ INLINE bool Is_Cell_Poisoned(const Cell* v) {
 INLINE bool IS_RELATIVE(const Cell* v) {
     if (Not_Bindable(v) or not v->extra.binding)
         return false; // INTEGER! and other types are inherently "specific"
-    return GET_SER_FLAG(v->extra.binding, ARRAY_FLAG_PARAMLIST);
+    return Get_Flex_Flag(v->extra.binding, ARRAY_FLAG_PARAMLIST);
 }
 
 #if defined(__cplusplus) && __cplusplus >= 201103L
@@ -1271,8 +1271,8 @@ INLINE Value* Init_Tuple(Cell* out, const Byte *data) {
 #define VAL_EVENT_REQ(v) \
     ((v)->extra.eventee.req)
 
-#define VAL_EVENT_SER(v) \
-    ((v)->extra.eventee.ser)
+#define VAL_EVENT_FLEX(v) \
+    ((v)->extra.eventee.flex)
 
 #define IS_EVENT_MODEL(v,f) \
     (VAL_EVENT_MODEL(v) == (f))
@@ -1382,7 +1382,7 @@ INLINE void INIT_BINDING(Cell* v, Stub* binding) {
             binding->header.bits & ARRAY_FLAG_VARLIST // specific
             or binding->header.bits & ARRAY_FLAG_PARAMLIST // relative
             or (
-                Is_Varargs(v) and not IS_SER_DYNAMIC(binding)
+                Is_Varargs(v) and not Is_Flex_Dynamic(binding)
             ) // varargs from MAKE VARARGS! [...], else is a varlist
         );
     }
@@ -1422,7 +1422,7 @@ INLINE void INIT_BINDING_MAY_MANAGE(Cell* out, Stub* binding) {
         out->extra.binding = nullptr; // unbound
         return;
     }
-    if (GET_SER_FLAG(binding, NODE_FLAG_MANAGED)) {
+    if (Get_Flex_Flag(binding, NODE_FLAG_MANAGED)) {
         out->extra.binding = binding; // managed is safe for any `out`
         return;
     }

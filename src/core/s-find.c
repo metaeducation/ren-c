@@ -52,8 +52,8 @@ REBINT Compare_Binary_Vals(const Cell* v1, const Cell* v2)
     // that asserts BYTE_SIZE().
     //
     n = memcmp(
-        Series_Data_At(Series_Wide(VAL_SERIES(v1)), VAL_SERIES(v1), VAL_INDEX(v1)),
-        Series_Data_At(Series_Wide(VAL_SERIES(v2)), VAL_SERIES(v2), VAL_INDEX(v2)),
+        Flex_Data_At(Flex_Wide(Cell_Flex(v1)), Cell_Flex(v1), VAL_INDEX(v1)),
+        Flex_Data_At(Flex_Wide(Cell_Flex(v2)), Cell_Flex(v2), VAL_INDEX(v2)),
         len
     );
 
@@ -307,7 +307,7 @@ REBLEN Find_Byte_Str(
 //
 // Flags are set according to ALL_FIND_REFS
 //
-REBLEN Find_Str_Str(Series* ser1, REBLEN head, REBLEN index, REBLEN tail, REBINT skip, Series* ser2, REBLEN index2, REBLEN len, REBLEN flags)
+REBLEN Find_Str_Str(Flex* ser1, REBLEN head, REBLEN index, REBLEN tail, REBINT skip, Flex* ser2, REBLEN index2, REBLEN len, REBLEN flags)
 {
     REBUNI c1;
     REBUNI c2;
@@ -361,7 +361,7 @@ REBLEN Find_Str_Str(Series* ser1, REBLEN head, REBLEN index, REBLEN tail, REBINT
 // is handled by the new version, and will be vetted separately.
 //
 static REBLEN Find_Str_Char_Old(
-    Series* ser,
+    Flex* flex,
     REBLEN head,
     REBLEN index,
     REBLEN tail,
@@ -374,7 +374,7 @@ static REBLEN Find_Str_Char_Old(
     if (uncase && c2 < UNICODE_CASES) c2 = LO_CASE(c2);
 
     for (; index >= head && index < tail; index += skip) {
-        REBUNI c1 = GET_ANY_CHAR(ser, index);
+        REBUNI c1 = GET_ANY_CHAR(flex, index);
         if (uncase && c1 < UNICODE_CASES)
             c1 = LO_CASE(c1);
 
@@ -413,7 +413,7 @@ static REBLEN Find_Str_Char_Old(
 //
 REBLEN Find_Str_Char(
     REBUNI uni,         // character to look for
-    Series* series,     // series with width sizeof(Byte) or sizeof(REBUNI)
+    Flex* series,     // series with width sizeof(Byte) or sizeof(REBUNI)
     REBLEN lowest,      // lowest return index
     REBLEN index_orig,  // first index to examine (if out of range, NOT_FOUND)
     REBLEN highest,     // *one past* highest return result (e.g. SER_LEN)
@@ -442,9 +442,9 @@ REBLEN Find_Str_Char(
         casings[1] = uni < UNICODE_CASES ? UP_CASE(uni) : uni;
     }
 
-    assert(lowest <= Series_Len(series));
-    assert(index_orig <= Series_Len(series));
-    assert(highest <= Series_Len(series));
+    assert(lowest <= Flex_Len(series));
+    assert(index_orig <= Flex_Len(series));
+    assert(highest <= Flex_Len(series));
 
     // !!! Would skip = 0 be a clearer expression of /MATCH, as in "there
     // is no skip count"?  Perhaps in the interface as /SKIP NONE and then
@@ -538,7 +538,7 @@ REBLEN Find_Str_Char(
             //
             if (
                 skip == 1
-                && (Series_Len(series) - highest) < ((highest - lowest) / 2)
+                && (Flex_Len(series) - highest) < ((highest - lowest) / 2)
                 && uni != '\0'
             ) {
                 // The `strcspn()` optimized routine can be used to check for
@@ -619,7 +619,7 @@ return_index:
 // Flags are set according to ALL_FIND_REFS
 //
 REBLEN Find_Str_Bitset(
-    Series* ser,
+    Flex* flex,
     REBLEN head,
     REBLEN index,
     REBLEN tail,
@@ -630,7 +630,7 @@ REBLEN Find_Str_Bitset(
     bool uncase = not (flags & AM_FIND_CASE); // case insensitive
 
     for (; index >= head && index < tail; index += skip) {
-        REBUNI c1 = GET_ANY_CHAR(ser, index);
+        REBUNI c1 = GET_ANY_CHAR(flex, index);
 
         if (Check_Bit(bset, c1, uncase))
             return index;

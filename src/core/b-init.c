@@ -126,7 +126,7 @@ static void Assert_Basics(void)
     if (sizeof_cell != sizeof(void*) * 4)
         panic ("size of Cell is not sizeof(void*) * 4");
 
-    #if defined(DEBUG_SERIES_ORIGINS) || defined(DEBUG_COUNT_TICKS)
+    #if defined(DEBUG_FLEX_ORIGINS) || defined(DEBUG_COUNT_TICKS)
         assert(sizeof(Stub) == sizeof(Cell) * 2 + sizeof(void*) * 2);
     #else
         assert(sizeof(Stub) == sizeof(Cell) * 2);
@@ -162,9 +162,9 @@ static void Assert_Basics(void)
     // Make sure tricks for "internal END markers" are lined up as expected.
     //
     assert(
-        SERIES_INFO_0_IS_TRUE == NODE_FLAG_NODE
-        and SERIES_INFO_1_IS_FALSE == NODE_FLAG_FREE
-        and SERIES_INFO_7_IS_FALSE == NODE_FLAG_CELL
+        FLEX_INFO_0_IS_TRUE == NODE_FLAG_NODE
+        and FLEX_INFO_1_IS_FALSE == NODE_FLAG_FREE
+        and FLEX_INFO_7_IS_FALSE == NODE_FLAG_CELL
     );
     assert(
         DO_FLAG_0_IS_TRUE == NODE_FLAG_NODE
@@ -442,7 +442,7 @@ static Value* Make_Locked_Tag(const char *utf8) { // helper
     Value* t = rebText(utf8);
     RESET_VAL_HEADER(t, REB_TAG);
 
-    Series* locker = nullptr;
+    Flex* locker = nullptr;
     Ensure_Value_Immutable(t, locker);
     return t;
 }
@@ -505,7 +505,7 @@ static void Init_Action_Meta_Shim(void) {
 
     Root_Action_Meta = Init_Object(Alloc_Value(), meta);
 
-    Series* locker = nullptr;
+    Flex* locker = nullptr;
     Ensure_Value_Immutable(Root_Action_Meta, locker);
 
 }
@@ -805,7 +805,7 @@ static void Startup_End_Node(void)
 static void Startup_Empty_Array(void)
 {
     PG_Empty_Array = Make_Array_Core(0, NODE_FLAG_MANAGED);
-    SET_SER_INFO(PG_Empty_Array, SERIES_INFO_FROZEN);
+    Set_Flex_Info(PG_Empty_Array, FLEX_INFO_FROZEN);
 }
 
 
@@ -905,7 +905,7 @@ static void Init_Root_Vars(void)
     RESET_CELL(&PG_R_Reference[0], REB_R_REFERENCE);
     Poison_Cell(&PG_R_Reference[1]);
 
-    Series* locker = nullptr;
+    Flex* locker = nullptr;
 
     Root_Empty_Block = Init_Block(Alloc_Value(), PG_Empty_Array);
     Ensure_Value_Immutable(Root_Empty_Block, locker);
@@ -1070,10 +1070,10 @@ void Shutdown_System_Object(void)
 //
 static void Init_Contexts_Object(void)
 {
-    DROP_GC_GUARD(Sys_Context);
+    Drop_GC_Guard(Sys_Context);
     Init_Object(Get_System(SYS_CONTEXTS, CTX_SYS), Sys_Context);
 
-    DROP_GC_GUARD(Lib_Context);
+    Drop_GC_Guard(Lib_Context);
     Init_Object(Get_System(SYS_CONTEXTS, CTX_LIB), Lib_Context);
     Init_Object(Get_System(SYS_CONTEXTS, CTX_USER), Lib_Context);
 }
@@ -1398,7 +1398,7 @@ void Startup_Core(void)
         utf8,
         utf8_size
     );
-    PUSH_GC_GUARD(boot_array); // managed, so must be guarded
+    Push_GC_Guard(boot_array); // managed, so must be guarded
 
     rebRelease(filename);  // must release API handle
     rebFree(utf8); // don't need decompressed text after it's scanned
@@ -1427,16 +1427,16 @@ void Startup_Core(void)
     // !!! Have MAKE-BOOT compute # of words
     //
     Lib_Context = Alloc_Context_Core(REB_OBJECT, 600, NODE_FLAG_MANAGED);
-    PUSH_GC_GUARD(Lib_Context);
+    Push_GC_Guard(Lib_Context);
 
     Sys_Context = Alloc_Context_Core(REB_OBJECT, 50, NODE_FLAG_MANAGED);
-    PUSH_GC_GUARD(Sys_Context);
+    Push_GC_Guard(Sys_Context);
 
     Array* datatypes_catalog = Startup_Datatypes(
         Cell_Array(&boot->types), Cell_Array(&boot->typespecs)
     );
-    Manage_Series(datatypes_catalog);
-    PUSH_GC_GUARD(datatypes_catalog);
+    Manage_Flex(datatypes_catalog);
+    Push_GC_Guard(datatypes_catalog);
 
     // !!! REVIEW: Startup_Typesets() uses symbols, data stack, and
     // adds words to lib--not available untilthis point in time.
@@ -1456,19 +1456,19 @@ void Startup_Core(void)
     // by scanning comments in the C sources for `native: ...` declarations.
     //
     Array* natives_catalog = Startup_Natives(KNOWN(&boot->natives));
-    Manage_Series(natives_catalog);
-    PUSH_GC_GUARD(natives_catalog);
+    Manage_Flex(natives_catalog);
+    Push_GC_Guard(natives_catalog);
 
     // boot->generics is the list in %generics.r
     //
     Array* generics_catalog = Startup_Generics(KNOWN(&boot->generics));
-    Manage_Series(generics_catalog);
-    PUSH_GC_GUARD(generics_catalog);
+    Manage_Flex(generics_catalog);
+    Push_GC_Guard(generics_catalog);
 
     // boot->errors is the error definition list from %errors.r
     //
     REBCTX *errors_catalog = Startup_Errors(KNOWN(&boot->errors));
-    PUSH_GC_GUARD(errors_catalog);
+    Push_GC_Guard(errors_catalog);
 
     Init_System_Object(
         KNOWN(&boot->sysobj),
@@ -1478,10 +1478,10 @@ void Startup_Core(void)
         errors_catalog
     );
 
-    DROP_GC_GUARD(errors_catalog);
-    DROP_GC_GUARD(generics_catalog);
-    DROP_GC_GUARD(natives_catalog);
-    DROP_GC_GUARD(datatypes_catalog);
+    Drop_GC_Guard(errors_catalog);
+    Drop_GC_Guard(generics_catalog);
+    Drop_GC_Guard(natives_catalog);
+    Drop_GC_Guard(datatypes_catalog);
 
     Init_Contexts_Object();
 
@@ -1533,7 +1533,7 @@ void Startup_Core(void)
 
     assert(TOP_INDEX == 0 and TOP_LEVEL == BOTTOM_LEVEL);
 
-    DROP_GC_GUARD(boot_array);
+    Drop_GC_Guard(boot_array);
 
     PG_Boot_Phase = BOOT_DONE;
 

@@ -82,7 +82,7 @@ INLINE void Free_Value(Value* v)
 
     Array* a = Singular_From_Cell(v);
     Poison_Cell(ARR_SINGLE(a));
-    GC_Kill_Series(a);
+    GC_Kill_Flex(a);
 }
 
 
@@ -97,25 +97,25 @@ INLINE void Free_Value(Value* v)
 // using these anywhere besides as arguments to a variadic API like rebValue().
 //
 INLINE Array* Alloc_Instruction(void) {
-    Series* s = Alloc_Series_Node(
-        SERIES_FLAG_FIXED_SIZE // not tracked as stray manual, but unmanaged
+    Flex* s = Alloc_Flex_Stub(
+        FLEX_FLAG_FIXED_SIZE // not tracked as stray manual, but unmanaged
     );
     s->info = Endlike_Header(
         FLAG_WIDE_BYTE_OR_0(0) // signals array, also implicit terminator
             | FLAG_LEN_BYTE_OR_255(1) // signals singular
-            | SERIES_INFO_API_INSTRUCTION
-            | SERIES_INFO_API_RELEASE
+            | FLEX_INFO_API_INSTRUCTION
+            | FLEX_INFO_API_RELEASE
     );
-    SER_CELL(s)->header.bits =
+    Stub_Cell(s)->header.bits =
         CELL_MASK_ERASE_END | NODE_FLAG_ROOT;
-    TRACK_CELL_IF_DEBUG(SER_CELL(s), "<<instruction>>", 0);
-    return ARR(s);
+    TRACK_CELL_IF_DEBUG(Stub_Cell(s), "<<instruction>>", 0);
+    return cast_Array(s);
 }
 
 INLINE void Free_Instruction(Array* instruction) {
     assert(WIDE_BYTE_OR_0(instruction) == 0);
     Poison_Cell(ARR_SINGLE(instruction));
-    Free_Pooled(SER_POOL, instruction);
+    Free_Pooled(STUB_POOL, instruction);
 }
 
 

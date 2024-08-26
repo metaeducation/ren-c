@@ -178,7 +178,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
             //
             // Wasn't already collected...so we added it...
             //
-            Expand_Series_Tail(BUF_COLLECT, 1);
+            Expand_Flex_Tail(BUF_COLLECT, 1);
             Init_Typeset(
                 Array_Last(BUF_COLLECT),
                 TS_VALUE, // !!! Currently ignored
@@ -189,7 +189,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
             break; // fix bug#708
     }
 
-    TERM_ARRAY_LEN(BUF_COLLECT, Array_Len(BUF_COLLECT));
+    Term_Array_Len(BUF_COLLECT, Array_Len(BUF_COLLECT));
 
     // Append new words to obj
     //
@@ -525,7 +525,7 @@ DECLARE_NATIVE(set_meta)
 //
 REBCTX *Copy_Context_Core_Managed(REBCTX *original, REBU64 types)
 {
-    assert(NOT_SER_INFO(original, SERIES_INFO_INACCESSIBLE));
+    assert(Not_Flex_Info(original, FLEX_INFO_INACCESSIBLE));
 
     Array* varlist = Make_Arr_For_Copy(
         CTX_LEN(original) + 1,
@@ -550,7 +550,7 @@ REBCTX *Copy_Context_Core_Managed(REBCTX *original, REBU64 types)
     for (; NOT_END(src); ++src, ++dest)
         Move_Var(dest, src); // keep VALUE_FLAG_ENFIXED, ARG_MARKED_CHECKED
 
-    TERM_ARRAY_LEN(varlist, CTX_LEN(original) + 1);
+    Term_Array_Len(varlist, CTX_LEN(original) + 1);
 
     REBCTX *copy = CTX(varlist); // now a well-formed context
 
@@ -597,7 +597,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 
     // Prevent endless mold loop:
     //
-    if (Find_Pointer_In_Series(TG_Mold_Stack, c) != NOT_FOUND) {
+    if (Find_Pointer_In_Flex(TG_Mold_Stack, c) != NOT_FOUND) {
         if (not form) {
             Pre_Mold(mo, v); // If molding, get #[object! etc.
             Append_Utf8_Codepoint(out, '[');
@@ -610,7 +610,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
         }
         return;
     }
-    Push_Pointer_To_Series(TG_Mold_Stack, c);
+    Push_Pointer_To_Flex(TG_Mold_Stack, c);
 
     if (form) {
         //
@@ -629,11 +629,11 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
         // Remove the final newline...but only if WE added to the buffer
         //
         if (had_output) {
-            Set_Series_Len(out, Series_Len(out) - 1);
-            TERM_SEQUENCE(out);
+            Set_Flex_Len(out, Flex_Len(out) - 1);
+            Term_Non_Array_Flex(out);
         }
 
-        Drop_Pointer_From_Series(TG_Mold_Stack, c);
+        Drop_Pointer_From_Flex(TG_Mold_Stack, c);
         return;
     }
 
@@ -687,7 +687,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 
     End_Mold(mo);
 
-    Drop_Pointer_From_Series(TG_Mold_Stack, c);
+    Drop_Pointer_From_Flex(TG_Mold_Stack, c);
 }
 
 

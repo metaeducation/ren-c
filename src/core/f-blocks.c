@@ -60,7 +60,7 @@ Array* Copy_Array_At_Extra_Shallow(
     for (; count < len; ++count, ++dest, ++src)
         Derelativize(dest, src, specifier);
 
-    TERM_ARRAY_LEN(copy, len);
+    Term_Array_Len(copy, len);
 
     return copy;
 }
@@ -94,7 +94,7 @@ Array* Copy_Array_At_Max_Shallow(
     for (; count < max; ++count, ++src, ++dest)
         Derelativize(dest, src, specifier);
 
-    TERM_ARRAY_LEN(copy, max);
+    Term_Array_Len(copy, max);
 
     return copy;
 }
@@ -126,7 +126,7 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
         }
     }
 
-    TERM_ARRAY_LEN(a, len);
+    Term_Array_Len(a, len);
     return a;
 }
 
@@ -163,7 +163,7 @@ void Clonify_Values_Len_Managed(
             //
             // Objects and series get shallow copied at minimum
             //
-            Series* series;
+            Flex* series;
             if (ANY_CONTEXT(v)) {
                 v->payload.any_context.varlist = CTX_VARLIST(
                     Copy_Context_Shallow_Managed(VAL_CONTEXT(v))
@@ -171,7 +171,7 @@ void Clonify_Values_Len_Managed(
                 series = CTX_VARLIST(VAL_CONTEXT(v));
             }
             else {
-                if (IS_SER_ARRAY(VAL_SERIES(v))) {
+                if (Is_Flex_Array(Cell_Flex(v))) {
                     Specifier* derived = Derive_Specifier(specifier, v);
                     series = Copy_Array_At_Extra_Shallow(
                         Cell_Array(v),
@@ -181,7 +181,7 @@ void Clonify_Values_Len_Managed(
                         NODE_FLAG_MANAGED
                     );
 
-                    INIT_VAL_ARRAY(v, ARR(series)); // copies args
+                    INIT_VAL_ARRAY(v, cast_Array(series)); // copies args
 
                     // If it was relative, then copying with a specifier
                     // means it isn't relative any more.
@@ -189,11 +189,11 @@ void Clonify_Values_Len_Managed(
                     INIT_BINDING(v, UNBOUND);
                 }
                 else {
-                    series = Copy_Sequence_Core(
-                        VAL_SERIES(v),
+                    series = Copy_Non_Array_Flex_Core(
+                        Cell_Flex(v),
                         NODE_FLAG_MANAGED
                     );
-                    INIT_VAL_SERIES(v, series);
+                    Set_Cell_Flex(v, series);
                 }
             }
 
@@ -208,7 +208,7 @@ void Clonify_Values_Len_Managed(
             if (types & FLAGIT_KIND(VAL_TYPE(v)) & TS_ARRAYS_OBJ) {
                 Specifier* derived = Derive_Specifier(specifier, v);
                 Clonify_Values_Len_Managed(
-                     Array_Head(ARR(series)),
+                     Array_Head(cast_Array(series)),
                      derived,
                      VAL_LEN_HEAD(v),
                      types
@@ -269,7 +269,7 @@ static Array* Copy_Array_Core_Managed_Inner_Loop(
     for (; count < len; ++count, ++dest, ++src)
         Derelativize(dest, src, specifier);
 
-    TERM_ARRAY_LEN(copy, len);
+    Term_Array_Len(copy, len);
 
     if (types != 0)
         Clonify_Values_Len_Managed(
@@ -287,7 +287,7 @@ static Array* Copy_Array_Core_Managed_Inner_Loop(
 //
 // To avoid having to do a second deep walk to add managed bits on all series,
 // the resulting array will already be deeply under GC management, and hence
-// cannot be freed with Free_Unmanaged_Series().
+// cannot be freed with Free_Unmanaged_Flex().
 //
 Array* Copy_Array_Core_Managed(
     Array* original,
@@ -373,7 +373,7 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
 
     }
 
-    TERM_ARRAY_LEN(copy, Array_Len(original));
+    Term_Array_Len(copy, Array_Len(original));
 
     return copy;
 }
@@ -391,8 +391,8 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
 //
 Cell* Alloc_Tail_Array(Array* a)
 {
-    Expand_Series_Tail(a, 1);
-    TERM_ARRAY_LEN(a, Array_Len(a));
+    Expand_Flex_Tail(a, 1);
+    Term_Array_Len(a, Array_Len(a));
     Cell* last = Array_Last(a);
     Erase_Cell(last);
     return last;
@@ -404,10 +404,10 @@ Cell* Alloc_Tail_Array(Array* a)
 //
 void Uncolor_Array(Array* a)
 {
-    if (Is_Series_White(a))
+    if (Is_Flex_White(a))
         return; // avoid loop
 
-    Flip_Series_To_White(a);
+    Flip_Flex_To_White(a);
 
     Cell* val;
     for (val = Array_Head(a); NOT_END(val); ++val)
@@ -436,7 +436,7 @@ void Uncolor(Cell* v)
         //
         assert(
             not ANY_SERIES(v)
-            or Is_Series_White(VAL_SERIES(v))
+            or Is_Flex_White(Cell_Flex(v))
         );
         return;
     }

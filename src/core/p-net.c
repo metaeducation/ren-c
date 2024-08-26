@@ -149,7 +149,7 @@ static REB_R Transport_Actor(
                 Blob* temp = Temp_UTF8_At_Managed(
                     &offset, &size, arg, VAL_LEN_AT(arg)
                 );
-                PUSH_GC_GUARD(temp);
+                Push_GC_Guard(temp);
 
                 sock->common.data = Blob_At(temp, offset);
                 DEVREQ_NET(sock)->remote_port =
@@ -158,7 +158,7 @@ static REB_R Transport_Actor(
                 // Note: sets remote_ip field
                 //
                 Value* l_result = OS_DO_DEVICE(sock, RDC_LOOKUP);
-                DROP_GC_GUARD(temp);
+                Drop_GC_Guard(temp);
 
                 assert(l_result != nullptr);
                 if (rebDid("error?", l_result))
@@ -244,8 +244,8 @@ static REB_R Transport_Actor(
         Value* port_data = CTX_VAR(ctx, STD_PORT_DATA);
         if (sock->command == RDC_READ) {
             if (ANY_BINSTR(port_data)) {
-                Set_Series_Len(
-                    VAL_SERIES(port_data),
+                Set_Flex_Len(
+                    Cell_Flex(port_data),
                     VAL_LEN_HEAD(port_data) + sock->actual
                 );
             }
@@ -291,11 +291,11 @@ static REB_R Transport_Actor(
         else {
             buffer = Cell_Blob(port_data);
 
-            if (SER_AVAIL(buffer) < NET_BUF_SIZE/2)
-                Extend_Series(buffer, NET_BUF_SIZE);
+            if (Flex_Available_Space(buffer) < NET_BUF_SIZE/2)
+                Extend_Flex(buffer, NET_BUF_SIZE);
         }
 
-        sock->length = SER_AVAIL(buffer);
+        sock->length = Flex_Available_Space(buffer);
         sock->common.data = Blob_Tail(buffer); // write at tail
         sock->actual = 0; // actual for THIS read (not for total)
 
@@ -387,7 +387,7 @@ static REB_R Transport_Actor(
             sock->common.data = Blob_At(temp, offset);
             sock->length = size;
 
-            PUSH_GC_GUARD(temp);
+            Push_GC_Guard(temp);
         }
 
         sock->actual = 0;
@@ -395,7 +395,7 @@ static REB_R Transport_Actor(
         Value* result = OS_DO_DEVICE(sock, RDC_WRITE);
 
         if (temp != nullptr)
-            DROP_GC_GUARD(temp);
+            Drop_GC_Guard(temp);
 
         if (result == nullptr) {
             //

@@ -242,7 +242,7 @@ void Debug_Values(const Cell* value, REBLEN count, REBLEN limit)
             Mold_Value(mo, value);
             Throttle_Mold(mo); // not using Pop_Mold(), must do explicitly
 
-            for (i1 = i2 = mo->start; i1 < Series_Len(mo->series); i1++) {
+            for (i1 = i2 = mo->start; i1 < Flex_Len(mo->series); i1++) {
                 uc = GET_ANY_CHAR(mo->series, i1);
                 if (uc < ' ') uc = ' ';
                 if (uc > ' ' || pc > ' ')
@@ -295,7 +295,7 @@ void Debug_Buf_No_Newline(const char *fmt, va_list *vaptr)
     Form_Args_Core(mo, fmt, vaptr);
 
     Debug_String_No_Newline(
-        Blob_At(mo->series, mo->start), Series_Len(mo->series) - mo->start
+        Blob_At(mo->series, mo->start), Flex_Len(mo->series) - mo->start
     );
 
     Drop_Mold(mo);
@@ -451,7 +451,7 @@ Byte *Form_RGB_Utf8(Byte *utf8, const Byte *dp)
 // This is an internal routine used for debugging, which is something like
 // `printf` (it understands %d, %s, %c) but stripped down in features.
 // It also knows how to show Value* values FORMed (%v) or MOLDed (%r),
-// as well as Series* or Array* series molded (%m).
+// as well as Flex* or Array* series molded (%m).
 //
 // Initially it was considered to be for low-level debug output only.  It
 // was strictly ASCII, and it only supported a fixed-size output destination
@@ -467,7 +467,7 @@ void Form_Args_Core(REB_MOLD *mo, const char *fmt, va_list *vaptr)
     REBINT pad;
     Byte desc;
     Byte padding;
-    Blob* ser = mo->series;
+    Blob* flex = mo->series;
     Byte buf[MAX_SCAN_DECIMAL];
 
     DECLARE_VALUE (value);
@@ -483,7 +483,7 @@ void Form_Args_Core(REB_MOLD *mo, const char *fmt, va_list *vaptr)
         // Copy format string until next % escape
         //
         while ((*fmt != '\0') && (*fmt != '%'))
-            Append_Utf8_Codepoint(ser, *fmt++);
+            Append_Utf8_Codepoint(flex, *fmt++);
 
         if (*fmt != '%') break;
 
@@ -512,7 +512,7 @@ pick:
                 pad,
                 padding
             );
-            Append_Unencoded_Len(ser, s_cast(buf), cast(REBLEN, cp - buf));
+            Append_Unencoded_Len(flex, s_cast(buf), cast(REBLEN, cp - buf));
             break;
 
         case 's':
@@ -522,9 +522,9 @@ pick:
                 pad = -pad;
                 pad -= LEN_BYTES(cp);
                 for (; pad > 0; pad--)
-                    Append_Utf8_Codepoint(ser, ' ');
+                    Append_Utf8_Codepoint(flex, ' ');
             }
-            Append_Unencoded(ser, s_cast(cp));
+            Append_Unencoded(flex, s_cast(cp));
 
             // !!! see R3-Alpha for original pad logic, this is an attempt
             // to make the output somewhat match without worrying heavily
@@ -533,7 +533,7 @@ pick:
             pad -= LEN_BYTES(cp);
 
             for (; pad > 0; pad--)
-                Append_Utf8_Codepoint(ser, ' ');
+                Append_Utf8_Codepoint(flex, ' ');
             break;
 
         case 'r':   // use Mold
@@ -555,28 +555,28 @@ pick:
 
         case 'c':
             Append_Utf8_Codepoint(
-                ser,
+                flex,
                 cast(Byte, va_arg(*vaptr, REBINT))
             );
             break;
 
         case 'x':
-            Append_Utf8_Codepoint(ser, '#');
+            Append_Utf8_Codepoint(flex, '#');
             if (pad == 1) pad = 8;
             cp = Form_Hex_Pad(
                 buf,
                 cast(REBU64, i_cast(uintptr_t, va_arg(*vaptr, Byte*))),
                 pad
             );
-            Append_Unencoded_Len(ser, s_cast(buf), cp - buf);
+            Append_Unencoded_Len(flex, s_cast(buf), cp - buf);
             break;
 
         default:
-            Append_Utf8_Codepoint(ser, *fmt);
+            Append_Utf8_Codepoint(flex, *fmt);
         }
     }
 
-    TERM_SERIES(ser);
+    Term_Flex(flex);
 }
 
 
@@ -609,6 +609,6 @@ void Startup_Raw_Print(void)
 //
 void Shutdown_Raw_Print(void)
 {
-    Free_Unmanaged_Series(TG_Byte_Buf);
+    Free_Unmanaged_Flex(TG_Byte_Buf);
     TG_Byte_Buf = nullptr;
 }

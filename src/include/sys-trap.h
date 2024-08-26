@@ -38,8 +38,8 @@
 // unwinding via longjmp, the macros in this file provide an abstraction
 // layer.  These allow Rebol to clean up after itself for some kinds of
 // "dangling" state--such as manually memory managed series that have been
-// made with Make_Series() but never passed to either Free_Unmanaged_Series()
-// or Manage_Series().  This covers several potential leaks known-to-Rebol,
+// made with Make_Flex() but never passed to either Free_Unmanaged_Flex()
+// or Manage_Flex().  This covers several potential leaks known-to-Rebol,
 // but custom interception code is needed for any generalized resource
 // that might be leaked in the case of a longjmp().
 //
@@ -314,7 +314,7 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
 // user's control could fix or work around the issue, hence the main goal is
 // to provide the most diagnostic information possible.
 //
-// So the best thing to do is to pass in whatever Value* or Series* subclass
+// So the best thing to do is to pass in whatever Value* or Flex* subclass
 // (including Array*, REBCTX*, REBACT*...) is the most useful "smoking gun":
 //
 //     if (VAL_TYPE(value) == REB_NOTHING)

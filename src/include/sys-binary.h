@@ -31,7 +31,7 @@
 // Is it a byte-sized series?
 //
 #define BYTE_SIZE(s) \
-    (Series_Wide(s) == 1)
+    (Flex_Wide(s) == 1)
 
 
 //
@@ -40,34 +40,34 @@
 
 INLINE Blob* Cell_Blob(const Cell* cell) {
     assert(Is_Binary(cell));
-    Series* s = VAL_SERIES(cell);
-    assert(Series_Wide(s) == 1);
+    Flex* s = Cell_Flex(cell);
+    assert(Flex_Wide(s) == 1);
     return cast(Blob*, s);
 }
 
 INLINE Byte* Blob_At(Blob* bin, REBLEN n)
-  { return Series_At(Byte, bin, n); }
+  { return Flex_At(Byte, bin, n); }
 
 INLINE Byte* Blob_Head(Blob* bin)
-  { return Series_Head(Byte, bin); }
+  { return Flex_Head(Byte, bin); }
 
 INLINE Byte* Blob_Tail(Blob* bin)
-  { return Series_Tail(Byte, bin); }
+  { return Flex_Tail(Byte, bin); }
 
 INLINE Byte* Blob_Last(Blob* bin)
   { return Series_Last(Byte, bin); }
 
 INLINE REBLEN Blob_Len(Blob* bin) {
     assert(BYTE_SIZE(bin));
-    return Series_Len(bin);
+    return Flex_Len(bin);
 }
 
 INLINE void Term_Blob(Blob* bin) {
-    Blob_Head(bin)[Series_Len(bin)] = 0;
+    Blob_Head(bin)[Flex_Len(bin)] = 0;
 }
 
 INLINE void Term_Blob_Len(Blob* bin, REBLEN len) {
-    Set_Series_Len(bin, len);
+    Set_Flex_Len(bin, len);
     Blob_Head(bin)[len] = 0;
 }
 
@@ -86,7 +86,7 @@ INLINE Byte *Cell_Binary_At(const Cell* v) {
 }
 
 INLINE Byte *Cell_Binary_Tail(const Cell* v) {
-    return Series_Tail(Byte, Cell_Blob(v));
+    return Flex_Tail(Byte, Cell_Blob(v));
 }
 
 // !!! RE: Cell_Binary_At_Head() see remarks on Cell_Array_At_Head()
@@ -95,7 +95,7 @@ INLINE Byte *Cell_Binary_Tail(const Cell* v) {
     Blob_At(Cell_Blob(v), (n))
 
 #define VAL_BYTE_SIZE(v) \
-    BYTE_SIZE(VAL_SERIES(v))
+    BYTE_SIZE(Cell_Flex(v))
 
 // defined as an inline to avoid side effects in:
 

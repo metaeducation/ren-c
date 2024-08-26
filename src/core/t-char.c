@@ -95,7 +95,7 @@ REB_R MAKE_Char(Value* out, enum Reb_Kind kind, const Value* arg)
       case REB_TEXT:
         if (VAL_INDEX(arg) >= VAL_LEN_HEAD(arg))
             goto bad_make;
-        return Init_Char(out, GET_ANY_CHAR(VAL_SERIES(arg), VAL_INDEX(arg)));
+        return Init_Char(out, GET_ANY_CHAR(Cell_Flex(arg), VAL_INDEX(arg)));
 
       default:
         break;
@@ -143,15 +143,15 @@ void MF_Char(REB_MOLD *mo, const Cell* v, bool form)
     bool parened = GET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
     REBUNI chr = VAL_CHAR(v);
 
-    REBLEN tail = Series_Len(out);
+    REBLEN tail = Flex_Len(out);
 
     if (form) {
-        Expand_Series_Tail(out, 4); // 4 is worst case scenario of bytes
+        Expand_Flex_Tail(out, 4); // 4 is worst case scenario of bytes
         tail += Encode_UTF8_Char(Blob_At(out, tail), chr);
-        Set_Series_Len(out, tail);
+        Set_Flex_Len(out, tail);
     }
     else {
-        Expand_Series_Tail(out, 10); // worst case: #"^(1234)"
+        Expand_Flex_Tail(out, 10); // worst case: #"^(1234)"
 
         Byte *bp = Blob_At(out, tail);
         *bp++ = '#';
@@ -159,7 +159,7 @@ void MF_Char(REB_MOLD *mo, const Cell* v, bool form)
         bp = Emit_Uni_Char(bp, chr, parened);
         *bp++ = '"';
 
-        Set_Series_Len(out, bp - Blob_Head(out));
+        Set_Flex_Len(out, bp - Blob_Head(out));
     }
     Term_Blob(out);
 }

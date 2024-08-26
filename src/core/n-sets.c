@@ -32,12 +32,12 @@
 
 
 //
-//  Make_Set_Operation_Series: C
+//  Make_Set_Operation_Flex: C
 //
 // Do set operations on a series.  Case-sensitive if `cased` is TRUE.
 // `skip` is the record size.
 //
-Series* Make_Set_Operation_Series(
+Flex* Make_Set_Operation_Flex(
     const Value* val1,
     const Value* val2,
     REBFLGS flags,
@@ -88,11 +88,11 @@ Series* Make_Set_Operation_Series(
 
     REBINT h = 1; // used for both logic true/false and hash check
     bool first_pass = true; // are we in the first pass over the series?
-    Series* out_ser;
+    Flex* out_ser;
 
     if (ANY_ARRAY(val1)) {
-        Series* hser = 0;   // hash table for series
-        Series* hret;       // hash table for return series
+        Flex* hser = 0;   // hash table for series
+        Flex* hret;       // hash table for return series
 
         // The buffer used for building the return series.  This creates
         // a new buffer every time, but reusing one might be slightly more
@@ -133,7 +133,7 @@ Series* Make_Set_Operation_Series(
                 }
                 if (h) {
                     Find_Key_Hashed(
-                        ARR(buffer),
+                        cast_Array(buffer),
                         hret,
                         item,
                         VAL_SPECIFIER(val1),
@@ -155,7 +155,7 @@ Series* Make_Set_Operation_Series(
             }
 
             if (flags & SOP_FLAG_CHECK)
-                Free_Unmanaged_Series(hser);
+                Free_Unmanaged_Flex(hser);
 
             if (not first_pass)
                 break;
@@ -171,13 +171,13 @@ Series* Make_Set_Operation_Series(
         } while (i);
 
         if (hret)
-            Free_Unmanaged_Series(hret);
+            Free_Unmanaged_Flex(hret);
 
         // The buffer may have been allocated too large, so copy it at the
         // used capacity size
         //
-        out_ser = Copy_Array_Shallow(ARR(buffer), SPECIFIED);
-        Free_Unmanaged_Series(ARR(buffer));
+        out_ser = Copy_Array_Shallow(cast_Array(buffer), SPECIFIED);
+        Free_Unmanaged_Flex(cast_Array(buffer));
     }
     else if (ANY_STRING(val1)) {
         DECLARE_MOLD (mo);
@@ -189,18 +189,18 @@ Series* Make_Set_Operation_Series(
         Push_Mold(mo);
 
         do {
-            Series* ser = VAL_SERIES(val1); // val1 and val2 swapped 2nd pass!
+            Flex* flex = Cell_Flex(val1); // val1 and val2 swapped 2nd pass!
             REBUNI uc;
 
             // Iterate over first series
             //
             i = VAL_INDEX(val1);
-            for (; i < Series_Len(ser); i += skip) {
-                uc = GET_ANY_CHAR(ser, i);
+            for (; i < Flex_Len(flex); i += skip) {
+                uc = GET_ANY_CHAR(flex, i);
                 if (flags & SOP_FLAG_CHECK) {
                     h = (NOT_FOUND != Find_Str_Char(
                         uc,
-                        VAL_SERIES(val2),
+                        Cell_Flex(val2),
                         0,
                         VAL_INDEX(val2),
                         VAL_LEN_HEAD(val2),
@@ -216,16 +216,16 @@ Series* Make_Set_Operation_Series(
                 if (
                     NOT_FOUND == Find_Str_Char(
                         uc, // c2 (the character to find)
-                        mo->series, // ser
+                        mo->series, // flex
                         mo->start, // head
                         mo->start, // index
-                        Series_Len(mo->series), // tail
+                        Flex_Len(mo->series), // tail
                         skip, // skip
                         cased ? AM_FIND_CASE : 0 // flags
                     )
                 ){
                     DECLARE_VALUE (temp);
-                    Init_Any_Series_At(temp, REB_TEXT, ser, i);
+                    Init_Any_Series_At(temp, REB_TEXT, flex, i);
                     Append_Utf8_String(mo->series, temp, skip);
                 }
             }
@@ -262,18 +262,18 @@ Series* Make_Set_Operation_Series(
         Push_Mold(mo);
 
         do {
-            Series* ser = VAL_SERIES(val1); // val1 and val2 swapped 2nd pass!
+            Flex* flex = Cell_Flex(val1); // val1 and val2 swapped 2nd pass!
             REBUNI uc;
 
             // Iterate over first series
             //
             i = VAL_INDEX(val1);
-            for (; i < Series_Len(ser); i += skip) {
-                uc = GET_ANY_CHAR(ser, i);
+            for (; i < Flex_Len(flex); i += skip) {
+                uc = GET_ANY_CHAR(flex, i);
                 if (flags & SOP_FLAG_CHECK) {
                     h = (NOT_FOUND != Find_Str_Char(
                         uc,
-                        VAL_SERIES(val2),
+                        Cell_Flex(val2),
                         0,
                         VAL_INDEX(val2),
                         VAL_LEN_HEAD(val2),
@@ -289,10 +289,10 @@ Series* Make_Set_Operation_Series(
                 if (
                     NOT_FOUND == Find_Str_Char(
                         uc, // c2 (the character to find)
-                        mo->series, // ser
+                        mo->series, // flex
                         mo->start, // head
                         mo->start, // index
-                        Series_Len(mo->series), // tail
+                        Flex_Len(mo->series), // tail
                         skip, // skip
                         cased ? AM_FIND_CASE : 0 // flags
                     )
@@ -302,7 +302,7 @@ Series* Make_Set_Operation_Series(
                     //
                     fail ("Binary set operations temporarily unsupported.");
 
-                    // Append_String(mo->series, ser, i, skip);
+                    // Append_String(mo->series, flex, i, skip);
                 }
             }
 
@@ -370,7 +370,7 @@ DECLARE_NATIVE(exclude)
     return Init_Any_Series(
         OUT,
         VAL_TYPE(val1),
-        Make_Set_Operation_Series(
+        Make_Set_Operation_Flex(
             val1,
             val2,
             SOP_FLAG_CHECK | SOP_FLAG_INVERT,
@@ -406,7 +406,7 @@ DECLARE_NATIVE(unique)
     return Init_Any_Series(
         OUT,
         VAL_TYPE(val),
-        Make_Set_Operation_Series(
+        Make_Set_Operation_Flex(
             val,
             nullptr,
             SOP_NONE,

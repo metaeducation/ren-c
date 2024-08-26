@@ -251,7 +251,7 @@ static void Encode_Utf16_Core(
 
     up[i] = '\0'; // needs two bytes worth of terminator, not just one.
 
-    Set_Series_Len(bin, len * sizeof(uint16_t));
+    Set_Flex_Len(bin, len * sizeof(uint16_t));
     Init_Binary(out, bin);
 }
 
@@ -262,16 +262,16 @@ static void Decode_Utf16_Core(
     REBLEN len,
     bool little_endian
 ){
-    String* ser = Make_String(len); // 2x too big (?)
+    String* flex = Make_String(len); // 2x too big (?)
 
     REBINT size = Decode_UTF16_Negative_If_ASCII(
-        String_Head(ser), data, len, little_endian, false
+        String_Head(flex), data, len, little_endian, false
     );
     if (size < 0) // ASCII
         size = -size;
-    Term_String_Len(ser, size);
+    Term_String_Len(flex, size);
 
-    Init_Text(out, ser);
+    Init_Text(out, flex);
 }
 
 
@@ -323,9 +323,9 @@ DECLARE_NATIVE(decode_utf16le)
     //
     if (
         VAL_LEN_AT(OUT) > 0
-        && GET_ANY_CHAR(VAL_SERIES(OUT), VAL_INDEX(OUT)) == 0xFEFF
+        && GET_ANY_CHAR(Cell_Flex(OUT), VAL_INDEX(OUT)) == 0xFEFF
     ){
-        Remove_Series(VAL_SERIES(OUT), VAL_INDEX(OUT), 1);
+        Remove_Flex(Cell_Flex(OUT), VAL_INDEX(OUT), 1);
     }
 
     return OUT;
@@ -408,9 +408,9 @@ DECLARE_NATIVE(decode_utf16be)
     //
     if (
         VAL_LEN_AT(OUT) > 0
-        && GET_ANY_CHAR(VAL_SERIES(OUT), VAL_INDEX(OUT)) == 0xFEFF
+        && GET_ANY_CHAR(Cell_Flex(OUT), VAL_INDEX(OUT)) == 0xFEFF
     ){
-        Remove_Series(VAL_SERIES(OUT), VAL_INDEX(OUT), 1);
+        Remove_Flex(Cell_Flex(OUT), VAL_INDEX(OUT), 1);
     }
 
     return OUT;

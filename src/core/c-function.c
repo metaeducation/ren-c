@@ -639,8 +639,8 @@ Array* Make_Paramlist_Managed_May_Fail(
             fail (Error_Dup_Vars_Raw(word));
         }
 
-        TERM_ARRAY_LEN(paramlist, num_slots);
-        Manage_Series(paramlist);
+        Term_Array_Len(paramlist, num_slots);
+        Manage_Flex(paramlist);
     }
 
     //=///////////////////////////////////////////////////////////////////=//
@@ -722,7 +722,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             }
         }
 
-        TERM_ARRAY_LEN(types_varlist, num_slots);
+        Term_Array_Len(types_varlist, num_slots);
 
         Init_Any_Context(
             CTX_VAR(meta, STD_ACTION_META_PARAMETER_TYPES),
@@ -755,7 +755,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             if (definitional_return and src == definitional_return + 2)
                 continue;
 
-            if (Series_Len(VAL_SERIES(src)) == 0)
+            if (Flex_Len(Cell_Flex(src)) == 0)
                 Init_Nulled(dest);
             else
                 Copy_Cell(dest, src);
@@ -768,7 +768,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             // the top-level META-OF, not the "incidentally" named RETURN
             // parameter in the list
             //
-            if (Series_Len(VAL_SERIES(definitional_return + 2)) == 0)
+            if (Flex_Len(Cell_Flex(definitional_return + 2)) == 0)
                 Init_Nulled(CTX_VAR(meta, STD_ACTION_META_RETURN_NOTE));
             else {
                 Copy_Cell(
@@ -783,7 +783,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             }
         }
 
-        TERM_ARRAY_LEN(notes_varlist, num_slots);
+        Term_Array_Len(notes_varlist, num_slots);
 
         Init_Frame(
             CTX_VAR(meta, STD_ACTION_META_PARAMETER_NOTES),
@@ -853,7 +853,7 @@ REBACT *Make_Action(
     REBCTX *opt_exemplar, // if provided, should be consistent w/next level
     REBLEN details_capacity // desired capacity of the ACT_DETAILS() array
 ){
-    Assert_Series_Managed(paramlist);
+    Assert_Flex_Managed(paramlist);
 
     Cell* rootparam = Array_Head(paramlist);
     assert(VAL_TYPE_RAW(rootparam) == REB_ACTION); // !!! not fully formed...
@@ -941,7 +941,7 @@ REBACT *Make_Action(
     // at the given length implicitly.
 
     Array* details = Make_Array_Core(details_capacity, NODE_FLAG_MANAGED);
-    TERM_ARRAY_LEN(details, details_capacity);
+    Term_Array_Len(details, details_capacity);
 
     rootparam->payload.action.details = details;
 
@@ -971,7 +971,7 @@ REBACT *Make_Action(
         // the exemplar (though some of these parameters may be hidden due to
         // specialization, see REB_TS_HIDDEN).
         //
-        assert(GET_SER_FLAG(opt_exemplar, NODE_FLAG_MANAGED));
+        assert(Get_Flex_Flag(opt_exemplar, NODE_FLAG_MANAGED));
         assert(CTX_LEN(opt_exemplar) == Array_Len(paramlist) - 1);
 
         LINK(details).specialty = CTX_VARLIST(opt_exemplar);
@@ -983,11 +983,11 @@ REBACT *Make_Action(
     //
     assert(
         not MISC(paramlist).meta
-        or GET_SER_FLAG(MISC(paramlist).meta, ARRAY_FLAG_VARLIST)
+        or Get_Flex_Flag(MISC(paramlist).meta, ARRAY_FLAG_VARLIST)
     );
 
-    assert(NOT_SER_FLAG(paramlist, ARRAY_FLAG_FILE_LINE));
-    assert(NOT_SER_FLAG(details, ARRAY_FLAG_FILE_LINE));
+    assert(Not_Flex_Flag(paramlist, ARRAY_FLAG_FILE_LINE));
+    assert(Not_Flex_Flag(details, ARRAY_FLAG_FILE_LINE));
 
     return ACT(paramlist);
 }
@@ -1010,16 +1010,16 @@ REBACT *Make_Action(
 //
 REBCTX *Make_Expired_Level_Ctx_Managed(REBACT *a)
 {
-    // Since passing SERIES_MASK_CONTEXT includes SERIES_FLAG_ALWAYS_DYNAMIC,
+    // Since passing SERIES_MASK_CONTEXT includes FLEX_FLAG_ALWAYS_DYNAMIC,
     // don't pass it in to the allocation...it needs to be set, but will be
-    // overridden by SERIES_INFO_INACCESSIBLE.
+    // overridden by FLEX_INFO_INACCESSIBLE.
     //
     Array* varlist = Alloc_Singular(
         ARRAY_FLAG_VARLIST
         | NODE_FLAG_MANAGED
     );
-    SET_SER_FLAG(varlist, SERIES_FLAG_ALWAYS_DYNAMIC);  // asserts check
-    SET_SER_INFO(varlist, SERIES_INFO_INACCESSIBLE);
+    Set_Flex_Flag(varlist, FLEX_FLAG_ALWAYS_DYNAMIC);  // asserts check
+    Set_Flex_Info(varlist, FLEX_INFO_INACCESSIBLE);
     MISC(varlist).meta = nullptr;
 
     Cell* rootvar = RESET_CELL(ARR_SINGLE(varlist), REB_FRAME);
@@ -1101,12 +1101,12 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
         }
 
         Array* real_body = Cell_Array(body);
-        assert(GET_SER_INFO(real_body, SERIES_INFO_FROZEN));
+        assert(Get_Flex_Info(real_body, FLEX_INFO_FROZEN));
 
         Array* maybe_fake_body;
         if (example == nullptr) {
             maybe_fake_body = real_body;
-            assert(GET_SER_INFO(maybe_fake_body, SERIES_INFO_FROZEN));
+            assert(Get_Flex_Info(maybe_fake_body, FLEX_INFO_FROZEN));
         }
         else {
             // See %sysobj.r for STANDARD/FUNC-BODY and STANDARD/PROC-BODY
@@ -1116,7 +1116,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
                 VAL_SPECIFIER(example),
                 NODE_FLAG_MANAGED
             );
-            SET_SER_INFO(maybe_fake_body, SERIES_INFO_FROZEN);
+            Set_Flex_Info(maybe_fake_body, FLEX_INFO_FROZEN);
 
             // Index 5 (or 4 in zero-based C) should be #BODY, a "real" body.
             // To give it the appearance of executing code in place, we use
@@ -1270,15 +1270,15 @@ REBACT *Make_Interpreted_Action_May_Fail(
 
     // Favor the spec first, then the body, for file and line information.
     //
-    if (GET_SER_FLAG(Cell_Array(spec), ARRAY_FLAG_FILE_LINE)) {
+    if (Get_Flex_Flag(Cell_Array(spec), ARRAY_FLAG_FILE_LINE)) {
         LINK(copy).file = LINK(Cell_Array(spec)).file;
         MISC(copy).line = MISC(Cell_Array(spec)).line;
-        SET_SER_FLAG(copy, ARRAY_FLAG_FILE_LINE);
+        Set_Flex_Flag(copy, ARRAY_FLAG_FILE_LINE);
     }
-    else if (GET_SER_FLAG(Cell_Array(code), ARRAY_FLAG_FILE_LINE)) {
+    else if (Get_Flex_Flag(Cell_Array(code), ARRAY_FLAG_FILE_LINE)) {
         LINK(copy).file = LINK(Cell_Array(code)).file;
         MISC(copy).line = MISC(Cell_Array(code)).line;
-        SET_SER_FLAG(copy, ARRAY_FLAG_FILE_LINE);
+        Set_Flex_Flag(copy, ARRAY_FLAG_FILE_LINE);
     }
     else {
         // Ideally all source series should have a file and line numbering
@@ -1633,13 +1633,13 @@ REB_R Encloser_Dispatcher(Level* L)
     REBCTX *c = Steal_Context_Vars(CTX(L->varlist), Level_Phase(L));
     LINK(c).keysource = VAL_ACTION(inner);
 
-    assert(GET_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE)); // look dead
+    assert(Get_Flex_Info(L->varlist, FLEX_INFO_INACCESSIBLE)); // look dead
 
     // L->varlist may or may not have wound up being managed.  It was not
     // allocated through the usual mechanisms, so if unmanaged it's not in
     // the tracking list Init_Any_Context() expects.  Just fiddle the bit.
     //
-    SET_SER_FLAG(c, NODE_FLAG_MANAGED);
+    Set_Flex_Flag(c, NODE_FLAG_MANAGED);
 
     // When the DO of the FRAME! executes, we don't want it to run the
     // encloser again (infinite loop).
@@ -1661,7 +1661,7 @@ REB_R Encloser_Dispatcher(Level* L)
     // Note that since varlists aren't added to the manual series list, the
     // bit must be tweaked vs. using ENSURE_ARRAY_MANAGED.
     //
-    SET_SER_FLAG(L->varlist, NODE_FLAG_MANAGED);
+    Set_Flex_Flag(L->varlist, NODE_FLAG_MANAGED);
 
     const bool fully = true;
     if (Apply_Only_Throws(L->out, fully, outer, Level_Spare(L), rebEND))

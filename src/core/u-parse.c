@@ -83,7 +83,7 @@
 
 #define P_INPUT_VALUE       (Level_Args_Head(L) + 0)
 #define P_TYPE              VAL_TYPE(P_INPUT_VALUE)
-#define P_INPUT             VAL_SERIES(P_INPUT_VALUE)
+#define P_INPUT             Cell_Flex(P_INPUT_VALUE)
 #define P_INPUT_SPECIFIER   VAL_SPECIFIER(P_INPUT_VALUE)
 #define P_POS               VAL_INDEX(P_INPUT_VALUE)
 
@@ -344,7 +344,7 @@ static void Print_Parse_Index(Level* L) {
         P_TYPE,
         P_INPUT,
         P_POS,
-        IS_SER_ARRAY(P_INPUT)
+        Is_Flex_Array(P_INPUT)
             ? P_INPUT_SPECIFIER
             : SPECIFIED
     );
@@ -356,13 +356,13 @@ static void Print_Parse_Index(Level* L) {
     // when seeking a position given in a variable or modifying?
     //
     if (IS_END(L->value)) {
-        if (P_POS >= Series_Len(P_INPUT))
+        if (P_POS >= Flex_Len(P_INPUT))
             Debug_Fmt("[]: ** END **");
         else
             Debug_Fmt("[]: %r", input);
     }
     else {
-        if (P_POS >= Series_Len(P_INPUT))
+        if (P_POS >= Flex_Len(P_INPUT))
             Debug_Fmt("%r: ** END **", P_RULE);
         else
             Debug_Fmt("%r: %r", P_RULE, input);
@@ -473,8 +473,8 @@ REB_R Process_Group_For_Parse(
     // PARSE's own REMOVE/etc.  This is a sketchy idea, but as long as it's
     // allowed, each time arbitrary user code runs, rules have to be adjusted
     //
-    if (P_POS > Series_Len(P_INPUT))
-        P_POS = Series_Len(P_INPUT);
+    if (P_POS > Flex_Len(P_INPUT))
+        P_POS = Flex_Len(P_INPUT);
 
     if (
         IS_NULLED(cell) // even for doubled groups, null evals are discarded
@@ -506,7 +506,7 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
 
     REBLEN flags = (P_FLAGS & PF_FIND_MASK) | AM_FIND_MATCH | AM_FIND_TAIL;
 
-    if (P_POS >= Series_Len(P_INPUT))
+    if (P_POS >= Flex_Len(P_INPUT))
         return END_FLAG;
 
     if (Is_Group(rule)) {
@@ -516,7 +516,7 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
             return THROWN_FLAG;
         }
         if (rule == R_INVISIBLE) {
-            assert(P_POS <= Series_Len(P_INPUT)); // !!! Process_Group ensures
+            assert(P_POS <= Flex_Len(P_INPUT)); // !!! Process_Group ensures
             return P_POS;
         }
         // was a doubled group ((...)), use result as rule
@@ -553,9 +553,9 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
             P_INPUT,
             0,
             P_POS,
-            Series_Len(P_INPUT),
+            Flex_Len(P_INPUT),
             1,
-            VAL_SERIES(rule),
+            Cell_Flex(rule),
             VAL_INDEX(rule),
             VAL_LEN_AT(rule),
             flags
@@ -569,19 +569,19 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
         // !!! The content to be matched does not have the delimiters in the
         // actual series data.  This FORMs it, but could be more optimized.
         //
-        Series* formed = Copy_Form_Value(rule, 0);
+        Flex* formed = Copy_Form_Value(rule, 0);
         REBLEN index = Find_Str_Str(
             P_INPUT,
             0,
             P_POS,
-            Series_Len(P_INPUT),
+            Flex_Len(P_INPUT),
             1,
             formed,
             0,
-            Series_Len(formed),
+            Flex_Len(formed),
             flags
         );
-        Free_Unmanaged_Series(formed);
+        Free_Unmanaged_Flex(formed);
         if (index == NOT_FOUND)
             return END_FLAG;
         return index; }
@@ -654,7 +654,7 @@ static REBIXO Parse_Array_One_Rule_Core(
 ) {
     assert(IS_END(P_OUT));
 
-    Array* array = ARR(P_INPUT);
+    Array* array = cast_Array(P_INPUT);
     Cell* item = Array_At(array, pos);
 
     if (IS_END(item)) {
@@ -790,7 +790,7 @@ static REBIXO To_Thru_Block_Rule(
     DECLARE_VALUE (cell); // holds evaluated rules (use frame cell instead?)
 
     REBLEN pos = P_POS;
-    for (; pos <= Series_Len(P_INPUT); ++pos) {
+    for (; pos <= Flex_Len(P_INPUT); ++pos) {
         const Cell* blk = VAL_ARRAY_HEAD(rule_block);
         for (; NOT_END(blk); blk++) {
             if (Is_Bar(blk))
@@ -814,8 +814,8 @@ static REBIXO To_Thru_Block_Rule(
                 if (0 != Compare_String_Vals(rule, Root_End_Tag, strict))
                     fail ("<end> is only tag in To_Thru_Non_Block_Rule()");
 
-                if (pos >= Series_Len(P_INPUT))
-                    return Series_Len(P_INPUT);
+                if (pos >= Flex_Len(P_INPUT))
+                    return Flex_Len(P_INPUT);
                 goto next_alternate_rule;
             }
 
@@ -827,8 +827,8 @@ static REBIXO To_Thru_Block_Rule(
                         if (not (P_FLAGS & PF_REDBOL))
                             fail ("Use <end> instead of END outside PARSE2");
 
-                        if (pos >= Series_Len(P_INPUT))
-                            return Series_Len(P_INPUT);
+                        if (pos >= Flex_Len(P_INPUT))
+                            return Flex_Len(P_INPUT);
                         goto next_alternate_rule;
                     }
                     else if (cmd == SYM_THE or cmd == SYM_QUOTE) {
@@ -963,20 +963,20 @@ static REBIXO To_Thru_Block_Rule(
                         // !!! This code was adapted from Parse_to, and is
                         // inefficient in the sense that it forms the tag
                         //
-                        Series* formed = Copy_Form_Value(rule, 0);
-                        REBLEN len = Series_Len(formed);
+                        Flex* formed = Copy_Form_Value(rule, 0);
+                        REBLEN len = Flex_Len(formed);
                         REBLEN i = Find_Str_Str(
                             P_INPUT,
                             0,
                             pos,
-                            Series_Len(P_INPUT),
+                            Flex_Len(P_INPUT),
                             1,
                             formed,
                             0,
                             len,
                             AM_FIND_MATCH | (P_FLAGS & PF_FIND_MASK)
                         );
-                        Free_Unmanaged_Series(formed);
+                        Free_Unmanaged_Flex(formed);
                         if (i != NOT_FOUND) {
                             if (is_thru)
                                 return pos + len;
@@ -1000,9 +1000,9 @@ static REBIXO To_Thru_Block_Rule(
                             P_INPUT,
                             0,
                             pos,
-                            Series_Len(P_INPUT),
+                            Flex_Len(P_INPUT),
                             1,
-                            VAL_SERIES(rule),
+                            Cell_Flex(rule),
                             VAL_INDEX(rule),
                             len,
                             AM_FIND_MATCH | (P_FLAGS & PF_FIND_MASK)
@@ -1066,8 +1066,8 @@ static REBIXO To_Thru_Non_Block_Rule(
         // But also, should there be an option for relative addressing?
         //
         REBLEN i = cast(REBLEN, Int32(rule)) - (is_thru ? 0 : 1);
-        if (i > Series_Len(P_INPUT))
-            return Series_Len(P_INPUT);
+        if (i > Flex_Len(P_INPUT))
+            return Flex_Len(P_INPUT);
         return i;
     }
 
@@ -1077,13 +1077,13 @@ static REBIXO To_Thru_Non_Block_Rule(
 
         // `TO/THRU END` JUMPS TO END INPUT SERIES (ANY SERIES TYPE)
         //
-        return Series_Len(P_INPUT);
+        return Flex_Len(P_INPUT);
     }
 
     if (Is_Tag(rule)) {
         bool strict = true;
         if (0 == Compare_String_Vals(rule, Root_End_Tag, strict)) {
-            return Series_Len(P_INPUT);
+            return Flex_Len(P_INPUT);
         }
         else if (0 == Compare_String_Vals(rule, Root_Here_Tag, strict)) {
             fail ("TO/THRU <here> isn't supported in PARSE3");
@@ -1092,7 +1092,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             fail ("TAG! combinator must be <here> or <end> ATM");
     }
 
-    if (IS_SER_ARRAY(P_INPUT)) {
+    if (Is_Flex_Array(P_INPUT)) {
         //
         // FOR ARRAY INPUT WITH NON-BLOCK RULES, USE Find_In_Array()
         //
@@ -1107,9 +1107,9 @@ static REBIXO To_Thru_Non_Block_Rule(
         }
 
         REBLEN i = Find_In_Array(
-            ARR(P_INPUT),
+            cast_Array(P_INPUT),
             P_POS,
-            Series_Len(P_INPUT),
+            Flex_Len(P_INPUT),
             rule,
             1,
             (P_FLAGS & AM_FIND_CASE),
@@ -1130,20 +1130,20 @@ static REBIXO To_Thru_Non_Block_Rule(
     if (ANY_BINSTR(rule)) {
         if (not Is_Text(rule) and not Is_Binary(rule)) {
             // !!! Can this be optimized not to use COPY?
-            Series* formed = Copy_Form_Value(rule, 0);
-            REBLEN form_len = Series_Len(formed);
+            Flex* formed = Copy_Form_Value(rule, 0);
+            REBLEN form_len = Flex_Len(formed);
             REBLEN i = Find_Str_Str(
                 P_INPUT,
                 0,
                 P_POS,
-                Series_Len(P_INPUT),
+                Flex_Len(P_INPUT),
                 1,
                 formed,
                 0,
                 form_len,
                 (P_FLAGS & AM_FIND_CASE)
             );
-            Free_Unmanaged_Series(formed);
+            Free_Unmanaged_Flex(formed);
 
             if (i == NOT_FOUND)
                 return END_FLAG;
@@ -1158,9 +1158,9 @@ static REBIXO To_Thru_Non_Block_Rule(
             P_INPUT,
             0,
             P_POS,
-            Series_Len(P_INPUT),
+            Flex_Len(P_INPUT),
             1,
-            VAL_SERIES(rule),
+            Cell_Flex(rule),
             VAL_INDEX(rule),
             VAL_LEN_AT(rule),
             (P_FLAGS & AM_FIND_CASE)
@@ -1181,7 +1181,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             P_INPUT,
             0,
             P_POS,
-            Series_Len(P_INPUT),
+            Flex_Len(P_INPUT),
             1,
             (P_FLAGS & AM_FIND_CASE)
         );
@@ -1200,7 +1200,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             P_INPUT,
             0,
             P_POS,
-            Series_Len(P_INPUT),
+            Flex_Len(P_INPUT),
             1,
             Cell_Bitset(rule),
             (P_FLAGS & AM_FIND_CASE)
@@ -1871,8 +1871,8 @@ DECLARE_NATIVE(subparse)
             else
                 assert(Is_Lit_Path(rule));
 
-            if (P_POS > Series_Len(P_INPUT))
-                P_POS = Series_Len(P_INPUT);
+            if (P_POS > Flex_Len(P_INPUT))
+                P_POS = Flex_Len(P_INPUT);
         }
 
         // All cases should have either set `rule` by this point or continued
@@ -1956,7 +1956,7 @@ DECLARE_NATIVE(subparse)
 
                 case SYM_ONE:
                 handle_one:
-                    i = (P_POS < Series_Len(P_INPUT))
+                    i = (P_POS < Flex_Len(P_INPUT))
                         ? P_POS + 1
                         : END_FLAG;
                     break;
@@ -1995,7 +1995,7 @@ DECLARE_NATIVE(subparse)
                     goto literal_match;
 
                 literal_match: {
-                    if (not IS_SER_ARRAY(P_INPUT))
+                    if (not Is_Flex_Array(P_INPUT))
                         fail (Error_Parse_Rule()); // see #2253
 
                     if (IS_END(L->value))
@@ -2004,7 +2004,7 @@ DECLARE_NATIVE(subparse)
                     if (not subrule) // capture only on iteration #1
                         FETCH_NEXT_RULE_KEEP_LAST(&subrule, f);
 
-                    Cell* cmp = Array_At(ARR(P_INPUT), P_POS);
+                    Cell* cmp = Array_At(cast_Array(P_INPUT), P_POS);
 
                     if (IS_END(cmp))
                         i = END_FLAG;
@@ -2032,10 +2032,10 @@ DECLARE_NATIVE(subparse)
                     // parse ["aa"] [into ["a" "a"]] ; is legal
                     // parse "aa" [into ["a" "a"]] ; is not...already "into"
                     //
-                    if (not IS_SER_ARRAY(P_INPUT))
+                    if (not Is_Flex_Array(P_INPUT))
                         fail (Error_Parse_Rule());
 
-                    Cell* into = Array_At(ARR(P_INPUT), P_POS);
+                    Cell* into = Array_At(cast_Array(P_INPUT), P_POS);
 
                     if (
                         IS_END(into)
@@ -2113,14 +2113,14 @@ DECLARE_NATIVE(subparse)
             else if (false) {
               handle_end:
                 count = 0;
-                i = (P_POS < Series_Len(P_INPUT))
+                i = (P_POS < Flex_Len(P_INPUT))
                     ? END_FLAG
-                    : Series_Len(P_INPUT);
+                    : Flex_Len(P_INPUT);
             }
             else {
                 // Parse according to datatype
 
-                if (IS_SER_ARRAY(P_INPUT))
+                if (Is_Flex_Array(P_INPUT))
                     i = Parse_Array_One_Rule(L, rule);
                 else
                     i = Parse_String_One_Rule(L, rule);
@@ -2176,7 +2176,7 @@ DECLARE_NATIVE(subparse)
             P_POS = cast(REBLEN, i);
         }
 
-        if (P_POS > Series_Len(P_INPUT))
+        if (P_POS > Flex_Len(P_INPUT))
             P_POS = NOT_FOUND;
 
     //==////////////////////////////////////////////////////////////////==//
@@ -2219,7 +2219,7 @@ DECLARE_NATIVE(subparse)
                             temp,
                             P_TYPE,
                             Copy_Array_At_Max_Shallow(
-                                ARR(P_INPUT),
+                                cast_Array(P_INPUT),
                                 begin,
                                 P_INPUT_SPECIFIER,
                                 count
@@ -2251,13 +2251,13 @@ DECLARE_NATIVE(subparse)
                     );
                 }
                 else if (P_FLAGS & PF_SET) {
-                    if (IS_SER_ARRAY(P_INPUT)) {
+                    if (Is_Flex_Array(P_INPUT)) {
                         if (count != 0)
                             Derelativize(
                                 Sink_Var_May_Fail(
                                     set_or_copy_word, P_RULE_SPECIFIER
                                 ),
-                                Array_At(ARR(P_INPUT), begin),
+                                Array_At(cast_Array(P_INPUT), begin),
                                 P_INPUT_SPECIFIER
                             );
                         else
@@ -2280,13 +2280,13 @@ DECLARE_NATIVE(subparse)
                 }
 
                 if (P_FLAGS & PF_REMOVE) {
-                    Fail_If_Read_Only_Series(P_INPUT);
-                    if (count) Remove_Series(P_INPUT, begin, count);
+                    Fail_If_Read_Only_Flex(P_INPUT);
+                    if (count) Remove_Flex(P_INPUT, begin, count);
                     P_POS = begin;
                 }
 
                 if (P_FLAGS & (PF_INSERT | PF_CHANGE)) {
-                    Fail_If_Read_Only_Series(P_INPUT);
+                    Fail_If_Read_Only_Flex(P_INPUT);
                     count = (P_FLAGS & PF_INSERT) ? 0 : count;
                     bool only = false;
 
@@ -2335,7 +2335,7 @@ DECLARE_NATIVE(subparse)
                         rule = evaluated;
                     }
 
-                    if (IS_SER_ARRAY(P_INPUT)) {
+                    if (Is_Flex_Array(P_INPUT)) {
                         DECLARE_VALUE (specified);
                         Derelativize(specified, rule, P_RULE_SPECIFIER);
 
@@ -2350,7 +2350,7 @@ DECLARE_NATIVE(subparse)
                             (P_FLAGS & PF_CHANGE)
                                 ? SYM_CHANGE
                                 : SYM_INSERT,
-                            ARR(P_INPUT),
+                            cast_Array(P_INPUT),
                             begin,
                             specified,
                             mod_flags,
@@ -2360,7 +2360,7 @@ DECLARE_NATIVE(subparse)
 
                         if (Is_Lit_Word(rule))
                             CHANGE_VAL_TYPE_BITS( // keeps binding flags
-                                Array_At(ARR(P_INPUT), P_POS - 1),
+                                Array_At(cast_Array(P_INPUT), P_POS - 1),
                                 REB_WORD
                             );
                     }

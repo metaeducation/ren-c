@@ -86,14 +86,14 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         Blob* temp = Temp_UTF8_At_Managed(
             &offset, &size, arg, VAL_LEN_AT(arg)
         );
-        PUSH_GC_GUARD(temp);
+        Push_GC_Guard(temp);
         Option(String*) filename = nullptr;
         Init_Any_Array(
             out,
             kind,
             Scan_UTF8_Managed(filename, Blob_At(temp, offset), size)
         );
-        DROP_GC_GUARD(temp);
+        Drop_GC_Guard(temp);
         return out;
     }
     else if (ANY_ARRAY(arg)) {
@@ -205,7 +205,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
             // any voids, because the data source is a block.
             //
             assert(
-                NOT_SER_FLAG(
+                Not_Flex_Flag(
                     arg->extra.binding, ARRAY_FLAG_VARLIST
                 )
             );
@@ -667,7 +667,7 @@ REB_R PD_Array(
     }
 
     if (opt_setval)
-        Fail_If_Read_Only_Series(VAL_SERIES(pvs->out));
+        Fail_If_Read_Only_Flex(Cell_Flex(pvs->out));
 
     pvs->u.ref.cell = Cell_Array_At_Head(pvs->out, n);
     pvs->u.ref.specifier = VAL_SPECIFIER(pvs->out);
@@ -810,7 +810,7 @@ REBTYPE(Array)
         if (REF(deep))
             fail (Error_Bad_Refines_Raw());
 
-        Fail_If_Read_Only_Series(arr);
+        Fail_If_Read_Only_Flex(arr);
 
         REBLEN len;
         if (REF(part)) {
@@ -840,7 +840,7 @@ REBTYPE(Array)
         else
             Derelativize(OUT, &Array_Head(arr)[index], specifier);
 
-        Remove_Series(arr, index, len);
+        Remove_Flex(arr, index, len);
         return OUT; }
 
     //-- Search:
@@ -917,7 +917,7 @@ REBTYPE(Array)
                 VAL_INDEX(array) = 0;
             RETURN (array); // don't fail on read only if it would be a no-op
         }
-        Fail_If_Read_Only_Series(arr);
+        Fail_If_Read_Only_Flex(arr);
 
         REBLEN index = VAL_INDEX(array);
 
@@ -946,13 +946,13 @@ REBTYPE(Array)
         return OUT; }
 
       case SYM_CLEAR: {
-        Fail_If_Read_Only_Series(arr);
+        Fail_If_Read_Only_Flex(arr);
         REBLEN index = VAL_INDEX(array);
         if (index < VAL_LEN_HEAD(array)) {
             if (index == 0) Reset_Array(arr);
             else {
                 SET_END(Array_At(arr, index));
-                Set_Series_Len(VAL_SERIES(array), cast(REBLEN, index));
+                Set_Flex_Len(Cell_Flex(array), cast(REBLEN, index));
             }
         }
         RETURN (array);
@@ -999,8 +999,8 @@ REBTYPE(Array)
         if (not ANY_ARRAY(arg))
             fail (Error_Invalid(arg));
 
-        Fail_If_Read_Only_Series(arr);
-        Fail_If_Read_Only_Series(Cell_Array(arg));
+        Fail_If_Read_Only_Flex(arr);
+        Fail_If_Read_Only_Flex(Cell_Array(arg));
 
         REBLEN index = VAL_INDEX(array);
 
@@ -1022,7 +1022,7 @@ REBTYPE(Array)
     }
 
     case SYM_REVERSE: {
-        Fail_If_Read_Only_Series(arr);
+        Fail_If_Read_Only_Flex(arr);
 
         REBLEN len = Part_Len_May_Modify_Index(array, D_ARG(3));
         if (len == 0)
@@ -1038,7 +1038,7 @@ REBTYPE(Array)
 
         bool line_back;
         if (back == Array_Last(arr)) // !!! review tail newline handling
-            line_back = GET_SER_FLAG(arr, ARRAY_FLAG_TAIL_NEWLINE);
+            line_back = Get_Flex_Flag(arr, ARRAY_FLAG_TAIL_NEWLINE);
         else
             line_back = GET_VAL_FLAG(back + 1, VALUE_FLAG_NEWLINE_BEFORE);
 
@@ -1083,7 +1083,7 @@ REBTYPE(Array)
         UNUSED(REF(skip)); // checks size as void
         UNUSED(REF(compare)); // checks comparator as void
 
-        Fail_If_Read_Only_Series(arr);
+        Fail_If_Read_Only_Flex(arr);
 
         Sort_Block(
             array,
@@ -1157,9 +1157,9 @@ void Assert_Array_Core(Array* a)
     // we don't use ASSERT_SERIES the macro here, because that checks to
     // see if the series is an array...and if so, would call this routine
     //
-    Assert_Series_Core(a);
+    Assert_Flex_Core(a);
 
-    if (not IS_SER_ARRAY(a))
+    if (not Is_Flex_Array(a))
         panic (a);
 
     Cell* item = Array_Head(a);
@@ -1174,13 +1174,13 @@ void Assert_Array_Core(Array* a)
     if (NOT_END(item))
         panic (item);
 
-    if (IS_SER_DYNAMIC(a)) {
-        REBLEN rest = Series_Rest(a);
+    if (Is_Flex_Dynamic(a)) {
+        REBLEN rest = Flex_Rest(a);
         assert(rest > 0 and rest > i);
 
         for (; i < rest - 1; ++i, ++item) {
             const bool unwritable = not (item->header.bits & NODE_FLAG_CELL);
-            if (GET_SER_FLAG(a, SERIES_FLAG_FIXED_SIZE)) {
+            if (Get_Flex_Flag(a, FLEX_FLAG_FIXED_SIZE)) {
               #if !defined(NDEBUG)
                 if (not unwritable) {
                     printf("Writable cell found in fixed-size array rest\n");

@@ -77,20 +77,20 @@ static Array* Read_Dir_May_Fail(struct devreq_file *dir)
         and (
             NOT_FOUND != Find_Str_Char(
                 '*',
-                VAL_SERIES(dir->path),
+                Cell_Flex(dir->path),
                 0, // !!! "lowest return index?"
                 VAL_INDEX(dir->path), // first index to examine
-                Series_Len(VAL_SERIES(dir->path)) + 1, // highest return + 1
+                Flex_Len(Cell_Flex(dir->path)) + 1, // highest return + 1
                 0, // skip
                 AM_FIND_CASE // not relevant
             )
             or
             NOT_FOUND != Find_Str_Char(
                 '?',
-                VAL_SERIES(dir->path),
+                Cell_Flex(dir->path),
                 0, // !!! "lowest return index?"
                 VAL_INDEX(dir->path), // first index to examine
-                Series_Len(VAL_SERIES(dir->path)) + 1, // highest return + 1
+                Flex_Len(Cell_Flex(dir->path)) + 1, // highest return + 1
                 0, // skip
                 AM_FIND_CASE // not relevant
             )

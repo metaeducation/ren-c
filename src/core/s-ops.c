@@ -167,8 +167,8 @@ Blob* Temp_UTF8_At_Managed(
     Blob* bin = Make_Utf8_From_Cell_String_At_Limit(str, length_limit);
     assert(BYTE_SIZE(bin));
 
-    Manage_Series(bin);
-    SET_SER_INFO(bin, SERIES_INFO_FROZEN);
+    Manage_Flex(bin);
+    Set_Flex_Info(bin, FLEX_INFO_FROZEN);
 
     *offset_out = 0;
     if (opt_size_out != nullptr)
@@ -227,7 +227,7 @@ Blob* Xandor_Binary(Value* verb, Value* value, Value* arg)
         // Ordinary binary
         //
         series = Make_Blob(t2);
-        TERM_SEQUENCE_LEN(series, t2);
+        Term_Non_Array_Flex_Len(series, t2);
     }
 
     Byte *p2 = Blob_Head(series);
@@ -276,7 +276,7 @@ Blob* Xandor_Binary(Value* verb, Value* value, Value* arg)
 //
 // Only valid for BINARY data.
 //
-Series* Complement_Binary(Value* value)
+Flex* Complement_Binary(Value* value)
 {
     const Byte *bp = Cell_Binary_At(value);
     REBLEN len = VAL_LEN_AT(value);
@@ -302,7 +302,7 @@ void Shuffle_String(Value* value, bool secure)
 {
     REBLEN n;
     REBLEN k;
-    Series* series = VAL_SERIES(value);
+    Flex* series = Cell_Flex(value);
     REBLEN idx     = VAL_INDEX(value);
     REBUNI swap;
 
@@ -353,7 +353,7 @@ void Change_Case(Value* out, Value* val, Value* part, bool upper)
 
     // String series:
 
-    Fail_If_Read_Only_Series(VAL_SERIES(val));
+    Fail_If_Read_Only_Flex(Cell_Flex(val));
 
     REBLEN len = Part_Len_May_Modify_Index(val, part);
     REBLEN n = 0;

@@ -617,7 +617,7 @@ static REB_R Case_Choose_Core_May_Throw(
 
     DECLARE_VALUE (cell); // unsafe to use ARG() slots as frame's L->out
     SET_END(cell);
-    PUSH_GC_GUARD(cell);
+    Push_GC_Guard(cell);
 
     while (NOT_END(L->value)) {
 
@@ -625,7 +625,7 @@ static REB_R Case_Choose_Core_May_Throw(
         // Will consume any pending "invisibles" (COMMENT, ELIDE, DUMP...)
 
         if (Eval_Step_Throws(SET_END(cell), L)) {
-            DROP_GC_GUARD(cell);
+            Drop_GC_Guard(cell);
             Copy_Cell(OUT, cell);
             Abort_Level(L);
             return R_THROWN;
@@ -643,7 +643,7 @@ static REB_R Case_Choose_Core_May_Throw(
         //     choose [1 > 2 (literal group) 3 > 4 <tag> 10 + 20] = 30
         //
         if (IS_END(L->value)) {
-            DROP_GC_GUARD(cell);
+            Drop_GC_Guard(cell);
             Drop_Level(L);
             return Copy_Cell(OUT, cell);
         }
@@ -660,7 +660,7 @@ static REB_R Case_Choose_Core_May_Throw(
             if (Eval_Step_Throws(SET_END(cell), L)) {
                 Abort_Level(L);
                 // preserving `out` value (may be previous match)
-                DROP_GC_GUARD(cell);
+                Drop_GC_Guard(cell);
                 return Copy_Cell(OUT, cell);
             }
 
@@ -686,7 +686,7 @@ static REB_R Case_Choose_Core_May_Throw(
             // Note: we are preserving `cell` to pass to an arity-1 ACTION!
 
             if (Eval_Step_Throws(SET_END(OUT), L)) {
-                DROP_GC_GUARD(cell);
+                Drop_GC_Guard(cell);
                 Abort_Level(L);
                 return R_THROWN;
             }
@@ -697,14 +697,14 @@ static REB_R Case_Choose_Core_May_Throw(
             if (Is_Block(block)) {
                 if (Do_Any_Array_At_Throws(OUT, block)) {
                     Abort_Level(L);
-                    DROP_GC_GUARD(cell);
+                    Drop_GC_Guard(cell);
                     return R_THROWN;
                 }
             }
             else if (Is_Action(OUT)) {
                 if (Do_Branch_With_Throws(OUT, block, cell)) {
                     Abort_Level(L);
-                    DROP_GC_GUARD(cell);
+                    Drop_GC_Guard(cell);
                     return R_THROWN;
                 }
             } else
@@ -714,13 +714,13 @@ static REB_R Case_Choose_Core_May_Throw(
         }
 
         if (not REF(all)) {
-            DROP_GC_GUARD(cell);
+            Drop_GC_Guard(cell);
             Abort_Level(L);
             return OUT;
         }
     }
 
-    DROP_GC_GUARD(cell);
+    Drop_GC_Guard(cell);
     Drop_Level(L);
     return OUT;
 }
@@ -1100,9 +1100,9 @@ DECLARE_NATIVE(catch)
         CATCH_THROWN(Array_At(a, 1), OUT); // thrown value--may be null!
         Copy_Cell(Array_At(a, 0), OUT); // throw name (thrown bit clear)
         if (IS_NULLED(Array_At(a, 1)))
-            TERM_ARRAY_LEN(a, 1); // trim out null value (illegal in block)
+            Term_Array_Len(a, 1); // trim out null value (illegal in block)
         else
-            TERM_ARRAY_LEN(a, 2);
+            Term_Array_Len(a, 2);
         return Init_Block(OUT, a);
     }
     else

@@ -29,16 +29,16 @@
 //
 
 
-// Includes SERIES_FLAG_ALWAYS_DYNAMIC because an action's paramlist is always
+// Includes FLEX_FLAG_ALWAYS_DYNAMIC because an action's paramlist is always
 // allocated dynamically, in order to make access to the archetype and the
 // parameters faster than Array_At().  See code for ACT_PARAM(), etc.
 //
-// Includes SERIES_FLAG_FIXED_SIZE because for now, the user can't expand
+// Includes FLEX_FLAG_FIXED_SIZE because for now, the user can't expand
 // them (e.g. by APPENDing to a FRAME! value).  Also, no internal tricks
 // for function composition expand them either at this time.
 //
 #define SERIES_MASK_ACTION \
-    (NODE_FLAG_NODE | SERIES_FLAG_ALWAYS_DYNAMIC | SERIES_FLAG_FIXED_SIZE \
+    (NODE_FLAG_NODE | FLEX_FLAG_ALWAYS_DYNAMIC | FLEX_FLAG_FIXED_SIZE \
         | ARRAY_FLAG_PARAMLIST)
 
 
@@ -65,7 +65,7 @@
 
         if (base)
             assert(
-                SERIES_MASK_ACTION == (cast(Series*, p)->header.bits & (
+                SERIES_MASK_ACTION == (cast(Flex*, p)->header.bits & (
                     SERIES_MASK_ACTION
                         | NODE_FLAG_FREE
                         | NODE_FLAG_CELL

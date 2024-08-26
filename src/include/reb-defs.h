@@ -127,7 +127,7 @@ typedef struct PoolUnitStruct PoolUnit;
 #endif
 
 
-//=//// SERIES SUBCLASSES /////////////////////////////////////////////////=//
+//=//// FLEX SUBCLASSES ///////////////////////////////////////////////////=//
 //
 // Note that because the StubStruct includes a Cell by value,
 // the %sys-rebser.h must be included *after* %sys-rebval.h; however the
@@ -137,7 +137,7 @@ typedef struct PoolUnitStruct PoolUnit;
 struct StubStruct;
 typedef struct StubStruct Stub;
 
-typedef Stub Series;
+typedef Stub Flex;
 
 #if CPLUSPLUS_11
     struct Blob;
@@ -150,15 +150,15 @@ typedef Stub Series;
     struct REBACT;
     struct REBMAP;
 #else
-    typedef Series Blob;
-    typedef Series Symbol;
-    typedef Series String;
+    typedef Flex Blob;
+    typedef Flex Symbol;
+    typedef Flex String;
 
-    typedef Series Array;
+    typedef Flex Array;
 
-    typedef Series REBCTX;
-    typedef Series REBACT;
-    typedef Series REBMAP;
+    typedef Flex REBCTX;
+    typedef Flex REBACT;
+    typedef Flex REBMAP;
 #endif
 
 

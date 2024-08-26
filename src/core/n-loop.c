@@ -190,12 +190,12 @@ static REB_R Loop_Series_Common(
         Nothingify_Branched(out);  // null->BREAK, void->empty
         if (
             VAL_TYPE(var) != VAL_TYPE(start)
-            or VAL_SERIES(var) != VAL_SERIES(start)
+            or Cell_Flex(var) != Cell_Flex(start)
         ){
             fail ("Can only change series index, not series to iterate");
         }
 
-        // Note that since the array is not locked with SERIES_INFO_HOLD, it
+        // Note that since the array is not locked with FLEX_INFO_HOLD, it
         // can be mutated during the loop body, so the end has to be refreshed
         // on each iteration.  Review ramifications of HOLD-ing it.
         //
@@ -385,13 +385,13 @@ struct Loop_Each_State {
     LOOP_MODE mode; // FOR-EACH, MAP-EACH, EVERY
     REBCTX *pseudo_vars_ctx; // vars made by Virtual_Bind_To_New_Context()
     Value* data; // the data argument passed in
-    Series* data_ser; // series data being enumerated (if applicable)
+    Flex* data_ser; // series data being enumerated (if applicable)
     REBLEN data_idx; // index into the data for filling current variable
     REBLEN data_len; // length of the data
 };
 
 // Isolation of central logic for FOR-EACH, MAP-EACH, and EVERY so that it
-// can be rebRescue()'d in case of failure (to remove SERIES_INFO_HOLD, etc.)
+// can be rebRescue()'d in case of failure (to remove FLEX_INFO_HOLD, etc.)
 //
 // Returns nullptr or R_THROWN, where the relevant result is in les->out.
 // (That result may be IS_NULLED() if there was a break during the loop)
@@ -435,7 +435,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
               case REB_PATH:
                 Derelativize(
                     var,
-                    Array_At(ARR(les->data_ser), les->data_idx),
+                    Array_At(cast_Array(les->data_ser), les->data_idx),
                     VAL_SPECIFIER(les->data)
                 );
                 if (++les->data_idx == les->data_len)
@@ -445,7 +445,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
               case REB_DATATYPE:
                 Derelativize(
                     var,
-                    Array_At(ARR(les->data_ser), les->data_idx),
+                    Array_At(cast_Array(les->data_ser), les->data_idx),
                     SPECIFIED // array generated via data stack, all specific
                 );
                 if (++les->data_idx == les->data_len)
@@ -502,9 +502,9 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                 Value* key;
                 Value* val;
                 while (true) { // pass over the unused map slots
-                    key = KNOWN(Array_At(ARR(les->data_ser), les->data_idx));
+                    key = KNOWN(Array_At(cast_Array(les->data_ser), les->data_idx));
                     ++les->data_idx;
-                    val = KNOWN(Array_At(ARR(les->data_ser), les->data_idx));
+                    val = KNOWN(Array_At(cast_Array(les->data_ser), les->data_idx));
                     ++les->data_idx;
                     if (les->data_idx == les->data_len)
                         more_data = false;
@@ -677,7 +677,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
     }
     else {
         if (ANY_SERIES(les.data)) {
-            les.data_ser = VAL_SERIES(les.data);
+            les.data_ser = Cell_Flex(les.data);
             les.data_idx = VAL_INDEX(les.data);
         }
         else if (ANY_CONTEXT(les.data)) {
@@ -685,7 +685,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
             les.data_idx = 1;
         }
         else if (Is_Map(les.data)) {
-            les.data_ser = VAL_SERIES(les.data);
+            les.data_ser = Cell_Flex(les.data);
             les.data_idx = 0;
         }
         else if (Is_Datatype(les.data)) {
@@ -700,7 +700,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
             switch (VAL_TYPE_KIND(les.data)) {
               case REB_ACTION:
                 les.data_ser = Snapshot_All_Actions();
-                assert(NOT_SER_FLAG(les.data_ser, NODE_FLAG_MANAGED));
+                assert(Not_Flex_Flag(les.data_ser, NODE_FLAG_MANAGED));
                 les.data_idx = 0;
                 break;
 
@@ -711,11 +711,11 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
         else
             panic ("Illegal type passed to Loop_Each()");
 
-        took_hold = NOT_SER_INFO(les.data_ser, SERIES_INFO_HOLD);
+        took_hold = Not_Flex_Info(les.data_ser, FLEX_INFO_HOLD);
         if (took_hold)
-            SET_SER_INFO(les.data_ser, SERIES_INFO_HOLD);
+            Set_Flex_Info(les.data_ser, FLEX_INFO_HOLD);
 
-        les.data_len = Series_Len(les.data_ser); // HOLD so length can't change
+        les.data_len = Flex_Len(les.data_ser); // HOLD so length can't change
         if (les.data_idx >= les.data_len) {
             assert(Is_Void(OUT));  // result if loop body never runs
             r = nullptr;
@@ -723,7 +723,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
         }
     }
 
-    // If there is a fail() and we took a SERIES_INFO_HOLD, that hold needs
+    // If there is a fail() and we took a FLEX_INFO_HOLD, that hold needs
     // to be released.  For this reason, the code has to trap errors.
 
     r = rebRescue(cast(REBDNG*, &Loop_Each_Core), &les);
@@ -733,10 +733,10 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
   cleanup:;
 
     if (took_hold) // release read-only lock
-        CLEAR_SER_INFO(les.data_ser, SERIES_INFO_HOLD);
+        Clear_Flex_Info(les.data_ser, FLEX_INFO_HOLD);
 
     if (Is_Datatype(les.data))
-        Free_Unmanaged_Series(ARR(les.data_ser)); // temp array of instances
+        Free_Unmanaged_Flex(cast_Array(les.data_ser)); // temp array of instances
 
     //=//// NOW FINISH UP /////////////////////////////////////////////////=//
 
@@ -1109,7 +1109,7 @@ DECLARE_NATIVE(every)
 struct Remove_Each_State {
     Value* out;
     Value* data;
-    Series* series;
+    Flex* series;
     bool broke; // e.g. a BREAK ran
     const Value* body;
     REBCTX *context;
@@ -1122,8 +1122,8 @@ struct Remove_Each_State {
 //
 INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
 {
-    assert(GET_SER_INFO(res->series, SERIES_INFO_HOLD));
-    CLEAR_SER_INFO(res->series, SERIES_INFO_HOLD);
+    assert(Get_Flex_Info(res->series, FLEX_INFO_HOLD));
+    Clear_Flex_Info(res->series, FLEX_INFO_HOLD);
 
     // If there was a BREAK, we return NULL to indicate that as part of
     // the loop protocol.  This prevents giving back a return value of
@@ -1163,7 +1163,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
                 ++count;
             }
             if (IS_END(src)) {
-                TERM_ARRAY_LEN(Cell_Array(res->data), len);
+                Term_Array_Len(Cell_Array(res->data), len);
                 return count;
             }
             Blit_Cell(dest, src); // same array--rare place we can do this
@@ -1194,18 +1194,18 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
         // into it.  Revisit if this inhibits cool UTF-8 based tricks the
         // mold buffer might do otherwise.
         //
-        Series* popped = Pop_Molded_Blob(res->mo);
+        Flex* popped = Pop_Molded_Blob(res->mo);
 
-        assert(Series_Len(popped) <= VAL_LEN_HEAD(res->data));
-        count = VAL_LEN_HEAD(res->data) - Series_Len(popped);
+        assert(Flex_Len(popped) <= VAL_LEN_HEAD(res->data));
+        count = VAL_LEN_HEAD(res->data) - Flex_Len(popped);
 
         // We want to swap out the data properties of the series, so the
         // identity of the incoming series is kept but now with different
         // underlying data.
         //
-        Swap_Series_Content(popped, VAL_SERIES(res->data));
+        Swap_Flex_Content(popped, Cell_Flex(res->data));
 
-        Free_Unmanaged_Series(popped); // now frees incoming series's data
+        Free_Unmanaged_Flex(popped); // now frees incoming series's data
     }
     else {
         assert(ANY_STRING(res->data));
@@ -1226,18 +1226,18 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
             );
         }
 
-        Series* popped = Pop_Molded_String(res->mo);
+        Flex* popped = Pop_Molded_String(res->mo);
 
-        assert(Series_Len(popped) <= VAL_LEN_HEAD(res->data));
-        count = VAL_LEN_HEAD(res->data) - Series_Len(popped);
+        assert(Flex_Len(popped) <= VAL_LEN_HEAD(res->data));
+        count = VAL_LEN_HEAD(res->data) - Flex_Len(popped);
 
         // We want to swap out the data properties of the series, so the
         // identity of the incoming series is kept but now with different
         // underlying data.
         //
-        Swap_Series_Content(popped, VAL_SERIES(res->data));
+        Swap_Flex_Content(popped, Cell_Flex(res->data));
 
-        Free_Unmanaged_Series(popped); // now frees incoming series's data
+        Free_Unmanaged_Flex(popped); // now frees incoming series's data
     }
 
     return count;
@@ -1253,11 +1253,11 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
     // This flag will be cleaned up by Finalize_Remove_Each(), which is run
     // even if there is a fail().
     //
-    SET_SER_INFO(res->series, SERIES_INFO_HOLD);
+    Set_Flex_Info(res->series, FLEX_INFO_HOLD);
 
     REBLEN index = res->start; // declare here, avoid longjmp clobber warnings
 
-    REBLEN len = Series_Len(res->series); // temp read-only, this won't change
+    REBLEN len = Flex_Len(res->series); // temp read-only, this won't change
     while (index < len) {
         assert(res->start == index);
 
@@ -1283,7 +1283,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
             else if (Is_Binary(res->data))
                 Init_Integer(
                     var,
-                    cast(REBI64, Series_Head(Byte, res->series)[index])
+                    cast(REBI64, Flex_Head(Byte, res->series)[index])
                 );
             else {
                 assert(ANY_STRING(res->data));
@@ -1401,10 +1401,10 @@ DECLARE_NATIVE(remove_each)
     // not be running a REMOVE-EACH on it.  This check for permissions applies
     // even if the REMOVE-EACH turns out to be a no-op.
     //
-    res.series = VAL_SERIES(res.data);
-    Fail_If_Read_Only_Series(res.series);
+    res.series = Cell_Flex(res.data);
+    Fail_If_Read_Only_Flex(res.series);
 
-    if (VAL_INDEX(res.data) >= Series_Len(res.series)) {
+    if (VAL_INDEX(res.data) >= Flex_Len(res.series)) {
         //
         // If index is past the series end, then there's nothing removable.
         //
@@ -1727,30 +1727,30 @@ INLINE REB_R While_Core(
 
     DECLARE_VALUE (cell); // unsafe to use ARG() slots as frame output cells
     SET_END(cell);
-    PUSH_GC_GUARD(cell);
+    Push_GC_Guard(cell);
 
     Init_Void(OUT);  // result if body never runs
 
     do {
         if (Do_Branch_Throws(cell, ARG(condition))) {
             Copy_Cell(OUT, cell);
-            DROP_GC_GUARD(cell);
+            Drop_GC_Guard(cell);
             return R_THROWN; // don't see BREAK/CONTINUE in the *condition*
         }
 
         if (IS_TRUTHY(cell) != trigger) {
-            DROP_GC_GUARD(cell);
+            Drop_GC_Guard(cell);
             return OUT; // trigger didn't match, return last body result
         }
 
         if (Do_Branch_With_Throws(OUT, ARG(body), cell)) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke)) {
-                DROP_GC_GUARD(cell);
+                Drop_GC_Guard(cell);
                 return R_THROWN;
             }
             if (broke) {
-                DROP_GC_GUARD(cell);
+                Drop_GC_Guard(cell);
                 return Init_Nulled(OUT);
             }
         }

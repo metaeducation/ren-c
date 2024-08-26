@@ -120,7 +120,7 @@ INLINE void Push_Level_Core(Level* L)
     if (
         did (containing = Try_Find_Containing_Node_Debug(L->out))
         and Is_Node_A_Stub(containing)
-        and NOT_SER_FLAG(SER(containing), SERIES_FLAG_DONT_RELOCATE)
+        and Not_Flex_Flag(cast_Flex(containing), FLEX_FLAG_DONT_RELOCATE)
     ){
         printf("Request for ->out location in movable series memory\n");
         panic (containing);
@@ -149,7 +149,7 @@ INLINE void Push_Level_Core(Level* L)
             continue;
         if (Is_Action_Level_Fulfilling(L_temp))
             continue;
-        if (GET_SER_INFO(L_temp->varlist, SERIES_INFO_INACCESSIBLE))
+        if (Get_Flex_Info(L_temp->varlist, FLEX_INFO_INACCESSIBLE))
             continue; // Encloser_Dispatcher() reuses args from up stack
         assert(
             L->out < Level_Args_Head(L_temp)
@@ -204,10 +204,10 @@ INLINE void Push_Level_Core(Level* L)
         // the frame is finished.
     }
     else {
-        if (GET_SER_INFO(L->source->array, SERIES_INFO_HOLD))
+        if (Get_Flex_Info(L->source->array, FLEX_INFO_HOLD))
             NOOP; // already temp-locked
         else {
-            SET_SER_INFO(L->source->array, SERIES_INFO_HOLD);
+            Set_Flex_Info(L->source->array, FLEX_INFO_HOLD);
             L->flags.bits |= DO_FLAG_TOOK_FRAME_HOLD;
         }
     }
@@ -309,7 +309,7 @@ INLINE void Set_Level_Detected_Fetch(
 
     Array* a; // ^--goto
     a = Singular_From_Cell(L->value);
-    if (NOT_SER_INFO(a, SERIES_INFO_API_RELEASE)) {
+    if (Not_Flex_Info(a, FLEX_INFO_API_RELEASE)) {
         if (opt_lookback)
             *opt_lookback = L->value; // keep-alive API value or instruction
         goto detect;
@@ -337,7 +337,7 @@ INLINE void Set_Level_Detected_Fetch(
         *opt_lookback = Level_Spare(L);
     }
 
-    if (GET_SER_INFO(a, SERIES_INFO_API_INSTRUCTION))
+    if (Get_Flex_Info(a, FLEX_INFO_API_INSTRUCTION))
         Free_Instruction(Singular_From_Cell(L->value));
     else
         rebRelease(cast(const Value*, L->value));
@@ -432,29 +432,29 @@ INLINE void Set_Level_Detected_Fetch(
         // there's an error or need to reify into a value.  For now, do the
         // inefficient thing and manage it.
         //
-        Manage_Series(reified);
+        Manage_Flex(reified);
 
         L->value = Array_Head(reified);
         L->source->pending = L->value + 1; // may be END
         L->source->array = reified;
         L->source->index = 1;
 
-        assert(GET_SER_FLAG(L->source->array, ARRAY_FLAG_NULLEDS_LEGAL));
+        assert(Get_Flex_Flag(L->source->array, ARRAY_FLAG_NULLEDS_LEGAL));
         break; }
 
       case DETECTED_AS_SERIES: { // "instructions" like rebEval(), rebUneval()
-        Array* instruction = ARR(m_cast(void*, p));
+        Array* instruction = cast_Array(m_cast(void*, p));
 
         // The instruction should be unmanaged, and will be freed on the next
         // entry to this routine (optionally copying out its contents into
         // the frame's cell for stable lookback--if necessary).
         //
-        assert(GET_SER_INFO(instruction, SERIES_INFO_API_INSTRUCTION));
-        assert(NOT_SER_FLAG(instruction, NODE_FLAG_MANAGED));
+        assert(Get_Flex_Info(instruction, FLEX_INFO_API_INSTRUCTION));
+        assert(Not_Flex_Flag(instruction, NODE_FLAG_MANAGED));
         L->value = ARR_SINGLE(instruction);
         break; }
 
-      case DETECTED_AS_FREED_SERIES:
+      case DETECTED_AS_FREED_FLEX:
         panic (p);
 
       case DETECTED_AS_CELL: {
@@ -462,7 +462,7 @@ INLINE void Set_Level_Detected_Fetch(
         if (IS_NULLED(cell))
             fail ("NULLED cell leaked to API, see NULLIZE() in C sources");
 
-        // If the cell is in an API holder with SERIES_INFO_API_RELEASE then
+        // If the cell is in an API holder with FLEX_INFO_API_RELEASE then
         // it will be released on the *next* call (see top of function)
 
         L->source->array = nullptr;
@@ -544,7 +544,7 @@ INLINE void Fetch_Next_In_Level(
     if (NOT_END(L->source->pending)) {
         //
         // We assume the ->pending value lives in a source array, and can
-        // just be incremented since the array has SERIES_INFO_HOLD while it
+        // just be incremented since the array has FLEX_INFO_HOLD while it
         // is being executed hence won't be relocated or modified.  This
         // means the release build doesn't need to call Array_At().
         //
@@ -576,8 +576,8 @@ INLINE void Fetch_Next_In_Level(
         ++L->source->index; // for consistency in index termination state
 
         if (L->flags.bits & DO_FLAG_TOOK_FRAME_HOLD) {
-            assert(GET_SER_INFO(L->source->array, SERIES_INFO_HOLD));
-            CLEAR_SER_INFO(L->source->array, SERIES_INFO_HOLD);
+            assert(Get_Flex_Info(L->source->array, FLEX_INFO_HOLD));
+            Clear_Flex_Info(L->source->array, FLEX_INFO_HOLD);
 
             // !!! Future features may allow you to move on to another array.
             // If so, the "hold" bit would need to be reset like this.
@@ -612,8 +612,8 @@ INLINE void Quote_Next_In_Level(Value* dest, Level* L) {
 
 
 INLINE void Abort_Level(Level* L) {
-    if (L->varlist and NOT_SER_FLAG(L->varlist, NODE_FLAG_MANAGED))
-        GC_Kill_Series(L->varlist);  // not alloc'd with manuals tracking
+    if (L->varlist and Not_Flex_Flag(L->varlist, NODE_FLAG_MANAGED))
+        GC_Kill_Flex(L->varlist);  // not alloc'd with manuals tracking
     Corrupt_Pointer_If_Debug(L->varlist);
 
     // Abort_Level() handles any work that wouldn't be done done naturally by
@@ -627,7 +627,7 @@ INLINE void Abort_Level(Level* L) {
 
         // Aborting valist frames is done by just feeding all the values
         // through until the end.  This is assumed to do any work, such
-        // as SERIES_INFO_API_RELEASE, which might be needed on an item.  It
+        // as FLEX_INFO_API_RELEASE, which might be needed on an item.  It
         // also ensures that va_end() is called, which happens when the frame
         // manages to feed to the end.
         //
@@ -653,8 +653,8 @@ INLINE void Abort_Level(Level* L) {
             // The frame was either never variadic, or it was but got spooled
             // into an array by Reify_Va_To_Array_In_Level()
             //
-            assert(GET_SER_INFO(L->source->array, SERIES_INFO_HOLD));
-            CLEAR_SER_INFO(L->source->array, SERIES_INFO_HOLD);
+            assert(Get_Flex_Info(L->source->array, FLEX_INFO_HOLD));
+            Clear_Flex_Info(L->source->array, FLEX_INFO_HOLD);
         }
     }
 
@@ -671,7 +671,7 @@ INLINE void Drop_Level_Core(Level* L) {
   #endif
 
     if (L->varlist) {
-        assert(NOT_SER_FLAG(L->varlist, NODE_FLAG_MANAGED));
+        assert(Not_Flex_Flag(L->varlist, NODE_FLAG_MANAGED));
         LINK(L->varlist).reuse = TG_Reuse;
         TG_Reuse = L->varlist;
     }
@@ -689,7 +689,7 @@ INLINE void Drop_Level_Unbalanced(Level* L) {
     // exact cycle caused the problem, see BALANCE_CHECK_EVERY_EVALUATION_STEP
     //
     L->state.stack_base = TOP_INDEX; // e.g. Reduce_To_Stack_Throws()
-    L->state.mold_buf_len = Series_Len(MOLD_BUF); // REMOVE-EACH accumulates
+    L->state.mold_buf_len = Flex_Len(MOLD_BUF); // REMOVE-EACH accumulates
     ASSERT_STATE_BALANCED(&L->state);
   #endif
     Drop_Level_Core(L);
@@ -981,15 +981,15 @@ INLINE void Reify_Va_To_Array_In_Level(
 
     // special array...may contain voids and eval flip is kept
     L->source->array = Pop_Stack_Values_Keep_Eval_Flip(base);
-    Manage_Series(L->source->array); // held alive while frame running
-    SET_SER_FLAG(L->source->array, ARRAY_FLAG_NULLEDS_LEGAL);
+    Manage_Flex(L->source->array); // held alive while frame running
+    Set_Flex_Flag(L->source->array, ARRAY_FLAG_NULLEDS_LEGAL);
 
     // The array just popped into existence, and it's tied to a running
     // frame...so safe to say we're holding it.  (This would be more complex
     // if we reused the empty array if base == TOP_INDEX, since someone else
     // might have a hold on it...not worth the complexity.)
     //
-    SET_SER_INFO(L->source->array, SERIES_INFO_HOLD);
+    Set_Flex_Info(L->source->array, FLEX_INFO_HOLD);
     L->flags.bits |= DO_FLAG_TOOK_FRAME_HOLD;
 
     if (truncated)

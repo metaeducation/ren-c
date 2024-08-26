@@ -32,7 +32,7 @@
 // variable values).  They are used by OBJECT!, PORT!, FRAME!, etc.
 //
 // The REBCTX* is how contexts are passed around as a single pointer.  This
-// pointer is actually just an array Series which represents the variable
+// pointer is actually just an Array Flex which represents the variable
 // values.  The keylist can be reached through the ->link field of that
 // stub, and the [0] value of the variable array is an "archetype instance"
 // of whatever kind of cell the context represents.
@@ -127,9 +127,9 @@ bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
 
     // can't expand or unshare a FRAME!'s list
     //
-    assert(NOT_SER_FLAG(keylist, ARRAY_FLAG_PARAMLIST));
+    assert(Not_Flex_Flag(keylist, ARRAY_FLAG_PARAMLIST));
 
-    if (GET_SER_INFO(keylist, SERIES_INFO_SHARED_KEYLIST)) {
+    if (Get_Flex_Info(keylist, FLEX_INFO_SHARED_KEYLIST)) {
         //
         // INIT_CTX_KEYLIST_SHARED was used to set the flag that indicates
         // this keylist is shared with one or more other contexts.  Can't
@@ -157,7 +157,7 @@ bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
         else
             LINK(copy).ancestor = LINK(keylist).ancestor;
 
-        Manage_Series(copy);
+        Manage_Flex(copy);
         INIT_CTX_KEYLIST_UNIQUE(context, copy);
 
         return true;
@@ -170,8 +170,8 @@ bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
     // context, and no INIT_CTX_KEYLIST_SHARED was used by another context
     // to mark the flag indicating it's shared.  Extend it directly.
 
-    Extend_Series(keylist, delta);
-    TERM_ARRAY_LEN(keylist, Array_Len(keylist));
+    Extend_Flex(keylist, delta);
+    Term_Array_Len(keylist, Array_Len(keylist));
 
     return false;
 }
@@ -186,8 +186,8 @@ void Expand_Context(REBCTX *context, REBLEN delta)
 {
     // varlist is unique to each object--expand without making a copy.
     //
-    Extend_Series(CTX_VARLIST(context), delta);
-    TERM_ARRAY_LEN(CTX_VARLIST(context), Array_Len(CTX_VARLIST(context)));
+    Extend_Flex(CTX_VARLIST(context), delta);
+    Term_Array_Len(CTX_VARLIST(context), Array_Len(CTX_VARLIST(context)));
 
     Expand_Context_Keylist_Core(context, delta);
 }
@@ -228,23 +228,23 @@ Value* Append_Context(
     // Review why this is expanding when the callers are expanding.  Should
     // also check that redundant keys aren't getting added here.
     //
-    Expand_Series_Tail(keylist, 1);
+    Expand_Flex_Tail(keylist, 1);
     Value* key = Init_Typeset(
         Array_Last(keylist), // !!! non-dynamic, could optimize
         TS_VALUE, // !!! Currently not paid attention to
         unwrap(symbol)
     );
     UNUSED(key);
-    TERM_ARRAY_LEN(keylist, Array_Len(keylist));
+    Term_Array_Len(keylist, Array_Len(keylist));
 
     // Add a slot to the var list
     //
-    Expand_Series_Tail(CTX_VARLIST(context), 1);
+    Expand_Flex_Tail(CTX_VARLIST(context), 1);
     REBLEN len = Array_Len(CTX_VARLIST(context)); // length we just bumped
     REBLEN index = len - 1;
 
     Value* value = Init_Nothing(Array_Last(CTX_VARLIST(context)));
-    TERM_ARRAY_LEN(CTX_VARLIST(context), len);
+    Term_Array_Len(CTX_VARLIST(context), len);
 
     if (any_word) {
         //
@@ -271,8 +271,8 @@ Value* Append_Context(
 // the same keylist will be used.
 //
 REBCTX *Copy_Context_Shallow_Extra_Managed(REBCTX *src, REBLEN extra) {
-    assert(GET_SER_FLAG(src, ARRAY_FLAG_VARLIST));
-    Assert_Series_Managed(CTX_KEYLIST(src));
+    assert(Get_Flex_Flag(src, ARRAY_FLAG_VARLIST));
+    Assert_Flex_Managed(CTX_KEYLIST(src));
 
     // Note that keylists contain only typesets (hence no relative values),
     // and no varlist is part of a function body.  All the values here should
@@ -361,7 +361,7 @@ Array* Grab_Collected_Array_Managed(struct Reb_Collector *collector)
 
     // We didn't terminate as we were collecting, so terminate now.
     //
-    TERM_ARRAY_LEN(BUF_COLLECT, Array_Len(BUF_COLLECT));
+    Term_Array_Len(BUF_COLLECT, Array_Len(BUF_COLLECT));
 
     // If no new words, prior context.  Note length must include the slot
     // for the rootkey...and note also this means the rootkey cell *may*
@@ -387,7 +387,7 @@ void Collect_End(struct Reb_Collector *cl)
 {
     // We didn't terminate as we were collecting, so terminate now.
     //
-    TERM_ARRAY_LEN(BUF_COLLECT, Array_Len(BUF_COLLECT));
+    Term_Array_Len(BUF_COLLECT, Array_Len(BUF_COLLECT));
 
     // Reset binding table (note BUF_COLLECT may have expanded)
     //
@@ -444,7 +444,7 @@ void Collect_Context_Keys(
     // necessary if duplicates are found, but the actual buffer length will be
     // set correctly by the end.)
     //
-    Expand_Series_Tail(BUF_COLLECT, CTX_LEN(context));
+    Expand_Flex_Tail(BUF_COLLECT, CTX_LEN(context));
     SET_ARRAY_LEN_NOTERM(BUF_COLLECT, cl->index);
 
     Cell* collect = Array_Tail(BUF_COLLECT); // get address *after* expansion
@@ -512,7 +512,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
 
             ++cl->index;
 
-            Expand_Series_Tail(BUF_COLLECT, 1);
+            Expand_Flex_Tail(BUF_COLLECT, 1);
             if (cl->flags & COLLECT_AS_TYPESET)
                 Init_Typeset(
                     Array_Last(BUF_COLLECT),
@@ -807,7 +807,7 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
         SERIES_MASK_CONTEXT
             | NODE_FLAG_MANAGED // Note: Rebind below requires managed context
     );
-    TERM_ARRAY_LEN(varlist, len);
+    Term_Array_Len(varlist, len);
     MISC(varlist).meta = nullptr;  // clear meta object (GC sees this)
 
     REBCTX *context = CTX(varlist);
@@ -1050,7 +1050,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
 
     // Collect_Keys_End() terminates, but Collect_Context_Inner_Loop() doesn't.
     //
-    TERM_ARRAY_LEN(BUF_COLLECT, Array_Len(BUF_COLLECT));
+    Term_Array_Len(BUF_COLLECT, Array_Len(BUF_COLLECT));
 
     // Allocate child (now that we know the correct size).  Obey invariant
     // that keylists are always managed.  The BUF_COLLECT contains only
@@ -1102,7 +1102,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
     // Update the child tail before making calls to CTX_VAR(), because the
     // debug build does a length check.
     //
-    TERM_ARRAY_LEN(varlist, Array_Len(keylist));
+    Term_Array_Len(varlist, Array_Len(keylist));
 
     // Copy parent2 values:
     Value* key = CTX_KEYS_HEAD(parent2);
@@ -1299,7 +1299,7 @@ void Resolve_Context(
 //
 REBLEN Find_Canon_In_Context(REBCTX *context, Symbol* canon, bool always)
 {
-    assert(GET_SER_INFO(canon, STRING_INFO_CANON));
+    assert(Get_Flex_Info(canon, SYMBOL_INFO_CANON));
 
     Value* key = CTX_KEYS_HEAD(context);
     REBLEN len = CTX_LEN(context);
@@ -1376,7 +1376,7 @@ void Startup_Collector(void)
 //
 void Shutdown_Collector(void)
 {
-    Free_Unmanaged_Series(TG_Buf_Collect);
+    Free_Unmanaged_Flex(TG_Buf_Collect);
     TG_Buf_Collect = nullptr;
 }
 
@@ -1413,7 +1413,7 @@ void Assert_Context_Core(REBCTX *c)
     if (rootvar->payload.any_context.varlist != varlist)
         panic (rootvar);
 
-    if (GET_SER_INFO(c, SERIES_INFO_INACCESSIBLE)) {
+    if (Get_Flex_Info(c, FLEX_INFO_INACCESSIBLE)) {
         //
         // !!! For the moment, don't check inaccessible stack frames any
         // further.  This includes varless reified frames and those reified

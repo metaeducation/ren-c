@@ -42,7 +42,7 @@
 //
 Blob* Make_Blob(REBLEN capacity)
 {
-    Blob* bin = cast(Blob*, Make_Series(capacity + 1, sizeof(Byte)));
+    Blob* bin = cast(Blob*, Make_Flex(capacity + 1, sizeof(Byte)));
     Term_Blob(bin);
     return bin;
 }
@@ -55,8 +55,8 @@ Blob* Make_Blob(REBLEN capacity)
 //
 String* Make_String(REBLEN capacity)
 {
-    String* str = cast(String*, Make_Series(capacity + 1, sizeof(REBUNI)));
-    TERM_SEQUENCE(str);
+    String* str = cast(String*, Make_Flex(capacity + 1, sizeof(REBUNI)));
+    Term_Non_Array_Flex(str);
     return str;
 }
 
@@ -71,7 +71,7 @@ Blob* Copy_Bytes(const Byte *src, REBSIZ size)
 {
     Blob* dst = Make_Blob(size);
     memcpy(Blob_Head(dst), src, size);
-    TERM_SEQUENCE_LEN(dst, size);
+    Term_Non_Array_Flex_Len(dst, size);
 
     return dst;
 }
@@ -82,11 +82,11 @@ Blob* Copy_Bytes(const Byte *src, REBSIZ size)
 //
 // Insert a unicode char into a string.
 //
-void Insert_Char(Series* dst, REBLEN index, REBLEN chr)
+void Insert_Char(Flex* dst, REBLEN index, REBLEN chr)
 {
-    if (index > Series_Len(dst))
-        index = Series_Len(dst);
-    Expand_Series(dst, index, 1);
+    if (index > Flex_Len(dst))
+        index = Flex_Len(dst);
+    Expand_Flex(dst, index, 1);
     SET_ANY_CHAR(dst, index, chr);
 }
 
@@ -98,7 +98,7 @@ void Insert_Char(Series* dst, REBLEN index, REBLEN chr)
 // other series due to the length being counted in characters and not
 // units of the series width.
 //
-Series* Copy_String_At_Len(const Cell* src, REBINT limit)
+Flex* Copy_String_At_Len(const Cell* src, REBINT limit)
 {
     REBLEN length_limit;
     REBSIZ size = VAL_SIZE_LIMIT_AT(&length_limit, src, limit);
@@ -106,7 +106,7 @@ Series* Copy_String_At_Len(const Cell* src, REBINT limit)
 
     String* dst = Make_String(size / 2);
     memcpy(String_At(dst, 0), Cell_String_At(src), size);
-    TERM_SEQUENCE_LEN(dst, length_limit);
+    Term_Non_Array_Flex_Len(dst, length_limit);
 
     return dst;
 }
@@ -126,12 +126,12 @@ Blob* Append_Unencoded_Len(Blob* dst, const char *src, REBLEN len)
         tail = 0;
     }
     else {
-        tail = Series_Len(dst);
-        Expand_Series_Tail(dst, len);
+        tail = Flex_Len(dst);
+        Expand_Flex_Tail(dst, len);
     }
 
     memcpy(Blob_At(dst, tail), src, len);
-    TERM_SEQUENCE(dst);
+    Term_Non_Array_Flex(dst);
     return dst;
 }
 
@@ -157,10 +157,10 @@ Blob* Append_Unencoded(Blob* dst, const char *src)
 //
 String* Append_Codepoint(String* dst, REBUNI codepoint)
 {
-    assert(Series_Wide(dst) == sizeof(REBUNI)); // invariant for "Latin1 Nowhere"
+    assert(Flex_Wide(dst) == sizeof(REBUNI)); // invariant for "Latin1 Nowhere"
 
-    REBLEN tail = Series_Len(dst);
-    Expand_Series_Tail(dst, 1);
+    REBLEN tail = Flex_Len(dst);
+    Expand_Flex_Tail(dst, 1);
 
     Ucs2(*) cp = String_At(dst, tail);
     cp = Write_Codepoint(cp, codepoint);
@@ -177,10 +177,10 @@ String* Append_Codepoint(String* dst, REBUNI codepoint)
 //
 Blob* Append_Utf8_Codepoint(Blob* dst, uint32_t codepoint)
 {
-    assert(Series_Wide(dst) == sizeof(Byte));
+    assert(Flex_Wide(dst) == sizeof(Byte));
 
-    REBLEN tail = Series_Len(dst);
-    Expand_Series_Tail(dst, 4); // !!! Conservative, assume long codepoint
+    REBLEN tail = Flex_Len(dst);
+    Expand_Flex_Tail(dst, 4); // !!! Conservative, assume long codepoint
     tail += Encode_UTF8_Char(Blob_At(dst, tail), codepoint); // 1 to 4 bytes
     Term_Blob_Len(dst, tail);
     return dst;
@@ -232,7 +232,7 @@ void Append_Utf8_String(Blob* dst, const Cell* src, REBLEN length_limit)
     Blob* temp = Temp_UTF8_At_Managed(&offset, &size, src, length_limit);
 
     REBLEN tail = Blob_Len(dst);
-    Expand_Series(dst, tail, size);  // tail changed too
+    Expand_Flex(dst, tail, size);  // tail changed too
 
     memcpy(Blob_At(dst, tail), Blob_At(temp, offset), size);
 }
@@ -295,7 +295,7 @@ String* Append_UTF8_May_Fail(
 
     String* temp = BUF_UCS2; // buffer is Unicode width
 
-    Resize_Series(temp, size + 1); // needs at most this many unicode chars
+    Resize_Flex(temp, size + 1); // needs at most this many unicode chars
 
     REBUNI *up = String_Head(temp);
     const Byte *src = cb_cast(utf8);
@@ -332,12 +332,12 @@ String* Append_UTF8_May_Fail(
         old_len = 0;
     }
     else {
-        old_len = Series_Len(dst);
-        Expand_Series_Tail(dst, num_codepoints);
+        old_len = Flex_Len(dst);
+        Expand_Flex_Tail(dst, num_codepoints);
     }
 
     Ucs2(*) dp = String_At(dst, old_len);
-    Set_Series_Len(dst, old_len + num_codepoints); // counted down to 0 below
+    Set_Flex_Len(dst, old_len + num_codepoints); // counted down to 0 below
 
     for (; num_codepoints > 0; --num_codepoints)
         *dp++ = *up++;
@@ -369,7 +369,7 @@ Blob* Join_Binary(const Value* blk, REBINT limit)
     if (limit < 0)
         limit = VAL_LEN_AT(blk);
 
-    Set_Series_Len(series, 0);
+    Set_Flex_Len(series, 0);
 
     Cell* val;
     for (val = Cell_Array_At(blk); limit > 0; val++, limit--) {
@@ -377,13 +377,13 @@ Blob* Join_Binary(const Value* blk, REBINT limit)
         case REB_INTEGER:
             if (VAL_INT64(val) > 255 || VAL_INT64(val) < 0)
                 fail (Error_Out_Of_Range(KNOWN(val)));
-            Expand_Series_Tail(series, 1);
+            Expand_Flex_Tail(series, 1);
             *Blob_At(series, tail) = (Byte)VAL_INT32(val);
             break;
 
         case REB_BINARY: {
             REBLEN len = VAL_LEN_AT(val);
-            Expand_Series_Tail(series, len);
+            Expand_Flex_Tail(series, len);
             memcpy(Blob_At(series, tail), Cell_Binary_At(val), len);
             break; }
 
@@ -395,8 +395,8 @@ Blob* Join_Binary(const Value* blk, REBINT limit)
             REBLEN val_len = VAL_LEN_AT(val);
             size_t val_size = Size_As_UTF8(Cell_String_At(val), val_len);
 
-            Expand_Series_Tail(series, val_size);
-            Set_Series_Len(
+            Expand_Flex_Tail(series, val_size);
+            Set_Flex_Len(
                 series,
                 tail + Encode_UTF8(
                     Blob_At(series, tail),
@@ -408,17 +408,17 @@ Blob* Join_Binary(const Value* blk, REBINT limit)
             break; }
 
         case REB_CHAR: {
-            Expand_Series_Tail(series, 6);
+            Expand_Flex_Tail(series, 6);
             REBLEN len =
                 Encode_UTF8_Char(Blob_At(series, tail), VAL_CHAR(val));
-            Set_Series_Len(series, tail + len);
+            Set_Flex_Len(series, tail + len);
             break; }
 
         default:
             fail (Error_Invalid_Core(val, VAL_SPECIFIER(blk)));
         }
 
-        tail = Series_Len(series);
+        tail = Flex_Len(series);
     }
 
     *Blob_At(series, tail) = 0;

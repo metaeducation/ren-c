@@ -200,7 +200,7 @@ REB_R PD_Word(
             if (n < 0)
                 return nullptr;
 
-            REBSIZ size = Series_Len(str);
+            REBSIZ size = Flex_Len(str);
             const Byte *bp = cb_cast(Symbol_Head(str));
             REBUNI c;
             do {

@@ -57,7 +57,7 @@ INLINE const char *Symbol_Head(Symbol* str) {
 }
 
 INLINE Symbol* Canon_Symbol(Symbol* str) {
-    while (NOT_SER_INFO(str, STRING_INFO_CANON))
+    while (Not_Flex_Info(str, SYMBOL_INFO_CANON))
         str = LINK(str).synonym; // circularly linked list
     return str;
 }
@@ -69,13 +69,13 @@ INLINE Option(SymId) Symbol_Id(Symbol* str) {
 }
 
 INLINE size_t Symbol_Size(Symbol* str) {
-    return Series_Len(str); // number of bytes in seris is series length, ATM
+    return Flex_Len(str); // number of bytes in seris is series length, ATM
 }
 
 INLINE Symbol* Canon(SymId sym) {
     assert(cast(REBLEN, sym) != 0);
-    assert(cast(REBLEN, sym) < Series_Len(PG_Symbol_Canons));
-    return *Series_At(Symbol*, PG_Symbol_Canons, cast(REBLEN, sym));
+    assert(cast(REBLEN, sym) < Flex_Len(PG_Symbol_Canons));
+    return *Flex_At(Symbol*, PG_Symbol_Canons, cast(REBLEN, sym));
 }
 
 INLINE bool Are_Synonyms(Symbol* s1, Symbol* s2) {
@@ -93,44 +93,44 @@ INLINE bool Are_Synonyms(Symbol* s1, Symbol* s2) {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-INLINE bool Is_Series_Ucs2(Series* s) {
+INLINE bool Is_Flex_Ucs2(Flex* s) {
     //
     // There's no specific flag for UCS-2, but these are the only 2-byte
     // series at the moment.
     //
-    return Series_Wide(s) == sizeof(REBUNI);
+    return Flex_Wide(s) == sizeof(REBUNI);
 }
 
 INLINE REBLEN String_Len(String* s) {
-    assert(Series_Wide(s) == sizeof(REBUNI));
-    return Series_Len(s);
+    assert(Flex_Wide(s) == sizeof(REBUNI));
+    return Flex_Len(s);
 }
 
 INLINE void Set_String_Len(String* s, REBLEN len) {
-    assert(Series_Wide(s) == sizeof(REBUNI));
-    Set_Series_Len(s, len);
+    assert(Flex_Wide(s) == sizeof(REBUNI));
+    Set_Flex_Len(s, len);
 }
 
 INLINE Ucs2(*) String_At(String* s, REBLEN n)
-  { return Series_At(REBUNI, (s), (n)); }
+  { return Flex_At(REBUNI, (s), (n)); }
 
 INLINE REBUNI* String_Head(String* s)
-  { return Series_Head(REBUNI, s); }
+  { return Flex_Head(REBUNI, s); }
 
 INLINE REBUNI* String_Tail(String* s)
-  { return Series_Tail(REBUNI, s); }
+  { return Flex_Tail(REBUNI, s); }
 
 INLINE REBUNI* String_Last(String* s)
   { return Series_Last(REBUNI, s); }
 
 INLINE void Term_String_Len(String* s, REBLEN len) {
-    Set_Series_Len(s, len);
-    *Series_At(REBUNI, s, len) = '\0';
+    Set_Flex_Len(s, len);
+    *Flex_At(REBUNI, s, len) = '\0';
 }
 
 INLINE String* Cell_String(const Cell* cell) {
     assert(ANY_STRING(cell));
-    return cast(String*, VAL_SERIES(cell));
+    return cast(String*, Cell_Flex(cell));
 }
 
 #define Cell_String_Head(v) \
@@ -185,21 +185,21 @@ INLINE REBSIZ VAL_SIZE_LIMIT_AT(
 // create new strings, if possible.
 //
 
-INLINE REBUNI GET_ANY_CHAR(Series* s, REBLEN n) {
-    return BYTE_SIZE(s) ? *Series_At(Byte, s, n) : *Series_At(REBUNI, s, n);
+INLINE REBUNI GET_ANY_CHAR(Flex* s, REBLEN n) {
+    return BYTE_SIZE(s) ? *Flex_At(Byte, s, n) : *Flex_At(REBUNI, s, n);
 }
 
-INLINE void SET_ANY_CHAR(Series* s, REBLEN n, REBUNI c) {
+INLINE void SET_ANY_CHAR(Flex* s, REBLEN n, REBUNI c) {
     if (BYTE_SIZE(s)) {
         assert(c <= 255);
-        *Series_At(Byte, s, n) = c;
+        *Flex_At(Byte, s, n) = c;
     }
     else
-        *Series_At(REBUNI, s, n) = c;
+        *Flex_At(REBUNI, s, n) = c;
 }
 
 #define VAL_ANY_CHAR(v) \
-    GET_ANY_CHAR(VAL_SERIES(v), VAL_INDEX(v))
+    GET_ANY_CHAR(Cell_Flex(v), VAL_INDEX(v))
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -287,17 +287,17 @@ INLINE REBINT First_Hash_Candidate_Slot(
 // Copy helpers
 //
 
-INLINE Series* Copy_Sequence_At_Position(const Value* v)
+INLINE Flex* Copy_Sequence_At_Position(const Value* v)
 {
-    return Copy_Sequence_At_Len_Extra(
-        VAL_SERIES(v), VAL_INDEX(v), VAL_LEN_AT(v), 0
+    return Copy_Non_Array_Flex_At_Len_Extra(
+        Cell_Flex(v), VAL_INDEX(v), VAL_LEN_AT(v), 0
     );
 }
 
-INLINE Series* Copy_Sequence_At_Len(
-    Series* s,
+INLINE Flex* Copy_Sequence_At_Len(
+    Flex* s,
     REBLEN index,
     REBLEN len
 ){
-    return Copy_Sequence_At_Len_Extra(s, index, len, 0);
+    return Copy_Non_Array_Flex_At_Len_Extra(s, index, len, 0);
 }

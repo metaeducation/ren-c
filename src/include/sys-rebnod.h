@@ -29,7 +29,7 @@
 // In order to implement several "tricks", the first pointer-size slots of
 // many datatypes is a `HeaderUnion` structure.  The bit layout of this header
 // is chosen in such a way that not only can Rebol value pointers (Value*)
-// be distinguished from Rebol series pointers (Series*), but these can be
+// be distinguished from Rebol series pointers (Flex*), but these can be
 // discerned from a valid UTF-8 string just by looking at the first byte.
 //
 // On a semi-superficial level, this permits a kind of dynamic polymorphism,
@@ -38,7 +38,7 @@
 //     Value* value = ...;
 //     panic (value); // can tell this is a value
 //
-//     Series* series = ...;
+//     Flex* series = ...;
 //     panic (series) // can tell this is a series
 //
 //     const char *utf8 = ...;
@@ -393,7 +393,7 @@ union HeaderUnion {
 // still manually managed...and during the GC's sweeping phase the simple fact
 // that it isn't NODE_FLAG_MARKED won't be enough to consider it for freeing.
 //
-// See Manage_Series() for details on the lifecycle of a series (how it starts
+// See Manage_Flex() for details on the lifecycle of a series (how it starts
 // out manually managed, and then must either become managed or be freed
 // before the evaluation that created it ends).
 //
@@ -412,7 +412,7 @@ union HeaderUnion {
 // On series nodes, this flag is used by the mark-and-sweep of the garbage
 // collector, and should not be referenced outside of %m-gc.c.
 //
-// See `SERIES_INFO_BLACK` for a generic bit available to other routines
+// See `FLEX_INFO_BLACK` for a generic bit available to other routines
 // that wish to have an arbitrary marker on series (for things like
 // recursion avoidance in algorithms).
 //
@@ -504,7 +504,7 @@ union HeaderUnion {
 // and "freed cells"...though NODE_FLAG_FREE is not generally used on purpose
 // (mostly happens if reading uninitialized memory)
 //
-#define FREED_SERIES_BYTE 192
+#define FREED_FLEX_BYTE 192
 #define FREED_CELL_BYTE 193
 
 
@@ -521,12 +521,12 @@ union HeaderUnion {
 // Though the name Node is used for a superclass that can be "in use" or
 // "free", this is the definition of the structure for its layout when it
 // has NODE_FLAG_FREE set.  In that case, the memory manager will set the
-// header bits to have the leftmost byte as FREED_SERIES_BYTE, and use the
+// header bits to have the leftmost byte as FREED_FLEX_BYTE, and use the
 // pointer slot right after the header for its linked list of free nodes.
 //
 
 struct PoolUnitStruct {
-    union HeaderUnion header; // leftmost byte FREED_SERIES_BYTE if free
+    union HeaderUnion header; // leftmost byte FREED_FLEX_BYTE if free
 
     struct PoolUnitStruct* next_if_free; // if not free, unit is available
 
@@ -546,7 +546,7 @@ struct PoolUnitStruct {
             return false;
 
         assert(
-            FIRST_BYTE(n) == FREED_SERIES_BYTE
+            FIRST_BYTE(n) == FREED_FLEX_BYTE
             or FIRST_BYTE(n) == FREED_CELL_BYTE
         );
         return true;

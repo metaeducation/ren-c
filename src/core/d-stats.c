@@ -99,7 +99,7 @@ DECLARE_NATIVE(stats)
             stats++;
             Init_Integer(stats, PG_Reb_Stats->Series_Memory);
             stats++;
-            Init_Integer(stats, PG_Reb_Stats->Recycle_Series_Total);
+            Init_Integer(stats, PG_Reb_Stats->Recycle_Flex_Total);
 
             stats++;
             Init_Integer(stats, PG_Reb_Stats->Blocks);
@@ -115,14 +115,14 @@ DECLARE_NATIVE(stats)
 
     if (REF(dump_series)) {
         Value* pool_id = ARG(pool_id);
-        Dump_Series_In_Pool(VAL_INT32(pool_id));
+        Dump_Flex_In_Pool(VAL_INT32(pool_id));
         return nullptr;
     }
 
     if (REF(show))
         Dump_Pools();
 
-    return Init_Integer(OUT, Inspect_Series(REF(show)));
+    return Init_Integer(OUT, Inspect_Flex(REF(show)));
 #endif
 }
 

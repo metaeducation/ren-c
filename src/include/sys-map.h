@@ -45,7 +45,7 @@
 
 
 INLINE Array* MAP_PAIRLIST(REBMAP *m) {
-    assert(GET_SER_FLAG(m, ARRAY_FLAG_PAIRLIST));
+    assert(Get_Flex_Flag(m, ARRAY_FLAG_PAIRLIST));
     return cast(Array*, m);
 }
 
@@ -53,11 +53,11 @@ INLINE Array* MAP_PAIRLIST(REBMAP *m) {
     (LINK(MAP_PAIRLIST(m)).hashlist)
 
 #define MAP_HASHES(m) \
-    Series_Head(MAP_HASHLIST(m))
+    Flex_Head(MAP_HASHLIST(m))
 
 INLINE REBMAP *MAP(void *p) {
-    Array* a = ARR(p);
-    assert(GET_SER_FLAG(a, ARRAY_FLAG_PAIRLIST));
+    Array* a = cast_Array(p);
+    assert(Get_Flex_Flag(a, ARRAY_FLAG_PAIRLIST));
     return cast(REBMAP*, a);
 }
 
@@ -65,8 +65,8 @@ INLINE REBMAP *MAP(void *p) {
 INLINE REBMAP *VAL_MAP(const Cell* v) {
     assert(Is_Map(v));
 
-    Series* s = v->payload.any_series.series;
-    if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE))
+    Flex* s = v->payload.any_series.series;
+    if (Get_Flex_Info(s, FLEX_INFO_INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
 
     return MAP(s);

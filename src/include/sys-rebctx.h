@@ -33,10 +33,10 @@
 //
 // !!! Ideally this would carry a flag to tell a GC "shrinking" process not
 // to reclaim the dynamic memory to make a singular cell...but that flag
-// can't be SERIES_FLAG_FIXED_SIZE, because most varlists can expand.
+// can't be FLEX_FLAG_FIXED_SIZE, because most varlists can expand.
 //
 #define SERIES_MASK_CONTEXT \
-    (NODE_FLAG_NODE | SERIES_FLAG_ALWAYS_DYNAMIC | ARRAY_FLAG_VARLIST)
+    (NODE_FLAG_NODE | FLEX_FLAG_ALWAYS_DYNAMIC | ARRAY_FLAG_VARLIST)
 
 
 #if !defined(DEBUG_CHECK_CASTS) || (! CPLUSPLUS_11)
@@ -52,17 +52,17 @@
 
         constexpr bool base = std::is_same<T, void>::value
             or std::is_same<T, Node>::value
-            or std::is_same<T, Series>::value
+            or std::is_same<T, Flex>::value
             or std::is_same<T, Array>::value;
 
         static_assert(
             derived or base,
-            "CTX() works on Node/Series/Array/REBCTX"
+            "CTX() works on Node/Flex/Array/REBCTX"
         );
 
         if (base)
             assert(
-                (reinterpret_cast<Series*>(p)->header.bits & (
+                (reinterpret_cast<Flex*>(p)->header.bits & (
                     NODE_FLAG_NODE | ARRAY_FLAG_VARLIST
                         | NODE_FLAG_FREE
                         | NODE_FLAG_CELL

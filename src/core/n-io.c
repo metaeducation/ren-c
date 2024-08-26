@@ -147,11 +147,11 @@ DECLARE_NATIVE(write_stdout)
         REBSIZ offset;
         REBSIZ size;
         Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
-        PUSH_GC_GUARD(temp);
+        Push_GC_Guard(temp);
 
         Prin_OS_String(Blob_At(temp, offset), size, OPT_ENC_0);
 
-        DROP_GC_GUARD(temp);
+        Drop_GC_Guard(temp);
     }
 
     return Init_Nothing(OUT);
@@ -182,7 +182,7 @@ DECLARE_NATIVE(new_line)
     Value* pos = ARG(position);
     Array* a = Cell_Array(pos);
 
-    Fail_If_Read_Only_Series(a);
+    Fail_If_Read_Only_Flex(a);
 
     Copy_Cell(OUT, pos); // always returns the input position
 
@@ -190,9 +190,9 @@ DECLARE_NATIVE(new_line)
 
     if (IS_END(item)) { // no value at tail to mark; use bit in array
         if (mark)
-            SET_SER_FLAG(a, ARRAY_FLAG_TAIL_NEWLINE);
+            Set_Flex_Flag(a, ARRAY_FLAG_TAIL_NEWLINE);
         else
-            CLEAR_SER_FLAG(a, ARRAY_FLAG_TAIL_NEWLINE);
+            Clear_Flex_Flag(a, ARRAY_FLAG_TAIL_NEWLINE);
         return OUT;
     }
 
@@ -284,7 +284,7 @@ DECLARE_NATIVE(new_line_q)
 
     return Init_Logic(
         OUT,
-        GET_SER_FLAG(arr, ARRAY_FLAG_TAIL_NEWLINE)
+        Get_Flex_Flag(arr, ARRAY_FLAG_TAIL_NEWLINE)
     );
 }
 
@@ -477,7 +477,7 @@ DECLARE_NATIVE(wait)
         }
         if (IS_END(val)) {
             if (n == 0) {
-                Free_Unmanaged_Series(ports);
+                Free_Unmanaged_Flex(ports);
                 return nullptr; // has no pending ports!
             }
             timeout = ALL_BITS; // no timeout provided
@@ -626,7 +626,7 @@ DECLARE_NATIVE(local_to_file)
         return Init_File(
             OUT,
             Copy_Sequence_At_Len( // Copy (callers frequently modify result)
-                VAL_SERIES(path),
+                Cell_Flex(path),
                 VAL_INDEX(path),
                 VAL_LEN_AT(path)
             )
@@ -671,7 +671,7 @@ DECLARE_NATIVE(file_to_local)
         return Init_Text(
             OUT,
             Copy_Sequence_At_Len( // Copy (callers frequently modify result)
-                VAL_SERIES(path),
+                Cell_Flex(path),
                 VAL_INDEX(path),
                 VAL_LEN_AT(path)
             )
@@ -730,7 +730,7 @@ DECLARE_NATIVE(what_dir)
     return Init_Any_Series_At(
         OUT,
         VAL_TYPE(current_path),
-        Copy_Sequence_Core(VAL_SERIES(current_path), NODE_FLAG_MANAGED),
+        Copy_Non_Array_Flex_Core(Cell_Flex(current_path), NODE_FLAG_MANAGED),
         VAL_INDEX(current_path)
     );
 }

@@ -50,11 +50,11 @@ void Snap_State_Core(struct Reb_State *s)
     //
     assert(Array_Len(BUF_COLLECT) == 0);
 
-    s->guarded_len = Series_Len(GC_Guarded);
+    s->guarded_len = Flex_Len(GC_Guarded);
     s->level = TOP_LEVEL;
 
-    s->manuals_len = Series_Len(GC_Manuals);
-    s->mold_buf_len = Series_Len(MOLD_BUF);
+    s->manuals_len = Flex_Len(GC_Manuals);
+    s->mold_buf_len = Flex_Len(MOLD_BUF);
     s->mold_loop_tail = Array_Len(TG_Mold_Stack);
 
     // !!! Is this initialization necessary?
@@ -87,49 +87,49 @@ void Assert_State_Balanced_Debug(
 
     assert(Array_Len(BUF_COLLECT) == 0);
 
-    if (s->guarded_len != Series_Len(GC_Guarded)) {
+    if (s->guarded_len != Flex_Len(GC_Guarded)) {
         printf(
-            "PUSH_GC_GUARD()x%d without DROP_GC_GUARD()\n",
-            cast(int, Series_Len(GC_Guarded) - s->guarded_len)
+            "Push_GC_Guard()x%d without Drop_GC_Guard()\n",
+            cast(int, Flex_Len(GC_Guarded) - s->guarded_len)
         );
-        Node* guarded = *Series_At(
+        Node* guarded = *Flex_At(
             Node*,
             GC_Guarded,
-            Series_Len(GC_Guarded) - 1
+            Flex_Len(GC_Guarded) - 1
         );
         panic_at (guarded, file, line);
     }
 
     // !!! Note that this inherits a test that uses GC_Manuals->content.xxx
-    // instead of Series_Len().  The idea being that although some series
+    // instead of Flex_Len().  The idea being that although some series
     // are able to fit in the series node, the GC_Manuals wouldn't ever
     // pay for that check because it would always be known not to.  Review
     // this in general for things that may not need "series" overhead,
     // e.g. a contiguous pointer stack.
     //
-    if (s->manuals_len > Series_Len(GC_Manuals)) {
+    if (s->manuals_len > Flex_Len(GC_Manuals)) {
         //
         // Note: Should this ever actually happen, panic() on the series won't
         // do any real good in helping debug it.  You'll probably need to
-        // add additional checks in Manage_Series and Free_Unmanaged_Series
+        // add additional checks in Manage_Flex and Free_Unmanaged_Flex
         // that check against the caller's manuals_len.
         //
         panic_at ("manual series freed outside checkpoint", file, line);
     }
-    else if (s->manuals_len < Series_Len(GC_Manuals)) {
+    else if (s->manuals_len < Flex_Len(GC_Manuals)) {
         printf(
-            "Make_Series()x%d w/o Free_Unmanaged_Series()/Manage_Series()\n",
-            cast(int, Series_Len(GC_Manuals) - s->manuals_len)
+            "Make_Flex()x%d w/o Free_Unmanaged_Flex()/Manage_Flex()\n",
+            cast(int, Flex_Len(GC_Manuals) - s->manuals_len)
         );
-        Series* manual = *(Series_At(
-            Series*,
+        Flex* manual = *(Flex_At(
+            Flex*,
             GC_Manuals,
-            Series_Len(GC_Manuals) - 1
+            Flex_Len(GC_Manuals) - 1
         ));
         panic_at (manual, file, line);
     }
 
-    assert(s->mold_buf_len == Series_Len(MOLD_BUF));
+    assert(s->mold_buf_len == Flex_Len(MOLD_BUF));
     assert(s->mold_loop_tail == Array_Len(TG_Mold_Stack));
 
     assert(s->error == nullptr);  // !!! necessary?
@@ -176,17 +176,17 @@ void Trapped_Helper(struct Reb_State *s)
     // any arglist series in call frames that have been wiped off the stack.
     // (Closure series will be managed.)
     //
-    assert(Series_Len(GC_Manuals) >= s->manuals_len);
-    while (Series_Len(GC_Manuals) != s->manuals_len) {
+    assert(Flex_Len(GC_Manuals) >= s->manuals_len);
+    while (Flex_Len(GC_Manuals) != s->manuals_len) {
         // Freeing the series will update the tail...
-        Free_Unmanaged_Series(
-            *Series_At(Series*, GC_Manuals, Series_Len(GC_Manuals) - 1)
+        Free_Unmanaged_Flex(
+            *Flex_At(Flex*, GC_Manuals, Flex_Len(GC_Manuals) - 1)
         );
     }
 
-    Set_Series_Len(GC_Guarded, s->guarded_len);
+    Set_Flex_Len(GC_Guarded, s->guarded_len);
     TG_Top_Level = s->level;
-    TERM_SEQUENCE_LEN(MOLD_BUF, s->mold_buf_len);
+    Term_Non_Array_Flex_Len(MOLD_BUF, s->mold_buf_len);
 
   #if !defined(NDEBUG)
     //
@@ -198,7 +198,7 @@ void Trapped_Helper(struct Reb_State *s)
     TG_Pushing_Mold = false;
   #endif
 
-    Set_Series_Len(TG_Mold_Stack, s->mold_loop_tail);
+    Set_Flex_Len(TG_Mold_Stack, s->mold_loop_tail);
 
     Saved_State = s->last_state;
 }
@@ -264,8 +264,8 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         break; }
 
     case DETECTED_AS_SERIES: {
-        Series* s = m_cast(Series*, cast(const Series*, p)); // don't mutate
-        if (NOT_SER_FLAG(s, ARRAY_FLAG_VARLIST))
+        Flex* s = m_cast(Flex*, cast(const Flex*, p)); // don't mutate
+        if (Not_Flex_Flag(s, ARRAY_FLAG_VARLIST))
             panic (s);
         error = CTX(s);
         break; }
@@ -303,7 +303,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
             assert(L->varlist); // action must be running
             Array* stub = L->varlist; // will be stubbed, info bits reset
             Drop_Action(L);
-            SET_SER_INFO(stub, FRAME_INFO_FAILED); // API leaks o.k.
+            Set_Flex_Info(stub, FRAME_INFO_FAILED); // API leaks o.k.
         }
 
         Level* prior = L->prior;
@@ -449,7 +449,7 @@ void Set_Location_Of_Error(
             //
             continue;
         }
-        if (NOT_SER_FLAG(L->source->array, ARRAY_FLAG_FILE_LINE))
+        if (Not_Flex_Flag(L->source->array, ARRAY_FLAG_FILE_LINE))
             continue;
         break;
     }
@@ -738,8 +738,8 @@ REBCTX *Make_Error_Managed_Core(
         // Fix up the tail first so CTX_KEY and CTX_VAR don't complain
         // in the debug build that they're accessing beyond the error length
         //
-        TERM_ARRAY_LEN(CTX_VARLIST(error), root_len + expected_args + 1);
-        TERM_ARRAY_LEN(CTX_KEYLIST(error), root_len + expected_args + 1);
+        Term_Array_Len(CTX_VARLIST(error), root_len + expected_args + 1);
+        Term_Array_Len(CTX_KEYLIST(error), root_len + expected_args + 1);
 
         Value* key = CTX_KEY(error, root_len) + 1;
         Value* value = CTX_VAR(error, root_len) + 1;
@@ -807,7 +807,7 @@ REBCTX *Make_Error_Managed_Core(
             }
         }
 
-        assert(IS_END(key)); // set above by TERM_ARRAY_LEN
+        assert(IS_END(key)); // set above by Term_Array_Len
         assert(IS_END(value)); // ...same
     }
 
@@ -1351,11 +1351,11 @@ void Shutdown_Stackoverflow(void)
 //
 static void Mold_Value_Limit(REB_MOLD *mo, Cell* v, REBLEN len)
 {
-    REBLEN start = Series_Len(mo->series);
+    REBLEN start = Flex_Len(mo->series);
     Mold_Value(mo, v);
 
-    if (Series_Len(mo->series) - start > len) {
-        Set_Series_Len(mo->series, start + len);
+    if (Flex_Len(mo->series) - start > len) {
+        Set_Flex_Len(mo->series, start + len);
         Append_Unencoded(mo->series, "...");
     }
 }

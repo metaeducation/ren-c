@@ -34,7 +34,7 @@
 // In Ren-C, there is an implicit END marker just past the last cell in the
 // capacity.  Allowing a SET_END() on this position could corrupt the END
 // signaling slot, which only uses a bit out of a HeaderUnion sized item to
-// signal.  Use TERM_ARRAY_LEN() to safely terminate arrays and respect not
+// signal.  Use Term_Array_Len() to safely terminate arrays and respect not
 // writing if it's past capacity.
 //
 // While many operations are shared in common with Series, there is a
@@ -59,19 +59,19 @@
 // valid for writing a full cell.
 
 INLINE Cell* Array_At(Array* a, REBLEN n)
-    { return Series_At(Cell, cast(Series*, a), n); }
+    { return Flex_At(Cell, cast(Flex*, a), n); }
 
 INLINE Cell* Array_Head(Array* a)
-    { return Series_Head(Cell, cast(Series*, a)); }
+    { return Flex_Head(Cell, cast(Flex*, a)); }
 
 INLINE Cell* Array_Tail(Array* a)
-    { return Series_Tail(Cell, cast(Series*, a)); }
+    { return Flex_Tail(Cell, cast(Flex*, a)); }
 
 INLINE Cell* Array_Last(Array* a)
-    { return Series_Last(Cell, cast(Series*, a)); }
+    { return Series_Last(Cell, cast(Flex*, a)); }
 
 INLINE Cell* ARR_SINGLE(Array* a) {
-    assert(not IS_SER_DYNAMIC(a)); // singular test avoided in release build
+    assert(not Is_Flex_Dynamic(a)); // singular test avoided in release build
     return &a->content.fixed.cell;
 }
 
@@ -79,13 +79,13 @@ INLINE Cell* ARR_SINGLE(Array* a) {
 // cell inside a singular array.
 //
 INLINE Array* Singular_From_Cell(const Cell* v) {
-    Array* singular = ARR( // some checking in debug builds is done by ARR()
+    Array* singular = cast_Array( // some checking in debug builds is done by cast_Array()
         cast(void*,
             cast(Byte*, m_cast(Cell*, v))
             - offsetof(Stub, content)
         )
     );
-    assert(not IS_SER_DYNAMIC(singular));
+    assert(not Is_Flex_Dynamic(singular));
     return singular;
 }
 
@@ -94,7 +94,7 @@ INLINE Array* Singular_From_Cell(const Cell* v) {
 // sync these independently for performance reasons (for better or worse).
 //
 #define Array_Len(a) \
-    Series_Len(a)
+    Flex_Len(a)
 
 
 // Set length and also terminate.  This routine avoids conditionality in the
@@ -102,13 +102,13 @@ INLINE Array* Singular_From_Cell(const Cell* v) {
 // end (such as an Endlike_Header).  Not branching is presumed to perform
 // better, but cells that weren't ends already are writability checked.
 //
-// !!! Review if SERIES_FLAG_FIXED_SIZE should be calling this routine.  At
+// !!! Review if FLEX_FLAG_FIXED_SIZE should be calling this routine.  At
 // the moment, fixed size series merely can't expand, but it might be more
 // efficient if they didn't use any "appending" operators to get built.
 //
-INLINE void TERM_ARRAY_LEN(Array* a, REBLEN len) {
-    assert(len < Series_Rest(a));
-    Set_Series_Len(a, len);
+INLINE void Term_Array_Len(Array* a, REBLEN len) {
+    assert(len < Flex_Rest(a));
+    Set_Flex_Len(a, len);
 
     Cell* at = Array_At(a, len);
 
@@ -121,18 +121,18 @@ INLINE void TERM_ARRAY_LEN(Array* a, REBLEN len) {
 }
 
 INLINE void SET_ARRAY_LEN_NOTERM(Array* a, REBLEN len) {
-    Set_Series_Len(a, len);  // call out non-terminating usages
+    Set_Flex_Len(a, len);  // call out non-terminating usages
 }
 
 INLINE void RESET_ARRAY(Array* a) {
-    TERM_ARRAY_LEN(a, 0);
+    Term_Array_Len(a, 0);
 }
 
-INLINE void TERM_SERIES(Series* s) {
-    if (IS_SER_ARRAY(s))
-        TERM_ARRAY_LEN(ARR(s), Series_Len(s));
+INLINE void Term_Flex(Flex* s) {
+    if (Is_Flex_Array(s))
+        Term_Array_Len(cast_Array(s), Flex_Len(s));
     else
-        memset(Series_Data_At(Series_Wide(s), s, Series_Len(s)), 0, Series_Wide(s));
+        memset(Flex_Data_At(Flex_Wide(s), s, Flex_Len(s)), 0, Flex_Wide(s));
 }
 
 
@@ -141,13 +141,13 @@ INLINE void TERM_SERIES(Series* s) {
 //
 
 INLINE bool Is_Array_Deeply_Frozen(Array* a) {
-    return GET_SER_INFO(a, SERIES_INFO_FROZEN);
+    return Get_Flex_Info(a, FLEX_INFO_FROZEN);
 
     // should be frozen all the way down (can only freeze arrays deeply)
 }
 
 INLINE void Deep_Freeze_Array(Array* a) {
-    Protect_Series(
+    Protect_Flex(
         a,
         0, // start protection at index 0
         PROT_DEEP | PROT_SET | PROT_FREEZE
@@ -156,7 +156,7 @@ INLINE void Deep_Freeze_Array(Array* a) {
 }
 
 #define Is_Array_Shallow_Read_Only(a) \
-    Is_Series_Read_Only(a)
+    Is_Flex_Read_Only(a)
 
 
 
@@ -177,13 +177,13 @@ INLINE void Deep_Freeze_Array(Array* a) {
 //
 INLINE void Prep_Array(
     Array* a,
-    REBLEN capacity_plus_one // Expand_Series passes 0 on dynamic reallocation
+    REBLEN capacity_plus_one // Expand_Flex passes 0 on dynamic reallocation
 ){
-    assert(IS_SER_DYNAMIC(a));
+    assert(Is_Flex_Dynamic(a));
 
     Cell* prep = Array_Head(a);
 
-    if (NOT_SER_FLAG(a, SERIES_FLAG_FIXED_SIZE)) {
+    if (Not_Flex_Flag(a, FLEX_FLAG_FIXED_SIZE)) {
         //
         // Expandable arrays prep all cells, including in the not-yet-used
         // capacity.  Otherwise you'd waste time prepping cells on every
@@ -239,10 +239,10 @@ INLINE void Prep_Array(
 INLINE Array* Make_Array_Core(REBLEN capacity, REBFLGS flags) {
     const REBLEN wide = sizeof(Cell);
 
-    Series* s = Alloc_Series_Node(flags);
+    Flex* s = Alloc_Flex_Stub(flags);
 
     if (
-        (flags & SERIES_FLAG_ALWAYS_DYNAMIC) // inlining will constant fold
+        (flags & FLEX_FLAG_ALWAYS_DYNAMIC) // inlining will constant fold
         or capacity > 1
     ){
         capacity += 1; // account for cell needed for terminator (END)
@@ -251,19 +251,19 @@ INLINE Array* Make_Array_Core(REBLEN capacity, REBFLGS flags) {
             fail (Error_No_Memory(cast(REBU64, capacity) * wide));
 
         s->info = Endlike_Header(FLAG_LEN_BYTE_OR_255(255)); // dynamic
-        if (not Did_Series_Data_Alloc(s, capacity)) // expects LEN_BYTE=255
+        if (not Did_Flex_Data_Alloc(s, capacity)) // expects LEN_BYTE=255
             fail (Error_No_Memory(capacity * wide));
 
-        Prep_Array(ARR(s), capacity);
-        SET_END(Array_Head(ARR(s)));
+        Prep_Array(cast_Array(s), capacity);
+        SET_END(Array_Head(cast_Array(s)));
 
       #if !defined(NDEBUG)
         PG_Reb_Stats->Series_Memory += capacity * wide;
       #endif
     }
     else {
-        SER_CELL(s)->header.bits = CELL_MASK_ERASE_END;
-        TRACK_CELL_IF_DEBUG(SER_CELL(s), "<<make>>", 0);
+        Stub_Cell(s)->header.bits = CELL_MASK_ERASE_END;
+        TRACK_CELL_IF_DEBUG(Stub_Cell(s), "<<make>>", 0);
 
         s->info = Endlike_Header(
             FLAG_WIDE_BYTE_OR_0(0) // implicit termination
@@ -273,15 +273,15 @@ INLINE Array* Make_Array_Core(REBLEN capacity, REBFLGS flags) {
 
     // It is more efficient if you know a series is going to become managed to
     // create it in the managed state.  But be sure no evaluations are called
-    // before it's made reachable by the GC, or use PUSH_GC_GUARD().
+    // before it's made reachable by the GC, or use Push_GC_Guard().
     //
     // !!! Code duplicated in Make_Ser_Core ATM.
     //
     if (not (flags & NODE_FLAG_MANAGED)) { // most callsites const fold this
-        if (SER_FULL(GC_Manuals))
-            Extend_Series(GC_Manuals, 8);
+        if (Is_Flex_Full(GC_Manuals))
+            Extend_Flex(GC_Manuals, 8);
 
-        cast(Series**, GC_Manuals->content.dynamic.data)[
+        cast(Flex**, GC_Manuals->content.dynamic.data)[
             GC_Manuals->content.dynamic.len++
         ] = s; // start out managed to not need to find/remove from this later
     }
@@ -292,13 +292,13 @@ INLINE Array* Make_Array_Core(REBLEN capacity, REBFLGS flags) {
     if (flags & ARRAY_FLAG_FILE_LINE) { // most callsites const fold this
         if (
             TOP_LEVEL->source->array and
-            GET_SER_FLAG(TOP_LEVEL->source->array, ARRAY_FLAG_FILE_LINE)
+            Get_Flex_Flag(TOP_LEVEL->source->array, ARRAY_FLAG_FILE_LINE)
         ){
             LINK(s).file = LINK(TOP_LEVEL->source->array).file;
             MISC(s).line = MISC(TOP_LEVEL->source->array).line;
         }
         else
-            CLEAR_SER_FLAG(s, ARRAY_FLAG_FILE_LINE);
+            Clear_Flex_Flag(s, ARRAY_FLAG_FILE_LINE);
     }
 
   #if !defined(NDEBUG)
@@ -324,7 +324,7 @@ INLINE Array* Make_Arr_For_Copy(
     REBFLGS flags,
     Array* original
 ){
-    if (original and GET_SER_FLAG(original, ARRAY_FLAG_TAIL_NEWLINE)) {
+    if (original and Get_Flex_Flag(original, ARRAY_FLAG_TAIL_NEWLINE)) {
         //
         // All of the newline bits for cells get copied, so it only makes
         // sense that the bit for newline on the tail would be copied too.
@@ -334,14 +334,14 @@ INLINE Array* Make_Arr_For_Copy(
 
     if (
         (flags & ARRAY_FLAG_FILE_LINE)
-        and (original and GET_SER_FLAG(original, ARRAY_FLAG_FILE_LINE))
+        and (original and Get_Flex_Flag(original, ARRAY_FLAG_FILE_LINE))
     ){
         flags &= ~ARRAY_FLAG_FILE_LINE;
 
         Array* a = Make_Array_Core(capacity, flags);
         LINK(a).file = LINK(original).file;
         MISC(a).line = MISC(original).line;
-        SET_SER_FLAG(a, ARRAY_FLAG_FILE_LINE);
+        Set_Flex_Flag(a, ARRAY_FLAG_FILE_LINE);
         return a;
     }
 
@@ -355,11 +355,11 @@ INLINE Array* Make_Arr_For_Copy(
 // Note ARR_SINGLE() must be overwritten by the caller...it contains an END
 // marker but the array length is 1, so that will assert if you don't.
 //
-// For `flags`, be sure to consider if you need SERIES_FLAG_FILE_LINE.
+// For `flags`, be sure to consider if you need FLEX_FLAG_FILE_LINE.
 //
 INLINE Array* Alloc_Singular(REBFLGS flags) {
-    assert(not (flags & SERIES_FLAG_ALWAYS_DYNAMIC));
-    Array* a = Make_Array_Core(1, flags | SERIES_FLAG_FIXED_SIZE);
+    assert(not (flags & FLEX_FLAG_ALWAYS_DYNAMIC));
+    Array* a = Make_Array_Core(1, flags | FLEX_FLAG_FIXED_SIZE);
     LEN_BYTE_OR_255(a) = 1; // non-dynamic length (defaulted to 0)
     return a;
 }
@@ -400,23 +400,23 @@ enum {
     Copy_Array_At_Extra_Shallow((a), 0, (s), 0, (f))
 
 #define Copy_Array_Deep_Managed(a,s) \
-    Copy_Array_At_Extra_Deep_Flags_Managed((a), 0, (s), 0, SERIES_FLAGS_NONE)
+    Copy_Array_At_Extra_Deep_Flags_Managed((a), 0, (s), 0, FLEX_FLAGS_NONE)
 
 #define Copy_Array_Deep_Flags_Managed(a,s,f) \
     Copy_Array_At_Extra_Deep_Flags_Managed((a), 0, (s), 0, (f))
 
 #define Copy_Array_At_Deep_Managed(a,i,s) \
-    Copy_Array_At_Extra_Deep_Flags_Managed((a), (i), (s), 0, SERIES_FLAGS_NONE)
+    Copy_Array_At_Extra_Deep_Flags_Managed((a), (i), (s), 0, FLEX_FLAGS_NONE)
 
 #define COPY_ANY_ARRAY_AT_DEEP_MANAGED(v) \
     Copy_Array_At_Extra_Deep_Flags_Managed( \
-        Cell_Array(v), VAL_INDEX(v), VAL_SPECIFIER(v), 0, SERIES_FLAGS_NONE)
+        Cell_Array(v), VAL_INDEX(v), VAL_SPECIFIER(v), 0, FLEX_FLAGS_NONE)
 
 #define Copy_Array_At_Shallow(a,i,s) \
-    Copy_Array_At_Extra_Shallow((a), (i), (s), 0, SERIES_FLAGS_NONE)
+    Copy_Array_At_Extra_Shallow((a), (i), (s), 0, FLEX_FLAGS_NONE)
 
 #define Copy_Array_Extra_Shallow(a,s,e) \
-    Copy_Array_At_Extra_Shallow((a), 0, (s), (e), SERIES_FLAGS_NONE)
+    Copy_Array_At_Extra_Shallow((a), 0, (s), (e), FLEX_FLAGS_NONE)
 
 // See TS_NOT_COPIED for the default types excluded from being deep copied
 //
@@ -463,7 +463,7 @@ INLINE Array* Copy_Array_At_Extra_Deep_Flags_Managed(
 
 INLINE void INIT_VAL_ARRAY(Cell* v, Array* a) {
     INIT_BINDING(v, UNBOUND);
-    assert(Is_Series_Managed(a));
+    assert(Is_Flex_Managed(a));
     v->payload.any_series.series = a;
 }
 
@@ -482,10 +482,10 @@ INLINE void INIT_VAL_ARRAY(Cell* v, Array* a) {
 //
 INLINE Array* Cell_Array(const Cell* v) {
     assert(ANY_ARRAY(v));
-    Series* s = v->payload.any_series.series;
-    if (s->info.bits & SERIES_INFO_INACCESSIBLE)
+    Flex* s = v->payload.any_series.series;
+    if (s->info.bits & FLEX_INFO_INACCESSIBLE)
         fail (Error_Series_Data_Freed_Raw());
-    return ARR(s);
+    return cast_Array(s);
 }
 
 #define VAL_ARRAY_HEAD(v) \
@@ -574,17 +574,17 @@ INLINE bool Is_Doubled_Group(const Cell* group) {
     #define Assert_Array(s) \
         NOOP
 
-    #define Assert_Series(s) \
+    #define Assert_Flex(s) \
         NOOP
 #else
     #define Assert_Array(s) \
         Assert_Array_Core(s)
 
-    INLINE void Assert_Series(Series* s) {
-        if (IS_SER_ARRAY(s))
-            Assert_Array_Core(ARR(s));
+    INLINE void Assert_Flex(Flex* s) {
+        if (Is_Flex_Array(s))
+            Assert_Array_Core(cast_Array(s));
         else
-            Assert_Series_Core(s);
+            Assert_Flex_Core(s);
     }
 
     #define IS_VALUE_IN_ARRAY_DEBUG(a,v) \

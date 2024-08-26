@@ -33,7 +33,7 @@
 //
 // What characterizes the external API is that it is not necessary to #include
 // the extensive definitions of StubStruct/ValueStruct or APIs for dealing with
-// all the internal details (e.g. PUSH_GC_GUARD(), which are easy to get
+// all the internal details (e.g. Push_GC_Guard(), which are easy to get
 // wrong).  Not only does this simplify the interface, but it also means that
 // the C code using the library isn't competing as much for definitions in
 // the global namespace.
@@ -98,7 +98,7 @@ void API_rebEnterApi_internal(void) {
 // It also has the benefit of helping interface with client code that has
 // been stylized to use malloc()-ish hooks to produce data, when the eventual
 // target of that data is a Rebol series.  It does this without exposing
-// Series* internals to the external API, by allowing one to "rebRepossess()"
+// Flex* internals to the external API, by allowing one to "rebRepossess()"
 // the underlying series as a BINARY! Value*.
 //
 
@@ -120,18 +120,18 @@ void API_rebEnterApi_internal(void) {
 //   for the size of any fundamental type".  See notes on ALIGN_SIZE.
 //
 // !!! rebAlignedMalloc() could exist to take an alignment, which could save
-// on wasted bytes when ALIGN_SIZE > sizeof(Series*)...or work with "weird"
+// on wasted bytes when ALIGN_SIZE > sizeof(Flex*)...or work with "weird"
 // large fundamental types that need more alignment than ALIGN_SIZE.
 //
 void *API_rebMalloc(size_t size)
 {
-    Blob* bin = cast(Blob*, Make_Series_Core(
-        ALIGN_SIZE // stores Series* (must be at least big enough for void*)
+    Blob* bin = cast(Blob*, Make_Flex_Core(
+        ALIGN_SIZE // stores Flex* (must be at least big enough for void*)
             + size // for the actual data capacity (may be 0...see notes)
             + 1, // for termination (even BINARY! has this, review necessity)
         sizeof(Byte), // rebRepossess() only creates binary series ATM
-        SERIES_FLAG_DONT_RELOCATE // direct data pointer is being handed back!
-            | SERIES_FLAG_ALWAYS_DYNAMIC // rebRepossess() needs bias field
+        FLEX_FLAG_DONT_RELOCATE // direct data pointer is being handed back!
+            | FLEX_FLAG_ALWAYS_DYNAMIC // rebRepossess() needs bias field
     ));
 
     Byte *ptr = Blob_Head(bin) + ALIGN_SIZE;
@@ -195,7 +195,7 @@ void *API_rebRealloc(void *ptr, size_t new_size)
     //
     void *reallocated = rebMalloc(new_size);
     memcpy(reallocated, ptr, old_size < new_size ? old_size : new_size);
-    Free_Unmanaged_Series(bin);
+    Free_Unmanaged_Flex(bin);
 
     return reallocated;
 }
@@ -226,7 +226,7 @@ void API_rebFree(void *ptr)
 
     assert(BYTE_SIZE(s));
 
-    Free_Unmanaged_Series(s);
+    Free_Unmanaged_Flex(s);
 }
 
 
@@ -260,21 +260,21 @@ RebolValue* API_rebRepossess(void *ptr, size_t size)
     UNPOISON_MEMORY(ps, sizeof(Blob*));  // need to underrun to fetch `s`
 
     Blob* bin = *ps;
-    assert(not Is_Series_Managed(bin));
+    assert(not Is_Flex_Managed(bin));
 
     if (size > Blob_Len(bin) - ALIGN_SIZE)
         fail ("Attempt to rebRepossess() more than rebMalloc() capacity");
 
-    assert(GET_SER_FLAG(bin, SERIES_FLAG_DONT_RELOCATE));
-    CLEAR_SER_FLAG(bin, SERIES_FLAG_DONT_RELOCATE);
+    assert(Get_Flex_Flag(bin, FLEX_FLAG_DONT_RELOCATE));
+    Clear_Flex_Flag(bin, FLEX_FLAG_DONT_RELOCATE);
 
-    if (IS_SER_DYNAMIC(bin)) {
+    if (Is_Flex_Dynamic(bin)) {
         //
         // Dynamic series have the concept of a "bias", which is unused
         // allocated capacity at the head of a series.  Bump the "bias" to
-        // treat the embedded Series* (aligned to REBI64) as unused capacity.
+        // treat the embedded Flex* (aligned to REBI64) as unused capacity.
         //
-        SER_SET_BIAS(bin, ALIGN_SIZE);
+        Set_Flex_Bias(bin, ALIGN_SIZE);
         bin->content.dynamic.data += ALIGN_SIZE;
         bin->content.dynamic.rest -= ALIGN_SIZE;
     }
@@ -617,7 +617,7 @@ const void *API_rebUneval(const RebolValue* v)
     }
     else {
         Array* a = Make_Array(2);
-        SET_SER_INFO(a, SERIES_INFO_HOLD);
+        Set_Flex_Info(a, FLEX_INFO_HOLD);
         Copy_Cell(Alloc_Tail_Array(a), NAT_VALUE(the));  // the THE function
         Copy_Cell(Alloc_Tail_Array(a), v);
 
@@ -645,10 +645,10 @@ const void *API_rebR(RebolValue* v)
         fail ("Cannot apply rebR() to non-API value");
 
     Array* a = Singular_From_Cell(v);
-    if (GET_SER_INFO(a, SERIES_INFO_API_RELEASE))
+    if (Get_Flex_Info(a, FLEX_INFO_API_RELEASE))
         fail ("Cannot apply rebR() more than once to the same API value");
 
-    SET_SER_INFO(a, SERIES_INFO_API_RELEASE);
+    Set_Flex_Info(a, FLEX_INFO_API_RELEASE);
     return v; // returned as const void* to discourage use outside variadics
 }
 
@@ -842,7 +842,7 @@ RebolValue* API_rebRescue(
         assert(L->varlist); // action must be running
         Array* stub = L->varlist; // will be stubbed, with info bits reset
         Drop_Action(L);
-        SET_SER_INFO(stub, FRAME_INFO_FAILED); // signal API leaks ok
+        Set_Flex_Info(stub, FRAME_INFO_FAILED); // signal API leaks ok
         Abort_Level(L);
         return Init_Error(Alloc_Value(), error_ctx);
     }
@@ -1137,11 +1137,11 @@ unsigned int API_rebSpellIntoW(
     unsigned int buf_chars, // chars buf can hold (not including terminator)
     const RebolValue* v
 ){
-    Series* s;
+    Flex* s;
     REBLEN index;
     REBLEN len;
     if (ANY_STRING(v)) {
-        s = VAL_SERIES(v);
+        s = Cell_Flex(v);
         index = VAL_INDEX(v);
         len = VAL_LEN_AT(v);
     }
@@ -1151,13 +1151,13 @@ unsigned int API_rebSpellIntoW(
         Symbol* symbol = Cell_Word_Symbol(v);
         s = Make_Sized_String_UTF8(Symbol_Head(symbol), Symbol_Size(symbol));
         index = 0;
-        len = Series_Len(s);
+        len = Flex_Len(s);
     }
 
     if (not buf) { // querying for size
         assert(buf_chars == 0);
         if (ANY_WORD(v))
-            Free_Unmanaged_Series(s);
+            Free_Unmanaged_Flex(s);
         return len; // caller must now allocate buffer of len + 1
     }
 
@@ -1169,7 +1169,7 @@ unsigned int API_rebSpellIntoW(
     buf[limit] = 0;
 
     if (ANY_WORD(v))
-        Free_Unmanaged_Series(s);
+        Free_Unmanaged_Flex(s);
     return len;
 }
 
@@ -1371,12 +1371,12 @@ RebolValue* API_rebManage(RebolValue* v)
     assert(Is_Api_Value(v));
 
     Array* a = Singular_From_Cell(v);
-    assert(GET_SER_FLAG(a, NODE_FLAG_ROOT));
+    assert(Get_Flex_Flag(a, NODE_FLAG_ROOT));
 
-    if (Is_Series_Managed(a))
+    if (Is_Flex_Managed(a))
         fail ("Attempt to rebManage() a handle that's already managed.");
 
-    SET_SER_FLAG(a, NODE_FLAG_MANAGED);
+    Set_Flex_Flag(a, NODE_FLAG_MANAGED);
     assert(not LINK(a).owner);
     LINK(a).owner = Context_For_Level_May_Manage(TOP_LEVEL);
 
@@ -1399,9 +1399,9 @@ void API_rebUnmanage(void *p)
     assert(Is_Api_Value(v));
 
     Array* a = Singular_From_Cell(v);
-    assert(GET_SER_FLAG(a, NODE_FLAG_ROOT));
+    assert(Get_Flex_Flag(a, NODE_FLAG_ROOT));
 
-    if (not Is_Series_Managed(a))
+    if (not Is_Flex_Managed(a))
         fail ("Attempt to rebUnmanage() a handle with indefinite lifetime.");
 
     // It's not safe to convert the average series that might be referred to
@@ -1410,8 +1410,8 @@ void API_rebUnmanage(void *p)
     // pointers to its cell being held by client C code only.  It's at their
     // own risk to do this, and not use those pointers after a free.
     //
-    CLEAR_SER_FLAG(a, NODE_FLAG_MANAGED);
-    assert(GET_SER_FLAG(LINK(a).owner, ARRAY_FLAG_VARLIST));
+    Clear_Flex_Flag(a, NODE_FLAG_MANAGED);
+    assert(Get_Flex_Flag(LINK(a).owner, ARRAY_FLAG_VARLIST));
     LINK(a).owner = nullptr;
 }
 
@@ -1521,8 +1521,8 @@ intptr_t API_rebPromise(const void *p, va_list *vaptr)
     // The array is managed, but let's unmanage it so it doesn't get GC'd and
     // use it as the ID of the table entry for the promise.
     //
-    assert(GET_SER_FLAG(L->source->array, NODE_FLAG_MANAGED));
-    CLEAR_SER_FLAG(L->source->array, NODE_FLAG_MANAGED);
+    assert(Get_Flex_Flag(L->source->array, NODE_FLAG_MANAGED));
+    Clear_Flex_Flag(L->source->array, NODE_FLAG_MANAGED);
 
     EM_ASM_({
         setTimeout(function() { // evaluate the code w/no other code on GUI
@@ -1566,8 +1566,8 @@ void API_rebPromise_callback(intptr_t promise_id)
     // !!! We probably can't unmanage and free it after because it (may?) be
     // legal for references to that array to make it out to the debugger?
     //
-    assert(NOT_SER_FLAG(arr, NODE_FLAG_MANAGED));
-    SET_SER_FLAG(arr, NODE_FLAG_MANAGED);
+    assert(Not_Flex_Flag(arr, NODE_FLAG_MANAGED));
+    Set_Flex_Flag(arr, NODE_FLAG_MANAGED);
 
     Value* result = Alloc_Value();
     if (THROWN_FLAG == Eval_Array_At_Core(

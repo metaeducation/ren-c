@@ -182,10 +182,10 @@ static Blob* Decode_Base2(const Byte **src, REBLEN len, Byte delim)
     REBLEN count = 0;
     REBLEN accum = 0;
     Byte lex;
-    Blob* ser;
+    Blob* flex;
 
-    ser = Make_Blob(len >> 3);
-    bp = Blob_Head(ser);
+    flex = Make_Blob(len >> 3);
+    bp = Blob_Head(flex);
     cp = *src;
 
     for (; len > 0; cp++, len--) {
@@ -211,12 +211,12 @@ static Blob* Decode_Base2(const Byte **src, REBLEN len, Byte delim)
     if (count) goto err; // improper modulus
 
     *bp = 0;
-    Set_Series_Len(ser, bp - Blob_Head(ser));
-    Assert_Series_Term(ser);
-    return ser;
+    Set_Flex_Len(flex, bp - Blob_Head(flex));
+    Assert_Flex_Term(flex);
+    return flex;
 
 err:
-    Free_Unmanaged_Series(ser);
+    Free_Unmanaged_Flex(flex);
     *src = cp;
     return 0;
 }
@@ -233,10 +233,10 @@ static Blob* Decode_Base16(const Byte **src, REBLEN len, Byte delim)
     REBLEN accum = 0;
     Byte lex;
     REBINT val;
-    Blob* ser;
+    Blob* flex;
 
-    ser = Make_Blob(len / 2);
-    bp = Blob_Head(ser);
+    flex = Make_Blob(len / 2);
+    bp = Blob_Head(flex);
     cp = *src;
 
     for (; len > 0; cp++, len--) {
@@ -256,12 +256,12 @@ static Blob* Decode_Base16(const Byte **src, REBLEN len, Byte delim)
     if (count & 1) goto err; // improper modulus
 
     *bp = 0;
-    Set_Series_Len(ser, bp - Blob_Head(ser));
-    Assert_Series_Term(ser);
-    return ser;
+    Set_Flex_Len(flex, bp - Blob_Head(flex));
+    Assert_Flex_Term(flex);
+    return flex;
 
 err:
-    Free_Unmanaged_Series(ser);
+    Free_Unmanaged_Flex(flex);
     *src = cp;
     return 0;
 }
@@ -277,12 +277,12 @@ static Blob* Decode_Base64(const Byte **src, REBLEN len, Byte delim)
     REBLEN flip = 0;
     REBLEN accum = 0;
     Byte lex;
-    Blob* ser;
+    Blob* flex;
 
     // Allocate buffer large enough to hold result:
     // Accounts for e bytes decoding into 3 bytes.
-    ser = Make_Blob(((len + 3) * 3) / 4);
-    bp = Blob_Head(ser);
+    flex = Make_Blob(((len + 3) * 3) / 4);
+    bp = Blob_Head(flex);
     cp = *src;
 
     for (; len > 0; cp++, len--) {
@@ -334,12 +334,12 @@ static Blob* Decode_Base64(const Byte **src, REBLEN len, Byte delim)
     if (flip) goto err;
 
     *bp = 0;
-    Set_Series_Len(ser, bp - Blob_Head(ser));
-    Assert_Series_Term(ser);
-    return ser;
+    Set_Flex_Len(flex, bp - Blob_Head(flex));
+    Assert_Flex_Term(flex);
+    return flex;
 
 err:
-    Free_Unmanaged_Series(ser);
+    Free_Unmanaged_Flex(flex);
     *src = cp;
     return 0;
 }
@@ -357,23 +357,23 @@ const Byte *Decode_Binary(
     REBINT base,
     Byte delim
 ) {
-    Blob* ser = 0;
+    Blob* flex = 0;
 
     switch (base) {
     case 64:
-        ser = Decode_Base64(&src, len, delim);
+        flex = Decode_Base64(&src, len, delim);
         break;
     case 16:
-        ser = Decode_Base16(&src, len, delim);
+        flex = Decode_Base16(&src, len, delim);
         break;
     case 2:
-        ser = Decode_Base2 (&src, len, delim);
+        flex = Decode_Base2 (&src, len, delim);
         break;
     }
 
-    if (!ser) return 0;
+    if (!flex) return 0;
 
-    Init_Binary(value, ser);
+    Init_Binary(value, flex);
 
     return src;
 }
@@ -392,7 +392,7 @@ Blob* Encode_Base2(const Byte *src, REBLEN len, bool brk)
     Byte *dest = Blob_Head(s);
 
     if (len == 0) { // return empty series if input was zero length
-        TERM_SEQUENCE_LEN(s, 0);
+        Term_Non_Array_Flex_Len(s, 0);
         return s;
     }
 
@@ -416,8 +416,8 @@ Blob* Encode_Base2(const Byte *src, REBLEN len, bool brk)
 
     *dest = '\0';
 
-    Set_Series_Len(s, cast(REBLEN, dest - Blob_Head(s)));
-    Assert_Series_Term(s);
+    Set_Flex_Len(s, cast(REBLEN, dest - Blob_Head(s)));
+    Assert_Flex_Term(s);
     return s;
 }
 
@@ -435,7 +435,7 @@ Blob* Encode_Base16(const Byte *src, REBLEN len, bool brk)
     Byte *dest = Blob_Head(s);
 
     if (len == 0) { // return empty series if input was zero length
-        TERM_SEQUENCE_LEN(s, 0);
+        Term_Non_Array_Flex_Len(s, 0);
         return s;
     }
 
@@ -454,8 +454,8 @@ Blob* Encode_Base16(const Byte *src, REBLEN len, bool brk)
 
     *dest = '\0';
 
-    Set_Series_Len(s, cast(REBLEN, dest - Blob_Head(s)));
-    Assert_Series_Term(s);
+    Set_Flex_Len(s, cast(REBLEN, dest - Blob_Head(s)));
+    Assert_Flex_Term(s);
     return s;
 }
 
@@ -473,7 +473,7 @@ Blob* Encode_Base64(const Byte *src, REBLEN len, bool brk)
     Byte *dest = Blob_Head(s);
 
     if (len == 0) { // return empty series if input was zero length
-        TERM_SEQUENCE_LEN(s, 0);
+        Term_Non_Array_Flex_Len(s, 0);
         return s;
     }
 
@@ -517,7 +517,7 @@ Blob* Encode_Base64(const Byte *src, REBLEN len, bool brk)
 
     *dest = '\0';
 
-    Set_Series_Len(s, cast(REBLEN, dest - Blob_Head(s)));
-    Assert_Series_Term(s);
+    Set_Flex_Len(s, cast(REBLEN, dest - Blob_Head(s)));
+    Assert_Flex_Term(s);
     return s;
 }

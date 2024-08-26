@@ -43,7 +43,7 @@
 //   the invariants in each section are made clear with comments and asserts.
 //
 // * The evaluator only moves forward, and it consumes exactly one element
-//   from the input at a time.  Input is held read-only (SERIES_INFO_HOLD) for
+//   from the input at a time.  Input is held read-only (FLEX_INFO_HOLD) for
 //   the duration of execution.  At the moment it can be an array tracked by
 //   index and incrementation, or it may be a C va_list which tracks its own
 //   position on each fetch through a forward-only iterator.
@@ -65,7 +65,7 @@
     //
     // *Plus* you can get the initialization tick for nulled cells, BLANK!s,
     // LOGIC!s, and most end markers by looking at the `track` payload of
-    // the cell.  Series contain the `Stub.tick` where they were created as
+    // the cell.  Flexes contain the `Stub.tick` where they were created as
     // well.  See also TOUCH_SERIES() and TOUCH_CELL().
     //
     //      *** DON'T COMMIT THIS v-- KEEP IT AT ZERO! ***

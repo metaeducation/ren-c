@@ -82,13 +82,13 @@ Value* Append_Event(void)
     if (!Is_Block(state)) return 0;
 
     // Append to tail if room:
-    if (SER_FULL(VAL_SERIES(state))) {
+    if (Is_Flex_Full(Cell_Flex(state))) {
         if (VAL_LEN_HEAD(state) > EVENTS_LIMIT)
             panic (state);
 
-        Extend_Series(VAL_SERIES(state), EVENTS_CHUNK);
+        Extend_Flex(Cell_Flex(state), EVENTS_CHUNK);
     }
-    TERM_ARRAY_LEN(Cell_Array(state), VAL_LEN_HEAD(state) + 1);
+    Term_Array_Len(Cell_Array(state), VAL_LEN_HEAD(state) + 1);
 
     return Init_Blank(Array_Last(Cell_Array(state)));
 }
@@ -206,7 +206,7 @@ static REB_R Event_Actor(Level* level_, Value* port, Value* verb)
         return r; }
 
     case SYM_CLEAR:
-        TERM_ARRAY_LEN(Cell_Array(state), 0);
+        Term_Array_Len(Cell_Array(state), 0);
         CLR_SIGNAL(SIG_EVENT_PORT);
         RETURN (port);
 

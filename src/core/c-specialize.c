@@ -297,7 +297,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
         continue;
     }
 
-    TERM_ARRAY_LEN(varlist, num_slots);
+    Term_Array_Len(varlist, num_slots);
     MISC(varlist).meta = nullptr;  // GC sees this, we must initialize
 
     INIT_CTX_KEYLIST_SHARED(CTX(varlist), ACT_PARAMLIST(act));
@@ -325,7 +325,7 @@ REBCTX *Make_Context_For_Action(
         opt_binder
     );
 
-    Manage_Series(CTX_VARLIST(exemplar)); // !!! was needed before, review
+    Manage_Flex(CTX_VARLIST(exemplar)); // !!! was needed before, review
     Drop_Data_Stack_To(lowest_stackindex);
     return exemplar;
 }
@@ -388,7 +388,7 @@ bool Specialize_Action_Throws(
         lowest_stackindex,
         opt_def ? &binder : nullptr
     );
-    Manage_Series(CTX_VARLIST(exemplar)); // destined to be managed, guarded
+    Manage_Flex(CTX_VARLIST(exemplar)); // destined to be managed, guarded
 
     if (opt_def) { // code that fills the frame...fully or partially
         //
@@ -433,9 +433,9 @@ bool Specialize_Action_Throws(
 
         // Run block and ignore result (unless it is thrown)
         //
-        PUSH_GC_GUARD(exemplar);
+        Push_GC_Guard(exemplar);
         bool threw = Do_Any_Array_At_Throws(out, opt_def);
-        DROP_GC_GUARD(exemplar);
+        Drop_GC_Guard(exemplar);
 
         if (threw) {
             Drop_Data_Stack_To(lowest_stackindex);
@@ -665,7 +665,7 @@ bool Specialize_Action_Throws(
         paramlist_base,
         SERIES_MASK_ACTION
     );
-    Manage_Series(paramlist);
+    Manage_Flex(paramlist);
     Cell* rootparam = Array_Head(paramlist);
     rootparam->payload.action.paramlist = paramlist;
 
@@ -965,10 +965,10 @@ REB_R Block_Dispatcher(Level* L)
 
         // Preserve file and line information from the original, if present.
         //
-        if (GET_SER_FLAG(Cell_Array(block), ARRAY_FLAG_FILE_LINE)) {
+        if (Get_Flex_Flag(Cell_Array(block), ARRAY_FLAG_FILE_LINE)) {
             LINK(body_array).file = LINK(Cell_Array(block)).file;
             MISC(body_array).line = MISC(Cell_Array(block)).line;
-            SET_SER_FLAG(body_array, ARRAY_FLAG_FILE_LINE);
+            Set_Flex_Flag(body_array, ARRAY_FLAG_FILE_LINE);
         }
 
         // Need to do a raw initialization of this block Cell because it is
@@ -1019,7 +1019,7 @@ DECLARE_NATIVE(does)
     Value* archetype = RESET_CELL(Alloc_Tail_Array(paramlist), REB_ACTION);
     archetype->payload.action.paramlist = paramlist;
     INIT_BINDING(archetype, UNBOUND);
-    TERM_ARRAY_LEN(paramlist, 1);
+    Term_Array_Len(paramlist, 1);
 
     MISC(paramlist).meta = nullptr; // REDESCRIBE can be used to add help
 
@@ -1031,7 +1031,7 @@ DECLARE_NATIVE(does)
     // is optimized to not run the block with the DO native...hence a
     // HIJACK of DO won't be triggered by invocations of the first form.
     //
-    Manage_Series(paramlist);
+    Manage_Flex(paramlist);
     REBACT *doer = Make_Action(
         paramlist,
         &Block_Dispatcher, // **SEE COMMENTS**, not quite like plain DO!
@@ -1044,7 +1044,7 @@ DECLARE_NATIVE(does)
     // things invariant we have to lock it.
     //
     Cell* body = Array_Head(ACT_DETAILS(doer));
-    Series* locker = nullptr;
+    Flex* locker = nullptr;
     Ensure_Value_Immutable(value, locker);
     Copy_Cell(body, value);
 

@@ -78,7 +78,7 @@ INLINE Symbol* VAL_WORD_CANON(const Cell* v) {
 //
 INLINE Symbol* VAL_STORED_CANON(const Cell* v) {
     assert(ANY_WORD(v));
-    assert(GET_SER_INFO(v->payload.any_word.symbol, STRING_INFO_CANON));
+    assert(Get_Flex_Info(v->payload.any_word.symbol, SYMBOL_INFO_CANON));
     return v->payload.any_word.symbol;
 }
 
@@ -90,7 +90,7 @@ INLINE REBCTX *VAL_WORD_CONTEXT(const Value* v) {
     assert(IS_WORD_BOUND(v));
     Stub* binding = VAL_BINDING(v);
     assert(
-        GET_SER_FLAG(binding, NODE_FLAG_MANAGED)
+        Get_Flex_Flag(binding, NODE_FLAG_MANAGED)
         or IS_END(LVL(LINK(binding).keysource)->param) // not fulfilling
     );
     binding->header.bits |= NODE_FLAG_MANAGED; // !!! review managing needs

@@ -585,8 +585,8 @@ void Virtual_Bind_Deep_To_New_Context(
         ++index;
     }
 
-    TERM_ARRAY_LEN(CTX_VARLIST(c), num_vars + 1);
-    TERM_ARRAY_LEN(CTX_KEYLIST(c), num_vars + 1);
+    Term_Array_Len(CTX_VARLIST(c), num_vars + 1);
+    Term_Array_Len(CTX_KEYLIST(c), num_vars + 1);
 
     // As currently written, the loop constructs which use these contexts
     // will hold pointers into the arrays across arbitrary user code running.
@@ -595,7 +595,7 @@ void Virtual_Bind_Deep_To_New_Context(
     //
     // https://github.com/rebol/rebol-issues/issues/2274
     //
-    SET_SER_FLAG(CTX_VARLIST(c), SERIES_FLAG_DONT_RELOCATE);
+    Set_Flex_Flag(CTX_VARLIST(c), FLEX_FLAG_DONT_RELOCATE);
 
     // !!! In virtual binding, there would not be a Bind_Values call below;
     // so it wouldn't necessarily be required to manage the augmented
@@ -604,7 +604,7 @@ void Virtual_Bind_Deep_To_New_Context(
     // things unless they are stack-based.  Virtual bindings will be, but
     // contexts like this won't.
     //
-    Manage_Series(CTX_VARLIST(c));
+    Manage_Flex(CTX_VARLIST(c));
 
     if (not rebinding)
         return; // nothing else needed to do

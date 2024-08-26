@@ -130,7 +130,7 @@ DECLARE_NATIVE(load_extension)
     Array* details = Cell_Array(ARG(where));
 
     assert(Array_Len(details) == IDX_COLLATOR_MAX);
-    PUSH_GC_GUARD(details);
+    Push_GC_Guard(details);
 
     // !!! In the initial design, extensions were distinct from modules, and
     // could in fact load several different modules from the same DLL.  But
@@ -171,7 +171,7 @@ DECLARE_NATIVE(load_extension)
         specs_size
     );
     rebFree(specs_utf8);
-    PUSH_GC_GUARD(specs);
+    Push_GC_Guard(specs);
 
     // !!! Specs have datatypes in them which are looked up via Get_Var().
     // This is something that raises questions, but go ahead and bind them
@@ -192,7 +192,7 @@ DECLARE_NATIVE(load_extension)
     );
     DECLARE_VALUE (module);
     Init_Any_Context(module, REB_MODULE, module_ctx);
-    PUSH_GC_GUARD(module);
+    Push_GC_Guard(module);
 
     StackIndex base = TOP_INDEX; // for accumulating exports
 
@@ -244,7 +244,7 @@ DECLARE_NATIVE(load_extension)
     Array* exports_arr = Pop_Stack_Values(base);
     DECLARE_VALUE (exports);
     Init_Block(exports, exports_arr);
-    PUSH_GC_GUARD(exports);
+    Push_GC_Guard(exports);
 
     // Now we have an empty context that has natives in it.  Ultimately what
     // we want is to run the init code for a module.
@@ -276,10 +276,10 @@ DECLARE_NATIVE(load_extension)
     UNUSED(REF(no_user));
     UNUSED(REF(no_lib));
 
-    DROP_GC_GUARD(exports);
-    DROP_GC_GUARD(module);
-    DROP_GC_GUARD(specs);
-    DROP_GC_GUARD(details);
+    Drop_GC_Guard(exports);
+    Drop_GC_Guard(module);
+    Drop_GC_Guard(specs);
+    Drop_GC_Guard(details);
 
     // !!! If modules are to be "unloadable", they would need some kind of
     // finalizer to clean up their resources.  There are shutdown actions
@@ -334,7 +334,7 @@ Value* rebCollateExtension_internal(
         dispatchers,
         dispatchers_len
     );
-    TERM_ARRAY_LEN(a, IDX_COLLATOR_MAX);
+    Term_Array_Len(a, IDX_COLLATOR_MAX);
 
     return Init_Block(Alloc_Value(), a);
 }

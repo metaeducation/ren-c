@@ -121,8 +121,8 @@ static void Expand_Word_Table(void)
     // The only full list of canon words available is the old hash table.
     // Hold onto it while creating the new hash table.
 
-    REBLEN old_num_slots = Series_Len(PG_Canons_By_Hash);
-    Symbol** old_canons_by_hash = Series_Head(Symbol*, PG_Canons_By_Hash);
+    REBLEN old_num_slots = Flex_Len(PG_Canons_By_Hash);
+    Symbol** old_canons_by_hash = Flex_Head(Symbol*, PG_Canons_By_Hash);
 
     REBLEN num_slots = Get_Hash_Prime(old_num_slots + 1);
     if (num_slots == 0) { // larger than hash prime table
@@ -131,17 +131,17 @@ static void Expand_Word_Table(void)
         fail (Error_Size_Limit_Raw(temp));
     }
 
-    assert(Series_Wide(PG_Canons_By_Hash) == sizeof(Symbol*));
+    assert(Flex_Wide(PG_Canons_By_Hash) == sizeof(Symbol*));
 
-    Series* ser = Make_Series_Core(
-        num_slots, sizeof(Symbol*), SERIES_FLAG_POWER_OF_2
+    Flex* flex = Make_Flex_Core(
+        num_slots, sizeof(Symbol*), FLEX_FLAG_POWER_OF_2
     );
-    Clear_Series(ser);
-    Set_Series_Len(ser, num_slots);
+    Clear_Flex(flex);
+    Set_Flex_Len(flex, num_slots);
 
     // Rehash all the symbols:
 
-    Symbol** new_canons_by_hash = Series_Head(Symbol*, ser);
+    Symbol** new_canons_by_hash = Flex_Head(Symbol*, flex);
 
     REBLEN old_slot;
     for (old_slot = 0; old_slot != old_num_slots; ++old_slot) {
@@ -172,8 +172,8 @@ static void Expand_Word_Table(void)
         new_canons_by_hash[slot] = canon;
     }
 
-    Free_Unmanaged_Series(PG_Canons_By_Hash);
-    PG_Canons_By_Hash = ser;
+    Free_Unmanaged_Flex(PG_Canons_By_Hash);
+    PG_Canons_By_Hash = flex;
 }
 
 
@@ -203,13 +203,13 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
     // actually kept larger than that, but to be on the right side of theory,
     // the table is always checked for expansion needs *before* the search.)
     //
-    REBLEN num_slots = Series_Len(PG_Canons_By_Hash);
+    REBLEN num_slots = Flex_Len(PG_Canons_By_Hash);
     if (PG_Num_Canon_Slots_In_Use > num_slots / 2) {
         Expand_Word_Table();
-        num_slots = Series_Len(PG_Canons_By_Hash); // got larger
+        num_slots = Flex_Len(PG_Canons_By_Hash); // got larger
     }
 
-    Symbol** canons_by_hash = Series_Head(Symbol*, PG_Canons_By_Hash);
+    Symbol** canons_by_hash = Flex_Head(Symbol*, PG_Canons_By_Hash);
 
     REBLEN skip; // how many slots to skip when occupied candidates found
     REBLEN slot = First_Hash_Candidate_Slot(
@@ -232,7 +232,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
             goto next_candidate_slot;
         }
 
-        assert(GET_SER_INFO(canon, STRING_INFO_CANON));
+        assert(Get_Flex_Info(canon, SYMBOL_INFO_CANON));
 
         REBINT cmp;
         cmp = Compare_UTF8(cb_cast(Symbol_Head(canon)), utf8, size);
@@ -249,7 +249,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
         Symbol* synonym;
         synonym = LINK(canon).synonym;
         while (synonym != canon) {
-            assert(NOT_SER_INFO(synonym, STRING_INFO_CANON));
+            assert(Not_Flex_Info(synonym, SYMBOL_INFO_CANON));
 
             cmp = Compare_UTF8(cb_cast(Symbol_Head(synonym)), utf8, size);
             if (cmp == 0)
@@ -276,10 +276,10 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
     // separate allocation.  Because automatically doing this is a new
     // feature, double check with an assert that the behavior matches.
     //
-    Symbol* intern = cast(Symbol*, Make_Series_Core(
+    Symbol* intern = cast(Symbol*, Make_Flex_Core(
         size + 1,
         sizeof(Byte),
-        SERIES_FLAG_UTF8 | SERIES_FLAG_FIXED_SIZE
+        FLEX_FLAG_UTF8 | FLEX_FLAG_FIXED_SIZE
     ));
 
     // The incoming string isn't always null terminated, e.g. if you are
@@ -300,7 +300,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
             ++PG_Num_Canon_Slots_In_Use;
         }
 
-        SET_SER_INFO(intern, STRING_INFO_CANON);
+        Set_Flex_Info(intern, SYMBOL_INFO_CANON);
 
         LINK(intern).synonym = intern; // circularly linked list, empty state
 
@@ -340,7 +340,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
     // be no clear contract on the return result--as it wouldn't be possible
     // to know if a shared instance had been managed by someone else or not.
     //
-    Manage_Series(intern);
+    Manage_Flex(intern);
     return intern;
 }
 
@@ -358,18 +358,18 @@ void GC_Kill_Interning(Symbol* intern)
 
     // Note synonym and intern may be the same here.
     //
-    Series* temp = synonym;
+    Flex* temp = synonym;
     while (LINK(temp).synonym != intern)
         temp = LINK(temp).synonym;
     LINK(temp).synonym = synonym; // cut intern out of chain (or no-op)
 
-    if (NOT_SER_INFO(intern, STRING_INFO_CANON))
+    if (Not_Flex_Info(intern, SYMBOL_INFO_CANON))
         return; // for non-canon forms, removing from chain is all you need
 
     assert(MISC(intern).bind_index.other == 0); // shouldn't GC during binds?
 
-    REBLEN num_slots = Series_Len(PG_Canons_By_Hash);
-    Symbol** canons_by_hash = Series_Head(Symbol*, PG_Canons_By_Hash);
+    REBLEN num_slots = Flex_Len(PG_Canons_By_Hash);
+    Symbol** canons_by_hash = Flex_Head(Symbol*, PG_Canons_By_Hash);
 
     REBLEN skip;
     REBLEN slot = First_Hash_Candidate_Slot(
@@ -396,7 +396,7 @@ void GC_Kill_Interning(Symbol* intern)
         assert(hash == Hash_String(synonym));
     #endif
         canons_by_hash[slot] = synonym;
-        SET_SER_INFO(synonym, STRING_INFO_CANON);
+        Set_Flex_Info(synonym, SYMBOL_INFO_CANON);
         MISC(synonym).bind_index.lib = MISC(intern).bind_index.lib;
         MISC(synonym).bind_index.other = 0;
     }
@@ -485,11 +485,11 @@ void Startup_Interning(void)
     n = 1; // forces exercise of rehashing logic in debug build
 #endif
 
-    PG_Canons_By_Hash = Make_Series_Core(
-        n, sizeof(Symbol*), SERIES_FLAG_POWER_OF_2
+    PG_Canons_By_Hash = Make_Flex_Core(
+        n, sizeof(Symbol*), FLEX_FLAG_POWER_OF_2
     );
-    Clear_Series(PG_Canons_By_Hash);  // all slots start at nullptr
-    Set_Series_Len(PG_Canons_By_Hash, n);
+    Clear_Flex(PG_Canons_By_Hash);  // all slots start at nullptr
+    Set_Flex_Len(PG_Canons_By_Hash, n);
 }
 
 
@@ -510,10 +510,10 @@ void Startup_Interning(void)
 //
 void Startup_Symbols(Array* words)
 {
-    PG_Symbol_Canons = Make_Series_Core(
+    PG_Symbol_Canons = Make_Flex_Core(
         1 + Array_Len(words), // 1 + => extra trash at head for SYM_0
         sizeof(Symbol*),
-        SERIES_FLAG_FIXED_SIZE // can't ever add more SYM_XXX lookups
+        FLEX_FLAG_FIXED_SIZE // can't ever add more SYM_XXX lookups
     );
 
     // All words that not in %words.r will get back Cell_Word_Id(w) == SYM_0
@@ -523,7 +523,7 @@ void Startup_Symbols(Array* words)
     //
     REBLEN sym = SYM_0;
     Corrupt_Pointer_If_Debug(
-        *Series_At(Symbol*, PG_Symbol_Canons, sym)
+        *Flex_At(Symbol*, PG_Symbol_Canons, sym)
     );
 
     Cell* word = Array_Head(words);
@@ -531,7 +531,7 @@ void Startup_Symbols(Array* words)
         Symbol* canon = VAL_STORED_CANON(word);
 
         sym = sym + 1;
-        *Series_At(Symbol*, PG_Symbol_Canons, sym) = canon;
+        *Flex_At(Symbol*, PG_Symbol_Canons, sym) = canon;
 
         // More code was loaded than just the word list, and it might have
         // included alternate-case forms of the %words.r words.  Walk any
@@ -551,10 +551,10 @@ void Startup_Symbols(Array* words)
         } while (name != canon); // circularly linked list, stop on a cycle
     }
 
-    *Series_At(Symbol*, PG_Symbol_Canons, sym) = nullptr;  // terminate
+    *Flex_At(Symbol*, PG_Symbol_Canons, sym) = nullptr;  // terminate
 
-    Set_Series_Len(PG_Symbol_Canons, 1 + cast(REBLEN, sym));
-    assert(Series_Len(PG_Symbol_Canons) == 1 + Array_Len(words));
+    Set_Flex_Len(PG_Symbol_Canons, 1 + cast(REBLEN, sym));
+    assert(Flex_Len(PG_Symbol_Canons) == 1 + Array_Len(words));
 
     // Do some sanity checks.  !!! Fairly critical, is debug-only appropriate?
 
@@ -571,7 +571,7 @@ void Startup_Symbols(Array* words)
 //
 void Shutdown_Symbols(void)
 {
-    Free_Unmanaged_Series(PG_Symbol_Canons);
+    Free_Unmanaged_Flex(PG_Symbol_Canons);
 }
 
 
@@ -597,15 +597,15 @@ void Shutdown_Interning(void)
         fflush(stdout);
 
         REBLEN slot;
-        for (slot = 0; slot < Series_Len(PG_Canons_By_Hash); ++slot) {
-            Symbol* canon = *Series_At(Symbol*, PG_Canons_By_Hash, slot);
+        for (slot = 0; slot < Flex_Len(PG_Canons_By_Hash); ++slot) {
+            Symbol* canon = *Flex_At(Symbol*, PG_Canons_By_Hash, slot);
             if (canon and canon != DELETED_CANON)
                 panic (canon);
         }
     }
   #endif
 
-    Free_Unmanaged_Series(PG_Canons_By_Hash);
+    Free_Unmanaged_Flex(PG_Canons_By_Hash);
 }
 
 
@@ -622,9 +622,9 @@ void INIT_WORD_INDEX_Extra_Checks_Debug(Cell* v, REBLEN i)
     assert(IS_WORD_BOUND(v));
     Stub* binding = VAL_BINDING(v);
     Array* keysource;
-    if (NOT_SER_FLAG(binding, NODE_FLAG_MANAGED))
+    if (Not_Flex_Flag(binding, NODE_FLAG_MANAGED))
         keysource = ACT_PARAMLIST(Level_Phase(LVL(LINK(binding).keysource)));
-    else if (GET_SER_FLAG(binding, ARRAY_FLAG_PARAMLIST))
+    else if (Get_Flex_Flag(binding, ARRAY_FLAG_PARAMLIST))
         keysource = ACT_PARAMLIST(ACT(binding));
     else
         keysource = CTX_KEYLIST(CTX(binding));

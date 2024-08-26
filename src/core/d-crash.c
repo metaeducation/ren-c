@@ -46,7 +46,7 @@
 //
 // Abnormal termination of Rebol.  The debug build is designed to present
 // as much diagnostic information as it can on the passed-in pointer, which
-// includes where a Series* was allocated or freed.  Or if a Value* is
+// includes where a Flex* was allocated or freed.  Or if a Value* is
 // passed in it tries to say what tick it was initialized on and what series
 // it lives in.  If the pointer is a simple UTF-8 string pointer, then that
 // is delivered as a message.
@@ -59,7 +59,7 @@
 // coverity[+kill]
 //
 ATTRIBUTE_NO_RETURN void Panic_Core(
-    const void *p, // Series* (array, context, etc), Value*, or UTF-8 char*
+    const void *p, // Flex* (array, context, etc), Value*, or UTF-8 char*
     Tick tick,
     const char *file, // UTF8
     int line
@@ -151,7 +151,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         break;
 
     case DETECTED_AS_SERIES: {
-        Series* s = m_cast(Series*, cast(const Series*, p)); // don't mutate
+        Flex* s = m_cast(Flex*, cast(const Flex*, p)); // don't mutate
       #if !defined(NDEBUG)
         #if 0
             //
@@ -162,7 +162,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
             PROBE(s);
         #endif
 
-        if (GET_SER_FLAG(s, ARRAY_FLAG_VARLIST)) {
+        if (Get_Flex_Flag(s, ARRAY_FLAG_VARLIST)) {
             printf("Series VARLIST detected.\n");
             REBCTX *context = CTX(s);
             if (CTX_TYPE(context) == REB_ERROR) {
@@ -170,18 +170,18 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
                 PROBE(context);
             }
         }
-        Panic_Series_Debug(cast(Series*, s));
+        Panic_Flex_Debug(cast(Flex*, s));
       #else
         UNUSED(s);
         strncat(buf, "valid series", PANIC_BUF_SIZE - strlen(buf));
       #endif
         break; }
 
-    case DETECTED_AS_FREED_SERIES:
+    case DETECTED_AS_FREED_FLEX:
       #if defined(NDEBUG)
         strncat(buf, "freed series", PANIC_BUF_SIZE - strlen(buf));
       #else
-        Panic_Series_Debug(m_cast(Series*, cast(const Series*, p)));
+        Panic_Flex_Debug(m_cast(Flex*, cast(const Flex*, p)));
       #endif
         break;
 

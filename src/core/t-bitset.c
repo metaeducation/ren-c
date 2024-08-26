@@ -64,15 +64,15 @@ REBINT CT_Bitset(const Cell* a, const Cell* b, REBINT mode)
 //
 Blob* Make_Bitset(REBLEN len)
 {
-    Blob* ser;
+    Blob* flex;
 
     len = (len + 7) / 8;
-    ser = Make_Blob(len);
-    Clear_Series(ser);
-    Set_Series_Len(ser, len);
-    INIT_BITS_NOT(ser, false);
+    flex = Make_Blob(len);
+    Clear_Flex(flex);
+    Set_Flex_Len(flex, len);
+    INIT_BITS_NOT(flex, false);
 
-    return ser;
+    return flex;
 }
 
 
@@ -119,18 +119,18 @@ REB_R MAKE_Bitset(Value* out, enum Reb_Kind kind, const Value* arg)
     if (len < 0 || len > 0x0FFFFFFF)
         fail (Error_Invalid(arg));
 
-    Blob* ser = Make_Bitset(len);
-    Init_Bitset(out, ser);
+    Blob* flex = Make_Bitset(len);
+    Init_Bitset(out, flex);
 
     if (Is_Integer(arg))
         return out; // allocated at a size, no contents.
 
     if (Is_Binary(arg)) {
-        memcpy(Blob_Head(ser), Cell_Binary_At(arg), len/8 + 1);
+        memcpy(Blob_Head(flex), Cell_Binary_At(arg), len/8 + 1);
         return out;
     }
 
-    Set_Bits(ser, arg, true);
+    Set_Bits(flex, arg, true);
     return out;
 }
 
@@ -216,7 +216,7 @@ REBINT Find_Max_Bit(const Cell* val)
 bool Check_Bit(Blob* bset, REBLEN c, bool uncased)
 {
     REBLEN i, n = c;
-    REBLEN tail = Series_Len(bset);
+    REBLEN tail = Flex_Len(bset);
     bool flag = false;
 
     if (uncased) {
@@ -260,7 +260,7 @@ void Set_Bit(Blob* bset, REBLEN n, bool set)
     // Expand if not enough room:
     if (i >= tail) {
         if (!set) return; // no need to expand
-        Expand_Series(bset, tail, (i - tail) + 1);
+        Expand_Flex(bset, tail, (i - tail) + 1);
         CLEAR(Blob_At(bset, tail), (i - tail) + 1);
     }
 
@@ -279,7 +279,7 @@ void Set_Bit(Blob* bset, REBLEN n, bool set)
 //
 bool Set_Bits(Blob* bset, const Value* val, bool set)
 {
-    Fail_If_Read_Only_Series(bset);
+    Fail_If_Read_Only_Flex(bset);
 
     if (Is_Char(val)) {
         Set_Bit(bset, VAL_CHAR(val), set);
@@ -401,9 +401,9 @@ bool Set_Bits(Blob* bset, const Value* val, bool set)
             if (not Is_Binary(item))
                 return false;
             REBLEN n = VAL_LEN_AT(item);
-            REBUNI c = Series_Len(bset);
+            REBUNI c = Flex_Len(bset);
             if (n >= c) {
-                Expand_Series(bset, c, (n - c));
+                Expand_Flex(bset, c, (n - c));
                 CLEAR(Blob_At(bset, c), (n - c));
             }
             memcpy(Blob_Head(bset), Cell_Binary_At(item), n);
@@ -534,18 +534,18 @@ REB_R PD_Bitset(
     const Value* picker,
     const Value* opt_setval
 ){
-    Blob* ser = Cell_Bitset(pvs->out);
+    Blob* flex = Cell_Bitset(pvs->out);
 
     if (opt_setval == nullptr) {
-        if (Check_Bits(ser, picker, false))
+        if (Check_Bits(flex, picker, false))
             return Init_True(pvs->out);
         return nullptr; // !!! Red false on out of range, R3-Alpha NONE! (?)
     }
 
     if (Set_Bits(
-        ser,
+        flex,
         picker,
-        BITS_NOT(ser)
+        BITS_NOT(flex)
             ? IS_FALSEY(opt_setval)
             : IS_TRUTHY(opt_setval)
     )){
@@ -561,10 +561,10 @@ REB_R PD_Bitset(
 //
 // Remove extra zero bytes from end of byte string.
 //
-void Trim_Tail_Zeros(Blob* ser)
+void Trim_Tail_Zeros(Blob* flex)
 {
-    REBLEN len = Blob_Len(ser);
-    Byte *bp = Blob_Head(ser);
+    REBLEN len = Blob_Len(flex);
+    Byte *bp = Blob_Head(flex);
 
     while (len > 0 && bp[len] == 0)
         len--;
@@ -572,7 +572,7 @@ void Trim_Tail_Zeros(Blob* ser)
     if (bp[len] != 0)
         len++;
 
-    Term_Blob_Len(ser, len);
+    Term_Blob_Len(flex, len);
 }
 
 
@@ -583,7 +583,7 @@ REBTYPE(Bitset)
 {
     Value* value = D_ARG(1);
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
-    Blob* ser;
+    Blob* flex;
 
     // !!! Set_Bits does locked series check--what should the more general
     // responsibility be for checking?
@@ -644,11 +644,11 @@ REBTYPE(Bitset)
 
     case SYM_COMPLEMENT:
     case SYM_NEGATE:
-        ser = cast(Blob*,
-            Copy_Sequence_Core(Cell_Bitset(value), NODE_FLAG_MANAGED)
+        flex = cast(Blob*,
+            Copy_Non_Array_Flex_Core(Cell_Bitset(value), NODE_FLAG_MANAGED)
         );
-        INIT_BITS_NOT(ser, not BITS_NOT(Cell_Bitset(value)));
-        Init_Bitset(value, ser);
+        INIT_BITS_NOT(flex, not BITS_NOT(Cell_Bitset(value)));
+        Init_Bitset(value, flex);
         goto return_bitset;
 
     case SYM_APPEND:  // Accepts: #"a" "abc" [1 - 10] [#"a" - #"z"] etc.
@@ -656,7 +656,7 @@ REBTYPE(Bitset)
         if (IS_NULLED_OR_BLANK(arg)) {
             RETURN (value); // don't fail on read only if it would be a no-op
         }
-        Fail_If_Read_Only_Series(Cell_Bitset(value));
+        Fail_If_Read_Only_Flex(Cell_Bitset(value));
 
         bool diff;
         if (BITS_NOT(Cell_Bitset(value)))
@@ -710,8 +710,8 @@ REBTYPE(Bitset)
         return OUT; }
 
     case SYM_CLEAR:
-        Fail_If_Read_Only_Series(Cell_Bitset(value));
-        Clear_Series(Cell_Bitset(value));
+        Fail_If_Read_Only_Flex(Cell_Bitset(value));
+        Clear_Flex(Cell_Bitset(value));
         goto return_bitset;
 
     case SYM_INTERSECT:
@@ -719,9 +719,9 @@ REBTYPE(Bitset)
     case SYM_DIFFERENCE:
         if (!Is_Bitset(arg) && !Is_Binary(arg))
             fail (Error_Math_Args(VAL_TYPE(arg), verb));
-        ser = Xandor_Binary(verb, value, arg);
-        Trim_Tail_Zeros(ser);
-        return Init_Any_Series(OUT, VAL_TYPE(value), ser);
+        flex = Xandor_Binary(verb, value, arg);
+        Trim_Tail_Zeros(flex);
+        return Init_Any_Series(OUT, VAL_TYPE(value), flex);
 
     default:
         break;

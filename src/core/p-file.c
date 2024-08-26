@@ -153,17 +153,17 @@ static void Read_File_Port(
 
     REBREQ *req = AS_REBREQ(file);
 
-    Blob* ser = Make_Blob(len);  // read result buffer
-    Init_Binary(out, ser);
+    Blob* flex = Make_Blob(len);  // read result buffer
+    Init_Binary(out, flex);
 
     // Do the read, check for errors:
-    req->common.data = Blob_Head(ser);
+    req->common.data = Blob_Head(flex);
     req->length = len;
 
     OS_DO_DEVICE_SYNC(req, RDC_READ);
 
-    Set_Series_Len(ser, req->actual);
-    TERM_SEQUENCE(ser);
+    Set_Flex_Len(flex, req->actual);
+    Term_Non_Array_Flex(flex);
 }
 
 
@@ -190,9 +190,9 @@ static void Write_File_Port(struct devreq_file *file, Value* data, REBLEN len, b
 
     if (Is_Text(data)) {
         bin = Make_Utf8_From_Cell_String_At_Limit(data, len);
-        Manage_Series(bin);
+        Manage_Flex(bin);
         req->common.data = Blob_Head(bin);
-        len = Series_Len(bin);
+        len = Flex_Len(bin);
         req->modes |= RFM_TEXT; // do LF => CR LF, e.g. on Windows
     }
     else {

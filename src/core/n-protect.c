@@ -82,43 +82,43 @@ static void Protect_Key(REBCTX *context, REBLEN index, REBFLGS flags)
 void Protect_Value(Cell* v, REBFLGS flags)
 {
     if (ANY_SERIES(v))
-        Protect_Series(VAL_SERIES(v), VAL_INDEX(v), flags);
+        Protect_Flex(Cell_Flex(v), VAL_INDEX(v), flags);
     else if (Is_Map(v))
-        Protect_Series(MAP_PAIRLIST(VAL_MAP(v)), 0, flags);
+        Protect_Flex(MAP_PAIRLIST(VAL_MAP(v)), 0, flags);
     else if (ANY_CONTEXT(v))
         Protect_Context(VAL_CONTEXT(v), flags);
 }
 
 
 //
-//  Protect_Series: C
+//  Protect_Flex: C
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Series(Series* s, REBLEN index, REBFLGS flags)
+void Protect_Flex(Flex* s, REBLEN index, REBFLGS flags)
 {
-    if (Is_Series_Black(s))
+    if (Is_Flex_Black(s))
         return; // avoid loop
 
     if (flags & PROT_SET) {
         if (flags & PROT_FREEZE) {
             assert(flags & PROT_DEEP);
-            SET_SER_INFO(s, SERIES_INFO_FROZEN);
+            Set_Flex_Info(s, FLEX_INFO_FROZEN);
         }
         else
-            SET_SER_INFO(s, SERIES_INFO_PROTECTED);
+            Set_Flex_Info(s, FLEX_INFO_PROTECTED);
     }
     else {
         assert(not (flags & PROT_FREEZE));
-        CLEAR_SER_INFO(s, SERIES_INFO_PROTECTED);
+        Clear_Flex_Info(s, FLEX_INFO_PROTECTED);
     }
 
-    if (not IS_SER_ARRAY(s) or not (flags & PROT_DEEP))
+    if (not Is_Flex_Array(s) or not (flags & PROT_DEEP))
         return;
 
-    Flip_Series_To_Black(s); // recursion protection
+    Flip_Flex_To_Black(s); // recursion protection
 
-    Cell* val = Array_At(ARR(s), index);
+    Cell* val = Array_At(cast_Array(s), index);
     for (; NOT_END(val); val++)
         Protect_Value(val, flags);
 }
@@ -131,26 +131,26 @@ void Protect_Series(Series* s, REBLEN index, REBFLGS flags)
 //
 void Protect_Context(REBCTX *c, REBFLGS flags)
 {
-    if (Is_Series_Black(CTX_VARLIST(c)))
+    if (Is_Flex_Black(CTX_VARLIST(c)))
         return; // avoid loop
 
     if (flags & PROT_SET) {
         if (flags & PROT_FREEZE) {
             assert(flags & PROT_DEEP);
-            SET_SER_INFO(c, SERIES_INFO_FROZEN);
+            Set_Flex_Info(c, FLEX_INFO_FROZEN);
         }
         else
-            SET_SER_INFO(c, SERIES_INFO_PROTECTED);
+            Set_Flex_Info(c, FLEX_INFO_PROTECTED);
     }
     else {
         assert(not (flags & PROT_FREEZE));
-        CLEAR_SER_INFO(CTX_VARLIST(c), SERIES_INFO_PROTECTED);
+        Clear_Flex_Info(CTX_VARLIST(c), FLEX_INFO_PROTECTED);
     }
 
     if (not (flags & PROT_DEEP))
         return;
 
-    Flip_Series_To_Black(CTX_VARLIST(c));  // for recursion
+    Flip_Flex_To_Black(CTX_VARLIST(c));  // for recursion
 
     Value* var = CTX_VARS_HEAD(c);
     for (; NOT_END(var); ++var)
@@ -371,7 +371,7 @@ bool Is_Value_Immutable(const Cell* v) {
         return Is_Context_Deeply_Frozen(VAL_CONTEXT(v));
 
     if (ANY_SERIES(v))
-        return Is_Series_Frozen(VAL_SERIES(v));
+        return Is_Flex_Frozen(Cell_Flex(v));
 
     return false;
 }
@@ -404,24 +404,24 @@ DECLARE_NATIVE(locked_q)
 // moment, etc.  Just put a flag at the top level for now, since that is
 // "better than nothing", and revisit later in the design.
 //
-void Ensure_Value_Immutable(const Cell* v, Series* opt_locker) {
+void Ensure_Value_Immutable(const Cell* v, Flex* opt_locker) {
     if (Is_Value_Immutable(v))
         return;
 
     if (ANY_ARRAY(v)) {
         Deep_Freeze_Array(Cell_Array(v));
         if (opt_locker)
-            SET_SER_INFO(Cell_Array(v), SERIES_INFO_AUTO_LOCKED);
+            Set_Flex_Info(Cell_Array(v), FLEX_INFO_AUTO_LOCKED);
     }
     else if (ANY_CONTEXT(v)) {
         Deep_Freeze_Context(VAL_CONTEXT(v));
         if (opt_locker)
-            SET_SER_INFO(VAL_CONTEXT(v), SERIES_INFO_AUTO_LOCKED);
+            Set_Flex_Info(VAL_CONTEXT(v), FLEX_INFO_AUTO_LOCKED);
     }
     else if (ANY_SERIES(v)) {
-        Freeze_Sequence(VAL_SERIES(v));
+        Freeze_Non_Array_Flex(Cell_Flex(v));
         if (opt_locker != nullptr)
-            SET_SER_INFO(VAL_SERIES(v), SERIES_INFO_AUTO_LOCKED);
+            Set_Flex_Info(Cell_Flex(v), FLEX_INFO_AUTO_LOCKED);
     } else
         fail (Error_Invalid_Type(VAL_TYPE(v))); // not yet implemented
 }
@@ -489,7 +489,7 @@ DECLARE_NATIVE(lock)
             Init_Any_Series_At(
                 OUT,
                 VAL_TYPE(v),
-                Copy_Sequence_Core(VAL_SERIES(v), NODE_FLAG_MANAGED),
+                Copy_Non_Array_Flex_Core(Cell_Flex(v), NODE_FLAG_MANAGED),
                 VAL_INDEX(v)
             );
         }
@@ -497,7 +497,7 @@ DECLARE_NATIVE(lock)
             fail (Error_Invalid_Type(VAL_TYPE(v))); // not yet implemented
     }
 
-    Series* locker = nullptr;
+    Flex* locker = nullptr;
     Ensure_Value_Immutable(OUT, locker);
 
     return OUT;

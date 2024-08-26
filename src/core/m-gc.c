@@ -101,32 +101,32 @@ static void Mark_Devices_Deep(void);
 #endif
 
 #define ASSERT_NO_GC_MARKS_PENDING() \
-    assert(Series_Len(GC_Mark_Stack) == 0)
+    assert(Flex_Len(GC_Mark_Stack) == 0)
 
 
 // Private routines for dealing with the GC mark bit.  Note that not all
-// REBSERs are actually series at the present time, because some are
-// "pairings".  Plus the name Mark_Rebser_Only helps drive home that it's
+// Stubs are actually series at the present time, because some are
+// "pairings".  Plus the name Mark_Stub_Only helps drive home that it's
 // not actually marking an "any_series" type (like array) deeply.
 //
-INLINE void Mark_Rebser_Only(Series* s)
+INLINE void Mark_Stub_Only(Stub* s)
 {
   #if !defined(NDEBUG)
     if (IS_FREE_NODE(s))
         panic (s);
-    if (NOT_SER_FLAG((s), NODE_FLAG_MANAGED)) {
+    if (Not_Flex_Flag((s), NODE_FLAG_MANAGED)) {
         printf("Link to non-MANAGED item reached by GC\n");
         panic (s);
     }
-    if (GET_SER_INFO((s), SERIES_INFO_INACCESSIBLE))
-        assert(not IS_SER_DYNAMIC(s));
+    if (Get_Flex_Info((s), FLEX_INFO_INACCESSIBLE))
+        assert(not Is_Flex_Dynamic(s));
   #endif
 
     s->header.bits |= NODE_FLAG_MARKED; // may be already set
 }
 
-INLINE void Unmark_Rebser(Series* rebser) {
-    rebser->header.bits &= ~NODE_FLAG_MARKED;
+INLINE void Unmark_Stub(Stub* s) {
+    s->header.bits &= ~NODE_FLAG_MARKED;
 }
 
 
@@ -151,14 +151,14 @@ INLINE void Unmark_Rebser(Series* rebser) {
 static void Queue_Mark_Array_Subclass_Deep(Array* a)
 {
   #if !defined(NDEBUG)
-    if (not IS_SER_ARRAY(a))
+    if (not Is_Flex_Array(a))
         panic (a);
   #endif
 
-    if (GET_SER_FLAG(a, NODE_FLAG_MARKED))
+    if (Get_Flex_Flag(a, NODE_FLAG_MARKED))
         return; // may not be finished marking yet, but has been queued
 
-    Mark_Rebser_Only(cast(Series*, a));
+    Mark_Stub_Only(cast(Flex*, a));
 
     // Add series to the end of the mark stack series.  The length must be
     // maintained accurately to know when the stack needs to grow.
@@ -166,18 +166,18 @@ static void Queue_Mark_Array_Subclass_Deep(Array* a)
     // !!! Should this use a "bumping a nullptr at the end" technique to grow,
     // like the data stack?
     //
-    if (SER_FULL(GC_Mark_Stack))
-        Extend_Series(GC_Mark_Stack, 8);
-    *Series_At(Array*, GC_Mark_Stack, Series_Len(GC_Mark_Stack)) = a;
-    Set_Series_Len(GC_Mark_Stack, Series_Len(GC_Mark_Stack) + 1); // unterminated
+    if (Is_Flex_Full(GC_Mark_Stack))
+        Extend_Flex(GC_Mark_Stack, 8);
+    *Flex_At(Array*, GC_Mark_Stack, Flex_Len(GC_Mark_Stack)) = a;
+    Set_Flex_Len(GC_Mark_Stack, Flex_Len(GC_Mark_Stack) + 1); // unterminated
 }
 
 INLINE void Queue_Mark_Array_Deep(Array* a) { // plain array
-    assert(NOT_SER_FLAG(a, ARRAY_FLAG_VARLIST));
-    assert(NOT_SER_FLAG(a, ARRAY_FLAG_PARAMLIST));
-    assert(NOT_SER_FLAG(a, ARRAY_FLAG_PAIRLIST));
+    assert(Not_Flex_Flag(a, ARRAY_FLAG_VARLIST));
+    assert(Not_Flex_Flag(a, ARRAY_FLAG_PARAMLIST));
+    assert(Not_Flex_Flag(a, ARRAY_FLAG_PAIRLIST));
 
-    if (GET_SER_FLAG(a, ARRAY_FLAG_FILE_LINE) and LINK(a).file)
+    if (Get_Flex_Flag(a, ARRAY_FLAG_FILE_LINE) and LINK(a).file)
         LINK(a).file->header.bits |= NODE_FLAG_MARKED;
 
     Queue_Mark_Array_Subclass_Deep(a);
@@ -186,7 +186,7 @@ INLINE void Queue_Mark_Array_Deep(Array* a) { // plain array
 INLINE void Queue_Mark_Context_Deep(REBCTX *c) { // ARRAY_FLAG_VARLIST
     Array* varlist = CTX_VARLIST(c);
     assert(
-        GET_SER_INFO(varlist, SERIES_INFO_INACCESSIBLE)
+        Get_Flex_Info(varlist, FLEX_INFO_INACCESSIBLE)
         or SERIES_MASK_CONTEXT == (varlist->header.bits & (
             SERIES_MASK_CONTEXT // these should be set, not the others
                 | ARRAY_FLAG_PAIRLIST
@@ -240,13 +240,13 @@ INLINE void Queue_Mark_Binding_Deep(const Cell* v) {
     }
     else {
         assert(Is_Varargs(v));
-        assert(IS_SER_ARRAY(binding));
-        assert(not IS_SER_DYNAMIC(binding)); // singular
+        assert(Is_Flex_Array(binding));
+        assert(not Is_Flex_Dynamic(binding)); // singular
     }
   #endif
 
     if (binding->header.bits & NODE_FLAG_MANAGED)
-        Queue_Mark_Array_Subclass_Deep(ARR(binding));
+        Queue_Mark_Array_Subclass_Deep(cast_Array(binding));
 }
 
 // A singular array, if you know it to be singular, can be marked a little
@@ -260,7 +260,7 @@ INLINE void Queue_Mark_Singular_Array(Array* a) {
         ))
     );
 
-    assert(not IS_SER_DYNAMIC(a));
+    assert(not Is_Flex_Dynamic(a));
 
     // While it would be tempting to just go ahead and try to queue the
     // ARR_SINGLE() value here, that could keep recursing if that value had
@@ -328,13 +328,13 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         // value.  That's because if the canon value gets GC'd, then
         // another value might become the new canon during that sweep.
         //
-        Mark_Rebser_Only(symbol);
+        Mark_Stub_Only(symbol);
 
         // A GC cannot run during a binding process--which is the only
         // time a canon word's "index" field is allowed to be nonzero.
         //
         assert(
-            NOT_SER_INFO(symbol, STRING_INFO_CANON)
+            Not_Flex_Info(symbol, SYMBOL_INFO_CANON)
             or MISC(symbol).bind_index.other == 0
         );
 
@@ -359,8 +359,8 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
     case REB_LIT_PATH:
     case REB_BLOCK:
     case REB_GROUP: {
-        Series* s = v->payload.any_series.series;
-        if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE)) {
+        Flex* s = v->payload.any_series.series;
+        if (Get_Flex_Info(s, FLEX_INFO_INACCESSIBLE)) {
             //
             // !!! Review: preserving the identity of inaccessible array nodes
             // is likely uninteresting--the only reason the node wasn't freed
@@ -369,11 +369,11 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
             // update the pointer in the cell to some global inaccessible
             // Array, and *not* mark the dead node at all.
             //
-            Mark_Rebser_Only(s);
+            Mark_Stub_Only(s);
             Queue_Mark_Binding_Deep(v); // !!! Review this too, is it needed?
         }
         else {
-            Queue_Mark_Array_Deep(ARR(s));
+            Queue_Mark_Array_Deep(cast_Array(s));
             Queue_Mark_Binding_Deep(v);
         }
         break; }
@@ -385,19 +385,19 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
     case REB_URL:
     case REB_TAG:
     case REB_BITSET: {
-        Series* s = v->payload.any_series.series;
+        Flex* s = v->payload.any_series.series;
 
-        assert(Series_Wide(s) <= sizeof(REBUNI));
+        assert(Flex_Wide(s) <= sizeof(REBUNI));
         assert(not v->extra.binding); // for future use
 
-        if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE)) {
+        if (Get_Flex_Info(s, FLEX_INFO_INACCESSIBLE)) {
             //
             // !!! See notes above on REB_BLOCK/etc. RE: letting series die.
             //
-            Mark_Rebser_Only(s);
+            Mark_Stub_Only(s);
         }
         else
-            Mark_Rebser_Only(s);
+            Mark_Stub_Only(s);
         break; }
 
     case REB_HANDLE: { // See %sys-handle.h
@@ -457,7 +457,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         // if unmarked...so it can stealthily participate in the marking
         // process, as long as the bit is cleared at the end.
         //
-        Series* pairing = cast(Series*, v->payload.pair);
+        Flex* pairing = cast(Flex*, v->payload.pair);
         pairing->header.bits |= NODE_FLAG_MARKED;  // read via Stub
         break; }
 
@@ -484,7 +484,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         // keys of objects (or parameters of functions)
         //
         if (v->extra.key_symbol != nullptr)
-            Mark_Rebser_Only(v->extra.key_symbol);
+            Mark_Stub_Only(v->extra.key_symbol);
         break;
 
     case REB_VARARGS: {
@@ -518,7 +518,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         if (v->extra.binding != UNBOUND) {
             assert(CTX_TYPE(context) == REB_FRAME);
 
-            if (GET_SER_INFO(context, SERIES_INFO_INACCESSIBLE)) {
+            if (Get_Flex_Info(context, FLEX_INFO_INACCESSIBLE)) {
                 //
                 // !!! It seems a bit wasteful to keep alive the binding of a
                 // stack frame you can no longer get values out of.  But
@@ -543,7 +543,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         else
             assert(VAL_TYPE(v) != REB_FRAME); // phase if-and-only-if frame
 
-        if (GET_SER_INFO(context, SERIES_INFO_INACCESSIBLE))
+        if (Get_Flex_Info(context, FLEX_INFO_INACCESSIBLE))
             break;
 
       #if !defined(NDEBUG)
@@ -599,7 +599,7 @@ INLINE void Queue_Mark_Value_Deep(const Cell* v)
 //  Propagate_All_GC_Marks: C
 //
 // The Mark Stack is a series containing series pointers.  They have already
-// had their SERIES_FLAG_MARK set to prevent being added to the stack multiple
+// had their FLEX_FLAG_MARK set to prevent being added to the stack multiple
 // times, but the items they can reach are not necessarily marked yet.
 //
 // Processing continues until all reachable items from the mark stack are
@@ -609,19 +609,19 @@ static void Propagate_All_GC_Marks(void)
 {
     assert(not in_mark);
 
-    while (Series_Len(GC_Mark_Stack) != 0) {
-        Set_Series_Len(GC_Mark_Stack, Series_Len(GC_Mark_Stack) - 1); // still ok
+    while (Flex_Len(GC_Mark_Stack) != 0) {
+        Set_Flex_Len(GC_Mark_Stack, Flex_Len(GC_Mark_Stack) - 1); // still ok
 
         // Data pointer may change in response to an expansion during
         // Mark_Array_Deep_Core(), so must be refreshed on each loop.
         //
-        Array* a = *Series_At(Array*, GC_Mark_Stack, Series_Len(GC_Mark_Stack));
+        Array* a = *Flex_At(Array*, GC_Mark_Stack, Flex_Len(GC_Mark_Stack));
 
         // Termination is not required in the release build (the length is
         // enough to know where it ends).  But overwrite with trash in debug.
         //
         Corrupt_Pointer_If_Debug(
-            *Series_At(Array*, GC_Mark_Stack, Series_Len(GC_Mark_Stack))
+            *Flex_At(Array*, GC_Mark_Stack, Flex_Len(GC_Mark_Stack))
         );
 
         // We should have marked this series at queueing time to keep it from
@@ -641,13 +641,13 @@ static void Propagate_All_GC_Marks(void)
         // For a lighter check, make sure it's marked as a value-bearing array
         // and that it hasn't been freed.
         //
-        assert(IS_SER_ARRAY(a));
+        assert(Is_Flex_Array(a));
         assert(not IS_FREE_NODE(a));
     #endif
 
         Cell* v;
 
-        if (GET_SER_FLAG(a, ARRAY_FLAG_PARAMLIST)) {
+        if (Get_Flex_Flag(a, ARRAY_FLAG_PARAMLIST)) {
             v = Array_Head(a); // archetype
             assert(Is_Action(v));
             assert(not v->extra.binding); // archetypes have no binding
@@ -663,7 +663,7 @@ static void Propagate_All_GC_Marks(void)
             Queue_Mark_Action_Deep(underlying);
 
             Array* specialty = LINK(details).specialty;
-            if (GET_SER_FLAG(specialty, ARRAY_FLAG_VARLIST))
+            if (Get_Flex_Flag(specialty, ARRAY_FLAG_VARLIST))
                 Queue_Mark_Context_Deep(CTX(specialty));
             else
                 assert(specialty == a);
@@ -674,12 +674,12 @@ static void Propagate_All_GC_Marks(void)
 
             // Functions can't currently be freed by FREE...
             //
-            assert(NOT_SER_INFO(a, SERIES_INFO_INACCESSIBLE));
+            assert(Not_Flex_Info(a, FLEX_INFO_INACCESSIBLE));
 
             ++v; // function archetype completely marked by this process
         }
-        else if (GET_SER_FLAG(a, ARRAY_FLAG_VARLIST)) {
-            v = CTX_ARCHETYPE(CTX(a)); // works if SERIES_INFO_INACCESSIBLE
+        else if (Get_Flex_Flag(a, ARRAY_FLAG_VARLIST)) {
+            v = CTX_ARCHETYPE(CTX(a)); // works if FLEX_INFO_INACCESSIBLE
 
             // Currently only FRAME! uses binding
             //
@@ -703,15 +703,15 @@ static void Propagate_All_GC_Marks(void)
                 assert(Is_Frame(v));
             }
             else {
-                Array* keylist = ARR(keysource);
+                Array* keylist = cast_Array(keysource);
                 if (Is_Frame(v)) {
-                    assert(GET_SER_FLAG(keylist, ARRAY_FLAG_PARAMLIST));
+                    assert(Get_Flex_Flag(keylist, ARRAY_FLAG_PARAMLIST));
 
                     // Frames use paramlists as their "keylist", there is no
                     // place to put an ancestor link.
                 }
                 else {
-                    assert(NOT_SER_FLAG(keylist, ARRAY_FLAG_PARAMLIST));
+                    assert(Not_Flex_Flag(keylist, ARRAY_FLAG_PARAMLIST));
                     Assert_Unreadable_If_Debug(Array_Head(keylist));
 
                     Array* ancestor = LINK(keylist).ancestor;
@@ -727,12 +727,12 @@ static void Propagate_All_GC_Marks(void)
             // Stack-based frames will be inaccessible if they are no longer
             // running, so there's no data to mark...
             //
-            if (GET_SER_INFO(a, SERIES_INFO_INACCESSIBLE))
+            if (Get_Flex_Info(a, FLEX_INFO_INACCESSIBLE))
                 continue;
 
             ++v; // context archetype completely marked by this process
         }
-        else if (GET_SER_FLAG(a, ARRAY_FLAG_PAIRLIST)) {
+        else if (Get_Flex_Flag(a, ARRAY_FLAG_PAIRLIST)) {
             //
             // There was once a "small map" optimization that wouldn't
             // produce a hashlist for small maps and just did linear search.
@@ -740,14 +740,14 @@ static void Propagate_All_GC_Marks(void)
             // seemed to be a source of bugs, but it may be added again...in
             // which case the hashlist may be nullptr.
             //
-            Series* hashlist = LINK(a).hashlist;
+            Flex* hashlist = LINK(a).hashlist;
             assert(hashlist != nullptr);
 
-            Mark_Rebser_Only(hashlist);
+            Mark_Stub_Only(hashlist);
 
             // !!! Currently MAP! doesn't work with FREE, but probably should.
             //
-            assert(NOT_SER_INFO(a, SERIES_INFO_INACCESSIBLE));
+            assert(Not_Flex_Info(a, FLEX_INFO_INACCESSIBLE));
 
             v = Array_Head(a);
         }
@@ -758,7 +758,7 @@ static void Propagate_All_GC_Marks(void)
             // !!! It could be possible to GC all these to a common freed
             // array stub, though that wouldn't permit equality comparisons.
             //
-            if (GET_SER_INFO(a, SERIES_INFO_INACCESSIBLE))
+            if (Get_Flex_Info(a, FLEX_INFO_INACCESSIBLE))
                 continue;
 
             v = Array_Head(a);
@@ -776,8 +776,8 @@ static void Propagate_All_GC_Marks(void)
             if (
                 not IS_BLANK_RAW(v)
                 and IS_NULLED(v)
-                and NOT_SER_FLAG(a, ARRAY_FLAG_VARLIST)
-                and NOT_SER_FLAG(a, ARRAY_FLAG_NULLEDS_LEGAL)
+                and Not_Flex_Flag(a, ARRAY_FLAG_VARLIST)
+                and Not_Flex_Flag(a, ARRAY_FLAG_NULLEDS_LEGAL)
             ){
                 panic(a);
             }
@@ -827,7 +827,7 @@ static void Reify_Any_C_Valist_Frames(void)
 
 
 //
-//  Mark_Root_Series: C
+//  Mark_Root_Stubs: C
 //
 // Root Series are any manual series that were allocated but have not been
 // managed yet, as well as Alloc_Value() nodes that are explicitly "roots".
@@ -843,13 +843,13 @@ static void Reify_Any_C_Valist_Frames(void)
 // should be weighed against background GC and other more sophisticated
 // methods which might come down the road for the GC than this simple one.
 //
-static void Mark_Root_Series(void)
+static void Mark_Root_Stubs(void)
 {
     REBSEG *seg;
-    for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
-        Series* s = cast(Series* , seg + 1);
+    for (seg = Mem_Pools[STUB_POOL].segs; seg; seg = seg->next) {
+        Flex* s = cast(Flex* , seg + 1);
         REBLEN n;
-        for (n = Mem_Pools[SER_POOL].units; n > 0; --n, ++s) {
+        for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
             //
             // !!! A smarter switch statement here could do this more
             // optimally...see the sweep code for an example.
@@ -863,7 +863,7 @@ static void Mark_Root_Series(void)
                 // from the C stack, only this visit should be marking it.
                 //
                 assert(not (s->header.bits & NODE_FLAG_MARKED));
-                assert(not IS_SER_DYNAMIC(s));
+                assert(not Is_Flex_Dynamic(s));
                 assert(
                     not LINK(s).owner
                     or LINK(s).owner->header.bits & NODE_FLAG_MANAGED
@@ -873,9 +873,9 @@ static void Mark_Root_Series(void)
                     assert(not LINK(s).owner);
                 else if (
                     CTX_VARLIST(LINK(s).owner)->info.bits
-                    & SERIES_INFO_INACCESSIBLE
+                    & FLEX_INFO_INACCESSIBLE
                 ){
-                    if (NOT_SER_INFO(LINK(s).owner, FRAME_INFO_FAILED)) {
+                    if (Not_Flex_Info(LINK(s).owner, FRAME_INFO_FAILED)) {
                         //
                         // Long term, it is likely that implicit managed-ness
                         // will allow users to leak API handles.  It will
@@ -888,7 +888,7 @@ static void Mark_Root_Series(void)
                         panic (s);
                     }
 
-                    GC_Kill_Series(s);
+                    GC_Kill_Flex(s);
                     continue;
                 }
                 else // note that Mark_Level_Stack_Deep() will mark the owner
@@ -896,7 +896,7 @@ static void Mark_Root_Series(void)
 
                 // Note: Eval_Core_Throws() might target API cells, uses END
                 //
-                Queue_Mark_Opt_End_Cell_Deep(ARR_SINGLE(ARR(s)));
+                Queue_Mark_Opt_End_Cell_Deep(ARR_SINGLE(cast_Array(s)));
                 continue;
             }
 
@@ -913,7 +913,7 @@ static void Mark_Root_Series(void)
                 Queue_Mark_Opt_Value_Deep(PAIRING_KEY(paired));
             }
 
-            if (IS_SER_ARRAY(s)) {
+            if (Is_Flex_Array(s)) {
                 if (s->header.bits & NODE_FLAG_MANAGED)
                     continue; // BLOCK!, Mark_Level_Stack_Deep() etc. mark it
 
@@ -935,17 +935,17 @@ static void Mark_Root_Series(void)
                 // Only plain arrays are supported as unmanaged across
                 // evaluations, because REBCTX and REBACT and REBMAP are too
                 // complex...they must be managed before evaluations happen.
-                // Manage and use PUSH_GC_GUARD and DROP_GC_GUARD on them.
+                // Manage and use Push_GC_Guard and Drop_GC_Guard on them.
                 //
                 assert(
-                    NOT_SER_FLAG(s, ARRAY_FLAG_PARAMLIST)
-                    and NOT_SER_FLAG(s, ARRAY_FLAG_PAIRLIST)
+                    Not_Flex_Flag(s, ARRAY_FLAG_PARAMLIST)
+                    and Not_Flex_Flag(s, ARRAY_FLAG_PAIRLIST)
                 );
 
                 // Note: Arrays which are using their LINK() or MISC() for
                 // other purposes than file and line will not be marked here!
                 //
-                if (GET_SER_FLAG(s, ARRAY_FLAG_FILE_LINE))
+                if (Get_Flex_Flag(s, ARRAY_FLAG_FILE_LINE))
                     LINK(s).file->header.bits |= NODE_FLAG_MARKED;
 
                 Cell* item = Array_Head(cast(Array*, s));
@@ -992,19 +992,19 @@ static void Mark_Data_Stack(void)
 
 
 //
-//  Mark_Symbol_Series: C
+//  Mark_Symbols: C
 //
-// Mark symbol series.  These canon words for SYM_XXX are the only ones that
+// Mark Symbol Flexes.  These canon words for SYM_XXX are the only ones that
 // are never candidates for GC (until shutdown).  All other symbol series may
 // go away if no words, parameters, object keys, etc. refer to them.
 //
-static void Mark_Symbol_Series(void)
+static void Mark_Symbols(void)
 {
-    Symbol* *canon = Series_Head(Symbol*, PG_Symbol_Canons);
+    Symbol* *canon = Flex_Head(Symbol*, PG_Symbol_Canons);
     assert(Is_Pointer_Corrupt_Debug(*canon)); // SYM_0 is for all non-builtin words
     ++canon;
     for (; *canon != nullptr; ++canon)
-        Mark_Rebser_Only(*canon);
+        Mark_Stub_Only(*canon);
 
     ASSERT_NO_GC_MARKS_PENDING(); // doesn't ues any queueing
 }
@@ -1033,13 +1033,13 @@ static void Mark_Natives(void)
 //  Mark_Guarded_Nodes: C
 //
 // Mark series and values that have been temporarily protected from garbage
-// collection with PUSH_GC_GUARD.  Subclasses e.g. ARRAY_FLAG_CONTEXT will
+// collection with Push_GC_Guard.  Subclasses e.g. ARRAY_FLAG_CONTEXT will
 // have their LINK() and MISC() fields guarded appropriately for the class.
 //
 static void Mark_Guarded_Nodes(void)
 {
-    Node** np = Series_Head(Node*, GC_Guarded);
-    REBLEN n = Series_Len(GC_Guarded);
+    Node** np = Flex_Head(Node*, GC_Guarded);
+    REBLEN n = Flex_Len(GC_Guarded);
     for (; n > 0; --n, ++np) {
         Node* node = *np;
         if (Is_Node_A_Cell(node)) {
@@ -1049,12 +1049,12 @@ static void Mark_Guarded_Nodes(void)
             Queue_Mark_Opt_End_Cell_Deep(cast(Value*, node));
         }
         else { // a series
-            Series* s = cast(Series*, node);
+            Flex* s = cast(Flex*, node);
             assert(s->header.bits & NODE_FLAG_MANAGED);
-            if (IS_SER_ARRAY(s))
-                Queue_Mark_Array_Subclass_Deep(ARR(s));
+            if (Is_Flex_Array(s))
+                Queue_Mark_Array_Subclass_Deep(cast_Array(s));
             else
-                Mark_Rebser_Only(s);
+                Mark_Stub_Only(s);
         }
         Propagate_All_GC_Marks();
     }
@@ -1150,7 +1150,7 @@ static void Mark_Level_Stack_Deep(void)
 
         Queue_Mark_Action_Deep(L->original);  // never nullptr
         if (L->opt_label)  // will be nullptr if no symbol
-            Mark_Rebser_Only(L->opt_label);
+            Mark_Stub_Only(L->opt_label);
 
         // refine and special can be used to GC protect an arbitrary value
         // while a function is running, currently.  nullptr is permitted as
@@ -1162,7 +1162,7 @@ static void Mark_Level_Stack_Deep(void)
         if (L->special)
             Queue_Mark_Opt_End_Cell_Deep(L->special);
 
-        if (L->varlist and GET_SER_FLAG(L->varlist, NODE_FLAG_MANAGED)) {
+        if (L->varlist and Get_Flex_Flag(L->varlist, NODE_FLAG_MANAGED)) {
             //
             // If the context is all set up with valid values and managed,
             // then it can just be marked normally...no need to do custom
@@ -1173,7 +1173,7 @@ static void Mark_Level_Stack_Deep(void)
             goto propagate_and_continue;
         }
 
-        if (L->varlist and GET_SER_INFO(L->varlist, SERIES_INFO_INACCESSIBLE)) {
+        if (L->varlist and Get_Flex_Info(L->varlist, FLEX_INFO_INACCESSIBLE)) {
             //
             // This happens in Encloser_Dispatcher(), where it can capture a
             // varlist that may not be managed (e.g. if there were no ADAPTs
@@ -1241,14 +1241,14 @@ static void Mark_Level_Stack_Deep(void)
 
 
 //
-//  Sweep_Series: C
+//  Sweep_Stubs: C
 //
 // Scans all series nodes (Stub structs) in all segments that are part of
-// the SER_POOL.  If a series had its lifetime management delegated to the
-// garbage collector with Manage_Series(), then if it didn't get "marked" as
+// the STUB_POOL.  If a series had its lifetime management delegated to the
+// garbage collector with Manage_Flex(), then if it didn't get "marked" as
 // live during the marking phase then free it.
 //
-static REBLEN Sweep_Series(void)
+static REBLEN Sweep_Stubs(void)
 {
     REBLEN count = 0;
 
@@ -1262,10 +1262,10 @@ static REBLEN Sweep_Series(void)
     );
 
     REBSEG *seg;
-    for (seg = Mem_Pools[SER_POOL].segs; seg != nullptr; seg = seg->next) {
-        Series* s = cast(Series*, seg + 1);
+    for (seg = Mem_Pools[STUB_POOL].segs; seg != nullptr; seg = seg->next) {
+        Flex* s = cast(Flex*, seg + 1);
         REBLEN n;
-        for (n = Mem_Pools[SER_POOL].units; n > 0; --n, ++s) {
+        for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
             switch (FIRST_BYTE(&s->header) >> 4) {
             case 0:
             case 1: // 0x1
@@ -1286,7 +1286,7 @@ static REBLEN Sweep_Series(void)
 
             case 8:
                 // 0x8: unmanaged and unmarked, e.g. a series that was made
-                // with Make_Series() and hasn't been managed.  It doesn't
+                // with Make_Flex() and hasn't been managed.  It doesn't
                 // participate in the GC.  Leave it as is.
                 //
                 // !!! Are there actually legitimate reasons to do this with
@@ -1312,10 +1312,10 @@ static REBLEN Sweep_Series(void)
                 //
                 if (s->header.bits & NODE_FLAG_CELL) {
                     assert(not (s->header.bits & NODE_FLAG_ROOT));
-                    Free_Pooled(SER_POOL, s); // Free_Pairing is for manuals
+                    Free_Pooled(STUB_POOL, s); // Free_Pairing is for manuals
                 }
                 else
-                    GC_Kill_Series(s);
+                    GC_Kill_Flex(s);
                 ++count;
                 break;
 
@@ -1334,7 +1334,7 @@ static REBLEN Sweep_Series(void)
             case 12:
                 // 0x8 + 0x4: free node, uses special illegal UTF-8 byte
                 //
-                assert(FIRST_BYTE(&s->header) == FREED_SERIES_BYTE);
+                assert(FIRST_BYTE(&s->header) == FREED_FLEX_BYTE);
                 break;
 
             case 13:
@@ -1354,7 +1354,7 @@ static REBLEN Sweep_Series(void)
     for (seg = Mem_Pools[PAR_POOL].segs; seg != nullptr; seg = seg->next) {
         Value* v = cast(Value*, seg + 1);
         if (v->header.bits & NODE_FLAG_FREE) {
-            assert(FIRST_BYTE(&v->header) == FREED_SERIES_BYTE);
+            assert(FIRST_BYTE(&v->header) == FREED_FLEX_BYTE);
             continue;
         }
 
@@ -1381,26 +1381,26 @@ static REBLEN Sweep_Series(void)
 //
 //  Fill_Sweeplist: C
 //
-REBLEN Fill_Sweeplist(Series* sweeplist)
+REBLEN Fill_Sweeplist(Flex* sweeplist)
 {
-    assert(Series_Wide(sweeplist) == sizeof(Node*));
-    assert(Series_Len(sweeplist) == 0);
+    assert(Flex_Wide(sweeplist) == sizeof(Node*));
+    assert(Flex_Len(sweeplist) == 0);
 
     REBLEN count = 0;
 
     REBSEG *seg;
-    for (seg = Mem_Pools[SER_POOL].segs; seg != nullptr; seg = seg->next) {
-        Series* s = cast(Series*, seg + 1);
+    for (seg = Mem_Pools[STUB_POOL].segs; seg != nullptr; seg = seg->next) {
+        Flex* s = cast(Flex*, seg + 1);
         REBLEN n;
-        for (n = Mem_Pools[SER_POOL].units; n > 0; --n, ++s) {
+        for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
             switch (FIRST_BYTE(&s->header) >> 4) {
             case 9: // 0x8 + 0x1
-                assert(Is_Series_Managed(s));
+                assert(Is_Flex_Managed(s));
                 if (s->header.bits & NODE_FLAG_MARKED)
                     s->header.bits &= ~NODE_FLAG_MARKED;
                 else {
-                    Expand_Series_Tail(sweeplist, 1);
-                    *Series_At(Node*, sweeplist, count) = s;
+                    Expand_Flex_Tail(sweeplist, 1);
+                    *Flex_At(Node*, sweeplist, count) = s;
                     ++count;
                 }
                 break;
@@ -1412,12 +1412,12 @@ REBLEN Fill_Sweeplist(Series* sweeplist)
                 //
                 // !!! It is a Node, but *not* a "Stub".
                 //
-                assert(Is_Series_Managed(s));
+                assert(Is_Flex_Managed(s));
                 if (s->header.bits & NODE_FLAG_MARKED)
                     s->header.bits &= ~NODE_FLAG_MARKED;
                 else {
-                    Expand_Series_Tail(sweeplist, 1);
-                    *Series_At(Node*, sweeplist, count) = s;
+                    Expand_Flex_Tail(sweeplist, 1);
+                    *Flex_At(Node*, sweeplist, count) = s;
                     ++count;
                 }
                 break;
@@ -1435,10 +1435,10 @@ REBLEN Fill_Sweeplist(Series* sweeplist)
 //  Recycle_Core: C
 //
 // Recycle memory no longer needed.  If sweeplist is not nullptr, then it needs
-// to be a series whose width is sizeof(Series*), and it will be filled with
+// to be a series whose width is sizeof(Flex*), and it will be filled with
 // the list of series that *would* be recycled.
 //
-REBLEN Recycle_Core(bool shutdown, Series* sweeplist)
+REBLEN Recycle_Core(bool shutdown, Flex* sweeplist)
 {
     // Ordinarily, it should not be possible to spawn a recycle during a
     // recycle.  But when debug code is added into the recycling code, it
@@ -1470,7 +1470,7 @@ REBLEN Recycle_Core(bool shutdown, Series* sweeplist)
 
   #if !defined(NDEBUG)
     PG_Reb_Stats->Recycle_Counter++;
-    PG_Reb_Stats->Recycle_Series = Mem_Pools[SER_POOL].free;
+    PG_Reb_Stats->Num_Flex_Recycled = Mem_Pools[STUB_POOL].free;
     PG_Reb_Stats->Mark_Count = 0;
   #endif
 
@@ -1478,7 +1478,7 @@ REBLEN Recycle_Core(bool shutdown, Series* sweeplist)
     // problem if code is building a new value at the tail, but has not yet
     // updated the TAIL marker.
     //
-    TERM_ARRAY_LEN(BUF_COLLECT, Array_Len(BUF_COLLECT));
+    Term_Array_Len(BUF_COLLECT, Array_Len(BUF_COLLECT));
 
     // The TG_Reuse list consists of entries which could grow to arbitrary
     // length, and which aren't being tracked anywhere.  Cull them during GC
@@ -1488,7 +1488,7 @@ REBLEN Recycle_Core(bool shutdown, Series* sweeplist)
     while (TG_Reuse) {
         Array* varlist = TG_Reuse;
         TG_Reuse = LINK(TG_Reuse).reuse;
-        GC_Kill_Series(varlist);  // no track for Free_Unmanaged_Series()
+        GC_Kill_Flex(varlist);  // no track for Free_Unmanaged_Flex()
     }
 
     // MARKING PHASE: the "root set" from which we determine the liveness
@@ -1497,11 +1497,11 @@ REBLEN Recycle_Core(bool shutdown, Series* sweeplist)
     // (In particular because that is when API series whose lifetimes
     // are bound to frames will be freed, if the frame is expired.)
     //
-    Mark_Root_Series();
+    Mark_Root_Stubs();
 
     if (not shutdown) {
         Mark_Natives();
-        Mark_Symbol_Series();
+        Mark_Symbols();
 
         Mark_Data_Stack();
 
@@ -1528,13 +1528,13 @@ REBLEN Recycle_Core(bool shutdown, Series* sweeplist)
     #endif
     }
     else
-        count += Sweep_Series();
+        count += Sweep_Stubs();
 
 #if !defined(NDEBUG)
     // Compute new stats:
-    PG_Reb_Stats->Recycle_Series
-        = Mem_Pools[SER_POOL].free - PG_Reb_Stats->Recycle_Series;
-    PG_Reb_Stats->Recycle_Series_Total += PG_Reb_Stats->Recycle_Series;
+    PG_Reb_Stats->Num_Flex_Recycled
+        = Mem_Pools[STUB_POOL].free - PG_Reb_Stats->Num_Flex_Recycled;
+    PG_Reb_Stats->Recycle_Flex_Total += PG_Reb_Stats->Num_Flex_Recycled;
     PG_Reb_Stats->Recycle_Prior_Eval = Eval_Cycles;
 #endif
 
@@ -1650,16 +1650,16 @@ void Push_Guard_Node(const Node* node)
     }
   #endif
 
-    if (SER_FULL(GC_Guarded))
-        Extend_Series(GC_Guarded, 8);
+    if (Is_Flex_Full(GC_Guarded))
+        Extend_Flex(GC_Guarded, 8);
 
-    *Series_At(
+    *Flex_At(
         const Node*,
         GC_Guarded,
-        Series_Len(GC_Guarded)
+        Flex_Len(GC_Guarded)
     ) = node;
 
-    Set_Series_Len(GC_Guarded, Series_Len(GC_Guarded) + 1);
+    Set_Flex_Len(GC_Guarded, Flex_Len(GC_Guarded) + 1);
 }
 
 
@@ -1676,20 +1676,20 @@ Array* Snapshot_All_Actions(void)
     StackIndex base = TOP_INDEX;
 
     REBSEG *seg;
-    for (seg = Mem_Pools[SER_POOL].segs; seg != nullptr; seg = seg->next) {
-        Series* s = cast(Series*, seg + 1);
+    for (seg = Mem_Pools[STUB_POOL].segs; seg != nullptr; seg = seg->next) {
+        Flex* s = cast(Flex*, seg + 1);
         REBLEN n;
-        for (n = Mem_Pools[SER_POOL].units; n > 0; --n, ++s) {
+        for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
             switch (s->header.bits & 0x7) {
             case 5:
                 // A managed Stub which has no cell mask and is marked as
                 // *not* an END.  This is the typical signature of what one
                 // would call an "ordinary managed series".  (For the meanings
-                // of other bits, see Sweep_Series.)
+                // of other bits, see Sweep_Stubs.)
                 //
-                assert(Is_Series_Managed(s));
-                if (GET_SER_FLAG(s, ARRAY_FLAG_PARAMLIST)) {
-                    Value* v = KNOWN(Array_Head(ARR(s)));
+                assert(Is_Flex_Managed(s));
+                if (Get_Flex_Flag(s, ARRAY_FLAG_PARAMLIST)) {
+                    Value* v = KNOWN(Array_Head(cast_Array(s)));
                     assert(Is_Action(v));
                     Copy_Cell(PUSH(), v);
                 }
@@ -1716,13 +1716,13 @@ void Startup_GC(void)
 
     // Temporary series and values protected from GC. Holds node pointers.
     //
-    GC_Guarded = Make_Series(15, sizeof(Node*));
+    GC_Guarded = Make_Flex(15, sizeof(Node*));
 
     // The marking queue used in lieu of recursion to ensure that deeply
     // nested structures don't cause the C stack to overflow.
     //
-    GC_Mark_Stack = Make_Series(100, sizeof(Array*));
-    TERM_SEQUENCE(GC_Mark_Stack);
+    GC_Mark_Stack = Make_Flex(100, sizeof(Array*));
+    Term_Non_Array_Flex(GC_Mark_Stack);
 }
 
 
@@ -1731,8 +1731,8 @@ void Startup_GC(void)
 //
 void Shutdown_GC(void)
 {
-    Free_Unmanaged_Series(GC_Guarded);
-    Free_Unmanaged_Series(GC_Mark_Stack);
+    Free_Unmanaged_Flex(GC_Guarded);
+    Free_Unmanaged_Flex(GC_Mark_Stack);
 }
 
 
@@ -1757,12 +1757,12 @@ static void Queue_Mark_Event_Deep(const Cell* value)
         IS_EVENT_MODEL(value, EVM_PORT)
         or IS_EVENT_MODEL(value, EVM_OBJECT)
     ){
-        Queue_Mark_Context_Deep(CTX(VAL_EVENT_SER(m_cast(Cell*, value))));
+        Queue_Mark_Context_Deep(CTX(VAL_EVENT_FLEX(m_cast(Cell*, value))));
     }
 
     if (IS_EVENT_MODEL(value, EVM_DEVICE)) {
         // In the case of being an EVM_DEVICE event type, the port! will
-        // not be in VAL_EVENT_SER of the REBEVT structure.  It is held
+        // not be in VAL_EVENT_FLEX of the REBEVT structure.  It is held
         // indirectly by the REBREQ ->req field of the event, which
         // in turn possibly holds a singly linked list of other requests.
         req = VAL_EVENT_REQ(value);

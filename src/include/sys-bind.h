@@ -122,13 +122,13 @@ INLINE bool Is_Overriding_Context(REBCTX *stored, REBCTX *override)
     //
     if (
         Is_Node_A_Stub(stored_source)
-        and SER(stored_source)->header.bits & ARRAY_FLAG_PARAMLIST
+        and cast_Flex(stored_source)->header.bits & ARRAY_FLAG_PARAMLIST
     ){
         return false;
     }
     if (
         Is_Node_A_Stub(temp)
-        and SER(temp)->header.bits & ARRAY_FLAG_PARAMLIST
+        and cast_Flex(temp)->header.bits & ARRAY_FLAG_PARAMLIST
     ){
         return false;
     }
@@ -137,10 +137,10 @@ INLINE bool Is_Overriding_Context(REBCTX *stored, REBCTX *override)
         if (temp == stored_source)
             return true;
 
-        if (LINK(SER(temp)).ancestor == temp)
+        if (LINK(cast_Flex(temp)).ancestor == temp)
             break;
 
-        temp = LINK(SER(temp)).ancestor;
+        temp = LINK(cast_Flex(temp)).ancestor;
     }
 
     return false;
@@ -207,7 +207,7 @@ INLINE bool Try_Add_Binder_Index(
     REBINT index
 ){
     assert(index != 0);
-    assert(GET_SER_INFO(canon, STRING_INFO_CANON));
+    assert(Get_Flex_Info(canon, SYMBOL_INFO_CANON));
 
     if (binder->context == Lib_Context) {
         assert(MISC(canon).bind_index.lib == index);
@@ -240,7 +240,7 @@ INLINE REBINT Get_Binder_Index_Else_0( // 0 if not present
     struct Reb_Binder *binder,
     Symbol* canon
 ){
-    assert(GET_SER_INFO(canon, STRING_INFO_CANON));
+    assert(Get_Flex_Info(canon, SYMBOL_INFO_CANON));
 
     if (binder->context == Lib_Context)
         return MISC(canon).bind_index.lib;
@@ -253,7 +253,7 @@ INLINE REBINT Remove_Binder_Index_Else_0( // return old value if there
     struct Reb_Binder *binder,
     Symbol* canon
 ){
-    assert(GET_SER_INFO(canon, STRING_INFO_CANON));
+    assert(Get_Flex_Info(canon, SYMBOL_INFO_CANON));
 
     if (binder->context == Lib_Context)
         return MISC(canon).bind_index.lib;
@@ -304,7 +304,7 @@ struct Reb_Collector {
 // happened, the cell may outlive the frame...but the binding override that
 // the frame contributed might still matter.
 //
-// !!! The functioning of Decay_Series() should be reviewed to see if it
+// !!! The functioning of Decay_Flex() should be reviewed to see if it
 // actually needs to preserve the CTX_ARCHETYPE().  It's not entirely clear
 // if the scenarios are meaningful--but Derelativize cannot fail(), and
 // it would without this.  It might also put in some "fake" element that
@@ -452,7 +452,7 @@ INLINE const Value* Get_Opt_Var_May_Fail(
         fail (Error_Not_Bound_Raw(KNOWN(any_word)));
 
     REBCTX *c = Get_Var_Context(any_word, specifier);
-    if (GET_SER_INFO(c, SERIES_INFO_INACCESSIBLE))
+    if (Get_Flex_Info(c, FLEX_INFO_INACCESSIBLE))
         fail (Error_No_Relative_Core(any_word));
 
     return CTX_VAR(c, VAL_WORD_INDEX(any_word));
@@ -466,7 +466,7 @@ INLINE const Value* Try_Get_Opt_Var(
         return nullptr;
 
     REBCTX *c = Get_Var_Context(any_word, specifier);
-    if (GET_SER_INFO(c, SERIES_INFO_INACCESSIBLE))
+    if (Get_Flex_Info(c, FLEX_INFO_INACCESSIBLE))
         return nullptr;
 
     return CTX_VAR(c, VAL_WORD_INDEX(any_word));
@@ -491,7 +491,7 @@ INLINE Value* Get_Mutable_Var_May_Fail(
 
     // A context can be permanently frozen (`lock obj`) or temporarily
     // protected, e.g. `protect obj | unprotect obj`.  A native will
-    // use SERIES_FLAG_HOLD on a FRAME! context in order to prevent
+    // use FLEX_FLAG_HOLD on a FRAME! context in order to prevent
     // setting values to types with bit patterns the C might crash on.
     //
     // Lock bits are all in SER->info and checked in the same instruction.

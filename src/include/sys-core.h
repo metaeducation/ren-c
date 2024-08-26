@@ -310,8 +310,8 @@ typedef struct rebol_stats {
     REBLEN  Series_Freed;
     REBLEN  Series_Expanded;
     REBLEN  Recycle_Counter;
-    REBLEN  Recycle_Series_Total;
-    REBLEN  Recycle_Series;
+    REBLEN  Recycle_Flex_Total;
+    REBLEN  Num_Flex_Recycled;
     REBI64  Recycle_Prior_Eval;
     REBLEN  Mark_Count;
     REBLEN  Blocks;

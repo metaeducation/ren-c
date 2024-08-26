@@ -358,7 +358,7 @@ struct Reb_Series_Payload {
     // (the series "width") is kept within the Series abstraction.  See the
     // file %sys-series.h for notes.
     //
-    Series* series;
+    Flex* series;
 
     // `index` is the 0-based position into the series represented by this
     // ANY-VALUE! (so if it is 0 then that means a Rebol index of 1).

@@ -28,7 +28,7 @@
 //
 // In R3-Alpha, the memory pool details were not exported to most of the
 // system.  However, Alloc_Pooled() takes a pool ID, so things that want to make
-// nodes need to know about SER_POOL.  And in order to take advantage of
+// nodes need to know about STUB_POOL.  And in order to take advantage of
 // inlining, the system has to put a lot of things in header files.  Not
 // being able to do so leads to a lot of pushing and popping overhead for
 // parameters to commonly called routines (e.g. Alloc_Pooled())
@@ -79,11 +79,11 @@ enum Mem_Pool_Specs {
     MEM_SMALL_POOLS = MEM_TINY_POOL + 16,
     MEM_MID_POOLS = MEM_SMALL_POOLS + 4,
     MEM_BIG_POOLS = MEM_MID_POOLS + 4, // larger pools
-    SER_POOL = MEM_BIG_POOLS,
+    STUB_POOL = MEM_BIG_POOLS,
     #ifdef UNUSUAL_CELL_SIZE
     PAR_POOL,
     #else
-    PAR_POOL = SER_POOL,
+    PAR_POOL = STUB_POOL,
     #endif
     GOB_POOL,
     SYSTEM_POOL,

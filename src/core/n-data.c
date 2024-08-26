@@ -348,7 +348,7 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
 
         assert(
             not out->payload.any_context.phase
-            or GET_SER_FLAG(
+            or Get_Flex_Flag(
                 ACT_PARAMLIST(out->payload.any_context.phase),
                 ARRAY_FLAG_PARAMLIST
             )
@@ -530,7 +530,7 @@ DECLARE_NATIVE(get)
         Nothingify_Branched(dest);  // !!! can't put nulls in blocks (blankify?)
     }
 
-    TERM_ARRAY_LEN(results, VAL_LEN_AT(source));
+    Term_Array_Len(results, VAL_LEN_AT(source));
     return Init_Block(OUT, results);
 }
 
@@ -931,12 +931,12 @@ DECLARE_NATIVE(free)
     if (ANY_CONTEXT(v) or Is_Handle(v))
         fail ("FREE only implemented for ANY-SERIES! at the moment");
 
-    Series* s = VAL_SERIES(v);
-    if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE))
+    Flex* s = Cell_Flex(v);
+    if (Get_Flex_Info(s, FLEX_INFO_INACCESSIBLE))
         fail ("Cannot FREE already freed series");
-    Fail_If_Read_Only_Series(s);
+    Fail_If_Read_Only_Flex(s);
 
-    Decay_Series(s);
+    Decay_Flex(s);
     return Init_Nothing(OUT);  // !!! Should it return freed, not-useful value?
 }
 
@@ -957,7 +957,7 @@ DECLARE_NATIVE(free_q)
 
     Value* v = ARG(value);
 
-    Series* s;
+    Flex* s;
     if (ANY_CONTEXT(v))
         s = v->payload.any_context.varlist;  // VAL_CONTEXT fails if freed
     else if (Is_Handle(v))
@@ -967,7 +967,7 @@ DECLARE_NATIVE(free_q)
     else
         return Init_False(OUT);
 
-    return Init_Logic(OUT, GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE));
+    return Init_Logic(OUT, Get_Flex_Info(s, FLEX_INFO_INACCESSIBLE));
 }
 
 
@@ -1017,11 +1017,11 @@ DECLARE_NATIVE(as)
         //
         if (ANY_WORD(v)) {
             Symbol* symbol = Cell_Word_Symbol(v);
-            Series* string = Make_Sized_String_UTF8(
+            Flex* string = Make_Sized_String_UTF8(
                 Symbol_Head(symbol),
                 Symbol_Size(symbol)
             );
-            SET_SER_INFO(string, SERIES_INFO_FROZEN);
+            Set_Flex_Info(string, FLEX_INFO_FROZEN);
             return Init_Any_Series(OUT, new_kind, string);
         }
 
@@ -1029,12 +1029,12 @@ DECLARE_NATIVE(as)
         // the UTF-8 bytes in a binary as a WCHAR string.
         //
         if (Is_Binary(v)) {
-            Series* string = Make_Sized_String_UTF8(
+            Flex* string = Make_Sized_String_UTF8(
                 cs_cast(Cell_Binary_At(v)),
                 VAL_LEN_AT(v)
             );
             if (Is_Value_Immutable(v))
-                SET_SER_INFO(string, SERIES_INFO_FROZEN);
+                Set_Flex_Info(string, FLEX_INFO_FROZEN);
             else {
                 // !!! Catch any cases of people who were trying to alias the
                 // binary, make mutations via the string, and see those
@@ -1042,7 +1042,7 @@ DECLARE_NATIVE(as)
                 // everywhere.  Most callsites don't need the binary after
                 // conversion...if so, tthey should AS a COPY of it for now.
                 //
-                Decay_Series(VAL_SERIES(v));
+                Decay_Flex(Cell_Flex(v));
             }
             return Init_Any_Series(OUT, new_kind, string);
         }
@@ -1069,7 +1069,7 @@ DECLARE_NATIVE(as)
             // string will change the output word, by freezing the input.
             // This will be relaxed when mutable words exist.
             //
-            Freeze_Sequence(VAL_SERIES(v));
+            Freeze_Non_Array_Flex(Cell_Flex(v));
 
             REBSIZ utf8_size;
             REBSIZ offset;
@@ -1092,7 +1092,7 @@ DECLARE_NATIVE(as)
         // the binary for now.
         //
         if (Is_Binary(v)) {
-            Freeze_Sequence(VAL_SERIES(v));
+            Freeze_Non_Array_Flex(Cell_Flex(v));
             return Init_Any_Word(
                 OUT,
                 new_kind,
@@ -1124,9 +1124,9 @@ DECLARE_NATIVE(as)
             // satisfactory you can make a copy before the AS.
             //
             if (Is_Value_Immutable(v))
-                Freeze_Sequence(bin);
+                Freeze_Non_Array_Flex(bin);
             else
-                Decay_Series(VAL_SERIES(v));
+                Decay_Flex(Cell_Flex(v));
 
             return Init_Binary(OUT, bin);
         }
@@ -1158,7 +1158,7 @@ DECLARE_NATIVE(aliases_q)
 {
     INCLUDE_PARAMS_OF_ALIASES_Q;
 
-    return Init_Logic(OUT, VAL_SERIES(ARG(value1)) == VAL_SERIES(ARG(value2)));
+    return Init_Logic(OUT, Cell_Flex(ARG(value1)) == Cell_Flex(ARG(value2)));
 }
 
 

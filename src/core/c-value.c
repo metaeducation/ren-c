@@ -94,16 +94,16 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
 
     if (containing and Is_Node_A_Stub(containing)) {
         printf("Containing series for value pointer found, panicking it:\n");
-        Panic_Series_Debug(SER(containing));
+        Panic_Flex_Debug(cast_Flex(containing));
     }
 
     if (containing) {
         printf("Containing pairing for value pointer found, panicking it:\n");
-        Panic_Value_Debug(VAL(containing));  // won't pass SER()
+        Panic_Value_Debug(VAL(containing));  // won't pass cast_Flex()
     }
 
     printf("No containing series for value...panicking to make stack dump:\n");
-    Panic_Series_Debug(EMPTY_ARRAY);
+    Panic_Flex_Debug(EMPTY_ARRAY);
 }
 
 #endif // !defined(NDEBUG)
@@ -169,16 +169,16 @@ void* Probe_Core_Debug(
         break;
 
     case DETECTED_AS_SERIES: {
-        Series* s = m_cast(Series*, cast(const Series*, p));
+        Flex* s = m_cast(Flex*, cast(const Flex*, p));
 
-        Assert_Series(s); // if corrupt, gives better info than a print crash
+        Assert_Flex(s); // if corrupt, gives better info than a print crash
 
         // This routine is also a little catalog of the outlying series
         // types in terms of sizing, just to know what they are.
 
-        if (GET_SER_FLAG(s, SERIES_FLAG_UTF8)) {
-            assert(Series_Wide(s) == sizeof(Byte));
-            Probe_Print_Helper(p, "Symbol Series", file, line);
+        if (Get_Flex_Flag(s, FLEX_FLAG_UTF8)) {
+            assert(Flex_Wide(s) == sizeof(Byte));
+            Probe_Print_Helper(p, "Symbol Flex", file, line);
             Symbol* sym = cast(Symbol*, m_cast(void*, p));
 
             const char *head = Symbol_Head(sym);  // UTF-8
@@ -186,8 +186,8 @@ void* Probe_Core_Debug(
 
             Append_Utf8_Utf8(mo->series, head, size);
         }
-        else if (Series_Wide(s) == sizeof(Byte)) {
-            Probe_Print_Helper(p, "Byte-Size Series", file, line);
+        else if (Flex_Wide(s) == sizeof(Byte)) {
+            Probe_Print_Helper(p, "Byte-Size Flex", file, line);
             Blob* bin = cast(Blob*, m_cast(void*, p));
 
             // !!! Duplication of code in MF_Binary
@@ -204,22 +204,22 @@ void* Probe_Core_Debug(
                 cs_cast(Blob_Head(enbased)), Blob_Len(enbased)
             );
             Append_Unencoded(mo->series, "}");
-            Free_Unmanaged_Series(enbased);
+            Free_Unmanaged_Flex(enbased);
         }
-        else if (Series_Wide(s) == sizeof(REBUNI)) {
-            Probe_Print_Helper(p, "REBWCHAR-Size Series", file, line);
+        else if (Flex_Wide(s) == sizeof(REBUNI)) {
+            Probe_Print_Helper(p, "REBWCHAR-Size Flex", file, line);
             String* str = cast(String*, m_cast(void*, p));
 
             Mold_Text_Series_At(mo, str, 0); // might be TAG! etc, not TEXT!
         }
-        else if (IS_SER_ARRAY(s)) {
-            if (GET_SER_FLAG(s, ARRAY_FLAG_VARLIST)) {
+        else if (Is_Flex_Array(s)) {
+            if (Get_Flex_Flag(s, ARRAY_FLAG_VARLIST)) {
                 Probe_Print_Helper(p, "Context Varlist", file, line);
                 Probe_Molded_Value(CTX_ARCHETYPE(CTX(s)));
             }
             else {
-                Probe_Print_Helper(p, "Array", file, line);
-                Mold_Array_At(mo, ARR(s), 0, "[]"); // not necessarily BLOCK!
+                Probe_Print_Helper(p, "Array Flex", file, line);
+                Mold_Array_At(mo, cast_Array(s), 0, "[]"); // not necessarily BLOCK!
             }
         }
         else if (s == PG_Canons_By_Hash) {
@@ -234,8 +234,8 @@ void* Probe_Core_Debug(
             panic (s);
         break; }
 
-    case DETECTED_AS_FREED_SERIES:
-        Probe_Print_Helper(p, "Freed Series", file, line);
+    case DETECTED_AS_FREED_FLEX:
+        Probe_Print_Helper(p, "Freed Flex", file, line);
         panic (p);
 
     case DETECTED_AS_CELL: {
@@ -252,7 +252,7 @@ void* Probe_Core_Debug(
         panic (p);
     }
 
-    if (mo->start != Series_Len(mo->series))
+    if (mo->start != Flex_Len(mo->series))
         printf("%s\n", s_cast(Blob_At(mo->series, mo->start)));
     fflush(stdout);
 

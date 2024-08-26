@@ -176,7 +176,7 @@ DECLARE_NATIVE(checksum)
     UNUSED(REF(part)); // checked by if limit is nulled
 
     Byte *data = VAL_RAW_DATA_AT(arg); // after Partial() in case of change
-    REBLEN wide = Series_Wide(VAL_SERIES(arg));
+    REBLEN wide = Flex_Wide(Cell_Flex(arg));
 
     SymId sym;
     if (REF(method)) {
@@ -243,7 +243,7 @@ DECLARE_NATIVE(checksum)
                     Blob* temp = Temp_UTF8_At_Managed(
                         &offset, &keylen, key, VAL_LEN_AT(key)
                     );
-                    PUSH_GC_GUARD(temp);
+                    Push_GC_Guard(temp);
                     keycp = Blob_At(temp, offset);
                 }
 
@@ -541,7 +541,7 @@ DECLARE_NATIVE(enbase)
         OUT,
         Make_Sized_String_UTF8(cs_cast(Blob_Head(enbased)), Blob_Len(enbased))
     );
-    Free_Unmanaged_Series(enbased);
+    Free_Unmanaged_Flex(enbased);
 
     return OUT;
 }
@@ -593,7 +593,7 @@ DECLARE_NATIVE(enhex)
     //
     Byte *dp = Prep_Mold_Overestimated(mo, len * 12);
 
-    Series* s = VAL_SERIES(ARG(string));
+    Flex* s = Cell_Flex(ARG(string));
 
     REBLEN i = VAL_INDEX(ARG(string));
     for (; i < len; ++i) {
@@ -702,7 +702,7 @@ DECLARE_NATIVE(enhex)
 
     *dp = '\0';
 
-    Set_Series_Len(mo->series, dp - Blob_Head(mo->series));
+    Set_Flex_Len(mo->series, dp - Blob_Head(mo->series));
 
     return Init_Any_Series(
         OUT,
@@ -744,7 +744,7 @@ DECLARE_NATIVE(dehex)
     Byte scan[5];
     REBSIZ scan_size = 0;
 
-    Series* s = VAL_SERIES(ARG(string));
+    Flex* s = Cell_Flex(ARG(string));
 
     REBLEN i = VAL_INDEX(ARG(string));
 
@@ -830,7 +830,7 @@ DECLARE_NATIVE(dehex)
 
     *dp = '\0';
 
-    Set_Series_Len(mo->series, dp - Blob_Head(mo->series));
+    Set_Flex_Len(mo->series, dp - Blob_Head(mo->series));
 
     return Init_Any_Series(
         OUT,
@@ -862,7 +862,7 @@ DECLARE_NATIVE(deline)
         return Init_Block(OUT, Split_Lines(val));
 
     String* s = Cell_String(val);
-    REBLEN len_head = Series_Len(s);
+    REBLEN len_head = Flex_Len(s);
 
     REBLEN len_at = VAL_LEN_AT(val);
 
@@ -907,7 +907,7 @@ DECLARE_NATIVE(enline)
 
     Value* val = ARG(string);
 
-    String* ser = Cell_String(val);
+    String* flex = Cell_String(val);
     REBLEN idx = VAL_INDEX(val);
     REBLEN len = VAL_LEN_AT(val);
 
@@ -921,7 +921,7 @@ DECLARE_NATIVE(enline)
     // but this would not work if someone added, say, an ENLINE/PART...since
     // the byte ending position of interest might not be end of the string.
 
-    Ucs2(*) cp = String_At(ser, idx);
+    Ucs2(*) cp = String_At(flex, idx);
 
     REBUNI c_prev = '\0';
 
@@ -937,7 +937,7 @@ DECLARE_NATIVE(enline)
     if (delta == 0)
         RETURN (ARG(string)); // nothing to do
 
-    Expand_Series_Tail(ser, delta);
+    Expand_Flex_Tail(flex, delta);
 
     // !!! After the UTF-8 Everywhere conversion, this will be able to stay
     // a byte-oriented process..because UTF-8 doesn't reuse ASCII chars in
@@ -949,8 +949,8 @@ DECLARE_NATIVE(enline)
     // UCS-2 has the CR LF bytes in codepoint sequences that aren't CR LF.
     // So sliding is done in full character counts.
 
-    REBUNI *up = String_Head(ser); // expand may change the pointer
-    REBLEN tail = Series_Len(ser); // length after expansion
+    REBUNI *up = String_Head(flex); // expand may change the pointer
+    REBLEN tail = Flex_Len(flex); // length after expansion
 
     // Add missing CRs
 

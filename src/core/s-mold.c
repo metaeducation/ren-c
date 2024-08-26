@@ -93,7 +93,7 @@
 void Emit(REB_MOLD *mo, const char *fmt, ...)
 {
     Blob* s = mo->series;
-    assert(Series_Wide(s) == 1);
+    assert(Flex_Wide(s) == 1);
 
     va_list va;
     va_start(va, fmt);
@@ -199,8 +199,8 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
 //
 Byte *Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
 {
-    REBLEN tail = Series_Len(mo->series);
-    Expand_Series_Tail(mo->series, num_bytes); // terminates, if guessed right
+    REBLEN tail = Flex_Len(mo->series);
+    Expand_Flex_Tail(mo->series, num_bytes); // terminates, if guessed right
     return Blob_At(mo->series, tail);
 }
 
@@ -255,7 +255,7 @@ void New_Indented_Line(REB_MOLD *mo)
     // Check output string has content already but no terminator:
     //
     Byte *bp;
-    if (Series_Len(mo->series) == 0)
+    if (Flex_Len(mo->series) == 0)
         bp = nullptr;
     else {
         bp = Blob_Last(mo->series);
@@ -283,45 +283,45 @@ void New_Indented_Line(REB_MOLD *mo)
 // While Rebol has never had a particularly coherent story about how cyclical
 // data structures will be handled in evaluation, they do occur--and the GC
 // is robust to their existence.  These helper functions can be used to
-// maintain a stack of series.
+// maintain a stack of Flex pointers.
 //
-// !!! TBD: Unify this with the PUSH_GC_GUARD and DROP_GC_GUARD implementation
+// !!! TBD: Unify this with the Push_GC_Guard and Drop_GC_Guard implementation
 // so that improvements in one will improve the other?
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
 //
-//  Find_Pointer_In_Series: C
+//  Find_Pointer_In_Flex: C
 //
-REBLEN Find_Pointer_In_Series(Series* s, void *p)
+REBLEN Find_Pointer_In_Flex(Flex* s, void *p)
 {
     REBLEN index = 0;
-    for (; index < Series_Len(s); ++index) {
-        if (*Series_At(void*, s, index) == p)
+    for (; index < Flex_Len(s); ++index) {
+        if (*Flex_At(void*, s, index) == p)
             return index;
     }
     return NOT_FOUND;
 }
 
 //
-//  Push_Pointer_To_Series: C
+//  Push_Pointer_To_Flex: C
 //
-void Push_Pointer_To_Series(Series* s, void *p)
+void Push_Pointer_To_Flex(Flex* s, void *p)
 {
-    if (SER_FULL(s))
-        Extend_Series(s, 8);
-    *Series_At(void*, s, Series_Len(s)) = p;
-    Set_Series_Len(s, Series_Len(s) + 1);
+    if (Is_Flex_Full(s))
+        Extend_Flex(s, 8);
+    *Flex_At(void*, s, Flex_Len(s)) = p;
+    Set_Flex_Len(s, Flex_Len(s) + 1);
 }
 
 //
-//  Drop_Pointer_From_Series: C
+//  Drop_Pointer_From_Flex: C
 //
-void Drop_Pointer_From_Series(Series* s, void *p)
+void Drop_Pointer_From_Flex(Flex* s, void *p)
 {
-    assert(p == *Series_At(void*, s, Series_Len(s) - 1));
+    assert(p == *Flex_At(void*, s, Flex_Len(s) - 1));
     UNUSED(p);
-    Set_Series_Len(s, Series_Len(s) - 1);
+    Set_Flex_Len(s, Flex_Len(s) - 1);
 
     // !!! Could optimize so mold stack is always dynamic, and just use
     // s->content.dynamic.len--
@@ -331,7 +331,7 @@ void Drop_Pointer_From_Series(Series* s, void *p)
 /***********************************************************************
 ************************************************************************
 **
-**  SECTION: Block Series Datatypes
+**  SECTION: Block Flex Datatypes
 **
 ************************************************************************
 ***********************************************************************/
@@ -346,12 +346,12 @@ void Mold_Array_At(
     const char *sep
 ) {
     // Recursion check:
-    if (Find_Pointer_In_Series(TG_Mold_Stack, a) != NOT_FOUND) {
+    if (Find_Pointer_In_Flex(TG_Mold_Stack, a) != NOT_FOUND) {
         Emit(mo, "C...C", sep[0], sep[1]);
         return;
     }
 
-    Push_Pointer_To_Series(TG_Mold_Stack, a);
+    Push_Pointer_To_Flex(TG_Mold_Stack, a);
 
     bool indented = false;
 
@@ -385,12 +385,12 @@ void Mold_Array_At(
         --mo->indent;
 
     if (sep[1] != '\0') {
-        if (GET_SER_FLAG(a, ARRAY_FLAG_TAIL_NEWLINE))
+        if (Get_Flex_Flag(a, ARRAY_FLAG_TAIL_NEWLINE))
             New_Indented_Line(mo); // but not any indentation from *this* mold
         Append_Utf8_Codepoint(mo->series, sep[1]);
     }
 
-    Drop_Pointer_From_Series(TG_Mold_Stack, a);
+    Drop_Pointer_From_Flex(TG_Mold_Stack, a);
 }
 
 
@@ -424,7 +424,7 @@ void Form_Array_At(
         }
         else {
             // Add a space if needed:
-            if (n < len && Series_Len(mo->series)
+            if (n < len && Flex_Len(mo->series)
                 && *Blob_Last(mo->series) != LF
                 && NOT_MOLD_FLAG(mo, MOLD_FLAG_TIGHT)
             ){
@@ -486,8 +486,8 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
     assert(not THROWN(v)); // !!! Note: Thrown bit is being eliminated
 
     Blob* s = mo->series;
-    assert(Series_Wide(s) == sizeof(Byte));
-    Assert_Series_Term(s);
+    assert(Flex_Wide(s) == sizeof(Byte));
+    Assert_Flex_Term(s);
 
     if (C_STACK_OVERFLOWING(&s))
         Fail_Stack_Overflow();
@@ -502,7 +502,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
         // the debug build keep going to exercise mold on the data.)
         //
     #ifdef NDEBUG
-        if (Series_Len(s) >= mo->limit)
+        if (Flex_Len(s) >= mo->limit)
             return;
     #endif
     }
@@ -528,7 +528,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
     assert(hook != nullptr); // all types have a hook, even if it just fails
     hook(mo, v, form);
 
-    Assert_Series_Term(s);
+    Assert_Flex_Term(s);
 }
 
 
@@ -681,11 +681,11 @@ void Push_Mold(REB_MOLD *mo)
     assert(mo->series == nullptr);
 
     Blob* s = mo->series = MOLD_BUF;
-    mo->start = Series_Len(s);
+    mo->start = Flex_Len(s);
 
-    Assert_Series_Term(s);
+    Assert_Flex_Term(s);
 
-    if (GET_MOLD_FLAG(mo, MOLD_FLAG_RESERVE) && Series_Rest(s) < mo->reserve) {
+    if (GET_MOLD_FLAG(mo, MOLD_FLAG_RESERVE) && Flex_Rest(s) < mo->reserve) {
         //
         // Expand will add to the series length, so we set it back.
         //
@@ -694,20 +694,20 @@ void Push_Mold(REB_MOLD *mo)
         // compatible with the appending mold is to come back with an
         // empty buffer after a push.
         //
-        Expand_Series(s, mo->start, mo->reserve);
-        Set_Series_Len(s, mo->start);
+        Expand_Flex(s, mo->start, mo->reserve);
+        Set_Flex_Len(s, mo->start);
     }
-    else if (Series_Rest(s) - Series_Len(s) > MAX_COMMON) {
+    else if (Flex_Rest(s) - Flex_Len(s) > MAX_COMMON) {
         //
         // If the "extra" space in the series has gotten to be excessive (due
         // to some particularly large mold), back off the space.  But preserve
         // the contents, as there may be important mold data behind the
         // ->start index in the stack!
         //
-        Remake_Series(
+        Remake_Flex(
             s,
-            Series_Len(s) + MIN_COMMON,
-            Series_Wide(s),
+            Flex_Len(s) + MIN_COMMON,
+            Flex_Wide(s),
             NODE_FLAG_NODE // NODE_FLAG_NODE means preserve the data
         );
     }
@@ -752,8 +752,8 @@ void Throttle_Mold(REB_MOLD *mo) {
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_LIMIT))
         return;
 
-    if (Series_Len(mo->series) > mo->limit) {
-        Set_Series_Len(mo->series, mo->limit - 3); // account for ellipsis
+    if (Flex_Len(mo->series) > mo->limit) {
+        Set_Flex_Len(mo->series, mo->limit - 3); // account for ellipsis
         Append_Unencoded(mo->series, "..."); // adds a null at the tail
     }
 }
@@ -778,18 +778,18 @@ String* Pop_Molded_String_Core(REB_MOLD *mo, REBLEN len)
 {
     assert(mo->series);  // if nullptr there was no Push_Mold()
 
-    Assert_Series_Term(mo->series);
+    Assert_Flex_Term(mo->series);
     Throttle_Mold(mo);
 
-    assert(Series_Len(mo->series) >= mo->start);
+    assert(Flex_Len(mo->series) >= mo->start);
     if (len == UNKNOWN)
-        len = Series_Len(mo->series) - mo->start;
+        len = Flex_Len(mo->series) - mo->start;
 
     String* result = Make_Sized_String_UTF8(
         cs_cast(Blob_At(mo->series, mo->start)),
         len
     );
-    assert(Series_Wide(result) == sizeof(REBUNI));
+    assert(Flex_Wide(result) == sizeof(REBUNI));
 
     // Though the protocol of Mold_Value does terminate, it only does so if
     // it adds content to the buffer.  If we did not terminate when we
@@ -810,15 +810,15 @@ String* Pop_Molded_String_Core(REB_MOLD *mo, REBLEN len)
 // Same as Pop_Molded_String() except gives back the data in UTF8 byte-size
 // series form.
 //
-Series* Pop_Molded_UTF8(REB_MOLD *mo)
+Flex* Pop_Molded_UTF8(REB_MOLD *mo)
 {
-    assert(Series_Len(mo->series) >= mo->start);
+    assert(Flex_Len(mo->series) >= mo->start);
 
-    Assert_Series_Term(mo->series);
+    Assert_Flex_Term(mo->series);
     Throttle_Mold(mo);
 
-    Series* bytes = Copy_Sequence_At_Len(
-        mo->series, mo->start, Series_Len(mo->series) - mo->start
+    Flex* bytes = Copy_Sequence_At_Len(
+        mo->series, mo->start, Flex_Len(mo->series) - mo->start
     );
     assert(BYTE_SIZE(bytes));
 
@@ -844,7 +844,7 @@ Series* Pop_Molded_UTF8(REB_MOLD *mo)
 // In its current form, the implementation is not distinguishable from
 // Pop_Molded_UTF8.
 //
-Series* Pop_Molded_Blob(REB_MOLD *mo)
+Flex* Pop_Molded_Blob(REB_MOLD *mo)
 {
     return Pop_Molded_UTF8(mo);
 }
@@ -884,7 +884,7 @@ void Drop_Mold_Core(REB_MOLD *mo, bool not_pushed_ok)
     // When pushed data are to be discarded, mo->series may be unterminated.
     // (Indeed that happens when Scan_Item_Push_Mold returns nullptr.)
     //
-    NOTE_SERIES_MAYBE_TERM(mo->series);
+    Note_Flex_Maybe_Term(mo->series);
 
     Term_Blob_Len(mo->series, mo->start); // see Pop_Molded_String() notes
 
@@ -897,7 +897,7 @@ void Drop_Mold_Core(REB_MOLD *mo, bool not_pushed_ok)
 //
 void Startup_Mold(REBLEN size)
 {
-    TG_Mold_Stack = Make_Series(10, sizeof(void*));
+    TG_Mold_Stack = Make_Flex(10, sizeof(void*));
 
     TG_Mold_Buf = Make_Blob(size);
 }
@@ -908,9 +908,9 @@ void Startup_Mold(REBLEN size)
 //
 void Shutdown_Mold(void)
 {
-    Free_Unmanaged_Series(TG_Mold_Buf);
+    Free_Unmanaged_Flex(TG_Mold_Buf);
     TG_Mold_Buf = nullptr;
 
-    Free_Unmanaged_Series(TG_Mold_Stack);
+    Free_Unmanaged_Flex(TG_Mold_Stack);
     TG_Mold_Stack = nullptr;
 }
