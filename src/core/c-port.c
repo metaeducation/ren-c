@@ -57,11 +57,11 @@ REBREQ *Ensure_Port_State(Value* port, REBLEN device)
 
     if (!Is_Binary(state)) {
         assert(IS_NULLED(state));
-        Binary* data = Make_Binary(req_size);
-        CLEAR(Binary_Head(data), req_size);
-        Term_Binary_Len(data, req_size);
+        Blob* data = Make_Blob(req_size);
+        CLEAR(Blob_Head(data), req_size);
+        Term_Blob_Len(data, req_size);
 
-        REBREQ *req = cast(REBREQ*, Binary_Head(data));
+        REBREQ *req = cast(REBREQ*, Blob_Head(data));
         req->port_ctx = ctx;
         req->device = device;
         Init_Binary(state, data);

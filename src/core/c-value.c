@@ -134,7 +134,7 @@ INLINE void Probe_Molded_Value(const Value* v)
     Push_Mold(mo);
     Mold_Value(mo, v);
 
-    printf("%s\n", s_cast(Binary_At(mo->series, mo->start)));
+    printf("%s\n", s_cast(Blob_At(mo->series, mo->start)));
     fflush(stdout);
 
     Drop_Mold(mo);
@@ -188,20 +188,20 @@ void* Probe_Core_Debug(
         }
         else if (Series_Wide(s) == sizeof(Byte)) {
             Probe_Print_Helper(p, "Byte-Size Series", file, line);
-            Binary* bin = cast(Binary*, m_cast(void*, p));
+            Blob* bin = cast(Blob*, m_cast(void*, p));
 
             // !!! Duplication of code in MF_Binary
             //
-            const bool brk = (Binary_Len(bin) > 32);
-            Binary* enbased = Encode_Base16(
-                Binary_Head(bin),
-                Binary_Len(bin),
+            const bool brk = (Blob_Len(bin) > 32);
+            Blob* enbased = Encode_Base16(
+                Blob_Head(bin),
+                Blob_Len(bin),
                 brk
             );
             Append_Unencoded(mo->series, "#{");
             Append_Utf8_Utf8(
                 mo->series,
-                cs_cast(Binary_Head(enbased)), Binary_Len(enbased)
+                cs_cast(Blob_Head(enbased)), Blob_Len(enbased)
             );
             Append_Unencoded(mo->series, "}");
             Free_Unmanaged_Series(enbased);
@@ -253,7 +253,7 @@ void* Probe_Core_Debug(
     }
 
     if (mo->start != Series_Len(mo->series))
-        printf("%s\n", s_cast(Binary_At(mo->series, mo->start)));
+        printf("%s\n", s_cast(Blob_At(mo->series, mo->start)));
     fflush(stdout);
 
     Drop_Mold(mo);

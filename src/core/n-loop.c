@@ -536,7 +536,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
               case REB_BINARY:
                 Init_Integer(
                     var,
-                    Binary_Head(cast(Binary*, les->data_ser))[les->data_idx]
+                    Blob_Head(cast(Blob*, les->data_ser))[les->data_idx]
                 );
                 if (++les->data_idx == les->data_len)
                     more_data = false;
@@ -1186,7 +1186,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
         assert(res->start <= orig_len);
         Append_Unencoded_Len(
             res->mo->series,
-            cs_cast(Binary_At(cast(Binary*, res->series), res->start)),
+            cs_cast(Blob_At(cast(Blob*, res->series), res->start)),
             orig_len - res->start
         );
 
@@ -1194,7 +1194,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
         // into it.  Revisit if this inhibits cool UTF-8 based tricks the
         // mold buffer might do otherwise.
         //
-        Series* popped = Pop_Molded_Binary(res->mo);
+        Series* popped = Pop_Molded_Blob(res->mo);
 
         assert(Series_Len(popped) <= VAL_LEN_HEAD(res->data));
         count = VAL_LEN_HEAD(res->data) - Series_Len(popped);
@@ -1342,7 +1342,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
                     Append_Unencoded_Len(
                         res->mo->series,
                         cs_cast(
-                            Binary_At(cast(Binary*, res->series), res->start)
+                            Blob_At(cast(Blob*, res->series), res->start)
                         ),
                         1
                     );

@@ -84,13 +84,13 @@ static REB_R Console_Actor(Level* level_, Value* port, Value* verb)
         //
         Value* data = CTX_VAR(ctx, STD_PORT_DATA);
         if (not Is_Binary(data))
-            Init_Binary(data, Make_Binary(OUT_BUF_SIZE));
+            Init_Binary(data, Make_Blob(OUT_BUF_SIZE));
 
-        Binary* ser = Cell_Binary(data);
+        Blob* ser = Cell_Blob(data);
         Set_Series_Len(ser, 0);
         TERM_SERIES(ser);
 
-        req->common.data = Binary_Head(ser);
+        req->common.data = Blob_Head(ser);
         req->length = SER_AVAIL(ser);
 
         OS_DO_DEVICE_SYNC(req, RDC_READ);

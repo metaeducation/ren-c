@@ -223,8 +223,8 @@ static void Encode_Utf16_Core(
 ){
     Ucs2(const*) cp = data;
 
-    Binary* bin = Make_Binary(sizeof(uint16_t) * len);
-    uint16_t* up = cast(uint16_t*, Binary_Head(bin));
+    Blob* bin = Make_Blob(sizeof(uint16_t) * len);
+    uint16_t* up = cast(uint16_t*, Blob_Head(bin));
 
     REBLEN i = 0;
     for (i = 0; i < len; ++i) {

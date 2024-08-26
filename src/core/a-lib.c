@@ -89,7 +89,7 @@ void API_rebEnterApi_internal(void) {
 //=//// SERIES-BACKED ALLOCATORS //////////////////////////////////////////=//
 //
 // These are replacements for malloc(), realloc(), and free() which use a
-// byte-sized Binary series as the backing store for the data.
+// byte-sized Blob series as the backing store for the data.
 //
 // One benefit of using a series is that it offers more options for automatic
 // memory management (such as being freed in case of a fail(), vs. leaked as
@@ -125,7 +125,7 @@ void API_rebEnterApi_internal(void) {
 //
 void *API_rebMalloc(size_t size)
 {
-    Binary* bin = cast(Binary*, Make_Series_Core(
+    Blob* bin = cast(Blob*, Make_Series_Core(
         ALIGN_SIZE // stores Series* (must be at least big enough for void*)
             + size // for the actual data capacity (may be 0...see notes)
             + 1, // for termination (even BINARY! has this, review necessity)
@@ -134,11 +134,11 @@ void *API_rebMalloc(size_t size)
             | SERIES_FLAG_ALWAYS_DYNAMIC // rebRepossess() needs bias field
     ));
 
-    Byte *ptr = Binary_Head(bin) + ALIGN_SIZE;
+    Byte *ptr = Blob_Head(bin) + ALIGN_SIZE;
 
-    Binary* *ps = (cast(Binary**, ptr) - 1);
+    Blob* *ps = (cast(Blob**, ptr) - 1);
     *ps = bin;  // save self in bytes *right before* data
-    POISON_MEMORY(ps, sizeof(Binary*));  // let ASAN catch underruns
+    POISON_MEMORY(ps, sizeof(Blob*));  // let ASAN catch underruns
 
     // !!! The data is uninitialized, and if it is turned into a BINARY! via
     // rebRepossess() before all bytes are assigned initialized, it could be
@@ -152,7 +152,7 @@ void *API_rebMalloc(size_t size)
     // promise--and leave it uninitialized so that address sanitizer notices
     // when bytes are used that haven't been assigned.
     //
-    Term_Binary_Len(bin, ALIGN_SIZE + size);
+    Term_Blob_Len(bin, ALIGN_SIZE + size);
 
     return ptr;
 }
@@ -182,12 +182,12 @@ void *API_rebRealloc(void *ptr, size_t new_size)
     if (not ptr) // C realloc() accepts null
         return rebMalloc(new_size);
 
-    Binary* *ps = cast(Binary**, ptr) - 1;
-    UNPOISON_MEMORY(ps, sizeof(Binary*)); // need to underrun to fetch `s`
+    Blob* *ps = cast(Blob**, ptr) - 1;
+    UNPOISON_MEMORY(ps, sizeof(Blob*)); // need to underrun to fetch `s`
 
-    Binary* bin = *ps;
+    Blob* bin = *ps;
 
-    REBLEN old_size = Binary_Len(bin) - ALIGN_SIZE;
+    REBLEN old_size = Blob_Len(bin) - ALIGN_SIZE;
 
     // !!! It's less efficient to create a new series with another call to
     // rebMalloc(), but simpler for the time being.  Switch to do this with
@@ -211,10 +211,10 @@ void API_rebFree(void *ptr)
     if (not ptr)
         return;
 
-    Series* *ps = cast(Series**, ptr) - 1;
-    UNPOISON_MEMORY(ps, sizeof(Series*)); // need to underrun to fetch `s`
+    Blob* *ps = cast(Blob**, ptr) - 1;
+    UNPOISON_MEMORY(ps, sizeof(Blob*)); // need to underrun to fetch `s`
 
-    Series* s = *ps;
+    Blob* s = *ps;
     if (s->header.bits & NODE_FLAG_CELL) {
         rebJumps(
             "PANIC [",
@@ -247,7 +247,7 @@ void API_rebFree(void *ptr)
 // point, as failure to do so will mean reads crash the interpreter.  See
 // remarks in rebMalloc() about the issue, and possibly doing zero fills.
 //
-// !!! It might seem tempting to use (Binary_Len(s) - ALIGN_SIZE).  However,
+// !!! It might seem tempting to use (Blob_Len(s) - ALIGN_SIZE).  However,
 // some routines make allocations bigger than they ultimately need and do not
 // realloc() before converting the memory to a series...rebInflate() and
 // rebDeflate() do this.  So a version passing the size will be necessary,
@@ -256,13 +256,13 @@ void API_rebFree(void *ptr)
 //
 RebolValue* API_rebRepossess(void *ptr, size_t size)
 {
-    Binary* *ps = cast(Binary**, ptr) - 1;
-    UNPOISON_MEMORY(ps, sizeof(Binary*));  // need to underrun to fetch `s`
+    Blob* *ps = cast(Blob**, ptr) - 1;
+    UNPOISON_MEMORY(ps, sizeof(Blob*));  // need to underrun to fetch `s`
 
-    Binary* bin = *ps;
+    Blob* bin = *ps;
     assert(not Is_Series_Managed(bin));
 
-    if (size > Binary_Len(bin) - ALIGN_SIZE)
+    if (size > Blob_Len(bin) - ALIGN_SIZE)
         fail ("Attempt to rebRepossess() more than rebMalloc() capacity");
 
     assert(GET_SER_FLAG(bin, SERIES_FLAG_DONT_RELOCATE));
@@ -282,13 +282,13 @@ RebolValue* API_rebRepossess(void *ptr, size_t size)
         // Data is in Stub node itself, no bias.  Just slide the bytes down.
         //
         memmove( // src overlaps destination, can't use memcpy()
-            Binary_Head(bin),
-            Binary_Head(bin) + ALIGN_SIZE,
+            Blob_Head(bin),
+            Blob_Head(bin) + ALIGN_SIZE,
             size
         );
     }
 
-    Term_Binary_Len(bin, size);
+    Term_Blob_Len(bin, size);
     return Init_Binary(Alloc_Value(), bin);
 }
 
@@ -1072,10 +1072,10 @@ size_t API_rebSpellInto(
     REBSIZ utf8_size;
     if (ANY_STRING(v)) {
         REBSIZ offset;
-        Binary* temp = Temp_UTF8_At_Managed(
+        Blob* temp = Temp_UTF8_At_Managed(
             &offset, &utf8_size, v, VAL_LEN_AT(v)
         );
-        utf8 = cs_cast(Binary_At(temp, offset));
+        utf8 = cs_cast(Blob_At(temp, offset));
     }
     else {
         assert(ANY_WORD(v));
@@ -1282,9 +1282,9 @@ unsigned char *API_rebBytes(
 //
 RebolValue* API_rebBinary(const void *bytes, size_t size)
 {
-    Binary* bin = Make_Binary(size);
-    memcpy(Binary_Head(bin), bytes, size);
-    Term_Binary_Len(bin, size);
+    Blob* bin = Make_Blob(size);
+    memcpy(Blob_Head(bin), bytes, size);
+    Term_Blob_Len(bin, size);
 
     return Init_Binary(Alloc_Value(), bin);
 }

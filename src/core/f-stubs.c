@@ -295,7 +295,7 @@ Value* Init_Any_Series_At_Core(
 
     // !!! Binaries are zero-terminated in modern Ren-C, so they can alias
     // as TEXT! if they are valid UTF-8.  That is not possible in this older
-    // branch where strings are Ucs2(*).  But note the original Make_Binary()
+    // branch where strings are Ucs2(*).  But note the original Make_Blob()
     // comment from the open source release read:
     //
     //     Make a binary string series. For byte, C, and UTF8 strings.

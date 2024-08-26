@@ -319,7 +319,7 @@ Series* Make_Set_Operation_Series(
             }
         } while (i);
 
-        out_ser = Pop_Molded_Binary(mo);
+        out_ser = Pop_Molded_Blob(mo);
     }
 
     return out_ser;

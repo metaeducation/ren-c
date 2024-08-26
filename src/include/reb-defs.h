@@ -140,7 +140,7 @@ typedef struct StubStruct Stub;
 typedef Stub Series;
 
 #if CPLUSPLUS_11
-    struct Binary;
+    struct Blob;
     struct Symbol;
     struct String;
 
@@ -150,7 +150,7 @@ typedef Stub Series;
     struct REBACT;
     struct REBMAP;
 #else
-    typedef Series Binary;
+    typedef Series Blob;
     typedef Series Symbol;
     typedef Series String;
 

@@ -83,7 +83,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         //
         REBSIZ offset;
         REBSIZ size;
-        Binary* temp = Temp_UTF8_At_Managed(
+        Blob* temp = Temp_UTF8_At_Managed(
             &offset, &size, arg, VAL_LEN_AT(arg)
         );
         PUSH_GC_GUARD(temp);
@@ -91,7 +91,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         Init_Any_Array(
             out,
             kind,
-            Scan_UTF8_Managed(filename, Binary_At(temp, offset), size)
+            Scan_UTF8_Managed(filename, Blob_At(temp, offset), size)
         );
         DROP_GC_GUARD(temp);
         return out;

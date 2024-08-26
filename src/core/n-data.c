@@ -1073,13 +1073,13 @@ DECLARE_NATIVE(as)
 
             REBSIZ utf8_size;
             REBSIZ offset;
-            Binary* temp = Temp_UTF8_At_Managed(
+            Blob* temp = Temp_UTF8_At_Managed(
                 &offset, &utf8_size, v, VAL_LEN_AT(v)
             );
             return Init_Any_Word(
                 OUT,
                 new_kind,
-                Intern_UTF8_Managed(Binary_At(temp, offset), utf8_size)
+                Intern_UTF8_Managed(Blob_At(temp, offset), utf8_size)
             );
         }
 
@@ -1117,7 +1117,7 @@ DECLARE_NATIVE(as)
         }
 
         if (ANY_STRING(v)) {
-            Binary* bin = Make_Utf8_From_Cell_String_At_Limit(v, VAL_LEN_AT(v));
+            Blob* bin = Make_Utf8_From_Cell_String_At_Limit(v, VAL_LEN_AT(v));
 
             // !!! Making a binary out of a UCS-2 encoded string currently
             // frees the string data if it's mutable, and if that's not

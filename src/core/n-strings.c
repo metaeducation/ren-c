@@ -219,10 +219,10 @@ DECLARE_NATIVE(checksum)
             if (digests[i].sym != sym)
                 continue;
 
-            Binary* digest = Make_Binary(digests[i].len + 1);
+            Blob* digest = Make_Blob(digests[i].len + 1);
 
             if (not REF(key))
-                digests[i].digest(data, len, Binary_Head(digest));
+                digests[i].digest(data, len, Blob_Head(digest));
             else {
                 Value* key = ARG(key_value);
 
@@ -240,11 +240,11 @@ DECLARE_NATIVE(checksum)
                     assert(Is_Text(key));
 
                     REBSIZ offset;
-                    Binary* temp = Temp_UTF8_At_Managed(
+                    Blob* temp = Temp_UTF8_At_Managed(
                         &offset, &keylen, key, VAL_LEN_AT(key)
                     );
                     PUSH_GC_GUARD(temp);
-                    keycp = Binary_At(temp, offset);
+                    keycp = Blob_At(temp, offset);
                 }
 
                 if (keylen > blocklen) {
@@ -275,12 +275,12 @@ DECLARE_NATIVE(checksum)
                 digests[i].init(ctx);
                 digests[i].update(ctx,opad,blocklen);
                 digests[i].update(ctx,tmpdigest,digests[i].len);
-                digests[i].final(Binary_Head(digest),ctx);
+                digests[i].final(Blob_Head(digest),ctx);
 
                 FREE_N(char, digests[i].ctxsize(), ctx);
             }
 
-            Term_Binary_Len(digest, digests[i].len);
+            Term_Blob_Len(digest, digests[i].len);
             return Init_Binary(OUT, digest);
         }
 
@@ -339,8 +339,8 @@ DECLARE_NATIVE(deflate)
     }
     else {
         REBSIZ offset;
-        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, data, len);
-        bp = Binary_At(temp, offset);
+        Blob* temp = Temp_UTF8_At_Managed(&offset, &size, data, len);
+        bp = Blob_At(temp, offset);
     }
 
     Symbol* envelope;
@@ -458,7 +458,7 @@ DECLARE_NATIVE(debase)
 
     REBSIZ offset;
     REBSIZ size;
-    Binary* temp = Temp_UTF8_At_Managed(
+    Blob* temp = Temp_UTF8_At_Managed(
         &offset, &size, ARG(value), VAL_LEN_AT(ARG(value))
     );
 
@@ -468,7 +468,7 @@ DECLARE_NATIVE(debase)
     else
         base = 64;
 
-    if (!Decode_Binary(OUT, Binary_At(temp, offset), size, base, 0))
+    if (!Decode_Binary(OUT, Blob_At(temp, offset), size, base, 0))
         fail (Error_Invalid_Data_Raw(ARG(value)));
 
     return OUT;
@@ -510,11 +510,11 @@ DECLARE_NATIVE(enbase)
     else { // Convert the string to UTF-8
         assert(ANY_STRING(v));
         REBSIZ offset;
-        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
-        bp = Binary_At(temp, offset);
+        Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
+        bp = Blob_At(temp, offset);
     }
 
-    Binary* enbased;
+    Blob* enbased;
     const bool brk = false;
     switch (base) {
     case 64:
@@ -539,7 +539,7 @@ DECLARE_NATIVE(enbase)
 
     Init_Text(
         OUT,
-        Make_Sized_String_UTF8(cs_cast(Binary_Head(enbased)), Binary_Len(enbased))
+        Make_Sized_String_UTF8(cs_cast(Blob_Head(enbased)), Blob_Len(enbased))
     );
     Free_Unmanaged_Series(enbased);
 
@@ -702,7 +702,7 @@ DECLARE_NATIVE(enhex)
 
     *dp = '\0';
 
-    Set_Series_Len(mo->series, dp - Binary_Head(mo->series));
+    Set_Series_Len(mo->series, dp - Blob_Head(mo->series));
 
     return Init_Any_Series(
         OUT,
@@ -830,7 +830,7 @@ DECLARE_NATIVE(dehex)
 
     *dp = '\0';
 
-    Set_Series_Len(mo->series, dp - Binary_Head(mo->series));
+    Set_Series_Len(mo->series, dp - Blob_Head(mo->series));
 
     return Init_Any_Series(
         OUT,
@@ -1036,7 +1036,7 @@ DECLARE_NATIVE(entab)
         }
     }
 
-    Term_Binary_Len(mo->series, dp - Binary_Head(mo->series));
+    Term_Blob_Len(mo->series, dp - Blob_Head(mo->series));
 
     return Init_Any_Series(OUT, VAL_TYPE(val), Pop_Molded_String(mo));
 }
@@ -1115,7 +1115,7 @@ DECLARE_NATIVE(detab)
         dp += Encode_UTF8_Char(dp, c);
     }
 
-    Term_Binary_Len(mo->series, dp - Binary_Head(mo->series));
+    Term_Blob_Len(mo->series, dp - Blob_Head(mo->series));
 
     return Init_Any_Series(OUT, VAL_TYPE(val), Pop_Molded_String(mo));
 }

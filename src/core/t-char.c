@@ -138,7 +138,7 @@ static REBINT Math_Arg_For_Char(Value* arg, Value* verb)
 //
 void MF_Char(REB_MOLD *mo, const Cell* v, bool form)
 {
-    Binary* out = mo->series;
+    Blob* out = mo->series;
 
     bool parened = GET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
     REBUNI chr = VAL_CHAR(v);
@@ -147,21 +147,21 @@ void MF_Char(REB_MOLD *mo, const Cell* v, bool form)
 
     if (form) {
         Expand_Series_Tail(out, 4); // 4 is worst case scenario of bytes
-        tail += Encode_UTF8_Char(Binary_At(out, tail), chr);
+        tail += Encode_UTF8_Char(Blob_At(out, tail), chr);
         Set_Series_Len(out, tail);
     }
     else {
         Expand_Series_Tail(out, 10); // worst case: #"^(1234)"
 
-        Byte *bp = Binary_At(out, tail);
+        Byte *bp = Blob_At(out, tail);
         *bp++ = '#';
         *bp++ = '"';
         bp = Emit_Uni_Char(bp, chr, parened);
         *bp++ = '"';
 
-        Set_Series_Len(out, bp - Binary_Head(out));
+        Set_Series_Len(out, bp - Blob_Head(out));
     }
-    Term_Binary(out);
+    Term_Blob(out);
 }
 
 

@@ -146,12 +146,12 @@ static REB_R Transport_Actor(
             if (Is_Text(arg)) {
                 REBSIZ offset;
                 REBSIZ size;
-                Binary* temp = Temp_UTF8_At_Managed(
+                Blob* temp = Temp_UTF8_At_Managed(
                     &offset, &size, arg, VAL_LEN_AT(arg)
                 );
                 PUSH_GC_GUARD(temp);
 
-                sock->common.data = Binary_At(temp, offset);
+                sock->common.data = Blob_At(temp, offset);
                 DEVREQ_NET(sock)->remote_port =
                     Is_Integer(port_id) ? VAL_INT32(port_id) : 80;
 
@@ -283,20 +283,20 @@ static REB_R Transport_Actor(
         // Setup the read buffer (allocate a buffer if needed):
         //
         Value* port_data = CTX_VAR(ctx, STD_PORT_DATA);
-        Binary* buffer;
+        Blob* buffer;
         if (not Is_Text(port_data) and not Is_Binary(port_data)) {
-            buffer = Make_Binary(NET_BUF_SIZE);
+            buffer = Make_Blob(NET_BUF_SIZE);
             Init_Binary(port_data, buffer);
         }
         else {
-            buffer = Cell_Binary(port_data);
+            buffer = Cell_Blob(port_data);
 
             if (SER_AVAIL(buffer) < NET_BUF_SIZE/2)
                 Extend_Series(buffer, NET_BUF_SIZE);
         }
 
         sock->length = SER_AVAIL(buffer);
-        sock->common.data = Binary_Tail(buffer); // write at tail
+        sock->common.data = Blob_Tail(buffer); // write at tail
         sock->actual = 0; // actual for THIS read (not for total)
 
         Value* result = OS_DO_DEVICE(sock, RDC_READ);
@@ -359,7 +359,7 @@ static REB_R Transport_Actor(
 
         // Setup the write:
 
-        Binary* temp;
+        Blob* temp;
         if (Is_Binary(data)) {
             temp = nullptr;
             sock->common.data = Cell_Binary_At(data);
@@ -384,7 +384,7 @@ static REB_R Transport_Actor(
                 data,
                 len
             );
-            sock->common.data = Binary_At(temp, offset);
+            sock->common.data = Blob_At(temp, offset);
             sock->length = size;
 
             PUSH_GC_GUARD(temp);

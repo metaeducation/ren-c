@@ -32,7 +32,7 @@
 
 
 //
-//  Make_Binary: C
+//  Make_Blob: C
 //
 // Make a byte series of length 0 with the given capacity.  The length will
 // be increased by one in order to allow for a null terminator.  Binaries are
@@ -40,10 +40,10 @@
 // as UTF-8 data later, e.g. `as word! binary`, since it would be too late
 // to give them that capacity after-the-fact to enable this.
 //
-Binary* Make_Binary(REBLEN capacity)
+Blob* Make_Blob(REBLEN capacity)
 {
-    Binary* bin = cast(Binary*, Make_Series(capacity + 1, sizeof(Byte)));
-    Term_Binary(bin);
+    Blob* bin = cast(Blob*, Make_Series(capacity + 1, sizeof(Byte)));
+    Term_Blob(bin);
     return bin;
 }
 
@@ -67,14 +67,11 @@ String* Make_String(REBLEN capacity)
 // Create a string series from the given bytes.
 // Source is always latin-1 valid. Result is always 8bit.
 //
-Binary* Copy_Bytes(const Byte *src, REBINT len)
+Blob* Copy_Bytes(const Byte *src, REBSIZ size)
 {
-    if (len < 0)
-        len = LEN_BYTES(src);
-
-    Binary* dst = Make_Binary(len);
-    memcpy(Binary_Head(dst), src, len);
-    TERM_SEQUENCE_LEN(dst, len);
+    Blob* dst = Make_Blob(size);
+    memcpy(Blob_Head(dst), src, size);
+    TERM_SEQUENCE_LEN(dst, size);
 
     return dst;
 }
@@ -121,11 +118,11 @@ Series* Copy_String_At_Len(const Cell* src, REBINT limit)
 // Append unencoded data to a byte string, using plain memcpy().  If dst is
 // nullptr, a new byte-sized series will be created and returned.
 //
-Binary* Append_Unencoded_Len(Binary* dst, const char *src, REBLEN len)
+Blob* Append_Unencoded_Len(Blob* dst, const char *src, REBLEN len)
 {
     REBLEN tail;
     if (dst == nullptr) {
-        dst = Make_Binary(len);
+        dst = Make_Blob(len);
         tail = 0;
     }
     else {
@@ -133,7 +130,7 @@ Binary* Append_Unencoded_Len(Binary* dst, const char *src, REBLEN len)
         Expand_Series_Tail(dst, len);
     }
 
-    memcpy(Binary_At(dst, tail), src, len);
+    memcpy(Blob_At(dst, tail), src, len);
     TERM_SEQUENCE(dst);
     return dst;
 }
@@ -147,7 +144,7 @@ Binary* Append_Unencoded_Len(Binary* dst, const char *src, REBLEN len)
 //
 // !!! Should be in a header file so it can be inlined.
 //
-Binary* Append_Unencoded(Binary* dst, const char *src)
+Blob* Append_Unencoded(Blob* dst, const char *src)
 {
     return Append_Unencoded_Len(dst, src, strlen(src));
 }
@@ -178,14 +175,14 @@ String* Append_Codepoint(String* dst, REBUNI codepoint)
 //
 // Encode a codepoint onto a UTF-8 binary series.
 //
-Binary* Append_Utf8_Codepoint(Binary* dst, uint32_t codepoint)
+Blob* Append_Utf8_Codepoint(Blob* dst, uint32_t codepoint)
 {
     assert(Series_Wide(dst) == sizeof(Byte));
 
     REBLEN tail = Series_Len(dst);
     Expand_Series_Tail(dst, 4); // !!! Conservative, assume long codepoint
-    tail += Encode_UTF8_Char(Binary_At(dst, tail), codepoint); // 1 to 4 bytes
-    Term_Binary_Len(dst, tail);
+    tail += Encode_UTF8_Char(Blob_At(dst, tail), codepoint); // 1 to 4 bytes
+    Term_Blob_Len(dst, tail);
     return dst;
 }
 
@@ -215,7 +212,7 @@ String* Make_Ser_Codepoint(REBLEN codepoint)
 // !!! Currently does the same thing as Append_Unencoded_Len.  Should it
 // check the bytes to make sure they're actually UTF8?
 //
-void Append_Utf8_Utf8(Binary* dst, const char *utf8, size_t size)
+void Append_Utf8_Utf8(Blob* dst, const char *utf8, size_t size)
 {
     Append_Unencoded_Len(dst, utf8, size);
 }
@@ -228,16 +225,16 @@ void Append_Utf8_Utf8(Binary* dst, const char *utf8, size_t size)
 //
 // !!! Used only with mold series at the moment.
 //
-void Append_Utf8_String(Binary* dst, const Cell* src, REBLEN length_limit)
+void Append_Utf8_String(Blob* dst, const Cell* src, REBLEN length_limit)
 {
     REBSIZ offset;
     REBSIZ size;
-    Binary* temp = Temp_UTF8_At_Managed(&offset, &size, src, length_limit);
+    Blob* temp = Temp_UTF8_At_Managed(&offset, &size, src, length_limit);
 
-    REBLEN tail = Binary_Len(dst);
+    REBLEN tail = Blob_Len(dst);
     Expand_Series(dst, tail, size);  // tail changed too
 
-    memcpy(Binary_At(dst, tail), Binary_At(temp, offset), size);
+    memcpy(Blob_At(dst, tail), Blob_At(temp, offset), size);
 }
 
 
@@ -246,7 +243,7 @@ void Append_Utf8_String(Binary* dst, const Cell* src, REBLEN length_limit)
 //
 // Append an integer string.
 //
-void Append_Int(Binary* dst, REBINT num)
+void Append_Int(Blob* dst, REBINT num)
 {
     Byte buf[32];
 
@@ -260,7 +257,7 @@ void Append_Int(Binary* dst, REBINT num)
 //
 // Append an integer string.
 //
-void Append_Int_Pad(Binary* dst, REBINT num, REBINT digs)
+void Append_Int_Pad(Blob* dst, REBINT num, REBINT digs)
 {
     Byte buf[32];
     if (digs > 0)
@@ -363,9 +360,9 @@ String* Append_UTF8_May_Fail(
 //
 // WARNING: returns BYTE_BUF, not a copy!
 //
-Binary* Join_Binary(const Value* blk, REBINT limit)
+Blob* Join_Binary(const Value* blk, REBINT limit)
 {
-    Binary* series = BYTE_BUF;
+    Blob* series = BYTE_BUF;
 
     REBLEN tail = 0;
 
@@ -381,13 +378,13 @@ Binary* Join_Binary(const Value* blk, REBINT limit)
             if (VAL_INT64(val) > 255 || VAL_INT64(val) < 0)
                 fail (Error_Out_Of_Range(KNOWN(val)));
             Expand_Series_Tail(series, 1);
-            *Binary_At(series, tail) = (Byte)VAL_INT32(val);
+            *Blob_At(series, tail) = (Byte)VAL_INT32(val);
             break;
 
         case REB_BINARY: {
             REBLEN len = VAL_LEN_AT(val);
             Expand_Series_Tail(series, len);
-            memcpy(Binary_At(series, tail), Cell_Binary_At(val), len);
+            memcpy(Blob_At(series, tail), Cell_Binary_At(val), len);
             break; }
 
         case REB_TEXT:
@@ -402,7 +399,7 @@ Binary* Join_Binary(const Value* blk, REBINT limit)
             Set_Series_Len(
                 series,
                 tail + Encode_UTF8(
-                    Binary_At(series, tail),
+                    Blob_At(series, tail),
                     val_size,
                     Cell_String_At(val),
                     &val_len
@@ -413,7 +410,7 @@ Binary* Join_Binary(const Value* blk, REBINT limit)
         case REB_CHAR: {
             Expand_Series_Tail(series, 6);
             REBLEN len =
-                Encode_UTF8_Char(Binary_At(series, tail), VAL_CHAR(val));
+                Encode_UTF8_Char(Blob_At(series, tail), VAL_CHAR(val));
             Set_Series_Len(series, tail + len);
             break; }
 
@@ -424,7 +421,7 @@ Binary* Join_Binary(const Value* blk, REBINT limit)
         tail = Series_Len(series);
     }
 
-    *Binary_At(series, tail) = 0;
+    *Blob_At(series, tail) = 0;
 
     return series;  // SHARED FORM SERIES!
 }

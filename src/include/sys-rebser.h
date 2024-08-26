@@ -904,9 +904,9 @@ struct StubStruct {
 typedef struct StubStruct Series;
 
 #if CPLUSPLUS_11
-    struct Binary : public Series {};
-    struct String : public Series {};  // derives from Binary in main branch
-    struct Symbol : public Binary {};  // derives from String in main branch
+    struct Blob : public Series {};
+    struct String : public Series {};  // derives from Blob in main branch
+    struct Symbol : public Blob {};  // derives from String in main branch
 
     struct Array : public Series {};
 
@@ -914,7 +914,7 @@ typedef struct StubStruct Series;
     struct REBACT : public Stub {};
     struct REBMAP : public Stub {};
 #else
-    typedef Series Binary;
+    typedef Series Blob;
     typedef Series String;
     typedef Series Symbol;
 

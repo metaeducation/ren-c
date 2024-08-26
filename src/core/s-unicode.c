@@ -963,14 +963,14 @@ REBLEN Encode_UTF8(
 //
 //  Make_Utf8_From_String: C
 //
-Binary* Make_Utf8_From_String(String* string) {
+Blob* Make_Utf8_From_String(String* string) {
     assert(Is_Series_Ucs2(string));
 
     const REBUNI* data = String_Head(string);
     size_t size = Size_As_UTF8(data, String_Len(string));
-    Binary* bin = Make_Binary(size);
+    Blob* bin = Make_Blob(size);
     REBLEN len = 0;
-    Set_Series_Len(bin, Encode_UTF8(Binary_Head(bin), size, data, &len));
+    Set_Series_Len(bin, Encode_UTF8(Blob_Head(bin), size, data, &len));
     assert(Series_Len(bin) == size);
     TERM_SEQUENCE(bin);
     return bin;
@@ -982,7 +982,7 @@ Binary* Make_Utf8_From_String(String* string) {
 //
 // !!! With UTF-8 Everywhere, strings will already be in UTF-8.
 //
-Binary* Make_Utf8_From_Cell_String_At_Limit(
+Blob* Make_Utf8_From_Cell_String_At_Limit(
     const Cell* any_string,
     REBLEN len
 ){
@@ -990,8 +990,8 @@ Binary* Make_Utf8_From_Cell_String_At_Limit(
 
     const REBUNI *data = Cell_String_At(any_string);
     size_t size = Size_As_UTF8(data, len);
-    Binary* bin = Make_Binary(size);
-    Set_Series_Len(bin, Encode_UTF8(Binary_Head(bin), size, data, &len));
+    Blob* bin = Make_Blob(size);
+    Set_Series_Len(bin, Encode_UTF8(Blob_Head(bin), size, data, &len));
     assert(Series_Len(bin) == size);
     TERM_SEQUENCE(bin);
     return bin;

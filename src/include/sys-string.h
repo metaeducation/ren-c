@@ -53,7 +53,7 @@
 //
 
 INLINE const char *Symbol_Head(Symbol* str) {
-    return cs_cast(Binary_Head(str));
+    return cs_cast(Blob_Head(str));
 }
 
 INLINE Symbol* Canon_Symbol(Symbol* str) {

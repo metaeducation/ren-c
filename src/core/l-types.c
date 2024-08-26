@@ -1306,9 +1306,9 @@ DECLARE_NATIVE(scan_net_header)
 
     Value* header = ARG(header);
     REBLEN index = VAL_INDEX(header);
-    Binary* utf8 = Cell_Binary(header);
+    Blob* utf8 = Cell_Blob(header);
 
-    Byte *cp = Binary_Head(utf8) + index;
+    Byte *cp = Blob_Head(utf8) + index;
 
     while (IS_LEX_ANY_SPACE(*cp)) cp++; // skip white space
 

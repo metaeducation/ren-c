@@ -614,10 +614,10 @@ DECLARE_NATIVE(sha256)
     REBSIZ size;
     if (Is_Text(data)) {
         REBSIZ offset;
-        Binary* temp = Temp_UTF8_At_Managed(
+        Blob* temp = Temp_UTF8_At_Managed(
             &offset, &size, data, VAL_LEN_AT(data)
         );
-        bp = Binary_At(temp, offset);
+        bp = Blob_At(temp, offset);
     }
     else {
         assert(Is_Binary(data));

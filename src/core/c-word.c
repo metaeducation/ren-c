@@ -285,8 +285,8 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
     // The incoming string isn't always null terminated, e.g. if you are
     // interning `foo` in `foo: bar + 1` it would be colon-terminated.
     //
-    memcpy(Binary_Head(intern), utf8, size);
-    Term_Binary_Len(intern, size);
+    memcpy(Blob_Head(intern), utf8, size);
+    Term_Blob_Len(intern, size);
 
     if (not canon) { // no canon found, so this interning must become canon
         if (deleted_slot) {

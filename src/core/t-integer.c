@@ -641,10 +641,10 @@ DECLARE_NATIVE(enbin)
     // with BigNum conversions as well).  Improvements welcome, but trying
     // to be correct for starters...
 
-    Binary* bin = Make_Binary(num_bytes);
+    Blob* bin = Make_Blob(num_bytes);
 
     REBINT delta = little ? 1 : -1;
-    Byte* bp = Binary_Head(bin);
+    Byte* bp = Blob_Head(bin);
     if (not little)
         bp += num_bytes - 1;  // go backwards for big endian
 
@@ -691,7 +691,7 @@ DECLARE_NATIVE(enbin)
             "]"
         );
 
-    Term_Binary_Len(bin, num_bytes);
+    Term_Blob_Len(bin, num_bytes);
     return Init_Binary(OUT, bin);
 }
 

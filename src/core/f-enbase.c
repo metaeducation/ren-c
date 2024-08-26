@@ -175,17 +175,17 @@ static const Byte Enbase64[64] =
 //
 //  Decode_Base2: C
 //
-static Binary* Decode_Base2(const Byte **src, REBLEN len, Byte delim)
+static Blob* Decode_Base2(const Byte **src, REBLEN len, Byte delim)
 {
     Byte *bp;
     const Byte *cp;
     REBLEN count = 0;
     REBLEN accum = 0;
     Byte lex;
-    Binary* ser;
+    Blob* ser;
 
-    ser = Make_Binary(len >> 3);
-    bp = Binary_Head(ser);
+    ser = Make_Blob(len >> 3);
+    bp = Blob_Head(ser);
     cp = *src;
 
     for (; len > 0; cp++, len--) {
@@ -211,7 +211,7 @@ static Binary* Decode_Base2(const Byte **src, REBLEN len, Byte delim)
     if (count) goto err; // improper modulus
 
     *bp = 0;
-    Set_Series_Len(ser, bp - Binary_Head(ser));
+    Set_Series_Len(ser, bp - Blob_Head(ser));
     Assert_Series_Term(ser);
     return ser;
 
@@ -225,7 +225,7 @@ err:
 //
 //  Decode_Base16: C
 //
-static Binary* Decode_Base16(const Byte **src, REBLEN len, Byte delim)
+static Blob* Decode_Base16(const Byte **src, REBLEN len, Byte delim)
 {
     Byte *bp;
     const Byte *cp;
@@ -233,10 +233,10 @@ static Binary* Decode_Base16(const Byte **src, REBLEN len, Byte delim)
     REBLEN accum = 0;
     Byte lex;
     REBINT val;
-    Binary* ser;
+    Blob* ser;
 
-    ser = Make_Binary(len / 2);
-    bp = Binary_Head(ser);
+    ser = Make_Blob(len / 2);
+    bp = Blob_Head(ser);
     cp = *src;
 
     for (; len > 0; cp++, len--) {
@@ -256,7 +256,7 @@ static Binary* Decode_Base16(const Byte **src, REBLEN len, Byte delim)
     if (count & 1) goto err; // improper modulus
 
     *bp = 0;
-    Set_Series_Len(ser, bp - Binary_Head(ser));
+    Set_Series_Len(ser, bp - Blob_Head(ser));
     Assert_Series_Term(ser);
     return ser;
 
@@ -270,19 +270,19 @@ err:
 //
 //  Decode_Base64: C
 //
-static Binary* Decode_Base64(const Byte **src, REBLEN len, Byte delim)
+static Blob* Decode_Base64(const Byte **src, REBLEN len, Byte delim)
 {
     Byte *bp;
     const Byte *cp;
     REBLEN flip = 0;
     REBLEN accum = 0;
     Byte lex;
-    Binary* ser;
+    Blob* ser;
 
     // Allocate buffer large enough to hold result:
     // Accounts for e bytes decoding into 3 bytes.
-    ser = Make_Binary(((len + 3) * 3) / 4);
-    bp = Binary_Head(ser);
+    ser = Make_Blob(((len + 3) * 3) / 4);
+    bp = Blob_Head(ser);
     cp = *src;
 
     for (; len > 0; cp++, len--) {
@@ -334,7 +334,7 @@ static Binary* Decode_Base64(const Byte **src, REBLEN len, Byte delim)
     if (flip) goto err;
 
     *bp = 0;
-    Set_Series_Len(ser, bp - Binary_Head(ser));
+    Set_Series_Len(ser, bp - Blob_Head(ser));
     Assert_Series_Term(ser);
     return ser;
 
@@ -357,7 +357,7 @@ const Byte *Decode_Binary(
     REBINT base,
     Byte delim
 ) {
-    Binary* ser = 0;
+    Blob* ser = 0;
 
     switch (base) {
     case 64:
@@ -384,12 +384,12 @@ const Byte *Decode_Binary(
 //
 // Base2 encode a range of arbitrary bytes into a byte-sized ASCII series.
 //
-Binary* Encode_Base2(const Byte *src, REBLEN len, bool brk)
+Blob* Encode_Base2(const Byte *src, REBLEN len, bool brk)
 {
     // Account for binary digits, lines, and extra syntax ("slop factor")
     //
-    Binary* s = Make_Binary(8 * len + 2 * (len / 8) + 4);
-    Byte *dest = Binary_Head(s);
+    Blob* s = Make_Blob(8 * len + 2 * (len / 8) + 4);
+    Byte *dest = Blob_Head(s);
 
     if (len == 0) { // return empty series if input was zero length
         TERM_SEQUENCE_LEN(s, 0);
@@ -416,7 +416,7 @@ Binary* Encode_Base2(const Byte *src, REBLEN len, bool brk)
 
     *dest = '\0';
 
-    Set_Series_Len(s, cast(REBLEN, dest - Binary_Head(s)));
+    Set_Series_Len(s, cast(REBLEN, dest - Blob_Head(s)));
     Assert_Series_Term(s);
     return s;
 }
@@ -427,12 +427,12 @@ Binary* Encode_Base2(const Byte *src, REBLEN len, bool brk)
 //
 // Base16 encode a range of arbitrary bytes into a byte-sized ASCII series.
 //
-Binary* Encode_Base16(const Byte *src, REBLEN len, bool brk)
+Blob* Encode_Base16(const Byte *src, REBLEN len, bool brk)
 {
     // Account for hex digits, lines, and extra syntax ("slop factor")
     //
-    Binary* s = Make_Binary(len * 2 + len / 32 + 32);
-    Byte *dest = Binary_Head(s);
+    Blob* s = Make_Blob(len * 2 + len / 32 + 32);
+    Byte *dest = Blob_Head(s);
 
     if (len == 0) { // return empty series if input was zero length
         TERM_SEQUENCE_LEN(s, 0);
@@ -454,7 +454,7 @@ Binary* Encode_Base16(const Byte *src, REBLEN len, bool brk)
 
     *dest = '\0';
 
-    Set_Series_Len(s, cast(REBLEN, dest - Binary_Head(s)));
+    Set_Series_Len(s, cast(REBLEN, dest - Blob_Head(s)));
     Assert_Series_Term(s);
     return s;
 }
@@ -465,12 +465,12 @@ Binary* Encode_Base16(const Byte *src, REBLEN len, bool brk)
 //
 // Base64 encode a range of arbitrary bytes into a byte-sized ASCII series.
 //
-Binary* Encode_Base64(const Byte *src, REBLEN len, bool brk)
+Blob* Encode_Base64(const Byte *src, REBLEN len, bool brk)
 {
     // Account for base64 digits, lines, and extra syntax ("slop factor")
     //
-    Binary* s = Make_Binary(4 * len / 3 + 2 * (len / 32) + 5);
-    Byte *dest = Binary_Head(s);
+    Blob* s = Make_Blob(4 * len / 3 + 2 * (len / 32) + 5);
+    Byte *dest = Blob_Head(s);
 
     if (len == 0) { // return empty series if input was zero length
         TERM_SEQUENCE_LEN(s, 0);
@@ -517,7 +517,7 @@ Binary* Encode_Base64(const Byte *src, REBLEN len, bool brk)
 
     *dest = '\0';
 
-    Set_Series_Len(s, cast(REBLEN, dest - Binary_Head(s)));
+    Set_Series_Len(s, cast(REBLEN, dest - Blob_Head(s)));
     Assert_Series_Term(s);
     return s;
 }

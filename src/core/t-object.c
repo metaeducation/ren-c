@@ -591,7 +591,7 @@ REBCTX *Copy_Context_Core_Managed(REBCTX *original, REBU64 types)
 //
 void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 {
-    Binary* out = mo->series;
+    Blob* out = mo->series;
 
     REBCTX *c = VAL_CONTEXT(v);
 

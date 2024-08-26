@@ -918,7 +918,7 @@ static void Init_Root_Vars(void)
     Root_Empty_Text = Init_Text(Alloc_Value(), nulled_uni);
     Ensure_Value_Immutable(Root_Empty_Text, locker);
 
-    Root_Empty_Binary = Init_Binary(Alloc_Value(), Make_Binary(0));
+    Root_Empty_Binary = Init_Binary(Alloc_Value(), Make_Blob(0));
     Ensure_Value_Immutable(Root_Empty_Binary, locker);
 
     Root_Space_Char = rebChar(' ');

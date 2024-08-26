@@ -35,40 +35,40 @@
 
 
 //
-// BIN_XXX: Binary or byte-size string seres macros
+// BIN_XXX: Blob or byte-size string seres macros
 //
 
-INLINE Binary* Cell_Binary(const Cell* cell) {
+INLINE Blob* Cell_Blob(const Cell* cell) {
     assert(Is_Binary(cell));
     Series* s = VAL_SERIES(cell);
     assert(Series_Wide(s) == 1);
-    return cast(Binary*, s);
+    return cast(Blob*, s);
 }
 
-INLINE Byte* Binary_At(Binary* bin, REBLEN n)
+INLINE Byte* Blob_At(Blob* bin, REBLEN n)
   { return Series_At(Byte, bin, n); }
 
-INLINE Byte* Binary_Head(Binary* bin)
+INLINE Byte* Blob_Head(Blob* bin)
   { return Series_Head(Byte, bin); }
 
-INLINE Byte* Binary_Tail(Binary* bin)
+INLINE Byte* Blob_Tail(Blob* bin)
   { return Series_Tail(Byte, bin); }
 
-INLINE Byte* Binary_Last(Binary* bin)
+INLINE Byte* Blob_Last(Blob* bin)
   { return Series_Last(Byte, bin); }
 
-INLINE REBLEN Binary_Len(Binary* bin) {
+INLINE REBLEN Blob_Len(Blob* bin) {
     assert(BYTE_SIZE(bin));
     return Series_Len(bin);
 }
 
-INLINE void Term_Binary(Binary* bin) {
-    Binary_Head(bin)[Series_Len(bin)] = 0;
+INLINE void Term_Blob(Blob* bin) {
+    Blob_Head(bin)[Series_Len(bin)] = 0;
 }
 
-INLINE void Term_Binary_Len(Binary* bin, REBLEN len) {
+INLINE void Term_Blob_Len(Blob* bin, REBLEN len) {
     Set_Series_Len(bin, len);
-    Binary_Head(bin)[len] = 0;
+    Blob_Head(bin)[len] = 0;
 }
 
 
@@ -79,25 +79,25 @@ INLINE void Term_Binary_Len(Binary* bin, REBLEN len) {
 //=////////////////////////////////////////////////////////////////////////=//
 
 #define Cell_Binary_Head(v) \
-    Binary_Head(Cell_Binary(v))
+    Blob_Head(Cell_Blob(v))
 
 INLINE Byte *Cell_Binary_At(const Cell* v) {
-    return Binary_At(Cell_Binary(v), VAL_INDEX(v));
+    return Blob_At(Cell_Blob(v), VAL_INDEX(v));
 }
 
 INLINE Byte *Cell_Binary_Tail(const Cell* v) {
-    return Series_Tail(Byte, Cell_Binary(v));
+    return Series_Tail(Byte, Cell_Blob(v));
 }
 
 // !!! RE: Cell_Binary_At_Head() see remarks on Cell_Array_At_Head()
 //
 #define Cell_Binary_At_Head(v,n) \
-    Binary_At(Cell_Binary(v), (n))
+    Blob_At(Cell_Blob(v), (n))
 
 #define VAL_BYTE_SIZE(v) \
     BYTE_SIZE(VAL_SERIES(v))
 
 // defined as an inline to avoid side effects in:
 
-#define Init_Binary(out, bin) \
-    Init_Any_Series((out), REB_BINARY, (bin))
+#define Init_Binary(out, blob) \
+    Init_Any_Series((out), REB_BINARY, (blob))

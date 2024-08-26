@@ -252,7 +252,7 @@ void Debug_Values(const Cell* value, REBLEN count, REBLEN limit)
             SET_ANY_CHAR(mo->series, i2, '\0');
 
             Debug_String_No_Newline(
-                Binary_At(mo->series, mo->start), i2 - mo->start
+                Blob_At(mo->series, mo->start), i2 - mo->start
             );
 
             Drop_Mold(mo);
@@ -295,7 +295,7 @@ void Debug_Buf_No_Newline(const char *fmt, va_list *vaptr)
     Form_Args_Core(mo, fmt, vaptr);
 
     Debug_String_No_Newline(
-        Binary_At(mo->series, mo->start), Series_Len(mo->series) - mo->start
+        Blob_At(mo->series, mo->start), Series_Len(mo->series) - mo->start
     );
 
     Drop_Mold(mo);
@@ -467,7 +467,7 @@ void Form_Args_Core(REB_MOLD *mo, const char *fmt, va_list *vaptr)
     REBINT pad;
     Byte desc;
     Byte padding;
-    Binary* ser = mo->series;
+    Blob* ser = mo->series;
     Byte buf[MAX_SCAN_DECIMAL];
 
     DECLARE_VALUE (value);
@@ -600,7 +600,7 @@ void Form_Args(REB_MOLD *mo, const char *fmt, ...)
 //
 void Startup_Raw_Print(void)
 {
-    TG_Byte_Buf = Make_Binary(1000);
+    TG_Byte_Buf = Make_Blob(1000);
 }
 
 

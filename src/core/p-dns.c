@@ -99,12 +99,12 @@ static REB_R DNS_Actor(Level* level_, Value* port, Value* verb)
         else if (Is_Text(arg)) {
             REBSIZ offset;
             REBSIZ size;
-            Binary* temp = Temp_UTF8_At_Managed(
+            Blob* temp = Temp_UTF8_At_Managed(
                 &offset, &size, arg, VAL_LEN_AT(arg)
             );
 
             DECLARE_VALUE (tmp);
-            if (Scan_Tuple(tmp, Binary_At(temp, offset), size) != nullptr) {
+            if (Scan_Tuple(tmp, Blob_At(temp, offset), size) != nullptr) {
                 sock->modes |= RST_REVERSE;
                 memcpy(&(DEVREQ_NET(sock)->remote_ip), VAL_TUPLE(tmp), 4);
             }
