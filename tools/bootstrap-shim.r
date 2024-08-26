@@ -238,19 +238,6 @@ split-path: func3 [] [
     fail/where "Use SPLIT-PATH3 in Bootstrap (no multi-return)" 'return
 ]
 
-transcode: func3 [source /next3 next3-arg [word!] <local> pos value] [
-    if not next3 [
-        return lib/transcode source
-    ]
-    value: lib/transcode/next source 'pos
-    set next3-arg value
-    if not value [
-        return null
-    ]
-    return pos
-]
-
-
 === "THESE REMAPPINGS ARE OKAY TO USE IN THE BOOTSTRAP SHIM ITSELF" ===
 
 ; Done is used as a signal in the boot files that the expected end is reached.
