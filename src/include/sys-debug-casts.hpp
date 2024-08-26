@@ -42,9 +42,9 @@
 // like Valgrind or Address Sanitizer.  While it's not "written in C", C++ is
 // a superset of C.  So without really understanding the C++ bits, you can
 // still inject arbitrary C code here to run whenever a `cast(type, value)`
-// operation executes.  This means that if you have a datatype like Series or
+// operation executes.  This means that if you have a datatype like Flex or
 // Cell, you can do runtime validation of the bits in these types when
-// `cast(Series*, ptr)` or `cast(Cell*, ptr)` happen.  That's an extremely
+// `cast(Flex*, ptr)` or `cast(Cell*, ptr)` happen.  That's an extremely
 // useful hook!
 //
 // Beyond that, you can even stop certain casts from happening at all at
@@ -99,8 +99,8 @@
 //    check of it to cause the enable_if to work correctly.  <shrug>
 //
 // 4. By default, if you upcast (e.g. casting from a derived class like Array
-//    to a base class like series), we do this with a zero-cost constexpr
-//    that does the cast for free.  This is because every Array is-a Series,
+//    to a base class like Flex), we do this with a zero-cost constexpr
+//    that does the cast for free.  This is because every Array is-a Flex,
 //    and if you have an Array* in your hand we can assume you got it through
 //    a means that you knew it was valid.  But if you downcast (e.g. from a
 //    Node* to a Context*), then it's a riskier operation, so validation
@@ -182,30 +182,30 @@ struct cast_helper<V*,Node*&&> {  // [5]
 };
 
 
-//=//// cast(Series*, ...) ////////////////////////////////////////////////=//
+//=//// cast(Flex*, ...) //////////////////////////////////////////////////=//
 
 template<typename V>  // [1]
-struct cast_helper<V*,const Series*> {  // [2]
+struct cast_helper<V*,const Flex*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
     template<typename V_ = V>
     static constexpr typename std::enable_if<
         std::is_same<V_, V>::value  // [3]
-        and std::is_base_of<Series, V0>::value,  // upcasting, no check [4]
-    const Series*>::type convert(V_* p) {
-        return reinterpret_cast<const Series*>(p);
+        and std::is_base_of<Flex, V0>::value,  // upcasting, no check [4]
+    const Flex*>::type convert(V_* p) {
+        return reinterpret_cast<const Flex*>(p);
     }
 
     template<typename V_ = V>
     static typename std::enable_if<
         std::is_same<V_, V>::value  // [3]
-        and not std::is_base_of<Series, V0>::value,  // downcasting, check [4]
-    const Series*>::type convert(V_* p) {
+        and not std::is_base_of<Flex, V0>::value,  // downcasting, check [4]
+    const Flex*>::type convert(V_* p) {
         static_assert(
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value
                 or std::is_same<V0, Node>::value,
-            "downcast(Series*) works on [void* Byte* Node*]"
+            "downcast(Flex*) works on [void* Byte* Node*]"
         );
 
         if (not p)
@@ -219,24 +219,24 @@ struct cast_helper<V*,const Series*> {  // [2]
             panic (p);
         }
 
-        return reinterpret_cast<const Series*>(p);
+        return reinterpret_cast<const Flex*>(p);
     }
 };
 
 template<typename V>
-struct cast_helper<V*,Series*> {
-    static constexpr Series* convert(V* p) {
+struct cast_helper<V*,Flex*> {
+    static constexpr Flex* convert(V* p) {
         static_assert(not std::is_const<V>::value, "casting discards const");
-        return const_cast<Series*>(
-            cast_helper<decltype(rr_cast(p)), const Series*>::convert(rr_cast(p))
-            /*cast(const Series*, rr_cast(p))*/);
+        return const_cast<Flex*>(
+            cast_helper<decltype(rr_cast(p)), const Flex*>::convert(rr_cast(p))
+            /*cast(const Flex*, rr_cast(p))*/);
     }
 };
 
 template<typename V>
-struct cast_helper<V*,Series*&&> {  // [5]
-    static constexpr Series* convert(V* p)
-      { return const_cast<Series*>(cast(Series*, p)); }  // cast away ref
+struct cast_helper<V*,Flex*&&> {  // [5]
+    static constexpr Flex* convert(V* p)
+      { return const_cast<Flex*>(cast(Flex*, p)); }  // cast away ref
 };
 
 
@@ -263,8 +263,8 @@ struct cast_helper<V*,const Binary*> {  // [2]
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value
                 or std::is_same<V0, Node>::value
-                or std::is_same<V0, Series>::value,
-            "downcast(Series*) works on [void* Byte* Node* Series*]"
+                or std::is_same<V0, Flex>::value,
+            "downcast(Flex*) works on [void* Byte* Node* Flex*]"
         );
 
         if (not p)
@@ -278,7 +278,7 @@ struct cast_helper<V*,const Binary*> {  // [2]
             panic (p);
         }
 
-        // assert series width here (trouble with Series_Wide() from within
+        // assert Flex width here (trouble with Flex_Wide() from within
         // cast at the moment)
 
         return reinterpret_cast<const Binary*>(p);
@@ -305,9 +305,9 @@ struct cast_helper<V*,const String*> {  // [2]
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value
                 or std::is_same<V0, Node>::value
-                or std::is_same<V0, Series>::value
+                or std::is_same<V0, Flex>::value
                 or std::is_same<V0, Binary>::value,
-            "downcast(String*) works on [void* Byte* Node* Series* Binary*]"
+            "downcast(String*) works on [void* Byte* Node* Flex* Binary*]"
         );
 
         if (not p)
@@ -351,23 +351,24 @@ struct cast_helper<V*,const Symbol*> {  // [2]
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value
                 or std::is_same<V0, Node>::value
-                or std::is_same<V0, Series>::value
+                or std::is_same<V0, Flex>::value
                 or std::is_same<V0, Binary>::value
                 or std::is_same<V0, String>::value,
-            "downcast(Symbol*) works on [void* Byte* Node* Series* Binary* String*]"
+            "downcast(Symbol*) works on"
+                " [void* Byte* Node* Flex* Binary* String*]"
         );
 
         if (not p)
             return nullptr;
 
         if (((reinterpret_cast<const Stub*>(p)->leader.bits & (
-            SERIES_MASK_SYMBOL
+            FLEX_MASK_SYMBOL
                 | NODE_FLAG_FREE
                 | NODE_FLAG_CELL
                 | FLAG_FLAVOR_BYTE(255)
         ))
         ) !=
-            SERIES_MASK_SYMBOL
+            FLEX_MASK_SYMBOL
         ){
             panic (p);
         }
@@ -420,9 +421,9 @@ struct cast_helper<V*,const Array*> {  // [2]
         static_assert(
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value
-                or std::is_same<V0, Series>::value
+                or std::is_same<V0, Flex>::value
                 or std::is_same<V0, Node>::value,
-            "downcast(Array*) works on [void* Byte* Node* Series*]"
+            "downcast(Array*) works on [void* Byte* Node* Flex*]"
         );
 
         if (not p)
@@ -464,21 +465,21 @@ struct cast_helper<V*,Context*> {  // [2]
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value
                 or std::is_same<V0, Node>::value
-                or std::is_same<V0, Series>::value
+                or std::is_same<V0, Flex>::value
                 or std::is_same<V0, Array>::value,
-            "downcast(Context*) works on [void* Byte* Node* Series* Array*]"
+            "downcast(Context*) works on [void* Byte* Node* Flex* Array*]"
         );
 
         if (not p)
             return nullptr;
 
         if ((reinterpret_cast<Stub*>(p)->leader.bits & (
-            SERIES_MASK_VARLIST
+            FLEX_MASK_VARLIST
                 | NODE_FLAG_FREE
                 | NODE_FLAG_CELL
                 | FLAG_FLAVOR_BYTE(255)
         )) !=
-            SERIES_MASK_VARLIST
+            FLEX_MASK_VARLIST
         ){
             panic (p);
         }
@@ -518,9 +519,9 @@ struct cast_helper<V*,Action*> {  // [2]
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value
                 or std::is_same<V0, Node>::value
-                or std::is_same<V0, Series>::value
+                or std::is_same<V0, Flex>::value
                 or std::is_same<V0, Array>::value,
-            "downcast(Action*) works on [void* Byte* Node* Series* Array*]"
+            "downcast(Action*) works on [void* Byte* Node* Flex* Array*]"
         );
 
         if (not p)
@@ -530,25 +531,25 @@ struct cast_helper<V*,Action*> {  // [2]
 
         if (FLAVOR_BYTE(stub) == FLAVOR_DETAILS) {
             if ((stub->leader.bits & (
-                SERIES_MASK_DETAILS
+                FLEX_MASK_DETAILS
                     | NODE_FLAG_FREE
                     | NODE_FLAG_CELL
                     | FLAG_FLAVOR_BYTE(255)
             )) !=
-                SERIES_MASK_DETAILS
+                FLEX_MASK_DETAILS
             ){
                 panic (p);
             }
         }
         else {
             if ((stub->leader.bits & ((
-                SERIES_MASK_VARLIST
+                FLEX_MASK_VARLIST
                     | NODE_FLAG_FREE
                     | NODE_FLAG_CELL
                     | FLAG_FLAVOR_BYTE(255)
                 )
             )) !=
-                SERIES_MASK_VARLIST
+                FLEX_MASK_VARLIST
             ){
                 panic (p);
             }

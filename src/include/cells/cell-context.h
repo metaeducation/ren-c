@@ -53,23 +53,27 @@ INLINE void INIT_VAL_FRAME_PHASE(Cell* v, Phase* phase) {
 }
 
 INLINE Phase* VAL_FRAME_PHASE(const Cell* v) {
-    Series* s = VAL_FRAME_PHASE_OR_LABEL(v);
-    if (not s or Is_String_Symbol(s))  // ANONYMOUS or label, not a phase
+    Flex* f = VAL_FRAME_PHASE_OR_LABEL(v);
+    if (not f or Is_String_Symbol(f))  // ANONYMOUS or label, not a phase
         return CTX_FRAME_PHASE(VAL_CONTEXT(v));  // use archetype
-    return cast(Phase*, s);  // cell has its own phase, return it
+    return cast(Phase*, f);  // cell has its own phase, return it
 }
 
 INLINE bool IS_FRAME_PHASED(const Cell* v) {
     assert(Cell_Heart(v) == REB_FRAME);
-    Series* s = VAL_FRAME_PHASE_OR_LABEL(v);
-    return s and not Is_String_Symbol(s);
+    Flex* f = VAL_FRAME_PHASE_OR_LABEL(v);
+    return f and not Is_String_Symbol(f);
 }
 
+// 1. VAL_ACTION_PARTIALS_OR_LABEL as well
+//
+// 2. as a phase (or partials), so no label (maybe findable if running)
+//
 INLINE Option(const Symbol*) VAL_FRAME_LABEL(const Cell* v) {
-    Series* s = VAL_FRAME_PHASE_OR_LABEL(v);  // VAL_ACTION_PARTIALS_OR_LABEL as well
-    if (s and Is_String_Symbol(s))  // label in value
-        return cast(Symbol*, s);
-    return ANONYMOUS;  // has a phase (or partials), so no label (maybe findable if running)
+    Flex* f = VAL_FRAME_PHASE_OR_LABEL(v);  // [1]
+    if (f and Is_String_Symbol(f))  // label in value
+        return cast(Symbol*, f);
+    return ANONYMOUS;  // [2]
 }
 
 INLINE void INIT_VAL_FRAME_LABEL(
@@ -124,9 +128,9 @@ INLINE Element* Init_Context_Cell(
     Extra_Init_Context_Cell_Checks_Debug(heart, c);
   #endif
     UNUSED(heart);
-    Assert_Series_Managed(CTX_VARLIST(c));
+    Assert_Flex_Managed(CTX_VARLIST(c));
     if (CTX_TYPE(c) != REB_MODULE)
-        Assert_Series_Managed(CTX_KEYLIST(c));
+        Assert_Flex_Managed(CTX_KEYLIST(c));
     return Copy_Cell(out, CTX_ARCHETYPE(c));
 }
 

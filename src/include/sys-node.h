@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -22,7 +22,7 @@
 //
 // This provides some convenience routines that require more definitions than
 // are available when %struct-node.h is being processed.  (e.g. Value*,
-// Series*, Level*...)
+// Flex*, Level*...)
 //
 // See %struct-node.h for what a "Node" means in this context.
 //
@@ -34,7 +34,7 @@
 //    should be run every so often.
 //
 // 2. Losing const information for fetching NODE_BYTE() is intentional.  GC
-//    needs to fiddle with the marked flag bit even on series that are
+//    needs to fiddle with the marked flag bit even on Flex that are
 //    conceptually immutable, and the managed bit needs to be set on bindings
 //    where the reference is const.  If you're changing something from a Cell
 //    to a Stub--or otherwise--you have much bigger concerns regarding safety
@@ -89,7 +89,7 @@
 
 // Add "_Bit" suffix to reinforce lack of higher level function.  (A macro
 // with the name Set_Node_Managed() might sound like it does more, like
-// removing from the manuals list the way Managed_Series() etc. do)
+// removing from the manuals list the way Manage_Flex() etc. do)
 
 #define Set_Node_Root_Bit(n) \
     NODE_BYTE(n) |= NODE_BYTEMASK_0x02_ROOT
@@ -116,9 +116,9 @@
     NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x40_FREE)
 
 
-//=//// POINTER DETECTION (UTF-8, SERIES, FREED SERIES, END) //////////////=//
+//=//// POINTER DETECTION (UTF-8, STUB, CELL, END) ////////////////////////=//
 //
-// Ren-C's "nodes" (Cell and Stub derivatives) all have a platform-pointer
+// Ren-C's "Nodes" (Cell and Stub derivatives) all have a platform-pointer
 // sized header of bits, which is constructed using byte-order-sensitive bit
 // flags (see FLAG_LEFT_BIT and related definitions for how those work).
 //
@@ -131,11 +131,10 @@
 //
 
 enum PointerDetectEnum {
-    DETECTED_AS_UTF8 = 0,
-
-    DETECTED_AS_END = 1,  // may be in a cell, or a rebEND signal (char* align)
-    DETECTED_AS_SERIES = 2,
-    DETECTED_AS_CELL = 3
+    DETECTED_AS_UTF8 = 1,
+    DETECTED_AS_STUB = 2,
+    DETECTED_AS_CELL = 3,
+    DETECTED_AS_END = 4  // a rebEND signal (char* align)
 };
 
 typedef enum PointerDetectEnum PointerDetect;
@@ -154,21 +153,21 @@ INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
         == NODE_BYTEMASK_0x80_NODE  // e.g. leading bit pattern is 10xxxxxx
     ){
         // In UTF-8 these are all continuation bytes, so not a legal way to
-        // start a string.  We leverage that to distinguish cells and series.
+        // start a string.  We leverage that to distinguish Cell and Stub.
         //
         if (b & NODE_BYTEMASK_0x01_CELL)
             return DETECTED_AS_CELL;
 
-        // Clients of this function should not be passing in series in mid-GC.
+        // Clients of this function should not be passing in Stubs in mid-GC.
         // (PROBE uses it, so that throws a wrench into this check.  Review.)
         //
         /*assert(not (*bp & NODE_BYTEMASK_0x10_MARKED));*/
 
-        return DETECTED_AS_SERIES;
+        return DETECTED_AS_STUB;
     }
 
     // Note: technically there are some internal states that overlap with UTF-8
-    // range, e.g. when a cell is marked "stale" in the output location of
+    // range, e.g. when a Cell is marked "stale" in the output location of
     // a level.  Such states are not supposed to be leaked to where clients of
     // this routine would be concerned about them.
     //
@@ -263,10 +262,10 @@ INLINE void *Alloc_Pooled(PoolId pool_id) {
 //
 INLINE void Free_Pooled(PoolId pool_id, void* p)
 {
-  #if DEBUG_MONITOR_SERIES
+  #if DEBUG_MONITOR_FLEX
     if (p == g_mem.monitor_node) {
         printf(
-            "Freeing series %p on tick #%d\n", p,
+            "Freeing Flex %p on tick #%d\n", p,
             cast(int, TG_tick)
         );
         fflush(stdout);
@@ -326,7 +325,7 @@ INLINE void Free_Pooled(PoolId pool_id, void* p)
 // use Try_Alloc_Core() and Free_Core() instead of calling malloc directly.
 // (Comments on those routines explain why this was done--even in an age of
 // modern thread-safe allocators--due to Rebol's ability to exploit extra
-// data in its pool block when a series grows.)
+// data in its pool unit when a Flex grows.)
 //
 // Since Free_Core() requires callers to pass in the size of the memory being
 // freed, it can be tricky.  These macros are modeled after C++'s new/delete

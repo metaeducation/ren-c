@@ -160,7 +160,7 @@ void Set_Parameter_Spec(
         NODE_FLAG_MANAGED,
         Cell_Array(spec)
     );
-    Set_Series_Len(copy, len);
+    Set_Flex_Len(copy, len);
     Cell* dest = Array_Head(copy);
 
     Byte* optimized = copy->misc.any.at_least_4;
@@ -472,8 +472,8 @@ REBTYPE(Parameter)
             if (not Is_Text(setval))
                 fail (setval);
             String* string = Copy_String_At(setval);
-            Manage_Series(string);
-            Freeze_Series(string);
+            Manage_Flex(string);
+            Freeze_Flex(string);
             Set_Parameter_String(param, string);
             return COPY(param); }  // update to container (e.g. varlist) needed
 

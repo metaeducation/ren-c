@@ -1,6 +1,6 @@
 //
 //  File: %cell-pair.h
-//  Summary: {Definitions for Pairing Series and the Pair Datatype}
+//  Summary: {Definitions for Pairing Nodes and the Pair Datatype}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -20,14 +20,14 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A "pairing" fits in a Stub, but actually holds two distinct Cells.
+// A "pairing" fits in a STUB_POOL allocation, but actually holds two Cells.
 //
 // !!! PAIR! is now generic, so it could theoretically store any type.  This
 // was done to avoid creating new numeric representations in the core (e.g.
 // 32-bit integers or lower precision floats) just so they could both fit in a
-// cell.  But while it's technically possible, no rendering formats for
-// other-valued pairs has been proposed.  So only integers and decimals are
-// accepted for now in the PAIR! type.
+// Cell.  But while it's technically possible, no rendering formats for
+// other-valued pairs has been proposed.  So only integers are accepted for
+// now in the PAIR! type.
 //
 
 #define PAIRING_LEN 2

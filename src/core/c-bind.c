@@ -138,7 +138,7 @@ void Bind_Values_Core(
     Context* c = VAL_CONTEXT(context);
 
     // Associate the canon of a word with an index number.  (This association
-    // is done by poking the index into the stub of the series behind the
+    // is done by poking the index into the Stub of the Symbol behind the
     // ANY-WORD?, so it must be cleaned up to not break future bindings.)
     //
   if (not Is_Module(context)) {
@@ -258,8 +258,8 @@ Stub* Make_Let_Patch(
     Stub* let = Alloc_Singular(  // payload is one variable
         FLAG_FLAVOR(LET)
             | NODE_FLAG_MANAGED
-            | SERIES_FLAG_LINK_NODE_NEEDS_MARK  // link to next virtual bind
-            | SERIES_FLAG_INFO_NODE_NEEDS_MARK  // inode of symbol
+            | FLEX_FLAG_LINK_NODE_NEEDS_MARK  // link to next virtual bind
+            | FLEX_FLAG_INFO_NODE_NEEDS_MARK  // inode of symbol
     );
 
     Init_Trash(x_cast(Value*, Stub_Cell(let)));  // start as unset
@@ -324,7 +324,7 @@ Stub* Make_Let_Patch(
 //    variable.  This ties into general questions of hiding (same bit).  Don't
 //    count it as a hit.
 //
-Option(Series*) Get_Word_Container(
+Option(Stub*) Get_Word_Container(
     REBLEN *index_out,
     const Cell* any_word,
     Specifier* specifier_in,
@@ -332,7 +332,7 @@ Option(Series*) Get_Word_Container(
 ){
     Corrupt_If_Debug(*index_out);  // corrupt index to make sure it gets set
 
-    Series* binding = BINDING(any_word);
+    Flex* binding = BINDING(any_word);
     const Symbol* symbol = Cell_Word_Symbol(any_word);
 
     if (VAL_WORD_INDEX_I32(any_word) == INDEX_ATTACHED) {
@@ -934,7 +934,7 @@ DECLARE_NATIVE(add_use_object) {
 //
 //  Clonify_And_Bind_Relative: C
 //
-// Clone the series embedded in a value *if* it's in the given set of types
+// Clone the Flex embedded in a value *if* it's in the given set of types
 // (and if "cloning" makes sense for them, e.g. they are not simple scalars).
 //
 // Note: The resulting clones will be managed.  The model for lists only
@@ -976,7 +976,7 @@ void Clonify_And_Bind_Relative(
     }
     else if (deeply and (Any_Series_Kind(heart) or Any_Sequence_Kind(heart))) {
         //
-        // Objects and series get shallow copied at minimum
+        // Objects and Flexes get shallow copied at minimum
         //
         Element* deep = nullptr;
         Element* deep_tail = nullptr;
@@ -1015,12 +1015,12 @@ void Clonify_And_Bind_Relative(
             deep_tail = Array_Tail(copy);
         }
         else if (Any_Series_Kind(heart)) {
-            Series* copy = Copy_Series_Core(Cell_Series(v), NODE_FLAG_MANAGED);
+            Flex* copy = Copy_Flex_Core(Cell_Flex(v), NODE_FLAG_MANAGED);
             Init_Cell_Node1(v, copy);
         }
 
         // If we're going to copy deeply, we go back over the shallow
-        // copied series and "clonify" the values in it.
+        // copied Array and "clonify" the values in it.
         //
         if (deep) {
             for (; deep != deep_tail; ++deep)
@@ -1093,7 +1093,7 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
     // Currently we start by making a shallow copy and then adjust it
 
     copy = Make_Array_For_Copy(len, flags, original);
-    Set_Series_Len(copy, len);
+    Set_Flex_Len(copy, len);
 
     const Element* src = Array_At(original, index);
     Element* dest = Array_Head(copy);
@@ -1407,16 +1407,16 @@ Context* Virtual_Bind_Deep_To_New_Context(
     //
     // https://github.com/rebol/rebol-issues/issues/2274
     //
-    // !!! Because SERIES_FLAG_DONT_RELOCATE is just a synonym for
-    // SERIES_FLAG_FIXED_SIZE at this time, it means that there has to be
+    // !!! Because FLEX_FLAG_DONT_RELOCATE is just a synonym for
+    // FLEX_FLAG_FIXED_SIZE at this time, it means that there has to be
     // unwritable cells in the extra capacity, to help catch overwrites.  If
     // we wait too late to add the flag, that won't be true...but if we pass
     // it on creation we can't make the context via Append_Context().  Review
     // this mechanic; and for now forego the protection.
     //
-    /* Set_Series_Flag(CTX_VARLIST(c), DONT_RELOCATE); */
+    /* Set_Flex_Flag(CTX_VARLIST(c), DONT_RELOCATE); */
 
-    Manage_Series(CTX_VARLIST(c));  // must be managed to use in binding
+    Manage_Flex(CTX_VARLIST(c));  // must be managed to use in binding
 
     if (not rebinding)
         return c;  // nothing else needed to do
@@ -1466,7 +1466,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
     // able to expand them...because things like FOR-EACH have historically
     // not been robust to the memory moving.
     //
-    Set_Series_Flag(CTX_VARLIST(c), FIXED_SIZE);
+    Set_Flex_Flag(CTX_VARLIST(c), FIXED_SIZE);
 
     return c;
 }

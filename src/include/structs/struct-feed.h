@@ -86,7 +86,7 @@ STATIC_ASSERT(FEED_FLAG_1_IS_FALSE == NODE_FLAG_FREE);
 
 //=//// FEED_FLAG_TOOK_HOLD ///////////////////////////////////////////////=//
 //
-// If a feed takes SERIES_INFO_HOLD on an array it is enumerating, it has to
+// If a feed takes FLEX_INFO_HOLD on an array it is enumerating, it has to
 // remember that it did so it can release it when it is done processing.
 // Note that this has to be a flag on the feed, not the level--as a feed can
 // be shared among many levels.

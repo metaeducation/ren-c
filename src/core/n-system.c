@@ -101,7 +101,7 @@ DECLARE_NATIVE(exit_rebol)
 //
 //  "Recycles unused memory"
 //
-//      return: "Number of series nodes recycled (if applicable)"
+//      return: "Number of Flex Nodes recycled (if applicable)"
 //          [~null~ integer!]
 //      /off "Disable auto-recycling"
 //      /on "Enable auto-recycling"
@@ -109,7 +109,7 @@ DECLARE_NATIVE(exit_rebol)
 //          [integer!]
 //      /torture "Constant recycle (for internal debugging)"
 //      /watch "Monitor recycling (debug only)"
-//      /verbose "Dump information about series being recycled (debug only)"
+//      /verbose "Dump information about Flexes being recycled (debug only)"
 //  ]
 //
 DECLARE_NATIVE(recycle)
@@ -145,18 +145,18 @@ DECLARE_NATIVE(recycle)
       #if defined(NDEBUG)
         fail (Error_Debug_Only_Raw());
       #else
-        Series* sweeplist = Make_Series_Core(100, FLAG_FLAVOR(NODELIST));
+        Flex* sweeplist = Make_Flex_Core(100, FLAG_FLAVOR(NODELIST));
         count = Recycle_Core(sweeplist);
-        assert(count == Series_Used(sweeplist));
+        assert(count == Flex_Used(sweeplist));
 
         REBLEN index = 0;
         for (index = 0; index < count; ++index) {
-            Node* node = *Series_At(Node*, sweeplist, index);
+            Node* node = *Flex_At(Node*, sweeplist, index);
             PROBE(node);
             UNUSED(node);
         }
 
-        Free_Unmanaged_Series(sweeplist);
+        Free_Unmanaged_Flex(sweeplist);
 
         REBLEN recount = Recycle_Core(nullptr);
         assert(recount == count);
@@ -251,10 +251,10 @@ DECLARE_NATIVE(check)
     // !!! Should call generic Assert_Value() macro with more cases
     //
     if (Any_Series(value)) {
-        Assert_Series(Cell_Series(value));
+        Assert_Flex(Cell_Flex(value));
     }
     else if (Is_Frame(value)) {
-        Assert_Series(VAL_ACTION_KEYLIST(value));
+        Assert_Flex(VAL_ACTION_KEYLIST(value));
         Assert_Array(Phase_Details(ACT_IDENTITY(VAL_ACTION(value))));
     }
     else if (Any_Context(value)) {

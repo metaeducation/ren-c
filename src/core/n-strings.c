@@ -705,7 +705,7 @@ DECLARE_NATIVE(enline)
         return COPY(ARG(string)); // nothing to do
 
     REBLEN old_len = s->misc.length;
-    Expand_Series_Tail(s, delta);  // corrupts str->misc.length
+    Expand_Flex_Tail(s, delta);  // corrupts str->misc.length
     s->misc.length = old_len + delta;  // just adding CR's
 
     // One feature of using UTF-8 for strings is that CR/LF substitution can

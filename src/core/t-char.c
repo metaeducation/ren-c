@@ -328,7 +328,7 @@ void MF_Issue(REB_MOLD *mo, const Cell* v, bool form)
     }
     else {
         const String* s = Cell_Issue_String(v);  // !!! needs node
-        Mold_Text_Series_At(mo, s, 0);
+        Mold_Text_Flex_At(mo, s, 0);
     }
 }
 

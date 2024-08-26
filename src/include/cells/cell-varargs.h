@@ -23,7 +23,7 @@
 // A VARARGS! represents a point for parameter gathering inline at the
 // callsite of a function.  The point is located *after* that function has
 // gathered all of its arguments and started running.  It is implemented by
-// holding a reference to a reified FRAME! series, which allows it to find
+// holding a reference to a reified FRAME!, which allows it to find
 // the point of a running evaluation (as well as to safely check for when
 // that call is no longer on the stack, and can't provide data.)
 //

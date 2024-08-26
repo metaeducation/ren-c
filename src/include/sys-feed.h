@@ -55,7 +55,7 @@
     INLINE bool Is_End(T* p) {
         static_assert(
             std::is_same<T, const void>::value,
-            "Is_End() is not designed to operate on Cell(), Series(), etc."
+            "Is_End() is not designed to operate on Cell, Flex, etc."
         );
         const Byte* bp = c_cast(Byte*, p);
         if (*bp != END_SIGNAL_BYTE) {
@@ -160,7 +160,7 @@ INLINE Option(va_list*) FEED_VAPTR(Feed* feed) {
 
 // 1. The va_end() is taken care of here; all code--regardless of throw or
 //    errors--must walk through feeds to the end in order to clean up manual
-//    series backing instructions (and also to run va_end() if needed, which
+//    Flexes backing instructions (and also to run va_end() if needed, which
 //    is required by the standard and may be essential on some platforms).
 //
 // 2. !!! Error reporting expects there to be an array.  The whole story of
@@ -227,17 +227,17 @@ INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
 // !!! Actually, THIS CODE CAN'T FAIL.  :-/  It is part of the implementation
 // of fail's cleanup itself.
 //
-INLINE Option(const Value*) Try_Reify_Variadic_Feed_Series(
+INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
     Feed* feed
 ){
-    const Series* s = c_cast(Series*, feed->p);
+    const Flex* f = c_cast(Flex*, feed->p);
 
-    switch (Series_Flavor(s)) {
+    switch (Flex_Flavor(f)) {
       case FLAVOR_INSTRUCTION_SPLICE: {
-        Array* inst1 = x_cast(Array*, s);
+        Array* inst1 = x_cast(Array*, f);
         Element* single = cast(Element*, Stub_Cell(inst1));
         if (Is_Blank(single)) {
-            GC_Kill_Series(inst1);
+            GC_Kill_Flex(inst1);
             return nullptr;
         }
 
@@ -250,11 +250,11 @@ INLINE Option(const Value*) Try_Reify_Variadic_Feed_Series(
             Unquotify(Copy_Cell(&feed->fetched, single), 1);
             feed->p = &feed->fetched;
         }
-        GC_Kill_Series(inst1);
+        GC_Kill_Flex(inst1);
         break; }
 
       case FLAVOR_API: {
-        Array* inst1 = x_cast(Array*, s);
+        Array* inst1 = x_cast(Array*, f);
 
         // We usually get the API *cells* passed to us, not the singular
         // array holding them.  But the rebR() function will actually
@@ -290,7 +290,7 @@ INLINE Option(const Value*) Try_Reify_Variadic_Feed_Series(
         // in debugging than putting the actions themselves.
         //
       case FLAVOR_SYMBOL: {
-        Init_Any_Word(&feed->fetched, REB_WORD, c_cast(Symbol*, s));
+        Init_Any_Word(&feed->fetched, REB_WORD, c_cast(Symbol*, f));
         feed->p = &feed->fetched;
         break; }
 
@@ -298,7 +298,7 @@ INLINE Option(const Value*) Try_Reify_Variadic_Feed_Series(
         //
         // Besides instructions, other series types aren't currenlty
         // supported...though it was considered that you could use
-        // Context* or Action* directly instead of their archtypes.  This
+        // Context* or Action* directly instead of their archetypes.  This
         // was considered when thinking about ditching value archetypes
         // altogether (e.g. no usable cell pattern guaranteed at the head)
         // but it's important in several APIs to emphasize a value gives
@@ -307,7 +307,7 @@ INLINE Option(const Value*) Try_Reify_Variadic_Feed_Series(
         panic (feed->p);
     }
 
-    return c_cast(Value*, feed->p);
+    return cast(const Element*, feed->p);
 }
 
 
@@ -338,8 +338,8 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
       case DETECTED_AS_CELL:
         break;
 
-      case DETECTED_AS_SERIES:  // e.g. rebQ, rebU, or a rebR() handle
-        if (not Try_Reify_Variadic_Feed_Series(feed))
+      case DETECTED_AS_STUB:  // e.g. rebQ, rebU, or a rebR() handle
+        if (not Try_Reify_Variadic_Feed_At(feed))
             goto detect_again;
         break;
 
@@ -465,14 +465,14 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
             // !!! At first this dropped the hold here; but that created
             // problems if you write `eval code: [clear code]`, because END
             // is reached when CODE is fulfilled as an argument to CLEAR but
-            // before CLEAR runs.  This subverted the series hold mechanic.
+            // before CLEAR runs.  This subverted the Flex hold mechanic.
             // Instead we do the drop in Free_Feed(), though drops on splices
             // happen here.  It's not perfect, but holds need systemic review.
             //
             if (FEED_SPLICE(feed)) {  // one or more additional splices to go
                 if (Get_Feed_Flag(feed, TOOK_HOLD)) {  // see note above
-                    assert(Get_Series_Info(FEED_ARRAY(feed), HOLD));
-                    Clear_Series_Info(FEED_ARRAY(feed), HOLD);
+                    assert(Get_Flex_Info(FEED_ARRAY(feed), HOLD));
+                    Clear_Flex_Info(FEED_ARRAY(feed), HOLD);
                     Clear_Feed_Flag(feed, TOOK_HOLD);
                 }
 
@@ -482,7 +482,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
                     FEED_SPLICE(feed),
                     sizeof(Stub)
                 );
-                GC_Kill_Series(splice);  // Array* would hold reference
+                GC_Kill_Flex(splice);  // Array* would hold reference
                 goto retry_splice;
             }
         }
@@ -572,8 +572,8 @@ INLINE void Free_Feed(Feed* feed) {
         Finalize_Variadic_Feed(feed);
     }
     else if (Get_Feed_Flag(feed, TOOK_HOLD)) {
-        assert(Get_Series_Info(FEED_ARRAY(feed), HOLD));
-        Clear_Series_Info(FEED_ARRAY(feed), HOLD);
+        assert(Get_Flex_Info(FEED_ARRAY(feed), HOLD));
+        Clear_Flex_Info(FEED_ARRAY(feed), HOLD);
         Clear_Feed_Flag(feed, TOOK_HOLD);
     }
 
@@ -650,10 +650,10 @@ INLINE Feed* Prep_Array_Feed(
     // their time to run comes up to not be END anymore.  But if we put a
     // hold on conservatively, it won't be dropped by Free_Feed() time.
     //
-    if (Is_Feed_At_End(feed) or Get_Series_Info(array, HOLD))
+    if (Is_Feed_At_End(feed) or Get_Flex_Info(array, HOLD))
         NOOP;  // already temp-locked
     else {
-        Set_Series_Info(array, HOLD);
+        Set_Flex_Info(array, HOLD);
         Set_Feed_Flag(feed, TOOK_HOLD);
     }
 

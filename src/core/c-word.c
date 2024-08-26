@@ -22,10 +22,10 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // * In R3-Alpha, symbols were permanently interned in a table as UTF-8, and
-//   referenced in cells by an integer index.  This was distinct from string
-//   series which were variable-length encoded and could be GC'd.  Ren-C
-//   unifies this where Symbols are String series which are referenced in
-//   cells by pointers and can be GC'd, and all strings use UTF-8 everywhere.
+//   referenced in cells by an integer index.  This was distinct from String
+//   Flexes which varied their encoding sie and could be GC'd.  Ren-C
+//   unifies this where Symbols are String Flexes which are referenced in
+//   Cells by pointers and can be GC'd, and all Strings use UTF-8 everywhere.
 //
 // * Ren-C binding is case-sensitive.  This is a difficult decision, but
 //   there is a good reasoning in the sense that it must be case-preserving,
@@ -141,24 +141,24 @@ uint32_t Get_Hash_Prime_May_Fail(uint32_t minimum)
 //
 static void Expand_Word_Table(void)
 {
-    Length old_num_slots = Series_Used(g_symbols.by_hash);
-    Symbol** old_symbols_by_hash = Series_Head(  // hold on temporarily [1]
+    Length old_num_slots = Flex_Used(g_symbols.by_hash);
+    Symbol** old_symbols_by_hash = Flex_Head(  // hold on temporarily [1]
         Symbol*,
         g_symbols.by_hash
     );
 
     Length num_slots = Get_Hash_Prime_May_Fail(old_num_slots + 1);
-    assert(Series_Wide(g_symbols.by_hash) == sizeof(Symbol*));
+    assert(Flex_Wide(g_symbols.by_hash) == sizeof(Symbol*));
 
-    Series* table = Make_Series_Core(
-        num_slots, FLAG_FLAVOR(CANONTABLE) | SERIES_FLAG_POWER_OF_2
+    Flex* table = Make_Flex_Core(
+        num_slots, FLAG_FLAVOR(CANONTABLE) | FLEX_FLAG_POWER_OF_2
     );
-    Clear_Series(table);
-    Set_Series_Len(table, num_slots);
+    Clear_Flex(table);
+    Set_Flex_Len(table, num_slots);
 
     // Rehash all the symbols:
 
-    Symbol** new_symbols_by_hash = Series_Head(Symbol*, table);
+    Symbol** new_symbols_by_hash = Flex_Head(Symbol*, table);
 
     Offset old_slot;
     for (old_slot = 0; old_slot != old_num_slots; ++old_slot) {
@@ -189,7 +189,7 @@ static void Expand_Word_Table(void)
         new_symbols_by_hash[slot] = symbol;
     }
 
-    Free_Unmanaged_Series(g_symbols.by_hash);
+    Free_Unmanaged_Flex(g_symbols.by_hash);
     g_symbols.by_hash = table;
 }
 
@@ -205,7 +205,7 @@ static void Expand_Word_Table(void)
 //
 //   https://en.wikipedia.org/wiki/Linear_probing
 //
-// 1. The result series must be managed, because if they were not there could
+// 1. The result Symbol must be managed, because if they were not there could
 //    be no clear contract on the return result--as it wouldn't be possible to
 //    know if a shared instance had been managed by someone else or not.
 //
@@ -215,7 +215,7 @@ static void Expand_Word_Table(void)
 //    compares.  If that canon form is GC'd, the agreed upon canon for the
 //    group will change.
 //
-// 3. Newly interned symbols will have SYM_0 as the answer to Symbol_Id().
+// 3. A newly interned Symbol will have SYM_0 as the answer to Symbol_Id().
 //    Startup_Symbols() tags the builtin SYM_XXX values from %symbols.r and
 //    %lib-words.r on the terms that it interns after they are returned.
 //    This lets them be used in compiled C switch() cases (e.g. SYM_ANY,
@@ -226,7 +226,7 @@ static void Expand_Word_Table(void)
 // 4. In addition to a circularly linked list of synonyms via LINK(), the
 //    MISC() field of the Symbol is another circularly linked list of stubs
 //    holding module-level variables with that symbol as a name.  Upon the
-//    initial interning of a symbol, this list is empty.
+//    initial interning of a Symbol, this list is empty.
 //
 const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     Option(void*) preallocated,  // most calls don't know if allocation needed
@@ -238,13 +238,13 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     // actually kept larger than that, but to be on the right side of theory,
     // the table is always checked for expansion needs *before* the search.)
     //
-    Length num_slots = Series_Used(g_symbols.by_hash);
+    Length num_slots = Flex_Used(g_symbols.by_hash);
     if (g_symbols.num_slots_in_use > num_slots / 2) {
         Expand_Word_Table();
-        num_slots = Series_Used(g_symbols.by_hash);  // got larger, update
+        num_slots = Flex_Used(g_symbols.by_hash);  // got larger, update
     }
 
-    Symbol** symbols_by_hash = Series_Head(Symbol*, g_symbols.by_hash);
+    Symbol** symbols_by_hash = Flex_Head(Symbol*, g_symbols.by_hash);
 
     Length skip;  // how many slots to skip when occupied candidates found
     Offset slot = First_Hash_Candidate_Slot(
@@ -290,10 +290,10 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
 
   new_interning: {
 
-    Binary* s = cast(Binary*, Make_Series_Into(
+    Binary* s = cast(Binary*, Make_Flex_Into(
         preallocated ? unwrap preallocated : Alloc_Stub(),
         utf8_size + 1,  // small sizes fit in a Stub (no dynamic allocation)
-        SERIES_MASK_SYMBOL
+        FLEX_MASK_SYMBOL
     ));
 
     // Cache whether this is an arrow word.
@@ -337,10 +337,10 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     memcpy(Binary_Head(s), utf8, utf8_size);
     Term_Binary_Len(s, utf8_size);
 
-    // The UTF-8 series can be aliased with AS to become an ANY-STRING? or a
+    // The UTF-8 Flex can be aliased with AS to become an ANY-STRING? or a
     // BINARY!.  If it is, then it should not be modified.
     //
-    Freeze_Series(s);
+    Freeze_Flex(s);
 
     if (not synonym) {
         LINK(Synonym, s) = c_cast(Symbol*, s);  // 1-item circular list
@@ -415,8 +415,8 @@ void GC_Kill_Interning(const Symbol* symbol)
     }
     node_MISC(Hitch, patch) = node_MISC(Hitch, symbol);  // may be no-op
 
-    Length num_slots = Series_Used(g_symbols.by_hash);
-    Symbol** symbols_by_hash = Series_Head(Symbol*, g_symbols.by_hash);
+    Length num_slots = Flex_Used(g_symbols.by_hash);
+    Symbol** symbols_by_hash = Flex_Head(Symbol*, g_symbols.by_hash);
 
     Length skip;
     Offset slot = First_Hash_Candidate_Slot(
@@ -476,27 +476,27 @@ void Startup_Interning(void)
     n = 1; // forces exercise of rehashing logic in debug build
   #endif
 
-    ensure(nullptr, g_symbols.by_hash) = Make_Series_Core(
-        n, FLAG_FLAVOR(CANONTABLE) | SERIES_FLAG_POWER_OF_2
+    ensure(nullptr, g_symbols.by_hash) = Make_Flex_Core(
+        n, FLAG_FLAVOR(CANONTABLE) | FLEX_FLAG_POWER_OF_2
     );
-    Clear_Series(g_symbols.by_hash);  // all slots start as nullptr
-    Set_Series_Len(g_symbols.by_hash, n);
+    Clear_Flex(g_symbols.by_hash);  // all slots start as nullptr
+    Set_Flex_Len(g_symbols.by_hash, n);
 }
 
 
 //
 //  Startup_Symbols: C
 //
-// Initializes a table for mapping from SYM_XXX => Symbol series.  This is used
-// by Canon_Symbol(id) and Canon(XXX) to get the symbol from id.
+// Initializes a table for mapping from SYM_XXX => Symbol Flex.  This is used
+// by Canon_Symbol(id) and Canon(XXX) to get the Symbol from SymId.
 //
 // 1. All words that do not have a SYM_XXX get back Cell_Word_Id(w) == SYM_0.
 //    Hence Canon(0) is illegal, to avoid `Canon(X) == Canon(Y)` being true
 //    when X and Y are different symbols with no SYM_XXX id.  We turn it into
-//    a freed series, so Detect_Rebol_Pointer() doesn't confuse the zeroed
+//    a freed Stub, so Detect_Rebol_Pointer() doesn't confuse the zeroed
 //    memory with an empty UTF-8 string.
 //
-// 2. Symbol series store symbol number in the header's 2nd uint16_t.  Could
+// 2. A Symbol Flex stores its SymId in the header's 2nd uint16_t.  Could
 //    probably use less than 16 bits, but 8 is insufficient (there are more
 //    than 256 SYM_XXX values)
 //
@@ -558,7 +558,7 @@ void Startup_Symbols(void)
 //  Shutdown_Symbols: C
 //
 // The Shutdown_Interning() code checks for g_symbols.by_hash to be empty...
-// the necessary removal happens in Decay_Series().  (Note that a "dirty"
+// the necessary removal happens in Decay_Flex().  (Note that a "dirty"
 // shutdown--used in release builds--avoids all these balancing checks!)
 //
 void Shutdown_Symbols(void)
@@ -568,7 +568,7 @@ void Shutdown_Symbols(void)
 
     for (uint16_t i = 1; i < ALL_SYMS_MAX; ++i) {
         Symbol* canon = &g_symbols.builtin_canons[i];
-        Decay_Series(canon);
+        Decay_Flex(canon);
     }
 }
 
@@ -595,14 +595,14 @@ void Shutdown_Interning(void)
         fflush(stdout);
 
         REBLEN slot;
-        for (slot = 0; slot < Series_Used(g_symbols.by_hash); ++slot) {
-            Symbol* symbol = *Series_At(Symbol*, g_symbols.by_hash, slot);
+        for (slot = 0; slot < Flex_Used(g_symbols.by_hash); ++slot) {
+            Symbol* symbol = *Flex_At(Symbol*, g_symbols.by_hash, slot);
             if (symbol and symbol != DELETED_SYMBOL)
                 panic (symbol);
         }
     }
   #endif
 
-    Free_Unmanaged_Series(g_symbols.by_hash);
+    Free_Unmanaged_Flex(g_symbols.by_hash);
     g_symbols.by_hash = nullptr;
 }

@@ -18,16 +18,16 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A byte in the series stub header is used to store an enumeration value of
-// the kind of stub that it is.  This takes the place of storing a special
-// element "width" in the series (which R3-Alpha did).  Instead, the element
-// width is determined by the "flavor".
+// A byte in the Flex Stub header is used to store an enumeration value of
+// the kind of Stub that it is.  This takes the place of storing a special
+// element "width" in the Flex (which R3-Alpha did).  Instead, the element
+// width is determined by the "Flavor".
 //
 // In order to maximize the usefulness of this byte, the enumeration is
 // organized in a way where the ordering conveys information.  So all the
 // arrays are grouped together so a single test can tell if a subclass is
 // an array type. This saves on needing to have separate flags like
-// SERIES_FLAG_IS_ARRAY.
+// FLEX_FLAG_IS_ARRAY.
 //
 //=//// NOTES ////////////////////////////////////////////////////////////=//
 //
@@ -88,10 +88,10 @@ enum StubFlavorEnum {
 
     FLAVOR_MIN_ISOTOPES_OK,  //=//// BELOW HERE, THE ARRAYS CAN HOLD ISOTOPES
 
-    // This indicates this series represents the "varlist" of a context (which
+    // This indicates this Flex represents the "varlist" of a context (which
     // is interchangeable with the identity of the varlist itself).  A second
-    // series can be reached from it via the LINK() in the series node, which
-    // is known as a "keylist".
+    // Flex can be reached from it via the LINK() in the Array Stub, which
+    // is known as a "KeyList".
     //
     // See notes on Context for further details about what a context is.
     //
@@ -131,14 +131,14 @@ enum StubFlavorEnum {
 
     FLAVOR_MAX_ARRAY = FLAVOR_PLUG,  //=//// ABOVE HERE WIDTH IS sizeof(Cell)
 
-    // For the moment all series that don't store Cells or or binary data of
+    // For the moment all Flexes that don't store Cells or or byte data of
     // WIDTH=1 store items of size pointer.
     //
     FLAVOR_KEYLIST,  // width = sizeof(Symbol*)
     FLAVOR_POINTER,  // generic
     FLAVOR_CANONTABLE,  // for canons table
     FLAVOR_NODELIST,  // e.g. GC protect list
-    FLAVOR_SERIESLIST,  // e.g. manually allocated series list
+    FLAVOR_FLEXLIST,  // e.g. the list of manually allocated Flexes
     FLAVOR_MOLDSTACK,
 
     FLAVOR_HASHLIST,  // outlier, sizeof(REBLEN)...
@@ -162,15 +162,15 @@ enum StubFlavorEnum {
     FLAVOR_SYMBOL,
 
     // Right now there is only one instance of FLAVOR_THE_GLOBAL_INACCESSIBLE
-    // series.  All stubs that have NODE_FLAG_FREE will be canonized
-    // to this node.  This allows a decayed series to still convey what flavor
+    // Flex.  All Stubs that have NODE_FLAG_FREE will be canonized
+    // to this Node.  This allows a decayed Flex to still convey what flavor
     // it was before being decayed.  That's useful at least for debugging, but
     // maybe for other mechanisms that sometimes might want to propagate some
-    // residual information from decayed series to the referencing sites.
+    // residual information from decayed Flex to the referencing sites.
     //
     // (For instance: Such a mechanism would've been necessary for propagating
-    // symbols back into words, when bound words gave up their symbols...if the
-    // series they were bound to went away.  Not needed now--but an example.)
+    // Symbols back into words, when bound words gave up their Symbols...if the
+    // Flex they were bound to went away.  Not needed now--but an example.)
     //
     FLAVOR_THE_GLOBAL_INACCESSIBLE,
 
@@ -187,11 +187,11 @@ typedef enum StubFlavorEnum Flavor;
 INLINE Flavor Flavor_From_Flags(Flags flags)
   { return u_cast(Flavor, THIRD_BYTE(&flags)); }
 
-#define Series_Flavor(s) \
-    u_cast(Flavor, FLAVOR_BYTE(s))
+#define Flex_Flavor(f) \
+    u_cast(Flavor, FLAVOR_BYTE(f))
 
 
-// Most accesses of series via Series_At(...) and Array_At(...) macros already
+// Most accesses of series via Flex_At(...) and Array_At(...) macros already
 // know at the callsite the size of the access.  The width is only a double
 // check in the debug build, and used at allocation time and other moments
 // when the system has to know the size but doesn't yet know the type.  Hence
@@ -211,23 +211,23 @@ INLINE size_t Wide_For_Flavor(Flavor flavor) {
     return sizeof(void*);
 }
 
-#define Series_Wide(s) \
-    Wide_For_Flavor(Series_Flavor(s))
+#define Flex_Wide(f) \
+    Wide_For_Flavor(Flex_Flavor(f))
 
 
 
-#define Is_Series_Array(s)         (Series_Flavor(s) <= FLAVOR_MAX_ARRAY)
-#define Is_Series_UTF8(s)          (Series_Flavor(s) >= FLAVOR_MIN_UTF8)
+#define Is_Flex_Array(f)      (Flex_Flavor(f) <= FLAVOR_MAX_ARRAY)
+#define Is_Flex_UTF8(f)       (Flex_Flavor(f) >= FLAVOR_MIN_UTF8)
 
-#define Is_String_NonSymbol(s)  (Series_Flavor(s) == FLAVOR_STRING)
-#define Is_String_Symbol(s)     (Series_Flavor(s) == FLAVOR_SYMBOL)
+#define Is_String_NonSymbol(f)  (Flex_Flavor(f) == FLAVOR_STRING)
+#define Is_String_Symbol(f)     (Flex_Flavor(f) == FLAVOR_SYMBOL)
 
-#define IS_KEYLIST(s)           (Series_Flavor(s) == FLAVOR_KEYLIST)
+#define IS_KEYLIST(f)           (Flex_Flavor(f) == FLAVOR_KEYLIST)
 
-#define IS_LET(s)               (Series_Flavor(s) == FLAVOR_LET)
-#define IS_USE(s)               (Series_Flavor(s) == FLAVOR_USE)
-#define IS_PATCH(s)             (Series_Flavor(s) == FLAVOR_PATCH)
-#define IS_VARLIST(s)           (Series_Flavor(s) == FLAVOR_VARLIST)
-#define IS_PAIRLIST(s)          (Series_Flavor(s) == FLAVOR_PAIRLIST)
-#define IS_DETAILS(s)           (Series_Flavor(s) == FLAVOR_DETAILS)
-#define IS_PARTIALS(s)          (Series_Flavor(s) == FLAVOR_PARTIALS)
+#define IS_LET(f)               (Flex_Flavor(f) == FLAVOR_LET)
+#define IS_USE(f)               (Flex_Flavor(f) == FLAVOR_USE)
+#define IS_PATCH(f)             (Flex_Flavor(f) == FLAVOR_PATCH)
+#define IS_VARLIST(f)           (Flex_Flavor(f) == FLAVOR_VARLIST)
+#define IS_PAIRLIST(f)          (Flex_Flavor(f) == FLAVOR_PAIRLIST)
+#define IS_DETAILS(f)           (Flex_Flavor(f) == FLAVOR_DETAILS)
+#define IS_PARTIALS(f)          (Flex_Flavor(f) == FLAVOR_PARTIALS)

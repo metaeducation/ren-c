@@ -99,7 +99,7 @@ typedef struct PoolSpecStruct {
 //
 // When enumerating over the units in a memory pool, it's important to know
 // how that unit was initialized in order to validly read its data.  If the
-// unit was initialized through a Series pointer, then you don't want to
+// unit was initialized through a Stub pointer, then you don't want to
 // dereference it as if it had been initialized through a Cell.
 //
 // Similarly, you need to know when you are looking at it through the lens
@@ -115,7 +115,7 @@ typedef struct PoolUnitStruct {
     //
     // This is not called "header" for a reason: you should *NOT* read the
     // bits of this header-sized slot to try and interpret bits that were
-    // assigned through a Series or a Cell.  *You have to read out the
+    // assigned through a Stub or a Cell.  *You have to read out the
     // bits using the same type that initialized it.*  So only the first
     // byte here should be consulted...accessed through an `unsigned char*`
     // in order to defeat strict aliasing.  See NODE_BYTE()

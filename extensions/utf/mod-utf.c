@@ -241,7 +241,7 @@ static Binary* Encode_UCS2(  // [1]
 
     ucs2[n] = '\0';  // needs two bytes worth of NULL, not just one.
 
-    Set_Series_Len(bin, len * sizeof(uint16_t));
+    Set_Flex_Len(bin, len * sizeof(uint16_t));
     return bin;
 }
 
@@ -323,7 +323,6 @@ DECLARE_NATIVE(encode_utf16le)
 
     return OUT;
 }
-
 
 
 //

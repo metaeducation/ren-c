@@ -3,25 +3,25 @@
 // Uses "evil macro" variations because it is called so frequently, that in
 // the debug build (which doesn't inline functions) there's a notable cost.
 //
-INLINE const Series* Cell_Series(const Cell* v) {
+INLINE const Flex* Cell_Flex(const Cell* v) {
     Heart heart = Cell_Heart(v);
     assert(Any_Series_Kind(heart) or heart == REB_URL);
     UNUSED(heart);
     if (Not_Node_Accessible(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());
 
-    return c_cast(Series*, Cell_Node1(v));
+    return c_cast(Flex*, Cell_Node1(v));
 }
 
-#define Cell_Series_Ensure_Mutable(v) \
-    m_cast(Series*, Cell_Series(Ensure_Mutable(v)))
+#define Cell_Flex_Ensure_Mutable(v) \
+    m_cast(Flex*, Cell_Flex(Ensure_Mutable(v)))
 
-#define Cell_Series_Known_Mutable(v) \
-    m_cast(Series*, Cell_Series(Known_Mutable(v)))
+#define Cell_Flex_Known_Mutable(v) \
+    m_cast(Flex*, Cell_Flex(Known_Mutable(v)))
 
 
 // It is possible that the index could be to a point beyond the range of the
-// series.  This is intrinsic, because the series data can be modified through
+// Flex.  This is intrinsic, because the Flex data can be modified through
 // one cell and not update the other cells referring to it.  Hence VAL_INDEX()
 // must be checked, or the routine called with it must.
 
@@ -34,7 +34,7 @@ INLINE const Series* Cell_Series(const Cell* v) {
 #else
     // allows an assert, but uses C++ reference for lvalue:
     //
-    //     VAL_INDEX_UNBOUNDED(v) = xxx;  // ensures v is Any_Series!
+    //     VAL_INDEX_UNBOUNDED(v) = xxx;  // ensures v is ANY-SERIES?
     //
     // Avoids Ensure_Readable(), because it's assumed that it was done in the
     // type checking to ensure VAL_INDEX() applied.  (This is called often.)
@@ -89,7 +89,7 @@ INLINE void INIT_SPECIFIER(Cell* v, Stub* binding) {
             Any_List_Kind(HEART_BYTE(v))
             and (IS_LET(binding) or IS_USE(binding)) // virtual
         ) or (
-            HEART_BYTE(v) == REB_VARARGS and Not_Series_Flag(binding, DYNAMIC)
+            HEART_BYTE(v) == REB_VARARGS and Not_Flex_Flag(binding, DYNAMIC)
         )  // varargs from MAKE VARARGS! [...], else is a varlist
     );
   #endif
@@ -100,30 +100,30 @@ INLINE void INIT_SPECIFIER(Cell* v, Stub* binding) {
 //    that if they were valid UTF-8, they could be aliased as Rebol strings,
 //    which are zero terminated.  So it's the rule.
 //
-// 2. Many Array* series (such as varlists) allow antiforms.  We don't want
+// 2. Many Array Flexes (such as varlists) allow antiforms.  We don't want
 //    these making it into things like BLOCK! or GROUP! values, as the user
-//    should never see antiforms or voids in what they see as "ANY-ARRAY!".
+//    should never see antiforms in what they see as "ANY-ARRAY!".
 //
-INLINE Element* Init_Series_Cell_At_Core(
+INLINE Element* Init_Series_At_Core(
     Sink(Element*) out,
     Heart heart,
-    const Series* s,  // ensured managed by calling macro
+    const Flex* f,  // ensured managed by calling macro
     REBLEN index,
     Stub* specifier
 ){
   #if !defined(NDEBUG)
     assert(Any_Series_Kind(heart) or heart == REB_URL);
-    assert(Is_Node_Managed(s));
+    assert(Is_Node_Managed(f));
 
-    Assert_Series_Term_If_Needed(s);  // even binaries [1]
+    Assert_Flex_Term_If_Needed(f);  // even binaries [1]
 
     if (Any_List_Kind(heart)) {
-        assert(Series_Flavor(s) == FLAVOR_ARRAY);  // no antiforms or voids [2]
+        assert(Flex_Flavor(f) == FLAVOR_ARRAY);  // no antiforms [2]
     }
     else if (Any_String_Kind(heart))
-        assert(Is_Series_UTF8(s));
+        assert(Is_Flex_UTF8(f));
     else {
-        // Note: Binaries are allowed to alias strings
+        // Note: Binary is allowed to alias String
     }
   #endif
 
@@ -131,15 +131,15 @@ INLINE Element* Init_Series_Cell_At_Core(
         out,
         FLAG_HEART_BYTE(heart) | CELL_FLAG_FIRST_IS_NODE
     );
-    Init_Cell_Node1(out, s);
+    Init_Cell_Node1(out, f);
     VAL_INDEX_RAW(out) = index;
     INIT_SPECIFIER(out, specifier);  // asserts if unbindable type tries to bind
     return out;
 }
 
-#define Init_Series_Cell_At(v,t,s,i) \
-    Init_Series_Cell_At_Core((v), (t), \
-        Force_Series_Managed_Core(s), (i), UNBOUND)
+#define Init_Series_At(v,t,f,i) \
+    Init_Series_At_Core((v), (t), \
+        Force_Flex_Managed_Core(f), (i), UNBOUND)
 
-#define Init_Series_Cell(v,t,s) \
-    Init_Series_Cell_At((v), (t), (s), 0)
+#define Init_Series(v,t,f) \
+    Init_Series_At((v), (t), (f), 0)

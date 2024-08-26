@@ -1,6 +1,6 @@
 //
 //  File: %f-modify.c
-//  Summary: "block series modification (insert, append, change)"
+//  Summary: "ANY-SERIES? modification (insert, append, change)"
 //  Section: functional
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2019 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -136,15 +136,15 @@ REBLEN Modify_Array(
 
     if (op != SYM_CHANGE) {
         // Always expand dst_arr for INSERT and APPEND actions:
-        Expand_Series(dst_arr, dst_idx, size);
+        Expand_Flex(dst_arr, dst_idx, size);
     }
     else {
         if (size > part)
-            Expand_Series(dst_arr, dst_idx, size - part);
+            Expand_Flex(dst_arr, dst_idx, size - part);
         else if (size < part and (flags & AM_PART))
-            Remove_Series_Units(dst_arr, dst_idx, part - size);
+            Remove_Flex_Units(dst_arr, dst_idx, part - size);
         else if (size + dst_idx > tail_idx) {
-            Expand_Series_Tail(dst_arr, size - (tail_idx - dst_idx));
+            Expand_Flex_Tail(dst_arr, size - (tail_idx - dst_idx));
         }
     }
 
@@ -195,8 +195,8 @@ REBLEN Modify_Array(
         Set_Cell_Flag(Array_Head(dst_arr), NEWLINE_BEFORE);
     }
 
-  #if DEBUG_POISON_SERIES_TAILS
-    if (Get_Series_Flag(dst_arr, DYNAMIC))
+  #if DEBUG_POISON_FLEX_TAILS
+    if (Get_Flex_Flag(dst_arr, DYNAMIC))
         Poison_Cell(Array_Tail(dst_arr));
   #endif
 
@@ -211,17 +211,17 @@ REBLEN Modify_Array(
 //
 // This returns the index of the tail of the insertion.  The reason it does
 // so is because the caller would have a hard time calculating that if the
-// input series were FORM'd.
+// input Flex were FORM'd.
 //
-// It is possible to alias strings as binaries (or alias a binary as a string,
-// but doing so flags the series with SERIES_FLAG_IS_STRING).  If a binary
-// is aliased anywhere as a string, it must carry this flag--and once it does
-// so, then all mutations must preserve the series content as valid UTF-8.
-// That aliasing ability is why this routine is for both strings and binaries.
+// It is possible to alias String as Binary (or alias a Binary as a String,
+// but doing so flags the Flex with FLEX_FLAG_IS_STRING).  If a Binary
+// is aliased anywhere as a String, it must carry this flag--and once it does
+// so, then all mutations must preserve the Flex content as valid UTF-8.
+// That aliasing ability is why this routine is for both String and Binary.
 //
-// While a BINARY! and an ANY-STRING? can alias the same series, the meaning
+// While a BINARY! and an ANY-STRING? can alias the same Flex, the meaning
 // of VAL_INDEX() is different.  So in addition to the detection of the
-// SERIES_FLAG_IS_STRING on the series, we must know if dst is a BINARY!.
+// FLEX_FLAG_IS_STRING on the Flex, we must know if dst is a BINARY!.
 //
 REBLEN Modify_String_Or_Binary(
     Value* dst,  // ANY-STRING? or BINARY! value to modify
@@ -235,11 +235,11 @@ REBLEN Modify_String_Or_Binary(
 
     Ensure_Mutable(dst);  // note this also rules out ANY-WORD?s
 
-    Binary* dst_ser = cast(Binary*, Cell_Series_Ensure_Mutable(dst));
+    Binary* dst_ser = cast(Binary*, Cell_Flex_Ensure_Mutable(dst));
     assert(not Is_String_Symbol(dst_ser));  // would be immutable
 
     REBLEN dst_idx = VAL_INDEX(dst);
-    Size dst_used = Series_Used(dst_ser);
+    Size dst_used = Flex_Used(dst_ser);
 
     REBLEN dst_len_old = 0xDECAFBAD;  // only if IS_SER_STRING(dst_ser)
     Size dst_off;
@@ -286,7 +286,7 @@ REBLEN Modify_String_Or_Binary(
     // in terms of codepoints (if applicable)
 
     if (op == SYM_APPEND or dst_off > dst_used) {
-        dst_off = Series_Used(dst_ser);
+        dst_off = Flex_Used(dst_ser);
         dst_idx = dst_len_old;
     }
     else if (Is_Binary(dst) and Is_String_NonSymbol(dst_ser)) {
@@ -336,11 +336,11 @@ REBLEN Modify_String_Or_Binary(
         // !!! Branch is very similar to the one for ISSUE! above (merge?)
 
         // If Source == Destination we must prevent possible conflicts in
-        // the memory regions being moved.  Clone the series just to be safe.
+        // the memory regions being moved.  Clone the Flex just to be safe.
         //
         // !!! It may be possible to optimize special cases like append.
         //
-        if (Cell_Series(dst) == Cell_Series(src))
+        if (Cell_Flex(dst) == Cell_Flex(src))
             goto form;
 
         src_ptr = Cell_String_At(src);
@@ -434,8 +434,8 @@ REBLEN Modify_String_Or_Binary(
         // Use the byte buffer.
         //
         if (bin == dst_ser) {
-            Set_Series_Len(BYTE_BUF, 0);
-            Expand_Series_Tail(BYTE_BUF, src_size_raw);
+            Set_Flex_Len(BYTE_BUF, 0);
+            Expand_Flex_Tail(BYTE_BUF, src_size_raw);
             memcpy(Binary_Head(BYTE_BUF), src_ptr, src_size_raw);
             src_ptr = Binary_Head(BYTE_BUF);
         }
@@ -539,8 +539,8 @@ REBLEN Modify_String_Or_Binary(
     // longer series.
 
     if (op == SYM_APPEND or op == SYM_INSERT) {  // always expands
-        Expand_Series(dst_ser, dst_off, src_size_total);
-        Set_Series_Used(dst_ser, dst_used + src_size_total);
+        Expand_Flex(dst_ser, dst_off, src_size_total);
+        Set_Flex_Used(dst_ser, dst_used + src_size_total);
 
         if (Is_String_NonSymbol(dst_ser)) {
             book = LINK(Bookmarks, dst_ser);
@@ -653,23 +653,23 @@ REBLEN Modify_String_Or_Binary(
             //
             // We're adding more bytes than we're taking out.  Expand.
             //
-            Expand_Series(
+            Expand_Flex(
                 dst_ser,
                 dst_off,
                 src_size_total - part_size
             );
-            Set_Series_Used(dst_ser, dst_used + src_size_total - part_size);
+            Set_Flex_Used(dst_ser, dst_used + src_size_total - part_size);
         }
         else if (part_size > src_size_total) {
             //
             // We're taking out more bytes than we're inserting.  Slide left.
             //
-            Remove_Series_Units(
+            Remove_Flex_Units(
                 dst_ser,
                 dst_off,
                 part_size - src_size_total
             );
-            Set_Series_Used(dst_ser, dst_used + src_size_total - part_size);
+            Set_Flex_Used(dst_ser, dst_used + src_size_total - part_size);
         }
         else {
             // staying the same size (change "abc" "-" => "-bc")
@@ -691,10 +691,10 @@ REBLEN Modify_String_Or_Binary(
         }
     }
 
-    // Since the series may be expanded, its pointer could change...so this
+    // Since the Flex may be expanded, its pointer could change...so this
     // can't be done up front at the top of this routine.
     //
-    Byte* dst_ptr = Series_At(Byte, dst_ser, dst_off);
+    Byte* dst_ptr = Flex_At(Byte, dst_ser, dst_off);
 
     REBLEN d;
     for (d = 0; d < cast(REBLEN, dups); ++d) {  // dups checked above as > 0
@@ -729,11 +729,11 @@ REBLEN Modify_String_Or_Binary(
         }
     }
 
-    // !!! Set_Series_Used() now corrupts the terminating byte, which notices
+    // !!! Set_Flex_Used() now corrupts the terminating byte, which notices
     // problems when it's not synchronized.  Review why the above code does
     // not always produce a legitimate termination.
     //
-    Term_Series_If_Necessary(dst_ser);
+    Term_Flex_If_Necessary(dst_ser);
 
     if (op == SYM_APPEND)
         return 0;

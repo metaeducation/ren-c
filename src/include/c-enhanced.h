@@ -1018,7 +1018,7 @@
 //
 // This introduces a simple `ensure` construct:
 //
-//      void *p = ensure(Series*, s);
+//      void *p = ensure(Flex*, s);
 //
 // 1. Because ensure is a no-op in non-checked builds, it does no casting in
 //    the checked builds.  It only validates the type is convertible, and

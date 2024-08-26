@@ -825,7 +825,7 @@ DECLARE_NATIVE(js_native)
 
     Details* details = Phase_Details(native);
 
-    if (Is_Series_Frozen(Cell_String(source)))
+    if (Is_Flex_Frozen(Cell_String(source)))
         Copy_Cell(Details_At(details, IDX_NATIVE_BODY), source);  // no copy
     else {
         Init_Text(

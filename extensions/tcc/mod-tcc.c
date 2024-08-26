@@ -107,7 +107,7 @@ bool Is_User_Native(Action* act) {
     if (not Is_Action_Native(act))
         return false;
 
-    if (Series_Flavor(act) != FLAVOR_DETAILS)
+    if (Flex_Flavor(act) != FLAVOR_DETAILS)
         return false;
 
     Details* details = Phase_Details(cast(Phase*, act));
@@ -330,7 +330,7 @@ DECLARE_NATIVE(make_native)
 
     Details* details = Phase_Details(native);
 
-    if (Is_Series_Frozen(Cell_String(source)))
+    if (Is_Flex_Frozen(Cell_String(source)))
         Copy_Cell(Details_At(details, IDX_NATIVE_BODY), source); // no copy
     else {
         Init_Text(
@@ -348,7 +348,7 @@ DECLARE_NATIVE(make_native)
     if (REF(linkname)) {
         Value* linkname = ARG(linkname);
 
-        if (Is_Series_Frozen(Cell_String(linkname)))
+        if (Is_Flex_Frozen(Cell_String(linkname)))
             Copy_Cell(Details_At(details, IDX_TCC_NATIVE_LINKNAME), linkname);
         else {
             Init_Text(

@@ -580,8 +580,8 @@ void Startup_Trampoline(void)
 //    in the debug build.  Restore it to a typical null before the drop.
 //
 // 2. There's a Catch-22 on checking the balanced state for outstanding
-//    manual series allocations, e.g. it can't check *before* the mold buffer
-//    is freed because it would look like it was a leaked series, but it
+//    manual Flex allocations, e.g. it can't check *before* the mold buffer
+//    is freed because it would look like it was a leaked Flex, but it
 //    can't check *after* because the mold buffer balance check would crash.
 //
 void Shutdown_Trampoline(void)
@@ -673,7 +673,7 @@ void Drop_Level_Core(Level* L) {
             Stub* s = cast(Stub*, n);
             n = LINK(ApiNext, s);
             Freshen_Cell(Stub_Cell(s));
-            GC_Kill_Series(s);
+            GC_Kill_Flex(s);
         }
         Corrupt_Pointer_If_Debug(L->alloc_value_list);
 

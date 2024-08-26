@@ -129,15 +129,15 @@ INLINE Stub* Make_Use_Core(
         //
         // INODE is not used yet (likely application: symbol for patches that
         // represent lets).  Consider uses in patches that represent objects.
-        // So no SERIES_FLAG_INFO_NODE_NEEDS_MARK yet.
+        // So no FLEX_FLAG_INFO_NODE_NEEDS_MARK yet.
         //
         // MISC is a node, but it's used for linking patches to variants
         // with different chains underneath them...and shouldn't keep that
-        // alternate version alive.  So no SERIES_FLAG_MISC_NODE_NEEDS_MARK.
+        // alternate version alive.  So no FLEX_FLAG_MISC_NODE_NEEDS_MARK.
         //
         FLAG_FLAVOR(USE)
             | NODE_FLAG_MANAGED
-            | SERIES_FLAG_LINK_NODE_NEEDS_MARK
+            | FLEX_FLAG_LINK_NODE_NEEDS_MARK
     );
 
     if (
@@ -189,7 +189,7 @@ INLINE Stub* Make_Use_Core(
 
     // A circularly linked list of variations of this use with different
     // NextVirtual() data is maintained, to assist in avoiding creating
-    // unnecessary duplicates.  Decay_Series() will remove this patch from the
+    // unnecessary duplicates.  Decay_Flex() will remove this patch from the
     // list when it is being GC'd.
     //
     // !!! This feature was removed for the moment, see notes on Variant.

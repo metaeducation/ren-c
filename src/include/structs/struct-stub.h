@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -20,17 +20,17 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Series is actually just a "Stub"... a small-ish fixed-size descriptor for
-// series data.  Usually it contains a pointer to a larger allocation for the
-// actual contents.  But if the series is small enough, the contents are
+// Flex is actually just a "Stub"... a small-ish fixed-size descriptor for
+// Flex data.  Usually it contains a pointer to a larger allocation for the
+// actual contents.  But if the Flex is small enough, the contents are
 // embedded into the stub structure itself.
 //
-// Every string, block, path, etc. in Rebol has a Series.  Since Rebol does
+// Every TEXT!, BLOCK!, BINARY!, etc. in Rebol has a Flex.  Since Rebol does
 // not depend on any data structure libraries--like C++'s std::vector--this
-// means that the Series is also used internally when there is a need for a
+// means that the Flex is also used internally when there is a need for a
 // dynamically growable contiguous memory structure.
 //
-// Series behaves something like a "double-ended queue".  It can reserve
+// Flex behaves something like a "double-ended queue".  It can reserve
 // capacity at both the tail and the head.  When data is taken from the head,
 // it will retain that capacity...reusing it on later insertions at the head.
 //
@@ -42,24 +42,24 @@
 //
 // A pool quickly grants and releases memory ranges that are sizeof(Stub)
 // without needing to use malloc() and free() for each individual allocation.
-// These nodes can also be enumerated in the pool without needing the series
+// These nodes can also be enumerated in the pool without needing the Flex
 // to be tracked via a linked list or other structure.  The garbage collector
 // is one example of code that performs such an enumeration.
 //
-// A Series stub pointer will remain valid as long as outstanding references
-// to the series exist in values visible to the GC.  On the other hand, the
-// series's data pointer may be freed and reallocated to respond to the needs
+// A Flex Stub pointer will remain valid as long as outstanding references
+// to the Flex exist in values visible to the GC.  On the other hand, the
+// Flex's data pointer may be freed and reallocated to respond to the needs
 // of resizing.  (In the future, it may be reallocated just as an idle task
 // by the GC to reclaim or optimize space.)
 //
-//    *** THIS MEANS POINTERS INTO THE Series_Data() FOR A MANAGED SERIES
+//    *** THIS MEANS POINTERS INTO THE Flex_Data() FOR A MANAGED Flex
 //    MUST NOT BE HELD ONTO ACROSS EVALUATIONS, WITHOUT SPECIAL PROTECTION
 //    OR ACCOMMODATION.**
 //
-// Series may be either manually memory managed or delegated to the garbage
-// collector.  Free_Unmanaged_Series() may only be called on manual series.
-// See Manage_Series()/Push_GC_Guard() for remarks on how to work safely
-// with pointers to garbage-collected series, to avoid having them be GC'd
+// Flex may be either manually memory managed or delegated to the garbage
+// collector.  Free_Unmanaged_Flex() may only be called on manual Flex.
+// See Manage_Flex()/Push_GC_Guard() for remarks on how to work safely
+// with pointers to garbage-collected Flexes, to avoid having them be GC'd
 // out from under the code while working with them.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
@@ -68,125 +68,125 @@
 //   `Cell` must be fully defined before this file can compile.  Hence
 //   %struct-cell.h must already be included.
 //
-// * For the API of operations available on Series types, see %stub-series.h
+// * For the API of operations available on Flex types, see %stub-flex.h
 //
-// * Array* is a series that contains Rebol cells.  It has many concerns
+// * Array is a Flex that contains Rebol Cells.  It has many concerns
 //   specific to special treatment and handling, in interaction with the
 //   garbage collector as well as handling "relative vs specific" values.
 //
 // * Several related types (Action* for function, Context* for context) are
-//   actually stylized arrays.  They are laid out with special values in their
-//   content (e.g. at the [0] index), or by links to other series in their
-//   `->misc` field of the series stub.  Hence series are the basic building
-//   blocks of nearly all variable-size structures in the system.
+//   actually stylized Arrays.  They are laid out with special values in their
+//   content (e.g. at the [0] index), or by links to other Flexes in their
+//   `->misc` and `->link` fields of the Flex Stub.  Hence Flexes are the basic
+//   building blocks of nearly all variable-size structures in the system.
 //
-// * The element size in a series is known as the "width".  R3-Alpha used a
-//   byte for this to get from element sizes ranging from 0-255 bytes.  Ren-C
-//   uses that byte for the "flavor" of the stub (a name distinguishing
-//   the stub in a way parallel to a cell's "heart") and then maps from flavor
-//   to size.
+// * The unit size in a Flex is known as the "width".  R3-Alpha used a
+//   byte for this to get from unit sizes ranging from 0-255 bytes.  Ren-C
+//   uses that byte for the "Flavor" of the Stub (a name distinguishing
+//   the Stub in a way parallel to a Cell's "Heart") and then maps from Flavor
+//   to Size.
 //
 
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// SERIES_FLAG_0 - SERIES_FLAG_7 are NODE_FLAG_XXX)
+// FLEX_FLAG_0 - FLEX_FLAG_7 are NODE_FLAG_XXX)
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
 // At one time all the flags were aliased, like:
 //
-//     #define SERIES_FLAG_MANAGED NODE_FLAG_MANAGED
-//     #define SERIES_FLAG_FREE NODE_FLAG_FREE
+//     #define FLEX_FLAG_MANAGED NODE_FLAG_MANAGED
+//     #define FLEX_FLAG_FREE NODE_FLAG_FREE
 //     ...
 //
 // This created weird inconsistencies where it would make an equal amount of
-// sense to pass SERIES_FLAG_MANAGED or NODE_FLAG_MANAGED, and introduces the
+// sense to pass FLEX_FLAG_MANAGED or NODE_FLAG_MANAGED, and introduces the
 // risk that the checks might be performed on pointers that don't know if
 // what they point at is a Cell or a Stub.  The duplication was removed, and
-// now you say `Is_Node_Managed(ser)` vs. `Get_Series_Flag(ser, MANAGED)` etc.
+// now you say `Is_Node_Managed(flex)` vs. `Get_Flex_Flag(flex, MANAGED)` etc.
 //
 // Aliases for the NODE_FLAG_GC_ONE and NODE_FLAG_GC_TWO are kept, as there
 // is no corresponding ambiguity.
 
 
-//=//// SERIES_FLAG_LINK_NODE_NEEDS_MARK //////////////////////////////////=//
+//=//// FLEX_FLAG_LINK_NODE_NEEDS_MARK //////////////////////////////////=//
 //
-// This indicates that a series's LINK() field is the `any.node`, and should
+// This indicates that a Flex's LINK() field is the `any.node`, and should
 // be marked (if not null).
 //
 // Note: Even if this flag is not set, *link.any might still be a node*...
 // just not one that should be marked.
 //
-#define SERIES_FLAG_LINK_NODE_NEEDS_MARK \
+#define FLEX_FLAG_LINK_NODE_NEEDS_MARK \
     NODE_FLAG_GC_ONE
 
 
-//=//// SERIES_FLAG_MISC_NODE_NEEDS_MARK //////////////////////////////////=//
+//=//// FLEX_FLAG_MISC_NODE_NEEDS_MARK //////////////////////////////////=//
 //
-// This indicates that a series's MISC() field is the `any.node`, and should
+// This indicates that a Flex's MISC() field is the `any.node`, and should
 // be marked (if not null).
 //
 // Note: Even if this flag is not set, *misc.any might still be a node*...
 // just not one that should be marked.
 //
-#define SERIES_FLAG_MISC_NODE_NEEDS_MARK \
+#define FLEX_FLAG_MISC_NODE_NEEDS_MARK \
     NODE_FLAG_GC_TWO
 
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// SERIES <<HEADER>> FLAGS
+// FLEX <<HEADER>> FLAGS
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Series have two places to store flags...in the "header" and in the "info".
-// The following are the SERIES_FLAG_XXX that are used in the header, while
-// the SERIES_INFO_XXX flags will be found in the info.
+// Flex has two places to store flags...in the "header" and in the "info".
+// The following are the FLEX_FLAG_XXX that are used in the header, while
+// the FLEX_INFO_XXX flags will be found in the info.
 //
-// ** Make_Series() takes SERIES_FLAG_XXX as a parameter, so anything that
-// controls series creation should be a _FLAG_ as opposed to an _INFO_! **
+// ** Make_Flex() takes FLEX_FLAG_XXX as a parameter, so anything that
+// controls Flex creation should be a _FLAG_ as opposed to an _INFO_! **
 //
 // (Other general rules might be that bits that are to be tested or set as
 // a group should be in the same flag group.  Perhaps things that don't change
-// for the lifetime of the series might prefer header to the info, too?
+// for the lifetime of the Flex might prefer header to the info, too?
 // Such things might help with caching.)
 //
 
-#define SERIES_FLAGS_NONE \
+#define FLEX_FLAGS_NONE \
     0  // helps locate places that want to say "no flags"
 
 
-//=//// SERIES_FLAG_8 /////////////////////////////////////////////////////=//
+//=//// FLEX_FLAG_8 /////////////////////////////////////////////////////=//
 //
-#define SERIES_FLAG_8 \
+#define FLEX_FLAG_8 \
     FLAG_LEFT_BIT(8)
 
 
-//=//// SERIES_FLAG_FIXED_SIZE ////////////////////////////////////////////=//
+//=//// FLEX_FLAG_FIXED_SIZE ////////////////////////////////////////////=//
 //
-// This means a series cannot be expanded or contracted.  Values within the
-// series are still writable (assuming it isn't otherwise locked).
+// This means a Flex cannot be expanded or contracted.  Values within the
+// Flex are still writable (assuming it isn't otherwise locked).
 //
-// !!! Is there checking in all paths?  Do series contractions check this?
+// !!! Is there checking in all paths?  Do Flex contractions check this?
 //
-// One important reason for ensuring a series is fixed size is to avoid
+// One important reason for ensuring a Flex is fixed size is to avoid
 // the possibility of the data pointer being reallocated.  This allows
 // code to ignore the usual rule that it is unsafe to hold a pointer to
-// a value in the series data (still might have to check for inaccessible).
+// a value in the Flex data (still might have to check for inaccessible).
 //
-// !!! Strictly speaking, SERIES_FLAG_NO_RELOCATE could be different
+// !!! Strictly speaking, FLEX_FLAG_NO_RELOCATE could be different
 // from fixed size... if there would be a reason to reallocate besides
 // changing size (such as memory compaction).  For now, just make the two
 // equivalent but let the callsite distinguish the intent.
 //
-#define SERIES_FLAG_FIXED_SIZE \
+#define FLEX_FLAG_FIXED_SIZE \
     FLAG_LEFT_BIT(9)
 
-#define SERIES_FLAG_DONT_RELOCATE SERIES_FLAG_FIXED_SIZE
+#define FLEX_FLAG_DONT_RELOCATE FLEX_FLAG_FIXED_SIZE
 
 
-//=//// SERIES_FLAG_POWER_OF_2 ////////////////////////////////////////////=//
+//=//// FLEX_FLAG_POWER_OF_2 ////////////////////////////////////////////=//
 //
 // R3-Alpha would round some memory allocation requests up to a power of 2.
 // This may well not be a good idea:
@@ -194,85 +194,85 @@
 // http://stackoverflow.com/questions/3190146/
 //
 // But leaving it alone for the moment: there is a mechanical problem that the
-// specific number of bytes requested for allocating series data is not saved.
-// Only the series capacity measured in elements is known.
+// specific number of bytes requested for allocating Flex data is not saved.
+// Only the Flex capacity measured in units is known.
 //
-// Hence this flag is marked on the node, which is enough to recreate the
-// actual number of allocator bytes to release when the series is freed.  The
+// Hence this flag is marked on the Stub, which is enough to recreate the
+// actual number of allocator bytes to release when the Flex is freed.  The
 // memory is accurately tracked for GC decisions, and balances back to 0 at
 // program end.
 //
-// Note: All R3-Alpha's series had elements that were powers of 2, so this bit
+// Note: All R3-Alpha's Flexes had widths that were powers of 2, so this bit
 // was not necessary there.
 //
-#define SERIES_FLAG_POWER_OF_2 \
+#define FLEX_FLAG_POWER_OF_2 \
     FLAG_LEFT_BIT(10)
 
 
-//=//// SERIES_FLAG_DYNAMIC ///////////////////////////////////////////////=//
+//=//// FLEX_FLAG_DYNAMIC ///////////////////////////////////////////////=//
 //
-// The optimization which uses small series will fit the data into the series
-// node if it is small enough.  This flag is set when a series uses its
-// `content` for tracking information instead of the actual data itself.
+// A small Flex will fit the data into the Flex Stub if it is small enough.
+// This flag is set when a Flex uses its `content` for tracking information
+// instead of the actual data itself.
 //
-// It can also be passed in at series creation time to force an allocation to
+// It can also be passed in at Flex creation time to force an allocation to
 // be dynamic.  This is because some code is more interested in performance
 // gained by being able to assume where to look for the data pointer and the
 // length (e.g. paramlists and context varlists/keylists).  So passing this
-// flag into series creation routines avoids creating the shortened form.
+// flag into Flex creation routines avoids creating the optimized form.
 //
 // Note: At one time the USED_BYTE() of 255 was the signal for this.  But
 // being able to pass in the flag to creation routines easily, and make the
-// test easier with Get_Series_Flag(), was seen as better.  Also, this means
-// dynamic series have an entire byte worth of free data available to use.
+// test easier with Get_Flex_Flag(), was seen as better.  Also, this means
+// a dynamic Flex has an entire byte worth of free data available to use.
 //
-#define SERIES_FLAG_DYNAMIC \
+#define FLEX_FLAG_DYNAMIC \
     FLAG_LEFT_BIT(11)
 
 
-//=//// SERIES_FLAG_INFO_NODE_NEEDS_MARK //////////////////////////////////=//
+//=//// FLEX_FLAG_INFO_NODE_NEEDS_MARK //////////////////////////////////=//
 //
 // Bits are hard to come by in a Stub, especially a singular Stub which
 // uses the cell content for an arbitrary value (e.g. API handles).  The
 // space for the INFO bits is thus sometimes claimed for a node ("INODE"),
 // which may need marking.
 //
-#define SERIES_FLAG_INFO_NODE_NEEDS_MARK \
+#define FLEX_FLAG_INFO_NODE_NEEDS_MARK \
     FLAG_LEFT_BIT(12)
 
 
-//=//// SERIES_FLAG_13 ////////////////////////////////////////////////////=//
+//=//// FLEX_FLAG_13 ////////////////////////////////////////////////////=//
 //
-#define SERIES_FLAG_13 \
+#define FLEX_FLAG_13 \
     FLAG_LEFT_BIT(13)
 
 
-//=//// SERIES_FLAG_BLACK /////////////////////////////////////////////////=//
+//=//// FLEX_FLAG_BLACK /////////////////////////////////////////////////=//
 //
-// This is a generic bit for the "coloring API", e.g. Is_Series_Black(),
-// Flip_Series_White(), etc.  These let native routines engage in marking
-// and unmarking nodes without potentially wrecking the garbage collector by
+// This is a generic bit for the "coloring API", e.g. Is_Flex_Black(),
+// Flip_Flex_White(), etc.  These let native routines engage in marking
+// and unmarking Flexes without potentially wrecking the garbage collector by
 // reusing NODE_FLAG_MARKED.  Purposes could be for recursion protection or
-// other features, to avoid having to make a map from Series to bool.
+// other features, to avoid having to make a map from Flex to bool.
 //
-// !!! Not clear if this belongs in the SERIES_FLAG_XXX or not, but moving
+// !!! Not clear if this belongs in the FLEX_FLAG_XXX or not, but moving
 // it here for now.
 //
-#define SERIES_FLAG_BLACK \
+#define FLEX_FLAG_BLACK \
     FLAG_LEFT_BIT(14)
 
 
-//=//// SERIES_FLAG_15 ////////////////////////////////////////////////////=//
+//=//// FLEX_FLAG_15 ////////////////////////////////////////////////////=//
 //
-#define SERIES_FLAG_15 \
+#define FLEX_FLAG_15 \
     FLAG_LEFT_BIT(15)
 
 
-//=//// BITS 16-23: SERIES SUBCLASS ("FLAVOR") ////////////////////////////=//
+//=//// BITS 16-23: FLEX SUBCLASS ("FLAVOR") //////////////////////////////=//
 //
-// Series subclasses keep a byte to tell which kind they are.  The byte is an
+// Flex subclasses use a byte to tell which kind they are.  The byte is an
 // enum which is ordered in a way that offers information (e.g. all the
-// arrays are in a range, all the series with wide size of 1 are together...)
+// arrays are in a range, all the Flexes with width of 1 are together...)
 //
 // 1. In lieu of typechecking cell is-a cell, we assume the macro finding
 //    a field called ->leader with .bits in it is good enough.  All methods of
@@ -289,161 +289,156 @@
 
 //=//// BITS 24-31: SUBCLASS FLAGS ////////////////////////////////////////=//
 //
-// These flags are those that differ based on which series subclass is used.
+// These flags are those that differ based on which Flex subclass is used.
 //
-// This space is used currently for array flags to store things like whether
+// This space is used currently for Array flags to store things like whether
 // the array ends in a newline.  It's a hodepodge of other bits which were
 // rehomed while organizing the flavor bits.  These positions now have the
 // ability to be more thought out after the basics of flavors are solved.
 //
 
-#define SERIES_FLAG_24    FLAG_LEFT_BIT(24)
-#define SERIES_FLAG_25    FLAG_LEFT_BIT(25)
-#define SERIES_FLAG_26    FLAG_LEFT_BIT(26)
-#define SERIES_FLAG_27    FLAG_LEFT_BIT(27)
-#define SERIES_FLAG_28    FLAG_LEFT_BIT(28)
-#define SERIES_FLAG_29    FLAG_LEFT_BIT(29)
-#define SERIES_FLAG_30    FLAG_LEFT_BIT(30)
-#define SERIES_FLAG_31    FLAG_LEFT_BIT(31)
+#define FLEX_FLAG_24    FLAG_LEFT_BIT(24)
+#define FLEX_FLAG_25    FLAG_LEFT_BIT(25)
+#define FLEX_FLAG_26    FLAG_LEFT_BIT(26)
+#define FLEX_FLAG_27    FLAG_LEFT_BIT(27)
+#define FLEX_FLAG_28    FLAG_LEFT_BIT(28)
+#define FLEX_FLAG_29    FLAG_LEFT_BIT(29)
+#define FLEX_FLAG_30    FLAG_LEFT_BIT(30)
+#define FLEX_FLAG_31    FLAG_LEFT_BIT(31)
 
 
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// SERIES <<INFO>> BITS
+// FLEX <<INFO>> BITS
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// See remarks on SERIES <<FLAG>> BITS about the two places where series store
+// See remarks on FLEX <<FLAG>> BITS about the two places where a Flex stores
 // bits.  These are the info bits, which are more likely to be changed over
-// the lifetime of the series--defaulting to FALSE.
+// the lifetime of the Flex--defaulting to FALSE.
 //
-// !!! The current main application of series info is a byte's worth of space
-// for the Series_Used() of series content that fits in the cell area, and
-// flags pertaining to locking.  The idea of "popping out" that series info
+// !!! The current main application of Flex info is a byte's worth of space
+// for the Flex_Used() of Flex content that fits in the Cell area, and
+// flags pertaining to locking.  The idea of "popping out" that Flex info
 // upon a hold lock being taken--such that the info bits move and the slot
-// holds a locking pointer--is currently being thught about.  See the INODE()
+// holds a locking pointer--is currently being thought about.  See the INODE()
 // for the beginnings of that.
 
 
-//=//// SERIES_INFO_0_IS_FALSE ////////////////////////////////////////////=//
+//=//// FLEX_INFO_0_IS_FALSE ////////////////////////////////////////////=//
 //
 // The INFO bits are resident immediately after the content description, and
-// in the case of singular arrays a node is stored in the cell itself.  An
+// in the case of singular Arrays a cell is stored in the Stub itself.  An
 // array traversal might step outside the bounds, so it's easiest just to say
-// the location is not a node to avoid writing it.
+// the location is not a Node to avoid writing it.
 //
 // !!! This can be reviewed if getting another bit seems important.
 //
-#define SERIES_INFO_0_IS_FALSE \
+#define FLEX_INFO_0_IS_FALSE \
     FLAG_LEFT_BIT(0)
-STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
+STATIC_ASSERT(FLEX_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 
 
-//=//// SERIES_INFO_1 /////////////////////////////////////////////////////=//
+//=//// FLEX_INFO_1 /////////////////////////////////////////////////////=//
 //
-#define SERIES_INFO_1 \
+#define FLEX_INFO_1 \
     FLAG_LEFT_BIT(1)
 
 
-//=//// SERIES_INFO_AUTO_LOCKED ///////////////////////////////////////////=//
+//=//// FLEX_INFO_AUTO_LOCKED ///////////////////////////////////////////=//
 //
-// Some operations lock series automatically, e.g. to use a piece of data as
-// map keys.  This approach was chosen after realizing that a lot of times,
+// Some operations lock Flexes automatically, e.g. to use a piece of data as
+// MAP! keys.  This approach was chosen after realizing that a lot of times,
 // users don't care if something they use as a key gets locked.  So instead
-// of erroring by telling them they can't use an unlocked series as a map key,
-// this locks it but changes the SERIES_FLAG_HAS_FILE_LINE to implicate the
+// of erroring by telling them they can't use an unlocked Flex as a MAP! key,
+// this locks it but changes the FLEX_FLAG_HAS_FILE_LINE to implicate the
 // point where the locking occurs.
 //
 // !!! The file-line feature is pending.
 //
-#define SERIES_INFO_AUTO_LOCKED \
+#define FLEX_INFO_AUTO_LOCKED \
     FLAG_LEFT_BIT(2)
 
 
-//=//// SERIES_INFO_PROTECTED /////////////////////////////////////////////=//
+//=//// FLEX_INFO_PROTECTED /////////////////////////////////////////////=//
 //
-// This indicates that the user had a tempoary desire to protect a series
+// This indicates that the user had a tempoary desire to protect a Flex
 // size or values from modification.  It is the usermode analogue of
-// SERIES_INFO_FROZEN_DEEP, but can be reversed.
+// FLEX_INFO_FROZEN_DEEP, but can be reversed.
 //
 // Note: There is a feature in PROTECT (CELL_FLAG_PROTECTED) which protects
 // a certain variable in a context from being changed.  It is similar, but
-// distinct.  SERIES_INFO_PROTECTED is a protection on a series itself--which
-// ends up affecting all values with that series in the payload.
+// distinct.  FLEX_INFO_PROTECTED is a protection on a Flex itself--which
+// ends up affecting all values with that Flex in the payload.
 //
-#define SERIES_INFO_PROTECTED \
+#define FLEX_INFO_PROTECTED \
     FLAG_LEFT_BIT(3)
 
 
-//=//// SERIES_INFO_FROZEN_DEEP ///////////////////////////////////////////=//
+//=//// FLEX_INFO_FROZEN_DEEP ///////////////////////////////////////////=//
 //
 // Indicates that the length or values cannot be modified...ever.  It has been
 // locked and will never be released from that state for its lifetime, and if
-// it's an array then everything referenced beneath it is also frozen.  This
+// it's an Array then everything referenced beneath it is also frozen.  This
 // means that if a read-only copy of it is required, no copy needs to be made.
 //
 // (Contrast this with the temporary condition like caused by something
-// like SERIES_INFO_HOLD or SERIES_INFO_PROTECTED.)
+// like FLEX_INFO_HOLD or FLEX_INFO_PROTECTED.)
 //
-// Note: This and the other read-only series checks are honored by some layers
+// Note: This and the other read-only Flex checks are honored by some layers
 // of abstraction, but if one manages to get a raw non-const pointer into a
-// value in the series data...then by that point it cannot be enforced.
+// value in the Flex data...then by that point it cannot be enforced.
 //
-#define SERIES_INFO_FROZEN_DEEP \
+#define FLEX_INFO_FROZEN_DEEP \
     FLAG_LEFT_BIT(4)
 
 
-//=//// SERIES_INFO_HOLD //////////////////////////////////////////////////=//
+//=//// FLEX_INFO_HOLD //////////////////////////////////////////////////=//
 //
 // Set in the header whenever some stack-based operation wants a temporary
-// hold on a series, to give it a protected state.  This will happen with a
-// DO, or PARSE, or enumerations.  Even REMOVE-EACH will transition the series
+// hold on a Flex, to give it a protected state.  This will happen with a
+// DO, or PARSE, or enumerations.  Even REMOVE-EACH will transition the Flex
 // it is operating on into a HOLD state while the removal signals are being
 // gathered, and apply all the removals at once before releasing the hold.
 //
 // It will be released when the execution is finished, which distinguishes it
-// from SERIES_INFO_FROZEN_DEEP, which will never be cleared once set.
+// from FLEX_INFO_FROZEN_DEEP, which will never be cleared once set.
 //
-#define SERIES_INFO_HOLD \
+#define FLEX_INFO_HOLD \
     FLAG_LEFT_BIT(5)
 
 
-//=//// SERIES_INFO_FROZEN_SHALLOW ////////////////////////////////////////=//
+//=//// FLEX_INFO_FROZEN_SHALLOW ////////////////////////////////////////=//
 //
-// A series can be locked permanently, but only at its own top level.
+// A Flex can be locked permanently at its top level only, if you want.
 //
-#define SERIES_INFO_FROZEN_SHALLOW \
+#define FLEX_INFO_FROZEN_SHALLOW \
     FLAG_LEFT_BIT(6)
 
 
-//=//// SERIES_INFO_7 /////////////////////////////////////////////////////=//
+//=//// FLEX_INFO_7 /////////////////////////////////////////////////////=//
 //
-#define SERIES_INFO_7 \
+#define FLEX_INFO_7 \
     FLAG_LEFT_BIT(7)
 
 
-//=//// BITS 8-15 ARE Series_Used() FOR NON-DYNAMIC NON-ARRAYS ////////////=//
+//=//// BITS 8-15 ARE Flex_Used() FOR NON-DYNAMIC NON-ARRAYS ////////////=//
 
-// SERIES_FLAG_DYNAMIC indicates that a series has a dynamically allocated
+// FLEX_FLAG_DYNAMIC indicates that a Flex has a dynamically allocated
 // portion, and it has a whole uintptr_t to use for the length.  However, if
 // that flag is not set the payload is small, fitting in StubContentUnion
 // where the allocation tracking information would be.
 //
-// If the data is an array, then the length can only be 0 or 1, since the
+// If the data is an Array, then the length can only be 0 or 1, since the
 // tracking information is the same size as a cell.  This can be encoded by
 // having the cell be poisoned or non-poisoned to know the length.
 //
-// For binaries and other non-arrays the length has to be stored somewhere.
+// For Binary and other non-Arrays the length has to be stored somewhere.
 // The third byte of the INFO is set aside for the purpose.
 //
-// !!! Currently arrays leverage this as 0 for a terminator of the singular
-// array case.  However, long term zero termination of arrays is not being
-// kept as a redundancy with the length.  It is costly to update and takes
-// additional space from rounding up.
-//
-#define USED_BYTE(s) \
-    SECOND_BYTE(&SERIES_INFO(s))
+#define USED_BYTE(f) \
+    SECOND_BYTE(&FLEX_INFO(f))
 
 #define FLAG_USED_BYTE(len)     FLAG_SECOND_BYTE(len)
 
@@ -452,7 +447,7 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 //
 // These bits are currently unused by other types.  One reason to avoid using
 // them is the concept that the INFO slot will be used to hold locking info
-// for series, which would require a full pointer.
+// for Flex, which would require a full pointer.
 //
 
 
@@ -462,12 +457,12 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 // While 64-bit systems have another 32-bits available in the header, core
 // functionality shouldn't require using them...only optimization features.
 
-#define SERIES_INFO_MASK_NONE 0
+#define FLEX_INFO_MASK_NONE 0
 
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// SERIES STUB STRUCTURE DEFINITION
+// FLEX STUB STRUCTURE DEFINITION
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -478,16 +473,15 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 // afoul of strict aliasing requirements.
 //
 // In order to help avoid confusion in optimizing macros that could be passed
-// a cell vs. stub unintentionally, the header in a stub is called "leader",
-// distinguishing it from the stub's "header".
+// a Cell vs. Stub unintentionally, the header in a stub is called `->leader`,
+// distinguishing it from the stub's `->header`.
 //
-// There are 3 basic layouts which the union can be interpreted as:
+// There are two layouts which the union can be interpreted as:
 //
 //      Dynamic: [leader link [allocation tracking] info misc]
-//     Singular: [leader link [cell] info misc]
-//      Pairing: [[cell] [cell]]
+//     Singular: [leader link [Cell] info misc]
 //
-// The singular form has space the *size* of a cell, but can be addressed as
+// The singular form has space the *size* of a Cell, but can be addressed as
 // raw bytes used for UTF-8 strings or other smallish data.  If a Stub is
 // aligned on a 64-bit boundary, the internal cell should be on a 64-bit
 // boundary as well, even on a 32-bit platform where the header and link are
@@ -500,16 +494,18 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 // NODE_FLAG_CELL clear.
 //
 // Singulars have widespread applications in the system.  One is that a
-// "single element array living in a series node" makes a very efficient
-// implementation of an API handle to a value.  Plus it's used notably in the
+// "single-Element Array living in a Flex Stub" makes a very efficient
+// implementation of an API handle to a Value.  Plus it's used notably in the
 // efficient implementation of FRAME!.  They also narrow the gap in overhead
 // between COMPOSE [A (B) C] vs. REDUCE ['A B 'C] such that the memory cost
-// of the array is nearly the same as just having another value in the array.
+// of the Array is nearly the same as just having another Cell in the array.
 //
-// Pairings are allocated from the Stub pool instead of their own to
+// Pairings are not Stubs, but allocated from the Stub pool in order to
 // help exchange a common "currency" of allocation size more efficiently.
 // They are used in the PAIR! datatype, but have other applications when
 // exactly two values are needed (e.g. paths or tuples like `a/b` or `a.b`)
+//
+//      Pairing: [[Cell] [Cell]]  ; sizeof(Pairing) = sizeof(Stub)
 //
 // Most of the time, code does not need to be concerned about distinguishing
 // Pairing from the Dynamic and Singular layouts--because it already knows
@@ -522,14 +518,14 @@ union StubBonusUnion {
     //
     // In R3-Alpha, the bias was not a full REBLEN but was limited in range to
     // 16 bits or so.  This means 16 info bits are likely available if needed
-    // for dynamic series...though it would complicate the logic for biasing
+    // for a dynamic Flex...though it would complicate the logic for biasing
     // to have to notice when you TAKE 65535 units from the head of a larger
-    // series and need to allocate a new pointer (though this needs to be
+    // Flex and need to allocate a new pointer (though this needs to be
     // done anyway, otherwise memory is wasted).
     //
     REBLEN bias;
 
-    // Series nodes that do not use bias (e.g. context varlists) can use the
+    // Flex Stubs that do not use bias (e.g. context varlists) can use the
     // bonus slot for other information.
     //
     const Node* node;
@@ -538,7 +534,7 @@ union StubBonusUnion {
 
 struct StubDynamicStruct {
     //
-    // `data` is the "head" of the series data.  It might not point directly
+    // `data` is the "head" of the Flex data.  It might not point directly
     // at the memory location that was returned from the allocator if it has
     // bias included in it.
     //
@@ -547,9 +543,9 @@ struct StubDynamicStruct {
     //
     char *data;
 
-    // `used` is the count of *physical* elements.  If a series is byte-sized
-    // and holding a UTF-8 string, then this may be a size in bytes distinct
-    // than the count of "logical" elements, e.g. codepoints.  The actual
+    // `used` is the count of *physical* units.  If a Flex is byte-sized
+    // and holding a UTF-8 String, then this may be a size in bytes distinct
+    // than the count of "logical" units, e.g. codepoints.  The actual
     // logical length in such cases will be in the MISC(length) field.
     //
     Length used;
@@ -561,7 +557,7 @@ struct StubDynamicStruct {
     Length rest;
 
     // This is the 4th pointer on 32-bit platforms which could be used for
-    // something when a series is dynamic.
+    // something when a Flex is dynamic.
     //
     union StubBonusUnion bonus;
 };
@@ -569,16 +565,16 @@ struct StubDynamicStruct {
 
 union StubContentUnion {
     //
-    // If the series data does not fit into the StubContent, then it must be
+    // If the Flex data does not fit into the StubContent, then it must be
     // dynamically allocated.  This is the tracking structure for that
     // dynamic data allocation.
     //
     struct StubDynamicStruct dynamic;
 
-    // If not(SERIES_FLAG_DYNAMIC), then 0 or 1 length arrays can be held in
-    // the series node.  If the single cell holds an END, it's 0 length...
-    // otherwise it's length 1.  This means Series_Used() for non-dynamic
-    // arrays is technically available for other purposes.
+    // If not(FLEX_FLAG_DYNAMIC), then 0 or 1 length arrays can be held in
+    // the Flex Stub.  If the single Cell holds a "Poison", it's 0 length...
+    // otherwise it's length 1.  This means Flex_Used() for non-dynamic
+    // Arrays is technically available for other purposes.
     //
     union {
         Cell cell;
@@ -597,12 +593,12 @@ union StubLinkUnion {
     // library is not loaded.
     //
     // !!! As with some other types, this may not need the optimization of
-    // being in the Series node--but be handled via user defined types
+    // being in the Flex Stub--but be handled via user defined types
     //
     void *fd;
 
     // If a Node* is stored in the link field, it has to use this union
-    // member for SERIES_INFO_LINK_NODE_NEEDS_MARK to see it.  To help make
+    // member for FLEX_INFO_LINK_NODE_NEEDS_MARK to see it.  To help make
     // the reference sites be unique for each purpose and still be type safe,
     // see the LINK() macro helpers.
     //
@@ -611,12 +607,12 @@ union StubLinkUnion {
 
 
 // The `misc` field is an extra pointer-sized piece of data which is resident
-// in the series node, and hence visible to all Cells that might be
-// referring to the series.
+// in the Flex Stub, and hence visible to all Cells that might be
+// referring to the Flex.
 //
 union StubMiscUnion {
     //
-    // See ARRAY_FLAG_FILE_LINE.  Ordinary source series store the line number
+    // See ARRAY_FLAG_FILE_LINE.  Ordinary source Arrays store the line number
     // here.  It perhaps could have some bits taken out of it, vs. being a
     // full 32-bit integer on 32-bit platforms or 64-bit integer on 64-bit
     // platforms...or have some kind of "extended line" flag which interprets
@@ -624,10 +620,10 @@ union StubMiscUnion {
     //
     LineNumber line;
 
-    // Under UTF-8 everywhere, strings are byte-sized...so the series "used"
+    // Under UTF-8 everywhere, Strings are byte-sized...so the Flex "used"
     // is actually counting *bytes*, not logical character codepoint units.
-    // Series_Used() and String_Len() can therefore be different...String_Len()
-    // on a string series comes from here, vs. just report the used units.
+    // Flex_Used() and String_Len() can therefore be different...String_Len()
+    // on a String Flex comes from here, vs. just report the used units.
     //
     Length length;
 
@@ -635,15 +631,15 @@ union StubMiscUnion {
     //
     CLEANUP_CFUNC *cleaner;
 
-    // Because a bitset can get very large, the negation state is stored
-    // as a boolean in the series.  Since negating a bitset is intended
-    // to affect all values, it has to be stored somewhere that all
-    // REBVALs would see a change--hence the field is in the series.
+    // Because a BITSET! can get very large, the negation state is stored
+    // as a boolean in the Flex.  Since negating a BITSET! is intended
+    // to affect all references, it has to be stored somewhere that all
+    // Cells would see a change--hence the field is in the Flex.
     //
     bool negated;
 
     // If a Node* is stored in the misc field, it has to use this union
-    // member for SERIES_INFO_MISC_NODE_NEEDS_MARK to see it.  To help make
+    // member for FLEX_INFO_MISC_NODE_NEEDS_MARK to see it.  To help make
     // the reference sites be unique for each purpose and still be type safe,
     // see the MISC() macro helpers.
     //
@@ -651,9 +647,9 @@ union StubMiscUnion {
 };
 
 
-// Some series flags imply the INFO is used not for flags, but for another
-// markable pointer.  This is not legal for any series that needs to encode
-// its Series_Used(), so only strings and arrays can pull this trick...when
+// Some Flex flags imply the INFO is used not for flags, but for another
+// markable pointer.  This is not legal for any Flex that needs to encode
+// its Flex_Used(), so only String and Array can pull this trick...when
 // they are used to implement internal structures.
 //
 union StubInfoUnion {
@@ -671,7 +667,7 @@ union StubInfoUnion {
     struct StubStruct
 #endif
 {
-    // See the description of SERIES_FLAG_XXX for the bits in this header.
+    // See the description of FLEX_FLAG_XXX for the bits in this header.
     // It is in the same position as a Cell header, and the first byte
     // can be read via NODE_BYTE() to determine which it is.  It's named
     // "leader" to be distinct from a Cell's "header" to achieve a kind of
@@ -680,9 +676,9 @@ union StubInfoUnion {
     union HeaderUnion leader;
 
     // The `link` field is generally used for pointers to something that
-    // when updated, all references to this series would want to be able
+    // when updated, all references to this Flex would want to be able
     // to see.  This cannot be done (easily) for properties that are held
-    // in cells directly.
+    // in a Cell directly.
     //
     // This field is in the second pointer-sized slot in the Stub node to
     // push the `content` so it is 64-bit aligned on 32-bit platforms.  This
@@ -694,18 +690,18 @@ union StubInfoUnion {
     //
     union StubLinkUnion link;
 
-    // `content` is the sizeof(Cell) data for the series, which is thus
-    // 4 platform pointers in size.  If the series is small enough, the header
+    // `content` is the sizeof(Cell) data for the Flex, which is thus
+    // 4 platform pointers in size.  If the Flex is small enough, the header
     // contains the size in bytes and the content lives literally in these
     // bits.  If it's too large, it will instead be a pointer and tracking
     // information for another allocation.
     //
     union StubContentUnion content;
 
-    // `info` consists of bits that could apply equally to any series, and
-    // that may need to be tested together as a group.  Make_Series()
+    // `info` consists of bits that could apply equally to any Flex, and
+    // that may need to be tested together as a group.  Make_Flex()
     // calls presume all the info bits are initialized to zero, so any flag
-    // that controls the allocation should be a SERIES_FLAG_XXX instead.
+    // that controls the allocation should be a FLEX_FLAG_XXX instead.
     //
     // !!! Only 32-bits are used on 64-bit platforms.  There could be some
     // interesting added caching feature or otherwise that would use
@@ -713,55 +709,55 @@ union StubInfoUnion {
     //
     union StubInfoUnion info;
 
-    // This is the second pointer-sized piece of series data that is used
+    // This is the second pointer-sized piece of Flex data that is used
     // for various purposes, similar to link.
     //
     union StubMiscUnion misc;
 
-  #if DEBUG_SERIES_ORIGINS || DEBUG_COUNT_TICKS
+  #if DEBUG_FLEX_ORIGINS || DEBUG_COUNT_TICKS
     Byte* guard;  // intentionally alloc'd and freed for use by panic()
     uintptr_t tick;  // also maintains sizeof(Stub) % sizeof(REBI64) == 0
   #endif
 };
 
 
-typedef Stub Series;
+typedef Stub Flex;
 
 
-// In C++, String* and Array* are derived from Series.  This gives
-// desirable type checking properties (like being able to pass an array to
-// a routine that needs a series, but not vice versa).  And it also means
-// that the fields are available.
+// In C++, Binary, String, Array, etc. are derived from Flex.  This gives
+// desirable type checking properties (like being able to pass an Array to
+// a routine that needs a Flex, but not vice versa).  And it also means
+// that the base class fields are available in the derived classes.
 //
 // In order for the inheritance to be known, these definitions cannot occur
-// until Series is fully defined.  So this is the earliest it can be done:
+// until Flex is fully defined.  So this is the earliest it can be done:
 //
 // https://stackoverflow.com/q/2159390/
 //
 #if CPLUSPLUS_11
-    struct Binary : public Series {};
-    struct String : public Binary {};  // strings can act as binaries
-    struct Symbol : public String {};  // word-constrained strings
+    struct Binary : public Flex {};
+    struct String : public Binary {};  // String can act as Binary
+    struct Symbol : public String {};  // word-constrained immutable Strings
 
-    struct BookmarkList : public Series {};
+    struct BookmarkList : public Flex {};
 
-    struct Context : public Series {};
+    struct Context : public Flex {};
 
-    struct Map : public Series {};  // the "pairlist" is the identity
+    struct Map : public Flex {};  // the "pairlist" is the identity
 
-    struct KeyList : public Series {};
+    struct KeyList : public Flex {};
 #else
-    typedef Series Binary;
-    typedef Series String;
-    typedef Series Symbol;
+    typedef Flex Binary;
+    typedef Flex String;
+    typedef Flex Symbol;
 
-    typedef Series BookmarkList;
+    typedef Flex BookmarkList;
 
-    typedef Series Context;
+    typedef Flex Context;
 
-    typedef Series Map;
+    typedef Flex Map;
 
-    typedef Series KeyList;
+    typedef Flex KeyList;
 #endif
 
 // It may become interesting to say that a specifier can be a pairing or
@@ -770,16 +766,16 @@ typedef Stub Series;
 typedef Stub Specifier;
 
 
-#define SERIES_MASK_SYMBOL \
+#define FLEX_MASK_SYMBOL \
     (NODE_FLAG_NODE \
         | FLAG_FLAVOR(SYMBOL) \
-        | SERIES_FLAG_FIXED_SIZE \
+        | FLEX_FLAG_FIXED_SIZE \
         | NODE_FLAG_MANAGED)
 
 
 // We want to be able to enumerate keys by incrementing across them.  The
-// things we increment across aren't Symbol stubs, but pointers to Symbol
-// stubs... so a Key* is a pointer to a pointer.
+// things we increment across aren't Symbol Stubs, but pointers to Symbol
+// Stubs... so a Key* is a pointer to a pointer.
 //
 typedef const Symbol* Key;
 

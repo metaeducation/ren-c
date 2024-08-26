@@ -1044,12 +1044,12 @@ static Token Maybe_Locate_Token_May_Push_Mold(
             }
             break; }
 
-          case DETECTED_AS_SERIES: {  // e.g. rebQ, rebU, or a rebR() handle
-            Option(const Value*) v = Try_Reify_Variadic_Feed_Series(L->feed);
-            if (not v)
+          case DETECTED_AS_STUB: {  // e.g. rebQ, rebU, or a rebR() handle
+            Option(const Element*) e = Try_Reify_Variadic_Feed_At(L->feed);
+            if (not e)
                 goto get_next_variadic_pointer;
 
-            Copy_Cell(PUSH(), unwrap v);
+            Copy_Cell(PUSH(), unwrap e);
             if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING)) {
                 Clear_Scan_Executor_Flag(L, NEWLINE_PENDING);
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);
@@ -2126,7 +2126,7 @@ Bounce Scanner_Executor(Level* const L) {
         a->misc.line = ss->line;
         LINK(Filename, a) = maybe ss->file;
         Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
-        Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
+        Set_Flex_Flag(a, LINK_NODE_NEEDS_MARK);
 
         Heart heart =
             (level->token == TOKEN_GROUP_BEGIN) ? REB_GROUP : REB_BLOCK;
@@ -2415,7 +2415,7 @@ Bounce Scanner_Executor(Level* const L) {
         array->misc.line = ss->line;
         LINK(Filename, array) = maybe ss->file;
         Set_Array_Flag(array, HAS_FILE_LINE_UNMASKED);
-        Set_Series_Flag(array, LINK_NODE_NEEDS_MARK);
+        Set_Flex_Flag(array, LINK_NODE_NEEDS_MARK);
 
         if (Array_Len(array) == 0 or not Is_Word(Array_Head(array))) {
             DECLARE_ATOM (temp);
@@ -2701,13 +2701,13 @@ Bounce Scanner_Executor(Level* const L) {
             Get_Cell_Flag(TOP, FIRST_IS_NODE)
             and Cell_Node1(TOP) != nullptr  // null legal in node slots ATM
             and not Is_Node_A_Cell(Cell_Node1(TOP))
-            and Is_Series_Array(cast(Series*, Cell_Node1(TOP)))
+            and Is_Flex_Array(cast(Flex*, Cell_Node1(TOP)))
         ){
             Array* a = cast(Array*, Cell_Node1(TOP));
             a->misc.line = ss->line;
             LINK(Filename, a) = maybe ss->file;
             Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
-            Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
+            Set_Flex_Flag(a, LINK_NODE_NEEDS_MARK);
 
             // !!! Does this mean anything for paths?  The initial code
             // had it, but it was exploratory and predates the ideas that
@@ -2888,7 +2888,7 @@ Array* Scan_UTF8_Managed(
     a->misc.line = 1;
     LINK(Filename, a) = maybe file;
     Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
-    Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
+    Set_Flex_Flag(a, LINK_NODE_NEEDS_MARK);
 
     return a;
 }
@@ -2990,7 +2990,7 @@ DECLARE_NATIVE(transcode)
     Option(const String*) file;
     if (REF(file)) {
         file = Cell_String(ARG(file));
-        Freeze_Series(unwrap file);  // freezes vs. interning [2]
+        Freeze_Flex(unwrap file);  // freezes vs. interning [2]
     }
     else
         file = ANONYMOUS;
@@ -3134,7 +3134,7 @@ DECLARE_NATIVE(transcode)
     }
 
     Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);  // /NEXT multi-return
-    Set_Series_Len(pack, 2);
+    Set_Flex_Len(pack, 2);
 
     Copy_Meta_Cell(Array_At(pack, 0), rest);
     Copy_Meta_Cell(Array_At(pack, 1), OUT);

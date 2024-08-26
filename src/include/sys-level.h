@@ -220,7 +220,7 @@ INLINE LineNumber LineNumber_Of_Level(Level* L) {
 // something like ADAPT may come along and manage the varlist first.  So this
 // macro captures the intent and provides a place to read this comment.
 //
-// Note we don't use Set_Series_Managed() here, because the varlist was never
+// Note we don't use Set_Flex_Managed() here, because the varlist was never
 // put in the "untracked manuals" list... created as unmanaged/untracked.
 //
 #define Force_Level_Varlist_Managed(L) \
@@ -352,7 +352,7 @@ INLINE void Free_Level_Internal(Level* L) {
     Release_Feed(L->feed);  // frees if refcount goes to 0
 
     if (L->varlist and Not_Node_Managed(L->varlist))
-        GC_Kill_Series(L->varlist);
+        GC_Kill_Flex(L->varlist);
     Corrupt_Pointer_If_Debug(L->varlist);
 
     assert(Is_Pointer_Corrupt_Debug(L->alloc_value_list));
@@ -599,7 +599,7 @@ INLINE Bounce Native_Raised_Result(Level* level_, const void *p) {
       case DETECTED_AS_UTF8:
         error = Error_User(c_cast(char*, p));
         break;
-      case DETECTED_AS_SERIES: {
+      case DETECTED_AS_STUB: {
         error = cast(Context*, m_cast(void*, p));
         break; }
       case DETECTED_AS_CELL: {  // note: can be Is_Raised()

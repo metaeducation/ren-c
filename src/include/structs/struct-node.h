@@ -23,21 +23,21 @@
 // In order to implement several "tricks", the first pointer-size slots of
 // many datatypes is a `HeaderUnion` union.  Using byte-order-sensitive
 // macros like FLAG_LEFT_BIT(), the layout of this header is chosen in such a
-// way that not only can Rebol cell pointers (Cell*) be distinguished from
-// Rebol series pointers (Series*), but these can be discerned from a valid
-// UTF-8 string just by looking at the first byte.  That's a safe C operation
-// since reading a `char*` is not subject to "strict aliasing" requirements.
+// way that not only can Cell pointers be distinguished from Flex pointers,
+// but these can be discerned from a valid UTF-8 string just by looking at the
+// first byte.  That's a safe C operation since reading a `char*` is not
+// subject to "strict aliasing" requirements.
 //
 // On a semi-superficial level, this permits a kind of dynamic polymorphism,
 // such as that used by panic():
 //
-//     Value* value = ...;
-//     panic (value);  // can tell this is a value
+//     Cell* cell = ...;
+//     panic (cell);  // can tell this is a cell
 //
-//     Series* series = ...;
-//     panic (series)  // can tell this is a series
+//     Stub* stub = ...;
+//     panic (stub)  // can tell this is a Stub (Flex, String, Array, Binary..)
 //
-//     panic ("Ḧéllŏ");  // can tell this is UTF-8 data (not series or value)
+//     panic ("Ḧéllŏ");  // can tell this is UTF-8 data (not Stub or Cell)
 //
 // An even more compelling case is the usage through the API, so variadic
 // combinations of strings and values can be intermixed, as in:
@@ -56,7 +56,7 @@
 #if (! CPLUSPLUS_11)
     //
     // In plain C builds, there's no such thing as "base classes".  So the
-    // only way to make a function that can accept either a Series* or a
+    // only way to make a function that can accept either a Flex* or a
     // Value* without knowing which is to use a `void*`.  So the Node is
     // defined as `void`, and the C++ build is trusted to do the more strict
     // type checking.
@@ -75,12 +75,12 @@
     // https://en.cppreference.com/w/cpp/language/ebo
     //
     // At one time there was an attempt to make Context/Action/Map derive
-    // from Node, but not Series.  Facilitating that through multiple
+    // from Node, but not Flex.  Facilitating that through multiple
     // inheritance foils the Empty Base Class optimization, and creates other
-    // headaches.  So it was decided that so long as they are Series, not
+    // headaches.  So it was decided that so long as they are Flex, not
     // Array, that's still abstract enough to block most casual misuses.
     //
-    struct RebolNodeStruct {};  // empty base for Series, Cell, Level...
+    struct RebolNodeStruct {};  // empty base for Stub, Flex, Cell, Level...
     typedef struct RebolNodeStruct Node;
 #endif
 
@@ -421,9 +421,9 @@ union HeaderUnion {
 // indicates an invalid leading byte in UTF-8.
 //
 // The exception are freed nodes, but they use 11000000 and 110000001 for
-// freed series stubs and end signal value cells.  These are the bytes
-// 192 and 193, which are specifically illegal in any UTF8 sequence.  So
-// even these cases may be safely distinguished from strings.  See the
+// freed Stubs and end signal value cells.  These are the bytes
+// 192 and 193, which are specifically illegal in any UTF-8 sequence.  So
+// even these cases may be safely distinguished from UTF-8.  See the
 // NODE_FLAG_CELL for why it is chosen to be that 8th bit.
 //
 #define NODE_FLAG_FREE \
@@ -433,12 +433,12 @@ union HeaderUnion {
 
 //=//// NODE_FLAG_MANAGED (third-leftmost bit) ////////////////////////////=//
 //
-// The GC-managed bit is used on series to indicate that its lifetime is
+// The GC-managed bit is used on a Stub to indicate that its lifetime is
 // controlled by the garbage collector.  If this bit is not set, then it is
 // still manually managed...and during the GC's sweeping phase the simple fact
 // that it isn't NODE_FLAG_MARKED won't be enough to consider it for freeing.
 //
-// See Manage_Series() for details on the lifecycle of a series (how it starts
+// See Manage_Flex() for details on the lifecycle of a Flex (how it starts
 // out manually managed, and then must either become managed or be freed
 // before the evaluation that created it ends).
 //
@@ -454,16 +454,16 @@ union HeaderUnion {
 
 //=//// NODE_FLAG_MARKED (fourth-leftmost bit) ////////////////////////////=//
 //
-// On series nodes, this flag is used by the mark-and-sweep of the garbage
+// On Stub Nodes, this flag is used by the mark-and-sweep of the garbage
 // collector, and should not be referenced outside of %m-gc.c.
 //
-// See `SERIES_INFO_BLACK` for a generic bit available to other routines
-// that wish to have an arbitrary marker on series (for things like
+// See `FLEX_INFO_BLACK` for a generic bit available to other routines
+// that wish to have an arbitrary marker on a Flex (for things like
 // recursion avoidance in algorithms).
 //
-// Because "pairings" can wind up marking what looks like both a value cell
-// and a series, it's a bit dangerous to try exploiting this bit on a generic
-// cell.  If one is *certain* that a value is not "paired" (e.g. it's in
+// Because "Pairings" can wind up marking what looks like a Cell but is in
+// the STUB_POOL, it's a bit dangerous to try exploiting this bit on a generic
+// Cell.  If one is *certain* that a value is not "paired" (e.g. it's in
 // a function arglist, or array slot), it may be used for other things.
 //
 #define NODE_FLAG_MARKED \
@@ -473,7 +473,7 @@ union HeaderUnion {
 
 //=//// NODE_FLAG_GC_ONE / NODE_FLAG_GC_TWO (fifth/sixth-leftmost bit) ////=//
 //
-// Both Value* and Series* nodes have two slots in them which can be called
+// Both Value* and Flex* have two bits in their NODE_BYTE which can be called
 // out for attention from the GC.  Though these bits are scarce, sacrificing
 // them means not needing to do a switch() on the REB_TYPE of the cell to
 // know how to mark them.
@@ -511,9 +511,9 @@ union HeaderUnion {
 // is `sizeof(Cell)`.
 //
 // In the debug build, it provides some safety for all value writing routines.
-// In the release build, it distinguishes "pairing" nodes (holders for two
-// cells in the same pool as ordinary stubs) from an ordinary Series stub.
-// Plain Stubs have the cell mask clear, while pairing values have it set.
+// In the release build, it distinguishes "Pairing" Nodes (holders for two
+// cells in the same Pool as ordinary Stubs) from an ordinary Flex Stub.
+// Stubs have the cell bit clear, while Pairings in the STUB_POOL have it set.
 //
 // The position chosen is not random.  It is picked as the 8th bit from the
 // left so that freed nodes can still express a distinction between

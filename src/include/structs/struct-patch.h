@@ -21,7 +21,7 @@
 // See %sys-patch.h for a description of virtual binding patches.
 //
 // !!! There were once three separate singular arrays that were all considered
-// to be a "patch" type.  This overloading was confusing, and so once series
+// to be a "patch" type.  This overloading was confusing, and so once Flex
 // "flavors" arrived it made more sense to split them out...and make their
 // minor overlap in function accounted for explicitly.  Revamping this is
 // a work in progress, scheduled for a large-scale revisiting of virtual
@@ -39,7 +39,7 @@
 // !!! This feature currently doesn't seem to be active.
 //
 #define USE_FLAG_REUSED \
-    SERIES_FLAG_24
+    FLEX_FLAG_24
 
 
 //=//// "PATCHES" FOR MODULE VARIABLES ////////////////////////////////////=//

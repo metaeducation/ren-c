@@ -120,7 +120,7 @@ Phase* Make_Native(
         spec,
         &flags  // return type checked only in debug build
     );
-    Assert_Series_Term_If_Needed(paramlist);
+    Assert_Flex_Term_If_Needed(paramlist);
 
     Phase* native;
     if (native_type == NATIVE_INTRINSIC) {

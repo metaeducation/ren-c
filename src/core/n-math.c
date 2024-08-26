@@ -713,7 +713,7 @@ DECLARE_NATIVE(same_q)
     if (Any_Series(v1))  // pointers -and- indices must match
         return Init_Logic(
             OUT,
-            Cell_Series(v1) == Cell_Series(v2)
+            Cell_Flex(v1) == Cell_Flex(v2)
                 and VAL_INDEX_RAW(v1) == VAL_INDEX_RAW(v2)  // permissive
         );
 

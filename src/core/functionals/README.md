@@ -37,7 +37,7 @@ are just some of these tools...which the system relies on heavily.
 ## Notes
 
 * The "details" array can be any length, but has an optimal size efficiency
-  when it's just one value--because it fits in the series node.  See the
+  when it's just one value--because it fits in the Array's Stub.  See the
   `Alloc_Singular()` routine for how this works.
 
 * Space for the "details" array in the ACTION! cell was made by eliminating

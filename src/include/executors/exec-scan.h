@@ -62,7 +62,7 @@
 
 //=//// SCAN_EXECUTOR_FLAG_LOCK_SCANNED ///////////////////////////////////=//
 //
-// Lock series as they are loaded
+// Lock Flexes as they are loaded.
 //
 // !!! This also does not seem to be used, likely supplanted by CONST.
 //

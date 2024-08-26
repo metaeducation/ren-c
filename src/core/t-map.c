@@ -52,12 +52,12 @@ REBINT CT_Map(const Cell* a, const Cell* b, bool strict)
 //
 // Makes a MAP block (that holds both keys and values).
 // Capacity is measured in key-value pairings.
-// A hash series is also created.
+// A hash Flex is also created.
 //
 Map* Make_Map(REBLEN capacity)
 {
-    Array* pairlist = Make_Array_Core(capacity * 2, SERIES_MASK_PAIRLIST);
-    LINK(Hashlist, pairlist) = Make_Hash_Series(capacity);
+    Array* pairlist = Make_Array_Core(capacity * 2, FLEX_MASK_PAIRLIST);
+    LINK(Hashlist, pairlist) = Make_Hash_Flex(capacity);
 
     return cast(Map*, pairlist);
 }
@@ -78,7 +78,7 @@ Map* Make_Map(REBLEN capacity)
 //
 REBINT Find_Key_Hashed(
     Array* array,
-    Series* hashlist,
+    Flex* hashlist,
     const Element* key,  // !!! assumes ++key finds the values
     REBLEN wide,
     bool strict,
@@ -95,8 +95,8 @@ REBINT Find_Key_Hashed(
     // adding skip (and subtracting len when needed) all positions are
     // visited.  1 <= skip < len, and len is prime, so this is guaranteed.
     //
-    REBLEN used = Series_Used(hashlist);
-    REBLEN *indexes = Series_Head(REBLEN, hashlist);
+    REBLEN used = Flex_Used(hashlist);
+    REBLEN *indexes = Flex_Head(REBLEN, hashlist);
 
     uint32_t hash = Hash_Value(key);
     REBLEN slot = hash % used;  // first slot to try for this hash
@@ -116,7 +116,7 @@ REBINT Find_Key_Hashed(
 
     REBLEN n;
     while ((n = indexes[slot]) != 0) {
-        Value* k = Series_At(Value, array, (n - 1) * wide); // stored key
+        Value* k = Flex_At(Value, array, (n - 1) * wide); // stored key
         if (0 == Cmp_Value(k, key, true)) {
             if (strict)
                 return slot; // don't need to check synonyms, stop looking
@@ -156,7 +156,7 @@ REBINT Find_Key_Hashed(
         );
     }
 
-    if (mode > 1) { // append new value to the target series
+    if (mode > 1) { // append new value to the target array
         const Element* src = key;
         indexes[slot] = (Array_Len(array) / wide) + 1;
 
@@ -176,11 +176,11 @@ REBINT Find_Key_Hashed(
 //
 static void Rehash_Map(Map* map)
 {
-    Series* hashlist = MAP_HASHLIST(map);
+    Flex* hashlist = MAP_HASHLIST(map);
 
     if (!hashlist) return;
 
-    REBLEN *hashes = Series_Head(REBLEN, hashlist);
+    REBLEN *hashes = Flex_Head(REBLEN, hashlist);
     Array* pairlist = MAP_PAIRLIST(map);
 
     Value* key = Array_Head(pairlist);
@@ -199,7 +199,7 @@ static void Rehash_Map(Map* map)
             Copy_Cell(
                 &key[1], Array_At(pairlist, Array_Len(pairlist) - 1)
             );
-            Set_Series_Len(pairlist, Array_Len(pairlist) - 2);
+            Set_Flex_Len(pairlist, Array_Len(pairlist) - 2);
         }
 
         REBLEN hash = Find_Key_Hashed(
@@ -210,9 +210,9 @@ static void Rehash_Map(Map* map)
         // discard zombies at end of pairlist
         //
         while (
-            Is_Zombie(Series_At(Value, pairlist, Array_Len(pairlist) - 1))
+            Is_Zombie(Flex_At(Value, pairlist, Array_Len(pairlist) - 1))
         ){
-            Set_Series_Len(pairlist, Array_Len(pairlist) - 2);
+            Set_Flex_Len(pairlist, Array_Len(pairlist) - 2);
         }
     }
 }
@@ -221,21 +221,21 @@ static void Rehash_Map(Map* map)
 //
 //  Expand_Hash: C
 //
-// Expand hash series. Clear it but set its tail.
+// Expand hash flex. Clear it but set its tail.
 //
-void Expand_Hash(Series* ser)
+void Expand_Hash(Flex* hashlist)
 {
-    assert(not Is_Series_Array(ser));
+    assert(not Is_Flex_Array(hashlist));
 
-    REBINT prime = Get_Hash_Prime_May_Fail(Series_Used(ser) + 1);
-    Remake_Series(
-        ser,
+    REBINT prime = Get_Hash_Prime_May_Fail(Flex_Used(hashlist) + 1);
+    Remake_Flex(
+        hashlist,
         prime + 1,
-        SERIES_FLAG_POWER_OF_2  // not(NODE_FLAG_NODE) => don't keep data
+        FLEX_FLAG_POWER_OF_2  // not(NODE_FLAG_NODE) => don't keep data
     );
 
-    Clear_Series(ser);
-    Set_Series_Len(ser, prime);
+    Clear_Flex(hashlist);
+    Set_Flex_Len(hashlist, prime);
 }
 
 
@@ -253,13 +253,13 @@ REBLEN Find_Map_Entry(
     Option(const Value*) val,  // nullptr is fetch only, void is remove
     bool strict
 ) {
-    Series* hashlist = MAP_HASHLIST(map); // can be null
+    Flex* hashlist = MAP_HASHLIST(map); // can be null
     Array* pairlist = MAP_PAIRLIST(map);
 
     assert(hashlist);
 
     // Get hash table, expand it if needed:
-    if (Array_Len(pairlist) > Series_Used(hashlist) / 2) {
+    if (Array_Len(pairlist) > Flex_Used(hashlist) / 2) {
         Expand_Hash(hashlist); // modifies size value
         Rehash_Map(map);
     }
@@ -270,7 +270,7 @@ REBLEN Find_Map_Entry(
         pairlist, hashlist, key, wide, strict, mode
     );
 
-    REBLEN *indexes = Series_Head(REBLEN, hashlist);
+    REBLEN *indexes = Flex_Head(REBLEN, hashlist);
     REBLEN n = indexes[slot];
 
     // n==0 or pairlist[(n-1)*]=~key
@@ -288,7 +288,7 @@ REBLEN Find_Map_Entry(
     // Must set the value:
     if (n) {  // re-set it:
         Copy_Cell(
-            Series_At(Value, pairlist, ((n - 1) * 2) + 1),
+            Flex_At(Value, pairlist, ((n - 1) * 2) + 1),
             Is_Void(unwrap val) ? ZOMBIE_CELL : unwrap val
         );
         return n;
@@ -299,8 +299,8 @@ REBLEN Find_Map_Entry(
 
     assert(not Is_Antiform(unwrap val));
 
-    // Create new entry.  Note that it does not copy underlying series (e.g.
-    // the data of a string), which is why the immutability test is necessary
+    // Create new entry.  Note that it does not copy the underlying Flex (e.g.
+    // the data of a String), which is why the immutability test is necessary
     //
     Append_Value(pairlist, key);
     Append_Value(pairlist, c_cast(Element*, unwrap val));  // val not void
@@ -370,16 +370,16 @@ Bounce MAKE_Map(
 INLINE Map* Copy_Map(const Map* map, bool deeply) {
     Array* copy = Copy_Array_Shallow_Flags(
         MAP_PAIRLIST(map),
-        SERIES_MASK_PAIRLIST
+        FLEX_MASK_PAIRLIST
     );
 
     // So long as the copied pairlist is the same array size as the original,
     // a literal copy of the hashlist can still be used, as a start (needs
     // its own copy so new map's hashes will reflect its own mutations)
     //
-    Series* hashlist = Copy_Series_Core(
+    Flex* hashlist = Copy_Flex_Core(
         MAP_HASHLIST(map),
-        SERIES_FLAGS_NONE | FLAG_FLAVOR(HASHLIST)
+        FLEX_FLAGS_NONE | FLAG_FLAVOR(HASHLIST)
             // ^-- !!! No NODE_FLAG_MANAGED?
     );
     LINK(Hashlist, copy) = hashlist;
@@ -387,7 +387,7 @@ INLINE Map* Copy_Map(const Map* map, bool deeply) {
     if (not deeply)
         return cast(Map*, copy);  // shallow is ok
 
-    // Even if the type flags request deep copies of series, none of the keys
+    // Even if the type flags request deep copies of Arrays, none of the keys
     // need to be copied deeply.  This is because they are immutable at the
     // time of insertion.
     //
@@ -459,8 +459,8 @@ Array* Map_To_Array(const Map* map, REBINT what)
     Array* a = Make_Array(count * ((what == 0) ? 2 : 1));
 
     Element* dest = Array_Head(a);
-    const Value* val_tail = Series_Tail(Value, MAP_PAIRLIST(map));
-    const Value* val = Series_Head(Value, MAP_PAIRLIST(map));
+    const Value* val_tail = Flex_Tail(Value, MAP_PAIRLIST(map));
+    const Value* val = Flex_Head(Value, MAP_PAIRLIST(map));
     for (; val != val_tail; val += 2) {
         if (Is_Zombie(val + 1))  // val + 1 can't be past tail
             continue;
@@ -475,7 +475,7 @@ Array* Map_To_Array(const Map* map, REBINT what)
         }
     }
 
-    Set_Series_Len(a, dest - Array_Head(a));
+    Set_Flex_Len(a, dest - Array_Head(a));
     return a;
 }
 
@@ -494,8 +494,8 @@ Context* Alloc_Context_From_Map(const Map* map)
     REBLEN count = 0;
 
   blockscope {
-    const Value* mval_tail = Series_Tail(Value, MAP_PAIRLIST(map));
-    const Value* mval = Series_Head(Value, MAP_PAIRLIST(map));
+    const Value* mval_tail = Flex_Tail(Value, MAP_PAIRLIST(map));
+    const Value* mval = Flex_Head(Value, MAP_PAIRLIST(map));
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (Any_Word(mval) and not Is_Zombie(mval + 1))
             ++count;
@@ -506,8 +506,8 @@ Context* Alloc_Context_From_Map(const Map* map)
 
     Context* c = Alloc_Context(REB_OBJECT, count);
 
-    const Value* mval_tail = Series_Tail(Value, MAP_PAIRLIST(map));
-    const Value* mval = Series_Head(Value, MAP_PAIRLIST(map));
+    const Value* mval_tail = Flex_Tail(Value, MAP_PAIRLIST(map));
+    const Value* mval = Flex_Head(Value, MAP_PAIRLIST(map));
 
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (Any_Word(mval) and not Is_Zombie(mval + 1)) {
@@ -528,12 +528,12 @@ void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
     const Map* m = VAL_MAP(v);
 
     // Prevent endless mold loop:
-    if (Find_Pointer_In_Series(g_mold.stack, m) != NOT_FOUND) {
+    if (Find_Pointer_In_Flex(g_mold.stack, m) != NOT_FOUND) {
         Append_Ascii(mo->series, "...]");
         return;
     }
 
-    Push_Pointer_To_Series(g_mold.stack, m);
+    Push_Pointer_To_Flex(g_mold.stack, m);
 
     if (not form) {
         Pre_Mold(mo, v);
@@ -545,8 +545,8 @@ void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
     //
     mo->indent++;
 
-    const Value* tail = Series_Tail(Value, MAP_PAIRLIST(m));
-    const Value* key = Series_Head(Value, MAP_PAIRLIST(m));
+    const Value* tail = Flex_Tail(Value, MAP_PAIRLIST(m));
+    const Value* key = Flex_Head(Value, MAP_PAIRLIST(m));
     for (; key != tail; key += 2) {  // note value slot must not be END
         assert(key + 1 != tail);
         if (Is_Zombie(key + 1))
@@ -569,7 +569,7 @@ void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
 
     End_Mold(mo);
 
-    Drop_Pointer_From_Series(g_mold.stack, m);
+    Drop_Pointer_From_Flex(g_mold.stack, m);
 }
 
 
@@ -632,7 +632,7 @@ REBTYPE(Map)
         if (n == 0)
             return nullptr;
 
-        const Value* val = Series_At(Value, MAP_PAIRLIST(m), ((n - 1) * 2) + 1);
+        const Value* val = Flex_At(Value, MAP_PAIRLIST(m), ((n - 1) * 2) + 1);
         if (Is_Zombie(val))
             return nullptr;
 
@@ -707,7 +707,7 @@ REBTYPE(Map)
         // !!! Review: should the space for the hashlist be reclaimed?  This
         // clears all the indices but doesn't scale back the size.
         //
-        Clear_Series(MAP_HASHLIST(m));
+        Clear_Flex(MAP_HASHLIST(m));
 
         return Init_Map(OUT, m); }
 

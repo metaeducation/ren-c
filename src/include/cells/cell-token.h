@@ -69,7 +69,7 @@ INLINE Codepoint Cell_Codepoint(const Cell* v) {
     assert(Not_Cell_Flag(v, STRINGLIKE_HAS_NODE));
 
     if (EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] == 0)
-        return 0;  // no '\0` bytes internal to series w/REB_TEXT "heart"
+        return 0;  // no '\0` bytes internal to ANY-UTF8! series
 
     assert(EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] == 1);  // e.g. codepoint
 
@@ -112,7 +112,7 @@ INLINE Element* Init_Issue_Utf8(
     else {
         String* str = Make_Sized_String_UTF8(cs_cast(utf8), size);
         assert(String_Len(str) == len);  // ^-- revalidates :-/ should match
-        Freeze_Series(str);
+        Freeze_Flex(str);
         Init_Text(out, str);
         HEART_BYTE(out) = REB_ISSUE;
     }
@@ -333,7 +333,7 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
     if (heart == REB_ISSUE or heart == REB_URL) {  // no index
         utf8 = String_Head(s);
         if (size_out)
-            *(unwrap size_out) = Series_Used(s);
+            *(unwrap size_out) = Flex_Used(s);
         if (length_out)
             *(unwrap length_out) = s->misc.length;
     }

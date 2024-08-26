@@ -163,7 +163,7 @@ Bounce Yielder_Dispatcher(Level* const L)
         //
         LINK(yielder_level->varlist).custom.node = nullptr;
 
-        GC_Kill_Series(yielder_level->varlist);  // Note: no tracking
+        GC_Kill_Flex(yielder_level->varlist);  // Note: no tracking
     } */
 
     // When the last yielder dropped from the frame stack, it should have
@@ -396,7 +396,7 @@ DECLARE_NATIVE(yield)
     Value* mode = Details_At(yielder_details, IDX_YIELDER_MODE);
     assert(Is_Quasi_Blank(mode));  // should be signal for "currently running"
     Init_Frame(mode, Context_For_Level_May_Manage(yield_level), ANONYMOUS);
-    Assert_Series_Managed(VAL_CONTEXT(mode));
+    Assert_Flex_Managed(VAL_CONTEXT(mode));
     assert(CTX_LEVEL_IF_ON_STACK(VAL_CONTEXT(mode)) == yield_level);
 
     // We store the frame chain into the yielder, as a FRAME! value.  The
@@ -414,7 +414,7 @@ DECLARE_NATIVE(yield)
     // but the next run of the yielder will swap in its new REBFRM* over that.
     //
     assert(CTX_VARLIST(yielder_context) == yielder_level->varlist);
-    Assert_Series_Managed(yielder_level->varlist);
+    Assert_Flex_Managed(yielder_level->varlist);
 
     // We don't only write the yielded value into the output slot so it is
     // returned from the yielder.  We also stow an extra copy of the value

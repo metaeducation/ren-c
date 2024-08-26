@@ -41,7 +41,7 @@ INLINE bool Any_Wordlike(const Cell* v) {
     const Node* node1 = Cell_Node1(v);
     if (Is_Node_A_Cell(node1))
         return false;
-    return Series_Flavor(u_cast(const Series*, node1)) == FLAVOR_SYMBOL;
+    return Flex_Flavor(u_cast(const Flex*, node1)) == FLAVOR_SYMBOL;
 }
 
 INLINE void INIT_CELL_WORD_SYMBOL(Cell* v, const Symbol* symbol)

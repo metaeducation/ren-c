@@ -53,7 +53,7 @@
 // precision) but it's not enough for a generic BLOCK!, FRAME!, TEXT!, etc.
 // So these slots are often used to point to one or more Rebol "stubs" (see
 // %sys-stub.h for an explanation of stubs, which are the base class of
-// things like Series*, Array*, Context*, and Map*.)
+// things like Flex*, Array*, Context*, and Map*.)
 //
 // So the next part of the structure is the "Extra".  This is the size of one
 // pointer, which sits immediately after the header (that's also the size of
@@ -202,7 +202,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // another location will not propagate the protectedness from the original
 // value to the copy.
 //
-// (Series have more than one kind of protection in "info" bits that can all
+// (A Flex has more than one kind of protection in "info" bits that can all
 // be checked at once...hence there's not "NODE_FLAG_PROTECTED" in common.)
 //
 #define CELL_FLAG_PROTECTED \
@@ -289,8 +289,8 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 
 //=//// CELL_FLAG_CONST ///////////////////////////////////////////////////=//
 //
-// A value that is CONST has read-only access to any series or data it points
-// to, regardless of whether that data is in a locked series or not.  It is
+// A value that is CONST has read-only access to any Flex data it points
+// to, regardless of whether that data is in a locked Flex or not.  It is
 // possible to get a mutable view on a const value by using MUTABLE, and a
 // const view on a mutable value with CONST.
 //
@@ -545,7 +545,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     // read through the same field that was assigned.  Hence, many types
     // whose payloads are nodes use the generic "Any" payload, which is
     // two separate variant fields.  If CELL_FLAG_FIRST_IS_NODE is set, then
-    // if that is a series node it will be used to answer questions about
+    // if that is a Flex Node it will be used to answer questions about
     // mutability (beyond CONST, which the cell encodes itself)
     //
     // ANY-WORD?  // see %sys-word.h
@@ -557,7 +557,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //     Action* phase;  // used by FRAME! contexts, see %sys-frame.h
     //
     // ANY-SERIES?  // see %sys-series.h
-    //     Series* rebser;  // vector/double-ended-queue of equal-sized items
+    //     Flex* flex;  // vector/double-ended-queue of equal-sized items
     //     REBLEN index;  // 0-based position (e.g. 0 means Rebol index 1)
     //
     // ACTION!  // see %sys-action.h
@@ -631,7 +631,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
         const char *file;  // is Byte (UTF-8), but char* for debug watch
         uintptr_t line;
         uintptr_t tick;
-        uintptr_t touch;  // see TOUCH_CELL(), pads out to 4 * sizeof(void*)
+        uintptr_t touch;  // see Touch_Cell(), pads out to 4 * sizeof(void*)
       #endif
 
     #if DEBUG_USE_CELL_SUBCLASSES

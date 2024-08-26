@@ -385,9 +385,9 @@ typedef bool (Decider)(const Value* arg);
     Level* prior;
 
     // This is where to write the result of the evaluation.  It should not be
-    // in "movable" memory, hence not in a series data array.  Often it is
-    // used as an intermediate free location to do calculations en route to
-    // a final result, due to being GC-safe during function evaluation.
+    // in "movable" memory, hence usually not in an Array Flex's data.  Often
+    // it is used as an intermediate free location to do calculations en route
+    // to a final result, due to being GC-safe during function evaluation.
     //
     Atom* out;
 

@@ -229,7 +229,7 @@ uint32_t Hash_Value(const Cell* cell)
         if (Is_Node_A_Cell(node1))
             goto hash_pair;
 
-        switch (Series_Flavor(c_cast(Series*, node1))) {
+        switch (Flex_Flavor(c_cast(Flex*, node1))) {
           case FLAVOR_SYMBOL:
             goto hash_any_word;
 
@@ -307,7 +307,7 @@ uint32_t Hash_Value(const Cell* cell)
         //
         // Because function equality is by identity only and they are
         // immutable once created, it is legal to put them in hashes.  The
-        // VAL_ACT is the paramlist series, guaranteed unique per function
+        // VAL_ACTION() is the paramlist Array, guaranteed unique per function
         //
         if (Is_Frame_Exemplar(cell))
             goto hash_object;
@@ -359,24 +359,24 @@ uint32_t Hash_Value(const Cell* cell)
 
 
 //
-//  Make_Hash_Series: C
+//  Make_Hash_Flex: C
 //
 // Hashlists are added to the manuals list normally.  They don't participate
 // in GC initially, and hence may be freed if used in some kind of set union
 // or intersection operation.  However, if Init_Map() is used they will be
 // forced managed along with the pairlist they are attached to.
 //
-// (Review making them non-managed, and freed in Decay_Series(), since they
+// (Review making them non-managed, and freed in Decay_Flex(), since they
 // are not shared in maps.  Consider impacts on the set operations.)
 //
-Series* Make_Hash_Series(REBLEN len)
+Flex* Make_Hash_Flex(REBLEN len)
 {
     REBLEN n = Get_Hash_Prime_May_Fail(len * 2);  // best when 2X # of keys
-    Series* ser = Make_Series_Core(n + 1, FLAG_FLAVOR(HASHLIST));
-    Clear_Series(ser);
-    Set_Series_Len(ser, n);
+    Flex* f = Make_Flex_Core(n + 1, FLAG_FLAVOR(HASHLIST));
+    Clear_Flex(f);
+    Set_Flex_Len(f, n);
 
-    return ser;
+    return f;
 }
 
 
@@ -389,9 +389,9 @@ Series* Make_Hash_Series(REBLEN len)
 Element* Init_Map(Sink(Element*) out, Map* map)
 {
     if (MAP_HASHLIST(map))
-        Force_Series_Managed(MAP_HASHLIST(map));
+        Force_Flex_Managed(MAP_HASHLIST(map));
 
-    Force_Series_Managed(MAP_PAIRLIST(map));
+    Force_Flex_Managed(MAP_PAIRLIST(map));
 
     Reset_Unquoted_Header_Untracked(TRACK(out), CELL_MASK_MAP);
     Init_Cell_Node1(out, MAP_PAIRLIST(map));
@@ -404,22 +404,22 @@ Element* Init_Map(Sink(Element*) out, Map* map)
 //
 //  Hash_Block: C
 //
-// Hash ALL values of a block. Return hash array series.
+// Hash ALL values of a block. Return hash Flex.
 // Used for SET logic (unique, union, etc.)
 //
 // Note: hash array contents (indexes) are 1-based!
 //
-Series* Hash_Block(const Value* block, REBLEN skip, bool cased)
+Flex* Hash_Block(const Value* block, REBLEN skip, bool cased)
 {
     // Create the hash array (integer indexes):
-    Series* hashlist = Make_Hash_Series(Cell_Series_Len_At(block));
+    Flex* hashlist = Make_Hash_Flex(Cell_Series_Len_At(block));
 
     const Element* tail;
     const Element* value = Cell_List_At(&tail, block);
     if (value == tail)
         return hashlist;
 
-    REBLEN *hashes = Series_Head(REBLEN, hashlist);
+    REBLEN *hashes = Flex_Head(REBLEN, hashlist);
 
     const Array* array = Cell_Array(block);
     REBLEN n = VAL_INDEX(block);

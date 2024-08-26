@@ -257,12 +257,12 @@ static Bounce Loop_Series_Common(
 
         if (
             VAL_TYPE(var) != VAL_TYPE(start)
-            or Cell_Series(var) != Cell_Series(start)
+            or Cell_Flex(var) != Cell_Flex(start)
         ){
             fail ("Can only change series index, not series to iterate");
         }
 
-        // Note that since the array is not locked with SERIES_INFO_HOLD, it
+        // Note that since the array is not locked with FLEX_INFO_HOLD, it
         // can be mutated during the loop body, so the end has to be refreshed
         // on each iteration.  Review ramifications of HOLD-ing it.
         //
@@ -801,7 +801,7 @@ typedef struct Reb_Enum_Series ESER;
 
 struct Loop_Each_State {
     Value* data;  // possibly API handle if converted from sequence
-    const Series* series;  // series data being enumerated (if applicable)
+    const Flex* flex;  // Flex being enumerated (if applicable)
     union {
         EVARS evars;
         ESER eser;
@@ -817,8 +817,8 @@ void Init_Loop_Each(Value* iterator, Value* data)
 {
     struct Loop_Each_State *les = Try_Alloc(struct Loop_Each_State);
 
-    // !!! Temporarily turn any sequences into a BLOCK!, rather than worry
-    // about figuring out how to iterate optimized series.  Review as part of
+    // !!! Temporarily turn any sequences into a BLOCK!, rather than worry over
+    // figuring out how to iterate optimized ANY-SEQUENCE.  Review as part of
     // an overall vetting of "generic iteration" (is a poor substitute for).
     //
     assert(not Is_Api_Value(data));  // we will free API handles
@@ -834,31 +834,31 @@ void Init_Loop_Each(Value* iterator, Value* data)
         //
         les->took_hold = false;
         les->more_data = true;  // !!! Needs to do first call
-        les->series = nullptr;
+        les->flex = nullptr;
     }
     else {
         if (Any_Series(data)) {
-            les->series = Cell_Series(data);
+            les->flex = Cell_Flex(data);
             les->u.eser.index = VAL_INDEX(data);
             les->u.eser.len = Cell_Series_Len_Head(data);  // has HOLD, won't change
         }
         else if (Any_Context(data)) {
-            les->series = CTX_VARLIST(VAL_CONTEXT(data));
+            les->flex = CTX_VARLIST(VAL_CONTEXT(data));
             Init_Evars(&les->u.evars, data);
         }
         else if (Is_Map(data)) {
-            les->series = MAP_PAIRLIST(VAL_MAP(data));
+            les->flex = MAP_PAIRLIST(VAL_MAP(data));
             les->u.eser.index = 0;
-            les->u.eser.len = Series_Used(les->series);  // immutable--has HOLD
+            les->u.eser.len = Flex_Used(les->flex);  // immutable--has HOLD
         }
         else
             panic ("Illegal type passed to Loop_Each()");
 
         // HOLD so length can't change
 
-        les->took_hold = Not_Series_Flag(les->series, FIXED_SIZE);
+        les->took_hold = Not_Flex_Flag(les->flex, FIXED_SIZE);
         if (les->took_hold)
-            Set_Series_Flag(les->series, FIXED_SIZE);
+            Set_Flex_Flag(les->flex, FIXED_SIZE);
 
         if (Any_Context(data)) {
             les->more_data = Did_Advance_Evars(&les->u.evars);
@@ -954,7 +954,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
                 Copy_Cell(
                     var,
                     Array_At(
-                        c_cast(Array*, les->series),
+                        c_cast(Array*, les->flex),
                         les->u.eser.index
                     )
                 );
@@ -1014,11 +1014,11 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
             const Value* val;
             while (true) {  // pass over the unused map slots
                 key = (
-                    Array_At(c_cast(Array*, les->series), les->u.eser.index)
+                    Array_At(c_cast(Array*, les->flex), les->u.eser.index)
                 );
                 ++les->u.eser.index;
                 val = (
-                    Array_At(c_cast(Array*, les->series), les->u.eser.index)
+                    Array_At(c_cast(Array*, les->flex), les->u.eser.index)
                 );
                 ++les->u.eser.index;
                 if (les->u.eser.index == les->u.eser.len)
@@ -1050,7 +1050,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
             break; }
 
           case REB_BINARY: {
-            const Binary* bin = c_cast(Binary*, les->series);
+            const Binary* bin = c_cast(Binary*, les->flex);
             if (var)
                 Init_Integer(var, Binary_Head(bin)[les->u.eser.index]);
             if (++les->u.eser.index == les->u.eser.len)
@@ -1065,7 +1065,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
             if (var)
                 Init_Char_Unchecked(
                     var,
-                    Get_Char_At(c_cast(String*, les->series), les->u.eser.index)
+                    Get_Char_At(c_cast(String*, les->flex), les->u.eser.index)
                 );
             if (++les->u.eser.index == les->u.eser.len)
                 les->more_data = false;
@@ -1090,7 +1090,7 @@ void Shutdown_Loop_Each(Value* iterator)
     les = VAL_HANDLE_POINTER(struct Loop_Each_State, iterator);
 
     if (les->took_hold)  // release read-only lock
-        Clear_Series_Flag(les->series, FIXED_SIZE);
+        Clear_Flex_Flag(les->flex, FIXED_SIZE);
 
     if (Any_Context(les->data))
         Shutdown_Evars(&les->u.evars);
@@ -1393,7 +1393,7 @@ DECLARE_NATIVE(remove_each)
     if (Is_Blank(data))
         return Init_Integer(OUT, 0);
 
-    Series* series = Cell_Series_Ensure_Mutable(data);  // check even if empty
+    Flex* flex = Cell_Flex_Ensure_Mutable(data);  // check even if empty
 
     if (VAL_INDEX(data) >= Cell_Series_Len_At(data))  // past series end
         return Init_Integer(OUT, 0);
@@ -1419,16 +1419,16 @@ DECLARE_NATIVE(remove_each)
     }
     else {
         // Generate a new data allocation, but then swap its underlying content
-        // to back the series we were given.  [3]
+        // to back the Flex we were given.  [3]
         //
         Push_Mold(mo);
     }
 
-    Set_Series_Info(series, HOLD);  // disallow mutations until finalize
+    Set_Flex_Info(flex, HOLD);  // disallow mutations until finalize
 
     REBLEN len = Any_String(data)
-        ? String_Len(cast(String*, series))
-        : Series_Used(series);  // temp read-only, this won't change
+        ? String_Len(cast(String*, flex))
+        : Flex_Used(flex);  // temp read-only, this won't change
 
     bool threw = false;
     bool breaking = false;
@@ -1452,14 +1452,14 @@ DECLARE_NATIVE(remove_each)
                     Cell_Specifier(data)
                 );
             else if (Is_Binary(data)) {
-                Binary* bin = cast(Binary*, series);
+                Binary* bin = cast(Binary*, flex);
                 Init_Integer(var, cast(REBI64, Binary_Head(bin)[index]));
             }
             else {
                 assert(Any_String(data));
                 Init_Char_Unchecked(
                     var,
-                    Get_Char_At(cast(String*, series), index)
+                    Get_Char_At(cast(String*, flex), index)
                 );
             }
             ++index;
@@ -1529,7 +1529,7 @@ DECLARE_NATIVE(remove_each)
             do {
                 assert(start <= len);
                 if (Is_Binary(data)) {
-                    Binary* bin = cast(Binary*, series);
+                    Binary* bin = cast(Binary*, flex);
                     Append_Ascii_Len(
                         mo->series,
                         cs_cast(Binary_At(bin, start)),
@@ -1539,7 +1539,7 @@ DECLARE_NATIVE(remove_each)
                 else {
                     Append_Codepoint(
                         mo->series,
-                        Get_Char_At(cast(String*, series), start)
+                        Get_Char_At(cast(String*, flex), start)
                     );
                 }
                 ++start;
@@ -1555,8 +1555,8 @@ DECLARE_NATIVE(remove_each)
 
     REBLEN removals = 0;
 
-    assert(Get_Series_Info(series, HOLD));
-    Clear_Series_Info(series, HOLD);
+    assert(Get_Flex_Info(flex, HOLD));
+    Clear_Flex_Info(flex, HOLD);
 
     if (Any_List(data)) {
         if (not threw and breaking) {  // clean marks, don't remove
@@ -1591,7 +1591,7 @@ DECLARE_NATIVE(remove_each)
                 ++removals;
             }
             if (src == tail) {
-                Set_Series_Len(Cell_Array_Known_Mutable(data), len);
+                Set_Flex_Len(Cell_Array_Known_Mutable(data), len);
                 goto done_finalizing;
             }
             Copy_Cell(dest, src);  // same array, so we can do this
@@ -1605,7 +1605,7 @@ DECLARE_NATIVE(remove_each)
             goto done_finalizing;
         }
 
-        Binary* bin = cast(Binary*, series);
+        Binary* bin = cast(Binary*, flex);
 
         // If there was a THROW, or fail() we need the remaining data
         //
@@ -1622,9 +1622,9 @@ DECLARE_NATIVE(remove_each)
         assert(Binary_Len(popped) <= Cell_Series_Len_Head(data));
         removals = Cell_Series_Len_Head(data) - Binary_Len(popped);
 
-        Swap_Series_Content(popped, series);  // swap series identity [3]
+        Swap_Flex_Content(popped, flex);  // swap Flex identity [3]
 
-        Free_Unmanaged_Series(popped);  // now frees incoming series's data
+        Free_Unmanaged_Flex(popped);  // now frees incoming Flex's data
     }
     else {
         assert(Any_String(data));
@@ -1641,7 +1641,7 @@ DECLARE_NATIVE(remove_each)
         for (; start != orig_len; ++start) {
             Append_Codepoint(
                 mo->series,
-                Get_Char_At(cast(String*, series), start)
+                Get_Char_At(cast(String*, flex), start)
             );
         }
 
@@ -1650,9 +1650,9 @@ DECLARE_NATIVE(remove_each)
         assert(String_Len(popped) <= Cell_Series_Len_Head(data));
         removals = Cell_Series_Len_Head(data) - String_Len(popped);
 
-        Swap_Series_Content(popped, series);  // swap series identity [3]
+        Swap_Flex_Content(popped, flex);  // swap Flex identity [3]
 
-        Free_Unmanaged_Series(popped);  // frees incoming series's data
+        Free_Unmanaged_Flex(popped);  // frees incoming Flex's data
     }
 
   done_finalizing:

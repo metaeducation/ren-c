@@ -25,7 +25,7 @@
 // user's control could fix or work around the issue, hence the main goal is
 // to provide the most diagnostic information possible to devleopers.
 //
-// The best thing to do is to pass in whatever Cell or Series subclass
+// The best thing to do is to pass in whatever Cell or Flex subclass
 // (including Array*, Context*, Action*...) is a useful "smoking gun":
 //
 //     if (VAL_TYPE(value) == REB_QUASIFORM)
@@ -105,15 +105,15 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Each trampoline step bumps a global count, that in deterministic repro
-// cases can be very helpful in identifying the "tick" where certain problems
-// are occurring.  The debug build pokes this ticks lots of places--into
-// value cells when they are formatted, into series when they are allocated
-// or freed, or into stack levels each time they perform a new operation.
+// cases can be very helpful in identifying the "Tick" where certain problems
+// are occurring.  The debug build pokes these Ticks lots of places--into
+// Cells when they are formatted, into Flexes when they are allocated
+// or freed, or into stack Levels each time they perform a new operation.
 //
 // BREAK_NOW() will show the stack status at the right moment.  If you have a
-// reproducible tick count, then BREAK_ON_TICK() is useful.  See also
+// reproducible Tick count, then BREAK_ON_TICK() is useful.  See also
 // TICK_BREAKPOINT in %c-eval.c for a description of all the places the debug
-// build hides tick counts which may be useful for sleuthing bug origins.
+// build hides Tick counts which may be useful for sleuthing bug origins.
 //
 // The SPORADICALLY() macro uses the count to allow flipping between different
 // behaviors in debug builds--usually to run the release behavior some of the

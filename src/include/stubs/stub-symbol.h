@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// In Ren-C, words are Symbol series (String subtype).  They may be GC'd
+// In Ren-C, words hold a Symbol Flex (String Flex subtype).  They may be GC'd
 // (unless they are in the %words.r list, in which case their canon forms are
 // protected in order to do SYM_XXX switch statements in the C source, etc.)
 //
@@ -54,7 +54,7 @@
 // forms.  It should be relatively quick to find the canon form on
 // average, since many-cased forms are somewhat rare.
 //
-// Note: String series using this don't have SERIES_FLAG_LINK_NODE_NEEDS_MARK.
+// Note: A String Flex using this doesn't have FLEX_FLAG_LINK_NODE_NEEDS_MARK.
 // One synonym need not keep another alive, because the process of freeing
 // string nodes unlinks them from the list.  (Hence the canon can change!)
 //
@@ -64,14 +64,14 @@
 // Hitches are a circularly linked list that includes transient binding info
 // for the word, as well as declared variables in "sea" contexts.
 //
-#define MISC_Hitch_TYPE         Series*
+#define MISC_Hitch_TYPE         Flex*
 #define HAS_MISC_Hitch          FLAVOR_SYMBOL
 
 
 //=//// SYMBOL_FLAG_24 ////////////////////////////////////////////////////=//
 //
 #define SYMBOL_FLAG_24 \
-    SERIES_FLAG_24
+    FLEX_FLAG_24
 
 
 //=//// SYMBOL_FLAG_ILLEGAL_IN_ANY_SEQUENCE ////////////////////////////////=//
@@ -84,7 +84,7 @@
 // Also, slashes are not allowed in paths or tuples (but dots are ok in paths)
 //
 #define SYMBOL_FLAG_ILLEGAL_IN_ANY_SEQUENCE \
-    SERIES_FLAG_25
+    FLEX_FLAG_25
 
 
 //=//// SYMBOL_FLAG_ILLEGAL_IN_ANY_TUPLE ///////////////////////////////////=//
@@ -93,7 +93,7 @@
 // are covered by ILLEGAL_IN_ANY_SEQUENCE.
 //
 #define SYMBOL_FLAG_ILLEGAL_IN_ANY_TUPLE \
-    SERIES_FLAG_26
+    FLEX_FLAG_26
 
 
 //=//// SYMBOL_FLAG_MISC_IS_BINDINFO ///////////////////////////////////////=//
@@ -105,7 +105,7 @@
 // on the next pointer that was reached, which was slower).
 //
 #define SYMBOL_FLAG_MISC_IS_BINDINFO \
-    SERIES_FLAG_27
+    FLEX_FLAG_27
 
 
 INLINE Option(SymId) Symbol_Id(const Symbol* s)

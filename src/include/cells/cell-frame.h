@@ -5,8 +5,8 @@ INLINE Action* VAL_ACTION(const Cell* v) {
     if (Not_Node_Accessible(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());
 
-    Series* s = cast(Series*, Cell_Node1(v));  // maybe exemplar, maybe details
-    return cast(Action*, s);
+    Flex* f = cast(Flex*, Cell_Node1(v));  // maybe exemplar, maybe details
+    return cast(Action*, f);
 }
 
 #define VAL_ACTION_KEYLIST(v) \
@@ -57,7 +57,7 @@ INLINE Element* Init_Frame_Details_Core(
   #if !defined(NDEBUG)
     Extra_Init_Frame_Details_Checks_Debug(a);
   #endif
-    Force_Series_Managed(a);
+    Force_Flex_Managed(a);
 
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_FRAME);
     INIT_VAL_ACTION_DETAILS(out, a);

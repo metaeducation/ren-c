@@ -48,12 +48,12 @@
 
 
 //
-//  Make_Set_Operation_Series: C
+//  Make_Set_Operation_Flex: C
 //
-// Do set operations on a series.  Case-sensitive if `cased` is TRUE.
+// Do set operations on a Flex.  Case-sensitive if `cased` is TRUE.
 // `skip` is the record size.
 //
-Series* Make_Set_Operation_Series(
+Flex* Make_Set_Operation_Flex(
     const Value* val1,
     const Value* val2,
     Flags flags,
@@ -104,18 +104,18 @@ Series* Make_Set_Operation_Series(
 
     REBINT h = 1; // used for both logic true/false and hash check
     bool first_pass = true; // are we in the first pass over the series?
-    Series* out_ser;
+    Flex* out_flex;
 
     if (Any_List(val1)) {
-        Series* hser = 0;   // hash table for series
-        Series* hret;       // hash table for return series
+        Flex* hflex = 0;   // hash table for series
+        Flex* hret;       // hash table for return series
 
         // The buffer used for building the return series.  This creates
         // a new buffer every time, but reusing one might be slightly more
         // efficient.
         //
-        Series* buffer = Make_Array(i);
-        hret = Make_Hash_Series(i);   // allocated
+        Array* buffer = Make_Array(i);
+        hret = Make_Hash_Flex(i);   // allocated
 
         // Optimization note: !!
         // This code could be optimized for small blocks by not hashing them
@@ -129,7 +129,7 @@ Series* Make_Set_Operation_Series(
             // Check what is in series1 but not in series2
             //
             if (flags & SOP_FLAG_CHECK)
-                hser = Hash_Block(val2, skip, cased);
+                hflex = Hash_Block(val2, skip, cased);
 
             // Iterate over first series
             //
@@ -139,7 +139,7 @@ Series* Make_Set_Operation_Series(
                 if (flags & SOP_FLAG_CHECK) {
                     h = Find_Key_Hashed(
                         m_cast(Array*, Cell_Array(val2)),  // mode 1 unchanged
-                        hser,
+                        hflex,
                         item,
                         skip,
                         cased,
@@ -150,7 +150,7 @@ Series* Make_Set_Operation_Series(
                 }
                 if (h) {
                     Find_Key_Hashed(
-                        cast(Array*, buffer),
+                        buffer,
                         hret,
                         item,
                         skip,
@@ -171,7 +171,7 @@ Series* Make_Set_Operation_Series(
             }
 
             if (flags & SOP_FLAG_CHECK)
-                Free_Unmanaged_Series(hser);
+                Free_Unmanaged_Flex(hflex);
 
             if (not first_pass)
                 break;
@@ -186,13 +186,13 @@ Series* Make_Set_Operation_Series(
         } while (true);
 
         if (hret)
-            Free_Unmanaged_Series(hret);
+            Free_Unmanaged_Flex(hret);
 
         // The buffer may have been allocated too large, so copy it at the
         // used capacity size
         //
-        out_ser = Copy_Array_Shallow(x_cast(Array*, buffer));
-        Free_Unmanaged_Series(x_cast(Array*, buffer));
+        out_flex = Copy_Array_Shallow(x_cast(Array*, buffer));
+        Free_Unmanaged_Flex(x_cast(Array*, buffer));
     }
     else if (Any_String(val1)) {
         DECLARE_MOLD (mo);
@@ -268,14 +268,14 @@ Series* Make_Set_Operation_Series(
             val2 = temp;
         } while (true);
 
-        out_ser = Pop_Molded_String(mo);
+        out_flex = Pop_Molded_String(mo);
     }
     else {
         assert(Is_Binary(val1) and Is_Binary(val2));
 
         Binary* buf = BYTE_BUF;
         REBLEN buf_start_len = Binary_Len(buf);
-        Expand_Series_Tail(buf, i);  // ask for at least `i` capacity
+        Expand_Flex_Tail(buf, i);  // ask for at least `i` capacity
         REBLEN buf_at = buf_start_len;
 
         do {
@@ -330,7 +330,7 @@ Series* Make_Set_Operation_Series(
                         skip
                     )
                 ){
-                    Expand_Series_Tail(buf, skip);
+                    Expand_Flex_Tail(buf, skip);
                     Size size_at;
                     const Byte* iter_at = Cell_Binary_Size_At(&size_at, iter);
                     REBLEN min = MIN(size_at, skip);
@@ -355,10 +355,10 @@ Series* Make_Set_Operation_Series(
         Binary* out_bin = Make_Binary(out_len);
         memcpy(Binary_Head(out_bin), Binary_At(buf, buf_start_len), out_len);
         Term_Binary_Len(out_bin, out_len);
-        out_ser = out_bin;
+        out_flex = out_bin;
 
         Term_Binary_Len(buf, buf_start_len);
     }
 
-    return out_ser;
+    return out_flex;
 }

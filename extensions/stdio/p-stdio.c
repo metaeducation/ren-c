@@ -367,9 +367,9 @@ Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
         if (not Is_Binary(data)) {
             Init_Binary(data, Make_Binary(readbuf_size));
         }
-        else if (Series_Rest(Cell_Binary(data)) < readbuf_size) {
+        else if (Flex_Rest(Cell_Binary(data)) < readbuf_size) {
             Binary* bin = Cell_Binary_Ensure_Mutable(data);
-            Expand_Series_Tail(bin, readbuf_size - Series_Rest(bin));
+            Expand_Flex_Tail(bin, readbuf_size - Flex_Rest(bin));
         }
 
         // !!! An egregious hack in READ-LINE to try and coax the system to
@@ -395,7 +395,7 @@ Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
             Binary* bin = Cell_Binary_Ensure_Mutable(data);
             REBLEN orig_len = Cell_Series_Len_At(data);
 
-            assert(Series_Available_Space(bin) >= size);
+            assert(Flex_Available_Space(bin) >= size);
 
             Byte* buf = Binary_At(bin, orig_len);
 

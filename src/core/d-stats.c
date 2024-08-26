@@ -38,7 +38,7 @@
 //      /show "Print formatted results to console"
 //      /profile "Returns profiler object"
 //      /evals "Number of values evaluated by interpreter"
-//      /pool "Dump all series in pool"
+//      /pool "Dump all flex in pool"
 //          [integer!]
 //  ]
 //
@@ -55,11 +55,11 @@ DECLARE_NATIVE(stats)
       #if DEBUG_COLLECT_STATS
         return rebValue("make object! [",
             "evals:", rebI(num_evals),
-            "series-made:", rebI(g_mem.series_made),
-            "series-freed:", rebI(g_mem.series_freed),
-            "series-expanded:", rebI(g_mem.series_expanded),
-            "series-bytes:", rebI(g_mem.series_memory),
-            "series-recycled:", rebI(g_gc.recycle_series_total),
+            "num-flex-made:", rebI(g_mem.num_flex_made),
+            "num-flex-freed:", rebI(g_mem.num_flex_freed),
+            "num-flex-expanded:", rebI(g_mem.num_flex_expanded),
+            "flex-memory:", rebI(g_mem.flex_memory),
+            "recycled-stubs_total:", rebI(g_gc.recycled_stubs_total),
             "blocks-made:", rebI(g_mem.blocks_made),
             "objects-made:", rebI(g_mem.objects_made),
             "recycles:", rebI(g_gc.recycle_counter),
@@ -72,14 +72,14 @@ DECLARE_NATIVE(stats)
   #if !defined(NDEBUG)
     if (REF(pool)) {
         Value* pool_id = ARG(pool);
-        Dump_Series_In_Pool(VAL_INT32(pool_id));
+        Dump_All_Flex_In_Pool(VAL_INT32(pool_id));
         return nullptr;
     }
 
     if (REF(show))
         Dump_Pools();
 
-    return Init_Integer(OUT, Inspect_Series(REF(show)));
+    return Init_Integer(OUT, Inspect_Flex(REF(show)));
   #else
     UNUSED(REF(show));
     UNUSED(ARG(pool));

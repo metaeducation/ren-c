@@ -271,8 +271,8 @@ REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 //
 void Extra_Init_Context_Cell_Checks_Debug(Kind kind, Context* c) {
     assert(
-        (CTX_VARLIST(c)->leader.bits & SERIES_MASK_VARLIST)
-        == SERIES_MASK_VARLIST
+        (CTX_VARLIST(c)->leader.bits & FLEX_MASK_VARLIST)
+        == FLEX_MASK_VARLIST
     );
 
     const Value* archetype = CTX_ARCHETYPE(c);
@@ -292,7 +292,7 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, Context* c) {
     //
     if (CTX_TYPE(c) != REB_MODULE) {  // keylist is global symbol table
         KeyList* keylist = CTX_KEYLIST(c);
-        Assert_Series_Managed(keylist);
+        Assert_Flex_Managed(keylist);
     }
 
     assert(not CTX_ADJUNCT(c) or Any_Context_Kind(CTX_TYPE(CTX_ADJUNCT(c))));
@@ -324,8 +324,8 @@ void Extra_Init_Frame_Details_Checks_Debug(Phase* a) {
 
     KeyList* keylist = ACT_KEYLIST(a);
     assert(
-        (keylist->leader.bits & SERIES_MASK_KEYLIST)
-        == SERIES_MASK_KEYLIST
+        (keylist->leader.bits & FLEX_MASK_KEYLIST)
+        == FLEX_MASK_KEYLIST
     );
 
     // !!! Currently only a context can serve as the "meta" information,
@@ -382,7 +382,7 @@ REBLEN Part_Len_May_Modify_Index(
         if (
             Is_Issue(part)
             or VAL_TYPE(series) != VAL_TYPE(part)  // !!! allow AS aliases?
-            or Cell_Series(series) != Cell_Series(part)
+            or Cell_Flex(series) != Cell_Flex(part)
         ){
             fail (Error_Invalid_Part_Raw(part));
         }

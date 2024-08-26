@@ -85,7 +85,7 @@ Phase* Make_Typechecker(Index decider_index) {
         spec,
         &flags  // return type checked only in debug build
     );
-    Assert_Series_Term_If_Needed(paramlist);
+    Assert_Flex_Term_If_Needed(paramlist);
 
     Phase* typechecker = Make_Action(
         paramlist,

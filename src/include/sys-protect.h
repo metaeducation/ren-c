@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2018 Ren-C Open Source Contributors
+// Copyright 2018-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -20,22 +20,26 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // R3-Alpha introduced the idea of "protected" series and variables.  Ren-C
-// introduces a new form of read-only-ness that is not a bit on series, but
-// rather bits on values.  This means that a value can be a read-only view of
-// a series that is otherwise mutable.
+// introduces a new form of read-only-ness that is not a bit on Flexes, but
+// rather bits on Cell instances.  This means that a value can be a read-only
+// view of a series that is otherwise mutable.
 //
-// !!! Checking for read access was a somewhat half-baked feature in R3-Alpha,
-// as heeding the protection bit had to be checked explicitly.  Many places in
-// the code did not do the check.  While several bugs of that nature have
-// been replaced in an ad-hoc fashion, a better solution would involve using
-// C's `const` feature to locate points that needed to promote series access
-// to be mutable, so it could be checked at compile-time.
+//=//// NOTES ////////////////////////////////////////////////////////////=//
+//
+// * Checking for read access was a half-baked feature in R3-Alpha, as heeding
+//   the protection bit had to be done by hand by any code doing mutations.
+//   Many places in the code forgot the check.  Ren-C uses `const Flex*`
+//   to default to immutable access, and using functions that mutate cells
+//   requires you to consciously use a routine that checks the Flex at
+//   runtime before it will give you back a plain `Flex*` from which you can
+//   get non-const `Cell*`.  See `const_if_c` for why this is only done in
+///  the C++ build.
 //
 
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// SERIES COLORING API
+// FLEX COLORING API
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -43,7 +47,7 @@
 // other bit-twiddling tasks when the GC wasn't running.  This is an
 // unusually dangerous thing to be doing...because leaving a stray mark on
 // during some other traversal could lead the GC to think it had marked
-// things reachable from that series when it had not--thus freeing something
+// things reachable from that Flex when it had not--thus freeing something
 // that was still in use.
 //
 // While leaving a stray mark on is a bug either way, GC bugs are particularly
@@ -54,32 +58,32 @@
 //
 // Ren-C keeps the term "mark" for the GC, since that's standard nomenclature.
 // A lot of basic words are taken other places for other things (tags, flags)
-// so this just goes with a series "color" of black or white, with white as
-// the default.  The debug build keeps a count of how many black series there
+// so this just goes with a Flex "color" of black or white, with white as
+// the default.  The debug build keeps a count of how many black Flexes there
 // are and asserts it's 0 by the time each evaluation ends, to ensure balance.
 //
 
-INLINE bool Is_Series_Black(const Series* s) {
-    return Get_Series_Flag(s, BLACK);
+INLINE bool Is_Flex_Black(const Flex* f) {
+    return Get_Flex_Flag(f, BLACK);
 }
 
-INLINE bool Is_Series_White(const Series* s) {
-    return Not_Series_Flag(s, BLACK);
+INLINE bool Is_Flex_White(const Flex* f) {
+    return Not_Flex_Flag(f, BLACK);
 }
 
-INLINE void Flip_Series_To_Black(const Series* s) {
-    assert(Not_Series_Flag(s, BLACK));
-    Set_Series_Flag(s, BLACK);
+INLINE void Flip_Flex_To_Black(const Flex* f) {
+    assert(Not_Flex_Flag(f, BLACK));
+    Set_Flex_Flag(f, BLACK);
   #if !defined(NDEBUG)
-    g_mem.num_black_series += 1;
+    g_mem.num_black_flex += 1;
   #endif
 }
 
-INLINE void Flip_Series_To_White(const Series* s) {
-    assert(Get_Series_Flag(s, BLACK));
-    Clear_Series_Flag(s, BLACK);
+INLINE void Flip_Flex_To_White(const Flex* f) {
+    assert(Get_Flex_Flag(f, BLACK));
+    Clear_Flex_Flag(f, BLACK);
   #if !defined(NDEBUG)
-    g_mem.num_black_series -= 1;
+    g_mem.num_black_flex -= 1;
   #endif
 }
 
@@ -87,28 +91,28 @@ INLINE void Flip_Series_To_White(const Series* s) {
 // Freezing and Locking
 //
 
-INLINE void Freeze_Series(const Series* s) {  // there is no unfreeze
-    assert(not Is_Series_Array(s)); // use Deep_Freeze_Array
+INLINE void Freeze_Flex(const Flex* f) {  // there is no unfreeze
+    assert(not Is_Flex_Array(f)); // use Deep_Freeze_Array
 
     // We set the FROZEN_DEEP flag even though there is no structural depth
     // here, so that the generic test for deep-frozenness can be faster.
     //
-    Set_Series_Info(s, FROZEN_SHALLOW);
-    Set_Series_Info(s, FROZEN_DEEP);
+    Set_Flex_Info(f, FROZEN_SHALLOW);
+    Set_Flex_Info(f, FROZEN_DEEP);
 }
 
-INLINE bool Is_Series_Frozen(const Series* s) {
-    assert(not Is_Series_Array(s));  // use Is_Array_Deeply_Frozen
-    if (Not_Series_Info(s, FROZEN_SHALLOW))
+INLINE bool Is_Flex_Frozen(const Flex* f) {
+    assert(not Is_Flex_Array(f));  // use Is_Array_Deeply_Frozen
+    if (Not_Flex_Info(f, FROZEN_SHALLOW))
         return false;
-    assert(Get_Series_Info(s, FROZEN_DEEP));  // true on frozen non-arrays
+    assert(Get_Flex_Info(f, FROZEN_DEEP));  // true on frozen non-arrays
     return true;
 }
 
-INLINE bool Is_Series_Read_Only(const Series* s) {  // may be temporary
-    return 0 != (SERIES_INFO(s) &
-        (SERIES_INFO_HOLD | SERIES_INFO_PROTECTED
-        | SERIES_INFO_FROZEN_SHALLOW | SERIES_INFO_FROZEN_DEEP)
+INLINE bool Is_Flex_Read_Only(const Flex* f) {  // may be temporary
+    return 0 != (FLEX_INFO(f) &
+        (FLEX_INFO_HOLD | FLEX_INFO_PROTECTED
+        | FLEX_INFO_FROZEN_SHALLOW | FLEX_INFO_FROZEN_DEEP)
     );
 }
 
@@ -121,22 +125,22 @@ INLINE bool Is_Series_Read_Only(const Series* s) {  // may be temporary
 // priority ordering.
 //
 
-INLINE void Fail_If_Read_Only_Series(const Series* s) {
-    if (not Is_Series_Read_Only(s))
+INLINE void Fail_If_Read_Only_Flex(const Flex* f) {
+    if (not Is_Flex_Read_Only(f))
         return;
 
-    if (Get_Series_Info(s, AUTO_LOCKED))
+    if (Get_Flex_Info(f, AUTO_LOCKED))
         fail (Error_Series_Auto_Locked_Raw());
 
-    if (Get_Series_Info(s, HOLD))
+    if (Get_Flex_Info(f, HOLD))
         fail (Error_Series_Held_Raw());
 
-    if (Get_Series_Info(s, FROZEN_SHALLOW))
+    if (Get_Flex_Info(f, FROZEN_SHALLOW))
         fail (Error_Series_Frozen_Raw());
 
-    assert(Not_Series_Info(s, FROZEN_DEEP));  // implies FROZEN_SHALLOW
+    assert(Not_Flex_Info(f, FROZEN_DEEP));  // implies FROZEN_SHALLOW
 
-    assert(Get_Series_Info(s, PROTECTED));
+    assert(Get_Flex_Info(f, PROTECTED));
     fail (Error_Series_Protected_Raw());
 }
 
@@ -144,18 +148,18 @@ INLINE void Fail_If_Read_Only_Series(const Series* s) {
 
 
 INLINE bool Is_Array_Frozen_Shallow(const Array* a)
-  { return Get_Series_Info(a, FROZEN_SHALLOW); }
+  { return Get_Flex_Info(a, FROZEN_SHALLOW); }
 
 INLINE bool Is_Array_Frozen_Deep(const Array* a) {
-    if (Not_Series_Info(a, FROZEN_DEEP))
+    if (Not_Flex_Info(a, FROZEN_DEEP))
         return false;
 
-    assert(Get_Series_Info(a, FROZEN_SHALLOW));  // implied by FROZEN_DEEP
+    assert(Get_Flex_Info(a, FROZEN_SHALLOW));  // implied by FROZEN_DEEP
     return true;
 }
 
 INLINE const Array* Freeze_Array_Deep(const Array* a) {
-    Protect_Series(
+    Protect_Flex(
         a,
         0, // start protection at index 0
         PROT_DEEP | PROT_SET | PROT_FREEZE
@@ -165,12 +169,12 @@ INLINE const Array* Freeze_Array_Deep(const Array* a) {
 }
 
 INLINE const Array* Freeze_Array_Shallow(const Array* a) {
-    Set_Series_Info(a, FROZEN_SHALLOW);
+    Set_Flex_Info(a, FROZEN_SHALLOW);
     return a;
 }
 
 #define Is_Array_Shallow_Read_Only(a) \
-    Is_Series_Read_Only(a)
+    Is_Flex_Read_Only(a)
 
 #define Force_Value_Frozen_Deep(v) \
     Force_Value_Frozen_Core((v), true, EMPTY_ARRAY)  // auto-locked
@@ -187,8 +191,8 @@ INLINE const Array* Freeze_Array_Shallow(const Array* a) {
 #else
     INLINE const Cell* Known_Mutable(const Cell* v) {
         assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-        const Series* s = c_cast(Series*, Cell_Node1(v));  // varlist, etc.
-        assert(not Is_Series_Read_Only(s));
+        const Flex* f = c_cast(Flex*, Cell_Node1(v));  // varlist, etc.
+        assert(not Is_Flex_Read_Only(f));
         assert(Not_Cell_Flag(v, CONST));
         return v;
     }
@@ -196,9 +200,9 @@ INLINE const Array* Freeze_Array_Shallow(const Array* a) {
 
 INLINE const Cell* Ensure_Mutable(const Cell* v) {
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-    const Series* s = c_cast(Series*, Cell_Node1(v));  // varlist, etc.
+    const Flex* f = c_cast(Flex*, Cell_Node1(v));  // varlist, etc.
 
-    Fail_If_Read_Only_Series(s);
+    Fail_If_Read_Only_Flex(f);
 
     if (Not_Cell_Flag(v, CONST))
         return v;

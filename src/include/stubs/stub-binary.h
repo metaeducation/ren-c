@@ -1,6 +1,6 @@
 //
 //  File: %stub-binary.h
-//  Summary: {Definitions for binary series}
+//  Summary: {Definitions for Binary Flex}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -20,49 +20,49 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A BINARY! value holds a byte-size series.  The bytes may be arbitrary, or
-// if the series flavor is FLAVOR_STRING or FLAVOR_SYMBOL then modifications
+// A BINARY! value holds a byte-size Flex.  The bytes may be arbitrary, or
+// if the Flex flavor is FLAVOR_STRING or FLAVOR_SYMBOL then modifications
 // are constrained to only allow valid `\0`-terminated UTF-8 data.
 //
 // (Such binary "views" are possible due to things like the AS operator,
 // e.g `as binary! "abc"`)
 //
-// R3-Alpha used a binary series to hold the data for BITSET!.  See notes in
+// R3-Alpha used a binary Flex to hold the data for BITSET!.  See notes in
 // %sys-bitset.h regarding this usage (which has a "negated" bit in the
 // MISC() field).
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * Since strings use MISC() and LINK() for various features, and binaries
-//   can be "views" on string series, this means that generally speaking a
-//   binary series can't use MISC() and LINK() for its own purposes.  (For
-//   the moment, typesets cannot be aliased, so you can't get into a situation
+// * Since Strings use MISC() and LINK() for various features, and Binary can
+//   be a "view" on a String Flex, this means that generally speaking a
+//   Binary Flex can't use MISC() and LINK() for its own purposes.  (For
+//   the moment, bitsets cannot be aliased, so you can't get into a situation
 //   like `as text! as binary! make bitset! [...]`)
 //
 
 //=//// BINARY! SERIES ////////////////////////////////////////////////////=//
 
-#define Binary_At(bin,i)        Series_At(Byte, (bin), (i))
-#define Binary_Head(bin)        Series_Head(Byte, (bin))
-#define Binary_Tail(bin)        Series_Tail(Byte, (bin))
-#define Binary_Last(bin)        Series_Last(Byte, (bin))
+#define Binary_At(bin,i)        Flex_At(Byte, (bin), (i))
+#define Binary_Head(bin)        Flex_Head(Byte, (bin))
+#define Binary_Tail(bin)        Flex_Tail(Byte, (bin))
+#define Binary_Last(bin)        Flex_Last(Byte, (bin))
 
-INLINE Length Binary_Len(const Binary* s) {
-    assert(Series_Wide(s) == 1);
-    return Series_Used(s);
+INLINE Length Binary_Len(const Binary* bin) {
+    assert(Flex_Wide(bin) == 1);
+    return Flex_Used(bin);
 }
 
 #define Term_Binary(bin) \
     *Binary_Tail(bin) = '\0'
 
 INLINE void Term_Binary_Len(Binary* bin, Length len) {
-    assert(Series_Wide(bin) == 1);
-    Set_Series_Used(bin, len);
+    assert(Flex_Wide(bin) == 1);
+    Set_Flex_Used(bin, len);
     Term_Binary(bin);
 }
 
-// Make a byte series of length 0 with the given capacity (plus 1, to permit
-// a '\0' terminator).  Binaries are given enough capacity to have a null
+// Make a byte-width Flex of length 0 with given capacity (plus 1, to permit
+// a '\0' terminator).  Binaries are given enough capacity to have a NUL
 // terminator in case they are aliased as UTF-8 later, e.g. `as word! binary`,
 // since it could be costly to give them that capacity after-the-fact.
 //
@@ -70,15 +70,15 @@ INLINE Binary* Make_Binary_Core(Length capacity, Flags flags)
 {
     assert(Flavor_From_Flags(flags) == 0);  // shouldn't pass in a flavor
 
-    Binary* bin = Make_Series(Binary,
+    Binary* bin = Make_Flex(Binary,
         capacity + 1,
         FLAG_FLAVOR(BINARY) | flags
     );
-  #if DEBUG_POISON_SERIES_TAILS
-    *Series_Head(Byte, bin) = BINARY_BAD_UTF8_TAIL_BYTE;  // reserve for '\0'
+  #if DEBUG_POISON_FLEX_TAILS
+    *Flex_Head(Byte, bin) = BINARY_BAD_UTF8_TAIL_BYTE;  // reserve for '\0'
   #endif
     return bin;
 }
 
 #define Make_Binary(capacity) \
-    Make_Binary_Core(capacity, SERIES_FLAGS_NONE)
+    Make_Binary_Core(capacity, FLEX_FLAGS_NONE)

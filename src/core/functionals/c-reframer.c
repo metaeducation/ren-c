@@ -242,7 +242,7 @@ bool Init_Invokable_From_Feed_Throws(
     Drop_Level(L);
     Drop_GC_Guard(action);
 
-    Set_Node_Managed_Bit(varlist);  // can't use Manage_Series
+    Set_Node_Managed_Bit(varlist);  // can't use Manage_Flex
 
     Init_Frame(out, cast(Context*, varlist), label);
     return false;  // didn't throw
@@ -461,7 +461,7 @@ DECLARE_NATIVE(reframer)
     // Make action with enough space to store the implementation phase and
     // which parameter to fill with the *real* frame instance.
     //
-    Manage_Series(CTX_VARLIST(exemplar));
+    Manage_Flex(CTX_VARLIST(exemplar));
     Phase* reframer = Alloc_Action_From_Exemplar(
         exemplar,  // shim minus the frame argument
         label,

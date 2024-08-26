@@ -170,45 +170,45 @@ void Protect_Value(const Value* v, Flags flags)
         return;
 
     if (Any_Series(v))
-        Protect_Series(Cell_Series(v), VAL_INDEX(v), flags);
+        Protect_Flex(Cell_Flex(v), VAL_INDEX(v), flags);
     else if (Is_Map(v))
-        Protect_Series(MAP_PAIRLIST(VAL_MAP(v)), 0, flags);
+        Protect_Flex(MAP_PAIRLIST(VAL_MAP(v)), 0, flags);
     else if (Any_Context(v))
         Protect_Context(VAL_CONTEXT(v), flags);
 }
 
 
 //
-//  Protect_Series: C
+//  Protect_Flex: C
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Series(const Series* s, REBLEN index, Flags flags)
+void Protect_Flex(const Flex* f, REBLEN index, Flags flags)
 {
-    if (Is_Series_Black(s))
+    if (Is_Flex_Black(f))
         return;  // avoid loop
 
     if (flags & PROT_SET) {
         if (flags & PROT_FREEZE) {
             if (flags & PROT_DEEP)
-                Set_Series_Info(s, FROZEN_DEEP);
-            Set_Series_Info(s, FROZEN_SHALLOW);
+                Set_Flex_Info(f, FROZEN_DEEP);
+            Set_Flex_Info(f, FROZEN_SHALLOW);
         }
         else
-            Set_Series_Info(s, PROTECTED);
+            Set_Flex_Info(f, PROTECTED);
     }
     else {
         assert(not (flags & PROT_FREEZE));
-        Clear_Series_Info(s, PROTECTED);
+        Clear_Flex_Info(f, PROTECTED);
     }
 
-    if (not Is_Series_Array(s) or not (flags & PROT_DEEP))
+    if (not Is_Flex_Array(f) or not (flags & PROT_DEEP))
         return;
 
-    Flip_Series_To_Black(s); // recursion protection
+    Flip_Flex_To_Black(f);  // recursion protection
 
-    const Value* val_tail = Series_Tail(Value, x_cast(Array*, s));
-    const Value* val = Series_At(Value, x_cast(Array*, s), index);
+    const Value* val_tail = Flex_Tail(Value, x_cast(Array*, f));
+    const Value* val = Flex_At(Value, x_cast(Array*, f), index);
     for (; val != val_tail; val++)
         Protect_Value(val, flags);
 }
@@ -223,27 +223,27 @@ void Protect_Context(Context* c, Flags flags)
 {
     const Array* varlist = CTX_VARLIST(c);
 
-    if (Is_Series_Black(varlist))
+    if (Is_Flex_Black(varlist))
         return; // avoid loop
 
     if (flags & PROT_SET) {
         if (flags & PROT_FREEZE) {
             if (flags & PROT_DEEP)
-                Set_Series_Info(varlist, FROZEN_DEEP);
-            Set_Series_Info(varlist, FROZEN_SHALLOW);
+                Set_Flex_Info(varlist, FROZEN_DEEP);
+            Set_Flex_Info(varlist, FROZEN_SHALLOW);
         }
         else
-            Set_Series_Info(varlist, PROTECTED);
+            Set_Flex_Info(varlist, PROTECTED);
     }
     else {
         assert(not (flags & PROT_FREEZE));
-        Clear_Series_Info(varlist, PROTECTED);
+        Clear_Flex_Info(varlist, PROTECTED);
     }
 
     if (not (flags & PROT_DEEP))
         return;
 
-    Flip_Series_To_Black(varlist); // for recursion
+    Flip_Flex_To_Black(varlist);  // for recursion
 
     const Value* var_tail;
     Value* var = CTX_VARS(&var_tail, c);
@@ -477,10 +477,10 @@ bool Is_Value_Frozen_Deep(const Cell* v) {
     if (node == nullptr or Is_Node_A_Cell(node))
         return true;  // !!! Will all non-quoted Pairings be frozen?
 
-    // Frozen deep should be set even on non-arrays, e.g. all frozen shallow
-    // strings should also have SERIES_INFO_FROZEN_DEEP.
+    // Frozen deep should be set even on non-Arrays, e.g. all frozen shallow
+    // Strings should also have FLEX_INFO_FROZEN_DEEP.
     //
-    return Get_Series_Info(x_cast(Series*, node), FROZEN_DEEP);
+    return Get_Flex_Info(x_cast(Flex*, node), FROZEN_DEEP);
 }
 
 
@@ -518,7 +518,7 @@ DECLARE_NATIVE(locked_q)
 void Force_Value_Frozen_Core(
     const Cell* v,
     bool deep,
-    Option(Series*) locker
+    Option(Flex*) locker
 ){
     if (Is_Value_Frozen_Deep(v))
         return;
@@ -535,7 +535,7 @@ void Force_Value_Frozen_Core(
         else
             Freeze_Array_Shallow(a);
         if (locker)
-            Set_Series_Info(a, AUTO_LOCKED);
+            Set_Flex_Info(a, AUTO_LOCKED);
     }
     else if (Any_Context_Kind(heart)) {
         Context* c = VAL_CONTEXT(v);
@@ -544,14 +544,14 @@ void Force_Value_Frozen_Core(
         else
             fail ("What does a shallow freeze of a context mean?");
         if (locker)
-            Set_Series_Info(CTX_VARLIST(c), AUTO_LOCKED);
+            Set_Flex_Info(CTX_VARLIST(c), AUTO_LOCKED);
     }
     else if (Any_Series_Kind(heart)) {
-        const Series* s = Cell_Series(v);
-        Freeze_Series(s);
+        const Flex* f = Cell_Flex(v);
+        Freeze_Flex(f);
         UNUSED(deep);
         if (locker)
-            Set_Series_Info(s, AUTO_LOCKED);
+            Set_Flex_Info(f, AUTO_LOCKED);
     }
     else if (Any_Sequence_Kind(heart)) {
         // No freezing needed
@@ -579,12 +579,12 @@ DECLARE_NATIVE(freeze)
     INCLUDE_PARAMS_OF_FREEZE;
 
     // REF(blame) is not exposed as a feature because there's nowhere to store
-    // locking information in the series.  So the only thing that happens if
-    // you pass in something other than null is SERIES_FLAG_AUTO_LOCKED is set
+    // locking information in the Flex.  So the only thing that happens if
+    // you pass in something other than null is FLEX_FLAG_AUTO_LOCKED is set
     // to deliver a message that the system locked something implicitly.  We
     // don't want to say that here, so hold off on the feature.
     //
-    Series* locker = nullptr;
+    Flex* locker = nullptr;
     Force_Value_Frozen_Core(ARG(value), REF(deep), locker);
 
     return COPY(ARG(value));

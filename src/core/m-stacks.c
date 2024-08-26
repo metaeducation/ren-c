@@ -43,10 +43,10 @@ void Startup_Data_Stack(Length capacity)
     //
     ensure(nullptr, g_ds.array) = Make_Array_Core(
         1,
-        FLAG_FLAVOR(DATASTACK) | SERIES_FLAGS_NONE
+        FLAG_FLAVOR(DATASTACK) | FLEX_FLAGS_NONE
     );
-    Set_Series_Len(g_ds.array, 1);
-    assert(Not_Series_Flag(g_ds.array, DYNAMIC));
+    Set_Flex_Len(g_ds.array, 1);
+    assert(Not_Flex_Flag(g_ds.array, DYNAMIC));
 
     Cell* head = Array_Head(g_ds.array);
     assert(Is_Cell_Erased(head));  // non-dynamic array, length 1 indicator
@@ -61,12 +61,12 @@ void Startup_Data_Stack(Length capacity)
     // initial stack size.  It requires you to be on an END to run.
     //
     g_ds.index = 1;
-    g_ds.movable_top = Series_At(Cell, g_ds.array, g_ds.index);
+    g_ds.movable_top = Flex_At(Cell, g_ds.array, g_ds.index);
     Expand_Data_Stack_May_Fail(capacity);
 
     DROP();  // drop the hypothetical thing that triggered the expand
 
-    assert(Get_Series_Flag(g_ds.array, DYNAMIC));
+    assert(Get_Flex_Flag(g_ds.array, DYNAMIC));
     Poison_Cell(Array_Head(g_ds.array));  // new head
 }
 
@@ -79,7 +79,7 @@ void Shutdown_Data_Stack(void)
     assert(TOP_INDEX == 0);
     assert(Is_Cell_Poisoned(Array_Head(g_ds.array)));
 
-    Free_Unmanaged_Series(g_ds.array);
+    Free_Unmanaged_Flex(g_ds.array);
     g_ds.array = nullptr;
 }
 
@@ -179,16 +179,16 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     // is at its end.  Sanity check that.
     //
     assert(len_old == g_ds.index);
-    assert(g_ds.movable_top == Series_Tail(Cell, g_ds.array));
+    assert(g_ds.movable_top == Flex_Tail(Cell, g_ds.array));
     assert(
-        g_ds.movable_top - Series_Head(Cell, g_ds.array)
+        g_ds.movable_top - Flex_Head(Cell, g_ds.array)
         == cast(int, len_old)
     );
 
     // If adding in the requested amount would overflow the stack limit, then
     // give a data stack overflow error.
     //
-    if (Series_Rest(g_ds.array) + amount >= STACK_LIMIT) {
+    if (Flex_Rest(g_ds.array) + amount >= STACK_LIMIT) {
         //
         // Because the stack pointer was incremented and hit the END marker
         // before the expansion, we have to decrement it if failing.
@@ -198,28 +198,28 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
         Fail_Stack_Overflow(); // !!! Should this be a "data stack" message?
     }
 
-    Extend_Series_If_Necessary(g_ds.array, amount);
+    Extend_Flex_If_Necessary(g_ds.array, amount);
 
     // Update the pointer used for fast access to the top of the stack that
     // likely was moved by the above allocation (needed before using TOP)
     //
-    g_ds.movable_top = Series_At(Cell, g_ds.array, g_ds.index);
+    g_ds.movable_top = Flex_At(Cell, g_ds.array, g_ds.index);
 
     REBLEN len_new = len_old + amount;
-    Set_Series_Len(g_ds.array, len_new);
+    Set_Flex_Len(g_ds.array, len_new);
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
     Cell* poison = g_ds.movable_top;
     REBLEN n;
     for (n = len_old; n < len_new; ++n, ++poison)
         Poison_Cell(poison);
-    assert(poison == Series_Tail(Cell, g_ds.array));
+    assert(poison == Flex_Tail(Cell, g_ds.array));
   #endif
 
     // Update the end marker to serve as the indicator for when the next
     // stack push would need to expand.
     //
-    g_ds.movable_tail = Series_Tail(Cell, g_ds.array);
+    g_ds.movable_tail = Flex_Tail(Cell, g_ds.array);
 }
 
 
@@ -236,10 +236,10 @@ Array* Pop_Stack_Values_Core(StackIndex base, Flags flags)
 
     Length len = TOP_INDEX - base;
     Array* a = Make_Array_Core(len, flags);
-    Set_Series_Len(a, len);
+    Set_Flex_Len(a, len);
 
   #if DEBUG
-    Flavor flavor = Series_Flavor(a);  // flavor comes from flags
+    Flavor flavor = Flex_Flavor(a);  // flavor comes from flags
   #endif
 
     Count count = 0;

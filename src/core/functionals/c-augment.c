@@ -138,7 +138,7 @@ DECLARE_NATIVE(augment)
     // with patching the augmentee's action information (phase and binding)
     // into the paramlist...and reusing the Specializer_Dispatcher.
 
-    assert(Is_Anti_Word_With_Id(Series_Head(Value, paramlist), SYM_ROOTVAR));
+    assert(Is_Anti_Word_With_Id(Flex_Head(Value, paramlist), SYM_ROOTVAR));
     INIT_VAL_FRAME_ROOTVAR(
         Array_Head(paramlist),
         paramlist,

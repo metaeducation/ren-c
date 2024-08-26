@@ -150,7 +150,7 @@ static Bounce MAKE_TO_Binary_Common(Level* level_, const Value* arg)
         Join_Binary_In_Byte_Buf(arg, -1);
         Binary* bin = cast(
             Binary*,
-            Copy_Series_Core(BYTE_BUF, SERIES_FLAGS_NONE)
+            Copy_Flex_Core(BYTE_BUF, FLEX_FLAGS_NONE)
         );
         return Init_Binary(OUT, bin); }
 
@@ -228,7 +228,7 @@ Bounce TO_Binary(Level* level_, Kind kind, const Value* arg)
     UNUSED(kind);
 
     if (Is_Integer(arg) or Is_Decimal(arg))
-        return Init_Series_Cell(OUT, REB_BINARY, Make_Binary_BE64(arg));
+        return Init_Series(OUT, REB_BINARY, Make_Binary_BE64(arg));
 
     return MAKE_TO_Binary_Common(level_, arg);
 }
@@ -479,13 +479,13 @@ REBTYPE(Binary)
             return nullptr;  // Don't Proxy_Multi_Returns()
 
         if (id == SYM_FIND) {
-            Init_Series_Cell_At(
+            Init_Series_At(
                 ARG(tail),
                 REB_BINARY,
                 Cell_Binary(v),
                 ret + size
             );
-            Init_Series_Cell_At(
+            Init_Series_At(
                 OUT,
                 REB_BINARY,
                 Cell_Binary(v),
@@ -515,7 +515,7 @@ REBTYPE(Binary)
             len = Part_Len_May_Modify_Index(v, ARG(part));
             if (len == 0) {
                 Heart heart = Cell_Heart_Ensure_Noquote(v);
-                return Init_Series_Cell(OUT, heart, Make_Binary(0));
+                return Init_Series(OUT, heart, Make_Binary(0));
             }
         } else
             len = 1;
@@ -538,7 +538,7 @@ REBTYPE(Binary)
                 return RAISE(Error_Nothing_To_Take_Raw());
 
             Heart heart = Cell_Heart_Ensure_Noquote(v);
-            return Init_Series_Cell(OUT, heart, Make_Binary(0));
+            return Init_Series(OUT, heart, Make_Binary(0));
         }
 
         // if no /PART, just return value, else return string
@@ -566,10 +566,10 @@ REBTYPE(Binary)
 
         // !!! R3-Alpha would take this opportunity to make it so that if the
         // series is now empty, it reclaims the "bias" (unused capacity at
-        // the head of the series).  One of many behaviors worth reviewing.
+        // the head of the Flex).  One of many behaviors worth reviewing.
         //
-        if (index == 0 and Get_Series_Flag(bin, DYNAMIC))
-            Unbias_Series(bin, false);
+        if (index == 0 and Get_Flex_Flag(bin, DYNAMIC))
+            Unbias_Flex(bin, false);
 
         Term_Binary_Len(bin, cast(REBLEN, index));  // may have string alias
         return COPY(v); }
@@ -584,10 +584,10 @@ REBTYPE(Binary)
 
         REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
 
-        return Init_Series_Cell(
+        return Init_Series(
             OUT,
             REB_BINARY,
-            Copy_Binary_At_Len(Cell_Series(v), VAL_INDEX(v), len)
+            Copy_Binary_At_Len(Cell_Flex(v), VAL_INDEX(v), len)
         ); }
 
     //-- Bitwise:
@@ -609,10 +609,10 @@ REBTYPE(Binary)
         Size smaller = MIN(t0, t1);  // smaller array size
         Size larger = MAX(t0, t1);
 
-        Binary* series = Make_Binary(larger);
-        Term_Binary_Len(series, larger);
+        Binary* b = Make_Binary(larger);
+        Term_Binary_Len(b, larger);
 
-        Byte* dest = Binary_Head(series);
+        Byte* dest = Binary_Head(b);
 
         switch (id) {
           case SYM_BITWISE_AND: {
@@ -648,7 +648,7 @@ REBTYPE(Binary)
             assert(false);  // not reachable
         }
 
-        return Init_Series_Cell(OUT, REB_BINARY, series); }
+        return Init_Binary(OUT, b); }
 
       case SYM_BITWISE_NOT: {
         Size size;
@@ -661,7 +661,7 @@ REBTYPE(Binary)
         for (; size > 0; --size, ++bp, ++dp)
             *dp = ~(*bp);
 
-        return Init_Series_Cell(OUT, REB_BINARY, bin); }
+        return Init_Series(OUT, REB_BINARY, bin); }
 
     // Arithmetic operations are allowed on BINARY!, because it's too limiting
     // to not allow `#{4B} + 1` => `#{4C}`.  Allowing the operations requires

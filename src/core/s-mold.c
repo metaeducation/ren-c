@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2019 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -21,7 +21,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// "Molding" is a term in Rebol for getting a string representation of a
+// "Molding" is a term in Rebol for getting an ANY-STRING! representation of a
 // value that is intended to be LOADed back into the system.  So if you mold
 // a TEXT!, you would get back another TEXT! that would include the delimiters
 // for that string (and any required escaping, e.g. for embedded quotes).
@@ -54,7 +54,7 @@
 //   same hook.  See %types.r for these categorizations in the "mold" column.
 //
 // * Molding is done via a REB_MOLD structure, which in addition to the
-//   series to mold into contains options for the mold--including length
+//   String to mold into contains options for the mold--including length
 //   limits, whether commas or periods should be used for decimal points,
 //   indentation rules, etc.
 //
@@ -66,7 +66,7 @@
 //
 // * It's hard to know in advance how long molded output will be.  Using the
 //   mold buffer allows one to use a "hot" preallocated UTF-8 buffer for the
-//   mold...and copy out a series of the precise width and length needed.
+//   mold...and copy out a String of the precise width and length needed.
 //   (That is, if copying out the result is needed at all.)
 //
 
@@ -94,7 +94,7 @@
 Byte* Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
 {
     REBLEN tail = String_Len(mo->series);
-    Expand_Series_Tail(mo->series, num_bytes);  // terminates at guess
+    Expand_Flex_Tail(mo->series, num_bytes);  // terminates at guess
     return Binary_At(mo->series, tail);
 }
 
@@ -186,7 +186,7 @@ void New_Indented_Line(REB_MOLD *mo)
 // While Rebol has never had a particularly coherent story about how cyclical
 // data structures will be handled in evaluation, they do occur--and the GC
 // is robust to their existence.  These helper functions can be used to
-// maintain a stack of series.
+// maintain a stack of Flex.
 //
 // !!! TBD: Unify this with the Push_GC_Guard and Drop_GC_Guard implementation
 // so that improvements in one will improve the other?
@@ -194,37 +194,37 @@ void New_Indented_Line(REB_MOLD *mo)
 //=////////////////////////////////////////////////////////////////////////=//
 
 //
-//  Find_Pointer_In_Series: C
+//  Find_Pointer_In_Flex: C
 //
-REBINT Find_Pointer_In_Series(Series* s, const void *p)
+REBINT Find_Pointer_In_Flex(Flex* f, const void *p)
 {
     REBLEN index = 0;
-    for (; index < Series_Used(s); ++index) {
-        if (*Series_At(void*, s, index) == p)
+    for (; index < Flex_Used(f); ++index) {
+        if (*Flex_At(void*, f, index) == p)
             return index;
     }
     return NOT_FOUND;
 }
 
 //
-//  Push_Pointer_To_Series: C
+//  Push_Pointer_To_Flex: C
 //
-void Push_Pointer_To_Series(Series* s, const void *p)
+void Push_Pointer_To_Flex(Flex* f, const void *p)
 {
-    if (Is_Series_Full(s))
-        Extend_Series_If_Necessary(s, 8);
-    *Series_At(const void*, s, Series_Used(s)) = p;
-    Set_Series_Used(s, Series_Used(s) + 1);
+    if (Is_Flex_Full(f))
+        Extend_Flex_If_Necessary(f, 8);
+    *Flex_At(const void*, f, Flex_Used(f)) = p;
+    Set_Flex_Used(f, Flex_Used(f) + 1);
 }
 
 //
-//  Drop_Pointer_From_Series: C
+//  Drop_Pointer_From_Flex: C
 //
-void Drop_Pointer_From_Series(Series* s, const void *p)
+void Drop_Pointer_From_Flex(Flex* f, const void *p)
 {
-    assert(p == *Series_At(void*, s, Series_Used(s) - 1));
+    assert(p == *Flex_At(void*, f, Flex_Used(f) - 1));
     UNUSED(p);
-    Set_Series_Used(s, Series_Used(s) - 1);
+    Set_Flex_Used(f, Flex_Used(f) - 1);
 
     // !!! Could optimize so mold stack is always dynamic, and just use
     // s->content.dynamic.len--
@@ -243,7 +243,7 @@ void Mold_Array_At(
     const char *sep
 ){
     // Recursion check:
-    if (Find_Pointer_In_Series(g_mold.stack, a) != NOT_FOUND) {
+    if (Find_Pointer_In_Flex(g_mold.stack, a) != NOT_FOUND) {
         if (sep[0] != '\0')
             Append_Codepoint(mo->series, sep[0]);
         Append_Ascii(mo->series, "...");
@@ -252,7 +252,7 @@ void Mold_Array_At(
         return;
     }
 
-    Push_Pointer_To_Series(g_mold.stack, a);
+    Push_Pointer_To_Flex(g_mold.stack, a);
 
     bool indented = false;
 
@@ -300,7 +300,7 @@ void Mold_Array_At(
         Append_Codepoint(mo->series, sep[1]);
     }
 
-    Drop_Pointer_From_Series(g_mold.stack, a);
+    Drop_Pointer_From_Flex(g_mold.stack, a);
 }
 
 
@@ -314,7 +314,6 @@ void Form_Array_At(
     Option(Context*) context,
     bool relax  // make antiforms into quasiforms instead of erroring
 ){
-    // Form a series (part_mold means mold non-string values):
     REBINT len = Array_Len(array) - index;
     if (len < 0)
         len = 0;
@@ -398,7 +397,7 @@ void Mold_Or_Form_Cell(
     bool form
 ){
     String* s = mo->series;
-    Assert_Series_Term_If_Needed(s);
+    Assert_Flex_Term_If_Needed(s);
 
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT)) {
         //
@@ -418,7 +417,7 @@ void Mold_Or_Form_Cell(
     MOLD_HOOK *hook = Mold_Or_Form_Hook_For_Type_Of(cell);
     hook(mo, cell, form);
 
-    Assert_Series_Term_If_Needed(s);
+    Assert_Flex_Term_If_Needed(s);
 }
 
 
@@ -492,7 +491,7 @@ String* Copy_Mold_Or_Form_Cell(const Cell* cell, Flags opts, bool form)
 //
 //  Push_Mold: C
 //
-// Much like the data stack, a single contiguous series is used for the mold
+// Like the data stack, a single contiguous String Flex is used for the mold
 // buffer.  So if a mold needs to happen during another mold, it is pushed
 // into a stack and must balance (with either a Pop() or Drop() of the nested
 // string).  The fail() mechanics will automatically balance the stack.
@@ -509,7 +508,7 @@ void Push_Mold(REB_MOLD *mo)
     String* s = g_mold.buffer;
     assert(LINK(Bookmarks, s) == nullptr);  // should never bookmark buffer
 
-    Assert_Series_Term_If_Needed(s);
+    Assert_Flex_Term_If_Needed(s);
 
     mo->series = s;
     mo->base.size = String_Size(s);
@@ -520,7 +519,7 @@ void Push_Mold(REB_MOLD *mo)
 
     if (
         GET_MOLD_FLAG(mo, MOLD_FLAG_RESERVE)
-        and Series_Rest(s) < mo->reserve
+        and Flex_Rest(s) < mo->reserve
     ){
         // Expand will add to the series length, so we set it back.
         //
@@ -529,10 +528,10 @@ void Push_Mold(REB_MOLD *mo)
         // compatible with the appending mold is to come back with an
         // empty buffer after a push.
         //
-        Expand_Series(s, mo->base.size, mo->reserve);
-        Set_Series_Used(s, mo->base.size);
+        Expand_Flex(s, mo->base.size, mo->reserve);
+        Set_Flex_Used(s, mo->base.size);
     }
-    else if (Series_Rest(s) - Series_Used(s) > MAX_COMMON) {
+    else if (Flex_Rest(s) - Flex_Used(s) > MAX_COMMON) {
         //
         // If the "extra" space in the series has gotten to be excessive (due
         // to some particularly large mold), back off the space.  But preserve
@@ -540,12 +539,12 @@ void Push_Mold(REB_MOLD *mo)
         // ->start index in the stack!
         //
         Length len = String_Len(g_mold.buffer);
-        Remake_Series(
+        Remake_Flex(
             s,
-            Series_Used(s) + MIN_COMMON,
+            Flex_Used(s) + MIN_COMMON,
             NODE_FLAG_NODE // NODE_FLAG_NODE means preserve the data
         );
-        Term_String_Len_Size(mo->series, len, Series_Used(s));
+        Term_String_Len_Size(mo->series, len, Flex_Used(s));
     }
 
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL))
@@ -641,13 +640,13 @@ String* Pop_Molded_String_Core(String* buf, Size offset, Index index)
 // When a Push_Mold is started, then string data for the mold is accumulated
 // at the tail of the task-global UTF-8 buffer.  It's possible to copy this
 // data directly into a target prior to calling Drop_Mold()...but this routine
-// is a helper that extracts the data as a string series.  It resets the
+// is a helper that extracts the data as a String Flex.  It resets the
 // buffer to its length at the time when the last push began.
 //
 String* Pop_Molded_String(REB_MOLD *mo)
 {
     assert(mo->series != nullptr);  // if null, there was no Push_Mold()
-    Assert_Series_Term_If_Needed(mo->series);
+    Assert_Flex_Term_If_Needed(mo->series);
 
     // Limit string output to a specified size to prevent long console
     // garbage output if MOLD_FLAG_LIMIT was set in Push_Mold().
@@ -675,7 +674,7 @@ Binary* Pop_Molded_Binary(REB_MOLD *mo)
 {
     assert(String_Len(mo->series) >= mo->base.size);
 
-    Assert_Series_Term_If_Needed(mo->series);
+    Assert_Flex_Term_If_Needed(mo->series);
     Throttle_Mold(mo);
 
     Size size = String_Size(mo->series) - mo->base.size;
@@ -699,8 +698,8 @@ Binary* Pop_Molded_Binary(REB_MOLD *mo)
 //
 //  Drop_Mold_Core: C
 //
-// When generating a molded string, sometimes it's enough to have access to
-// the molded data without actually creating a new series out of it.  If the
+// When generating a molded String, sometimes it's enough to have access to
+// the molded data without actually creating a new String Flex.  If the
 // information in the mold has done its job and Pop_Molded_String() is not
 // required, just call this to drop back to the state of the last push.
 //
@@ -721,7 +720,7 @@ void Drop_Mold_Core(
     // When pushed data are to be discarded, mo->series may be unterminated.
     // (Indeed that happens when Scan_Item_Push_Mold returns NULL/0.)
     //
-    Note_Series_Maybe_Term(mo->series);
+    Note_Flex_Maybe_Term(mo->series);
 
     // see notes in Pop_Molded_String()
     //
@@ -736,9 +735,9 @@ void Drop_Mold_Core(
 //
 void Startup_Mold(REBLEN size)
 {
-    g_mold.stack = Make_Series_Core(10, FLAG_FLAVOR(MOLDSTACK));
+    g_mold.stack = Make_Flex_Core(10, FLAG_FLAVOR(MOLDSTACK));
 
-    ensure(nullptr, g_mold.buffer) = Make_String_Core(size, SERIES_FLAG_DYNAMIC);
+    ensure(nullptr, g_mold.buffer) = Make_String_Core(size, FLEX_FLAG_DYNAMIC);
 }
 
 
@@ -748,9 +747,9 @@ void Startup_Mold(REBLEN size)
 void Shutdown_Mold(void)
 {
     assert(LINK(Bookmarks, g_mold.buffer) == nullptr);  // should not be set
-    Free_Unmanaged_Series(g_mold.buffer);
+    Free_Unmanaged_Flex(g_mold.buffer);
     g_mold.buffer = nullptr;
 
-    Free_Unmanaged_Series(g_mold.stack);
+    Free_Unmanaged_Flex(g_mold.stack);
     g_mold.stack = nullptr;
 }

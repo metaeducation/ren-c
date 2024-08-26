@@ -48,8 +48,8 @@ void Splice_Block_Into_Feed(Feed* feed, const Value* splice) {
     // on a feed-by-feed basis.  It should be on a splice-by-splice basis.
     //
     if (Get_Feed_Flag(feed, TOOK_HOLD)) {
-        assert(Get_Series_Info(FEED_ARRAY(feed), HOLD));
-        Clear_Series_Info(FEED_ARRAY(feed), HOLD);
+        assert(Get_Flex_Info(FEED_ARRAY(feed), HOLD));
+        Clear_Flex_Info(FEED_ARRAY(feed), HOLD);
         Clear_Feed_Flag(feed, TOOK_HOLD);
     }
 
@@ -83,8 +83,8 @@ void Splice_Block_Into_Feed(Feed* feed, const Value* splice) {
     // !!! See remarks above about this per-feed hold logic that should be
     // per-splice hold logic.  Pending whole system review of iteration.
     //
-    if (Not_Feed_At_End(feed) and Not_Series_Info(FEED_ARRAY(feed), HOLD)) {
-        Set_Series_Info(FEED_ARRAY(feed), HOLD);
+    if (Not_Feed_At_End(feed) and Not_Flex_Info(FEED_ARRAY(feed), HOLD)) {
+        Set_Flex_Info(FEED_ARRAY(feed), HOLD);
         Set_Feed_Flag(feed, TOOK_HOLD);
     }
 }
@@ -209,7 +209,7 @@ DECLARE_NATIVE(inline)
         // This could probably be done more efficiently, but for now just
         // turn it into a block.
         //
-        Array* a = Alloc_Singular(SERIES_FLAGS_NONE);
+        Array* a = Alloc_Singular(FLEX_FLAGS_NONE);
         Unquotify(Move_Cell(Stub_Cell(a), splice), 1);
         Init_Block(splice, a);
         Splice_Block_Into_Feed(level_->feed, ARG(splice));

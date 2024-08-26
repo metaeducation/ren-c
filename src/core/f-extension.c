@@ -199,8 +199,8 @@ DECLARE_NATIVE(load_extension)
     );
 
     // The decompress routine gives back a pointer which points directly into
-    // a binary series (e.g. a rebAlloc() product).  Get the series back so
-    // we can pass it to import as a string.
+    // a Binary Flex (e.g. a rebAlloc() product).  Get the BINARY! back so
+    // we can pass it to import as a TEXT!.
     //
     Value* script = rebRepossess(script_utf8, script_size);
 

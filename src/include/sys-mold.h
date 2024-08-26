@@ -22,10 +22,10 @@
 //
 
 struct rebol_mold {
-    String* series;     // destination series (utf8)
+    String* series;  // destination String (utf8)
     struct {
-        REBLEN index;       // codepoint index where mold starts within series
-        Size size;      // byte offset where mold starts within series
+        REBLEN index;  // codepoint index where mold starts within String
+        Size size;  // byte offset where mold starts within String
     } base;
     Flags opts;       // special option flags
     REBLEN limit;       // how many characters before cutting off

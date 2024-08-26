@@ -93,8 +93,8 @@ Context* Make_Context_For_Action_Push_Partials(
     Action* act = VAL_ACTION(action);
 
     REBLEN num_slots = ACT_NUM_PARAMS(act) + 1;  // +1 is for CTX_ARCHETYPE()
-    Array* varlist = Make_Array_Core(num_slots, SERIES_MASK_VARLIST);
-    Set_Series_Len(varlist, num_slots);
+    Array* varlist = Make_Array_Core(num_slots, FLEX_MASK_VARLIST);
+    Set_Flex_Len(varlist, num_slots);
 
     INIT_CTX_KEYLIST_SHARED(cast(Context*, varlist), ACT_KEYLIST(act));
 
@@ -215,7 +215,7 @@ Context* Make_Context_For_Action(
         binder
     );
 
-    Manage_Series(CTX_VARLIST(exemplar));  // !!! was needed before, review
+    Manage_Flex(CTX_VARLIST(exemplar));  // !!! was needed before, review
     Drop_Data_Stack_To(lowest_stackindex);
     return exemplar;
 }
@@ -257,7 +257,7 @@ bool Specialize_Action_Throws(
         lowest_stackindex,
         def ? &binder : nullptr
     );
-    Manage_Series(CTX_VARLIST(exemplar)); // destined to be managed, guarded
+    Manage_Flex(CTX_VARLIST(exemplar)); // destined to be managed, guarded
 
     if (def) { // code that fills the frame...fully or partially
         //
@@ -378,7 +378,7 @@ bool Specialize_Action_Throws(
         //
         partials = Make_Array_Core(
             TOP_INDEX - ordered_stackindex,  // maximum partial count possible
-            SERIES_MASK_PARTIALS  // don't manage, yet... may free
+            FLEX_MASK_PARTIALS  // don't manage, yet... may free
         );
 
         while (ordered_stackindex != TOP_INDEX) {
@@ -406,11 +406,11 @@ bool Specialize_Action_Throws(
         Drop_Data_Stack_To(lowest_stackindex);
 
         if (Array_Len(partials) == 0) {
-            Free_Unmanaged_Series(partials);
+            Free_Unmanaged_Flex(partials);
             partials = nullptr;
         }
         else {
-            Manage_Series(partials);
+            Manage_Flex(partials);
         }
     }
 

@@ -42,12 +42,12 @@ void Snap_State(struct Reb_State *s)
 {
     s->stack_base = TOP_INDEX;
 
-    s->guarded_len = Series_Dynamic_Used(g_gc.guarded);
+    s->guarded_len = Flex_Dynamic_Used(g_gc.guarded);
 
-    s->manuals_len = Series_Dynamic_Used(g_gc.manuals);
+    s->manuals_len = Flex_Dynamic_Used(g_gc.manuals);
     s->mold_buf_len = String_Len(g_mold.buffer);
     s->mold_buf_size = String_Dynamic_Size(g_mold.buffer);
-    s->mold_loop_tail = Series_Dynamic_Used(g_mold.stack);
+    s->mold_loop_tail = Flex_Dynamic_Used(g_mold.stack);
 
     s->saved_sigmask = g_ts.eval_sigmask;
 }
@@ -64,23 +64,23 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 {
     Drop_Data_Stack_To(s->stack_base);
 
-    // Free any manual series that were extant (e.g. Make_Series() nodes
+    // Free any manual Flexes that were extant (e.g. Make_Flex() nodes
     // which weren't created with NODE_FLAG_MANAGED and were not transitioned
-    // into the managed state).  This will include the series used as backing
+    // into the managed state).  This will include any Flexes used as backing
     // store for rebAlloc() calls.
     //
-    assert(Series_Dynamic_Used(g_gc.manuals) >= s->manuals_len);
-    while (Series_Dynamic_Used(g_gc.manuals) != s->manuals_len) {
-        Free_Unmanaged_Series(
-            *Series_At(
-                Series*,
+    assert(Flex_Dynamic_Used(g_gc.manuals) >= s->manuals_len);
+    while (Flex_Dynamic_Used(g_gc.manuals) != s->manuals_len) {
+        Free_Unmanaged_Flex(
+            *Flex_At(
+                Flex*,
                 g_gc.manuals,
-                Series_Dynamic_Used(g_gc.manuals) - 1
+                Flex_Dynamic_Used(g_gc.manuals) - 1
             )
-        );  // ^-- Free_Unmanaged_Series will decrement Series_Used()
+        );  // ^-- Free_Unmanaged_Flex() will decrement Flex_Used()
     }
 
-    Set_Series_Len(g_gc.guarded, s->guarded_len);
+    Set_Flex_Len(g_gc.guarded, s->guarded_len);
 
     Term_String_Len_Size(g_mold.buffer, s->mold_buf_len, s->mold_buf_size);
 
@@ -94,14 +94,14 @@ void Rollback_Globals_To_State(struct Reb_State *s)
     g_mold.currently_pushing = false;
   #endif
 
-    Set_Series_Len(g_mold.stack, s->mold_loop_tail);
+    Set_Flex_Len(g_mold.stack, s->mold_loop_tail);
 
     g_ts.eval_sigmask = s->saved_sigmask;
 }
 
 
-#define PLUG_FLAG_HAS_DATA_STACK SERIES_FLAG_24
-#define PLUG_FLAG_HAS_MOLD SERIES_FLAG_25
+#define PLUG_FLAG_HAS_DATA_STACK FLEX_FLAG_24
+#define PLUG_FLAG_HAS_MOLD FLEX_FLAG_25
 
 
 //
@@ -122,7 +122,7 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 //
 //      Replug_Stack(level_, TOP_LEVEL, SPARE);
 //
-// This is used by something like YIELD, which unplugs the series of levels
+// This is used by something like YIELD, which unplugs the stack of Levels
 // all the way up to the GENERATOR (or YIELDER) that it's running under...
 // restoring the stack so the generator is back on top and able to return
 // a value.  Any global state (like mold buffer bits or the data stack) which
@@ -292,7 +292,7 @@ void Replug_Stack(Level* L, Level* base, Value* plug) {
   blockscope {
 
     Array* array = Cell_Array_Known_Mutable(plug);
-    Value* item = Series_Tail(Value, array);
+    Value* item = Flex_Tail(Value, array);
 
     if (Get_Subclass_Flag(PLUG, array, HAS_MOLD)) {  // restore mold from plug
         --item;
@@ -302,7 +302,7 @@ void Replug_Stack(Level* L, Level* base, Value* plug) {
     }
 
     if (Get_Subclass_Flag(PLUG, array, HAS_DATA_STACK)) {
-        Value* stacked = Series_Head(Value, array);
+        Value* stacked = Flex_Head(Value, array);
         for (; stacked != item; ++stacked)
             Move_Cell(PUSH(), stacked);
     }
@@ -336,51 +336,51 @@ void Assert_State_Balanced_Debug(
         panic_at (nullptr, file, line);
     }
 
-    if (s->guarded_len != Series_Used(g_gc.guarded)) {
+    if (s->guarded_len != Flex_Used(g_gc.guarded)) {
         printf(
             "Push_GC_Guard()x%d without Drop_GC_Guard()\n",
-            cast(int, Series_Used(g_gc.guarded) - s->guarded_len)
+            cast(int, Flex_Used(g_gc.guarded) - s->guarded_len)
         );
-        Node* guarded = *Series_At(
+        Node* guarded = *Flex_At(
             Node*,
             g_gc.guarded,
-            Series_Used(g_gc.guarded) - 1
+            Flex_Used(g_gc.guarded) - 1
         );
         panic_at (guarded, file, line);
     }
 
     // !!! Note that this inherits a test that uses g_gc.manuals->content.xxx
-    // instead of Series_Used().  The idea being that although some series
-    // are able to fit in the series node, the g_gc.manuals wouldn't ever
+    // instead of Flex_Used().  The idea being that although some Flex
+    // are able to fit in the Stub node, the g_gc.manuals wouldn't ever
     // pay for that check because it would always be known not to.  Review
-    // this in general for things that may not need "series" overhead,
+    // this in general for things that may not need "Flex" overhead,
     // e.g. a contiguous pointer stack.
     //
-    if (s->manuals_len > Series_Used(g_gc.manuals)) {
+    if (s->manuals_len > Flex_Used(g_gc.manuals)) {
         //
-        // Note: Should this ever actually happen, panic() on the series won't
+        // Note: Should this ever actually happen, panic() on the Flex won't
         // do any real good in helping debug it.  You'll probably need
-        // additional checks in Manage_Series() and Free_Unmanaged_Series()
+        // additional checks in Manage_Flex() and Free_Unmanaged_Flex()
         // that check against the caller's manuals_len.
         //
-        panic_at ("manual series freed outside checkpoint", file, line);
+        panic_at ("manual Flex freed outside checkpoint", file, line);
     }
-    else if (s->manuals_len < Series_Used(g_gc.manuals)) {
+    else if (s->manuals_len < Flex_Used(g_gc.manuals)) {
         printf(
-            "Make_Series()x%d w/o Free_Unmanaged_Series or Manage_Series\n",
-            cast(int, Series_Used(g_gc.manuals) - s->manuals_len)
+            "Make_Flex()x%d w/o Free_Unmanaged_Flex() or Manage_Flex()\n",
+            cast(int, Flex_Used(g_gc.manuals) - s->manuals_len)
         );
-        Series* manual = *(Series_At(
-            Series*,
+        Flex* manual = *(Flex_At(
+            Flex*,
             g_gc.manuals,
-            Series_Used(g_gc.manuals) - 1
+            Flex_Used(g_gc.manuals) - 1
         ));
         panic_at (manual, file, line);
     }
 
     assert(s->mold_buf_len == String_Len(g_mold.buffer));
     assert(s->mold_buf_size == String_Size(g_mold.buffer));
-    assert(s->mold_loop_tail == Series_Used(g_mold.stack));
+    assert(s->mold_loop_tail == Flex_Used(g_mold.stack));
 
 /*    assert(s->saved_sigmask == g_ts.eval_sigmask);  // !!! is this always true? */
 }

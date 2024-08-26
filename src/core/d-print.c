@@ -109,7 +109,7 @@ void Form_RGBA(REB_MOLD *mo, const Byte* dp)
     REBLEN len_old = String_Len(mo->series);
     Size used_old = String_Size(mo->series);
 
-    Expand_Series_Tail(mo->series, 8);  // grow by 8 bytes, may realloc
+    Expand_Flex_Tail(mo->series, 8);  // grow by 8 bytes, may realloc
 
     Byte* bp = Binary_At(mo->series, used_old);  // potentially new buffer
 
@@ -143,6 +143,6 @@ void Startup_Raw_Print(void)
 //
 void Shutdown_Raw_Print(void)
 {
-    Free_Unmanaged_Series(TG_Byte_Buf);
+    Free_Unmanaged_Flex(TG_Byte_Buf);
     TG_Byte_Buf = NULL;
 }

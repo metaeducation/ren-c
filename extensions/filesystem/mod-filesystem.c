@@ -115,13 +115,13 @@ enum {
 };
 
 INLINE bool Last_In_Mold_Is_Slash(REB_MOLD *mo) {
-    if (mo->base.size == Series_Used(mo->series))
+    if (mo->base.size == Flex_Used(mo->series))
         return false;  // nothing added yet
 
     // It's UTF-8 data, so we can just check the last byte; if it's a
     // continuation code it will not match an ASCII character.
     //
-    return *Series_Last(Byte, mo->series) == '/';
+    return *Flex_Last(Byte, mo->series) == '/';
 }
 
 

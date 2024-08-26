@@ -55,7 +55,7 @@ Binary* Make_Bitset(REBLEN num_bits)
 {
     REBLEN num_bytes = (num_bits + 7) / 8;
     Binary* bin = Make_Binary(num_bytes);
-    Clear_Series(bin);
+    Clear_Flex(bin);
     Term_Binary_Len(bin, num_bytes);
     INIT_BITS_NOT(bin, false);
     return bin;
@@ -105,7 +105,7 @@ Bounce MAKE_Bitset(
         return RAISE(arg);
 
     Binary* bin = Make_Bitset(cast(REBLEN, len));
-    Manage_Series(bin);
+    Manage_Flex(bin);
     Init_Bitset(OUT, bin);
 
     if (Is_Integer(arg))
@@ -246,9 +246,9 @@ void Set_Bit(Binary* bset, REBLEN n, bool set)
     // Expand if not enough room:
     if (i >= tail) {
         if (!set) return; // no need to expand
-        Expand_Series(bset, tail, (i - tail) + 1);
+        Expand_Flex(bset, tail, (i - tail) + 1);
         memset(Binary_At(bset, tail), 0, (i - tail) + 1);
-        Term_Series_If_Necessary(bset);
+        Term_Flex_If_Necessary(bset);
     }
 
     bit = 1 << (7 - ((n) & 7));
@@ -390,7 +390,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
 
             Codepoint c = Binary_Len(bset);
             if (n >= c) {
-                Expand_Series(bset, c, (n - c));
+                Expand_Flex(bset, c, (n - c));
                 memset(Binary_At(bset, c), 0, (n - c));
             }
             memcpy(Binary_Head(bset), at, n);
@@ -540,7 +540,7 @@ void Trim_Tail_Zeros(Binary* ser)
     if (bp[len] != 0)
         len++;
 
-    Set_Series_Len(ser, len);
+    Set_Flex_Len(ser, len);
 }
 
 
@@ -625,7 +625,7 @@ REBTYPE(Bitset)
       case SYM_COMPLEMENT: {
         Binary* copy = cast(
             Binary*,
-            Copy_Series_Core(VAL_BITSET(v), NODE_FLAG_MANAGED)
+            Copy_Flex_Core(VAL_BITSET(v), NODE_FLAG_MANAGED)
         );
         INIT_BITS_NOT(copy, not BITS_NOT(VAL_BITSET(v)));
         return Init_Bitset(OUT, copy); }
@@ -674,7 +674,7 @@ REBTYPE(Bitset)
 
         Binary* copy = cast(
             Binary*,
-            Copy_Series_Core(VAL_BITSET(v), NODE_FLAG_MANAGED)
+            Copy_Flex_Core(VAL_BITSET(v), NODE_FLAG_MANAGED)
         );
         INIT_BITS_NOT(copy, BITS_NOT(VAL_BITSET(v)));
         return Init_Bitset(OUT, copy); }
@@ -682,7 +682,7 @@ REBTYPE(Bitset)
       case SYM_CLEAR: {
         Binary* bin = VAL_BITSET_Ensure_Mutable(v);
         INIT_BITS_NOT(bin, false);
-        Clear_Series(bin);
+        Clear_Flex(bin);
         return COPY(v); }
 
       case SYM_INTERSECT:

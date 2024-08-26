@@ -72,7 +72,7 @@ static void Check_Basics(void)
     // But if someone is in an odd situation with a larger sized cell--and
     // it's an even multiple of ALIGN_SIZE--it may still work.  For instance:
     // the DEBUG_TRACK_EXTEND_CELLS mode doubles the cell size to carry the
-    // file, line, and tick of their initialization (or last TOUCH_CELL()).
+    // file, line, and tick of their initialization (or last Touch_Cell()).
     // Define UNUSUAL_CELL_SIZE to bypass this check.
 
     Size cell_size = sizeof(Cell);  // in variable avoids warning
@@ -84,14 +84,14 @@ static void Check_Basics(void)
     if (cell_size != sizeof(void*) * 4)
         panic ("size of cell is not sizeof(void*) * 4");
 
-    Size series_size = sizeof(Cell) * 2;
+    Size stub_size = sizeof(Cell) * 2;
 
-    #if DEBUG_SERIES_ORIGINS || DEBUG_COUNT_TICKS
-      series_size += sizeof(void*) * 2;
+    #if DEBUG_FLEX_ORIGINS || DEBUG_COUNT_TICKS
+      stub_size += sizeof(void*) * 2;
     #endif
 
-    assert(sizeof(Series) == series_size);
-    UNUSED(series_size);
+    assert(sizeof(Stub) == stub_size);
+    UNUSED(stub_size);
   #endif
 
     //=//// CHECK STUB INFO PLACEMENT ///////////////////////////////////=//
@@ -182,8 +182,8 @@ static void Startup_Lib(void)
             // the reason for this is when patches are cached in variables;
             // then the variable no longer refers directly to the module.
             //
-            | SERIES_FLAG_LINK_NODE_NEEDS_MARK
-            | SERIES_FLAG_INFO_NODE_NEEDS_MARK
+            | FLEX_FLAG_LINK_NODE_NEEDS_MARK
+            | FLEX_FLAG_INFO_NODE_NEEDS_MARK
         );
 
         INODE(PatchContext, patch) = nullptr;  // signals unused
@@ -247,7 +247,7 @@ static void Shutdown_Lib(void)
             continue;  // was never initialized !!! should it not be in lib?
 
         Erase_Cell(Stub_Cell(patch));  // may be PROTECTED, can't Freshen_Cell()
-        Decay_Series(patch);
+        Decay_Flex(patch);
 
         // !!! Typically nodes aren't zeroed out when they are freed.  Since
         // this one is a global, it is set to nullptr just to indicate that
@@ -319,7 +319,7 @@ static void Startup_Empty_Arrays(void)
 {
   blockscope {
     Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
-    Set_Series_Len(a, 1);
+    Set_Flex_Len(a, 1);
     Init_Quasi_Null(Array_At(a, 0));
     Freeze_Array_Deep(a);
     PG_1_Quasi_Null_Array = a;
@@ -327,7 +327,7 @@ static void Startup_Empty_Arrays(void)
 
   blockscope {
     Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
-    Set_Series_Len(a, 1);
+    Set_Flex_Len(a, 1);
     Init_Quasi_Void(Array_At(a, 0));
     Freeze_Array_Deep(a);
     PG_1_Quasi_Void_Array = a;
@@ -340,7 +340,7 @@ static void Startup_Empty_Arrays(void)
     //
   blockscope {
     Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
-    Set_Series_Len(a, 2);
+    Set_Flex_Len(a, 2);
     Init_Blank(Array_At(a, 0));
     Init_Blank(Array_At(a, 1));
     Freeze_Array_Deep(a);
@@ -680,7 +680,7 @@ void Startup_Core(void)
 
   blockscope {
     Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
-    Set_Series_Len(a, 1);
+    Set_Flex_Len(a, 1);
     Init_Quasi_Word(Array_At(a, 0), Canon(FALSE));
     Freeze_Array_Deep(a);
     PG_1_Meta_False_Array = a;
@@ -697,7 +697,7 @@ void Startup_Core(void)
     Startup_Lib();  // establishes Lib_Context and Lib_Context_Value
 
   #if !defined(NDEBUG)
-    Assert_Pointer_Detection_Working();  // uses root series/values to test
+    Assert_Pointer_Detection_Working();  // uses root Flex/Values to test
   #endif
 
 
@@ -758,7 +758,7 @@ void Startup_Core(void)
     Array* datatypes_catalog = Startup_Datatypes(
         Cell_Array_Known_Mutable(&boot->typespecs)
     );
-    Manage_Series(datatypes_catalog);
+    Manage_Flex(datatypes_catalog);
     Push_GC_Guard(datatypes_catalog);
 
     // Startup_Type_Predicates() uses symbols, data stack, and adds words
@@ -773,14 +773,14 @@ void Startup_Core(void)
     //
     INIT_SPECIFIER(&boot->natives, Lib_Context);
     Array* natives_catalog = Startup_Natives(&boot->natives);
-    Manage_Series(natives_catalog);
+    Manage_Flex(natives_catalog);
     Push_GC_Guard(natives_catalog);
 
     // boot->generics is the list in %generics.r
     //
     INIT_SPECIFIER(&boot->generics, Lib_Context);
     Array* generics_catalog = Startup_Generics(&boot->generics);
-    Manage_Series(generics_catalog);
+    Manage_Flex(generics_catalog);
     Push_GC_Guard(generics_catalog);
 
     // boot->errors is the error definition list from %errors.r
@@ -1040,9 +1040,9 @@ void Shutdown_Core(bool clean)
     Shutdown_Trampoline();  // all API calls (e.g. rebRelease()) before this
     Shutdown_Api();
 
-//=//// ALL MANAGED SERIES MUST HAVE THE KEEPALIVE REFERENCES GONE NOW ////=//
+//=//// ALL MANAGED STUBS MUST HAVE THE KEEPALIVE REFERENCES GONE NOW /////=//
 
-    Sweep_Series();  // go ahead and free all managed series
+    Sweep_Stubs();  // go ahead and free all managed Stubs
 
     assert(Is_Cell_Erased(&g_ts.thrown_arg));
     assert(Is_Cell_Erased(&g_ts.thrown_label));

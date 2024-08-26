@@ -45,8 +45,8 @@ static bool panicking = false;
 //
 // Abnormal termination of Rebol.  The debug build is designed to present
 // as much diagnostic information as it can on the passed-in pointer, which
-// includes where a Series* was allocated or freed.  Or if a Value* is
-// passed in it tries to say what tick it was initialized on and what series
+// includes where a Flex* was allocated or freed.  Or if a Value* is
+// passed in it tries to say what tick it was initialized on and what Array
 // it lives in.  If the pointer is a simple UTF-8 string pointer, then that
 // is delivered as a message.
 //
@@ -58,7 +58,7 @@ static bool panicking = false;
 // coverity[+kill]
 //
 ATTRIBUTE_NO_RETURN void Panic_Core(
-    const void *p,  // Series*, Value*, or UTF-8 char*
+    const void *p,  // Flex*, Value*, or UTF-8 char*
     Tick tick,
     const char *file, // UTF8
     int line
@@ -134,31 +134,31 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         );
         break;
 
-      case DETECTED_AS_SERIES: {
-        Series* s = m_cast(Series*, c_cast(Series*, p)); // don't mutate
+      case DETECTED_AS_STUB: {
+        Flex* f = m_cast(Flex*, c_cast(Flex*, p)); // don't mutate
       #if DEBUG_FANCY_PANIC
         #if 0
             //
-            // It can sometimes be useful to probe here if the series is
+            // It can sometimes be useful to probe here if the Flex is
             // valid, but if it's not valid then that could result in a
             // recursive call to panic and a stack overflow.
             //
-            PROBE(s);
+            PROBE(f);
         #endif
 
-        if (IS_VARLIST(s)) {
-            printf("Series VARLIST detected.\n");
-            Context* context = u_cast(Context*, s);  // avoid plain cast checks
+        if (IS_VARLIST(f)) {
+            printf("VARLIST Flex detected.\n");
+            Context* context = u_cast(Context*, f);  // avoid plain cast checks
             if (HEART_BYTE(CTX_ARCHETYPE(context)) == REB_ERROR) {
                 printf("...and that VARLIST is of an ERROR!...");
                 Force_Location_Of_Error(context, TOP_LEVEL);
                 PROBE(context);
             }
         }
-        Panic_Series_Debug(cast(Series*, s));
+        Panic_Flex_Debug(cast(Flex*, f));
       #else
-        UNUSED(s);
-        strncat(buf, "valid series", PANIC_BUF_SIZE - strsize(buf));
+        UNUSED(f);
+        strncat(buf, "valid Flex", PANIC_BUF_SIZE - strsize(buf));
       #endif
         break; }
 

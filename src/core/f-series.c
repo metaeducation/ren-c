@@ -90,20 +90,20 @@ Bounce Series_Common_Action_Maybe_Unhandled(
             );
 
           case SYM_FILE: {
-            const Series* s = Cell_Series(v);
-            if (not Is_Series_Array(s))
+            const Flex* f = Cell_Flex(v);
+            if (not Is_Flex_Array(f))
                 return nullptr;
-            if (Not_Array_Flag(c_cast(Array*, s), HAS_FILE_LINE_UNMASKED))
+            if (Not_Array_Flag(c_cast(Array*, f), HAS_FILE_LINE_UNMASKED))
                 return nullptr;
-            return Init_File(OUT, LINK(Filename, s)); }
+            return Init_File(OUT, LINK(Filename, f)); }
 
           case SYM_LINE: {
-            const Series* s = Cell_Series(v);
-            if (not Is_Series_Array(s))
+            const Flex* f = Cell_Flex(v);
+            if (not Is_Flex_Array(f))
                 return nullptr;
-            if (Not_Array_Flag(c_cast(Array*, s), HAS_FILE_LINE_UNMASKED))
+            if (Not_Array_Flag(c_cast(Array*, f), HAS_FILE_LINE_UNMASKED))
                 return nullptr;
-            return Init_Integer(OUT, s->misc.line); }
+            return Init_Integer(OUT, f->misc.line); }
 
           default:
             break;
@@ -223,10 +223,10 @@ Bounce Series_Common_Action_Maybe_Unhandled(
         INCLUDE_PARAMS_OF_DIFFERENCE;  // should all have compatible specs
         UNUSED(ARG(value1));  // covered by `value`
 
-        return Init_Series_Cell(
+        return Init_Series(
             OUT,
             Cell_Heart_Ensure_Noquote(v),
-            Make_Set_Operation_Series(
+            Make_Set_Operation_Flex(
                 v,
                 (id == SYM_UNIQUE)
                     ? cast(Value*, nullptr)  // C++98 ambiguous w/o cast

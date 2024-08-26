@@ -48,31 +48,31 @@
 
 
 //
-//  Dump_Series: C
+//  Dump_Flex: C
 //
-void Dump_Series(Series* s, const char *memo)
+void Dump_Flex(Flex* f, const char *memo)
 {
-    printf("Dump_Series(%s) @ %p\n", memo, cast(void*, s));
+    printf("Dump_Flex(%s) @ %p\n", memo, cast(void*, f));
     fflush(stdout);
 
-    if (s == NULL)
+    if (not f)
         return;
 
-    printf(" wide: %d\n", cast(int, Series_Wide(s)));
-    if (Get_Series_Flag(s, DYNAMIC)) {
-        printf(" size: %ld\n", cast(unsigned long, Series_Total(s)));
-        printf(" bias: %d\n", cast(int, Series_Bias(s)));
+    printf(" wide: %d\n", cast(int, Flex_Wide(f)));
+    if (Get_Flex_Flag(f, DYNAMIC)) {
+        printf(" size: %ld\n", cast(unsigned long, Flex_Total(f)));
+        printf(" bias: %d\n", cast(int, Flex_Bias(f)));
     }
     else
         printf(" size: 0\n");
-    printf(" used: %d\n", cast(int, Series_Used(s)));
-    printf(" rest: %d\n", cast(int, Series_Rest(s)));
+    printf(" used: %d\n", cast(int, Flex_Used(f)));
+    printf(" rest: %d\n", cast(int, Flex_Rest(f)));
 
     // flags includes len if non-dynamic
-    printf(" flags: %lx\n", cast(unsigned long, s->leader.bits));
+    printf(" flags: %lx\n", cast(unsigned long, f->leader.bits));
 
     // info includes width
-    printf(" info: %lx\n", cast(unsigned long, SERIES_INFO(s)));
+    printf(" info: %lx\n", cast(unsigned long, FLEX_INFO(f)));
 
     fflush(stdout);
 }
@@ -97,7 +97,7 @@ void Dump_Info(void)
 
     printf("    Ballast: %d\n", cast(int, g_gc.depletion));
     printf("    Disable: %s\n", g_gc.disabled ? "yes" : "no");
-    printf("    Guarded Nodes: %d\n", cast(int, Series_Used(g_gc.guarded)));
+    printf("    Guarded Nodes: %d\n", cast(int, Flex_Used(g_gc.guarded)));
     fflush(stdout);
 }
 

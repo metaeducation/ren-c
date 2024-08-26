@@ -20,10 +20,10 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A "Rebol Array" is a series of value cells.  Every BLOCK! or GROUP! points
-// at an array node, which you see in the source as Array*.
+// A "Rebol Array" is a Flex of Rebol Cells.  Every BLOCK! or GROUP! points
+// at an Array Flex, which you see in the source as Array*.
 //
-// While many Array operations are shared in common with Series, there are a
+// While many Array operations are shared in common with Flex, there are a
 // few (deliberate) type incompatibilities introduced.  This incompatibility
 // is only noticed when building as C++, and draws attention to operations
 // that make sense on things like string but maybe not on array.
@@ -39,12 +39,12 @@
 //
 //  * In R3-Alpha, there was a full-sized cell at the end of every array that
 //    would hold an END signal--much like a string terminator.  Ren-C does not
-//    terminate arrays but relies on the known length, in order to save on
+//    terminate Arrays but relies on the known length, in order to save on
 //    space.  This also avoids the cost of keeping the terminator up to date
-//    as the array grows or resizes.
+//    as the Array grows or resizes.
 //
 //   (Note: The debug build may put "poison" at the tail position whenever
-//    the array size is updated, to make it easier to catch out-of-bounds
+//    the Array size is updated, to make it easier to catch out-of-bounds
 //    access.  But the release build does not do this)
 
 
@@ -52,7 +52,7 @@
 // or paramlists or anything that isn't just an ordinary source-level array
 // (like you'd find in a BLOCK!)
 //
-// 1. See mutability notes on Set_Series_Flag() / Clear_Series_Flag()
+// 1. See mutability notes on Set_Flex_Flag() / Clear_Flex_Flag()
 
 #define Get_Array_Flag(a,flag) \
     Get_Subclass_Flag(ARRAY, ensure(const Array*, (a)), flag)
@@ -68,7 +68,7 @@
 
 
 INLINE bool Has_Newline_At_Tail(const Array* a) {
-    if (Series_Flavor(a) != FLAVOR_ARRAY)
+    if (Flex_Flavor(a) != FLAVOR_ARRAY)
         return false;  // only plain arrays can have newlines
 
     // Using Get_Subclass_Flag() would redundantly check it's a plain array.
@@ -77,7 +77,7 @@ INLINE bool Has_Newline_At_Tail(const Array* a) {
 }
 
 INLINE bool Has_File_Line(const Array* a) {
-    if (Series_Flavor(a) != FLAVOR_ARRAY)
+    if (Flex_Flavor(a) != FLAVOR_ARRAY)
         return false;  // only plain arrays can have newlines
 
     // Using Get_Subclass_Flag() would redundantly check it's a plain array.
@@ -89,21 +89,21 @@ INLINE bool Has_File_Line(const Array* a) {
 // HEAD, TAIL, and LAST refer to specific value pointers in the array.  Since
 // empty arrays have no "last" value Array_Last() should not be called on it.
 
-#define Array_At(a,n)           Series_At(Element, (a), (n))
-#define Array_Head(a)           Series_Head(Element, (a))
-#define Array_Tail(a)           Series_Tail(Element, (a))
-#define Array_Last(a)           Series_Last(Element, (a))
+#define Array_At(a,n)           Flex_At(Element, (a), (n))
+#define Array_Head(a)           Flex_Head(Element, (a))
+#define Array_Tail(a)           Flex_Tail(Element, (a))
+#define Array_Last(a)           Flex_Last(Element, (a))
 
 INLINE Value* Stub_Cell(const_if_c Stub* s) {
-    assert(Not_Series_Flag(s, DYNAMIC));
-    assert(Is_Series_Array(s));
+    assert(Not_Flex_Flag(s, DYNAMIC));
+    assert(Is_Flex_Array(s));
     return x_cast(Value*, &s->content.fixed.cell);
 }
 
 #if CPLUSPLUS_11
     INLINE const Value* Stub_Cell(const Stub* s) {
-        assert(Not_Series_Flag(s, DYNAMIC));
-        assert(Is_Series_Array(s));
+        assert(Not_Flex_Flag(s, DYNAMIC));
+        assert(Is_Flex_Array(s));
         return u_cast(const Value*, &s->content.fixed.cell);
     }
 #endif
@@ -119,12 +119,12 @@ INLINE Stub* Singular_From_Cell(const Cell* v) {
             - offsetof(Stub, content)
         )
     );
-    assert(Not_Series_Flag(singular, DYNAMIC));
+    assert(Not_Flex_Flag(singular, DYNAMIC));
     return singular;
 }
 
 #define Array_Len(a) \
-    Series_Used(ensure(const Array*, (a)))
+    Flex_Used(ensure(const Array*, (a)))
 
 
 // See Ensure_Readable(), Ensure_Writable() and related functions for an
@@ -132,13 +132,13 @@ INLINE Stub* Singular_From_Cell(const Cell* v) {
 //
 INLINE void Prep_Array(
     Array* a,
-    REBLEN capacity  // Expand_Series passes 0 on dynamic reallocation
+    REBLEN capacity  // Expand_Flex passes 0 on dynamic reallocation
 ){
-    assert(Get_Series_Flag(a, DYNAMIC));
+    assert(Get_Flex_Flag(a, DYNAMIC));
 
     Cell* prep = Array_Head(a);
 
-    if (Not_Series_Flag(a, FIXED_SIZE)) {
+    if (Not_Flex_Flag(a, FIXED_SIZE)) {
         //
         // Expandable arrays prep all cells, including in the not-yet-used
         // capacity.  Otherwise you'd waste time prepping cells on every
@@ -148,7 +148,7 @@ INLINE void Prep_Array(
         for (n = 0; n < a->content.dynamic.rest; ++n, ++prep)
             Erase_Cell(prep);
 
-      #if DEBUG_POISON_SERIES_TAILS  // allocation deliberately oversized by 1
+      #if DEBUG_POISON_FLEX_TAILS  // allocation deliberately oversized by 1
         Poison_Cell(prep - 1);
       #endif
     }
@@ -169,7 +169,7 @@ INLINE void Prep_Array(
 }
 
 
-// Make a series that is the right size to store REBVALs (and marked for the
+// Make an Array that is the right size to store Cells (and marked for the
 // garbage collector to look into recursively).  Array_Len() will be 0.
 //
 INLINE Array* Make_Array_Core_Into(
@@ -177,18 +177,18 @@ INLINE Array* Make_Array_Core_Into(
     REBLEN capacity,
     Flags flags
 ){
-  #if DEBUG_POISON_SERIES_TAILS  // non-dynamic arrays poisoned by bit pattern
-    if (capacity > 1 or (flags & SERIES_FLAG_DYNAMIC))
+  #if DEBUG_POISON_FLEX_TAILS  // non-dynamic arrays poisoned by bit pattern
+    if (capacity > 1 or (flags & FLEX_FLAG_DYNAMIC))
         capacity += 1;  // account for space needed for poison cell
   #endif
 
-    Array* a = x_cast(Array*, Make_Series_Into(preallocated, capacity, flags));
-    assert(Is_Series_Array(a));  // flavor should have been an array flavor
+    Array* a = x_cast(Array*, Make_Flex_Into(preallocated, capacity, flags));
+    assert(Is_Flex_Array(a));  // flavor should have been an array flavor
 
-    if (Get_Series_Flag(a, DYNAMIC)) {
+    if (Get_Flex_Flag(a, DYNAMIC)) {
         Prep_Array(a, capacity);
 
-      #if DEBUG_POISON_SERIES_TAILS
+      #if DEBUG_POISON_FLEX_TAILS
         Poison_Cell(Array_Head(a));
       #endif
     }
@@ -203,7 +203,7 @@ INLINE Array* Make_Array_Core_Into(
         Flavor_From_Flags(flags) == FLAVOR_ARRAY
         and (flags & ARRAY_FLAG_HAS_FILE_LINE_UNMASKED)  // hope callsites fold
     ){
-        assert(flags & SERIES_FLAG_LINK_NODE_NEEDS_MARK);
+        assert(flags & FLEX_FLAG_LINK_NODE_NEEDS_MARK);
         if (
             not Level_Is_Variadic(TOP_LEVEL) and
             Get_Array_Flag(Level_Array(TOP_LEVEL), HAS_FILE_LINE_UNMASKED)
@@ -213,7 +213,7 @@ INLINE Array* Make_Array_Core_Into(
         }
         else {
             Clear_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
-            Clear_Series_Flag(a, LINK_NODE_NEEDS_MARK);
+            Clear_Flex_Flag(a, LINK_NODE_NEEDS_MARK);
         }
     }
 
@@ -235,7 +235,7 @@ INLINE Array* Make_Array_Core_Into(
 // copying an array to turn it into a paramlist or varlist, or to use as the
 // kind of array the use might see.  If we used plain Make_Array() then it
 // would add a flag saying there were line numbers available, which may
-// compete with the usage of the ->misc and ->link fields of the series node
+// compete with the usage of the ->misc and ->link fields of the Stub Node
 // for internal arrays.
 //
 INLINE Array* Make_Array_For_Copy(
@@ -271,7 +271,7 @@ INLINE Array* Make_Array_For_Copy(
 
 
 // A singular array is specifically optimized to hold *one* value in the
-// series Stub directly, and stay fixed at that size.
+// Array Stub directly, and stay fixed at that size.
 //
 // Note Stub_Cell() must be overwritten by the caller...it contains an erased
 // cell but the array length is 1, so that will assert if you don't.
@@ -279,13 +279,13 @@ INLINE Array* Make_Array_For_Copy(
 // For `flags`, be sure to consider if you need ARRAY_FLAG_HAS_FILE_LINE.
 //
 INLINE Array* Alloc_Singular(Flags flags) {
-    assert(not (flags & SERIES_FLAG_DYNAMIC));
-    Array* a = x_cast(Array*, Make_Series_Into(
+    assert(not (flags & FLEX_FLAG_DYNAMIC));
+    Array* a = x_cast(Array*, Make_Flex_Into(
         Alloc_Stub(),
         1,
-        flags | SERIES_FLAG_FIXED_SIZE
+        flags | FLEX_FLAG_FIXED_SIZE
     ));
-    assert(Is_Series_Array(a));  // flavor should have been an array flavor
+    assert(Is_Flex_Array(a));  // flavor should have been an array flavor
     Erase_Cell(Stub_Cell(a));  // poison means length 0, erased length 1
     return a;
 }
@@ -320,24 +320,24 @@ enum {
     Copy_Array_At_Extra_Shallow((a), 0, 0, (f))
 
 #define Copy_Array_At_Shallow(a,i) \
-    Copy_Array_At_Extra_Shallow((a), (i), 0, SERIES_FLAGS_NONE)
+    Copy_Array_At_Extra_Shallow((a), (i), 0, FLEX_FLAGS_NONE)
 
 #define Copy_Array_Extra_Shallow(a,e) \
-    Copy_Array_At_Extra_Shallow((a), 0, (e), SERIES_FLAGS_NONE)
+    Copy_Array_At_Extra_Shallow((a), 0, (e), FLEX_FLAGS_NONE)
 
 
 #ifdef NDEBUG
-    #define Assert_Array(s)     NOOP
-    #define Assert_Series(s)    NOOP
+    #define Assert_Array(a)     NOOP
+    #define Assert_Flex(f)    NOOP
 #else
-    #define Assert_Array(s) \
-        Assert_Array_Core(s)
+    #define Assert_Array(a) \
+        Assert_Array_Core(a)
 
-    INLINE void Assert_Series(const Series* s) {
-        if (Is_Series_Array(s))
-            Assert_Array_Core(c_cast(Array*, s));  // calls _Series_Basics()
+    INLINE void Assert_Flex(const Flex* f) {
+        if (Is_Flex_Array(f))
+            Assert_Array_Core(c_cast(Array*, f));  // calls _Flex_Basics()
         else
-            Assert_Series_Basics_Core(s);
+            Assert_Flex_Basics_Core(f);
     }
 
     #define IS_VALUE_IN_ARRAY_DEBUG(a,v) \

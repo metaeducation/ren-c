@@ -33,15 +33,15 @@
 // objects with hidden fields, locals in paramlists, etc.
 //
 
-#define SERIES_MASK_PAIRLIST \
+#define FLEX_MASK_PAIRLIST \
     (FLAG_FLAVOR(PAIRLIST) \
-        | SERIES_FLAG_LINK_NODE_NEEDS_MARK  /* hashlist */)
+        | FLEX_FLAG_LINK_NODE_NEEDS_MARK  /* hashlist */)
 
 
 
 // See LINK() macro for how this is used.
 //
-#define LINK_Hashlist_TYPE          Series*
+#define LINK_Hashlist_TYPE          Flex*
 #define HAS_LINK_Hashlist           FLAVOR_PAIRLIST
 
 INLINE Array* MAP_PAIRLIST(const_if_c Map* map)
@@ -56,7 +56,7 @@ INLINE Array* MAP_PAIRLIST(const_if_c Map* map)
     LINK(Hashlist, MAP_PAIRLIST(m))
 
 #define MAP_HASHES(m) \
-    Series_Head(MAP_HASHLIST(m))
+    Flex_Head(MAP_HASHLIST(m))
 
 
 INLINE const Map* VAL_MAP(const Cell* v) {
@@ -75,8 +75,8 @@ INLINE const Map* VAL_MAP(const Cell* v) {
 
 INLINE REBLEN Length_Map(const Map* map)
 {
-    const Value* tail = Series_Tail(Value, MAP_PAIRLIST(map));
-    const Value* v = Series_Head(Value, MAP_PAIRLIST(map));
+    const Value* tail = Flex_Tail(Value, MAP_PAIRLIST(map));
+    const Value* v = Flex_Head(Value, MAP_PAIRLIST(map));
 
     REBLEN count = 0;
     for (; v != tail; v += 2) {

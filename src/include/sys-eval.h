@@ -26,8 +26,8 @@
 // written such that a longjmp up to a failure handler above it can run
 // safely and clean up even though intermediate stacks have vanished.
 //
-// Ren-C can run the evaluator across an Array*-style input series based on
-// index.  It can also enumerate through C's `va_list`, providing the ability
+// Ren-C can run the evaluator across an Array*-style input based on index.
+// It can also enumerate through C's `va_list`, providing the ability
 // to pass pointers as Value* to comma-separated input at the source level.
 //
 // To provide even greater flexibility, it allows the very first element's
@@ -35,8 +35,8 @@
 // have to be resident in the same sequence from which ensuing values are
 // pulled, allowing a free head value (such as an ACTION! cell in a local
 // C variable) to be evaluated in combination from another source (like a
-// va_list or series representing the arguments.)  This avoids the cost and
-// complexity of allocating a series to combine the values together.
+// va_list or Array representing the arguments.)  This avoids the cost and
+// complexity of allocating an Array to combine the values together.
 //
 //=//// NOTES ////////////////////////////////////////////////////////////=//
 //
@@ -53,13 +53,13 @@
     // If the tick is AFTER command line processing is done, you can request
     // a tick breakpoint that way with `--breakpoint NNN`
     //
-    // The debug build carries ticks many other places.  Series contain the
-    // `Series.tick` where they were created, levels have a `Level.tick`,
+    // The debug build carries ticks many other places.  Stubs contain the
+    // `Stub.tick` where they were created, levels have a `Level.tick`,
     // and the DEBUG_TRACK_EXTEND_CELLS switch will double the size of cells
     // so they can carry the tick, file, and line where they were initialized.
     //
     // For custom updating of stored ticks to help debugging some scenarios,
-    // see TOUCH_SERIES() and TOUCH_CELL().  Note also that BREAK_NOW() can be
+    // see Touch_Stub() and Touch_Cell().  Note also that BREAK_NOW() can be
     // called to pause and dump state at any moment.
 
     #define Update_Tick_If_Enabled() \

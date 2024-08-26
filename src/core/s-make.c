@@ -29,7 +29,7 @@
 //
 //  Make_String_Core: C
 //
-// Makes a series to hold a string with enough capacity for a certain amount
+// Makes a Flex to hold a String with enough capacity for a certain amount
 // of encoded data.  Note that this is not a guarantee of being able to hold
 // more than `encoded_capacity / UNI_ENCODED_MAX` unencoded codepoints...
 //
@@ -37,7 +37,7 @@ String* Make_String_Core(Size encoded_capacity, Flags flags)
 {
     assert(Flavor_From_Flags(flags) == 0);  // shouldn't have a flavor
 
-    String* str = Make_Series(String,
+    String* str = Make_Flex(String,
         encoded_capacity + 1,  // binary includes room for '\0' terminator
         FLAG_FLAVOR(STRING) | flags
     );
@@ -51,8 +51,7 @@ String* Make_String_Core(Size encoded_capacity, Flags flags)
 //
 //  Copy_Bytes: C
 //
-// Create a string series from the given bytes.
-// Source is always latin-1 valid. Result is always 8bit.
+// Create a Binary Flex from the given bytes.
 //
 Binary* Copy_Bytes(const Byte* src, REBINT len)
 {
@@ -69,9 +68,8 @@ Binary* Copy_Bytes(const Byte* src, REBINT len)
 //
 //  Copy_String_At_Limit: C
 //
-// !!! With UTF-8 Everywhere, copying strings will still be distinct from
-// other series due to the length being counted in characters and not
-// units of the series width.
+// Copying a String is distinct from copying a Binary due to the length being
+// counted in characters, and not units of the Flex width (1).
 //
 String* Copy_String_At_Limit(const Cell* src, REBINT limit)
 {
@@ -95,7 +93,7 @@ String* Copy_String_At_Limit(const Cell* src, REBINT limit)
 //
 //  Append_Codepoint: C
 //
-// Encode a codepoint onto the end of a UTF-8 string series.  This is used
+// Encode a codepoint onto the end of a UTF-8 String Flex.  This is used
 // frequently by molding.
 //
 // !!! Should the mold buffer avoid paying for termination?  Might one save on
@@ -116,7 +114,7 @@ String* Append_Codepoint(String* dst, Codepoint c)
 
     Size tail = String_Size(dst);
     Size encoded_size = Encoded_Size_For_Codepoint(c);
-    Expand_Series_Tail(dst, encoded_size);
+    Expand_Flex_Tail(dst, encoded_size);
     Encode_UTF8_Char(Binary_At(dst, tail), c, encoded_size);
 
     // "length" grew by 1 codepoint, but "size" grew by 1 to UNI_MAX_ENCODED
@@ -151,11 +149,11 @@ String* Make_Codepoint_String(Codepoint c)
 //
 //  Append_Ascii_Len: C
 //
-// Append unencoded data to a byte string, using plain memcpy().  If dst is
-// NULL, a new byte-sized series will be created and returned.
+// Append unencoded data to a String, using plain memcpy().  If dst is
+// nullptr, a new String will be created and returned.
 //
 // !!! Should debug build assert it's ASCII?  Most of these are coming from
-// string literals in the source.
+// C literals in the source.
 //
 String* Append_Ascii_Len(String* dst, const char *ascii, REBLEN len)
 {
@@ -170,7 +168,7 @@ String* Append_Ascii_Len(String* dst, const char *ascii, REBLEN len)
     else {
         old_size = String_Size(dst);
         old_len = String_Len(dst);
-        Expand_Series_Tail(dst, len);
+        Expand_Flex_Tail(dst, len);
     }
 
     memcpy(Binary_At(dst, old_size), ascii, len);
@@ -197,7 +195,7 @@ String* Append_Ascii(String* dst, const char *src)
 //
 //  Append_Utf8: C
 //
-// Append a UTF8 byte series to a UTF8 binary.  Terminates.
+// Append and validate UTF-8 bytes to a String Flex.  Terminates.
 //
 String* Append_Utf8(String* dst, const char *utf8, size_t size)
 {
@@ -234,7 +232,7 @@ void Append_String_Limit(String* dst, const Cell* src, REBLEN limit)
     Size old_used = String_Size(dst);
 
     REBLEN tail = String_Size(dst);
-    Expand_Series(dst, tail, size);  // series USED changes too
+    Expand_Flex(dst, tail, size);  // Flex_Used() changes too
 
     memcpy(Binary_At(dst, tail), utf8, size);
     Term_String_Len_Size(dst, old_len + len, old_used + size);
@@ -276,7 +274,7 @@ void Append_Int_Pad(String* dst, REBINT num, REBINT digs)
 //
 //  Append_UTF8_May_Fail: C
 //
-// Append UTF-8 data to a series underlying an ANY-STRING? (or create new one)
+// Append UTF-8 data to a String Flex (or create new one)
 //
 String* Append_UTF8_May_Fail(
     String* dst,  // if nullptr, that means make a new string
@@ -289,9 +287,9 @@ String* Append_UTF8_May_Fail(
     // * If STRMODE_CRLF_TO_LF is set, some characters may need to be removed
     // * We want to check for invalid byte sequences, as this can be called
     //   with arbitrary outside data from the API.
-    // * It's needed to know how many characters (length) are in the series,
+    // * It's needed to know how many characters (length) are in the String,
     //   not just how many bytes.  The higher level concept of "length" gets
-    //   stored in the series MISC() field.
+    //   stored in the String's MISC() field.
     // * In the future, some operations will be accelerated by knowing that
     //   a string only contains ASCII codepoints.
 
@@ -328,7 +326,7 @@ String* Append_UTF8_May_Fail(
     UNUSED(all_ascii);
 
     // !!! The implicit nature of this is probably not the best way of
-    // handling things, but... if the series we were supposed to be appending
+    // handling things, but... if the String we were supposed to be appending
     // to was the mold buffer, that's what we just did.  Consider making this
     // a specific call for Mold_Utf8() or similar.
     //
@@ -341,7 +339,7 @@ String* Append_UTF8_May_Fail(
     Length old_len = String_Len(dst);
     Size old_size = String_Size(dst);
 
-    Expand_Series_Tail(dst, size);
+    Expand_Flex_Tail(dst, size);
     memcpy(
         Binary_At(dst, old_size),
         Binary_At(mo->series, mo->base.size),
@@ -381,7 +379,7 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
     if (limit < 0)
         limit = Cell_Series_Len_At(blk);
 
-    Set_Series_Len(buf, 0);
+    Set_Flex_Len(buf, 0);
 
     const Element* val = Cell_List_Item_At(blk);
     for (; limit > 0; val++, limit--) {
@@ -393,14 +391,14 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
             fail (Error_Bad_Value(val));
 
           case REB_INTEGER:
-            Expand_Series_Tail(buf, 1);
+            Expand_Flex_Tail(buf, 1);
             *Binary_At(buf, tail) = cast(Byte, VAL_UINT8(val));  // can fail()
             break;
 
           case REB_BINARY: {
             Size size;
             const Byte* data = Cell_Binary_Size_At(&size, val);
-            Expand_Series_Tail(buf, size);
+            Expand_Flex_Tail(buf, size);
             memcpy(Binary_At(buf, tail), data, size);
             break; }
 
@@ -413,16 +411,16 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
             Size utf8_size;
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, val);
 
-            Expand_Series_Tail(buf, utf8_size);
+            Expand_Flex_Tail(buf, utf8_size);
             memcpy(Binary_At(buf, tail), utf8, utf8_size);
-            Set_Series_Len(buf, tail + utf8_size);
+            Set_Flex_Len(buf, tail + utf8_size);
             break; }
 
           default:
             fail (Error_Bad_Value(val));
         }
 
-        tail = Series_Used(buf);
+        tail = Flex_Used(buf);
     }
 
     *Binary_At(buf, tail) = 0;

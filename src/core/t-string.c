@@ -93,7 +93,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
         if (len < sizeof(Cell)) {
             if (Is_String_NonSymbol(s))
                 assert(
-                    Get_Series_Flag(s, DYNAMIC)  // e.g. mold buffer
+                    Get_Flex_Flag(s, DYNAMIC)  // e.g. mold buffer
                     or not book  // mutations must ensure this
                 );
             goto scan_from_head;  // good locality, avoid bookmark logic
@@ -109,7 +109,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
             if (Is_String_NonSymbol(s))
                 assert(
                     not book  // mutations must ensure this usually but...
-                    or Get_Series_Flag(s, DYNAMIC)  // !!! mold buffer?
+                    or Get_Flex_Flag(s, DYNAMIC)  // !!! mold buffer?
                 );
             goto scan_from_tail;  // good locality, avoid bookmark logic
         }
@@ -126,7 +126,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
     // track the last access--which speeds up the most common case of an
     // iteration.  Improve as time permits!
     //
-    assert(not book or Series_Used(book) == 1);  // only one
+    assert(not book or Flex_Used(book) == 1);  // only one
 
   blockscope {
     REBLEN booked = book ? BMK_INDEX(book) : 0;
@@ -151,9 +151,9 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
 
     index = booked;
     if (book)
-        cp = cast(Utf8(*), Series_Data(s) + BMK_OFFSET(book));
+        cp = cast(Utf8(*), Flex_Data(s) + BMK_OFFSET(book));
     else
-        cp = cast(Utf8(*), Series_Data(s));
+        cp = cast(Utf8(*), Flex_Data(s));
   }
 
     if (index > at) {
@@ -414,7 +414,7 @@ Bounce MAKE_String(
         if (i < 0 or i > cast(REBINT, Cell_Series_Len_At(first)))
             goto bad_make;
 
-        return Init_Series_Cell_At(OUT, heart, Cell_Series(first), i);
+        return Init_Series_At(OUT, heart, Cell_Flex(first), i);
     }
 
   bad_make:
@@ -621,7 +621,7 @@ void Mold_Uni_Char(REB_MOLD *mo, Codepoint c, bool parened)
 
             Length len_old = String_Len(buf);
             Size size_old = String_Size(buf);
-            Expand_Series_Tail(buf, 5);  // worst case: ^(1234), ^( is done
+            Expand_Flex_Tail(buf, 5);  // worst case: ^(1234), ^( is done
             Term_String_Len_Size(buf, len_old, size_old);
 
             Byte* bp = Binary_Tail(buf);
@@ -649,9 +649,9 @@ void Mold_Uni_Char(REB_MOLD *mo, Codepoint c, bool parened)
 
 
 //
-//  Mold_Text_Series_At: C
+//  Mold_Text_Flex_At: C
 //
-void Mold_Text_Series_At(REB_MOLD *mo, const String* s, REBLEN index) {
+void Mold_Text_Flex_At(REB_MOLD *mo, const String* s, REBLEN index) {
     String* buf = mo->series;
 
     if (index >= String_Len(s)) {
@@ -837,7 +837,7 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
     //
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) and VAL_INDEX(v) != 0) {
         Pre_Mold(mo, v); // e.g. #[file! part
-        Mold_Text_Series_At(mo, Cell_String(v), 0);
+        Mold_Text_Flex_At(mo, Cell_String(v), 0);
         Post_Mold(mo, v);
         return;
     }
@@ -852,7 +852,7 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
 
     switch (heart) {
       case REB_TEXT:
-        Mold_Text_Series_At(mo, Cell_String(v), VAL_INDEX(v));
+        Mold_Text_Flex_At(mo, Cell_String(v), VAL_INDEX(v));
         break;
 
       case REB_FILE:
@@ -1017,7 +1017,7 @@ REBTYPE(String)
         Size offset = VAL_BYTEOFFSET_FOR_INDEX(v, index);
         Size size_old = String_Size(s);
 
-        Remove_Series_Units(s, offset, size);  // !!! at one time, kept term
+        Remove_Flex_Units(s, offset, size);  // !!! at one time, kept term
         Free_Bookmarks_Maybe_Null(s);
         Term_String_Len_Size(s, tail - len, size_old - size);
 
@@ -1123,16 +1123,16 @@ REBTYPE(String)
         UNUSED(find);
 
         if (id == SYM_FIND) {
-            Init_Series_Cell_At(
+            Init_Series_At(
                 ARG(tail),
                 Cell_Heart_Ensure_Noquote(v),
-                Cell_Series(v),
+                Cell_Flex(v),
                 ret + len
             );
-            Init_Series_Cell_At(
+            Init_Series_At(
                 OUT,
                 Cell_Heart_Ensure_Noquote(v),
-                Cell_Series(v),
+                Cell_Flex(v),
                 ret
             );
             return Proxy_Multi_Returns(level_);
@@ -1214,8 +1214,8 @@ REBTYPE(String)
         // series is now empty, it reclaims the "bias" (unused capacity at
         // the head of the series).  One of many behaviors worth reviewing.
         //
-        if (index == 0 and Get_Series_Flag(s, DYNAMIC))
-            Unbias_Series(s, false);
+        if (index == 0 and Get_Flex_Flag(s, DYNAMIC))
+            Unbias_Flex(s, false);
 
         Free_Bookmarks_Maybe_Null(s);  // review!
         Size offset = VAL_BYTEOFFSET_FOR_INDEX(v, index);

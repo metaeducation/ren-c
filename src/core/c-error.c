@@ -91,11 +91,11 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         error = Error_User(c_cast(char*, p));
         break;
 
-      case DETECTED_AS_SERIES: {
-        Series* s = m_cast(Series*, c_cast(Series* , p));  // don't mutate
-        if (not IS_VARLIST(s))
-            panic (s);  // only kind of series allowed are contexts of ERROR!
-        error = cast(Context*, s);
+      case DETECTED_AS_STUB: {
+        Flex* f = m_cast(Flex*, c_cast(Flex* , p));  // don't mutate
+        if (not IS_VARLIST(f))
+            panic (f);  // only kind of Flex allowed are contexts of ERROR!
+        error = cast(Context*, f);
         break; }
 
       case DETECTED_AS_CELL: {

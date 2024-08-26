@@ -163,7 +163,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         file->size_cache = FILESIZE_UNKNOWN;
         file->offset = FILEOFFSET_UNKNOWN;
 
-        // Generally speaking, you don't want to store Value* or Series* in
+        // Generally speaking, you don't want to store Value* or Flex* in
         // something like this struct-embedded-in-a-BINARY! as it will be
         // invisible to the GC.  But this pointer is into the port spec, which
         // we will assume is good for the lifetime of the port.  :-/  (Not a

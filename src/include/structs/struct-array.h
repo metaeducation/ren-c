@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Arrays are series whose element type is Cell.  The garbage collector has to
+// Arrays are Flexes whose element type is Cell.  The garbage collector has to
 // treat them specially, by visiting the cells and marking the pointers in
 // those cells as live.
 //
@@ -32,33 +32,33 @@
 // output at the end of the varlist).
 //
 
-// The C++ build derives Array from Series...so it allows passing an array to
-// a function that expects a series, but not vice-versa.  In the C build, an
-// Array* and Series* are the same type, so it doesn't get those checks.
+// The C++ build derives Array from Flex...so it allows passing an Array to
+// a function that expects a Flex, but not vice-versa.  In the C build, an
+// Array* and Flex* are the same type, so it doesn't get those checks.
 //
 #if CPLUSPLUS_11
-    struct Array : public Series {};
+    struct Array : public Flex {};
 #else
-    typedef Series Array;
+    typedef Flex Array;
 #endif
 
 
 //=//// ARRAY_FLAG_HAS_FILE_LINE_UNMASKED /////////////////////////////////=//
 //
-// The Series node has two pointers in it, ->link and ->misc, which are
-// used for a variety of purposes (pointing to the keylist for an object,
-// the C code that runs as the dispatcher for a function, etc.)  But for
-// regular source series, they can be used to store the filename and line
+// The Flex Stub has two pointers in it, ->link and ->misc, which are
+// used for a variety of purposes (pointing to the KeyList for an object,
+// the C code that runs as the dispatcher for an Action, etc.)  But for
+// regular source Arrays, they can be used to store the filename and line
 // number, if applicable.
 //
-// Only arrays preserve file and line info, as UTF-8 strings need to use the
-// ->misc and ->link fields for caching purposes in strings.
+// Only Array preserves file and line info, as UTF-8 Strings need to use the
+// ->misc and ->link fields for caching purposes in String.
 //
 #define ARRAY_FLAG_HAS_FILE_LINE_UNMASKED \
-    SERIES_FLAG_24
+    FLEX_FLAG_24
 
 #define ARRAY_MASK_HAS_FILE_LINE \
-    (ARRAY_FLAG_HAS_FILE_LINE_UNMASKED | SERIES_FLAG_LINK_NODE_NEEDS_MARK)
+    (ARRAY_FLAG_HAS_FILE_LINE_UNMASKED | FLEX_FLAG_LINK_NODE_NEEDS_MARK)
 
 #define LINK_Filename_TYPE          const String*
 #define HAS_LINK_Filename           FLAVOR_ARRAY
@@ -67,25 +67,25 @@
 //=//// ARRAY_FLAG_25 /////////////////////////////////////////////////////=//
 //
 #define ARRAY_FLAG_25 \
-    SERIES_FLAG_25
+    FLEX_FLAG_25
 
 
 //=//// ARRAY_FLAG_26 /////////////////////////////////////////////////////=//
 //
 #define ARRAY_FLAG_26 \
-    SERIES_FLAG_26
+    FLEX_FLAG_26
 
 
 //=//// ARRAY_FLAG_27 /////////////////////////////////////////////////////=//
 //
 #define ARRAY_FLAG_27 \
-    SERIES_FLAG_27
+    FLEX_FLAG_27
 
 
 //=//// ARRAY_FLAG_28 /////////////////////////////////////////////////////=//
 //
 #define ARRAY_FLAG_28 \
-    SERIES_FLAG_28
+    FLEX_FLAG_28
 
 
 //=//// ARRAY_FLAG_CONST_SHALLOW //////////////////////////////////////////=//
@@ -99,7 +99,7 @@
 // it is the same bit as the const flag one would find in the value.
 //
 #define ARRAY_FLAG_CONST_SHALLOW \
-    SERIES_FLAG_30
+    FLEX_FLAG_30
 STATIC_ASSERT(ARRAY_FLAG_CONST_SHALLOW == CELL_FLAG_CONST);
 
 
@@ -113,4 +113,4 @@ STATIC_ASSERT(ARRAY_FLAG_CONST_SHALLOW == CELL_FLAG_CONST);
 // tail of an array.
 //
 #define ARRAY_FLAG_NEWLINE_AT_TAIL \
-    SERIES_FLAG_31
+    FLEX_FLAG_31

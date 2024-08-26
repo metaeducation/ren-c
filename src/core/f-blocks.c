@@ -1,6 +1,6 @@
 //
 //  File: %f-blocks.c
-//  Summary: "primary block series support functions"
+//  Summary: "primary Array Flex support functions"
 //  Section: functional
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -46,7 +46,7 @@ Array* Copy_Array_At_Extra_Shallow(
     len -= index;
 
     Array* copy = Make_Array_For_Copy(len + extra, flags, original);
-    Set_Series_Len(copy, len);
+    Set_Flex_Len(copy, len);
 
     const Element* src = Array_At(original, index);
     Element* dest = Array_Head(copy);
@@ -78,7 +78,7 @@ Array* Copy_Array_At_Max_Shallow(
         max = Array_Len(original) - index;
 
     Array* copy = Make_Array_For_Copy(max, flags, original);
-    Set_Series_Len(copy, max);
+    Set_Flex_Len(copy, max);
 
     Count count = 0;
     const Element* src = Array_At(original, index);
@@ -93,7 +93,7 @@ Array* Copy_Array_At_Max_Shallow(
 //
 //  Copy_Values_Len_Extra_Shallow_Core: C
 //
-// Shallow copy the first 'len' values of `head` into a new series created to
+// Shallow copy the first 'len' values of `head` into a new Array created to
 // hold that many entries, with an optional bit of extra space at the end.
 //
 Array* Copy_Values_Len_Extra_Shallow_Core(
@@ -103,11 +103,11 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
     Flags flags
 ){
     Array* a = Make_Array_Core(len + extra, flags);
-    Set_Series_Len(a, len);
+    Set_Flex_Len(a, len);
 
     REBLEN count = 0;
     const Value* src = head;
-    Value* dest = Series_Head(Value, a);
+    Value* dest = Flex_Head(Value, a);
     for (; count < len; ++count, ++src, ++dest) {
         if (Is_Antiform(src))
             assert(IS_VARLIST(a));  // usually not legal
@@ -136,9 +136,9 @@ void Clonify(
 //
 // Copy a block, copy specified values, deeply if indicated.
 //
-// To avoid having to do a second deep walk to add managed bits on all series,
-// the resulting array will already be deeply under GC management, and hence
-// cannot be freed with Free_Unmanaged_Series().
+// To avoid having to do a second deep walk to add managed bits on all Flexes,
+// the resulting Array will already be deeply under GC management, and hence
+// cannot be freed with Free_Unmanaged_Flex().
 //
 Array* Copy_Array_Core_Managed(
     const Array* original,
@@ -165,7 +165,7 @@ Array* Copy_Array_Core_Managed(
         flags | NODE_FLAG_MANAGED,
         original
     );
-    Set_Series_Len(copy, len);
+    Set_Flex_Len(copy, len);
 
     const Element* src = Array_At(original, index);
     Element* dest = Array_Head(copy);
@@ -186,17 +186,18 @@ Array* Copy_Array_Core_Managed(
 //
 //  Alloc_Tail_Array: C
 //
-// Append a cell to Rebol Array series at its tail.
-// Will use existing memory capacity already in the series if it
-// is available, but will expand the series if necessary.
-// Returns the new value for you to initialize.
+// Append an Erased Cell to a Rebol Array Flex at its tail.  Returns the
+// new cell for you to initialize.
+//
+// Will use existing memory capacity already in the Flex if it is available,
+// but will expand the Flex if necessary.
 //
 // Note: Updates the termination and tail.
 //
 Element* Alloc_Tail_Array(Array* a)
 {
-    Expand_Series_Tail(a, 1);
-    Set_Series_Len(a, Array_Len(a));
+    Expand_Flex_Tail(a, 1);
+    Set_Flex_Len(a, Array_Len(a));
     Element* last = Array_Last(a);
 
   #if DEBUG_ERASE_ALLOC_TAIL_CELLS
@@ -215,10 +216,10 @@ Element* Alloc_Tail_Array(Array* a)
 //
 void Uncolor_Array(const Array* a)
 {
-    if (Is_Series_White(a))
+    if (Is_Flex_White(a))
         return; // avoid loop
 
-    Flip_Series_To_White(a);
+    Flip_Flex_To_White(a);
 
     const Element* tail = Array_Tail(a);
     const Element* v = Array_Head(a);
@@ -232,7 +233,7 @@ void Uncolor_Array(const Array* a)
 //
 //  Uncolor: C
 //
-// Clear the recusion markers for series and object trees.
+// Clear the recursion markers for Flex and Object trees.
 //
 void Uncolor(const Value* v)
 {
@@ -255,11 +256,11 @@ void Uncolor(const Value* v)
     else if (Any_Context(v))
         Uncolor_Array(CTX_VARLIST(VAL_CONTEXT(v)));
     else {
-        // Shouldn't have marked recursively any non-array series (no need)
+        // Shouldn't have marked recursively any non-Array Flexes (no need)
         //
         assert(
             not Any_Series(v)
-            or Is_Series_White(Cell_Series(v))
+            or Is_Flex_White(Cell_Flex(v))
         );
     }
 }

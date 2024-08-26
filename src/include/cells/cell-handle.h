@@ -163,7 +163,7 @@ INLINE void Init_Handle_Managed_Common(
     // Don't fill the handle properties in the instance if it's the managed
     // form.  This way, you can set the properties in the canon value and
     // effectively update all instances...since the bits live in the shared
-    // series component.
+    // Flex component.
     //
     Reset_Unquoted_Header_Untracked(
         out,

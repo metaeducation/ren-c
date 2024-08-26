@@ -465,7 +465,7 @@ DECLARE_INTRINSIC(spread)
 //
 // 3. !!! The idea that quoted elements spread to be their unquoted forms was
 //    presumably added here to provide an efficiency hack, so that you could
-//    avoid making a series.  It's probably a bad idea.  Leaving here to
+//    avoid making an Array.  It's probably a bad idea.  Leaving here to
 //    keep the concept under review, but expect it to go away.
 {
     UNUSED(phase);

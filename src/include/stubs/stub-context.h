@@ -21,12 +21,12 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // A "context" is the abstraction behind OBJECT!, PORT!, FRAME!, ERROR!, etc.
-// It maps keys to values using two parallel series, whose indices line up in
+// It maps keys to values using two parallel Flexes, whose indices line up in
 // correspondence:
 //
-//   "KEYLIST" - a series of pointer-sized elements holding Symbol* pointers
+//   "KEYLIST" - a Flex of pointer-sized elements holding Symbol* pointers
 //
-//   "VARLIST" - an array which holds an archetypal ANY-CONTEXT? value in its
+//   "VARLIST" - an Array which holds an archetypal ANY-CONTEXT? value in its
 //   [0] element, and then a cell-sized slot for each variable.
 //
 // A `Context*` is an alias of the varlist's `Array*`, and keylists are
@@ -59,8 +59,8 @@
 // when needed (using CTX_ARCHETYPE()).  ACTION!s have a similar trick.
 //
 // Contexts coordinate with words, which can have their VAL_WORD_CONTEXT()
-// set to a context's series pointer.  Then they cache the index of that
-// word's symbol in the context's keylist, for a fast lookup to get to the
+// set to a context's Array pointer.  Then they cache the index of that
+// word's symbol in the context's KeyList, for a fast lookup to get to the
 // corresponding var.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
@@ -71,7 +71,7 @@
 //   (Appending to keylists involves making a copy if it is shared.)
 //
 // * Since varlists and keylists always have more than one element, they are
-//   allocated with SERIES_FLAG_DYNAMIC and do not need to check for whether
+//   allocated with FLEX_FLAG_DYNAMIC and do not need to check for whether
 //   the singular optimization when being used.  This does not apply when a
 //   varlist becomes invalid (e.g. via FREE), when its data allocation is
 //   released and it is decayed to a singular.
@@ -98,7 +98,7 @@
 // the GC would have to clean up.
 //
 #define KEYLIST_FLAG_SHARED \
-    SERIES_FLAG_24
+    FLEX_FLAG_24
 
 
 // Context* properties (note: shares BONUS_KEYSOURCE() with Action*)
@@ -118,7 +118,7 @@
 #define VAL_CONTEXT_VARLIST(v)              cast(Array*, Cell_Node1(v))
 #define INIT_VAL_CONTEXT_VARLIST            Init_Cell_Node1
 #define VAL_FRAME_PHASE_OR_LABEL_NODE       Cell_Node2  // faster in debug
-#define VAL_FRAME_PHASE_OR_LABEL(v)         cast(Series*, Cell_Node2(v))
+#define VAL_FRAME_PHASE_OR_LABEL(v)         cast(Flex*, Cell_Node2(v))
 #define INIT_VAL_FRAME_PHASE_OR_LABEL       Init_Cell_Node2
 
 
@@ -147,7 +147,7 @@
 //
 
 INLINE const Element* CTX_ARCHETYPE(Context* c) {  // read-only form
-    const Series* varlist = CTX_VARLIST(c);
+    const Flex* varlist = CTX_VARLIST(c);
     return c_cast(Element*, varlist->content.dynamic.data);
 }
 
@@ -264,7 +264,7 @@ INLINE KeyList* CTX_KEYLIST(Context* c) {
     return cast(KeyList*, node_BONUS(KeySource, CTX_VARLIST(c)));  // not Level
 }
 
-INLINE void INIT_CTX_KEYLIST_SHARED(Context* c, Series* keylist) {
+INLINE void INIT_CTX_KEYLIST_SHARED(Context* c, KeyList* keylist) {
     Set_Subclass_Flag(KEYLIST, keylist, SHARED);
     INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), keylist);
 }
@@ -285,8 +285,8 @@ INLINE void INIT_CTX_KEYLIST_UNIQUE(Context* c, KeyList *keylist) {
 //     Value* y = CTX_KEYS_HEAD(VAL_CONTEXT(context), n);  // no phase
 //
 // Context's "length" does not count the [0] cell of either the varlist or
-// the keylist arrays.  Hence it must subtract 1.  SERIES_MASK_VARLIST
-// includes SERIES_FLAG_DYNAMIC, so a dyamic series can be assumed so long
+// the keylist arrays.  Hence it must subtract 1.  FLEX_MASK_VARLIST
+// includes FLEX_FLAG_DYNAMIC, so a dyamic Array can be assumed so long
 // as it is valid.
 //
 
@@ -297,12 +297,12 @@ INLINE REBLEN CTX_LEN(Context* c) {
 
 INLINE const Key* CTX_KEY(Context* c, REBLEN n) {
     assert(n != 0 and n <= CTX_LEN(c));
-    return Series_At(const Key, CTX_KEYLIST(c), n - 1);
+    return Flex_At(const Key, CTX_KEYLIST(c), n - 1);
 }
 
 INLINE Value* CTX_VAR(Context* c, REBLEN n) {  // 1-based, no Cell*
     assert(n != 0 and n <= CTX_LEN(c));
-    return cast(Value*, cast(Series*, c)->content.dynamic.data) + n;
+    return cast(Value*, cast(Flex*, c)->content.dynamic.data) + n;
 }
 
 INLINE const Value* Try_Lib_Var(SymId id) {
@@ -385,20 +385,20 @@ INLINE Value* MOD_VAR(Context* c, const Symbol* sym, bool strict) {
 // CTX_VAR() does not.  Also, CTX_KEYS_HEAD() gives back a mutable slot.
 
 #define CTX_KEYS_HEAD(c) \
-    Series_At(Key, CTX_KEYLIST(c), 0)  // 0-based
+    Flex_At(Key, CTX_KEYLIST(c), 0)  // 0-based
 
 #define CTX_VARS_HEAD(c) \
-    (cast(Value*, x_cast(Series*, (c))->content.dynamic.data) + 1)
+    (cast(Value*, x_cast(Flex*, (c))->content.dynamic.data) + 1)
 
 INLINE const Key* CTX_KEYS(const Key* * tail, Context* c) {
-    Series* keylist = CTX_KEYLIST(c);
-    *tail = Series_Tail(Key, keylist);
-    return Series_Head(Key, keylist);
+    KeyList* keylist = CTX_KEYLIST(c);
+    *tail = Flex_Tail(Key, keylist);
+    return Flex_Head(Key, keylist);
 }
 
 INLINE Value* CTX_VARS(const Value* * tail, Context* c) {
     Value* head = CTX_VARS_HEAD(c);
-    *tail = head + x_cast(Series*, (c))->content.dynamic.used - 1;
+    *tail = head + x_cast(Flex*, (c))->content.dynamic.used - 1;
     return head;
 }
 
@@ -464,7 +464,7 @@ INLINE Context* Force_KeyList_Unique(Context* context) {
 // careful not to do any evaluations or trigger GC until it's well formed)
 //
 #define Alloc_Context(kind,capacity) \
-    Alloc_Context_Core((kind), (capacity), SERIES_FLAGS_NONE)
+    Alloc_Context_Core((kind), (capacity), FLEX_FLAGS_NONE)
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -497,7 +497,7 @@ INLINE void Deep_Freeze_Context(Context* c) {
 // instead of needing to push a redundant run of stack-based memory cells.
 //
 // 1. Rather than Mem_Copy() the whole stub and touch up the header and info
-//    to remove SERIES_INFO_HOLD from DETAILS_FLAG_IS_NATIVE, or things like
+//    to remove FLEX_INFO_HOLD from DETAILS_FLAG_IS_NATIVE, or things like
 //    NODE_FLAG_MANAGED, etc.--use constant assignments and only copy the
 //    remaining fields.
 //
@@ -514,10 +514,10 @@ INLINE Context* Steal_Context_Vars(Context* c, Node* keysource) {
 
     Stub* copy = Prep_Stub(  // don't Mem_Copy() the incoming stub [1]
         Alloc_Stub(),  // not preallocated
-        SERIES_MASK_VARLIST
-            | SERIES_FLAG_FIXED_SIZE
+        FLEX_MASK_VARLIST
+            | FLEX_FLAG_FIXED_SIZE
     );
-    SERIES_INFO(copy) = SERIES_INFO_MASK_NONE;
+    FLEX_INFO(copy) = FLEX_INFO_MASK_NONE;
     Corrupt_Pointer_If_Debug(BONUS(KeySource, copy)); // needs update
     Mem_Copy(&copy->content, &stub->content, sizeof(union StubContentUnion));
     MISC(VarlistAdjunct, copy) = nullptr;  // let stub have the meta
@@ -526,7 +526,7 @@ INLINE Context* Steal_Context_Vars(Context* c, Node* keysource) {
     Value* rootvar = cast(Value*, copy->content.dynamic.data);
     INIT_VAL_CONTEXT_VARLIST(rootvar, x_cast(Array*, copy));
 
-    Set_Series_Inaccessible(stub);  // Make unusable [2]
+    Set_Flex_Inaccessible(stub);  // Make unusable [2]
   #if DEBUG
     FLAVOR_BYTE(stub) = FLAVOR_CORRUPT;
     Corrupt_Pointer_If_Debug(stub->link.any.corrupt);

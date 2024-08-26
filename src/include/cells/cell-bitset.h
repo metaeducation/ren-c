@@ -29,7 +29,7 @@
 // negating the bitset could be prohibitive.  e.g. the size of all Unicode
 // codepoints that *aren't* spaces would take a very large number of bits
 // to represent.  Hence the NEGATE operation on a bitset would keep the
-// underlying binary data with an annotation on the series node that it
+// underlying binary data with an annotation on the Binary Stub that it
 // was in a negated state, and searches would invert their results.
 //
 // !!! There were several bugs related to routines not heeding the negated
@@ -40,11 +40,11 @@
 
 #define MAX_BITSET 0x7fffffff
 
-INLINE bool BITS_NOT(const Series* s)
-  { return s->misc.negated; }
+INLINE bool BITS_NOT(const Flex* f)
+  { return f->misc.negated; }
 
-INLINE void INIT_BITS_NOT(Series* s, bool negated)
-  { s->misc.negated = negated; }
+INLINE void INIT_BITS_NOT(Flex* f, bool negated)
+  { f->misc.negated = negated; }
 
 
 INLINE Binary* VAL_BITSET(const Cell* v) {
@@ -57,7 +57,7 @@ INLINE Binary* VAL_BITSET(const Cell* v) {
 
 INLINE Element* Init_Bitset(Sink(Element*) out, Binary* bits) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_BITSET);
-    Assert_Series_Managed(bits);
+    Assert_Flex_Managed(bits);
     Init_Cell_Node1(out, bits);
     return out;
 }

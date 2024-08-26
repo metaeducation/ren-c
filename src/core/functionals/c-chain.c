@@ -193,7 +193,7 @@ Bounce Chainer_Dispatcher(Level* const L)
         assert(Get_Level_Flag(sub, RAISED_RESULT_OK));
 
     if (sub->varlist and Not_Node_Managed(sub->varlist))
-        GC_Kill_Series(sub->varlist);
+        GC_Kill_Flex(sub->varlist);
 
     sub->varlist = nullptr;
 

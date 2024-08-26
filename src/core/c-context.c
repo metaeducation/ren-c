@@ -35,16 +35,16 @@
 //
 Context* Alloc_Context_Core(Heart heart, REBLEN capacity, Flags flags)
 {
-    KeyList* keylist = Make_Series(KeyList,
+    KeyList* keylist = Make_Flex(KeyList,
         capacity,  // no terminator
-        SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED  // always shareable
+        FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED  // always shareable
     );
     LINK(Ancestor, keylist) = keylist;  // default to keylist itself
-    assert(Series_Used(keylist) == 0);
+    assert(Flex_Used(keylist) == 0);
 
     Array* varlist = Make_Array_Core(
         capacity + 1,  // size + room for rootvar (array terminator implicit)
-        SERIES_MASK_VARLIST  // includes assurance of dynamic allocation
+        FLEX_MASK_VARLIST  // includes assurance of dynamic allocation
             | flags  // e.g. NODE_FLAG_MANAGED
     );
     MISC(VarlistAdjunct, varlist) = nullptr;
@@ -81,12 +81,12 @@ bool Expand_Context_KeyList_Core(Context* context, REBLEN delta)
         // (If all shared copies break away in this fashion, then the last
         // copy of the dangling keylist will be GC'd.)
 
-        KeyList* copy = cast(KeyList*, Copy_Series_At_Len_Extra(
+        KeyList* copy = cast(KeyList*, Copy_Flex_At_Len_Extra(
             keylist,
             0,
-            Series_Used(keylist),
+            Flex_Used(keylist),
             delta,
-            SERIES_MASK_KEYLIST
+            FLEX_MASK_KEYLIST
         ));
 
         // Preserve link to ancestor keylist.  Note that if it pointed to
@@ -103,7 +103,7 @@ bool Expand_Context_KeyList_Core(Context* context, REBLEN delta)
         else
             LINK(Ancestor, copy) = LINK(Ancestor, keylist);
 
-        Manage_Series(copy);
+        Manage_Flex(copy);
         INIT_CTX_KEYLIST_UNIQUE(context, copy);
 
         return true;
@@ -116,7 +116,7 @@ bool Expand_Context_KeyList_Core(Context* context, REBLEN delta)
     // context, and no INIT_CTX_KEYLIST_SHARED was used by another context
     // to mark the flag indicating it's shared.  Extend it directly.
 
-    Extend_Series_If_Necessary(keylist, delta);
+    Extend_Flex_If_Necessary(keylist, delta);
 
     return false;
 }
@@ -131,7 +131,7 @@ void Expand_Context(Context* context, REBLEN delta)
 {
     // varlist is unique to each object--expand without making a copy.
     //
-    Extend_Series_If_Necessary(CTX_VARLIST(context), delta);
+    Extend_Flex_If_Necessary(CTX_VARLIST(context), delta);
 
     Expand_Context_KeyList_Core(context, delta);
 }
@@ -153,8 +153,8 @@ static Value* Append_Context_Core(
         //
         // !!! In order to make MODULE more friendly to the idea of very
         // large number of words, variable instances for a module are stored
-        // not in an indexed block form...but distributed as individual series
-        // node allocations.  The variables are linked reachable from the
+        // not in an indexed block form...but distributed as individual Stub
+        // Node allocations.  The variables are linked reachable from the
         // symbol node for the word's spelling, and can be directly linked
         // to from a word as a singular value (with binding index "1").
 
@@ -197,7 +197,7 @@ static Value* Append_Context_Core(
             // to something else...e.g. to forward references to a cache back
             // to the context in order to "delete" variables?
             //
-            | SERIES_FLAG_INFO_NODE_NEEDS_MARK  // mark context through cache
+            | FLEX_FLAG_INFO_NODE_NEEDS_MARK  // mark context through cache
         );
 
         // We circularly link the variable into the list of hitches so that you
@@ -205,7 +205,7 @@ static Value* Append_Context_Core(
 
         // skip over binding-related hitches
         //
-        Series* updating = m_cast(Symbol*, symbol);
+        Flex* updating = m_cast(Symbol*, symbol);
         if (Get_Subclass_Flag(SYMBOL, updating, MISC_IS_BINDINFO))
             updating = cast(Stub*, node_MISC(Hitch, updating));  // skip
 
@@ -230,12 +230,12 @@ static Value* Append_Context_Core(
     // Review why this is expanding when the callers are expanding.  Should
     // also check that redundant keys aren't getting added here.
     //
-    Expand_Series_Tail(keylist, 1);  // updates the used count
-    Init_Key(Series_Last(Key, keylist), symbol);
+    Expand_Flex_Tail(keylist, 1);  // updates the used count
+    Init_Key(Flex_Last(Key, keylist), symbol);
 
     // Add a slot to the var list
     //
-    Expand_Series_Tail(CTX_VARLIST(context), 1);
+    Expand_Flex_Tail(CTX_VARLIST(context), 1);
 
     Cell* value = Erase_Cell(Array_Last(CTX_VARLIST(context)));
 
@@ -286,7 +286,7 @@ void Collect_Start(struct Reb_Collector* collector, Flags flags)
 //
 //  Collect_End: C
 //
-// Reset the bind markers in the canon series nodes so they can be reused,
+// Reset the bind markers in the canon Stub Nodes so they can be reused,
 // and drop the collected words from the stack.
 //
 void Collect_End(struct Reb_Collector *cl)
@@ -437,17 +437,17 @@ KeyList* Collect_KeyList_Managed(
     if (prior and CTX_LEN(unwrap prior) == num_collected)
         keylist = CTX_KEYLIST(unwrap prior);
     else {
-        keylist = Make_Series(KeyList,
+        keylist = Make_Flex(KeyList,
             num_collected,  // no terminator
-            SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
+            FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED
         );
 
         StackValue(*) word = Data_Stack_At(cl->stack_base) + 1;
-        Key* key = Series_Head(Key, keylist);
+        Key* key = Flex_Head(Key, keylist);
         for (; word != TOP + 1; ++word, ++key)
             Init_Key(key, Cell_Word_Symbol(word));
 
-        Set_Series_Used(keylist, num_collected);  // no terminator
+        Set_Flex_Used(keylist, num_collected);  // no terminator
     }
 
     Collect_End(cl);
@@ -612,13 +612,13 @@ Context* Make_Context_Detect_Managed(
         COLLECT_ONLY_SET_WORDS
     );
 
-    REBLEN len = Series_Used(keylist);
+    REBLEN len = Flex_Used(keylist);
     Array* varlist = Make_Array_Core(
         1 + len,  // needs room for rootvar
-        SERIES_MASK_VARLIST
+        FLEX_MASK_VARLIST
             | NODE_FLAG_MANAGED // Note: Rebind below requires managed context
     );
-    Set_Series_Len(varlist, 1 + len);
+    Set_Flex_Len(varlist, 1 + len);
     MISC(VarlistAdjunct, varlist) = nullptr;
     LINK(Patches, varlist) = nullptr;  // start w/no virtual binds
 
@@ -658,8 +658,8 @@ Context* Make_Context_Detect_Managed(
 
     if (parent) {
         //
-        // Copy parent values, and for values we copied that were blocks and
-        // strings, replace their series components with deep copies.
+        // Copy parent values, and for values we copied that were ANY-SERIES!,
+        // replace their Flex components with deep copies.
         //
         Value* dest = CTX_VARS_HEAD(context);
         const Value* src_tail;
@@ -861,7 +861,7 @@ void Assert_Context_Core(Context* c)
     Array* varlist = CTX_VARLIST(c);
 
     if (
-        (varlist->leader.bits & SERIES_MASK_VARLIST) != SERIES_MASK_VARLIST
+        (varlist->leader.bits & FLEX_MASK_VARLIST) != FLEX_MASK_VARLIST
     ){
         panic (varlist);
     }
@@ -872,7 +872,7 @@ void Assert_Context_Core(Context* c)
 
     KeyList* keylist = CTX_KEYLIST(c);
 
-    REBLEN keys_len = Series_Used(keylist);
+    REBLEN keys_len = Flex_Used(keylist);
     REBLEN vars_len = Array_Len(varlist);
 
     if (vars_len < 1)
@@ -889,7 +889,7 @@ void Assert_Context_Core(Context* c)
         if (not Is_String_Symbol(*key))
             panic (*key);
 
-      #if DEBUG_POISON_SERIES_TAILS
+      #if DEBUG_POISON_FLEX_TAILS
         if (Is_Cell_Poisoned(var)) {
             printf("** Early var end at index: %d\n", cast(int, n));
             panic (c);
@@ -897,7 +897,7 @@ void Assert_Context_Core(Context* c)
       #endif
     }
 
-  #if DEBUG_POISON_SERIES_TAILS
+  #if DEBUG_POISON_FLEX_TAILS
     if (not Is_Cell_Poisoned(var)) {
         printf("** Missing var end at index: %d\n", cast(int, n));
         panic (var);

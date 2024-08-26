@@ -38,7 +38,7 @@ Value* Try_Init_Any_Sequence_At_Listlike(
 ){
     assert(Any_Sequence_Kind(heart));
     assert(Is_Node_Managed(a));
-    Assert_Series_Term_If_Needed(a);
+    Assert_Flex_Term_If_Needed(a);
     assert(index == 0);  // !!! current rule
     assert(Is_Array_Frozen_Shallow(a));  // must be immutable (may be aliased)
 
@@ -97,7 +97,7 @@ Value* Try_Init_Any_Sequence_At_Listlike(
     // do it is that leaving it as an index allows for aliasing BLOCK! as
     // PATH! from non-head positions.
 
-    Init_Series_Cell_At_Core(out, REB_BLOCK, a, index, SPECIFIED);
+    Init_Series_At_Core(out, REB_BLOCK, a, index, SPECIFIED);
     HEART_BYTE(out) = heart;
 
     return out;
@@ -369,7 +369,7 @@ Bounce TO_Sequence(Level* level_, Kind k, const Value* arg) {
             VAL_INDEX(arg)
         );
         Freeze_Array_Shallow(a);
-        Force_Series_Managed(a);
+        Force_Flex_Managed(a);
 
         if (not Try_Init_Any_Sequence_Listlike(OUT, heart, a))
             return RAISE(Error_Bad_Sequence_Init(stable_OUT));

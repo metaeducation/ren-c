@@ -117,14 +117,14 @@ INLINE Value* Derelativize_Untracked(
         }
         else {
             REBLEN index;
-            Series* s =
+            Flex* f =
                 maybe Get_Word_Container(&index, v, specifier, ATTACH_READ);
-            if (not s) {
+            if (not f) {
                 out->extra = v->extra;
             }
             else {
                 INIT_VAL_WORD_INDEX(out, index);
-                BINDING(out) = s;
+                BINDING(out) = f;
             }
         }
     }
@@ -145,7 +145,7 @@ INLINE Value* Derelativize_Untracked(
         if (Is_Node_A_Cell(node1))  // x.y pairing
             goto any_listlike;
         Stub* stub1 = cast(Stub*, node1);
-        if (FLAVOR_SYMBOL == Series_Flavor(stub1))  // x. or /x, wordlike
+        if (FLAVOR_SYMBOL == Flex_Flavor(stub1))  // x. or /x, wordlike
             goto any_wordlike;
         goto any_listlike;
     }
@@ -283,7 +283,7 @@ INLINE bool Try_Add_Binder_Index(
     // and we don't want to pay for putting this in the manual tracking list.
     //
     Array* hitch = Alloc_Singular(
-        NODE_FLAG_MANAGED | SERIES_FLAG_BLACK | FLAG_FLAVOR(HITCH)
+        NODE_FLAG_MANAGED | FLEX_FLAG_BLACK | FLAG_FLAVOR(HITCH)
     );
     Clear_Node_Managed_Bit(hitch);
     Init_Integer(Stub_Cell(hitch), index);
@@ -339,7 +339,7 @@ INLINE REBINT Remove_Binder_Index_Else_0( // return old value if there
     Clear_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO);
 
     Set_Node_Managed_Bit(hitch);  // we didn't manuals track it
-    GC_Kill_Series(hitch);
+    GC_Kill_Flex(hitch);
 
   #if defined(NDEBUG)
     UNUSED(binder);
@@ -450,22 +450,22 @@ INLINE const Value* Lookup_Word_May_Fail(
     Specifier* specifier
 ){
     REBLEN index;
-    Series* s = maybe Get_Word_Container(
+    Flex* f = maybe Get_Word_Container(
         &index,
         any_word,
         specifier,
         ATTACH_READ
     );
-    if (not s)
+    if (not f)
         fail (Error_Not_Bound_Raw(any_word));
     if (index == INDEX_ATTACHED)
         fail (Error_Unassigned_Attach_Raw(any_word));
 
-    if (IS_LET(s) or IS_PATCH(s))
-        return Stub_Cell(s);
+    if (IS_LET(f) or IS_PATCH(f))
+        return Stub_Cell(f);
 
-    Assert_Node_Accessible(s);
-    Context* c = cast(Context*, s);
+    Assert_Node_Accessible(f);
+    Context* c = cast(Context*, f);
     return CTX_VAR(c, index);
 }
 
@@ -474,19 +474,19 @@ INLINE Option(const Value*) Lookup_Word(
     Specifier* specifier
 ){
     REBLEN index;
-    Series* s = maybe Get_Word_Container(
+    Flex* f = maybe Get_Word_Container(
         &index,
         any_word,
         specifier,
         ATTACH_READ
     );
-    if (not s or index == INDEX_ATTACHED)
+    if (not f or index == INDEX_ATTACHED)
         return nullptr;
-    if (IS_LET(s) or IS_PATCH(s))
-        return Stub_Cell(s);
+    if (IS_LET(f) or IS_PATCH(f))
+        return Stub_Cell(f);
 
-    Assert_Node_Accessible(s);
-    Context* c = cast(Context*, s);
+    Assert_Node_Accessible(f);
+    Context* c = cast(Context*, f);
     return CTX_VAR(c, index);
 }
 
@@ -518,29 +518,29 @@ INLINE Value* Lookup_Mutable_Word_May_Fail(
     Specifier* specifier
 ){
     REBLEN index;
-    Series* s = maybe Get_Word_Container(
+    Flex* f = maybe Get_Word_Container(
         &index,
         any_word,
         specifier,
         ATTACH_WRITE
     );
-    if (not s)
+    if (not f)
         fail (Error_Not_Bound_Raw(any_word));
 
     Value* var;
-    if (IS_LET(s) or IS_PATCH(s))
-        var = Stub_Cell(s);
+    if (IS_LET(f) or IS_PATCH(f))
+        var = Stub_Cell(f);
     else {
-        Context* c = cast(Context*, s);
+        Context* c = cast(Context*, f);
 
         // A context can be permanently frozen (`lock obj`) or temporarily
         // protected, e.g. `protect obj | unprotect obj`.  A native will
-        // use SERIES_FLAG_HOLD on a FRAME! context in order to prevent
+        // use FLEX_FLAG_HOLD on a FRAME! context in order to prevent
         // setting values to types with bit patterns the C might crash on.
         //
         // Lock bits are all in SER->info and checked in the same instruction.
         //
-        Fail_If_Read_Only_Series(CTX_VARLIST(c));
+        Fail_If_Read_Only_Flex(CTX_VARLIST(c));
 
         var = CTX_VAR(c, index);
     }

@@ -93,7 +93,7 @@
 //
 // (Note: when arguments to natives are viewed under the debugger, the
 // debug frames are read only.  So it's not possible for the user to change
-// the Any_Series! of the current parse position sitting in slot 0 into
+// the ANY-SERIES? of the current parse position sitting in slot 0 into
 // a DECIMAL! and crash the parse, for instance.  They are able to change
 // usermode authored function arguments only.)
 //
@@ -116,7 +116,7 @@
 #define P_RULE_SPECIFIER    Level_Specifier(level_)
 
 #define P_HEART             Cell_Heart_Ensure_Noquote(ARG(input))
-#define P_INPUT             Cell_Series(ARG(input))
+#define P_INPUT             Cell_Flex(ARG(input))
 #define P_INPUT_BINARY      Cell_Binary(ARG(input))
 #define P_INPUT_STRING      Cell_String(ARG(input))
 #define P_INPUT_ARRAY       Cell_Array(ARG(input))
@@ -250,7 +250,7 @@ static bool Subparse_Throws(
     // ensures that usermode accesses to the frame won't be able to fiddle
     // the frame values to bit patterns the native might crash on.
     //
-    Set_Series_Info(L->varlist, HOLD);
+    Set_Flex_Info(L->varlist, HOLD);
 
     USE_LEVEL_SHORTHANDS (L);
     INCLUDE_PARAMS_OF_SUBPARSE;
@@ -346,12 +346,12 @@ static void Print_Parse_Index(Level* level_) {
     USE_PARAMS_OF_SUBPARSE;
 
     DECLARE_ATOM (input);
-    Init_Series_Cell_At_Core(
+    Init_Series_At_Core(
         input,
         P_HEART,
         P_INPUT,
         P_POS,
-        Is_Series_Array(P_INPUT)
+        Is_Flex_Array(P_INPUT)
             ? P_INPUT_SPECIFIER
             : SPECIFIED
     );
@@ -620,7 +620,7 @@ static REBIXO Parse_One_Rule(
         // Other cases handled distinctly between blocks/strings/binaries...
     }
 
-    if (Is_Series_Array(P_INPUT)) {
+    if (Is_Flex_Array(P_INPUT)) {
         const Cell* item = Array_At(P_INPUT_ARRAY, pos);
 
         switch (VAL_TYPE(rule)) {
@@ -1035,7 +1035,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             fail ("TAG! combinator must be <here> or <end> ATM");
     }
 
-    if (Is_Series_Array(P_INPUT)) {
+    if (Is_Flex_Array(P_INPUT)) {
         //
         // FOR ARRAY INPUT WITH NON-BLOCK RULES, USE Find_In_Array()
         //
@@ -1178,7 +1178,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
         --index;  // Rebol is 1-based, C is 0 based...
     }
     else if (Any_Series_Kind(k)) {
-        if (Cell_Series(rule) != P_INPUT)
+        if (Cell_Flex(rule) != P_INPUT)
             fail ("Switching PARSE series is not allowed");
         index = VAL_INDEX(rule);
     }
@@ -1893,7 +1893,7 @@ DECLARE_NATIVE(subparse)
                 fail ("Use THE instead of QUOTE in PARSE3 for literal match");
 
               case SYM_THE: {
-                if (not Is_Series_Array(P_INPUT))
+                if (not Is_Flex_Array(P_INPUT))
                     fail (Error_Parse3_Rule());  // see #2253
 
                 if (P_AT_END)
@@ -1935,7 +1935,7 @@ DECLARE_NATIVE(subparse)
                 // parse ["aa"] [into ["a" "a"]] ; is legal
                 // parse "aa" [into ["a" "a"]] ; is not...already "into"
                 //
-                if (not Is_Series_Array(P_INPUT))
+                if (not Is_Flex_Array(P_INPUT))
                     fail (Error_Parse3_Rule());
 
                 const Element* input_tail = Array_Tail(P_INPUT_ARRAY);
@@ -2159,7 +2159,7 @@ DECLARE_NATIVE(subparse)
                     assert(Any_String_Kind(P_HEART));
 
                     DECLARE_ATOM (begin_val);
-                    Init_Series_Cell_At(begin_val, P_HEART, P_INPUT, begin);
+                    Init_Series_At(begin_val, P_HEART, P_INPUT, begin);
 
                     // Rebol2 behavior of always "netural" TEXT!.  Avoids
                     // creation of things like URL!-typed fragments that
@@ -2200,7 +2200,7 @@ DECLARE_NATIVE(subparse)
                             )
                         );
                 }
-                else if (Is_Series_Array(P_INPUT)) {
+                else if (Is_Flex_Array(P_INPUT)) {
                     assert(count == 1);  // check for > 1 would have errored
 
                     Copy_Cell(
@@ -2222,8 +2222,8 @@ DECLARE_NATIVE(subparse)
 
                     /*
                     DECLARE_ATOM (begin_val);
-                    Init_Series_Cell_At(begin_val, P_HEART, P_INPUT, begin);
-                    Init_Series_Cell(
+                    Init_Series_At(begin_val, P_HEART, P_INPUT, begin);
+                    Init_Series(
                         captured,
                         P_HEART,
                         Copy_String_At_Limit(begin_val, count)
@@ -2293,7 +2293,7 @@ DECLARE_NATIVE(subparse)
                 Decay_If_Unstable(atom_evaluated);
               }
 
-                if (Is_Series_Array(P_INPUT)) {
+                if (Is_Flex_Array(P_INPUT)) {
                     REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
                     if (not only and Any_List(evaluated))
                         mod_flags |= AM_SPLICE;

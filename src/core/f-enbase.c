@@ -204,7 +204,7 @@ static Binary* Decode_Base2(const Byte* *src, REBLEN len, Byte delim)
     return bin;
 
 err:
-    Free_Unmanaged_Series(bin);
+    Free_Unmanaged_Flex(bin);
     *src = cp;
     return 0;
 }
@@ -242,7 +242,7 @@ static Binary* Decode_Base16(const Byte* *src, REBLEN len, Byte delim)
     return bin;
 
 err:
-    Free_Unmanaged_Series(bin);
+    Free_Unmanaged_Flex(bin);
     *src = cp;
     return 0;
 }
@@ -315,7 +315,7 @@ static Binary* Decode_Base64(const Byte* *src, REBLEN len, Byte delim)
     return bin;
 
 err:
-    Free_Unmanaged_Series(bin);
+    Free_Unmanaged_Flex(bin);
     *src = cp;
     return 0;
 }
@@ -333,23 +333,24 @@ const Byte* Decode_Binary(
     REBINT base,
     Byte delim
 ) {
-    Series* ser = 0;
+    Binary* bin = 0;
 
     switch (base) {
     case 64:
-        ser = Decode_Base64(&src, len, delim);
+        bin = Decode_Base64(&src, len, delim);
         break;
     case 16:
-        ser = Decode_Base16(&src, len, delim);
+        bin = Decode_Base16(&src, len, delim);
         break;
     case 2:
-        ser = Decode_Base2 (&src, len, delim);
+        bin = Decode_Base2 (&src, len, delim);
         break;
     }
 
-    if (!ser) return 0;
+    if (not bin)
+        return 0;
 
-    Init_Binary(out, ser);
+    Init_Binary(out, bin);
 
     return src;
 }
@@ -358,7 +359,7 @@ const Byte* Decode_Binary(
 //
 //  Form_Base2: C
 //
-// Base2 encode a range of arbitrary bytes into a byte-sized ASCII series.
+// Base2 encode a range of arbitrary bytes as ASCII into the mold buffer.
 //
 void Form_Base2(REB_MOLD *mo, const Byte* src, REBLEN len, bool brk)
 {
@@ -423,7 +424,7 @@ void Form_Base16(REB_MOLD *mo, const Byte* src, REBLEN len, bool brk)
 //
 //  Form_Base64: C
 //
-// Base64 encode a range of arbitrary bytes into a byte-sized ASCII series.
+// Base64 encode a range of arbitrary bytes as ASCII into a the mold buffer.
 //
 // !!! Strongly parallels this code, may have originated from it:
 // http://web.mit.edu/freebsd/head/contrib/wpa/src/utils/base64.c

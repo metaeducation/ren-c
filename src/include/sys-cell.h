@@ -22,19 +22,19 @@
 //
 // See notes in %struct-cell.h for the definition of the Cell structure.
 //
-// While some cells are in C stack variables, most reside in the allocated
-// memory block for a Rebol array.  The memory block for an array can be
+// While some Cells are in C stack variables, most reside in the allocated
+// memory block for an Array Flex.  The underlying Flex memory can be
 // resized and require a reallocation, or it may become invalid if the
-// containing series is garbage-collected.  This means that many pointers to
-// cells are movable, and could become invalid if arbitrary user code
-// is run...this includes values on the data stack, which is implemented as
-// an array under the hood.  (See %sys-stack.h)
+// containing Array is garbage-collected.  This means that many pointers to
+// Cells are movable, and could become invalid if arbitrary user code
+// is run...this includes Cells on the data stack, which is implemented as
+// an Array under the hood.  (See %sys-stack.h)
 //
-// A cell in a C stack variable does not have to worry about its memory
+// A Cell in a C stack variable does not have to worry about its memory
 // address becoming invalid--but by default the garbage collector does not
-// know that value exists.  So while the address may be stable, any series
-// it has in the payload might go bad.  Use Push_GC_Guard() to protect a
-// stack variable's payload, and then Drop_GC_Guard() when the protection
+// know that value exists.  So while the address may be stable, any Flexes
+// it has in the Payload might go bad.  Use Push_GC_Guard() to protect a
+// stack variable's Payload, and then Drop_GC_Guard() when the protection
 // is not needed.  (You must always drop the most recently pushed guard.)
 //
 // Function invocations keep their arguments in FRAME!s, which can be accessed
@@ -75,7 +75,7 @@
 // Readable cells have NODE_FLAG_NODE and NODE_FLAG_CELL set.  It's important
 // that they do, because if they don't then the first byte of the header
 // could be mistaken for valid UTF-8 (see Detect_Rebol_Pointer() for the
-// machinery that relies upon this for mixing UTF-8, cells, and series in
+// machinery that relies upon this for mixing UTF-8, Cells, and Stubs in
 // variadic API calls).
 //
 // Also, readable cells don't have NODE_FLAG_FREE set.  At one time the
@@ -337,18 +337,18 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 //
 // Poisoning is used in the spirit of things like Address Sanitizer to block
 // reading or writing locations such as beyond the allocated memory of an
-// array series.  It leverages the checks done by Ensure_Readable(),
+// Array Flex.  It leverages the checks done by Ensure_Readable(),
 // Ensure_Writable() and Is_Fresh()
 //
 // Another use for the poisoned state is in an optimized array representation
-// that fits 0 or 1 cells into the series node itself.  Since the cell lives
+// that fits 0 or 1 cells into the Array Stub itself.  Since the Cell lives
 // where the content tracking information would usually be, there's no length.
 // Hence the presence of a poison cell in the slot indicates length 0.
 //
-// * To stop reading but not stop writing, use "unreadable" cells instead.
+// * To stop reading but not stop writing, use "Unreadable" cells instead.
 //
 // * This will defeat Detect_Rebol_Pointer(), so it will not realize the value
-//   is a cell any longer.  Hence poisoned cells should (perhaps obviously) not
+//   is a cell any longer.  Hence poisoned Cells should (perhaps obviously) not
 //   be passed to API functions--as they'd appear to be UTF-8 strings.
 
 #define Poison_Cell(v) \
@@ -549,7 +549,7 @@ INLINE void Copy_Cell_Header(
     out->file = v->file;
     out->line = v->line;
     out->tick = TG_tick;  // initialization tick
-    out->touch = v->touch;  // arbitrary debugging use via TOUCH_CELL
+    out->touch = v->touch;  // arbitrary debugging use via Touch_Cell
   #endif
 }
 
@@ -620,7 +620,7 @@ INLINE Cell* Copy_Cell_Untracked(
 //=//// CELL MOVEMENT //////////////////////////////////////////////////////=//
 //
 // Moving a cell invalidates the old location.  This idea is a potential
-// prelude to being able to do some sort of reference counting on series based
+// prelude to being able to do some sort of reference counting on Arrays based
 // on the cells that refer to them tracking when they are overwritten.  One
 // advantage would be being able to leave the reference counting as-is.
 //

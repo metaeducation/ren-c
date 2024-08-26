@@ -543,7 +543,7 @@ REBLEN Find_Value_In_Binstr(
         // !!! A TAG! does not have its delimiters in it.  The logic of the
         // find would have to be rewritten to accomodate this, and it's a
         // bit tricky as it is.  Let it settle down before trying that--and
-        // for now just form the tag into a temporary alternate series.
+        // for now just form the tag into a temporary alternate String.
 
         String* formed = nullptr;
         if (
@@ -575,7 +575,7 @@ REBLEN Find_Value_In_Binstr(
         );
 
         if (formed)
-            Free_Unmanaged_Series(formed);
+            Free_Unmanaged_Flex(formed);
 
         return result;
     }

@@ -27,12 +27,12 @@
 
 #if CPLUSPLUS_11
     struct Details : public Array {};
-    struct Action : public Series {};
+    struct Action : public Flex {};
     struct Phase : public Action {};
 #else
     typedef Array Details;
-    typedef Series Action;
-    typedef Series Phase;
+    typedef Flex Action;
+    typedef Action Phase;
 #endif
 
 
@@ -50,7 +50,7 @@
 // time when single-length keylists can be represented by just a pointer to
 // a symbol.
 //
-#define ARRAY_FLAG_IS_KEYLIST SERIES_FLAG_IS_KEYLIKE
+#define ARRAY_FLAG_IS_KEYLIST FLEX_FLAG_IS_KEYLIKE
 
 
 //=//// DETAILS_FLAG_POSTPONES_ENTIRELY ///////////////////////////////////=//
@@ -61,13 +61,13 @@
 // the stack vs. just one.
 //
 #define DETAILS_FLAG_POSTPONES_ENTIRELY \
-    SERIES_FLAG_24
+    FLEX_FLAG_24
 
 
 //=//// DETAILS_FLAG_25 ///////////////////////////////////////////////////=//
 //
 #define DETAILS_FLAG_25 \
-    SERIES_FLAG_25
+    FLEX_FLAG_25
 
 
 //=//// DETAILS_FLAG_DEFERS_LOOKBACK //////////////////////////////////////=//
@@ -79,19 +79,19 @@
 // is always the same for invocation via a plain word.
 //
 #define DETAILS_FLAG_DEFERS_LOOKBACK \
-    SERIES_FLAG_26
+    FLEX_FLAG_26
 
 
 //=//// DETAILS_FLAG_27 ///////////////////////////////////////////////////=//
 //
 #define DETAILS_FLAG_27 \
-    SERIES_FLAG_27
+    FLEX_FLAG_27
 
 
 //=//// DETAILS_FLAG_28 ///////////////////////////////////////////////////=//
 //
 #define DETAILS_FLAG_28 \
-    SERIES_FLAG_28
+    FLEX_FLAG_28
 
 
 //=//// DETAILS_FLAG_IS_NATIVE ////////////////////////////////////////////=//
@@ -103,13 +103,13 @@
 // rebValue() etc. should consider for binding, in addition to lib.  A BLANK!
 // in the 1 slot means no additional consideration...bind to lib only.
 //
-// Note: This was tactially set to be the same as SERIES_INFO_HOLD to make it
+// Note: This was tactially set to be the same as FLEX_INFO_HOLD to make it
 // possible to branchlessly mask in the bit to stop frames from being mutable
 // by user code once native code starts running.  Shuffling made this no
 // longer possible, so that was dropped...but it could be brought back.
 //
 #define DETAILS_FLAG_IS_NATIVE \
-    SERIES_FLAG_29
+    FLEX_FLAG_29
 
 typedef enum {
     NATIVE_NORMAL,
@@ -121,13 +121,13 @@ typedef enum {
 //=//// DETAILS_FLAG_30 ///////////////////////////////////////////////////=//
 //
 #define DETAILS_FLAG_30 \
-    SERIES_FLAG_30
+    FLEX_FLAG_30
 
 
 //=//// DETAILS_FLAG_31 ///////////////////////////////////////////////////=//
 //
 #define DETAILS_FLAG_31 \
-    SERIES_FLAG_31
+    FLEX_FLAG_31
 
 
 // These flags should be copied when specializing or adapting.  They may not
@@ -151,25 +151,25 @@ typedef enum {
     Not_Subclass_Flag(DETAILS, ACT_IDENTITY(act), name)
 
 
-// Includes SERIES_FLAG_DYNAMIC because an action's paramlist is always
+// Includes FLEX_FLAG_DYNAMIC because an action's paramlist is always
 // allocated dynamically, in order to make access to the archetype and the
 // parameters faster than Array_At().  See code for ACT_KEY(), etc.
 //
-// !!! This used to include SERIES_FLAG_FIXED_SIZE for both.  However, that
+// !!! This used to include FLEX_FLAG_FIXED_SIZE for both.  However, that
 // meant the mask was different for paramlists and context keylists (which
 // are nearing full convergence).  And on the details array, it got in the
 // way of HIJACK, which may perform expansion.  So that was removed.
 //
-#define SERIES_MASK_PARAMLIST SERIES_MASK_VARLIST
+#define FLEX_MASK_PARAMLIST FLEX_MASK_VARLIST
 
-#define SERIES_MASK_DETAILS \
+#define FLEX_MASK_DETAILS \
     (NODE_FLAG_NODE \
-        | SERIES_FLAG_MISC_NODE_NEEDS_MARK  /* meta */ \
+        | FLEX_FLAG_MISC_NODE_NEEDS_MARK  /* meta */ \
         | FLAG_FLAVOR(DETAILS) \
         /* LINK is dispatcher, a c function pointer, should not mark */ \
-        | SERIES_FLAG_INFO_NODE_NEEDS_MARK  /* exemplar */ )
+        | FLEX_FLAG_INFO_NODE_NEEDS_MARK  /* exemplar */ )
 
-#define SERIES_MASK_PARTIALS \
+#define FLEX_MASK_PARTIALS \
     (NODE_FLAG_NODE \
         | FLAG_FLAVOR(PARTIALS) \
         /* LINK is unused at this time */ \

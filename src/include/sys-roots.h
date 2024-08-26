@@ -53,7 +53,7 @@
 // function to release that handle after encountering it.
 //
 #define API_FLAG_RELEASE \
-    SERIES_FLAG_24
+    FLEX_FLAG_24
 
 
 // What distinguishes an API value is that it has both the NODE_FLAG_CELL and
@@ -146,7 +146,7 @@ INLINE Value* Alloc_Value_Core(Flags flags)
 {
     Stub* stub = Alloc_Singular(
         FLAG_FLAVOR(API)
-            |  NODE_FLAG_ROOT | NODE_FLAG_MANAGED | SERIES_FLAG_FIXED_SIZE
+            |  NODE_FLAG_ROOT | NODE_FLAG_MANAGED | FLEX_FLAG_FIXED_SIZE
     );
 
     Cell* cell = Stub_Cell(stub);
@@ -170,7 +170,7 @@ INLINE void Free_Value(Value* v)
         Unlink_Api_Handle_From_Level(stub);
 
     Poison_Cell(v);  // has to be last (removes NODE_FLAG_ROOT if set)
-    GC_Kill_Series(stub);
+    GC_Kill_Flex(stub);
 }
 
 

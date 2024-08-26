@@ -89,7 +89,7 @@ Bounce Combinator_Dispatcher(Level* L)
 
     Bounce b;
     if (Is_Frame(body)) {  // NATIVE-COMBINATOR
-        Set_Series_Info(L->varlist, HOLD);  // mandatory for natives.
+        Set_Flex_Info(L->varlist, HOLD);  // mandatory for natives.
         Dispatcher* dispatcher = ACT_DISPATCHER(VAL_ACTION(body));
         b = dispatcher(L);
     }
@@ -514,7 +514,7 @@ DECLARE_NATIVE(some_combinator)
 } first_parse_result_in_out: {  //////////////////////////////////////////////
 
     if (Is_Nulled(OUT)) {  // didn't match even once, so not enough
-        Remove_Series_Units(loops, Array_Len(loops) - 1, 1);  // drop loop
+        Remove_Flex_Units(loops, Array_Len(loops) - 1, 1);  // drop loop
         return nullptr;
     }
 
@@ -536,7 +536,7 @@ DECLARE_NATIVE(some_combinator)
 
     if (Is_Nulled(SPARE)) {  // first still succeeded, so we're okay.
         Set_Var_May_Fail(remainder, SPECIFIED, input);  // put back [3]
-        Remove_Series_Units(loops, Array_Len(loops) - 1, 1);  // drop loop
+        Remove_Flex_Units(loops, Array_Len(loops) - 1, 1);  // drop loop
         return OUT;  // return previous successful parser result
     }
 

@@ -745,7 +745,7 @@ bool Get_Var_Push_Refinements_Throws(
         if (Is_Node_A_Cell(node1)) { // pair compressed
             // is considered "Listlike", can answer Cell_List_At()
         }
-        else switch (Series_Flavor(x_cast(Series*, node1))) {
+        else switch (Flex_Flavor(x_cast(Flex*, node1))) {
           case FLAVOR_SYMBOL:
             if (Get_Cell_Flag(var, REFINEMENT_LIKE))  // `/a` or `.a`
                 goto get_source;
@@ -939,7 +939,7 @@ bool Get_Path_Push_Refinements_Throws(
     if (Is_Node_A_Cell(node1)) {
         // pairing, but "Listlike", so Cell_List_At() will work on it
     }
-    else switch (Series_Flavor(c_cast(Series*, node1))) {
+    else switch (Flex_Flavor(c_cast(Flex*, node1))) {
       case FLAVOR_SYMBOL : {
         if (Get_Cell_Flag(path, REFINEMENT_LIKE)) {  // `/a` - should these GET?
             Get_Word_May_Fail(out, path, path_specifier);
@@ -1333,7 +1333,7 @@ bool Set_Var_Core_Updater_Throws(
         if (Is_Node_A_Cell(node1)) {  // pair optimization
             // pairings considered "Listlike", handled by Cell_List_At()
         }
-        else switch (Series_Flavor(c_cast(Series*, node1))) {
+        else switch (Flex_Flavor(c_cast(Flex*, node1))) {
           case FLAVOR_SYMBOL: {
             if (Get_Cell_Flag(var, REFINEMENT_LIKE))  // `/a` or `.a`
                goto set_target;
@@ -1784,8 +1784,8 @@ DECLARE_NATIVE(free)
     if (Not_Node_Accessible(Cell_Node1(v)))
         fail ("Cannot FREE already freed series");
 
-    Series* s = Cell_Series_Ensure_Mutable(v);
-    Decay_Series(s);
+    Flex* f = Cell_Flex_Ensure_Mutable(v);
+    Decay_Flex(f);
     return TRASH; // !!! Could return freed value
 }
 
@@ -1809,18 +1809,18 @@ DECLARE_NATIVE(free_q)
     if (Is_Void(v) or Is_Nulled(v))
         return Init_False(OUT);
 
-    // All freeable values put their freeable series in the payload's "first".
+    // All freeable values put their freeable Flex in the payload's "first".
     //
     if (Not_Cell_Flag(v, FIRST_IS_NODE))
         return Init_False(OUT);
 
     Node* n = Cell_Node1(v);
 
-    // If the node is not a series (e.g. a pairing), it cannot be freed (as
-    // a freed version of a pairing is the same size as the pairing).
+    // If the node is not a Flex (e.g. a Pairing), it cannot be freed (as
+    // a freed version of a Pairing is the same size as the Pairing).
     //
     // !!! Technically speaking a PAIR! could be freed as ANY-LIST? could, it
-    // would mean converting the node.  Review.
+    // would mean converting the Node.  Review.
     //
     if (n == nullptr or Is_Node_A_Cell(n))
         return Init_False(OUT);
@@ -1866,7 +1866,7 @@ bool Try_As_String(
         const String* str;
         REBLEN index;
         if (
-            not Is_Series_UTF8(bin)
+            not Is_Flex_UTF8(bin)
             or strmode != STRMODE_ALL_CODEPOINTS
         ){
             // If the binary wasn't created as a view on string data to
@@ -1878,7 +1878,7 @@ bool Try_As_String(
             // Regardless of aliasing, not using STRMODE_ALL_CODEPOINTS means
             // a valid UTF-8 string may have been edited to include CRs.
             //
-            if (not Is_Series_Frozen(bin))
+            if (not Is_Flex_Frozen(bin))
                 if (Get_Cell_Flag(v, CONST))
                     fail (Error_Alias_Constrains_Raw());
 
@@ -1941,24 +1941,24 @@ bool Try_As_String(
     }
     else if (Is_Issue(v)) {
         if (Get_Cell_Flag(v, STRINGLIKE_HAS_NODE)) {
-            assert(Is_Series_Frozen(Cell_Issue_String(v)));
+            assert(Is_Flex_Frozen(Cell_Issue_String(v)));
             goto any_string;  // ISSUE! series must be immutable
         }
 
-        // If payload of an ISSUE! lives in the cell itself, a read-only
-        // series must be created for the data...because otherwise there isn't
+        // If payload of an ISSUE! lives in the Cell itself, a read-only
+        // Flex must be created for the data...because otherwise there isn't
         // room for an index (which ANY-STRING? needs).  For behavior parity
-        // with if the payload *was* in the series, this alias must be frozen.
+        // with if the payload *was* in the Cell, this alias must be frozen.
 
         REBLEN len;
         Size size;
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
         assert(size + 1 <= sizeof(PAYLOAD(Bytes, v).at_least_8));  // must fit
 
-        String* str = Make_String_Core(size, SERIES_FLAGS_NONE);
-        memcpy(Series_Data(str), utf8, size + 1);  // +1 to include '\0'
+        String* str = Make_String_Core(size, FLEX_FLAGS_NONE);
+        memcpy(Flex_Data(str), utf8, size + 1);  // +1 to include '\0'
         Term_String_Len_Size(str, len, size);
-        Freeze_Series(str);
+        Freeze_Flex(str);
         Init_Any_String(out, new_heart, str);
     }
     else if (Any_String(v) or Is_Url(v)) {
@@ -2031,16 +2031,16 @@ DECLARE_NATIVE(as)
                 const Cell* paired = c_cast(Cell*, node1);
                 Specifier *specifier = Cell_Specifier(v);
                 Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
-                Set_Series_Len(a, 2);
+                Set_Flex_Len(a, 2);
                 Derelativize(Array_At(a, 0), paired, specifier);
                 Derelativize(Array_At(a, 1), Pairing_Second(paired), specifier);
                 Freeze_Array_Shallow(a);
                 Init_Block(v, a);
             }
-            else switch (Series_Flavor(c_cast(Series*, node1))) {
+            else switch (Flex_Flavor(c_cast(Flex*, node1))) {
               case FLAVOR_SYMBOL: {
                 Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
-                Set_Series_Len(a, 2);
+                Set_Flex_Len(a, 2);
                 if (Get_Cell_Flag(v, REFINEMENT_LIKE)) {
                     Init_Blank(Array_At(a, 0));
                     Copy_Cell(Array_At(a, 1), v);
@@ -2109,8 +2109,8 @@ DECLARE_NATIVE(as)
         if (Is_Issue(v)) {
             if (Get_Cell_Flag(v, STRINGLIKE_HAS_NODE)) {
                 //
-                // Handle the same way we'd handle any other read-only text
-                // with a series allocation...e.g. reuse it if it's already
+                // Handle the same way we'd handle any other read-only TEXT!
+                // with a String allocation...e.g. reuse it if it's already
                 // been validated as a WORD!, or mark it word-valid if it's
                 // frozen and hasn't been marked yet.
                 //
@@ -2141,7 +2141,7 @@ DECLARE_NATIVE(as)
           any_string: {
             const String* s = Cell_String(v);
 
-            if (not Is_Series_Frozen(s)) {
+            if (not Is_Flex_Frozen(s)) {
                 //
                 // We always force strings used with AS to frozen, so that the
                 // effect of freezing doesn't appear to mystically happen just
@@ -2150,7 +2150,7 @@ DECLARE_NATIVE(as)
                 if (Get_Cell_Flag(v, CONST))
                     fail (Error_Alias_Constrains_Raw());
 
-                Freeze_Series(Cell_Series(v));
+                Freeze_Flex(Cell_Flex(v));
             }
 
             if (VAL_INDEX(v) != 0)  // can't reuse non-head series AS WORD!
@@ -2163,8 +2163,8 @@ DECLARE_NATIVE(as)
             }
             else {
                 // !!! If this spelling is already interned we'd like to
-                // reuse the existing series, and if not we'd like to promote
-                // this series to be the interned one.  This efficiency has
+                // reuse the existing Symbol, and if not we'd like to promote
+                // this String to be the interned one.  This efficiency has
                 // not yet been implemented, so we just intern it.
                 //
                 goto intern_utf8;
@@ -2179,11 +2179,11 @@ DECLARE_NATIVE(as)
             if (VAL_INDEX(v) != 0)  // ANY-WORD? stores binding, not position
                 fail ("Cannot convert BINARY! to WORD! unless at the head");
 
-            // We have to permanently freeze the underlying series from any
+            // We have to permanently freeze the underlying String from any
             // mutation to use it in a WORD! (and also, may add STRING flag);
             //
             const Binary* bin = Cell_Binary(v);
-            if (not Is_Series_Frozen(bin))
+            if (not Is_Flex_Frozen(bin))
                 if (Get_Cell_Flag(v, CONST))  // can't freeze or add IS_STRING
                     fail (Error_Alias_Constrains_Raw());
 
@@ -2208,7 +2208,7 @@ DECLARE_NATIVE(as)
                 // the more efficient reuse.
                 //
                 FLAVOR_BYTE(m_cast(Binary*, bin)) = FLAVOR_STRING;
-                Freeze_Series(bin);
+                Freeze_Flex(bin);
             }
 
             Init_Any_Word(OUT, new_heart, c_cast(Symbol*, str));
@@ -2263,7 +2263,7 @@ DECLARE_NATIVE(as)
                 )){
                     goto bad_cast;
                 }
-                Freeze_Series(Cell_Series(OUT));  // must be frozen
+                Freeze_Flex(Cell_Flex(OUT));  // must be frozen
             }
             HEART_BYTE(OUT) = REB_ISSUE;
             return OUT;
@@ -2290,16 +2290,16 @@ DECLARE_NATIVE(as)
       case REB_BINARY: {
         if (Is_Issue(v)) {
             if (Get_Cell_Flag(v, STRINGLIKE_HAS_NODE))
-                goto any_string_as_binary;  // had a series allocation
+                goto any_string_as_binary;  // had a String allocation
 
-            // Data lives in payload--make new frozen series for BINARY!
+            // Data lives in Cell--make new frozen String for BINARY!
 
             Size size;
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&size, v);
             Binary* bin = Make_Binary_Core(size, NODE_FLAG_MANAGED);
             memcpy(Binary_Head(bin), utf8, size + 1);
-            Set_Series_Used(bin, size);
-            Freeze_Series(bin);
+            Set_Flex_Used(bin, size);
+            Freeze_Flex(bin);
             Init_Binary(OUT, bin);
             return Inherit_Const(stable_OUT, v);
         }
@@ -2408,7 +2408,7 @@ DECLARE_NATIVE(aliases_q)
 {
     INCLUDE_PARAMS_OF_ALIASES_Q;
 
-    return Init_Logic(OUT, Cell_Series(ARG(value1)) == Cell_Series(ARG(value2)));
+    return Init_Logic(OUT, Cell_Flex(ARG(value1)) == Cell_Flex(ARG(value2)));
 }
 
 

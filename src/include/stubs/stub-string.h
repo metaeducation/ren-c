@@ -41,24 +41,24 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * UTF-8 strings are "byte-sized series", which is also true of BINARY!
-//   datatypes.  However, the series used to store UTF-8 strings also store
-//   information about their length in codepoints in their series nodes (the
-//   main "number of bytes used" in the series conveys bytes, not codepoints).
-//   See the distinction between Series_Used() and String_Len().
+// * UTF-8 String Flexes are "byte-sized", which is also true in BINARY!
+//   datatypes.  However, the Flex used to store UTF-8 strings also stores
+//   information about their length in codepoints in their Stub Nodes (the
+//   main "number of bytes used" in the Flex conveys bytes, not codepoints).
+//   See the distinction between Flex_Used() and String_Len().
 //
 
 
-// For a writable REBSTR, a list of entities that cache the mapping from
+// For a writable String, a list of entities that cache the mapping from
 // index to character offset is maintained.  Without some help, it would
 // be necessary to search from the head or tail of the string, character
 // by character, to turn an index into an offset.  This is prohibitive.
 //
 // These bookmarks must be kept in sync.  How many bookmarks are kept
-// should be reigned in proportionally to the length of the series.  As
-// a first try of this strategy, singular arrays are being used.
+// should be reigned in proportionally to the length of the String.  As
+// a first try of this strategy, one bookmark is being used.
 //
-#define LINK_Bookmarks_TYPE     BookmarkList*  // alias for Series for now
+#define LINK_Bookmarks_TYPE     BookmarkList*  // alias of Flex for now
 #define HAS_LINK_Bookmarks      FLAVOR_STRING
 
 
@@ -192,20 +192,20 @@ INLINE bool Is_String_Definitely_ASCII(const String* str) {
     return false;
 }
 
-#define String_UTF8(s)      Series_Head(char, ensure(const String*, s))
-#define String_Head(s)      c_cast(Utf8(*), Series_Head(Byte, s))
-#define String_Tail(s)      c_cast(Utf8(*), Series_Tail(Byte, s))
+#define String_UTF8(s)      Flex_Head(char, ensure(const String*, s))
+#define String_Head(s)      c_cast(Utf8(*), Flex_Head(Byte, s))
+#define String_Tail(s)      c_cast(Utf8(*), Flex_Tail(Byte, s))
 
 #define String_Size(s) \
-    Series_Used(ensure(const String*, s))  // encoded byte size, not codepoints
+    Flex_Used(ensure(const String*, s))  // encoded byte size, not codepoints
 
 #define String_Dynamic_Size(s) \
-    Series_Dynamic_Used(ensure(const String*, s))
+    Flex_Dynamic_Used(ensure(const String*, s))
 
 INLINE Length String_Len(const String* s) {
     if (not Is_String_Symbol(s)) {
       #if DEBUG_UTF8_EVERYWHERE
-        if (s->misc.length > Series_Used(s))  // includes 0xDECAFBAD
+        if (s->misc.length > Flex_Used(s))  // includes 0xDECAFBAD
             panic(s);
         if (Is_Definitely_Ascii(s))
             assert(s->misc.length == String_Size(s));
@@ -237,15 +237,15 @@ INLINE REBLEN String_Index_At(
 
     if (Is_String_NonSymbol(s)) {  // length is cached for non-ANY-WORD?
       #if DEBUG_UTF8_EVERYWHERE
-        if (s->misc.length > Series_Used(s))  // includes 0xDECAFBAD
-            panic(s);
+        if (s->misc.length > Flex_Used(s))  // includes 0xDECAFBAD
+            panic (s);
       #endif
 
         // We have length and bookmarks.  We should build String_At() based on
         // this routine.  For now, fall through and do it slowly.
     }
 
-    // Have to do it the slow way if it's a symbol series...but hopefully
+    // Have to do it the slow way if it's a Symbol Flex...but hopefully
     // they're not too long (since spaces and newlines are illegal.)
     //
     REBLEN index = 0;
@@ -261,7 +261,7 @@ INLINE REBLEN String_Index_At(
 INLINE void Set_String_Len_Size(String* s, Length len, Size used) {
     assert(Is_String_NonSymbol(s));
     assert(len <= used);
-    assert(used == Series_Used(s));
+    assert(used == Flex_Used(s));
     s->misc.length = len;
     assert(*Binary_At(s, used) == '\0');
     UNUSED(used);
@@ -270,7 +270,7 @@ INLINE void Set_String_Len_Size(String* s, Length len, Size used) {
 INLINE void Term_String_Len_Size(String* s, Length len, Size used) {
     assert(Is_String_NonSymbol(s));
     assert(len <= used);
-    Set_Series_Used(s, used);
+    Set_Flex_Used(s, used);
     s->misc.length = len;
     *Binary_At(s, used) = '\0';
 }
@@ -278,37 +278,37 @@ INLINE void Term_String_Len_Size(String* s, Length len, Size used) {
 
 //=//// CACHED ACCESSORS AND BOOKMARKS ////////////////////////////////////=//
 //
-// BookMarkList in this terminology is simply a series which contains a list
+// BookMarkList in this terminology is simply a Flex which contains a list
 // of indexes and offsets.  This helps to accelerate finding positions in
 // UTF-8 strings based on index, vs. having to necessarily search from the
 // beginning.
 //
 // !!! At the moment, only one bookmark is in effect at a time.  Even though
 // it's just two numbers, there's only one pointer's worth of space in the
-// series node otherwise.  Bookmarks aren't generated for strings that are
-// very short, or that are never enumerated.
+// Flex Stub otherwise.  Bookmarks aren't generated for a String that is
+// very short, or one that is never enumerated.
 
 #define BMK_INDEX(b) \
-    Series_Head(Bookmark, (b))->index
+    Flex_Head(Bookmark, (b))->index
 
 #define BMK_OFFSET(b) \
-    Series_Head(Bookmark, (b))->offset
+    Flex_Head(Bookmark, (b))->offset
 
 INLINE BookmarkList* Alloc_BookmarkList(void) {
-    BookmarkList* books = Make_Series(BookmarkList,
+    BookmarkList* books = Make_Flex(BookmarkList,
         1,
         FLAG_FLAVOR(BOOKMARKLIST)
             | NODE_FLAG_MANAGED  // lie to be untracked
     );
     Clear_Node_Managed_Bit(books);  // untracked and indefinite lifetime
-    Set_Series_Len(books, 1);
+    Set_Flex_Len(books, 1);
     return books;
 }
 
 INLINE void Free_Bookmarks_Maybe_Null(String* str) {
     assert(Is_String_NonSymbol(str));
     if (LINK(Bookmarks, str)) {
-        GC_Kill_Series(LINK(Bookmarks, str));
+        GC_Kill_Flex(LINK(Bookmarks, str));
         LINK(Bookmarks, str) = nullptr;
     }
 }
@@ -327,7 +327,7 @@ INLINE void Free_Bookmarks_Maybe_Null(String* str) {
         for (i = 0; i != index; ++i)
             cp = Skip_Codepoint(cp);
 
-        Size actual = cast(Byte*, cp) - Series_Data(s);
+        Size actual = cast(Byte*, cp) - Flex_Data(s);
         assert(actual == offset);
     }
 #endif
@@ -375,7 +375,7 @@ INLINE Codepoint Get_Char_At(const String* s, REBLEN n) {
 INLINE void Set_Char_At(String* s, REBLEN n, Codepoint c) {
     //
     // We are maintaining the same length, but DEBUG_UTF8_EVERYWHERE will
-    // corrupt the length every time the Series_Used() changes.  Workaround that
+    // corrupt the length every time the Flex_Used() changes.  Workaround that
     // by saving the length and restoring at the end.
     //
   #if DEBUG_UTF8_EVERYWHERE
@@ -405,10 +405,10 @@ INLINE void Set_Char_At(String* s, REBLEN n, Codepoint c) {
                 String_Tail(s) - old_next_cp
             );
 
-            Set_Series_Used(s, Series_Used(s) + delta);
+            Set_Flex_Used(s, Flex_Used(s) + delta);
         }
         else {
-            Expand_Series_Tail(s, delta);  // this adds to SERIES_USED
+            Expand_Flex_Tail(s, delta);  // this adds to SERIES_USED
             cp = cast(Utf8(*),  // refresh `cp` (may've reallocated!)
                 cast(Byte*, String_Head(s)) + cp_offset
             );
@@ -436,7 +436,7 @@ INLINE void Set_Char_At(String* s, REBLEN n, Codepoint c) {
   #endif
 
     Encode_UTF8_Char(cp, c, size);
-    Assert_Series_Term_If_Needed(s);
+    Assert_Flex_Term_If_Needed(s);
 }
 
 INLINE REBLEN Num_Codepoints_For_Bytes(
@@ -459,7 +459,7 @@ INLINE REBLEN Num_Codepoints_For_Bytes(
 // data they are given is not UTF-8.
 
 #define Make_String(encoded_capacity) \
-    Make_String_Core((encoded_capacity), SERIES_FLAGS_NONE)
+    Make_String_Core((encoded_capacity), FLEX_FLAGS_NONE)
 
 INLINE String* Make_String_UTF8(const char *utf8) {
     return Append_UTF8_May_Fail(nullptr, utf8, strsize(utf8), STRMODE_NO_CR);
@@ -492,17 +492,17 @@ INLINE Offset First_Hash_Candidate_Slot(
 #define Copy_String_At(v) \
     Copy_String_At_Limit((v), -1)
 
-INLINE Series* Copy_Binary_At_Len(
-    const Series* s,
+INLINE Flex* Copy_Binary_At_Len(
+    const Flex* s,
     REBLEN index,
     REBLEN len
 ){
-    return Copy_Series_At_Len_Extra(
+    return Copy_Flex_At_Len_Extra(
         s,
         index,
         len,
         0,
-        FLAG_FLAVOR(BINARY) | SERIES_FLAGS_NONE
+        FLAG_FLAVOR(BINARY) | FLEX_FLAGS_NONE
     );
 }
 

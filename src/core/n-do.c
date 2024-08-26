@@ -528,7 +528,7 @@ DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
             fail (VAL_CONTEXT(OUT));
 
         Array *pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
-        Set_Series_Len(pack, 2);
+        Set_Flex_Len(pack, 2);
         Copy_Meta_Cell(Array_At(pack, 0), source);  // pack wants META values
         Copy_Meta_Cell(Array_At(pack, 1), OUT);
 
@@ -680,7 +680,7 @@ DECLARE_NATIVE(applique)
         STACK_BASE,  // lowest_stackindex of refinements to weave in
         nullptr  // no binder needed
     );
-    Manage_Series(CTX_VARLIST(exemplar));
+    Manage_Flex(CTX_VARLIST(exemplar));
     Init_Frame(frame, exemplar, VAL_FRAME_LABEL(op));
 
     Drop_Data_Stack_To(STACK_BASE);  // refinement order unimportant
@@ -792,7 +792,7 @@ DECLARE_NATIVE(apply)
         STACK_BASE,  // lowest_stackindex of refinements to weave in
         nullptr /* &binder */
     );
-    Manage_Series(CTX_VARLIST(exemplar)); // Putting into a frame
+    Manage_Flex(CTX_VARLIST(exemplar)); // Putting into a frame
     Init_Frame(frame, exemplar, VAL_FRAME_LABEL(op));  // GC guarded
 
     Drop_Data_Stack_To(STACK_BASE);  // partials ordering unimportant

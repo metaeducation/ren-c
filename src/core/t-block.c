@@ -52,9 +52,9 @@ DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
 // 2. How useful the VOID-makes-empty-block is (vs. returning null, void, or
 //    failing) is unclear, since there aren't really usage scenarios for this.
 //
-// 3. This uses a "singular" array which is the size of a "stub" (8 platform
-//    pointers).  The cell is put in the portion of the stub where tracking
-//    information for a dynamically allocated series would ordinarily be.
+// 3. This uses a "singular" Array which is the size of a Stub (8 platform
+//    pointers).  The Cell is put in the portion of the Stub where tracking
+//    information for a dynamically allocated Series would ordinarily be.
 {
     INCLUDE_PARAMS_OF_ONLY_P;
 
@@ -62,7 +62,7 @@ DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
 
     Array* a = Alloc_Singular(NODE_FLAG_MANAGED);  // semi-efficient [3]
     if (Is_Void(v))
-        Set_Series_Len(a, 0);  // singulars initialize at length 1
+        Set_Flex_Len(a, 0);  // singulars initialize at length 1
     else
         Copy_Cell(Stub_Cell(a), ARG(value));
     return Init_Block(OUT, a);
@@ -228,7 +228,7 @@ Bounce MAKE_List(
         // line markers should use construction syntax to preserve them.
 
         Specifier* derived = Derive_Specifier(Cell_Specifier(arg), list);
-        return Init_Series_Cell_At_Core(
+        return Init_Series_At_Core(
             OUT,
             heart,
             Cell_Array(list),
@@ -973,7 +973,7 @@ REBTYPE(List)
         else
             Derelativize(OUT, &Array_Head(arr)[index], specifier);
 
-        Remove_Series_Units(arr, index, len);
+        Remove_Flex_Units(arr, index, len);
         return OUT; }
 
     //-- Search:
@@ -1109,7 +1109,7 @@ REBTYPE(List)
             if (index == 0)
                 Reset_Array(arr);
             else
-                Set_Series_Len(arr, cast(REBLEN, index));
+                Set_Flex_Len(arr, cast(REBLEN, index));
         }
         return COPY(list);
     }
@@ -1392,7 +1392,7 @@ DECLARE_NATIVE(blockify)
     if (Is_Void(v)) {
         // leave empty
     } else {
-        Set_Series_Len(a, 1);
+        Set_Flex_Len(a, 1);
         Copy_Cell(Array_Head(a), cast(Element*, v));
     }
     return Init_Block(OUT, Freeze_Array_Shallow(a));
@@ -1425,7 +1425,7 @@ DECLARE_NATIVE(groupify)
     if (Is_Void(v)) {
         // leave empty
     } else {
-        Set_Series_Len(a, 1);
+        Set_Flex_Len(a, 1);
         Copy_Cell(Array_Head(a), cast(Element*, v));
     }
     return Init_Group(OUT, Freeze_Array_Shallow(a));
@@ -1456,7 +1456,7 @@ DECLARE_NATIVE(enblock)
     if (Is_Void(v)) {
         // leave empty
     } else {
-        Set_Series_Len(a, 1);
+        Set_Flex_Len(a, 1);
         Copy_Cell(Array_Head(a), cast(Element*, v));
     }
     return Init_Block(OUT, Freeze_Array_Shallow(a));
@@ -1487,7 +1487,7 @@ DECLARE_NATIVE(engroup)
     if (Is_Void(v)) {
         // leave empty
     } else {
-        Set_Series_Len(a, 1);
+        Set_Flex_Len(a, 1);
         Copy_Cell(Array_Head(a), cast(Element*, v));
     }
     return Init_Group(OUT, Freeze_Array_Shallow(a));
@@ -1542,7 +1542,7 @@ DECLARE_NATIVE(glom)
             return COPY(result);  // see note: index may be nonzero
 
         Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
-        Set_Series_Len(a, 1);
+        Set_Flex_Len(a, 1);
         Copy_Cell(Array_Head(a), cast(Element*, result));  // not void / splice
         return Init_Block(OUT, a);
     }
@@ -1572,7 +1572,7 @@ DECLARE_NATIVE(glom)
         Array* r = Cell_Array_Ensure_Mutable(result);
         Length a_len = Array_Len(a);
         Length r_len = Array_Len(r);
-        Expand_Series_Tail(a, r_len);  // can move memory, get `at` after
+        Expand_Flex_Tail(a, r_len);  // can move memory, get `at` after
         Element* dst = Array_At(a, a_len);  // old tail position
         Element* src = Array_Head(r);
 
@@ -1580,10 +1580,10 @@ DECLARE_NATIVE(glom)
         for (index = 0; index < r_len; ++index, ++src, ++dst)
             Copy_Cell(dst, src);
 
-        assert(Array_Len(a) == a_len + r_len);  // Expand_Series_Tail sets
+        assert(Array_Len(a) == a_len + r_len);  // Expand_Flex_Tail sets
 
-     #if DEBUG_POISON_SERIES_TAILS
-        Term_Series_If_Necessary(a);
+     #if DEBUG_POISON_FLEX_TAILS
+        Term_Flex_If_Necessary(a);
      #endif
 
         // GLOM only works with mutable arrays, as part of its efficiency.  We
@@ -1591,7 +1591,7 @@ DECLARE_NATIVE(glom)
         // result array (we might sporadically do it the other way just to
         // establish that the optimizations could obliterate either).
         //
-        Decay_Series(r);
+        Decay_Flex(r);
     }
 
     return COPY(accumulator);
@@ -1605,11 +1605,11 @@ DECLARE_NATIVE(glom)
 //
 void Assert_Array_Core(const Array* a)
 {
-    assert(Series_Flavor(a) != FLAVOR_DATASTACK);  // has special handling
+    assert(Flex_Flavor(a) != FLAVOR_DATASTACK);  // has special handling
 
-    Assert_Series_Basics_Core(a);  // not marked free, etc.
+    Assert_Flex_Basics_Core(a);  // not marked free, etc.
 
-    if (not Is_Series_Array(a))
+    if (not Is_Flex_Array(a))
         panic (a);
 
     const Cell* item = Array_Head(a);
@@ -1623,12 +1623,12 @@ void Assert_Array_Core(const Array* a)
         }
     }
 
-    if (Get_Series_Flag(a, DYNAMIC)) {
-        Length rest = Series_Rest(a);
+    if (Get_Flex_Flag(a, DYNAMIC)) {
+        Length rest = Flex_Rest(a);
 
-      #if DEBUG_POISON_SERIES_TAILS
+      #if DEBUG_POISON_FLEX_TAILS
         assert(rest > 0 and rest > n);
-        if (Not_Series_Flag(a, FIXED_SIZE) and not Is_Cell_Poisoned(item))
+        if (Not_Flex_Flag(a, FIXED_SIZE) and not Is_Cell_Poisoned(item))
             panic (item);
         ++item;
         rest = rest - 1;
@@ -1639,7 +1639,7 @@ void Assert_Array_Core(const Array* a)
                 (item->header.bits != CELL_MASK_0)
                 and not (item->header.bits & NODE_FLAG_CELL)
             );
-            if (Get_Series_Flag(a, FIXED_SIZE)) {
+            if (Get_Flex_Flag(a, FIXED_SIZE)) {
                 if (not unwritable) {
                     printf("Writable cell found in fixed-size array rest\n");
                     panic (a);

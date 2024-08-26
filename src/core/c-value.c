@@ -73,13 +73,13 @@ Node* Dump_Value_Debug(const Cell* v)
 
     if (Is_Node_A_Stub(containing)) {
         printf(
-            "Containing series for value pointer found, %p:\n",
+            "Containing Flex for value pointer found, %p:\n",
             cast(void*, containing)
         );
     }
     else{
         printf(
-            "Containing pairing for value pointer found %p:\n",
+            "Containing Pairing for value pointer found %p:\n",
             cast(void*, containing)
         );
     }
@@ -92,7 +92,7 @@ Node* Dump_Value_Debug(const Cell* v)
 //  Panic_Value_Debug: C
 //
 // This is a debug-only "error generator", which will hunt through all the
-// series allocations and panic on the series that contains the value (if
+// Flex allocations and panic on the Flex that contains the value (if
 // it can find it).  This will allow those using Address Sanitizer or
 // Valgrind to know a bit more about where the value came from.
 //
@@ -103,12 +103,12 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
     Node* containing = Dump_Value_Debug(v);
 
     if (containing) {
-        printf("Panicking the containing series...\n");
-        Panic_Series_Debug(cast(Series*, containing));
+        printf("Panicking the containing Flex...\n");
+        Panic_Flex_Debug(cast(Flex*, containing));
     }
 
-    printf("No containing series for value, panicking for stack dump:\n");
-    Panic_Series_Debug(EMPTY_ARRAY);
+    printf("No containing Flex for value, panicking for stack dump:\n");
+    Panic_Flex_Debug(EMPTY_ARRAY);
 }
 
 #endif // !defined(NDEBUG)
@@ -117,7 +117,7 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
 #if DEBUG_HAS_PROBE
 
 INLINE void Probe_Print_Helper(
-    const void *p,  // the Value*, Series*, or UTF-8 char*
+    const void *p,  // the Value*, Flex*, or UTF-8 char*
     const char *expr,  // stringified contents of the PROBE() macro
     const char *label,  // detected type of `p` (see %rebnod.h)
     const char *file,  // file where this PROBE() was invoked
@@ -247,30 +247,30 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "END", file, line);
         goto cleanup;
 
-      case DETECTED_AS_SERIES:
+      case DETECTED_AS_STUB:
         break;  // lots of possibilities, break to handle
     }
 
-    // If we didn't jump to cleanup above, it's a series.  New switch().
+    // If we didn't jump to cleanup above, it's a Flex.  New switch().
 
   blockscope {
-    const Series* s = c_cast(Series* , p);
-    assert(not Is_Node_Free(s));  // Detect should have caught, above
-    Flavor flavor = Series_Flavor(s);
-    Assert_Series(s);  // if corrupt, gives better info than a print crash
+    const Flex* f = c_cast(Flex* , p);
+    assert(not Is_Node_Free(f));  // Detect should have caught, above
+    Flavor flavor = Flex_Flavor(f);
+    Assert_Flex(f);  // if corrupt, gives better info than a print crash
 
     switch (flavor) {
 
-    //=//// ARRAY FLAVORS //////////////////////////////////////////////////=//
+    //=//// ARRAY FLEXES //////////////////////////////////////////////////=//
 
       case FLAVOR_ARRAY:
         Probe_Print_Helper(p, expr, "Generic Array", file, line);
-        Mold_Array_At(mo, cast(const Array*, s), 0, "[]");
+        Mold_Array_At(mo, cast(const Array*, f), 0, "[]");
         break;
 
       case FLAVOR_VARLIST:  // currently same as FLAVOR_PARAMLIST
         Probe_Print_Helper(p, expr, "Varlist (or Paramlist)", file, line);
-        Probe_Molded_Value(CTX_ARCHETYPE(x_cast(Context*, s)));
+        Probe_Molded_Value(CTX_ARCHETYPE(x_cast(Context*, f)));
         break;
 
       case FLAVOR_DETAILS:
@@ -292,7 +292,7 @@ void* Probe_Core_Debug(
 
       case FLAVOR_LET: {
         Probe_Print_Helper(p, expr, "LET single variable", file, line);
-        Append_Spelling(mo->series, INODE(LetSymbol, s));
+        Append_Spelling(mo->series, INODE(LetSymbol, f));
         break; }
 
       case FLAVOR_USE: {
@@ -331,23 +331,23 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "Splicing Instruction", file, line);
         break;
 
-    //=//// SERIES WITH ELEMENTS sizeof(void*) /////////////////////////////=//
+    //=//// FLEXES WITH ELEMENTS sizeof(void*) ////////////////////////////=//
 
       case FLAVOR_KEYLIST: {
-        assert(Series_Wide(s) == sizeof(Key));  // ^-- or is byte size
-        Probe_Print_Helper(p, expr, "KeyList Series", file, line);
-        const Key* tail = Series_Tail(Key, s);
-        const Key* key = Series_Head(Key, s);
+        assert(Flex_Wide(f) == sizeof(Key));  // ^-- or is byte size
+        Probe_Print_Helper(p, expr, "KeyList Flex", file, line);
+        const Key* tail = Flex_Tail(Key, f);
+        const Key* key = Flex_Head(Key, f);
         Append_Ascii(mo->series, "<< ");
         for (; key != tail; ++key) {
-            Mold_Text_Series_At(mo, KEY_SYMBOL(key), 0);
+            Mold_Text_Flex_At(mo, KEY_SYMBOL(key), 0);
             Append_Codepoint(mo->series, ' ');
         }
         Append_Ascii(mo->series, ">>");
         break; }
 
       case FLAVOR_POINTER:
-        Probe_Print_Helper(p, expr, "Series of void*", file, line);
+        Probe_Print_Helper(p, expr, "Flex of void*", file, line);
         break;
 
       case FLAVOR_CANONTABLE:
@@ -355,34 +355,34 @@ void* Probe_Core_Debug(
         break;
 
       case FLAVOR_NODELIST:  // e.g. GC protect list
-        Probe_Print_Helper(p, expr, "Series of NODE*", file, line);
+        Probe_Print_Helper(p, expr, "Flex of Node*", file, line);
         break;
 
-      case FLAVOR_SERIESLIST:  // e.g. manually allocated series list
-        Probe_Print_Helper(p, expr, "Series of Series*", file, line);
+      case FLAVOR_FLEXLIST:  // e.g. manually allocated Flex* list
+        Probe_Print_Helper(p, expr, "Flex of Flex*", file, line);
         break;
 
       case FLAVOR_MOLDSTACK:
         Probe_Print_Helper(p, expr, "Mold Stack", file, line);
         break;
 
-    //=//// SERIES WITH ELEMENTS sizeof(REBLEN) ////////////////////////////=//
+    //=//// FLEXES WITH ELEMENTS sizeof(REBLEN) ///////////////////////////=//
 
       case FLAVOR_HASHLIST:
         Probe_Print_Helper(p, expr, "Hashlist", file, line);
         break;
 
-    //=//// SERIES WITH ELEMENTS sizeof(Bookmark) //////////////////////////=//
+    //=//// FLEXES WITH ELEMENTS sizeof(Bookmark) /////////////////////////=//
 
       case FLAVOR_BOOKMARKLIST:
         Probe_Print_Helper(p, expr, "BookmarkList", file, line);
         break;
 
-    //=//// SERIES WITH ELEMENTS WIDTH 1 ///////////////////////////////////=//
+    //=//// FLEXES WITH ELEMENTS WIDTH 1 //////////////////////////////////=//
 
       case FLAVOR_BINARY: {
-        const Binary* bin = cast(const Binary*, s);
-        Probe_Print_Helper(p, expr, "Byte-Size Series", file, line);
+        const Binary* bin = cast(const Binary*, f);
+        Probe_Print_Helper(p, expr, "Byte-Size Flex", file, line);
 
         const bool brk = (Binary_Len(bin) > 32);  // !!! duplicates MF_Binary code
         Append_Ascii(mo->series, "#{");
@@ -390,16 +390,16 @@ void* Probe_Core_Debug(
         Append_Ascii(mo->series, "}");
         break; }
 
-    //=//// SERIES WITH ELEMENTS WIDTH 1 INTERPRETED AS UTF-8 //////////////=//
+    //=//// FLEXES WITH ELEMENTS WIDTH 1 INTERPRETED AS UTF-8 /////////////=//
 
       case FLAVOR_STRING: {
-        Probe_Print_Helper(p, expr, "String series", file, line);
-        Mold_Text_Series_At(mo, c_cast(String*, s), 0);  // could be TAG!, etc.
+        Probe_Print_Helper(p, expr, "String Flex", file, line);
+        Mold_Text_Flex_At(mo, c_cast(String*, f), 0);  // could be TAG!, etc.
         break; }
 
       case FLAVOR_SYMBOL: {
-        Probe_Print_Helper(p, expr, "Interned (Symbol) series", file, line);
-        Mold_Text_Series_At(mo, c_cast(Symbol*, s), 0);
+        Probe_Print_Helper(p, expr, "Interned (Symbol) Flex", file, line);
+        Mold_Text_Flex_At(mo, c_cast(Symbol*, f), 0);
         break; }
 
       case FLAVOR_THE_GLOBAL_INACCESSIBLE: {
@@ -408,12 +408,12 @@ void* Probe_Core_Debug(
 
     #if !defined(NDEBUG)  // PROBE() is sometimes in non-debug executables
       case FLAVOR_CORRUPT:
-        Probe_Print_Helper(p, expr, "!!! CORRUPT Series !!!", file, line);
+        Probe_Print_Helper(p, expr, "!!! CORRUPT Flex !!!", file, line);
         break;
     #endif
 
       default:
-        Probe_Print_Helper(p, expr, "!!! Unknown Series_Flavor() !!!", file, line);
+        Probe_Print_Helper(p, expr, "!!! Unknown Flex_Flavor() !!!", file, line);
         break;
     }
   }

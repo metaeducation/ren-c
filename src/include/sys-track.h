@@ -28,8 +28,10 @@
 
 #if DEBUG_TRACK_EXTEND_CELLS  // assume DEBUG_COUNT_TICKS
 
-    #define TOUCH_CELL(c) \
+    #define Touch_Cell(c) \
         ((c)->touch = TG_tick)
+
+    #define Touch_Cell_If_Debug(c) Touch_Cell(c)
 
   #if CPLUSPLUS_11
     template<typename T>
@@ -82,6 +84,8 @@
         Track_Cell_Debug((v), __FILE__, __LINE__)
 
 #else
+
+    #define Touch_Cell_If_Debug(c) NOOP
 
     #define TRACK(v) (v)
 

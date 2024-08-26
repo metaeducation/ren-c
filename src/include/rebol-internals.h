@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -23,7 +23,7 @@
 // This is the main include file used in the implementation of the system.
 //
 // * It defines all the data types and structures used by the auto-generated
-//   function prototypes.  Includes the obvious REBINT, Value*, Series*.
+//   function prototypes.  Includes the obvious REBINT, Value*, Flex*.
 //   It also includes any enumerated type parameters to functions which are
 //   shared between various C files.
 //
@@ -174,7 +174,7 @@ typedef RebolValue Value;
 #define MIN_COMMON 10000        // min size of common buffer
 #define MAX_COMMON 100000       // max size of common buffer (shrink trigger)
 #define MAX_NUM_LEN 64          // As many numeric digits we will accept on input
-#define MAX_EXPAND_LIST 5       // number of series-1 in g_mem.prior_expand list
+#define MAX_EXPAND_LIST 5       // num flexes - 1 in g_mem.prior_expand list
 
 
 //=//// FORWARD-DECLARE TYPES USED IN %tmp-internals.h ////////////////////=//
@@ -194,11 +194,11 @@ typedef RebolValue Value;
 #include "structs/struct-cell.h"
 #include "structs/struct-value.h"
 
-#include "structs/struct-stub.h"  // series structure definition, embeds Cell
+#include "structs/struct-stub.h"  // Stub definition (Flex), embeds Cell
 
-#include "structs/struct-array.h"  // series subclass
-#include "structs/struct-action.h"  // array subclass
-#include "structs/struct-context.h"  // array subclass
+#include "structs/struct-array.h"  // Flex subclass
+#include "structs/struct-action.h"  // Array subclass
+#include "structs/struct-context.h"  // Array subclass
 
 #include "structs/struct-patch.h"
 
@@ -213,7 +213,7 @@ typedef RebolValue Value;
 #include "sys-kinds.h"  // defines Heart and Kind as safe wrappers if C++
 
 #include "sys-ordered.h"  // changing the type enum *must* update these macros
-#include "sys-flavor.h"  // series subclass byte (uses sizeof(Cell))
+#include "sys-flavor.h"  // Flex subclass byte (uses sizeof(Cell))
 
 
 #include "sys-hooks.h"  // function pointer definitions
@@ -242,7 +242,7 @@ struct Reb_Enum_Vars {
 
     // !!! Enumerating key/val pairs in modules in the "sea of words" model is
     // tricky, as what it really is hooks the variables in a linked list off
-    // the Symbol series node for the symbol.  This is accessed via a global
+    // the Symbol Stub Node for the word.  This is accessed via a global
     // hash table that can expand and rearrange freely...it's not possible
     // to lock the table during enumeration.  Locking the module itself may
     // be possible, but the iteration order could get messed up by a hash
@@ -293,7 +293,7 @@ typedef struct {
     bool always_malloc;   // For memory-related troubleshooting
   #endif
 
-    Series** prior_expand;  // Track prior series expansions (acceleration)
+    Flex** prior_expand;  // Track prior Flex expansions (acceleration)
 
     uintptr_t usage;  // Overall memory used
     Option(uintptr_t) usage_limit;  // Memory limit set by SECURE
@@ -302,7 +302,7 @@ typedef struct {
     intptr_t fuzz_factor;  // (-) => a countdown, (+) percent of 10000
   #endif
 
-  #if DEBUG_MONITOR_SERIES
+  #if DEBUG_MONITOR_FLEX
     const Node* monitor_node;
   #endif
 
@@ -311,14 +311,14 @@ typedef struct {
   #endif
 
   #if DEBUG
-    intptr_t num_black_series;
+    intptr_t num_black_flex;
   #endif
 
   #if DEBUG_COLLECT_STATS
-    Size series_memory;
-    Count series_made;
-    Count series_freed;
-    Count series_expanded;
+    Size flex_memory;
+    Count num_flex_made;
+    Count num_flex_freed;
+    Count num_flex_expanded;
     Count blocks_made;
     Count objects_made;
   #endif
@@ -327,7 +327,7 @@ typedef struct {
 typedef struct {
     Symbol builtin_canons[ALL_SYMS_MAX + 1];
 
-    Series* by_hash;  // Symbol REBSTR pointers indexed by hash
+    Flex* by_hash;  // Symbol* pointers indexed by hash
     REBLEN num_slots_in_use;  // Total symbol hash slots (+deleteds)
   #if !defined(NDEBUG)
     REBLEN num_deleteds;  // Deleted symbol hash slots "in use"
@@ -340,9 +340,9 @@ typedef struct {
     intptr_t depletion;  // bytes left to allocate until automatic GC is forced
     intptr_t ballast;  // what depletion is reset to after a GC
     bool disabled;  // true when RECYCLE/OFF is run
-    Series* guarded;  // stack of GC protected series and values
-    Series* mark_stack;  // series pending to mark their reachables as live
-    Series* manuals;  // Manually memory managed (not by GC)
+    Flex* guarded;  // stack of GC protected Flexes and Values
+    Flex* mark_stack;  // Flexes pending to mark their reachables as live
+    Flex* manuals;  // Manually memory managed (not by GC)
 
   #if DEBUG
     intptr_t mark_count;  // Count of stubs with NODE_FLAG_MARKED, must balance
@@ -354,8 +354,8 @@ typedef struct {
 
   #if DEBUG_COLLECT_STATS
     REBLEN recycle_counter;
-    REBLEN recycle_series_total;
-    REBLEN recycle_series;
+    REBLEN recycled_stubs_total;
+    REBLEN recycled_stubs;
   #endif
 } GarbageCollectorState;
 
@@ -390,7 +390,7 @@ typedef struct {
 } TrampolineState;
 
 typedef struct {
-    Series* stack;  // tracked to prevent infinite loop in cyclical molds
+    Flex* stack;  // tracked to prevent infinite loop in cyclical molds
 
     String* buffer;  // temporary UTF8 buffer
 
@@ -523,7 +523,7 @@ enum rebol_signals {
     // particular during memory allocation, which can detect crossing a
     // memory usage boundary that suggests GC'ing would be good...but might
     // be in the middle of code that is halfway through manipulating a
-    // managed series.
+    // managed Flex.
     //
     SIG_RECYCLE = 1 << 0,
 

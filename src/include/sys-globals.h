@@ -28,8 +28,9 @@
 //-- Bootstrap variables:
 PVAR REBINT PG_Boot_Phase;  // To know how far in the boot we are.
 
-// This is a series that holds 8-platform-pointer Array nodes, arranged in
-// canon order.  It provides fast access to lib entries by symbol.
+// This is a C array that holds 8-platform-pointer Array Flex Stubs (the
+// structures themselves, not pointers to them), arranged in canon order.
+// It provides fast access to Patches for variables in LIB by SymId.
 //
 PVAR Array PG_Lib_Patches[LIB_SYMS_MAX];
 

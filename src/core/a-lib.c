@@ -26,7 +26,7 @@
 // comments and notes which will help understand it.
 //
 // What characterizes the external API is that it is not necessary to #include
-// the extensive definitions of `struct Series` or the APIs for dealing with
+// the extensive definitions of `struct Stub` or the APIs for dealing with
 // all the internal details (e.g. Push_GC_Guard(), which are easy to get
 // wrong).  Not only does this simplify the interface, but it also means that
 // the C code using the library isn't competing as much for definitions in
@@ -124,20 +124,20 @@ INLINE const RebolValue* NULLIFY_NULLED(const Value* value) {
     } while (0)
 
 
-//=//// SERIES-BACKED ALLOCATORS //////////////////////////////////////////=//
+//=//// FLEX-BACKED ALLOCATORS ////////////////////////////////////////////=//
 //
 // These are replacements for malloc(), realloc(), and free() which use a
-// byte-sized Series as the backing store for the data.
+// byte-sized Flex as the backing store for the data.
 //
-// One benefit of using a series is that it offers more options for automatic
+// One benefit of using a Flex is that it offers more options for automatic
 // memory management (such as being freed in case of a fail(), vs. leaked as
 // a malloc() would, or perhaps being GC'd when a particular FRAME! ends).
 //
 // It also has the benefit of helping interface with client code that has
 // been stylized to use malloc()-ish hooks to produce data, when the eventual
-// target of that data is a Rebol series.  It does this without exposing
-// Series* internals to the external API, by allowing one to "rebRepossess()"
-// the underlying series as a BINARY! value.
+// target of that data is a Rebol Flex.  It does this without exposing
+// Flex internals to the external API, by allowing one to "rebRepossess()"
+// the underlying data as a BINARY! value.
 //
 
 
@@ -148,7 +148,7 @@ INLINE const RebolValue* NULLIFY_NULLED(const Value* value) {
 //   if an allocation cannot be fulfilled.
 //
 // * Like plain malloc(), if size is zero, the implementation just has to
-//   return something that free() will take.  A backing series is added in
+//   return something that free() will take.  A backing Flex is added in
 //   this case vs. returning null, in order to avoid null handling in other
 //   routines (e.g. rebRepossess() or handle lifetime control functions).
 //
@@ -162,21 +162,21 @@ INLINE const RebolValue* NULLIFY_NULLED(const Value* value) {
 //   for the size of any fundamental type".  See notes on ALIGN_SIZE.
 //
 // !!! rebAllocBytesAligned() could exist to take an alignment, which could
-// save on wasted bytes when ALIGN_SIZE > sizeof(Series*)...or work with
+// save on wasted bytes when ALIGN_SIZE > sizeof(Flex*)...or work with
 // "weird" large fundamental types that need more alignment than ALIGN_SIZE.
 //
 unsigned char* API_rebAllocBytes(size_t size)
 {
     ENTER_API;
 
-    Binary* s = Make_Series(Binary,
-        ALIGN_SIZE  // stores Series* (must be at least big enough for void*)
+    Binary* s = Make_Flex(Binary,
+        ALIGN_SIZE  // stores Binary* (must be at least big enough for void*)
             + size  // for the actual data capacity (may be 0, see notes)
             + 1,  // for termination (AS TEXT! of rebRepossess(), see notes)
-        FLAG_FLAVOR(BINARY)  // rebRepossess() only creates binary series ATM
+        FLAG_FLAVOR(BINARY)  // rebRepossess() only creates BINARY! ATM
             | NODE_FLAG_ROOT  // indicate this originated from the API
-            | SERIES_FLAG_DONT_RELOCATE  // direct data pointer handed back
-            | SERIES_FLAG_DYNAMIC  // rebRepossess() needs bias field
+            | FLEX_FLAG_DONT_RELOCATE  // direct data pointer handed back
+            | FLEX_FLAG_DYNAMIC  // rebRepossess() needs bias field
     );
 
     Byte* ptr = Binary_Head(s) + ALIGN_SIZE;
@@ -207,7 +207,7 @@ unsigned char* API_rebAllocBytes(size_t size)
 //
 // Variant of rebAllocBytes() that returns nullptr on failure.  To accomplish
 // this it just uses a RESCUE_SCOPE to intercept any fail() that happens in the
-// course of the underlying series creation.
+// course of the underlying Flex creation.
 //
 unsigned char* API_rebTryAllocBytes(size_t size)
 {
@@ -257,9 +257,9 @@ unsigned char* API_rebReallocBytes(void *ptr, size_t new_size)
 
     REBLEN old_size = Binary_Len(s) - ALIGN_SIZE;
 
-    // !!! It's less efficient to create a new series with another call to
-    // rebAalloc(), but simpler for the time being.  Switch to do this with
-    // the same series node.
+    // !!! It's less efficient to create a new Flex with another call to
+    // rebAlloc(), but simpler for the time being.  Switch to do this with
+    // the same Flex Stub.
     //
     Byte* reallocated = API_rebAllocBytes(new_size);
     memcpy(reallocated, ptr, old_size < new_size ? old_size : new_size);
@@ -299,7 +299,7 @@ void API_rebFreeMaybe(void *ptr)
         );
     }
 
-    assert(Series_Wide(s) == 1);
+    assert(Flex_Wide(s) == 1);
 
     if (g_gc.recycling and Is_Node_Marked(s)) {
         assert(Is_Node_Managed(s));
@@ -312,9 +312,9 @@ void API_rebFreeMaybe(void *ptr)
     Clear_Node_Root_Bit(s);
 
     if (Is_Node_Managed(s))  // set by rebUnmanageMemory()
-        GC_Kill_Series(s);
+        GC_Kill_Flex(s);
     else
-        Free_Unmanaged_Series(s);
+        Free_Unmanaged_Flex(s);
 }
 
 
@@ -336,12 +336,12 @@ void API_rebFree(void *ptr) {
 //
 //  rebRepossess: API
 //
-// Alternative to rebFree() is to take over the underlying series as a
+// Alternative to rebFree() is to take over the underlying Flex as a
 // BINARY!.  The old void* should not be used after the transition, as this
-// operation makes the series underlying the memory subject to relocation.
+// operation makes the Flex underlying the memory subject to relocation.
 //
-// If the passed in size is less than the size with which the series was
-// allocated, the overage will be treated as unused series capacity.
+// If the passed in size is less than the size with which the Flex was
+// allocated, the overage will be treated as unused Flex capacity.
 //
 // Note that all rebRepossess()'d data will be terminated by an 0x00 byte
 // after the end of its capacity.
@@ -352,7 +352,7 @@ void API_rebFree(void *ptr) {
 //
 // !!! It might seem tempting to use (Binary_Len(s) - ALIGN_SIZE).  However,
 // some routines make allocations bigger than they ultimately need and do not
-// realloc() before converting the memory to a series...rebInflate() and
+// realloc() before converting the memory to a Flex...rebInflate() and
 // rebDeflate() do this.  So a version passing the size will be necessary,
 // and since C does not have the size exposed in malloc() and you track it
 // yourself, it seems fair to *always* ask the caller to pass in a size.
@@ -366,26 +366,26 @@ RebolValue* API_rebRepossess(void* ptr, size_t size)
 
     Binary* s = *ps;
     assert(Is_Node_Root_Bit_Set(s));  // may or may not be managed
-    assert(Get_Series_Flag(s, DONT_RELOCATE));
+    assert(Get_Flex_Flag(s, DONT_RELOCATE));
 
     if (size > Binary_Len(s) - ALIGN_SIZE)
         fail ("Attempt to rebRepossess() more than rebAlloc() capacity");
 
     Clear_Node_Root_Bit(s);
-    Clear_Series_Flag(s, DONT_RELOCATE);
+    Clear_Flex_Flag(s, DONT_RELOCATE);
 
-    if (Get_Series_Flag(s, DYNAMIC)) {
+    if (Get_Flex_Flag(s, DYNAMIC)) {
         //
-        // Dynamic series have the concept of a "bias", which is unused
-        // allocated capacity at the head of a series.  Bump the "bias" to
-        // treat the embedded Series* (aligned to REBI64) as unused capacity.
+        // Dynamic Flexes have the concept of a "bias", which is unused
+        // allocated capacity at the head of the Flex.  Bump the "bias" to
+        // treat the embedded Binary* (aligned to REBI64) as unused capacity.
         //
-        Set_Series_Bias(s, ALIGN_SIZE);
+        Set_Flex_Bias(s, ALIGN_SIZE);
         s->content.dynamic.data += ALIGN_SIZE;
         s->content.dynamic.rest -= ALIGN_SIZE;
     }
     else {
-        // Data is in Series Stub itself, no bias.  Just slide the bytes down.
+        // Data is in Binary Stub itself, no bias.  Just slide the bytes down.
         //
         memmove(  // src overlaps destination, can't use memcpy()
             Binary_Head(s),
@@ -421,13 +421,13 @@ void* API_rebUnmanageMemory(void* ptr)
     Binary** ps = cast(Binary**, ptr) - 1;
     Unpoison_Memory_If_Sanitize(ps, sizeof(Binary*));  // fetch `s` underruns
 
-    // We "manage" the series to remove it from the tracked manuals list.
+    // We "manage" the Flex to remove it from the tracked manuals list.
     // But the fact that it still has NODE_FLAG_ROOT means it should not be
     // garbage collected.
     //
     Binary* s = *ps;
     assert(Is_Node_Root_Bit_Set(s));
-    Manage_Series(s);  // panics if already unmanaged... should it tolerate?
+    Manage_Flex(s);  // panics if already unmanaged... should it tolerate?
 
     Poison_Memory_If_Sanitize(ps, sizeof(Binary*));  // catch underruns
 
@@ -2038,7 +2038,7 @@ static size_t Bytes_Into(
 //
 // !!! Caller must allocate a buffer of the returned size + 1.  It's not clear
 // if this is a good idea; but this is based on a longstanding convention of
-// zero termination of Rebol series, including binaries.  Review.
+// zero termination of Rebol TEXT! and BINARY!.
 //
 size_t API_rebBytesInto(
     RebolSpecifier** specifier_ref,
@@ -2316,7 +2316,7 @@ const RebolNodeInternal* API_rebQUOTING(const void* p)
     const Stub* stub;
 
     switch (Detect_Rebol_Pointer(p)) {
-      case DETECTED_AS_SERIES: {
+      case DETECTED_AS_STUB: {
         stub = c_cast(Stub*, p);
         if (Not_Subclass_Flag(API, stub, RELEASE))
             fail ("Can't quote instructions (besides rebR())");
@@ -2379,7 +2379,7 @@ RebolNodeInternal* API_rebUNQUOTING(const void* p)
     Stub* stub;
 
     switch (Detect_Rebol_Pointer(p)) {
-      case DETECTED_AS_SERIES: {
+      case DETECTED_AS_STUB: {
         stub = m_cast(Stub*, c_cast(Stub*, p));
         if (Not_Subclass_Flag(API, stub, RELEASE))
             fail ("Can't unquote instructions (besides rebR())");
@@ -2477,7 +2477,7 @@ RebolNodeInternal* API_rebRUN(const void* p)
     Stub* stub;
 
     switch (Detect_Rebol_Pointer(p)) {
-      case DETECTED_AS_SERIES: {
+      case DETECTED_AS_STUB: {
         stub = m_cast(Stub*, c_cast(Stub*, p));
         if (Not_Subclass_Flag(API, stub, RELEASE))
             fail ("Can't quote instructions (besides rebR())");
@@ -2558,9 +2558,9 @@ void API_rebUnmanage(void *p)
     if (Not_Node_Managed(stub))
         fail ("Attempt to rebUnmanage() API value with indefinite lifetime.");
 
-    // It's not safe to convert the average series that might be referred to
+    // It's not safe to convert the average Flex that might be referred to
     // from managed to unmanaged, because you don't know how many references
-    // might be in cells.  But the singular array holding API handles has
+    // might be in Cells.  But the singular array holding API handles has
     // pointers to its cell being held by client C code only.  It's at their
     // own risk to do this, and not use those pointers after a free.
     //
@@ -2960,7 +2960,7 @@ RebolValue* API_rebCollateExtension_internal(
     int cfuncs_len
 ){
     Array* a = Make_Array(IDX_COLLATOR_MAX);  // details
-    Set_Series_Len(a, IDX_COLLATOR_MAX);
+    Set_Flex_Len(a, IDX_COLLATOR_MAX);
 
     Init_Handle_Cdata(
         Array_At(a, IDX_COLLATOR_SCRIPT),

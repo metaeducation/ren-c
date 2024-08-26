@@ -18,7 +18,7 @@ INLINE bool Any_Listlike(const Cell* v) {
     const Node* node1 = Cell_Node1(v);
     if (Is_Node_A_Cell(node1))
         return true;  // Cell_List_At() works, but Cell_Array() won't work!
-    return Series_Flavor(u_cast(const Series*, node1)) == FLAVOR_ARRAY;
+    return Flex_Flavor(u_cast(const Flex*, node1)) == FLAVOR_ARRAY;
 }
 
 INLINE const Array* Cell_Array(const Cell* v) {
@@ -58,7 +58,7 @@ INLINE const Element* Cell_List_Len_At(
         return c_cast(Element*, node);
     }
     const Array* arr = c_cast(Array*, node);
-    REBIDX i = VAL_INDEX_RAW(v);  // Cell_Array() already checks it's series
+    REBIDX i = VAL_INDEX_RAW(v);  // Cell_Array() already checks it's a series
     Length len = Array_Len(arr);
     if (i < 0 or i > cast(REBIDX, len))
         fail (Error_Index_Out_Of_Range_Raw());
@@ -130,10 +130,10 @@ INLINE Element* Init_Any_List_At_Core(
     REBLEN index,
     Stub* binding
 ){
-    return Init_Series_Cell_At_Core(
+    return Init_Series_At_Core(
         out,
         heart,
-        Force_Series_Managed_Core(array),
+        Force_Flex_Managed_Core(array),
         index,
         binding
     );
@@ -147,7 +147,7 @@ INLINE Element* Init_Any_List_At_Core(
         REBLEN index,
         Stub* binding
     ){
-        return Init_Series_Cell_At_Core(out, heart, array, index, binding);
+        return Init_Series_At_Core(out, heart, array, index, binding);
     }
 #endif
 

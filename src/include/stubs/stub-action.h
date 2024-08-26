@@ -88,7 +88,7 @@
 // that the keylist can be changed without needing to update all the
 // REBVALs for that object.
 //
-// It may be a simple Series* -or- in the case of the varlist of a running
+// It may be a simple Flex* -or- in the case of the varlist of a running
 // FRAME! on the stack, it points to a Level*.  If it's a FRAME! that
 // is not running on the stack, it will be the function paramlist of the
 // actual phase that function is for.  Since Level* all start with a
@@ -114,7 +114,7 @@
 INLINE void INIT_BONUS_KEYSOURCE(Array* varlist, Node* keysource) {
     if (keysource != nullptr) {
         if (Is_Node_A_Stub(keysource))
-            assert(IS_KEYLIST(cast(Series*, keysource)));
+            assert(IS_KEYLIST(cast(Flex*, keysource)));
         else
             assert(Is_Non_Cell_Node_A_Level(keysource));
     }
@@ -241,7 +241,7 @@ INLINE bool Is_Throwing(Level* level_) {
 
 
 #define INIT_VAL_ACTION_DETAILS                 Init_Cell_Node1
-#define VAL_ACTION_PARTIALS_OR_LABEL(v)         cast(Series*, Cell_Node2(v))
+#define VAL_ACTION_PARTIALS_OR_LABEL(v)         cast(Flex*, Cell_Node2(v))
 #define INIT_VAL_ACTION_PARTIALS_OR_LABEL       Init_Cell_Node2
 
 
@@ -261,13 +261,13 @@ INLINE Phase* ACT_IDENTITY(Action* action) {
 // archetype is updated to match its container.
 //
 // Note that the details array represented by the identity is not guaranteed
-// to be SERIES_FLAG_DYNAMIC, so we use Series_Data() that handles it.
+// to be FLEX_FLAG_DYNAMIC, so we use Flex_Data() that handles it.
 //
 #define ACT_ARCHETYPE(action) \
-    cast(Element*, Series_Data(ACT_IDENTITY(action)))
+    cast(Element*, Flex_Data(ACT_IDENTITY(action)))
 
 #define Phase_Archetype(phase) \
-    cast(Element*, Series_Data(ensure(Phase*, phase)))
+    cast(Element*, Flex_Data(ensure(Phase*, phase)))
 
 
 INLINE bool Is_Frame_Details(const Cell* v) {
@@ -332,7 +332,7 @@ INLINE Context* ACT_EXEMPLAR(Action* a) {
     cast(KeyList*, node_BONUS(KeySource, ACT_EXEMPLAR(a)))
 
 #define ACT_KEYS_HEAD(a) \
-    Series_Head(const Key, ACT_KEYLIST(a))
+    Flex_Head(const Key, ACT_KEYLIST(a))
 
 #define ACT_KEYS(tail,a) \
     CTX_KEYS((tail), ACT_EXEMPLAR(a))
@@ -354,12 +354,12 @@ INLINE Param* ACT_PARAMS_HEAD(Action* a) {
     mutable_LINK_DISPATCHER(ACT_IDENTITY(a)) = cast(CFunction*, (cfunc))
 
 
-// The DETAILS array isn't guaranteed to be SERIES_FLAG_DYNAMIC (it may hold
+// The DETAILS array isn't guaranteed to be FLEX_FLAG_DYNAMIC (it may hold
 // only the archetype, e.g. with a specialized function).  *BUT* if you are
 // asking for elements in the details array, you must know it is dynamic.
 //
 INLINE Value* Details_At(Details* details, Length n) {
-    assert(n != 0 and n < Series_Dynamic_Used(details));
+    assert(n != 0 and n < Flex_Dynamic_Used(details));
     Cell* at = cast(Cell*, details->content.dynamic.data) + n;
     return cast(Value*, at);
 }
@@ -458,13 +458,13 @@ INLINE bool Action_Is_Base_Of(Action* base, Action* derived) {
     if (ACT_IDENTITY(derived) == ACT_IDENTITY(base))
         return true;  // Covers COPY + HIJACK cases (seemingly)
 
-    Series* keylist_test = ACT_KEYLIST(derived);
-    Series* keylist_base = ACT_KEYLIST(base);
+    KeyList* keylist_test = ACT_KEYLIST(derived);
+    KeyList* keylist_base = ACT_KEYLIST(base);
     while (true) {
         if (keylist_test == keylist_base)
             return true;
 
-        Series* ancestor = LINK(Ancestor, keylist_test);
+        KeyList* ancestor = LINK(Ancestor, keylist_test);
         if (ancestor == keylist_test)
             return false;  // signals end of the chain, no match found
 

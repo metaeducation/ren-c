@@ -2,7 +2,7 @@
 
 INLINE const Binary* Cell_Binary(const Cell* v) {
     assert(Cell_Heart(v) == REB_BINARY);
-    return c_cast(Binary*, Cell_Series(v));
+    return c_cast(Binary*, Cell_Flex(v));
 }
 
 #define Cell_Binary_Ensure_Mutable(v) \
@@ -39,10 +39,10 @@ INLINE const Byte* Cell_Binary_Size_At(
     m_cast(Byte*, Cell_Binary_At(Known_Mutable(v)))
 
 #define Init_Binary(out,bin) \
-    Init_Series_Cell((out), REB_BINARY, (bin))
+    Init_Series((out), REB_BINARY, (bin))
 
 #define Init_Binary_At(out,bin,offset) \
-    Init_Series_Cell_At((out), REB_BINARY, (bin), (offset))
+    Init_Series_At((out), REB_BINARY, (bin), (offset))
 
 
 //=//// GLOBAL BINARIES //////////////////////////////////////////////////=//

@@ -6,7 +6,7 @@ INLINE const String* Cell_String(const Cell* v) {
         return Cell_Word_Symbol(v);
 
     assert(Any_String_Kind(heart) or heart == REB_URL);
-    return c_cast(String*, Cell_Series(v));
+    return c_cast(String*, Cell_Flex(v));
 }
 
 #define Cell_String_Ensure_Mutable(v) \
@@ -21,14 +21,14 @@ INLINE const String* Cell_Issue_String(const Cell* v) {
 // This routine works with the notion of "length" that corresponds to the
 // idea of the datatype which the series index is for.  Notably, a BINARY!
 // can alias an ANY-STRING? or ANY-WORD? and address the individual bytes of
-// that type.  So if the series is a string and not a binary, the special
-// cache of the length in the series node for strings must be used.
+// that type.  So if the series is a STRING! and not a BINARY!, the special
+// cache of the length in the String Stub must be used.
 //
 INLINE Length Cell_Series_Len_Head(const Cell* v) {
-    const Series* s = Cell_Series(v);
-    if (Is_Series_UTF8(s) and Cell_Heart(v) != REB_BINARY)
-        return String_Len(c_cast(String*, s));
-    return Series_Used(s);
+    const Flex* f = Cell_Flex(v);
+    if (Is_Flex_UTF8(f) and Cell_Heart(v) != REB_BINARY)
+        return String_Len(c_cast(String*, f));
+    return Flex_Used(f);
 }
 
 INLINE bool VAL_PAST_END(const Cell* v)
@@ -68,7 +68,7 @@ INLINE Utf8(const*) Cell_String_At(const Cell* v) {
     if (not Any_String_Kind(heart))  // non-positional: URL, ISSUE, WORD...
         return Cell_Utf8_Head(v);  // might store utf8 directly in cell
 
-    const String* str = c_cast(String*, Cell_Series(v));
+    const String* str = c_cast(String*, Cell_Flex(v));
     REBIDX i = VAL_INDEX_RAW(v);
     if (i < 0 or i > cast(REBIDX, String_Len(str)))
         fail (Error_Index_Out_Of_Range_Raw());
@@ -176,10 +176,10 @@ INLINE Element* Init_Any_String_At(
     const_if_c String* s,
     REBLEN index
 ){
-    Init_Series_Cell_At_Core(
+    Init_Series_At_Core(
         out,
         heart,
-        Force_Series_Managed_Core(s),
+        Force_Flex_Managed_Core(s),
         index,
         UNBOUND
     );
@@ -194,7 +194,7 @@ INLINE Element* Init_Any_String_At(
         REBLEN index
     ){
         // Init will assert if str is not managed...
-        return Init_Series_Cell_At_Core(out, heart, s, index, UNBOUND);
+        return Init_Series_At_Core(out, heart, s, index, UNBOUND);
     }
 #endif
 

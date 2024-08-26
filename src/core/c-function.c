@@ -204,8 +204,8 @@ void Push_Keys_And_Parameters_May_Fail(
                 Ensure_Adjunct(adjunct_out);
 
                 String* string = Copy_String_At(item);
-                Manage_Series(string);
-                Freeze_Series(string);
+                Manage_Flex(string);
+                Freeze_Flex(string);
                 Init_Text(
                     CTX_VAR(*adjunct_out, STD_ACTION_ADJUNCT_DESCRIPTION),
                     string
@@ -219,8 +219,8 @@ void Push_Keys_And_Parameters_May_Fail(
                     fail (Error_Bad_Func_Def_Raw(item));
 
                 String* string = Copy_String_At(item);
-                Manage_Series(string);
-                Freeze_Series(string);
+                Manage_Flex(string);
+                Freeze_Flex(string);
                 Set_Parameter_String(TOP, string);
             }
 
@@ -482,18 +482,18 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
     Count num_params = (TOP_INDEX - base) / 2;
 
-    KeyList* keylist = Make_Series(KeyList,
+    KeyList* keylist = Make_Flex(KeyList,
         num_params,
-        SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
+        FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED
     );
-    Set_Series_Used(keylist, num_params);  // no terminator
+    Set_Flex_Used(keylist, num_params);  // no terminator
     LINK(Ancestor, keylist) = keylist;  // chain
 
     Array* paramlist = Make_Array_Core(
         num_params + 1,
-        SERIES_MASK_PARAMLIST
+        FLEX_MASK_PARAMLIST
     );
-    Set_Series_Len(paramlist, num_params + 1);
+    Set_Flex_Len(paramlist, num_params + 1);
 
     if (flags & MKF_HAS_RETURN)
         paramlist->leader.bits |= VARLIST_FLAG_PARAMLIST_HAS_RETURN;
@@ -513,7 +513,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     Value* param = 1 + Init_Anti_Word(
         x_cast(Value*, Array_Head(paramlist)), Canon(ROOTVAR)
     );
-    Key* key = Series_Head(Key, keylist);
+    Key* key = Flex_Head(Key, keylist);
 
     if (return_stackindex != 0) {
         assert(flags & MKF_RETURN);
@@ -575,7 +575,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     }
     assert(param == Array_Tail(paramlist));
 
-    Manage_Series(paramlist);
+    Manage_Flex(paramlist);
 
     INIT_BONUS_KEYSOURCE(paramlist, keylist);
     MISC(VarlistAdjunct, paramlist) = nullptr;
@@ -589,9 +589,9 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     // Must remove binder indexes for all words, even if about to fail
     //
   blockscope {
-    const Key* key_tail = Series_Tail(Key, keylist);
-    const Key* key = Series_Head(Key, keylist);
-    const Param* param = Series_At(Param, paramlist, 1);
+    const Key* key_tail = Flex_Tail(Key, keylist);
+    const Key* key = Flex_Head(Key, keylist);
+    const Param* param = Flex_At(Param, paramlist, 1);
     for (; key != key_tail; ++key, ++param) {
         //
         // See notes in AUGMENT on why we don't do binder indices on "sealed"
@@ -728,7 +728,7 @@ Phase* Make_Action(
 
     assert(Is_Node_Managed(paramlist));
     assert(
-        Is_Anti_Word_With_Id(Series_Head(Value, paramlist), SYM_ROOTVAR)
+        Is_Anti_Word_With_Id(Flex_Head(Value, paramlist), SYM_ROOTVAR)
         or CTX_TYPE(cast(Context*, paramlist)) == REB_FRAME
     );
 
@@ -743,10 +743,10 @@ Phase* Make_Action(
   blockscope {
     KeyList* keylist = cast(KeyList*, node_BONUS(KeySource, paramlist));
 
-    Assert_Series_Managed(keylist);  // paramlists/keylists, can be shared
-    assert(Series_Used(keylist) + 1 == Array_Len(paramlist));
+    Assert_Flex_Managed(keylist);  // paramlists/keylists, can be shared
+    assert(Flex_Used(keylist) + 1 == Array_Len(paramlist));
     if (Get_Subclass_Flag(VARLIST, paramlist, PARAMLIST_HAS_RETURN)) {
-        const Key* key = Series_At(const Key, keylist, 0);
+        const Key* key = Flex_At(const Key, keylist, 0);
         assert(KEY_SYM(key) == SYM_RETURN);
         UNUSED(key);
     }
@@ -758,9 +758,9 @@ Phase* Make_Action(
     //
     Array* details = Make_Array_Core(
         details_capacity,  // Note: may be just 1 (so non-dynamic!)
-        SERIES_MASK_DETAILS | NODE_FLAG_MANAGED
+        FLEX_MASK_DETAILS | NODE_FLAG_MANAGED
     );
-    Set_Series_Len(details, details_capacity);
+    Set_Flex_Len(details, details_capacity);
 
     Cell* archetype = Array_Head(details);
     Reset_Unquoted_Header_Untracked(TRACK(archetype), CELL_MASK_FRAME);
@@ -783,7 +783,7 @@ Phase* Make_Action(
 
     // !!! We may have to initialize the exemplar rootvar.
     //
-    Value* rootvar = Series_Head(Value, paramlist);
+    Value* rootvar = Flex_Head(Value, paramlist);
     if (Is_Anti_Word_With_Id(rootvar, SYM_ROOTVAR)) {
         INIT_VAL_FRAME_ROOTVAR(rootvar, paramlist, ACT_IDENTITY(act), UNBOUND);
     }

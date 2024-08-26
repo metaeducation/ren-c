@@ -92,8 +92,8 @@ enum {
 //
 // 4. The FRAME! we're making demands that the varlist be managed to put it
 //    into a cell.  It may already have been managed...but since varlists
-//    aren't added to the manual series list, the bit must be tweaked vs.
-//    using Force_Series_Managed().
+//    aren't added to the manual Flex list, the bit must be tweaked vs.
+//    using Force_Flex_Managed().
 //
 // 5. Because the built FRAME! is intended to be used with DO, it must be
 //    "phaseless".  The property of phaselessness allows detection of when
@@ -141,7 +141,7 @@ Bounce Encloser_Dispatcher(Level* const L)
     assert(Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED));
     Clear_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED);  // [3]
 
-    Set_Node_Managed_Bit(varlist);  // can't use Force_Series_Managed [4]
+    Set_Node_Managed_Bit(varlist);  // can't use Force_Flex_Managed [4]
 
     Element* rootcopy = Copy_Cell(SPARE, rootvar);  // need phaseless copy [5]
     INIT_VAL_FRAME_PHASE_OR_LABEL(SPARE, VAL_FRAME_LABEL(inner));

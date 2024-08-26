@@ -21,7 +21,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // While most extensions should use %rebol.h, some extensions need access to
-// the inner bits of cells and series provided by %rebol-internals.h.  But
+// the inner bits of Cells and Stubs provided by %rebol-internals.h.  But
 // they don't want *all* the definitions the core uses.  So those definitions
 // are added in this file.
 //

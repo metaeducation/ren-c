@@ -485,9 +485,9 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
         assert(VAL_INDEX(port_data) == 0);
 
         // !!! Binaries need +1 space for the terminator, but that is handled
-        // internally to Extend_Series.  Review wasted space in array case.
+        // internally to Extend_Flex.  Review wasted space in array case.
         //
-        Extend_Series_If_Necessary(bin, bufsize);
+        Extend_Flex_If_Necessary(bin, bufsize);
     }
 
     buf->base = s_cast(Binary_Tail(bin));

@@ -368,8 +368,8 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_FANCY_PANIC DEBUG
 #endif
 
-#if !defined(DEBUG_MONITOR_SERIES)
-    #define DEBUG_MONITOR_SERIES DEBUG
+#if !defined(DEBUG_MONITOR_FLEX)
+    #define DEBUG_MONITOR_FLEX DEBUG
 #endif
 
 #if !defined(DEBUG_COUNT_TICKS)
@@ -677,18 +677,18 @@ Special internal defines used by RT, not Host-Kit developers:
 
 
 // Both Valgrind and Address Sanitizer can provide the call stack at the moment
-// of allocation when a freed pointer is used.  Touch_Series() exploits this
-// to use a bogus allocation to help mark series origins that can later be used
-// by `panic()`.  But the feature is a waste if you're not using such tools.
+// of allocation when a freed pointer is used.  Touch_Stub() uses a bogus
+// allocation to help mark Stub origins that can later be used by `panic()`.
+// But the feature is a waste if you're not using such tools.
 //
 // If you plan to use Valgrind with this, you'll have to set it explicitly...
 // only Address Sanitizer can be detected here.
 //
-#if !defined(DEBUG_SERIES_ORIGINS)
+#if !defined(DEBUG_FLEX_ORIGINS)
   #if defined(__SANITIZE_ADDRESS__)
-    #define DEBUG_SERIES_ORIGINS DEBUG
+    #define DEBUG_FLEX_ORIGINS DEBUG
   #else
-    #define DEBUG_SERIES_ORIGINS 0
+    #define DEBUG_FLEX_ORIGINS 0
   #endif
 #endif
 
@@ -724,11 +724,11 @@ Special internal defines used by RT, not Host-Kit developers:
 // usually marked at their tails (unlike R3-Alpha which used END! cells to
 // terminate)...but the residual functionality helps catch overruns.
 //
-#if !defined(DEBUG_POISON_SERIES_TAILS)
+#if !defined(DEBUG_POISON_FLEX_TAILS)
   #if defined(__SANITIZE_ADDRESS__)
-    #define DEBUG_POISON_SERIES_TAILS 0  // *not* when sanitized
+    #define DEBUG_POISON_FLEX_TAILS 0  // *not* when sanitized
   #else
-    #define DEBUG_POISON_SERIES_TAILS DEBUG
+    #define DEBUG_POISON_FLEX_TAILS DEBUG
   #endif
 #endif
 

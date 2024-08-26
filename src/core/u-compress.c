@@ -78,8 +78,8 @@ static const int window_bits_zlib_raw = -(MAX_WBITS);
 // "raw gzip" would be nonsense, e.g. `-(MAX_WBITS | 16)`
 
 
-// Inflation and deflation tends to ultimately target series, so we want to
-// be using memory that can be transitioned to a series without reallocation.
+// Inflation and deflation tends to ultimately target BINARY!, so we want to
+// be using memory that can be transitioned to a BINARY! without reallocation.
 // See rebRepossess() for how rebAlloc()'d pointers can be used this way.
 //
 // We go ahead and use the rebAllocBytes() for zlib's internal state allocation
@@ -309,8 +309,8 @@ Byte* Decompress_Alloc_Core(
             buf_size = size_in * 3;
     }
 
-    // Use memory backed by a managed series (can be converted to a series
-    // later if desired, via Rebserize)
+    // Use memory backed by a managed Flex (can be converted to a BINARY!
+    // later if desired, via rebRepossess())
     //
     Byte* output = rebAllocN(Byte, buf_size);
     strm.avail_out = buf_size;

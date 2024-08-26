@@ -194,13 +194,12 @@ REBINT Index_From_Picker_For_Pair(
 // they had floating point precision (otherwise you couldn't fit a full cell
 // for two values into a single cell).  This meant they were neither INTEGER!
 // nor DECIMAL!.  Ren-C stepped away from this idea of introducing a new
-// numeric type and instead created a more compact "pairing" that could fit
-// in a single series node and hold two arbitrary values.
+// numeric type and instead created a more compact "Pairing" that could fit
+// in a single STUB_POOL node and hold two arbitrary values.
 //
 // With the exception of operations that are specifically pair-aware (e.g.
 // REVERSE swapping X and Y), this chains to retrigger the action onto the
-// pair elements and then return a pair made of that.  This makes PAIR! have
-// whatever promotion of integers to decimals the rest of the language has.
+// pair elements and then return a pair made of that.
 //
 REBTYPE(Pair)
 {

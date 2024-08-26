@@ -61,7 +61,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             break;
 
         assert(Is_Node_Managed(binding));
-        assert(Is_Series_Array(binding));
+        assert(Is_Flex_Array(binding));
 
         if (not IS_VARLIST(binding))
             break;
@@ -75,8 +75,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
         KeyList* keylist = cast(KeyList*, keysource);
         if (
-            (keylist->leader.bits & SERIES_MASK_KEYLIST)
-            != SERIES_MASK_KEYLIST
+            (keylist->leader.bits & FLEX_MASK_KEYLIST)
+            != FLEX_MASK_KEYLIST
         ){
             panic (binding);
         }
@@ -114,18 +114,18 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case REB_ISSUE: {
         if (Get_Cell_Flag_Unchecked(v, STRINGLIKE_HAS_NODE)) {
-            const Series* s = Cell_Issue_String(v);
-            assert(Is_Series_Frozen(s));
+            const Flex* f = Cell_Issue_String(v);
+            assert(Is_Flex_Frozen(f));
 
-            // We do not want ISSUE!s to use series if the payload fits in
+            // We do not want ISSUE!s to use a Flex if the payload fits in
             // a cell.  It would offer some theoretical benefits for reuse,
             // e.g. an `as text! as issue! "foo"` would share the same
-            // small series...the way it would share a larger one.  But this
+            // small Flex...the way it would share a larger one.  But this
             // fringe-ish benefit comes at the cost of keeping a GC reference
             // live on something that doesn't need to be live, and also makes
             // the invariants more complex.
             //
-            assert(Series_Used(s) + 1 > sizeof(PAYLOAD(Bytes, v).at_least_8));
+            assert(Flex_Used(f) + 1 > sizeof(PAYLOAD(Bytes, v).at_least_8));
         }
         else {
             // it's bytes
@@ -150,16 +150,16 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         if (Not_Node_Accessible_Canon(Cell_Node1(v)))
             break;
-        Series* s = cast(Series*, Cell_Node1(v));
-        Assert_Series_Term_Core(s);
-        assert(Is_Node_Marked(s));
+        Flex* f = cast(Flex*, Cell_Node1(v));
+        Assert_Flex_Term_Core(f);
+        assert(Is_Node_Marked(f));
         break; }
 
       case REB_MAP: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         const Map* map = VAL_MAP(v);
         assert(Is_Node_Marked(map));
-        assert(Is_Series_Array(MAP_PAIRLIST(map)));
+        assert(Is_Flex_Array(MAP_PAIRLIST(map)));
         break; }
 
       case REB_HANDLE: { // See %sys-handle.h
@@ -199,10 +199,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (Not_Node_Accessible_Canon(Cell_Node1(v)))
             break;
 
-        Binary* s = cast(Binary*, Cell_Node1(v));
-        assert(Series_Wide(s) == sizeof(Byte));
-        Assert_Series_Term_If_Needed(s);
-        assert(Is_Node_Marked(s));
+        Binary* b = cast(Binary*, Cell_Node1(v));
+        assert(Flex_Wide(b) == sizeof(Byte));
+        Assert_Flex_Term_If_Needed(b);
+        assert(Is_Node_Marked(b));
         break; }
 
       case REB_TEXT:
@@ -215,15 +215,15 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             break;
 
         const String* s = c_cast(String*, Cell_Node1(v));
-        Assert_Series_Term_If_Needed(s);
+        Assert_Flex_Term_If_Needed(s);
 
-        assert(Series_Wide(s) == sizeof(Byte));
+        assert(Flex_Wide(s) == sizeof(Byte));
         assert(Is_Node_Marked(s));
 
         if (Is_String_NonSymbol(s)) {
             BookmarkList* book = LINK(Bookmarks, s);
             if (book) {
-                assert(Series_Used(book) == 1);  // just one for now
+                assert(Flex_Used(book) == 1);  // just one for now
                 //
                 // The intent is that bookmarks are unmanaged stubs, which
                 // get freed when the string GCs.
@@ -345,7 +345,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             break;
 
         Array* a = cast(Array*, Cell_Node1(v));
-        Assert_Series_Term_If_Needed(a);
+        Assert_Flex_Term_If_Needed(a);
         assert(Is_Node_Marked(a));
         break; }
 
@@ -376,7 +376,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (Is_Node_A_Cell(node1)) {
             // it's a pairing
         }
-        else switch (Series_Flavor(x_cast(Stub*, node1))) {
+        else switch (Flex_Flavor(x_cast(Stub*, node1))) {
           case FLAVOR_SYMBOL :
             break;
 
@@ -418,7 +418,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
 
         const String *spelling = Cell_Word_Symbol(v);
-        assert(Is_Series_Frozen(spelling));
+        assert(Is_Flex_Frozen(spelling));
 
         assert(Is_Node_Marked(spelling));
 
@@ -427,7 +427,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Not_Subclass_Flag(SYMBOL, spelling, MISC_IS_BINDINFO));
 
         REBINT index = VAL_WORD_INDEX_I32(v);
-        Series* binding = BINDING(v);
+        Flex* binding = BINDING(v);
         if (binding) {
             if (IS_VARLIST(binding)) {
                 if (CTX_TYPE(cast(Context*, binding)) == REB_MODULE)
@@ -463,9 +463,9 @@ void Assert_Array_Marked_Correctly(const Array* a) {
 
     #ifdef HEAVY_CHECKS
         //
-        // The GC is a good general hook point that all series which have been
+        // The GC is a good general hook point that every Flex which has been
         // managed will go through, so it's a good time to assert properties
-        // about the array.
+        // about the Array.
         //
         Assert_Array(a);
     #else
@@ -474,7 +474,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         // and that it hasn't been freed.
         //
         assert(not Is_Node_Free(a));
-        assert(Is_Series_Array(a));
+        assert(Is_Flex_Array(a));
     #endif
 
     if (IS_DETAILS(a)) {
@@ -546,8 +546,8 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         // seemed to be a source of bugs, but it may be added again...in
         // which case the hashlist may be NULL.
         //
-        Series* hashlist = LINK(Hashlist, a);
-        assert(Series_Flavor(hashlist) == FLAVOR_HASHLIST);
+        Flex* hashlist = LINK(Hashlist, a);
+        assert(Flex_Flavor(hashlist) == FLAVOR_HASHLIST);
         UNUSED(hashlist);
     }
 }

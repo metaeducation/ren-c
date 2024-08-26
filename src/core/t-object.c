@@ -181,7 +181,7 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
 //////////////////////////////////////////////////////////////////////////////
 //
 // 1. We allocate a wordlist just to notice leaks when there are no shutdowns,
-//    but there is a problem with using an unmanaged array in the case of an
+//    but there is a problem with using an unmanaged Array in the case of an
 //    LEVEL_FLAG_ABRUPT_FAILURE.  So we make them "fake unmanaged" so they
 //    are "untracked" by saying they're managed, and taking that flag off.
 //
@@ -200,7 +200,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
         e->var = nullptr;
         e->param = ACT_PARAMS_HEAD(act) - 1;
 
-        assert(Series_Used(ACT_KEYLIST(act)) <= ACT_NUM_PARAMS(act));
+        assert(Flex_Used(ACT_KEYLIST(act)) <= ACT_NUM_PARAMS(act));
 
         // There's no clear best answer to whether the locals should be
         // visible when enumerating an action, only the caller knows if it's
@@ -211,7 +211,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
 
       #if !defined(NDEBUG)
         e->wordlist = Make_Array_Core(1, NODE_FLAG_MANAGED);
-        Clear_Node_Managed_Bit(e->wordlist);  // dummy series [1]
+        Clear_Node_Managed_Bit(e->wordlist);  // dummy Array [1]
       #endif
 
         e->word = nullptr;
@@ -231,8 +231,8 @@ void Init_Evars(EVARS *e, const Cell* v) {
 
         StackIndex base = TOP_INDEX;
 
-        Symbol** psym = Series_Head(Symbol*, g_symbols.by_hash);
-        Symbol** psym_tail = Series_Tail(Symbol*, g_symbols.by_hash);
+        Symbol** psym = Flex_Head(Symbol*, g_symbols.by_hash);
+        Symbol** psym_tail = Flex_Tail(Symbol*, g_symbols.by_hash);
         for (; psym != psym_tail; ++psym) {
             if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;
@@ -241,7 +241,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
             if (Get_Subclass_Flag(SYMBOL, *psym, MISC_IS_BINDINFO))
                 patch = cast(Stub*, node_MISC(Hitch, patch));  // skip bindinfo
 
-            Series* found = nullptr;
+            Flex* found = nullptr;
 
             for (
                 ;
@@ -279,7 +279,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
 
         e->var = CTX_VARS_HEAD(e->ctx) - 1;
 
-        assert(Series_Used(CTX_KEYLIST(e->ctx)) <= CTX_LEN(e->ctx));
+        assert(Flex_Used(CTX_KEYLIST(e->ctx)) <= CTX_LEN(e->ctx));
 
         if (heart != REB_FRAME) {
             e->param = nullptr;
@@ -327,7 +327,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
             Action* action = phase;
             e->param = ACT_PARAMS_HEAD(action) - 1;
             e->key = ACT_KEYS(&e->key_tail, action) - 1;
-            assert(Series_Used(ACT_KEYLIST(action)) <= ACT_NUM_PARAMS(action));
+            assert(Flex_Used(ACT_KEYLIST(action)) <= ACT_NUM_PARAMS(action));
         }
 
       #if !defined(NDEBUG)
@@ -440,10 +440,10 @@ bool Did_Advance_Evars(EVARS *e) {
 void Shutdown_Evars(EVARS *e)
 {
     if (e->word)
-        GC_Kill_Series(e->wordlist);
+        GC_Kill_Flex(e->wordlist);
     else {
       #if !defined(NDEBUG)
-        GC_Kill_Series(e->wordlist);  // dummy to catch missing shutdown
+        GC_Kill_Flex(e->wordlist);  // dummy to catch missing shutdown
       #endif
     }
 }
@@ -803,15 +803,15 @@ Context* Copy_Context_Extra_Managed(
 
     Array* varlist = Make_Array_For_Copy(
         len + extra + 1,
-        SERIES_MASK_VARLIST | NODE_FLAG_MANAGED,
+        FLEX_MASK_VARLIST | NODE_FLAG_MANAGED,
         nullptr // original_array, N/A because LINK()/MISC() used otherwise
     );
     if (CTX_TYPE(original) == REB_MODULE)
-        Set_Series_Used(varlist, 1);  // all variables linked from word table
+        Set_Flex_Used(varlist, 1);  // all variables linked from word table
     else
-        Set_Series_Len(varlist, CTX_LEN(original) + 1);
+        Set_Flex_Len(varlist, CTX_LEN(original) + 1);
 
-    Value* dest = Series_Head(Value, varlist);
+    Value* dest = Flex_Head(Value, varlist);
 
     // The type information and fields in the rootvar (at head of the varlist)
     // get filled in with a copy, but the varlist needs to be updated in the
@@ -842,10 +842,10 @@ Context* Copy_Context_Extra_Managed(
         LINK(Patches, varlist) = nullptr;
 
         Context* copy = cast(Context*, varlist); // now a well-formed context
-        assert(Get_Series_Flag(varlist, DYNAMIC));
+        assert(Get_Flex_Flag(varlist, DYNAMIC));
 
-        Symbol** psym = Series_Head(Symbol*, g_symbols.by_hash);
-        Symbol** psym_tail = Series_Tail(Symbol*, g_symbols.by_hash);
+        Symbol** psym = Flex_Head(Symbol*, g_symbols.by_hash);
+        Symbol** psym_tail = Flex_Tail(Symbol*, g_symbols.by_hash);
         for (; psym != psym_tail; ++psym) {
             if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;
@@ -870,7 +870,7 @@ Context* Copy_Context_Extra_Managed(
         return copy;
     }
 
-    Assert_Series_Managed(CTX_KEYLIST(original));
+    Assert_Flex_Managed(CTX_KEYLIST(original));
 
     ++dest;
 
@@ -890,7 +890,7 @@ Context* Copy_Context_Extra_Managed(
         Clonify(dest, flags, deeply);
     }
 
-    varlist->leader.bits |= SERIES_MASK_VARLIST;
+    varlist->leader.bits |= FLEX_MASK_VARLIST;
 
     Context* copy = cast(Context*, varlist); // now a well-formed context
 
@@ -899,12 +899,12 @@ Context* Copy_Context_Extra_Managed(
     else {
         assert(CTX_TYPE(original) != REB_FRAME);  // can't expand FRAME!s
 
-        KeyList* keylist = cast(KeyList*, Copy_Series_At_Len_Extra(
+        KeyList* keylist = cast(KeyList*, Copy_Flex_At_Len_Extra(
             CTX_KEYLIST(original),
             0,
             CTX_LEN(original),
             extra,
-            SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
+            FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED
         ));
 
         LINK(Ancestor, keylist) = CTX_KEYLIST(original);
@@ -942,7 +942,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 
     // Prevent endless mold loop:
     //
-    if (Find_Pointer_In_Series(g_mold.stack, c) != NOT_FOUND) {
+    if (Find_Pointer_In_Flex(g_mold.stack, c) != NOT_FOUND) {
         if (not form) {
             Pre_Mold(mo, v); // If molding, get #[object! etc.
             Append_Codepoint(s, '[');
@@ -955,13 +955,13 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
         }
         return;
     }
-    Push_Pointer_To_Series(g_mold.stack, c);
+    Push_Pointer_To_Flex(g_mold.stack, c);
 
     if (Cell_Heart(v) == REB_FRAME and not IS_FRAME_PHASED(v)) {
         Array* varlist = CTX_VARLIST(VAL_CONTEXT(v));
         if (Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED)) {
             Append_Ascii(s, "make frame! [...invoked frame...]\n");
-            Drop_Pointer_From_Series(g_mold.stack, c);
+            Drop_Pointer_From_Flex(g_mold.stack, c);
             return;
         }
     }
@@ -994,7 +994,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
         if (had_output)
             Trim_Tail(mo, '\n');
 
-        Drop_Pointer_From_Series(g_mold.stack, c);
+        Drop_Pointer_From_Flex(g_mold.stack, c);
         return;
     }
 
@@ -1047,7 +1047,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 
     End_Mold(mo);
 
-    Drop_Pointer_From_Series(g_mold.stack, c);
+    Drop_Pointer_From_Flex(g_mold.stack, c);
 }
 
 
@@ -1457,7 +1457,7 @@ REBTYPE(Frame)
           case SYM_LINE: {
             //
             // Use a heuristic that if the first element of a function's body
-            // is a series with the file and line bits set, then that's what
+            // is an Array with the file and line bits set, then that's what
             // it returns for FILE OF and LINE OF.
 
             Details* details = Phase_Details(act);
@@ -1689,7 +1689,7 @@ void MF_Frame(REB_MOLD *mo, const Cell* v, bool form) {
     const bool just_words = false;
     Array* parameters = Make_Action_Parameters_Arr(VAL_ACTION(v), just_words);
     Mold_Array_At(mo, parameters, 0, "[]");
-    Free_Unmanaged_Series(parameters);
+    Free_Unmanaged_Flex(parameters);
 
     // !!! Previously, ACTION! would mold the body out.  This created a large
     // amount of output, and also many function variations do not have

@@ -726,7 +726,7 @@ Bounce Action_Executor(Level* L)
         goto continue_fulfilling;
     }
 
-  #if DEBUG_POISON_SERIES_TAILS
+  #if DEBUG_POISON_FLEX_TAILS
     assert(Is_Cell_Poisoned(ARG));  // arg can otherwise point to any arg cell
   #endif
 
@@ -969,9 +969,9 @@ Bounce Action_Executor(Level* L)
 
     Action* phase = Level_Phase(L);
 
-    /*STATIC_ASSERT(DETAILS_FLAG_IS_NATIVE == SERIES_INFO_HOLD);*/
+    /*STATIC_ASSERT(DETAILS_FLAG_IS_NATIVE == FLEX_INFO_HOLD);*/
     if (Is_Action_Native(phase))
-        SERIES_INFO(L->varlist) |= SERIES_INFO_HOLD;  // prevents crashes [2]
+        FLEX_INFO(L->varlist) |= FLEX_INFO_HOLD;  // prevents crashes [2]
 
     Dispatcher* dispatcher = ACT_DISPATCHER(phase);
 
@@ -1111,8 +1111,8 @@ Bounce Action_Executor(Level* L)
 //
 //  Push_Action: C
 //
-// Allocate the series of REBVALs inspected by a function when executed (the
-// values behind ARG(name), REF(name), D_ARG(3),  etc.)
+// Allocate the Array of Values inspected by a function when executed (the
+// Cells behind ARG(name), REF(name), D_ARG(3),  etc.)
 //
 // 1. We perform a traversal of the argument slots.  This fills any cells that
 //    have been specialized with the specialized value, and erases cells
@@ -1161,20 +1161,20 @@ void Push_Action(
 
     Stub* s = Prep_Stub(
         Alloc_Stub(),  // not preallocated
-        SERIES_MASK_VARLIST
-            | SERIES_FLAG_FIXED_SIZE  // FRAME!s don't expand ATM
+        FLEX_MASK_VARLIST
+            | FLEX_FLAG_FIXED_SIZE  // FRAME!s don't expand ATM
             // not managed by default, see Force_Level_Varlist_Managed()
     );
-    s->info.any.flags = SERIES_INFO_MASK_NONE;
+    s->info.any.flags = FLEX_INFO_MASK_NONE;
     INIT_BONUS_KEYSOURCE(x_cast(Array*, s), L);  // maps varlist back to L
     MISC(VarlistAdjunct, s) = nullptr;
     LINK(Patches, s) = nullptr;
 
-    if (not Did_Series_Data_Alloc(
+    if (not Did_Flex_Data_Alloc(
         s,
         num_args + 1 + ONE_IF_POISON_TAILS  // +1 is rootvar
     )){
-        Set_Series_Inaccessible(s);
+        Set_Flex_Inaccessible(s);
         GC_Kill_Stub(s);  // ^-- needs non-null data unless free
         fail (Error_No_Memory(
             sizeof(Cell) * (num_args + 1 + ONE_IF_POISON_TAILS))
@@ -1209,7 +1209,7 @@ void Push_Action(
             Poison_Cell(prep);  // unreadable + unwritable
     #endif
 
-    #if DEBUG_POISON_SERIES_TAILS  // redundant if excess capacity poisoned
+    #if DEBUG_POISON_FLEX_TAILS  // redundant if excess capacity poisoned
         Poison_Cell(Array_Tail(L->varlist));
     #endif
   #endif
@@ -1328,15 +1328,15 @@ void Drop_Action(Level* L) {
         // We can reuse the varlist and its data allocation, which may be
         // big enough for ensuing calls.
         //
-        // But no series bits we didn't set should be set...and right now,
+        // But no Array bits we didn't set should be set...and right now,
         // only DETAILS_FLAG_IS_NATIVE sets HOLD.  Clear that.
         //
-        Clear_Series_Info(L->varlist, HOLD);
+        Clear_Flex_Info(L->varlist, HOLD);
         Clear_Subclass_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);
 
         assert(
-            0 == (SERIES_INFO(L->varlist) & ~(  // <- note bitwise not
-                SERIES_INFO_0_IS_FALSE
+            0 == (FLEX_INFO(L->varlist) & ~(  // <- note bitwise not
+                FLEX_INFO_0_IS_FALSE
                     | FLAG_USED_BYTE(255)  // mask out non-dynamic-len
         )));
     }

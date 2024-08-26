@@ -34,7 +34,7 @@
 // on DETAILS...e.g. the varlist of an exemplar context.
 //
 #define VARLIST_FLAG_PARAMLIST_HAS_RETURN \
-    SERIES_FLAG_24
+    FLEX_FLAG_24
 
 
 //=//// FRAME_HAS_BEEN_INVOKED ////////////////////////////////////////////=//
@@ -60,7 +60,7 @@
 // !!! This may not be the best place to put this flag, review.
 //
 #define VARLIST_FLAG_FRAME_HAS_BEEN_INVOKED \
-    SERIES_FLAG_24
+    FLEX_FLAG_24
 
 
 //=//// VARLIST_FLAG_PARAMLIST_QUOTES_FIRST ///////////////////////////////=//
@@ -72,7 +72,7 @@
 // walk the parameter list every time that function is called.
 //
 #define VARLIST_FLAG_PARAMLIST_QUOTES_FIRST \
-    SERIES_FLAG_25
+    FLEX_FLAG_25
 
 
 //=//// VARLIST_FLAG_PARAMLIST_SKIPPABLE_FIRST ////////////////////////////=//
@@ -86,7 +86,7 @@
 // work too when it doesn't see a SET-WORD! or SET-PATH! to the left.)
 //
 #define VARLIST_FLAG_PARAMLIST_SKIPPABLE_FIRST \
-    SERIES_FLAG_26
+    FLEX_FLAG_26
 
 
 // These are the flags which are scanned for and set during Make_Action
@@ -106,18 +106,18 @@
 //
 // !!! Ideally this would carry a flag to tell a GC "shrinking" process not
 // to reclaim the dynamic memory to make a singular cell...but that flag
-// can't be SERIES_FLAG_FIXED_SIZE, because most varlists can expand.
+// can't be FLEX_FLAG_FIXED_SIZE, because most varlists can expand.
 //
-#define SERIES_MASK_VARLIST \
-    (NODE_FLAG_NODE | SERIES_FLAG_DYNAMIC \
+#define FLEX_MASK_VARLIST \
+    (NODE_FLAG_NODE | FLEX_FLAG_DYNAMIC \
         | FLAG_FLAVOR(VARLIST) \
-        | SERIES_FLAG_LINK_NODE_NEEDS_MARK  /* NextVirtual */ \
-        | SERIES_FLAG_MISC_NODE_NEEDS_MARK  /* Adjunct */)
+        | FLEX_FLAG_LINK_NODE_NEEDS_MARK  /* NextVirtual */ \
+        | FLEX_FLAG_MISC_NODE_NEEDS_MARK  /* Adjunct */)
 
-#define SERIES_MASK_KEYLIST \
+#define FLEX_MASK_KEYLIST \
     (NODE_FLAG_NODE  /* NOT always dynamic */ \
         | FLAG_FLAVOR(KEYLIST) \
-        | SERIES_FLAG_LINK_NODE_NEEDS_MARK  /* ancestor */ )
+        | FLEX_FLAG_LINK_NODE_NEEDS_MARK  /* ancestor */ )
 
 
 #define CTX_VARLIST(ctx) \
