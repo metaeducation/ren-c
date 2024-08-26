@@ -87,7 +87,7 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
 
     StackValue(*) new_word = Data_Stack_At(collector.stack_base) + first_new_index;
     for (; new_word != TOP + 1; ++new_word)
-        Init_Trash(Append_Context(c, Cell_Word_Symbol(new_word)));
+        Init_Nothing(Append_Context(c, Cell_Word_Symbol(new_word)));
   }
   }  // end the non-module part
 
@@ -101,7 +101,7 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
             var = MOD_VAR(c, symbol, strict);
             if (not var) {
                 var = Append_Context(c, symbol);
-                Init_Trash(var);
+                Init_Nothing(var);
             }
         }
         else {
@@ -131,7 +131,7 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
         }
 
         if (word + 1 == tail) {
-            Init_Trash(var);
+            Init_Nothing(var);
             break;  // fix bug#708
         }
         else
@@ -1211,7 +1211,7 @@ REBTYPE(Context)
                 Cell_Word_Symbol(arg),
                 strict
             )){
-                Init_Trash(Append_Context(c, Cell_Word_Symbol(arg)));
+                Init_Nothing(Append_Context(c, Cell_Word_Symbol(arg)));
             }
             return COPY(context);
         }

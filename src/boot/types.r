@@ -65,7 +65,7 @@ REBOL [
 
 
 blank       "placeholder unit type"
-~trash~     (CELL_MASK_NO_NODES)
+~nothing~   (CELL_MASK_NO_NODES)
             [any-unit? any-inert?]  ; allow as `branch`?
             [blank       -       +]
 

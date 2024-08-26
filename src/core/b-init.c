@@ -368,9 +368,9 @@ static void Init_Root_Vars(void)
     // Simple isolated values, not available via lib, e.g. not Lib(TRUE) or
     // Lib(BLANK)...
 
-    Init_Trash(&PG_Trash_Cell);
-    Set_Cell_Flag(&PG_Trash_Cell, PROTECTED);  // prevent overwriting
-    assert(Is_Trash(TRASH_CELL));
+    Init_Nothing(&PG_Nothing_Value);
+    Set_Cell_Flag(&PG_Nothing_Value, PROTECTED);  // prevent overwriting
+    assert(Is_Nothing(NOTHING_VALUE));
 
     // They should only be accessed by macros which retrieve their values
     // as `const`, to avoid the risk of accidentally changing them.  (This
@@ -447,7 +447,7 @@ static void Init_Root_Vars(void)
 
 static void Shutdown_Root_Vars(void)
 {
-    Erase_Cell(&PG_Trash_Cell);
+    Erase_Cell(&PG_Nothing_Value);
 
     Erase_Cell(&PG_R_Thrown);
     Erase_Cell(&PG_R_Redo_Unchecked);

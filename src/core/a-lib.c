@@ -572,6 +572,17 @@ RebolValue* API_rebVoid(void)
 
 
 //
+//  rebNothing: API
+//
+RebolValue* API_rebNothing(void)
+{
+    ENTER_API;
+
+    return Init_Nothing(Alloc_Value());
+}
+
+
+//
 //  rebTrash: API
 //
 RebolValue* API_rebTrash(void)

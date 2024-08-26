@@ -174,6 +174,6 @@ DECLARE_NATIVE(dump)
             PROBE(var);
     }
 
-    return Init_Trash(OUT);
+    return NOTHING;
 #endif
 }

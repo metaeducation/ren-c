@@ -143,7 +143,7 @@ DECLARE_NATIVE(diagnose)
 
     Dump_Value_Debug(v);
 
-    return TRASH;
+    return NOTHING;
   #endif
 }
 
@@ -178,6 +178,6 @@ DECLARE_NATIVE(fuzz)
         assert(Is_Percent(ARG(factor)));
         g_mem.fuzz_factor = 10000 * VAL_DECIMAL(ARG(factor));
     }
-    return TRASH;
+    return NOTHING;
   #endif
 }

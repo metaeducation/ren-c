@@ -264,10 +264,10 @@ static bool Subparse_Throws(
 
     // Locals in frame would be unset on entry if called by action dispatch.
     //
-    Init_Trash(Erase_Cell(ARG(num_quotes)));
-    Init_Trash(Erase_Cell(ARG(position)));
-    Init_Trash(Erase_Cell(ARG(save)));
-    Init_Trash(Erase_Cell(ARG(lookback)));
+    Init_Nothing(Erase_Cell(ARG(num_quotes)));
+    Init_Nothing(Erase_Cell(ARG(position)));
+    Init_Nothing(Erase_Cell(ARG(save)));
+    Init_Nothing(Erase_Cell(ARG(lookback)));
 
     // !!! By calling the subparse native here directly from its C function
     // vs. going through the evaluator, we don't get the opportunity to do
@@ -1264,7 +1264,7 @@ DECLARE_NATIVE(subparse)
     // But we save the number of quotes in a local variable.  This way we can
     // put the quotes back on whenever doing a COPY etc.
     //
-    assert(Is_Trash(ARG(num_quotes)));
+    assert(Is_Nothing(ARG(num_quotes)));
     Init_Integer(ARG(num_quotes), Cell_Num_Quotes(ARG(input)));
     Dequotify(ARG(input));
 
@@ -1276,7 +1276,7 @@ DECLARE_NATIVE(subparse)
         VAL_INDEX_RAW(ARG(input)) = Cell_Series_Len_Head(ARG(input));
     }
 
-    assert(Is_Trash(ARG(position)));
+    assert(Is_Nothing(ARG(position)));
     Copy_Cell(ARG(position), ARG(input));
 
     assert(Is_Fresh(OUT));  // invariant provided by parse3
@@ -2477,7 +2477,7 @@ DECLARE_NATIVE(parse3)
     if (REF(match))
         return COPY(ARG(input));
 
-    return TRASH;  // no synthesized result in PARSE3 unless ACCEPT
+    return NOTHING;  // no synthesized result in PARSE3 unless ACCEPT
 }
 
 

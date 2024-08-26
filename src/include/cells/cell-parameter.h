@@ -191,11 +191,11 @@ INLINE Option(const Array*) Cell_Parameter_Spec(const Cell* v) {
     FLAG_LEFT_BIT(13)
 
 
-//=//// PARAMETER_FLAG_TRASH_DEFINITELY_OK ////////////////////////////////=//
+//=//// PARAMETER_FLAG_NOTHING_DEFINITELY_OK //////////////////////////////=//
 //
 // See notes on NULL_DEFINITELY_OK
 //
-#define PARAMETER_FLAG_TRASH_DEFINITELY_OK \
+#define PARAMETER_FLAG_NOTHING_DEFINITELY_OK \
     FLAG_LEFT_BIT(14)
 
 

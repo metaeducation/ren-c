@@ -61,7 +61,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
           case SYM_LENGTH: {
             REBI64 len_head = Cell_Series_Len_Head(v);
             if (VAL_INDEX_RAW(v) < 0 or VAL_INDEX_RAW(v) > len_head)
-                return TRASH;  // !!! better than error?
+                return NOTHING;  // !!! better than error?
             return Init_Integer(OUT, len_head - VAL_INDEX_RAW(v)); }
 
           case SYM_HEAD:

@@ -2826,7 +2826,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     // Note: ss->newline_pending may be true; used for ARRAY_NEWLINE_AT_TAIL
 
-    return TRASH;
+    return NOTHING;
 
 } handle_failure: {  /////////////////////////////////////////////////////////
 

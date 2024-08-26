@@ -331,9 +331,9 @@ DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
 //    of every enumeration, e.g. EVAL [1 + 2 10 + 20] goes through three
 //    steps, where the third step is []... and if we were to say that "step"
 //    produced anything, it would be NIHIL...because that step does not
-//    contribute to the output (the result is 30).  But producing NIHIL
-//    is a nuisance, and the caller would have to check the result position
-//    being NULL regardless.  We instead set the product to TRASH.
+//    contribute to the output (the result is 30).  But we actually don't
+//    produce anything--because we don't return a pack of values when nothing
+//    is synthesized, we just return NULL.
 //
 // 4. We want EVALUATE to treat all ANY-LIST? the same.  (e.g. a ^[1 + 2] just
 //    does the same thing as [1 + 2] and gives 3, not '3)  Rather than mutate
@@ -774,7 +774,7 @@ DECLARE_NATIVE(apply)
       case ST_APPLY_UNLABELED_EVAL_STEP :
         if (THROWING)
             goto finalize_apply;
-        if (Is_Trash(iterator)) {
+        if (Is_Nothing(iterator)) {
             assert(REF(relax));
             goto handle_next_item;
         }
@@ -860,7 +860,7 @@ DECLARE_NATIVE(apply)
 
         Init_Integer(ARG(index), index);
     }
-    else if (Is_Trash(iterator)) {
+    else if (Is_Nothing(iterator)) {
         STATE = ST_APPLY_UNLABELED_EVAL_STEP;
         param = nullptr;  // throw away result
     }
@@ -875,7 +875,7 @@ DECLARE_NATIVE(apply)
                     fail (Error_Apply_Too_Many_Raw());
 
                 Free(EVARS, e);
-                Init_Trash(iterator);
+                Init_Nothing(iterator);
                 param = nullptr;  // we're throwing away the evaluated product
                 break;
             }
@@ -945,13 +945,13 @@ DECLARE_NATIVE(apply)
 
 } finalize_apply: {  /////////////////////////////////////////////////////////
 
-    if (Is_Trash(iterator))
+    if (Is_Nothing(iterator))
         assert(REF(relax));
     else {
         EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
         Shutdown_Evars(e);
         Free(EVARS, e);
-        Init_Trash(iterator);
+        Init_Nothing(iterator);
     }
 
     if (THROWING)  // assume Drop_Level() called on SUBLEVEL?

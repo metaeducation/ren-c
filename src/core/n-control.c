@@ -1443,7 +1443,7 @@ DECLARE_NATIVE(default)
         return CONTINUE(SPARE, predicate, OUT);
     }
 
-    if (not Is_Trash(OUT) and not Is_Nulled(OUT))
+    if (not Is_Nothing(OUT) and not Is_Nulled(OUT))
         return OUT;  // consider it a "value" [2]
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;

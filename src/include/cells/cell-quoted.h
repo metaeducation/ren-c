@@ -272,13 +272,6 @@ INLINE Atom* Degrade(Atom* v) {
     return v;
 }
 
-INLINE Element* Concretize(Atom* v) {
-    assert(not Is_Trash(v));
-    if (QUOTE_BYTE(v) == ANTIFORM_0)
-        QUOTE_BYTE(v) = NOQUOTE_1;
-    return cast(Element*, v);
-}
-
 
 //=//// META QUOTING ///////////////////////////////////////////////////////=//
 

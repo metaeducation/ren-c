@@ -494,7 +494,7 @@ INLINE Option(const Value*) Lookup_Word(
 // with plain WORD! access regarding antiforms.  Since ~true~ and ~false~
 // antiforms are the currency of "logic" now, they have to be legal...so this
 // is opened up to the entire class of antiforms.  But unlike in assignment,
-// antiform blanks (trash) are not get-friendly.
+// antiform blanks (nothing) are not get-friendly.
 //
 INLINE bool Is_Antiform_Get_Friendly(const Value* v) {
     assert(QUOTE_BYTE(v) == ANTIFORM_0);

@@ -434,7 +434,7 @@ Bounce Action_Executor(Level* L)
             }
 
             if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // non-empty is ok [4]
-                assert(not Is_Trash(OUT));
+                assert(not Is_Nothing(OUT));
                 Decay_If_Unstable(OUT);  // !!! ^META variadics?
                 Init_Varargs_Untyped_Enfix(ARG, stable_OUT);
                 Freshen_Cell(OUT);
@@ -779,7 +779,7 @@ Bounce Action_Executor(Level* L)
 
     if (Get_Action_Executor_Flag(L, FULFILL_ONLY)) {  // no typecheck
         assert(Is_Fresh(OUT));  // didn't touch out, should be fresh
-        Init_Trash(OUT);
+        Init_Nothing(OUT);
         goto skip_output_check;
     }
 
@@ -1129,14 +1129,14 @@ Bounce Action_Executor(Level* L)
 //    Additionally, only a subset of the information needed for specialization
 //    is available to the fulfillment process.  It walks the "paramlist" of
 //    the underlying action, which contains typechecking information for
-//    slots that are trash (and hence unspecialized) for frame invocations.
+//    slots that are nothing (and hence unspecialized) for frame invocations.
 //    But walking exemplar frames to see specializations would only see those
-//    trash cells and not know how to typecheck.
+//    nothing cells and not know how to typecheck.
 //
 //    Empirically this extra walk can be costing us as much as 5% of runtime
 //    vs. leaving memory uninitialized and folding the walks together.  If
-//    frames could somehow be rigged to store parameters instead of trash
-//    and merely give the impression of trash on extraction, the gains could
+//    frames could somehow be rigged to store parameters instead of nothing
+//    and merely give the impression of nothing on extraction, the gains could
 //    be substantial.
 //
 // 2. Each layer of specialization of a function can only add specializations

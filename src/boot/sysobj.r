@@ -179,7 +179,7 @@ standard: make object! [
                     typecheck 'return unmeta value
             ]
         ] #BODY
-        ; if you don't call RETURN, the result is a ~ antiform (trash)
+        ; if you don't call RETURN, the result is a ~ antiform (nothing)
     ]
 
     ; !!! The %sysobj.r initialization currently runs natives (notably the

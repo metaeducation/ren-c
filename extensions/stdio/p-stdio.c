@@ -333,7 +333,7 @@ Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
             Value* result = Read_Line(Term_IO);
             if (rebUnboxLogic("'~halt~ =", rebQ(result))) {  // HALT received
                 rebRelease(result);
-                return rebTrash();
+                return rebNothing();
             }
             if (rebUnboxLogic("blank?", result)) {  // ESCAPE received
                 rebRelease(result);

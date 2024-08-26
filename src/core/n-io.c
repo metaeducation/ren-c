@@ -133,7 +133,7 @@ DECLARE_NATIVE(write_stdout)
         assert(Is_Binary(v));
         PROBE(v);
     }
-    return TRASH;
+    return NOTHING;
   #endif
 }
 
@@ -380,6 +380,6 @@ DECLARE_NATIVE(basic_write)
     fwrite(data, size, 1, f);
     fclose(f);
 
-    return TRASH;
+    return NOTHING;
   #endif
 }

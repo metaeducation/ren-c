@@ -458,7 +458,7 @@ default-combinators: make map! reduce [
 
         cycle [
             [^result' input]: parser input except [
-                result': trash'
+                result': nothing'
                 continue
             ]
         ]
@@ -505,7 +505,7 @@ default-combinators: make map! reduce [
         parser [<end> action?]
         <local> f result'
     ][
-        result': trash'  ; default `[stop]` returns trash
+        result': nothing'  ; default `[stop]` returns nothing
         if :parser [  ; parser argument is optional
             [^result' input]: parser input except e -> [
                 return raise e

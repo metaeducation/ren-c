@@ -12,25 +12,25 @@
 ; It has had a tendency to break, so these tests are here even though they
 ; spew a large amount of output, in the interests of making HELP stay working.
 
-(trash? help)
-(trash? help help)
-(trash? help system)
-(trash? help to)
-(trash? help "to-")
-(trash? help "to")
-(trash? help void)
-(trash? help xxx)
-(trash? help function)
+(nothing? help)
+(nothing? help help)
+(nothing? help system)
+(nothing? help to)
+(nothing? help "to-")
+(nothing? help "to")
+(nothing? help void)
+(nothing? help xxx)
+(nothing? help function)
 
 (
     for-each w words of lib [
         dump w
         if quasi? ^(get/any w) [continue]
         if action? get w
-            (compose/deep [assert [trash? help (w)]])
+            (compose/deep [assert [nothing? help (w)]])
         else [
             if not issue? get w [  ; "don't open web browser"
-                assert [trash? help (get w)]
+                assert [nothing? help (get w)]
             ]
         ]
     ]
@@ -50,7 +50,7 @@
 )
 
 [https://github.com/metaeducation/ren-c/issues/1106
-    (trash? help "any")
+    (nothing? help "any")
 ]
 
-(trash? about)
+(nothing? about)

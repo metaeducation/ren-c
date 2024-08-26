@@ -20,7 +20,7 @@
 )
 (
     unset $a
-    trash? :a
+    nothing? :a
 )
 
 [#1477

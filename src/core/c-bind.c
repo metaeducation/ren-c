@@ -64,7 +64,7 @@ void Bind_Values_Inner_Loop(
                     and heart == REB_SET_WORD
                 )
             ){
-                Init_Trash(Append_Context_Bind_Word(context, v));
+                Init_Nothing(Append_Context_Bind_Word(context, v));
             }
           }
           else {
@@ -262,7 +262,7 @@ Stub* Make_Let_Patch(
             | FLEX_FLAG_INFO_NODE_NEEDS_MARK  // inode of symbol
     );
 
-    Init_Trash(x_cast(Value*, Stub_Cell(let)));  // start as unset
+    Init_Nothing(x_cast(Value*, Stub_Cell(let)));  // start as unset
 
     if (specifier) {
         assert(IS_LET(specifier) or IS_USE(specifier) or IS_VARLIST(specifier));
@@ -351,7 +351,7 @@ Option(Stub*) Get_Word_Container(
         }
         *index_out = INDEX_PATCHED;
         var = Append_Context(ctx, symbol);
-        Init_Trash(var);
+        Init_Nothing(var);
         return Singular_From_Cell(var);
     }
 
@@ -389,7 +389,7 @@ Option(Stub*) Get_Word_Container(
                 if (mode == ATTACH_WRITE) {  // only write to first module
                     *index_out = INDEX_PATCHED;
                     var = Append_Context(ctx, symbol);
-                    Init_Trash(var);
+                    Init_Nothing(var);
                     return Singular_From_Cell(var);
                 }
 
@@ -927,7 +927,7 @@ DECLARE_NATIVE(add_use_object) {
 
     BINDING(FEED_SINGLE(L->feed)) = use;
 
-    return TRASH;
+    return NOTHING;
 }
 
 
@@ -1326,7 +1326,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
             // with something.  But this code is shared with USE, so the user
             // can get their hands on the variable.  Can't be unreadable.
             //
-            Init_Trash(var);
+            Init_Nothing(var);
 
             assert(rebinding); // shouldn't get here unless we're rebinding
 

@@ -727,7 +727,7 @@ INLINE Value* Constify(Value* v) {
 //   has to return control to the trampoline...destroying that stack memory.
 //   If a native needs a cell besides OUT or SPARE to do evaluations into,
 //   it should declare `<local>`s in its spec, and access them with the
-//   LOCAL() macro.  These are GC safe, and are initialized to trash.
+//   LOCAL() macro.  These are GC safe, and are initialized to nothing.
 //
 // * Although Erase_Cell() is very cheap in release builds (just writing a
 //   zero in the header), it still costs *something*.  And in debug builds it

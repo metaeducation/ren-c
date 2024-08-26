@@ -116,7 +116,7 @@ DECLARE_NATIVE(generic)
     Value* verb_var = Sink_Word_May_Fail(verb, SPECIFIED);
     Init_Action(verb_var, generic, Cell_Word_Symbol(verb), UNBOUND);
 
-    return TRASH;
+    return NOTHING;
 }
 
 

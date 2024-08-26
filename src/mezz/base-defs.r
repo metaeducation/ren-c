@@ -33,7 +33,7 @@ c-break-debug: runs :c-debug-break  ; easy to mix up
 ;
 void': meta void
 null': meta null
-trash': meta trash
+trash: nothing': meta nothing
 nihil': meta nihil
 
 evaluate: :eval  ; shorthands should be synonyms, too confusing otherwise

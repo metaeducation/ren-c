@@ -172,7 +172,7 @@ void Set_Parameter_Spec(
 
         if (Is_Quasiform(item)) {
             if (Cell_Heart(item) == REB_BLANK) {
-                *flags |= PARAMETER_FLAG_TRASH_DEFINITELY_OK;
+                *flags |= PARAMETER_FLAG_NOTHING_DEFINITELY_OK;
                 continue;
             }
             if (Cell_Heart(item) != REB_WORD)
@@ -254,7 +254,7 @@ void Set_Parameter_Spec(
             lookup = maybe Lookup_Word(item, spec_specifier);
             if (not lookup)  // not even bound to anything
                 fail (item);
-            if (Is_Trash(lookup)) {  // bound but not set
+            if (Is_Nothing(lookup)) {  // bound but not set
                 //
                 // !!! This happens on things like LOGIC?, because they are
                 // assigned in usermode code.  That misses an optimization

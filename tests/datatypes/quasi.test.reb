@@ -77,15 +77,15 @@
 [
     (foo: func [] [], true)
 
-    (trash? foo)
+    (nothing? foo)
 
-    (trash' = ^ applique :foo [])
-    (trash? applique :foo [])
+    (nothing' = ^ applique :foo [])
+    (nothing? applique :foo [])
 
-    (trash' = ^ eval :foo)
-    (trash? eval :foo)
+    (nothing' = ^ eval :foo)
+    (nothing? eval :foo)
 
-    (trash' = ^ eval :foo)
+    (nothing' = ^ eval :foo)
 ]
 
 ; Explicit return of VOID
@@ -120,17 +120,17 @@
 
 [(
     foo: func [return: [~]] []
-    trash' = ^ foo
+    nothing' = ^ foo
 )(
     data: [a b c]
     f: func [return: [~]] [append data spread [1 2 3]]
-    trash' = ^ f
+    nothing' = ^ f
 )]
 
 ; locals are unset before they are assigned
 (
     f: func [<local> loc] [return get/any $loc]
-    trash? f
+    nothing? f
 )(
     f: func [<local> loc] [return reify get/any $loc]
     f = '~
@@ -228,10 +228,8 @@
 (not error? trap [set $a '~bad~])
 
 
-; CONCRETIZE is used to make antiforms into the non-antiform, pass through
-; all other values.
 [
-    ('foo = concretize ~foo~)
+    ('foo = reify/unquasi ~foo~)
     ('~null~ = reify null)
     ('~null~ = reify ~null~)
 

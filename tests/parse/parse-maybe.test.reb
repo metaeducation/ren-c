@@ -56,7 +56,7 @@
 ; (all [
 ;     "b" == parse "bbb" [
 ;         (x: 10, y: 20)
-;         y: x: maybe (~)  ; Isotopic ~ is trash, unset variable
+;         y: x: maybe (~)  ; antiform ~ is nothing, unset variable
 ;         some "b"
 ;     ]
 ;     '~ = ^ get/any $x

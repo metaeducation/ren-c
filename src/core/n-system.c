@@ -212,7 +212,7 @@ DECLARE_NATIVE(limit_usage)
     else
         fail (PARAM(field));
 
-    return TRASH;
+    return NOTHING;
 }
 
 

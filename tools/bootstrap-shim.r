@@ -532,8 +532,8 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
                 void? :product [
                     change3/part pos void 1
                 ]
-                trash? :product [  ; e.g. compose [(if true [null])]
-                    fail/where "trash compose found" 'return
+                nothing? :product [  ; e.g. compose [(if true [null])]
+                    fail/where "nothing compose found" 'return
                 ]
             ] else [
                 change3/only pos :product
@@ -741,7 +741,7 @@ modernize-action: function3 [
         (tryers)
         (proxiers)
         (as group! body)  ; compose3 does not splice groups--just blocks
-        return ~  ; functions now default to returning trash
+        return ~  ; functions now default to returning nothing
     ]
     return reduce [spec body]
 ]

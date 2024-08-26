@@ -344,11 +344,11 @@ DECLARE_NATIVE(unload_extension)
        true
     );
    if (shutdown_action == nullptr)
-        return TRASH;
+        return NOTHING;
 
    rebElide(rebRUN(shutdown_action));
 
-   return TRASH;
+   return NOTHING;
 }
 
 

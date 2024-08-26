@@ -233,7 +233,7 @@ DECLARE_NATIVE(sleep)
     usleep(msec * 1000);
   #endif
 
-    return TRASH;
+    return NOTHING;
 }
 
 

@@ -171,7 +171,7 @@ module: func [
         ;
         assert [block? body]
 
-        product: ^ eval body  ; can't set variable to trash/etc.
+        product: ^ eval body  ; !!! meta-convention to return PACKs?
         quitting: false
     ]
     then ^arg-to-quit -> [

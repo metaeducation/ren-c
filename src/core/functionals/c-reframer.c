@@ -117,7 +117,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     if (Trampoline_With_Top_As_Root_Throws())
         return L;
 
-    assert(Is_Trash(L->out));  // should only have gathered arguments
+    assert(Is_Nothing(L->out));  // should only have gathered arguments
 
     assert(  // !!! new flag [2]
         Not_Subclass_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED)

@@ -28,8 +28,8 @@
 
 // "Zombie" keys in map, represent missing or deleted entries.
 //
-#define Is_Zombie Is_Trash
-#define ZOMBIE_CELL TRASH_CELL
+#define Is_Zombie Is_Nothing
+#define ZOMBIE_CELL NOTHING_VALUE
 
 
 //

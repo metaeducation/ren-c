@@ -238,7 +238,7 @@ DECLARE_NATIVE(send_signal)
     //
     kill_process(pid, signal);
 
-    return TRASH;
+    return NOTHING;
 }
 
 #endif  // TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU

@@ -407,7 +407,7 @@ void Push_Keys_And_Parameters_May_Fail(
         // Non-annotated arguments allow all parameter types.
 
         if (local) {
-            Init_Trash(param);
+            Init_Nothing(param);
             assert(mode == SPEC_MODE_LOCAL);
         }
         else if (refinement) {

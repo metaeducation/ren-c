@@ -52,7 +52,7 @@ lf: LF:    newline
 ; in function specs.
 
 null?!: &null?
-trash?!: &trash?
+nothing?!: &nothing?
 void?!: &void?
 char?!: &char?
 blackhole?!: &blackhole?

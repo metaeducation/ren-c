@@ -80,7 +80,7 @@ DECLARE_NATIVE(startup_p)
     //
     Startup_Stdio();
 
-    return rebTrash();
+    return rebNothing();
 }
 
 
@@ -137,7 +137,7 @@ DECLARE_NATIVE(write_stdout)
         //
         if (rebWasHalting()) {  // the test clears halt request
             rebHalt();  // put in a new halt request and stop
-            return TRASH;  // ...or, could also RAISE() or FAIL() a halt
+            return NOTHING;  // ...or, could also RAISE() or FAIL() a halt
         }
 
         REBLEN part;
@@ -151,7 +151,7 @@ DECLARE_NATIVE(write_stdout)
         VAL_INDEX_RAW(v) += part;
     }
 
-    return TRASH;
+    return NOTHING;
 }
 
 
@@ -558,5 +558,5 @@ DECLARE_NATIVE(shutdown_p)
     //
     Shutdown_Stdio();
 
-    return rebTrash();
+    return rebNothing();
 }

@@ -475,7 +475,7 @@
         use [x] [return ~]
         42
     ]
-    trash' = ^ f
+    nothing' = ^ f
 )]
 
 (

@@ -983,7 +983,7 @@ DECLARE_NATIVE(swap_contents)
     Flex* f2 = Cell_Flex_Ensure_Mutable(ARG(series2));
     Swap_Flex_Content(f1, f2);
 
-    return TRASH;
+    return NOTHING;
 }
 
 

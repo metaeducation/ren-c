@@ -1135,7 +1135,7 @@ DECLARE_NATIVE(startup_p)
 
     uv_timer_init(uv_default_loop(), &halt_poll_timer);
 
-    return rebTrash();
+    return rebNothing();
 }
 
 
@@ -1158,7 +1158,7 @@ DECLARE_NATIVE(shutdown_p)
     uv_close(cast(uv_handle_t*, &wait_timer), nullptr);  // no close callback
     uv_close(cast(uv_handle_t*, &halt_poll_timer), nullptr);
 
-    return rebTrash();
+    return rebNothing();
 }
 
 

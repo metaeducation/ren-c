@@ -299,7 +299,7 @@ unset?: func [
     return: [logic?]
     var [word! path! tuple!]
 ][
-    return trash? get/any var
+    return nothing? get/any var
 ]
 
 set?: func [
@@ -307,7 +307,7 @@ set?: func [
     return: [logic?]
     var [word! path! tuple!]
 ][
-    return not trash? get/any var
+    return not nothing? get/any var
 ]
 
 

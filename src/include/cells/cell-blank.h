@@ -25,7 +25,7 @@
 //    >> append [a b c] _
 //    == [a b c _]
 //
-// BLANK! takes on the placeholder responsibilities of Rebol2's #[none]
+// BLANK! takes on some placeholder responsibilities of Rebol2's #[none]
 // value, while the "soft failure" aspects are covered by NULL (which unlike
 // blanks, can't be stored in blocks).  Consequently blanks are not "falsey"
 // which means all "reified" values that can be stored in blocks are
@@ -43,16 +43,30 @@
 //    >> append [d e] spread fourth [a b c _]
 //    == [d e]
 //
-// The antiform of BLANK! is called "trash", and it is used for the state of
-// an unset variable.  The quasiform of BLANK! is a tilde (instead of ~_~)
+// The antiform of BLANK! is called NOTHING, and it is used for the state of
+// an unset variable.  It is also the result when a function has no meaningful
+// value of return, so it has no display in the console.
 //
 //    >> x: anti _
 //
 //    >> unset? 'x
 //    == ~true~  ; anti
 //
-//    >> meta get/any 'x
+//    >> print "Hello"
+//
+//    >> nothing? print "Hello"
+//    == ~true~
+//
+// The quasiform of BLANK! is a tilde (instead of ~_~), and called TRASH
+//
+//    >> meta print "Quasiform of BLANK is TRASH"
+//    Quasiform of BLANK is TRASH
 //    == ~
+//
+// Trash cannot be SPREAD or passed to routines like EMPTY?, so it is a more
+// ornery placeholder than blank.  Depending on one's desires, it can be
+// a better substitution for Rebol's historical NONE! type than BLANK!.
+// (Although both TRASH and BLANK! are truthy in Ren-C.)
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
@@ -88,14 +102,12 @@ INLINE Element* Init_Blank_Untracked(Cell* out, Byte quote_byte) {
 #define Init_Blank(out) \
     TRACK(Init_Blank_Untracked((out), NOQUOTE_1))
 
-#define Init_Quasi_Blank(out) \
-    TRACK(Init_Blank_Untracked((out), QUASIFORM_2))
 
 
-//=//// '~' ANTIFORM (a.k.a. TRASH) ///////////////////////////////////////=//
+//=//// '~' ANTIFORM (a.k.a. NOTHING) /////////////////////////////////////=//
 //
 // Picking antiform blank as the contents of unset variables has many benefits
-// over choosing something like an `~unset~` or `~trash~` antiforms:
+// over choosing something like an `~unset~` or `~nothing~` antiforms:
 //
 //  * Reduces noise when looking at a list of variables to see which are unset
 //
@@ -105,20 +117,31 @@ INLINE Element* Init_Blank_Untracked(Cell* out, Byte quote_byte) {
 //
 //  * Quick way to unset variables, simply `(var: ~)`
 //
-// While "trash" is a slightly jarring name for ~ antiforms, one doesn't need
-// to call it by name to use it.  e.g. return specs can say `return: [~]`
-// instead of `return: [trash?]`, and `return ~` instead of `return trash`
-//
 // The choice of this name (vs. "unset") was meditated on for quite some time,
 // and resolved as superior to trying to claim there's such a thing as an
 // "unset value".
 //
 
-#define Init_Trash(out) \
+#define Init_Nothing(out) \
     u_cast(Value*, TRACK( \
         Init_Blank_Untracked(ensure(Sink(Value*), (out)), ANTIFORM_0)))
 
-#define Init_Meta_Of_Trash(out)     Init_Quasi_Blank(out)
+#define Init_Meta_Of_Nothing(out)     Init_Quasi_Blank(out)
 
-#define TRASH_CELL \
-    cast(const Value*, &PG_Trash_Cell)  // Lib(TRASH) would be a function
+#define NOTHING_VALUE \
+    cast(const Value*, &PG_Nothing_Value)  // Lib(NOTHING) would be an action
+
+
+//=//// '~' QUASIFORM (a.k.a. TRASH) //////////////////////////////////////=//
+//
+// Note return specs can say `return: [~]` instead of `return: [nothing?]`,
+// and in the body you can `return ~` instead of `return nothing`
+//
+
+#define Init_Quasi_Blank(out) \
+    TRACK(Init_Blank_Untracked((out), QUASIFORM_2))
+
+#define Init_Trash(out) Init_Quasi_Blank(out)
+
+INLINE bool Is_Trash(Value* v)
+  { return HEART_BYTE(v) == REB_BLANK and QUOTE_BYTE(v) == QUASIFORM_2; }

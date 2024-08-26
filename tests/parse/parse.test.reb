@@ -18,9 +18,9 @@
     ]
 )]
 
-; TRASH should be allowable as a combinator result.
+; NOTHING should be allowable as a combinator result.
 [
-    (trash? parse "a" ["a" (~)])
+    (nothing? parse "a" ["a" (~)])
 ]
 
 ; /RELAX means you don't have to match the full input

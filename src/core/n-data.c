@@ -166,7 +166,7 @@ DECLARE_NATIVE(bind)
         // not in context, bind/new means add it if it's not.
         //
         if (REF(new) or (Is_Set_Word(v) and REF(set))) {
-            Init_Trash(Append_Context_Bind_Word(VAL_CONTEXT(context), v));
+            Init_Nothing(Append_Context_Bind_Word(VAL_CONTEXT(context), v));
             return COPY(v);
         }
 
@@ -729,7 +729,7 @@ bool Get_Var_Push_Refinements_Throws(
         Drop_GC_Guard(safe);
 
         if (steps_out and steps_out != GROUPS_OK)
-            Init_Trash(unwrap steps_out);  // !!! What to return?
+            Init_Nothing(unwrap steps_out);  // !!! What to return?
 
         Move_Cell(out, Decay_If_Unstable(result));
         return threw;
@@ -1776,7 +1776,7 @@ DECLARE_NATIVE(free)
 
     Value* v = ARG(memory);
     if (Is_Blank(v))
-        return TRASH;
+        return NOTHING;
 
     if (Any_Context(v) or Is_Handle(v))
         fail ("FREE only implemented for ANY-SERIES? at the moment");
@@ -1786,7 +1786,7 @@ DECLARE_NATIVE(free)
 
     Flex* f = Cell_Flex_Ensure_Mutable(v);
     Decay_Flex(f);
-    return TRASH; // !!! Could return freed value
+    return NOTHING; // !!! Could return freed value
 }
 
 
@@ -2587,18 +2587,18 @@ DECLARE_INTRINSIC(elision_q)
 
 
 //
-//  trash: native [
+//  nothing: native [
 //
-//  "Returns the value used to represent an unset variable (antiform void)"
+//  "Returns the value used to represent an unset variable (antiform blank)"
 //
-//      return: [~]
+//      return: [~]  ; quasiform nothing (e.g. trash) notation means "nothing"
 //  ]
 //
-DECLARE_NATIVE(trash)
+DECLARE_NATIVE(nothing)
 {
-    INCLUDE_PARAMS_OF_TRASH;
+    INCLUDE_PARAMS_OF_NOTHING;
 
-    return Init_Trash(OUT);
+    return NOTHING;
 }
 
 
@@ -2620,25 +2620,36 @@ DECLARE_INTRINSIC(void_q)
 
 
 //
-//  trash?: native/intrinsic [
+//  nothing?: native/intrinsic [
 //
-//  "Tells you if argument is the value used to indicate an unset variable"
+//  "Tells you if argument is the state used to indicate an unset variable"
 //
 //      return: [logic?]
-//      ^value "Parameter must be ^META (trash usually means unspecialized)"
-//          [any-value?]  ; [1]
+//      value "Tested to see if it is antiform blank"
+//          [any-value?]
 //  ]
 //
-DECLARE_INTRINSIC(trash_q)
-//
-// 1. Though trash values are stable, they can't be passed as normal arguments
-//    to functions, because in frames they represent an unspecialized
-//    argument value.  So a meta parameter is used.  However, it isn't
-//    intended that raised errors be tolerated by this test, so decay it.
+DECLARE_INTRINSIC(nothing_q)
 {
     UNUSED(phase);
 
-    Meta_Unquotify_Decayed(arg);  // [1]
+    Init_Logic(out, Is_Nothing(arg));
+}
+
+
+//
+//  trash?: native/intrinsic [
+//
+//  "Tells you if argument is a quasiform blank (~), most routines don't take"
+//
+//      return: [logic?]
+//      value "Tested to see if it is quasiform blank"
+//          [any-value?]
+//  ]
+//
+DECLARE_INTRINSIC(trash_q)
+{
+    UNUSED(phase);
 
     Init_Logic(out, Is_Trash(arg));
 }
@@ -2765,6 +2776,7 @@ DECLARE_INTRINSIC(decay)
 //
 //      return: [element?]
 //      value [any-value?]
+//      /unquasi "Give the plain form instead of quasiforms"
 //  ]
 //
 DECLARE_NATIVE(reify)
@@ -2772,7 +2784,12 @@ DECLARE_NATIVE(reify)
     INCLUDE_PARAMS_OF_REIFY;
 
     Value* v = ARG(value);
-    return Reify(Copy_Cell(OUT, v));
+    Reify(Copy_Cell(OUT, v));
+
+    if (REF(unquasi) and Is_Quasiform(OUT))
+        Unquasify(stable_OUT);
+
+    return OUT;
 }
 
 
@@ -2792,32 +2809,6 @@ DECLARE_NATIVE(degrade)
     Value* v = ARG(value);
     return Degrade(Copy_Cell(OUT, v));
 }
-
-
-//
-//  concretize: native [
-//
-//  "Make non-trash antiforms into plain forms, pass thru other values"
-//
-//      return: [element?]
-//      value [any-value?]
-//  ]
-//
-DECLARE_NATIVE(concretize)
-//
-// 1. CONCRETIZE of TRASH is not supported by default (it's not entirely
-//    clear why CONCRETIZE was created as distinct from REIFY, is this
-//    actually needed?)
-{
-    INCLUDE_PARAMS_OF_CONCRETIZE;
-
-    Value* v = ARG(value);
-    if (Is_Trash(v))  // see 1
-        fail ("CONCRETIZE of TRASH is undefined (needs motivating case)");
-
-    return Concretize(Copy_Cell(OUT, v));
-}
-
 
 
 //

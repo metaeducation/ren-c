@@ -573,23 +573,23 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
 
 
 //
-//  non-trash?: native/intrinsic [
+//  something?: native/intrinsic [
 //
-//  "Tells you if the argument is not trash"
+//  "Tells you if the argument is not antiform blank (e.g. not nothing)"
 //
 //      return: [logic?]
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(non_trash_q)
+DECLARE_INTRINSIC(something_q)
 //
-// Comparisons in particular do not allow you to compare against trash.
+// Comparisons in particular do not allow you to compare against NOTHING.
 //
 //   https://forum.rebol.info/t/2068
 {
     UNUSED(phase);
 
-    Init_Logic(out, not Is_Trash(arg));
+    Init_Logic(out, not Is_Nothing(arg));
 }
 
 
@@ -601,8 +601,8 @@ DECLARE_INTRINSIC(non_trash_q)
 //  "TRUE if the values are equal"
 //
 //      return: [logic?]
-//      value1 [non-trash?]
-//      value2 [non-trash?]
+//      value1 [something?]
+//      value2 [something?]
 //  ]
 //
 DECLARE_NATIVE(equal_q)
@@ -621,8 +621,8 @@ DECLARE_NATIVE(equal_q)
 //  "TRUE if the values are not equal"
 //
 //      return: [logic?]
-//      value1 [non-trash?]
-//      value2 [non-trash?]
+//      value1 [something?]
+//      value2 [something?]
 //  ]
 //
 DECLARE_NATIVE(not_equal_q)
@@ -641,8 +641,8 @@ DECLARE_NATIVE(not_equal_q)
 //  "TRUE if the values are strictly equal"
 //
 //      return: [logic?]
-//      value1 [non-trash?]
-//      value2 [non-trash?]
+//      value1 [something?]
+//      value2 [something?]
 //  ]
 //
 DECLARE_NATIVE(strict_equal_q)
@@ -664,8 +664,8 @@ DECLARE_NATIVE(strict_equal_q)
 //  "TRUE if the values are not strictly equal"
 //
 //      return: [logic?]
-//      value1 [non-trash?]
-//      value2 [non-trash?]
+//      value1 [something?]
+//      value2 [something?]
 //  ]
 //
 DECLARE_NATIVE(strict_not_equal_q)
@@ -687,8 +687,8 @@ DECLARE_NATIVE(strict_not_equal_q)
 //  "TRUE if the values are identical"
 //
 //      return: [logic?]
-//      value1 [non-trash?]
-//      value2 [non-trash?]
+//      value1 [something?]
+//      value2 [something?]
 //  ]
 //
 DECLARE_NATIVE(same_q)
@@ -775,8 +775,8 @@ DECLARE_NATIVE(same_q)
 //  "TRUE if the first value is less than the second value"
 //
 //      return: [logic?]
-//      value1 [non-trash?]
-//      value2 [non-trash?]
+//      value1 [something?]
+//      value2 [something?]
 //  ]
 //
 DECLARE_NATIVE(lesser_q)
@@ -814,8 +814,8 @@ DECLARE_NATIVE(lesser_q)
 //  "TRUE if the first value is equal to or less than the second value"
 //
 //      return: [logic?]
-//      value1 [non-trash?]
-//      value2 [non-trash?]
+//      value1 [something?]
+//      value2 [something?]
 //  ]
 //
 DECLARE_NATIVE(equal_or_lesser_q)
@@ -834,8 +834,8 @@ DECLARE_NATIVE(equal_or_lesser_q)
 //  "TRUE if the first value is greater than the second value"
 //
 //      return: [logic?]
-//      value1 [non-trash?]
-//      value2 [non-trash?]
+//      value1 [something?]
+//      value2 [something?]
 //  ]
 //
 DECLARE_NATIVE(greater_q)
@@ -857,8 +857,8 @@ DECLARE_NATIVE(greater_q)
 //  "TRUE if the first value is greater than or equal to the second value"
 //
 //      return: [logic?]
-//      value1 [non-trash?]
-//      value2 [non-trash?]
+//      value1 [something?]
+//      value2 [something?]
 //  ]
 //
 DECLARE_NATIVE(greater_or_equal_q)

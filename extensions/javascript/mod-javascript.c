@@ -1021,15 +1021,15 @@ DECLARE_NATIVE(js_eval_p)
         );
 
     if (addr == 0)
-        return TRASH;
+        return NOTHING;
 
     goto handle_error;
 
   want_result: {  ////////////////////////////////////////////////////////////
 
-    // Currently, reb.Box() only translates to INTEGER!, TEXT!, TRASH?, NULL
+    // Currently, reb.Box() only translates to INTEGER!, TEXT!, NOTHING?, NULL
     //
-    // !!! All other types come back as trash (~ antiform).  Should they error?
+    // !!! All other types come back as nothing (~ antiform).  Error instead?
     //
     if (REF(local)) {
         addr = EM_ASM_INT(
@@ -1093,7 +1093,7 @@ DECLARE_NATIVE(startup_p)
 
     TRACE("INIT-JAVASCRIPT-EXTENSION called");
 
-    return TRASH;
+    return NOTHING;
 }
 
 
@@ -1116,7 +1116,7 @@ DECLARE_NATIVE(js_trace)
     fail ("JS-TRACE only if DEBUG_JAVASCRIPT_EXTENSION set in %emscripten.r");
   #endif
 
-    return TRASH;
+    return NOTHING;
 }
 
 

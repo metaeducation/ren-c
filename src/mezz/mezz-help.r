@@ -227,8 +227,8 @@ help: func [
                 null?! [
                     print [topic "is null"]
                 ]
-                trash?! [
-                    print [topic "is not defined (e.g. has a trash value)"]
+                nothing?! [
+                    print [topic "is not defined (e.g. is antiform blank)"]
                 ]
             ] then [
                 return ~

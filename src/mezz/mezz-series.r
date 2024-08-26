@@ -58,7 +58,7 @@ array: func [
         [element? action?]
     <local> rest block
 ][
-    initial: default ['~]  ; if not specified, array will be all meta trash
+    initial: default ['~]  ; if not specified, array will be all trash
     if block? size [
         rest: next size else [
             ;

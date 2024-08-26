@@ -175,7 +175,7 @@ bool Typecheck_Atom_Core(
         //
         if (Is_Quasiform(item)) {
             if (HEART_BYTE(item) == REB_BLANK) {
-                if (Is_Trash(v))
+                if (Is_Nothing(v))
                     goto test_succeeded;
                 goto test_failed;
             }
@@ -257,7 +257,7 @@ bool Typecheck_Atom_Core(
                 if (Is_Specialized(param))
                     Copy_Cell(arg, param);
                 else
-                    Init_Trash(arg);
+                    Init_Nothing(arg);
                 assert(Is_Stable(arg));
             }
 
@@ -395,8 +395,12 @@ bool Typecheck_Coerce_Argument(
         if (Get_Parameter_Flag(param, NIHIL_DEFINITELY_OK) and Is_Nihil(arg))
             goto return_true;
 
-        if (Get_Parameter_Flag(param, TRASH_DEFINITELY_OK) and Is_Trash(arg))
+        if (
+            Get_Parameter_Flag(param, NOTHING_DEFINITELY_OK)
+            and Is_Nothing(arg)
+        ){
             goto return_true;
+        }
     }
 
     if (Get_Parameter_Flag(param, ANY_VALUE_OK) and Is_Stable(arg))

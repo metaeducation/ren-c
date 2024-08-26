@@ -86,10 +86,10 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // 1. The body result is never used as a return value.  Only RETURN can give
-//    non-"trash".
+//    non-NOTHING.
 //
-// 2. If no RETURN statement is given, the result is trash, and typechecking
-//    is performed to make sure trash was a legitimate return.  This has a
+// 2. If no RETURN statement is given, the result is NOTHING, and typechecking
+//    is performed to make sure NOTHING? was a legitimate return.  This has a
 //    little bit of a negative side in that if someone is to hook the RETURN
 //    function, it will not be called in these "fallout" cases.  It's deemed
 //    too ugly to slip in a "hidden" call to RETURN for this case, and too
@@ -146,7 +146,7 @@ Bounce Func_Dispatcher(Level* const L)
 
 } body_finished_without_returning: {  ////////////////////////////////////////
 
-    Init_Trash(OUT);  // trash, regardless of body result [2]
+    Init_Nothing(OUT);  // NOTHING, regardless of body result [2]
 
     if (not Typecheck_Coerce_Return(L, OUT))
         fail ("End of function without a RETURN, but ~ not in RETURN: spec");
@@ -525,7 +525,7 @@ bool Typecheck_Coerce_Return(
     const Param* param = ACT_PARAMS_HEAD(phase);
     assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
 
-    if (Get_Parameter_Flag(param, TRASH_DEFINITELY_OK) and Is_Trash(atom))
+    if (Get_Parameter_Flag(param, NOTHING_DEFINITELY_OK) and Is_Nothing(atom))
         return true;  // common case, make fast
 
     if (Get_Parameter_Flag(param, NIHIL_DEFINITELY_OK) and Is_Nihil(atom))
@@ -536,13 +536,13 @@ bool Typecheck_Coerce_Return(
 
     if (Is_Nihil(atom)) {  // RETURN NIHIL
         //
-        // !!! Treating a return of NIHIL as a return of trash helps some
+        // !!! Treating a return of NIHIL as a return of NOTHING helps some
         // scenarios, for instance piping UPARSE combinators which do not
         // want to propagate pure invisibility.  The idea should be reviewed
         // to see if VOID makes more sense...but start with a more "ornery"
         // value to see how it shapes up.
         //
-        Init_Trash(atom);
+        Init_Nothing(atom);
     }
 
     return Typecheck_Coerce_Argument(param, atom);
