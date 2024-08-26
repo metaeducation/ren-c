@@ -203,10 +203,10 @@ DECLARE_NATIVE(read_stdin)
         bool eof = false;
 
         Size max = VAL_UINT32(ARG(size));
-        Binary* bin = Make_Binary(max);
+        Binary* b = Make_Binary(max);
         REBLEN i = 0;
-        while (Binary_Len(bin) < max) {
-            if (Read_Stdin_Byte_Interrupted(&eof, Binary_At(bin, i))) {  // Ctrl-C
+        while (Binary_Len(b) < max) {
+            if (Read_Stdin_Byte_Interrupted(&eof, Binary_At(b, i))) {  // Ctrl-C
                 if (rebWasHalting())
                     rebJumps(Canon(HALT));
                 fail ("Interruption of READ-STDIN for reason other than HALT?");
@@ -215,10 +215,10 @@ DECLARE_NATIVE(read_stdin)
                 break;
             ++i;
         }
-        Term_Binary_Len(bin, i);
+        Term_Binary_Len(b, i);
 
         Init_Logic(ARG(eof), eof);
-        Init_Binary(OUT, bin);
+        Init_Blob(OUT, b);
         return Proxy_Multi_Returns(level_);
     }
 }

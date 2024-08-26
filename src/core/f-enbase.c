@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -26,7 +26,7 @@
 
 
 //
-// Base-64 binary decoder table.
+// Base-64 decoder table.
 //
 static const Byte Debase64[128] =
 {
@@ -149,7 +149,7 @@ static const Byte Debase64[128] =
 };
 
 
-// Base-64 binary encoder table.
+// Base-64 encoder table.
 //
 // NOTE: Entered one-character-at-a-time in array initialization
 // format to avoid the length of 65 which would be needed if
@@ -179,16 +179,18 @@ static Binary* Decode_Base2(const Byte* *src, REBLEN len, Byte delim)
     const Byte* cp = *src;
 
     for (; len > 0; cp++, len--) {
-
-        if (delim && *cp == delim) break;
+        if (delim && *cp == delim)
+            break;
 
         Byte lex = Lex_Map[*cp];
 
         if (lex >= LEX_NUMBER) {
-
-            if (*cp == '0') accum *= 2;
-            else if (*cp == '1') accum = (accum * 2) + 1;
-            else goto err;
+            if (*cp == '0')
+                accum *= 2;
+            else if (*cp == '1')
+                accum = (accum * 2) + 1;
+            else
+                goto err;
 
             if (count++ >= 7) {
                 *bp++ = cast(Byte, accum);
@@ -196,14 +198,16 @@ static Binary* Decode_Base2(const Byte* *src, REBLEN len, Byte delim)
                 accum = 0;
             }
         }
-        else if (!*cp || lex > LEX_DELIMIT_RETURN) goto err;
+        else if (!*cp || lex > LEX_DELIMIT_RETURN)
+            goto err;
     }
-    if (count) goto err; // improper modulus
+    if (count)
+        goto err; // improper modulus
 
     Term_Binary_Len(bin, bp - Binary_Head(bin));
     return bin;
 
-err:
+  err:
     Free_Unmanaged_Flex(bin);
     *src = cp;
     return 0;
@@ -223,25 +227,28 @@ static Binary* Decode_Base16(const Byte* *src, REBLEN len, Byte delim)
     const Byte* cp = *src;
 
     for (; len > 0; cp++, len--) {
-
-        if (delim && *cp == delim) break;
+        if (delim && *cp == delim)
+            break;
 
         Byte lex = Lex_Map[*cp];
 
         if (lex > LEX_WORD) {
             REBINT val = lex & LEX_VALUE;  // char num encoded into lex
-            if (!val && lex < LEX_NUMBER) goto err;  // invalid char (word but no val)
+            if (!val && lex < LEX_NUMBER)
+                goto err;  // invalid char (word but no val)
             accum = (accum << 4) + val;
-            if (count++ & 1) *bp++ = cast(Byte, accum);
+            if (count++ & 1)
+                *bp++ = cast(Byte, accum);
         }
-        else if (!*cp || lex > LEX_DELIMIT_RETURN) goto err;
+        else if (!*cp || lex > LEX_DELIMIT_RETURN)
+            goto err;
     }
     if (count & 1) goto err; // improper modulus
 
     Term_Binary_Len(bin, bp - Binary_Head(bin));
     return bin;
 
-err:
+  err:
     Free_Unmanaged_Flex(bin);
     *src = cp;
     return 0;
@@ -264,20 +271,20 @@ static Binary* Decode_Base64(const Byte* *src, REBLEN len, Byte delim)
     const Byte* cp = *src;
 
     for (; len > 0; cp++, len--) {
-
         // Check for terminating delimiter (optional):
-        if (delim && *cp == delim) break;
+        if (delim && *cp == delim)
+            break;
 
         // Check for char out of range:
         if (*cp > 127) {
-            if (*cp == 0xA0) continue;  // hard space
+            if (*cp == 0xA0)
+                continue;  // hard space
             goto err;
         }
 
         Byte lex = Debase64[*cp];
 
         if (lex < BIN_SPACE) {
-
             if (*cp != '=') {
                 accum = (accum << 6) + lex;
                 if (flip++ == 3) {
@@ -297,24 +304,28 @@ static Binary* Decode_Base64(const Byte* *src, REBLEN len, Byte delim)
                     flip = 0;
                 }
                 else if (flip == 2) {
-                    if (!Skip_To_Byte(cp, cp + len, '=')) goto err;
+                    if (not Skip_To_Byte(cp, cp + len, '='))
+                        goto err;
                     cp++;
                     *bp++ = cast(Byte, accum >> 4);
                     flip = 0;
                 }
-                else goto err;
+                else
+                    goto err;
                 break;
             }
         }
-        else if (lex == BIN_ERROR) goto err;
+        else if (lex == BIN_ERROR)
+            goto err;
     }
 
-    if (flip) goto err;
+    if (flip)
+        goto err;
 
     Term_Binary_Len(bin, bp - Binary_Head(bin));
     return bin;
 
-err:
+  err:
     Free_Unmanaged_Flex(bin);
     *src = cp;
     return 0;
@@ -322,37 +333,31 @@ err:
 
 
 //
-//  Decode_Binary: C
+//  Decode_Enbased_Utf8_As_Binary: C
 //
-// Scan and convert a binary string.
+// Scan and convert strings like "3sr7rQ==" to #{DECAFBAD}
 //
-const Byte* Decode_Binary(
-    Cell* out,
-    const Byte* src,
+Option(Binary*) Decode_Enbased_Utf8_As_Binary(
+    const Byte** bp,
     REBLEN len,
     REBINT base,
     Byte delim
-) {
-    Binary* bin = 0;
+){
+    Option(Binary*) bin = nullptr;
 
     switch (base) {
-    case 64:
-        bin = Decode_Base64(&src, len, delim);
+      case 64:
+        bin = Decode_Base64(bp, len, delim);
         break;
-    case 16:
-        bin = Decode_Base16(&src, len, delim);
+      case 16:
+        bin = Decode_Base16(bp, len, delim);
         break;
-    case 2:
-        bin = Decode_Base2 (&src, len, delim);
+      case 2:
+        bin = Decode_Base2(bp, len, delim);
         break;
     }
 
-    if (not bin)
-        return 0;
-
-    Init_Binary(out, bin);
-
-    return src;
+    return bin;
 }
 
 

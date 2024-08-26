@@ -38,8 +38,8 @@ REBINT CT_Bitset(const Cell* a, const Cell* b, bool strict)
 {
     DECLARE_ATOM (atemp);
     DECLARE_ATOM (btemp);
-    Init_Binary(atemp, VAL_BITSET(a));
-    Init_Binary(btemp, VAL_BITSET(b));
+    Init_Blob(atemp, VAL_BITSET(a));
+    Init_Blob(btemp, VAL_BITSET(b));
 
     if (BITS_NOT(VAL_BITSET(a)) != BITS_NOT(VAL_BITSET(b)))
         return 1;
@@ -54,11 +54,11 @@ REBINT CT_Bitset(const Cell* a, const Cell* b, bool strict)
 Binary* Make_Bitset(REBLEN num_bits)
 {
     REBLEN num_bytes = (num_bits + 7) / 8;
-    Binary* bin = Make_Binary(num_bytes);
-    Clear_Flex(bin);
-    Term_Binary_Len(bin, num_bytes);
-    INIT_BITS_NOT(bin, false);
-    return bin;
+    Binary* bset = Make_Binary(num_bytes);
+    Clear_Flex(bset);
+    Term_Binary_Len(bset, num_bytes);
+    INIT_BITS_NOT(bset, false);
+    return bset;
 }
 
 
@@ -71,16 +71,16 @@ void MF_Bitset(REB_MOLD *mo, const Cell* v, bool form)
 
     Pre_Mold(mo, v); // #[bitset! or make bitset!
 
-    const Binary* s = VAL_BITSET(v);
+    const Binary* bset = VAL_BITSET(v);
 
-    if (BITS_NOT(s))
+    if (BITS_NOT(bset))
         Append_Ascii(mo->string, "[not bits ");
 
-    DECLARE_ATOM (binary);
-    Init_Binary(binary, s);
+    DECLARE_ELEMENT (binary);
+    Init_Blob(binary, bset);
     MF_Binary(mo, binary, false); // false = mold, don't form
 
-    if (BITS_NOT(s))
+    if (BITS_NOT(bset))
         Append_Codepoint(mo->string, ']');
 
     End_Mold(mo);
@@ -104,9 +104,9 @@ Bounce MAKE_Bitset(
     if (len == NOT_FOUND)
         return RAISE(arg);
 
-    Binary* bin = Make_Bitset(cast(REBLEN, len));
-    Manage_Flex(bin);
-    Init_Bitset(OUT, bin);
+    Binary* bset = Make_Bitset(cast(REBLEN, len));
+    Manage_Flex(bset);
+    Init_Bitset(OUT, bset);
 
     if (Is_Integer(arg))
         return OUT; // allocated at a size, no contents.
@@ -114,11 +114,11 @@ Bounce MAKE_Bitset(
     if (Is_Binary(arg)) {
         Size size;
         const Byte* at = Cell_Binary_Size_At(&size, arg);
-        memcpy(Binary_Head(bin), at, (size / 8) + 1);
+        memcpy(Binary_Head(bset), at, (size / 8) + 1);
         return OUT;
     }
 
-    Set_Bits(bin, arg, true);
+    Set_Bits(bset, arg, true);
     return OUT;
 }
 
@@ -529,10 +529,10 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
 //
 // Remove extra zero bytes from end of byte string.
 //
-void Trim_Tail_Zeros(Binary* ser)
+void Trim_Tail_Zeros(Binary* bin)
 {
-    REBLEN len = Binary_Len(ser);
-    Byte* bp = Binary_Head(ser);
+    REBLEN len = Binary_Len(bin);
+    Byte* bp = Binary_Head(bin);
 
     while (len > 0 && bp[len] == 0)
         len--;
@@ -540,7 +540,7 @@ void Trim_Tail_Zeros(Binary* ser)
     if (bp[len] != 0)
         len++;
 
-    Set_Flex_Len(ser, len);
+    Set_Flex_Len(bin, len);
 }
 
 
@@ -639,7 +639,7 @@ REBTYPE(Bitset)
         if (Is_Antiform(arg))
             fail (arg);
 
-        Binary* bin = VAL_BITSET_Ensure_Mutable(v);
+        Binary* bset = VAL_BITSET_Ensure_Mutable(v);
 
         bool diff;
         if (BITS_NOT(VAL_BITSET(v)))
@@ -647,7 +647,7 @@ REBTYPE(Bitset)
         else
             diff = true;
 
-        if (not Set_Bits(bin, arg, diff))
+        if (not Set_Bits(bset, arg, diff))
             fail (arg);
         return COPY(v); }
 
@@ -655,12 +655,12 @@ REBTYPE(Bitset)
         INCLUDE_PARAMS_OF_REMOVE;
         UNUSED(PARAM(series));  // covered by `v`
 
-        Binary* bin = VAL_BITSET_Ensure_Mutable(v);
+        Binary* bset = VAL_BITSET_Ensure_Mutable(v);
 
         if (not REF(part))
             fail (Error_Missing_Arg_Raw());
 
-        if (not Set_Bits(bin, ARG(part), false))
+        if (not Set_Bits(bset, ARG(part), false))
             fail (PARAM(part));
 
         return COPY(v); }
@@ -680,9 +680,9 @@ REBTYPE(Bitset)
         return Init_Bitset(OUT, copy); }
 
       case SYM_CLEAR: {
-        Binary* bin = VAL_BITSET_Ensure_Mutable(v);
-        INIT_BITS_NOT(bin, false);
-        Clear_Flex(bin);
+        Binary* bset = VAL_BITSET_Ensure_Mutable(v);
+        INIT_BITS_NOT(bset, false);
+        Clear_Flex(bset);
         return COPY(v); }
 
       case SYM_INTERSECT:
@@ -694,8 +694,8 @@ REBTYPE(Bitset)
             if (BITS_NOT(VAL_BITSET(arg))) {  // !!! see #2365
                 fail ("Bitset negation not handled by set operations");
             }
-            const Binary* bin = VAL_BITSET(arg);
-            Init_Binary(arg, bin);
+            const Binary* bset = VAL_BITSET(arg);
+            Init_Blob(arg, bset);
         }
         else if (not Is_Binary(arg))
             fail (Error_Math_Args(VAL_TYPE(arg), verb));
@@ -716,8 +716,8 @@ REBTYPE(Bitset)
                 fail ("Bitset negation not handled by (most) set operations");
         }
 
-        const Binary* bin = VAL_BITSET(v);
-        Init_Binary(v, bin);
+        const Binary* bset = VAL_BITSET(v);
+        Init_Blob(v, bset);
 
         // !!! Until the replacement implementation with Roaring Bitmaps, the
         // bitset is based on a BINARY!.  Reuse the code on the generated
@@ -747,12 +747,12 @@ REBTYPE(Bitset)
 
         Value* processed = rebValue(rebR(action), rebQ(v), rebQ(arg));
 
-        Binary* bits = Cell_Binary_Known_Mutable(processed);
+        Binary* bset_out = Cell_Binary_Known_Mutable(processed);
         rebRelease(processed);
 
-        INIT_BITS_NOT(bits, negated_result);
-        Trim_Tail_Zeros(bits);
-        return Init_Bitset(OUT, bits); }
+        INIT_BITS_NOT(bset_out, negated_result);
+        Trim_Tail_Zeros(bset_out);
+        return Init_Bitset(OUT, bset_out); }
 
       default:
         break;

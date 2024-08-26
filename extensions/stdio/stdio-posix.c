@@ -131,7 +131,7 @@ void Write_IO(const Value* data, REBLEN len)
             bool ok = true;
 
             const Byte* tail = Binary_Tail(Cell_Binary(data));
-            const Byte* bp = Cell_Binary_At(data);
+            const Byte* bp = Cell_Blob_At(data);
             for (; bp != tail; ++bp) {
                 char digits[2];
                 digits[0] = Hex_Digits[*bp / 16];
@@ -155,7 +155,7 @@ void Write_IO(const Value* data, REBLEN len)
         const Byte* bp;
         Size size;
         if (Is_Binary(data)) {
-            bp = Cell_Binary_At(data);
+            bp = Cell_Blob_At(data);
             size = len;
         }
         else {

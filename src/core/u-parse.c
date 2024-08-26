@@ -850,7 +850,7 @@ static REBIXO To_Thru_Block_Rule(
                 }
             }
             else if (P_HEART == REB_BINARY) {
-                Byte ch1 = *Cell_Binary_At(iter);
+                Byte ch1 = *Cell_Blob_At(iter);
 
                 if (VAL_INDEX(iter) == P_INPUT_LEN) {
                     //
@@ -2150,9 +2150,9 @@ DECLARE_NATIVE(subparse)
                     );
                 }
                 else if (P_HEART == REB_BINARY) {
-                    Init_Binary(  // R3-Alpha behavior (e.g. not AS TEXT!)
+                    Init_Blob(  // R3-Alpha behavior (e.g. not AS TEXT!)
                         sink,
-                        Copy_Binary_At_Len(P_INPUT, begin, count)
+                        Copy_Binary_At_Len(P_INPUT_BINARY, begin, count)
                     );
                 }
                 else {

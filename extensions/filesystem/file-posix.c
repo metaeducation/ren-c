@@ -378,7 +378,7 @@ Value* Write_File(const Value* port, const Value* value, REBLEN limit)
         if (not Is_Binary(value))
             return rebValue("make error! {ISSUE!, TEXT!, BINARY! for WRITE}");
 
-        data = Cell_Binary_At(value);
+        data = Cell_Blob_At(value);
         size = limit;
     }
 

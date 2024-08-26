@@ -56,7 +56,7 @@ native-info!: make object! [
 ; loading turned out to be less practically useful than the malleability.
 ;
 ; Hence this instead extracts a tiny bit of information, and returns the spec
-; as a text blob.
+; as a text string.
 ;
 export extract-native-protos: func [
     return: "Returns block of NATIVE-INFO! objects"

@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -38,7 +38,7 @@ String* Make_String_Core(Size encoded_capacity, Flags flags)
     assert(Flavor_From_Flags(flags) == 0);  // shouldn't have a flavor
 
     String* str = Make_Flex(String,
-        encoded_capacity + 1,  // binary includes room for '\0' terminator
+        encoded_capacity + 1,  // + 1 makes room for '\0' terminator
         FLAG_FLAVOR(STRING) | flags
     );
     str->misc.length = 0;
@@ -49,19 +49,16 @@ String* Make_String_Core(Size encoded_capacity, Flags flags)
 
 
 //
-//  Copy_Bytes: C
+//  Make_Binary_From_Sized_Bytes: C
 //
 // Create a Binary Flex from the given bytes.
 //
-Binary* Copy_Bytes(const Byte* src, REBINT len)
+Binary* Make_Binary_From_Sized_Bytes(const Byte* src, Size len)
 {
-    if (len < 0)
-        len = strsize(src);
-
-    Binary* bin = Make_Binary(len);
-    memcpy(Binary_Head(bin), src, len);
-    Term_Binary_Len(bin, len);
-    return bin;
+    Binary* b = Make_Binary(len);
+    memcpy(Binary_Head(b), src, len);
+    Term_Binary_Len(b, len);
+    return b;
 }
 
 

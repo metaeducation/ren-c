@@ -102,9 +102,9 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
         // structure...which would mean different Rename_Directory() and
         // Rename_File() calls, for instance.
         //
-        Binary* bin = Make_Binary(sizeof(FILEREQ));
-        Init_Binary(state, bin);
-        Term_Binary_Len(bin, sizeof(FILEREQ));
+        Binary* b = Make_Binary(sizeof(FILEREQ));
+        Init_Blob(state, b);
+        Term_Binary_Len(b, sizeof(FILEREQ));
 
         dir = File_Of_Port(port);
         dir->handle = nullptr;

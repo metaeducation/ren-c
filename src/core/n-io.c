@@ -339,12 +339,12 @@ DECLARE_NATIVE(basic_read)
     Size size = ftell(f);
     fseek(f, 0, SEEK_SET);
 
-    Binary* bin = Make_Binary(size);
-    fread(Binary_Head(bin), size, 1, f);
-    Term_Binary_Len(bin, size);
+    Binary* buf = Make_Binary(size);
+    fread(Binary_Head(buf), size, 1, f);
+    Term_Binary_Len(buf, size);
     fclose(f);
 
-    return Init_Binary(OUT, bin);
+    return Init_Blob(OUT, buf);
   #endif
 }
 

@@ -365,11 +365,11 @@ Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
 
         Value* data = CTX_VAR(ctx, STD_PORT_DATA);
         if (not Is_Binary(data)) {
-            Init_Binary(data, Make_Binary(readbuf_size));
+            Init_Blob(data, Make_Binary(readbuf_size));
         }
         else if (Flex_Rest(Cell_Binary(data)) < readbuf_size) {
-            Binary* bin = Cell_Binary_Ensure_Mutable(data);
-            Expand_Flex_Tail(bin, readbuf_size - Flex_Rest(bin));
+            Binary* b = Cell_Binary_Ensure_Mutable(data);
+            Expand_Flex_Tail(b, readbuf_size - Flex_Rest(b));
         }
 
         // !!! An egregious hack in READ-LINE to try and coax the system to

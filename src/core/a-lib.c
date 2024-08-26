@@ -169,7 +169,7 @@ unsigned char* API_rebAllocBytes(size_t size)
 {
     ENTER_API;
 
-    Binary* s = Make_Flex(Binary,
+    Binary* b = Make_Flex(Binary,
         ALIGN_SIZE  // stores Binary* (must be at least big enough for void*)
             + size  // for the actual data capacity (may be 0, see notes)
             + 1,  // for termination (AS TEXT! of rebRepossess(), see notes)
@@ -179,11 +179,11 @@ unsigned char* API_rebAllocBytes(size_t size)
             | FLEX_FLAG_DYNAMIC  // rebRepossess() needs bias field
     );
 
-    Byte* ptr = Binary_Head(s) + ALIGN_SIZE;
+    Byte* ptr = Binary_Head(b) + ALIGN_SIZE;
 
-    Binary** ps = (cast(Binary**, ptr) - 1);
-    *ps = s;  // save self in bytes that appear immediately before the data
-    Poison_Memory_If_Sanitize(ps, sizeof(Binary*));  // catch underruns
+    Binary** pb = (cast(Binary**, ptr) - 1);
+    *pb = b;  // save self in bytes that appear immediately before the data
+    Poison_Memory_If_Sanitize(pb, sizeof(Binary*));  // catch underruns
 
     // !!! The data is uninitialized, and if it is turned into a BINARY! via
     // rebRepossess() before all bytes are assigned initialized, it could be
@@ -192,12 +192,12 @@ unsigned char* API_rebAllocBytes(size_t size)
     //
     // https://stackoverflow.com/a/37184840
     //
-    // It may be that rebAalloc() and rebRealloc() should initialize with 0
+    // It may be that rebAlloc() and rebRealloc() should initialize with 0
     // to defend against that, but that has a cost.  For now we make no such
     // promise--and leave it uninitialized so that address sanitizer notices
     // when bytes are used that haven't been assigned.
     //
-    Term_Binary_Len(s, ALIGN_SIZE + size);
+    Term_Binary_Len(b, ALIGN_SIZE + size);
 
     return ptr;
 }
@@ -249,13 +249,13 @@ unsigned char* API_rebReallocBytes(void *ptr, size_t new_size)
     if (not ptr)  // C realloc() accepts null
         return API_rebAllocBytes(new_size);
 
-    Binary** ps = cast(Binary**, ptr) - 1;
-    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary*));  // fetch `s` underruns
+    Binary** pb = cast(Binary**, ptr) - 1;
+    Unpoison_Memory_If_Sanitize(pb, sizeof(Binary*));  // fetch `b` underruns
 
-    Binary* s = *ps;
-    assert(Is_Node_Root_Bit_Set(s));
+    Binary* b = *pb;
+    assert(Is_Node_Root_Bit_Set(b));
 
-    REBLEN old_size = Binary_Len(s) - ALIGN_SIZE;
+    REBLEN old_size = Binary_Len(b) - ALIGN_SIZE;
 
     // !!! It's less efficient to create a new Flex with another call to
     // rebAlloc(), but simpler for the time being.  Switch to do this with
@@ -285,12 +285,12 @@ void API_rebFreeMaybe(void *ptr)
     if (not ptr)
         return;
 
-    Binary** ps = cast(Binary**, ptr) - 1;
-    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary*));  // fetch `s` underruns
+    Binary** pb = cast(Binary**, ptr) - 1;
+    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary*));  // fetch `b` underruns
 
-    Binary* s = *ps;
+    Binary* b = *pb;
 
-    if (Is_Node_A_Cell(s) or not (NODE_BYTE(s) & NODE_BYTEMASK_0x02_ROOT)) {
+    if (Is_Node_A_Cell(b) or not (NODE_BYTE(b) & NODE_BYTEMASK_0x02_ROOT)) {
         rebJumps(
             "panic [",
                 "{rebFree() mismatched with allocator!}"
@@ -299,22 +299,22 @@ void API_rebFreeMaybe(void *ptr)
         );
     }
 
-    assert(Flex_Wide(s) == 1);
+    assert(Flex_Wide(b) == 1);
 
-    if (g_gc.recycling and Is_Node_Marked(s)) {
-        assert(Is_Node_Managed(s));
-        Clear_Node_Marked_Bit(s);
+    if (g_gc.recycling and Is_Node_Marked(b)) {
+        assert(Is_Node_Managed(b));
+        Clear_Node_Marked_Bit(b);
       #if DEBUG
         g_gc.mark_count -= 1;
       #endif
     }
 
-    Clear_Node_Root_Bit(s);
+    Clear_Node_Root_Bit(b);
 
-    if (Is_Node_Managed(s))  // set by rebUnmanageMemory()
-        GC_Kill_Flex(s);
+    if (Is_Node_Managed(b))  // set by rebUnmanageMemory()
+        GC_Kill_Flex(b);
     else
-        Free_Unmanaged_Flex(s);
+        Free_Unmanaged_Flex(b);
 }
 
 
@@ -361,41 +361,41 @@ RebolValue* API_rebRepossess(void* ptr, size_t size)
 {
     ENTER_API;
 
-    Binary** ps = cast(Binary**, ptr) - 1;
-    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary*));  // fetch `s` underruns
+    Binary** pb = cast(Binary**, ptr) - 1;
+    Unpoison_Memory_If_Sanitize(pb, sizeof(Binary*));  // fetch `b` underruns
 
-    Binary* s = *ps;
-    assert(Is_Node_Root_Bit_Set(s));  // may or may not be managed
-    assert(Get_Flex_Flag(s, DONT_RELOCATE));
+    Binary* b = *pb;
+    assert(Is_Node_Root_Bit_Set(b));  // may or may not be managed
+    assert(Get_Flex_Flag(b, DONT_RELOCATE));
 
-    if (size > Binary_Len(s) - ALIGN_SIZE)
+    if (size > Binary_Len(b) - ALIGN_SIZE)
         fail ("Attempt to rebRepossess() more than rebAlloc() capacity");
 
-    Clear_Node_Root_Bit(s);
-    Clear_Flex_Flag(s, DONT_RELOCATE);
+    Clear_Node_Root_Bit(b);
+    Clear_Flex_Flag(b, DONT_RELOCATE);
 
-    if (Get_Flex_Flag(s, DYNAMIC)) {
+    if (Get_Flex_Flag(b, DYNAMIC)) {
         //
         // Dynamic Flexes have the concept of a "bias", which is unused
         // allocated capacity at the head of the Flex.  Bump the "bias" to
         // treat the embedded Binary* (aligned to REBI64) as unused capacity.
         //
-        Set_Flex_Bias(s, ALIGN_SIZE);
-        s->content.dynamic.data += ALIGN_SIZE;
-        s->content.dynamic.rest -= ALIGN_SIZE;
+        Set_Flex_Bias(b, ALIGN_SIZE);
+        b->content.dynamic.data += ALIGN_SIZE;
+        b->content.dynamic.rest -= ALIGN_SIZE;
     }
     else {
         // Data is in Binary Stub itself, no bias.  Just slide the bytes down.
         //
         memmove(  // src overlaps destination, can't use memcpy()
-            Binary_Head(s),
-            Binary_Head(s) + ALIGN_SIZE,
+            Binary_Head(b),
+            Binary_Head(b) + ALIGN_SIZE,
             size
         );
     }
 
-    Term_Binary_Len(s, size);
-    return Init_Binary(Alloc_Value(), s);
+    Term_Binary_Len(b, size);
+    return Init_Blob(Alloc_Value(), b);
 }
 
 
@@ -418,18 +418,18 @@ void* API_rebUnmanageMemory(void* ptr)
 {
     ENTER_API;
 
-    Binary** ps = cast(Binary**, ptr) - 1;
-    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary*));  // fetch `s` underruns
+    Binary** pb = cast(Binary**, ptr) - 1;
+    Unpoison_Memory_If_Sanitize(pb, sizeof(Binary*));  // fetch `b` underruns
 
     // We "manage" the Flex to remove it from the tracked manuals list.
     // But the fact that it still has NODE_FLAG_ROOT means it should not be
     // garbage collected.
     //
-    Binary* s = *ps;
-    assert(Is_Node_Root_Bit_Set(s));
-    Manage_Flex(s);  // panics if already unmanaged... should it tolerate?
+    Binary* b = *pb;
+    assert(Is_Node_Root_Bit_Set(b));
+    Manage_Flex(b);  // panics if already unmanaged... should it tolerate?
 
-    Poison_Memory_If_Sanitize(ps, sizeof(Binary*));  // catch underruns
+    Poison_Memory_If_Sanitize(pb, sizeof(Binary*));  // catch underruns
 
     return ptr;
 }
@@ -677,11 +677,11 @@ RebolValue* API_rebSizedBinary(const void* bytes, size_t size)
 {
     ENTER_API;
 
-    Binary* bin = Make_Binary(size);
-    memcpy(Binary_Head(bin), bytes, size);
-    Term_Binary_Len(bin, size);
+    Binary* b = Make_Binary(size);
+    memcpy(Binary_Head(b), bytes, size);
+    Term_Binary_Len(b, size);
 
-    return Init_Binary(Alloc_Value(), bin);
+    return Init_Blob(Alloc_Value(), b);
 }
 
 
@@ -693,9 +693,10 @@ RebolValue* API_rebSizedBinary(const void* bytes, size_t size)
 // it exists is because emscripten's writeArrayToMemory() is based on use of
 // an Int8Array.set() call.
 //
-// When large binary blobs come back from file reads/etc. we already have one
-// copy of it.  We don't want to extract it into a temporary malloc'd buffer
-// just to be able to pass it to reb.Binary() to make *another* copy.
+// When large amounts of data come back from file reads/etc. the caller
+// already has one copy of it.  We don't want to extract it into a temporary
+// malloc'd buffer just to be able to pass it to reb.Binary() to make yet
+// *another* copy.
 //
 // Note: It might be interesting to have a concept of "external" memory by
 // which the data wasn't copied but a handle was kept to the JavaScript
@@ -708,15 +709,15 @@ RebolValue* API_rebUninitializedBinary_internal(size_t size)
 {
     ENTER_API;
 
-    Binary* bin = Make_Binary(size);
+    Binary* b = Make_Binary(size);
 
     // !!! Caution, unfilled bytes, access or molding may be *worse* than
     // random by the rules of C if they don't get written!  Must be filled
     // immediately by caller--before a GC or other operation.
     //
-    Term_Binary_Len(bin, size);
+    Term_Binary_Len(b, size);
 
-    return Init_Binary(Alloc_Value(), bin);
+    return Init_Blob(Alloc_Value(), b);
 }
 
 
@@ -747,7 +748,7 @@ unsigned char* API_rebBinaryAt_internal(const RebolValue* binary)
 {
     ENTER_API;
 
-    return Cell_Binary_At_Known_Mutable(binary);
+    return Cell_Blob_At_Known_Mutable(binary);
 }
 
 
@@ -1821,7 +1822,7 @@ size_t API_rebSpellInto(
 //
 // This gives the spelling as UTF-8 bytes.  Length in codepoints should be
 // extracted with LENGTH OF.  If size in bytes of the encoded UTF-8 is needed,
-// use the binary extraction API (works on ANY-STRING? to get UTF-8)
+// use the rebBytes() extraction API (works on ANY-STRING? to get UTF-8)
 //
 // Can return nullptr.  Use rebSpell() if you want a failure instead.
 //
@@ -2045,7 +2046,7 @@ static size_t Bytes_Into(
 //
 //  rebBytesInto: API
 //
-// Extract binary data from a BINARY!
+// Extract data from a BINARY!
 //
 // !!! Caller must allocate a buffer of the returned size + 1.  It's not clear
 // if this is a good idea; but this is based on a longstanding convention of

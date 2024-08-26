@@ -1289,9 +1289,9 @@ void Assert_Pointer_Detection_Working(void)
 
     assert(Detect_Rebol_Pointer(rebEND) == DETECTED_AS_END);
 
-    Binary* bin = Make_Flex(Binary, 1, FLAG_FLAVOR(BINARY));
-    assert(Detect_Rebol_Pointer(bin) == DETECTED_AS_STUB);
-    Free_Unmanaged_Flex(bin);
+    Binary* b = Make_Flex(Binary, 1, FLAG_FLAVOR(BINARY));
+    assert(Detect_Rebol_Pointer(b) == DETECTED_AS_STUB);
+    Free_Unmanaged_Flex(b);
 }
 
 

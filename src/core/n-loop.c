@@ -1050,9 +1050,9 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
             break; }
 
           case REB_BINARY: {
-            const Binary* bin = c_cast(Binary*, les->flex);
+            const Binary* b = c_cast(Binary*, les->flex);
             if (var)
-                Init_Integer(var, Binary_Head(bin)[les->u.eser.index]);
+                Init_Integer(var, Binary_Head(b)[les->u.eser.index]);
             if (++les->u.eser.index == les->u.eser.len)
                 les->more_data = false;
             break; }
@@ -1350,7 +1350,7 @@ DECLARE_NATIVE(remove_each)
 //    possible exit path.  (Errors, throws, completion)
 //
 // 2. Updating arrays in place may not be better than pushing kept values to
-//    the data stack and then creating a precisely-sized output blob to swap as
+//    the data stack and creating a precisely-sized output Flex to swap as
 //    underlying memory for the array.  (Imagine a large array from which there
 //    are many removals, and the ensuing wasted space being left behind).  We
 //    use the method anyway, to test novel techniques and error handling.
@@ -1452,8 +1452,8 @@ DECLARE_NATIVE(remove_each)
                     Cell_Specifier(data)
                 );
             else if (Is_Binary(data)) {
-                Binary* bin = cast(Binary*, flex);
-                Init_Integer(var, cast(REBI64, Binary_Head(bin)[index]));
+                Binary* b = cast(Binary*, flex);
+                Init_Integer(var, cast(REBI64, Binary_Head(b)[index]));
             }
             else {
                 assert(Any_String(data));
@@ -1529,10 +1529,10 @@ DECLARE_NATIVE(remove_each)
             do {
                 assert(start <= len);
                 if (Is_Binary(data)) {
-                    Binary* bin = cast(Binary*, flex);
+                    Binary* b = cast(Binary*, flex);
                     Append_Ascii_Len(
                         mo->string,
-                        cs_cast(Binary_At(bin, start)),
+                        cs_cast(Binary_At(b, start)),
                         1
                     );
                 }
@@ -1605,7 +1605,7 @@ DECLARE_NATIVE(remove_each)
             goto done_finalizing;
         }
 
-        Binary* bin = cast(Binary*, flex);
+        Binary* b = cast(Binary*, flex);
 
         // If there was a THROW, or fail() we need the remaining data
         //
@@ -1613,7 +1613,7 @@ DECLARE_NATIVE(remove_each)
         assert(start <= orig_len);
         Append_Ascii_Len(
             mo->string,
-            cs_cast(Binary_At(bin, start)),
+            cs_cast(Binary_At(b, start)),
             orig_len - start
         );
 

@@ -29,7 +29,7 @@
 // negating the bitset could be prohibitive.  e.g. the size of all Unicode
 // codepoints that *aren't* spaces would take a very large number of bits
 // to represent.  Hence the NEGATE operation on a bitset would keep the
-// underlying binary data with an annotation on the Binary Stub that it
+// underlying byte data with an annotation on the Binary Stub that it
 // was in a negated state, and searches would invert their results.
 //
 // !!! There were several bugs related to routines not heeding the negated
@@ -55,10 +55,10 @@ INLINE Binary* VAL_BITSET(const Cell* v) {
 #define VAL_BITSET_Ensure_Mutable(v) \
     m_cast(Binary*, VAL_BITSET(Ensure_Mutable(v)))
 
-INLINE Element* Init_Bitset(Sink(Element*) out, Binary* bits) {
+INLINE Element* Init_Bitset(Sink(Element*) out, Binary* bset) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_BITSET);
-    Assert_Flex_Managed(bits);
-    Init_Cell_Node1(out, bits);
+    Assert_Flex_Managed(bset);
+    Init_Cell_Node1(out, bset);
     return out;
 }
 

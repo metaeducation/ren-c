@@ -597,7 +597,7 @@ INLINE void SET_SIGNAL(Flags f) { // used in %sys-series.h
 
 #include "stubs/stub-array.h"  // Array* used by UTF-8 string bookmarks
 #include "stubs/stub-symbol.h"
-#include "stubs/stub-binary.h"  // BIN_XXX(), etc. used by strings
+#include "stubs/stub-binary.h"  // Binary_At(), etc. used by strings
 #include "sys-utf8.h"
 #include "stubs/stub-string.h"  // SymId needed for typesets
 #include "stubs/stub-action.h"
@@ -636,7 +636,7 @@ INLINE void SET_SIGNAL(Flags f) { // used in %sys-series.h
 #include "cells/cell-logic.h"  // ~true~ and ~false~ are antiform words
 
 #include "cells/cell-string.h"
-#include "cells/cell-binary.h"  // Cell_Bytes_At() interprets string indexes
+#include "cells/cell-binary.h"
 #include "cells/cell-token.h"
 
 #include "cells/cell-context.h"

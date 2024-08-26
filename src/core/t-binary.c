@@ -130,7 +130,7 @@ static Bounce MAKE_TO_Binary_Common(Level* level_, const Value* arg)
     case REB_BINARY: {
         Size size;
         const Byte* data = Cell_Binary_Size_At(&size, arg);
-        return Init_Binary(OUT, Copy_Bytes(data, size)); }
+        return Init_Blob(OUT, Make_Binary_From_Sized_Bytes(data, size)); }
 
       case REB_TEXT:
       case REB_FILE:
@@ -141,39 +141,42 @@ static Bounce MAKE_TO_Binary_Common(Level* level_, const Value* arg)
         Size utf8_size;
         Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, arg);
 
-        Binary* bin = Make_Binary(utf8_size);
-        memcpy(Binary_Head(bin), utf8, utf8_size);
-        Term_Binary_Len(bin, utf8_size);
-        return Init_Binary(OUT, bin); }
+        Binary* b = Make_Binary(utf8_size);
+        memcpy(Binary_Head(b), utf8, utf8_size);
+        Term_Binary_Len(b, utf8_size);
+        return Init_Blob(OUT, b); }
 
       case REB_BLOCK: {
         Join_Binary_In_Byte_Buf(arg, -1);
-        Binary* bin = cast(
+        Binary* b = cast(
             Binary*,
             Copy_Flex_Core(BYTE_BUF, FLEX_FLAGS_NONE)
         );
-        return Init_Binary(OUT, bin); }
+        return Init_Blob(OUT, b); }
 
       case REB_TUPLE: {
         REBLEN len = Cell_Sequence_Len(arg);
-        Binary* bin = Make_Binary(len);
-        if (Did_Get_Sequence_Bytes(Binary_Head(bin), arg, len)) {
-            Term_Binary_Len(bin, len);
-            return Init_Binary(OUT, bin);
+        Binary* b = Make_Binary(len);
+        if (Did_Get_Sequence_Bytes(Binary_Head(b), arg, len)) {
+            Term_Binary_Len(b, len);
+            return Init_Blob(OUT, b);
         }
         fail ("TUPLE! did not consist entirely of INTEGER! values 0-255"); }
 
       case REB_BITSET:
-        return Init_Binary(
+        return Init_Blob(
             OUT,
-            Copy_Bytes(Binary_Head(Cell_Binary(arg)), Cell_Series_Len_Head(arg))
+            Make_Binary_From_Sized_Bytes(
+                Binary_Head(Cell_Binary(arg)),
+                Cell_Series_Len_Head(arg)
+            )
         );
 
       case REB_MONEY: {
-        Binary* bin = Make_Binary(12);
-        deci_to_binary(Binary_Head(bin), VAL_MONEY_AMOUNT(arg));
-        Term_Binary_Len(bin, 12);
-        return Init_Binary(OUT, bin); }
+        Binary* b = Make_Binary(12);
+        deci_to_binary(Binary_Head(b), VAL_MONEY_AMOUNT(arg));
+        Term_Binary_Len(b, 12);
+        return Init_Blob(OUT, b); }
 
       default:
         return RAISE(Error_Bad_Make(REB_BINARY, arg));
@@ -202,7 +205,7 @@ Bounce MAKE_Binary(
         // !!! R3-Alpha tolerated decimal, e.g. `make string! 3.14`, which
         // is semantically nebulous (round up, down?) and generally bad.
         //
-        return Init_Binary(OUT, Make_Binary(Int32s(def, 0)));
+        return Init_Blob(OUT, Make_Binary(Int32s(def, 0)));
     }
 
     if (Is_Block(def)) {  // was construction syntax, #[binary [#{0001} 2]]
@@ -364,8 +367,8 @@ REBTYPE(Binary)
         if (i > 0xff)
             fail (Error_Out_Of_Range(setval));
 
-        Binary* bin = Cell_Binary_Ensure_Mutable(v);
-        Binary_Head(bin)[n] = cast(Byte, i);
+        Binary* b = Cell_Binary_Ensure_Mutable(v);
+        Binary_Head(b)[n] = cast(Byte, i);
 
         return nullptr; }  // caller's Binary* is not stale, no update needed
 
@@ -503,7 +506,7 @@ REBTYPE(Binary)
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
 
-        Binary* bin = Cell_Binary_Ensure_Mutable(v);
+        Binary* b = Cell_Binary_Ensure_Mutable(v);
 
         UNUSED(PARAM(series));
 
@@ -544,19 +547,19 @@ REBTYPE(Binary)
         // if no /PART, just return value, else return string
         //
         if (not REF(part)) {
-            Init_Integer(OUT, *Cell_Binary_At(v));
+            Init_Integer(OUT, *Cell_Blob_At(v));
         }
         else {
-            Init_Binary(
+            Init_Blob(
                 OUT,
-                Copy_Binary_At_Len(bin, VAL_INDEX(v), len)
+                Copy_Binary_At_Len(b, VAL_INDEX(v), len)
             );
         }
         Remove_Any_Series_Len(v, VAL_INDEX(v), len);  // bad UTF-8 alias fails
         return OUT; }
 
       case SYM_CLEAR: {
-        Binary* bin = Cell_Binary_Ensure_Mutable(v);
+        Binary* b = Cell_Binary_Ensure_Mutable(v);
 
         REBINT tail = cast(REBINT, Cell_Series_Len_Head(v));
         REBINT index = cast(REBINT, VAL_INDEX(v));
@@ -568,10 +571,10 @@ REBTYPE(Binary)
         // series is now empty, it reclaims the "bias" (unused capacity at
         // the head of the Flex).  One of many behaviors worth reviewing.
         //
-        if (index == 0 and Get_Flex_Flag(bin, DYNAMIC))
-            Unbias_Flex(bin, false);
+        if (index == 0 and Get_Flex_Flag(b, DYNAMIC))
+            Unbias_Flex(b, false);
 
-        Term_Binary_Len(bin, cast(REBLEN, index));  // may have string alias
+        Term_Binary_Len(b, cast(REBLEN, index));  // may have string alias
         return COPY(v); }
 
     //-- Creation:
@@ -587,7 +590,7 @@ REBTYPE(Binary)
         return Init_Series(
             OUT,
             REB_BINARY,
-            Copy_Binary_At_Len(Cell_Flex(v), VAL_INDEX(v), len)
+            Copy_Binary_At_Len(Cell_Binary(v), VAL_INDEX(v), len)
         ); }
 
     //-- Bitwise:
@@ -648,7 +651,7 @@ REBTYPE(Binary)
             assert(false);  // not reachable
         }
 
-        return Init_Binary(OUT, b); }
+        return Init_Blob(OUT, b); }
 
       case SYM_BITWISE_NOT: {
         Size size;
@@ -749,8 +752,8 @@ REBTYPE(Binary)
         if (VAL_TYPE(v) != VAL_TYPE(arg))
             fail (Error_Not_Same_Type_Raw());
 
-        Byte* v_at = Cell_Binary_At_Ensure_Mutable(v);
-        Byte* arg_at = Cell_Binary_At_Ensure_Mutable(arg);
+        Byte* v_at = Cell_Blob_At_Ensure_Mutable(v);
+        Byte* arg_at = Cell_Blob_At_Ensure_Mutable(arg);
 
         REBINT tail = cast(REBINT, Cell_Series_Len_Head(v));
         REBINT index = cast(REBINT, VAL_INDEX(v));
@@ -767,7 +770,7 @@ REBTYPE(Binary)
         UNUSED(ARG(series));
 
         REBLEN len = Part_Len_May_Modify_Index(v, ARG(part));
-        Byte* bp = Cell_Binary_At_Ensure_Mutable(v);  // index may've changed
+        Byte* bp = Cell_Blob_At_Ensure_Mutable(v);  // index may've changed
 
         if (len > 0) {
             REBLEN n = 0;
@@ -799,7 +802,7 @@ REBTYPE(Binary)
         Copy_Cell(OUT, v);  // copy to output before index adjustment
 
         REBLEN len = Part_Len_May_Modify_Index(v, ARG(part));
-        Byte* data_at = Cell_Binary_At_Ensure_Mutable(v);  // ^ index changes
+        Byte* data_at = Cell_Blob_At_Ensure_Mutable(v);  // ^ index changes
 
         if (len <= 1)
             return OUT;
@@ -852,20 +855,20 @@ REBTYPE(Binary)
 
             index += cast(REBLEN, Random_Int(REF(secure)))
                 % (tail - index);
-            const Binary* bin = Cell_Binary(v);
-            return Init_Integer(OUT, *Binary_At(bin, index));  // PICK
+            const Binary* b = Cell_Binary(v);
+            return Init_Integer(OUT, *Binary_At(b, index));  // PICK
         }
 
-        Binary* bin = Cell_Binary_Ensure_Mutable(v);
+        Binary* b = Cell_Binary_Ensure_Mutable(v);
 
         bool secure = REF(secure);
         REBLEN n;
-        for (n = Binary_Len(bin) - index; n > 1;) {
+        for (n = Binary_Len(b) - index; n > 1;) {
             REBLEN k = index + cast(REBLEN, Random_Int(secure)) % n;
             n--;
-            Byte swap = *Binary_At(bin, k);
-            *Binary_At(bin, k) = *Binary_At(bin, n + index);
-            *Binary_At(bin, n + index) = swap;
+            Byte swap = *Binary_At(b, k);
+            *Binary_At(b, k) = *Binary_At(b, n + index);
+            *Binary_At(b, n + index) = swap;
         }
         return COPY(v); }
 
@@ -977,7 +980,7 @@ DECLARE_NATIVE(enbin)
         );
 
     Term_Binary_Len(bin, num_bytes);
-    return Init_Binary(OUT, bin);
+    return Init_Blob(OUT, bin);
 }
 
 

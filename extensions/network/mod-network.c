@@ -475,7 +475,7 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
     Binary* bin;
     if (Is_Nulled(port_data)) {
         bin = Make_Binary(bufsize);
-        Init_Binary(port_data, bin);
+        Init_Blob(port_data, bin);
     }
     else {
         bin = Cell_Binary_Known_Mutable(port_data);
@@ -594,8 +594,8 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 
         rebreq->actual += nread;
 
-        // Binaries must be kept with proper termination in case the GC sees
-        // them.  This rule is maintained in case binaries alias UTF-8 strings,
+        // Blobs must be kept with proper termination in case the GC sees
+        // them.  This rule is maintained in case Blobs alias UTF-8 Strings,
         // which are stored terminated with 0.
         //
         Term_Binary_Len(bin, Binary_Len(bin) + nread);
@@ -935,7 +935,7 @@ static Bounce Transport_Actor(
         rebUnmanage(rebreq->binary);  // otherwise would be seen as a leak
 
         uv_buf_t buf;
-        buf.base = s_cast(m_cast(Byte*, Cell_Binary_At(rebreq->binary)));
+        buf.base = s_cast(m_cast(Byte*, Cell_Blob_At(rebreq->binary)));
         buf.len = Cell_Series_Len_At(rebreq->binary);
         int r = uv_write(&rebreq->req, sock->stream, &buf, 1, on_write_finished);
         if (r < 0)

@@ -457,7 +457,7 @@ REBINT Find_Bitset_In_Binstr(
 
     bool is_str = (Cell_Heart(binstr) != REB_BINARY);
 
-    const Byte* cp1 = is_str ? Cell_String_At(binstr) : Cell_Binary_At(binstr);
+    const Byte* cp1 = is_str ? Cell_String_At(binstr) : Cell_Blob_At(binstr);
     Codepoint c1;
     if (skip > 0) {  // skip 1 will pass over cp1, so leave as is
         if (is_str)

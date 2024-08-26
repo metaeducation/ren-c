@@ -1,6 +1,6 @@
 //
 //  File: %l-scan.c
-//  Summary: "lexical analyzer for source to binary translation"
+//  Summary: "Lexical analyzer for UTF-8 source to Rebol Array translation"
 //  Section: lexical
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2019 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -30,7 +30,7 @@
 // Because Red is implemented using Rebol, it has a more abstract definition
 // in the sense that it uses PARSE rules:
 //
-// https://github.com/red/red/blob/master/lexer.r
+// https://github.com/red/red/bin/master/lexer.r
 //
 // It would likely be desirable to bring more formalism and generativeness
 // to Rebol's scanner; though the current method of implementation was
@@ -1427,7 +1427,7 @@ static Token Maybe_Locate_Token_May_Push_Mold(
                 goto prescan_subsume_up_to_one_dot;
             }
             if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) {
-                cp = Skip_To_Byte(cp, ss->end, ':');
+                cp = maybe Skip_To_Byte(cp, ss->end, ':');
                 if (cp and (cp + 1) != ss->end) {  // 12:34
                     token = TOKEN_TIME;
                     goto prescan_subsume_up_to_one_dot;  // -596523:14:07.9999
@@ -1656,7 +1656,7 @@ static Token Maybe_Locate_Token_May_Push_Mold(
     if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) { // word:  url:words
         if (token != TOKEN_WORD)  // only valid with WORD (not set or lit)
             return token;
-        cp = Skip_To_Byte(cp, ss->end, ':');
+        cp = unwrap Skip_To_Byte(cp, ss->end, ':');
         assert(*cp == ':');
         if (not Is_Dot_Or_Slash(cp[1]) and Lex_Map[cp[1]] < LEX_SPECIAL) {
             // a valid delimited word SET?
@@ -3044,7 +3044,7 @@ DECLARE_NATIVE(transcode)
 
     Term_Binary_Len(bin, sizeof(SCAN_STATE));
 
-    Init_Binary(ss_buffer, bin);
+    Init_Blob(ss_buffer, bin);
 
     Push_Level(OUT, sub);
     STATE = ST_TRANSCODE_SCANNING;
@@ -3108,11 +3108,11 @@ DECLARE_NATIVE(transcode)
     Copy_Cell(rest, source);
 
     if (Is_Binary(source)) {
-        const Binary* bin = Cell_Binary(source);
+        const Binary* b = Cell_Binary(source);
         if (ss->begin)
-            VAL_INDEX_UNBOUNDED(rest) = ss->begin - Binary_Head(bin);
+            VAL_INDEX_UNBOUNDED(rest) = ss->begin - Binary_Head(b);
         else
-            VAL_INDEX_UNBOUNDED(rest) = Binary_Len(bin);
+            VAL_INDEX_UNBOUNDED(rest) = Binary_Len(b);
     }
     else {
         assert(Is_Text(source));

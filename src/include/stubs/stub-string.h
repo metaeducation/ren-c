@@ -492,18 +492,18 @@ INLINE Offset First_Hash_Candidate_Slot(
 #define Copy_String_At(v) \
     Copy_String_At_Limit((v), -1)
 
-INLINE Flex* Copy_Binary_At_Len(
-    const Flex* s,
+INLINE Binary* Copy_Binary_At_Len(
+    const Binary* b,
     REBLEN index,
     REBLEN len
 ){
-    return Copy_Flex_At_Len_Extra(
-        s,
+    return cast(Binary*, Copy_Flex_At_Len_Extra(
+        b,
         index,
         len,
         0,
         FLAG_FLAVOR(BINARY) | FLEX_FLAGS_NONE
-    );
+    ));
 }
 
 

@@ -80,7 +80,7 @@
 // parameters, or PRINT to output boot banners.
 //
 // This is the %main-startup.reb file bundled with other modules, compressed
-// with Gzip and expressed as a C binary literal.  That literal is TRANSCODE'd
+// with Gzip and expressed as a C byte array literal.  That is TRANSCODE'd
 // and executed to return the MAIN-STARTUP function, which takes the command
 // line arguments as a block of TEXT! and handles things from there.
 //

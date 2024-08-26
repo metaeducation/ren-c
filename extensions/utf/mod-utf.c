@@ -216,8 +216,8 @@ static Binary* Encode_UCS2(  // [1]
     Length len,
     bool little_endian
 ){
-    Binary* bin = Make_Binary(sizeof(uint16_t) * len);
-    uint16_t* ucs2 = cast(uint16_t*, Binary_Head(bin));
+    Binary* b = Make_Binary(sizeof(uint16_t) * len);
+    uint16_t* ucs2 = cast(uint16_t*, Binary_Head(b));
 
     Count n = 0;
     for (n = 0; n < len; ++n) {
@@ -241,8 +241,8 @@ static Binary* Encode_UCS2(  // [1]
 
     ucs2[n] = '\0';  // needs two bytes worth of NULL, not just one.
 
-    Set_Flex_Len(bin, len * sizeof(uint16_t));
-    return bin;
+    Set_Flex_Len(b, len * sizeof(uint16_t));
+    return b;
 }
 
 
@@ -316,7 +316,7 @@ DECLARE_NATIVE(encode_utf16le)
     Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(text));
 
     const bool little_endian = true;
-    Init_Binary(OUT, Encode_UCS2(utf8, len, little_endian));
+    Init_Blob(OUT, Encode_UCS2(utf8, len, little_endian));
 
     // !!! Should probably by default add a byte order mark, but given this
     // is weird "userspace" encoding it should be an option to the codec.
@@ -395,7 +395,7 @@ DECLARE_NATIVE(encode_utf16be)
     Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(text));
 
     const bool little_endian = false;
-    Init_Binary(OUT, Encode_UCS2(utf8, len, little_endian));
+    Init_Blob(OUT, Encode_UCS2(utf8, len, little_endian));
 
     // !!! Should probably by default add a byte order mark, but given this
     // is weird "userspace" encoding it should be an option to the codec.

@@ -735,9 +735,9 @@ typedef Stub Flex;
 // https://stackoverflow.com/q/2159390/
 //
 #if CPLUSPLUS_11
-    struct Binary : public Flex {};
-    struct String : public Binary {};  // String can act as Binary
-    struct Symbol : public String {};  // word-constrained immutable Strings
+    struct Binary : public Flex {};  // used by BLOB!
+    struct String : public Binary {};  // UTF8-constrained Binary
+    struct Symbol : public String {};  // WORD!-constrained immutable String
 
     struct BookmarkList : public Flex {};
 

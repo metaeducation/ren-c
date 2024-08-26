@@ -202,10 +202,9 @@ DECLARE_NATIVE(delimit)
 //
 //  debase: native [
 //
-//  "Decodes binary-coded string (BASE-64 default) to binary value"
+//  "Decodes base-coded string (BASE-64 default) to binary value"
 //
 //      return: [binary!]
-//          ; Comment said "we don't know the encoding" of the return binary
 //      value [binary! text!]
 //      /base "The base to convert from: 64, 16, or 2 (defaults to 64)"
 //          [integer!]
@@ -224,10 +223,11 @@ DECLARE_NATIVE(debase)
     else
         base = 64;
 
-    if (!Decode_Binary(OUT, bp, size, base, 0))
+    Binary* decoded = maybe Decode_Enbased_Utf8_As_Binary(&bp, size, base, 0);
+    if (not decoded)
         fail (Error_Invalid_Data_Raw(ARG(value)));
 
-    return OUT;
+    return Init_Blob(OUT, decoded);
 }
 
 

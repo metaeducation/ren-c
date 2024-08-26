@@ -24,7 +24,7 @@
 // The Rebol executable includes a version of zlib which has been extracted
 // from the GitHub archive and pared down into a single .h and .c file.
 // This wraps that functionality into functions that compress and decompress
-// Binary* series.
+// Binary Flexes.
 //
 // Options are offered for using zlib envelope, gzip envelope, or raw deflate.
 //
@@ -443,7 +443,7 @@ DECLARE_NATIVE(checksum_core)
     }
     Term_Binary_Len(bin, 4);
 
-    return Init_Binary(OUT, bin);
+    return Init_Blob(OUT, bin);
 }
 
 
@@ -539,7 +539,7 @@ DECLARE_NATIVE(inflate)
     Size size;
     if (Is_Binary(ARG(data))) {
         size = Part_Len_May_Modify_Index(ARG(data), ARG(part));
-        data = Cell_Binary_At(ARG(data));  // after (in case index modified)
+        data = Cell_Blob_At(ARG(data));  // after (in case index modified)
     }
     else {
         size = VAL_HANDLE_LEN(ARG(data));

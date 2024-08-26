@@ -441,7 +441,7 @@ static void Init_Root_Vars(void)
     Force_Value_Frozen_Deep(Root_Empty_Text);
 
     Binary* bzero = Make_Binary(0);
-    ensure(nullptr, Root_Empty_Binary) = Init_Binary(Alloc_Value(), bzero);
+    ensure(nullptr, Root_Empty_Binary) = Init_Blob(Alloc_Value(), bzero);
     Force_Value_Frozen_Deep(Root_Empty_Binary);
 }
 

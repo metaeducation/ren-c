@@ -32,10 +32,10 @@
 // such as that used by panic():
 //
 //     Cell* cell = ...;
-//     panic (cell);  // can tell this is a cell
+//     panic (cell);  // can tell this is a Cell
 //
 //     Stub* stub = ...;
-//     panic (stub)  // can tell this is a Stub (Flex, String, Array, Binary..)
+//     panic (stub)  // can tell this is a Stub (Flex, String, Array, Binary)
 //
 //     panic ("Ḧéllŏ");  // can tell this is UTF-8 data (not Stub or Cell)
 //

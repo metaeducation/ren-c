@@ -215,17 +215,17 @@ DECLARE_NATIVE(load_extension)
     // this *should* make no difference.
     //
     if (SPORADICALLY(2)) {
-        Binary* bin = Cell_Binary_Ensure_Mutable(script);
-        FLAVOR_BYTE(bin) = FLAVOR_STRING;
+        Binary* b = Cell_Binary_Ensure_Mutable(script);
+        FLAVOR_BYTE(b) = FLAVOR_STRING;
         Term_String_Len_Size(
-            cast(String*, bin),  // legal for tweaking cached data
+            cast(String*, b),  // legal for tweaking cached data
             script_num_codepoints,
-            Binary_Len(bin)
+            Binary_Len(b)
         );
-        LINK(Bookmarks, m_cast(Binary*, bin)) = nullptr;
+        LINK(Bookmarks, m_cast(Binary*, b)) = nullptr;
 
         if (SPORADICALLY(2))
-            Init_Text(script, cast(String*, bin));
+            Init_Text(script, cast(String*, b));
     }
 
     // !!! We currently are pushing all extensions into the lib context so

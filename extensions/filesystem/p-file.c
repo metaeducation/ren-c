@@ -153,9 +153,9 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         // was seen as having another benefit in making the internal state
         // opaque to users, so they didn't depend on it or fiddle with it.
         //
-        Binary* bin = Make_Binary(sizeof(FILEREQ));
-        Init_Binary(state, bin);
-        Term_Binary_Len(bin, sizeof(FILEREQ));
+        Binary* b = Make_Binary(sizeof(FILEREQ));
+        Init_Blob(state, b);
+        Term_Binary_Len(b, sizeof(FILEREQ));
 
         file = File_Of_Port(port);
         file->id = FILEHANDLE_NONE;

@@ -281,7 +281,7 @@ Flex* Make_Set_Operation_Flex(
         do {
             // Note: val1 and val2 swapped 2nd pass!
             //
-            const Binary* bin = Cell_Binary(val1);
+            const Binary* b = Cell_Binary(val1);
 
             // Iterate over first series
             //
@@ -290,7 +290,7 @@ Flex* Make_Set_Operation_Flex(
 
             for (
                 ;
-                VAL_INDEX_RAW(iter) < cast(REBIDX, Binary_Len(bin));
+                VAL_INDEX_RAW(iter) < cast(REBIDX, Binary_Len(b));
                 VAL_INDEX_RAW(iter) += skip
             ){
                 REBLEN len_match;

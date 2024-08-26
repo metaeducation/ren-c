@@ -678,9 +678,9 @@ Binary* Pop_Molded_Binary(REB_MOLD *mo)
     Throttle_Mold(mo);
 
     Size size = String_Size(mo->string) - mo->base.size;
-    Binary* bin = Make_Binary(size);
-    memcpy(Binary_Head(bin), Binary_At(mo->string, mo->base.size), size);
-    Term_Binary_Len(bin, size);
+    Binary* b = Make_Binary(size);
+    memcpy(Binary_Head(b), Binary_At(mo->string, mo->base.size), size);
+    Term_Binary_Len(b, size);
 
     // Though the protocol of Mold_Value does terminate, it only does so if
     // it adds content to the buffer.  If we did not terminate when we
@@ -691,7 +691,7 @@ Binary* Pop_Molded_Binary(REB_MOLD *mo)
     Term_String_Len_Size(mo->string, mo->base.index, mo->base.size);
 
     mo->string = nullptr;  // indicates mold is not currently pushed
-    return bin;
+    return b;
 }
 
 

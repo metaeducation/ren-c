@@ -2182,14 +2182,14 @@ DECLARE_NATIVE(as)
             // We have to permanently freeze the underlying String from any
             // mutation to use it in a WORD! (and also, may add STRING flag);
             //
-            const Binary* bin = Cell_Binary(v);
-            if (not Is_Flex_Frozen(bin))
+            const Binary* b = Cell_Binary(v);
+            if (not Is_Flex_Frozen(b))
                 if (Get_Cell_Flag(v, CONST))  // can't freeze or add IS_STRING
                     fail (Error_Alias_Constrains_Raw());
 
             const String* str;
-            if (Is_String_Symbol(bin))
-                str = c_cast(String*, bin);
+            if (Is_String_Symbol(b))
+                str = c_cast(String*, b);
             else {
                 // !!! There isn't yet a mechanic for interning an existing
                 // string series.  That requires refactoring.  It would need
@@ -2207,8 +2207,8 @@ DECLARE_NATIVE(as)
                 // Constrain the input in the way it would be if we were doing
                 // the more efficient reuse.
                 //
-                FLAVOR_BYTE(m_cast(Binary*, bin)) = FLAVOR_STRING;
-                Freeze_Flex(bin);
+                FLAVOR_BYTE(m_cast(Binary*, b)) = FLAVOR_STRING;
+                Freeze_Flex(b);
             }
 
             Init_Any_Word(OUT, new_heart, c_cast(Symbol*, str));
@@ -2296,17 +2296,17 @@ DECLARE_NATIVE(as)
 
             Size size;
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&size, v);
-            Binary* bin = Make_Binary_Core(size, NODE_FLAG_MANAGED);
-            memcpy(Binary_Head(bin), utf8, size + 1);
-            Set_Flex_Used(bin, size);
-            Freeze_Flex(bin);
-            Init_Binary(OUT, bin);
+            Binary* b = Make_Binary_Core(size, NODE_FLAG_MANAGED);
+            memcpy(Binary_Head(b), utf8, size + 1);
+            Set_Flex_Used(b, size);
+            Freeze_Flex(b);
+            Init_Blob(OUT, b);
             return Inherit_Const(stable_OUT, v);
         }
 
         if (Any_Word(v) or Any_String(v)) {
           any_string_as_binary:
-            Init_Binary_At(
+            Init_Blob_At(
                 OUT,
                 Cell_String(v),
                 Any_Word(v) ? 0 : VAL_BYTEOFFSET(v)

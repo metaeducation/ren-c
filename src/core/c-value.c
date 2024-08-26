@@ -381,12 +381,12 @@ void* Probe_Core_Debug(
     //=//// FLEXES WITH ELEMENTS WIDTH 1 //////////////////////////////////=//
 
       case FLAVOR_BINARY: {
-        const Binary* bin = cast(const Binary*, f);
+        const Binary* b = cast(const Binary*, f);
         Probe_Print_Helper(p, expr, "Byte-Size Flex", file, line);
 
-        const bool brk = (Binary_Len(bin) > 32);  // !!! duplicates MF_Binary code
+        const bool brk = (Binary_Len(b) > 32);  // !!! duplicates MF_Binary code
         Append_Ascii(mo->string, "#{");
-        Form_Base16(mo, Binary_Head(bin), Binary_Len(bin), brk);
+        Form_Base16(mo, Binary_Head(b), Binary_Len(b), brk);
         Append_Ascii(mo->string, "}");
         break; }
 

@@ -16,33 +16,33 @@ INLINE const Byte* Cell_Binary_Size_At(
     Option(Size*) size_at_out,
     const Cell* v
 ){
-    const Binary* bin = Cell_Binary(v);
+    const Binary* b = Cell_Binary(v);
     REBIDX i = VAL_INDEX_RAW(v);
-    Size size = Binary_Len(bin);
+    Size size = Binary_Len(b);
     if (i < 0 or i > cast(REBIDX, size))
         fail (Error_Index_Out_Of_Range_Raw());
     if (size_at_out)
         *(unwrap size_at_out) = size - i;
-    return Binary_At(bin, i);
+    return Binary_At(b, i);
 }
 
 #define Cell_Binary_Size_At_Ensure_Mutable(size_out,v) \
     m_cast(Byte*, Cell_Binary_Size_At((size_out), Ensure_Mutable(v)))
 
-#define Cell_Binary_At(v) \
+#define Cell_Blob_At(v) \
     Cell_Binary_Size_At(nullptr, (v))
 
-#define Cell_Binary_At_Ensure_Mutable(v) \
-    m_cast(Byte*, Cell_Binary_At(Ensure_Mutable(v)))
+#define Cell_Blob_At_Ensure_Mutable(v) \
+    m_cast(Byte*, Cell_Blob_At(Ensure_Mutable(v)))
 
-#define Cell_Binary_At_Known_Mutable(v) \
-    m_cast(Byte*, Cell_Binary_At(Known_Mutable(v)))
+#define Cell_Blob_At_Known_Mutable(v) \
+    m_cast(Byte*, Cell_Blob_At(Known_Mutable(v)))
 
-#define Init_Binary(out,bin) \
-    Init_Series((out), REB_BINARY, (bin))
+#define Init_Blob(out,blob) \
+    Init_Series((out), REB_BINARY, (blob))
 
-#define Init_Binary_At(out,bin,offset) \
-    Init_Series_At((out), REB_BINARY, (bin), (offset))
+#define Init_Blob_At(out,blob,offset) \
+    Init_Series_At((out), REB_BINARY, (blob), (offset))
 
 
 //=//// GLOBAL BINARIES //////////////////////////////////////////////////=//
@@ -54,11 +54,12 @@ INLINE const Byte* Cell_Binary_Size_At(
 
 
 // Historically, it was popular for routines that wanted BINARY! data to also
-// accept a STRING!, which would be automatically converted to UTF-8 binary
-// data.  This makes those more convenient to write.
+// accept a TEXT!, which would be interpreted as UTF-8.
+//
+// This makes those more convenient to write.
 //
 // !!! With the existence of AS, this might not be as useful as leaving
-// STRING! open for a different meaning (or an error as a sanity check).
+// TEXT! open for a different meaning (or an error as a sanity check)?
 //
 INLINE const Byte* Cell_Bytes_Limit_At(
     Size* size_out,
@@ -70,7 +71,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
 
     if (Cell_Heart(v) == REB_BINARY) {
         *size_out = limit;
-        return Cell_Binary_At(v);
+        return Cell_Blob_At(v);
     }
 
     if (Any_String_Kind(Cell_Heart(v))) {

@@ -290,7 +290,7 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
 
   new_interning: {
 
-    Binary* s = cast(Binary*, Make_Flex_Into(
+    Binary* b = cast(Binary*, Make_Flex_Into(
         preallocated ? unwrap preallocated : Alloc_Stub(),
         utf8_size + 1,  // small sizes fit in a Stub (no dynamic allocation)
         FLEX_MASK_SYMBOL
@@ -320,12 +320,12 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
             or utf8[i] == '<'
             or utf8[i] == '>'
         ){
-            Set_Subclass_Flag(SYMBOL, s, ILLEGAL_IN_ANY_SEQUENCE);
+            Set_Subclass_Flag(SYMBOL, b, ILLEGAL_IN_ANY_SEQUENCE);
             continue;
         }
 
         if (utf8[i] == '.') {
-            Set_Subclass_Flag(SYMBOL, s, ILLEGAL_IN_ANY_TUPLE);
+            Set_Subclass_Flag(SYMBOL, b, ILLEGAL_IN_ANY_TUPLE);
             continue;
         }
     }
@@ -334,46 +334,46 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     // The incoming string isn't always null terminated, e.g. if you are
     // interning `foo` in `foo: bar + 1` it would be colon-terminated.
     //
-    memcpy(Binary_Head(s), utf8, utf8_size);
-    Term_Binary_Len(s, utf8_size);
+    memcpy(Binary_Head(b), utf8, utf8_size);
+    Term_Binary_Len(b, utf8_size);
 
     // The UTF-8 Flex can be aliased with AS to become an ANY-STRING? or a
     // BINARY!.  If it is, then it should not be modified.
     //
-    Freeze_Flex(s);
+    Freeze_Flex(b);
 
     if (not synonym) {
-        LINK(Synonym, s) = c_cast(Symbol*, s);  // 1-item circular list
-        assert(SECOND_UINT16(&s->info) == SYM_0);  // Startup may assign [3]
+        LINK(Synonym, b) = c_cast(Symbol*, b);  // 1-item circular list
+        assert(SECOND_UINT16(&b->info) == SYM_0);  // Startup may assign [3]
     }
     else {
         // This is a synonym for an existing canon.  Link it into the synonyms
         // circularly linked list, and direct link the canon form.
         //
-        LINK(Synonym, s) = LINK(Synonym, synonym);
-        LINK(Synonym, synonym) = c_cast(Symbol*, s);
+        LINK(Synonym, b) = LINK(Synonym, synonym);
+        LINK(Synonym, synonym) = c_cast(Symbol*, b);
 
         // If the canon form had a SYM_XXX for quick comparison of %words.r
         // words in C switch statements, the synonym inherits that number.
         //
-        assert(SECOND_UINT16(&s->info) == SYM_0);
-        SET_SECOND_UINT16(&s->info, Symbol_Id(synonym));
+        assert(SECOND_UINT16(&b->info) == SYM_0);
+        SET_SECOND_UINT16(&b->info, Symbol_Id(synonym));
     }
 
-    MISC(Hitch, s) = s;  // circular list of module vars and bind info [4]
+    MISC(Hitch, b) = b;  // circular list of module vars and bind info [4]
 
     if (deleted_slot) {
-        *deleted_slot = cast(Symbol*, s);  // reuse the deleted slot
+        *deleted_slot = cast(Symbol*, b);  // reuse the deleted slot
       #if !defined(NDEBUG)
         g_symbols.num_deleteds -= 1;  // note slot usage count stays constant
       #endif
     }
     else {
-        symbols_by_hash[slot] = cast(Symbol*, s);
+        symbols_by_hash[slot] = cast(Symbol*, b);
         ++g_symbols.num_slots_in_use;
     }
 
-    return cast(Symbol*, s);
+    return cast(Symbol*, b);
   }
 }
 

@@ -567,7 +567,7 @@ INLINE Byte* Flex_Data_Last(size_t wide, const_if_c Flex* f) {
 // R3-Alpha had a concept of termination which was that all Flexes had one
 // full-sized unit at their tail which was set to zero bytes.  Ren-C moves
 // away from this concept...it only has terminating '\0' on UTF-8 Strings,
-// a reserved terminating *position* on Binary (in case they become
+// a reserved terminating *position* on Blobs (in case they become
 // aliased as UTF-8 Strings), and the debug build terminates Arrays in order
 // to catch out-of-bounds accesses more easily:
 //
@@ -581,7 +581,7 @@ INLINE Byte* Flex_Data_Last(size_t wide, const_if_c Flex* f) {
 // 1. A Binary alias of a String must have all modifications keep it as valid
 //    UTF-8, and it must maintain a `\0` terminator.  Because all Binary
 //    are candidates for being aliased as String, they reserve a byte at
-//    their tail.  This debug setting helps ensure that binaries are setting
+//    their tail.  This debug setting helps ensure that Blobs are setting
 //    the '\0' tail intentionally when appropriate by poisoning the byte.
 //
 // 2. There's a difference with how byte buffers are handled vs. Array, in
@@ -596,7 +596,7 @@ INLINE Byte* Flex_Data_Last(size_t wide, const_if_c Flex* f) {
 #if DEBUG_POISON_FLEX_TAILS
     #define ONE_IF_POISON_TAILS 1
 
-    #define BINARY_BAD_UTF8_TAIL_BYTE 0xFE  // binaries reserve tail byte [1]
+    #define BINARY_BAD_UTF8_TAIL_BYTE 0xFE  // Blobs reserve tail byte [1]
 
     INLINE void Poison_Or_Unpoison_Tail_Debug(Flex* f, bool poison) {
         if (Flex_Wide(f) == 1) {  // presume BINARY! or ANY-STRING? (?)
@@ -628,11 +628,8 @@ INLINE Byte* Flex_Data_Last(size_t wide, const_if_c Flex* f) {
 #else
     #define ONE_IF_POISON_TAILS 0
 
-    #define Poison_Flex_Tail_If_Debug(f) \
-        NOOP
-
-    #define Unpoison_Flex_Tail_If_Debug(f) \
-        NOOP
+    #define Poison_Flex_Tail_If_Debug(f) NOOP
+    #define Unpoison_Flex_Tail_If_Debug(f) NOOP
 #endif
 
 INLINE void Term_Flex_If_Necessary(Flex* f)
@@ -674,7 +671,7 @@ INLINE void Term_Flex_If_Necessary(Flex* f)
 // 2. UTF-8 Strings maintain a length in codepoints (in misc.length), as well
 //    as the size in bytes (as "used").  It's expected that both will be
 //    updated together--see Term_String_Len_Size().  But sometimes the used
-//    field is updated solo by a binary-based routine in an intermediate step.
+//    field is updated solo by a Binary-based routine in an intermediate step.
 //    That's okay so long as the length is not consulted before the String
 //    handling code finalizes it.  DEBUG_UTF8_EVERYWHERE makes violations
 //    obvious by corrupting the length.

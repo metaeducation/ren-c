@@ -338,7 +338,7 @@ enum rebol_esc_codes {
 // Skip to the specified byte but not past the provided end pointer of bytes.
 // nullptr if byte is not found.
 //
-INLINE const Byte* Skip_To_Byte(
+INLINE Option(const Byte*) Skip_To_Byte(
     const Byte* cp,
     const Byte* ep,
     Byte b

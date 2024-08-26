@@ -1168,13 +1168,17 @@ const Byte* Scan_Binary(
 
     len -= 2;
 
-    cp = Decode_Binary(out, cp, len, base, '}');
-    if (cp == NULL)
+    Binary* decoded = maybe Decode_Enbased_Utf8_As_Binary(&cp, len, base, '}');
+    if (not decoded)
         return_NULL;
 
-    cp = Skip_To_Byte(cp, cp + len, '}');
-    if (cp == NULL)
-        return_NULL; // series will be gc'd
+    cp = maybe Skip_To_Byte(cp, cp + len, '}');
+    if (not cp) {
+        Free_Unmanaged_Flex(decoded);
+        return_NULL;
+    }
+
+    Init_Blob(out, decoded);
 
     return cp + 1; // include the "}" in the scan total
 }
