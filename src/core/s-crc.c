@@ -201,7 +201,7 @@ uint32_t Hash_Value(const Cell* v)
     case REB_BAR:
     case REB_LIT_BAR:
     case REB_BLANK:
-    case REB_TRASH:
+    case REB_NOTHING:
     case REB_VOID:
         hash = 0;
         break;

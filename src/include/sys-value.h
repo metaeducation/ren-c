@@ -99,9 +99,9 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// In the debug build, "Trash" cells (NODE_FLAG_FREE) can use their payload to
+// In the debug build, Poison cells (NODE_FLAG_FREE) can use their payload to
 // store where and when they were initialized.  This also applies to some
-// datatypes like BLANK!, BAR!, LOGIC!, or TRASH--since they only use their
+// datatypes like BLANK!, BAR!, LOGIC!, or NOTHING--since they only use their
 // header bits, they can also use the payload for this in the debug build.
 //
 // (Note: The release build does not canonize unused bits of payloads, so
@@ -517,7 +517,7 @@ INLINE void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  TRASH CELLS
+//  POISON CELLS
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -765,30 +765,30 @@ INLINE const Value* NULLIZE(const Value* cell)
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  TRASH!
+//  NOTHING!
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// TRASH! results are the default for `do []`, and unlike NULL a trash! *is*
-// a value...however a somewhat unfriendly one.  While NULLs are falsey, trash
-// is *neither* truthy nor falsey.
+// NOTHING! results are the default for `do []`, and unlike NULL nothing! *is*
+// a value...however a somewhat unfriendly one.  While NULLs are falsey,
+// nothin is *neither* truthy nor falsey.
 //
-// TRASH! also comes into play in what is known as "voidification" of NULLs.
+// NOTHING! also comes into play in the "nothingification" of NULLs.
 // Loops wish to reserve NULL as the return result if there is a BREAK, and
 // conditionals like IF and SWITCH want to reserve NULL to mean there was no
 // branch taken.  So when branches or loop bodies produce null, they need
 // to be converted to some ANY-VALUE!.
 //
 
-#define TRASH_VALUE \
-    c_cast(const Value*, &PG_Trash_Value[0])
+#define NOTHING_VALUE \
+    c_cast(const Value*, &PG_Nothing_Value[0])
 
-#define Init_Trash(out) \
-    RESET_CELL((out), REB_TRASH)
+#define Init_Nothing(out) \
+    RESET_CELL((out), REB_NOTHING)
 
-INLINE Value* Trashify_Branched(Value* cell) {
+INLINE Value* Nothingify_Branched(Value* cell) {
     if (IS_NULLED(cell) or Is_Void(cell))
-        Init_Trash(cell);
+        Init_Nothing(cell);
     return cell;
 }
 
@@ -936,8 +936,6 @@ INLINE Value* Trashify_Branched(Value* cell) {
 INLINE bool IS_TRUTHY(const Cell* v) {
     if (GET_VAL_FLAG(v, VALUE_FLAG_FALSEY))
         return false;
-    if (Is_Trash(v))
-        fail (Error_Trash_Conditional_Raw());
     if (Is_Void(v))
         fail (Error_Void_Conditional_Raw());
     return true;

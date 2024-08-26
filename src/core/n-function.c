@@ -223,7 +223,7 @@ DECLARE_NATIVE(return)
     }
     else {
         if (IS_ENDISH_NULLED(v))
-            Init_Trash(v);  // `do [return]` acts as `return trash`
+            Init_Nothing(v);  // `do [return]` acts as `return trash`
 
         // Check type NOW instead of waiting and letting Eval_Core_Throws()
         // check it.  Reasoning is that the error can indicate the callsite,
@@ -844,7 +844,7 @@ REB_R N_Shot_Dispatcher(Level* L)
     if (Do_Branch_Throws(L->out, code))
         return R_THROWN;
 
-    return Trashify_Branched(L->out);
+    return Nothingify_Branched(L->out);
 }
 
 
@@ -863,7 +863,7 @@ REB_R N_Upshot_Dispatcher(Level* L)
     if (Do_Branch_Throws(L->out, code))
         return R_THROWN;
 
-    return Trashify_Branched(L->out);
+    return Nothingify_Branched(L->out);
 }
 
 

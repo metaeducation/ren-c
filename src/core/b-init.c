@@ -432,7 +432,7 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
     for (i = 0; names[i] != nullptr; ++i) {
         Symbol* str = Intern_UTF8_Managed(cb_cast(names[i]), strlen(names[i]));
         Value* val = Append_Context(Lib_Context, nullptr, str);
-        assert(Is_Trash(val));  // functions will fill in
+        assert(Is_Nothing(val));  // functions will fill in
         UNUSED(val);
     }
 }
@@ -862,10 +862,10 @@ static void Init_Root_Vars(void)
     Init_True(&PG_True_Value[0]);
     Poison_Cell(&PG_True_Value[1]);
 
-    Erase_Cell(&PG_Trash_Value[0]);
-    Erase_Cell(&PG_Trash_Value[1]);
-    Init_Trash(&PG_Trash_Value[0]);
-    Poison_Cell(&PG_Trash_Value[1]);
+    Erase_Cell(&PG_Nothing_Value[0]);
+    Erase_Cell(&PG_Nothing_Value[1]);
+    Init_Nothing(&PG_Nothing_Value[0]);
+    Poison_Cell(&PG_Nothing_Value[1]);
 
     Erase_Cell(&PG_R_Thrown[0]);
     Erase_Cell(&PG_R_Thrown[1]);
@@ -1200,7 +1200,7 @@ static Value* Startup_Mezzanine(BOOT_BLK *boot);
 
 #if !defined(NDEBUG)
 //
-//  Startup_Trash_Debug: C
+//  Startup_Corrupt_Globals: C
 //
 // The C language initializes global variables to 0.
 //
@@ -1210,7 +1210,7 @@ static Value* Startup_Mezzanine(BOOT_BLK *boot);
 // 0 carrying information, as opposed to them not being ready yet.  Any
 // variables that should be trashed up front should do so here.
 //
-static void Startup_Trash_Debug(void)
+static void Startup_Corrupt_Globals(void)
 {
     assert(not TG_Top_Level);
     Corrupt_Pointer_If_Debug(TG_Top_Level);
@@ -1247,7 +1247,7 @@ static void Startup_Trash_Debug(void)
 void Startup_Core(void)
 {
   #if !defined(NDEBUG)
-    Startup_Trash_Debug();
+    Startup_Corrupt_Globals();
   #endif
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1574,7 +1574,7 @@ static Value* Startup_Mezzanine(BOOT_BLK *boot)
         fail (Error_No_Catch_For_Throw(result));
     }
 
-    if (not Is_Trash(result))
+    if (not Is_Nothing(result))
         panic (result); // FINISH-INIT-CORE is a PROCEDURE, returns void
 
     return nullptr;

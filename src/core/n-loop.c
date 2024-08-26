@@ -164,7 +164,7 @@ static REB_R Loop_Series_Common(
             if (broke)
                 return nullptr;
         }
-        return Trashify_Branched(out);  // null->BREAK, void->empty
+        return Nothingify_Branched(out);  // null->BREAK, void->empty
     }
 
     // As per #1993, start relative to end determines the "direction" of the
@@ -187,7 +187,7 @@ static REB_R Loop_Series_Common(
             if (broke)
                 return nullptr;
         }
-        Trashify_Branched(out);  // null->BREAK, void->empty
+        Nothingify_Branched(out);  // null->BREAK, void->empty
         if (
             VAL_TYPE(var) != VAL_TYPE(start)
             or VAL_SERIES(var) != VAL_SERIES(start)
@@ -240,7 +240,7 @@ static REB_R Loop_Integer_Common(
             if (broke)
                 return nullptr;
         }
-        return Trashify_Branched(out);  // null->BREAK, void->empty
+        return Nothingify_Branched(out);  // null->BREAK, void->empty
     }
 
     // As per #1993, start relative to end determines the "direction" of the
@@ -259,7 +259,7 @@ static REB_R Loop_Integer_Common(
             if (broke)
                 return nullptr;
         }
-        Trashify_Branched(out);  // null->BREAK, void->empty
+        Nothingify_Branched(out);  // null->BREAK, void->empty
 
         if (not Is_Integer(var))
             fail (Error_Invalid_Type(VAL_TYPE(var)));
@@ -326,7 +326,7 @@ static REB_R Loop_Number_Common(
             if (broke)
                 return nullptr;
         }
-        return Trashify_Branched(out);  // null->BREAK, void->empty
+        return Nothingify_Branched(out);  // null->BREAK, void->empty
     }
 
     // As per #1993, see notes in Loop_Integer_Common()
@@ -343,7 +343,7 @@ static REB_R Loop_Number_Common(
             if (broke)
                 return nullptr;
         }
-        Trashify_Branched(out);  // null->BREAK, void->empty
+        Nothingify_Branched(out);  // null->BREAK, void->empty
 
         if (not Is_Decimal(var))
             fail (Error_Invalid_Type(VAL_TYPE(var)));
@@ -588,7 +588,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
         switch (les->mode) {
           case LOOP_FOR_EACH:
-            Trashify_Branched(les->out);  // null->BREAK, void->empty
+            Nothingify_Branched(les->out);  // null->BREAK, void->empty
             break;
 
           case LOOP_EVERY:
@@ -601,7 +601,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             if (IS_NULLED(les->out))  // null body is error now
                 fail (Error_Need_Non_Null_Raw());
             if (Is_Void(les->out))  // vanish result
-                Init_Trash(les->out);  // nulled is used to signal breaking only
+                Init_Nothing(les->out);  // nulled is used to signal breaking only
             else
                 Copy_Cell(PUSH(), les->out);  // not void, added to the result
             break;
@@ -773,7 +773,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
         // any other value is the last body result, and is truthy
         // only illegal value here is trash (would cause error if body gave it)
         //
-        assert(not Is_Trash(OUT));
+        assert(not Is_Nothing(OUT));
         return OUT;
 
       case LOOP_MAP_EACH:
@@ -946,7 +946,7 @@ DECLARE_NATIVE(for_skip)
             if (broke)
                 return nullptr;
         }
-        Trashify_Branched(OUT);  // null->BREAK, blank->empty
+        Nothingify_Branched(OUT);  // null->BREAK, blank->empty
 
         // Modifications to var are allowed, to another ANY-SERIES! value.
         //
@@ -998,7 +998,7 @@ DECLARE_NATIVE(stop)
 
     Copy_Cell(OUT, NAT_VALUE(stop));
     if (IS_ENDISH_NULLED(v))
-        CONVERT_NAME_TO_THROWN(OUT, TRASH_VALUE); // `if true [stop]`
+        CONVERT_NAME_TO_THROWN(OUT, NOTHING_VALUE); // `if true [stop]`
     else
         CONVERT_NAME_TO_THROWN(OUT, v); // `if true [stop ...]`
 
@@ -1308,8 +1308,6 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
                 // CONTINUE - res->out may not be void if /WITH refinement used
             }
         }
-        if (Is_Trash(res->out))
-            fail (Error_Trash_Conditional_Raw());  // neither true nor false
 
         if (ANY_ARRAY(res->data)) {
             if (
@@ -1411,7 +1409,7 @@ DECLARE_NATIVE(remove_each)
         // If index is past the series end, then there's nothing removable.
         //
         // !!! Should REMOVE-EACH follow the "loop conventions" where if the
-        // body never gets a chance to run, the return value is trash?
+        // body never gets a chance to run, the return value is nothing?
         //
         return Init_Integer(OUT, 0);
     }
@@ -1558,7 +1556,7 @@ DECLARE_NATIVE(repeat)
             if (broke)
                 return nullptr;
         }
-        Trashify_Branched(OUT);  // null->BREAK, blank->empty
+        Nothingify_Branched(OUT);  // null->BREAK, blank->empty
     }
 
     if (Is_Logic(ARG(count)))
@@ -1677,10 +1675,6 @@ INLINE REB_R Until_Core(
             if (Is_Void(OUT))  // e.g. CONTINUE and no /WITH
                 goto skip_check;
         }
-        else { // didn't throw, see above about null difference from CONTINUE
-            if (Is_Trash(OUT))
-                fail (Error_Trash_Conditional_Raw());
-        }
 
         if (not Is_Void(OUT) and IS_TRUTHY(OUT) == trigger)
             return OUT;
@@ -1744,9 +1738,6 @@ INLINE REB_R While_Core(
             return R_THROWN; // don't see BREAK/CONTINUE in the *condition*
         }
 
-        if (Is_Trash(cell))
-            fail (Error_Trash_Conditional_Raw());  // neither truthy nor falsey
-
         if (IS_TRUTHY(cell) != trigger) {
             DROP_GC_GUARD(cell);
             return OUT; // trigger didn't match, return last body result
@@ -1763,7 +1754,7 @@ INLINE REB_R While_Core(
                 return Init_Nulled(OUT);
             }
         }
-        Trashify_Branched(OUT);  // null->BREAK, blank->empty
+        Nothingify_Branched(OUT);  // null->BREAK, blank->empty
     } while (true);
 
     DEAD_END;

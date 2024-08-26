@@ -13,7 +13,7 @@
 )
 
 ; initialization (lack of)
-(a: 10 all [use [a] [trash? get/any 'a] a = 10])
+(a: 10 all [use [a] [nothing? get/any 'a] a = 10])
 (use [a] [unset? 'a])
 
 ; BREAK out of USE

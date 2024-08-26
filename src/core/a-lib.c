@@ -654,11 +654,11 @@ const void *API_rebR(RebolValue* v)
 
 
 //
-//  rebTrash: API
+//  rebNothing: API
 //
-RebolValue* API_rebTrash(void)
+RebolValue* API_rebNothing(void)
 {
-    return Init_Trash(Alloc_Value());
+    return Init_Nothing(Alloc_Value());
 }
 
 
@@ -871,7 +871,7 @@ RebolValue* API_rebRescue(
     if (VAL_TYPE_RAW(result) == REB_ERROR) {
         if (Is_Api_Value(result))
             rebRelease(result);
-        return rebTrash();
+        return rebNothing();
     }
 
     if (not Is_Api_Value(result))

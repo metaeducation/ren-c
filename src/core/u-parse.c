@@ -418,7 +418,7 @@ static const Cell* Get_Parse_Value(
 
         Move_Opt_Var_May_Fail(cell, rule, specifier);
 
-        if (Is_Trash(cell))
+        if (Is_Nothing(cell))
             fail (Error_No_Value_Core(rule, specifier));
 
         if (IS_NULLED(cell))
@@ -437,7 +437,7 @@ static const Cell* Get_Parse_Value(
         if (Get_Path_Throws_Core(cell, rule, specifier))
             fail (Error_No_Catch_For_Throw(cell));
 
-        if (Is_Trash(cell))
+        if (Is_Nothing(cell))
             fail (Error_No_Value_Core(rule, specifier));
 
         if (IS_NULLED(cell))
@@ -2513,7 +2513,7 @@ DECLARE_NATIVE(parse)
     if (REF(match))
         return Copy_Cell(OUT, input);
 
-    return Init_Trash(OUT);  // should be synthesized value, see [1]
+    return Init_Nothing(OUT);  // should be synthesized value, see [1]
 }
 
 

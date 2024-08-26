@@ -39,7 +39,7 @@ probe: func [
     value [~null~ any-value!]
 ][
     case [
-        trash? :value [write-stdout "~  ; anti"]
+        nothing? :value [write-stdout "~  ; anti"]
         void? :value [write-stdout "~void~  ; anti"]
         null? :value [write-stdout "~null~  ; anti"]
         true [write-stdout mold :value]
@@ -113,7 +113,7 @@ uneval: func [
     case [
         void? :optional [the (void)]
         null? :optional [the (null)]
-        trash? :optional [the (~)]
+        nothing? :optional [the (~)]
         true [as group! reduce ['the :optional]]
     ]
 ]
@@ -243,7 +243,7 @@ reeval func [
         ]
     ]
 ]
-    trash?:
+    nothing?:
     void?:
     blank?:
     bar?:
@@ -307,7 +307,7 @@ print: func [
     {Textually output spaced line (evaluating elements if a block)}
 
     return: "NULL if blank input or effectively empty block, otherwise trash"
-        [~null~ trash!]
+        [~null~ nothing!]
     line "Line of text or block, blank or [] has NO output, newline allowed"
         [<maybe> char! text! block!]
 ][

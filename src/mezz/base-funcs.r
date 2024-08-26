@@ -687,10 +687,10 @@ find-last: specialize :find [
     last: true
 ]
 
-reify: func [value [~null~ ~void~ trash! any-value!]] [
+reify: func [value [~null~ ~void~ nothing! any-value!]] [
     case [
         void? :value [return '~void~]
-        trash? :value [return '~]
+        nothing? :value [return '~]
         null? :value [return '~null~]
         true = :value [return '~true~]
         false = :value [return '~false~]

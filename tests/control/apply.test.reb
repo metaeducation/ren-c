@@ -123,7 +123,7 @@
 )
 
 (
-    trash? redbol-apply func [
+    nothing? redbol-apply func [
         return: [~null~ any-value!]
         x [~null~ any-value!]
     ][
@@ -133,7 +133,7 @@
     ]
 )
 (
-    trash? redbol-apply func [
+    nothing? redbol-apply func [
         return: [~null~ any-value!]
         'x [~null~ any-value!]
     ][
@@ -143,7 +143,7 @@
     ]
 )
 (
-    trash? redbol-apply func [
+    nothing? redbol-apply func [
         return: [~null~ any-value!]
         x [~null~ any-value!]
     ][
@@ -153,7 +153,7 @@
     ]
 )
 (
-    trash? redbol-apply func [
+    nothing? redbol-apply func [
         return: [~null~ any-value!]
         'x [~null~ any-value!]
     ][

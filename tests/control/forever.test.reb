@@ -21,7 +21,7 @@
     1 = f1
 )
 ; Test that arity-0 return stops the loop
-(trash? reeval func [return: [~]] [cycle [return]])
+(nothing? reeval func [return: [~]] [cycle [return]])
 ; Test that errors do not stop the loop and errors can be returned
 (
     num: 0
@@ -53,5 +53,5 @@
 ; Unlike loops with ordinary termination conditions, CYCLE can return a
 ; value with STOP
 ;
-(trash? cycle [stop])
+(nothing? cycle [stop])
 (10 = cycle [stop 10])

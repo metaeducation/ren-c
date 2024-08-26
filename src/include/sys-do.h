@@ -73,7 +73,7 @@ INLINE bool Do_Va_Throws(
     va_list *vaptr // va_end() will be called on success, fail, throw, etc.
 ){
     return THROWN_FLAG == Eval_Va_Core(
-        Init_Trash(out),
+        Init_Nothing(out),
         opt_first,
         vaptr,
         DO_FLAG_TO_END | DO_FLAG_EXPLICIT_EVALUATE

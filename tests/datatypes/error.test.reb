@@ -32,9 +32,7 @@
 (error? make error! [type: 'syntax id: 'malconstruct])
 (error? make error! [type: 'syntax id: 'bad-char])
 (error? make error! [type: 'syntax id: 'needs])
-
 (error? make error! [type: 'script id: 'no-value])
-(error? make error! [type: 'script id: 'need-non-trash])
 (error? make error! [type: 'script id: 'not-bound])
 (error? make error! [type: 'script id: 'not-in-context])
 (error? make error! [type: 'script id: 'no-arg])

@@ -199,8 +199,6 @@ void Expand_Context(REBCTX *context, REBLEN delta)
 // Append a word to the context word list. Expands the list if necessary.
 // Returns the value cell for the word.  The new variable is unset by default.
 //
-// !!! Review if it would make more sense to use TRASH.
-//
 // If word is not nullptr, use the word sym and bind the word value, otherwise
 // use sym.  When using a word, it will be modified to be specifically bound
 // to this context after the operation.
@@ -245,7 +243,7 @@ Value* Append_Context(
     REBLEN len = Array_Len(CTX_VARLIST(context)); // length we just bumped
     REBLEN index = len - 1;
 
-    Value* value = Init_Trash(Array_Last(CTX_VARLIST(context)));
+    Value* value = Init_Nothing(Array_Last(CTX_VARLIST(context)));
     TERM_ARRAY_LEN(CTX_VARLIST(context), len);
 
     if (any_word) {
@@ -1241,10 +1239,10 @@ void Resolve_Context(
             // "the remove succeeded, so it's marked as set now" (old comment)
             if (
                 NOT_VAL_FLAG(var, CELL_FLAG_PROTECTED)
-                and (all or Is_Trash(var))
+                and (all or Is_Nothing(var))
             ){
                 if (m < 0)
-                    Init_Trash(var);  // treat as undefined in source context
+                    Init_Nothing(var);  // treat as undefined in source context
                 else
                     Move_Var(var, CTX_VAR(source, m)); // preserves enfix
             }

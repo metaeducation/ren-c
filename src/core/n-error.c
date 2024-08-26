@@ -46,7 +46,7 @@ static const Value* Trap_Dangerous(Level* level_) {
     UNUSED(ARG(valid));
 
     if (Do_Branch_Throws(OUT, ARG(code)))
-        return TRASH_VALUE;
+        return NOTHING_VALUE;
 
     return nullptr;
 }
@@ -98,13 +98,13 @@ DECLARE_NATIVE(trap)
         return nullptr;
     }
 
-    if (Is_Trash(error))  // signal used to indicate a throw
+    if (Is_Nothing(error))  // signal used to indicate a throw
         return R_THROWN;
 
     assert(Is_Error(error));
 
     if (REF(result))  // error case voids result to minimize likely use
-        rebElide(NAT_VALUE(set), ARG(valid), TRASH_VALUE);
+        rebElide(NAT_VALUE(set), ARG(valid), NOTHING_VALUE);
 
     return error;
 }

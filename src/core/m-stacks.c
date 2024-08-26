@@ -91,7 +91,7 @@ void Shutdown_Data_Stack(void)
 //
 void Startup_Level_Stack(void)
 {
-  #if !defined(NDEBUG) // see Startup_Trash_Debug() for explanation
+  #if !defined(NDEBUG) // see Startup_Corrupt_Globals() for explanation
     assert(Is_Pointer_Corrupt_Debug(TG_Top_Level));
     assert(Is_Pointer_Corrupt_Debug(TG_Bottom_Level));
     TG_Top_Level = TG_Bottom_Level = nullptr;

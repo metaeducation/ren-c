@@ -228,7 +228,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
         }
 
         if (IS_END(word + 1)) {
-            Init_Trash(var);
+            Init_Nothing(var);
             break; // fix bug#708
         }
         else {

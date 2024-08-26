@@ -210,7 +210,7 @@ void Eval_Core_Expression_Checks_Debug(Level* L) {
     assert(Is_Unreadable_Debug(&TG_Thrown_Arg)); // no evals between throws
   #endif
 
-    // Trash fields that GC won't be seeing unless Is_Action_Level()
+    // Corrupt fields that GC won't be seeing unless Is_Action_Level()
     //
     Corrupt_Pointer_If_Debug(L->param);
     Corrupt_Pointer_If_Debug(L->arg);

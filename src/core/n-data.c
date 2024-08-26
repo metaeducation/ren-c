@@ -487,8 +487,8 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
     else
         fail (Error_Invalid_Core(v, specifier));
 
-    if (not any and Is_Trash(out))
-        fail (Error_Need_Non_Trash_Core(v, specifier));
+    if (not any and Is_Nothing(out))
+        fail (Error_Var_Is_Unset_Core(v, specifier));
 }
 
 
@@ -527,7 +527,7 @@ DECLARE_NATIVE(get)
             VAL_SPECIFIER(source),
             REF(any)
         );
-        Trashify_Branched(dest);  // !!! can't put nulls in blocks (blankify?)
+        Nothingify_Branched(dest);  // !!! can't put nulls in blocks (blankify?)
     }
 
     TERM_ARRAY_LEN(results, VAL_LEN_AT(source));
@@ -644,7 +644,7 @@ DECLARE_NATIVE(set)
 //
 // Note: Initial prescriptivisim about not allowing trash in SET has been
 // changed to allow void assignments, with the idea that preventing it can
-// be done e.g. with `set var non [trash!] (...)` or more narrow ideas like
+// be done e.g. with `set var non [nothing!] (...)` or more narrow ideas like
 // `set numeric-var ensure integer! (...)`.  SET thus mirrors SET-WORD! in
 // allowing void assignments.
 {
@@ -918,7 +918,7 @@ DECLARE_NATIVE(identity)
 //
 //  {Releases the underlying data of a value so it can no longer be accessed}
 //
-//      return: [trash!]
+//      return: [nothing!]
 //      memory [any-series! any-context! handle!]
 //  ]
 //
@@ -937,7 +937,7 @@ DECLARE_NATIVE(free)
     Fail_If_Read_Only_Series(s);
 
     Decay_Series(s);
-    return Init_Trash(OUT);  // !!! Should it return freed, not-useful value?
+    return Init_Nothing(OUT);  // !!! Should it return freed, not-useful value?
 }
 
 
@@ -1172,11 +1172,11 @@ DECLARE_NATIVE(aliases_q)
 INLINE bool Is_Set(const Value* location)
 {
     if (ANY_WORD(location))
-        return not Is_Trash(Get_Opt_Var_May_Fail(location, SPECIFIED));
+        return not Is_Nothing(Get_Opt_Var_May_Fail(location, SPECIFIED));
 
     DECLARE_VALUE (temp); // result may be generated
     Get_Path_Core(temp, location, SPECIFIED);
-    return not Is_Trash(temp);
+    return not Is_Nothing(temp);
 }
 
 

@@ -520,7 +520,7 @@
         ]
 )]
 
-; TRASH is legal to test with equality (as is UNSET! in R3-Alpha/Red)
+; NOTHING is legal to test with equality (as is UNSET! in R3-Alpha/Red)
 [
     (equal? ~ ~)
     (not-equal? ~ blank)

@@ -1814,7 +1814,7 @@ DECLARE_NATIVE(get_os_browsers)
 //
 //  "Use system sleep to wait a certain amount of time (doesn't use PORT!s)."
 //
-//      return: [trash!]
+//      return: [nothing!]
 //      duration [integer! decimal! time!]
 //          {Length to sleep (integer and decimal are measuring seconds)}
 //
@@ -1842,7 +1842,7 @@ DECLARE_NATIVE(sleep)
     usleep(msec * 1000);
   #endif
 
-    return Init_Trash(OUT);
+    return Init_Nothing(OUT);
 }
 
 #if defined(TO_LINUX) || defined(TO_ANDROID) || defined(TO_POSIX) || defined(TO_OSX)
@@ -2428,7 +2428,7 @@ static void kill_process(pid_t pid, int signal)
 //
 //  "Send signal to a process"
 //
-//      return: [trash!]  ;-- !!! might this return pid or signal (?)
+//      return: [nothing!]  ;-- !!! might this return pid or signal (?)
 //      pid [integer!]
 //          {The process ID}
 //      signal [integer!]
@@ -2444,7 +2444,7 @@ DECLARE_NATIVE(send_signal)
     //
     kill_process(rebUnboxInteger(ARG(pid)), rebUnboxInteger(ARG(signal)));
 
-    return Init_Trash(OUT);
+    return Init_Nothing(OUT);
 }
 
 #endif // defined(TO_LINUX) || defined(TO_ANDROID) || defined(TO_POSIX) || defined(TO_OSX)

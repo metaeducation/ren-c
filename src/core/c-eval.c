@@ -922,7 +922,7 @@ bool Eval_Core_Throws(Level* const L)
                 // in taking arguments at the callsite than the current
                 // refinement, if it's in use due to a PATH! invocation.
                 //
-                if (Is_Trash(L->special))
+                if (Is_Nothing(L->special))
                     goto unspecialized_refinement_must_pickup; // defer this
 
                 // A "typechecked" ISSUE! with binding indicates a partial
@@ -1017,7 +1017,7 @@ bool Eval_Core_Throws(Level* const L)
 
             switch (pclass) {
               case PARAM_CLASS_LOCAL:
-                Init_Trash(L->arg);  // !!! L->special?
+                Init_Nothing(L->arg);  // !!! L->special?
                 SET_VAL_FLAG(L->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
 
@@ -1772,8 +1772,8 @@ bool Eval_Core_Throws(Level* const L)
             goto process_action;
         }
 
-        if (Is_Trash(current_gotten))  // need `:x` if `x` is unset
-            fail (Error_Need_Non_Trash_Core(current, L->specifier));
+        if (Is_Nothing(current_gotten))  // need `:x` if `x` is unset
+            fail (Error_Var_Is_Unset_Core(current, L->specifier));
 
         Copy_Cell(L->out, current_gotten);
         break;
@@ -1805,7 +1805,7 @@ bool Eval_Core_Throws(Level* const L)
 
         REBFLGS flags = (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
 
-        Init_Trash(L->out);  // `1 x: comment "hi"` shouldn't set x to 1!
+        Init_Nothing(L->out);  // `1 x: comment "hi"` shouldn't set x to 1!
 
         if (CURRENT_CHANGES_IF_FETCH_NEXT) { // must use new frame
             DECLARE_SUBLEVEL(child, L);
@@ -1955,8 +1955,8 @@ bool Eval_Core_Throws(Level* const L)
             goto return_thrown;
         }
 
-        if (Is_Trash(L->out))  // need GET/ANY if path is trash
-            fail (Error_Need_Non_Trash_Core(current, L->specifier));
+        if (Is_Nothing(L->out))  // need GET/ANY if path is trash
+            fail (Error_Var_Is_Unset_Core(current, L->specifier));
 
         if (Is_Action(L->out)) {
             //
@@ -2023,7 +2023,7 @@ bool Eval_Core_Throws(Level* const L)
 
         REBFLGS flags = (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
 
-        Init_Trash(L->out);  // `1 o/x: comment "hi"` shouldn't set o/x to 1!
+        Init_Nothing(L->out);  // `1 o/x: comment "hi"` shouldn't set o/x to 1!
 
         if (CURRENT_CHANGES_IF_FETCH_NEXT) { // must use new frame
             DECLARE_SUBLEVEL(child, L);
@@ -2200,17 +2200,17 @@ bool Eval_Core_Throws(Level* const L)
 
 //==//////////////////////////////////////////////////////////////////////==//
 //
-// [TRASH!]
+// [NOTHING!]
 //
-// Trash is "evaluatively unfriendly", it shouldn't reach the evaluator.
+// Nothing is "evaluatively unfriendly", it shouldn't reach the evaluator.
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      case REB_TRASH:
+      case REB_NOTHING:
         if (not EVALUATING(current))
             goto inert;
 
-        fail ("Trash cells cannot be evaluated");
+        fail ("Nothing cells cannot be evaluated");
 
 //==//////////////////////////////////////////////////////////////////////==//
 //

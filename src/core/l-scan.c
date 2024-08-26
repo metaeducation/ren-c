@@ -2296,7 +2296,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                     break;
 
                 case SYM_TRASH:
-                    Init_Trash(PUSH());
+                    Init_Nothing(PUSH());
                     break;
 
                 default: {

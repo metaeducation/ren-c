@@ -8,13 +8,13 @@
     is-barrier? ()
 )
 (void! = type of (do []))
-(not trash? 1)
+(not nothing? 1)
 
 [
-    ('need-non-trash = (trap [a: ~ | a])/id)
+    ('no-value = (trap [a: ~ | a])/id)
 ]
 
-; NULL and TRASH assignments via SET are legal.  You are expected to do your
+; NULL and NOTHING assignments via SET are legal.  You are expected to do your
 ; own checks with ENSURE and NON.
 ;
 (
@@ -24,7 +24,7 @@
 (not error? trap [set 'a null])
 (
     value: ~
-    error? trap [set the a: non trash! :value]
+    error? trap [set the a: non nothing! :value]
 )
 (not error? trap [set 'a ~])
 

@@ -75,7 +75,7 @@ DECLARE_NATIVE(reeval)
         ARG(value)->header.bits ^= VALUE_FLAG_EVAL_FLIP;
     }
 
-    Init_Trash(OUT);  // !!! R3C patch, better than error on `reeval :elide`
+    Init_Nothing(OUT);  // !!! R3C patch, better than error on `reeval :elide`
 
     if (Eval_Step_In_Subframe_Throws(OUT, level_, flags, child))
         return R_THROWN;
@@ -341,7 +341,7 @@ DECLARE_NATIVE(do)
         //
         DECLARE_SUBLEVEL (child, L);
         REBFLGS flags = 0;
-        Init_Trash(OUT);
+        Init_Nothing(OUT);
         while (NOT_END(L->value)) {
             if (Eval_Step_In_Subframe_Throws(OUT, L, flags, child))
                 return R_THROWN;

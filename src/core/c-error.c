@@ -316,7 +316,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     Saved_State->error = error;
 
     // If a THROWN() was being processed up the stack when the error was
-    // raised, then it had the thrown argument set.  Trash it in debug
+    // raised, then it had the thrown argument set.  Mark unreadable in debug
     // builds.  (The value will not be kept alive, it is not seen by GC)
     //
     Init_Unreadable(&TG_Thrown_Arg);
@@ -895,14 +895,14 @@ REBCTX *Error_Need_Non_End_Core(const Cell* target, Specifier* specifier) {
 
 
 //
-//  Error_Need_Non_Trash_Core: C
+//  Error_Var_Is_Unset_Core: C
 //
-REBCTX *Error_Need_Non_Trash_Core(const Cell* target, Specifier* specifier) {
+REBCTX *Error_Var_Is_Unset_Core(const Cell* target, Specifier* specifier) {
     assert(ANY_WORD(target) or ANY_PATH(target));
 
     DECLARE_VALUE (specific);
     Derelativize(specific, target, specifier);
-    return Error_Need_Non_Trash_Raw(specific);
+    return Error_Var_Is_Unset_Raw(specific);
 }
 
 
@@ -1232,7 +1232,7 @@ REBCTX *Error_Bad_Return_Type(Level* L, enum Reb_Kind kind) {
     if (kind == REB_MAX_NULLED)
         return Error_Needs_Return_Opt_Raw(label);
 
-    if (kind == REB_TRASH)
+    if (kind == REB_NOTHING)
         return Error_Needs_Return_Value_Raw(label);
 
     return Error_Bad_Return_Type_Raw(label, Datatype_From_Kind(kind));

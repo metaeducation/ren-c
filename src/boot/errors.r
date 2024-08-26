@@ -80,7 +80,7 @@ Syntax: [
 
 Script: [
     no-value:           [:arg1 {has no value}]
-    need-non-trash:     [:arg1 {is trash (~) (Note: use GET/ANY to GET trash)}]
+    var-is-unset:       [:arg1 {is unset (holds nothing, ~) See: GET/ANY)}]
     need-non-end:       [{end was reached while trying to set} :arg1]
     need-non-null:      {non-NULL value required (see MAYBE, TRY, REIFY)}
 
@@ -126,7 +126,7 @@ Script: [
     bad-func-arg:       [{function argument} :arg1 {is not valid}]
 
     needs-return-opt:   [:arg1 {can't return null (see RETURN: [~null~ ...])}]
-    needs-return-value: [:arg1 {can't return trash (see RETURN: [trash!])}]
+    needs-return-value: [:arg1 {can't return trash (see RETURN: [nothing!])}]
     bad-return-type:    [:arg1 {doesn't have RETURN: enabled for} :arg2]
 
     no-refine:          [:arg1 {has no refinement called} :arg2]
@@ -200,7 +200,6 @@ Script: [
 
     conflicting-key:    [:arg1 {key conflicts; use SELECT or PUT with /CASE}]
 
-    trash-conditional:  [{Trash antiforms (~) not conditionally true/false}]
     void-conditional:   [{Void antiforms (~void~) not conditionally true/false}]
 
     native-unloaded:    [{Native has been unloaded:} :arg1]

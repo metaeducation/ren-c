@@ -36,9 +36,9 @@
 //
 // * If a branch *does* run--and that branch evaluation produces a NULL--then
 //   conditionals designed to be used with branching (like IF or CASE) will
-//   return a trash result.  Trashes are neither true nor false, and since they
-//   are values (unlike NULL), they distinguish the signal of a branch that
-//   evaluated to NULL from no branch at all.
+//   return a NOTHING result.  Since NOTHING are values (unlike NULL), they
+//   distinguish the signal of a branch that evaluated to NULL from no branch
+//   at all.
 //
 // * Zero-arity function values used as branches will be executed, and
 //   single-arity functions used as branches will also be executed--but passed
@@ -73,7 +73,7 @@ DECLARE_NATIVE(if)
     if (Do_Branch_With_Throws(OUT, ARG(branch), ARG(condition)))
         return R_THROWN;
 
-    return Trashify_Branched(OUT);  // trash means no branch (cues ELSE)
+    return Nothingify_Branched(OUT);  // trash means no branch (cues ELSE)
 }
 
 
@@ -98,7 +98,7 @@ DECLARE_NATIVE(if_not)
     if (Do_Branch_With_Throws(OUT, ARG(branch), ARG(condition)))
         return R_THROWN;
 
-    return Trashify_Branched(OUT);  // trash means no branch (cues ELSE)
+    return Nothingify_Branched(OUT);  // trash means no branch (cues ELSE)
 }
 
 
@@ -202,9 +202,6 @@ bool Either_Test_Core_Throws(
         )){
             return true;
         }
-
-        if (Is_Trash(out))
-            fail (Error_Trash_Conditional_Raw());
 
         Init_Logic(out, IS_TRUTHY(out));
         return false; }
@@ -362,7 +359,7 @@ DECLARE_NATIVE(then)
     if (Do_Branch_With_Throws(OUT, ARG(branch), left))
         return R_THROWN;
 
-    return Trashify_Branched(OUT);  // if left ran, make THEN signal it did
+    return Nothingify_Branched(OUT);  // if left ran, make THEN signal it did
 }
 
 
@@ -422,7 +419,7 @@ DECLARE_NATIVE(match)
 
     if (VAL_LOGIC(temp)) {
         if (IS_FALSEY(value)) // see above for why false match not passed thru
-            return Init_Trash(OUT);
+            return Init_Nothing(OUT);
         return Copy_Cell(OUT, value);
     }
 
@@ -446,7 +443,7 @@ DECLARE_NATIVE(match)
 DECLARE_NATIVE(non)
 //
 // !!! This is a partial implementation of NON implemented for R3C, just good
-// enough for `non [trash!]` and `non null` cases to give validation options to
+// enough for `non [nothing!]` and `non null` cases to give validation options to
 // those wanting a less permissive SET (now that it has no /ANY refinement).
 {
     INCLUDE_PARAMS_OF_NON;
@@ -458,8 +455,8 @@ DECLARE_NATIVE(non)
         if (IS_NULLED(value))
             fail ("NON expected value to not be NULL, but it was");
     }
-    else if (VAL_TYPE_KIND(test) == REB_TRASH) {  // specialize common case
-        if (Is_Trash(value))
+    else if (VAL_TYPE_KIND(test) == REB_NOTHING) {  // specialize common case
+        if (Is_Nothing(value))
             fail ("NON expected value to not be trash, but it was");
     }
     else if (not TYPE_CHECK(value, VAL_TYPE_KIND(test))) {
@@ -713,7 +710,7 @@ static REB_R Case_Choose_Core_May_Throw(
             } else
                 fail (Error_Invalid_Core(OUT, L->specifier));
 
-            Trashify_Branched(OUT);  // null is reserved for no branch taken
+            Nothingify_Branched(OUT);  // null is reserved for no branch taken
         }
 
         if (not REF(all)) {
@@ -899,7 +896,7 @@ DECLARE_NATIVE(switch)
             return R_THROWN;
         }
 
-        Trashify_Branched(OUT);  // null is reserved for no branch run
+        Nothingify_Branched(OUT);  // null is reserved for no branch run
 
         if (not REF(all)) {
             Abort_Level(L);
@@ -956,7 +953,7 @@ DECLARE_NATIVE(default)
 
     if (
         not IS_NULLED(OUT)
-        and not Is_Trash(OUT)
+        and not Is_Nothing(OUT)
         and (not Is_Blank(OUT) or REF(only))
     ){
         return OUT;  // count it as "already set"
@@ -1010,7 +1007,7 @@ DECLARE_NATIVE(catch)
 //
 //     catch: catch/result [...] 'uncaught
 //
-// When the value being set is TRASH, SET/ANY must be used at this time.  This
+// When the value being set is NOTHING, SET/ANY must be used for now.  This
 // is a bit more inefficient in the API since it requires scanning.  Non-void
 // cases are done with directly referencing the SET native.
 {
@@ -1115,7 +1112,7 @@ DECLARE_NATIVE(catch)
     // so this assignment has to wait until the end.
     //
     if (REF(result))  // caught case voids result to minimize likely use
-        rebElide(NAT_VALUE(set), ARG(uncaught), TRASH_VALUE);
+        rebElide(NAT_VALUE(set), ARG(uncaught), NOTHING_VALUE);
 
     return OUT;
 }

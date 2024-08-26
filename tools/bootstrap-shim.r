@@ -151,7 +151,7 @@ try: func [] [fail/where "Use MAYBE instead of TRY for bootstrap" 'return]
 opt: func [] [fail/where "Use REIFY instead of OPT for bootstrap" 'return]
 
 trash: :void
-trash!: :void!
+nothing!: :void!
 void!: func [] [fail/where "No VOID! in bootstrap-shim" 'return]
 void: :null
 

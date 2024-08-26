@@ -83,7 +83,7 @@ void MF_Unit(REB_MOLD *mo, const Cell* v, bool form)
         Append_Unencoded(mo->series, "_");
         break;
 
-    case REB_TRASH:  // In modern Ren-C, trash in an antiform of blank
+    case REB_NOTHING:  // In modern Ren-C, trash in an antiform of blank
         Append_Unencoded(mo->series, "~");
         break;
 

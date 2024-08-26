@@ -228,7 +228,7 @@ blank       unit        blank   +       +       -
 ; end of inert unbindable types
 bar         unit        -       +       +       -
 lit-bar     unit        -       +       +       -
-trash       unit        -       +       +       -
+nothing     unit        -       +       +       -
 void        unit        -       +       +       -
 
 ; Note that the "null?" state has no associated NULL! datatype.  Internally

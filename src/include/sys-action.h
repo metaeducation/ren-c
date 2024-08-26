@@ -204,7 +204,7 @@ INLINE Value* ACT_SPECIALTY_HEAD(REBACT *a) {
 //
 #define ACTION_FLAG_RETURN ACTION_FLAG(0)
 
-// Uses the Trasher_Dispatcher() (implies ACTION_FLAG_RETURN + arity-0 RETURN)
+// Uses the Eraser_Dispatcher() (implies ACTION_FLAG_RETURN + arity-0 RETURN)
 //
 #define ACTION_FLAG_TRASHER ACTION_FLAG(1)
 

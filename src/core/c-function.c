@@ -260,9 +260,9 @@ Array* Make_Paramlist_Managed_May_Fail(
                 and Is_Word(Cell_Array_At(item))
                 and Cell_Word_Id(Cell_Array_At(item)) == SYM_TILDE
             ){
-                header_bits |= ACTION_FLAG_TRASHER;  // Trasher_Dispatcher()
+                header_bits |= ACTION_FLAG_TRASHER;  // Eraser_Dispatcher()
 
-                // Fake as if they said [trash!]
+                // Fake as if they said [nothing!]
                 //
                 item = Get_System(SYS_STANDARD, STD_PROC_RETURN_TYPE);
                 goto process_typeset_block;
@@ -380,7 +380,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             Copy_Cell(PUSH(), EMPTY_TEXT);
         assert(Is_Text(TOP));
 
-        // Non-annotated arguments disallow ACTION!, TRASH and NULL.  Not
+        // Non-annotated arguments disallow ACTION!, NOTHING and NULL.  Not
         // having to worry about ACTION! and NULL means by default, code
         // does not have to worry about "disarming" arguments via GET-WORD!.
         // Also, keeping NULL a bit "prickly" helps discourage its use as
@@ -397,7 +397,7 @@ Array* Make_Paramlist_Managed_May_Fail(
                 ? TS_OPT_VALUE
                 : TS_VALUE & ~(
                     FLAGIT_KIND(REB_ACTION)
-                    | FLAGIT_KIND(REB_TRASH)
+                    | FLAGIT_KIND(REB_NOTHING)
                 ),
             Cell_Word_Symbol(item) // don't canonize, see #2258
         );
@@ -517,7 +517,7 @@ Array* Make_Paramlist_Managed_May_Fail(
     if (flags & MKF_RETURN) {
         if (return_stackindex == 0) {  // no explicit RETURN: pure local
             //
-            // While default arguments disallow ACTION!, TRASH, and NULL...
+            // While default arguments disallow ACTION!, NOTHING, and NULL...
             // they are allowed to return anything.  Generally speaking, the
             // checks are on the input side, not the output.
             //
@@ -1068,9 +1068,9 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
 
     if (
         ACT_DISPATCHER(a) == &Null_Dispatcher
-        or ACT_DISPATCHER(a) == &Trash_Dispatcher
+        or ACT_DISPATCHER(a) == &Nothing_Dispatcher
         or ACT_DISPATCHER(a) == &Unchecked_Dispatcher
-        or ACT_DISPATCHER(a) == &Trasher_Dispatcher
+        or ACT_DISPATCHER(a) == &Eraser_Dispatcher
         or ACT_DISPATCHER(a) == &Returner_Dispatcher
         or ACT_DISPATCHER(a) == &Block_Dispatcher
     ){
@@ -1086,7 +1086,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
 
         Value* example;
         REBLEN real_body_index;
-        if (ACT_DISPATCHER(a) == &Trasher_Dispatcher) {
+        if (ACT_DISPATCHER(a) == &Eraser_Dispatcher) {
             example = Get_System(SYS_STANDARD, STD_PROC_BODY);
             real_body_index = 4;
         }
@@ -1229,7 +1229,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
             ACT_DISPATCHER(a) = &Commenter_Dispatcher;
         }
         else if (GET_VAL_FLAG(value, ACTION_FLAG_TRASHER)) {
-            ACT_DISPATCHER(a) = &Trasher_Dispatcher;
+            ACT_DISPATCHER(a) = &Eraser_Dispatcher;
         }
         else if (GET_VAL_FLAG(value, ACTION_FLAG_RETURN)) {
             Value* typeset = ACT_PARAM(a, ACT_NUM_PARAMS(a));
@@ -1250,7 +1250,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
         if (GET_VAL_FLAG(value, ACTION_FLAG_INVISIBLE))
             ACT_DISPATCHER(a) = &Elider_Dispatcher; // no L->out mutation
         else if (GET_VAL_FLAG(value, ACTION_FLAG_TRASHER))
-            ACT_DISPATCHER(a) = &Trasher_Dispatcher; // forces L->out trash
+            ACT_DISPATCHER(a) = &Eraser_Dispatcher; // forces L->out trash
         else if (GET_VAL_FLAG(value, ACTION_FLAG_RETURN))
             ACT_DISPATCHER(a) = &Returner_Dispatcher; // type checks L->out
         else
@@ -1378,17 +1378,17 @@ REB_R Null_Dispatcher(Level* L)
 
 
 //
-//  Trash_Dispatcher: C
+//  Nothing_Dispatcher: C
 //
 // Analogue to Null_Dispatcher() for `func [return: [~] ...] []`.
 //
-REB_R Trash_Dispatcher(Level* L)
+REB_R Nothing_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     assert(VAL_LEN_AT(Array_Head(details)) == 0);
     UNUSED(details);
 
-    return Init_Trash(L->out);
+    return Init_Nothing(L->out);
 }
 
 
@@ -1446,13 +1446,13 @@ REB_R Unchecked_Dispatcher(Level* L)
 
 
 //
-//  Trasher_Dispatcher: C
+//  Eraser_Dispatcher: C
 //
 // Variant of Unchecked_Dispatcher, except sets the output value to trash.
 // Pushing that code into the dispatcher means there's no need to do flag
 // testing in the main loop.
 //
-REB_R Trasher_Dispatcher(Level* L)
+REB_R Eraser_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* body = Array_Head(details);
@@ -1461,7 +1461,7 @@ REB_R Trasher_Dispatcher(Level* L)
     if (Do_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
         return R_THROWN;
 
-    return Init_Trash(L->out);
+    return Init_Nothing(L->out);
 }
 
 

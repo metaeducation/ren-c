@@ -128,7 +128,7 @@ console!: make object! [
 
     print-result: function [return: [~] v [~null~ any-value!]]  [
 
-        if trash? last-result: get/any 'v [
+        if nothing? last-result: get/any 'v [
             ;
             ; There are no antiforms in the R3C branch, but we can lie and
             ; make this legacy bootstrapping branch at least look a bit like
@@ -143,7 +143,7 @@ console!: make object! [
             ]
 
             null? :v [
-                ; As with trash, we can be forward-looking and lie about the
+                ; As with nothing, we can be forward-looking and lie about the
                 ; representation of null, as a WORD! antiform.
                 ;
                 print [result "~null~  ; anti"]
