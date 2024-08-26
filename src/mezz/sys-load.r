@@ -124,11 +124,11 @@ load-header: function [
 
     ; get 'rebol keyword
     ;
-    key: transcode/next/line data 'rest line-var
+    rest: transcode/next3/line data the key: line-var
 
     ; get header block
     ;
-    hdr: transcode/next/line/relax rest 'rest line-var
+    rest: transcode/next3/line/relax rest the hdr: line-var
 
     if not block? :hdr [
         ; header block is incomplete

@@ -2754,14 +2754,14 @@ void Shutdown_Scanner(void)
 //
 //  transcode: native [
 //
-//  {Translates UTF-8 binary source to values. Returns [value binary].}
+//  {Translates UTF-8 binary source to values.}
 //
-//      return: [~null~ any-value!]
+//      return: [~null~ block! binary! text!]
 //      source [<maybe> binary! text!]
 //          "Must be Unicode UTF-8 encoded"
-//      /next
+//      /next3
 //          {Translate next complete value (blocks as single value)}
-//          next-arg [any-word!]  ; word to set
+//          next-arg [any-word!]  ; word to set to transcoded value
 //      /relax
 //          {Do not cause errors - return error object as value in place}
 //      /file
@@ -2813,7 +2813,7 @@ DECLARE_NATIVE(transcode)
         VAL_LEN_AT(source)
     );
 
-    if (REF(next))
+    if (REF(next3))
         ss.opts |= SCAN_FLAG_NEXT;
     if (REF(relax))
         ss.opts |= SCAN_FLAG_RELAX;
@@ -2835,9 +2835,8 @@ DECLARE_NATIVE(transcode)
         Value* ivar = Get_Mutable_Var_May_Fail(ARG(line_number), SPECIFIED);
         Init_Integer(ivar, ss.line);
     }
-    if (REF(next) and TOP_INDEX != base) {
-        Value* nvar = Get_Mutable_Var_May_Fail(ARG(next_arg), SPECIFIED);
-        Copy_Cell(nvar, ARG(source));
+    if (REF(next3) and TOP_INDEX != base) {
+        Copy_Cell(OUT, ARG(source));  // result will be new position
         if (Is_Text(ARG(source))) {
             assert(ss.end <= Cell_Binary_Tail(source));
             assert(ss.end >= Cell_Binary_Head(source));
@@ -2845,25 +2844,28 @@ DECLARE_NATIVE(transcode)
             Byte* bp = Cell_Binary_Head(source);
             for (; bp < ss.end; ++bp) {
                 if (not Is_Continuation_Byte(*bp))
-                    ++VAL_INDEX(nvar);  // bump ahead for each utf8 codepoint
+                    ++VAL_INDEX(OUT);  // bump ahead for each utf8 codepoint
             }
         }
         else {
-            VAL_INDEX(nvar) = ss.end - Cell_Binary_Head(nvar);  // binary advance
+            VAL_INDEX(OUT) = ss.end - Cell_Binary_Head(OUT);  // binary advance
         }
     }
 
     if (Is_Text(ARG(source)))
         rebRelease(source);  // release temporary binary created
 
-    if (REF(next)) {
-        if (TOP_INDEX == base)
-            return nullptr;
+    if (REF(next3)) {
+        Value* nvar = Get_Mutable_Var_May_Fail(ARG(next_arg), SPECIFIED);
 
-        assert(TOP_INDEX == base + 1);
-        Copy_Cell(OUT, TOP);
+        if (TOP_INDEX == base) {
+            Init_Nulled(nvar);  // matches modern Ren-C optional unpack
+            return nullptr;
+        }
+
+        Copy_Cell(nvar, TOP);
         DROP();
-        return OUT;
+        return OUT;  // position set above
     }
 
     Array* a = Pop_Stack_Values_Core(

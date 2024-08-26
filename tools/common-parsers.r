@@ -83,11 +83,11 @@ load-until-blank: function [
 ] [
 
     wsp: compose [some (charset { ^-})]
+    dummy: _
 
     rebol-value: parsing-at x [
         attempt [
-            transcode/next x the temp:
-            temp
+            transcode/next3 x 'dummy
         ]
     ]
 

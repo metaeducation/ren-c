@@ -330,17 +330,17 @@ trim: adapt 'trim [ ; there's a bug in TRIM/AUTO in 8994d23
 ]
 
 transcode: lib/function [
-    return: [<opt> any-value!]
+    return: [<opt> block! text! binary!] "full block or remainder if /next3"
     source [text! binary!]
-    /next
-    next-arg [any-word!]
+    /next3
+    next-arg [any-word!] "variable to set the transcoded element to"
 ][
-    values: lib/transcode/(either next ['next] [_])
+    values: lib/transcode/(either next3 ['next] [_])
         either text? source [to binary! source] [source]
     pos: take/last values
     assert [binary? pos]
 
-    if next [
+    if next3 [
         assert [1 >= length of values]
 
         ; In order to return a text position in pre-UTF-8 everywhere, fake it
@@ -351,8 +351,12 @@ transcode: lib/function [
             rest: to text! pos
             pos: skip source subtract (length of source) (length of rest)
         ]
-        set next-arg pos
-        return pick values 1  ; may be null
+        if null? pick values 1 [
+            set next-arg null  ; match modern Ren-C optional pack item
+            return null
+        ]
+        set next-arg pick values 1
+        return pos
     ]
 
     return values

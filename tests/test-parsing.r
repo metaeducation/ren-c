@@ -51,6 +51,7 @@ make object! [
 
     position: _
     success: _
+    dummy: _
 
     ;; TEST-SOURCE-RULE matches the internal text of a test
     ;; even if that text is invalid rebol syntax.
@@ -62,7 +63,7 @@ make object! [
             ["{" | {"}] (
                 ; handle string using TRANSCODE
                 success-rule: trap [
-                    transcode/next position 'position
+                    position: transcode/next3 position 'dummy
                 ] then [
                     [<end> one]
                 ] else [
@@ -147,7 +148,7 @@ make object! [
 
         single-value: parsing-at x [
             trap [
-                value: transcode/next x the next-position:
+                next-position: transcode/next3 x the value:
             ] else [
                 type: in types 'val
                 next-position
@@ -254,7 +255,7 @@ make object! [
                 opt some whitespace
                 [
                     position: "%"
-                    (value: transcode/next position the next-position:)
+                    (next-position: transcode/next3 position the value)
                     seek next-position
                         |
                     ; dialect failure?
