@@ -115,7 +115,7 @@ void MF_Date(REB_MOLD *mo, const Cell* v_orig, bool form)
         or VAL_DAY(v) == 0
         or VAL_DAY(v) > 31
     ) {
-        Append_Ascii(mo->series, "?date?");
+        Append_Ascii(mo->string, "?date?");
         return;
     }
 
@@ -139,10 +139,10 @@ void MF_Date(REB_MOLD *mo, const Cell* v_orig, bool form)
     bp = Form_Int_Pad(bp, cast(REBINT, VAL_YEAR(v)), 6, -4, '0');
     *bp = '\0';
 
-    Append_Ascii(mo->series, s_cast(buf));
+    Append_Ascii(mo->string, s_cast(buf));
 
     if (Does_Date_Have_Time(v)) {
-        Append_Codepoint(mo->series, '/');
+        Append_Codepoint(mo->string, '/');
         MF_Time(mo, v, form);
 
         if (zone != NO_DATE_ZONE) {
@@ -160,7 +160,7 @@ void MF_Date(REB_MOLD *mo, const Cell* v_orig, bool form)
             bp = Form_Int_Pad(bp, (zone & 3) * 15, 2, 2, '0');
             *bp = 0;
 
-            Append_Ascii(mo->series, s_cast(buf));
+            Append_Ascii(mo->string, s_cast(buf));
         }
     }
 }

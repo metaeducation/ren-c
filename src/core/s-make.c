@@ -320,7 +320,7 @@ String* Append_UTF8_May_Fail(
         }
 
         ++num_codepoints;
-        Append_Codepoint(mo->series, c);
+        Append_Codepoint(mo->string, c);
     }
 
     UNUSED(all_ascii);
@@ -330,7 +330,7 @@ String* Append_UTF8_May_Fail(
     // to was the mold buffer, that's what we just did.  Consider making this
     // a specific call for Mold_Utf8() or similar.
     //
-    if (dst == mo->series)
+    if (dst == mo->string)
         return dst;
 
     if (not dst)
@@ -342,14 +342,14 @@ String* Append_UTF8_May_Fail(
     Expand_Flex_Tail(dst, size);
     memcpy(
         Binary_At(dst, old_size),
-        Binary_At(mo->series, mo->base.size),
-        String_Size(mo->series) - mo->base.size
+        Binary_At(mo->string, mo->base.size),
+        String_Size(mo->string) - mo->base.size
     );
 
     Term_String_Len_Size(
         dst,
         old_len + num_codepoints,
-        old_size + String_Size(mo->series) - mo->base.size
+        old_size + String_Size(mo->string) - mo->base.size
     );
 
     Drop_Mold(mo);

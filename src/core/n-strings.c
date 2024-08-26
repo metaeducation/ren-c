@@ -160,7 +160,7 @@ DECLARE_NATIVE(delimit)
         nothing = false;
 
         if (Is_Blank(OUT)) {  // BLANK! acts as space [3]
-            Append_Codepoint(mo->series, ' ');
+            Append_Codepoint(mo->string, ' ');
             pending = false;
         }
         else if (Is_Issue(OUT)) {  // do not delimit (unified w/char) [4]
@@ -411,7 +411,7 @@ DECLARE_NATIVE(enhex)
           #if !defined(NDEBUG)
             assert(strchr(no_encode, c) != NULL);
           #endif
-            Append_Codepoint(mo->series, c);
+            Append_Codepoint(mo->string, c);
             continue;
         }
 
@@ -423,15 +423,15 @@ DECLARE_NATIVE(enhex)
 
         REBLEN n;
         for (n = 0; n != encoded_size; ++n) {
-            Append_Codepoint(mo->series, '%');
+            Append_Codepoint(mo->string, '%');
 
             // Use uppercase hex digits, per RFC 3896 2.1, which is also
             // consistent with JavaScript's encodeURIComponent()
             //
             // https://tools.ietf.org/html/rfc3986#section-2.1
             //
-            Append_Codepoint(mo->series, Hex_Digits[(encoded[n] & 0xf0) >> 4]);
-            Append_Codepoint(mo->series, Hex_Digits[encoded[n] & 0xf]);
+            Append_Codepoint(mo->string, Hex_Digits[(encoded[n] & 0xf0) >> 4]);
+            Append_Codepoint(mo->string, Hex_Digits[encoded[n] & 0xf]);
         }
     }
 
@@ -477,7 +477,7 @@ DECLARE_NATIVE(dehex)
     REBLEN i;
     for (i = 0; i < len;) {
         if (c != '%')
-            Append_Codepoint(mo->series, c);
+            Append_Codepoint(mo->string, c);
         else {
             if (i + 2 >= len)
                fail ("Percent decode has less than two codepoints after %");
@@ -548,7 +548,7 @@ DECLARE_NATIVE(dehex)
             if (decoded == '\0')
                 fail (Error_Illegal_Zero_Byte_Raw());
 
-            Append_Codepoint(mo->series, decoded);
+            Append_Codepoint(mo->string, decoded);
             --scan_size; // one less (see why it's called "Back_Scan")
 
             // Slide any residual UTF-8 data to the head of the buffer
@@ -780,7 +780,7 @@ DECLARE_NATIVE(entab)
         // Count leading spaces, insert TAB for each tabsize:
         if (c == ' ') {
             if (++n >= tabsize) {
-                Append_Codepoint(mo->series, '\t');
+                Append_Codepoint(mo->string, '\t');
                 n = 0;
             }
             continue;
@@ -788,13 +788,13 @@ DECLARE_NATIVE(entab)
 
         // Hitting a leading TAB resets space counter:
         if (c == '\t') {
-            Append_Codepoint(mo->series, '\t');
+            Append_Codepoint(mo->string, '\t');
             n = 0;
         }
         else {
             // Incomplete tab space, pad with spaces:
             for (; n > 0; n--)
-                Append_Codepoint(mo->series, ' ');
+                Append_Codepoint(mo->string, ' ');
 
             // Copy chars thru end-of-line (or end of buffer):
             for (; index < len; ++index) {
@@ -804,10 +804,10 @@ DECLARE_NATIVE(entab)
                     // append pointer, it just changed the last character to
                     // a newline.  Was this the intent?
                     //
-                    Append_Codepoint(mo->series, '\n');
+                    Append_Codepoint(mo->string, '\n');
                     break;
                 }
-                Append_Codepoint(mo->series, c);
+                Append_Codepoint(mo->string, c);
                 up = Utf8_Next(&c, up);
             }
         }
@@ -857,10 +857,10 @@ DECLARE_NATIVE(detab)
         cp = Utf8_Next(&c, cp);
 
         if (c == '\t') {
-            Append_Codepoint(mo->series, ' ');
+            Append_Codepoint(mo->string, ' ');
             n++;
             for (; n % tabsize != 0; n++)
-                Append_Codepoint(mo->series, ' ');
+                Append_Codepoint(mo->string, ' ');
             continue;
         }
 
@@ -869,7 +869,7 @@ DECLARE_NATIVE(detab)
         else
             ++n;
 
-        Append_Codepoint(mo->series, c);
+        Append_Codepoint(mo->string, c);
     }
 
     Heart heart = Cell_Heart_Ensure_Noquote(ARG(string));
@@ -971,8 +971,8 @@ DECLARE_NATIVE(to_hex)
     // !!! Issue should be able to use string from mold buffer directly when
     // UTF-8 Everywhere unification of ANY-WORD? and ANY-STRING? is done.
     //
-    assert(len == String_Size(mo->series) - mo->base.size);
-    if (NULL == Scan_Issue(OUT, Binary_At(mo->series, mo->base.size), len))
+    assert(len == String_Size(mo->string) - mo->base.size);
+    if (NULL == Scan_Issue(OUT, Binary_At(mo->string, mo->base.size), len))
         fail (PARAM(value));
 
     Drop_Mold(mo);

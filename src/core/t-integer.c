@@ -259,7 +259,7 @@ void MF_Integer(REB_MOLD *mo, const Cell* v, bool form)
 
     Byte buf[60];
     REBINT len = Emit_Integer(buf, VAL_INT64(v));
-    Append_Ascii_Len(mo->series, s_cast(buf), len);
+    Append_Ascii_Len(mo->string, s_cast(buf), len);
 }
 
 

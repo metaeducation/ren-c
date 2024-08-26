@@ -266,7 +266,7 @@ void MF_Sigil(REB_MOLD *mo, const Cell* v, bool form)
 
     const char* utf8 = cs_cast(PAYLOAD(Bytes, v).at_least_8);
     Size size = EXTRA(Bytes, v).at_least_4[IDX_EXTRA_USED];
-    Append_Utf8(mo->series, utf8, size);
+    Append_Utf8(mo->string, utf8, size);
 }
 
 
@@ -279,14 +279,14 @@ void MF_Issue(REB_MOLD *mo, const Cell* v, bool form)
         if (IS_CHAR_CELL(v) and Cell_Codepoint(v) == 0)
             fail (Error_Illegal_Zero_Byte_Raw());  // don't form #, only mold
 
-        Append_String_Limit(mo->series, v, UNLIMITED);
+        Append_String_Limit(mo->string, v, UNLIMITED);
         return;
     }
 
     Length len;
     Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, v);
 
-    Append_Codepoint(mo->series, '#');
+    Append_Codepoint(mo->string, '#');
 
     if (len == 0)
         return;  // Just be `#`
@@ -319,12 +319,12 @@ void MF_Issue(REB_MOLD *mo, const Cell* v, bool form)
         if (len == 1 and not no_quotes) {  // use historical CHAR! molding
             bool parened = GET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
 
-            Append_Codepoint(mo->series, '"');
+            Append_Codepoint(mo->string, '"');
             Mold_Uni_Char(mo, Cell_Codepoint(v), parened);
-            Append_Codepoint(mo->series, '"');
+            Append_Codepoint(mo->string, '"');
         }
         else
-            Append_String_Limit(mo->series, v, len);
+            Append_String_Limit(mo->string, v, len);
     }
     else {
         const String* s = Cell_Issue_String(v);  // !!! needs node

@@ -442,15 +442,15 @@ void MF_Sequence(REB_MOLD *mo, const Cell* v, bool form)
     char interstitial = Any_Tuple_Kind(heart) ? '.' : '/';
 
     if (heart == REB_GET_PATH or heart == REB_GET_TUPLE)
-        Append_Codepoint(mo->series, ':');
+        Append_Codepoint(mo->string, ':');
     else if (heart == REB_META_PATH or heart == REB_META_TUPLE)
-        Append_Codepoint(mo->series, '^');
+        Append_Codepoint(mo->string, '^');
     else if (heart == REB_THE_PATH or heart == REB_THE_TUPLE)
-        Append_Codepoint(mo->series, '@');
+        Append_Codepoint(mo->string, '@');
     else if (heart == REB_TYPE_PATH or heart == REB_TYPE_TUPLE)
-        Append_Codepoint(mo->series, '&');
+        Append_Codepoint(mo->string, '&');
     else if (heart == REB_VAR_PATH or heart == REB_VAR_TUPLE)
-        Append_Codepoint(mo->series, '$');
+        Append_Codepoint(mo->string, '$');
 
     bool first = true;
 
@@ -464,7 +464,7 @@ void MF_Sequence(REB_MOLD *mo, const Cell* v, bool form)
         if (first)
             first = false;  // don't print `.` or `/` before first element
         else
-            Append_Codepoint(mo->series, interstitial);
+            Append_Codepoint(mo->string, interstitial);
 
         if (element_heart == REB_BLANK) {
             // no blank molding; implicit
@@ -493,5 +493,5 @@ void MF_Sequence(REB_MOLD *mo, const Cell* v, bool form)
     }
 
     if (heart == REB_SET_PATH or heart == REB_SET_TUPLE)
-        Append_Codepoint(mo->series, ':');
+        Append_Codepoint(mo->string, ':');
 }

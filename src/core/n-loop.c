@@ -1531,14 +1531,14 @@ DECLARE_NATIVE(remove_each)
                 if (Is_Binary(data)) {
                     Binary* bin = cast(Binary*, flex);
                     Append_Ascii_Len(
-                        mo->series,
+                        mo->string,
                         cs_cast(Binary_At(bin, start)),
                         1
                     );
                 }
                 else {
                     Append_Codepoint(
-                        mo->series,
+                        mo->string,
                         Get_Char_At(cast(String*, flex), start)
                     );
                 }
@@ -1612,7 +1612,7 @@ DECLARE_NATIVE(remove_each)
         REBLEN orig_len = Cell_Series_Len_Head(data);
         assert(start <= orig_len);
         Append_Ascii_Len(
-            mo->series,
+            mo->string,
             cs_cast(Binary_At(bin, start)),
             orig_len - start
         );
@@ -1640,7 +1640,7 @@ DECLARE_NATIVE(remove_each)
 
         for (; start != orig_len; ++start) {
             Append_Codepoint(
-                mo->series,
+                mo->string,
                 Get_Char_At(cast(String*, flex), start)
             );
         }

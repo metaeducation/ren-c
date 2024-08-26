@@ -60,9 +60,9 @@ void MF_Blank(REB_MOLD *mo, const Cell* v, bool form)
     UNUSED(v);
 
     if (form)
-        Append_Ascii(mo->series, " ");
+        Append_Ascii(mo->string, " ");
     else
-        Append_Ascii(mo->series, "_");
+        Append_Ascii(mo->string, "_");
 }
 
 
@@ -144,7 +144,7 @@ void MF_Handle(REB_MOLD *mo, const Cell* v, bool form)
     UNUSED(form);  // !!! Handles have "no printable form", what to do here?
     UNUSED(v);
 
-    Append_Ascii(mo->series, "#[handle!]");
+    Append_Ascii(mo->string, "#[handle!]");
 }
 
 

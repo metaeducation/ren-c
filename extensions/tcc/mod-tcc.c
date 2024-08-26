@@ -535,13 +535,13 @@ DECLARE_NATIVE(compile_p)
                 //
                 // https://forum.rebol.info/t/817
                 //
-                Append_Ascii(mo->series, "const Value* ");
-                Append_String(mo->series, linkname);
-                Append_Ascii(mo->series, "(void *level_)\n{");
+                Append_Ascii(mo->string, "const Value* ");
+                Append_String(mo->string, linkname);
+                Append_Ascii(mo->string, "(void *level_)\n{");
 
-                Append_String(mo->series, source);
+                Append_String(mo->string, source);
 
-                Append_Ascii(mo->series, "}\n\n");
+                Append_Ascii(mo->string, "}\n\n");
             }
             else if (Is_Text(item)) {
                 //
@@ -552,8 +552,8 @@ DECLARE_NATIVE(compile_p)
                 // macros or constants.  The string will appear at the point
                 // in the compile where it is given in the list.
                 //
-                Append_String(mo->series, item);
-                Append_Ascii(mo->series, "\n");
+                Append_String(mo->string, item);
+                Append_Ascii(mo->string, "\n");
             }
             else {
                 // COMPILE should've vetted the list to only TEXT! and ACTION!
@@ -576,7 +576,7 @@ DECLARE_NATIVE(compile_p)
         if (
             tcc_compile_string(
                 state,
-                cs_cast(Binary_At(mo->series, mo->base.size))
+                cs_cast(Binary_At(mo->string, mo->base.size))
             ) < 0
         ){
             rebJumps ("fail [",

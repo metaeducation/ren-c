@@ -936,7 +936,7 @@ Context* Copy_Context_Extra_Managed(
 //
 void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 {
-    String* s = mo->series;
+    String* s = mo->string;
 
     Context* c = VAL_CONTEXT(v);
 
@@ -975,8 +975,8 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
         //
         bool had_output = false;
         while (Did_Advance_Evars(&e)) {
-            Append_Spelling(mo->series, KEY_SYMBOL(e.key));
-            Append_Ascii(mo->series, ": ");
+            Append_Spelling(mo->string, KEY_SYMBOL(e.key));
+            Append_Ascii(mo->string, ": ");
 
             if (Is_Antiform(e.var)) {
                 fail (Error_Bad_Antiform(e.var));  // can't FORM antiforms
@@ -984,7 +984,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
             else
                 Mold_Value(mo, cast(Element*, e.var));
 
-            Append_Codepoint(mo->series, LF);
+            Append_Codepoint(mo->string, LF);
             had_output = true;
         }
         Shutdown_Evars(&e);
@@ -1015,7 +1015,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
         Init_Set_Word(set_word, spelling);  // want escaping, e.g `|::|: 10`
 
         Mold_Value(mo, set_word);
-        Append_Codepoint(mo->series, ' ');
+        Append_Codepoint(mo->string, ' ');
 
         if (Is_Antiform(e.var)) {
             assert(Is_Antiform_Stable(cast(Atom*, e.var)));  // extra check
@@ -1672,13 +1672,13 @@ void MF_Frame(REB_MOLD *mo, const Cell* v, bool form) {
         return;
     }
 
-    Append_Ascii(mo->series, "#[frame! ");
+    Append_Ascii(mo->string, "#[frame! ");
 
     Option(const Symbol*) label = VAL_FRAME_LABEL(v);
     if (label) {
-        Append_Codepoint(mo->series, '{');
-        Append_Spelling(mo->series, unwrap label);
-        Append_Ascii(mo->series, "} ");
+        Append_Codepoint(mo->string, '{');
+        Append_Spelling(mo->string, unwrap label);
+        Append_Ascii(mo->string, "} ");
     }
 
     // !!! The system is no longer keeping the spec of functions, in order
@@ -1697,7 +1697,7 @@ void MF_Frame(REB_MOLD *mo, const Cell* v, bool form) {
     // some base64 encoding of a UUID (?)  In the meantime, having the label
     // of the last word used is actually a lot more useful than most things.
 
-    Append_Codepoint(mo->series, ']');
+    Append_Codepoint(mo->string, ']');
     End_Mold(mo);
 }
 

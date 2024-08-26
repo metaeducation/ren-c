@@ -776,33 +776,33 @@ void MF_List(REB_MOLD *mo, const Cell* v, bool form)
         SET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
         Pre_Mold(mo, v); // #[block! part
 
-        Append_Codepoint(mo->series, '[');
+        Append_Codepoint(mo->string, '[');
         Mold_Array_At(mo, Cell_Array(v), 0, "[]");
         Post_Mold(mo, v);
-        Append_Codepoint(mo->series, ']');
+        Append_Codepoint(mo->string, ']');
     }
     else {
         const char *sep;
 
         switch (heart) {
           case REB_GET_BLOCK:
-            Append_Codepoint(mo->series, ':');
+            Append_Codepoint(mo->string, ':');
             goto block;
 
           case REB_META_BLOCK:
-            Append_Codepoint(mo->series, '^');
+            Append_Codepoint(mo->string, '^');
             goto block;
 
           case REB_THE_BLOCK:
-            Append_Codepoint(mo->series, '@');
+            Append_Codepoint(mo->string, '@');
             goto block;
 
           case REB_TYPE_BLOCK:
-            Append_Codepoint(mo->series, '&');
+            Append_Codepoint(mo->string, '&');
             goto block;
 
           case REB_VAR_BLOCK:
-            Append_Codepoint(mo->series, '$');
+            Append_Codepoint(mo->string, '$');
             goto block;
 
           case REB_BLOCK:
@@ -817,23 +817,23 @@ void MF_List(REB_MOLD *mo, const Cell* v, bool form)
             break;
 
           case REB_GET_GROUP:
-            Append_Codepoint(mo->series, ':');
+            Append_Codepoint(mo->string, ':');
             goto group;
 
           case REB_META_GROUP:
-            Append_Codepoint(mo->series, '^');
+            Append_Codepoint(mo->string, '^');
             goto group;
 
           case REB_THE_GROUP:
-            Append_Codepoint(mo->series, '@');
+            Append_Codepoint(mo->string, '@');
             goto group;
 
           case REB_TYPE_GROUP:
-            Append_Codepoint(mo->series, '&');
+            Append_Codepoint(mo->string, '&');
             goto group;
 
           case REB_VAR_GROUP:
-            Append_Codepoint(mo->series, '$');
+            Append_Codepoint(mo->string, '$');
             goto group;
 
           case REB_GROUP:
@@ -849,7 +849,7 @@ void MF_List(REB_MOLD *mo, const Cell* v, bool form)
         Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
 
         if (heart == REB_SET_GROUP or heart == REB_SET_BLOCK)
-            Append_Codepoint(mo->series, ':');
+            Append_Codepoint(mo->string, ':');
     }
 }
 

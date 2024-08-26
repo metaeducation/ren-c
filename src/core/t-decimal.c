@@ -448,7 +448,7 @@ void MF_Decimal(REB_MOLD *mo, const Cell* v, bool form)
         GET_MOLD_FLAG(mo, MOLD_FLAG_COMMA_PT) ? ',' : '.',
         mo->digits
     );
-    Append_Ascii_Len(mo->series, s_cast(buf), len);
+    Append_Ascii_Len(mo->string, s_cast(buf), len);
 }
 
 
@@ -469,7 +469,7 @@ void MF_Percent(REB_MOLD *mo, const Cell* v, bool form)
         GET_MOLD_FLAG(mo, MOLD_FLAG_COMMA_PT) ? ',' : '.',
         mo->digits
     );
-    Append_Ascii_Len(mo->series, s_cast(buf), len);
+    Append_Ascii_Len(mo->string, s_cast(buf), len);
 }
 
 

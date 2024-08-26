@@ -197,7 +197,7 @@ Flex* Make_Set_Operation_Flex(
     else if (Any_String(val1)) {
         DECLARE_MOLD (mo);
 
-        // ask mo->series to have at least `i` capacity beyond mo->base.size
+        // ask mo->string to have at least `i` capacity beyond mo->base.size
         //
         SET_MOLD_FLAG(mo, MOLD_FLAG_RESERVE);
         mo->reserve = i;
@@ -238,21 +238,21 @@ Flex* Make_Set_Operation_Flex(
 
                 DECLARE_ATOM (mo_value);
                 Reset_Unquoted_Header_Untracked(TRACK(mo_value), CELL_MASK_TEXT);
-                Init_Cell_Node1(mo_value, mo->series);
+                Init_Cell_Node1(mo_value, mo->string);
                 VAL_INDEX_RAW(mo_value) = mo->base.index;
 
                 if (
                     NOT_FOUND == Find_Binstr_In_Binstr(
                         &len_match,
                         mo_value,
-                        String_Len(mo->series),  // tail
+                        String_Len(mo->string),  // tail
                         iter,
                         1,  // single codepoint length
                         cased ? AM_FIND_CASE : 0,  // flags
                         skip  // skip
                     )
                 ){
-                    Append_String_Limit(mo->series, iter, skip);
+                    Append_String_Limit(mo->string, iter, skip);
                 }
             }
 

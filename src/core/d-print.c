@@ -70,7 +70,7 @@ void Form_Hex_Pad(
         *bp-- = (sgn != 0) ? 'F' : '0';
 
     for (++bp; *bp != '\0'; ++bp)
-        Append_Codepoint(mo->series, *bp);
+        Append_Codepoint(mo->string, *bp);
 }
 
 
@@ -81,8 +81,8 @@ void Form_Hex_Pad(
 //
 void Form_Hex2(REB_MOLD *mo, Byte b)
 {
-    Append_Codepoint(mo->series, Hex_Digits[(b & 0xf0) >> 4]);
-    Append_Codepoint(mo->series, Hex_Digits[b & 0xf]);
+    Append_Codepoint(mo->string, Hex_Digits[(b & 0xf0) >> 4]);
+    Append_Codepoint(mo->string, Hex_Digits[b & 0xf]);
 }
 
 
@@ -93,9 +93,9 @@ void Form_Hex2(REB_MOLD *mo, Byte b)
 //
 void Form_Hex_Esc(REB_MOLD *mo, Byte b)
 {
-    Append_Codepoint(mo->series, '%');
-    Append_Codepoint(mo->series, Hex_Digits[(b & 0xf0) >> 4]);
-    Append_Codepoint(mo->series, Hex_Digits[b & 0xf]);
+    Append_Codepoint(mo->string, '%');
+    Append_Codepoint(mo->string, Hex_Digits[(b & 0xf0) >> 4]);
+    Append_Codepoint(mo->string, Hex_Digits[b & 0xf]);
 }
 
 
@@ -106,12 +106,12 @@ void Form_Hex_Esc(REB_MOLD *mo, Byte b)
 //
 void Form_RGBA(REB_MOLD *mo, const Byte* dp)
 {
-    REBLEN len_old = String_Len(mo->series);
-    Size used_old = String_Size(mo->series);
+    REBLEN len_old = String_Len(mo->string);
+    Size used_old = String_Size(mo->string);
 
-    Expand_Flex_Tail(mo->series, 8);  // grow by 8 bytes, may realloc
+    Expand_Flex_Tail(mo->string, 8);  // grow by 8 bytes, may realloc
 
-    Byte* bp = Binary_At(mo->series, used_old);  // potentially new buffer
+    Byte* bp = Binary_At(mo->string, used_old);  // potentially new buffer
 
     bp[0] = Hex_Digits[(dp[0] >> 4) & 0xf];
     bp[1] = Hex_Digits[dp[0] & 0xf];
@@ -123,7 +123,7 @@ void Form_RGBA(REB_MOLD *mo, const Byte* dp)
     bp[7] = Hex_Digits[dp[3] & 0xf];
     bp[8] = '\0';
 
-    Term_String_Len_Size(mo->series, len_old + 8, used_old + 8);
+    Term_String_Len_Size(mo->string, len_old + 8, used_old + 8);
 }
 
 

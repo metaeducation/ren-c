@@ -144,13 +144,13 @@ INLINE void Probe_Molded_Value(const Value* v)
         Copy_Cell(temp, v);
         Element* elem = Quasify_Antiform(temp);
         Mold_Value(mo, elem);
-        Append_Ascii(mo->series, "  ; anti");
+        Append_Ascii(mo->string, "  ; anti");
     }
     else {
         Mold_Value(mo, c_cast(Element*, v));
     }
 
-    printf("%s\n", c_cast(char*, Binary_At(mo->series, mo->base.size)));
+    printf("%s\n", c_cast(char*, Binary_At(mo->string, mo->base.size)));
     fflush(stdout);
 
     Drop_Mold(mo);
@@ -169,19 +169,19 @@ void Probe_Cell_Print_Helper(
 
   #if DEBUG_UNREADABLE_CELLS
     if (Is_Unreadable_Debug(v)) {  // Is_Nulled() asserts on unreadables
-        Append_Ascii(mo->series, "\\\\unreadable\\\\");
+        Append_Ascii(mo->string, "\\\\unreadable\\\\");
         return;
     }
   #endif
 
     if (Is_Cell_Poisoned(v)) {
-        Append_Ascii(mo->series, "**POISONED CELL**");
+        Append_Ascii(mo->string, "**POISONED CELL**");
     }
     else if (Is_Antiform(v)) {
         DECLARE_VALUE (reified);
         Quasify_Antiform(Copy_Cell(reified, v));
         Mold_Value(mo, cast(Element*, reified));
-        Append_Ascii(mo->series, "  ; anti");
+        Append_Ascii(mo->string, "  ; anti");
     }
     else
         Mold_Value(mo, cast(const Element*, v));
@@ -292,7 +292,7 @@ void* Probe_Core_Debug(
 
       case FLAVOR_LET: {
         Probe_Print_Helper(p, expr, "LET single variable", file, line);
-        Append_Spelling(mo->series, INODE(LetSymbol, f));
+        Append_Spelling(mo->string, INODE(LetSymbol, f));
         break; }
 
       case FLAVOR_USE: {
@@ -338,12 +338,12 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "KeyList Flex", file, line);
         const Key* tail = Flex_Tail(Key, f);
         const Key* key = Flex_Head(Key, f);
-        Append_Ascii(mo->series, "<< ");
+        Append_Ascii(mo->string, "<< ");
         for (; key != tail; ++key) {
             Mold_Text_Flex_At(mo, KEY_SYMBOL(key), 0);
-            Append_Codepoint(mo->series, ' ');
+            Append_Codepoint(mo->string, ' ');
         }
-        Append_Ascii(mo->series, ">>");
+        Append_Ascii(mo->string, ">>");
         break; }
 
       case FLAVOR_POINTER:
@@ -385,9 +385,9 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "Byte-Size Flex", file, line);
 
         const bool brk = (Binary_Len(bin) > 32);  // !!! duplicates MF_Binary code
-        Append_Ascii(mo->series, "#{");
+        Append_Ascii(mo->string, "#{");
         Form_Base16(mo, Binary_Head(bin), Binary_Len(bin), brk);
-        Append_Ascii(mo->series, "}");
+        Append_Ascii(mo->string, "}");
         break; }
 
     //=//// FLEXES WITH ELEMENTS WIDTH 1 INTERPRETED AS UTF-8 /////////////=//
@@ -420,8 +420,8 @@ void* Probe_Core_Debug(
 
   cleanup:
 
-    if (mo->base.size != String_Size(mo->series))
-        printf("%s\n", c_cast(char*, Binary_At(mo->series, mo->base.size)));
+    if (mo->base.size != String_Size(mo->string))
+        printf("%s\n", c_cast(char*, Binary_At(mo->string, mo->base.size)));
     fflush(stdout);
 
     Drop_Mold(mo);
@@ -459,7 +459,7 @@ void Where_Core_Debug(Level* L) {
         Mold_Array_At(mo, FEED_ARRAY(L->feed), before_index, "[]");
         Throttle_Mold(mo);
         printf("Where(Before):\n");
-        printf("%s\n\n", Binary_At(mo->series, mo->base.size));
+        printf("%s\n\n", Binary_At(mo->string, mo->base.size));
         Drop_Mold(mo);
     }
 
@@ -470,7 +470,7 @@ void Where_Core_Debug(Level* L) {
     Mold_Array_At(mo, FEED_ARRAY(L->feed), index, "[]");
     Throttle_Mold(mo);
     printf("Where(At):\n");
-    printf("%s\n\n", Binary_At(mo->series, mo->base.size));
+    printf("%s\n\n", Binary_At(mo->string, mo->base.size));
     Drop_Mold(mo);
 }
 

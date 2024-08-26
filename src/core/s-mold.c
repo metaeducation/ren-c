@@ -93,9 +93,9 @@
 //
 Byte* Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
 {
-    REBLEN tail = String_Len(mo->series);
-    Expand_Flex_Tail(mo->series, num_bytes);  // terminates at guess
-    return Binary_At(mo->series, tail);
+    REBLEN tail = String_Len(mo->string);
+    Expand_Flex_Tail(mo->string, num_bytes);  // terminates at guess
+    return Binary_At(mo->string, tail);
 }
 
 
@@ -107,15 +107,15 @@ Byte* Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
 void Pre_Mold_Core(REB_MOLD *mo, const Cell* v, bool all)
 {
     if (all)
-        Append_Ascii(mo->series, "#[");
+        Append_Ascii(mo->string, "#[");
     else
-        Append_Ascii(mo->series, "make ");
+        Append_Ascii(mo->string, "make ");
 
     const String* type_name = Canon_Symbol(SYM_FROM_KIND(Cell_Heart(v)));
-    Append_Spelling(mo->series, type_name);
-    Append_Codepoint(mo->series, '!');  // !!! `make object!` not `make object`
+    Append_Spelling(mo->string, type_name);
+    Append_Codepoint(mo->string, '!');  // !!! `make object!` not `make object`
 
-    Append_Codepoint(mo->series, ' ');
+    Append_Codepoint(mo->string, ' ');
 }
 
 
@@ -127,7 +127,7 @@ void Pre_Mold_Core(REB_MOLD *mo, const Cell* v, bool all)
 void End_Mold_Core(REB_MOLD *mo, bool all)
 {
     if (all)
-        Append_Codepoint(mo->series, ']');
+        Append_Codepoint(mo->string, ']');
 }
 
 
@@ -140,11 +140,11 @@ void End_Mold_Core(REB_MOLD *mo, bool all)
 void Post_Mold(REB_MOLD *mo, const Cell* v)
 {
     if (VAL_INDEX(v)) {
-        Append_Codepoint(mo->series, ' ');
-        Append_Int(mo->series, VAL_INDEX(v) + 1);
+        Append_Codepoint(mo->string, ' ');
+        Append_Int(mo->string, VAL_INDEX(v) + 1);
     }
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL))
-        Append_Codepoint(mo->series, ']');
+        Append_Codepoint(mo->string, ']');
 }
 
 
@@ -158,10 +158,10 @@ void New_Indented_Line(REB_MOLD *mo)
     // Check output string has content already but no terminator:
     //
     Byte* bp;
-    if (String_Len(mo->series) == 0)
+    if (String_Len(mo->string) == 0)
         bp = nullptr;
     else {
-        bp = Binary_Last(mo->series);  // legal way to check UTF-8
+        bp = Binary_Last(mo->string);  // legal way to check UTF-8
         if (*bp == ' ' or *bp == '\t')
             *bp = '\n';
         else
@@ -170,13 +170,13 @@ void New_Indented_Line(REB_MOLD *mo)
 
     // Add terminator:
     if (bp == nullptr)
-        Append_Codepoint(mo->series, '\n');
+        Append_Codepoint(mo->string, '\n');
 
     // Add proper indentation:
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_INDENT)) {
         REBINT n;
         for (n = 0; n < mo->indent; n++)
-            Append_Ascii(mo->series, "    ");
+            Append_Ascii(mo->string, "    ");
     }
 }
 
@@ -245,10 +245,10 @@ void Mold_Array_At(
     // Recursion check:
     if (Find_Pointer_In_Flex(g_mold.stack, a) != NOT_FOUND) {
         if (sep[0] != '\0')
-            Append_Codepoint(mo->series, sep[0]);
-        Append_Ascii(mo->series, "...");
+            Append_Codepoint(mo->string, sep[0]);
+        Append_Ascii(mo->string, "...");
         if (sep[1] != '\0')
-            Append_Codepoint(mo->series, sep[1]);
+            Append_Codepoint(mo->string, sep[1]);
         return;
     }
 
@@ -257,7 +257,7 @@ void Mold_Array_At(
     bool indented = false;
 
     if (sep[0] != '\0')
-        Append_Codepoint(mo->series, sep[0]);
+        Append_Codepoint(mo->string, sep[0]);
 
     bool first_item = true;
 
@@ -288,7 +288,7 @@ void Mold_Array_At(
             break;
 
         if (Not_Cell_Flag(item, NEWLINE_BEFORE))
-            Append_Codepoint(mo->series, ' ');
+            Append_Codepoint(mo->string, ' ');
     }
 
     if (indented)
@@ -297,7 +297,7 @@ void Mold_Array_At(
     if (sep[1] != '\0') {
         if (Has_Newline_At_Tail(a))  // accommodates varlists, etc. for PROBE
             New_Indented_Line(mo); // but not any indentation from *this* mold
-        Append_Codepoint(mo->series, sep[1]);
+        Append_Codepoint(mo->string, sep[1]);
     }
 
     Drop_Pointer_From_Flex(g_mold.stack, a);
@@ -338,16 +338,16 @@ void Form_Array_At(
         Mold_Or_Form_Value(mo, item, wval == nullptr);
         n++;
         if (GET_MOLD_FLAG(mo, MOLD_FLAG_LINES)) {
-            Append_Codepoint(mo->series, LF);
+            Append_Codepoint(mo->string, LF);
         }
         else {  // Add a space if needed
             if (
                 n < len
-                and String_Len(mo->series) != 0
-                and *Binary_Last(mo->series) != LF
+                and String_Len(mo->string) != 0
+                and *Binary_Last(mo->string) != LF
                 and NOT_MOLD_FLAG(mo, MOLD_FLAG_TIGHT)
             ){
-                Append_Codepoint(mo->series, ' ');
+                Append_Codepoint(mo->string, ' ');
             }
         }
     }
@@ -396,7 +396,7 @@ void Mold_Or_Form_Cell(
     const Cell* cell,
     bool form
 ){
-    String* s = mo->series;
+    String* s = mo->string;
     Assert_Flex_Term_If_Needed(s);
 
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT)) {
@@ -433,7 +433,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Element* v, bool form)
 
   #if DEBUG_UNREADABLE_CELLS
     if (Is_Unreadable_Debug(v)) {  // would assert otherwise
-        Append_Ascii(mo->series, "\\\\unreadable\\\\");
+        Append_Ascii(mo->string, "\\\\unreadable\\\\");
         return;
     }
   #endif
@@ -442,15 +442,15 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Element* v, bool form)
 
     REBLEN i;
     for (i = 0; i < depth; ++i)
-        Append_Ascii(mo->series, "'");
+        Append_Ascii(mo->string, "'");
 
     if (QUOTE_BYTE(v) & NONQUASI_BIT)
         Mold_Or_Form_Cell(mo, v, form);
     else {
-        Append_Codepoint(mo->series, '~');
+        Append_Codepoint(mo->string, '~');
         if (HEART_BYTE(v) != REB_BLANK) {
             Mold_Or_Form_Cell(mo, v, form);
-            Append_Codepoint(mo->series, '~');
+            Append_Codepoint(mo->string, '~');
         }
     }
 }
@@ -503,14 +503,14 @@ void Push_Mold(REB_MOLD *mo)
     g_mold.currently_pushing = true;
   #endif
 
-    assert(mo->series == nullptr);  // Indicates not pushed, see DECLARE_MOLD
+    assert(mo->string == nullptr);  // Indicates not pushed, see DECLARE_MOLD
 
     String* s = g_mold.buffer;
     assert(LINK(Bookmarks, s) == nullptr);  // should never bookmark buffer
 
     Assert_Flex_Term_If_Needed(s);
 
-    mo->series = s;
+    mo->string = s;
     mo->base.size = String_Size(s);
     mo->base.index = String_Len(s);
 
@@ -544,7 +544,7 @@ void Push_Mold(REB_MOLD *mo)
             Flex_Used(s) + MIN_COMMON,
             NODE_FLAG_NODE // NODE_FLAG_NODE means preserve the data
         );
-        Term_String_Len_Size(mo->series, len, Flex_Used(s));
+        Term_String_Len_Size(mo->string, len, Flex_Used(s));
     }
 
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL))
@@ -587,21 +587,21 @@ void Throttle_Mold(REB_MOLD *mo) {
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_LIMIT))
         return;
 
-    if (String_Len(mo->series) - mo->base.index > mo->limit) {
-        REBINT overage = (String_Len(mo->series) - mo->base.index) - mo->limit;
+    if (String_Len(mo->string) - mo->base.index > mo->limit) {
+        REBINT overage = (String_Len(mo->string) - mo->base.index) - mo->limit;
 
         // Mold buffer is UTF-8...length limit is (currently) in characters,
         // not bytes.  Have to back up the right number of bytes, but also
         // adjust the character length appropriately.
 
-        Utf8(*) tail = String_Tail(mo->series);
+        Utf8(*) tail = String_Tail(mo->string);
         Codepoint dummy;
         Utf8(*) cp = Utf8_Skip(&dummy, tail, -(overage));
 
         Term_String_Len_Size(
-            mo->series,
-            String_Len(mo->series) - overage,
-            String_Size(mo->series) - (tail - cp)
+            mo->string,
+            String_Len(mo->string) - overage,
+            String_Size(mo->string) - (tail - cp)
         );
 
         assert(not (mo->opts & MOLD_FLAG_WAS_TRUNCATED));
@@ -645,8 +645,8 @@ String* Pop_Molded_String_Core(String* buf, Size offset, Index index)
 //
 String* Pop_Molded_String(REB_MOLD *mo)
 {
-    assert(mo->series != nullptr);  // if null, there was no Push_Mold()
-    Assert_Flex_Term_If_Needed(mo->series);
+    assert(mo->string != nullptr);  // if null, there was no Push_Mold()
+    Assert_Flex_Term_If_Needed(mo->string);
 
     // Limit string output to a specified size to prevent long console
     // garbage output if MOLD_FLAG_LIMIT was set in Push_Mold().
@@ -654,12 +654,12 @@ String* Pop_Molded_String(REB_MOLD *mo)
     Throttle_Mold(mo);
 
     String* popped = Pop_Molded_String_Core(
-        mo->series,
+        mo->string,
         mo->base.size,
         mo->base.index
     );
 
-    mo->series = nullptr;  // indicates mold is not currently pushed
+    mo->string = nullptr;  // indicates mold is not currently pushed
     return popped;
 }
 
@@ -672,14 +672,14 @@ String* Pop_Molded_String(REB_MOLD *mo)
 //
 Binary* Pop_Molded_Binary(REB_MOLD *mo)
 {
-    assert(String_Len(mo->series) >= mo->base.size);
+    assert(String_Len(mo->string) >= mo->base.size);
 
-    Assert_Flex_Term_If_Needed(mo->series);
+    Assert_Flex_Term_If_Needed(mo->string);
     Throttle_Mold(mo);
 
-    Size size = String_Size(mo->series) - mo->base.size;
+    Size size = String_Size(mo->string) - mo->base.size;
     Binary* bin = Make_Binary(size);
-    memcpy(Binary_Head(bin), Binary_At(mo->series, mo->base.size), size);
+    memcpy(Binary_Head(bin), Binary_At(mo->string, mo->base.size), size);
     Term_Binary_Len(bin, size);
 
     // Though the protocol of Mold_Value does terminate, it only does so if
@@ -688,9 +688,9 @@ Binary* Pop_Molded_Binary(REB_MOLD *mo)
     // whatever value in the terminator spot was there.  This could be
     // addressed by making no-op molds terminate.
     //
-    Term_String_Len_Size(mo->series, mo->base.index, mo->base.size);
+    Term_String_Len_Size(mo->string, mo->base.index, mo->base.size);
 
-    mo->series = nullptr;  // indicates mold is not currently pushed
+    mo->string = nullptr;  // indicates mold is not currently pushed
     return bin;
 }
 
@@ -711,22 +711,22 @@ void Drop_Mold_Core(
     REB_MOLD *mo,
     bool not_pushed_ok  // see Drop_Mold_If_Pushed()
 ){
-    if (mo->series == nullptr) {  // there was no Push_Mold()
+    if (mo->string == nullptr) {  // there was no Push_Mold()
         assert(not_pushed_ok);
         UNUSED(not_pushed_ok);
         return;
     }
 
-    // When pushed data are to be discarded, mo->series may be unterminated.
+    // When pushed data are to be discarded, mo->string may be unterminated.
     // (Indeed that happens when Scan_Item_Push_Mold returns NULL/0.)
     //
-    Note_Flex_Maybe_Term(mo->series);
+    Note_Flex_Maybe_Term(mo->string);
 
     // see notes in Pop_Molded_String()
     //
-    Term_String_Len_Size(mo->series, mo->base.index, mo->base.size);
+    Term_String_Len_Size(mo->string, mo->base.index, mo->base.size);
 
-    mo->series = nullptr;  // indicates mold is not currently pushed
+    mo->string = nullptr;  // indicates mold is not currently pushed
 }
 
 

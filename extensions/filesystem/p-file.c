@@ -444,7 +444,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
             for (; remain != 0; --remain, ++item) {
                 Form_Value(mo, item);
                 if (REF(lines))
-                    Append_Codepoint(mo->series, LF);
+                    Append_Codepoint(mo->string, LF);
             }
 
             // !!! This makes a string all at once; could be more efficient if

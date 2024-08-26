@@ -22,7 +22,7 @@
 //
 
 struct rebol_mold {
-    String* series;  // destination String (utf8)
+    String* string;  // destination String (utf8)
     struct {
         REBLEN index;  // codepoint index where mold starts within String
         Size size;  // byte offset where mold starts within String
@@ -90,7 +90,7 @@ enum REB_Mold_Opts {
 
 #define DECLARE_MOLD(name) \
     REB_MOLD mold_struct; \
-    mold_struct.series = nullptr; /* used to tell if pushed or not */ \
+    mold_struct.string = nullptr; /* used to tell if pushed or not */ \
     mold_struct.opts = 0; \
     mold_struct.indent = 0; \
     REB_MOLD *name = &mold_struct; \

@@ -510,7 +510,7 @@ static const Byte* Scan_Quote_Push_Mold(
         if (c == '\0')  // e.g. ^(00) or ^@
             fail (Error_Illegal_Zero_Byte_Raw());  // legal CHAR!, not string
 
-        Append_Codepoint(mo->series, c);
+        Append_Codepoint(mo->string, c);
     }
 
     ss->line += lines;
@@ -599,7 +599,7 @@ const Byte* Scan_Item_Push_Mold(
         if (c == '\0')  // e.g. ^(00) or ^@
             fail (Error_Illegal_Zero_Byte_Raw());  // legal CHAR!, not string
 
-        Append_Codepoint(mo->series, c);
+        Append_Codepoint(mo->string, c);
     }
 
     if (*bp != '\0' and *bp == opt_term)
@@ -685,10 +685,10 @@ static void Update_Error_Near_For_Line(
     //
     DECLARE_MOLD (mo);
     Push_Mold(mo);
-    Append_Ascii(mo->series, "(line ");
-    Append_Int(mo->series, line);
-    Append_Ascii(mo->series, ") ");
-    Append_Utf8(mo->series, cs_cast(bp), len);
+    Append_Ascii(mo->string, "(line ");
+    Append_Int(mo->string, line);
+    Append_Ascii(mo->string, ") ");
+    Append_Utf8(mo->string, cs_cast(bp), len);
 
     ERROR_VARS *vars = ERR_VARS(error);
     Init_Text(&vars->nearest, Pop_Molded_String(mo));

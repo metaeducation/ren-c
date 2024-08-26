@@ -278,28 +278,28 @@ void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
     switch (Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16)) {
       default:
       case 16: {
-        Append_Ascii(mo->series, "#{"); // default, so #{...} not #16{...}
+        Append_Ascii(mo->string, "#{"); // default, so #{...} not #16{...}
 
         const bool brk = (size > 32);
         Form_Base16(mo, data, size, brk);
         break; }
 
       case 64: {
-        Append_Ascii(mo->series, "64#{");
+        Append_Ascii(mo->string, "64#{");
 
         const bool brk = (size > 64);
         Form_Base64(mo, data, size, brk);
         break; }
 
       case 2: {
-        Append_Ascii(mo->series, "2#{");
+        Append_Ascii(mo->string, "2#{");
 
         const bool brk = (size > 8);
         Form_Base2(mo, data, size, brk);
         break; }
     }
 
-    Append_Codepoint(mo->series, '}');
+    Append_Codepoint(mo->string, '}');
 
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) and VAL_INDEX(v) != 0)
         Post_Mold(mo, v);

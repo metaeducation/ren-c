@@ -124,16 +124,16 @@ void Trim_Tail(REB_MOLD *mo, Byte ascii)
 {
     assert(ascii < 0x80);  // more work needed for multi-byte characters
 
-    Length len = String_Len(mo->series);
-    Size size = String_Size(mo->series);
+    Length len = String_Len(mo->string);
+    Size size = String_Size(mo->string);
 
     for (; size > 0; --size, --len) {
-        Byte b = *Binary_At(mo->series, size - 1);
+        Byte b = *Binary_At(mo->string, size - 1);
         if (b != ascii)
             break;
     }
 
-    Term_String_Len_Size(mo->series, len, size);
+    Term_String_Len_Size(mo->string, len, size);
 }
 
 
@@ -239,7 +239,7 @@ Array* Split_Lines(const Element* str)
 
     for (; i < len; ++i, cp = Utf8_Next(&c, cp)) {
         if (c != LF && c != CR) {
-            Append_Codepoint(mo->series, c);
+            Append_Codepoint(mo->string, c);
             continue;
         }
 
@@ -260,7 +260,7 @@ Array* Split_Lines(const Element* str)
     // If there's any remainder we pushed in the buffer, consider the end of
     // string to be an implicit line-break
 
-    if (String_Size(mo->series) == mo->base.size)
+    if (String_Size(mo->string) == mo->base.size)
         Drop_Mold(mo);
     else {
         Init_Text(PUSH(), Pop_Molded_String(mo));

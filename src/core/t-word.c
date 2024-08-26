@@ -216,14 +216,14 @@ Bounce TO_Word(Level* level_, Kind k, const Value* arg)
 void MF_Word(REB_MOLD *mo, const Cell* v, bool form) {
     UNUSED(form);
     const Symbol* symbol = Cell_Word_Symbol(v);
-    Append_Utf8(mo->series, String_UTF8(symbol), String_Size(symbol));
+    Append_Utf8(mo->string, String_UTF8(symbol), String_Size(symbol));
 }
 
 
 INLINE void Mold_Decorable_Word(REB_MOLD *mo, const Cell* v)
 {
     const Symbol* symbol = Cell_Word_Symbol(v);
-    Append_Utf8(mo->series, String_UTF8(symbol), String_Size(symbol));
+    Append_Utf8(mo->string, String_UTF8(symbol), String_Size(symbol));
 }
 
 
@@ -233,7 +233,7 @@ INLINE void Mold_Decorable_Word(REB_MOLD *mo, const Cell* v)
 void MF_Set_Word(REB_MOLD *mo, const Cell* v, bool form) {
     UNUSED(form);
     Mold_Decorable_Word(mo, v);
-    Append_Codepoint(mo->series, ':');
+    Append_Codepoint(mo->string, ':');
 }
 
 
@@ -242,7 +242,7 @@ void MF_Set_Word(REB_MOLD *mo, const Cell* v, bool form) {
 //
 void MF_Get_Word(REB_MOLD *mo, const Cell* v, bool form) {
     UNUSED(form);
-    Append_Codepoint(mo->series, ':');
+    Append_Codepoint(mo->string, ':');
     Mold_Decorable_Word(mo, v);
 }
 
@@ -252,7 +252,7 @@ void MF_Get_Word(REB_MOLD *mo, const Cell* v, bool form) {
 //
 void MF_Meta_Word(REB_MOLD *mo, const Cell* v, bool form) {
     UNUSED(form);
-    Append_Codepoint(mo->series, '^');
+    Append_Codepoint(mo->string, '^');
     Mold_Decorable_Word(mo, v);
 }
 
@@ -262,7 +262,7 @@ void MF_Meta_Word(REB_MOLD *mo, const Cell* v, bool form) {
 //
 void MF_The_Word(REB_MOLD *mo, const Cell* v, bool form) {
     UNUSED(form);
-    Append_Codepoint(mo->series, '@');
+    Append_Codepoint(mo->string, '@');
     Mold_Decorable_Word(mo, v);
 }
 
@@ -272,7 +272,7 @@ void MF_The_Word(REB_MOLD *mo, const Cell* v, bool form) {
 //
 void MF_Var_Word(REB_MOLD *mo, const Cell* v, bool form) {
     UNUSED(form);
-    Append_Codepoint(mo->series, '$');
+    Append_Codepoint(mo->string, '$');
     Mold_Decorable_Word(mo, v);
 }
 
@@ -281,7 +281,7 @@ void MF_Var_Word(REB_MOLD *mo, const Cell* v, bool form) {
 //
 void MF_Type_Word(REB_MOLD *mo, const Cell* v, bool form) {
     UNUSED(form);
-    Append_Codepoint(mo->series, '&');
+    Append_Codepoint(mo->string, '&');
     Mold_Decorable_Word(mo, v);
 }
 

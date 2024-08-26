@@ -529,7 +529,7 @@ void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
 
     // Prevent endless mold loop:
     if (Find_Pointer_In_Flex(g_mold.stack, m) != NOT_FOUND) {
-        Append_Ascii(mo->series, "...]");
+        Append_Ascii(mo->string, "...]");
         return;
     }
 
@@ -537,7 +537,7 @@ void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
 
     if (not form) {
         Pre_Mold(mo, v);
-        Append_Codepoint(mo->series, '[');
+        Append_Codepoint(mo->string, '[');
     }
 
     // Mold all entries that are set.  As with contexts, void values are not
@@ -555,16 +555,16 @@ void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
         if (not form)
             New_Indented_Line(mo);
         Mold_Value(mo, c_cast(Element*, key));
-        Append_Codepoint(mo->series, ' ');
+        Append_Codepoint(mo->string, ' ');
         Mold_Value(mo, c_cast(Element*, key + 1));
         if (form)
-            Append_Codepoint(mo->series, '\n');
+            Append_Codepoint(mo->string, '\n');
     }
     mo->indent--;
 
     if (not form) {
         New_Indented_Line(mo);
-        Append_Codepoint(mo->series, ']');
+        Append_Codepoint(mo->string, ']');
     }
 
     End_Mold(mo);

@@ -307,7 +307,7 @@ DECLARE_NATIVE(read_line)
                 fail ("Interruption of READ-LINE for reason other than HALT?");
             }
             if (eof) {
-                if (mo->base.size == String_Size(mo->series)) {
+                if (mo->base.size == String_Size(mo->string)) {
                     //
                     // If we hit the end of file before accumulating any data,
                     // then just return nullptr as an end of file signal.
@@ -349,11 +349,11 @@ DECLARE_NATIVE(read_line)
 
             if (c == '\n') {  // found a newline
                 if (REF(raw))
-                    Append_Codepoint(mo->series, c);
+                    Append_Codepoint(mo->string, c);
                 break;
             }
 
-            Append_Codepoint(mo->series, c);
+            Append_Codepoint(mo->string, c);
         }
 
         line = Init_Text(Alloc_Value(), Pop_Molded_String(mo));

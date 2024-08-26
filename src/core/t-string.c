@@ -302,7 +302,7 @@ static void reverse_string(String* str, REBLEN index, Length len)
         for (n = 0; n < len; ++n) {
             Codepoint c;
             utf8 = Utf8_Back(&c, utf8);
-            Append_Codepoint(mo->series, c);
+            Append_Codepoint(mo->string, c);
         }
 
         DECLARE_VALUE (temp);
@@ -591,7 +591,7 @@ Byte* Form_Uni_Hex(Byte* out, REBLEN n)
 //
 void Mold_Uni_Char(REB_MOLD *mo, Codepoint c, bool parened)
 {
-    String* buf = mo->series;
+    String* buf = mo->string;
 
     // !!! The UTF-8 "Byte Order Mark" is an insidious thing which is not
     // necessary for UTF-8, not recommended by the Unicode standard, and
@@ -652,7 +652,7 @@ void Mold_Uni_Char(REB_MOLD *mo, Codepoint c, bool parened)
 //  Mold_Text_Flex_At: C
 //
 void Mold_Text_Flex_At(REB_MOLD *mo, const String* s, REBLEN index) {
-    String* buf = mo->series;
+    String* buf = mo->string;
 
     if (index >= String_Len(s)) {
         Append_Ascii(buf, "\"\"");
@@ -790,14 +790,14 @@ void Mold_Text_Flex_At(REB_MOLD *mo, const String* s, REBLEN index) {
 //
 static void Mold_Url(REB_MOLD *mo, const Cell* v)
 {
-    Append_String(mo->series, v);
+    Append_String(mo->string, v);
 }
 
 
 static void Mold_File(REB_MOLD *mo, const Cell* v)
 {
 
-    Append_Codepoint(mo->series, '%');
+    Append_Codepoint(mo->string, '%');
 
     REBLEN len;
     Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, v);
@@ -810,16 +810,16 @@ static void Mold_File(REB_MOLD *mo, const Cell* v)
         if (IS_FILE_ESC(c))
             Form_Hex_Esc(mo, c); // c => %xx
         else
-            Append_Codepoint(mo->series, c);
+            Append_Codepoint(mo->string, c);
     }
 }
 
 
 static void Mold_Tag(REB_MOLD *mo, const Cell* v)
 {
-    Append_Codepoint(mo->series, '<');
-    Append_String(mo->series, v);
-    Append_Codepoint(mo->series, '>');
+    Append_Codepoint(mo->string, '<');
+    Append_String(mo->string, v);
+    Append_Codepoint(mo->string, '>');
 }
 
 
@@ -828,7 +828,7 @@ static void Mold_Tag(REB_MOLD *mo, const Cell* v)
 //
 void MF_String(REB_MOLD *mo, const Cell* v, bool form)
 {
-    String* buf = mo->series;
+    String* buf = mo->string;
 
     Heart heart = Cell_Heart(v);
     assert(Any_Utf8_Kind(heart));

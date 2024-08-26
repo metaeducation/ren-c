@@ -372,7 +372,7 @@ void Form_Base2(REB_MOLD *mo, const Byte* src, REBLEN len, bool brk)
     //     8 * len + 2 * (len / 8) + 4
 
     if (len > 8 && brk)
-        Append_Codepoint(mo->series, LF);
+        Append_Codepoint(mo->string, LF);
 
     REBLEN i;
     for (i = 0; i < len; i++) {
@@ -380,14 +380,14 @@ void Form_Base2(REB_MOLD *mo, const Byte* src, REBLEN len, bool brk)
 
         REBLEN n;
         for (n = 0x80; n > 0; n = n >> 1)
-            Append_Codepoint(mo->series, (b & n) ? '1' : '0');
+            Append_Codepoint(mo->string, (b & n) ? '1' : '0');
 
         if ((i + 1) % 8 == 0 && brk)
-            Append_Codepoint(mo->series, LF);
+            Append_Codepoint(mo->string, LF);
     }
 
-    if (*Binary_Tail(mo->series) != LF && len > 9 && brk)
-        Append_Codepoint(mo->series, LF);
+    if (*Binary_Tail(mo->string) != LF && len > 9 && brk)
+        Append_Codepoint(mo->string, LF);
 }
 
 
@@ -407,17 +407,17 @@ void Form_Base16(REB_MOLD *mo, const Byte* src, REBLEN len, bool brk)
     //     len * 2 + len / 32 + 32
 
     if (brk and len >= 32)
-        Append_Codepoint(mo->series, LF);
+        Append_Codepoint(mo->string, LF);
 
     REBLEN count;
     for (count = 1; count <= len; count++) {
         Form_Hex2(mo, *src++);
         if (brk and ((count % 32) == 0))
-            Append_Codepoint(mo->series, LF);
+            Append_Codepoint(mo->string, LF);
     }
 
-    if (brk and (len >= 32) and *Binary_Last(mo->series) != LF)
-        Append_Codepoint(mo->series, LF);
+    if (brk and (len >= 32) and *Binary_Last(mo->string) != LF)
+        Append_Codepoint(mo->string, LF);
 }
 
 
@@ -436,7 +436,7 @@ void Form_Base64(REB_MOLD *mo, const Byte* src, REBLEN len, bool brk)
     // it appends one character at a time and relies upon the mold buffer's
     // natural expansion.  Review if it needs the optimization.
 
-    String* s = mo->series;
+    String* s = mo->string;
 
     REBINT loop = cast(int, len / 3) - 1;
     if (brk and 4 * loop > 64)

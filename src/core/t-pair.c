@@ -154,7 +154,7 @@ void MF_Pair(REB_MOLD *mo, const Cell* v, bool form)
 {
     Mold_Or_Form_Value(mo, VAL_PAIR_X(v), form);
 
-    Append_Codepoint(mo->series, 'x');
+    Append_Codepoint(mo->string, 'x');
 
     Mold_Or_Form_Value(mo, VAL_PAIR_Y(v), form);
 }

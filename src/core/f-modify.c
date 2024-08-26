@@ -296,7 +296,7 @@ REBLEN Modify_String_Or_Binary(
     // If the src is not an ANY-STRING?, then we need to create string data
     // from the value to use its content.
     //
-    DECLARE_MOLD (mo);  // mo->series will be non-null if Push_Mold() run
+    DECLARE_MOLD (mo);  // mo->string will be non-null if Push_Mold() run
 
     const Byte* src_ptr;  // start of utf-8 encoded data to insert
     REBLEN src_len_raw;  // length in codepoints (if dest is string)
@@ -483,12 +483,12 @@ REBLEN Modify_String_Or_Binary(
 
       use_mold_buffer:
 
-        src_ptr = Binary_At(mo->series, mo->base.size);
-        src_size_raw = String_Size(mo->series) - mo->base.size;
+        src_ptr = Binary_At(mo->string, mo->base.size);
+        src_size_raw = String_Size(mo->string) - mo->base.size;
         if (not Is_String_NonSymbol(dst_ser))
             src_len_raw = src_size_raw;
         else
-            src_len_raw = String_Len(mo->series) - mo->base.index;
+            src_len_raw = String_Len(mo->string) - mo->base.index;
     }
 
     // Here we are accounting for a /PART where we know the source series
@@ -707,7 +707,7 @@ REBLEN Modify_String_Or_Binary(
         }
     }
 
-    if (mo->series != nullptr)  // ...a Push_Mold() happened
+    if (mo->string != nullptr)  // ...a Push_Mold() happened
         Drop_Mold(mo);
 
     // !!! Should BYTE_BUF's memory be reclaimed also (or should it be

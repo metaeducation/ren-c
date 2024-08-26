@@ -876,29 +876,29 @@ DECLARE_NATIVE(js_native)
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 
-    Append_Ascii(mo->series, "let f = ");  // variable we store function in
+    Append_Ascii(mo->string, "let f = ");  // variable we store function in
 
     if (REF(awaiter))
-        Append_Ascii(mo->series, "async ");  // run inside rebPromise() [1]
+        Append_Ascii(mo->string, "async ");  // run inside rebPromise() [1]
 
-    Append_Ascii(mo->series, "function (reb) {");  // just one arg [2]
-    Append_String(mo->series, source);
-    Append_Ascii(mo->series, "};\n");  // end `function() {`
+    Append_Ascii(mo->string, "function (reb) {");  // just one arg [2]
+    Append_String(mo->string, source);
+    Append_Ascii(mo->string, "};\n");  // end `function() {`
 
     if (REF(awaiter))
-        Append_Ascii(mo->series, "f.is_awaiter = true;\n");
+        Append_Ascii(mo->string, "f.is_awaiter = true;\n");
     else
-        Append_Ascii(mo->series, "f.is_awaiter = false;\n");
+        Append_Ascii(mo->string, "f.is_awaiter = false;\n");
 
     Byte id_buf[60];  // !!! Why 60?  Copied from MF_Integer()
     REBINT len = Emit_Integer(id_buf, native_id);
 
-    Append_Ascii(mo->series, "reb.RegisterId_internal(");  // put in table [3]
-    Append_Ascii_Len(mo->series, s_cast(id_buf), len);
-    Append_Ascii(mo->series, ", f);\n");
+    Append_Ascii(mo->string, "reb.RegisterId_internal(");  // put in table [3]
+    Append_Ascii_Len(mo->string, s_cast(id_buf), len);
+    Append_Ascii(mo->string, ", f);\n");
 
-    Term_Binary(mo->series);  // !!! is this necessary?
-    const char *js = cs_cast(Binary_At(mo->series, mo->base.size));
+    Term_Binary(mo->string);  // !!! is this necessary?
+    const char *js = cs_cast(Binary_At(mo->string, mo->base.size));
 
     TRACE("Registering native_id %ld", cast(long, native_id));
 

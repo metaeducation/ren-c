@@ -559,14 +559,14 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
 
     Pre_Mold(mo, v);  // #[varargs! or make varargs!
 
-    Append_Codepoint(mo->series, '[');
+    Append_Codepoint(mo->string, '[');
 
     ParamClass pclass;
     const Key* key;
     const Param* param = Param_For_Varargs_Maybe_Null(&key, v);
     if (param == NULL) {
         pclass = PARAMCLASS_HARD;
-        Append_Ascii(mo->series, "???"); // never bound to an argument
+        Append_Ascii(mo->string, "???"); // never bound to an argument
     }
     else {
         Heart heart;
@@ -601,36 +601,36 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
         Mold_Value(mo, param_word);
     }
 
-    Append_Ascii(mo->series, " => ");
+    Append_Ascii(mo->string, " => ");
 
     Level* L;
     Element* shared;
     if (Is_Block_Style_Varargs(&shared, v)) {
         if (Is_Cell_Poisoned(shared))
-            Append_Ascii(mo->series, "[]");
+            Append_Ascii(mo->string, "[]");
         else if (pclass == PARAMCLASS_HARD)
             Mold_Value(mo, shared); // full feed can be shown if hard quoted
         else
-            Append_Ascii(mo->series, "[...]"); // can't look ahead
+            Append_Ascii(mo->string, "[...]"); // can't look ahead
     }
     else if (Is_Level_Style_Varargs_Maybe_Null(&L, v)) {
         if (L == NULL)
-            Append_Ascii(mo->series, "!!!");
+            Append_Ascii(mo->string, "!!!");
         else if (Is_Feed_At_End(L->feed)) {
-            Append_Ascii(mo->series, "[]");
+            Append_Ascii(mo->string, "[]");
         }
         else if (pclass == PARAMCLASS_HARD) {
-            Append_Ascii(mo->series, "[");
+            Append_Ascii(mo->string, "[");
             Mold_Value(mo, At_Feed(L->feed)); // one value shown if hard quoted
-            Append_Ascii(mo->series, " ...]");
+            Append_Ascii(mo->string, " ...]");
         }
         else
-            Append_Ascii(mo->series, "[...]");
+            Append_Ascii(mo->string, "[...]");
     }
     else
         assert(false);
 
-    Append_Codepoint(mo->series, ']');
+    Append_Codepoint(mo->string, ']');
 
     End_Mold(mo);
 }

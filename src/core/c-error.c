@@ -1357,7 +1357,7 @@ void Shutdown_Stackoverflow(void)
 //
 static void Mold_Value_Limit(REB_MOLD *mo, Element* v, REBLEN limit)
 {
-    String* str = mo->series;
+    String* str = mo->string;
 
     REBLEN start_len = String_Len(str);
     Size start_size = String_Size(str);
@@ -1399,14 +1399,14 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
 
     // Form: ** <type> Error:
     //
-    Append_Ascii(mo->series, "** ");
+    Append_Ascii(mo->string, "** ");
     if (Is_Word(&vars->type)) {  // has a <type>
-        Append_Spelling(mo->series, Cell_Word_Symbol(&vars->type));
-        Append_Codepoint(mo->series, ' ');
+        Append_Spelling(mo->string, Cell_Word_Symbol(&vars->type));
+        Append_Codepoint(mo->string, ' ');
     }
     else
         assert(Is_Nulled(&vars->type));  // no <type>
-    Append_Ascii(mo->series, RM_ERROR_LABEL);  // "Error:"
+    Append_Ascii(mo->string, RM_ERROR_LABEL);  // "Error:"
 
     // Append: error message ARG1, ARG2, etc.
     if (Is_Block(&vars->message)) {
@@ -1416,7 +1416,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
     else if (Is_Text(&vars->message))
         Form_Value(mo, cast(Element*, &vars->message));
     else
-        Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
+        Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
 
     // Form: ** Where: function
     Value* where = &vars->where;
@@ -1425,19 +1425,19 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
         and not (Is_Block(where) and Cell_Series_Len_At(where) == 0)
     ){
         if (Is_Block(where)) {
-            Append_Codepoint(mo->series, '\n');
-            Append_Ascii(mo->series, RM_ERROR_WHERE);
+            Append_Codepoint(mo->string, '\n');
+            Append_Ascii(mo->string, RM_ERROR_WHERE);
             Form_Value(mo, cast(Element*, where));
         }
         else
-            Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
+            Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
     }
 
     // Form: ** Near: location
     Value* nearest = &vars->nearest;
     if (not Is_Nulled(nearest)) {
-        Append_Codepoint(mo->series, '\n');
-        Append_Ascii(mo->series, RM_ERROR_NEAR);
+        Append_Codepoint(mo->string, '\n');
+        Append_Ascii(mo->string, RM_ERROR_NEAR);
 
         if (Is_Text(nearest)) {
             //
@@ -1447,12 +1447,12 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
             // error, because otherwise it obscures the LOAD call where the
             // scanner was invoked.  Review.
             //
-            Append_String(mo->series, nearest);
+            Append_String(mo->string, nearest);
         }
         else if (Any_List(nearest) or Any_Path(nearest))
             Mold_Value_Limit(mo, cast(Element*, nearest), 60);
         else
-            Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
+            Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
     }
 
     // Form: ** File: filename
@@ -1464,22 +1464,22 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
     //
     Value* file = &vars->file;
     if (not Is_Nulled(file)) {
-        Append_Codepoint(mo->series, '\n');
-        Append_Ascii(mo->series, RM_ERROR_FILE);
+        Append_Codepoint(mo->string, '\n');
+        Append_Ascii(mo->string, RM_ERROR_FILE);
         if (Is_File(file))
             Form_Value(mo, cast(Element*, file));
         else
-            Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
+            Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
     }
 
     // Form: ** Line: line-number
     Value* line = &vars->line;
     if (not Is_Nulled(line)) {
-        Append_Codepoint(mo->series, '\n');
-        Append_Ascii(mo->series, RM_ERROR_LINE);
+        Append_Codepoint(mo->string, '\n');
+        Append_Ascii(mo->string, RM_ERROR_LINE);
         if (Is_Integer(line))
             Form_Value(mo, cast(Element*, line));
         else
-            Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
+            Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
     }
 }

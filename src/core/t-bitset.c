@@ -74,14 +74,14 @@ void MF_Bitset(REB_MOLD *mo, const Cell* v, bool form)
     const Binary* s = VAL_BITSET(v);
 
     if (BITS_NOT(s))
-        Append_Ascii(mo->series, "[not bits ");
+        Append_Ascii(mo->string, "[not bits ");
 
     DECLARE_ATOM (binary);
     Init_Binary(binary, s);
     MF_Binary(mo, binary, false); // false = mold, don't form
 
     if (BITS_NOT(s))
-        Append_Codepoint(mo->series, ']');
+        Append_Codepoint(mo->string, ']');
 
     End_Mold(mo);
 }

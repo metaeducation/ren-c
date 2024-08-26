@@ -34,16 +34,16 @@ void MF_Comma(REB_MOLD *mo, const Cell* v, bool form)
     UNUSED(form);
     UNUSED(v);
 
-    Size size = String_Size(mo->series);
+    Size size = String_Size(mo->string);
     if (
         size > mo->base.size + 1
-        and *Binary_At(mo->series, size - 1) == ' '  // not multibyte char
-        and *Binary_At(mo->series, size - 2) != ','  // also safe compare
+        and *Binary_At(mo->string, size - 1) == ' '  // not multibyte char
+        and *Binary_At(mo->string, size - 2) != ','  // also safe compare
     ){
-        *Binary_At(mo->series, size - 1) = ',';
+        *Binary_At(mo->string, size - 1) = ',';
     }
     else
-        Append_Codepoint(mo->series, ',');
+        Append_Codepoint(mo->string, ',');
 }
 
 
