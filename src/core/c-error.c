@@ -265,7 +265,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
 
     case DETECTED_AS_SERIES: {
         Flex* s = m_cast(Flex*, cast(const Flex*, p)); // don't mutate
-        if (Not_Flex_Flag(s, ARRAY_FLAG_VARLIST))
+        if (Not_Array_Flag(s, IS_VARLIST))
             panic (s);
         error = CTX(s);
         break; }
@@ -303,7 +303,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
             assert(L->varlist); // action must be running
             Array* stub = L->varlist; // will be stubbed, info bits reset
             Drop_Action(L);
-            Set_Flex_Info(stub, FRAME_INFO_FAILED); // API leaks o.k.
+            Set_Flex_Info(stub, FRAME_FAILED); // API leaks o.k.
         }
 
         Level* prior = L->prior;
@@ -436,7 +436,7 @@ void Set_Location_Of_Error(
     Init_Near_For_Frame(&vars->nearest, where);
 
     // Try to fill in the file and line information of the error from the
-    // stack, looking for arrays with ARRAY_FLAG_FILE_LINE.
+    // stack, looking for arrays with ARRAY_FLAG_HAS_FILE_LINE.
     //
     L = where;
     for (; L != BOTTOM_LEVEL; L = L->prior) {
@@ -449,7 +449,7 @@ void Set_Location_Of_Error(
             //
             continue;
         }
-        if (Not_Flex_Flag(L->source->array, ARRAY_FLAG_FILE_LINE))
+        if (Not_Array_Flag(L->source->array, HAS_FILE_LINE))
             continue;
         break;
     }
@@ -891,18 +891,6 @@ REBCTX *Error_Need_Non_End_Core(const Cell* target, Specifier* specifier) {
     DECLARE_VALUE (specific);
     Derelativize(specific, target, specifier);
     return Error_Need_Non_End_Raw(specific);
-}
-
-
-//
-//  Error_Var_Is_Unset_Core: C
-//
-REBCTX *Error_Var_Is_Unset_Core(const Cell* target, Specifier* specifier) {
-    assert(ANY_WORD(target) or ANY_PATH(target));
-
-    DECLARE_VALUE (specific);
-    Derelativize(specific, target, specifier);
-    return Error_Var_Is_Unset_Raw(specific);
 }
 
 

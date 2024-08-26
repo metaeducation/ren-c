@@ -45,7 +45,7 @@
 
 
 INLINE Array* MAP_PAIRLIST(REBMAP *m) {
-    assert(Get_Flex_Flag(m, ARRAY_FLAG_PAIRLIST));
+    assert(Get_Array_Flag(m, IS_PAIRLIST));
     return cast(Array*, m);
 }
 
@@ -57,7 +57,7 @@ INLINE Array* MAP_PAIRLIST(REBMAP *m) {
 
 INLINE REBMAP *MAP(void *p) {
     Array* a = cast_Array(p);
-    assert(Get_Flex_Flag(a, ARRAY_FLAG_PAIRLIST));
+    assert(Get_Array_Flag(a, IS_PAIRLIST));
     return cast(REBMAP*, a);
 }
 
@@ -66,7 +66,7 @@ INLINE REBMAP *VAL_MAP(const Cell* v) {
     assert(Is_Map(v));
 
     Flex* s = v->payload.any_series.series;
-    if (Get_Flex_Info(s, FLEX_INFO_INACCESSIBLE))
+    if (Get_Flex_Info(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
 
     return MAP(s);

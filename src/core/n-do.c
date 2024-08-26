@@ -433,8 +433,8 @@ DECLARE_NATIVE(do)
         // Its data stolen, the context's node should now be GC'd when
         // references in other FRAME! value cells have all gone away.
         //
-        assert(Get_Flex_Flag(c, NODE_FLAG_MANAGED));
-        assert(Get_Flex_Info(c, FLEX_INFO_INACCESSIBLE));
+        assert(Is_Node_Managed(c));
+        assert(Get_Flex_Info(c, INACCESSIBLE));
 
         L->varlist = CTX_VARLIST(stolen);
         L->rootvar = CTX_ARCHETYPE(stolen);
@@ -687,7 +687,7 @@ DECLARE_NATIVE(redo)
     //
     assert(
         ACT_PARAMLIST(restartee->payload.any_context.phase)->leader.bits
-        & ARRAY_FLAG_PARAMLIST
+        & ARRAY_FLAG_IS_PARAMLIST
     );
 
     // We need to cooperatively throw a restart instruction up to the level

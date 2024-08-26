@@ -971,7 +971,7 @@ REBACT *Make_Action(
         // the exemplar (though some of these parameters may be hidden due to
         // specialization, see REB_TS_HIDDEN).
         //
-        assert(Get_Flex_Flag(opt_exemplar, NODE_FLAG_MANAGED));
+        assert(Is_Node_Managed(opt_exemplar));
         assert(CTX_LEN(opt_exemplar) == Array_Len(paramlist) - 1);
 
         LINK(details).specialty = CTX_VARLIST(opt_exemplar);
@@ -983,11 +983,11 @@ REBACT *Make_Action(
     //
     assert(
         not MISC(paramlist).meta
-        or Get_Flex_Flag(MISC(paramlist).meta, ARRAY_FLAG_VARLIST)
+        or Get_Array_Flag(MISC(paramlist).meta, IS_VARLIST)
     );
 
-    assert(Not_Flex_Flag(paramlist, ARRAY_FLAG_FILE_LINE));
-    assert(Not_Flex_Flag(details, ARRAY_FLAG_FILE_LINE));
+    assert(Not_Array_Flag(paramlist, HAS_FILE_LINE));
+    assert(Not_Array_Flag(details, HAS_FILE_LINE));
 
     return ACT(paramlist);
 }
@@ -1015,11 +1015,11 @@ REBCTX *Make_Expired_Level_Ctx_Managed(REBACT *a)
     // overridden by FLEX_INFO_INACCESSIBLE.
     //
     Array* varlist = Alloc_Singular(
-        ARRAY_FLAG_VARLIST
+        ARRAY_FLAG_IS_VARLIST
         | NODE_FLAG_MANAGED
     );
-    Set_Flex_Flag(varlist, FLEX_FLAG_ALWAYS_DYNAMIC);  // asserts check
-    Set_Flex_Info(varlist, FLEX_INFO_INACCESSIBLE);
+    Set_Flex_Flag(varlist, ALWAYS_DYNAMIC);  // asserts check
+    Set_Flex_Info(varlist, INACCESSIBLE);
     MISC(varlist).meta = nullptr;
 
     Cell* rootvar = RESET_CELL(ARR_SINGLE(varlist), REB_FRAME);
@@ -1101,12 +1101,12 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
         }
 
         Array* real_body = Cell_Array(body);
-        assert(Get_Flex_Info(real_body, FLEX_INFO_FROZEN));
+        assert(Get_Flex_Info(real_body, FROZEN_DEEP));
 
         Array* maybe_fake_body;
         if (example == nullptr) {
             maybe_fake_body = real_body;
-            assert(Get_Flex_Info(maybe_fake_body, FLEX_INFO_FROZEN));
+            assert(Get_Flex_Info(maybe_fake_body, FROZEN_DEEP));
         }
         else {
             // See %sysobj.r for STANDARD/FUNC-BODY and STANDARD/PROC-BODY
@@ -1116,7 +1116,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
                 VAL_SPECIFIER(example),
                 NODE_FLAG_MANAGED
             );
-            Set_Flex_Info(maybe_fake_body, FLEX_INFO_FROZEN);
+            Set_Flex_Info(maybe_fake_body, FROZEN_DEEP);
 
             // Index 5 (or 4 in zero-based C) should be #BODY, a "real" body.
             // To give it the appearance of executing code in place, we use
@@ -1241,7 +1241,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
             // Keep the Null_Dispatcher passed in above
         }
 
-        // Reusing EMPTY_ARRAY won't allow adding ARRAY_FLAG_FILE_LINE bits
+        // Reusing EMPTY_ARRAY won't allow adding ARRAY_FLAG_HAS_FILE_LINE bits
         //
         copy = Make_Array_Core(1, NODE_FLAG_MANAGED);
     }
@@ -1270,15 +1270,15 @@ REBACT *Make_Interpreted_Action_May_Fail(
 
     // Favor the spec first, then the body, for file and line information.
     //
-    if (Get_Flex_Flag(Cell_Array(spec), ARRAY_FLAG_FILE_LINE)) {
+    if (Get_Array_Flag(Cell_Array(spec), HAS_FILE_LINE)) {
         LINK(copy).file = LINK(Cell_Array(spec)).file;
         MISC(copy).line = MISC(Cell_Array(spec)).line;
-        Set_Flex_Flag(copy, ARRAY_FLAG_FILE_LINE);
+        Set_Array_Flag(copy, HAS_FILE_LINE);
     }
-    else if (Get_Flex_Flag(Cell_Array(code), ARRAY_FLAG_FILE_LINE)) {
+    else if (Get_Array_Flag(Cell_Array(code), HAS_FILE_LINE)) {
         LINK(copy).file = LINK(Cell_Array(code)).file;
         MISC(copy).line = MISC(Cell_Array(code)).line;
-        Set_Flex_Flag(copy, ARRAY_FLAG_FILE_LINE);
+        Set_Array_Flag(copy, HAS_FILE_LINE);
     }
     else {
         // Ideally all source series should have a file and line numbering
@@ -1633,13 +1633,13 @@ REB_R Encloser_Dispatcher(Level* L)
     REBCTX *c = Steal_Context_Vars(CTX(L->varlist), Level_Phase(L));
     LINK(c).keysource = VAL_ACTION(inner);
 
-    assert(Get_Flex_Info(L->varlist, FLEX_INFO_INACCESSIBLE)); // look dead
+    assert(Get_Flex_Info(L->varlist, INACCESSIBLE)); // look dead
 
     // L->varlist may or may not have wound up being managed.  It was not
     // allocated through the usual mechanisms, so if unmanaged it's not in
     // the tracking list Init_Any_Context() expects.  Just fiddle the bit.
     //
-    Set_Flex_Flag(c, NODE_FLAG_MANAGED);
+    Set_Node_Managed_Bit(c);
 
     // When the DO of the FRAME! executes, we don't want it to run the
     // encloser again (infinite loop).
@@ -1661,7 +1661,7 @@ REB_R Encloser_Dispatcher(Level* L)
     // Note that since varlists aren't added to the manual series list, the
     // bit must be tweaked vs. using ENSURE_ARRAY_MANAGED.
     //
-    Set_Flex_Flag(L->varlist, NODE_FLAG_MANAGED);
+    Set_Node_Managed_Bit(L->varlist);
 
     const bool fully = true;
     if (Apply_Only_Throws(L->out, fully, outer, Level_Spare(L), rebEND))

@@ -700,7 +700,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
             switch (VAL_TYPE_KIND(les.data)) {
               case REB_ACTION:
                 les.data_ser = Snapshot_All_Actions();
-                assert(Not_Flex_Flag(les.data_ser, NODE_FLAG_MANAGED));
+                assert(Not_Node_Managed(les.data_ser));
                 les.data_idx = 0;
                 break;
 
@@ -711,9 +711,9 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
         else
             panic ("Illegal type passed to Loop_Each()");
 
-        took_hold = Not_Flex_Info(les.data_ser, FLEX_INFO_HOLD);
+        took_hold = Not_Flex_Info(les.data_ser, HOLD);
         if (took_hold)
-            Set_Flex_Info(les.data_ser, FLEX_INFO_HOLD);
+            Set_Flex_Info(les.data_ser, HOLD);
 
         les.data_len = Flex_Len(les.data_ser); // HOLD so length can't change
         if (les.data_idx >= les.data_len) {
@@ -733,7 +733,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
   cleanup:;
 
     if (took_hold) // release read-only lock
-        Clear_Flex_Info(les.data_ser, FLEX_INFO_HOLD);
+        Clear_Flex_Info(les.data_ser, HOLD);
 
     if (Is_Datatype(les.data))
         Free_Unmanaged_Flex(cast_Array(les.data_ser)); // temp array of instances
@@ -1122,8 +1122,8 @@ struct Remove_Each_State {
 //
 INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
 {
-    assert(Get_Flex_Info(res->series, FLEX_INFO_HOLD));
-    Clear_Flex_Info(res->series, FLEX_INFO_HOLD);
+    assert(Get_Flex_Info(res->series, HOLD));
+    Clear_Flex_Info(res->series, HOLD);
 
     // If there was a BREAK, we return NULL to indicate that as part of
     // the loop protocol.  This prevents giving back a return value of
@@ -1253,7 +1253,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
     // This flag will be cleaned up by Finalize_Remove_Each(), which is run
     // even if there is a fail().
     //
-    Set_Flex_Info(res->series, FLEX_INFO_HOLD);
+    Set_Flex_Info(res->series, HOLD);
 
     REBLEN index = res->start; // declare here, avoid longjmp clobber warnings
 

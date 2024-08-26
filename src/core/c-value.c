@@ -176,7 +176,7 @@ void* Probe_Core_Debug(
         // This routine is also a little catalog of the outlying series
         // types in terms of sizing, just to know what they are.
 
-        if (Get_Flex_Flag(s, FLEX_FLAG_UTF8)) {
+        if (Get_Flex_Flag(s, UTF8_SYMBOL)) {
             assert(Flex_Wide(s) == sizeof(Byte));
             Probe_Print_Helper(p, "Symbol Flex", file, line);
             Symbol* sym = cast(Symbol*, m_cast(void*, p));
@@ -213,7 +213,7 @@ void* Probe_Core_Debug(
             Mold_Text_Series_At(mo, str, 0); // might be TAG! etc, not TEXT!
         }
         else if (Is_Flex_Array(s)) {
-            if (Get_Flex_Flag(s, ARRAY_FLAG_VARLIST)) {
+            if (Get_Array_Flag(s, IS_VARLIST)) {
                 Probe_Print_Helper(p, "Context Varlist", file, line);
                 Probe_Molded_Value(CTX_ARCHETYPE(CTX(s)));
             }

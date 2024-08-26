@@ -211,7 +211,7 @@ static REB_R Dir_Actor(Level* level_, Value* port, Value* verb)
                     VAL_SPECIFIER(state),
                     VAL_ARRAY_LEN_AT(state), // tail
                     0, // extra
-                    ARRAY_FLAG_FILE_LINE, // flags
+                    ARRAY_FLAG_HAS_FILE_LINE, // flags
                     TS_STRING // types
                 )
             );

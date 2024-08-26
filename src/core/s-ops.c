@@ -168,7 +168,7 @@ Blob* Temp_UTF8_At_Managed(
     assert(BYTE_SIZE(bin));
 
     Manage_Flex(bin);
-    Set_Flex_Info(bin, FLEX_INFO_FROZEN);
+    Set_Flex_Info(bin, FROZEN_DEEP);
 
     *offset_out = 0;
     if (opt_size_out != nullptr)
@@ -466,5 +466,5 @@ Array* Split_Lines(const Value* str)
         SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
     }
 
-    return Pop_Stack_Values_Core(base, ARRAY_FLAG_TAIL_NEWLINE);
+    return Pop_Stack_Values_Core(base, ARRAY_FLAG_NEWLINE_AT_TAIL);
 }

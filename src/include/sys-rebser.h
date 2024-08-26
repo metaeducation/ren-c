@@ -125,7 +125,7 @@
 #define FLEX_FLAG_DONT_RELOCATE FLEX_FLAG_FIXED_SIZE
 
 
-//=//// FLEX_FLAG_UTF8 ///////////////////////////////////////////////////=//
+//=//// FLEX_FLAG_UTF8_SYMBOL ///////////////////////////////////////////////////=//
 //
 // Indicates the Flex holds UTF-8 encoded data.
 //
@@ -141,7 +141,7 @@
 // The changes will not be backpatched to this old codebase, which only
 // needs to work for bootstrap.  It continues to encode String as UCS2.
 //
-#define FLEX_FLAG_UTF8 \
+#define FLEX_FLAG_UTF8_SYMBOL \
     FLAG_LEFT_BIT(10)
 
 
@@ -210,12 +210,12 @@
 // Because there are a lot of different Array flags that one might want to
 // check, they are broken into a separate section.  However, note that if you
 // do not know a Flex is an Array you can't check just for this...e.g.
-// an arbitrary Flex tested for ARRAY_FLAG_VARLIST might alias with a
+// an arbitrary Flex tested for ARRAY_FLAG_IS_VARLIST might alias with a
 // UTF-8 Symbol Flex whose SymId uses that bit (!).
 //
 
 
-//=//// ARRAY_FLAG_FILE_LINE //////////////////////////////////////////////=//
+//=//// ARRAY_FLAG_HAS_FILE_LINE //////////////////////////////////////////=//
 //
 // The Stub node has two pointers in it, ->link and ->misc, which are
 // used for a variety of purposes (pointing to the keylist for an object,
@@ -226,7 +226,7 @@
 // Only Arrays preserve file and line info, as UTF-8 Symbols need to use the
 // ->misc and ->link fields for caching purposes.
 //
-#define ARRAY_FLAG_FILE_LINE \
+#define ARRAY_FLAG_HAS_FILE_LINE \
     FLAG_LEFT_BIT(16)
 
 
@@ -238,23 +238,23 @@
 // be put into arrays for the purposes of GC protection, they may contain
 // nulled cells.  (How to present this in the debugger will be a UI issue.)
 //
-// Note: ARRAY_FLAG_VARLIST also implies legality of nulleds, which in that
+// Note: ARRAY_FLAG_IS_VARLIST also implies legality of nulleds, which in that
 // case are used to represent unset variables.
 //
 #define ARRAY_FLAG_NULLEDS_LEGAL \
     FLAG_LEFT_BIT(17)
 
 
-//=//// ARRAY_FLAG_PARAMLIST //////////////////////////////////////////////=//
+//=//// ARRAY_FLAG_IS_PARAMLIST ////////////////////////////////////////////=//
 //
-// ARRAY_FLAG_PARAMLIST indicates the Array is the parameter list of a
-// ACTION! (the first element will be a canon value of the function)
+// This indicates the Array is the parameter list of an ACTION! (the first
+// element will be a canon value of the function)
 //
-#define ARRAY_FLAG_PARAMLIST \
+#define ARRAY_FLAG_IS_PARAMLIST \
     FLAG_LEFT_BIT(18)
 
 
-//=//// ARRAY_FLAG_VARLIST ////////////////////////////////////////////////=//
+//=//// ARRAY_FLAG_IS_VARLIST /////////////////////////////////////////////=//
 //
 // This indicates this Array represents the "varlist" of a context (which is
 // interchangeable with the identity of the varlist itself).  A second Flex
@@ -263,16 +263,16 @@
 //
 // See notes on REBCTX for further details about what a context is.
 //
-#define ARRAY_FLAG_VARLIST \
+#define ARRAY_FLAG_IS_VARLIST \
     FLAG_LEFT_BIT(19)
 
 
-//=//// ARRAY_FLAG_PAIRLIST ///////////////////////////////////////////////=//
+//=//// ARRAY_FLAG_IS_PAIRLIST ////////////////////////////////////////////=//
 //
 // Indicates that this series represents the "pairlist" of a map, so the
 // series also has a hashlist linked to in the series node.
 //
-#define ARRAY_FLAG_PAIRLIST \
+#define ARRAY_FLAG_IS_PAIRLIST \
     FLAG_LEFT_BIT(20)
 
 
@@ -284,7 +284,7 @@
     FLAG_LEFT_BIT(21)
 
 
-//=//// ARRAY_FLAG_TAIL_NEWLINE ///////////////////////////////////////////=//
+//=//// ARRAY_FLAG_NEWLINE_AT_TAIL ///////////////////////////////////////////=//
 //
 // The mechanics of how Rebol tracks newlines is that there is only one bit
 // per value to track the property.  Yet since newlines are conceptually
@@ -293,7 +293,7 @@
 // Ren-C carries a bit for indicating when there's a newline intended at the
 // tail of an array.
 //
-#define ARRAY_FLAG_TAIL_NEWLINE \
+#define ARRAY_FLAG_NEWLINE_AT_TAIL \
     FLAG_LEFT_BIT(22)
 
 
@@ -380,7 +380,7 @@
     FLAG_LEFT_BIT(5)
 
 
-//=//// FLEX_INFO_FROZEN ////////////////////////////////////////////////=//
+//=//// FLEX_INFO_FROZEN_DEEP /////////////////////////////////////////////=//
 //
 // Indicates that the length or values cannot be modified...ever.  It has been
 // locked and will never be released from that state for its lifetime, and if
@@ -394,7 +394,7 @@
 // of abstraction, but if one manages to get a raw non-const pointer into a
 // value in the Flex data...then by that point it cannot be enforced.
 //
-#define FLEX_INFO_FROZEN \
+#define FLEX_INFO_FROZEN_DEEP \
     FLAG_LEFT_BIT(6)
 
 
@@ -472,7 +472,7 @@
     FLAG_LEFT_BIT(25)
 
 
-//=//// FRAME_INFO_FAILED /////////////////////////////////////////////////=//
+//=//// FLEX_INFO_FRAME_FAILED ////////////////////////////////////////////=//
 //
 // In the specific case of a frame being freed due to a failure, this mark
 // is put on the context node.  What this allows is for the system to account
@@ -485,13 +485,13 @@
 // of valgrind/address-sanitizer way of looking at a codebase vs. just taking
 // for granted that it will GC things.
 //
-#define FRAME_INFO_FAILED \
+#define FLEX_INFO_FRAME_FAILED \
     FLAG_LEFT_BIT(26)
 
 
-//=//// SYMBOL_INFO_CANON /////////////////////////////////////////////////=//
+//=//// FLEX_INFO_CANON_SYMBOL ////////////////////////////////////////////=//
 //
-// This is used to indicate when a FLEX_FLAG_UTF8 series represents
+// This is used to indicate when a FLEX_FLAG_UTF8_SYMBOL series represents
 // the canon form of a word.  This doesn't mean anything special about the
 // case of its letters--just that it was loaded first.  Canon forms can be
 // GC'd and then delegate the job of being canon to another symbol.
@@ -500,7 +500,7 @@
 // its canon form.  So it can use the Stub.misc field for the purpose of
 // holding an index during binding.
 //
-#define SYMBOL_INFO_CANON \
+#define FLEX_INFO_CANON_SYMBOL \
     FLAG_LEFT_BIT(27)
 
 
@@ -745,7 +745,7 @@ union StubLinkUnion {
     Symbol* synonym;
 
     // REBACT uses this.  It can hold either the varlist of a frame containing
-    // specialized values (e.g. an "exemplar"), with ARRAY_FLAG_VARLIST set.
+    // specialized values (e.g. an "exemplar"), with ARRAY_FLAG_IS_VARLIST set.
     // Or just hold the paramlist.  This speeds up Push_Action() because
     // if this were `REBCTX *exemplar;` then it would have to test it for null
     // explicitly to default L->special to L->param.
@@ -992,38 +992,51 @@ typedef struct StubStruct Flex;
 #endif
 
 
+//=//// FLEX "FLAG" BITS //////////////////////////////////////////////////=//
 //
-// Flex leader FLAGs (distinct from INFO bits)
+// See definitions of FLEX_FLAG_XXX.
 //
+// Using token pasting macros achieves some brevity, but also helps to avoid
+// mixups with FLEX_INFO_XXX!
+//
+// 1. Avoid cost that inline functions (even constexpr) add to debug builds
+//    by "typechecking" via finding the name ->leader.bits in (f).  (The name
+//    "leader" is chosen to prevent calls with cells, which use "header".)
+//
+// 2. Flex flags are managed distinctly from conceptual immutability of their
+//    data, and so we m_cast away constness.  We do this on the HeaderUnion
+//    vs. x_cast() on the (f) to get the typechecking of [1]
 
-#define Set_Flex_Flag(s,f) \
-    cast(void, (s)->leader.bits |= (f))
+#define Get_Flex_Flag(f,name) \
+    (((f)->leader.bits & FLEX_FLAG_##name) != 0)
 
-#define Clear_Flex_Flag(s,f) \
-    cast(void, (s)->leader.bits &= ~(f))
+#define Not_Flex_Flag(f,name) \
+    (((f)->leader.bits & FLEX_FLAG_##name) == 0)
 
-#define Get_Flex_Flag(s,f) \
-    (did ((s)->leader.bits & (f))) // !!! ensure it's just one flag?
+#define Set_Flex_Flag(f,name) \
+    m_cast(union HeaderUnion*, &(f)->leader)->bits |= FLEX_FLAG_##name
 
-#define Not_Flex_Flag(s,f) \
-    (not ((s)->leader.bits & (f)))
+#define Clear_Flex_Flag(f,name) \
+    m_cast(union HeaderUnion*, &(f)->leader)->bits &= ~FLEX_FLAG_##name
+
 
 
 //
 // Flex INFO bits (distinct from leader FLAGs)
 //
 
-#define Set_Flex_Info(s,f) \
-    cast(void, (s)->info.bits |= (f))
+#define Get_Flex_Info(f,name) \
+    (((f)->info.bits & FLEX_INFO_##name) != 0)
 
-#define Clear_Flex_Info(s,f) \
-    cast(void, (s)->info.bits &= ~(f))
+#define Not_Flex_Info(f,name) \
+    (((f)->info.bits & FLEX_INFO_##name) == 0)
 
-#define Get_Flex_Info(s,f) \
-    (did ((s)->info.bits & (f)))
+#define Set_Flex_Info(f,name) \
+    (f)->info.bits |= FLEX_INFO_##name
 
-#define Not_Flex_Info(s,f) \
-    (not ((s)->info.bits & (f)))
+#define Clear_Flex_Info(f,name) \
+    (f)->info.bits &= ~FLEX_INFO_##name
+
 
 
 #define Is_Flex_Array(s) \
@@ -1031,6 +1044,20 @@ typedef struct StubStruct Flex;
 
 #define Is_Flex_Dynamic(s) \
     (LEN_BYTE_OR_255(s) == 255)
+
+
+#define Get_Array_Flag(a,name) \
+    (((a)->leader.bits & ARRAY_FLAG_##name) != 0)
+
+#define Not_Array_Flag(a,name) \
+    (((a)->leader.bits & ARRAY_FLAG_##name) == 0)
+
+#define Set_Array_Flag(a,name) \
+    m_cast(union HeaderUnion*, &(a)->leader)->bits |= ARRAY_FLAG_##name
+
+#define Clear_Array_Flag(a,name) \
+    m_cast(union HeaderUnion*, &(a)->leader)->bits &= ~ARRAY_FLAG_##name
+
 
 // These are series implementation details that should not be used by most
 // code.  But in order to get good inlining, they have to be in the header

@@ -525,7 +525,7 @@ DECLARE_NATIVE(set_meta)
 //
 REBCTX *Copy_Context_Core_Managed(REBCTX *original, REBU64 types)
 {
-    assert(Not_Flex_Info(original, FLEX_INFO_INACCESSIBLE));
+    assert(Not_Flex_Info(original, INACCESSIBLE));
 
     Array* varlist = Make_Arr_For_Copy(
         CTX_LEN(original) + 1,

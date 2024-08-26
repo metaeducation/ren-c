@@ -273,7 +273,7 @@ REBTYPE(Action)
                 return nullptr;
 
             Array* a = Cell_Array(Array_Head(details));
-            if (Not_Flex_Flag(a, ARRAY_FLAG_FILE_LINE))
+            if (Not_Array_Flag(a, HAS_FILE_LINE))
                 return nullptr;
 
             // !!! How to tell whether it's a URL! or a FILE! ?
@@ -290,7 +290,7 @@ REBTYPE(Action)
                 return nullptr;
 
             Array* a = Cell_Array(Array_Head(details));
-            if (Not_Flex_Flag(a, ARRAY_FLAG_FILE_LINE))
+            if (Not_Array_Flag(a, HAS_FILE_LINE))
                 return nullptr;
 
             return Init_Integer(OUT, MISC(a).line); }

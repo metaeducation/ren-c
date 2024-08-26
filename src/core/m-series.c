@@ -374,13 +374,13 @@ void Assert_Flex_Term_Core(Flex* s)
 //
 void Assert_Flex_Core(Flex* s)
 {
-    if (IS_FREE_NODE(s))
+    if (Is_Node_Free(s))
         panic (s);
 
     assert(
-        Get_Flex_Info(s, FLEX_INFO_0_IS_TRUE) // @ NODE_FLAG_NODE
-        and Not_Flex_Info(s, FLEX_INFO_1_IS_FALSE) // @ NOT(NODE_FLAG_FREE)
-        and Not_Flex_Info(s, FLEX_INFO_7_IS_FALSE) // @ NODE_FLAG_CELL
+        Get_Flex_Info(s, 0_IS_TRUE) // @ NODE_FLAG_NODE
+        and Not_Flex_Info(s, 1_IS_FALSE) // @ NOT(NODE_FLAG_FREE)
+        and Not_Flex_Info(s, 7_IS_FALSE) // @ NODE_FLAG_CELL
     );
 
     assert(Flex_Len(s) < Flex_Rest(s));

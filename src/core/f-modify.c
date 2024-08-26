@@ -80,7 +80,7 @@ REBLEN Modify_Array(
     // * It's a spliced insertion and there's a NEWLINE_BEFORE flag on the
     //   element *after* the last item in the dup
     // * It's a spliced insertion and there dup goes to the end of the array
-    //   so there's no element after the last item, but TAIL_NEWLINE is set
+    //   so there's no element after the last item, but NEWLINE_AT_TAIL is set
     //   on the inserted array.
     //
     bool tail_newline = did (flags & AM_LINE);
@@ -98,9 +98,9 @@ REBLEN Modify_Array(
         if (not tail_newline) {
             Cell* tail_cell = Cell_Array_At(src_val) + ilen;
             if (IS_END(tail_cell)) {
-                tail_newline = Get_Flex_Flag(
+                tail_newline = Get_Array_Flag(
                     Cell_Array(src_val),
-                    ARRAY_FLAG_TAIL_NEWLINE
+                    NEWLINE_AT_TAIL
                 );
             }
             else if (ilen == 0)
@@ -144,7 +144,7 @@ REBLEN Modify_Array(
     //
     bool head_newline =
         (dst_idx == Array_Len(dst_arr))
-        and Get_Flex_Flag(dst_arr, ARRAY_FLAG_TAIL_NEWLINE);
+        and Get_Array_Flag(dst_arr, NEWLINE_AT_TAIL);
 
     if (op != SYM_CHANGE) {
         // Always expand dst_arr for INSERT and APPEND actions:
@@ -181,7 +181,7 @@ REBLEN Modify_Array(
                 // The array flag is not cleared until the loop actually
                 // makes a value that will carry on the bit.
                 //
-                Clear_Flex_Flag(dst_arr, ARRAY_FLAG_TAIL_NEWLINE);
+                Clear_Array_Flag(dst_arr, NEWLINE_AT_TAIL);
                 continue;
             }
 
@@ -199,7 +199,7 @@ REBLEN Modify_Array(
     //
     if (tail_newline) {
         if (dst_idx == Array_Len(dst_arr))
-            Set_Flex_Flag(dst_arr, ARRAY_FLAG_TAIL_NEWLINE);
+            Set_Array_Flag(dst_arr, NEWLINE_AT_TAIL);
         else
             SET_VAL_FLAG(Array_At(dst_arr, dst_idx), VALUE_FLAG_NEWLINE_BEFORE);
     }

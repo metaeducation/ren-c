@@ -92,7 +92,7 @@ run-command: function [
     cmd [block! text!]
 ][
     x: copy ""
-    call/wait/shell/output cmd x
+    call/shell/output cmd x
     trim/with x "^/^M"
 ]
 
@@ -1538,12 +1538,12 @@ Execution: make generator-class [
                     for-each cmd target/commands [
                         cmd: reify cmd
                         print ["Running:" cmd]
-                        call/wait/shell cmd
+                        call/shell cmd
                     ]
                 ][
                     cmd: reify target/commands
                     print ["Running:" cmd]
-                    call/wait/shell cmd
+                    call/shell cmd
                 ]
             ]
             default [

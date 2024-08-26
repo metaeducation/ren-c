@@ -663,7 +663,7 @@ INLINE bool Is_Cell_Poisoned(const Cell* v) {
 INLINE bool IS_RELATIVE(const Cell* v) {
     if (Not_Bindable(v) or not v->extra.binding)
         return false; // INTEGER! and other types are inherently "specific"
-    return Get_Flex_Flag(v->extra.binding, ARRAY_FLAG_PARAMLIST);
+    return Get_Array_Flag(v->extra.binding, IS_PARAMLIST);
 }
 
 #if defined(__cplusplus) && __cplusplus >= 201103L
@@ -1379,8 +1379,8 @@ INLINE void INIT_BINDING(Cell* v, Stub* binding) {
 
     if (binding->leader.bits & NODE_FLAG_MANAGED) {
         assert(
-            binding->leader.bits & ARRAY_FLAG_VARLIST // specific
-            or binding->leader.bits & ARRAY_FLAG_PARAMLIST // relative
+            binding->leader.bits & ARRAY_FLAG_IS_VARLIST // specific
+            or binding->leader.bits & ARRAY_FLAG_IS_PARAMLIST // relative
             or (
                 Is_Varargs(v) and not Is_Flex_Dynamic(binding)
             ) // varargs from MAKE VARARGS! [...], else is a varlist
@@ -1422,7 +1422,7 @@ INLINE void INIT_BINDING_MAY_MANAGE(Cell* out, Stub* binding) {
         out->extra.binding = nullptr; // unbound
         return;
     }
-    if (Get_Flex_Flag(binding, NODE_FLAG_MANAGED)) {
+    if (Is_Node_Managed(binding)) {
         out->extra.binding = binding; // managed is safe for any `out`
         return;
     }

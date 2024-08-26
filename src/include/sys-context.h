@@ -66,7 +66,7 @@
 #endif
 
 INLINE Array* CTX_VARLIST(REBCTX* c) {
-    assert(Get_Flex_Flag(c, ARRAY_FLAG_VARLIST));
+    assert(Get_Array_Flag(c, IS_VARLIST));
     return cast(Array*, c);
 }
 
@@ -83,7 +83,7 @@ INLINE Value* CTX_ARCHETYPE(REBCTX *c) {
     // If a context has its data freed, it must be converted into non-dynamic
     // form if it wasn't already (e.g. if it wasn't a FRAME!)
     //
-    assert(Not_Flex_Info(varlist, FLEX_INFO_INACCESSIBLE));
+    assert(Not_Flex_Info(varlist, INACCESSIBLE));
     return cast(Value*, varlist->content.dynamic.data);
 }
 
@@ -108,12 +108,12 @@ INLINE Array* CTX_KEYLIST(REBCTX *c) {
 }
 
 INLINE void INIT_CTX_KEYLIST_SHARED(REBCTX *c, Array* keylist) {
-    Set_Flex_Info(keylist, FLEX_INFO_SHARED_KEYLIST);
+    Set_Flex_Info(keylist, SHARED_KEYLIST);
     LINK(c).keysource = keylist;
 }
 
 INLINE void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, Array* keylist) {
-    assert(Not_Flex_Info(keylist, FLEX_INFO_SHARED_KEYLIST));
+    assert(Not_Flex_Info(keylist, SHARED_KEYLIST));
     LINK(c).keysource = keylist;
 }
 
@@ -144,7 +144,7 @@ INLINE Level* CTX_LEVEL_IF_ON_STACK(REBCTX *c) {
     if (Is_Node_A_Stub(keysource))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
 
-    assert(Not_Flex_Info(CTX_VARLIST(c), FLEX_INFO_INACCESSIBLE));
+    assert(Not_Flex_Info(CTX_VARLIST(c), INACCESSIBLE));
     assert(Is_Frame(CTX_ARCHETYPE(c)));
 
     Level* L = LVL(keysource);
@@ -163,16 +163,16 @@ INLINE Level* CTX_LEVEL_MAY_FAIL(REBCTX *c) {
     Flex_At(Value, CTX_VARLIST(c), 1)  // may fail() if inaccessible
 
 INLINE Value* CTX_KEY(REBCTX *c, REBLEN n) {
-    assert(Not_Flex_Flag(c, FLEX_INFO_INACCESSIBLE));
-    assert(Get_Flex_Flag(c, ARRAY_FLAG_VARLIST));
+    assert(Not_Flex_Info(c, INACCESSIBLE));
+    assert(Get_Array_Flag(c, IS_VARLIST));
     assert(n != 0 and n <= CTX_LEN(c));
     return cast(Value*, cast(Flex*, CTX_KEYLIST(c))->content.dynamic.data)
         + n;
 }
 
 INLINE Value* CTX_VAR(REBCTX *c, REBLEN n) {
-    assert(Not_Flex_Flag(c, FLEX_INFO_INACCESSIBLE));
-    assert(Get_Flex_Flag(c, ARRAY_FLAG_VARLIST));
+    assert(Not_Flex_Info(c, INACCESSIBLE));
+    assert(Get_Array_Flag(c, IS_VARLIST));
     assert(n != 0 and n <= CTX_LEN(c));
     return cast(Value*, cast(Flex*, c)->content.dynamic.data) + n;
 }
@@ -210,7 +210,7 @@ INLINE void FREE_CONTEXT(REBCTX *c) {
 //
 
 INLINE void FAIL_IF_INACCESSIBLE_CTX(REBCTX *c) {
-    if (Get_Flex_Info(c, FLEX_INFO_INACCESSIBLE)) {
+    if (Get_Flex_Info(c, INACCESSIBLE)) {
         if (CTX_TYPE(c) == REB_FRAME)
             fail (Error_Do_Expired_Frame_Raw()); // !!! different error?
         fail (Error_Series_Data_Freed_Raw());
@@ -326,7 +326,7 @@ INLINE void Deep_Freeze_Context(REBCTX *c) {
 }
 
 INLINE bool Is_Context_Deeply_Frozen(REBCTX *c) {
-    return Get_Flex_Info(c, FLEX_INFO_FROZEN);
+    return Get_Flex_Info(c, FROZEN_DEEP);
 }
 
 
@@ -431,7 +431,7 @@ INLINE REBCTX *Steal_Context_Vars(REBCTX *c, Node* keysource) {
     // singular "stub", holding only the CTX_ARCHETYPE.  This is needed
     // for the ->binding to allow Derelativize(), see SPC_BINDING().
     //
-    // Note: previously this had to preserve FRAME_INFO_FAILED, but now
+    // Note: previously this had to preserve FLEX_INFO_FRAME_FAILED, but now
     // those marking failure are asked to do so manually to the stub
     // after this returns (hence they need to cache the varlist first).
     //

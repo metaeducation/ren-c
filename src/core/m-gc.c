@@ -112,13 +112,13 @@ static void Mark_Devices_Deep(void);
 INLINE void Mark_Stub_Only(Stub* s)
 {
   #if !defined(NDEBUG)
-    if (IS_FREE_NODE(s))
+    if (Is_Node_Free(s))
         panic (s);
-    if (Not_Flex_Flag((s), NODE_FLAG_MANAGED)) {
+    if (Not_Node_Managed(s)) {
         printf("Link to non-MANAGED item reached by GC\n");
         panic (s);
     }
-    if (Get_Flex_Info((s), FLEX_INFO_INACCESSIBLE))
+    if (Get_Flex_Info(s, INACCESSIBLE))
         assert(not Is_Flex_Dynamic(s));
   #endif
 
@@ -155,7 +155,7 @@ static void Queue_Mark_Array_Subclass_Deep(Array* a)
         panic (a);
   #endif
 
-    if (Get_Flex_Flag(a, NODE_FLAG_MARKED))
+    if (Is_Node_Marked(a))
         return; // may not be finished marking yet, but has been queued
 
     Mark_Stub_Only(cast(Flex*, a));
@@ -173,51 +173,51 @@ static void Queue_Mark_Array_Subclass_Deep(Array* a)
 }
 
 INLINE void Queue_Mark_Array_Deep(Array* a) { // plain array
-    assert(Not_Flex_Flag(a, ARRAY_FLAG_VARLIST));
-    assert(Not_Flex_Flag(a, ARRAY_FLAG_PARAMLIST));
-    assert(Not_Flex_Flag(a, ARRAY_FLAG_PAIRLIST));
+    assert(Not_Array_Flag(a, IS_VARLIST));
+    assert(Not_Array_Flag(a, IS_PARAMLIST));
+    assert(Not_Array_Flag(a, IS_PAIRLIST));
 
-    if (Get_Flex_Flag(a, ARRAY_FLAG_FILE_LINE) and LINK(a).file)
+    if (Get_Array_Flag(a, HAS_FILE_LINE) and LINK(a).file)
         LINK(a).file->leader.bits |= NODE_FLAG_MARKED;
 
     Queue_Mark_Array_Subclass_Deep(a);
 }
 
-INLINE void Queue_Mark_Context_Deep(REBCTX *c) { // ARRAY_FLAG_VARLIST
+INLINE void Queue_Mark_Context_Deep(REBCTX *c) { // ARRAY_FLAG_IS_VARLIST
     Array* varlist = CTX_VARLIST(c);
     assert(
-        Get_Flex_Info(varlist, FLEX_INFO_INACCESSIBLE)
+        Get_Flex_Info(varlist, INACCESSIBLE)
         or SERIES_MASK_CONTEXT == (varlist->leader.bits & (
             SERIES_MASK_CONTEXT // these should be set, not the others
-                | ARRAY_FLAG_PAIRLIST
-                | ARRAY_FLAG_PARAMLIST
-                | ARRAY_FLAG_FILE_LINE
+                | ARRAY_FLAG_IS_PAIRLIST
+                | ARRAY_FLAG_IS_PARAMLIST
+                | ARRAY_FLAG_HAS_FILE_LINE
         ))
     );
 
     Queue_Mark_Array_Subclass_Deep(varlist); // see Propagate_All_GC_Marks()
 }
 
-INLINE void Queue_Mark_Action_Deep(REBACT *a) { // ARRAY_FLAG_PARAMLIST
+INLINE void Queue_Mark_Action_Deep(REBACT *a) { // ARRAY_FLAG_IS_PARAMLIST
     Array* paramlist = ACT_PARAMLIST(a);
     assert(
         SERIES_MASK_ACTION == (paramlist->leader.bits & (
             SERIES_MASK_ACTION // these should be set, not the others
-                | ARRAY_FLAG_PAIRLIST
-                | ARRAY_FLAG_VARLIST
-                | ARRAY_FLAG_FILE_LINE
+                | ARRAY_FLAG_IS_PAIRLIST
+                | ARRAY_FLAG_IS_VARLIST
+                | ARRAY_FLAG_HAS_FILE_LINE
         ))
     );
 
     Queue_Mark_Array_Subclass_Deep(paramlist); // see Propagate_All_GC_Marks()
 }
 
-INLINE void Queue_Mark_Map_Deep(REBMAP *m) { // ARRAY_FLAG_PAIRLIST
+INLINE void Queue_Mark_Map_Deep(REBMAP *m) { // ARRAY_FLAG_IS_PAIRLIST
     Array* pairlist = MAP_PAIRLIST(m);
     assert(
-        ARRAY_FLAG_PAIRLIST == (pairlist->leader.bits & (
-            ARRAY_FLAG_VARLIST | ARRAY_FLAG_PAIRLIST | ARRAY_FLAG_PARAMLIST
-            | ARRAY_FLAG_FILE_LINE
+        ARRAY_FLAG_IS_PAIRLIST == (pairlist->leader.bits & (
+            ARRAY_FLAG_IS_VARLIST | ARRAY_FLAG_IS_PAIRLIST | ARRAY_FLAG_IS_PARAMLIST
+            | ARRAY_FLAG_HAS_FILE_LINE
         ))
     );
 
@@ -230,11 +230,11 @@ INLINE void Queue_Mark_Binding_Deep(const Cell* v) {
         return;
 
   #if !defined(NDEBUG)
-    if (binding->leader.bits & ARRAY_FLAG_PARAMLIST) {
+    if (binding->leader.bits & ARRAY_FLAG_IS_PARAMLIST) {
         //
         // It's an action, any reasonable added check?
     }
-    else if (binding->leader.bits & ARRAY_FLAG_VARLIST) {
+    else if (binding->leader.bits & ARRAY_FLAG_IS_VARLIST) {
         //
         // It's a context, any reasonable added check?
     }
@@ -255,8 +255,8 @@ INLINE void Queue_Mark_Binding_Deep(const Cell* v) {
 INLINE void Queue_Mark_Singular_Array(Array* a) {
     assert(
         0 == (a->leader.bits & (
-            ARRAY_FLAG_VARLIST | ARRAY_FLAG_PAIRLIST | ARRAY_FLAG_PARAMLIST
-            | ARRAY_FLAG_FILE_LINE
+            ARRAY_FLAG_IS_VARLIST | ARRAY_FLAG_IS_PAIRLIST | ARRAY_FLAG_IS_PARAMLIST
+            | ARRAY_FLAG_HAS_FILE_LINE
         ))
     );
 
@@ -334,7 +334,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         // time a canon word's "index" field is allowed to be nonzero.
         //
         assert(
-            Not_Flex_Info(symbol, SYMBOL_INFO_CANON)
+            Not_Flex_Info(symbol, CANON_SYMBOL)
             or MISC(symbol).bind_index.other == 0
         );
 
@@ -360,7 +360,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
     case REB_BLOCK:
     case REB_GROUP: {
         Flex* s = v->payload.any_series.series;
-        if (Get_Flex_Info(s, FLEX_INFO_INACCESSIBLE)) {
+        if (Get_Flex_Info(s, INACCESSIBLE)) {
             //
             // !!! Review: preserving the identity of inaccessible array nodes
             // is likely uninteresting--the only reason the node wasn't freed
@@ -390,7 +390,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         assert(Flex_Wide(s) <= sizeof(REBUNI));
         assert(not v->extra.binding); // for future use
 
-        if (Get_Flex_Info(s, FLEX_INFO_INACCESSIBLE)) {
+        if (Get_Flex_Info(s, INACCESSIBLE)) {
             //
             // !!! See notes above on REB_BLOCK/etc. RE: letting series die.
             //
@@ -518,7 +518,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         if (v->extra.binding != UNBOUND) {
             assert(CTX_TYPE(context) == REB_FRAME);
 
-            if (Get_Flex_Info(context, FLEX_INFO_INACCESSIBLE)) {
+            if (Get_Flex_Info(context, INACCESSIBLE)) {
                 //
                 // !!! It seems a bit wasteful to keep alive the binding of a
                 // stack frame you can no longer get values out of.  But
@@ -543,7 +543,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         else
             assert(VAL_TYPE(v) != REB_FRAME); // phase if-and-only-if frame
 
-        if (Get_Flex_Info(context, FLEX_INFO_INACCESSIBLE))
+        if (Get_Flex_Info(context, INACCESSIBLE))
             break;
 
       #if !defined(NDEBUG)
@@ -642,12 +642,12 @@ static void Propagate_All_GC_Marks(void)
         // and that it hasn't been freed.
         //
         assert(Is_Flex_Array(a));
-        assert(not IS_FREE_NODE(a));
+        assert(not Is_Node_Free(a));
     #endif
 
         Cell* v;
 
-        if (Get_Flex_Flag(a, ARRAY_FLAG_PARAMLIST)) {
+        if (Get_Array_Flag(a, IS_PARAMLIST)) {
             v = Array_Head(a); // archetype
             assert(Is_Action(v));
             assert(not v->extra.binding); // archetypes have no binding
@@ -663,7 +663,7 @@ static void Propagate_All_GC_Marks(void)
             Queue_Mark_Action_Deep(underlying);
 
             Array* specialty = LINK(details).specialty;
-            if (Get_Flex_Flag(specialty, ARRAY_FLAG_VARLIST))
+            if (Get_Array_Flag(specialty, IS_VARLIST))
                 Queue_Mark_Context_Deep(CTX(specialty));
             else
                 assert(specialty == a);
@@ -674,11 +674,11 @@ static void Propagate_All_GC_Marks(void)
 
             // Functions can't currently be freed by FREE...
             //
-            assert(Not_Flex_Info(a, FLEX_INFO_INACCESSIBLE));
+            assert(Not_Flex_Info(a, INACCESSIBLE));
 
             ++v; // function archetype completely marked by this process
         }
-        else if (Get_Flex_Flag(a, ARRAY_FLAG_VARLIST)) {
+        else if (Get_Array_Flag(a, IS_VARLIST)) {
             v = CTX_ARCHETYPE(CTX(a)); // works if FLEX_INFO_INACCESSIBLE
 
             // Currently only FRAME! uses binding
@@ -705,13 +705,13 @@ static void Propagate_All_GC_Marks(void)
             else {
                 Array* keylist = cast_Array(keysource);
                 if (Is_Frame(v)) {
-                    assert(Get_Flex_Flag(keylist, ARRAY_FLAG_PARAMLIST));
+                    assert(Get_Array_Flag(keylist, IS_PARAMLIST));
 
                     // Frames use paramlists as their "keylist", there is no
                     // place to put an ancestor link.
                 }
                 else {
-                    assert(Not_Flex_Flag(keylist, ARRAY_FLAG_PARAMLIST));
+                    assert(Not_Array_Flag(keylist, IS_PARAMLIST));
                     Assert_Unreadable_If_Debug(Array_Head(keylist));
 
                     Array* ancestor = LINK(keylist).ancestor;
@@ -727,12 +727,12 @@ static void Propagate_All_GC_Marks(void)
             // Stack-based frames will be inaccessible if they are no longer
             // running, so there's no data to mark...
             //
-            if (Get_Flex_Info(a, FLEX_INFO_INACCESSIBLE))
+            if (Get_Flex_Info(a, INACCESSIBLE))
                 continue;
 
             ++v; // context archetype completely marked by this process
         }
-        else if (Get_Flex_Flag(a, ARRAY_FLAG_PAIRLIST)) {
+        else if (Get_Array_Flag(a, IS_PAIRLIST)) {
             //
             // There was once a "small map" optimization that wouldn't
             // produce a hashlist for small maps and just did linear search.
@@ -747,7 +747,7 @@ static void Propagate_All_GC_Marks(void)
 
             // !!! Currently MAP! doesn't work with FREE, but probably should.
             //
-            assert(Not_Flex_Info(a, FLEX_INFO_INACCESSIBLE));
+            assert(Not_Flex_Info(a, INACCESSIBLE));
 
             v = Array_Head(a);
         }
@@ -758,7 +758,7 @@ static void Propagate_All_GC_Marks(void)
             // !!! It could be possible to GC all these to a common freed
             // array stub, though that wouldn't permit equality comparisons.
             //
-            if (Get_Flex_Info(a, FLEX_INFO_INACCESSIBLE))
+            if (Get_Flex_Info(a, INACCESSIBLE))
                 continue;
 
             v = Array_Head(a);
@@ -776,8 +776,8 @@ static void Propagate_All_GC_Marks(void)
             if (
                 not IS_BLANK_RAW(v)
                 and IS_NULLED(v)
-                and Not_Flex_Flag(a, ARRAY_FLAG_VARLIST)
-                and Not_Flex_Flag(a, ARRAY_FLAG_NULLEDS_LEGAL)
+                and Not_Array_Flag(a, IS_VARLIST)
+                and Not_Array_Flag(a, NULLEDS_LEGAL)
             ){
                 panic(a);
             }
@@ -854,7 +854,7 @@ static void Mark_Root_Stubs(void)
             // !!! A smarter switch statement here could do this more
             // optimally...see the sweep code for an example.
             //
-            if (IS_FREE_NODE(s))
+            if (Is_Node_Free(s))
                 continue;
 
             if (s->leader.bits & NODE_FLAG_ROOT) {
@@ -875,7 +875,7 @@ static void Mark_Root_Stubs(void)
                     CTX_VARLIST(LINK(s).owner)->info.bits
                     & FLEX_INFO_INACCESSIBLE
                 ){
-                    if (Not_Flex_Info(LINK(s).owner, FRAME_INFO_FAILED)) {
+                    if (Not_Flex_Info(LINK(s).owner, FRAME_FAILED)) {
                         //
                         // Long term, it is likely that implicit managed-ness
                         // will allow users to leak API handles.  It will
@@ -917,7 +917,7 @@ static void Mark_Root_Stubs(void)
                 if (s->leader.bits & NODE_FLAG_MANAGED)
                     continue; // BLOCK!, Mark_Level_Stack_Deep() etc. mark it
 
-                if (s->leader.bits & ARRAY_FLAG_VARLIST) {
+                if (s->leader.bits & ARRAY_FLAG_IS_VARLIST) {
                     //
                     // Legal when unmanaged varlists are held onto by
                     // Level*, and marked by them.  We check for that by
@@ -938,14 +938,14 @@ static void Mark_Root_Stubs(void)
                 // Manage and use Push_GC_Guard and Drop_GC_Guard on them.
                 //
                 assert(
-                    Not_Flex_Flag(s, ARRAY_FLAG_PARAMLIST)
-                    and Not_Flex_Flag(s, ARRAY_FLAG_PAIRLIST)
+                    Not_Array_Flag(s, IS_PARAMLIST)
+                    and Not_Array_Flag(s, IS_PAIRLIST)
                 );
 
                 // Note: Arrays which are using their LINK() or MISC() for
                 // other purposes than file and line will not be marked here!
                 //
-                if (Get_Flex_Flag(s, ARRAY_FLAG_FILE_LINE))
+                if (Get_Array_Flag(s, HAS_FILE_LINE))
                     LINK(s).file->leader.bits |= NODE_FLAG_MARKED;
 
                 Cell* item = Array_Head(cast(Array*, s));
@@ -1162,7 +1162,7 @@ static void Mark_Level_Stack_Deep(void)
         if (L->special)
             Queue_Mark_Opt_End_Cell_Deep(L->special);
 
-        if (L->varlist and Get_Flex_Flag(L->varlist, NODE_FLAG_MANAGED)) {
+        if (L->varlist and Is_Node_Managed(L->varlist)) {
             //
             // If the context is all set up with valid values and managed,
             // then it can just be marked normally...no need to do custom
@@ -1173,7 +1173,7 @@ static void Mark_Level_Stack_Deep(void)
             goto propagate_and_continue;
         }
 
-        if (L->varlist and Get_Flex_Info(L->varlist, FLEX_INFO_INACCESSIBLE)) {
+        if (L->varlist and Get_Flex_Info(L->varlist, INACCESSIBLE)) {
             //
             // This happens in Encloser_Dispatcher(), where it can capture a
             // varlist that may not be managed (e.g. if there were no ADAPTs
@@ -1688,7 +1688,7 @@ Array* Snapshot_All_Actions(void)
                 // of other bits, see Sweep_Stubs.)
                 //
                 assert(Is_Flex_Managed(s));
-                if (Get_Flex_Flag(s, ARRAY_FLAG_PARAMLIST)) {
+                if (Get_Array_Flag(s, IS_PARAMLIST)) {
                     Value* v = KNOWN(Array_Head(cast_Array(s)));
                     assert(Is_Action(v));
                     Copy_Cell(PUSH(), v);

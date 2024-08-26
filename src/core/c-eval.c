@@ -1773,7 +1773,7 @@ bool Eval_Core_Throws(Level* const L)
         }
 
         if (Is_Nothing(current_gotten))  // need `:x` if `x` is unset
-            fail (Error_Var_Is_Unset_Core(current, L->specifier));
+            fail (Error_No_Value_Core(current, L->specifier));
 
         Copy_Cell(L->out, current_gotten);
         break;
@@ -1956,7 +1956,7 @@ bool Eval_Core_Throws(Level* const L)
         }
 
         if (Is_Nothing(L->out))  // need GET/ANY if path is trash
-            fail (Error_Var_Is_Unset_Core(current, L->specifier));
+            fail (Error_No_Value_Core(current, L->specifier));
 
         if (Is_Action(L->out)) {
             //

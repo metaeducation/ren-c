@@ -78,7 +78,7 @@
 //
 REBCTX *Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
 {
-    assert(not (flags & ARRAY_FLAG_FILE_LINE)); // LINK and MISC are taken
+    assert(not (flags & ARRAY_FLAG_HAS_FILE_LINE)); // LINK and MISC are taken
 
     Array* varlist = Make_Array_Core(
         capacity + 1, // size + room for ROOTVAR
@@ -127,9 +127,9 @@ bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
 
     // can't expand or unshare a FRAME!'s list
     //
-    assert(Not_Flex_Flag(keylist, ARRAY_FLAG_PARAMLIST));
+    assert(Not_Array_Flag(keylist, IS_PARAMLIST));
 
-    if (Get_Flex_Info(keylist, FLEX_INFO_SHARED_KEYLIST)) {
+    if (Get_Flex_Info(keylist, SHARED_KEYLIST)) {
         //
         // INIT_CTX_KEYLIST_SHARED was used to set the flag that indicates
         // this keylist is shared with one or more other contexts.  Can't
@@ -271,7 +271,7 @@ Value* Append_Context(
 // the same keylist will be used.
 //
 REBCTX *Copy_Context_Shallow_Extra_Managed(REBCTX *src, REBLEN extra) {
-    assert(Get_Flex_Flag(src, ARRAY_FLAG_VARLIST));
+    assert(Get_Array_Flag(src, IS_VARLIST));
     Assert_Flex_Managed(CTX_KEYLIST(src));
 
     // Note that keylists contain only typesets (hence no relative values),
@@ -1003,7 +1003,7 @@ Array* Context_To_Array(REBCTX *context, REBINT mode)
 
     return Pop_Stack_Values_Core(
         base,
-        did (mode & 2) ? ARRAY_FLAG_TAIL_NEWLINE : 0
+        did (mode & 2) ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0
     );
 }
 
@@ -1299,7 +1299,7 @@ void Resolve_Context(
 //
 REBLEN Find_Canon_In_Context(REBCTX *context, Symbol* canon, bool always)
 {
-    assert(Get_Flex_Info(canon, SYMBOL_INFO_CANON));
+    assert(Get_Flex_Info(canon, CANON_SYMBOL));
 
     Value* key = CTX_KEYS_HEAD(context);
     REBLEN len = CTX_LEN(context);
@@ -1413,7 +1413,7 @@ void Assert_Context_Core(REBCTX *c)
     if (rootvar->payload.any_context.varlist != varlist)
         panic (rootvar);
 
-    if (Get_Flex_Info(c, FLEX_INFO_INACCESSIBLE)) {
+    if (Get_Flex_Info(c, INACCESSIBLE)) {
         //
         // !!! For the moment, don't check inaccessible stack frames any
         // further.  This includes varless reified frames and those reified

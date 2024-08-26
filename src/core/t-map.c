@@ -51,7 +51,7 @@ REBINT CT_Map(const Cell* a, const Cell* b, REBINT mode)
 //
 REBMAP *Make_Map(REBLEN capacity)
 {
-    Array* pairlist = Make_Array_Core(capacity * 2, ARRAY_FLAG_PAIRLIST);
+    Array* pairlist = Make_Array_Core(capacity * 2, ARRAY_FLAG_IS_PAIRLIST);
     LINK(pairlist).hashlist = Make_Hash_Sequence(capacity);
 
     return MAP(pairlist);
@@ -338,7 +338,7 @@ REBLEN Find_Map_Entry(
     // changed, there'd be no notification to rehash the map.
     //
     Flex* locker = MAP_PAIRLIST(map);
-    Ensure_Value_Immutable(key, locker);
+    Force_Value_Frozen_Deep(key, locker);
 
     // Must set the value:
     if (n) {  // re-set it:
@@ -466,7 +466,7 @@ REB_R MAKE_Map(Value* out, enum Reb_Kind kind, const Value* arg)
 
 INLINE REBMAP *Copy_Map(REBMAP *map, REBU64 types) {
     Array* copy = Copy_Array_Shallow(MAP_PAIRLIST(map), SPECIFIED);
-    Set_Flex_Flag(copy, ARRAY_FLAG_PAIRLIST);
+    Set_Array_Flag(copy, IS_PAIRLIST);
 
     // So long as the copied pairlist is the same array size as the original,
     // a literal copy of the hashlist can still be used, as a start (needs

@@ -122,13 +122,13 @@ INLINE bool Is_Overriding_Context(REBCTX *stored, REBCTX *override)
     //
     if (
         Is_Node_A_Stub(stored_source)
-        and cast_Flex(stored_source)->leader.bits & ARRAY_FLAG_PARAMLIST
+        and cast_Flex(stored_source)->leader.bits & ARRAY_FLAG_IS_PARAMLIST
     ){
         return false;
     }
     if (
         Is_Node_A_Stub(temp)
-        and cast_Flex(temp)->leader.bits & ARRAY_FLAG_PARAMLIST
+        and cast_Flex(temp)->leader.bits & ARRAY_FLAG_IS_PARAMLIST
     ){
         return false;
     }
@@ -207,7 +207,7 @@ INLINE bool Try_Add_Binder_Index(
     REBINT index
 ){
     assert(index != 0);
-    assert(Get_Flex_Info(canon, SYMBOL_INFO_CANON));
+    assert(Get_Flex_Info(canon, CANON_SYMBOL));
 
     if (binder->context == Lib_Context) {
         assert(MISC(canon).bind_index.lib == index);
@@ -240,7 +240,7 @@ INLINE REBINT Get_Binder_Index_Else_0( // 0 if not present
     struct Reb_Binder *binder,
     Symbol* canon
 ){
-    assert(Get_Flex_Info(canon, SYMBOL_INFO_CANON));
+    assert(Get_Flex_Info(canon, CANON_SYMBOL));
 
     if (binder->context == Lib_Context)
         return MISC(canon).bind_index.lib;
@@ -253,7 +253,7 @@ INLINE REBINT Remove_Binder_Index_Else_0( // return old value if there
     struct Reb_Binder *binder,
     Symbol* canon
 ){
-    assert(Get_Flex_Info(canon, SYMBOL_INFO_CANON));
+    assert(Get_Flex_Info(canon, CANON_SYMBOL));
 
     if (binder->context == Lib_Context)
         return MISC(canon).bind_index.lib;
@@ -372,7 +372,7 @@ INLINE REBCTX *Get_Var_Context(
 
     REBCTX *c;
 
-    if (binding->leader.bits & ARRAY_FLAG_VARLIST) {
+    if (binding->leader.bits & ARRAY_FLAG_IS_VARLIST) {
 
         // SPECIFIC BINDING: The context the word is bound to is explicitly
         // contained in the `any_word` Value payload.  Extract it, but check
@@ -408,7 +408,7 @@ INLINE REBCTX *Get_Var_Context(
         }
     }
     else {
-        assert(binding->leader.bits & ARRAY_FLAG_PARAMLIST);
+        assert(binding->leader.bits & ARRAY_FLAG_IS_PARAMLIST);
 
         // RELATIVE BINDING: The word was made during a deep copy of the block
         // that was given as a function's body, and stored a reference to that
@@ -452,7 +452,7 @@ INLINE const Value* Get_Opt_Var_May_Fail(
         fail (Error_Not_Bound_Raw(KNOWN(any_word)));
 
     REBCTX *c = Get_Var_Context(any_word, specifier);
-    if (Get_Flex_Info(c, FLEX_INFO_INACCESSIBLE))
+    if (Get_Flex_Info(c, INACCESSIBLE))
         fail (Error_No_Relative_Core(any_word));
 
     return CTX_VAR(c, VAL_WORD_INDEX(any_word));
@@ -466,7 +466,7 @@ INLINE const Value* Try_Get_Opt_Var(
         return nullptr;
 
     REBCTX *c = Get_Var_Context(any_word, specifier);
-    if (Get_Flex_Info(c, FLEX_INFO_INACCESSIBLE))
+    if (Get_Flex_Info(c, INACCESSIBLE))
         return nullptr;
 
     return CTX_VAR(c, VAL_WORD_INDEX(any_word));
@@ -565,7 +565,7 @@ INLINE Value* Derelativize(
     if (not binding) {
         out->extra.binding = UNBOUND;
     }
-    else if (binding->leader.bits & ARRAY_FLAG_PARAMLIST) {
+    else if (binding->leader.bits & ARRAY_FLAG_IS_PARAMLIST) {
         //
         // The stored binding is relative to a function, and so the specifier
         // needs to be a frame to have a precise invocation to lookup in.
@@ -601,7 +601,7 @@ INLINE Value* Derelativize(
 
         INIT_BINDING_MAY_MANAGE(out, specifier);
     }
-    else if (specifier and (binding->leader.bits & ARRAY_FLAG_VARLIST)) {
+    else if (specifier and (binding->leader.bits & ARRAY_FLAG_IS_VARLIST)) {
         Stub* f_binding = SPC_BINDING(specifier);  // can't fail(), see notes
 
         if (
@@ -617,7 +617,7 @@ INLINE Value* Derelativize(
     }
     else { // no potential override
         assert(
-            (binding->leader.bits & ARRAY_FLAG_VARLIST)
+            (binding->leader.bits & ARRAY_FLAG_IS_VARLIST)
             or Is_Varargs(v) // BLOCK! style varargs use binding to hold array
         );
         INIT_BINDING_MAY_MANAGE(out, binding);

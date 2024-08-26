@@ -150,8 +150,8 @@ static void Eval_Core_Shared_Checks_Debug(Level* L) {
     assert(Is_Pointer_Corrupt_Debug(L->opt_label));
 
     if (L->varlist) {
-        assert(Not_Flex_Flag(L->varlist, NODE_FLAG_MANAGED));
-        assert(Not_Flex_Info(L->varlist, FLEX_INFO_INACCESSIBLE));
+        assert(Not_Node_Managed(L->varlist));
+        assert(Not_Flex_Info(L->varlist, INACCESSIBLE));
     }
 
     //=//// ^-- ABOVE CHECKS *ALWAYS* APPLY ///////////////////////////////=//
@@ -219,7 +219,7 @@ void Eval_Core_Expression_Checks_Debug(Level* L) {
 
     assert(
         not L->varlist
-        or Not_Flex_Info(L->varlist, FLEX_INFO_INACCESSIBLE)
+        or Not_Flex_Info(L->varlist, INACCESSIBLE)
     );
 
     // Mutate va_list sources into arrays at fairly random moments in the
@@ -248,7 +248,7 @@ void Do_Process_Action_Checks_Debug(Level* L) {
 
     //=//// v-- BELOW CHECKS ONLY APPLY WHEN Level_Phase() is VALID ////////=//
 
-    assert(Get_Flex_Flag(phase, ARRAY_FLAG_PARAMLIST));
+    assert(Get_Array_Flag(phase, IS_PARAMLIST));
     if (L->param != ACT_PARAMS_HEAD(phase)) {
         //
         // !!! When you MAKE FRAME! 'APPEND/ONLY, it will create a frame
@@ -282,7 +282,7 @@ void Do_After_Action_Checks_Debug(Level* L) {
     assert(NOT_END(L->out));
     assert(not THROWN(L->out));
 
-    if (Get_Flex_Info(L->varlist, FLEX_INFO_INACCESSIBLE)) // e.g. ENCLOSE
+    if (Get_Flex_Info(L->varlist, INACCESSIBLE)) // e.g. ENCLOSE
         return;
 
     // See Level_Phase() for why it's not allowed when DEFER-0 is the dispatcher

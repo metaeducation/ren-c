@@ -106,7 +106,7 @@ void Startup_Typesets(void)
     Root_Typesets = Init_Block(Alloc_Value(), Pop_Stack_Values(base));
 
     Flex* locker = nullptr;
-    Ensure_Value_Immutable(Root_Typesets, locker);
+    Force_Value_Frozen_Deep(Root_Typesets, locker);
 }
 
 

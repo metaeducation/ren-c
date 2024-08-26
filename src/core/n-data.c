@@ -211,7 +211,7 @@ DECLARE_NATIVE(bind)
             VAL_SPECIFIER(v),
             Array_Len(Cell_Array(v)), // tail
             0, // extra
-            ARRAY_FLAG_FILE_LINE, // flags
+            ARRAY_FLAG_HAS_FILE_LINE, // flags
             TS_ARRAY // types to copy deeply
         );
         at = Array_Head(copy);
@@ -348,9 +348,9 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
 
         assert(
             not out->payload.any_context.phase
-            or Get_Flex_Flag(
+            or Get_Array_Flag(
                 ACT_PARAMLIST(out->payload.any_context.phase),
-                ARRAY_FLAG_PARAMLIST
+                IS_PARAMLIST
             )
         );
     }
@@ -488,7 +488,7 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
         fail (Error_Invalid_Core(v, specifier));
 
     if (not any and Is_Nothing(out))
-        fail (Error_Var_Is_Unset_Core(v, specifier));
+        fail (Error_No_Value_Core(v, specifier));
 }
 
 
@@ -932,7 +932,7 @@ DECLARE_NATIVE(free)
         fail ("FREE only implemented for ANY-SERIES! at the moment");
 
     Flex* s = Cell_Flex(v);
-    if (Get_Flex_Info(s, FLEX_INFO_INACCESSIBLE))
+    if (Get_Flex_Info(s, INACCESSIBLE))
         fail ("Cannot FREE already freed series");
     Fail_If_Read_Only_Flex(s);
 
@@ -967,7 +967,7 @@ DECLARE_NATIVE(free_q)
     else
         return Init_False(OUT);
 
-    return Init_Logic(OUT, Get_Flex_Info(s, FLEX_INFO_INACCESSIBLE));
+    return Init_Logic(OUT, Get_Flex_Info(s, INACCESSIBLE));
 }
 
 
@@ -1021,7 +1021,7 @@ DECLARE_NATIVE(as)
                 Symbol_Head(symbol),
                 Symbol_Size(symbol)
             );
-            Set_Flex_Info(string, FLEX_INFO_FROZEN);
+            Set_Flex_Info(string, FROZEN_DEEP);
             return Init_Any_Series(OUT, new_kind, string);
         }
 
@@ -1034,7 +1034,7 @@ DECLARE_NATIVE(as)
                 Cell_Series_Len_At(v)
             );
             if (Is_Value_Immutable(v))
-                Set_Flex_Info(string, FLEX_INFO_FROZEN);
+                Set_Flex_Info(string, FROZEN_DEEP);
             else {
                 // !!! Catch any cases of people who were trying to alias the
                 // binary, make mutations via the string, and see those

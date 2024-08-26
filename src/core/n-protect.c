@@ -103,14 +103,14 @@ void Protect_Flex(Flex* s, REBLEN index, REBFLGS flags)
     if (flags & PROT_SET) {
         if (flags & PROT_FREEZE) {
             assert(flags & PROT_DEEP);
-            Set_Flex_Info(s, FLEX_INFO_FROZEN);
+            Set_Flex_Info(s, FROZEN_DEEP);
         }
         else
-            Set_Flex_Info(s, FLEX_INFO_PROTECTED);
+            Set_Flex_Info(s, PROTECTED);
     }
     else {
         assert(not (flags & PROT_FREEZE));
-        Clear_Flex_Info(s, FLEX_INFO_PROTECTED);
+        Clear_Flex_Info(s, PROTECTED);
     }
 
     if (not Is_Flex_Array(s) or not (flags & PROT_DEEP))
@@ -137,14 +137,14 @@ void Protect_Context(REBCTX *c, REBFLGS flags)
     if (flags & PROT_SET) {
         if (flags & PROT_FREEZE) {
             assert(flags & PROT_DEEP);
-            Set_Flex_Info(c, FLEX_INFO_FROZEN);
+            Set_Flex_Info(c, FROZEN_DEEP);
         }
         else
-            Set_Flex_Info(c, FLEX_INFO_PROTECTED);
+            Set_Flex_Info(c, PROTECTED);
     }
     else {
         assert(not (flags & PROT_FREEZE));
-        Clear_Flex_Info(CTX_VARLIST(c), FLEX_INFO_PROTECTED);
+        Clear_Flex_Info(CTX_VARLIST(c), PROTECTED);
     }
 
     if (not (flags & PROT_DEEP))
@@ -395,7 +395,7 @@ DECLARE_NATIVE(locked_q)
 
 
 //
-//  Ensure_Value_Immutable: C
+//  Force_Value_Frozen_Deep: C
 //
 // !!! The concept behind `opt_locker` is that it might be able to give the
 // user more information about why data would be automatically locked, e.g.
@@ -404,24 +404,24 @@ DECLARE_NATIVE(locked_q)
 // moment, etc.  Just put a flag at the top level for now, since that is
 // "better than nothing", and revisit later in the design.
 //
-void Ensure_Value_Immutable(const Cell* v, Flex* opt_locker) {
+void Force_Value_Frozen_Deep(const Cell* v, Flex* opt_locker) {
     if (Is_Value_Immutable(v))
         return;
 
     if (ANY_ARRAY(v)) {
         Deep_Freeze_Array(Cell_Array(v));
         if (opt_locker)
-            Set_Flex_Info(Cell_Array(v), FLEX_INFO_AUTO_LOCKED);
+            Set_Flex_Info(Cell_Array(v), AUTO_LOCKED);
     }
     else if (ANY_CONTEXT(v)) {
         Deep_Freeze_Context(VAL_CONTEXT(v));
         if (opt_locker)
-            Set_Flex_Info(VAL_CONTEXT(v), FLEX_INFO_AUTO_LOCKED);
+            Set_Flex_Info(VAL_CONTEXT(v), AUTO_LOCKED);
     }
     else if (ANY_SERIES(v)) {
         Freeze_Non_Array_Flex(Cell_Flex(v));
         if (opt_locker != nullptr)
-            Set_Flex_Info(Cell_Flex(v), FLEX_INFO_AUTO_LOCKED);
+            Set_Flex_Info(Cell_Flex(v), AUTO_LOCKED);
     } else
         fail (Error_Invalid_Type(VAL_TYPE(v))); // not yet implemented
 }
@@ -498,7 +498,7 @@ DECLARE_NATIVE(lock)
     }
 
     Flex* locker = nullptr;
-    Ensure_Value_Immutable(OUT, locker);
+    Force_Value_Frozen_Deep(OUT, locker);
 
     return OUT;
 }

@@ -292,14 +292,14 @@ void Startup_Pools(REBINT scale)
     PG_Reb_Stats = ALLOC(REB_STATS);
   #endif
 
-    // Manually allocated series that GC is not responsible for (unless a
-    // trap occurs). Holds series pointers.
+    // Manually allocated Flex that GC is not responsible for (unless a
+    // trap occurs). Holds Flex pointers.
     //
-    // As a trick to keep this series from trying to track itself, say it's
+    // As a trick to keep this Flex from trying to track itself, say it's
     // managed, then sneak the flag off.
     //
     GC_Manuals = Make_Flex_Core(15, sizeof(Flex* ), NODE_FLAG_MANAGED);
-    Clear_Flex_Flag(GC_Manuals, NODE_FLAG_MANAGED);
+    Clear_Node_Managed_Bit(GC_Manuals);
 
     Prior_Expand = ALLOC_N(Flex*, MAX_EXPAND_LIST);
     CLEAR(Prior_Expand, sizeof(Flex*) * MAX_EXPAND_LIST);
@@ -325,10 +325,10 @@ void Shutdown_Pools(void)
         Flex* series = cast(Flex*, debug_seg + 1);
         REBLEN n;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; n--, series++) {
-            if (IS_FREE_NODE(series))
+            if (Is_Node_Free(series))
                 continue;
 
-            assert(Not_Flex_Flag(series, NODE_FLAG_MANAGED));
+            assert(Not_Node_Managed(series));
             printf("At least one leaked series at shutdown...\n");
             panic (series);
         }
@@ -466,7 +466,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
         Flex* s = cast(Flex*, seg + 1);
         REBLEN n;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
-            if (IS_FREE_NODE(s))
+            if (Is_Node_Free(s))
                 continue;
 
             if (s->leader.bits & NODE_FLAG_CELL) {  // a "pairing"
@@ -792,7 +792,7 @@ void Expand_Flex(Flex* s, REBLEN index, REBLEN delta)
 
 //=//// INSUFFICIENT CAPACITY, NEW ALLOCATION REQUIRED ////////////////////=//
 
-    if (Get_Flex_Flag(s, FLEX_FLAG_FIXED_SIZE))
+    if (Get_Flex_Flag(s, FIXED_SIZE))
         fail (Error_Locked_Series_Raw());
 
   #ifndef NDEBUG
@@ -858,7 +858,7 @@ void Expand_Flex(Flex* s, REBLEN index, REBLEN delta)
     // expanding if a fixed size allocation was sufficient.
 
     LEN_BYTE_OR_255(s) = 255; // series alloc caller sets
-    Set_Flex_Flag(s, FLEX_FLAG_POWER_OF_2);
+    Set_Flex_Flag(s, POWER_OF_2);
     if (not Did_Flex_Data_Alloc(s, len_old + delta + x))
         fail (Error_No_Memory((len_old + delta + x) * wide));
 
@@ -898,7 +898,7 @@ void Expand_Flex(Flex* s, REBLEN index, REBLEN delta)
     PG_Reb_Stats->Series_Expanded++;
   #endif
 
-    assert(Not_Flex_Flag(s, NODE_FLAG_MARKED));
+    assert(Not_Node_Marked(s));
 }
 
 
@@ -973,7 +973,7 @@ void Remake_Flex(Flex* s, REBLEN units, Byte wide, REBFLGS flags)
         assert(wide == wide_old); // can't change width if preserving
   #endif
 
-    assert(Not_Flex_Flag(s, FLEX_FLAG_FIXED_SIZE));
+    assert(Not_Flex_Flag(s, FIXED_SIZE));
 
     bool was_dynamic = Is_Flex_Dynamic(s);
 
@@ -1048,9 +1048,9 @@ void Remake_Flex(Flex* s, REBLEN units, Byte wide, REBFLGS flags)
 //
 void Decay_Flex(Flex* s)
 {
-    assert(Not_Flex_Info(s, FLEX_INFO_INACCESSIBLE));
+    assert(Not_Flex_Info(s, INACCESSIBLE));
 
-    if (Get_Flex_Flag(s, FLEX_FLAG_UTF8))
+    if (Get_Flex_Flag(s, UTF8_SYMBOL))
         GC_Kill_Interning(cast(Symbol*, s));  // needs to adjust canons
 
     // Remove series from expansion list, if found:
@@ -1072,8 +1072,8 @@ void Decay_Flex(Flex* s)
         // possibility exists for the other array with a "canon" [0]
         //
         if (
-            Get_Flex_Flag(s, ARRAY_FLAG_VARLIST)
-            or Get_Flex_Flag(s, ARRAY_FLAG_PARAMLIST)
+            Get_Array_Flag(s, IS_VARLIST)
+            or Get_Array_Flag(s, IS_PARAMLIST)
         ){
             // `char*` casts needed: https://stackoverflow.com/q/57721104
             memcpy(
@@ -1129,7 +1129,7 @@ void Decay_Flex(Flex* s)
         }
     }
 
-    Set_Flex_Info(s, FLEX_INFO_INACCESSIBLE);
+    Set_Flex_Info(s, INACCESSIBLE);
 }
 
 
@@ -1143,13 +1143,13 @@ void Decay_Flex(Flex* s)
 void GC_Kill_Flex(Flex* s)
 {
   #if !defined(NDEBUG)
-    if (IS_FREE_NODE(s)) {
+    if (Is_Node_Free(s)) {
         printf("Freeing already freed node.\n");
         panic (s);
     }
   #endif
 
-    if (Not_Flex_Info(s, FLEX_INFO_INACCESSIBLE))
+    if (Not_Flex_Info(s, INACCESSIBLE))
         Decay_Flex(s);
 
   #if !defined(NDEBUG)
@@ -1219,7 +1219,7 @@ INLINE void Untrack_Manual_Flex(Flex* s)
 void Free_Unmanaged_Flex(Flex* s)
 {
   #if !defined(NDEBUG)
-    if (IS_FREE_NODE(s)) {
+    if (Is_Node_Free(s)) {
         printf("Trying to Free_Unmanaged_Flex() on already freed Flex\n");
         panic (s); // erroring here helps not conflate with tracking problems
     }
@@ -1328,10 +1328,10 @@ REBLEN Check_Memory_Debug(void)
 
         REBLEN n;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
-            if (IS_FREE_NODE(s))
+            if (Is_Node_Free(s))
                 continue;
 
-            if (Get_Flex_Flag(s, NODE_FLAG_CELL))
+            if (Is_Node_A_Cell(s))
                 continue; // a pairing
 
             if (not Is_Flex_Dynamic(s))
@@ -1357,7 +1357,7 @@ REBLEN Check_Memory_Debug(void)
 
         PoolUnit* unit = Mem_Pools[pool_num].first;
         for (; unit != nullptr; unit = unit->next_if_free) {
-            assert(IS_FREE_NODE(unit));
+            assert(Is_Node_Free(unit));
 
             ++pool_free_nodes;
 
@@ -1408,7 +1408,7 @@ void Dump_All_Flex_Of_Size(REBLEN size)
         Flex* s = cast(Flex*, seg + 1);
         REBLEN n;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
-            if (IS_FREE_NODE(s))
+            if (Is_Node_Free(s))
                 continue;
 
             if (Flex_Wide(s) == size) {
@@ -1438,11 +1438,11 @@ void Dump_Flex_In_Pool(REBLEN pool_id)
         Flex* s = cast(Flex*, seg + 1);
         REBLEN n = 0;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
-            if (IS_FREE_NODE(s))
+            if (Is_Node_Free(s))
                 continue;
 
-            if (Get_Flex_Flag(s, NODE_FLAG_CELL))
-                continue; // pairing
+            if (Is_Node_A_Cell(s))
+                continue;  // pairing
 
             if (
                 pool_id == UNKNOWN
@@ -1546,14 +1546,14 @@ REBU64 Inspect_Flex(bool show)
 
         REBLEN n;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; n--) {
-            if (IS_FREE_NODE(s)) {
+            if (Is_Node_Free(s)) {
                 ++fre;
                 continue;
             }
 
             ++tot;
 
-            if (Get_Flex_Flag(s, NODE_FLAG_CELL))
+            if (Is_Node_A_Cell(s))
                 continue;
 
             tot_size += Flex_Total_If_Dynamic(s); // else 0

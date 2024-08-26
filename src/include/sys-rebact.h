@@ -39,7 +39,7 @@
 //
 #define SERIES_MASK_ACTION \
     (NODE_FLAG_NODE | FLEX_FLAG_ALWAYS_DYNAMIC | FLEX_FLAG_FIXED_SIZE \
-        | ARRAY_FLAG_PARAMLIST)
+        | ARRAY_FLAG_IS_PARAMLIST)
 
 
 #if !defined(DEBUG_CHECK_CASTS) || (! CPLUSPLUS_11)
@@ -69,8 +69,8 @@
                     SERIES_MASK_ACTION
                         | NODE_FLAG_FREE
                         | NODE_FLAG_CELL
-                        | ARRAY_FLAG_VARLIST
-                        | ARRAY_FLAG_PAIRLIST
+                        | ARRAY_FLAG_IS_VARLIST
+                        | ARRAY_FLAG_IS_PAIRLIST
                 ))
             );
 

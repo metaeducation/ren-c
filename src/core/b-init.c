@@ -443,7 +443,7 @@ static Value* Make_Locked_Tag(const char *utf8) { // helper
     RESET_VAL_HEADER(t, REB_TAG);
 
     Flex* locker = nullptr;
-    Ensure_Value_Immutable(t, locker);
+    Force_Value_Frozen_Deep(t, locker);
     return t;
 }
 
@@ -506,7 +506,7 @@ static void Init_Action_Meta_Shim(void) {
     Root_Action_Meta = Init_Object(Alloc_Value(), meta);
 
     Flex* locker = nullptr;
-    Ensure_Value_Immutable(Root_Action_Meta, locker);
+    Force_Value_Frozen_Deep(Root_Action_Meta, locker);
 
 }
 
@@ -798,14 +798,14 @@ static void Startup_End_Node(void)
 //  Startup_Empty_Array: C
 //
 // Generic read-only empty array, which will be put into EMPTY_BLOCK when
-// Alloc_Value() is available.  Note it's too early for ARRAY_FLAG_FILE_LINE.
+// Alloc_Value() is available.  Note it's too early for ARRAY_FLAG_HAS_FILE_LINE.
 //
 // Warning: GC must not run before Init_Root_Vars() puts it in an API node!
 //
 static void Startup_Empty_Array(void)
 {
     PG_Empty_Array = Make_Array_Core(0, NODE_FLAG_MANAGED);
-    Set_Flex_Info(PG_Empty_Array, FLEX_INFO_FROZEN);
+    Set_Flex_Info(PG_Empty_Array, FROZEN_DEEP);
 }
 
 
@@ -908,7 +908,7 @@ static void Init_Root_Vars(void)
     Flex* locker = nullptr;
 
     Root_Empty_Block = Init_Block(Alloc_Value(), PG_Empty_Array);
-    Ensure_Value_Immutable(Root_Empty_Block, locker);
+    Force_Value_Frozen_Deep(Root_Empty_Block, locker);
 
     // Note: rebText() can't run yet, review.
     //
@@ -916,10 +916,10 @@ static void Init_Root_Vars(void)
     assert(Codepoint_At(String_At(nulled_uni, 0)) == '\0');
     assert(String_Len(nulled_uni) == 0);
     Root_Empty_Text = Init_Text(Alloc_Value(), nulled_uni);
-    Ensure_Value_Immutable(Root_Empty_Text, locker);
+    Force_Value_Frozen_Deep(Root_Empty_Text, locker);
 
     Root_Empty_Binary = Init_Binary(Alloc_Value(), Make_Blob(0));
-    Ensure_Value_Immutable(Root_Empty_Binary, locker);
+    Force_Value_Frozen_Deep(Root_Empty_Binary, locker);
 
     Root_Space_Char = rebChar(' ');
     Root_Newline_Char = rebChar('\n');

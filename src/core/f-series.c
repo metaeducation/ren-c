@@ -84,7 +84,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
 
         case SYM_FILE: {
             Flex* s = Cell_Flex(value);
-            if (Is_Flex_Array(s) and Get_Flex_Flag(s, ARRAY_FLAG_FILE_LINE)) {
+            if (Is_Flex_Array(s) and Get_Array_Flag(s, HAS_FILE_LINE)) {
                 //
                 // !!! How to tell whether it's a URL! or a FILE! ?
                 //
@@ -95,7 +95,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
 
         case SYM_LINE: {
             Flex* s = Cell_Flex(value);
-            if (Is_Flex_Array(s) and Get_Flex_Flag(s, ARRAY_FLAG_FILE_LINE))
+            if (Is_Flex_Array(s) and Get_Array_Flag(s, HAS_FILE_LINE))
                 return Init_Integer(OUT, MISC(s).line);
             return nullptr; }
 

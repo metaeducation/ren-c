@@ -456,6 +456,12 @@ union HeaderUnion {
     FLAG_LEFT_BIT(4)
 
 
+//=//// NODE_FLAG_5 (seventh-leftmost bit) ////////////////////////////////=//
+//
+#define NODE_FLAG_STACK \
+    FLAG_LEFT_BIT(5)
+
+
 //=//// NODE_FLAG_ROOT (sixth-leftmost bit) ///////////////////////////////=//
 //
 // Means the node should be treated as a root for GC purposes.  If the node
@@ -466,13 +472,8 @@ union HeaderUnion {
 // into or out of API handle cells the flag is left untouched.
 //
 #define NODE_FLAG_ROOT \
-    FLAG_LEFT_BIT(5)
-
-
-//=//// NODE_FLAG_6 (seventh-leftmost bit) ////////////////////////////////=//
-//
-#define NODE_FLAG_STACK \
     FLAG_LEFT_BIT(6)
+#define NODE_BYTEMASK_0x02_ROOT 0x02
 
 
 //=//// NODE_FLAG_CELL (eighth-leftmost bit) //////////////////////////////=//
@@ -536,22 +537,6 @@ struct PoolUnitStruct {
     //
     /* REBI64 payload[N];*/
 };
-
-#ifdef NDEBUG
-    #define IS_FREE_NODE(n) \
-        (did (NODE_BYTE(n) & NODE_BYTEMASK_0x40_FREE))
-#else
-    INLINE bool IS_FREE_NODE(Node* n) {
-        if (not (NODE_BYTE(n) & NODE_BYTEMASK_0x40_FREE))
-            return false;
-
-        assert(
-            FIRST_BYTE(n) == FREED_FLEX_BYTE
-            or FIRST_BYTE(n) == FREED_CELL_BYTE
-        );
-        return true;
-    }
-#endif
 
 
 //=////////////////////////////////////////////////////////////////////////=//

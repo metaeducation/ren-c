@@ -272,7 +272,7 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
         VAL_SPECIFIER(body),
         Cell_Series_Len_At(body), // tail
         0, // extra
-        ARRAY_FLAG_FILE_LINE, // ask to preserve file and line info
+        ARRAY_FLAG_HAS_FILE_LINE, // ask to preserve file and line info
         TS_SERIES & ~TS_NOT_COPIED // types to copy deeply
     );
 
@@ -460,7 +460,7 @@ void Virtual_Bind_Deep_To_New_Context(
                 VAL_SPECIFIER(body_in_out),
                 Array_Len(Cell_Array(body_in_out)), // tail
                 0, // extra
-                ARRAY_FLAG_FILE_LINE, // flags
+                ARRAY_FLAG_HAS_FILE_LINE, // flags
                 TS_ARRAY // types to copy deeply
             )
         );
@@ -595,7 +595,7 @@ void Virtual_Bind_Deep_To_New_Context(
     //
     // https://github.com/rebol/rebol-issues/issues/2274
     //
-    Set_Flex_Flag(CTX_VARLIST(c), FLEX_FLAG_DONT_RELOCATE);
+    Set_Flex_Flag(CTX_VARLIST(c), DONT_RELOCATE);
 
     // !!! In virtual binding, there would not be a Bind_Values call below;
     // so it wouldn't necessarily be required to manage the augmented

@@ -106,7 +106,7 @@
 
 
 INLINE Array* ACT_PARAMLIST(REBACT *a) {
-    assert(Get_Flex_Flag(a, ARRAY_FLAG_PARAMLIST));
+    assert(Get_Array_Flag(a, IS_PARAMLIST));
     return cast(Array*, a);
 }
 
@@ -165,7 +165,7 @@ INLINE Value* ACT_PARAM(REBACT *a, REBLEN n) {
 INLINE REBCTX *ACT_EXEMPLAR(REBACT *a) {
     Array* details = ACT_ARCHETYPE(a)->payload.action.details;
     Array* specialty = LINK(details).specialty;
-    if (Get_Flex_Flag(specialty, ARRAY_FLAG_VARLIST))
+    if (Get_Array_Flag(specialty, IS_VARLIST))
         return CTX(specialty);
 
     return nullptr;
@@ -262,7 +262,7 @@ INLINE void Clear_Action_Cached_Flags(Cell *v) {
 INLINE REBACT *VAL_ACTION(const Cell* v) {
     assert(Is_Action(v));
     Flex* s = v->payload.action.paramlist;
-    if (Get_Flex_Info(s, FLEX_INFO_INACCESSIBLE))
+    if (Get_Flex_Info(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return ACT(s);
 }

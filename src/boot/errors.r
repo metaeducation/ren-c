@@ -79,8 +79,7 @@ Syntax: [
 ]
 
 Script: [
-    no-value:           [:arg1 {has no value}]
-    var-is-unset:       [:arg1 {is unset (holds nothing, ~) See: GET/ANY)}]
+    no-value:           [:arg1 {has no value (~ antiform) See: GET/ANY}]
     need-non-end:       [{end was reached while trying to set} :arg1]
     need-non-null:      {non-NULL value required (see MAYBE, TRY, REIFY)}
 

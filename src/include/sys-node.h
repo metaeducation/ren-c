@@ -41,6 +41,67 @@
     (not (NODE_BYTE(n) & NODE_BYTEMASK_0x01_CELL))
 
 
+#define Is_Node_Marked(n)   (did (NODE_BYTE(n) & NODE_BYTEMASK_0x10_MARKED))
+#define Not_Node_Marked(n)  (not Is_Node_Marked(n))
+
+#define Is_Node_Managed(n)  (did (NODE_BYTE(n) & NODE_BYTEMASK_0x20_MANAGED))
+#define Not_Node_Managed(n) (not Is_Node_Managed(n))
+
+#ifdef NDEBUG
+    #define Is_Node_Free(n) \
+        (did (NODE_BYTE(n) & NODE_BYTEMASK_0x40_FREE))
+#else
+    INLINE bool Is_Node_Free(Node* n) {
+        if (not (NODE_BYTE(n) & NODE_BYTEMASK_0x40_FREE))
+            return false;
+
+        assert(
+            FIRST_BYTE(n) == FREED_FLEX_BYTE
+            or FIRST_BYTE(n) == FREED_CELL_BYTE
+        );
+        return true;
+    }
+#endif
+#define Not_Node_Free(n)    (not Is_Node_Free(n))
+
+// Is_Node_Root() sounds like it might be the only node.
+// Is_Node_A_Root() sounds like a third category vs Is_Node_A_Cell()/Stub()
+//
+#define Is_Node_Root_Bit_Set(n) \
+    (did (NODE_BYTE(n) & NODE_BYTEMASK_0x02_ROOT))
+
+#define Not_Node_Root_Bit_Set(n) \
+    (not (NODE_BYTE(n) & NODE_BYTEMASK_0x02_ROOT))
+
+// Add "_Bit" suffix to reinforce lack of higher level function.  (A macro
+// with the name Set_Node_Managed() might sound like it does more, like
+// removing from the manuals list the way Manage_Flex() etc. do)
+
+#define Set_Node_Root_Bit(n) \
+    NODE_BYTE(n) |= NODE_BYTEMASK_0x02_ROOT
+
+#define Clear_Node_Root_Bit(n) \
+    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x02_ROOT)
+
+#define Set_Node_Marked_Bit(n) \
+    NODE_BYTE(n) |= NODE_BYTEMASK_0x10_MARKED
+
+#define Clear_Node_Marked_Bit(n) \
+    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x10_MARKED)
+
+#define Set_Node_Managed_Bit(n) \
+    NODE_BYTE(n) |= NODE_BYTEMASK_0x20_MANAGED
+
+#define Clear_Node_Managed_Bit(n) \
+    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x20_MANAGED)
+
+#define Set_Node_Free_Bit(n) \
+    NODE_BYTE(n) |= NODE_BYTEMASK_0x40_FREE
+
+#define Clear_Node_Free_Bit(n) \
+    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x40_FREE)
+
+
 #if !defined(DEBUG_CHECK_CASTS) || (! CPLUSPLUS_11)
 
     #define NOD(p) \
@@ -126,7 +187,7 @@ INLINE void *Alloc_Pooled(REBLEN pool_id)
     }
   #endif
 
-    assert(IS_FREE_NODE(unit));  // client needs to change to non-free
+    assert(Is_Node_Free(unit));  // client needs to change to non-free
     return cast(void*, unit);
 }
 
@@ -141,7 +202,7 @@ INLINE void Free_Pooled(REBLEN pool_id, void *p)
     if (
         pool_id == STUB_POOL
         and not (cast(union HeaderUnion*, p)->bits & NODE_FLAG_CELL)
-        and Get_Flex_Info(cast(Flex*, p), FLEX_INFO_MONITOR_DEBUG)
+        and Get_Flex_Info(cast(Flex*, p), MONITOR_DEBUG)
     ){
         printf("Freeing series %p on tick #%d\n", p, cast(int, TG_Tick));
         fflush(stdout);

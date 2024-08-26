@@ -357,7 +357,7 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
 
     Array* varlist = CTX_VARLIST(c);
     Array* keylist = CTX_KEYLIST(c);
-    assert(Not_Flex_Flag(keylist, ARRAY_FLAG_FILE_LINE));
+    assert(Not_Array_Flag(keylist, HAS_FILE_LINE));
 
     assert(
         not MISC(varlist).meta
@@ -398,7 +398,7 @@ void Extra_Init_Action_Checks_Debug(REBACT *a) {
     assert(VAL_ACTION(archetype) == a);
 
     Array* paramlist = ACT_PARAMLIST(a);
-    assert(Not_Flex_Flag(paramlist, ARRAY_FLAG_FILE_LINE));
+    assert(Not_Array_Flag(paramlist, HAS_FILE_LINE));
 
     // !!! Currently only a context can serve as the "meta" information,
     // though the interface may expand.

@@ -204,11 +204,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
             // so no typeset or quoting settings available.  Can't produce
             // any voids, because the data source is a block.
             //
-            assert(
-                Not_Flex_Flag(
-                    arg->extra.binding, ARRAY_FLAG_VARLIST
-                )
-            );
+            assert(Not_Array_Flag(arg->extra.binding, IS_VARLIST));
         }
         else {
             REBCTX *context = CTX(arg->extra.binding);
@@ -987,7 +983,7 @@ REBTYPE(Array)
             specifier,
             tail, // tail
             0, // extra
-            ARRAY_FLAG_FILE_LINE, // flags
+            ARRAY_FLAG_HAS_FILE_LINE, // flags
             types // types to copy deeply
         );
         return Init_Any_Array(OUT, VAL_TYPE(array), copy);
@@ -1038,7 +1034,7 @@ REBTYPE(Array)
 
         bool line_back;
         if (back == Array_Last(arr)) // !!! review tail newline handling
-            line_back = Get_Flex_Flag(arr, ARRAY_FLAG_TAIL_NEWLINE);
+            line_back = Get_Array_Flag(arr, NEWLINE_AT_TAIL);
         else
             line_back = GET_VAL_FLAG(back + 1, VALUE_FLAG_NEWLINE_BEFORE);
 
@@ -1180,7 +1176,7 @@ void Assert_Array_Core(Array* a)
 
         for (; i < rest - 1; ++i, ++item) {
             const bool unwritable = not (item->header.bits & NODE_FLAG_CELL);
-            if (Get_Flex_Flag(a, FLEX_FLAG_FIXED_SIZE)) {
+            if (Get_Flex_Flag(a, FIXED_SIZE)) {
               #if !defined(NDEBUG)
                 if (not unwritable) {
                     printf("Writable cell found in fixed-size array rest\n");

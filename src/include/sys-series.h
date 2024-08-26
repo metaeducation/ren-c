@@ -126,7 +126,7 @@
             cast(int, TG_Tick)
         );
         fflush(stdout);
-        Set_Flex_Info(stub, FLEX_INFO_MONITOR_DEBUG);
+        Set_Flex_Info(stub, MONITOR_DEBUG);
     }
 #endif
 
@@ -357,22 +357,22 @@ INLINE void Force_Flex_Managed(Flex* s) {
 //
 
 INLINE bool Is_Flex_Black(Flex* s)
-  { return Get_Flex_Info(s, FLEX_INFO_BLACK); }
+  { return Get_Flex_Info(s, BLACK); }
 
 INLINE bool Is_Flex_White(Flex* s)
- { return Not_Flex_Info(s, FLEX_INFO_BLACK); }
+ { return Not_Flex_Info(s, BLACK); }
 
 INLINE void Flip_Flex_To_Black(Flex* s) {
-    assert(Not_Flex_Info(s, FLEX_INFO_BLACK));
-    Set_Flex_Info(s, FLEX_INFO_BLACK);
+    assert(Not_Flex_Info(s, BLACK));
+    Set_Flex_Info(s, BLACK);
   #if !defined(NDEBUG)
     ++TG_Num_Black_Flex;
   #endif
 }
 
 INLINE void Flip_Flex_To_White(Flex* s) {
-    assert(Get_Flex_Info(s, FLEX_INFO_BLACK));
-    Clear_Flex_Info(s, FLEX_INFO_BLACK);
+    assert(Get_Flex_Info(s, BLACK));
+    Clear_Flex_Info(s, BLACK);
   #if !defined(NDEBUG)
     --TG_Num_Black_Flex;
   #endif
@@ -385,18 +385,18 @@ INLINE void Flip_Flex_To_White(Flex* s) {
 
 INLINE void Freeze_Non_Array_Flex(Flex* s) { // there is no unfreeze!
     assert(not Is_Flex_Array(s)); // use Deep_Freeze_Array
-    Set_Flex_Info(s, FLEX_INFO_FROZEN);
+    Set_Flex_Info(s, FROZEN_DEEP);
 }
 
 INLINE bool Is_Flex_Frozen(Flex* s) {
     assert(not Is_Flex_Array(s)); // use Is_Array_Deeply_Frozen
-    return Get_Flex_Info(s, FLEX_INFO_FROZEN);
+    return Get_Flex_Info(s, FROZEN_DEEP);
 }
 
 INLINE bool Is_Flex_Read_Only(Flex* s) { // may be temporary...
     return did (
         s->info.bits &
-        (FLEX_INFO_FROZEN | FLEX_INFO_HOLD | FLEX_INFO_PROTECTED)
+        (FLEX_INFO_FROZEN_DEEP | FLEX_INFO_HOLD | FLEX_INFO_PROTECTED)
     );
 }
 
@@ -409,16 +409,16 @@ INLINE bool Is_Flex_Read_Only(Flex* s) { // may be temporary...
 //
 INLINE void Fail_If_Read_Only_Flex(Flex* s) {
     if (Is_Flex_Read_Only(s)) {
-        if (Get_Flex_Info(s, FLEX_INFO_AUTO_LOCKED))
+        if (Get_Flex_Info(s, AUTO_LOCKED))
             fail (Error_Series_Auto_Locked_Raw());
 
-        if (Get_Flex_Info(s, FLEX_INFO_HOLD))
+        if (Get_Flex_Info(s, HOLD))
             fail (Error_Series_Held_Raw());
 
-        if (Get_Flex_Info(s, FLEX_INFO_FROZEN))
+        if (Get_Flex_Info(s, FROZEN_DEEP))
             fail (Error_Series_Frozen_Raw());
 
-        assert(Get_Flex_Info(s, FLEX_INFO_PROTECTED));
+        assert(Get_Flex_Info(s, PROTECTED));
         fail (Error_Series_Protected_Raw());
     }
 }
@@ -483,7 +483,7 @@ INLINE void Fail_If_Read_Only_Flex(Flex* s) {
 INLINE Flex* Cell_Flex(const Cell* v) {
     assert(ANY_SERIES(v) or Is_Map(v));  // !!! gcc 5.4 -O2 bug
     Flex* s = v->payload.any_series.series;
-    if (Get_Flex_Info(s, FLEX_INFO_INACCESSIBLE))
+    if (Get_Flex_Info(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return s;
 }
@@ -635,7 +635,7 @@ INLINE bool Did_Flex_Data_Alloc(Flex* s, REBLEN length) {
         assert(size >= length * wide);
 
         // We don't round to power of 2 for allocations in memory pools
-        Clear_Flex_Flag(s, FLEX_FLAG_POWER_OF_2);
+        Clear_Flex_Flag(s, POWER_OF_2);
     }
     else {
         // ...the allocation is too big for a pool.  But instead of just
@@ -644,7 +644,7 @@ INLINE bool Did_Flex_Data_Alloc(Flex* s, REBLEN length) {
         // boundaries (or choose a power of 2, if requested).
 
         size = length * wide;
-        if (Get_Flex_Flag(s, FLEX_FLAG_POWER_OF_2)) {
+        if (Get_Flex_Flag(s, POWER_OF_2)) {
             REBLEN len = 2048;
             while (len < size)
                 len *= 2;
@@ -654,7 +654,7 @@ INLINE bool Did_Flex_Data_Alloc(Flex* s, REBLEN length) {
             // divisibility by the item width.
             //
             if (size % wide == 0)
-                Clear_Flex_Flag(s, FLEX_FLAG_POWER_OF_2);
+                Clear_Flex_Flag(s, POWER_OF_2);
         }
 
         s->content.dynamic.data = ALLOC_N(char, size);
@@ -701,7 +701,7 @@ INLINE Flex* Make_Flex_Core(
     Byte wide,
     REBFLGS flags
 ){
-    assert(not (flags & ARRAY_FLAG_FILE_LINE));
+    assert(not (flags & ARRAY_FLAG_HAS_FILE_LINE));
 
     if (cast(REBU64, capacity) * wide > INT32_MAX)
         fail (Error_No_Memory(cast(REBU64, capacity) * wide));

@@ -174,7 +174,8 @@ help: function [
     ;
     if match [group! get-word! get-path!] :topic [
         topic: reeval topic else [
-            fail "HELP requested on NULL" ;-- should this PRINT vs. FAIL?
+            print "HELP requested on NULL"
+            return
         ]
     ]
 

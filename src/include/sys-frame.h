@@ -131,7 +131,7 @@ INLINE Option(String*) File_Of_Level(Level* L) {
     if (not L->source->array)
         return nullptr;
 
-    if (Not_Flex_Flag(L->source->array, ARRAY_FLAG_FILE_LINE))
+    if (Not_Array_Flag(L->source->array, HAS_FILE_LINE))
         return nullptr;
 
     Option(String*) file = LINK(L->source->array).file;
@@ -145,7 +145,7 @@ INLINE int LVL_LINE(Level* L) {
     if (not L->source->array)
         return 0;
 
-    if (Not_Flex_Flag(L->source->array, ARRAY_FLAG_FILE_LINE))
+    if (Not_Array_Flag(L->source->array, HAS_FILE_LINE))
         return 0;
 
     return MISC(L->source->array).line;
@@ -399,7 +399,7 @@ INLINE void SET_FRAME_VALUE(Level* L, const Cell* value) {
 // This way there is no test and only natives pay the cost of flag setting.
 //
 INLINE void Enter_Native(Level* L) {
-    Set_Flex_Info(L->varlist, FLEX_INFO_HOLD); // may or may not be managed
+    Set_Flex_Info(L->varlist, HOLD); // may or may not be managed
 }
 
 
@@ -412,7 +412,7 @@ INLINE void Begin_Action(
     L->original = LVL_PHASE_OR_DUMMY(L);
 
     assert(Is_Pointer_Corrupt_Debug(L->opt_label)); // only valid w/REB_ACTION
-    assert(not opt_label or Get_Flex_Flag(opt_label, FLEX_FLAG_UTF8));
+    assert(not opt_label or Get_Flex_Flag(opt_label, UTF8_SYMBOL));
     L->opt_label = opt_label;
   #if defined(DEBUG_FRAME_LABELS) // helpful for looking in the debugger
     L->label_utf8 = cast(const char*, Frame_Label_Or_Anonymous_UTF8(L));
@@ -533,28 +533,28 @@ INLINE void Push_Action(
 
     L->u.defer.arg = nullptr;
 
-    assert(Not_Flex_Flag(L->varlist, NODE_FLAG_MANAGED));
-    assert(Not_Flex_Info(L->varlist, FLEX_INFO_INACCESSIBLE));
+    assert(Not_Node_Managed(L->varlist));
+    assert(Not_Flex_Info(L->varlist, INACCESSIBLE));
 }
 
 
 INLINE void Drop_Action(Level* L) {
-    assert(Not_Flex_Info(L->varlist, FRAME_INFO_FAILED));
+    assert(Not_Flex_Info(L->varlist, FRAME_FAILED));
 
     assert(
         not L->opt_label
-        or Get_Flex_Flag(L->opt_label, FLEX_FLAG_UTF8)
+        or Get_Flex_Flag(L->opt_label, UTF8_SYMBOL)
     );
 
     if (not (L->flags.bits & DO_FLAG_FULFILLING_ARG))
         L->flags.bits &= ~DO_FLAG_BARRIER_HIT;
 
     assert(
-        Get_Flex_Info(L->varlist, FLEX_INFO_INACCESSIBLE)
+        Get_Flex_Info(L->varlist, INACCESSIBLE)
         or LINK(L->varlist).keysource == L
     );
 
-    if (Get_Flex_Info(L->varlist, FLEX_INFO_INACCESSIBLE)) {
+    if (Get_Flex_Info(L->varlist, INACCESSIBLE)) {
         //
         // If something like Encloser_Dispatcher() runs, it might steal the
         // variables from a context to give them to the user, leaving behind
@@ -562,7 +562,7 @@ INLINE void Drop_Action(Level* L) {
         // therefore useless.  It served a purpose by being non-null during
         // the call, however, up to this moment.
         //
-        if (Get_Flex_Flag(L->varlist, NODE_FLAG_MANAGED))
+        if (Is_Node_Managed(L->varlist))
             L->varlist = nullptr; // references exist, let a new one alloc
         else {
             // This node could be reused vs. calling Alloc_Pooled() on the next
@@ -572,7 +572,7 @@ INLINE void Drop_Action(Level* L) {
             L->varlist = nullptr;
         }
     }
-    else if (Get_Flex_Flag(L->varlist, NODE_FLAG_MANAGED)) {
+    else if (Is_Node_Managed(L->varlist)) {
         //
         // The varlist wound up getting referenced in a cell that will outlive
         // this Drop_Action().  The pointer needed to stay working up until
@@ -591,7 +591,7 @@ INLINE void Drop_Action(Level* L) {
                 L->original  // degrade keysource from L
             )
         );
-        assert(Not_Flex_Flag(L->varlist, NODE_FLAG_MANAGED));
+        assert(Not_Node_Managed(L->varlist));
         LINK(L->varlist).keysource = L;  // carries NODE_FLAG_CELL
     }
     else {
@@ -601,7 +601,7 @@ INLINE void Drop_Action(Level* L) {
         // But no series bits we didn't set should be set...and right now,
         // only Enter_Native() sets HOLD.  Clear that.
         //
-        Clear_Flex_Info(L->varlist, FLEX_INFO_HOLD);
+        Clear_Flex_Info(L->varlist, HOLD);
         assert(0 == (L->varlist->info.bits & ~( // <- note bitwise not
             FLEX_INFO_0_IS_TRUE // parallels NODE_FLAG_NODE
             | FLAG_WIDE_BYTE_OR_0(0) // don't mask out wide (0 for arrays))
@@ -611,8 +611,8 @@ INLINE void Drop_Action(Level* L) {
 
   #if !defined(NDEBUG)
     if (L->varlist) {
-        assert(Not_Flex_Info(L->varlist, FLEX_INFO_INACCESSIBLE));
-        assert(Not_Flex_Flag(L->varlist, NODE_FLAG_MANAGED));
+        assert(Not_Flex_Info(L->varlist, INACCESSIBLE));
+        assert(Not_Node_Managed(L->varlist));
 
         Value* rootvar = cast(Value*, Array_Head(L->varlist));
         assert(Is_Frame(rootvar));
@@ -637,7 +637,7 @@ INLINE void Drop_Action(Level* L) {
 INLINE REBCTX *Context_For_Level_May_Manage(Level* L)
 {
     assert(not Is_Action_Level_Fulfilling(L));
-    Set_Flex_Flag(L->varlist, NODE_FLAG_MANAGED);
+    Set_Node_Managed_Bit(L->varlist);
     return CTX(L->varlist);
 }
 

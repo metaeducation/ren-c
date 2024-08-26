@@ -57,7 +57,7 @@ INLINE const char *Symbol_Head(Symbol* str) {
 }
 
 INLINE Symbol* Canon_Symbol(Symbol* str) {
-    while (Not_Flex_Info(str, SYMBOL_INFO_CANON))
+    while (Not_Flex_Info(str, CANON_SYMBOL))
         str = LINK(str).synonym; // circularly linked list
     return str;
 }

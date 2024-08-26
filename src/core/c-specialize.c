@@ -965,10 +965,10 @@ REB_R Block_Dispatcher(Level* L)
 
         // Preserve file and line information from the original, if present.
         //
-        if (Get_Flex_Flag(Cell_Array(block), ARRAY_FLAG_FILE_LINE)) {
+        if (Get_Array_Flag(Cell_Array(block), HAS_FILE_LINE)) {
             LINK(body_array).file = LINK(Cell_Array(block)).file;
             MISC(body_array).line = MISC(Cell_Array(block)).line;
-            Set_Flex_Flag(body_array, ARRAY_FLAG_FILE_LINE);
+            Set_Array_Flag(body_array, HAS_FILE_LINE);
         }
 
         // Need to do a raw initialization of this block Cell because it is
@@ -1045,7 +1045,7 @@ DECLARE_NATIVE(does)
     //
     Cell* body = Array_Head(ACT_DETAILS(doer));
     Flex* locker = nullptr;
-    Ensure_Value_Immutable(value, locker);
+    Force_Value_Frozen_Deep(value, locker);
     Copy_Cell(body, value);
 
     return Init_Action_Unbound(OUT, doer);

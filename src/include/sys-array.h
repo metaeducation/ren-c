@@ -141,7 +141,7 @@ INLINE void Term_Flex(Flex* s) {
 //
 
 INLINE bool Is_Array_Deeply_Frozen(Array* a) {
-    return Get_Flex_Info(a, FLEX_INFO_FROZEN);
+    return Get_Flex_Info(a, FROZEN_DEEP);
 
     // should be frozen all the way down (can only freeze arrays deeply)
 }
@@ -183,7 +183,7 @@ INLINE void Prep_Array(
 
     Cell* prep = Array_Head(a);
 
-    if (Not_Flex_Flag(a, FLEX_FLAG_FIXED_SIZE)) {
+    if (Not_Flex_Flag(a, FIXED_SIZE)) {
         //
         // Expandable arrays prep all cells, including in the not-yet-used
         // capacity.  Otherwise you'd waste time prepping cells on every
@@ -289,16 +289,16 @@ INLINE Array* Make_Array_Core(REBLEN capacity, REBFLGS flags) {
     // Arrays created at runtime default to inheriting the file and line
     // number from the array executing in the current frame.
     //
-    if (flags & ARRAY_FLAG_FILE_LINE) { // most callsites const fold this
+    if (flags & ARRAY_FLAG_HAS_FILE_LINE) { // most callsites const fold this
         if (
             TOP_LEVEL->source->array and
-            Get_Flex_Flag(TOP_LEVEL->source->array, ARRAY_FLAG_FILE_LINE)
+            Get_Array_Flag(TOP_LEVEL->source->array, HAS_FILE_LINE)
         ){
             LINK(s).file = LINK(TOP_LEVEL->source->array).file;
             MISC(s).line = MISC(TOP_LEVEL->source->array).line;
         }
         else
-            Clear_Flex_Flag(s, ARRAY_FLAG_FILE_LINE);
+            Clear_Array_Flag(s, HAS_FILE_LINE);
     }
 
   #if !defined(NDEBUG)
@@ -310,7 +310,7 @@ INLINE Array* Make_Array_Core(REBLEN capacity, REBFLGS flags) {
 }
 
 #define Make_Array(capacity) \
-    Make_Array_Core((capacity), ARRAY_FLAG_FILE_LINE)
+    Make_Array_Core((capacity), ARRAY_FLAG_HAS_FILE_LINE)
 
 // !!! Currently, many bits of code that make copies don't specify if they are
 // copying an array to turn it into a paramlist or varlist, or to use as the
@@ -324,24 +324,24 @@ INLINE Array* Make_Arr_For_Copy(
     REBFLGS flags,
     Array* original
 ){
-    if (original and Get_Flex_Flag(original, ARRAY_FLAG_TAIL_NEWLINE)) {
+    if (original and Get_Array_Flag(original, NEWLINE_AT_TAIL)) {
         //
         // All of the newline bits for cells get copied, so it only makes
         // sense that the bit for newline on the tail would be copied too.
         //
-        flags |= ARRAY_FLAG_TAIL_NEWLINE;
+        flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
     }
 
     if (
-        (flags & ARRAY_FLAG_FILE_LINE)
-        and (original and Get_Flex_Flag(original, ARRAY_FLAG_FILE_LINE))
+        (flags & ARRAY_FLAG_HAS_FILE_LINE)
+        and (original and Get_Array_Flag(original, HAS_FILE_LINE))
     ){
-        flags &= ~ARRAY_FLAG_FILE_LINE;
+        flags &= ~ARRAY_FLAG_HAS_FILE_LINE;
 
         Array* a = Make_Array_Core(capacity, flags);
         LINK(a).file = LINK(original).file;
         MISC(a).line = MISC(original).line;
-        Set_Flex_Flag(a, ARRAY_FLAG_FILE_LINE);
+        Set_Array_Flag(a, HAS_FILE_LINE);
         return a;
     }
 
@@ -433,7 +433,7 @@ INLINE Array* Copy_Array_At_Extra_Deep_Flags_Managed(
         specifier,
         Array_Len(original), // tail
         extra, // extra
-        flags, // note no ARRAY_FLAG_FILE_LINE by default
+        flags, // note no ARRAY_FLAG_HAS_FILE_LINE by default
         TS_SERIES & ~TS_NOT_COPIED // types
     );
 }

@@ -190,9 +190,9 @@ DECLARE_NATIVE(new_line)
 
     if (IS_END(item)) { // no value at tail to mark; use bit in array
         if (mark)
-            Set_Flex_Flag(a, ARRAY_FLAG_TAIL_NEWLINE);
+            Set_Array_Flag(a, NEWLINE_AT_TAIL);
         else
-            Clear_Flex_Flag(a, ARRAY_FLAG_TAIL_NEWLINE);
+            Clear_Array_Flag(a, NEWLINE_AT_TAIL);
         return OUT;
     }
 
@@ -284,7 +284,7 @@ DECLARE_NATIVE(new_line_q)
 
     return Init_Logic(
         OUT,
-        Get_Flex_Flag(arr, ARRAY_FLAG_TAIL_NEWLINE)
+        Get_Array_Flag(arr, NEWLINE_AT_TAIL)
     );
 }
 

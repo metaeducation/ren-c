@@ -1001,12 +1001,12 @@ acquisition_loop:
 
             if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
                 Flex* locker = nullptr;
-                Ensure_Value_Immutable(TOP, locker);
+                Force_Value_Frozen_Deep(TOP, locker);
             }
 
             if (Is_Api_Value(splice)) { // moved to TOP, can release *now*
                 Array* a = Singular_From_Cell(splice);
-                if (Get_Flex_Info(a, FLEX_INFO_API_RELEASE))
+                if (Get_Flex_Info(a, API_RELEASE))
                     rebRelease(m_cast(Value*, splice)); // !!! m_cast
             }
 
@@ -1033,8 +1033,8 @@ acquisition_loop:
                         and VAL_ACTION(single) == NAT_ACTION(null)
                     ) or (
                         Is_Group(single) and (
-                            Get_Flex_Info(Cell_Array(single), FLEX_INFO_HOLD)
-                            or Get_Flex_Info(Cell_Array(single), FLEX_INFO_FROZEN)
+                            Get_Flex_Info(Cell_Array(single), HOLD)
+                            or Get_Flex_Info(Cell_Array(single), FROZEN_DEEP)
                         )
                     )
                 );
@@ -1049,7 +1049,7 @@ acquisition_loop:
 
             if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
                 Flex* locker = nullptr;
-                Ensure_Value_Immutable(TOP, locker);
+                Force_Value_Frozen_Deep(TOP, locker);
             }
 
             Free_Instruction(instruction);
@@ -2378,7 +2378,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             ){
                 arr = Make_Array_Core(
                     1,
-                    NODE_FLAG_MANAGED | ARRAY_FLAG_FILE_LINE
+                    NODE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE
                 );
                 Append_Value(arr, TOP);
                 DROP();
@@ -2436,7 +2436,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
 
         if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
             Flex* locker = nullptr;
-            Ensure_Value_Immutable(TOP, locker);
+            Force_Value_Frozen_Deep(TOP, locker);
         }
 
         // Set the newline on the new value, indicating molding should put a
@@ -2464,7 +2464,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
 array_done:
     Drop_Mold_If_Pushed(mo);
 
-    // Note: ss->newline_pending may be true; used for ARRAY_FLAG_TAIL_NEWLINE
+    // Note: ss->newline_pending may be true; used for ARRAY_FLAG_NEWLINE_AT_TAIL
 
     return nullptr; // used with rebRescue(), so protocol requires a return
 }
@@ -2505,7 +2505,7 @@ void Scan_To_Stack_Relaxed(SCAN_STATE *ss) {
         memcpy(Blob_Head(bin), ss_before.begin, limit);
         Term_Blob_Len(bin, limit);
 
-        Set_Flex_Flag(bin, FLEX_FLAG_DONT_RELOCATE); // Blob_Head() is cached
+        Set_Flex_Flag(bin, DONT_RELOCATE); // Blob_Head() is cached
         ss_before.begin = Blob_Head(bin);
         Corrupt_Pointer_If_Debug(ss_before.end);
 
@@ -2567,14 +2567,14 @@ static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char)
     Array* a = Pop_Stack_Values_Core(
         base,
         NODE_FLAG_MANAGED
-            | (child.newline_pending ? ARRAY_FLAG_TAIL_NEWLINE : 0)
+            | (child.newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
     );
 
     // Tag array with line where the beginning bracket/group/etc. was found
     //
     MISC(a).line = ss->line;
     LINK(a).file = try_unwrap(ss->file);
-    Set_Flex_Flag(a, ARRAY_FLAG_FILE_LINE);
+    Set_Array_Flag(a, HAS_FILE_LINE);
 
     // The only variables that should actually be written back into the
     // parent ss are those reflecting an update in the "feed" of data.
@@ -2643,12 +2643,12 @@ Array* Scan_Va_Managed(
     Array* a = Pop_Stack_Values_Core(
         base,
         ARRAY_FLAG_NULLEDS_LEGAL | NODE_FLAG_MANAGED
-            | (ss.newline_pending ? ARRAY_FLAG_TAIL_NEWLINE : 0)
+            | (ss.newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
     );
 
     MISC(a).line = ss.line;
     LINK(a).file = try_unwrap(ss.file);
-    Set_Flex_Flag(a, ARRAY_FLAG_FILE_LINE);
+    Set_Array_Flag(a, HAS_FILE_LINE);
 
     // !!! While in practice every system has va_end() as a no-op, it's not
     // necessarily true from a standards point of view:
@@ -2686,12 +2686,12 @@ Array* Scan_UTF8_Managed(
     Array* a = Pop_Stack_Values_Core(
         base,
         NODE_FLAG_MANAGED
-            | (ss.newline_pending ? ARRAY_FLAG_TAIL_NEWLINE : 0)
+            | (ss.newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
     );
 
     MISC(a).line = ss.line;
     LINK(a).file = try_unwrap(ss.file);
-    Set_Flex_Flag(a, ARRAY_FLAG_FILE_LINE);
+    Set_Array_Flag(a, HAS_FILE_LINE);
 
     return a;
 }
@@ -2871,11 +2871,11 @@ DECLARE_NATIVE(transcode)
     Array* a = Pop_Stack_Values_Core(
         base,
         NODE_FLAG_MANAGED
-            | (ss.newline_pending ? ARRAY_FLAG_TAIL_NEWLINE : 0)
+            | (ss.newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
     );
     MISC(a).line = ss.line;
     LINK(a).file = try_unwrap(ss.file);
-    Set_Flex_Flag(a, ARRAY_FLAG_FILE_LINE);
+    Set_Array_Flag(a, HAS_FILE_LINE);
 
     return Init_Block(OUT, a);
 }

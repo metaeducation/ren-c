@@ -232,7 +232,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
             goto next_candidate_slot;
         }
 
-        assert(Get_Flex_Info(canon, SYMBOL_INFO_CANON));
+        assert(Get_Flex_Info(canon, CANON_SYMBOL));
 
         REBINT cmp;
         cmp = Compare_UTF8(cb_cast(Symbol_Head(canon)), utf8, size);
@@ -249,7 +249,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
         Symbol* synonym;
         synonym = LINK(canon).synonym;
         while (synonym != canon) {
-            assert(Not_Flex_Info(synonym, SYMBOL_INFO_CANON));
+            assert(Not_Flex_Info(synonym, CANON_SYMBOL));
 
             cmp = Compare_UTF8(cb_cast(Symbol_Head(synonym)), utf8, size);
             if (cmp == 0)
@@ -279,7 +279,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
     Symbol* intern = cast(Symbol*, Make_Flex_Core(
         size + 1,
         sizeof(Byte),
-        FLEX_FLAG_UTF8 | FLEX_FLAG_FIXED_SIZE
+        FLEX_FLAG_UTF8_SYMBOL | FLEX_FLAG_FIXED_SIZE
     ));
 
     // The incoming string isn't always null terminated, e.g. if you are
@@ -300,7 +300,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
             ++PG_Num_Canon_Slots_In_Use;
         }
 
-        Set_Flex_Info(intern, SYMBOL_INFO_CANON);
+        Set_Flex_Info(intern, CANON_SYMBOL);
 
         LINK(intern).synonym = intern; // circularly linked list, empty state
 
@@ -363,7 +363,7 @@ void GC_Kill_Interning(Symbol* intern)
         temp = LINK(temp).synonym;
     LINK(temp).synonym = synonym; // cut intern out of chain (or no-op)
 
-    if (Not_Flex_Info(intern, SYMBOL_INFO_CANON))
+    if (Not_Flex_Info(intern, CANON_SYMBOL))
         return; // for non-canon forms, removing from chain is all you need
 
     assert(MISC(intern).bind_index.other == 0); // shouldn't GC during binds?
@@ -396,7 +396,7 @@ void GC_Kill_Interning(Symbol* intern)
         assert(hash == Hash_String(synonym));
     #endif
         canons_by_hash[slot] = synonym;
-        Set_Flex_Info(synonym, SYMBOL_INFO_CANON);
+        Set_Flex_Info(synonym, CANON_SYMBOL);
         MISC(synonym).bind_index.lib = MISC(intern).bind_index.lib;
         MISC(synonym).bind_index.other = 0;
     }
@@ -622,9 +622,9 @@ void INIT_WORD_INDEX_Extra_Checks_Debug(Cell* v, REBLEN i)
     assert(IS_WORD_BOUND(v));
     Stub* binding = VAL_BINDING(v);
     Array* keysource;
-    if (Not_Flex_Flag(binding, NODE_FLAG_MANAGED))
+    if (Not_Node_Managed(binding))
         keysource = ACT_PARAMLIST(Level_Phase(LVL(LINK(binding).keysource)));
-    else if (Get_Flex_Flag(binding, ARRAY_FLAG_PARAMLIST))
+    else if (Get_Array_Flag(binding, IS_PARAMLIST))
         keysource = ACT_PARAMLIST(ACT(binding));
     else
         keysource = CTX_KEYLIST(CTX(binding));

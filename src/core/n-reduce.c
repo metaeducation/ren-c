@@ -98,9 +98,9 @@ DECLARE_NATIVE(reduce)
         if (Reduce_To_Stack_Throws(OUT, value))
             return R_THROWN;
 
-        REBFLGS pop_flags = NODE_FLAG_MANAGED | ARRAY_FLAG_FILE_LINE;
-        if (Get_Flex_Flag(Cell_Array(value), ARRAY_FLAG_TAIL_NEWLINE))
-            pop_flags |= ARRAY_FLAG_TAIL_NEWLINE;
+        REBFLGS pop_flags = NODE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE;
+        if (Get_Array_Flag(Cell_Array(value), NEWLINE_AT_TAIL))
+            pop_flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
         return Init_Any_Array(
             OUT,
@@ -280,9 +280,9 @@ bool Compose_To_Stack_Throws(
                 return true;
             }
 
-            REBFLGS flags = NODE_FLAG_MANAGED | ARRAY_FLAG_FILE_LINE;
-            if (Get_Flex_Flag(Cell_Array(L->value), ARRAY_FLAG_TAIL_NEWLINE))
-                flags |= ARRAY_FLAG_TAIL_NEWLINE;
+            REBFLGS flags = NODE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE;
+            if (Get_Array_Flag(Cell_Array(L->value), NEWLINE_AT_TAIL))
+                flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
             Array* popped = Pop_Stack_Values_Core(deep_base, flags);
             Init_Any_Array(
@@ -345,9 +345,9 @@ DECLARE_NATIVE(compose)
     // The stack values contain N NEWLINE_BEFORE flags, and we need N + 1
     // flags.  Borrow the one for the tail directly from the input Array.
     //
-    REBFLGS flags = NODE_FLAG_MANAGED | ARRAY_FLAG_FILE_LINE;
-    if (Get_Flex_Flag(Cell_Array(ARG(value)), ARRAY_FLAG_TAIL_NEWLINE))
-        flags |= ARRAY_FLAG_TAIL_NEWLINE;
+    REBFLGS flags = NODE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE;
+    if (Get_Array_Flag(Cell_Array(ARG(value)), NEWLINE_AT_TAIL))
+        flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
     return Init_Any_Array(
         OUT,

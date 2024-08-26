@@ -265,8 +265,8 @@ RebolValue* API_rebRepossess(void *ptr, size_t size)
     if (size > Blob_Len(bin) - ALIGN_SIZE)
         fail ("Attempt to rebRepossess() more than rebMalloc() capacity");
 
-    assert(Get_Flex_Flag(bin, FLEX_FLAG_DONT_RELOCATE));
-    Clear_Flex_Flag(bin, FLEX_FLAG_DONT_RELOCATE);
+    assert(Get_Flex_Flag(bin, DONT_RELOCATE));
+    Clear_Flex_Flag(bin, DONT_RELOCATE);
 
     if (Is_Flex_Dynamic(bin)) {
         //
@@ -617,7 +617,7 @@ const void *API_rebUneval(const RebolValue* v)
     }
     else {
         Array* a = Make_Array(2);
-        Set_Flex_Info(a, FLEX_INFO_HOLD);
+        Set_Flex_Info(a, HOLD);
         Copy_Cell(Alloc_Tail_Array(a), NAT_VALUE(the));  // the THE function
         Copy_Cell(Alloc_Tail_Array(a), v);
 
@@ -645,10 +645,10 @@ const void *API_rebR(RebolValue* v)
         fail ("Cannot apply rebR() to non-API value");
 
     Array* a = Singular_From_Cell(v);
-    if (Get_Flex_Info(a, FLEX_INFO_API_RELEASE))
+    if (Get_Flex_Info(a, API_RELEASE))
         fail ("Cannot apply rebR() more than once to the same API value");
 
-    Set_Flex_Info(a, FLEX_INFO_API_RELEASE);
+    Set_Flex_Info(a, API_RELEASE);
     return v; // returned as const void* to discourage use outside variadics
 }
 
@@ -842,7 +842,7 @@ RebolValue* API_rebRescue(
         assert(L->varlist); // action must be running
         Array* stub = L->varlist; // will be stubbed, with info bits reset
         Drop_Action(L);
-        Set_Flex_Info(stub, FRAME_INFO_FAILED); // signal API leaks ok
+        Set_Flex_Info(stub, FRAME_FAILED); // signal API leaks ok
         Abort_Level(L);
         return Init_Error(Alloc_Value(), error_ctx);
     }
@@ -1371,12 +1371,12 @@ RebolValue* API_rebManage(RebolValue* v)
     assert(Is_Api_Value(v));
 
     Array* a = Singular_From_Cell(v);
-    assert(Get_Flex_Flag(a, NODE_FLAG_ROOT));
+    assert(Is_Node_Root_Bit_Set(a));
 
     if (Is_Flex_Managed(a))
         fail ("Attempt to rebManage() a handle that's already managed.");
 
-    Set_Flex_Flag(a, NODE_FLAG_MANAGED);
+    Set_Node_Managed_Bit(a);
     assert(not LINK(a).owner);
     LINK(a).owner = Context_For_Level_May_Manage(TOP_LEVEL);
 
@@ -1399,19 +1399,19 @@ void API_rebUnmanage(void *p)
     assert(Is_Api_Value(v));
 
     Array* a = Singular_From_Cell(v);
-    assert(Get_Flex_Flag(a, NODE_FLAG_ROOT));
+    assert(Is_Node_Root_Bit_Set(a));
 
     if (not Is_Flex_Managed(a))
         fail ("Attempt to rebUnmanage() a handle with indefinite lifetime.");
 
-    // It's not safe to convert the average series that might be referred to
+    // It's not safe to convert the average Flex that might be referred to
     // from managed to unmanaged, because you don't know how many references
-    // might be in cells.  But the singular array holding API handles has
+    // might be in cells.  But the singular Array holding API handles has
     // pointers to its cell being held by client C code only.  It's at their
     // own risk to do this, and not use those pointers after a free.
     //
-    Clear_Flex_Flag(a, NODE_FLAG_MANAGED);
-    assert(Get_Flex_Flag(LINK(a).owner, ARRAY_FLAG_VARLIST));
+    Clear_Node_Managed_Bit(a);
+    assert(Get_Array_Flag(LINK(a).owner, IS_VARLIST));
     LINK(a).owner = nullptr;
 }
 
@@ -1521,8 +1521,8 @@ intptr_t API_rebPromise(const void *p, va_list *vaptr)
     // The array is managed, but let's unmanage it so it doesn't get GC'd and
     // use it as the ID of the table entry for the promise.
     //
-    assert(Get_Flex_Flag(L->source->array, NODE_FLAG_MANAGED));
-    Clear_Flex_Flag(L->source->array, NODE_FLAG_MANAGED);
+    assert(Is_Node_Managed(L->source->array));
+    Clear_Node_Managed_Bit(L->source->array);
 
     EM_ASM_({
         setTimeout(function() { // evaluate the code w/no other code on GUI
@@ -1566,8 +1566,8 @@ void API_rebPromise_callback(intptr_t promise_id)
     // !!! We probably can't unmanage and free it after because it (may?) be
     // legal for references to that array to make it out to the debugger?
     //
-    assert(Not_Flex_Flag(arr, NODE_FLAG_MANAGED));
-    Set_Flex_Flag(arr, NODE_FLAG_MANAGED);
+    assert(Not_Is_Node_Managed(arr));
+    Set_Node_Managed_Bit(arr);
 
     Value* result = Alloc_Value();
     if (THROWN_FLAG == Eval_Array_At_Core(
