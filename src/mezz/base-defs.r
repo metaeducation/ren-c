@@ -299,7 +299,7 @@ reeval func [
     any-number?:
     any-series?:
     any-scalar?:
-    any-array?:
+    any-list?:
     <end>
 
 

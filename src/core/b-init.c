@@ -673,7 +673,7 @@ static Array* Startup_Natives(const Value* boot_natives)
     Init_Action_Meta_Shim();
 
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
-    Cell* item = Cell_Array_At(boot_natives);
+    Cell* item = Cell_List_At(boot_natives);
     Specifier* specifier = VAL_SPECIFIER(boot_natives);
 
     // Although the natives are not being "executed", there are typesets
@@ -737,7 +737,7 @@ static Array* Startup_Natives(const Value* boot_natives)
 static Array* Startup_Generics(const Value* boot_generics)
 {
     assert(VAL_INDEX(boot_generics) == 0); // should be at head, sanity check
-    Cell* head = Cell_Array_At(boot_generics);
+    Cell* head = Cell_List_At(boot_generics);
     Specifier* specifier = VAL_SPECIFIER(boot_generics);
 
     // Add SET-WORD!s that are top-level in the generics block to the lib
@@ -755,7 +755,7 @@ static Array* Startup_Generics(const Value* boot_generics)
     Bind_Values_Deep(head, Lib_Context);
 
     DECLARE_VALUE (result);
-    if (Do_Any_Array_At_Throws(result, boot_generics))
+    if (Do_At_Throws(result, boot_generics))
         panic (result);
 
     if (not Is_Blank(result))
@@ -970,13 +970,13 @@ static void Init_System_Object(
     REBCTX *errors_catalog
 ) {
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
-    Cell* spec_head = Cell_Array_At(boot_sysobj_spec);
+    Cell* spec_head = Cell_List_At(boot_sysobj_spec);
 
     // Create the system object from the sysobj block (defined in %sysobj.r)
     //
     REBCTX *system = Make_Selfish_Context_Detect_Managed(
         REB_OBJECT, // type
-        Cell_Array_At(boot_sysobj_spec), // scan for toplevel set-words
+        Cell_List_At(boot_sysobj_spec), // scan for toplevel set-words
         nullptr  // parent
     );
 
@@ -989,7 +989,7 @@ static void Init_System_Object(
     // Evaluate the block (will eval CONTEXTs within).  Expects void result.
     //
     DECLARE_VALUE (result);
-    if (Do_Any_Array_At_Throws(result, boot_sysobj_spec))
+    if (Do_At_Throws(result, boot_sysobj_spec))
         panic (result);
     if (not Is_Blank(result))
         panic (result);

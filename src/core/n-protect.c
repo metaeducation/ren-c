@@ -81,11 +81,11 @@ static void Protect_Key(REBCTX *context, REBLEN index, REBFLGS flags)
 //
 void Protect_Value(Cell* v, REBFLGS flags)
 {
-    if (ANY_SERIES(v))
+    if (Any_Series(v))
         Protect_Flex(Cell_Flex(v), VAL_INDEX(v), flags);
     else if (Is_Map(v))
         Protect_Flex(MAP_PAIRLIST(VAL_MAP(v)), 0, flags);
-    else if (ANY_CONTEXT(v))
+    else if (Any_Context(v))
         Protect_Context(VAL_CONTEXT(v), flags);
 }
 
@@ -163,7 +163,7 @@ void Protect_Context(REBCTX *c, REBFLGS flags)
 //
 static void Protect_Word_Value(Value* word, REBFLGS flags)
 {
-    if (ANY_WORD(word) and IS_WORD_BOUND(word)) {
+    if (Any_Word(word) and IS_WORD_BOUND(word)) {
         Protect_Key(VAL_WORD_CONTEXT(word), VAL_WORD_INDEX(word), flags);
         if (flags & PROT_DEEP) {
             //
@@ -178,7 +178,7 @@ static void Protect_Word_Value(Value* word, REBFLGS flags)
             Uncolor(var);
         }
     }
-    else if (ANY_PATH(word)) {
+    else if (Any_Path(word)) {
         REBLEN index;
         REBCTX *context = Resolve_Path(word, &index);
         if (index == 0)
@@ -224,7 +224,7 @@ static REB_R Protect_Unprotect_Core(Level* level_, REBFLGS flags)
     if (Is_Block(value)) {
         if (REF(words)) {
             Cell* val;
-            for (val = Cell_Array_At(value); NOT_END(val); val++) {
+            for (val = Cell_List_At(value); NOT_END(val); val++) {
                 DECLARE_VALUE (word); // need binding, can't pass Cell
                 Derelativize(word, val, VAL_SPECIFIER(value));
                 Protect_Word_Value(word, flags);  // will unmark if deep
@@ -237,7 +237,7 @@ static REB_R Protect_Unprotect_Core(Level* level_, REBFLGS flags)
 
             DECLARE_VALUE (safe);
 
-            for (item = Cell_Array_At(value); NOT_END(item); ++item) {
+            for (item = Cell_List_At(value); NOT_END(item); ++item) {
                 if (Is_Word(item)) {
                     //
                     // Since we *are* PROTECT we allow ourselves to get mutable
@@ -357,20 +357,20 @@ bool Is_Value_Immutable(const Cell* v) {
         Is_Blank(v)
         || Is_Bar(v)
         || Is_Lit_Bar(v)
-        || ANY_SCALAR(v)
-        || ANY_WORD(v)
+        || Any_Scalar(v)
+        || Any_Word(v)
         || Is_Action(v) // paramlist is identity, hash
     ){
         return true;
     }
 
-    if (ANY_ARRAY(v))
+    if (Any_List(v))
         return Is_Array_Deeply_Frozen(Cell_Array(v));
 
-    if (ANY_CONTEXT(v))
+    if (Any_Context(v))
         return Is_Context_Deeply_Frozen(VAL_CONTEXT(v));
 
-    if (ANY_SERIES(v))
+    if (Any_Series(v))
         return Is_Flex_Frozen(Cell_Flex(v));
 
     return false;
@@ -408,17 +408,17 @@ void Force_Value_Frozen_Deep(const Cell* v, Flex* opt_locker) {
     if (Is_Value_Immutable(v))
         return;
 
-    if (ANY_ARRAY(v)) {
+    if (Any_List(v)) {
         Deep_Freeze_Array(Cell_Array(v));
         if (opt_locker)
             Set_Flex_Info(Cell_Array(v), AUTO_LOCKED);
     }
-    else if (ANY_CONTEXT(v)) {
+    else if (Any_Context(v)) {
         Deep_Freeze_Context(VAL_CONTEXT(v));
         if (opt_locker)
             Set_Flex_Info(VAL_CONTEXT(v), AUTO_LOCKED);
     }
-    else if (ANY_SERIES(v)) {
+    else if (Any_Series(v)) {
         Freeze_Non_Array_Flex(Cell_Flex(v));
         if (opt_locker != nullptr)
             Set_Flex_Info(Cell_Flex(v), AUTO_LOCKED);
@@ -467,8 +467,8 @@ DECLARE_NATIVE(lock)
     if (!REF(clone))
         Copy_Cell(OUT, v);
     else {
-        if (ANY_ARRAY(v)) {
-            Init_Any_Array_At(
+        if (Any_List(v)) {
+            Init_Any_List_At(
                 OUT,
                 VAL_TYPE(v),
                 Copy_Array_Deep_Managed(
@@ -478,14 +478,14 @@ DECLARE_NATIVE(lock)
                 VAL_INDEX(v)
             );
         }
-        else if (ANY_CONTEXT(v)) {
+        else if (Any_Context(v)) {
             Init_Any_Context(
                 OUT,
                 VAL_TYPE(v),
                 Copy_Context_Core_Managed(VAL_CONTEXT(v), TS_STD_SERIES)
             );
         }
-        else if (ANY_SERIES(v)) {
+        else if (Any_Series(v)) {
             Init_Any_Series_At(
                 OUT,
                 VAL_TYPE(v),

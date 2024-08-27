@@ -171,7 +171,7 @@ void Dump_Values(Cell* vp, REBLEN count)
         if (IS_END(val)) {
             break;
         }
-        if (IS_BLANK_RAW(val) or IS_NULLED(val)) {
+        if (IS_BLANK_RAW(val) or Is_Nulled(val)) {
             bp = cast(REBLEN*, val + 1);
             continue;
         }
@@ -271,7 +271,7 @@ void Dump_Stack(Level* L, REBLEN level)
     Value* param = ACT_PARAMS_HEAD(Level_Phase(L));
 
     for (; NOT_END(param); ++param, ++arg, ++n) {
-        if (IS_NULLED(arg))
+        if (Is_Nulled(arg))
             Debug_Fmt(
                 "    %s:",
                 Symbol_Head(Cell_Parameter_Symbol(param))
@@ -319,7 +319,7 @@ DECLARE_NATIVE(dump)
         if (not var) {
             PROBE("\\unbound\\");
         }
-        else if (IS_NULLED(var)) {
+        else if (Is_Nulled(var)) {
             PROBE("\\null\\");
         }
         else

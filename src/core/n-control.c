@@ -197,7 +197,7 @@ bool Either_Test_Core_Throws(
             out,
             true, // `fully` (ensure argument consumed)
             test,
-            NULLIZE(arg), // convert nulled cells to C nullptr for API
+            arg,  // may be nulled cell
             rebEND
         )){
             return true;
@@ -215,7 +215,7 @@ bool Either_Test_Core_Throws(
         return false;
 
     case REB_BLOCK: {
-        Cell* item = Cell_Array_At(test);
+        Cell* item = Cell_List_At(test);
         if (IS_END(item)) {
             //
             // !!! If the test is just [], what's that?  People aren't likely
@@ -231,7 +231,7 @@ bool Either_Test_Core_Throws(
                 var = item;
             else {
                 if (Cell_Word_Id(item) == SYM__TNULL_T) {
-                    if (IS_NULLED(arg)) {
+                    if (Is_Nulled(arg)) {
                         Init_True(out);
                         return false;
                     }
@@ -325,7 +325,7 @@ DECLARE_NATIVE(else)
     INCLUDE_PARAMS_OF_ELSE; // faster than EITHER-TEST specialized w/`VALUE?`
 
     Value* left = ARG(left);
-    if (not IS_NULLED(left) and not Is_Void(left))
+    if (not Is_Nulled(left) and not Is_Void(left))
         RETURN (left);
 
     if (Do_Branch_With_Throws(OUT, ARG(branch), NULLED_CELL))
@@ -353,7 +353,7 @@ DECLARE_NATIVE(then)
     INCLUDE_PARAMS_OF_THEN; // faster than EITHER-TEST specialized w/`NULL?`
 
     Value* left = ARG(left);
-    if (IS_NULLED(left) or Is_Void(left))
+    if (Is_Nulled(left) or Is_Void(left))
         return nullptr;  // left didn't run, so signal THEN didn't run either
 
     if (Do_Branch_With_Throws(OUT, ARG(branch), left))
@@ -381,7 +381,7 @@ DECLARE_NATIVE(also)
     INCLUDE_PARAMS_OF_ALSO; // `then func [x] [(...) :x]` => `also [...]`
 
     Value* left = ARG(left);
-    if (IS_NULLED(left) or Is_Void(left))
+    if (Is_Nulled(left) or Is_Void(left))
         return nullptr;
 
     if (Do_Branch_With_Throws(OUT, ARG(branch), left))
@@ -451,8 +451,8 @@ DECLARE_NATIVE(non)
     Value* test = ARG(test);
     Value* value = ARG(value);
 
-    if (IS_NULLED(test)) {  // not a datatype, needs special case
-        if (IS_NULLED(value))
+    if (Is_Nulled(test)) {  // not a datatype, needs special case
+        if (Is_Nulled(value))
             fail ("NON expected value to not be NULL, but it was");
     }
     else if (VAL_TYPE_KIND(test) == REB_NOTHING) {  // specialize common case
@@ -695,7 +695,7 @@ static REB_R Case_Choose_Core_May_Throw(
 
             Copy_Cell(block, OUT); // can't evaluate into ARG(block)
             if (Is_Block(block)) {
-                if (Do_Any_Array_At_Throws(OUT, block)) {
+                if (Do_At_Throws(OUT, block)) {
                     Abort_Level(L);
                     Drop_GC_Guard(cell);
                     return R_THROWN;
@@ -933,7 +933,7 @@ DECLARE_NATIVE(default)
 
     Value* target = ARG(target);
 
-    if (IS_NULLED(target)) { // e.g. `case [... default [...]]`
+    if (Is_Nulled(target)) { // e.g. `case [... default [...]]`
         UNUSED(ARG(look));
         if (NOT_END(level_->value)) // !!! shortcut using variadic for now
             fail ("DEFAULT usage with no left hand side must be at <end>");
@@ -952,7 +952,7 @@ DECLARE_NATIVE(default)
     }
 
     if (
-        not IS_NULLED(OUT)
+        not Is_Nulled(OUT)
         and not Is_Nothing(OUT)
         and (not Is_Blank(OUT) or REF(only))
     ){
@@ -1018,7 +1018,7 @@ DECLARE_NATIVE(catch)
     if (REF(any) and REF(name))
         fail (Error_Bad_Refines_Raw());
 
-    if (not Do_Any_Array_At_Throws(OUT, ARG(block))) {
+    if (not Do_At_Throws(OUT, ARG(block))) {
         if (REF(result))
             rebElide(rebEval(NAT_VALUE(set)), ARG(uncaught), OUT);
 
@@ -1054,7 +1054,7 @@ DECLARE_NATIVE(catch)
             //
             // Test all the words in the block for a match to catch
 
-            Cell* candidate = Cell_Array_At(ARG(names));
+            Cell* candidate = Cell_List_At(ARG(names));
             for (; NOT_END(candidate); candidate++) {
                 //
                 // !!! Should we test a typeset for illegal name types?
@@ -1099,7 +1099,7 @@ DECLARE_NATIVE(catch)
 
         CATCH_THROWN(Array_At(a, 1), OUT); // thrown value--may be null!
         Copy_Cell(Array_At(a, 0), OUT); // throw name (thrown bit clear)
-        if (IS_NULLED(Array_At(a, 1)))
+        if (Is_Nulled(Array_At(a, 1)))
             Term_Array_Len(a, 1); // trim out null value (illegal in block)
         else
             Term_Array_Len(a, 2);

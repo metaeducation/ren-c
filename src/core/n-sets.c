@@ -44,13 +44,13 @@ Flex* Make_Set_Operation_Flex(
     bool cased,
     REBLEN skip
 ){
-    assert(ANY_SERIES(val1));
+    assert(Any_Series(val1));
 
     if (val2) {
-        assert(ANY_SERIES(val2));
+        assert(Any_Series(val2));
 
-        if (ANY_ARRAY(val1)) {
-            if (!ANY_ARRAY(val2))
+        if (Any_List(val1)) {
+            if (!Any_List(val2))
                 fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
 
             // As long as they're both arrays, we're willing to do:
@@ -60,14 +60,14 @@ Flex* Make_Set_Operation_Flex(
             //
             // The type of the result will match the first value.
         }
-        else if (ANY_STRING(val1)) {
+        else if (Any_String(val1)) {
 
             // We will similarly do any two ANY-STRING! types:
             //
             //      >> union <abc> "bde"
             //      <abcde>
 
-            if (not ANY_STRING((val2)))
+            if (not Any_String((val2)))
                 fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
         }
         else {
@@ -90,7 +90,7 @@ Flex* Make_Set_Operation_Flex(
     bool first_pass = true; // are we in the first pass over the series?
     Flex* out_ser;
 
-    if (ANY_ARRAY(val1)) {
+    if (Any_List(val1)) {
         Flex* hser = 0;   // hash table for series
         Flex* hret;       // hash table for return series
 
@@ -179,7 +179,7 @@ Flex* Make_Set_Operation_Flex(
         out_ser = Copy_Array_Shallow(cast_Array(buffer), SPECIFIED);
         Free_Unmanaged_Flex(cast_Array(buffer));
     }
-    else if (ANY_STRING(val1)) {
+    else if (Any_String(val1)) {
         DECLARE_MOLD (mo);
 
         // ask mo->series to have at least `i` capacity beyond mo->start
@@ -331,9 +331,9 @@ Flex* Make_Set_Operation_Flex(
 //
 //  {Returns the first data set less the second data set.}
 //
-//      series [any-array! any-string! binary! bitset! typeset!]
+//      series [any-list! any-string! binary! bitset! typeset!]
 //          "original data"
-//      exclusions [any-array! any-string! binary! bitset! typeset!]
+//      exclusions [any-list! any-string! binary! bitset! typeset!]
 //          "data to exclude from series"
 //      /case
 //          "Uses case-sensitive comparison"
@@ -386,7 +386,7 @@ DECLARE_NATIVE(exclude)
 //
 //  "Returns the data set with duplicates removed."
 //
-//      series [any-array! any-string! binary! bitset! typeset!]
+//      series [any-list! any-string! binary! bitset! typeset!]
 //      /case
 //          "Use case-sensitive comparison (except bitsets)"
 //      /skip

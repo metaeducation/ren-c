@@ -305,7 +305,7 @@ void Do_After_Action_Checks_Debug(Level* L) {
             not TYPE_CHECK(typeset, VAL_TYPE(L->out))
             and not (
                 GET_ACT_FLAG(phase, ACTION_FLAG_INVISIBLE)
-                and IS_NULLED(L->out) // this happens with `do [return]`
+                and Is_Nulled(L->out) // this happens with `do [return]`
             )
         ){
             printf("Native code violated return type contract!\n");

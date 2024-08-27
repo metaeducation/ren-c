@@ -496,7 +496,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
     const Cell* v = head;
     for (; NOT_END(v); ++v) {
         enum Reb_Kind kind = VAL_TYPE(v);
-        if (ANY_WORD_KIND(kind)) {
+        if (Any_Word_Kind(kind)) {
             if (kind != REB_SET_WORD and not (cl->flags & COLLECT_ANY_WORD))
                 continue; // kind of word we're not interested in collecting
 
@@ -535,7 +535,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
         // behavior which is probably wrong.
         //
         if (kind == REB_BLOCK or kind == REB_GROUP)
-            Collect_Inner_Loop(cl, Cell_Array_At(v));
+            Collect_Inner_Loop(cl, Cell_List_At(v));
     }
 }
 
@@ -661,9 +661,9 @@ Array* Collect_Unique_Words_Managed(
     // assumes you were collecting for a keylist...it doesn't have access to
     // the "ignore" bindings.)  Do a pre-pass to fail first.
 
-    Cell* check = Cell_Array_At(ignore);
+    Cell* check = Cell_List_At(ignore);
     for (; NOT_END(check); ++check) {
-        if (not ANY_WORD(check))
+        if (not Any_Word(check))
             fail (Error_Invalid_Core(check, VAL_SPECIFIER(ignore)));
     }
 
@@ -681,9 +681,9 @@ Array* Collect_Unique_Words_Managed(
     // an error...so they will just be skipped when encountered.
     //
     if (Is_Block(ignore)) {
-        Cell* item = Cell_Array_At(ignore);
+        Cell* item = Cell_List_At(ignore);
         for (; NOT_END(item); ++item) {
-            assert(ANY_WORD(item)); // pre-pass checked this
+            assert(Any_Word(item)); // pre-pass checked this
             Symbol* canon = VAL_WORD_CANON(item);
 
             // A block may have duplicate words in it (this situation could
@@ -701,7 +701,7 @@ Array* Collect_Unique_Words_Managed(
             }
         }
     }
-    else if (ANY_CONTEXT(ignore)) {
+    else if (Any_Context(ignore)) {
         Value* key = CTX_KEYS_HEAD(VAL_CONTEXT(ignore));
         for (; NOT_END(key); ++key) {
             //
@@ -712,16 +712,16 @@ Array* Collect_Unique_Words_Managed(
         }
     }
     else
-        assert(IS_NULLED(ignore));
+        assert(Is_Nulled(ignore));
 
     Collect_Inner_Loop(cl, head);
 
     Array* array = Grab_Collected_Array_Managed(cl);
 
     if (Is_Block(ignore)) {
-        Cell* item = Cell_Array_At(ignore);
+        Cell* item = Cell_List_At(ignore);
         for (; NOT_END(item); ++item) {
-            assert(ANY_WORD(item));
+            assert(Any_Word(item));
             Symbol* canon = VAL_WORD_CANON(item);
 
         #if !defined(NDEBUG)
@@ -737,14 +737,14 @@ Array* Collect_Unique_Words_Managed(
             Remove_Binder_Index(&cl->binder, canon);
         }
     }
-    else if (ANY_CONTEXT(ignore)) {
+    else if (Any_Context(ignore)) {
         Value* key = CTX_KEYS_HEAD(VAL_CONTEXT(ignore));
         for (; NOT_END(key); ++key) {
             Remove_Binder_Index(&cl->binder, Key_Canon(key));
         }
     }
     else
-        assert(IS_NULLED(ignore));
+        assert(Is_Nulled(ignore));
 
     Collect_End(cl);
     return array;
@@ -993,7 +993,7 @@ Array* Context_To_Array(REBCTX *context, REBINT mode)
                 // been set.  These contexts cannot be converted to blocks,
                 // since user arrays may not contain void.
                 //
-                if (IS_NULLED(var))
+                if (Is_Nulled(var))
                     fail (Error_Null_Object_Block_Raw());
 
                 Copy_Cell(PUSH(), var);
@@ -1188,7 +1188,7 @@ void Resolve_Context(
     }
     else if (Is_Block(only_words)) {
         // Limit exports to only these words:
-        Cell* word = Cell_Array_At(only_words);
+        Cell* word = Cell_List_At(only_words);
         for (; NOT_END(word); word++) {
             if (Is_Word(word) or Is_Set_Word(word)) {
                 Add_Binder_Index(&binder, VAL_WORD_CANON(word), -1);
@@ -1219,7 +1219,7 @@ void Resolve_Context(
     key = CTX_KEYS_HEAD(source);
     for (n = 1; NOT_END(key); n++, key++) {
         Symbol* canon = Key_Canon(key);
-        if (IS_NULLED(only_words))
+        if (Is_Nulled(only_words))
             Add_Binder_Index(&binder, canon, n);
         else {
             if (Get_Binder_Index_Else_0(&binder, canon) != 0) {
@@ -1275,7 +1275,7 @@ void Resolve_Context(
                 Remove_Binder_Index_Else_0(&binder, Key_Canon(key));
         }
         else if (Is_Block(only_words)) {
-            Cell* word = Cell_Array_At(only_words);
+            Cell* word = Cell_List_At(only_words);
             for (; NOT_END(word); word++) {
                 if (Is_Word(word) or Is_Set_Word(word))
                     Remove_Binder_Index_Else_0(&binder, VAL_WORD_CANON(word));
@@ -1398,7 +1398,7 @@ void Assert_Context_Core(REBCTX *c)
         panic (c);
 
     Value* rootvar = CTX_ARCHETYPE(c);
-    if (not ANY_CONTEXT(rootvar))
+    if (not Any_Context(rootvar))
         panic (rootvar);
 
     REBLEN keys_len = Array_Len(keylist);

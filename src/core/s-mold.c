@@ -507,7 +507,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
     #endif
     }
 
-    if (IS_NULLED(v)) {
+    if (Is_Nulled(v)) {
         //
         // NULLs should only be molded out in debug scenarios, but this still
         // happens a lot, e.g. PROBE() of context arrays when they have unset
@@ -570,7 +570,7 @@ bool Form_Reduce_Throws(
     const Value* delimiter
 ){
     assert(
-        IS_NULLED(delimiter) or Is_Void(delimiter)
+        Is_Nulled(delimiter) or Is_Void(delimiter)
         or Is_Char(delimiter) or Is_Text(delimiter)
     );
 
@@ -593,7 +593,7 @@ bool Form_Reduce_Throws(
         if (IS_END(out))
             break;  // e.g. `spaced [comment "hi"]`
 
-        if (IS_NULLED(out))
+        if (Is_Nulled(out))
             fail (Error_Need_Non_Null_Raw());
 
         if (Is_Void(out))
@@ -609,7 +609,7 @@ bool Form_Reduce_Throws(
             Append_Utf8_Codepoint(mo->series, VAL_CHAR(out));
             pending = false;
         }
-        else if (IS_NULLED(delimiter) or Is_Void(delimiter))
+        else if (Is_Nulled(delimiter) or Is_Void(delimiter))
             Form_Value(mo, out);
         else {
             if (pending)
@@ -641,7 +641,7 @@ String* Form_Tight_Block(const Value* blk)
     Push_Mold(mo);
 
     Cell* item;
-    for (item = Cell_Array_At(blk); NOT_END(item); ++item)
+    for (item = Cell_List_At(blk); NOT_END(item); ++item)
         Form_Value(mo, item);
 
     return Pop_Molded_String(mo);

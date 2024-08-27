@@ -170,7 +170,7 @@ INLINE bool Start_New_Expression_Throws(Level* L) {
 //
 // Additionally, in the L->param state, L->special will never register as
 // anything other than a typeset.  This increases performance of some checks,
-// e.g. `IS_NULLED(L->special)` can only match the other two cases.
+// e.g. `Is_Nulled(L->special)` can only match the other two cases.
 //
 
 INLINE bool In_Typecheck_Mode(Level* L) {
@@ -222,7 +222,7 @@ INLINE void Finalize_Arg(
         or Is_Refinement(refine) // ensure arg not null
     );
 
-    if (IS_NULLED(arg) or Is_Void(arg)) {
+    if (Is_Nulled(arg) or Is_Void(arg)) {
         if (Is_Refinement(refine)) {
             //
             // We can only revoke the refinement if this is the 1st
@@ -588,7 +588,7 @@ bool Eval_Core_Throws(Level* const L)
             }
         }
         else if (Is_Group(L->value)) {
-            REBIXO indexor = Eval_Array_At_Core(
+            REBIXO indexor = Eval_At_Core(
                 SET_END(Level_Shove(L)),
                 nullptr, // opt_first (null means nothing, not nulled cell)
                 Cell_Array(L->value),
@@ -680,13 +680,13 @@ bool Eval_Core_Throws(Level* const L)
         //
         if (
             Cell_Series_Len_At(current) > 0
-            and Is_Word(Cell_Array_At(current))
+            and Is_Word(Cell_List_At(current))
         ){
             assert(not current_gotten); // no caching for paths
 
             Specifier* derived = Derive_Specifier(L->specifier, current);
 
-            Cell* path_at = Cell_Array_At(current);
+            Cell* path_at = Cell_List_At(current);
             const Value* var_at = Try_Get_Opt_Var(path_at, derived);
 
             if (
@@ -882,7 +882,7 @@ bool Eval_Core_Throws(Level* const L)
                 // the same as L->arg then L->arg must get assigned somehow
                 // (jumping to unspecialized_refinement will take care of it)
 
-                if (IS_NULLED(L->special)) {
+                if (Is_Nulled(L->special)) {
                     assert(NOT_VAL_FLAG(L->special, ARG_MARKED_CHECKED));
                     goto unspecialized_refinement; // second most common
                 }
@@ -1052,7 +1052,7 @@ bool Eval_Core_Throws(Level* const L)
                 // refinement arguments, but is legal in fulfilled frames.
                 //
                 assert(
-                    (L->refine != ORDINARY_ARG and IS_NULLED(L->special))
+                    (L->refine != ORDINARY_ARG and Is_Nulled(L->special))
                     or TYPE_CHECK(L->param, VAL_TYPE(L->special))
                 );
 
@@ -1612,7 +1612,7 @@ bool Eval_Core_Throws(Level* const L)
                         L->special = CTX_VARS_HEAD(exemplar);
                         L->arg = Level_Args_Head(L);
                         for (; NOT_END(L->arg); ++L->arg, ++L->special) {
-                            if (IS_NULLED(L->special)) // no specialization
+                            if (Is_Nulled(L->special)) // no specialization
                                 continue;
                             Copy_Cell(L->arg, L->special); // reset it
                         }
@@ -1750,7 +1750,7 @@ bool Eval_Core_Throws(Level* const L)
         if (not current_gotten)
             current_gotten = Get_Opt_Var_May_Fail(current, L->specifier);
 
-        if (Is_Action(current_gotten)) { // before IS_NULLED() is common case
+        if (Is_Action(current_gotten)) { // before Is_Nulled() is common case
             Push_Action(
                 L,
                 VAL_ACTION(current_gotten),
@@ -1897,7 +1897,7 @@ bool Eval_Core_Throws(Level* const L)
         // Note we might have something like (1 + 2 elide "Hi") that would
         // show up as having the stale bit.
         //
-        REBIXO indexor = Eval_Array_At_Core(
+        REBIXO indexor = Eval_At_Core(
             SET_END(Level_Spare(L)),
             nullptr, // opt_first (null means nothing, not nulled cell)
             array,

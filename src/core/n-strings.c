@@ -129,7 +129,7 @@ DECLARE_NATIVE(delimit)
         return R_THROWN;
     }
 
-    if (IS_NULLED(OUT) or not REF(tail))
+    if (Is_Nulled(OUT) or not REF(tail))
         return OUT;
 
     assert(Is_Text(OUT));
@@ -508,7 +508,7 @@ DECLARE_NATIVE(enbase)
         size = Cell_Series_Len_At(v);
     }
     else { // Convert the string to UTF-8
-        assert(ANY_STRING(v));
+        assert(Any_String(v));
         REBSIZ offset;
         Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
         bp = Blob_At(temp, offset);

@@ -184,7 +184,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         if (Vararg_Op_If_No_Advance_Handled(
             out,
             op,
-            IS_END(shared) ? END_NODE : Cell_Array_At(shared),
+            IS_END(shared) ? END_NODE : Cell_List_At(shared),
             IS_END(shared) ? SPECIFIED : VAL_SPECIFIER(shared),
             pclass
         )){
@@ -247,20 +247,20 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             break; }
 
         case PARAM_CLASS_HARD_QUOTE:
-            Derelativize(out, Cell_Array_At(shared), VAL_SPECIFIER(shared));
+            Derelativize(out, Cell_List_At(shared), VAL_SPECIFIER(shared));
             VAL_INDEX(shared) += 1;
             break;
 
         case PARAM_CLASS_SOFT_QUOTE:
-            if (IS_QUOTABLY_SOFT(Cell_Array_At(shared))) {
+            if (IS_QUOTABLY_SOFT(Cell_List_At(shared))) {
                 if (Eval_Value_Core_Throws(
-                    out, Cell_Array_At(shared), VAL_SPECIFIER(shared)
+                    out, Cell_List_At(shared), VAL_SPECIFIER(shared)
                 )){
                     return true;
                 }
             }
             else { // not a soft-"exception" case, quote ordinarily
-                Derelativize(out, Cell_Array_At(shared), VAL_SPECIFIER(shared));
+                Derelativize(out, Cell_List_At(shared), VAL_SPECIFIER(shared));
             }
             VAL_INDEX(shared) += 1;
             break;
@@ -395,7 +395,7 @@ REB_R MAKE_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
     // (shared) that the varargs interface cannot affect, but changes to
     // the array will change the varargs.
     //
-    if (ANY_ARRAY(arg)) {
+    if (Any_List(arg)) {
         //
         // Make a single-element array to hold a reference+index to the
         // incoming ANY-ARRAY!.  This level of indirection means all
@@ -404,7 +404,7 @@ REB_R MAKE_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
         // should be an END marker (not an array at its end)
         //
         Array* array1 = Alloc_Singular(NODE_FLAG_MANAGED);
-        if (IS_END(Cell_Array_At(arg)))
+        if (IS_END(Cell_List_At(arg)))
             SET_END(ARR_SINGLE(array1));
         else
             Copy_Cell(ARR_SINGLE(array1), arg);
@@ -652,7 +652,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
             Append_Unencoded(mo->series, "[]");
         else if (pclass == PARAM_CLASS_HARD_QUOTE)
             Mold_Value(mo, shared); // full feed can be shown if hard quoted
-        else if (Is_Bar(Cell_Array_At(shared)))
+        else if (Is_Bar(Cell_List_At(shared)))
             Append_Unencoded(mo->series, "[]"); // simulate end appearance
         else
             Append_Unencoded(mo->series, "[...]"); // can't look ahead

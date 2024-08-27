@@ -188,7 +188,7 @@ REBINT Find_Max_Bit(const Cell* val)
         break;
 
     case REB_BLOCK:
-        for (val = Cell_Array_At(val); NOT_END(val); val++) {
+        for (val = Cell_List_At(val); NOT_END(val); val++) {
             n = Find_Max_Bit(val);
             if (n > maxi) maxi = n;
         }
@@ -304,7 +304,7 @@ bool Set_Bits(Blob* bset, const Value* val, bool set)
         return true;
     }
 
-    if (ANY_STRING(val)) {
+    if (Any_String(val)) {
         REBLEN i = VAL_INDEX(val);
         Ucs2(const*) up = Cell_String_At(val);
         for (; i < VAL_LEN_HEAD(val); ++i) {
@@ -316,10 +316,10 @@ bool Set_Bits(Blob* bset, const Value* val, bool set)
         return true;
     }
 
-    if (!ANY_ARRAY(val))
+    if (!Any_List(val))
         fail (Error_Invalid_Type(VAL_TYPE(val)));
 
-    Cell* item = Cell_Array_At(val);
+    Cell* item = Cell_List_At(val);
 
     if (
         NOT_END(item)
@@ -441,7 +441,7 @@ bool Check_Bits(Blob* bset, const Value* val, bool uncased)
         return false;
     }
 
-    if (ANY_STRING(val)) {
+    if (Any_String(val)) {
         REBLEN i = VAL_INDEX(val);
         Ucs2(const*) up = Cell_String_At(val);
         for (; i != VAL_LEN_HEAD(val); ++i) {
@@ -454,13 +454,13 @@ bool Check_Bits(Blob* bset, const Value* val, bool uncased)
         return false;
     }
 
-    if (!ANY_ARRAY(val))
+    if (!Any_List(val))
         fail (Error_Invalid_Type(VAL_TYPE(val)));
 
     // Loop through block of bit specs
 
     Cell* item;
-    for (item = Cell_Array_At(val); NOT_END(item); item++) {
+    for (item = Cell_List_At(val); NOT_END(item); item++) {
 
         switch (VAL_TYPE(item)) {
 
@@ -653,9 +653,9 @@ REBTYPE(Bitset)
 
     case SYM_APPEND:  // Accepts: #"a" "abc" [1 - 10] [#"a" - #"z"] etc.
     case SYM_INSERT: {
-        if (IS_NULLED_OR_BLANK(arg)) {
+        if (Is_Nulled(arg) or Is_Blank(arg))
             RETURN (value); // don't fail on read only if it would be a no-op
-        }
+
         Fail_If_Read_Only_Flex(Cell_Bitset(value));
 
         bool diff;

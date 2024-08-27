@@ -982,8 +982,8 @@ acquisition_loop:
 
         case DETECTED_AS_CELL: {
             const Value* splice = cast(const Value*, p);
-            if (IS_NULLED(splice))
-                fail ("NULL cell leaked to API, see NULLIZE() in C sources");
+            if (Is_Nulled(splice) and Is_Api_Value(splice))
+                fail ("NULL cell leaked to API");
 
             Copy_Cell(PUSH(), splice);
 
@@ -1984,7 +1984,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 ++ss->begin;
                 ++bp;
                 ++ep;
-                Init_Any_Array(
+                Init_Any_List(
                     PUSH(),
                     ss->token == TOKEN_LIT ? REB_LIT_PATH : REB_GET_PATH,
                     Make_Array(0)
@@ -2044,7 +2044,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
 
             ep = ss->end;
 
-            Init_Any_Array(
+            Init_Any_List(
                 PUSH(),
                 (ss->token == TOKEN_BLOCK_BEGIN) ? REB_BLOCK : REB_GROUP,
                 array
@@ -2319,7 +2319,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         // the lib context (which we do not expand) and any positive numbers
         // are into the user context (which we will expand).
         //
-        if (ss->binder and ANY_WORD(TOP)) {
+        if (ss->binder and Any_Word(TOP)) {
             Symbol* canon = VAL_WORD_CANON(TOP);
             REBINT n = Get_Binder_Index_Else_0(ss->binder, canon);
             if (n > 0) {

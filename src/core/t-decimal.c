@@ -194,8 +194,8 @@ REB_R MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
         break;
 
     default:
-        if (ANY_ARRAY(arg) && VAL_ARRAY_LEN_AT(arg) == 2) {
-            Cell* item = Cell_Array_At(arg);
+        if (Any_List(arg) && VAL_ARRAY_LEN_AT(arg) == 2) {
+            Cell* item = Cell_List_At(arg);
             if (Is_Integer(item))
                 d = cast(REBDEC, VAL_INT64(item));
             else if (Is_Decimal(item) || Is_Percent(item))

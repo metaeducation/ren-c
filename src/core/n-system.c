@@ -236,10 +236,10 @@ DECLARE_NATIVE(check)
 
     // !!! Should call generic ASSERT_VALUE macro with more cases
     //
-    if (ANY_SERIES(value)) {
+    if (Any_Series(value)) {
         Assert_Flex(Cell_Flex(value));
     }
-    else if (ANY_CONTEXT(value)) {
+    else if (Any_Context(value)) {
         ASSERT_CONTEXT(VAL_CONTEXT(value));
     }
     else if (Is_Action(value)) {

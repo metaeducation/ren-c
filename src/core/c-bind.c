@@ -80,10 +80,10 @@ void Bind_Values_Inner_Loop(
                 Add_Binder_Index(binder, canon, VAL_WORD_INDEX(v));
             }
         }
-        else if (ANY_ARRAY(v) and (flags & BIND_DEEP)) {
+        else if (Any_List(v) and (flags & BIND_DEEP)) {
             Bind_Values_Inner_Loop(
                 binder,
-                Cell_Array_At(v),
+                Cell_List_At(v),
                 context,
                 bind_types,
                 add_midstream_types,
@@ -161,13 +161,13 @@ void Unbind_Values_Core(Cell* head, REBCTX *context, bool deep)
     Cell* v = head;
     for (; NOT_END(v); ++v) {
         if (
-            ANY_WORD(v)
+            Any_Word(v)
             and (not context or VAL_BINDING(v) == context)
         ){
             Unbind_Any_Word(v);
         }
-        else if (ANY_ARRAY(v) and deep)
-            Unbind_Values_Core(Cell_Array_At(v), context, true);
+        else if (Any_List(v) and deep)
+            Unbind_Values_Core(Cell_List_At(v), context, true);
     }
 }
 
@@ -228,9 +228,9 @@ static void Bind_Relative_Inner_Loop(
                 INIT_WORD_INDEX(v, n);
             }
         }
-        else if (ANY_ARRAY(v)) {
+        else if (Any_List(v)) {
             Bind_Relative_Inner_Loop(
-                binder, Cell_Array_At(v), paramlist, bind_types
+                binder, Cell_List_At(v), paramlist, bind_types
             );
 
             // !!! Technically speaking it is not necessary for an array to
@@ -313,10 +313,10 @@ void Rebind_Values_Deep(
 ) {
     Cell* v = head;
     for (; NOT_END(v); ++v) {
-        if (ANY_ARRAY(v)) {
-            Rebind_Values_Deep(src, dst, Cell_Array_At(v), opt_binder);
+        if (Any_List(v)) {
+            Rebind_Values_Deep(src, dst, Cell_List_At(v), opt_binder);
         }
-        else if (ANY_WORD(v) and VAL_BINDING(v) == src) {
+        else if (Any_Word(v) and VAL_BINDING(v) == src) {
             INIT_BINDING(v, dst);
 
             if (opt_binder != nullptr) {
@@ -415,7 +415,7 @@ void Virtual_Bind_Deep_To_New_Context(
     Specifier* specifier;
     bool rebinding;
     if (Is_Block(spec)) {
-        item = Cell_Array_At(spec);
+        item = Cell_List_At(spec);
         specifier = VAL_SPECIFIER(spec);
 
         rebinding = false;
@@ -433,7 +433,7 @@ void Virtual_Bind_Deep_To_New_Context(
             }
         }
 
-        item = Cell_Array_At(spec);
+        item = Cell_List_At(spec);
     }
     else {
         item = spec;
@@ -461,7 +461,7 @@ void Virtual_Bind_Deep_To_New_Context(
                 Array_Len(Cell_Array(body_in_out)), // tail
                 0, // extra
                 ARRAY_FLAG_HAS_FILE_LINE, // flags
-                TS_ARRAY // types to copy deeply
+                TS_LIST // types to copy deeply
             )
         );
     }
@@ -616,7 +616,7 @@ void Virtual_Bind_Deep_To_New_Context(
         // duplicates.
         //
         Bind_Values_Inner_Loop(
-            &binder, Cell_Array_At(body_in_out), c, TS_WORD, 0, BIND_DEEP
+            &binder, Cell_List_At(body_in_out), c, TS_WORD, 0, BIND_DEEP
         );
     }
 

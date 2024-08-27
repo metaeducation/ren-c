@@ -469,11 +469,11 @@ RebolValue* API_rebValue(const void *p, va_list *vaptr)
     if (Do_Va_Throws(result, p, vaptr)) // calls va_end()
         fail (Error_No_Catch_For_Throw(result)); // no need to release result
 
-    if (not IS_NULLED(result))
+    if (not Is_Nulled(result))
         return result;
 
     rebRelease(result);
-    return nullptr;  // API uses nullptr for NULL (see notes on NULLIZE)
+    return nullptr;  // API uses nullptr for NULL
 }
 
 
@@ -565,7 +565,7 @@ RebolValue* API_rebValueInline(const RebolValue* array)
 //
 const void *API_rebEval(const RebolValue* v)
 {
-    if (IS_NULLED(v))
+    if (Is_Nulled(v))
         fail ("Cannot pass NULL to rebEval()");
 
     Array* instruction = Alloc_Instruction();
@@ -877,7 +877,7 @@ RebolValue* API_rebRescue(
     if (not Is_Api_Value(result))
         return result; // no proxying needed
 
-    assert(not IS_NULLED(result)); // leaked API nulled cell (not nullptr)
+    assert(not Is_Nulled(result)); // leaked API nulled cell (not nullptr)
 
     // !!! We automatically proxy the ownership of any managed handles to the
     // caller.  Any other handles that leak out (e.g. via state) will not be
@@ -920,7 +920,7 @@ RebolValue* API_rebRescueWith(
     }
 
     Value* result = (*dangerous)(opaque); // guarded by trap
-    assert(not IS_NULLED(result)); // nulled cells not exposed by API
+    assert(not Is_Nulled(result)); // nulled cells not exposed by API
 
     DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
 
@@ -1070,7 +1070,7 @@ size_t API_rebSpellInto(
 ){
     const char *utf8;
     REBSIZ utf8_size;
-    if (ANY_STRING(v)) {
+    if (Any_String(v)) {
         REBSIZ offset;
         Blob* temp = Temp_UTF8_At_Managed(
             &offset, &utf8_size, v, Cell_Series_Len_At(v)
@@ -1078,7 +1078,7 @@ size_t API_rebSpellInto(
         utf8 = cs_cast(Blob_At(temp, offset));
     }
     else {
-        assert(ANY_WORD(v));
+        assert(Any_Word(v));
 
         Symbol* symbol = Cell_Word_Symbol(v);
         utf8 = Symbol_Head(symbol);
@@ -1110,7 +1110,7 @@ char *API_rebSpell(const void *p, va_list *vaptr)
     if (Do_Va_Throws(string, p, vaptr)) // calls va_end()
         fail (Error_No_Catch_For_Throw(string));
 
-    if (IS_NULLED(string))
+    if (Is_Nulled(string))
         return nullptr;  // NULL is passed through, for opting out
 
     size_t size = rebSpellInto(nullptr, 0, string);
@@ -1140,13 +1140,13 @@ unsigned int API_rebSpellIntoW(
     Flex* s;
     REBLEN index;
     REBLEN len;
-    if (ANY_STRING(v)) {
+    if (Any_String(v)) {
         s = Cell_Flex(v);
         index = VAL_INDEX(v);
         len = Cell_Series_Len_At(v);
     }
     else {
-        assert(ANY_WORD(v));
+        assert(Any_Word(v));
 
         Symbol* symbol = Cell_Word_Symbol(v);
         s = Make_Sized_String_UTF8(Symbol_Head(symbol), Symbol_Size(symbol));
@@ -1156,7 +1156,7 @@ unsigned int API_rebSpellIntoW(
 
     if (not buf) { // querying for size
         assert(buf_chars == 0);
-        if (ANY_WORD(v))
+        if (Any_Word(v))
             Free_Unmanaged_Flex(s);
         return len; // caller must now allocate buffer of len + 1
     }
@@ -1168,7 +1168,7 @@ unsigned int API_rebSpellIntoW(
 
     buf[limit] = 0;
 
-    if (ANY_WORD(v))
+    if (Any_Word(v))
         Free_Unmanaged_Flex(s);
     return len;
 }
@@ -1193,7 +1193,7 @@ REBWCHAR *API_rebSpellW(const void *p, va_list *vaptr)
     if (Do_Va_Throws(string, p, vaptr)) // calls va_end()
         fail (Error_No_Catch_For_Throw(string));
 
-    if (IS_NULLED(string))
+    if (Is_Nulled(string))
         return nullptr;  // NULL is passed through, for opting out
 
     REBLEN len = rebSpellIntoW(nullptr, 0, string);
@@ -1254,12 +1254,12 @@ unsigned char *API_rebBytes(
     if (Do_Va_Throws(series, p, vaptr)) // calls va_end()
         fail (Error_No_Catch_For_Throw(series));
 
-    if (IS_NULLED(series)) {
+    if (Is_Nulled(series)) {
         *size_out = 0;
         return nullptr;  // NULL is passed through, for opting out
     }
 
-    if (ANY_WORD(series) or ANY_STRING(series)) {
+    if (Any_Word(series) or Any_String(series)) {
         *size_out = rebSpellInto(nullptr, 0, series);
         Byte *result = rebAllocN(Byte, (*size_out + 1));
         rebSpell(result, *size_out, series);
@@ -1570,7 +1570,7 @@ void API_rebPromise_callback(intptr_t promise_id)
     Set_Node_Managed_Bit(arr);
 
     Value* result = Alloc_Value();
-    if (THROWN_FLAG == Eval_Array_At_Core(
+    if (THROWN_FLAG == Eval_At_Core(
         Init_Void(result),
         nullptr, // opt_first (null indicates nothing, not nulled cell)
         arr,
@@ -1581,7 +1581,7 @@ void API_rebPromise_callback(intptr_t promise_id)
         fail (Error_No_Catch_For_Throw(result)); // no need to release result
     }
 
-    if (IS_NULLED(result)) {
+    if (Is_Nulled(result)) {
         rebRelease(result); // recipient must release if not nullptr
         result = nullptr;
     }

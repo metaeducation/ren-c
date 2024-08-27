@@ -78,7 +78,7 @@ INLINE REBLEN Length_Map(REBMAP *map)
 
     REBLEN count = 0;
     for (; NOT_END(v); v += 2) {
-        if (not IS_NULLED(v + 1))
+        if (not Is_Nulled(v + 1))
             ++count;
     }
 

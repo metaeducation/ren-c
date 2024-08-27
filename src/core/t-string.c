@@ -188,7 +188,7 @@ static REBLEN find_string(
         else index--;
     }
 
-    if (ANY_BINSTR(target)) {
+    if (Is_Binary(target) or Any_String(target)) {
         // Do the optimal search or the general search?
         if (
             BYTE_SIZE(series)
@@ -278,11 +278,11 @@ static Flex* MAKE_TO_String_Common(const Value* arg)
         );
     }
     // MAKE/TO <type> <any-string>
-    else if (ANY_STRING(arg)) {
+    else if (Any_String(arg)) {
         flex = Copy_String_At_Len(arg, -1);
     }
     // MAKE/TO <type> <any-word>
-    else if (ANY_WORD(arg)) {
+    else if (Any_Word(arg)) {
         flex = Copy_Mold_Value(arg, MOLD_FLAG_0);
     }
     // MAKE/TO <type> #"A"
@@ -427,13 +427,13 @@ REB_R MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
         if (VAL_ARRAY_LEN_AT(def) != 2)
             goto bad_make;
 
-        Cell* any_binstr = Cell_Array_At(def);
-        if (!ANY_BINSTR(any_binstr))
+        Cell* any_binstr = Cell_List_At(def);
+        if (not (Is_Binary(any_binstr) or Any_String(any_binstr)))
             goto bad_make;
         if (Is_Binary(any_binstr) != (kind == REB_BINARY))
             goto bad_make;
 
-        Cell* index = Cell_Array_At(def) + 1;
+        Cell* index = Cell_List_At(def) + 1;
         if (!Is_Integer(index))
             goto bad_make;
 
@@ -541,7 +541,7 @@ static void Sort_String(
     // sized codepoints.  However, it could work if all the codepoints were
     // known to be ASCII range in the memory of interest, maybe common case.
 
-    if (not IS_NULLED(compv))
+    if (not Is_Nulled(compv))
         fail (Error_Bad_Refine_Raw(compv)); // !!! didn't seem to be supported (?)
 
     REBLEN skip = 1;
@@ -553,7 +553,7 @@ static void Sort_String(
         return;
 
     // Skip factor:
-    if (not IS_NULLED(skipv)) {
+    if (not Is_Nulled(skipv)) {
         skip = Get_Num_From_Arg(skipv);
         if (skip <= 0 || len % skip != 0 || skip > len)
             fail (Error_Invalid(skipv));
@@ -622,7 +622,7 @@ REB_R PD_String(
 
         if (
             Is_Binary(pvs->out)
-            or not (Is_Word(picker) or ANY_STRING(picker))
+            or not (Is_Word(picker) or Any_String(picker))
         ){
             return R_UNHANDLED;
         }
@@ -729,7 +729,7 @@ REB_R PD_String(
         if (c > MAX_CHAR || c < 0)
             return R_UNHANDLED;
     }
-    else if (ANY_BINSTR(opt_setval)) {
+    else if (Is_Binary(opt_setval) or Any_String(opt_setval)) {
         REBLEN i = VAL_INDEX(opt_setval);
         if (i >= VAL_LEN_HEAD(opt_setval))
             fail (Error_Invalid(opt_setval));
@@ -1123,7 +1123,7 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
 {
     Blob* s = mo->series;
 
-    assert(ANY_STRING(v));
+    assert(Any_String(v));
 
     // Special format for MOLD/ALL string series when not at head
     //
@@ -1184,7 +1184,7 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
 REBTYPE(String)
 {
     Value* v = D_ARG(1);
-    assert(Is_Binary(v) || ANY_STRING(v));
+    assert(Is_Binary(v) || Any_String(v));
 
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
@@ -1220,7 +1220,7 @@ REBTYPE(String)
         // Note that while inserting or removing NULL is a no-op, CHANGE with
         // a /PART can actually erase data.
         //
-        if (IS_NULLED(arg) and len == 0) { // only nulls bypass write attempts
+        if (Is_Nulled(arg) and len == 0) { // only nulls bypass write attempts
             if (sym == SYM_APPEND) // append always returns head
                 VAL_INDEX(v) = 0;
             RETURN (v); // don't fail on read only if it would be a no-op
@@ -1588,7 +1588,7 @@ REBTYPE(String)
         if (REF(all)) // Not Supported
             fail (Error_Bad_Refine_Raw(ARG(all)));
 
-        if (ANY_STRING(v))  // always true here
+        if (Any_String(v))  // always true here
             fail ("UTF-8 Everywhere: String sorting temporarily unavailable");
 
         Sort_String(
@@ -1639,7 +1639,7 @@ REBTYPE(String)
             return OUT;
         }
 
-        if (ANY_STRING(v))  // always true here
+        if (Any_String(v))  // always true here
             fail ("UTF-8 Everywhere: String shuffle temporarily unavailable");
 
         Shuffle_String(v, REF(secure));

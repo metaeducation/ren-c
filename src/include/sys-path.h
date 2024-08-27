@@ -30,7 +30,7 @@
 // evaluative result of chaining the prior steps is offered as input to
 // the next step.  The path evaluator `Eval_Path_Throws` delegates steps to
 // type-specific "(P)ath (D)ispatchers" with names like PD_Context,
-// PD_Array, etc.
+// PD_List, etc.
 //
 // R3-Alpha left several open questions about the handling of paths.  One
 // of the trickiest regards the mechanics of how to use a SET-PATH! to
@@ -104,7 +104,7 @@ INLINE void Get_Path_Core(
     const Cell* any_path,
     Specifier* specifier
 ){
-    assert(ANY_PATH(any_path)); // *could* work on ANY_ARRAY(), actually
+    assert(Any_Path(any_path)); // *could* work on Any_List(), actually
 
     if (Eval_Path_Throws_Core(
         out,
@@ -126,7 +126,7 @@ INLINE bool Set_Path_Throws_Core(
     Specifier* specifier,
     const Value* setval
 ){
-    assert(ANY_PATH(any_path)); // *could* work on ANY_ARRAY(), actually
+    assert(Any_Path(any_path)); // *could* work on Any_List(), actually
 
     return Eval_Path_Throws_Core(
         out,
@@ -146,7 +146,7 @@ INLINE void Set_Path_Core(
     const Value* setval,
     bool enfix
 ){
-    assert(ANY_PATH(any_path)); // *could* work on ANY_ARRAY(), actually
+    assert(Any_Path(any_path)); // *could* work on Any_List(), actually
 
     // If there's no throw, there's no result of setting a path (hence it's
     // not in the interface)

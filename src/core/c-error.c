@@ -514,7 +514,7 @@ bool Make_Error_Object_Throws(
 
         error = Make_Selfish_Context_Detect_Managed(
             REB_ERROR, // type
-            Cell_Array_At(arg), // values to scan for toplevel set-words
+            Cell_List_At(arg), // values to scan for toplevel set-words
             root_error // parent
         );
 
@@ -524,10 +524,10 @@ bool Make_Error_Object_Throws(
         Init_Error(out, error);
 
         Rebind_Context_Deep(root_error, error, nullptr);  // no more binds
-        Bind_Values_Deep(Cell_Array_At(arg), error);
+        Bind_Values_Deep(Cell_List_At(arg), error);
 
         DECLARE_VALUE (evaluated);
-        if (Do_Any_Array_At_Throws(evaluated, arg)) {
+        if (Do_At_Throws(evaluated, arg)) {
             Copy_Cell(out, evaluated);
             return true;
         }
@@ -548,8 +548,8 @@ bool Make_Error_Object_Throws(
         error = Copy_Context_Shallow_Managed(root_error);
 
         vars = ERR_VARS(error);
-        assert(IS_NULLED(&vars->type));
-        assert(IS_NULLED(&vars->id));
+        assert(Is_Nulled(&vars->type));
+        assert(Is_Nulled(&vars->id));
 
         Init_Text(&vars->message, Copy_Sequence_At_Position(arg));
     }
@@ -589,7 +589,7 @@ bool Make_Error_Object_Throws(
             if (message) {
                 assert(Is_Text(message) or Is_Block(message));
 
-                if (not IS_NULLED(&vars->message))
+                if (not Is_Nulled(&vars->message))
                     fail (Error_Invalid_Error_Raw(arg));
 
                 Copy_Cell(&vars->message, message);
@@ -625,12 +625,12 @@ bool Make_Error_Object_Throws(
         // good for general purposes.
 
         if (not (
-            (Is_Word(&vars->id) or IS_NULLED(&vars->id))
-            and (Is_Word(&vars->type) or IS_NULLED(&vars->type))
+            (Is_Word(&vars->id) or Is_Nulled(&vars->id))
+            and (Is_Word(&vars->type) or Is_Nulled(&vars->type))
             and (
                 Is_Block(&vars->message)
                 or Is_Text(&vars->message)
-                or IS_NULLED(&vars->message)
+                or Is_Nulled(&vars->message)
             )
         )){
             fail (Error_Invalid_Error_Raw(CTX_ARCHETYPE(error)));
@@ -1064,7 +1064,7 @@ REBCTX *Error_Bad_Refine_Revoke(const Cell* param, const Value* arg)
     DECLARE_VALUE (refine_name);
     Init_Refinement(refine_name, Cell_Parameter_Symbol(param));
 
-    if (IS_NULLED(arg)) // was void and shouldn't have been
+    if (Is_Nulled(arg)) // was void and shouldn't have been
         return Error_Bad_Refine_Revoke_Raw(refine_name, param_name);
 
     // wasn't void and should have been
@@ -1256,7 +1256,7 @@ REBCTX *Error_On_Port(SymId id_sym, Value* port, REBINT err_code)
     Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
 
     Value* val = VAL_CONTEXT_VAR(spec, STD_PORT_SPEC_HEAD_REF);
-    if (IS_NULLED(val))
+    if (Is_Nulled(val))
         val = VAL_CONTEXT_VAR(spec, STD_PORT_SPEC_HEAD_TITLE); // less info
 
     DECLARE_VALUE (err_code_value);
@@ -1290,7 +1290,7 @@ REBCTX *Startup_Errors(const Value* boot_errors)
     assert(VAL_INDEX(boot_errors) == 0);
     REBCTX *catalog = Construct_Context_Managed(
         REB_OBJECT,
-        Cell_Array_At(boot_errors),
+        Cell_List_At(boot_errors),
         VAL_SPECIFIER(boot_errors),
         nullptr
     );
@@ -1365,7 +1365,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
     ERROR_VARS *vars = ERR_VARS(error);
 
     // Form: ** <type> Error:
-    if (IS_NULLED(&vars->type))
+    if (Is_Nulled(&vars->type))
         Emit(mo, "** S", RM_ERROR_LABEL);
     else {
         assert(Is_Word(&vars->type));
@@ -1383,7 +1383,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
     // Form: ** Where: function
     Value* where = KNOWN(&vars->where);
     if (
-        not IS_NULLED(where)
+        not Is_Nulled(where)
         and not (Is_Block(where) and Cell_Series_Len_At(where) == 0)
     ){
         Append_Utf8_Codepoint(mo->series, '\n');
@@ -1393,7 +1393,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
 
     // Form: ** Near: location
     Value* nearest = KNOWN(&vars->nearest);
-    if (not IS_NULLED(nearest)) {
+    if (not Is_Nulled(nearest)) {
         Append_Utf8_Codepoint(mo->series, '\n');
         Append_Unencoded(mo->series, RM_ERROR_NEAR);
 
@@ -1407,7 +1407,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
             //
             Append_Utf8_String(mo->series, nearest, VAL_LEN_HEAD(nearest));
         }
-        else if (ANY_ARRAY(nearest))
+        else if (Any_List(nearest))
             Mold_Value_Limit(mo, nearest, 60);
         else
             Append_Unencoded(mo->series, RM_BAD_ERROR_FORMAT);
@@ -1421,7 +1421,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
     // not a FILE!.
     //
     Value* file = KNOWN(&vars->file);
-    if (not IS_NULLED(file)) {
+    if (not Is_Nulled(file)) {
         Append_Utf8_Codepoint(mo->series, '\n');
         Append_Unencoded(mo->series, RM_ERROR_FILE);
         if (Is_File(file))
@@ -1432,7 +1432,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
 
     // Form: ** Line: line-number
     Value* line = KNOWN(&vars->line);
-    if (not IS_NULLED(line)) {
+    if (not Is_Nulled(line)) {
         Append_Utf8_Codepoint(mo->series, '\n');
         Append_Unencoded(mo->series, RM_ERROR_LINE);
         if (Is_Integer(line))

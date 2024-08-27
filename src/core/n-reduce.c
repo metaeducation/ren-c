@@ -57,7 +57,7 @@ bool Reduce_To_Stack_Throws(
             break;
         }
 
-        if (IS_NULLED(out))
+        if (Is_Nulled(out))
             fail (Error_Need_Non_Null_Raw());
 
         if (Is_Void(out)) {
@@ -102,7 +102,7 @@ DECLARE_NATIVE(reduce)
         if (Get_Array_Flag(Cell_Array(value), NEWLINE_AT_TAIL))
             pop_flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
-        return Init_Any_Array(
+        return Init_Any_List(
             OUT,
             VAL_TYPE(value),
             Pop_Stack_Values_Core(base, pop_flags)
@@ -115,13 +115,13 @@ DECLARE_NATIVE(reduce)
     //
     // !!! Should the error be more "reduce-specific" if args were required?
 
-    if (ANY_INERT(value)) // don't bother with the evaluation
+    if (Any_Inert(value)) // don't bother with the evaluation
         RETURN (value);
 
     if (Eval_Value_Throws(OUT, value))
         return R_THROWN;
 
-    if (not IS_NULLED(OUT))
+    if (not Is_Nulled(OUT))
         return OUT;
 
     return nullptr; // let caller worry about whether to error on nulls
@@ -129,13 +129,13 @@ DECLARE_NATIVE(reduce)
 
 
 bool Match_For_Compose(const Cell* group, const Value* pattern) {
-    if (IS_NULLED(pattern))
+    if (Is_Nulled(pattern))
         return true;
 
     if (Cell_Series_Len_At(group) == 0) // you have a pattern, so leave `()` as-is
         return false;
 
-    Cell* first = Cell_Array_At(group);
+    Cell* first = Cell_List_At(group);
     Cell* last = VAL_ARRAY_TAIL(group) - 1;
     if (Is_Bar(first) != Is_Bar(last))
         fail ("Pattern for COMPOSE must be on both ends of GROUP!");
@@ -175,7 +175,7 @@ bool Compose_To_Stack_Throws(
     );
 
     while (NOT_END(L->value)) {
-        if (not ANY_ARRAY(L->value)) { // non-arrays don't substitute/recurse
+        if (not Any_List(L->value)) { // non-arrays don't substitute/recurse
             Derelativize(PUSH(), L->value, specifier);  // preserves newline
             Fetch_Next_In_Level(nullptr, L);
             continue;
@@ -193,7 +193,7 @@ bool Compose_To_Stack_Throws(
         }
         else {
             if (Is_Doubled_Group(L->value)) { // non-spliced compose, if match
-                Cell* inner = Cell_Array_At(L->value);
+                Cell* inner = Cell_List_At(L->value);
                 if (Match_For_Compose(inner, pattern)) {
                     splice = false;
                     match = inner;
@@ -209,7 +209,7 @@ bool Compose_To_Stack_Throws(
         }
 
         if (match) { // only L->value if pattern is just [] or (), else deeper
-            REBIXO indexor = Eval_Array_At_Core(
+            REBIXO indexor = Eval_At_Core(
                 Init_Void(out), // want empty () to vanish as a VOID would
                 nullptr, // no opt_first
                 Cell_Array(match),
@@ -224,7 +224,7 @@ bool Compose_To_Stack_Throws(
                 return true;
             }
 
-            if (IS_NULLED(out))
+            if (Is_Nulled(out))
                 fail (Error_Need_Non_Null_Raw());
 
             if (Is_Void(out)) {
@@ -236,7 +236,7 @@ bool Compose_To_Stack_Throws(
                 //
                 // compose [not-only ([a b]) merges] => [not-only a b merges]
 
-                Cell* push = Cell_Array_At(out);
+                Cell* push = Cell_List_At(out);
                 if (NOT_END(push)) {
                     //
                     // Only proxy newline flag from the template on *first*
@@ -285,7 +285,7 @@ bool Compose_To_Stack_Throws(
                 flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
             Array* popped = Pop_Stack_Values_Core(deep_base, flags);
-            Init_Any_Array(
+            Init_Any_List(
                 PUSH(),
                 VAL_TYPE(L->value),
                 popped // can't push and pop in same step, need this variable!
@@ -313,11 +313,11 @@ bool Compose_To_Stack_Throws(
 //
 //  {Evaluates only contents of GROUP!-delimited expressions in an array}
 //
-//      return: [any-array!]
+//      return: [any-list!]
 //      :pattern "Distinguish compose groups, e.g. [(plain) (* composed *)]"
 //          [<skip> lit-bar!]
 //      value "Array to use as the template for substitution"
-//          [any-array!]
+//          [any-list!]
 //      /deep "Compose deeply into nested arrays"
 //      /only "Insert arrays as single value (not as contents of array)"
 //  ]
@@ -349,7 +349,7 @@ DECLARE_NATIVE(compose)
     if (Get_Array_Flag(Cell_Array(ARG(value)), NEWLINE_AT_TAIL))
         flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
-    return Init_Any_Array(
+    return Init_Any_List(
         OUT,
         VAL_TYPE(ARG(value)),
         Pop_Stack_Values_Core(base, flags)
@@ -374,7 +374,7 @@ static void Flatten_Core(
         if (Is_Block(item) and level != FLATTEN_NOT) {
             Specifier* derived = Derive_Specifier(specifier, item);
             Flatten_Core(
-                Cell_Array_At(item),
+                Cell_List_At(item),
                 derived,
                 level == FLATTEN_ONCE ? FLATTEN_NOT : FLATTEN_DEEP
             );
@@ -404,7 +404,7 @@ DECLARE_NATIVE(flatten)
     StackIndex base = TOP_INDEX;
 
     Flatten_Core(
-        Cell_Array_At(ARG(block)),
+        Cell_List_At(ARG(block)),
         VAL_SPECIFIER(ARG(block)),
         REF(deep) ? FLATTEN_DEEP : FLATTEN_ONCE
     );

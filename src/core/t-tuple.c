@@ -78,11 +78,11 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
         return out;
     }
 
-    if (ANY_ARRAY(arg)) {
+    if (Any_List(arg)) {
         REBLEN len = 0;
         REBINT n;
 
-        Cell* item = Cell_Array_At(arg);
+        Cell* item = Cell_List_At(arg);
 
         for (; NOT_END(item); ++item, ++vp, ++len) {
             if (len >= MAX_TUPLE)

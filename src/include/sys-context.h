@@ -218,7 +218,7 @@ INLINE void FAIL_IF_INACCESSIBLE_CTX(REBCTX *c) {
 }
 
 INLINE REBCTX *VAL_CONTEXT(const Cell* v) {
-    assert(ANY_CONTEXT(v));
+    assert(Any_Context(v));
     assert(not v->payload.any_context.phase or VAL_TYPE(v) == REB_FRAME);
     REBCTX *c = CTX(v->payload.any_context.varlist);
     FAIL_IF_INACCESSIBLE_CTX(c);
@@ -368,7 +368,7 @@ INLINE bool Is_Context_Deeply_Frozen(REBCTX *c) {
 // repeating the code.
 //
 INLINE void FAIL_IF_BAD_PORT(Value* port) {
-    if (not ANY_CONTEXT(port))
+    if (not Any_Context(port))
         fail (Error_Invalid_Port_Raw());
 
     REBCTX *ctx = VAL_CONTEXT(port);

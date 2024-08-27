@@ -126,7 +126,7 @@ static bool Equal_Context(const Cell* val, const Cell* arg)
 static void Append_To_Context(REBCTX *context, Value* arg)
 {
     // Can be a word:
-    if (ANY_WORD(arg)) {
+    if (Any_Word(arg)) {
         if (0 == Find_Canon_In_Context(context, VAL_WORD_CANON(arg), true)) {
             Expand_Context(context, 1); // copy word table also
             Append_Context(context, nullptr, Cell_Word_Symbol(arg));
@@ -140,7 +140,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
 
     // Process word/value argument block:
 
-    Cell* item = Cell_Array_At(arg);
+    Cell* item = Cell_List_At(arg);
 
     // Can't actually fail() during a collect, so make sure any errors are
     // set and then jump to a Collect_End()
@@ -309,8 +309,8 @@ REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
 
         if (
             Cell_Series_Len_At(arg) != 2
-            || !Is_Block(Cell_Array_At(arg)) // spec
-            || !Is_Block(Cell_Array_At(arg) + 1) // body
+            or not Is_Block(Cell_List_At(arg)) // spec
+            or not Is_Block(Cell_List_At(arg) + 1) // body
         ) {
             fail (Error_Bad_Make(kind, arg));
         }
@@ -321,7 +321,7 @@ REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
             out,
             Construct_Context_Managed(
                 REB_OBJECT,
-                Cell_Array_At(Cell_Array_At(arg) + 1),
+                Cell_List_At(Cell_List_At(arg) + 1),
                 VAL_SPECIFIER(arg),
                 nullptr  // no parent
             )
@@ -342,7 +342,7 @@ REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
 
     // `make object! 10` - currently not prohibited for any context type
     //
-    if (ANY_NUMBER(arg)) {
+    if (Any_Number(arg)) {
         //
         // !!! Temporary!  Ultimately SELF will be a user protocol.
         // We use Make_Selfish_Context while MAKE is filling in for
@@ -458,7 +458,7 @@ DECLARE_NATIVE(meta_of)
     if (Is_Action(v))
         meta = VAL_ACT_META(v);
     else {
-        assert(ANY_CONTEXT(v));
+        assert(Any_Context(v));
         meta = MISC(VAL_CONTEXT(v)).meta;
     }
 
@@ -486,14 +486,14 @@ DECLARE_NATIVE(set_meta)
     INCLUDE_PARAMS_OF_SET_META;
 
     REBCTX *meta;
-    if (ANY_CONTEXT(ARG(meta))) {
+    if (Any_Context(ARG(meta))) {
         if (VAL_BINDING(ARG(meta)) != UNBOUND)
             fail ("SET-META can't store context bindings, must be unbound");
 
         meta = VAL_CONTEXT(ARG(meta));
     }
     else {
-        assert(IS_NULLED(ARG(meta)));
+        assert(Is_Nulled(ARG(meta)));
         meta = nullptr;
     }
 
@@ -502,7 +502,7 @@ DECLARE_NATIVE(set_meta)
     if (Is_Action(v))
         MISC(VAL_ACT_PARAMLIST(v)).meta = meta;
     else {
-        assert(ANY_CONTEXT(v));
+        assert(Any_Context(v));
         MISC(VAL_CONTEXT(v)).meta = meta;
     }
 
@@ -675,7 +675,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 
         Append_Unencoded(out, ": ");
 
-        if (IS_NULLED(var))
+        if (Is_Nulled(var))
             Append_Unencoded(out, "~null~");
         else
             Mold_Value(mo, var);
@@ -834,7 +834,7 @@ REBTYPE(Context)
 
 
       case SYM_APPEND:
-        if (IS_NULLED_OR_BLANK(arg))
+        if (Is_Nulled(arg) or Is_Blank(arg))
             RETURN (value); // don't fail on read only if it would be a no-op
 
         FAIL_IF_READ_ONLY_CONTEXT(c);
@@ -941,12 +941,12 @@ DECLARE_NATIVE(construct)
         Copy_Cell(OUT, spec); // !!! very "shallow" clone of the event
         Set_Event_Vars(
             OUT,
-            Cell_Array_At(body),
+            Cell_List_At(body),
             VAL_SPECIFIER(body)
         );
         return OUT;
     }
-    else if (ANY_CONTEXT(spec)) {
+    else if (Any_Context(spec)) {
         parent = VAL_CONTEXT(spec);
         target = VAL_TYPE(spec);
     }
@@ -972,7 +972,7 @@ DECLARE_NATIVE(construct)
             OUT,
             Construct_Context_Managed(
                 REB_OBJECT,
-                Cell_Array_At(body),
+                Cell_List_At(body),
                 VAL_SPECIFIER(body),
                 parent
             )
@@ -1000,7 +1000,7 @@ DECLARE_NATIVE(construct)
             // scan for toplevel set-words
             Is_Blank(body)
                 ? cast(const Cell*, END_NODE) // gcc/g++ 2.95 needs (bug)
-                : Cell_Array_At(body),
+                : Cell_List_At(body),
             parent
         );
         Init_Object(OUT, context);
@@ -1010,10 +1010,10 @@ DECLARE_NATIVE(construct)
             // !!! This binds the actual body data, not a copy of it.  See
             // Virtual_Bind_Deep_To_New_Context() for future directions.
             //
-            Bind_Values_Deep(Cell_Array_At(body), context);
+            Bind_Values_Deep(Cell_List_At(body), context);
 
             DECLARE_VALUE (temp);
-            if (Do_Any_Array_At_Throws(temp, body)) {
+            if (Do_At_Throws(temp, body)) {
                 Copy_Cell(OUT, temp);
                 return R_THROWN; // evaluation result ignored unless thrown
             }

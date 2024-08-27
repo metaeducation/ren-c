@@ -51,7 +51,7 @@
 
 
 INLINE bool IS_WORD_UNBOUND(const Cell* v) {
-    assert(ANY_WORD(v));
+    assert(Any_Word(v));
     return v->extra.binding == nullptr;
 }
 
@@ -59,12 +59,12 @@ INLINE bool IS_WORD_UNBOUND(const Cell* v) {
     cast(bool, not IS_WORD_UNBOUND(v))
 
 INLINE Symbol* Cell_Word_Symbol(const Cell* v) {
-    assert(ANY_WORD(v));
+    assert(Any_Word(v));
     return v->payload.any_word.symbol;
 }
 
 INLINE Symbol* VAL_WORD_CANON(const Cell* v) {
-    assert(ANY_WORD(v));
+    assert(Any_Word(v));
     return Canon_Symbol(v->payload.any_word.symbol);
 }
 
@@ -77,7 +77,7 @@ INLINE Symbol* VAL_WORD_CANON(const Cell* v) {
 // so this is a safe technique as long as these words are GC-mark-visible.
 //
 INLINE Symbol* VAL_STORED_CANON(const Cell* v) {
-    assert(ANY_WORD(v));
+    assert(Any_Word(v));
     assert(Get_Flex_Info(v->payload.any_word.symbol, CANON_SYMBOL));
     return v->payload.any_word.symbol;
 }

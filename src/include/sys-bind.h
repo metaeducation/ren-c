@@ -70,7 +70,7 @@
     }
 
     INLINE Specifier* VAL_SPECIFIER(const Value* v) {
-        assert(ANY_ARRAY(v));
+        assert(Any_List(v));
         if (not v->extra.binding)
             return SPECIFIED;
 
@@ -365,7 +365,7 @@ INLINE REBCTX *Get_Var_Context(
     const Cell* any_word,
     Specifier* specifier
 ){
-    assert(ANY_WORD(any_word));
+    assert(Any_Word(any_word));
 
     Stub* binding = VAL_BINDING(any_word);
     assert(binding); // caller should check so context won't be null
@@ -570,7 +570,7 @@ INLINE Value* Derelativize(
         // The stored binding is relative to a function, and so the specifier
         // needs to be a frame to have a precise invocation to lookup in.
 
-        assert(ANY_WORD(v) or ANY_ARRAY(v));
+        assert(Any_Word(v) or Any_List(v));
 
       #if !defined(NDEBUG)
         if (not specifier) {

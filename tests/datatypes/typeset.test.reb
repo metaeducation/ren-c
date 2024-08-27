@@ -1,6 +1,6 @@
 ; datatypes/typeset.r
-(typeset? any-array!)
-(typeset? to-typeset any-array!)
+(typeset? any-list!)
+(typeset? to-typeset any-list!)
 (typeset? any-path!)
 (typeset? to-typeset any-path!)
 (typeset? any-context!)

@@ -408,7 +408,7 @@ enum {
 #define Copy_Array_At_Deep_Managed(a,i,s) \
     Copy_Array_At_Extra_Deep_Flags_Managed((a), (i), (s), 0, FLEX_FLAGS_NONE)
 
-#define COPY_ANY_ARRAY_AT_DEEP_MANAGED(v) \
+#define COPY_ANY_LIST_AT_DEEP_MANAGED(v) \
     Copy_Array_At_Extra_Deep_Flags_Managed( \
         Cell_Array(v), VAL_INDEX(v), VAL_SPECIFIER(v), 0, FLEX_FLAGS_NONE)
 
@@ -471,7 +471,7 @@ INLINE void INIT_VAL_ARRAY(Cell* v, Array* a) {
 // of the word AT with a missing index is a hint that the index is coming
 // from the VAL_INDEX() of the value itself.
 //
-#define Cell_Array_At(v) \
+#define Cell_List_At(v) \
     Array_At(Cell_Array(v), VAL_INDEX(v))
 
 #define VAL_ARRAY_LEN_AT(v) \
@@ -481,7 +481,7 @@ INLINE void INIT_VAL_ARRAY(Cell* v, Array* a) {
 // account; they strictly operate on the array series
 //
 INLINE Array* Cell_Array(const Cell* v) {
-    assert(ANY_ARRAY(v));
+    assert(Any_List(v));
     Flex* s = v->payload.any_series.series;
     if (s->info.bits & FLEX_INFO_INACCESSIBLE)
         fail (Error_Series_Data_Freed_Raw());
@@ -496,8 +496,8 @@ INLINE Cell* VAL_ARRAY_TAIL(const Cell* v) {
 }
 
 
-// !!! Cell_Array_At_Head() is a leftover from the old definition of
-// Cell_Array_At().  Unlike SKIP in Rebol, this definition did *not* take
+// !!! Cell_List_At_Head() is a leftover from the old definition of
+// Cell_List_At().  Unlike SKIP in Rebol, this definition did *not* take
 // the current index position of the value into account.  It rather extracted
 // the array, counted rom the head, and disregarded the index entirely.
 //
@@ -507,23 +507,23 @@ INLINE Cell* VAL_ARRAY_TAIL(const Cell* v) {
 // head because it's taking an index.  So  it looks weird enough to suggest
 // looking here for what the story is.
 //
-#define Cell_Array_At_Head(v,n) \
+#define Cell_List_At_Head(v,n) \
     Array_At(Cell_Array(v), (n))
 
-#define Init_Any_Array_At(v,t,a,i) \
+#define Init_Any_List_At(v,t,a,i) \
     Init_Any_Series_At((v), (t), (a), (i))
 
-#define Init_Any_Array(v,t,a) \
-    Init_Any_Array_At((v), (t), (a), 0)
+#define Init_Any_List(v,t,a) \
+    Init_Any_List_At((v), (t), (a), 0)
 
 #define Init_Block(v,s) \
-    Init_Any_Array((v), REB_BLOCK, (s))
+    Init_Any_List((v), REB_BLOCK, (s))
 
 #define Init_Group(v,s) \
-    Init_Any_Array((v), REB_GROUP, (s))
+    Init_Any_List((v), REB_GROUP, (s))
 
 #define Init_Path(v,s) \
-    Init_Any_Array((v), REB_PATH, (s))
+    Init_Any_List((v), REB_PATH, (s))
 
 
 // PATH! types will splice into each other, but not into a BLOCK! or GROUP!.
@@ -552,10 +552,10 @@ INLINE bool Splices_Into_Type_Without_Only(
     if (Is_Nothing(arg))
         fail ("Cannot put trash (~) into arrays");
 
-    assert(ANY_ARRAY_KIND(array_kind));
+    assert(Any_List_Kind(array_kind));
     return Is_Group(arg)
         or Is_Block(arg)
-        or (ANY_PATH(arg) and ANY_PATH_KIND(array_kind));
+        or (Any_Path(arg) and Any_Path_Kind(array_kind));
 }
 
 
@@ -563,7 +563,7 @@ INLINE bool Splices_Into_Type_Without_Only(
 //
 INLINE bool Is_Doubled_Group(const Cell* group) {
     assert(Is_Group(group));
-    Cell* inner = Cell_Array_At(group);
+    Cell* inner = Cell_List_At(group);
     if (VAL_TYPE_RAW(inner) != REB_GROUP or Cell_Series_Len_At(group) != 1)
         return false; // plain (...) GROUP!
     return true; // a ((...)) GROUP!, inject as rule

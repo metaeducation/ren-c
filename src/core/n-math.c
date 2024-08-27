@@ -522,7 +522,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
         case REB_LIT_WORD:
         case REB_REFINEMENT:
         case REB_ISSUE:
-            if (ANY_WORD(b)) goto compare;
+            if (Any_Word(b)) goto compare;
             break;
 
         case REB_TEXT:
@@ -530,7 +530,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
         case REB_EMAIL:
         case REB_URL:
         case REB_TAG:
-            if (ANY_STRING(b)) goto compare;
+            if (Any_String(b)) goto compare;
             break;
         }
 
@@ -677,7 +677,7 @@ DECLARE_NATIVE(same_q)
         return Init_True(OUT);
     }
 
-    if (ANY_SERIES(value1)) {
+    if (Any_Series(value1)) {
         //
         // ANY-SERIES! can only be the same if pointers and indices match.
         //
@@ -688,7 +688,7 @@ DECLARE_NATIVE(same_q)
         return Init_True(OUT);
     }
 
-    if (ANY_CONTEXT(value1)) {
+    if (Any_Context(value1)) {
         //
         // ANY-CONTEXT! are the same if the varlists match.
         //
@@ -706,7 +706,7 @@ DECLARE_NATIVE(same_q)
         return Init_True(OUT);
     }
 
-    if (ANY_WORD(value1)) {
+    if (Any_Word(value1)) {
         //
         // ANY-WORD! must match in binding as well as be otherwise equal.
         //

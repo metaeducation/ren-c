@@ -141,7 +141,7 @@ REB_R PD_Blank(
 REBTYPE(Unit)
 {
     Value* val = D_ARG(1);
-    assert(not IS_NULLED(val));
+    assert(not Is_Nulled(val));
 
     if (not Is_Void(val) and not Is_Blank(val))
         fail (Error_Invalid(val));

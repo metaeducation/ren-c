@@ -450,7 +450,7 @@ Flex* Hash_Block(const Value* block, REBLEN skip, bool cased)
     hashlist = Make_Hash_Sequence(Cell_Series_Len_At(block));
     hashes = Flex_Head(REBLEN, hashlist);
 
-    value = Cell_Array_At(block);
+    value = Cell_List_At(block);
     if (IS_END(value))
         return hashlist;
 

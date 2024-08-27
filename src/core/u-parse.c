@@ -73,7 +73,7 @@
 //
 // (Note: when arguments to natives are viewed under the debugger, the
 // debug frames are read only.  So it's not possible for the user to change
-// the ANY_SERIES! of the current parse position sitting in slot 0 into
+// the Any_Series! of the current parse position sitting in slot 0 into
 // a DECIMAL! and crash the parse, for instance.  They are able to change
 // usermode authored function arguments only.)
 //
@@ -196,8 +196,8 @@ static bool Subparse_Throws(
     Specifier* rules_specifier,
     REBFLGS flags
 ){
-    assert(ANY_ARRAY(rules));
-    assert(ANY_SERIES(input));
+    assert(Any_List(rules));
+    assert(Any_Series(input));
 
     // Since SUBPARSE is a native that the user can call directly, and it
     // is "effectively variadic" reading its instructions inline out of the
@@ -221,7 +221,7 @@ static bool Subparse_Throws(
     L->out = out;
 
     L->gotten = nullptr;
-    SET_FRAME_VALUE(L, Cell_Array_At(rules)); // not an END due to test above
+    SET_FRAME_VALUE(L, Cell_List_At(rules)); // not an END due to test above
     L->specifier = Derive_Specifier(rules_specifier, rules);
 
     L->source->vaptr = nullptr;
@@ -289,7 +289,7 @@ static bool Subparse_Throws(
         if (Is_Action(out)) {
             if (VAL_ACTION(out) == NAT_ACTION(parse_reject)) {
                 CATCH_THROWN(out, out);
-                assert(IS_NULLED(out));
+                assert(Is_Nulled(out));
                 *interrupted_out = true;
                 return false;
             }
@@ -421,7 +421,7 @@ static const Cell* Get_Parse_Value(
         if (Is_Nothing(cell))
             fail (Error_No_Value_Core(rule, specifier));
 
-        if (IS_NULLED(cell))
+        if (Is_Nulled(cell))
             fail (Error_No_Value_Core(rule, specifier));
 
         return cell;
@@ -440,7 +440,7 @@ static const Cell* Get_Parse_Value(
         if (Is_Nothing(cell))
             fail (Error_No_Value_Core(rule, specifier));
 
-        if (IS_NULLED(cell))
+        if (Is_Nulled(cell))
             fail (Error_No_Value_Core(rule, specifier));
 
         return cell;
@@ -477,7 +477,7 @@ REB_R Process_Group_For_Parse(
         P_POS = Flex_Len(P_INPUT);
 
     if (
-        IS_NULLED(cell) // even for doubled groups, null evals are discarded
+        Is_Nulled(cell) // even for doubled groups, null evals are discarded
         or not Is_Doubled_Group(group) // non-doubled groups always discard
     ){
         return R_INVISIBLE;
@@ -619,7 +619,7 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
 
         // !!! ignore "interrupted"? (e.g. ACCEPT or REJECT ran)
 
-        if (IS_NULLED(subresult))
+        if (Is_Nulled(subresult))
             return END_FLAG;
 
         REBINT index = VAL_INT32(subresult);
@@ -736,7 +736,7 @@ static REBIXO Parse_Array_One_Rule_Core(
 
         P_POS = pos_before; // restore input position
 
-        if (IS_NULLED(subresult))
+        if (Is_Nulled(subresult))
             return END_FLAG;
 
         REBINT index = VAL_INT32(subresult);
@@ -865,8 +865,8 @@ static REBIXO To_Thru_Block_Rule(
                 rule = Get_Parse_Value(cell, rule, P_RULE_SPECIFIER);
 
             // Try to match it:
-            if (ANY_ARRAY_KIND(P_TYPE)) {
-                if (ANY_ARRAY(rule))
+            if (Any_List_Kind(P_TYPE)) {
+                if (Any_List(rule))
                     fail (Error_Parse_Rule());
 
                 REBIXO i = Parse_Array_One_Rule_Core(L, pos, rule);
@@ -984,7 +984,7 @@ static REBIXO To_Thru_Block_Rule(
                         }
                     }
                 }
-                else if (ANY_STRING(rule)) {
+                else if (Any_String(rule)) {
                     REBUNI ch2 = VAL_ANY_CHAR(rule);
                     if (!P_HAS_CASE) ch2 = UP_CASE(ch2);
 
@@ -1127,7 +1127,7 @@ static REBIXO To_Thru_Non_Block_Rule(
 
     //=//// PARSE INPUT IS A STRING OR BINARY, USE A FIND ROUTINE /////////=//
 
-    if (ANY_BINSTR(rule)) {
+    if (Is_Binary(rule) or Any_String(rule)) {
         if (not Is_Text(rule) and not Is_Binary(rule)) {
             // !!! Can this be optimized not to use COPY?
             Flex* formed = Copy_Form_Value(rule, 0);
@@ -1469,15 +1469,15 @@ DECLARE_NATIVE(subparse)
                                 not Is_Block(OUT)
                                 or not (
                                     Cell_Series_Len_At(OUT) == 2
-                                    and Is_Integer(Cell_Array_At(OUT))
-                                    and Is_Integer(Cell_Array_At(OUT) + 1)
+                                    and Is_Integer(Cell_List_At(OUT))
+                                    and Is_Integer(Cell_List_At(OUT) + 1)
                                 )
                             ){
                                 fail ("REPEAT takes INTEGER! or length 2 BLOCK! range");
                             }
 
-                            mincount = Int32s(Cell_Array_At(OUT), 0);
-                            maxcount = Int32s(Cell_Array_At(OUT) + 1, 0);
+                            mincount = Int32s(Cell_List_At(OUT), 0);
+                            maxcount = Int32s(Cell_List_At(OUT) + 1, 0);
 
                             if (maxcount < mincount)
                                 fail ("REPEAT range can't have lower max than minimum");
@@ -1788,7 +1788,7 @@ DECLARE_NATIVE(subparse)
                   seek_rule: ;
                     DECLARE_VALUE (temp);
                     Move_Opt_Var_May_Fail(temp, rule, P_RULE_SPECIFIER);
-                    if (not ANY_SERIES(temp)) { // #1263
+                    if (not Any_Series(temp)) { // #1263
                         DECLARE_VALUE (non_series);
                         Derelativize(non_series, P_RULE, P_RULE_SPECIFIER);
                         fail (Error_Parse_Series_Raw(non_series));
@@ -1820,7 +1820,7 @@ DECLARE_NATIVE(subparse)
                         Move_Opt_Var_May_Fail(save, rule, P_RULE_SPECIFIER);
                         rule = save;
                     }
-                    if (IS_NULLED(rule))
+                    if (Is_Nulled(rule))
                         fail (Error_No_Value_Core(rule, P_RULE_SPECIFIER));
                 }
                 else {
@@ -1828,7 +1828,7 @@ DECLARE_NATIVE(subparse)
                 }
             }
         }
-        else if (ANY_PATH(rule)) {
+        else if (Any_Path(rule)) {
             if (Is_Path(rule)) {
                 if (Get_Path_Throws_Core(save, rule, P_RULE_SPECIFIER)) {
                     Copy_Cell(P_OUT, save);
@@ -1861,7 +1861,7 @@ DECLARE_NATIVE(subparse)
                 // but note the positions being returned and checked aren't
                 // prepared for this, they only exchange numbers ATM (!!!)
                 //
-                if (not ANY_SERIES(save))
+                if (not Any_Series(save))
                     fail (Error_Parse_Series_Raw(save));
 
                 Set_Parse_Series(L, save);
@@ -1877,7 +1877,7 @@ DECLARE_NATIVE(subparse)
 
         // All cases should have either set `rule` by this point or continued
         //
-        assert(rule and not IS_NULLED(rule));
+        assert(rule and not Is_Nulled(rule));
 
         // Counter? 123
         if (Is_Integer(rule)) { // Specify count or range count
@@ -2039,7 +2039,11 @@ DECLARE_NATIVE(subparse)
 
                     if (
                         IS_END(into)
-                        or (not ANY_BINSTR(into) and not ANY_ARRAY(into))
+                        or (not (
+                            Is_Binary(into)
+                            or Any_String(into)
+                        )
+                        and not Any_List(into))
                     ){
                         i = END_FLAG;
                         break;
@@ -2061,7 +2065,7 @@ DECLARE_NATIVE(subparse)
 
                     // !!! ignore interrupted? (e.g. ACCEPT or REJECT ran)
 
-                    if (IS_NULLED(P_CELL)) {
+                    if (Is_Nulled(P_CELL)) {
                         i = END_FLAG;
                     }
                     else {
@@ -2094,7 +2098,7 @@ DECLARE_NATIVE(subparse)
 
                 // Non-breaking out of loop instances of match or not.
 
-                if (IS_NULLED(P_CELL))
+                if (Is_Nulled(P_CELL))
                     i = END_FLAG;
                 else {
                     assert(Is_Integer(P_CELL));
@@ -2214,8 +2218,8 @@ DECLARE_NATIVE(subparse)
 
                 if (P_FLAGS & PF_COPY) {
                     DECLARE_VALUE (temp);
-                    if (ANY_ARRAY(P_INPUT_VALUE)) {
-                        Init_Any_Array(
+                    if (Any_List(P_INPUT_VALUE)) {
+                        Init_Any_List(
                             temp,
                             P_TYPE,
                             Copy_Array_At_Max_Shallow(
@@ -2233,7 +2237,7 @@ DECLARE_NATIVE(subparse)
                         );
                     }
                     else {
-                        assert(ANY_STRING(P_INPUT_VALUE));
+                        assert(Any_String(P_INPUT_VALUE));
 
                         DECLARE_VALUE (begin_val);
                         Init_Any_Series_At(begin_val, P_TYPE, P_INPUT, begin);
@@ -2496,7 +2500,7 @@ DECLARE_NATIVE(parse)
         return R_THROWN;
     }
 
-    if (IS_NULLED(OUT)) {
+    if (Is_Nulled(OUT)) {
         if (REF(match))
             return nullptr;
         fail (Error_Parse_Mismatch_Raw(rules));

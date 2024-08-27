@@ -45,7 +45,7 @@ REBLEN Modify_Array(
     REBINT dst_len,         // length to remove
     REBINT dups             // dup count
 ){
-    assert(not IS_NULLED(src_val));
+    assert(not Is_Nulled(src_val));
 
     assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
 
@@ -88,7 +88,7 @@ REBLEN Modify_Array(
 
     // Check /PART, compute LEN:
     if (flags & AM_SPLICE) {
-        assert(ANY_ARRAY(src_val));
+        assert(Any_List(src_val));
         // Adjust length of insertion if changing /PART:
         if (op != SYM_CHANGE and (flags & AM_PART))
             ilen = dst_len;
@@ -96,7 +96,7 @@ REBLEN Modify_Array(
             ilen = Cell_Series_Len_At(src_val);
 
         if (not tail_newline) {
-            Cell* tail_cell = Cell_Array_At(src_val) + ilen;
+            Cell* tail_cell = Cell_List_At(src_val) + ilen;
             if (IS_END(tail_cell)) {
                 tail_newline = Get_Array_Flag(
                     Cell_Array(src_val),
@@ -125,7 +125,7 @@ REBLEN Modify_Array(
             specifier = SPECIFIED; // copy already specified it
         }
         else {
-            src_rel = Cell_Array_At(src_val); // skips by VAL_INDEX values
+            src_rel = Cell_List_At(src_val); // skips by VAL_INDEX values
             specifier = VAL_SPECIFIER(src_val);
         }
     }
@@ -233,7 +233,7 @@ REBLEN Modify_Binary(
     REBINT dst_len,         // length to remove
     REBINT dups             // dup count
 ){
-    assert(not IS_NULLED(src_val));
+    assert(not Is_Nulled(src_val));
 
     assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
 
@@ -301,7 +301,7 @@ REBLEN Modify_Binary(
         needs_free = true;
         limit = -1;
     }
-    else if (ANY_STRING(src_val)) {
+    else if (Any_String(src_val)) {
         REBLEN len_at = Cell_Series_Len_At(src_val);
         if (limit >= 0 && len_at > cast(REBLEN, limit))
             src_ser = Make_Utf8_From_Cell_String_At_Limit(src_val, limit);
@@ -392,7 +392,7 @@ REBLEN Modify_String(
     REBINT dst_len,         // length to remove
     REBINT dups             // dup count
 ){
-    assert(not IS_NULLED(src_val));
+    assert(not Is_Nulled(src_val));
 
     assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
 
@@ -442,7 +442,7 @@ REBLEN Modify_String(
         needs_free = true;
     }
     else if (
-        ANY_STRING(src_val)
+        Any_String(src_val)
         and not (Is_Tag(src_val) or (flags & AM_LINE))
     ){
         src_ser = Cell_String(src_val);

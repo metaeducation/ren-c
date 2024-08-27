@@ -57,7 +57,7 @@ REB_R MAKE_Port(Value* out, enum Reb_Kind kind, const Value* arg)
     Value* make_port_helper = CTX_VAR(Sys_Context, SYS_CTX_MAKE_PORT_P);
     assert(Is_Action(make_port_helper));
 
-    assert(not IS_NULLED(arg)); // would need to DEVOID it otherwise
+    assert(not Is_Nulled(arg)); // would need to DEVOID it otherwise
     if (Apply_Only_Throws(out, fully, make_port_helper, arg, rebEND))
         fail (Error_No_Catch_For_Throw(out));
 

@@ -143,7 +143,7 @@ replace: function [
             length of :pattern
         ]
 
-        any-array? :pattern [length of :pattern]
+        any-list? :pattern [length of :pattern]
     ]
 
     while [pos: find/(if case_REPLACE [/case]) target :pattern] [
@@ -688,7 +688,7 @@ split: function [
     ; or where the dlm was a char/string/charset and it was the last char
     ; (so we want to append an empty field that the above rule misses).
     ;
-    fill-val: does [copy either any-array? series [[]] [""]]
+    fill-val: does [copy either any-list? series [[]] [""]]
     add-fill-val: does [append/only result fill-val]
     if integer? dlm [
         if into [

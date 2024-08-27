@@ -31,7 +31,7 @@
 // for you.
 //
 // Even "friendlier" interfaces are available as macros on top of these.
-// See %sys-do.h for Do_Any_Array_At_Throws() and similar macros.
+// See %sys-do.h for Do_At_Throws() and similar macros.
 //
 
 #include "sys-core.h"

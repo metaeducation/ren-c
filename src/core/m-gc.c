@@ -683,7 +683,7 @@ static void Propagate_All_GC_Marks(void)
 
             // Currently only FRAME! uses binding
             //
-            assert(ANY_CONTEXT(v));
+            assert(Any_Context(v));
             assert(not v->extra.binding or VAL_TYPE(v) == REB_FRAME);
 
             // These queueings cannot be done in Queue_Mark_Context_Deep
@@ -775,7 +775,7 @@ static void Propagate_All_GC_Marks(void)
             //
             if (
                 not IS_BLANK_RAW(v)
-                and IS_NULLED(v)
+                and Is_Nulled(v)
                 and Not_Array_Flag(a, IS_VARLIST)
                 and Not_Array_Flag(a, NULLEDS_LEGAL)
             ){

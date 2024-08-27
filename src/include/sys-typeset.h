@@ -101,8 +101,8 @@ INLINE Symbol* Get_Type_Name(const Cell* value)
 #define TS_SERIES_OBJ \
     ((TS_SERIES | TS_CONTEXT) & ~TS_NOT_COPIED)
 
-#define TS_ARRAYS_OBJ \
-    ((TS_ARRAY | TS_CONTEXT) & ~TS_NOT_COPIED)
+#define TS_LISTS_OBJ \
+    ((TS_LIST | TS_CONTEXT) & ~TS_NOT_COPIED)
 
 #define TS_CLONE \
     (TS_SERIES & ~TS_NOT_COPIED) // currently same as TS_NOT_COPIED

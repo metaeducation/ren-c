@@ -88,12 +88,12 @@ intersect: generic [
     {Returns the intersection (AND) of two values.}
     value1 [
         logic! integer! char! tuple! ;-- math
-        any-array! any-string! bitset! typeset! ;-- sets
+        any-list! any-string! bitset! typeset! ;-- sets
         binary! ;-- ???
     ]
     value2 [
         logic! integer! char! tuple! ;-- math
-        any-array! any-string! bitset! typeset! ;-- sets
+        any-list! any-string! bitset! typeset! ;-- sets
         binary! ;-- ???
     ]
     /case
@@ -107,12 +107,12 @@ union: generic [
     {Returns the union (OR) of two values.}
     value1 [
         logic! integer! char! tuple! ;-- math
-        any-array! any-string! bitset! typeset! ;-- sets
+        any-list! any-string! bitset! typeset! ;-- sets
         binary! ;-- ???
     ]
     value2 [
         logic! integer! char! tuple! ;-- math
-        any-array! any-string! bitset! typeset! ;-- sets
+        any-list! any-string! bitset! typeset! ;-- sets
         binary! ;-- ???
     ]
     /case
@@ -126,13 +126,13 @@ difference: generic [
     {Returns the special difference (XOR) of two values.}
     value1 [
         logic! integer! char! tuple! ;-- math
-        any-array! any-string! bitset! typeset! ;-- sets
+        any-list! any-string! bitset! typeset! ;-- sets
         binary! ;-- ???
         date! ;-- !!! Under review, this really doesn't fit
     ]
     value2 [
         logic! integer! char! tuple! ;-- math
-        any-array! any-string! bitset! typeset! ;-- sets
+        any-list! any-string! bitset! typeset! ;-- sets
         binary! ;-- ???
         date! ;-- !!! Under review, this really doesn't fit
     ]

@@ -78,8 +78,8 @@ REB_R MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
         if (Cell_Series_Len_At(arg) != 2)
             goto bad_make;
 
-        x = Cell_Array_At(arg);
-        y = Cell_Array_At(arg) + 1;
+        x = Cell_List_At(arg);
+        y = Cell_List_At(arg) + 1;
     }
     else {
         x = arg;

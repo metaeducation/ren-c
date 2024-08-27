@@ -132,18 +132,18 @@ REBINT Find_Key_Hashed(
     //
     REBINT synonym_slot = -1; // no synonyms seen yet...
 
-    if (ANY_WORD(key)) {
+    if (Any_Word(key)) {
         REBLEN n;
         while ((n = indexes[slot]) != 0) {
             Cell* k = Array_At(array, (n - 1) * wide); // stored key
-            if (ANY_WORD(k)) {
+            if (Any_Word(k)) {
                 if (Cell_Word_Symbol(key) == Cell_Word_Symbol(k))
                     FOUND_EXACT;
                 else if (not cased)
                     if (VAL_WORD_CANON(key) == VAL_WORD_CANON(k))
                         FOUND_SYNONYM;
             }
-            if (wide > 1 && IS_NULLED(k + 1) && zombie_slot == -1)
+            if (wide > 1 && Is_Nulled(k + 1) && zombie_slot == -1)
                 zombie_slot = slot;
 
             slot += skip;
@@ -151,7 +151,7 @@ REBINT Find_Key_Hashed(
                 slot -= len;
         }
     }
-    else if (ANY_BINSTR(key)) {
+    else if (Is_Binary(key) or Any_String(key)) {
         REBLEN n;
         while ((n = indexes[slot]) != 0) {
             Cell* k = Array_At(array, (n - 1) * wide); // stored key
@@ -162,7 +162,7 @@ REBINT Find_Key_Hashed(
                     if (0 == Compare_String_Vals(k, key, true))
                         FOUND_SYNONYM;
             }
-            if (wide > 1 && IS_NULLED(k + 1) && zombie_slot == -1)
+            if (wide > 1 && Is_Nulled(k + 1) && zombie_slot == -1)
                 zombie_slot = slot;
 
             slot += skip;
@@ -181,7 +181,7 @@ REBINT Find_Key_Hashed(
                     if (Is_Char(k) && 0 == Cmp_Value(k, key, false))
                         FOUND_SYNONYM; // CHAR! is only non-STRING!/WORD! case
             }
-            if (wide > 1 && IS_NULLED(k + 1) && zombie_slot == -1)
+            if (wide > 1 && Is_Nulled(k + 1) && zombie_slot == -1)
                 zombie_slot = slot;
 
             slot += skip;
@@ -235,7 +235,7 @@ static void Rehash_Map(REBMAP *map)
     for (n = 0; n < Array_Len(pairlist); n += 2, key += 2) {
         const bool cased = true; // cased=true is always fine
 
-        if (IS_NULLED(key + 1)) {
+        if (Is_Nulled(key + 1)) {
             //
             // It's a "zombie", move last key to overwrite it
             //
@@ -255,7 +255,7 @@ static void Rehash_Map(REBMAP *map)
 
         // discard zombies at end of pairlist
         //
-        while (IS_NULLED(Array_At(pairlist, Array_Len(pairlist) - 1))) {
+        while (Is_Nulled(Array_At(pairlist, Array_Len(pairlist) - 1))) {
             SET_ARRAY_LEN_NOTERM(pairlist, Array_Len(pairlist) - 2);
         }
     }
@@ -305,7 +305,7 @@ REBLEN Find_Map_Entry(
     Specifier* val_specifier,
     bool cased // case-sensitive if true
 ) {
-    assert(not IS_NULLED(key));
+    assert(not Is_Nulled(key));
 
     Flex* hashlist = MAP_HASHLIST(map); // can be null
     Array* pairlist = MAP_PAIRLIST(map);
@@ -350,7 +350,7 @@ REBLEN Find_Map_Entry(
         return n;
     }
 
-    if (IS_NULLED(val)) return 0; // trying to remove non-existing key
+    if (Is_Nulled(val)) return 0; // trying to remove non-existing key
 
     // Create new entry.  Note that it does not copy underlying series (e.g.
     // the data of a string), which is why the immutability test is necessary
@@ -404,7 +404,7 @@ REB_R PD_Map(
     Value* val = KNOWN(
         Array_At(MAP_PAIRLIST(VAL_MAP(pvs->out)), ((n - 1) * 2) + 1)
     );
-    if (IS_NULLED(val)) // zombie entry, means unused
+    if (Is_Nulled(val)) // zombie entry, means unused
         return nullptr;
 
     return Copy_Cell(pvs->out, val); // RETURN (...) uses `level_`, not `pvs`
@@ -452,7 +452,7 @@ static void Append_Map(
 //
 REB_R MAKE_Map(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    if (ANY_NUMBER(arg)) {
+    if (Any_Number(arg)) {
         return Init_Map(out, Make_Map(Int32s(arg, 0)));
     }
     else {
@@ -491,7 +491,7 @@ INLINE REBMAP *Copy_Map(REBMAP *map, REBU64 types) {
         assert(Is_Value_Immutable(key)); // immutable key
 
         Cell* v = key + 1;
-        if (IS_NULLED(v))
+        if (Is_Nulled(v))
             continue; // "zombie" map element (not present)
 
         // No plain Clonify_Value() yet, call on values with length of 1.
@@ -555,7 +555,7 @@ Array* Map_To_Array(REBMAP *map, REBINT what)
     Value* val = KNOWN(Array_Head(MAP_PAIRLIST(map)));
     for (; NOT_END(val); val += 2) {
         assert(NOT_END(val + 1));
-        if (not IS_NULLED(val + 1)) {
+        if (not Is_Nulled(val + 1)) {
             if (what <= 0) {
                 Copy_Cell(dest, &val[0]);
                 ++dest;
@@ -589,7 +589,7 @@ REBCTX *Alloc_Context_From_Map(REBMAP *map)
 
     for (; NOT_END(mval); mval += 2) {
         assert(NOT_END(mval + 1));
-        if (ANY_WORD(mval) and not IS_NULLED(mval + 1))
+        if (Any_Word(mval) and not Is_Nulled(mval + 1))
             ++count;
     }
 
@@ -603,7 +603,7 @@ REBCTX *Alloc_Context_From_Map(REBMAP *map)
 
     for (; NOT_END(mval); mval += 2) {
         assert(NOT_END(mval + 1));
-        if (ANY_WORD(mval) and not IS_NULLED(mval + 1)) {
+        if (Any_Word(mval) and not Is_Nulled(mval + 1)) {
             // !!! Used to leave SET_WORD typed values here... but why?
             // (Objects did not make use of the set-word vs. other distinctions
             // that function specs did.)
@@ -655,7 +655,7 @@ void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
     Cell* key = Array_Head(MAP_PAIRLIST(m));
     for (; NOT_END(key); key += 2) {
         assert(NOT_END(key + 1)); // value slot must not be END
-        if (IS_NULLED(key + 1))
+        if (Is_Nulled(key + 1))
             continue; // if value for this key is void, key has been removed
 
         if (not form)
@@ -762,7 +762,7 @@ REBTYPE(Map)
         );
 
         if (Cell_Word_Id(verb) == SYM_FIND)
-            return IS_NULLED(OUT) ? nullptr : Init_Bar(OUT);
+            return Is_Nulled(OUT) ? nullptr : Init_Bar(OUT);
 
         return OUT; }
 
@@ -786,7 +786,7 @@ REBTYPE(Map)
     case SYM_APPEND: {
         INCLUDE_PARAMS_OF_INSERT;
 
-        if (IS_NULLED_OR_BLANK(arg))
+        if (Is_Nulled(arg) or Is_Blank(arg))
             RETURN (val); // don't fail on read only if it would be a no-op
 
         Fail_If_Read_Only_Flex(MAP_PAIRLIST(map));

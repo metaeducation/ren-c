@@ -47,75 +47,68 @@ REBOL [
         /* For other checks, we pay the cost in the debug build of all the
            associated baggage that VAL_TYPE() carries over VAL_TYPE_RAW() */
 
-        #define ANY_VALUE(v) \
+        #define Any_Value(v) \
             (VAL_TYPE(v) != REB_MAX_NULLED)
 
-        INLINE bool ANY_SCALAR_KIND(enum Reb_Kind k) {
+        INLINE bool Any_Scalar_Kind(enum Reb_Kind k) {
             return k >= REB_LOGIC and k <= REB_DATE;
         }
 
-        #define ANY_SCALAR(v) \
-            ANY_SCALAR_KIND(VAL_TYPE(v))
+        #define Any_Scalar(v) \
+            Any_Scalar_Kind(VAL_TYPE(v))
 
-        INLINE bool ANY_SERIES_KIND(enum Reb_Kind k) {
+        INLINE bool Any_Series_Kind(enum Reb_Kind k) {
             return k >= REB_PATH and k <= REB_BITSET;
         }
 
-        #define ANY_SERIES(v) \
-            ANY_SERIES_KIND(VAL_TYPE(v))
+        #define Any_Series(v) \
+            Any_Series_Kind(VAL_TYPE(v))
 
-        INLINE bool ANY_STRING_KIND(enum Reb_Kind k) {
+        INLINE bool Any_String_Kind(enum Reb_Kind k) {
             return k >= REB_TEXT and k <= REB_TAG;
         }
 
-        #define ANY_STRING(v) \
-            ANY_STRING_KIND(VAL_TYPE(v))
+        #define Any_String(v) \
+            Any_String_Kind(VAL_TYPE(v))
 
-        INLINE bool ANY_BINSTR_KIND(enum Reb_Kind k) {
-            return k >= REB_BINARY and k <= REB_TAG;
-        }
-
-        #define ANY_BINSTR(v) \
-            ANY_BINSTR_KIND(VAL_TYPE(v))
-
-        INLINE bool ANY_ARRAY_KIND(enum Reb_Kind k) {
+        INLINE bool Any_List_Kind(enum Reb_Kind k) {
             return k >= REB_PATH and k <= REB_BLOCK;
         }
 
-        #define ANY_ARRAY(v) \
-            ANY_ARRAY_KIND(VAL_TYPE(v))
+        #define Any_List(v) \
+            Any_List_Kind(VAL_TYPE(v))
 
-        INLINE bool ANY_WORD_KIND(enum Reb_Kind k) {
+        INLINE bool Any_Word_Kind(enum Reb_Kind k) {
             return k >= REB_WORD and k <= REB_ISSUE;
         }
 
-        #define ANY_WORD(v) \
-            ANY_WORD_KIND(VAL_TYPE(v))
+        #define Any_Word(v) \
+            Any_Word_Kind(VAL_TYPE(v))
 
-        INLINE bool ANY_PATH_KIND(enum Reb_Kind k) {
+        INLINE bool Any_Path_Kind(enum Reb_Kind k) {
             return k >= REB_PATH and k <= REB_LIT_PATH;
         }
 
-        #define ANY_PATH(v) \
-            ANY_PATH_KIND(VAL_TYPE(v))
+        #define Any_Path(v) \
+            Any_Path_Kind(VAL_TYPE(v))
 
-        INLINE bool ANY_CONTEXT_KIND(enum Reb_Kind k) {
+        INLINE bool Any_Context_Kind(enum Reb_Kind k) {
             return k >= REB_OBJECT and k <= REB_PORT;
         }
 
-        #define ANY_CONTEXT(v) \
-            ANY_CONTEXT_KIND(VAL_TYPE(v))
+        #define Any_Context(v) \
+            Any_Context_Kind(VAL_TYPE(v))
 
         /* !!! There was an IS_NUMBER() macro defined in R3-Alpha which was
            REB_INTEGER and REB_DECIMAL.  But ANY-NUMBER! the typeset included
            PERCENT! so this adds that and gets rid of IS_NUMBER() */
 
-        INLINE bool ANY_NUMBER_KIND(enum Reb_Kind k) {
+        INLINE bool Any_Number_Kind(enum Reb_Kind k) {
             return k == REB_INTEGER or k == REB_DECIMAL or k == REB_PERCENT;
         }
 
-        #define ANY_NUMBER(v) \
-            ANY_NUMBER_KIND(VAL_TYPE(v))
+        #define Any_Number(v) \
+            Any_Number_Kind(VAL_TYPE(v))
 
         /* !!! Being able to locate inert types based on range *almost* works,
            but REB_ISSUE and REB_REFINEMENT want to be picked up as ANY-WORD!.
@@ -123,25 +116,13 @@ REBOL [
            get unified, but it's here to show how choosing these values
            carefully can help with speeding up tests. */
 
-        INLINE bool ANY_INERT_KIND(enum Reb_Kind k) {
+        INLINE bool Any_Inert_Kind(enum Reb_Kind k) {
             return (k >= REB_BLOCK and k <= REB_BLANK)
                 or k == REB_ISSUE or k == REB_REFINEMENT;
         }
 
-        #define ANY_INERT(v) \
-            ANY_INERT_KIND(VAL_TYPE(v))
-
-        /*
-         * This is another kind of test that might have some way to speed up
-         * based on types or bits, or as an alternate to another speedup if
-         * it turns out to be more common
-         */
-        INLINE bool IS_NULLED_OR_BLANK_KIND(enum Reb_Kind k) {
-            return k == REB_MAX_NULLED or k == REB_BLANK;
-        }
-
-        #define IS_NULLED_OR_BLANK(v) \
-            IS_NULLED_OR_BLANK_KIND(VAL_TYPE(v))
+        #define Any_Inert(v) \
+            Any_Inert_Kind(VAL_TYPE(v))
     }
 ]
 
@@ -164,17 +145,17 @@ lit-word    word        +       +       +       word
 refinement  word        +       +       +       word
 issue       word        +       +       +       word
 
-; ANY-ARRAY!, order matters (and contiguous with ANY-SERIES below matters!)
+; ANY-LIST!, order matters (and contiguous with ANY-SERIES below matters!)
 ;
-path        array       +       +       +       [series path array]
-set-path    array       +       +       +       [series path array]
-get-path    array       +       +       +       [series path array]
-lit-path    array       +       +       +       [series path array]
-group       array       +       +       +       [series array]
+path        list        +       +       +       [series path list]
+set-path    list        +       +       +       [series path list]
+get-path    list        +       +       +       [series path list]
+lit-path    list        +       +       +       [series path list]
+group       list        +       +       +       [series list]
 ; -- start of inert bindable types (that aren't refinement! and issue!)
-block       array       +       +       +       [series array]
+block       list        +       +       +       [series list]
 
-; ANY-SERIES!, order matters (and contiguous with ANY-ARRAY above matters!)
+; ANY-SERIES!, order matters (and contiguous with ANY-LIST above matters!)
 ;
 binary      string      +       +       binary  [series]
 text        string      +       +       +       [series string]

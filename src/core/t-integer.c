@@ -136,7 +136,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         Init_Integer(out, deci_to_int(VAL_MONEY_AMOUNT(value)));
         goto check_sign;
     }
-    else if (Is_Binary(value)) { // must be before ANY_STRING() test...
+    else if (Is_Binary(value)) { // must be before Any_String() test...
 
         // Rebol3 creates 8-byte big endian for signed 64-bit integers.
         // Rebol2 created 4-byte big endian for signed 32-bit integers.
@@ -284,7 +284,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
 
         return;
     }
-    else if (ANY_STRING(value)) {
+    else if (Any_String(value)) {
         REBSIZ size;
         const REBLEN max_len = Cell_Series_Len_At(value); // e.g. "no maximum"
         Byte *bp = Analyze_String_For_Scan(&size, value, max_len);
@@ -628,7 +628,7 @@ DECLARE_NATIVE(enbin)
             "fail {Second element of ENBIN settings must be + or +/-}",
         "]"
     );
-    Cell* third = Cell_Array_At_Head(settings, index + 2);
+    Cell* third = Cell_List_At_Head(settings, index + 2);
     if (not Is_Integer(third))
         fail ("Third element of ENBIN settings must be an integer}");
     REBINT num_bytes = VAL_INT32(third);
@@ -735,7 +735,7 @@ DECLARE_NATIVE(debin)
         "]"
     );
     REBLEN num_bytes;
-    Cell* third = Cell_Array_At_Head(settings, index + 2);
+    Cell* third = Cell_List_At_Head(settings, index + 2);
     if (IS_END(third))
         num_bytes = Cell_Series_Len_At(ARG(binary));
     else {

@@ -445,8 +445,8 @@ REB_R MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
         return out;
     }
 
-    if (ANY_ARRAY(arg) && VAL_ARRAY_LEN_AT(arg) >= 3) {
-        const Cell* item = Cell_Array_At(arg);
+    if (Any_List(arg) && VAL_ARRAY_LEN_AT(arg) >= 3) {
+        const Cell* item = Cell_List_At(arg);
         if (not Is_Integer(item))
             goto bad_make;
 
@@ -727,7 +727,7 @@ void Pick_Or_Poke_Date(
             break;
 
         case SYM_TIME:
-            if (IS_NULLED(opt_poke)) { // clear out the time component
+            if (Is_Nulled(opt_poke)) { // clear out the time component
                 CLEAR_VAL_FLAG(v, DATE_FLAG_HAS_TIME);
                 CLEAR_VAL_FLAG(v, DATE_FLAG_HAS_ZONE);
                 return;
@@ -745,7 +745,7 @@ void Pick_Or_Poke_Date(
             break;
 
         case SYM_ZONE:
-            if (IS_NULLED(opt_poke)) { // clear out the zone component
+            if (Is_Nulled(opt_poke)) { // clear out the zone component
                 CLEAR_VAL_FLAG(v, DATE_FLAG_HAS_ZONE);
                 return;
             }

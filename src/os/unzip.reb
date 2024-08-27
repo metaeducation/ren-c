@@ -333,7 +333,7 @@ ctx-zip: context [
 
     unzip: function [
         {Decompresses a ZIP archive with to a directory or a block.}
-        where [file! url! any-array!]
+        where [file! url! any-list!]
             "Where to decompress it"
         source [file! url! binary!]
             "Archive to decompress (only STORE and DEFLATE methods supported)"
@@ -440,7 +440,7 @@ ctx-zip: context [
                         num-errors: me + 1
                     ]
 
-                    either any-array? where [
+                    either any-list? where [
                         where: insert where name
                         where: insert where either all [
                             #"/" = last name

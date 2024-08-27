@@ -196,7 +196,7 @@ dump-obj: function [
 
     form-val: func [val [any-value!]] [
         ; Form a limited string from the value provided.
-        if any-array? :val [return spaced ["length:" length of val]]
+        if any-list? :val [return spaced ["length:" length of val]]
         if datatype? :val [return form val]
         if action? :val [
             return clip-str any [title-of :val | mold spec-of :val]
@@ -285,7 +285,7 @@ dump-obj: function [
 ][
     while [(not new-line? args) and [value: take args]] [
         all [
-            any-array? :value
+            any-list? :value
             contains-newline value
             return
         ]

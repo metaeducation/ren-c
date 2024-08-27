@@ -217,12 +217,12 @@ DECLARE_NATIVE(return)
 
     if (
         GET_ACT_FLAG(target_fun, ACTION_FLAG_INVISIBLE)
-        and IS_ENDISH_NULLED(v)
+        and Is_Endish_Nulled(v)
     ){
         // The only legal way invisibles can use RETURN is with no argument.
     }
     else {
-        if (IS_ENDISH_NULLED(v))
+        if (Is_Endish_Nulled(v))
             Init_Nothing(v);  // `do [return]` acts as `return trash`
 
         // Check type NOW instead of waiting and letting Eval_Core_Throws()
@@ -319,7 +319,7 @@ DECLARE_NATIVE(chain)
     Value* pipeline = ARG(pipeline);
     Array* chainees;
     if (REF(quote))
-        chainees = COPY_ANY_ARRAY_AT_DEEP_MANAGED(pipeline);
+        chainees = COPY_Any_List_AT_DEEP_MANAGED(pipeline);
     else {
         StackIndex base = TOP_INDEX;
         if (Reduce_To_Stack_Throws(out, pipeline))

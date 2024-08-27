@@ -262,7 +262,7 @@ REB_R MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
         if (VAL_ARRAY_LEN_AT(arg) > 3)
             goto no_time;
 
-        Cell* item = Cell_Array_At(arg);
+        Cell* item = Cell_List_At(arg);
         if (not Is_Integer(item))
             goto no_time;
 

@@ -89,7 +89,7 @@ INLINE Byte *Cell_Binary_Tail(const Cell* v) {
     return Flex_Tail(Byte, Cell_Blob(v));
 }
 
-// !!! RE: Cell_Binary_At_Head() see remarks on Cell_Array_At_Head()
+// !!! RE: Cell_Binary_At_Head() see remarks on Cell_List_At_Head()
 //
 #define Cell_Binary_At_Head(v,n) \
     Blob_At(Cell_Blob(v), (n))

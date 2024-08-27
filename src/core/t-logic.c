@@ -230,13 +230,13 @@ DECLARE_NATIVE(and)
 
     if (IS_FALSEY(left)) {
         if (Is_Group(right)) { // no need to evaluate right if BLOCK!
-            if (Do_Any_Array_At_Throws(OUT, right))
+            if (Do_At_Throws(OUT, right))
                 return R_THROWN;
         }
         RETURN (left); // preserve falsey value
     }
 
-    if (Do_Any_Array_At_Throws(OUT, right))
+    if (Do_At_Throws(OUT, right))
         return R_THROWN;
 
     return OUT; // preserve the exact truthy or falsey value
@@ -263,13 +263,13 @@ DECLARE_NATIVE(or)
 
     if (IS_TRUTHY(left)) {
         if (Is_Group(right)) { // no need to evaluate right if BLOCK!
-            if (Do_Any_Array_At_Throws(OUT, right))
+            if (Do_At_Throws(OUT, right))
                 return R_THROWN;
         }
         RETURN (left);
     }
 
-    if (Do_Any_Array_At_Throws(OUT, right))
+    if (Do_At_Throws(OUT, right))
         return R_THROWN;
 
     return OUT; // preserve the exact truthy or falsey value
@@ -295,7 +295,7 @@ DECLARE_NATIVE(xor)
 
     Value* left = ARG(left);
 
-    if (Do_Any_Array_At_Throws(OUT, ARG(right))) // always evaluated
+    if (Do_At_Throws(OUT, ARG(right))) // always evaluated
         return R_THROWN;
 
     Value* right = OUT;

@@ -129,7 +129,7 @@ INLINE void Term_String_Len(String* s, REBLEN len) {
 }
 
 INLINE String* Cell_String(const Cell* cell) {
-    assert(ANY_STRING(cell));
+    assert(Any_String(cell));
     return cast(String*, Cell_Flex(cell));
 }
 
@@ -148,7 +148,7 @@ INLINE REBSIZ VAL_SIZE_LIMIT_AT(
     const Cell* v,
     REBINT limit // -1 for no limit
 ){
-    assert(ANY_STRING(v));
+    assert(Any_String(v));
 
     Ucs2(const*) at = Cell_String_At(v); // !!! update cache if needed
     Ucs2(const*) tail;

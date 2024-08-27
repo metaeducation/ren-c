@@ -32,7 +32,7 @@
 
 
 //
-//  CT_Array: C
+//  CT_List: C
 //
 // "Compare Type" dispatcher for the following types: (list here to help
 // text searches)
@@ -44,7 +44,7 @@
 //     CT_Get_Path()
 //     CT_Lit_Path()
 //
-REBINT CT_Array(const Cell* a, const Cell* b, REBINT mode)
+REBINT CT_List(const Cell* a, const Cell* b, REBINT mode)
 {
     REBINT num = Cmp_Array(a, b, mode == 1);
     if (mode >= 0)
@@ -56,7 +56,7 @@ REBINT CT_Array(const Cell* a, const Cell* b, REBINT mode)
 
 
 //
-//  MAKE_Array: C
+//  MAKE_List: C
 //
 // "Make Type" dispatcher for the following subtypes:
 //
@@ -67,12 +67,12 @@ REBINT CT_Array(const Cell* a, const Cell* b, REBINT mode)
 //     MAKE_Get_Path
 //     MAKE_Lit_Path
 //
-REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
+REB_R MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
     if (Is_Integer(arg) or Is_Decimal(arg)) {
         //
         // `make block! 10` => creates array with certain initial capacity
         //
-        return Init_Any_Array(out, kind, Make_Array(Int32s(arg, 0)));
+        return Init_Any_List(out, kind, Make_Array(Int32s(arg, 0)));
     }
     else if (Is_Text(arg)) {
         //
@@ -88,7 +88,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         );
         Push_GC_Guard(temp);
         Option(String*) filename = nullptr;
-        Init_Any_Array(
+        Init_Any_List(
             out,
             kind,
             Scan_UTF8_Managed(filename, Blob_At(temp, offset), size)
@@ -96,7 +96,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         Drop_GC_Guard(temp);
         return out;
     }
-    else if (ANY_ARRAY(arg)) {
+    else if (Any_List(arg)) {
         //
         // !!! Ren-C unified MAKE and construction syntax, see #2263.  This is
         // now a questionable idea, as MAKE and TO have their roles defined
@@ -129,14 +129,14 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         //
         if (
             VAL_ARRAY_LEN_AT(arg) != 2
-            || !ANY_ARRAY(Cell_Array_At(arg))
-            || !Is_Integer(Cell_Array_At(arg) + 1)
+            || !Any_List(Cell_List_At(arg))
+            || !Is_Integer(Cell_List_At(arg) + 1)
         ) {
             goto bad_make;
         }
 
-        Cell* any_array = Cell_Array_At(arg);
-        REBINT index = VAL_INDEX(any_array) + Int32(Cell_Array_At(arg) + 1) - 1;
+        Cell* any_array = Cell_List_At(arg);
+        REBINT index = VAL_INDEX(any_array) + Int32(Cell_List_At(arg) + 1) - 1;
 
         if (index < 0 || index > cast(REBINT, VAL_LEN_HEAD(any_array)))
             goto bad_make;
@@ -162,7 +162,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         // !!! Should MAKE GROUP! and MAKE PATH! from a TYPESET! work like
         // MAKE BLOCK! does?  Allow it for now.
         //
-        return Init_Any_Array(out, kind, Typeset_To_Array(arg));
+        return Init_Any_List(out, kind, Typeset_To_Array(arg));
     }
     else if (Is_Binary(arg)) {
         //
@@ -170,17 +170,17 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         // goes directly to the scanner to make an unbound code array.
         //
         Option(String*) filename = nullptr;
-        return Init_Any_Array(
+        return Init_Any_List(
             out,
             kind,
             Scan_UTF8_Managed(filename, Cell_Binary_At(arg), Cell_Series_Len_At(arg))
         );
     }
     else if (Is_Map(arg)) {
-        return Init_Any_Array(out, kind, Map_To_Array(VAL_MAP(arg), 0));
+        return Init_Any_List(out, kind, Map_To_Array(VAL_MAP(arg), 0));
     }
-    else if (ANY_CONTEXT(arg)) {
-        return Init_Any_Array(out, kind, Context_To_Array(VAL_CONTEXT(arg), 3));
+    else if (Any_Context(arg)) {
+        return Init_Any_List(out, kind, Context_To_Array(VAL_CONTEXT(arg), 3));
     }
     else if (Is_Varargs(arg)) {
         //
@@ -235,7 +235,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
             Copy_Cell(PUSH(), out);
         } while (true);
 
-        return Init_Any_Array(out, kind, Pop_Stack_Values(base));
+        return Init_Any_List(out, kind, Pop_Stack_Values(base));
     }
     else if (Is_Action(arg)) {
         //
@@ -250,7 +250,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
             Copy_Cell(PUSH(), generated);
             rebRelease(generated);
         }
-        return Init_Any_Array(out, kind, Pop_Stack_Values(base));
+        return Init_Any_List(out, kind, Pop_Stack_Values(base));
     }
 
   bad_make:;
@@ -259,18 +259,18 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
 
 
 //
-//  TO_Array: C
+//  TO_List: C
 //
-REB_R TO_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
+REB_R TO_List(Value* out, enum Reb_Kind kind, const Value* arg) {
     if (
         kind == VAL_TYPE(arg) // always act as COPY if types match
         or Splices_Into_Type_Without_Only(kind, arg) // see comments
     ){
-        return Init_Any_Array(
+        return Init_Any_List(
             out,
             kind,
             Copy_Values_Len_Shallow(
-                Cell_Array_At(arg), VAL_SPECIFIER(arg), VAL_ARRAY_LEN_AT(arg)
+                Cell_List_At(arg), VAL_SPECIFIER(arg), VAL_ARRAY_LEN_AT(arg)
             )
         );
     }
@@ -279,7 +279,7 @@ REB_R TO_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         //
         Array* single = Alloc_Singular(NODE_FLAG_MANAGED);
         Copy_Cell(ARR_SINGLE(single), arg);
-        return Init_Any_Array(out, kind, single);
+        return Init_Any_List(out, kind, single);
     }
 }
 
@@ -312,11 +312,11 @@ REBLEN Find_In_Array(
 
     // Optimized find word in block
     //
-    if (ANY_WORD(target)) {
+    if (Any_Word(target)) {
         for (; index >= start && index < end; index += skip) {
             Cell* item = Array_At(array, index);
             Symbol* target_canon = VAL_WORD_CANON(target); // canonize once
-            if (ANY_WORD(item)) {
+            if (Any_Word(item)) {
                 if (flags & AM_FIND_CASE) { // Must be same type and spelling
                     if (
                         Cell_Word_Symbol(item) == Cell_Word_Symbol(target)
@@ -338,12 +338,12 @@ REBLEN Find_In_Array(
 
     // Match a block against a block
     //
-    if (ANY_ARRAY(target) and not (flags & AM_FIND_ONLY)) {
+    if (Any_List(target) and not (flags & AM_FIND_ONLY)) {
         for (; index >= start and index < end; index += skip) {
             Cell* item = Array_At(array, index);
 
             REBLEN count = 0;
-            Cell* other = Cell_Array_At(target);
+            Cell* other = Cell_List_At(target);
             for (; NOT_END(other); ++other, ++item) {
                 if (
                     IS_END(item) ||
@@ -489,7 +489,7 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
 
 
 //
-//  Sort_Block: C
+//  Sort_List: C
 //
 // series [any-series!]
 // /case {Case sensitive sort}
@@ -502,7 +502,7 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
 // /all {Compare all fields}
 // /reverse {Reverse sort order}
 //
-static void Sort_Block(
+static void Sort_List(
     Value* block,
     bool ccase,
     Value* skipv,
@@ -525,7 +525,7 @@ static void Sort_Block(
         flags.offset = Int32(compv) - 1;
     }
     else {
-        assert(IS_NULLED(compv));
+        assert(Is_Nulled(compv));
         flags.comparator = nullptr;
         flags.offset = 0;
     }
@@ -536,7 +536,7 @@ static void Sort_Block(
 
     // Skip factor:
     REBLEN skip;
-    if (not IS_NULLED(skipv)) {
+    if (not Is_Nulled(skipv)) {
         skip = Get_Num_From_Arg(skipv);
         if (skip <= 0 || len % skip != 0 || skip > len)
             fail (Error_Out_Of_Range(skipv));
@@ -545,7 +545,7 @@ static void Sort_Block(
         skip = 1;
 
     reb_qsort_r(
-        Cell_Array_At(block),
+        Cell_List_At(block),
         len / skip,
         sizeof(Cell) * skip,
         &flags,
@@ -555,9 +555,9 @@ static void Sort_Block(
 
 
 //
-//  Shuffle_Block: C
+//  Shuffle_List: C
 //
-void Shuffle_Block(Value* value, bool secure)
+void Shuffle_List(Value* value, bool secure)
 {
     REBLEN n;
     REBLEN k;
@@ -588,7 +588,7 @@ void Shuffle_Block(Value* value, bool secure)
 
 
 //
-//  PD_Array: C
+//  PD_List: C
 //
 // Path dispatch for the following types:
 //
@@ -599,7 +599,7 @@ void Shuffle_Block(Value* value, bool secure)
 //     PD_Set_Path
 //     PD_Lit_Path
 //
-REB_R PD_Array(
+REB_R PD_List(
     REBPVS *pvs,
     const Value* picker,
     const Value* opt_setval
@@ -622,10 +622,10 @@ REB_R PD_Array(
         n = -1;
 
         Symbol* canon = VAL_WORD_CANON(picker);
-        Cell* item = Cell_Array_At(pvs->out);
+        Cell* item = Cell_List_At(pvs->out);
         REBLEN index = VAL_INDEX(pvs->out);
         for (; NOT_END(item); ++item, ++index) {
-            if (ANY_WORD(item) && canon == VAL_WORD_CANON(item)) {
+            if (Any_Word(item) && canon == VAL_WORD_CANON(item)) {
                 n = index + 1;
                 break;
             }
@@ -665,7 +665,7 @@ REB_R PD_Array(
     if (opt_setval)
         Fail_If_Read_Only_Flex(Cell_Flex(pvs->out));
 
-    pvs->u.ref.cell = Cell_Array_At_Head(pvs->out, n);
+    pvs->u.ref.cell = Cell_List_At_Head(pvs->out, n);
     pvs->u.ref.specifier = VAL_SPECIFIER(pvs->out);
     return R_REFERENCE;
 }
@@ -685,16 +685,16 @@ Cell* Pick_Block(Value* out, const Value* block, const Value* picker)
         return nullptr;
     }
 
-    Cell* slot = Cell_Array_At_Head(block, n);
+    Cell* slot = Cell_List_At_Head(block, n);
     Derelativize(out, slot, VAL_SPECIFIER(block));
     return slot;
 }
 
 
 //
-//  MF_Array: C
+//  MF_List: C
 //
-void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
+void MF_List(REB_MOLD *mo, const Cell* v, bool form)
 {
     if (form && (Is_Block(v) || Is_Group(v))) {
         Form_Array_At(mo, Cell_Array(v), VAL_INDEX(v), 0);
@@ -783,9 +783,9 @@ void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
 //     REBTYPE(Set_Path)
 //     REBTYPE(Lit_Path)
 //
-REBTYPE(Array)
+REBTYPE(List)
 {
-    Value* array = D_ARG(1);
+    Value* list = D_ARG(1);
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
     // Common operations for any series type (length, head, etc.)
@@ -794,8 +794,8 @@ REBTYPE(Array)
     if (r != R_UNHANDLED)
         return r;
 
-    Array* arr = Cell_Array(array);
-    Specifier* specifier = VAL_SPECIFIER(array);
+    Array* arr = Cell_Array(list);
+    Specifier* specifier = VAL_SPECIFIER(list);
 
     Option(SymId) sym = Cell_Word_Id(verb);
     switch (sym) {
@@ -810,19 +810,19 @@ REBTYPE(Array)
 
         REBLEN len;
         if (REF(part)) {
-            len = Part_Len_May_Modify_Index(array, ARG(limit));
+            len = Part_Len_May_Modify_Index(list, ARG(limit));
             if (len == 0)
                 return Init_Block(OUT, Make_Array(0)); // new empty block
         }
         else
             len = 1;
 
-        REBLEN index = VAL_INDEX(array); // Partial() can change index
+        REBLEN index = VAL_INDEX(list); // Partial() can change index
 
         if (REF(last))
-            index = VAL_LEN_HEAD(array) - len;
+            index = VAL_LEN_HEAD(list) - len;
 
-        if (index >= VAL_LEN_HEAD(array)) {
+        if (index >= VAL_LEN_HEAD(list)) {
             if (not REF(part))
                 return nullptr;
 
@@ -848,12 +848,12 @@ REBTYPE(Array)
         UNUSED(PAR(series));
         UNUSED(PAR(value)); // aliased as arg
 
-        REBINT len = ANY_ARRAY(arg) ? VAL_ARRAY_LEN_AT(arg) : 1;
+        REBINT len = Any_List(arg) ? VAL_ARRAY_LEN_AT(arg) : 1;
 
-        REBLEN limit = Part_Tail_May_Modify_Index(array, ARG(limit));
+        REBLEN limit = Part_Tail_May_Modify_Index(list, ARG(limit));
         UNUSED(REF(part)); // checked by if limit is nulled
 
-        REBLEN index = VAL_INDEX(array);
+        REBLEN index = VAL_INDEX(list);
 
         REBFLGS flags = (
             (REF(only) ? AM_FIND_ONLY : 0)
@@ -878,8 +878,8 @@ REBTYPE(Array)
         if (Cell_Word_Id(verb) == SYM_FIND) {
             if (REF(tail) || REF(match))
                 ret += len;
-            VAL_INDEX(array) = ret;
-            Copy_Cell(OUT, array);
+            VAL_INDEX(list) = ret;
+            Copy_Cell(OUT, list);
         }
         else {
             ret += len;
@@ -901,26 +901,26 @@ REBTYPE(Array)
 
         REBLEN len; // length of target
         if (Cell_Word_Id(verb) == SYM_CHANGE)
-            len = Part_Len_May_Modify_Index(array, ARG(limit));
+            len = Part_Len_May_Modify_Index(list, ARG(limit));
         else
             len = Part_Len_Append_Insert_May_Modify_Index(arg, ARG(limit));
 
         // Note that while inserting or removing NULL is a no-op, CHANGE with
         // a /PART can actually erase data.
         //
-        if (IS_NULLED(arg) and len == 0) { // only nulls bypass write attempts
+        if (Is_Nulled(arg) and len == 0) { // only nulls bypass write attempts
             if (sym == SYM_APPEND) // append always returns head
-                VAL_INDEX(array) = 0;
-            RETURN (array); // don't fail on read only if it would be a no-op
+                VAL_INDEX(list) = 0;
+            RETURN (list); // don't fail on read only if it would be a no-op
         }
         Fail_If_Read_Only_Flex(arr);
 
-        REBLEN index = VAL_INDEX(array);
+        REBLEN index = VAL_INDEX(list);
 
         REBFLGS flags = 0;
         if (
             not REF(only)
-            and Splices_Into_Type_Without_Only(VAL_TYPE(array), arg)
+            and Splices_Into_Type_Without_Only(VAL_TYPE(list), arg)
         ){
             flags |= AM_SPLICE;
         }
@@ -929,7 +929,7 @@ REBTYPE(Array)
         if (REF(line))
             flags |= AM_LINE;
 
-        Copy_Cell(OUT, array);
+        Copy_Cell(OUT, list);
         VAL_INDEX(OUT) = Modify_Array(
             unwrap(Cell_Word_Id(verb)),
             arr,
@@ -943,15 +943,15 @@ REBTYPE(Array)
 
       case SYM_CLEAR: {
         Fail_If_Read_Only_Flex(arr);
-        REBLEN index = VAL_INDEX(array);
-        if (index < VAL_LEN_HEAD(array)) {
+        REBLEN index = VAL_INDEX(list);
+        if (index < VAL_LEN_HEAD(list)) {
             if (index == 0) Reset_Array(arr);
             else {
                 SET_END(Array_At(arr, index));
-                Set_Flex_Len(Cell_Flex(array), cast(REBLEN, index));
+                Set_Flex_Len(Cell_Flex(list), cast(REBLEN, index));
             }
         }
-        RETURN (array);
+        RETURN (list);
     }
 
     //-- Creation:
@@ -962,10 +962,10 @@ REBTYPE(Array)
         UNUSED(PAR(value));
 
         REBU64 types = 0;
-        REBLEN tail = Part_Tail_May_Modify_Index(array, ARG(limit));
+        REBLEN tail = Part_Tail_May_Modify_Index(list, ARG(limit));
         UNUSED(REF(part));
 
-        REBLEN index = VAL_INDEX(array);
+        REBLEN index = VAL_INDEX(list);
 
         if (REF(deep))
             types |= REF(types) ? 0 : TS_STD_SERIES;
@@ -986,45 +986,45 @@ REBTYPE(Array)
             ARRAY_FLAG_HAS_FILE_LINE, // flags
             types // types to copy deeply
         );
-        return Init_Any_Array(OUT, VAL_TYPE(array), copy);
+        return Init_Any_List(OUT, VAL_TYPE(list), copy);
     }
 
     //-- Special actions:
 
     case SYM_SWAP: {
-        if (not ANY_ARRAY(arg))
+        if (not Any_List(arg))
             fail (Error_Invalid(arg));
 
         Fail_If_Read_Only_Flex(arr);
         Fail_If_Read_Only_Flex(Cell_Array(arg));
 
-        REBLEN index = VAL_INDEX(array);
+        REBLEN index = VAL_INDEX(list);
 
         if (
-            index < VAL_LEN_HEAD(array)
+            index < VAL_LEN_HEAD(list)
             && VAL_INDEX(arg) < VAL_LEN_HEAD(arg)
         ){
             // Cell bits can be copied within the same array
             //
-            Cell* a = Cell_Array_At(array);
+            Cell* a = Cell_List_At(list);
             Cell temp;
             temp.header = a->header;
             temp.payload = a->payload;
             temp.extra = a->extra;
-            Blit_Cell(Cell_Array_At(array), Cell_Array_At(arg));
-            Blit_Cell(Cell_Array_At(arg), &temp);
+            Blit_Cell(Cell_List_At(list), Cell_List_At(arg));
+            Blit_Cell(Cell_List_At(arg), &temp);
         }
-        RETURN (array);
+        RETURN (list);
     }
 
     case SYM_REVERSE: {
         Fail_If_Read_Only_Flex(arr);
 
-        REBLEN len = Part_Len_May_Modify_Index(array, D_ARG(3));
+        REBLEN len = Part_Len_May_Modify_Index(list, D_ARG(3));
         if (len == 0)
-            RETURN (array); // !!! do 1-element reversals update newlines?
+            RETURN (list); // !!! do 1-element reversals update newlines?
 
-        Cell* front = Cell_Array_At(array);
+        Cell* front = Cell_List_At(list);
         Cell* back = front + len - 1;
 
         // We must reverse the sense of the newline markers as well, #2326
@@ -1068,7 +1068,7 @@ REBTYPE(Array)
             else
                 CLEAR_VAL_FLAG(back, VALUE_FLAG_NEWLINE_BEFORE);
         }
-        RETURN (array);
+        RETURN (list);
     }
 
     case SYM_SORT: {
@@ -1081,8 +1081,8 @@ REBTYPE(Array)
 
         Fail_If_Read_Only_Flex(arr);
 
-        Sort_Block(
-            array,
+        Sort_List(
+            list,
             REF(case),
             ARG(size), // skip size (may be void if no /SKIP)
             ARG(comparator), // (may be void if no /COMPARE)
@@ -1090,7 +1090,7 @@ REBTYPE(Array)
             REF(all),
             REF(reverse)
         );
-        RETURN (array);
+        RETURN (list);
     }
 
     case SYM_RANDOM: {
@@ -1098,22 +1098,22 @@ REBTYPE(Array)
 
         UNUSED(PAR(value));
 
-        REBLEN index = VAL_INDEX(array);
+        REBLEN index = VAL_INDEX(list);
 
         if (REF(seed))
             fail (Error_Bad_Refines_Raw());
 
-        if (REF(only)) { // pick an element out of the array
-            if (index >= VAL_LEN_HEAD(array))
+        if (REF(only)) { // pick an element out of the list
+            if (index >= VAL_LEN_HEAD(list))
                 return nullptr;
 
             Init_Integer(
                 ARG(seed),
-                1 + (Random_Int(REF(secure)) % (VAL_LEN_HEAD(array) - index))
+                1 + (Random_Int(REF(secure)) % (VAL_LEN_HEAD(list) - index))
             );
 
-            Cell* slot = Pick_Block(OUT, array, ARG(seed));
-            if (IS_NULLED(OUT)) {
+            Cell* slot = Pick_Block(OUT, list, ARG(seed));
+            if (Is_Nulled(OUT)) {
                 assert(slot);
                 UNUSED(slot);
                 return nullptr;
@@ -1122,8 +1122,8 @@ REBTYPE(Array)
 
         }
 
-        Shuffle_Block(array, REF(secure));
-        RETURN (array);
+        Shuffle_List(list, REF(secure));
+        RETURN (list);
     }
 
     default:

@@ -429,7 +429,7 @@ e-types/emit trim/auto copy ensure text! types-header/macros
 
 e-types/emit {
     /*
-    ** TYPESET DEFINITIONS (e.g. TS_ARRAY or TS_STRING)
+    ** TYPESET DEFINITIONS (e.g. TS_LIST or TS_STRING)
     **
     ** Note: User-facing typesets, such as ANY-VALUE!, do not include null
     ** (absence of a value), nor do they include the internal "REB_0" type.

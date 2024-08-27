@@ -73,7 +73,7 @@ REBINT CT_Word(const Cell* a, const Cell* b, REBINT mode)
 //
 REB_R MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    if (ANY_WORD(arg)) {
+    if (Any_Word(arg)) {
         //
         // Only reset the type, not all the header bits (the bits must
         // stay in sync with the binding state)
@@ -83,7 +83,7 @@ REB_R MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
         return out;
     }
 
-    if (ANY_STRING(arg)) {
+    if (Any_String(arg)) {
         REBSIZ size;
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_WORD);
 
@@ -237,7 +237,7 @@ REB_R PD_Word(
 REBTYPE(Word)
 {
     Value* val = D_ARG(1);
-    assert(ANY_WORD(val));
+    assert(Any_Word(val));
 
     switch (Cell_Word_Id(verb)) {
     case SYM_REFLECT: {

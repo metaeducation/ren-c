@@ -131,7 +131,7 @@ static REB_R Transport_Actor(
             // must be set before the OS_DO_DEVICE() call.
             //
             Value* local_id = Obj_Value(spec, STD_PORT_SPEC_NET_LOCAL_ID);
-            if (IS_NULLED(local_id))
+            if (Is_Nulled(local_id))
                 DEVREQ_NET(sock)->local_port = 0; // let the system pick
             else if (Is_Integer(local_id))
                 DEVREQ_NET(sock)->local_port = VAL_INT32(local_id);
@@ -218,7 +218,7 @@ static REB_R Transport_Actor(
             Value* port_data = CTX_VAR(ctx, STD_PORT_DATA);
             return Init_Integer(
                 OUT,
-                ANY_SERIES(port_data) ? VAL_LEN_HEAD(port_data) : 0
+                Any_Series(port_data) ? VAL_LEN_HEAD(port_data) : 0
             ); }
 
         case SYM_OPEN_Q:
@@ -243,7 +243,7 @@ static REB_R Transport_Actor(
         //
         Value* port_data = CTX_VAR(ctx, STD_PORT_DATA);
         if (sock->command == RDC_READ) {
-            if (ANY_BINSTR(port_data)) {
+            if (Is_Binary(port_data) or Any_String(port_data)) {
                 Set_Flex_Len(
                     Cell_Flex(port_data),
                     VAL_LEN_HEAD(port_data) + sock->actual
@@ -425,7 +425,7 @@ static REB_R Transport_Actor(
         return rebValue(
             "take/part/(", ARG(deep), ")/(", ARG(last), ")",
                 CTX_VAR(ctx, STD_PORT_CONNECTIONS),
-                NULLIZE(ARG(limit))
+                ARG(limit)
         ); }
 
     case SYM_PICK: {

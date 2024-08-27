@@ -156,7 +156,7 @@ Blob* Temp_UTF8_At_Managed(
     REBLEN length_limit
 ){
 #if !defined(NDEBUG)
-    if (not ANY_STRING(str)) {
+    if (not Any_String(str)) {
         printf("Temp_UTF8_At_Managed() called on non-ANY-STRING!");
         panic (str);
     }

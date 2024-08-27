@@ -58,7 +58,7 @@ const struct {
     {SYM_ANY_SERIES_X, TS_SERIES},
     {SYM_ANY_STRING_X, TS_STRING},
     {SYM_ANY_CONTEXT_X, TS_CONTEXT},
-    {SYM_ANY_ARRAY_X, TS_ARRAY},
+    {SYM_ANY_LIST_X, TS_LIST},
 
     {SYM_0_internal, 0}
 };
@@ -229,7 +229,7 @@ REB_R MAKE_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
     if (!Is_Block(arg)) goto bad_make;
 
     Init_Typeset(out, 0, nullptr);
-    Update_Typeset_Bits_Core(out, Cell_Array_At(arg), VAL_SPECIFIER(arg));
+    Update_Typeset_Bits_Core(out, Cell_List_At(arg), VAL_SPECIFIER(arg));
     return out;
 
   bad_make:

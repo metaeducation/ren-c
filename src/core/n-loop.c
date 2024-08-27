@@ -58,7 +58,7 @@ bool Catching_Break_Or_Continue(Value* val, bool *broke)
     if (VAL_ACT_DISPATCHER(val) == &N_break) {
         *broke = true;
         CATCH_THROWN(val, val);
-        assert(IS_NULLED(val)); // BREAK must always return NULL
+        assert(Is_Nulled(val)); // BREAK must always return NULL
         return true;
     }
 
@@ -116,7 +116,7 @@ DECLARE_NATIVE(continue)
 {
     INCLUDE_PARAMS_OF_CONTINUE;
 
-    if (IS_NULLED(ARG(value)))  // it's an END (should change to CONTINUE/WITH)
+    if (Is_Nulled(ARG(value)))  // it's an END (should change to CONTINUE/WITH)
         Init_Void(ARG(value));
 
     Copy_Cell(OUT, NAT_VALUE(continue));
@@ -394,7 +394,7 @@ struct Loop_Each_State {
 // can be rebRescue()'d in case of failure (to remove FLEX_INFO_HOLD, etc.)
 //
 // Returns nullptr or R_THROWN, where the relevant result is in les->out.
-// (That result may be IS_NULLED() if there was a break during the loop)
+// (That result may be Is_Nulled() if there was a break during the loop)
 //
 static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
@@ -508,11 +508,11 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                     ++les->data_idx;
                     if (les->data_idx == les->data_len)
                         more_data = false;
-                    if (not IS_NULLED(val))
+                    if (not Is_Nulled(val))
                         break;
                     if (not more_data)
                         goto finished;
-                } while (IS_NULLED(val));
+                } while (Is_Nulled(val));
 
                 Copy_Cell(var, key);
 
@@ -598,7 +598,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             break;
 
           case LOOP_MAP_EACH:
-            if (IS_NULLED(les->out))  // null body is error now
+            if (Is_Nulled(les->out))  // null body is error now
                 fail (Error_Need_Non_Null_Raw());
             if (Is_Void(les->out))  // vanish result
                 Init_Nothing(les->out);  // nulled is used to signal breaking only
@@ -676,11 +676,11 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
         took_hold = false;
     }
     else {
-        if (ANY_SERIES(les.data)) {
+        if (Any_Series(les.data)) {
             les.data_ser = Cell_Flex(les.data);
             les.data_idx = VAL_INDEX(les.data);
         }
-        else if (ANY_CONTEXT(les.data)) {
+        else if (Any_Context(les.data)) {
             les.data_ser = CTX_VARLIST(VAL_CONTEXT(les.data));
             les.data_idx = 1;
         }
@@ -777,7 +777,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
         return OUT;
 
       case LOOP_MAP_EACH:
-        if (IS_NULLED(OUT)) { // e.g. there was a BREAK...*must* return null
+        if (Is_Nulled(OUT)) { // e.g. there was a BREAK...*must* return null
             Drop_Data_Stack_To(base);
             return nullptr;
         }
@@ -842,8 +842,8 @@ DECLARE_NATIVE(for)
         );
     }
 
-    if (ANY_SERIES(ARG(start))) {
-        if (ANY_SERIES(ARG(end))) {
+    if (Any_Series(ARG(start))) {
+        if (Any_Series(ARG(end))) {
             return Loop_Series_Common(
                 OUT,
                 var,
@@ -956,9 +956,9 @@ DECLARE_NATIVE(for_skip)
         //
         var = Real_Var_From_Pseudo(pseudo_var);
 
-        if (IS_NULLED(var))
+        if (Is_Nulled(var))
             fail (Error_No_Value(ARG(word)));
-        if (not ANY_SERIES(var))
+        if (not Any_Series(var))
             fail (Error_Invalid(var));
 
         VAL_INDEX(var) += skip;
@@ -997,7 +997,7 @@ DECLARE_NATIVE(stop)
     Value* v = ARG(value);
 
     Copy_Cell(OUT, NAT_VALUE(stop));
-    if (IS_ENDISH_NULLED(v))
+    if (Is_Endish_Nulled(v))
         CONVERT_NAME_TO_THROWN(OUT, NOTHING_VALUE); // `if true [stop]`
     else
         CONVERT_NAME_TO_THROWN(OUT, v); // `if true [stop ...]`
@@ -1130,9 +1130,9 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
     // how many removals there were, so we don't do the removals.
 
     REBLEN count = 0;
-    if (ANY_ARRAY(res->data)) {
+    if (Any_List(res->data)) {
         if (res->broke) { // cleanup markers, don't do removals
-            Cell* temp = Cell_Array_At(res->data);
+            Cell* temp = Cell_List_At(res->data);
             for (; NOT_END(temp); ++temp) {
                 if (GET_VAL_FLAG(temp, NODE_FLAG_MARKED))
                     CLEAR_VAL_FLAG(temp, NODE_FLAG_MARKED);
@@ -1142,7 +1142,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
 
         REBLEN len = VAL_LEN_HEAD(res->data);
 
-        Cell* dest = Cell_Array_At(res->data);
+        Cell* dest = Cell_List_At(res->data);
         Cell* src = dest;
 
         // avoid blitting cells onto themselves by making the first thing we
@@ -1208,7 +1208,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
         Free_Unmanaged_Flex(popped); // now frees incoming series's data
     }
     else {
-        assert(ANY_STRING(res->data));
+        assert(Any_String(res->data));
         if (res->broke) { // leave data unchanged
             Drop_Mold(res->mo);
             return 0;
@@ -1274,10 +1274,10 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
                 continue; // the `for` loop setting variables
             }
 
-            if (ANY_ARRAY(res->data))
+            if (Any_List(res->data))
                 Derelativize(
                     var,
-                    Cell_Array_At_Head(res->data, index),
+                    Cell_List_At_Head(res->data, index),
                     VAL_SPECIFIER(res->data)
                 );
             else if (Is_Binary(res->data))
@@ -1286,7 +1286,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
                     cast(REBI64, Flex_Head(Byte, res->series)[index])
                 );
             else {
-                assert(ANY_STRING(res->data));
+                assert(Any_String(res->data));
                 Init_Char(var, GET_ANY_CHAR(res->series, index));
             }
             ++index;
@@ -1309,9 +1309,9 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
             }
         }
 
-        if (ANY_ARRAY(res->data)) {
+        if (Any_List(res->data)) {
             if (
-                IS_NULLED(res->out)
+                Is_Nulled(res->out)
                 or Is_Void(res->out)
                 or IS_FALSEY(res->out)
             ){
@@ -1321,14 +1321,14 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
 
             do {
                 assert(res->start <= len);
-                Cell_Array_At_Head(res->data, res->start)->header.bits
+                Cell_List_At_Head(res->data, res->start)->header.bits
                     |= NODE_FLAG_MARKED;
                 ++res->start;
             } while (res->start != index);
         }
         else {
             if (
-                not IS_NULLED(res->out)
+                not Is_Nulled(res->out)
                 and not Is_Void(res->out)
                 and IS_TRUTHY(res->out)
             ){
@@ -1392,7 +1392,7 @@ DECLARE_NATIVE(remove_each)
         return Init_Integer(OUT, 0);
 
     if (not (
-        ANY_ARRAY(res.data) or ANY_STRING(res.data) or Is_Binary(res.data)
+        Any_List(res.data) or Any_String(res.data) or Is_Binary(res.data)
     )){
         fail (Error_Invalid(res.data));
     }
@@ -1430,7 +1430,7 @@ DECLARE_NATIVE(remove_each)
     res.start = VAL_INDEX(res.data);
 
     REB_MOLD mold_struct;
-    if (ANY_ARRAY(res.data)) {
+    if (Any_List(res.data)) {
         //
         // We're going to use NODE_FLAG_MARKED on the elements of data's
         // array for those items we wish to remove later.

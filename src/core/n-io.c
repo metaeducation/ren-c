@@ -186,7 +186,7 @@ DECLARE_NATIVE(new_line)
 
     Copy_Cell(OUT, pos); // always returns the input position
 
-    Cell* item = Cell_Array_At(pos);
+    Cell* item = Cell_List_At(pos);
 
     if (IS_END(item)) { // no value at tail to mark; use bit in array
         if (mark)
@@ -265,7 +265,7 @@ DECLARE_NATIVE(new_line_q)
         }
         else if (Is_Block_Style_Varargs(&shared, pos)) {
             arr = Cell_Array(shared);
-            item = Cell_Array_At(shared);
+            item = Cell_List_At(shared);
         }
         else
             panic ("Bad VARARGS!");
@@ -273,7 +273,7 @@ DECLARE_NATIVE(new_line_q)
     else {
         assert(Is_Group(pos) or Is_Block(pos));
         arr = Cell_Array(pos);
-        item = Cell_Array_At(pos);
+        item = Cell_List_At(pos);
     }
 
     if (NOT_END(item))
@@ -701,7 +701,7 @@ DECLARE_NATIVE(what_dir)
 {
     Value* current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
-    if (Is_File(current_path) || IS_NULLED(current_path)) {
+    if (Is_File(current_path) || Is_Nulled(current_path)) {
         //
         // !!! Because of the need to track a notion of "current path" which
         // could be a URL! as well as a FILE!, the state is stored in the

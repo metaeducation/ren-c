@@ -344,7 +344,7 @@ void Pop_Stack_Values_Into(Value* into, StackIndex base) {
     REBLEN len = TOP_INDEX - base;
     Value* values = KNOWN(Array_At(DS_Array, base + 1));
 
-    assert(ANY_ARRAY(into));
+    assert(Any_List(into));
     Fail_If_Read_Only_Flex(Cell_Array(into));
 
     VAL_INDEX(into) = Insert_Flex(

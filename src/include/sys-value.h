@@ -279,9 +279,9 @@
         if (category != REB_0) { \
             if (kind != category) { \
                 if (category == REB_WORD) \
-                    assert(ANY_WORD_KIND(kind)); \
+                    assert(Any_Word_Kind(kind)); \
                 else if (category == REB_OBJECT) \
-                    assert(ANY_CONTEXT_KIND(kind)); \
+                    assert(Any_Context_Kind(kind)); \
                 else \
                     assert(false); \
             } \
@@ -736,7 +736,7 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
 #define NULLED_CELL \
     c_cast(const Value*, &PG_Nulled_Cell[0])
 
-#define IS_NULLED(v) \
+#define Is_Nulled(v) \
     (VAL_TYPE(v) == REB_MAX_NULLED)
 
 #define Init_Nulled(out) \
@@ -751,16 +751,9 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
     RESET_CELL_EXTRA((out), REB_MAX_NULLED, \
         VALUE_FLAG_FALSEY | VALUE_FLAG_ENDISH)
 
-INLINE bool IS_ENDISH_NULLED(const Cell* v) {
-    return IS_NULLED(v) and GET_VAL_FLAG(v, VALUE_FLAG_ENDISH);
+INLINE bool Is_Endish_Nulled(const Cell* v) {
+    return Is_Nulled(v) and GET_VAL_FLAG(v, VALUE_FLAG_ENDISH);
 }
-
-// To help ensure full nulled cells don't leak to the API, the variadic
-// interface only accepts nullptr.  Any internal code with a Value* that may
-// be a "nulled cell" must translate any such cells to nullptr.
-//
-INLINE const Value* NULLIZE(const Value* cell)
-  { return VAL_TYPE(cell) == REB_MAX_NULLED ? nullptr : cell; }
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -787,7 +780,7 @@ INLINE const Value* NULLIZE(const Value* cell)
     RESET_CELL((out), REB_NOTHING)
 
 INLINE Value* Nothingify_Branched(Value* cell) {
-    if (IS_NULLED(cell) or Is_Void(cell))
+    if (Is_Nulled(cell) or Is_Void(cell))
         Init_Nothing(cell);
     return cell;
 }

@@ -282,7 +282,7 @@ DECLARE_NATIVE(do)
 
     case REB_BLOCK:
     case REB_GROUP: {
-        REBIXO indexor = Eval_Array_At_Core(
+        REBIXO indexor = Eval_At_Core(
             Init_Void(OUT),  // so `do []` vanishes
             nullptr, // opt_head (interpreted as no head, not nulled cell)
             Cell_Array(source),
@@ -307,7 +307,7 @@ DECLARE_NATIVE(do)
             // array during execution, there will be problems if it is TAKE'n
             // or DO'd while this operation is in progress.
             //
-            REBIXO indexor = Eval_Array_At_Core(
+            REBIXO indexor = Eval_At_Core(
                 Init_Void(OUT),
                 nullptr, // opt_head (no head, not intepreted as nulled cell)
                 Cell_Array(position),
@@ -368,7 +368,7 @@ DECLARE_NATIVE(do)
             fully,
             sys_do_helper,
             source,
-            NULLIZE(ARG(arg)), // nulled cells => nullptr for API
+            ARG(arg), // may be nulled cell
             REF(only) ? TRUE_VALUE : FALSE_VALUE,
             rebEND
         )){
@@ -500,7 +500,7 @@ DECLARE_NATIVE(evaluate)
     case REB_BLOCK:
     case REB_GROUP: {
         DECLARE_VALUE (temp);
-        REBIXO indexor = Eval_Array_At_Core(
+        REBIXO indexor = Eval_At_Core(
             SET_END(temp), // use END to distinguish residual non-values
             nullptr, // opt_head
             Cell_Array(source),
@@ -537,7 +537,7 @@ DECLARE_NATIVE(evaluate)
             // or DO'd while this operation is in progress.
             //
             DECLARE_VALUE (temp);
-            REBIXO indexor = Eval_Array_At_Core(
+            REBIXO indexor = Eval_At_Core(
                 SET_END(temp),
                 nullptr, // opt_head (interpreted as nothing, not nulled cell)
                 Cell_Array(position),
@@ -807,7 +807,7 @@ DECLARE_NATIVE(applique)
     //
     Push_GC_Guard(exemplar);
     DECLARE_VALUE (temp);
-    bool def_threw = Do_Any_Array_At_Throws(temp, ARG(def));
+    bool def_threw = Do_At_Throws(temp, ARG(def));
     Drop_GC_Guard(exemplar);
 
     assert(CTX_KEYS_HEAD(exemplar) == ACT_PARAMS_HEAD(VAL_ACTION(applicand)));

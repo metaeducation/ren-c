@@ -986,7 +986,7 @@ Blob* Make_Utf8_From_Cell_String_At_Limit(
     const Cell* any_string,
     REBLEN len
 ){
-    assert(ANY_STRING(any_string));
+    assert(Any_String(any_string));
 
     const REBUNI *data = Cell_String_At(any_string);
     size_t size = Size_As_UTF8(data, len);

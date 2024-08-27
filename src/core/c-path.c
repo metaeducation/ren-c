@@ -87,7 +87,7 @@ REB_R PD_Unhooked(
 //
 bool Next_Path_Throws(REBPVS *pvs)
 {
-    if (IS_NULLED(pvs->out))
+    if (Is_Nulled(pvs->out))
         fail (Error_No_Value_Core(pvs->value, pvs->specifier));
 
     PATH_HOOK hook = Path_Hooks[VAL_TYPE(pvs->out)];
@@ -119,7 +119,7 @@ bool Next_Path_Throws(REBPVS *pvs)
     // common sense for safety, and also corresponds to voids being illegal
     // to use in SELECT.
     //
-    if (IS_NULLED(PVS_PICKER(pvs)))
+    if (Is_Nulled(PVS_PICKER(pvs)))
         fail (Error_No_Value_Core(pvs->value, pvs->specifier));
 
     Fetch_Next_In_Level(nullptr, pvs); // may be at end
@@ -213,7 +213,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             Init_Nulled(pvs->out);
         }
         else if (r == R_UNHANDLED) {
-            if (IS_NULLED(PVS_PICKER(pvs)))
+            if (Is_Nulled(PVS_PICKER(pvs)))
                 fail ("NULL used in path picking but was not handled");
             fail (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
         }
@@ -270,7 +270,7 @@ bool Next_Path_Throws(REBPVS *pvs)
 //
 //  Eval_Path_Throws_Core: C
 //
-// Evaluate an ANY_PATH! Value, starting from the index position of that
+// Evaluate an Any_Path! Value, starting from the index position of that
 // path value and continuing to the end.
 //
 // The evaluator may throw because GROUP! is evaluated, e.g. `foo/(throw 1020)`
@@ -320,10 +320,10 @@ bool Eval_Path_Throws_Core(
     // is different from `(/foo)/1` or `ref: /foo | ref/1`, both of which
     // would be #"o".
     //
-    if (ANY_INERT(Array_At(array, index))) {
+    if (Any_Inert(Array_At(array, index))) {
         if (opt_setval)
             fail ("Can't perform SET_PATH! on path with inert head");
-        Init_Any_Array_At(out, REB_PATH, array, index);
+        Init_Any_List_At(out, REB_PATH, array, index);
         return false;
     }
 
@@ -392,7 +392,7 @@ bool Eval_Path_Throws_Core(
         Derelativize(pvs->out, pvs->value, pvs->specifier);
     }
 
-    if (IS_NULLED(pvs->out))
+    if (Is_Nulled(pvs->out))
         fail (Error_No_Value_Core(pvs->value, pvs->specifier));
 
     Fetch_Next_In_Level(nullptr, pvs);
@@ -525,7 +525,7 @@ REBCTX *Resolve_Path(const Value* path, REBLEN *index_out)
     Array* array = Cell_Array(path);
     Cell* picker = Array_Head(array);
 
-    if (IS_END(picker) or not ANY_WORD(picker))
+    if (IS_END(picker) or not Any_Word(picker))
         return nullptr;  // !!! only handles heads of paths that are ANY-WORD!
 
     const Cell* var = Get_Opt_Var_May_Fail(picker, VAL_SPECIFIER(path));
@@ -534,7 +534,7 @@ REBCTX *Resolve_Path(const Value* path, REBLEN *index_out)
     if (IS_END(picker))
         return nullptr;  // !!! does not handle single-element paths
 
-    while (ANY_CONTEXT(var) and Is_Word(picker)) {
+    while (Any_Context(var) and Is_Word(picker)) {
         REBLEN i = Find_Canon_In_Context(
             VAL_CONTEXT(var), VAL_WORD_CANON(picker), false
         );
@@ -732,7 +732,7 @@ DECLARE_NATIVE(path_0)
     // Uses the /INTO refinement so that `"abcdef" / 2` divides the string
     // into two pieces, as opposed to pieces of length 2.
     //
-    if (ANY_STRING(left) or ANY_ARRAY(left))
+    if (Any_String(left) or Any_List(left))
         return rebValue("split/into", left, right);
 
     // Note: DIVIDE is historically a "type action", so technically it is the

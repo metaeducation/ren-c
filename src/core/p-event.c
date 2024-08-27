@@ -188,13 +188,13 @@ static REB_R Event_Actor(Level* level_, Value* port, Value* verb)
         // INSERT/etc. on a PORT! to do an INSERT/etc. on whatever kind of
         // value the state is.  It saves the value of the port, substitutes
         // the state value in the first slot of the frame, and calls the
-        // array type dispatcher.  :-/
+        // list type dispatcher.  :-/
         //
         DECLARE_VALUE (save_port);
         Copy_Cell(save_port, D_ARG(1));
         Copy_Cell(D_ARG(1), state);
 
-        REB_R r = T_Array(level_, verb);
+        REB_R r = T_List(level_, verb);
         SET_SIGNAL(SIG_EVENT_PORT);
         if (
             Cell_Word_Id(verb) == SYM_INSERT

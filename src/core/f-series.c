@@ -259,8 +259,8 @@ REB_R Series_Common_Action_Maybe_Unhandled(
 //
 REBINT Cmp_Array(const Cell* sval, const Cell* tval, bool is_case)
 {
-    Cell* s = Cell_Array_At(sval);
-    Cell* t = Cell_Array_At(tval);
+    Cell* s = Cell_List_At(sval);
+    Cell* t = Cell_List_At(tval);
 
     if (C_STACK_OVERFLOWING(&s))
         Fail_Stack_Overflow();
@@ -277,7 +277,7 @@ REBINT Cmp_Array(const Cell* sval, const Cell* tval, bool is_case)
 
     while (
         VAL_TYPE(s) == VAL_TYPE(t)
-        or (ANY_NUMBER(s) and ANY_NUMBER(t))
+        or (Any_Number(s) and Any_Number(t))
     ){
         REBINT diff;
         if ((diff = Cmp_Value(s, t, is_case)) != 0)
@@ -316,7 +316,7 @@ REBINT Cmp_Value(const Cell* s, const Cell* t, bool is_case)
 {
     REBDEC  d1, d2;
 
-    if (VAL_TYPE(t) != VAL_TYPE(s) and not (ANY_NUMBER(s) and ANY_NUMBER(t)))
+    if (VAL_TYPE(t) != VAL_TYPE(s) and not (Any_Number(s) and Any_Number(t)))
         return VAL_TYPE(s) - VAL_TYPE(t);
 
     assert(NOT_END(s) and NOT_END(t));

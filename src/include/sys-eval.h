@@ -345,7 +345,7 @@ INLINE void Set_Level_Detected_Fetch(
 
   detect:;
 
-    if (not p) { // libRebol's null/~null~ (IS_NULLED prohibited below)
+    if (not p) { // libRebol's null/~null~ (Is_Nulled prohibited below)
 
         L->source->array = nullptr;
         L->value = NULLED_CELL;
@@ -459,8 +459,8 @@ INLINE void Set_Level_Detected_Fetch(
 
       case DETECTED_AS_CELL: {
         const Value* cell = cast(const Value*, p);
-        if (IS_NULLED(cell))
-            fail ("NULLED cell leaked to API, see NULLIZE() in C sources");
+          if (Is_Nulled(cell) and Is_Api_Value(cell))
+              fail ("NULL cell leaked to API");
 
         // If the cell is in an API holder with FLEX_INFO_API_RELEASE then
         // it will be released on the *next* call (see top of function)
@@ -469,7 +469,7 @@ INLINE void Set_Level_Detected_Fetch(
         L->value = cell; // note that END is detected separately
         assert(
             not IS_RELATIVE(L->value) or (
-                IS_NULLED(L->value)
+                Is_Nulled(L->value)
                 and (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE)
             )
         );
@@ -869,7 +869,7 @@ INLINE bool Eval_Step_In_Subframe_Throws(
 // Most common case of evaluator invocation in Rebol: the data lives in an
 // array series.
 //
-INLINE REBIXO Eval_Array_At_Core(
+INLINE REBIXO Eval_At_Core(
     Value* out, // must be initialized, marked stale if empty / all invisible
     const Cell* opt_first, // non-array element to kick off execution with
     Array* array,
@@ -1086,7 +1086,7 @@ INLINE bool Eval_Value_Core_Throws(
     const Cell* value, // e.g. a BLOCK! here would just evaluate to itself!
     Specifier* specifier
 ){
-    REBIXO indexor = Eval_Array_At_Core(
+    REBIXO indexor = Eval_At_Core(
         SET_END(out), // start with END to detect no actual eval product
         value, // put the value as the opt_first element
         EMPTY_ARRAY,
@@ -1123,7 +1123,7 @@ INLINE void Handle_Api_Dispatcher_Result(Level* L, const Value* r) {
     }
   #endif
 
-    if (IS_NULLED(r))
+    if (Is_Nulled(r))
         assert(!"Dispatcher returned nulled cell, not C nullptr for API use");
 
     Copy_Cell(L->out, r);

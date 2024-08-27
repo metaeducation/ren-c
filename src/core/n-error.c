@@ -118,7 +118,7 @@ static Value* Entrap_Dangerous(Level* level_) {
         return nullptr;
     }
 
-    if (IS_NULLED(OUT))
+    if (Is_Nulled(OUT))
         return nullptr; // don't box it up
 
     Array* a = Alloc_Singular(ARRAY_FLAG_HAS_FILE_LINE | NODE_FLAG_MANAGED);

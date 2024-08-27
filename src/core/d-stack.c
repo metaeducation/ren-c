@@ -49,7 +49,7 @@ void Collapsify_Array(Array* array, Specifier* specifier, REBLEN limit)
 {
     Cell* item = Array_Head(array);
     for (; NOT_END(item); ++item) {
-        if (ANY_ARRAY(item) and Cell_Series_Len_At(item) > limit) {
+        if (Any_List(item) and Cell_Series_Len_At(item) > limit) {
             Specifier* derived = Derive_Specifier(specifier, item);
             Array* copy = Copy_Array_At_Max_Shallow(
                 Cell_Array(item),
@@ -67,7 +67,7 @@ void Collapsify_Array(Array* array, Specifier* specifier, REBLEN limit)
             );
 
             enum Reb_Kind kind = VAL_TYPE(item);
-            Init_Any_Array_At(item, kind, copy, 0); // at 0 now
+            Init_Any_List_At(item, kind, copy, 0); // at 0 now
             assert(IS_SPECIFIC(item));
             assert(
                 NOT_VAL_FLAG(item, VALUE_FLAG_NEWLINE_BEFORE) // gets cleared
@@ -134,7 +134,7 @@ Value* Init_Near_For_Frame(Cell* out, Level* L)
     REBLEN count = 0;
     Cell* item = Array_At(LVL_ARRAY(L), start);
     for (; NOT_END(item) and count < 6; ++item, ++count) {
-        if (IS_NULLED(item)) {
+        if (Is_Nulled(item)) {
             //
             // If a va_list is used to do a non-evaluative call (something
             // like R3-Alpha's APPLY/ONLY) then nulled cells are currently
@@ -184,8 +184,8 @@ Value* Init_Near_For_Frame(Cell* out, Level* L)
     //
     Collapsify_Array(near, SPECIFIED, 3);
 
-    if (ANY_ARRAY_KIND(VAL_TYPE_RAW(L->value)))
-        Init_Any_Array(out, VAL_TYPE(L->value), near);
+    if (Any_List_Kind(VAL_TYPE_RAW(L->value)))
+        Init_Any_List(out, VAL_TYPE(L->value), near);
     else
         Init_Block(out, near);
 

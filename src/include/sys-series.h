@@ -481,7 +481,7 @@ INLINE void Fail_If_Read_Only_Flex(Flex* s) {
 //=////////////////////////////////////////////////////////////////////////=//
 
 INLINE Flex* Cell_Flex(const Cell* v) {
-    assert(ANY_SERIES(v) or Is_Map(v));  // !!! gcc 5.4 -O2 bug
+    assert(Any_Series(v) or Is_Map(v));  // !!! gcc 5.4 -O2 bug
     Flex* s = v->payload.any_series.series;
     if (Get_Flex_Info(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
@@ -501,11 +501,11 @@ INLINE void Set_Cell_Flex(Cell* v, Flex* s) {
     // allows an assert, but also lvalue: `VAL_INDEX(v) = xxx`
     //
     INLINE REBLEN & VAL_INDEX(Cell* v) { // C++ reference type
-        assert(ANY_SERIES(v));
+        assert(Any_Series(v));
         return v->payload.any_series.index;
     }
     INLINE REBLEN VAL_INDEX(const Cell* v) {
-        assert(ANY_SERIES(v));
+        assert(Any_Series(v));
         return v->payload.any_series.index;
     }
 #endif

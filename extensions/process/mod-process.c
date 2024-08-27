@@ -916,7 +916,7 @@ int OS_Create_Process(
             close(fd);
         }
         else {
-            assert(IS_NULLED(ARG(in)));
+            assert(Is_Nulled(ARG(in)));
             // inherit stdin from the parent
         }
 
@@ -948,7 +948,7 @@ int OS_Create_Process(
             close(fd);
         }
         else {
-            assert(IS_NULLED(ARG(out)));
+            assert(Is_Nulled(ARG(out)));
             // inherit stdout from the parent
         }
 
@@ -980,7 +980,7 @@ int OS_Create_Process(
             close(fd);
         }
         else {
-            assert(IS_NULLED(ARG(err)));
+            assert(Is_Nulled(ARG(err)));
             // inherit stderr from the parent
         }
 
@@ -1563,7 +1563,7 @@ DECLARE_NATIVE(call_internal_p)
 
         int i;
         for (i = 0; i < argc; i ++) {
-            Cell* param = Cell_Array_At_Head(block, i);
+            Cell* param = Cell_List_At_Head(block, i);
             if (Is_Text(param)) {
                 argv[i] = rebValSpellingAllocOS(KNOWN(param));
             }
@@ -2034,7 +2034,7 @@ DECLARE_NATIVE(set_env)
   #else
     char *key_utf8 = rebSpell(variable);
 
-    if (IS_NULLED(value)) {
+    if (Is_Nulled(value)) {
       #ifdef unsetenv
         if (unsetenv(key_utf8) == -1)
             fail ("unsetenv() couldn't unset environment variable");

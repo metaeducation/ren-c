@@ -56,7 +56,7 @@ REBREQ *Ensure_Port_State(Value* port, REBLEN device)
     REBLEN req_size = dev->req_size;
 
     if (!Is_Binary(state)) {
-        assert(IS_NULLED(state));
+        assert(Is_Nulled(state));
         Blob* data = Make_Blob(req_size);
         CLEAR(Blob_Head(data), req_size);
         Term_Blob_Len(data, req_size);
@@ -236,7 +236,7 @@ bool Wait_Ports_Throws(
             fail ("system/ports/pump must be a block");
 
         DECLARE_VALUE (result);
-        if (Do_Any_Array_At_Throws(result, pump))
+        if (Do_At_Throws(result, pump))
             fail (Error_No_Catch_For_Throw(result));
 
         if (timeout != ALL_BITS) {
@@ -383,7 +383,7 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
     // Invoke DO with the special mode requesting non-evaluation on all
     // args, as they were evaluated the first time around.
     //
-    REBIXO indexor = Eval_Array_At_Core(
+    REBIXO indexor = Eval_At_Core(
         SET_END(L->out),
         first, // path not in array, will be "virtual" first element
         code_arr,

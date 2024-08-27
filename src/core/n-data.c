@@ -39,7 +39,7 @@ static bool Check_Char_Range(const Value* val, REBINT limit)
     if (Is_Integer(val))
         return not (VAL_INT64(val) > limit);
 
-    assert(ANY_STRING(val));
+    assert(Any_String(val));
 
     REBLEN len = Cell_Series_Len_At(val);
     Ucs2(const*) up = Cell_String_At(val);
@@ -120,7 +120,7 @@ DECLARE_NATIVE(as_pair)
 //
 //  "Binds words or words in arrays to the specified context."
 //
-//      value [action! any-array! any-word!]
+//      value [action! any-list! any-word!]
 //          "Value whose binding is to be set (modified) (returned)"
 //      target [any-word! any-context!]
 //          "The target context or a word whose binding should be the target"
@@ -159,21 +159,21 @@ DECLARE_NATIVE(bind)
 
     // !!! For now, force reification before doing any binding.
 
-    if (ANY_CONTEXT(target)) {
+    if (Any_Context(target)) {
         //
         // Get target from an OBJECT!, ERROR!, PORT!, MODULE!, FRAME!
         //
         context = VAL_CONTEXT(target);
     }
     else {
-        assert(ANY_WORD(target));
+        assert(Any_Word(target));
         if (IS_WORD_UNBOUND(target))
             fail (Error_Not_Bound_Raw(target));
 
         context = VAL_WORD_CONTEXT(target);
     }
 
-    if (ANY_WORD(v)) {
+    if (Any_Word(v)) {
         //
         // Bind a single word
 
@@ -201,7 +201,7 @@ DECLARE_NATIVE(bind)
         return OUT;
     }
 
-    assert(ANY_ARRAY(v));
+    assert(Any_List(v));
 
     Cell* at;
     if (REF(copy)) {
@@ -212,13 +212,13 @@ DECLARE_NATIVE(bind)
             Array_Len(Cell_Array(v)), // tail
             0, // extra
             ARRAY_FLAG_HAS_FILE_LINE, // flags
-            TS_ARRAY // types to copy deeply
+            TS_LIST // types to copy deeply
         );
         at = Array_Head(copy);
-        Init_Any_Array(OUT, VAL_TYPE(v), copy);
+        Init_Any_List(OUT, VAL_TYPE(v), copy);
     }
     else {
-        at = Cell_Array_At(v); // only affects binding from current index
+        at = Cell_List_At(v); // only affects binding from current index
         Copy_Cell(OUT, v);
     }
 
@@ -272,7 +272,7 @@ DECLARE_NATIVE(use)
         ARG(vars) // similar to the "spec" of a loop: WORD!/LIT-WORD!/BLOCK!
     );
 
-    if (Do_Any_Array_At_Throws(OUT, ARG(body)))
+    if (Do_At_Throws(OUT, ARG(body)))
         return R_THROWN;
 
     return OUT;
@@ -371,7 +371,7 @@ DECLARE_NATIVE(value_q)
 {
     INCLUDE_PARAMS_OF_VALUE_Q;
 
-    return Init_Logic(OUT, ANY_VALUE(ARG(optional)));
+    return Init_Logic(OUT, Any_Value(ARG(optional)));
 }
 
 
@@ -387,7 +387,7 @@ DECLARE_NATIVE(element_q)
 {
     INCLUDE_PARAMS_OF_ELEMENT_Q;
 
-    return Init_Logic(OUT, ANY_VALUE(ARG(optional)));
+    return Init_Logic(OUT, Any_Value(ARG(optional)));
 }
 
 
@@ -408,10 +408,10 @@ DECLARE_NATIVE(unbind)
 
     Value* word = ARG(word);
 
-    if (ANY_WORD(word))
+    if (Any_Word(word))
         Unbind_Any_Word(word);
     else
-        Unbind_Values_Core(Cell_Array_At(word), nullptr, REF(deep));
+        Unbind_Values_Core(Cell_List_At(word), nullptr, REF(deep));
 
     RETURN (word);
 }
@@ -448,7 +448,7 @@ DECLARE_NATIVE(collect_words)
 
     UNUSED(REF(ignore)); // implied used or unused by ARG(hidden)'s voidness
 
-    Cell* head = Cell_Array_At(ARG(block));
+    Cell* head = Cell_List_At(ARG(block));
     return Init_Block(
         OUT,
         Collect_Unique_Words_Managed(head, flags, ARG(hidden))
@@ -474,10 +474,10 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
     else if (Is_Void(v)) {
         Init_Nulled(out);  // may be turned to trash after loop, or error
     }
-    else if (ANY_WORD(v)) {
+    else if (Any_Word(v)) {
         Move_Opt_Var_May_Fail(out, v, specifier);
     }
-    else if (ANY_PATH(v)) {
+    else if (Any_Path(v)) {
         //
         // `get 'foo/bar` acts as `:foo/bar`
         // except Get_Path_Core() doesn't allow GROUP!s in the PATH!
@@ -518,7 +518,7 @@ DECLARE_NATIVE(get)
 
     Array* results = Make_Array(Cell_Series_Len_At(source));
     Value* dest = KNOWN(Array_Head(results));
-    Cell* item = Cell_Array_At(source);
+    Cell* item = Cell_List_At(source);
 
     for (; NOT_END(item); ++item, ++dest) {
         Get_Opt_Polymorphic_May_Fail(
@@ -585,13 +585,13 @@ INLINE void Set_Opt_Polymorphic_May_Fail(
         // are cases of `in obj 'word` which give back blank if the word
         // is not there, so it leads to too many silent errors.
     }
-    else if (ANY_WORD(target)) {
+    else if (Any_Word(target)) {
         Value* var = Sink_Var_May_Fail(target, target_specifier);
         Derelativize(var, value, value_specifier);
         if (enfix)
             SET_VAL_FLAG(var, VALUE_FLAG_ENFIXED);
     }
-    else if (ANY_PATH(target)) {
+    else if (Any_Path(target)) {
         DECLARE_VALUE (specific);
         Derelativize(specific, value, value_specifier);
 
@@ -656,7 +656,7 @@ DECLARE_NATIVE(set)
     UNUSED(REF(any));  // !!!provided for bootstrap at this time
 
     if (not Is_Block(target)) {
-        assert(ANY_WORD(target) or ANY_PATH(target));
+        assert(Any_Word(target) or Any_Path(target));
 
         Set_Opt_Polymorphic_May_Fail(
             target,
@@ -669,11 +669,11 @@ DECLARE_NATIVE(set)
         RETURN (value);
     }
 
-    const Cell* item = Cell_Array_At(target);
+    const Cell* item = Cell_List_At(target);
 
     const Cell* v;
     if (Is_Block(value) and not REF(single))
-        v = Cell_Array_At(value);
+        v = Cell_List_At(value);
     else
         v = value;
 
@@ -732,7 +732,7 @@ DECLARE_NATIVE(maybe)
 {
     INCLUDE_PARAMS_OF_MAYBE;
 
-    if (IS_NULLED(ARG(optional)))
+    if (Is_Nulled(ARG(optional)))
         return Init_Void(OUT);
 
     RETURN (ARG(optional));
@@ -768,7 +768,7 @@ DECLARE_NATIVE(in)
             for (i = VAL_INDEX(val); i < VAL_LEN_HEAD(val); i++) {
                 Get_Simple_Value_Into(
                     safe,
-                    Cell_Array_At_Head(val, i),
+                    Cell_List_At_Head(val, i),
                     VAL_SPECIFIER(val)
                 );
 
@@ -869,14 +869,14 @@ DECLARE_NATIVE(enfixed_q)
 
     Value* source = ARG(source);
 
-    if (ANY_WORD(source)) {
+    if (Any_Word(source)) {
         const Value* var = Get_Opt_Var_May_Fail(source, SPECIFIED);
 
         assert(NOT_VAL_FLAG(var, VALUE_FLAG_ENFIXED) or Is_Action(var));
         return Init_Logic(OUT, GET_VAL_FLAG(var, VALUE_FLAG_ENFIXED));
     }
     else {
-        assert(ANY_PATH(source));
+        assert(Any_Path(source));
 
         DECLARE_VALUE (temp);
         Get_Path_Core(temp, source, SPECIFIED);
@@ -928,7 +928,7 @@ DECLARE_NATIVE(free)
 
     Value* v = ARG(memory);
 
-    if (ANY_CONTEXT(v) or Is_Handle(v))
+    if (Any_Context(v) or Is_Handle(v))
         fail ("FREE only implemented for ANY-SERIES! at the moment");
 
     Flex* s = Cell_Flex(v);
@@ -958,11 +958,11 @@ DECLARE_NATIVE(free_q)
     Value* v = ARG(value);
 
     Flex* s;
-    if (ANY_CONTEXT(v))
+    if (Any_Context(v))
         s = v->payload.any_context.varlist;  // VAL_CONTEXT fails if freed
     else if (Is_Handle(v))
         s = v->extra.singular;
-    else if (ANY_SERIES(v))
+    else if (Any_Series(v))
         s = v->payload.any_series.series;  // VAL_SERIES fails if freed
     else
         return Init_False(OUT);
@@ -997,7 +997,7 @@ DECLARE_NATIVE(as)
         if (new_kind == VAL_TYPE(v))
             RETURN (v); // no-op
 
-        if (not ANY_ARRAY(v))
+        if (not Any_List(v))
             goto bad_cast;
         break;
 
@@ -1015,7 +1015,7 @@ DECLARE_NATIVE(as)
         // WORD! you won't think you can mutate the data.  (Though mutable
         // WORD! should become a thing, if they're not bound or locked.)
         //
-        if (ANY_WORD(v)) {
+        if (Any_Word(v)) {
             Symbol* symbol = Cell_Word_Symbol(v);
             Flex* string = Make_Sized_String_UTF8(
                 Symbol_Head(symbol),
@@ -1047,7 +1047,7 @@ DECLARE_NATIVE(as)
             return Init_Any_Series(OUT, new_kind, string);
         }
 
-        if (not ANY_STRING(v))
+        if (not Any_String(v))
             goto bad_cast;
         break; }
 
@@ -1063,7 +1063,7 @@ DECLARE_NATIVE(as)
         // !!! Until UTF-8 Everywhere, turning ANY-STRING! into an ANY-WORD!
         // means you have to have an interning of it.
         //
-        if (ANY_STRING(v)) {
+        if (Any_String(v)) {
             //
             // Don't give misleading impression that mutations of the input
             // string will change the output word, by freezing the input.
@@ -1100,7 +1100,7 @@ DECLARE_NATIVE(as)
             );
         }
 
-        if (not ANY_WORD(v))
+        if (not Any_Word(v))
             goto bad_cast;
         break; }
 
@@ -1111,12 +1111,12 @@ DECLARE_NATIVE(as)
         // !!! A locked BINARY! shouldn't (?) complain if it exposes a
         // Symbol holding UTF-8 data, even prior to the UTF-8 conversion.
         //
-        if (ANY_WORD(v)) {
+        if (Any_Word(v)) {
             assert(Is_Value_Immutable(v));
             return Init_Binary(OUT, Cell_Word_Symbol(v));
         }
 
-        if (ANY_STRING(v)) {
+        if (Any_String(v)) {
             Blob* bin = Make_Utf8_From_Cell_String_At_Limit(v, Cell_Series_Len_At(v));
 
             // !!! Making a binary out of a UCS-2 encoded string currently
@@ -1171,7 +1171,7 @@ DECLARE_NATIVE(aliases_q)
 //
 INLINE bool Is_Set(const Value* location)
 {
-    if (ANY_WORD(location))
+    if (Any_Word(location))
         return not Is_Nothing(Get_Opt_Var_May_Fail(location, SPECIFIED));
 
     DECLARE_VALUE (temp); // result may be generated
@@ -1273,5 +1273,5 @@ DECLARE_NATIVE(null_q)
 {
     INCLUDE_PARAMS_OF_NULL_Q;
 
-    return Init_Logic(OUT, IS_NULLED(ARG(optional)));
+    return Init_Logic(OUT, Is_Nulled(ARG(optional)));
 }

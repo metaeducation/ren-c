@@ -24,7 +24,7 @@ any-scalar!
 any-series!
 any-string!
 any-context!
-any-array! ;-- replacement for ANY-BLOCK! that doesn't conflate with BLOCK!
+any-list! ;-- replacement for ANY-BLOCK! that doesn't conflate with BLOCK!
 
 ;-----------------------------------------------------------------------------
 ; Signal that every earlier numbered symbol is for a typeset or datatype...

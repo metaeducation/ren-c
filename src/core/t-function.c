@@ -77,17 +77,17 @@ REB_R MAKE_Action(Value* out, enum Reb_Kind kind, const Value* arg)
     if (
         not Is_Block(arg)
         or Cell_Series_Len_At(arg) != 2
-        or not Is_Block(Cell_Array_At(arg))
-        or not Is_Block(Cell_Array_At(arg) + 1)
+        or not Is_Block(Cell_List_At(arg))
+        or not Is_Block(Cell_List_At(arg) + 1)
     ){
         fail (Error_Bad_Make(REB_ACTION, arg));
     }
 
     DECLARE_VALUE (spec);
-    Derelativize(spec, Cell_Array_At(arg), VAL_SPECIFIER(arg));
+    Derelativize(spec, Cell_List_At(arg), VAL_SPECIFIER(arg));
 
     DECLARE_VALUE (body);
-    Derelativize(body, Cell_Array_At(arg) + 1, VAL_SPECIFIER(arg));
+    Derelativize(body, Cell_List_At(arg) + 1, VAL_SPECIFIER(arg));
 
     // Spec-constructed functions do *not* have definitional returns
     // added automatically.  They are part of the generators.  So the
@@ -98,7 +98,7 @@ REB_R MAKE_Action(Value* out, enum Reb_Kind kind, const Value* arg)
     REBACT *act = Make_Interpreted_Action_May_Fail(
         spec,
         body,
-        MKF_ANY_VALUE
+        MKF_Any_Value
     );
 
     return Init_Action_Unbound(out, act);
@@ -269,7 +269,7 @@ REBTYPE(Action)
             if (Array_Len(details) < 1)
                 return nullptr;
 
-            if (not ANY_ARRAY(Array_Head(details)))
+            if (not Any_List(Array_Head(details)))
                 return nullptr;
 
             Array* a = Cell_Array(Array_Head(details));
@@ -286,7 +286,7 @@ REBTYPE(Action)
             if (Array_Len(details) < 1)
                 return nullptr;
 
-            if (not ANY_ARRAY(Array_Head(details)))
+            if (not Any_List(Array_Head(details)))
                 return nullptr;
 
             Array* a = Cell_Array(Array_Head(details));

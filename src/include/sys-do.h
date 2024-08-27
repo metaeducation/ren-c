@@ -41,7 +41,7 @@ INLINE bool Do_At_Throws(
     REBLEN index,
     Specifier* specifier
 ){
-    return THROWN_FLAG == Eval_Array_At_Core(
+    return THROWN_FLAG == Eval_At_Core(
         Init_Void(out),
         nullptr, // opt_first (null indicates nothing, not nulled cell)
         array,
@@ -52,7 +52,7 @@ INLINE bool Do_At_Throws(
 }
 
 
-INLINE bool Do_Any_Array_At_Throws(
+INLINE bool Do_At_Throws(
     Value* out,
     const Value* any_array // Note: can be same pointer as `out`
 ){
@@ -133,7 +133,7 @@ INLINE bool Do_Branch_Core_Throws(
     assert(branch != out and condition != out);
 
     if (Is_Block(branch))
-        return Do_Any_Array_At_Throws(out, branch);
+        return Do_At_Throws(out, branch);
 
     assert(Is_Action(branch));
     return Apply_Only_Throws(
@@ -146,7 +146,7 @@ INLINE bool Do_Branch_Core_Throws(
 }
 
 #define Do_Branch_With_Throws(out,branch,condition) \
-    Do_Branch_Core_Throws((out), (branch), NULLIZE(condition))
+    Do_Branch_Core_Throws((out), (branch), (condition))
 
 #define Do_Branch_Throws(out,branch) \
     Do_Branch_Core_Throws((out), (branch), END_NODE)

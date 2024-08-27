@@ -158,7 +158,7 @@ Array* Make_Paramlist_Managed_May_Fail(
     const Value* spec,
     REBFLGS flags
 ) {
-    assert(ANY_ARRAY(spec));
+    assert(Any_List(spec));
 
     uintptr_t header_bits = 0;
 
@@ -199,7 +199,7 @@ Array* Make_Paramlist_Managed_May_Fail(
 
     bool refinement_seen = false;
 
-    const Cell* value = Cell_Array_At(spec);
+    const Cell* value = Cell_List_At(spec);
 
     while (NOT_END(value)) {
         const Cell* item = value; // "faked", e.g. <return> => RETURN:
@@ -257,8 +257,8 @@ Array* Make_Paramlist_Managed_May_Fail(
 
             if (
                 VAL_ARRAY_LEN_AT(item) == 1
-                and Is_Word(Cell_Array_At(item))
-                and Cell_Word_Id(Cell_Array_At(item)) == SYM_TILDE
+                and Is_Word(Cell_List_At(item))
+                and Cell_Word_Id(Cell_List_At(item)) == SYM_TILDE
             ){
                 header_bits |= ACTION_FLAG_TRASHER;  // Eraser_Dispatcher()
 
@@ -353,7 +353,7 @@ Array* Make_Paramlist_Managed_May_Fail(
 
     //=//// ANY-WORD! PARAMETERS THEMSELVES (MAKE TYPESETS w/SYMBOL) //////=//
 
-        if (not ANY_WORD(item))
+        if (not Any_Word(item))
             fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
 
         // !!! If you say [<with> x /foo y] the <with> terminates and a
@@ -393,7 +393,7 @@ Array* Make_Paramlist_Managed_May_Fail(
         //
         Value* typeset = Init_Typeset(
             PUSH(),  // volatile if you PUSH() again
-            (flags & MKF_ANY_VALUE)
+            (flags & MKF_Any_Value)
                 ? TS_OPT_VALUE
                 : TS_VALUE & ~(
                     FLAGIT_KIND(REB_ACTION)

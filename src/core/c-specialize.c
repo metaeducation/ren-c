@@ -242,7 +242,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
 
         assert(
             special == param
-            or IS_NULLED(special)
+            or Is_Nulled(special)
             or (
                 Is_Nothing(special)
                 and GET_VAL_FLAG(special, ARG_MARKED_CHECKED)
@@ -292,7 +292,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
 
       continue_specialized:;
 
-        assert(not IS_NULLED(arg));
+        assert(not Is_Nulled(arg));
         assert(GET_VAL_FLAG(arg, ARG_MARKED_CHECKED));
         continue;
     }
@@ -406,7 +406,7 @@ bool Specialize_Action_Throws(
 
         Bind_Values_Inner_Loop(
             &binder,
-            Cell_Array_At(opt_def),
+            Cell_List_At(opt_def),
             exemplar,
             FLAGIT_KIND(REB_SET_WORD), // types to bind (just set-word!)
             0, // types to "add midstream" to binding as we go (nothing)
@@ -434,7 +434,7 @@ bool Specialize_Action_Throws(
         // Run block and ignore result (unless it is thrown)
         //
         Push_GC_Guard(exemplar);
-        bool threw = Do_Any_Array_At_Throws(out, opt_def);
+        bool threw = Do_At_Throws(out, opt_def);
         Drop_GC_Guard(exemplar);
 
         if (threw) {
@@ -469,7 +469,7 @@ bool Specialize_Action_Throws(
             refine = arg;
 
             if (
-                IS_NULLED(refine)
+                Is_Nulled(refine)
                 or (
                     Is_Integer(refine)
                     and GET_VAL_FLAG(refine, ARG_MARKED_CHECKED)
@@ -486,7 +486,7 @@ bool Specialize_Action_Throws(
                 // use the same mechanic for voids.
 
                 StackIndex partial_stackindex =
-                    IS_NULLED(refine) ? 0 : VAL_INT32(refine);
+                    Is_Nulled(refine) ? 0 : VAL_INT32(refine);
 
                 if (not first_partial)
                     first_partial = refine;
@@ -533,7 +533,7 @@ bool Specialize_Action_Throws(
 
         case PARAM_CLASS_RETURN:
         case PARAM_CLASS_LOCAL:
-            assert(IS_NULLED(arg)); // no bindings, you can't set these
+            assert(Is_Nulled(arg)); // no bindings, you can't set these
             goto unspecialized_arg;
 
         default:
@@ -543,14 +543,14 @@ bool Specialize_Action_Throws(
         // It's an argument, either a normal one or a refinement arg.
 
         if (refine == ORDINARY_ARG) {
-            if (IS_NULLED(arg))
+            if (Is_Nulled(arg))
                 goto unspecialized_arg;
 
             goto specialized_arg;
         }
 
         if (VAL_TYPE_RAW(refine) == REB_X_PARTIAL) {
-            if (IS_NULLED(arg)) { // we *know* it's not completely fulfilled
+            if (Is_Nulled(arg)) { // we *know* it's not completely fulfilled
                 SET_VAL_FLAG(refine, PARTIAL_FLAG_SAW_NULL_ARG);
                 goto unspecialized_arg;
             }
@@ -584,12 +584,12 @@ bool Specialize_Action_Throws(
             //
             // `specialize 'append [dup: false count: 10]` is not legal.
             //
-            if (not IS_NULLED(arg))
+            if (not Is_Nulled(arg))
                 fail (Error_Bad_Refine_Revoke(param, arg));
             goto specialized_arg_no_typecheck;
         }
 
-        if (not IS_NULLED(arg))
+        if (not Is_Nulled(arg))
             goto specialized_arg;
 
         // A previously *fully* specialized TRUE should not have null args.
@@ -935,7 +935,7 @@ REB_R Block_Dispatcher(Level* L)
 
     if (IS_SPECIFIC(block)) {
         if (LVL_BINDING(L) == UNBOUND) {
-            if (Do_Any_Array_At_Throws(L->out, KNOWN(block)))
+            if (Do_At_Throws(L->out, KNOWN(block)))
                 return R_THROWN;
             return L->out;
         }

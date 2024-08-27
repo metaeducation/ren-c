@@ -164,7 +164,7 @@ void Clonify_Values_Len_Managed(
             // Objects and series get shallow copied at minimum
             //
             Flex* series;
-            if (ANY_CONTEXT(v)) {
+            if (Any_Context(v)) {
                 v->payload.any_context.varlist = CTX_VARLIST(
                     Copy_Context_Shallow_Managed(VAL_CONTEXT(v))
                 );
@@ -205,7 +205,7 @@ void Clonify_Values_Len_Managed(
             // in Clonify_Values will be threading through any updated
             // specificity through to the new values.
             //
-            if (types & FLAGIT_KIND(VAL_TYPE(v)) & TS_ARRAYS_OBJ) {
+            if (types & FLAGIT_KIND(VAL_TYPE(v)) & TS_LISTS_OBJ) {
                 Specifier* derived = Derive_Specifier(specifier, v);
                 Clonify_Values_Len_Managed(
                      Array_Head(cast_Array(series)),
@@ -357,7 +357,7 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
 
         Move_Value_Header(dest, src);
 
-        if (ANY_ARRAY(src)) {
+        if (Any_List(src)) {
             dest->payload.any_series.series =
                 Copy_Rerelativized_Array_Deep_Managed(
                     Cell_Array(src), before, after
@@ -366,7 +366,7 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
             INIT_BINDING(dest, after); // relative binding
         }
         else {
-            assert(ANY_WORD(src));
+            assert(Any_Word(src));
             dest->payload.any_word = src->payload.any_word;
             INIT_BINDING(dest, after);
         }
@@ -411,7 +411,7 @@ void Uncolor_Array(Array* a)
 
     Cell* val;
     for (val = Array_Head(a); NOT_END(val); ++val)
-        if (ANY_ARRAY(val) or Is_Map(val) or ANY_CONTEXT(val))
+        if (Any_List(val) or Is_Map(val) or Any_Context(val))
             Uncolor(val);
 }
 
@@ -425,17 +425,17 @@ void Uncolor(Cell* v)
 {
     Array* array;
 
-    if (ANY_ARRAY(v))
+    if (Any_List(v))
         array = Cell_Array(v);
     else if (Is_Map(v))
         array = MAP_PAIRLIST(VAL_MAP(v));
-    else if (ANY_CONTEXT(v))
+    else if (Any_Context(v))
         array = CTX_VARLIST(VAL_CONTEXT(v));
     else {
         // Shouldn't have marked recursively any non-array series (no need)
         //
         assert(
-            not ANY_SERIES(v)
+            not Any_Series(v)
             or Is_Flex_White(Cell_Flex(v))
         );
         return;

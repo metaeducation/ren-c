@@ -309,7 +309,7 @@ Value* Init_Any_Series_At_Core(
     INIT_BINDING(out, binding);
 
   #if !defined(NDEBUG)
-    if (ANY_STRING(out)) {
+    if (Any_String(out)) {
         if (Flex_Wide(series) != 2)
             panic(series);
     } else if (Is_Binary(out)) {
@@ -361,7 +361,7 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
 
     assert(
         not MISC(varlist).meta
-        or ANY_CONTEXT(CTX_ARCHETYPE(MISC(varlist).meta)) // current rule
+        or Any_Context(CTX_ARCHETYPE(MISC(varlist).meta)) // current rule
     );
 
     // FRAME!s must always fill in the phase slot, but that piece of the
@@ -405,7 +405,7 @@ void Extra_Init_Action_Checks_Debug(REBACT *a) {
     //
     assert(
         MISC(paramlist).meta == nullptr
-        or ANY_CONTEXT(CTX_ARCHETYPE(MISC(paramlist).meta))
+        or Any_Context(CTX_ARCHETYPE(MISC(paramlist).meta))
     );
 }
 
@@ -425,14 +425,14 @@ static REBLEN Part_Len_Core(
     Value* series, // this is the series whose index may be modified
     const Value* limit // /PART (number, position in value, or NULLED cell)
 ){
-    if (IS_NULLED(limit)) // limit is nulled when /PART refinement unused
+    if (Is_Nulled(limit)) // limit is nulled when /PART refinement unused
         return Cell_Series_Len_At(series); // leave index alone, use plain length
 
     REBI64 len;
     if (Is_Integer(limit) or Is_Decimal(limit))
         len = Int32(limit); // may be positive or negative
     else {
-        assert(ANY_SERIES(limit)); // must be same series (same series, even)
+        assert(Any_Series(limit)); // must be same series (same series, even)
         if (
             VAL_TYPE(series) != VAL_TYPE(limit) // !!! should AS be tolerated?
             or Cell_Flex(series) != Cell_Flex(limit)
@@ -480,7 +480,7 @@ static REBLEN Part_Len_Core(
 // subsetted range and gives back a length to the end of that subset.
 //
 REBLEN Part_Len_May_Modify_Index(Value* series, const Value* limit) {
-    assert(ANY_SERIES(series));
+    assert(Any_Series(series));
     return Part_Len_Core(series, limit);
 }
 
@@ -518,10 +518,10 @@ REBLEN Part_Len_Append_Insert_May_Modify_Index(
     Value* value,
     const Value* limit
 ){
-    if (ANY_SERIES(value))
+    if (Any_Series(value))
         return Part_Len_Core(value, limit);
 
-    if (IS_NULLED(limit))
+    if (Is_Nulled(limit))
         return 1;
 
     if (Is_Integer(limit) or Is_Decimal(limit))
