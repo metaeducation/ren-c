@@ -298,6 +298,13 @@ INLINE void Drop_Data_Stack_To(StackIndex i) {
 #define Pop_Stack_Values(base) \
     Pop_Stack_Values_Core((base), ARRAY_MASK_HAS_FILE_LINE)
 
+#define Pop_Stack_Values_Core(base,flags) \
+    Pop_Stack_Values_Core_Masked((base), (flags), CELL_MASK_PERSIST)
+
+#define Pop_Stack_Values_Core_Keep_Notes(base,flags) \
+    Pop_Stack_Values_Core_Masked((base), (flags), \
+        CELL_MASK_PERSIST | CELL_FLAG_NOTE)
+
 
 // Since stack overflows are memory-related errors, don't try to do any
 // error allocations...just use an already made error.

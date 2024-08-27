@@ -224,14 +224,17 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
 
 
 //
-//  Pop_Stack_Values_Core: C
+//  Pop_Stack_Values_Core_Masked: C
 //
 // Pops computed values from the stack to make a new ARRAY.
 //
 // !!! How can we pass in callsite file/line for tracking info?
 //
-Array* Pop_Stack_Values_Core(StackIndex base, Flags flags)
-{
+Array* Pop_Stack_Values_Core_Masked(
+    StackIndex base,
+    Flags flags,
+    Flags cell_mask_persist
+){
     Assert_No_DataStack_Pointers_Extant();  // in the future, pop may disrupt
 
     Length len = TOP_INDEX - base;
@@ -253,11 +256,11 @@ Array* Pop_Stack_Values_Core(StackIndex base, Flags flags)
         }
       #endif
 
-        Move_Cell_Untracked(dest, src, (~ CELL_MASK_PERSIST));
+          Move_Cell_Untracked(dest, src, (~ cell_mask_persist));
 
-      #if DEBUG_POISON_DROPPED_STACK_CELLS
-        Poison_Cell(src);
-      #endif
+        #if DEBUG_POISON_DROPPED_STACK_CELLS
+          Poison_Cell(src);
+        #endif
     }
 
     g_ds.index -= len;
