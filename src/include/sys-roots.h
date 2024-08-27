@@ -160,6 +160,9 @@ INLINE Value* Alloc_Value_Core(Flags flags)
 #define Alloc_Value() \
     TRACK(Alloc_Value_Core(CELL_MASK_0_ROOT))  // don't use as eval target [3]
 
+#define Alloc_Element() \
+    Init_Trash(TRACK(Alloc_Value_Core(CELL_MASK_0_ROOT)))  // same [3]
+
 INLINE void Free_Value(Value* v)
 {
     Stub* stub = Singular_From_Cell(v);

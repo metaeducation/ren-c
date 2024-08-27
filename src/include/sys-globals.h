@@ -34,9 +34,9 @@ PVAR REBINT PG_Boot_Phase;  // To know how far in the boot we are.
 //
 PVAR Array PG_Lib_Patches[LIB_SYMS_MAX];
 
-PVAR Value* Lib_Context_Value;
-PVAR Value* Sys_Util_Module;
-PVAR Value* User_Context_Value;
+PVAR Element* Lib_Context_Value;
+PVAR Element* Sys_Util_Module;
+PVAR Element* User_Context_Value;
 
 PVAR Context* Lib_Context;
 PVAR Context* Sys_Context;
@@ -84,22 +84,22 @@ PVAR Value PG_R_Suspend;
 // by the same mechanism they use.  This means they can be initialized at
 // the appropriate moment during the boot, one at a time.
 
-PVAR Value* Root_With_Tag; // overrides locals gathering (can disable RETURN)
-PVAR Value* Root_Variadic_Tag; // marks variadic argument <variadic>
-PVAR Value* Root_End_Tag; // marks endable argument (NULL if at end of input)
-PVAR Value* Root_Maybe_Tag; // passing void won't run the action, return null
-PVAR Value* Root_Local_Tag; // marks beginning of a list of "pure locals"
-PVAR Value* Root_Skip_Tag; // marks a hard quote as "skippable" if wrong type
-PVAR Value* Root_Const_Tag; // pass a CONST version of the input argument
-PVAR Value* Root_Void_Tag;  // tolerance for void returns or passing void args
-PVAR Value* Root_Unrun_Tag;  // parameters that degrade antiform actions
+PVAR Element* Root_With_Tag; // overrides locals gathering (can disable RETURN)
+PVAR Element* Root_Variadic_Tag; // marks variadic argument <variadic>
+PVAR Element* Root_End_Tag; // marks endable argument (NULL if at end of input)
+PVAR Element* Root_Maybe_Tag; // passing void won't run the action, return null
+PVAR Element* Root_Local_Tag; // marks beginning of a list of "pure locals"
+PVAR Element* Root_Skip_Tag; // marks a hard quote as "skippable" if wrong type
+PVAR Element* Root_Const_Tag; // pass a CONST version of the input argument
+PVAR Element* Root_Void_Tag;  // tolerance for void returns or passing void args
+PVAR Element* Root_Unrun_Tag;  // parameters that degrade antiform actions
 
-PVAR Value* Root_Here_Tag;  // https://forum.rebol.info/t/1558/5
+PVAR Element* Root_Here_Tag;  // https://forum.rebol.info/t/1558/5
 
-PVAR Value* Root_Empty_Text; // read-only ""
-PVAR Value* Root_Empty_Binary; // read-only #{}
-PVAR Value* Root_Empty_Block; // read-only []
-PVAR Value* Root_2_Blanks_Block;  // read-only [_ _]
+PVAR Element* Root_Empty_Text; // read-only ""
+PVAR Element* Root_Empty_Binary; // read-only #{}
+PVAR Element* Root_Empty_Block; // read-only []
+PVAR Element* Root_2_Blanks_Block;  // read-only [_ _]
 PVAR Array* PG_Empty_Array; // optimization of Cell_Array(Root_Empty_Block)
 PVAR Array* PG_1_Quasi_Null_Array;  // used by heavy nulls ~[~null~]~
 PVAR Array* PG_1_Quasi_Void_Array;  // used by heavy voids ~[~void~]~
@@ -110,7 +110,7 @@ PVAR Value* Root_Heavy_Null;  // antiform block containing a blank
 PVAR Value* Root_Heavy_Void;  // antiform block containing a quasi null
 PVAR Value* Root_Heavy_False;  // antiform block containing a meta false
 
-PVAR Value* Root_Feed_Null_Substitute;  // flagged with FEED_NOTE_META
+PVAR Element* Root_Feed_Null_Substitute;  // flagged with FEED_NOTE_META
 
 PVAR Stub PG_Inaccessible_Stub;  // GC canonizes all inaccessible stubs to this
 

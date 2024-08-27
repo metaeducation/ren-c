@@ -161,7 +161,7 @@ static void Check_Basics(void)
 static void Startup_Lib(void)
 {
     Context* lib = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
-    ensure(nullptr, Lib_Context_Value) = Alloc_Value();
+    ensure(nullptr, Lib_Context_Value) = Alloc_Element();
     Init_Context_Cell(Lib_Context_Value, REB_MODULE, lib);
     ensure(nullptr, Lib_Context) = VAL_CONTEXT(Lib_Context_Value);
 
@@ -263,8 +263,8 @@ static void Shutdown_Lib(void)
 }
 
 
-static Value* Make_Locked_Tag(const char *utf8) { // helper
-    Value* t = rebText(utf8);
+static Element* Make_Locked_Tag(const char *utf8) { // helper
+    Element* t = cast(Element*, rebText(utf8));
     HEART_BYTE(t) = REB_TAG;
 
     Force_Value_Frozen_Deep(t);
@@ -873,7 +873,7 @@ void Startup_Core(void)
 
     Context* util = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
     node_LINK(NextVirtual, util) = Lib_Context;
-    ensure(nullptr, Sys_Util_Module) = Alloc_Value();
+    ensure(nullptr, Sys_Util_Module) = Alloc_Element();
     Init_Context_Cell(Sys_Util_Module, REB_MODULE, util);
     ensure(nullptr, Sys_Context) = VAL_CONTEXT(Sys_Util_Module);
 
@@ -941,10 +941,10 @@ void Startup_Core(void)
         "system.contexts.user: module [Name: User] []"
     );
 
-    ensure(nullptr, User_Context_Value) = Copy_Cell(
+    ensure(nullptr, User_Context_Value) = cast(Element*, Copy_Cell(
         Alloc_Value(),
         Get_System(SYS_CONTEXTS, CTX_USER)
-    );
+    ));
     rebUnmanage(User_Context_Value);
     User_Context = VAL_CONTEXT(User_Context_Value);
 

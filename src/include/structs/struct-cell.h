@@ -665,13 +665,14 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
 // unstable antiforms from being the values of variables.  To make it easier
 // to do this, the C++ build offers the ability to make `Element` that
 // can't hold any antiforms, `Value` that can hold stable antiforms, and
-// `Atom` unstable isotopes.
+// `Atom` that can hold anything--including unstable isotopes.
 //
 // * Class Hierarchy: Atom as base, Value derived, Element derived
 //   (upside-down for compile-time error preferences--we want passing an
 //   Atom to a routine that expects only Element to fail)
 //
-// * Primary Goal: Prevent passing Atoms/Values to Element-only routines.
+// * Primary Goal: Prevent passing Atoms/Values to Element-only routines,
+//   or Atoms to Value-only routines.
 //
 // * Secondary Goal: Prevent things like passing Element cells to writing
 //   routines that may potentially produce antiforms in that cell.
@@ -696,7 +697,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     typedef struct RebolValueStruct Atom;
     typedef struct RebolValueStruct Element;
 #else
-    struct Atom : public Cell
+    struct Atom : public Cell  // can hold unstable antiforms
     {
       #if !defined(NDEBUG)
         Atom() = default;
@@ -709,7 +710,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
       #endif
     };
 
-    struct RebolValueStruct : public Atom {
+    struct RebolValueStruct : public Atom {  // can't hold unstable antiforms
       #if !defined(NDEBUG)
         RebolValueStruct () = default;
         ~RebolValueStruct () {
@@ -721,7 +722,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
       #endif
     };
 
-    struct Element : public RebolValueStruct {
+    struct Element : public RebolValueStruct {  // can't hold antiforms at all
       #if !defined(NDEBUG)
         Element () = default;
         ~Element () {
@@ -749,4 +750,17 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
             and std::is_standard_layout<Element>::value,
         "C++ Cells must match C Cells: http://stackoverflow.com/a/7189821/"
     );
+#endif
+
+
+#if CPLUSPLUS_11
+    //
+    // rebReleaseAndNull is in the API, but because the API doesn't make
+    // distinctions between Element and Value the double pointer trips it up
+    // in the C++ build.  Add an overload.
+    //
+    static inline void rebReleaseAndNull(Element** e) {
+        rebRelease(*e);
+        *e = nullptr;
+    }
 #endif
