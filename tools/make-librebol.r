@@ -201,6 +201,9 @@ lib-struct-fields: map-each-api [
 ]
 
 non-variadic-api-macros: map-each-api [
+    if name = "rebFunction" [  ; handled specially, easiest for now
+        continue
+    ]
     if not is-variadic [
         cscape [:api {#define $<Name> LIBREBOL_PREFIX($<Name>)}]
     ]
@@ -293,16 +296,16 @@ variadic-api-specifier-capturing-macros: map-each-api [
     ]
 ]
 
-variadic-api-run-in-lib-macros: map-each-api [
+variadic-api-specifier-explicit-macros: map-each-api [
     if is-variadic [
         fixed-params: map-each [type var] paramlist [
             to-text var
         ]
 
         cscape [:api {
-            #define $<Name>Core($<Fixed-Params,>...) \
+            #define $<Name>Core(specifier_ref, $<Fixed-Params,>...) \
                 $<Name>_helper( \
-                    0,  /* just run in lib */ \
+                    specifier_ref, \
                     $<Fixed-Params, >__VA_ARGS__, rebEND \
                 )
         }]
@@ -337,7 +340,7 @@ variadic-api-c89-alias-macros: map-each-api [
 assert [newline = take/last last variadic-api-c-helpers]
 assert [newline = take/last last variadic-api-c++-helpers]
 assert [newline = take/last last variadic-api-specifier-capturing-macros]
-assert [newline = take/last last variadic-api-run-in-lib-macros]
+assert [newline = take/last last variadic-api-specifier-explicit-macros]
 
 
 === "GENERATE REBOL.H" ===
@@ -684,6 +687,94 @@ e-lib/emit [ver {
 
 
     /*
+     * RebolActionCFunction is used when creating your own Rebol natives in C.
+     * It takes exactly one RebolSpecifier* parameter, and acts as the
+     * implementation of an action.
+     *
+     * To use it with rebFunction(), you pass your C function as the first
+     * parameter.  The variadic portion after the pointer is a normal API feed
+     * of values for making a spec block.  (But if your spec is just a string
+     * you can declare that beforehand...just remember that C strings joined
+     * in this way will not have spaces at the merge points unless you put
+     * them in manually.  I suggest putting them at the start of the line.)
+     *
+     * It requires a little boilerplate to do the trick, but it's a neat one!
+     *
+     *     #define LIBREBOL_SPECIFIER (&specifier)
+     *
+     *     #include "rebol.h"
+     *     typedef RebolValue Value;
+     *     typedef RebolSpecifier Specifier;
+     *     typedef RebolBounce Bounce;
+     *
+     *     static Specifier* specifier = nullptr;  // default inherit of LIB
+     *
+     *     void Subroutine(void) {
+     *         rebElide(
+     *             "assert [action? :print]",
+     *             "print {Subroutine() has original ASSERT and PRINT!}"
+     *         );
+     *     }
+     *
+     *     const char* Sum_Plus_1000_Spec = "[ \
+     *         {Demonstration native that shadows ASSERT and PRINT}" \
+     *         assert [integer!]" \
+     *         print [integer!]" \
+     *     ]";
+     *     Bounce Sum_Plus_1000_Impl(Specifier* specifier) {
+     *         Value* hundred = rebValue("fourth [1 10 100 1000]");
+     *         Subroutine();
+     *         return rebValue("print + assert +", rebR(hundred));
+     *     }
+     *
+     *     int main() {
+     *         rebStartup();
+     *
+     *         Value* action = rebFunction(
+     *             Sum_Plus_1000_Spec,
+     *             &Sum_Plus_1000_Impl
+     *         );
+     *
+     *         rebElide(
+     *             "let sum-plus-1000: @", action,
+     *             "print [{Sum Plus 1000 is:} sum-plus-1000 5 15]"
+     *         )
+     *
+     *         rebRelease(action);
+     *         rebShutdown();
+     *         return 0;
+     *     }
+     *
+     * This outputs:
+     *
+     *     Subroutine() has original ASSERT and PRINT!
+     *     Sum Plus 1000 is 1020
+     *
+     * It's a very elegant bridge, working without resorting to FFI or similar.
+     * The smarts of the API macros like rebElide() and rebValue() is that they
+     * pick up the specifier by name that you give, so you don't have to pass
+     * it every time.  When you're inside your native's implementation, the
+     * shadowing of the argument overrides the global variable.
+     *
+     * (If you don't like shadowing, you can use variants that pass the address
+     * of the specifier explicitly on each call...but this is better!)
+     *
+     * With C++ you can use raw strings and lambdas:
+     *
+     *     Value* action = rebFunction(R"(
+     *         {Another way to do functions}
+     *         message [text!]
+     *     ])",
+     *     [](Specifier* specifier) {
+     *         rebElide("print [{The message is:}", message, "]");
+     *         return rebTrash();
+     *     });
+     */
+
+    typedef RebolBounce (RebolActionCFunction)(RebolSpecifier*);
+
+
+    /*
      * "Dangerous Function" which is called by rebRescue().  Argument can be a
      * RebolValue* but does not have to be.
      *
@@ -913,6 +1004,10 @@ e-lib/emit [ver {
      *
      * (It's not predefined to avoid forcing inclusion of <string>, but it
      * is easy to add if you want it.)
+     *
+     * 1. If we didn't explicitly delete the conversion of const void*, then
+     *    a nasty corner of C++ is that it would fall back on the bool
+     *    conversion...which leads to great confusion.
      */
 
     #if (! LIBREBOL_NO_CPLUSPLUS)
@@ -931,14 +1026,16 @@ e-lib/emit [ver {
         inline const void* to_rebarg(const char *source)
             { return source; }  /* not TEXT!, but LOADable source code */
 
-        inline const void* to_rebarg(bool b)
-            { return rebL(b); }
-
         inline const void* to_rebarg(int i)
             { return rebI(i); }
 
         inline const void* to_rebarg(double d)
             { return rebR(rebDecimal(d)); }
+
+        inline const void* to_rebarg(const void* p) = delete;  // [1]
+
+        inline const void* to_rebarg(bool b)  // no implicit conversion [1]
+            { return rebL(b); }
 
     #endif
 
@@ -1026,6 +1123,12 @@ e-lib/emit [ver {
      * this does that.  But if you don't specify it at all, then it means
      * the API execution will be done in its own isolated environment that
      * just inherits from lib.
+     *
+     * 1. rebFunction() is an oddity in that it wants to do some parameter
+     *    reversal to put the spec first and the function last, so it can't
+     *    be variadic or the C version wouldn't compile-time type check the
+     *    passed in C function.  But it also wants to capture the specifier.
+     *    Easiest just to hardcode it here.
      */
 
     #if (! LIBREBOL_USE_C89)
@@ -1036,18 +1139,32 @@ e-lib/emit [ver {
 
         $[Variadic-Api-Specifier-Capturing-Macros]
 
+        #define rebFunction(spec,cfunc)  /* not variadic, but captures [1] */ \
+            LIBREBOL_PREFIX(rebFunction)( \
+                LIBREBOL_SPECIFIER,  /* captured from callsite! */ \
+                spec, cfunc \
+            )
+
     #endif  /* (! LIBREBOL_USE_C89) */
 
 
     /*
-     * VARIADIC API RUN IN LIB MACROS
+     * VARIADIC API SPECIFIER EXPLICIT MACROS
      *
-     * Variant that just runs the code in lib.
+     * Variant where you pass in the pointer-to-pointer-to-specifier manually.
+     *
+     * 1. See remarks on rebFunction() in the SPECIFIER CAPTURING MACROS above.
      */
 
     #if (! LIBREBOL_USE_C89)
 
-        $[Variadic-Api-Run-In-Lib-Macros]
+        $[Variadic-Api-Specifier-Explicit-Macros]
+
+        #define rebFunctionCore(specifier_ref,spec,cfunc)  /* anomaly [1] */ \
+            LIBREBOL_PREFIX(rebFunction)( \
+                specifier_ref, \
+                spec, cfunc \
+            )
 
     #endif  /* (! LIBREBOL_USE_C89) */
 
@@ -1143,13 +1260,13 @@ e-lib/emit [ver {
      * Note: There is no need to rebR() the handle due to the failure; the
      * handles will auto-GC.
      *
-     * Because it runs rebJumpsCore() instead of rebJumps() it would not
+     * Because it uses rebJumpsCore() instead of rebJumps() it would not
      * pick up an overridden definition of FAIL.  It always calls LIB.FAIL,
      * which may be good (?)
      */
 
     #define rebFail_OS(errnum) \
-        rebJumpsCore("fail", rebR(rebError_OS(errnum)));
+        rebJumpsCore(nullptr, "fail", rebR(rebError_OS(errnum)));
 
 
     #endif  /* REBOL_H_1020_0304 */

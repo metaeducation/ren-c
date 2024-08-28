@@ -2106,7 +2106,7 @@ Bounce Scanner_Executor(Level* const L) {
         Push_Level(OUT, sub);
         return CATCH_CONTINUE_SUBLEVEL(sub); }
 
- child_array_scanned: {  /////////////////////////////////////////////////////
+  child_array_scanned: {  ////////////////////////////////////////////////////
 
         if (Is_Raised(OUT))
             goto handle_failure;

@@ -1265,16 +1265,13 @@ RebolValue* API_rebTranscodeInto(
 //
 // Helper for when variadic code wants to run as its own stack level.
 //
-// 1. The TRANSCODE operation does not heed binding, but it follows the
-//    regular pattern of parameterization in the auto-generated API.
-//
-// 2. We don't call `rebTranscodeInto()` here, because that would package
+// 1. We don't call `rebTranscodeInto()` here, because that would package
 //    up an arbitrary number of variadic parameters that are meant to
 //    be things like Value* and UTF8.  But we have exactly 3 parameters
 //    in hand, and want to pass them directly to the implementation routine,
 //    as they're encodings of variadic parameters--not the actual parameters!
 //
-// 3. TRANSCODE does not put any binding in the block it takes, so we have
+// 2. TRANSCODE does not put any binding in the block it takes, so we have
 //    to apply the specifier here.
 //
 void API_rebPushContinuation(
@@ -1286,12 +1283,12 @@ void API_rebPushContinuation(
     ENTER_API;
 
     DECLARE_VALUE (block);
-    RebolSpecifier** dummy_ref = nullptr;  // transcode ignores [1]
+    RebolSpecifier** dummy_ref = nullptr;  // transcode ignores
     Corrupt_Pointer_If_Debug(dummy_ref);
-    API_rebTranscodeInto(dummy_ref, block, p, vaptr);  // use "API_" [2]
+    API_rebTranscodeInto(dummy_ref, block, p, vaptr);  // use "API_" [1]
 
     if (specifier_ref)
-        BINDING(block) = *cast(Specifier**, specifier_ref);  // [3]
+        BINDING(block) = *cast(Specifier**, specifier_ref);  // [2]
     else
         BINDING(block) = Lib_Context;  // [3]
 
@@ -2939,6 +2936,200 @@ RebolSpecifier** API_rebAllocSpecifierRefFromLevel_internal(
 
     *ref = API_rebSpecifierFromLevel_internal(level);
     return ref;
+}
+
+
+enum {
+    IDX_API_ACTION_CFUNC = 1,  // HANDLE! of RebolActionCFunction*
+    IDX_API_ACTION_SPECIFIER_BLOCK = 2,  // BLOCK! so specifier is GC marked
+    IDX_API_ACTION_MAX
+};
+
+
+//
+//  Api_Function_Dispatcher: C
+//
+// Puts a definitional return ACTION! in the RETURN slot of the frame, and
+// runs the CFunction associated with this action.
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// 1. If you use rebFunction(), we still put a RETURN in the frame.  It may
+//    seem like that's not useful, because while a C function is on the
+//    stack we cannot RETURN across it.  *BUT* it is possible for the C
+//    function to return a continuation of code.  When that happens, the C
+//    function is off the stack and the definitional return can be acted upon.
+//
+// 2. The Level L gives us the visibility of variables for the function args,
+//    but we need to see more than that to run code.  When rebFunction() was
+//    run there was a specifier in effect.  We stored it in a dummy BLOCK!
+//    so that the GC will keep it alive (if we poked the specifier into a
+//    HANDLE! it would not be marked).  Make the specifier passed to the
+//    CFunction inherit that original environment.
+//
+// 3. RebolSpecifier accepts an Array* in the C++ build, but not the C build.
+//    So the cast is needed here.
+//
+Bounce Api_Function_Dispatcher(Level* const L)
+{
+    assert(ACT_HAS_RETURN(Level_Phase(L)));  // continuations can RETURN [1]
+    assert(KEY_SYM(ACT_KEYS_HEAD(Level_Phase(L))) == SYM_RETURN);
+
+    Value* cell = Level_Arg(L, 1);
+    assert(Not_Specialized(cell));
+    Force_Level_Varlist_Managed(L);
+    Init_Action(
+        cell,
+        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_RETURN))),
+        Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
+        cast(Context*, L->varlist)  // so RETURN knows where to return from
+    );
+
+    Details* details = Phase_Details(Level_Phase(L));
+
+    Value* cfunc_handle = Details_At(details, IDX_API_ACTION_CFUNC);
+    RebolActionCFunction* cfunc = cast(RebolActionCFunction*,
+        VAL_HANDLE_CFUNC(cfunc_handle)
+    );
+
+    Value *holder = Details_At(details, IDX_API_ACTION_SPECIFIER_BLOCK);
+    node_LINK(NextVirtual, L->varlist) = Cell_Specifier(holder);  // [2]
+    RebolSpecifier* specifier = cast(RebolSpecifier*, L->varlist);  // [3]
+
+    Bounce bounce = cast(Bounce, (*cfunc)(specifier));
+
+    if (not Is_Bounce_An_Atom(bounce))
+        return bounce;  // e.g. a continuation.
+
+    assert(Is_Stable(cast(Atom*, bounce)));  // API can't do unstable values
+
+    Value* result = cast(Value*, bounce);
+
+    if (not Typecheck_Coerce_Return(L, result))
+        fail (Error_Bad_Return_Type(L, result));
+
+    return result;
+}
+
+
+//
+//  rebFunc: API
+//
+// 1. Due to technical limitations of the variadic machinery, the C function
+//    pointer can't be the last item in the va_list--it has to be the first
+//    in order to get typechecking in C.  (rebFunction() flips it so you can
+//    give the spec first, but it isn't variadic.)
+//
+// 2. Can't leave the spec unbound, or it wouldn't find definitions like
+//    INTEGER! to use in typechecking.  (This probably should be some kind of
+//    one-off module, because we don't want code executed in the spec to
+//    write to lib by default.)
+//
+RebolValue* API_rebFunc(
+    RebolSpecifier** specifier_ref,
+    RebolActionCFunction* cfunc,  // for typechecking, must be first [1]
+    const void* p, void* vaptr
+){
+    Feed* feed = Make_Variadic_Feed(
+        p, cast(va_list*, vaptr),
+        FEED_MASK_DEFAULT
+    );
+    Add_Feed_Reference(feed);
+    Sync_Feed_At_Cell_Or_End_May_Fail(feed);
+
+    DECLARE_ELEMENT (spec);
+
+    if (Is_Feed_At_End(feed)) {  // act like `func [] [...]`
+        Init_Block(spec, EMPTY_ARRAY);
+    }
+    else {
+        Copy_Cell(spec, At_Feed(feed));
+        Fetch_Next_In_Feed(feed);
+
+        if (Not_Feed_At_End(feed) or not Is_Block(spec))
+            fail ("rebFunc() expects either no spec, or just one BLOCK!");
+    }
+
+    Release_Feed(feed);  // Note: exhausting feed takes care of the va_end()
+
+    if (specifier_ref and *specifier_ref)
+        BINDING(spec) = *cast(Specifier**, specifier_ref);  // [2]
+    else
+        BINDING(spec) = Lib_Context;  // !!! Review: needs module isolation!
+
+    Flags mkf_flags = MKF_RETURN;
+
+    Context* meta;
+    Array* paramlist = Make_Paramlist_Managed_May_Fail(
+        &meta,
+        spec,
+        &mkf_flags
+    );
+
+    Phase* a = Make_Action(
+        paramlist,
+        nullptr,  // no partials
+        &Api_Function_Dispatcher,
+        IDX_API_ACTION_MAX
+    );
+
+    assert(ACT_ADJUNCT(a) == nullptr);
+    mutable_ACT_ADJUNCT(a) = meta;
+
+    Details* details = Phase_Details(a);
+    Init_Handle_Cfunc(
+        Details_At(details, IDX_API_ACTION_CFUNC),
+        cast(CFunction*, cfunc)
+    );
+    Value* holder = Details_At(details, IDX_API_ACTION_SPECIFIER_BLOCK);
+    Init_Block(holder, EMPTY_ARRAY);  // only care about specifier GC safety
+    INIT_SPECIFIER(holder, BINDING(spec));
+
+    return Init_Action(Alloc_Value(), a, ANONYMOUS, UNBOUND);
+}
+
+
+//
+//  rebFunction: API
+//
+// Version of rebFunc() that isn't variadic, but takes the spec as a single
+// item (UTF-8, Value*, Instruction*).  This way it can swap the order of
+// the parameters so that the CFunction is in the final spot and still
+// gets typechecked.  This can give a more pleasing ordering in some
+// situations (e.g. C++ lambdas as second arg).
+//
+RebolValue* API_rebFunction(
+    RebolSpecifier** specifier_ref,
+    const void* spec,
+    RebolActionCFunction* cfunc
+){
+    // By design, we cannot pass void* to the variadic API (this helps to
+    // prevent accidents, as that would accept any random pointer type you
+    // happened to have around).  But there is no "base type" besides void*
+    // that can have char* alignment and be checked by to_rebarg().  So we have
+    // to use pointer detection to decide what we were passed, then cast.
+
+    PointerDetect detect = Detect_Rebol_Pointer(spec);
+    switch (detect) {
+      case DETECTED_AS_UTF8:
+        return rebFuncCore(specifier_ref, cfunc, cast(const char*, spec));
+
+      case DETECTED_AS_CELL:
+        return rebFuncCore(specifier_ref, cfunc, cast(const RebolValue*, spec));
+
+      case DETECTED_AS_STUB:
+        return rebFuncCore(
+            specifier_ref,
+            cfunc,
+            cast(const RebolNodeInternal*, spec)
+        );
+
+      case DETECTED_AS_END:
+        return rebFuncCore(specifier_ref, cfunc, rebEND);
+
+      default:
+        panic ("Invalid spec pointer passed to rebFunction()");
+    }
 }
 
 

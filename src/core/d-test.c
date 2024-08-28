@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2019 Ren-C Open Source Contributors
+// Copyright 2019-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -28,7 +28,33 @@
 // built only in certain debug builds.
 //
 
+#define LIBREBOL_SPECIFIER (&librebol_specifier)
+
 #include "sys-core.h"
+
+#if INCLUDE_TEST_LIBREBOL_NATIVE
+    // Note: This demo is described in rebol.h, next to RebolActionCFunction
+    // Altered to fit into this file's automated testing.
+
+    static int Subroutine(void) {
+        RebolSpecifier* librebol_specifier = nullptr;
+
+        return rebUnboxInteger(
+            "assert [action? :print]",
+            "add 304 696"
+        );
+    }
+
+    static const char* Sum_Plus_1000_Spec = "[ \
+        {Demonstration native that shadows ASSERT and ADD} \
+        assert [integer!] \
+        add [integer!] \
+    ]";
+    static RebolBounce Sum_Plus_1000_Impl(RebolSpecifier* librebol_specifier) {
+        int thousand = Subroutine();
+        return rebValue("add + assert +", rebI(thousand));
+    }
+#endif
 
 
 //
@@ -55,6 +81,8 @@ DECLARE_NATIVE(test_librebol)
         )
     );
   #else
+    RebolSpecifier* librebol_specifier = nullptr;
+
     StackIndex base = TOP_INDEX;
 
   // !!! NOTICE: We are pushing values to the data stack, but we can't hold
@@ -101,6 +129,47 @@ DECLARE_NATIVE(test_librebol)
     bool is_null = rebUnboxLogic("null? @", nullptr);
 
     Meta_Quotify(Init_Logic(PUSH(), is_null));
+  }
+
+  blockscope {
+    Set_Cell_Flag(Init_Integer(PUSH(), 6), NEWLINE_BEFORE);
+    Value* action = rebFunction(
+        Sum_Plus_1000_Spec,
+        &Sum_Plus_1000_Impl
+    );
+
+    int sum = rebUnboxInteger(
+        "let sum-plus-1000: @", action,
+        "sum-plus-1000 5 15"
+    );
+
+    rebRelease(action);
+    Init_Integer(PUSH(), sum);
+  }
+
+  blockscope {
+    Set_Cell_Flag(Init_Integer(PUSH(), 6), NEWLINE_BEFORE);
+  #if (! CPLUSPLUS_11)
+    Init_Integer(PUSH(), 1020);  // fake success result
+  #else
+    Value* action = rebFunction(R"([
+        {Demonstration native that shadows ASSERT and ADD (C++ version)}
+        assert [integer!]
+        add [integer!]
+    ])",
+    [](RebolSpecifier* librebol_specifier) -> RebolBounce {
+        int thousand = Subroutine();
+        return rebValue("add + assert +", rebI(thousand));
+    });
+
+    int sum = rebUnboxInteger(
+        "let sum-plus-1000: @", action,
+        "sum-plus-1000 5 15"
+    );
+
+    rebRelease(action);
+    Init_Integer(PUSH(), sum);
+  #endif
   }
 
     return Init_Block(OUT, Pop_Stack_Values(base));
