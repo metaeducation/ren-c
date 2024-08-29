@@ -32,37 +32,10 @@ script-pre-load-hook: ~
 enrescue: :lib.enrescue
 lib.enrescue: ~  ; forcing long name of SYS.UTIL.ENRESCUE hints it is dangerous
 
-rescue: func [  ; see also TRAP
-    {If evaluation encounters a failure, return it, otherwise NULL}
-
-    return: [~null~ error!]
-    code [block!]
-][
-    return match error! enrescue code
-]
-
-
-rescue+: func [  ; see also TRAP+
-    {Experimental variation of RESCUE using THENable mechanics}
-
-    return: [pack? lazy?]
-    code [block!]
-    <local> result
-][
-    ; If you return a pure NULL with the desire of triggering ELSE, that does
-    ; not allow you to return more values.  This uses a lazy object that will
-    ; run a THEN branch on error, but then an ELSE branch with the returned
-    ; value on non-error...or decay to a pack with NULL for the error and
-    ; the result.
-    ;
-    if error? result: enrescue code [
-        return pack [result null]
-    ]
-
-    return anti make object! [
-        else: branch -> [(heavy unmeta :result) then (:branch)]
-        decay: [pack [null unmeta result]]
-    ]
+; Returns NULL if no error, otherwise the error
+;
+rescue: enclose :enrescue func [f [frame!]] [
+    return match error! eval f
 ]
 
 

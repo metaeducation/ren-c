@@ -57,16 +57,12 @@ run-single-test: func [
 
     log [mold code]
 
-    ; Need to use ^result, otherwise nihil (empty pack) would case a failure
-    ; in the test code itself trying to unpack to a regular result.  We want
-    ; to report it as a failure, not fail ourseves...
-    ;
-    let [error ^result]: sys.util.rescue+ as block! code
+    let result: sys.util.enrescue code
 
     all [
-        error
+        error? result
         expected-id
-        (all [not error.id, expected-id = '???]) or (error.id = expected-id)
+        (all [not result.id, expected-id = '???]) or (result.id = expected-id)
     ] then [
         successes: me + 1
         log reduce [_ {"correct failure:"} _ quote quasi expected-id newline]
@@ -74,10 +70,10 @@ run-single-test: func [
     ]
 
     case [
-        error [
+        error? result [
             spaced ["error" any [
-                to text! maybe error.id
-                mold error.message   ; errors with no ID may have BLOCK!
+                to text! maybe result.id
+                mold result.message   ; errors with no ID may have BLOCK!
                 "(unknown)"
             ]]
         ]
@@ -244,7 +240,7 @@ process-tests: func [
                 ;
                 flags: []
 
-                sys.util.rescue+ [
+                sys.util.rescue [
                     handler flags collected
                 ]
                 then error -> [

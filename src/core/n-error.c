@@ -34,7 +34,8 @@
 //      return: "ERROR! if raised, else ^META of the result"
 //          [error! quoted? quasi? blank!]
 //      code "Code to sandbox and monitor"
-//          [<unrun> frame! block!]
+//          [<unrun> frame! any-list?]
+//      /relax "Allow non-erroring premature exits (THROW, RETURN, etc.)"
 //  ]
 //
 DECLARE_NATIVE(enrescue)
@@ -62,19 +63,43 @@ DECLARE_NATIVE(enrescue)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    // 1. We prime the evaluator with nihil so (enrescue [comment "hi"]) and
+    //    (enrescue []) will return a ~[]~ empty block antiform.  This is
+    //    because a key early use of ENRESCUE is in the console, and the
+    //    console wishes to give the user the clearest feedback on what
+    //    is going on.  It may be that there should be an option that decays
+    //    that to void, and maybe even that should be the default, but at
+    //    time of writing serving the needs of the console is most important.
+
     if (Not_Cell_Flag(code, CONST))
-        Set_Cell_Flag(code, EXPLICITLY_MUTABLE);  // see DECLARE_NATIVE(do) for why
+        Set_Cell_Flag(code, EXPLICITLY_MUTABLE);  // read EVAL source for why
+
+    Init_Nihil(Alloc_Evaluator_Primed_Result());  // able to produce nihil [1]
+    Level* L = Make_Level_At(
+        &Evaluator_Executor,
+        code,
+        LEVEL_FLAG_META_RESULT | LEVEL_FLAG_RAISED_RESULT_OK
+    );
+
+    Push_Level(OUT, L);
 
     STATE = ST_ENRESCUE_EVALUATING;
-    return CATCH_CONTINUE(OUT, code);
+    return CATCH_CONTINUE_SUBLEVEL(L);
 
 } evaluation_finished: {  ////////////////////////////////////////////////////
 
-    if (not THROWING)  // successful result
-        return Meta_Quotify(OUT);
+    if (not THROWING) {  // successful result
+        if (Is_Meta_Of_Raised(OUT))  // was definitional error, got META'd
+            QUOTE_BYTE(OUT) = NOQUOTE_1;  // turn it into normal error
 
-    if (not Is_Throwing_Failure(LEVEL))  // non-ERROR! throws
-        return BOUNCE_THROWN;
+        return OUT;  // META'd by LEVEL_FLAG_META_RESULT
+    }
+
+    if (not Is_Throwing_Failure(LEVEL)) {  // non-ERROR! throws
+        if (REF(relax))
+            return BOUNCE_THROWN;  // e.g. RETURN, THROW
+        return Init_Error(OUT, Error_No_Catch_For_Throw(LEVEL));
+    }
 
     Copy_Cell(OUT, VAL_THROWN_LABEL(LEVEL));
     CATCH_THROWN(SPARE, LEVEL);
