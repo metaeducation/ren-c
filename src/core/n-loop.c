@@ -1999,7 +1999,7 @@ DECLARE_NATIVE(for)
         // Delegate to FOR-EACH (note: in the future this will be the other
         // way around, with FOR-EACH delegating to FOR).
         //
-        rebPushContinuation(
+        rebPushContinuation_internal(
             cast(Value*, OUT),  // <-- output cell
             LEVEL_MASK_NONE,
             Canon(FOR_EACH), ARG(vars), rebQ(value), body

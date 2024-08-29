@@ -424,7 +424,11 @@ void RunPromise(void)
     BINDING(code) = info->specifier;
 
     Level* L = Make_Level_At(&Stepper_Executor, code, LEVEL_FLAG_ROOT_LEVEL);
-    Push_Level(Alloc_Value_Core(CELL_MASK_0), L);
+
+    Push_Level_Dont_Inherit_Interruptibility(  // you can HALT inside a promise
+        Alloc_Value_Core(CELL_MASK_0),
+        L
+    );
     goto run_promise;
 
 } run_promise: {  ////////////////////////////////////////////////////////////
@@ -532,16 +536,11 @@ EXTERN_C void API_rebIdle_internal(void)  // NO user JS code on stack!
 {
     TRACE("rebIdle() => begin running promise code");
 
-    Flags saved_sigmask = g_ts.eval_sigmask;
-    g_ts.eval_sigmask &= ~SIG_HALT;  // disable
-
     // In stackless, we'd have some protocol by which RunPromise() could get
     // started in rebPromise(), then maybe be continued here.  For now, it
     // is always continued here.
     //
     RunPromise();
-
-    g_ts.eval_sigmask = saved_sigmask;
 
     TRACE("rebIdle() => finished running promise code");
 }

@@ -386,7 +386,7 @@ for-each-api [
         find name "_internal"  ; called as API_rebXXX(), don't need reb.XXX()
         name = "rebStartup"  ; the reb.Startup() is offered by load_r3.js
         name = "rebBytes"  ; JS variant returns array that knows its size
-        name = "rebHalt"  ; JS variant augmented to cancel JS promises too
+        name = "rebRequestHalt"  ; JS variant adds canceling JS promises too
     ]
     then [
         continue
@@ -639,12 +639,12 @@ e-cwrap/emit {
      * there's no way to find those promises.  All cancelable promises would
      * have to be tracked, and when resolve() or reject() was called the
      * tracking entries in the table would have to be removed...with all
-     * actively cancelable promises canceled by reb.Halt().  TBD.
+     * actively cancelable promises canceled by reb.RequestHalt().  TBD.
      */
     reb.Cancelable = (promise) => {
         /*
          * We are going to put this promise into a set, which we call cancel()
-         * on in case of a reb.Halt().  This means even if a promise was
+         * on in case of a reb.RequestHalt().  This means even if a promise was
          * already cancellable, we have to hook its resolve() and reject()
          * to take it out of the set for normal non-canceled operation.
          *
@@ -703,16 +703,16 @@ e-cwrap/emit {
         })
         cancelable.cancel = cancel
 
-        reb.JS_CANCELABLES.add(cancelable)  /* reb.Halt() calls if in set */
+        reb.JS_CANCELABLES.add(cancelable)  /* reb.RequestHalt() can call */
         return cancelable
     }
 
-    reb.Halt = function() {
+    reb.RequestHalt = function() {
         /*
          * Standard request to the interpreter not to perform any more Rebol
          * evaluations...next evaluator step forces a THROW of a HALT signal.
          */
-        _API_rebHalt()
+        _API_rebRequestHalt()
 
         /* For JavaScript, we additionally take any JS Promises which were
          * registered via reb.Cancelable() and ask them to cancel.  The
@@ -764,7 +764,7 @@ e-cwrap/emit {
 
             let result_id
             if (res === undefined)  /* `resolve()`, `resolve(undefined)` */
-                result_id = reb.Trash()  /* allow it */
+                result_id = reb.Nothing()  /* allow it */
             else if (res === null)  /* explicitly, e.g. `resolve(null)` */
                 result_id = 0  /* allow it */
             else if (typeof res == "number") { /* hope it's API heap handle */
@@ -883,7 +883,7 @@ e-cwrap/emit {
 
         switch (typeof js_value) {
           case 'undefined':
-            return reb.Trash()  /* or `reb.Value("~undefined~") antiform? */
+            return reb.Nothing()  /* or `reb.Value("~undefined~") antiform? */
 
           case 'number':
             return reb.Integer(js_value)
@@ -892,7 +892,7 @@ e-cwrap/emit {
             return reb.Text(js_value)
 
           default:  /* used by JS-EVAL* with /VALUE; should it error here? */
-            return reb.Trash()
+            return reb.Nothing()
         }
     }
 }

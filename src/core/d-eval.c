@@ -272,6 +272,7 @@ void Evaluator_Exit_Checks_Debug(Level* L) {
             LEVEL_FLAG_BRANCH
             | LEVEL_FLAG_META_RESULT
             | LEVEL_FLAG_RAISED_RESULT_OK
+            | LEVEL_FLAG_UNINTERRUPTIBLE
             | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
             | EVAL_EXECUTOR_FLAG_NO_RESIDUE
         );

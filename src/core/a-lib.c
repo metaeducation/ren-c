@@ -1023,49 +1023,46 @@ RebolValue* API_rebArg(
 //
 //  Run_Va_Throws: C
 //
-// * Due to the nature of C va_lists you always have to have one non-variadic
-//   parameter.  This turns out all right with Ren-C being able to even work
-//   with something like `rebValue()`, because rebValue() is actually a macro
-//   that throws in a rebEND to get `rebValue_inline(rebEND)`.
+// 1. va_end() will be called on va_lists regardless of what happens (e.g.
+//    FAILs, THROWS, etc.).  The feed processing traverses to the end in all
+//    cases, making sure it frees any instructions that were allocated as
+//    parameters to this call.
 //
-// * Every variadic entry point receives the non-optional pointer `p`, and
-//   the captured va_list for the rest of the arguments in `vaptr`.
+// 2. When vaptr is null, p is a pointer to a packed C array of `const void*`.
+//    This method is preferred by the C++ build, because using variadic
+//    templates it can recursively process the arguments and pack them into
+//    that array...doing additional type checking and conversions.
 //
-//  (va_list by pointer: http://stackoverflow.com/a/3369762/211160)
+//    (The WebAssembly build also uses this packed array format, as it does not
+//    require delving into the compiler-specific details of how a va_list is
+//    encoded...and can stick to the standardized layout of a pointer array.)
 //
-//   However, there's a special meaning given to `p` when vaptr is null.
-//   In that case, p is no longer the first variadic argument but a pointer
-//   to a packed C array of `const void*`.  This method is preferred by the
-//   C++ build, because using variadic templates it can recursively process
-//   the arguments and pack them into that array...doing additional type
-//   checking and conversions.
+// 3. When vaptr is non-null, it is a pointer to a va_list:
 //
-//  (The WebAssembly also uses this packed array format, as it does not
-//   require delving into the compiler-specific details of how a va_list is
-//   encoded...and can stick to the standardized layout of a pointer array.)
+//      http://stackoverflow.com/a/3369762/211160
 //
-static bool Run_Va_Throws(
+//    `p` represents the first parameter *before* the va_list.  It's done
+//    this way because due to the nature of C, you always have to have one
+//    non-variadic parameter in a variadic function.  This turns out all right
+//    with Ren-C being able to even work with something like `rebValue()`,
+//    because rebValue() is actually a macro that throws in a rebEND to get
+//    `rebValue_inline(rebEND)`.
+//
+// 4. Interruptibility means that the trampoline will heed the SIG_HALT
+//    flag that is set.  If not, it will leave the flag set and continue
+//    processing.  Most code using the API doesn't want to react to the
+//    signal...because it would cause an exception/longjmp() and the C API
+//    call would not return.  So only a few functions that are specifically
+//    designed to give back errors react, e.g. rebEntrapInterruptible()
+//
+static bool Run_Va_Throws(  // va_end() handled by feed for all cases [1]
     RebolSpecifier** specifier_ref,
     Atom* out,
     bool interruptible,  // whether a HALT can cause a longjmp/throw
     Flags flags,
-    const void* p,  // first pointer (may be END, nullptr means NULLED)
-    void* vaptr  // va_end() handled by feed for all cases (throws, fails)
+    const void* p,  // null vaptr means void* array [2] else first param [3]
+    void* vaptr
 ){
-    // !!! Some kind of policy is needed to decide how to disable halting in
-    // the API.  It uses the longjmp() mechanism as a "no catch for throw",
-    // meaning that an error could be introduced at any moment in the code.
-    // Recovery from a HALT is almost like recovering from a stack overflow
-    // exception, in terms of how bad the program state could wind up (though
-    // the intereter will be okay, it's like any line in your program could
-    // have half-run.  Review a holistic answer.
-    //
-    Flags saved_sigmask = g_ts.eval_sigmask;
-    if (interruptible)
-        g_ts.eval_sigmask |= SIG_HALT;  // enable
-    else
-        g_ts.eval_sigmask &= ~SIG_HALT;  // disable
-
     Feed* feed = Make_Variadic_Feed(
         p, cast(va_list*, vaptr),
         FEED_MASK_DEFAULT
@@ -1081,13 +1078,17 @@ static bool Run_Va_Throws(
     Init_Void(Alloc_Evaluator_Primed_Result());
     Level* L = Make_Level(&Evaluator_Executor, feed, flags);
 
-    bool threw = Trampoline_Throws(out, L);
+    if (interruptible)
+        L->flags.bits &= (~ LEVEL_FLAG_UNINTERRUPTIBLE);
+    else
+        L->flags.bits |= LEVEL_FLAG_UNINTERRUPTIBLE;
+
+    Push_Level_Dont_Inherit_Interruptibility(out, L);
+    bool threw = Trampoline_With_Top_As_Root_Throws();
+    Drop_Level(L);
 
     if (not threw and (flags & LEVEL_FLAG_META_RESULT))
         assert(QUOTE_BYTE(out) >= QUASIFORM_2);
-
-    // (see also Reb_State->saved_sigmask RE: if a longjmp happens)
-    g_ts.eval_sigmask = saved_sigmask;
 
     return threw;
 }
@@ -1143,7 +1144,7 @@ INLINE void Run_Va_Decay_May_Fail_Calls_Va_End(
 
 
 //
-//  rebRunCoreThrows: API
+//  rebRunCoreThrows_internal: API
 //
 // Most API routines (rebValue(), rebDid(), etc.) have no way of handling
 // thrown values or invisibles.  They also run more than one step.
@@ -1151,15 +1152,18 @@ INLINE void Run_Va_Decay_May_Fail_Calls_Va_End(
 // This function runs one evaluation step, and allows you to say whether the
 // step must consume all input or not (see EVAL_EXECUTOR_FLAG_NO_RESIDUE).
 //
-// The output is written into a cell that is provided--which is not something
-// the API should do--especially considering that this can evaluate to a void
-// cell.  But it's in the API file because we want the wrapping machinery
-// that handles the variadics to be applied here.
+// 1. The output is written into a cell that is provided--which is not
+//    something the API should do.  But it's in the API file because we want
+//    the wrapping machinery that handles the variadics to be applied here.
 //
-// There is a rebRunThrows() macro that passes in the flags LEVEL_MASK_NONE
-// and EVAL_EXECUTOR_FLAG_NO_RESIDUE defined in %sys-do.h
+// 2. When calling this routine, use either the rebRunThrowsInterruptible() or
+//    rebRunThrows() macros.  (The policy on when to use which is still
+//    evolving, but as an example of a place where interruptibility is
+//    okay is that WRITE-STDOUT calls into the API to do an AS TEXT! call,
+//    and allowing that to interrupt makes reacting to Ctrl-C while printing
+//    large things more responsive.)
 //
-bool API_rebRunCoreThrows(
+bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     RebolSpecifier** specifier_ref,
     RebolValue* out,
     uintptr_t flags,  // Flags not exported in API
@@ -1261,7 +1265,7 @@ RebolValue* API_rebTranscodeInto(
 
 
 //
-//  rebPushContinuation: API
+//  rebPushContinuation_internal: API
 //
 // Helper for when variadic code wants to run as its own stack level.
 //
@@ -1274,7 +1278,7 @@ RebolValue* API_rebTranscodeInto(
 // 2. TRANSCODE does not put any binding in the block it takes, so we have
 //    to apply the specifier here.
 //
-void API_rebPushContinuation(
+void API_rebPushContinuation_internal(
     RebolSpecifier** specifier_ref,
     RebolValue* out,
     uintptr_t flags,
@@ -1311,13 +1315,71 @@ RebolBounce API_rebDelegate(
 ){
     ENTER_API;
 
-    API_rebPushContinuation(
+    API_rebPushContinuation_internal(
         specifier_ref,
         cast(Value*, TOP_LEVEL->out),
         LEVEL_FLAG_RAISED_RESULT_OK,  // definitional error if raised
         p, vaptr
     );
     return BOUNCE_DELEGATE;
+}
+
+
+//
+//  rebContinue: API
+//
+// Typically internal natives use the Level_State_Byte() to track what
+// mode of a continuation they are in.  But actions made by rebFunction()
+// don't speak directly in terms of their "level", and also can't receive
+// a value in OUT or SPARE as the result of a continuation.  So they should
+// track their state in a local variable, and also the code they pass to
+// the continuation should write to some other local variable or argument
+// to get the result, e.g.
+//
+//     return rebContinue(
+//         "local-state: 'evaluating",
+//         "local-result: eval", block
+//     );
+//
+RebolBounce API_rebContinue(
+    RebolSpecifier** specifier_ref,
+    const void* p, void* vaptr
+){
+    ENTER_API;
+
+    Level_State_Byte(TOP_LEVEL) = 1;  // rebFunction() can't see, can't be 0
+
+    API_rebPushContinuation_internal(
+        specifier_ref,
+        cast(Value*, TOP_LEVEL->out),  // rebFunction() also won't see result
+        LEVEL_FLAG_UNINTERRUPTIBLE,  // default, see rebContinueInterruptbile()
+        p, vaptr
+    );
+    return BOUNCE_CONTINUE;
+}
+
+
+//
+//  rebContinueInterruptible: API
+//
+// If you want an interruptible continuation,
+//
+RebolBounce API_rebContinueInterruptible(
+    RebolSpecifier** specifier_ref,
+    const void* p, void* vaptr
+){
+    ENTER_API;
+
+    Level_State_Byte(TOP_LEVEL) = 1;  // rebFunction() can't see, can't be 0
+
+    API_rebPushContinuation_internal(
+        specifier_ref,
+        cast(Value*, TOP_LEVEL->out),  // rebFunction() also won't see result
+        LEVEL_MASK_NONE,  // will inherit interruptibility of parent.
+        p, vaptr
+    );
+    Clear_Level_Flag(TOP_LEVEL, UNINTERRUPTIBLE);
+    return BOUNCE_CONTINUE;
 }
 
 
@@ -2250,7 +2312,7 @@ RebolValue* API_rebRescueWith(
 
 
 //
-//  rebHalt: API
+//  rebRequestHalt: API
 //
 // This function sets a signal that is checked during evaluation of code
 // when it is run interruptibly.  Most API evaluations are not interruptible,
@@ -2260,16 +2322,16 @@ RebolValue* API_rebRescueWith(
 // computing world in general doesn't have great answers.  Ren-C is nothing
 // special in this regard, and more thought needs to be put into it!
 //
-void API_rebHalt(void)
+void API_rebRequestHalt(void)
 {
-    ENTER_API;
+    ENTER_API_RECYCLING_OK;
 
     SET_SIGNAL(SIG_HALT);
 }
 
 
 //
-//  rebWasHalting: API
+//  rebWasHaltRequested: API
 //
 // Returns whether or not the halting signal is set, but clears it if set.
 // Hence the question it answers is "was it halting" (previous to this call),
@@ -2279,7 +2341,7 @@ void API_rebHalt(void)
 // and bears the burden for propagating the signal up to something that does
 // a HALT later--or it will be lost.
 //
-bool API_rebWasHalting(void)
+bool API_rebWasHaltRequested(void)
 {
     ENTER_API;
 

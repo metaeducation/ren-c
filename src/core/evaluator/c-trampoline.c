@@ -540,7 +540,11 @@ void Startup_Signals(void)
 //    is not necessary for used levels to check if `L->prior` is null; it
 //    may be assumed that it never is.
 //
-// 2. Also: since levels are needed to track API handles, this permits making
+// 2. You can't get a functional system by interrupting the evaluator while
+//    it is starting up the environment.  Ctrl-C can only terminate the
+//    process...but that is not the business of the interpreter.
+//
+// 3. Since levels are needed to track API handles, this permits making
 //    API handles for things that come into existence at boot and aren't freed
 //    until shutdown, as they attach to this level.
 //
@@ -551,9 +555,9 @@ void Startup_Trampoline(void)
 
     Level* L = Make_End_Level(  // ensure L->prior [1]
         &Stepper_Executor,  // executor is irrelevant (permit nullptr?)
-        LEVEL_MASK_NONE
+        LEVEL_FLAG_UNINTERRUPTIBLE  // can't interrupt while initializing [2]
     );
-    Push_Level(nullptr, L);  // global API handles attach here [2]
+    Push_Level_Dont_Inherit_Interruptibility(nullptr, L);  // API handles [3]
 
     Corrupt_Pointer_If_Debug(L->prior);  // catches enumeration past bottom_level
     g_ts.bottom_level = L;

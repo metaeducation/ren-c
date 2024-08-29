@@ -64,7 +64,7 @@
 // breakpoints.  The RESUME instruction is able to execute code with /DO,
 // and that code may escape from a debug interrupt signal (like Ctrl-C).
 //
-bool Do_Signals_Throws(Level* level_)
+bool Do_Signals_Throws(Level* L)
 {
     if (g_ts.eval_countdown >= 0) {  // natural countdown or invocation
         //
@@ -118,7 +118,7 @@ bool Do_Signals_Throws(Level* level_)
         Recycle();
     }
 
-    if (filtered_sigs & SIG_HALT) {
+    if ((filtered_sigs & SIG_HALT) and Not_Level_Flag(L, UNINTERRUPTIBLE)) {
         //
         // Early in the booting process, it's not possible to handle Ctrl-C.
         //
@@ -128,7 +128,7 @@ bool Do_Signals_Throws(Level* level_)
         CLR_SIGNAL(SIG_HALT);
         g_ts.eval_sigmask = saved_sigmask;
 
-        Init_Thrown_With_Label(LEVEL, Lib(NULL), Lib(HALT));
+        Init_Thrown_With_Label(L, Lib(NULL), Lib(HALT));
         return true; // thrown
     }
 

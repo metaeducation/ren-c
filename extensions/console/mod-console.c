@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2016-2019 Ren-C Open Source Contributors
+// Copyright 2016-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -30,9 +30,6 @@
     #define WIN32_LEAN_AND_MEAN  // trim down the Win32 headers
     #include <windows.h>
 
-    #undef OUT  // %minwindef.h defines this, we have a better use for it
-    #undef VOID  // %winnt.h defines this, we have a better use for it
-
 #else
 
     #include <signal.h>  // needed for SIGINT, SIGTERM, SIGHUP
@@ -40,7 +37,12 @@
 #endif
 
 
+#include "assert-fix.h"
+#include "c-enhanced.h"
+
 #include "tmp-mod-console.h"
+
+typedef RebolValue Value;
 
 
 //=//// USER-INTERRUPT/HALT HANDLING (Ctrl-C, Escape, etc.) ///////////////=//
@@ -59,7 +61,7 @@
 // is that we should not be enabling it ourselves.  Review.)
 //
 
-bool halting_enabled = true;
+bool ctrl_c_enabled = true;
 
 #if TO_EMSCRIPTEN || TO_WASI //=////////////////////////////////////////////=//
 
@@ -67,8 +69,8 @@ bool halting_enabled = true;
 // compile the POSIX branch of this #if it will say that sigaction is an
 // incomplete type.
 
-void Disable_Halting(void) { halting_enabled = false; }
-void Enable_Halting(void) { halting_enabled = true; }
+void Disable_Ctrl_C(void) { ctrl_c_enabled = false; }
+void Enable_Ctrl_C(void) { ctrl_c_enabled = true; }
 
 
 #elif TO_WINDOWS  //=//// WINDOWS //////////////////////////////////////////=//
@@ -77,12 +79,12 @@ void Enable_Halting(void) { halting_enabled = true; }
 // `SetConsoleCtrlHandler()`.  The most annoying thing about cancellation in
 // windows is the limited signaling possible in the terminal's readline.
 //
-BOOL WINAPI Handle_Break(DWORD dwCtrlType)
+BOOL WINAPI Halt_On_Ctrl_C_Or_Break(DWORD dwCtrlType)
 {
     switch (dwCtrlType) {
       case CTRL_C_EVENT:
       case CTRL_BREAK_EVENT:
-        rebHalt();
+        rebRequestHalt();
         return TRUE;  // TRUE = "we handled it"
 
       case CTRL_CLOSE_EVENT:
@@ -106,32 +108,32 @@ BOOL WINAPI Handle_Break(DWORD dwCtrlType)
     }
 }
 
-BOOL WINAPI Handle_Nothing(DWORD dwCtrlType)
+BOOL WINAPI Suppress_Ctrl_C(DWORD dwCtrlType)
 {
-    if (dwCtrlType == CTRL_C_EVENT)
+    if (dwCtrlType == CTRL_C_EVENT)  // should it suppress BREAK?
         return TRUE;
 
     return FALSE;
 }
 
-void Disable_Halting(void)
+void Disable_Ctrl_C(void)
 {
-    assert(halting_enabled);
+    assert(ctrl_c_enabled);
 
-    SetConsoleCtrlHandler(Handle_Break, FALSE);
-    SetConsoleCtrlHandler(Handle_Nothing, TRUE);
+    SetConsoleCtrlHandler(Halt_On_Ctrl_C_Or_Break, FALSE);
+    SetConsoleCtrlHandler(Suppress_Ctrl_C, TRUE);
 
-    halting_enabled = false;
+    ctrl_c_enabled = false;
 }
 
-void Enable_Halting(void)
+void Enable_Ctrl_C(void)
 {
-    assert(not halting_enabled);
+    assert(not ctrl_c_enabled);
 
-    SetConsoleCtrlHandler(Handle_Break, TRUE);
-    SetConsoleCtrlHandler(Handle_Nothing, FALSE);
+    SetConsoleCtrlHandler(Halt_On_Ctrl_C_Or_Break, TRUE);
+    SetConsoleCtrlHandler(Suppress_Ctrl_C, FALSE);
 
-    halting_enabled = true;
+    ctrl_c_enabled = true;
 }
 
 #else  //=//// POSIX, LINUX, MAC, etc. ////////////////////////////////////=//
@@ -155,17 +157,17 @@ void Enable_Halting(void)
 //
 // SIGKILL is the impolite signal for shutdown; cannot be hooked/blocked
 
-static void Handle_Signal(int sig)
+static void Handle_SIGINT(int sig)
 {
     UNUSED(sig);
-    rebHalt();
+    rebRequestHalt();
 }
 
 struct sigaction old_action;
 
-void Disable_Halting(void)
+void Disable_Ctrl_C(void)
 {
-    assert(halting_enabled);
+    assert(ctrl_c_enabled);
 
     sigaction(SIGINT, nullptr, &old_action); // fetch current handler
     if (old_action.sa_handler != SIG_IGN) {
@@ -176,26 +178,25 @@ void Disable_Halting(void)
         sigaction(SIGINT, &new_action, nullptr);
     }
 
-    halting_enabled = false;
+    ctrl_c_enabled = false;
 }
 
-void Enable_Halting(void)
+void Enable_Ctrl_C(void)
 {
-    assert(not halting_enabled);
+    assert(not ctrl_c_enabled);
 
     if (old_action.sa_handler != SIG_IGN) {
         struct sigaction new_action;
-        new_action.sa_handler = &Handle_Signal;
+        new_action.sa_handler = &Handle_SIGINT;
         sigemptyset(&new_action.sa_mask);
         new_action.sa_flags = 0;
         sigaction(SIGINT, &new_action, nullptr);
     }
 
-    halting_enabled = true;
+    ctrl_c_enabled = true;
 }
 
 #endif  //=///////////////////////////////////////////////////////////////=//
-
 
 
 //
@@ -210,7 +211,13 @@ void Enable_Halting(void)
 //      /resumable "Allow RESUME instruction (will return a META-GROUP!)"
 //      /skin "File containing console skin, or MAKE CONSOLE! derived object"
 //          [file! object!]
-//      <local> old-console was-halting-enabled no-recover
+//      <local>
+//          old-console
+//          was-ctrl-c-enabled
+//          no-recover
+//          code
+//          metaresult
+//          state
 //  ]
 //
 DECLARE_NATIVE(console)
@@ -226,190 +233,158 @@ DECLARE_NATIVE(console)
 {
     INCLUDE_PARAMS_OF_CONSOLE;
 
-    // skin return result--request or ultimate return
-    Value* const code = cast(Value*, OUT);
-
-    // what we got from running code requests
-    Value* const metaresult = cast(Value*, SPARE);
-
-    enum {
-        ST_CONSOLE_INITIAL_ENTRY = STATE_0,
-        ST_CONSOLE_RUNNING_REQUEST
-    };
-
-    switch (STATE) {
-      case ST_CONSOLE_INITIAL_ENTRY :
+    switch (rebUnboxInteger("case [",
+        "unset? $state [0]",  // initial entry
+        "state = 'running-request [1]",
+        "fail {Invalid CONSOLE state}",
+    "]")){
+      case 0:
         goto initial_entry;
 
-      case ST_CONSOLE_RUNNING_REQUEST :
-        goto request_result_in_out;
+      case 1: {
+        Disable_Ctrl_C();  // remove hook calling rebRequestHalt() on Ctrl-C
+        goto run_skin; }
 
-      default : assert(false);
+      default:
+        assert(false);
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    // !!! The initial usermode console implementation was geared toward a
-    // single `system.console` object.  But the debugger raised the issue of
-    // nested sessions which might have a different skin.  So save whatever
-    // the console object was if it is being overridden.
-
-    if (rebRunThrows(cast(Value*, LOCAL(old_console)), ":system.console"))
-        panic (LOCAL(old_console));
-
-    if (REF(skin))
-        rebElide("system.console: null");  // !!! needed for now
-
-    // We only enable halting (e.g. Ctrl-C, or Escape, or whatever) when user
-    // code is running...not when the HOST-CONSOLE function itself is, or
-    // during startup.  (Enabling it during startup would require a special
-    // "kill" mode that did not call rebHalt(), as basic startup cannot
-    // meaningfully be halted--the system would be in an incomplete state.)
+    // 1. The initial usermode console implementation was geared toward a
+    //    single `system.console` object.  But the debugger raised the issue
+    //    of nested sessions which might have a different skin.  So save
+    //    whatever the console object was if it is being overridden.
     //
-    Init_Logic(ARG(was_halting_enabled), halting_enabled);
-    if (halting_enabled)
-        Disable_Halting();
+    // 2. We only enable halting (e.g. Ctrl-C, or Escape, or whatever) when
+    //    console requests or user requests are running...not when the
+    //    HOST-CONSOLE function itself is, or during startup.  (Enabling it
+    //    during startup would require a special "kill" mode that did not call
+    //    rebRequestHalt(), as basic startup cannot meaningfully be halted.
+    //    The system would be in an incomplete state.)
 
-    Init_Nulled(metaresult);  // invalid "meta" result, but first call expects
+    rebElide("old-console: :system.console");  // !!! unfinished for debug [1]
 
-    Init_False(ARG(no_recover));  // one chance at HOST-CONSOLE internal error
+    rebElide(
+        "if skin [system.console: null]",  // !!! needed for now
+        "was-ctrl-c-enabled:", rebQ(rebL(ctrl_c_enabled))
+    );
+    if (ctrl_c_enabled)
+        Disable_Ctrl_C();
 
-    if (REF(provoke)) {
-        Copy_Cell(code, ARG(provoke));
+    if (rebUnboxLogic(
+        "metaresult: null",  // invalid "meta" result, but first call expects
+        "no_recover: false",  // one chance at HOST-CONSOLE internal error
+        "null <> code: provoke"
+    )){
         goto provoked;
     }
-    else
-        Init_Nulled(code);
 
 } run_skin: {  ///////////////////////////////////////////////////////////////
 
-    assert(not halting_enabled);  // not while HOST-CONSOLE is on the stack
+    // 1. This runs CONSOLE*, which returns *requests* to execute arbitrary
+    //    code by way of its return results.  The ENTRAP is thus here to
+    //    intercept bugs in CONSOLE* itself.  Any evaluations for the user
+    //    (or on behalf of the console) are done in their own separate step
+    //    with rebContinue()
+    //
+    // 2. If the CONSOLE* function has any of its own implementation that
+    //    could raise an error (or act as an uncaught throw) it *should* be
+    //    returned as a BLOCK!.  This way the "console skin" can be reset to
+    //    the default.  If CONSOLE* itself fails (e.g. a typo in the
+    //    implementation) there's probably not much use in trying again...but
+    //    give it a chance rather than just crash.  Pass it back something
+    //    that looks like an instruction it might have generated (a BLOCK!)
+    //    asking itself to report an error more gracefully.
+
+    assert(not ctrl_c_enabled);  // not while CONSOLE* is on the stack
 
   recover: ;  // Note: semicolon needed as next statement is declaration
 
-    // This runs the HOST-CONSOLE, which returns *requests* to execute
-    // arbitrary code by way of its return results.  The ENTRAP is thus
-    // here to intercept bugs *in HOST-CONSOLE itself*.  Any evaluations
-    // for the user (or on behalf of the console skin) are done in their
-    // own separate step with rebMetaInterruptible()
-    //
-    // !!! We use rebQ() here and not "@" due to the current behavior of
-    // @ which will make quasiforms into antiforms.  That behavior is to
-    // help with treatment of ~null~, but perhaps it should be exclusive
-    // to ~null~?  Either way, rebQ() would be needed if the distinction
-    // were to be important.
-    //
-    Value* metacode;  // Note: goto would cross initialization
-    metacode = rebEntrap(
-        "ext-console-impl",  // action that takes 4 args, run it
-            rebQ(code),  // group! or block! executed prior (or null)
-            rebQ(metaresult),  // prior result quoted, or error (or null)
-            rebL(REF(resumable)),
-            rebQ(ARG(skin))
+    Value* metacode = rebEntrap(  // entrap catches buggy CONSOLE* [1]
+        "console*",  // action that takes 4 args, run it
+            "code",  // group! or block! executed prior (or null)
+            "metaresult",  // prior result meta, or error (or null)
+            "if resumable [true] else [false]",
+            "skin"
     );
 
-    /*rebRelease(code);
-    rebRelease(metaresult); */
-
-    if (rebUnboxLogic("error? @", metacode)) {
-        //
-        // If the HOST-CONSOLE function has any of its own implementation
-        // that could raise an error (or act as an uncaught throw) it
-        // *should* be returned as a BLOCK!.  This way the "console skin"
-        // can be reset to the default.  If HOST-CONSOLE itself fails
-        // (e.g. a typo in the implementation) there's probably not much
-        // use in trying again...but give it a chance rather than just
-        // crash.  Pass it back something that looks like an instruction
-        // it might have generated (a BLOCK!) asking itself to crash.
-
-        if (Cell_Logic(ARG(no_recover)))
+    if (rebUnboxLogic("error? @", metacode)) {  // error in CONSOLE* itself [2]
+        if (rebUnboxLogic("no_recover"))
             rebJumps("panic @", metacode);
 
-        rebRunThrows(code, "[#host-console-error]");
-        Copy_Cell(metaresult, metacode);
-        Init_True(ARG(no_recover));  // no second chances until user code runs
+        rebElide(
+            "code: [#host-console-error]",
+            "metaresult:", metacode,
+            "no-recover: true"  // unrecoverable until user can request eval
+        );
         goto recover;
     }
 
-    rebRunThrows(code, "unquote @", metacode);  // meta quotes non-error
+    rebElide("code: unquote @", metacode);  // meta quotes non-error
     rebRelease(metacode); // don't need the outer block any more
 
 } provoked: {  ///////////////////////////////////////////////////////////////
 
-    if (rebUnboxLogic("integer? @", code))
-        goto finished;  // when HOST-CONSOLE returns INTEGER! it means exit code
+    // 1. Both console-initiated and user-initiated code is cancellable with
+    //    Ctrl-C (though it's up to HOST-CONSOLE on the next iteration to
+    //    decide whether to accept the cancellation or consider it an error
+    //    condition or a reason to fall back to the default skin).
+    //
+    // 2. If the user was able to get to the point of requesting evaluation,
+    //    then the console skin must not be broken beyond all repair.  So
+    //    re-enable recovery.
+    //
+    // 3. This once used a META-GROUP! to reduce the amount of code on the
+    //    stack which the user might see in a backtrace.  So instead of:
+    //
+    //        metaresult: meta eval/undecayed [print "hi"]
+    //
+    //    It would just execute the code directly:
+    //
+    //        metaresult: ^(print "hi")
+    //
+    //    That might be a nice idea, but as it turns out there's no mechanism
+    //    for rescuing abrupt failures in the API...and I'm not entirely sure
+    //    what a good version of that would wind up looking like.  Internal
+    //    natives use DISPATCHER_CATCHES but it is very easy to screw it up or
+    //    overlook it, and we don't have a way to tunnel that value into a
+    //    callback from a continuation.  For the moment, just to get things
+    //    working, we give in and use SYS.UTIL.ENRESCUE.
 
-    if (rebDid("match [meta-group! handle!] @", code)) {
-        assert(REF(resumable));
+    if (rebUnboxLogic("integer? code"))
+        goto finished;  // if HOST-CONSOLE returns INTEGER! it means exit code
+
+    if (rebDid("match [meta-group! handle!] code")) {
+        rebElide("assert [resumable]");
         goto finished;
     }
 
-    bool is_console_instruction = rebUnboxLogic("block? @", code);
-    Value* group;
+    Enable_Ctrl_C();  // add hook that will call rebRequestHalt() on Ctrl-C
 
-    if (is_console_instruction) {
-        group = rebValue("as group! @", code);  // to run without DO
-    }
-    else {
-        group = rebValue("@", code);  // rebRelease() w/o affecting code
-
-        // If they made it to a user mode instruction, the console skin
-        // must not be broken beyond all repair.  So re-enable recovery.
-        //
-        Init_False(ARG(no_recover));
-    }
-
-    // Both console-initiated and user-initiated code is cancellable with
-    // Ctrl-C (though it's up to HOST-CONSOLE on the next iteration to
-    // decide whether to accept the cancellation or consider it an error
-    // condition or a reason to fall back to the default skin).
-    //
-    assert(not (g_ts.eval_sigmask & SIG_HALT));
-    g_ts.eval_sigmask |= SIG_HALT;  // tell Trampoline to throw evaluator on halts
-    Enable_Halting();  // add hook that will call rebHalt() on Ctrl-C
-
-    // DON'T ADD ANY MORE LIBREBOL CODE HERE.  If this is a user-requested
-    // evaluation, then any extra libRebol code run here will wind up being
-    // shown in a TRACE.  The only thing that's acceptable to see in the
-    // backtrace is the GROUP! itself that we are running.  (If we didn't
-    // want that, getting rid of it would take some magic).
-    //
-    // So don't add superfluous libRebol calls here, except to debug.
-    //
-    // Meta lets us catch errors, as well as discern if the value vaporizes
-    // completely or not.
-    //
-    Set_Executor_Flag(ACTION, level_, DISPATCHER_CATCHES);
-
-    rebPushContinuation(
-        metaresult,  // aka SPARE
-        LEVEL_FLAG_META_RESULT,
-        group
+    return rebContinueInterruptible(  // allows abrupt fail from HALT [1]
+        "assert [match [block! group!] code]",
+        "if group? code [no-recover: false]",  // user could make request [2]
+        "state: 'running-request",
+        "metaresult: sys.util.enrescue code"  // pollutes stack trace [3]
     );
-    rebRelease(group);  // Note: does not release `code`
-
-    STATE = ST_CONSOLE_RUNNING_REQUEST;
-    return BOUNCE_CONTINUE;  // wants to produce metaresult
-
-} request_result_in_out: {  //////////////////////////////////////////////////
-
-    g_ts.eval_sigmask &= ~SIG_HALT;  // tell Trampoline not to halt on evals
-    Disable_Halting();  // remove hook that calls rebHalt() on Ctrl-C
-
-    if (THROWING)
-        Init_Error(metaresult, Error_No_Catch_For_Throw(LEVEL));
-
-    goto run_skin;
 
 } finished: {  ///////////////////////////////////////////////////////////////
 
     // Exit code is now an INTEGER! or a resume instruction PATH!
+    //
+    // 1. Exit codes aren't particularly well formalized (and are particularly
+    //    tricky when you ask a shell to execute a process, to know whether
+    //    the code is coming from the shell or what you wanted to run)
+    //
+    //      http://stackoverflow.com/q/1101957/
 
-    if (Cell_Logic(ARG(was_halting_enabled)))
-        Enable_Halting();
+    if (rebUnboxLogic(
+        "system.console: old-console",
+        "was-ctrl-c-enabled"
+    )){
+        Enable_Ctrl_C();
+    }
 
-    rebElide("system.console: @", ARG(old_console));
-
-    assert(code == OUT);
-    return code;  // http://stackoverflow.com/q/1101957/
+    return rebValue("code");  // INTEGER! means exit code [1]
 }}

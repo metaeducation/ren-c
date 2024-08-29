@@ -558,6 +558,7 @@ INLINE void Free_Feed(Feed* feed) {
     // any faster...they're usually reified into an array anyway, so
     // the level processing the array will take the other branch.
 
+    Sync_Feed_At_Cell_Or_End_May_Fail(feed);  // may not be sync'd yet
     while (Not_Feed_At_End(feed))
         Fetch_Next_In_Feed(feed);
 

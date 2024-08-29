@@ -270,7 +270,7 @@ DECLARE_NATIVE(do)
       do_helper : {
         UNUSED(REF(args)); // detected via `value? :arg`
 
-        rebPushContinuation(
+        rebPushContinuation_internal(
             cast(Value*, OUT),  // <-- output cell
             LEVEL_MASK_NONE,
             rebRUN(SysUtil(DO_P)),

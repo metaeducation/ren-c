@@ -39,14 +39,22 @@
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
 
-
+// !!! Review callsites for which callsites should be interruptible and
+// which ones should not.
+//
 #define rebRunThrows(out,...) \
-    rebRunCoreThrows( \
+    rebRunCoreThrows_internal( \
+        (out), \
+        EVAL_EXECUTOR_FLAG_NO_RESIDUE | LEVEL_FLAG_UNINTERRUPTIBLE, \
+        __VA_ARGS__ \
+    )
+
+#define rebRunThrowsInterruptible(out,...) \
+    rebRunCoreThrows_internal( \
         (out), \
         EVAL_EXECUTOR_FLAG_NO_RESIDUE, \
         __VA_ARGS__ \
     )
-
 
 
 INLINE bool Do_Any_List_At_Core_Throws(

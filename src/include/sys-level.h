@@ -360,27 +360,30 @@ INLINE void Free_Level_Internal(Level* L) {
     Free_Pooled(LEVEL_POOL, L);
 }
 
-// * Push_Level() takes an Atom() for the output.  This is important, as
-//   we don't want to evaluate into variables or array slots.  Not only can
-//   they have their memory moved during an evaluation, but we don't want
-//   unstable antiforms being put into variables (or any antiforms being
-//   put in array cells).  Plus, states like erased cells exist as unstable
-//   intermediate states which we don't want to leak to debuggers.  So
-//   typically evaluations are done into the OUT or SPARE cells.
+// 1. Push_Level() takes an Atom() for the output.  This is important, as
+//    we don't want to evaluate into variables or array slots.  Not only can
+//    they have their memory moved during an evaluation, but we don't want
+//    unstable antiforms being put into variables (or any antiforms being
+//    put in array cells).  Plus, states like erased cells exist as unstable
+//    intermediate states which we don't want to leak to debuggers.  So
+//    typically evaluations are done into the OUT or SPARE cells.
 //
-//   Note that a special exception is made by LOCAL() in frames, based on the
-//   belief that local state for a native will never be exposed by a debugger.
+//    Note that a special exception is made by LOCAL() in frames, based on the
+//    belief that local state for a native will never be exposed by a debugger.
 //
-INLINE void Push_Level(
-    Atom* out,  // typecheck prohibits passing `unstable` Cell* for output
+// 2. Levels are pushed to reuse for several sequential operations like ANY,
+//    ALL, CASE, REDUCE.  It is allowed to change the output cell for each
+//    evaluation.  But the GC expects initialized bits in the output slot at
+//    all times; use null until first eval call if needed
+//
+// 3. Uninterruptibility is inherited by default by Push_Level(), but
+//    interruptibility is not.
+//
+INLINE void Push_Level_Dont_Inherit_Interruptibility(
+    Atom* out,  // typecheck prohibits passing `unstable` Cell* for output [1]
     Level* L
 ){
-    // Levels are pushed to reuse for several sequential operations like
-    // ANY, ALL, CASE, REDUCE.  It is allowed to change the output cell for
-    // each evaluation.  But the GC expects initialized bits in the output
-    // slot at all times; use null until first eval call if needed
-    //
-    L->out = out;
+    L->out = out;  // must be a valid cell for GC [2]
   #if DEBUG
     if (L->out)
         assert(not Is_Api_Value(L->out));
@@ -399,6 +402,14 @@ INLINE void Push_Level(
 
     assert(Is_Pointer_Corrupt_Debug(L->alloc_value_list));
     L->alloc_value_list = L;  // doubly link list, terminates in `L`
+}
+
+INLINE void Push_Level(  // inherits uninterruptibility [3]
+    Atom* out,  // typecheck prohibits passing `unstable` Cell* for output [1]
+    Level* L
+){
+    Push_Level_Dont_Inherit_Interruptibility(out, L);
+    L->flags.bits |= L->prior->flags.bits & LEVEL_FLAG_UNINTERRUPTIBLE;  // [3]
 }
 
 

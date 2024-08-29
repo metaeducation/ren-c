@@ -354,7 +354,7 @@ Bounce Stepper_Executor(Level* L)
             fail ("Using :: for APPLY cannot have END on right");
 
         STATE = REB_FRAME;  // bounces back to do lookahead
-        rebPushContinuation(
+        rebPushContinuation_internal(
             cast(Value*, OUT),  // API won't take Atom(*)
             LEVEL_MASK_NONE,
             Canon(APPLY), rebQ(SPARE), rebDERELATIVIZE(L_next, L_specifier)

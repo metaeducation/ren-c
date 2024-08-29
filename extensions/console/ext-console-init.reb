@@ -150,17 +150,11 @@ export console!: make object! [
         ; was in a pack.  This hints the user to do a ^META on the value to
         ; see the complete pack.
         ;
-        ; 0-length packs (~[]~ a.k.a. "none") are treated specially by the
-        ; evaluator, and should not be able to be returned by a non-^META
-        ; invocation of a code block.
+        ; 0-length packs (~[]~ antiform, a.k.a. "nihil") are passed through to
+        ; the regular antiform molding.
 
-        if pack? unmeta v [
+        if (pack? unmeta v) and (0 <> length of v) [
             v: unquasi v
-
-            if 0 = length of v [
-                print "!!! UNEXPECTED 0-LENGTH PACK, SHOULD NOT HAPPEN !!!"
-                return ~
-            ]
 
             for-each item v [
                 any [quoted? item, quasi? item] else [
@@ -433,7 +427,7 @@ start-console: func [
 ]
 
 
-ext-console-impl: func [
+console*: func [
     "Rebol ACTION! that is called from C in a loop to implement the console"
 
     return: "Code for C caller to sandbox, exit status, RESUME code, or hook"
@@ -718,49 +712,8 @@ ext-console-impl: func [
 
     === HANDLE RESULT FROM EXECUTION OF CODE ON USER'S BEHALF ===
 
-    if result = void' [
-        ;
-        ; !!! You can get nothing from an empty string, and having that print
-        ; out "; void" is somewhat pedantic if you're just hitting enter to
-        ; see if the console is frozen or taking input.
-        ;
-        ;    >>
-        ;    ; void
-        ;
-        ; But we do want this, for reasons explained in PRINT-RESULT:
-        ;
-        ;     >> comment "hi"
-        ;     ; void
-        ;
-        ; Review making the console check specifically for empty strings and
-        ; not even submitting them.
-    ]
-
     if group? prior [
-        ;
-        ; This weird way of calling PRINT-RESULT originates from when some
-        ; issues with ^META and VOID were not fully worked out.  It should no
-        ; longer be necessary and can just call normally.  But it provoked a
-        ; binding bug so it's being kept here for now as a reminder to tend
-        ; to the issue.
-        ;
-        ; !!! There is a binding issue where a LET patch running in a non
-        ; function will get tweaked in response to seeing a frame context,
-        ; so the LET chain will end with that frame context.  You can get
-        ; this simply by `foo: func [] [return []]` and then having that
-        ; block result cause the frame for FOO that's on [] in the result
-        ; get poked into the LET F virtual bind element.  But once that's
-        ; there, it causes contention with code composed in with binding
-        ; from another function...such as `system.console.print-gap` if that
-        ; list has its own binding on it.  Putting this code in a group
-        ; to limit the LET binding is a lousy workaround for the general
-        ; issue--but it needs deeper thought.
-        ;
-        emit [(  ; <-- GROUP! needed for binding bug, review
-            let f: make frame! :system.console.print-result
-            f.v: '(<*> result)
-            eval f
-        )]
+        system.console.print-result unmeta result
         return <prompt>
     ]
 

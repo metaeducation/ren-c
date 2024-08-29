@@ -199,9 +199,13 @@ INLINE Byte State_Byte_From_Flags(Flags flags)
     FLAG_LEFT_BIT(21)
 
 
-//=//// LEVEL_FLAG_22 /////////////////////////////////////////////////////=//
+//=//// LEVEL_FLAG_UNINTERRUPTIBLE ////////////////////////////////////////=//
 //
-#define LEVEL_FLAG_22 \
+// Levels inherit the uninteruptibility flag of their parent when they are
+// pushed.  You can clear it after the push if you want an interruptible
+// level underneath an uninterruptible one.
+//
+#define LEVEL_FLAG_UNINTERRUPTIBLE \
     FLAG_LEFT_BIT(22)
 
 

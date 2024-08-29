@@ -209,7 +209,7 @@ Bounce MAKE_Binary(
     }
 
     if (Is_Block(def)) {  // was construction syntax, #[binary [#{0001} 2]]
-        rebPushContinuation(
+        rebPushContinuation_internal(
             cast(Value*, OUT),
             LEVEL_MASK_NONE,
             Canon(TO), Canon(BINARY_X),

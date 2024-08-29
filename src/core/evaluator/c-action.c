@@ -949,16 +949,7 @@ Bounce Action_Executor(Level* L)
   //    !!! Should this be done in the continuations themselves, so that an
   //    action that doesn't use any continuations won't pay for this clearing?
   //
-  // 2. Native code trusts that type checking has ensured it won't get bits
-  //    in its argument slots that the C won't recognize.  Usermode code that
-  //    gets its hands on a native's FRAME! (e.g. for debug viewing) can't be
-  //    allowed to change the frame values to other bit patterns out from
-  //    under the C or it could result in a crash.
-  //
-  //    !!! Once the IS_NATIVE flag was the same as the HOLD info bit, but
-  //    that trick got shaken up with flag reordering.  Review.
-  //
-  // 3. The stale bit is set on the output before we run the dispatcher.  We
+  // 2. The stale bit is set on the output before we run the dispatcher.  We
   //    check to make sure it's not stale at the end--because that could often
   //    mean the function forgot to write the output cell on some code path.
   //    (To intentionally not write anything and "vaporize", use `return VOID`
@@ -968,10 +959,6 @@ Bounce Action_Executor(Level* L)
     Clear_Action_Executor_Flag(LEVEL, DISPATCHER_CATCHES);  // [1]
 
     Action* phase = Level_Phase(L);
-
-    /*STATIC_ASSERT(DETAILS_FLAG_IS_NATIVE == FLEX_INFO_HOLD);*/
-    if (Is_Action_Native(phase))
-        FLEX_INFO(L->varlist) |= FLEX_INFO_HOLD;  // prevents crashes [2]
 
     Dispatcher* dispatcher = ACT_DISPATCHER(phase);
 

@@ -218,11 +218,23 @@ export emit-include-params-macro: func [
         ]
     ]
 
+    ; We need `Set_Flex_Info(level_varlist, HOLD)` here because native code
+    ; trusts that type checking has ensured it won't get bits in its argument
+    ; slots that the C won't recognize.  Usermode code that gets its hands on
+    ; a native's FRAME! (e.g. for debug viewing) can't be allowed to change
+    ; the frame values to other bit patterns out from under the C or it could
+    ; result in a crash.  The native itself doesn't care because it's not
+    ; using ordinary variable assignment.
+    ;
+    ; !!! This prevents API use inside natives which is specifier-based.  That
+    ; is an inconvenience, and if a native wants to do it for expedience then
+    ; it needs to clear this bit itself (and set it back when done).
+    ;
     let prefix: all [ext unspaced [ext "_"]]
     e/emit [prefix native-name items {
         #define ${MAYBE PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \
+            Set_Flex_Info(level_->varlist, HOLD); \
             $[Items]; \
-            assert(Get_Flex_Info(level_->varlist, HOLD))
     }]
     e/emit newline
     e/emit newline

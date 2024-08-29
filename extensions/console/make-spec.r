@@ -1,7 +1,11 @@
 REBOL []
 
 name: 'Console
-source: %console/mod-console.c
+source: [
+    %console/mod-console.c
+
+    <msc:/wd4459>  ; global shadowing ok, see LIBREBOL_SPECIFIER
+]
 
 includes: [
     %prep/extensions/console  ; for %tmp-mod-console.h
@@ -21,3 +25,5 @@ libraries: switch platform-config/os-base [
         [%shell32 %user32]
     ]
 ] else [null]
+
+use-librebol: true

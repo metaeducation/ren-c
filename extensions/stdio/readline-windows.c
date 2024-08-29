@@ -437,7 +437,7 @@ static bool Read_Input_Records_Interrupted(STD_TERM *t)
   #endif
 
     CHECK_INPUT_RECORDS(t);
-    if (rebWasHalting()) {
+    if (rebWasHaltRequested()) {
         //
         // !!! This doesn't provide the desired behavior of being able to
         // cancel pending input when interpreter code is running...it only

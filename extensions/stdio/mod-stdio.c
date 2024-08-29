@@ -109,17 +109,18 @@ DECLARE_NATIVE(write_stdout)
     // cell...but ISSUE! has no position.  Alias it as a read-only TEXT!.
     //
     if (Is_Issue(v)) {
-        bool threw = rebRunThrows(
+        bool threw = rebRunThrowsInterruptible(
             cast(Value*, SPARE),  // <-- output cell
             Canon(AS), Canon(TEXT_X), v
         );
-        assert(not threw);
-        UNUSED(threw);
+        if (threw)  // AS TEXT! may have abruptly failed, or could be a HALT
+            fail (Error_No_Catch_For_Throw(LEVEL));
+
         Move_Cell(v, stable_SPARE);
     }
 
     // !!! The Write_IO() function does not test for halts.  So data is broken
-    // up into small batches and it's this loop that calls rebWasHalting().
+    // up into small batches and it's this loop that calls rebWasHaltRequested().
     // So one can send a giant string to the code that does write() and be
     // able to interrupt it...
     //
@@ -135,8 +136,8 @@ DECLARE_NATIVE(write_stdout)
         //
         // Yield to signals processing for cancellation requests.
         //
-        if (rebWasHalting()) {  // the test clears halt request
-            rebHalt();  // put in a new halt request and stop
+        if (rebWasHaltRequested()) {  // the test clears halt request
+            rebRequestHalt();  // put in a new halt request and stop
             return NOTHING;  // ...or, could also RAISE() or FAIL() a halt
         }
 
@@ -207,7 +208,7 @@ DECLARE_NATIVE(read_stdin)
         REBLEN i = 0;
         while (Binary_Len(b) < max) {
             if (Read_Stdin_Byte_Interrupted(&eof, Binary_At(b, i))) {  // Ctrl-C
-                if (rebWasHalting())
+                if (rebWasHaltRequested())
                     rebJumps(Canon(HALT));
                 fail ("Interruption of READ-STDIN for reason other than HALT?");
             }
@@ -301,7 +302,7 @@ DECLARE_NATIVE(read_line)
 
         while (true) {
             if (Read_Stdin_Byte_Interrupted(&eof, &encoded[0])) {  // Ctrl-C
-                if (rebWasHalting())
+                if (rebWasHaltRequested())
                     rebJumps(Canon(HALT));
 
                 fail ("Interruption of READ-LINE for reason other than HALT?");
@@ -331,7 +332,7 @@ DECLARE_NATIVE(read_line)
                 Size size = 1;  // we add to size as we count trailing bytes
                 while (trail != 0) {
                     if (Read_Stdin_Byte_Interrupted(&eof, &encoded[size])) {
-                        if (rebWasHalting())
+                        if (rebWasHaltRequested())
                             rebJumps(Canon(HALT));
 
                         fail ("Interruption of READ-LINE"
@@ -498,7 +499,7 @@ DECLARE_NATIVE(read_char)
         Byte encoded[UNI_ENCODED_MAX];
 
         if (Read_Stdin_Byte_Interrupted(&eof, &encoded[0])) {  // Ctrl-C
-            if (rebWasHalting())
+            if (rebWasHaltRequested())
                 rebJumps(Canon(HALT));
 
             fail ("Interruption of READ-CHAR for reason other than HALT?");
@@ -520,7 +521,7 @@ DECLARE_NATIVE(read_char)
             Size size = 1;  // we add to size as we count trailing bytes
             while (trail != 0) {
                 if (Read_Stdin_Byte_Interrupted(&eof, &encoded[size])) {
-                    if (rebWasHalting())
+                    if (rebWasHaltRequested())
                         rebJumps(Canon(HALT));
 
                     fail ("Interruption of READ-CHAR"
