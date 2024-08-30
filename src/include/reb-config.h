@@ -430,3 +430,7 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
     #define DEBUG_CHECK_OPTIONALS 0
   #endif
 #endif
+
+#if !defined(DEBUG_DTOA)
+    #define DEBUG_DTOA DEBUG
+#endif
