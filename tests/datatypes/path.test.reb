@@ -123,16 +123,16 @@
 ; calling functions through paths: function in block, positional
 (
     blk: reduce [
-        reify/unquasi func [] [return 10]
-        reify/unquasi lambda [] [20]
+        noquasi reify func [] [return 10]
+        noquasi reify lambda [] [20]
     ]
     10 = run blk.1
 )
 ; calling functions through paths: function in block, "named"
 (
     blk: reduce [
-        'foo reify/unquasi lambda [] [10]
-        'bar reify/unquasi func [] [return 20]
+        'foo noquasi reify lambda [] [10]
+        'bar noquasi reify func [] [return 20]
     ]
     20 = run blk.bar
 )

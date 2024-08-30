@@ -2770,26 +2770,48 @@ DECLARE_INTRINSIC(decay)
 
 
 //
-//  reify: native [
+//  reify: native/intrinsic [
 //
-//  "Make antiforms into their quasiforms, pass thru other values"
+//  "Make antiforms into their quasiforms, quote all other values"
 //
 //      return: [element?]
 //      value [any-value?]
-//      /unquasi "Give the plain form instead of quasiforms"
 //  ]
 //
-DECLARE_NATIVE(reify)
+DECLARE_INTRINSIC(reify)
+//
+// There isn't a /NOQUASI refinement to REIFY so it can be an intrinsic.  This
+// speeds up all REIFY operations, and (noquasi reify ...) will be faster
+// than (reify/noquasi ...)
+//
+// !!! We don't handle unstable isotopes here, so REIFY of a pack will just
+// be a reification of the first value in the pack.  And REIFY of an raised
+// error will error.  We could have REIFY/EXCEPT and REIFY/PACK, if they
+// seem to be important...but let's see if we can get away without them and
+// have this be an intrinsic.
 {
-    INCLUDE_PARAMS_OF_REIFY;
+    UNUSED(phase);
 
-    Value* v = ARG(value);
-    Reify(Copy_Cell(OUT, v));
+    Reify(Copy_Cell(out, arg));
+}
 
-    if (REF(unquasi) and Is_Quasiform(OUT))
-        Unquasify(stable_OUT);
 
-    return OUT;
+//
+//  noquasi: native/intrinsic [
+//
+//  "Make quasiforms into their plain forms, pass through all other elements"
+//
+//      return: [element?]
+//      value [element?]
+//  ]
+//
+DECLARE_INTRINSIC(noquasi)
+{
+    UNUSED(phase);
+
+    Copy_Cell(out, arg);
+    if (Is_Quasiform(out))
+        QUOTE_BYTE(out) = NOQUOTE_1;
 }
 
 

@@ -229,7 +229,7 @@
 
 
 [
-    ('foo = reify/unquasi ~foo~)
+    ('foo = noquasi reify ~foo~)
     ('~null~ = reify null)
     ('~null~ = reify ~null~)
 
