@@ -112,7 +112,7 @@ bool Did_Flex_Data_Alloc(Stub* s, REBLEN capacity) {
     s->content.dynamic.used = 0;  // all series start zero length
 
     if ((g_gc.depletion -= size) <= 0)  // should we trigger garbage collect?
-        SET_SIGNAL(SIG_RECYCLE);  // queue it to run on next evaluation
+        Set_Trampoline_Flag(RECYCLE);  // queue it to run on next evaluation
 
     assert(Flex_Total(s) <= size);  // irregular widths won't use all space
     return true;

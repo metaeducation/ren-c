@@ -74,15 +74,6 @@ struct Reb_State {
     REBLEN mold_buf_len;
     Size mold_buf_size;
     REBLEN mold_loop_tail;
-
-    // Some operations disable the ability to halt, e.g. remove SIG_HALT
-    // from eval_sigmask...and then restore it when they are done.  If one of
-    // these operations is running and then there is a longjmp past the place
-    // where the restore is going to happen, they'd have to pay the cost of
-    // a RESCUE_SCOPE to put it back.  We save effort for that case by saving
-    // the signal mask and restoring it at the RESCUE states.
-    //
-    Flags saved_sigmask;
 };
 
 

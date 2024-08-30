@@ -1197,10 +1197,10 @@ REBLEN Recycle_Core(Flex* sweeplist)
     // could cause a recursion.  Be tolerant of such recursions to make that
     // debugging easier...but make a note that it's not ordinarily legal.
     //
-  #if !defined(NDEBUG)
+  #if DEBUG
     if (g_gc.recycling) {
         printf("Recycle re-entry; should only happen in debug scenarios.\n");
-        SET_SIGNAL(SIG_RECYCLE);
+        Set_Trampoline_Flag(RECYCLE);
         return 0;
     }
   #endif
@@ -1209,11 +1209,11 @@ REBLEN Recycle_Core(Flex* sweeplist)
     // shutdown, ignore so recycling runs and can be checked for balance.)
     //
     if (g_gc.disabled) {
-        SET_SIGNAL(SIG_RECYCLE);
+        Set_Trampoline_Flag(RECYCLE);
         return 0;
     }
 
-  #if !defined(NDEBUG)
+  #if DEBUG
     g_gc.recycling = true;
   #endif
 

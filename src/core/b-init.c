@@ -646,7 +646,7 @@ void Startup_Core(void)
 
     Startup_Signals();  // allocation can set signal flags for recycle/etc.
 
-    Startup_Pools(0);  // performs allocation, calls SET_SIGNAL()
+    Startup_Pools(0);  // performs allocation, calls Set_Trampoline_Flag()
     Startup_GC();
 
     Startup_Raw_Print();

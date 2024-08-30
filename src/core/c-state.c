@@ -48,8 +48,6 @@ void Snap_State(struct Reb_State *s)
     s->mold_buf_len = String_Len(g_mold.buffer);
     s->mold_buf_size = String_Dynamic_Size(g_mold.buffer);
     s->mold_loop_tail = Flex_Dynamic_Used(g_mold.stack);
-
-    s->saved_sigmask = g_ts.eval_sigmask;
 }
 
 
@@ -95,8 +93,6 @@ void Rollback_Globals_To_State(struct Reb_State *s)
   #endif
 
     Set_Flex_Len(g_mold.stack, s->mold_loop_tail);
-
-    g_ts.eval_sigmask = s->saved_sigmask;
 }
 
 
@@ -381,8 +377,6 @@ void Assert_State_Balanced_Debug(
     assert(s->mold_buf_len == String_Len(g_mold.buffer));
     assert(s->mold_buf_size == String_Size(g_mold.buffer));
     assert(s->mold_loop_tail == Flex_Used(g_mold.stack));
-
-/*    assert(s->saved_sigmask == g_ts.eval_sigmask);  // !!! is this always true? */
 }
 
 #endif

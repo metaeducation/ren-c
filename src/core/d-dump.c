@@ -89,8 +89,8 @@ void Dump_Info(void)
     printf("    Cycles:  %ld\n", cast(unsigned long, g_ts.total_eval_cycles));
     printf("    Counter: %d\n", cast(int, g_ts.eval_countdown));
     printf("    Dose:    %d\n", cast(int, g_ts.eval_dose));
-    printf("    Signals: %lx\n", cast(unsigned long, g_ts.eval_signals));
-    printf("    Sigmask: %lx\n", cast(unsigned long, g_ts.eval_sigmask));
+    printf("    Signals: %lx\n", cast(unsigned long, g_ts.signal_flags));
+    printf("    Sigmask: %lx\n", cast(unsigned long, g_ts.signal_mask));
     printf("    TOP_INDEX: %ld\n", cast(unsigned long, TOP_INDEX));
 
     printf("Memory/GC:\n");

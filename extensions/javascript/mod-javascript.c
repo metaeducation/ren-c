@@ -769,7 +769,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
         // call GetNativeError_internal()?  Or is this a good moment to
         // know it's "handled"?
         //
-        CLR_SIGNAL(SIG_HALT);
+        Clear_Trampoline_Flag(HALT);
 
         return Init_Thrown_With_Label(LEVEL, Lib(NULL), Lib(HALT));
     }

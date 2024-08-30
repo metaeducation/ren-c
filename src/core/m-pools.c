@@ -237,7 +237,7 @@ const PoolSpec Mem_Pool_Spec[MAX_POOLS] =
 //
 // Initialize memory pool array.
 //
-void Startup_Pools(REBINT scale)
+void  Startup_Pools(REBINT scale)
 {
     g_mem.usage = 0;
     g_mem.usage_limit = 0;  // unlimited
@@ -1210,7 +1210,7 @@ void GC_Kill_Stub(Stub* s)
     Free_Pooled(STUB_POOL, s);
 
     if (g_gc.depletion > 0)
-        CLR_SIGNAL(SIG_RECYCLE);  // Enough space that requested GC can cancel
+        Clear_Trampoline_Flag(RECYCLE);  // Enough space GC request can cancel
 
   #if DEBUG_COLLECT_STATS
     g_mem.num_flex_freed += 1;

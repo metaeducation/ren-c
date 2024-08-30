@@ -1086,7 +1086,7 @@ void halt_poll_timer_callback(uv_timer_t* handle) {
     // for SIGINT and a callback like:
     //
     //     void signal_callback(uv_signal_t* handle, int signum) {
-    //         SET_SIGNAL(SIG_HALT);
+    //         Set_Trampoline_Flag(HALT);
     //     }
     //
     // But that seems to only work on Linux and not Windows.
@@ -1250,7 +1250,7 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
     //
     while (
         (timeout == ALL_BITS or wait_timer.data != nullptr)
-        and not GET_SIGNAL(SIG_HALT)
+        and not Get_Trampoline_Flag(HALT)
     ){
         int callbacks_left = uv_run(uv_default_loop(), UV_RUN_ONCE);
         UNUSED(callbacks_left);
@@ -1262,20 +1262,20 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
         uv_timer_stop(&wait_timer);
     }
 
-    if (GET_SIGNAL(SIG_HALT)) {
-        CLR_SIGNAL(SIG_HALT);
+    if (Get_Trampoline_Flag(HALT)) {
+        Clear_Trampoline_Flag(HALT);
 
         return Init_Thrown_With_Label(LEVEL, Lib(NULL), Lib(HALT));
     }
 
-    if (GET_SIGNAL(SIG_INTERRUPT)) {
-        CLR_SIGNAL(SIG_INTERRUPT);
+    if (Get_Trampoline_Flag(DEBUG_BREAK)) {
+        Clear_Trampoline_Flag(DEBUG_BREAK);
 
         // !!! If implemented, this would allow triggering a breakpoint
         // with a keypress.  This needs to be thought out a bit more,
         // but may not involve much more than running `BREAKPOINT`.
         //
-        fail ("BREAKPOINT from SIG_INTERRUPT not currently implemented");
+        fail ("BREAKPOINT from TRAMPOLINE_FLAG_DEBUG_BREAK unimplemented");
     }
 
     return nullptr;

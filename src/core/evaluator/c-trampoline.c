@@ -524,8 +524,8 @@ bool Trampoline_Throws(Atom* out, Level* root)
 //
 void Startup_Signals(void)
 {
-    g_ts.eval_signals = 0;
-    g_ts.eval_sigmask = ALL_BITS;
+    g_ts.signal_flags = 0;
+    g_ts.signal_mask = (~ cast(Flags, 0));  // heed all flags by default
     g_ts.eval_dose = EVAL_DOSE;
     g_ts.eval_countdown = g_ts.eval_dose;
     g_ts.total_eval_cycles = 0;

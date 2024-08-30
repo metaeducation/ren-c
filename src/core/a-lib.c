@@ -1048,8 +1048,8 @@ RebolValue* API_rebArg(
 //    because rebValue() is actually a macro that throws in a rebEND to get
 //    `rebValue_inline(rebEND)`.
 //
-// 4. Interruptibility means that the trampoline will heed the SIG_HALT
-//    flag that is set.  If not, it will leave the flag set and continue
+// 4. Interruptibility means that TRAMPOLINE_FLAG_HALT will be heeded when the
+//    flag has been set.  If not, it will leave the flag set and continue
 //    processing.  Most code using the API doesn't want to react to the
 //    signal...because it would cause an exception/longjmp() and the C API
 //    call would not return.  So only a few functions that are specifically
@@ -2326,7 +2326,7 @@ void API_rebRequestHalt(void)
 {
     ENTER_API_RECYCLING_OK;
 
-    SET_SIGNAL(SIG_HALT);
+    Set_Trampoline_Flag(HALT);
 }
 
 
@@ -2345,8 +2345,8 @@ bool API_rebWasHaltRequested(void)
 {
     ENTER_API;
 
-    bool halting = GET_SIGNAL(SIG_HALT);
-    CLR_SIGNAL(SIG_HALT);
+    bool halting = Get_Trampoline_Flag(HALT);
+    Clear_Trampoline_Flag(HALT);
     return halting;
 }
 

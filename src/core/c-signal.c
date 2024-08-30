@@ -21,7 +21,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // "Signal" refers to special events to process periodically during
-// evaluation. Search for SET_SIGNAL to find them.
+// evaluation. Search for Set_Trampoline_Flag to find them.
 //
 // (Note: Not to be confused with SIGINT and unix "signals", although on
 // unix an evaluator signal can be triggered by a unix signal.)
@@ -79,15 +79,15 @@ bool Do_Signals_Throws(Level* L)
     }
     else if (g_ts.eval_countdown == -2) {
         //
-        // SET_SIGNAL() sets the countdown to -1, which then reaches -2 on
-        // a tick of the evaluator.  We *only* add that one tick, because
+        // Set_Trampoline_Flag() sets the countdown to -1, which then reaches
+        // -2 on a tick of the evaluator.  We *only* add that one tick, because
         // reconciliation was already performed.
         //
         if (g_ts.total_eval_cycles < UINTPTR_MAX)
             g_ts.total_eval_cycles += 1;
     }
     else {
-        // This means SET_SIGNAL() ran, and Do_Signals_Throws() was called
+        // Means Set_Trampoline_Flag() ran, and Do_Signals_Throws() was called
         // before the evaluator was called.  That can happen with the manual
         // call in Prin_OS_String at time of writing.  There's no tick that
         // needs accounting for in this case.
@@ -104,55 +104,58 @@ bool Do_Signals_Throws(Level* L)
     bool thrown = false;
 
     // The signal mask allows the system to disable processing of some
-    // signals.  It defaults to ALL_BITS, but during signal processing
+    // signals.  It defaults to all bits but during signal processing
     // itself, the mask is set to 0 to avoid recursion.
     //
-    Flags filtered_sigs = g_ts.eval_signals & g_ts.eval_sigmask;
-    Flags saved_sigmask = g_ts.eval_sigmask;
-    g_ts.eval_sigmask = 0;
+    Flags filtered_sigs = g_ts.signal_flags & g_ts.signal_mask;
+    Flags saved_sigmask = g_ts.signal_mask;
+    g_ts.signal_mask = 0;
 
     // "Be careful of signal loops! EG: do not PRINT from here."
 
-    if (filtered_sigs & SIG_RECYCLE) {
-        CLR_SIGNAL(SIG_RECYCLE);
+    if (filtered_sigs & TRAMPOLINE_FLAG_RECYCLE) {
+        Clear_Trampoline_Flag(RECYCLE);
         Recycle();
     }
 
-    if ((filtered_sigs & SIG_HALT) and Not_Level_Flag(L, UNINTERRUPTIBLE)) {
+    if (
+        (filtered_sigs & TRAMPOLINE_FLAG_HALT)
+        and Not_Level_Flag(L, UNINTERRUPTIBLE)
+    ){
         //
         // Early in the booting process, it's not possible to handle Ctrl-C.
         //
         if (g_ts.jump_list == nullptr)
             panic ("Ctrl-C or other HALT signal with no rescue to process it");
 
-        CLR_SIGNAL(SIG_HALT);
-        g_ts.eval_sigmask = saved_sigmask;
+        Clear_Trampoline_Flag(HALT);
+        g_ts.signal_mask = saved_sigmask;
 
         Init_Thrown_With_Label(L, Lib(NULL), Lib(HALT));
         return true; // thrown
     }
 
-    if (filtered_sigs & SIG_INTERRUPT) {
+    if (filtered_sigs & TRAMPOLINE_FLAG_DEBUG_BREAK) {
         //
         // Similar to the Ctrl-C halting, the "breakpoint" interrupt request
         // can't be processed early on.  The throw mechanics should panic
         // all right, but it might make more sense to wait.
         //
-        CLR_SIGNAL(SIG_INTERRUPT);
+        Clear_Trampoline_Flag(DEBUG_BREAK);
 
         // !!! This can recurse, which may or may not be a bad thing.  But
         // if the garbage collector and such are going to run during this
         // execution, the signal mask has to be turned back on.  Review.
         //
-        g_ts.eval_sigmask = saved_sigmask;
+        g_ts.signal_mask = saved_sigmask;
 
         // !!! If implemented, this would allow triggering a breakpoint
         // with a keypress.  This needs to be thought out a bit more,
         // but may not involve much more than running `BREAKPOINT`.
         //
-        fail ("BREAKPOINT from SIG_INTERRUPT not currently implemented");
+        fail ("BREAKPOINT from TRAMPOLINE_FLAG_DEBUG_BREAK unimplemented");
     }
 
-    g_ts.eval_sigmask = saved_sigmask;
+    g_ts.signal_mask = saved_sigmask;
     return thrown;
 }

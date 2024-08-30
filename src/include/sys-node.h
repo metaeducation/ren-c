@@ -252,7 +252,9 @@ INLINE void *Alloc_Pooled(PoolId pool_id) {
 }
 
 #define Alloc_Stub() ( \
-    (g_gc.depletion -= sizeof(Stub)) <= 0 ? SET_SIGNAL(SIG_RECYCLE) : NOOP, \
+    (g_gc.depletion -= sizeof(Stub)) <= 0 \
+        ? Set_Trampoline_Flag(RECYCLE) \
+        : NOOP, \
     Alloc_Pooled(STUB_POOL))  // not a formed stub yet, don't cast it
 
 
