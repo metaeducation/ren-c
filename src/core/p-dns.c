@@ -173,7 +173,7 @@ static REB_R DNS_Actor(Level* level_, Value* port, Value* verb)
         RETURN (port); }
 
     case SYM_ON_WAKE_UP:
-        return Init_Bar(OUT);
+        return Init_Nothing(OUT);
 
     default:
         break;

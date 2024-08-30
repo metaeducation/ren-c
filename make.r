@@ -443,10 +443,10 @@ switch rebmake/default-compiler/name [
     fail ["Unrecognized compiler (gcc, clang or cl):" cc]
 ]
 
-all [set? 'cc-exec | cc-exec] then [
+all [set? 'cc-exec  cc-exec] then [
     set-exec-path rebmake/default-compiler cc-exec
 ]
-all [set? 'linker-exec | linker-exec] then [
+all [set? 'linker-exec  linker-exec] then [
     set-exec-path rebmake/default-linker linker-exec
 ]
 
@@ -645,7 +645,7 @@ append app-config/cflags degrade switch user-config/rigorous [
             ;
             (
                 any [
-                    cfg-cplusplus | not find [c gnu89] user-config/standard
+                    cfg-cplusplus  not find [c gnu89] user-config/standard
                 ] then [
                     <gnu:--pedantic>
                 ]
@@ -1161,7 +1161,7 @@ for-each ext builtin-extensions [
         not empty? ext/depends
     ] then [
         append ext-objs map-each s ext/depends [
-            all [object? s | s/class = #object-library] then [s] else [continue]
+            all [object? s  s/class = #object-library] then [s] else [continue]
         ]
     ]
 

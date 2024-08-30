@@ -185,7 +185,7 @@ const Byte Lex_Map[256] =
     /* 79 y   */    LEX_WORD,
     /* 7A z   */    LEX_WORD,
     /* 7B {   */    LEX_DELIMIT|LEX_DELIMIT_LEFT_BRACE,
-    /* 7C |   */    LEX_SPECIAL|LEX_SPECIAL_BAR,
+    /* 7C |   */    LEX_WORD,
     /* 7D }   */    LEX_DELIMIT|LEX_DELIMIT_RIGHT_BRACE,
     /* 7E ~   */    LEX_WORD, // !!! once belonged to LEX_SPECIAL
     /* 7F DEL */    LEX_DEFAULT,
@@ -1298,13 +1298,6 @@ acquisition_loop:
                 ss->token = TOKEN_LIT;
                 fail (Error_Syntax(ss));
             }
-            if (
-                cp[1] == '|'
-                and (IS_LEX_DELIMIT(cp[2]) or IS_LEX_ANY_SPACE(cp[2]))
-            ){
-                ss->token = TOKEN_LIT_BAR;
-                return; // '| is a LIT-BAR!, '|foo is LIT-WORD!
-            }
             if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD)) {
                 ss->token = TOKEN_LIT;
                 return; // common case
@@ -1436,26 +1429,6 @@ acquisition_loop:
                 }
                 ss->token = TOKEN_WORD;
                 fail (Error_Syntax(ss));
-            }
-            ss->token = TOKEN_WORD;
-            goto scanword;
-
-        case LEX_SPECIAL_BAR:
-            //
-            // `|` standalone should become a BAR!, so if followed by a
-            // delimiter or space.  However `|a|` and `a|b` are left as
-            // legal words (at least for the time being).
-            //
-            if (IS_LEX_DELIMIT(cp[1]) or IS_LEX_ANY_SPACE(cp[1])) {
-                ss->token = TOKEN_BAR;
-                return;
-            }
-            if (
-                cp[1] == '>'
-                and (IS_LEX_DELIMIT(cp[2]) or IS_LEX_ANY_SPACE(cp[2]))
-            ){
-                ss->token = TOKEN_WORD;
-                return; // for `|>`
             }
             ss->token = TOKEN_WORD;
             goto scanword;
@@ -1735,7 +1708,7 @@ scanword:
         ss->end = cp;
     }
     else if (HAS_LEX_FLAG(flags, LEX_SPECIAL_GREATER)) {
-        if (*cp == '=' and cp[1] == '>' and IS_LEX_DELIMIT(cp[2])) {
+        if ((*cp == '=' or *cp == '|') and cp[1] == '>' and IS_LEX_DELIMIT(cp[2])) {
             ss->token = TOKEN_WORD; // enable `=>`
             return;
         }
@@ -1954,16 +1927,6 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             ss->newline_pending = true;
             ss->line_head = ep;
             continue;
-
-        case TOKEN_BAR:
-            Init_Bar(PUSH());
-            ++bp;
-            break;
-
-        case TOKEN_LIT_BAR:
-            Init_Lit_Bar(PUSH());
-            ++bp;
-            break;
 
         case TOKEN_BLANK:
             Init_Blank(PUSH());
@@ -2938,7 +2901,6 @@ const Byte *Scan_Issue(Value* out, const Byte *cp, REBLEN len)
                 and LEX_SPECIAL_PERIOD != c
                 and LEX_SPECIAL_PLUS != c
                 and LEX_SPECIAL_MINUS != c
-                and LEX_SPECIAL_BAR != c
                 and LEX_SPECIAL_BLANK != c
                 and LEX_SPECIAL_COLON != c
             ){

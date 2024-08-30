@@ -1420,7 +1420,7 @@ tls-read-data: function [
             break
         ]
 
-        debug ["received bytes:" length of fragment | "parsing response..."]
+        debug ["received bytes:" length of fragment  "parsing response..."]
 
         append ctx/resp parse-response ctx fragment
 

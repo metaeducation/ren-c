@@ -54,7 +54,7 @@ abs: :absolute
 
 rebol.com: http://www.rebol.com
 
-; Words for BLANK! and BAR!, for those who don't like symbols
+; Words for BLANK! and bar, for those who don't like symbols
 
 blank: _
 bar: '|

@@ -49,15 +49,15 @@ dump: function [
             ]
 
             word! [
-                print [to set-word! item | val-to-text get item]
+                print [to set-word! item  val-to-text get item]
             ]
 
             path! [
-                print [to set-path! item | val-to-text reduce item]
+                print [to set-path! item  val-to-text reduce item]
             ]
 
             group! [
-                print [unspaced [mold item ":"] | mold eval item]
+                print [unspaced [mold item ":"]  mold eval item]
             ]
 
             issue! [
@@ -74,14 +74,14 @@ dump: function [
         swp: match [set-word! set-path!] :value [ ; `dump x: 1 + 2`
             pos: evaluate/set extra (the result:)
             set swp :result
-            print [swp | result]
+            print [swp  result]
         ]
 
         b: match block! :value [
             while [not tail? b] [
                 if swp: match [set-word! set-path!] :b/1 [ ; `dump [x: 1 + 2]`
                     b: evaluate/set b (the result:)
-                    print [swp | result]
+                    print [swp  result]
                 ] else [
                     dump-one b/1
                     b: next b
@@ -199,7 +199,7 @@ dump-obj: function [
         if any-list? :val [return spaced ["length:" length of val]]
         if datatype? :val [return form val]
         if action? :val [
-            return clip-str any [title-of :val | mold spec-of :val]
+            return clip-str any [title-of :val  mold spec-of :val]
         ]
         if object? :val [val: words of val]
         if typeset? :val [val: make block! val]
@@ -216,7 +216,7 @@ dump-obj: function [
 
     ; Search for matching strings:
     return collect [
-        wild: did all [set? 'pat | text? pat | find pat "*"]
+        wild: did all [set? 'pat  text? pat  find pat "*"]
 
         for-each [word val] obj [
             if nothing! = type: type of get* 'val [
@@ -224,7 +224,7 @@ dump-obj: function [
             ]
 
             str: if lib/match [action! object!] :type [
-                spaced [word | mold spec-of :val | words of :val]
+                spaced [word  mold spec-of :val  words of :val]
             ] else [
                 form word
             ]

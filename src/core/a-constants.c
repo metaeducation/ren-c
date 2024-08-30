@@ -123,8 +123,6 @@ const char * const Token_Names[] = {
     "get",
     "lit",
     "blank",
-    "bar",
-    "lit-bar",
     "logic",
     "integer",
     "decimal",

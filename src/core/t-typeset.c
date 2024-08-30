@@ -138,9 +138,7 @@ Value* Init_Typeset(Cell* out, REBU64 bits, Symbol* opt_name)
 //
 //  Update_Typeset_Bits_Core: C
 //
-// This sets the bits in a bitset according to a block of datatypes.  There
-// is special handling by which BAR! will set the "variadic" bit on the
-// typeset, which is heeded by functions only.
+// This sets the bits in a bitset according to a block of datatypes.
 //
 // !!! R3-Alpha supported fixed word symbols for datatypes and typesets.
 // Confusingly, this means that if you have said `word!: integer!` and use
@@ -161,6 +159,10 @@ bool Update_Typeset_Bits_Core(
         const Cell* item;
 
         if (Is_Word(maybe_word)) {
+            if (Cell_Word_Id(maybe_word) == SYM_TILDE_1) {  // ~
+                TYPE_SET(typeset, REB_NOTHING);
+                continue;
+            }
             if (Cell_Word_Id(maybe_word) == SYM__TNULL_T) {  // ~null~
                 TYPE_SET(typeset, REB_MAX_NULLED);
                 continue;
@@ -354,7 +356,7 @@ REBTYPE(Typeset)
             fail (Error_Invalid(arg));
 
         if (TYPE_CHECK(val, VAL_TYPE_KIND(arg)))
-            return Init_Bar(OUT);
+            return Init_Nothing(OUT);
 
         return nullptr;
 

@@ -71,27 +71,19 @@ void MF_Unit(REB_MOLD *mo, const Cell* v, bool form)
     UNUSED(form); // no distinction between MOLD and FORM
 
     switch (VAL_TYPE(v)) {
-    case REB_BAR:
-        Append_Unencoded(mo->series, "|");
-        break;
-
-    case REB_LIT_BAR:
-        Append_Unencoded(mo->series, "'|");
-        break;
-
-    case REB_BLANK:
+      case REB_BLANK:
         Append_Unencoded(mo->series, "_");
         break;
 
-    case REB_NOTHING:  // In modern Ren-C, trash in an antiform of blank
+      case REB_NOTHING:  // In modern Ren-C, nothing is an antiform of blank
         Append_Unencoded(mo->series, "~");
         break;
 
-    case REB_VOID:  // In modern Ren-C, void is the antiform of the word VOID
+      case REB_VOID:  // In modern Ren-C, void is the antiform of the word VOID
         Append_Unencoded(mo->series, "~void~");
         break;
 
-    default:
+      default:
         panic (v);
     }
 }

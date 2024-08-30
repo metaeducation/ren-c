@@ -5,8 +5,8 @@
             sum: sum + take x
         ]
     ]
-    y: (z: foo 1 2 3 | 4 5)
-    all [y = 5 | z = 6]
+    y: ((z: foo 1 2 3) 4 5)
+    all [y = 5  z = 6]
 )
 (
     foo: func [x [integer! <...>]] [make block! x]
@@ -51,7 +51,7 @@
     (do [normal] = 0)
     (do [10 normal] = 10)
     (do [10 20 normal] = 20)
-    (do [x: 30 | y: 'x | 1 2 x normal] = 30)
+    (do [x: 30  y: 'x  1 2 x normal] = 30)
     (do [multiply 3 9 normal] = 27) ;-- seen as ((multiply 3 9) normal)
 ][
     (
@@ -68,7 +68,7 @@
     (do [tight] = 0)
     (do [10 tight] = 10)
     (do [10 20 tight] = 20)
-    (do [x: 30 | y: 'x | 1 2 x tight] = 30)
+    (do [x: 30  y: 'x  1 2 x tight] = 30)
     (do [multiply 3 9 tight] = 27) ;-- seen as (multiply 3 (9 tight))
 ][
     (
@@ -114,7 +114,7 @@
 
     3 = (value: 1 + 2 <| 30 + 40 x: value  () ())
 
-    did all [value = 3 | x = 3]
+    did all [value = 3  x = 3]
 )
 (
     value: ~
@@ -122,7 +122,7 @@
 
     70 = (value: 1 + 2 |> 30 + 40 x: value () () ())
 
-    did all [value = 3 | x = 3]
+    did all [value = 3  x = 3]
 )
 
 (
@@ -134,8 +134,8 @@
 )
 
 (
-    2 = (1 |> 2 | 3 + 4 | 5 + 6)
+    2 = (1 |> 2  3 + 4  5 + 6)
 )
 (
-    1 = (1 <| 2 | 3 + 4 | 5 + 6)
+    1 = (1 <| 2  3 + 4  5 + 6)
 )

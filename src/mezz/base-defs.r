@@ -133,13 +133,22 @@ back: specialize 'skip [
     only: true ;-- don't clip (return null if already at tail of series)
 ]
 
-bound?: chain [specialize 'reflect [property: 'binding] | :value?]
+bound?: chain [
+    specialize 'reflect [property: 'binding]
+    :value?
+]
 
 unspaced: specialize 'delimit [delimiter: void]
-unspaced-text: chain [:unspaced | specialize 'else [branch: [copy ""]]]
+unspaced-text: chain [
+    :unspaced
+    specialize 'else [branch: [copy ""]]
+]
 
 spaced: specialize 'delimit [delimiter: space]
-spaced-text: chain [:spaced | specialize 'else [branch: [copy ""]]]
+spaced-text: chain [
+    :spaced
+    specialize 'else [branch: [copy ""]]
+]
 
 newlined: chain [
     adapt specialize 'delimit [delimiter: newline] [
@@ -147,7 +156,6 @@ newlined: chain [
             fail/where "NEWLINED on TEXT! semantics being debated" 'line
         ]
     ]
-        |
     func [t [~null~ text!]] [
         if null? t [return null]
         append t newline ;; Terminal newline is POSIX standard, more useful
@@ -191,7 +199,11 @@ empty?: func [
     return: [logic!]
     series [any-series! object! port! bitset! map! blank! ~void~]
 ][
-    did any [void? series | blank? series | tail? series]
+    did any [
+        void? series
+        blank? series
+        tail? series
+    ]
 ]
 
 
@@ -246,8 +258,6 @@ reeval func [
     nothing?:
     void?:
     blank?:
-    bar?:
-    lit-bar?:
     logic?:
     integer?:
     decimal?:

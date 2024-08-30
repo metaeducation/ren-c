@@ -253,19 +253,12 @@ Array* Make_Paramlist_Managed_May_Fail(
     //=//// BLOCK! OF TYPES TO MAKE TYPESET FROM (PLUS PARAMETER TAGS) ////=//
 
         if (Is_Block(item)) {
-          process_typeset_block:
-
-            if (
+            if (  // legacy behavior: `return: [~]` erases return result
                 VAL_ARRAY_LEN_AT(item) == 1
                 and Is_Word(Cell_List_At(item))
-                and Cell_Word_Id(Cell_List_At(item)) == SYM_TILDE
+                and Cell_Word_Id(Cell_List_At(item)) == SYM_TILDE_1
             ){
                 header_bits |= ACTION_FLAG_TRASHER;  // Eraser_Dispatcher()
-
-                // Fake as if they said [nothing!]
-                //
-                item = Get_System(SYS_STANDARD, STD_PROC_RETURN_TYPE);
-                goto process_typeset_block;
             }
 
             if (Is_Block(TOP)) // two blocks of types!

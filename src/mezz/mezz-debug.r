@@ -21,15 +21,10 @@ verify: function [
 ][
     while [pos: evaluate/set conditions 'result] [
         if not :result [
-            ;
-            ; including BAR!s in the failure report looks messy, skip them
-            ;
-            while [bar? first conditions] [conditions: my next]
-
             fail/where [
                 "Assertion condition returned"
                  choose [
-                    (unset? 'result) "trash"
+                    (unset? 'result) "nothing"
                     (null? result) "null"
                     (blank? result) "blank"
                     (result = false) "false"

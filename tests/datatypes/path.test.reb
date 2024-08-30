@@ -170,17 +170,17 @@
     (/ref/inement/path = as path! [/ref inement path])
     (/refinement/3 = as path! [/refinement 3])
     ((/refinement)/3 = #"f")
-    (r: /refinement | r/3 = #"f")
+    (r: /refinement  r/3 = #"f")
 ][
     (#iss/ue/path = as path! [#iss ue path])
     (#issue/3 = as path! [#issue 3])
     ((#issue)/3 = #"s")
-    (i: #issue | i/3 = #"s")
+    (i: #issue  i/3 = #"s")
 ][
     ("te"/xt/path = as path! ["te" xt path])
     ("text"/3 = as path! ["text" 3])
     (("text")/3 = #"x")
-    (t: "text" | t/3 = #"x")
+    (t: "text"  t/3 = #"x")
 ]
 
 

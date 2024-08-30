@@ -112,7 +112,7 @@ args: any [
     fail "No platform specified."
 ]
 
-product: to-word any [get 'args/PRODUCT | "core"]
+product: to-word any [get 'args/PRODUCT  "core"]
 
 platform-data: context [type: 'windows]
 build: context [features: [help-strings]]
@@ -138,7 +138,7 @@ boot-words: copy []
 add-sym: function [
     {Add SYM_XXX to enumeration}
     return: [~null~ integer!]
-    word [word!]
+    word [word! text!]  ; BAR! is just synonym for WORD! in R3C
     /exists "return ID of existing SYM_XXX constant if already exists"
     <with> sym-n
 ][
@@ -150,7 +150,12 @@ add-sym: function [
     append syms cscape/with {/* $<Word> */ SYM_${WORD} = $<sym-n>} [sym-n word]
     sym-n: sym-n + 1
 
-    append boot-words word
+    if text? word [
+        assert [word = "|"]
+        append boot-words '|
+    ] else [
+        append boot-words word
+    ]
     return null
 ]
 
@@ -341,7 +346,7 @@ rebs: collect [
         ensure word! t/class
 
         assert [sym-n == n] ;-- SYM_XXX should equal REB_XXX value
-        add-sym to-word unspaced [ensure word! t/name "!"]
+        add-sym to-word unspaced [t/name "!"]
         keep cscape/with {REB_${T/NAME} = $<n>} [n t]
         n: n + 1
     ]
@@ -506,7 +511,13 @@ e-version/write-emitted
 ;-- Add SYM_XXX constants for the words in %words.r
 
 wordlist: load %words.r
-for-each word wordlist [add-sym word]
+for-each word-or-bar wordlist [  ; bootstrap | is BAR!, but WORD! in R3C
+    if word-or-bar = '| [
+        add-sym "|"
+    ] else [
+        add-sym word-or-bar
+    ]
+]
 
 
 ;-- Add SYM_XXX constants for generics (e.g. SYM_APPEND, etc.)
@@ -542,8 +553,8 @@ change at-value build now/utc
 change at-value product to lit-word! product
 
 change/only at-value platform reduce [
-    any [config/platform-name | "Unknown"]
-    any [config/build-label | ""]
+    any [config/platform-name  "Unknown"]
+    any [config/build-label  ""]
 ]
 
 ob: make object! boot-sysobj

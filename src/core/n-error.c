@@ -46,7 +46,7 @@ static const Value* Trap_Dangerous(Level* level_) {
     UNUSED(ARG(valid));
 
     if (Do_Branch_Throws(OUT, ARG(code)))
-        return NOTHING_VALUE;
+        return NOTHING_VALUE;  // not API value, no proxying needed
 
     return nullptr;
 }

@@ -578,7 +578,7 @@ DECLARE_NATIVE(wake_up)
         DECLARE_VALUE (verb);
         Init_Word(verb, Canon(SYM_ON_WAKE_UP));
         const Value* r = Do_Port_Action(level_, ARG(port), verb);
-        assert(Is_Bar(r));
+        assert(Is_Nothing(r));
         UNUSED(r);
     }
 

@@ -45,10 +45,10 @@
 // it can find it).  This will allow those using Address Sanitizer or
 // Valgrind to know a bit more about where the value came from.
 //
-// Additionally, if it happens to be NULLED, NOTHING, LOGIC!, BAR!, BLANK!, or
-// a trash cell, it will dump out where the initialization happened if that
-// information was stored.  (See DEBUG_TRACK_EXTEND_CELLS for more intense
-// debugging scenarios, which track all cell types, but at greater cost.)
+// Additionally, if it happens to be NULLED, NOTHING, LOGIC!, VOID!, BLANK!, or
+// it will dump out where the initialization happened if that information was
+// stored.  (See DEBUG_TRACK_EXTEND_CELLS for more intense debugging scenarios,
+// which track all cell types, but at greater cost.)
 //
 ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
     fflush(stdout);
@@ -60,7 +60,6 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
     case REB_MAX_NULLED:
     case REB_BLANK:
     case REB_LOGIC:
-    case REB_BAR:
       #if defined(DEBUG_TRACK_CELLS)
         printf("Cell init ");
 

@@ -198,8 +198,6 @@ uint32_t Hash_Value(const Cell* v)
         //
         panic (nullptr);
 
-    case REB_BAR:
-    case REB_LIT_BAR:
     case REB_BLANK:
     case REB_NOTHING:
     case REB_VOID:

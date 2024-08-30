@@ -1136,11 +1136,6 @@ bool Eval_Core_Throws(Level* const L)
                         goto continue_arg_loop;
                     }
 
-                    // The NODE_FLAG_MARKED flag is also used by BAR! to keep
-                    // a result in L->out, so that the barrier doesn't destroy
-                    // data in cases like `(1 + 2 | comment "hi")` => 3, but
-                    // left enfix should treat that just like an end.
-                    //
                     if (not Is_Param_Endable(L->param))
                         fail (Error_No_Arg(L, L->param));
 
@@ -1176,13 +1171,6 @@ bool Eval_Core_Throws(Level* const L)
                             Copy_Cell(L->out, L->arg);
                             goto abort_action;
                         }
-                    }
-                    else if (Is_Bar(L->out)) {
-                        //
-                        // Hard quotes take BAR!s but they should look like an
-                        // <end> to a soft quote.
-                        //
-                        SET_END(L->arg);
                     }
                     else {
                         Copy_Cell(L->arg, L->out);
@@ -1295,9 +1283,9 @@ bool Eval_Core_Throws(Level* const L)
                 Corrupt_Pointer_If_Debug(L->u.defer.refine);
             }
 
-    //=//// ERROR ON END MARKER, BAR! IF APPLICABLE //////////////////////=//
+    //=//// ERROR ON END MARKER ///////////////////////////////////////////=//
 
-            if (IS_END(L->value) or (L->flags.bits & DO_FLAG_BARRIER_HIT)) {
+            if (IS_END(L->value)) {
                 if (not Is_Param_Endable(L->param))
                     fail (Error_No_Arg(L, L->param));
 
@@ -1349,7 +1337,7 @@ bool Eval_Core_Throws(Level* const L)
                 if (Is_Param_Skippable(L->param)) {
                     if (not TYPE_CHECK(L->param, VAL_TYPE(L->value))) {
                         assert(Is_Param_Endable(L->param));
-                        Init_Endish_Nulled(L->arg); // not DO_FLAG_BARRIER_HIT
+                        Init_Endish_Nulled(L->arg);
                         SET_VAL_FLAG(L->arg, ARG_MARKED_CHECKED);
                         goto continue_arg_loop;
                     }
@@ -1363,14 +1351,6 @@ bool Eval_Core_Throws(Level* const L)
     //=//// SOFT QUOTED ARG-OR-REFINEMENT-ARG  ////////////////////////////=//
 
               case PARAM_CLASS_SOFT_QUOTE:
-                if (Is_Bar(L->value)) { // BAR! stops a soft quote
-                    L->flags.bits |= DO_FLAG_BARRIER_HIT;
-                    Fetch_Next_In_Level(nullptr, L);
-                    SET_END(L->arg);
-                    Finalize_Current_Arg(L);
-                    goto continue_arg_loop;
-                }
-
                 if (not IS_QUOTABLY_SOFT(L->value)) {
                     Quote_Next_In_Level(L->arg, L);
                     Finalize_Current_Arg(L);
@@ -2148,54 +2128,6 @@ bool Eval_Core_Throws(Level* const L)
       inert:;
 
         Derelativize(L->out, current, L->specifier);
-        break;
-
-//==//////////////////////////////////////////////////////////////////////==//
-//
-// [BAR!]
-//
-// Expression barriers prevent non-hard-quoted operations from picking up
-// parameters, e.g. `do [1 | + 2]` is an error.  But they don't erase values,
-// so `do [1 + 2 |]` is 3.  In that sense, they are like "invisible" actions.
-//
-//==//////////////////////////////////////////////////////////////////////==//
-
-      case REB_BAR:
-        if (not EVALUATING(current))
-            goto inert;
-
-        if (L->flags.bits & DO_FLAG_FULFILLING_ARG) {
-            //
-            // May be fulfilling a variadic argument (or an argument to an
-            // argument of a variadic, etc.)  Let this appear to give back
-            // an END...though if the frame is not at an END then it has
-            // more potential evaluation after the current action invocation.
-            //
-            L->flags.bits |= DO_FLAG_BARRIER_HIT;
-            goto finished;
-        }
-
-        eval_type = VAL_TYPE_RAW(L->value);
-        if (eval_type == REB_0_END)
-            goto finished;
-        goto do_next; // quickly process next item, no infix test needed
-
-//==//////////////////////////////////////////////////////////////////////==//
-//
-// [LIT-BAR!]
-//
-// LIT-BAR! decays into an ordinary BAR! if seen here by the evaluator.
-//
-// !!! Considerations of the "lit-bit" proposal would add a literal form
-// for every type, which would make this datatype unnecssary.
-//
-//==//////////////////////////////////////////////////////////////////////==//
-
-      case REB_LIT_BAR:
-        if (not EVALUATING(current))
-            goto inert;
-
-        Init_Bar(L->out);
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//

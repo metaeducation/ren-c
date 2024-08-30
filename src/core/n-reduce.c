@@ -132,18 +132,13 @@ bool Match_For_Compose(const Cell* group, const Value* pattern) {
     if (Is_Nulled(pattern))
         return true;
 
-    if (Cell_Series_Len_At(group) == 0) // you have a pattern, so leave `()` as-is
+    if (Cell_Series_Len_At(group) == 0) // yhave a pattern, so leave `()` as-is
         return false;
 
     Cell* first = Cell_List_At(group);
-    Cell* last = VAL_ARRAY_TAIL(group) - 1;
-    if (Is_Bar(first) != Is_Bar(last))
-        fail ("Pattern for COMPOSE must be on both ends of GROUP!");
-    if (not Is_Bar(first))
-        return false; // leave as-is
-    if (first == last) // e.g. (*), needs to be at least (* *)
-        fail ("Two patterns, not one, must appear used in COMPOSE of GROUP!");
-    return true;
+    if (not Is_Tag(first))
+        return false;
+    return 0 == Compare_String_Vals(cast(Value*, first), pattern, true);
 }
 
 
@@ -315,7 +310,7 @@ bool Compose_To_Stack_Throws(
 //
 //      return: [any-list!]
 //      :pattern "Distinguish compose groups, e.g. [(plain) (* composed *)]"
-//          [<skip> lit-bar!]
+//          [<skip> tag!]
 //      value "Array to use as the template for substitution"
 //          [any-list!]
 //      /deep "Compose deeply into nested arrays"

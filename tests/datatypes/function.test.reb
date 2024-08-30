@@ -282,7 +282,7 @@
     (10 == litf 10)
     ('a == litf a)
     (the 'a == litf 'a)
-    (a: 10 | 10 == litf :a)
+    (a: 10  10 == litf :a)
     (the a: == litf a:)
     (30 == litf (10 + 20))
     (
@@ -294,7 +294,7 @@
 ; basic test for recursive action! invocation
 (
     i: 0
-    countdown: func [n] [if n > 0 [i: i + 1 | countdown n - 1]]
+    countdown: func [n] [if n > 0 [i: i + 1  countdown n - 1]]
     countdown 10
     i = 10
 )

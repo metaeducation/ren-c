@@ -31,15 +31,15 @@
 
 (
     res: did parse/match ser: [x y] [pos: <here> one one]
-    all [res | pos = ser]
+    all [res  pos = ser]
 )
 (
     res: did parse/match ser: [x y] [one pos: <here> one]
-    all [res | pos = next ser]
+    all [res  pos = next ser]
 )
 (
     res: did parse/match ser: [x y] [one one pos: <here>]
-    all [res | pos = tail of ser]
+    all [res  pos = tail of ser]
 )
 
 ; These don't work with the new parse combinatorics

@@ -76,7 +76,7 @@
     x: 1 + 2 * 3
     elide (y: :x)
 
-    did all [x = 9 | y = 9]
+    did all [x = 9  y = 9]
 )
 (
     x: ~
@@ -118,133 +118,6 @@
     [3 11] = reduce [1 + 2 elide 3 + 4 5 + 6]
 )
 
-
-; BAR! is invisible, and acts as an expression barrier
-
-(
-    3 = (1 + 2 |)
-)(
-    3 = (1 + 2 | comment "invisible")
-)
-
-; Non-variadic
-[
-    (
-        left-normal: enfix right-normal:
-            <- func [return: [~null~ bar!] x [bar!]] [:x]
-        left-normal*: enfix right-normal*:
-            <- func [return: [~null~ bar!] x [bar! <end>]] [:x]
-
-        left-tight: enfix right-tight:
-            <- func [return: [~null~ bar!] #x [bar!]] [:x]
-        left-tight*: enfix right-tight*:
-            <- func [return: [~null~ bar!] #x [bar! <end>]] [:x]
-
-        left-soft: enfix right-soft:
-            <- func [return: [~null~ bar!] 'x [bar!]] [:x]
-        left-soft*: enfix right-soft*:
-            <- func [return: [~null~ bar!] 'x [bar! <end>]] [:x]
-
-        left-hard: enfix right-hard:
-            <- func [return: [~null~ bar!] :x [bar!]] [:x]
-        left-hard*: enfix right-hard*:
-            <- func [return: [~null~ bar!] :x [bar! <end>]] [:x]
-
-        true
-    )
-
-    ('no-arg = (trap [right-normal |])/id)
-    (null? do [right-normal* |])
-    (null? do [right-normal*])
-
-    ('no-arg = (trap [| left-normal])/id)
-    (null? do [| left-normal*])
-    (null? do [left-normal*])
-
-    ('no-arg = (trap [right-tight |])/id)
-    (null? do [right-tight* |])
-    (null? do [right-tight*])
-
-    ('no-arg = (trap [| left-tight])/id)
-    (null? do [| left-tight*])
-    (null? do [left-tight*])
-
-    ('no-arg = (trap [right-soft |])/id)
-    (null? do [right-soft* |])
-    (null? do [right-soft*])
-
-    ('no-arg = (trap [| left-soft])/id)
-    (null? do [| left-soft*])
-    (null? do [left-soft*])
-
-    ('| = do [right-hard |])
-    ('| = do [right-hard* |])
-    (null? do [right-hard*])
-
-    ('| = do [| left-hard])
-    ('| = do [| left-hard*])
-    (null? do [left-hard*])
-]
-
-
-; Variadic
-[
-    (
-        left-normal: enfix right-normal:
-            <- func [return: [~null~ bar!] x [bar! <...>]] [take x]
-        left-normal*: enfix right-normal*:
-            <- func [return: [~null~ bar!] x [bar! <...> <end>]] [take x]
-
-        left-tight: enfix right-tight:
-            <- func [return: [~null~ bar!] #x [bar! <...>]] [take x]
-        left-tight*: enfix right-tight*:
-            <- func [return: [~null~ bar!] #x [bar! <...> <end>]] [take x]
-
-        left-soft: enfix right-soft:
-            <- func [return: [~null~ bar!] 'x [bar! <...>]] [take x]
-        left-soft*: enfix right-soft*:
-            <- func [return: [~null~ bar!] 'x [bar! <...> <end>]] [take x]
-
-        left-hard: enfix right-hard:
-            <- func [return: [~null~ bar!] :x [bar! <...>]] [take x]
-        left-hard*: enfix right-hard*:
-            <- func [return: [~null~ bar!] :x [bar! <...> <end>]] [take x]
-
-        true
-    )
-
-    (null? trap [right-normal |])
-    (null? do [right-normal* |])
-    (null? do [right-normal*])
-
-    (null? trap [| left-normal])
-    (null? do [| left-normal*])
-    (null? do [left-normal*])
-
-    (null? trap [right-tight |])
-    (null? do [right-tight* |])
-    (null? do [right-tight*])
-
-    (null? trap [| left-tight])
-    (null? do [| left-tight*])
-    (null? do [left-tight*])
-
-    (null? trap [right-soft |])
-    (null? do [right-soft* |])
-    (null? do [right-soft*])
-
-    (null? trap [| left-soft])
-    (null? do [| left-soft*])
-    (null? do [left-soft*])
-
-    ('| = do [right-hard |])
-    ('| = do [right-hard* |])
-    (null? do [right-hard*])
-
-    ('| = do [| left-hard])
-    ('| = do [| left-hard*])
-    (null? do [left-hard*])
-]
 
 ; GROUP!s with no content act as invisible
 (

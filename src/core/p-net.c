@@ -253,7 +253,7 @@ static REB_R Transport_Actor(
         else if (sock->command == RDC_WRITE) {
             Init_Nulled(port_data); // Write is done.
         }
-        return Init_Bar(OUT); }
+        return Init_Nothing(OUT); }
 
     case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;

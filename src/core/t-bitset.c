@@ -340,7 +340,7 @@ bool Set_Bits(Blob* bset, const Value* val, bool set)
             if (
                 NOT_END(item + 1)
                 && Is_Word(item + 1)
-                && Cell_Word_Id(item + 1) == SYM_HYPHEN
+                && Cell_Word_Id(item + 1) == SYM_HYPHEN_1
             ){
                 item += 2;
                 if (Is_Char(item)) {
@@ -365,7 +365,7 @@ bool Set_Bits(Blob* bset, const Value* val, bool set)
             if (
                 NOT_END(item + 1)
                 && Is_Word(item + 1)
-                && Cell_Word_Id(item + 1) == SYM_HYPHEN
+                && Cell_Word_Id(item + 1) == SYM_HYPHEN_1
             ){
                 REBUNI c = n;
                 item += 2;
@@ -466,7 +466,7 @@ bool Check_Bits(Blob* bset, const Value* val, bool uncased)
 
         case REB_CHAR: {
             REBUNI c = VAL_CHAR(item);
-            if (Is_Word(item + 1) && Cell_Word_Id(item + 1) == SYM_HYPHEN) {
+            if (Is_Word(item + 1) && Cell_Word_Id(item + 1) == SYM_HYPHEN_1) {
                 item += 2;
                 if (Is_Char(item)) {
                     REBLEN n = VAL_CHAR(item);
@@ -488,7 +488,7 @@ bool Check_Bits(Blob* bset, const Value* val, bool uncased)
             REBLEN n = Int32s(KNOWN(item), 0);
             if (n > 0xffff)
                 return false;
-            if (Is_Word(item + 1) && Cell_Word_Id(item + 1) == SYM_HYPHEN) {
+            if (Is_Word(item + 1) && Cell_Word_Id(item + 1) == SYM_HYPHEN_1) {
                 REBUNI c = n;
                 item += 2;
                 if (Is_Integer(item)) {
@@ -639,7 +639,7 @@ REBTYPE(Bitset)
 
         if (not Check_Bits(Cell_Bitset(value), arg, REF(case)))
             return nullptr;
-        return Init_Bar(OUT);
+        return Init_Nothing(OUT);
     }
 
     case SYM_COMPLEMENT:

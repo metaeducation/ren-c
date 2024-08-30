@@ -21,17 +21,17 @@
 ; continue cycle
 (
     success: true
-    count-up i 1 [continue | success: false]
+    count-up i 1 [continue success: false]
     success
 )
 (
     success: true
-    for-next i "a" [continue | success: false]
+    for-next i "a" [continue success: false]
     success
 )
 (
     success: true
-    for-next i [a] [continue | success: false]
+    for-next i [a] [continue success: false]
     success
 )
 ; decimal! test

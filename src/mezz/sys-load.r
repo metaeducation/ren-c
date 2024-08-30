@@ -545,7 +545,7 @@ load-module: function [
                 pos: _  ; just override, don't replace
                 if ver0 >= modver [
                     ; it's at least as new, use it instead
-                    mod: mod0 | hdr: hdr0 | code: _
+                    mod: mod0  hdr: hdr0  code: _
                     modver: ver0
                     override?: false
                 ]

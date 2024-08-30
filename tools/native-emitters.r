@@ -80,7 +80,7 @@ emit-include-params-macro: function [
     n: 1
     items: collect [
         for-each item paramlist [
-            if any [not any-word? item | set-word? item] [continue]
+            if any [not any-word? item  set-word? item] [continue]
 
             param-name: copy as text! item
             either refinement? item [

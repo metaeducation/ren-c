@@ -546,9 +546,6 @@ INLINE void Drop_Action(Level* L) {
         or Get_Flex_Flag(L->opt_label, UTF8_SYMBOL)
     );
 
-    if (not (L->flags.bits & DO_FLAG_FULFILLING_ARG))
-        L->flags.bits &= ~DO_FLAG_BARRIER_HIT;
-
     assert(
         Get_Flex_Info(L->varlist, INACCESSIBLE)
         or LINK(L->varlist).keysource == L

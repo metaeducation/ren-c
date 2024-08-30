@@ -355,8 +355,6 @@ DECLARE_NATIVE(unprotect)
 bool Is_Value_Immutable(const Cell* v) {
     if (
         Is_Blank(v)
-        || Is_Bar(v)
-        || Is_Lit_Bar(v)
         || Any_Scalar(v)
         || Any_Word(v)
         || Is_Action(v) // paramlist is identity, hash

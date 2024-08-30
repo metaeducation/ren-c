@@ -881,7 +881,7 @@ REBTYPE(Context)
             return nullptr;
 
         if (Cell_Word_Id(verb) == SYM_FIND)
-            return Init_Bar(OUT); // TRUE would obscure non-LOGIC! result
+            return Init_Nothing(OUT); // TRUE would obscure non-LOGIC! result
 
         RETURN (CTX_VAR(c, n)); }
 

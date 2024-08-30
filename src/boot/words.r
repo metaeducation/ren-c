@@ -16,6 +16,8 @@ REBOL [
     }
 ]
 
+|  ; SYM_BAR_1 (was BAR! datatype for a while, but turned back to WORD!)
+
 any-value! ;-- signal typesets start (SYM_ANY_VALUE_X hardcoded reference)
 any-word!
 any-path!
@@ -41,11 +43,11 @@ none
 ; These aren't "quasiforms" in the bootstrap executable, they're words...but
 ; they're used in function specs and other places.
 ;
-~
+~  ; SYM_TILDE_1 (TRASH in modern Ren-C, but UNDEFINED in R3C)
 ~void~
 ~null~
 
-...  ; SYM_ELLIPSIS
+...  ; SYM_ELLIPSIS_3
 
 generic ;-- used in boot, see %generics.r
 

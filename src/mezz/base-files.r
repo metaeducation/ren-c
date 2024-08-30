@@ -208,7 +208,6 @@ split-path: func [
         pos: <here> opt some [thru #"/" [<end> | pos: <here>]] (
             all [
                 empty? dir: copy/part location at head of location index of pos
-                    |
                 dir: %./
             ]
             all [find [%. %..] pos: to file! pos insert tail of pos #"/"]

@@ -560,8 +560,8 @@ DECLARE_NATIVE(any)
 //
 //  {Short circuiting version of NOR, using a block of expressions as input}
 //
-//      return: "BAR! if all expressions are falsey, null if any are truthy"
-//          [~null~ bar!]
+//      return: "NOTHING! if all expressions are falsey, null if any are truthy"
+//          [nothing! ~null~]
 //      block "Block of expressions."
 //          [block!]
 //  ]
@@ -595,7 +595,7 @@ DECLARE_NATIVE(none)
     }
 
     Drop_Level(L);
-    return Init_Bar(OUT); // truthy, but doesn't suggest LOGIC! on failure
+    return Init_Nothing(OUT);  // truthy, but doesn't suggest LOGIC! on failure
 }
 
 

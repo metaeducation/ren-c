@@ -61,29 +61,6 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         return true;
     }
 
-    if (Is_Bar(opt_look)) {
-        //
-        // Only hard quotes are allowed to see BAR! (and if they do, they
-        // are *encouraged* to test the evaluated bit and error on literals,
-        // unless they have a *really* good reason to do otherwise)
-        //
-        if (pclass == PARAM_CLASS_HARD_QUOTE) {
-            if (op == VARARG_OP_TAIL_Q) {
-                Init_False(out);
-                return true;
-            }
-            if (op == VARARG_OP_FIRST) {
-                Init_Bar(out);
-                return true;
-            }
-            assert(op == VARARG_OP_TAKE);
-            return false; // advance frame/array to consume BAR!
-        }
-
-        Init_For_Vararg_End(out, op); // simulate exhaustion on non hard quote
-        return true;
-    }
-
     if (
         (pclass == PARAM_CLASS_NORMAL || pclass == PARAM_CLASS_TIGHT)
         && Is_Word(opt_look)
@@ -228,10 +205,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
                 return true;
             }
 
-            if (
-                IS_END(L_temp->value)
-                or (L_temp->flags.bits & DO_FLAG_BARRIER_HIT)
-            ){
+            if (IS_END(L_temp->value)) {
                 SET_END(shared);
             }
             else {
@@ -287,9 +261,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         if (Vararg_Op_If_No_Advance_Handled(
             out,
             op,
-            (L->flags.bits & DO_FLAG_BARRIER_HIT)
-                ? END_NODE
-                : L->value, // might be END
+            L->value, // might be END
             L->specifier,
             pclass
         )){
@@ -541,9 +513,6 @@ REBTYPE(Varargs)
             if (limit < 0)
                 limit = 0;
         }
-        else if (Is_Bar(ARG(limit))) {
-            limit = 0; // not used, but avoid maybe uninitalized warning
-        }
         else
             fail (Error_Invalid(ARG(limit)));
 
@@ -652,25 +621,20 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
             Append_Unencoded(mo->series, "[]");
         else if (pclass == PARAM_CLASS_HARD_QUOTE)
             Mold_Value(mo, shared); // full feed can be shown if hard quoted
-        else if (Is_Bar(Cell_List_At(shared)))
-            Append_Unencoded(mo->series, "[]"); // simulate end appearance
         else
             Append_Unencoded(mo->series, "[...]"); // can't look ahead
     }
     else if (Is_Level_Style_Varargs_Maybe_Null(&L, v)) {
         if (L == nullptr)
             Append_Unencoded(mo->series, "!!!");
-        else if (IS_END(L->value) or (L->flags.bits & DO_FLAG_BARRIER_HIT))
+        else if (IS_END(L->value))
             Append_Unencoded(mo->series, "[]");
         else if (pclass == PARAM_CLASS_HARD_QUOTE) {
             Append_Unencoded(mo->series, "[");
             Mold_Value(mo, L->value); // one value can be shown if hard quoted
             Append_Unencoded(mo->series, " ...]");
         }
-        else if (Is_Bar(L->value))
-            Append_Unencoded(mo->series, "[]");
-        else
-            Append_Unencoded(mo->series, "[...]");
+        Append_Unencoded(mo->series, "[...]");
     }
     else
         assert(false);

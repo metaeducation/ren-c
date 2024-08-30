@@ -112,7 +112,7 @@ INLINE bool Apply_Only_Throws(
     );
 
     if (IS_END(out))
-        fail ("Apply_Only_Throws() empty or just COMMENTs/ELIDEs/BAR!s");
+        fail ("Apply_Only_Throws() empty or just COMMENTs/ELIDEs");
 
     return indexor == THROWN_FLAG;
 }

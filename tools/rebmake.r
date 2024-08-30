@@ -85,7 +85,7 @@ filter-flag: function [
         fail ["Tag must be <prefix:flag> ->" (flag)]
     ]
 
-    return all [prefix = header | to-text option]
+    return all [prefix = header  to-text option]
 ]
 
 run-command: function [
@@ -1170,7 +1170,10 @@ generator-class: make object! [
                         [
                             "$(" copy name: some [letter | digit | #"_"] ")"
                             | "$" copy name: letter
-                        ] (val: localize select vars name | stop: false)
+                        ] (
+                            val: localize select vars name
+                            stop: false
+                        )
                     ] val
                     | skip
                 ]

@@ -214,7 +214,7 @@ list-dir: function [
             split-path/file info/1 the filename:
             change info filename
             printf [indent 16 -8 #" " 24 #" " 6] info
-            if all [r | dir? file] [
+            if all [r  dir? file] [
                 list-dir/l/r/i :file join indent "    "
             ]
         ]

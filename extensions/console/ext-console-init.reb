@@ -381,21 +381,21 @@ ext-console-impl: function [
     emit: function [
         {Builds up sandboxed code to submit to C, hooked RETURN will finalize}
 
-        item "ISSUE! directive, TEXT! comment, (| composed |) code BLOCK!"
+        item "ISSUE! directive, TEXT! comment, (<*> composed) code BLOCK!"
             [block! issue! text!]
         <with> instruction
     ][
         switch type of item [
             issue! [
-                if not empty? instruction [append/line instruction '|]
+                if not empty? instruction [append/line instruction [()]]
                 insert instruction item
             ]
             text! [
                 append/line instruction compose [comment (item)]
             ]
             block! [
-                if not empty? instruction [append/line instruction '|]
-                append/line instruction compose/deep '| item
+                if not empty? instruction [append/line instruction [()]]
+                append/line instruction compose/deep <*> item
             ]
             fail
         ]
@@ -414,7 +414,7 @@ ext-console-impl: function [
                 emit [system/console/print-gap]
                 emit [system/console/print-prompt]
                 emit [reduce [
-                    any [system/console/input-hook | '~escape~]
+                    any [system/console/input-hook  '~escape~]
                 ]] ;-- gather first line (or null), put in BLOCK!
             ]
             <halt> [
@@ -427,8 +427,8 @@ ext-console-impl: function [
             ]
             <bad> [
                 emit #no-unskin-if-error
-                emit [print (| mold uneval prior |)]
-                emit [fail ["Bad REPL continuation:" ((| uneval result |))]]
+                emit [print (<*> mold uneval prior)]
+                emit [fail ["Bad REPL continuation:" ((<*> uneval result))]]
             ]
         ] then [
             return-to-c instruction
@@ -452,7 +452,7 @@ ext-console-impl: function [
                 state
             ]
             default [
-                emit [fail [{Bad console instruction:} (| mold state |)]]
+                emit [fail [{Bad console instruction:} (<*> mold state)]]
             ]
         ]
     ]
@@ -549,7 +549,7 @@ ext-console-impl: function [
             e: make error! "Can't RESUME top-level CONSOLE (use QUIT to exit)"
             e/near: result/near
             e/where: result/where
-            emit [system/console/print-error (| e |)]
+            emit [system/console/print-error (<*> e)]
             return <prompt>
         ]
         return :result/arg1
@@ -562,9 +562,9 @@ ext-console-impl: function [
         ; interpreter is being called non-interactively from the shell).
         ;
         if object? system/console [
-            emit [system/console/print-error (| :result |)]
+            emit [system/console/print-error (<*> :result)]
         ] else [
-            emit [print [(| :result |)]]
+            emit [print [(<*> :result)]]
         ]
         if find directives #die-if-error [
             return <die>
@@ -618,7 +618,7 @@ ext-console-impl: function [
     ]
 
     if group? prior [ ;-- plain execution of user code
-        emit [system/console/print-result ((| uneval get/any 'result |))]
+        emit [system/console/print-result ((<*> uneval get/any 'result))]
         return <prompt>
     ]
 
@@ -689,7 +689,7 @@ ext-console-impl: function [
                 write-stdout unspaced [unclosed #"\" space space]
                 emit compose/deep [reduce [
                     (result)
-                    any [system/console/input-hook | '~escape~]
+                    any [system/console/input-hook  '~escape~]
                 ]]
 
                 return block!
@@ -699,7 +699,7 @@ ext-console-impl: function [
         ; Could be an unclosed double quote (unclosed tag?) which more input
         ; on a new line cannot legally close ATM
         ;
-        emit [system/console/print-error (| error |)]
+        emit [system/console/print-error (<*> error)]
         return <prompt>
     ]
 
@@ -713,15 +713,15 @@ ext-console-impl: function [
             ; panic by giving them a message.  Reduce noise for the casual
             ; shortcut by only doing so when a bound variable exists.
             ;
-            emit [system/console/print-warning (|
+            emit [system/console/print-warning (<*>
                 spaced [
                     uppercase to text! code/1
                         "interpreted by console as:" mold :shortcut
                 ]
-            |)]
-            emit [system/console/print-warning (|
+            )]
+            emit [system/console/print-warning (<*>
                 spaced ["use" to get-word! code/1 "to get variable."]
-            |)]
+            )]
         ]
         take code
         insert code shortcut
@@ -730,7 +730,7 @@ ext-console-impl: function [
     ; Run the "dialect hook", which can transform the completed code block
     ;
     emit #unskin-if-halt ;-- Ctrl-C during dialect hook is a problem
-    emit [as group! system/console/dialect-hook ((| code |))]
+    emit [as group! system/console/dialect-hook ((<*> code))]
     return group! ;-- a group RESULT should come back to HOST-CONSOLE
 ]
 

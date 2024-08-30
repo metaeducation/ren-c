@@ -125,7 +125,7 @@ cscape: function [
                     copy "/* _ */"  ; replaced in post phase, vaporization
                 ]
                 mode = #cname [
-                    reify if not all [text? sub | empty? sub] [
+                    reify if not all [text? sub  empty? sub] [
                         to-c-name sub
                     ]
                 ]
@@ -141,14 +141,14 @@ cscape: function [
             sub: any [degrade sub copy ""]
 
             case [
-                all [any-upper | not any-lower] [uppercase sub]
-                all [any-lower | not any-upper] [lowercase sub]
+                all [any-upper  not any-lower] [uppercase sub]
+                all [any-lower  not any-upper] [lowercase sub]
             ]
 
             ; If the substitution started at a certain column, make any line
             ; breaks continue at the same column.
             ;
-            indent: unspaced collect [keep newline | keep prefix]
+            indent: unspaced collect [keep newline  keep prefix]
             replace/all sub newline indent
 
             keep sub
@@ -171,7 +171,7 @@ cscape: function [
             |
             newline
             [
-                if (did all [not nonwhite | removed])
+                if (did all [not nonwhite  removed])
                 :start-line remove thru [newline | end]
                 |
                 skip
@@ -214,7 +214,10 @@ make-emitter: function [
 
     split-path/file file the stem:
 
-    temporary: did any [temporary | parse2/match stem ["tmp-" to end]]
+    temporary: did any [
+        temporary
+        parse2/match stem ["tmp-" to end]
+    ]
 
     is-c: did parse2/match stem [thru [".c" | ".h" | ".inc"]]
 

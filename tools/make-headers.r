@@ -252,9 +252,9 @@ for-each item file-base/core [
     ]
 
     assert [
-        | %.c = suffix? file
-        | not find/match file "host-"
-        | not find/match file "os-"
+        %.c = suffix? file
+        not find/match file "host-"
+        not find/match file "os-"
     ]
 
     process file

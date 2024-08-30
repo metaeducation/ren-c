@@ -58,7 +58,7 @@ void Collapsify_Array(Array* array, Specifier* specifier, REBLEN limit)
                 limit + 1
             );
 
-            Init_Word(Array_At(copy, limit), Canon(SYM_ELLIPSIS));
+            Init_Word(Array_At(copy, limit), Canon(SYM_ELLIPSIS_3));
 
             Collapsify_Array(
                 copy,
@@ -126,7 +126,7 @@ Value* Init_Near_For_Frame(Cell* out, Level* L)
 
     REBINT start = LVL_INDEX(L) - 3;
     if (start > 0) {
-        Init_Word(PUSH(), Canon(SYM_ELLIPSIS));
+        Init_Word(PUSH(), Canon(SYM_ELLIPSIS_3));
     }
     else if (start < 0)
         start = 0;
@@ -164,7 +164,7 @@ Value* Init_Near_For_Frame(Cell* out, Level* L)
     }
 
     if (NOT_END(item))
-        Init_Word(PUSH(), Canon(SYM_ELLIPSIS));
+        Init_Word(PUSH(), Canon(SYM_ELLIPSIS_3));
 
     // !!! This code can be called on an executing frame, such as when an
     // error happens in that frame.  Or it can be called on a pending frame

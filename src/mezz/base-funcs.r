@@ -246,10 +246,16 @@ dig-action-meta-fields: function [value [action!]] [
     underlying: ensure [~null~ action!] any [
         get 'meta/specializee
         get 'meta/adaptee
-        all [block? :meta/chainees | first meta/chainees]
+        all [
+            block? :meta/chainees
+            first meta/chainees
+        ]
     ]
 
-    fields: all [:underlying | dig-action-meta-fields :underlying]
+    fields: all [
+        :underlying
+        dig-action-meta-fields :underlying
+    ]
 
     inherit-frame: function [parent [<maybe> frame!]] [
         child: make frame! :value
@@ -352,7 +358,10 @@ redescribe: function [
     parse spec [
         opt [
             description: text! (
-                either all [equal? description {} | not meta] [
+                either all [
+                    equal? description {}
+                    not meta
+                ][
                     ; No action needed (no meta to delete old description in)
                 ][
                     on-demand-meta
@@ -467,8 +476,10 @@ ensure: redescribe [
             ; https://github.com/metaeducation/ren-c/issues/587
             ;
             fail [
-                "ENSURE failed with argument of type"
-                    any [type of :arg | "null"]
+                "ENSURE failed with argument of type" any [
+                    type of :arg
+                    "null"
+                ]
             ]
         ]
     ]
@@ -552,7 +563,10 @@ iterate-back: redescribe [
 count-up: redescribe [
     "Loop the body, setting a word from 1 up to the end value given"
 ](
-    specialize 'for [start: 1 | bump: 1]
+    specialize 'for [
+        start: 1
+        bump: 1
+    ]
 )
 
 count-down: redescribe [
@@ -626,7 +640,6 @@ nfix?: function [
     ] else [
         fail [
             name "used on enfixed function with arity" arity
-                |
             "Use ENFIXED? for generalized (tricky) testing"
         ]
     ]
@@ -635,13 +648,19 @@ nfix?: function [
 postfix?: redescribe [
     {TRUE if an arity 1 function is SET/ENFIX to act as postfix.}
 ](
-    specialize :nfix? [n: 1 | name: "POSTFIX?"]
+    specialize :nfix? [
+        n: 1
+        name: "POSTFIX?"
+    ]
 )
 
 infix?: redescribe [
     {TRUE if an arity 2 function is SET/ENFIX to act as infix.}
 ](
-    specialize :nfix? [n: 2 | name: "INFIX?"]
+    specialize :nfix? [
+        n: 2
+        name: "INFIX?"
+    ]
 )
 
 
@@ -753,7 +772,6 @@ once-bar: func [
 
     elide any [
         tail? right
-            |
         '|| = look: take lookahead ;-- hack...recognize selfs
     ] else [
         fail/where [
@@ -887,7 +905,6 @@ module: func [
                         append spec/exports w
                     ]
                 )
-            |
                 w: block! (
                     append spec/exports collect-words/ignore w spec/exports
                 )
@@ -908,7 +925,6 @@ module: func [
                         append hidden w
                     ]
                 )
-            |
                 w: block! (
                     append hidden collect-words/ignore w select spec 'exports
                 )

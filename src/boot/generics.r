@@ -220,8 +220,8 @@ at: generic [
 
 find: generic [
     {Searches for the position where a matching value is found}
-    return: {position found, else blank (void if series is itself blank)}
-        [~null~ any-series! blank! bar!]
+    return: {position found, else null (NOTHING if non-positional)}
+        [~null~ any-series! nothing!]
     series [<maybe> blank! any-series! any-context! map! bitset! typeset!]
     value [any-value!]
     /part {Limits the search to a given length or position}
@@ -237,7 +237,7 @@ find: generic [
 ]
 
 select: generic [
-    {Searches for a value; returns the value that follows, else void.}
+    {Searches for a value; returns the value that follows, else null.}
     return: [~null~ any-value!]
     series [<maybe> blank! any-series! any-context! map!]
     value [any-value!]
@@ -291,7 +291,7 @@ take: generic [
     series [<maybe> blank! any-series! port! blank! varargs!]
         {At position (modified)}
     /part {Specifies a length or end position}
-    limit [any-number! any-series! pair! bar!]
+    limit [any-number! any-series! pair!]
     /deep {Also copies series values within the block}
     /last {Take it from the tail end}
 ]
@@ -470,7 +470,7 @@ modify: generic [
 ;
 on-wake-up: generic [
     {Updates external and internal states (normally after read/write).}
-    return: [~null~]
+    return: [~]
     port [port!]
 ]
 

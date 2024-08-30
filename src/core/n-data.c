@@ -462,17 +462,8 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
     Specifier* specifier,
     bool any
 ){
-    if (Is_Bar(v)) {
-        //
-        // `a: 10 | b: 20 | get [a | b]` will give back `[10 | 20]`.
-        // While seemingly not a very useful feature standalone, this
-        // compatibility with SET could come in useful so that blocks
-        // don't have to be rearranged to filter out BAR!s.
-        //
-        Init_Bar(out);
-    }
-    else if (Is_Void(v)) {
-        Init_Nulled(out);  // may be turned to trash after loop, or error
+    if (Is_Void(v)) {
+        Init_Nulled(out);  // may be turned to undefined after loop, or error
     }
     else if (Any_Word(v)) {
         Move_Opt_Var_May_Fail(out, v, specifier);
@@ -577,15 +568,7 @@ INLINE void Set_Opt_Polymorphic_May_Fail(
     if (enfix and not Is_Action(value))
         fail ("Attempt to SET/ENFIX on a non-ACTION!");
 
-    if (Is_Bar(target)) {
-        //
-        // Just skip it, e.g. `set [a | b] [1 2 3]` sets a to 1, and b
-        // to 3, but drops the 2.  This functionality was achieved
-        // initially with blanks, but with setting in particular there
-        // are cases of `in obj 'word` which give back blank if the word
-        // is not there, so it leads to too many silent errors.
-    }
-    else if (Any_Word(target)) {
+    if (Any_Word(target)) {
         Value* var = Sink_Var_May_Fail(target, target_specifier);
         Derelativize(var, value, value_specifier);
         if (enfix)

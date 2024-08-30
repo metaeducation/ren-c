@@ -517,14 +517,13 @@ collect*: specialize :collect-with [name: 'keep]
 
 collect: chain [  ; Gives empty block instead of null if no keeps
     :collect*
-        |
     specialize 'else [branch: [copy []]]
 ]
 
 collect-lines: adapt 'collect [  ; https://forum.rebol.info/t/945/1
     body: compose [
         keep: adapt specialize 'keep [
-            line: true | only: false | part: false
+            line: true  only: false  part: false
         ] [value: maybe spaced maybe :value]
         ((as group! body))
     ]
@@ -534,18 +533,15 @@ collect-text: chain [  ; https://forum.rebol.info/t/945/2
      adapt 'collect [
          body: compose [
              keep: adapt specialize 'keep [
-                 line: false | only: false | part: false
+                 line: false  only: false  part: false
              ][
                  value: maybe unspaced maybe :value
              ]
              ((as group! body))
          ]
      ]
-        |
     :maybe
-        |
     :spaced
-        |
     specialize 'else [branch: [copy ""]]
 ]
 
@@ -731,8 +727,8 @@ find-all: function [
 ][
     verify [any-series? orig: get series]
     while [any [
-        | set series find get series :value
-        | (set series orig | false) ;-- reset series and break loop
+        set series find get series :value
+        (set series orig  false) ;-- reset series and break loop
     ]][
         do body
         series: next series

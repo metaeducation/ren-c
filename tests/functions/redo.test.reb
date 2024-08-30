@@ -186,7 +186,6 @@
 
            ;-- fall through to base
         ]
-            |
         func [x] [
             if x = "base done" [
                 <success>

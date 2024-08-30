@@ -847,11 +847,6 @@ static void Init_Root_Vars(void)
     Init_Blank(&PG_Blank_Value[0]);
     Poison_Cell(&PG_Blank_Value[1]);
 
-    Erase_Cell(&PG_Bar_Value[0]);
-    Erase_Cell(&PG_Bar_Value[1]);
-    Init_Bar(&PG_Bar_Value[0]);
-    Poison_Cell(&PG_Bar_Value[1]);
-
     Erase_Cell(&PG_False_Value[0]);
     Erase_Cell(&PG_False_Value[1]);
     Init_False(&PG_False_Value[0]);
@@ -1406,6 +1401,13 @@ void Startup_Core(void)
     BOOT_BLK *boot = cast(BOOT_BLK*, VAL_ARRAY_HEAD(Array_Head(boot_array)));
 
     Startup_Symbols(Cell_Array(&boot->words));
+
+    // BAR! datatype is now WORD! of `|`, can't init until symbols inited
+    //
+    Erase_Cell(&PG_Bar_Value[0]);
+    Erase_Cell(&PG_Bar_Value[1]);
+    Init_Bar(&PG_Bar_Value[0]);
+    Poison_Cell(&PG_Bar_Value[1]);
 
     // Symbol_Id(), Cell_Word_Id() and Canon(SYM_XXX) now available
 

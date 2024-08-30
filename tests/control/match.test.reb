@@ -39,18 +39,18 @@
         ;     if match [blank!] find "abc" "d" [...]
         ;
         ; Rather than have MATCH return a falsey result in these cases of
-        ; success, pass back a BAR! in the hopes of drawing attention.
+        ; success, pass back a NOTHING in the hopes of drawing attention.
 
         set the result: do f  ; can't access f/arg after the DO
 
         if not :arg and [not null? :result] [
-            return '| ;-- BAR! if matched a falsey type
+            return ~  ; nothing if matched a falsey type
         ]
         :result  ; return null if no match, else truthy result
     ])
 
     (10 = match2 integer! 10)
     (null = match2 integer! "ten")
-    (bar? match2 blank! _)
+    (nothing? match2 blank! _)
     (null = match2 blank! 10)
 ]

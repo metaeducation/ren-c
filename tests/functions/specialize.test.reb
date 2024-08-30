@@ -73,14 +73,14 @@
     r: [<X> #Y A B A B A B]
 
     did all [
-        | r = apd copy xy abc 2 3
-        | r = applique 'apd [series: copy xy | value: abc | limit: 2 | count: 3]
-        |
-        | r = apd3 copy xy abc 2
-        | r = applique 'apd3 [series: copy xy | value: abc | limit: 2]
-        |
-        | r = ap2d copy xy abc 3
-        | r = applique 'ap2d [series: copy xy | value: abc | count: 3]
+        r = apd copy xy abc 2 3
+        r = applique 'apd [series: copy xy  value: abc  limit: 2  count: 3]
+
+        r = apd3 copy xy abc 2
+        r = applique 'apd3 [series: copy xy  value: abc  limit: 2]
+
+        r = ap2d copy xy abc 3
+        r = applique 'ap2d [series: copy xy  value: abc  count: 3]
     ]
 )(
     adp: specialize 'append/dup [part: true]
@@ -92,14 +92,14 @@
     r: [<X> #Y A B A B A B]
 
     did all [
-        | r = adp copy xy abc 3 2
-        | r = applique 'adp [series: copy xy | value: abc | count: 3 | limit: 2]
-        |
-        | r = adp2 copy xy abc 3
-        | r = applique 'adp2 [series: copy xy | value: abc | count: 3]
-        |
-        | r = ad3p copy xy abc 2
-        | r = applique 'ad3p [series: copy xy | value: abc | limit: 2]
+        r = adp copy xy abc 3 2
+        r = applique 'adp [series: copy xy  value: abc  count: 3  limit: 2]
+
+        r = adp2 copy xy abc 3
+        r = applique 'adp2 [series: copy xy  value: abc  count: 3]
+
+        r = ad3p copy xy abc 2
+        r = applique 'ad3p [series: copy xy  value: abc  limit: 2]
     ]
 )
 
@@ -112,8 +112,8 @@
     r: [a b c [d e] [d e] [d e]]
 
     did all [
-        | r = aopd3 copy [a b c] [d e]
-        | r = applique 'aopd3 [series: copy [a b c] value: [d e]]
+        r = aopd3 copy [a b c] [d e]
+        r = applique 'aopd3 [series: copy [a b c] value: [d e]]
     ]
 )
 

@@ -220,21 +220,21 @@ host-start: function [
     emit: function [
         {Builds up sandboxed code to submit to C, hooked RETURN will finalize}
 
-        item "ISSUE! directive, TEXT! comment, (| composed |) code BLOCK!"
+        item "ISSUE! directive, TEXT! comment, (<*> composed) code BLOCK!"
             [block! issue! text!]
         <with> instruction
     ][
         really switch type of item [
             issue! [
-                if not empty? instruction [append/line instruction '|]
+                if not empty? instruction [append/line instruction [()]]
                 insert instruction item
             ]
             text! [
                 append/line instruction compose [comment (item)]
             ]
             block! [
-                if not empty? instruction [append/line instruction '|]
-                append/line instruction compose/deep '| item
+                if not empty? instruction [append/line instruction [()]]
+                append/line instruction compose/deep <*> item
             ]
         ]
     ]
@@ -255,7 +255,7 @@ host-start: function [
                 emit [system/console/print-gap]
                 emit [system/console/print-prompt]
                 emit [reduce [
-                    any [system/console/input-hook | '~escape~]
+                    any [system/console/input-hook  '~escape~]
                 ]] ;-- gather first line (or escape), put in BLOCK!
             ]
             <halt> [
@@ -268,8 +268,8 @@ host-start: function [
             ]
             <bad> [
                 emit #no-unskin-if-error
-                emit [print (| mold uneval prior |)]
-                emit [fail ["Bad REPL continuation:" ((| uneval result |))]]
+                emit [print (<*> mold uneval prior)]
+                emit [fail ["Bad REPL continuation:" ((<*> uneval result))]]
             ]
         ] then [
             return-to-c instruction
@@ -289,7 +289,7 @@ host-start: function [
                 state
             ]
             default [
-                emit [fail [{Bad console instruction:} ((| mold state |))]]
+                emit [fail [{Bad console instruction:} ((<*> mold state))]]
             ]
         ]
     ]
@@ -539,7 +539,7 @@ host-start: function [
                 quit-when-done: default [true] ;-- override blank, not false
 
                 emit {Use /ONLY so that QUIT/WITH quits, vs. return DO value}
-                emit [do/only ((| param-or-die "DO" |))]
+                emit [do/only ((<*> param-or-die "DO"))]
             )
         |
             ["--halt" | "-h"] <end> (
@@ -719,7 +719,7 @@ host-start: function [
     ;
     if file? o/script [
         emit {Use DO/ONLY so QUIT/WITH exits vs. being DO's return value}
-        emit [do/only/args ((| o/script |)) ((| script-args |))]
+        emit [do/only/args ((<*> o/script)) ((<*> script-args))]
     ]
 
     host-start: 'done

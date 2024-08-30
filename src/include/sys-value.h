@@ -101,7 +101,7 @@
 //
 // In the debug build, Poison cells (NODE_FLAG_FREE) can use their payload to
 // store where and when they were initialized.  This also applies to some
-// datatypes like BLANK!, BAR!, LOGIC!, or NOTHING--since they only use their
+// datatypes like BLANK!, VOID!, LOGIC!, or NOTHING--since they only use their
 // header bits, they can also use the payload for this in the debug build.
 //
 // (Note: The release build does not canonize unused bits of payloads, so
@@ -803,29 +803,21 @@ INLINE Value* Nothingify_Branched(Value* cell) {
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  BAR! and LIT-BAR!
+//  BAR!
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// The "expression barrier" is denoted by a lone vertical bar `|`.  It
-// has the special property that literals used directly will be rejected
-// as a source for argument fulfillment.  BAR! that comes from evaluations
-// can be passed as a parameter, however:
-//
-//     append [a b c] | [d e f] print "Hello"   ;-- will cause an error
-//     append [a b c] [d e f] | print "Hello"   ;-- is legal
-//     append [a b c] first [|]                 ;-- is legal
-//     append [a b c] '|                        ;-- is legal
+// Was for a time the expression barrier.  That is now COMMA! in modern Ren-C.
 //
 
 #define BAR_VALUE \
     c_cast(const Value*, &PG_Bar_Value[0])
 
 #define Init_Bar(out) \
-    RESET_CELL((out), REB_BAR);
+    Init_Word((out), Canon(SYM_BAR_1));
 
-#define Init_Lit_Bar(out) \
-    RESET_CELL((out), REB_LIT_BAR);
+#define Is_Bar(v) \
+    (Is_Word(v) and Cell_Word_Id(v) == SYM_BAR_1)
 
 
 //=////////////////////////////////////////////////////////////////////////=//

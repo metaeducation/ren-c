@@ -274,20 +274,9 @@
     FLAG_LEFT_BIT(23)
 
 
-//=//// DO_FLAG_BARRIER_HIT ///////////////////////////////////////////////=//
+//=//// DO_FLAG_24 ////////////////////////////////////////////////////////=//
 //
-// Evaluation of arguments can wind up seeing a barrier and "consuming" it.
-// This is true of a BAR!, but also GROUP!s which have no effective content:
-//
-//    >> 1 + (comment "vaporizes, but disrupts like a BAR! would") 2
-//    ** Script Error: + is missing its value2 argument
-//
-// But the evaluation will advance the frame.  So if a function has more than
-// one argument it has to remember that one of its arguments saw a "barrier",
-// otherwise it would receive an end signal on an earlier argument yet then
-// get a later argument fulfilled.
-//
-#define DO_FLAG_BARRIER_HIT \
+#define DO_FLAG_24 \
     FLAG_LEFT_BIT(24)
 
 

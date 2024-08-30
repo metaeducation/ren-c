@@ -50,11 +50,15 @@ to-c-name: function [
 
     return: [text!]
     value "Will be converted to text (via UNSPACED if BLOCK!)"
-        [text! block! word!]
+        [word! text!]  ; accepts TEXT! to get past bootstrap issues
     /scope "See C's rules: http://stackoverflow.com/questions/228783/"
     where "Either #global or #local (defaults global)"
         [issue!]
 ][
+    if any [value = '|  value = "|"] [  ; BAR! in bootstrap, but WORD! in R3C
+        return copy "bar_1"
+    ]
+
     all [
         text? value
         empty? value
@@ -72,26 +76,23 @@ to-c-name: function [
     string: either block? :value [unspaced value] [form value]
 
     string: switch string [
-        ; Used specifically by t-routine.c to make SYM_ELLIPSIS
+        ; Used specifically by t-routine.c to make SYM_ELLIPSIS_3
         ;
-        "..." [copy "ellipsis"]
+        "..." [copy "ellipsis_3"]
 
-        ; Used to make SYM_HYPHEN which is needed by `charset [#"A" - #"Z"]`
+        ; Used to make SYM_HYPHEN_1 which is needed by `charset [#"A" - #"Z"]`
         ;
-        "-" [copy "hyphen"]
+        "-" [copy "hyphen_1"]
 
-        ; Used to deal with the /? refinements (which may not last)
-        ;
-        "?" [copy "q"]
+        "?" [copy "question_1"]
 
         ; None of these are used at present, but included just in case
         ;
-        "*" [copy "asterisk"]
-        "." [copy "period"]
-        "!" [copy "exclamation"]
-        "+" [copy "plus"]
-        "~" [copy "tilde"]
-        "|" [copy "bar"]
+        "*" [copy "asterisk_1"]
+        "." [copy "period_1"]
+        "!" [copy "exclamation_1"]
+        "+" [copy "plus_1"]
+        "~" [copy "tilde_1"]
 
         default [
             ;

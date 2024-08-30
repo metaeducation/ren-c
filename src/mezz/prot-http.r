@@ -791,7 +791,7 @@ sys/make-scheme [
         copy: func [
             port [port!]
         ][
-            either all [port/spec/method = 'HEAD | port/state] [
+            either all [port/spec/method = 'HEAD  port/state] [
                 reduce bind [name size date] port/state/info
             ][
                 if port/data [copy port/data]

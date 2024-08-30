@@ -207,8 +207,6 @@ handle      handle      -       -       +       -
 
 blank       unit        blank   +       +       -
 ; end of inert unbindable types
-bar         unit        -       +       +       -
-lit-bar     unit        -       +       +       -
 nothing     unit        -       +       +       -
 void        unit        -       +       +       -
 

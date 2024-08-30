@@ -283,7 +283,10 @@ modernize-action: function [
                 ;
                 ; Feed through any TEXT!s following the ANY-WORD!
                 ;
-                while [if (tail? spec: my next) [break] | text? spec/1] [
+                while [
+                    if (tail? spec: my next) [break]
+                    text? spec/1
+                ][
                     keep/only spec/1
                 ]
 
@@ -377,7 +380,6 @@ split-path: lib/func [
         pos: opt some [thru #"/" [end | pos:]] (
             all [
                 empty? dir: copy/part location at head of location index of pos
-                    |
                 dir: %./
             ]
             all [find [%. %..] pos: to file! pos insert tail of pos #"/"]

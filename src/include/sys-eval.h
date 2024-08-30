@@ -726,10 +726,7 @@ INLINE bool Eval_Step_Throws(
     // The & on the following line is purposeful.  See Init_Endlike_Header.
     // DO_FLAG_NO_LOOKAHEAD may be set by an operation like ELIDE.
     //
-    // Since this routine is used by BLOCK!-style varargs, it must retain
-    // knowledge of if BAR! was hit.
-    //
-    (&L->flags)->bits = prior_flags | (L->flags.bits & DO_FLAG_BARRIER_HIT);
+    (&L->flags)->bits = prior_flags;
 
     return threw;
 }
@@ -757,10 +754,7 @@ INLINE bool Eval_Step_Maybe_Stale_Throws(
     // The & on the following line is purposeful.  See Init_Endlike_Header.
     // DO_FLAG_NO_LOOKAHEAD may be set by an operation like ELIDE.
     //
-    // Since this routine is used by BLOCK!-style varargs, it must retain
-    // knowledge of if BAR! was hit.
-    //
-    (&L->flags)->bits = prior_flags | (L->flags.bits & DO_FLAG_BARRIER_HIT);
+    (&L->flags)->bits = prior_flags;
 
     return threw;
 }
@@ -858,9 +852,6 @@ INLINE bool Eval_Step_In_Subframe_Throws(
     higher->value = child->value;
     higher->gotten = child->gotten;
     assert(higher->specifier == child->specifier); // !!! can't change?
-
-    if (child->flags.bits & DO_FLAG_BARRIER_HIT)
-        higher->flags.bits |= DO_FLAG_BARRIER_HIT;
 
     return threw;
 }
@@ -1096,7 +1087,7 @@ INLINE bool Eval_Value_Core_Throws(
     );
 
     if (IS_END(out))
-        fail ("Eval_Value_Core_Throws() empty or just COMMENTs/ELIDEs/BAR!s");
+        fail ("Eval_Value_Core_Throws() empty or just COMMENTs/ELIDEs");
 
     return indexor == THROWN_FLAG;
 }
