@@ -45,7 +45,7 @@
 (
     block: copy [1 2 3 4]
     remove-each i block [
-        if i = 3 [continue true]
+        if i = 3 [continue/with true]
         if i = 4 [true] else [false]
     ]
     block = [1 2]

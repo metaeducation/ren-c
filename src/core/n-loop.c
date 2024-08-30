@@ -104,8 +104,8 @@ DECLARE_NATIVE(break)
 //
 //  "Throws control back to top of loop for next iteration."
 //
-//      value "If provided, act as if loop body finished with this value"
-//          [<end> any-value!]
+//      /with "Act as if loop body finished with this value"
+//      value [any-value!]
 //  ]
 //
 DECLARE_NATIVE(continue)
@@ -116,7 +116,7 @@ DECLARE_NATIVE(continue)
 {
     INCLUDE_PARAMS_OF_CONTINUE;
 
-    if (Is_Nulled(ARG(value)))  // it's an END (should change to CONTINUE/WITH)
+    if (not REF(with))  // it's an END (should change to CONTINUE/WITH)
         Init_Void(ARG(value));
 
     Copy_Cell(OUT, NAT_VALUE(continue));
