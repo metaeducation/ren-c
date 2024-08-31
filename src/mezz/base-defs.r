@@ -64,11 +64,11 @@ probe: func* [
 ;
 ; https://forum.rebol.info/t/why-then-and-else-are-mutually-exclusive/1080/9
 ;
-did*: runs :did/decay
-didn't*: runs :didn't/decay
-*then: enfix :then/decay
-*also: enfix :also/decay
-*else: enfix :else/decay
+did*: get $did/decay
+didn't*: get $didn't/decay
+*then: get $then/decay
+*also: get $also/decay
+*else: get $else/decay
 
 ; Give special operations their special properties
 ;

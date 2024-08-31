@@ -280,17 +280,7 @@ Bounce MAKE_Path(
 //     >> compose /(block)
 //     == /[a b c]
 //
-// TO must return the exact type requested, so this wouldn't be legal:
-//
-//     >> to path! 'a:
-//     == /a:  ; !!! a SET-PATH!, which is not the promised PATH! return type
-//
-// So the only choice is to discard the decorators, or error.  Discarding is
-// consistent with ANY-WORD? interconversion, and also allows another avenue
-// for putting blocks as-is in paths by using the decorated type:
-//
-//     >> to path! ^[a b c]
-//     == /[a b c]
+// TO must return the exact type requested.
 //
 Bounce TO_Sequence(Level* level_, Kind k, const Value* arg) {
     Heart heart = cast(Heart, k);
@@ -320,7 +310,7 @@ Bounce TO_Sequence(Level* level_, Kind k, const Value* arg) {
         );
     }
 
-    if (Any_Sequence_Kind(arg_kind)) {  // e.g. `to set-path! 'a/b/c`
+    if (Any_Sequence_Kind(arg_kind)) {  // e.g. `to set-tuple! 'a.b.c`
         assert(heart != arg_kind);  // TO should have called COPY
 
         // !!! If we don't copy an array, we don't get a new form to use for

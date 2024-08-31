@@ -286,13 +286,7 @@ void Push_Keys_And_Parameters_May_Fail(
 
             symbol = VAL_REFINEMENT_SYMBOL(item);
 
-            if (heart == REB_GET_PATH) {
-                if (quoted)
-                    pclass = PARAMCLASS_MEDIUM;
-                else
-                    pclass = PARAMCLASS_SOFT;
-            }
-            else if (heart == REB_PATH) {
+            if (heart == REB_PATH) {
                 if (quoted)
                     pclass = PARAMCLASS_HARD;
                 else

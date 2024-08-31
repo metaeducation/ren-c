@@ -121,7 +121,7 @@
 )
 ; routine test?
 (
-    a-value: first [a/b:]
+    a-value: first [a.b:]
     :a-value == a-value
 )
 (

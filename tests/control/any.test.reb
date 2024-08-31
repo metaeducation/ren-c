@@ -111,7 +111,7 @@
 (/a == any [/a])
 ; routine test?
 (
-    a-value: first [a/b:]
+    a-value: first [a.b:]
     :a-value == any [:a-value]
 )
 (
@@ -209,7 +209,7 @@
 )
 (/a == any [false /a])
 (
-    a-value: first [a/b:]
+    a-value: first [a.b:]
     :a-value == any [false :a-value]
 )
 (
@@ -305,7 +305,7 @@
 )
 (/a == any [/a false])
 (
-    a-value: first [a/b:]
+    a-value: first [a.b:]
     :a-value == any [:a-value false]
 )
 (

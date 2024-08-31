@@ -73,12 +73,9 @@
         "/#a"  !!  ~scan-invalid~
         "blk/#{}"  !!  ~scan-invalid~
 
-        === R3-ALPHA COMPATIBILITY HACKS ===
+        === CHAIN INSIDE OF PATH ===
 
-        ; GET-WORD! is not legal in Ren-C as a path element due to ambiguities
-        ; about `:a/b` being a GET-WORD! in the head position of a PATH! or
-        ; a plain WORD! at the head of a GET-PATH!.  Instead, single-element
-        ; GROUP!s are made as cheap as GET-WORD! cells in path.
+        ; Coming soon: CHAIN! datatype
 
         "a/:b"  ->  [a ^(:b)]
         "a/:b/c"  ->  [a ^(:b) c]

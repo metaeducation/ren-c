@@ -70,7 +70,7 @@ dump: func [
             ]
 
             path! [
-                print [to set-path! item, val-to-text reduce item]
+                print [unspaced [mold item ":"] val-to-text reduce item]
             ]
 
             group! [
@@ -89,7 +89,7 @@ dump: func [
 
     let swp
     case [
-        swp: match [set-word! set-path!] :value [  ; `dump x: 1 + 2`
+        swp: match [set-word! set-tuple!] :value [  ; `dump x: 1 + 2`
             let [pos result]: evaluate/next extra
             set swp :result
             print [swp, result]
@@ -97,7 +97,7 @@ dump: func [
 
         let b: match block! value [
             while [not tail? b] [
-                if swp: match [set-word! set-path!] :b.1 [  ; `dump [x: 1 + 2]`
+                if swp: match [set-word! set-tuple!] :b.1 [  ; `dump [x: 1 + 2]`
                     [b result]: evaluate/next b
                     print [swp, result]
                 ] else [
@@ -150,7 +150,7 @@ dumps: enfix func [
     return: [action?]
     :name [set-word!]
     :value "If issue, create non-specialized dumper...#on or #off by default"
-        [issue! text! integer! word! set-word! set-path! group! block!]
+        [issue! text! integer! word! set-word! set-tuple! group! block!]
     extra "Optional variadic data for SET-WORD!, e.g. `dv: dump var: 1 + 2`"
         [~null~ any-value? <variadic>]
 ][
@@ -161,7 +161,7 @@ dumps: enfix func [
     ] else [
         ; Make it easy to declare and dump a variable at the same time.
         ;
-        if match [set-word! set-path!] value [
+        if match [set-word! set-tuple!] value [
             value: evaluate extra
             value: either set-word? value [as word! value] [as path! value]
         ]

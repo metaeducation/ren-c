@@ -151,19 +151,19 @@
     b-value: [a b]
     equal? equal? :a-value :b-value equal? :b-value :a-value
 )
-; block! vs. set-path!
-(not equal? [a b] first [a/b:])
-; block! vs. set-path! symmetry
+; block! vs. set-tuple!
+(not equal? [a b] first [a.b:])
+; block! vs. set-tuple! symmetry
 (
-    a-value: first [a/b:]
+    a-value: first [a.b:]
     b-value: [a b]
     equal? equal? :a-value :b-value equal? :b-value :a-value
 )
-; block! vs. get-path!
-(not equal? [a b] first [:a/b])
-; block! vs. get-path! symmetry
+; block! vs. get-tuple!
+(not equal? [a b] first [:a.b])
+; block! vs. get-tuple! symmetry
 (
-    a-value: first [:a/b]
+    a-value: first [:a.b]
     b-value: [a b]
     equal? equal? :a-value :b-value equal? :b-value :a-value
 )
@@ -466,13 +466,13 @@
         a: 1 b: 1.0 c: $1 d: 1%
         e: [a 'a :a a: /a #"a" #{00}]
         f: ["a" #a http://a a@a.com <a>]
-        g: :a/b/(c: 'd/e/f)/(b/d: [:f/g h/i])
+        g: a/b/(c: 'd/e/f)/(b.d: [:f.g h/i])
     ]
     b-value: construct @[
         a: 1 b: 1.0 c: $1 d: 1%
         e: [a 'a :a a: /a #"a" #{00}]
         f: ["a" #a http://a a@a.com <a>]
-        g: :a/b/(c: 'd/e/f)/(b/d: [:f/g h/i])
+        g: a/b/(c: 'd/e/f)/(b.d: [:f.g h/i])
     ]
     equal? a-value b-value
 )(
@@ -480,13 +480,13 @@
         a: 1 b: 1.0 c: $1 d: 1%
         e: [a 'a :a a: /a #"a" #{00}]
         f: ["a" #a http://a a@a.com <a>]
-        g: :a/b/(c: 'd/e/f)/(b/d: [:f/g h/i])
+        g: a/b/(c: 'd/e/f)/(b.d: [:f.g h/i])
     ]
     b-value: construct @[
         a: 1 b: 1.0 c: $1 d: 1%
         e: [a 'a :a a: /a #"a" #{00}]
         f: ["a" #a http://a a@a.com <a>]
-        g: :a/b/(c: 'd/e/f)/(b/d: [:f/g h/i])
+        g: a/b/(c: 'd/e/f)/(b.d: [:f.g h/i])
     ]
     test: :equal?
     equal?
@@ -500,13 +500,13 @@
         a: 1 b: 1.0 c: $1 d: 1%
         e: [a 'a :a a: /a #"a" #{00}]
         f: ["a" #a http://a a@a.com <a>]
-        g: :a/b/(c: 'd/e/f)/(b/d: [:f/g h/i])
+        g: a/b/(c: 'd/e/f)/(b.d: [:f.g h/i])
     ]
     b-value: construct compose @[
         a: 1.0 b: $1 c: 100% d: 0.01
         e: [/a a 'a :a a: #"A" (next #{0000})]
         f: [#a <A> http://A a@A.com "A"]
-        g: :a/b/(c: 'd/e/f)/(b/d: [:f/g h/i])
+        g: a/b/(c: 'd/e/f)/(b.d: [:f.g h/i])
     ]
     test: :equal?
     equal?

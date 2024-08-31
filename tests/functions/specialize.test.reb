@@ -1,10 +1,10 @@
 ; specialize.test.reb
 ;
-; Note: GET-PATH! for partial specialization uses basically the same code
+; Note: GET for partial specialization uses basically the same code
 ; path as SPECIALIZE does, e.g. these run the same code:
 ;
-;     specialize :append/dup/part []
-;     :append/dup/part
+;     specialize append:dup:part. []  ; CHAIN! notation, coming soon!
+;     get $append:dup:part
 
 [
     (
@@ -14,8 +14,8 @@
             ]
         ]
 
-        fooBC: :foo/B/C
-        fooCB: :foo/C/B
+        fooBC: get $foo/B/C
+        fooCB: get $foo/C/B
         true
     )
 
@@ -71,7 +71,7 @@
 
 [
     (
-        apd: :append/part/dup
+        apd: get $append/part/dup
         apd3: specialize :apd [dup: 3]
         ap2d: specialize :apd [part: 2]
 
@@ -105,7 +105,7 @@
 
 [
     (
-        adp: :append/dup/part
+        adp: get $append/dup/part
         adp2: specialize :adp [part: 2]
         ad3p: specialize :adp [dup: 3]
 
@@ -155,10 +155,10 @@
     is-bad: true
 
     for-each code [
-        [specialize :append/asdf []]
+        [specialize get $append/asdf []]
         [
-            flp: specialize :file-to-local/pass []
-            specialize :flp/pass []
+            flp: specialize get $file-to-local/pass []
+            specialize get $flp/pass []
         ]
     ][
         is-bad: me and (
@@ -171,7 +171,7 @@
 
 
 (
-    ap10d: specialize :append/dup [value: 10]
+    ap10d: specialize get $append/dup [value: 10]
     f: make frame! unrun :ap10d
     f.series: copy [a b c]
     all [
@@ -189,7 +189,7 @@
         foo: func [/a [integer!] '/b [<skip> word!]] [
             return reduce [/A (reify a) /B (reify b)]
         ]
-        foob: enfix :foo/b
+        foob: enfix get $foo/b
         true
     )
 

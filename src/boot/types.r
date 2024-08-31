@@ -322,14 +322,14 @@ pair        "two dimensional point or size"
                 [any-plain-value?]
                 [sequence    *       *]
 
-    set-path    "definition of a path's value"
+    set-dead    "WAS SET-PATH!, WILL NOT EXIST AFTER BIG ALIEN PROPOSAL"
                 ()
-                [any-set-value?]
+                []
                 [sequence    *       *]
 
-    get-path    "the value of a path"
+    get-dead    "WAS GET-PATH!, WILL NOT EXIST AFTER BIG ALIEN PROPOSAL"
                 ()
-                [any-get-value?]
+                []
                 [sequence    *       *]
 
     meta-path   "path that quotes product or turns quasiforms to antiforms"

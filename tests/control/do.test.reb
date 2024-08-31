@@ -161,7 +161,7 @@
 )
 (/a == eval [/a])
 (
-    a-value: first [a/b:]
+    a-value: first [a.b:]
     :a-value == eval [:a-value]
 )
 (
@@ -240,7 +240,7 @@
 )
 (
     all [
-        [pos /value]: evaluate/next/undecayed []
+        null? [pos /value]: evaluate/next/undecayed []
         pos = null
         null? value
     ]

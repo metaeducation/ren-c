@@ -34,9 +34,9 @@
     (10 = match integer! 10)
     (null = match integer! <tag>)
 
-    ('a/b: = match &any-path? 'a/b:)
-    ('a/b: = match &any-sequence? 'a/b:)
-    (null = match &any-list? 'a/b:)
+    ('a.b: = match &any-tuple? 'a.b:)
+    ('a.b: = match &any-sequence? 'a.b:)
+    (null = match &any-list? 'a.b:)
 ]
 
 ; ENSURE is a version of MATCH that fails vs. returning NULL on no match

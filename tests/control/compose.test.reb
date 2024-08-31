@@ -159,9 +159,8 @@
 ~???~ !! ([x:] = compose [(#x):])
 ~???~ !! ([x:] = compose [("x"):])
 
-([x/y:] = compose [( 'x/y ):])
-([x/y:] = compose [( 'x/y: ):])
-([x/y:] = compose [( ':x/y ):])
+; Can't put colons "on top" of paths
+~???~ !! (compose [( 'x/y ):])
 
 ([(x y):] = compose [( '(x y) ):])
 ([(x y):] = compose [( '(x y): ):])
@@ -186,9 +185,8 @@
 ([:x] = compose [:('x:)])
 ([:x] = compose [:(':x)])
 
-([:x/y] = compose [:( 'x/y )])
-([:x/y] = compose [:( 'x/y: )])
-([:x/y] = compose [:( ':x/y )])
+; Can't put colons on top of paths
+~???~ !! (compose [:( 'x/y )])
 
 ([:(x y)] = compose [:( '(x y) )])
 ([:(x y)] = compose [:( '(x y): )])
@@ -228,8 +226,8 @@
         ('(a)) :('(a)) ('(a)): @('(a)) ^('(a))
     ])
 
-    ([a/b :a/b a/b: @a/b ^a/b] = compose [
-        ('a/b) :('a/b) ('a/b): @('a/b) ^('a/b)
+    ([a/b @a/b ^a/b] = compose [
+        ('a/b) @('a/b) ^('a/b)
     ])
 
     ([a.b :a.b a.b: @a.b ^a.b] = compose [

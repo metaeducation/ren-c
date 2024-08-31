@@ -336,8 +336,6 @@ REBINT Cmp_Value(const Cell* s, const Cell* t, bool strict)
         return CT_List(s, t, strict);
 
       case REB_PATH:
-      case REB_SET_PATH:
-      case REB_GET_PATH:
       case REB_META_PATH:
       case REB_THE_PATH:
       case REB_TYPE_PATH:

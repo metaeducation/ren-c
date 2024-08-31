@@ -1131,8 +1131,7 @@ static void Handle_Mark_Rule(
         Copy_Cell(Sink_Word_May_Fail(rule, specifier), ARG(position));
     }
     else if (
-        k == REB_PATH or k == REB_SET_PATH
-        or k == REB_TUPLE or k == REB_SET_TUPLE
+        k == REB_PATH or k == REB_TUPLE or k == REB_SET_TUPLE
     ){
         // !!! Assume we might not be able to corrupt SPARE (rule may be
         // in SPARE?)

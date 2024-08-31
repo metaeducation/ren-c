@@ -941,8 +941,6 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
           case REB_META_GROUP:
           case REB_THE_GROUP:
           case REB_PATH:
-          case REB_SET_PATH:
-          case REB_GET_PATH:
           case REB_META_PATH:
           case REB_THE_PATH:
           case REB_TUPLE:

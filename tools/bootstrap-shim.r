@@ -48,11 +48,11 @@ REBOL [
 ]
 
 
-if trap [
-    :import/into  ; no /INTO means error here, so old r3 without import shim
-][
+if not find (words of :import) 'into [
+    ; no /INTO means error here, so old r3 without import shim
+
     ; Don't use -{...}- in this error message, because if this message is
-    ; being reported then this interpreter will think that's a tag.
+    ; being reported then this interpreter will not understand it.
 
     print ""
     print "!!! Bootstrapping with older Ren-C requires passing %import-shim.r"

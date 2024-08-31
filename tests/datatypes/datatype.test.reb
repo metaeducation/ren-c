@@ -7,9 +7,9 @@
 (
     for-each typename [
         frame! binary! bitset! block! type-word! date! decimal!
-        email! error! file! get-path! get-word! handle! integer!
+        email! error! file! get-tuple! get-word! handle! integer!
         issue! map! module! money! blank! object! pair! group!
-        path! percent! port! set-path! set-word! text! tag!
+        path! percent! port! set-tuple! set-word! text! tag!
         time! tuple! parameter! url! word!
     ][
         if not type-block? get inside [] typename [

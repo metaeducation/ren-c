@@ -114,9 +114,9 @@
 (void? eval [~void~])
 
 (
-    [1 (2 + 3) [4 + 5] a/+/b c/+/d: :e/+/f]
+    [1 (2 + 3) [4 + 5] a/+/b c.+.d: :e.+.f]
     = reduce
-    ['1 '(2 + 3) '[4 + 5] 'a/+/b 'c/+/d: ':e/+/f]
+    ['1 '(2 + 3) '[4 + 5] 'a/+/b 'c.+.d: ':e.+.f]
 )
 
 (the '[a b c] = quote [a b c])
@@ -204,8 +204,9 @@
         #issue
         'quoted
         pa/th
-        set/pa/th
-        :get/pa/th
+        tu.ple
+        set.tu.ple:
+        :get.tu.ple
         (the (group))
         [block]
         #{AE1020BD0304EA}

@@ -441,7 +441,7 @@ void MF_Sequence(REB_MOLD *mo, const Cell* v, bool form)
     Heart heart = Cell_Heart(v);
     char interstitial = Any_Tuple_Kind(heart) ? '.' : '/';
 
-    if (heart == REB_GET_PATH or heart == REB_GET_TUPLE)
+    if (heart == REB_GET_TUPLE)
         Append_Codepoint(mo->string, ':');
     else if (heart == REB_META_PATH or heart == REB_META_TUPLE)
         Append_Codepoint(mo->string, '^');
@@ -492,6 +492,6 @@ void MF_Sequence(REB_MOLD *mo, const Cell* v, bool form)
 
     }
 
-    if (heart == REB_SET_PATH or heart == REB_SET_TUPLE)
+    if (heart == REB_SET_TUPLE)
         Append_Codepoint(mo->string, ':');
 }

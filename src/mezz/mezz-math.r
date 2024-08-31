@@ -17,12 +17,12 @@ pi: 3.14159265358979323846
 ; Shorthands for radian forms of trig functions, first introduced by Red.
 ; http://www.red-lang.org/2014/08/043-floating-point-support.html
 
-cos: runs :cosine/radians
-sin: runs :sine/radians
-tan: runs :tangent/radians  ; contentious with color "tan" (CSS and elsewhere)
-acos: runs :arccosine/radians
-asin: runs :arcsine/radians
-atan: runs :arctangent/radians
+cos: get $cosine/radians
+sin: get $sine/radians
+tan: get $tangent/radians  ; contentious with color "tan" (CSS and elsewhere)
+acos: get $arccosine/radians
+asin: get $arcsine/radians
+atan: get $arctangent/radians
 
 modulo: func [
     "Compute a remainder of A divided by B with the sign of B."

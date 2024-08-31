@@ -12,7 +12,7 @@
 ;
 
 (get-block! = kind of first [:[a b c]])
-(get-path! = kind of first [:[a b c]/d])
+(get-tuple! = kind of first [:[a b c].d])
 
 (
     a: 10 b: 20

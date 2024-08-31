@@ -1,23 +1,14 @@
-; datatypes/set-path.r
-(set-path? first [a/b:])
-(not set-path? 1)
-(set-path! = kind of first [a/b:])
+(set-tuple? first [a.b:])
+(not set-tuple? 1)
+(set-tuple! = kind of first [a.b:])
 ; the minimum
 [#1947
-    (set-path? load-value "[a]/1:")
+    (set-tuple? load-value "[a].1:")
 ]
 
-; ANY-PATH? are no longer positional
-;
-;(
-;    all [
-;        set-path? a: load-value "[a b c]/2:"
-;        2 == index? a
-;    ]
-;)
+("a.b:" = mold first [a.b:])
 
-("a/b:" = mold first [a/b:])
-; set-paths are active
+; set-tuples are active
 (
     a: make object! [b: null]
     a.b: 5
@@ -28,7 +19,7 @@
     o.a.x: 71830
     o.a.x = 71830
 )]
-; set-path evaluation order
+; set-tuple evaluation order
 (
     a: 1x2
     a.x: (a: [x 4] 3)

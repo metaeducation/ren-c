@@ -29,9 +29,9 @@
 // action.  Slots in that frame that would have held TYPESET! information for
 // the parameter are replaced by the fixed value, which is type checked.
 //
-// Partial specialization uses a different mechanism.  `:file-to-local/pass`
-// fulfills a frame slot value since /PASS has no arguments, but `:append/part`
-// does not.  Distinctions between `:append/dup/part` and `:append/part/dup`
+// Partial specialization uses a different mechanism.  `file-to-local/pass`
+// fulfills a frame slot value since /PASS has no arguments, but `append/part`
+// does not.  Distinctions of `get $append/dup/part` & `get $append/part/dup`
 // require ordering information that has to be tracked outside of the
 // exemplar frame.
 //
@@ -155,8 +155,8 @@ Context* Make_Context_For_Action_Push_Partials(
         // !!! If partials were allowed to encompass things like /ONLY then
         // we would have to use that to fill the slot here.  For the moment,
         // a full new exemplar is generated for parameterless refinements
-        // which seems expensive for the likes of :append/only, when we
-        // can make :append/dup more compactly.  Rethink.
+        // which seems expensive for the likes of `get $append/only`, when we
+        // can make `get $append/dup` more compactly.  Rethink.
 
         // Check the passed-in refinements on the stack for usage.
         //
@@ -461,7 +461,7 @@ DECLARE_NATIVE(specialize)
         def,
         STACK_BASE  // lowest ordered stackindex [1]
     )){
-        return THROWN;  // e.g. `specialize :append/dup [value: throw 10]`
+        return THROWN;  // e.g. `specialize get $append/dup [value: throw 10]`
     }
 
     return OUT;

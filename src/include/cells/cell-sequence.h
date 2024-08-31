@@ -421,11 +421,7 @@ INLINE Value* Try_Pop_Sequence_Or_Element_Or_Nulled(
                 return nullptr;
             }
 
-            if (heart == REB_SET_PATH)
-                Setify(out);
-            else if (heart == REB_GET_PATH)
-                Getify(out);
-            else if (heart == REB_META_PATH)
+            if (heart == REB_META_PATH)
                 Metafy(out);
         }
 

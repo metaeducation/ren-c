@@ -14,7 +14,7 @@
 )
 
 (
-    metaraise: chain [:raise :meta/except]
+    metaraise: chain [:raise get $meta/except]
     e: metaraise ~test~
     all [
         error? e
@@ -23,7 +23,7 @@
 )
 
 (
-    metatranscode: chain [:transcode :meta/except]
+    metatranscode: chain [:transcode get $meta/except]
     e: metatranscode "1&e"
     all [
         error? e

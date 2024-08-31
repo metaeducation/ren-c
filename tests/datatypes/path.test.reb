@@ -83,7 +83,7 @@
     null? a-value.data
 )
 (
-    a-value: first [a/b:]
+    a-value: first [a.b:]
     'a == a-value.1
 )
 (

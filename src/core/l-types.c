@@ -317,7 +317,7 @@ Bounce Reflect_Core(Level* level_)
 //
 //      return: [any-value?]
 //      'property "Will be escapable, ':property (bootstrap permitting)"
-//          [word! get-word! get-path! get-group!]
+//          [word! get-word! get-tuple! get-group!]
 //      value [any-value?]
 //  ]
 //

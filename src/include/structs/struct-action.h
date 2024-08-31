@@ -212,7 +212,7 @@ typedef enum {
 
     // `PARAMCLASS_MEDIUM` is cued by a QUOTED GET-WORD! in the function spec
     // dialect.  It quotes with the exception of GET-GROUP!, GET-WORD!, and
-    // GET-PATH!...which will be evaluated:
+    // GET-TUPLE!...which will be evaluated:
     //
     //     >> foo: function [':a] [print [{a is} a]
     //

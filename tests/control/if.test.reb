@@ -72,7 +72,7 @@
 (if 'a/b [true])
 (if make port! http:// [true])
 (if /a [true])
-(if first [a/b:] [true])
+(if first [a.b:] [true])
 (if first [a:] [true])
 (if "" [true])
 (if to tag! "" [true])

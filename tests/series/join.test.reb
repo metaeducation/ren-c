@@ -30,7 +30,7 @@
 
 ('/a/ = join '/a spread [/])
 
-(':a/b = join get-path! [a / b])
+(':a.b = join get-tuple! [a . b])
 
 ; VOID is not a no-op, because you still get a copy made for ANY-SERIES?
 (
@@ -45,13 +45,12 @@
 ; DIRECT PATH AND TUPLE SPLICING WITHOUT A BLOCK
 [
     ('a/b/c/d = join 'a/b '/c/d)
-    ('a/b//c/d = join 'a/b '//c/d)
-    ('a/b//c/d = join 'a/b/ '/c/d)
+    ~scan-invalid~ !! (transcode "//c/d")
     ('a/b/c/d = join 'a/b/ 'c/d)
     ~???~ !! (join 'a/b 'c/d)  ; missing slash, can't glue b to c
 
     ('a.b.c.d = join 'a.b '.c.d)
-    ('a.b..c.d = join 'a.b '..c.d)
+    ~scan-invalid~ !! (transcode "..c.d")
     ('a.b..c.d = join 'a.b. '.c.d)
     ('a.b.c.d = join 'a.b. 'c.d)
     ~???~ !! (join 'a.b 'c.d)  ; missing slash, can't glue b to c
@@ -62,8 +61,6 @@
     ('a/b = join 'a/b _)  ; no-op
 
     ('a/b/c = join 'a/b/ 'c)
-    ('a/b//c = join 'a/b// 'c)
-    ('a/b//[d] = join 'a/b// [d])
 ]
 
 ; BLANK! when joining BINARY! or ANY-STRING? should be ignored, but ANY-LIST?

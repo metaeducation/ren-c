@@ -15,7 +15,7 @@
 
 
 (set-group! = kind of first [(a b c):])
-(set-path! = kind of first [a/(b c d):])
+(set-tuple! = kind of first [a.(b c d):])
 
 (
     m: <before>
@@ -35,7 +35,7 @@
 (
     value: ~
     o: make object! [rest: ~]
-    block: [o.rest value]
+    block: [o.rest @value]
     all [
         10 = (block): transcode/next "10 20"
         10 = value

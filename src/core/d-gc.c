@@ -360,8 +360,6 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case REB_PATH:
       case REB_THE_PATH:
-      case REB_SET_PATH:
-      case REB_GET_PATH:
       case REB_META_PATH:
       case REB_TYPE_PATH:
       case REB_VAR_PATH:

@@ -349,13 +349,13 @@ debug: func [
         fail ["FRAME! does not exist for" value]
     ]
 
-    debug-console-skin/focus-frame: frame
-    debug-console-skin/focus-index: value
+    debug-console-skin.focus-frame: frame
+    debug-console-skin.focus-index: value
 ]
 
 
 locals: func [return: [~]] [
-    print [debug-console-skin/focus-frame]
+    print [debug-console-skin.focus-frame]
 ]
 
 

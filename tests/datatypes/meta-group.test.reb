@@ -16,7 +16,7 @@
 
     (void' = ^(maybe void))
     (void' = ^ (maybe void))
-    ~no-value~ !! (maybe comment "hi")
+    ~expect-arg~ !! (maybe comment "hi")
 
     (nihil' = ^ ())
     (nihil' = ^ (comment "hi"))

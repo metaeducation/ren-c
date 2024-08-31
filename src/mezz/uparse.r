@@ -2991,7 +2991,7 @@ parsify: func [
             return [@ advanced]: combinatorize/value comb rules state gotten
         ]
 
-        ; !!! Here is where we would let GET-PATH! and GET-WORD! be used to
+        ; !!! Here is where we would let GET-TUPLE! and GET-WORD! be used to
         ; subvert keywords if SEEK were universally adopted.
     ]
 

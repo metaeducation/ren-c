@@ -153,7 +153,7 @@
     /a == f
 )
 (
-    a-value: first [a/b:]
+    a-value: first [a.b:]
     f: does [:a-value]
     :a-value == f
 )

@@ -28,7 +28,7 @@
 (false = not first [a/b])
 (false = not make port! http://)
 (false = not /refinement)
-(false = not first [a/b:])
+(false = not first [a.b:])
 (false = not first [a:])
 (false = not "")
 (false = not <tag>)

@@ -111,6 +111,9 @@ INLINE Element* Init_Series_At_Core(
     REBLEN index,
     Stub* specifier
 ){
+    if (heart == REB_GET_DEAD or heart == REB_SET_DEAD)
+        fail ("Cannot create GET-PATH! or SET-PATH! (chains are below paths)");
+
   #if !defined(NDEBUG)
     assert(Any_Series_Kind(heart) or heart == REB_URL);
     assert(Is_Node_Managed(f));

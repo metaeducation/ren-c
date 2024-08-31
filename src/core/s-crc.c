@@ -210,8 +210,6 @@ uint32_t Hash_Value(const Cell* cell)
       case REB_VAR_TUPLE:
         //
       case REB_PATH:
-      case REB_SET_PATH:
-      case REB_GET_PATH:
       case REB_THE_PATH:
       case REB_META_PATH:
       case REB_TYPE_PATH:

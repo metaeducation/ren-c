@@ -135,7 +135,7 @@
 ]
 
 (
-    nihil? eval [|||]
+    nihil? eval/undecayed [|||]
 )
 (
     3 = eval [1 + 2 ||| 10 + 20, 100 + 200]

@@ -119,7 +119,7 @@
 )
 (/a == all [/a])
 (
-    a-value: first [a/b:]
+    a-value: first [a.b:]
     :a-value == all [:a-value]
 )
 (
@@ -215,7 +215,7 @@
 )
 (/a == all [true /a])
 (
-    a-value: first [a/b:]
+    a-value: first [a.b:]
     :a-value == all [true :a-value]
 )
 (
@@ -310,7 +310,7 @@
 )
 (true = all [/a true])
 (
-    a-value: first [a/b:]
+    a-value: first [a.b:]
     true = all [:a-value true]
 )
 (

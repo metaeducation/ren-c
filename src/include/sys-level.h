@@ -47,8 +47,7 @@ INLINE bool ANY_ESCAPABLE_GET(const Atom* v) {
     //    =>
     //    for-each [a d] [...]
     //
-    return Is_Get_Group(v) or Is_Get_Word(v)
-        or Is_Get_Path(v) or Is_Get_Tuple(v);
+    return Is_Get_Group(v) or Is_Get_Word(v) or Is_Get_Tuple(v);
 }
 
 

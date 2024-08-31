@@ -148,7 +148,7 @@ DECLARE_NATIVE(test_librebol)
   }
 
   blockscope {
-    Set_Cell_Flag(Init_Integer(PUSH(), 6), NEWLINE_BEFORE);
+    Set_Cell_Flag(Init_Integer(PUSH(), 7), NEWLINE_BEFORE);
   #if (! CPLUSPLUS_11)
     Init_Integer(PUSH(), 1020);  // fake success result
   #else

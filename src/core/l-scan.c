@@ -1837,9 +1837,7 @@ void Init_Scan_Level(
 // to include that previous element, and a recursive call to Scan_To_Stack()
 // collects elements so long as a `/` is seen between them.  When space is
 // reached, the element that was seen prior to the `/` is integrated into a
-// path to replace it in the scan of the array the path is in.  (e.g. if the
-// prior element was a GET-WORD!, the scan becomes a GET-PATH!...if the final
-// element is a SET-WORD!, the scan becomes a SET-PATH!)
+// path to replace it in the scan of the array the path is in.
 //
 Bounce Scanner_Executor(Level* const L) {
     USE_LEVEL_SHORTHANDS (L);
@@ -2178,11 +2176,11 @@ Bounce Scanner_Executor(Level* const L) {
             *ss->end == ':'  // `...(foo):` or `...[bar]:`
             and not Is_Dot_Or_Slash(level->mode)  // leave `:` for SET-PATH!
         ){
-            Init_Any_List(
-                PUSH(),
-                Sigilize_Any_Plain_Kind(SIGIL_SET, heart),
-                a
-            );
+            Heart new_heart = Sigilize_Any_Plain_Kind(SIGIL_SET, heart);
+            if (new_heart == REB_SET_DEAD or new_heart == REB_GET_DEAD)
+                return RAISE(Error_Syntax(ss, TOKEN_PATH));
+
+            Init_Any_List(PUSH(), new_heart, a);
             ++ss->begin;
             ++ss->end;
         }
@@ -2808,7 +2806,11 @@ Bounce Scanner_Executor(Level* const L) {
         if (not Any_Plain_Value_Kind(heart))
             return RAISE(Error_Syntax(ss, level->token));
 
-        HEART_BYTE(TOP) = Sigilize_Any_Plain_Kind(SIGIL_SET, heart);
+        Heart new_heart = Sigilize_Any_Plain_Kind(SIGIL_SET, heart);
+        if (new_heart == REB_SET_DEAD or new_heart == REB_GET_DEAD)
+            return RAISE(Error_Syntax(ss, TOKEN_PATH));
+
+        HEART_BYTE(TOP) = new_heart;
 
         ss->begin = ++ss->end;  // !!! ?
     }
@@ -2817,10 +2819,17 @@ Bounce Scanner_Executor(Level* const L) {
         if (not Any_Plain_Kind(heart))
             return DROP(), RAISE(Error_Syntax(ss, level->token));
 
-        HEART_BYTE(TOP) = Sigilize_Any_Plain_Kind(
+        Heart new_heart = Sigilize_Any_Plain_Kind(
             unwrap level->sigil_pending,
             heart
         );
+        if (new_heart == REB_SET_DEAD or new_heart == REB_GET_DEAD) {
+            if (ss->end < ss->begin)
+                ss->end = ss->begin;
+            return RAISE(Error_Syntax(ss, TOKEN_PATH));
+        }
+
+        HEART_BYTE(TOP) = new_heart;
 
         level->sigil_pending = SIGIL_0;
     }

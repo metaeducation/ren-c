@@ -683,7 +683,7 @@ Bounce Action_Executor(Level* L)
             else if (ANY_ESCAPABLE_GET(ARG)) {
                 //
                 // We did not defer the quoted argument.  If the argument
-                // is something like a GET-GROUP!, GET-WORD!, or GET-PATH!...
+                // is something like a GET-GROUP!, GET-WORD!, or GET-TUPLE!...
                 // it has to be evaluated.
                 //
                 Move_Cell(SPARE, ARG);

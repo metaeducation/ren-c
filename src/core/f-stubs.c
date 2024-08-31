@@ -505,9 +505,6 @@ Value* Setify(Value* out) {  // called on stack values; can't call evaluator
     if (Any_Word_Kind(heart)) {
         HEART_BYTE(out) = REB_SET_WORD;
     }
-    else if (Any_Path_Kind(heart)) {
-        HEART_BYTE(out) = REB_SET_PATH;
-    }
     else if (Any_Tuple_Kind(heart)) {
         HEART_BYTE(out) = REB_SET_TUPLE;
     }
@@ -553,9 +550,6 @@ Value* Getify(Value* out) {  // called on stack values; can't call evaluator
     }
     else if (Any_Group_Kind(heart)) {
         HEART_BYTE(out) = REB_GET_GROUP;
-    }
-    else if (Any_Path_Kind(heart)) {
-        HEART_BYTE(out) = REB_GET_PATH;
     }
     else if (Any_Tuple_Kind(heart)) {
         HEART_BYTE(out) = REB_GET_TUPLE;

@@ -11,7 +11,7 @@
     (1 == eval reduce [unrun :abs -1])
 ]
 
-; Actions should store labels of the last GET-WORD! or GET-PATH! that was
+; Actions should store labels of the last GET-WORD! or GET-TUPLE! that was
 ; used to retrieve them.  Using GET subverts changing the name.
 [
     ('append = label of :append)

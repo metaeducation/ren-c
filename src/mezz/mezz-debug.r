@@ -80,7 +80,7 @@ delta-time: func [
     {Returns the time it takes to evaluate the block}
     block [block!]
 ][
-    let timer: unrun :lib.now/precise  ; Note: NOW comes from an Extension
+    let timer: unrun get $lib.now/precise  ; Note: NOW comes from an Extension
     results: reduce reduce [  ; resolve word lookups first, run fetched items
         timer
         (unrun :elide) (unrun :do) block

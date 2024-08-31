@@ -49,7 +49,7 @@
 
                 all [
                     match [lit-word?] p.1
-                    match [group! get-word! get-path!] block.1
+                    match [group! get-word! get-tuple!] block.1
                 ][
                     frame.(p.1): reeval block.1
                     block: skip block 1  ; NEXT not defined yet
@@ -82,7 +82,7 @@
         ; rest of block is invocation by example
         f.block: skip f.block 1  ; Note: NEXT not defined yet
     ])[
-        frame: unrun :panic/value  ; overwritten, best to make something mean
+        frame: unrun get $panic/value  ; overwritten, best to be something mean
     ]
 
     <-: enfix func* [

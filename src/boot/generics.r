@@ -347,7 +347,7 @@ select: generic [
 
 
 pick*: generic [
-    {Low-level hook for PICK, used also by PATH! and GET-PATH!}
+    {Low-level hook for PICK, used also by TUPLE! and GET-TUPLE!}
 
     return: "PICK: the retrieved value"
         [any-value?]  ; PICK doesn't return void, but GET can

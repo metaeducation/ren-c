@@ -5,7 +5,7 @@
 ; of distinction in dialecting.
 
 (get-group! = kind of first [:(a b c)])
-(get-path! = kind of first [:(a b c)/d])
+(get-tuple! = kind of first [:(a b c).d])
 
 (
     m: 1020

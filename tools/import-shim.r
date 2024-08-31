@@ -36,9 +36,7 @@ Rebol [
 ]
 
 
-if not trap [
-    :import/into  ; no error here means already shimmed, or EXE is new
-][
+if did find (words of :import) 'into [  ; non-bootstrap Ren-C
     print ""
     print "!!! %import-shim.r is only for use with old Ren-C EXEs"
     print ""

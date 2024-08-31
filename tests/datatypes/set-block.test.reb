@@ -5,4 +5,4 @@
 ; scanner and mechanical tests of the type itself vs. that feature.
 
 (set-block! = kind of first [[a b c]:])
-(set-path! = kind of first [a/[b c d]:])
+(set-tuple! = kind of first [a.[b c d]:])

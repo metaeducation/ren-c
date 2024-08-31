@@ -61,7 +61,7 @@ REBOL [
     }
 ]
 
-if trap [:import/into] [  ; See %import-shim.r
+if not find (words of :import) 'into [  ; See %import-shim.r
     do <import-shim.r>
 ]
 

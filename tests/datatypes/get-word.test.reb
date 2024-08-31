@@ -24,11 +24,23 @@
 )
 
 [#1477
-    ((match get-word! the :/) = (load-value ":/"))
+    (all [
+        x: load-value ":/"
+        ':/ = x
+        get-word? x
+    ])
 
-    ((match get-path! the ://) = (load-value "://"))
+    (all [
+        x: load-value "://"
+        ':// = x
+        get-word? x
+    ])
 
-    ((match get-path! the :///) = (load-value ":///"))
+    (all [
+        x: load-value ":///"
+        ':/// = x
+        get-word? x
+    ])
 ]
 
 ; Terminal dotted access inhibits action invocation, while slashed access
@@ -52,7 +64,6 @@
     (.a/ = .a/)
 
     (<inert> = :a)
-    (<inert> = :/a)
     (<inert> = :.a)
 
     (<inert> = get $a)
@@ -63,21 +74,9 @@
     ; (<inert> = get $/a.)  ; !!! Not working ATM, needs path overhaul
     ; (<inert> = get $.a.)  ; !!! Not working ATM, needs path overhaul
 
-    ('inert-with-slashed = pick trap [ :a/ ] 'id)
-    ('inert-with-slashed = pick trap [ :/a/ ] 'id)
-    ('inert-with-slashed = pick trap [ :.a/ ] 'id)
-
     ('inert-with-slashed = pick trap [ get $a/ ] 'id)
     ('inert-with-slashed = pick trap [ get $/a/ ] 'id)
     ('inert-with-slashed = pick trap [ get $.a/ ] 'id)
-
-    ('inert-with-slashed = pick trap [ get inside [] ':a/ ] 'id)
-    ('inert-with-slashed = pick trap [ get inside [] ':/a/ ] 'id)
-    ('inert-with-slashed = pick trap [ get inside [] ':.a/ ] 'id)
-
-    ('inert-with-slashed = pick trap [ get inside [] 'a/: ] 'id)
-    ('inert-with-slashed = pick trap [ get inside [] '/a/: ] 'id)
-    ('inert-with-slashed = pick trap [ get inside [] '.a/: ] 'id)
   ]
   true
 )]
@@ -103,7 +102,6 @@
     (.a/ = .a/)
 
     (action? :a)
-    (action? :/a)
     (action? :.a)
 
     (action? get $a)
@@ -114,21 +112,9 @@
     ; (<inert> = get $/a.)  ; !!! Not working ATM, needs path overhaul
     ; (<inert> = get $.a.)  ; !!! Not working ATM, needs path overhaul
 
-    (action? :a/)
-    (action? :/a/)
-    (action? :.a/)
-
     (action? get $a/)
     (action? get $/a/)
     (action? get $.a/)
-
-    (action? get inside [] ':a/)
-    (action? get inside [] ':/a/)
-    (action? get inside [] ':.a/)
-
-    (action? get inside [] 'a/:)
-    (action? get inside [] '/a/:)
-    (action? get inside [] '.a/:)
   ]
   true
 )]

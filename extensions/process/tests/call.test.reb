@@ -7,7 +7,7 @@ https://github.com/metaeducation/ren-c/commit/298409f485420ecd03f0be4b465111be4a
 https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb0319635f81f
 
 (
-    apply :call/shell [
+    apply get $call/shell [
         [(system.options.boot) --suppress {"*"} print.reb 100]  ; small
 
         /input false  ; avoid child process eating pastes of length test
@@ -17,7 +17,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
     100 = length of data
 )
 (
-    apply :call/shell [
+    apply get $call/shell [
         [(system.options.boot) --suppress {"*"} print.reb 9000]  ; medium
 
         /input false  ; avoid child process eating pastes of length test
@@ -27,7 +27,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
     9000 = length of data
 )
 (
-    apply :call/shell [
+    apply get $call/shell [
         [(system.options.boot) --suppress {"*"} print.reb 80000]  ; large
 
         /input false  ; avoid child process eating pastes of length test
@@ -62,7 +62,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
 
 ; Tests feeding input and taking output from various sources
 [
-    (echoer: enclose specialize :call/input/output [
+    (echoer: enclose specialize get $call/input/output [
         command: [
             (system.options.boot) --suppress {"*"} -q
             --do "write-stdout read system.ports.input"

@@ -271,7 +271,6 @@ Bounce Stepper_Executor(Level* L)
       case REB_SET_WORD :
         goto set_word_rightside_in_out;
 
-      case REB_SET_PATH :
       case REB_SET_TUPLE :
         goto set_generic_rightside_in_out;
 
@@ -1086,53 +1085,6 @@ Bounce Stepper_Executor(Level* L)
         goto process_action; }
 
 
-    //=//// SET-PATH! /////////////////////////////////////////////////////=//
-    //
-    // See notes on PATH! for why Ren-C aligns itself with the general idea of
-    // "dots instead of slashes" for member selection.  For now, those who
-    // try to use SET-PATH! will receive a warning once...then it will set
-    // a switch to where it runs the SET-TUPLE! code instead.
-    //
-    // Future uses of SET-PATH! could do things like verify that the thing
-    // being assigned is an ACTION!:
-    //
-    //     >> foo/: 10
-    //     ** Expected an ACTION! but got an INTEGER!
-    //
-    // Or it might be a way of installing a "getter/setter" function:
-    //
-    //     >> obj.field/: func [/value] [
-    //            either value [print ["Assigning" value]] [print "Getting"]]
-    //        ]
-    //
-    //     >> obj.field: 10
-    //     Assigning 10
-    //
-    // But for the moment, it is just used in Redbol emulation.
-
-      case REB_SET_PATH: {
-        Value* redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
-        if (not Is_Logic(redbol) or Cell_Logic(redbol) == false) {
-            Derelativize(OUT, L_current, L_specifier);
-            HEART_BYTE(OUT) = REB_SET_TUPLE;
-
-            Derelativize(SPARE, L_current, L_specifier);
-            rebElide(
-                "echo [The SET-PATH!", SPARE, "is no longer the preferred",
-                    "way to do member assignments.]",
-                "echo [SYSTEM.OPTIONS.REDBOL-PATHS is FALSE, so SET-PATH!",
-                    "is not allowed by default.]",
-                "echo [For now, we'll enable it automatically...but it",
-                    "will slow down the system!]",
-                "echo [Please use TUPLE! instead, like", OUT, "]",
-
-                "system.options.redbol-paths: true",
-                "wait 3"
-            );
-        }
-        goto generic_set_common; }
-
-
     //=//// SET-TUPLE! /////////////////////////////////////////////////////=//
     //
     // !!! The evaluation ordering is dictated by the fact that there isn't a
@@ -1152,7 +1104,7 @@ Bounce Stepper_Executor(Level* L)
     generic_set_common: //////////////////////////////////////////////////////
 
       case REB_SET_TUPLE: {
-        assert(STATE == REB_SET_TUPLE or STATE == REB_SET_PATH);
+        assert(STATE == REB_SET_TUPLE);
 
         Level* right = Maybe_Rightward_Continuation_Needed(L);
         if (not right)
@@ -1246,25 +1198,23 @@ Bounce Stepper_Executor(Level* L)
       break; }
 
 
-    //=//// GET-PATH! and GET-TUPLE! //////////////////////////////////////=//
+    //=//// GET-TUPLE! and META-TUPLE! ////////////////////////////////////=//
     //
-    // Note that the GET native on a PATH! won't allow GROUP! execution:
+    // Note that the GET native on a TUPLE! won't allow GROUP! execution:
     //
     //    foo: [X]
-    //    path: 'foo/(print "side effect!" 1)
+    //    path: 'foo.(print "side effect!" 1)
     //    get path  ; not allowed, due to surprising side effects
     //
-    // However a source-level GET-PATH! allows them, since they are at the
+    // However a source-level GET-TUPLE! allows them, since they are at the
     // callsite and you are assumed to know what you are doing:
     //
-    //    :foo/(print "side effect" 1)  ; this is allowed
+    //    :foo.(print "side effect" 1)  ; this is allowed
     //
-    // Consistent with GET-WORD!, a GET-PATH! won't allow nothing access on
+    // Consistent with GET-WORD!, a GET-TUPLE! won't allow nothing access on
     // the plain (unfriendly) forms.
 
-      case REB_META_PATH:
       case REB_META_TUPLE:
-      case REB_GET_PATH:
       case REB_GET_TUPLE:
         if (Get_Var_Core_Throws(OUT, GROUPS_OK, L_current, L_specifier))
             goto return_thrown;
@@ -1272,7 +1222,7 @@ Bounce Stepper_Executor(Level* L)
         if (STATE == REB_META_PATH or STATE == REB_META_TUPLE)
             Meta_Quotify(OUT);
         else
-            assert(STATE == REB_GET_PATH or STATE == REB_GET_TUPLE);
+            assert(STATE == REB_GET_TUPLE);
 
         break;
 

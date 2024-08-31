@@ -154,7 +154,7 @@ help: func [
     ; but they exist...e.g. DEFAULT.)  To make sure HELP DEFAULT works, HELP
     ; must hard quote and simulate its own soft quote semantics.
     ;
-    if match [group! get-word! get-path! get-tuple!] topic [
+    if match [group! get-word! get-tuple!] topic [
         topic: reeval topic else [
             print "NULL is a non-valued state that cannot be put in lists"
             return ~

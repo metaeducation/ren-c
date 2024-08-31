@@ -131,13 +131,11 @@ join: func [
     ]
 
     let sep
-    if find/case reduce [
-        path! get-path! set-path! the-path! meta-path!
-    ] kind [
+    if find/case reduce [path! the-path! meta-path! type-path!] kind [
         sep: '/
     ] else [
         assert [find/case reduce [
-            tuple! get-tuple! set-tuple! the-tuple! meta-tuple!
+            tuple! get-tuple! set-tuple! the-tuple! meta-tuple! type-tuple!
         ] kind]
         sep: '.
     ]
