@@ -1254,16 +1254,59 @@ static Token Maybe_Locate_Token_May_Push_Mold(
             *error = Error_Extra(ss, '}');
             return TOKEN_0;
 
-          case LEX_DELIMIT_SLASH:  // a /REFINEMENT-style PATH!
+          case LEX_DELIMIT_SLASH:  // a /REFINEMENT-style PATH! or /// WORD!
             assert(*cp == '/');
             assert(ss->begin == cp);
-            ss->end = cp + 1;
+
+            if (
+                cp[1] == '/'
+                or IS_LEX_ANY_SPACE(cp[1])
+                or cp[1] == ']'
+                or cp[1] == ')'
+                or cp[1] == ':'
+            ){
+                while (cp[1] == '/')
+                    ++cp;
+                if (
+                    IS_LEX_ANY_SPACE(cp[1])
+                    or cp[1] == ']'
+                    or cp[1] == ')'
+                    or cp[1] == ':'
+                ){
+                    ss->end = cp + 1;
+                    return TOKEN_WORD;  // something like / or // or ///
+                }
+                cp = ss->begin;
+            }
+
+            ss->end = ss->begin + 1;
             return TOKEN_PATH;
 
-          case LEX_DELIMIT_PERIOD:  // a .PREDICATE-style TUPLE!
+          case LEX_DELIMIT_PERIOD:  // a .PREDICATE-style TUPLE! or ... WORD!
             assert(*cp == '.');
             assert(ss->begin == cp);
-            ss->end = cp + 1;
+
+            if (
+                cp[1] == '.'
+                or IS_LEX_ANY_SPACE(cp[1])
+                or cp[1] == ']'
+                or cp[1] == ')'
+                or cp[1] == ':'
+            ){
+                while (cp[1] == '.')
+                    ++cp;
+                if (
+                    IS_LEX_ANY_SPACE(cp[1])
+                    or cp[1] == ']'
+                    or cp[1] == ')'
+                    or cp[1] == ':'
+                ){
+                    ss->end = cp + 1;
+                    return TOKEN_WORD;  // something like . or .. or ...
+                }
+            }
+
+            ss->end = ss->begin + 1;
             return TOKEN_TUPLE;
 
           case LEX_DELIMIT_END:
