@@ -95,8 +95,8 @@ export: lib3/func [
 
 === "SOURCE CONVERSION" ===
 
-strip-commas-and-downgrade-strings: lib3/func [
-    "Remove commas from non-string portions of the code, turn <{...}> to {...}"
+rewrite-source-for-bootstrap-exe: lib3/func [
+    "turn -{...}- to {...}"
     source [text!]
     <local> pushed rule
 ][
@@ -121,17 +121,13 @@ strip-commas-and-downgrade-strings: lib3/func [
                 ]
             )
             |
-            ; Try to get a little performance by matching ahead ", " first
-            ;
-            ahead ", " if (empty? pushed) remove ","
-            |
             one
         ]
         <end>
     ]
 
-    lib3/parse source rule else [
-        fail "STRIP-COMMAS-AND-DOWNGRADE-STRINGS did not work"
+    lib3/parse/match source rule else [
+        fail "REWRITE-SOURCE-FOR-BOOTSTRAP-EXE did not work"
     ]
     return source
 ]
@@ -184,10 +180,10 @@ do: enclose :lib3/do lib3/func [
             args: either old-system-script/path [_] [system/options/args]
         ]
 
-        ; We want to strip the commas, but we also want the file-like behavior
-        ; of preserving the directory.  :-(  Implement via wrapper.
+        ; Note: want the file-like behavior of preserving the directory.  :-(
+        ; Implement via wrapper.
         ;
-        f/source: strip-commas-and-downgrade-strings read/string file
+        f/source: rewrite-source-for-bootstrap-exe read/string file
 
         ; We do not want top-level set-words to be automatically cleared out,
         ; in case you plan to overwrite something like IF but are using the
@@ -288,7 +284,7 @@ load: adapt :lib3/load [  ; source [file! url! text! binary! block!]
         file? source
         not dir? source
     ][use [item] [
-        source: strip-commas-and-downgrade-strings read/string source
+        source: rewrite-source-for-bootstrap-exe read/string source
         source: next find source unspaced ["]" newline]  ; skip header
     ]]
 ]
