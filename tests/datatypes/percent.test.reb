@@ -55,7 +55,6 @@
 (same? 30.000000000000004% load mold/all 30.000000000000004%)
 (same? 9.9999999999999926e154% load mold/all 9.9999999999999926e154%)
 ; alternative form
-(1.1% == 1,1%)
 (110% = make percent! 110%)
 (110% = make percent! "110%")
 (1.1% = to percent! 1.1%)

@@ -33,6 +33,7 @@
 enum Reb_Token {
     TOKEN_END = 0,
     TOKEN_NEWLINE,
+    TOKEN_COMMA,
     TOKEN_BLOCK_END,
     TOKEN_GROUP_END,
     TOKEN_WORD,
@@ -97,6 +98,7 @@ enum LEX_DELIMIT_ENUM {
     LEX_DELIMIT_DOUBLE_QUOTE,       /* 22 " */
     LEX_DELIMIT_SLASH,              /* 2F / - date, path, file */
     LEX_DELIMIT_SEMICOLON,          /* 3B ; */
+    LEX_DELIMIT_COMMA,              /* 2C , */
     LEX_DELIMIT_UTF8_ERROR,
     LEX_DELIMIT_MAX
 };
@@ -156,7 +158,6 @@ enum LEX_SPECIAL_ENUM {             /* The order is important! */
 
                                     /** Any of these can follow - or ~ : */
     LEX_SPECIAL_PERIOD,             /* 2E . - decimal number */
-    LEX_SPECIAL_COMMA,              /* 2C , - decimal number */
     LEX_SPECIAL_POUND,              /* 23 # - hex number */
     LEX_SPECIAL_DOLLAR,             /* 24 $ - money */
 
@@ -189,7 +190,6 @@ enum LEX_SPECIAL_ENUM {             /* The order is important! */
 #define LEX_WORD_FLAGS (LEX_FLAG(LEX_SPECIAL_AT) |              \
                         LEX_FLAG(LEX_SPECIAL_PERCENT) |         \
                         LEX_FLAG(LEX_SPECIAL_BACKSLASH) |       \
-                        LEX_FLAG(LEX_SPECIAL_COMMA) |           \
                         LEX_FLAG(LEX_SPECIAL_POUND) |           \
                         LEX_FLAG(LEX_SPECIAL_DOLLAR) |          \
                         LEX_FLAG(LEX_SPECIAL_COLON))

@@ -100,7 +100,7 @@ const Byte Lex_Map[256] =
     /* 29 )   */    LEX_DELIMIT|LEX_DELIMIT_RIGHT_PAREN,
     /* 2A *   */    LEX_WORD,
     /* 2B +   */    LEX_SPECIAL|LEX_SPECIAL_PLUS,
-    /* 2C ,   */    LEX_SPECIAL|LEX_SPECIAL_COMMA,
+    /* 2C ,   */    LEX_DELIMIT|LEX_DELIMIT_COMMA,
     /* 2D -   */    LEX_SPECIAL|LEX_SPECIAL_MINUS,
     /* 2E .   */    LEX_SPECIAL|LEX_SPECIAL_PERIOD,
     /* 2F /   */    LEX_DELIMIT|LEX_DELIMIT_SLASH,
@@ -1113,6 +1113,10 @@ acquisition_loop:
             ss->token = TOKEN_NEWLINE;
             return;
 
+        case LEX_DELIMIT_COMMA:
+            ss->end = cp + 1;
+            ss->token = TOKEN_COMMA;
+            return;
 
         // [BRACKETS]
 
@@ -1326,7 +1330,6 @@ acquisition_loop:
             ss->token = TOKEN_LIT;
             goto scanword;
 
-        case LEX_SPECIAL_COMMA:         /* ,123 */
         case LEX_SPECIAL_PERIOD:        /* .123 .123.456.789 */
             SET_LEX_FLAG(flags, (GET_LEX_VALUE(*cp)));
             if (IS_LEX_NUMBER(cp[1]))
@@ -1565,22 +1568,11 @@ acquisition_loop:
             }
             cp = Skip_To_Byte(cp, ss->end, '.');
             // Note: no comma in bytes
-            if (
-                not HAS_LEX_FLAG(flags, LEX_SPECIAL_COMMA)
-                and Skip_To_Byte(cp + 1, ss->end, '.')
-            ){
+            if (Skip_To_Byte(cp + 1, ss->end, '.')) {
                 ss->token = TOKEN_TUPLE;
                 return;
             }
             ss->token = TOKEN_DECIMAL;
-            return;
-        }
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COMMA)) {
-            if (Skip_To_Byte(cp, ss->end, 'x')) {
-                ss->token = TOKEN_PAIR;
-                return;
-            }
-            ss->token = TOKEN_DECIMAL; // 1,23
             return;
         }
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_POUND)) { // -#123 2#1010
@@ -1926,6 +1918,9 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         case TOKEN_NEWLINE:
             ss->newline_pending = true;
             ss->line_head = ep;
+            continue;
+
+        case TOKEN_COMMA:
             continue;
 
         case TOKEN_BLANK:
@@ -2897,7 +2892,6 @@ const Byte *Scan_Issue(Value* out, const Byte *cp, REBLEN len)
             REBLEN c = GET_LEX_VALUE(*bp);
             if (
                 LEX_SPECIAL_APOSTROPHE != c
-                and LEX_SPECIAL_COMMA != c
                 and LEX_SPECIAL_PERIOD != c
                 and LEX_SPECIAL_PLUS != c
                 and LEX_SPECIAL_MINUS != c

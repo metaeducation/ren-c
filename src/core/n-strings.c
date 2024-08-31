@@ -622,6 +622,7 @@ DECLARE_NATIVE(enhex)
                 case LEX_DELIMIT_RIGHT_BRACKET:
                 case LEX_DELIMIT_SLASH:
                 case LEX_DELIMIT_SEMICOLON:
+                case LEX_DELIMIT_COMMA:
                     goto leave_as_is;
 
                 case LEX_DELIMIT_SPACE: // includes control characters
@@ -648,7 +649,6 @@ DECLARE_NATIVE(enhex)
                 case LEX_SPECIAL_MINUS:
                 case LEX_SPECIAL_BLANK:
                 case LEX_SPECIAL_PERIOD:
-                case LEX_SPECIAL_COMMA:
                 case LEX_SPECIAL_POUND:
                 case LEX_SPECIAL_DOLLAR:
                     goto leave_as_is;

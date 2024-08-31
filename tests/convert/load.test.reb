@@ -44,3 +44,9 @@
         error? trap [load "[+<]"]
     ]
 )]
+
+; Stripping out commas
+[
+    ([] = transcode "[, ]")
+    ([a b c] = transcode "[a, b,, c,]")
+]

@@ -25,7 +25,6 @@
     ]
 )
 ; alternative form
-($1.1 == $1,1)
 (
     did any [
         error? trap [x: $1234567890123456]

@@ -116,6 +116,7 @@ const char * const Month_Names[12] = {
 const char * const Token_Names[] = {
     "end-of-script",
     "newline",
+    "comma",
     "block-end",
     "group-end",
     "word",

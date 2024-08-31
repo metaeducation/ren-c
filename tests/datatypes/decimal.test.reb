@@ -139,8 +139,6 @@
     (#"0" <= c) and [#"9" >= c]
 )]
 
-; alternative form
-(1.1 == 1,1)
 (1.1 = make decimal! 1.1)
 (1.1 = make decimal! "1.1")
 (1.1 = to decimal! 1.1)
