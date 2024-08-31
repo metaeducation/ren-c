@@ -118,8 +118,7 @@ sym-n: 1  ; counts up as symbols are added
 add-sym: func [
     {Add SYM_XXX to enumeration}
     return: [~null~ integer!]
-    word "Word (but may be in text form to gloss over bootstrap issues)"
-        [word! text!]
+    word [word! text!]
     /exists "return ID of existing SYM_XXX constant if already exists"
     <with> sym-n
 ][
@@ -209,7 +208,7 @@ for-each-typerange: func [
     <local> name* heart* any-name!* stack types* starting
 ][
     stack: copy []
-    types*: _
+    types*: _  ; will be put in a block, can't be null
 
     heart*: 1  ; 0 is reserved
     while [true] [  ; need to be in loop for BREAK to work
@@ -651,7 +650,7 @@ for-each term load %lib-words.r [
             fail ["Expected symbol for" term "from native/generic/type"]
         ]
     ] else [
-        add-sym term  ; Note, may actually be a BAR! w/older boot
+        add-sym term
     ]
 ]
 

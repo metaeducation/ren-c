@@ -154,8 +154,6 @@ trap [
         fail/where "Don't use UNLESS in Bootstrap, definition in flux" 'dummy
     ]
 
-    export bar!: word!  ; signal there is no BAR! type, and | is a WORD!
-
     quit
 ]
 
