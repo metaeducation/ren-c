@@ -129,8 +129,8 @@ info: all-protos
 while [not tail? info] [
     case [
         info/1/name = "native" [native-proto: take info]
-        info/1/name = "antiform?" [antiform?-proto: take info]
         info/1/name = "logic?" [logic?-proto: take info]
+        info/1/name = "antiform?" [antiform?-proto: take info]
         info/1/name = "action?" [action?-proto: take info]
         info/1/name = "enfix" [enfix-proto: take info]
         info/1/name = "any-value?" [any-value?-proto: take info]
@@ -144,19 +144,19 @@ while [not tail? info] [
     ]
 ]
 
-assert [native-proto antiform?-proto logic?-proto action?-proto enfix-proto
+assert [native-proto logic?-proto antiform?-proto action?-proto enfix-proto
     any-value?-proto any-atom?-proto element?-proto
     quasi?-proto quoted?-proto]
 
-insert all-protos quoted?-proto  ; will be tenth
-insert all-protos quasi?-proto  ; will be ninth
-insert all-protos element?-proto  ; will be eighth
-insert all-protos any-atom?-proto  ; will be seventh
-insert all-protos any-value?-proto  ; will be sixth
-insert all-protos enfix-proto  ; will be fifth
-insert all-protos logic?-proto  ; will be fourth
-insert all-protos action?-proto  ; will be third
-insert all-protos antiform?-proto  ; will be second
+insert all-protos quoted?-proto  ; last before unsorted natives
+insert all-protos quasi?-proto
+insert all-protos element?-proto
+insert all-protos any-atom?-proto
+insert all-protos any-value?-proto
+insert all-protos enfix-proto
+insert all-protos action?-proto
+insert all-protos antiform?-proto
+insert all-protos logic?-proto
 insert all-protos native-proto  ; so now it's first
 
 

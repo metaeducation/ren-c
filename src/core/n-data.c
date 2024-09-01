@@ -2440,8 +2440,7 @@ DECLARE_INTRINSIC(any_atom_q)
 //
 //  "Tells you if the argument is a ~true~ or ~false~ antiform"
 //
-//      return: "~true~ or ~false~ antiform"
-//          [antiform?]  ; can't use LOGIC? to test LOGIC? return result
+//      return: "~true~ or ~false~ antiform"  ; can't use LOGIC? to typecheck
 //      value
 //  ]
 //
