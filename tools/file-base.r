@@ -19,39 +19,39 @@ REBOL [
 ; the file is generated.
 core: [
     ; (A)???
-    a-constants.c
-    a-globals.c
-    a-lib.c
+    %a-constants.c
+    %a-globals.c
+    %a-lib.c
 
     ; (B)oot
-    b-init.c
+    %b-init.c
 
     ; (C)ore
-    c-bind.c
-    c-do.c
-    c-context.c
-    c-error.c
-    c-eval.c
-    c-function.c
-    c-path.c
-    c-port.c
-    c-signal.c
-    c-specialize.c
-    c-value.c
-    c-word.c
+    %c-bind.c
+    %c-do.c
+    %c-context.c
+    %c-error.c
+    %c-eval.c
+    %c-function.c
+    %c-path.c
+    %c-port.c
+    %c-signal.c
+    %c-specialize.c
+    %c-value.c
+    %c-word.c
 
     ; (D)ebug
-    d-crash.c
-    d-dump.c
-    d-eval.c
-    d-print.c
-    d-stack.c
-    d-stats.c
+    %d-crash.c
+    %d-dump.c
+    %d-eval.c
+    %d-print.c
+    %d-stack.c
+    %d-stats.c
 
     ; (F)???
-    f-blocks.c
+    %f-blocks.c
     [
-        f-deci.c
+        %f-deci.c
 
         ; May 2018 update to MSVC 2017 added warnings for Spectre mitigation.
         ; %f-deci.c is a lot of twiddly cusotm C code for implementing a fixed
@@ -62,7 +62,7 @@ core: [
         <msc:/wd5045> ;-- https://stackoverflow.com/q/50399940
     ]
     [
-        f-dtoa.c
+        %f-dtoa.c
 
         ; f-dtoa.c comes from a third party, and should be updated from their
         ; code if they change their policies, including Spectre mitigation:
@@ -78,101 +78,101 @@ core: [
         <implicit-fallthru>
     ]
     [
-        f-enbase.c
+        %f-enbase.c
 
         ; At time of writing there are 4 Spectre mitigations, which should
         ; be looked at and rewritten when there is time:
         ;
         <msc:/wd5045> ;-- https://stackoverflow.com/q/50399940
     ]
-    f-extension.c
-    f-int.c
-    f-math.c
-    f-modify.c
-    f-qsort.c
-    f-random.c
-    f-round.c
-    f-series.c
-    f-stubs.c
+    %f-extension.c
+    %f-int.c
+    %f-math.c
+    %f-modify.c
+    %f-qsort.c
+    %f-random.c
+    %f-round.c
+    %f-series.c
+    %f-stubs.c
 
     ; (L)exer
-    l-scan.c
-    l-types.c
+    %l-scan.c
+    %l-types.c
 
     ; (M)emory
-    m-gc.c
-    [m-pools.c <no-uninitialized>]
-    m-series.c
-    m-stacks.c
+    %m-gc.c
+    [%m-pools.c <no-uninitialized>]
+    %m-series.c
+    %m-stacks.c
 
     ; (N)atives
-    n-control.c
-    n-data.c
-    n-do.c
-    n-error.c
-    n-function.c
-    n-io.c
-    n-loop.c
-    n-math.c
-    n-protect.c
-    n-reduce.c
-    n-sets.c
-    n-strings.c
-    n-system.c
-    n-textcodecs.c ; !!! should be moved to extensions
+    %n-control.c
+    %n-data.c
+    %n-do.c
+    %n-error.c
+    %n-function.c
+    %n-io.c
+    %n-loop.c
+    %n-math.c
+    %n-protect.c
+    %n-reduce.c
+    %n-sets.c
+    %n-strings.c
+    %n-system.c
+    %n-textcodecs.c ; !!! should be moved to extensions
 
     ; (P)orts
-    p-console.c
-    p-dir.c
-    p-dns.c
-    p-event.c
-    p-file.c
-    p-net.c
+    %p-console.c
+    %p-dir.c
+    %p-dns.c
+    %p-event.c
+    %p-file.c
+    %p-net.c
 
     ; (S)trings
-    s-cases.c
-    s-crc.c
-    s-file.c
-    s-find.c
-    s-make.c
-    s-mold.c
-    s-ops.c
-    s-unicode.c
+    %s-cases.c
+    %s-crc.c
+    %s-file.c
+    %s-find.c
+    %s-make.c
+    %s-mold.c
+    %s-ops.c
+    %s-unicode.c
 
     ; (T)ypes
-    t-bitset.c
-    t-blank.c
-    t-block.c
-    t-char.c
-    t-datatype.c
-    t-date.c
-    t-decimal.c
-    t-event.c
-    t-function.c
-    t-integer.c
-    t-logic.c
-    t-map.c
-    t-money.c
-    t-object.c
-    t-pair.c
-    t-port.c
-    t-string.c
-    t-time.c
-    t-tuple.c
-    t-typeset.c
-    t-varargs.c
-    t-word.c
+    %t-bitset.c
+    %t-blank.c
+    %t-block.c
+    %t-char.c
+    %t-datatype.c
+    %t-date.c
+    %t-decimal.c
+    %t-event.c
+    %t-function.c
+    %t-integer.c
+    %t-logic.c
+    %t-map.c
+    %t-money.c
+    %t-object.c
+    %t-pair.c
+    %t-port.c
+    %t-string.c
+    %t-time.c
+    %t-tuple.c
+    %t-typeset.c
+    %t-varargs.c
+    %t-word.c
 
     ; (U)??? (3rd-party code extractions)
-    u-compress.c
-    [u-md5.c <implicit-fallthru>]
-    u-parse.c
+    %u-compress.c
+    [%u-md5.c <implicit-fallthru>]
+    %u-parse.c
     [
-        u-sha1.c
+        %u-sha1.c
         <implicit-fallthru>
         <no-hidden-local>
     ][
-        u-zlib.c
+        %u-zlib.c
 
         <no-make-header>
         <implicit-fallthru>
@@ -188,17 +188,17 @@ core: [
 ; Files created by the make-boot process
 ;
 generated: [
-    tmp-boot-block.c
-    tmp-dispatchers.c
+    %tmp-boot-block.c
+    %tmp-dispatchers.c
 ]
 
 made: [
-    make-boot.r         core/tmp-boot-block.c
-    make-headers.r      include/tmp-internals.h
+    %make-boot.r         core/tmp-boot-block.c
+    %make-headers.r      include/tmp-internals.h
 
-    make-host-init.r    include/tmp-host-start.inc
-    make-os-ext.r       include/host-lib.h
-    make-librebol.r     include/rebol.h
+    %make-host-init.r    include/tmp-host-start.inc
+    %make-os-ext.r       include/host-lib.h
+    %make-librebol.r     include/rebol.h
 ]
 
 ;
@@ -209,13 +209,13 @@ made: [
 ; the Rebol Core sources, except for the host.)
 ;
 
-main: 'host-main.c
+main: %host-main.c
 
 os: [
-    + host-device.c
-    host-table.c
-    dev-net.c
-    dev-dns.c
+    + %host-device.c
+    %host-table.c
+    %dev-net.c
+    %dev-dns.c
 ]
 
 os-windows: [
@@ -300,7 +300,7 @@ os-android: [
 ]
 
 boot-files: [
-    version.r
+    %version.r
 ]
 
 mezz-files: [
@@ -308,11 +308,11 @@ mezz-files: [
 ]
 
 prot-files: [
-    prot-tls.r
-    prot-http.r
+    %prot-tls.r
+    %prot-http.r
 ]
 
 tools: [
-    make-host-init.r
-    make-host-ext.r
+    %make-host-init.r
+    %make-host-ext.r
 ]

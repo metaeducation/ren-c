@@ -52,8 +52,6 @@ min: :minimum
 max: :maximum
 abs: :absolute
 
-rebol.com: http://www.rebol.com
-
 ; Words for BLANK! and bar, for those who don't like symbols
 
 blank: _

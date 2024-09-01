@@ -99,9 +99,11 @@ enum LEX_DELIMIT_ENUM {
     LEX_DELIMIT_SLASH,              /* 2F / - date, path, file */
     LEX_DELIMIT_SEMICOLON,          /* 3B ; */
     LEX_DELIMIT_COMMA,              /* 2C , */
-    LEX_DELIMIT_UTF8_ERROR,
+    LEX_DELIMIT_PERIOD,
     LEX_DELIMIT_MAX
 };
+
+STATIC_ASSERT(LEX_DELIMIT_MAX <= 16);
 
 
 /*
@@ -157,7 +159,6 @@ enum LEX_SPECIAL_ENUM {             /* The order is important! */
     LEX_SPECIAL_BLANK,              /* 5F _ - blank */
 
                                     /** Any of these can follow - or ~ : */
-    LEX_SPECIAL_PERIOD,             /* 2E . - decimal number */
     LEX_SPECIAL_POUND,              /* 23 # - hex number */
     LEX_SPECIAL_DOLLAR,             /* 24 $ - money */
 

@@ -32,11 +32,8 @@
 )]
 
 [#1477 (
-    e: trap [load "/:"]
-    error? e and [e/id = 'scan-invalid]
+    all [
+        sw: load "/:"
+        refinement? sw
+    ]
 )]
-
-; These are comments in Ren-C
-;
-(load "//:" = [])
-(load "///:" = [])

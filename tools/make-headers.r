@@ -102,13 +102,13 @@ emit-proto: func [
         $<Proto>; /* $<The-File> */
     }
 
-    if "REBTYPE" = proto-parser/proto.id [
+    if "REBTYPE" = proto-parser/proto-id [
         e-syms/emit [the-file proto-parser] {
-            /* $<The-File> */ SYM_CFUNC(T_$<Proto-Parser/Proto.Arg.1>),
+            /* $<The-File> */ SYM_CFUNC(T_$<Proto-Parser/Proto-Arg-1>),
         }
     ] else [
         e-syms/emit [the-file proto-parser] {
-            /* $<The-File> */ SYM_CFUNC($<Proto-Parser/Proto.Id>),
+            /* $<The-File> */ SYM_CFUNC($<Proto-Parser/Proto-Id>),
         }
     ]
 ]
@@ -136,8 +136,8 @@ process-conditional: function [
 ]
 
 emit-directive: function [return: [~] directive] [
-    process-conditional directive proto-parser/parse.position e-funcs
-    process-conditional directive proto-parser/parse.position e-syms
+    process-conditional directive proto-parser/parse-position e-funcs
+    process-conditional directive proto-parser/parse-position e-syms
 ]
 
 process: function [
@@ -274,11 +274,11 @@ print [length of prototypes "function prototypes"]
 
 ;-------------------------------------------------------------------------
 
-sys-globals.parser: context [
+sys-globals-parser: context [
 
     emit-directive: _
     emit-identifier: _
-    parse.position: _
+    parse-position: _
     id: _
 
     process: func [return: [~] text] [
@@ -289,7 +289,7 @@ sys-globals.parser: context [
 
         rule: [
             opt some [
-                parse.position:
+                parse-position:
                 segment
             ]
         ]
@@ -317,13 +317,13 @@ sys-globals.parser: context [
                 opt some [not newline c-pp-token]
             ] eol
             (
-                process-conditional data parse.position e-syms
+                process-conditional data parse-position e-syms
             )
         ]
 
         other-segment: [thru newline]
 
-    ] c.lexical/grammar
+    ] c-lexical/grammar
 
 ]
 
@@ -334,7 +334,7 @@ extern const struct rebol_sym_data_t rebol_sym_data [];
 const struct rebol_sym_data_t rebol_sym_data [] = ^{^/}
 
 the-file: %sys-globals.h
-sys-globals.parser/process read/string %../include/sys-globals.h
+sys-globals-parser/process read/string %../include/sys-globals.h
 
 e-syms/emit "^/    {nullptr, nullptr} //Terminator^/};"
 e-syms/emit newline

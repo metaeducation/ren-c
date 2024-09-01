@@ -239,11 +239,11 @@ make: enclose 'lib/make func [f] [
 reeval func [
     {Make fast type testing functions (variadic to quote "top-level" words)}
     return: [~]
-    'set-word... [tag! set-word! <...>]
+    'set-words [tag! set-word! <...>]
     <local>
         set-word type-name tester meta
 ][
-    while [not equal? <end> set-word: take set-word...] [
+    while [not equal? <end> set-word: take set-words] [
         type-name: copy as text! set-word
         change back tail of type-name "!" ;-- change ? at tail to !
         tester: typechecker (get bind (as word! type-name) set-word)

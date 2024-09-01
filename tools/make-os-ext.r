@@ -55,7 +55,10 @@ if not (
 
 files: copy []
 
-rule: ['+ set scannable [word! | path!] (append files to-file scannable) | skip]
+rule: [
+    '+ set scannable [word! | path! | file!] (append files to-file scannable)
+    | skip
+]
 
 parse2 file-base/os [some rule]
 parse2 os-specific-objs [some rule]
@@ -99,15 +102,15 @@ emit-proto: func [
         trim proto
         not find proto "static"
 
-        pos.id: null-to-blank find proto "OS_"
+        pos-id: null-to-blank find proto "OS_"
 
         ;-- !!! All functions *should* start with OS_, not just
         ;-- have OS_ somewhere in it!  At time of writing, Atronix
         ;-- has added As_OS_Str and when that is addressed in a
         ;-- later commit to OS_STR_FROM_SERIES (or otherwise) this
         ;-- backwards search can be removed
-        pos.id: next find/reverse pos.id space
-        pos.id: either #"*" = first pos.id [next pos.id] [pos.id]
+        pos-id: next find/reverse pos-id space
+        pos-id: either #"*" = first pos-id [next pos-id] [pos-id]
 
         find proto #"("
     ] [
@@ -119,25 +122,25 @@ emit-proto: func [
 
         append checksum-source proto
 
-        fn.declarations: copy/part proto pos.id
-        pos.lparen: find pos.id #"("
-        fn.name: copy/part pos.id pos.lparen
-        fn.name.upper: uppercase copy fn.name
-        fn.name.lower: lowercase copy fn.name
+        fn-declarations: copy/part proto pos-id
+        pos-lparen: find pos-id #"("
+        fn-name: copy/part pos-id pos-lparen
+        fn-name-upper: uppercase copy fn-name
+        fn-name-lower: lowercase copy fn-name
 
-        append host-instance-fields fn.name
+        append host-instance-fields fn-name
 
         append host-lib-fields unspaced [
-            fn.declarations "(*" fn.name.lower ")" pos.lparen
+            fn-declarations "(*" fn-name-lower ")" pos-lparen
         ]
 
-        args: count pos.lparen #","
+        args: count pos-lparen #","
         append rebol-lib-macros reduce [
-            {#define} space fn.name.upper args space {Host_Lib->} fn.name.lower args newline
+            {#define} space fn-name-upper args space {Host_Lib->} fn-name-lower args newline
         ]
 
         append host-lib-macros reduce [
-            "#define" space fn.name.upper args space fn.name args newline
+            "#define" space fn-name-upper args space fn-name args newline
         ]
 
         proto-count: proto-count + 1

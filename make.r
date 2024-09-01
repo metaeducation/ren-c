@@ -86,9 +86,12 @@ rebmake/set-target-platform system-config/os-base
 
 to-obj-path: func [
     file [any-string!]
-    ext:
+    <local> ext
 ][
     ext: find/last file #"."
+    if not ext [
+        print ["File with no extension" mold file]
+    ]
     remove/part ext (length of ext)
     join %objs/ head-of append ext rebmake/target-platform/obj-suffix
 ]

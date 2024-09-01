@@ -44,7 +44,7 @@
     3 == do [blk/blank]
 )
 (
-    a-value: 1/Jan/0000
+    a-value: 1-Jan-0000
     0 == a-value/1
 )
 (
@@ -196,9 +196,8 @@
     ]
 )
 
-; / is a length 0 PATH! in Ren-C
-(type of the / = path!)
-(length of the / = 0)
+; / is no longer a length 0 PATH! in Ren-C
+(type of the / = word!)
 
 ; foo/ is a length 1 PATH! in Ren-C
 (type of the foo/ = path!)

@@ -50,15 +50,15 @@ r3-alpha-quote: func [:spelling [word! text!]] [
 
 ; Make top-level words
 ;
-+: -: *: and+: or+: xor+: _
++: -: *: and+: or+: xor+: null
+
+append lib [/]  ; `/:` is not legal in bootstrap, use painful workaround
+do compose/deep [lib/(the /): enfix tighten :divide]
 
 for-each [math-op function-name] [
     +       add
     -       subtract
     *       multiply
-
-    ; / is a 0-arity PATH! in Ren-C.  While "pathing" with a number on the
-    ; left acts as division, it has slight differences.
 
     and+    intersect
     or+     union

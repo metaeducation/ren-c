@@ -54,10 +54,13 @@ to-c-name: function [
     /scope "See C's rules: http://stackoverflow.com/questions/228783/"
     where "Either #global or #local (defaults global)"
         [issue!]
+    <local> fail
 ][
     if any [value = '|  value = "|"] [  ; BAR! in bootstrap, but WORD! in R3C
         return copy "bar_1"
     ]
+
+    fail: specialize :lib/fail [where: true location: 'value]
 
     all [
         text? value
@@ -94,6 +97,8 @@ to-c-name: function [
         "+" [copy "plus_1"]
         "~" [copy "tilde_1"]
 
+        "." [copy "period"]
+
         default [
             ;
             ; If these symbols occur composite in a longer word, they use a
@@ -103,14 +108,24 @@ to-c-name: function [
               #"'"  ""      ; isn't => isnt, don't => dont
                 -   "_"     ; foo-bar => foo_bar
                 *   "_p"    ; !!! because it symbolizes a (p)ointer in C??
-                .   "_"     ; !!! same as hyphen?
+                .   <bad>   ; !!! no longer legal
                 ?   "_q"    ; (q)uestion
                 !   "_x"    ; e(x)clamation
                 +   "_a"    ; (a)ddition
-                ~   "_t"    ; (t)ilde
+                ~   "_t"   ;; (t)ilde
                 |   "_b"    ; (b)ar
 
             ][
+                all [
+                    c = <bad>
+                    find string c
+                    fail [
+                        reb space "is no longer legal internal to WORD!"
+                        "in" value
+                    ]
+
+                ]
+                if c = <bad> [continue]
                 replace/all string (form reb) c
             ]
 

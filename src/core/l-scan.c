@@ -102,7 +102,7 @@ const Byte Lex_Map[256] =
     /* 2B +   */    LEX_SPECIAL|LEX_SPECIAL_PLUS,
     /* 2C ,   */    LEX_DELIMIT|LEX_DELIMIT_COMMA,
     /* 2D -   */    LEX_SPECIAL|LEX_SPECIAL_MINUS,
-    /* 2E .   */    LEX_SPECIAL|LEX_SPECIAL_PERIOD,
+    /* 2E .   */    LEX_DELIMIT|LEX_DELIMIT_PERIOD,
     /* 2F /   */    LEX_DELIMIT|LEX_DELIMIT_SLASH,
 
     /* 30 0   */    LEX_NUMBER|0,
@@ -395,6 +395,11 @@ static const Byte *Scan_UTF8_Char_Escapable(REBUNI *out, const Byte *bp)
     }
 
     return bp;
+}
+
+
+static bool Is_Interstitial_Scan(SCAN_STATE* ss) {
+    return ss->mode_char == '.' or ss->mode_char == '/';
 }
 
 
@@ -1090,7 +1095,6 @@ acquisition_loop:
         case LEX_DELIMIT_SPACE:
             panic ("Prescan_Token did not skip whitespace");
 
-        delimit_comment:;
         case LEX_DELIMIT_SEMICOLON:     /* ; begin comment */
             while (not ANY_CR_LF_END(*cp))
                 ++cp;
@@ -1170,48 +1174,56 @@ acquisition_loop:
             fail (Error_Extra(ss, '}'));
 
 
-        // /REFINEMENT, or //-style comment
+        // /REFINEMENT, or /
 
         case LEX_DELIMIT_SLASH:
             assert(*cp == '/');
+            if (Is_Interstitial_Scan(ss)) {  // handled in token processing
+                ss->token = TOKEN_PATH;
+                fail (Error_Syntax(ss));  // some weird cases, e.g. `=///`
+            }
             ++cp;
-            if (*cp == '/') {
-                if (ss->mode_char == '/') // don't allow `a///b` to be `a/`
-                    fail (Error_Extra(ss, '/'));
+            while (*cp == '/')  // or /// etc.
                 ++cp;
-                goto delimit_comment; // Ren-C adds `//` as a form of comment
-            }
             if (
-                IS_LEX_WORD_OR_NUMBER(*cp)
-                or *cp == '+'
-                or *cp == '-'
-                or *cp == '.'
-                or *cp == '|'
-                or *cp == '_'
+                IS_LEX_ANY_SPACE(*cp)
+                or *cp == ']'
+                or *cp == ')'
             ){
-                // ///refine not allowed
-                if (ss->begin + 1 != cp) {
-                    ss->end = cp;
-                    ss->token = TOKEN_REFINE;
-                    fail (Error_Syntax(ss));
-                }
-                ss->begin = cp;
-                Corrupt_Pointer_If_Debug(ss->end);
-                flags = Prescan_Token(ss);
-                ss->begin--;
-                ss->token = TOKEN_REFINE;
-                // Fast easy case:
-                if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD))
-                    return;
-                goto scanword;
+                ss->end = cp;
+                ss->token = TOKEN_WORD;
+                return;
             }
-            if (cp[0] == '<' or cp[0] == '>') {
-                ss->end = cp + 1;
-                ss->token = TOKEN_REFINE;
+            if (cp != ss->begin + 1) {  // only /REFINEMENT, not ///REFINEMENT
+                ss->token = TOKEN_PATH;
                 fail (Error_Syntax(ss));
             }
-            ss->end = cp;
-            ss->token = TOKEN_PATH;
+            ss->begin = cp;
+            Corrupt_Pointer_If_Debug(ss->end);
+            flags = Prescan_Token(ss);
+            ss->begin--;
+
+            if (*ss->end == '.' or *ss->end == '/') {
+                //
+                // Bootstrap needs to support `/foo.bar: :append` which has
+                // special meaning in modern Ren-C (accept action antiforms).
+                // But since that feature does not exist in the bootstrap
+                // executable, just scan that as `foo.bar: :append`.  Drop
+                // the slash.
+                //
+                ss->end = cp;
+                ss->token = TOKEN_COMMA;
+                return;
+            }
+
+            ss->token = TOKEN_REFINE;
+            if (0 != (flags & (~ (
+                LEX_FLAG(LEX_SPECIAL_WORD)
+                | LEX_FLAG(LEX_SPECIAL_MINUS)
+                | LEX_FLAG(LEX_SPECIAL_PLUS)
+            )))){
+                fail (Error_Syntax(ss));
+            }
             return;
 
         case LEX_DELIMIT_END:
@@ -1225,9 +1237,27 @@ acquisition_loop:
             Corrupt_Pointer_If_Debug(ss->end);
             goto acquisition_loop;
 
-        case LEX_DELIMIT_UTF8_ERROR:
-            ss->token = TOKEN_WORD;
-            fail (Error_Syntax(ss));
+        case LEX_DELIMIT_PERIOD:        /* only [. .. ...] etc. are WORD! */
+            assert(*cp == '.');
+            if (Is_Interstitial_Scan(ss)) {  // handled in token processing
+                ss->token = TOKEN_TUPLE;
+                fail (Error_Syntax(ss));  // some weird cases, e.g. `=...`
+            }
+
+            while (cp[1] == '.')
+                ++cp;
+
+            if (
+                IS_LEX_ANY_SPACE(cp[1])
+                or cp[1] == ']'
+                or cp[1] == ')'
+            ){
+                ss->end = cp + 1;
+                ss->token = TOKEN_WORD;  // not perfect, allows ..a etc.
+                return;
+            }
+            ss->token = TOKEN_PATH;  // bootstrap scans `a.b.c` as `a/b/c`
+            return;
 
         default:
             panic ("Invalid LEX_DELIMIT class");
@@ -1236,7 +1266,7 @@ acquisition_loop:
     case LEX_CLASS_SPECIAL:
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT) and *cp != '<') {
             ss->token = TOKEN_EMAIL;
-            return;
+            goto prescan_subsume_all_dots;
         }
     next_ls:
         switch (GET_LEX_VALUE(*cp)) {
@@ -1256,7 +1286,7 @@ acquisition_loop:
                 ss->token = TOKEN_FILE;
                 return;
             }
-            while (*cp == '/') {        /* deal with path delimiter */
+            while (*cp == '/' or *cp == '.') {  /* deal with delimiter */
                 cp++;
                 while (IS_LEX_NOT_DELIMIT(*cp))
                     ++cp;
@@ -1302,6 +1332,22 @@ acquisition_loop:
                 ss->token = TOKEN_LIT;
                 fail (Error_Syntax(ss));
             }
+            if (cp[1] == '.') {
+                while (cp[1] == '.')
+                    ++cp;
+
+                if (
+                    IS_LEX_ANY_SPACE(cp[1])
+                    or cp[1] == ']'
+                    or cp[1] == ')'
+                ){
+                    ss->end = cp + 1;
+                    ss->token = TOKEN_LIT;  // not perfect, allows ..a etc.
+                    return;
+                }
+                ss->token = TOKEN_LIT;
+                fail (Error_Syntax(ss));
+            }
             if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD)) {
                 ss->token = TOKEN_LIT;
                 return; // common case
@@ -1328,16 +1374,6 @@ acquisition_loop:
                 fail (Error_Syntax(ss));
             }
             ss->token = TOKEN_LIT;
-            goto scanword;
-
-        case LEX_SPECIAL_PERIOD:        /* .123 .123.456.789 */
-            SET_LEX_FLAG(flags, (GET_LEX_VALUE(*cp)));
-            if (IS_LEX_NUMBER(cp[1]))
-                goto num;
-            ss->token = TOKEN_WORD;
-            if (GET_LEX_VALUE(*cp) != LEX_SPECIAL_PERIOD)
-                fail (Error_Syntax(ss));
-            ss->token = TOKEN_WORD;
             goto scanword;
 
         case LEX_SPECIAL_GREATER:
@@ -1394,17 +1430,17 @@ acquisition_loop:
         case LEX_SPECIAL_MINUS:         /* -123 -123.45 -$123 */
             if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
                 ss->token = TOKEN_EMAIL;
-                return;
+                goto prescan_subsume_all_dots;
             }
             if (HAS_LEX_FLAG(flags, LEX_SPECIAL_DOLLAR)) {
                 ss->token = TOKEN_MONEY;
-                return;
+                goto prescan_subsume_up_to_one_dot;
             }
             if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) {
                 cp = Skip_To_Byte(cp, ss->end, ':');
                 if (cp != nullptr and (cp + 1) != ss->end) { // 12:34
                     ss->token = TOKEN_TIME;
-                    return;
+                    goto prescan_subsume_up_to_one_dot;  // -596523:14:07.9999
                 }
                 cp = ss->begin;
                 if (cp[1] == ':') {     // +: -:
@@ -1416,7 +1452,7 @@ acquisition_loop:
             if (IS_LEX_NUMBER(*cp))
                 goto num;
             if (IS_LEX_SPECIAL(*cp)) {
-                if ((GET_LEX_VALUE(*cp)) >= LEX_SPECIAL_PERIOD)
+                if ((GET_LEX_VALUE(*cp)) >= LEX_SPECIAL_POUND)
                     goto next_ls;
                 if (*cp == '+' or *cp == '-') {
                     ss->token = TOKEN_WORD;
@@ -1503,10 +1539,10 @@ acquisition_loop:
         case LEX_SPECIAL_DOLLAR:
             if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
                 ss->token = TOKEN_EMAIL;
-                return;
+                goto prescan_subsume_all_dots;
             }
             ss->token = TOKEN_MONEY;
-            return;
+            goto prescan_subsume_up_to_one_dot;
 
         default:
             ss->token = TOKEN_WORD;
@@ -1515,6 +1551,30 @@ acquisition_loop:
 
     case LEX_CLASS_WORD:
         ss->token = TOKEN_WORD;
+        if (ss->mode_char == '/') {
+            //
+            // If we're in the mode of scanning a path, we don't want words
+            // to consider dot to be a delimiter...rather we want to embed
+            // those dots in the word.  This is because the bootstrap exe
+            // doesn't have tuples, but we want to preserve `a/b/c.txt` as
+            // it is while turning `a.b.c` into `a/b/c` and this is basically
+            // the only way to do it.
+            //
+            cp = ss->end;
+            while (
+                *cp == '.'
+                or GET_LEX_CLASS(*cp) == LEX_CLASS_WORD
+                or GET_LEX_CLASS(*cp) == LEX_CLASS_NUMBER
+                or (GET_LEX_CLASS(*cp) == LEX_CLASS_SPECIAL and (
+                    GET_LEX_VALUE(*cp) == LEX_SPECIAL_MINUS
+                    or GET_LEX_VALUE(*cp) == LEX_SPECIAL_PLUS
+                ))
+            ){
+                ++cp;
+            }
+            ss->end = cp;
+            cp = ss->begin;
+        }
         if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD))
             return;
         goto scanword;
@@ -1527,7 +1587,7 @@ acquisition_loop:
         }
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
             ss->token = TOKEN_EMAIL;
-            return;
+            goto prescan_subsume_all_dots;
         }
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_POUND)) {
             if (cp == ss->begin) { // no +2 +16 +64 allowed
@@ -1557,22 +1617,15 @@ acquisition_loop:
             fail (Error_Syntax(ss));
         }
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) { // 12:34
-            ss->token = TOKEN_TIME;
-            return;
-        }
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_PERIOD)) {
-            // 1.2 1.2.3 1,200.3 1.200,3 1.E-2
-            if (Skip_To_Byte(cp, ss->end, 'x')) {
-                ss->token = TOKEN_PAIR;
-                return;
+            if (ss->end[-1] != ':') {  // colon at the end could come from `a.1:`
+                ss->token = TOKEN_TIME;
+                goto prescan_subsume_up_to_one_dot;
             }
-            cp = Skip_To_Byte(cp, ss->end, '.');
-            // Note: no comma in bytes
-            if (Skip_To_Byte(cp + 1, ss->end, '.')) {
-                ss->token = TOKEN_TUPLE;
-                return;
-            }
-            ss->token = TOKEN_DECIMAL;
+            cp = ss->begin;
+            while (GET_LEX_CLASS(*cp) == LEX_CLASS_NUMBER)
+                ++cp;
+            ss->end = cp;
+            ss->token = TOKEN_INTEGER;
             return;
         }
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_POUND)) { // -#123 2#1010
@@ -1581,17 +1634,12 @@ acquisition_loop:
                     flags,
                     ~(
                         LEX_FLAG(LEX_SPECIAL_POUND)
-                        | LEX_FLAG(LEX_SPECIAL_PERIOD)
                         | LEX_FLAG(LEX_SPECIAL_APOSTROPHE)
                     )
                 )
             ){
                 ss->token = TOKEN_INTEGER;
                 fail (Error_Syntax(ss));
-            }
-            if (HAS_LEX_FLAG(flags, LEX_SPECIAL_PERIOD)) {
-                ss->token = TOKEN_TUPLE;
-                return;
             }
             ss->token = TOKEN_INTEGER;
             return;
@@ -1645,7 +1693,7 @@ scanword:
         }
         // This Skip_To_Byte always returns a pointer (always a ':')
         cp = Skip_To_Byte(cp, ss->end, ':');
-        if (cp[1] != '/' and Lex_Map[cp[1]] < LEX_SPECIAL) {
+        if (cp[1] != '/' and cp[1] != '.' and Lex_Map[cp[1]] < LEX_SPECIAL) {
             // a valid delimited word SET?
             if (
                 HAS_LEX_FLAGS(
@@ -1659,9 +1707,9 @@ scanword:
             return;
         }
         cp = ss->end;   /* then, must be a URL */
-        while (*cp == '/') {    /* deal with path delimiter */
+        while (*cp == '/' or *cp == '.') {    /* deal with path delimiter */
             cp++;
-            while (IS_LEX_NOT_DELIMIT(*cp) or *cp == '/')
+            while (IS_LEX_NOT_DELIMIT(*cp) or *cp == '/' or *cp == '.')
                 ++cp;
         }
         ss->end = cp;
@@ -1670,11 +1718,11 @@ scanword:
     }
     if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
         ss->token = TOKEN_EMAIL;
-        return;
+        goto prescan_subsume_all_dots;
     }
     if (HAS_LEX_FLAG(flags, LEX_SPECIAL_DOLLAR)) {
         ss->token = TOKEN_MONEY;
-        return;
+        goto prescan_subsume_up_to_one_dot;
     }
     if (HAS_LEX_FLAGS(flags, LEX_WORD_FLAGS)) {
         // has chars not allowed in word (eg % \ )
@@ -1706,6 +1754,50 @@ scanword:
         }
         fail (Error_Syntax(ss));
     }
+
+    return;
+
+  prescan_subsume_up_to_one_dot:
+    assert(ss->token == TOKEN_MONEY or ss->token == TOKEN_TIME);
+
+    // By default, `.` is a delimiter class which stops token scaning.  So if
+    // scanning +$10.20 or -$10.20 or $3.04, there is common code to look
+    // past the delimiter hit.  The same applies to times.  (DECIMAL! has
+    // its own code)
+
+    if (*ss->end != '.' and *ss->end != ',')
+        return;
+
+    cp = ss->end + 1;
+    while (not IS_LEX_DELIMIT(*cp) and not IS_LEX_ANY_SPACE(*cp))
+        ++cp;
+    ss->end = cp;
+
+    return;
+
+  prescan_subsume_all_dots:
+    assert(ss->token == TOKEN_EMAIL);
+
+    // Similar to the above, email scanning in R3-Alpha relied on the non
+    // delimiter status of periods to incorporate them into the EMAIL!.
+    // (Unlike FILE! or URL!, it did not already have code for incorporating
+    // the otherwise-delimiting `/`)  It may be that since EMAIL! is not
+    // legal in PATH! there's no real reason not to allow slashes in it, and
+    // it could be based on the same code.
+    //
+    // (This is just good enough to lets the existing tests work on EMAIL!)
+
+    if (*ss->end != '.')
+        return;
+
+    cp = ss->end + 1;
+    while (
+        *cp == '.'
+        or (not IS_LEX_DELIMIT(*cp) and not IS_LEX_ANY_SPACE(*cp))
+    ){
+        ++cp;
+    }
+    ss->end = cp;
 
     return;
 }
@@ -1954,7 +2046,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         case TOKEN_GET:
         token_get:
             if (ep[-1] == ':') {
-                if (len == 1 or ss->mode_char != '/')
+                if (len == 1)
                     fail (Error_Syntax(ss));
                 --len;
                 --ss->end;
@@ -1965,7 +2057,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         case TOKEN_SET:
         token_set:
             len--;
-            if (ss->mode_char == '/' and ss->token == TOKEN_SET) {
+            if (Is_Interstitial_Scan(ss) and ss->token == TOKEN_SET) {
                 ss->token = TOKEN_WORD; // will be a PATH_SET
                 ss->end--;  // put ':' back on end but not beginning
             }
@@ -2010,13 +2102,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             break; }
 
         case TOKEN_PATH:
-            if (ss->mode_char != '/') {
-                //
-                // If not in the process of scanning a path, this is a 0
-                // element path, so push it.
-                //
-                Init_Path(PUSH(), Make_Array(0));
-            }
+            assert(Is_Interstitial_Scan(ss));  // leading slash should be WORD!
             break;
 
         case TOKEN_BLOCK_END: {
@@ -2041,29 +2127,63 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             //
             fail (Error_Extra(ss, ')')); }
 
+
+        // We treat `10.20.30` as a TUPLE!, but `10.20` has a cultural lock on
+        // being a DECIMAL! number.  Due to the overlap, Locate_Token() does
+        // not have enough information in hand to discern TOKEN_DECIMAL; it
+        // just returns TOKEN_INTEGER and the decision is made here.
+        //
+        // (Imagine we're in a tuple scan and INTEGER! 10 was pushed, and are
+        // at "20.30" in the 10.20.30 case.  Locate_Token() would need access
+        // to level->mode to know that the tuple scan was happening, else
+        // it would have to conclude "20.30" was TOKEN_DECIMAL.  Deeper study
+        // would be needed to know if giving Locate_Token() more information
+        // is wise.  But that study would likely lead to the conclusion that
+        // the whole R3-Alpha scanner concept needs a full rewrite!)
+        //
+        // Note: We can't merely start with assuming it's a TUPLE!, scan the
+        // values, and then decide it's a DECIMAL! when the tuple is popped
+        // if it's two INTEGER!.  Because the integer scanning will lose
+        // leading digits on the second number (1.002 would become 1.2).
+        //
         case TOKEN_INTEGER:     // or start of DATE
-            if (*ep != '/' or ss->mode_char == '/') {
-                if (ep != Scan_Integer(PUSH(), bp, len))
-                    fail (Error_Syntax(ss));
-            }
-            else {              // A / and not in block
-                ss->token = TOKEN_DATE;
-                while (*ep == '/' or IS_LEX_NOT_DELIMIT(*ep))
-                    ++ep;
-                len = cast(REBLEN, ep - bp);
-                if (ep != Scan_Date(PUSH(), bp, len))
-                    fail (Error_Syntax(ss));
+            if (
+                (*ep == '.')
+                and not Is_Interstitial_Scan(ss)  // not in PATH! (yet)
+                and IS_LEX_NUMBER(ep[1])  // If # digit, we're seeing `###.#???`
+            ){
+                // If we will be scanning a TUPLE!, then we're at the head of it.
+                // But it could also be a DECIMAL! if there aren't any more dots.
+                //
+                const Byte* temp = ep + 1;
+                REBLEN temp_len = len + 1;
+                for (; *temp != '.'; ++temp, ++temp_len) {
+                    if (IS_LEX_DELIMIT(*temp)) {
+                        ss->begin = ss->end = ep = temp;
+                        len = temp_len;
+                        goto scan_decimal;
+                    }
+                }
+                while (*temp == '.' or not IS_LEX_DELIMIT(*temp))
+                    { ++temp; ++temp_len; }
 
-                // !!! used to just set ss->begin to ep...which tripped up an
-                // assert that ss->end is greater than ss->begin at the start
-                // of the loop.  So this sets both to ep.  Review.
-
-                ss->begin = ss->end = ep;
+                ss->token = TOKEN_COMMA;  // skip
+                if (bp + temp_len != Scan_Tuple(PUSH(), bp, temp_len))
+                    fail (Error_Syntax(ss));
+                ss->begin = ss->end = ep = bp + temp_len;
+                break;
             }
+
+            // Wasn't beginning of a DECIMAL!, so scan as a normal INTEGER!
+            //
+            if (ep != Scan_Integer(PUSH(), bp, len))
+                fail (Error_Syntax(ss));
             break;
+
 
         case TOKEN_DECIMAL:
         case TOKEN_PERCENT:
+        scan_decimal:
             // Do not allow 1.2/abc:
             if (*ep == '/')
                 fail (Error_Syntax(ss));
@@ -2142,8 +2262,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             break;
 
         case TOKEN_TUPLE:
-            if (ep != Scan_Tuple(PUSH(), bp, len))
-                fail (Error_Syntax(ss));
+            assert(!"Tuple scanning is handled in TOKEN_INTEGER case");
             break;
 
         case TOKEN_FILE:
@@ -2310,9 +2429,21 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         }
 
         // Check for end of path:
-        if (ss->mode_char == '/') {
-            if (*ep != '/')
+        if (Is_Interstitial_Scan(ss)) {
+            if (*ep != '/' and *ep != '.')
                 goto array_done;
+
+            // For bootstrap we want `abc.def.ghi` to scan as `abc/def/ghi`
+            // But we want `abc/def/ghi.txt` to have a WORD! in the last
+            // position containing a dot, for how bootstrap uses PATH! in
+            // order to represent files.
+            //
+            // The best way to go about this is to have a separate scan
+            // mode for `.` that shifts into `/` if a slash is seen, and
+            // only the `.` mode will do the conversions.
+            //
+            if (ss->mode_char == '.' and *ep == '/')
+                ss->mode_char = '/';
 
             ep++;
             if (*ep != '(' and *ep != '[' and IS_LEX_DELIMIT(*ep)) {
@@ -2321,7 +2452,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             }
             ss->begin = ep;  // skip next /
         }
-        else if (*ep == '/') {
+        else if (*ep == '/' or *ep == '.') {
             //
             // We're noticing a path was actually starting with the token
             // that just got pushed, so it should be a part of that path.
@@ -2350,7 +2481,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 // pushed item from us...as it's the head of the path it
                 // couldn't see coming in the future.
 
-                arr = Scan_Array(ss, '/');
+                arr = Scan_Array(ss, *ep);
 
               #if !defined(NDEBUG)
                 assert(TOP_INDEX == check - 1);  // should only take one!
@@ -2510,7 +2641,7 @@ static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char)
     // in the path.  Hence, we take over one pushed item from the caller.
     //
     StackIndex base;
-    if (mode_char == '/') {
+    if (mode_char == '/' or mode_char == '.') {
         assert(TOP_INDEX > 0);
         base = TOP_INDEX - 1;
     } else
@@ -2885,14 +3016,16 @@ const Byte *Scan_Issue(Value* out, const Byte *cp, REBLEN len)
     REBLEN l = len;
     while (l > 0) {
         switch (GET_LEX_CLASS(*bp)) {
-          case LEX_CLASS_DELIMIT:
-            return nullptr; // will trigger error
+          case LEX_CLASS_DELIMIT: {
+            REBLEN c = GET_LEX_VALUE(*bp);
+            if (c == LEX_DELIMIT_PERIOD)  // periods legal in ISSUE!
+                goto lex_word_or_number;
+            return nullptr; }  // will trigger error
 
           case LEX_CLASS_SPECIAL: { // Flag all but first special char
             REBLEN c = GET_LEX_VALUE(*bp);
             if (
                 LEX_SPECIAL_APOSTROPHE != c
-                and LEX_SPECIAL_PERIOD != c
                 and LEX_SPECIAL_PLUS != c
                 and LEX_SPECIAL_MINUS != c
                 and LEX_SPECIAL_BLANK != c

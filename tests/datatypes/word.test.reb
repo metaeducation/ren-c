@@ -23,7 +23,7 @@
     same? :a-value a-value
 )
 (
-    a-value: 1/Jan/0000
+    a-value: 1-Jan-0000
     same? :a-value a-value
 )
 (

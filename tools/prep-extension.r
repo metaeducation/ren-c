@@ -80,9 +80,9 @@ verbose: false
 proto-count: 0
 module-header: _
 
-source.text: read c-src
+source-text: read c-src
 if system/version > 2.100.0 [ ;-- !!! Why is this necessary?
-    source.text: deline to-text source.text
+    source-text: deline to-text source-text
 ]
 
 ; When the header information in the comments at the top of the file is
@@ -100,7 +100,7 @@ proto-parser/emit-proto: :emit-native-proto
 
 the-file: c-src ;-- global used for comments in the native emitter
 
-proto-parser/process source.text
+proto-parser/process source-text
 
 
 ;

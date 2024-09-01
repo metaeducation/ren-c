@@ -614,51 +614,50 @@ DECLARE_NATIVE(enhex)
             encoded_size = 1;
 
             switch (GET_LEX_CLASS(c)) {
-            case LEX_CLASS_DELIMIT:
+              case LEX_CLASS_DELIMIT:
                 switch (GET_LEX_VALUE(c)) {
-                case LEX_DELIMIT_LEFT_PAREN:
-                case LEX_DELIMIT_RIGHT_PAREN:
-                case LEX_DELIMIT_LEFT_BRACKET:
-                case LEX_DELIMIT_RIGHT_BRACKET:
-                case LEX_DELIMIT_SLASH:
-                case LEX_DELIMIT_SEMICOLON:
-                case LEX_DELIMIT_COMMA:
+                  case LEX_DELIMIT_LEFT_PAREN:
+                  case LEX_DELIMIT_RIGHT_PAREN:
+                  case LEX_DELIMIT_LEFT_BRACKET:
+                  case LEX_DELIMIT_RIGHT_BRACKET:
+                  case LEX_DELIMIT_SLASH:
+                  case LEX_DELIMIT_SEMICOLON:
+                  case LEX_DELIMIT_COMMA:
+                  case LEX_DELIMIT_PERIOD:
                     goto leave_as_is;
 
-                case LEX_DELIMIT_SPACE: // includes control characters
-                case LEX_DELIMIT_END: // 00 null terminator
-                case LEX_DELIMIT_LINEFEED:
-                case LEX_DELIMIT_RETURN: // e.g. ^M
-                case LEX_DELIMIT_LEFT_BRACE:
-                case LEX_DELIMIT_RIGHT_BRACE:
-                case LEX_DELIMIT_DOUBLE_QUOTE:
+                  case LEX_DELIMIT_SPACE:  // includes control characters
+                  case LEX_DELIMIT_END:  // 00 null terminator
+                  case LEX_DELIMIT_LINEFEED:
+                  case LEX_DELIMIT_RETURN:  // e.g. ^M
+                  case LEX_DELIMIT_LEFT_BRACE:
+                  case LEX_DELIMIT_RIGHT_BRACE:
+                  case LEX_DELIMIT_DOUBLE_QUOTE:
                     goto needs_encoding;
 
-                case LEX_DELIMIT_UTF8_ERROR: // not for c < 0x80
-                default:
-                    panic ("Internal LEX_DELIMIT table error");
+                  default:
+                    assert(!"Bad LEX_DELIMIT Value");
+                    goto leave_as_is;
                 }
-                goto leave_as_is;
 
-            case LEX_CLASS_SPECIAL:
+              case LEX_CLASS_SPECIAL:
                 switch (GET_LEX_VALUE(c)) {
-                case LEX_SPECIAL_AT:
-                case LEX_SPECIAL_COLON:
-                case LEX_SPECIAL_APOSTROPHE:
-                case LEX_SPECIAL_PLUS:
-                case LEX_SPECIAL_MINUS:
-                case LEX_SPECIAL_BLANK:
-                case LEX_SPECIAL_PERIOD:
-                case LEX_SPECIAL_POUND:
-                case LEX_SPECIAL_DOLLAR:
+                  case LEX_SPECIAL_AT:
+                  case LEX_SPECIAL_COLON:
+                  case LEX_SPECIAL_APOSTROPHE:
+                  case LEX_SPECIAL_PLUS:
+                  case LEX_SPECIAL_MINUS:
+                  case LEX_SPECIAL_BLANK:
+                  case LEX_SPECIAL_POUND:
+                  case LEX_SPECIAL_DOLLAR:
                     goto leave_as_is;
 
-                default:
+                  default:
                     goto needs_encoding; // what is LEX_SPECIAL_WORD?
                 }
                 goto leave_as_is;
 
-            case LEX_CLASS_WORD:
+              case LEX_CLASS_WORD:
                 if (
                     (c >= 'a' and c <= 'z') or (c >= 'A' and c <= 'Z')
                     or c == '?' or c == '!' or c == '&'
@@ -668,7 +667,7 @@ DECLARE_NATIVE(enhex)
                 }
                 goto needs_encoding;
 
-            case LEX_CLASS_NUMBER:
+              case LEX_CLASS_NUMBER:
                 goto leave_as_is; // 0-9 needs no encoding.
             }
 

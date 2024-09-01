@@ -40,7 +40,7 @@
     did all [
         true = every x [1 2 7] [
             sum: me + x
-            if even? x [continue] // acts as `continue void`, ignored
+            if even? x [continue]  ; acts as `continue void`, ignored
             true
         ]
         10 = sum

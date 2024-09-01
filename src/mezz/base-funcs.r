@@ -323,7 +323,7 @@ redescribe: function [
                 fail [{PARAMETER-NOTES in META-OF is not a FRAME!} notes]
             ]
 
-          // !!! Getting error on equality test from expired frame...review
+          ; Getting error on equality test from expired frame...review
           comment [
             if not equal? :value (action of notes) [
                 fail [{PARAMETER-NOTES in META-OF frame mismatch} notes]
