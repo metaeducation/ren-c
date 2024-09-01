@@ -4,7 +4,7 @@
 (antiform! = kind of :reduce)
 [#1659 (
     ; natives are active
-    same? blank! eval reduce [
+    equal? blank! eval reduce [  ; not SAME? as type block array may differ
         (unrun specialize :of [property: 'type]) blank
     ]
 )]

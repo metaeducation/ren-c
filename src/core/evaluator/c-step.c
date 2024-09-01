@@ -1019,13 +1019,6 @@ Bounce Stepper_Executor(Level* L)
     // usual PICK process, and being able to say that "slashing" is not
     // methodized the way "dotting" is gives some hope of optimizing it.
     //
-    // *BUT* for compatibility with Redbol, there has to be a mode where the
-    // paths are effectively turned into TUPLE!s.  This is implemented and
-    // controlled by the flag SYSTEM.OPTIONS.REDBOL-PATHS - but it is slow
-    // because the method has to actually synthesize a specialized function,
-    // instead of pushing refinements to the stack.  (Going through a method
-    // call would not allow accrual of data stack elements.)
-    //
     // PATH!s starting with inert values do not evaluate.  `/foo/bar` has a
     // blank at its head, and it evaluates to itself.
 

@@ -1568,49 +1568,6 @@ REBTYPE(Frame)
             VAL_FRAME_COUPLING(frame)  // same (e.g. RETURN to same frame)
         ); }
 
-
-  //=//// PICK* (see %sys-pick.h for explanation) //////////////////////////=//
-
-    // !!! This is an interim implementation hack for REDBOL-PATHS, which
-    // transforms something like `lib/append/dup` into `lib.append.dup` when
-    // it notices that LIB is not an ACTION!.  This is a *very slow* way of
-    // dealing with refinements because it produces a specialized action
-    // at each stage.
-
-      case SYM_PICK_P:
-        if (Is_Frame_Exemplar(frame))
-            break;
-      {
-        INCLUDE_PARAMS_OF_PICK_P;
-        UNUSED(ARG(location));
-
-        Value* redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
-        if (not Is_Logic(redbol) or Cell_Logic(redbol) == false) {
-            fail (
-                "SYSTEM.OPTIONS.REDBOL-PATHS is false, so you can't"
-                " use paths to do ordinary picking.  Use TUPLE!"
-            );
-          }
-
-        Value* picker = ARG(picker);
-        if (Is_Blank(picker))
-            return COPY(frame);
-
-        const Symbol* symbol;
-        if (Is_Word(picker))
-            symbol = Cell_Word_Symbol(picker);
-        else if (Is_Path(picker) and Is_Refinement(picker))
-            symbol = VAL_REFINEMENT_SYMBOL(picker);
-        else
-            fail (picker);
-
-        StackIndex base = TOP_INDEX;
-        Init_Pushed_Refinement(PUSH(), symbol);
-        if (Specialize_Action_Throws(OUT, frame, nullptr, base))
-            return THROWN;
-
-        return OUT; }
-
       default:
         break;
     }

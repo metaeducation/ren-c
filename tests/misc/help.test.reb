@@ -37,14 +37,14 @@
     true
 )
 (
-    nihil? source ||   ; Was once a tricky case, SOURCE of a barrier
+    nothing? source ||   ; Was once a tricky case, SOURCE of a barrier
 )
 (
     for-each w words of lib [
         dump w
         if quasi? ^(get/any w) [continue]
         if action? get w
-            (compose/deep [assert [nihil? source (w)]])
+            (compose/deep [assert [nothing? source (w)]])
     ]
     true
 )

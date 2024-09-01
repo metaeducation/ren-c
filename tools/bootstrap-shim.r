@@ -81,17 +81,14 @@ trap [
 ] then [
     ; Fall through to the body of this file, we are shimming version ~8994d23
 ] else [
-    if trap [system.options.redbol-paths] [  ; old shim'd interpreter
+    if find (words of :transcode) 'next3 [  ; old shim'd interpreter
         ;
         ; Old bootstrap executables that are already shimmed should not do
-        ; tweaks for the modern import.  Otherwise, export load-all: would
-        ; overwrite with LOAD instead of LOAD/ALL (for example).  It's just
-        ; generally inefficient to shim multiple times.
+        ; tweaks for the modern import.  It's just generally inefficient to
+        ; shim multiple times.
         ;
         quit
     ]
-
-    system.options.redbol-paths: true  ; new interpreter, make it act older
 
 
     === "BACKWARDS-LEANING BOOTSTRAP FUNCTIONS" ===

@@ -694,7 +694,7 @@ bool Get_Var_Push_Refinements_Throws(
         return false;
     }
 
-    if (Any_Word(var)) {
+    if (Any_Word(var)) {  // META-WORD! is not META'd, all act the same
 
       get_source:  // Note: source may be `out`, due to GROUP fetch above!
 
@@ -713,7 +713,7 @@ bool Get_Var_Push_Refinements_Throws(
         return false;
     }
 
-    if (Any_Path(var)) {  // !!! SET-PATH! too?
+    if (Any_Path(var)) {  // META-PATH! is not META'd, all act the same
         DECLARE_ATOM (safe);
         Push_GC_Guard_Erased_Cell(safe);
         DECLARE_ATOM (result);
@@ -737,7 +737,7 @@ bool Get_Var_Push_Refinements_Throws(
 
     StackIndex base = TOP_INDEX;
 
-    if (Any_Sequence(var)) {
+    if (Any_Tuple(var)) {
         if (Not_Cell_Flag(var, SEQUENCE_HAS_NODE))  // byte compressed
             fail (var);
 
@@ -750,12 +750,7 @@ bool Get_Var_Push_Refinements_Throws(
             if (Get_Cell_Flag(var, REFINEMENT_LIKE))  // `/a` or `.a`
                 goto get_source;
 
-            // `a/` or `a.`
-            //
-            // !!! If this is a PATH!, it should error if it's not an action...
-            // and if it's a TUPLE! it should error if it is an action.  Review.
-            //
-            goto get_source;
+            fail ("No self object to use with .field style access"); }
 
           case FLAVOR_ARRAY:
             break;
@@ -921,9 +916,6 @@ void Get_Var_May_Fail(
 // This form of Get_Path() is low-level, and may return a non-ACTION! value
 // if the path is inert (e.g. `/abc` or `.a.b/c/d`).
 //
-// It is also able to return a non-ACTION! value if REDBOL-PATHS compatibility
-// is enabled.
-//
 bool Get_Path_Push_Refinements_Throws(
     Sink(Value*) out,
     Sink(Value*) safe,
@@ -990,46 +982,13 @@ bool Get_Path_Push_Refinements_Throws(
         Specifier* derived = Derive_Specifier(path_specifier, path);
         if (Eval_Value_Throws(out, head, derived))
             return true;
-
-        if (Is_Action(out))
-            NOOP;  // it's good
-        else if (Is_Antiform(out))
-            fail (Error_Bad_Antiform(out));
-        else if (Is_Frame(out))
-            Actionify(out);
-        else
-            fail ("Head of PATH! did not evaluate to an ACTION!");
     }
     else if (Is_Tuple(head)) {
-        //
-        // Note: Historical Rebol didn't have WORD!-bearing TUPLE!s at all.
-        // We can thus restrict head-of-path evaluations to ACTION!, or
-        // this exemption...where blank-headed tuples can carry over the
-        // inert evaluative behavior.  For instance:
-        //
-        //    >> .a.b/c/d
-        //    == .a.b/c/d
-        //
-        if (Is_Blank(Copy_Sequence_At(safe, head, 0))) {
-            Derelativize(out, path, path_specifier);
-            return false;
-        }
-
         Specifier* derived = Derive_Specifier(path_specifier, path);
 
         DECLARE_VALUE (steps);
         if (Get_Var_Core_Throws(out, steps, head, derived))
             return true;
-
-        if (Is_Antiform(out)) {
-            if (not Is_Action(out))
-                fail (Error_Bad_Antiform(out));
-        }
-        else if (Is_Frame(out)) {
-            Actionify(out);
-        }
-        else
-            fail ("TUPLE! must resolve to an action if head of PATH!");
     }
     else if (Is_Word(head)) {
         Specifier* derived = Derive_Specifier(path_specifier, path);
@@ -1037,60 +996,19 @@ bool Get_Path_Push_Refinements_Throws(
             head,
             derived
         );
-
-        // Under the new thinking, PATH! is only used to invoke actions.
-        //
-        if (Is_Action(lookup)) {
-            Copy_Cell(out, lookup);
-            goto action_in_out;
-        }
-
-        if (Is_Antiform(lookup))
-            fail (Error_Bad_Word_Get(head, lookup));
-
-        Derelativize(safe, path, path_specifier);
-        HEART_BYTE(safe) = REB_TUPLE;
-
-        // ...but historical Rebol used PATH! for everything.  For Redbol
-        // compatibility, we flip over to a TUPLE!.  We must be sure that
-        // we are running in a mode where tuple allows the getting of
-        // actions (though it's slower because it does specialization)
-        //
-        Value* redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
-        if (not Is_Logic(redbol) or Cell_Logic(redbol) == false) {
-            Derelativize(out, path, path_specifier);
-            rebElide(
-                "echo [The PATH!", cast(Value*, out), "doesn't evaluate to",
-                    "an ACTION! in the first slot.]",
-                "echo [SYSTEM.OPTIONS.REDBOL-PATHS is FALSE so this",
-                    "is not allowed by default.]",
-                "echo [For now, we'll enable it automatically...but it",
-                    "will slow down the system!]",
-                "echo [Please use TUPLE!, like", cast(Value*, safe), "]",
-
-                "system.options.redbol-paths: true",
-                "wait 3"
-            );
-        }
-
-        DECLARE_VALUE (steps);
-        if (Get_Var_Core_Throws(out, steps, safe, SPECIFIED))
-            return true;
-
-        if (Is_Action(out))
-            return false;  // activated actions are ok
-
-        if (Is_Antiform(out) and not redbol)  // need for GET/ANY $OBJ/UNDEF
-            fail (Error_Bad_Word_Get(path, out));
-
-        return false;  // refinements pushed by Redbol-adjusted Get_Var()
+        Copy_Cell(out, lookup);
     }
     else
         fail (head);  // what else could it have been?
 
-  action_in_out:
-
-    assert(Is_Action(out));
+    if (Is_Action(out))
+        NOOP;  // it's good
+    else if (Is_Antiform(out))
+        fail (Error_Bad_Antiform(out));
+    else if (Is_Frame(out))
+        Actionify(out);
+    else
+        fail ("Head of PATH! did not evaluate to an ACTION!");
 
     // We push the remainder of the path in *reverse order* as words to act
     // as refinements to the function.  The action execution machinery will
