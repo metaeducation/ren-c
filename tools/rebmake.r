@@ -1204,21 +1204,24 @@ generator-class: make object! [
         return switch cmd.class [
             #cmd-create [
                 applique any [
-                    :gen-cmd-create get $target-platform/gen-cmd-create
+                    get $gen-cmd-create
+                    get $target-platform/gen-cmd-create
                 ] compose [
                     cmd: (cmd)
                 ]
             ]
             #cmd-delete [
                 applique any [
-                    :gen-cmd-delete get $target-platform/gen-cmd-delete
+                    get $gen-cmd-delete
+                    get $target-platform/gen-cmd-delete
                 ] compose [
                     cmd: (cmd)
                 ]
             ]
             #cmd-strip [
                 applique any [
-                    :gen-cmd-strip get $target-platform/gen-cmd-strip
+                    get $gen-cmd-strip
+                    get $target-platform/gen-cmd-strip
                 ] compose [
                     cmd: (cmd)
                 ]
@@ -1396,10 +1399,12 @@ generator-class: make object! [
 makefile: make generator-class [
     nmake?: false ; Generating for Microsoft nmake
 
-    ;by default makefiles are for POSIX platform
-    gen-cmd-create: :posix.gen-cmd-create
-    gen-cmd-delete: :posix.gen-cmd-delete
-    gen-cmd-strip: :posix.gen-cmd-strip
+    ; by default makefiles are for POSIX platform
+    ; these GETs are null-tolerant
+    ;
+    gen-cmd-create: get $posix.gen-cmd-create
+    gen-cmd-delete: get $posix.gen-cmd-delete
+    gen-cmd-strip: get $posix.gen-cmd-strip
 
     gen-rule: meth [
         return: "Possibly multi-line text for rule, with extra newline @ end"
@@ -1545,7 +1550,7 @@ makefile: make generator-class [
                     ]
                 ]
                 #object-file [
-                    append buf gen-rule dep.gen-entries project
+                    append buf gen-rule dep/gen-entries project
                 ]
                 #entry #variable [
                     append buf gen-rule dep
@@ -1608,9 +1613,11 @@ export execution: make generator-class [
         posix
     ]
 
-    gen-cmd-create: :host.gen-cmd-create
-    gen-cmd-delete: :host.gen-cmd-delete
-    gen-cmd-strip: :host.gen-cmd-strip
+    ; these GETs are null tolerant
+    ;
+    gen-cmd-create: get $host.gen-cmd-create
+    gen-cmd-delete: get $host.gen-cmd-delete
+    gen-cmd-strip: get $host.gen-cmd-strip
 
     run-target: meth [
         return: [~]

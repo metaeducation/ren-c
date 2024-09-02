@@ -940,25 +940,6 @@ targets: [
     'nmake [
         rebmake.nmake/generate %makefile solution
     ]
-    'vs2019
-    'visual-studio [
-        apply get $rebmake.visual-studio/generate [
-            output-dir solution
-            /x86 (platform-config.os-name = 'Windows-x86)
-        ]
-    ]
-    'vs2015 [
-        apply get $rebmake.vs2015/generate [
-            output-dir solution
-            /x86 (platform-config.os-name = 'Windows-x86)
-        ]
-    ]
-    'vs2017 [
-        fail [
-            "Only minor changes needed to support vs2017, please get in"
-            "touch if this is an issue and you need it for some reason."
-        ]
-    ]
 ]
 
 target-names: make block! 16
