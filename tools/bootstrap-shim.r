@@ -128,7 +128,7 @@ trap [
             fail/where "Use TRANSCODE/NEXT3 in Bootstrap" 'return
         ]
         if not f.next3 [
-            return do f
+            return eval f
         ]
         f.next: make issue! 0  ; # is invalid issue in bootstrap
         let dummy
@@ -188,7 +188,7 @@ for-each [alias] [  ; SET-WORD!s for readability + findability [1]
     name: copy as text! alias
     assert [#"3" = take/last name]
     name: to word! name
-    lib3/append system/contexts/user reduce [alias :lib3/(name)]
+    lib3/append system.contexts.user reduce [alias :lib3.(name)]
 
     ; Make calling the undecorated version an error, until it becomes shimmed
     ; (e.g. func: does [fail ...])
@@ -196,7 +196,7 @@ for-each [alias] [  ; SET-WORD!s for readability + findability [1]
     error: spaced [
         (lib/mold name) "not shimmed yet, see" as word! (lib/mold alias)
     ]
-    system/contexts/user/(name): lib3/func [] lib3/compose [
+    system.contexts.user.(name): lib3/func [] lib3/compose [
         fail/where (error) 'return
     ]
 ]
@@ -223,7 +223,7 @@ collect3: adapt :collect3 [
 ; can't be emulated by older executables.  Here we raise errors in the old
 ; executable on any undecorated functions that have no emulation equivalent.
 
-parse3: :lib/parse
+parse3: get $lib/parse
 
 parse: does [
     fail "Only PARSE3 is available in bootstrap executable, not PARSE"
@@ -300,8 +300,8 @@ in: func3 [] [
 
 ; !!! This isn't perfect, but it should work for the cases in rebmake
 ;
-load-value: :load
-load-all: :load/all
+load-value: get $load
+load-all: get $load/all
 
 logic-to-word: func3 [logic [logic!]] [
     as word! either logic ["true"] ["false"]  ; want no binding, so AS it
@@ -470,10 +470,11 @@ collect*: func3 [  ; variant giving NULL if no actual material kept
     out: null
     keeper: specialize (  ; SPECIALIZE to remove series argument
         enclose 'append func3 [f [frame!] <with> out] [  ; gets /LINE, /DUP
-            if void? :f/value [return void]  ; doesn't "count" as collected
+            assert [not action? get $f.value]
+            if void? f.value [return void]  ; doesn't "count" as collected
 
-            f/series: out: default [make block! 16]  ; won't return null now
-            :f/value  ; ELIDE leaves as result (F/VALUE invalid after EVAL F)
+            f.series: out: default [make block! 16]  ; won't return null now
+            f.value  ; ELIDE leaves as result (F.VALUE invalid after EVAL F)
             elide eval f
         ]
     )[
@@ -496,12 +497,12 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
     ]
     pos: result: copy block
     while [not tail? pos] [
-        if not group? pos/1 [
+        if not group? pos.1 [
             pos: next pos
             continue
         ]
 
-        product: eval pos/1
+        product: eval pos.1
         all [
             block? :product
             #splice! = first product
@@ -555,14 +556,14 @@ collect-lets: func3 [
     lets: copy []
     for-next item list [
         case [
-            item/1 = 'let [
+            item.1 = 'let [
                 item: next item
-                if match [set-word! word! block!] item/1 [
-                    append3 lets item/1
+                if match [set-word! word! block!] item.1 [
+                    append3 lets item.1
                 ]
             ]
-            match [block! group!] item/1 [
-                append3 lets collect-lets item/1
+            match [block! group!] item.1 [
+                append3 lets collect-lets item.1
             ]
         ]
     ]
@@ -604,30 +605,30 @@ modernize-action: function3 [
 
     spec: collect3 [  ; Note: offers KEEP/ONLY
         while [not tail? spec] [
-            if tag? spec/1 [
+            if tag? spec.1 [
                 last-refine-word: null
-                keep3/only spec/1
+                keep3/only spec.1
                 spec: my next
                 continue
             ]
 
-            if refinement? spec/1 [  ; REFINEMENT! is ANY-WORD! in this r3
-                last-refine-word: as word! spec/1
-                keep3/only spec/1
+            if refinement? spec.1 [  ; REFINEMENT! is ANY-WORD! in this r3
+                last-refine-word: as word! spec.1
+                keep3/only spec.1
 
                 ; Feed through any TEXT!s following the PATH!
                 ;
                 while [
                     if (tail? spec: my next) [break]
-                    text? spec/1
+                    text? spec.1
                 ][
-                    keep3/only spec/1
+                    keep3/only spec.1
                 ]
 
                 ; If there's a block specifying argument types, we need to
                 ; have a fake proxying parameter.
 
-                if not block? spec/1 [
+                if not block? spec.1 [
                     ; append3 proxiers compose3 [  ; no longer turn blank->null
                     ;    (as set-word! last-refine-word)
                     ;        (as get-word! last-refine-word)
@@ -637,7 +638,7 @@ modernize-action: function3 [
 
                 proxy: as word! unspaced [last-refine-word "-arg"]
                 keep3/only proxy
-                keep3/only modernize-typespec spec/1
+                keep3/only modernize-typespec spec.1
 
                 append3 proxiers compose [
                     (as set-word! last-refine-word) (as get-word! proxy)
@@ -647,20 +648,20 @@ modernize-action: function3 [
                 continue
             ]
 
-            ; Find ANY-WORD!s (args/locals)
+            ; Find ANY-WORD!s (args and locals)
             ;
-            if w: match any-word! spec/1 [
+            if w: match any-word! spec.1 [
                 if set-word? w [
                     assert [w = first [return:]]
-                    keep3 spec/1, spec: my next
+                    keep3 spec.1, spec: my next
                     if tail? spec [continue]
-                    if text? spec/1 [keep3 spec/1, spec: my next]
-                    if block? spec/1 [
-                        keep3/only modernize-typespec spec/1
+                    if text? spec.1 [keep3 spec.1, spec: my next]
+                    if block? spec.1 [
+                        keep3/only modernize-typespec spec.1
                         spec: my next
                     ]
                     if tail? spec [continue]
-                    if text? spec/1 [keep3 spec/1 spec: my next]
+                    if text? spec.1 [keep3 spec.1 spec: my next]
                     continue
                 ]
 
@@ -684,18 +685,18 @@ modernize-action: function3 [
                 ;
                 while [
                     if (tail? spec: my next) [break]
-                    text? spec/1
+                    text? spec.1
                 ][
-                    keep3/only spec/1
+                    keep3/only spec.1
                 ]
 
-                if spec/1 = [nihil?] [
+                if spec.1 = [nihil?] [
                     keep3/only []  ; old cue for invisibility
                     spec: my next
                     continue
                 ]
 
-                if types: match block! spec/1 [
+                if types: match block! spec.1 [
                     types: modernize-typespec types
                     keep3/only types
                     spec: my next
@@ -703,11 +704,11 @@ modernize-action: function3 [
                 ]
             ]
 
-            if refinement? spec/1 [
+            if refinement? spec.1 [
                 continue
             ]
 
-            keep3/only spec/1
+            keep3/only spec.1
             spec: my next
         ]
     ]
@@ -742,12 +743,12 @@ function: does [
     fail "gathering FUNCTION deprecated (will be synonym for FUNC, eventually)"
 ]
 
-meth: enfix adapt :lib/meth [set [spec body] modernize-action spec body]
+meth: enfix adapt get $lib/meth [set [spec body] modernize-action spec body]
 method: func3 [] [
     fail/where "METHOD deprecated temporarily, use METH" 'return
 ]
 
-mold: adapt :lib/mold [  ; update so MOLD SPREAD works
+mold: adapt get $lib/mold [  ; update so MOLD SPREAD works
     if all [
         block? value
         #splice! = first value
@@ -758,11 +759,12 @@ mold: adapt :lib/mold [  ; update so MOLD SPREAD works
 ]
 
 noquote: func3 [x [~null~ any-value!]] [
-    switch kind of :x [
+    assert [not action? get $x]
+    switch kind of x [
         lit-word! [return to word! x]
         lit-path! [return to path! x]
     ]
-    :x
+    x
 ]
 
 ; We've scrapped the form of refinements via GROUP! for function dispatch, and
@@ -780,38 +782,45 @@ apply: function3 [
     ; Get all the normal parameters applied
     ;
     result: _
-    while [all [:params/1, not refinement? :params/1]] [
+    while [all [:params.1, not refinement? :params.1]] [
         args: evaluate/set args 'result
-        f/(to word! :params/1): :result
+        f.(to word! :params.1): :result
         params: next params
     ]
 
     ; Now go by the refinements.  If it's a refinement that takes an argument,
     ; we have to set the refinement to true
     ;
-    while [refinement? :args/1] [
-        pos: find params args/1 else [fail ["Unknown refinement" args/1]]
+    while [refinement? :args.1] [
+        pos: find params args.1 else [fail ["Unknown refinement" args.1]]
         args: evaluate/set (next args) 'result
         any [
-            not :pos/2
-            refinement? pos/2
+            not :pos.2
+            refinement? pos.2
         ] then [  ; doesn't take an argument, set it to the logical next value
             if blank? :result [
-                f/(to word! pos/1): null
+                f.(to word! pos.1): null
             ] else [
-                f/(to word! pos/1): :result
+                f.(to word! pos.1): :result
             ]
         ] else [  ; takes an arg, so set refinement to true and set NEXT param
-            f/(to word! pos/1): true
+            f.(to word! pos.1): true
             if blank? :result [
-                f/(to word! pos/2): null
+                f.(to word! pos.2): null
             ] else [
-                f/(to word! pos/2): :result
+                f.(to word! pos.2): :result
             ]
         ]
     ]
 
     eval f
+]
+
+; For commentary purposes, e.g. old-append: runs lib.append
+;
+runs: func3 [action [~void~ action!]] [
+    if void? action [return null]
+    return action
 ]
 
 
@@ -826,7 +835,7 @@ cscape-inside: func3 [
     code [block!]
     <local> obj
 ][
-    intern code  ; baseline user/lib binding
+    intern code  ; baseline user or lib binding
     obj: make object! []  ; can't bind individual words, fake w/proxy object
     for-each item template [
         if path? item [item: first item]
@@ -840,7 +849,7 @@ cscape-inside: func3 [
         ] else [
             assert [word? item]
             append obj spread reduce [item 0]
-            obj/(item): get/any item
+            obj.(item): get/any item
         ]
     ]
     bind code obj  ; simulates ability to bind to single words

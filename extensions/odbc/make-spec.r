@@ -29,16 +29,16 @@ includes: [
     %prep/extensions/odbc ;for %tmp-ext-odbc-init.inc
 ]
 
-libraries: switch platform-config/os-base [
+libraries: switch platform-config.os-base [
     'Windows [
         [%odbc32]
     ]
 ] else [
     ; On some systems (32-bit Ubuntu 12.04), odbc requires ltdl
     ;
-    assert [logic? user-config/odbc-requires-ltdl]
+    assert [logic? user-config.odbc-requires-ltdl]
     compose [
-        %odbc (if user-config/odbc-requires-ltdl [%ltdl])
+        %odbc (if user-config.odbc-requires-ltdl [%ltdl])
     ]
 ]
 

@@ -35,15 +35,15 @@ import <platforms.r>
 
 change-dir join repo-dir %src/boot/
 
-args: parse-args system/script/args  ; either from command line or DO/ARGS
-platform-config: configure-platform args/OS_ID
+args: parse-args system.script.args  ; either from command line or DO/ARGS
+platform-config: configure-platform args.OS_ID
 
 first-rebol-commit: "19d4f969b4f5c1536f24b023991ec11ee6d5adfb"
 
-if args/GIT_COMMIT = "unknown" [
+if args.GIT_COMMIT = "unknown" [
     git-commit: null
 ] else [
-    git-commit: args/GIT_COMMIT
+    git-commit: args.GIT_COMMIT
     if (length of git-commit) != (length of first-rebol-commit) [
         fail [
             "GIT_COMMIT should be a full hash, e.g." first-rebol-commit newline
@@ -54,7 +54,7 @@ if args/GIT_COMMIT = "unknown" [
 
 === "SETUP PATHS AND MAKE DIRECTORIES (IF NEEDED)" ===
 
-prep-dir: join system/options/path %prep/
+prep-dir: join system.options.path %prep/
 
 mkdir/deep join prep-dir %include/
 mkdir/deep join prep-dir %boot/
@@ -69,7 +69,7 @@ e-version: make-emitter "Version Information" (
 
 version: load-value %version.r
 version: to tuple! reduce [
-    version/1 version/2 version/3 platform-config/id/2 platform-config/id/3
+    version.1 version.2 version.3 platform-config.id.2 platform-config.id.3
 ]
 
 e-version/emit [version {
@@ -80,11 +80,11 @@ e-version/emit [version {
      * not be ideal, it's a standard that's been around a long time.
      */
 
-    #define REBOL_VER $<version/1>
-    #define REBOL_REV $<version/2>
-    #define REBOL_UPD $<version/3>
-    #define REBOL_SYS $<version/4>
-    #define REBOL_VAR $<version/5>
+    #define REBOL_VER $<version.1>
+    #define REBOL_REV $<version.2>
+    #define REBOL_UPD $<version.3>
+    #define REBOL_SYS $<version.4>
+    #define REBOL_VAR $<version.5>
 }]
 e-version/emit newline
 e-version/write-emitted
@@ -280,15 +280,15 @@ e-types/emit newline
 
 rebs: collect [
     for-each-datatype t [
-        assert [sym-n == t/heart]  ; SYM_XXX should equal REB_XXX value
-        add-sym unspaced t/name
+        assert [sym-n == t.heart]  ; SYM_XXX should equal REB_XXX value
+        add-sym unspaced t.name
 
         any [
-            t/name = "quasiform"
-            t/name = "quoted"
-            t/name = "antiform"
+            t.name = "quasiform"
+            t.name = "quoted"
+            t.name = "antiform"
         ] else [
-            keep cscape [t {REB_${T/NAME} = $<T/HEART>}]
+            keep cscape [t {REB_${T.NAME} = $<T.HEART>}]
         ]
     ]
 ]
@@ -296,11 +296,11 @@ rebs: collect [
 kinds: collect [
     for-each-datatype t [
         any [
-            t/name = "quasiform"
-            t/name = "quoted"
-            t/name = "antiform"
+            t.name = "quasiform"
+            t.name = "quoted"
+            t.name = "antiform"
         ] else [
-            keep cscape [t {KIND_${T/NAME} = $<T/HEART>}]
+            keep cscape [t {KIND_${T.NAME} = $<T.HEART>}]
         ]
     ]
 ]
@@ -367,21 +367,21 @@ for-each-datatype t [
     ;
     ; Pseudotypes don't make macros or cell masks.
     ;
-    if find ["quoted" "quasiform" "antiform"] ensure text! t/name  [
+    if find ["quoted" "quasiform" "antiform"] ensure text! t.name  [
         continue
     ]
 
-    if not empty? t/cellmask [
+    if not empty? t.cellmask [
         e-types/emit [t {
-            #define CELL_MASK_${T/NAME} \
-                (FLAG_HEART_BYTE(REB_${T/NAME}) | $<MOLD T/CELLMASK>)
+            #define CELL_MASK_${T.NAME} \
+                (FLAG_HEART_BYTE(REB_${T.NAME}) | $<MOLD T.CELLMASK>)
         }]
         e-types/emit newline
     ]
 
     e-types/emit [propercase-of t {
-        #define Is_${propercase-of T/name}(v) \
-            (VAL_TYPE(v) == REB_${T/NAME})  /* $<T/HEART> */
+        #define Is_${propercase-of T.name}(v) \
+            (VAL_TYPE(v) == REB_${T.NAME})  /* $<T.HEART> */
     }]
     e-types/emit newline
 ]
@@ -389,23 +389,23 @@ for-each-datatype t [
 ; Type constraints: integer! is &(integer?) and distinct from &integer
 
 for-each-datatype t [
-    add-sym unspaced [t/name "?"]
-    add-sym unspaced [t/name "!"]
+    add-sym unspaced [t.name "?"]
+    add-sym unspaced [t.name "!"]
 ]
 
 typeset-sets: copy []
 
 for-each-datatype t [
-    for-each ts-name t/typesets [
+    for-each ts-name t.typesets [
         if spot: select typeset-sets ts-name [
-            append spot t/name  ; not the first time we've seen this typeset
+            append spot t.name  ; not the first time we've seen this typeset
             continue
         ]
 
         add-sym unspaced ["any-" ts-name "?"]
 
         append typeset-sets ts-name
-        append typeset-sets reduce [t/name]
+        append typeset-sets reduce [t.name]
 
         e-types/emit newline
         e-types/emit [propercase-of ts-name {
@@ -419,19 +419,19 @@ for-each-datatype t [
 ]
 
 for-each-typerange tr [
-    add-sym replace to text! tr/any-name! "!" "?"
+    add-sym replace to text! tr.any-name! "!" "?"
 
-    append typeset-sets spread reduce [tr/name tr/types]
+    append typeset-sets spread reduce [tr.name tr.types]
 
-    name: copy tr/name
+    name: copy tr.name
 
     e-types/emit newline
     e-types/emit [propercase-of tr {
-        INLINE bool Any_${propercase-of Tr/Name}_Kind(Byte k)
-          { return k >= $<TR/START> and k < $<TR/END>; }
+        INLINE bool Any_${propercase-of Tr.Name}_Kind(Byte k)
+          { return k >= $<TR.START> and k < $<TR.END>; }
 
-        #define Any_${propercase-of Tr/Name}(v) \
-            Any_${propercase-of Tr/Name}_Kind(VAL_TYPE(v))
+        #define Any_${propercase-of Tr.Name}(v) \
+            Any_${propercase-of Tr.Name}_Kind(VAL_TYPE(v))
     }]
 ]
 
@@ -458,28 +458,28 @@ e-types/emit newline
 add-sym 'datatypes  ; signal where the datatypes stop
 
 for-each-datatype t [
-    if not t/antiname [continue]  ; no special name for antiform form
+    if not t.antiname [continue]  ; no special name for antiform form
 
-    need: either t/unstable ["Atom"] ["Value"]
+    need: either t.unstable ["Atom"] ["Value"]
 
     ; Note: Ensure_Readable() not defined yet at this point, so defined as
     ; a macro vs. an inline function.  Revisit.
     ;
     e-types/emit [t {
-        INLINE bool Is_$<Propercase T/Antiname>_Core(Need(const $<Need>*) v) { \
+        INLINE bool Is_$<Propercase T.Antiname>_Core(Need(const $<Need>*) v) { \
             return ((v->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
-                == (FLAG_QUOTE_BYTE(ANTIFORM_0) | FLAG_HEART_BYTE(REB_$<T/NAME>))); \
+                == (FLAG_QUOTE_BYTE(ANTIFORM_0) | FLAG_HEART_BYTE(REB_$<T.NAME>))); \
         }
 
-        #define Is_$<Propercase T/Antiname>(v) \
-            Is_$<Propercase T/Antiname>_Core(Ensure_Readable(v))
+        #define Is_$<Propercase T.Antiname>(v) \
+            Is_$<Propercase T.Antiname>_Core(Ensure_Readable(v))
 
-        #define Is_Meta_Of_$<Propercase T/Antiname>(v) \
+        #define Is_Meta_Of_$<Propercase T.Antiname>(v) \
         ((Ensure_Readable(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
-            == (FLAG_QUOTE_BYTE(QUASIFORM_2) | FLAG_HEART_BYTE(REB_$<T/NAME>)))
+            == (FLAG_QUOTE_BYTE(QUASIFORM_2) | FLAG_HEART_BYTE(REB_$<T.NAME>)))
 
-        #define Is_Quasi_$<Propercase T/Name>(v) \
-            Is_Meta_Of_$<Propercase T/Antiname>(v)  /* alternative */
+        #define Is_Quasi_$<Propercase T.Name>(v) \
+            Is_Meta_Of_$<Propercase T.Antiname>(v)  /* alternative */
     }]
     e-types/emit newline
 ]
@@ -499,19 +499,19 @@ hookname: enfix func [
     t [object!] "type record (e.g. a row out of %types.r)"
     column [word!] "which column we are deriving the hook's name based on"
 ][
-    if t/(column) = 0 [return "nullptr"]
+    if t.(column) = 0 [return "nullptr"]
 
     ; The CSCAPE mechanics lowercase all strings.  Uppercase it back.
     ;
     prefix: uppercase copy prefix
 
-    return unspaced [prefix propercase-of (switch ensure word! t/(column) [
-        '+ [propercase-of t/name]  ; type has its own unique hook
-        '* [t/class]        ; type uses common hook for class
+    return unspaced [prefix propercase-of (switch ensure word! t.(column) [
+        '+ [propercase-of t.name]  ; type has its own unique hook
+        '* [t.class]        ; type uses common hook for class
         '? ['unhooked]      ; datatype provided by extension
         '- ['fail]          ; service unavailable for type
     ] else [
-        t/(column)      ; override with word in column
+        t.(column)      ; override with word in column
     ])]
 ]
 
@@ -528,9 +528,9 @@ hook-list: collect [
     }]
 
     for-each-datatype t [
-        if t/name = "void" [
+        if t.name = "void" [
             keep cscape [{
-                {  /* VOID = $<T/HEART> */
+                {  /* VOID = $<T.HEART> */
                     cast(CFunction*, nullptr),  /* generic */
                     cast(CFunction*, nullptr),  /* compare */
                     cast(CFunction*, nullptr),  /* make */
@@ -543,7 +543,7 @@ hook-list: collect [
         ]
 
         keep cscape [t {
-            {  /* $<T/NAME> = $<T/HEART> */
+            {  /* $<T.NAME> = $<T.HEART> */
                 cast(CFunction*, ${"T_" Hookname T 'Class}),  /* generic */
                 cast(CFunction*, ${"CT_" Hookname T 'Class}),  /* compare */
                 cast(CFunction*, ${"MAKE_" Hookname T 'Make}),  /* make */
@@ -587,16 +587,16 @@ memberships: copy []
 
 for-each-datatype t [
     e-typesets/emit [t {
-        bool ${Propercase T/Name}_Decider(const Value* arg)
-          { return Is_${Propercase T/Name}(arg); }
+        bool ${Propercase T.Name}_Decider(const Value* arg)
+          { return Is_${Propercase T.Name}(arg); }
     }]
     e-typesets/emit newline
-    append decider-names cscape [t {${Propercase T/Name}_Decider}]
+    append decider-names cscape [t {${Propercase T.Name}_Decider}]
 
     flagits: collect [
         for-each [ts-name types] typeset-sets [
             if blank? types [continue]
-            if not find types t/name [continue]
+            if not find types t.name [continue]
 
             keep cscape [ts-name {TYPESET_FLAG_${TS-NAME}}]
         ]
@@ -734,8 +734,8 @@ change (at-value build) now/utc
 change (at-value product) (quote to word! "core")  ; want it to be quoted
 
 change at-value platform reduce [
-    any [platform-config/name "Unknown"]
-    any [platform-config/build-label ""]
+    any [platform-config.name "Unknown"]
+    any [platform-config.build-label ""]
 ]
 
 ; If debugging something code in %sysobj.r, the C-DEBUG-BREAK should only
@@ -781,22 +781,22 @@ make-obj-defs: func [
                 object? get has obj field
             ][
                 let extended-prefix: uppercase unspaced [prefix "_" field]
-                make-obj-defs e obj/:field extended-prefix (depth - 1)
+                make-obj-defs e obj.(field) extended-prefix (depth - 1)
             ]
         ]
     ]
 ]
 
 make-obj-defs e-sysobj ob "SYS" 1
-make-obj-defs e-sysobj ob/catalog "CAT" 4
-make-obj-defs e-sysobj ob/contexts "CTX" 4
-make-obj-defs e-sysobj ob/standard "STD" 4
-make-obj-defs e-sysobj ob/state "STATE" 4
-;make-obj-defs e-sysobj ob/network "NET" 4
-make-obj-defs e-sysobj ob/ports "PORTS" 4
-make-obj-defs e-sysobj ob/options "OPTIONS" 4
-;make-obj-defs e-sysobj ob/intrinsic "INTRINSIC" 4
-make-obj-defs e-sysobj ob/locale "LOCALE" 4
+make-obj-defs e-sysobj ob.catalog "CAT" 4
+make-obj-defs e-sysobj ob.contexts "CTX" 4
+make-obj-defs e-sysobj ob.standard "STD" 4
+make-obj-defs e-sysobj ob.state "STATE" 4
+;make-obj-defs e-sysobj ob.network "NET" 4
+make-obj-defs e-sysobj ob.ports "PORTS" 4
+make-obj-defs e-sysobj ob.options "OPTIONS" 4
+;make-obj-defs e-sysobj ob.intrinsic "INTRINSIC" 4
+make-obj-defs e-sysobj ob.locale "LOCALE" 4
 
 e-sysobj/write-emitted
 
@@ -808,7 +808,7 @@ e-errfuncs: make-emitter "Error structure and functions" (
 )
 
 fields: collect [
-    for-each word words-of ob/standard/error [
+    for-each word words-of ob.standard.error [
         either word = 'near [
             keep {/* near & far are old C keywords */ Value nearest}
         ][
@@ -1042,7 +1042,7 @@ e-bootblock/emit [nats {
 
 boot-typespecs: collect [
     for-each-datatype t [
-        keep reduce [t/description]
+        keep reduce [t.description]
     ]
 ]
 

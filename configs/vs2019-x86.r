@@ -20,8 +20,7 @@ with-ffi: [
     ;
     searches: [%../external/ffi-prebuilt/msvc/lib32/Release]
 
-    libraries: reduce [make rebmake/ext-static-class [output: %libffi.lib]]
+    libraries: reduce [make rebmake.ext-static-class [output: %libffi.lib]]
 ]
 
 rebol-tool: %r3-make.exe
-

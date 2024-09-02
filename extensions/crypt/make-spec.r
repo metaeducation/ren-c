@@ -92,7 +92,7 @@ depends: [
      [%crypt/mbedtls/library/hmac_drbg.c  #no-c++]
 ]
 
-libraries: switch platform-config/os-base [
+libraries: switch platform-config.os-base [
     'Windows [
         ;
         ; Provides crypto functions, e.g. CryptAcquireContext()

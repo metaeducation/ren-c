@@ -38,7 +38,7 @@ extensions: make map! [
     View +
 ]
 
-rebol-tool: null ; fallback value if system/options/boot fails
+rebol-tool: null  ; fallback value if system.options.boot fails
 
 ; possible combination:
 ; [gcc _ ld _]

@@ -151,12 +151,12 @@ export to-c-name: func [
         all [
             scope <> #prefixed
             head? s
-            pick charset [#"0" - #"9"] s/1
+            pick charset [#"0" - #"9"] s.1
         ] then [
             fail ["identifier" string "starts with digit in to-c-name"]
         ]
 
-        pick c-chars s/1 else [
+        pick c-chars s.1 else [
             fail ["Non-alphanumeric or hyphen in" string "in to-c-name"]
         ]
     ]
@@ -164,14 +164,14 @@ export to-c-name: func [
     case [
         scope = #prefixed [<ok>]  ; assume legitimate prefix
 
-        string/1 != #"_" [<ok>]
+        string.1 != #"_" [<ok>]
 
         scope = #global [
             fail ["global C ids starting with _ are reserved:" string]
         ]
 
         scope = #local [
-            find charset [#"A" - #"Z"] string/2 then [
+            find charset [#"A" - #"Z"] string.2 then [
                 fail [
                     "local C ids starting with _ and uppercase are reserved:"
                         string
@@ -236,7 +236,7 @@ export parse-args: func [
     let standalone: make block! 4
     iterate args [
         let name: null
-        let value: args/1
+        let value: args.1
         case [
             let idx: find value #"=" [; name=value
                 name: to word! copy/part value (index of idx) - 1
@@ -248,13 +248,15 @@ export parse-args: func [
                 if empty? args [
                     fail ["Missing value after" value]
                 ]
-                value: args/1
+                value: args.1
             ]
         ]
-        if all [; value1,value2,...,valueN
+        if all [  ; value1,value2,...,valueN
             not find value "["
             find value ","
-        ][value: mold split value ","]
+        ][
+            value: mold split value ","
+        ]
         either name [
             append ret spread reduce [name value]
         ][  ; standalone-arg
@@ -284,11 +286,11 @@ export lowercase-of: func [
 
 export propercase: func [text [text!]] [
     assert [not empty? text]
-    change text uppercase text/1
+    change text uppercase text.1
     pos: next text
     while [pos: any [find pos "_", find pos "-"]] [
         if not pos: next pos [break]
-        change pos uppercase pos/1
+        change pos uppercase pos.1
     ]
     return text
 ]
@@ -330,12 +332,12 @@ export relative-to-path: func [
     while [all [
         not tail? target
         not tail? base
-        base/1 = target/1
+        base.1 = target.1
     ]] [
         base: next base
         target: next target
     ]
-    iterate base [base/1: %..]
+    iterate base [base.1: %..]
     append base spread target
 
     base: to-file delimit "/" base

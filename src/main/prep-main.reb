@@ -30,7 +30,7 @@ if not find (words of :import) 'into [  ; See %import-shim.r
 import <../../tools/common.r>  ; for PARSE-ARGS, STRIPLOAD, BINARY-TO-C...
 import <../../tools/common-emitter.r>  ; for splicing Rebol in templated strings
 
-args: parse-args system/script/args  ; either from command line or DO/ARGS
+args: parse-args system.script.args  ; either from command line or DO/ARGS
 
 ; Assume we start up in the directory where the build/prep products should be
 ;

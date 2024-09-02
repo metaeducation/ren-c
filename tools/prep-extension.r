@@ -45,7 +45,7 @@ import <native-emitters.r>  ; scans C source for native specs, emits macros
 ; code into the %prep/<name-of-extension> directory, which is added to the
 ; include path for the build of the extension
 
-args: parse-args system/script/args  ; either from command line or DO/ARGS
+args: parse-args system.script.args  ; either from command line or DO/ARGS
 
 ; !!! At time of writing, SRC=extensions/name/mod-name.c is what this script
 ; gets on the command line.  This is split out to make a directory to put the
@@ -54,7 +54,7 @@ args: parse-args system/script/args  ; either from command line or DO/ARGS
 ; addresses to pull and build them, etc.  It should not give the module name,
 ; just point at a directory and follow the specification.
 ;
-src: to file! :args/SRC
+src: to file! :args.SRC
 in-dir: split-path3/file src inside [] 'file-name
 
 ; Assume we start up in the directory where build products are being made
@@ -139,8 +139,8 @@ has-startup*: false
 
 num-natives: 0
 for-each info all-protos [
-    if info/name = "startup*" [
-        if info/exported [
+    if info.name = "startup*" [
+        if info.exported [
             ;
             ; STARTUP* is supposed to be called once and only once, by the
             ; internal extension code.
@@ -149,8 +149,8 @@ for-each info all-protos [
         ]
         has-startup*: true
     ]
-    if info/name = "shutdown*" [
-        if info/exported [
+    if info.name = "shutdown*" [
+        if info.exported [
             ;
             ; SHUTDOWN* is supposed to be called once and only once, by the
             ; internal extension code.
@@ -171,7 +171,7 @@ for-each info all-protos [
 specs-uncompressed: make text! 10000
 
 for-each info all-protos [
-    append specs-uncompressed info/proto
+    append specs-uncompressed info.proto
     append specs-uncompressed newline
 ]
 
@@ -247,7 +247,7 @@ e1/emit newline
 
 if use-librebol [
     for-each info all-protos [
-        parse3 info/proto [
+        parse3 info.proto [
             opt ["export" space] proto-name: across to ":"
             to <end>
         ]
@@ -283,8 +283,8 @@ else [
 
 dispatcher-forward-decls: collect [
     for-each info all-protos [
-        name: info/name
-        if info/native-type = 'intrinsic [  ; not that hard to do if needed
+        name: info.name
+        if info.native-type = 'intrinsic [  ; not that hard to do if needed
             fail "Intrinsics not currently supported in extensions"
         ]
         keep cscape [name {DECLARE_NATIVE(${Name})}]
@@ -370,7 +370,7 @@ script-compressed: gzip script-uncompressed
 
 dispatcher_c_names: collect [  ; must be in the order that NATIVE is called!
     for-each info all-protos [
-        name: info/name
+        name: info.name
         keep cscape [mod name {N_${MOD}_${Name}}]
     ]
 ]

@@ -77,7 +77,7 @@ user-config: make object! load (join repo-dir %configs/default-config.r)
 ; COMMAND = WORD
 ; OPTION = 'NAME=VALUE' | 'NAME: VALUE'
 ;
-args: parse-args system/script/args  ; either from command line or DO/ARGS
+args: parse-args system.script.args  ; either from command line or DO/ARGS
 
 ; now args are ordered and separated by bar:
 ; [NAME VALUE ... '| COMMAND ...]
@@ -140,12 +140,12 @@ for-each [name value] options [
                 ]
                 all [
                     not empty? user-ext
-                    find [+ - *] user-ext/1
+                    find [+ - *] user-ext.1
                 ] then [
                     value: take user-ext
                 ]
                 for-each [name value] user-ext [
-                    user-config/extensions/:name: value
+                    user-config.extensions.(name): value
                 ]
             ]
         ]
@@ -178,21 +178,24 @@ repo-dir: relative-to-path repo-dir output-dir
 
 === "PROCESS COMMANDS" ===
 
-if commands [user-config/target: null]  ; was `target: load commands`  Why? :-/
+if commands [user-config.target: null]  ; was `target: load commands`  Why? :-/
 
 
 === "MODULES AND EXTENSIONS" ===
 
-platform-config: configure-platform user-config/os-id
-rebmake/set-target-platform platform-config/os-base
+platform-config: configure-platform user-config.os-id
+rebmake.set-target-platform platform-config.os-base
 
 to-obj-path: func [
     return: [file!]
     file [any-string?]
 ][
     let ext: find-last file #"."
+    if not ext [
+        print ["File with no extension" mold file]
+    ]
     remove/part ext (length of ext)
-    return join %objs/ head-of append ext rebmake/target-platform/obj-suffix
+    return join %objs/ head-of append ext rebmake.target-platform.obj-suffix
 ]
 
 gen-obj: func [
@@ -207,8 +210,8 @@ gen-obj: func [
     /main "for main object"
 ][
     let prefer-O2: false  ; overrides -Os to give -O2, e.g. for %c-eval.c
-    let standard: user-config/standard  ; may have a per-file override
-    let rigorous: user-config/rigorous  ; may have a per-file override
+    let standard: user-config.standard  ; may have a per-file override
+    let rigorous: user-config.rigorous  ; may have a per-file override
     let cplusplus: false  ; determined for just this file
     let flags: make block! 8
 
@@ -324,21 +327,20 @@ gen-obj: func [
 
                 ; C++ standard, MSVC only supports "c++14/17/latest"
                 ;
-                (to tag! unspaced ["gnu:--std=" user-config/standard])
+                (to tag! unspaced ["gnu:--std=" user-config.standard])
                 (to tag! unspaced [
-                    "msc:/std:" lowercase to text! user-config/standard
+                    "msc:/std:" lowercase to text! user-config.standard
                 ])
 
                 ; There is a shim for `nullptr` used, that's warned about even
                 ; when building as pre-C++11 where it was introduced, unless
                 ; you disable that warning.
                 ;
-                (if user-config/standard = 'c++98 [<gnu:-Wno-c++0x-compat>])
+                (if user-config.standard = 'c++98 [<gnu:-Wno-c++0x-compat>])
 
-                ; Note: The C and C++ user-config/standards do not dictate if
-                ; `char` is signed or unsigned.  If you think environments
-                ; all settled on them being signed, they're not... Android NDK
-                ; uses unsigned:
+                ; Note: The C and C++ standards do not dictate if `char` is
+                ; signed or unsigned.  If you think environments all settled
+                ; on them being signed...Android NDK uses unsigned:
                 ;
                 ; http://stackoverflow.com/questions/7414355/
                 ;
@@ -359,7 +361,7 @@ gen-obj: func [
         fail [
             "STANDARD should be one of"
             "[c gnu89 gnu99 c99 c11 c++ c++11 c++14 c++17 c++latest]"
-            "not" (user-config/standard)
+            "not" (user-config.standard)
         ]
     ]
 
@@ -429,7 +431,7 @@ gen-obj: func [
                 (
                     either all [
                         cplusplus
-                        find app-config/definitions "NDEBUG"
+                        find app-config.definitions "NDEBUG"
                     ][
                         <gnu:-Wcast-qual>
                     ][
@@ -724,13 +726,13 @@ gen-obj: func [
                 reduce [ensure [text! tag!] flag]
             ])
         ]
-        s: s/1
+        s: s.1
     ]
 
     ; With the flags and settings ready, make a rebmake object and ask it
     ; to build the requested object file.
     ;
-    return make rebmake/object-file-class compose [
+    return make rebmake.object-file-class compose [
         assert [any [file? s path? s tuple? s word? s]]
             ; ^-- e.g. TUPLE! like `foo.o`
 
@@ -831,9 +833,9 @@ parse-ext-build-spec: func [
 
     let config
     if has ext 'options [
-        ensure block! ext/options
+        ensure block! ext.options
         config: null  ; default for locals in modern Ren-C
-        parse3/match ext/options [
+        parse3/match ext.options [
             opt some [
                 word! block! opt text! config: group!
             ]
@@ -868,13 +870,13 @@ use [extension-dir entry][
             ]
 
             parsed: parse-ext-build-spec spec
-            assert [not parsed/mode]  ; no build mode assigned at first yet
+            assert [not parsed.mode]  ; no build mode assigned at first yet
             append extensions parsed
         ]
     ]
 ]
 
-extension-names: map-each x extensions [to-lit-word x/name]
+extension-names: map-each x extensions [to-lit-word x.name]
 
 
 === "TARGETS" ===
@@ -883,14 +885,14 @@ extension-names: map-each x extensions [to-lit-word x/name]
 
 targets: [
     'clean [
-        rebmake/execution/run make rebmake/solution-class [
+        rebmake.execution/run make rebmake.solution-class [
             depends: reduce [
                 clean
             ]
         ]
     ]
     'prep [
-        rebmake/execution/run make rebmake/solution-class [
+        rebmake.execution/run make rebmake.solution-class [
             depends: flatten reduce [
                 vars
                 prep
@@ -900,7 +902,7 @@ targets: [
         ]
     ]
     'app 'executable 'r3 [
-        rebmake/execution/run make rebmake/solution-class [
+        rebmake.execution/run make rebmake.solution-class [
             depends: flatten reduce [
                 vars
                 t-folders
@@ -910,7 +912,7 @@ targets: [
         ]
     ]
     'library [
-        rebmake/execution/run make rebmake/solution-class [
+        rebmake.execution/run make rebmake.solution-class [
             depends: flatten reduce [
                 vars
                 t-folders
@@ -920,7 +922,7 @@ targets: [
         ]
     ]
     'all 'execution [
-        rebmake/execution/run make rebmake/solution-class [
+        rebmake.execution/run make rebmake.solution-class [
             depends: flatten reduce [
                 clean
                 prep
@@ -932,22 +934,22 @@ targets: [
         ]
     ]
     'makefile [
-        rebmake/makefile/generate %makefile solution
+        rebmake.makefile/generate %makefile solution
     ]
     'nmake [
-        rebmake/nmake/generate %makefile solution
+        rebmake.nmake/generate %makefile solution
     ]
     'vs2019
     'visual-studio [
-        apply :rebmake/visual-studio/generate [
+        apply get $rebmake.visual-studio/generate [
             output-dir solution
-            /x86 (platform-config/os-name = 'Windows-x86)
+            /x86 (platform-config.os-name = 'Windows-x86)
         ]
     ]
     'vs2015 [
-        apply :rebmake/vs2015/generate [
+        apply get $rebmake.vs2015/generate [
             output-dir solution
-            /x86 (platform-config/os-name = 'Windows-x86)
+            /x86 (platform-config.os-name = 'Windows-x86)
         ]
     ]
     'vs2017 [
@@ -976,7 +978,7 @@ indent: func [
     text [text!]
     /space
 ][
-    return apply :replace/all [
+    return apply get $replace/all [
         text
         either space [" "] [newline]
         "^/    "
@@ -1029,13 +1031,13 @@ NOTES:^/
 'os-id unspaced [ {=== OS-ID ===^/
 CURRENT OS:^/
     }
-    indent mold configure-platform user-config/os-id
+    indent mold configure-platform user-config.os-id
     {^/
 LIST:^/
     OS-ID:  OS-NAME:}
     indent form collect [for-each-platform p [
         keep unspaced [
-            newline format 8 p/id p/os-name
+            newline format 8 p.id p.os-name
         ]
     ]]
     newline
@@ -1059,13 +1061,13 @@ EXAMPLES:
     => disable all extensions but gif (builtin),jpg and png (dynamic)^/
 CURRENT VALUE:
     }
-    indent mold user-config/extensions
+    indent mold user-config.extensions
     newline
     ]
 ]
 
 ; dynamically fill help topics list ;-)
-replace help-topics/usage "HELP-TOPICS" ;\
+replace help-topics.usage "HELP-TOPICS" ;\
     form append (map-each x help-topics [either text? x ['|] [x]]) 'all
 
 help: func [
@@ -1088,7 +1090,7 @@ help: func [
             elide print msg
         ][]
     ] else [
-        print help-topics/usage
+        print help-topics.usage
     ]
 ]
 
@@ -1096,8 +1098,8 @@ help: func [
 
 if commands [
     iterate commands [
-        if find ["-h" "-help" "--help"] commands/1 [
-            if second commands [  ; bootstrap commands/2 errors if null
+        if find ["-h" "-help" "--help"] commands.1 [
+            if second commands [  ; bootstrap commands.2 errors if null
                 help/topic second commands
             ] else [
                 help
@@ -1120,37 +1122,37 @@ set-exec-path: func [
     path
 ][
     switch kind of path [  ; can't use SWITCH/TYPE in bootstrap
-        blank! [tool/check]
-        file! text! [tool/exec-file: path]
+        blank! [tool.check]
+        file! text! [tool.exec-file: path]
         fail "Tool path has to be a file!"
     ]
 ]
 
-parse3/match user-config/toolset [
+parse3/match user-config.toolset [
     opt some [
         'gcc opt cc-exec: [file! | text! | blank!] (
-            rebmake/default-compiler: rebmake/gcc
+            rebmake.default-compiler: rebmake.gcc
         )
         | 'clang opt cc-exec: [file! | text! | blank!] (
-            rebmake/default-compiler: rebmake/clang
+            rebmake.default-compiler: rebmake.clang
         )
         | 'cl opt cc-exec: [file! | text! | blank!] (
-            rebmake/default-compiler: rebmake/cl
+            rebmake.default-compiler: rebmake.cl
         )
         | 'ld opt linker-exec: [file! | text! | blank!] (
-            rebmake/default-linker: rebmake/ld
+            rebmake.default-linker: rebmake.ld
         )
         | 'llvm-link opt linker-exec: [file! | text! | blank!] (
-            rebmake/default-linker: rebmake/llvm-link
+            rebmake.default-linker: rebmake.llvm-link
         )
         | 'link opt linker-exec: [file! | text! | blank!] (
-            rebmake/default-linker: rebmake/link
+            rebmake.default-linker: rebmake.link
         )
         | 'strip opt strip-exec: [file! | text! | blank!] (
-            rebmake/default-strip: rebmake/strip
-            rebmake/default-strip/options: [<gnu:-S> <gnu:-x> <gnu:-X>]
+            rebmake.default-strip: rebmake.strip
+            rebmake.default-strip.options: [<gnu:-S> <gnu:-x> <gnu:-X>]
             if get 'strip-exec [
-                set-exec-path rebmake/default-strip strip-exec
+                set-exec-path rebmake.default-strip strip-exec
             ]
         )
     ]
@@ -1162,31 +1164,31 @@ parse3/match user-config/toolset [
 
 === "SANITY CHECK COMPILER AND LINKER" ===
 
-if not rebmake/default-compiler [fail "Compiler is not set"]
-if not rebmake/default-linker [fail "Default linker is not set"]
+if not rebmake.default-compiler [fail "Compiler is not set"]
+if not rebmake.default-linker [fail "Default linker is not set"]
 
-switch rebmake/default-compiler/name [
+switch rebmake.default-compiler.name [
     'gcc [
-        if rebmake/default-linker/name != 'ld [
+        if rebmake.default-linker.name != 'ld [
             fail [
                 "Incompatible compiler (GCC) and linker:"
-                    rebmake/default-linker/name
+                    rebmake.default-linker.name
             ]
         ]
     ]
     'clang [
-        if not find [ld llvm-link] rebmake/default-linker/name [
+        if not find [ld llvm-link] rebmake.default-linker.name [
             fail [
                 "Incompatible compiler (CLANG) and linker:"
-                rebmake/default-linker/name
+                rebmake.default-linker.name
             ]
         ]
     ]
     'cl [
-        if rebmake/default-linker/name != 'link [
+        if rebmake.default-linker.name != 'link [
             fail [
                 "Incompatible compiler (CL) and linker:"
-                rebmake/default-linker/name
+                rebmake.default-linker.name
             ]
         ]
     ]
@@ -1195,10 +1197,10 @@ switch rebmake/default-compiler/name [
 ]
 
 if cc-exec [
-    set-exec-path rebmake/default-compiler cc-exec
+    set-exec-path rebmake.default-compiler cc-exec
 ]
 if linker-exec [
-    set-exec-path rebmake/default-linker linker-exec
+    set-exec-path rebmake.default-linker linker-exec
 ]
 
 
@@ -1222,37 +1224,37 @@ app-config: make object! [
 
 cfg-sanitize: false
 cfg-symbols: false
-switch user-config/debug [
+switch user-config.debug [
     ~false~ 'no 'false 'off 'none [
-        append app-config/definitions "NDEBUG"
-        app-config/debug: off
+        append app-config.definitions "NDEBUG"
+        app-config.debug: off
     ]
     ~true~ 'yes 'true 'on [
-        app-config/debug: on
+        app-config.debug: on
     ]
     'asserts [
         ; /debug should only affect the "-g -g3" symbol inclusions in rebmake.
         ; To actually turn off asserts or other checking features, NDEBUG must
         ; be defined.
         ;
-        app-config/debug: off
+        app-config.debug: off
     ]
     'symbols [ ; No asserts, just symbols.
-        app-config/debug: on
+        app-config.debug: on
         cfg-symbols: true
-        append app-config/definitions "NDEBUG"
+        append app-config.definitions "NDEBUG"
     ]
     'normal [
         cfg-symbols: true
-        app-config/debug: on
+        app-config.debug: on
     ]
     'sanitize [
-        app-config/debug: on
+        app-config.debug: on
         cfg-symbols: true
         cfg-sanitize: true
 
-        append app-config/cflags <gnu:-fsanitize=address>
-        append app-config/ldflags <gnu:-fsanitize=address>
+        append app-config.cflags <gnu:-fsanitize=address>
+        append app-config.ldflags <gnu:-fsanitize=address>
 
         ; MSVC added support for address sanitizer in 2019.  At first it wasn't
         ; great, but it got improved and got working reasonably in March 2021.
@@ -1261,9 +1263,9 @@ switch user-config/debug [
         ; !!! This isn't printing line numbers.  /Zi should be included with -g
         ; and does not help (adding it repeatedly here made symbols vanish?)
         ;
-        append app-config/cflags <msc:/fsanitize=address>
-        append app-config/cflags <msc:/MT>
-        append app-config/ldflags <msc:/DEBUG>  ; for better error reporting
+        append app-config.cflags <msc:/fsanitize=address>
+        append app-config.cflags <msc:/MT>
+        append app-config.ldflags <msc:/DEBUG>  ; for better error reporting
     ]
 
     ; Because it has symbols but no debugging, the callgrind option can also
@@ -1283,10 +1285,10 @@ switch user-config/debug [
     ;
     'callgrind [
         cfg-symbols: true
-        append app-config/cflags "-g"  ; for symbols
-        app-config/debug: off
+        append app-config.cflags "-g"  ; for symbols
+        app-config.debug: off
 
-        append app-config/definitions spread [
+        append app-config.definitions spread [
             "NDEBUG"  ; disable assert(), and many other general debug checks
 
             ; Include debugging features which do not in-and-of-themselves
@@ -1305,15 +1307,15 @@ switch user-config/debug [
         ]
     ]
 
-    fail ["unrecognized debug setting:" user-config/debug]
+    fail ["unrecognized debug setting:" user-config.debug]
 ]
 
-switch user-config/optimize [
+switch user-config.optimize [
     ~false~ 'false 'no 'off 0 [
-        app-config/optimization: false
+        app-config.optimization: false
     ]
     1 2 3 4 "s" "z" "g" 's 'z 'g [
-        app-config/optimization: user-config/optimize
+        app-config.optimization: user-config.optimize
     ]
 ]
 
@@ -1323,7 +1325,7 @@ cfg-cplusplus: false  ; gets set to true if linked as c++ overall
 ; Example. Mingw32 does not have access to windows console api prior to vista.
 ;
 cfg-pre-vista: false
-append app-config/definitions maybe spread switch user-config/pre-vista [
+append app-config.definitions maybe spread switch user-config.pre-vista [
     ~true~ 'yes 'on 'true [
         cfg-pre-vista: true
         compose [
@@ -1335,11 +1337,11 @@ append app-config/definitions maybe spread switch user-config/pre-vista [
         []  ; empty for spread
     ]
 
-    fail ["PRE-VISTA [yes no \logic?!\] not" (user-config/pre-vista)]
+    fail ["PRE-VISTA [yes no \logic?!\] not" (user-config.pre-vista)]
 ]
 
 
-append app-config/ldflags maybe spread switch user-config/static [
+append app-config.ldflags maybe spread switch user-config.static [
     ~false~ 'no 'off 'false [
         ;pass
         []
@@ -1352,7 +1354,7 @@ append app-config/ldflags maybe spread switch user-config/static [
         ]
     ]
 
-    fail ["STATIC must be yes, no or logic?! not" (user-config/static)]
+    fail ["STATIC must be yes, no or logic?! not" (user-config.static)]
 ]
 
 
@@ -1360,68 +1362,68 @@ append app-config/ldflags maybe spread switch user-config/static [
 
 ; Not quite sure what counts as system definitions (?)  Review.
 
-append app-config/definitions spread flatten/deep (
-    reduce bind (copy platform-config/definitions) platform-definitions
+append app-config.definitions spread flatten/deep (
+    reduce bind (copy platform-config.definitions) platform-definitions
 )
 
-append app-config/cflags spread flatten/deep (  ; !!! can be string?
-    reduce bind copy platform-config/cflags compiler-flags
+append app-config.cflags spread flatten/deep (  ; !!! can be string?
+    reduce bind copy platform-config.cflags compiler-flags
 )
 
-append app-config/libraries spread (
+append app-config.libraries spread (
     let value: flatten/deep reduce (
-        bind copy platform-config/libraries platform-libraries
+        bind copy platform-config.libraries platform-libraries
     )
     map-each w flatten value [
-        make rebmake/ext-dynamic-class [
+        make rebmake.ext-dynamic-class [
             output: w
         ]
     ]
 )
 
-append app-config/ldflags spread flatten/deep (
-    reduce bind copy platform-config/ldflags linker-flags
+append app-config.ldflags spread flatten/deep (
+    reduce bind copy platform-config.ldflags linker-flags
 )
 
-print ["definitions:" mold app-config/definitions]
-print ["includes:" mold app-config/includes]
-print ["libraries:" mold app-config/libraries]
-print ["cflags:" mold app-config/cflags]
-print ["ldflags:" mold app-config/ldflags]
-print ["debug:" logic-to-word app-config/debug]
-print ["optimization:" mold reify app-config/optimization]
+print ["definitions:" mold app-config.definitions]
+print ["includes:" mold app-config.includes]
+print ["libraries:" mold app-config.libraries]
+print ["cflags:" mold app-config.cflags]
+print ["ldflags:" mold app-config.ldflags]
+print ["debug:" logic-to-word app-config.debug]
+print ["optimization:" mold reify app-config.optimization]
 
-append app-config/definitions spread reduce [
-    unspaced ["TO_" uppercase to-text platform-config/os-base "=1"]
+append app-config.definitions spread reduce [
+    unspaced ["TO_" uppercase to-text platform-config.os-base "=1"]
     unspaced [
-        "TO_" (uppercase replace/all to-text platform-config/os-name "-" "_") "=1"
+        "TO_" (uppercase replace/all to-text platform-config.os-name "-" "_") "=1"
     ]
 ]
 
 ; Add user settings (can be BLANK!, but should be null)
 ;
-append app-config/definitions maybe spread :user-config/definitions
-append app-config/includes maybe spread :user-config/includes
-append app-config/cflags maybe spread :user-config/cflags
-append app-config/libraries maybe spread :user-config/libraries
-append app-config/ldflags maybe spread :user-config/ldflags
+append app-config.definitions maybe spread :user-config.definitions
+append app-config.includes maybe spread :user-config.includes
+append app-config.cflags maybe spread :user-config.cflags
+append app-config.libraries maybe spread :user-config.libraries
+append app-config.ldflags maybe spread :user-config.ldflags
 
-libr3-core: make rebmake/object-library-class [
+libr3-core: make rebmake.object-library-class [
     name: 'libr3-core
-    definitions: append copy ["REB_API"] spread app-config/definitions
+    definitions: append copy ["REB_API"] spread app-config.definitions
 
     ; might be modified by the generator, thus copying
-    includes: append copy app-config/includes %prep/core
+    includes: append copy app-config.includes %prep/core
 
     ; might be modified by the generator, thus copying
-    cflags: copy app-config/cflags
+    cflags: copy app-config.cflags
 
-    optimization: app-config/optimization
-    debug: app-config/debug
-    depends: map-each w file-base/core [
+    optimization: app-config.optimization
+    debug: app-config.debug
+    depends: map-each w file-base.core [
         gen-obj/dir w (join src-dir %core/)
     ]
-    append depends spread map-each w file-base/generated [
+    append depends spread map-each w file-base.generated [
         gen-obj/dir w "prep/core/"
     ]
 ]
@@ -1429,20 +1431,20 @@ libr3-core: make rebmake/object-library-class [
 main: make libr3-core [
     name: 'main
 
-    definitions: append copy ["REB_CORE"] spread app-config/definitions
-    includes: append copy app-config/includes %prep/main  ; generator may modify
-    cflags: copy app-config/cflags  ; generator may modify
+    definitions: append copy ["REB_CORE"] spread app-config.definitions
+    includes: append copy app-config.includes %prep/main  ; generator may modify
+    cflags: copy app-config.cflags  ; generator may modify
 
     depends: reduce [
-        either user-config/main [
-            gen-obj/main user-config/main
+        either user-config.main [
+            gen-obj/main user-config.main
         ][
-            gen-obj/dir file-base/main (join src-dir %main/)
+            gen-obj/dir file-base.main (join src-dir %main/)
         ]
     ]
 ]
 
-pthread: make rebmake/ext-dynamic-class [
+pthread: make rebmake.ext-dynamic-class [
     output: %pthread
     flags: [static]
 ]
@@ -1478,19 +1480,19 @@ add-new-obj-folders: func [
     dir
 ][
     for-each lib objs [
-        switch lib/class [
+        switch lib.class [
             #object-file [
                 lib: reduce [lib]
             ]
             #object-library [
-                lib: lib/depends
+                lib: lib.depends
             ]
             (elide dump lib)
             fail ["unexpected class"]
         ]
 
         for-each obj lib [
-            dir: split-path3 obj/output
+            dir: split-path3 obj.output
             if not find folders dir [
                 append folders dir
             ]
@@ -1504,14 +1506,16 @@ for-each [category entries] file-base [
         continue  ; these categories are taken care of elsewhere
     ]
     switch kind of entries [
+        file!  ; can't use `foo.r` in bootstrap, scans as foo/r for hack
         word!  ; if bootstrap
         tuple! [  ; if generic-tuple enabled
-            assert [entries = 'main.c]  ; !!! anomaly, ignore it for now
+            assert [entries = %main.c]  ; !!! anomaly, ignore it for now
         ]
         block! [
             for-each entry entries [
                 if block? entry [entry: first entry]
                 switch kind of entry [
+                    file!
                     word!  ; if bootstrap executable
                     tuple! [  ; if generic-tuple enabled
                         ; assume taken care of
@@ -1537,37 +1541,37 @@ for-each [category entries] file-base [
 ; is built into the executable) or `*` (built as dll or so dynamically, and
 ; can be selectively loaded by the interpreter).
 ;
-; This translates to an ext/mode of <builtin>, <dynamic>, or null.
+; This translates to an ext.mode of <builtin>, <dynamic>, or null.
 
 for-each ext extensions [
-    if mode: select user-config/extensions ext/name [
+    if mode: select user-config.extensions ext.name [
         ;
         ; Bootstrap executable (at least on mac) had problems setting to null.
         ; Try workaround.
         ;
-        append user-config/extensions spread reduce [ext/name #recognized]
+        append user-config.extensions spread reduce [ext.name #recognized]
     ] else [
         mode: '+  ; Currently the default is built in.  Shouldn't be!
     ]
 
     switch mode [
         '+ [
-            ext/mode: <builtin>
+            ext.mode: <builtin>
         ]
         '* [
-            if not ext/loadable [
+            if not ext.loadable [
                 fail [{Extension} name {is not dynamically loadable}]
             ]
-            ext/mode: <dynamic>
+            ext.mode: <dynamic>
         ]
         '- [
-            ext/mode: null
+            ext.mode: null
         ]
         fail ["Unrecognized extension mode:" mold mode]
     ]
 ]
 
-for-each [name val] user-config/extensions [
+for-each [name val] user-config.extensions [
     if val <> #recognized [
         fail [{Unrecognized extension name:} name]
     ]
@@ -1580,8 +1584,8 @@ for-each [mode label] [
     print label
     print mold collect [
         for-each ext extensions [
-            if ext/mode = mode [
-                keep ext/name
+            if ext.mode = mode [
+                keep ext.name
             ]
         ]
     ]
@@ -1603,35 +1607,35 @@ add-project-flags: func [
             #object-library
             #static-library
             #application
-        ] project/class
+        ] project.class
     ]
 
     if D [
-        if null? project/definitions [
-            project/definitions: D
+        if null? project.definitions [
+            project.definitions: D
         ]
         else [
-            append project/definitions spread D
+            append project.definitions spread D
         ]
     ]
 
     if I [
-        if null? project/includes [
-            project/includes: I
+        if null? project.includes [
+            project.includes: I
         ] else [
-            append project/includes spread I
+            append project.includes spread I
         ]
     ]
     if c [
-        if null? project/cflags [
-            project/cflags: c
+        if null? project.cflags [
+            project.cflags: c
         ]
         else [
-            append project/cflags spread c
+            append project.cflags spread c
         ]
     ]
-    if g [project/debug: g]
-    if O [project/optimization: O]
+    if g [project.debug: g]
+    if O [project.optimization: O]
 ]
 
 
@@ -1649,29 +1653,29 @@ calculate-sequence: func [
     return: [integer!]
     ext
 ][
-    if integer? ext/sequence [return ext/sequence]
-    if ext/visited [fail ["circular dependency on" ext]]
-    if null? ext/requires [ext/sequence: 0 return ext/sequence]
-    ext/visited: true
+    if integer? ext.sequence [return ext.sequence]
+    if ext.visited [fail ["circular dependency on" ext]]
+    if null? ext.requires [ext.sequence: 0 return ext.sequence]
+    ext.visited: true
     let seq: 0
-    if word? ext/requires [ext/requires: reduce [ext/requires]]
-    for-each req ext/requires [
+    if word? ext.requires [ext.requires: reduce [ext.requires]]
+    for-each req ext.requires [
         for-each b extensions [
-            if b/name = req [
+            if b.name = req [
                 seq: seq + (
-                    (match integer! b/sequence) else [calculate-sequence b]
+                    (match integer! b.sequence) else [calculate-sequence b]
                 )
                 break
             ]
         ] then [  ; didn't BREAK, so no match found
-            fail ["unrecoginized dependency" req "for" ext/name]
+            fail ["unrecoginized dependency" req "for" ext.name]
         ]
     ]
-    return ext/sequence: seq + 1
+    return ext.sequence: seq + 1
 ]
 
 for-each ext extensions [calculate-sequence ext]
-sort/compare extensions func [a b] [return a/sequence < b/sequence]
+sort/compare extensions func [a b] [return a.sequence < b.sequence]
 
 
 === "PRODUCE COMPILER/LINKER PROCESSABLE OBJECTS FROM EXTENSION SPECS" ===
@@ -1693,16 +1697,16 @@ dynamic-ext-objlibs: copy []  ; #object-library for each built in extension
 dynamic-libs: copy []  ; #dynamic-library for each DLL
 
 for-each ext extensions [
-    assert [ext/class = #extension]  ; basically what we read from %make-spec.r
+    assert [ext.class = #extension]  ; basically what we read from %make-spec.r
 
-    if not ext/mode [continue]  ; blank means extension not in use
+    if not ext.mode [continue]  ; blank means extension not in use
 
-    assert [find [<builtin> <dynamic>] ext/mode]
+    assert [find [<builtin> <dynamic>] ext.mode]
 
-    ext-objlib: make rebmake/object-library-class [  ; #object-library
-        name: ext/name
+    ext-objlib: make rebmake.object-library-class [  ; #object-library
+        name: ext.name
         depends: map-each s (
-            append reduce [ext/source] maybe spread ext/depends
+            append reduce [ext.source] maybe spread ext.depends
         )[
             dep: case [
                 match [file! block!] s [
@@ -1710,11 +1714,11 @@ for-each ext extensions [
                 ]
                 all [
                     object? s
-                    find [#object-library #object-file] s/class
+                    find [#object-library #object-file] s.class
                 ][
                     s
                     ; #object-library has already been taken care of above
-                    ; if s/class = #object-library [s]
+                    ; if s.class = #object-library [s]
                 ]
             ] else [
                 dump s
@@ -1722,16 +1726,16 @@ for-each ext extensions [
             ]
         ]
         libraries: all [
-            ext/libraries
-            map-each lib ext/libraries [
+            ext.libraries
+            map-each lib ext.libraries [
                 case [
                     file? lib [
-                        make rebmake/ext-dynamic-class [
+                        make rebmake.ext-dynamic-class [
                             output: lib
                         ]
                     ]
                     (object? lib) and (
-                        find [#dynamic-extension #static-extension] lib/class
+                        find [#dynamic-extension #static-extension] lib.class
                     )[
                         lib
                     ]
@@ -1740,10 +1744,10 @@ for-each ext extensions [
             ]
         ]
 
-        includes: ext/includes
-        definitions: ext/definitions
-        cflags: ext/cflags
-        searches: ext/searches
+        includes: ext.includes
+        definitions: ext.definitions
+        cflags: ext.cflags
+        searches: ext.searches
     ]
 
     ; %prep-extensions.r creates a temporary .c file which contains the
@@ -1751,16 +1755,16 @@ for-each ext extensions [
     ; array of dispatcher CFunction pointers for the natives) and RX_Collate
     ; function.  It is located in the %prep/ directory for the extension.
     ;
-    ext-name-lower: lowercase copy to text! ext/name
+    ext-name-lower: lowercase copy to text! ext.name
     ext-init-source: as file! unspaced [
         "tmp-mod-" ext-name-lower "-init.c"
     ]
-    append ext-objlib/depends apply :gen-obj [
+    append ext-objlib.depends apply :gen-obj [
         ext-init-source
         /dir unspaced ["prep/extensions/" ext-name-lower "/"]
-        /I ext/includes
-        /D ext/definitions
-        /F ext/cflags
+        /I ext.includes
+        /D ext.definitions
+        /F ext.cflags
     ]
 
     ; Here we graft things like the global debug settings and optimization
@@ -1776,23 +1780,23 @@ for-each ext extensions [
     ;
     apply :add-project-flags [
         ext-objlib
-        /I app-config/includes
+        /I app-config.includes
         /D compose [
             (
-                either ext/mode = <builtin> [
+                either ext.mode = <builtin> [
                     "REB_API"
                 ][
                     "LIBREBOL_USES_API_TABLE"
                 ]
             )
-            (spread app-config/definitions)
+            (spread app-config.definitions)
         ]
-        /c app-config/cflags
-        /O app-config/optimization
-        /g app-config/debug
+        /c app-config.cflags
+        /O app-config.optimization
+        /g app-config.debug
     ]
 
-    if ext/mode = <builtin> [
+    if ext.mode = <builtin> [
         append builtin-ext-objlibs maybe ext-objlib
 
         ; While you can have varied compiler switches in effect for individual
@@ -1804,18 +1808,18 @@ for-each ext extensions [
         ; ldflag, but this then has to be platform specific.  But generally you
         ; already need platform-specific code to know where to look.
         ;
-        append app-config/libraries maybe spread ext-objlib/libraries
-        append app-config/ldflags maybe spread ext/ldflags
-        append app-config/searches maybe spread ext/searches
+        append app-config.libraries maybe spread ext-objlib.libraries
+        append app-config.ldflags maybe spread ext.ldflags
+        append app-config.searches maybe spread ext.searches
     ]
     else [
         append dynamic-ext-objlibs ext-objlib
 
         ; We need to make a new "Project" abstraction to represent the DLL
 
-        ext-proj: make rebmake/dynamic-library-class [
-            name: join either platform-config/os-base = 'windows ["r3-"]["libr3-"]
-                lowercase to text! ext/name
+        ext-proj: make rebmake.dynamic-library-class [
+            name: join either platform-config.os-base = 'windows ["r3-"]["libr3-"]
+                lowercase to text! ext.name
             output: to file! name
             depends: compose [
                 (ext-objlib)  ; !!! Pulls in in all of extensions deps?
@@ -1823,21 +1827,21 @@ for-each ext extensions [
                 ; (app) all dynamic extensions depend on r3, but app not ready
                 ; so the dependency is added at a later phase below
                 ;
-                (maybe spread app-config/libraries)
-                (maybe spread ext-objlib/libraries)
+                (maybe spread app-config.libraries)
+                (maybe spread ext-objlib.libraries)
             ]
             post-build-commands: all [
                 not cfg-symbols
                 reduce [
-                    make rebmake/cmd-strip-class [
-                        file: join output maybe rebmake/target-platform/dll-suffix
+                    make rebmake.cmd-strip-class [
+                        file: join output maybe rebmake.target-platform.dll-suffix
                     ]
                 ]
             ]
 
             ldflags: compose [
-                (maybe spread ext/ldflags)
-                (maybe spread app-config/ldflags)
+                (maybe spread ext.ldflags)
+                (maybe spread app-config.ldflags)
 
                 ; GCC has this but Clang does not, and currently Clang is
                 ; being called through a gcc alias.  Review.
@@ -1850,11 +1854,11 @@ for-each ext extensions [
         ;
         apply :add-project-flags [
             ext-proj
-            /I app-config/includes
-            /D join ["LIBREBOL_USES_API_TABLE"] spread app-config/definitions
-            /c app-config/cflags
-            /O app-config/optimization
-            /g app-config/debug
+            /I app-config.includes
+            /D join ["LIBREBOL_USES_API_TABLE"] spread app-config.definitions
+            /c app-config.cflags
+            /O app-config.optimization
+            /g app-config.debug
         ]
 
         append dynamic-libs ext-proj  ; need to add app as a dependency later
@@ -1874,17 +1878,17 @@ for-each ext extensions [
 ; Rebmake to run the compiler via CALL.
 
 vars: reduce [
-    reb-tool: make rebmake/var-class [
+    reb-tool: make rebmake.var-class [
         name: "REBOL_TOOL"
         any [
-            'file = exists? value: system/options/boot
+            'file = exists? value: system.options.boot
             all [
-                user-config/rebol-tool
-                'file = exists? value: join repo-dir user-config/rebol-tool
+                user-config.rebol-tool
+                'file = exists? value: join repo-dir user-config.rebol-tool
             ]
             'file = exists? value: join repo-dir unspaced [
                 "r3-make"
-                :rebmake/target-platform/exe-suffix
+                :rebmake.target-platform.exe-suffix
             ]
         ] else [
             fail "^/^/!! Cannot find a valid REBOL_TOOL !!^/"
@@ -1896,21 +1900,21 @@ vars: reduce [
         ;
         value: file-to-local value
     ]
-    make rebmake/var-class [
+    make rebmake.var-class [
         name: "REBOL"
         value: "$(REBOL_TOOL) -q"
     ]
-    make rebmake/var-class [
+    make rebmake.var-class [
         name: "T"
         value: join src-dir %tools/
     ]
-    make rebmake/var-class [
+    make rebmake.var-class [
         name: "GIT_COMMIT"
-        default: any [user-config/git-commit "unknown"]
+        default: any [user-config.git-commit "unknown"]
     ]
 ]
 
-prep: make rebmake/entry-class [
+prep: make rebmake.entry-class [
     target: 'prep ; phony target
 
     commands: collect [
@@ -1926,28 +1930,28 @@ prep: make rebmake/entry-class [
         keep ["$(REBOL)" join tools-dir %make-headers.r]
         keep [
             "$(REBOL)" join tools-dir %make-boot.r
-            unspaced ["OS_ID=" platform-config/id]
+            unspaced ["OS_ID=" platform-config.id]
             "GIT_COMMIT=$(GIT_COMMIT)"
         ]
         keep [
             "$(REBOL)" join tools-dir %make-librebol.r
-            unspaced ["OS_ID=" platform-config/id]
+            unspaced ["OS_ID=" platform-config.id]
         ]
 
         for-each ext extensions [
             keep [
                 "$(REBOL)" join tools-dir %prep-extension.r
-                unspaced ["MODULE=" ext/name]
-                unspaced ["SRC=extensions/" switch kind of ext/source [
-                    file! [ext/source]
-                    block! [first find ext/source matches file!]
-                    fail "ext/source must be BLOCK! or FILE!"
+                unspaced ["MODULE=" ext.name]
+                unspaced ["SRC=extensions/" switch kind of ext.source [
+                    file! [ext.source]
+                    block! [first find ext.source matches file!]
+                    fail "ext.source must be BLOCK! or FILE!"
                 ]]
-                unspaced ["OS_ID=" platform-config/id]
-                unspaced ["USE_LIBREBOL=" logic-to-word ext/use-librebol]
+                unspaced ["OS_ID=" platform-config.id]
+                unspaced ["USE_LIBREBOL=" logic-to-word ext.use-librebol]
             ]
 
-            if ext/hook [
+            if ext.hook [
                 ;
                 ; This puts a "per-extension" script into the commands to
                 ; run on prep.  It runs after the core prep, so that it can
@@ -1958,12 +1962,12 @@ prep: make rebmake/entry-class [
                 ;
                 hook-script: file-to-local/full (
                     join repo-dir spread reduce [
-                        "extensions/" (ext/directory) (ext/hook)
+                        "extensions/" (ext.directory) (ext.hook)
                     ]
                 )
                 keep [
                     "$(REBOL)" hook-script
-                    unspaced ["OS_ID=" platform-config/id]
+                    unspaced ["OS_ID=" platform-config.id]
                 ]
             ]
         ]
@@ -1972,7 +1976,7 @@ prep: make rebmake/entry-class [
             "$(REBOL)" join tools-dir %make-extensions-table.r
             unspaced [
                 "EXTENSIONS=" delimit ":" map-each ext extensions [
-                    if ext/mode = <builtin> [to text! ext/name]
+                    if ext.mode = <builtin> [to text! ext.name]
                 ]
             ]
         ]
@@ -1984,59 +1988,59 @@ prep: make rebmake/entry-class [
     ]
 ]
 
-app: make rebmake/application-class [
+app: make rebmake.application-class [
     name: 'r3-exe
     output: %r3 ;no suffix
     depends: compose [
         (libr3-core)
         (spread builtin-ext-objlibs)
-        (spread app-config/libraries)
+        (spread app-config.libraries)
         (main)
     ]
     post-build-commands: either cfg-symbols [
         null
     ][
         reduce [
-            make rebmake/cmd-strip-class [
-                file: join output maybe rebmake/target-platform/exe-suffix
+            make rebmake.cmd-strip-class [
+                file: join output maybe rebmake.target-platform.exe-suffix
             ]
         ]
     ]
 
-    searches: app-config/searches
-    ldflags: app-config/ldflags
-    cflags: app-config/cflags
-    optimization: app-config/optimization
-    debug: app-config/debug
-    includes: app-config/includes
-    definitions: app-config/definitions
+    searches: app-config.searches
+    ldflags: app-config.ldflags
+    cflags: app-config.cflags
+    optimization: app-config.optimization
+    debug: app-config.debug
+    includes: app-config.includes
+    definitions: app-config.definitions
 ]
 
 ; Now that app is created, make it a dependency of all the dynamic libs
 ; See `accept` method handling of #application for pulling in import lib
 ;
 for-each proj dynamic-libs [
-    append proj/depends app
+    append proj.depends app
 ]
 
-library: make rebmake/dynamic-library-class [
+library: make rebmake.dynamic-library-class [
     name: 'libr3
     output: %libr3 ;no suffix
     depends: compose [
         (libr3-core)
         (spread builtin-ext-objlibs)
-        (spread app-config/libraries)
+        (spread app-config.libraries)
     ]
-    searches: app-config/searches
-    ldflags: app-config/ldflags
-    cflags: app-config/cflags
-    optimization: app-config/optimization
-    debug: app-config/debug
-    includes: app-config/includes
-    definitions: app-config/definitions
+    searches: app-config.searches
+    ldflags: app-config.ldflags
+    cflags: app-config.cflags
+    optimization: app-config.optimization
+    debug: app-config.debug
+    includes: app-config.includes
+    definitions: app-config.definitions
 ]
 
-top: make rebmake/entry-class [
+top: make rebmake.entry-class [
     target: 'top  ; phony target
 
     depends: flatten reduce
@@ -2047,49 +2051,49 @@ top: make rebmake/entry-class [
     commands: []
 ]
 
-t-folders: make rebmake/entry-class [
+t-folders: make rebmake.entry-class [
     target: 'folders  ; phony target
 
     ; Sort it so that the parent folder gets created first
     ;
     commands: map-each dir sort folders [
-        make rebmake/cmd-create-class compose [
+        make rebmake.cmd-create-class compose [
             file: (dir)
         ]
     ]
 ]
 
-clean: make rebmake/entry-class [
+clean: make rebmake.entry-class [
     target: 'clean  ; phony target
 
     commands: reduce [
-        make rebmake/cmd-delete-class [file: %objs/]
-        make rebmake/cmd-delete-class [file: %prep/]
-        make rebmake/cmd-delete-class [
-            file: join %r3 rebmake/target-platform/exe-suffix
+        make rebmake.cmd-delete-class [file: %objs/]
+        make rebmake.cmd-delete-class [file: %prep/]
+        make rebmake.cmd-delete-class [
+            file: join %r3 rebmake.target-platform.exe-suffix
         ]
-        make rebmake/cmd-delete-class [file: %libr3.*]
+        make rebmake.cmd-delete-class [file: %libr3.*]
     ]
 ]
 
-check: make rebmake/entry-class [
+check: make rebmake.entry-class [
     target: 'check  ; phony target
 
     depends: append (copy dynamic-libs) app
 
     commands: collect [
-        keep make rebmake/cmd-strip-class [
-            file: join app/output maybe rebmake/target-platform/exe-suffix
+        keep make rebmake.cmd-strip-class [
+            file: join app.output maybe rebmake.target-platform.exe-suffix
         ]
         for-each s dynamic-libs [
-            keep make rebmake/cmd-strip-class [
-                file: join s/output maybe rebmake/target-platform/dll-suffix
+            keep make rebmake.cmd-strip-class [
+                file: join s.output maybe rebmake.target-platform.dll-suffix
             ]
         ]
     ]
 ]
 
-solution: make rebmake/solution-class [
+solution: make rebmake.solution-class [
     name: 'app
 
     depends: flatten reduce [
@@ -2108,17 +2112,17 @@ solution: make rebmake/solution-class [
         clean
     ]
 
-    debug: app-config/debug
+    debug: app-config.debug
 ]
 
-target: user-config/target
+target: user-config.target
 if not block? target [target: reduce [target]]
 for-each t target [
     switch t targets else [
         fail [
             newline
             newline
-            "UNSUPPORTED TARGET" user-config/target newline
+            "UNSUPPORTED TARGET" user-config.target newline
             "TRY --HELP TARGETS" newline
         ]
     ]

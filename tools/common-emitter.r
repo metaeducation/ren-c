@@ -138,12 +138,12 @@ export cscape: func [
             ; SET no longer takes BLOCK!, and bootstrap executable doesn't have
             ; SET-BLOCK! so no UNPACK.
             ;
-            pattern: degrade item/1
-            col: item/2
-            mode: item/3
-            expr: item/4
-            prefix: degrade item/5
-            suffix: degrade item/6
+            pattern: degrade item.1
+            col: item.2
+            mode: item.3
+            expr: item.4
+            prefix: degrade item.5
+            suffix: degrade item.6
 
             let any-upper: did find/case expr charset [#"A" - #"Z"]
             let any-lower: did find/case expr charset [#"a" - #"z"]
@@ -302,7 +302,7 @@ export make-emitter: func [
     <with>
     system  ; The `System:` SET-WORD! below overrides the global for access
 ][
-    if not let by: system/script/header/file [
+    if not let by: system.script.header.file [
         fail [
             "File: should be set in the generating scripts header section"
             "so that generated files have a comment on what made them"
@@ -326,7 +326,7 @@ export make-emitter: func [
     let e: make object! compose [
         ;
         ; NOTE: %make-headers.r directly manipulates the buffer, because it
-        ; wishes to merge #ifdef/#endif cases
+        ; wishes to merge #ifdef and #endif cases
         ;
         ; !!! Should the allocation size be configurable?
         ;

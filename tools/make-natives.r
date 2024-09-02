@@ -74,7 +74,7 @@ import <native-emitters.r>
 print "------ Generate tmp-natives.r"
 
 src-dir: join repo-dir %src/
-output-dir: join system/options/path %prep/
+output-dir: join system.options.path %prep/
 mkdir/deep join output-dir %boot/
 
 verbose: false
@@ -128,16 +128,16 @@ quoted?-proto: null
 info: all-protos
 while [not tail? info] [
     case [
-        info/1/name = "native" [native-proto: take info]
-        info/1/name = "logic?" [logic?-proto: take info]
-        info/1/name = "antiform?" [antiform?-proto: take info]
-        info/1/name = "action?" [action?-proto: take info]
-        info/1/name = "enfix" [enfix-proto: take info]
-        info/1/name = "any-value?" [any-value?-proto: take info]
-        info/1/name = "any-atom?" [any-atom?-proto: take info]
-        info/1/name = "element?" [element?-proto: take info]
-        info/1/name = "quasi?" [quasi?-proto: take info]
-        info/1/name = "quoted?" [quoted?-proto: take info]
+        info.1.name = "native" [native-proto: take info]
+        info.1.name = "logic?" [logic?-proto: take info]
+        info.1.name = "antiform?" [antiform?-proto: take info]
+        info.1.name = "action?" [action?-proto: take info]
+        info.1.name = "enfix" [enfix-proto: take info]
+        info.1.name = "any-value?" [any-value?-proto: take info]
+        info.1.name = "any-atom?" [any-atom?-proto: take info]
+        info.1.name = "element?" [element?-proto: take info]
+        info.1.name = "quasi?" [quasi?-proto: take info]
+        info.1.name = "quoted?" [quoted?-proto: take info]
     ]
     else [
         info: next info

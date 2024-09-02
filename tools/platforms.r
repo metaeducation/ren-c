@@ -489,7 +489,7 @@ export for-each-platform: func [
             [
                 blank! (os: os-name: os-base: null)
                     |
-                os: path! (os-name: os/1, os-base: os/2)
+                os: path! (os-name: os.1, os-base: os.2)
             ]
             [
                 blank! (build-label: null)
@@ -537,8 +537,8 @@ use [
             ]
             tuple? id
             all [
-                id/1 = 0
-                id/2 = number
+                id.1 = 0
+                id.2 = number
             ]
             (to-text os-name) == (lowercase to-text os-name)
             (to-text os-base) == (lowercase to-text os-base)
@@ -549,10 +549,10 @@ use [
             block? ldflags
         ]
 
-        for-each flag p/definitions [assert [word? flag]]
-        for-each flag p/cflags [assert [word? flag]]
-        for-each flag p/libraries [assert [word? flag]]
-        for-each flag p/ldflags [assert [word? flag]]
+        for-each flag p.definitions [assert [word? flag]]
+        for-each flag p.cflags [assert [word? flag]]
+        for-each flag p.libraries [assert [word? flag]]
+        for-each flag p.ldflags [assert [word? flag]]
 
         for-each [word context] compose [
             definitions (platform-definitions)
@@ -593,7 +593,7 @@ export configure-platform: func [
         [~null~ text! tuple!]
 ][
     if null? hint [  ; Try same version as this r3-make was built with
-        hint: to tuple! reduce [0 system/version/4 system/version/5]
+        hint: to tuple! reduce [0 system.version.4 system.version.5]
     ]
 
     let version: switch kind of hint [  ; no switch/type in bootstrap
@@ -607,7 +607,7 @@ export configure-platform: func [
 
     let result: null
     for-each-platform p [
-        if p/id = version [
+        if p.id = version [
             result: copy p  ; could RETURN, but sanity-check whole table
         ]
     ]

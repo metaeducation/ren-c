@@ -64,7 +64,7 @@ export read-deep: func [
         let len: length of root
         cfor i 1 length of result 1 [
             ; Strip off root path from locked paths.
-            poke result i copy skip result/:i len
+            poke result i copy skip result.(i) len
         ]
     ]
 

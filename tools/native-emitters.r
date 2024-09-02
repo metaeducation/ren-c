@@ -151,20 +151,20 @@ export emit-include-params-macro: func [
         ; `state` and `input` and `remainder` in their body code)
         ;
         paramlist: collect [  ; no PARSE COLLECT in bootstrap exe :-(
-            assert [text? spec/1]
-            keep spec/1
+            assert [text? spec.1]
+            keep spec.1
             spec: my next
 
-            assert [spec/1 = the return:]
-            keep spec/1
+            assert [spec.1 = the return:]
+            keep spec.1
             spec: my next
 
-            assert [text? spec/1]  ; description
-            keep spec/1
+            assert [text? spec.1]  ; description
+            keep spec.1
             spec: my next
 
-            assert [block? spec/1]  ; type spec
-            keep spec/1
+            assert [block? spec.1]  ; type spec
+            keep spec.1
             spec: my next
 
             keep spread compose [
@@ -191,8 +191,8 @@ export emit-include-params-macro: func [
         ; the user provides...so making actions may have to shuffle the
         ; position.  But it may come to be enforced for efficiency).
         ;
-        while [text? :paramlist/1] [paramlist: next paramlist]
-        if (the return:) <> :paramlist/1 [
+        while [text? :paramlist.1] [paramlist: next paramlist]
+        if (the return:) <> :paramlist.1 [
             fail [native-name "does not have a RETURN: specification"]
         ] else [
             keep {DECLARE_PARAM(1, return)}

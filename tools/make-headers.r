@@ -30,8 +30,8 @@ c-lexical: import <c-lexicals.r>
 
 file-base: make object! load join repo-dir %tools/file-base.r
 
-tools-dir: system/options/current-path
-output-dir: join system/options/path %prep/
+tools-dir: system.options.current-path
+output-dir: join system.options.path %prep/
 mkdir/deep (join output-dir %include/)
 
 mkdir/deep (join output-dir %include/)
@@ -68,7 +68,7 @@ emit-proto: func [
     all [
         block? header
         2 <= length of header
-        set-word? header/1
+        set-word? header.1
     ] else [
         print mold proto-parser/data
         fail [
@@ -78,7 +78,7 @@ emit-proto: func [
         ]
     ]
 
-    switch header/2 [
+    switch header.2 [
         'API [
             ; Currently the API entries should only occur in %a-lib.c, and
             ; are processed by %make-librebol.r.  Their API_XxxYyy() forms are
@@ -99,13 +99,13 @@ emit-proto: func [
     ]
 
     if find prototypes proto [
-        fail ["Duplicate prototype:" proto-parser/file ":" proto]
+        fail ["Duplicate prototype:" proto-parser.file ":" proto]
     ]
 
     append prototypes proto
 
-    e-funcs/emit [proto proto-parser/file {
-        RL_API $<Proto>; /* $<proto-parser/file> */
+    e-funcs/emit [proto proto-parser.file {
+        RL_API $<Proto>; /* $<proto-parser.file> */
     }]
 ]
 
@@ -115,8 +115,8 @@ process-conditional: func [
     dir-position
     emitter [object!]
 ][
-    emitter/emit [proto-parser/file dir-position text-line-of directive {
-        $<Directive> /* $<proto-parser/file> #$<text-line-of dir-position> */
+    emitter/emit [proto-parser.file dir-position text-line-of directive {
+        $<Directive> /* $<proto-parser.file> #$<text-line-of dir-position> */
     }]
 
     ; Minimise conditionals for the reader - unnecessary for compilation.
@@ -125,20 +125,20 @@ process-conditional: func [
     ;
     all [
         find/match directive "#endif"
-        let position: find-last tail-of emitter/buf-emit "#if"
+        let position: find-last tail-of emitter.buf-emit "#if"
         elide rewrite-if-directives position
     ]
 ]
 
 emit-directive: func [return: [~] directive] [
-    process-conditional directive proto-parser/parse-position e-funcs
+    process-conditional directive proto-parser.parse-position e-funcs
 ]
 
 process: func [return: [~] file] [
-    proto-parser/emit-proto: :emit-proto
-    proto-parser/file: file
-    proto-parser/emit-directive: :emit-directive
-    proto-parser/process (as text! read file)
+    proto-parser.emit-proto: :emit-proto
+    proto-parser.file: file
+    proto-parser.emit-directive: :emit-directive
+    proto-parser.process (as text! read file)
 ]
 
 ;-------------------------------------------------------------------------
@@ -180,7 +180,7 @@ e-funcs/emit {
 }
 e-funcs/emit newline
 
-for-each item file-base/core [
+for-each item file-base.core [
     ;
     ; Items can be blocks if there's special flags for the file (
     ; <no-make-header> marks it to be skipped by this script)
@@ -188,7 +188,7 @@ for-each item file-base/core [
     if block? item [
         all [
             2 <= length of item
-            <no-make-header> = item/2
+            <no-make-header> = item.2
         ] then [
             continue  ; skip this file
         ]
@@ -229,7 +229,7 @@ sys-globals-parser: context [
     id: null
 
     process: func [return: [~] text] [
-        parse3 text grammar/rule  ; Review: no END (return result unused?)
+        parse3 text grammar.rule  ; Review: no END (return result unused?)
     ]
 
     grammar: context bind [
@@ -282,7 +282,7 @@ sys-globals-parser: context [
 
         other-segment: [thru newline]
 
-    ] c-lexical/grammar
+    ] c-lexical.grammar
 
 ]
 

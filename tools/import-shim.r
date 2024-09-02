@@ -52,7 +52,7 @@ write-stdout "LOADING %import-shim.r --- "  ; when finished, adds "COMPLETE!"
 ; LIB3/FUNC are good ways of seeing that.
 ;
 append lib [lib3: _]  ; see header notes: `Exports` broken
-lib/lib3: lib3: lib  ; use LIB3 to make it clearer when using old semantics
+lib.lib3: lib3: lib  ; use LIB3 to make it clearer when using old semantics
 
 
 === "EXPORT" ===
@@ -68,7 +68,7 @@ export: lib3/func [
 ][
     if :set-word [
         args: take args
-        lib3/append system/contexts/user reduce [  ; splices blocks by default
+        lib3/append system.contexts.user reduce [  ; splices blocks by default
             set-word (set set-word :args)
         ]
         return get 'args
@@ -84,7 +84,7 @@ export: lib3/func [
         if not word? :word [  ; no type checking in shim via BLOCK!s
             fail "EXPORT only exports block of words in bootstrap shim"
         ]
-        lib3/append system/contexts/user reduce [  ; splices blocks by default
+        lib3/append system.contexts.user reduce [  ; splices blocks by default
             word get word
         ]
     ]
@@ -162,48 +162,48 @@ do: enclose :lib3/do lib3/func [
     <local> old-system-script file
     <with> wrap-module
 ][
-    old-system-script: system/script
+    old-system-script: system.script
 
-    if file? :f/source [
-        file: f/source
+    if file? :f.source [
+        file: f.source
 
-        system/script: make system/standard/script [
+        system.script: make system.standard.script [
             title: "Script imported by import shim"
-            header: make system/standard/header compose [
+            header: make system.standard.header compose [
                 title: "Script imported by import shim"
                 file: (file)
             ]
             parent: old-system-script
             path: lib3/split-path file
-            args: either old-system-script/path [_] [system/options/args]
+            args: either old-system-script.path [_] [system.options.args]
         ]
 
         ; Note: want the file-like behavior of preserving the directory.  :-(
         ; Implement via wrapper.
         ;
-        f/source: rewrite-source-for-bootstrap-exe read/string file
+        f.source: rewrite-source-for-bootstrap-exe read/string file
 
         ; We do not want top-level set-words to be automatically cleared out,
         ; in case you plan to overwrite something like IF but are using the
         ; old definition.
         ;
-        replace f/source "Type: module" ""
+        replace f.source "Type: module" ""
 
         ; Wrap the whole thing in an object if needed
         ;
-        replace f/source unspaced [newline "]"] unspaced compose [
+        replace f.source unspaced [newline "]"] unspaced compose [
             newline
             "]" newline
             (if wrap-module ["make object! ["]) newline
         ]
         if wrap-module [
-            append f/source newline
-            append f/source "]  ; end wrapping MAKE OBJECT!"
+            append f.source newline
+            append f.source "]  ; end wrapping MAKE OBJECT!"
         ]
         wrap-module: false  ; only wrap one level of DO
     ]
     old-do f
-    elide system/script: old-system-script
+    elide system.script: old-system-script
 ]
 
 already-imported: make map! []  ; avoid importing things twice
@@ -241,7 +241,7 @@ import: enfix lib3/func [
     assert [#"%" <> dir/1]  ; accidental `import <%foo.r>`
 
     full-script-dir: clean-path lib3/append copy any [
-        system/script/path system/options/path
+        system.script.path system.options.path
     ] dir
 
     full-script-path: join full-script-dir script-filename
@@ -269,7 +269,7 @@ import: enfix lib3/func [
 
     change-dir old-dir
 
-    already-imported/(full-script-path): ret
+    already-imported.(full-script-path): ret
     return ret
 ]
 

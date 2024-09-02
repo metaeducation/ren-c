@@ -57,7 +57,7 @@ load-until-double-newline: func [
 
 
 collapse-whitespace: [some [change some white-space (space) | one] <end>]
-bind collapse-whitespace c-lexical/grammar
+bind collapse-whitespace c-lexical.grammar
 
 
 export proto-parser: context [
@@ -80,7 +80,7 @@ export proto-parser: context [
     count: ~
 
     process: func [return: [~] text] [
-        parse3 text grammar/rule
+        parse3 text grammar.rule
     ]
 
     grammar: context bind [
@@ -174,7 +174,7 @@ export proto-parser: context [
                 parse3/match lines [data: across to {=///} to <end>]
                 data: attempt [load-until-double-newline trim/auto data]
                 data: attempt [
-                    if set-word? first data/1 [data/1] else [false]
+                    if set-word? first data.1 [data.1] else [false]
                 ]
                 position ; Success.
             ]
@@ -192,11 +192,11 @@ export proto-parser: context [
                 data: load-until-double-newline lines
 
                 any [
-                    set-word? first data/1
-                    'export = first data/1
+                    set-word? first data.1
+                    'export = first data.1
                 ] then [
-                    notes: data/2
-                    data: data/1
+                    notes: data.2
+                    data: data.1
                 ] else [
                     data: notes: ~
                     false
@@ -244,7 +244,7 @@ export proto-parser: context [
             ]
         ]
 
-    ] c-lexical/grammar
+    ] c-lexical.grammar
 ]
 
 export rewrite-if-directives: func [

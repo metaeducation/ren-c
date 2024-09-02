@@ -15,14 +15,24 @@ REBOL [
     }
 ]
 
+; !!! Originally this table had files in it as TUPLE!, e.g. `a-constants.c`
+; without the need for a % to decorate it.  That works in modern Ren-C, but
+; the bootstrap executable was tweaked so that loads as `a-constants/c` in
+; order to allow things that look like TUPLE! to build in bootstrap (which
+; does not have generic tuple).  That out-prioritizes the nice look here of
+; a tuple, but after bootstrapping to a modern EXE it could be used again.
+; (There is however a hack which only turns dots into slashes until the
+; first actual slash is seen, allowing paths like `functionals/c-adapt.c`
+; to work without the % annotation)
+;
 core: [
     ; (A)???
-    a-constants.c
-    a-globals.c
-    a-lib.c
+    %a-constants.c
+    %a-globals.c
+    %a-lib.c
 
     ; (B)oot
-    b-init.c
+    %b-init.c
 
     ; Function Generators
     ;
@@ -46,10 +56,10 @@ core: [
     functionals/c-yielder.c
 
     ; (C)ore
-    c-bind.c
-    c-do.c
-    c-context.c
-    c-error.c
+    %c-bind.c
+    %c-do.c
+    %c-context.c
+    %c-error.c
 
     ; EVALUATOR
     ;
@@ -68,29 +78,29 @@ core: [
         evaluator/c-trampoline.c  #prefer-O2-optimization
     ]
 
-    c-function.c
-    c-path.c
-    c-port.c
-    c-signal.c
-    c-state.c
-    c-value.c
-    c-word.c
+    %c-function.c
+    %c-path.c
+    %c-port.c
+    %c-signal.c
+    %c-state.c
+    %c-value.c
+    %c-word.c
 
     ; (D)ebug
-    d-crash.c
-    d-dump.c
-    d-eval.c
-    d-gc.c
-    d-print.c
-    d-stack.c
-    d-stats.c
-    d-test.c
-    d-trace.c
+    %d-crash.c
+    %d-dump.c
+    %d-eval.c
+    %d-gc.c
+    %d-print.c
+    %d-stack.c
+    %d-stats.c
+    %d-test.c
+    %d-trace.c
 
     ; (F)???
-    f-blocks.c
+    %f-blocks.c
     [
-        f-deci.c
+        %f-deci.c
 
         ; May 2018 update to MSVC 2017 added warnings for Spectre mitigation.
         ; %f-deci.c is a lot of twiddly custom C code for implementing a fixed
@@ -101,7 +111,7 @@ core: [
         <msc:/wd5045>  ; https://stackoverflow.com/q/50399940
     ]
     [
-        f-dtoa.c
+        %f-dtoa.c
 
         ; f-dtoa.c comes from a third party and is an old file.  There is an
         ; updated package, but it is not a single-file...rather something with
@@ -122,86 +132,86 @@ core: [
         <implicit-fallthru>
     ]
     [
-        f-enbase.c
+        %f-enbase.c
 
         ; At time of writing there are 4 Spectre mitigations, which should
         ; be looked at and rewritten when there is time:
         ;
         <msc:/wd5045>  ; https://stackoverflow.com/q/50399940
     ]
-    f-extension.c
-    f-int.c
-    f-math.c
-    f-modify.c
-    f-qsort.c
-    f-random.c
-    f-round.c
-    f-series.c
-    f-stubs.c
+    %f-extension.c
+    %f-int.c
+    %f-math.c
+    %f-modify.c
+    %f-qsort.c
+    %f-random.c
+    %f-round.c
+    %f-series.c
+    %f-stubs.c
 
     ; (L)exer
-    l-scan.c
-    l-types.c
+    %l-scan.c
+    %l-types.c
 
     ; (M)emory
-    m-gc.c
-    [m-pools.c <no-uninitialized>]
-    m-series.c
-    m-stacks.c
+    %m-gc.c
+    [%m-pools.c <no-uninitialized>]
+    %m-series.c
+    %m-stacks.c
 
     ; (N)atives
-    n-control.c
-    n-data.c
-    n-do.c
-    n-error.c
-    n-io.c
-    n-loop.c
-    n-math.c
-    n-protect.c
-    n-reduce.c
-    n-sets.c
-    n-strings.c
-    n-system.c
+    %n-control.c
+    %n-data.c
+    %n-do.c
+    %n-error.c
+    %n-io.c
+    %n-loop.c
+    %n-math.c
+    %n-protect.c
+    %n-reduce.c
+    %n-sets.c
+    %n-strings.c
+    %n-system.c
 
     ; (S)trings
-    s-cases.c
-    s-crc.c
-    s-find.c
-    s-make.c
-    s-mold.c
-    s-ops.c
+    %s-cases.c
+    %s-crc.c
+    %s-find.c
+    %s-make.c
+    %s-mold.c
+    %s-ops.c
 
     ; (T)ypes
-    t-binary.c
-    t-bitset.c
-    t-blank.c
-    t-block.c
-    t-char.c
-    t-comma.c
-    t-datatype.c
-    t-date.c
-    t-decimal.c
-    t-integer.c
-    t-logic.c
-    t-map.c
-    t-money.c
-    t-object.c
-    t-pair.c
-    t-port.c
-    t-quoted.c
-    t-string.c
-    t-time.c
-    t-tuple.c
-    t-typeset.c
-    t-word.c
-    t-varargs.c
-    t-void.c
+    %t-binary.c
+    %t-bitset.c
+    %t-blank.c
+    %t-block.c
+    %t-char.c
+    %t-comma.c
+    %t-datatype.c
+    %t-date.c
+    %t-decimal.c
+    %t-integer.c
+    %t-logic.c
+    %t-map.c
+    %t-money.c
+    %t-object.c
+    %t-pair.c
+    %t-port.c
+    %t-quoted.c
+    %t-string.c
+    %t-time.c
+    %t-tuple.c
+    %t-typeset.c
+    %t-word.c
+    %t-varargs.c
+    %t-void.c
 
     ; (U)??? (3rd-party code extractions)
-    u-compress.c
-    u-parse.c
+    %u-compress.c
+    %u-parse.c
     [
-        u-zlib.c
+        %u-zlib.c
 
         <no-make-header>
         <implicit-fallthru>
@@ -219,28 +229,28 @@ core: [
 ; Files created by the make-boot process
 ;
 generated: [
-    tmp-boot-block.c
-    tmp-type-hooks.c
-    tmp-typesets.c
-    tmp-builtin-extension-table.c
-    tmp-rebol-api-table.c
+    %tmp-boot-block.c
+    %tmp-type-hooks.c
+    %tmp-typesets.c
+    %tmp-builtin-extension-table.c
+    %tmp-rebol-api-table.c
 ]
 
 made: [
-    make-boot.r                 core/tmp-boot-block.c
-    make-extension-table.r      core/tmp-builtin-extension-table.c
-    make-librebol.r             core/tmp-rebol-api-table.c
+    %make-boot.r                 core/tmp-boot-block.c
+    %make-extension-table.r      core/tmp-builtin-extension-table.c
+    %make-librebol.r             core/tmp-rebol-api-table.c
 
-    make-headers.r              include/tmp-internals.h
+    %make-headers.r              include/tmp-internals.h
 
-    make-host-init.r            include/host-init.h
-    make-librebol.r             include/rebol.h
+    %make-host-init.r            include/host-init.h
+    %make-librebol.r             include/rebol.h
 ]
 
-main: 'main.c
+main: %main.c
 
 boot-files: [
-    version.r
+    %version.r
 ]
 
 mezz-files: [
@@ -248,6 +258,6 @@ mezz-files: [
 ]
 
 tools: [
-    make-host-init.r
-    make-host-ext.r
+    %make-host-init.r
+    %make-host-ext.r
 ]

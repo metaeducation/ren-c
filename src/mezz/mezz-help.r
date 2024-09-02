@@ -115,7 +115,7 @@ help: func [
                 help lib    - the runtime library
                 help system.contexts.user   - your user context
                 help system - the system object
-                help system/options - special settings
+                help system.options - special settings
 
             To see all words of a specific datatype:
 

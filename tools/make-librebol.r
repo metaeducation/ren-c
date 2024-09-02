@@ -26,7 +26,7 @@ import <common-emitter.r>
 
 print "--- Make Reb-Lib Headers ---"
 
-args: parse-args system/script/args  ; either from command line or DO/ARGS
+args: parse-args system.script.args  ; either from command line or DO/ARGS
 
 ; Assume we start up in the directory where we want build products to go
 ;
@@ -70,12 +70,12 @@ for-each-api: func [code [block!]] [  ; lambda bootstrap doesn't support LET
 ]
 
 emit-proto: func [return: [~] proto] [
-    header: proto-parser/data
+    header: proto-parser.data
 
     all [
         block? header
         2 <= length of header
-        set-word? header/1
+        set-word? header.1
     ] else [
         print mold header
         fail [
@@ -85,9 +85,9 @@ emit-proto: func [return: [~] proto] [
         ]
     ]
 
-    if header/2 != 'API [return ~]
-    if not set-word? header/1 [
-        fail ["API declaration should be a SET-WORD!, not" (header/1)]
+    if header.2 != 'API [return ~]
+    if not set-word? header.1 [
+        fail ["API declaration should be a SET-WORD!, not" (header.1)]
     ]
 
     paramlist: collect [
@@ -97,7 +97,7 @@ emit-proto: func [return: [~] proto] [
                 [param: across to "," one | param: across to ")" to <end>] (
                     ;
                     ; Separate type from parameter name.  Step backwards from
-                    ; the tail to find space, or non-letter/digit/underscore.
+                    ; the tail to find space, or non-[letter digit underscore]
                     ;
                     trim/head/tail param
                     identifier-chars: charset [
@@ -109,7 +109,7 @@ emit-proto: func [return: [~] proto] [
                         ; #"." in variadics (but all va_list* in API defs)
                     ]
                     pos: back tail param
-                    while [pick identifier-chars pos/1] [
+                    while [pick identifier-chars pos.1] [
                         pos: back pos
                     ]
                     keep trim/tail copy/part param next pos  ; TEXT! of type
@@ -121,9 +121,9 @@ emit-proto: func [return: [~] proto] [
         ]
     ]
 
-    if (to set-word! name) != header/1 [  ; e.g. `//  rebValue: API`
+    if (to set-word! name) != header.1 [  ; e.g. `//  rebValue: API`
         fail [
-            "Name in comment header (" header/1 ") isn't C function name"
+            "Name in comment header (" header.1 ") isn't C function name"
             "minus API_ prefix to match" (name)
         ]
     ]
@@ -165,8 +165,8 @@ emit-proto: func [return: [~] proto] [
 ]
 
 process: func [return: [~] file] [
-    proto-parser/file: file
-    proto-parser/emit-proto: :emit-proto
+    proto-parser.file: file
+    proto-parser.emit-proto: :emit-proto
     proto-parser/process as text! read file
 ]
 

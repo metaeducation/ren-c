@@ -62,10 +62,10 @@ map-files-to-local: func [
 ends-with?: func [
     return: [logic?!]
     s [any-string?]
-    suffix [~null~ any-string?]
+    suffix [~void~ any-string?]
 ][
     return to-logic any [
-        null? :suffix
+        void? suffix
         empty? suffix
         suffix = (skip tail-of s negate length of suffix)
     ]
@@ -182,10 +182,10 @@ posix: make platform-class [
         return: [text!]
         cmd [object!]
     ][
-        return either dir? cmd/file [
-            spaced ["mkdir -p" cmd/file]
+        return either dir? cmd.file [
+            spaced ["mkdir -p" cmd.file]
         ][
-            spaced ["touch" cmd/file]
+            spaced ["touch" cmd.file]
         ]
     ]
 
@@ -193,17 +193,17 @@ posix: make platform-class [
         return: [text!]
         cmd [object!]
     ][
-        return spaced ["rm -fr" cmd/file]
+        return spaced ["rm -fr" cmd.file]
     ]
 
     gen-cmd-strip: meth [
         return: [text!]
         cmd [object!]
     ][
-        if let tool: any [:cmd/strip :default-strip] [
-            let b: ensure block! tool/commands cmd/file cmd/options
+        if let tool: any [get $cmd/strip :default-strip] [
+            let b: ensure block! tool/commands cmd.file cmd.options
             assert [1 = length of b]
-            return b/1
+            return b.1
         ]
         return ""
     ]
@@ -244,9 +244,9 @@ windows: make platform-class [
         return: [text!]
         cmd [object!]
     ][
-        let f: file-to-local cmd/file
+        let f: file-to-local cmd.file
         if #"\" = last f [remove back tail-of f]
-        return either dir? cmd/file [
+        return either dir? cmd.file [
             spaced ["if not exist" f "mkdir" f]
         ][
             unspaced ["echo . 2>" f]
@@ -257,9 +257,9 @@ windows: make platform-class [
         return: [text!]
         cmd [object!]
     ][
-        let f: file-to-local cmd/file
+        let f: file-to-local cmd.file
         if #"\" = last f [remove back tail-of f]
-        return either dir? cmd/file [
+        return either dir? cmd.file [
             ;
             ; Note: If you have Git shell tools installed on Windows, then
             ; `rmdir` here might run `C:\Program Files\Git\usr\bin\rmdir.EXE`
@@ -375,7 +375,7 @@ application-class: make project-class [
 
     command: meth [return: [text!]] [
         let ld: any [linker, default-linker]
-        return apply :ld/command [
+        return apply get $ld/command [
             output, depends, searches, ldflags
             /debug debug
         ]
@@ -401,7 +401,7 @@ dynamic-library-class: make project-class [
         default-linker
     ][
         let l: any [linker, default-linker]
-        return apply :l/command [
+        return apply get $l/command [
             output, depends, searches, ldflags
             /dynamic true
         ]
@@ -573,10 +573,10 @@ gcc: make compiler-class [
 
             output: file-to-local output
 
-            any [E, ends-with? output target-platform/obj-suffix] then [
+            any [E, ends-with? output target-platform.obj-suffix] then [
                 keep output
             ] else [
-                keep [output target-platform/obj-suffix]
+                keep [output target-platform.obj-suffix]
             ]
 
             keep file-to-local source
@@ -689,11 +689,11 @@ cl: make compiler-class [
                 either E ["/Fi"]["/Fo"]
                 any [
                     E
-                    ends-with? output target-platform/obj-suffix
+                    ends-with? output target-platform.obj-suffix
                 ] then [
                     output
                 ] else [
-                    unspaced [output target-platform/obj-suffix]
+                    unspaced [output target-platform.obj-suffix]
                 ]
             ]
 
@@ -746,9 +746,9 @@ ld: make linker-class [
         /debug [logic?!]
     ][
         let suffix: either dynamic [
-            target-platform/dll-suffix
+            target-platform.dll-suffix
         ][
-            target-platform/exe-suffix
+            target-platform.exe-suffix
         ]
         return spaced collect [
             keep any [(file-to-local/pass maybe exec-file) "gcc"]
@@ -763,10 +763,10 @@ ld: make linker-class [
             keep "-o"
 
             output: file-to-local output
-            either ends-with? output :suffix [
+            either ends-with? output maybe suffix [
                 keep output
             ][
-                keep unspaced [output :suffix]
+                keep unspaced [output suffix]
             ]
 
             for-each search (maybe map-files-to-local maybe searches) [
@@ -787,30 +787,30 @@ ld: make linker-class [
         return: [~null~ text!]
         dep [object!]
     ][
-        return degrade switch dep/class [
+        return degrade switch dep.class [
             #object-file [
-                file-to-local dep/output
+                file-to-local dep.output
             ]
             #dynamic-extension [
-                either tag? dep/output [
-                    if let lib: filter-flag dep/output id [
+                either tag? dep.output [
+                    if let lib: filter-flag dep.output id [
                         unspaced ["-l" lib]
                     ]
                 ][
                     spaced [
-                        if dep/flags [
-                            if find dep/flags 'static ["-static"]
+                        if dep.flags [
+                            if find dep.flags 'static ["-static"]
                         ]
-                        unspaced ["-l" dep/output]
+                        unspaced ["-l" dep.output]
                     ]
                 ]
             ]
             #static-extension [
-                file-to-local dep/output
+                file-to-local dep.output
             ]
             #object-library [
-                spaced map-each ddep dep/depends [
-                    file-to-local ddep/output
+                spaced map-each ddep dep.depends [
+                    file-to-local ddep.output
                 ]
             ]
             #application [
@@ -855,9 +855,9 @@ llvm-link: make linker-class [
         /debug [logic?!]
     ][
         let suffix: either dynamic [
-            target-platform/dll-suffix
+            target-platform.dll-suffix
         ][
-            target-platform/exe-suffix
+            target-platform.exe-suffix
         ]
 
         return spaced collect [
@@ -866,10 +866,10 @@ llvm-link: make linker-class [
             keep "-o"
 
             output: file-to-local output
-            either ends-with? output :suffix [
+            either ends-with? output maybe suffix [
                 keep output
             ][
-                keep unspaced [output :suffix]
+                keep unspaced [output suffix]
             ]
 
             ; llvm-link doesn't seem to deal with libraries
@@ -893,9 +893,9 @@ llvm-link: make linker-class [
         return: [~null~ text!]
         dep [object!]
     ][
-        return degrade switch dep/class [
+        return degrade switch dep.class [
             #object-file [
-                file-to-local dep/output
+                file-to-local dep.output
             ]
             #dynamic-extension [
                 '~null~
@@ -904,8 +904,8 @@ llvm-link: make linker-class [
                 '~null~
             ]
             #object-library [
-                spaced map-each ddep dep/depends [
-                    file-to-local ddep/output
+                spaced map-each ddep dep.depends [
+                    file-to-local ddep.output
                 ]
             ]
             #application [
@@ -939,9 +939,9 @@ link: make linker-class [
         /debug [logic?!]
     ][
         let suffix: either dynamic [
-            target-platform/dll-suffix
+            target-platform.dll-suffix
         ][
-            target-platform/exe-suffix
+            target-platform.exe-suffix
         ]
         return spaced collect [
             keep any [(file-to-local/pass maybe exec-file) "link"]
@@ -954,7 +954,7 @@ link: make linker-class [
 
             output: file-to-local output
             keep unspaced [
-                "/OUT:" either ends-with? output suffix [
+                "/OUT:" either ends-with? output maybe suffix [
                     output
                 ][
                     unspaced [output suffix]
@@ -979,34 +979,34 @@ link: make linker-class [
         return: [~null~ text!]
         dep [object!]
     ][
-        return degrade switch dep/class [
+        return degrade switch dep.class [
             #object-file [
-                file-to-local to-file dep/output
+                file-to-local to-file dep.output
             ]
             #dynamic-extension [
                 comment [import file]  ; static property is ignored
 
-                reify either tag? dep/output [
-                    filter-flag dep/output id
+                reify either tag? dep.output [
+                    filter-flag dep.output id
                 ][
-                    ;dump dep/output
-                    file-to-local/pass either ends-with? dep/output ".lib" [
-                        dep/output
+                    ;dump dep.output
+                    file-to-local/pass either ends-with? dep.output ".lib" [
+                        dep.output
                     ][
-                        join dep/output ".lib"
+                        join dep.output ".lib"
                     ]
                 ]
             ]
             #static-extension [
-                file-to-local dep/output
+                file-to-local dep.output
             ]
             #object-library [
-                spaced map-each ddep dep/depends [
-                    file-to-local to-file ddep/output
+                spaced map-each ddep dep.depends [
+                    file-to-local to-file ddep.output
                 ]
             ]
             #application [
-                file-to-local any [:dep/implib, join dep/basename ".lib"]
+                file-to-local any [:dep.implib, join dep.basename ".lib"]
             ]
             #variable [
                 '~null~
@@ -1105,7 +1105,7 @@ object-file-class: make object! [
             optimization: false
         ]
 
-        return apply :cc/command [  ; reduced APPLY in bootstrap!
+        return apply get $cc/command [  ; reduced APPLY in bootstrap!
             output
             source
 
@@ -1136,19 +1136,19 @@ object-file-class: make object! [
                 #dynamic-library
                 #static-library
                 #object-library
-            ] parent/class
+            ] parent.class
         ]
 
         return make entry-class [
             target: output
             depends: append (copy any [depends []]) source
             commands: reduce [apply :command [
-                /I maybe parent/includes
-                /D maybe parent/definitions
-                /F maybe parent/cflags
-                /O maybe parent/optimization
-                /g maybe parent/debug
-                /PIC to-logic any [PIC, parent/class = #dynamic-library]
+                /I maybe parent.includes
+                /D maybe parent.definitions
+                /F maybe parent.cflags
+                /O maybe parent.optimization
+                /g maybe parent.debug
+                /PIC to-logic any [PIC, parent.class = #dynamic-library]
             ]]
         ]
     ]
@@ -1204,27 +1204,27 @@ generator-class: make object! [
         return switch cmd/class [
             #cmd-create [
                 applique any [
-                    :gen-cmd-create :target-platform/gen-cmd-create
+                    :gen-cmd-create get $target-platform/gen-cmd-create
                 ] compose [
                     cmd: (cmd)
                 ]
             ]
             #cmd-delete [
                 applique any [
-                    :gen-cmd-delete :target-platform/gen-cmd-delete
+                    :gen-cmd-delete get $target-platform/gen-cmd-delete
                 ] compose [
                     cmd: (cmd)
                 ]
             ]
             #cmd-strip [
                 applique any [
-                    :gen-cmd-strip :target-platform/gen-cmd-strip
+                    :gen-cmd-strip get $target-platform/gen-cmd-strip
                 ] compose [
                     cmd: (cmd)
                 ]
             ]
 
-            fail ["Unknown cmd class:" cmd/class]
+            fail ["Unknown cmd class:" cmd.class]
         ]
     ]
 
@@ -1246,7 +1246,7 @@ generator-class: make object! [
             assert [
                 find [
                     #cmd-create #cmd-delete #cmd-strip
-                ] cmd/class
+                ] cmd.class
             ]
             cmd: gen-cmd cmd
         ]
@@ -1287,11 +1287,11 @@ generator-class: make object! [
         flip-flag solution false
 
         if find words-of solution 'depends [
-            for-each dep (maybe solution/depends) [
-                if dep/class = #variable [
+            for-each dep (maybe solution.depends) [
+                if dep.class = #variable [
                     append vars spread reduce [
-                        dep/name
-                        any [dep/value, dep/default]
+                        dep.name
+                        any [dep.value, dep.default]
                     ]
                 ]
             ]
@@ -1305,11 +1305,11 @@ generator-class: make object! [
     ][
         all [
             find words-of project 'generated?
-            to != project/generated?
+            to != project.generated?
         ] then [
-            project/generated?: to
+            project.generated?: to
             if find words-of project 'depends [
-                for-each dep project/depends [
+                for-each dep project.depends [
                     flip-flag dep to
                 ]
             ]
@@ -1320,50 +1320,50 @@ generator-class: make object! [
         return: [~]
         project [object!]
     ][
-        assert [project/class]
-        let suffix: switch project/class [
-            #application [target-platform/exe-suffix]
-            #dynamic-library [target-platform/dll-suffix]
-            #static-library [target-platform/archive-suffix]
-            #object-library [target-platform/archive-suffix]
-            #object-file [target-platform/obj-suffix]
+        assert [project.class]
+        let suffix: switch project.class [
+            #application [target-platform.exe-suffix]
+            #dynamic-library [target-platform.dll-suffix]
+            #static-library [target-platform.archive-suffix]
+            #object-library [target-platform.archive-suffix]
+            #object-file [target-platform.obj-suffix]
         ] else [
             return ~
         ]
 
         case [
-            null? project/output [
-                switch project/class [
+            null? project.output [
+                switch project.class [
                     #object-file [
-                        project/output: copy project/source
+                        project.output: copy project.source
                     ]
                     #object-library [
-                        project/output: to text! project/name
+                        project.output: to text! project.name
                     ]
 
-                    fail ["Unexpected project class:" (project/class)]
+                    fail ["Unexpected project class:" (project.class)]
                 ]
-                if output-ext: find-last project/output #"." [
+                if output-ext: find-last project.output #"." [
                     remove output-ext
                 ]
 
-                basename: project/output
-                project/output: join basename suffix
+                basename: project.output
+                project.output: join basename suffix
             ]
-            ends-with? project/output :suffix [
-                basename: either :suffix [
-                    copy/part project/output
-                        (length of project/output) - (length of suffix)
+            ends-with? project.output maybe suffix [
+                basename: either suffix [
+                    copy/part project.output
+                        (length of project.output) - (length of suffix)
                 ][
-                    copy project/output
+                    copy project.output
                 ]
             ]
         ] else [
-            basename: project/output
-            project/output: join basename suffix
+            basename: project.output
+            project.output: join basename suffix
         ]
 
-        project/basename: basename
+        project.basename: basename
     ]
 
     setup-outputs: meth [
@@ -1373,16 +1373,16 @@ generator-class: make object! [
     ][
         ;print ["Setting outputs for:"]
         ;dump project
-        switch project/class [
+        switch project.class [
             #application
             #dynamic-library
             #static-library
             #solution
             #object-library [
-                if project/generated? [return ~]
+                if project.generated? [return ~]
                 setup-output project
-                project/generated?: true
-                for-each dep project/depends [
+                project.generated?: true
+                for-each dep project.depends [
                     setup-outputs dep
                 ]
             ]
@@ -1397,24 +1397,24 @@ makefile: make generator-class [
     nmake?: false ; Generating for Microsoft nmake
 
     ;by default makefiles are for POSIX platform
-    gen-cmd-create: :posix/gen-cmd-create
-    gen-cmd-delete: :posix/gen-cmd-delete
-    gen-cmd-strip: :posix/gen-cmd-strip
+    gen-cmd-create: :posix.gen-cmd-create
+    gen-cmd-delete: :posix.gen-cmd-delete
+    gen-cmd-strip: :posix.gen-cmd-strip
 
     gen-rule: meth [
         return: "Possibly multi-line text for rule, with extra newline @ end"
             [text!]
         entry [object!]
     ][
-        return delimit/tail newline collect [switch entry/class [
+        return delimit/tail newline collect [switch entry.class [
 
             ; Makefile variable, defined on a line by itself
             ;
             #variable [
-                keep either entry/value [
-                    spaced [entry/name "=" entry/value]
+                keep either entry.value [
+                    spaced [entry.name "=" entry.value]
                 ][
-                    spaced [entry/name either nmake? ["="]["?="] entry/default]
+                    spaced [entry.name either nmake? ["="]["?="] entry.default]
                 ]
             ]
 
@@ -1429,22 +1429,22 @@ makefile: make generator-class [
                 ;
                 keep spaced collect [
                     case [
-                        word? entry/target [  ; like `clean` in `make clean`
-                            keep unspaced [entry/target ":"]
+                        word? entry.target [  ; like `clean` in `make clean`
+                            keep unspaced [entry.target ":"]
                             keep ".PHONY"
                         ]
-                        file? entry/target [
-                            keep unspaced [file-to-local entry/target ":"]
+                        file? entry.target [
+                            keep unspaced [file-to-local entry.target ":"]
                         ]
-                        fail ["Unknown entry/target type" entry/target]
+                        fail ["Unknown entry.target type" entry.target]
                     ]
-                    for-each w (maybe entry/depends) [
+                    for-each w (maybe entry.depends) [
                         switch select (match object! w else [[]]) 'class [
                             #variable [
-                                keep unspaced ["$(" w/name ")"]
+                                keep unspaced ["$(" w.name ")"]
                             ]
                             #entry [
-                                keep to-text w/target
+                                keep to-text w.target
                             ]
                             #dynamic-extension #static-extension [
                                 ; only contribute to command line
@@ -1452,8 +1452,8 @@ makefile: make generator-class [
                         ] else [
                             keep case [
                                 file? w [file-to-local w]
-                                file? w/output [file-to-local w/output]
-                            ] else [w/output]
+                                file? w.output [file-to-local w.output]
+                            ] else [w.output]
                         ]
                     ]
                 ]
@@ -1462,8 +1462,8 @@ makefile: make generator-class [
                 ; lines of shell code that run to build the target.  These
                 ; may use escaped makefile variables that get substituted.
                 ;
-                if entry/commands [
-                    for-each cmd (ensure block! entry/commands) [
+                if entry.commands [
+                    for-each cmd (ensure block! entry.commands) [
                         let c: any [
                             match text! cmd
                             gen-cmd cmd
@@ -1475,7 +1475,7 @@ makefile: make generator-class [
                 ]
             ]
 
-            fail ["Unrecognized entry class:" entry/class]
+            fail ["Unrecognized entry class:" entry.class]
         ] keep ""]  ; final keeps just adds extra newline
 
         ; !!! Adding an extra newline here unconditionally means variables
@@ -1492,37 +1492,37 @@ makefile: make generator-class [
     ][
         ;print ["emitting..."]
         ;dump project
-        ;if project/generated? [return ~]
-        ;project/generated?: true
+        ;if project.generated? [return ~]
+        ;project.generated?: true
 
-        for-each dep project/depends [
+        for-each dep project.depends [
             if not object? dep [continue]
-            if not find [#dynamic-extension #static-extension] dep/class [
-                either dep/generated? [
+            if not find [#dynamic-extension #static-extension] dep.class [
+                either dep.generated? [
                     continue
                 ][
-                    dep/generated?: true
+                    dep.generated?: true
                 ]
             ]
-            switch dep/class [
+            switch dep.class [
                 #application
                 #dynamic-library
                 #static-library [
                     let objs: make block! 8
                     ;dump dep
-                    for-each obj dep/depends [
+                    for-each obj dep.depends [
                         ;dump obj
-                        if obj/class = #object-library [
-                            append objs spread obj/depends
+                        if obj.class = #object-library [
+                            append objs spread obj.depends
                         ]
                     ]
                     append buf gen-rule make entry-class [
-                        target: dep/output
-                        depends: append copy objs spread map-each ddep dep/depends [
-                            if ddep/class <> #object-library [ddep]
+                        target: dep.output
+                        depends: append copy objs spread map-each ddep dep.depends [
+                            if ddep.class <> #object-library [ddep]
                         ]
-                        commands: append reduce [dep/command] maybe (
-                            spread :dep/post-build-commands
+                        commands: append reduce [dep.command] maybe (
+                            spread dep.post-build-commands
                         )
                     ]
                     emit buf dep
@@ -1531,21 +1531,21 @@ makefile: make generator-class [
                     comment [
                         ; !!! Said "No nested object-library-class allowed"
                         ; but was commented out (?)
-                        assert [dep/class != #object-library]
+                        assert [dep.class != #object-library]
                     ]
-                    for-each obj dep/depends [
-                        assert [obj/class = #object-file]
-                        if not obj/generated? [
-                            obj/generated?: true
-                            append buf (gen-rule apply :obj/gen-entries [
+                    for-each obj dep.depends [
+                        assert [obj.class = #object-file]
+                        if not obj.generated? [
+                            obj.generated?: true
+                            append buf (gen-rule apply get $obj/gen-entries [
                                 dep
-                                /PIC (project/class = #dynamic-library)
+                                /PIC (project.class = #dynamic-library)
                             ])
                         ]
                     ]
                 ]
                 #object-file [
-                    append buf gen-rule dep/gen-entries project
+                    append buf gen-rule dep.gen-entries project
                 ]
                 #entry #variable [
                     append buf gen-rule dep
@@ -1554,7 +1554,7 @@ makefile: make generator-class [
                     _
                 ]
                 (elide dump dep)
-                fail ["unrecognized project type:" dep/class]
+                fail ["unrecognized project type:" dep.class]
             ]
         ]
     ]
@@ -1565,7 +1565,7 @@ makefile: make generator-class [
         solution [object!]
     ][
         let buf: make binary! 2048
-        assert [solution/class = #solution]
+        assert [solution.class = #solution]
 
         prepare solution
 
@@ -1595,7 +1595,7 @@ mingw-make: make makefile [
 ; Execute the command to generate the target directly
 ;
 export execution: make generator-class [
-    host: switch system/platform/1 [
+    host: switch system.platform.1 [
         'Windows [windows]
         'Linux [linux]
         'Haiku [haiku]
@@ -1603,14 +1603,14 @@ export execution: make generator-class [
         'Android [android]
     ] else [
         print [
-            "Untested platform" system/platform "- assume POSIX compilant"
+            "Untested platform" system.platform "- assume POSIX compilant"
         ]
         posix
     ]
 
-    gen-cmd-create: :host/gen-cmd-create
-    gen-cmd-delete: :host/gen-cmd-delete
-    gen-cmd-strip: :host/gen-cmd-strip
+    gen-cmd-create: :host.gen-cmd-create
+    gen-cmd-delete: :host.gen-cmd-delete
+    gen-cmd-strip: :host.gen-cmd-strip
 
     run-target: meth [
         return: [~]
@@ -1618,26 +1618,26 @@ export execution: make generator-class [
         /cwd "change working directory"  ; !!! Not heeded (?)
             [file!]
     ][
-        switch target/class [
+        switch target.class [
             #variable [
                 _  ; already been taken care of by PREPARE
             ]
             #entry [
                 if all [
-                    not word? target/target
+                    not word? target.target
                     ; so you can use words for "phony" targets
-                    exists? to-file target/target
+                    exists? to-file target.target
                 ][
                     return ~
                 ]  ; TODO: Check the timestamp to see if it needs to be updated
-                either block? target/commands [
-                    for-each cmd target/commands [
+                either block? target.commands [
+                    for-each cmd target.commands [
                         cmd: do-substitutions cmd
                         print ["Running:" cmd]
                         call/shell cmd
                     ]
                 ][
-                    let cmd: do-substitutions target/commands
+                    let cmd: do-substitutions target.commands
                     print ["Running:" cmd]
                     call/shell cmd
                 ]
@@ -1658,38 +1658,38 @@ export execution: make generator-class [
 
         prepare project
 
-        if not find [#dynamic-extension #static-extension] project/class [
-            if project/generated? [return ~]
-            project/generated?: true
+        if not find [#dynamic-extension #static-extension] project.class [
+            if project.generated? [return ~]
+            project.generated?: true
         ]
 
-        switch project/class [
+        switch project.class [
             #application
             #dynamic-library
             #static-library [
                 let objs: make block! 8
-                for-each obj project/depends [
-                    if obj/class = #object-library [
-                        append objs spread obj/depends
+                for-each obj project.depends [
+                    if obj.class = #object-library [
+                        append objs spread obj.depends
                     ]
                 ]
-                for-each dep project/depends [
+                for-each dep project.depends [
                     run/parent dep project
                 ]
                 run-target make entry-class [
-                    target: project/output
-                    depends: join project/depends spread objs
-                    commands: reduce [project/command]
+                    target: project.output
+                    depends: join project.depends spread objs
+                    commands: reduce [project.command]
                 ]
             ]
             #object-library [
-                for-each obj project/depends [
-                    assert [obj/class = #object-file]
-                    if not obj/generated? [
-                        obj/generated?: true
-                        run-target apply :obj/gen-entries [
+                for-each obj project.depends [
+                    assert [obj.class = #object-file]
+                    if not obj.generated? [
+                        obj.generated?: true
+                        run-target apply get $obj/gen-entries [
                             project
-                            /PIC (parent/class = #dynamic-library)
+                            /PIC (parent.class = #dynamic-library)
                         ]
                     ]
                 ]
@@ -1705,12 +1705,12 @@ export execution: make generator-class [
                 _
             ]
             #solution [
-                for-each dep project/depends [
+                for-each dep project.depends [
                     run dep
                 ]
             ]
             (elide dump project)
-            fail ["unrecognized project type:" project/class]
+            fail ["unrecognized project type:" project.class]
         ]
     ]
 ]

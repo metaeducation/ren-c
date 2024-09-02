@@ -67,7 +67,7 @@ static char *gcvt(double value, int digits, char *buffer)
         distinct floating point numbers can be found between them
 
         the max_diff value may be one of the system options specified in
-        the system/options object allowing users to exactly define the
+        the system.options object allowing users to exactly define the
         strictness of equality checks
     }
     Differences: {

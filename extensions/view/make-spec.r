@@ -18,7 +18,7 @@ includes: copy [
 ; For now just enable REQUEST-FILE on Windows if the view module is
 ; included, because it doesn't bring along any extra dependencies.
 ;
-libraries: switch platform-config/os-base [
+libraries: switch platform-config.os-base [
     ;
     ; Note: MinGW is case-sensitive, e.g. %Ole32 won't work.
     ;

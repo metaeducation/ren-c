@@ -593,7 +593,7 @@ DECLARE_NATIVE(what_dir)
     }
     else if (not Is_Url(current_path)) {
         //
-        // Lousy error, but ATM the user can directly edit system/options.
+        // Lousy error, but ATM the user can directly edit system.options.
         // They shouldn't be able to (or if they can, it should be validated)
         //
         fail (current_path);
