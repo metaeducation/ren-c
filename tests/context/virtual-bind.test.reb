@@ -49,16 +49,16 @@
     (
         add1020: func [x] [return use [y] [y: 1020, $(((x + y)))]]
         add1324: func [x] [
-            return use [z] compose/deep <*> [
+            return use [z] compose/label/deep [
                 z: 304
                 $(((z + (<*> add1020 x))))
-            ]
+            ] <*>
         ]
         add2020: func [x] [
-            return use [zz] compose/deep <*> [
+            return use [zz] compose/label/deep [
                 zz: 696
                 $(((zz + (<*> add1324 x))))
-            ]
+            ] <*>
         ]
 
         true

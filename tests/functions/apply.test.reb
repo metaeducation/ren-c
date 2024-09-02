@@ -136,7 +136,7 @@
     ([3 7] = compose [(1 + 2) (<*> 3 + 4)])
     ([3 7] = apply get $compose [[(1 + 2) (<*> 3 + 4)]])
 
-    ([(1 + 2) 7] = compose <*> [(1 + 2) (<*> 3 + 4)])
+    ([(1 + 2) 7] = compose/label [(1 + 2) (<*> 3 + 4)]) <*>
     ([(1 + 2) 7] = apply get $compose [[(1 + 2) (<*> 3 + 4)] /label <*>])
     ([(1 + 2) 7] = apply get $compose [[(1 + 2) (<*> 3 + 4)] /label first [<*>]])
 ]

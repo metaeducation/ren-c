@@ -112,23 +112,25 @@
 ; COMPOSE with pattern, beginning tests
 
 (
-    [(1 + 2) 3] = compose <*> [(1 + 2) (<*> 1 + 2)]
+    [(1 + 2) 3] = compose/label [(1 + 2) (<*> 1 + 2)] <*>
 )(
-    [(1 + 2)] = compose <*> [(1 + 2) (<*>)]
+    [(1 + 2)] = compose/label [(1 + 2) (<*>)] <*>
 )(
-    'a/(b)/3/c = compose <?> @ a/(b)/(<?> 1 + 2)/c
+    'a/(b)/3/c = compose/label @ a/(b)/(<?> 1 + 2)/c <?>
 )(
-    [(a b c) [((d) 1 + 2)]] = compose/deep </> [(a (</> 'b) c) [((d) 1 + 2)]]
+    [(a b c) [((d) 1 + 2)]] = compose/deep/label [
+        (a (</> 'b) c) [((d) 1 + 2)]
+    ] </>
 )
 
 (
     [(left alone) [c b a] c b a ((left alone))]
-    = compose <$> [
+    = compose/label [
         (left alone)
         (<$> reverse copy [a b c])
         (<$> spread reverse copy [a b c])
         ((left alone))
-    ]
+    ] <$>
 )
 
 

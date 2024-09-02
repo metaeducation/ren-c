@@ -468,7 +468,7 @@ console*: func [
             ]
             block! [
                 if not empty? instruction [append/line instruction ',]
-                append/line instruction spread compose/deep <*> item
+                append/line instruction spread compose/label/deep item <*>
             ]
             fail
         ]

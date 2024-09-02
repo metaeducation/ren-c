@@ -541,10 +541,11 @@ Bounce Composer_Executor(Level* const L)
     if (THROWING)
         return THROWN;  // no state to cleanup (just data stack, auto-cleaned)
 
+    // !!! IF YOU REARRANGE THESE, YOU HAVE TO UPDATE THE NUMBERING ALSO !!!
     DECLARE_PARAM(1, return);
-    DECLARE_PARAM(2, label);
-    DECLARE_PARAM(3, value);
-    DECLARE_PARAM(4, deep);
+    DECLARE_PARAM(2, value);
+    DECLARE_PARAM(3, deep);
+    DECLARE_PARAM(4, label);
     DECLARE_PARAM(5, predicate);
 
     Level* main_level = L->u.compose.main_level;  // the invoked COMPOSE native
@@ -793,16 +794,16 @@ Bounce Composer_Executor(Level* const L)
 
 
 //
-//  compose: native [
+//  compose: native [  ; !!! IMPORTANT! IF YOU REARRANGE ARGS, SEE [1] !!!
 //
 //  "Evaluates only contents of GROUP!-delimited expressions in the argument"
 //
 //      return: [blackhole? any-list? any-sequence? any-word? action?]
-//      'label "Distinguish compose groups, e.g. [(plain) (<*> composed)]"
-//          [<skip> tag! file!]
 //      value "The template to fill in (no-op if WORD!, ACTION?, BLACKHOLE!)"
 //          [blackhole? any-list? any-sequence? any-word? action?]
 //      /deep "Compose deeply into nested lists and sequences"
+//      /label "Distinguish compose groups, e.g. [(plain) (<*> composed)]"
+//          [tag! file!]
 //      /predicate "Function to run on composed slots (default: META)"
 //          [<unrun> frame!]
 //  ]
@@ -814,6 +815,13 @@ Bounce Composer_Executor(Level* const L)
 //  https://forum.rebol.info/t/the-superpowers-of-ren-cs-revamped-compose/979/7
 //
 DECLARE_NATIVE(compose)
+//
+// 1. Composer_Executor() accesses the arguments of the COMPOSE that spawned
+//    it by index.  The trick used to name arguments and pick up `level_->`
+//    does not work there because level_ is the level of an executor with
+//    no varlist.  There's diminishing returns to coming up with a super
+//    clever way to work around this, so instead heed this warning and go
+//    update Composer_Executor() if these arguments are reordered.
 {
     INCLUDE_PARAMS_OF_COMPOSE;
 

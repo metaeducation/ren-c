@@ -246,7 +246,7 @@ reword: func [
                 fail ["Invalid keyword type:" keyword]
             ]
 
-            keep spread compose/deep <*> [
+            keep spread compose/label/deep [
                 (<*> if match [integer! word!] keyword [
                     to-text keyword  ; `parse "a1" ['a '1]` illegal for now
                 ] else [
@@ -256,7 +256,7 @@ reword: func [
                 (<*> suffix)  ; vaporizes if void no-op rule
 
                 (keyword-match: '(<*> keyword))
-            ]
+            ] <*>
 
             keep/line '|
         ]
@@ -599,13 +599,13 @@ split: func [
     ] else [
         assert [quoted? dlm]
         let mk1
-        compose/deep <*> [
+        compose/label/deep [
             some [not <end> [
                 mk1: across [to (<*> dlm) | to <end>]
                 (keep mk1)
                 opt thru (<*> dlm)
             ]]
-        ]
+        ] <*>
     ]]
 
     ; Special processing, to handle cases where the spec'd more items in
