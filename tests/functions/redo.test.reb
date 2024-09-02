@@ -73,7 +73,7 @@
         redo $n  comment {should redo INNER, not outer}
     ]
 
-    outer: adapt :inner [
+    outer: adapt get $inner [
         if n = 0 [
             return "outer phase run by redo"
         ]
@@ -99,7 +99,7 @@
         redo captured-frame  ; should redo OUTER, not INNER
     ]
 
-    outer: enclose :inner func [return: [tag!] f] [
+    outer: enclose get $inner func [return: [tag!] f] [
         if global = 0 [  ; was F.N, see note about that being wrong
             return <success>
         ]
@@ -188,7 +188,7 @@
     ]
 
     c: chain [
-        adapt :base [
+        adapt get $base [
            log [{C} n delta]
 
            captured-frame: binding of $n
@@ -205,7 +205,7 @@
         ]
     ]
 
-    s: specialize adapt :base [
+    s: specialize adapt get $base [
         log [{S} n delta]
 
         if n = 1 [n: 10]

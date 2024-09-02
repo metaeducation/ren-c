@@ -111,13 +111,13 @@ replace: func [
     if void? :pattern [return target]
 
     let all_REPLACE: all
-    all: :lib.all
+    all: get $lib/all
     let case_REPLACE: case
-    case: :lib.case
+    case: get $lib/case
 
     pos: target
 
-    while [[pos /tail]: apply :find [
+    while [[pos /tail]: apply get $find [
         pos
         :pattern
         /case case_REPLACE
@@ -173,7 +173,7 @@ reword: func [
     )
 ][
     let case_REWORD: case
-    case: runs :lib.case
+    case: runs get $lib/case
 
     let out: make (kind of source) length of source
 
@@ -274,7 +274,7 @@ reword: func [
                     any-keyword-suffix-rule (
                         append/part out a offset? a b  ; output before prefix
 
-                        let v: apply :select [
+                        let v: apply get $select [
                             values keyword-match
                             /case case_REWORD
                         ]
@@ -297,7 +297,7 @@ reword: func [
         (append out a)  ; finalize output - transfer any remainder verbatim
     ]
 
-    apply :parse3 [source rule /case case_REWORD]  ; should succeed
+    apply get $parse3 [source rule /case case_REWORD]  ; should succeed
     return out
 ]
 
@@ -324,7 +324,7 @@ move: func [
     ]
     part: take/part source part
     insert either to [at head of source offset] [
-        lib.skip source offset
+        lib/skip source offset
     ] either any-list? source [spread part] [part]
 ]
 
@@ -364,7 +364,7 @@ alter: func [
     /case "Case-sensitive comparison"
 ][
     case_ALTER: case
-    case: runs :lib.case
+    case: runs get $lib/case
 
     if bitset? series [
         if find series value [
@@ -374,7 +374,7 @@ alter: func [
         append series value
         return true
     ]
-    if remove apply :find [series value, /case case_ALTER] [
+    if remove apply get $find [series value, /case case_ALTER] [
         append series value
         return true
     ]
@@ -392,7 +392,7 @@ collect*: func [
 ][
     let out: null
     let keeper: specialize (  ; SPECIALIZE to hide series argument
-        enclose :append lambda [  ; Derive from APPEND for /LINE /DUP
+        enclose get $append lambda [  ; Derive from APPEND for /LINE /DUP
             f [frame!]
             <with> out
         ][
@@ -424,8 +424,8 @@ collect: redescribe [
     {Evaluate body, and return block of values collected via KEEP function.
     Returns empty block if nothing KEEPed.}
 ] chain [
-    :collect*,
-    specialize :else [branch: [copy []]]
+    get $collect*,
+    specialize get $else [branch: [copy []]]
 ]
 
 format: func [

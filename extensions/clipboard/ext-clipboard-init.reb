@@ -13,7 +13,7 @@ REBOL [
 ; with FUNCTION!s in it dispatched via words.
 ;
 ;
-sys.util.make-scheme [
+sys.util/make-scheme [
     title: "Clipboard"
     name: 'clipboard
     actor: get-clipboard-actor-handle

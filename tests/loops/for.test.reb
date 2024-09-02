@@ -178,7 +178,7 @@
 )(
     block: copy [a b c]
     all [
-        e: sys.util.rescue [
+        e: sys.util/rescue [
             for item each block [
                 append block <failure>
             ]

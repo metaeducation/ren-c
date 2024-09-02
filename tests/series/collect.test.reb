@@ -24,9 +24,9 @@
     (collect-lines: redescribe [
         {Evaluate body, and return block of values collected via KEEP function.
         KEEPed blocks become spaced TEXT!.}
-    ] adapt :collect [  ; https://forum.rebol.info/t/945/1
+    ] adapt get $collect [  ; https://forum.rebol.info/t/945/1
         body: compose [
-            keep: adapt specialize :keep [
+            keep: adapt specialize get $keep [
                 line: #
                 part: null
             ][
@@ -49,9 +49,9 @@
         {Evaluate body, and return block of values collected via KEEP function.
         Returns all values as a single spaced TEXT!, individual KEEPed blocks get UNSPACED.}
     ] chain [  ; https://forum.rebol.info/t/945/2
-        adapt :collect [
+        adapt get $collect [
             body: compose [
-                keep: adapt specialize :keep [
+                keep: adapt specialize get $keep [
                     line: null
                     part: null
                 ][
@@ -60,8 +60,8 @@
                 (as group! body)
             ]
         ],
-        :spaced,
-        specialize :else [branch: [copy ""]]
+        get $spaced,
+        specialize get $else [branch: [copy ""]]
     ] true)
 
     (

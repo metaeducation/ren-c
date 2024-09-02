@@ -6,7 +6,7 @@ REBOL [
     License: {Apache 2.0}
 ]
 
-sys.util.make-scheme [
+sys.util/make-scheme [
     title: "Console Access"
     name: 'console
     actor: get-console-actor-handle
@@ -22,7 +22,7 @@ system.ports.input: open [scheme: 'console]
 ; We use HIJACK because if we just overwrote LIB/WRITE-STDOUT with the new
 ; function, it would not affect existing specializations and usages.
 
-hijack :lib.write-stdout :write-stdout
+hijack get $lib/write-stdout :write-stdout
 
 
 ; This is the tab-complete command.  It may be that managing the state as a

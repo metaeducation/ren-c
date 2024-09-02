@@ -189,12 +189,12 @@ shell: func [
     if not command [return null]  ; SPACED components all vaporized
 
     if not pipe [
-        lib.call/shell command  ; must use LIB (binding issue)
+        lib/call/shell command  ; must use LIB (binding issue)
         return  ; don't show any result in console
     ]
 
     let output: copy ""
-    lib.call/shell/output command output  ; must use LIB (binding issue)
+    lib/call/shell/output command output  ; must use LIB (binding issue)
     return output
 ]
 
@@ -218,7 +218,7 @@ shell+: func [  ; was $ but that now has a binding purpose
         ]
     ]
 
-    return apply :shell [code, /inspect inspect, /pipe pipe]
+    return apply get $shell [code, /inspect inspect, /pipe pipe]
 ]
 
 export [shell %% shell+]

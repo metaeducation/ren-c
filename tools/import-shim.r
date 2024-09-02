@@ -157,7 +157,7 @@ rewrite-source-for-bootstrap-exe: lib3/func [
 wrap-module: false
 
 old-do: :lib3/do
-do: enclose :lib3/do lib3/func [
+do: enclose get $lib3/do lib3/func [
     f [frame!]
     <local> old-system-script file
     <with> wrap-module
@@ -277,7 +277,7 @@ import: enfix lib3/func [
 === "LOAD WRAPPING" ===
 
 ; see header notes: `Exports` broken
-load: adapt :lib3/load [  ; source [file! url! text! binary! block!]
+load: adapt get $lib3/load [  ; source [file! url! text! binary! block!]
     if all [  ; ALL THEN does not seem to work in bootstrap EXE
         file? source
         not dir? source

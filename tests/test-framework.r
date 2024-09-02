@@ -57,7 +57,7 @@ run-single-test: func [
 
     log [mold code]
 
-    let result: sys.util.enrescue code
+    let result: sys.util/enrescue code
 
     all [
         error? result
@@ -226,7 +226,7 @@ process-tests: func [
                 log ["@collect-tests" space mold body]
 
                 let [_ collected]: module null compose/deep [collect [
-                    let keep-test: adapt :keep [
+                    let keep-test: adapt get $keep [
                         if not block? :value [
                             fail "KEEP-TEST takes BLOCK! (acts as GROUP!)"
                         ]
@@ -240,7 +240,7 @@ process-tests: func [
                 ;
                 flags: []
 
-                sys.util.rescue [
+                sys.util/rescue [
                     handler flags collected
                 ]
                 then error -> [

@@ -897,14 +897,14 @@ void Startup_Core(void)
             "Name: 'System",  // this is MAKE OBJECT!, not MODULE, must quote
             "Exports: [module load load-value decode encode encoding-of]",
         "]",
-        "sys.util.import*", Lib_Context_Value, Sys_Util_Module
+        "sys.util/import*", Lib_Context_Value, Sys_Util_Module
     );
 
     // !!! It was a stated goal at one point that it should be possible to
     // protect the entire system object and still run the interpreter.  That
     // was commented out in R3-Alpha
     //
-    //    comment [if :lib.secure [protect-system-object]]
+    //    comment [if :get $lib/secure [protect-system-object]]
 
   //=//// MEZZ STARTUP /////////////////////////////////////////////////////=//
 

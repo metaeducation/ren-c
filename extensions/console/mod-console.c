@@ -350,7 +350,7 @@ DECLARE_NATIVE(console)
     //    natives use DISPATCHER_CATCHES but it is very easy to screw it up or
     //    overlook it, and we don't have a way to tunnel that value into a
     //    callback from a continuation.  For the moment, just to get things
-    //    working, we give in and use SYS.UTIL.ENRESCUE.
+    //    working, we give in and use SYS.UTIL/ENRESCUE.
 
     if (rebUnboxLogic("integer? code"))
         goto finished;  // if HOST-CONSOLE returns INTEGER! it means exit code
@@ -366,7 +366,7 @@ DECLARE_NATIVE(console)
         "assert [match [block! group!] code]",
         "if group? code [no-recover: false]",  // user could make request [2]
         "state: 'running-request",
-        "metaresult: sys.util.enrescue code"  // pollutes stack trace [3]
+        "metaresult: sys.util/enrescue code"  // pollutes stack trace [3]
     );
 
 } finished: {  ///////////////////////////////////////////////////////////////

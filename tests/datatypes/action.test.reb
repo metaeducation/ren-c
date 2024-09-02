@@ -14,16 +14,14 @@
 ; Actions should store labels of the last GET-WORD! or GET-TUPLE! that was
 ; used to retrieve them.  Using GET subverts changing the name.
 [
-    ('append = label of :append)
-    ('append = label of :lib.append)
+    ('append = label of get $append)
+    ('append = label of get $lib/append)
 
     (
-        new-name: :append
-        set $old-name :append
+        new-name: get $append
+        set $old-name get $append
         all [
-            'new-name = label of :new-name
             'new-name = label of get $new-name
-            'append = label of :old-name
             'append = label of get $old-name
         ]
     )

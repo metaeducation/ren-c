@@ -63,7 +63,7 @@
 (if true [true])
 (void' = ^ if false [true])
 (if $1 [true])
-(if (specialize :of [property: 'type]) [true])
+(if (specialize get $of [property: 'type]) [true])
 (true = if blank [true])
 (if make object! [] [true])
 (if get $+ [true])

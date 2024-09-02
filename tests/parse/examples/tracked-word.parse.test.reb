@@ -25,7 +25,7 @@
 ; https://forum.rebol.info/t/getting-hooks-into-events-during-parse/1640/5
 
 [(
-    tracked-word!: enclose :default-combinators.(word!) func [
+    tracked-word!: enclose get/groups $default-combinators.(word!) func [
         return: [~null~ pack?]
         f [frame!]
         <static> indent (0)
@@ -68,9 +68,9 @@
     tracked-combinators: copy default-combinators
     tracked-combinators.(word!): unrun :tracked-word!
 
-    trackparse*: specialize :parse [combinators: tracked-combinators]
+    trackparse*: specialize get $parse [combinators: tracked-combinators]
 
-    trackparse: enclose :trackparse* lambda [f [frame!]] [
+    trackparse: enclose get $trackparse* lambda [f [frame!]] [
         stack: copy []
         eval f then [
             append stack ""  ; give final newline

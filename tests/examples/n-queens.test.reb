@@ -104,7 +104,7 @@
                 for-each place free-choices [
                     append solution place
                     if logic-countonly = 0 [
-                        append solved-boards apply :form-board [
+                        append solved-boards apply get $form-board [
                             length-of solution
                             solution
                         ]
@@ -115,7 +115,7 @@
                         odd-symmetry-limit = 0
                     ][
                         if logic-countonly = 0 [
-                            append solved-boards apply :form-board [
+                            append solved-boards apply get $form-board [
                                 length-of solution
                                 reverse copy solution
                             ]
@@ -220,7 +220,7 @@ true)
     [num boards]: solve-n-queens 4
     all [
         num = 2
-        boards = apply :reduce [/predicate :trim, [
+        boards = apply get $reduce [/predicate :trim, [
             {. Q . .
              . . . Q
              Q . . .
@@ -238,7 +238,7 @@ true)
     [num boards]: solve-n-queens 5
     all [
         num = 10
-        boards = apply :reduce [/predicate :trim, [
+        boards = apply get $reduce [/predicate :trim, [
            {Q . . . .
             . . Q . .
             . . . . Q

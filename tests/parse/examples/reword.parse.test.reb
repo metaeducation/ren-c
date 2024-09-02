@@ -20,7 +20,7 @@
     )
 ][
     let case_REWORD: case
-    case: :lib.case
+    case: get $lib/case
 
     let out: make (kind of source) length of source
 
@@ -93,7 +93,7 @@
             [keyword-match: any (keyword-suffix-rules)] (
                 append/part out a offset? a b  ; output before prefix
 
-                let v: apply :select [values keyword-match, /case case_REWORD]
+                let v: apply get $select [values keyword-match, /case case_REWORD]
                 append out switch/type v [
                     frame! [
                         apply/relax v [:keyword-match]  ; arity-0 ok
@@ -111,7 +111,7 @@
         (append out a)  ; finalize output - transfer any remainder verbatim
     ]
 
-    apply :parse- [source rule, /case case_REWORD] else [fail]  ; why fail?
+    apply get $parse- [source rule, /case case_REWORD] else [fail]  ; why fail?
     return out
 ])
 

@@ -425,7 +425,7 @@
 [#2044 (
     o: make object! [f: func [x] [return $x]]
     p: make o []
-    not same? o.f 1 p.f 1
+    not same? o/f 1 p/f 1
 )]
 
 (

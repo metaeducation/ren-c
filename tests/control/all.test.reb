@@ -386,14 +386,14 @@
 
 ; PREDICATES
 
-(15 = all/predicate [1 + 2 3 + 4 5 + 6 7 + 8] :odd?)
-(15 = all/predicate [1 + 2 3 + 4 5 + 6 7 + 8] chain [:even?, :not])
-(15 = all/predicate [1 + 2, 3 + 4, comment "Hi" 5 + 6, 7 + 8] :odd?)
-(15 = all/predicate [1 + 2, 3 + 4 5 + 6, 7 + 8,] chain [:even?, :not])
+(15 = all/predicate [1 + 2 3 + 4 5 + 6 7 + 8] get $odd?)
+(15 = all/predicate [1 + 2 3 + 4 5 + 6 7 + 8] chain [get $even?, get $not])
+(15 = all/predicate [1 + 2, 3 + 4, comment "Hi" 5 + 6, 7 + 8] get $odd?)
+(15 = all/predicate [1 + 2, 3 + 4 5 + 6, 7 + 8,] chain [get $even?, get $not])
 
-('~[~null~]~ = ^ all/predicate [false null] :not)
-('~[~false~]~ = ^ all/predicate [null false] :not)
-("this is why" = (all/predicate [false null] :not then ["this is why"]))
+('~[~null~]~ = ^ all/predicate [false null] get $not)
+('~[~false~]~ = ^ all/predicate [null false] get $not)
+("this is why" = (all/predicate [false null] get $not then ["this is why"]))
 
 
 ; ALL returns void when contents completely erase

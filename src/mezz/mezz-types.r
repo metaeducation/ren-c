@@ -42,7 +42,7 @@ use [word] [
         set word redescribe compose [
             (spaced ["Converts to" form type "value."])
         ](
-            specialize :to [type: get type]
+            specialize get $to [type: get type]
         )
     ]
 ]
@@ -51,7 +51,7 @@ use [word] [
 ; !!! Refinements are actually PATH! now, but TO PATH! of a WORD! assumes you
 ; want a 2-element path with a blank at the head that looks like a refinement
 ;
-to-refinement: runs :to-path
+to-refinement: runs get $to-path
 
 ; !!! We make this give back an unbound word for the moment, to encourage
 ; people to use REIFY-LOGIC instead if they want literals that survive.  If

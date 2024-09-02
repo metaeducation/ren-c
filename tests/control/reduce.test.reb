@@ -75,7 +75,7 @@
     ([] = reduce [
         maybe null
     ])
-    ([ZOMG <!!!> 1020 #wow] = apply :reduce [
+    ([ZOMG <!!!> 1020 #wow] = apply get $reduce [
         ['ZOMG null 1000 + 20 #wow]
         /predicate lambda [x] [
             non [~null~] x else [<!!!>]
@@ -83,20 +83,23 @@
     ])
 ]
 
-~no-arg~ !! (reduce/predicate [null] chain [:null?, :non])
+~no-arg~ !! (reduce/predicate [null] chain [get $null?, get $non])
 
 ; Voids are offered, but omitted if predicate doesn't take them.
 ; https://forum.rebol.info/t/should-void-be-offered-to-predicates-for-reduce-any-all-etc/1872
 ;
-([3 ~void~ 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :reify)
-([-3 -300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :negate)
-([3 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :maybe)
+([3 ~void~ 300] = reduce/predicate [
+    1 + 2 if false [10 + 20] 100 + 200
+] get $reify)
 
-([3 ~null~ 300] = reduce/predicate [1 + 2 if true [null] 100 + 200] :reify)
-([3 300] = reduce/predicate [1 + 2 if true [null] 100 + 200] :maybe)
+([-3 -300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] get $negate)
+([3 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] get $maybe)
 
-([3 ~null~ 300] = reduce/predicate [1 + 2 null 100 + 200] :reify)
-([3 300] = reduce/predicate [1 + 2 null 100 + 200] :maybe)
+([3 ~null~ 300] = reduce/predicate [1 + 2 if true [null] 100 + 200] get $reify)
+([3 300] = reduce/predicate [1 + 2 if true [null] 100 + 200] get $maybe)
+
+([3 ~null~ 300] = reduce/predicate [1 + 2 null 100 + 200] get $reify)
+([3 300] = reduce/predicate [1 + 2 null 100 + 200] get $maybe)
 
 ; REDUCE* is a specialization of REDUCE with MAYBE
 ;
@@ -105,7 +108,9 @@
 ~bad-antiform~ !! (reduce/predicate [1 + 2 3 + 4] func [x] [x * 10])
 ([30 70] = reduce/predicate [1 + 2 3 + 4] func [x] [return x * 10])
 
-([~true~ ~false~] = reduce/predicate [2 + 2 3 + 4] chain [:even?, :reify])
+([~true~ ~false~] = reduce/predicate [2 + 2 3 + 4] chain [
+    get $even?, get $reify
+])
 
 
 ; REDUCE-EACH is a variant which lets you intercept the values, and thus

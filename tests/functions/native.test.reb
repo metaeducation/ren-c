@@ -5,6 +5,6 @@
 [#1659 (
     ; natives are active
     equal? blank! eval reduce [  ; not SAME? as type block array may differ
-        (unrun specialize :of [property: 'type]) blank
+        (unrun specialize get $of [property: 'type]) blank
     ]
 )]

@@ -496,7 +496,7 @@ default-combinators: make map! reduce [
         ]
 
         f.remainder: input
-        f.return raise "BREAK encountered"
+        f/return raise "BREAK encountered"
     ]
 
     'stop combinator [
@@ -517,7 +517,7 @@ default-combinators: make map! reduce [
         ]
 
         f.remainder: input
-        f.return unmeta result'
+        f/return unmeta result'
     ]
 
    === ACCEPT KEYWORD ===
@@ -549,7 +549,7 @@ default-combinators: make map! reduce [
         ; we can't leave it as unset).  Review.
         ;
         state.pending: _
-        state.return unmeta value'
+        state/return unmeta value'
     ]
 
     === INDEX and MEASUREMENT COMBINATORS ===
@@ -1261,7 +1261,7 @@ default-combinators: make map! reduce [
             ; no isolated value to capture.  Should we copy it?
 
             any-string? input [
-                [_ remainder]: apply :find [
+                [_ remainder]: apply get $find [
                     input value
                     /match true
                     /case state.case
@@ -1271,7 +1271,7 @@ default-combinators: make map! reduce [
             ]
             true [
                 assert [binary? input]
-                [_ remainder]: apply :find [
+                [_ remainder]: apply get $find [
                     input value
                     /match true
                     /case state.case
@@ -2511,7 +2511,7 @@ default-combinators: make map! reduce [
         result': nihil'  ; default result is invisible
 
         old-env: state.env
-        return: adapt :return [state.env: old-env]
+        return: adapt get $return [state.env: old-env]
         state.env: rules  ; currently using blocks as surrogate for environment
 
         while [not same? rules limit] [
@@ -3065,7 +3065,7 @@ parse*: func [
     ;
     ; https://forum.rebol.info/t/1276/16
     ;
-    lib.case [  ; !!! Careful... /CASE is a refinement to this function
+    lib/case [  ; !!! Careful... /CASE is a refinement to this function
         any-sequence? input [input: as block! input]
         url? input [input: as text! input]
     ]
@@ -3125,7 +3125,7 @@ parse*: func [
     f.rule-start: null
     f.rule-end: null
 
-    sys.util.rescue/relax [  ; /RELAX allows RETURN from block
+    sys.util/rescue/relax [  ; /RELAX allows RETURN from block
         [^synthesized' remainder pending]: eval/undecayed f except e -> [
             assert [empty? state.loops]
             pending: _  ; didn't get assigned due to error
@@ -3159,7 +3159,7 @@ parse*: func [
 parse: (comment [redescribe [  ; redescribe not working at the moment (?)
     {Process input in the parse dialect, definitional error on failure}
 ] ]
-    enclose :parse* func [f] [
+    enclose get $parse* func [f] [
         let [^synthesized' pending]: eval/undecayed f except e -> [
             return raise e
         ]
@@ -3173,7 +3173,7 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
 parse-: (comment [redescribe [  ; redescribe not working at the moment (?)
     {Process input in the parse dialect, return how far reached}
 ] ]
-    enclose :parse* func [f] [
+    enclose get $parse* func [f] [
         f.rules: compose [(f.rules) || accept <here>]
 
         let [^synthesized' pending]: eval/undecayed f except [
@@ -3187,7 +3187,7 @@ parse-: (comment [redescribe [  ; redescribe not working at the moment (?)
 )
 
 
-sys.util.parse: runs :parse  ; !!! expose UPARSE to SYS.UTIL module, hack...
+sys.util.parse: runs get $parse  ; !!! expose UPARSE to SYS.UTIL module, hack...
 
 
 === HOOKS ===
@@ -3215,7 +3215,7 @@ parse-trace-hook: func [
     return unmeta result'
 ]
 
-parse-trace: specialize :parse [hook: :parse-trace-hook]
+parse-trace: specialize get $parse [hook: :parse-trace-hook]
 
 
 parse-furthest-hook: func [
@@ -3239,7 +3239,7 @@ parse-furthest: adapt augment :parse [
     var "Variable to hold furthest position reached"
         [word! tuple!]
 ][
-    hook: specialize :parse-furthest-hook compose [var: '(var)]
+    hook: specialize get $parse-furthest-hook compose [var: '(var)]
     set var input
 ]
 

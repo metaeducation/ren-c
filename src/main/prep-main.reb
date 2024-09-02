@@ -79,7 +79,7 @@ for-each file reduce [
     ; unsustainable pattern set by historical Redbols that needs to be
     ; rethought.
     ;
-    append/line buf "sys.util.import* lib module ["
+    append/line buf "sys.util/import* lib module ["
     append/line buf header
     append/line buf "]["  ; use unquoted block so modules inherit lib
     append/line buf contents
@@ -92,7 +92,7 @@ for-each file reduce [
 ; (This organization lets us separate the moment of loading from the moment
 ; of running, in case that were interesting.)
 ;
-append/line buf "unrun :main-startup"  ; need newline, else `[...]reify...`
+append/line buf "unrun get $main-startup"  ; need newline, else `[...]reify...`
 
 
 ; It's helpful to have an uncompressed readable copy of the bundled and

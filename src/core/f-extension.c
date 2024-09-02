@@ -232,7 +232,7 @@ DECLARE_NATIVE(load_extension)
     // they are seen by every module.  This is an interim step to keep things
     // running, but a better strategy is needed.
     //
-    rebElide("sys.util.import*/into lib", script, module);
+    rebElide("sys.util/import*/into lib", script, module);
 
     // !!! Note: This does not get cleaned up in case of an error.
     //

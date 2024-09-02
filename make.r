@@ -184,7 +184,7 @@ if commands [user-config.target: null]  ; was `target: load commands`  Why? :-/
 === "MODULES AND EXTENSIONS" ===
 
 platform-config: configure-platform user-config.os-id
-rebmake.set-target-platform platform-config.os-base
+rebmake/set-target-platform platform-config.os-base
 
 to-obj-path: func [
     return: [file!]
@@ -195,7 +195,8 @@ to-obj-path: func [
         print ["File with no extension" mold file]
     ]
     remove/part ext (length of ext)
-    return join %objs/ head-of append ext rebmake.target-platform.obj-suffix
+    append ext rebmake.target-platform.obj-suffix
+    return join %objs/ file
 ]
 
 gen-obj: func [
@@ -1759,7 +1760,7 @@ for-each ext extensions [
     ext-init-source: as file! unspaced [
         "tmp-mod-" ext-name-lower "-init.c"
     ]
-    append ext-objlib.depends apply :gen-obj [
+    append ext-objlib.depends apply get $gen-obj [
         ext-init-source
         /dir unspaced ["prep/extensions/" ext-name-lower "/"]
         /I ext.includes
@@ -1778,7 +1779,7 @@ for-each ext extensions [
     ; We add a #define of either REB_API or LIBREBOL_USES_API_TABLE based on
     ; if it's a DLL
     ;
-    apply :add-project-flags [
+    apply get $add-project-flags [
         ext-objlib
         /I app-config.includes
         /D compose [
@@ -1852,7 +1853,7 @@ for-each ext extensions [
 
         ; !!! It's not clear if this is really needed (?)
         ;
-        apply :add-project-flags [
+        apply get $add-project-flags [
             ext-proj
             /I app-config.includes
             /D join ["LIBREBOL_USES_API_TABLE"] spread app-config.definitions
@@ -1918,7 +1919,7 @@ prep: make rebmake.entry-class [
     target: 'prep ; phony target
 
     commands: collect [
-        keep: adapt :keep [
+        keep: adapt get $keep [
             if block? value [
                 value: spaced value  ; old append semantics
             ] else [

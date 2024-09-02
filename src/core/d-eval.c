@@ -191,7 +191,7 @@ void Evaluator_Expression_Checks_Debug(Level* L)
 {
     assert(L == TOP_LEVEL); // should be topmost level, still
 
-    assert(Not_Executor_Flag(EVAL, L, DIDNT_LEFT_QUOTE_TUPLE));
+    assert(Not_Executor_Flag(EVAL, L, DIDNT_LEFT_QUOTE_PATH));
     if (Not_Executor_Flag(EVAL, L, FULFILLING_ARG))
         assert(Not_Feed_Flag(L->feed, NO_LOOKAHEAD));
     assert(Not_Feed_Flag(L->feed, DEFERRING_ENFIX));

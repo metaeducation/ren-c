@@ -177,14 +177,14 @@ load-header: func [
         ;
         if find maybe hdr.options 'compress [
             any [
-                not error? sys.util.rescue [
+                not error? sys.util/rescue [
                     ; Raw bits.  whitespace *could* be tolerated; if
                     ; you know the kind of compression and are looking
                     ; for its signature (gzip is 0x1f8b)
                     ;
                     rest: gunzip/part rest end
                 ]
-                not error? sys.util.rescue [  ; e.g. not error
+                not error? sys.util/rescue [  ; e.g. not error
                     ; BINARY! literal ("'SCRIPT encoded").  Since it
                     ; uses transcode, leading whitespace and comments
                     ; are tolerated before the literal.
@@ -307,7 +307,7 @@ load-value: redescribe [
     {Do a LOAD of a single value}
 ](
     chain [
-        :load,
+        get $load,
         lambda [^x [raised? block!]] [
             either raised? unmeta x [
                 unmeta x  ; pipe error
@@ -429,7 +429,7 @@ import*: func [
     <static>
         importing-remotely (false)
 ][
-    return: adapt :return [  ; make sure all return paths actually import vars
+    return: adapt get $return [  ; make sure all return paths actually import vars
         ;
         ; Note: `value` below is the argument to RETURN.  It is a ^META
         ; parameter so should be a quoted module.  We don't disrupt that, else

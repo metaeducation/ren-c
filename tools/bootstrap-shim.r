@@ -110,7 +110,7 @@ trap [
     ]
 
     export split-path3: enclose (
-        augment :split-path [/file [any-word? any-path?]]
+        augment get $split-path [/file [any-word? any-path?]]
     ) f -> [
         let file: f.file
         let results: unquasi ^ eval f  ; no [...]: in bootstrap load of file
@@ -122,7 +122,7 @@ trap [
     ]
 
     export transcode: enclose (
-        augment :lib.transcode [/next3 [word!] "set to transcoded value"]
+        augment get $lib/transcode [/next3 [word!] "set to transcoded value"]
     ) func [f] [
         if f.next [  ; no multi-return in bootstrap
             fail/where "Use TRANSCODE/NEXT3 in Bootstrap" 'return
@@ -141,7 +141,7 @@ trap [
     ; LOAD changed to have no /ALL, so it always enforces getting a block.
     ; But LOAD-VALUE comes in the box to load a single value.
     ;
-    export load-all: :load
+    export load-all: runs get $load
 
     export for: func [] [
         fail/where "FOR is being repurposed, use CFOR" 'return
@@ -208,7 +208,7 @@ for-each [alias] [  ; SET-WORD!s for readability + findability [1]
 ; to not remember that the KEEP is the kind that takes /ONLY.  Renaming the
 ; keeper to KEEP3 makes that clearer.
 
-collect3: adapt :collect3 [
+collect3: adapt get $collect3 [
     body: compose3 [
         keep3: :keep  ; help point out keep3 will splice blocks, has /ONLY
         keep: ~
@@ -247,7 +247,7 @@ set '~done~ does [~]
 ; "cell kinds" like &integer.  SWITCH/TYPE does not exist in the bootstrap
 ; so one must use the more limited `switch kind of` pattern.
 ;
-of: enfix adapt :of [
+of: enfix adapt get $of [
     if property = 'type [fail "Use KIND OF not type of"]
     if property = 'kind [property: 'type]
 ]
@@ -481,9 +481,9 @@ collect*: func3 [  ; variant giving NULL if no actual material kept
         series: <replaced>
     ]
 
-    reeval func3 [keep [action!] <with> return] body :keeper
+    reeval func3 [keep [action!] <with> return] body get $keeper
 
-    :out
+    out
 ]
 
 collect: chain [  ; Gives empty block instead of null if no keeps
@@ -729,7 +729,7 @@ modernize-action: function3 [
     return reduce [spec body]
 ]
 
-func: adapt :func3 [set [spec body] modernize-action spec body]
+func: adapt get $func3 [set [spec body] modernize-action spec body]
 lambda: func3 [spec body] [
     set [spec body] modernize-action spec body
     if not tail? next find spec <local> [

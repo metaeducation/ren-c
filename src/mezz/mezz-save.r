@@ -22,7 +22,7 @@ REBOL [
 write-enlined: redescribe [
     {Write out a TEXT! with its LF sequences translated to CR LF}
 ](
-    adapt :write [
+    adapt get $write [
         if not text? data [
             fail ["WRITE-ENLINED only works on TEXT! data"]
         ]
@@ -59,7 +59,7 @@ save: func [
 ][
     ; Recover common natives for words used as refinements.
     let all_SAVE: all
-    all: runs :lib.all
+    all: runs get $lib/all
 
     ; Special datatypes use codecs directly (e.g. PNG image file):
     all [

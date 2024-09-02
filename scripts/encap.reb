@@ -572,7 +572,7 @@ pe-format: context [
             [word! block!]
     ][
         let words: skip
-        skip: runs :lib.skip
+        skip: runs get $lib/skip
 
         let def: make block! 1
         let find-a-word: func [
@@ -1152,7 +1152,7 @@ pe-format: context [
         return (head of exe-data, elide reset)
     ]
 
-    update-embedding: specialize :update-section [
+    update-embedding: specialize get $update-section [
         section-name: encap-section-name
     ]
 
@@ -1268,7 +1268,7 @@ encap: func [
     ; head tuple support is still pending...use GROUP!
     ;
     let compressed: copy #{}
-    lib.zip/deep/verbose compressed spec
+    lib/zip/deep/verbose compressed spec
 
     print ["Compressed resource is" length of compressed "bytes long."]
 
@@ -1312,19 +1312,19 @@ get-encap: func [
     ]
 
     let compressed-data: any [
-        elf-format.get-embedding rebol-path,
-        pe-format.get-embedding rebol-path,
-        generic-format.get-embedding rebol-path
+        elf-format/get-embedding rebol-path,
+        pe-format/get-embedding rebol-path,
+        generic-format/get-embedding rebol-path
     ] else [
         return null
     ]
 
-    ; !!! Note: LIB. qualifier needed on UNZIP due to binding dependency.  "Sea
+    ; !!! Note: LIB qualifier needed on UNZIP due to binding dependency.  "Sea
     ; of words" resolves this problem (not committed to master yet).  Also,
     ; head tuple support is still pending...use GROUP!
     ;
     let block: copy []
-    lib.unzip/quiet block compressed-data
+    lib/unzip/quiet block compressed-data
     return block
 ]
 

@@ -42,10 +42,10 @@
 [#2045 (
     a: 1
     f: lambda [] [a]
-    g: :f
-    o: make object! [a: 2 g: :f]
+    g: get $f
+    o: make object! [a: 2 g: get $f]
     p: make o [a: 3]
-    1 == p.g
+    1 == p/g
 )]
 ; object cloning
 [#2045 (
@@ -128,12 +128,12 @@
     o1: make object! [a: 10 b: func [] [f: lambda [] [a] return f]]
     o2: make o1 [a: 20]
 
-    o2.b = 10
+    o2/b = 10
 )(
     o1: make object! [a: 10 b: meth [] [f: lambda [] [a] return f]]
     o2: make o1 [a: 20]
 
-    o2.b = 20
+    o2/b = 20
 )
 
 (
@@ -177,7 +177,7 @@
     ;
     did count-up i 2048 [
         derived: make o-big [var-1: 100000 + i]
-        if 132639 + i <> derived.meth-255 [
+        if 132639 + i <> derived/meth-255 [
             break
         ]
         true

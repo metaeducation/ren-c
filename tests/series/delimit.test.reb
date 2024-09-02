@@ -61,7 +61,7 @@
     )
 
     (
-        e: sys.util.rescue [spaced ["Hello" ~baddie~ "World"]]
+        e: sys.util/rescue [spaced ["Hello" ~baddie~ "World"]]
         all [
             e.id = 'bad-antiform
             e.arg1 = '~baddie~

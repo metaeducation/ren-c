@@ -29,13 +29,13 @@ REBOL [
 boot-print: redescribe [
     "Prints during boot when not quiet."
 ](
-    enclose :print f -> [if not system.options.quiet [eval f]]
+    enclose get $print f -> [if not system.options.quiet [eval f]]
 )
 
 loud-print: redescribe [
     "Prints during boot when verbose."
 ](
-    enclose :print f -> [if system.options.verbose [eval f]]
+    enclose get $print f -> [if system.options.verbose [eval f]]
 )
 
 make-banner: func [
@@ -191,7 +191,7 @@ host-script-pre-load: func [
 ;
 ; https://forum.rebol.info/t/the-real-story-about-user-and-lib-contexts/764
 ;
-; We could use them via `lib.<whatever>`, but then each callsite would have to
+; We could use them via `lib/<whatever>`, but then each callsite would have to
 ; document the issue.  So we make them SET-WORD!s added to lib up front, so
 ; the lib modification gets picked up.
 ;
@@ -257,10 +257,10 @@ main-startup: func [
                 ; Done actually via #start-console, but we return something
             ]
             <prompt> [
-                emit [system.console.print-gap]
-                emit [system.console.print-prompt]
+                emit [system.console/print-gap]
+                emit [system.console/print-prompt]
                 emit [reduce [
-                    system.console.input-hook
+                    system.console/input-hook
                 ]]  ; gather first line (or BLANK!), put in BLOCK!
             ]
             <halt> [
@@ -436,7 +436,7 @@ main-startup: func [
         o.resources: resources-dir
     ]
 
-    sys.util.script-pre-load-hook: runs :host-script-pre-load
+    sys.util.script-pre-load-hook: runs get $host-script-pre-load
 
     let quit-when-done: null  ; by default run CONSOLE
 
@@ -556,7 +556,7 @@ main-startup: func [
         )
     |
         "--import" [param: text! | (param-missing "IMPORT")] (
-            lib.import local-to-file param
+            lib/import local-to-file param
         )
     |
         "--no-encap" (

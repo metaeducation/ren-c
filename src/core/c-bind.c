@@ -797,7 +797,7 @@ DECLARE_NATIVE(let)
     // We want the left hand side to use the *new* LET bindings, but the right
     // hand side should use the *old* bindings.  For instance:
     //
-    //     let assert: specialize :assert [handler: [print "should work!"]]
+    //     let assert: specialize get $assert [handler: [print "should work!"]]
     //
     // Leverage same mechanism as REEVAL to preload the next execution step
     // with the rebound SET-WORD! or SET-BLOCK!

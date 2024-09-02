@@ -151,7 +151,7 @@
 ; would demand some kind of prior declaration of intent to use the name).
 ;
 (all [
-    e: sys.util.rescue [get/any $asiieiajiaosdfbjakbsjxbjkchasdf]
+    e: sys.util/rescue [get/any $asiieiajiaosdfbjakbsjxbjkchasdf]
     e.id = 'unassigned-attach
     e.arg1 = 'asiieiajiaosdfbjakbsjxbjkchasdf
 ])

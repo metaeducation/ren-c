@@ -113,11 +113,11 @@
 ; calling functions through paths: function in object
 (
     obj: make object! [fun: func [] [return 1]]
-    1 == obj.fun
+    1 == obj/fun
 )
 (
     obj: make object! [fun: func [/ref [integer!]] [return ref]]
-    1 == obj.fun/ref 1
+    1 == obj/fun/ref 1
 )
 
 ; calling functions through paths: function in block, positional

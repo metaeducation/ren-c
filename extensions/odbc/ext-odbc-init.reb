@@ -55,7 +55,7 @@ export odbc-statement-of: func [
 
     open-statement database statement
 
-    port: lib.open port.spec.ref
+    port: lib/open port.spec.ref
     port.locals: statement
 
     append database.statements port
@@ -63,7 +63,7 @@ export odbc-statement-of: func [
     return port
 ]
 
-sys.util.make-scheme [
+sys.util/make-scheme [
     name:  'odbc
     title: "ODBC Open Database Connectivity Scheme"
 

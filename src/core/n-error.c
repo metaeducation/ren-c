@@ -41,7 +41,7 @@
 DECLARE_NATIVE(enrescue)
 //
 // Note: During boot, this operation is removed from LIB and moved to the
-// system utilities, so it is typically called as SYS.UTIL.ENRESCUE.  Reason
+// system utilities, so it is typically called as SYS.UTIL/ENRESCUE.  Reason
 // is to help raise awareness of the risks involved with using this function,
 // because it's dangerous to react to these errors (or suppress them) due to
 // how little you know about what actually happened.
@@ -123,7 +123,7 @@ DECLARE_NATIVE(enrescue)
 //
 DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
 //
-// Unlike SYS.UTIL.RESCUE, the ENTRAP function only reacts to errors from the
+// Unlike SYS.UTIL/RESCUE, the ENTRAP function only reacts to errors from the
 // functions it directly calls via LEVEL_FLAG_RAISED_RESULT_OK.  Hence it
 // does not intercept thrown "failures", making it much safer to react to the
 // errors one gets back from it.

@@ -21,7 +21,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // A specialization is an ACTION! which has some of its parameters fixed.
-// e.g. `ap10: specialize :append [value: 5 + 5]` makes ap10 have all the same
+// e.g. `ap10: specialize get $append [value: 5 + 5]` makes ap10 have all the same
 // refinements available as APPEND, but otherwise just takes one series arg,
 // as it will always be appending 10.
 //
@@ -176,7 +176,7 @@ Context* Make_Context_For_Action_Push_Partials(
             // If refinement named on stack takes no arguments, then it can't
             // be partially specialized...only fully, and won't be bound:
             //
-            //     specialize :skip/unbounded [unbounded: #]  ; word not bound
+            //     specialize get $skip/unbounded [unbounded: #]  ; word not bound
             //
             Init_Blackhole(arg);
             goto continue_specialized;
@@ -384,7 +384,7 @@ bool Specialize_Action_Throws(
         while (ordered_stackindex != TOP_INDEX) {
             ordered_stackindex += 1;
             StackValue(*) ordered = Data_Stack_At(ordered_stackindex);
-            if (not BINDING(ordered)) {  // specialize :print/asdf
+            if (not BINDING(ordered)) {  // specialize get $print/asdf
                 Refinify_Pushed_Refinement(ordered);
                 fail (Error_Bad_Parameter_Raw(ordered));
             }
@@ -447,7 +447,7 @@ DECLARE_NATIVE(specialize)
 //
 // 1. Refinement specializations via path are pushed to the stack, giving
 //    order information that can't be meaningfully gleaned from an arbitrary
-//    code block (e.g. `specialize :append [dup: x | if y [part: z]]`, we
+//    code block (e.g. `specialize get $append [dup: x | if y [part: z]]`, we
 //    shouldn't think that intends any ordering of /dup/part or /part/dup)
 {
     INCLUDE_PARAMS_OF_SPECIALIZE;
@@ -656,7 +656,7 @@ static bool Last_Param_Hook(
 // This can be somewhat complex in the worst case:
 //
 //     >> foo: func [/a [block!] /b [block!] /c [block!] /d [block!]] [...]
-//     >> foo-d: runs :foo/d
+//     >> foo-d: runs get $foo/d
 //
 // This means that the last parameter (D) is actually the first of FOO-D.
 //

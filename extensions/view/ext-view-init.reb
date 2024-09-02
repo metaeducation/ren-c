@@ -8,7 +8,7 @@ REBOL [
 
 ; Move the default filters to usermode code, instead of a hardcoded C literal
 ;
-request-file: adapt :request-file* [
+request-file: adapt get $request-file* [
     ;
     ; !!! What notation should be used to indicate the default filter?
     ; Perhaps put in a GROUP!?
@@ -26,9 +26,9 @@ request-file: adapt :request-file* [
 ; "Asks user to select a directory and returns it as file path"
 ;
 request-dir: chain [
-    adapt :request-dir* [
+    adapt get $request-dir* [
         if path [
-            dir: lib.replace/all file-to-local dir "/" "//"
+            dir: lib/replace/all file-to-local dir "/" "//"
         ]
     ]
     func [result] [

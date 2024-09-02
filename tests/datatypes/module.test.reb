@@ -90,7 +90,7 @@
     ]
     all [
         var = <outer>
-        <1> = m2.fetch
+        <1> = m2/fetch
     ]
 )
 
@@ -104,14 +104,14 @@
             assert ['eval = first source]
 
             rebound: inside lib bindable source
-            return lib.eval rebound
+            return lib/eval rebound
         ]
 
         test: does [emulate [eval [1 + 2]]]
     ]
     all [
         3 = test
-        <override> = catch [m.eval [1 + 2]]
+        <override> = catch [m/eval [1 + 2]]
         ^eval = ^eval-before
     ]
 )

@@ -207,9 +207,9 @@
 
 ; antiforms besides splices are not legal in compose, but you can reify them
 [
-    ([<a> ~null~ <b>] = apply :compose [
+    ([<a> ~null~ <b>] = apply get $compose [
         [<a> (if true [null]) <b>]
-        /predicate chain [:eval :reify]
+        /predicate chain [get $eval, get $reify]
     ])
     ([<a>] = compose [<a> (~()~)])
     ([<a>] = compose [<a> (~void~)])  ; exception made for pure void

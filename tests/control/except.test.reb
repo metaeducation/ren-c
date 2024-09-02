@@ -15,7 +15,7 @@
    ]
 )
 (
-    e: sys.util.rescue [
+    e: sys.util/rescue [
         fail "foo" then [print "THEN"] else [print "ELSE"]
     ]
     e.message = "foo"

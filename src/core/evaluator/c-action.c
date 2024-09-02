@@ -377,7 +377,7 @@ Bounce Action_Executor(Level* L)
     //
     //        if + 2 [...]
     //
-    // 2. Something like `lib.help left-lit` is allowed to work, but if it was
+    // 2. Something like `lib/help left-lit` is allowed to work, but if it was
     //    just `obj/int-value left-lit` then the path evaluation won...but
     //    LEFT-LIT still gets run.  It appears it has nothing to its left, but
     //    since we remembered what happened we can give an informative error
@@ -403,8 +403,8 @@ Bounce Action_Executor(Level* L)
     //
     // 6. SOFT permits L->out to not carry the UNEVALUATED flag--enfixed
     //    operations which have evaluations on their left are treated as if
-    //    they were in a GROUP!.  This is important to `1 + 2 ->- lib.* 3`
-    //    being 9, while also allowing `1 + x: ->- lib.default [...]` to work.
+    //    they were in a GROUP!.  This is important to `1 + 2 ->- lib/* 3`
+    //    being 9, while also allowing `1 + x: ->- lib/default [...]` to work.
     //
     // 7. MEDIUM escapability means that it only allows the escape of one unit.
     //    Thus when reaching this point, it must carry the UENEVALUATED FLAG.
@@ -418,8 +418,8 @@ Bounce Action_Executor(Level* L)
             STATE = ST_ACTION_FULFILLING_ARGS;
 
             if (Is_Fresh(OUT)) {  // "nothing" to left, but [1]
-                if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE))
-                    fail (Error_Literal_Left_Tuple_Raw());  // [2]
+                if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))
+                    fail (Error_Literal_Left_Path_Raw());  // [2]
 
                 if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // empty is ok [3]
                     Init_Varargs_Untyped_Enfix(ARG, nullptr);
@@ -922,8 +922,8 @@ Bounce Action_Executor(Level* L)
     L->u.action.dispatcher_base = TOP_INDEX;
 
     if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT) {  // can happen [2]
-        if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE))  // see notes
-            fail (Error_Literal_Left_Tuple_Raw());
+        if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))  // see notes
+            fail (Error_Literal_Left_Path_Raw());
 
         assert(Get_Action_Executor_Flag(L, RUNNING_ENFIX));
         Freshen_Cell(OUT);
@@ -1048,7 +1048,7 @@ Bounce Action_Executor(Level* L)
     if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT)  // [1]
         fail ("Left lookback toward thing that took no args, look at later");
 
-    Clear_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE);  // [2]
+    Clear_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);  // [2]
 
     Drop_Action(L);  // must fail before Drop_Action()
 

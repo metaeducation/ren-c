@@ -2,8 +2,8 @@
 
 ; DEHEX no longer tolerates non %xx or %XX patterns with % in source data
 ;
-(error? sys.util.rescue ["a%b" = dehex "a%b"])
-(error? sys.util.rescue ["a%~b" = dehex "a%~b"])
+(error? sys.util/rescue ["a%b" = dehex "a%b"])
+(error? sys.util/rescue ["a%~b" = dehex "a%~b"])
 
 ; !!! Strings don't tolerate NUL, so should you be able to DEHEX a BINARY!
 ; and get something like "a%00b" from it?  That would not enforce the rest

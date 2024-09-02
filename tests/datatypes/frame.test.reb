@@ -29,9 +29,9 @@
         f.series = [a b c <d>]
         f.value = <d>
         [a b c <d> <d>] = eval f
-        'stale-frame = pick sys.util.rescue [eval f] 'id
-        'bad-pick = pick sys.util.rescue [f.series] 'id
-        'bad-pick = pick sys.util.rescue [f.value] 'id
+        'stale-frame = pick sys.util/rescue [eval f] 'id
+        'bad-pick = pick sys.util/rescue [f.series] 'id
+        'bad-pick = pick sys.util/rescue [f.value] 'id
     ]
 )
 
@@ -72,7 +72,7 @@
     (
         f-inner-prelude: '~junk~
         private: <not-in-prelude>
-        adapted-foo: adapt :foo [
+        adapted-foo: adapt get $foo [
             f-inner-prelude: binding of $public
             assert [private = <not-in-prelude>]  ; should not be bound
         ]

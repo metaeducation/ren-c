@@ -10,7 +10,7 @@ REBOL [
 ; amount of C code that CALL has to run.  So things like transforming any
 ; FILE! into local paths are done here.
 ;
-call*: adapt :call-internal* [
+call*: adapt get $call-internal* [
     command: switch/type command [
         text! [
             ; A TEXT! is passed through as-is, and will be interpreted by
@@ -81,7 +81,7 @@ call*: adapt :call-internal* [
 ;    result when shown in the terminal.
 ;
 call: enclose (
-    augment (specialize :call* [wait: #]) [
+    augment (specialize get $call* [wait: #]) [
         /relax "If exit code is non-zero, return the integer vs. raising error"
     ]
 ) func [f [frame!]] [

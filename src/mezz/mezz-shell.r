@@ -11,14 +11,14 @@ REBOL [
     }
 ]
 
-ls: runs :list-dir
-pwd: runs :what-dir
+ls: runs get $list-dir
+pwd: runs get $what-dir
 
 rm: does [
     fail "Use DELETE, not RM (Rebol REMOVE is different, shell dialect coming)"
 ]
 
-mkdir: runs :make-dir
+mkdir: runs get $make-dir
 
 cd: func [
     "Change directory (shell shortcut function)."
@@ -36,7 +36,7 @@ cd: func [
             ; not get bound due to an ordering problem.  Hence it needs the
             ; lib. prefix.  Review.
             ;
-            change-dir lib.local-to-file path
+            change-dir lib/local-to-file path
         ]
         tuple! word! path! [change-dir to-file path]
     ]

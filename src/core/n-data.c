@@ -922,6 +922,8 @@ bool Get_Path_Push_Refinements_Throws(
     const Element* path,
     Specifier* path_specifier
 ){
+    UNUSED(safe);
+
     if (Not_Cell_Flag(path, SEQUENCE_HAS_NODE)) {  // byte compressed, inert
         Derelativize(out, path, path_specifier);  // inert
         return false;
@@ -932,27 +934,27 @@ bool Get_Path_Push_Refinements_Throws(
         // pairing, but "Listlike", so Cell_List_At() will work on it
     }
     else switch (Flex_Flavor(c_cast(Flex*, node1))) {
-      case FLAVOR_SYMBOL : {
-        if (Get_Cell_Flag(path, REFINEMENT_LIKE)) {  // `/a` - should these GET?
-            Get_Word_May_Fail(out, path, path_specifier);
+      case FLAVOR_SYMBOL : {  // `/a` or `a/`
+        Get_Word_May_Fail(out, path, path_specifier);
+
+        if (Get_Cell_Flag(path, REFINEMENT_LIKE))  // `/a` - maybe an action
+            return false;
+
+        // `a/` means it has to be an action, or error.  Frames allowed.
+        //
+      trailing_slash_means_out_must_be_action:
+        if (Is_Action(out))
+            return false;
+        if (Is_Frame(out)) {
+            Actionify(out);
             return false;
         }
 
-        // !!! `a/` should error if it's not an action...
+        // !!! `a/` has no meaning at this time
         //
         const Value* val = Lookup_Word_May_Fail(path, path_specifier);
-        if (Is_Antiform(val)) {
-            if (not Is_Action(val))
-                fail (Error_Bad_Word_Get(path, val));
-            Copy_Cell(out, val);
-        }
-        else {
-            if (not Is_Frame(val))
-                fail (Error_Inert_With_Slashed_Raw());
-            Copy_Cell(out, val);
-            Actionify(out);
-        }
-        return false; }
+        UNUSED(val);
+        fail (path); }
 
       case FLAVOR_ARRAY : {}
         break;
@@ -963,13 +965,12 @@ bool Get_Path_Push_Refinements_Throws(
 
     const Element* tail;
     const Element* head = Cell_List_At(&tail, path);
-    while (Is_Blank(head)) {
-        ++head;
-        if (head == tail)
-            fail ("Empty PATH!");
-    }
 
-    if (Any_Inert(head)) {
+    if (Is_Blank(head)) {  // leading slash means execute (but we're GET-ing)
+        ++head;
+        assert(not Is_Blank(head));  // two blanks would be `/` as WORD!
+    }
+    else if (Any_Inert(head)) {
         Derelativize(out, path, path_specifier);
         return false;
     }
@@ -1001,6 +1002,27 @@ bool Get_Path_Push_Refinements_Throws(
     else
         fail (head);  // what else could it have been?
 
+    ++head;
+
+    // When we see `lib/append` for instance, we want to pick APPEND out of
+    // LIB and make sure it is an action.
+    //
+    if (Any_Context(out)) {
+        Quotify(out, 1);  // may be FRAME!, would run if seen literally in EVAL
+
+        DECLARE_ATOM (temp);
+        if (rebRunThrows(
+            cast(RebolValue*, temp),
+            Canon(PICK_P),
+            cast(const RebolValue*, out),  // was quoted above
+            rebQ(cast(const RebolValue*, head)))  // Cell, but is Element*
+        ){
+            fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+        }
+        Copy_Cell(out, Decay_If_Unstable(temp));
+        ++head;
+    }
+
     if (Is_Action(out))
         NOOP;  // it's good
     else if (Is_Antiform(out))
@@ -1014,9 +1036,17 @@ bool Get_Path_Push_Refinements_Throws(
     // as refinements to the function.  The action execution machinery will
     // decide if they are valid or not.
     //
-    REBLEN len = Cell_Sequence_Len(path) - 1;
-    for (; len != 0; --len) {
-        const Value* at = Copy_Sequence_At(safe, path, len);
+    const Value* at = tail - 1;
+
+    bool last_is_blank = false;
+    if (Is_Blank(at)) {
+        --at;
+        last_is_blank = true;
+    }
+
+    for (; at != head - 1; --at) {
+        const Value* item = at;
+
         DECLARE_ATOM (temp);
         if (Is_Group(at)) {
             Specifier* derived = Derive_Specifier(
@@ -1026,30 +1056,34 @@ bool Get_Path_Push_Refinements_Throws(
             if (Eval_Value_Throws(temp, c_cast(Element*, at), derived))
                 return true;
 
-            at = Decay_If_Unstable(temp);
+            item = Decay_If_Unstable(temp);
 
-            if (Is_Void(at))
+            if (Is_Void(item))
                 continue;  // just skip it (voids are ignored, NULLs error)
 
-            if (Is_Antiform(at))
-                fail (Error_Bad_Antiform(at));
+            if (Is_Antiform(item))
+                fail (Error_Bad_Antiform(item));
         }
 
         // Note: NULL not supported intentionally, could represent an accident
         // User is expected to do `maybe var` to show they know it's null
 
-        if (Is_Blank(at)) {
-            // This is needed e.g. for append/dup/ to work, just skip it
+        if (Is_Blank(item)) {
+            assert(!"Illegal internal blank found in path");
+            fail (path);  // should be illegal to make e.g. append//dup
         }
-        else if (Is_Word(at))
-            Init_Pushed_Refinement(PUSH(), Cell_Word_Symbol(at));
-        else if (Is_Path(at) and Is_Refinement(at)) {
+        else if (Is_Word(item))
+            Init_Pushed_Refinement(PUSH(), Cell_Word_Symbol(item));
+        else if (Is_Path(item) and Is_Refinement(item)) {
             // Not strictly necessary, but kind of neat to allow
-            Init_Pushed_Refinement(PUSH(), VAL_REFINEMENT_SYMBOL(at));
+            Init_Pushed_Refinement(PUSH(), VAL_REFINEMENT_SYMBOL(item));
         }
         else
-            fail (at);
+            fail (item);
     }
+
+    if (last_is_blank)
+        goto trailing_slash_means_out_must_be_action;
 
     return false;
 }

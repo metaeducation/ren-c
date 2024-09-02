@@ -44,14 +44,14 @@ boot-print: redescribe [
     "Prints during boot when not quiet."
 ](
     ; !!! Duplicates code in %main-startup.reb, where this isn't exported.
-    enclose :print f -> [if not system.options.quiet [eval f]]
+    enclose get $print f -> [if not system.options.quiet [eval f]]
 )
 
 loud-print: redescribe [
     "Prints during boot when verbose."
 ](
     ; !!! Duplicates code in %main-startup.reb, where this isn't exported.
-    enclose :print f -> [if system.options.verbose [eval f]]
+    enclose get $print f -> [if system.options.verbose [eval f]]
 )
 
 
@@ -387,9 +387,9 @@ start-console: func [
     ; hook to save the last error printed.  Also inform people of the
     ; existence of the WHY function on the first error delivery.
     ;
-    proto-skin.print-error: adapt :proto-skin.print-error [
+    proto-skin.print-error: adapt get $proto-skin.print-error [
         if not system.state.last-error [
-            system.console.print-info "Info: use WHY for error information"
+            system.console/print-info "Info: use WHY for error information"
         ]
 
         system.state.last-error: e
@@ -401,7 +401,7 @@ start-console: func [
         boot-print make-banner boot-banner  ; the fancier banner
     ]
 
-    system.console.print-greeting
+    system.console/print-greeting
 
     === VERBOSE CONSOLE SKINNING MESSAGES ===
 
@@ -484,10 +484,10 @@ console*: func [
     ][
         switch state [
             <prompt> [
-                emit [system.console.print-gap]
-                emit [system.console.print-prompt]
+                emit [system.console/print-gap]
+                emit [system.console/print-prompt]
                 emit [reduce [
-                    system.console.input-hook  ; can return NULL
+                    system.console/input-hook  ; can return NULL
                 ]]  ; gather first line (or null), put in BLOCK!
             ]
             <halt> [
@@ -626,7 +626,7 @@ console*: func [
         ;
         comment [emit #unskin-if-halt]
 
-        emit [system.console.print-halted]
+        emit [system.console/print-halted]
         return <prompt>
     ]
 
@@ -642,14 +642,14 @@ console*: func [
         has lib 'resume
         error? result
         result.id = 'no-catch
-        result.arg2 = unrun :lib.resume  ; throw's /NAME
+        result.arg2 = unrun :get $lib/resume  ; throw's /NAME
     ] then [
         assert [match [meta-group! handle!] result.arg1]
         if not resumable [
             e: make error! "Can't RESUME top-level CONSOLE (use QUIT to exit)"
             e.near: result.near
             e.where: result.where
-            emit [system.console.print-error (<*> e)]
+            emit [system.console/print-error (<*> e)]
             return <prompt>
         ]
         return result.arg1
@@ -662,7 +662,7 @@ console*: func [
         ; interpreter is being called non-interactively from the shell).
         ;
         if object? system.console [
-            emit [system.console.print-error (<*> result)]
+            emit [system.console/print-error (<*> result)]
         ] else [
             emit [print [(<*> result)]]
         ]
@@ -713,7 +713,7 @@ console*: func [
     === HANDLE RESULT FROM EXECUTION OF CODE ON USER'S BEHALF ===
 
     if group? prior [
-        system.console.print-result unmeta result
+        system.console/print-result unmeta result
         return <prompt>
     ]
 
@@ -786,7 +786,7 @@ console*: func [
 
                 emit [reduce [  ; reduce will runs in sandbox
                     (<*> spread result)  ; splice previous inert literal lines
-                    system.console.input-hook  ; hook to run in sandbox
+                    system.console/input-hook  ; hook to run in sandbox
                 ]]
 
                 return block!  ; documents expected match of REDUCE product
@@ -796,7 +796,7 @@ console*: func [
         ; Could be an unclosed double quote (unclosed tag?) which more input
         ; on a new line cannot legally close ATM
         ;
-        emit [system.console.print-error (<*> error)]
+        emit [system.console/print-error (<*> error)]
         return <prompt>
     ]
 
@@ -814,13 +814,13 @@ console*: func [
             ; panic by giving them a message.  Reduce noise for the casual
             ; shortcut by only doing so when a bound variable exists.
             ;
-            emit [system.console.print-warning (<*>
+            emit [system.console/print-warning (<*>
                 spaced [
                     uppercase to text! code.1
                         "interpreted by console as:" mold :shortcut
                 ]
             )]
-            emit [system.console.print-warning (<*>
+            emit [system.console/print-warning (<*>
                 spaced ["use" to get-word! code.1 "to get variable."]
             )]
         ]
@@ -833,7 +833,7 @@ console*: func [
     emit #unskin-if-halt  ; Ctrl-C during dialect hook is a problem
     emit [
         comment {not all users may want CONST result, review configurability}
-        as group! system.console.dialect-hook '(<*> code)
+        as group! system.console/dialect-hook '(<*> code)
     ]
     return group!  ; a group RESULT should come back to HOST-CONSOLE
 ]

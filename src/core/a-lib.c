@@ -2190,7 +2190,7 @@ unsigned char* API_rebBytes(
 //
 // It's a largely uncharted territory at this time...so the hope is that
 // your code "just works".  The JavaScript ReplPad runs the console extension
-// code which is already protected by SYS.UTIL.RESCUE, so this captures the
+// code which is already protected by SYS.UTIL/RESCUE, so this captures the
 // failures in API calls in JS-NATIVEs pretty well...but other scenarios
 // might be messier.
 //
@@ -2206,16 +2206,16 @@ unsigned char* API_rebBytes(
 //
 // http://silverhammermba.github.io/emberb/c/#rescue
 //
-// Unlike SYS.UTIL.RESCUE, it returns an ERROR! in case of failure, or the
+// Unlike SYS.UTIL/RESCUE, it returns an ERROR! in case of failure, or the
 // result of the code otherwise.  This creates conflation problems when
-// the code actually returned an ERROR!.  SYS.UTIL.ENRESCUE solves this
+// the code actually returned an ERROR!.  SYS.UTIL/ENRESCUE solves this
 // problem by returning a plain ERROR! in case of failure or a META result
 // otherwise, so a plain error would appear quoted.
 //
 // !!! Redesign of this function at this time is probably not as good an
 // investment as working more on interoperability of exceptions with
 // JavaScript try/catch.  Code which is protecting against errors and
-// knows it needs to can just use SYS.UTIL.RESCUE in the API call itself.
+// knows it needs to can just use SYS.UTIL/RESCUE in the API call itself.
 //
 RebolValue* API_rebRescue(
     REBDNG *dangerous,  // !!! pure C function if REBOL_FAIL_USES_LONGJMP

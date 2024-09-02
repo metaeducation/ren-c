@@ -59,7 +59,7 @@ destructure: func [
 validate: (comment [redescribe [  ; redescribe not working at the moment (?)
     "Process input in the parse dialect, return input if match"
 ] ]
-    enclose :parse* func [f [frame!]] [
+    enclose get $parse* func [f [frame!]] [
         let input: f.input  ; EVAL FRAME! invalidates args; cache for returning
 
         eval f except [return null]

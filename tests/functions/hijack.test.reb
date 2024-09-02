@@ -29,7 +29,7 @@
     (
         old-three: copy :three
 
-        two-30: specialize :three [z: 30]
+        two-30: specialize get $three [z: 30]
         60 = (two-30 10 20)
     )
 
@@ -52,7 +52,7 @@
     (240000 = (two-30/available 10 20 40))
 
     (
-        one-20: specialize :two-30 [y: 20]
+        one-20: specialize get $two-30 [y: 20]
 
         hijack :three func [q r s] [
             return q - r - s
@@ -64,7 +64,7 @@
     (-40 = (one-20 10))
 
     (
-        hijack :three :old-three
+        hijack get $three get $old-three
         true
     )
 
@@ -76,7 +76,7 @@
 ; HIJACK of a specialization (needs to notice paramlist has "hidden" params)
 (
     two: func [a b] [a + b]
-    one: specialize :two [a: 10]
+    one: specialize get $two [a: 10]
     hijack :one lambda [b] [20 - b]
     0 = one 20
 )

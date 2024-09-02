@@ -64,7 +64,7 @@ compile: func [
     ; being available in some builds.  It gets added to lib but is somehow not
     ; available here.  This is a bug to look into.
     ;
-    get-env: runs :lib.get-env
+    get-env: runs $lib/get-env
 
     if 0 = length of compilables [
         fail ["COMPILABLES must have at least one element"]
@@ -622,7 +622,7 @@ c99: func [
 
     ; !!! This doesn't return the C source from COMPILE, should it?
     ;
-    apply :compile [
+    apply get $compile [
         compilables
         /files true  ; compilables represents a list of files
         /inspect inspect  ; return C source as text but don't compile it
@@ -659,14 +659,14 @@ bootstrap: func [
     ; that hasn't been done, use fetching from a web build as a proxy for it.
     ;
     unzip/quiet %./tccencap https://metaeducation.s3.amazonaws.com/travis-builds/0.4.40/r3-06ac629-debug-cpp-tcc-encap.zip
-    lib.set-env "CONFIG_TCCDIR" file-to-local make-file [(what-dir) %tccencap/]
+    lib/set-env "CONFIG_TCCDIR" file-to-local make-file [(what-dir) %tccencap/]
 
     cd ren-c-master
 
     ; make.r will notice we are in the same directory as itself, and so it
     ; will make a %build/ subdirectory to do the building in.
     ;
-    let status: lib.call [
+    let status: lib/call [
         (system.options.boot) make.r
             "config=configs/bootstrap.r"
             (if options [spread system.options.args])

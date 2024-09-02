@@ -25,7 +25,7 @@ REBOL [
 
 ; Start with basic debugging
 
-c-break-debug: runs :c-debug-break  ; easy to mix up
+c-break-debug: runs get $c-debug-break  ; easy to mix up
 
 ; These definitions have been helpful as the syntax has shuffled around,
 ; though today you can say '~void~ and it is considered stable (vs the old
@@ -58,7 +58,7 @@ probe: func* [
     return unmeta value'
 ]
 
-??: runs :probe  ; shorthand for debug sessions, not intended to be committed
+??: runs get $probe  ; shorthand for debug sessions, not to be committed
 
 ; Pre-decaying specializations for DID, DIDN'T, THEN, ELSE, ALSO
 ;
@@ -97,11 +97,11 @@ tweak :*else 'defer on
 
 ; SET OPERATORS
 
-not+: runs :bitwise-not
-and+: enfix :bitwise-and
-or+: enfix :bitwise-or
-xor+: enfix :bitwise-xor
-and-not+: enfix :bitwise-and-not
+not+: runs get $bitwise-not
+and+: enfix get $bitwise-and
+or+: enfix get $bitwise-or
+xor+: enfix get $bitwise-xor
+and-not+: enfix get $bitwise-and-not
 
 
 ; COMPARISON OPERATORS
@@ -109,31 +109,31 @@ and-not+: enfix :bitwise-and-not
 ; !!! See discussion about the future of comparison operators:
 ; https://forum.rebol.info/t/349
 
-=: enfix :equal?
-<>: enfix :not-equal?
-<: enfix :lesser?
->: enfix :greater?
+=: enfix get $equal?
+<>: enfix get $not-equal?
+<: enfix get $lesser?
+>: enfix get $greater?
 
 ; "Official" forms of the comparison operators.  This is what we would use
 ; if starting from scratch, and didn't have to deal with expectations people
 ; have coming from other languages: https://forum.rebol.info/t/349/
 ;
->=: enfix :greater-or-equal?
-=<: enfix :equal-or-lesser?
+>=: enfix get $greater-or-equal?
+=<: enfix get $equal-or-lesser?
 
 ; Compatibility Compromise: sacrifice what looks like left and right arrows
 ; for usage as comparison, even though the perfectly good `=<` winds up
 ; being unused as a result.  Compromise `=>` just to reinforce what is lost
 ; by not retraining: https://forum.rebol.info/t/349/11
 ;
-equal-or-greater?: runs :greater-or-equal?
-lesser-or-equal?: runs :equal-or-lesser?
-=>: enfix :equal-or-greater?
-<=: enfix :lesser-or-equal?
+equal-or-greater?: runs get $greater-or-equal?
+lesser-or-equal?: runs get $equal-or-lesser?
+=>: enfix get $equal-or-greater?
+<=: enfix get $lesser-or-equal?
 
-!=: enfix :not-equal?  ; http://www.rebol.net/r3blogs/0017.html
-==: enfix :strict-equal?  ; !!! https://forum.rebol.info/t/349
-!==: enfix :strict-not-equal?  ; !!! bad pairing, most would think !=
+!=: enfix get $not-equal?  ; http://www.rebol.net/r3blogs/0017.html
+==: enfix get $strict-equal?  ; !!! https://forum.rebol.info/t/349
+!==: enfix get $strict-not-equal?  ; !!! bad pairing, most would think !=
 
 =?: enfix :same?
 
@@ -192,13 +192,13 @@ elide-if-void: func* [
 ; EACH will ultimately be a generator, but for now it acts as QUOTE so it can
 ; be used with `map x each [a b c] [...]` and give you x as a, then b, then c.
 ;
-each: runs :quote
+each: runs get $quote
 
 
 ; It's easier to pre-process CHAIN's block in usermode, which also offers a
 ; lower-level version CHAIN* that just takes a block of frames.
 ;
-chain: adapt :chain* [
+chain: adapt get $chain* [
     pipeline: reduce/predicate pipeline :unrun
 ]
 
@@ -243,20 +243,20 @@ requote: reframer lambda [
 ; specializations they don't fit easily into the NEXT OF SERIES model--this
 ; is a problem which hasn't been addressed.
 ;
-next: specialize :skip [offset: 1]
-back: specialize :skip [offset: -1]
+next: specialize get $skip [offset: 1]
+back: specialize get $skip [offset: -1]
 
 ; Function synonyms
 
-min: runs :minimum
-max: runs :maximum
-abs: runs :absolute
+min: runs get $minimum
+max: runs get $maximum
+abs: runs get $absolute
 
-unspaced: specialize :delimit [delimiter: null]
-spaced: specialize :delimit [delimiter: space]
-newlined: specialize :delimit [delimiter: newline, tail: #]
+unspaced: specialize get $delimit [delimiter: null]
+spaced: specialize get $delimit [delimiter: space]
+newlined: specialize get $delimit [delimiter: newline, tail: #]
 
-validate3: enclose :parse3 func* [f] [
+validate3: enclose get $parse3 func* [f] [
     let input: f.input
     eval f except [return null]
     return input
@@ -289,10 +289,10 @@ an: lambda [
 ; {Returns TRUE if port is open.}
 ; port [port!]
 
-head?: specialize :reflect [property: 'head?]
-tail?: specialize :reflect [property: 'tail?]
-past?: specialize :reflect [property: 'past?]
-open?: specialize :reflect [property: 'open?]
+head?: specialize get $reflect [property: 'head?]
+tail?: specialize get $reflect [property: 'tail?]
+past?: specialize get $reflect [property: 'past?]
+open?: specialize get $reflect [property: 'open?]
 
 
 empty?: func* [
@@ -385,5 +385,5 @@ echo: func* [
 
 ; Convenient alternatives for readability
 ;
-neither?: runs :nand?
-both?: runs :and?
+neither?: runs get $nand?
+both?: runs get $and?

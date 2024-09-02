@@ -7,7 +7,7 @@
 ; An error is raised for now.
 ;
 (all [
-    e: sys.util.rescue [set? $utternonsense]
+    e: sys.util/rescue [set? $utternonsense]
     e.id = 'unassigned-attach
     e.arg1 = 'utternonsense
 ])

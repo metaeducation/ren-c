@@ -167,7 +167,7 @@
 
         {-<=>-} {-<>-} {>=<}
     ][
-        let assert: specialize :assert [
+        let assert: specialize get $assert [
             handler: [echo Failure on: @str]
         ]
 

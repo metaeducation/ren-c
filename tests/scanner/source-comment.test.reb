@@ -32,7 +32,7 @@
         issue? issue
         0 = length of issue
         0 = codepoint of issue
-        'illegal-zero-byte = (sys.util.rescue [to text! issue]).id
+        'illegal-zero-byte = (sys.util/rescue [to text! issue]).id
     ]
 )
 

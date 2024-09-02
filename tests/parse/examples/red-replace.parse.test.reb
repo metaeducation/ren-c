@@ -11,7 +11,7 @@
 ; bad idea implemented.
 
 [
-    (replace: enclose :lib.replace func [f [frame!] <local> head tail rule] [
+    (replace: enclose get $lib/replace func [f [frame!] <local> head tail rule] [
         if not all [match [text! binary!] f.target, block? f.pattern] [
             return eval f
         ]
@@ -23,7 +23,7 @@
         ] else '[
             change f.pattern (f.replacement)
         ]
-        apply :parse [/case f.case, f.target [
+        apply get $parse [/case f.case, f.target [
             while [thru rule] (
                 if not f.all [return f.target]
             )

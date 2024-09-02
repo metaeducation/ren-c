@@ -139,7 +139,7 @@ export analyse: context [
         return: [~null~ block!]
         file
     ][
-        lib.print ["Analyzing:" file]  ; subvert tests PRINT disablement
+        lib/print ["Analyzing:" file]  ; subvert tests PRINT disablement
         return all [
             let filetype: select extensions extension-of file
             let type: has source filetype
@@ -160,7 +160,7 @@ export analyse: context [
             <local> position  ; used sketchily in rules, no LET in parse :-/
         ][
             let analysis: analyse.text file data
-            let emit: specialize :log-emit [log: analysis]
+            let emit: specialize get $log-emit [log: analysis]
 
             data: as text! data
 
@@ -299,7 +299,7 @@ export analyse: context [
         <local> position last-pos line-ending alt-ending  ; no PARSE let :-/
     ][
         let analysis: copy []
-        let emit: specialize :log-emit [log: analysis]
+        let emit: specialize get $log-emit [log: analysis]
 
         data: read %% (repo-dir)/(file)
 
@@ -442,7 +442,7 @@ list: context [
             item: null
         ] else [
             any [
-                try parse [_ @]: lib.split-path item ["tmp-" ...]
+                try parse [_ @]: lib/split-path item ["tmp-" ...]
                 not find extensions extension-of item
             ] then [
                 item: null

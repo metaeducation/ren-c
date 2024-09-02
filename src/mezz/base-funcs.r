@@ -291,7 +291,7 @@ redescribe: func [
 unset: redescribe [
     {Clear the value of a word to the unset state (in its current context)}
 ](
-    specialize :set [value: meta ~]  ; SET's value is a ^META parameter
+    specialize get $set [value: meta ~]  ; SET's value is a ^META parameter
 )
 
 unset?: func [
@@ -368,7 +368,7 @@ curtail: reframer func [
 ; By default, the evaluation rules proceed according to the enfix mode of
 ; the operation being shoved into:
 ;
-;    >> 10 >- lib.= 5 + 5  ; as if you wrote `10 = 5 + 5`
+;    >> 10 >- lib/= 5 + 5  ; as if you wrote `10 = 5 + 5`
 ;    ** Script Error: + does not allow logic? for its value1 argument
 ;
 ;    >> 10 >- equal? 5 + 5  ; as if you wrote `equal? 10 5 + 5`
@@ -376,17 +376,17 @@ curtail: reframer func [
 ;
 ; You can force processing to be enfix using `->-` (an infix-looking "icon"):
 ;
-;    >> 1 ->- lib.add 2 * 3  ; as if you wrote `1 + 2 * 3`
+;    >> 1 ->- lib/add 2 * 3  ; as if you wrote `1 + 2 * 3`
 ;    == 9
 ;
 ; Or force prefix processing using `>--` (multi-arg prefix "icon"):
 ;
-;    >> 10 >-- lib.+ 2 * 3  ; as if you wrote `add 1 2 * 3`
+;    >> 10 >-- lib/+ 2 * 3  ; as if you wrote `add 1 2 * 3`
 ;    == 7
 ;
 >-: enfix :shove
->--: enfix specialize :>- [prefix: true]
-->-: enfix specialize :>- [prefix: false]
+>--: enfix specialize get $>- [prefix: true]
+->-: enfix specialize get $>- [prefix: false]
 
 
 ; The -- and ++ operators were deemed too "C-like", so ME was created to allow
@@ -452,25 +452,25 @@ tweak :was 'postpone on
 zdeflate: redescribe [
     {Deflates data with zlib envelope: https://en.wikipedia.org/wiki/ZLIB}
 ](
-    specialize :deflate [envelope: 'zlib]
+    specialize get $deflate [envelope: 'zlib]
 )
 
 zinflate: redescribe [
     {Inflates data with zlib envelope: https://en.wikipedia.org/wiki/ZLIB}
 ](
-    specialize :inflate [envelope: 'zlib]
+    specialize get $inflate [envelope: 'zlib]
 )
 
 gzip: redescribe [
     {Deflates data with gzip envelope: https://en.wikipedia.org/wiki/Gzip}
 ](
-    specialize :deflate [envelope: 'gzip]
+    specialize get $deflate [envelope: 'gzip]
 )
 
 gunzip: redescribe [
     {Inflates data with gzip envelope: https://en.wikipedia.org/wiki/Gzip}
 ](
-    specialize :inflate [envelope: 'gzip]  ; What about GZIP-BADSIZE?
+    specialize get $inflate [envelope: 'gzip]  ; What about GZIP-BADSIZE?
 )
 
 ensure: redescribe [
@@ -479,7 +479,7 @@ ensure: redescribe [
     ; MATCH returns a pack (antiform block) vs. NULL if the input is NULL
     ; and matches NULL.  This is not reactive with ELSE
     ;
-    enclose :match lambda [f <local> value] [  ; LET was having trouble
+    enclose get $match lambda [f <local> value] [  ; LET was having trouble
         value: :f.value  ; EVAL makes frame arguments unavailable
         eval f else [
             ; !!! Can't use FAIL/WHERE until we can implicate the callsite.
@@ -497,7 +497,7 @@ ensure: redescribe [
 non: redescribe [
     {Pass through value if it *doesn't* match test, else null (e.g. MATCH/NOT)}
 ](
-    enclose :match lambda [f] [
+    enclose get $match lambda [f] [
         let value: :f.value  ; EVAL makes frame arguments unavailable
         light (eval f then [null] else [:value])
     ]
@@ -506,7 +506,7 @@ non: redescribe [
 prohibit: redescribe [
     {Pass through value if it *doesn't* match test, else fail (e.g. ENSURE/NOT)}
 ](
-    enclose :match lambda [f] [
+    enclose get $match lambda [f] [
         let value: :f.value  ; EVAL makes frame arguments unavailable
         eval f then [
             ; !!! Can't use FAIL/WHERE until we can implicate the callsite.
@@ -523,8 +523,8 @@ prohibit: redescribe [
 )
 
 
-oneshot: specialize :n-shot [n: 1]
-upshot: specialize :n-shot [n: -1]
+oneshot: specialize get $n-shot [n: 1]
+upshot: specialize get $n-shot [n: -1]
 
 ;
 ; !!! The /REVERSE and /LAST refinements of FIND and SELECT caused a lot of
@@ -535,13 +535,13 @@ upshot: specialize :n-shot [n: -1]
 find-reverse: redescribe [
     {Variant of FIND that uses a /SKIP of -1}
 ](
-    specialize :find [skip: -1]
+    specialize get $find [skip: -1]
 )
 
 find-last: redescribe [
     {Variant of FIND that uses a /SKIP of -1 and seeks the TAIL of a series}
 ](
-    adapt :find-reverse [
+    adapt get $find-reverse [
         if not any-series? series [
             fail 'series "Can only use FIND-LAST on ANY-SERIES?"
         ]
@@ -597,25 +597,25 @@ trap+: func [
 reduce*: redescribe [
     "REDUCE a block but vaporize NULL Expressions"
 ](
-    specialize :reduce [predicate: unrun :maybe]
+    specialize get $reduce [predicate: unrun :maybe]
 )
 
 for-next: redescribe [
     "Evaluates a block for each position until the end, using NEXT to skip"
 ](
-    specialize :for-skip [skip: 1]
+    specialize get $for-skip [skip: 1]
 )
 
 for-back: redescribe [
     "Evaluates a block for each position until the start, using BACK to skip"
 ](
-    specialize :for-skip [skip: -1]
+    specialize get $for-skip [skip: -1]
 )
 
 iterate-skip: redescribe [
     "Variant of FOR-SKIP that directly modifies a series variable in a word"
 ](
-    specialize enclose :for-skip func [f] [
+    specialize enclose get $for-skip func [f] [
         if blank? let word: f.word [return null]
         f.word: quote to word! word  ; do not create new virtual binding
         let saved: f.series: get word
@@ -640,13 +640,13 @@ iterate-skip: redescribe [
 iterate: iterate-next: redescribe [
     "Variant of FOR-NEXT that directly modifies a series variable in a word"
 ](
-    specialize :iterate-skip [skip: 1]
+    specialize get $iterate-skip [skip: 1]
 )
 
 iterate-back: redescribe [
     "Variant of FOR-BACK that directly modifies a series variable in a word"
 ](
-    specialize :iterate-skip [skip: -1]
+    specialize get $iterate-skip [skip: -1]
 )
 
 
@@ -693,7 +693,7 @@ count-up: func [
 count-down: redescribe [
     "Loop the body, setting a word from the end value given down to 1"
 ](
-    specialize adapt :cfor [
+    specialize adapt get $cfor [
         start: end
         end: 1
     ][
@@ -706,7 +706,7 @@ count-down: redescribe [
 lock-of: redescribe [
     "If value is already locked, return it...otherwise CLONE it and LOCK it."
 ](
-    chain [specialize :copy [deep: #], :freeze]
+    chain [specialize get $copy [deep: #], :freeze]
 )
 
 eval-all: func [
@@ -726,8 +726,8 @@ eval-all: func [
 ; to allow longer runs of evaluation.  "Invisible functions" (those which
 ; `return: [nihil?]`) permit a more flexible version of the mechanic.
 
-<|: runs tweak copy unrun :eval-all 'postpone on
-|>: runs tweak enfix copy :shove 'postpone on
+<|: runs tweak copy unrun get $eval-all 'postpone on
+|>: runs tweak enfix copy get $shove 'postpone on
 
 
 meth: enfix func [
@@ -895,4 +895,4 @@ raise: func [
 ; generation of the NEAR and WHERE fields.  If we tried to ENCLOSE and DO
 ; the error it would add more overhead and confuse those matters.
 ;
-fail: chain [:raise, :null?]
+fail: chain [get $raise, get $null?]

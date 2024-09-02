@@ -30,7 +30,7 @@
 
 ; All required arguments must be mentioned in the ordering.
 (
-    e: sys.util.rescue [reorder :append [series]]
+    e: sys.util/rescue [reorder :append [series]]
     all [
         e.id = 'no-arg
         e.arg1 = 'append
@@ -46,7 +46,7 @@
 
 ; Naming a refinement more than once is an error
 (
-    e: sys.util.rescue [reorder :append [series value series]]
+    e: sys.util/rescue [reorder :append [series value series]]
     all [
         e.id = 'bad-parameter
         e.arg1 = 'series
@@ -55,7 +55,7 @@
 
 ; Unrecognized parameters cause errors
 (
-    e: sys.util.rescue [reorder :append [series value fhqwhgads]]
+    e: sys.util/rescue [reorder :append [series value fhqwhgads]]
     all [
         e.id = 'bad-parameter
         e.arg1 = 'fhqwhgads
@@ -64,7 +64,7 @@
 
 ; Functions modified with ADAPT, SPECIALIZE, etc. can be reordered.
 (
-    aplus: adapt :append [value: value + 1000]
+    aplus: adapt get $append [value: value + 1000]
     newaplus: reorder :aplus [value series]
     [a b c 1020] = newaplus 20 [a b c]
 )
@@ -72,7 +72,7 @@
 ; Reordered functions also preserve their reordering across compositions.
 (
     newa: reorder :append [value series]
-    newaplus: adapt :newa [value: value + 1000]
+    newaplus: adapt get $newa [value: value + 1000]
     [a b c 1020] = newaplus 20 [a b c]
 )
 

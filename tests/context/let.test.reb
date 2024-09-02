@@ -247,7 +247,7 @@
 ; of LET actually do one step of evaluation where the left has the new
 ; bindings and the right doesn't yet for that step.  This permits things like:
 ;
-;     let assert: specialize :assert [handler: [print "should work"]]
+;     let assert: specialize get $assert [handler: [print "should work"]]
 ;
 ; Doing it this way introduces some odd edge cases.
 [
@@ -314,7 +314,7 @@
     (
         x: <x>
         all [
-            e: sys.util.rescue [
+            e: sys.util/rescue [
                 let x: raise ~test~
             ]
             error? e

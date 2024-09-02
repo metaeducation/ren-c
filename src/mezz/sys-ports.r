@@ -18,7 +18,7 @@ REBOL [
 ]
 
 ; !!! UPARSE is not available in SYS because it is higher level.  We hack it
-; up so that when %uparse.reb runs it pokes itself into sys.util.parse
+; up so that when %uparse.reb runs it pokes itself into sys.util/parse
 ;
 parse: ~sys-util-parse-not-set-yet~
 
@@ -129,7 +129,7 @@ make-port*: func [
     ; Call the scheme-specific port init. Note that if the
     ; scheme has not yet been initialized, it can be done
     ; at this time.
-    if has scheme 'init [scheme.init port]
+    if has scheme 'init [scheme/init port]
     return port
 ]
 
@@ -204,8 +204,8 @@ make-port*: func [
     ; list of fields but breaks them down differently and uses different names.
     ; That should be reviewed.
     ;
-    decode-url: func [  ; this function is bound in sys.util.*parse-url
-        {Decode a URL according to rules of sys.util.*parse-url}
+    decode-url: func [  ; this function is bound in sys.util/*parse-url
+        {Decode a URL according to rules of sys.util/*parse-url}
         return: [object!]
         url [url! text!]
     ][

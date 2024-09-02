@@ -40,7 +40,7 @@
 //    converted into a throw state with an ERROR! as the label.  This state
 //    is bubbled up the stack much like a throw, however it cannot be
 //    intercepted by CATCH or definitional-error handlers like TRY.  Only
-//    special routines like SYS.UTIL.RESCUE can catch abrupt failures, as
+//    special routines like SYS.UTIL/RESCUE can catch abrupt failures, as
 //    what they mean is too nebulous for arbitrary stacks to assume they
 //    know how to handle them.
 //

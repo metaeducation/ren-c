@@ -11,7 +11,7 @@
 ; the rise of more antiform forms leans to doing it like R3-Alpha and Red.
 (
     unset $a
-    e: sys.util.rescue [a]
+    e: sys.util/rescue [a]
     all [
        'bad-word-get = e.id
        'a = e.arg1

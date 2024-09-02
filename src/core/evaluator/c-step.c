@@ -112,14 +112,14 @@
 // !!! Evil Macro, repeats parent!
 //
 STATIC_ASSERT(
-    EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE
-    == ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE
+    EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
+    == ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
 );
 
 #define Make_Action_Sublevel(parent) \
     Make_Level(&Action_Executor, (parent)->feed, \
         LEVEL_FLAG_RAISED_RESULT_OK \
-        | ((parent)->flags.bits & EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE))
+        | ((parent)->flags.bits & EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH))
 
 
 // When a SET-BLOCK! is being processed for multi-returns, it may encounter
@@ -426,13 +426,13 @@ Bounce Stepper_Executor(Level* L)
         Is_Feed_At_End(L->feed)  // v-- OUT is what used to be on left
         and (
             VAL_TYPE_UNCHECKED(OUT) == REB_WORD
-            or VAL_TYPE_UNCHECKED(OUT) == REB_TUPLE
+            or VAL_TYPE_UNCHECKED(OUT) == REB_PATH
         )
     ){
         // We make a special exemption for left-stealing arguments, when
         // they have nothing to their right.  They lose their priority
         // and we run the left hand side with them as a priority instead.
-        // This lets us do e.g. `(the ->)` or `help of`
+        // This lets us do (the ->) or (help of)
         //
         // Swap it around so that what we had put in OUT goes to being in
         // CURRENT, and the current is put back into the feed.
@@ -444,16 +444,16 @@ Bounce Stepper_Executor(Level* L)
         Move_Cell(CURRENT, cast(Element*, OUT));
         L_current_gotten = nullptr;
 
-        Set_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE);
+        Set_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);
 
         if (Is_Word(CURRENT)) {
             STATE = REB_WORD;
             goto word_common;
         }
 
-        assert(Is_Tuple(CURRENT));
-        STATE = REB_TUPLE;
-        goto tuple_common;
+        assert(Is_Path(CURRENT));
+        STATE = REB_PATH;
+        goto path_common;
     }
   }
 
@@ -541,6 +541,9 @@ Bounce Stepper_Executor(Level* L)
     //    hand side argument.
 
       case REB_FRAME: {
+        if (IS_FRAME_PHASED(L_current))  // running frame if phased
+            fail ("Use REDO to restart a running FRAME! (can't EVAL)");
+
         Level* sub = Make_Action_Sublevel(L);
         Push_Level(OUT, sub);
         Push_Action(
@@ -748,15 +751,11 @@ Bounce Stepper_Executor(Level* L)
             );
             const Symbol* label = Cell_Word_Symbol(L_current);  // use WORD!
             bool enfixed = Is_Enfixed(unwrap L_current_gotten);
-            if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE)) {
-                if (enfixed) {
-                    assert(false);  // !!! want OUT as *right* hand side...
-                    enfixed = true;
-                }
-                else
-                    enfixed = true;  // not enfix, but act as OUT is first arg
+            if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH)) {
+                if (enfixed)
+                    assert(false);  // !!! this won't work, can it happen?
 
-                Clear_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE);
+                Clear_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);
             }
 
             if (
@@ -964,49 +963,29 @@ Bounce Stepper_Executor(Level* L)
     // WORD! and GET-WORD!, and will error...directing you use GET/ANY if
     // fetching nothing is what you actually intended.
 
-      tuple_common:  /////////////////////////////////////////////////////////
-
       case REB_TUPLE: {
         Copy_Sequence_At(SPARE, L_current, 0);
-        if (Any_Inert(SPARE)) {
+        if (
+            not Is_Blank(SPARE)  // `.a` means pick member from "self"
+            and Any_Inert(SPARE)  // `1.2.3` is inert
+        ){
             Derelativize(OUT, L_current, L_specifier);
             break;
         }
 
-        if (Get_Var_Core_Throws(SPARE, GROUPS_OK, L_current, L_specifier))
+        if (Get_Var_Core_Throws(OUT, GROUPS_OK, L_current, L_specifier))
             goto return_thrown;
 
-        if (Is_Action(SPARE)) {
-            //
-            // PATH! dispatch is costly and can error in more ways than WORD!:
-            //
-            //     e: trap [eval transcode ":a"] e.id = 'not-bound
-            //                                   ^-- not ready @ lookahead
-            //
-            // Plus with GROUP!s in a path, their evaluations can't be undone.
-            //
-            if (Is_Enfixed(SPARE))
-                fail ("Use `>-` to shove left enfix operands into PATH!s");
+        if (Is_Antiform(OUT)) {
+            if (Is_Raised(OUT))
+                break;  // tuple access can raise definitional errors
 
-            Level* sub = Make_Action_Sublevel(L);
-            Push_Level(OUT, sub);
-            Push_Action(
-                sub,
-                VAL_ACTION(SPARE),
-                VAL_FRAME_COUPLING(SPARE)
-            );
-            Begin_Prefix_Action(sub, VAL_FRAME_LABEL(SPARE));
-            goto process_action;
+            if (Is_Action(OUT))
+                fail ("Can't fetch actions (FRAME! antiform) with TUPLE!");
+
+            if (not Is_Antiform_Get_Friendly(stable_OUT))
+                fail (Error_Bad_Word_Get(L_current, stable_OUT));
         }
-
-        if (
-            Is_Antiform(SPARE)  // we test *after* action (faster common case)
-            and not Is_Antiform_Get_Friendly(stable_SPARE)
-        ){
-            fail (Error_Bad_Word_Get(L_current, stable_SPARE));
-        }
-
-        Move_Cell(OUT, SPARE);
         break; }
 
 
@@ -1022,21 +1001,13 @@ Bounce Stepper_Executor(Level* L)
     // PATH!s starting with inert values do not evaluate.  `/foo/bar` has a
     // blank at its head, and it evaluates to itself.
 
+      path_common:
       case REB_PATH: {
         Copy_Sequence_At(SPARE, L_current, 0);
         if (Any_Inert(SPARE)) {
             Derelativize(OUT, L_current, L_specifier);
             break;
         }
-
-        Copy_Sequence_At(
-            SPARE,
-            L_current,
-            Cell_Sequence_Len(L_current) - 1
-        );
-        bool terminal_slash = Is_Blank(SPARE);
-        if (terminal_slash)
-            fail ("Terminal slashes in paths are being reviewed.");
 
         if (Get_Path_Push_Refinements_Throws(
             SPARE,
@@ -1047,19 +1018,11 @@ Bounce Stepper_Executor(Level* L)
             goto return_thrown;
         }
 
-        if (not Is_Action(SPARE)) {
-            //
-            // !!! This is legacy support, which will be done another way in
-            // the future.  You aren't supposed to use PATH! to get field
-            // access...just action execution.
-            //
-            Move_Cell(OUT, SPARE);
-            break;
-        }
+        assert(Is_Action(SPARE));
 
         // PATH! dispatch is costly and can error in more ways than WORD!:
         //
-        //     e: trap [eval make block! ":a"] e.id = 'not-bound
+        //     e: trap [eval transcode ":a"] e.id = 'not-bound
         //                                   ^-- not ready @ lookahead
         //
         // Plus with GROUP!s in a path, their evaluations can't be undone.
@@ -1784,15 +1747,15 @@ Bounce Stepper_Executor(Level* L)
     // opportunity to quote left because it has no argument...and instead
     // retriggers and lets x run.
 
-    if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE))
-        fail (Error_Literal_Left_Tuple_Raw());
+    if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))
+        fail (Error_Literal_Left_Path_Raw());
 
 
   //=//// IF NOT A WORD!, IT DEFINITELY STARTS A NEW EXPRESSION ///////////=//
 
     // For long-pondered technical reasons, only WORD! is able to dispatch
     // enfix.  If it's necessary to dispatch an enfix function via path, then
-    // a word is used to do it, like `>-` in `x: >- lib.method [...] [...]`.
+    // a word is used to do it, like `>-` in `x: >- lib/method [...] [...]`.
 
     if (Is_Feed_At_End(L->feed)) {
         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
@@ -1867,9 +1830,9 @@ Bounce Stepper_Executor(Level* L)
         // the left quoting function might be okay with seeing nothing on the
         // left.  Start a new expression and let it error if that's not ok.
         //
-        assert(Not_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE));
-        if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE))
-            fail (Error_Literal_Left_Tuple_Raw());
+        assert(Not_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH));
+        if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))
+            fail (Error_Literal_Left_Path_Raw());
 
         const Param* first = First_Unspecialized_Param(nullptr, enfixed);
         if (Cell_ParamClass(first) == PARAMCLASS_SOFT) {
@@ -2000,7 +1963,7 @@ Bounce Stepper_Executor(Level* L)
     //     o: make object! [f: does [1]]
     //     o.f left-the  ; want error suggesting >- here, need flag for that
     //
-    Clear_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE);
+    Clear_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);
 
   #if !defined(NDEBUG)
     Evaluator_Exit_Checks_Debug(L);

@@ -32,7 +32,7 @@
         1 / 0
         success: false
     ]
-    error? sys.util.rescue [f1]
+    error? sys.util/rescue [f1]
     success
 )
 [#822
@@ -41,7 +41,7 @@
     )
 ]
 #rescue (
-    sys.util.rescue [fail make error! ""] then [true]
+    sys.util/rescue [fail make error! ""] then [true]
 )
 #trap (
     trap [1 / 0] then :error?
@@ -54,7 +54,7 @@
 )
 [#1514
     #trap (
-        error? sys.util.rescue [trap [1 / 0] then :add]
+        error? sys.util/rescue [trap [1 / 0] then :add]
     )
 ]
 

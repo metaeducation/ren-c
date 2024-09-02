@@ -25,7 +25,7 @@
 // passed to an "outer" function, which can modify the frame arguments and
 // also operate upon the result:
 //
-//     >> add2x3x+1: enclose :add func [f [frame!]] [
+//     >> add2x3x+1: enclose get $add func [f [frame!]] [
 //            f.value1: f.value1 * 2
 //            f.value2: f.value2 * 3
 //            return 1 + eval f
@@ -39,7 +39,7 @@
 // Given the mechanics of FRAME!, it's also possible to COPY the frame for
 // multiple invocations.
 //
-//     >> print2x: enclose :print func [f [frame!]] [
+//     >> print2x: enclose get $print func [f [frame!]] [
 //            eval copy f
 //            f.value: append f.value "again!"
 //            eval f

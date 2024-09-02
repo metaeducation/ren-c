@@ -26,9 +26,9 @@ REBOL [
 ;
 ; WAIT* expects block to be pre-reduced, to ease stackless implementation
 ;
-export wait: adapt :wait* [if block? :value [value: reduce value]]
+export wait: adapt get $wait* [if block? :value [value: reduce value]]
 
-sys.util.make-scheme [
+sys.util/make-scheme [
     title: "TCP Networking"
     name: 'tcp
     actor: get-tcp-actor-handle
@@ -39,7 +39,7 @@ sys.util.make-scheme [
 ; NOTE: UDP Networking has not been rewritten for the libuv transition.  It
 ; is kept here as a reminder of that.
 ;
-sys.util.make-scheme [
+sys.util/make-scheme [
     title: "UDP Networking"
     name: 'udp
     actor: get-udp-actor-handle

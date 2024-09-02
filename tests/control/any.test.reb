@@ -382,12 +382,12 @@
 
 ; PREDICATES
 
-(10 = any/predicate [1 + 2 3 + 4 5 + 5 6 + 7] :even?)
-(10 = any/predicate [1 + 2 3 + 4 5 + 5 6 + 7] chain [:odd?, :not])
-(10 = any/predicate [1 + 2, comment "Hello", 3 + 4, 5 + 5, 6 + 7] :even?)
-(10 = apply :any [
+(10 = any/predicate [1 + 2 3 + 4 5 + 5 6 + 7] get $even?)
+(10 = any/predicate [1 + 2 3 + 4 5 + 5 6 + 7] chain [get $odd?, get $not])
+(10 = any/predicate [1 + 2, comment "Hello", 3 + 4, 5 + 5, 6 + 7] get $even?)
+(10 = apply get $any [
     [1 + 2, 3 + 4 comment "No Comma" 5 + 5, 6 + 7]
-    /predicate chain [:odd?, :not]
+    /predicate chain [get $odd?, get $not]
 ])
 
 ('~[~false~]~ = ^ any/predicate [1 false 2] :not)

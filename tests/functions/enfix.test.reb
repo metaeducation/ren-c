@@ -112,7 +112,7 @@
         ]
     ])
 
-    ~???~ !! (1 obj.magic 2)  ; must use shove
+    ~???~ !! (1 obj/magic 2)  ; must use shove
 
     (3 = (1 ->- obj.magic 2))
     (-1 = (1 ->- obj.magic/minus 2))
@@ -128,11 +128,11 @@
         true
     )
 
-    ~literal-left-tuple~ !! (o.i left-the)
+    ('o.i = o.i left-the)
     (o.i ->- left-the = 'o.i)
 
-    ~literal-left-tuple~ !! (o.f left-the)
-    (o.f ->- left-the = 'o.f)
+    ~literal-left-path~ !! (o/f left-the)
+    (o/f ->- left-the = 'o/f)
 ]
 
 ; Rather than error when SET-WORD! or SET-PATH! are used as the left hand
@@ -170,16 +170,16 @@
 
 (9 = (1 + 2 ->- multiply 3))
 (9 = (1 + 2 >- multiply 3))
-(9 = (1 + 2 >-- lib.* 3))
-(9 = (1 + 2 ->- lib.* 3))
+(9 = (1 + 2 >-- lib/* 3))
+(9 = (1 + 2 ->- lib/* 3))
 
 (7 = (add 1 2 * 3))
-(7 = (add 1 2 ->- lib.* 3))
-(7 = (add 1 2 >- lib.* 3))
+(7 = (add 1 2 ->- lib/* 3))
+(7 = (add 1 2 >- lib/* 3))
 
-~expect-arg~ !! (10 ->- lib.= 5 + 5)
-~expect-arg~ !! (10 >- lib.= 5 + 5)
-(10 >-- lib.= 5 + 5)
+~expect-arg~ !! (10 ->- lib/= 5 + 5)
+~expect-arg~ !! (10 >- lib/= 5 + 5)
+(10 >-- lib/= 5 + 5)
 (10 >- = (5 + 5))
 
 ~no-arg~ !! (
@@ -198,7 +198,7 @@
 
 
 (
-    (x: add 1 add 2 3 |> lib.* 4)
+    (x: add 1 add 2 3 |> lib/* 4)
     x = 24
 )
 

@@ -182,7 +182,7 @@
 ('a == eval ['a])
 
 ; !!! Currently, EVAL of an ERROR! is like FAIL; it is not definitional,
-; and can only be caught with SYS.UTIL.RESCUE.  Should it be?  Or should a
+; and can only be caught with SYS.UTIL/RESCUE.  Should it be?  Or should a
 ; EVAL of an ERROR! just make it into a definitional error?
 ;
 ~zero-divide~ !! (error? trap [eval trap [1 / 0] 1])

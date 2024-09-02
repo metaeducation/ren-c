@@ -6,7 +6,7 @@
     data: mutable [a b c]
     data-readonly: const data
     all [
-        e: sys.util.rescue [append data-readonly <readonly>]
+        e: sys.util/rescue [append data-readonly <readonly>]
         e.id = 'const-value
         append data <readwrite>
         data = [a b c <readwrite>]
@@ -88,8 +88,8 @@
 (
     repeat 1 [data: copy [a [b [c]]]]
     append data <success>
-    e2: sys.util.rescue [append data.2 <failure>]
-    e22: sys.util.rescue [append data.2.2 <failure>]
+    e2: sys.util/rescue [append data.2 <failure>]
+    e22: sys.util/rescue [append data.2.2 <failure>]
     all [
         data = [a [b [c]] <success>]
         e2.id = 'const-value
@@ -146,7 +146,7 @@
 ; !!! RESKINNED is temporarily out of service, pending reworking of the way
 ; functions are built from frames.
 ;
-;    func-r2: reskinned [body [block!]] adapt :func []
+;    func-r2: reskinned [body [block!]] adapt get $func []
 ;    aggregator: func-r2 [x] [data: [] append data x]
 ;    all [
 ;        [10] = aggregator 10

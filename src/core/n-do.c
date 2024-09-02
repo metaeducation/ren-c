@@ -102,7 +102,7 @@ DECLARE_NATIVE(shove)
 // The SHOVE operation is used to push values from the left to act as the
 // first argument of an operation, e.g.:
 //
-//      >> 10 >- lib.(print "Hi!" first [multiply]) 20
+//      >> 10 >- lib/(print "Hi!" first [multiply]) 20
 //      Hi!
 //      200
 //
@@ -970,7 +970,7 @@ DECLARE_NATIVE(apply)
 #define Make_Action_Sublevel(parent) \
     Make_Level(&Action_Executor, (parent)->feed, \
         LEVEL_FLAG_RAISED_RESULT_OK \
-        | ((parent)->flags.bits & EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE))
+        | ((parent)->flags.bits & EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH))
 
 
 

@@ -19,12 +19,12 @@
 
 ; A simple FAIL with a string message will be a generic error ID
 ;
-(e: sys.util.rescue [fail "hello"], (e.id = null) and (e.message = "hello"))
+(e: sys.util/rescue [fail "hello"], (e.id = null) and (e.message = "hello"))
 
 
 ; Failing instead with a quasi-WORD? will make the error have that ID
 ;
-(e: sys.util.rescue [fail ~some-error-id~], e.id = 'some-error-id)
+(e: sys.util/rescue [fail ~some-error-id~], e.id = 'some-error-id)
 
 
 ; FAIL can be given a QUOTED! of a parameter to blame.  This gives a
@@ -36,7 +36,7 @@
     (
         foo: func [x] [fail 'x]
 
-        e: sys.util.rescue [foo 10]
+        e: sys.util/rescue [foo 10]
         all [
             e.id = 'invalid-arg
             e.arg1 = 'foo
@@ -47,7 +47,7 @@
     )(
         foo: func [x] [fail 'x "error reason"]
 
-        e: sys.util.rescue [foo 10]
+        e: sys.util/rescue [foo 10]
         all [
             e.id = null  ; no longer an invalid arg error
             [foo 10] = copy/part e.near 2  ; still implicates callsite

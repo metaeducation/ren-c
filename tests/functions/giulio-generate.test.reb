@@ -96,7 +96,7 @@
     input-lines: redescribe [
         {Makes a generator that yields lines from system.ports.input.}
     ](
-        specialize :read-lines [src: null]
+        specialize get $read-lines [src: null]
     )
 )
 

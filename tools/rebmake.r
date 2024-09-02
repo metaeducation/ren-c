@@ -1142,7 +1142,7 @@ object-file-class: make object! [
         return make entry-class [
             target: output
             depends: append (copy any [depends []]) source
-            commands: reduce [apply :command [
+            commands: reduce [apply get $command [
                 /I maybe parent.includes
                 /D maybe parent.definitions
                 /F maybe parent.cflags
@@ -1201,7 +1201,7 @@ generator-class: make object! [
         return: [text!]
         cmd [object!]
     ][
-        return switch cmd/class [
+        return switch cmd.class [
             #cmd-create [
                 applique any [
                     :gen-cmd-create get $target-platform/gen-cmd-create

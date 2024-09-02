@@ -23,11 +23,11 @@ utrim: func [
         [char? text! binary! integer! block! bitset!]
 ][
     let tail_TRIM: :tail
-    tail: :lib.tail
+    tail: get $lib/tail
     let head_TRIM: :head
-    head: :lib.head
+    head: get $lib/head
     let all_TRIM: :all
-    all: :lib.all
+    all: get $lib/all
 
     ; ACTION!s in the new object will still refer to fields in the original
     ; object.  That was true in R3-Alpha as well.  Fixing this would require

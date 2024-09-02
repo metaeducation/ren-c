@@ -29,15 +29,14 @@ REBOL [
 ;
 script-pre-load-hook: ~
 
-enrescue: :lib.enrescue
-lib.enrescue: ~  ; forcing long name of SYS.UTIL.ENRESCUE hints it is dangerous
+enrescue: get $lib/enrescue
+lib.enrescue: ~  ; forcing long name of SYS.UTIL/ENRESCUE hints it is dangerous
 
 ; Returns NULL if no error, otherwise the error
 ;
-rescue: enclose :enrescue func [f [frame!]] [
+rescue: enclose get $enrescue func [f [frame!]] [
     return match error! eval f
 ]
-
 
 module: func [
     {Creates a new module}
@@ -115,15 +114,15 @@ module: func [
     ; probably better to have such cases use MAKE MODULE! instead of MODULE.
     ;
     append mod 'import
-    mod.import: specialize :sys.util.import* [where: mod]
+    mod.import: specialize get $sys.util/import* [where: mod]
 
     ; If you DO a file, it doesn't get an EXPORT operation...only modules.
     ;
     append mod 'export
     mod.export: if spec and (spec.type = 'Module) [
-        specialize :sys.util.export* [where: mod]
+        specialize get $sys.util/export* [where: mod]
     ] else [
-        specialize :fail [reason: [
+        specialize get $fail [reason: [
             {Scripts must be invoked via IMPORT to get EXPORT, not DO:}
             (file else ["<was run as text!/binary!>"])
         ]]

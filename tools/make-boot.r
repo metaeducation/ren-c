@@ -745,7 +745,7 @@ c-debug-break: :void
 
 ob: make object! boot-sysobj
 
-c-debug-break: :lib/c-debug-break
+c-debug-break: get $lib/c-debug-break
 
 make-obj-defs: func [
     {Given a Rebol OBJECT!, write C structs that can access its raw variables}

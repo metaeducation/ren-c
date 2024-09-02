@@ -23,7 +23,7 @@
 
 [#1122 (
     any [
-        error? sys.util.rescue [load "9999999999999999999"]
+        error? sys.util/rescue [load "9999999999999999999"]
         greater? load-value "9999999999999999999" load-value "9223372036854775807"
     ]
 )]
