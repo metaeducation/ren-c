@@ -66,7 +66,7 @@ for-each [name value] options [
                     value: take user-ext
                 ]
                 for-each [name value] user-ext [
-                    user-config/extensions/:name: value
+                    user-config/extensions/(name): value
                 ]
             ]
         ]

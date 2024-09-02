@@ -1323,6 +1323,7 @@ acquisition_loop:
             ++cp; // skip ':'
             goto scanword;
 
+        treat_dollar_as_apostrophe:
         case LEX_SPECIAL_APOSTROPHE:
             if (IS_LEX_NUMBER(cp[1])) { // no '2nd
                 ss->token = TOKEN_LIT;
@@ -1537,6 +1538,23 @@ acquisition_loop:
             fail (Error_Syntax(ss));
 
         case LEX_SPECIAL_DOLLAR:
+            if (
+                GET_LEX_CLASS(cp[1]) == LEX_CLASS_WORD
+                or cp[1] == '-'
+                or cp[1] == '+'
+            ){
+                goto treat_dollar_as_apostrophe;
+            }
+            if (cp[1] == '.') {
+                ++cp;
+                ++ss->begin;
+                ss->token = TOKEN_LIT;
+                goto prescan_subsume_up_to_one_dot;
+            }
+            if (cp[1] == '/') {
+                ss->token = TOKEN_LIT;
+                fail (Error_Syntax(ss));
+            }
             if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
                 ss->token = TOKEN_EMAIL;
                 goto prescan_subsume_all_dots;
@@ -1758,7 +1776,11 @@ scanword:
     return;
 
   prescan_subsume_up_to_one_dot:
-    assert(ss->token == TOKEN_MONEY or ss->token == TOKEN_TIME);
+    assert(
+        ss->token == TOKEN_MONEY
+        or ss->token == TOKEN_TIME
+        or ss->token == TOKEN_LIT
+    );
 
     // By default, `.` is a delimiter class which stops token scaning.  So if
     // scanning +$10.20 or -$10.20 or $3.04, there is common code to look

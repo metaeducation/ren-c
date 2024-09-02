@@ -164,11 +164,12 @@
     ]
 )
 
-; PATH! beginning with an inert item will itself be inert
+; To aid in bootstrap, `/foo:` loads as `foo:`, consequently there are other
+; distruptions to losing slashes.
 ;
 [
-    (/ref/inement/path = as path! [/ref inement path])
-    (/refinement/3 = as path! [/refinement 3])
+    ((the /ref/inement/path) = as path! [ref inement path])
+    ((the /refinement/3) = as path! [refinement 3])
     ((/refinement)/3 = #"f")
     (r: /refinement  r/3 = #"f")
 ][
