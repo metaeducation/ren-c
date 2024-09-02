@@ -81,9 +81,9 @@ dump: func [
                 enablements.(prefix): item
             ]
 
-            fail 'value [
+            fail/blame [
                 "Item not TEXT!, INTEGER!, WORD!, TUPLE!, PATH!, GROUP!:" :item
-            ]
+            ] $value
         ]
     ]
 
@@ -252,7 +252,7 @@ summarize-obj: func [
                     if not find str pattern [continue]
                 ]
 
-                fail 'pattern
+                fail @pattern
             ]
 
             let desc: description-of noantiform get/any $val

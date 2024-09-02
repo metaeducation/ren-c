@@ -67,7 +67,9 @@ array: func [
             fail "Empty ARRAY dimensions (file issue if you want a meaning)"
         ]
         if not integer? size: size.1 [
-            fail 'size ["Expect INTEGER! size in BLOCK!, not" kind of size]
+            fail/blame [
+                "Expect INTEGER! size in BLOCK!, not" kind of size
+            ] $size
         ]
         if tail? rest [rest: null]  ; want `array [2]` => `[~ ~]`, no recurse
     ]

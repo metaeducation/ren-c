@@ -44,13 +44,13 @@ verify: func [
                 reaction != '~ignore~
             ]
         ] then [
-            fail 'conditions make error! [
+            fail/blame make error! [
                 type: 'Script
                 id: 'assertion-failure
                 arg1: compose [
                     (spread copy/part conditions pos) ** (reify result)
                 ]
-            ]
+            ] $conditions
         ]
 
         conditions: pos   ; move expression position and continue

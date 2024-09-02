@@ -168,9 +168,9 @@ join: func [
                     ]
                 ]
                 (not blank? last base) and (not blank? first item) [
-                    fail 'item [
+                    fail/blame [
                         "Elements must be separated with" sep
-                    ]
+                    ] $item
                 ]
                 (blank? last base) and (not blank? first item) [
                     take/last base
@@ -187,7 +187,7 @@ join: func [
             case [
                 empty? base [append base item]
                 blank? last base [change back tail base item]
-                fail 'item ["Elements must be separated with" sep]
+                fail/blame ["Elements must be separated with" sep] $item
             ]
         ]
     ]

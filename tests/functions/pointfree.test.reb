@@ -63,7 +63,9 @@
         ]
 
         if block and (:block.1) [
-            fail 'block ["Unused argument data at end of POINTFREE block"]
+            fail/blame [
+                "Unused argument data at end of POINTFREE block"
+            ] $block
         ]
 
         ; We now create an action out of the frame.  nothing parameters are

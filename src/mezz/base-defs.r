@@ -266,7 +266,7 @@ an: lambda [
     {Prepends the correct "a" or "an" to a string, based on leading character}
     value <local> s
 ][
-    if null? value [fail 'value]
+    if null? value [fail @value]
     head of insert (s: form value) either (find "aeiou" s.1) ["an "] ["a "]
 ]
 

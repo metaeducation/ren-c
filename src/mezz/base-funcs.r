@@ -420,11 +420,11 @@ so: enfix func [
         [<end> any-value? <variadic>]
 ][
     if not condition [
-        fail 'condition make error! [
+        fail/blame make error! [
             type: 'Script
             id: 'assertion-failure
             arg1: compose [~false~ so]
-        ]
+        ] $condition
     ]
     if tail? feed [return ~]
     return take feed
@@ -437,11 +437,11 @@ was: enfix redescribe [
 ](
     lambda [left [any-value?] right [any-value?]] [
         if :left != :right [
-            fail 'return make error! [
+            fail/blame make error! [
                 type: 'Script
                 id: 'assertion-failure
                 arg1: compose [(:left) is (:right)]
-            ]
+            ] $return
         ]
         :left  ; choose left in case binding or case matters somehow
     ]
@@ -543,7 +543,7 @@ find-last: redescribe [
 ](
     adapt get $find-reverse [
         if not any-series? series [
-            fail 'series "Can only use FIND-LAST on ANY-SERIES?"
+            fail/blame "Can only use FIND-LAST on ANY-SERIES?" $series
         ]
 
         series: tail of series  ; can't use plain TAIL due to /TAIL refinement
@@ -773,12 +773,10 @@ raise: func [
     {Interrupts execution by reporting an error (a TRAP can intercept it).}
 
     return: []
-    'blame "Point to variable or parameter to blame"
-        [<skip> quoted?]
     reason "ERROR! value, ID, URL, message text, or failure spec"
         [<end> error! path! url! text! block! antiword?]
-    /where "Frame or parameter at which to indicate the error originated"
-        [frame! any-word?]
+    /blame "Point to variable or parameter to blame"
+        [word! frame!]
 ][
     if (antiword? reason) and (not null? reason) [  ; <end> acts as null nonmeta
         ;
@@ -787,15 +785,10 @@ raise: func [
         ; ~null~, ~true~, ~false~, etc.  But for a time they were allowed
         ; to say things like (fail ~unreachable~)...permit for now.
         ;
-        reason: noantiform reason
+        reason: noquasi reify reason
     ]
-    all [error? reason, not blame, not where] then [
+    all [error? reason, not blame] then [
         return raise* reason  ; fast shortcut
-    ]
-    if blame [
-        blame: (match [word! tuple!] unquote blame) else [
-            fail "Quoted blame for error must be WORD! or TUPLE!)"
-        ]
     ]
 
     ; Ultimately we might like FAIL to use some clever error-creating dialect
@@ -873,7 +866,7 @@ raise: func [
         ; If no specific location specified, and error doesn't already have a
         ; location, make it appear to originate from the frame calling FAIL.
         ;
-        where: default [any [frame, binding of $return]]
+        let where: default [any [frame, binding of $return]]
 
         set-location-of-error error where  ; !!! why is this native?
     ]

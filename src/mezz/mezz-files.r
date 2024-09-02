@@ -275,10 +275,10 @@ confirm: func [
         block? with
         length of with > 2
 
-        fail 'with [
+        fail/blame [
             "maximum 2 arguments allowed for with [true false]"
             "got:" mold with
-        ]
+        ] $with
     ]
 
     let response: ask question
