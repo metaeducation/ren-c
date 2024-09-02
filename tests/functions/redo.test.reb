@@ -187,7 +187,7 @@
         return "base got no frame"
     ]
 
-    c: chain [
+    c: cascade [
         adapt get $base [
            log [{C} n delta]
 

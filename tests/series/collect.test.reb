@@ -48,7 +48,7 @@
     (collect-text: redescribe [
         {Evaluate body, and return block of values collected via KEEP function.
         Returns all values as a single spaced TEXT!, individual KEEPed blocks get UNSPACED.}
-    ] chain [  ; https://forum.rebol.info/t/945/2
+    ] cascade [  ; https://forum.rebol.info/t/945/2
         adapt get $collect [
             body: compose [
                 keep: adapt specialize get $keep [

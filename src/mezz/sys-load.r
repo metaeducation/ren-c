@@ -306,7 +306,7 @@ load: func [
 load-value: redescribe [
     {Do a LOAD of a single value}
 ](
-    chain [
+    cascade [
         get $load,
         lambda [^x [raised? block!]] [
             either raised? unmeta x [

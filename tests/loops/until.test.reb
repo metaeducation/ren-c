@@ -44,7 +44,7 @@
 (
     x: [2 4 6 8 7 9 11 30]
     all [
-        7 = until/predicate [take x] chain [get $even?, get $not]
+        7 = until/predicate [take x] cascade [get $even?, get $not]
         x = [9 11 30]
     ]
 )(

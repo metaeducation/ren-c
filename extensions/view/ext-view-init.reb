@@ -25,7 +25,7 @@ request-file: adapt get $request-file* [
 ;
 ; "Asks user to select a directory and returns it as file path"
 ;
-request-dir: chain [
+request-dir: cascade [
     adapt get $request-dir* [
         if path [
             dir: lib/replace/all file-to-local dir "/" "//"

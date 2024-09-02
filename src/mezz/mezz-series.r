@@ -425,7 +425,7 @@ collect*: func [
 collect: redescribe [
     {Evaluate body, and return block of values collected via KEEP function.
     Returns empty block if nothing KEEPed.}
-] chain [
+] cascade [
     get $collect*,
     specialize get $else [branch: [copy []]]
 ]

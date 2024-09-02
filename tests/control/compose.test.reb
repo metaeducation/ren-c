@@ -211,7 +211,7 @@
 [
     ([<a> ~null~ <b>] = apply get $compose [
         [<a> (if true [null]) <b>]
-        /predicate chain [get $eval, get $reify]
+        /predicate cascade [get $eval, get $reify]
     ])
     ([<a>] = compose [<a> (~()~)])
     ([<a>] = compose [<a> (~void~)])  ; exception made for pure void

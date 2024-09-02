@@ -83,7 +83,7 @@
     ])
 ]
 
-~no-arg~ !! (reduce/predicate [null] chain [get $null?, get $non])
+~no-arg~ !! (reduce/predicate [null] cascade [get $null?, get $non])
 
 ; Voids are offered, but omitted if predicate doesn't take them.
 ; https://forum.rebol.info/t/should-void-be-offered-to-predicates-for-reduce-any-all-etc/1872
@@ -108,7 +108,7 @@
 ~bad-antiform~ !! (reduce/predicate [1 + 2 3 + 4] func [x] [x * 10])
 ([30 70] = reduce/predicate [1 + 2 3 + 4] func [x] [return x * 10])
 
-([~true~ ~false~] = reduce/predicate [2 + 2 3 + 4] chain [
+([~true~ ~false~] = reduce/predicate [2 + 2 3 + 4] cascade [
     get $even?, get $reify
 ])
 

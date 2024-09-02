@@ -387,9 +387,9 @@
 ; PREDICATES
 
 (15 = all/predicate [1 + 2 3 + 4 5 + 6 7 + 8] get $odd?)
-(15 = all/predicate [1 + 2 3 + 4 5 + 6 7 + 8] chain [get $even?, get $not])
+(15 = all/predicate [1 + 2 3 + 4 5 + 6 7 + 8] cascade [get $even?, get $not])
 (15 = all/predicate [1 + 2, 3 + 4, comment "Hi" 5 + 6, 7 + 8] get $odd?)
-(15 = all/predicate [1 + 2, 3 + 4 5 + 6, 7 + 8,] chain [get $even?, get $not])
+(15 = all/predicate [1 + 2, 3 + 4 5 + 6, 7 + 8,] cascade [get $even?, get $not])
 
 ('~[~null~]~ = ^ all/predicate [false null] get $not)
 ('~[~false~]~ = ^ all/predicate [null false] get $not)

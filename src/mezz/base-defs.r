@@ -195,11 +195,11 @@ elide-if-void: func* [
 each: runs get $quote
 
 
-; It's easier to pre-process CHAIN's block in usermode, which also offers a
-; lower-level version CHAIN* that just takes a block of frames.
+; It's easier to pre-process CASCADE's block in usermode, which also offers a
+; lower-level version CASCADE* that just takes a block of frames.
 ;
-chain: adapt get $chain* [
-    pipeline: reduce/predicate pipeline :unrun
+cascade: adapt get $cascade* [
+    pipeline: reduce/predicate pipeline get $/unrun
 ]
 
 

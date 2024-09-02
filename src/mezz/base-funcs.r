@@ -706,7 +706,7 @@ count-down: redescribe [
 lock-of: redescribe [
     "If value is already locked, return it...otherwise CLONE it and LOCK it."
 ](
-    chain [specialize get $copy [deep: #], :freeze]
+    cascade [specialize get $copy [deep: #], :freeze]
 )
 
 eval-all: func [
@@ -888,4 +888,4 @@ raise: func [
 ; generation of the NEAR and WHERE fields.  If we tried to ENCLOSE and DO
 ; the error it would add more overhead and confuse those matters.
 ;
-fail: chain [get $raise, get $null?]
+fail: cascade [get $raise, get $null?]

@@ -19,11 +19,11 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// CHAIN is used to create a function that matches the interface of a "first"
+// CASCADE is used to create a function that matches the interface of a "first"
 // function, and then pipes its results through to several subsequent
 // post-processing actions:
 //
-//     >> negadd: chain [get $add, get $negate]
+//     >> negadd: cascade [get $add, get $negate]
 //
 //     >> negadd 2 2
 //     == -4
@@ -32,15 +32,13 @@
 // inputs to the first function (or other memory in the process), consider
 // using ENCLOSE...which is less efficient, but more powerful.
 //
-// !!! CHAIN is one of the oldest function derivations, and has not been
-// revisited much in its design--e.g. to support multiple return values.
-//
 
 #include "sys-core.h"
 
 enum {
-    IDX_CHAINER_PIPELINE = 1,  // Chain of functions to execute
-    IDX_CHAINER_MAX
+    IDX_CASCADER_PIPELINE = 1,  // BLOCK! of what should be all FRAME!
+    /* IDX_CASCADER_PIPELINE_INDEX, */  // Series index in PIPELINE is used
+    IDX_CASCADER_MAX
 };
 
 
@@ -51,7 +49,7 @@ enum {
 // it derived from, sometimes it can do some work...update the phase...and
 // keep running in that same Level* allocation.
 //
-// But if it wants to stay in control and do post-processing (as CHAIN does)
+// But if it wants to stay in control and do post-processing (as CASCADE does)
 // then it needs to remain linked into the stack.  This function helps to
 // move the built level into a new level that can be executed with a new
 // entry to Process_Action().  The ability is also used by RESKINNED.
@@ -71,7 +69,7 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
     sub->rootvar = Array_Head(sub->varlist);
 
     // Note that it can occur that this may be a TRAMPOLINE_KEEPALIVE sublevel
-    // of something like another CHAIN, that it intends to reuse (!)  This
+    // of something like another CASCADE, that it intends to reuse (!)  This
     // means it started out thinking we were going to run an action in that
     // frame and drop it, when in reality we're changing the executor and
     // everything.  This is clearly voodoo but maybe it can be formalized.
@@ -91,49 +89,49 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
 
 
 //
-//  Chainer_Dispatcher: C
+//  Cascader_Dispatcher: C
 //
-// The frame built for the CHAIN matches the arguments needed by the first
+// The frame built for the CASCADE matches the arguments needed by the first
 // function in the pipeline.  Having the same interface as that function
-// makes a chained function specializable.
+// makes a cascaded function specializable.
 //
-// A first cut at implementing CHAIN did it all within one level.  It changed
+// A first cut at implementing CASCADE did it all within one level.  It changed
 // the Level_Phase() and returned a REDO signal--pushing actions to the data
 // stack that the evaluator was complicit in processing as "things to run
-// afterward".  This baked awareness of chaining into %c-action.c, when it is
+// afterward".  This baked awareness of cascading into %c-action.c, when it is
 // better if the process was localized in the dispatcher.
 //
-// Handling it in the dispatcher means the Chainer_Dispatcher() stays on
+// Handling it in the dispatcher means the Cascader_Dispatcher() stays on
 // the stack and in control.  This means either unhooking the current `L` and
 // putting a new Level* above it, or stealing the content of the `L` into a
 // new level to put beneath it.  The latter is chosen to avoid disrupting
 // existing pointers to `L`.
 //
-// (Having a separate level for the overall chain has an advantage in error
+// (Having a separate level for the overall pipeline has an advantage in error
 // messages too, as there is a level with the label of the function that the
-// user invoked in the stack trace...instead of just the chained item that
+// user invoked in the stack trace...instead of just the cascaded item that
 // causes an error.)
 //
-Bounce Chainer_Dispatcher(Level* const L)
+Bounce Cascader_Dispatcher(Level* const L)
 //
-// 1. Stealing the varlist leaves the actual chainer frame with no varlist
+// 1. Stealing the varlist leaves the actual cascader frame with no varlist
 //    content.  That means debuggers introspecting the stack may see a
 //    "stolen" frame state.
 //
 // 2. You can't have an Action_Executor()-based frame on the stack unless it
 //    has a lot of things (like a varlist, which provides the phase, etc.)
 //    So we switch it around to where the level that had its varlist stolen
-//    just uses Chainer_Dispatcher() as its executor, so we get called back.
+//    just uses Cascader_Dispatcher() as its executor, so we get called back.
 //
-// 3. At the head of the chain we start at the dispatching phase since the
+// 3. At the head of the pipeline we start at the dispatching phase since the
 //    frame is already filled, but each step after that uses enfix and runs
 //    from the top.)
 //
-// 4. We use the same mechanism as enfix operations do...give the next chain
+// 4. We use the same mechanism as enfix operations do...give the next cascade
 //    step its first argument coming from L->out.
 //
-//    !!! One side effect of this is that unless CHAIN is changed to check,
-//    your chains can consume more than one argument.  It might be interesting
+//    !!! One side effect of this is that unless CASCADE is changed to check,
+//    pipeline items can consume more than one argument.  Might be interesting
 //    or it might be bugs waiting to happen, trying it this way for now.
 {
     USE_LEVEL_SHORTHANDS (L);
@@ -142,51 +140,51 @@ Bounce Chainer_Dispatcher(Level* const L)
         return THROWN;
 
     enum {
-        ST_CHAINER_INITIAL_ENTRY = STATE_0,
-        ST_CHAINER_RUNNING_SUBFUNCTION
+        ST_CASCADER_INITIAL_ENTRY = STATE_0,
+        ST_CASCADER_RUNNING_SUBFUNCTION
     };
 
     switch (STATE) {
-      case ST_CHAINER_INITIAL_ENTRY: goto initial_entry;
-      case ST_CHAINER_RUNNING_SUBFUNCTION: goto run_next_in_chain;
+      case ST_CASCADER_INITIAL_ENTRY: goto initial_entry;
+      case ST_CASCADER_RUNNING_SUBFUNCTION: goto run_next_in_pipeline;
       default: assert(false);
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Details* details = Phase_Details(PHASE);
-    assert(Array_Len(details) == IDX_CHAINER_MAX);
+    assert(Array_Len(details) == IDX_CASCADER_MAX);
 
-    Value* pipeline_at = Init_Block(
+    Value* pipeline = Init_Block(
         SPARE,  // index of BLOCK! is current step
-        Cell_Array(Details_At(details, IDX_CHAINER_PIPELINE))
+        Cell_Array(Details_At(details, IDX_CASCADER_PIPELINE))
     );
 
     Level* sub = Push_Downshifted_Level(OUT, L);  // steals varlist [1]
-    L->executor = &Chainer_Dispatcher;  // so trampoline calls us [2]
+    L->executor = &Cascader_Dispatcher;  // so trampoline calls us [2]
 
-    const Cell* chained = Cell_List_Item_At(pipeline_at);
-    ++VAL_INDEX_RAW(pipeline_at);
+    const Cell* first = Cell_List_Item_At(pipeline);
+    ++VAL_INDEX_RAW(pipeline);  // point series index to next FRAME! to call
 
     INIT_LVL_PHASE(
         sub,
-        ACT_IDENTITY(VAL_ACTION(chained))  // has varlist already [3]
+        ACT_IDENTITY(VAL_ACTION(first))  // has varlist already [3]
     );
-    INIT_LVL_COUPLING(sub, VAL_FRAME_COUPLING(chained));
+    INIT_LVL_COUPLING(sub, VAL_FRAME_COUPLING(first));
 
-    sub->u.action.original = VAL_ACTION(chained);
-    sub->label = VAL_FRAME_LABEL(chained);
+    sub->u.action.original = VAL_ACTION(first);
+    sub->label = VAL_FRAME_LABEL(first);
   #if !defined(NDEBUG)
     sub->label_utf8 = sub->label
         ? String_UTF8(unwrap sub->label)
         : "(anonymous)";
   #endif
 
-    STATE = ST_CHAINER_RUNNING_SUBFUNCTION;
+    STATE = ST_CASCADER_RUNNING_SUBFUNCTION;
     Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);
     return CATCH_CONTINUE_SUBLEVEL(sub);
 
-} run_next_in_chain: {  //////////////////////////////////////////////////////
+} run_next_in_pipeline: {  ///////////////////////////////////////////////////
 
     Level* sub = SUBLEVEL;
     if (Get_Level_Flag(L, RAISED_RESULT_OK))
@@ -198,26 +196,26 @@ Bounce Chainer_Dispatcher(Level* const L)
     sub->varlist = nullptr;
 
     assert(Is_Block(SPARE));
-    Value* pipeline_at = cast(Value*, SPARE);
-    const Element* chained_tail;
-    const Element* chained = Cell_List_At(&chained_tail, pipeline_at);
+    Value* pipeline = cast(Value*, SPARE);  // series index at FRAME! to call
+    const Element* pipeline_tail;
+    const Element* pipeline_at = Cell_List_At(&pipeline_tail, pipeline);
 
-    if (chained == chained_tail)
+    if (pipeline_at == pipeline_tail)
         goto finished;
 
-    ++VAL_INDEX_RAW(pipeline_at);
+    ++VAL_INDEX_RAW(pipeline);  // update series index to next FRAME! to call
 
     Restart_Action_Level(sub);  // see notes
-    Push_Action(sub, VAL_ACTION(chained), VAL_FRAME_COUPLING(chained));
+    Push_Action(sub, VAL_ACTION(pipeline_at), VAL_FRAME_COUPLING(pipeline_at));
 
-    Begin_Prefix_Action(sub, VAL_FRAME_LABEL(chained));
+    Begin_Prefix_Action(sub, VAL_FRAME_LABEL(pipeline_at));
 
     Level_State_Byte(sub) = ST_ACTION_INITIAL_ENTRY_ENFIX;  // [4]
     Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);
     Clear_Executor_Flag(ACTION, sub, IN_DISPATCH);
     Clear_Level_Flag(sub, NOTIFY_ON_ABRUPT_FAILURE);
 
-    assert(STATE == ST_CHAINER_RUNNING_SUBFUNCTION);
+    assert(STATE == ST_CASCADER_RUNNING_SUBFUNCTION);
     return CATCH_CONTINUE_SUBLEVEL(sub);
 
 } finished: {  ///////////////////////////////////////////////////////////////
@@ -234,7 +232,7 @@ Bounce Chainer_Dispatcher(Level* const L)
 
 
 //
-//  chain*: native [
+//  cascade*: native [
 //
 //  "Create a processing pipeline of actions, each consuming the last result"
 //
@@ -243,18 +241,18 @@ Bounce Chainer_Dispatcher(Level* const L)
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
+DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
 {
-    INCLUDE_PARAMS_OF_CHAIN_P;
+    INCLUDE_PARAMS_OF_CASCADE_P;
 
-    Atom* out = OUT;  // plan ahead for factoring into Chain_Action(out..
+    Atom* out = OUT;  // plan ahead for factoring into Cascade_Action(out..
 
     Element* pipeline = cast(Element*, ARG(pipeline));
     const Element* tail;
     const Element* first = Cell_List_At(&tail, pipeline);
 
     // !!! Current validation is that all are frames.  Should there be other
-    // checks?  (That inputs match outputs in the chain?)  Should it be
+    // checks?  (That inputs match outputs in the pipeline?)  Should it be
     // a dialect and allow things other than functions?
     //
     const Element* check = first;
@@ -266,21 +264,24 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
         }
     }
 
-    // The chained function has the same interface as head of the chain.
+    // The cascaded function has the same interface as head.
     //
-    // !!! Output (RETURN) should match the *tail* of the chain.  Is this
+    // !!! Output (RETURN) should match the *tail* of the pipeline.  Is this
     // worth a new paramlist?  Should return mechanics be just reviewed in
     // general, possibly that all actions put the return slot in a separate
     // sliver that includes the partials?
     //
-    Phase* chain = Make_Action(
+    Phase* cascade = Make_Action(
         ACT_PARAMLIST(VAL_ACTION(first)),  // same interface as first action
         ACT_PARTIALS(VAL_ACTION(first)),
-        &Chainer_Dispatcher,
-        IDX_CHAINER_MAX  // details array capacity
+        &Cascader_Dispatcher,
+        IDX_CASCADER_MAX  // details array capacity
     );
     Force_Value_Frozen_Deep(pipeline);
-    Copy_Cell(Array_At(Phase_Details(chain), IDX_CHAINER_PIPELINE), pipeline);
+    Copy_Cell(  // index of this block gets incremented as pipeline executes
+        Array_At(Phase_Details(cascade), IDX_CASCADER_PIPELINE),
+        pipeline
+    );
 
-    return Init_Action(out, chain, VAL_FRAME_LABEL(first), UNBOUND);
+    return Init_Action(out, cascade, VAL_FRAME_LABEL(first), UNBOUND);
 }

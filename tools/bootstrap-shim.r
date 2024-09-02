@@ -486,7 +486,7 @@ collect*: func3 [  ; variant giving NULL if no actual material kept
     out
 ]
 
-collect: chain [  ; Gives empty block instead of null if no keeps
+collect: cascade [  ; Gives empty block instead of null if no keeps
     :collect*  ; note: does not support , in bootstrap build
     specialize 'else [branch: [copy []]]
 ]

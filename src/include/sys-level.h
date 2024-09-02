@@ -120,10 +120,10 @@ INLINE bool ANY_ESCAPABLE_GET(const Atom* v) {
 //    routine helps find places that turn the level back into one that the
 //    Push_Action() function is legal on.
 //
-// 2. CHAIN has a strange implementation detail where it steals the frame
-//    data built for the chain and gives it to the function at the head of
-//    the chain.  Then it replaces the executor for the original frame to
-//    the &Chainer_Dispatcher.  Hence Drop_Action() is never called on such
+// 2. CASCADE has a strange implementation detail where it steals the frame
+//    data built for the cascade and gives it to the function at the head of
+//    the pipeline.  Then it replaces the executor for the original frame to
+//    the &Cascader_Dispatcher.  Hence Drop_Action() is never called on such
 //    functions to null out the executor.  These mechanisms are the ones
 //    most likely to break when code is rearranged, so it's good to call
 //    out the weirdness.
@@ -131,7 +131,7 @@ INLINE bool ANY_ESCAPABLE_GET(const Atom* v) {
 INLINE void Restart_Action_Level(Level* L) {
     assert(
         L->executor == nullptr  // Drop_Action() sets to nullptr [1]
-        or L->executor == &Chainer_Dispatcher   // Weird exception [2]
+        or L->executor == &Cascader_Dispatcher   // Weird exception [2]
     );
     L->executor = &Action_Executor;
 }
