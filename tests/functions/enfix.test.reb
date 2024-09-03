@@ -37,55 +37,6 @@
 ~no-arg~ !! (eval reduce [unrun get $+ 1 2])  ; enfix no argument
 
 
-; Only hard-quoted parameters are <skip>-able
-~???~ !! (
-    lambda [x [<skip> integer!] y] [<unreachable>]
-)
-
-[
-    (
-        skippy: lambda ['x [<skip> integer!] y] [reduce [any [x _] y]]
-        lefty: enfix :skippy
-        true
-    )
-
-    ([_ "hi"] = skippy "hi")
-    ([10 "hi"] = skippy 10 "hi")
-
-    ([_ "hi"] = lefty "hi")
-    ([1 "hi"] = 1 lefty "hi")
-
-    ; Enfixed skipped left arguments mean that a function will not be executed
-    ; greedily...it will run in its own step, as if the left was an end.
-    (
-        var: ~
-        block: [<tag> lefty "hi"]
-        all [
-            <tag> = [block @]: evaluate/next block
-            [lefty "hi"] = block
-            [_ "hi"] = [block @]: evaluate/next block
-            [] = block
-        ]
-    )
-
-    ; Normal operations quoting rightward outrank operations quoting left,
-    ; making the left-quoting operation see nothing on the left, even if the
-    ; type matched what it was looking for.
-    (
-        unset $var
-        block: [the 1 lefty "hi"]
-        all [
-            1 = [block @]: evaluate/next block
-            [lefty "hi"] = block
-            [_ "hi"] = [block @]: evaluate/next block
-            [] = block
-        ]
-    )
-
-    ([_ "hi"] = any [false null lefty "hi"])
-]
-
-
 ; ->- is the "SHOVE" operation.  It lets any ACTION!, including one dispatched
 ; from PATH!, receive its first argument from the left.  It uses the parameter
 ; conventions of that argument.
@@ -233,52 +184,6 @@
     )
 
     (
-        ifoo: func ['i [<skip> integer!]] [
-            fail "ifoo should not run, it tests <skip> on *next* step"
-        ]
-        ignored: func [return: [issue!]] [
-            ignored: null
-            return #ignored
-        ]
-        all [
-            #ignored == [pos @var]: evaluate/next [ignored ifoo 304]
-            var == #ignored
-            pos = [ifoo 304]
-            null? ignored
-        ]
-    )(
-        enifoo: enfix func ['i [<skip> integer!]] [
-            fail [
-                {enifoo should not run; when arguments are skipped this}
-                {defers the enfix until the next evaluator step.  Otherwise}
-                {`case [1 = 1 [print "good"]] else [print "bad"]`}
-                {would print both `good` and `bad`.}
-            ]
-        ]
-        ignored: func [return: [issue!]] [
-            ignored: null
-            return #ignored
-        ]
-        all [
-            [pos var]: evaluate/next [ignored enifoo 304]
-            pos = [enifoo 304]
-            var == #ignored
-            null? ignored
-        ]
-    )(
-        enifoo: enfix lambda ['i [<skip> integer!]] [compose $<enifoo>/(i)]
-        all [
-            [pos var]: evaluate/next [1020 enifoo 304]
-            pos = [304]
-            var == '<enifoo>/1020
-        ]
-        comment {
-            When arguments are not skipped, the behavior should be the
-            same as a non-skippable enfix function
-        }
-    )
-
-    (
         bar: func [return: [nihil?]] [bar: null, return nihil]
         all [
             [pos var]: evaluate/next [1020 bar 304]
@@ -298,55 +203,6 @@
             null? enbar
         ]
         comment {Invisible enfix arity-0 function should run on same step}
-    )
-
-    (
-        ibar: func ['i [<skip> integer!]] [ibar: null]
-        ignored: func [return: [issue!]] [
-            ignored: null
-            return #ignored
-        ]
-        all [
-            [pos var]: evaluate/next [ignored ibar 304]
-            pos = [ibar 304]
-            var == #ignored
-            null? ignored
-        ]
-        comment {skip irrelevant (tests right on *next* step)}
-    )(
-        enibar: enfix func [return: [] 'i [<skip> integer!]] [
-            fail {
-                When arguments are skipped, this defers the enfix until the
-                next evaluator step.  Doing otherwise would mean that
-                `case [1 = 1 [print "good"]] else [print "bad"]` would
-                print both `good` and `bad`.
-            }
-        ]
-        kept: func [return: [issue!]] [
-            kept: null
-            return #kept
-        ]
-        all [
-            [pos var]: evaluate/next [kept enibar 304]
-            pos = [enibar 304]
-            var == #kept
-            null? kept
-        ]
-    )(
-        enibar: enfix func [return: [integer!] 'i [<skip> integer!]] [
-            enibar: null
-            return i
-        ]
-        all [
-            [pos var]: evaluate/next [1020 enibar 304]
-            pos = [304]
-            var == 1020
-            null? enibar
-        ]
-        comment {
-            When arguments are not skipped, the behavior should be the
-            same as a non-skippable enfix function
-        }
     )
 ]
 

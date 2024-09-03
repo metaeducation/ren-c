@@ -654,7 +654,7 @@ export*: func [
         [any-value?]
     where "Specialized for each module via EXPORT"
         [module!]
-    'left [<skip> set-word! set-group!]
+    'what [set-word! set-group! block!]
     args "`export x: ...` for single or `export [...]` for words list"
         [any-value? <variadic>]
     <local>
@@ -663,16 +663,16 @@ export*: func [
     hdr: adjunct-of where
     exports: ensure block! select hdr 'Exports
 
-    if left [
-        if set-group? left [
-            left: ^ eval left
+    if not block? what [
+        if set-group? what [
+            what: ^ eval what
             case [
-                void' = left [word: null]
-                any-word? unmeta left [word: as word! unmeta left]
+                void' = what [word: null]
+                any-word? unmeta what [word: as word! unmeta what]
                 fail "EXPORT of SET-GROUP! must be VOID or ANY-WORD?"
             ]
         ] else [
-            word: as word! left
+            word: as word! what
         ]
         return (  ; can't append until after, if prev. definition used in expr
             (
@@ -685,12 +685,7 @@ export*: func [
         )
     ]
 
-    items: ^ try take args
-    if group? unmeta items [items: eval unmeta items]
-    if not block? unmeta items [
-        fail "EXPORT must be of form `export x: ...` or `export [...]`"
-    ]
-    items: unmeta items
+    items: what
 
     while [not tail? items] [
         val: get/any inside items word: match word! items.1 else [

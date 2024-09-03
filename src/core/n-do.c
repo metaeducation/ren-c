@@ -715,32 +715,6 @@ DECLARE_NATIVE(applique)
 //  ]
 //
 DECLARE_NATIVE(apply)
-//
-// 1. Binders cannot be held across evaluations at this time.  Do slow
-//    lookups for refinements, but this is something that needs rethinking.
-//
-// 2. Make a FRAME! for the ACTION!, weaving in the ordered refinements
-//    collected on the stack (if any).  Any refinements that are used in any
-//    specialization level will be pushed as well, which makes them
-//    out-prioritize (e.g. higher-ordered) than any used in a PATH! that were
-//    pushed during the Get of the ACTION!.
-//
-// 3. Two argument-name labels in a row is not legal...treat it like the next
-//    refinement is reaching a comma or end of block.  (Though this could be
-//    treated as an <end> case?)
-//
-// 4. We treat <skip> parameters as if they can only be requested by name,
-//    like a refinement.  This is because the evaluative nature of APPLY is
-//    not compatible with the quoting requirement of skippability.
-//
-// 5. Low-level frame mechanics require that no-argument refinements be either
-//    # or null.  As a higher-level utility, APPLY can throw in some assistance
-//    so it converts (true => #) and (false => null)
-//
-// 6. We need to remove the binder indices, whether we are raising an error
-//    or not.  But we also want any fields not assigned to be set to `~`.
-//    (We wanted to avoid the situation where someone purposefully set a
-//    meta-parameter to `~` being interpreted as never setting a field).
 {
     INCLUDE_PARAMS_OF_APPLY;
 
@@ -785,12 +759,19 @@ DECLARE_NATIVE(apply)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    /*struct Reb_Binder binder;  // [1]
-    INIT_BINDER(&binder);*/
-    Context* exemplar = Make_Context_For_Action_Push_Partials(  // [2]
+    // 1. Make a FRAME! for the ACTION!, weaving in the ordered refinements
+    //    collected on the stack (if any).  Any refinements that are used in
+    //    any specialization level will be pushed as well, which makes them
+    //    out-prioritize (e.g. higher-ordered) than any used in a PATH! that
+    //    were pushed during the Get of the ACTION!.
+    //
+    // 2. Binders cannot be held across evaluations at this time.  Do slow
+    //    lookups for refinements, but this is something that needs rethinking.
+
+    Context* exemplar = Make_Context_For_Action_Push_Partials(  // [1]
         op,
         STACK_BASE,  // lowest_stackindex of refinements to weave in
-        nullptr /* &binder */
+        nullptr  // doesn't use a Binder [2]
     );
     Manage_Flex(CTX_VARLIST(exemplar)); // Putting into a frame
     Init_Frame(frame, exemplar, VAL_FRAME_LABEL(op));  // GC guarded
@@ -813,6 +794,10 @@ DECLARE_NATIVE(apply)
 
 } handle_next_item: {  ///////////////////////////////////////////////////////
 
+    // 1. Two argument-name labels in a row is not legal...treat it like the
+    //    next refinement is reaching a comma or end of block.  (Though this
+    //    could be treated as an <end> case?)
+
     Level* L = SUBLEVEL;
 
     if (Is_Level_At_End(L))
@@ -825,14 +810,11 @@ DECLARE_NATIVE(apply)
         goto handle_next_item;
     }
 
-    // We do special handling if we see a /REFINEMENT ... that is taken
-    // to mean we are naming the next argument.
-
   #if !defined(NDEBUG)
     Corrupt_Pointer_If_Debug(param);
   #endif
 
-    if (Is_Path(at) and Is_Refinement(at)) {
+    if (Is_Path(at) and Is_Refinement(at)) {  // /REFINEMENT names next arg
         STATE = ST_APPLY_LABELED_EVAL_STEP;
 
         const Symbol* symbol = VAL_REFINEMENT_SYMBOL(At_Level(L));
@@ -855,7 +837,7 @@ DECLARE_NATIVE(apply)
         if (at == nullptr or Is_Comma(at))
             fail (Error_Need_Non_End_Raw(lookback));
 
-        if (Is_Path(at) and Is_Refinement(at))  // [3]
+        if (Is_Path(at) and Is_Refinement(at))  // catch e.g. /DUP /LINE [1]
             fail (Error_Need_Non_End_Raw(lookback));
 
         Init_Integer(ARG(index), index);
@@ -884,9 +866,8 @@ DECLARE_NATIVE(apply)
                 Cell_ParamClass(e->param) == PARAMCLASS_RETURN
                 or Cell_ParamClass(e->param) == PARAMCLASS_OUTPUT
                 or Get_Parameter_Flag(e->param, REFINEMENT)
-                or Get_Parameter_Flag(e->param, SKIPPABLE)
             ){
-                continue;  // skippable only requested by name [4]
+                continue;
             }
             if (Not_Specialized(e->var)) {
                 param = e->param;
@@ -925,7 +906,11 @@ DECLARE_NATIVE(apply)
 
 } copy_spare_to_var_in_frame: {  /////////////////////////////////////////////
 
-    if (  // help convert logic for no-arg refinement [5]
+    // 1. Low-level frame mechanics require that no-argument refinements be
+    //    either # or null.  As a higher-level utility, APPLY can throw in
+    //    some assistance so it converts (true => #) and (false => null)
+
+    if (  // convenience: convert logic for no-arg refinement [1]
         Is_Logic(SPARE)
         and Get_Parameter_Flag(param, REFINEMENT)
         and Is_Parameter_Unconstrained(param)

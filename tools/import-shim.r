@@ -157,7 +157,7 @@ rewrite-source-for-bootstrap-exe: lib3/func [
 wrap-module: false
 
 old-do: :lib3/do
-do: enclose get $lib3/do lib3/func [
+do: enclose :lib3/do lib3/func [
     f [frame!]
     <local> old-system-script file
     <with> wrap-module

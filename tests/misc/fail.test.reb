@@ -27,11 +27,8 @@
 (e: sys.util/rescue [fail ~some-error-id~], e.id = 'some-error-id)
 
 
-; FAIL can be given a QUOTED! of a parameter to blame.  This gives a
-; more informative message, even when no text is provided.
-;
-; The QUOTED! is a skippable parameter, and can be used in combination
-; with other error reason parameters
+; FAIL can be given a /BLAME parameter.  This gives a more informative message,
+; even when no text is provided.
 [
     (
         foo: func [x] [fail $x]

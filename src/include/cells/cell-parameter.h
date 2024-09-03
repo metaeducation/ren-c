@@ -154,21 +154,9 @@ INLINE Option(const Array*) Cell_Parameter_Spec(const Cell* v) {
     FLAG_LEFT_BIT(11)
 
 
-//=//// PARAMETER_FLAG_SKIPPABLE //////////////////////////////////////////=//
+//=//// PARAMETER_FLAG_12 /////////////////////////////////////////////////=//
 //
-// Skippability is used on quoted arguments to indicate that they are willing
-// to "pass" on something that isn't a matching type.  This gives an ability
-// that a variadic doesn't have, which is to make decisions about rejecting
-// a parameter *before* the function body runs.
-//
-// Skippability is only applicable to literal arguments, because if an
-// argument had to be evaluated to tell if it should be skipped or not then
-// you could not undo the evaluation.  While there are some cases that could
-// technically work (e.g. if there's another parameter afterward and it is
-// evaluative) the semantics would be dodgy if you couldn't tell at source
-// level whether something would be skipped or not.
-//
-#define PARAMETER_FLAG_SKIPPABLE \
+#define PARAMETER_FLAG_12 \
     FLAG_LEFT_BIT(12)
 
 

@@ -223,15 +223,6 @@ void Set_Parameter_Spec(
                 Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
                 Init_Quasi_Word(dest, Canon(VOID));  // !!!
             }
-            else if (0 == CT_String(item, Root_Skip_Tag, strict)) {
-                if (pclass != PARAMCLASS_HARD)
-                    fail ("Only hard-quoted parameters are <skip>-able");
-
-                *flags |= PARAMETER_FLAG_SKIPPABLE;
-                *flags |= PARAMETER_FLAG_ENDABLE; // skip => null
-                Init_Quasi_Word(dest, Canon(NULL));  // !!!
-                *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
-            }
             else if (0 == CT_String(item, Root_Const_Tag, strict)) {
                 *flags |= PARAMETER_FLAG_CONST;
                 Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);

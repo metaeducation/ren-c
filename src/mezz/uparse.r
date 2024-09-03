@@ -1780,11 +1780,9 @@ default-combinators: make map! reduce [
     ; The behavior of INTEGER! in UPARSE is to just evaluate to itself.  If you
     ; want to repeat a rule a certain number of times, you have to say REPEAT.
     ;
-    ; A compatibility combinator for Rebol2 PARSE has the repeat semantics.
-    ;
-    ; It is possible to break this regularity with quoted/skippable combinator
-    ; arguments.  And it's necessary to do so for the Redbol emulation.  See
-    ; the INTEGER! combinator used in UPARSE2 for this "dirty" technique.
+    ; A compatibility combinator for Rebol2 PARSE has the repeat semantics
+    ; (though variadic combinators would be required to accomplish [2 4 rule]
+    ; meaning "apply the rule between 2 and 4 times")
     ;
     ; Note that REPEAT allows the use of BLANK! to opt out of an iteration.
 
@@ -2788,20 +2786,8 @@ comment [combinatorize: func [
                     f.(param): null
                 ]
                 else [
-                    ; We also allow skippable parameters, so that legacy
-                    ; combinators can implement things like INTEGER! combinator
-                    ; which takes another optional INTEGER! for end of range.
-                    ;
-                ;    all [
-                ;        skippable? in f param
-                ;        not find (exemplar of action of f).(param) kind of r
-                ;    ] then [
-                ;        f.(param): null
-                ;    ]
-                ;    else [
-                        f.(param): r
-                        rules: next rules
-                ;    ]
+                    f.(param): r
+                    rules: next rules
                 ]
             ]
             refinement? param [

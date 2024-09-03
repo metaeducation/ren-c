@@ -450,7 +450,7 @@ Bounce Action_Executor(Level* L)
                 Meta_Quotify(ARG);
                 break; }
 
-              case PARAMCLASS_HARD:  // PARAMETER_FLAG_SKIPPABLE in pre-lookback
+              case PARAMCLASS_HARD:
                 Move_Cell(ARG, OUT);
                 break;
 
@@ -597,17 +597,7 @@ Bounce Action_Executor(Level* L)
             // get here...if we don't clear the flag, then the presence of
             // a non-void causes a later assert.  Review.
             //
-            if (Not_Parameter_Flag(PARAM, SKIPPABLE))
-                The_Next_In_Feed(ARG, L->feed);
-            else {
-                Derelativize(SPARE, L_next, L_specifier);
-                if (not Typecheck_Atom(PARAM, SPARE)) {
-                    assert(Get_Parameter_Flag(PARAM, ENDABLE));
-                    Init_Nulled(ARG);  // not actually an ~end~ (?)
-                    goto continue_fulfilling;
-                }
-                The_Next_In_Feed(ARG, L->feed);
-            }
+            The_Next_In_Feed(ARG, L->feed);
 
             // Have to account for enfix deferrals in cases like:
             //
@@ -846,10 +836,6 @@ Bounce Action_Executor(Level* L)
 
         if (Not_Specialized(stable_ARG)) {
             if (Get_Parameter_Flag(PARAM, REFINEMENT)) {
-                Init_Nulled(ARG);
-                continue;
-            }
-            if (Get_Parameter_Flag(PARAM, SKIPPABLE)) {
                 Init_Nulled(ARG);
                 continue;
             }

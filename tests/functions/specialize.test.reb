@@ -181,29 +181,6 @@
     ]
 )
 
-; Partial specialization can do some complex reordering of argument gathering,
-; which the evaluator needs to accomodate with backwards quoting skippables
-; and other enfix situations.
-[
-    (
-        foo: func [/a [integer!] '/b [<skip> word!]] [
-            return reduce [/A (reify a) /B (reify b)]
-        ]
-        foob: enfix get $foo/b
-        true
-    )
-
-    ([/A ~null~ /B word] = (word foob ||))
-    ([/A ~null~ /B ~null~] = (<not a word> foob ||))
-    ([/A 20 /B word] = (word ->- foob/a 20))
-
-    (comment [
-        {Currently SHOVE and <skip> don't work together, maybe shouldn't}
-        https://github.com/metaeducation/ren-c/issues/909
-        [/A 20 /B ~null~] = (<not a word> ->- foob/a 20)
-    ] true)
-]
-
 ; Making a FRAME! from an ACTION!, and making an ACTION! from a FRAME!
 (
     data: [a b c]

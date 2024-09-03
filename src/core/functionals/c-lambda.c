@@ -125,7 +125,7 @@ Bounce Lambda_Unoptimized_Dispatcher(Level* const L)
 //
 //      return: [action?]
 //      spec "Names of arguments (will not be type checked)"
-//          [~null~ word! lit-word? meta-word! refinement? block!]
+//          [blank! word! lit-word? meta-word! refinement? block!]
 //      body "Code to execute"
 //          [<const> block!]
 //  ]
@@ -159,7 +159,7 @@ DECLARE_NATIVE(lambda)
         item_tail = item + 1;
     }
     else {
-        assert(Is_Nulled(spec));
+        assert(Is_Blank(spec));
         item = nullptr;
         item_tail = nullptr;
     }

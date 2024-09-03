@@ -24,7 +24,7 @@
         ; We prune out any unused refinements for convenience.
         ;
         params: map-each w parameters of frame [
-            match [word! lit-word? get-word!] w  ; !!! what about skippable?
+            match [word! lit-word? get-word!] w  ; !!! what about variadics?
         ]
 
         frame: make frame! frame

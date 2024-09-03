@@ -229,7 +229,7 @@ requote: reframer lambda [
 ;
 ->: enfix lambda [
     'words "Names of arguments (will not be type checked)"
-        [<skip> word! lit-word? meta-word! refinement? block! group!]
+        [blank! word! lit-word? meta-word! refinement? block! group!]
     body "Code to execute"
         [block!]
 ][

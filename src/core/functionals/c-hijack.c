@@ -108,9 +108,6 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
         if (Cell_ParamClass(e.param) == PARAMCLASS_RETURN)
             continue;  // !!! hack, has PARAMETER_FLAG_REFINEMENT, don't stack it
 
-        if (Get_Parameter_Flag(e.param, SKIPPABLE) and Is_Nulled(e.var))
-            continue;  // don't throw in skippable args that are nulled out
-
         if (Get_Parameter_Flag(e.param, REFINEMENT)) {
             if (Is_Nulled(e.var))  // don't add to PATH!
                 continue;

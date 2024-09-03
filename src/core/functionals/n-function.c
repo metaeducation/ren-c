@@ -367,41 +367,6 @@ DECLARE_NATIVE(endable_q)
 
 
 //
-//  skippable?: native [
-//
-//  "Tell whether a parameter is registered as <skip> or not"
-//
-//      return: [logic?]
-//      parameter [word!]
-//  ]
-//
-DECLARE_NATIVE(skippable_q)
-//
-// !!! The general mechanics by which parameter properties are extracted have
-// not been designed.  This extraction feature was added to support making
-// combinators that could <skip> arguments in UPARSE, but better is needed.
-{
-    INCLUDE_PARAMS_OF_SKIPPABLE_Q;
-
-    Value* v = ARG(parameter);
-
-    if (not Did_Get_Binding_Of(SPARE, v))
-        fail (PARAM(parameter));
-
-    if (not Is_Frame(SPARE))
-        fail ("SKIPPABLE? requires a WORD! bound into a FRAME! at present");
-
-    Context* ctx = VAL_CONTEXT(SPARE);
-    Action* act = CTX_FRAME_PHASE(ctx);
-
-    Param* param = ACT_PARAM(act, VAL_WORD_INDEX(v));
-    bool skippable = Get_Parameter_Flag(param, SKIPPABLE);
-
-    return Init_Logic(OUT, skippable);
-}
-
-
-//
 //  Init_Thrown_Unwind_Value: C
 //
 // This routine generates a thrown signal that can be used to indicate a

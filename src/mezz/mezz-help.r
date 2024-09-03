@@ -332,7 +332,7 @@ help: func [
 
     print "USAGE:"
 
-    let args  ; required parameters (and "skippable" parameters, at the moment)
+    let args  ; required parameters
     let refinements  ; optional parameters (PARAMETERS OF puts at tail)
 
     parse parameters of :value [

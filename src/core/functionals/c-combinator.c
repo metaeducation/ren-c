@@ -674,8 +674,6 @@ static bool Combinator_Param_Hook(
         //
         // Quoted parameters represent a literal element captured from rules.
         //
-        // !!! <skip>-able parameters would be useful as well.
-        //
         const Element* tail;
         const Element* item = Cell_List_At(&tail, ARG(rules));
 
@@ -689,15 +687,7 @@ static bool Combinator_Param_Hook(
         }
         else {
             Derelativize(var, item, Cell_Specifier(ARG(rules)));
-            if (
-                Get_Parameter_Flag(param, SKIPPABLE)
-                and not Typecheck_Atom(param, var)
-            ){
-                Init_Nulled(var);
-            }
-            else {
-                ++VAL_INDEX_UNBOUNDED(ARG(rules));
-            }
+            ++VAL_INDEX_UNBOUNDED(ARG(rules));
         }
         break; }
 

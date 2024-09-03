@@ -285,7 +285,6 @@ static void Init_Action_Spec_Tags(void)
     ensure(nullptr, Root_End_Tag) = Make_Locked_Tag("end");
     ensure(nullptr, Root_Maybe_Tag) = Make_Locked_Tag("maybe");
     ensure(nullptr, Root_Local_Tag) = Make_Locked_Tag("local");
-    ensure(nullptr, Root_Skip_Tag) = Make_Locked_Tag("skip");
     ensure(nullptr, Root_Const_Tag) = Make_Locked_Tag("const");
     ensure(nullptr, Root_Unrun_Tag) = Make_Locked_Tag("unrun");
 
@@ -299,7 +298,6 @@ static void Shutdown_Action_Spec_Tags(void)
     rebReleaseAndNull(&Root_End_Tag);
     rebReleaseAndNull(&Root_Maybe_Tag);
     rebReleaseAndNull(&Root_Local_Tag);
-    rebReleaseAndNull(&Root_Skip_Tag);
     rebReleaseAndNull(&Root_Const_Tag);
     rebReleaseAndNull(&Root_Unrun_Tag);
 

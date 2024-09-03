@@ -128,19 +128,6 @@
     s = [a b c d e d e]
 )
 
-; <skip> arguments are tied intimately with fixed patterns at callsites where
-; a datatype matches.  When used with APPLY, this fits better with using a
-; refinement to name it than doing type detection on evaluative products.
-; Hence they are always skipped and can only be specified by name.
-[
-    ([3 7] = compose [(1 + 2) (<*> 3 + 4)])
-    ([3 7] = apply get $compose [[(1 + 2) (<*> 3 + 4)]])
-
-    ([(1 + 2) 7] = compose/label [(1 + 2) (<*> 3 + 4)]) <*>
-    ([(1 + 2) 7] = apply get $compose [[(1 + 2) (<*> 3 + 4)] /label <*>])
-    ([(1 + 2) 7] = apply get $compose [[(1 + 2) (<*> 3 + 4)] /label first [<*>]])
-]
-
 ; APPLY is called by the evaluator when it sees a :: SIGIL!, using whatever
 ; is on the left as the action.
 [

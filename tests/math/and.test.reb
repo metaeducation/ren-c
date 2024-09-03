@@ -140,8 +140,8 @@
 ; a synonym for that word or path in a GROUP.
 
 ; !!! Once this allowed running functions.  Currently it does not.  There
-; are some problems with that idea, e.g. if they take <skip> arguments or
-; are enfix...so ruling them out is the most conervative choice.
+; are some problems with that idea, e.g. if they  are enfix...so ruling them
+; out is the most conervative choice.
 
 [
     (

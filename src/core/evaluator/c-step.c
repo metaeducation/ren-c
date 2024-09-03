@@ -165,6 +165,10 @@ INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
     return sub;
 }
 
+bool Is_Action_Deferring(Value* v) {
+    return Get_Action_Flag(VAL_ACTION(v), DEFERS_LOOKBACK);
+}
+
 
 //
 //  Stepper_Executor: C
@@ -401,19 +405,6 @@ Bounce Stepper_Executor(Level* L)
     // step because we need derelativized value for type check)
     //
     Derelativize(OUT, L_current, L_specifier);  // for FULFILLING_ENFIX
-
-    // Let the <skip> flag allow the right hand side to gracefully decline
-    // interest in the left hand side due to type.  This is how DEFAULT works,
-    // such that `case [condition [...] default [...]]` does not interfere
-    // with the BLOCK! on the left, but `x: default [...]` gets the SET-WORD!
-    //
-    if (Get_Subclass_Flag(VARLIST, paramlist, PARAMLIST_SKIPPABLE_FIRST)) {
-        const Param* first = First_Unspecialized_Param(nullptr, enfixed);
-        if (not Typecheck_Atom(first, OUT)) {  // left's kind
-            Freshen_Cell(OUT);
-            goto give_up_backward_quote_priority;
-        }
-    }
 
     // We skip over the word that invoked the action (e.g. ->-, OF, =>).
     // CURRENT will then hold that word.  (OUT holds what was to the left)
@@ -1826,9 +1817,9 @@ Bounce Stepper_Executor(Level* L)
         //     left-the: enfix func [:value] [:value]
         //     the <something> left-the
         //
-        // But due to the existence of <end>-able and <skip>-able parameters,
-        // the left quoting function might be okay with seeing nothing on the
-        // left.  Start a new expression and let it error if that's not ok.
+        // But due to the existence of <end>-able parameters, the left quoting
+        // function might be okay with seeing nothing on the left.  Start a
+        // new expression and let it error if that's not ok.
         //
         assert(Not_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH));
         if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))

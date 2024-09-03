@@ -807,9 +807,6 @@ Phase* Make_Action(
           default:
             assert(false);
         }
-
-        if (Get_Parameter_Flag(first, SKIPPABLE))
-            Set_Subclass_Flag(VARLIST, paramlist, PARAMLIST_SKIPPABLE_FIRST);
     }
 
     // The exemplar needs to be frozen, it can't change after this point.
