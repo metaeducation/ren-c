@@ -133,24 +133,24 @@ back: specialize 'skip [
     only: true ;-- don't clip (return null if already at tail of series)
 ]
 
-bound?: chain [
+bound?: cascade [
     specialize 'reflect [property: 'binding]
     :value?
 ]
 
 unspaced: specialize 'delimit [delimiter: void]
-unspaced-text: chain [
+unspaced-text: cascade [
     :unspaced
     specialize 'else [branch: [copy ""]]
 ]
 
 spaced: specialize 'delimit [delimiter: space]
-spaced-text: chain [
+spaced-text: cascade [
     :spaced
     specialize 'else [branch: [copy ""]]
 ]
 
-newlined: chain [
+newlined: cascade [
     adapt specialize 'delimit [delimiter: newline] [
         if text? :line [
             fail/where "NEWLINED on TEXT! semantics being debated" 'line

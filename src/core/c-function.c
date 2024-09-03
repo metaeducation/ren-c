@@ -1665,11 +1665,11 @@ REB_R Encloser_Dispatcher(Level* L)
 
 
 //
-//  Chainer_Dispatcher: C
+//  Cascader_Dispatcher: C
 //
-// Dispatcher used by CHAIN.
+// Dispatcher used by CASCADE.
 //
-REB_R Chainer_Dispatcher(Level* L)
+REB_R Cascader_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     Array* pipeline = Cell_Array(Array_Head(details));
@@ -1678,16 +1678,16 @@ REB_R Chainer_Dispatcher(Level* L)
     // Go in reverse order, so the function to apply last is at the bottom of
     // the stack.
     //
-    Value* chained = KNOWN(Array_Last(pipeline));
-    for (; chained != Array_Head(pipeline); --chained) {
-        assert(Is_Action(chained));
-        Copy_Cell(PUSH(), KNOWN(chained));
+    Value* pipeline_at = KNOWN(Array_Last(pipeline));
+    for (; pipeline_at != Array_Head(pipeline); --pipeline_at) {
+        assert(Is_Action(pipeline_at));
+        Copy_Cell(PUSH(), KNOWN(pipeline_at));
     }
 
-    // Extract the first function, itself which might be a chain.
+    // Extract the first function, itself which might be a cascade.
     //
-    Level_Phase(L) = VAL_ACTION(chained);
-    LVL_BINDING(L) = VAL_BINDING(chained);
+    Level_Phase(L) = VAL_ACTION(pipeline_at);
+    LVL_BINDING(L) = VAL_BINDING(pipeline_at);
 
     return R_REDO_UNCHECKED; // signatures should match
 }

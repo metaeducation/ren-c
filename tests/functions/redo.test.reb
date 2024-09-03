@@ -108,7 +108,7 @@
 
 ; "Sibling" tail-call with compatible function
 ;
-; (CHAINs are compatible with functions at head of CHAIN
+; (CASCADEs are compatible with functions at head of the CASCADE
 ;  ADAPTs are compatible with functions they adapt
 ;  SPECIALIZEs are compatible with functions they specialize...etc.)
 ;
@@ -154,11 +154,11 @@
 ; when it falls through to BASE, the subtraction of DELTA from N yields
 ; zero so that BASE returns completion.
 ;
-; Since the function we originally called and built a frame for was a CHAIN,
+; Since the function we originally called and built a frame for was a CASCADE,
 ; the REDO is effectively REDO-finishing the frame for the adaptation of
 ; BASE that sits at the head of the frame.  That delegation has now finished
 ; bouncing around on that single frame and come to a completion, which means
-; the chained functions will get that result.  The string is translated to
+; the cascaded functions will get that result.  The string is translated to
 ; a tag and signals success.
 (
     log: (
@@ -176,7 +176,7 @@
         return "base got no frame"
     ]
 
-    c: chain [
+    c: cascade [
         adapt 'base [
            log [{C} n delta]
 

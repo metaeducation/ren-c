@@ -227,7 +227,7 @@ function: func [
 ]
 
 
-; Actions can be chained, adapted, and specialized--repeatedly.  The meta
+; Actions can be cascaded, adapted, and specialized--repeatedly.  The meta
 ; information from which HELP is determined can be inherited through links
 ; in that meta information.  Though in order to mutate the information for
 ; the purposes of distinguishing a derived action, it must be copied.
@@ -247,8 +247,8 @@ dig-action-meta-fields: function [value [action!]] [
         get 'meta/specializee
         get 'meta/adaptee
         all [
-            block? :meta/chainees
-            first meta/chainees
+            block? :meta/pipeline
+            first meta/pipeline
         ]
     ]
 

@@ -223,10 +223,10 @@ standard: construct [] [
             null
     ]
 
-    chained-meta: construct [] [
+    cascaded-meta: construct [] [
         description:
-        chainees:
-        chainee-names:
+        pipeline:
+        pipeline-names:
             null
     ]
 

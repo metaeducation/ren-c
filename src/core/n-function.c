@@ -299,7 +299,7 @@ DECLARE_NATIVE(typechecker)
 
 
 //
-//  chain: native [
+//  cascade: native [
 //
 //  {Create a processing pipeline of actions, each consuming the last result}
 //
@@ -310,31 +310,30 @@ DECLARE_NATIVE(typechecker)
 //          {Do not reduce the pipeline--use the values as-is.}
 //  ]
 //
-DECLARE_NATIVE(chain)
+DECLARE_NATIVE(cascade)
 {
-    INCLUDE_PARAMS_OF_CHAIN;
+    INCLUDE_PARAMS_OF_CASCADE;
 
-    Value* out = OUT; // plan ahead for factoring into Chain_Action(out..
+    Value* out = OUT; // plan ahead for factoring into Cascade_Action(out..
 
-    Value* pipeline = ARG(pipeline);
-    Array* chainees;
+    Array* pipeline;
     if (REF(quote))
-        chainees = COPY_Any_List_AT_DEEP_MANAGED(pipeline);
+        pipeline = COPY_ANY_LIST_AT_DEEP_MANAGED(ARG(pipeline));
     else {
         StackIndex base = TOP_INDEX;
-        if (Reduce_To_Stack_Throws(out, pipeline))
+        if (Reduce_To_Stack_Throws(out, ARG(pipeline)))
             return out;
 
         // No more evaluations *should* run before putting this array in a
         // GC-safe spot, but leave unmanaged anyway.
         //
-        chainees = Pop_Stack_Values(base); // no NODE_FLAG_MANAGED
+        pipeline = Pop_Stack_Values(base); // no NODE_FLAG_MANAGED
     }
 
-    Value* first = KNOWN(Array_Head(chainees));
+    Value* first = KNOWN(Array_Head(pipeline));
 
     // !!! Current validation is that all are functions.  Should there be other
-    // checks?  (That inputs match outputs in the chain?)  Should it be
+    // checks?  (That inputs match outputs in the pipeline?)  Should it be
     // a dialect and allow things other than functions?
     //
     Value* check = first;
@@ -345,42 +344,42 @@ DECLARE_NATIVE(chain)
     }
 
     // Paramlist needs to be unique to identify the new function, but will be
-    // a compatible interface with the first function in the chain.
+    // a compatible interface with the first function in the pipeline.
     //
     Array* paramlist = Copy_Array_Shallow_Flags(
-        VAL_ACT_PARAMLIST(Array_Head(chainees)),
+        VAL_ACT_PARAMLIST(Array_Head(pipeline)),
         SPECIFIED,
         SERIES_MASK_ACTION | NODE_FLAG_MANAGED // flags not auto-copied
     );
     Array_Head(paramlist)->payload.action.paramlist = paramlist;
 
     // Initialize the "meta" information, which is used by HELP.  Because it
-    // has a link to the "chainees", it is not necessary to copy parameter
+    // has a link to the pipeline, it is not necessary to copy parameter
     // descriptions...HELP can follow the link and find the information.
     //
-    // See %sysobj.r for `chained-meta:` object template
+    // See %sysobj.r for `cascaded-meta:` object template
     //
-    // !!! There could be a system for preserving names in the chain, by
+    // !!! There could be a system for preserving names in the cascade, by
     // accepting lit-words instead of functions--or even by reading the
     // GET-WORD!s in the block.  Consider for the future.
     //
-    Value* std_meta = Get_System(SYS_STANDARD, STD_CHAINED_META);
+    Value* std_meta = Get_System(SYS_STANDARD, STD_CASCADED_META);
     REBCTX *meta = Copy_Context_Shallow_Managed(VAL_CONTEXT(std_meta));
-    Init_Nulled(CTX_VAR(meta, STD_CHAINED_META_DESCRIPTION)); // default
-    Init_Block(CTX_VAR(meta, STD_CHAINED_META_CHAINEES), chainees);
-    Init_Nulled(CTX_VAR(meta, STD_CHAINED_META_CHAINEE_NAMES));
+    Init_Nulled(CTX_VAR(meta, STD_CASCADED_META_DESCRIPTION)); // default
+    Init_Block(CTX_VAR(meta, STD_CASCADED_META_PIPELINE), pipeline);
+    Init_Nulled(CTX_VAR(meta, STD_CASCADED_META_PIPELINE_NAMES));
     MISC(paramlist).meta = meta; // must initialize before Make_Action
 
-    REBACT *chain = Make_Action(
+    REBACT *cascade = Make_Action(
         paramlist,
-        &Chainer_Dispatcher,
+        &Cascader_Dispatcher,
         ACT_UNDERLYING(VAL_ACTION(first)), // same underlying as first action
         ACT_EXEMPLAR(VAL_ACTION(first)), // same exemplar as first action
         1 // details array capacity
     );
-    Init_Block(Array_Head(ACT_DETAILS(chain)), chainees);
+    Init_Block(Array_Head(ACT_DETAILS(cascade)), pipeline);
 
-    return Init_Action_Unbound(out, chain);
+    return Init_Action_Unbound(out, cascade);
 }
 
 

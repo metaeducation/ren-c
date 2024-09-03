@@ -359,7 +359,7 @@ help: function [
 
     specializee: ensure [~null~ action!] select maybe meta 'specializee
     adaptee: ensure [~null~ action!] select maybe meta 'adaptee
-    chainees: ensure [~null~ block!] select maybe meta 'chainees
+    pipeline: ensure [~null~ block!] select maybe meta 'pipeline
 
     classification: case [
         :specializee [
@@ -378,7 +378,7 @@ help: function [
             ]
         ]
 
-        :chainees [{a chained ACTION!}]
+        :pipeline [{a cascaded ACTION!}]
     ] else [
         {an ACTION!}
     ]

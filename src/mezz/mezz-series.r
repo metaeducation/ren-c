@@ -515,7 +515,7 @@ collect-with: func [
 ;
 collect*: specialize :collect-with [name: 'keep]
 
-collect: chain [  ; Gives empty block instead of null if no keeps
+collect: cascade [  ; Gives empty block instead of null if no keeps
     :collect*
     specialize 'else [branch: [copy []]]
 ]
@@ -529,7 +529,7 @@ collect-lines: adapt 'collect [  ; https://forum.rebol.info/t/945/1
     ]
 ]
 
-collect-text: chain [  ; https://forum.rebol.info/t/945/2
+collect-text: cascade [  ; https://forum.rebol.info/t/945/2
      adapt 'collect [
          body: compose [
              keep: adapt specialize 'keep [

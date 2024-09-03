@@ -956,7 +956,7 @@ bool Eval_Core_Throws(Level* const L)
                     goto unused_refinement;
 
                 if (Is_Action(ordered)) {
-                    // chained function to call later
+                    // cascaded function to call later
                 }
                 else if (VAL_STORED_CANON(ordered) == param_canon) {
                     DROP(); // we're lucky: this was next refinement used
@@ -970,7 +970,7 @@ bool Eval_Core_Throws(Level* const L)
 
                 for (; ordered != Data_Stack_At(L->stack_base); --ordered) {
                     if (Is_Action(ordered))
-                        continue;  // chained function to call later
+                        continue;  // cascaded function to call later
 
                     if (VAL_STORED_CANON(ordered) != param_canon)
                         continue;
@@ -1670,7 +1670,7 @@ bool Eval_Core_Throws(Level* const L)
         // Here we know the function finished and nothing threw past it or
         // FAIL / fail()'d.  It should still be in REB_ACTION evaluation
         // type, and overwritten the L->out with a non-thrown value.  If the
-        // function composition is a CHAIN, the chained functions are still
+        // function composition is a CASCADE, the cascaded functions are still
         // pending on the stack to be run.
 
       #if !defined(NDEBUG)
@@ -1680,17 +1680,17 @@ bool Eval_Core_Throws(Level* const L)
       skip_output_check:;
 
         // If we have functions pending to run on the outputs (e.g. this was
-        // the result of a CHAIN) we can run those chained functions in the
+        // the result of a CASCADE) we can run those cascaded functions in the
         // same Level, for efficiency.
         //
         while (TOP_INDEX != L->stack_base) {
             //
             // We want to keep the label that the function was invoked with,
-            // because the other phases in the chain are implementation
+            // because the other phases in the cascade are implementation
             // details...and if there's an error, it should still show the
             // name the user invoked the function with.  But we have to drop
             // the action args, as the paramlist is likely be completely
-            // incompatible with this next chain step.
+            // incompatible with this next pipeline step.
             //
             Symbol* opt_label = L->opt_label;
             Drop_Action(L);
