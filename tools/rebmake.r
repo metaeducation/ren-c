@@ -1140,9 +1140,9 @@ object-file-class: make object! [
         ]
 
         return make entry-class [
-            target: output
-            depends: append (copy any [depends []]) source
-            commands: reduce [apply get $command [
+            target: .output
+            depends: append (copy any [.depends []]) source
+            commands: reduce [apply get $.command [
                 /I maybe parent.includes
                 /D maybe parent.definitions
                 /F maybe parent.cflags

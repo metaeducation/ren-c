@@ -770,7 +770,7 @@ gen-obj: func [
         cflags: either empty? flags [_] [flags]
         definitions: D
         includes: I
-        (if prefer-O2 [[optimization: #prefer-O2-optimization]])
+        (if prefer-O2 [spread [optimization: #prefer-O2-optimization]])
     ]
 ]
 
