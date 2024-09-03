@@ -949,7 +949,7 @@ REBTYPE(List)
         if (REF(part)) {
             len = Part_Len_May_Modify_Index(list, ARG(part));
             if (len == 0)
-                return Init_Block(OUT, Make_Array(0)); // new empty block
+                return Init_Any_List(OUT, Cell_Heart(list), Make_Array(0));
         }
         else
             len = 1;
@@ -963,12 +963,14 @@ REBTYPE(List)
             if (not REF(part))
                 return RAISE(Error_Nothing_To_Take_Raw());
 
-            return Init_Block(OUT, Make_Array(0)); // new empty block
+            return Init_Any_List(OUT, Cell_Heart(list), Make_Array(0));
         }
 
         if (REF(part))
-            Init_Block(
-                OUT, Copy_Array_At_Max_Shallow(arr, index, len)
+            Init_Any_List(
+                OUT,
+                Cell_Heart(list),
+                Copy_Array_At_Max_Shallow(arr, index, len)
             );
         else
             Derelativize(OUT, &Array_Head(arr)[index], specifier);
