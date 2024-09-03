@@ -358,7 +358,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
 //
 //  MAKE_Varargs: C
 //
-REB_R MAKE_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_VARARGS);
     UNUSED(kind);
@@ -398,7 +398,7 @@ REB_R MAKE_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Varargs: C
 //
-REB_R TO_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_VARARGS);
     UNUSED(kind);
@@ -414,7 +414,7 @@ REB_R TO_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 // Implements the PICK* operation.
 //
-REB_R PD_Varargs(
+Bounce PD_Varargs(
     REBPVS *pvs,
     const Value* picker,
     const Value* opt_setval
@@ -436,7 +436,7 @@ REB_R PD_Varargs(
         VARARG_OP_FIRST
     )){
         assert(false); // VARARG_OP_FIRST can't throw
-        return R_THROWN;
+        return BOUNCE_THROWN;
     }
 
     if (IS_END(pvs->out))
@@ -472,7 +472,7 @@ REBTYPE(Varargs)
                 VARARG_OP_TAIL_Q
             )){
                 assert(false);
-                return R_THROWN;
+                return BOUNCE_THROWN;
             }
             assert(Is_Logic(OUT));
             return OUT; }
@@ -498,7 +498,7 @@ REBTYPE(Varargs)
                 value,
                 VARARG_OP_TAKE
             )){
-                return R_THROWN;
+                return BOUNCE_THROWN;
             }
             if (IS_END(OUT))
                 return Init_Endish_Nulled(OUT);
@@ -522,7 +522,7 @@ REBTYPE(Varargs)
                 value,
                 VARARG_OP_TAKE
             )){
-                return R_THROWN;
+                return BOUNCE_THROWN;
             }
             if (IS_END(OUT))
                 break;

@@ -126,7 +126,7 @@ DECLARE_NATIVE(delimit)
         VAL_SPECIFIER(line),
         ARG(delimiter)
     )){
-        return R_THROWN;
+        return BOUNCE_THROWN;
     }
 
     if (Is_Nulled(OUT) or not REF(tail))

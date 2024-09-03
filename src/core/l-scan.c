@@ -2352,12 +2352,12 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 Push_GC_Guard(cell);
 
                 Push_GC_Guard(array);
-                const Value* r = hook(cell, kind, KNOWN(Array_At(array, 1)));
-                if (r == R_THROWN) { // !!! good argument for not using MAKE
+                Bounce bounce = hook(cell, kind, KNOWN(Array_At(array, 1)));
+                if (bounce == BOUNCE_THROWN) { // !!! good argument against MAKE
                     assert(false);
                     fail ("MAKE during construction syntax threw--illegal");
                 }
-                if (r != cell) { // !!! not yet supported
+                if (bounce != cell) { // !!! not yet supported
                     assert(false);
                     fail ("MAKE during construction syntax not out cell");
                 }

@@ -177,7 +177,7 @@ static Value* Get_Event_Var(Cell* out, const Cell* v, Symbol* name)
 //
 //  MAKE_Event: C
 //
-REB_R MAKE_Event(Value* out, enum Reb_Kind kind, const Value* arg) {
+Bounce MAKE_Event(Value* out, enum Reb_Kind kind, const Value* arg) {
     assert(kind == REB_EVENT);
     UNUSED(kind);
 
@@ -197,7 +197,7 @@ REB_R MAKE_Event(Value* out, enum Reb_Kind kind, const Value* arg) {
 //
 //  TO_Event: C
 //
-REB_R TO_Event(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Event(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_EVENT);
     UNUSED(kind);
@@ -210,7 +210,7 @@ REB_R TO_Event(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  PD_Event: C
 //
-REB_R PD_Event(
+Bounce PD_Event(
     REBPVS *pvs,
     const Value* picker,
     const Value* opt_setval
@@ -220,20 +220,20 @@ REB_R PD_Event(
             if (Is_Blank(Get_Event_Var(
                 pvs->out, pvs->out, VAL_WORD_CANON(picker)
             ))){
-                return R_UNHANDLED;
+                return BOUNCE_UNHANDLED;
             }
 
             return pvs->out;
         }
         else {
             if (!Set_Event_Var(pvs->out, picker, opt_setval))
-                return R_UNHANDLED;
+                return BOUNCE_UNHANDLED;
 
-            return R_INVISIBLE;
+            return BOUNCE_INVISIBLE;
         }
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }
 
 

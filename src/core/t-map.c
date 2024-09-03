@@ -365,7 +365,7 @@ REBLEN Find_Map_Entry(
 //
 //  PD_Map: C
 //
-REB_R PD_Map(
+Bounce PD_Map(
     REBPVS *pvs,
     const Value* picker,
     const Value* opt_setval
@@ -395,7 +395,7 @@ REB_R PD_Map(
 
     if (opt_setval != nullptr) {
         assert(n != 0);
-        return R_INVISIBLE;
+        return BOUNCE_INVISIBLE;
     }
 
     if (n == 0)
@@ -450,7 +450,7 @@ static void Append_Map(
 //
 //  MAKE_Map: C
 //
-REB_R MAKE_Map(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Map(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     if (Any_Number(arg)) {
         return Init_Map(out, Make_Map(Int32s(arg, 0)));
@@ -506,7 +506,7 @@ INLINE REBMAP *Copy_Map(REBMAP *map, REBU64 types) {
 //
 //  TO_Map: C
 //
-REB_R TO_Map(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Map(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_MAP);
     UNUSED(kind);

@@ -69,7 +69,7 @@ REBINT CT_Action(const Cell* a1, const Cell* a2, REBINT mode)
 //
 //     [[spec] [body]]
 //
-REB_R MAKE_Action(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Action(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_ACTION);
     UNUSED(kind);
@@ -112,7 +112,7 @@ REB_R MAKE_Action(Value* out, enum Reb_Kind kind, const Value* arg)
 // from a BLOCK!, e.g. `x: does [1 + y]`, so TO ACTION! of a block doesn't
 // need to do that (for instance).
 //
-REB_R TO_Action(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Action(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_ACTION);
     UNUSED(kind);
@@ -321,7 +321,7 @@ REBTYPE(Action)
 // (see WORD_FLAG_PARTIAL_REFINE).  But the processing for REB_PATH in
 // Eval_Core_Throws() does not need to...it operates off stack values directly.
 //
-REB_R PD_Action(
+Bounce PD_Action(
     REBPVS *pvs,
     const Value* picker,
     const Value* opt_setval

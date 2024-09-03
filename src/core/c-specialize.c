@@ -838,7 +838,7 @@ bool Specialize_Action_Throws(
 // all this does is change the phase and binding to match the function this
 // layer was specializing.
 //
-REB_R Specializer_Dispatcher(Level* L)
+Bounce Specializer_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
 
@@ -848,7 +848,7 @@ REB_R Specializer_Dispatcher(Level* L)
     Level_Phase(L) = exemplar->payload.any_context.phase;
     LVL_BINDING(L) = VAL_BINDING(exemplar);
 
-    return R_REDO_UNCHECKED; // redo uses the updated phase and binding
+    return BOUNCE_REDO_UNCHECKED; // redo uses the updated phase and binding
 }
 
 
@@ -885,7 +885,7 @@ DECLARE_NATIVE(specialize)
     )){
         // e.g. `specialize 'append/(throw 10 'dup) [value: 20]`
         //
-        return R_THROWN;
+        return BOUNCE_THROWN;
     }
 
     // Note: Even if there was a PATH! doesn't mean there were refinements
@@ -904,7 +904,7 @@ DECLARE_NATIVE(specialize)
     )){
         // e.g. `specialize 'append/dup [value: throw 10]`
         //
-        return R_THROWN;
+        return BOUNCE_THROWN;
     }
 
     return OUT;
@@ -927,7 +927,7 @@ DECLARE_NATIVE(specialize)
 // (Luckily these copies are often not needed, such as when the DOES is not
 // used in a method... -AND- it only needs to be made once.)
 //
-REB_R Block_Dispatcher(Level* L)
+Bounce Block_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* block = Array_Head(details);
@@ -936,7 +936,7 @@ REB_R Block_Dispatcher(Level* L)
     if (IS_SPECIFIC(block)) {
         if (LVL_BINDING(L) == UNBOUND) {
             if (Do_At_Throws(L->out, KNOWN(block)))
-                return R_THROWN;
+                return BOUNCE_THROWN;
             return L->out;
         }
 
@@ -989,7 +989,7 @@ REB_R Block_Dispatcher(Level* L)
         VAL_INDEX(block),
         SPC(L->varlist)
     )){
-        return R_THROWN;
+        return BOUNCE_THROWN;
     }
 
     return L->out;

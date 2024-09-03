@@ -220,7 +220,7 @@ bool Update_Typeset_Bits_Core(
 //
 //  MAKE_Typeset: C
 //
-REB_R MAKE_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_TYPESET);
     UNUSED(kind);
@@ -242,7 +242,7 @@ REB_R MAKE_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Typeset: C
 //
-REB_R TO_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     return MAKE_Typeset(out, kind, arg);
 }

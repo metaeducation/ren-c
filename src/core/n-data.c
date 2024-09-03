@@ -273,7 +273,7 @@ DECLARE_NATIVE(use)
     );
 
     if (Do_At_Throws(OUT, ARG(body)))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     return OUT;
 }

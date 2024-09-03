@@ -40,7 +40,7 @@
 // care of without knowing what specific kind of series it is.  So generally
 // index manipulation, and things like LENGTH/etc.
 //
-REB_R Series_Common_Action_Maybe_Unhandled(
+Bounce Series_Common_Action_Maybe_Unhandled(
     Level* level_,
     Value* verb
 ){
@@ -185,7 +185,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
 
     case SYM_INTERSECT: {
         if (Is_Binary(value))
-            return R_UNHANDLED; // !!! unhandled; use bitwise math, for now
+            return BOUNCE_UNHANDLED; // !!! unhandled; use bitwise math, for now
 
         INCLUDE_PARAMS_OF_INTERSECT;
 
@@ -205,7 +205,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
 
     case SYM_UNION: {
         if (Is_Binary(value))
-            return R_UNHANDLED; // !!! unhandled; use bitwise math, for now
+            return BOUNCE_UNHANDLED; // !!! unhandled; use bitwise math, for now
 
         INCLUDE_PARAMS_OF_UNION;
 
@@ -225,7 +225,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
 
     case SYM_DIFFERENCE: {
         if (Is_Binary(value))
-            return R_UNHANDLED; // !!! unhandled; use bitwise math, for now
+            return BOUNCE_UNHANDLED; // !!! unhandled; use bitwise math, for now
 
         INCLUDE_PARAMS_OF_DIFFERENCE;
 
@@ -247,7 +247,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
         break;
     }
 
-    return R_UNHANDLED; // not a common operation, uhandled (not NULLED_CELL!)
+    return BOUNCE_UNHANDLED; // not a common operation, uhandled (not NULLED_CELL!)
 }
 
 

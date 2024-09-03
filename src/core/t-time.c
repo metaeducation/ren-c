@@ -224,7 +224,7 @@ REBINT CT_Time(const Cell* a, const Cell* b, REBINT mode)
 //
 //  MAKE_Time: C
 //
-REB_R MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_TIME);
     UNUSED(kind);
@@ -335,7 +335,7 @@ REB_R MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Time: C
 //
-REB_R TO_Time(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Time(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     return MAKE_Time(out, kind, arg);
 }
@@ -468,20 +468,20 @@ void Poke_Time_Immediate(
 //
 //  PD_Time: C
 //
-REB_R PD_Time(
+Bounce PD_Time(
     REBPVS *pvs,
     const Value* picker,
     const Value* opt_setval
 ){
     if (opt_setval) {
         //
-        // Returning R_IMMEDIATE means that we aren't actually changing a
+        // Returning BOUNCE_IMMEDIATE means that we aren't actually changing a
         // variable directly, and it will be up to the caller to decide if
         // they can meaningfully determine what variable to copy the update
         // we're making to.
         //
         Poke_Time_Immediate(pvs->out, picker, opt_setval);
-        return R_IMMEDIATE;
+        return BOUNCE_IMMEDIATE;
     }
 
     Pick_Time(pvs->out, pvs->out, picker);

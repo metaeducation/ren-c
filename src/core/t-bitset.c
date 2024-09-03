@@ -104,7 +104,7 @@ void MF_Bitset(REB_MOLD *mo, const Cell* v, bool form)
 //
 //  MAKE_Bitset: C
 //
-REB_R MAKE_Bitset(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Bitset(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_BITSET);
     UNUSED(kind);
@@ -138,7 +138,7 @@ REB_R MAKE_Bitset(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Bitset: C
 //
-REB_R TO_Bitset(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Bitset(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     return MAKE_Bitset(out, kind, arg);
 }
@@ -529,7 +529,7 @@ bool Check_Bits(Blob* bset, const Value* val, bool uncased)
 //
 //  PD_Bitset: C
 //
-REB_R PD_Bitset(
+Bounce PD_Bitset(
     REBPVS *pvs,
     const Value* picker,
     const Value* opt_setval
@@ -549,10 +549,10 @@ REB_R PD_Bitset(
             ? IS_FALSEY(opt_setval)
             : IS_TRUTHY(opt_setval)
     )){
-        return R_INVISIBLE;
+        return BOUNCE_INVISIBLE;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }
 
 

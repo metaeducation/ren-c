@@ -273,7 +273,7 @@ static bool Subparse_Throws(
     Drop_Action(L);
     Drop_Level(L);
 
-    if (r == R_THROWN) {
+    if (r == BOUNCE_THROWN) {
         //
         // ACCEPT and REJECT are special cases that can happen at nested parse
         // levels and bubble up through the throw mechanism to break a looping
@@ -458,7 +458,7 @@ static const Cell* Get_Parse_Value(
 // adds another behavior for when groups are "doubled", e.g. ((...)).  This
 // makes them act like a COMPOSE/ONLY that runs each time they are visited.
 //
-REB_R Process_Group_For_Parse(
+Bounce Process_Group_For_Parse(
     Level* L,
     Value* cell,
     const Cell* group
@@ -467,7 +467,7 @@ REB_R Process_Group_For_Parse(
     Specifier* derived = Derive_Specifier(P_RULE_SPECIFIER, group);
 
     if (Do_At_Throws(cell, Cell_Array(group), VAL_INDEX(group), derived))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     // !!! The input is not locked from modification by agents other than the
     // PARSE's own REMOVE/etc.  This is a sketchy idea, but as long as it's
@@ -480,7 +480,7 @@ REB_R Process_Group_For_Parse(
         Is_Nulled(cell) // even for doubled groups, null evals are discarded
         or not Is_Doubled_Group(group) // non-doubled groups always discard
     ){
-        return R_INVISIBLE;
+        return BOUNCE_INVISIBLE;
     }
 
     if (Is_Group(cell))
@@ -511,11 +511,11 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
 
     if (Is_Group(rule)) {
         rule = Process_Group_For_Parse(L, P_CELL, rule);
-        if (rule == R_THROWN) {
+        if (rule == BOUNCE_THROWN) {
             Copy_Cell(P_OUT, P_CELL);
             return THROWN_FLAG;
         }
-        if (rule == R_INVISIBLE) {
+        if (rule == BOUNCE_INVISIBLE) {
             assert(P_POS <= Flex_Len(P_INPUT)); // !!! Process_Group ensures
             return P_POS;
         }
@@ -669,11 +669,11 @@ static REBIXO Parse_Array_One_Rule_Core(
 
     if (Is_Group(rule)) {
         rule = Process_Group_For_Parse(L, P_CELL, rule);
-        if (rule == R_THROWN) {
+        if (rule == BOUNCE_THROWN) {
             Copy_Cell(P_OUT, P_CELL);
             return THROWN_FLAG;
         }
-        if (rule == R_INVISIBLE) {
+        if (rule == BOUNCE_INVISIBLE) {
             assert(pos <= Array_Len(array)); // !!! Process_Group ensures
             return pos;
         }
@@ -801,11 +801,11 @@ static REBIXO To_Thru_Block_Rule(
                 rule = blk;
             else {
                 rule = Process_Group_For_Parse(L, cell, blk);
-                if (rule == R_THROWN) {
+                if (rule == BOUNCE_THROWN) {
                     Copy_Cell(P_OUT, cell);
                     return THROWN_FLAG;
                 }
-                if (rule == R_INVISIBLE)
+                if (rule == BOUNCE_INVISIBLE)
                     continue;
             }
 
@@ -847,7 +847,7 @@ static REBIXO To_Thru_Block_Rule(
                             /* if (not Is_Doubled_Group(rule))
                                fail ("QUOTE needs doubled GROUP! ((...))"); */
                             rule = Process_Group_For_Parse(L, cell, rule);
-                            if (rule == R_THROWN) {
+                            if (rule == BOUNCE_THROWN) {
                                 Copy_Cell(P_OUT, cell);
                                 return THROWN_FLAG;
                             }
@@ -1372,11 +1372,11 @@ DECLARE_NATIVE(subparse)
             rule = P_RULE;
         else {
             rule = Process_Group_For_Parse(L, save, P_RULE);
-            if (rule == R_THROWN) {
+            if (rule == BOUNCE_THROWN) {
                 Copy_Cell(P_OUT, save);
-                return R_THROWN;
+                return BOUNCE_THROWN;
             }
-            if (rule == R_INVISIBLE) { // was a (...), or null-bearing ((...))
+            if (rule == BOUNCE_INVISIBLE) { // was a (...), or null-bearing ((...))
                 FETCH_NEXT_RULE(L); // ignore result and go on to next rule
                 continue;
             }
@@ -1455,7 +1455,7 @@ DECLARE_NATIVE(subparse)
                         FETCH_NEXT_RULE(L);
                         if (Is_Group(P_RULE)) {
                             if (Eval_Value_Core_Throws(OUT, P_RULE, P_RULE_SPECIFIER))
-                                return R_THROWN;
+                                return BOUNCE_THROWN;
                         }
                         else {
                             Derelativize(OUT, P_RULE, P_RULE_SPECIFIER);
@@ -1542,7 +1542,7 @@ DECLARE_NATIVE(subparse)
                                 P_RULE,
                                 P_RULE_SPECIFIER
                             )){
-                                return R_THROWN;
+                                return BOUNCE_THROWN;
                             }
                             Value* var = Sink_Var_May_Fail(
                                 set_or_copy_word, P_RULE_SPECIFIER
@@ -1642,7 +1642,7 @@ DECLARE_NATIVE(subparse)
                                 P_RULE_SPECIFIER
                             )){
                                 Copy_Cell(P_OUT, thrown_arg);
-                                return R_THROWN;
+                                return BOUNCE_THROWN;
                             }
                         }
                         else
@@ -1650,7 +1650,7 @@ DECLARE_NATIVE(subparse)
 
                         Copy_Cell(P_OUT, NAT_VALUE(parse_accept));
                         CONVERT_NAME_TO_THROWN(P_OUT, thrown_arg);
-                        return R_THROWN; }
+                        return BOUNCE_THROWN; }
 
                     case SYM_BREAK: {
                         //
@@ -1671,7 +1671,7 @@ DECLARE_NATIVE(subparse)
                         thrown_arg->extra.corrupt = thrown_arg;  // local junk
 
                         CONVERT_NAME_TO_THROWN(P_OUT, thrown_arg);
-                        return R_THROWN;
+                        return BOUNCE_THROWN;
                     }
 
                     case SYM_REJECT: {
@@ -1680,7 +1680,7 @@ DECLARE_NATIVE(subparse)
                         //
                         Copy_Cell(P_OUT, NAT_VALUE(parse_reject));
                         CONVERT_NAME_TO_THROWN(P_OUT, NULLED_CELL);
-                        return R_THROWN;
+                        return BOUNCE_THROWN;
                     }
 
                     case SYM_FAIL:
@@ -1705,7 +1705,7 @@ DECLARE_NATIVE(subparse)
                             P_RULE_SPECIFIER
                         )) {
                             Copy_Cell(P_OUT, condition);
-                            return R_THROWN;
+                            return BOUNCE_THROWN;
                         }
 
                         FETCH_NEXT_RULE(L);
@@ -1832,7 +1832,7 @@ DECLARE_NATIVE(subparse)
             if (Is_Path(rule)) {
                 if (Get_Path_Throws_Core(save, rule, P_RULE_SPECIFIER)) {
                     Copy_Cell(P_OUT, save);
-                    return R_THROWN;
+                    return BOUNCE_THROWN;
                 }
 
                 rule = save;
@@ -1842,7 +1842,7 @@ DECLARE_NATIVE(subparse)
                     save, rule, P_RULE_SPECIFIER, P_INPUT_VALUE
                 )){
                     Copy_Cell(P_OUT, save);
-                    return R_THROWN;
+                    return BOUNCE_THROWN;
                 }
 
                 // Nothing left to do after storing the parse position in the
@@ -1854,7 +1854,7 @@ DECLARE_NATIVE(subparse)
             else if (Is_Get_Path(rule)) {
                 if (Get_Path_Throws_Core(save, rule, P_RULE_SPECIFIER)) {
                     Copy_Cell(P_OUT, save);
-                    return R_THROWN;
+                    return BOUNCE_THROWN;
                 }
 
                 // !!! This allows the series to be changed, as per #1263,
@@ -2060,7 +2060,7 @@ DECLARE_NATIVE(subparse)
                         (P_FLAGS & PF_FIND_MASK) | (P_FLAGS & PF_REDBOL)
                     )) {
                         Copy_Cell(P_OUT, P_CELL);
-                        return R_THROWN;
+                        return BOUNCE_THROWN;
                     }
 
                     // !!! ignore interrupted? (e.g. ACCEPT or REJECT ran)
@@ -2093,7 +2093,7 @@ DECLARE_NATIVE(subparse)
                     (P_FLAGS & PF_FIND_MASK) | (P_FLAGS & PF_REDBOL)
                 )) {
                     Copy_Cell(P_OUT, P_CELL);
-                    return R_THROWN;
+                    return BOUNCE_THROWN;
                 }
 
                 // Non-breaking out of loop instances of match or not.
@@ -2133,7 +2133,7 @@ DECLARE_NATIVE(subparse)
             }
 
             if (i == THROWN_FLAG)
-                return R_THROWN;
+                return BOUNCE_THROWN;
 
             // Necessary for special cases like: some [to <end>]
             // i: indicates new index or failure of the match, but
@@ -2333,7 +2333,7 @@ DECLARE_NATIVE(subparse)
                             derived
                         )) {
                             Copy_Cell(P_OUT, evaluated);
-                            return R_THROWN;
+                            return BOUNCE_THROWN;
                         }
 
                         rule = evaluated;
@@ -2497,7 +2497,7 @@ DECLARE_NATIVE(parse)
             }
         }
 
-        return R_THROWN;
+        return BOUNCE_THROWN;
     }
 
     if (Is_Nulled(OUT)) {

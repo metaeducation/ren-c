@@ -140,7 +140,7 @@ Value* Init_Decimal_Bits(Cell* out, const Byte *bp)
 //
 //  MAKE_Decimal: C
 //
-REB_R MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     REBDEC d;
 
@@ -251,7 +251,7 @@ bad_make:
 //
 //  TO_Decimal: C
 //
-REB_R TO_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     return MAKE_Decimal(out, kind, arg);
 }

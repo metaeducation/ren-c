@@ -48,7 +48,7 @@
 //
 //  MAKE_Fail: C
 //
-REB_R MAKE_Fail(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Fail(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     UNUSED(out);
     UNUSED(kind);
@@ -65,7 +65,7 @@ REB_R MAKE_Fail(Value* out, enum Reb_Kind kind, const Value* arg)
 // aren't ready yet as a general concept, this hook is overwritten in the
 // dispatch table when the extension loads.
 //
-REB_R MAKE_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     UNUSED(out);
     UNUSED(arg);
@@ -136,19 +136,19 @@ DECLARE_NATIVE(make)
     if (hook == nullptr)
         fail (Error_Bad_Make(kind, arg));
 
-    REB_R r = hook(OUT, kind, arg); // might throw, fail...
-    if (r == R_THROWN)
-        return r;
-    if (r == nullptr or VAL_TYPE(r) != kind)
+    Bounce bounce = hook(OUT, kind, arg);  // might throw, fail...
+    if (bounce == BOUNCE_THROWN)
+        return bounce;
+    if (bounce == nullptr or VAL_TYPE(bounce) != kind)
         fail ("MAKE dispatcher did not return correct type");
-    return r; // may be OUT or an API handle
+    return bounce;  // may be OUT or an API handle
 }
 
 
 //
 //  TO_Fail: C
 //
-REB_R TO_Fail(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Fail(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     UNUSED(out);
     UNUSED(kind);
@@ -161,7 +161,7 @@ REB_R TO_Fail(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Unhooked: C
 //
-REB_R TO_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     UNUSED(out);
     UNUSED(arg);
@@ -195,16 +195,16 @@ DECLARE_NATIVE(to)
     if (not hook)
         fail (Error_Invalid(v));
 
-    REB_R r = hook(OUT, new_kind, v); // may fail();
-    if (r == R_THROWN) {
+    Bounce bounce = hook(OUT, new_kind, v);  // may fail();
+    if (bounce == BOUNCE_THROWN) {
         assert(!"Illegal throw in TO conversion handler");
         fail (Error_No_Catch_For_Throw(OUT));
     }
-    if (r == nullptr or VAL_TYPE(r) != new_kind) {
+    if (bounce == nullptr or VAL_TYPE(bounce) != new_kind) {
         assert(!"TO conversion did not return intended type");
-        fail (Error_Invalid_Type(VAL_TYPE(r)));
+        fail (Error_Invalid_Type(VAL_TYPE(bounce)));
     }
-    return r; // must be either OUT or an API handle
+    return bounce; // must be either OUT or an API handle
 }
 
 
@@ -232,7 +232,7 @@ REBTYPE(Unhooked)
 // The series common code is in Series_Common_Action_Maybe_Unhandled(), but
 // that is only called from series.  Handle a few extra cases here.
 //
-REB_R Reflect_Core(Level* level_)
+Bounce Reflect_Core(Level* level_)
 {
     INCLUDE_PARAMS_OF_REFLECT;
 

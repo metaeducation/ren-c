@@ -401,7 +401,7 @@ static Blob* make_binary(const Value* arg, bool make)
 //
 //  MAKE_String: C
 //
-REB_R MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
+Bounce MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
     Flex* flex; // goto would cross initialization
 
     if (Is_Integer(def)) {
@@ -462,7 +462,7 @@ REB_R MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
 //
 //  TO_String: C
 //
-REB_R TO_String(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_String(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     Flex* flex;
     if (kind == REB_BINARY)
@@ -578,7 +578,7 @@ static void Sort_String(
 //
 //  PD_String: C
 //
-REB_R PD_String(
+Bounce PD_String(
     REBPVS *pvs,
     const Value* picker,
     const Value* opt_setval
@@ -624,7 +624,7 @@ REB_R PD_String(
             Is_Binary(pvs->out)
             or not (Is_Word(picker) or Any_String(picker))
         ){
-            return R_UNHANDLED;
+            return BOUNCE_UNHANDLED;
         }
 
         // !!! This is a historical and questionable feature, where path
@@ -707,7 +707,7 @@ REB_R PD_String(
     Fail_If_Read_Only_Flex(flex);
 
     if (not Is_Integer(picker))
-        return R_UNHANDLED;
+        return BOUNCE_UNHANDLED;
 
     REBINT n = Int32(picker);
     if (n == 0)
@@ -722,12 +722,12 @@ REB_R PD_String(
     if (Is_Char(opt_setval)) {
         c = VAL_CHAR(opt_setval);
         if (c > MAX_CHAR)
-            return R_UNHANDLED;
+            return BOUNCE_UNHANDLED;
     }
     else if (Is_Integer(opt_setval)) {
         c = Int32(opt_setval);
         if (c > MAX_CHAR || c < 0)
-            return R_UNHANDLED;
+            return BOUNCE_UNHANDLED;
     }
     else if (Is_Binary(opt_setval) or Any_String(opt_setval)) {
         REBLEN i = VAL_INDEX(opt_setval);
@@ -737,19 +737,19 @@ REB_R PD_String(
         c = GET_ANY_CHAR(Cell_Flex(opt_setval), i);
     }
     else
-        return R_UNHANDLED;
+        return BOUNCE_UNHANDLED;
 
     if (Is_Binary(pvs->out)) {
         if (c > 0xff)
             fail (Error_Out_Of_Range(opt_setval));
 
         Blob_Head(cast(Blob*, flex))[n] = cast(Byte, c);
-        return R_INVISIBLE;
+        return BOUNCE_INVISIBLE;
     }
 
     SET_ANY_CHAR(flex, n, c);
 
-    return R_INVISIBLE;
+    return BOUNCE_INVISIBLE;
 }
 
 
@@ -1190,9 +1190,9 @@ REBTYPE(String)
 
     // Common operations for any series type (length, head, etc.)
     //
-    REB_R r = Series_Common_Action_Maybe_Unhandled(level_, verb);
-    if (r != R_UNHANDLED)
-        return r;
+    Bounce bounce = Series_Common_Action_Maybe_Unhandled(level_, verb);
+    if (bounce != BOUNCE_UNHANDLED)
+        return bounce;
 
     // Common setup code for all actions:
     //

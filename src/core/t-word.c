@@ -71,7 +71,7 @@ REBINT CT_Word(const Cell* a, const Cell* b, REBINT mode)
 //
 //  MAKE_Word: C
 //
-REB_R MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     if (Any_Word(arg)) {
         //
@@ -125,7 +125,7 @@ REB_R MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Word: C
 //
-REB_R TO_Word(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Word(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     return MAKE_Word(out, kind, arg);
 }
@@ -187,7 +187,7 @@ void MF_Word(REB_MOLD *mo, const Cell* v, bool form) {
 // adds support for picking characters out of the UTF-8 data of a word
 // (eventually all strings will be "UTF-8 Everywhere")
 //
-REB_R PD_Word(
+Bounce PD_Word(
     REBPVS *pvs,
     const Value* picker,
     const Value* opt_setval
@@ -219,10 +219,10 @@ REB_R PD_Word(
             return pvs->out;
         }
 
-        return R_UNHANDLED;
+        return BOUNCE_UNHANDLED;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }
 
 

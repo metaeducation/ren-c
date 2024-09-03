@@ -71,7 +71,7 @@ DECLARE_NATIVE(if)
         return Init_Void(OUT);
 
     if (Do_Branch_With_Throws(OUT, ARG(branch), ARG(condition)))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     return Nothingify_Branched(OUT);  // trash means no branch (cues ELSE)
 }
@@ -96,7 +96,7 @@ DECLARE_NATIVE(if_not)
         return nullptr;
 
     if (Do_Branch_With_Throws(OUT, ARG(branch), ARG(condition)))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     return Nothingify_Branched(OUT);  // trash means no branch (cues ELSE)
 }
@@ -126,7 +126,7 @@ DECLARE_NATIVE(either)
             : ARG(false_branch),
         ARG(condition)
     )){
-        return R_THROWN;
+        return BOUNCE_THROWN;
     }
 
     return OUT;
@@ -296,13 +296,13 @@ DECLARE_NATIVE(either_test)
     INCLUDE_PARAMS_OF_EITHER_TEST;
 
     if (Either_Test_Core_Throws(OUT, ARG(test), ARG(arg)))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     if (VAL_LOGIC(OUT))
         RETURN (ARG(arg));
 
     if (Do_Branch_With_Throws(OUT, ARG(branch), ARG(arg)))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     return OUT;
 }
@@ -329,7 +329,7 @@ DECLARE_NATIVE(else)
         RETURN (left);
 
     if (Do_Branch_With_Throws(OUT, ARG(branch), NULLED_CELL))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     return OUT;  // don't trashify, allows chaining: `else [...] then [...]`
 }
@@ -357,7 +357,7 @@ DECLARE_NATIVE(then)
         return nullptr;  // left didn't run, so signal THEN didn't run either
 
     if (Do_Branch_With_Throws(OUT, ARG(branch), left))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     return Nothingify_Branched(OUT);  // if left ran, make THEN signal it did
 }
@@ -385,7 +385,7 @@ DECLARE_NATIVE(also)
         return nullptr;
 
     if (Do_Branch_With_Throws(OUT, ARG(branch), left))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     RETURN (left); // just passing thru the input
 }
@@ -415,7 +415,7 @@ DECLARE_NATIVE(match)
 
     DECLARE_VALUE (temp);
     if (Either_Test_Core_Throws(temp, test, value))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     if (VAL_LOGIC(temp)) {
         if (IS_FALSEY(value)) // see above for why false match not passed thru
@@ -490,7 +490,7 @@ DECLARE_NATIVE(all)
     while (NOT_END(L->value)) {
         if (Eval_Step_Maybe_Stale_Throws(OUT, L)) {
             Abort_Level(L);
-            return R_THROWN;
+            return BOUNCE_THROWN;
         }
 
         if (
@@ -534,7 +534,7 @@ DECLARE_NATIVE(any)
     while (NOT_END(L->value)) {
         if (Eval_Step_Maybe_Stale_Throws(OUT, L)) {
             Abort_Level(L);
-            return R_THROWN;
+            return BOUNCE_THROWN;
         }
 
         if (
@@ -581,7 +581,7 @@ DECLARE_NATIVE(none)
     while (NOT_END(L->value)) {
         if (Eval_Step_Maybe_Stale_Throws(OUT, L)) {
             Abort_Level(L);
-            return R_THROWN;
+            return BOUNCE_THROWN;
         }
 
         if (IS_TRUTHY(OUT)) { // any true results mean failure
@@ -602,7 +602,7 @@ DECLARE_NATIVE(none)
 // Shared code for CASE (which runs BLOCK! clauses as code) and CHOOSE (which
 // returns values as-is, e.g. `choose [true [print "hi"]]` => `[print "hi]`
 //
-static REB_R Case_Choose_Core_May_Throw(
+static Bounce Case_Choose_Core_May_Throw(
     Level* level_,
     bool choose // do not evaluate branches, just "choose" them
 ){
@@ -628,7 +628,7 @@ static REB_R Case_Choose_Core_May_Throw(
             Drop_GC_Guard(cell);
             Copy_Cell(OUT, cell);
             Abort_Level(L);
-            return R_THROWN;
+            return BOUNCE_THROWN;
         }
 
         if (IS_END(cell)) {  // !!! R3C patch for permissive invisibility
@@ -688,7 +688,7 @@ static REB_R Case_Choose_Core_May_Throw(
             if (Eval_Step_Throws(SET_END(OUT), L)) {
                 Drop_GC_Guard(cell);
                 Abort_Level(L);
-                return R_THROWN;
+                return BOUNCE_THROWN;
             }
 
             L->gotten = nullptr; // can't hold onto cache, running user code
@@ -698,14 +698,14 @@ static REB_R Case_Choose_Core_May_Throw(
                 if (Do_At_Throws(OUT, block)) {
                     Abort_Level(L);
                     Drop_GC_Guard(cell);
-                    return R_THROWN;
+                    return BOUNCE_THROWN;
                 }
             }
             else if (Is_Action(OUT)) {
                 if (Do_Branch_With_Throws(OUT, block, cell)) {
                     Abort_Level(L);
                     Drop_GC_Guard(cell);
-                    return R_THROWN;
+                    return BOUNCE_THROWN;
                 }
             } else
                 fail (Error_Invalid_Core(OUT, L->specifier));
@@ -846,7 +846,7 @@ DECLARE_NATIVE(switch)
         else {
             if (Eval_Step_Throws(SET_END(OUT), L)) {
                 Abort_Level(L);
-                return R_THROWN;
+                return BOUNCE_THROWN;
             }
 
             if (IS_END(OUT)) {
@@ -893,7 +893,7 @@ DECLARE_NATIVE(switch)
             L->specifier
         )){
             Abort_Level(L);
-            return R_THROWN;
+            return BOUNCE_THROWN;
         }
 
         Nothingify_Branched(OUT);  // null is reserved for no branch run
@@ -939,7 +939,7 @@ DECLARE_NATIVE(default)
             fail ("DEFAULT usage with no left hand side must be at <end>");
 
         if (Do_Branch_Throws(OUT, ARG(branch)))
-            return R_THROWN;
+            return BOUNCE_THROWN;
 
         return OUT; // NULL is okay in this case
     }
@@ -960,7 +960,7 @@ DECLARE_NATIVE(default)
     }
 
     if (Do_Branch_Throws(OUT, ARG(branch)))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     const bool enfix = false;
     if (Is_Set_Word(target))
@@ -1090,7 +1090,7 @@ DECLARE_NATIVE(catch)
             goto was_caught;
     }
 
-    return R_THROWN; // throw name is in OUT, value is held task local
+    return BOUNCE_THROWN; // throw name is in OUT, value is held task local
 
   was_caught:
 
@@ -1149,5 +1149,5 @@ DECLARE_NATIVE(throw)
     }
 
     CONVERT_NAME_TO_THROWN(OUT, value);
-    return R_THROWN;
+    return BOUNCE_THROWN;
 }

@@ -36,7 +36,7 @@
 //
 //  Console_Actor: C
 //
-static REB_R Console_Actor(Level* level_, Value* port, Value* verb)
+static Bounce Console_Actor(Level* level_, Value* port, Value* verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
     REBREQ *req = Ensure_Port_State(port, RDI_STDIO);

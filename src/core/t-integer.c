@@ -47,7 +47,7 @@ REBINT CT_Integer(const Cell* a, const Cell* b, REBINT mode)
 //
 //  MAKE_Integer: C
 //
-REB_R MAKE_Integer(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Integer(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_INTEGER);
     UNUSED(kind);
@@ -86,7 +86,7 @@ REB_R MAKE_Integer(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Integer: C
 //
-REB_R TO_Integer(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Integer(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_INTEGER);
     UNUSED(kind);

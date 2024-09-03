@@ -132,7 +132,7 @@ static void Init_Dir_Path(
 //
 // Internal port handler for file directories.
 //
-static REB_R Dir_Actor(Level* level_, Value* port, Value* verb)
+static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
     Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);

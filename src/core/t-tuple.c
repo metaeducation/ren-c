@@ -48,7 +48,7 @@ REBINT CT_Tuple(const Cell* a, const Cell* b, REBINT mode)
 //
 //  MAKE_Tuple: C
 //
-REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_TUPLE);
     UNUSED(kind);
@@ -149,7 +149,7 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Tuple: C
 //
-REB_R TO_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     return MAKE_Tuple(out, kind, arg);
 }
@@ -255,18 +255,18 @@ void Poke_Tuple_Immediate(
 //
 //  PD_Tuple: C
 //
-REB_R PD_Tuple(
+Bounce PD_Tuple(
     REBPVS *pvs,
     const Value* picker,
     const Value* opt_setval
 ){
     if (opt_setval) {
         //
-        // Returning R_IMMEDIATE means it is up to the caller to decide if
+        // Returning BOUNCE_IMMEDIATE means it is up to the caller to decide if
         // they can meaningfully find a variable to store any updates to.
         //
         Poke_Tuple_Immediate(pvs->out, picker, opt_setval);
-        return R_IMMEDIATE;
+        return BOUNCE_IMMEDIATE;
     }
 
     Pick_Tuple(pvs->out, pvs->out, picker);

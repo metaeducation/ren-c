@@ -155,7 +155,7 @@ DECLARE_NATIVE(unwind)
     UNUSED(REF(with)); // implied by non-null value
 
     Make_Thrown_Unwind_Value(OUT, ARG(level), ARG(value), level_);
-    return R_THROWN;
+    return BOUNCE_THROWN;
 }
 
 
@@ -245,7 +245,7 @@ DECLARE_NATIVE(return)
     INIT_BINDING_MAY_MANAGE(OUT, L_binding);
 
     CONVERT_NAME_TO_THROWN(OUT, v);
-    return R_THROWN;
+    return BOUNCE_THROWN;
 }
 
 
@@ -410,7 +410,7 @@ DECLARE_NATIVE(adapt)
         SPECIFIED,
         push_refinements
     )){
-        return R_THROWN;
+        return BOUNCE_THROWN;
     }
 
     if (not Is_Action(OUT))
@@ -504,7 +504,7 @@ DECLARE_NATIVE(enclose)
         SPECIFIED,
         push_refinements
     )){
-        return R_THROWN;
+        return BOUNCE_THROWN;
     }
 
     if (not Is_Action(OUT))
@@ -520,7 +520,7 @@ DECLARE_NATIVE(enclose)
         SPECIFIED,
         push_refinements
     )){
-        return R_THROWN;
+        return BOUNCE_THROWN;
     }
 
     if (not Is_Action(OUT))
@@ -619,7 +619,7 @@ DECLARE_NATIVE(hijack)
         SPECIFIED,
         push_refinements
     )){
-        return R_THROWN;
+        return BOUNCE_THROWN;
     }
 
     if (not Is_Action(OUT))
@@ -635,7 +635,7 @@ DECLARE_NATIVE(hijack)
         SPECIFIED,
         push_refinements
     )){
-        return R_THROWN;
+        return BOUNCE_THROWN;
     }
 
     if (not Is_Action(OUT))
@@ -829,7 +829,7 @@ DECLARE_NATIVE(tighten)
 
 
 
-REB_R N_Shot_Dispatcher(Level* L)
+Bounce N_Shot_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     assert(Array_Len(details) == 1);
@@ -841,13 +841,13 @@ REB_R N_Shot_Dispatcher(Level* L)
 
     Value* code = Level_Arg(L, 1);
     if (Do_Branch_Throws(L->out, code))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     return Nothingify_Branched(L->out);
 }
 
 
-REB_R N_Upshot_Dispatcher(Level* L)
+Bounce N_Upshot_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     assert(Array_Len(details) == 1);
@@ -860,7 +860,7 @@ REB_R N_Upshot_Dispatcher(Level* L)
 
     Value* code = Level_Arg(L, 1);
     if (Do_Branch_Throws(L->out, code))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     return Nothingify_Branched(L->out);
 }

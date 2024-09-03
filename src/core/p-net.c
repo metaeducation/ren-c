@@ -78,7 +78,7 @@ static void Query_Net(Value* out, Value* port, struct devreq_net *sock)
 //
 //  Transport_Actor: C
 //
-static REB_R Transport_Actor(
+static Bounce Transport_Actor(
     Level* level_,
     Value* port,
     Value* verb,
@@ -484,7 +484,7 @@ static REB_R Transport_Actor(
 //
 //  TCP_Actor: C
 //
-static REB_R TCP_Actor(Level* level_, Value* port, Value* verb)
+static Bounce TCP_Actor(Level* level_, Value* port, Value* verb)
 {
     return Transport_Actor(level_, port, verb, TRANSPORT_TCP);
 }
@@ -493,7 +493,7 @@ static REB_R TCP_Actor(Level* level_, Value* port, Value* verb)
 //
 //  UDP_Actor: C
 //
-static REB_R UDP_Actor(Level* level_, Value* port, Value* verb)
+static Bounce UDP_Actor(Level* level_, Value* port, Value* verb)
 {
     return Transport_Actor(level_, port, verb, TRANSPORT_UDP);
 }

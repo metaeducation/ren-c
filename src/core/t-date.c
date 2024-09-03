@@ -429,7 +429,7 @@ REBINT Cmp_Date(const Cell* d1, const Cell* d2)
 //
 //  MAKE_Date: C
 //
-REB_R MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
+Bounce MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
     assert(kind == REB_DATE);
     UNUSED(kind);
 
@@ -537,7 +537,7 @@ REB_R MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
 //
 //  TO_Date: C
 //
-REB_R TO_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
+Bounce TO_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
     return MAKE_Date(out, kind, arg);
 }
 
@@ -856,19 +856,19 @@ void Pick_Or_Poke_Date(
 //
 //  PD_Date: C
 //
-REB_R PD_Date(
+Bounce PD_Date(
     REBPVS *pvs,
     const Value* picker,
     const Value* opt_setval
 ){
     if (opt_setval != nullptr) {
         //
-        // Updates pvs->out; R_IMMEDIATE means path dispatch will write it
+        // Updates pvs->out; BOUNCE_IMMEDIATE means path dispatch will write it
         // back to whatever the originating variable location was, or error
         // if it didn't come from a variable.
         //
         Pick_Or_Poke_Date(nullptr, pvs->out, picker, opt_setval);
-        return R_IMMEDIATE;
+        return BOUNCE_IMMEDIATE;
     }
 
     // !!! The date picking as written can't both read and write the out cell.

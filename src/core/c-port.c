@@ -409,14 +409,14 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
 // NOTE: stack must already be setup correctly for action, and
 // the caller must cleanup the stack.
 //
-REB_R Do_Port_Action(Level* level_, Value* port, Value* verb)
+Bounce Do_Port_Action(Level* level_, Value* port, Value* verb)
 {
     FAIL_IF_BAD_PORT(port);
 
     REBCTX *ctx = VAL_CONTEXT(port);
     Value* actor = CTX_VAR(ctx, STD_PORT_ACTOR);
 
-    REB_R r;
+    Bounce bounce;
 
     // If actor is a HANDLE!, it should be a PAF
     //
@@ -424,7 +424,7 @@ REB_R Do_Port_Action(Level* level_, Value* port, Value* verb)
     // it's some other kind of handle value this could crash.
     //
     if (Is_Native_Port_Actor(actor)) {
-        r = cast(PORT_HOOK, VAL_HANDLE_CFUNC(actor))(level_, port, verb);
+        bounce = cast(PORT_HOOK, VAL_HANDLE_CFUNC(actor))(level_, port, verb);
         goto post_process_output;
     }
 
@@ -445,9 +445,9 @@ REB_R Do_Port_Action(Level* level_, Value* port, Value* verb)
         fail (Error_No_Port_Action_Raw(verb));
 
     if (Redo_Action_Throws(level_, VAL_ACTION(action)))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
-    r = OUT; // result should be in level_->out
+    bounce = OUT; // result should be in level_->out
 
     // !!! READ's /LINES and /STRING refinements are something that should
     // work regardless of data source.  But R3-Alpha only implemented it in
@@ -456,7 +456,7 @@ REB_R Do_Port_Action(Level* level_, Value* port, Value* verb)
     //
     // !!! Note this code is incorrect for files read in chunks!!!
 
-post_process_output:
+  post_process_output:
     if (Cell_Word_Id(verb) == SYM_READ) {
         INCLUDE_PARAMS_OF_READ;
 
@@ -466,7 +466,7 @@ post_process_output:
         UNUSED(PAR(seek));
         UNUSED(PAR(index));
 
-        assert(r == OUT);
+        assert(bounce == OUT);
 
         if ((REF(string) or REF(lines)) and not Is_Text(OUT)) {
             if (not Is_Binary(OUT))
@@ -488,7 +488,7 @@ post_process_output:
         }
     }
 
-    return r;
+    return bounce;
 }
 
 

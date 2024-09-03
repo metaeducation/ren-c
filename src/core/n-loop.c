@@ -95,7 +95,7 @@ DECLARE_NATIVE(break)
 
     Copy_Cell(OUT, NAT_VALUE(break));
     CONVERT_NAME_TO_THROWN(OUT, NULLED_CELL);
-    return R_THROWN;
+    return BOUNCE_THROWN;
 }
 
 
@@ -122,14 +122,14 @@ DECLARE_NATIVE(continue)
     Copy_Cell(OUT, NAT_VALUE(continue));
     CONVERT_NAME_TO_THROWN(OUT, ARG(value)); // null if e.g. `do [continue]`
 
-    return R_THROWN;
+    return BOUNCE_THROWN;
 }
 
 
 //
 //  Loop_Series_Common: C
 //
-static REB_R Loop_Series_Common(
+static Bounce Loop_Series_Common(
     Value* out,
     Value* var, // Must not be movable from context expansion, see #2274
     const Value* body,
@@ -160,7 +160,7 @@ static REB_R Loop_Series_Common(
         if (Do_Branch_Throws(out, body)) {
             bool broke;
             if (not Catching_Break_Or_Continue(out, &broke))
-                return R_THROWN;
+                return BOUNCE_THROWN;
             if (broke)
                 return nullptr;
         }
@@ -183,7 +183,7 @@ static REB_R Loop_Series_Common(
         if (Do_Branch_Throws(out, body)) {
             bool broke;
             if (not Catching_Break_Or_Continue(out, &broke))
-                return R_THROWN;
+                return BOUNCE_THROWN;
             if (broke)
                 return nullptr;
         }
@@ -212,7 +212,7 @@ static REB_R Loop_Series_Common(
 //
 //  Loop_Integer_Common: C
 //
-static REB_R Loop_Integer_Common(
+static Bounce Loop_Integer_Common(
     Value* out,
     Value* var, // Must not be movable from context expansion, see #2274
     const Value* body,
@@ -236,7 +236,7 @@ static REB_R Loop_Integer_Common(
         if (Do_Branch_Throws(out, body)) {
             bool broke;
             if (not Catching_Break_Or_Continue(out, &broke))
-                return R_THROWN;
+                return BOUNCE_THROWN;
             if (broke)
                 return nullptr;
         }
@@ -255,7 +255,7 @@ static REB_R Loop_Integer_Common(
         if (Do_Branch_Throws(out, body)) {
             bool broke;
             if (not Catching_Break_Or_Continue(out, &broke))
-                return R_THROWN;
+                return BOUNCE_THROWN;
             if (broke)
                 return nullptr;
         }
@@ -275,7 +275,7 @@ static REB_R Loop_Integer_Common(
 //
 //  Loop_Number_Common: C
 //
-static REB_R Loop_Number_Common(
+static Bounce Loop_Number_Common(
     Value* out,
     Value* var, // Must not be movable from context expansion, see #2274
     const Value* body,
@@ -322,7 +322,7 @@ static REB_R Loop_Number_Common(
         if (Do_Branch_Throws(out, body)) {
             bool broke;
             if (not Catching_Break_Or_Continue(out, &broke))
-                return R_THROWN;
+                return BOUNCE_THROWN;
             if (broke)
                 return nullptr;
         }
@@ -339,7 +339,7 @@ static REB_R Loop_Number_Common(
         if (Do_Branch_Throws(out, body)) {
             bool broke;
             if (not Catching_Break_Or_Continue(out, &broke))
-                return R_THROWN;
+                return BOUNCE_THROWN;
             if (broke)
                 return nullptr;
         }
@@ -393,10 +393,10 @@ struct Loop_Each_State {
 // Isolation of central logic for FOR-EACH, MAP-EACH, and EVERY so that it
 // can be rebRescue()'d in case of failure (to remove FLEX_INFO_HOLD, etc.)
 //
-// Returns nullptr or R_THROWN, where the relevant result is in les->out.
+// Returns nullptr or BOUNCE_THROWN, where the relevant result is in les->out.
 // (That result may be Is_Nulled() if there was a break during the loop)
 //
-static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
+static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
 
     bool more_data = true;
     bool broke = false;
@@ -578,7 +578,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
         if (Do_Branch_Throws(les->out, les->body)) {
             if (not Catching_Break_Or_Continue(les->out, &broke))
-                return R_THROWN; // non-loop-related throw
+                return BOUNCE_THROWN; // non-loop-related throw
 
             if (broke) {
                 Init_Nulled(les->out);
@@ -630,7 +630,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 // likely be factored in a better way...pushing more per-native code into the
 // natives themselves.
 //
-static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
+static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
 {
     INCLUDE_PARAMS_OF_FOR_EACH; // MAP-EACH & EVERY must have same interface
 
@@ -662,7 +662,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
 
     // Extract the series and index being enumerated, based on data type
 
-    REB_R r;
+    Bounce bounce;
 
     bool took_hold;
     if (Is_Action(les.data)) {
@@ -718,7 +718,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
         les.data_len = Flex_Len(les.data_ser); // HOLD so length can't change
         if (les.data_idx >= les.data_len) {
             assert(Is_Void(OUT));  // result if loop body never runs
-            r = nullptr;
+            bounce = nullptr;
             goto cleanup;
         }
     }
@@ -726,7 +726,7 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
     // If there is a fail() and we took a FLEX_INFO_HOLD, that hold needs
     // to be released.  For this reason, the code has to trap errors.
 
-    r = rebRescue(cast(REBDNG*, &Loop_Each_Core), &les);
+    bounce = rebRescue(cast(REBDNG*, &Loop_Each_Core), &les);
 
     //=//// CLEANUPS THAT NEED TO BE DONE DESPITE ERROR, THROW, ETC. //////=//
 
@@ -740,17 +740,17 @@ static REB_R Loop_Each(Level* level_, LOOP_MODE mode)
 
     //=//// NOW FINISH UP /////////////////////////////////////////////////=//
 
-    if (r == R_THROWN) { // generic THROW/RETURN/QUIT (not BREAK/CONTINUE)
+    if (bounce == BOUNCE_THROWN) {  // THROW/RETURN/QUIT (not CONTINUE/BREAK)
         if (mode == LOOP_MAP_EACH)
             Drop_Data_Stack_To(base);
-        return R_THROWN;
+        return BOUNCE_THROWN;
     }
 
-    if (r) {
-        assert(Is_Error(r));
+    if (bounce) {
+        assert(Is_Error(bounce));
         if (mode == LOOP_MAP_EACH)
             Drop_Data_Stack_To(base);
-        rebJumps ("FAIL", rebR(r));
+        rebJumps ("FAIL", rebR(bounce));
     }
 
     // Otherwise, nullptr signals result in les.out (a.k.a. OUT)
@@ -942,7 +942,7 @@ DECLARE_NATIVE(for_skip)
         if (Do_Branch_Throws(OUT, ARG(body))) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
-                return R_THROWN;
+                return BOUNCE_THROWN;
             if (broke)
                 return nullptr;
         }
@@ -1002,7 +1002,7 @@ DECLARE_NATIVE(stop)
     else
         CONVERT_NAME_TO_THROWN(OUT, v); // `if true [stop ...]`
 
-    return R_THROWN;
+    return BOUNCE_THROWN;
 }
 
 
@@ -1036,7 +1036,7 @@ DECLARE_NATIVE(cycle)
                     return OUT; // special case: null allowed (like break)
                 }
 
-                return R_THROWN;
+                return BOUNCE_THROWN;
             }
             if (broke)
                 return nullptr;
@@ -1246,7 +1246,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
 
 // See notes on Remove_Each_State
 //
-static REB_R Remove_Each_Core(struct Remove_Each_State *res)
+static Bounce Remove_Each_Core(struct Remove_Each_State *res)
 {
     // Set a bit saying we are iterating the series, which will disallow
     // mutations (including a nested REMOVE-EACH) until completion or failure.
@@ -1294,7 +1294,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
 
         if (Do_Branch_Throws(res->out, res->body)) {
             if (not Catching_Break_Or_Continue(res->out, &res->broke))
-                return R_THROWN; // we'll bubble it up, but will also finalize
+                return BOUNCE_THROWN;  // bubble it up, but we'll also finalize
 
             if (res->broke) {
                 //
@@ -1467,19 +1467,19 @@ DECLARE_NATIVE(remove_each)
 
     res.broke = false; // will be set to true if there is a BREAK
 
-    REB_R r = rebRescue(cast(REBDNG*, &Remove_Each_Core), &res);
+    Bounce bounce = rebRescue(cast(REBDNG*, &Remove_Each_Core), &res);
 
     // Currently, if a fail() happens during the iteration, any removals
     // which were indicated will be enacted before propagating failure.
     //
     REBLEN removals = Finalize_Remove_Each(&res);
 
-    if (r == R_THROWN)
-        return R_THROWN;
+    if (bounce == BOUNCE_THROWN)
+        return BOUNCE_THROWN;
 
-    if (r) {
-        assert(Is_Error(r));
-        rebJumps("FAIL", rebR(r));
+    if (bounce) {
+        assert(Is_Error(bounce));
+        rebJumps("FAIL", rebR(bounce));
     }
 
     if (res.broke)
@@ -1552,7 +1552,7 @@ DECLARE_NATIVE(repeat)
         if (Do_Branch_Throws(OUT, ARG(body))) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
-                return R_THROWN;
+                return BOUNCE_THROWN;
             if (broke)
                 return nullptr;
         }
@@ -1655,7 +1655,7 @@ DECLARE_NATIVE(for_next)
 
 // Common code for UNTIL & UNTIL-NOT (same frame param layout)
 //
-INLINE REB_R Until_Core(
+INLINE Bounce Until_Core(
     Level* level_,
     bool trigger // body keeps running so until evaluation matches this
 ){
@@ -1668,7 +1668,7 @@ INLINE REB_R Until_Core(
         if (Do_Branch_Throws(OUT, ARG(body))) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
-                return R_THROWN;
+                return BOUNCE_THROWN;
             if (broke)
                 return Init_Nulled(OUT);
 
@@ -1719,7 +1719,7 @@ DECLARE_NATIVE(until_not)
 
 // Common code for WHILE & WHILE-NOT
 //
-INLINE REB_R While_Core(
+INLINE Bounce While_Core(
     Level* level_,
     bool trigger // body keeps running so long as condition matches
 ){
@@ -1735,7 +1735,7 @@ INLINE REB_R While_Core(
         if (Do_Branch_Throws(cell, ARG(condition))) {
             Copy_Cell(OUT, cell);
             Drop_GC_Guard(cell);
-            return R_THROWN; // don't see BREAK/CONTINUE in the *condition*
+            return BOUNCE_THROWN; // don't see BREAK/CONTINUE in the *condition*
         }
 
         if (IS_TRUTHY(cell) != trigger) {
@@ -1747,7 +1747,7 @@ INLINE REB_R While_Core(
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke)) {
                 Drop_GC_Guard(cell);
-                return R_THROWN;
+                return BOUNCE_THROWN;
             }
             if (broke) {
                 Drop_GC_Guard(cell);

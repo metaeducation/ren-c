@@ -460,7 +460,7 @@ DECLARE_NATIVE(wait)
     else {
         StackIndex base = TOP_INDEX;
         if (Reduce_To_Stack_Throws(OUT, ARG(value)))
-            return R_THROWN;
+            return BOUNCE_THROWN;
 
         // !!! This takes the stack array and creates an unmanaged array from
         // it, which ends up being put into a value and becomes managed.  So
@@ -517,7 +517,7 @@ DECLARE_NATIVE(wait)
 
     // Process port events [stack-move]:
     if (Wait_Ports_Throws(OUT, ports, timeout, REF(only)))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     assert(Is_Logic(OUT));
 

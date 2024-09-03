@@ -78,7 +78,7 @@ DECLARE_NATIVE(reeval)
     Init_Nothing(OUT);  // !!! R3C patch, better than error on `reeval :elide`
 
     if (Eval_Step_In_Subframe_Throws(OUT, level_, flags, child))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     return OUT;
 }
@@ -229,7 +229,7 @@ DECLARE_NATIVE(eval_enfix)
     REBFLGS flags = DO_FLAG_FULFILLING_ARG | DO_FLAG_POST_SWITCH;
     if (Eval_Step_In_Subframe_Throws(OUT, L, flags, child)) {
         Drop_GC_Guard(temp);
-        return R_THROWN;
+        return BOUNCE_THROWN;
     }
 
     Corrupt_Pointer_If_Debug(TOP_LEVEL->u.defer.arg);
@@ -292,7 +292,7 @@ DECLARE_NATIVE(do)
         );
 
         if (indexor == THROWN_FLAG)
-            return R_THROWN;
+            return BOUNCE_THROWN;
 
         return OUT; }
 
@@ -324,7 +324,7 @@ DECLARE_NATIVE(do)
                 // having BLANK! mean "thrown" may evolve into a convention.
                 //
                 Init_Unreadable(position);
-                return R_THROWN;
+                return BOUNCE_THROWN;
             }
 
             SET_END(position); // convention for shared data at end point
@@ -344,7 +344,7 @@ DECLARE_NATIVE(do)
         Init_Nothing(OUT);
         while (NOT_END(L->value)) {
             if (Eval_Step_In_Subframe_Throws(OUT, L, flags, child))
-                return R_THROWN;
+                return BOUNCE_THROWN;
         }
 
         return OUT; }
@@ -372,7 +372,7 @@ DECLARE_NATIVE(do)
             REF(only) ? TRUE_VALUE : FALSE_VALUE,
             rebEND
         )){
-            return R_THROWN;
+            return BOUNCE_THROWN;
         }
         return OUT; }
 
@@ -403,7 +403,7 @@ DECLARE_NATIVE(do)
             fail (Error_Use_Eval_For_Eval_Raw());
 
         if (Eval_Value_Throws(OUT, source))
-            return R_THROWN;
+            return BOUNCE_THROWN;
         return OUT; }
 
     case REB_FRAME: {
@@ -453,7 +453,7 @@ DECLARE_NATIVE(do)
         Drop_Level(L);
 
         if (threw)
-            return R_THROWN; // prohibits recovery from exits
+            return BOUNCE_THROWN; // prohibits recovery from exits
 
         assert(IS_END(L->value)); // we started at END_FLAG, can only throw
 
@@ -511,7 +511,7 @@ DECLARE_NATIVE(evaluate)
 
         if (indexor == THROWN_FLAG) {
             Copy_Cell(OUT, temp);
-            return R_THROWN;
+            return BOUNCE_THROWN;
         }
 
         if (indexor == END_FLAG or IS_END(temp))
@@ -554,7 +554,7 @@ DECLARE_NATIVE(evaluate)
                 // having BLANK! mean "thrown" may evolve into a convention.
                 //
                 Init_Unreadable(position);
-                return R_THROWN;
+                return BOUNCE_THROWN;
             }
 
             if (indexor == END_FLAG or IS_END(temp)) {
@@ -702,7 +702,7 @@ DECLARE_NATIVE(redo)
     // the actual value that Eval_Core_Throws() catches.
     //
     CONVERT_NAME_TO_THROWN(OUT, restartee);
-    return R_THROWN;
+    return BOUNCE_THROWN;
 }
 
 
@@ -752,7 +752,7 @@ DECLARE_NATIVE(applique)
         SPECIFIED,
         true // push_refinements, don't specialize ACTION! on 'APPEND/ONLY/DUP
     )){
-        return R_THROWN;
+        return BOUNCE_THROWN;
     }
 
     if (not Is_Action(OUT))
@@ -854,7 +854,7 @@ DECLARE_NATIVE(applique)
     Drop_Level(L);
 
     if (action_threw)
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     assert(IS_END(L->value)); // we started at END_FLAG, can only throw
     return OUT;

@@ -326,6 +326,6 @@ DECLARE_NATIVE(dump)
             PROBE(var);
     }
 
-    return R_INVISIBLE;
+    return BOUNCE_INVISIBLE;
 #endif
 }

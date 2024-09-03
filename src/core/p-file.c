@@ -255,7 +255,7 @@ static void Set_Seek(struct devreq_file *file, Value* arg)
 //
 // Internal port handler for files.
 //
-static REB_R File_Actor(Level* level_, Value* port, Value* verb)
+static Bounce File_Actor(Level* level_, Value* port, Value* verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
     Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);

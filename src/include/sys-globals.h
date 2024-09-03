@@ -99,12 +99,12 @@ PVAR Value PG_False_Value[2];
 PVAR Value PG_True_Value[2];
 PVAR Value PG_Nothing_Value[2];
 
-PVAR Value PG_R_Invisible[2]; // has "pseudotype" REB_R_INVISIBLE
-PVAR Value PG_R_Immediate[2]; // has "pseudotype" REB_R_IMMEDIATE
-PVAR Value PG_R_Redo_Unchecked[2]; // "pseudotype" REB_R_REDO + FALSEY flag
-PVAR Value PG_R_Redo_Checked[2]; // "pseudotype" REB_R_REDO + no FALSEY flag
-PVAR Value PG_R_Reference[2]; // "pseudotype" REB_R_REFERENCE
-PVAR Value PG_R_Thrown[2]; // has "pseudotype" REB_R_THROWN
+PVAR Value PG_Bounce_Invisible[2]; // has "pseudotype" REB_R_INVISIBLE
+PVAR Value PG_Bounce_Immediate[2]; // has "pseudotype" REB_R_IMMEDIATE
+PVAR Value PG_Bounce_Redo_Unchecked[2]; // "pseudotype" REB_R_REDO + FALSEY flag
+PVAR Value PG_Bounce_Redo_Checked[2]; // "pseudotype" REB_R_REDO + no FALSEY flag
+PVAR Value PG_Bounce_Reference[2]; // "pseudotype" REB_R_REFERENCE
+PVAR Value PG_Bounce_Thrown[2]; // has "pseudotype" REB_R_THROWN
 
 // These are root variables which used to be described in %root.r and kept
 // alive by keeping that array alive.  Now they are API handles, kept alive

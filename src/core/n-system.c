@@ -82,7 +82,7 @@ DECLARE_NATIVE(quit)
         CONVERT_NAME_TO_THROWN(OUT, NULLED_CELL);
     }
 
-    return R_THROWN;
+    return BOUNCE_THROWN;
 }
 
 
@@ -376,7 +376,7 @@ DECLARE_NATIVE(c_debug_break)
     //
     TG_Break_At_Tick = level_->tick + 1;
 
-    return R_INVISIBLE;
+    return BOUNCE_INVISIBLE;
   #else
     fail (Error_Debug_Only_Raw());
   #endif

@@ -39,7 +39,7 @@
 // In order to avoid having to pay for a check for nullptr in the path dispatch
 // table for types with no path dispatch, a failing handler is in the slot.
 //
-REB_R PD_Fail(
+Bounce PD_Fail(
     REBPVS *pvs,
     const Value* picker,
     const Value* opt_setval
@@ -48,7 +48,7 @@ REB_R PD_Fail(
     UNUSED(picker);
     UNUSED(opt_setval);
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }
 
 
@@ -58,7 +58,7 @@ REB_R PD_Fail(
 // As a temporary workaround for not having real user-defined types, an
 // extension can overtake an "unhooked" type slot to provide behavior.
 //
-REB_R PD_Unhooked(
+Bounce PD_Unhooked(
     REBPVS *pvs,
     const Value* picker,
     const Value* opt_setval
@@ -125,19 +125,19 @@ bool Next_Path_Throws(REBPVS *pvs)
     Fetch_Next_In_Level(nullptr, pvs); // may be at end
 
     if (IS_END(pvs->value) and PVS_IS_SET_PATH(pvs)) {
-        const Value* r = hook(
+        const Value* bounce = hook(
             pvs,
             PVS_PICKER(pvs),
             PVS_OPT_SETVAL(pvs)
         );
 
-        if (r == nullptr)
+        if (bounce == nullptr)
             fail (Error_Bad_Path_Poke_Raw(PVS_PICKER(pvs)));
 
-        switch (VAL_TYPE_RAW(r)) {
+        switch (VAL_TYPE_RAW(bounce)) {
 
         case REB_0_END: // unhandled
-            assert(r == R_UNHANDLED); // shouldn't be other ends
+            assert(bounce == BOUNCE_UNHANDLED); // shouldn't be other ends
             fail (Error_Bad_Path_Poke_Raw(PVS_PICKER(pvs)));
 
         case REB_R_THROWN:
@@ -185,7 +185,7 @@ bool Next_Path_Throws(REBPVS *pvs)
         default:
             //
             // Something like a generic OUT.  We could in theory take those
-            // to just be variations of R_IMMEDIATE, but it's safer to break
+            // to just be variations of BOUNCE_IMMEDIATE, but it's safer to break
             // that out as a separate class.
             //
             fail ("Path evaluation produced temporary value, can't POKE it");
@@ -212,7 +212,7 @@ bool Next_Path_Throws(REBPVS *pvs)
         else if (not r) {
             Init_Nulled(pvs->out);
         }
-        else if (r == R_UNHANDLED) {
+        else if (r == BOUNCE_UNHANDLED) {
             if (Is_Nulled(PVS_PICKER(pvs)))
                 fail ("NULL used in path picking but was not handled");
             fail (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
@@ -241,11 +241,11 @@ bool Next_Path_Throws(REBPVS *pvs)
                 SET_VAL_FLAG(pvs->out, VALUE_FLAG_ENFIXED);
 
             // Leave the pvs->u.ref as-is in case the next update turns out
-            // to be R_IMMEDIATE, and it is needed.
+            // to be BOUNCE_IMMEDIATE, and it is needed.
             break;
 
         default:
-            panic ("REB_R value not supported for path dispatch");
+            panic ("Bounce value not supported for path dispatch");
         }
     }
 
@@ -357,7 +357,7 @@ bool Eval_Path_Throws_Core(
     if (Is_Word(pvs->value)) {
         //
         // Remember the actual location of this variable, not just its value,
-        // in case we need to do R_IMMEDIATE writeback (e.g. month/day: 1)
+        // in case we need to do BOUNCE_IMMEDIATE writeback (e.g. month/day: 1)
         //
         pvs->u.ref.cell = Get_Mutable_Var_May_Fail(pvs->value, pvs->specifier);
 
@@ -371,7 +371,7 @@ bool Eval_Path_Throws_Core(
         }
     }
     else if (Is_Group(pvs->value)) {
-        pvs->u.ref.cell = nullptr; // nowhere to R_IMMEDIATE write back to
+        pvs->u.ref.cell = nullptr; // nowhere to BOUNCE_IMMEDIATE write back to
 
         if (pvs->flags.bits & DO_FLAG_NO_PATH_GROUPS)
             fail ("GROUP! in PATH! used with GET or SET (use REDUCE/EVAL)");
@@ -387,7 +387,7 @@ bool Eval_Path_Throws_Core(
         }
     }
     else {
-        pvs->u.ref.cell = nullptr; // nowhere to R_IMMEDIATE write back to
+        pvs->u.ref.cell = nullptr; // nowhere to BOUNCE_IMMEDIATE write back to
 
         Derelativize(pvs->out, pvs->value, pvs->specifier);
     }
@@ -605,13 +605,13 @@ DECLARE_NATIVE(pick)
     PATH_HOOK hook = Path_Hooks[VAL_TYPE(location)];
     assert(hook != nullptr); // &PD_Fail is used instead of null
 
-    REB_R r = hook(pvs, PVS_PICKER(pvs), nullptr);
-    if (not r)
-        return r;
+    Bounce bounce = hook(pvs, PVS_PICKER(pvs), nullptr);
+    if (not bounce)
+        return bounce;
 
-    switch (VAL_TYPE_RAW(r)) {
+    switch (VAL_TYPE_RAW(bounce)) {
     case REB_0_END:
-        assert(r == R_UNHANDLED);
+        assert(bounce == BOUNCE_UNHANDLED);
         fail (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
 
     case REB_R_INVISIBLE:
@@ -630,7 +630,7 @@ DECLARE_NATIVE(pick)
         break;
     }
 
-    return r;
+    return bounce;
 }
 
 
@@ -686,20 +686,20 @@ DECLARE_NATIVE(poke)
     PATH_HOOK hook = Path_Hooks[VAL_TYPE(location)];
     assert(hook); // &PD_Fail is used instead of nullptr
 
-    const Value* r = hook(pvs, PVS_PICKER(pvs), ARG(value));
-    switch (VAL_TYPE_RAW(r)) {
-    case REB_0_END:
-        assert(r == R_UNHANDLED);
+    const Value* bounce = hook(pvs, PVS_PICKER(pvs), ARG(value));
+    switch (VAL_TYPE_RAW(bounce)) {
+      case REB_0_END:
+        assert(bounce == BOUNCE_UNHANDLED);
         fail (Error_Bad_Path_Poke_Raw(PVS_PICKER(pvs)));
 
-    case REB_R_INVISIBLE: // is saying it did the write already
+      case REB_R_INVISIBLE: // is saying it did the write already
         break;
 
-    case REB_R_REFERENCE: // wants us to write it
+      case REB_R_REFERENCE: // wants us to write it
         Copy_Cell(pvs->u.ref.cell, ARG(value));
         break;
 
-    default:
+      default:
         assert(false); // shouldn't happen, complain in the debug build
         fail (Error_Invalid(PVS_PICKER(pvs))); // raise error in release build
     }

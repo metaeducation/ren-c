@@ -67,7 +67,7 @@ REBINT CT_List(const Cell* a, const Cell* b, REBINT mode)
 //     MAKE_Get_Path
 //     MAKE_Lit_Path
 //
-REB_R MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
+Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
     if (Is_Integer(arg) or Is_Decimal(arg)) {
         //
         // `make block! 10` => creates array with certain initial capacity
@@ -226,7 +226,7 @@ REB_R MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
                 VARARG_OP_TAKE
             )){
                 Drop_Data_Stack_To(base);
-                return R_THROWN;
+                return BOUNCE_THROWN;
             }
 
             if (IS_END(out))
@@ -261,7 +261,7 @@ REB_R MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
 //
 //  TO_List: C
 //
-REB_R TO_List(Value* out, enum Reb_Kind kind, const Value* arg) {
+Bounce TO_List(Value* out, enum Reb_Kind kind, const Value* arg) {
     if (
         kind == VAL_TYPE(arg) // always act as COPY if types match
         or Splices_Into_Type_Without_Only(kind, arg) // see comments
@@ -599,7 +599,7 @@ void Shuffle_List(Value* value, bool secure)
 //     PD_Set_Path
 //     PD_Lit_Path
 //
-REB_R PD_List(
+Bounce PD_List(
     REBPVS *pvs,
     const Value* picker,
     const Value* opt_setval
@@ -657,7 +657,7 @@ REB_R PD_List(
 
     if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(pvs->out))) {
         if (opt_setval)
-            return R_UNHANDLED;
+            return BOUNCE_UNHANDLED;
 
         return nullptr;
     }
@@ -667,7 +667,7 @@ REB_R PD_List(
 
     pvs->u.ref.cell = Cell_List_At_Head(pvs->out, n);
     pvs->u.ref.specifier = VAL_SPECIFIER(pvs->out);
-    return R_REFERENCE;
+    return BOUNCE_REFERENCE;
 }
 
 
@@ -790,9 +790,9 @@ REBTYPE(List)
 
     // Common operations for any series type (length, head, etc.)
     //
-    REB_R r = Series_Common_Action_Maybe_Unhandled(level_, verb);
-    if (r != R_UNHANDLED)
-        return r;
+    Bounce bounce = Series_Common_Action_Maybe_Unhandled(level_, verb);
+    if (bounce != BOUNCE_UNHANDLED)
+        return bounce;
 
     Array* arr = Cell_Array(list);
     Specifier* specifier = VAL_SPECIFIER(list);

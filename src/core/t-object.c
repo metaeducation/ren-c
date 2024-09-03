@@ -261,7 +261,7 @@ REBINT CT_Context(const Cell* a, const Cell* b, REBINT mode)
 // !!! MAKE functions currently don't have an explicit protocol for
 // thrown values.  So out just might be set as thrown.  Review.
 //
-REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     if (kind == REB_FRAME) {
         //
@@ -335,7 +335,7 @@ REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
     //
     if (kind == REB_ERROR) {
         if (Make_Error_Object_Throws(out, arg))
-            return R_THROWN;
+            return BOUNCE_THROWN;
 
         return out;
     }
@@ -381,7 +381,7 @@ REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Context: C
 //
-REB_R TO_Context(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Context(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     if (kind == REB_ERROR) {
         //
@@ -408,7 +408,7 @@ REB_R TO_Context(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  PD_Context: C
 //
-REB_R PD_Context(
+Bounce PD_Context(
     REBPVS *pvs,
     const Value* picker,
     const Value* opt_setval
@@ -416,7 +416,7 @@ REB_R PD_Context(
     REBCTX *c = VAL_CONTEXT(pvs->out);
 
     if (not Is_Word(picker))
-        return R_UNHANDLED;
+        return BOUNCE_UNHANDLED;
 
     const bool always = false;
     REBLEN n = Find_Canon_In_Context(c, VAL_WORD_CANON(picker), always);
@@ -433,7 +433,7 @@ REB_R PD_Context(
 
     pvs->u.ref.cell = CTX_VAR(c, n);
     pvs->u.ref.specifier = SPECIFIED;
-    return R_REFERENCE;
+    return BOUNCE_REFERENCE;
 }
 
 
@@ -698,7 +698,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 // PORT! wants to act like a context for some things, but if you ask an
 // ordinary object if it's OPEN? it doesn't know how to do that.
 //
-REB_R Context_Common_Action_Maybe_Unhandled(
+Bounce Context_Common_Action_Maybe_Unhandled(
     Level* level_,
     Value* verb
 ){
@@ -753,7 +753,7 @@ REB_R Context_Common_Action_Maybe_Unhandled(
         break;
     }
 
-    return R_UNHANDLED;
+    return BOUNCE_UNHANDLED;
 }
 
 
@@ -764,9 +764,9 @@ REB_R Context_Common_Action_Maybe_Unhandled(
 //
 REBTYPE(Context)
 {
-    REB_R r = Context_Common_Action_Maybe_Unhandled(level_, verb);
-    if (r != R_UNHANDLED)
-        return r;
+    Bounce bounce = Context_Common_Action_Maybe_Unhandled(level_, verb);
+    if (bounce != BOUNCE_UNHANDLED)
+        return bounce;
 
     Value* value = D_ARG(1);
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
@@ -1015,7 +1015,7 @@ DECLARE_NATIVE(construct)
             DECLARE_VALUE (temp);
             if (Do_At_Throws(temp, body)) {
                 Copy_Cell(OUT, temp);
-                return R_THROWN; // evaluation result ignored unless thrown
+                return BOUNCE_THROWN; // evaluation result ignored unless thrown
             }
         }
 

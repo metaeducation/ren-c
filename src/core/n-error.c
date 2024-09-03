@@ -99,7 +99,7 @@ DECLARE_NATIVE(trap)
     }
 
     if (Is_Nothing(error))  // signal used to indicate a throw
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     assert(Is_Error(error));
 
@@ -143,7 +143,7 @@ DECLARE_NATIVE(entrap)
 {
     INCLUDE_PARAMS_OF_ENTRAP;
 
-    REB_R error = rebRescue(cast(REBDNG*, &Entrap_Dangerous), level_);
+    Bounce error = rebRescue(cast(REBDNG*, &Entrap_Dangerous), level_);
     UNUSED(ARG(code)); // gets used by the above call, via the level_ pointer
 
     if (error)

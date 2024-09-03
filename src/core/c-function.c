@@ -1338,7 +1338,7 @@ REBTYPE(Fail)
 // https://en.wikipedia.org/wiki/Multiple_dispatch
 // https://en.wikipedia.org/wiki/Generic_function
 //
-REB_R Generic_Dispatcher(Level* L)
+Bounce Generic_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
 
@@ -1360,7 +1360,7 @@ REB_R Generic_Dispatcher(Level* L)
 // it sounds, because you can make fast stub actions that only cost if they
 // are HIJACK'd (e.g. ASSERT is done this way).
 //
-REB_R Null_Dispatcher(Level* L)
+Bounce Null_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(LVL_PHASE_OR_DUMMY(L));
     assert(Cell_Series_Len_At(Array_Head(details)) == 0);
@@ -1375,7 +1375,7 @@ REB_R Null_Dispatcher(Level* L)
 //
 // Analogue to Null_Dispatcher() for `func [return: [~] ...] []`.
 //
-REB_R Nothing_Dispatcher(Level* L)
+Bounce Nothing_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     assert(Cell_Series_Len_At(Array_Head(details)) == 0);
@@ -1390,7 +1390,7 @@ REB_R Nothing_Dispatcher(Level* L)
 //
 // Dispatcher used by TYPECHECKER generator for when argument is a datatype.
 //
-REB_R Datatype_Checker_Dispatcher(Level* L)
+Bounce Datatype_Checker_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* datatype = Array_Head(details);
@@ -1408,7 +1408,7 @@ REB_R Datatype_Checker_Dispatcher(Level* L)
 //
 // Dispatcher used by TYPECHECKER generator for when argument is a typeset.
 //
-REB_R Typeset_Checker_Dispatcher(Level* L)
+Bounce Typeset_Checker_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* typeset = Array_Head(details);
@@ -1425,14 +1425,14 @@ REB_R Typeset_Checker_Dispatcher(Level* L)
 // (whose body is a block that runs through DO []).  There is no return type
 // checking done on these simple functions.
 //
-REB_R Unchecked_Dispatcher(Level* L)
+Bounce Unchecked_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* body = Array_Head(details);
     assert(Is_Block(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     if (Do_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     return L->out;
 }
@@ -1445,14 +1445,14 @@ REB_R Unchecked_Dispatcher(Level* L)
 // Pushing that code into the dispatcher means there's no need to do flag
 // testing in the main loop.
 //
-REB_R Eraser_Dispatcher(Level* L)
+Bounce Eraser_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* body = Array_Head(details);
     assert(Is_Block(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     if (Do_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     return Init_Nothing(L->out);
 }
@@ -1465,7 +1465,7 @@ REB_R Eraser_Dispatcher(Level* L)
 // correct.  (Note that natives do not get this type checking, and they
 // probably shouldn't pay for it except in the debug build.)
 //
-REB_R Returner_Dispatcher(Level* L)
+Bounce Returner_Dispatcher(Level* L)
 {
     REBACT *phase = Level_Phase(L);
     Array* details = ACT_DETAILS(phase);
@@ -1474,7 +1474,7 @@ REB_R Returner_Dispatcher(Level* L)
     assert(Is_Block(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     if (Do_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     Value* typeset = ACT_PARAM(phase, ACT_NUM_PARAMS(phase));
     assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
@@ -1498,7 +1498,7 @@ REB_R Returner_Dispatcher(Level* L)
 // doesn't disrupt the chain of evaluation any more than if the call were not
 // there.  (The call can have side effects, however.)
 //
-REB_R Elider_Dispatcher(Level* L)
+Bounce Elider_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
 
@@ -1513,10 +1513,10 @@ REB_R Elider_Dispatcher(Level* L)
 
     if (Do_At_Throws(dummy, Cell_Array(body), 0, SPC(L->varlist))) {
         Copy_Cell(L->out, dummy); // can't return a local variable
-        return R_THROWN;
+        return BOUNCE_THROWN;
     }
 
-    return R_INVISIBLE;
+    return BOUNCE_INVISIBLE;
 }
 
 
@@ -1526,13 +1526,13 @@ REB_R Elider_Dispatcher(Level* L)
 // This is a specialized version of Elider_Dispatcher() for when the body of
 // a function is empty.  This helps COMMENT and functions like it run faster.
 //
-REB_R Commenter_Dispatcher(Level* L)
+Bounce Commenter_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* body = Array_Head(details);
     assert(Cell_Series_Len_At(body) == 0);
     UNUSED(body);
-    return R_INVISIBLE;
+    return BOUNCE_INVISIBLE;
 }
 
 
@@ -1549,7 +1549,7 @@ REB_R Commenter_Dispatcher(Level* L)
 // and a "shim" is needed...since something like an ADAPT or SPECIALIZE
 // or a MAKE FRAME! might depend on the existing paramlist shape.
 //
-REB_R Hijacker_Dispatcher(Level* L)
+Bounce Hijacker_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* hijacker = Array_Head(details);
@@ -1558,7 +1558,7 @@ REB_R Hijacker_Dispatcher(Level* L)
     // transform the parameters we've gathered to be compatible with it.
     //
     if (Redo_Action_Throws(L, VAL_ACTION(hijacker)))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     return L->out;
 }
@@ -1569,7 +1569,7 @@ REB_R Hijacker_Dispatcher(Level* L)
 //
 // Dispatcher used by ADAPT.
 //
-REB_R Adapter_Dispatcher(Level* L)
+Bounce Adapter_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     assert(Array_Len(details) == 2);
@@ -1593,13 +1593,13 @@ REB_R Adapter_Dispatcher(Level* L)
         SPC(L->varlist)
     )){
         Copy_Cell(L->out, dummy);
-        return R_THROWN;
+        return BOUNCE_THROWN;
     }
 
     Level_Phase(L) = VAL_ACTION(adaptee);
     LVL_BINDING(L) = VAL_BINDING(adaptee);
 
-    return R_REDO_CHECKED; // the redo will use the updated phase/binding
+    return BOUNCE_REDO_CHECKED; // the redo will use the updated phase/binding
 }
 
 
@@ -1608,7 +1608,7 @@ REB_R Adapter_Dispatcher(Level* L)
 //
 // Dispatcher used by ENCLOSE.
 //
-REB_R Encloser_Dispatcher(Level* L)
+Bounce Encloser_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     assert(Array_Len(details) == 2);
@@ -1658,7 +1658,7 @@ REB_R Encloser_Dispatcher(Level* L)
 
     const bool fully = true;
     if (Apply_Only_Throws(L->out, fully, outer, Level_Spare(L), rebEND))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     return L->out;
 }
@@ -1669,7 +1669,7 @@ REB_R Encloser_Dispatcher(Level* L)
 //
 // Dispatcher used by CASCADE.
 //
-REB_R Cascader_Dispatcher(Level* L)
+Bounce Cascader_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     Array* pipeline = Cell_Array(Array_Head(details));
@@ -1689,7 +1689,7 @@ REB_R Cascader_Dispatcher(Level* L)
     Level_Phase(L) = VAL_ACTION(pipeline_at);
     LVL_BINDING(L) = VAL_BINDING(pipeline_at);
 
-    return R_REDO_UNCHECKED; // signatures should match
+    return BOUNCE_REDO_UNCHECKED; // signatures should match
 }
 
 

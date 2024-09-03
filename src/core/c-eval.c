@@ -1413,7 +1413,7 @@ bool Eval_Core_Throws(Level* const L)
         //
         // Note that there may be functions on the stack if this is the
         // second time through, and we were just jumping up to check the
-        // parameters in response to a R_REDO_CHECKED; if so, skip this.
+        // parameters in response to a BOUNCE_REDO_CHECKED; if so, skip this.
         //
         if (TOP_INDEX != L->stack_base and Is_Issue(TOP)) {
 
@@ -1614,10 +1614,10 @@ bool Eval_Core_Throws(Level* const L)
             // run the L->phase again.  The dispatcher may have changed the
             // value of what L->phase is, for instance.
 
-            if (GET_VAL_FLAG(r, VALUE_FLAG_FALSEY)) // R_REDO_UNCHECKED
+            if (GET_VAL_FLAG(r, VALUE_FLAG_FALSEY)) // BOUNCE_REDO_UNCHECKED
                 goto redo_unchecked;
 
-          redo_checked:; // R_REDO_CHECKED
+          redo_checked:; // BOUNCE_REDO_CHECKED
 
             Expire_Out_Cell_Unless_Invisible(L);
             assert(Is_Pointer_Corrupt_Debug(L->u.defer.arg));

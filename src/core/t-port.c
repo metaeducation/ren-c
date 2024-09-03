@@ -47,7 +47,7 @@ REBINT CT_Port(const Cell* a, const Cell* b, REBINT mode)
 // Create a new port. This is done by calling the MAKE_PORT
 // function stored in the system/intrinsic object.
 //
-REB_R MAKE_Port(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Port(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_PORT);
     UNUSED(kind);
@@ -72,7 +72,7 @@ REB_R MAKE_Port(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Port: C
 //
-REB_R TO_Port(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Port(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_PORT);
     UNUSED(kind);
@@ -106,7 +106,7 @@ REB_R TO_Port(Value* out, enum Reb_Kind kind, const Value* arg)
 // ports do this, as some have their own interpretation of APPEND.  It's
 // hacky, but still not as bad as it was.  Review.
 //
-REB_R Retrigger_Append_As_Write(Level* level_) {
+Bounce Retrigger_Append_As_Write(Level* level_) {
     INCLUDE_PARAMS_OF_APPEND;
 
     // !!! Something like `write/append %foo.txt "data"` knows to convert
@@ -194,9 +194,9 @@ REBTYPE(Port)
 
     Value* port = D_ARG(1);
 
-    REB_R r = Context_Common_Action_Maybe_Unhandled(level_, verb);
-    if (r != R_UNHANDLED)
-        return r;
+    Bounce bounce = Context_Common_Action_Maybe_Unhandled(level_, verb);
+    if (bounce != BOUNCE_UNHANDLED)
+        return bounce;
 
     return Do_Port_Action(level_, port, verb);
 }

@@ -48,7 +48,7 @@
 // could track whether it's "open" or not, but the details of what is needed
 // depends on the development of a coherent port model.
 //
-static REB_R Clipboard_Actor(
+static Bounce Clipboard_Actor(
     Level* level_,
     Value* port,
     Value* verb

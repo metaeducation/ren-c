@@ -48,8 +48,8 @@
 
 // This signals that the evaluator is in a "thrown state".
 //
-#define R_THROWN \
-    cast(Value*, &PG_R_Thrown)
+#define BOUNCE_THROWN \
+    cast(Value*, &PG_Bounce_Thrown)
 
 // See ACTION_FLAG_INVISIBLE...this is what any function with that flag needs
 // to return.
@@ -59,8 +59,8 @@
 // into the output slot...instead leaving that to the evaluator (as a
 // SET-PATH! should always evaluate to what was just set)
 //
-#define R_INVISIBLE \
-    cast(Value*, &PG_R_Invisible)
+#define BOUNCE_INVISIBLE \
+    cast(Value*, &PG_Bounce_Invisible)
 
 // If Eval_Core gets back an REB_R_REDO from a dispatcher, it will re-execute
 // the L->phase in the frame.  This function may be changed by the dispatcher
@@ -71,11 +71,11 @@
 // frame from expected types, and then let those reach an underlying native
 // who thought the types had been checked.
 //
-#define R_REDO_UNCHECKED \
-    cast(Value*, &PG_R_Redo_Unchecked)
+#define BOUNCE_REDO_UNCHECKED \
+    cast(Value*, &PG_Bounce_Redo_Unchecked)
 
-#define R_REDO_CHECKED \
-    cast(Value*, &PG_R_Redo_Checked)
+#define BOUNCE_REDO_CHECKED \
+    cast(Value*, &PG_Bounce_Redo_Checked)
 
 
 // Path dispatch used to have a return value PE_SET_IF_END which meant that
@@ -91,18 +91,18 @@
 // than that.  It hasn't been addressed much in Ren-C yet, but needs a more
 // generalized design.
 //
-#define R_REFERENCE \
-    cast(Value*, &PG_R_Reference)
+#define BOUNCE_REFERENCE \
+    cast(Value*, &PG_Bounce_Reference)
 
 // This is used in path dispatch, signifying that a SET-PATH! assignment
 // resulted in the updating of an immediate expression in pvs->out, meaning
 // it will have to be copied back into whatever reference cell it had been in.
 //
-#define R_IMMEDIATE \
-    cast(Value*, &PG_R_Immediate)
+#define BOUNCE_IMMEDIATE \
+    cast(Value*, &PG_Bounce_Immediate)
 
-#define R_UNHANDLED \
-    cast(Value*, &PG_End_Node)
+#define BOUNCE_UNHANDLED \
+    cast(Value*, &PG_End_Node)  // ...an old and sort of superfluous conflation
 
 
 INLINE Array* ACT_PARAMLIST(REBACT *a) {

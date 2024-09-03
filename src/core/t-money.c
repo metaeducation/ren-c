@@ -56,7 +56,7 @@ REBINT CT_Money(const Cell* a, const Cell* b, REBINT mode)
 //
 //  MAKE_Money: C
 //
-REB_R MAKE_Money(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Money(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_MONEY);
     UNUSED(kind);
@@ -101,7 +101,7 @@ REB_R MAKE_Money(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Money: C
 //
-REB_R TO_Money(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Money(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     return MAKE_Money(out, kind, arg);
 }

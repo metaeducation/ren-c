@@ -223,17 +223,22 @@ typedef enum SymIdEnum SymId;
 #endif
 
 
-// The REB_R type is a Value* but with the idea that it is legal to hold
-// types like REB_R_THROWN, etc.  This helps document interface contract.
+// The Bounce type is a Value* but with the idea that it is legal to hold
+// types like REB_R_THROWN, etc. which are understood specially by the
+// evaluator as return values from natives.
 //
-typedef Value* REB_R;
+// It is called a "Bounce" to match modern Ren-C because these are signals
+// understood by the trampoline.  This older codebase is not stackless, but
+// having the name of the return values align is good.
+//
+typedef Value* Bounce;
 
 
 //=//// DISPATCHERS ///////////////////////////////////////////////////////=//
 //
 typedef REBINT (*COMPARE_HOOK)(const Cell* a, const Cell* b, REBINT s);
-typedef REB_R (*MAKE_HOOK)(Value*, enum Reb_Kind, const Value*);
-typedef REB_R (*TO_HOOK)(Value*, enum Reb_Kind, const Value*);
+typedef Bounce (*MAKE_HOOK)(Value*, enum Reb_Kind, const Value*);
+typedef Bounce (*TO_HOOK)(Value*, enum Reb_Kind, const Value*);
 
 
 //=//// MOLDING ///////////////////////////////////////////////////////////=//
@@ -249,24 +254,24 @@ typedef void (*MOLD_HOOK)(REB_MOLD *mo, const Cell* v, bool form);
 
 // C function implementing a native ACTION!
 //
-typedef REB_R (*REBNAT)(Level* level_);
+typedef Bounce (*REBNAT)(Level* level_);
 #define DECLARE_NATIVE(n) \
-    REB_R N_##n(Level* level_)
+    Bounce N_##n(Level* level_)
 
 // Generic hooks: implementing a "verb" ACTION! for a particular
 // type (or class of types).
 //
-typedef REB_R (*GENERIC_HOOK)(Level* level_, Value* verb);
+typedef Bounce (*GENERIC_HOOK)(Level* level_, Value* verb);
 #define REBTYPE(n) \
-    REB_R T_##n(Level* level_, Value* verb)
+    Bounce T_##n(Level* level_, Value* verb)
 
 // Port hook: for implementing generic ACTION!s on a PORT! class
 //
-typedef REB_R (*PORT_HOOK)(Level* level_, Value* port, Value* verb);
+typedef Bounce (*PORT_HOOK)(Level* level_, Value* port, Value* verb);
 
 // Path evaluator function
 //
-typedef REB_R (*PATH_HOOK)(
+typedef Bounce (*PATH_HOOK)(
     REBPVS *pvs, const Value* picker, const Value* opt_setval
 );
 

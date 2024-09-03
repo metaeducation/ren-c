@@ -49,7 +49,7 @@ REBINT CT_Pair(const Cell* a, const Cell* b, REBINT mode)
 //
 //  MAKE_Pair: C
 //
-REB_R MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_PAIR);
     UNUSED(kind);
@@ -103,7 +103,7 @@ REB_R MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Pair: C
 //
-REB_R TO_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     return MAKE_Pair(out, kind, arg);
 }
@@ -167,7 +167,7 @@ void Min_Max_Pair(Value* out, const Value* a, const Value* b, bool maxed)
 //
 //  PD_Pair: C
 //
-REB_R PD_Pair(
+Bounce PD_Pair(
     REBPVS *pvs,
     const Value* picker,
     const Value* opt_setval
@@ -180,15 +180,15 @@ REB_R PD_Pair(
         else if (Cell_Word_Id(picker) == SYM_Y)
             n = 2;
         else
-            return R_UNHANDLED;
+            return BOUNCE_UNHANDLED;
     }
     else if (Is_Integer(picker)) {
         n = Int32(picker);
         if (n != 1 && n != 2)
-            return R_UNHANDLED;
+            return BOUNCE_UNHANDLED;
     }
     else
-        return R_UNHANDLED;
+        return BOUNCE_UNHANDLED;
 
     if (opt_setval == nullptr) {
         if (n == 1)
@@ -203,14 +203,14 @@ REB_R PD_Pair(
     // and DECIMAL! are currently allowed.
     //
     if (not Is_Integer(opt_setval) and not Is_Decimal(opt_setval))
-        return R_UNHANDLED;
+        return BOUNCE_UNHANDLED;
 
     if (n == 1)
         Copy_Cell(VAL_PAIR_FIRST(pvs->out), opt_setval);
     else
         Copy_Cell(VAL_PAIR_SECOND(pvs->out), opt_setval);
 
-    // Using R_IMMEDIATE means that although we've updated pvs->out, we'll
+    // Using BOUNCE_IMMEDIATE means that although we've updated pvs->out, we'll
     // leave it to the path dispatch to figure out if that can be written back
     // to some variable from which this pair actually originated.
     //
@@ -219,7 +219,7 @@ REB_R PD_Pair(
     // be used to update other things (like header bits) from an originating
     // variable.
     //
-    return R_IMMEDIATE;
+    return BOUNCE_IMMEDIATE;
 }
 
 

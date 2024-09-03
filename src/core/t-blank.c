@@ -46,7 +46,7 @@ REBINT CT_Unit(const Cell* a, const Cell* b, REBINT mode)
 // MAKE is disallowed, with the general rule that a blank in will give
 // a null out... for e.g. `make object! maybe select data spec else [...]`
 //
-REB_R MAKE_Unit(Value* out, enum Reb_Kind kind, const Value* arg) {
+Bounce MAKE_Unit(Value* out, enum Reb_Kind kind, const Value* arg) {
     UNUSED(out);
     fail (Error_Bad_Make(kind, arg));
 }
@@ -57,7 +57,7 @@ REB_R MAKE_Unit(Value* out, enum Reb_Kind kind, const Value* arg) {
 //
 // TO is disallowed, e.g. you can't TO convert an integer of 0 to a blank.
 //
-REB_R TO_Unit(Value* out, enum Reb_Kind kind, const Value* data) {
+Bounce TO_Unit(Value* out, enum Reb_Kind kind, const Value* data) {
     UNUSED(out);
     fail (Error_Bad_Make(kind, data));
 }
@@ -97,7 +97,7 @@ void MF_Unit(REB_MOLD *mo, const Cell* v, bool form)
 // or GET, we indicate no result with void.  (Ordinary path selection will
 // treat this as an error.)
 //
-REB_R PD_Blank(
+Bounce PD_Blank(
     REBPVS *pvs,
     const Value* picker,
     const Value* opt_setval
@@ -106,7 +106,7 @@ REB_R PD_Blank(
     UNUSED(pvs);
 
     if (opt_setval != nullptr)
-        return R_UNHANDLED;
+        return BOUNCE_UNHANDLED;
 
     return nullptr;
 }

@@ -862,43 +862,43 @@ static void Init_Root_Vars(void)
     Init_Nothing(&PG_Nothing_Value[0]);
     Poison_Cell(&PG_Nothing_Value[1]);
 
-    Erase_Cell(&PG_R_Thrown[0]);
-    Erase_Cell(&PG_R_Thrown[1]);
-    RESET_CELL(&PG_R_Thrown[0], REB_R_THROWN);
-    Poison_Cell(&PG_R_Thrown[1]);
+    Erase_Cell(&PG_Bounce_Thrown[0]);
+    Erase_Cell(&PG_Bounce_Thrown[1]);
+    RESET_CELL(&PG_Bounce_Thrown[0], REB_R_THROWN);
+    Poison_Cell(&PG_Bounce_Thrown[1]);
 
-    Erase_Cell(&PG_R_Invisible[0]);
-    Erase_Cell(&PG_R_Invisible[1]);
-    RESET_CELL(&PG_R_Invisible[0], REB_R_INVISIBLE);
-    Poison_Cell(&PG_R_Invisible[1]);
+    Erase_Cell(&PG_Bounce_Invisible[0]);
+    Erase_Cell(&PG_Bounce_Invisible[1]);
+    RESET_CELL(&PG_Bounce_Invisible[0], REB_R_INVISIBLE);
+    Poison_Cell(&PG_Bounce_Invisible[1]);
 
-    Erase_Cell(&PG_R_Immediate[0]);
-    Erase_Cell(&PG_R_Immediate[1]);
-    RESET_CELL(&PG_R_Immediate[0], REB_R_IMMEDIATE);
-    Poison_Cell(&PG_R_Immediate[1]);
+    Erase_Cell(&PG_Bounce_Immediate[0]);
+    Erase_Cell(&PG_Bounce_Immediate[1]);
+    RESET_CELL(&PG_Bounce_Immediate[0], REB_R_IMMEDIATE);
+    Poison_Cell(&PG_Bounce_Immediate[1]);
 
-    Erase_Cell(&PG_R_Redo_Unchecked[0]);
-    Erase_Cell(&PG_R_Redo_Unchecked[1]);
+    Erase_Cell(&PG_Bounce_Redo_Unchecked[0]);
+    Erase_Cell(&PG_Bounce_Redo_Unchecked[1]);
     RESET_CELL_EXTRA(
-        &PG_R_Redo_Unchecked[0],
+        &PG_Bounce_Redo_Unchecked[0],
         REB_R_REDO,
         VALUE_FLAG_FALSEY // understood by Eval_Core_Throws() as "unchecked"
     );
-    Poison_Cell(&PG_R_Redo_Unchecked[1]);
+    Poison_Cell(&PG_Bounce_Redo_Unchecked[1]);
 
-    Erase_Cell(&PG_R_Redo_Checked[0]);
-    Erase_Cell(&PG_R_Redo_Checked[1]);
+    Erase_Cell(&PG_Bounce_Redo_Checked[0]);
+    Erase_Cell(&PG_Bounce_Redo_Checked[1]);
     RESET_CELL_EXTRA(
-        &PG_R_Redo_Checked[0],
+        &PG_Bounce_Redo_Checked[0],
         REB_R_REDO,
         0 // no VALUE_FLAG_FALSEY is taken by Eval_Core_Throws() as "checked"
     );
-    Poison_Cell(&PG_R_Redo_Checked[1]);
+    Poison_Cell(&PG_Bounce_Redo_Checked[1]);
 
-    Erase_Cell(&PG_R_Reference[0]);
-    Erase_Cell(&PG_R_Reference[1]);
-    RESET_CELL(&PG_R_Reference[0], REB_R_REFERENCE);
-    Poison_Cell(&PG_R_Reference[1]);
+    Erase_Cell(&PG_Bounce_Reference[0]);
+    Erase_Cell(&PG_Bounce_Reference[1]);
+    RESET_CELL(&PG_Bounce_Reference[0], REB_R_REFERENCE);
+    Poison_Cell(&PG_Bounce_Reference[1]);
 
     Flex* locker = nullptr;
 

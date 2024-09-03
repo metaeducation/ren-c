@@ -231,13 +231,13 @@ DECLARE_NATIVE(and)
     if (IS_FALSEY(left)) {
         if (Is_Group(right)) { // no need to evaluate right if BLOCK!
             if (Do_At_Throws(OUT, right))
-                return R_THROWN;
+                return BOUNCE_THROWN;
         }
         RETURN (left); // preserve falsey value
     }
 
     if (Do_At_Throws(OUT, right))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     return OUT; // preserve the exact truthy or falsey value
 }
@@ -264,13 +264,13 @@ DECLARE_NATIVE(or)
     if (IS_TRUTHY(left)) {
         if (Is_Group(right)) { // no need to evaluate right if BLOCK!
             if (Do_At_Throws(OUT, right))
-                return R_THROWN;
+                return BOUNCE_THROWN;
         }
         RETURN (left);
     }
 
     if (Do_At_Throws(OUT, right))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     return OUT; // preserve the exact truthy or falsey value
 }
@@ -296,7 +296,7 @@ DECLARE_NATIVE(xor)
     Value* left = ARG(left);
 
     if (Do_At_Throws(OUT, ARG(right))) // always evaluated
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     Value* right = OUT;
 
@@ -355,7 +355,7 @@ REBINT CT_Logic(const Cell* a, const Cell* b, REBINT mode)
 //
 //  MAKE_Logic: C
 //
-REB_R MAKE_Logic(Value* out, enum Reb_Kind kind, const Value* arg) {
+Bounce MAKE_Logic(Value* out, enum Reb_Kind kind, const Value* arg) {
     assert(kind == REB_LOGIC);
     UNUSED(kind);
 
@@ -384,7 +384,7 @@ REB_R MAKE_Logic(Value* out, enum Reb_Kind kind, const Value* arg) {
 //
 //  TO_Logic: C
 //
-REB_R TO_Logic(Value* out, enum Reb_Kind kind, const Value* arg) {
+Bounce TO_Logic(Value* out, enum Reb_Kind kind, const Value* arg) {
     assert(kind == REB_LOGIC);
     UNUSED(kind);
 

@@ -96,7 +96,7 @@ DECLARE_NATIVE(reduce)
         StackIndex base = TOP_INDEX;
 
         if (Reduce_To_Stack_Throws(OUT, value))
-            return R_THROWN;
+            return BOUNCE_THROWN;
 
         REBFLGS pop_flags = NODE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE;
         if (Get_Array_Flag(Cell_Array(value), NEWLINE_AT_TAIL))
@@ -119,7 +119,7 @@ DECLARE_NATIVE(reduce)
         RETURN (value);
 
     if (Eval_Value_Throws(OUT, value))
-        return R_THROWN;
+        return BOUNCE_THROWN;
 
     if (not Is_Nulled(OUT))
         return OUT;
@@ -334,7 +334,7 @@ DECLARE_NATIVE(compose)
         REF(deep),
         REF(only)
     )){
-        return R_THROWN;
+        return BOUNCE_THROWN;
     }
 
     // The stack values contain N NEWLINE_BEFORE flags, and we need N + 1
