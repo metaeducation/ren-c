@@ -84,7 +84,7 @@ Bounce MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
     }
 
     if (Any_String(arg)) {
-        REBSIZ size;
+        Size size;
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_WORD);
 
         if (kind == REB_ISSUE) {
@@ -200,7 +200,7 @@ Bounce PD_Word(
             if (n < 0)
                 return nullptr;
 
-            REBSIZ size = Flex_Len(str);
+            Size size = Flex_Len(str);
             const Byte *bp = cb_cast(Symbol_Head(str));
             REBUNI c;
             do {
@@ -251,7 +251,7 @@ REBTYPE(Word)
         case SYM_LENGTH: {
             Symbol* symbol = Cell_Word_Symbol(val);
             const Byte *bp = cb_cast(Symbol_Head(symbol));
-            REBSIZ size = Symbol_Size(symbol);
+            Size size = Symbol_Size(symbol);
             REBLEN len = 0;
             for (; size > 0; ++bp, --size) {
                 if (*bp < 0x80)

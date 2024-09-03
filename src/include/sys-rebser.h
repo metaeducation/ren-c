@@ -788,7 +788,7 @@ union StubMiscUnion {
     // Flex_Used() and Flex_Len() can therefore be different, where Flex_Len()
     // on a string series comes from here, vs. just report the size.
     //
-    REBSIZ length;
+    Size length;
 
     // When binding words into a context, it's necessary to keep a table
     // mapping those words to indices in the context's keylist.  R3-Alpha

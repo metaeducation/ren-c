@@ -97,8 +97,8 @@ static Bounce DNS_Actor(Level* level_, Value* port, Value* verb)
             memcpy(&(DEVREQ_NET(sock)->remote_ip), VAL_TUPLE(arg), 4);
         }
         else if (Is_Text(arg)) {
-            REBSIZ offset;
-            REBSIZ size;
+            Size offset;
+            Size size;
             Blob* temp = Temp_UTF8_At_Managed(
                 &offset, &size, arg, Cell_Series_Len_At(arg)
             );

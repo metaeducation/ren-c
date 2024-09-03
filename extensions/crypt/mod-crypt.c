@@ -611,9 +611,9 @@ DECLARE_NATIVE(sha256)
     Value* data = ARG(data);
 
     Byte *bp;
-    REBSIZ size;
+    Size size;
     if (Is_Text(data)) {
-        REBSIZ offset;
+        Size offset;
         Blob* temp = Temp_UTF8_At_Managed(
             &offset, &size, data, Cell_Series_Len_At(data)
         );

@@ -144,8 +144,8 @@ static Bounce Transport_Actor(
 
             // Lookup host name (an extra TCP device step):
             if (Is_Text(arg)) {
-                REBSIZ offset;
-                REBSIZ size;
+                Size offset;
+                Size size;
                 Blob* temp = Temp_UTF8_At_Managed(
                     &offset, &size, arg, Cell_Series_Len_At(arg)
                 );
@@ -376,8 +376,8 @@ static Bounce Transport_Actor(
             // behavior.  Convert to UTF-8...but the port model needs a top
             // to bottom review of what types are accepted where and why.
             //
-            REBSIZ offset;
-            REBSIZ size;
+            Size offset;
+            Size size;
             temp = Temp_UTF8_At_Managed(
                 &offset,
                 &size,

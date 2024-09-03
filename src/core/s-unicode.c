@@ -777,7 +777,7 @@ Byte *Check_UTF8(Byte *utf8, size_t size)
 const Byte *Back_Scan_UTF8_Char_Core(
     unsigned long *out, // "UTF32" is defined as unsigned long above
     const Byte *bp,
-    REBSIZ *size
+    Size *size
 ) {
     *out = 0;
 

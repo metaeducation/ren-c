@@ -144,8 +144,8 @@ DECLARE_NATIVE(write_stdout)
         //
         assert(Is_Text(v));
 
-        REBSIZ offset;
-        REBSIZ size;
+        Size offset;
+        Size size;
         Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
         Push_GC_Guard(temp);
 

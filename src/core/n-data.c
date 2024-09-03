@@ -1054,8 +1054,8 @@ DECLARE_NATIVE(as)
             //
             Freeze_Non_Array_Flex(Cell_Flex(v));
 
-            REBSIZ utf8_size;
-            REBSIZ offset;
+            Size utf8_size;
+            Size offset;
             Blob* temp = Temp_UTF8_At_Managed(
                 &offset, &utf8_size, v, Cell_Series_Len_At(v)
             );

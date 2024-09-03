@@ -70,7 +70,7 @@ Bounce MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
     // URL! here fixes it, though there are still open questions.
     //
     if (Is_Text(arg) or Is_Url(arg)) {
-        REBSIZ size;
+        Size size;
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TUPLE);
         Erase_Cell(out);
         if (Scan_Tuple(out, bp, size) == nullptr)

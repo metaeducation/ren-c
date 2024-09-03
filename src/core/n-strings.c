@@ -231,7 +231,7 @@ DECLARE_NATIVE(checksum)
                 Byte tmpdigest[20]; // size must be max of all digest[].len
 
                 Byte *keycp;
-                REBSIZ keylen;
+                Size keylen;
                 if (Is_Binary(key)) {
                     keycp = Cell_Binary_At(key);
                     keylen = Cell_Series_Len_At(key);
@@ -239,7 +239,7 @@ DECLARE_NATIVE(checksum)
                 else {
                     assert(Is_Text(key));
 
-                    REBSIZ offset;
+                    Size offset;
                     Blob* temp = Temp_UTF8_At_Managed(
                         &offset, &keylen, key, Cell_Series_Len_At(key)
                     );
@@ -331,14 +331,14 @@ DECLARE_NATIVE(deflate)
     REBLEN len = Part_Len_May_Modify_Index(data, ARG(limit));
     UNUSED(PAR(part)); // checked by if limit is nulled
 
-    REBSIZ size;
+    Size size;
     Byte *bp;
     if (Is_Binary(data)) {
         bp = Cell_Binary_At(data);
         size = len; // width = sizeof(Byte), so limit = len
     }
     else {
-        REBSIZ offset;
+        Size offset;
         Blob* temp = Temp_UTF8_At_Managed(&offset, &size, data, len);
         bp = Blob_At(temp, offset);
     }
@@ -456,8 +456,8 @@ DECLARE_NATIVE(debase)
 {
     INCLUDE_PARAMS_OF_DEBASE;
 
-    REBSIZ offset;
-    REBSIZ size;
+    Size offset;
+    Size size;
     Blob* temp = Temp_UTF8_At_Managed(
         &offset, &size, ARG(value), Cell_Series_Len_At(ARG(value))
     );
@@ -501,7 +501,7 @@ DECLARE_NATIVE(enbase)
 
     Value* v = ARG(value);
 
-    REBSIZ size;
+    Size size;
     Byte *bp;
     if (Is_Binary(v)) {
         bp = Cell_Binary_At(v);
@@ -509,7 +509,7 @@ DECLARE_NATIVE(enbase)
     }
     else { // Convert the string to UTF-8
         assert(Any_String(v));
-        REBSIZ offset;
+        Size offset;
         Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
         bp = Blob_At(temp, offset);
     }
@@ -741,7 +741,7 @@ DECLARE_NATIVE(dehex)
     // UTF-8 decoding--the maximum one UTF-8 encoded codepoint may have.
     //
     Byte scan[5];
-    REBSIZ scan_size = 0;
+    Size scan_size = 0;
 
     Flex* s = Cell_Flex(ARG(string));
 

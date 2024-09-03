@@ -143,7 +143,7 @@ INLINE Ucs2(*) Cell_String_At(const Cell* v) {
     return String_At(Cell_String(v), VAL_INDEX(v));
 }
 
-INLINE REBSIZ VAL_SIZE_LIMIT_AT(
+INLINE Size VAL_SIZE_LIMIT_AT(
     REBLEN *length, // length in chars to end (including limit)
     const Cell* v,
     REBINT limit // -1 for no limit
@@ -240,7 +240,7 @@ INLINE void SET_ANY_CHAR(Flex* s, REBLEN n, REBUNI c) {
 INLINE const Byte *Back_Scan_UTF8_Char(
     REBUNI *out,
     const Byte *bp,
-    REBSIZ *size
+    Size *size
 ){
     unsigned long ch; // "UTF32" is defined as unsigned long
     const Byte *bp_new = Back_Scan_UTF8_Char_Core(&ch, bp, size);

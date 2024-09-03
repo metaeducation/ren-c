@@ -64,7 +64,7 @@ bool All_Bytes_ASCII(Byte *bp, REBLEN len)
 // returned could be GC'd if it's not guarded and evaluator logic runs.
 //
 Byte *Analyze_String_For_Scan(
-    REBSIZ *opt_size_out,
+    Size *opt_size_out,
     const Value* any_string,
     REBLEN max_len // maximum length in *codepoints*
 ){
@@ -122,7 +122,7 @@ Byte *Analyze_String_For_Scan(
     Copy_Cell(reindexed, any_string);
     VAL_INDEX(reindexed) = index;
 
-    REBSIZ offset;
+    Size offset;
     Blob* temp = Temp_UTF8_At_Managed(
         &offset, opt_size_out, reindexed, Cell_Series_Len_At(reindexed)
     );
@@ -150,8 +150,8 @@ Byte *Analyze_String_For_Scan(
 // be reflected in the original string, due to generation.
 //
 Blob* Temp_UTF8_At_Managed(
-    REBSIZ *offset_out,
-    REBSIZ *opt_size_out,
+    Size *offset_out,
+    Size *opt_size_out,
     const Cell* str,
     REBLEN length_limit
 ){

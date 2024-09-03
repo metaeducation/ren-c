@@ -61,7 +61,7 @@ Bounce MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
         //
         // -1234567890x-1234567890
         //
-        REBSIZ size;
+        Size size;
         Byte *bp = Analyze_String_For_Scan(&size, arg, Cell_Series_Len_At(arg));
 
         Erase_Cell(out);

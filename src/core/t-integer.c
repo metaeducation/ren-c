@@ -285,7 +285,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         return;
     }
     else if (Any_String(value)) {
-        REBSIZ size;
+        Size size;
         const REBLEN max_len = Cell_Series_Len_At(value); // e.g. "no maximum"
         Byte *bp = Analyze_String_For_Scan(&size, value, max_len);
         if (

@@ -287,7 +287,7 @@ unsigned char *Decompress_Alloc_Core(
         and Symbol_Id(envelope) == SYM_GZIP // not DETECT...trust stored size
         and len_in < 4161808 // (2^32 / 1032 + 18) ->1032 is max deflate ratio
     ){
-        const REBSIZ gzip_min_overhead = 18; // at *least* 18 bytes
+        const Size gzip_min_overhead = 18; // at *least* 18 bytes
         if (len_in < gzip_min_overhead)
             fail ("GZIP compressed size less than minimum for gzip format");
 

@@ -193,10 +193,10 @@ REBINT Compare_String_Vals(const Cell* v1, const Cell* v2, bool uncase)
 //
 // Used for: WORD comparison.
 //
-REBINT Compare_UTF8(const Byte *s1, const Byte *s2, REBSIZ l2)
+REBINT Compare_UTF8(const Byte *s1, const Byte *s2, Size l2)
 {
     REBUNI c1, c2;
-    REBSIZ l1 = LEN_BYTES(s1);
+    Size l1 = LEN_BYTES(s1);
     REBINT result = 0;
 
     for (; l1 > 0 && l2 > 0; s1++, s2++, l1--, l2--) {

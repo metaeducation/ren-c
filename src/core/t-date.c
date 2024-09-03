@@ -437,7 +437,7 @@ Bounce MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
         return Copy_Cell(out, arg);
 
     if (Is_Text(arg)) {
-        REBSIZ size;
+        Size size;
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DATE);
         Erase_Cell(out);
         if (nullptr == Scan_Date(out, bp, size))

@@ -67,7 +67,7 @@ String* Make_String(REBLEN capacity)
 // Create a string series from the given bytes.
 // Source is always latin-1 valid. Result is always 8bit.
 //
-Blob* Copy_Bytes(const Byte *src, REBSIZ size)
+Blob* Copy_Bytes(const Byte *src, Size size)
 {
     Blob* dst = Make_Blob(size);
     memcpy(Blob_Head(dst), src, size);
@@ -101,7 +101,7 @@ void Insert_Char(Flex* dst, REBLEN index, REBLEN chr)
 Flex* Copy_String_At_Len(const Cell* src, REBINT limit)
 {
     REBLEN length_limit;
-    REBSIZ size = VAL_SIZE_LIMIT_AT(&length_limit, src, limit);
+    Size size = VAL_SIZE_LIMIT_AT(&length_limit, src, limit);
     assert(length_limit * 2 == size); // !!! Temporary
 
     String* dst = Make_String(size / 2);
@@ -227,8 +227,8 @@ void Append_Utf8_Utf8(Blob* dst, const char *utf8, size_t size)
 //
 void Append_Utf8_String(Blob* dst, const Cell* src, REBLEN length_limit)
 {
-    REBSIZ offset;
-    REBSIZ size;
+    Size offset;
+    Size size;
     Blob* temp = Temp_UTF8_At_Managed(&offset, &size, src, length_limit);
 
     REBLEN tail = Blob_Len(dst);
@@ -304,7 +304,7 @@ String* Append_UTF8_May_Fail(
 
     REBLEN num_codepoints = 0;
 
-    REBSIZ bytes_left = size; // see remarks on Back_Scan_UTF8_Char's 3rd arg
+    Size bytes_left = size; // see remarks on Back_Scan_UTF8_Char's 3rd arg
     for (; bytes_left > 0; --bytes_left, ++src) {
         REBUNI ch = *src;
         if (ch >= 0x80) {

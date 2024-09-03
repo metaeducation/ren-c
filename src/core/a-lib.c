@@ -1069,9 +1069,9 @@ size_t API_rebSpellInto(
     const RebolValue* v
 ){
     const char *utf8;
-    REBSIZ utf8_size;
+    Size utf8_size;
     if (Any_String(v)) {
-        REBSIZ offset;
+        Size offset;
         Blob* temp = Temp_UTF8_At_Managed(
             &offset, &utf8_size, v, Cell_Series_Len_At(v)
         );
@@ -1090,7 +1090,7 @@ size_t API_rebSpellInto(
         return utf8_size; // caller must allocate a buffer of size + 1
     }
 
-    REBSIZ limit = MIN(buf_size, utf8_size);
+    Size limit = MIN(buf_size, utf8_size);
     memcpy(buf, utf8, limit);
     buf[limit] = '\0';
     return utf8_size;
@@ -1128,7 +1128,7 @@ char *API_rebSpell(const void *p, va_list *vaptr)
 // cause errors.
 //
 // !!! Although the rebSpellInto API deals in bytes, this deals in count of
-// characters.  (The use of REBLEN instead of REBSIZ indicates this.)  It may
+// characters.  (The use of REBLEN instead of Size indicates this.)  It may
 // be more useful for the wide string APIs to do this so leaving it that way
 // for now.
 //
@@ -1291,11 +1291,11 @@ RebolValue* API_rebBinary(const void *bytes, size_t size)
 
 
 //
-//  rebSizedText: API
+//  SizeedText: API
 //
 // If utf8 does not contain valid UTF-8 data, this may fail().
 //
-RebolValue* API_rebSizedText(const char *utf8, size_t size)
+RebolValue* API_SizeedText(const char *utf8, size_t size)
 {
     return Init_Text(Alloc_Value(), Make_Sized_String_UTF8(utf8, size));
 }
@@ -1306,7 +1306,7 @@ RebolValue* API_rebSizedText(const char *utf8, size_t size)
 //
 RebolValue* API_rebText(const char *utf8)
 {
-    return rebSizedText(utf8, strsize(utf8));
+    return SizeedText(utf8, strsize(utf8));
 }
 
 

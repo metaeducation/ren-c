@@ -1059,8 +1059,8 @@ static void Mold_Tag(REB_MOLD *mo, const Cell* v)
 {
     Append_Utf8_Codepoint(mo->series, '<');
 
-    REBSIZ offset;
-    REBSIZ size;
+    Size offset;
+    Size size;
     Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
     Append_Utf8_Utf8(mo->series, cs_cast(Blob_At(temp, offset)), size);
 
@@ -1138,8 +1138,8 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
     // would form with no delimiters, e.g. `form #foo` is just foo
     //
     if (form and not Is_Tag(v)) {
-        REBSIZ offset;
-        REBSIZ size;
+        Size offset;
+        Size size;
         Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
 
         Append_Utf8_Utf8(mo->series, cs_cast(Blob_At(temp, offset)), size);

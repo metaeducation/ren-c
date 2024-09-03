@@ -106,7 +106,7 @@ void Print_OS_Line(void)
 //
 // The encoding options are OPT_ENC_XXX flags OR'd together.
 //
-void Prin_OS_String(const Byte *utf8, REBSIZ size, REBFLGS opts)
+void Prin_OS_String(const Byte *utf8, Size size, REBFLGS opts)
 {
     Req_SIO->flags |= RRF_FLUSH;
     if (opts & OPT_ENC_RAW)
@@ -164,7 +164,7 @@ void Prin_OS_String(const Byte *utf8, REBSIZ size, REBFLGS opts)
 //
 //  Debug_String_No_Newline: C
 //
-void Debug_String_No_Newline(const Byte *utf8, REBSIZ size)
+void Debug_String_No_Newline(const Byte *utf8, Size size)
 {
     bool disabled = GC_Disabled;
     GC_Disabled = true;

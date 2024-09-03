@@ -81,8 +81,8 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
         // Until UTF-8 Everywhere, text must be converted to UTF-8 before
         // using it with the scanner.
         //
-        REBSIZ offset;
-        REBSIZ size;
+        Size offset;
+        Size size;
         Blob* temp = Temp_UTF8_At_Managed(
             &offset, &size, arg, Cell_Series_Len_At(arg)
         );

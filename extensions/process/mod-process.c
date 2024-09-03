@@ -118,7 +118,7 @@ void Append_OS_Str(Value* dest, const void *src, REBINT len)
   #ifdef TO_WINDOWS
     Value* src_str = rebLengthedTextWide(cast(const REBWCHAR*, src), len);
   #else
-    Value* src_str = rebSizedText(cast(const char*, src), len);
+    Value* src_str = SizeedText(cast(const char*, src), len);
   #endif
 
     rebElide("append", dest, src_str);
@@ -2167,10 +2167,10 @@ DECLARE_NATIVE(list_env)
         REBLEN size = strlen(key_equals_val);
 
         int key_size = eq_pos - key_equals_val;
-        Value* key = rebSizedText(key_equals_val, key_size);
+        Value* key = SizeedText(key_equals_val, key_size);
 
         int val_size = size - (eq_pos - key_equals_val) - 1;
-        Value* val = rebSizedText(eq_pos + 1, val_size);
+        Value* val = SizeedText(eq_pos + 1, val_size);
 
         rebElide("append", map, "[", rebR(key), rebR(val), "]");
     }

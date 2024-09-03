@@ -249,8 +249,8 @@ DECLARE_NATIVE(panic)
     // report the contained message.  PANIC-VALUE for the latter intent.
     //
     if (Is_Text(v)) {
-        REBSIZ offset;
-        REBSIZ size;
+        Size offset;
+        Size size;
         Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
 
         p = Blob_At(temp, offset); // UTF-8 data

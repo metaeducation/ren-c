@@ -174,7 +174,7 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
         break;
 
     case REB_TEXT: {
-        REBSIZ size;
+        Size size;
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DECIMAL);
 
         Erase_Cell(out);

@@ -234,7 +234,7 @@ Bounce MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
         return Copy_Cell(out, arg);
 
     case REB_TEXT: { // scan using same decoding as LOAD would
-        REBSIZ size;
+        Size size;
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TIME);
 
         Erase_Cell(out);
