@@ -308,7 +308,7 @@ gen-obj: func [
             ]
         ]
         'c++98 'c++0x 'c++11 'c++14 'c++17 'c++20 'c++latest [
-            cfg-cplusplus: cplusplus: true
+            cfg-cplusplus: cplusplus: yes
             compose [
                 ; Compile C files as C++.
                 ;
@@ -1104,7 +1104,7 @@ set-exec-path: func [
     path
 ][
     switch kind of path [  ; can't use SWITCH/TYPE in bootstrap
-        blank! [tool.check]
+        blank! [tool.check/]
         file! text! [tool.exec-file: path]
         fail "Tool path has to be a file!"
     ]
@@ -1382,13 +1382,13 @@ append app-config.definitions spread reduce [
     ]
 ]
 
-; Add user settings (can be BLANK!, but should be null)
+; Add user settings (can be null)
 ;
-append app-config.definitions maybe spread :user-config.definitions
-append app-config.includes maybe spread :user-config.includes
-append app-config.cflags maybe spread :user-config.cflags
-append app-config.libraries maybe spread :user-config.libraries
-append app-config.ldflags maybe spread :user-config.ldflags
+append app-config.definitions maybe spread user-config.definitions
+append app-config.includes maybe spread user-config.includes
+append app-config.cflags maybe spread user-config.cflags
+append app-config.libraries maybe spread user-config.libraries
+append app-config.ldflags maybe spread user-config.ldflags
 
 libr3-core: make rebmake.object-library-class [
     name: 'libr3-core
@@ -1413,9 +1413,12 @@ libr3-core: make rebmake.object-library-class [
 main: make libr3-core [
     name: 'main
 
-    definitions: append copy ["REB_CORE"] spread app-config.definitions
-    includes: append copy app-config.includes %prep/main  ; generator may modify
-    cflags: copy app-config.cflags  ; generator may modify
+    .definitions: append copy ["REB_CORE"] spread app-config.definitions
+
+    ; The generator may modify these.
+    ;
+    .includes: append copy app-config.includes %prep/main
+    .cflags: copy app-config.cflags
 
     depends: reduce [
         either user-config.main [
@@ -1870,7 +1873,7 @@ vars: reduce [
             ]
             'file = exists? value: join repo-dir unspaced [
                 "r3-make"
-                :rebmake.target-platform.exe-suffix
+                rebmake.target-platform.exe-suffix
             ]
         ] else [
             fail "^/^/!! Cannot find a valid REBOL_TOOL !!^/"
