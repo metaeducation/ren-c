@@ -200,6 +200,4 @@
 ; / is no longer a length 0 PATH! in Ren-C
 (type of the / = word!)
 
-; foo/ is a length 1 PATH! in Ren-C
-(type of the foo/ = path!)
-(length of the foo/ = 1)
+(type of the foo/ = word!)  ; bootstrap compatibliity, scan foo/ as foo

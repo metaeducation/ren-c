@@ -45,8 +45,34 @@
     ]
 )]
 
+;=== BOOTSTRAP SCANNER MODIFICATIONS ===
+
 ; Stripping out commas
 [
     ([[]] = transcode "[, ]")
     ([[a b c]] = transcode "[a, b,, c,]")
+]
+
+; Stripping leading dots
+[
+    ([abc] = transcode ".abc")
+    ([abc/def] = transcode ".abc/def")
+]
+
+; Stripping leading slashes (if not refinement)
+[
+    ([abc/def] = transcode "/abc/def")
+]
+
+; Stripping trailing slashes
+[
+    ([a] = transcode "a/")
+    ([a] = transcode ".a/")
+    ([a/b] = transcode "a.b/")
+]
+
+; Turning tuples into paths
+[
+    ([abc/def] = transcode "abc.def")
+    ([abc/def/ghi.txt] = transcode "abc/def/ghi.txt")
 ]

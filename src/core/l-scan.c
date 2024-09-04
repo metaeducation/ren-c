@@ -1183,7 +1183,7 @@ acquisition_loop:
                 fail (Error_Syntax(ss));  // some weird cases, e.g. `=///`
             }
             ++cp;
-            while (*cp == '/')  // or /// etc.
+            while (*cp == '/')  // `//` or `///` etc.
                 ++cp;
             if (
                 IS_LEX_ANY_SPACE(*cp)
@@ -1191,7 +1191,7 @@ acquisition_loop:
                 or *cp == ')'
             ){
                 ss->end = cp;
-                ss->token = TOKEN_WORD;
+                ss->token = TOKEN_WORD;  // `//` or `///` etc.
                 return;
             }
             if (cp != ss->begin + 1) {  // only /REFINEMENT, not ///REFINEMENT
@@ -1237,6 +1237,11 @@ acquisition_loop:
             Corrupt_Pointer_If_Debug(ss->end);
             goto acquisition_loop;
 
+        // 1. Internal dots are picked up at the end of scanning each token.
+        // This is only for leading periods, which we discard in order
+        // to make `.foo` (used in new executables ot pick object members)
+        // scan as simply foo.
+        //
         case LEX_DELIMIT_PERIOD:        /* only [. .. ...] etc. are WORD! */
             assert(*cp == '.');
             if (Is_Interstitial_Scan(ss)) {  // handled in token processing
@@ -1256,7 +1261,7 @@ acquisition_loop:
                 ss->token = TOKEN_WORD;  // not perfect, allows ..a etc.
                 return;
             }
-            ss->token = TOKEN_PATH;  // bootstrap scans `a.b.c` as `a/b/c`
+            ss->token = TOKEN_COMMA;  // `.abc` => `abc`, see [1]
             return;
 
         default:
@@ -2469,9 +2474,10 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
 
             ep++;
             if (*ep != '(' and *ep != '[' and IS_LEX_DELIMIT(*ep)) {
-                ss->token = TOKEN_PATH;
-                fail (Error_Syntax(ss));
+                ss->begin = ep;
+                goto array_done;  // we want `a.b/` to scan as `a/b`
             }
+
             ss->begin = ep;  // skip next /
         }
         else if (*ep == '/' or *ep == '.') {
@@ -2481,18 +2487,16 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
 
             ++ss->begin;
 
-            Array* arr;
             if (
                 *ss->begin == '\0' // `foo/`
                 or IS_LEX_ANY_SPACE(*ss->begin) // `foo/ bar`
                 or *ss->begin == ';' // `foo/;--bar`
             ){
-                arr = Make_Array_Core(
-                    1,
-                    NODE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE
-                );
-                Append_Value(arr, TOP);
-                DROP();
+                // These are valid paths in modern Ren-C with blanks at
+                // their tails.  But in the bootstrap build we just treat
+                // these as if the slash is not there, and don't enforce
+                // the evaluator rule for these (ensure the path resolves
+                // to an action)
             }
             else {
               #if !defined(NDEBUG)
@@ -2503,34 +2507,34 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 // pushed item from us...as it's the head of the path it
                 // couldn't see coming in the future.
 
-                arr = Scan_Array(ss, *ep);
+                Array* arr = Scan_Array(ss, *ep);
 
               #if !defined(NDEBUG)
                 assert(TOP_INDEX == check - 1);  // should only take one!
               #endif
-            }
 
-            if (ss->token == TOKEN_LIT) {
-                RESET_VAL_HEADER(PUSH(), REB_LIT_PATH);
-                CHANGE_VAL_TYPE_BITS(Array_Head(arr), REB_WORD);
-            }
-            else if (Is_Get_Word(Array_Head(arr))) {
-                if (ss->begin and *ss->end == ':')
-                    fail (Error_Syntax(ss));
-                RESET_VAL_HEADER(PUSH(), REB_GET_PATH);
-                CHANGE_VAL_TYPE_BITS(Array_Head(arr), REB_WORD);
-            }
-            else {
-                if (ss->begin and *ss->end == ':') {
-                    RESET_VAL_HEADER(PUSH(), REB_SET_PATH);
-                    ss->begin = ++ss->end;
+                if (ss->token == TOKEN_LIT) {
+                    RESET_VAL_HEADER(PUSH(), REB_LIT_PATH);
+                    CHANGE_VAL_TYPE_BITS(Array_Head(arr), REB_WORD);
                 }
-                else
-                    RESET_VAL_HEADER(PUSH(), REB_PATH);
+                else if (Is_Get_Word(Array_Head(arr))) {
+                    if (ss->begin and *ss->end == ':')
+                        fail (Error_Syntax(ss));
+                    RESET_VAL_HEADER(PUSH(), REB_GET_PATH);
+                    CHANGE_VAL_TYPE_BITS(Array_Head(arr), REB_WORD);
+                }
+                else {
+                    if (ss->begin and *ss->end == ':') {
+                        RESET_VAL_HEADER(PUSH(), REB_SET_PATH);
+                        ss->begin = ++ss->end;
+                    }
+                    else
+                        RESET_VAL_HEADER(PUSH(), REB_PATH);
+                }
+                INIT_VAL_ARRAY(TOP, arr);
+                VAL_INDEX(TOP) = 0;
+                ss->token = TOKEN_PATH;
             }
-            INIT_VAL_ARRAY(TOP, arr);
-            VAL_INDEX(TOP) = 0;
-            ss->token = TOKEN_PATH;
         }
 
         // If we get to this point, it means that the value came from UTF-8
