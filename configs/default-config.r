@@ -50,8 +50,7 @@ toolset: [
     strip _
 ]
 
-;one of "no", "'asserts", "'symbols" or "'sanitize"
-debug: no
+debug: 'none  ; [none asserts symbols sanitize]
 
 ; one of 'no', 1, 2 or 4
 ;
@@ -61,18 +60,18 @@ optimize: 2
 ;
 standard: 'c
 
-rigorous: no
+rigorous: 'no
 
-static: no
+static: 'no
 pkg-config: get-env "PKGCONFIG"  ; path to pkg-config, or default
 
-odbc-requires-ltdl: no
+odbc-requires-ltdl: 'no
 
-with-tcc: no
+with-tcc: 'no
 
 ; Console API for windows does not exist before vista.
 ;
-pre-vista: no
+pre-vista: 'no
 
 
 git-commit: null

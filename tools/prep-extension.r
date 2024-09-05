@@ -69,9 +69,9 @@ mkdir/deep output-dir
 platform-config: configure-platform args/OS_ID
 
 use-librebol: switch args/USE_LIBREBOL [
-    "false" [false]
-    "true" [true]
-    fail "%prep-extension.r needs USE_LIBREBOL as true or false"
+    "no" ['no]
+    "yes" ['yes]
+    fail "%prep-extension.r needs USE_LIBREBOL as yes or no"
 ]
 
 mod: ensure text! args/MODULE
@@ -140,7 +140,7 @@ has-startup*: false
 num-natives: 0
 for-each info all-protos [
     if info.name = "startup*" [
-        if info.exported [
+        if yes? info.exported [
             ;
             ; STARTUP* is supposed to be called once and only once, by the
             ; internal extension code.
@@ -150,7 +150,7 @@ for-each info all-protos [
         has-startup*: true
     ]
     if info.name = "shutdown*" [
-        if info.exported [
+        if yes? info.exported [
             ;
             ; SHUTDOWN* is supposed to be called once and only once, by the
             ; internal extension code.
@@ -182,9 +182,9 @@ e1: make-emitter "Module C Header File Preface" (
     join output-dir spread reduce ["tmp-mod-" (l-m-name) ".h"]
 )
 
-if use-librebol [
+if yes? use-librebol [
     e1/emit [{
-        /* extension configuration says `use-librebol: true` */
+        /* extension configuration says [use-librebol: 'yes] */
 
         #define LIBREBOL_SPECIFIER (&librebol_specifier)
         #include "rebol.h"  /* not %rebol-internals.h ! */
@@ -208,7 +208,7 @@ if use-librebol [
     }]
 ] else [
     e1/emit [{
-        /* extension configuration says `use-librebol: false` */
+        /* extension configuration says [use-librebol: 'no] */
         #include "rebol-internals.h"  /* superset of %rebol.h */
 
         /*
@@ -245,7 +245,7 @@ e1/emit {
 }
 e1/emit newline
 
-if use-librebol [
+if yes? use-librebol [
     for-each info all-protos [
         parse3 info.proto [
             opt ["export" space] proto-name: across to ":"

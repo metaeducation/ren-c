@@ -26,4 +26,4 @@ libraries: switch platform-config.os-base [
     ]
 ] else [null]
 
-use-librebol: true
+use-librebol: 'yes

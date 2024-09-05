@@ -55,15 +55,15 @@ host: #web  ; #web, or #node (not recently tested)
 ;
 ; https://emscripten.org/docs/porting/asyncify.html
 ;
-use-asyncify: false
-use-pthreads: false
+use-asyncify: 'no
+use-pthreads: 'no
 
 ; Making an actual debug build of the interpreter core is prohibitive for
 ; emscripten in general usage--even on a developer machine.  This enables a
 ; smaller set of options for getting better feedback about errors in an
 ; emscripten build.
 ;
-debug-javascript-extension: true
+debug-javascript-extension: 'yes
 
 ; Ren-C has build options for supporting C++ exceptions or the use of setjmp()
 ; and longjmp() (or just to panic, and not handle them at all).  This affects
@@ -152,7 +152,7 @@ cflags: compose [
         fail
     ])
 
-    (if debug-javascript-extension [spread [
+    (if yes? debug-javascript-extension [spread [
         {-DDEBUG_JAVASCRIPT_EXTENSION=1}
 
         {-DDEBUG_HAS_PROBE=1}
@@ -163,7 +163,7 @@ cflags: compose [
         {-DDEBUG_COLLECT_STATS=1}  ; !!! maybe temporary, has cost but good info
     ]])
 
-    (if use-asyncify [spread [
+    (if yes? use-asyncify [spread [
         {-DUSE_ASYNCIFY}  ; affects rebPromise() methodology
     ]])
 ]
@@ -197,7 +197,7 @@ ldflags: compose [
 
     (switch host [
         #web [
-            if use-pthreads [
+            if yes? use-pthreads [
                 ; https://github.com/emscripten-core/emscripten/issues/8102
                 {-s ENVIRONMENT='web,worker'}
             ] else [
@@ -236,7 +236,7 @@ ldflags: compose [
     {-s MODULARIZE=1}
     {-s 'EXPORT_NAME="r3_module_promiser"'}
 
-    (if debug-javascript-extension [
+    (if yes? debug-javascript-extension [
         {-s ASSERTIONS=1}
     ] else [
         {-s ASSERTIONS=0}
@@ -246,11 +246,11 @@ ldflags: compose [
     ; large value for the asyncify stack.  If Asyncify is to be used again, it
     ; would probably not need a very large stack.
     ;
-    (if use-asyncify [
+    (if yes? use-asyncify [
         {-s ASYNCIFY_STACK_SIZE=64000}
     ])
 
-    (if false [spread [
+    (if null [spread [
         ; In theory, using the closure compiler will reduce the amount of
         ; unused support code in %libr3.js, at the cost of slower compilation.
         ; Level 2 is also available, but is not recommended as it impedes
@@ -276,7 +276,7 @@ ldflags: compose [
 
     ; Minification usually tied to optimization, but can be set separately.
     ;
-    (if debug-javascript-extension [{--minify 0}])
+    (if yes? debug-javascript-extension [{--minify 0}])
 
     ; %reb-lib.js is produced by %make-librebol.js - It contains the wrapper
     ; code that proxies JavaScript calls to `rebElide(...)` etc. into calls
@@ -348,7 +348,7 @@ ldflags: compose [
     ;
     ;{-s ALLOW_MEMORY_GROWTH=0}
 
-    (if use-asyncify [spread [
+    (if yes? use-asyncify [spread [
         {-s ASYNCIFY=1}
 
         ; Memory initialization file,
@@ -384,7 +384,7 @@ ldflags: compose [
         {--profiling-funcs}
     ]])
 
-    (if use-pthreads [spread [
+    (if yes? use-pthreads [spread [
         {-s USE_PTHREADS=1}  ; must be in both cflags and ldflags if used
 
         ; If you don't specify a thread pool size as a linker flag, the first

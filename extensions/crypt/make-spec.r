@@ -1,7 +1,7 @@
 REBOL []
 
 name: 'Crypt
-loadable: no ;tls depends on this, so it has to be builtin
+loadable: 'no  ; TLS depends on this, so it has to be builtin
 source: [
     %crypt/mod-crypt.c
 
@@ -101,4 +101,4 @@ libraries: switch platform-config.os-base [
     ]
 ] else [null]  ; can't use null fallout in bootstrap
 
-use-librebol: true
+use-librebol: 'yes

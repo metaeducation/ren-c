@@ -24,4 +24,4 @@ includes: copy [
 
 requires: 'process ;for get-env
 
-use-librebol: true
+use-librebol: 'yes

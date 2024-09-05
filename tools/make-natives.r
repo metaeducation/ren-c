@@ -4,7 +4,7 @@ REBOL [
     File: %make-natives.r
     Rights: {
         Copyright 2012 REBOL Technologies
-        Copyright 2012-2020 Ren-C Open Source Contributors
+        Copyright 2012-2024 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
     License: {
@@ -182,15 +182,15 @@ append output-buffer {REBOL [
 ; removed by the process that does embedding in the EXE.)
 
 for-each info all-protos [
-    if info/exported [
+    if yes? info.exported [
         fail "EXPORT is implied on %tmp-natives.r"
     ]
     append output-buffer spaced [
         newline newline
-        {; !!! DON'T EDIT HERE, generated from} mold info/file {line} info/line
+        {; !!! DON'T EDIT HERE, generated from} mold info.file {line} info.line
         newline
     ]
-    append output-buffer info/proto
+    append output-buffer info.proto
 ]
 
 append output-buffer unspaced [
@@ -238,7 +238,7 @@ e-params: make-emitter "PARAM() and REFINE() Automatic Macros" (
 )
 
 for-each info all-protos [
-    emit-include-params-macro e-params info/proto
+    emit-include-params-macro e-params info.proto
 ]
 
 blockrule: ["[" opt some [blockrule | not ahead "]" one] "]"]
@@ -284,7 +284,7 @@ e-forward/emit {
 e-forward/emit newline
 
 for-each info all-protos [
-    if info/native-type = 'intrinsic [
+    if info.native-type = 'intrinsic [
         e-forward/emit [info {DECLARE_INTRINSIC(${info/name});}]
     ] else [
         e-forward/emit [info {DECLARE_NATIVE(${info/name});}]

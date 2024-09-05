@@ -128,7 +128,7 @@ emit-proto: func [return: [~] proto] [
         ]
     ]
 
-    if is-variadic: did find paramlist 'vaptr [
+    if yes? is-variadic: to-yesno find paramlist 'vaptr [
         parse3/match paramlist [  ; Note: block! parsing
             ;
             ; Any generalized "modes" or "flags" should come first, which
@@ -160,7 +160,7 @@ emit-proto: func [return: [~] proto] [
         return-type: (ensure text! trim/tail return-type)
         paramlist: (ensure block! paramlist)
         proto: (ensure text! proto)
-        is-variadic: (reify-logic is-variadic)
+        is-variadic: (quote is-variadic)
     ]
 ]
 
@@ -188,9 +188,9 @@ extern-prototypes: map-each-api [
 
 lib-struct-fields: map-each-api [
     cfunc-params: delimit ", " compose [
-        (if is-variadic ["RebolSpecifier** specifier_ref"])
+        (if yes? is-variadic ["RebolSpecifier** specifier_ref"])
         (spread map-each [type var] paramlist [spaced [type var]])
-        (if is-variadic [
+        (if yes? is-variadic [
             spread ["const void* p" "void* vaptr"]
         ])
     ]
@@ -204,7 +204,7 @@ non-variadic-api-macros: map-each-api [
     if name = "rebFunction" [  ; handled specially, easiest for now
         continue
     ]
-    if not is-variadic [
+    if no? is-variadic [
         cscape [:api {#define $<Name> LIBREBOL_PREFIX($<Name>)}]
     ]
 ]
@@ -213,7 +213,7 @@ variadic-api-c-helpers: copy []
 variadic-api-c++-helpers: copy []
 
 for-each-api [
-    if not is-variadic [
+    if no? is-variadic [
         continue
     ]
 
@@ -281,7 +281,7 @@ for-each-api [
 ]
 
 variadic-api-specifier-capturing-macros: map-each-api [
-    if is-variadic [
+    if yes? is-variadic [
         fixed-params: map-each [type var] paramlist [
             to-text var
         ]
@@ -297,7 +297,7 @@ variadic-api-specifier-capturing-macros: map-each-api [
 ]
 
 variadic-api-specifier-explicit-macros: map-each-api [
-    if is-variadic [
+    if yes? is-variadic [
         fixed-params: map-each [type var] paramlist [
             to-text var
         ]
@@ -313,7 +313,7 @@ variadic-api-specifier-explicit-macros: map-each-api [
 ]
 
 variadic-api-c89-alias-macros: map-each-api [
-    if is-variadic [
+    if yes? is-variadic [
         cscape [:api {#define $<Name>_c89 $<Name>_helper}]
     ]
 ]

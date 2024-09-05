@@ -68,8 +68,8 @@ export extract-native-protos: func [
         parse3 read/string c-source-file [opt some [
             "//" newline
             "//" space space proto: across [
-                (exported: false)
-                opt ["export" space (exported: true)]
+                (exported: 'no)
+                opt ["export" space (exported: 'yes)]
                 not ahead space name: across to ":" one space
                 opt ["enfix" space]
                 ["native" (native-type: 'normal)
@@ -85,7 +85,7 @@ export extract-native-protos: func [
                 keep make native-info! compose [
                     proto: (proto)
                     name: (name)
-                    exported: (reify-logic exported)
+                    exported: (quote exported)
                     file: (c-source-file)
                     native-type: the (native-type)
                 ]

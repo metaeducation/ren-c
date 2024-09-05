@@ -36,9 +36,8 @@ libraries: switch platform-config.os-base [
 ] else [
     ; On some systems (32-bit Ubuntu 12.04), odbc requires ltdl
     ;
-    assert [logic? user-config.odbc-requires-ltdl]
     compose [
-        %odbc (if user-config.odbc-requires-ltdl [%ltdl])
+        %odbc (if yes? user-config.odbc-requires-ltdl [%ltdl])
     ]
 ]
 
@@ -46,4 +45,4 @@ options: [
     odbc-requires-ltdl [logic?] ()
 ]
 
-use-librebol: true  ; ODBC is a great example of not depending on %sys-core.h !
+use-librebol: 'yes  ; ODBC is a great example of not depending on %sys-core.h !

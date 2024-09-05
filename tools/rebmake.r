@@ -63,7 +63,7 @@ ends-with?: func [
     s [any-string?]
     suffix [~void~ any-string?]
 ][
-    return to-logic any [
+    return to-logic any [  ; TO-LOGIC for bootstrap (xxx? returns #[true])
         void? suffix
         empty? suffix
         suffix = (skip tail-of s negate length of suffix)
@@ -318,7 +318,7 @@ project-class: make object! [
     depends: null  ; a dependency could be a library, object file
     output: null  ; file path
     basename: null   ; output without extension part
-    generated?: false
+    generated: 'no
     implib: null  ; Windows exe/lib with exported symbols generates implib file
 
     post-build-commands: null  ; commands to run after the "build" command
@@ -361,7 +361,7 @@ ext-static-class: make object! [
 application-class: make project-class [
     class: #application
     type: 'application
-    generated?: false
+    generated: 'no
 
     linker: null
     searches: null
@@ -384,7 +384,7 @@ application-class: make project-class [
 dynamic-library-class: make project-class [
     class: #dynamic-library
     type: 'dynamic
-    generated?: false
+    generated: 'no
     linker: null
 
     searches: null
@@ -401,7 +401,7 @@ dynamic-library-class: make project-class [
         let l: any [.linker, default-linker]
         return apply get $l/command [
             .output, .depends, .searches, .ldflags
-            /dynamic true
+            /dynamic ~
         ]
     ]
 ]
@@ -479,9 +479,9 @@ gcc: make compiler-class [
                     to integer! minor
                     to integer! macro
                 ]
-                return true
+                return ~
             ]
-            return false
+            return null
         ]
     ]
 
@@ -492,8 +492,8 @@ gcc: make compiler-class [
         /I "includes" [block!]
         /D "definitions" [block!]
         /F "cflags" [block!]
-        /O "opt-level" [word! logic?! integer! text!]
-        /g "debug" [word! logic?! integer!]
+        /O "opt-level" [word! integer!]
+        /g "debug" [toggle?!]
         /PIC "https://en.wikipedia.org/wiki/Position-independent_code"
         /E "only preprocessing"
     ][
@@ -542,8 +542,6 @@ gcc: make compiler-class [
             ]
             if O [
                 case [
-                    O = true [keep "-O2"]
-                    O = false [keep "-O0"]
                     integer? O [keep unspaced ["-O" O]]
                     find ["s" "z" "g" 's 'z 'g] O [
                         keep unspaced ["-O" O]
@@ -552,11 +550,11 @@ gcc: make compiler-class [
                     fail ["unrecognized optimization level:" O]
                 ]
             ]
-            if g [
+            if not null? g [
                 case [
-                    g = true [keep "-g -g3"]
-                    g = false []
-                    integer? g [keep unspaced ["-g" g]]
+                    on? g [keep "-g -g3"]
+                    off? g []
+                    integer? g [keep unspaced ["-g" g]]  ; not triggered?
 
                     fail ["unrecognized debug option:" g]
                 ]
@@ -606,8 +604,8 @@ cl: make compiler-class [
         /I "includes" [block!]
         /D "definitions" [block!]
         /F "cflags" [block!]
-        /O "opt-level" [word! logic?! integer! text!]
-        /g "debug" [word! logic?! integer!]
+        /O "opt-level" [word! integer!]
+        /g "debug" [word! integer!]
         /PIC "https://en.wikipedia.org/wiki/Position-independent_code"
         ; Note: PIC is ignored for this Microsoft CL compiler handler
         /E "only preprocessing"
@@ -663,15 +661,15 @@ cl: make compiler-class [
                     ]
                 ]
             ]
-            if g [
+            if not null? g [
                 case [
+                    off? g []
                     any [
-                        g = true
+                        on? g  ; only on and off are passed in...
                         integer? g  ; doesn't map to a CL option
                     ][
                         keep "/Od /Zi"
                     ]
-                    debug = false []
 
                     fail ["unrecognized debug option:" g]
                 ]
@@ -741,7 +739,7 @@ ld: make linker-class [
         searches [~null~ block!]
         ldflags [~null~ block! any-string?]
         /dynamic
-        /debug [logic?!]
+        /debug [toggle?!]
     ][
         let suffix: either dynamic [
             target-platform.dll-suffix
@@ -832,7 +830,7 @@ ld: make linker-class [
         let version: copy ""
         .exec-file: exec: default ["gcc"]
         call/output [(exec) "--version"] version
-        return false  ; !!! Ever called?
+        return null  ; !!! Ever called?
     ]
 ]
 
@@ -848,7 +846,7 @@ llvm-link: make linker-class [
         searches [~null~ block!]
         ldflags [~null~ block! any-string?]
         /dynamic
-        /debug [logic?!]
+        /debug [toggle?!]
     ][
         let suffix: either dynamic [
             target-platform.dll-suffix
@@ -932,7 +930,7 @@ link: make linker-class [
         searches [~null~ block!]
         ldflags [~null~ block! any-string?]
         /dynamic
-        /debug [logic?!]
+        /debug [toggle?!]
     ][
         let suffix: either dynamic [
             target-platform.dll-suffix
@@ -943,7 +941,7 @@ link: make linker-class [
             keep any [(file-to-local/pass maybe .exec-file) "link"]
 
             ; https://docs.microsoft.com/en-us/cpp/build/reference/debug-generate-debug-info
-            if debug [keep "/DEBUG"]
+            if all [debug, on? debug] [keep "/DEBUG"]
 
             keep "/NOLOGO"  ; don't show startup banner (link takes uppercase!)
             if dynamic [keep "/DLL"]
@@ -1055,9 +1053,8 @@ strip: make strip-class [
         /exec [file!]
     ][
         .exec-file: exec: default ["strip"]
-        return true
+        return ~
     ]
-
 ]
 
 ; includes/definitions/cflags will be inherited from its immediately ancester
@@ -1065,14 +1062,14 @@ object-file-class: make object! [
     class: #object-file
     compiler: null
     cflags: null
-    definitions:
+    definitions: ~
     source: ~
     output: ~
     basename: null  ; output without extension part
     optimization: null
     debug: null
     includes: null
-    generated?: false
+    generated: 'no
     depends: null
 
     compile: meth [return: [~]] [
@@ -1084,8 +1081,8 @@ object-file-class: make object! [
         /I "extra includes" [block!]
         /D "extra definitions" [block!]
         /F "extra cflags (override)" [block!]
-        /O "opt-level" [word! logic?! integer! text!]
-        /g "dbg" [word! logic?! integer!]
+        /O "opt-level" [word! integer!]
+        /g "dbg" [word! integer!]
         /PIC "https://en.wikipedia.org/wiki/Position-independent_code"
         /E "only preprocessing"
     ][
@@ -1098,7 +1095,7 @@ object-file-class: make object! [
             ] then [
                 O: 2  ; don't override e.g. "-Oz"
             ]
-            optimization: false
+            optimization: 0
         ]
 
         return apply get $cc/command [  ; reduced APPLY in bootstrap!
@@ -1144,7 +1141,7 @@ object-file-class: make object! [
                 /F maybe parent.cflags
                 /O maybe parent.optimization
                 /g maybe parent.debug
-                /PIC to-logic any [PIC, parent.class = #dynamic-library]
+                /PIC any [PIC, parent.class = #dynamic-library]
             ]]
         ]
     ]
@@ -1156,7 +1153,7 @@ entry-class: make object! [
     target: ~
     depends: null
     commands: ~
-    generated?: false
+    generated: 'no
 ]
 
 var-class: make object! [
@@ -1164,7 +1161,7 @@ var-class: make object! [
     name: ~
     value: null  ; behavior is `any [.value, default]`, so start as null
     default: ~
-    generated?: false
+    generated: 'no
 ]
 
 cmd-create-class: make object! [
@@ -1250,11 +1247,11 @@ generator-class: make object! [
         ]
         if not cmd [return null]
 
-        let stop: false
+        let stop: 'no
         let name
         let val
-        while [not stop][
-            stop: true
+        while [no? stop][
+            stop: 'yes
             parse3/match cmd [
                 opt some [
                     change [
@@ -1263,7 +1260,7 @@ generator-class: make object! [
                             | "$" name: across letter
                         ] (
                             val: file-to-local/pass select vars name
-                            stop: false
+                            stop: 'no
                         )
                     ] (val)
                     | one
@@ -1282,7 +1279,7 @@ generator-class: make object! [
         if find words-of solution 'output [
             .setup-outputs/ solution
         ]
-        flip-flag solution false
+        flip-flag solution 'no
 
         if find words-of solution 'depends [
             for-each dep (maybe solution.depends) [
@@ -1299,13 +1296,13 @@ generator-class: make object! [
     flip-flag: meth [
         return: [~]
         project [object!]
-        to [logic?!]
+        to [confirm?!]
     ][
         all [
-            find words-of project 'generated?
-            to != project.generated?
+            find words-of project 'generated
+            to != project.generated
         ] then [
-            project.generated?: to
+            project.generated: to
             if find words-of project 'depends [
                 for-each dep project.depends [
                     flip-flag dep to
@@ -1377,9 +1374,9 @@ generator-class: make object! [
             #static-library
             #solution
             #object-library [
-                if project.generated? [return ~]
+                if yes? project.generated [return ~]
                 .setup-output project
-                project.generated?: true
+                project.generated: 'yes
                 for-each dep project.depends [
                     setup-outputs dep
                 ]
@@ -1392,7 +1389,7 @@ generator-class: make object! [
 ]
 
 makefile: make generator-class [
-    nmake?: false ; Generating for Microsoft nmake
+    is-nmake: 'no  ; Generating for Microsoft nmake
 
     ; by default makefiles are for POSIX platform
     ; these GETs are null-tolerant
@@ -1411,10 +1408,10 @@ makefile: make generator-class [
             ; Makefile variable, defined on a line by itself
             ;
             #variable [
-                keep either entry.value [
-                    spaced [entry.name "=" entry.value]
+                keep spaced either entry.value [
+                    [entry.name "=" entry.value]
                 ][
-                    spaced [entry.name either nmake? ["="]["?="] entry.default]
+                    [entry.name either yes? is-nmake ["="]["?="] entry.default]
                 ]
             ]
 
@@ -1493,11 +1490,10 @@ makefile: make generator-class [
         for-each dep project.depends [
             if not object? dep [continue]
             if not find [#dynamic-extension #static-extension] dep.class [
-                either dep.generated? [
+                if yes? dep.generated [
                     continue
-                ][
-                    dep.generated?: true
                 ]
+                dep.generated: 'yes
             ]
             switch dep.class [
                 #application
@@ -1530,8 +1526,8 @@ makefile: make generator-class [
                     ]
                     for-each obj dep.depends [
                         assert [obj.class = #object-file]
-                        if not obj.generated? [
-                            obj.generated?: true
+                        if no? obj.generated [
+                            obj.generated: 'yes
                             append buf (gen-rule apply get $obj/gen-entries [
                                 dep
                                 /PIC (project.class = #dynamic-library)
@@ -1571,7 +1567,7 @@ makefile: make generator-class [
 ]
 
 nmake: make makefile [
-    nmake?: true
+    is-nmake: 'yes
 
     ; reset them, so they will be chosen by the target platform
     gen-cmd-create: null
@@ -1657,8 +1653,8 @@ export execution: make generator-class [
         .prepare project
 
         if not find [#dynamic-extension #static-extension] project.class [
-            if project.generated? [return ~]
-            project.generated?: true
+            if yes? project.generated [return ~]
+            project.generated: 'yes
         ]
 
         switch project.class [
@@ -1683,8 +1679,8 @@ export execution: make generator-class [
             #object-library [
                 for-each obj project.depends [
                     assert [obj.class = #object-file]
-                    if not obj.generated? [
-                        obj.generated?: true
+                    if no? obj.generated [
+                        obj.generated: 'yes
                         .run-target/ apply get $obj/gen-entries [
                             project
                             /PIC (parent.class = #dynamic-library)

@@ -11,6 +11,6 @@ extensions: [
     - ODBC _
 ]
 
-with-ffi: no
+with-ffi: 'no
 
 cflags: ["-emit-llvm"]

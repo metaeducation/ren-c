@@ -69,12 +69,12 @@ toolset: compose [
 ; could not test.  Wasi executables aren't being run in the browser and the
 ; dynamics may be different in terms of memory use.  Review.
 ;
-debug-wasi-extension: false
+debug-wasi-extension: 'no
 
 ; Note: anything other than -O0 will strip debug symbols in wasi-sdk:
 ; https://bugs.llvm.org/show_bug.cgi?id=45602
 ;
-optimize: if debug-wasi-extension [0] else ["s"]
+optimize: if yes? debug-wasi-extension [0] else ["s"]
 
 
 ; 1. Filesystem and Networking extensions are based on libuv, which has more
@@ -138,7 +138,7 @@ cflags: compose [
 
     {-DREBOL_FAIL_JUST_ABORTS=1}  ; no exceptions or setjmp()/longjmp()
 
-    (if debug-wasi-extension [spread [
+    (if yes? debug-wasi-extension [spread [
         {-DDEBUG_HAS_PROBE=1}
         {-DDEBUG_FANCY_PANIC=1}
         {-DDEBUG_COUNT_TICKS=1}
@@ -153,5 +153,5 @@ ldflags: compose [
 
     {-lwasi-emulated-signal}  ; cflags needs {-D_WASI_EMULATED_SIGNAL}
 
-    (if debug-wasi-extension [{-g}])
+    (if yes? debug-wasi-extension [{-g}])
 ]

@@ -202,6 +202,50 @@ for-each [alias] [  ; SET-WORD!s for readability + findability [1]
 ]
 
 
+=== "WORD!-BASED LOGIC" ===
+
+; Modern Ren-C has no LOGIC! fundamental datatype.  The words TRUE and FALSE
+; are used as the currency of logic, while IF only tests for nullness (or
+; NaN-ness).
+
+if: adapt :if [
+    all [
+        :condition
+        find [true false yes no on off] :condition
+        fail/where "IF not supposed to take [true false yes no off]" 'return
+    ]
+]
+
+either: adapt :either [
+    all [
+        :condition
+        find [true false yes no on off] :condition
+        fail/where "EITHER not supposed to take [true false yes no off]" 'return
+    ]
+]
+
+boolean?: func3 [x] [any [:x = 'true, :x = 'false]]
+toggle?: func3 [x] [any [:x = 'on, :x = 'off]]
+confirm?: func3 [x] [any [:x = 'yes, :x = 'no]]
+
+boolean?!: word!
+toggle?!: word!
+confirm?!: word!
+
+logic?!: make typeset! [~null~ nothing!]
+to-logic: func3 [x] [
+    either x [~] [null]
+]
+
+boolean: func3 [x [~null~ any-value!]] [
+    either x ['true] ['false]
+]
+
+to-yesno: func3 [x [~null~ any-value!]] [  ; should this be DID?
+    either x ['yes] ['no]
+]
+
+
 === "MAKE THE KEEP IN COLLECT3 OBVIOUS AS KEEP3" ===
 
 ; Even if you see you are using the COLLECT3 version of COLLECT, it's easy
@@ -302,14 +346,6 @@ in: func3 [] [
 ;
 load-value: get $load
 load-all: get $load/all
-
-logic-to-word: func3 [logic [logic!]] [
-    as word! either logic ["true"] ["false"]  ; want no binding, so AS it
-]
-
-reify-logic: func3 [logic [logic!]] [
-    either logic ['~true~] ['~false~]
-]
 
 ; Tricky way of getting simple non-definitional break extraction that looks
 ; like getting a definitional break.

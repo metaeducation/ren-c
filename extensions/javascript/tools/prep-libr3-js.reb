@@ -333,7 +333,7 @@ append api-objects make object! [
     return-type: "intptr_t"
     paramlist: []
     proto: "intptr_t rebPromise(void* p, void* vaptr)"
-    is-variadic: true
+    is-variadic: 'yes
 ]
 
 append api-objects make object! [
@@ -344,7 +344,7 @@ append api-objects make object! [
     proto: unspaced [
         "void rebResolveNative_internal(intptr_t frame_id, intptr_t value_id)"
     ]
-    is-variadic: false
+    is-variadic: 'no
 ]
 
 append api-objects make object! [
@@ -355,7 +355,7 @@ append api-objects make object! [
     proto: unspaced [
         "void rebRejectNative_internal(intptr_t frame_id, intptr_t error_id)"
     ]
-    is-variadic: false
+    is-variadic: 'no
 ]
 
 append api-objects make object! [
@@ -364,10 +364,10 @@ append api-objects make object! [
     return-type: "void"
     paramlist: []
     proto: "void rebIdle_internal(void)"
-    is-variadic: false
+    is-variadic: 'no
 ]
 
-if false [  ; Only used if DEBUG_JAVASCRIPT_SILENT_TRACE (how to know here?)
+if null [  ; Only used if DEBUG_JAVASCRIPT_SILENT_TRACE (how to know here?)
     append api-objects make object! [
         spec: null  ; e.g. `name: API [...this is the spec, if any...]`
         name: "rebGetSilentTrace_internal"  ; !!! see %mod-javascript.c
@@ -376,7 +376,7 @@ if false [  ; Only used if DEBUG_JAVASCRIPT_SILENT_TRACE (how to know here?)
         proto: unspaced [
             "intptr_t rebGetSilentTrace_internal(void)"
         ]
-        is-variadic: false
+        is-variadic: 'no
     ]
 ]
 
@@ -414,7 +414,7 @@ for-each-api [
         ]
     ]
 
-    if not is-variadic [
+    if no? is-variadic [
         e-cwrap/emit cscape [:api {
             reb.$<No-Reb-Name> = cwrap_tolerant(  /* vs. R3Module.cwrap() */
                 'API_$<Name>',
@@ -434,7 +434,7 @@ for-each-api [
         continue
     ]
 
-    prologue: if false [
+    prologue: if null [
         ; It can be useful for debugging to see the API entry points;
         ; using console.error() adds a stack trace to it.
         ;
@@ -443,7 +443,7 @@ for-each-api [
         null
     ]
 
-    epilogue: if false [
+    epilogue: if null [
         ; Similar to debugging on entry, it can be useful on exit to see
         ; when APIs return...code comes *before* the return statement.
         ;
@@ -897,7 +897,7 @@ e-cwrap/emit {
     }
 }
 
-if false [  ; Only used if DEBUG_JAVASCRIPT_SILENT_TRACE (how to know here?)
+if null [  ; Only used if DEBUG_JAVASCRIPT_SILENT_TRACE (how to know here?)
     e-cwrap/emit {
         reb.GetSilentTrace_internal = function() {
             return UTF8ToString(reb.m._API_rebGetSilentTrace_internal())

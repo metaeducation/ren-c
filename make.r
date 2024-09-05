@@ -42,12 +42,12 @@ rebmake: import <tools/rebmake.r>
 ; the repository directory itself.  Otherwise we build wherever they are.
 
 if repo-dir = what-dir [
-    launched-from-root: true
+    launched-from-root: 'yes
     output-dir: join repo-dir %build/
     make-dir output-dir
 ] else [
     output-dir: what-dir  ; out-of-source build
-    launched-from-root: false
+    launched-from-root: 'no
 ]
 
 tools-dir: join repo-dir %tools/
@@ -107,7 +107,7 @@ for-each [name value] options [
             ; config fields visible when the run.
             ;
             config-stack: copy []
-            while [:config] [
+            while [config] [
                 dir: split-path3/file config inside [] 'file
                 change-dir dir
                 append config-stack (load read file)
@@ -210,10 +210,10 @@ gen-obj: func [
     /F "cflags" [block!]
     /main "for main object"
 ][
-    let prefer-O2: false  ; overrides -Os to give -O2, e.g. for %c-eval.c
+    let prefer-O2: 'no  ; overrides -Os to give -O2, e.g. for %c-eval.c
     let standard: user-config.standard  ; may have a per-file override
     let rigorous: user-config.rigorous  ; may have a per-file override
-    let cplusplus: false  ; determined for just this file
+    let cplusplus: 'no  ; determined for just this file
     let flags: make block! 8
 
     ; Microsoft shouldn't bother having the C warning that foo() in standard
@@ -266,7 +266,7 @@ gen-obj: func [
                     ; a previous call to this routine noticed a C++ compiler
                     ; is in effect, e.g. the config maps `gcc` tool to `%g++`.
                     ;
-                    if cfg-cplusplus [
+                    if yes? cfg-cplusplus [
                         standard: 'c
 
                         ; Here we inject "compile as c", but to limit the
@@ -301,14 +301,14 @@ gen-obj: func [
             ]
         ]
         'c++ [
-            cfg-cplusplus: cplusplus: true
+            cfg-cplusplus: cplusplus: 'yes
             [
                 <gnu:-x c++>
                 <msc:/TP>
             ]
         ]
         'c++98 'c++0x 'c++11 'c++14 'c++17 'c++20 'c++latest [
-            cfg-cplusplus: cplusplus: yes
+            cfg-cplusplus: cplusplus: 'yes
             compose [
                 ; Compile C files as C++.
                 ;
@@ -366,7 +366,7 @@ gen-obj: func [
         ]
     ]
 
-    ; The `rigorous: yes` setting in the config turns the warnings up to where
+    ; The `rigorous: 'yes` setting in the config turns the warnings up to where
     ; they are considered errors.  However, there are a *lot* of warnings
     ; when you turn things all the way up...and not all of them are relevant.
     ; Still we'd like to get the best information from any good ones, so
@@ -384,7 +384,7 @@ gen-obj: func [
     ; own headers
     ;
     append flags spread switch rigorous [
-        ~true~ 'yes 'on 'true [
+        'yes [
             compose [
                 <gnu:-Werror> <msc:/WX>  ; convert warnings to errors
 
@@ -431,7 +431,7 @@ gen-obj: func [
                 ; template stubs when they aren't inlined is too troublesome.
                 (
                     either all [
-                        cplusplus
+                        yes? cplusplus
                         find app-config.definitions "NDEBUG"
                     ][
                         <gnu:-Wcast-qual>
@@ -651,11 +651,11 @@ gen-obj: func [
                 <msc:/wd5264>
             ]
         ]
-        ~false~ 'no 'off 'false [
+        'no [
             []  ; empty for SPREAD
         ]
 
-        fail ["RIGOROUS [yes no \logic?!\] not" (rigorous)]
+        fail ["RIGOROUS [yes no] not" (rigorous)]
     ]
 
     ; Now add the flags for the project overall.
@@ -667,7 +667,7 @@ gen-obj: func [
     ;
     if block? s [
         for-each flag next s [
-            append flags maybe spread degrade (switch flag [  ; boot ELSE, ()
+            append flags spread (switch flag [  ; boot ELSE, ()
                 <no-uninitialized> [
                     [
                         <gnu:-Wno-uninitialized>
@@ -715,7 +715,7 @@ gen-obj: func [
                 ]
 
                 #prefer-O2-optimization [
-                    prefer-O2: true
+                    prefer-O2: 'yes
                     []
                 ]
 
@@ -770,14 +770,14 @@ gen-obj: func [
         cflags: either empty? flags [_] [flags]
         definitions: D
         includes: I
-        (if prefer-O2 [spread [optimization: #prefer-O2-optimization]])
+        (if yes? prefer-O2 [spread [optimization: #prefer-O2-optimization]])
     ]
 ]
 
 extension-class: make object! [
     class: #extension
     name: ~
-    loadable: yes ;can be loaded at runtime
+    loadable: 'yes  ; can be loaded at runtime
 
     mode: null  ; [<builtin> <dynamic>] or unused
 
@@ -796,12 +796,12 @@ extension-class: make object! [
 
     hook: null  ; FILE! of extension-specific Rebol script to run during rebmake
 
-    use-librebol: false  ; default right now is use %sys-core.h
+    use-librebol: 'no  ; default right now is use %sys-core.h
 
     ; Internal Fields
 
     sequence: null  ; the sequence in which the extension should be loaded
-    visited: false
+    visited: 'no
 
     directory: meth [
         return: [text!]  ; Should this be [file!]?
@@ -1094,7 +1094,7 @@ if commands [
 
 === "DETECT TOOLCHAIN FOR BUILDING" ===
 
-if launched-from-root [
+if yes? launched-from-root [
     print ["Launched from root dir, so building in:" output-dir]
 ]
 
@@ -1197,43 +1197,40 @@ app-config: make object! [
     cflags: make block! 8
     ldflags: make block! 8
     libraries: make block! 8
-    debug: off
+    debug: 'none
     optimization: 2
     definitions: copy []
     includes: reduce [(join src-dir %include/) %prep/include/]
     searches: make block! 8
 ]
 
-cfg-sanitize: false
-cfg-symbols: false
+cfg-sanitize: 'off
+cfg-symbols: 'off
 switch user-config.debug [
-    ~false~ 'no 'false 'off 'none [
+    'none [
         append app-config.definitions "NDEBUG"
-        app-config.debug: off
-    ]
-    ~true~ 'yes 'true 'on [
-        app-config.debug: on
+        app-config.debug: 'off
     ]
     'asserts [
         ; /debug should only affect the "-g -g3" symbol inclusions in rebmake.
         ; To actually turn off asserts or other checking features, NDEBUG must
         ; be defined.
         ;
-        app-config.debug: off
+        app-config.debug: 'off
     ]
-    'symbols [ ; No asserts, just symbols.
-        app-config.debug: on
-        cfg-symbols: true
+    'symbols [  ; No asserts, just symbols.
+        app-config.debug: 'on
+        cfg-symbols: 'on
         append app-config.definitions "NDEBUG"
     ]
     'normal [
-        cfg-symbols: true
-        app-config.debug: on
+        cfg-symbols: 'on
+        app-config.debug: 'on
     ]
     'sanitize [
-        app-config.debug: on
-        cfg-symbols: true
-        cfg-sanitize: true
+        app-config.debug: 'on
+        cfg-symbols: 'on
+        cfg-sanitize: 'on
 
         append app-config.cflags <gnu:-fsanitize=address>
         append app-config.ldflags <gnu:-fsanitize=address>
@@ -1266,9 +1263,9 @@ switch user-config.debug [
     ; file, one option is to use KCacheGrind.
     ;
     'callgrind [
-        cfg-symbols: true
+        cfg-symbols: 'on
         append app-config.cflags "-g"  ; for symbols
-        app-config.debug: off
+        app-config.debug: 'off
 
         append app-config.definitions spread [
             "NDEBUG"  ; disable assert(), and many other general debug checks
@@ -1293,50 +1290,48 @@ switch user-config.debug [
 ]
 
 switch user-config.optimize [
-    ~false~ 'false 'no 'off 0 [
-        app-config.optimization: false
-    ]
-    1 2 3 4 "s" "z" "g" 's 'z 'g [
+    0 1 2 3 4 "s" "z" "g" 's 'z 'g [
         app-config.optimization: user-config.optimize
     ]
+] else [
+    fail ["Optimization setting unknown:" user-config.optimize]
 ]
 
-cfg-cplusplus: false  ; gets set to true if linked as c++ overall
+cfg-cplusplus: 'no  ; gets set to true if linked as c++ overall
 
 ; pre-vista switch
 ; Example. Mingw32 does not have access to windows console api prior to vista.
 ;
-cfg-pre-vista: false
-append app-config.definitions maybe spread switch user-config.pre-vista [
-    ~true~ 'yes 'on 'true [
-        cfg-pre-vista: true
+cfg-pre-vista: 'no
+append app-config.definitions spread switch user-config.pre-vista [
+    'yes [
+        cfg-pre-vista: 'yes
         compose [
             "PRE_VISTA"
         ]
     ]
-    ~false~ 'no 'off 'false [
-        cfg-pre-vista: false
+    'no [
+        cfg-pre-vista: 'no
         []  ; empty for spread
     ]
 
-    fail ["PRE-VISTA [yes no \logic?!\] not" (user-config.pre-vista)]
+    fail ["PRE-VISTA [yes no] not" (user-config.pre-vista)]
 ]
 
 
-append app-config.ldflags maybe spread switch user-config.static [
-    ~false~ 'no 'off 'false [
-        ;pass
-        []
+append app-config.ldflags spread switch user-config.static [
+    'no [
+        []  ; empty for spread
     ]
-    ~true~ 'yes 'on 'true [
+    'yes [
         compose [
             <gnu:-static-libgcc>
-            (if cfg-cplusplus [<gnu:-static-libstdc++>])
-            (if cfg-sanitize [<gnu:-static-libasan>])
+            (if yes? cfg-cplusplus [<gnu:-static-libstdc++>])
+            (if on? cfg-sanitize [<gnu:-static-libasan>])
         ]
     ]
 
-    fail ["STATIC must be yes, no or logic?! not" (user-config.static)]
+    fail ["STATIC must be [yes no] not" (user-config.static)]
 ]
 
 
@@ -1372,8 +1367,8 @@ print ["includes:" mold app-config.includes]
 print ["libraries:" mold app-config.libraries]
 print ["cflags:" mold app-config.cflags]
 print ["ldflags:" mold app-config.ldflags]
-print ["debug:" logic-to-word app-config.debug]
-print ["optimization:" mold reify app-config.optimization]
+print ["debug:" app-config.debug]
+print ["optimization:" app-config.optimization]
 
 append app-config.definitions spread reduce [
     unspaced ["TO_" uppercase to-text platform-config.os-base "=1"]
@@ -1583,8 +1578,8 @@ add-project-flags: func [
     /I "includes" [block!]
     /D "definitions" [block!]
     /c "cflags" [block!]
-    /O "optimization" [word! logic?! integer! text!]
-    /g "debug" [word! logic?! integer!]
+    /O "optimization" [word! integer!]
+    /g "debug" [toggle?!]
 ][
     assert [
         find [
@@ -1619,7 +1614,7 @@ add-project-flags: func [
             append project.cflags spread c
         ]
     ]
-    if g [project.debug: g]
+    if not null? g [project.debug: g]  ; could just be IF G in new R3
     if O [project.optimization: O]
 ]
 
@@ -1639,9 +1634,9 @@ calculate-sequence: func [
     ext
 ][
     if integer? ext.sequence [return ext.sequence]
-    if ext.visited [fail ["circular dependency on" ext]]
+    if yes? ext.visited [fail ["circular dependency on" ext]]
     if null? ext.requires [ext.sequence: 0 return ext.sequence]
-    ext.visited: true
+    ext.visited: 'yes
     let seq: 0
     if word? ext.requires [ext.requires: reduce [ext.requires]]
     for-each req ext.requires [
@@ -1816,7 +1811,7 @@ for-each ext extensions [
                 (maybe spread ext-objlib.libraries)
             ]
             post-build-commands: all [
-                not cfg-symbols
+                off? cfg-symbols
                 reduce [
                     make rebmake.cmd-strip-class [
                         file: join output maybe rebmake.target-platform.dll-suffix
@@ -1933,7 +1928,7 @@ prep: make rebmake.entry-class [
                     fail "ext.source must be BLOCK! or FILE!"
                 ]]
                 unspaced ["OS_ID=" platform-config.id]
-                unspaced ["USE_LIBREBOL=" logic-to-word ext.use-librebol]
+                unspaced ["USE_LIBREBOL=" ext.use-librebol]
             ]
 
             if ext.hook [
@@ -1975,14 +1970,14 @@ prep: make rebmake.entry-class [
 
 app: make rebmake.application-class [
     name: 'r3-exe
-    output: %r3 ;no suffix
+    output: %r3  ; no suffix
     depends: compose [
         (libr3-core)
         (spread builtin-ext-objlibs)
         (spread app-config.libraries)
         (main)
     ]
-    post-build-commands: either cfg-symbols [
+    post-build-commands: either on? cfg-symbols [
         null
     ][
         reduce [
@@ -2010,7 +2005,7 @@ for-each proj dynamic-libs [
 
 library: make rebmake.dynamic-library-class [
     name: 'libr3
-    output: %libr3 ;no suffix
+    output: %libr3  ; no suffix
     depends: compose [
         (libr3-core)
         (spread builtin-ext-objlibs)
