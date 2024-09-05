@@ -116,8 +116,6 @@ export emit-include-params-macro: func [
         return ~  ; intrinsics don't have INCLUDE_PARAMS_OF macros
     ]
 
-    let seen-refinement: false
-
     let native-name: ~
     parse3/match proto [
         opt some newline  ; stripload preserves newlines

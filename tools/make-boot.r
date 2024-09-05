@@ -183,8 +183,8 @@ for-each-datatype: func [
                 class: class*
                 antiname: either antiname* [to text! unquasi antiname*] [null]
                 unstable: switch is-unstable* [
-                    null [false]
-                    #unstable [true]
+                    null ['no]
+                    #unstable ['yes]
                     fail "unstable annotation must be #unstable"
                 ]
                 make: make*
@@ -211,7 +211,7 @@ for-each-typerange: func [
     types*: _  ; will be put in a block, can't be null
 
     heart*: 1  ; 0 is reserved
-    while [true] [  ; need to be in loop for BREAK to work
+    cycle [  ; need to be in loop for BREAK to work
         parse3/match type-table [some [
             opt some [name*: tag! (
                 name*: to text! name*
@@ -460,7 +460,7 @@ add-sym 'datatypes  ; signal where the datatypes stop
 for-each-datatype t [
     if not t.antiname [continue]  ; no special name for antiform form
 
-    need: either t.unstable ["Atom"] ["Value"]
+    need: either yes? t.unstable ["Atom"] ["Value"]
 
     ; Note: Ensure_Readable() not defined yet at this point, so defined as
     ; a macro vs. an inline function.  Revisit.

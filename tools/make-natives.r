@@ -77,8 +77,6 @@ src-dir: join repo-dir %src/
 output-dir: join system.options.path %prep/
 mkdir/deep join output-dir %boot/
 
-verbose: false
-
 all-protos: copy []
 
 

@@ -154,7 +154,7 @@ rewrite-source-for-bootstrap-exe: lib3/func [
 ;
 ;    rebmake: import <tools/rebmake.r>
 ;
-wrap-module: false
+wrap-module: 'no
 
 old-do: :lib3/do
 do: enclose :lib3/do lib3/func [
@@ -194,13 +194,13 @@ do: enclose :lib3/do lib3/func [
         replace f.source unspaced [newline "]"] unspaced compose [
             newline
             "]" newline
-            (if wrap-module ["make object! ["]) newline
+            (if yes? wrap-module ["make object! ["]) newline
         ]
-        if wrap-module [
+        if yes? wrap-module [
             append f.source newline
             append f.source "]  ; end wrapping MAKE OBJECT!"
         ]
-        wrap-module: false  ; only wrap one level of DO
+        wrap-module: 'no  ; only wrap one level of DO
     ]
     old-do f
     elide system.script: old-system-script
@@ -258,10 +258,10 @@ import: enfix lib3/func [
     ret: #quit
     catch/quit [
         ret: if :set-word [
-            wrap-module: true
+            wrap-module: 'yes
             set set-word do script-filename
         ] else [
-            assert [not wrap-module]
+            assert [no? wrap-module]
             do script-filename
             #imported
         ]

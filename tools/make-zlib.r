@@ -219,14 +219,14 @@ fix-kr: func [
                 ; 1) "int i;" or
                 ; 2) "int i, *j, **k;"
 
-                let typed?
+                let typed
                 let single-param-start
                 let spec-type
                 let param-end
                 parse3 param-spec [
                     opt some white-space
                     some [
-                        (typed?: true)
+                        (typed: 'yes)
                         single-param-start: <here>, single-param (
                             spec-type: (
                                 copy/part single-param-start
@@ -241,7 +241,7 @@ fix-kr: func [
                                 ; spec-type should be "int "
                                 ; name should be "i"
                                 poke (find/skip param-block name 2) 2
-                                    either typed? [
+                                    either yes? typed [
                                         (copy/part single-param-start
                                             (index of param-end)
                                             - (index of single-param-start)
@@ -256,7 +256,7 @@ fix-kr: func [
                                             ) ; " *j"
                                        ]
                                    ]
-                                   typed?: false
+                                   typed: 'no
                            )
                            single-param-start: <here>
                            opt some white-space
@@ -267,7 +267,7 @@ fix-kr: func [
                         [param-end: <here>] ";"
                         (
                            poke (find/skip param-block name 2) 2
-                               either typed? [
+                               either yes? typed [
                                    (copy/part single-param-start
                                         (index of param-end)
                                         - (index of single-param-start)

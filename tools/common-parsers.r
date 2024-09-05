@@ -174,7 +174,7 @@ export proto-parser: context [
                 parse3/match lines [data: across to {=///} to <end>]
                 data: attempt [load-until-double-newline trim/auto data]
                 data: attempt [
-                    if set-word? first data.1 [data.1] else [false]
+                    if set-word? first data.1 [data.1] else [null]
                 ]
                 position ; Success.
             ]
@@ -199,7 +199,7 @@ export proto-parser: context [
                     data: data.1
                 ] else [
                     data: notes: ~
-                    false
+                    null
                 ]
                 position  ; return the start position (e.g. stay at head)
             ]
@@ -255,19 +255,19 @@ export rewrite-if-directives: func [
     until [
         let rewritten
         parse3/match position [
-            (rewritten: false)
+            (rewritten: 'no)
             some [
                 [
                     change ["#if" thru newline "#endif" thru newline] ("")
                     | change ["#elif" thru newline "#endif"] ("#endif")
                     | change ["#else" thru newline "#endif"] ("#endif")
-                ] (rewritten: true)
+                ] (rewritten: 'yes)
                 seek position
 
               | thru newline
             ]
             <end>
         ]
-        not rewritten
+        no? rewritten
     ]
 ]

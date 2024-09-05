@@ -654,12 +654,7 @@ cl: make compiler-class [
                 ]
             ]
             if O [
-                case [
-                    O = true [keep "/O2"]
-                    all [O, not zero? O] [
-                        keep unspaced ["/O" O]
-                    ]
-                ]
+                keep unspaced ["/O" O]
             ]
             if not null? g [
                 case [

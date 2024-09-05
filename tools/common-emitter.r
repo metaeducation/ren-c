@@ -145,8 +145,8 @@ export cscape: func [
             prefix: degrade item.5
             suffix: degrade item.6
 
-            let any-upper: did find/case expr charset [#"A" - #"Z"]
-            let any-lower: did find/case expr charset [#"a" - #"z"]
+            let any-upper: to-yesno find/case expr charset [#"A" - #"Z"]
+            let any-lower: to-yesno find/case expr charset [#"a" - #"z"]
             keep maybe pattern
 
             ; With binding being case-sensitive, we lowercase the expression.
@@ -212,10 +212,10 @@ export cscape: func [
             assert [not null? :sub]
 
             case [
-                all [any-upper, not any-lower] [
+                all [yes? any-upper, no? any-lower] [
                     uppercase sub
                 ]
-                all [any-lower, not any-upper] [
+                all [yes? any-lower, no? any-upper] [
                     lowercase sub
                 ]
             ]
@@ -250,7 +250,7 @@ export cscape: func [
     let start-line
     let end-line
     parse3 string [
-        (allwhite: true seen-void: false) start-line: <here>
+        (allwhite: 'yes, seen-void: 'no) start-line: <here>
         opt some [
             space
             |
@@ -260,18 +260,22 @@ export cscape: func [
                 ; not available in the bootstrap build.
                 ;
                 end-line: <here>
-                (if allwhite and (seen-void) and (end-line != next start-line) [
+                (all [
+                    yes? allwhite
+                    yes? seen-void
+                    end-line != next start-line
+                ][
                     insert kill-lines start-line  ; back to front for delete
                     insert kill-lines end-line
                 ])
             ]
-            (allwhite: true seen-void: false) start-line: <here>
+            (allwhite: 'yes, seen-void: 'no) start-line: <here>
             |
             [
                 void-marker  ; e.g. "!?*VOID*?!"
-                (seen-void: true)
+                (seen-void: 'yes)
                 |
-                (allwhite: false)  ; has something not a newline or space in it
+                (allwhite: 'no)  ; has something not a newline or space in it
                 one
             ]
         ]
@@ -314,7 +318,7 @@ export make-emitter: func [
     let stem
     split-path3/file file inside [] 'stem
 
-    temporary: to-logic any [
+    temporary: boolean any [
         temporary
         parse3/match stem ["tmp-" to <end>]
     ]
@@ -405,7 +409,7 @@ export make-emitter: func [
             **      See: http://www.apache.org/licenses/LICENSE-2.0
             **  }
         }]
-        if temporary [
+        if true? temporary [
             e/emit {
                 **  Note: {AUTO-GENERATED FILE - Do not modify.}
             }
@@ -431,7 +435,7 @@ export make-emitter: func [
                 Licensed under the Apache License, Version 2.0.
                 See: http://www.apache.org/licenses/LICENSE-2.0
             }
-            (if temporary [
+            (if true? temporary [
                 spread [Note: {AUTO-GENERATED FILE - Do not modify.}]
             ])
         ]

@@ -30,8 +30,6 @@ if not find (words of :import) 'into [  ; See %import-shim.r
     do <import-shim.r>
 ]
 
-verbose: false
-
 import <bootstrap-shim.r>
 
 import <common.r>
@@ -104,7 +102,6 @@ parse3/match script-name [
 ]
 
 split-path3/file c-src inside [] 'inc-name
-is-cpp: false
 parse3/match inc-name [
     change "mod-" ("tmp-mod-")
     to "."
@@ -135,7 +132,7 @@ all-protos: extract-native-protos c-src
 ; is being initialized...after the natives are loaded but before the Rebol
 ; code gets a chance to run.  So this prep code has to insert that call.
 
-has-startup*: false
+has-startup*: 'no
 
 num-natives: 0
 for-each info all-protos [
@@ -147,7 +144,7 @@ for-each info all-protos [
             ;
             fail "Do not EXPORT the STARTUP* function for an extension!"
         ]
-        has-startup*: true
+        has-startup*: 'yes
     ]
     if info.name = "shutdown*" [
         if yes? info.exported [
@@ -358,7 +355,7 @@ script-uncompressed: unspaced [
     ; the rest of the body.  (The user could do this themselves, but it makes
     ; things read better to do it automatically.)
     ;
-    if has-startup* [unspaced ["startup*" newline]]
+    if yes? has-startup* [unspaced ["startup*" newline]]
 
     initscript-body
 ]
