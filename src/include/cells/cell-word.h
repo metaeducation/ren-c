@@ -76,6 +76,11 @@ INLINE Element* Init_Any_Word_Untracked(
     Byte quote_byte
 ){
     assert(Any_Word_Kind(heart));
+    assert(not (
+        quote_byte == ANTIFORM_0
+        and Is_Node_Root_Bit_Set(out)  // Is_Api_Value()
+        and Symbol_Id(sym) == SYM_NULL  // nullptr only in API, no Is_Nulled()
+    ));
     Freshen_Cell_Untracked(out);
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL
