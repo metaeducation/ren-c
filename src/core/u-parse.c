@@ -1601,18 +1601,7 @@ DECLARE_NATIVE(subparse)
                 FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
-                // IF is deprecated in favor of `:(expression)`.  But it is
-                // currently used for bootstrap.  Remove once the bootstrap
-                // executable is updated to have GET-GROUP!s.  Substitution:
-                //
-                //    (go-on?: either condition [[accept]][[reject]])
-                //    go-on?
-                //
-                // !!! Note: PARSE3/REDBOL may be a modality it needs to
-                // support, and Red added IF.  It might be necessary to keep
-                // it (though Rebol2 did not have IF in PARSE...)
-                //
-              case SYM_IF: {
+              case SYM_WHEN: {
                 FETCH_NEXT_RULE(L);
                 if (P_AT_END)
                     fail (Error_Parse3_End());
@@ -1680,7 +1669,7 @@ DECLARE_NATIVE(subparse)
                 Init_Thrown_With_Label(LEVEL, Lib(NULL), Lib(PARSE_REJECT));
                 goto return_thrown; }
 
-              case SYM_FAIL:  // deprecated... use LOGIC! false instead
+              case SYM_BYPASS:  // skip to next alternate
                 Init_Nulled(ARG(position));  // not found
                 FETCH_NEXT_RULE(L);
                 goto post_match_processing;

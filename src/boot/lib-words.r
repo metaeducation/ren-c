@@ -73,8 +73,8 @@ ahead  ; Ren-C addition (also in Red)
 remove
 insert
 change
-if  ; deprecated: https://forum.rebol.info/t/968/7
-fail
+bypass
+when
 reject
 while  ; no longer supported, use TRY SOME for precise meaning
 repeat

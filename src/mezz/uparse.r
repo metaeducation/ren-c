@@ -301,6 +301,36 @@ default-combinators: make map! reduce [
         ]
     ]
 
+    === WHEN COMBINATOR ===
+
+    'when combinator [
+        "If parser's synthesized result is null, skip to next alternate"
+        return: [any-value?]
+        parser [action?]
+        <local> result
+    ][
+        [result remainder]: parser input except e -> [
+            return raise e  ; non-matching parser means WHEN did not match
+        ]
+        if void? :result [
+            fail "WHEN combinator received ~void~ antiform result"
+        ]
+        if null? :result [
+            return raise "WHEN combinator received ~null~ antiform result"
+        ]
+        return :result  ; can say e.g. [x: when (next var)] if you like
+    ]
+
+    === BYPASS COMBINATOR ===
+
+    'bypass combinator [
+        "Stop the current rule chain, and skip to the next `|` alternate"
+        return: []
+        ; /negated  <- could this be negated to not bypass?
+    ][
+        return raise "BYPASS to next alternate rule requested"
+    ]
+
     === BASIC KEYWORDS ===
 
     'try combinator [

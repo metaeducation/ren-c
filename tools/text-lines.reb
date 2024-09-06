@@ -161,7 +161,7 @@ text-line-of: func [
             ; IF deprecated in Ren-C, but :(...) with logic not available
             ; in the bootstrap build.
             ;
-            if (lesser? index of cursor idx)
+            when (lesser? index of cursor idx)
 
             advance-rule
         ]
@@ -198,7 +198,7 @@ text-location-of: func [
             ; !!! IF is deprecated in PARSE, but this code is expected to work
             ; in bootstrap.
             ;
-            if (lesser? index of cursor idx)
+            when (lesser? index of cursor idx)
 
             advance-rule
         ]

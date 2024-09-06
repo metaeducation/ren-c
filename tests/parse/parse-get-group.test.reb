@@ -1,7 +1,7 @@
 ; %parse-get-group.test.reb
 ;
-; GET-GROUP!s will splice rules, null means no rule but succeeds...FALSE is
-; useful for failing, and TRUE is a synonym for NULL in this context.
+; GET-GROUP!s will splice rules, void means no rule but succeeds...returning
+; 'BYPASS is useful for skipping to the next alternate.
 ;
 ; They act like a COMPOSE that runs each time the GET-GROUP! is passed.
 
@@ -31,40 +31,23 @@
 ] true)]
 
 [https://github.com/red/red/issues/562
-    ~parse-incomplete~ !! (parse [+] [opt some ['+ :(no)]])
-    ~parse-incomplete~ !! (parse "+" [opt some [#+ :(no)]])
+    ~parse-incomplete~ !! (parse [+] [opt some ['+ when (null)]])
+    ~parse-incomplete~ !! (parse "+" [opt some [#+ when (null)]])
 ]
 
 
 [
     (
         x: ~
-        6 == parse [2 4 6] [some [x: integer! :(even? x)]]
+        6 == parse [2 4 6] [some [x: integer! elide when (even? x)]]
     )
     ~parse-mismatch~ !! (
         x: ~
-        parse [1] [x: integer! :(even? x)]
+        parse [1] [x: integer! elide when (even? x)]
     )
     ~parse-mismatch~ !! (
         x: ~
-        parse [1 5] [some [x: integer! :(even? x)]]
-    )
-]
-
-[
-    (
-        x: ~
-        "6" == parse "246" [some [
-            x: across one :(even? load-value x)
-        ]]
-    )
-    ~parse-mismatch~ !! (
-        x: ~
-        parse "1" [x: across one :(even? load-value x)]
-    )
-    ~parse-mismatch~ !! (
-        x: ~
-        parse "15" [some [x: across one :(even? load-value x)]]
+        parse [1 5] [some [x: integer! elide when (even? x)]]
     )
 ]
 
@@ -108,7 +91,7 @@
     )
 ]
 
-; Void handling, just vanishes
+; Void/nihil handling, just vanishes
 [
     ('z = parse [x z] ['x :(if false 'y) 'z])
 

@@ -174,7 +174,7 @@
 )(
     i: 0
     all [
-        raised? parse "a" [opt some [(i: i + 1, j: if i = 2 [[false]]) j]]
+        raised? parse "a" [opt some [(i: i + 1, j: if i = 2 [[bypass]]) j]]
         i == 2
     ]
 )]
@@ -196,11 +196,15 @@
         true
     )
     (#{06} == parse #{020406} [
-        opt some [x: across one :(even? first x)]
+        opt some [x: across one elide when (even? first x)]
     ])
 
-    ~parse-mismatch~ !! (parse #{01} [x: across one :(even? first x)])
-    ~parse-mismatch~ !! (parse #{0105} [some [x: across one :(even? first x)]])
+    ~parse-mismatch~ !! (
+        parse #{01} [x: across one elide when (even? first x)]
+    )
+    ~parse-mismatch~ !! (
+        parse #{0105} [some [x: across one elide when (even? first x)]]
+    )
 
     (null = parse #{} [opt some #{0A}])
     (null = parse #{} [opt some #{0B}])

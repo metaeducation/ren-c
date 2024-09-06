@@ -188,7 +188,7 @@
         letters: [x y z]
         all [
             [x y z] == parse series [
-                to <end> mark: <here> [false]
+                to <end> mark: <here> [bypass]
                 |
                 ; Try equivalent of Red's `insert only mark letters`
                 pos: <here>

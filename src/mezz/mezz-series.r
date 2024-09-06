@@ -262,7 +262,7 @@ reword: func [
 
             keep/line '|
         ]
-        keep [false]  ; add failure if no match, instead of removing last |
+        keep 'bypass  ; add failure if no match, instead of removing last |
     ]
 
     let rule: [

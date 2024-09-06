@@ -40,7 +40,7 @@ export test-source-rule: [
             trap [
                 [position _]: transcode/next position
             ] then [
-                [false]  ; result for :() is rule to say stop the parse
+                'bypass  ; result for :() is rule to say stop the parse
             ] else [
                 [seek position]  ; result for :() go to transcoded position
             ]

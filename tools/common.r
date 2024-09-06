@@ -374,7 +374,7 @@ export stripload: func [
         ; Note: IF is deprecated in PARSE, and `:(...)` should be used instead
         ; once the bootstrap executable supports it.
         ;
-        if (empty? pushed)  ; string not in effect, okay to proceed
+        when (empty? pushed)  ; string not in effect, okay to proceed
 
         opt some [
             remove [some space]

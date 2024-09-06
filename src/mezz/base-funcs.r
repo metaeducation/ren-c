@@ -124,7 +124,7 @@ func: func* [
                 append new-spec spaced other  ; spec notes
             )
         ] else [
-            [false]
+            'bypass
         ])
     |
         other: group! (
@@ -142,7 +142,7 @@ func: func* [
         )
     |
         (var: null)  ; everything below this line resets var
-        false  ; failing here means rolling over to next rule
+        bypass  ; failing here means rolling over to next rule
     |
         '<local> (append new-spec <local>)
         opt some [var: word! other: opt group! (

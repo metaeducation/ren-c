@@ -230,6 +230,7 @@
 %parse/parse-blank.test.reb
 %parse/parse-block.test.reb
 %parse/parse-break.test.reb
+%parse/parse-bypass.test.reb
 %parse/parse-change.test.reb
 %parse/parse-collect.test.reb
 %parse/parse-datatype.test.reb
@@ -242,7 +243,6 @@
 %parse/parse-insert.test.reb
 %parse/parse-issue.test.reb
 %parse/parse-let.test.reb
-%parse/parse-logic.test.reb
 %parse/parse-maybe.test.reb
 %parse/parse-measure.test.reb
 %parse/parse-meta-xxx.test.reb
@@ -272,6 +272,7 @@
 %parse/parse-to.test.reb
 %parse/parse-validate.test.reb
 %parse/parse-void.test.reb
+%parse/parse-when.test.reb
 %parse/parse-word.test.reb
 %parse/examples/argtest.parse.test.reb
 %parse/examples/breaker.parse.test.reb
