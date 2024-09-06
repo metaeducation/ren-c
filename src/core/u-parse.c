@@ -1688,7 +1688,13 @@ DECLARE_NATIVE(subparse)
                         FETCH_NEXT_RULE(L);
                         goto post_match_processing;
 
-                    case SYM_IF: {
+                    case SYM_IF:
+                        if (not (P_FLAGS & PF_REDBOL))
+                            fail ("Use WHEN for arity-1 IF in PARSE");
+                        goto handle_when;
+
+                    handle_when:
+                    case SYM_WHEN: {
                         FETCH_NEXT_RULE(L);
                         if (IS_END(P_RULE))
                             fail (Error_Parse_End());

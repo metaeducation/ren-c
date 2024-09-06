@@ -98,7 +98,7 @@ function: func [
     parse spec [opt some [
         the <void> (append new-spec <void>)
     |
-        if (var) [
+        when (var) [
             var: any-word! (
                 append exclusions var ;-- exclude args/refines
                 append new-spec var
@@ -109,7 +109,7 @@ function: func [
             )
         ]
     |
-        if (not var) [
+        when (not var) [
             var: set-word! ( ;-- locals legal anywhere
                 append exclusions var
                 append new-spec var

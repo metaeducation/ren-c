@@ -194,6 +194,7 @@ remove
 insert
 change
 if
+when
 fail
 reject
 while
