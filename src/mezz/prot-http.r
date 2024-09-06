@@ -48,7 +48,7 @@ idate-to-date: function [return: [date!] date [text!]] [
 sync-op: function [port body] [
     if not port/state [
         open port
-        port/state/close?: yes
+        port/state/close?: true
     ]
 
     state: port/state
@@ -747,7 +747,7 @@ sys/make-scheme [
                 state: 'inited
                 connection: _
                 error: _
-                close?: no
+                close?: false
                 info: construct port/scheme/info [type: 'file]
                 awake: ensure [~null~ action!] :port/awake
             ]

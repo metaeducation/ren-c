@@ -36,10 +36,10 @@ toolset: [
     strip _
 ]
 
-;one of 'no', 'assert', 'symbols' or 'sanitize'
-debug: no
+;one of 'none', 'assert', 'symbols' or 'sanitize'
+debug: 'none
 
-; one of 'no', 1, 2 or 4
+; one of 0, 1, 2 or 4
 ;
 optimize: 2
 
@@ -47,13 +47,13 @@ optimize: 2
 ;
 standard: 'c
 
-rigorous: no
+rigorous: 'no
 
-static: no
+static: 'no
 
 ; Console API for windows does not exist before vista.
 ;
-pre-vista: no
+pre-vista: 'no
 
 
 git-commit: _

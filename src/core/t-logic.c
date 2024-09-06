@@ -32,6 +32,146 @@
 #include "sys-deci-funcs.h"
 
 
+
+
+//
+//  true?: native [
+//
+//  {Tests if word is the word TRUE}
+//
+//      word "Must be the word TRUE or FALSE"
+//          [word!]
+//  ]
+//
+DECLARE_NATIVE(true_q)
+{
+    INCLUDE_PARAMS_OF_TRUE_Q;
+
+    Value* word = ARG(word);
+
+    if (Cell_Word_Id(word) == SYM_TRUE)
+        return Init_Logic(OUT, true);
+    if (Cell_Word_Id(word) == SYM_FALSE)
+        return Init_Logic(OUT, false);
+    fail ("TRUE? requires word to be TRUE or FALSE");
+}
+
+
+//
+//  false?: native [
+//
+//  {Tests if value is the word FALSE}
+//
+//      word "Must be the word TRUE or FALSE"
+//          [word!]
+//  ]
+//
+DECLARE_NATIVE(false_q)
+{
+    INCLUDE_PARAMS_OF_FALSE_Q;
+
+    Value* word = ARG(word);
+
+    if (Cell_Word_Id(word) == SYM_FALSE)
+        return Init_Logic(OUT, true);
+    if (Cell_Word_Id(word) == SYM_TRUE)
+        return Init_Logic(OUT, false);
+    fail ("FALSE? requires word to be TRUE or FALSE");
+}
+
+
+//
+//  yes?: native [
+//
+//  {Tests if word is the word YES}
+//
+//      word "Must be the word YES or NO"
+//          [word!]
+//  ]
+//
+DECLARE_NATIVE(yes_q)
+{
+    INCLUDE_PARAMS_OF_YES_Q;
+
+    Value* word = ARG(word);
+
+    if (Cell_Word_Id(word) == SYM_YES)
+        return Init_Logic(OUT, true);
+    if (Cell_Word_Id(word) == SYM_NO)
+        return Init_Logic(OUT, false);
+    fail ("YES? requires word to be YES or NO");
+}
+
+
+//
+//  no?: native [
+//
+//  {Tests if value is the word NO}
+//
+//      word "Must be the word YES or NO"
+//          [word!]
+//  ]
+//
+DECLARE_NATIVE(no_q)
+{
+    INCLUDE_PARAMS_OF_NO_Q;
+
+    Value* word = ARG(word);
+
+    if (Cell_Word_Id(word) == SYM_NO)
+        return Init_Logic(OUT, true);
+    if (Cell_Word_Id(word) == SYM_YES)
+        return Init_Logic(OUT, false);
+    fail ("NO? requires word to be YES or NO");
+}
+
+
+//
+//  on?: native [
+//
+//  {Tests if word is the word ON}
+//
+//      word "Must be the word ON or OFF"
+//          [word!]
+//  ]
+//
+DECLARE_NATIVE(on_q)
+{
+    INCLUDE_PARAMS_OF_ON_Q;
+
+    Value* word = ARG(word);
+
+    if (Cell_Word_Id(word) == SYM_ON)
+        return Init_Logic(OUT, true);
+    if (Cell_Word_Id(word) == SYM_OFF)
+        return Init_Logic(OUT, false);
+    fail ("ON? requires word to be ON or OFF");
+}
+
+
+//
+//  off?: native [
+//
+//  {Tests if value is the word OFF}
+//
+//      word "Must be the word ON or OFF"
+//          [word!]
+//  ]
+//
+DECLARE_NATIVE(off_q)
+{
+    INCLUDE_PARAMS_OF_NO_Q;
+
+    Value* word = ARG(word);
+
+    if (Cell_Word_Id(word) == SYM_OFF)
+        return Init_Logic(OUT, true);
+    if (Cell_Word_Id(word) == SYM_ON)
+        return Init_Logic(OUT, false);
+    fail ("OFF? requires word to be ON or OFF");
+}
+
+
 //
 //  and?: native [
 //

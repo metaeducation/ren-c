@@ -457,7 +457,7 @@ app-config: make object! [
     cflags: make block! 8
     ldflags: make block! 8
     libraries: make block! 8
-    debug: off
+    debug: 'off
     optimization: 2
     definitions: copy []
     includes: reduce [src-dir/include %prep/include]
@@ -467,30 +467,27 @@ app-config: make object! [
 cfg-sanitize: false
 cfg-symbols: false
 switch user-config/debug [
-    #[false] 'no 'false 'off 'none [
+    'none [
         append app-config/definitions ["NDEBUG"]
-        app-config/debug: off
-    ]
-    #[true] 'yes 'true 'on [
-        app-config/debug: on
+        app-config/debug: false
     ]
     'asserts [
         ; /debug should only affect the "-g -g3" symbol inclusions in rebmake.
         ; To actually turn off asserts or other checking features, NDEBUG must
         ; be defined.
         ;
-        app-config/debug: off
+        app-config/debug: false
     ]
     'symbols [ ; No asserts, just symbols.
-        app-config/debug: on
+        app-config/debug: true
         append app-config/definitions ["NDEBUG"]
     ]
     'normal [
         cfg-symbols: true
-        app-config/debug: on
+        app-config/debug: true
     ]
     'sanitize [
-        app-config/debug: on
+        app-config/debug: true
         cfg-symbols: true
         cfg-sanitize: true
         append app-config/cflags <gnu:-fsanitize=address>
@@ -505,7 +502,7 @@ switch user-config/debug [
         cfg-symbols: true
         append app-config/definitions ["NDEBUG"]
         append app-config/cflags "-g" ;; for symbols
-        app-config/debug: off
+        app-config/debug: false
 
         ; Include debugging features which do not in-and-of-themselves affect
         ; runtime performance (DEBUG_TRACK_CELLS would be an example of
@@ -529,7 +526,7 @@ switch user-config/debug [
 ]
 
 switch user-config/optimize [
-    #[false] 'false 'no 'off 0 [
+    0 [
         app-config/optimization: false
     ]
     1 2 3 4 "s" "z" "g" 's 'z 'g [
@@ -539,9 +536,9 @@ switch user-config/optimize [
 
 cfg-cplusplus: false
 ;standard
-append app-config/cflags degrade switch user-config/standard [
+append app-config/cflags switch user-config/standard [
     'c [
-        '~void~
+        []  ; splices empty block
     ]
     'gnu89 'c99 'gnu99 'c11 [
         to tag! unspaced ["gnu:--std=" user-config/standard]
@@ -618,24 +615,24 @@ append app-config/cflags degrade switch user-config/standard [
 ; Example. Mingw32 does not have access to windows console api prior to vista.
 ;
 cfg-pre-vista: false
-append app-config/definitions degrade switch user-config/pre-vista [
-    #[true] 'yes 'on 'true [
+append app-config/definitions switch user-config/pre-vista [
+    'yes [
         cfg-pre-vista: true
         compose [
             "PRE_VISTA"
         ]
     ]
-    _ #[false] 'no 'off 'false [
+    'no [
         cfg-pre-vista: false
-        '~void~
+        []  ; spliced as empty block
     ]
 
-    fail ["PRE-VISTA [yes no \logic!\] not" (user-config/pre-vista)]
+    fail ["PRE-VISTA [yes no] not" (user-config/pre-vista)]
 ]
 
 cfg-rigorous: false
-append app-config/cflags degrade switch user-config/rigorous [
-    #[true] 'yes 'on 'true [
+append app-config/cflags switch user-config/rigorous [
+    'yes [
         cfg-rigorous: true
         compose [
             <gnu:-Werror> <msc:/WX>;-- convert warnings to errors
@@ -858,18 +855,17 @@ append app-config/cflags degrade switch user-config/rigorous [
             <msc:/wd5264>
         ]
     ]
-    _ #[false] 'no 'off 'false [
+    'no [
         cfg-rigorous: false
-        '~void~
+        []  ; spliced as empty block
     ]
 
-    fail ["RIGOROUS [yes no \logic!\] not" (user-config/rigorous)]
+    fail ["RIGOROUS [yes no] not" (user-config/rigorous)]
 ]
 
-append app-config/ldflags degrade switch user-config/static [
-    _ 'no 'off 'false #[false] [
-        ;pass
-        '~void~
+append app-config/ldflags switch user-config/static [
+    'no [
+        []  ; splice empty block
     ]
     'yes 'on #[true] [
         compose [

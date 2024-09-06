@@ -143,6 +143,41 @@ lib/read: read: enclose :lib-read function [f [frame!]] [
     bin
 ]
 
+
+if: adapt :if [
+    all [
+        :condition
+        find [true false yes no on off] :condition
+        fail/where "IF not supposed to take [true false yes no off]" 'return
+    ]
+]
+
+either: adapt :either [
+    all [
+        :condition
+        find [true false yes no on off] :condition
+        fail/where "EITHER not supposed to take [true false yes no off]" 'return
+    ]
+]
+
+wordtester: enfix func ['name [set-word!] want [word!] dont [word!]] [
+    set name func [x] [
+        case [
+            :x = want [true]
+            :x = dont [false]
+        ]
+        fail [to word! name "expects only" mold reduce [want dont]]
+    ]
+]
+
+true?: wordtester 'true 'false
+false?: wordtester 'false 'true
+on?: wordtester 'on 'off
+off?: wordtester 'off 'on
+yes?: wordtester 'yes 'no
+no?: wordtester 'no 'yes
+
+
 maybe+: :try  ; see [2]
 maybe-: func [x [<opt> any-value!]] [either blank? :x [null] [:x]]
 
