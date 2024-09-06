@@ -193,6 +193,7 @@ then
 remove
 insert
 change
+bypass
 if
 when
 fail

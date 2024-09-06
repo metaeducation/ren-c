@@ -295,7 +295,7 @@ reword: function [
                 |
             ]
         ]
-        keep 'fail ;-- add failure if no match, instead of removing last |
+        keep 'bypass  ; skip to next alternate if no match, vs. removing last |
     ]
 
     ; Note that `any-keyword-rule` will look something like:
@@ -303,7 +303,7 @@ reword: function [
     ; [
     ;     "keyword1" (keyword-match: the keyword1)
     ;     | "keyword2" (keyword-match: the keyword2)
-    ;     | fail
+    ;     | bypass
     ; ]
 
     rule: [

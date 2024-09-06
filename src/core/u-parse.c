@@ -1684,6 +1684,12 @@ DECLARE_NATIVE(subparse)
                     }
 
                     case SYM_FAIL:
+                        if (not (P_FLAGS & PF_REDBOL))
+                            fail ("Use BYPASS for next alternate in PARSE");
+                        goto handle_bypass;
+
+                    handle_bypass:
+                    case SYM_BYPASS:
                         P_POS = NOT_FOUND;
                         FETCH_NEXT_RULE(L);
                         goto post_match_processing;

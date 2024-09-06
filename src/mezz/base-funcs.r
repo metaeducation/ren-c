@@ -132,8 +132,8 @@ function: func [
             ]
         )
     |
-        (var: _) ;-- everything below this line resets var
-        fail ;-- failing here means rolling over to next rule
+        (var: _)  ; everything below this line resets var
+        bypass  ; rolling over to next alternate
     |
         the <local>
         opt some [var: word! (other: _) opt other: group! (

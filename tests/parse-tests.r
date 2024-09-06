@@ -141,7 +141,7 @@
 
 [#1268 (
     i: 0
-    parse/match "a" [opt some [(i: i + 1 j: if i = 2 [[fail]]) j]]
+    parse/match "a" [opt some [(i: i + 1 j: if i = 2 [[bypass]]) j]]
     i == 2
 )]
 
@@ -150,8 +150,8 @@
 [#1267 (
     b: "abc"
     c: ["a" | "b"]
-    a2: [opt some [b e: (d: [:e]) then fail | [c | (d: [fail]) fail]] d]
-    a4: [opt some [b then e: (d: [:e]) fail | [c | (d: [fail]) fail]] d]
+    a2: [opt some [b e: (d: [:e]) then bypass | [c | (d: [bypass]) bypass]] d]
+    a4: [opt some [b then e: (d: [:e]) bypass | [c | (d: [bypass]) bypass]] d]
     equal? parse/match/redbol "aaaaabc" a2 parse/match/redbol "aaaaabc" a4
 )]
 
@@ -176,7 +176,7 @@
     (did parse/match "" [not ahead one])
 ]
 [#1240
-    (did parse/match "" [not ahead fail])
+    (did parse/match "" [not ahead bypass])
 ]
 
 
