@@ -599,6 +599,7 @@ export configure-platform: func [
     let version: switch kind of hint [  ; no switch/type in bootstrap
         text! [load-value hint]
         tuple! [hint]
+        fail
     ]
 
     if not tuple? version [

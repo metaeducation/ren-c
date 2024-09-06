@@ -19,18 +19,18 @@ depends: switch platform-config.os-base [
             %uuid/libuuid/randutils.c
         ]
     ]
-] else [null]  ; can't use null fallout in bootstrap
+]
 
 libraries: switch platform-config.os-base [
     'Windows [
         [%rpcrt4]
     ]
-] else [null]  ; can't use null fallout in bootstrap
+]
 
 ldflags: switch platform-config.os-base [
     'OSX [
         ["-framework CoreFoundation"]
     ]
-] else [null]  ; can't use null fallout in bootstrap
+]
 
 use-librebol: 'yes  ; can't use %sys-core.h with MacOS UUID APIs, conflicts

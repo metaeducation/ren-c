@@ -38,6 +38,6 @@ libraries: switch platform-config.os-base [
         comment [%gtk-3 %gobject-2.0 %glib-2.0]
         []
     ]
-] else [null]  ; can't use null fallout in bootstrap
+]
 
 use-librebol: 'yes

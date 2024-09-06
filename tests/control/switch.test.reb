@@ -12,7 +12,7 @@
     ]
 )
 
-(void' = ^ switch 2 [1 []])
+(null' = ^ switch 2 [1 []])
 ('~[~null~]~ = ^ switch 1 [1 [null]])
 
 (
@@ -33,7 +33,7 @@
 (<b> = switch/all 10 [5 + 5 [<a>] 5 + 5 [<b>]])
 (<b> = switch/all 10 [0 + 0 [<a>] 5 + 5 [<b>]])
 (<a> = switch/all 10 [5 + 5 [<a>] 0 + 0 [<b>]])
-(void' = ^ switch/all 10 [0 + 0 [<a>] 0 + 0 [<b>]])
+(null' = ^ switch/all 10 [0 + 0 [<a>] 0 + 0 [<b>]])
 
 (<fallout> = switch/all 10 [5 + 5 [<a>] 5 + 5 [<b>] <fallout>])
 (<fallout> = switch/all 10 [0 + 0 [<a>] 5 + 5 [<b>] <fallout>])
@@ -50,5 +50,5 @@
     ("COOL!" = switch/type <asdf> [&any-string? ["COOL!"]])
     ("COOL!" = switch/type "asdf" [&any-string? ["COOL!"]])
 
-    (void? switch 1020 [&any-string? [fail ~unreachable~]])
+    (null? switch 1020 [&any-string? [fail ~unreachable~]])
 ]

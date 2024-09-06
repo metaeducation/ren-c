@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2022 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -23,17 +23,18 @@
 //
 // Control constructs follow these rules:
 //
-// * If they do not run any branches, the construct will "return void".  This
+// * If they do not run any branches, most constructs will return NULL.  This
 //   will signal functions like ELSE and DIDN'T, much like the NULL state
 //   conveying soft failure does.
 //
-//   (Note: `return VOID;` doesn't actually overwrite the contents of the
-//    output cell.  This makes it possible for functions like ALL to skip
-//    over void results and let the previous evaluation "drop out".
-//    See %cell-void.h for more information about this mechanic.)
+//   (The exception is IF, which returns VOID.  The thinking is that since
+//   it's obvious that an IF may not run its single branch, it's less likely
+//   that someone saying e.g. (append block if condition [...]) is mistaken
+//   in believing branches are exhaustive.  But (append block case [...])
+//   would be more likely to mask errors and generate spurious voids).
 //
 // * If a branch *does* run--and its evaluation happens to produce VOID or
-//   NULL, then they are wrapped in a BLOCK! antiform.  This way THEN runs
+//   NULL, those states are wrapped in a BLOCK! antiform.  This way THEN runs
 //   instead of ELSE.  Although this does mean there is some conflation of
 //   the results, the conflated values have properties that mostly align with
 //   what their intent was--so it works about as well as it can.
@@ -46,9 +47,6 @@
 //       THEN got 30
 //
 //   (See Do_Branch_Throws() for supported ANY-BRANCH? types and behaviors.)
-//
-// * There is added checking that a literal block is not used as a condition,
-//   to catch common mistakes like `if [x = 10] [...]`.
 //
 
 #include "sys-core.h"
@@ -1043,10 +1041,10 @@ DECLARE_NATIVE(case)
 //
 // 4. Last evaluation will "fall out" if there is no branch:
 //
-//        >> case [false [<a>] false [<b>]]
-//        ; void
+//        >> case [null [<a>] null [<b>]]
+//        == ~null~  ; anti
 //
-//        >> case [false [<a>] false [<b>] 10 + 20]
+//        >> case [null [<a>] null [<b>] 10 + 20]
 //        == 30
 //
 //    It's a little bit like a quick-and-dirty ELSE (or /DEFAULT), however
@@ -1210,7 +1208,7 @@ DECLARE_NATIVE(case)
     }
 
     if (Is_Fresh(OUT))  // none of the clauses of an /ALL ran a branch
-        return Init_Void(OUT);
+        return Init_Nulled(OUT);
 
     return BRANCHED(OUT);
 }}
@@ -1408,7 +1406,7 @@ DECLARE_NATIVE(switch)
     }
 
     if (Is_Fresh(OUT))  // no fallout, and no branches ran
-        return Init_Void(OUT);
+        return Init_Nulled(OUT);
 
     return BRANCHED(OUT);
 }}

@@ -14,10 +14,10 @@
 )
 
 (
-    void? case [false []]
+    null? case [false []]
 )
 (
-    void? case []  ; empty case block is legal (e.g. as COMPOSE product)
+    null? case []  ; maybe useful (e.g. as COMPOSE product) !!! make it void?
 )
 (
     '~[~null~]~ = ^ case [
@@ -42,7 +42,7 @@
     3 = case [true (reduce ['add 1 2])]
 )
 (
-    void? case [false (reduce ['add 1 2])]
+    null? case [null (reduce ['add 1 2])]
 )
 
 ~bad-branch-type~ !! (
@@ -149,7 +149,7 @@
     (
         called: false
         all [
-            void? case [false :(called: true, [1 + 2])]
+            null? case [null :(called: true, [1 + 2])]
             called
         ]
     )

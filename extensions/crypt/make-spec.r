@@ -99,6 +99,6 @@ libraries: switch platform-config.os-base [
         ;
         [%advapi32]
     ]
-] else [null]  ; can't use null fallout in bootstrap
+]
 
 use-librebol: 'yes
