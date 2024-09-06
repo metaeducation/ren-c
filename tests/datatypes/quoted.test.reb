@@ -156,8 +156,8 @@
 ((the '''a/b/c/d/e/f) = requote join the '''a/b/c '/d/e/f)
 
 [
-    ((the '[1]) = (requote validate3 the '[1] [some integer!]))
-    (null = (requote validate3 the '[a] [some integer!]))
+    ((the '[1]) = (requote parse3/match the '[1] [some integer!]))
+    (null = (requote parse3/match the '[a] [some integer!]))
 ]
 
 ; COPY should be implemented for all types, QUOTED! included.

@@ -256,12 +256,6 @@ unspaced: specialize get $delimit [delimiter: null]
 spaced: specialize get $delimit [delimiter: space]
 newlined: specialize get $delimit [delimiter: newline, tail: #]
 
-validate3: enclose get $parse3 func* [f] [
-    let input: f.input
-    eval f except [return null]
-    return input
-]
-
 an: lambda [
     {Prepends the correct "a" or "an" to a string, based on leading character}
     value <local> s

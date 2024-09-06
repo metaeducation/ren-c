@@ -823,7 +823,7 @@ pe-format: context [
         exe-data [binary!]
     ][
         reset
-        validate3 exe-data exe-rule
+        parse3/match exe-data exe-rule
         if err = 'missing-dos-signature [
             return false  ; soft failure (just wasn't an EXE, no "MZ")
         ]
@@ -1273,7 +1273,7 @@ encap: func [
     print ["Compressed resource is" length of compressed "bytes long."]
 
     case [
-        validate3 executable [
+        parse3/match executable [
             (elf-format.mode: 'read) elf-format.header-rule to <end>
         ][
             print "ELF format found"

@@ -196,11 +196,11 @@
     all [val = 'x, pos = ser]
 )]
 [#2130 (
-    res: validate3 ser: "foo" [pos: <here>, val: across one]
+    res: parse3/match ser: "foo" [pos: <here>, val: across one]
     all [res = null, val = "f", pos = ser]
 )]
 [#2130 (
-    res: validate3 ser: "foo" [pos: <here>, val: across one]
+    res: parse3/match ser: "foo" [pos: <here>, val: across one]
     all [res = null, val = "f", pos = ser]
 )]
 
