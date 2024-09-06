@@ -1956,7 +1956,7 @@ default-combinators: make map! reduce [
         <local> item error
     ][
         either any-list? input [
-            match value input.1 else [
+            if not match value maybe input.1 [
                 return raise "Value at parse position did not match TYPE-GROUP!"
             ]
             remainder: next input
@@ -1985,7 +1985,7 @@ default-combinators: make map! reduce [
         <local> item error
     ][
         either any-list? input [
-            match value input.1 else [
+            if not match value maybe input.1 [
                 if negated [
                     remainder: next input
                     return input.1

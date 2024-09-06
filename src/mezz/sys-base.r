@@ -82,7 +82,7 @@ module: func [
             spec.version [~null~ tuple!]
             spec.options [~null~ block!]
         ][
-            (match inside [] types get inside [] var) else [
+            if not (match/meta inside [] types get inside [] var) [
                 fail ["Module" var "must be in" mold types "- not" ^(get var)]
             ]
         ]

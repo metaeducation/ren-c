@@ -156,11 +156,6 @@
     e.arg1 = 'asiieiajiaosdfbjakbsjxbjkchasdf
 ])
 
-[
-    (''~preserved~ = ^ match &quasi-word? '~preserved~)
-    ('~[~null~]~ = ^ match null null)
-]
-
 ; ~quit~ is the label of the quasiform you get by default from QUIT.  If the
 ; result is meant to be used, then QUIT should be passed an argument,
 ; but the idea is to help draw attention to when a script was cut short

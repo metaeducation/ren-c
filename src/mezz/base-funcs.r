@@ -474,14 +474,11 @@ gunzip: redescribe [
 )
 
 ensure: redescribe [
-    {Pass through value if it matches test, otherwise trigger a FAIL}
+    "Pass through value if it matches test, otherwise trigger a FAIL"
 ](
-    ; MATCH returns a pack (antiform block) vs. NULL if the input is NULL
-    ; and matches NULL.  This is not reactive with ELSE
-    ;
-    enclose get $match lambda [f <local> value] [  ; LET was having trouble
+    enclose get $match/meta lambda [f <local> value] [  ; !!! LET had trouble
         value: :f.value  ; EVAL makes frame arguments unavailable
-        eval f else [
+        unmeta eval f else [  ; /META allows any value, must UNMETA
             ; !!! Can't use FAIL/WHERE until we can implicate the callsite.
             ;
             ; https://github.com/metaeducation/ren-c/issues/587
@@ -806,7 +803,7 @@ raise: func [
     ; !!! PATH! doesn't do BINDING OF, and in the general case it couldn't
     ; tell you where it resolved to without evaluating, just do WORD! for now.
     ;
-    let frame: match frame! maybe binding of maybe match word! blame
+    let frame: match frame! maybe binding of maybe match word! maybe blame
 
     let error: switch/type :reason [
         error! [reason]

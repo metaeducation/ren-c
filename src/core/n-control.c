@@ -634,13 +634,15 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 //
 //  match: native [
 //
-//  "Check value using tests (match types, TRUE or FALSE, or filter action)"
+//  "Check value using the same typechecking that functions use for parameters"
 //
 //      return: "Input if it matched, NULL if it did not"
 //          [any-value?]
-//      test "Typeset or arity-1 filter function"
-//          [~null~ logic? action? block! type-word! type-group! type-block!]
-//      value [any-value?]
+//      test "Type specification, can use NULL instead of [null?]"  ; [1]
+//          [~null~ block! type-word! type-group! type-block! parameter!]
+//      value "If not /META, NULL values illegal, and VOID returns NULL"  ; [2]
+//          [any-value?]
+//      /meta "Return the ^META result (allows checks on NULL and VOID)"
 //  ]
 //
 DECLARE_NATIVE(match)
@@ -649,31 +651,53 @@ DECLARE_NATIVE(match)
 // just does some fairly simple matching:
 //
 //   https://forum.rebol.info/t/time-to-meet-your-match-dialect/1009/5
+//
+// 1. Passing in NULL for test is taken as a synonym for [null?], which isn't
+//    usually very useful for MATCH, but it's useful for things built on it
+//    (like ENSURE and NON):
+//
+//        >> result: null
+//
+//        >> ensure null result
+//        == null
+//
+//        >> non null result
+//        ** Error: NON argument cannot be [null?]
+//
+// 2. Passing in NULL for *value* creates a problem, because it conflates the
+//    "didn't match" signal with the "did match" signal.  To solve this problem
+//    requires MATCH/META:
+//
+//        >> match/meta [~null~ integer!] 10
+//        == '10
+//
+//        >> match/meta [~null~ integer!] null
+//        == ~null~
+//
+//        >> match/meta [~null~ integer!] <some-tag>
+//        == ~null~  ; anti
 {
     INCLUDE_PARAMS_OF_MATCH;
 
     Value* v = ARG(value);
     Value* test = ARG(test);
 
+    if (not REF(meta)) {
+        if (Is_Nulled(v))
+            fail (Error_Need_Non_Null_Raw());  // [1]
+    }
+
     if (Is_Nulled(test)) {
-        if (not Is_Nulled(v))
-            return nullptr;
+        if (not REF(meta))
+            fail ("Can't give coherent answer for NULL matching without /META");
+
+        if (Is_Nulled(v))
+            return Init_Meta_Of_Null(OUT);
+
+        return Init_Nulled(OUT);
     }
-    else if (Is_Logic(test)) {
-        if (Is_Truthy(v) != Cell_Logic(test))
-            return nullptr;
-    }
-    else if (Is_Action(test)) {
-        if (rebRunThrows(
-            cast(Value*, SPARE),  // <-- output cell, API doesn't do unstable
-            rebRUN(test), rebQ(v)
-        )){
-            return THROWN;
-        }
-        if (Is_Falsey(stable_SPARE))
-            return nullptr;
-    }
-    else switch (VAL_TYPE(test)) {
+
+    switch (VAL_TYPE(test)) {
       case REB_PARAMETER:
       case REB_BLOCK:
       case REB_TYPE_WORD:
@@ -689,9 +713,15 @@ DECLARE_NATIVE(match)
 
     //=//// IF IT GOT THIS FAR WITHOUT RETURNING, THE TEST MATCHED /////////=//
 
+    if (Is_Void(v) and not REF(meta))  // not a good case of void-in-null-out
+        fail ("~void~ antiform requires MATCH/META if in set being tested");
+
     Copy_Cell(OUT, v);
 
-    return BRANCHED(OUT);  // "heavy" null or void, so THEN and ELSE work
+    if (REF(meta))
+        Meta_Quotify(OUT);
+
+    return OUT;
 }
 
 

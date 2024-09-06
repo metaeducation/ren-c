@@ -13,21 +13,29 @@
 (20 = match [integer! text!] 20)
 (null = match [integer! text!] <tag>)
 
-(10 = match :even? 10)
-(null = match :even? 3)
+(10 = match [even?] 10)
+(null = match [even?] 3)
 
 
 (_ = match blank! _)
 (null = match blank! 10)
-(null = match blank! false)
+(null = match blank! 'false)
 
 
-; Falsey things are wrapped in single-unit packs so they will trigger THEN.
 [
-    ('~[~null~]~ = ^ match null null)
+    ~need-non-null~ !! (match [~null~] null)
+    ~need-non-null~ !! (match [null?] null)
+    ('~null~ = match/meta [null?] null)
+
+    (null = match [integer!] void)
+    ~???~ !! (match [void?] void)
+    ('~void~ = match/meta [void?] void)
+
     ('_ = match blank! blank)
-    (true = match logic?! true)
-    ('~[~false~]~ = ^ match logic?! false)
+    ('true = match [boolean?] 'true)
+    ('false = match [boolean?] 'false)
+
+    (''~preserved~ = ^ match &quasi-word? '~preserved~)
 ]
 
 [
@@ -53,10 +61,12 @@
     (null = non integer! 10)
     (:append = non integer! :append)
 
-    (10 = non null 10)
+    ~need-non-null~ !! (non null null)
+    ~???~ !! (non null 10)
+    (null = non/meta null null)
+    ((the '10) = non/meta null 10)
 
-    (null = non null null)
-    (null = non logic?! false)
+    (null = non [logic?] okay)
 ]
 
 ; PROHIBIT is an inverted version of ENSURE, where it must not match
@@ -71,7 +81,7 @@
     (10 = prohibit null 10)
 
     ~???~ !! (prohibit null null)
-    ~???~ !! (prohibit logic?! false)
+    ~???~ !! (prohibit [logic?] okay)
 ]
 
 
@@ -89,32 +99,8 @@
         eval f except [return null]
         return p  ; evaluate to parameter if operation succeeds
     ]
-    true)
+    ok)
 
     (null = match+ parse3 "aaa" [some "b"])
     ("aaa" = match+ parse3 "aaa" [some "a"])
-]
-
-; You can shoot yourself in the foot if you use MATCH as a test of falsey
-; things and then use an IF conditionally on them.  Attempts to try and make
-; this safe compromise the generality, so users are encouraged to make a
-; wrapper and use that if they're in the group of people who feel the cure
-; is not worse than the disease.
-[
-    (smatch: enclose (augment :match [/unsafe]) func [f [frame!]] [
-        if f.unsafe [return eval f]
-        let result': ^ eval f
-        any [
-            result' = '~[~false~]~
-            result' = '~[~null~]~
-        ] then [
-            return raise ~falsey-match~
-        ]
-        return unmeta result'
-    ],
-    true)
-
-    (true = smatch logic?! true)
-    ~falsey-match~ !! (smatch logic?! false)
-    ~falsey-match~ !! (smatch [~null~] null)
 ]

@@ -77,13 +77,11 @@
     ])
     ([ZOMG <!!!> 1020 #wow] = apply get $reduce [
         ['ZOMG null 1000 + 20 #wow]
-        /predicate lambda [x] [
-            non [~null~] x else [<!!!>]
-        ]
+        /predicate lambda [x] [any [x, <!!!>]]
     ])
 ]
 
-~no-arg~ !! (reduce/predicate [null] cascade [get $null?, get $non])
+~expect-arg~ !! (reduce/predicate [null] cascade [get $null?, get $non])
 
 ; Voids are offered, but omitted if predicate doesn't take them.
 ; https://forum.rebol.info/t/should-void-be-offered-to-predicates-for-reduce-any-all-etc/1872

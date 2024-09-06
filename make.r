@@ -1642,9 +1642,10 @@ calculate-sequence: func [
     for-each req ext.requires [
         for-each b extensions [
             if b.name = req [
-                seq: seq + (
-                    (match integer! b.sequence) else [calculate-sequence b]
-                )
+                seq: seq + any [
+                    match integer! maybe b.sequence
+                    calculate-sequence b
+                ]
                 break
             ]
         ] then [  ; didn't BREAK, so no match found

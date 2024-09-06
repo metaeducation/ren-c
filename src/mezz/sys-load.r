@@ -140,7 +140,7 @@ load-header: func [
         return raise "bad-header"
     ]
 
-    (match [~null~ block!] hdr.options) else [
+    if not match/meta [~null~ block!] hdr.options [
         return raise "bad-header"
     ]
 
@@ -694,7 +694,7 @@ export*: func [
         ; !!! notation for exporting antiforms?
         items: next items
 
-        (types: match block! items.1) then [
+        (types: match block! maybe items.1) then [
             (match types val) else [
                 fail [
                     {EXPORT expected} word {to be in} ^types

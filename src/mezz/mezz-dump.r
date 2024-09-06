@@ -117,7 +117,7 @@ contains-newline: func [return: [logic?] pos [block! group!]] [
         any [
             new-line? pos
             all [
-                match [block! group!] pos.1
+                match [block! group!] maybe pos.1
                 contains-newline pos.1
             ]
         ] then [return true]

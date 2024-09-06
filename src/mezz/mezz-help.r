@@ -18,7 +18,9 @@ spec-of: func [
     return: [block!]
     action [<unrun> frame!]
 ][
-    let adjunct: (match object! adjunct-of action) else [return [~bad-spec~]]
+    let adjunct: (match object! maybe adjunct-of action) else [
+        return [~bad-spec~]
+    ]
 
     return collect [
         keep/line maybe ensure [~null~ text!] select adjunct 'description
