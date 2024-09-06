@@ -2,18 +2,18 @@
 
 (
     parse3 "abc" ["abc"]
-    true
+    ok
 )
 (
     parse3 "abc" ["abc" <end>]
-    true
+    ok
 )
 
 ; voids match and don't advance input (nulls are errors)
 ;
 (
     parse3 [] [void]
-    true
+    ok
 )
 (
     parse3 [a b] ['a void pos: <here> 'b]
@@ -21,15 +21,15 @@
 )
 (
     parse3 "a" [void "a"]
-    true
+    ok
 )
 (
     parse3 "a" [to void "a"]
-    true
+    ok
 )
 (
     parse3 "a" [thru void "a"]
-    true
+    ok
 )
 
 
@@ -37,19 +37,19 @@
 ;
 (
     parse3 "" [to ["a" | <end>]]
-    true
+    ok
 )
 (
     parse3 "" [thru ["a" | <end>]]
-    true
+    ok
 )
 (
     parse3 [] [to ["a" | <end>]]
-    true
+    ok
 )
 (
     parse3 [] [thru ["a" | <end>]]
-    true
+    ok
 )
 
 
@@ -63,14 +63,14 @@
         ]
         if c != codepoint-to-char n - 1 [fail "Char didn't match"]
     ]
-    true
+    ok
 )]
 
 (
     var: 3
     rule: "a"
     parse3 "aaa" [repeat (var) rule]  ; clearer than [var rule]
-    true
+    ok
 )
 
 ; Don't leak internal detail that BINARY! or ANY-STRING? are 0-terminated
@@ -94,12 +94,12 @@
     ~bad-antiform~ !! (
         foo: ~bad~
         parse3 "a" [foo]
-        true
+        ok
     )
     ~???~ !! (
         foo: '~bad~
         parse3 [~bad~] [foo <end>]
-        true
+        ok
     )
 ]
 
@@ -107,11 +107,11 @@
 
 (
     parse3 [] []
-    true
+    ok
 )
 (
     parse3 [] [[[]]]
-    true
+    ok
 )
 ~parse3-incomplete~ !! (
     parse3 [x] []
@@ -121,7 +121,7 @@
 )
 (
     parse3 [x] [[] 'x []]
-    true
+    ok
 )
 
 ; No longer contentious concept: NULL is not legal as a parse rule.
@@ -133,7 +133,7 @@
     )
     (
         parse3 [_ x] [blank 'x <end>]
-        true
+        ok
     )
 
     ~parse3-incomplete~ !! (
@@ -141,11 +141,11 @@
     )
     (
         parse3 [_ _ _] [blank blank blank]
-        true
+        ok
     )
     (
         parse3 [_ _ _] [_ _ _]
-        true
+        ok
     )
     ~parse3-incomplete~ !!(
         parse3 [x <y> "z"] [_ _ _]
@@ -156,12 +156,12 @@
     )
     (
         parse3 [_ _ _] ['_ '_ '_]
-        true
+        ok
     )
     (
         q-blank: quote '_
         parse3 [_ _ _] [q-blank q-blank q-blank]
-        true
+        ok
     )
 
     ~parse3-incomplete~ !!(
@@ -169,7 +169,7 @@
     )
     (
         parse3 [_ _ _] [[[blank blank blank]]]
-        true
+        ok
     )
 ]
 
@@ -208,37 +208,37 @@
 
 (
     parse3 "abcd" [seek 3 "cd"]
-    true
+    ok
 )
 (
     parse3 "abcd" [seek 5]
-    true
+    ok
 )
 (
     parse3 "abcd" [seek 128]
-    true
+    ok
 )
 
 [#1965
     (
         parse3 "abcd" [seek 3 one "d"]
-        true
+        ok
     )
     (
         parse3 "abcd" [seek 4 one]
-        true
+        ok
     )
     (
         parse3 "abcd" [seek 128]
-        true
+        ok
     )
     (
         parse3 "abcd" ["ab" seek 1 "abcd"]
-        true
+        ok
     )
     (
         parse3 "abcd" ["ab" seek 1 one "bcd"]
-        true
+        ok
     )
 ]
 
@@ -263,32 +263,32 @@
 [#1959
     (
         parse3 "abcd" [thru "d"]
-        true
+        ok
     )
 ]
 [#1959
     (
         parse3 "abcd" [to "d" one]
-        true
+        ok
     )
 ]
 
 [#1959
     (
         parse3 "<abcd>" [thru '<abcd>]
-        true
+        ok
     )
 ]
 [#1959
     (
         parse3 [a b c d] [thru 'd]
-        true
+        ok
     )
 ]
 [#1959
     (
         parse3 [a b c d] [to 'd one]
-        true
+        ok
     )
 ]
 
@@ -324,11 +324,11 @@
 [#1246
     (
         parse3 "1" [not ahead not ahead "1" "1"]
-        true
+        ok
     )
     (
         parse3 "1" [not ahead [not ahead "1"] "1"]
-        true
+        ok
     )
     ~parse3-incomplete~ !! (
         parse3 "" [not ahead repeat 0 "a"]
@@ -341,15 +341,15 @@
 [#1240
     (
         parse3 "" [not ahead "a"]
-        true
+        ok
     )
     (
         parse3 "" [not ahead one]
-        true
+        ok
     )
     (
         parse3 "" [not ahead bypass]
-        true
+        ok
     )
 ]
 
@@ -359,14 +359,14 @@
 [#1457
     (
         parse3 "a" compose [thru (charset "a")]
-        true
+        ok
     )
     ~parse3-incomplete~ !! (
         parse3 "a" compose [thru (charset "a") one]
     )
     (
         parse3 "ba" compose [to (charset "a") one]
-        true
+        ok
     )
     ~parse3-incomplete~ !! (
         parse3 "ba" compose [to (charset "a") "ba"]
@@ -376,7 +376,7 @@
 [#2141 (
     xset: charset "x"
     parse3 "x" [thru [xset]]
-    true
+    ok
 )]
 
 ; self-modifying rule, not legal in Ren-C if it's during the parse
@@ -395,11 +395,11 @@
 ;
 (
     parse3 ["aa"] [ahead text! into ["a" "a"]]
-    true
+    ok
 )
 (
     parse3 ["aa"] [and text! into ["a" "a"]]
-    true
+    ok
 )
 
 [#1238
@@ -416,12 +416,12 @@
 ; PATH! cannot be PARSE'd due to restrictions of the implementation
 (
     a-value: first [a/b]
-    parse3 as block! a-value [b-value: <here>, accept (true)]
+    'true = parse3 as block! a-value [b-value: <here>, accept ('true)]
     a-value = to path! b-value
 )
 (
     a-value: first [()]
-    parse3 a-value [b-value: <here>, accept (true)]
+    'true = parse3 a-value [b-value: <here>, accept ('true)]
     same? a-value b-value
 )
 
@@ -443,45 +443,49 @@
 
 (
     parse3 "aaabbb" [:([some "a"]) :([some "b"])]
-    true
+    ok
 )
 (
-    parse3 "aaabbb" [:([some "a"]) :(if false [some "c"]) :([some "b"])]
-    true
+    parse3 "aaabbb" [:([some "a"]) :(if null [some "c"]) :([some "b"])]
+    ok
 )
 (
     parse3 "aaa" [:('some) "a"]
-    true
+    ok
 )
 ~parse3-incomplete~ !! (
     parse3 "aaa" [repeat (1 + 1) "a"]
 )
 (
     parse3 "aaa" [repeat (1 + 2) "a"]
-    true
+    ok
 )
 (
     count: 0
     parse3 ["a" "aa" "aaa"] [some [into [repeat (count: count + 1) "a"]]]
-    true
+    ok
 )
 
 ; LOGIC! BEHAVIOR
-; A logic true acts as a no-op, while a logic false causes matches to fail
+; A logic OKAY acts as a no-op, while a NULL is illegal (use MAYBE to get VOID)
 
 (
-    parse3 "ab" ["a" true "b"]
-    true
+    parse3 "ab" ["a" okay "b"]
+    ok
 )
-~parse3-incomplete~ !! (
-    parse3 "ab" ["a" false "b"]
+~bad-null~ !! (
+    parse3 "ab" ["a" null "b"]
 )
 (
     parse3 "ab" ["a" :(1 = 1) "b"]
-    true
+    ok
 )
-~parse3-incomplete~ !! (
+~???~ !! (
     parse3 "ab" ["a" :(1 = 2) "b"]
+)
+(
+    parse3 "ab" ["a" :(maybe 1 = 2) "b"]
+    ok
 )
 
 
@@ -494,11 +498,11 @@
 )
 (
     parse3 [... [a b]] [thru '[a b]]
-    true
+    ok
 )
 (
     parse3 [1 1 1] [some '1]
-    true
+    ok
 )
 
 ; Quote level is not retained by captured content
@@ -515,12 +519,12 @@
 (
     block: [some rule]
     parse3 [[some rule] [some rule]] [repeat 2 @block]
-    true
+    ok
 )
 (
     ch: #a
     parse3 "a" [@ch]
-    true
+    ok
 )
 
 ; As alternatives to using SET-WORD! to set the parse position and GET-WORD!
@@ -555,22 +559,21 @@
     (
         catchar: #"🐱"
         parse3 #{F09F90B1} [catchar]
-        true
+        ok
     )
     (
         cattext: "🐱"
         parse3 #{F09F90B1} [cattext]
-        true
+        ok
     )
     ~find-string-binary~ !! (
         catbin: #{F09F90B1}
         parse3 "🐱" [catbin]
-        true
     )
     (
         catchar: #"🐱"
         parse3 "🐱" [catchar]
-        true
+        ok
     )
 ]
 
@@ -582,12 +585,12 @@
 
     (
         parse3 bincat [{C😺T}]
-        true
+        ok
     )
 
     (
         parse3 bincat [{c😺t}]
-        true
+        ok
     )
 
     ~parse3-incomplete~ !! (
@@ -618,7 +621,7 @@
 [
     (
         parse3 "" [opt some further [to <end>]]
-        true
+        ok
     )
 
     ~parse3-incomplete~ !! (
@@ -626,15 +629,15 @@
     )
     (
         parse3 "a" [further [opt "a" opt "b"] ("at least 1")]
-        true
+        ok
     )
     (
         parse3 "a" [further [opt "a" opt "b"] ("at least 1")]
-        true
+        ok
     )
     (
         parse3 "ab" [further [opt "a" opt "b"] ("at least 1")]
-        true
+        ok
     )
 ]
 
@@ -649,7 +652,7 @@
         ]]
         if sub != copy/part t n [fail "Incorrect Replacement"]
     ]
-    true
+    ok
 )]
 
 [(
@@ -676,7 +679,7 @@
             ]
         ]
     ]
-    true
+    ok
 )(
     ["a" 3 "b" 3 "c" 3] = countify ["a" "b" "c"] "aaabccbbc"
 )(
@@ -702,27 +705,27 @@
 [
     (
         parse3 "ab" [to [""] "ab"]
-        true
+        ok
     )
     (
         parse3 "ab" [to ["a"] "ab"]
-        true
+        ok
     )
     (
         parse3 "ab" [to ["ab"] "ab"]
-        true
+        ok
     )
     (
         parse3 "ab" [thru [""] "ab"]
-        true
+        ok
     )
     (
         parse3 "ab" [thru ["a"] "b"]
-        true
+        ok
     )
     (
         parse3 "ab" [thru ["ab"] ""]
-        true
+        ok
     )
 ]
 
@@ -746,7 +749,7 @@
 (
     byteset: make bitset! [0 16 32]
     parse3 #{001020} [some byteset]
-    true
+    ok
 )
 
 ; A SET of zero elements gives NULL, a SET of > 1 elements is an error
@@ -814,21 +817,21 @@
 [#1298 (
     cset: charset [#"^(01)" - #"^(FF)"]
     parse3 "a" ["a" opt some cset]
-    true
+    ok
 )(
     cset: charset [# - #"^(FE)"]
     parse3 "a" ["a" opt some cset]
-    true
+    ok
 )(
     cset: charset [# - #"^(FF)"]
     parse3 "a" ["a" opt some cset]
-    true
+    ok
 )]
 
 [#1282
     (
         parse3 [1 2 a] [thru word!]
-        true
+        ok
     )
 ]
 

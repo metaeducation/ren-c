@@ -121,5 +121,5 @@
 ; at the time of writing, and the function has been renamed to PROXY-EXPORTS
 ;
 [#2017
-    (get has proxy-exports (module [] []) (module [] [a: true]) [a] 'a)
+    (get has proxy-exports (module [] []) (module [] [a: okay]) [a] 'a)
 ]

@@ -11,7 +11,7 @@
 
 ; Meta parameters are allowed, and accept voids by default`
 [
-    ('~baddie~ = if true [~baddie~] then ^x -> [x])
+    ('~baddie~ = if ok [~baddie~] then ^x -> [x])
 
     (
         tester: ^x -> [if x = '~()~ [<void>] else [<nonvoid>]]

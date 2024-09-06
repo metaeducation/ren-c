@@ -25,7 +25,7 @@
     ][
         assert [value = do-script-returning value]
     ]
-    true
+    ok
 )
 
 [#2190

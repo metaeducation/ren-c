@@ -13,8 +13,8 @@
 ; (At one time it was thought it might be how to say "match any value", as
 ; underscore is sometimes used in this wildcarding fashion in some languages:
 ;
-;    >> did parse [x <y> "z"] [_ _ _]
-;    == ~true~  ; anti
+;    >> parse [x <y> "z"] [_ _ _]
+;    == "z"
 ;
 ; ...but the ONE combinator serves this purpose more literately.)
 ;

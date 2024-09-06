@@ -647,7 +647,7 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
 #include "cells/cell-word.h"  // needs to know about QUOTED! for binding
 #include "cells/cell-void.h"  // uses pack array for Init_Heavy_Void()
 #include "cells/cell-nulled.h"  // ~null~ is an antiform word
-#include "cells/cell-logic.h"  // ~true~ and ~false~ are antiform words
+#include "cells/cell-logic.h"  // TRUE, FALSE, YES, NO, ON, OFF are words
 
 #include "cells/cell-string.h"
 #include "cells/cell-binary.h"

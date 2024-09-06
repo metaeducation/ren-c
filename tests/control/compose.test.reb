@@ -139,7 +139,7 @@
 ; labeled compose...saving it for quoting composed material.
 
 ([3 '3 ''3] == compose [(1 + 2) '(1 + 2) ''(1 + 2)])
-~???~ !! (compose ['(if false [<cant-vanish-with-quote>])])
+~???~ !! (compose ['(if null [<cant-vanish-with-quote>])])
 
 ; Quoting should be preserved by deep composition
 
@@ -210,7 +210,7 @@
 ; antiforms besides splices are not legal in compose, but you can reify them
 [
     ([<a> ~null~ <b>] = apply get $compose [
-        [<a> (if true [null]) <b>]
+        [<a> (if ok [null]) <b>]
         /predicate cascade [get $eval, get $reify]
     ])
     ([<a>] = compose [<a> (~()~)])
@@ -239,7 +239,7 @@
 
 ; More tests of crazy quoting depths
 [
-    ~???~ !! (compose ['''''''(if false [<a>])])
+    ~???~ !! (compose ['''''''(if null [<a>])])
 ]
 
 ; You can apply quasiforms just like other quoting levels, but the value

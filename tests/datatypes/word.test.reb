@@ -81,8 +81,8 @@
     a-value: first ['a]
     a-value == :a-value
 )
-(:true == true)
-(:false == false)
+(:okay == okay)
+(:null == null)
 (
     a-value: $1
     :a-value == a-value
@@ -213,7 +213,7 @@
         assert [pos = ""]
         assert [l = as get-word! word]
     ]
-    true)
+    ok)
 ]
 
 [(
@@ -222,7 +222,7 @@
     ][
         assert ['scan-invalid = (trap [load bad]).id]
     ]
-    true
+    ok
 )]
 
 

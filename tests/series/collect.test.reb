@@ -27,14 +27,14 @@
     ] adapt get $collect [  ; https://forum.rebol.info/t/945/1
         body: compose [
             keep: adapt specialize get $keep [
-                line: #
+                line: ok
                 part: null
             ][
                 value: try spaced :value
             ]
             (as group! body)
         ]
-    ] true)
+    ] ok)
 
     (
         ["three 3" "four 4"] = collect-lines [
@@ -62,7 +62,7 @@
         ],
         get $spaced,
         specialize get $else [branch: [copy ""]]
-    ] true)
+    ] ok)
 
     (
         "three3 four4" = collect-text [

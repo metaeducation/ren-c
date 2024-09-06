@@ -12,9 +12,9 @@
         let dir
         parse args [opt some [
             "-a", access-dir: [
-                <end> (true)
-                | "true" (true)
-                | "false" (false)
+                <end> ('true)
+                | "true" ('true)
+                | "false" ('false)
                 | dir: text!, (to-file dir)  ; manual form, use TO-FILE/ below
             ]
             |
@@ -36,9 +36,9 @@
     ])
 
     ([~null~ ~null~ ~null~ 2] = argtest ["-v"])
-    ([~true~ ~null~ ~null~ ~null~] = argtest ["-a"])
-    ([~true~ ~null~ ~null~ ~null~] = argtest ["-a" "true"])
-    ([~false~ ~null~ ~null~ ~null~] = argtest ["-a" "false"])
+    ([true ~null~ ~null~ ~null~] = argtest ["-a"])
+    ([true ~null~ ~null~ ~null~] = argtest ["-a" "true"])
+    ([false ~null~ ~null~ ~null~] = argtest ["-a" "false"])
     ([%something ~null~ ~null~ ~null~] = argtest ["-a" "something"])
     ([~null~ 8000 ~null~ ~null~] = argtest ["8000"])
     ([~null~ 8000 ~null~ 2] = argtest ["8000" "-v"])

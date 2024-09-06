@@ -83,7 +83,7 @@
     (
         bin: #{0BAD00CAFE00BABE00DEADBEEF00}
         wa: [#{0A}]
-        true
+        ok
     )
     (void? parse #{} [to <end>])
     (void? parse #{0A} [to <end>])
@@ -112,6 +112,6 @@
         count-up i 4 [
             assert ["1" == parse/part "12" ["1" to [<end>]] i]
         ]
-        true
+        ok
     )
 ]

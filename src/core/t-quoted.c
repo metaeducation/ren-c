@@ -554,7 +554,7 @@ DECLARE_NATIVE(pack)
 //    result from evaluating commas are -not- offered to any predicates.  This
 //    is by design, so we get:
 //
-//        >> pack [1 + 2, comment "hi", if false [1020]]
+//        >> pack [1 + 2, comment "hi", if null [1020]]
 //        == ~[3 ~[]~ ']
 //
 // 3. Raised errors are not tolerated as things to pack.  This is by design:

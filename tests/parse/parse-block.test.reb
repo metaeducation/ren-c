@@ -30,7 +30,7 @@
 [
     (
         wa: ['a]
-        true
+        ok
     )
     (
         res: 0
@@ -111,9 +111,9 @@
         x = null
     )
     (
-        did-not-match: false
-        parse "aaa" [some "b"] except [did-not-match: true]
-        did-not-match
+        matched: 'yes
+        parse "aaa" [some "b"] except [matched: 'no]
+        no? matched
     )
 ]
 

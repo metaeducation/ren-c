@@ -10,7 +10,7 @@
 ; reserved by the system and must be formed from mezzanine/user code in
 ; accordance with the structure the system would form.  Hence, illegal.
 ;
-(trap [make error! [type: 'script id: 'nonexistent-id]] then [true])
+(trap [make error! [type: 'script id: 'nonexistent-id]] then [okay])
 
 ; triggered errors should not be assignable
 ;

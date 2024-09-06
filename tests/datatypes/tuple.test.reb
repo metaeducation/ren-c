@@ -33,7 +33,7 @@
         30 = length of tuple  ; too big to fit in cell on 32-bit -or- 64-bit
         (cfor i 1 30 1 [
             assert [tuple.(i) = 1]
-        ] true)
+        ] ok)
     ]
 )
 
@@ -54,7 +54,7 @@
             assert [tuple.(i) = structure.(i)]
         ]
     ]
-    true
+    ok
 )
 
 ; No implicit to binary! from tuple!
@@ -80,7 +80,7 @@
     (equal? 1.0.0 1.0.0.0.0.0.0)
     ; tuple! right-pads with 0
     (equal? 1.0.0.0.0.0.0 1.0.0)
-] true)
+] ok)
 
 [
     ~bad-pick~ !! (pick 'a/b 1000)

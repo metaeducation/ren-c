@@ -4,7 +4,7 @@
     (
         test-file: %fixtures/crlf.txt
         write test-file to-binary {a^Mb^/c^M^/^/d^/^M^/e^/^/f}
-        true
+        ok
     )
 
     ( { READ-LINES }

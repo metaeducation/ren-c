@@ -65,7 +65,7 @@
 [
     (
         mstr: {   a ^-1^/    ab2^-  ^/  ac3  ^/  ^/^/}
-        true
+        ok
     )
 
     ("a ^-1^/ab2^/ac3^/" = trim copy mstr)

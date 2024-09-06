@@ -232,8 +232,8 @@ typedef enum {
     // version of PARAMCLASS_MEDIUM which is escapable but will defer to enfix.
     // This covers cases like:
     //
-    //     if true [...] then :(func [...] [...])  ; want escapability
-    //     if true [...] then x -> [...]  ; but want enfix -> lookback to win
+    //     if ok [...] then :(func [...] [...])  ; want escapability
+    //     if ok [...] then x -> [...]  ; but want enfix -> lookback to win
     //
     // Hence it is the main mode of quoting for branches.  It would be
     // unsuitable for cases like OF, however, due to this problem:

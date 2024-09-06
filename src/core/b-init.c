@@ -201,27 +201,25 @@ static void Startup_Lib(void)
     // seed the values to get the ball rolling.
 
     Set_Cell_Flag(Init_Nulled(force_Lib(NULL)), PROTECTED);
-    assert(Is_Falsey(Lib(NULL)) and Is_Nulled(Lib(NULL)));
+    assert(Is_Inhibitor(Lib(NULL)) and Is_Nulled(Lib(NULL)));
+
+    Set_Cell_Flag(Init_Okay(force_Lib(OKAY)), PROTECTED);
+    assert(Is_Trigger(Lib(OKAY)) and Is_Okay(Lib(OKAY)));
 
     Set_Cell_Flag(Init_Quasi_Void(force_Lib(QUASI_VOID)), PROTECTED);
-    assert(Is_Truthy(Lib(QUASI_VOID)));
+    assert(Is_Trigger(Lib(QUASI_VOID)));
 
     Set_Cell_Flag(Init_Blank(force_Lib(BLANK)), PROTECTED);
-    assert(Is_Truthy(Lib(BLANK)) and Is_Blank(Lib(BLANK)));
+    assert(Is_Trigger(Lib(BLANK)) and Is_Blank(Lib(BLANK)));
 
     Set_Cell_Flag(
         Init_Quasi_Null(force_Lib(QUASI_NULL)),
         PROTECTED
     );
     assert(
-        Is_Truthy(Lib(QUASI_NULL))
+        Is_Trigger(Lib(QUASI_NULL))
         and Is_Quasi_Null(Lib(QUASI_NULL))
     );
-
-    Init_True(force_Lib(TRUE));
-    Init_False(force_Lib(FALSE));
-    assert(Is_Truthy(Lib(TRUE)) and Cell_Logic(Lib(TRUE)) == true);
-    assert(Is_Falsey(Lib(FALSE)) and Cell_Logic(Lib(FALSE)) == false);
 
     // !!! Other constants are just initialized as part of Startup_Base().
 }
@@ -363,8 +361,7 @@ static void Shutdown_Empty_Arrays(void) {
 //
 static void Init_Root_Vars(void)
 {
-    // Simple isolated values, not available via lib, e.g. not Lib(TRUE) or
-    // Lib(BLANK)...
+    // Simple isolated values, not available via lib, e.g. not Lib(BLANK)
 
     Init_Nothing(&PG_Nothing_Value);
     Set_Cell_Flag(&PG_Nothing_Value, PROTECTED);  // prevent overwriting
@@ -414,12 +411,6 @@ static void Init_Root_Vars(void)
       );
     Force_Value_Frozen_Deep(Root_Heavy_Void);
 
-    ensure(nullptr, Root_Heavy_False) = Init_Block(
-        Alloc_Value(),
-        PG_1_Meta_False_Array
-      );
-    Force_Value_Frozen_Deep(Root_Heavy_False);
-
     ensure(nullptr, Root_Feed_Null_Substitute) = Init_Quasi_Null(Alloc_Value());
     Set_Cell_Flag(Root_Feed_Null_Substitute, FEED_NOTE_META);
     Force_Value_Frozen_Deep(Root_Feed_Null_Substitute);
@@ -460,7 +451,6 @@ static void Shutdown_Root_Vars(void)
     rebReleaseAndNull(&Root_Heavy_Null);
     rebReleaseAndNull(&Root_Heavy_Void);
     rebReleaseAndNull(&Root_Feed_Null_Substitute);
-    rebReleaseAndNull(&Root_Heavy_False);
     rebReleaseAndNull(&Root_Empty_Binary);
 }
 
@@ -675,14 +665,6 @@ void Startup_Core(void)
 
     Startup_Symbols();
     Startup_Empty_Arrays();
-
-  blockscope {
-    Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
-    Set_Flex_Len(a, 1);
-    Init_Quasi_Word(Array_At(a, 0), Canon(FALSE));
-    Freeze_Array_Deep(a);
-    PG_1_Meta_False_Array = a;
-  }
 
 //=//// CREATE GLOBAL OBJECTS /////////////////////////////////////////////=//
 

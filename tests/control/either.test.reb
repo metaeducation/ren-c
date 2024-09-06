@@ -1,32 +1,32 @@
 ; functions/control/either.r
 (
-    either true [success: true] [success: false]
-    success
+    either okay [success: 'yes] [success: 'no]
+    yes? success
 )
 (
-    either false [success: false] [success: true]
-    success
+    either null [success: 'no] [success: 'yes]
+    yes? success
 )
-(1 = either true [1] [2])
-(2 = either false [1] [2])
+(1 = either okay [1] [2])
+(2 = either null [1] [2])
 
-('~[~null~]~ = ^ either true [null] [1])
-('~[~null~]~ = ^ either false [1] [null])
+('~[~null~]~ = ^ either okay [null] [1])
+('~[~null~]~ = ^ either null [1] [null])
 
-(error? either true [trap [1 / 0]] [])
-(error? either false [] [trap [1 / 0]])
+(error? either okay [trap [1 / 0]] [])
+(error? either null [] [trap [1 / 0]])
 
 ; RETURN stops the evaluation
 (
     f1: func [return: [integer!]] [
-        either true [return 1 2] [2]
+        either okay [return 1 2] [2]
         2
     ]
     1 = f1
 )
 (
     f1: func [return: [integer!]] [
-        either false [2] [return 1 2]
+        either null [2] [return 1 2]
         2
     ]
     1 = f1
@@ -34,26 +34,26 @@
 ; THROW stops the evaluation
 (
     1 == catch [
-        either true [throw 1 2] [2]
+        either okay [throw 1 2] [2]
         2
     ]
 )
 (
     1 == catch [
-        either false [2] [throw 1 2]
+        either null [2] [throw 1 2]
         2
     ]
 )
 ; BREAK stops the evaluation
 (
     null? repeat 1 [
-        either true [break 2] [2]
+        either okay [break 2] [2]
         2
     ]
 )
 (
     null? repeat 1 [
-        either false [2] [break 2]
+        either null [2] [break 2]
         2
     ]
 )
@@ -61,8 +61,8 @@
 [
     ; Recursive behavior
 
-    (2 = either true [either false [1] [2]] [])
-    (1 = either false [] [either true [1] [2]])
+    (2 = either okay [either null [1] [2]] [])
+    (1 = either null [] [either okay [1] [2]])
 
     ; Infinite recursion
 
@@ -71,7 +71,7 @@
         eval blk: [
             depth: me + 1
             if depth = 1000 [throw <deep-enough>]
-            either true (blk) []
+            either okay (blk) []
         ]
     ])
     (<deep-enough> = catch [
@@ -79,7 +79,7 @@
         eval blk: [
             depth: me + 1
             if depth = 1000 [throw <deep-enough>]
-            either false [] (blk)
+            either null [] (blk)
         ]
     ])
 ]
@@ -95,37 +95,37 @@
         infix-voider: enfix func [return: [quasi-word?] x y] [
             return '~bad~
         ]
-        true
+        ok
     )
 
-    (takes-2-logics ('~bad~) = '~bad~ false)
+    (takes-2-logics ('~bad~) = '~bad~ null)
 
-    ~expect-arg~ !! (takes-2-logics true infix-voider true false)
+    ~expect-arg~ !! (takes-2-logics okay infix-voider okay null)
 ]
 
 ; Soft Quoted Branching
 ; https://forum.rebol.info/t/soft-quoted-branching-light-elegant-fast/1020
 (
-    [1 + 2] = either true '[1 + 2] [3 + 4]
+    [1 + 2] = either okay '[1 + 2] [3 + 4]
 )(
-    7 = either false '[1 + 2] [3 + 4]
+    7 = either null '[1 + 2] [3 + 4]
 )(
-    1020 = either true '1020 '304
+    1020 = either okay '1020 '304
 )
 
 ; THE-XXX! Branching (TBD)
 ;(
 ;    j: 304
-;    304 = either true @j [fail "Shouldn't run"]
+;    304 = either okay @j [fail "Shouldn't run"]
 ;)(
 ;    o: make object! [b: 1020]
-;    1020 = either true @o/b [fail "Shouldn't run"]
+;    1020 = either okay @o/b [fail "Shouldn't run"]
 ;)(
 ;    var: <something>
 ;    all [
-;        304 = either false @(var: <something-else> [1000 + 20]) [300 + 4]
+;        304 = either null @(var: <something-else> [1000 + 20]) [300 + 4]
 ;        var = <something>
-;        1020 = if true @(var: <something-else> [1000 + 20]) [300 + 4]
+;        1020 = if ok @(var: <something-else> [1000 + 20]) [300 + 4]
 ;        var = <something-else>
 ;    ]
 ;)

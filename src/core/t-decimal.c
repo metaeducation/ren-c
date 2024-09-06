@@ -614,14 +614,14 @@ REBTYPE(Decimal)
     case SYM_EVEN_Q:
         d1 = fabs(fmod(d1, 2.0));
         if (d1 < 0.5 || d1 >= 1.5)
-            return Init_True(OUT);
-        return Init_False(OUT);
+            return Init_Logic(OUT, true);
+        return Init_Logic(OUT, false);
 
     case SYM_ODD_Q:
         d1 = fabs(fmod(d1, 2.0));
         if (d1 < 0.5 || d1 >= 1.5)
-            return Init_False(OUT);
-        return Init_True(OUT);
+            return Init_Logic(OUT, false);
+        return Init_Logic(OUT, true);
 
     case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;

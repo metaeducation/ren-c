@@ -24,7 +24,7 @@
         quasiform: ^ eval reduce [bad]
         assert [bad = quasiform]
     ]
-    true
+    ok
 )
 
 (
@@ -34,7 +34,7 @@
             assert [e.id = 'scan-invalid]
         ]
     ]
-    true
+    ok
 )
 
 
@@ -61,7 +61,7 @@
 )
 
 [
-    (foo: lambda [] [], true)
+    (foo: lambda [] [], ok)
 
     (void? foo)
 
@@ -75,7 +75,7 @@
 ]
 
 [
-    (foo: func [] [], true)
+    (foo: func [] [], ok)
 
     (nothing? foo)
 
@@ -182,17 +182,15 @@
 ; there needs to be a mechanism to indicate that it's okay for a rule to
 ; literally match something that's not set vs. be a typo.
 ;
-(parse3 [~foo~ ~foo~] [some '~foo~], true)  ; acceptable
-~???~ !! (parse3 [~foo~ ~foo~] [some ~foo~], true)  ; !!! shady, rethink
+(parse3 [~foo~ ~foo~] [some '~foo~], ok)  ; acceptable
+~???~ !! (parse3 [~foo~ ~foo~] [some ~foo~], ok)  ; !!! shady, rethink
 ~???~ !! (
     foo: '~foo~
     parse3 [~foo~ ~foo~] [some foo]
-    true
 )
 ~bad-antiform~ !! (
     foo: ~foo~
     parse3 [~foo~ ~foo~] [some foo]
-    true
 )
 
 [#68 https://github.com/metaeducation/ren-c/issues/876

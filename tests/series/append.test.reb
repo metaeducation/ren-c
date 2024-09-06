@@ -184,10 +184,10 @@
 ; leads to a useful interaction with blocks, while retaining the reactivity
 ; of a true branch product with THEN, and false giving void runs ELSE.
 [
-    ('~[~void~]~ = ^ if true [])
-    (void? if false [<a>])
-    ([a b c] = append [a b c] if true [])
-    ([a b c] = append [a b c] if false [<a>])
+    ('~[~void~]~ = ^ if ok [])
+    (void? if null [<a>])
+    ([a b c] = append [a b c] if ok [])
+    ([a b c] = append [a b c] if null [<a>])
 ]
 
 ; BLANK! acts like an empty block when passed to SPREAD

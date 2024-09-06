@@ -7,7 +7,7 @@
     str: "aaa"
     all [
         '~change~ == meta parse str [
-            change [some "a"] (if true ["literally"])
+            change [some "a"] (if ok ["literally"])
         ]
         str = "literally"
     ]

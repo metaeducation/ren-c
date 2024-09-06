@@ -12,17 +12,17 @@ switch2: func [
     /multi
     <local> more found result' condition branch
 ][
-    found: false
+    found: 'no
     result': void'
-    more: true
+    more: okay
 
     return parse cases [cycle [
-        while :(more) [
+        while more [
             ; Find next condition clause, or break loop if we hit => or end
             ;
             condition: *in* between <here> any [
-                ['| (more: true)]
-                ['=> (more: false)]
+                ['| (more: okay)]
+                ['=> (more: [bypass])]  ; !!! Should (more: 'bypass) be legal?
                 [<end> accept (unmeta result')]
             ]
 
@@ -30,7 +30,7 @@ switch2: func [
                 ; If we've already found a condition that matched, skip any
                 ; following alternates.
                 ;
-                [:(found) (log ["Skipping condition:" mold condition])]
+                [when (yes? found) (log ["Skipping condition:" mold condition])]
 
                 ; Otherwise, try building a frame for the condition.  If the
                 ; frame is incomplete, slip the switch value into an ~end~ slot
@@ -46,7 +46,7 @@ switch2: func [
                     ]
                     log ["Built frame for condition:" mold f]
 
-                    if found: to-logic eval f [
+                    if yes? found: to-yesno eval f [
                         log "Result was truthy, skipping to branch!"
                     ] else [
                         log "Result was falsey, seeking next condition."
@@ -55,7 +55,7 @@ switch2: func [
             ]
         ]
 
-        (more: true)
+        (more: okay)
 
         branch: [
             *in* block!
@@ -67,19 +67,19 @@ switch2: func [
         any [
             ; If we didn't find a matching condition, skip over this branch.
             ;
-            [:(not found) (log ["Skipping branch:" mold branch])]
+            [when (no? found) (log ["Skipping branch:" mold branch])]
 
             ; Otherwise, run the branch.  Keep going if we are using /MULTI,
             ; else return whatever that branch gives back.
             (
-                result': ^ if true :branch  ; IF semantics for null, void
+                result': ^ if ok :branch  ; IF semantics for null, void
                 if not multi [return unmeta result']
-                found: false
+                found: 'no
             )
         ]
     ]]
 ]
-true)
+ok)
 
 (#i = switch2 1020 [match integer! => [#i], match tag! => [#t]])
 

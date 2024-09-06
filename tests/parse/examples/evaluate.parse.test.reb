@@ -15,7 +15,7 @@
             raise "PARSE-EVALUATE attempted at series tail"
         ]
     ]
-    true)
+    ok)
 
 (
     keeper-saver: func [
@@ -41,14 +41,14 @@
             ]
         ]]
     ]
-    true
+    ok
 )
 
     (all [
         [35 13 23] = [k s]: keeper-saver [
             1 + 2
-            <K> (3 + 4) * 5 if true [6 + 7]
-            <S> 7 + 8, if false [9 + 10] else ["save me!"] <K>, 11 + 12
+            <K> (3 + 4) * 5 if ok [6 + 7]
+            <S> 7 + 8, if null [9 + 10] else ["save me!"] <K>, 11 + 12
         ]
         k = [35 13 23]
         s = [3 15 "save me!"]

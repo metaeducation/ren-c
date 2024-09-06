@@ -10,7 +10,7 @@
 ^-^-^-^-<body><div><u>Hello</u> <b>World</b></div></body>
 ^-^-^-</html>
 ^-^-}
-        true
+        ok
     )
 
     ; This version of the parser is roughly equivalent to what was in the

@@ -319,14 +319,14 @@ compile: func [
     ; would be to encap the executable you already have as a copy with the
     ; natives loaded into it.
 
-    let librebol: false
+    let use-librebol: 'yes
 
     compilables: map-each item compilables [
         if match [word! path!] :item [item: get item]
 
         switch/type :item [
             action?! [
-                librebol: true
+                use-librebol: 'yes
                 unrun :item
             ]
             text! [
@@ -339,7 +339,7 @@ compile: func [
         ]
     ]
 
-    if librebol [
+    if use-librebol [
         insert compilables trim/auto mutable {
             /* TCC's override of <stddef.h> defines int64_t in a way that
              * might not be compatible with glibc's <stdint.h> (which at time
@@ -447,7 +447,7 @@ compile: func [
         config: config
         files: files
         inspect: inspect
-        librebol: if librebol [#] else [null]
+        librebol: yes? use-librebol
     ]
 
     if inspect [

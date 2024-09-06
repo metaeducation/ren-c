@@ -209,7 +209,7 @@ INLINE Option(Context*) Trap_Init_Char_Untracked(Cell* out, uint32_t c) {
 //         <local> result
 //      ][
 //          process in
-//          if bar [  ; unlike BLANK!, blackhole is truthy so branch runs
+//          if out [  ; unlike BLANK!, blackhole is truthy so branch runs
 //             result: process/more in
 //             set out result  ; blackhole SET is no-op (BLANK! would error)
 //          ]

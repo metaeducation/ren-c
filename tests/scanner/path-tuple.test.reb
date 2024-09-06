@@ -178,18 +178,18 @@
             fail ["Transformation mismatch for" text]
         ]
 
-        start: true
+        start: 'yes
         for-each v items [
             append compares iter.1
 
             all [
-                not start
+                no? start
                 any [tail? iter, new-line? iter]
             ] then [
                 fail ["Transcode produced unexpected results for:" text]
             ]
 
-            start: false
+            start: 'no
 
             t: transform v  ; turns path & tuples to block & group structure
 
@@ -207,5 +207,5 @@
         ]
     ]
 
-    true
+    ok
 )]

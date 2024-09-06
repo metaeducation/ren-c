@@ -19,10 +19,10 @@
 ; Test break and continue
 (null? cycle [break])
 (
-    success: true
-    cycle?: true
-    cycle [if cycle? [cycle?: false, continue, success: false] break]
-    success
+    success: 'true
+    cycling: 'yes
+    cycle [if yes? cycling [cycling: 'no, continue, success: 'false] break]
+    true? success
 )
 ; Test that arity-1 return stops the loop
 (

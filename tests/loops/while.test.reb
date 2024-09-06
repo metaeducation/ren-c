@@ -10,69 +10,70 @@
     num: 0
     1 = while [num < 1] [num: num + 1]
 )]
-(void? while [false] [])
+(void? while [null] [])
 ; zero repetition
 (
-    success: true
-    while [false] [success: false]
-    success
+    success: 'true
+    while [null] [success: 'false]
+    true? success
 )
 ; Test break and continue
 (
-    cycle?: true
-    null? while [cycle?] [break cycle?: false]
+    cycling: 'yes
+    null? while [cycling = 'yes] [break, cycling: 'no]
 )
 ; Test reactions to break and continue in the condition
 (
-    was-stopped: true
-    while [true] [
+    was-stopped: 'yes
+    while [okay] [
         while [break] []
-        was-stopped: false
+        was-stopped: 'no
         break
     ]
-    was-stopped
+    yes? was-stopped
 )
 (
-    first-time: true
-    was-continued: false
-    while [true] [
-        if not first-time [
-            was-continued: true
+    first-time: 'yes
+    was-continued: 'no
+    while [okay] [
+        if no? first-time [
+            was-continued: 'yes
             break
         ]
-        first-time: false
+        first-time: 'no
         while [continue] [break]
         break
     ]
-    was-continued
+    yes? was-continued
 )
 (
-    success: true
-    cycle?: true
-    while [cycle?] [cycle?: false, continue, success: false]
-    success
+    success: 'true
+    cycling: 'yes
+    while [yes? cycling] [cycling: 'no, continue, success: 'false]
+    true? success
 )
 (
     num: 0
-    while [true] [num: 1 break num: 2]
+    while [okay] [num: 1 break num: 2]
     num = 1
 )
 ; RETURN should stop the loop
 (
-    cycle?: true
+    cycling: 'yes
     f1: func [return: [integer!]] [
-        while [cycle?] [
-            cycle?: false return 1
+        while [yes? cycling] [
+            cycling: 'no
+            return 1
         ]
         return 2
     ]
     1 = f1
 )
 (  ; bug#1519
-    cycle?: true
+    cycling: 'yes
     f1: func [return: [integer!]] [
-        return while [if cycle? [return 1], cycle?] [
-            cycle?: false
+        return while [if yes? cycling [return 1], yes? cycling] [
+            cycling: 'no
             2
         ]
     ]
@@ -98,19 +99,20 @@
 )
 
 ; THROW should stop the loop
-(1 = catch [cycle?: true while [cycle?] [throw 1 cycle?: false]])
+(1 = catch [cycling: 'yes while [yes? cycling] [throw 1 cycling: 'no]])
 
 [#1519 (
-    cycle?: true
-    1 = catch [while [if cycle? [throw 1] false] [cycle?: false]]
+    cycling: 'yes
+    1 = catch [while [if yes? cycling [throw 1] <bad>] [cycling: 'no]]
 )(
     1 = catch/name [
-        cycle?: true while [cycle?] [throw/name 1 'a cycle?: false]
+        cycling: 'yes
+        while [yes? cycling] [throw/name 1 'a cycling: 'no]
     ] 'a
 )(
-    cycle?: true
+    cycling: 'yes
     1 = catch/name [
-        while [if cycle? [throw/name 1 'a] false] [cycle?: false]
+        while [if yes? cycling [throw/name 1 'a] 'false] [cycling: 'no]
     ] 'a
 )]
 
@@ -136,12 +138,12 @@
 )
 
 (
-    flag: true
+    flag: 'true
     <complete> = catch [
-        while [true] [
+        while [okay] [
             ~()~
-            if flag [flag: false, continue]
-            if false [fail]
+            if true? flag [flag: 'false, continue]
+            if null [fail]
             throw <complete>
         ]
     ]
@@ -158,7 +160,7 @@
         return sum
     ]
     counter: 0
-    null = while [true] [
+    null = while [okay] [
         assert [(1 + 2 + 3) = implemented-with-loops [
             counter: counter + 1
             if counter <= 3 [counter] else [null]

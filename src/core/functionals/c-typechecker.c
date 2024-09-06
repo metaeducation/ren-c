@@ -415,7 +415,7 @@ bool Typecheck_Coerce_Argument(
 
     if (Is_Parameter_Unconstrained(param)) {
         if (Get_Parameter_Flag(param, REFINEMENT)) {  // no-arg refinement
-            if (Is_Blackhole(arg))
+            if (Is_Okay(arg))
                 goto return_true;  // nulls handled by NULL_DEFINITELY_OK
             goto return_false;
         }

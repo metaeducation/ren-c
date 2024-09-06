@@ -572,13 +572,13 @@ SQLRETURN ODBC_BindParameter(
     // https://forum.rebol.info/t/689/2
     //
     SQLSMALLINT c_type = rebUnboxInteger("switch/type @", v, "[",
-        "quasiform! [",
+        "word! [",
             "switch @", v, "[",
-                "'~null~ [", rebI(SQL_C_DEFAULT), "]",
-                "'~true~ [", rebI(SQL_C_BIT), "]",
-                "'~false~ [", rebI(SQL_C_BIT), "]",
+                "'null [", rebI(SQL_C_DEFAULT), "]",
+                "'true [", rebI(SQL_C_BIT), "]",
+                "'false [", rebI(SQL_C_BIT), "]",
             "] else [",
-                "fail {Legal QUASI?-parameters ~null~ ~true~ ~false~}",
+                "fail {Legal WORD!-parameters: [null true false]}",
             "]",
         "]",
 
@@ -633,18 +633,18 @@ SQLRETURN ODBC_BindParameter(
     SQLSMALLINT sql_type;
 
     switch (c_type) {
-      case SQL_C_DEFAULT: {  // ~null~
+      case SQL_C_DEFAULT: {  // null
         sql_type = SQL_NULL_DATA;
-        assert(rebUnboxLogic("null?", v));
+        assert(rebUnboxLogic("'null =", v));
         p->buffer_size = 0;
         p->buffer = nullptr;
         break; }
 
-      case SQL_C_BIT: {  // ~true~ ~false~
+      case SQL_C_BIT: {  // [true false]
         sql_type = SQL_BIT;
         p->buffer_size = sizeof(unsigned char);
         p->buffer = rebAllocN(char, p->buffer_size);
-        *cast(unsigned char*, p->buffer) = rebUnboxLogic(v);  // unmetas
+        *cast(unsigned char*, p->buffer) = rebUnboxBoolean(rebQ(v));
         break; }
 
       case SQL_C_ULONG: {  // unsigned INTEGER! in 32-bit positive range
@@ -1233,10 +1233,10 @@ DECLARE_NATIVE(insert_odbc)
 
     bool use_cache = false;
 
-    bool get_catalog = rebUnboxLogic(
+    bool get_catalog = rebUnboxBoolean(
         "switch/type first sql [",
-            "&lit-word? [true]",  // like Rebol2: 'tables, 'columns, 'types
-            "text! [false]",
+            "&lit-word? ['true]",  // like Rebol2: 'tables, 'columns, 'types
+            "text! ['false]",
         "] else [",
             "fail [",
                 "{SQL dialect must start with WORD! or TEXT! value}",
@@ -1446,7 +1446,7 @@ Value* ODBC_Column_To_Rebol_Value(
     SQLLEN len
 ){
     if (len == SQL_NULL_DATA)
-        return rebValue("'~null~");
+        return nullptr;
 
     switch (col->c_type) {
       case SQL_C_BIT:
@@ -1459,8 +1459,8 @@ Value* ODBC_Column_To_Rebol_Value(
             rebJumps("fail {BIT(n) fields are only supported for n = 1}");
 
         if (*cast(unsigned char*, col->buffer))
-            return rebValue("'~true~");  // can't append antiform to block :-(
-        return rebValue("'~false~");
+            return rebValue("'true");  // can't append antiform to block :-(
+        return rebValue("'false");
 
     // ODBC was asked at SQLGetData time to give back *most* integer
     // types as SQL_C_SLONG or SQL_C_ULONG, regardless of actual size
@@ -1772,7 +1772,7 @@ DECLARE_NATIVE(copy_odbc)
             Value* temp = ODBC_Column_To_Rebol_Value(col, allocated, len);
 
             rebElide(
-                "append", record, rebQ(temp)  // rebQ for ~null~ ~true~ ~false~
+                "append", record, rebQ(temp)  // rebQ for ~null~ true false
             );
             rebRelease(temp);
         }

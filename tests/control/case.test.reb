@@ -1,35 +1,35 @@
 ; %case.test.reb
 
-(true = case [true [true]])
-(false = case [true [false]])
+(okay = case [okay [okay]])
+(null = case [okay [null]])
 (
-    success: false
-    case [true [success: true]]
+    success: null
+    case [okay [success: okay]]
     success
 )
 (
-    success: true
-    case [false [success: false]]
+    success: okay
+    case [null [success: null]]
     success
 )
 
 (
-    null? case [false []]
+    null? case [null []]
 )
 (
     null? case []  ; maybe useful (e.g. as COMPOSE product) !!! make it void?
 )
 (
     '~[~null~]~ = ^ case [
-        true [null]  ; turned to heavy null pack so ELSE won't run
-        false [1 + 2]
+        okay [null]  ; turned to heavy null pack so ELSE won't run
+        null [1 + 2]
     ]
 )
 
 [#2246 (
-    '~[~null~]~ = ^ case [true [null]]  ; indicates branch was taken (vs. null)
+    '~[~null~]~ = ^ case [okay [null]]  ; indicates branch was taken (vs. null)
 )(
-    '~[~void~]~ = ^ case [true []]
+    '~[~void~]~ = ^ case [okay []]
 )]
 
 (
@@ -39,7 +39,7 @@
 )
 
 (
-    3 = case [true (reduce ['add 1 2])]
+    3 = case [okay (reduce ['add 1 2])]
 )
 (
     null? case [null (reduce ['add 1 2])]
@@ -47,7 +47,7 @@
 
 ~bad-branch-type~ !! (
     case [
-        true add 1 2  ; branch slots must be BLOCK!, ACTION!, softquote
+        okay add 1 2  ; branch slots must be BLOCK!, ACTION!, softquote
     ]
 )
 
@@ -55,26 +55,26 @@
 ; not affect the behavior.
 
 [(
-    flag: false
+    flag: null
     result: case [
         1 < 2 [1020]
-        elide (flag: true)
+        elide (flag: okay)
         fail "shouldn't get here"
     ]
     (not flag) and (result = 1020)
 )(
-    flag: false
+    flag: null
     result: case [
         1 < 2 [1020]
-        elide flag: true
+        elide flag: okay
         fail "shouldn't get here"
     ]
     (not flag) and (result = 1020)
 )(
-    flag: false
+    flag: null
     result: case [
         1 < 2 [1020]
-        (elide flag: true)
+        (elide flag: okay)
         fail "shouldn't get here"
     ]
     (not flag) and (result = 1020)
@@ -102,17 +102,17 @@
 )
 
 [#86 (
-    s1: false
-    s2: false
+    s1: null
+    s2: null
     case/all [
-        true [s1: true]
-        true [s2: true]
+        okay [s1: okay]
+        okay [s2: okay]
     ]
     s1 and (s2)
 )]
 
 ; nested calls
-(1 = case [true [case [true [1]]]])
+(1 = case [okay [case [okay [1]]]])
 
 ; infinite recursion
 (
@@ -128,31 +128,31 @@
 (<b> = case/predicate [1 [<a>] 2 [<b>]] :even?)
 (<b> = case/predicate [1 = 1 [<a>]] :not else [<b>])
 
-~bad-branch-type~ !! (case [true #bad])
+~bad-branch-type~ !! (case [okay #bad])
 
-(1 = case [(comment "hi") true [1]])
+(1 = case [(comment "hi") okay [1]])
 
-~bad-void~ !! (case [(void) true [1]])
+~bad-void~ !! (case [(void) okay [1]])
 
 ~bad-antiform~ !! (case [~antiform~ [print "Causes error"]])
 
 ; GET-GROUP! branches will be evaluated unconditionally, but their branches
-; are not run if the condition was false.
+; are not run if the condition was null.
 [
     (
-        called: false
+        called: null
         all [
-            3 = case [true :(called: true, [1 + 2])]
+            3 = case [okay :(called: okay, [1 + 2])]
             called
         ]
     )
     (
-        called: false
+        called: null
         all [
-            null? case [null :(called: true, [1 + 2])]
+            null? case [null :(called: okay, [1 + 2])]
             called
         ]
     )
 ]
 
-([a] = case [true '[a]])
+([a] = case [okay '[a]])

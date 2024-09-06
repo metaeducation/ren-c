@@ -13,7 +13,7 @@
 ; This is convenient for throwaway code.
 [
     ~unknown-error~ !! (fail)
-    ~unknown-error~ !! (case [false [x] false [y] fail])
+    ~unknown-error~ !! (case [null [x] null [y] fail])
 ]
 
 
@@ -77,13 +77,13 @@
     (null? until [[x]: raise "hi" except [break]])
     (
         all [
-            true = until [x: raise "hi" except [true]]
-            x = true
+            'true = until [x: raise "hi" except ['true]]
+            x = 'true
         ]
     )
     (all [
-        true = until [[x]: raise "hi" except [true]]
-        x = true
+        'true = until [[x]: raise "hi" except ['true]]
+        x = 'true
     ])
 
     (e: 1020, all [(trap [e: raise "hi"]).message = "hi", e = 1020])

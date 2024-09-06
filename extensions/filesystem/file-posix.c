@@ -181,7 +181,7 @@ Value* Try_Read_Directory_Entry(FILEREQ *dir)
     Value* path = rebValue(
         "applique :local-to-file [",
             "path:", rebT(dirent.name),
-            "dir: all [", rebL(is_dir), "#]",
+            "dir:", rebQ(rebL(is_dir)),
         "]"
     );
 

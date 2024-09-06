@@ -14,9 +14,9 @@
     (''30 = ^ (10 + 20 eval/undecayed make frame! :nihil))
 
     (didn't eval [null])
-    ('~[~null~]~ = ^ eval/undecayed [if true [null]])
-    (void' = ^ eval/undecayed [if false [<a>]])
-    (void' = ^ eval/undecayed [10 + 20 if false [<a>]])
+    ('~[~null~]~ = ^ eval/undecayed [if okay [null]])
+    (void' = ^ eval/undecayed [if null [<a>]])
+    (void' = ^ eval/undecayed [10 + 20 if null [<a>]])
 
     (all [
         x: <overwritten>
@@ -34,14 +34,14 @@
     (nihil' = (10 + 20 ^(eval/undecayed [comment "hi"])))
     (void' = (10 + 20 ^(eval/undecayed make frame! lambda [] [void])))
     (null' = ^(eval [null]))
-    ('~[~null~]~ = ^(eval/undecayed [if true [null]]))
+    ('~[~null~]~ = ^(eval/undecayed [if okay [null]]))
 
     (30 = (10 + 20 eval/undecayed []))
     (30 = (10 + 20 eval/undecayed [comment "hi"]))
     (30 = (10 + 20 eval/undecayed make frame! :nihil))
     (null' = ^(eval/undecayed [null]))
     ('~[~null~]~ = ^ eval/undecayed [heavy null])
-    ('~[~null~]~ = ^ eval/undecayed [if true [null]])
+    ('~[~null~]~ = ^ eval/undecayed [if okay [null]])
 
     ; Try standalone ^ operator so long as we're at it.
     (nihil' = ^ eval/undecayed [])
@@ -59,7 +59,7 @@
     ('~[~null~]~ = ^ (eval/undecayed [heavy null]))
     ('~[~null~]~ = meta eval/undecayed [heavy null])
 
-    ('~[~null~]~ = ^ eval/undecayed [if true [null]])
+    ('~[~null~]~ = ^ eval/undecayed [if ok [null]])
 ]
 
 
@@ -81,9 +81,9 @@
 ]
 
 (
-    success: false
-    eval [success: true]
-    success
+    success: 'false
+    eval [success: 'true]
+    true? success
 )
 ~expect-arg~ !! (
     a-value: to binary! "Rebol [] 1 + 1"
@@ -136,8 +136,8 @@
     a-value: first ['a]
     :a-value == eval [:a-value]
 )
-(~true~ == eval [~true~])
-(~false~ == eval [~false~])
+('true == eval ['true])
+('false == eval ['false])
 ($1 == eval [$1])
 (same? :append eval [:append])
 (null? eval [~null~])
@@ -227,9 +227,9 @@
 
 ; evaluate block tests
 (
-    success: false
-    pos: evaluate/next [success: true success: false]
-    success and (pos = [success: false])
+    success: 'false
+    pos: evaluate/next [success: 'true success: 'false]
+    (true? success) and (pos = [success: 'false])
 )
 (
     [b value]: evaluate/next [1 2]

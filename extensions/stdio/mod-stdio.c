@@ -192,7 +192,7 @@ DECLARE_NATIVE(read_stdin)
         if (Is_Nulled(OUT))
             return nullptr;  // don't proxy multi-returns
 
-        Init_Logic(ARG(eof), false);  // never terminates?
+        Init_Boolean(ARG(eof), false);  // never terminates?
         return Proxy_Multi_Returns(level_);
     }
     else  // we have a smart console but aren't using it (redirected to file?)

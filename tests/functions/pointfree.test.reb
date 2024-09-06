@@ -129,7 +129,7 @@
         return pointfree make block! expression  ; !!! vararg param, efficiency?
     ]
 
-    true
+    ok
 )
 
     (

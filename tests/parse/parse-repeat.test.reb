@@ -13,17 +13,17 @@
 ;
 ;    >> parse "aaa" [repeat (foo) rule]
 ;
-; However, REPEAT adds much more flexibility.  It can opt-out with a blank:
+; However, REPEAT adds much more flexibility.  It can opt-out with void:
 ;
 ;    >> num: null
-;    >> did parse "aaa" [repeat (num) "b", some "a"]
-;    == ~true~  ; anti
+;    >> parse "aaa" [repeat (maybe num) "b", some "a"]
+;    == "a"
 ;
 ; It can also "opt all the way in" and become a synonym for MAYBE SOME with #:
 ;
 ;    >> num: #
-;    >> did parse "aaaaaaaaaa" [repeat (num) "a"]
-;    == ~true~  ; anti
+;    >> parse "aaaaaaaaaa" [repeat (num) "a"]
+;    == "a"
 ;
 ; These decayed forms mean that you can get behavior differences out of your
 ; variables driving the looping while using the same rule.  But it also works
@@ -32,12 +32,12 @@
 ;
 ;    >> min: 3
 ;    >> max: #
-;    >> did parse "aaaaaaa" [repeat (:[min max]) "a"]
-;    == ~true~  ; anti
-;    >> did parse "aaaaaaaaaaaaaaaaaaa" [repeat (:[min max]) "a"]
-;    == ~true~  ; anti
-;    >> did parse "aa" [repeat (:[min max]) "a"]
-;    == ~false~  ; anti
+;    >> parse "aaaaaaa" [repeat (:[min max]) "a"]
+;    == "a"
+;    >> parse "aaaaaaaaaaaaaaaaaaa" [repeat (:[min max]) "a"]
+;    == "a"
+;    >> parse "aa" [repeat (:[min max]) "a"]
+;    ** Error: PARSE BLOCK! combinator did not match input
 ;
 ; If maximum is blank then it's assumed to be the same as if it were equal
 ; to the minimum, so `repeat (:[n _])` is the same as `repeat (n)`.  So if

@@ -130,21 +130,21 @@ shell: func [
         ; But when you use a GROUP! or a BLOCK!, it will put things in quotes.
         ; To bypass this behavior, use GET-GROUP! or GET-BLOCK!
 
-        let splice?: <default>
+        let splice-it: <default>
         switch/type item [
-            group! [splice?: false, item: eval inside code item]
+            group! [splice-it: 'no, item: eval inside code item]
 
-            get-group! [splice?: true, item: eval inside code item]
-            get-block! [splice?: true, item: as block! inside code item]
+            get-group! [splice-it: 'yes, item: eval inside code item]
+            get-block! [splice-it: 'yes, item: as block! inside code item]
         ]
         let needs-quotes?: func [return: [logic?] item] [
-            if match [word! issue!] item [return false]  ; never quoted
+            if match [word! issue!] item [return null]  ; never quoted
             if file? item [
-                return did find item space  ; !!! should check other escapes
+                return did find item space  ; !!! check other escapes
             ]
-            if splice? = false [return true]
-            if splice? = true [return false]  ; e.g. even TEXT! has no quotes
-            return text? item  ; plain `$ ls "/foo"` puts quotes on "/foo"
+            if splice-it = 'no [return okay]
+            if splice-it = 'yes [return null]  ; e.g. TEXT! has no quotes
+            return text? item  ; `$ ls "/foo"` puts quotes on "/foo"
         ]
 
         item: switch/type item [

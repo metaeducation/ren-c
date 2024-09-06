@@ -16,7 +16,7 @@
 
         fooBC: get $foo/B/C
         fooCB: get $foo/C/B
-        true
+        ok
     )
 
     ([/A ~null~ /B 10 /C 20] = fooBC 10 20)
@@ -78,7 +78,7 @@
         xy: [<X> #Y]
         abc: [A B C]
         r: [<X> #Y A B A B A B]
-        true
+        ok
     )
 
     (r = apd copy xy spread abc 2 3)
@@ -112,7 +112,7 @@
         xy: [<X> #Y]
         abc: [A B C]
         r: [<X> #Y A B A B A B]
-        true
+        ok
     )
 
     (r = adp copy xy spread abc 3 2)
@@ -152,7 +152,7 @@
 )
 
 (
-    is-bad: true
+    error: null
 
     for-each code [
         [specialize get $append/asdf []]
@@ -161,12 +161,12 @@
             specialize get $flp/pass []
         ]
     ][
-        is-bad: me and (
+        error: me or (
             'bad-parameter = (sys.util/rescue [eval inside [] code]).id
         )
     ]
 
-    is-bad
+    not null? error
 )
 
 

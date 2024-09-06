@@ -193,7 +193,7 @@
 [
     (
         x: blank
-        true
+        ok
     )
     (#{06} == parse #{020406} [
         opt some [x: across one elide when (even? first x)]

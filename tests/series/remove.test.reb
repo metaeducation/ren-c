@@ -69,7 +69,7 @@
     (
         str: "Tæke Pært"
         bin: as binary! str
-        true
+        ok
     )
 
     ~bad-utf8-bin-edit~ !! (pick trap [take/part bin 2])

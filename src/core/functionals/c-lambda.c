@@ -23,7 +23,7 @@
 // checking, and which does not copy the block that serves as its body.  It
 // is enfixed as `->` and is intended for uses like light branching.
 //
-//     >> if true [10] then x -> [print ["The branch produced" x]]
+//     >> if ok [10] then x -> [print ["The branch produced" x]]
 //     The branch produced 10
 //
 // The implementation is essentially like `does [use 'x [...]]`, but it's

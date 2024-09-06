@@ -208,7 +208,7 @@ export collect-logs: func [
     let position
     let next-position
     parse3 log-contents [
-        (guard: false)  ; trigger failure by default (may be set to true)
+        (guard: 'false)  ; trigger failure by default (may be set to true)
         opt some [
             opt some whitespace
             [
@@ -249,11 +249,11 @@ export collect-logs: func [
                     )
                 ]
                     |
-                "system.version:" to <end> (guard: true)
+                "system.version:" to <end> (guard: 'true)
                     |
                 (fail "collect-logs - log file parsing problem")
             ]
-            position: <here>, guard, break ; Break when error detected.
+            position: <here>, when (true? guard), break  ; Break on error
                 |
             seek position
         ]

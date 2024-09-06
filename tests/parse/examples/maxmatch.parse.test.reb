@@ -42,7 +42,7 @@
         remainder: remainder1
         return unmeta result1'
     ]
-    true
+    ok
 )
 
     ; NON COLLECT VARIATIONS
@@ -222,7 +222,7 @@
         pending: pending1
         return unmeta result1'
     ]
-    true
+    ok
 )
 
     ; NON COLLECT VARIATIONS

@@ -33,7 +33,7 @@ in R3-Alpha.  The code was very "organic" and had evolved over time...with a
 complex set of flags and states.  It was not extensible; the keywords were
 baked in and interacted in specific ways that were difficult to modify.  As
 Ren-C was developed it was pushed toward being more rigorous code in some
-ways--at least in regards to memory safety and GC.  But the lack of a true
+ways--at least in regards to memory safety and GC.  But the lack of a solid
 "architecture" limited the ability to make clean extensions for it.
 
 UPARSE for (U)sermode PARSE is a new architecture for PARSE based on the

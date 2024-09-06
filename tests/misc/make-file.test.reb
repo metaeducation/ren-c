@@ -14,9 +14,9 @@
 ; In newer Ren-C the operator `%%` is available as a quoting form, and is
 ; used for brevity in this test file.
 [
-    (%*.txt = make-file $*.(if true ["txt"]))
+    (%*.txt = make-file $*.(if ok ["txt"]))
 
-    (%*.txt = %% *.(if true ["txt"]))
+    (%*.txt = %% *.(if ok ["txt"]))
 ]
 
 
@@ -53,14 +53,14 @@
 
     (%a/b/c/d/e/f = %% [a/b / c/d / e/f])
 
-    (%/b/c = %% [(if false ['a]) /b/c])
-    (%a/b/c = %% [(if true ['a]) /b/c])
+    (%/b/c = %% [(if null ['a]) /b/c])
+    (%a/b/c = %% [(if ok ['a]) /b/c])
 
     ~doubled-file-slash~ !! (
-        %% [(if true ['a/b/]) /b/c]
+        %% [(if ok ['a/b/]) /b/c]
     )
 
     ~embedded-file-slash~ !! (
-        %% [(if true ["a/b/"]) /b/c]
+        %% [(if ok ["a/b/"]) /b/c]
     )
 ]

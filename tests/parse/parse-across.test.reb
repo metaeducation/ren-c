@@ -134,7 +134,7 @@
     (
         input: [h 5 #l "l" o]
         input2: [a a a b b]
-        true
+        ok
     )
     (
         v: '~before~
@@ -361,7 +361,7 @@
         input: "hello"
         input2: "aaabb"
         letters: charset [#a - #o]
-        true
+        ok
     )
     (
         v: '~before~
@@ -612,7 +612,7 @@
         input: #{DEADBEEF}
         input2: #{0A0A0A0B0B}
         letters: charset [#­ - #Þ]
-        true
+        ok
     )
     (
         v: '~before~

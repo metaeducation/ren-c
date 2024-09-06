@@ -87,14 +87,18 @@ run-single-test: func [
         ]
         (elide if pack? unmeta result [result: first unquasi result])
 
-        result = '~true~ [
+        result = '~okay~ [
             successes: me + 1
             log reduce [_ {"succeeded"} newline]
             return ~
         ]
 
-        result = '~false~ [
-            "test returned false"
+        result = '~null~ [
+            "test returned null"
+        ]
+
+        result = '~void~ [
+            "test returned void"
         ]
 
         quasi? result [
@@ -102,14 +106,8 @@ run-single-test: func [
         ]
         (elide result: unmeta result)
 
-        null? result [
-            "test returned null"
-        ]
-        void? result [
-            "test returned void"
-        ]
-        true [
-            spaced ["was" (mold kind of :result) ", not ~true~ or ~false~"]
+        <default> [
+            spaced ["was" (mold kind of :result) ", not true or false"]
         ]
     ] then message -> [
         test-failures: me + 1

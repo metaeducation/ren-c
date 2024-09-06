@@ -151,8 +151,8 @@ DECLARE_NATIVE(write_stdout)
 //      return: [block!]
 //      position "Position to change marker (modified)"
 //          [block! group!]
-//      mark "Set TRUE for newline"
-//          [logic?]
+//      mark "Set YES for newline, NO for no newline"
+//          [yesno?]
 //      /all "Set/clear marker to end of series"
 //      /skip "Set/clear marker periodically to the end of the series"
 //          [integer!]
@@ -162,7 +162,7 @@ DECLARE_NATIVE(new_line)
 {
     INCLUDE_PARAMS_OF_NEW_LINE;
 
-    bool mark = Cell_Logic(ARG(mark));
+    bool mark = Cell_Yes(ARG(mark));
 
     Value* pos = ARG(position);
     const Element* tail;

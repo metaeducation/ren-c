@@ -414,8 +414,8 @@ REBTYPE(Integer)
         // falls through
     case SYM_ODD_Q:
         if (num & 1)
-            return Init_True(OUT);
-        return Init_False(OUT);
+            return Init_Logic(OUT, true);
+        return Init_Logic(OUT, false);
 
     case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;

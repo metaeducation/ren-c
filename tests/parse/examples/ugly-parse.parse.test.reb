@@ -27,12 +27,12 @@
         remainder: input
         return nihil
     ]
-    true
+    ok
 )
 
 (
     "b" = ugly-parse "aaabbb" [
-        (if true '[some "a"]), some "b", discard (if true '[some "c"])
+        (if ok '[some "a"]), some "b", discard (if ok '[some "c"])
     ]
 )
 ]

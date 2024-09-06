@@ -636,7 +636,7 @@ DECLARE_NATIVE(definitional_return)
         // leave phase as-is... we redo the phase we were in
         // (also if we redid original, note there's no original_binding :-/)
 
-        gather_args = Lib(FALSE);
+        gather_args = Lib(NULL);
     }
     else if (Is_Action(atom) or Is_Frame(atom)) {  // just reuse Level
         Drop_Action(target_level);
@@ -655,7 +655,7 @@ DECLARE_NATIVE(definitional_return)
 
         Set_Node_Managed_Bit(target_level->varlist);
 
-        gather_args = Lib(TRUE);
+        gather_args = Lib(OKAY);
     }
     else
         fail ("RETURN/RUN requires action, frame, or <redo> as argument");

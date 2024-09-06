@@ -44,7 +44,7 @@
             last': result'
         ]
         return unmeta last'
-    ], true)
+    ], ok)
 
     (null? uattempt [1 / 0])
     (30 = uattempt [10 + 20])

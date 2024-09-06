@@ -798,9 +798,9 @@ Bounce Composer_Executor(Level* const L)
 //
 //  "Evaluates only contents of GROUP!-delimited expressions in the argument"
 //
-//      return: [blackhole? any-list? any-sequence? any-word? action?]
+//      return: [~null~ any-list? any-sequence? any-word? action?]
 //      value "The template to fill in (no-op if WORD!, ACTION?, BLACKHOLE!)"
-//          [blackhole? any-list? any-sequence? any-word? action?]
+//          [<maybe> any-list? any-sequence? any-word? action?]
 //      /deep "Compose deeply into nested lists and sequences"
 //      /label "Distinguish compose groups, e.g. [(plain) (<*> composed)]"
 //          [tag! file!]
@@ -843,9 +843,6 @@ DECLARE_NATIVE(compose)
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
-
-    if (Is_Blackhole(v))
-        return COPY(v);  // sink locations composed to avoid double eval
 
     if (Any_Word(v) or Is_Action(v))
         return COPY(v);  // makes it easier to `set compose target`

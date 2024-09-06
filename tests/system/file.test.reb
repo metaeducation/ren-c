@@ -28,7 +28,7 @@
 
 [
     (data: [1 1.2 10:20 "test" user@example.com [sub block]]
-    true)
+    ok)
 
     ((save blank []) = #{
         0A

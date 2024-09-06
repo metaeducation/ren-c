@@ -1300,7 +1300,7 @@ DECLARE_NATIVE(every)
         goto next_iteration;  // ...but void does not NULL-lock output
     }
 
-    if (Is_Falsey(stable_SPARE)) {
+    if (Is_Inhibitor(stable_SPARE)) {
         Init_Nulled(OUT);
     }
     else if (Is_Fresh(OUT) or not Is_Nulled(OUT)) {
@@ -1471,30 +1471,23 @@ DECLARE_NATIVE(remove_each)
 
         bool keep;
 
+        Decay_If_Unstable(OUT);
+
         if (Is_Void(OUT)) {
             keep = true;  // treat same as logic false (e.g. don't remove)
         }
-        else if (Is_Logic(OUT)) {  // pure logic required [6]
-            keep = not Cell_Logic(OUT);
+        else if (Is_Okay(OUT)) {  // pure logic required [6]
+            keep = false;  // okay is remove
         }
         else if (Is_Nulled(OUT)) {  // don't remove
             keep = true;
             Init_Heavy_Null(OUT);  // NULL reserved for BREAK signal
         }
-        else if (Is_Antiform(OUT)) {  // don't decay isotopes [5]
-            threw = true;
-            Init_Error(SPARE, Error_Bad_Antiform(OUT));
-            Init_Thrown_With_Label(LEVEL, Lib(NULL), stable_SPARE);
-            goto finalize_remove_each;
-        }
-        else if (Is_Blackhole(OUT)) {  // do remove
-            keep = false;
-        }
         else {
             threw = true;
             Init_Error(
                 SPARE,
-                Error_User("Use [LOGIC! NULL BLACKHOLE VOID] with REMOVE-EACH")
+                Error_User("Use [~null~ ~okay~ ~void~] with REMOVE-EACH")
             );
             Init_Thrown_With_Label(LEVEL, Lib(NULL), stable_SPARE);
             goto finalize_remove_each;
@@ -2138,7 +2131,7 @@ DECLARE_NATIVE(until)
     Decay_If_Unstable(condition);  // must decay for truth test [2]
 
     if (not Is_Void(condition)) {  // skip voids [3]
-        if (Is_Truthy(Stable_Unchecked(condition)))
+        if (Is_Trigger(Stable_Unchecked(condition)))
             return BRANCHED(OUT);  // truthy result, return value!
     }
 
@@ -2176,8 +2169,8 @@ DECLARE_NATIVE(while)
 //
 // 3. If someone writes:
 //
-//        flag: true
-//        while [flag] [flag: false, null]
+//        flag: 'true
+//        while [true? flag] [flag: 'false, null]
 //
 //    We don't want that to evaluate to NULL--because NULL is reserved for
 //    signaling BREAK.  Similarly, VOID results are reserved for when the body
@@ -2212,7 +2205,7 @@ DECLARE_NATIVE(while)
 
 } condition_was_evaluated: {  ////////////////////////////////////////////////
 
-    if (Is_Falsey(stable_SPARE)) {  // falsey condition => last body result
+    if (Is_Inhibitor(stable_SPARE)) {  // falsey condition => last body result
         if (Is_Fresh(OUT))
             return VOID;  // body never ran, so no result to return!
 

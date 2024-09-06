@@ -227,9 +227,9 @@
 ; Voids vanish in GROUP!s, refinements allowed.  /REFINE form is permitted
 ; because it's easy to support and may make someone happy.
 ;
-([a b c d] = append/(if false ['dup]) [a b c] spread [d])
-([a b c d d] = append/(if true ['dup]) [a b c] spread [d] 2)
-([a b c d d] = append/(if true [/dup]) [a b c] spread [d] 2)
+([a b c d] = append/(if null ['dup]) [a b c] spread [d])
+([a b c d d] = append/(if ok ['dup]) [a b c] spread [d] 2)
+([a b c d d] = append/(if ok [/dup]) [a b c] spread [d] 2)
 
 ; Made this example in a forum post, tested it working, so why not a test
 (

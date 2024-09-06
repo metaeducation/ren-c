@@ -20,7 +20,7 @@
         warning: "⚠"
         assert [1 = length of warning]
 
-        true
+        ok
     )
 
     (
@@ -94,7 +94,7 @@ https://github.com/metaeducation/ren-c/issues/817
 [
     (t: "օʊʀֆօռǟɢɢօռ"
     b: as binary! t
-    true)
+    ok)
 
     (insert b "ƈ"
     t = "ƈօʊʀֆօռǟɢɢօռ")

@@ -10,7 +10,7 @@
     10 = num
 )
 ; cycle return value
-(false = repeat 1 [false])
+('false = repeat 1 ['false])
 ; break cycle
 (
     num: 0
@@ -21,20 +21,20 @@
 (null? repeat 10 [break])
 ; continue cycle
 (
-    success: true
-    repeat 1 [continue, success: false]
-    success
+    success: 'true
+    repeat 1 [continue, success: 'false]
+    true? success
 )
 ; zero repetition
 (
-    success: true
-    repeat 0 [success: false]
-    success
+    success: 'true
+    repeat 0 [success: 'false]
+    true? success
 )
 (
-    success: true
-    repeat -1 [success: false]
-    success
+    success: 'true
+    repeat -1 [success: 'false]
+    true? success
 )
 ; Test that return stops the loop
 (
@@ -63,14 +63,14 @@
                 use [break] [
                     break: 1
                     f 2
-                    1 = get $break
+                    boolean 1 = get $break
                 ]
             ][
-                false
+                'false
             ]
         ]
     ]
-    f 1
+    true? f 1
 )
 
 

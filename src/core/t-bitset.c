@@ -563,7 +563,7 @@ REBTYPE(Bitset)
         const Value* picker = ARG(picker);
         bool bit = Check_Bits(VAL_BITSET(v), picker, false);
 
-        return bit ? Init_True(OUT) : Init_Nulled(OUT); }
+        return Init_Logic(OUT, bit); }
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
 
@@ -579,7 +579,7 @@ REBTYPE(Bitset)
         if (not Set_Bits(
             bset,
             picker,
-            BITS_NOT(bset) ? Is_Falsey(setval) : Is_Truthy(setval)
+            BITS_NOT(bset) ? Is_Inhibitor(setval) : Is_Trigger(setval)
         )){
             fail (PARAM(picker));
         }
@@ -620,7 +620,7 @@ REBTYPE(Bitset)
 
         if (not Check_Bits(VAL_BITSET(v), ARG(value), REF(case)))
             return nullptr;
-        return Init_True(OUT); }
+        return Init_Logic(OUT, true); }
 
       case SYM_COMPLEMENT: {
         Binary* copy = cast(

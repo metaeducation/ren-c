@@ -72,7 +72,7 @@ make-file-block-parts: func [
 ][
     ; Current idea is to analyze for "slash coherence"
 
-    last-was-slash: false
+    last-was-slash: 'no
 
     return collect [iterate block [
         item: either group? block.1 [eval inside block block.1] [block.1]
@@ -87,21 +87,21 @@ make-file-block-parts: func [
             path! [
                 case [
                     item = '/ [
-                        if last-was-slash [
+                        if yes? last-was-slash [
                             fail doubled-file-slash-error item
                         ]
                         keep "/"
-                        last-was-slash: true
+                        last-was-slash: 'yes
                     ]
 
                     all [
-                        last-was-slash
+                        yes? last-was-slash
                         blank? first item
                     ][
                         fail doubled-file-slash-error item
                     ]
                 ] else [
-                    last-was-slash: blank? last item
+                    last-was-slash: to-yesno blank? last item
                     keep to text! item
                 ]
             ]
@@ -109,7 +109,7 @@ make-file-block-parts: func [
             tuple!
             word! [
                 keep to text! item
-                last-was-slash: false
+                last-was-slash: 'no
             ]
 
             text! [
@@ -117,7 +117,7 @@ make-file-block-parts: func [
                     fail embedded-file-slash-error item
                 ]
                 keep item
-                last-was-slash: false
+                last-was-slash: 'no
             ]
 
             integer! [
@@ -126,13 +126,13 @@ make-file-block-parts: func [
 
             file! [
                 all [
-                    last-was-slash
+                    yes? last-was-slash
                     #"/" = first item
                 ] then [
                     fail doubled-file-slash-error item
                 ]
                 keep to text! item
-                last-was-slash: #"/" = last item
+                last-was-slash: to-yesno #"/" = last item
             ]
 
             fail ["Bad MAKE-FILE item:" item]

@@ -1,14 +1,14 @@
 ; %loops/for-next.test.reb
 
 (
-    success: true
-    for-next i "a" [continue, success: false]
-    success
+    success: 'true
+    for-next i "a" [continue, success: 'false]
+    true? success
 )
 (
-    success: true
-    for-next i [a] [continue, success: false]
-    success
+    success: 'true
+    for-next i [a] [continue, success: 'false]
+    true? success
 )
 ; text! test
 (

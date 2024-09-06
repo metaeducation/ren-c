@@ -49,7 +49,7 @@ import %% (repo-dir)/tools/read-deep.reb
 ; rebsource is organised along the lines of a context sensitive vocabulary.
 ;
 
-logfn: func [message][print mold new-line/all compose message false]
+logfn: func [message][print mold new-line/all compose message 'no]
 log: :logfn
 
 standard: context [
@@ -115,7 +115,7 @@ log-emit: func [
     label [tag!]
     body [block!]
 ][
-    body: new-line/all compose body false
+    body: new-line/all compose body 'no
     append/line log spread (head insert body label)
 ]
 
@@ -205,7 +205,7 @@ export analyse: context [
                             parse3 last-func-end [
                                 function-spacing-rule
                                 position: <here>
-                                accept (true)
+                                accept (~)
                                 |
                                 accept (null)
                             ]
@@ -219,7 +219,7 @@ export analyse: context [
                     ]
                 ]
 
-                if (parse3 proto-parser.data [
+                if true? (parse3 proto-parser.data [
                     opt 'export
                     name: set-word! (name: to-word name)
                     opt 'enfix
@@ -228,9 +228,9 @@ export analyse: context [
                         | 'native/combinator
                         | 'native/intrinsic
                     ]
-                    accept (true)
+                    accept ('true)
                     |
-                    accept (false)
+                    accept ('false)
                 ]) [
                     ;
                     ; It's a `some-name?: native [...]`, so we expect
@@ -420,7 +420,7 @@ list: context [
         let files: read-deep/full/strategy source-paths :source-files-seq
 
         sort files
-        new-line/all files true
+        new-line/all files 'yes
 
         return files
     ]

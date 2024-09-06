@@ -1,32 +1,32 @@
 (
-    success: <bad>
-    if 1 > 2 [success: false] else [success: true]
-    success
+    success: ~
+    if 1 > 2 [success: 'false] else [success: 'true]
+    true? success
 )
 (
-    success: <bad>
-    if 1 < 2 [success: true] else [success: false]
-    success
+    success: ~
+    if 1 < 2 [success: 'true] else [success: 'false]
+    true? success
 )
 (
-    success: <bad>
-    if not 1 > 2 [success: true] else [success: false]
-    success
+    success: ~
+    if not 1 > 2 [success: 'true] else [success: 'false]
+    true? success
 )
 (
-    success: <bad>
-    if not 1 < 2 [success: false] else [success: true]
-    success
+    success: ~
+    if not 1 < 2 [success: 'false] else [success: 'true]
+    true? success
 )
 (
-    success: <bad>
-    if true (does [success: true])
-    success
+    success: ~
+    if ok (does [success: 'true])
+    true? success
 )
 (
-    success: true
-    if false (does [success: false])
-    success
+    success: 'true
+    if null (does [success: 'false])
+    true? success
 )
 
 [https://github.com/metaeducation/ren-c/issues/510 (
@@ -67,13 +67,13 @@
 )
 
 ; This is a by-product of the wish to make it so (@ <QUASIFORM!>) can produce
-; a true NULL, for use with the API...and that this provoking quasivalue be
+; a pure NULL, for use with the API...and that this provoking quasivalue be
 ; something the API puts in automatically when a nullptr is given as input.
 (
     null? (~null~ then [fail ~unreachable~])
 )
 
-(~ then [true])
+(~ then [okay])
 
 ; Although branches can be triggered by heavy null, if functions ask to
 ; receive the value it is decayed, so they do not have to be ^META.  But if
@@ -99,41 +99,41 @@
 ;
 ; https://forum.rebol.info/t/why-then-and-else-are-mutually-exclusive/1080/9
 [
-    (~null~ *then [fail "shouldn't run"] else [true])
-    (~null~ *also [fail "shouldn't run"] *else [true])
-    (~null~ *else [true])
+    (~null~ *then [fail "shouldn't run"] else [okay])
+    (~null~ *also [fail "shouldn't run"] *else [okay])
+    (~null~ *else [okay])
 ]
 
 [
     ~no-arg~ !! (else [~unused~])
-    ~???~ !! (() else [true])  ; should NIHIL with enfix look like no value?
+    ~???~ !! (() else [okay])  ; should NIHIL with enfix look like no value?
     ~???~ !! (1000 + 20 () then [fail ~unreachable~])
 
-    (void else [true])
+    (void else [okay])
     (1020 = (1000 + 20 elide-if-void (void then [fail ~unreachable~])))
 
-    ((void) else [true])
+    ((void) else [okay])
     (void? (1000 + 20 ((void) then [fail ~unreachable~])))
 
-    (eval [] else [true])
+    (eval [] else [okay])
     (void? eval [] then [fail ~reachable~])
 ]
 
 [
-    (foo: func [] [return void], true)
-    (foo else [true])
+    (foo: func [] [return void], ok)
+    (foo else [okay])
     (1020 = (1000 + 20 elide-if-void (foo then [fail [~unreachable~]])))
 ]
 
 [
-    (foo: lambda [] [if false [~ignore~]], true)
-    (foo else [true])
+    (foo: lambda [] [if null [~ignore~]], ok)
+    (foo else [okay])
     (void? (1000 + 20 foo then [fail [~unreachable~]]))
 ]
 
 [
-    (foo: lambda [] [], true)
-    (foo else [true])
+    (foo: lambda [] [], ok)
+    (foo else [okay])
     (1020 = (1000 + 20 elide-if-void (foo then [fail [~unreachable~]])))
 ]
 
@@ -142,5 +142,5 @@
     (null = (null else (void)))
     (void = (void else (void)))
 
-    (3 = (if true [1 + 2] then (void)))
+    (3 = (if ok [1 + 2] then (void)))
 ]

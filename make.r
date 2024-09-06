@@ -1579,7 +1579,7 @@ add-project-flags: func [
     /D "definitions" [block!]
     /c "cflags" [block!]
     /O "optimization" [word! integer!]
-    /g "debug" [toggle?!]
+    /g "debug" [onoff?!]
 ][
     assert [
         find [

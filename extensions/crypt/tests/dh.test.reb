@@ -62,7 +62,7 @@
             ]
          ]
     ]
-    true
+    ok
 )
 
 ; Coming up with meaningful further tests is a work in progress, but learning

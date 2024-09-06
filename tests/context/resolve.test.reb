@@ -26,7 +26,7 @@
     ][
         ([steps @v]: resolve target) else [set steps eval branch]
     ],
-    true)
+    ok)
 
     (
         x: null

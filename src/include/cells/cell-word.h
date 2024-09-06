@@ -193,3 +193,13 @@ INLINE bool Is_Quasi_Word_With_Id(const Atom* v, SymId id) {
 
     return id == Cell_Word_Id(v);
 }
+
+
+INLINE bool Is_Word_With_Id(const Atom* v, SymId id) {
+    assert(id != 0);
+
+    if (not Is_Word(v))
+        return false;
+
+    return id == Cell_Word_Id(v);
+}

@@ -170,5 +170,5 @@
 ; breaking of rules that would apply to values in a block-based branch.
 ;
 ~const-value~ !! (
-    repeat 2 [append if true '{y} {z}]
+    repeat 2 [append if ok '{y} {z}]
 )

@@ -7,7 +7,7 @@
         nanb: [#a opt nanb #b]
         nbnc: [#b opt nbnc #c]
         nanbnc: [ahead [nanb #c] some #a nbnc]
-        true
+        ok
     )
 
     (#c = parse "abc" nanbnc)

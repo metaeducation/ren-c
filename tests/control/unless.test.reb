@@ -19,16 +19,16 @@
     10 = (10 unless null)
 )(
     x: 10 + 20 unless case [
-        false [<no>]
-        false [<nope>]
-        false [<nada>]
+        true? 'false [<no>]
+        true? 'false [<nope>]
+        true? 'false [<nada>]
     ]
     x = 30
 )(
     x: 10 + 20 unless case [
-        false [<no>]
-        true [<yip!>]
-        false [<nada>]
+        true? 'false [<no>]
+        true? 'true [<yip!>]
+        true? 'false [<nada>]
     ]
     x = <yip!>
 )

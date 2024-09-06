@@ -103,7 +103,7 @@
 ; )]
 ;
 ; [#1756
-;     (reeval does [reduce reduce [:self] true])
+;     (reeval does [reduce reduce [:self] okay])
 ; ]
 ;
 ; [#1528
@@ -175,13 +175,13 @@
     ; derived binding allows the derived object's methods to see the derived
     ; object's values.
     ;
-    did count-up i 2048 [
+    count-up i 2048 [
         derived: make o-big [var-1: 100000 + i]
         if 132639 + i <> derived/meth-255 [
-            break
+            fail "Unexpected Sum"
         ]
-        true
     ]
+    ok
 )
 
 ; object cloning
@@ -197,7 +197,7 @@
 
     (
         o: make object! []
-        true
+        ok
     )
 
     ~bad-pick~ !! (o.i: 1)

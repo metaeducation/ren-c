@@ -23,7 +23,7 @@
             elide blk1: next maybe blk1
             elide blk2: next maybe blk2
         ]
-    ], true)
+    ], ok)
 
     (void = for-parallel [x y] [] [] [fail])
     ([1 2] = collect [for-parallel [x y] [] [1 2] [keep maybe x, keep y]])

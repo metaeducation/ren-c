@@ -5,9 +5,9 @@
         let capturing
         let inner
         return parse text [collect while [not <end>] [
-            (capturing: false)
-            opt keep between <here> ["$(" (capturing: true) | <end>]
-            :(if capturing '[
+            (capturing: 'no)
+            opt keep between <here> ["$(" (capturing: 'yes) | <end>]
+            :(if yes? capturing '[
                 inner: between <here> ")"
                 keep (as word! inner)
             ])

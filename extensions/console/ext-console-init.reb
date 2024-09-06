@@ -44,14 +44,14 @@ boot-print: redescribe [
     "Prints during boot when not quiet."
 ](
     ; !!! Duplicates code in %main-startup.reb, where this isn't exported.
-    enclose get $print f -> [if not system.options.quiet [eval f]]
+    enclose get $print f -> [if no? system.options.quiet [eval f]]
 )
 
 loud-print: redescribe [
     "Prints during boot when verbose."
 ](
     ; !!! Duplicates code in %main-startup.reb, where this isn't exported.
-    enclose get $print f -> [if system.options.verbose [eval f]]
+    enclose get $print f -> [if yes? system.options.verbose [eval f]]
 )
 
 
@@ -66,10 +66,10 @@ loud-print: redescribe [
 ;
 export console!: make object! [
     name: null
-    repl: true  ; used to identify this as a console! object
-    is-loaded: false  ; if true then this is a loaded (external) skin
-    was-updated: false  ; if true then console! object found in loaded skin
-    last-result: ~startup~  ; last evaluated result (sent by HOST-CONSOLE)
+    repl: 'true  ; used to identify this as a console! object
+    is-loaded: 'no  ; if yes then this is a loaded (external) skin
+    was-updated: 'no  ; if yes then console! object found in loaded skin
+    last-result: ~  ; last evaluated result (sent by HOST-CONSOLE)
 
     === APPEARANCE (can be overridden) ===
 
@@ -346,7 +346,7 @@ start-console: func [
 
     loud-print "Starting console..."
     loud-print newline
-    let proto-skin: match object! skin else [make console! []]
+    let proto-skin: match object! maybe skin else [make console! []]
     let skin-error: null
 
     all [
@@ -362,11 +362,11 @@ start-console: func [
                 select new-skin 'repl  ; quacks like REPL, it's a console!
             ] then [
                 proto-skin: new-skin
-                proto-skin.was-updated: true
+                proto-skin.was-updated: 'yes
                 proto-skin.name: default ["updated"]
             ]
 
-            proto-skin.is-loaded: true
+            proto-skin.is-loaded: 'yes
             proto-skin.name: default ["loaded"]
             append o.loaded skin-file
         ]
@@ -397,7 +397,7 @@ start-console: func [
 
     === PRINT BANNER ===
 
-    if o.about [
+    if yes? o.about [
         boot-print make-banner boot-banner  ; the fancier banner
     ]
 
@@ -415,13 +415,13 @@ start-console: func [
     ] else [
        loud-print [
             space space
-            if proto-skin.is-loaded [
+            if yes? proto-skin.is-loaded [
                 "Loaded skin"
             ] else [
                 "Skin does not exist"
             ]
             "-" skin-file
-            "(CONSOLE" if not proto-skin.was-updated ["not"] "updated)"
+            "(CONSOLE" if no? proto-skin.was-updated ["not"] "updated)"
         ]
     ]
 ]
@@ -437,7 +437,7 @@ console*: func [
     result "^META result from evaluating PRIOR, or non-quoted error"
         [~null~ error! quoted? quasi?]
     resumable "Is the RESUME function allowed to exit this console"
-        [logic?]
+        [yesno?]
     skin "Console skin to use if the console has to be launched"
         [~null~ object! file!]
 ][
@@ -562,7 +562,7 @@ console*: func [
         if block? prior [
             parse3 prior [
                 opt some [i: issue! (keep i)]
-                accept (true)
+                accept (~)
             ]
         ]
     ]
@@ -645,7 +645,7 @@ console*: func [
         result.arg2 = unrun :get $lib/resume  ; throw's /NAME
     ] then [
         assert [match [meta-group! handle!] result.arg1]
-        if not resumable [
+        if no? resumable [
             e: make error! "Can't RESUME top-level CONSOLE (use QUIT to exit)"
             e.near: result.near
             e.where: result.where

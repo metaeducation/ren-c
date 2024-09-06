@@ -33,8 +33,8 @@
 ]
 (error? trap [to integer! -9.2233720368547779e18])
 (0 == to integer! "0")
-~expect-arg~ !! (to integer! false)
-~expect-arg~ !! (to integer! true)
+~expect-arg~ !! (to integer! null)
+~expect-arg~ !! (to integer! okay)
 (0 == codepoint of NUL)
 (1 == codepoint of #"^a")
 (0 == to integer! as text! #0)

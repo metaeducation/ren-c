@@ -157,10 +157,10 @@ void Unplug_Stack(
             // still GC safe.  When the stack gets patched back in, it will
             // be recognized and reset to the new base's out.
             //
-            temp->out = m_cast(Value*, Lib(TRUE));
+            temp->out = m_cast(Value*, Lib(BLANK));
         }
         else if (temp->out == &base->spare) {
-            temp->out = m_cast(Value*, Lib(FALSE));
+            temp->out = m_cast(Value*, Lib(NULL));
         }
 
         // We make the baseline stack pointers in each level relative to the
@@ -187,9 +187,9 @@ void Unplug_Stack(
             assert(Level_State_Byte(temp->prior) != 0);  // must be continuation
 
             // !!! This is true for YIELD's relationship to the YIELDER, but
-            // why would it be generically true?
+            // why would it be generically the case?
             //
-            /* assert(temp->out == Lib(TRUE)); */  // should have matched base
+            /* assert(temp->out == Lib(BLANK)); */  // should have matched base
 
             temp->prior = nullptr;  // show where the fragment of stack ends
             break;
@@ -250,8 +250,8 @@ void Unplug_Stack(
 //    function, an API cell that was released, etc.)  But more levels than
 //    that could have inherited the same L->out.
 //
-//    Unplug_Stack() put a bogus pointer to the read-only Lib(TRUE) cell, which
-//    is good enough to be GC safe and also distinct.  Anywhere we see that,
+//    Unplug_Stack() put a bogus pointer to the read-only Lib(BLANK) cell,
+//    it's good enough to be GC safe and also distinct.  Anywhere we see that,
 //    replace with the output this new base wants to write its output to.
 //
 // 2. Unplug made the stack_base be relative to 0.  We're going to restore the
@@ -269,9 +269,9 @@ void Replug_Stack(Level* L, Level* base, Value* plug) {
 
     Level* temp = L;
     while (true) {
-        if (temp->out == Lib(TRUE))  // replace output placeholder [1]
+        if (temp->out == Lib(BLANK))  // replace output placeholder [1]
             temp->out = base->out;
-        else if (temp->out == Lib(FALSE))
+        else if (temp->out == Lib(NULL))
             temp->out = cast(Value*, &base->spare);
 
         temp->baseline.stack_base += base->baseline.stack_base;  // [2]

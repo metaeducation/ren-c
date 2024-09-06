@@ -169,9 +169,10 @@ Context* Make_Context_For_Action_Push_Partials(
             // If refinement named on stack takes no arguments, then it can't
             // be partially specialized...only fully, and won't be bound:
             //
-            //     specialize get $skip/unbounded [unbounded: #]  ; word not bound
+            //     >> specialize get $skip/unbounded [unbounded: ok]
+            //     ** Error: unbounded not bound
             //
-            Init_Blackhole(arg);
+            Init_Okay(arg);
             goto continue_specialized;
         }
 

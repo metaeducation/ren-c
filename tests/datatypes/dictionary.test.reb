@@ -57,7 +57,7 @@
 [
     (
         m: make map! [AA 10 aa 20 <BB> 30 <bb> 40 #"C" 50 #"c" 60]
-        true
+        ok
     )
 
     (10 = select/case m 'AA)
@@ -82,7 +82,7 @@
         put/case m 'Aa 100
         put/case m <Bb> 110
         put/case m #"C" 120
-        true
+        ok
     )
 
     (100 = select/case m 'Aa)
@@ -109,7 +109,7 @@
             A 10 'A 11 ''A 12 '''A 13 ''''A 14
             (b2) II (b4) IIII
         ]
-        true
+        ok
     )
 
     (0 = select/case m the a)
@@ -146,7 +146,7 @@
         m.key: null
     )
 
-    ~expect-arg~ !! (
+    ~bad-antiform~ !! (
         m: make map! []
         m.(null): 1020
     )

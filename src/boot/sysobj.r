@@ -123,11 +123,10 @@ options: make object! [  ; Options supplied to REBOL during startup
 
     dump-size: 68   ; used by dump
 
-    quiet: false    ; do not show startup info (compatibility)
-    about: false    ; do not show full banner (about) on start-up
-    cgi: false
-    no-window: false
-    verbose: false
+    quiet: 'no      ; do not show startup info (compatibility)
+    about: 'no      ; do not show full banner (about) on start-up
+    cgi: 'no
+    verbose: 'no
 
     binary-base: 16    ; Default base for FORMed binary values (64, 16, 2)
     decimal-digits: 15 ; Max number of decimal digits to print.

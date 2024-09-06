@@ -14,7 +14,7 @@
         ]]
         if sub != copy/part t n [fail "Incorrect Replacement"]
     ]
-    true
+    ok
 )]
 
 [https://github.com/red/red/issues/3357

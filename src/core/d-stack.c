@@ -192,9 +192,9 @@ DECLARE_NATIVE(running_q)
     Level* L = CTX_LEVEL_MAY_FAIL(frame_ctx);
 
     if (Is_Level_Fulfilling(L))
-        return Init_False(OUT);
+        return Init_Logic(OUT, false);
 
-    return Init_True(OUT);
+    return Init_Logic(OUT, true);
 }
 
 
@@ -216,7 +216,7 @@ DECLARE_NATIVE(pending_q)
     Level* L = CTX_LEVEL_MAY_FAIL(frame_ctx);
 
     if (Is_Level_Fulfilling(L))
-        return Init_True(OUT);
+        return Init_Logic(OUT, true);
 
-    return Init_False(OUT);
+    return Init_Logic(OUT, false);
 }

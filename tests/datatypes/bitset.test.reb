@@ -31,12 +31,12 @@
     for i 8 [
         assert [bs.(i) = null]
         assert [not pick bs i]
-        bs.(i): true
+        bs.(i): okay
     ]
     for i 8 [
-        assert [bs.(i) = true]
+        assert [bs.(i) = okay]
     ]
-    true
+    ok
 )
 
 ; Generically speaking, R3-Alpha's BITSET! negation concept did not work.  It
@@ -61,10 +61,10 @@
     invalid: exclude (complement bs) make bitset! [4 5]
     for i 8 [
         if i <= 5 [
-            assert [not pick invalid i]
+            assert [null = pick invalid i]
         ] else [
-            assert [pick invalid i]
+            assert [okay = pick invalid i]
         ]
     ]
-    true
+    ok
 )

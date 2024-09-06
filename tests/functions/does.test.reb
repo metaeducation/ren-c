@@ -22,7 +22,7 @@
     (does+: reframer lambda [f [frame!]] [
         does [eval copy f]
     ]
-    true)
+    ok)
 
     (
         backup: block: copy [a b]
@@ -39,11 +39,11 @@
     (
         x: 10
         y: 20
-        flag: true
-        z: does+ all [x: x + 1, flag, y: y + 2, <finish>]
+        flag: 'true
+        z: does+ all [x: x + 1, true? flag, y: y + 2, <finish>]
         all [
             z = <finish>, x = 11, y = 22
-            elide (flag: false)
+            elide (flag: 'false)
             z = null, x = 12, y = 22
         ]
     )
@@ -63,7 +63,7 @@
 (
     o1: make object! [
         a: 10
-        b: bind (does [if true [a]]) binding of $b
+        b: bind (does [if ok [a]]) binding of $b
     ]
     o2: make o1 [a: 20]
     o2.b = 20

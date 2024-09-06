@@ -34,7 +34,7 @@ c99-logged: enclose get $c99 function [f [frame!]] [
     ; f.runtime: "..."  ; set this to override CONFIG_TCCDIR
 
     fdebug: copy f
-    fdebug.inspect: true
+    fdebug.inspect: ok
     eval fdebug  ; Run command once with /INSPECT (don't compile)
 
     return eval f  ; Run original command without /INSPECT

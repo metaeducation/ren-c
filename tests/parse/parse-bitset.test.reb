@@ -12,14 +12,14 @@
     count-up n 512 [
         if n = 1 [continue]
 
-        if not ok? parse (append copy "" codepoint-to-char n - 1) [
+        if raised? parse (append copy "" codepoint-to-char n - 1) [
             c: any-char <end>
         ][
             fail "Parse didn't work"
         ]
         if c != codepoint-to-char n - 1 [fail "Char didn't match"]
     ]
-    true
+    ok
 )]
 
 ; With strings, BITSET! acts as charset
@@ -29,7 +29,7 @@
         bs: charset [not 1 - 3 #"^/" - #"^O"]
         wbs: [bs]
         wbs2: reduce wbs
-        true
+        ok
     )
 
     ~parse-mismatch~ !! (parse #{0A0B0C} [some bs])
@@ -52,7 +52,7 @@
         bs: charset [16 - 31 #"^/" - #"^O"]
         wbs: [bs]
         wbs2: reduce wbs
-        true
+        ok
     )
 
     (12 == parse #{0A0B0C} [some bs])
@@ -86,7 +86,7 @@
         abc: charset ["a" "b" "c"]
         rls: ["a", some ws, b: across some abc, some ws, "c"]
         rla: ["a", opt some ws, b: across some abc, opt some ws, "c"]
-        true
+        ok
     )
 
     ("c" == parse "a b c" rls)
@@ -112,7 +112,7 @@
         bs: charset ["hello" #a - #z]
         wbs: [bs]
         wbs2: reduce wbs
-        true
+        ok
     )
 
     (#c == parse "abc" [some bs])
@@ -146,7 +146,7 @@
         bs: charset [not "hello123" #a - #z]
         wbs: [bs]
         wbs2: reduce wbs
-        true
+        ok
     )
 
     ~parse-mismatch~ !! (parse "abc" [some bs])

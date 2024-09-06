@@ -31,7 +31,7 @@
         result = _
         count = 0
     ])
-    (void? every x _ [true])
+    (void? every x _ [okay])
     (void? for-skip x _ 2 [1020])
 
     ~nothing-to-take~ !! (take _)

@@ -34,7 +34,7 @@
             ]
         ]
     ]
-    true
+    ok
 )
 (
     nothing? source ||   ; Was once a tricky case, SOURCE of a barrier
@@ -46,7 +46,7 @@
         if action? get w
             (compose/deep [assert [nothing? source (w)]])
     ]
-    true
+    ok
 )
 
 [https://github.com/metaeducation/ren-c/issues/1106

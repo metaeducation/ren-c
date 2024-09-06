@@ -6,7 +6,7 @@
     (
         import %../../tools/common.r
         import %../../tools/text-lines.reb
-        true
+        ok
     )
 
     ; encode-lines

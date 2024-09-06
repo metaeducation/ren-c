@@ -1,7 +1,7 @@
 ; %enfix.test.reb
 
 (antiform! = kind of :+)
-(true = enfix? :+)
+(enfix? :+)
 
 (enfix? :+)
 ~expect-arg~ !! (enfix? 1)
@@ -76,7 +76,7 @@
     (
         left-the: enfix :the
         o: make object! [i: 10 f: does [20]]
-        true
+        ok
     )
 
     ('o.i = o.i left-the)

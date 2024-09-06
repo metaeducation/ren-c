@@ -26,7 +26,7 @@
 [(
     x: ~
     y: <y>
-    z: if true :[elide x: <x>, 1 + 2 3 + 4] else :[elide y: ~, 3 + 4, 1 + 2]
+    z: if ok :[elide x: <x>, 1 + 2 3 + 4] else :[elide y: ~, 3 + 4, 1 + 2]
     all [
         z = [3 7]
         x = <x>

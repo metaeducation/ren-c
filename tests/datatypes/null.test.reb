@@ -55,19 +55,19 @@
 ; Conditionals return VOID on failure, and ~[~null~]~ antiform on a branch that
 ; executes and evaluates to either NULL or ~[~null~]~ antiform.
 [
-    ('~[~null~]~ = ^ if true [null])
-    ('~[~null~]~ = ^ if true [heavy null])
-    ('~[~void~]~ = ^ if true [])
-    ('~custom~ = ^ if true [~custom~])
-    (''~custom~ = ^ if true ['~custom~])
+    ('~[~null~]~ = ^ if ok [null])
+    ('~[~null~]~ = ^ if ok [heavy null])
+    ('~[~void~]~ = ^ if ok [])
+    ('~custom~ = ^ if ok [~custom~])
+    (''~custom~ = ^ if ok ['~custom~])
 
     (void' <> ^ ~()~)
     (not void' = first [~()~])
     (not void' = ^ 'void)
 
-    ('~null~ = if true ^[null])
-    ('~[~null~]~ = if true ^[heavy null])
-    (void' = if true ^[])
-    ('~custom~ = if true ^[~custom~])
-    (''~custom~ = if true ^['~custom~])
+    ('~null~ = if ok ^[null])
+    ('~[~null~]~ = if ok ^[heavy null])
+    (void' = if ok ^[])
+    ('~custom~ = if ok ^[~custom~])
+    (''~custom~ = if ok ^['~custom~])
 ]

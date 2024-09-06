@@ -3,5 +3,5 @@
     count-up n 200 [
         close open join tcp://localhost: n
     ]
-    true
+    ok
 )]

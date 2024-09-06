@@ -18,7 +18,7 @@
         wh: "hello"
         wrab: ['a | 'b]
         wrba: ['b | 'a]
-        true
+        ok
     )
     ('a == parse [a] [wa])
     ~parse-mismatch~ !! (parse [a] [wb])
@@ -106,7 +106,7 @@
         wh: "hello"
         wrab: [#a | #b]
         wrba: [#b | #a]
-        true
+        ok
     )
     (#a == parse "a" [wa])
     ~parse-mismatch~ !! (parse "a" [wb])
@@ -173,7 +173,7 @@
         wh: #{88031100}
         wrab: [#{0A} | #{0B}]
         wrba: [#{0B} | #{0A}]
-        true
+        ok
     )
     (#{0A} == parse #{0A} [wa])
     ~parse-mismatch~ !! (parse #{0A} [wb])

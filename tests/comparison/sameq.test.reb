@@ -373,10 +373,10 @@
 ; reflexivity
 (same? first [a:] first [a:])
 ; logic? values
-(same? true true)
-(same? false false)
-(not same? true false)
-(not same? false true)
+(same? okay okay)
+(same? null null)
+(not same? okay null)
+(not same? null okay)
 ; port! values; reflexivity; in this case the error should not be generated, I think
 (
     p: make port! http://

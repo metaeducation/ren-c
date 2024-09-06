@@ -202,9 +202,9 @@
     x: ~
     all [
         [#a <kept> #a <kept> #a <kept>] == parse "aaa" [x: collect [some [
-            keep (if false [<not kept>])
+            keep (if null [<not kept>])
             keep one
-            keep (if true [<kept>])
+            keep (if ok [<kept>])
         ]]]
         x = [#a <kept> #a <kept> #a <kept>]
     ]
@@ -438,7 +438,7 @@ https://github.com/metaeducation/ren-c/issues/935
 ; incongruous with what happens if you set a variable that way:
 ;
 ;     red>> parse "" [test: to end]
-;     == true
+;     == true  ; not the WORD!, but logic #[true]
 ;
 ;     red>> test
 ;     == ""
@@ -543,7 +543,7 @@ https://github.com/metaeducation/ren-c/issues/939
         opt some [keep across to vowel skip 1 keep (#"-")]
         keep across to <end>
     ]
-    true
+    ok
 )
 
     (
@@ -551,7 +551,7 @@ https://github.com/metaeducation/ren-c/issues/939
         out == res
     )
 
-    (take/last append str "¿", true)
+    (take/last append str "¿", ok)
 
     (
         parse str b: [c: collect rule (insert out spread c)]

@@ -128,7 +128,7 @@
             ] $right
         ]
     ]
-    true)
+    ok)
 
     (7 = (1 + 2 |1| 3 + 4))
     ~???~ !! (1 + 2 |1| 3 + 4 5 + 6)
@@ -146,7 +146,7 @@
 ; in that there are no "pure invisibles".  So saying that it's an <end> is
 ; questionable.  Review when there's enough time in priorities to think on it.
 ;
-;     (ok? trap [reeval (lambda [x [<end>]] []) ||| 1 2 3])
+;     (unraised? trap [reeval (lambda [x [<end>]] []) ||| 1 2 3])
 ;     (error? trap [reeval (lambda [x [~null~]] []) ||| 1 2 3])
 
 (
@@ -172,8 +172,8 @@
         left-normal*: enfix right-normal*:
             func [return: [~null~ word!] x [word! <end>]] [return x]
 
-        left-defer: enfix tweak (copy unrun :left-normal) 'defer on
-        left-defer*: enfix tweak (copy unrun :left-normal*) 'defer on
+        left-defer: enfix tweak (copy unrun :left-normal) 'defer 'on
+        left-defer*: enfix tweak (copy unrun :left-normal*) 'defer 'on
 
         left-soft: enfix right-soft:
             func [return: [~null~ word!] 'x [word!]] [return x]
@@ -185,7 +185,7 @@
         left-hard*: enfix right-hard*:
             func [return: [~null~ word!] :x [word! <end>]] [return x]
 
-        true
+        ok
     )
 
     ~no-arg~ !! (right-normal ||)
@@ -237,8 +237,8 @@
                 return try take x
             ]
 
-        left-defer: enfix tweak (copy unrun :left-normal) 'defer on
-        left-defer*: enfix tweak (copy unrun :left-normal*) 'defer on
+        left-defer: enfix tweak (copy unrun :left-normal) 'defer 'on
+        left-defer*: enfix tweak (copy unrun :left-normal*) 'defer 'on
 
         left-soft: enfix right-soft:
             func [return: [~null~ word!] 'x [word! <variadic>]] [
@@ -258,7 +258,7 @@
                 return try take x
             ]
 
-        true
+        ok
     )
 
     ; !!! A previous distinction between TAKE and TAKE* made errors on cases of
@@ -330,8 +330,8 @@
     (<kept> obj.x:,)
 )
 
-('~[~void~]~ = ^ (if true [] else [<else>]))
-('~[~void~]~ = ^(if true [comment <true-branch>] else [<else>]))
+('~[~void~]~ = ^ (if ok [] else [<else>]))
+('~[~void~]~ = ^(if ok [comment <true-branch>] else [<else>]))
 
 (1 = all [1 elide <vaporize>])
 (1 = any [1 elide <vaporize>])
@@ -386,14 +386,14 @@
     (vanish-if-odd: func [return: [nihil? integer!] x] [
         if even? x [return x]
         return nihil
-    ] true)
+    ] ok)
 
     (2 = (<test> vanish-if-odd 2))
     (<test> = (<test> vanish-if-odd 1))
 
     (vanish-if-even: func [return: [nihil? integer!] y] [
         return unmeta ^(vanish-if-odd y + 1)
-    ] true)
+    ] ok)
 
     (<test> = (<test> vanish-if-even 2))
     (2 = (<test> vanish-if-even 1))

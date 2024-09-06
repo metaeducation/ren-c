@@ -10,9 +10,9 @@
 
 ; logic
 [#849
-    (false = not+ true)
+    (null = not+ okay)
 ]
-(true = not+ false)
+(okay = not+ null)
 
 ; integer
 (-1 = not+ 0)

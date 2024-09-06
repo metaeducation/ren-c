@@ -11,16 +11,16 @@
 ; https://github.com/rebol/rebol-issues/issues/1993
 
 (
-    success: true
+    success: 'true
     num: 0
     cfor i 1 10 1 [
         num: num + 1
-        success: success and (i = num)
+        success: boolean (true? success) and (i = num)
     ]
-    success and (10 = num)
+    (true? success) and (10 = num)
 )
 ; cycle return value
-(false = cfor i 1 1 1 [false])
+('false = cfor i 1 1 1 ['false])
 ; break cycle
 (
     num: 0
@@ -32,15 +32,15 @@
 
 ; continue cycle
 [#58 (
-    success: true
-    cfor i 1 1 1 [continue, success: false]
-    success
+    success: 'true
+    cfor i 1 1 1 [continue, success: 'false]
+    true? success
 )]
 (
-    success: true
+    success: 'true
     x: "a"
-    cfor i x tail of x 1 [continue, success: false]
-    success
+    cfor i x tail of x 1 [continue, success: 'false]
+    true? success
 )
 ; text! test
 (
@@ -56,9 +56,9 @@
 )
 ; zero repetition block test
 (
-    success: true
-    cfor i b: [1] tail of :b -1 [success: false]
-    success
+    success: 'true
+    cfor i b: [1] tail of :b -1 [success: 'false]
+    true? success
 )
 ; Test that return stops the loop
 (
@@ -101,14 +101,14 @@
     num: 0
     cfor i 2147483647 2147483647 1 [
         num: num + 1
-        either num > 1 [break] [true]
+        either num > 1 [break] [okay]
     ]
 )
 (
     num: 0
     cfor i -2147483648 -2147483648 -1 [
         num: num + 1
-        either num > 1 [break] [true]
+        either num > 1 [break] [okay]
     ]
 )
 <64bit>
@@ -117,7 +117,7 @@
     cfor i 9223372036854775807 9223372036854775807 -9223372036854775808 [
         num: num + 1
         if num <> 1 [break]
-        true
+        ok
     ]
 )]
 <64bit>
@@ -126,7 +126,7 @@
     cfor i -9223372036854775808 -9223372036854775808 9223372036854775807 [
         num: num + 1
         if num <> 1 [break]
-        true
+        ok
     ]
 )
 (
@@ -134,7 +134,7 @@
     cfor i 2147483647 2147483647 2147483647 [
         num: num + 1
         if num <> 1 [break]
-        true
+        ok
     ]
 )
 (
@@ -142,7 +142,7 @@
     cfor i 2147483647 2147483647 -2147483648 [
         num: num + 1
         if num <> 1 [break]
-        true
+        ok
     ]
 )
 (
@@ -150,7 +150,7 @@
     cfor i -2147483648 -2147483648 2147483647 [
         num: num + 1
         if num <> 1 [break]
-        true
+        ok
     ]
 )
 (
@@ -158,7 +158,7 @@
     cfor i -2147483648 -2147483648 -2147483648 [
         num: num + 1
         if num <> 1 [break]
-        true
+        ok
     ]
 )
 [#1993
@@ -190,11 +190,11 @@
 
 ; local variable changeability - this is how it works in R3
 (
-    test: false
+    test: 'false
     null? cfor i 1 3 1 [
         if i = 2 [
-            if test [break]
-            test: true
+            if true? test [break]
+            test: 'true
             i: 1
         ]
     ]
@@ -202,11 +202,11 @@
 
 ; local variable type safety
 ~expect-arg~ !! (
-    test: false
+    test: 'false
     cfor i 1 2 [
-        either test [i == 2] [
-            test: true
-            i: false
+        either true? test [i == 2] [
+            test: 'true
+            i: 'false
         ]
     ]
 )
@@ -221,7 +221,7 @@
         num: 0
         cfor i 9223372036854775806 9223372036854775807 2 [
             num: num + 1
-            either num > 1 [break] [true]
+            either num > 1 [break] [okay]
         ]
     )
 ]
@@ -230,7 +230,7 @@
     num: 0
     cfor i -9223372036854775807 -9223372036854775808 -2 [
         num: num + 1
-        either num > 1 [break] [true]
+        either num > 1 [break] [okay]
     ]
 )
 
@@ -240,7 +240,6 @@
         cfor i 9223372036854775806 9223372036854775807 9223372036854775807 [
             num: num + 1
             if num <> 1 [break]
-            true
         ]
     )
 ]
@@ -250,6 +249,5 @@
     cfor i -9223372036854775807 -9223372036854775808 -9223372036854775808 [
         num: num + 1
         if num <> 1 [break]
-        true
     ]
 )

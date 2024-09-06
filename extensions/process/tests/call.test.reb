@@ -39,7 +39,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
 (
     ; extra large CALL/OUTPUT (500K+), test only run if can find git binary
     ;
-    if not exists? %/usr/bin/git [true] else [
+    if not exists? %/usr/bin/git [okay] else [
         data: {}
         call/output [
             %/usr/bin/git log (spaced [
@@ -71,7 +71,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
         out: frame.output
         eval frame
         out
-    ], true)
+    ], ok)
 
     ("Foo" = echoer "Foo" "")
     ("Rҽʋσʅυƚισɳ" = echoer "Rҽʋσʅυƚισɳ" "")

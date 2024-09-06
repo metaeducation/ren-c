@@ -214,7 +214,7 @@ void Enable_Ctrl_C(void)
 //      <local>
 //          old-console
 //          was-ctrl-c-enabled
-//          no-recover
+//          can-recover
 //          code
 //          metaresult
 //          state
@@ -274,7 +274,7 @@ DECLARE_NATIVE(console)
 
     if (rebUnboxLogic(
         "metaresult: null",  // invalid "meta" result, but first call expects
-        "no_recover: false",  // one chance at HOST-CONSOLE internal error
+        "can-recover: 'yes",  // one chance at HOST-CONSOLE internal error
         "null <> code: provoke"
     )){
         goto provoked;
@@ -305,18 +305,18 @@ DECLARE_NATIVE(console)
         "console*",  // action that takes 4 args, run it
             "code",  // group! or block! executed prior (or null)
             "metaresult",  // prior result meta, or error (or null)
-            "if resumable [true] else [false]",
+            "to-yesno resumable",
             "skin"
     );
 
     if (rebUnboxLogic("error? @", metacode)) {  // error in CONSOLE* itself [2]
-        if (rebUnboxLogic("no_recover"))
+        if (rebUnboxLogic("no? can-recover"))
             rebJumps("panic @", metacode);
 
         rebElide(
             "code: [#host-console-error]",
             "metaresult:", metacode,
-            "no-recover: true"  // unrecoverable until user can request eval
+            "can-recover: 'no"  // unrecoverable until user can request eval
         );
         goto recover;
     }
@@ -364,7 +364,7 @@ DECLARE_NATIVE(console)
 
     return rebContinueInterruptible(  // allows abrupt fail from HALT [1]
         "assert [match [block! group!] code]",
-        "if group? code [no-recover: false]",  // user could make request [2]
+        "if group? code [can-recover: 'yes]",  // user could make request [2]
         "state: 'running-request",
         "metaresult: sys.util/enrescue code"  // pollutes stack trace [3]
     );

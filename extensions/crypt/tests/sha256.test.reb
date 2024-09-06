@@ -12,7 +12,7 @@
         ;
         "Rebol" #{C8537DEDCA2810F48C80008DBCBDA9AC2FA60382C7F073118DDDEDEEEE65FF47}
         #{1020BFDBFD0304} #{165825199DB849EAFE254E3339FD651748EBF845CAD94C238424EAF344647F98}
-    ] true)
+    ] ok)
 
     ; plain hash test
     (
@@ -21,7 +21,7 @@
                 fail ["bad sha256 for" mold data]
             ]
         ]
-        true
+        ok
     )
 
     ; non-series head test
@@ -32,7 +32,7 @@
                 fail ["bad sha256 for skip 4 of" mold longer]
             ]
         ]
-        true
+        ok
     )
 ]
 
@@ -83,5 +83,5 @@
             fail ["Mismatched HMAC-SHA256 for" mold data "with" mold key]
         ]
     ]
-    true
+    ok
 )

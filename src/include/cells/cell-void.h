@@ -24,21 +24,21 @@
 // code evaluates to void then there will be no `==` in the console.  It is
 // the antiform of the WORD! "void":
 //
-//     >> if false [<d>]
+//     >> if null [<d>]
 //     == ~void~  ; anti
 //
-//     >> if true [<d>]
+//     >> if ok [<d>]
 //     == <d>
 //
 // Many operations that try to add voids will be no-ops instead of errors:
 //
-//     >> append [a b c] if false [<d>]
+//     >> append [a b c] if null [<d>]
 //     == [a b c]
 //
 // Other operations will use the "void-in, null out" convention to permit
 // opting out:
 //
-//     >> to-word! if false ["abc"]
+//     >> to-word! if null ["abc"]
 //     == ~null~  ; anti
 //
 
@@ -80,19 +80,19 @@ INLINE bool Is_Quasi_Void(const Cell* v) {
 // carry the void intent, while being in a parameter pack--which is not
 // considered a candidate for running ELSE branches:
 //
-//     >> if false [<a>]
+//     >> if null [<a>]
 //     == ~void~  ; anti (will trigger ELSE)
 //
-//     >> if true []
+//     >> if ok [if null [<unused>]]
 //     == ~[~void~]~  ; anti (will trigger THEN, not ELSE)
 //
 // Heavy voids will decay when passed as normal parameters to functions that
 // do not specifically take pack isotopes:
 //
-//     >> append [a b c] if false [<a>]
+//     >> append [a b c] if null [<a>]
 //     == [a b c]
 //
-//     >> append [a b c] if true []
+//     >> append [a b c] if ok [if null [<unused>]]
 //     == [a b c]
 //
 // ("Heavy Nulls" are an analogous concept for ~null~.)

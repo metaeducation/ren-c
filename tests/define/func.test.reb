@@ -5,13 +5,13 @@
         return lambda [x] [
             either x = 1 [
                 reeval f 2
-                x = 1
+                boolean x = 1
             ][
-                false
+                'false
             ]
         ]
     ]
-    reeval f 1
+    true? reeval f 1
 )
 
 ; Check parameter processing produces correct labeling.  These were written in

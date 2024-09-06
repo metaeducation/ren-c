@@ -58,7 +58,7 @@
 
 ; https://github.com/red/red/pull/4381
 ;
-(false = eval compose [
+(null = eval compose [
     same? (second split "a," ",") (second split "b," ",")
 ])
 

@@ -236,12 +236,12 @@ odbc-execute: func [
 
     if block? query [
         query: spaced collect [
-            let is-first: true
+            let is-first: 'true
             for-next pos query [
-                if not is-first [
+                if false? is-first [
                     if new-line? pos [keep newline]
                 ]
-                is-first: false
+                is-first: 'false
                 keep sqlform parameters inside query :pos.1
             ]
         ]

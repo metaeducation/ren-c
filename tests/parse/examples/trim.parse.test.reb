@@ -30,7 +30,7 @@ utrim: func [
     all: get $lib/all
 
     ; ACTION!s in the new object will still refer to fields in the original
-    ; object.  That was true in R3-Alpha as well.  Fixing this would require
+    ; object.  That was the case in R3-Alpha as well.  Fixing it would require
     ; new kinds of binding overrides.  The feature itself is questionable.
     ;
     ; https://github.com/rebol/rebol-issues/issues/2288
@@ -63,7 +63,7 @@ utrim: func [
             rule: blank!
 
             if not any [head_TRIM tail_TRIM] [
-                head_TRIM: tail_TRIM: true  ; plain utrim => utrim/HEAD/TAIL
+                head_TRIM: tail_TRIM: okay  ; plain utrim => utrim/HEAD/TAIL
             ]
         ]
 
@@ -107,7 +107,7 @@ utrim: func [
             ]
 
             if not any [head_TRIM tail_TRIM] [
-                head_TRIM: tail_TRIM: true  ; plain utrim => utrim/HEAD/TAIL
+                head_TRIM: tail_TRIM: okay  ; plain utrim => utrim/HEAD/TAIL
             ]
         ]
     ] else [
@@ -184,7 +184,7 @@ utrim: func [
 
     return series
 ]
-true)
+ok)
 
     ; refinement order
     #83

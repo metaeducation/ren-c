@@ -153,7 +153,7 @@ backtrace*: func [
 
     let row: 0  ; row we're on (incl. pending frames and maybe ellipsis)
     let number: 0  ; level label number in the loop (no pending frames)
-    let first-frame: true  ; special check of first frame for "breakpoint 0"
+    let first-frame: 'yes  ; special check of first frame for "breakpoint 0"
 
     let f: start
 
@@ -170,7 +170,7 @@ backtrace*: func [
         ]
 
         if not pending? f [
-            if first-frame and (any [
+            if (yes? first-frame) and (any [
                 true  ; !!! Now these are ADAPT, try just zeroing first frame
                 :a = :pause
                 :a = :breakpoint
@@ -188,7 +188,7 @@ backtrace*: func [
             ]
         ] else [copy []]
 
-        first-frame: false
+        first-frame: 'no
 
         let row: me + 1
 
@@ -301,7 +301,7 @@ backtrace: func [
     return: [~]
 ][
     ; We could backtrace relative to `binding of $return`, but this would
-    ; mean `>> if true [backtrace]` would see that IF in the trace.
+    ; mean `>> if ok [backtrace]` would see that IF in the trace.
     ;
     let stack: backtrace* debug-console-skin/base-frame _
     print mold spread stack
@@ -360,7 +360,7 @@ locals: func [return: [~]] [
 
 
 debug-console: adapt get $console [
-    resumable: true
+    resumable: 'yes
 
     ; The debug skin is made as a global object, so changes to the skin will
     ; persist between invocations for BREAKPOINTs or STEPs.

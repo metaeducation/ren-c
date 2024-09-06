@@ -94,5 +94,5 @@
             fail ["Split did not JOIN equivalently:" mold test mold res]
         ]
     ]
-    true
+    ok
 )

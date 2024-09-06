@@ -9,7 +9,7 @@
         factor: [primary "**" factor | primary]
         primary: [some digit | "(" expr ")"]
         digit: charset "0123456789"
-        true
+        ok
     )
 
     ~parse-incomplete~ !! (parse "123a+2" expr)

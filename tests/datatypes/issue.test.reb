@@ -57,5 +57,5 @@
             fail "wrong type"
         ]
     ]
-    true
+    ok
 )

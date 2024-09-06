@@ -330,7 +330,7 @@ Bounce Action_Executor(Level* L)
                     // for this one.  But we did need to set its index
                     // so we knew it was valid (errors later if not set).
                     //
-                    Init_Blackhole(ARG);  // # means refinement used
+                    Init_Okay(ARG);  // ~okay~ antiform means refinement used
                     goto continue_fulfilling;
                 }
 
@@ -639,7 +639,7 @@ Bounce Action_Executor(Level* L)
             // See remarks on Lookahead_To_Sync_Enfix_Defer_Flag().  We
             // have to account for enfix deferrals in cases like:
             //
-            //     return if false '[foo] else '[bar]
+            //     return if null '[foo] else '[bar]
             //
             // Note that this quoting lookahead ("lookback?") is exempt
             // from the usual "no lookahead" rule while gathering enfix
@@ -1063,7 +1063,7 @@ Bounce Action_Executor(Level* L)
             Clear_Action_Executor_Flag(L, DISPATCHER_CATCHES);
             Clear_Level_Flag(L, NOTIFY_ON_ABRUPT_FAILURE);
 
-            if (Is_True(OUT)) {
+            if (Is_Okay(OUT)) {
                 STATE = ST_ACTION_FULFILLING_ARGS;
                 goto fulfill;
             }

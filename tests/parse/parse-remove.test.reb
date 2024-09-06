@@ -36,7 +36,7 @@
     (
         ws: charset " ^- ^/^M"
         not-ws: complement ws
-        true
+        ok
     )
     ~???~ !! (parse "" [remove])
     ~parse-mismatch~ !! (parse "" [remove one])
@@ -92,7 +92,7 @@
     (
         ws: charset " ^- ^/^M"
         not-ws: complement ws
-        true
+        ok
     )
     ~???~ !! (parse #{} [remove])
     ~parse-mismatch~ !! (parse #{} [remove one])

@@ -39,7 +39,7 @@
         ][
             return a * b * c * either available [available] [1]
         ]
-        true
+        ok
     )
 
     (6000 = (three 10 20 30))
@@ -58,14 +58,14 @@
             return q - r - s
         ]
 
-        true
+        ok
     )
 
     (-40 = (one-20 10))
 
     (
         hijack get $three get $old-three
-        true
+        ok
     )
 
     (60 = (three 10 20 30))

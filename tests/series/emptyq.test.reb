@@ -12,7 +12,7 @@
 )
 
 [#190
-    (x: copy "xx^/" repeat 20 [enline y: join x x] true)
+    (x: copy "xx^/" repeat 20 [enline y: join x x] ok)
 ]
 
 ; EMPTY? is not by default tolerant of null, but it's a common need, so you

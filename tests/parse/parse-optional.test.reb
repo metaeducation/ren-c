@@ -47,6 +47,6 @@
 ]
 
 [https://gitter.im/red/bugs?at=638e27b34cb5585f9666500d (
-    not ok? parse [1] [optional (x: true)]
-    x = true
+    raised? parse [1] [optional (x: 'true)]
+    x = 'true
 )]

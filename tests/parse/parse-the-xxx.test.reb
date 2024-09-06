@@ -25,7 +25,7 @@
 ("b" = parse "aaab" [@[some "x" ("y") | some "a" ("b")]])
 
 [
-    (data: [[some rule] [some rule]], true)
+    (data: [[some rule] [some rule]], ok)
 
     (
         x: [some rule]

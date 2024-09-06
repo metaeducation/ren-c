@@ -44,8 +44,8 @@ module: func [
     return: [module!]
     @product "The result of running the body (~quit~ antiform if it ran QUIT)"
         [any-value?]
-    @quitting "If requested and quitting, when true PRODUCT is QUIT's argument"
-        [logic?]
+    @quitting "If requested and quitting, when yes PRODUCT is QUIT's argument"
+        [yesno?]
     spec "The header block of the module (modified)"
         [~null~ block! object!]
     body "The body of the module"
@@ -144,10 +144,10 @@ module: func [
         assert [block? body]
 
         product: ^ eval body  ; !!! meta-convention to return PACKs?
-        quitting: false
+        quitting: 'no
     ]
     then ^arg-to-quit -> [
-        quitting: true
+        quitting: 'yes
         product: arg-to-quit  ; !!! meta convention?
     ]
 
@@ -168,7 +168,7 @@ do*: func [
     args "Args passed as system.script.args to a script (normally a string)"
         [~null~ element?]
     only "Do not catch quits...propagate them"
-        [logic?]
+        [boolean?]
 ][
     ; For the moment, common features of DO and IMPORT are implemented in the
     ; IMPORT* command.  This includes:
@@ -203,5 +203,5 @@ do*: func [
     ; this is likely done backwards, as having product as a secondary result
     ; means that it has to be meta.
     ;
-    return unmeta [_ @]: import*/args/only null source args only
+    return unmeta [_ @]: import*/args/only null source args true? only
 ]

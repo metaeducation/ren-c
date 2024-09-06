@@ -172,7 +172,7 @@ parse-write-dialect: func [
 ][
     let spec: port.spec
     parse block [
-        opt ['headers (spec.debug: true)]  ; may leave debug as-is
+        opt ['headers (spec.debug: 'on)]  ; may leave debug as-is
         opt ['no-redirect (spec.follow: 'ok)]  ; may leave follow as-is
         spec.method: [word! | ('post)]
         opt [spec.path: [file! | url!]]
@@ -281,7 +281,7 @@ check-response: func [
         ]
     ]
 
-    if spec.debug = true [
+    if spec.debug = 'on [
         spec.debug: info
     ]
 
@@ -614,7 +614,7 @@ sys.util/make-scheme [
             /string
             <local> data
         ][
-            let close?: false
+            let need-close: 'no
             if port.state [
                 if not open? port [
                     cause-error 'Access 'not-open port.spec.ref
@@ -624,13 +624,13 @@ sys.util/make-scheme [
                 ]
             ] else [
                 open port
-                close?: true
+                need-close: 'yes
             ]
 
             data: do-request port except e -> [return raise e]
             assert [find [<ready> <close>] port.state.mode]
 
-            if close? [
+            if yes? need-close [
                 close port
             ]
 
@@ -662,7 +662,7 @@ sys.util/make-scheme [
                     value
                 ]
             ]
-            let close?: false
+            let need-close: 'no
             if port.state [
                 if not open? port [
                     cause-error 'Access 'not-open port.spec.ref
@@ -672,14 +672,14 @@ sys.util/make-scheme [
                 ]
             ] else [
                 open port
-                close?: true
+                need-close: 'yes
             ]
 
             parse-write-dialect port value
             data: do-request port except e -> [return raise e]
             assert [find [<ready> <close>] port.state.mode]
 
-            if close? [
+            if yes? need-close [
                 close port
             ]
 

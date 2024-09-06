@@ -83,8 +83,8 @@ Bounce Yielder_Dispatcher(Level* const L)
     if (Is_Quasi_Blank(mode))  // currently on the stack and running
         fail ("Yielder was re-entered");
 
-    if (Is_Logic(mode)) {  // terminated due to finishing the body or error
-        if (Cell_Logic(mode))  // terminated due to finishing the body
+    if (Is_Boolean(mode)) {  // terminated due to finishing the body or error
+        if (Cell_True(mode))  // terminated due to finishing the body
             return nullptr;
 
         fail ("Yielder called again after raising an error");

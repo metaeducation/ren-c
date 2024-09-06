@@ -78,7 +78,7 @@
     ('inert-with-slashed = pick trap [ get $/a/ ] 'id)
     ('inert-with-slashed = pick trap [ get $.a/ ] 'id)
   ]
-  true
+  ok
 )]
 
 ; Terminal slash does the opposite of terminal dot, by enforcing that the
@@ -116,5 +116,5 @@
     (action? get $/a/)
     (action? get $.a/)
   ]
-  true
+  ok
 )]

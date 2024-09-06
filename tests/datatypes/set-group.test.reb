@@ -62,7 +62,7 @@
         enclose (augment frame [/return [word!]]) f -> [
             (maybe f.return): eval f
         ]
-    ], true)
+    ], ok)
 
     (
         test: lambda [x] [x + 1000]

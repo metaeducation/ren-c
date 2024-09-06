@@ -19,29 +19,29 @@
     e.id = 'zero-divide
 )
 #trap (
-    success: true
+    success: 'true
     error? trap [
         1 / 0
-        success: false
+        success: 'false
     ]
-    success
+    true? success
 )
 #rescue (
-    success: true
+    success: 'true
     f1: does [
         1 / 0
-        success: false
+        success: 'false
     ]
     error? sys.util/rescue [f1]
-    success
+    true? success
 )
 [#822
     #trap (
-        trap [make error! ""] then [<branch-not-run>] else [true]
+        trap [make error! ""] then [<branch-not-run>] else [okay]
     )
 ]
 #rescue (
-    sys.util/rescue [fail make error! ""] then [true]
+    sys.util/rescue [fail make error! ""] then [okay]
 )
 #trap (
     trap [1 / 0] then :error?
@@ -50,7 +50,7 @@
     trap [1 / 0] then e -> [error? e]
 )
 #trap (
-    trap [] then (func [e] [return <handler-not-run>]) else [true]
+    trap [] then (func [e] [return <handler-not-run>]) else [okay]
 )
 [#1514
     #trap (

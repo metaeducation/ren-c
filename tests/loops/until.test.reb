@@ -8,13 +8,13 @@
 ; Test body-block return values
 (1 = until [1])
 ; Test break
-(null? until [break true])
+(null? until [break 'true])
 ; Test continue
 (
-    success: true
-    cycle?: true
-    until [if cycle? [cycle?: false, continue, success: false] true]
-    success
+    success: 'true
+    cycling: 'yes
+    until [if yes? cycling [cycling: 'no, continue, success: 'false] okay]
+    true? success
 )
 ; Test that return stops the loop
 (
@@ -62,15 +62,9 @@
     ('~['1 '2]~ = until [meta pack [1 2]])
 ]
 
-; At one time, UNTIL errored upon receiving antiforms, so that cases like
-; `until [match [logic?] false]` would raise an error on a ~false~ antiform
-; word--as opposed to a plain #[false] value.  This protection no longer made
-; sense once ~false~ the antiform word *was* the representation of falseness.
-; So there's no stopping you shooting yourself in the foot with MATCH here,
-; you need to use something like DID.
 [
     (
-        true = until [did match logic?! false]
+        'false = until [match [boolean?] 'false]
     )
 ]
 

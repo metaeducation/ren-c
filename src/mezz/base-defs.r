@@ -27,16 +27,20 @@ REBOL [
 
 c-break-debug: runs get $c-debug-break  ; easy to mix up
 
+ok: :okay
+
 ; These definitions have been helpful as the syntax has shuffled around,
 ; though today you can say '~void~ and it is considered stable (vs the old
 ; way of saying '')
 ;
 void': meta void
 null': meta null
+okay': meta okay
 trash: nothing': meta nothing
 nihil': meta nihil
 
 eval: :evaluate  ; shorthands should be synonyms, too confusing otherwise
+ok?: :okay?
 
 probe: func* [
     {Debug print a molded value and returns that same value.}
@@ -76,13 +80,13 @@ didn't*: get $didn't/decay
 ; known what would be best for them.  They aren't parameter conventions, they
 ; apply to the whole action.
 ;
-tweak :then 'defer on
-tweak :also 'defer on
-tweak :else 'defer on
-tweak :except 'defer on
-tweak :*then 'defer on
-tweak :*also 'defer on
-tweak :*else 'defer on
+tweak :then 'defer 'on
+tweak :also 'defer 'on
+tweak :else 'defer 'on
+tweak :except 'defer 'on
+tweak :*then 'defer 'on
+tweak :*also 'defer 'on
+tweak :*else 'defer 'on
 
 
 ; ARITHMETIC OPERATORS
@@ -254,7 +258,7 @@ abs: runs get $absolute
 
 unspaced: specialize get $delimit [delimiter: null]
 spaced: specialize get $delimit [delimiter: space]
-newlined: specialize get $delimit [delimiter: newline, tail: #]
+newlined: specialize get $delimit [delimiter: newline, tail: ok]
 
 an: lambda [
     {Prepends the correct "a" or "an" to a string, based on leading character}
@@ -290,7 +294,7 @@ open?: specialize get $reflect [property: 'open?]
 
 
 empty?: func* [
-    "OKAY if blank or void, or if container is empty or at or beyond its tail"
+    "OKAY if blank or void, if empty, or if index is at or beyond its tail"
     return: [logic?]
     container [
         ~void~ blank! any-series? any-sequence? object! port! bitset! map!

@@ -45,12 +45,12 @@
     var: []
     'b = parse [a b] ['a 'b var]
 )
-('b = parse [a b] ['a 'b :(if true '[])])
+('b = parse [a b] ['a 'b :(if ok '[])])
 
 ; Voided expressions work in GET-GROUP! substitutions
 
-('b = parse [a b] ['a 'b :(if false [[some 'c]])])
-('c = parse [a b c c c] ['a 'b :(if true [[some 'c]])])
+('b = parse [a b] ['a 'b :(if null [[some 'c]])])
+('c = parse [a b c c c] ['a 'b :(if ok [[some 'c]])])
 
 ; Liberal policy of letting voids opt-out is convenient to use void as a
 ; state equivalent to no-op...if you are willing to deal with the possible
@@ -62,11 +62,11 @@
 ; such as *c-rule, to draw attention to the issue.
 
 (
-    c-rule: if false [[some 'c]]
+    c-rule: if null [[some 'c]]
     'b = parse [a b] ['a 'b c-rule]
 )
 (
-    c-rule: if true [[some 'c]]
+    c-rule: if ok [[some 'c]]
     'c = parse [a b c c c] ['a 'b c-rule]
 )
 

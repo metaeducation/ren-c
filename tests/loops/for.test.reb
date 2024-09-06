@@ -23,11 +23,11 @@
 ; cycle return value
 (
     blk: [1 2 3 4]
-    true = for i each blk [true]
+    'true = for i each blk ['true]
 )
 (
     blk: [1 2 3 4]
-    false = for i each blk [false]
+    'false = for i each blk ['false]
 )
 ; break cycle
 (
@@ -45,19 +45,19 @@
 )
 ; continue cycle
 (
-    success: true
+    success: 'true
     all [
-        '~[~void~]~ = ^ for i each [1] [continue, success: false]
-        success
+        '~[~void~]~ = ^ for i each [1] [continue, success: 'false]
+        true? success
     ]
 )
 ; zero repetition
 (
-    success: true
+    success: 'true
     blk: []
     all [
-        void? for i each blk [success: false]
-        success
+        void? for i each blk [success: 'false]
+        true? success
     ]
 )
 ; Test that return stops the loop
@@ -122,7 +122,7 @@
         obj1: make object! [x: 20]
         obj2: make object! [x: 30]
         sum: 0
-        true
+        ok
     )
     ~dup-vars~ !! (
         for [x x] each [1 2 3 4] [sum: sum + x]

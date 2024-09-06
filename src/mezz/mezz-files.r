@@ -283,11 +283,11 @@ confirm: func [
     let response: ask question
 
     return case [
-        empty? with [true]
+        empty? with [okay]
         text? with [did find/match response with]
         length of with < 2 [did find/match response first with]
-        find first with response [true]
-        find second with response [false]
+        find first with response [okay]
+        find second with response [okay]
     ]
 ]
 
@@ -321,7 +321,7 @@ list-dir: func [
         word! path! [change-dir to-file path]
     ]
 
-    if r [l: true]
+    if r [l: ok]
     if not l [l: make text! 62] ; approx width
 
     let files: attempt [read %./] else [
@@ -415,7 +415,7 @@ to-relative-file: func [
         ]
         if as-rebol [
             file: local-to-file file
-            no-copy: true
+            no-copy: ok
         ]
     ] else [
         let pos
@@ -424,7 +424,7 @@ to-relative-file: func [
         ]
         if as-local [
             file: file-to-local file
-            no-copy: true
+            no-copy: ok
         ]
     ]
 

@@ -89,7 +89,7 @@ DECLARE_NATIVE(reeval)
 //      'right [<variadic> <end> element?]
 //          "(uses magic -- SHOVE can't be written easily in usermode yet)"
 //      /prefix "Force either prefix or enfix behavior (vs. acting as is)"
-//          [logic?]
+//          [yesno?]
 //  ]
 //
 DECLARE_NATIVE(shove)
@@ -169,7 +169,7 @@ DECLARE_NATIVE(shove)
     //
     bool enfix;
     if (REF(prefix))
-        enfix = not Cell_Logic(ARG(prefix));
+        enfix = Cell_No(ARG(prefix));
     else if (Is_Frame(shovee))
         enfix = Is_Enfixed(shovee);
     else
@@ -270,13 +270,15 @@ DECLARE_NATIVE(do)
       do_helper : {
         UNUSED(REF(args)); // detected via `value? :arg`
 
+        Meta_Quotify(Init_Boolean(SPARE, did REF(only)));
+
         rebPushContinuation_internal(
             cast(Value*, OUT),  // <-- output cell
             LEVEL_MASK_NONE,
             rebRUN(SysUtil(DO_P)),
                 source,
                 rebQ(ARG(args)),
-                REF(only) ? rebQ(Lib(TRUE)) : rebQ(Lib(FALSE))
+                SPARE  // only ('true or 'false)
         );
         return BOUNCE_DELEGATE; }
 
@@ -636,7 +638,7 @@ DECLARE_NATIVE(redo)
     Copy_Cell(SPARE, Lib(REDO));  // label used for throw
     INIT_VAL_FRAME_COUPLING(SPARE, c);  // coupling has restartee as varlist
 
-    const Value* gather_args = Lib(FALSE);
+    const Value* gather_args = Lib(NULL);
     return Init_Thrown_With_Label(LEVEL, gather_args, stable_SPARE);
 }
 
@@ -921,25 +923,12 @@ DECLARE_NATIVE(apply)
 
 } copy_spare_to_var_in_frame: {  /////////////////////////////////////////////
 
-    // 1. Low-level frame mechanics require that no-argument refinements be
-    //    either # or null.  As a higher-level utility, APPLY can throw in
-    //    some assistance so it converts (true => #) and (false => null)
+    // !!! Low-level frame mechanics require that no-argument refinements be
+    // either ~okay~ or ~null~ antiforms.  As a higher-level utility, APPLY
+    // *could* turn [true false yes no on off] into the corresponding canon
+    // logic...but the core APPLY is agnostic and does not do this.
 
-    if (  // convenience: convert logic for no-arg refinement [1]
-        Is_Logic(SPARE)
-        and Get_Parameter_Flag(param, REFINEMENT)
-        and Is_Parameter_Unconstrained(param)
-    ){
-        if (Cell_Logic(SPARE))
-            Init_Blackhole(var);
-        else
-            Init_Nulled(var);
-
-        Freshen_Cell(SPARE);
-    }
-    else {
-        Move_Cell(var, stable_SPARE);  // !!! Review stability
-    }
+    Move_Cell(var, stable_SPARE);  // !!! Review stability
 
     goto handle_next_item;
 

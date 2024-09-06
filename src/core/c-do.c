@@ -38,14 +38,14 @@
 //    one of those cases.
 //
 //    (The theory here is that we're not throwing away any safety, as the
-//     isotopification process was usually just for the purposes of making the
+//     heavy branch process was usually just for the purposes of making the
 //     branch trigger or not.  With that addressed, it's just inconvenient to
 //     force functions to be meta to get things like NULL.)
 //
-//         if true [null] then x -> [
+//         if ok [null] then x -> [
 //             ;
 //             ; Why would we want to have to make it ^x, when we know any
-//             ; nulls that triggered the branch would have been antiforms?
+//             ; nulls that triggered the branch would have been heavy forms?
 //         ]
 //
 void Prep_Action_Level(

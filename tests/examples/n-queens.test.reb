@@ -187,7 +187,8 @@
         solved-boards: null
         return get-number-of-solutions
     ]
-true)
+    ok
+)
 
 
 ; Examples

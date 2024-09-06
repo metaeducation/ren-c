@@ -39,9 +39,9 @@
                     ]
                 ]
             ]
-            return true
+            return ok
         ]
-        true
+        ok
     )
 
     (rescue-protected? [insert value 4])
@@ -55,8 +55,8 @@
 ]
 
 [#1764
-    (unset $blk protect/deep $blk true)
-    (unprotect $blk true)
+    (unset $blk protect/deep $blk, ok)
+    (unprotect $blk, ok)
 ]
 
 

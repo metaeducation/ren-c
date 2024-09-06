@@ -81,8 +81,8 @@
     a-value: first ['a]
     :a-value == any [:a-value]
 )
-(true = any [true])
-(null? any [false])
+(okay = any [okay])
+(null? any [null])
 ($1 == any [$1])
 
 (same? ^append any [^append])
@@ -131,219 +131,219 @@
 (null? any [null])
 ('a == any ['a])
 ; two values
-((unrun :abs) = any [false unrun :abs])
+((unrun :abs) = any [null unrun :abs])
 (
     a-value: #{}
-    same? a-value any [false a-value]
+    same? a-value any [null a-value]
 )
 (
     a-value: charset ""
-    same? a-value any [false a-value]
+    same? a-value any [null a-value]
 )
 (
     a-value: []
-    same? a-value any [false a-value]
+    same? a-value any [null a-value]
 )
 (
     a-value: blank!
-    same? a-value any [false a-value]
+    same? a-value any [null a-value]
 )
-(1/Jan/0000 = any [false 1/Jan/0000])
-(0.0 == any [false 0.0])
-(1.0 == any [false 1.0])
+(1/Jan/0000 = any [null 1/Jan/0000])
+(0.0 == any [null 0.0])
+(1.0 == any [null 1.0])
 (
     a-value: me@here.com
-    same? a-value any [false a-value]
+    same? a-value any [null a-value]
 )
-(error? any [false trap [1 / 0]])
+(error? any [null trap [1 / 0]])
 (
     a-value: %""
-    same? a-value any [false a-value]
+    same? a-value any [null a-value]
 )
 (
     a-value: does []
-    same? unrun :a-value any [false unrun :a-value]
+    same? unrun :a-value any [null unrun :a-value]
 )
 (
     a-value: first [:a]
-    :a-value == any [false :a-value]
+    :a-value == any [null :a-value]
 )
-(NUL == any [false NUL])
+(NUL == any [null NUL])
 
-(0 == any [false 0])
-(1 == any [false 1])
-(#a == any [false #a])
+(0 == any [null 0])
+(1 == any [null 1])
+(#a == any [null #a])
 (
     a-value: first ['a/b]
-    :a-value == any [false :a-value]
+    :a-value == any [null :a-value]
 )
 (
     a-value: first ['a]
-    :a-value == any [false :a-value]
+    :a-value == any [null :a-value]
 )
-(true = any [false true])
-(null? any [false false])
-($1 == any [false $1])
-(same? unrun :append any [false unrun :append])
+(okay = any [null okay])
+(null? any [null null])
+($1 == any [null $1])
+(same? unrun :append any [null unrun :append])
 
-(null? any [false ~null~])
-(_ = any [false _])
+(null? any [null ~null~])
+(_ = any [null _])
 
 (
     a-value: make object! []
-    same? :a-value any [false :a-value]
+    same? :a-value any [null :a-value]
 )
 (
     a-value: first [()]
-    same? :a-value any [false :a-value]
+    same? :a-value any [null :a-value]
 )
-(same? get $+ any [false get $+])
-(0x0 == any [false 0x0])
+(same? get $+ any [null get $+])
+(0x0 == any [null 0x0])
 (
     a-value: 'a/b
-    :a-value == any [false :a-value]
+    :a-value == any [null :a-value]
 )
 (
     a-value: make port! http://
-    port? any [false :a-value]
+    port? any [null :a-value]
 )
-(/a == any [false /a])
+(/a == any [null /a])
 (
     a-value: first [a.b:]
-    :a-value == any [false :a-value]
+    :a-value == any [null :a-value]
 )
 (
     a-value: first [a:]
-    :a-value == any [false :a-value]
+    :a-value == any [null :a-value]
 )
 (
     a-value: ""
-    same? :a-value any [false :a-value]
+    same? :a-value any [null :a-value]
 )
 (
     a-value: make tag! ""
-    same? :a-value any [false :a-value]
+    same? :a-value any [null :a-value]
 )
-(0:00 == any [false 0:00])
-(0.0.0 == any [false 0.0.0])
-(null? any [false null])
-('a == any [false 'a])
-(:abs = any [:abs false])
+(0:00 == any [null 0:00])
+(0.0.0 == any [null 0.0.0])
+(null? any [null null])
+('a == any [null 'a])
+(:abs = any [:abs null])
 (
     a-value: #{}
-    same? a-value any [a-value false]
+    same? a-value any [a-value null]
 )
 (
     a-value: charset ""
-    same? a-value any [a-value false]
+    same? a-value any [a-value null]
 )
 (
     a-value: []
-    same? a-value any [a-value false]
+    same? a-value any [a-value null]
 )
 (
     a-value: blank!
-    same? a-value any [a-value false]
+    same? a-value any [a-value null]
 )
-(1/Jan/0000 = any [1/Jan/0000 false])
-(0.0 == any [0.0 false])
-(1.0 == any [1.0 false])
+(1/Jan/0000 = any [1/Jan/0000 null])
+(0.0 == any [0.0 null])
+(1.0 == any [1.0 null])
 (
     a-value: me@here.com
-    same? a-value any [a-value false]
+    same? a-value any [a-value null]
 )
-(error? any [trap [1 / 0] false])
+(error? any [trap [1 / 0] null])
 (
     a-value: %""
-    same? a-value any [a-value false]
+    same? a-value any [a-value null]
 )
 (
     a-value: does []
-    same? unrun :a-value any [unrun :a-value false]
+    same? unrun :a-value any [unrun :a-value null]
 )
 (
     a-value: first [:a]
-    :a-value == any [:a-value false]
+    :a-value == any [:a-value null]
 )
-(NUL == any [NUL false])
+(NUL == any [NUL null])
 
-(0 == any [0 false])
-(1 == any [1 false])
-(#a == any [#a false])
+(0 == any [0 null])
+(1 == any [1 null])
+(#a == any [#a null])
 (
     a-value: first ['a/b]
-    :a-value == any [:a-value false]
+    :a-value == any [:a-value null]
 )
 (
     a-value: first ['a]
-    :a-value == any [:a-value false]
+    :a-value == any [:a-value null]
 )
-(true = any [true false])
-($1 == any [$1 false])
+(okay = any [okay null])
+($1 == any [$1 null])
 
-(same? unrun :append any [unrun :append false])
-(_ = any [_ false])
-(null? any [~null~ false])
+(same? unrun :append any [unrun :append null])
+(_ = any [_ null])
+(null? any [~null~ null])
 
 (
     a-value: make object! []
-    same? :a-value any [:a-value false]
+    same? :a-value any [:a-value null]
 )
 (
     a-value: first [()]
-    same? :a-value any [:a-value false]
+    same? :a-value any [:a-value null]
 )
-(same? get $+ any [get $+ false])
-(0x0 == any [0x0 false])
+(same? get $+ any [get $+ null])
+(0x0 == any [0x0 null])
 (
     a-value: 'a/b
-    :a-value == any [:a-value false]
+    :a-value == any [:a-value null]
 )
 (
     a-value: make port! http://
-    port? any [:a-value false]
+    port? any [:a-value null]
 )
-(/a == any [/a false])
+(/a == any [/a null])
 (
     a-value: first [a.b:]
-    :a-value == any [:a-value false]
+    :a-value == any [:a-value null]
 )
 (
     a-value: first [a:]
-    :a-value == any [:a-value false]
+    :a-value == any [:a-value null]
 )
 (
     a-value: ""
-    same? :a-value any [:a-value false]
+    same? :a-value any [:a-value null]
 )
 (
     a-value: make tag! ""
-    same? :a-value any [:a-value false]
+    same? :a-value any [:a-value null]
 )
-(0:00 == any [0:00 false])
-(0.0.0 == any [0.0.0 false])
-(null? any [null false])
-('a == any ['a false])
-; evaluation stops after encountering something else than FALSE or NULL
+(0:00 == any [0:00 null])
+(0.0.0 == any [0.0.0 null])
+(null? any [null null])
+('a == any ['a null])
+; evaluation stops after encountering something else than null or NULL
 (
-    success: true
-    any [true success: false]
+    success: okay
+    any [okay success: null]
     success
 )
 (
-    success: true
-    any [1 success: false]
+    success: okay
+    any [1 success: null]
     success
 )
 ; evaluation continues otherwise
 (
-    success: false
-    any [false success: true]
+    success: null
+    any [null success: okay]
     success
 )
 (
-    success: false
-    blank = any [blank success: true]
+    success: null
+    blank = any [blank success: okay]
 )
 ; RETURN stops evaluation
 (
@@ -369,13 +369,13 @@
     ]
 )
 ; recursivity
-(any [false any [true]])
-(null? any [false any [false]])
+(any [null any [okay]])
+(null? any [null any [null]])
 
 ; infinite recursion
 (
     n: 0
-    blk: [all [either 5000 = n: n + 1 [throw <deep-enough>] [true]]]
+    blk: [all [either 5000 = n: n + 1 [throw <deep-enough>] [okay]]]
     append blk.2 as group! blk
     <deep-enough> = catch blk
 )
@@ -390,7 +390,7 @@
     /predicate cascade [get $odd?, get $not]
 ])
 
-('~[~false~]~ = ^ any/predicate [1 false 2] :not)
+('~[~null~]~ = ^ any/predicate [1 null 2] :not)
 ('~[~null~]~ = ^ any/predicate [1 null 2] :not)
 ("this is why" = (any/predicate [1 null 2] :not then ["this is why"]))
 
@@ -412,12 +412,9 @@
 [
     (void? any @[])
     (1 = any @[1 + 2])
-    ('~false~ = any @[~false~ _])
-    ('false = any inert reduce ['false blank])
-    ('false = any @[false])  ; just the word, and words are truthy
+    ('~null~ = any @[~null~ _])
+    ('null = any inert reduce ['null blank])
+    ('null = any @[null])  ; just the word, and words are truthy
 ]
-
-(not any [match logic?! false])
-(true = any [did match logic?! false])
 
 (^append = ^(any [1 > 2, :append, 3 > 4]))

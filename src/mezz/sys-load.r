@@ -165,7 +165,7 @@ load-header: func [
     ]
 
     let binary
-    if true [  ; was `if key = 'REBOL`, how was that ever not true?
+    if <always> [  ; was `if key = 'REBOL`, how was that ever not true?
         ;
         ; !!! R3-Alpha apparently used a very bad heuristic of attempting to
         ; decompress garbage (likely asking for a very big memory allocation
@@ -423,11 +423,10 @@ import*: func [
     /args "Args passed as system.script.args to a script (normally a string)"
         [element?]
     /only "Do not catch quits...propagate them"
-        [logic?]
     /into "e.g. reuse Context* already made for NATIVEs loading from extension"
         [module!]
     <static>
-        importing-remotely (false)
+        importing-remotely ('no)
 ][
     return: adapt get $return [  ; make sure all return paths actually import vars
         ;
@@ -487,7 +486,7 @@ import*: func [
     ; `import @mod2`.
     ;
     let old-importing-remotely: importing-remotely
-    if all [importing-remotely, word? source] [
+    if all [yes? importing-remotely, word? source] [
         source: to the-word! source
     ]
 
@@ -521,7 +520,7 @@ import*: func [
     ]
 
     if url? source [
-        importing-remotely: true
+        importing-remotely: 'yes
     ]
 
     === LOAD JUST THE HEADER FOR EXAMINATION, TO FIND THE NAME ===
@@ -551,7 +550,7 @@ import*: func [
 
     ensure [~null~ object!] hdr
 
-    let is-module: hdr and ('module = select hdr 'type)
+    let is-module: to-yesno all [hdr, 'module = select hdr 'type]
 
     === MAKE SCRIPT CHARACTERIZATION OBJECT AND CALL PRE-SCRIPT HOOK ===
 
@@ -626,7 +625,7 @@ import*: func [
 
     ensure module! mod
 
-    if is-module and name [
+    if (yes? is-module) and name [
         append system.modules spread :[name mod]
     ]
 
@@ -639,7 +638,7 @@ import*: func [
 
     === PROPAGATE QUIT IF REQUESTED, OR RETURN MODULE ===
 
-    if quitting and only [
+    if only and (yes? quitting) [
         quit/with unmeta product'  ; "rethrow" the QUIT if DO/ONLY
     ]
 

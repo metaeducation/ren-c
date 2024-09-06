@@ -1270,7 +1270,7 @@ REBTYPE(Context)
             return nullptr;
 
         if (Symbol_Id(verb) == SYM_FIND)
-            return Init_True(OUT); // !!! obscures non-LOGIC! result?
+            return Init_Logic(OUT, true); // !!! obscures non-LOGIC! result?
 
         return COPY(CTX_VAR(c, n)); }
 

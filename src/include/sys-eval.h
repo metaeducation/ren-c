@@ -87,10 +87,10 @@
 
 // A "set friendly" antiform is one that allows assignment via SET-WORD!
 // without any special considerations.  The allowance of antiform WORD! started
-// so that ~true~ and ~false~ could be implemented as antiforms, but a decision
-// to also permit the unset state to assign easily was made as well--so that
-// a variable could easily be unset with (var: ~).  So this shifted to say
-// that all stable antiforms are set friendly.
+// so that ~null~ could be implemented as an antiform, but a decision to also
+// permit the unset state to assign easily was made as well--so that a variable
+// could easily be unset with (var: ~).  So this shifted to say that all stable
+// antiforms are set friendly.
 //
 INLINE bool Is_Antiform_Set_Friendly(const Value* v) {
     assert(QUOTE_BYTE(v) == ANTIFORM_0);

@@ -18,11 +18,11 @@
 ; cycle return value
 (
     blk: [1 2 3 4]
-    true = iterate blk [true]
+    'true = iterate blk ['true]
 )
 (
     blk: [1 2 3 4]
-    false = iterate blk [false]
+    'false = iterate blk ['false]
 )
 ; break cycle
 (
@@ -37,17 +37,17 @@
 )
 ; continue cycle
 (
-    success: true
+    success: 'true
     x: "a"
-    iterate x [continue, success: false]
-    success
+    iterate x [continue, success: 'false]
+    true? success
 )
 ; zero repetition
 (
-    success: true
+    success: 'true
     blk: []
-    iterate blk [success: false]
-    success
+    iterate blk [success: 'false]
+    true? success
 )
 ; Test that return stops the loop
 (

@@ -21,21 +21,21 @@
 ([] = copy/part [] 0)
 ([] = copy/part [] 1)
 ([] = copy/part [] 2147483647)
-(ok? copy blank)
+(unraised? copy blank)
 
 ;[#877
 ;    ~stack-overflow~ !! (
 ;        a: copy []
 ;        insert a a
 ;        error? trap [copy/deep a]
-;        true
+;        ok
 ;    )
 ;]
 
 [#2043 (
     f: func [] []
     error? trap [copy :f]
-    true
+    ok
 )]
 
 

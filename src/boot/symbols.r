@@ -26,6 +26,15 @@ REBOL [
     }
 ]
 
+; === WORD!-based LOGIC ===
+
+true
+false
+on
+off
+yes
+no
+
 ; === NAMED BAD WORDS (SEE %sys-bad-word.h) ===
 
 unset

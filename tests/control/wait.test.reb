@@ -1,4 +1,4 @@
 ; functions/control/wait.r
 [#5
-    (wait 0:0:0.3 true)
+    (wait 0:0:0.3 ok)
 ]

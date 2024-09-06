@@ -619,7 +619,9 @@ RebolValue* API_rebLogic(bool logic)
 {
     ENTER_API;
 
-    return Init_Logic(Alloc_Value(), did logic);
+    if (not logic)
+        return nullptr;
+    return Init_Logic(Alloc_Value(), true);
 }
 
 
@@ -1650,7 +1652,7 @@ bool API_rebTruthy(
     DECLARE_VALUE (condition);
     Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, condition, p, vaptr);
 
-    return Is_Truthy(condition);  // will fail() on (most) antiforms
+    return Is_Trigger(condition);  // will fail() on (most) antiforms
 }
 
 
@@ -1669,7 +1671,7 @@ bool API_rebNot(
     DECLARE_VALUE (condition);
     Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, condition, p, vaptr);
 
-    return Is_Falsey(condition);  // will fail() on (most) antiforms
+    return Is_Inhibitor(condition);  // will fail() on (most) antiforms
 }
 
 
@@ -1726,6 +1728,65 @@ bool API_rebUnboxLogic(
 
     return Cell_Logic(result);
 }
+
+
+//
+//  rebUnboxBoolean: API
+//
+bool API_rebUnboxBoolean(
+    RebolSpecifier** specifier_ref,
+    const void* p, void* vaptr
+){
+    ENTER_API;
+
+    DECLARE_VALUE (result);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, result, p, vaptr);
+
+    if (not Is_Boolean(result))
+        fail ("rebUnboxBoolean() called on non-[true false]!");
+
+    return Cell_True(result);
+}
+
+
+//
+//  rebUnboxYesNo: API
+//
+bool API_rebUnboxYesNo(
+    RebolSpecifier** specifier_ref,
+    const void* p, void* vaptr
+){
+    ENTER_API;
+
+    DECLARE_VALUE (result);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, result, p, vaptr);
+
+    if (not Is_YesNo(result))
+        fail ("rebUnboxYesNo() called on non-[yes no]!");
+
+    return Cell_Yes(result);
+}
+
+
+//
+//  rebUnboxOnOff: API
+//
+bool API_rebUnboxOnOff(
+    RebolSpecifier** specifier_ref,
+    const void* p, void* vaptr
+){
+    ENTER_API;
+
+    DECLARE_VALUE (result);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, result, p, vaptr);
+
+    if (not Is_OnOff(result))
+        fail ("rebUnboxOnOff() called on non-[on off]!");
+
+    return Cell_On(result);
+}
+
+
 
 
 //

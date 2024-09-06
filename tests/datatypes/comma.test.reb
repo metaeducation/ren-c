@@ -37,7 +37,7 @@
         e: trap [load text]
         assert [e.id = 'scan-invalid]
     ]
-    true
+    ok
 )
 
 ; Due to the spacing rule, the traditional "comma means decimal point" rule

@@ -21,7 +21,7 @@
             fail [mold sigil]
         ]
     ]
-    true
+    ok
 )
 
 ; try termination by delimiter (and molding)
@@ -108,7 +108,7 @@
             ]
         ]
     ]
-    true
+    ok
 )
 
 ; : has no meaning in the evaluator yet

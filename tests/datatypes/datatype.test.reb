@@ -16,7 +16,7 @@
             fail [typename "is not a type-block!"]
         ]
     ]
-    true
+    ok
 )
 
 (type-word? &even?)  ; a type constraint

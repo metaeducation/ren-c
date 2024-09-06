@@ -20,7 +20,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Null is used as a signal for "soft failure", e.g. (find [c d] 'e) is null.
-// It is treated as conditionally false by branching constructs like IF.
+// It is treated as a "branch inhibitor" by control constructs like IF.
 //
 // The representation for nulls is the antiform of the WORD! "null":
 //
@@ -45,7 +45,7 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * In the libRebol API, a nulled cell handle actually uses C's concept of
+// * In the libRebol API, a nulled RebolValue* actually uses C's concept of
 //   a null pointer to represent the optional state.  By promising this
 //   is the case, clients of the API can write `if (value)` or `if (!value)`
 //   as tests for the null state...with no need to release cell handles
@@ -59,7 +59,7 @@
 //   representation with the test for if a pointer itself is C's NULL, it is
 //   called "Is_Nulled()" instead of "Is_Null()".
 //
-// * We ensure that non-quoted, non-quasi NULL isn't written into a Cell*
+// * We ensure that non-quoted, non-quasi NULL isn't written into an Element*
 //   e.g. for a BLOCK!... must be a Value*, e.g. a context variable or
 //   frame output.
 //
@@ -102,10 +102,10 @@ INLINE bool Is_Quasi_Null(const Cell* v) {
 //     >> x: ~[~null~]~
 //     == ~null~  ; anti
 //
-//     >> if true [null]
+//     >> if ok [null]
 //     == ~[~null~]~  ; anti
 //
-//     >> if true [null] else [print "This won't run"]
+//     >> if ok [null] else [print "This won't run"]
 //     == ~[~null~]~  ; anti
 //
 // ("Heavy Voids" are an analogous concept for VOID.)

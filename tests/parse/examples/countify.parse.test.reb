@@ -28,7 +28,7 @@
             ]
         ]
     ]
-    true
+    ok
 )(
     ["a" 3 "b" 3 "c" 3] = countify ["a" "b" "c"] "aaabccbbc"
 )(

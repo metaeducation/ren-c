@@ -975,7 +975,7 @@ REBTYPE(Fail)
 //          [<unrun> frame!]
 //      property "Currently must be [defer postpone]"
 //          [word!]
-//      enable ; should be LOGIC!, but logic constraint not loaded yet
+//      enable ; should be ONOFF?, but constraint not loaded yet (native order)
 //  ]
 //
 DECLARE_NATIVE(tweak)
@@ -1013,7 +1013,7 @@ DECLARE_NATIVE(tweak)
         fail ("TWEAK currently only supports [barrier defer postpone]");
     }
 
-    if (Cell_Logic(ARG(enable)))
+    if (Cell_On(ARG(enable)))
         ACT_IDENTITY(act)->leader.bits |= flag;
     else
         ACT_IDENTITY(act)->leader.bits &= ~flag;

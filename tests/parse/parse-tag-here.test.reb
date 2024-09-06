@@ -52,10 +52,10 @@
     ]
 )(
     all [
-        true = res: parse ser: "foo" [
+        'true = res: parse ser: "foo" [
             pos: <here>
             val: across one
-            accept (true)
+            accept ('true)
         ]
         val = "f"
         pos = ser

@@ -356,10 +356,10 @@
 ; reflexivity
 (strict-equal? first [a:] first [a:])
 ; logic? values
-(strict-equal? true true)
-(strict-equal? false false)
-(not strict-equal? true false)
-(not strict-equal? false true)
+(strict-equal? okay okay)
+(strict-equal? null null)
+(not strict-equal? okay null)
+(not strict-equal? null okay)
 ; port! values; reflexivity; in this case the error should not be generated, I think
 (
     p: make port! http://

@@ -9,12 +9,14 @@
 ; Changing this convention was a popular suggestion:
 ; https://github.com/metaeducation/rebol-issues/issues/1879
 ;
+; Also, the logic operation is on OKAY and NULL, due to the agnosticism about
+; what words are used in Flexible Logic.
 
 ; logic?
-(true and+ true = true)
-(true and+ false = false)
-(false and+ true = false)
-(false and+ false = false)
+(okay and+ okay = okay)
+(okay and+ null = null)
+(null and+ okay = null)
+(null and+ null = null)
 
 ; integer!
 (1 and+ 1 = 1)
@@ -68,70 +70,70 @@
 
 ; GROUP! for the right clause, short circuit.
 ;
-(false and (false) = false)
-(false and (true) = false)
-(true and (false) = false)
-(true and (true) = true)
+(null and (null) = null)
+(null and (okay) = null)
+(okay and (null) = null)
+(okay and (okay) = okay)
 (
     x: 1020
     all [
-        true and (x: null) = false
+        okay and (x: null) = null
         null? x
     ]
 )
 (
     x: null
     all [
-        true and (x: 304) = true
+        okay and (x: 304) = okay
         x = 304
     ]
 )
 (
     x: 1020
     all [
-        (<truthy>) and (x: 304) = true
+        (<truthy>) and (x: 304) = okay
         x = 304
     ]
 )
 (
     x: 1020
     all [
-        (<truthy>) and (x: null) = false
+        (<truthy>) and (x: null) = null
         null? x
     ]
 )
 
 
-(false or (false) = false)
-(false or (true) = true)
-(true or (false) = true)
-(true or (true) = true)
+(null or (null) = null)
+(null or (okay) = okay)
+(okay or (null) = okay)
+(okay or (okay) = okay)
 (
     x: 1020
     all [
-        false or (x: null) = false
+        null or (x: null) = null
         null? x
     ]
 )
 (
     x: null
     all [
-        false or (x: 304) = true
+        null or (x: 304) = okay
         x = 304
     ]
 )
 (
     x: 1020
     all [
-        (null) or (x: 304) = true
+        (null) or (x: 304) = okay
         x = 304
     ]
 )
 (
     x: 1020
     all [
-        (null) or (x: true) = true
-        x = true
+        (null) or (x: okay) = okay
+        x = okay
     ]
 )
 
@@ -146,13 +148,13 @@
 [
     (
         x: 1
-        y: true  ; truesum: does [x: x * 2 true]
-        n: false  ; falsesum: does [x: x * 3 false]
+        y: okay  ; truesum: does [x: x * 2 'true]
+        n: null  ; falsesum: does [x: x * 3 'false]
         o: make object! [
-            y: true  ; :truesum
-            n: false  ; :falsesum
+            y: okay  ; :truesum
+            n: null  ; :falsesum
         ]
-        true
+        okay
     )
 
     (did y and y)

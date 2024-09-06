@@ -606,7 +606,7 @@ client-hello: func [
     ; chooses).  At time of writing, we are experimenting with secp256r1
     ; and not building in any others.
     ;
-    if true [  ; should depend on if any "_ECDHE_" ciphers are in the table
+    if <secp256r1> [  ; should depend on "_ECDHE_" ciphers in the table
         emit ctx [
             #{00 0A}                    ; extension type (supported_groups=10)
           extension_length:
@@ -632,7 +632,7 @@ client-hello: func [
     ; We've modified the "easy-ecc" library providing secp256r1 to accept
     ; uncompressed format keys (it initially only took X coordinate and sign).
     ;
-    if true [  ; should depend on if any "_ECDHE_" ciphers are in the table
+    if <secp256r1> [  ; should depend on "_ECDHE_" ciphers in the table
         emit ctx [
             #{00 0b}                    ; extension type (ec_points_format=11)
           extension_length:
@@ -862,7 +862,11 @@ finished: func [
         applique :prf [
             ctx: ctx
             secret: ctx.master-secret
-            label: if ctx.server? ["server finished"] else ["client finished"]
+            label: if yes? ctx.is-server [
+                "server finished"
+            ] else [
+                "client finished"
+            ]
             seed: seed
             output-length: 12
         ]
@@ -1081,7 +1085,7 @@ parse-messages: func [
     let result: make block! 8
     let data: proto.messages
 
-    if ctx.encrypted? [
+    if yes? ctx.is-encrypted [
         all [ctx/block-size, ctx.version > 1.0] then [
             ;
             ; Grab the server's initialization vector, which will be new for
@@ -1134,7 +1138,11 @@ parse-messages: func [
                 let msg-type: try select message-types data.1  ; 1 byte
 
                 update-read-state ctx (
-                    if ctx.encrypted? [#encrypted-handshake] else [msg-type]
+                    if yes? ctx.is-encrypted [
+                        #encrypted-handshake
+                    ] else [
+                        msg-type
+                    ]
                 )
 
                 let len: debin [be +] copy/part (skip data 1) 3
@@ -1418,7 +1426,7 @@ parse-messages: func [
                             bin <> applique :prf [
                                 ctx: ctx
                                 secret: ctx.master-secret
-                                label: either ctx.server? [
+                                label: either yes? ctx.is-server [
                                     "client finished"
                                 ][
                                     "server finished"
@@ -1442,7 +1450,7 @@ parse-messages: func [
 
                 append ctx.handshake-messages copy/part data len + 4
 
-                let skip-amount: either ctx.encrypted? [
+                let skip-amount: either yes? ctx.is-encrypted [
                     let mac: copy/part skip data len + 4 ctx/hash-size
 
                     let mac-check: checksum/key ctx/hash-method make binary! [
@@ -1467,7 +1475,7 @@ parse-messages: func [
         ]
 
         <change-cipher-spec> [
-            ctx.encrypted?: true
+            ctx.is-encrypted: 'yes
             append result context [
                 type: 'ccs-message-type
             ]
@@ -1684,7 +1692,7 @@ tls-init: func [
     ctx.seq-num-r: 0
     ctx.seq-num-w: 0
     ctx.mode: null
-    ctx.encrypted?: false
+    ctx.is-encrypted: 'no
     assert [not ctx.suite]
 ]
 
@@ -1730,13 +1738,13 @@ tls-read-data: func [
                 same? tail of ctx.data-buffer data
             ]
             clear ctx.data-buffer
-            return true
+            return okay
         ]
     ]
 
     debug ["CONTINUE READING..."]
     clear change ctx.data-buffer data
-    return false
+    return null
 ]
 
 
@@ -1762,8 +1770,8 @@ check-response: func [
         "bytes in mode:" tls-port.state.mode
     ]
 
-    let complete?: tls-read-data tls-port.state port.data
-    let application?: false
+    let is-complete: to-yesno tls-read-data tls-port.state port.data
+    let is-application: 'no
 
     for-each proto tls-port.state.resp [
         switch proto.type [
@@ -1774,7 +1782,7 @@ check-response: func [
                             clear tls-port.state.port-data
                         ]
                         append tls-port.data msg.content
-                        application?: true
+                        is-application: 'yes
                         msg.type: null
                     ]
                 ]
@@ -1783,23 +1791,23 @@ check-response: func [
                 for-each msg proto.messages [
                     if msg.description = "Close notify" [
                         do-commands tls-port [<close-notify>]
-                        return true
+                        return okay
                     ]
                 ]
             ]
         ]
     ]
 
-    debug ["data complete?:" complete? "application?:" application?]
+    debug ["data complete?:" is-complete "application?:" is-application]
 
-    if application? [
+    if yes? is-application [
         ; Done regardless?
     ] else [
-        if not complete? [  ; !!! to avoid multiple in-flight read
+        if no? is-complete [  ; !!! to avoid multiple in-flight read
             read port
         ]
     ]
-    return complete?
+    return yes? is-complete
 ]
 
 
@@ -1868,7 +1876,7 @@ sys.util/make-scheme [
                     ]
                 ]
 
-                server?: false ; !!! server role of protocol not yet written
+                is-server: 'no ; !!! server role of protocol not yet written
 
                 ; Used by https://en.wikipedia.org/wiki/Server_Name_Indication
                 host-name: port.spec.host
@@ -1936,7 +1944,7 @@ sys.util/make-scheme [
                 ;
                 handshake-messages: make binary! 4096
 
-                encrypted?: false
+                is-encrypted: 'no
 
                 client-random: null
                 server-random: null

@@ -4,7 +4,7 @@
 (
     sum: 0
     all [
-        true = every x [1 3 7] [
+        okay = every x [1 3 7] [
             sum: me + x
             odd? x
         ]
@@ -29,7 +29,7 @@
         null = every x [1 2 7] [
             sum: me + x
             if even? x [break]
-            true
+            okay
         ]
         3 = sum
     ]

@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -26,6 +26,199 @@
 
 #include "cells/cell-money.h" // !!! For conversions (good dependency?)
 
+
+//
+//  true?: native [
+//
+//  {Tests if word is the word TRUE}
+//
+//      return: [logic?]
+//      word "Must be the word TRUE or FALSE"
+//          [word!]
+//  ]
+//
+DECLARE_NATIVE(true_q)
+{
+    INCLUDE_PARAMS_OF_TRUE_Q;
+
+    Value* w = ARG(word);
+
+    if (Cell_Word_Id(w) == SYM_TRUE)
+        return Init_Logic(OUT, true);
+    if (Cell_Word_Id(w) == SYM_FALSE)
+        return Init_Logic(OUT, false);
+    fail ("TRUE? requires word to be TRUE or FALSE");
+}
+
+
+//
+//  false?: native [
+//
+//  {Tests if value is the word FALSE}
+//
+//      return: [logic?]
+//      word "Must be the word TRUE or FALSE"
+//          [word!]
+//  ]
+//
+DECLARE_NATIVE(false_q)
+{
+    INCLUDE_PARAMS_OF_FALSE_Q;
+
+    Value* w = ARG(word);
+
+    if (Cell_Word_Id(w) == SYM_FALSE)
+        return Init_Logic(OUT, true);
+    if (Cell_Word_Id(w) == SYM_TRUE)
+        return Init_Logic(OUT, false);
+    fail ("FALSE? requires word to be TRUE or FALSE");
+}
+
+
+//
+//  boolean: native [
+//
+//  "The word TRUE if the supplied value is a branch trigger, otherwise FALSE"
+//
+//      return: [boolean?]
+//      value [any-value?]
+//  ]
+//
+DECLARE_NATIVE(boolean)
+{
+    INCLUDE_PARAMS_OF_BOOLEAN;
+
+    return Init_Word(OUT, Is_Trigger(ARG(value)) ? Canon(TRUE) : Canon(FALSE));
+}
+
+
+//
+//  yes?: native [
+//
+//  {Tests if word is the word YES}
+//
+//      return: [logic?]
+//      word [yesno?]
+//  ]
+//
+DECLARE_NATIVE(yes_q)
+{
+    INCLUDE_PARAMS_OF_YES_Q;
+
+    Value* w = ARG(word);
+
+    if (Cell_Word_Id(w) == SYM_YES)
+        return Init_Logic(OUT, true);
+    if (Cell_Word_Id(w) == SYM_NO)
+        return Init_Logic(OUT, false);
+    fail ("YES? requires word to be YES or NO");
+}
+
+
+//
+//  no?: native [
+//
+//  "Tests if value is the word NO"
+//
+//      return: [logic?]
+//      word "Must be the word YES or NO"
+//          [yesno?]
+//  ]
+//
+DECLARE_NATIVE(no_q)
+{
+    INCLUDE_PARAMS_OF_NO_Q;
+
+    Value* w = ARG(word);
+
+    if (Cell_Word_Id(w) == SYM_NO)
+        return Init_Logic(OUT, true);
+    if (Cell_Word_Id(w) == SYM_YES)
+        return Init_Logic(OUT, false);
+    fail ("NO? requires word to be YES or NO");
+}
+
+
+//
+//  to-yesno: native [
+//
+//  "The word YES if the supplied value is a branch trigger, otherwise NO"
+//
+//      return: [yesno?]
+//      value [any-value?]
+//  ]
+//
+DECLARE_NATIVE(to_yesno)
+{
+    INCLUDE_PARAMS_OF_TO_YESNO;
+
+    return Init_Word(OUT, Is_Trigger(ARG(value)) ? Canon(YES) : Canon(NO));
+}
+
+
+//
+//  on?: native [
+//
+//  "Tests if word is the word ON"
+//
+//      return: [logic?]
+//      word [onoff?]
+//  ]
+//
+DECLARE_NATIVE(on_q)
+{
+    INCLUDE_PARAMS_OF_ON_Q;
+
+    Value* w = ARG(word);
+
+    if (Cell_Word_Id(w) == SYM_ON)
+        return Init_Logic(OUT, true);
+    if (Cell_Word_Id(w) == SYM_OFF)
+        return Init_Logic(OUT, false);
+    fail ("ON? requires word to be ON or OFF");
+}
+
+
+//
+//  off?: native [
+//
+//  "Tests if value is the word OFF"
+//
+//      return: [logic?]
+//      word [onoff?]
+//  ]
+//
+DECLARE_NATIVE(off_q)
+{
+    INCLUDE_PARAMS_OF_NO_Q;
+
+    Value* w = ARG(word);
+
+    if (Cell_Word_Id(w) == SYM_OFF)
+        return Init_Logic(OUT, true);
+    if (Cell_Word_Id(w) == SYM_ON)
+        return Init_Logic(OUT, false);
+    fail ("OFF? requires word to be ON or OFF");
+}
+
+
+//
+//  to-onoff: native [
+//
+//  "The word ON if the supplied value is a branch trigger, otherwise OFF"
+//
+//      return: [onoff?]
+//      value [any-value?]
+//  ]
+//
+DECLARE_NATIVE(to_onoff)
+{
+    INCLUDE_PARAMS_OF_TO_ONOFF;
+
+    return Init_Word(OUT, Is_Trigger(ARG(value)) ? Canon(ON) : Canon(OFF));
+}
+
+
 //
 //  and?: native [
 //
@@ -40,10 +233,10 @@ DECLARE_NATIVE(and_q)
 {
     INCLUDE_PARAMS_OF_AND_Q;
 
-    if (Is_Truthy(ARG(value1)) && Is_Truthy(ARG(value2)))
-        return Init_True(OUT);
+    if (Is_Trigger(ARG(value1)) && Is_Trigger(ARG(value2)))
+        return Init_Logic(OUT, true);
 
-    return Init_False(OUT);
+    return Init_Logic(OUT, false);
 }
 
 
@@ -61,10 +254,10 @@ DECLARE_NATIVE(nor_q)
 {
     INCLUDE_PARAMS_OF_NOR_Q;
 
-    if (Is_Falsey(ARG(value1)) && Is_Falsey(ARG(value2)))
-        return Init_True(OUT);
+    if (Is_Inhibitor(ARG(value1)) && Is_Inhibitor(ARG(value2)))
+        return Init_Logic(OUT, true);
 
-    return Init_False(OUT);
+    return Init_Logic(OUT, false);
 }
 
 
@@ -84,7 +277,7 @@ DECLARE_NATIVE(nand_q)
 
     return Init_Logic(
         OUT,
-        Is_Truthy(ARG(value1)) and Is_Truthy(ARG(value2))
+        Is_Trigger(ARG(value1)) and Is_Trigger(ARG(value2))
     );
 }
 
@@ -102,22 +295,22 @@ DECLARE_NATIVE(to_logic)
 {
     INCLUDE_PARAMS_OF_TO_LOGIC;
 
-    return Init_Logic(OUT, Is_Truthy(ARG(value)));
+    return Init_Logic(OUT, Is_Trigger(ARG(value)));
 }
 
 
 //
-//  false-if-zero: native [
+//  null-if-zero: native [
 //
-//  "False if the integer input is a zero"
+//  "Null if the integer input is a zero"
 //
 //      return: [logic?]
 //      integer [integer!]
 //  ]
 //
-DECLARE_NATIVE(false_if_zero)
+DECLARE_NATIVE(null_if_zero)
 {
-    INCLUDE_PARAMS_OF_FALSE_IF_ZERO;
+    INCLUDE_PARAMS_OF_NULL_IF_ZERO;
 
     return Init_Logic(OUT, VAL_INT64(ARG(integer)) != 0);
 }
@@ -126,10 +319,9 @@ DECLARE_NATIVE(false_if_zero)
 //
 //  not: native/intrinsic [
 //
-//  "Returns the logic complement"
+//  "Returns the logic complement (inverts the nullness of what's passed in)"
 //
-//      return: "Only ~false~ and ~null~ antiforms return a ~true~ antiform"
-//          [logic?]
+//      return: [logic?]
 //      value
 //  ]
 //
@@ -137,7 +329,7 @@ DECLARE_INTRINSIC(not_1)  // see TO-C-NAME
 {
     UNUSED(phase);
 
-    Init_Logic(out, Is_Falsey(arg));
+    Init_Logic(out, Is_Inhibitor(arg));
 }
 
 
@@ -190,13 +382,13 @@ DECLARE_NATIVE(and_1)  // see TO-C-NAME
     Value* left = ARG(left);
     Value* right = ARG(right);
 
-    if (Is_Falsey(left))
-        return Init_False(OUT);
+    if (Is_Inhibitor(left))
+        return Init_Logic(OUT, false);
 
     if (Do_Logic_Right_Side_Throws(SPARE, right))
         return THROWN;
 
-    return Init_Logic(OUT, Is_Truthy(stable_SPARE));
+    return Init_Logic(OUT, Is_Trigger(stable_SPARE));
 }
 
 
@@ -218,13 +410,13 @@ DECLARE_NATIVE(or_1)  // see TO-C-NAME
     Value* left = ARG(left);
     Value* right = ARG(right);
 
-    if (Is_Truthy(left))
-        return Init_True(OUT);
+    if (Is_Trigger(left))
+        return Init_Logic(OUT, true);
 
     if (Do_Logic_Right_Side_Throws(SPARE, right))
         return THROWN;
 
-    return Init_Logic(OUT, Is_Truthy(stable_SPARE));
+    return Init_Logic(OUT, Is_Trigger(stable_SPARE));
 }
 
 
@@ -249,10 +441,10 @@ DECLARE_NATIVE(xor_1)  // see TO-C-NAME
     if (Do_Logic_Right_Side_Throws(SPARE, right))
         return THROWN;
 
-    if (Is_Falsey(left))
-        return Init_Logic(OUT, Is_Truthy(stable_SPARE));
+    if (Is_Inhibitor(left))
+        return Init_Logic(OUT, Is_Trigger(stable_SPARE));
 
-    return Init_Logic(OUT, Is_Falsey(stable_SPARE));
+    return Init_Logic(OUT, Is_Inhibitor(stable_SPARE));
 }
 
 
@@ -389,8 +581,8 @@ REBTYPE(Antiform)
         }
 
         if (Random_Int(REF(secure)) & 1)
-            return Init_True(OUT);
-        return Init_False(OUT); }
+            return Init_Logic(OUT, true);
+        return Init_Logic(OUT, false); }
 
     default:
         break;

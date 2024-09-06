@@ -47,7 +47,7 @@
             ]
             return sum + 1
         ]
-        true
+        ok
     )
 
     (1 = eval [normal])
@@ -64,8 +64,8 @@
             ]
             return sum + 1
         ]
-        tweak :defers 'defer on
-        true
+        tweak :defers 'defer 'on
+        ok
     )
 
     (1 = eval [defers])
@@ -82,7 +82,7 @@
                 ]
             ]
         ]
-        true
+        ok
     )
 
     ([] = eval [soft])
@@ -100,7 +100,7 @@
                 ]
             ]
         ]
-        true
+        ok
     )
 
     ([] = eval [hard])

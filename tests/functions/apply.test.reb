@@ -86,19 +86,17 @@
     )
 ]
 
-; Refinements that take no argument are allowed to be not just # or NULL (which
-; is what the core frame mechanics demand), but also LOGIC!.  APPLY will
-; convert true to # and false to NULL.
+; Refinements that take no argument can only be OKAY or NULL
 [
     (
         testme: func [/refine] [return refine]
-        true
+        ok
     )
 
-    (# = apply get $testme [/refine #])
+    (ok = apply get $testme [/refine ok])
     (null = apply get $testme [/refine null])
-    (# = apply get $testme [/refine true])
-    (null = apply get $testme [/refine false])
+    ~expect-arg~ !! (apply get $testme [/refine 'true])
+    ~expect-arg~ !! (apply get $testme [/refine 'false])
 
     (all [
         e: sys.util/rescue [apply get $testme [/refine #garbage]]
@@ -109,8 +107,8 @@
 
 ; Argument fulfillment needs to handle throws.
 [
-    (catch [apply get $append [[a b c] throw true]])
-    (catch [apply get $append [[a b c] [d e f] /dup throw true]])
+    (true? catch [apply get $append [[a b c] throw 'true]])
+    (true? catch [apply get $append [[a b c] [d e f] /dup throw 'true]])
 ]
 
 

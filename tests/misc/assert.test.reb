@@ -55,11 +55,11 @@
 
 ; Invisibles
 [
-    (assert [] true)
-    (assert [comment "hi" 1] true)
-    (assert [1 elide 2 + 3] true)
-    (assert [comment "hi" (true)] true)
-    (assert [(true) elide 2 + 3] true)
+    (assert [] ok)
+    (assert [comment "hi" 1] ok)
+    (assert [1 elide 2 + 3] ok)
+    (assert [comment "hi" (ok)] ok)
+    (assert [(ok) elide 2 + 3] ok)
 ]
 
 

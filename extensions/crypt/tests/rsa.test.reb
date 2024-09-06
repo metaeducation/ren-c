@@ -33,7 +33,7 @@
                 "Different encrypt:" mold cryptcheck "vs" mold encrypted
             ]
         ]
-    ], true)
+    ], ok)
 
     (plaintext = rsa-decrypt encrypted private)
 ]
@@ -126,5 +126,5 @@
         ]
     ]
 
-    true
+    ok
 )

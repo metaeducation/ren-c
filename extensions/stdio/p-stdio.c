@@ -306,7 +306,7 @@ Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
         Option(SymId) property = Cell_Word_Id(ARG(property));
         switch (property) {
           case SYM_OPEN_Q:
-            return Init_True(OUT);  // stdio port always open
+            return Init_Logic(OUT, true);  // stdio port always open
 
           default:
             break;

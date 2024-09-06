@@ -21,7 +21,7 @@
 
         return 304
     ]
-    true)
+    ok)
 
     (304 = test 1020)
 
@@ -145,9 +145,9 @@
     (
         value: rest: ~
         all [
-            <item!> = ([rest /value]: transcode/next "ab cd") then [<item!>]
-            value = 'ab
-            rest = " cd"
+            <item!> = [rest /value]: transcode/next "ab cd" then [<item!>]
+            value = null
+            rest = <item!>
         ]
     )
 

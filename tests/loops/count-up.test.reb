@@ -2,14 +2,14 @@
 
 ; zero repetition
 (
-    success: true
-    count-up i 0 [success: false]
-    success
+    success: 'true
+    count-up i 0 [success: 'false]
+    true? success
 )
 (
-    success: true
-    count-up i -1 [success: false]
-    success
+    success: 'true
+    count-up i -1 [success: 'false]
+    true? success
 )
 ; Test that return stops the loop
 (
@@ -38,26 +38,26 @@
 ; local variable type safety
 
 ~invalid-type~ !! (
-    test: false
+    test: 'false
     count-up i 2 [
-        either test [i == 2] [
-            test: true
-            i: false
+        either true? test [i == 2] [
+            test: 'true
+            i: 'false
         ]
     ]
 )
 
 (
-    success: true
+    success: 'true
     num: 0
     count-up i 10 [
         num: num + 1
-        success: success and (i = num)
+        success: boolean (true? success) and (i = num)
     ]
-    success and (10 = num)
+    (true? success) and (10 = num)
 )
 ; cycle return value
-(false = count-up i 1 [false])
+('false = count-up i 1 ['false])
 ; break cycle
 (
     num: 0
@@ -68,9 +68,9 @@
 (null? count-up i 10 [break])
 ; continue cycle
 (
-    success: true
-    count-up i 1 [continue, success: false]
-    success
+    success: 'true
+    count-up i 1 [continue, success: 'false]
+    true? success
 )
 
 ; The concept of "opting out" and "opting in" are being tried in COUNT-UP,

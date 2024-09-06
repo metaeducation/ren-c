@@ -2,8 +2,8 @@
 ; see also functions/control/throw.r
 (
     catch [
-        throw success: true
-        sucess: false
+        throw success: okay
+        sucess: null
     ]
     success
 )
@@ -81,7 +81,7 @@
 ; CATCH/QUIT
 (
     catch/quit [quit]
-    true
+    ok
 )
 [#851
     (error? trap [catch/quit [] raise make error! ""])

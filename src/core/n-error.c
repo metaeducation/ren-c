@@ -265,7 +265,7 @@ DECLARE_INTRINSIC(raised_q)
 
 
 //
-//  ok?: native/intrinsic [
+//  unraised?: native/intrinsic [
 //
 //  "Tells you if argument is not an ERROR! antiform, doesn't fail if it is"
 //
@@ -273,12 +273,13 @@ DECLARE_INTRINSIC(raised_q)
 //      ^optional
 //  ]
 //
-DECLARE_INTRINSIC(ok_q)
+DECLARE_INTRINSIC(unraised_q)
 {
     UNUSED(phase);
 
     Init_Logic(out, not Is_Meta_Of_Raised(arg));
 }
+
 
 //
 //  set-location-of-error: native [

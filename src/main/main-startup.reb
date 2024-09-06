@@ -29,13 +29,13 @@ REBOL [
 boot-print: redescribe [
     "Prints during boot when not quiet."
 ](
-    enclose get $print f -> [if not system.options.quiet [eval f]]
+    enclose get $print f -> [if no? system.options.quiet [eval f]]
 )
 
 loud-print: redescribe [
     "Prints during boot when verbose."
 ](
-    enclose get $print f -> [if system.options.verbose [eval f]]
+    enclose get $print f -> [if yes? system.options.verbose [eval f]]
 )
 
 make-banner: func [
@@ -172,13 +172,14 @@ license: func [
 host-script-pre-load: func [
     {Code registered as a hook when a module or script are loaded}
     return: [~]
-    is-module [logic?]
+    is-module [yesno?]
     hdr [~null~ object!]
         {Header object (missing for DO of BINARY! with no header)}
 ][
     ; Print out the script info
     boot-print [
-        (if is-module ["Module:"] else ["Script:"]) reify select maybe hdr 'title
+        (if yes? is-module ["Module:"] else ["Script:"])
+            reify select maybe hdr 'title
             "Version:" reify select maybe hdr 'version
             "Date:" reify select maybe hdr 'date
     ]
@@ -361,7 +362,7 @@ main-startup: func [
         print "Startup encountered an error!"
         print ["**" if block? reason [spaced reason] else [reason]]
         if error [
-            print either o.verbose [
+            print either yes? o.verbose [
                 [error]
             ][
                 "!! use --verbose for more detail"
@@ -499,8 +500,8 @@ main-startup: func [
     comment [emit #countdown-if-error]
     emit #die-if-error
 
-    let is-script-implicit: true
-    let check-encap: true
+    let is-script-implicit: 'yes
+    let check-encap: 'yes
 
     let param
 
@@ -517,28 +518,26 @@ main-startup: func [
         [ahead text! | (panic "ARGV element not TEXT!")]  ; argv.N must be text
 
         "--about" (
-            o.about: true  ; show full banner (ABOUT) on startup
+            o.about: 'yes  ; show full banner (ABOUT) on startup
         )
     |
         ["--cgi" | "-c"] (
-            o.quiet: true
-            o.cgi: true
+            o.quiet: 'yes
+            o.cgi: 'yes
         )
     |
         "--debug" [param: text! | (param-missing "DEBUG")] (
-            ; was coerced to BLOCK! before, but what did this do?
-            ;
-            o.debug: to-logic param
+            o.debug: transcode param  ; !!! didn't have any references
         )
     |
         "--do" [param: text! | (param-missing "DO")] (
             ;
             ; A string of code to run, e.g. `r3 --do "print {Hello}"`
             ;
-            o.quiet: true  ; don't print banner, just run code string
-            quit-when-done: default [true]
+            o.quiet: 'yes  ; don't print banner, just run code string
+            quit-when-done: default ['yes]
 
-            is-script-implicit: false  ; must use --script
+            is-script-implicit: 'no  ; must use --script
 
             ; Use /ONLY so that QUIT/WITH quits, vs. return DO value
             ; !!! TBD: change to IN SYSTEM.CONTEXTS.USER TRANSCODE PARAM
@@ -547,12 +546,12 @@ main-startup: func [
         )
     |
         ["--halt" | "-h"] (
-            quit-when-done: false  ; overrides true
+            quit-when-done: 'no  ; overrides yes
         )
     |
         ["--help" | "-?"] (
             usage
-            quit-when-done: default [true]
+            quit-when-done: default ['yes]
         )
     |
         "--import" [param: text! | (param-missing "IMPORT")] (
@@ -560,11 +559,11 @@ main-startup: func [
         )
     |
         "--no-encap" (
-            check-encap: false
+            check-encap: 'no
         )
     |
         ["--quiet" | "-q"] (
-            o.quiet: true
+            o.quiet: 'yes
         )
     |
         "--resources" [param: text! | (param-missing "RESOURCES")] (
@@ -584,9 +583,9 @@ main-startup: func [
     |
         "--script" [param: text! | (param-missing "SCRIPT")] (
             o.script: param
-            quit-when-done: default [true]  ; overrides blank, not false
+            quit-when-done: default ['yes]  ; overrides null, not `no`
 
-            is-script-implicit: false  ; not the first post-option arg
+            is-script-implicit: 'no  ; not the first post-option arg
         )
     |
         ; Added initially for GitHub CI.  Concept is that it takes a
@@ -596,10 +595,10 @@ main-startup: func [
         ;
         "--fragment" [param: text! | (param-missing "FRAGMENT")] (
             let code: read local-to-file param
-            is-script-implicit: false  ; must use --script
+            is-script-implicit: 'no  ; must use --script
 
-            o.quiet: true  ; don't print banner, just run code string
-            quit-when-done: default [true]  ; override blank, not false
+            o.quiet: 'yes  ; don't print banner, just run code string
+            quit-when-done: default ['yes]  ; overrides null, not `no`
 
             ; !!! Here we make a concession to Windows CR LF, only when
             ; running code fragments.  This was added because when you use
@@ -622,12 +621,12 @@ main-startup: func [
         )
     |
         "--verbose" (
-            o.verbose: true
+            o.verbose: 'yes
         )
     |
         ["-v" | "-V" | "--version"] (
             boot-print ["Rebol 3" system.version]  ; version tuple
-            quit-when-done: default [true]
+            quit-when-done: default ['yes]
         )
     |
         "-w" (
@@ -649,9 +648,9 @@ main-startup: func [
     ;
     ; Whatever is left is the positional arguments, available to the script.
     ;
-    all [is-script-implicit, not tail? o.args] then [
+    all [yes? is-script-implicit, not tail? o.args] then [
         o.script: take o.args
-        quit-when-done: default [true]
+        quit-when-done: default ['yes]
     ]
 
     if o.script [
@@ -675,12 +674,12 @@ main-startup: func [
     ]
 
     let boot-embedded: all [
-        check-encap
+        yes? check-encap
         system.options.boot
         get-encap system.options.boot
     ]
 
-    if any [boot-embedded, o.script] [o.quiet: true]
+    if any [boot-embedded, o.script] [o.quiet: 'yes]
 
     ; Set option/paths for /path, /boot, /home, and script path
     ;
@@ -761,7 +760,7 @@ main-startup: func [
         ; showing execution of a main.reb if that is found in the encapping.
 
         emit [do/only (<*> code)]
-        quit-when-done: default [true]
+        quit-when-done: default ['yes]
     ]
 
     ; Evaluate any script argument, e.g. `r3 test.r` or `r3 --script test.r`
@@ -785,7 +784,7 @@ main-startup: func [
 
     main-startup: '~main-startup-done~  ; free function for GC
 
-    if quit-when-done [
+    if 'yes = quit-when-done [  ; can be null, YES? would complain...
         return <quit>
     ]
 

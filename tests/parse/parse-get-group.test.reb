@@ -5,11 +5,11 @@
 ;
 ; They act like a COMPOSE that runs each time the GET-GROUP! is passed.
 
-("aaa" == parse "aaa" [:(if false ["bbb"]) "aaa"])
-("aaa" == parse "bbbaaa" [:(if true ["bbb"]) "aaa"])
+("aaa" == parse "aaa" [:(if null ["bbb"]) "aaa"])
+("aaa" == parse "bbbaaa" [:(if ok ["bbb"]) "aaa"])
 
 ("b" == parse "aaabbb" [:([some "a"]) :([some "b"])])
-("b" == parse "aaabbb" [:([some "a"]) :(if false [some "c"]) :([some "b"])])
+("b" == parse "aaabbb" [:([some "a"]) :(if null [some "c"]) :([some "b"])])
 
 ; !!! Partial rule splicing doesn't work with GET-GROUP! being a combinator
 ; under the constraints of the current design...this would mean it would be
@@ -28,7 +28,7 @@
             some [subparse text! [:(count: count + 1) "a"]]
         ]
     )
-] true)]
+] ok)]
 
 [https://github.com/red/red/issues/562
     ~parse-incomplete~ !! (parse [+] [opt some ['+ when (null)]])
@@ -56,7 +56,7 @@
     (
         f563: lambda [t [text!]] [did try parse t [opt some r]]
 
-        r: [#+, :(res: f563 "-", assert [not res], res)]
+        r: [#+, :(res: f563 "-", assert [not res], maybe res)]
 
         all [
             not f563 "-"
@@ -84,7 +84,7 @@
                     | #"]" :(f x)
                 ]
             ]
-            return ok? parse s [opt some r <end>]
+            return unraised? parse s [opt some r <end>]
         ]
 
         f "420,]]"
@@ -93,7 +93,7 @@
 
 ; Void/nihil handling, just vanishes
 [
-    ('z = parse [x z] ['x :(if false 'y) 'z])
+    ('z = parse [x z] ['x :(if null 'y) 'z])
 
-    ('z = parse [x z] ['x :(assert [true]) 'z])
+    ('z = parse [x z] ['x :(assert [okay]) 'z])
 ]

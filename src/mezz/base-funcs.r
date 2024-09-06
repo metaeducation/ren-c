@@ -18,7 +18,7 @@ REBOL [
 ]
 
 assert: func* [
-    {Ensure conditions are conditionally true if hooked by debugging}
+    {Ensure conditions are branch triggers if hooked by debugging}
 
     return: [nihil?]
     conditions "Block of conditions to evaluate and test for logical truth"
@@ -201,7 +201,7 @@ func: func* [
         ]
         (var: null)
     |
-        <end> accept (true)
+        <end> accept (~)
     |
         other: <here> (
             fail [
@@ -242,12 +242,12 @@ func: func* [
 ===: func [
     return: [nihil?]
     'remarks [element? <variadic>]
-    /visibility [logic?]
-    <static> showing (false)
+    /visibility [onoff?]
+    <static> showing ('no)
 ][
-    if not null? visibility [showing: visibility, return nihil]
+    if visibility [showing: visibility, return nihil]
 
-    if showing [
+    if yes? showing [
         print form collect [
             keep [===]
             until [equal? '=== keep take remarks]  ; prints tail `===`
@@ -307,7 +307,7 @@ set?: func [
     return: [logic?]
     var [word! path! tuple!]
 ][
-    return not nothing? get/any var
+    return something? get/any var
 ]
 
 
@@ -372,7 +372,7 @@ curtail: reframer func [
 ;    ** Script Error: + does not allow logic? for its value1 argument
 ;
 ;    >> 10 >- equal? 5 + 5  ; as if you wrote `equal? 10 5 + 5`
-;    == ~true~  ; anti
+;    ; nothing, e.g. branch trigger
 ;
 ; You can force processing to be enfix using `->-` (an infix-looking "icon"):
 ;
@@ -385,8 +385,8 @@ curtail: reframer func [
 ;    == 7
 ;
 >-: enfix :shove
->--: enfix specialize get $>- [prefix: true]
-->-: enfix specialize get $>- [prefix: false]
+>--: enfix specialize get $>- [prefix: 'yes]
+->-: enfix specialize get $>- [prefix: 'no]
 
 
 ; The -- and ++ operators were deemed too "C-like", so ME was created to allow
@@ -411,7 +411,7 @@ my: enfix redescribe [
 )
 
 so: enfix func [
-    {Postfix assertion which won't keep running if left expression is false}
+    {Postfix assertion which stops running if left expression is inhibitor}
 
     return: [any-value?]
     condition "Condition to test, must resolve to logic (use DID, NOT)"
@@ -419,17 +419,17 @@ so: enfix func [
     feed "Needs value to return as result e.g. (x: even? 4 so 10 + 20)"
         [<end> any-value? <variadic>]
 ][
-    if not condition [
+    if not get/any $condition [
         fail/blame make error! [
             type: 'Script
             id: 'assertion-failure
-            arg1: compose [~false~ so]
+            arg1: compose [~null~ so]
         ] $condition
     ]
     if tail? feed [return ~]
     return take feed
 ]
-tweak :so 'postpone on
+tweak :so 'postpone 'on
 
 
 was: enfix redescribe [
@@ -446,7 +446,7 @@ was: enfix redescribe [
         :left  ; choose left in case binding or case matters somehow
     ]
 )
-tweak :was 'postpone on
+tweak :was 'postpone 'on
 
 
 zdeflate: redescribe [
@@ -476,34 +476,40 @@ gunzip: redescribe [
 ensure: redescribe [
     "Pass through value if it matches test, otherwise trigger a FAIL"
 ](
-    enclose get $match/meta lambda [f <local> value] [  ; !!! LET had trouble
-        value: :f.value  ; EVAL makes frame arguments unavailable
-        unmeta eval f else [  ; /META allows any value, must UNMETA
+    enclose get $match/meta lambda [f] [
+        let value: :f.value  ; EVAL makes frame arguments unavailable
+        eval f else [  ; /META allows any value, must UNMETA
             ; !!! Can't use FAIL/WHERE until we can implicate the callsite.
             ;
             ; https://github.com/metaeducation/ren-c/issues/587
             ;
             fail [
                 "ENSURE failed with argument of type"
-                    (mold kind of :value) else ["VOID"]
+                    (mold reify try kind of :value) else ["VOID"]
             ]
         ]
+        :value
     ]
 )
 
+; NULL is sticky in NON, as with MATCH.  If you say `non integer! null` then
+; if you give back NULL ("it passed, it wasn't an integer") this conflates
+; with the failure signal.  You need to use
+;
 non: redescribe [
-    {Pass through value if it *doesn't* match test, else null (e.g. MATCH/NOT)}
+    {Pass through value if it *doesn't* match test, else null (MATCH/NOT)}
 ](
     enclose get $match lambda [f] [
         let value: :f.value  ; EVAL makes frame arguments unavailable
-        light (eval f then [null] else [:value])
+        if f.meta [value: ^value]
+        eval f then [null] else [:value]
     ]
 )
 
 prohibit: redescribe [
-    {Pass through value if it *doesn't* match test, else fail (e.g. ENSURE/NOT)}
+    {Pass through value if it *doesn't* match test, else fail (ENSURE/NOT)}
 ](
-    enclose get $match lambda [f] [
+    enclose get $match/meta lambda [f] [
         let value: :f.value  ; EVAL makes frame arguments unavailable
         eval f then [
             ; !!! Can't use FAIL/WHERE until we can implicate the callsite.
@@ -512,7 +518,7 @@ prohibit: redescribe [
             ;
             fail [
                 "PROHIBIT failed with argument of type"
-                    (kind of maybe value) else ["NULL"]
+                    (mold reify try kind of :value) else ["NULL"]
             ]
         ]
         :value
@@ -703,7 +709,7 @@ count-down: redescribe [
 lock-of: redescribe [
     "If value is already locked, return it...otherwise CLONE it and LOCK it."
 ](
-    cascade [specialize get $copy [deep: #], :freeze]
+    cascade [specialize get $copy [deep: ok], :freeze]
 )
 
 eval-all: func [
@@ -723,8 +729,8 @@ eval-all: func [
 ; to allow longer runs of evaluation.  "Invisible functions" (those which
 ; `return: [nihil?]`) permit a more flexible version of the mechanic.
 
-<|: runs tweak copy unrun get $eval-all 'postpone on
-|>: runs tweak enfix copy get $shove 'postpone on
+<|: runs tweak copy unrun get $eval-all 'postpone 'on
+|>: runs tweak enfix copy get $shove 'postpone 'on
 
 
 meth: enfix func [
@@ -779,7 +785,7 @@ raise: func [
         ;
         ; !!! It's not clear that users will be able to create arbitrary
         ; antiform words like ~unreachable~ to occupy the same space as
-        ; ~null~, ~true~, ~false~, etc.  But for a time they were allowed
+        ; ~null~, ~void~, ~NaN~, etc.  But for a time they were allowed
         ; to say things like (fail ~unreachable~)...permit for now.
         ;
         reason: noquasi reify reason

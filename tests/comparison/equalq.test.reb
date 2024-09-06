@@ -443,10 +443,10 @@
 (equal? equal? /a first [a:] equal? first [a:] /a)
 ; set-word! reflexivity
 (equal? first [a:] first [a:])
-(equal? true true)
-(equal? false false)
-(not equal? true false)
-(not equal? false true)
+(equal? okay okay)
+(equal? null null)
+(not equal? okay null)
+(not equal? null okay)
 ; object! reflexivity
 (equal? a-value: make object! [a: 1] a-value)
 ; object! simple structural equivalence
@@ -493,7 +493,7 @@
         test a-value b-value
         not null? for-each [w v] a-value [
             if not test :v select b-value w [break]
-            true
+            ok
         ]
 )(
     a-value: construct @[
@@ -513,7 +513,7 @@
         test a-value b-value
         not null? for-each [w v] a-value [
             if not test :v select b-value w [break]
-            true
+            ok
         ]
 )]
 

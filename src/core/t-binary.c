@@ -903,15 +903,15 @@ DECLARE_NATIVE(enbin)
     Value* settings = rebValue("compose", ARG(settings));
     if (Cell_Series_Len_At(settings) != 3)
         fail ("ENBIN requires list of length 3 for settings for now");
-    bool little = rebUnboxLogic(
+    bool little = rebUnboxBoolean(
         "switch first", settings, "[",
-            "'BE [false] 'LE [true]",
+            "'BE ['false] 'LE ['true]",
             "fail {First element of ENBIN settings must be BE or LE}",
         "]"
     );
-    bool no_sign = rebUnboxLogic(
+    bool no_sign = rebUnboxBoolean(
         "switch second", settings, "[",
-            "'+ [true] '+/- [false]",
+            "'+ ['true] '+/- ['false]",
             "fail {Second element of ENBIN settings must be + or +/-}",
         "]"
     );
@@ -1012,15 +1012,15 @@ DECLARE_NATIVE(debin)
     REBLEN arity = Cell_Series_Len_At(settings);
     if (arity != 2 and arity != 3)
         fail("DEBIN requires list of length 2 or 3 for settings for now");
-    bool little = rebUnboxLogic(
+    bool little = rebUnboxBoolean(
         "switch first", settings, "[",
-            "'BE [false] 'LE [true]",
+            "'BE ['false] 'LE ['true]",
             "fail {First element of DEBIN settings must be BE or LE}",
         "]"
     );
-    bool no_sign = rebUnboxLogic(
+    bool no_sign = rebUnboxBoolean(  // signed is C keyword
         "switch second", settings, "[",
-            "'+ [true] '+/- [false]",
+            "'+ ['true] '+/- ['false]",
             "fail {Second element of DEBIN settings must be + or +/-}",
         "]"
     );

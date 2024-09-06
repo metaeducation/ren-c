@@ -147,11 +147,11 @@ combinator: func [
 
         (if '@pending = try spec.1 [
             assert [spec.2 = [blank! block!]]
-            autopipe: false  ; they're asking to handle pending themselves
+            autopipe: 'no  ; they're asking to handle pending themselves
             spread reduce ['@pending spec.2]
             elide spec: my skip 2
         ] else [
-            autopipe: true  ; they didn't mention pending, handle automatically
+            autopipe: 'yes  ; they didn't mention pending, handle automatically
             spread [@pending [blank! block!]]
         ])
 
@@ -167,14 +167,14 @@ combinator: func [
         ; we receive in will automatically bubble up their pending contents in
         ; order of being called.
 
-        (spread if autopipe '[
+        (spread if yes? autopipe '[
             let f: binding of $return
 
             pending: _
-            let in-args: false
+            let in-args: 'no
             for-each [key val] f [
-                if not in-args [
-                    if key = 'input [in-args: true]
+                if no? in-args [
+                    if key = 'input [in-args: 'yes]
                     continue
                 ]
                 all [
@@ -1044,7 +1044,7 @@ default-combinators: make map! reduce [
         ;
         collected: collect [
             remove-each item pending [
-                if quoted? item [keep unquote item, true]
+                if quoted? item [keep unquote item, okay]
             ]
         ]
 
@@ -1156,7 +1156,7 @@ default-combinators: make map! reduce [
 
         obj: make object! collect [
             remove-each item pending [
-                if block? item [keep spread item, true]
+                if block? item [keep spread item, okay]
             ] else [
                 ; should it error or fail if pending was NULL ?
             ]
@@ -1293,17 +1293,17 @@ default-combinators: make map! reduce [
             any-string? input [
                 [_ remainder]: apply get $find [
                     input value
-                    /match true
+                    /match ok
                     /case state.case
                 ] else [
                     return raise "String at parse position does not match TEXT!"
                 ]
             ]
-            true [
+            <default> [
                 assert [binary? input]
                 [_ remainder]: apply get $find [
                     input value
-                    /match true
+                    /match ok
                     /case state.case
                 ] else [
                     return raise "Binary at parse position does not match TEXT!"
@@ -1362,7 +1362,7 @@ default-combinators: make map! reduce [
                 ]
                 return value
             ]
-            true [
+            <default> [
                 assert [binary? input]
                 if negated [
                     if (not char? value) or (255 < codepoint of value) [
@@ -1404,7 +1404,7 @@ default-combinators: make map! reduce [
                 ]
                 return raise "Value at parse position does not match BINARY!"
             ]
-            true [  ; Note: BITSET! acts as "byteset" here
+            <default> [  ; Note: BITSET! acts as "byteset" here
                 ; binary or any-string input
                 [_ remainder]: find/match input value else [
                     return raise [
@@ -1506,7 +1506,7 @@ default-combinators: make map! reduce [
         ; Run GROUP!s in order, removing them as one goes
         ;
         remove-each item pending [
-            if group? item [eval item, true]
+            if group? item [eval item, okay]
         ]
 
         return unmeta result'
@@ -1542,7 +1542,8 @@ default-combinators: make map! reduce [
 
         any [
             r = nihil'  ; like [:(comment "hi")]
-            r = void'  ; like [:(if false [...])]
+            r = void'  ; like [:(if 1 = 0 [...])]
+            r = okay'  ; like [:(maybe 1 = 1)], but generally use WHEN instead
         ] then [
             pending: _
             remainder: input
@@ -1551,12 +1552,6 @@ default-combinators: make map! reduce [
 
         if null? unmeta r [
             fail "GET-GROUP! evaluated to NULL"  ; no NULL rules, mistake?
-        ]
-
-        if quasi? r [
-            if not find [~true~ ~false~] r [
-                fail ["Bad antiform from GET-GROUP!" r]  ; fail other antiforms
-            ]
         ]
 
         r: unmeta r
@@ -1569,7 +1564,7 @@ default-combinators: make map! reduce [
         ]
 
         if not comb: select state.combinators kind of r [
-            fail ["Unhandled type in GET-GROUP! combinator:" kind of r]
+            fail ["Unhandled type in GET-GROUP! combinator:" mold kind of r]
         ]
 
         ; !!! We don't need to call COMBINATORIZE because we can't handle
@@ -1585,8 +1580,8 @@ default-combinators: make map! reduce [
     ; have to be "run this block as a rule, and use the synthesized product
     ; as a rule"
     ;
-    ;     >> did parse "aaabbb" [:[some "a" ([some "b"])]
-    ;     == ~true~  ; anti
+    ;     >> parse "aaabbb" [:[some "a" ([some "b"])]
+    ;     == "b"
     ;
     ; It's hard offhand to think of great uses for that, but that isn't to say
     ; that they don't exist.
@@ -1626,7 +1621,7 @@ default-combinators: make map! reduce [
                     return input.1
                 ]
             ]
-            true [
+            <default> [
                 assert [binary? input]
                 if pick value input.1 [
                     remainder: next input
@@ -1800,31 +1795,6 @@ default-combinators: make map! reduce [
         return raise "BLANK! rule found next input in binary was not ASCII 32"
     ]
 
-    === ANTIFORM! COMBINATOR ===
-
-    ; Handling of LOGIC! in Ren-C replaces the idea of FAIL, because a logic
-    ; true is treated as "continue parsing" while false is "rule didn't match".
-    ; When combined with GET-GROUP!, this fully replaces the IF construct.
-    ;
-    ; e.g. parse "..." [:(mode = 'read) ... | :(mode = 'write) ...]
-
-    antiform! combinator [
-        return: "Invisible if true (signal to keep parsing)"
-            [nihil?]
-        value [antiform?]
-    ][
-        switch/type :value [
-            logic?! [
-                if value [
-                    remainder: input
-                    return nihil
-                ]
-                return raise "~false~ antiform used to force a non-match"
-            ]
-        ]
-        fail "Unhandled antiform in GET-GROUP!"
-    ]
-
     === INTEGER! COMBINATOR ===
 
     ; The behavior of INTEGER! in UPARSE is to just evaluate to itself.  If you
@@ -1854,8 +1824,12 @@ default-combinators: make map! reduce [
     ][
         [^times' input]: times-parser input except e -> [return raise e]
 
+        if times' = void' [  ; VOID-in-NULL-out
+            remainder: input
+            return null
+        ]
         switch/type unmeta times' [
-            blank! [
+            blank! [  ; should blank be tolerated if void is?
                 remainder: input
                 return void  ; `[repeat (_) rule]` is a no-op
             ]
@@ -2429,12 +2403,6 @@ default-combinators: make map! reduce [
             binary! []
             issue! []
 
-            ; While most frequently used with GET-GROUP! to use a conditional
-            ; to continue control or not, ~true~ and ~false~ antiforms are
-            ; allowed from word lookups e.g. TRUE and FALSE.
-            ;
-            logic?! []
-
             ; Datatypes looked up by words (e.g. TAG!) are legal as rules
             ;
             type-word! []
@@ -2452,13 +2420,14 @@ default-combinators: make map! reduce [
             ;
             blank! []
 
-            void?! [
+            &okay?
+            &void? [
                 remainder: input
                 pending: _  ; not delegating to combinator with pending
                 return nihil  ; act invisibly
             ]
 
-            null?! [
+            &null? [
                 fail "WORD! fetches cannot be NULL in UPARSE"
             ]
 
@@ -2469,7 +2438,7 @@ default-combinators: make map! reduce [
         ]
 
         if not comb: select state.combinators kind of r [
-            fail ["Unhandled type in WORD! combinator:" kind of r]
+            fail ["Unhandled type in WORD! combinator:" mold kind of r]
         ]
 
         ; !!! We don't need to call COMBINATORIZE because we can't handle
@@ -2648,7 +2617,7 @@ default-combinators: make map! reduce [
                 f.rule-start: rules
                 f.rule-end: sublimit else [tail of rules]
 
-                f.thru: #
+                f.thru: ok
 
                 rules: sublimit else [tail of rules]
             ] else [
@@ -2672,7 +2641,7 @@ default-combinators: make map! reduce [
                 ]
                 pending: glom pending spread subpending
             ] else [
-                result': nihil'  ; reset, e.g. `[false |]`
+                result': nihil'  ; reset, e.g. `[bypass |]`
 
                 free pending  ; proactively release memory
                 pending: _
@@ -2854,7 +2823,7 @@ comment [combinatorize: func [
                 ; would be needed for these if the refinements add parameters
                 ; as to how they work.
             ]
-            true [  ; another parser to combine with
+            <default> [  ; another parser to combine with
                 ;
                 ; !!! At the moment we disallow SET with GROUP!.
                 ; This could be more conservative to stop calling
@@ -3055,23 +3024,23 @@ parsify: func [
 ; the rules matched the input to completion.
 ;
 ; But UPARSE goes deeper by letting rules evaluate to arbitrary results, and
-; bubbles out the final result.  All values are in-band, so nothing like NULL
-; or FALSE can be drawn out as signals of a lack of completion...definitional
-; errors, and hence EXCEPT must be used:
+; bubbles out the final result.  All values are in-band, so NULL can't be
+; drawn out as signals of a lack of completion...definitional errors, and
+; hence EXCEPT or TRAP must be used:
 ;
 ;     result: parse data rules except [...]
 ;
-; But there's a parse variant called VALIDATE which returns the input matched,
+; But there's a variant called PARSE/MATCH which returns the input matched,
 ; or it returns null:
 ;
-;     >> validate "aaa" [some #a]
+;     >> parse/match "aaa" [some #a]
 ;     == "aaa"
 ;
 ;     >> validate "aaa" [some #b]
 ;     == ~null~  ; anti
 ;
 ; So for those who prefer to use IF to know about a parse's success or failure
-; they can just use VALIDATE instead.
+; they can just use PARSE/MATCH instead.
 ;
 ; There is a core implementation for this called PARSE*, which is exposed
 ; separately in order to allow handling the case when pending values have
@@ -3081,7 +3050,7 @@ parsify: func [
 ; mechanism.  So they are gathered in pending.
 
 parse*: func [
-    {Process as much of the input as parse rules consume (see also PARSE)}
+    "Process as much of the input as parse rules consume (see also PARSE)"
 
     return: "Synthesized value from last match rule, or NULL if rules failed"
         [any-value? pack?]

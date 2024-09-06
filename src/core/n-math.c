@@ -650,7 +650,7 @@ DECLARE_NATIVE(strict_equal_q)
     INCLUDE_PARAMS_OF_STRICT_EQUAL_Q;
 
     if (VAL_TYPE(ARG(value1)) != VAL_TYPE(ARG(value2)))
-        return Init_False(OUT);  // don't allow coercion
+        return Init_Logic(OUT, false);  // don't allow coercion
 
     bool strict = true;
     REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
@@ -673,7 +673,7 @@ DECLARE_NATIVE(strict_not_equal_q)
     INCLUDE_PARAMS_OF_STRICT_NOT_EQUAL_Q;
 
     if (VAL_TYPE(ARG(value1)) != VAL_TYPE(ARG(value2)))
-        return Init_True(OUT);  // don't allow coercion
+        return Init_Logic(OUT, true);  // don't allow coercion
 
     bool strict = true;
     REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
@@ -705,7 +705,7 @@ DECLARE_NATIVE(same_q)
     Value* v2 = ARG(value2);
 
     if (VAL_TYPE(v1) != VAL_TYPE(v2))
-        return Init_False(OUT);  // can't be "same" value if not same type
+        return Init_Logic(OUT, false);  // not "same" value if not same type
 
     if (Is_Bitset(v1))  // same if binaries are same
         return Init_Logic(OUT, VAL_BITSET(v1) == VAL_BITSET(v2));
@@ -1028,7 +1028,7 @@ DECLARE_NATIVE(zero_q)
 
     Value* v = ARG(value);
     if (QUOTE_BYTE(v) != NOQUOTE_1)
-        return Init_False(OUT);
+        return Init_Logic(OUT, false);
 
     Heart heart = Cell_Heart_Ensure_Noquote(v);
 
@@ -1036,7 +1036,7 @@ DECLARE_NATIVE(zero_q)
         return Init_Logic(OUT, IS_CHAR(v) and Cell_Codepoint(v) == 0);
 
     if (not Any_Scalar_Kind(heart))
-        return Init_False(OUT);
+        return Init_Logic(OUT, false);
 
     if (heart == REB_TUPLE) {
         REBLEN len = Cell_Sequence_Len(v);
@@ -1044,9 +1044,9 @@ DECLARE_NATIVE(zero_q)
         for (i = 0; i < len; ++i) {
             Copy_Sequence_At(SPARE, v, i);
             if (not Is_Integer(SPARE) or VAL_INT64(SPARE) != 0)
-                return Init_False(OUT);
+                return Init_Logic(OUT, false);
         }
-        return Init_True(OUT);
+        return Init_Logic(OUT, true);
     }
 
     DECLARE_ATOM (zero);

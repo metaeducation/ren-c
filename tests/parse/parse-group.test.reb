@@ -20,4 +20,4 @@
     ]
 )
 
-('z = parse [x z] ['x (assert [true]) 'z])
+('z = parse [x z] ['x (assert [okay]) 'z])

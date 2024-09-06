@@ -40,7 +40,7 @@
 [(
     i: #i
     t: #t
-    if true [
+    if ok [
         using parse [1 <foo>] [gather [emit i: integer!, emit t: tag!]]
         assert [i = 1, t = <foo>]
     ]
@@ -51,7 +51,7 @@
 )(
     base: #base
     extension: #extension
-    if true [
+    if ok [
         let filename: "demo.txt"
         using parse filename [
             gather [

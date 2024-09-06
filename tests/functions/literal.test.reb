@@ -8,7 +8,7 @@
 
     ((the '10) = detector 10)
     (null' = detector null)
-    ('~[~null~]~ = detector if true [null])
+    ('~[~null~]~ = detector if ok [null])
 
     (nihil' = detector (comment "hi"))
     (null = detector)
@@ -21,7 +21,7 @@
 ]
 
 (
-    x: false
-    ^(void) then [x: true]
-    x
+    x: 'false
+    ^(void) then [x: 'true]
+    true? x
 )

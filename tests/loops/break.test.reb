@@ -53,14 +53,14 @@
 )
 
 [#1535 #1535
-    (repeat 1 [words of break] true)
+    (repeat 1 [words of break] ok)
 ]
 [#1535
-    (repeat 1 [values of break] true)
+    (repeat 1 [values of break] ok)
 ]
 
 [#1945
-    (repeat 1 [spec-of break] true)
+    (repeat 1 [spec-of break] ok)
 ]
 
 ; the "result" of break should not be caught by try

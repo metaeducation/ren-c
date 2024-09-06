@@ -270,7 +270,7 @@ trim: func [
             rule: blank!
 
             if not any [head_TRIM tail_TRIM] [
-                head_TRIM: tail_TRIM: true  ; plain TRIM => TRIM/HEAD/TAIL
+                head_TRIM: tail_TRIM: #  ; plain TRIM => TRIM/HEAD/TAIL
             ]
         ]
 
@@ -314,7 +314,7 @@ trim: func [
             ]
 
             if not any [head_TRIM tail_TRIM] [
-                head_TRIM: tail_TRIM: true  ; plain TRIM => TRIM/HEAD/TAIL
+                head_TRIM: tail_TRIM: #  ; plain TRIM => TRIM/HEAD/TAIL
             ]
         ]
     ] else [
@@ -368,7 +368,7 @@ trim: func [
             s: <here>, opt some rule, e: <here>
             (indent: (index of e) - (index of s))
 
-            accept (true)  ; don't need to reach end
+            accept (~)  ; don't need to reach end
         ]
     ]
 

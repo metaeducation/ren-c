@@ -30,7 +30,7 @@
             to <end>
         ]]
         return f.target
-    ], true)
+    ], ok)
 
     ; These are the tests Red had demonstrating the feature
 

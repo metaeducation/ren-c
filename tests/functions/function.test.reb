@@ -101,12 +101,12 @@
     :a-value == f
 )
 (
-    f: does [true]
-    true = f
+    f: does ['true]
+    'true = f
 )
 (
-    f: does [false]
-    false = f
+    f: does ['false]
+    'false = f
 )
 (
     f: does [$1]
@@ -261,7 +261,7 @@
 [
     (
         hard: func ['x] [return :x]
-        true
+        ok
     )
 
     (10 == hard 10)
@@ -287,7 +287,7 @@
             got: '~junk~
             compose [(eval expr), (:got)]
         ]
-        true
+        ok
     )
 
     ([1000, 1] = test [medium 1])
@@ -323,7 +323,7 @@
             got: '~junk~
             return compose [(eval expr), (:got)]
         ]
-        true
+        ok
     )
 
     ([1000, 1] = test [soft 1])
@@ -388,7 +388,7 @@
 
 ; inline function test
 [#1659 (
-    f: does :(reduce [unrun does [true]])
+    f: does :(reduce [unrun does [okay]])
     f
 )]
 
@@ -443,7 +443,7 @@
         let data: reduce [count x y outer static]
         return case [
             count = 0 [reduce [data]]
-            true [
+            <default> [
                append (f/count count - 1) data
             ]
         ]

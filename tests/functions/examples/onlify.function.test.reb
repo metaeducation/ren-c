@@ -23,7 +23,7 @@ onlify: func [
         ; ...fall through to normal handling
     ]
 ]
-true)
+ok)
 
 (
     append: my onlify
@@ -76,7 +76,7 @@ true)
 )
 
 (
-    is-bad: true
+    good: 'no
 
     for-each code [
         [specialize get $append/only/only []]
@@ -86,11 +86,14 @@ true)
             specialize get $apo/only []
         ]
     ][
-        is-bad: me and (
-            'bad-parameter = (sys.util/rescue [eval inside [] code]).id)
+        if no? good [
+            good: to-yesno (
+                'bad-parameter <> (sys.util/rescue [eval inside [] code]).id
+            )
+        ]
     ]
 
-    is-bad
+    no? good
 )
 
 (

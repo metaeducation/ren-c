@@ -77,7 +77,7 @@
         ]
     ]
     return unmeta any [result' void']
-], true)
+], ok)
 
 (
     a: b: ~bad~

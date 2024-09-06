@@ -1151,7 +1151,7 @@ Bounce Stepper_Executor(Level* L)
     // a REDUCE.  This does not correspond to what one would think of as an
     // "itemwise get" of a block as GET of BLOCK! acted in historical Rebol.
     //
-    // Note that GET-BLOCK! is available as a branch type, `if true :[a b]`
+    // Note that GET-BLOCK! is available as a branch type, `if ok :[a b]`
 
       case REB_GET_BLOCK: {
         Derelativize(SPARE, L_current, L_specifier);
@@ -1822,7 +1822,7 @@ Bounce Stepper_Executor(Level* L)
     if (
         Get_Eval_Executor_Flag(L, FULFILLING_ARG)
         and not (Get_Action_Flag(enfixed, DEFERS_LOOKBACK)
-                                       // ^-- `1 + if false [2] else [3]` => 4
+                                       // ^-- `1 + if null [2] else [3]` => 4
         )
     ){
         if (Get_Feed_Flag(L->feed, NO_LOOKAHEAD)) {

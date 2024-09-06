@@ -115,7 +115,7 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
             Init_Pushed_Refinement(PUSH(), KEY_SYMBOL(e.key));
 
             if (Is_Parameter_Unconstrained(e.param)) {
-                assert(Is_Blackhole(e.var));  // used but argless refinement
+                assert(Is_Okay(e.var));  // used but argless refinement
                 continue;
             }
         }

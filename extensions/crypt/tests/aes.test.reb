@@ -13,7 +13,7 @@
             bin = copy/part decrypted bin-len
             check = encrypted
         ]
-    ] true)
+    ] ok)
 
     ; exactly one block
     (test "1234567890123456" #{4538B1F7577E37CB4404D266384524BB})

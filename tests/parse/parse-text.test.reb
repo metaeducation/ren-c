@@ -152,7 +152,7 @@
 [
     (
         str: "Lorem ipsum dolor sit amet."
-        true
+        ok
     )
 
     (#. == parse str [thru "amet" one])

@@ -51,7 +51,7 @@
             ]
         ]
 
-        true
+        ok
     )
 
     ; ^-- This is a LAMBDA instead of a FUNCTION so that no RETURN is needed
@@ -61,10 +61,10 @@
     ; ^-- Note that this uses META* and not META (a.k.a. `^`)  The reason is
     ; that it wants to leave voids and nulls as-is:
     ;
-    ;     >> 1 + 2 meta comment "hi"
-    ;     ; null  <-- the true result, e.g. what the ^META arg would be
+    ;     >> 1 + 2 meta void
+    ;     == ~void~  ; <-- ordinary result, e.g. what the ^META arg would be
     ;
-    ;     >> 1 + 2 meta* comment "hi"
+    ;     >> 1 + 2 meta* void
     ;     == 3  ; <-- what we want in situations like this
     ;
 
@@ -156,7 +156,7 @@
         ]
     ])
 
-    ; FOR-BOTH provides a proof of why this is true:
+    ; FOR-BOTH provides a proof of why this is the case:
     ;
     ;     >> for-each x [1 2] [if x = 2 [continue]]
     ;     == ~[~]~  ; anti

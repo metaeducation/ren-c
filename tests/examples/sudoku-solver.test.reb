@@ -45,7 +45,7 @@
         return text
     ]
 
-    possible: func [
+    possible?: func [
         y
         x
         n
@@ -53,12 +53,12 @@
     ][
         count-up i 9 [
             if n = input.(9 * (y - 1) + i) [
-                return false
+                return null
             ]
         ]
         count-up i 9 [
             if n = input.(9 * (i - 1) + x) [
-                return false
+                return null
             ]
         ]
         x0: ((to integer! (x - 1) / 3)) * 3 + 1
@@ -66,11 +66,11 @@
         count-up i 3 [
             count-up j 3 [
                 if n = input.(9 * (y0 + (i - 1) - 1) + (x0 + (j - 1))) [
-                    return false
+                    return null
                 ]
             ]
         ]
-        return true
+        return okay
     ]
 
     solve: func [] [
@@ -78,7 +78,7 @@
             count-up x 9 [
                 if 0 = input.(9 * (y - 1) + x) [
                     count-up n 9 [
-                        if possible y x n [
+                        if possible? y x n [
                             input.(9 * (y - 1) + x): n
                             solve
                             input.(9 * (y - 1) + x): 0  ; backtracking

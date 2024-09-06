@@ -20,24 +20,24 @@
         ]
         if not dir? f [
             delete f
-            return true
+            return ~
         ]
         for-each item read f [
            name: join f item
            delete-recurse name
         ]
         delete f
-        return true
+        return ~
     ]
-    true)
+    ok)
 
-    (if exists? %scratch/ [delete-recurse %scratch/], true)  ; first call
+    (if exists? %scratch/ [delete-recurse %scratch/], ok)  ; first call
     (not exists? %scratch/)  ; should be gone
 
     ; Now let's fake up a directory as if it had been leftover from
     ; a previous test run...
 
-    (create %scratch/, true)
+    (create %scratch/, ok)
     ('dir = exists? %scratch/)
     ([] = read %scratch/)
 
@@ -56,7 +56,7 @@
     ;
     ((sort copy [%leftover1.txt %leftover2.txt]) = sort read %scratch/)
 
-    (create %scratch/leftover-dir/, true)
+    (create %scratch/leftover-dir/, ok)
     ('dir = exists? %scratch/leftover-dir/)
     ([] = read %scratch/leftover-dir/)
 
@@ -66,13 +66,13 @@
     )
     ('file = exists? %scratch/leftover-dir/leftover3.txt)
 
-    (delete-recurse %scratch/)  ; second call
+    (delete-recurse %scratch/, ok)  ; second call
     (not exists? %scratch/)
 ]
 
 ; We used CREATE above to make a directory, now try MAKE-DIR
 [
-    (make-dir/deep %scratch/sub1/sub2/, true)
+    (make-dir/deep %scratch/sub1/sub2/, ok)
 
     ('dir = exists? %scratch/sub1/)
     ('dir = exists? %scratch/sub1/sub2/)
@@ -81,7 +81,7 @@
     ([%sub2/] = read %scratch/sub1/)
     ([] = read %scratch/sub1/sub2/)
 
-    (change-dir %scratch, true)
+    (change-dir %scratch, ok)
 ]
 
 ; === EMPTY FILE TESTS ===
@@ -282,8 +282,8 @@
 ;
 ; Use the DELETE-DIR instead of the handmade one from the beginning of tests
 [
-    (change-dir %../, true)
+    (change-dir %../, ok)
     ('dir = exists? %scratch/)
-    (delete-dir %scratch/, true)
+    (delete-dir %scratch/, ok)
     (not exists? %scratch/)
 ]

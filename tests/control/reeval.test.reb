@@ -68,8 +68,8 @@
     ]
 )
 
-~expect-arg~ !! (true = reeval true)
-~expect-arg~ !! (false = reeval false)
+~expect-arg~ !! (reeval okay)
+~expect-arg~ !! (reeval null)
 
 ($1 == reeval $1)
 (null? eval maybe null)

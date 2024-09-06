@@ -152,10 +152,6 @@ INLINE Count Dequotify(Cell* v) {
 // As demonstrated, the reified QUASIFORM! and the "ghostly" ANTIFORM! work
 // in concert to solve the problem.
 //
-// * Besides the word antiforms of ~true~, ~false~ and ~null~, antiforms
-//   are neither true nor false...they must be decayed or handled in some other
-//   way, for instance DID/DIDN'T or THEN/ELSE.
-//
 // * A special parameter convention must be used to receive unstable antiforms.
 //   Code that isn't expecting such strange circumstances can error if they
 //   happen, while more sensitive code can be adapted to cleanly handle the

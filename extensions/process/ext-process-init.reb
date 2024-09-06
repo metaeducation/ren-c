@@ -81,7 +81,7 @@ call*: adapt get $call-internal* [
 ;    result when shown in the terminal.
 ;
 call: enclose (
-    augment (specialize get $call* [wait: #]) [
+    augment (specialize get $call* [wait: ok]) [
         /relax "If exit code is non-zero, return the integer vs. raising error"
     ]
 ) func [f [frame!]] [

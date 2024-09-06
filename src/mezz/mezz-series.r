@@ -28,7 +28,7 @@ offset-of: lambda [
 
 
 last?: single?: lambda [
-    "Returns TRUE if the series length is 1."
+    "Returns okay if the series length is 1."
     series [any-series? port! map! tuple! bitset! object! any-word?]
 ][
     1 = length of series
@@ -243,7 +243,7 @@ reword: func [
     let keyword-match: null  ; variable that gets set by rule
     let any-keyword-suffix-rule: inside [] collect [
         for-each [keyword value] values [
-            if not ok? parse :[keyword] keyword-types [
+            if raised? parse :[keyword] keyword-types [
                 fail ["Invalid keyword type:" keyword]
             ]
 
@@ -370,16 +370,16 @@ alter: func [
     if bitset? series [
         if find series value [
             remove/part series value
-            return false
+            return null
         ]
         append series value
-        return true
+        return okay
     ]
     if remove apply get $find [series value, /case case_ALTER] [
         append series value
-        return true
+        return okay
     ]
-    return false
+    return null
 ]
 
 
@@ -631,19 +631,21 @@ split: func [
         ; implied empty field after it, which we add here.
         ;
         switch/type dlm [
-            bitset! [did select dlm maybe last series]
-            char?! [dlm = last series]
+            bitset! [boolean select dlm maybe last series]
+            char?! [boolean dlm = last series]
             text! [
-                (find series dlm) and (empty? [_ @]: find-last series dlm)
+                boolean (find series dlm) and (
+                    empty? [_ @]: find-last series dlm
+                )
             ]
             quoted! [
-                (find series unquote dlm) and (
+                boolean (find series unquote dlm) and (
                     empty? [_ @]: find-last series unquote dlm
                 )
             ]
-            block! [false]
+            block! ['false]
         ] then fill -> [
-            if fill [add-fill-val]
+            if true? fill [add-fill-val]
         ]
     ]
 

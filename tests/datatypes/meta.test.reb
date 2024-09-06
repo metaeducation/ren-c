@@ -5,7 +5,7 @@
 
 ((the '3) = ^ 1 + 2)
 
-('~[~null~]~ = ^ if true [null])
+('~[~null~]~ = ^ if ok [null])
 
 (null' = ^ null)
 

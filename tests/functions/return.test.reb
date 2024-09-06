@@ -5,10 +5,10 @@
     1 = f1
 )
 (
-    success: true
-    f1: func [return: [integer!]] [return 1 success: false]
+    success: 'true
+    f1: func [return: [integer!]] [return 1 success: 'false]
     f1
-    success
+    true? success
 )
 
 ; return value tests
@@ -33,13 +33,13 @@
 ]
 
 [#1535
-    (run func [return: [blank!]] [words of return blank] true)
+    (run func [return: [blank!]] [words of return blank] ok)
 ]
 
-(reeval reify func [return: [blank!]] [values of return blank] true)
+(reeval reify func [return: [blank!]] [values of return blank] ok)
 
 [#1945
-    (run func [return: [blank!]] [spec-of return blank] true)
+    (run func [return: [blank!]] [spec-of return blank] ok)
 ]
 
 ; return should not be caught by TRAP
@@ -49,10 +49,10 @@
 )
 
 (
-    success: true
-    f1: func [return: [~]] [return ~, success: false]
+    success: 'true
+    f1: func [return: [~]] [return ~, success: 'false]
     f1
-    success
+    true? success
 )
 (
     f1: func [return: [~]] [return ~]
@@ -71,11 +71,11 @@
     a = 1
 )]
 [#1535
-    (reeval reify func [return: [~]] [words of return ~] true)
+    (nothing? reeval noquasi reify func [return: [~]] [words of return ~])
 ]
-(run func [return: [~]] [values of return ~] true)
+(nothing? run func [return: [~]] [values of return ~])
 [#1945
-    (run func [return: [~]] [spec-of return ~] true)
+    (nothing? run func [return: [~]] [spec-of return ~])
 ]
 
 

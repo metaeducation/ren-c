@@ -153,7 +153,9 @@ Bounce Group_Branch_Executor(Level* level_)
 //
 DECLARE_NATIVE(if)
 //
-// 1. ~false~ and ~null~ antiforms are falsey, while voids error.
+// 1. ~null~ antiforms are branch inhibitors, while ~void~ antiforms will
+//    trigger an abrupt failure.  (Voids opt out of "voting" in aggregate
+//    conditional testing, so a single isolated test can't have an answer.)
 //
 // 2. Evaluations must be performed through continuations, so IF can't be on
 //    the C function stack while the branch runs.  Rather than asking to be
@@ -166,7 +168,7 @@ DECLARE_NATIVE(if)
     Value* condition = ARG(condition);
     Value* branch = ARG(branch);
 
-    if (Is_Falsey(condition))  // [1]
+    if (Is_Inhibitor(condition))  // [1]
         return VOID;
 
     return DELEGATE_BRANCH(OUT, branch, condition);  // no callback [2]
@@ -192,7 +194,7 @@ DECLARE_NATIVE(either)
 
     Value* condition = ARG(condition);
 
-    Value* branch = Is_Truthy(condition)  // [1] on IF native
+    Value* branch = Is_Trigger(condition)  // [1] on IF native
         ? ARG(true_branch)
         : ARG(false_branch);
 
@@ -205,10 +207,10 @@ DECLARE_NATIVE(either)
 // The conventional sense of THEN and ELSE are tied to whether a result is
 // "nothing" or not, where NULL and VOID are the nothing states.
 //
-//    >> if false [<not run>]
+//    >> if null [<not run>]
 //    ; void
 //
-//    >> if false [<not run>] else [print "ELSE triggered by voidness"]
+//    >> if null [<not run>] else [print "ELSE triggered by voidness"]
 //    ELSE triggered by voidness
 //
 // But this mechanical notion is augmented by a methodization concept, which
@@ -448,7 +450,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 
       case ST_THENABLE_REJECTING_INPUT:
         assert(bounce == OUT);
-        bounce = Init_False(OUT);
+        bounce = Init_Logic(OUT, false);
         break;
 
       case ST_THENABLE_RUNNING_BRANCH:
@@ -466,7 +468,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 
 } return_true: {  ////////////////////////////////////////////////////////////
 
-    return Init_True(OUT);  // can't trust branch product [1]
+    return Init_Logic(OUT, true);  // can't trust branch product [1]
 }}
 
 
@@ -491,12 +493,12 @@ DECLARE_NATIVE(didnt)
     USED(ARG(branch));
 
     if (Is_Meta_Of_Void(in) or Is_Meta_Of_Null(in))
-        return Init_True(OUT);
+        return Init_Logic(OUT, true);
 
     if (REF(decay) and Is_Quasi_Null(in))
-        return Init_True(OUT);
+        return Init_Logic(OUT, true);
 
-    return Init_False(OUT);
+    return Init_Logic(OUT, false);
 }
 
 
@@ -514,7 +516,7 @@ DECLARE_NATIVE(didnt)
 //          [<unrun> any-branch?]
 //  ]
 //
-DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
+DECLARE_NATIVE(then)  // see `tweak :then 'defer' on` in %base-defs.r
 {
     INCLUDE_PARAMS_OF_THEN;
 
@@ -556,7 +558,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 //      :branch [<unrun> any-branch?]
 //  ]
 //
-DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
+DECLARE_NATIVE(else)  // see `tweak :else 'defer 'on` in %base-defs.r
 {
     INCLUDE_PARAMS_OF_ELSE;
 
@@ -599,7 +601,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 //          [<unrun> any-branch?]
 //  ]
 //
-DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
+DECLARE_NATIVE(also)  // see `tweak :also 'defer 'on` in %base-defs.r
 {
     INCLUDE_PARAMS_OF_ALSO;  // `then func [x] [(...) :x]` => `also [...]`
 
@@ -769,7 +771,7 @@ DECLARE_NATIVE(all)
 //    your only two choices.  Because Ren-C has the option of voids, it's
 //    better to signal to the caller that nothing happened.  For an example
 //    of how useful it is, see the loop wrapper FOR-BOTH.  Other behaviors
-//    can be forced with (all [... null]) or (any [... true])
+//    can be forced with (all [... null]) or (any [... okay])
 //
 // 2. The predicate-running condition gets pushed over the "keepalive" stepper,
 //    but we don't want the stepper to take a step before coming back to us.
@@ -834,7 +836,7 @@ DECLARE_NATIVE(all)
     }
 
     Decay_If_Unstable(SPARE);
-    if (Is_Void(SPARE))  // (if false [<a>])
+    if (Is_Void(SPARE))  // (if null [<a>])
         goto handle_elision;
 
     Clear_Level_Flag(LEVEL, ALL_VOIDS);
@@ -854,7 +856,7 @@ DECLARE_NATIVE(all)
     if (Is_Void(scratch))  // !!! Should void predicate results signal opt-out?
         fail (Error_Bad_Void());
 
-    Isotopify_If_Falsey(SPARE);  // predicates can approve "falseys" [3]
+    Packify_If_Inhibitor(SPARE);  // predicates can approve inhibitors [3]
 
     SUBLEVEL->executor = &Stepper_Executor;  // done tunneling [2]
     STATE = ST_ALL_EVAL_STEP;
@@ -864,7 +866,7 @@ DECLARE_NATIVE(all)
 
 } process_condition: {  //////////////////////////////////////////////////////
 
-    if (Is_Falsey(condition)) {
+    if (Is_Inhibitor(condition)) {
         Drop_Level(SUBLEVEL);
         return nullptr;
     }
@@ -968,7 +970,7 @@ DECLARE_NATIVE(any)
 
     Decay_If_Unstable(OUT);
     if (Is_Void(OUT))
-        goto handle_elision;  // (if false [<a>])
+        goto handle_elision;  // (if null [<a>])
 
     Clear_Level_Flag(LEVEL, ALL_VOIDS);
 
@@ -987,7 +989,7 @@ DECLARE_NATIVE(any)
     if (Is_Void(SPARE))  // !!! Should void predicate results signal opt-out?
         fail (Error_Bad_Void());
 
-    Isotopify_If_Falsey(OUT);  // predicates can approve "falseys" [3]
+    Packify_If_Inhibitor(OUT);  // predicates can approve inhibitors [3]
 
     SUBLEVEL->executor = &Stepper_Executor;  // done tunneling [2]
     STATE = ST_ANY_EVAL_STEP;
@@ -997,7 +999,7 @@ DECLARE_NATIVE(any)
 
 } process_condition: {  //////////////////////////////////////////////////////
 
-    if (Is_Truthy(condition))
+    if (Is_Trigger(condition))
         goto return_out;
 
     if (Is_Level_At_End(SUBLEVEL))
@@ -1054,7 +1056,7 @@ DECLARE_NATIVE(case)
 //
 // 3. Maintain symmetry with IF on non-taken branches:
 //
-//        >> if false <some-tag>
+//        >> if null <some-tag>
 //        ** Script Error: if does not allow tag! for its branch...
 //
 // 4. Last evaluation will "fall out" if there is no branch:
@@ -1163,7 +1165,7 @@ DECLARE_NATIVE(case)
 
 } processed_result_in_spare: {  //////////////////////////////////////////////
 
-    bool matched = Is_Truthy(stable_SPARE);
+    bool matched = Is_Trigger(stable_SPARE);
 
     const Element* branch = Copy_Cell(ARG(branch), At_Level(SUBLEVEL));
     Fetch_Next_In_Feed(SUBLEVEL->feed);
@@ -1278,11 +1280,11 @@ DECLARE_NATIVE(switch)
 //        lib: switch config.platform [
 //            'Windows [%windows.lib]
 //            'Linux [%linux.a]
-//            null
+//            %whatever.a
 //        ]
 //
-//    These cases still count as "branch taken", so the null is put in a
-//    PACK!.
+//    These cases still count as "branch taken", so if a null or void fall
+//    out they will be put in a pack.
 {
     INCLUDE_PARAMS_OF_SWITCH;
 
@@ -1387,7 +1389,7 @@ DECLARE_NATIVE(switch)
         )){
             return BOUNCE_THROWN;  // aborts sublevel
         }
-        if (Is_Falsey(Stable_Unchecked(scratch)))
+        if (Is_Inhibitor(Stable_Unchecked(scratch)))
             goto next_switch_step;
     }
 
@@ -1497,7 +1499,7 @@ DECLARE_NATIVE(default)
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
 
-    if (Is_Truthy(stable_SPARE))
+    if (Is_Trigger(stable_SPARE))
         return OUT;
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;
@@ -1682,7 +1684,7 @@ DECLARE_NATIVE(throw)
 // When a branch runs, it specifically wants to remove signals that are used
 // by THEN and ELSE.  This means NULL and VOID can't stay as those states:
 //
-//     >> if true [null] else [print "Otherwise you'd get this :-("]
+//     >> if ok [null] else [print "Otherwise you'd get this :-("]
 //     Otherwise you'd get this :-(  ; <-- BAD!
 //
 // See notes about "Heavy Null" and "Heavy Void" for how the variations carry

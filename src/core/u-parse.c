@@ -563,14 +563,14 @@ static REBIXO Parse_One_Rule(
             return END_FLAG;  // Other cases below assert if item is END
     }
 
-    if (Is_Quasiform(rule)) {
-        if (Is_Meta_Of_True(rule))
-            return pos;  // true matches always
-        if (Is_Meta_Of_False(rule))
-            return END_FLAG;  // false matches never
-        if (Is_Quasi_Word_With_Id(rule, SYM_VOID))
-            return pos;  // void also skips
-        fail ("PARSE3 only supports ~true~ and ~false~ quasiforms/antiforms");
+    if (Is_Quasi_Word(rule)) {
+        if (
+            Is_Quasi_Word_With_Id(rule, SYM_VOID)
+            or Is_Quasi_Word_With_Id(rule, SYM_OKAY)
+        ){
+            return pos;  // just skip ahead
+        }
+        fail ("PARSE3 only supports ~void~ and ~okay~ quasiforms/antiforms");
     }
     else switch (VAL_TYPE(rule)) {  // handle w/same behavior for all P_INPUT
       case REB_INTEGER:
@@ -1007,14 +1007,14 @@ static REBIXO To_Thru_Non_Block_Rule(
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    if (Is_Quasiform(rule)) {  // no-op if true, match failure if false
-        if (Is_Meta_Of_True(rule))
-            return P_POS;
-        if (Is_Meta_Of_False(rule))
-            return END_FLAG;
-        if (Is_Quasi_Word_With_Id(rule, SYM_VOID))
+    if (Is_Quasiform(rule)) {
+        if (
+            Is_Quasi_Word_With_Id(rule, SYM_VOID)
+            or Is_Quasi_Word_With_Id(rule, SYM_OKAY)
+        ){
             return P_POS;  // no-op
-        fail ("QUASI true and false only forms supported by PARSE3");
+        }
+        fail ("PARSE3 only supports ~void~ and ~okay~ quasiforms/antiforms");
     }
 
     Kind kind = VAL_TYPE(rule);
@@ -1620,7 +1620,7 @@ DECLARE_NATIVE(subparse)
 
                 FETCH_NEXT_RULE(L);
 
-                if (Is_Truthy(Stable_Unchecked(condition)))
+                if (Is_Trigger(Stable_Unchecked(condition)))
                     goto pre_rule;
 
                 Init_Nulled(ARG(position));  // not found
@@ -1772,21 +1772,15 @@ DECLARE_NATIVE(subparse)
     if (IS_BAR(rule))
         fail ("BAR! must be source level (else PARSE can't skip it)");
 
-    if (Is_Quasiform(rule)) {  // true is a no-op, false causes match failure
-        if (Is_Meta_Of_True(rule)) {
+    if (Is_Quasiform(rule)) {
+        if (
+            Is_Quasi_Word_With_Id(rule, SYM_VOID)
+            or Is_Quasi_Word_With_Id(rule, SYM_OKAY)
+        ){
             FETCH_NEXT_RULE(L);
             goto pre_rule;
         }
-        if (Is_Meta_Of_False(rule)) {
-            FETCH_NEXT_RULE(L);
-            Init_Nulled(ARG(position));  // not found
-            goto post_match_processing;
-        }
-        if (Is_Quasi_Word_With_Id(rule, SYM_VOID)) {
-            FETCH_NEXT_RULE(L);
-            goto pre_rule;
-        }
-        fail ("Only quasiforms supported by PARSE3 are ~true~ and ~false~");
+        fail ("PARSE3 only supports ~void~ and ~okay~ quasiforms/antiforms");
     }
     else switch (VAL_TYPE(rule)) {
       case REB_GROUP:

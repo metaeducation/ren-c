@@ -24,5 +24,5 @@
             fail ["Binding of" ^item "is not to expected object"]
         ]
     ]
-    true
+    ok
 )

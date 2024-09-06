@@ -71,7 +71,7 @@
         ] compose/deep [
             let crlf: charset "^/^M"
             let data: null
-            let eof: false
+            let eof: 'false
             cycle [
                 pos: null
                 parse3 buffer (rule)
@@ -82,13 +82,13 @@
                     '[data: read/part port 4096]
                 )
                 if empty? data [
-                    eof: true
+                    eof: 'true
                     pos: tail of buffer
                     break
                 ]
                 append buffer data
             ]
-            if all [eof empty? buffer] [return null]
+            if all [true? eof, empty? buffer] [return null]
             (maybe spread if not binary '[to text!]) take/part buffer pos
         ]
     ]
@@ -135,10 +135,10 @@
 )
 ( { GENERATE, 20 prime numbers }
     for-each x giulio-generate [primes: mutable [2] n: 2] [count <= 20] [
-        forever [n: n + 1 nop: true for-each p primes [
+        cycle [n: n + 1 nop: 'yes for-each p primes [
             if (n mod p = 0) [break]
-            if (p * p > n) [nop: false break]
-        ] if not nop [break]]
+            if (p * p > n) [nop: 'false, break]
+        ] if no? nop [break]]
         append primes n
         n
     ] [ t: x ]

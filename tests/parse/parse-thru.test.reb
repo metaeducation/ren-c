@@ -75,7 +75,7 @@
 [
     (
         wa: ['a]
-        true
+        ok
     )
 
     ('c == parse [z z a b c] [thru ['c | 'b | 'a] repeat 2 one])
@@ -131,7 +131,7 @@
     (
         bin: #{0BAD00CAFE00BABE00DEADBEEF00}
         wa: [#{0A}]
-        true
+        ok
     )
     (void? parse #{} [thru <end>])
     (#{0A} == parse #{0A} [thru #{0A}])

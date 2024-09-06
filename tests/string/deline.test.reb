@@ -20,7 +20,7 @@
         str: "a^M^/b"
         a-bin: as binary! str  comment {remembers it was utf-8, optimizes!}
         t-bin: to binary! str  comment {makes dissociated/unconstrained copy}
-        true
+        ok
     )
 
     ('illegal-cr = pick trap [to text! t-bin] 'id)

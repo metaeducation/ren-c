@@ -145,7 +145,7 @@ DECLARE_NATIVE(delimit)
 
         Decay_If_Unstable(OUT);  // spaced [match [logic?] false ...]
 
-        if (Is_Void(OUT))  // spaced [maybe null], spaced [if false [<a>]], etc
+        if (Is_Void(OUT))  // spaced [maybe null], spaced [if null [<a>]], etc
             continue;  // vaporize
 
         if (Is_Nulled(OUT))  // catches bugs in practice [1]

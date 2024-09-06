@@ -11,7 +11,7 @@
             opt [thru group! (fail "Only One Circle")]
             accept (result)
         ]
-    ], true)
+    ], ok)
 
     ('b = circled [a (b) c])
     (null = circled [a b c])

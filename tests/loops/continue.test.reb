@@ -11,11 +11,11 @@
     (a: 1 repeat 1 [a: error? continue] :a =? 1)
 ]
 [#1535
-    (repeat 1 [words of continue] true)
+    (repeat 1 [words of continue] ok)
 ]
-(repeat 1 [values of continue] true)
+(repeat 1 [values of continue] ok)
 [#1945
-    (repeat 1 [spec-of continue] true)
+    (repeat 1 [spec-of continue] ok)
 ]
 ; continue should not be caught by try
 (a: 1 repeat 1 [a: error? trap [continue]] :a =? 1)

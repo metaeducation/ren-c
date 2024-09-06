@@ -12,7 +12,7 @@
     e.arg1 = 'utternonsense
 ])
 
-(true == set? $set?)
+(set? $set?)
 
 [#1914 (
     set? run lambda [x] [$x] blank

@@ -21,10 +21,6 @@ REBOL [
 
 ; Standard constants
 
-on:  true
-off: false
-yes: true
-no:  false
 zero: 0
 
 ; Special values

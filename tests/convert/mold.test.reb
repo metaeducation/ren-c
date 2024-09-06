@@ -54,10 +54,10 @@
     (
         {[a b c]} = mold block
     )(
-        new-line block true
+        new-line block 'yes
         {[^/    a b c]} = mold block
     )(
-        new-line tail block true
+        new-line tail block 'yes
         {[^/    a b c^/]} = mold block
     )(
         {[^/]} = mold tail block
@@ -85,16 +85,16 @@
 
 (
     block: copy [a b c]
-    new-line block true
-    new-line tail block true
+    new-line block 'yes
+    new-line tail block 'yes
     append block spread [d e f]
     {[^/    a b c^/    d e f]} = mold block
 )
 
 (
     block: copy [a b c]
-    new-line block true
-    new-line tail block true
+    new-line block 'yes
+    new-line tail block 'yes
     append/line block spread [d e f]
     {[^/    a b c^/    d e f^/]} = mold block
 )
@@ -107,8 +107,8 @@
 
 (
     block: copy [a b c]
-    new-line block true
-    new-line tail block true
+    new-line block 'yes
+    new-line tail block 'yes
     append/line block spread [d e f]
     {[^/    a b c^/    d e f^/]} = mold block
 )
@@ -128,16 +128,16 @@
     ]
     f
     recycle
-    true
+    ok
 )]
 
 ; NEW-LINE shouldn't be included on first element of a MOLD SPREAD
 ;
-("a b" = mold spread new-line [a b] true)
-("[^/    a b]" = mold new-line [a b] true)
+("a b" = mold spread new-line [a b] 'yes)
+("[^/    a b]" = mold new-line [a b] 'yes)
 
 [https://github.com/metaeducation/ren-c/issues/1033 (
-    "[^/    1^/    2^/]" == mold new-line/all [1 2] true
+    "[^/    1^/    2^/]" == mold new-line/all [1 2] 'yes
 )]
 
 [https://github.com/metaeducation/rebol-httpd/issues/10 (

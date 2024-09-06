@@ -8,7 +8,7 @@
                 keep value: across some rule | <next>
             ]]
         ]
-        true
+        ok
     )
     (["Hello" "bright" "world!"] = split-test5 "Hello bright world!" space)
     (["Hell" "bright" "w" "rld!"] = split-test5 "Hello bright world!" " o")

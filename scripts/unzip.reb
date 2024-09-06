@@ -627,7 +627,7 @@ unzip: func [
         ;
         pos: <here>, (assert [pos = central-end-pos])
 
-        accept (true)  ; allow parse to succeed even though not at end
+        accept (~)  ; allow parse to succeed even though not at end
     ] except [
         fail "Malformed Zip Archive"
     ]

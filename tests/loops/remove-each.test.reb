@@ -9,7 +9,7 @@
 (
     all [
         s: [1 2]
-        s = [@ count]: remove-each i s [true]
+        s = [@ count]: remove-each i s [okay]
         empty? s
         count = 2
     ]
@@ -39,29 +39,29 @@
     block: copy [1 2 3 4]
     remove-each i block [
         if i = 3 [break]
-        true
+        ok
     ]
     block = [1 2 3 4]
 )
 (
     block: copy [1 2 3 4]
-    returned-null: false
+    returned-null: 'no
     remove-each i block [
         if i = 3 [break]
         i = 2
     ] else [
-        returned-null: true
+        returned-null: 'yes
     ]
     all [
         block = [1 2 3 4]
-        returned-null = true
+        yes? returned-null
     ]
 )
 (
     block: copy [1 2 3 4]
     remove-each i block [
-        if i = 3 [continue/with true]
-        if i = 4 [true] else [false]
+        if i = 3 [continue/with okay]
+        if i = 4 [okay] else [null]
     ]
     block = [1 2]
 )
@@ -70,21 +70,22 @@
     sys.util/rescue [
         remove-each i block [
             if i = 3 [fail "midstream failure"]
-            true
+            okay
         ]
     ]
     block = [3 4]
 )
 (
-    b-was-null: false
+    was-b-null: 'no
 
     block: copy [1 2 3 4 5]
     remove-each [a b] block [
         if a = 5 [
-            b-was-null: null? :b
+            was-b-null: to-yesno null? :b
         ]
+        continue
     ]
-    b-was-null
+    yes? was-b-null
 )
 
 ; STRING!
@@ -100,13 +101,13 @@
     returned-null: 'false
     remove-each i string [
         if i = #"3" [break]
-        true
+        okay
     ] else [
-        returned-null: true
+        returned-null: 'true
     ]
     all [
         string = "1234" comment {not changed if BREAK}
-        returned-null = true
+        returned-null = 'true
     ]
 )
 (
@@ -114,21 +115,21 @@
     sys.util/rescue [
         remove-each i string [
             if i = #"3" [fail "midstream failure"]
-            true
+            okay
         ]
     ]
     string = "34"
 )
 (
-    b-was-null: false
+    b-was-null: 'false
 
     string: copy "12345"
     remove-each [a b] string [
         if a = #"5" [
-            b-was-null: null? :b
+            true? b-was-null: boolean null? b
         ]
     ]
-    b-was-null
+    true? b-was-null
 )
 (
     string: "cօʊʀֆօռǟɢɢօռi"
@@ -148,16 +149,16 @@
 )
 (
     binary: copy #{01020304}
-    returned-null: false
+    returned-null: 'false
     remove-each i binary [
         if i = 3 [break]
-        true
+        okay
     ] else [
-        returned-null: true
+        returned-null: 'true
     ]
     all [
         binary = #{01020304} comment {Not changed with BREAK}
-        returned-null = true
+        returned-null = 'true
     ]
 )
 (
@@ -165,24 +166,24 @@
     sys.util/rescue [
         remove-each i binary [
             if i = 3 [fail "midstream failure"]
-            true
+            okay
         ]
     ]
     binary = #{0304}
 )
 (
-    b-was-null: false
+    b-was-null: 'false
 
     binary: copy #{0102030405}
     remove-each [a b] binary [
         if a = 5 [
-            b-was-null: null? :b
+            true? b-was-null: boolean null? :b
         ]
     ]
-    b-was-null
+    true? b-was-null
 )
 
 ; You can opt out of the series input with a void
 (
-    null = remove-each x void [true]
+    null = remove-each x void [okay]
 )

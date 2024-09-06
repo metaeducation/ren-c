@@ -7,7 +7,7 @@
 
 (lit-word? first ['a])
 (not lit-word? 1)
-(switch/type first ['a] [&lit-word? [true]])
+(switch/type first ['a] [&lit-word? [okay]])
 
 ; lit-words are active
 (

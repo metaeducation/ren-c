@@ -400,7 +400,7 @@ DECLARE_NATIVE(text_x_combinator)
     INCLUDE_PARAMS_OF_TEXT_X_COMBINATOR;
 
     Context* state = VAL_CONTEXT(ARG(state));
-    bool cased = Is_Truthy(CTX_VAR(state, IDX_UPARSE_PARAM_CASE));
+    bool cased = Is_Trigger(CTX_VAR(state, IDX_UPARSE_PARAM_CASE));
 
     Value* v = ARG(value);
     Value* input = ARG(input);

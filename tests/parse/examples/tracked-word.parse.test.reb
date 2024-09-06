@@ -78,12 +78,12 @@
         ]
     ]
 
-    true
+    ok
 )(
     foo-rule: [some "f"]
     bar-rule: [some "b" foo-rule]
     meta-rule: [some bar-rule]
-    true
+    ok
 )(
     (trackparse "fff" [foo-rule]) == trim/auto {
         foo-rule [

@@ -50,7 +50,7 @@
         f-outer.public: 1020
 
         f-inner: eval copy f-outer
-        true
+        ok
     )
 
     (f-outer.public = 1020)  ; public values visible externally
@@ -82,7 +82,7 @@
 
         f-inner-foo: eval copy f-outer-adapt
 
-        true
+        ok
     )
 
     (f-outer-adapt.public = 1020)
@@ -124,7 +124,7 @@
 
         f-inner-foo: eval copy f-outer-augment
 
-        true
+        ok
     )
 
     (f-outer-augment.public = 1020)
@@ -165,7 +165,7 @@
 
         f-inner: eval f-outer
 
-        true
+        ok
     )
 
     (f-prelude.public = 1020)

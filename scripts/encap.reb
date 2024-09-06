@@ -774,7 +774,7 @@ pe-format: context [
         repeat (COFF-header.number-of-sections) section-rule
         end-of-section-header: <here>
 
-        accept (true)  ; !!! stop here, no END ?
+        accept (~)  ; !!! stop here, no END ?
     ]
     size-of-section-header: 40  ; Size of one entry
 
@@ -825,12 +825,12 @@ pe-format: context [
         reset
         parse3/match exe-data exe-rule
         if err = 'missing-dos-signature [
-            return false  ; soft failure (just wasn't an EXE, no "MZ")
+            return null  ; soft failure (just wasn't an EXE, no "MZ")
         ]
         if err [  ; hard failure (was an EXE, but something wrong with it)
             fail ["err:" err, "at:" copy/part fail-at 16]
         ]
-        return true
+        return okay
     ]
 
     update-section-header: func [
@@ -1202,13 +1202,10 @@ generic-format: context [
 
         while [0 != modulo (length of executable) 4096] [
             append executable #{00}
-            true
-        ] then padded -> [
-            if padded [
-                print ["Executable padded to" length of executable "bytes."]
-            ] else [
-                print "No padding of executable length required."
-            ]
+        ] then [
+            print ["Executable padded to" length of executable "bytes."]
+        ] else [
+            print "No padding of executable length required."
         ]
 
         append executable embedding

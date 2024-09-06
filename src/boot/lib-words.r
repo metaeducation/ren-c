@@ -27,15 +27,10 @@ REBOL [
     }
 ]
 
-true
-false
 void
-on
-off
-yes
-no
-
 null
+okay
+
 quasi-void
 quasi-null
 blackhole

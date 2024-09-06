@@ -56,7 +56,7 @@
             fail ["Should LOAD" mold text "as an email but couldn't"]
         ]
     ]
-], true)
+], ok)
 
 
 ; List of Invalid Email Addresses

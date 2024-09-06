@@ -401,7 +401,7 @@ dynamic-library-class: make project-class [
         let l: any [.linker, default-linker]
         return apply get $l/command [
             .output, .depends, .searches, .ldflags
-            /dynamic ~
+            /dynamic ok
         ]
     ]
 ]
@@ -493,7 +493,7 @@ gcc: make compiler-class [
         /D "definitions" [block!]
         /F "cflags" [block!]
         /O "opt-level" [word! integer!]
-        /g "debug" [toggle?!]
+        /g "debug" [onoff?!]
         /PIC "https://en.wikipedia.org/wiki/Position-independent_code"
         /E "only preprocessing"
     ][
@@ -734,7 +734,7 @@ ld: make linker-class [
         searches [~null~ block!]
         ldflags [~null~ block! any-string?]
         /dynamic
-        /debug [toggle?!]
+        /debug [onoff?!]
     ][
         let suffix: either dynamic [
             target-platform.dll-suffix
@@ -841,7 +841,7 @@ llvm-link: make linker-class [
         searches [~null~ block!]
         ldflags [~null~ block! any-string?]
         /dynamic
-        /debug [toggle?!]
+        /debug [onoff?!]
     ][
         let suffix: either dynamic [
             target-platform.dll-suffix
@@ -925,7 +925,7 @@ link: make linker-class [
         searches [~null~ block!]
         ldflags [~null~ block! any-string?]
         /dynamic
-        /debug [toggle?!]
+        /debug [onoff?!]
     ][
         let suffix: either dynamic [
             target-platform.dll-suffix
@@ -1291,7 +1291,7 @@ generator-class: make object! [
     flip-flag: meth [
         return: [~]
         project [object!]
-        to [confirm?!]
+        to [yesno?!]
     ][
         all [
             find words-of project 'generated
@@ -1537,7 +1537,7 @@ makefile: make generator-class [
                     append buf gen-rule dep
                 ]
                 #dynamic-extension #static-extension [
-                    _
+                    ; nothing to do
                 ]
                 (elide dump dep)
                 fail ["unrecognized project type:" dep.class]

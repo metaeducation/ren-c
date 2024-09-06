@@ -31,7 +31,7 @@
 
 INLINE void Init_For_Vararg_End(Atom* out, enum Reb_Vararg_Op op) {
     if (op == VARARG_OP_TAIL_Q)
-        Init_True(out);
+        Init_Logic(out, true);
     else
         Init_Barrier(out);
 }
@@ -94,7 +94,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
     // actual END--are all taken care of, so we're not "at the TAIL?"
     //
     if (op == VARARG_OP_TAIL_Q) {
-        Init_False(out);
+        Init_Logic(out, false);
         return true;
     }
 
@@ -124,7 +124,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
 // check the result, and if an error is delivered it will use the name of
 // the parameter symbol in the fail() message.
 //
-// If op is VARARG_OP_TAIL_Q, then it will return Lib(TRUE) or Lib(FALSE),
+// If op is VARARG_OP_TAIL_Q, then it will return Lib(BLANK) or Lib(NULL),
 // and this case cannot return a thrown value.
 //
 // For other ops, it will return END_NODE if at the end of variadic input,
@@ -656,8 +656,8 @@ DECLARE_NATIVE(variadic_q)
     const Value* param = ACT_PARAMS_HEAD(action);
     for (; key != key_tail; ++param, ++key) {
         if (Get_Parameter_Flag(param, VARIADIC))
-            return Init_True(OUT);
+            return Init_Logic(OUT, true);
     }
 
-    return Init_False(OUT);
+    return Init_Logic(OUT, false);
 }

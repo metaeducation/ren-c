@@ -44,10 +44,10 @@
 
     [#1314 (
         d: [a b c 1 d]
-        true
+        ok
     )(
         'd = parse d [thru the 1 'd]
     )(
         1 = parse d [thru 'c the 1 elide 'd]
     )]
-] true)
+] ok)

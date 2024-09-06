@@ -35,7 +35,7 @@
     (not head? bind next [1] $rebol)
 ]
 [#892 #216
-    (y: 'x reeval unrun lambda [<local> x] [x: true get bind y $x])
+    (y: 'x reeval unrun lambda [<local> x] [x: okay get bind y $x])
 ]
 
 [#2086 (

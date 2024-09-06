@@ -23,7 +23,8 @@
         ]
         return a
     ]
-true)
+    ok
+)
 
     ([1] = prime-factors 1)
     ([2 5] = prime-factors 10)

@@ -127,9 +127,9 @@ trap [
         if not f.next3 [
             return eval f
         ]
-        f.next: make issue! 0  ; # is invalid issue in bootstrap
+        f.next: okay
         let dummy
-        block: compose [dummy (f.next3)]  ; SET-BLOCK, @, invalid in bootstrap
+        block: compose [dummy (to path! f.next3)]  ; no SET-BLOCK, @, in boot
         return eval compose [(as set-block! block) eval f]
     ]
 
@@ -147,6 +147,10 @@ trap [
     export unless: func [/dummy] [
         fail/where "Don't use UNLESS in Bootstrap, definition in flux" 'dummy
     ]
+
+    export boolean?!: get $boolean?
+    export onoff?!: get $onoff?
+    export yesno?!: get $yesno?
 
     quit
 ]
@@ -222,12 +226,12 @@ either: adapt :either [
 ]
 
 boolean?: func3 [x] [any [:x = 'true, :x = 'false]]
-toggle?: func3 [x] [any [:x = 'on, :x = 'off]]
-confirm?: func3 [x] [any [:x = 'yes, :x = 'no]]
+yesno?: func3 [x] [any [:x = 'on, :x = 'off]]
+onoff?: func3 [x] [any [:x = 'yes, :x = 'no]]
 
 boolean?!: word!
-toggle?!: word!
-confirm?!: word!
+onoff?!: word!
+yesno?!: word!
 
 logic?!: make typeset! [~null~ nothing!]
 to-logic: func3 [x] [
@@ -241,6 +245,9 @@ boolean: func3 [x [~null~ any-value!]] [
 to-yesno: func3 [x [~null~ any-value!]] [  ; should this be DID?
     either x ['yes] ['no]
 ]
+
+ok: okay: true
+okay?: :true?
 
 
 === "MAKE THE KEEP IN COLLECT3 OBVIOUS AS KEEP3" ===
@@ -431,7 +438,9 @@ append: func3 [series value [any-value!] /line <local> only] [
 
     only: 'only
     case [
-        logic? :value [fail/where "APPEND LOGIC! LOGIC-TO-WORD, REIFY" 'value]
+        logic? :value [
+            fail/where "APPEND LOGIC! ILLEGAL, use REIFY, BOOLEAN, etc." 'value
+        ]
         block? :value [
             if #splice! = (first value) [
                 value: second value
@@ -451,7 +460,9 @@ append: func3 [series value [any-value!] /line <local> only] [
 insert: func3 [series value [any-value!] /line <local> only] [
     only: 'only
     case [
-        logic? :value [fail/where "INSERT LOGIC! LOGIC-TO-WORD, REIFY" 'value]
+        logic? :value [
+            fail/where "INSERT LOGIC! ILLEGAL, use REIFY, BOOLEAN, etc." 'value
+        ]
         block? :value [
             if #splice! = (first value) [
                 value: second value
@@ -471,7 +482,9 @@ insert: func3 [series value [any-value!] /line <local> only] [
 change: func3 [series value [any-value!] /line <local> only] [
     only: 'only
     case [
-        logic? :value [fail/where "CHANGE LOGIC! LOGIC-TO-WORD, REIFY" 'value]
+        logic? :value [
+            fail/where "CHANGE LOGIC! ILLEGAL, use REIFY, BOOLEAN, etc." 'value
+        ]
         block? :value [
             if #splice! = (first value) [
                 value: second value
@@ -548,7 +561,7 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
                 void? :product [
                     change3/part pos void 1
                 ]
-                nothing? :product [  ; e.g. compose [(if true [null])]
+                nothing? :product [  ; e.g. compose [(if ok [null])]
                     fail/where "nothing compose found" 'return
                 ]
             ] else [
@@ -826,10 +839,19 @@ apply: function3 [
             not :pos.2
             refinement? pos.2
         ] then [  ; doesn't take an argument, set it to the logical next value
-            if blank? :result [
-                f.(to word! pos.1): null
-            ] else [
-                f.(to word! pos.1): :result
+            case [
+                any [
+                    null? :result
+                    void? :result
+                    blank? :result
+                    false = :result
+                ][
+                    f.(to word! pos.1): null
+                ]
+                true = :result [
+                    f.(to word! pos.1): true
+                ]
+                fail "No-Arg Refinements in Bootstrap must be TRUE or NULL"
             ]
         ] else [  ; takes an arg, so set refinement to true and set NEXT param
             f.(to word! pos.1): true

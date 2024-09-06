@@ -952,12 +952,7 @@ bool Get_Path_Push_Refinements_Throws(
             Actionify(out);
             return false;
         }
-
-        // !!! `a/` has no meaning at this time
-        //
-        const Value* val = Lookup_Word_May_Fail(path, path_specifier);
-        UNUSED(val);
-        fail (path); }
+        fail ("Trailing slash notation must retrieve an action or frame."); }
 
       case FLAVOR_ARRAY : {}
         break;
@@ -1762,12 +1757,12 @@ DECLARE_NATIVE(free_q)
     Value* v = ARG(value);
 
     if (Is_Void(v) or Is_Nulled(v))
-        return Init_False(OUT);
+        return Init_Logic(OUT, false);
 
     // All freeable values put their freeable Flex in the payload's "first".
     //
     if (Not_Cell_Flag(v, FIRST_IS_NODE))
-        return Init_False(OUT);
+        return Init_Logic(OUT, false);
 
     Node* n = Cell_Node1(v);
 
@@ -1778,7 +1773,7 @@ DECLARE_NATIVE(free_q)
     // would mean converting the Node.  Review.
     //
     if (n == nullptr or Is_Node_A_Cell(n))
-        return Init_False(OUT);
+        return Init_Logic(OUT, false);
 
     return Init_Logic(OUT, Not_Node_Accessible(n));
 }
@@ -2370,7 +2365,7 @@ DECLARE_NATIVE(aliases_q)
 //
 //  null?: native/intrinsic [
 //
-//  "Tells you if the argument is not a value"
+//  "Tells you if the argument is a ~null~ antiform (branch inhibitor)"
 //
 //      return: [logic?]
 //      value
@@ -2381,6 +2376,23 @@ DECLARE_INTRINSIC(null_q)
     UNUSED(phase);
 
     Init_Logic(out, Is_Nulled(arg));
+}
+
+
+//
+//  okay?: native/intrinsic [
+//
+//  "Tells you if the argument is an ~okay~ antiform (canon branch trigger)"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_INTRINSIC(okay_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_Okay(arg));
 }
 
 
@@ -2397,8 +2409,8 @@ DECLARE_INTRINSIC(any_value_q)
 {
     UNUSED(phase);
 
-    if (not Is_Quasiform(arg))
-        Init_True(out);
+    if (not Is_Quasiform(arg))  // meta
+        Init_Logic(out, true);
     else
         Init_Logic(out, Is_Stable_Antiform_Heart(Cell_Heart(arg)));
 }
@@ -2417,10 +2429,7 @@ DECLARE_INTRINSIC(element_q)
 {
     UNUSED(phase);
 
-    if (Is_Antiform(arg))
-        Init_False(out);
-    else
-        Init_True(out);
+    Init_Logic(out, not Is_Antiform(arg));
 }
 
 
@@ -2445,9 +2454,9 @@ DECLARE_INTRINSIC(non_void_value_q)
 
     if (not Is_Quasiform(arg)) {
         if (Is_Meta_Of_Void(arg))
-            Init_False(out);
+            Init_Logic(out, false);
         else
-            Init_True(out);
+            Init_Logic(out, true);
     }
     else
         Init_Logic(out, Is_Stable_Antiform_Heart(Cell_Heart(arg)));
@@ -2468,16 +2477,16 @@ DECLARE_INTRINSIC(any_atom_q)
     UNUSED(phase);
     UNUSED(arg);
 
-    Init_True(out);
+    Init_Logic(out, true);
 }
 
 
 //
 //  logic?: native/intrinsic [
 //
-//  "Tells you if the argument is a ~true~ or ~false~ antiform"
+//  "Tells you if the argument is NULL or #"
 //
-//      return: "~true~ or ~false~ antiform"  ; can't use LOGIC? to typecheck
+//      return: "null or #"  ; can't use LOGIC? to typecheck
 //      value
 //  ]
 //
@@ -2487,6 +2496,75 @@ DECLARE_INTRINSIC(logic_q)
 
     Init_Logic(out, Is_Logic(arg));
 }
+
+
+//
+//  logical: native/intrinsic [
+//
+//  "Produces NULL for 0, or # for all other integers"
+//
+//      return: [logic?]
+//      value [integer!]
+//  ]
+//
+DECLARE_INTRINSIC(logical)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, VAL_INT64(arg) != 0);
+}
+
+
+//
+//  boolean?: native/intrinsic [
+//
+//  "Tells you if the argument is the TRUE or FALSE word"
+//
+//      return: [logic?]
+//      value [any-value?]
+//  ]
+//
+DECLARE_INTRINSIC(boolean_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_Boolean(arg));
+}
+
+
+//
+//  onoff?: native/intrinsic [
+//
+//  "Tells you if the argument is the ON or OFF word"
+//
+//      return: [logic?]
+//      value [any-value?]
+//  ]
+//
+DECLARE_INTRINSIC(onoff_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_OnOff(arg));
+}
+
+
+//
+//  yesno?: native/intrinsic [
+//
+//  "Tells you if the argument is the YES or NO word"
+//
+//      return: [logic?]
+//      value [any-value?]
+//  ]
+//
+DECLARE_INTRINSIC(yesno_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_YesNo(arg));
+}
+
 
 
 //

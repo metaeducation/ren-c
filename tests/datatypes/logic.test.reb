@@ -1,30 +1,21 @@
 ; datatypes/logic.r
-(logic? true)
-(logic? false)
+(logic? okay)
+(logic? null)
 (not logic? 1)
-(antiform! = kind of true)
-(antiform! = kind of false)
-(on = true)
-(off = false)
-(yes = true)
-(no = false)
-(false = false-if-zero 0)
-(true = false-if-zero 1)
-(true = to-logic 0)
-(true = to-logic 1)
-(true = to-logic "f")
+(antiform! = try kind of okay)
+(null = try kind of null)
 
-~expect-arg~ !! (mold true)
-~expect-arg~ !! (mold false)
+((on? 'on) = true? 'true)
+((on? 'off) = true? 'false)
+((yes? 'yes) = true? 'true)
+((yes? 'no) = true? 'false)
 
-("true" = mold logic-to-word true)
-("false" = mold logic-to-word false)
+(okay = to-logic 0)
+(okay = to-logic 1)
+(okay = to-logic "f")
 
-; Legacy support for LOAD-ability, compatible with Rebol2/R3-Alpha
-; (This support could be shifted to the Redbol module, perhaps?)
-[
-    ('~true~ = the #[true])
-    ('~false~ = the #[false])
-    (true = #[true])  ; legacy support
-    (false = #[false])
-]
+(null = null-if-zero 0)
+(okay = null-if-zero 1)
+
+~expect-arg~ !! (mold okay)
+~expect-arg~ !! (mold null)

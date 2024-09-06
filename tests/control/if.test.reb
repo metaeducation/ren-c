@@ -1,120 +1,120 @@
 ; functions/control/if.r
 (
-    success: false
-    if true [success: true]
-    success
+    success: 'no
+    if ok [success: 'yes]
+    yes? success
 )
 (
-    success: true
-    if false [success: false]
-    success
+    success: 'yes
+    if null [success: 'no]
+    yes? success
 )
-(1 = if true [1])
+(1 = if ok [1])
 
-(void' = ^ if false [])
-('~[~void~]~ = ^ if true [])
+(void' = ^ if null [])
+('~[~void~]~ = ^ if ok [])
 
-(error? if true [trap [1 / 0]])
+(error? if ok [trap [1 / 0]])
 ; RETURN stops the evaluation
 (
     f1: func [return: [integer!]] [
-        if true [return 1 2]
+        if ok [return 1 2]
         2
     ]
     1 = f1
 )
 ; condition datatype tests; action
-(if get $abs [true])
+(if get $abs [okay])
 ; binary
-(if #{00} [true])
+(if #{00} [okay])
 ; bitset
-(if make bitset! "" [true])
+(if make bitset! "" [okay])
 
 ; literal blocks were once illegal in Ren-C as conditions, but that check
 ; was based on CELL_FLAG_UNEVALUATED, which was removed when blocks became
 ; "evaluative" for their bindings.
 [
-    (if [] [true])
-    (if identity [] [true])
+    (if [] [okay])
+    (if identity [] [okay])
 ]
 
 ; datatype
-(if blank! [true])
+(if blank! [okay])
 ; typeset
-(if &any-number? [true])
+(if &any-number? [okay])
 ; date
-(if 1/1/0000 [true])
+(if 1/1/0000 [okay])
 ; decimal
-(if 0.0 [true])
-(if 1.0 [true])
-(if -1.0 [true])
+(if 0.0 [okay])
+(if 1.0 [okay])
+(if -1.0 [okay])
 ; email
-(if me@rt.com [true])
-(if %"" [true])
-(if does [] [true])
-(if first [:first] [true])
+(if me@rt.com [okay])
+(if %"" [okay])
+(if does [] [okay])
+(if first [:first] [okay])
 ; integer
-(if 0 [true])
-(if 1 [true])
-(if -1 [true])
-(if #a [true])
-(if first ['a/b] [true])
-(if first ['a] [true])
-(if true [true])
-(void' = ^ if false [true])
-(if $1 [true])
-(if (specialize get $of [property: 'type]) [true])
-(true = if blank [true])
-(if make object! [] [true])
-(if get $+ [true])
-(if 0x0 [true])
-(if first [()] [true])
-(if 'a/b [true])
-(if make port! http:// [true])
-(if /a [true])
-(if first [a.b:] [true])
-(if first [a:] [true])
-(if "" [true])
-(if to tag! "" [true])
-(if 0:00 [true])
-(if 0.0.0 [true])
-(if  http:// [true])
-(if 'a [true])
+(if 0 [okay])
+(if 1 [okay])
+(if -1 [okay])
+(if #a [okay])
+(if first ['a/b] [okay])
+(if first ['a] [okay])
+(if ok [okay])
+(void' = ^ if null [okay])
+(if $1 [okay])
+(if (specialize get $of [property: 'type]) [okay])
+(okay = if blank [okay])
+(if make object! [] [okay])
+(if get $+ [okay])
+(if 0x0 [okay])
+(if first [()] [okay])
+(if 'a/b [okay])
+(if make port! http:// [okay])
+(if /a [okay])
+(if first [a.b:] [okay])
+(if first [a:] [okay])
+(if "" [okay])
+(if to tag! "" [okay])
+(if 0:00 [okay])
+(if 0.0.0 [okay])
+(if  http:// [okay])
+(if 'a [okay])
 
 ; recursive behaviour
 
-('~[~void~]~ = ^ if true [if false [1]])
-(void? if true [2 if false [1]])
-(1 = if true [if true [1]])
+('~[~void~]~ = ^ if ok [if null [1]])
+(void? if ok [2 if null [1]])
+(1 = if ok [if ok [1]])
 
 ; infinite recursion
 (<deep-enough> = catch [
     depth: 0
-    blk: [depth: me + 1, if depth = 1000 [throw <deep-enough>], if true (blk)]
+    blk: [depth: me + 1, if depth = 1000 [throw <deep-enough>], if ok (blk)]
     eval blk
 ])
 
 (
-    success: false
-    if not false [success: true]
-    success
+    success: 'no
+    if no? 'no [success: 'yes]
+    yes? success
 )
 (
-    success: true
-    if not true [success: false]
-    success
+    success: 'yes
+    if no? 'yes [success: 'no]
+    yes? success
 )
-(1 = if not false [1])
+(1 = if false? 'false [1])
 
-(void' = ^ if not true [1])
-('~[~null~]~ = ^ if not false [null])
+(void' = ^ if not okay [1])
+('~[~null~]~ = ^ if no? 'no [null])
 
-(error? if not false [trap [1 / 0]])
+(error? if off? 'off [trap [1 / 0]])
 
 ; RETURN stops the evaluation
 (
     f1: func [return: [integer!]] [
-        if not false [return 1 2]
+        if not null [return 1 2]
         2
     ]
     1 = f1
@@ -123,9 +123,9 @@
 ; Soft Quoted Branching
 ; https://forum.rebol.info/t/soft-quoted-branching-light-elegant-fast/1020
 (
-    [1 + 2] = if true '[1 + 2]
+    [1 + 2] = if ok '[1 + 2]
 )(
-    1020 = if true '1020
+    1020 = if ok '1020
 )
 
 ; THE-XXX! Branching
@@ -134,17 +134,17 @@
 ; shorthand for `if xxx [:word]` etc.
 ;
 ;    j: 304
-;    304 = if true @j
+;    304 = if ok @j
 ;
 ;    o: make object! [b: 1020]
-;    1020 = if true @o/b
+;    1020 = if ok @o/b
 ;
 ; Might be good for code golf?  (Even better would be to wedge in tailored
 ; support for plain WORD! etc.)
 [(
     x: ~
     all [
-        <else> = if true [x: <branch>, null] *else [<else>]
+        <else> = if ok [x: <branch>, null] *else [<else>]
         x = <branch>
     ]
 )
@@ -154,9 +154,9 @@
 ;(
 ;    var: <something>
 ;    all [
-;        void? if false @(var: <something-else> [null])
+;        void? if null @(var: <something-else> [null])
 ;        var = <something>
-;        null? if true @(var: <something-else> [null])
+;        null? if ok @(var: <something-else> [null])
 ;        var = <something-else>
 ;    ]
 ;)
