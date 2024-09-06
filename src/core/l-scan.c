@@ -2464,35 +2464,13 @@ Bounce Scanner_Executor(Level* const L) {
             return RAISE(Error_Malconstruct_Raw(temp));
         }
 
-        const Symbol* symbol = Cell_Word_Symbol(Array_Head(array));
-
         if (Array_Len(array) == 1) {
             //
-            // #[none], #[true], #[false], #[unset]
-            // !!! These should be under a LEGACY flag...
+            // #[true] #[false] #[none] #[unset] -- no equivalents.
             //
-            switch (Symbol_Id(symbol)) {
-              case SYM_NONE:  // !!! Should be under a LEGACY flag...
-                Init_Blank(PUSH());
-                break;
-
-              case SYM_FALSE:
-                Init_Quasi_Word(PUSH(), Canon(FALSE));
-                break;
-
-              case SYM_TRUE:
-                Init_Quasi_Word(PUSH(), Canon(TRUE));
-                break;
-
-              case SYM_UNSET:
-                Init_Quasi_Word(PUSH(), Canon(UNSET));
-                break;
-
-              default: {
-                DECLARE_ATOM (temp);
-                Init_Block(temp, array);
-                return RAISE(Error_Malconstruct_Raw(temp)); }
-            }
+            DECLARE_ATOM (temp);
+            Init_Block(temp, array);
+            return RAISE(Error_Malconstruct_Raw(temp));
         }
         else if (Array_Len(array) == 2) {  // #[xxx! [...]], #[xxx! yyy!], etc.
             //
