@@ -299,11 +299,11 @@ INLINE void Drop_Data_Stack_To(StackIndex i) {
     Pop_Stack_Values_Core((base), ARRAY_MASK_HAS_FILE_LINE)
 
 #define Pop_Stack_Values_Core(base,flags) \
-    Pop_Stack_Values_Core_Masked((base), (flags), CELL_MASK_PERSIST)
+    Pop_Stack_Values_Core_Masked((base), (flags), CELL_MASK_COPY)
 
 #define Pop_Stack_Values_Core_Keep_Notes(base,flags) \
     Pop_Stack_Values_Core_Masked((base), (flags), \
-        CELL_MASK_PERSIST | CELL_FLAG_NOTE)
+        CELL_MASK_COPY_KEEP_NOTES)
 
 
 // Since stack overflows are memory-related errors, don't try to do any

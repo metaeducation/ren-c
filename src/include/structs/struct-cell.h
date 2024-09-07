@@ -352,6 +352,10 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
         | CELL_FLAG_NOTE \
         | CELL_FLAG_PROTECTED)
 
+#define CELL_MASK_COPY_KEEP_NOTES \
+    ~(CELL_MASK_PERSIST \
+        | CELL_FLAG_PROTECTED)
+
 #define CELL_MASK_ALL \
     ~cast(Flags, 0)
 

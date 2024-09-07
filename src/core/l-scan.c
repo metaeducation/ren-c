@@ -3282,6 +3282,13 @@ const Byte* Scan_Issue(Cell* out, const Byte* cp, Size size)
 //  Try_Scan_Variadic_Feed_Utf8_Managed: C
 //
 Option(Array*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
+//
+// 1. We want to preserve CELL_FLAG_FEED_NOTE_META.  This tells us when what
+//    the feed sees as an quasiform was really originally intended as an
+//    antiform.  The Feed_At() mechanics will typically error on these, but
+//    under evaluation the evaluator's treatment of @ will reconstitute the
+//    antiform.  (There are various dangers to this, which have not been
+//    fully vetted, but the idea is pretty important.)
 {
     assert(Detect_Rebol_Pointer(feed->p) == DETECTED_AS_UTF8);
 
@@ -3309,7 +3316,10 @@ Option(Array*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
     }
 
     Flags flags = NODE_FLAG_MANAGED;
-    Array* reified = Pop_Stack_Values_Core(L->baseline.stack_base, flags);
+    Array* reified = Pop_Stack_Values_Core_Keep_Notes(
+        L->baseline.stack_base,
+        flags
+    );
     Drop_Level(L);
     return reified;
 }

@@ -233,7 +233,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
 Array* Pop_Stack_Values_Core_Masked(
     StackIndex base,
     Flags flags,
-    Flags cell_mask_persist
+    Flags copy_mask
 ){
     Assert_No_DataStack_Pointers_Extant();  // in the future, pop may disrupt
 
@@ -256,7 +256,7 @@ Array* Pop_Stack_Values_Core_Masked(
         }
       #endif
 
-          Move_Cell_Untracked(dest, src, (~ cell_mask_persist));
+          Move_Cell_Untracked(dest, src, copy_mask);
 
         #if DEBUG_POISON_DROPPED_STACK_CELLS
           Poison_Cell(src);
