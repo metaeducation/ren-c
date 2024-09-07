@@ -254,11 +254,8 @@ bool Typecheck_Atom_Core(
             const Param* param = L->u.action.param;
             Atom* arg = L->u.action.arg;
             for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
-                if (Is_Specialized(param))
-                    Copy_Cell(arg, param);
-                else
-                    Init_Nothing(arg);
-                assert(Is_Stable(arg));
+                Erase_Cell(arg);  // uninitialized in release, poison in debug
+                Copy_Cell(arg, param);
             }
 
             arg = First_Unspecialized_Arg(&param, L);
