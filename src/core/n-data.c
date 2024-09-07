@@ -715,9 +715,9 @@ bool Get_Var_Push_Refinements_Throws(
 
     if (Any_Path(var)) {  // META-PATH! is not META'd, all act the same
         DECLARE_ATOM (safe);
-        Push_GC_Guard_Erased_Cell(safe);
+        Push_GC_Guard(safe);
         DECLARE_ATOM (result);
-        Push_GC_Guard_Erased_Cell(result);
+        Push_GC_Guard(result);
 
         bool threw = Get_Path_Push_Refinements_Throws(
             result,
@@ -827,7 +827,7 @@ bool Get_Var_Push_Refinements_Throws(
     ++stackindex;
 
     DECLARE_ATOM (temp);
-    Push_GC_Guard_Erased_Cell(temp);
+    Push_GC_Guard(temp);
 
     while (stackindex != TOP_INDEX + 1) {
         Move_Cell(temp, out);
@@ -1344,10 +1344,10 @@ bool Set_Var_Core_Updater_Throws(
         fail (var);
 
     DECLARE_VALUE (writeback);
-    Push_GC_Guard_Erased_Cell(writeback);
+    Push_GC_Guard(writeback);
 
     Erase_Cell(temp);
-    Push_GC_Guard_Erased_Cell(temp);
+    Push_GC_Guard(temp);
 
     StackIndex stackindex_top = TOP_INDEX;
 

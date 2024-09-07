@@ -120,25 +120,15 @@ INLINE Flex* Force_Flex_Managed(const_if_c Flex* f) {
 #define Push_GC_Guard(node) \
     Push_Guard_Node(node)
 
-INLINE void Drop_GC_Guard(const Node* node) {
+INLINE void Drop_GC_Guard(const void* p) {  // p may be erased cell (not Node)
   #if defined(NDEBUG)
-    UNUSED(node);
+    UNUSED(p);
   #else
-    if (node != *Flex_Last(const Node*, g_gc.guarded)) {
+    if (p != *Flex_Last(const void*, g_gc.guarded)) {
         printf("Drop_GC_Guard() pointer that wasn't last Push_GC_Guard()\n");
-        panic (node);
+        panic (p);
     }
   #endif
 
     g_gc.guarded->content.dynamic.used -= 1;
-}
-
-// Cells memset 0 for speed.  But Push_Guard_Node() expects a Node, where
-// the NODE_BYTE() has NODE_FLAG_NODE set.  Use this with DECLARE_ATOM().
-//
-INLINE void Push_GC_Guard_Erased_Cell(Cell* cell) {
-    assert(FIRST_BYTE(cell) == 0);
-    FIRST_BYTE(cell) = NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x01_CELL;
-
-    Push_Guard_Node(cell);
 }

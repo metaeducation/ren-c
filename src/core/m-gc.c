@@ -175,13 +175,13 @@ static void Queue_Unmarked_Accessible_Flex_Deep(const Flex* f);
 // turned into a decayed form and only kept alive to prevent referencing
 // pointers to be swept.  See Decay_Flex()
 //
-static void Queue_Mark_Node_Deep(const Node** pp) {
-    Byte nodebyte = NODE_BYTE(*pp);
+static void Queue_Mark_Node_Deep(const Node** npp) {
+    Byte nodebyte = NODE_BYTE(*npp);
     if (nodebyte & NODE_BYTEMASK_0x10_MARKED)
         return;  // may not be finished marking yet, but has been queued
 
     if (nodebyte & NODE_BYTEMASK_0x01_CELL) {  // e.g. a pairing
-        const Value* v = x_cast(const Value*, *pp);
+        const Value* v = x_cast(const Value*, *npp);
         if (Is_Node_Managed(v))
             Queue_Mark_Pairing_Deep(v);
         else {
@@ -191,7 +191,7 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
         return;  // it's 2 cells, sizeof(Stub), but no room for a Stub's data
     }
 
-    if (Not_Node_Accessible(*pp)) {
+    if (Not_Node_Accessible(*npp)) {
         //
         // All inaccessible nodes are collapsed and canonized into a universal
         // inaccessible node so the stub can be freed.
@@ -206,13 +206,13 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
         // !!! Here we are setting things that may already be the canon
         // inaccessible stub which may not be efficient.  Review.
         //
-        *pp = &PG_Inaccessible_Stub;
+        *npp = &PG_Inaccessible_Stub;
         return;
     }
 
-    const Flex* f = x_cast(const Flex*, *pp);
+    const Flex* f = x_cast(const Flex*, *npp);
 
- #if !defined(NDEBUG)
+  #if !defined(NDEBUG)
     if (Is_Node_Free(f))
         panic (f);
 
@@ -767,24 +767,34 @@ static void Mark_Data_Stack(void)
 // collection with Push_GC_Guard.  Subclasses e.g. ARRAY_IS_CONTEXT will
 // have their LINK() and MISC() fields guarded appropriately for the class.
 //
+// 1. For efficiency, the system allows ranges of places that cells will be
+//    put to be memset() to 0.  The Init_XXX() routines will then make sure
+//    the NODE_FLAG_NODE and NODE_FLAG_CELL are OR'd onto it.  If you GC Guard
+//    a cell made with DECLARE_ATOM()/DECLARE_VALUE()/DECLARE_ELEMENT() it
+//    will be in the erased state, and even if you put the NODE and CELL
+//    bits on it, the evaluator may transitionally Erase_Cell() on it.
+//
+// 2. Guarding a Cell means keeping its contents alive...the Cell is assumed
+//    to not live in a Flex or Pairing.  Marks on the Cell itself are not
+//    covered... if this happens, treat it as a bug.
+//
 static void Mark_Guarded_Nodes(void)
 {
-    const Node* *np = Flex_Head(const Node*, g_gc.guarded);
+    const void* *pp = Flex_Head(const void*, g_gc.guarded);
     REBLEN n = Flex_Used(g_gc.guarded);
-    for (; n > 0; --n, ++np) {
-        if (Is_Node_A_Cell(*np)) {
-            //
-            // !!! Guarding a Cell means keeping its contents alive...the
-            // Cell is assumed to not live in a Flex or Pairing.  Marks
-            // on the Cell itself are not covered... if this happens, treat
-            // it as a bug.
-            //
-            assert(Not_Node_Marked(*np));
+    for (; n > 0; --n, ++pp) {
+        if (*c_cast(Byte*, *pp) == 0) {  // assume erased cell, tolerate [1]
+            assert(Is_Cell_Erased(c_cast(Cell*, *pp)));
+            continue;
+        }
 
-            Queue_Mark_Maybe_Fresh_Cell_Deep(x_cast(const Value*, *np));
+        const Node** npp = cast(const Node**, pp);
+        if (Is_Node_A_Cell(*npp)) {
+            assert(Not_Node_Marked(*npp));  // shouldn't live in array [2]
+            Queue_Mark_Maybe_Fresh_Cell_Deep(c_cast(Cell*, *npp));
         }
         else  // a Flex Stub
-            Queue_Mark_Node_Deep(np);
+            Queue_Mark_Node_Deep(npp);
 
         Propagate_All_GC_Marks();
     }
@@ -1422,42 +1432,41 @@ REBLEN Recycle(void)
 //
 //  Push_Guard_Node: C
 //
-void Push_Guard_Node(const Node* node)
+// 1. Technically we should never call this routine to guard a value that lives
+//    in some array.  Not only would we have to guard the containing array, we
+//    would also have to lock the array from being able to resize and
+//    reallocate the data pointer.  But this is a somewhat expensive check, so
+//    only feasible to run occasionally.
+//
+// 2. At one time this didn't ensure the Stub being guarded was managed, based
+//    on the idea of guarding the contents of an unmanaged array.  That idea
+//    didn't get any usage, and allowing unmanaged guards here just obfuscated
+//    errors when they occurred.  So the assert has been put back.  Review.
+//
+void Push_Guard_Node(const void* p)
 {
-    assert(Is_Node(node));
-
-  #if !defined(NDEBUG)
-    if (Is_Node_A_Cell(node)) {
-
+    if (*c_cast(Byte*, p) == 0) {
+        assert(Is_Cell_Erased(c_cast(Cell*, p)));
+        goto check_cell_address;
+    }
+    else if (Is_Node_A_Cell(c_cast(Node*, p))) {
+      check_cell_address: ;  // need semicolon, next statement is declaration
       #ifdef STRESS_CHECK_GUARD_VALUE_POINTER
-        //
-        // Technically we should never call this routine to guard a value
-        // that lives in some array.  Not only would we have to guard the
-        // containing array, we would also have to lock the array from
-        // being able to resize and reallocate the data pointer.  But this is
-        // a somewhat expensive check, so only feasible to run occasionally.
-        //
+        const Cell* cell = c_cast(Cell*, p);
+
         Node* containing = Try_Find_Containing_Node_Debug(v);
-        if (containing)
+        if (containing)  // cell shouldn't live in array or pairing [1]
             panic (containing);
       #endif
     }
     else {  // It's a Stub
-        //
-        // !!! At one time this didn't ensure the Stub being guarded was
-        // managed, based on the idea of guarding the contents of an unmanaged
-        // Array.  That idea didn't get any usage, and allowing unmanaged
-        // guards here just obfuscated errors when they occurred.  So the
-        // assert has been put back.  Review.
-
-        assert(Is_Node_Managed(node));
+        assert(Is_Node_Managed(c_cast(Node*, p)));  // [2]
     }
-  #endif
 
     if (Is_Flex_Full(g_gc.guarded))
         Extend_Flex_If_Necessary(g_gc.guarded, 8);
 
-    *Flex_At(const Node*, g_gc.guarded, Flex_Used(g_gc.guarded)) = node;
+    *Flex_At(const void*, g_gc.guarded, Flex_Used(g_gc.guarded)) = p;
 
     Set_Flex_Used(g_gc.guarded, Flex_Used(g_gc.guarded) + 1);
 }
