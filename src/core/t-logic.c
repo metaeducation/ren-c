@@ -304,7 +304,7 @@ DECLARE_INTRINSIC(not_1)  // see TO-C-NAME
 //
 INLINE bool Do_Logic_Right_Side_Throws(
     Sink(Value*) out,
-    const Value* right
+    const Element* right
 ){
     if (Is_Group(right)) {
         Atom* atom_out = out;
@@ -341,7 +341,7 @@ DECLARE_NATIVE(and_1)  // see TO-C-NAME
     INCLUDE_PARAMS_OF_AND_1;
 
     Value* left = ARG(left);
-    Value* right = ARG(right);
+    Element* right = cast(Element*, ARG(right));
 
     if (Is_Inhibitor(left))
         return Init_Logic(OUT, false);
@@ -369,7 +369,7 @@ DECLARE_NATIVE(or_1)  // see TO-C-NAME
     INCLUDE_PARAMS_OF_OR_1;
 
     Value* left = ARG(left);
-    Value* right = ARG(right);
+    Element* right = cast(Element*, ARG(right));
 
     if (Is_Trigger(left))
         return Init_Logic(OUT, true);
@@ -397,7 +397,7 @@ DECLARE_NATIVE(xor_1)  // see TO-C-NAME
     INCLUDE_PARAMS_OF_XOR_1;
 
     Value* left = ARG(left);
-    Value* right = ARG(right);
+    Element* right = cast(Element*, ARG(right));
 
     if (Do_Logic_Right_Side_Throws(SPARE, right))
         return THROWN;

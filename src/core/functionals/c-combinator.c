@@ -380,7 +380,7 @@ DECLARE_NATIVE(opt_combinator)
     if (not Is_Raised(OUT))  // parser succeeded...
         return OUT;  // so return its result
 
-    Set_Var_May_Fail(remainder, SPECIFIED, input);  // convey no progress made
+    Copy_Cell(remainder, input);  // convey no progress made
     return Init_Nulled(OUT);  // null result
 }}
 
@@ -414,7 +414,7 @@ DECLARE_NATIVE(text_x_combinator)
             return nullptr;
 
         ++VAL_INDEX_UNBOUNDED(input);
-        Set_Var_May_Fail(ARG(remainder), SPECIFIED, input);
+        Copy_Cell(ARG(remainder), input);
 
         Derelativize(OUT, at, Cell_Specifier(input));
         return OUT;  // Note: returns item in array, not rule, when an array!
@@ -436,7 +436,7 @@ DECLARE_NATIVE(text_x_combinator)
 
     assert(cast(REBLEN, index) == VAL_INDEX(input));  // asked for AM_FIND_MATCH
     VAL_INDEX_UNBOUNDED(input) += len;
-    Set_Var_May_Fail(ARG(remainder), SPECIFIED, input);
+    Copy_Cell(ARG(remainder), input);
 
     // If not a list, we have return the rule on match since there's
     // no isolated value to capture.
@@ -520,12 +520,7 @@ DECLARE_NATIVE(some_combinator)
 
 } call_parser_again: {  //////////////////////////////////////////////////////
 
-    Get_Var_May_Fail(
-        input,
-        remainder, // remainder from previous call becomes new input
-        SPECIFIED,
-        true
-    );
+    Copy_Cell(remainder, input);  // remainder from previous call is new input
 
     Push_Parser_Sublevel(SPARE, remainder, parser, input);
 
@@ -535,7 +530,7 @@ DECLARE_NATIVE(some_combinator)
 } later_parse_result_in_spare: {  ////////////////////////////////////////////
 
     if (Is_Nulled(SPARE)) {  // first still succeeded, so we're okay.
-        Set_Var_May_Fail(remainder, SPECIFIED, input);  // put back [3]
+        Copy_Cell(remainder, input);  // put back [3]
         Remove_Flex_Units(loops, Array_Len(loops) - 1, 1);  // drop loop
         return OUT;  // return previous successful parser result
     }
@@ -591,7 +586,7 @@ DECLARE_NATIVE(further_combinator)
     if (Is_Nulled(OUT))
         return nullptr;  // the parse rule did not match
 
-    Get_Var_May_Fail(SPARE, remainder, SPECIFIED, true);
+    Copy_Cell(SPARE, remainder);
 
     if (VAL_INDEX(SPARE) <= VAL_INDEX(input))
         return nullptr;  // the rule matched but did not advance the input
@@ -716,13 +711,14 @@ static bool Combinator_Param_Hook(
             // write to native frame variables, so hack in a temporary here.
             // (could be done much more efficiently another way!)
 
-            if (rebRunThrows(cast(Value*, SPARE), "let temp"))
+            if (rebRunThrows(cast(RebolValue*, SPARE), "let temp"))
                 assert(!"LET failed");
+            Element* temp = cast(Element*, SPARE);
             Value* parser = rebValue(
-                "[@", stable_SPARE, "]: parsify", rebQ(ARG(state)), ARG(rules)
+                "[@", temp, "]: parsify", rebQ(ARG(state)), ARG(rules)
             );
             bool any = false;
-            Get_Var_May_Fail(ARG(rules), stable_SPARE, SPECIFIED, any);
+            Get_Var_May_Fail(ARG(rules), temp, SPECIFIED, any);
             Copy_Cell(var, parser);
             rebRelease(parser);
         }

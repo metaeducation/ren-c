@@ -314,7 +314,7 @@ parse-asn: func [
     class-types ([@universal @application @context-specific @private])
 ][
     let data-start: data  ; may not be at head
-    let index: does [1 + offset-of data-start data]  ; effective index
+    let index: accessor does [1 + offset-of data-start data]  ; effective index
 
     let mode: #type
     let [class tag val size constructed]
@@ -674,10 +674,10 @@ client-key-exchange: func [
 ][
     let [key-data key-len]
 
-    switch ctx/key-method [
+    switch ctx.key-method [
         <rsa> [
             ; generate pre-master-secret
-            ctx.pre-master-secret: copy ctx/ver-bytes
+            ctx.pre-master-secret: copy ctx.ver-bytes
             random/seed now/time/precise
             repeat 46 [append ctx.pre-master-secret (random-secure 256) - 1]
 
@@ -722,7 +722,7 @@ client-key-exchange: func [
 
     emit ctx [
         #{16}                       ; protocol type (22=Handshake)
-        ctx/ver-bytes               ; protocol version
+        ctx.ver-bytes               ; protocol version
 
       ssl-record-length:
         #{00 00}                    ; length of SSL record data
@@ -750,19 +750,19 @@ client-key-exchange: func [
     make-key-block ctx
 
     ; update keys
-    ctx.client-mac-key: copy/part ctx.key-block ctx/hash-size
-    ctx.server-mac-key: copy/part skip ctx.key-block ctx/hash-size ctx/hash-size
-    ctx.client-crypt-key: copy/part skip ctx.key-block 2 * ctx/hash-size ctx/crypt-size
-    ctx.server-crypt-key: copy/part skip ctx.key-block (2 * ctx/hash-size) + ctx/crypt-size ctx/crypt-size
+    ctx.client-mac-key: copy/part ctx.key-block ctx.hash-size
+    ctx.server-mac-key: copy/part skip ctx.key-block ctx.hash-size ctx.hash-size
+    ctx.client-crypt-key: copy/part skip ctx.key-block 2 * ctx.hash-size ctx.crypt-size
+    ctx.server-crypt-key: copy/part skip ctx.key-block (2 * ctx.hash-size) + ctx.crypt-size ctx.crypt-size
 
-    if ctx/block-size [
+    if ctx.block-size [
         if ctx.version = 1.0 [
             ;
             ; Block ciphers in TLS 1.0 used an implicit initialization vector
             ; (IV) to seed the encryption process.  This has vulnerabilities.
             ;
-            ctx.client-iv: copy/part skip ctx.key-block 2 * (ctx/hash-size + ctx/crypt-size) ctx/block-size
-            ctx.server-iv: copy/part skip ctx.key-block (2 * (ctx/hash-size + ctx/crypt-size)) + ctx/block-size ctx/block-size
+            ctx.client-iv: copy/part skip ctx.key-block 2 * (ctx.hash-size + ctx.crypt-size) ctx.block-size
+            ctx.server-iv: copy/part skip ctx.key-block (2 * (ctx.hash-size + ctx.crypt-size)) + ctx.block-size ctx.block-size
         ] else [
             ;
             ; Each encrypted message in TLS 1.1 and above carry a plaintext
@@ -783,7 +783,7 @@ change-cipher-spec: func [
 ][
     emit ctx [
         #{14}           ; protocol type (20=ChangeCipherSpec)
-        ctx/ver-bytes   ; protocol version
+        ctx.ver-bytes   ; protocol version
         #{00 01}        ; length of SSL record data
         #{01}           ; CCS protocol type
     ]
@@ -798,7 +798,7 @@ encrypted-handshake-msg: func [
     let encrypted: encrypt-data/type ctx unencrypted #{16}
     emit ctx [
         #{16}                         ; protocol type (22=Handshake)
-        ctx/ver-bytes                 ; protocol version
+        ctx.ver-bytes                 ; protocol version
         to-2bin length of encrypted  ; length of SSL record data
         encrypted
     ]
@@ -814,7 +814,7 @@ application-data: func [
     let encrypted: encrypt-data ctx to binary! unencrypted
     emit ctx [
         #{17}                         ; protocol type (23=Application)
-        ctx/ver-bytes                 ; protocol version
+        ctx.ver-bytes                 ; protocol version
         to-2bin length of encrypted  ; length of SSL record data
         encrypted
     ]
@@ -828,7 +828,7 @@ alert-close-notify: func [
     let encrypted: encrypt-data ctx #{0100} ; close notify
     emit ctx [
         #{15}                         ; protocol type (21=Alert)
-        ctx/ver-bytes                 ; protocol version
+        ctx.ver-bytes                 ; protocol version
         to-2bin length of encrypted  ; length of SSL record data
         encrypted
     ]
@@ -851,7 +851,7 @@ finished: func [
         ; cipher suite which defines a different PRF MUST also define the
         ; Hash to use in the Finished computation."
         ;
-        checksum ctx/prf-method ctx.handshake-messages
+        checksum ctx.prf-method ctx.handshake-messages
     ]
 
     return make binary! [
@@ -895,32 +895,32 @@ encrypt-data: func [
         ;  which is equal to the SecurityParameters.block_size."
         ;
         ctx.client-iv: copy #{}
-        repeat ctx/block-size [append ctx.client-iv (random-secure 256) - 1]
+        repeat ctx.block-size [append ctx.client-iv (random-secure 256) - 1]
     ]
 
     ; Message Authentication Code
     ; https://tools.ietf.org/html/rfc5246#section-6.2.3.1
     ;
-    let MAC: checksum/key ctx/hash-method make binary! [
+    let MAC: checksum/key ctx.hash-method make binary! [
         to-8bin ctx.seq-num-w               ; sequence number (64-bit int)
         type                                ; msg type
-        ctx/ver-bytes                       ; version
+        ctx.ver-bytes                       ; version
         to-2bin length of content           ; msg content length
         content                             ; msg content
     ] ctx.client-mac-key
 
     let data: join content MAC
 
-    if ctx/block-size [
+    if ctx.block-size [
         ; add the padding data in CBC mode
-        let padding: ctx/block-size - (
-            remainder (1 + (length of data)) ctx/block-size
+        let padding: ctx.block-size - (
+            remainder (1 + (length of data)) ctx.block-size
         )
         let len: 1 + padding
         append data head of insert/dup make binary! len to-1bin padding len
     ]
 
-    switch ctx/crypt-method [
+    switch ctx.crypt-method [
         @aes [
             ctx.encrypt-stream: default [
                 aes-key ctx.client-crypt-key ctx.client-iv
@@ -935,7 +935,7 @@ encrypt-data: func [
             ]
         ]
     ] else [
-        fail ["Unsupported TLS crypt-method:" ctx/crypt-method]
+        fail ["Unsupported TLS crypt-method:" ctx.crypt-method]
     ]
 
     ; TLS versions 1.1 and above include the client-iv in plaintext.
@@ -954,7 +954,7 @@ decrypt-data: func [
     ctx [object!]
     data [binary!]
 ][
-    switch ctx/crypt-method [
+    switch ctx.crypt-method [
         @aes [
             ctx.decrypt-stream: default [
                 aes-key/decrypt ctx.server-crypt-key ctx.server-iv
@@ -969,7 +969,7 @@ decrypt-data: func [
             ]
         ]
     ] else [
-        fail ["Unsupported TLS crypt-method:" ctx/crypt-method]
+        fail ["Unsupported TLS crypt-method:" ctx.crypt-method]
     ]
 
     return data
@@ -1085,18 +1085,18 @@ parse-messages: func [
     let data: proto.messages
 
     if yes? ctx.is-encrypted [
-        all [ctx/block-size, ctx.version > 1.0] then [
+        all [ctx.block-size, ctx.version > 1.0] then [
             ;
             ; Grab the server's initialization vector, which will be new for
             ; each message.
             ;
-            ctx.server-iv: take/part data ctx/block-size
+            ctx.server-iv: take/part data ctx.block-size
         ]
 
         change data decrypt-data ctx data
         debug ["decrypting..."]
 
-        if ctx/block-size [
+        if ctx.block-size [
             ; deal with padding in CBC mode
             data: copy/part data (
                 ((length of data) - 1) - (last data)
@@ -1257,7 +1257,7 @@ parse-messages: func [
                         ;
                         ctx.certificate: parse-asn msg-obj.certificate-list.1
 
-                        switch ctx/key-method [
+                        switch ctx.key-method [
                             <rsa> [
                                 ; get the public key and exponent (hardcoded for now)
                                 let temp: parse-asn (next
@@ -1280,7 +1280,7 @@ parse-messages: func [
                     ]
 
                     <server-key-exchange> [
-                        switch ctx/key-method [
+                        switch ctx.key-method [
                             <dhe-dss>
                             <dhe-rsa> [
                                 let msg-obj: context [
@@ -1419,7 +1419,7 @@ parse-messages: func [
                                 checksum 'sha1 ctx.handshake-messages
                             ]
                         ] else [
-                            checksum ctx/hmac-method ctx.handshake-messages
+                            checksum ctx.hmac-method ctx.handshake-messages
                         ]
                         if (
                             bin <> applique :prf [
@@ -1450,12 +1450,12 @@ parse-messages: func [
                 append ctx.handshake-messages copy/part data len + 4
 
                 let skip-amount: either yes? ctx.is-encrypted [
-                    let mac: copy/part skip data len + 4 ctx/hash-size
+                    let mac: copy/part skip data len + 4 ctx.hash-size
 
-                    let mac-check: checksum/key ctx/hash-method make binary! [
+                    let mac-check: checksum/key ctx.hash-method make binary! [
                         to-8bin ctx.seq-num-r   ; 64-bit sequence number
                         #{16}                   ; msg type
-                        ctx/ver-bytes           ; version
+                        ctx.ver-bytes           ; version
                         to-2bin len + 4         ; msg content length
                         copy/part data len + 4
                     ] ctx.server-mac-key
@@ -1464,7 +1464,7 @@ parse-messages: func [
                         fail "Bad handshake record MAC"
                     ]
 
-                    4 + ctx/hash-size
+                    4 + ctx.hash-size
                 ][
                     4
                 ]
@@ -1483,14 +1483,14 @@ parse-messages: func [
         #application [
             append result let msg-obj: context [
                 type: 'app-data
-                content: copy/part data (length of data) - ctx/hash-size
+                content: copy/part data (length of data) - ctx.hash-size
             ]
             let len: length of msg-obj.content
-            let mac: copy/part skip data len ctx/hash-size
-            let mac-check: checksum/key ctx/hash-method make binary! [
+            let mac: copy/part skip data len ctx.hash-size
+            let mac-check: checksum/key ctx.hash-method make binary! [
                 to-8bin ctx.seq-num-r   ; sequence number (64-bit int in R3)
                 #{17}                   ; msg type
-                ctx/ver-bytes           ; version
+                ctx.ver-bytes           ; version
                 to-2bin len             ; msg content length
                 msg-obj.content         ; content
             ] ctx.server-mac-key
@@ -1586,8 +1586,8 @@ prf: func [
     let p-shaX: copy #{}  ; P_SHA256, P_SHA384..whichever
     let a: seed  ; A(0)
     while [output-length > length of p-shaX] [
-        a: checksum/key ctx/prf-method a secret
-        append p-shaX checksum/key ctx/prf-method (join a seed) secret
+        a: checksum/key ctx.prf-method a secret
+        append p-shaX checksum/key ctx.prf-method (join a seed) secret
     ]
     take/last/part p-shaX ((length of p-shaX) - output-length)
     return p-shaX
@@ -1604,8 +1604,8 @@ make-key-block: func [
         label: "key expansion"
         seed: join ctx.server-random ctx.client-random
         output-length: (
-            (ctx/hash-size + ctx/crypt-size)
-            + (either ctx/block-size [ctx/iv-size] [0])
+            (ctx.hash-size + ctx.crypt-size)
+            + (either ctx.block-size [ctx.iv-size] [0])
         ) * 2
     ]
 ]
@@ -1869,7 +1869,7 @@ sys.util/make-scheme [
                 min-version: null
                 max-version: null
                 version: null
-                ver-bytes: does [
+                ver-bytes: accessor does [
                     select version-to-bytes version else [
                         fail ["version has no byte sequence:" version]
                     ]
@@ -1884,13 +1884,14 @@ sys.util/make-scheme [
 
                 suite: null
 
-                cipher-suite: does [first find suite matches word!]
+                ; !!! Doesn't appear to be used
+                cipher-suite: accessor does [first find suite matches word!]
 
-                key-method: does [first find suite matches tag!]
+                key-method: accessor does [first find suite matches tag!]
 
-                hashspec: does [find suite matches issue!]
-                hash-method: does [to word! first hashspec]
-                hash-size: does [
+                hashspec: accessor does [find suite matches issue!]
+                hash-method: accessor does [to word! first hashspec]
+                hash-size: accessor does [
                     select (ensure block! second hashspec) 'size
                 ]
 
@@ -1908,22 +1909,22 @@ sys.util/make-scheme [
                 ;
                 ; https://tools.ietf.org/html/rfc5289
                 ;
-                prf-method: does [
+                prf-method: accessor does [
                     either hash-method = 'sha384 ['sha384] ['sha256]
                 ]
-                hmac-method: does [
+                hmac-method: accessor does [
                     either hash-method = 'sha384 ['sha384] ['sha256]
                 ]
 
-                cryptspec: does [find suite matches the-word!]
-                crypt-method: does [first cryptspec]
-                crypt-size: does [
+                cryptspec: accessor does [find suite matches the-word!]
+                crypt-method: accessor does [first cryptspec]
+                crypt-size: accessor does [
                     select (ensure block! second cryptspec) 'size
                 ]
-                block-size: does [
+                block-size: accessor does [
                     try select (ensure block! second cryptspec) 'block
                 ]
-                iv-size: does [
+                iv-size: accessor does [
                     try select (ensure block! second cryptspec) 'iv
                 ]
 

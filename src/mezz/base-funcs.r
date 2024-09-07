@@ -766,6 +766,20 @@ eval-all: func [
 meth: :func
 
 
+; It's a bit odd that `foo: accessor does [...]` will evaluate to nothing.
+; But the other option would be to call the accessor to synthesize its value
+; (or to provide the prior value of the variable?)  It seems wasteful to
+; call the accessor when 99 times out of 100 the value would be discarded.
+;
+accessor: enfix func [
+    return: [~]
+    var [set-word!]
+    action [action?]
+][
+    set-accessor var get $action
+]
+
+
 cause-error: func [
     "Causes an immediate error throw with the provided information."
     err-type [word!]

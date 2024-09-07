@@ -208,7 +208,7 @@ INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
     if (Is_Nulled(cell))
         assert(not Is_Api_Value(cell));  // only internals can be nulled [1]
 
-    if (Is_Antiform(cell)) {
+    if (QUOTE_BYTE(cell) == ANTIFORM_0) {
         Copy_Meta_Cell(out, cell);
         Set_Cell_Flag(out, FEED_NOTE_META);  // @ turns back [2]
     }

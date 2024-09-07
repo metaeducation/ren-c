@@ -635,7 +635,7 @@ DECLARE_NATIVE(pack_p)
 //
 // Give back an action antiform which can act as a matcher for a datatype.
 //
-Value* Init_Matcher(Sink(Value*) out, const Value* types) {
+Value* Init_Matcher(Sink(Value*) out, const Element* types) {
     if (Is_Type_Block(types)) {
         Kind kind = VAL_TYPE_KIND(types);
         Offset n = cast(Offset, kind);
@@ -671,8 +671,8 @@ DECLARE_NATIVE(matches)
 {
     INCLUDE_PARAMS_OF_MATCHES;
 
-    Value* v = ARG(types);
-    return Init_Matcher(OUT, v);
+    Element* types = cast(Element*, ARG(types));
+    return Init_Matcher(OUT, types);
 }
 
 

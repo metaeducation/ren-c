@@ -797,7 +797,7 @@ Context* Error_Need_Non_End(const Element* target) {
 //
 Context* Error_Bad_Word_Get(
     const Element* target,
-    const Value* anti
+    const Atom* anti
 ){
     // SET calls this, and doesn't work on just SET-WORD! and SET-PATH!
     //

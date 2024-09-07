@@ -671,36 +671,49 @@ DECLARE_NATIVE(collect_words)
 
 
 //
+//  set-accessor: native [
+//      "Put a function in charge of getting/setting a variable's value"
+//
+//      return: [~]
+//      var [word!]
+//      action [action?]
+//  ]
+//
+DECLARE_NATIVE(set_accessor)
+//
+// 1. While Get_Var()/Set_Var() and their variants are specially written to
+//    know about accessors, lower level code is not.  Only code that is
+//    sensitive to the fact that the cell contains an accessor should be
+//    dealing with the raw cell.  We use the read and write protection
+//    abilities to catch violators.
+{
+    INCLUDE_PARAMS_OF_SET_ACCESSOR;
+
+    Element* word = cast(Element*, ARG(var));
+    Value* action = ARG(action);
+
+    Value* var = Lookup_Mutable_Word_May_Fail(word, SPECIFIED);
+    Copy_Cell(var, action);
+    Set_Cell_Flag(var, VAR_NOTE_ACCESSOR);
+
+    Set_Cell_Flag(var, PROTECTED);  // help trap unintentional writes [1]
+    Set_Node_Free_Bit(var);  // help trap unintentional reads [1]
+
+    return NOTHING;
+}
+
+
+//
 //  Get_Var_Push_Refinements_Throws: C
 //
 bool Get_Var_Push_Refinements_Throws(
     Sink(Value*) out,
     Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
-    const Value* var,
+    const Element* var,
     Specifier* var_specifier
 ){
     assert(var != cast(Cell*, out));
     assert(steps_out != out);  // Legal for SET, not for GET
-
-    if (Any_Group(var)) {  // !!! GET-GROUP! makes sense, but SET-GROUP!?
-        if (not steps_out)
-            fail (Error_Bad_Get_Group_Raw(var));
-
-        if (steps_out != GROUPS_OK)
-            fail ("GET-VAR on GROUP! with steps doesn't have answer ATM");
-
-        if (Do_Any_List_At_Throws(out, var, var_specifier))
-            return true;
-
-        return false;
-    }
-
-    if (Is_Void(var)) {
-        Init_Nulled(out);  // "void in, null out" get variable convention
-        if (steps_out and steps_out != GROUPS_OK)
-            Init_Nulled(unwrap steps_out);
-        return false;
-    }
 
     if (Any_Word(var)) {  // META-WORD! is not META'd, all act the same
 
@@ -714,11 +727,32 @@ bool Get_Var_Push_Refinements_Throws(
             HEART_BYTE(unwrap steps_out) = REB_THE_WORD;
         }
 
-        Copy_Cell(
-            out,
-            Lookup_Word_May_Fail(c_cast(Element*, var), var_specifier)
+        const Value* lookup = Lookup_Word_May_Fail(
+            c_cast(Element*, var),
+            var_specifier
         );
-        return false;
+
+        if (not (lookup->header.bits & CELL_FLAG_VAR_NOTE_ACCESSOR)) {
+            Copy_Cell(out, lookup);
+            return false;
+        }
+
+        assert(HEART_BYTE(lookup) == REB_FRAME);
+        assert(QUOTE_BYTE(lookup) == ANTIFORM_0);
+
+        DECLARE_ATOM (accessor);
+        Push_GC_Guard(accessor);
+        accessor->header.bits |= (
+            NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
+            | (lookup->header.bits & CELL_MASK_COPY & (~ NODE_FLAG_FREE))
+        );
+        accessor->extra = lookup->extra;
+        accessor->payload = lookup->payload;
+        QUOTE_BYTE(accessor) = NOQUOTE_1;
+
+        bool threw = rebRunThrows(out, accessor);  // run accessor as GET
+        Drop_GC_Guard(accessor);
+        return threw;
     }
 
     if (Any_Path(var)) {  // META-PATH! is not META'd, all act the same
@@ -914,8 +948,8 @@ bool Get_Var_Push_Refinements_Throws(
 //
 bool Get_Var_Core_Throws(
     Sink(Value*) out,
-    Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
-    const Value* var,
+    Option(Value*) steps_out,  // if nullptr, then GROUP!s not legal
+    const Element* var,
     Specifier* var_specifier
 ){
     StackIndex base = TOP_INDEX;
@@ -944,13 +978,13 @@ bool Get_Var_Core_Throws(
 //
 void Get_Var_May_Fail(
     Sink(Value*) out,  // variables never store unstable Atom* values
-    const Value* source,
-    Specifier* specifier,
+    const Element* var,
+    Specifier* var_specifier,
     bool any
 ){
     Value* steps_out = nullptr;
 
-    if (Get_Var_Core_Throws(out, steps_out, source, specifier))
+    if (Get_Var_Core_Throws(out, steps_out, var, var_specifier))
         fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 
     if (not any) {
@@ -1154,7 +1188,7 @@ DECLARE_NATIVE(resolve)
 {
     INCLUDE_PARAMS_OF_RESOLVE;
 
-    Value* source = ARG(source);
+    Element* source = cast(Element*, ARG(source));
 
     if (Get_Var_Core_Throws(SPARE, cast(Value*, OUT), source, SPECIFIED))
         return THROWN;
@@ -1196,6 +1230,30 @@ DECLARE_NATIVE(get)
         steps = GROUPS_OK;
     else
         steps = nullptr;  // no GROUP! evals
+
+    if (Any_Group(source)) {  // !!! GET-GROUP! makes sense, but SET-GROUP!?
+        if (not REF(groups))
+            fail (Error_Bad_Get_Group_Raw(source));
+
+        if (steps != GROUPS_OK)
+            fail ("GET on GROUP! with steps doesn't have answer ATM");
+
+        if (Do_Any_List_At_Throws(SPARE, source, SPECIFIED))
+            return Error_No_Catch_For_Throw(LEVEL);
+
+        Decay_If_Unstable(SPARE);
+
+        if (Is_Void(SPARE))
+            return nullptr;  // !!! Is this a good idea, or should it error?
+
+        if (not (
+            Any_Word(SPARE) or Any_Sequence(SPARE) or Is_The_Block(SPARE))
+        ){
+            fail (SPARE);
+        }
+
+        source = cast(Element*, SPARE);
+    }
 
     if (Get_Var_Core_Throws(OUT, steps, source, SPECIFIED)) {
         assert(steps or Is_Throwing_Failure(LEVEL));  // [1]
@@ -1241,50 +1299,30 @@ DECLARE_NATIVE(get)
 bool Set_Var_Core_Updater_Throws(
     Sink(Value*) out,  // GC-safe cell to write steps to, or put thrown value
     Option(Value*) steps_out,  // no GROUP!s if nulled
-    const Value* var,  // e.g. v (may be void)
-    Specifier* var_specifier,  // e.g. v_specifier
+    const Element* var,
+    Specifier* var_specifier,
     const Value* setval,  // e.g. L->out (in the evaluator, right hand side)
     const Value* updater
 ){
     // Note: `steps_out` can be equal to `out` can be equal to `target`
 
-    Assert_Cell_Stable(setval);
-
-    assert(Is_Action(updater));  // we will use rebM() on it
+    Assert_Cell_Stable(setval);  // paranoid check (Value* means stable)
 
     DECLARE_ATOM (temp);  // target might be same as out (e.g. spare)
 
     Heart var_heart = Cell_Heart(var);
 
-    if (Any_Group_Kind(var_heart)) {  // !!! maybe SET-GROUP!, but GET-GROUP!?
-        if (not steps_out)
-            fail (Error_Bad_Get_Group_Raw(var));
-
-        if (Do_Any_List_At_Throws(temp, var, var_specifier))
-            return true;
-
-        Move_Cell(out, Decay_If_Unstable(temp));  // replacing if spare was var
-        var = out;
-        var_specifier = SPECIFIED;
-    }
-
-    if (Is_Void(var)) {
-        if (steps_out and steps_out != GROUPS_OK)
-            Init_Nulled(unwrap steps_out);
-        return false;
-    }
-
     if (Any_Word_Kind(var_heart)) {
 
       set_target:
 
-        if (VAL_ACTION(updater) == VAL_ACTION(Lib(POKE_P))) {
+        if (not updater or VAL_ACTION(updater) == VAL_ACTION(Lib(POKE_P))) {
             //
             // Shortcut past POKE for WORD! (though this subverts hijacking,
             // review that case.)
             //
             Copy_Cell(
-                Sink_Word_May_Fail(c_cast(Element*, var), var_specifier),
+                Sink_Word_May_Fail(var, var_specifier),
                 setval
             );
         }
@@ -1390,6 +1428,8 @@ bool Set_Var_Core_Updater_Throws(
     }
     else
         fail (var);
+
+    assert(Is_Action(updater));  // we will use rebM() on it
 
     DECLARE_VALUE (writeback);
     Push_GC_Guard(writeback);
@@ -1502,8 +1542,8 @@ bool Set_Var_Core_Updater_Throws(
 bool Set_Var_Core_Throws(
     Sink(Value*) out,  // GC-safe cell to write steps to
     Option(Value*) steps_out,  // no GROUP!s if nulled
-    const Value* var,  // e.g. v (can be void)
-    Specifier* var_specifier,  // e.g. v_specifier
+    const Element* var,
+    Specifier* var_specifier,
     const Value* setval  // e.g. L->out (in the evaluator, right hand side)
 ){
     return Set_Var_Core_Updater_Throws(
@@ -1524,14 +1564,14 @@ bool Set_Var_Core_Throws(
 // preserving the "steps" to reuse in multiple assignments.
 //
 void Set_Var_May_Fail(
-    const Value* target,
-    Specifier* target_specifier,
+    const Element* var,
+    Specifier* var_specifier,
     const Value* setval
 ){
     Option(Value*) steps_out = nullptr;
 
     DECLARE_ATOM (dummy);
-    if (Set_Var_Core_Throws(dummy, steps_out, target, target_specifier, setval))
+    if (Set_Var_Core_Throws(dummy, steps_out, var, var_specifier, setval))
         fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 }
 
@@ -1552,22 +1592,34 @@ void Set_Var_May_Fail(
 //
 DECLARE_NATIVE(set)
 //
-// 1. Plain POKE can't throw (e.g. from a GROUP!) because it won't evaluate
+// 1. We want parity between (set $x expression) and (x: expression).  It is
+//    very useful that you can write (e: trap [x: expression]) and in the case
+//    of a raised definitional error, have the assignment skipped and the
+//    error trapped.  Hence SET has to take its argument ^META and receive
+//    definitional errors to pass through
+//
+// 2. SET of a BLOCK! should probably expose the implementation of the
+//    multi-return mechanics used by SET-BLOCK!.  That would require some
+//    refactoring that isn't a priority at time of writing...but were it to
+//    be implemented, we would need to not decay packs like this.
+//
+// 3. Plain POKE can't throw (e.g. from a GROUP!) because it won't evaluate
 //    them.  However, we can get errors.  Confirm we only are raising errors
 //    unless steps_out were passed.
 {
     INCLUDE_PARAMS_OF_SET;
 
-    Value* target = ARG(target);
-    Value* v = ARG(value);
+    Value* setval = ARG(value);
 
-    // !!! Should SET look for antiform objects specially, with a particular
-    // interaction distinct from DECAY?  Review.
+    if (Is_Meta_Of_Raised(setval))
+        return UNMETA(cast(Element*, setval));  // passthru raised errors [1]
 
-    if (Is_Meta_Of_Raised(v))
-        return UNMETA(v);  // !!! Is this tunneling worthwhile?
+    Meta_Unquotify_Decayed(setval);  // in future, no decay for SET BLOCK! [2]
 
-    Meta_Unquotify_Decayed(v);
+    if (Is_Void(ARG(target)))
+        return COPY(setval);   // same behavior for SET as [10 = (void): 10]
+
+    Element* target = cast(Element*, ARG(target));
 
     Value* steps;
     if (REF(groups))
@@ -1580,12 +1632,33 @@ DECLARE_NATIVE(set)
         // (more general filtering available via accessors)
     }
 
-    if (Set_Var_Core_Throws(SPARE, steps, target, SPECIFIED, v)) {
-        assert(steps or Is_Throwing_Failure(LEVEL));  // [1]
+    if (Any_Group(target)) {  // !!! maybe SET-GROUP!, but GET-GROUP!?
+        if (not REF(groups))
+            fail (Error_Bad_Get_Group_Raw(target));
+
+        if (Do_Any_List_At_Throws(SPARE, target, SPECIFIED))
+            fail (Error_No_Catch_For_Throw(LEVEL));
+
+        Decay_If_Unstable(SPARE);
+
+        if (Is_Void(SPARE))
+            return COPY(setval);
+
+        if (not (
+            Any_Word(SPARE) or Any_Sequence(SPARE) or Is_The_Block(SPARE)
+        )){
+            fail (SPARE);
+        }
+
+        target = cast(Element*, SPARE);
+    }
+
+    if (Set_Var_Core_Throws(OUT, steps, target, SPECIFIED, setval)) {
+        assert(steps or Is_Throwing_Failure(LEVEL));  // [3]
         return THROWN;
     }
 
-    return Copy_Cell(OUT, v);
+    return COPY(setval);
 }
 
 

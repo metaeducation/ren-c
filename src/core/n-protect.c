@@ -378,8 +378,8 @@ DECLARE_NATIVE(protect)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 
-    Value* v = ARG(value);
-    if (Any_Word(v) or Any_Tuple(v)) {
+    Element* e = cast(Element*, ARG(value));
+    if (Any_Word(e) or Any_Tuple(e)) {
         if (REF(hide))
             Init_Word(SPARE, Canon(HIDE));
         else
@@ -387,14 +387,14 @@ DECLARE_NATIVE(protect)
         if (Set_Var_Core_Updater_Throws(
             OUT,
             nullptr,
-            v,
+            e,
             SPECIFIED,
             stable_SPARE,
             Lib(PROTECT_P)
         )){
             return THROWN;
         }
-        return COPY(v);
+        return COPY(e);
     }
 
     // Avoid unused parameter warnings (core routine handles them via level_)
@@ -441,20 +441,20 @@ DECLARE_NATIVE(unprotect)
     if (REF(hide))
         fail ("Cannot un-hide an object field once hidden");
 
-    Value* v = ARG(value);
-    if (Any_Word(v) or Any_Tuple(v)) {
+    Element* e = cast(Element*, ARG(value));
+    if (Any_Word(e) or Any_Tuple(e)) {
         Init_Word(SPARE, Canon(UNPROTECT));
         if (Set_Var_Core_Updater_Throws(
             OUT,
             nullptr,
-            v,
+            e,
             SPECIFIED,
             stable_SPARE,
             Lib(PROTECT_P)
         )){
             return THROWN;
         }
-        return COPY(v);
+        return COPY(e);
     }
 
     return Protect_Unprotect_Core(level_, PROT_WORD);

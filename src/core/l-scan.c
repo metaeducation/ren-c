@@ -3129,7 +3129,8 @@ DECLARE_NATIVE(transcode)
     if (REF(line) and Is_Word(ARG(line))) {  // wanted the line number updated
         Value* line_int = ARG(return);  // use return as scratch slot
         Init_Integer(line_int, ss->line);
-        if (Set_Var_Core_Throws(SPARE, nullptr, ARG(line), SPECIFIED, line_int))
+        const Element* line_var = cast(Element*, ARG(line));
+        if (Set_Var_Core_Throws(SPARE, nullptr, line_var, SPECIFIED, line_int))
             return THROWN;
     }
 

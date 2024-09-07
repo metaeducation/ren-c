@@ -692,14 +692,21 @@ Bounce Stepper_Executor(Level* L)
 
       word_common: ///////////////////////////////////////////////////////////
 
-      case REB_WORD:
-        if (not L_current_gotten)
-            L_current_gotten = Lookup_Word_May_Fail(L_current, L_specifier);
+      case REB_WORD: {
+        /*if (not L_current_gotten)
+            L_current_gotten = Lookup_Word_May_Fail(L_current, L_specifier); */
 
-        if (Is_Action(unwrap L_current_gotten)) {
-            Action* action = VAL_ACTION(unwrap L_current_gotten);
+        const bool any = false;
+        Get_Var_May_Fail(OUT, L_current, L_specifier, any);
 
-            if (Is_Enfixed(unwrap L_current_gotten)) {
+        if (Is_Action(OUT)) {
+            Action* action = VAL_ACTION(OUT);
+            bool enfixed = Is_Enfixed(OUT);
+            Option(Context*) coupling = VAL_FRAME_COUPLING(OUT);
+            const Symbol* label = Cell_Word_Symbol(L_current);  // use WORD!
+            Erase_Cell(OUT);  // sanity check, plus don't want enfix to see
+
+            if (enfixed) {
                 if (
                     Get_Action_Flag(action, POSTPONES_ENTIRELY)
                     or Get_Action_Flag(action, DEFERS_LOOKBACK)
@@ -707,17 +714,11 @@ Bounce Stepper_Executor(Level* L)
                     if (Get_Eval_Executor_Flag(L, FULFILLING_ARG)) {
                         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
                         Set_Feed_Flag(L->feed, DEFERRING_ENFIX);
-                        Freshen_Cell(OUT);
                         goto finished;
                     }
                 }
             }
 
-            Option(Context*) coupling = VAL_FRAME_COUPLING(
-                unwrap L_current_gotten
-            );
-            const Symbol* label = Cell_Word_Symbol(L_current);  // use WORD!
-            bool enfixed = Is_Enfixed(unwrap L_current_gotten);
             if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH)) {
                 if (enfixed)
                     assert(false);  // !!! this won't work, can it happen?
@@ -732,8 +733,12 @@ Bounce Stepper_Executor(Level* L)
                 and Not_Level_At_End(L)  // can't do <end>, fallthru to error
                 and not SPORADICALLY(10)  // debug build bypass every 10th call
             ){
-                Copy_Meta_Cell(CURRENT, unwrap L_current_gotten);
-                INIT_VAL_ACTION_LABEL(CURRENT, label);  // use the word
+                Init_Frame_Details_Core(
+                    CURRENT,
+                    cast(Phase*, action),  // !!! is this legitimate?
+                    label,
+                    coupling
+                );
                 Param* param = ACT_PARAM(action, 2);
                 Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
@@ -772,8 +777,6 @@ Bounce Stepper_Executor(Level* L)
 
             goto process_action;
         }
-
-        Copy_Cell(OUT, unwrap L_current_gotten);
 
         if (Any_Vacancy(stable_OUT))  // checked second
             fail (Error_Bad_Word_Get(L_current, OUT));
@@ -831,10 +834,7 @@ Bounce Stepper_Executor(Level* L)
             if (Is_Action(OUT))  // !!! Review: When to update labels?
                 INIT_VAL_ACTION_LABEL(OUT, Cell_Word_Symbol(L_current));
 
-            Copy_Cell(
-                Sink_Word_May_Fail(L_current, L_specifier),
-                stable_OUT
-            );
+            Set_Var_May_Fail(L_current, L_specifier, stable_OUT);
 
             if (L_next_gotten) {  // cache can tamper with lookahead [1]
                 if (VAL_TYPE_UNCHECKED(L_next) == REB_FRAME) {

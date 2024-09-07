@@ -161,22 +161,22 @@ INLINE Count Dequotify(Cell* v) {
 // antiforms aren't just not allowed in blocks, they can't be in variables.
 //
 
-INLINE bool Is_Antiform(Need(const Value*) v)
-  { return QUOTE_BYTE(Ensure_Readable(v)) == ANTIFORM_0; }
+INLINE bool Is_Antiform(const Atom* a)
+  { return QUOTE_BYTE(Ensure_Readable(a)) == ANTIFORM_0; }
 
-INLINE bool Is_Antiform_Unstable(Need(const Atom*) v) {
+INLINE bool Is_Antiform_Unstable(const Atom* a) {
     // Assume Is_Antiform() checked Ensure_Readable()
-    assert(QUOTE_BYTE(v) == ANTIFORM_0);
+    assert(QUOTE_BYTE(a) == ANTIFORM_0);
     return (
-        HEART_BYTE(v) == REB_BLOCK  // Is_Pack()
-        or HEART_BYTE(v) == REB_ERROR  // Is_Raised()
-        or HEART_BYTE(v) == REB_COMMA  // Is_Barrier()
-        or HEART_BYTE(v) == REB_OBJECT  // Is_Lazy()
+        HEART_BYTE(a) == REB_BLOCK  // Is_Pack()
+        or HEART_BYTE(a) == REB_ERROR  // Is_Raised()
+        or HEART_BYTE(a) == REB_COMMA  // Is_Barrier()
+        or HEART_BYTE(a) == REB_OBJECT  // Is_Lazy()
     );
 }
 
-#define Is_Antiform_Stable(v) \
-    (not Is_Antiform_Unstable(v))
+#define Is_Antiform_Stable(a) \
+    (not Is_Antiform_Unstable(a))
 
 INLINE bool Is_Stable_Antiform_Heart(Heart heart) {
     return (
@@ -187,15 +187,15 @@ INLINE bool Is_Stable_Antiform_Heart(Heart heart) {
     );
 }
 
-INLINE bool Is_Stable(Need(const Atom*) v) {  // repeat for non-inlined speed
-    Assert_Cell_Readable(v);
-    if (QUOTE_BYTE(v) != ANTIFORM_0)
+INLINE bool Is_Stable(Need(const Atom*) a) {  // repeat for non-inlined speed
+    Assert_Cell_Readable(a);
+    if (QUOTE_BYTE(a) != ANTIFORM_0)
         return true;
     return (
-        HEART_BYTE(v) != REB_BLOCK  // Is_Pack()
-        and HEART_BYTE(v) != REB_ERROR  // Is_Raised()
-        and HEART_BYTE(v) != REB_COMMA  // Is_Barrier()
-        and HEART_BYTE(v) != REB_OBJECT  // Is_Lazy()
+        HEART_BYTE(a) != REB_BLOCK  // Is_Pack()
+        and HEART_BYTE(a) != REB_ERROR  // Is_Raised()
+        and HEART_BYTE(a) != REB_COMMA  // Is_Barrier()
+        and HEART_BYTE(a) != REB_OBJECT  // Is_Lazy()
     );
 }
 

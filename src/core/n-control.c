@@ -1463,11 +1463,11 @@ DECLARE_NATIVE(default)
 {
     INCLUDE_PARAMS_OF_DEFAULT;
 
-    Value* target = ARG(target);
+    Element* target = cast(Element*, ARG(target));
     Value* branch = ARG(branch);
     Value* predicate = ARG(predicate);
 
-    Value* steps = ARG(return);  // reuse slot to save resolved steps [1]
+    Sink(Element*) steps = ARG(return);  // reuse to save resolved steps [1]
 
     enum {
         ST_DEFAULT_INITIAL_ENTRY = STATE_0,
