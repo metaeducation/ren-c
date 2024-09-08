@@ -53,8 +53,8 @@ DECLARE_NATIVE(form)
 //
 //      return: "Returns null if input is void"
 //          [~null~ text!]
-//      @truncated "Whether the mold was truncated"
-//          [logic?]
+//      @truncated "If mold was truncated, return the integer /LIMIT"
+//          [~null~ integer!]
 //      value [<maybe> element? splice?]
 //      /all "Use construction syntax"
 //      /flat "No indentation"
@@ -90,7 +90,12 @@ DECLARE_NATIVE(mold)
 
     String* popped = Pop_Molded_String(mo);  // sets MOLD_FLAG_TRUNCATED
 
-    Init_Logic(ARG(truncated), did (mo->opts & MOLD_FLAG_WAS_TRUNCATED));
+    if (mo->opts & MOLD_FLAG_WAS_TRUNCATED) {
+        assert(REF(limit));
+        Copy_Cell(ARG(truncated), ARG(limit));
+    }
+    else
+        Init_Nulled(ARG(truncated));
 
     Init_Text(OUT, popped);
     return Proxy_Multi_Returns(level_);

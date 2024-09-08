@@ -165,14 +165,14 @@
         [str trunc]: mold/limit "abcdefg" 3
         all [
             str = {"ab}
-            trunc = true
+            trunc = 3
         ]
     )
     (
         [str trunc]: mold/limit "abcdefg" 300
         all [
             str = {"abcdefg"}
-            trunc = false
+            trunc = null
         ]
     )
 ]
