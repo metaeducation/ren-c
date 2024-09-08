@@ -89,6 +89,8 @@
         pos: parse- "abc10def" ['abc '10]
         "def" = pos
     ])
+
+    (1 = parse "1 1 1" [some ['1 [space | <end>]]])
 ]
 
 [#682 (  ; like the old way...

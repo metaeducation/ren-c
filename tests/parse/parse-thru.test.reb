@@ -47,7 +47,7 @@
 
 [#1959
     ("d" == parse "abcd" [thru "d"])
-    ("<abcd>" == parse "<abcd>" [thru '<abcd>])
+    ('<abcd> == parse "<abcd>" [thru '<abcd>])
     ('d == parse [a b c d] [thru 'd])
 ]
 

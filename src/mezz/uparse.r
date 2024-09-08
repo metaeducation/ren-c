@@ -1633,6 +1633,21 @@ default-combinators: make map! reduce [
 
     ; When used with ANY-LIST? input, recognizes values literally.  When used
     ; with ANY-STRING? it will convert the value to a string before matching.
+    ;
+    ; 1. It is legal to say:
+    ;
+    ;     >> parse "" [~void~ (1020)]
+    ;     == 1020
+    ;
+    ;    Arguably there is a void match at every position (note that by
+    ;    contrast, null rules are errors)
+    ;
+    ; 2. Not exactly sure what this operation is, but it's becoming more
+    ;    relevant...it's like FORM by putting < > on tags (TO TEXT! won't) and
+    ;    it will merge strings in blocks without spacing.
+    ;
+
+
 
     quoted! combinator [
         return: "The matched value"
@@ -1642,15 +1657,7 @@ default-combinators: make map! reduce [
         /negated
         <local> comb neq?
     ][
-        ; It is legal to say:
-        ;
-        ;     >> parse "" [~void~ (1020)]
-        ;     == 1020
-        ;
-        ; Arguably there is a void match at every position (note that by
-        ; contrast, null rules are errors)
-        ;
-        if void' = value [
+        if void' = value [  ; there's a "void match at every position" [1]
             pending: _
             remainder: input
             return nihil  ; act invisibly
@@ -1698,15 +1705,13 @@ default-combinators: make map! reduce [
         ]
 
         if any-string? input [
-            ;
-            ; Not exactly sure what this operation is, but it's becoming more
-            ; relevant...it's like FORM by putting < > on tags (TO TEXT! won't)
-            ; and it will merge strings in blocks without spacing.
-            ;
-            value: append copy "" unquote value
+            let text: append copy "" unquote value  ; !!! name for this? [2]
 
             comb: (state.combinators).(text!)
-            return [@ remainder pending]: run comb state input value
+            [@ remainder pending]: run comb state input text except e -> [
+                return raise e
+            ]
+            return unquote value
         ]
 
         assert [binary? input]

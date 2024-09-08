@@ -202,12 +202,11 @@ reword: func [
         prefix: escape
     ]
 
-    ; To be used in a parse rule, words must be turned into strings, though
-    ; it would be nice if they didn't have to be, e.g.
+    ; To be used in a PARSE3 rule, words and integers must be turned to text
+    ; to match in a string.  UPARSE does not require this:
     ;
-    ;     parse "abc" ['abc] => true
-    ;
-    ; Integers have to be converted also.
+    ;     >> parse "1 1 1" [some ['1 [space | <end>]]]
+    ;     == 1
     ;
     if match [integer! word!] prefix [prefix: to-text prefix]
     if match [integer! word!] suffix [suffix: to-text suffix]
