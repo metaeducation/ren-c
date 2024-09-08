@@ -78,10 +78,22 @@
 //    from making mistakes.  Because this does something weird to use the
 //    OUT cell as `with` the LEVEL_FLAG_BRANCH was taken off at the callsite.
 //
+// 3. Allowing a void branch can be useful, consider:
+//
+//        switch-d: enclose (augment :switch [
+//            /default "Default case if no others are found"
+//            [block!]
+//        ]) lambda [f [frame!]] [
+//            let def: f.default
+//            eval f else (maybe def)
+//        ]
+//
 Bounce Group_Branch_Executor(Level* level_)
 {
     if (THROWING)
         return THROWN;
+
+    Atom* const with = OUT;  // value passed to branch if it runs [1]
 
     switch (STATE) {
       case ST_GROUP_BRANCH_ENTRY_DONT_ERASE_OUT :
@@ -95,12 +107,15 @@ Bounce Group_Branch_Executor(Level* level_)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    if (Is_Fresh(with))
+        Init_Nulled(with);
+
     Init_Void(Alloc_Evaluator_Primed_Result());
     Level* sub = Make_Level(
         &Evaluator_Executor,
         LEVEL->feed,
         LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255))  // take out state 1
-            & (~ LEVEL_FLAG_BRANCH)  // take off branch flag
+            & (~ LEVEL_FLAG_BRANCH)  // take off branch flag [2]
     );
     Push_Level(SPARE, sub);
 
@@ -114,7 +129,10 @@ Bounce Group_Branch_Executor(Level* level_)
     if (Any_Group(SPARE))
         fail (Error_Bad_Branch_Type_Raw());  // stop infinite recursion (good?)
 
-    const Atom* with = Is_Fresh(OUT) ? nullptr : OUT;  // with here [1]
+    if (Is_Void(SPARE)) {  // void branches giving their input is useful  [3]
+        assert(with == OUT);
+        return with;
+    }
 
     assert(Is_Level_At_End(LEVEL));
     return DELEGATE_BRANCH(OUT, stable_SPARE, with);  // (OUT, OUT, SPARE) bad
