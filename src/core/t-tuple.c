@@ -356,7 +356,9 @@ REBTYPE(Sequence)
           case SYM_LENGTH:
             return Init_Integer(OUT, Cell_Sequence_Len(sequence));
 
-          case SYM_INDEX:  // Note: not legal, paths always at head, no index
+          case SYM_INDEX:
+            return RAISE(Error_Type_Has_No_Index_Raw(Type_Of(sequence)));
+
           default:
             break;
         }

@@ -3,5 +3,5 @@
     #1626 ; "Allow LENGTH? to take blank as an argument, return blank"
     #1688 ; "LENGTH? NONE returns TRUE" (should return NONE)
 
-    (null? length of blank)  ; in Ren-C, returns null (should it be 0?)
+    (0 = length of blank)  ; in Ren-C, returns 0
 ]

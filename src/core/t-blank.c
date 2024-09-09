@@ -90,12 +90,13 @@ REBTYPE(Blank)
     switch (Symbol_Id(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value)); // taken care of by `unit` above.
 
         switch (Cell_Word_Id(ARG(property))) {
           case SYM_INDEX:
+            return RAISE(Error_Type_Has_No_Index_Raw(Type_Of(ARG(value))));
+
           case SYM_LENGTH:
-            return nullptr;
+            return Init_Integer(OUT, 0);
 
           default: break;
         }

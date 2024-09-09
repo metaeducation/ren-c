@@ -179,6 +179,8 @@ Script: [
     expression-barrier: {expression barrier hit while fulfilling argument}
 
     index-out-of-range: {series index before head or after tail}
+    type-has-no-index:  [{Datatype} :arg1 {does not have an internal index}]
+
     missing-arg:        {missing a required argument or refinement}
     too-short:          {content too short (or just whitespace)}
     too-long:           {content too long}

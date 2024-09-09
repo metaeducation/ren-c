@@ -238,3 +238,10 @@
         as tuple! [foo r+]
     ]
 )
+
+[
+    (3 = length of 'a/b/c)
+    (not empty? 'a/b/c)
+    ~type-has-no-index~ !! (index of 'a/b/c)
+    (null = try index of 'a/b/c)
+]

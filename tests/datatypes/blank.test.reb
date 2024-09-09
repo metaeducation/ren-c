@@ -38,3 +38,12 @@
 
     (_ = copy _)  ; do NOT want opt-out of copy
 ]
+
+; BLANK!s are considered to be EMPTY?, and in accordance with that they report
+; that their length is 0.  However they do not have an index.
+[
+    (empty? _)
+    (0 = length of _)
+    ~type-has-no-index~ !! (index of _)
+    (null = try index of _)
+]
