@@ -122,7 +122,8 @@ export to-c-name: func [
             #"'"  ""      ; isn't => isnt, didn't => didnt
             -   "_"     ; foo-bar => foo_bar
             *   "_p"    ; !!! because it symbolizes a (p)ointer in C??
-            .   "_"     ; !!! same as hyphen?
+            .   "_d"    ; (d)ot (only valid in [. .. ...] etc)
+            /   "_s"    ; (s)lash (only valid in [/ // ///] etc)
             ?   "_q"    ; (q)uestion
             !   "_x"    ; e(x)clamation
             +   "_a"    ; (a)ddition
@@ -449,8 +450,14 @@ export stripload: func [
                     not find str "{"
                     not find str "}"
                     not find str {"}
-                    not find str "/"
-                    not find str "."  ; tuple assign is not a top-level decl
+                    any [
+                        not find str "/"
+                        parse3/match str [some "/"]
+                    ]
+                    any [
+                        not find str "."
+                        parse3/match str [some "."]
+                    ]
                 ] then [
                     keep as word! str
                 ]

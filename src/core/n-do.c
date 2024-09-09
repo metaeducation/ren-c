@@ -702,7 +702,7 @@ DECLARE_NATIVE(applique)
 
 
 //
-//  apply: native [
+//  apply: native [  ; !!! MUST UPDATE SPEC FOR // NATIVE IF CHANGED [1]
 //
 //  "Invoke an action with all required arguments specified"
 //
@@ -711,10 +711,15 @@ DECLARE_NATIVE(applique)
 //      args "Arguments and Refinements, e.g. [arg1 arg2 /ref refine1]"
 //          [block!]
 //      /relax "Don't worry about too many arguments to the APPLY"
-//      <local> frame index
+//      <local> frame index  ; update // native if ANY of this changes [1]
 //  ]
 //
 DECLARE_NATIVE(apply)
+//
+// 1. For efficiency, the // infix version of APPLY is native, and just calls
+//    right through to the apply code without going through any "Bounce"
+//    or specialization code.  But that means the frame pushed for // must
+//    be directly usable by APPLY.  Keep them in sync.
 {
     INCLUDE_PARAMS_OF_APPLY;
 
@@ -948,6 +953,47 @@ DECLARE_NATIVE(apply)
 
     return DELEGATE(OUT, frame);
 }}
+
+
+//
+//  //: enfix native [  ; !!! MUST UPDATE SPEC FOR APPLY NATIVE IF CHANGED [1]
+//
+//  "Infix version of APPLY with name of thing to apply literally on left"
+//
+//      return: [any-atom?]
+//      :operation [<unrun> word! tuple! frame! action?]
+//      args "Arguments and Refinements, e.g. [arg1 arg2 /ref refine1]"
+//          [block!]
+//      /relax "Don't worry about too many arguments to the APPLY"
+//      <local> frame index  ; need frame compatibility with APPLY
+//  ]
+//
+DECLARE_NATIVE(_s_s)  // [_s]lash [_s]lash (see TO-C-NAME)
+//
+// 1. See notes on APPLY for the required frame compatibility.
+{
+    INCLUDE_PARAMS_OF_APPLY;  // needs to be frame-compatible [1]
+
+    if (STATE != STATE_0)  // not initial entry, APPLY bouncing trampoline
+        return N_apply(level_);
+
+    Element* operation = cast(Element*, ARG(operation));
+
+    if (Get_Var_Core_Throws(SPARE, GROUPS_OK, operation, SPECIFIED))
+        fail (Error_No_Catch_For_Throw(LEVEL));
+
+    if (not Is_Action(SPARE) or not Is_Frame(SPARE))
+        fail (SPARE);
+    Deactivate_If_Action(SPARE);  // APPLY has <unrun> on ARG(operation)
+
+    Copy_Cell(ARG(operation), stable_SPARE);
+    UNUSED(REF(relax));
+    UNUSED(REF(args));
+    UNUSED(LOCAL(frame));
+    UNUSED(LOCAL(index));
+
+    return N_apply(level_);
+}
 
 
 // From %c-eval.c -- decide if this should be shared or otherwise.

@@ -339,32 +339,6 @@ Bounce Stepper_Executor(Level* L)
             goto give_up_backward_quote_priority;  // note only ACTION! is ENFIXED
         }
     }
-    else if (
-        VAL_TYPE_UNCHECKED(L_next) == REB_SIGIL
-        and Cell_Sigil(L_next) == SIGIL_SET  // `append :: [...]` is APPLY
-    ){
-        if (not Is_Word(L_current))
-            fail ("Using :: for APPLY requires WORD! on left for now");
-
-        if (not L_current_gotten)
-            L_current_gotten = Lookup_Word(L_current, L_specifier);
-
-        Copy_Cell(SPARE, unwrap L_current_gotten);
-
-        Fetch_Next_In_Feed(L->feed);  // L_next = L->feed->p = whats after ::
-
-        if (Is_Level_At_End(L))
-            fail ("Using :: for APPLY cannot have END on right");
-
-        STATE = REB_FRAME;  // bounces back to do lookahead
-        rebPushContinuation_internal(
-            cast(Value*, OUT),  // API won't take Atom(*)
-            LEVEL_MASK_NONE,
-            Canon(APPLY), rebQ(SPARE), rebDERELATIVIZE(L_next, L_specifier)
-        );
-        Fetch_Next_In_Feed(L->feed);
-        return BOUNCE_CONTINUE;
-    }
     else
         goto give_up_backward_quote_priority;
 
@@ -585,10 +559,7 @@ Bounce Stepper_Executor(Level* L)
     //     >> get word
     //     == 10
     //
-    // :: is an infix apply operator:
-    //
-    //     >> append :: [[a b c] spread [d e] /dup 2]
-    //     == [a b c d e d e]
+    // :: has no use at time of writing
     //
     // : has no use at time of writing.
     //
