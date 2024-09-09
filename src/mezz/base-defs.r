@@ -290,19 +290,17 @@ open?: specialize get $reflect [property: 'open?]
 
 
 empty?: func* [
-    {TRUE if blank, or if series is empty or at or beyond its tail}
+    "OKAY if blank or void, or if container is empty or at or beyond its tail"
     return: [logic?]
-    series [blank! any-series? object! port! bitset! map!]
+    container [
+        ~void~ blank! any-series? any-sequence? object! port! bitset! map!
+    ]
 ][
-    return did any [blank? series, tail? series]
-]
-
-empty-or-null?: func* [
-    {TRUE if null, blank, or if series is empty or at or beyond its tail}
-    return: [logic?]
-    series [~null~ blank! any-series? object! port! bitset! map!]
-][
-    return did any [null? series, blank? series, tail? series]
+    return any [
+        void? container
+        blank? container
+        0 = length of container  ; sequences always have > 0 length, not empty
+    ]
 ]
 
 

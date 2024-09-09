@@ -3,23 +3,43 @@
 ; Function requested by @gchiu, serves as another test of loop composition.
 
 [
-    (for-parallel: lambda [
+    (for-parallel: func [
+        return: [any-atom?]
         vars [block!]
-        blk1 [<maybe> block!]
-        blk2 [<maybe> block!]
+        blk1 [~void~ any-list?]
+        blk2 [~void~ any-list?]
         body [block!]
     ][
-        while [(not empty-or-null? blk1) or (not empty-or-null? blk2)] [
+        return while [(not empty? maybe blk1) or (not empty? maybe blk2)] [
             (vars): pack [(first maybe blk1) (first maybe blk2)]
 
-            eval body  ; BREAK from body break the outer while, it returns NULL
+            repeat 1 body else [  ; if pure NULL it was a BREAK
+                return null
+            ]
 
-            ; Now ELIDE the increment, so body evaluation above is result
+            ; They either did a CONTINUE the REPEAT caught, or the body reached
+            ; the end.  ELIDE the increment, so body evaluation is result.
             ;
             elide blk1: next maybe blk1
             elide blk2: next maybe blk2
         ]
     ], true)
+
+    (void = for-parallel [x y] [] [] [fail])
+    ([1 2] = collect [for-parallel [x y] [] [1 2] [keep maybe x, keep y]])
+    ([a b] = collect [for-parallel [x y] [a b] [] [keep x, keep maybe y]])
+
+    (void = for-parallel [x y] void void [fail])
+    ([1 2] = collect [for-parallel [x y] void [1 2] [keep maybe x, keep y]])
+    ([a b] = collect [for-parallel [x y] [a b] void [keep x, keep maybe y]])
+
+    (null' = ^ for-parallel [x y] [a b] [1 2] [if x = 'b [break]])
+    ('~[~null~]~ = ^ for-parallel [x y] [a b] [1 2] [null])
+
+    ('z = for-parallel [x y] [a b] [1 2] [if x = 'b [continue/with 'z]])
+    ([a b 2] = collect [
+        for-parallel [x y] [a b] [1 2] [keep x if y = '1 [continue] keep y]
+    ])
 
     ([[a 1] [b 2]] = collect [
         assert [

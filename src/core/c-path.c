@@ -111,7 +111,7 @@ Value* Try_Init_Any_Sequence_At_Listlike(
 //
 //      return: "Picked value, or null if picker can't fulfill the request"
 //          [any-value?]
-//      location [element?]
+//      location [<maybe> element?]
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<maybe> element? logic?]
 //  ]
@@ -147,7 +147,7 @@ DECLARE_NATIVE(pick)
 //      return: "Same as poked value"
 //          [any-value?]
 //      location "(modified)"
-//          [element?]
+//          [<maybe> element?]
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<maybe> element?]
 //      value [any-value?]

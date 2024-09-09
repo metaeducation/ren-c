@@ -36,9 +36,10 @@
 ~???~ !! ("some**stuff" = delimit "**" [[] "some" [] "stuff" []])
 
 ; Empty strings do NOT vaporize, because DELIMIT needs to be able to point
-; out empty fields.  Use NULL, BLANK!, or [] to convey true emptiness.
+; out empty fields.  Use VOID for emptiness.
 ;
 ("**some****stuff**" = delimit "**" [{} "some" {} "stuff" {}])
+("some**stuff" = delimit "**" [void "some" void "stuff" void])
 
 [
     (

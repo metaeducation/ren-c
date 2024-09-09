@@ -579,11 +579,6 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
 ;
 enfixed: enfix :enfix
 
-; EMPTY? in modern Ren-C only considers blanks and tail series empty.
-;
-empty-or-null?: :empty?
-
-
 collect-lets: func3 [
     return: [block!]
     list [block! group!]

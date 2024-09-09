@@ -8,5 +8,6 @@
     2 == index? a
 )
 [#1611
-    (null? index of blank)
+    ~type-has-no-index~ !! (index of blank)
+    (null? try index of blank)
 ]

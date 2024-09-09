@@ -15,12 +15,10 @@
     (x: copy "xx^/" repeat 20 [enline y: join x x] true)
 ]
 
-; EMPTY? is not by default tolerant of null, but it's a common need, so a
-; combined test is available.
+; EMPTY? is not by default tolerant of null, but it's a common need, so you
+; can pass voids via MAYBE.
 [
     ~expect-arg~ !! (empty? null)
 
-    (empty-or-null? [])
-    (empty-or-null? _)
-    (empty-or-null? null)
+    (empty? maybe null)
 ]

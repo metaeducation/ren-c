@@ -200,7 +200,7 @@ export binary-to-c: func [
     let data-len: length of data
 
     let out: make text! 6 * (length of data)
-    while [not empty-or-null? data] [
+    while [not empty? maybe data] [
         ; grab hexes in groups of 8 bytes
         let hexed: enbase/base (copy/part data 8) 16
         data: skip data 8
@@ -209,7 +209,7 @@ export binary-to-c: func [
         ]
 
         take/last out  ; drop the last space
-        if empty-or-null? data [
+        if empty? maybe data [
             take/last out  ; lose that last comma
         ]
         append out newline  ; newline after each group, and at end
