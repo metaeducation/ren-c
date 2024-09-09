@@ -26,7 +26,11 @@
     (void? for-each x _ [1020])
     ([] = map-each x _ [1020])
     (void? for-next x _ [1020])
-    (0 = remove-each x _ [true])
+    (all [
+        _ = [result count]: remove-each x _ [fail "this never gets called"]
+        result = _
+        count = 0
+    ])
     (void? every x _ [true])
     (void? for-skip x _ 2 [1020])
 

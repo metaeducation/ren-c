@@ -1,12 +1,26 @@
 ; %loops/remove-each.test.reb
+;
+; Ren-C's REMOVE-EACH is a multi-return routine which gives you the updated
+; series as the main result, and the count as a secondary return.  This
+; nicely resolves a historically contentious issue of which it should return.
+;
+;   https://github.com/metaeducation/rebol-issues/issues/931
 
 (
-    remove-each i s: [1 2] [true]
-    empty? s
+    all [
+        s: [1 2]
+        s = [@ count]: remove-each i s [true]
+        empty? s
+        count = 2
+    ]
 )
 (
-    remove-each i s: [1 2] [false]
-    [1 2] = s
+    all [
+        s: [1 2]
+        s = [@ count]: remove-each i s: [1 2] [null]
+        [1 2] = s
+        count = 0
+    ]
 )
 
 ; BLOCK!
@@ -83,7 +97,7 @@
 )
 (
     string: copy "1234"
-    returned-null: false
+    returned-null: 'false
     remove-each i string [
         if i = #"3" [break]
         true

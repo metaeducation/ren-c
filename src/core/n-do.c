@@ -982,7 +982,7 @@ DECLARE_NATIVE(_s_s)  // [_s]lash [_s]lash (see TO-C-NAME)
     if (Get_Var_Core_Throws(SPARE, GROUPS_OK, operation, SPECIFIED))
         fail (Error_No_Catch_For_Throw(LEVEL));
 
-    if (not Is_Action(SPARE) or not Is_Frame(SPARE))
+    if (not Is_Action(SPARE) and not Is_Frame(SPARE))
         fail (SPARE);
     Deactivate_If_Action(SPARE);  // APPLY has <unrun> on ARG(operation)
 

@@ -1328,8 +1328,10 @@ DECLARE_NATIVE(every)
 //
 //  "Removes values for each block that returns true"
 //
-//      return: "Number of removed series items, or null if BREAK"
-//          [~null~ integer!]
+//      return: "Modified Input"
+//          [~null~ any-series?]
+//      @removals "<output> Number of removed items"
+//          [integer!]
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
 //      data "The series to traverse (modified)"
@@ -1364,20 +1366,9 @@ DECLARE_NATIVE(remove_each)
 //    would not be a way to get the number of removals in this case.  Hence
 //    it is semantically easiest to say BREAK goes along with "no effect".
 //
-//    UPDATE: With multi-returns, the number of removals could be a secondary
-//    result.  It still feels a bit uncomfortable to have the result usually
-//    be the modified series, but then NULL if there's a BREAK.
-//
-// 5. We do not want to decay isotopes, e.g. if someone tried to say:
-//
-//        remove-each x [...] [n: _, ..., match [logic? integer!] false]
-//
-//    The ~false~ antiform protects from having a condition you thought should
-//    be truthy come back #[false] and be falsey.
-//
-// 6. The only signals allowed are LOGIC! and void.  This is believed to be
-//    more coherent, and likely would catch more errors than just allowing any
-//    truthy value to mean "remove".
+// 6. The only signals allowed are ~okay~, ~null~ and ~void~.  This is believed
+//    to be more coherent, and likely would catch more errors than just
+//    allowing any Is_Trigger() value to mean "remove".
 //
 // 7. We are reusing the mold buffer for BINARY!, but *not putting UTF-8 data*
 //    into it.  Revisit if this inhibits cool UTF-8 based tricks the mold
@@ -1388,13 +1379,16 @@ DECLARE_NATIVE(remove_each)
     Value* data = ARG(data);
     Value* body = ARG(body);
 
-    if (Is_Blank(data))
-        return Init_Integer(OUT, 0);
+    if (Is_Blank(data)) {
+        Init_Integer(ARG(removals), 0);
+        Init_Blank(OUT);
+        return Proxy_Multi_Returns(LEVEL);
+    }
 
     Flex* flex = Cell_Flex_Ensure_Mutable(data);  // check even if empty
 
     if (VAL_INDEX(data) >= Cell_Series_Len_At(data))  // past series end
-        return Init_Integer(OUT, 0);
+        return nullptr;
 
     Context* context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
@@ -1567,6 +1561,8 @@ DECLARE_NATIVE(remove_each)
             goto done_finalizing;
         }
 
+        Copy_Cell(OUT, data);  // going to be the same series
+
         const Element* tail;
         Element* dest = Cell_List_At_Known_Mutable(&tail, data);
         Element* src = dest;
@@ -1620,9 +1616,10 @@ DECLARE_NATIVE(remove_each)
         assert(Binary_Len(popped) <= Cell_Series_Len_Head(data));
         removals = Cell_Series_Len_Head(data) - Binary_Len(popped);
 
-        Swap_Flex_Content(popped, flex);  // swap Flex identity [3]
+        Swap_Flex_Content(popped, b);  // swap Flex identity [3]
 
         Free_Unmanaged_Flex(popped);  // now frees incoming Flex's data
+        Init_Blob(OUT, b);
     }
     else {
         assert(Any_String(data));
@@ -1636,21 +1633,20 @@ DECLARE_NATIVE(remove_each)
         REBLEN orig_len = Cell_Series_Len_Head(data);
         assert(start <= orig_len);
 
-        for (; start != orig_len; ++start) {
-            Append_Codepoint(
-                mo->string,
-                Get_Char_At(cast(String*, flex), start)
-            );
-        }
+        String* s = cast(String*, flex);
+
+        for (; start != orig_len; ++start)
+            Append_Codepoint(mo->string, Get_Char_At(s, start));
 
         String* popped = Pop_Molded_String(mo);
 
         assert(String_Len(popped) <= Cell_Series_Len_Head(data));
         removals = Cell_Series_Len_Head(data) - String_Len(popped);
 
-        Swap_Flex_Content(popped, flex);  // swap Flex identity [3]
+        Swap_Flex_Content(popped, s);  // swap Flex identity [3]
 
         Free_Unmanaged_Flex(popped);  // frees incoming Flex's data
+        Init_Any_String(OUT, Cell_Heart(data), s);
     }
 
   done_finalizing:
@@ -1661,7 +1657,10 @@ DECLARE_NATIVE(remove_each)
     if (breaking)
         return nullptr;
 
-    return Init_Integer(OUT, removals);
+    Init_Integer(ARG(removals), removals);
+    assert(VAL_TYPE(OUT) == VAL_TYPE(data));
+
+    return Proxy_Multi_Returns(LEVEL);
 }}
 
 
