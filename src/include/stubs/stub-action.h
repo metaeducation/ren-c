@@ -509,3 +509,11 @@ INLINE bool Action_Is_Base_Of(Action* base, Action* derived) {
 
 #define ACT_HAS_RETURN(a) \
     Get_Subclass_Flag(VARLIST, ACT_PARAMLIST(a), PARAMLIST_HAS_RETURN)
+
+
+// The exemplar alone is sufficient information for the specialization frame.
+// Hence a compact "singular" array of 1 cell can be used for the details.
+//
+enum {
+    IDX_SPECIALIZER_MAX = 1  // has just Phase_Details[0], the ACT_ARCHETYPE()
+};

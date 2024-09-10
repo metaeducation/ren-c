@@ -839,6 +839,7 @@ Bounce Action_Executor(Level* L)
                 Init_Nulled(ARG);
                 continue;
             }
+            Init_Nulled(ARG);  // happens if EVAL of FRAME! w/unspecialized
         }
         else if (Is_Void(ARG)) {
             if (Get_Parameter_Flag(PARAM, NOOP_IF_VOID)) {  // e.g. <maybe> param
@@ -1251,6 +1252,30 @@ void Begin_Action_Core(
 //
 //  Drop_Action: C
 //
+// 1. Varlists start out unmanaged.  If they became managed, that means they
+//    wound up being referenced in a cell that may outlive this Drop_Action().
+//    We allow frames to exist indefinitely, due to the belief that we would
+//    not want JavaScript to have the upper hand in "closure" scenarios.  See:
+//
+//      "What Happens To Function Args/Locals When The Call Ends"
+//      https://forum.rebol.info/t/234
+//
+// 2. This was the old behavior, before allowing frames to have indefinite
+//    lifetimes.  Previously this said:
+//
+//    "The pointer needed to stay working up until now, but the memory for
+//    the args won't be available.  But since we know there are outstanding
+//    references to the varlist, we need to convert it into a "stub" that's
+//    enough to avoid crashes.  But we don't free the memory for the args, we
+//    just hide it from the stub and get it ready for potential reuse by the
+//    next action call.  That's done by making an adjusted copy of the stub,
+//    which steals its dynamic memory (by setting the stub not HAS_DYNAMIC)."
+//
+// 2. If a varlist never became managed, there are no outstanding references.
+//    So we can reuse the varlist and its data allocation, which may be big
+//    enough for ensuing calls.  But no Array bits we didn't set should be
+//    set...and right now, only DETAILS_FLAG_IS_NATIVE sets HOLD.  Clear that.
+//
 void Drop_Action(Level* L) {
     assert(not L->label or Is_String_Symbol(unwrap L->label));
 
@@ -1259,31 +1284,8 @@ void Drop_Action(Level* L) {
 
     assert(BONUS(KeySource, L->varlist) == L);
 
-    if (Is_Node_Managed(L->varlist)) {
-        //
-        // Varlist wound up getting referenced in a cell that will outlive
-        // this Drop_Action().
-        //
-        // !!! The new concept is to let frames survive indefinitely in this
-        // case.  This is in order to not let JavaScript have the upper hand
-        // in "closure"-like scenarios.  See:
-        //
-        // "What Happens To Function Args/Locals When The Call Ends"
-        // https://forum.rebol.info/t/234
-        //
-        // Previously this said:
-        //
-        // "The pointer needed to stay working up until now, but the args
-        // memory won't be available.  But since we know there are outstanding
-        // references to the varlist, we need to convert it into a "stub"
-        // that's enough to avoid crashes.
-        //
-        // ...but we don't free the memory for the args, we just hide it from
-        // the stub and get it ready for potential reuse by the next action
-        // call.  That's done by making an adjusted copy of the stub, which
-        // steals its dynamic memory (by setting the stub not HAS_DYNAMIC)."
-        //
-      #if 0
+    if (Is_Node_Managed(L->varlist)) {  // outstanding references may exist [1]
+      #if 0  // old behavior: keep stub alive, reuse memory [2]
         L->varlist = CTX_VARLIST(
             Steal_Context_Vars(
                 cast(Context*, L->varlist),
@@ -1297,13 +1299,7 @@ void Drop_Action(Level* L) {
         INIT_BONUS_KEYSOURCE(L->varlist, ACT_KEYLIST(ORIGINAL));
         L->varlist = nullptr;
     }
-    else {
-        // We can reuse the varlist and its data allocation, which may be
-        // big enough for ensuing calls.
-        //
-        // But no Array bits we didn't set should be set...and right now,
-        // only DETAILS_FLAG_IS_NATIVE sets HOLD.  Clear that.
-        //
+    else {  // no outstanding references [3]
         Clear_Flex_Info(L->varlist, HOLD);
         Clear_Subclass_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);
 

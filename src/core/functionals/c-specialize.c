@@ -38,13 +38,6 @@
 
 #include "sys-core.h"
 
-// The exemplar alone is sufficient information for the specialization frame.
-// Hence a compact "singular" array of 1 cell can be used for the details.
-//
-enum {
-    IDX_SPECIALIZER_MAX = 1  // has just Phase_Details[0], the ACT_ARCHETYPE()
-};
-
 
 //
 //  Specializer_Dispatcher: C

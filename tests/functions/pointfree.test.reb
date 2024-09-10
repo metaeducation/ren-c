@@ -7,88 +7,118 @@
 ; the higher level one uses a block.  Specialize out the action, and then
 ; overwrite it in the enclosure with an action taken out of the block.
 ;
+
+
 [(
+    ; POINTFREE* is the lower-level version that takes FRAME! and BLOCK! of
+    ; just the arguments.
+    ;
+    ; NOTE: Variadics are not handled at this time.
+    ;
+    ; 1. If what gets passed in is something like :append, then we don't wants
+    ;    to be modifying that directly.  We make a copy.  This *should* be
+    ;    done with just `copy frame`, but that is residually a lightweight
+    ;    way to make a Details identity that resists hijacking.
+    ;
+    ; 2. If we did a GET of a PATH! it comes back as a partially specialized
+    ;    function, where the refinements are reported as normal args at the
+    ;    right spot in the evaluation order.  (e.g. GET $APPEND/DUP returns a
+    ;    function where DUP is a plain WORD! parameter in the third spot).
+    ;
+    ; 3. If the user does (pointfree :append [_ [d e]]) then the blank signals
+    ;    an unspecialized slot.  So that would be like writing:
+    ;
+    ;        specialize :append [value: [d e]]  ; leave series unspecialized
+    ;
     pointfree*: func* [
-        {Specialize by example: https://en.wikipedia.org/wiki/Tacit_programming}
+        "Specialize by example: https://en.wikipedia.org/wiki/Tacit_programming"
 
         return: [action?]
-        frame [<unrun> frame!]  ; this lower version takes frame AND a block
-        block [block!]
+        frame [<unrun> frame!]
+        block "Invocation by example (BLANK!s are unspecialized)"
+            [block!]
         <local> params var
     ][
-        ; If we did a GET of a PATH! it comes back as a partially specialized
-        ; function, where the refinements are reported as normal args at the
-        ; right spot in the evaluation order.  (e.g. GET $APPEND/DUP returns a
-        ; function where DUP is a plain WORD! parameter in the third spot).
-        ;
-        ; We prune out any unused refinements for convenience.
-        ;
-        params: map-each w parameters of frame [
-            match [word! lit-word? get-word!] w  ; !!! what about variadics?
-        ]
+        frame: make frame! frame  ; don't mutate incoming frame [1]
 
-        frame: make frame! frame
+        for-each param (parameters of frame) [
+            if tail? block [break]  ; no more args, leave rest unspecialized
 
-        ; Step through the block we are given--first looking to see if there is
-        ; a BLANK! in the slot where a parameter was accepted.  If it is blank,
-        ; then leave the parameter null in the frame.  Otherwise take one step
-        ; of evaluation or literal (as appropriate) and put the parameter in
-        ; the frame slot.
-        ;
-        for-skip p params 1 [
+            match [word! lit-word? get-word!] param else [
+                continue  ; skip unused refinements [2]
+            ]
+
             case [
-                ; !!! Ue STRICT-EQUAL?, else '_ says type equal to blank
-                blank? block.1 [block: skip block 1]
+                blank? block.1 [  ; means leave unspecialized [3]
+                    block: skip block 1  ; avoided NEXT when mezzanine
+                ]
 
-                match word! p.1 [
-                    if not [block /var]: evaluate/next block [
-                        break  ; out of args, assume remaining unspecialized
-                    ]
-                    frame.(p.1): get/any $var
+                match word! param [  ; ordinary parameter
+                    [block frame.(param)]: evaluate/next block
                 ]
 
                 all [
-                    match [lit-word?] p.1
+                    match [lit-word?] param
                     match [group! get-word! get-tuple!] block.1
                 ][
-                    frame.(p.1): reeval block.1
-                    block: skip block 1  ; NEXT not defined yet
+                    frame.(param): reeval block.1
+                    block: skip block 1  ; avoided NEXT when mezzanine
                 ]
 
-                true [  ; hard literal argument or non-escaped soft literal
-                    frame.(p.1): block.1
-                    block: skip block 1  ; NEXT not defined yet
+                <default> [  ; hard literal arg or non-escaped soft literal
+                    frame.(param): block.1
+                    block: skip block 1  ; avoided NEXT when mezzanine
                 ]
             ]
         ]
 
-        if block and (:block.1) [
+        if not tail? block [
             fail/blame [
                 "Unused argument data at end of POINTFREE block"
             ] $block
         ]
 
-        ; We now create an action out of the frame.  nothing parameters are
-        ; taken as being unspecialized and gathered at the callsite.
-        ;
         return runs frame
     ]
 
-    pointfree: specialize (enclose get $pointfree* lambda [f] [
-        set let frame f.frame: (match frame! any [  ; no SET-WORD! namecache
-            if match [word! path!] f.block.1 [unrun get/any f.block.1]
+    ; POINTFREE is the higher-level version that wants the name of an action
+    ; at the head of the block, e.g.
+    ;
+    ;      pointfree [append _ [d e]]
+    ;      =>
+    ;      pointfree* :append [_ [d e]]
+    ;
+    pointfree: specialize (adapt get $pointfree* [
+        frame: (match frame! any [  ; no SET-WORD! namecache
+            if match [word! path!] block.1 [
+                unrun get/any inside block block.1
+            ]
         ]) else [
             fail "POINTFREE requires FRAME! argument at head of block"
         ]
 
-        ; rest of block is invocation by example
-        f.block: skip f.block 1  ; Note: NEXT not defined yet
+        block: skip block 1  ; Note: NEXT not defined yet
     ])[
         frame: unrun get $panic/value  ; overwritten, best to be something mean
     ]
 
+    ; <- is a variadic operator that lets you express a pointfree expression
+    ; inside a GROUP!
+    ;
+    ;    (<- append _ [d e])
+    ;    =>
+    ;    pointfree [append _ [d e]]
+    ;    =>
+    ;    pointfree* :append [_ [d e]]
+    ;
+    ; It's not clear that this is better than just having it mean POINTFREE
+    ;
+    ;    <- [append _ [d e]]
+    ;
+    ; Hopefully you see some of the ambition, here--what I am trying to do.
+    ;
     <-: enfix func* [
-        {Declare action by example instantiation, missing args unspecialized}
+        "Declare action by example instantiation, missing args unspecialized"
 
         return: [action?]
         :left "Enforces nothing to the left of the pointfree expression"
@@ -101,6 +131,45 @@
 
     true
 )
+
+    (
+        apde: pointfree* :append [_ [d e]]
+        [a b c [d e]] = apde [a b c]
+    )
+
+    (
+        apde: pointfree [append _ [d e]]
+        [a b c [d e]] = apde [a b c]
+    )
+
+    (
+        apde: (<- append _ [d e])
+        [a b c [d e]] = apde [a b c]
+    )
+
+    (
+        apabc: pointfree* :append [[a b c]]
+        [a b c [d e]] = apabc [d e]
+    )
+
+    (
+        apabc: pointfree [append [a b c]]
+        [a b c [d e]] = apabc [d e]
+    )
+
+    (
+        apabc: (<- append [a b c])
+        [a b c [d e]] = apabc [d e]
+    )
+
+    ~???~ !! (
+        ap12invalid: (<- append _ 1 2)  ; unused data at end
+    )
+
+    (
+        ap1twice: (<- append/dup _ 1 2)
+        [a b c 1 1] = ap1twice [a b c]
+    )
 
 (
     x: [1 2 3 4 5 6]

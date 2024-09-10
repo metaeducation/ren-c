@@ -283,16 +283,13 @@ INLINE void Set_Parameter_String(Cell* param, Option(const String*) string) {
 }
 
 
-// Isotopic parameters are used to represent unspecialized parameters.  When
+// Antiform parameters are used to represent unspecialized parameters.  When
 // the slot they are in is overwritten by another value, that indicates they
 // are then fixed at a value and hence specialized--so not part of the public
 // interface of the function.
 //
 INLINE bool Is_Specialized(const Value* v) {
-    if (
-        HEART_BYTE(v) == REB_PARAMETER
-        and QUOTE_BYTE(v) == ANTIFORM_0
-    ){
+    if (Is_Unspecialized(v)) {
         if (Get_Cell_Flag_Unchecked(v, VAR_MARKED_HIDDEN))
             assert(!"Unspecialized parameter is marked hidden!");
         return false;

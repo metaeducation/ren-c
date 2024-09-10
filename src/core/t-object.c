@@ -385,20 +385,13 @@ bool Did_Advance_Evars(EVARS *e) {
         if (e->var and Get_Cell_Flag(e->var, VAR_MARKED_HIDDEN))
             continue;  // user-specified hidden bit, on the variable itself
 
-        // A simple specialization of a function would provide a value that
-        // the function should see as an argument when it runs.  But layers
-        // above that will use VAR_MARKED_HIDDEN so higher abstractions will
-        // not be aware of that specialized out variable.
-        //
-        // (Put another way: when a function copies an exemplar and uses it
-        // as its own, the fact that exemplar points at the phase does not
-        // suddenly give access to the private variables that would have been
-        // inaccessible before the copy.  The hidden bit must be added during
-        // that copy to honor this property.)
-        //
-        if (e->param) {  // v-- system-level hidden bit on *exemplar*
-            if (Get_Cell_Flag(e->param, VAR_MARKED_HIDDEN)) {
-                assert(Is_Specialized(e->param));  // don't hide param typesets
+        if (e->param) {
+            if (
+                Get_Cell_Flag(
+                    e->param,
+                    VAR_MARKED_HIDDEN  // hidden bit on *exemplar* [1]
+                )){
+                assert(Is_Specialized(e->param));  // *not* anti PARAMETER!
                 continue;
             }
 

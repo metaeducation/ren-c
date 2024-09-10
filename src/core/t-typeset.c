@@ -343,14 +343,19 @@ void Set_Parameter_Spec(
 //  "Tells you if argument is parameter antiform, used for unspecialized args"
 //
 //      return: [logic?]
-//      value
+//      ^value  ; cannot take parameter antiform as normal argument [1]
 //  ]
 //
 DECLARE_INTRINSIC(unspecialized_q)
+//
+// 1. Although the antiform of PARAMETER! is stable, it is fundamental to the
+//    argument gathering process that it represents an unspecialized slot.
+//    Hence any function intending to take parameter antiforms must use the
+//    ^META argument convention.
 {
     UNUSED(phase);
 
-    Init_Logic(out, Is_Unspecialized(arg));
+    Init_Logic(out, Is_Meta_Of_Unspecialized(arg));
 }
 
 

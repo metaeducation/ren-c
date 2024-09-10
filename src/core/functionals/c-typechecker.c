@@ -115,11 +115,18 @@ Phase* Make_Typechecker(Index decider_index) {
 // Ren-C has eliminated the concept of TYPESET!, instead gaining behaviors
 // for TYPE-BLOCK! and TYPE-GROUP!.
 //
+// 1. For the moment, we prohibit typechecking parameter antiforms.  If you
+//    write something like (match [antiform?] frame.unspecialized-arg) then
+//    trying to fill the argument to MATCH with an antiform parameter just
+//    should not be possible.
+//
 bool Typecheck_Atom_Core(
     const Value* tests,  // PARAMETER!, TYPE-BLOCK!, GROUP!, TYPE-GROUP!...
     Specifier* tests_specifier,
     const Atom* v
 ){
+    assert(not (Is_Antiform(v) and HEART_BYTE(v) == REB_PARAMETER));  // [1]
+
     DECLARE_ATOM (spare);  // !!! stackful
 
     const Element* tail;

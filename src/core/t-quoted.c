@@ -725,15 +725,35 @@ DECLARE_INTRINSIC(action_q)
 //  "Make frames run when fetched through word access"
 //
 //      return: [action?]
-//      frame [<maybe> frame! action?]
+//      frame [<unrun> frame! action?]
 //  ]
 //
 DECLARE_INTRINSIC(runs)
+//
+// 1. In order for a frame to properly report answers to things like
+//    `parameters of`, the specializations have to be committed to...because
+//    until that commitment, the frame hasn't hidden the parameters on its
+//    public interface that are specialized.  At the moment, this means
+//    making a copy.
 {
     UNUSED(phase);
 
-    Copy_Cell(out, arg);  // may or may not be antiform
-    QUOTE_BYTE(out) = ANTIFORM_0;  // now it's known to be an antiform
+    Value* frame = arg;
+
+    if (Is_Frame_Details(frame)) {
+        Copy_Cell(out, frame);
+        QUOTE_BYTE(out) = ANTIFORM_0;
+        return;
+    }
+
+    Phase* specialized = Make_Action(
+        CTX_VARLIST(VAL_CONTEXT(frame)),
+        nullptr,
+        &Specializer_Dispatcher,
+        IDX_SPECIALIZER_MAX  // details array capacity
+    );
+
+    Init_Action(out, specialized, VAL_FRAME_LABEL(frame), UNBOUND);
 }
 
 

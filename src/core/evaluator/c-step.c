@@ -1470,7 +1470,16 @@ Bounce Stepper_Executor(Level* L)
                 var_heart == REB_WORD or var_heart == REB_TUPLE
                 or var_heart == REB_THE_WORD or var_heart == REB_THE_TUPLE
             ){
-                Set_Var_May_Fail(var, SPECIFIED, stable_SPARE);
+                DECLARE_VALUE (dummy);
+                if (Set_Var_Core_Throws(
+                    dummy,
+                    GROUPS_OK,
+                    var,
+                    SPECIFIED,
+                    stable_SPARE
+                )){
+                    fail (Error_No_Catch_For_Throw(L));
+                }
             }
             else
                 assert(false);

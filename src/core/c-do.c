@@ -201,10 +201,23 @@ bool Pushed_Continuation(
         if (IS_FRAME_PHASED(branch))  // see REDO for tail-call recursion
             fail ("Use REDO to restart a running FRAME! (not DO)");
 
-        Context* c = VAL_CONTEXT(branch);
+        if (Get_Subclass_Flag(
+            VARLIST,
+            CTX_VARLIST(VAL_CONTEXT(branch)),
+            FRAME_HAS_BEEN_INVOKED
+        )){
+           fail (Error_Stale_Frame_Raw());
+        }
 
-        if (Get_Subclass_Flag(VARLIST, CTX_VARLIST(c), FRAME_HAS_BEEN_INVOKED))
-            fail (Error_Stale_Frame_Raw());
+        // We want to run a COPY of the FRAME!, not the frame itself
+
+        StackIndex lowest_stackindex = TOP_INDEX;  // for refinements
+
+        Context *c = Make_Context_For_Action(
+            branch,  // being used here as input (e.g. the ACTION!)
+            lowest_stackindex,  // will weave in any refinements pushed
+            nullptr  // no binder needed, not running any code
+        );
 
         Level* L = Make_End_Level(
             &Action_Executor,
