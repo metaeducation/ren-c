@@ -126,6 +126,8 @@
 
 %define/func.test.reb
 
+%examples/circled.test.reb
+%examples/flow.test.reb
 %examples/n-queens.test.reb
 %examples/prime-factors.test.reb
 %examples/sudoku-solver.test.reb
