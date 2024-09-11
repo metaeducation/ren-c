@@ -82,6 +82,76 @@ void Prep_Action_Level(
 
 
 //
+//  Push_Frame_Continuation: C
+//
+void Push_Frame_Continuation(
+    Atom* out,
+    Flags flags,
+    const Value* frame,  // may be antiform
+    Option(const Atom*) with,
+    bool copy_frame
+){
+    if (Is_Frame_Details(frame)) {
+        UNUSED(copy_frame);  // !!! have to copy (details are locked)
+
+        Level* L = Make_End_Level(
+            &Action_Executor,
+            FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
+        );
+        Prep_Action_Level(L, frame, with);
+        Push_Level(out, L);
+        return;
+    }
+
+    UNUSED(with);  // !!! no handling at present
+
+    if (IS_FRAME_PHASED(frame))  // see REDO for tail-call recursion
+        fail ("Use REDO to restart a running FRAME! (not DO)");
+
+    if (Get_Subclass_Flag(
+        VARLIST,
+        CTX_VARLIST(VAL_CONTEXT(frame)),
+        FRAME_HAS_BEEN_INVOKED
+    )){
+        fail (Error_Stale_Frame_Raw());
+    }
+
+    // We want to run a COPY of the FRAME!, not the frame itself
+
+    StackIndex lowest_stackindex = TOP_INDEX;  // for refinements
+
+    Context *c;
+    if (copy_frame) {
+        c = Make_Context_For_Action(
+            frame,  // being used here as input (e.g. the ACTION!)
+            lowest_stackindex,  // will weave in any refinements pushed
+            nullptr  // no binder needed, not running any code
+        );
+    } else
+        c = VAL_CONTEXT(frame);
+
+    Level* L = Make_End_Level(
+        &Action_Executor,
+        FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
+    );
+
+    Array* varlist = CTX_VARLIST(c);
+    L->varlist = varlist;
+    L->rootvar = CTX_ROOTVAR(c);
+    INIT_BONUS_KEYSOURCE(varlist, L);
+
+    assert(Level_Phase(L) == CTX_FRAME_PHASE(c));
+    INIT_LVL_COUPLING(L, VAL_FRAME_COUPLING(frame));
+
+    L->u.action.original = Level_Phase(L);
+
+    Begin_Prefix_Action(L, VAL_FRAME_LABEL(frame));
+
+    Push_Level(out, L);
+}
+
+
+//
 //  Pushed_Continuation: C
 //
 //////////////////////////////////////////////////////////////////////////////
@@ -185,58 +255,10 @@ bool Pushed_Continuation(
         Push_Level(out, L);
         goto pushed_continuation; }
 
-      handle_action: {
-        Level* L = Make_End_Level(
-            &Action_Executor,
-            FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
-        );
-        Prep_Action_Level(L, branch, with);
-        Push_Level(out, L);
-        goto pushed_continuation; }
-
+      handle_action:
       case REB_FRAME: {
-        if (Is_Frame_Details(branch))
-            goto handle_action;
-
-        if (IS_FRAME_PHASED(branch))  // see REDO for tail-call recursion
-            fail ("Use REDO to restart a running FRAME! (not DO)");
-
-        if (Get_Subclass_Flag(
-            VARLIST,
-            CTX_VARLIST(VAL_CONTEXT(branch)),
-            FRAME_HAS_BEEN_INVOKED
-        )){
-           fail (Error_Stale_Frame_Raw());
-        }
-
-        // We want to run a COPY of the FRAME!, not the frame itself
-
-        StackIndex lowest_stackindex = TOP_INDEX;  // for refinements
-
-        Context *c = Make_Context_For_Action(
-            branch,  // being used here as input (e.g. the ACTION!)
-            lowest_stackindex,  // will weave in any refinements pushed
-            nullptr  // no binder needed, not running any code
-        );
-
-        Level* L = Make_End_Level(
-            &Action_Executor,
-            FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
-        );
-
-        Array* varlist = CTX_VARLIST(c);
-        L->varlist = varlist;
-        L->rootvar = CTX_ROOTVAR(c);
-        INIT_BONUS_KEYSOURCE(varlist, L);
-
-        assert(Level_Phase(L) == CTX_FRAME_PHASE(c));
-        INIT_LVL_COUPLING(L, VAL_FRAME_COUPLING(branch));
-
-        L->u.action.original = Level_Phase(L);
-
-        Begin_Prefix_Action(L, VAL_FRAME_LABEL(branch));
-
-        Push_Level(out, L);
+        bool copy_frame = true;  // !!! dicate based on freeze status?
+        Push_Frame_Continuation(out, flags, branch, with, copy_frame);
         goto pushed_continuation; }
 
       default:

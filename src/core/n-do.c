@@ -450,7 +450,16 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
             if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
                 fail (Error_Do_Arity_Non_Zero_Raw());  // see notes in DO on error
 
-        return DELEGATE(OUT, source); }
+        Option(const Atom*) with = nullptr;
+        bool copy_frame = false;  // EVAL consumes by default
+        Push_Frame_Continuation(
+            OUT,
+            LEVEL_FLAG_RAISED_RESULT_OK,
+            source,
+            with,
+            copy_frame
+        );
+        return BOUNCE_DELEGATE; }
 
       case REB_VARARGS : {
         Element* position;
