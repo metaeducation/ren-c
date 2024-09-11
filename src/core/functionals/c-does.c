@@ -50,38 +50,52 @@
 //
 //  does: native [
 //
-//  "Make action that will EVAL a BLOCK! or DO a value"
+//  "Make action that will EVAL a BLOCK!"
 //
 //      return: [action?]
-//      source [element?]  ; can be e.g. (does http://example.com/script.r)
+//      source [block!]  ; allow other types? [1]
 //  ]
 //
 DECLARE_NATIVE(does)
+//
+// 1. There is an open question if you should be able to pass DOES anything
+//    that you could pass and use as a branch, e.g.:
+//
+//       >> foo: does 'something
+//       >> foo
+//       == 'something
+//
+//       >> bar: 10
+//       >> foo: does @bar
+//       >> foo
+//       == 10
+//
+//    This competes with an alternate meaning, that you could pass DOES
+//    anything that DO would take (e.g. URL!s).  For the moment it is limited
+//    to just taking BLOCK! while those questions are hashed out.
+//
+//      https://forum.rebol.info/t/does-vs-do/2271
 {
     INCLUDE_PARAMS_OF_DOES;
 
     Value* source = ARG(source);
 
-    if (Is_Block(source))  // act as lambda with an empty spec
+    if (Is_Block(source))
         return rebValue(Canon(LAMBDA), EMPTY_BLOCK, source);
 
-    // On all other types, we just make it act like a specialized call to
-    // DO for that value.
+    assert(!"DOES with types other than BLOCK! not currently active");  // [1]
 
     Context* exemplar = Make_Context_For_Action(
-        Lib(DO),
+        Lib(EVALUATE),
         TOP_INDEX,  // lower stackindex would be if wanting to add refinements
         nullptr  // don't set up a binder; just poke specializee in frame
     );
     assert(Is_Node_Managed(CTX_VARLIST(exemplar)));
 
-    // Put argument into DO's *second* frame slot (first is RETURN)
-    //
     assert(KEY_SYM(CTX_KEY(exemplar, 1)) == SYM_RETURN);
     Copy_Cell(CTX_VAR(exemplar, 2), source);
 
-    const Symbol* label = Canon(DO);  // !!! Better answer?
-
+    const Symbol* label = Canon(EVALUATE);  // !!! Better answer?
     Init_Frame(OUT, exemplar, label);
     return Actionify(OUT);
 }

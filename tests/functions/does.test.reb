@@ -1,25 +1,8 @@
 ; %does.test.reb
 ;
-; Behavior varies from from R3-Alpha:
-;
-; * Unlike FUNC [] [...], the DOES [...] has no RETURN
-; * For types like FILE! / URL! / STRING! it will act as DO when called
-;
-; It also locks the BLOCK!.  It's still experimental, but the idea of using
-; a separate generator (e.g. not a FUNC) and being able to say `does %foo.r`
-; are likely firm.
+; DOES has no RETURN behavior (it did in R3-Alpha).
 
-(
-    three: does "Rebol [] 1 + 2"
-    3 = three
-)
 
-~expect-arg~ !! (
-    make-x: does the 'x
-    make-x = 'x
-)
-
-; DOES of BLOCK! as more an arity-0 func... block evaluated each time
 (
     backup: block: copy [a b]
     f: does [append block [c d]]
