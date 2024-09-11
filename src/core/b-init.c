@@ -851,7 +851,7 @@ void Startup_Core(void)
         // Create actual variables for top-level SET-WORD!s only, and run.
         //
         "bind/only/set", &boot->base, Lib_Context_Value,
-        "eval inside", Lib_Context_Value, rebQ(&boot->base)
+        "evaluate inside", Lib_Context_Value, rebQ(&boot->base)
         //
         // Note: ENSURE not available yet.
     );
@@ -884,7 +884,7 @@ void Startup_Core(void)
 
         "bind/only/set", &boot->system_util, Sys_Util_Module,
         "if not equal? '~done~",
-          "^ eval inside", Sys_Util_Module, rebQ(&boot->system_util),
+          "^ evaluate inside", Sys_Util_Module, rebQ(&boot->system_util),
             "[fail {sys.util}]",
 
         // SYS contains the implementation of the module machinery itself, so
@@ -915,7 +915,7 @@ void Startup_Core(void)
         // Create actual variables for top-level SET-WORD!s only, and run.
         //
         "bind/only/set", &boot->mezz, Lib_Context_Value,
-        "eval inside", Lib_Context_Value, rebQ(&boot->mezz)
+        "evaluate inside", Lib_Context_Value, rebQ(&boot->mezz)
     );
 
   //=//// MAKE USER CONTEXT ////////////////////////////////////////////////=//

@@ -36,7 +36,7 @@ null': meta null
 trash: nothing': meta nothing
 nihil': meta nihil
 
-evaluate: :eval  ; shorthands should be synonyms, too confusing otherwise
+eval: :evaluate  ; shorthands should be synonyms, too confusing otherwise
 
 probe: func* [
     {Debug print a molded value and returns that same value.}

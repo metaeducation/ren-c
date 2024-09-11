@@ -298,7 +298,7 @@ DECLARE_NATIVE(do)
 
 
 //
-//  eval: native [
+//  evaluate: native [
 //
 //  "Perform a single evaluator step, returning the next source position"
 //
@@ -315,7 +315,7 @@ DECLARE_NATIVE(do)
 //      /undecayed "Don't convert NIHIL or COMMA! antiforms to VOID"
 //  ]
 //
-DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
+DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 //
 // 1. When operating stepwise, the primary result shifts to be the position,
 //    to be more useful for knowing if there are more steps to take.  It also
@@ -358,9 +358,9 @@ DECLARE_NATIVE(eval)  // synonym as EVALUATE in mezzanine
 //    an ERROR! would have to raise an error anyway, so it might as well use
 //    the one it is given.
 {
-    INCLUDE_PARAMS_OF_EVAL;
+    INCLUDE_PARAMS_OF_EVALUATE;
 
-    Element* source = Ensure_Element(ARG(source));  // hold for GC [2]
+    Element* source = cast(Element*, ARG(source));  // hold for GC [2]
 
     enum {
         ST_EVALUATE_INITIAL_ENTRY = STATE_0,
