@@ -14,24 +14,30 @@ REBOL [
 decode-url: get $sys.util/decode-url
 
 
+; 1. TAG! is a shorthand for getting files relative to the path of the
+;    currently running script.
+;
+;    !!! This has strange interactions if you have a function that gets called
+;    back after a script has finished, and it still wants to fetch resources
+;    relative to its original location.  These issues are parallel to that of
+;    using the current working directory, so one should be cautious.
+;
+; 2. THE-WORD! like `@tool` gets translated into a URL!.  The list is itself
+;    loaded from the internet, URL is in `system.locale.library.utilities`.
+;
+;    !!! As the project matures, this would have to come from a curated list,
+;    not just links on individuals' websites.  There should also be some kind
+;    of local caching facility.
+;
 clean-path: func [
-    {Returns new directory path with `.` and `..` processed.}
+    "Returns new directory path with `.` and `..` processed"
 
     return: [file! url! text!]
     path [file! url! text! tag! the-word!]
     /only "Do not prepend current directory"
     /dir "Add a trailing / if missing"
 ][
-    ; TAG! is a shorthand for getting files relative to the path of the
-    ; currently running script.
-    ;
-    ; !!! This has strange interactions if you have a function that gets
-    ; called back after a script has finished, and it still wants to
-    ; fetch resources relative to its original location.  These issues are
-    ; parallel to that of using the current working directory, so one
-    ; should be cautious.
-    ;
-    if tag? path [
+    if tag? path [  ; path relative to currently running script [1]
         if #"/" = first path [
             fail ["TAG! import from SYSTEM.SCRIPT.PATH not relative:" path]
         ]
@@ -43,14 +49,7 @@ clean-path: func [
         ]
     ]
 
-    ; This translates `@tool` into a URL!.  The list is itself loaded from
-    ; the internet, URL is in `system.locale.library.utilities`.
-    ;
-    ; !!! As the project matures, this would have to come from a curated
-    ; list, not just links on individuals' websites.  There should also be
-    ; some kind of local caching facility.
-    ;
-    if the-word? path [
+    if the-word? path [  ; lookup @tool on the internet [2]
         path: switch as tag! path  ; !!! list actually used tags, should change
             (load system.locale.library.utilities)
         else [
@@ -111,7 +110,7 @@ clean-path: func [
             (
                 if any [
                     not file? target
-                    #"/" <> last path
+                    #"/" <> try last path
                 ][
                     append path #"/"
                 ]

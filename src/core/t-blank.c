@@ -110,13 +110,9 @@ REBTYPE(Blank)
         return RAISE(Error_Nothing_To_Take_Raw());
 
       case SYM_PICK_P: {
-        //
-        // !!! The idea of allowing you to pick one step of anything out of
-        // a BLANK! and return NULL was thrown in as a potential way of
-        // getting an interesting distinction between NULL and BLANK!.  It
-        // may not be the best idea.
-        //
-        return nullptr; }
+        INCLUDE_PARAMS_OF_PICK_P;
+        UNUSED(ARG(location));
+        return RAISE(Error_Bad_Pick_Raw(ARG(picker))); }
 
       case SYM_COPY: { // since `copy/deep [1 _ 2]` is legal, allow `copy _`
         INCLUDE_PARAMS_OF_COPY;

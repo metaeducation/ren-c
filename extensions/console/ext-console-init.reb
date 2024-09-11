@@ -804,7 +804,7 @@ console*: func [
 
     === HANDLE CODE THAT HAS BEEN SUCCESSFULLY LOADED ===
 
-    if let shortcut: select system.console.shortcuts maybe first code [
+    if let shortcut: select system.console.shortcuts maybe try code.1 [
         ;
         ; Shortcuts like `q => [quit]`, `d => [dump]`
         ;

@@ -71,7 +71,7 @@ encode-lines: func [
 
     ; Indent head if original text did not start with a newline.
     pos: insert text line-prefix
-    if not equal? newline pos.1 [insert pos indent]
+    if not equal? newline try pos.1 [insert pos indent]
 
     ; Clear indent from tail if present.
     if indent = pos: skip tail-of text 0 - length of indent [clear pos]

@@ -1122,11 +1122,14 @@ REBTYPE(Context)
 
         const Value* var = TRY_VAL_CONTEXT_VAR(context, symbol);
         if (not var)
-            fail (Error_Bad_Pick_Raw(picker));
+            return RAISE(Error_Bad_Pick_Raw(picker));
 
-        if (Is_Void(var))
-            return VOID;  // GET/ANY will allow, PICK and SELECT won't
-        return Copy_Cell(OUT, var); }
+        Copy_Cell(OUT, var);
+
+        if (HEART_BYTE(var) == REB_FRAME)
+            INIT_VAL_FRAME_COUPLING(OUT, c);
+
+        return OUT; }
 
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//

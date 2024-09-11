@@ -1197,6 +1197,9 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     if (too_many)
         fail (Error_Apply_Too_Many_Raw());
 
+    if (Is_Raised(cast(Atom*, out)) and (flags & LEVEL_FLAG_RAISED_RESULT_OK))
+        return false;  // !!! Lying about the result being a RebolValue !
+
     Decay_If_Unstable(cast(Atom*, out));
     return false;
 }

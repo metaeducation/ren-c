@@ -449,7 +449,7 @@ REBTYPE(Parameter)
             break;
         }
 
-        fail (Error_Bad_Pick_Raw(picker)); }
+        return RAISE(Error_Bad_Pick_Raw(picker)); }
 
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//

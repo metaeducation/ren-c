@@ -145,7 +145,7 @@ combinator: func [
 
         @remainder [any-series?]  ; all combinators have remainder
 
-        (if spec.1 = '@pending [
+        (if '@pending = try spec.1 [
             assert [spec.2 = [blank! block!]]
             autopipe: false  ; they're asking to handle pending themselves
             spread reduce ['@pending spec.2]
@@ -1062,8 +1062,8 @@ default-combinators: make map! reduce [
             return raise e
         ]
         if pack? unmeta result' [  ; KEEP picks first pack item
-            result': (first unquasi result') else [  ; empty pack, ~[]~
-                fail "Can't KEEP NULL"
+            result': (try first unquasi result') else [  ; empty pack, ~[]~
+                fail "Can't KEEP NIHIL"
             ]
         ]
         if void? unmeta result' [
@@ -1280,7 +1280,7 @@ default-combinators: make map! reduce [
         case [
             any-list? input [
                 neq?: either state.case [:strict-not-equal?] [:not-equal?]
-                if neq? input.1 value [
+                if neq? try input.1 value [
                     return raise "Value at parse position does not match TEXT!"
                 ]
                 remainder: next input
@@ -1398,7 +1398,7 @@ default-combinators: make map! reduce [
     ][
         case [
             any-list? input [
-                if input.1 = value [
+                if value = try input.1 [
                     remainder: next input
                     return input.1
                 ]
@@ -1474,6 +1474,11 @@ default-combinators: make map! reduce [
         value [any-list?]  ; allow any array to use this "EVAL combinator"
     ][
         remainder: input
+
+        if tail? value [
+            pending: _
+            return nihil
+        ]
 
         if <delay> = first value [
             if length of value = 1 [
@@ -1605,22 +1610,25 @@ default-combinators: make map! reduce [
             [char? integer!]
         value [bitset!]
     ][
+        if tail? input [
+            return raise "BITSET! cannot match at end of input"
+        ]
         case [
             any-list? input [
-                if input.1 = value [
+                if value = input.1 [
                     remainder: next input
                     return input.1
                 ]
             ]
             any-string? input [
-                if pick value maybe input.1 [
+                if pick value input.1 [
                     remainder: next input
                     return input.1
                 ]
             ]
             true [
                 assert [binary? input]
-                if pick value maybe input.1 [
+                if pick value input.1 [
                     remainder: next input
                     return input.1
                 ]
@@ -1661,6 +1669,10 @@ default-combinators: make map! reduce [
             pending: _
             remainder: input
             return nihil  ; act invisibly
+        ]
+
+        if tail? input [
+            return raise "QUOTED! cannot match at end of input"
         ]
 
         if any-list? input [
@@ -1765,6 +1777,9 @@ default-combinators: make map! reduce [
             [blank! char?]
         value [blank!]
     ][
+        if tail? input [
+            return raise "BLANK! cannot match at end of input"
+        ]
         remainder: next input  ; if we consume an item, we'll consume just one
         if any-list? input [
             if blank? input.1 [
@@ -1773,13 +1788,13 @@ default-combinators: make map! reduce [
             return raise "BLANK! rule found next input in list was not a blank"
         ]
         if any-string? input [
-            if input.1 = space [
+            if space = input.1 [
                 return space
             ]
             return raise "BLANK! rule found next input in list was not space"
         ]
         assert [binary? input]
-        if input.1 = 32 [  ; codepoint of space, crucially single byte for test
+        if 32 = input.1 [  ; codepoint of space, crucially single byte for test
             return space  ; acts like if you'd written space in the rule
         ]
         return raise "BLANK! rule found next input in binary was not ASCII 32"
@@ -1922,8 +1937,11 @@ default-combinators: make map! reduce [
         /negated
         <local> item error
     ][
+        if tail? input [
+            return raise "TYPE-BLOCK! cannot match at end of input"
+        ]
         either any-list? input [
-            if value <> type of maybe input.1 [
+            if value <> type of input.1 [
                 if negated [
                     remainder: next input
                     return input.1
@@ -1960,8 +1978,11 @@ default-combinators: make map! reduce [
         value [type-group!]
         <local> item error
     ][
+        if tail? input [
+            return raise "TYPE-GROUP! cannot match at end of input"
+        ]
         either any-list? input [
-            if not match value maybe input.1 [
+            if not match value input.1 [
                 return raise "Value at parse position did not match TYPE-GROUP!"
             ]
             remainder: next input
@@ -1989,8 +2010,11 @@ default-combinators: make map! reduce [
         /negated
         <local> item error
     ][
+        if tail? input [
+            return raise "TYPE-WORD! cannot match at end of input"
+        ]
         either any-list? input [
-            if not match value maybe input.1 [
+            if not match value input.1 [
                 if negated [
                     remainder: next input
                     return input.1
@@ -2572,7 +2596,7 @@ default-combinators: make map! reduce [
                 ;
                 catch [  ; use CATCH to continue outer loop
                     let r
-                    while [r: rules.1] [
+                    while [r: try rules.1] [
                         rules: my next
                         if r = '|| [
                             input: pos  ; don't roll back past current pos
@@ -2660,7 +2684,7 @@ default-combinators: make map! reduce [
                 ;
                 pos: catch [
                     let r
-                    while [r: rules.1] [
+                    while [r: try rules.1] [
                         rules: my next
                         if r = '| [throw input]  ; reset POS
 

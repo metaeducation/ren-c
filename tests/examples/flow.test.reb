@@ -11,7 +11,7 @@
         placeholder: default [_]
         block: copy block
         replace/all block placeholder $flow-result
-        while [block.1] [
+        while [not tail? block] [
             insert block $ 'flow-result:
             [block flow-result]: evaluate/next block
         ]

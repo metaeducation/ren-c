@@ -263,8 +263,8 @@ make-file: func [
     ;
     all [
         3 = fourth system.version  ; Windows system
-        #":" = second result
-        drive: first path
+        #":" = try second result
+        drive: try first path
         any [
             (#"A" <= drive) and (#"Z" >= drive)
             (#"a" <= drive) and (#"z" >= drive)

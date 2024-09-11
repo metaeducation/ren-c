@@ -398,7 +398,7 @@ REBTYPE(Issue)
 
         REBI64 n = VAL_INT64(picker);
         if (n <= 0)
-            return nullptr;
+            return RAISE(Error_Bad_Pick_Raw(picker));
 
         REBLEN len;
         Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, issue);

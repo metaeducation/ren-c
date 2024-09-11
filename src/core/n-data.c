@@ -833,8 +833,11 @@ bool Get_Var_Push_Refinements_Throws(
         Move_Cell(temp, out);
         QUOTE_BYTE(temp) = ONEQUOTE_3;
         const Node* ins = rebQ(cast(Value*, Data_Stack_At(stackindex)));
-        if (rebRunThrows(
+        if (rebRunCoreThrows_internal(
             out,  // <-- output cell
+            EVAL_EXECUTOR_FLAG_NO_RESIDUE
+                | LEVEL_FLAG_UNINTERRUPTIBLE
+                | LEVEL_FLAG_RAISED_RESULT_OK,
             Canon(PICK_P), temp, ins
         )){
             Drop_Data_Stack_To(base);

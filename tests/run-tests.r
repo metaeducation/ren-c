@@ -69,7 +69,7 @@ run-tests: func [
 
 print newline
 
-if first system.options.args [
+if try first system.options.args [
     tests: local-to-file first system.options.args
 ] else [
     tests: %core-tests.r

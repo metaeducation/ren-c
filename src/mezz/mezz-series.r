@@ -350,7 +350,7 @@ extract: func [
     index: default [1]
     let out: make (kind of series) len
     iterate-skip series width [
-        append out maybe (pick series index)
+        append out maybe (try pick series index)
     ]
     return out
 ]

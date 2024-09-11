@@ -82,8 +82,13 @@
     (equal? 1.0.0.0.0.0.0 1.0.0)
 ] true)
 
-(null = pick 'a/b 1000)
-(null = pick 'a/b 0)
+[
+    ~bad-pick~ !! (pick 'a/b 1000)
+    (null = try pick 'a/b 1000)
+
+    ~bad-pick~ !! (pick 'a/b 0)
+    (null = try pick 'a/b 0)
+]
 
 [
     (3 = length of 'a.b.c)

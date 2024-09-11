@@ -932,7 +932,7 @@ REBTYPE(String)
         const Value* picker = ARG(picker);
         REBINT n;
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
-            return nullptr;
+            return RAISE(Error_Bad_Pick_Raw(picker));
 
         Codepoint c = Get_Char_At(Cell_String(v), n);
 

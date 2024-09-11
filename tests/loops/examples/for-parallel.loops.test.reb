@@ -11,7 +11,7 @@
         body [block!]
     ][
         return while [(not empty? maybe blk1) or (not empty? maybe blk2)] [
-            (vars): pack [(first maybe blk1) (first maybe blk2)]
+            (vars): pack [(try first maybe blk1) (try first maybe blk2)]
 
             repeat 1 body else [  ; if pure NULL it was a BREAK
                 return null

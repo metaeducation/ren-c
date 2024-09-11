@@ -38,7 +38,9 @@
     (null = try take _)
     (null = find _ 304)
     (null = select _ 304)
-    (null = pick _ 304)
+
+    ~bad-pick~ !! (pick _ 304)
+    (null = try pick _ 304)
 
     (_ = copy _)  ; do NOT want opt-out of copy
 ]

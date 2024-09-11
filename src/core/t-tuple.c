@@ -399,7 +399,7 @@ REBTYPE(Sequence)
             fail (picker);
 
         if (n < 0 or n >= cast(REBINT, Cell_Sequence_Len(sequence)))
-            return nullptr;
+            return RAISE(Error_Bad_Pick_Raw(picker));
 
         Copy_Sequence_At(OUT, sequence, n);
         return OUT; }

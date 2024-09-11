@@ -884,7 +884,7 @@ REBTYPE(List)
         const Value* picker = ARG(picker);
         REBINT n = Try_Get_Array_Index_From_Picker(list, picker);
         if (n < 0 or n >= cast(REBINT, Cell_Series_Len_Head(list)))
-            return nullptr;
+            return RAISE(Error_Bad_Pick_Raw(picker));
 
         const Element* at = Array_At(Cell_Array(list), n);
 

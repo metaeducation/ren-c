@@ -63,7 +63,7 @@
         ]
         vars: my next
     ]
-    if vars.1 = <...> [
+    if <...> = try vars.1 [
         if not last? vars [
             fail "<...> must appear only at the tail of PACK variable list"
         ]

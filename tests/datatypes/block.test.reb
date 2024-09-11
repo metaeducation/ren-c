@@ -18,7 +18,7 @@
         10 = select data 'a
         20 = data.b
         20 = select data 'b
-        null = get $data.c
+        null = try get $data.c
         null? select data 'c
     ]
 )
@@ -66,14 +66,18 @@
     [1 2 3 4 5] = array/initial 5 :counter
 )
 
-; !!! Right now, picking out of range (positive or negative) is null, while
-; picking by word is also null.  This is inconsistent with objects.  Review.
 [
     (did block: [ae #{BD}])
 
-    (block.-304 = null)
-    (block.1020 = null)
+    ~bad-pick~ !! (block.-304)
+    (null? try block.-304)
+
+    ~bad-pick~ !! (block.1020)
+    (null? try block.1020)
+
     (block.ae = #{BD})
     (block.AE = #{BD})
-    (block.xy = null)
+
+    ~bad-pick~ !! (block.xy)
+    (null? try block.xy)
 ]

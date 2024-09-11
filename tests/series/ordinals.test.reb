@@ -1,21 +1,31 @@
 ; functions/series/ordinals.r
-(null? first [])
-(null? second [])
-(null? third [])
-(null? fourth [])
-(null? fifth [])
-(null? sixth [])
-(null? seventh [])
-(null? eighth [])
-(null? ninth [])
-(null? tenth [])
-(1 = first [1 2 3 4 5 6 7 8 9 10 11])
-(2 = second [1 2 3 4 5 6 7 8 9 10 11])
-(3 = third [1 2 3 4 5 6 7 8 9 10 11])
-(4 = fourth [1 2 3 4 5 6 7 8 9 10 11])
-(5 = fifth [1 2 3 4 5 6 7 8 9 10 11])
-(6 = sixth [1 2 3 4 5 6 7 8 9 10 11])
-(7 = seventh [1 2 3 4 5 6 7 8 9 10 11])
-(8 = eighth [1 2 3 4 5 6 7 8 9 10 11])
-(9 = ninth [1 2 3 4 5 6 7 8 9 10 11])
-(10 = tenth [1 2 3 4 5 6 7 8 9 10 11])
+
+(
+    for-each ordinal [
+        first second third fourth fifth sixth seventh eighth ninth tenth
+    ][
+        assert compose [null = try ($ ordinal) []]
+        assert compose [($ordinal) [] except e -> [e.id = 'bad-pick]]
+    ]
+    ok
+)
+
+(
+    for-each [num ordinal] [
+        1 first
+        2 second
+        3 third
+        4 fourth
+        5 fifth
+        6 sixth
+        7 seventh
+        8 eighth
+        9 ninth
+        10 tenth
+    ][
+        assert compose [
+            (num) = ($ ordinal) [1 2 3 4 5 6 7 8 9 10 11]
+        ]
+    ]
+    ok
+)
