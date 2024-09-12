@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 Atronix Engineering
-// Copyright 2012-2019 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -154,7 +154,10 @@ Bounce Call_Core(Level* level_) {
         inbuf = nullptr;
         inbuf_size = 0;
     }
-    else if (Is_Logic(ARG(input))) {
+    else if (Is_Word(ARG(input))) {
+        char mode = Get_Char_For_Stream_Mode(ARG(input));
+        assert(mode == 'i' or mode == 'n');
+        UNUSED(mode);
         goto null_input_buffer;
     }
     else switch (VAL_TYPE(ARG(input))) {
@@ -401,10 +404,12 @@ Bounce Call_Core(Level* level_) {
                 goto child_error;
             close(fd);
         }
-        else if (Is_Logic(ARG(input))) {
-            if (Cell_Logic(ARG(input)))
+        else if (Is_Word(ARG(input))) {
+            char mode = Get_Char_For_Stream_Mode(ARG(input));
+            if (mode == 'i')
                 goto inherit_stdin_from_parent;
 
+            assert(mode == 'n');
             int fd = open("/dev/null", O_RDONLY);
             if (fd < 0)
                 goto child_error;
@@ -438,10 +443,12 @@ Bounce Call_Core(Level* level_) {
                 goto child_error;
             close(fd);
         }
-        else if (Is_Logic(ARG(output))) {
-            if (Cell_Logic(ARG(output)))
+        else if (Is_Word(ARG(output))) {
+            char mode = Get_Char_For_Stream_Mode(ARG(output));
+            if (mode == 'i')
                 goto inherit_stdout_from_parent;
 
+            assert(mode == 'n');
             int fd = open("/dev/null", O_WRONLY);
             if (fd < 0)
                 goto child_error;
@@ -473,10 +480,12 @@ Bounce Call_Core(Level* level_) {
                 goto child_error;
             close(fd);
         }
-        else if (Is_Logic(ARG(error))) {
-            if (Cell_Logic(ARG(error)))
+        else if (Is_Word(ARG(error))) {
+            char mode = Get_Char_For_Stream_Mode(ARG(error));
+            if (mode == 'i')
                 goto inherit_stderr_from_parent;
 
+            assert(mode == 'n');
             int fd = open("/dev/null", O_WRONLY);
             if (fd < 0)
                 goto child_error;

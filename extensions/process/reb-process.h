@@ -59,3 +59,13 @@ INLINE void Fail_No_Process(const Value* arg) {
 #define BUF_SIZE_CHUNK 4096
 
 Bounce Call_Core(Level* level_);
+
+INLINE char Get_Char_For_Stream_Mode(const RebolValue* mode) {
+    return rebUnboxChar(
+        "switch @", mode, "[",
+            "'inherit [#i]",
+            "'none [#n]",
+            "fail {WORD! for Stream Mode must be INHERIT or NONE}",
+        "]"
+    );
+}

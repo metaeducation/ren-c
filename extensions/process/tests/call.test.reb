@@ -10,7 +10,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
     apply get $call/shell [
         [(system.options.boot) --suppress {"*"} print.reb 100]  ; small
 
-        /input false  ; avoid child process eating pastes of length test
+        /input 'none  ; avoid child process eating pastes of length test
         /output data: {}
     ]
 
@@ -20,7 +20,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
     apply get $call/shell [
         [(system.options.boot) --suppress {"*"} print.reb 9000]  ; medium
 
-        /input false  ; avoid child process eating pastes of length test
+        /input 'none  ; avoid child process eating pastes of length test
         /output data: {}
     ]
 
@@ -30,7 +30,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
     apply get $call/shell [
         [(system.options.boot) --suppress {"*"} print.reb 80000]  ; large
 
-        /input false  ; avoid child process eating pastes of length test
+        /input 'none  ; avoid child process eating pastes of length test
         /output data: {}
     ]
 

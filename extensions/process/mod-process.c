@@ -85,12 +85,12 @@
 //      /console "Runs command with I/O redirected to console"
 //      /shell "Forces command to be run from shell"
 //      /info "Returns process information object"
-//      /input "Redirects stdin (false=/dev/null, true=inherit)"
-//          [text! binary! file! logic?]
-//      /output "Redirects stdout (false=/dev/null, true=inherit)"
-//          [text! binary! file! logic?]
-//      /error "Redirects stderr (false=/dev/null, true=inherit)"
-//          [text! binary! file! logic?]
+//      /input "Redirects stdin ('none = /dev/null, 'inherit)"
+//          [text! binary! file! word!]
+//      /output "Redirects stdout ('none = /dev/null, 'inherit)"
+//          [text! binary! file! word!]
+//      /error "Redirects stderr ('none = /dev/null, 'inherit)"
+//          [text! binary! file! word!]
 //  ]
 //
 DECLARE_NATIVE(call_internal_p)

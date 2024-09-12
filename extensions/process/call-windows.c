@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 Atronix Engineering
-// Copyright 2012-2020 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -85,8 +85,9 @@ static bool Try_Init_Startupinfo_Sink(
     if (Is_Nulled(arg)) {  // write normally (usually to console)
         *hsink = GetStdHandle(std_handle_id);
     }
-    else if (Is_Logic(arg)) {
-        if (Cell_Logic(arg)) {
+    else if (Is_Word(arg)) {
+        char mode = Get_Char_For_Stream_Mode(arg);
+        if (mode == 'i') {
             //
             // !!! This said true was "inherit", but hwrite was not being
             // set to anything...?  So is this supposed to be able to deal
@@ -106,6 +107,7 @@ static bool Try_Init_Startupinfo_Sink(
             // Not documented, but this is how to make a /dev/null on Windows
             // https://stackoverflow.com/a/25609668
             //
+            assert(mode == 'n');
             *hwrite = CreateFile(
                 L"NUL",
                 GENERIC_WRITE,
@@ -314,8 +316,9 @@ Bounce Call_Core(Level* level_) {
     if (not REF(input)) {  // get stdin normally (usually from user console)
         si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
     }
-    else if (Is_Logic(ARG(input))) {
-        if (Cell_Logic(ARG(input))) {  // !!! make inheritable (correct?)
+    else if (Is_Word(ARG(input))) {
+        char mode = Get_Char_For_Stream_Mode(ARG(input));
+        if (mode == 'i') {  // !!! make inheritable (correct?)
             if (not SetHandleInformation(
                 hInputRead,
                 HANDLE_FLAG_INHERIT,
@@ -326,6 +329,7 @@ Bounce Call_Core(Level* level_) {
             si.hStdInput = hInputRead;
         }
         else {
+            assert(mode == 'n');
             // Not documented, but this is how to make a /dev/null on Windows
             // https://stackoverflow.com/a/25609668
             //
