@@ -1,30 +1,30 @@
 ; %parse-path.test.reb
 ;
-; Historical Rebol and Red considered PATH! processing "too slow" to
-; make convenient to use in rules.  Ren-C seeks to provide convenience
-; and expressivity, so it permits object field access...however that
-; is expected to be generally done with TUPLE!
+; PATH!s only have meaning in the default combinator set when they terminate
+; in a BLANK!, and mean "run as action combinator".
 ;
-; PATH!s currently have a special feature that if a path ends in a
-; slash it will be looked up as a normal function, whose arguments
-; will then be fulfilled by the values synthesized from parse rules.
-; It's a dodgy mechanism, but interesting.
+; When paths represent cascades of functions vs. refinements, there will be
+; more to test here.
 ;
-; PATH! combinator is still a work in progress.
+; Other applications would be in Rebol2/Red PARSE emulation to do variable
+; lookup, and creative possibilites that do not have anything to do with
+; function execution or variable lookup are also possible with custom maps
+; of combinators.
+;
 
 [https://github.com/red/red/issues/4101
     ('a/b == parse [a/b] ['a/b])
 
-    ~unassigned-attach~ !! (
+    ~???~ !! (
         parse [a/b] [a/b]
     )
-    ~unassigned-attach~ !! (
+    ~???~ !! (
         parse [a b c] [change repeat 3 word! d/e]
     )
-    ~unassigned-attach~ !! (
+    ~???~ !! (
         parse [a/b c d] [remove a/b]
     )
-    ~unassigned-attach~ !! (
+    ~???~ !! (
         parse [c d] [insert a/b repeat 2 word!]
     )
 ]

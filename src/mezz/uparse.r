@@ -732,25 +732,6 @@ default-combinators: make map! reduce [
     ; Historical PARSE matched tags literally, while UPARSE pushes to the idea
     ; that they are better leveraged as "special nouns" to avoid interfering
     ; with the user variables in wordspace.
-    ;
-    ; There is an overall TAG! combinator which looks in the combinator map for
-    ; specific tags.  You can replace individual tag combinators or change the
-    ; behavior of tags overall completely.
-
-    tag! combinator [
-        {Special noun-like keyword subdispatcher for TAG!s}
-        return: "What the delegated-to tag returned"
-            [any-value? pack?]
-        @pending [blank! block!]
-        value [tag!]
-        <local> comb
-    ][
-        if not comb: state.combinators.(value) [
-            fail ["No TAG! Combinator registered for" value]
-        ]
-
-        return [@ remainder pending]: run comb state input
-    ]
 
     <here> combinator [
         {Get the current parse input position, without advancing input}
@@ -2630,7 +2611,6 @@ comment [combinatorize: func [
     rules [block!]
     state "Parse State" [frame!]
     /value "Initiating value (if datatype)" [element?]
-    /path "Invoking Path" [path!]
     <local> r f rule-start
 ][
     rule-start: back rules  ; value may not be set if WORD! dispatch
@@ -2650,10 +2630,6 @@ comment [combinatorize: func [
     ; So we see that CHANGE got SOME "A" turned into a parser action, but it
     ; received "literal" literally.  The definition of the combinator is used
     ; to determine the arguments and which kind they are.
-
-    if path [  ; was for /ONLY but not in use now, will be rethought
-        fail "Refinements not supported currently with combinators"
-    ]
 
     f: make frame! combinator
 
@@ -2750,8 +2726,67 @@ comment [combinatorize: func [
 ]]
 
 
+; PARSIFY: The parsify function's job is to produce a single parser that
+; encapsulates one "expression" a parse block.  So if you give parsify the
+; block `[opt some "a", while ["b"] (print "hi")]` it will give back a
+; black-box parsing function that implements the logic of `[opt some "a"]`.
+;
+;  * The parser takes an INPUT series at a given position as an argument
+;  * If it matches, it will give back a synthesized value and a remainder
+;  * If it doesn't match, it will return a raised error
+;
+; Parsify searches for elements in the combinator map, and it will coordinate
+; the connections between those combinators.  However, since combinators are
+; not variadic, all the "variadicness" is implemented here in parsify.  A
+; datatype combinator (such as that for a TAG!) can thus not acquire any
+; arguments unless code is added here to facilitate that.
+;
+; 1. The concept behind COMMA! is to provide a delimiting between rules.  That
+;    is handled by the BLOCK! combinator.  So if you see `[some, "a"]` in
+;    PARSIFY, that is just running out of turn.
+;
+;    (It may seem making a dummy "comma combinator" for the comma type is a
+;    good idea.  But that's an unwanted axis of flexibility, and if we defer
+;    the error until the combinator is run, it might never be run.)
+;
+; 2. First thing we do is look up the item in combinators to see if there is a
+;    literal match.  This out-prioritizes a more general lookup by type.
+;    (Original design was that the type got first dibs, with the concept
+;    that it would make it easier to substitute hooked combinators.  But
+;    hooking an overriding combinator is kind of a contradiction in terms,
+;    it just meant there were dummy combinators for things like TAG! that
+;    had to tunnel unknown conventions they did not understand.)
+;
+; 3. If not a FRAME! combinator, then you can map to an element which will
+;    be looked up as if it had been written there literally.  This can be
+;    used e.g. to map `<whitespace>` to a rule like `[some whitespace-char]`.
+;    Unlike binding, this works for types other than WORD!...and such
+;    definitions added to the combinator table are available globally while
+;    the parser runs.
+;
+; 4. If a WORD! looks up to a user-written combinator that takes parser
+;    arguments, we have to handle it here instead of being able to fold that
+;    into the generic combinator for the WORD! datatype.
+;
+; 5. UPARSE introduced the idea of "action combinators", where if a PATH!
+;    ends in a slash, it is considered an invocation of a normal function with
+;    the results of combinators as its arguments.  This has to be hacked in
+;    variadically here, because the number of arguments needed depends on
+;    the number of arguments taken by the action.  For the moment, be weird
+;    and customize the combinator with AUGMENT for each argument (parser1,
+;    parser2, parser3...)
+;
+;    (Note that we do fall through to a PATH! combinator for paths that don't
+;    end in slashes.  This permits--among other things--the Rebol2 parse
+;    semantics to look up variables via PATH!.)
+;
+; 6. If all else fails, dispatch is given to the datatype.  To reiterate,
+;    this kind of dispatch is not variadic--and hence no arguments are taken.
+;    (That's fine for BLOCK!, TAG!, TEXT! etc. in the general case, though
+;    this limitation may be overcome someday.)
+;
 parsify: func [
-    {Transform one "step's worth" of rules into a parser combinator action}
+    "Transform one step's worth of rules into a parser combinator action"
 
     return: "Parser action for input processing corresponding to a full rule"
         [action?]
@@ -2765,70 +2800,30 @@ parsify: func [
 ][
     r: rules.1
 
-    ; The concept behind COMMA! is to provide a delimiting between rules.
-    ; That is handled by the block combinator.  So if you see a thing like
-    ; `[some, "a"]` in PARSIFY, that is just running out of turn.
-    ;
-    ; It may seem like making a dummy "comma combinator" for the comma
-    ; type is a good idea.  But that's an unwanted axis of flexibility
-    ; in this model...and also if we defer the error until the combinator
-    ; is run, it might never be run.
-    ;
-    if comma? r [
+    if comma? r [  ; block combinator consumes the legal commas [1]
         fail "COMMA! can only be run between PARSE steps, not during them"
     ]
     rules: my next
 
+    while [comb: try state.combinators.(r)] [  ; literal match first [2]
+        if match frame! comb [
+            return [@ advanced]: combinatorize comb rules state
+        ]
+
+        r: comb  ; didn't look up to combinator, just element to substitute [3]
+    ]
+
+    r: inside state.env r  ; add binding if applicable
+
+    ;--- SPECIAL-CASE VARIADIC SCENARIOS BEFORE DISPATCHING BY DATATYPE
+
     case [
-        word? r [
-            ;
-            ; The first thing we do is see if the combinator list we are using
-            ; has an entry for this word/symbol.
-            ;
-            if value: select state.combinators r [
-                ;
-                ; Combinators get "combinated" with the subsequent stream of
-                ; rules to produce a parser instance.  This is the common case.
-                ;
-                if comb: match frame! :value [
-                    return [@ advanced]: combinatorize :comb rules state
-                ]
-
-                ; Ordinary data values are dispatched to the combinator for
-                ; that datatype.  This feature is useful for injecting simple
-                ; definitions into the parser, like mapping ALPHA to the bitset
-                ; for alphabetic characters.  Unlike binding, such definitions
-                ; added to the combinator table are available globally while
-                ; the parser runs.
-                ;
-                ; At the moment there are no "variadic" combinators, so these
-                ; dispatches do not have access to the stream of subsequent
-                ; rules...only the value itself.
-                ;
-                ; !!! Note: We have looked up a WORD! and found it literally in
-                ; the combinator table.  But despite looking up a word, it
-                ; does not get passed to the WORD! combinator in this case.
-                ; The datatype handler is unconditionally called with no hook,
-                ; as if the value had appeared literally in the rule stream.
-                ;
-                comb: state.combinators.(kind of value)
-                return (
-                    [@ advanced]: combinatorize/value comb rules state :value
-                )
+        word? r [  ; non-"keyword" WORD! (didn't look up literally)
+            if null? value: get r [
+                fail [r "looked up to ~null~ antiform in UPARSE"]
             ]
 
-            ; Failing to find an entry in the combinator table, we fall back on
-            ; checking to see if the word looks up to a variable via binding.
-            ;
-            if null? value: get inside state.env r [
-                fail [r "looked up to ~null~ antiform in UPARSE"]  ; void is ok
-            ]
-
-            ; Looking up to a combinator via variable is allowed, and will use
-            ; COMBINATORIZE to permit access to consume parts of the subsequent
-            ; rule stream.
-            ;
-            if comb: match frame! :value [
+            if comb: match frame! :value [  ; variable held a combinator [4]
                 if combinator? :comb [
                     return [@ advanced]: combinatorize :comb rules state
                 ]
@@ -2841,110 +2836,56 @@ parsify: func [
                 ]
             ]
 
-            ; Any other values that we looked up as a variable will be
-            ; sent to the WORD! combinator for processing.  This permits a
-            ; word that looks up to a value to do something distinct from what
-            ; the value would do literally in the stream.
-            ;
-            ; (For the most part, this should be used to limit what types are
-            ; legal to fetch from words...but there may be cases where distinct
-            ; non-erroring behavior is desired.)
-            ;
-            comb: select state.combinators word!
-            return [@ advanced]:
-                combinatorize/value :comb rules state (inside state.env r)
+            ; fall through to datatype-based WORD! combinator handling
         ]
 
-        path? r [
-            ;
-            ; !!! Wild new feature idea: if a PATH! ends in a slash, assume it
-            ; is an invocation of a normal function with the results of
-            ; combinators as its arguments.
-            ;
-            ; This is variadic and hacked in, so it cannot be done via a
-            ; combinator.  But we fall through to a PATH! combinator for paths
-            ; that don't end in slashes.  This permits (among other things)
-            ; the Rebol2 parse semantics to look up variables via PATH!.
-            ;
-            let f
-            if blank? last r [
-                if not frame? let gotten: unrun get/any inside state.env r [
-                    fail "In UPARSE PATH ending in / must be action or frame"
-                ]
-                if not comb: select state.combinators frame! [
-                    fail "No frame! combinator, can't use PATH ending in /"
-                ]
+        (path? r) and (blank? last r) [  ; "action combinator" [5]
+            if not frame? let gotten: unrun get/any r [
+                fail "In UPARSE PATH ending in / must be action or frame"
+            ]
+            if not comb: select state.combinators frame! [
+                fail "No frame! combinator, can't use PATH ending in /"
+            ]
 
-                ; !!! The frame combinator has to be variadic, because the
-                ; number of arguments it takes depends on the arguments of
-                ; the action.  This requires design.  :-/
-                ;
-                ; For the moment, do something weird and customize the
-                ; combinator with AUGMENT for each argument (parser1, parser2
-                ; parser3).
-                ;
-                comb: unrun adapt (augment comb inside [] collect [
-                    let n: 1
-                    for-each param parameters of gotten [
-                        if not path? param [
-                            keep spread compose [
-                                (to word! unspaced ["param" n]) [action?]
-                            ]
-                            n: n + 1
+            comb: unrun adapt (augment comb inside [] collect [
+                let n: 1
+                for-each param parameters of gotten [
+                    if not path? param [
+                        keep spread compose [
+                            (to word! unspaced ["param" n]) [action?]
                         ]
-                    ]
-                ])[
-                    parsers: copy []
-
-                    ; No RETURN visible in ADAPT.  :-/  Should we use ENCLOSE
-                    ; to more legitimately get the frame as a parameter?
-                    ;
-                    let f: binding of $param1
-
-                    let n: 1
-                    for-each param (parameters of value) [
-                        if not path? param [
-                            append parsers unrun :f.(as word! unspaced ["param" n])
-                            n: n + 1
-                        ]
+                        n: n + 1
                     ]
                 ]
+            ])[
+                parsers: copy []
 
-                return [@ advanced]:
-                        combinatorize/value comb rules state gotten
+                ; No RETURN visible in ADAPT.  :-/  Should we use ENCLOSE
+                ; to more legitimately get the frame as a parameter?
+                ;
+                let f: binding of $param1
+
+                let n: 1
+                for-each param (parameters of value) [
+                    if not path? param [
+                        append parsers unrun :f.(as word! unspaced ["param" n])
+                        n: n + 1
+                    ]
+                ]
             ]
 
-            let word: ensure word! first r
-            if comb: select state.combinators word [
-                return [@ advanced]:
-                    combinatorize/path comb rules state (inside state.env r)
-            ]
-
-            ; !!! Originally this would just say "unknown combinator" at this
-            ; point, but for compatibility with historical Rebol we handle
-            ; paths in UPARSE for now as being gotten as if they were tuples.
-            ;
-            r: get inside state.env r else [
-                fail [r "is NULL, not legal in UPARSE"]
-            ]
+            return [@ advanced]: combinatorize/value comb rules state gotten
         ]
 
         ; !!! Here is where we would let GET-PATH! and GET-WORD! be used to
         ; subvert keywords if SEEK were universally adopted.
     ]
 
-    ; Non-keywords are also handled as combinators, where we just pass the
-    ; data value itself to the handler for that type.
-    ;
-    ; !!! This won't work with INTEGER!, as they are actually rules with
-    ; arguments.  Does this mean the block rule has to hardcode handling of
-    ; integers, or that when we do these rules they may have skippable types?
-
-    if not comb: select state.combinators kind of r [
-        fail ["Unhandled type in PARSIFY:" kind of r "-" mold r]
+    if not comb: try state.combinators.(kind of r) [  ; datatype dispatch [6]
+        fail ["Unhandled type in PARSIFY:" mold kind of r "-" mold r]
     ]
 
-    return [@ advanced]: combinatorize/value comb rules state (inside state.env r)
+    return [@ advanced]: combinatorize/value comb rules state r
 ]
 
 
