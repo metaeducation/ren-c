@@ -121,6 +121,7 @@ uint32_t Hash_Value(const Cell* cell)
 
     switch (heart) {
       case REB_BLANK:
+      case REB_COMMA:
         hash = 0;
         break;
 
@@ -181,6 +182,11 @@ uint32_t Hash_Value(const Cell* cell)
         Size size;
         const Byte* data = Cell_Binary_Size_At(&size, cell);
         hash = Hash_Bytes(data, size);
+        break; }
+
+      case REB_BITSET: {  // current implementation is a binary
+        Binary* b = VAL_BITSET(cell);
+        hash = Hash_Bytes(Binary_Head(b), Binary_Len(b));
         break; }
 
       case REB_TEXT:
@@ -268,7 +274,6 @@ uint32_t Hash_Value(const Cell* cell)
         hash = Array_Len(Cell_Array(cell));
         break;
 
-      case REB_BITSET:
       case REB_PARAMETER:
         //
         // "These types are currently not supported."
