@@ -249,3 +249,28 @@
     ([1 ''~2~ 3] = compose [1 ''~(1 + 1)~ 3])
     ~???~ !! (compose [1 ''~(quote 1 + 1)~ 3])
 ]
+
+; We allow the reduced case of `eval []` or `eval [comment "hi"]` to be VOID,
+; and this is an example of why we choose that instead of NOTHING.
+[
+    (
+        condition: 1 = 2
+        messages: []
+        log: func [msg] [append messages msg]
+        ok
+    )
+    (
+        ; kind of lame
+        condition: 1 = 2
+        [a c] = compose [a (either condition ['b] [log "skipping" void]) c]
+    )
+    (
+        ; clearer but still lame
+        condition: 1 = 2
+        [a c] = compose [a (either condition ['b] [log "skipping", void]) c]
+    )
+    (
+        ; best rhythm
+        [a c] = compose [a (either condition ['b] [elide log "skipping"]) c]
+    )
+]
