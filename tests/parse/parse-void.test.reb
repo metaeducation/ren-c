@@ -12,21 +12,18 @@
     'b = parse [a b] ['a var 'b]
 )
 
-; Voids evaporate, leaving the previous result...
+; Voids synthesize void
 
-('b = parse [a b] ['a 'b ~void~])
+(void = parse [a b] ['a 'b ~void~])
 (
     var: void
-    'b = parse [a b] ['a 'b var]
+    void = parse [a b] ['a 'b var]
 )
-
-; Given that they evaporate, they can't be assigned to variables...
-
 (
     test: ~
     all [
-        'b = parse [a b] ['a test: ^[~void~] 'b]
-        nihil' = test
+        'b = parse [a b] ['a test: [~void~] 'b]
+        void = test
     ]
 )
 (
@@ -34,36 +31,26 @@
     var: void
     all [
        'b = parse [a b] ['a test: ^[var] 'b]
-        nihil' = test
+        '~void~ = test
     ]
 )
 
-; Notice functionally, a void rule acts the same as an empty block rule
-
-('b = parse [a b] ['a 'b []])
-(
-    var: []
-    'b = parse [a b] ['a 'b var]
-)
-('b = parse [a b] ['a 'b :(if ok '[])])
-
 ; Voided expressions work in GET-GROUP! substitutions
 
-('b = parse [a b] ['a 'b :(if null [[some 'c]])])
+(void = parse [a b] ['a 'b :(if null [[some 'c]])])
 ('c = parse [a b c c c] ['a 'b :(if ok [[some 'c]])])
 
-; Liberal policy of letting voids opt-out is convenient to use void as a
+; Liberal policy of letting voids skip ahead is convenient to use void as a
 ; state equivalent to no-op...if you are willing to deal with the possible
 ; slipperiness of such values, e.g. consider:
 ;
 ;    c-rule-copy: all [1 = 1, c-rule]  ; won't act like you expect
 ;
-; This may suggest a naming convention for variables which can be void,
-; such as *c-rule, to draw attention to the issue.
+; If this is not what you want, then ~okay~ is a better fit.
 
 (
     c-rule: if null [[some 'c]]
-    'b = parse [a b] ['a 'b c-rule]
+    void = parse [a b] ['a 'b c-rule]
 )
 (
     c-rule: if ok [[some 'c]]
@@ -77,7 +64,7 @@
 
 (
     c-rule: null
-    'b = parse [a b] ['a 'b :(maybe c-rule)]
+    void = parse [a b] ['a 'b :(maybe c-rule)]
 )
 (
     c-rule: [some 'c]
@@ -99,8 +86,7 @@
      ]
 )
 
-; Void rules or GET-GROUP! are distinct from synthesized voids in plain GROUP!
-; These are values that do not vanish.
+; Voids synthesized from plain GROUP! also do not vanish
 
 (3 = parse [x] ['x (1 + 2) | 'y (10 + 20)])
 (void? parse [x] ['x (void) | 'y (10 + 20)])

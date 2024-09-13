@@ -29,9 +29,11 @@
 ; be very helpful (for an example, see the implementation of the Whitespace
 ; Interpreter Dialect).
 ;
-; Decisions about this are still up in the air.
+; Decisions about this are still up in the air, but for the moment the second
+; form is done under LIT for literal matching.
 
 ('a = parse [] [the a])  ; current behavior
+('a = parse [] [@ a])  ; shorthand
 
 (comment [  ; alternate behavior
     [

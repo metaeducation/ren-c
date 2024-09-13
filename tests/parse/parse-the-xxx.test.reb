@@ -36,8 +36,6 @@
         obj: make object! [x: [some rule]]
         [some rule] = parse data [some @obj.x]
     )
-
-    ([some rule] = parse data [@ block!])
 ]
 
 (

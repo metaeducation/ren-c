@@ -252,6 +252,7 @@
 %parse/parse-optional.test.reb
 %parse/parse-path.test.reb
 %parse/parse-phase.test.reb
+%parse/parse-quasi.test.reb
 %parse/parse-quoted.test.reb
 %parse/parse-remove.test.reb
 %parse/parse-repeat.test.reb

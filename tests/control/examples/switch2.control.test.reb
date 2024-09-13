@@ -14,15 +14,15 @@ switch2: func [
 ][
     found: 'no
     result': void'
-    more: okay
+    more: 'yes
 
     return parse cases [cycle [
-        while more [
+        while :(yes? more) [
             ; Find next condition clause, or break loop if we hit => or end
             ;
             condition: *in* between <here> any [
-                ['| (more: okay)]
-                ['=> (more: [bypass])]  ; !!! Should (more: 'bypass) be legal?
+                ['| (more: 'yes)]
+                ['=> (more: 'no)]
                 [<end> accept (unmeta result')]
             ]
 
@@ -55,7 +55,7 @@ switch2: func [
             ]
         ]
 
-        (more: okay)
+        (more: 'yes)
 
         branch: [
             *in* block!

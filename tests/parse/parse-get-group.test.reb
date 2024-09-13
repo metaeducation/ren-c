@@ -1,9 +1,40 @@
 ; %parse-get-group.test.reb
 ;
-; GET-GROUP!s will splice rules, void means no rule but succeeds...returning
-; 'BYPASS is useful for skipping to the next alternate.
+; GET-GROUP!s will evaluate code to produce a rule to splice as if it had
+; been written in that spot.  If a WORD! is used as a rule, it cannot be
+; variadic.  So this is legal:
 ;
-; They act like a COMPOSE that runs each time the GET-GROUP! is passed.
+;    >> parse [a a a] [:(if 1 = 1 ['bypass]) | some 'a]
+;    == a
+;
+; But this is not legal:
+;
+;    >> parse [a a a] [:(if 1 = 1 ['some]) 'a]
+;    ** Error: Too few parameters for combinator
+;
+; It is a particularly powerful facility--though unlike COMPOSE it will run
+; the code in the group every time it is encountered in the PARSE, so can
+; carry something of a runtime penalty.
+
+[
+    ; === SPECIAL ANTIFORM MEANINGS ===
+    (
+        ; NULL means no match (does not cause abrupt failure)
+        'a = parse [a a a] [:(1 = 0) | some 'a]
+    )
+    (
+        ; OKAY synthesizes NIHIL and continues matching
+        'a = parse [a a a] ['a :(1 = 1) elide some 'a]
+    )
+    (
+        ; VOID synthesizes VOID and continues matching
+        void = parse [a a a] ['a :(void) elide some 'a]
+    )
+    (
+        ; NIHIL synthesizes NIHIL and continues matching
+        'a = parse [a a a] ['a :(comment "hi") elide some 'a]
+    )
+]
 
 ("aaa" == parse "aaa" [:(if null ["bbb"]) "aaa"])
 ("aaa" == parse "bbbaaa" [:(if ok ["bbb"]) "aaa"])

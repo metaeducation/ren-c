@@ -10,6 +10,14 @@
 ; pending list...the entire group must succeed
 
 
+; Empty block rules vaporize
+(
+    var: []
+    'b = parse [a b] ['a 'b var]
+)
+('b = parse [a b] ['a 'b :(if ok '[])])
+
+
 ; No-op rule of empty block should always match.
 [
     (void? parse "" [])
