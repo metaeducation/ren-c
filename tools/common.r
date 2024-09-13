@@ -31,7 +31,7 @@ export repo-dir: clean-path %../
 export spaced-tab: unspaced [space space space space]
 
 export to-c-name: func [
-    {Take a Rebol value and transliterate it as a (likely) valid C identifier}
+    "Take a Rebol value and transliterate it as a (likely) valid C identifier"
 
     return: [~null~ text!]
     value "Will be converted to text (via UNSPACED if BLOCK!)"
@@ -54,7 +54,7 @@ export to-c-name: func [
 
     let string: either block? :value [unspaced value] [form value]
 
-    string: switch string [
+    switch string [
         ; Used specifically by t-routine.c to make SYM_ELLIPSIS
         ;
         ; !!! Note: this was ... but that is now a TUPLE!  So this has to
@@ -111,34 +111,31 @@ export to-c-name: func [
         "xor_eq" ["xor_eq_1"]
 
         "did" ["did_1"]  ; This is a macro in Ren-C code
-    ] then (func [s] [
+    ] then s -> [
         return copy s
-    ]) else [
-        ;
-        ; If these symbols occur composite in a longer word, they use a
-        ; shorthand; e.g. `foo?` => `foo_q`
+    ]
 
-        for-each [reb c] [
-            #"'"  ""      ; isn't => isnt, didn't => didnt
-            -   "_"     ; foo-bar => foo_bar
-            *   "_p"    ; !!! because it symbolizes a (p)ointer in C??
-            .   "_d"    ; (d)ot (only valid in [. .. ...] etc)
-            /   "_s"    ; (s)lash (only valid in [/ // ///] etc)
-            ?   "_q"    ; (q)uestion
-            !   "_x"    ; e(x)clamation
-            +   "_a"    ; (a)ddition
-            |   "_b"    ; (b)ar
-            >   "_g"    ; (g)reater
-            <   "_l"    ; (l)esser
-            =   "_e"    ; (e)qual
-            #"^^"  "_c" ; (c)aret
-            #"^^"  "_c" ; !!! Bug in shim loading requres a paired ^^ !!!
-            #"@" "_z"   ; a was taken, doesn't make less sense than * => p
-        ][
-            replace/all string (form reb) c
-        ]
-
-        string
+    ; If these symbols occur composite in a longer word, they use a shorthand.
+    ; e.g. `foo?` => `foo_q`
+    ;
+    for-each [reb c] [
+        #"'"  ""    ; isn't => isnt, didn't => didnt
+        -   "_"     ; foo-bar => foo_bar
+        *   "_p"    ; !!! because it symbolizes a (p)ointer in C??
+        .   "_d"    ; (d)ot (only valid in [. .. ...] etc)
+        /   "_s"    ; (s)lash (only valid in [/ // ///] etc)
+        ?   "_q"    ; (q)uestion
+        !   "_x"    ; e(x)clamation
+        +   "_a"    ; (a)ddition
+        |   "_b"    ; (b)ar
+        >   "_g"    ; (g)reater
+        <   "_l"    ; (l)esser
+        =   "_e"    ; (e)qual
+        #"^^"  "_c" ; (c)aret
+        #"^^"  "_c" ; !!! Bug in shim loading requres a paired ^^ !!!
+        #"@" "_z"   ; a was taken, doesn't make less sense than * => p
+    ][
+        replace/all string (form reb) c
     ]
 
     if empty? string [
