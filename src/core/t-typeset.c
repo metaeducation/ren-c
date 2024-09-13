@@ -149,6 +149,7 @@ void Set_Parameter_Spec(
         assert(*flags & PARAMETER_FLAG_NULL_DEFINITELY_OK);
         assert(pclass != PARAMCLASS_RETURN and pclass != PARAMCLASS_OUTPUT);
     }
+    UNUSED(pclass);
 
     const Element* tail;
     const Element* item = Cell_List_At(&tail, spec);
