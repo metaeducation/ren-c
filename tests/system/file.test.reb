@@ -54,14 +54,14 @@
     ; So do not test for exact matches of BINARY! products of compression.
     ; Decompression should be consistent, however.
 
-    ([] = load (save/compress blank [] true))
+    ([] = load (save/compress blank [] 'raw))
 
     ([] = load #{
         5245424F4C205B0A202020204F7074696F6E733A205B636F6D70726573735D0A
         5D0A1F8B080000000000000AE302009306D73201000000
     })
 
-    (data = load (save/compress blank data true))
+    (data = load (save/compress blank data 'raw))
 
     (data = load #{
         5245424F4C205B0A202020204F7074696F6E733A205B636F6D70726573735D0A
@@ -70,7 +70,7 @@
         8CB030000000
     })
 
-    (data = load (save/compress blank data 'script))
+    (data = load (save/compress blank data 'base64))
 
     (
         data = load #{
@@ -84,7 +84,7 @@
 
     (
         [loaded header]: load (
-            save/header/compress blank data [Title: "my code"] true
+            save/header/compress blank data [Title: "my code"] 'raw
         )
         all [
             header.title = "my code"
@@ -109,7 +109,7 @@
 
     (
         [loaded header]: load (
-            save/header/compress blank data [Title: "my code"] 'script
+            save/header/compress blank data [Title: "my code"] 'base64
         )
         all [
             header.title = "my code"

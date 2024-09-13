@@ -42,6 +42,10 @@ mold64: func [
     return data
 ]
 
+; 1. Script compression was a weird feature that is not a priority in Ren-C,
+;    but keeping things working well enough to run the tests helps expose
+;    thinking points.
+;
 save: func [
     {Saves a value, block, or other data to a file, URL, binary, or text}
 
@@ -50,12 +54,12 @@ save: func [
         [file! url! binary! text! blank!]
     value "Value(s) to save"
         [<const> element?]
-    /header "Provide REBOL header block/object, or TRUE (header is in value)"
-        [block! object! logic?]
+    /header "Provide REBOL header block/object, or INCLUDED if in value"
+        [block! object! 'included]
     /all "Save in serialized format"
     /length "Save the length of the script content in the header"
-    /compress "true = compressed, false = not, 'script = encoded string"
-        [logic? word!]
+    /compress "Detect from header if not supplied"  ; weird old feature [1]
+        ['none 'raw 'base64]
 ][
     ; Recover common natives for words used as refinements.
     let all_SAVE: all
@@ -72,12 +76,15 @@ save: func [
         return write where encode type :value
     ]
 
-    any [length compress] then [  ; need header if compressed or lengthed
-        header: default [[]]
+    any [
+        length
+        (compress <> 'none) and (compress <> null)
+    ] then [  ; need header if compressed or lengthed
+        header: default [copy []]
     ]
 
     if header [
-        if header = true [  ; the header is the first value in the block
+        if header = 'included [  ; the header is the first value in the block
             header: first ensure block! value
             value: my next
         ]
@@ -94,9 +101,12 @@ save: func [
         ;
         case [
             null? compress [
-                compress: did find maybe (select header 'options) 'compress
+                compress: all [
+                    find maybe (select header 'options) 'compress
+                    'blob  ; I guess this is the default?  [1]
+                ]
             ]
-            compress = false [
+            compress = 'none [
                 remove find maybe select header 'options 'compress
             ]
             not block? select header 'options [
@@ -116,6 +126,8 @@ save: func [
         length: ensure [~null~ integer!] try select header 'length
         header: body-of header
     ]
+
+    compress: default ['none]
 
     ; !!! Maybe /all should be the default?  See #2159
     ;
@@ -147,13 +159,12 @@ save: func [
             change next tmp (checksum-core 'crc32 data)
         ]
 
-        compress [
-            ; Compress the data if necessary
+        compress <> 'none [
             data: gzip data
         ]
 
-        compress = 'script [
-            data: mold64 data  ; File content is encoded as base-64
+        compress = 'base64 [
+            data: mold64 data
         ]
 
         not binary? data [
