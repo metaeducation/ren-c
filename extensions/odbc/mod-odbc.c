@@ -359,8 +359,8 @@ CharColumnEncoding char_column_encoding = CHAR_COL_UTF16;
 //  "Set the encoding for CHAR, CHAR(n), VARCHAR(n), LONGVARCHAR fields"
 //
 //      return: [~]
-//      encoding "Either UTF-8, Latin-1, or UCS-2"
-//          [word!]
+//      encoding "Currently you have to use UTF-16 for UCS-2"
+//          ['utf-8 'latin-1 'utf-16]
 //  ]
 //
 DECLARE_NATIVE(odbc_set_char_encoding)
@@ -372,7 +372,6 @@ DECLARE_NATIVE(odbc_set_char_encoding)
     char_column_encoding = cast(CharColumnEncoding, rebUnboxInteger(
         "switch encoding [",
             "'utf-8 [", rebI(CHAR_COL_UTF8), "]",
-            "'ucs-2 [", rebI(CHAR_COL_UTF16), "]",  // TBD: limited codepoints
             "'utf-16 [", rebI(CHAR_COL_UTF16), "]",
             "'latin-1 [", rebI(CHAR_COL_LATIN1), "]",
         "] else [",

@@ -85,12 +85,11 @@ static const int window_bits_zlib_raw = -(MAX_WBITS);
 // We go ahead and use the rebAllocBytes() for zlib's internal state allocation
 // too, so that any fail() calls (e.g. out-of-memory during a rebRealloc())
 // will automatically free that state.  Thus inflateEnd() and deflateEnd()
-// only need to be called if there is no failure.  There's no need to
-// rebRescue(), clean up, and rethrow the error.
+// only need to be called if there is no failure.
 //
 // As a side-benefit, fail() can be used freely for other errors during the
 // inflate or deflate.
-
+//
 static void* zalloc(void *opaque, unsigned nr, unsigned size)
 {
     UNUSED(opaque);
@@ -107,14 +106,14 @@ static void zfree(void *opaque, void *addr)
 // Zlib gives back string error messages.  We use them or fall back on the
 // integer code if there is no message.
 //
+// 1. rebAlloc() fails vs. returning nullptr, so as long as zalloc() is used
+//    then Z_MEM_ERROR should never happen.
+//
 static Context* Error_Compression(const z_stream *strm, int ret)
 {
-    // rebAlloc() fails vs. returning nullptr, so as long as zalloc() is used
-    // then Z_MEM_ERROR should never happen.
-    //
-    assert(ret != Z_MEM_ERROR);
+    assert(ret != Z_MEM_ERROR);  // memory errors should have fail()'d [1]
 
-    DECLARE_ATOM (arg);
+    DECLARE_ELEMENT (arg);
     if (strm->msg)
         Init_Text(arg, Make_String_UTF8(strm->msg));
     else
@@ -130,6 +129,14 @@ static Context* Error_Compression(const z_stream *strm, int ret)
 // Common code for compressing raw deflate, zlib envelope, gzip envelope.
 // Exported as rebDeflateAlloc() and rebGunzipAlloc() for clarity.
 //
+// 1. The memory buffer pointer returned by this routine is allocated using
+//    rebAllocN(), and is backed by a managed Flex.  This means it can be
+//    converted to a BINARY! if desired, via rebRepossess().  Otherwise it
+//    should be freed using rebFree()
+//
+// 2. GZIP contains a 32-bit length of the uncompressed data (modulo 2^32),
+//    at the tail of the compressed data.  Sanity check that it's right.
+//
 Byte* Compress_Alloc_Core(
     Option(Size*) size_out,
     const void* input,
@@ -137,7 +144,7 @@ Byte* Compress_Alloc_Core(
     Option(SymId) envelope  // SYM_ZLIB, or SYM_GZIP
 ){
     z_stream strm;
-    strm.zalloc = &zalloc;  // fail() cleans up automatically, see notes
+    strm.zalloc = &zalloc;  // fail() will clean up, see zalloc() definition
     strm.zfree = &zfree;
     strm.opaque = nullptr;  // passed to zalloc/zfree, not needed currently
 
@@ -158,13 +165,9 @@ Byte* Compress_Alloc_Core(
         assert(false);  // release build keeps default
     }
 
-    // compression level can be a value from 1 to 9, or Z_DEFAULT_COMPRESSION
-    // if you want it to pick what the library author considers the "worth it"
-    // tradeoff of time to generally suggest.
-    //
     int ret_init = deflateInit2(
         &strm,
-        Z_DEFAULT_COMPRESSION,
+        Z_DEFAULT_COMPRESSION,  // space/time tradeoff (1 to 9), use default
         Z_DEFLATED,
         window_bits,
         8,
@@ -180,7 +183,7 @@ Byte* Compress_Alloc_Core(
     strm.avail_in = size_in;
     strm.next_in = c_cast(z_Bytef*, input);
 
-    Byte* output = rebAllocN(Byte, buf_size);
+    Byte* output = rebAllocN(Byte, buf_size);  // can rebRepossess() this [1]
     strm.avail_out = buf_size;
     strm.next_out = output;
 
@@ -192,16 +195,13 @@ Byte* Compress_Alloc_Core(
     if (size_out)
         *(unwrap size_out) = strm.total_out;
 
-  #if !defined(NDEBUG)
-    //
-    // GZIP contains a 32-bit length of the uncompressed data (modulo 2^32),
-    // at the tail of the compressed data.  Sanity check that it's right.
-    //
+  #if DEBUG
     if (envelope and envelope == SYM_GZIP) {
-        uint32_t gzip_len = Bytes_To_U32_BE(
+        uint32_t gzip_len = Bytes_To_U32_BE(  // verify compressed size [2]
             output + strm.total_out - sizeof(uint32_t)
         );
         assert(size_in == gzip_len);  // !!! 64-bit REBLEN would need modulo
+        UNUSED(gzip_len);
     }
   #endif
 
@@ -222,7 +222,38 @@ Byte* Compress_Alloc_Core(
 // Common code for decompressing: raw deflate, zlib envelope, gzip envelope.
 // Exported as rebInflateAlloc() and rebGunzipAlloc() for clarity.
 //
-Byte* Decompress_Alloc_Core(
+// 1. The memory buffer pointer returned by this routine is allocated using
+//    rebAllocN(), and is backed by a managed Flex.  This means it can be
+//    converted to a BINARY! if desired, via rebRepossess().  Otherwise it
+//    should be freed using rebFree()
+//
+// 2. Size (modulo 2^32) is in the last 4 bytes, *if* it's trusted:
+//
+//      http://stackoverflow.com/a/9213826
+//
+//    Note that since it's not known how much actual gzip header info there is,
+//    it's not possible to tell if a very small number here (compared to the
+//    length of the input data) is actually wrong.
+//
+// 3. Zlib envelope does not store decompressed size, have to guess:
+//
+//      http://stackoverflow.com/q/929757/211160
+//
+//    Gzip envelope may *ALSO* need guessing if the data comes from a sketchy
+//    source (GNU gzip utilities are, unfortunately, sketchy).  Use SYM_DETECT
+//    instead of SYM_GZIP with untrusted gzip sources:
+//
+//      http://stackoverflow.com/a/9213826
+//
+//    If the passed-in "max" seems in the ballpark of a compression ratio
+//    then use it, because often that will be the exact size.
+//
+//    If the guess is wrong, then the decompression has to keep making
+//    a bigger buffer and trying to continue.  Better heuristics welcome.
+//
+//      "Typical zlib compression ratios are from 1:2 to 1:5"
+//
+Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
     Size* size_out,
     const void *input,
     Size size_in,
@@ -230,7 +261,7 @@ Byte* Decompress_Alloc_Core(
     Option(SymId) envelope  // SYM_0, SYM_ZLIB, SYM_GZIP, or SYM_DETECT
 ){
     z_stream strm;
-    strm.zalloc = &zalloc;  // fail() cleans up automatically, see notes
+    strm.zalloc = &zalloc;  // fail() will clean up, see zalloc() definition
     strm.zfree = &zfree;
     strm.opaque = nullptr;  // passed to zalloc/zfree, not needed currently
     strm.total_out = 0;
@@ -256,7 +287,7 @@ Byte* Decompress_Alloc_Core(
         break;
 
       default:
-        assert(false);  // fall through with default in release build
+        assert(false);
     }
 
     int ret_init = inflateInit2(&strm, window_bits);
@@ -272,47 +303,18 @@ Byte* Decompress_Alloc_Core(
         if (size_in < gzip_min_overhead)
             fail ("GZIP compressed size less than minimum for gzip format");
 
-        // Size (modulo 2^32) is in the last 4 bytes, *if* it's trusted:
-        //
-        // see http://stackoverflow.com/a/9213826
-        //
-        // Note that since it's not known how much actual gzip header info
-        // there is, it's not possible to tell if a very small number here
-        // (compared to the input data) is actually wrong.
-        //
-        buf_size = Bytes_To_U32_BE(
+        buf_size = Bytes_To_U32_BE(  // size is last 4 bytes [2]
             c_cast(Byte*, input) + size_in - sizeof(uint32_t)
         );
     }
-    else {
-        // Zlib envelope does not store decompressed size, have to guess:
-        //
-        // http://stackoverflow.com/q/929757/211160
-        //
-        // Gzip envelope may *ALSO* need guessing if the data comes from a
-        // sketchy source (GNU gzip utilities are, unfortunately, sketchy).
-        // Use SYM_DETECT instead of SYM_GZIP with untrusted gzip sources:
-        //
-        // http://stackoverflow.com/a/9213826
-        //
-        // If the passed-in "max" seems in the ballpark of a compression ratio
-        // then use it, because often that will be the exact size.
-        //
-        // If the guess is wrong, then the decompression has to keep making
-        // a bigger buffer and trying to continue.  Better heuristics welcome.
-
-        // "Typical zlib compression ratios are from 1:2 to 1:5"
-
+    else {  // no decompressed size in envelope (or untrusted), must guess [3]
         if (max >= 0 and (cast(Size, max) < size_in * 6))
             buf_size = max;
         else
             buf_size = size_in * 3;
     }
 
-    // Use memory backed by a managed Flex (can be converted to a BINARY!
-    // later if desired, via rebRepossess())
-    //
-    Byte* output = rebAllocN(Byte, buf_size);
+    Byte* output = rebAllocN(Byte, buf_size);  // can rebRepossess() this [1]
     strm.avail_out = buf_size;
     strm.next_out = cast(Byte*, output);
 
@@ -334,7 +336,7 @@ Byte* Decompress_Alloc_Core(
         assert(strm.next_out == output + buf_size - strm.avail_out);
 
         if (max >= 0 and buf_size >= cast(Size, max)) {
-            DECLARE_ATOM (temp);
+            DECLARE_ELEMENT (temp);
             Init_Integer(temp, max);
             fail (Error_Size_Limit_Raw(temp));
         }
@@ -378,9 +380,8 @@ Byte* Decompress_Alloc_Core(
 //  "Built-in checksums from zlib (see CHECKSUM in Crypt extension for more)"
 //
 //      return: "Little-endian format of 4-byte CRC-32"
-//          [binary!]
-//      method "Either ADLER32 or CRC32"
-//          [word!]
+//          [binary!]  ; binary return avoids signedness issues [1]
+//      method ['adler32 'crc32]
 //      data "Data to encode (using UTF-8 if TEXT!)"
 //          [binary! text!]
 //      /part "Length of data"
@@ -392,13 +393,24 @@ DECLARE_NATIVE(checksum_core)
 // Most checksum and hashing algorithms are optional in the build (at time of
 // writing they are all in the "Crypt" extension).  This is because they come
 // in and out of fashion (MD5 and SHA1, for instance), so it doesn't make
-// sense to force every build configuration to build them in.
+// sense to force every configuration to build them in.
 //
-// But CRC32 is used by zlib (for gzip, gunzip, and the PKZIP .zip file
-// usermode code) and ADLER32 is used for zlib encodings in PNG and such.
-// It's a sunk cost to export them.  However, some builds may not want both
-// of these either--so bear that in mind.  (ADLER32 is only really needed for
-// PNG decoding, I believe (?))
+// But the interpreter core depends on zlib compression.  CRC32 is used by zlib
+// (for gzip, gunzip, and the PKZIP .zip file usermode code) and ADLER32 is
+// used for zlib encodings in PNG and such.  It's a sunk cost to export them.
+// However, some builds may not want both of these either--so bear that in
+// mind.  (ADLER32 is only really needed for PNG decoding, I believe (?))
+//
+// 1. Returning as a BINARY! avoids signedness issues (R3-Alpha CRC-32 was a
+//    signed integer, which was weird):
+//
+//       https://github.com/rebol/rebol-issues/issues/2375
+//
+//    When formulated as a binary, most callers seem to want little endian.
+//
+// 2. The zlib documentation shows passing 0L, but this is not right.
+//    "At the beginning [of Adler-32], A is initialized to 1, B to 0"
+//    A is the low 16-bits, B is the high.  Hence start with 1L.
 {
     INCLUDE_PARAMS_OF_CHECKSUM_CORE;
 
@@ -414,28 +426,17 @@ DECLARE_NATIVE(checksum_core)
         break;
 
       case SYM_ADLER32:
-        //
-        // The zlib documentation shows passing 0L, but this is not right.
-        // "At the beginning [of Adler-32], A is initialized to 1, B to 0"
-        // A is the low 16-bits, B is the high.  Hence start with 1L.
-        //
-        crc = z_adler32(1L, data, size);
+        crc = z_adler32(1L, data, size);  // 1L is right, not 0L, see [2]
         break;
 
       default:
-        fail ("METHOD for CHECKSUM-CORE must be CRC32 or ADLER32");
+        crc = 0;  // avoid compiler warning
+        assert(!"Bug in typechecking of method parameter");
     }
 
     Binary* bin = Make_Binary(4);
     Byte* bp = Binary_Head(bin);
 
-    // Returning as a BINARY! avoids signedness issues (R3-Alpha CRC-32 was a
-    // signed integer, which was weird):
-    //
-    // https://github.com/rebol/rebol-issues/issues/2375
-    //
-    // When formulated as a binary, most callers seem to want little endian.
-    //
     int i;
     for (i = 0; i < 4; ++i, ++bp) {
         *bp = crc % 256;
@@ -458,7 +459,7 @@ DECLARE_NATIVE(checksum_core)
 //      /part "Length of data (elements)"
 //          [integer! binary! text!]
 //      /envelope "ZLIB (adler32, no size) or GZIP (crc32, uncompressed size)"
-//          [word!]
+//          ['zlib 'gzip]
 //  ]
 //
 DECLARE_NATIVE(deflate)
@@ -481,7 +482,7 @@ DECLARE_NATIVE(deflate)
             break;
 
           default:
-            fail (PARAM(envelope));
+            assert(!"Bug in typechecking of envelope parameter");
         }
     }
 
@@ -500,7 +501,7 @@ DECLARE_NATIVE(deflate)
 //
 //  inflate: native [
 //
-//  "Decompresses DEFLATEd data: https://en.wikipedia.org/wiki/DEFLATE"
+//  "Decompresses DEFLATE-d data: https://en.wikipedia.org/wiki/DEFLATE"
 //
 //      return: [binary!]
 //      data [binary! handle!]
@@ -509,7 +510,7 @@ DECLARE_NATIVE(deflate)
 //      /max "Error out if result is larger than this"
 //          [integer!]
 //      /envelope "ZLIB, GZIP, or DETECT (http://stackoverflow.com/a/9213826)"
-//          [word!]
+//          ['zlib 'gzip 'detect]
 //  ]
 //
 DECLARE_NATIVE(inflate)
@@ -558,7 +559,7 @@ DECLARE_NATIVE(inflate)
             break;
 
           default:
-            fail (PARAM(envelope));
+            assert(!"Bug in typechecking of envelope parameter");
         }
     }
 

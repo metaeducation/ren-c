@@ -973,8 +973,7 @@ REBTYPE(Fail)
 //          [action?]
 //      frame "(modified) Action to modify property of"
 //          [<unrun> frame!]
-//      property "Currently must be [defer postpone]"
-//          [word!]
+//      property ['defer 'postpone]
 //      enable ; should be ONOFF?, but constraint not loaded yet (native order)
 //  ]
 //

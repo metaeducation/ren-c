@@ -127,14 +127,13 @@ build-variants: [debug release]
 
 
 latest-of: func [
-    {INTERNAL USE ONLY!  Link to unstable S3 CI build of the interpreter}
+    "INTERNAL USE ONLY!  Link to unstable S3 CI build of the interpreter"
 
     return: [url!]
 
     os "https://github.com/metaeducation/ren-c/blob/master/tools/platforms.r"
         [<end> blank! tuple!]
-    /variant "Which build variation (DEBUG, RELEASE)"
-        [word!]
+    /variant ['debug 'release]
     /commit "Link for specific commit number (defaults to latest commit)"
         [text!]
     /verbose "Print file size, commit, hash information"

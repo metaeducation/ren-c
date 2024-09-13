@@ -381,8 +381,7 @@ protect*: generic [
         [element?]
     picker "The property to update (e.g. object field)"
         [element?]
-    value "Protection signal, currently [PROTECT UNPROTECT HIDE]"
-        [word!]
+    value ['protect 'unprotect 'hide]
 ]
 
 

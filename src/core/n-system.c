@@ -157,8 +157,7 @@ DECLARE_NATIVE(recycle)
 //  "Set a usage limit only once (used for SECURE)"
 //
 //      return: [~]
-//      field [word!]
-//          "eval (count) or memory (bytes)"
+//      field ['eval 'memory]
 //      limit [any-number?]
 //  ]
 //

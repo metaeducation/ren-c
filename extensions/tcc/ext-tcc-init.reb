@@ -52,7 +52,7 @@ compile: func [
             library [block! file! text!]
             runtime-path [file! text!]
             librebol-path [file! text!]
-            output-type [word!]  ; MEMORY, EXE, DLL, OBJ, PREPROCESS
+            output-type ['memory 'exe 'dll 'obj 'preprocess]
             output-file [file! text!]
             debug [word!]  ; !!! currently unimplemented
     }
@@ -146,11 +146,11 @@ compile: func [
         ]
     ]
 
-    config.output-type: default ['MEMORY]
+    config.output-type: default ['memory]
 
-    if config.output-type <> 'MEMORY [
+    if config.output-type <> 'memory [
         if not config.output-file [
-            fail "If OUTPUT-TYPE is not 'MEMORY then OUTPUT-FILE must be set"
+            fail "If OUTPUT-TYPE is not MEMORY then OUTPUT-FILE must be set"
         ]
         config.output-file: my file-to-local/full
     ]

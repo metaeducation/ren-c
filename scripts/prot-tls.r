@@ -398,8 +398,7 @@ parse-asn: func [
 
 make-state-updater: func [
     return: [action?]
-    direction "READ or WRITE"
-        [word!]
+    direction ['read 'write]
     transdialect "dialected mapping from state to legal next states"
         [block!]
     <local> transitions state-rule left right

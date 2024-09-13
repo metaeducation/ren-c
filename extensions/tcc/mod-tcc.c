@@ -458,11 +458,11 @@ DECLARE_NATIVE(compile_p)
     //
     int output_type = rebUnboxInteger(
         "switch pick", config, "'output-type [",
-            "'MEMORY [", rebI(TCC_OUTPUT_MEMORY), "]",  // no tcc_relocate()!
-            "'EXE [", rebI(TCC_OUTPUT_EXE), "]",
-            "'DLL [", rebI(TCC_OUTPUT_DLL), "]",
-            "'OBJ [", rebI(TCC_OUTPUT_OBJ), "]",
-            "'PREPROCESS [", rebI(TCC_OUTPUT_PREPROCESS), "]",
+            "'memory [", rebI(TCC_OUTPUT_MEMORY), "]",  // no tcc_relocate()!
+            "'exe [", rebI(TCC_OUTPUT_EXE), "]",
+            "'dll [", rebI(TCC_OUTPUT_DLL), "]",
+            "'obj [", rebI(TCC_OUTPUT_OBJ), "]",
+            "'preprocess [", rebI(TCC_OUTPUT_PREPROCESS), "]",
             "-1",
         "]"
     );

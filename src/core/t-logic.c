@@ -30,48 +30,34 @@
 //
 //  true?: native [
 //
-//  {Tests if word is the word TRUE}
+//  "Tests if word is the word TRUE (errors if not TRUE or FALSE)"
 //
 //      return: [logic?]
-//      word "Must be the word TRUE or FALSE"
-//          [word!]
+//      word ['true 'false]
 //  ]
 //
 DECLARE_NATIVE(true_q)
 {
     INCLUDE_PARAMS_OF_TRUE_Q;
 
-    Value* w = ARG(word);
-
-    if (Cell_Word_Id(w) == SYM_TRUE)
-        return Init_Logic(OUT, true);
-    if (Cell_Word_Id(w) == SYM_FALSE)
-        return Init_Logic(OUT, false);
-    fail ("TRUE? requires word to be TRUE or FALSE");
+    return Init_Logic(OUT, Cell_Word_Id(ARG(word)) == SYM_TRUE);
 }
 
 
 //
 //  false?: native [
 //
-//  {Tests if value is the word FALSE}
+//  "Tests if value is the word FALSE (errors if not TRUE or FALSE)"
 //
 //      return: [logic?]
-//      word "Must be the word TRUE or FALSE"
-//          [word!]
+//      word ['true 'false]
 //  ]
 //
 DECLARE_NATIVE(false_q)
 {
     INCLUDE_PARAMS_OF_FALSE_Q;
 
-    Value* w = ARG(word);
-
-    if (Cell_Word_Id(w) == SYM_FALSE)
-        return Init_Logic(OUT, true);
-    if (Cell_Word_Id(w) == SYM_TRUE)
-        return Init_Logic(OUT, false);
-    fail ("FALSE? requires word to be TRUE or FALSE");
+    return Init_Logic(OUT, Cell_Word_Id(ARG(word)) == SYM_FALSE);
 }
 
 
@@ -95,47 +81,34 @@ DECLARE_NATIVE(boolean)
 //
 //  yes?: native [
 //
-//  {Tests if word is the word YES}
+//  "Tests if word is the word YES (errors if not YES or NO)"
 //
 //      return: [logic?]
-//      word [yesno?]
+//      word ['yes 'no]
 //  ]
 //
 DECLARE_NATIVE(yes_q)
 {
     INCLUDE_PARAMS_OF_YES_Q;
 
-    Value* w = ARG(word);
-
-    if (Cell_Word_Id(w) == SYM_YES)
-        return Init_Logic(OUT, true);
-    if (Cell_Word_Id(w) == SYM_NO)
-        return Init_Logic(OUT, false);
-    fail ("YES? requires word to be YES or NO");
+    return Init_Logic(OUT, Cell_Word_Id(ARG(word)) == SYM_YES);
 }
 
 
 //
 //  no?: native [
 //
-//  "Tests if value is the word NO"
+//  "Tests if value is the word NO (errors if not YES or NO)"
 //
 //      return: [logic?]
-//      word "Must be the word YES or NO"
-//          [yesno?]
+//      word ['yes 'no]
 //  ]
 //
 DECLARE_NATIVE(no_q)
 {
     INCLUDE_PARAMS_OF_NO_Q;
 
-    Value* w = ARG(word);
-
-    if (Cell_Word_Id(w) == SYM_NO)
-        return Init_Logic(OUT, true);
-    if (Cell_Word_Id(w) == SYM_YES)
-        return Init_Logic(OUT, false);
-    fail ("NO? requires word to be YES or NO");
+    return Init_Logic(OUT, Cell_Word_Id(ARG(word)) == SYM_NO);
 }
 
 
@@ -159,46 +132,34 @@ DECLARE_NATIVE(to_yesno)
 //
 //  on?: native [
 //
-//  "Tests if word is the word ON"
+//  "Tests if word is the word ON (errors if not ON or OFF)"
 //
 //      return: [logic?]
-//      word [onoff?]
+//      word ['on 'off]
 //  ]
 //
 DECLARE_NATIVE(on_q)
 {
     INCLUDE_PARAMS_OF_ON_Q;
 
-    Value* w = ARG(word);
-
-    if (Cell_Word_Id(w) == SYM_ON)
-        return Init_Logic(OUT, true);
-    if (Cell_Word_Id(w) == SYM_OFF)
-        return Init_Logic(OUT, false);
-    fail ("ON? requires word to be ON or OFF");
+    return Init_Logic(OUT, Cell_Word_Id(ARG(word)) == SYM_ON);
 }
 
 
 //
 //  off?: native [
 //
-//  "Tests if value is the word OFF"
+//  "Tests if value is the word OFF (errors if not ON or OFF)"
 //
 //      return: [logic?]
-//      word [onoff?]
+//      word ['on 'off]
 //  ]
 //
 DECLARE_NATIVE(off_q)
 {
     INCLUDE_PARAMS_OF_NO_Q;
 
-    Value* w = ARG(word);
-
-    if (Cell_Word_Id(w) == SYM_OFF)
-        return Init_Logic(OUT, true);
-    if (Cell_Word_Id(w) == SYM_ON)
-        return Init_Logic(OUT, false);
-    fail ("OFF? requires word to be ON or OFF");
+    return Init_Logic(OUT, Cell_Word_Id(ARG(word)) == SYM_OFF);
 }
 
 
