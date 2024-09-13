@@ -115,13 +115,10 @@
 //    Variant definition for why it was removed.
 //
 INLINE Stub* Make_Use_Core(
-    Stub* binding,  // must be a varlist or a LET patch
+    const Element* defs,  // must be a context or a WORD!
     Specifier* next,
     Heart affected
 ){
-    if (next and IS_USE(next))
-        assert(BINDING(Stub_Cell(next)) != binding);  // eventually legal? [1]
-
     Stub* use = Alloc_Singular(
         FLAG_FLAVOR(USE)
             | NODE_FLAG_MANAGED
@@ -130,25 +127,8 @@ INLINE Stub* Make_Use_Core(
             /* FLEX_FLAG_MISC_NODE_NEEDS_MARK */  // node, but not marked [3]
     );
 
-    if (IS_VARLIST(binding)) {
-        Init_Context_Cell(
-            Stub_Cell(use),
-            CTX_TYPE(cast(Context*, binding)),
-            cast(Context*, binding)
-        );
-    }
-    else {
-        assert(IS_LET(binding));
-
-        const Symbol* symbol = INODE(LetSymbol, binding);
-        Init_Any_Word_Bound_Untracked(  // no reified object for LETs [4]
-            TRACK(Stub_Cell(use)),
-            REB_WORD,
-            symbol,
-            binding,
-            INDEX_PATCHED  // the only word in the LET
-        );
-    }
+    assert(Any_Context(defs) or Is_Word(defs));
+    Copy_Cell(Stub_Cell(use), defs);
 
     if (affected == REB_SET_WORD)
         Set_Cell_Flag(Stub_Cell(use), USE_NOTE_SET_WORDS);

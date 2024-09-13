@@ -8,15 +8,13 @@
 
 ; Basic example of virtual binding not disrupting the bindings of a block.
 (
-    obj1000: make object! [x: 1000]
-    block: [x + 20]
-    bind block obj1000
-
-    obj284: make object! [x: 284]
+    x: 1000
+    block: '[add x 20]
+    obj284: make object! compose [x: 284, add: (^add)]
     all [
-        1020 = eval block
+        1020 = eval $ block
         304 = eval inside obj284 block
-        1020 = eval block
+        1020 = eval $ block
     ]
 )
 
@@ -78,29 +76,20 @@
     ;
     (30 = eval group)
     (30 = eval compose [(group)])
-    (30 = eval compose [(group)])
     (30 = eval compose/deep [eval [(group)]])
     (30 = reeval unrun does [eval compose [(group)]])
 
     ; Unrelated USE should not interfere
     ;
-    (30 = use [z] compose [(group)])
-    (30 = use [z] compose/deep [eval [(group)]])
+    (30 = use [z] [z: ~<whatever>~ eval compose [(group)]])
 
-    ; Related USE should override
+    ; Related USE shouldn't interfere, either
     ;
-    (110 = use [y] compose [y: 100, (group)])
-    (110 = use [y] compose/deep [y: 100, eval [(group)]])
+    (30 = use [y] [y: 100, eval compose [(group)]])
 
-    ; Chaining will affect any values that were visible at the time of the
-    ; USE (think of it the way you would as if the BIND were run mutably).
-    ; In the first case, the inner use sees the composed group's x and y,
-    ; but the compose is run after the outer use, so the x override is unseen.
-    ; Moving the compose so it happens before the use [x] runs will mean the
-    ; x gets overridden as well.
+    ; You have to invasvely overbind to see an effect
     ;
-    (110 = use [x] [x: 1000, use [y] compose [y: 100, (group)]])
-    (1100 = use [x] compose/deep [x: 1000, use [y] [y: 100, eval [(group)]]])
+    (110 = use [y] [y: 100, eval compose [(overbind $y group)]])
 ]
 
 
@@ -109,53 +98,32 @@
     data: array/initial 20 1
     sum: 0
     for-each x data [
-        code: copy []
-        for-each y data [
-            append code spread compose [sum: sum + eval [(x) + (y) + z]]
+        code: copy []  ; block captures binding that can see X
+        for-each 'y data [  ; block can't see Y w/o overbind, let's COMPOSE it
+            append code spread compose/deep [sum: sum + eval [x + (y) + z]]
         ]
-        for-each z data code
+        for-each 'z data code  ; FOR-EACH overbinds for Z visibility
     ]
     sum = 24000
 )
 
 
-; Virtual Binding gives back a CONST value, because it can't assure you that
-; mutable bindings would have an effect.  You can second-guess it.
+; Virtual Binding once gave back a CONST value, because it couldn't assure you
+; that mutable bindings would have an effect.  That's no longer the case (to
+; the extent you should ever mutably bind).
+;
 ; https://forum.rebol.info/t/765/2
 [
-    ~const-value~ !! (
-        bind use [x] [x: 10, [x + 1]] make object! [x: 20]
-    )
-
-    ; It tried to warn you that the X binding wouldn't be updated... but
-    ; using MUTABLE overrides the warning.
-    ;
-    (11 = eval bind mutable use [x] [x: 10, [x + 1]] make object! [x: 20])
-
-    ; Quoted values elude the CONST inheritance (this is a general mechanism
-    ; that is purposeful, and used heavily by the API).  The more cautious
-    ; approach is not to use quotes as part of inline evaluations.
-    ;
-    ; https://forum.rebol.info/t/1062/4
-    ;
-    (11 = eval bind use [x] [x: 10, $(x + 1)] make object! [x: 20])
-
-    ~const-value~ !! (
-        bind use [x] [x: 10, the (x + 1)] make object! [x: 20]
-    )
+    (21 = eval bind use [x] [x: 10, [x + 1]] make object! [x: 20])
 ]
 
-; Test virtual binding chain reuse scenario.
-;
-; !!! Right now the only way to make sure it's actually reusing the same
-; chain is to set a breakpoint in the debugger.  There should probably be
-; some way to reflect this--at least in debug builds--so you can analyze
-; the virtual bind patch information.
+; This was originally a test for "virtual binding chain reuse".  That is a
+; currently defunct optimization, and binding rules have changed drastically.
 (
     x: 100
     y: 200
-    plus-global: [x + y]
-    minus-global: [x - y]
+    plus-global: '[x + y]  ; unbound--no capture
+    minus-global: [x - y]  ; captures x and y
     alpha: make object! compose [  ; virtual binds body to obj
         x: 10
         y: 20
@@ -168,18 +136,20 @@
         plus: (plus-global)
         minus: (minus-global)
     ]
-    [11 1001 999 9 30 -10 3000 -1000 300 -100] = collect [
+    [30 3000 -100 -100 30 -100 3000 -100 101 -100 101 -100] = collect [
         for-each y [1] compose [
-            keep eval (alpha.plus)  ; needs chain y -> alpha
-            keep eval (beta.plus)  ; needs chain y -> beta
-            keep eval (beta.minus)  ; also needs chain y -> beta
-            keep eval (alpha.minus)  ; back to needing chain y -> alpha
+            keep eval (alpha.plus)
+            keep eval (beta.plus)
+            keep eval (alpha.minus)
+            keep eval (beta.minus)
             keep eval alpha.plus
             keep eval alpha.minus
             keep eval beta.plus
             keep eval beta.minus
             keep eval inside [] plus-global
             keep eval inside [] minus-global
+            keep eval inside [] (plus-global)
+            keep eval inside [] (minus-global)
         ]
     ]
 )

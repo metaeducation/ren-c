@@ -399,10 +399,9 @@ Option(Stub*) Get_Word_Container(
                 goto next_virtual;
             }
 
-            assert(CTX_TYPE(cast(Context*, specifier)) == REB_FRAME);
-
             if (
-                binding  // word has a cache for if it's in an action frame
+                CTX_TYPE(ctx) == REB_FRAME
+                and binding  // word has a cache for if it's in an action frame
                 and Action_Is_Base_Of(
                     cast(Action*, binding),
                     CTX_FRAME_PHASE(ctx)
@@ -414,23 +413,26 @@ Option(Stub*) Get_Word_Container(
                 *index_out = -(VAL_WORD_INDEX_I32(any_word));
                 return CTX_VARLIST(ctx);
             }
-            else {  // have to search frame manually
-                REBINT len = Find_Symbol_In_Context(
-                    CTX_ARCHETYPE(cast(Context*, specifier)),
-                    symbol,
-                    true
-                );
-                // Note: caching here seems to slow things down?
-              #ifdef CACHE_FINDINGS_BUT_SEEMS_TO_SLOW_THINGS_DOWN
+
+            REBINT len = Find_Symbol_In_Context(  // have to search manually
+                CTX_ARCHETYPE(ctx),
+                symbol,
+                true
+            );
+
+            // Note: if frame, caching here seems to slow things down?
+          #ifdef CACHE_FINDINGS_BUT_SEEMS_TO_SLOW_THINGS_DOWN
+            if (CTX_TYPE(ctx) == REB_FRAME) {
                 if (VAL_WORD_INDEX_I32(any_word) <= 0) {  // cache in unbounds
                     VAL_WORD_INDEX_I32(m_cast(Cell*, any_word)) = -(len);
                     BINDING(m_cast(Cell*, any_word)) = CTX_FRAME_PHASE(ctx);
                 }
-              #endif
-                if (len != 0) {
-                    *index_out = len;
-                    return specifier;
-                }
+            }
+          #endif
+
+            if (len != 0) {
+                *index_out = len;
+                return specifier;
             }
 
           goto next_virtual;
@@ -464,11 +466,11 @@ Option(Stub*) Get_Word_Container(
             goto next_virtual;
         }
 
-        if (Is_Word(Stub_Cell(specifier))) {  // a patch-formed LET overload
-            Stub* overbind = BINDING(Stub_Cell(specifier));
-            if (INODE(LetSymbol, overbind) == symbol) {
-                *index_out = INDEX_PATCHED;
-                return overbind;
+        if (Is_Word(Stub_Cell(specifier))) {  // OVERBIND use of single WORD!
+            Element* word = u_cast(Element*, Stub_Cell(specifier));
+            if (Cell_Word_Symbol(word) == symbol) {
+                *index_out = VAL_WORD_INDEX(word);
+                return BINDING(word);
             }
             goto next_virtual;
         }
@@ -899,15 +901,15 @@ DECLARE_NATIVE(add_let_binding)
 DECLARE_NATIVE(add_use_object) {
     INCLUDE_PARAMS_OF_ADD_USE_OBJECT;
 
+    Element* object = cast(Element*, ARG(object));
+
     Level* L = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
     Specifier* L_specifier = Level_Specifier(L);
-
-    Context* ctx = VAL_CONTEXT(ARG(object));
 
     if (L_specifier)
         Set_Node_Managed_Bit(L_specifier);
 
-    Specifier* use = Make_Use_Core(ctx, L_specifier, REB_WORD);
+    Specifier* use = Make_Use_Core(object, L_specifier, REB_WORD);
 
     BINDING(FEED_SINGLE(L->feed)) = use;
 
@@ -1418,7 +1420,7 @@ void Virtual_Bind_Deep_To_Existing_Context(
  */
 
     BINDING(list) = Make_Use_Core(
-        context,
+        CTX_ARCHETYPE(context),
         Cell_Specifier(list),
         affected
     );

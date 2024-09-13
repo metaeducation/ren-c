@@ -32,7 +32,7 @@
             ][
                 value: try spaced :value
             ]
-            (as group! body)
+            eval overbind $keep (body)
         ]
     ] ok)
 
@@ -57,7 +57,7 @@
                 ][
                     value: maybe unspaced :value
                 ]
-                (as group! body)
+                eval overbind $keep (body)
             ]
         ],
         get $spaced,

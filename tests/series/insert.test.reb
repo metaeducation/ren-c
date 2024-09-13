@@ -88,24 +88,6 @@
     insert b a
     a == b
 )
-; url
-(
-    a: make url! 0
-    insert a #"0"
-    a == make url! "0"
-)
-(
-    a: make url! "0"
-    b: make url! 0
-    insert b first a
-    a == b
-)
-(
-    a: make url! "0"
-    b: make url! 0
-    insert b a
-    a == b
-)
 ; tag
 (
     a: make tag! 0

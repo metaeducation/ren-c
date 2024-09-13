@@ -150,10 +150,10 @@ DECLARE_NATIVE(bind)
     else {
         assert(Any_Word(target));
 
-        if (not Did_Get_Binding_Of(SPARE, target))
+        if (IS_WORD_UNBOUND(target))
             fail (Error_Not_Bound_Raw(target));
 
-        context = stable_SPARE;
+        fail ("Binding to WORD! only implemented via INSIDE at this time.");
     }
 
     if (Any_Wordlike(v)) {
@@ -247,7 +247,7 @@ DECLARE_NATIVE(inside)
 //  "Add definitions from context to environment of value"
 //
 //      return: [~null~ any-value?]
-//      context [any-context?]
+//      definitions [word! any-context?]
 //      value [<maybe> any-list?]  ; QUOTED? support?
 //  ]
 //
@@ -256,16 +256,24 @@ DECLARE_NATIVE(overbind)
     INCLUDE_PARAMS_OF_OVERBIND;
 
     Element* v = cast(Element*, ARG(value));
-    Value* context = ARG(context);
+    Element* defs = cast(Element*, ARG(definitions));
 
-    Copy_Cell(OUT, v);
-    Virtual_Bind_Deep_To_Existing_Context(
-        stable_OUT,
-        VAL_CONTEXT(context),
-        nullptr,
-        REB_WORD
+    if (Is_Word(defs)) {
+        if (IS_WORD_UNBOUND(defs))
+            fail (Error_Not_Bound_Raw(defs));
+    }
+    else
+        assert(Any_Context(defs));
+
+    Heart affected = REB_WORD;
+
+    BINDING(v) = Make_Use_Core(
+        defs,
+        Cell_Specifier(v),
+        affected
     );
-    return OUT;
+
+    return COPY(v);
 }
 
 

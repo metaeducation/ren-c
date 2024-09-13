@@ -80,18 +80,16 @@
 ("$0.66666666666666666666666667" = mold $2 / $3)
 
 
-; Configurability of the `/` was once special because it was a PATH! and not
-; a WORD!.  However, it was changed back to a WORD!.  Previous hacks for
-; reinterpreting /: as a SET-WORD! of an alias vs. a SET-PATH! are gone.
-;
 [#2516 (
-    code: [1 / 2]
-    obj: make object! [
-        /: enfix func [a b] [
-            return reduce @(b a)
+    all [
+        code: [1 / 2]
+        obj: make object! [
+            /: enfix func [a b] [
+                return reduce @(b a)
+            ]
         ]
+        0.5 = eval code
+        code: overbind obj code
+        @(2 1) = eval code
     ]
-    0.5 = eval code
-    bind inside [] code obj
-    '(2 1) = eval code
 )]

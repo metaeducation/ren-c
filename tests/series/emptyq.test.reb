@@ -5,10 +5,10 @@
 (not empty? [a])
 (empty? next [a])
 
-(
+~index-out-of-range~ !! (
     blk: tail of [1]
     clear head of blk
-    not empty? blk  ; !!! currently answers as "not tail?" so not empty
+    not empty? blk
 )
 
 [#190

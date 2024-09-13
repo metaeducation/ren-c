@@ -71,7 +71,7 @@ Bounce Lambda_Dispatcher(Level* const L)
     Force_Level_Varlist_Managed(L);
 
     Specifier* specifier = Make_Use_Core(  // have to USE here
-        cast(Context*, L->varlist),
+        CTX_ARCHETYPE(cast(Context*, L->varlist)),
         Cell_Specifier(block),
         REB_WORD
     );

@@ -10,7 +10,7 @@
     b1: [self]
     ob: make object! [
         b2: [self]
-        set $a same? first b2 first bind/copy b1 $b2
+        set $a same? first b2 first bind/copy b1 binding of $b2
     ]
     a
 )]
@@ -19,7 +19,7 @@
     b1: [self]
     f: lambda [<local> b2] [
         b2: [self]
-        same? first b2 first bind/copy b1 $b2
+        same? first b2 first bind/copy b1 binding of $b2
     ]
     f
 )]
@@ -28,22 +28,19 @@
     b1: [self]
     count-up i 1 [
         b2: [self]
-        same? first b2 first bind/copy b1 $i
+        same? first b2 first bind/copy b1 binding of $i
     ]
 )]
-[#1655
-    (not head? bind next [1] $rebol)
-]
 [#892 #216
-    (y: 'x reeval unrun lambda [<local> x] [x: okay get bind y $x])
+    (y: 'x reeval unrun lambda [<local> x] [x: okay get bind y binding of $x])
 ]
 
 [#2086 (
-    bind next block: [a a] use [a] [$a]
+    bind next block: [a a] binding of use [a] [$a]
     same? $a first block
 )]
 
 [#1893 (
     word: reeval unrun lambda [x] [$x] 1
-    same? word bind 'x word
+    same? word bind 'x binding of word
 )]
