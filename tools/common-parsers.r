@@ -38,7 +38,7 @@ load-until-double-newline: func [
 
     let dummy  ; !!! collect as SET-WORD!s for locals, evolving...
     let rebol-value: parsing-at x [
-        attempt [transcode/next3 x inside [] 'dummy]  ; ret = position or null
+        attempt [transcode/next x]  ; ret = position or null
     ]
 
     let terminator: [opt wsp newline opt wsp newline]

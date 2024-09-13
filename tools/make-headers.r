@@ -138,7 +138,7 @@ process: func [return: [~] file] [
     proto-parser.emit-proto: :emit-proto
     proto-parser.file: file
     proto-parser.emit-directive: :emit-directive
-    proto-parser.process (as text! read file)
+    proto-parser/process (as text! read file)
 ]
 
 ;-------------------------------------------------------------------------

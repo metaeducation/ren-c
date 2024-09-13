@@ -104,7 +104,7 @@ for-each-line: func [
 ]
 
 lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
-    {Return the line numbers of lines exceeding line-length.}
+    "Return the line numbers of lines exceeding line-length"
 
     return: "Returns null if no lines (is this better than returning []?)"
         [~null~ block!]
@@ -124,7 +124,7 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
         )
     ]
 
-    parse3 text [
+    parse3/match text [
         opt some [
             bol: <here>
             to newline
@@ -135,13 +135,15 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
         bol: <here>
         one, to <end>, eol: <here>
         count-line-rule
+    ] else [
+        return null
     ]
 
     return line-list
 ]
 
 text-line-of: func [
-    {Returns line number of position within text}
+    "Returns line number of position within text"
 
     return: "Line 0 does not exist, no counting is performed for empty text"
         [~null~ integer!]
@@ -154,7 +156,7 @@ text-line-of: func [
 
     let advance-rule: [one (line: line + 1)]
 
-    parse3 text [
+    parse3/match text [
         opt some [
             to newline cursor: <here>
 
@@ -167,6 +169,8 @@ text-line-of: func [
         ]
         advance-rule
         to <end>
+    ] else [
+        return null
     ]
 
     if zero? line [return null]

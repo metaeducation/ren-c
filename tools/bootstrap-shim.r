@@ -124,9 +124,6 @@ trap [
     export transcode: enclose (
         augment get $lib/transcode [/next3 [word!] "set to transcoded value"]
     ) func [f] [
-        if f.next [  ; no multi-return in bootstrap
-            fail/where "Use TRANSCODE/NEXT3 in Bootstrap" 'return
-        ]
         if not f.next3 [
             return eval f
         ]

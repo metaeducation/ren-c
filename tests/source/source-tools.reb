@@ -126,10 +126,10 @@ export analyse: context [
         return: [block!]
     ][
         return collect [
-            for-each source list.source-files [
+            for-each source list/source-files [
                 if find whitelisted source [continue]
 
-                keep maybe spread analyse.file source
+                keep maybe spread analyse/file source
             ]
         ]
     ]
@@ -159,7 +159,7 @@ export analyse: context [
             data [binary!]
             <local> position  ; used sketchily in rules, no LET in parse :-/
         ][
-            let analysis: analyse.text file data
+            let analysis: analyse/text file data
             let emit: specialize get $log-emit [log: analysis]
 
             data: as text! data
@@ -267,7 +267,7 @@ export analyse: context [
             ]
 
             proto-parser.emit-proto: :emit-proto
-            proto-parser.process data
+            proto-parser/process data
 
             if non-std-func-space [
                 emit <non-std-func-space> [(file) (non-std-func-space)]
@@ -284,7 +284,7 @@ export analyse: context [
             file [file!]
             data
         ][
-            let analysis: analyse.text file data
+            let analysis: analyse/text file data
             return analysis
         ]
     ]
@@ -461,7 +461,7 @@ c-parser-extension: context bind bind [
 
     lbrace: [and punctuator "{"]
     rbrace: [and punctuator "}"]
-    braced: [lbrace opt some [braced | not rbrace one] rbrace]
+    braced: [lbrace opt some [braced | not ahead rbrace one] rbrace]
 
     function-spacing-rule: (
         bind/copy standard.function-spacing c-lexical.grammar

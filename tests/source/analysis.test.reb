@@ -14,7 +14,7 @@
 [
     (
         rebsource: import %source-tools.reb
-        source-analysis: rebsource.analyse.files
+        source-analysis: rebsource.analyse/files
         save %../source-analysis.log source-analysis
         true
     )
