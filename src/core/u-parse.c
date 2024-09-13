@@ -621,7 +621,7 @@ static REBIXO Parse_One_Rule(
     }
 
     if (Is_Flex_Array(P_INPUT)) {
-        const Cell* item = Array_At(P_INPUT_ARRAY, pos);
+        const Element* item = Array_At(P_INPUT_ARRAY, pos);
 
         switch (VAL_TYPE(rule)) {
           case REB_QUOTED:
@@ -639,7 +639,7 @@ static REBIXO Parse_One_Rule(
           case REB_TYPE_BLOCK:
           case REB_TYPE_GROUP:
           case REB_PARAMETER: {
-            if (Typecheck_Atom_Core(rule, P_RULE_SPECIFIER, cast(const Atom*, item)))
+            if (Typecheck_Atom_Core(rule, P_RULE_SPECIFIER, item))
                 return pos + 1;  // type was in typeset
             return END_FLAG; }
 

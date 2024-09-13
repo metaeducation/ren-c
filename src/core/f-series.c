@@ -248,17 +248,28 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 //
 //  Cmp_Value: C
 //
-// Compare two values and return the difference.
+// Compare two values and return the difference.  Quoting level is heeded,
+// and values at distinct quoting levels are not considered equal.
 //
-// is_case should be true for case sensitive compare
 //
-REBINT Cmp_Value(const Cell* s, const Cell* t, bool strict)
+REBINT Cmp_Value(const Value* s, const Value* t, bool strict)
 {
     Byte squotes = QUOTE_BYTE(s);
     Byte tquotes = QUOTE_BYTE(t);
     if (squotes != tquotes)
         return squotes > tquotes ? 1 : -1;
 
+    return Compare_Cells_Ignore_Quotes(s, t, strict);
+}
+
+
+//
+//  Compare_Cells_Ignore_Quotes: C
+//
+// Compare two cells and return the difference.  Quoting is ignored.
+//
+REBINT Compare_Cells_Ignore_Quotes(const Cell* s, const Value* t, bool strict)
+{
     Heart s_heart = Cell_Heart(s);
     Heart t_heart = Cell_Heart(t);
 

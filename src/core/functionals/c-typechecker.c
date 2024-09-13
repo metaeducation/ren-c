@@ -177,29 +177,47 @@ bool Typecheck_Atom_Core(
 
         Option(const Symbol*) label = nullptr;  // so goto doesn't cross
 
-        // !!! Ultimately, we'll enable literal comparison for quoted/quasi
-        // items.  For the moment just try quasiforms for antiforms.
-        //
-        if (Is_Quasiform(item)) {
-            if (HEART_BYTE(item) == REB_BLANK) {
-                if (Is_Nothing(v))
-                    goto test_succeeded;
+        if (Is_Quasiform(item)) {  // quasiforms e.g. [~null~] mean antiform
+            assert(Is_Stable_Antiform_Heart(Cell_Heart(item)));
+
+            if (not Is_Antiform(v) or Cell_Heart(item) != Cell_Heart(v))
                 goto test_failed;
-            }
 
-            if (HEART_BYTE(item) != REB_WORD)
-                fail (item);
-
-            if (not Is_Antiword(v))
-                continue;
-            if (Cell_Word_Symbol(v) == Cell_Word_Symbol(item))
+            bool strict = false;  // !!! Is being case-insensitive good?
+            if (0 == Compare_Cells_Ignore_Quotes(
+                item,
+                cast(const Value*, v),  // stable antiform if we got here
+                strict
+            )){
                 goto test_succeeded;
+            }
+            goto test_failed;
+        }
+
+        if (Is_Quoted(item)) {  // quoted items e.g. ['off 'on] mean literal
+            if (Is_Antiform(v))
+                goto test_failed;
+
+            if (QUOTE_BYTE(item) - Quote_Shift(1) != QUOTE_BYTE(v))
+                goto test_failed;
+
+            bool strict = false;  // !!! Is being case-insensitive good?
+            if (0 == Compare_Cells_Ignore_Quotes(
+                item,
+                cast(const Element*, v),
+                strict
+            )){
+                goto test_succeeded;
+            }
             goto test_failed;
         }
 
         Kind kind;
         const Value* test;
-        if (VAL_TYPE_UNCHECKED(item) == REB_WORD or VAL_TYPE_UNCHECKED(item) == REB_TYPE_WORD) {
+        if (
+            VAL_TYPE_UNCHECKED(item) == REB_WORD
+            or VAL_TYPE_UNCHECKED(item) == REB_TYPE_WORD
+        ){
             label = Cell_Word_Symbol(item);
             test = Lookup_Word_May_Fail(item, derived);
             kind = VAL_TYPE(test);  // e.g. TYPE-BLOCK! <> BLOCK!

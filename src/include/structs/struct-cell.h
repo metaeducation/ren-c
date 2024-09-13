@@ -189,6 +189,8 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 
 #define MAX_QUOTE_DEPTH     126  // highest legal quoting level
 
+#define Quote_Shift(n)      ((n) << 1)  // help find manipulation sites
+
 
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//
 //

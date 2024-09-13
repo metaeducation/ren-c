@@ -79,7 +79,7 @@ INLINE Cell* Quotify_Core(Cell* v, Count depth) {
     if (Cell_Num_Quotes(v) + depth >  MAX_QUOTE_DEPTH)
         fail ("Quoting Depth of 126 Exceeded");
 
-    QUOTE_BYTE(v) += (depth << 1);
+    QUOTE_BYTE(v) += Quote_Shift(depth);
     return v;
 }
 
@@ -105,7 +105,7 @@ INLINE Cell* Unquotify_Core(Cell* v, Count unquotes) {
     if (unquotes > Cell_Num_Quotes(v))
         fail ("Attempt to set quoting level of value to less than 0");
 
-    QUOTE_BYTE(v) -= (unquotes << 1);
+    QUOTE_BYTE(v) -= Quote_Shift(unquotes);
     return v;
 }
 

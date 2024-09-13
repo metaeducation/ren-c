@@ -71,3 +71,31 @@
         (select :foo 'b).text = "b"
     ]
 )]
+
+; Literal parameter checking
+[
+    (
+        foo: func [control ['on 'off]] [return control]
+        bar: func [decoration ['[*] '(())]] [return decoration]
+        baz: func [evil ['~mojo~ '~jojo~ '~(mojo jojo)~]] [return evil]
+        mumble: func [splice [~(a b c)~]] [return splice]
+        ok
+    )
+
+    ('on = foo 'on)
+    ('off = foo 'off)
+    ~expect-arg~ !! (foo 'explode)
+
+    ([*] = bar [*])
+    ('(()) = bar '(()))
+    ~expect-arg~ !! (bar [**])
+    ~expect-arg~ !! (bar '((())))
+
+    ('~mojo~ = baz '~mojo~)
+    ('~jojo~ = baz '~jojo~)
+    ('~(mojo jojo)~ = baz meta spread [mojo jojo])
+    ~expect-arg~ !! (baz meta spread [jojo mojo])
+
+    (~(a b c)~ = mumble ~(a b c)~)
+    ~expect-arg~ !! (mumble ~(a b c d)~)
+]

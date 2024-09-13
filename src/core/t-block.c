@@ -569,14 +569,14 @@ static int Compare_Val(void *arg, const void *v1, const void *v2)
 
     if (flags->reverse)
         return Cmp_Value(
-            c_cast(Cell*, v2) + flags->offset,
-            c_cast(Cell*, v1) + flags->offset,
+            c_cast(Value*, v2) + flags->offset,
+            c_cast(Value*, v1) + flags->offset,
             flags->cased
         );
     else
         return Cmp_Value(
-            c_cast(Cell*, v1) + flags->offset,
-            c_cast(Cell*, v2) + flags->offset,
+            c_cast(Value*, v1) + flags->offset,
+            c_cast(Value*, v2) + flags->offset,
             flags->cased
         );
 }

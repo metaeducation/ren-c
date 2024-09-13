@@ -176,8 +176,13 @@ void Set_Parameter_Spec(
                 *flags |= PARAMETER_FLAG_NOTHING_DEFINITELY_OK;
                 continue;
             }
-            if (Cell_Heart(item) != REB_WORD)
+            if (not Is_Stable_Antiform_Heart(Cell_Heart(item)))
                 fail (item);
+
+            if (Cell_Heart(item) != REB_WORD) {
+                *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+                continue;
+            }
 
             switch (Cell_Word_Id(item)) {
               case SYM_NULL:
@@ -191,12 +196,9 @@ void Set_Parameter_Spec(
             }
             continue;
         }
-        if (Is_Quoted(item)) {
-            //
-            // !!! Some question on if you could do a typecheck on words like
-            // an enum, e.g. `foo [size ['small 'medium 'large]]`.
-            //
-            fail (item);
+        if (Is_Quoted(item)) {  // foo: func [size ['small 'medium 'large]]...
+            *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+            continue;
         }
 
         if (Cell_Heart(item) == REB_TAG) {  // literal check of tag [2]
