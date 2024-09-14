@@ -814,7 +814,7 @@ console*: func [
             )]
         ]
         take code
-        insert code shortcut
+        insert code spread shortcut
     ]
 
     ; Run the "dialect hook", which can transform the completed code block
