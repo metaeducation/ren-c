@@ -158,53 +158,58 @@ module: func [
 ]
 
 
-; DO delegates to this Rebol function for ANY-STRING? and BINARY! types
-; (presumably because it would be laborious to express as C).
+; DO is aiming to be polymorphic, to run things like JavaScript.  It always
+; requires a header (or an implied header from filename/location).  It will
+; support blocks at one point, but not in the historical way.
 ;
-do*: func [
-    {SYS: Called by system for DO on datatypes that require special handling}
+;   https://forum.rebol.info/t/polyglot-polymorphic-do/1846
+;
+; Modern calls for evaluation services on BLOCK! etc. should use EVAL.
+;
+; For the moment, common features of DO and IMPORT are implemented in the
+; IMPORT* command.  This includes:
+;
+; * Changing the working directory to match the file path (or URL "path") of a
+;   script, and restoring the prior path on completion of failure
+;
+; * Isolating the executed code into a MODULE! so that it doesn't leak into
+;   the caller's context.
+;
+; * Turning @xxx identified script names to DO into a URL by looking it up in
+;   the modules library.  So `do @chess` and `import @json` use the same logic
+;   to figure out where that name points.
+;
+; * Setting system.script to reflect the executing script during its run, and
+;   then putting it back when control is returned to the caller.
+;
+; * Adding specialized IMPORT, EXPORT, and INTERN definitions that know where
+;   the importing and exporting and interning needs to be done, e.g. into the
+;   containing context.  (Lower-level mechanics that want to avoid this should
+;   use MAKE MODULE! instead for full control.)
+;
+; But the actual action taken is different: DO returns the evaluative product
+; (scripts must use QUIT/VALUE to return such a product).  While IMPORT returns
+; the module context the script was executed in.  Also, IMPORT is designed to
+; return the same context every time it is called--so modules are loaded only
+; once--while DO performs an action that you can run any number of times.
+;
+do: func [
+    "Execution facility for Rebol or other Languages/Dialects (see also: EVAL)"
 
-    return: "Final evaluative product of code or block"
-        [any-value?]
-    source "Files, urls and modules evaluate as scripts, other strings don't"
-        [file! url! text! binary! tag! the-word!]
-    args "Args passed as system.script.args to a script (normally a string)"
-        [~null~ element?]
-    only "Do not catch quits...propagate them"
-        [boolean?]
+    return: "Evaluative product, or error"
+        [any-value? raised?]
+    source "Files interpreted based on extension, dialects based on 'kind'"
+        [
+            <maybe>  ; opts out of the DO, returns null
+            text!  ; source code with header
+            binary!  ; treated as UTF-8, same interpretation as text
+            url!  ; load code from URL via protocol
+            file!  ; load from file relative to OS current directory
+            tag!  ; load relative to system.script.name
+            the-word!  ; module name (URL! looked up from table)
+        ]
+    /args "Args passed as system.script.args to a script (normally a string)"
+        [element?]
 ][
-    ; For the moment, common features of DO and IMPORT are implemented in the
-    ; IMPORT* command.  This includes:
-    ;
-    ; * Changing the working directory to match the file path (or URL "path")
-    ;   of a script, and restoring the prior path on completion of failure
-    ;
-    ; * Isolating the executed code into a MODULE! so that it doesn't leak
-    ;   into the caller's context.
-    ;
-    ; * Turning @xxx identified script names to DO into a URL by looking it
-    ;   up in the modules library.  So `do @chess` and `import @json` use
-    ;   the same logic to figure out where that name points.
-    ;
-    ; * Setting system.script to reflect the executing script during its run,
-    ;   and then putting it back when control is returned to the caller.
-    ;
-    ; * Adding specialized IMPORT, EXPORT, and INTERN definitions that know
-    ;   where the importing and exporting and interning needs to be done,
-    ;   e.g. into the containing context.  (Lower-level mechanics that want
-    ;   to avoid this should use MAKE MODULE! instead for full control.)
-    ;
-    ; But the actual action taken is different: DO returns the evaluative
-    ; product of the script as its primary result, while IMPORT returns the
-    ; module context the script was executed in.  And IMPORT is designed to
-    ; return the same context every time it is called--so modules are loaded
-    ; only once--while DO performs an action that you can run any number
-    ; of times.  So what DO does is effectively flips the order of the
-    ; return results of IMPORT.
-    ;
-    ; !!! Because DO presumably wants to be able to return stable isotopes,
-    ; this is likely done backwards, as having product as a secondary result
-    ; means that it has to be meta.
-    ;
-    return unmeta [_ @]: import*/args/only null source args true? only
+    return unmeta [_ @]: import*/args null source args
 ]
