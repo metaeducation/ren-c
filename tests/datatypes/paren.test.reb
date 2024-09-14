@@ -31,8 +31,10 @@
 ; errors is a policy decision, which could utilize a counter the user sets)
 ;
 [#859 #1665 (
-    n: 0
-    fact: $(n: n + 1 if n = 5000 [throw <deep-enough>])
-    append fact fact
-    <deep-enough> = catch [eval fact]
+    <deep-enough> = catch [
+        n: 0
+        fact: $(n: n + 1 if n = 5000 [throw <deep-enough>])
+        append fact fact
+        eval fact
+    ]
 )]

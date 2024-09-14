@@ -1086,7 +1086,7 @@ if commands [
             ] else [
                 help
             ]
-            quit
+            quit 0
         ]
     ]
 ]

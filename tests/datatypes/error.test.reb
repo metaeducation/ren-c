@@ -20,10 +20,7 @@
 
 [#2190
     ~zero-divide~ !! (
-        e: trap [
-            catch/quit [attempt [catch/quit [1 / 0]]]
-            quit/with 127
-        ]
+        catch [1 / 0]
     )
 ]
 

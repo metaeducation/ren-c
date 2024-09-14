@@ -60,6 +60,16 @@ stop: func* [] [
     fail "STOP archetype called when no loop is providing it"
 ]
 
+throw: func* [] [
+    fail "THROW archetype called when no catch is providing it"
+]
+
+quit: func* [] [
+    fail "QUIT archetype called when none no DO/IMPORT/console is providing it"
+]
+
+catch: specialize :catch* [name: 'throw]
+
 func: func* [
     {Augment action with <static>, <in>, <with> features}
 

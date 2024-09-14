@@ -99,6 +99,7 @@ end  ; must be last (SYM_END referred to by GET_VAR() in %u-parse.c)
 #break
 continue
 stop
+quit
 
 ; It is convenient to be able to say `for-each [_ x y] [1 2 3 ...] [...]` and
 ; let the blank indicate you are not interested in a value.  This might be

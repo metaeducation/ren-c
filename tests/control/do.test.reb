@@ -193,11 +193,11 @@
 )
 (
     a-value: "Rebol [] 1"
-    1 == do :a-value
+    nothing? do :a-value
 )
-(void? do "Rebol []")
-(1 = do "Rebol [] 1")
-(3 = do "Rebol [] 1 2 3")
+(nothing? do "Rebol []")
+(nothing? do "Rebol [] 1")
+(2 = do "Rebol [] 1 quit/value 2 3")
 
 ; RETURN stops the evaluation
 (
@@ -294,14 +294,16 @@
 )
 ; recursive behaviour
 (1 = eval [eval [1]])
-(1 = do "Rebol [] eval [1]")
+(1 = do "Rebol [] quit/value eval [1]")
 (1 == 1)
 (3 = reeval unrun :reeval unrun :add 1 2)
 ; infinite recursion for block
 (
-    x: 0
-    blk: [x: x + 1, if x = 2000 [throw <deep-enough>] eval blk]
-    <deep-enough> = catch blk
+    <deep-enough> = catch [
+        x: 0
+        blk: [x: x + 1, if x = 2000 [throw <deep-enough>] eval blk]
+        eval blk
+    ]
 )
 
 ; This was supposed to test infinite recursion in strings, but it doesn't
@@ -316,9 +318,11 @@
 
 ; infinite recursion for evaluate
 (
-    x: 0
-    blk: [x: x + 1, if x = 2000 [throw <deep-enough>] b: evaluate blk]
-    <deep-enough> = catch blk
+    <deep-enough> = catch [
+        x: 0
+        blk: [x: x + 1, if x = 2000 [throw <deep-enough>] b: evaluate blk]
+        eval blk
+    ]
 )
 
 ; evaluating quoted argument

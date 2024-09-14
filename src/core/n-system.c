@@ -42,37 +42,6 @@ DECLARE_NATIVE(halt)
 
 
 //
-//  quit: native [
-//
-//  "Stop evaluating and return control to command shell or calling script"
-//
-//      return: []
-//      /with "See: http://en.wikipedia.org/wiki/Exit_status"
-//          [any-value?]
-//  ]
-//
-DECLARE_NATIVE(quit)
-//
-// QUIT is implemented via a thrown signal that bubbles up through the stack.
-// It uses the value of its own native function as the name of the throw, like
-// `throw/name value :quit`.
-{
-    INCLUDE_PARAMS_OF_QUIT;
-
-    Value* v = ARG(with);
-
-    if (not REF(with)) {  // e.g. QUIT VOID or QUIT
-        //
-        // This returns an quasiform if there is no arg, and labels it ~quit~
-        //
-        Init_Quasi_Word(v, Canon(QUIT));
-    }
-
-    return Init_Thrown_With_Label(LEVEL, v, Lib(QUIT));
-}
-
-
-//
 //  exit: native [
 //
 //  "Stop the current Rebol interpreter immediately, return exit status"

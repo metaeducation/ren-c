@@ -217,8 +217,15 @@ main-startup: func [
 ][
     ; We hook the RETURN function so that it actually returns an instruction
     ; that the code can build up from multiple EMIT statements.
+    ;
+    ; 1. Each module or script gets its own QUIT, and every console instruction
+    ;    execution also gets its own quit.  If we didn't use quoting to leave
+    ;    the instruction unbound, then QUIT would bind to the main-startup's
+    ;    QUIT...which is not available after the module initialization has
+    ;    finished running.  Leaving it unbound means that the console engine
+    ;    (which processes these instructions) will supply it.
 
-    let instruction: copy []
+    let instruction: copy '[]  ; quote for no binding, want console binding [1]
 
     let emit: func [
         {Builds up sandboxed code to submit to C, hooked RETURN will finalize}
@@ -254,32 +261,16 @@ main-startup: func [
         <local> return-to-c (runs :return)  ; capture HOST-CONSOLE's RETURN
     ][
         switch state [
-            <start-console> [
-                ; Done actually via #start-console, but we return something
-            ]
-            <prompt> [
-                emit [system.console/print-gap]
-                emit [system.console/print-prompt]
-                emit [reduce [
-                    system.console/input-hook
-                ]]  ; gather first line (or BLANK!), put in BLOCK!
-            ]
-            <halt> [
-                emit [halt]
-                emit [fail {^-- Shouldn't get here, due to HALT}]
-            ]
             <die> [
-                emit [quit 1]  ; catch-all bash code for general errors
-                emit [fail {^-- Shouldn't get here, due to QUIT}]
-            ]
-            <bad> [
-                emit #no-unskin-if-error
-                emit [print mold '(<*> prior)]
-                emit [fail ["Bad REPL continuation:" '(<*> result)]]
+                emit [quit 1]  ; must leave unbound to get console's QUIT [1]
+                emit [fail ~<unreachable>~]
             ]
             <quit> [
-                emit [quit/with 0]
-                emit [fail ~unreachable~]
+                emit [quit 0]  ; must leave unbound to get console's QUIT [1]
+                emit [fail ~<unreachable>~]
+            ]
+            <start-console> [
+                ; Done actually via #start-console, but we return something
             ]
         ] then [
             run return-to-c instruction
@@ -287,6 +278,9 @@ main-startup: func [
 
         return-to-c switch/type state [
             integer! [  ; just tells the calling C loop to exit() process
+                if not empty? instruction [
+                    print mold instruction
+                ]
                 assert [empty? instruction]
                 state
             ]
@@ -539,10 +533,11 @@ main-startup: func [
 
             is-script-implicit: 'no  ; must use --script
 
-            ; Use /ONLY so that QUIT/WITH quits, vs. return DO value
-            ; !!! TBD: change to IN SYSTEM.CONTEXTS.USER TRANSCODE PARAM
-            ;
-            emit [do/only (<*> spaced ["Rebol []" param])]
+            emit [
+                do (<*> spaced ["Rebol []" param]) except e -> [
+                    quit e.exit-code
+                ]
+            ]
         )
     |
         ["--halt" | "-h"] (
@@ -612,8 +607,11 @@ main-startup: func [
             ] else [
                 code: as text! code
             ]
-            emit {Use /ONLY so that QUIT/WITH quits, vs. return DO value}
-            emit [do/only (<*> spaced ["Rebol []" code])]
+            emit [
+                do (<*> spaced ["Rebol []" code]) except e -> [
+                    quit e.exit-code
+                ]
+            ]
         )
     |
         ["-t" | "--trace"] (
@@ -759,7 +757,11 @@ main-startup: func [
         ; %main.reb's location.  But for now, just do a proof of concept by
         ; showing execution of a main.reb if that is found in the encapping.
 
-        emit [do/only (<*> code)]
+        emit [
+            do (<*> code) except e -> [
+                quit e.exit-code
+            ]
+        ]
         quit-when-done: default ['yes]
     ]
 
@@ -778,14 +780,17 @@ main-startup: func [
         file? o.script
         url? o.script
     ] then [
-        emit {Use DO/ONLY so QUIT/WITH exits vs. being DO's return value}
-        emit [do/only/args (<*> o.script) (<*> script-args)]
+        emit [
+            (do/args (<*> o.script) (<*> script-args)) except e -> [
+                quit e.exit-code
+            ]
+        ]
     ]
 
-    main-startup: '~main-startup-done~  ; free function for GC
+    main-startup: ~<main-startup done>~  ; free function for GC
 
     if 'yes = quit-when-done [  ; can be null, YES? would complain...
-        return <quit>
+        return <quit>  ; quits after instructions done
     ]
 
     emit #start-console

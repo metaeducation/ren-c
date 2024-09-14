@@ -230,19 +230,20 @@
         f 1
     ]
 )
-; THROW out leaves a "running" function in a "clean" state
+
 (
+    result: <before>
     all [
-        null? catch [
+        2 = catch [  ; outer catch
             f: lambda [x] [
                 either x = 1 [
-                    catch [f 2]
+                    catch [f 2]  ; inner catch--no throws in block
                     x
-                ] [throw 1]
+                ] [throw 2]  ; definitional throw, only matches outer catch
             ]
-            result: f 1
+            result: f 1  ; never returns due ot outer catch
         ]
-        result = 1
+        result = <before>
     ]
 )
 

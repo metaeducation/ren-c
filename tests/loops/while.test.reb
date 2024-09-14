@@ -104,16 +104,6 @@
 [#1519 (
     cycling: 'yes
     1 = catch [while [if yes? cycling [throw 1] <bad>] [cycling: 'no]]
-)(
-    1 = catch/name [
-        cycling: 'yes
-        while [yes? cycling] [throw/name 1 'a cycling: 'no]
-    ] 'a
-)(
-    cycling: 'yes
-    1 = catch/name [
-        while [if yes? cycling [throw/name 1 'a] 'false] [cycling: 'no]
-    ] 'a
 )]
 
 ; Test that disarmed errors do not stop the loop and errors can be returned

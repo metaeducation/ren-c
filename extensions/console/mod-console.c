@@ -350,7 +350,20 @@ DECLARE_NATIVE(console)
     //    natives use DISPATCHER_CATCHES but it is very easy to screw it up or
     //    overlook it, and we don't have a way to tunnel that value into a
     //    callback from a continuation.  For the moment, just to get things
-    //    working, we give in and use SYS.UTIL/ENRESCUE.
+    //    working, we give in and use SYS.UTIL/ENRESCUE, along with other
+    //    functions that are necessary.
+    //
+    // 4. Under the new understanding of definitional quits, a QUIT is just
+    //    a function that throws a value specifically to the "generator" of
+    //    the QUIT.  In the case of the console, that means each time we
+    //    run code, a new QUIT needs to be created.  It's poked into the same
+    //    place every time--the user context--but it's a new function.
+    //
+    //    (This idea that quits expire actually makes a lot of sense--e.g. when
+    //    you think about running a module, it should only be able to quit
+    //    during its initialization.  After that moment the module system isn't
+    //    on the stack and dealing with it, so really it can only call the
+    //    SYS.UTIL/EXIT function and exit the interpreter completely.)
 
     if (rebUnboxLogic("integer? code"))
         goto finished;  // if HOST-CONSOLE returns INTEGER! it means exit code
@@ -365,8 +378,19 @@ DECLARE_NATIVE(console)
     return rebContinueInterruptible(  // allows abrupt fail from HALT [1]
         "assert [match [block! group!] code]",
         "if group? code [can-recover: 'yes]",  // user could make request [2]
+
         "state: 'running-request",
-        "metaresult: sys.util/enrescue code"  // pollutes stack trace [3]
+
+        "sys.util/rescue [",  // pollutes stack trace [3]
+            "catch* 'quit* [",  // definitional quit (customized THROW) [4]
+                "sys.contexts.user.quit: sys.util.make-quit/console :quit*",
+                "metaresult: meta eval/undecayed code",
+            "] then caught -> [",  // QUIT wraps QUIT* to only throw integers
+                "metaresult: caught",  // INTEGER! due to /CONSOLE, out of band
+            "]",
+        "] then error -> [",
+            "metaresult: error",  // ERROR! out of band
+        "]"
     );
 
 } finished: {  ///////////////////////////////////////////////////////////////

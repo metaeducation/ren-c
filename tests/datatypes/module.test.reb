@@ -98,6 +98,7 @@
 (
     eval-before: :eval
     import m: module [Exports: [test]] [
+        throw: ~  ; needs to be provided, no archetypal throw
         eval: func [source] [throw <override>]
 
         emulate: func [source [block!] <local> rebound] [
@@ -111,7 +112,10 @@
     ]
     all [
         3 = test
-        <override> = catch [m/eval [1 + 2]]
+        <override> = catch [
+            m.throw: :throw
+            m/eval [1 + 2]
+        ]
         ^eval = ^eval-before
     ]
 )

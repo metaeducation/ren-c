@@ -295,7 +295,7 @@ export console!: make object! [
     shortcuts: make object! compose/deep [
         d: [dump]
         h: [help]
-        q: [quit]
+        q: [quit 0]
         dt: [delta-time]
         dp: [delta-profile]
 
@@ -434,13 +434,25 @@ console*: func [
         [block! group! integer! meta-group! handle!]  ; RETURN is hooked below!
     prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
         [~null~ block! group!]
-    result "^META result from evaluating PRIOR, or non-quoted error"
-        [~null~ error! quoted? quasi?]
+    result "^META result from PRIOR eval, non-quoted error, or exit code #"
+        [~null~ error! quoted? quasi? integer!]
     resumable "Is the RESUME function allowed to exit this console"
         [yesno?]
     skin "Console skin to use if the console has to be launched"
         [~null~ object! file!]
 ][
+    === HANDLE EXIT CODE ===
+
+    ; We could do some sort of handling or cleanup here if we wanted to.
+    ; Note that for simplicity's sake, the QUIT supplied by the CONSOLE to
+    ; the user context only returns integer exit codes (otherwise we'd have
+    ; to add a parameter for what the QUIT/VALUE was--or multiplex it into
+    ; the result--making this code more complicated for little point.)
+
+    if integer? result [  ; QUIT for console only returns exit statuses
+        return result
+    ]
+
     === HOOK RETURN FUNCTION TO GIVE EMITTED INSTRUCTION ===
 
     ; The C caller can be given a BLOCK! representing an code the console is
@@ -495,7 +507,7 @@ console*: func [
                 emit [fail "^-- Shouldn't get here, due to HALT"]
             ]
             <die> [
-                emit [quit/with 1]  ; bash exit code for any generic error
+                emit [quit 1]  ; bash exit code for any generic error
                 emit [fail "^-- Shouldn't get here, due to QUIT"]
             ]
             <bad> [
@@ -570,29 +582,6 @@ console*: func [
     if find directives #start-console [
         emit [start-console/skin (<*> ^ skin)]
         return <prompt>
-    ]
-
-    === QUIT handling ===
-
-    ; https://en.wikipedia.org/wiki/Exit_status
-
-    all [
-        error? result
-        result.id = 'no-catch
-        result.arg2 = unrun :quit  ; throw's /NAME
-    ] then [
-        if '~quit~ = result.arg1 [
-            return 0  ; plain QUIT with no argument, treat it as success
-        ]
-        return switch/type result.arg1 [
-            logic?! [either result.arg1 [0] [1]]  ; logic true is success
-
-            integer! [result.arg1]  ; Note: may be too big for status range
-
-            error! [1]  ; currently there's no default error-to-int mapping
-        ] else [
-            1  ; generic error code
-        ]
     ]
 
     === HALT handling (e.g. Ctrl-C) ===
@@ -806,7 +795,7 @@ console*: func [
 
     if let shortcut: select system.console.shortcuts maybe try code.1 [
         ;
-        ; Shortcuts like `q => [quit]`, `d => [dump]`
+        ; Shortcuts like `q => [quit 0]`, `d => [dump]`
         ;
         if (has sys.contexts.user code.1) and (set? inside code code.1) [
             ;

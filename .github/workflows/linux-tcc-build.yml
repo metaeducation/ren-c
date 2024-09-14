@@ -146,7 +146,7 @@ jobs:
 
     - name: Stop the build early if the R3MAKE is no good
       run: |
-        "$R3MAKE" --do "print {R3MAKE is Working} quit"
+        "$R3MAKE" --do "print {R3MAKE is Working}"
 
 
     # Refer to the TCC Extension's README.md for an explanation of what's in
@@ -340,7 +340,7 @@ jobs:
 
     - name: HTTPS Read Test (If This Works, A Lot Of Things Are Working)
       run: |
-        "$R3TWO" --do "quit either find to-text read https://example.com {<h1>Example Domain</h1>} [0] [1]"
+        "$R3TWO" --do "either find to-text read https://example.com {<h1>Example Domain</h1>} [0] [1]"
 
 
     - name: Fibonnacci Test (Build a New Native From String of C Code)

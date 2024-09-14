@@ -6,4 +6,4 @@ Rebol [
 ]
 
 print "Quitting With Exit Code 3"
-quit/with 3
+quit 3

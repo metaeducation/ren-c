@@ -65,7 +65,7 @@ if not find (words of :import) 'into [
     print ""
     print "(See %import-shim.r for more details)"
     print ""
-    quit/with 1
+    quit 1
 ]
 
 
@@ -87,7 +87,7 @@ trap [
         ; tweaks for the modern import.  It's just generally inefficient to
         ; shim multiple times.
         ;
-        quit
+        quit 0
     ]
 
 
@@ -152,7 +152,7 @@ trap [
     export onoff?!: get $onoff?
     export yesno?!: get $yesno?
 
-    quit
+    quit 0
 ]
 
 

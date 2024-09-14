@@ -18,7 +18,7 @@
                 | dir: text!, (to-file dir)  ; manual form, use TO-FILE/ below
             ]
             |
-            ["-h" | "-help" | "--help" || (-help, quit)]
+            ["-h" | "-help" | "--help" || (-help, quit 0)]
             |
             verbose: [
                 "-q" (0)

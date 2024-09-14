@@ -1517,27 +1517,25 @@ DECLARE_NATIVE(default)
 
 
 //
-//  catch: native [
+//  catch*: native [
 //
 //  "Catches a throw from a block and returns its value"
 //
 //      return: "Thrown value"
 //          [any-value?]
+//      name "Name of the THROW construct to use"
+//          [word!]
 //      block "Block to evaluate"
 //          [block!]
-//      /name "Catches a named throw (single name if not block)"
-//          [block! word! frame! object!]
-//      /quit "Special catch for QUIT native"
-//      /any "Catch all throws except QUIT (can be used with /QUIT)"
 //  ]
 //
-DECLARE_NATIVE(catch)
-//
-// There's a refinement for catching quits, and CATCH/ANY will not alone catch
-// it (you have to CATCH/ANY/QUIT).  Currently the label for quitting is the
-// NATIVE! function value for QUIT.
+DECLARE_NATIVE(catch_p)  // specialized to plain CATCH w/ NAME="THROW" in boot
 {
-    INCLUDE_PARAMS_OF_CATCH;
+    INCLUDE_PARAMS_OF_CATCH_P;
+
+    Element* block = cast(Element*, ARG(block));
+    Element* name = cast(Element*, ARG(name));
+    Level* catch_level = level_;
 
     enum {
         ST_CATCH_INITIAL_ENTRY = STATE_0,
@@ -1556,10 +1554,19 @@ DECLARE_NATIVE(catch)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    // /ANY would override /NAME, so point out the potential confusion
-    //
-    if (REF(any) and REF(name))
-        fail (Error_Bad_Refines_Raw());
+    Specifier* block_specifier = Cell_Specifier(block);
+
+    Force_Level_Varlist_Managed(catch_level);
+
+    Stub* let_throw = Make_Let_Patch(Cell_Word_Symbol(name), block_specifier);
+    Init_Action(
+        Stub_Cell(let_throw),
+        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_THROW))),
+        Cell_Word_Symbol(name),  // relabel (THROW in lib is a dummy action)
+        cast(Context*, catch_level->varlist)  // what to continue
+    );
+
+    INIT_SPECIFIER(block, let_throw);  // extend chain
 
     STATE = ST_CATCH_RUNNING_CODE;
     return CATCH_CONTINUE_BRANCH(OUT, ARG(block));
@@ -1570,111 +1577,43 @@ DECLARE_NATIVE(catch)
         return nullptr;  // no throw means just return null (pure, for ELSE)
 
     const Value* label = VAL_THROWN_LABEL(LEVEL);
+    if (not Any_Context(label))
+        return THROWN;  // not a context throw, not from DEFINITIONAL-THROW
 
-    if (REF(any) and not (
-        Is_Frame(label)
-        and ACT_DISPATCHER(VAL_ACTION(label)) == &N_quit
-    )){
-        goto was_caught;
-    }
-
-    if (REF(quit) and (
-        Is_Frame(label)
-        and ACT_DISPATCHER(VAL_ACTION(label)) == &N_quit
-    )){
-        goto was_caught;
-    }
-
-    if (REF(name)) {
-        //
-        // We use equal? by way of Compare_Modify_Values, and re-use the
-        // refinement slots for the mutable space
-
-        Value* temp1 = ARG(quit);
-        Value* temp2 = ARG(any);
-
-        if (Is_Block(ARG(name))) {
-            //
-            // Test all the words in the block for a match to catch
-
-            const Element* tail;
-            const Element* candidate = Cell_List_At(&tail, ARG(name));
-            for (; candidate != tail; candidate++) {
-                //
-                // !!! Should we test a typeset for illegal name types?
-                //
-                if (Is_Block(candidate))
-                    fail (PARAM(name));
-
-                Derelativize(temp1, candidate, Cell_Specifier(ARG(name)));
-                Copy_Cell(temp2, label);
-
-                // Return the THROW/NAME's arg if the names match
-                //
-                bool strict = false;  // e.g. EQUAL?, better if STRICT-EQUAL?
-                if (0 == Compare_Modify_Values(temp1, temp2, strict))
-                    goto was_caught;
-            }
-        }
-        else {
-            Copy_Cell(temp1, ARG(name));
-            Copy_Cell(temp2, label);
-
-            // Return the THROW/NAME's arg if the names match
-            //
-            bool strict = false;  // e.g. EQUAL?, better if STRICT-EQUAL?
-            if (0 == Compare_Modify_Values(temp1, temp2, strict))
-                goto was_caught;
-        }
-    }
-    else {
-        // Return THROW's arg only if it did not have a /NAME supplied
-        //
-        if (Is_Nulled(label) and (REF(any) or not REF(quit)))
-            goto was_caught;
-    }
-
-    return THROWN; // throw label and value are held task local
-
-  was_caught:  ///////////////////////////////////////////////////////////////
+    Array *throw_varlist = CTX_VARLIST(VAL_CONTEXT(label));
+    if (throw_varlist != catch_level->varlist)
+        return THROWN;  // context throw, but not to this CATCH*, keep going
 
     CATCH_THROWN(OUT, level_); // thrown value
-
     return BRANCHED(OUT);  // a caught NULL triggers THEN, not ELSE
 }}
 
 
 //
-//  throw: native [
+//  definitional-throw: native [
 //
 //  "Throws control back to a previous catch"
 //
 //      return: []
-//      ^value "Value returned from catch"
+//      ^atom "What CATCH will receive (unstable antiforms ok, e.g. RAISED?)"
 //          [any-atom?]
-//      /name "Throws to a named catch"
-//          [word! frame! object!]
 //  ]
 //
-DECLARE_NATIVE(throw)
-//
-// Choices are currently limited for what one can use as a "name" of a THROW.
-// Note blocks as names would conflict with the `name_list` feature in CATCH.
-//
-// !!! Should it be /NAMED instead of /NAME?
+DECLARE_NATIVE(definitional_throw)
 {
-    INCLUDE_PARAMS_OF_THROW;
+    INCLUDE_PARAMS_OF_DEFINITIONAL_THROW;
 
-    Atom* atom = Copy_Cell(SPARE, ARG(value));
+    Atom* atom = Copy_Cell(SPARE, ARG(atom));
+    Meta_Unquotify_Undecayed(atom);
 
-    if (Is_Meta_Of_Void(atom))
-        Init_Heavy_Void(atom);
-    else if (Is_Meta_Of_Null(atom))
-        Init_Heavy_Null(atom);
-    else
-        Meta_Unquotify_Undecayed(atom);
+    Level* throw_level = LEVEL;  // Level of this RETURN call
 
-    return Init_Thrown_With_Label(LEVEL, atom, ARG(name));  // nulled name ok
+    Option(Context*) coupling = Level_Coupling(throw_level);
+    if (not coupling)
+        fail (Error_Archetype_Invoked_Raw());
+
+    const Value* label = CTX_ARCHETYPE(unwrap coupling);
+    return Init_Thrown_With_Label(LEVEL, atom, label);
 }
 
 

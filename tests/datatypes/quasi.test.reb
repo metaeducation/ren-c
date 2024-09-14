@@ -156,17 +156,14 @@
     e.arg1 = 'asiieiajiaosdfbjakbsjxbjkchasdf
 ])
 
-; ~quit~ is the label of the quasiform you get by default from QUIT.  If the
-; result is meant to be used, then QUIT should be passed an argument,
-; but the idea is to help draw attention to when a script was cut short
-; prematurely via a QUIT command.  Antiforms may be passed.
-;
-; Note: EVAL of BLOCK! does not catch quits, so TEXT! is used here.
+; Note: QUITs are definitional and provided by things like DO when they run
+; a script, or IMPORT.  They are variants of THROW.
 [
-    (1 = do "Rebol [] quit/with 1")
-    ('~quit~ =  ^ do "Rebol [] quit")
-    ('~thing~ = ^ do "Rebol [] quit/with ~thing~")
-    ('~plain~ = do "Rebol [] quit/with '~plain~")
+    (1 = do "Rebol [] quit/value 1")
+    (nothing? do "Rebol [] quit 0")
+    (do "Rebol [] quit 1" except e -> [e.exit-code = 1])
+    (quasi? do "Rebol [] quit/value ^^ raise {some error}")  ; ^^ escapes ^
+    (raised? do "Rebol [] quit/value raise* make error! {some error}")
 ]
 
 ; Antiforms make it easier to write generic routines that handle QUASI-WORD?

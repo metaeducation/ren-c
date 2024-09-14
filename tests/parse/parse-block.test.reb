@@ -119,9 +119,11 @@
 
 
 [#1672 (  ; infinite recursion
-    x: 0
-    a: [(x: x + 1, if x = 200 [throw <deep-enough>]) a]
-    <deep-enough> = catch [parse [] a]
+    <deep-enough> = catch [
+        x: 0
+        a: [(x: x + 1, if x = 200 [throw <deep-enough>]) a]
+        parse [] a
+    ]
 )]
 
 

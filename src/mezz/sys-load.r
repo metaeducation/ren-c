@@ -422,7 +422,6 @@ import*: func [
     ]
     /args "Args passed as system.script.args to a script (normally a string)"
         [element?]
-    /only "Do not catch quits...propagate them"
     /into "e.g. reuse Context* already made for NATIVEs loading from extension"
         [module!]
     <static>
@@ -450,7 +449,7 @@ import*: func [
     === IF MODULE ALREADY CREATED, REGISTER AND RESOLVE IMPORTED VARS ===
 
     if module? source [
-        assert [not into]  ; ONLY isn't applicable unless scanning new source
+        assert [not into]  ; INTO isn't applicable unless scanning new source
 
         let name: (adjunct-of source).name else [
             product': ~nameless~
@@ -621,7 +620,7 @@ import*: func [
     if not block? code [  ; review assumption of lib here (header guided?)
         code: inside lib transcode/file/line code file line
     ]
-    let [mod 'product' quitting]: module/into hdr code into
+    let [mod 'product']: module/into hdr code into
 
     ensure module! mod
 
@@ -635,12 +634,6 @@ import*: func [
     if original-path [change-dir original-path]
 
     importing-remotely: old-importing-remotely
-
-    === PROPAGATE QUIT IF REQUESTED, OR RETURN MODULE ===
-
-    if only and (yes? quitting) [
-        quit/with unmeta product'  ; "rethrow" the QUIT if DO/ONLY
-    ]
 
     return mod
 ]

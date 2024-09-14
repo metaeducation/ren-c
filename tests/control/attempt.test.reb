@@ -24,9 +24,11 @@
 
 ; infinite recursion, no more stack overflow error...
 (
-    x: 0
-    blk: [x: x + 1, if x = 2000 [throw <deep-enough>] attempt blk]
-    <deep-enough> = catch [attempt blk]
+    <deep-enough> = catch [
+        x: 0
+        blk: [x: x + 1, if x = 2000 [throw <deep-enough>] attempt blk]
+        attempt blk
+    ]
 )
 
 ; ATTEMPT is implemented on top of ENTRAP for efficiency, but it should be

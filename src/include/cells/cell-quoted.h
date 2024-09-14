@@ -238,10 +238,10 @@ INLINE Element* Ensure_Element(const_if_c Atom* cell) {
 #define Is_Quasiform(v) \
     (QUOTE_BYTE(Ensure_Readable(v)) == QUASIFORM_2)
 
-INLINE Value* Unquasify(Value* v) {
+INLINE Element* Unquasify(Value* v) {
     assert(QUOTE_BYTE(v) == QUASIFORM_2);
     QUOTE_BYTE(v) = NOQUOTE_1;
-    return v;
+    return u_cast(Element*, v);
 }
 
 INLINE Element* Quasify(Value* v) {

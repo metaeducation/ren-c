@@ -166,7 +166,7 @@ jobs:
 
     - name: Stop the build early if the R3MAKE is no good
       run: |
-        "$R3MAKE" --do "print {R3MAKE is Working} quit"
+        "$R3MAKE" --do "print {R3MAKE is Working}"
 
 
     # By default you can't call MSVC Compilation from the command line.  Use
@@ -326,7 +326,7 @@ jobs:
     - name: QUIT Test (from code on command line)
       run: |
         set +e  # so nonzero exit codes won't immediately terminate step
-        "$R3BUILT" --do "quit/with 3"
+        "$R3BUILT" --do "quit 3"
         if [ $? -eq 3 ]; then
           echo "QUIT Properly Gave Exit Status 3"
         else

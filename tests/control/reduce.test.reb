@@ -19,7 +19,6 @@
 ; was introduced, the name was at first a secondary result...until the
 ; convenience of throwing packs was decided as better.
 ;
-(1 = catch/name [reduce [throw/name 1 'a]] 'a)
 (~['1 '2]~ = catch [throw pack [1 2]])
 
 (1 = reeval unrun func [return: [integer!]] [reduce [return 1 2] 2])
@@ -28,9 +27,11 @@
 
 ; infinite recursion
 (
-    x: 0
-    blk: [x: x + 1, if x = 5000 [throw <deep-enough>] reduce blk]
-    <deep-enough> = catch blk
+    <deep-enough> = catch [
+        x: 0
+        blk: [x: x + 1, if x = 5000 [throw <deep-enough>] reduce blk]
+        eval blk
+    ]
 )
 
 ; Quick flatten test, here for now

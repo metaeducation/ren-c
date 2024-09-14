@@ -135,7 +135,7 @@ jobs:
 
     - name: Stop the build early if the R3MAKE is no good
       run: |
-        "$R3MAKE" --do "print {R3MAKE is Working} quit"
+        "$R3MAKE" --do "print {R3MAKE is Working}"
 
 
     # Wasi-Sdk is part of the WebAssembly GitHub Repository.  It has a version

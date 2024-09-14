@@ -40,7 +40,7 @@ if did find (words of :import) 'into [  ; non-bootstrap Ren-C
     print ""
     print "!!! %import-shim.r is only for use with old Ren-C EXEs"
     print ""
-    quit/with 1
+    quit 1
 ]
 
 

@@ -274,7 +274,7 @@
 )
 
 [
-    (do "Rebol [] ['] = reduce ['']")
-    (do "Rebol [] [''] = reduce [''']")
-    (do "Rebol [] [' '' ''' ''''] = reduce ['' ''' '''' ''''']")
+    (do "Rebol [] quit/value ['] = reduce ['']")
+    (do "Rebol [] quit/value [''] = reduce [''']")
+    (do "Rebol [] quit/value [' '' ''' ''''] = reduce ['' ''' '''' ''''']")
 ]

@@ -210,7 +210,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
 //
 //      return: "Non-failure input, or product of processing failure"
 //          [any-atom?]  ; [1]
-//      ^optional "<deferred argument> Run branch if this is definitional fail"
+//      ^atom "<deferred argument> Run branch if this is definitional fail"
 //          [any-atom?]
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> any-branch?]
@@ -235,15 +235,17 @@ DECLARE_NATIVE(except)
 {
     INCLUDE_PARAMS_OF_EXCEPT;
 
-    Value* v = ARG(optional);
+    Element* meta_atom = cast(Element*, ARG(atom));
     Value* branch = ARG(branch);
-    Deactivate_If_Action(ARG(branch));
 
-    if (not Is_Meta_Of_Raised(v))
-        return UNMETA(v);
+    if (not Is_Meta_Of_Raised(meta_atom))
+        return UNMETA(meta_atom);  // pass thru anything not a raised error
 
-    Unquasify(v);  // meta failures are ~QUASI-ERROR!~, branch wants ERROR!
-    return DELEGATE_BRANCH(OUT, branch, v);
+    return DELEGATE_BRANCH(
+        OUT,
+        branch,  // if branch is an action, wants plain ERROR! as argument...
+        Unquasify(meta_atom)  // ...meta_atom is ~QUASI-ERROR!~, unquasify it
+    );
 }
 
 
