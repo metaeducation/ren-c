@@ -367,7 +367,7 @@ static void Init_Root_Vars(void)
     Set_Cell_Flag(&PG_Nothing_Value, PROTECTED);  // prevent overwriting
     assert(Is_Nothing(NOTHING_VALUE));
 
-    // They should only be accessed by macros which retrieve their values
+    // Return signals should only be accessed by macros which cast them as
     // as `const`, to avoid the risk of accidentally changing them.  (This
     // rule is broken by some special system code which `m_cast`s them for
     // the purpose of using them as directly recognizable pointers which
@@ -378,12 +378,12 @@ static void Init_Root_Vars(void)
     // the root set.  Should that change, they could be explicitly added
     // to the GC's root set.
 
-    Init_Return_Signal(&PG_R_Thrown, C_THROWN);
-    Init_Return_Signal(&PG_R_Redo_Unchecked, C_REDO_UNCHECKED);
-    Init_Return_Signal(&PG_R_Redo_Checked, C_REDO_CHECKED);
-    Init_Return_Signal(&PG_R_Continuation, C_CONTINUATION);
-    Init_Return_Signal(&PG_R_Delegation, C_DELEGATION);
-    Init_Return_Signal(&PG_R_Suspend, C_SUSPEND);
+    Init_Return_Signal(&PG_Bounce_Thrown, C_THROWN);
+    Init_Return_Signal(&PG_Bounce_Redo_Unchecked, C_REDO_UNCHECKED);
+    Init_Return_Signal(&PG_Bounce_Redo_Checked, C_REDO_CHECKED);
+    Init_Return_Signal(&PG_Bounce_Continuation, C_CONTINUATION);
+    Init_Return_Signal(&PG_Bounce_Delegation, C_DELEGATION);
+    Init_Return_Signal(&PG_Bounce_Suspend, C_SUSPEND);
 
     ensure(nullptr, Root_Empty_Block) = Init_Block(
         Alloc_Value(),
@@ -438,12 +438,12 @@ static void Shutdown_Root_Vars(void)
 {
     Erase_Cell(&PG_Nothing_Value);
 
-    Erase_Cell(&PG_R_Thrown);
-    Erase_Cell(&PG_R_Redo_Unchecked);
-    Erase_Cell(&PG_R_Redo_Checked);
-    Erase_Cell(&PG_R_Continuation);
-    Erase_Cell(&PG_R_Delegation);
-    Erase_Cell(&PG_R_Suspend);
+    Erase_Cell(&PG_Bounce_Thrown);
+    Erase_Cell(&PG_Bounce_Redo_Unchecked);
+    Erase_Cell(&PG_Bounce_Redo_Checked);
+    Erase_Cell(&PG_Bounce_Continuation);
+    Erase_Cell(&PG_Bounce_Delegation);
+    Erase_Cell(&PG_Bounce_Suspend);
 
     rebReleaseAndNull(&Root_Empty_Text);
     rebReleaseAndNull(&Root_Empty_Block);

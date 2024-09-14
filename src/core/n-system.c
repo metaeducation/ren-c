@@ -44,19 +44,24 @@ DECLARE_NATIVE(halt)
 //
 //  exit: native [
 //
-//  "Stop the current Rebol interpreter immediately, return exit status"
+//  "Stop the interpreter, return exit status"
 //
 //      return: []
 //      status "See: http://en.wikipedia.org/wiki/Exit_status"
 //          [integer!]
+//      /abrupt "Don't shut down, end process immediately (leaks in Valgrind)"
 //  ]
 //
 DECLARE_NATIVE(exit)  // moved to SYS.UTIL/EXIT by boot code, for safety
 {
     INCLUDE_PARAMS_OF_EXIT;
 
-    int status = VAL_INT32(ARG(status));
-    exit(status);
+    int status = VAL_INT32(ARG(status));  // exit() takes an int
+
+    if (REF(abrupt))  // doesn't run Shutdown_Core()
+        exit(status);
+
+    exit(status);  // !!! Clean shutdown interop with trampoline TBD
 }
 
 

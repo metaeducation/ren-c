@@ -68,15 +68,26 @@ PVAR Value PG_Feed_At_End;  // Canon pointer; internals use instead of rebEND
 PVAR Value PG_Nothing_Value;
 
 // These are special return values that can be checked easily by pointer.  They
-// could be checked even faster if they were fake immediate values, like
-// (Value*)0x00000010...but that is not standard C.
+// are turned into a `Bounce` (which is a `Node*` at time of writing).
 //
-PVAR Value PG_R_Redo_Unchecked;
-PVAR Value PG_R_Redo_Checked;
-PVAR Value PG_R_Thrown;
-PVAR Value PG_R_Continuation;
-PVAR Value PG_R_Delegation;
-PVAR Value PG_R_Suspend;
+// * If Bounce were `void*`, then these could just be `char` turned into
+//   `char*` and have their first byte checked for UTF-8 and act as the signal.
+//   But type checking is a little better if we make sure it's at least a
+//   Node*, and direct pointer comparison is faster than dereference anyway.
+//
+// * Comparisons to literal pointers like (Node*)0x00000010 might be faster,
+//   but that is "implementation defined behavior" and could have problems.
+//   Consider investigating if it's worth going outside the C standard in some
+//   builds to use such "magic numbers":
+//
+//     https://stackoverflow.com/q/51083356
+
+PVAR Value PG_Bounce_Redo_Unchecked;
+PVAR Value PG_Bounce_Redo_Checked;
+PVAR Value PG_Bounce_Thrown;
+PVAR Value PG_Bounce_Continuation;
+PVAR Value PG_Bounce_Delegation;
+PVAR Value PG_Bounce_Suspend;
 
 
 // These are root variables which used to be described in %root.r and kept

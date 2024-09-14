@@ -174,7 +174,7 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 //
 #define C_THROWN 'T'
 #define BOUNCE_THROWN \
-    cast(Bounce, &PG_R_Thrown)
+    cast(Bounce, &PG_Bounce_Thrown)
 
 INLINE bool Is_Throwing(Level* level_) {
     //
@@ -207,11 +207,11 @@ INLINE bool Is_Throwing(Level* level_) {
 //
 #define C_REDO_UNCHECKED 'r'
 #define BOUNCE_REDO_UNCHECKED \
-    cast(Bounce, &PG_R_Redo_Unchecked)
+    cast(Bounce, &PG_Bounce_Redo_Unchecked)
 
 #define C_REDO_CHECKED 'R'
 #define BOUNCE_REDO_CHECKED \
-    cast(Bounce, &PG_R_Redo_Checked)
+    cast(Bounce, &PG_Bounce_Redo_Checked)
 
 
 // Continuations are used to mitigate the problems that occur when the C stack
@@ -225,7 +225,7 @@ INLINE bool Is_Throwing(Level* level_) {
 //
 #define C_CONTINUATION 'C'
 #define BOUNCE_CONTINUE \
-    cast(Bounce, &PG_R_Continuation)
+    cast(Bounce, &PG_Bounce_Continuation)
 
 
 // A dispatcher may want to run a "continuation" but not be called back.
@@ -233,7 +233,7 @@ INLINE bool Is_Throwing(Level* level_) {
 //
 #define C_DELEGATION 'D'
 #define BOUNCE_DELEGATE \
-    cast(Bounce, &PG_R_Delegation)
+    cast(Bounce, &PG_Bounce_Delegation)
 
 #define DELEGATE_255 255
 
@@ -242,8 +242,7 @@ INLINE bool Is_Throwing(Level* level_) {
 //
 #define C_SUSPEND 'S'
 #define BOUNCE_SUSPEND \
-    cast(Bounce, &PG_R_Suspend)
-
+    cast(Bounce, &PG_Bounce_Suspend)
 
 #define INIT_VAL_ACTION_DETAILS                 Init_Cell_Node1
 #define VAL_ACTION_PARTIALS_OR_LABEL(v)         cast(Flex*, Cell_Node2(v))
