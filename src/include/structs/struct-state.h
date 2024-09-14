@@ -74,6 +74,10 @@ struct Reb_State {
     REBLEN mold_buf_len;
     Size mold_buf_size;
     REBLEN mold_loop_tail;
+
+  #if DEBUG
+    Count num_evars_outstanding;
+  #endif
 };
 
 

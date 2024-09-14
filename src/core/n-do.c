@@ -870,6 +870,7 @@ DECLARE_NATIVE(apply)
                 if (not REF(relax))
                     fail (Error_Apply_Too_Many_Raw());
 
+                Shutdown_Evars(e);
                 Free(EVARS, e);
                 Init_Nothing(iterator);
                 param = nullptr;  // we're throwing away the evaluated product

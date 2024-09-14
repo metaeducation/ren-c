@@ -840,6 +840,9 @@ Value* Obj_Value(Value* value, REBLEN index)
 //
 void Startup_Collector(void)
 {
+  #if DEBUG
+    assert(g_num_evars_outstanding == 0);
+  #endif
 }
 
 
@@ -848,6 +851,9 @@ void Startup_Collector(void)
 //
 void Shutdown_Collector(void)
 {
+  #if DEBUG
+    assert(g_num_evars_outstanding == 0);
+  #endif
 }
 
 

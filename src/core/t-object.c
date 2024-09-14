@@ -180,10 +180,26 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
 //
 //////////////////////////////////////////////////////////////////////////////
 //
-// 1. We allocate a wordlist just to notice leaks when there are no shutdowns,
-//    but there is a problem with using an unmanaged Array in the case of an
-//    LEVEL_FLAG_ABRUPT_FAILURE.  So we make them "fake unmanaged" so they
-//    are "untracked" by saying they're managed, and taking that flag off.
+//
+// 1. There's no clear best answer to whether the locals should be visible when
+//    enumerating an action, only the caller knows if it's a context where they
+//    should be.  Guess conservatively and let them set e->visibility if they
+//    think they should see more.
+//
+// 2. !!! Module enumeration is slow, and you should not do it often...it
+//    requires walking over the global word table.  The global table gets
+//    rehashed in a way that we'd have a hard time maintainining a consistent
+//    enumerator state in the current design.  So for the moment we fabricate
+//    an array to enumerate.  The enumeration won't see changes.
+//
+// 3. The frame can be phaseless, which means it is not running (such as the
+//    direct result of a MAKE FRAME! call, which is awaiting an EVAL to start).
+//    These frames should only show variables on the public interface.
+//
+// 4. Since phases can reuse exemplars, we have to check for an exact match of
+//    the action of the exemplar with the phase in order to know if the locals
+//    should be visible.  If you ADAPT a function that reuses its exemplar,
+//    but should not be able to see the locals (for instance).
 //
 void Init_Evars(EVARS *e, const Cell* v) {
     Heart heart = Cell_Heart(v);
@@ -202,29 +218,13 @@ void Init_Evars(EVARS *e, const Cell* v) {
 
         assert(Flex_Used(ACT_KEYLIST(act)) <= ACT_NUM_PARAMS(act));
 
-        // There's no clear best answer to whether the locals should be
-        // visible when enumerating an action, only the caller knows if it's
-        // a context where they should be.  Guess conservatively and let them
-        // set e->visibility if they think they should see more.
-        //
-        e->visibility = VAR_VISIBILITY_INPUTS;
+        e->visibility = VAR_VISIBILITY_INPUTS;  // conservative guess [1]
 
-      #if !defined(NDEBUG)
-        e->wordlist = Make_Array_Core(1, NODE_FLAG_MANAGED);
-        Clear_Node_Managed_Bit(e->wordlist);  // dummy Array [1]
-      #endif
-
+        Corrupt_Pointer_If_Debug(e->wordlist);
         e->word = nullptr;
         Corrupt_Pointer_If_Debug(e->word_tail);
     }
-    else if (heart == REB_MODULE) {
-        //
-        // !!! Module enumeration is slow, and you should not do it often...it
-        // requires walking over the global word table.  The global table gets
-        // rehashed in a way that we would have a hard time maintaining a
-        // consistent enumerator state in the current design.  So for the
-        // moment we fabricate an array to enumerate.
-
+    else if (heart == REB_MODULE) {  // !!! module enumeration is bad/slow [2]
         e->index = INDEX_PATCHED;
 
         e->ctx = VAL_CONTEXT(v);
@@ -288,37 +288,25 @@ void Init_Evars(EVARS *e, const Cell* v) {
         else {
             e->var = CTX_VARS_HEAD(e->ctx) - 1;
 
-            // The frame can be phaseless, which means it is not running (such
-            // as the direct result of a MAKE FRAME! call, which is awaiting a
-            // DO to begin running).  These frames should only show variables
-            // on the public interface.  Or it can be running, in which case
-            // the phase determines which additional fields should be seen.
-            //
             Phase* phase;
-            if (not IS_FRAME_PHASED(v)) {
+            if (not IS_FRAME_PHASED(v)) {  // not running, inputs visible [3]
                 phase = CTX_FRAME_PHASE(e->ctx);
 
-                // See FRAME_HAS_BEEN_INVOKED about the efficiency trick used
-                // to make sure archetypal frame views do not DO a frame after
-                // being run where the action could've tainted the arguments.
-                //
                 Array* varlist = CTX_VARLIST(e->ctx);
-                if (Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED))
+                if (Get_Subclass_Flag(
+                    VARLIST,
+                    varlist,
+                    FRAME_HAS_BEEN_INVOKED  // optimization, see definition
+                )){
                     e->visibility = VAR_VISIBILITY_NONE;
-                else
+                } else
                     e->visibility = VAR_VISIBILITY_INPUTS;
             }
-            else {
+            else {  // is running, phase determines field visibility
                 phase = VAL_FRAME_PHASE(v);
 
-                // Since phases can reuse exemplars, we have to check for an
-                // exact match of the action of the exemplar with the phase in
-                // order to know if the locals should be visible.  If you ADAPT
-                // a function that reuses its exemplar, but should not be able
-                // to see the locals (for instance).
-                //
                 Context* exemplar = ACT_EXEMPLAR(phase);
-                if (CTX_FRAME_PHASE(exemplar) == phase)
+                if (CTX_FRAME_PHASE(exemplar) == phase)  // phase reuses [4]
                     e->visibility = VAR_VISIBILITY_ALL;
                 else
                     e->visibility = VAR_VISIBILITY_INPUTS;
@@ -330,13 +318,14 @@ void Init_Evars(EVARS *e, const Cell* v) {
             assert(Flex_Used(ACT_KEYLIST(action)) <= ACT_NUM_PARAMS(action));
         }
 
-      #if !defined(NDEBUG)
-        e->wordlist = Make_Array_Core(1, NODE_FLAG_MANAGED);
-        Clear_Node_Managed_Bit(e->wordlist);  // [1]
-      #endif
+        Corrupt_Pointer_If_Debug(e->wordlist);
         e->word = nullptr;
         UNUSED(e->word_tail);
     }
+
+  #if DEBUG
+    ++g_num_evars_outstanding;
+  #endif
 }
 
 
@@ -350,6 +339,23 @@ void Init_Evars(EVARS *e, const Cell* v) {
 // in case of errors.  That becomes cheaper in the stackless model where a
 // single setjmp/exception boundary can wrap an arbitrary number of stack
 // levels.  Ultimately there should probably be a Shutdown_Evars().
+//
+// 1. A simple specialization of a function would provide a value that the
+//    function should see as an argument when it runs.  But layers above that
+//    will use VAR_MARKED_HIDDEN so higher abstractions will not be aware of
+//    that specialized-out variable.
+//
+//    (Put another way: when a function copies an exemplar and uses it as its
+//    own, the fact that exemplar points at the phase does not suddenly give
+//    access to the private variables that would have been inaccessible before
+//    the copy.  The hidden bit must be added during that copy in order to
+//    honor this property.)
+//
+// 2. !!! Unfortunately, the code for associating comments with return and
+//    output parameters uses a FRAME! for the function to do it.  This means
+//    that it expects keys for those values as public.  A rethought mechanism
+//    will be needed to keep HELP working if we actually suppress these from
+//    the "input" view of a FRAME!.
 //
 bool Did_Advance_Evars(EVARS *e) {
     if (e->visibility == VAR_VISIBILITY_NONE)
@@ -402,19 +408,11 @@ bool Did_Advance_Evars(EVARS *e) {
                 continue;  // public should not see specialized args
 
             if (e->visibility == VAR_VISIBILITY_INPUTS) {
-                //
-                // !!! Unfortunately, the code for associating comments with
-                // return and output parameters uses a FRAME! for the function
-                // to do it.  This means that it expects keys for those values
-                // as public.  A rethought mechanism will be needed to keep
-                // HELP working if we actually suppress these from the
-                // "input" view of a FRAME!.
-                //
               #if 0
                 ParamClass pclass = Cell_ParamClass(e->param);
-                if (pclass == PARAMCLASS_RETURN)
+                if (pclass == PARAMCLASS_RETURN)  // false "input" [2]
                     continue;
-                if (pclass == PARAMCLASS_OUTPUT)
+                if (pclass == PARAMCLASS_OUTPUT)  // false "input" [2]
                     continue;
               #endif
             }
@@ -435,10 +433,14 @@ void Shutdown_Evars(EVARS *e)
     if (e->word)
         GC_Kill_Flex(e->wordlist);
     else {
-      #if !defined(NDEBUG)
-        GC_Kill_Flex(e->wordlist);  // dummy to catch missing shutdown
+      #if DEBUG
+        assert(Is_Pointer_Corrupt_Debug(e->wordlist));
       #endif
     }
+
+  #if DEBUG
+    --g_num_evars_outstanding;
+  #endif
 }
 
 
