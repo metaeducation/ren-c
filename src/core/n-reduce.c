@@ -681,14 +681,16 @@ Bounce Composer_Executor(Level* const L)
         return RAISE(Error_Need_Non_Null_Raw());  // [(null)] => error!
 
     if (Is_Void(OUT)) {
-        if (group_heart == REB_GROUP and group_quote_byte == NOQUOTE_1)
+        if (group_heart == REB_GROUP and group_quote_byte == NOQUOTE_1) {
+            L->u.compose.changed = true;
             goto handle_next_item;  // compose [(void)] => []
+        }
 
-        // !!! At one point, [''(void)] => [''] but today that's not possible.
-        // We could make the group vanish anyway, [''(void)] => [], but that
-        // seems like a bad idea.  Give an error.
+        // We can actually handle e.g. [''(void)] now as being some levels of
+        // quotedness of the apostrophe SIGIL! (e.g. that would be '' which
+        // is a single-quoted apostrophe).  Probably not meaningful??
         //
-        fail ("COMPOSE cannot quote groups that vanished with void");
+        fail ("COMPOSE of quoted VOIDs as quoted apostrophe SIGIL! disabled");
     }
     else if (Is_Antiform(OUT))
         return RAISE(Error_Bad_Antiform(OUT));
