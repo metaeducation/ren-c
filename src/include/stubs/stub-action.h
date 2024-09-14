@@ -151,6 +151,11 @@ INLINE Value* Init_Return_Signal_Untracked(Sink(Value*) out, char ch) {
 #define Init_Return_Signal(out,ch) \
     TRACK(Init_Return_Signal_Untracked((out), (ch)))
 
+INLINE char Cell_Return_Type(const Cell* cell) {
+    assert(cast(Kind, Cell_Heart(cell)) == REB_T_RETURN_SIGNAL);
+    return cast(char, PAYLOAD(Any, cell).first.u);
+}
+
 INLINE bool Is_Bounce_An_Atom(Bounce b)
   { return HEART_BYTE(cast(Value*, b)) != REB_T_RETURN_SIGNAL; }
 

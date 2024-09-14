@@ -278,7 +278,7 @@ DECLARE_NATIVE(terminate)
 
     if (GetCurrentProcessId() == cast(DWORD, VAL_INT32(ARG(pid))))
         return RAISE(
-          "Use QUIT or EXIT-REBOL to terminate current process, vs. TERMINATE"
+          "QUIT or SYS.UTIL/EXIT terminate current process, not TERMINATE"
         );
 
     DWORD err = 0;
@@ -317,7 +317,7 @@ DECLARE_NATIVE(terminate)
     if (getpid() == VAL_INT32(ARG(pid))) {
         // signal is not as reliable for this purpose
         // it's caught in main.c as to stop the evaluation
-        fail ("Use QUIT or EXIT-REBOL to terminate current process, instead");
+        fail ("QUIT or SYS.UTIL/EXIT to terminate current process, instead");
     }
     kill_process(VAL_INT32(ARG(pid)), SIGTERM);
     return nullptr;

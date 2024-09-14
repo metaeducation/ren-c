@@ -38,6 +38,9 @@ rescue: enclose get $enrescue func [f [frame!]] [
     return match error! eval f
 ]
 
+exit: get $lib/exit
+lib.exit: ~  ; forcing long name of SYS.UTIL/EXIT
+
 module: func [
     {Creates a new module}
 

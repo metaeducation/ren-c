@@ -73,25 +73,20 @@ DECLARE_NATIVE(quit)
 
 
 //
-//  exit-rebol: native [
+//  exit: native [
 //
-//  "Stop the current Rebol interpreter (cannot be caught by CATCH/QUIT)"
+//  "Stop the current Rebol interpreter immediately, return exit status"
 //
 //      return: []
 //      status "See: http://en.wikipedia.org/wiki/Exit_status"
-//          [~null~ <end> integer!]
+//          [integer!]
 //  ]
 //
-DECLARE_NATIVE(exit_rebol)
+DECLARE_NATIVE(exit)  // moved to SYS.UTIL/EXIT by boot code, for safety
 {
-    INCLUDE_PARAMS_OF_EXIT_REBOL;
+    INCLUDE_PARAMS_OF_EXIT;
 
-    int status;
-    if (Is_Nulled(ARG(status)))
-        status = EXIT_SUCCESS;
-    else
-        status = VAL_INT32(ARG(status));
-
+    int status = VAL_INT32(ARG(status));
     exit(status);
 }
 
