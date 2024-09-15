@@ -695,7 +695,7 @@ sys.util/make-scheme [
                 fail make-http-error "Missing host address"
             ]
             port.state: make object! [
-                mode: ~inited~  ; original http confusingly called this "state"
+                mode: ~<inited>~  ; original confusingly called this "state"
                 connection: ~
                 info: make port.scheme.info [type: 'file]
             ]

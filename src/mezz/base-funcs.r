@@ -802,7 +802,15 @@ raise: func [
 
     return: []
     reason "ERROR! value, ID, URL, message text, or failure spec"
-        [<end> error! word! path! url! text! block! tripwire?]
+        [
+            <end>  ; non-specific failure
+            error!  ; already constructed error
+            the-word!  ; invalid-arg error with variable name/value
+            text!  ; textual error message
+            tripwire?  ; same as text (but more attention grabbing at callsite)
+            block!  ; mixture of object error spec and message
+            word! path! url!  ; increasing specificity of error ID
+        ]
     /blame "Point to variable or parameter to blame"
         [word! frame!]
 ][
@@ -825,29 +833,31 @@ raise: func [
     ;
     ;     fail/with [{The key} :key-name {is invalid}] [key-name: key]
 
-    ; !!! PATH! doesn't do BINDING OF, and in the general case it couldn't
-    ; tell you where it resolved to without evaluating, just do WORD! for now.
-    ;
-    let frame: match frame! maybe binding of maybe match word! maybe blame
-
     let error: switch/type :reason [
         error! [reason]
+        the-word! [
+            blame: default [to word! reason]
+            make error! [
+                id: 'invalid-arg
+                arg1: label of binding of reason
+                arg2: to word! reason
+                arg3: get reason
+            ]
+        ]
         text! [make error! reason]
         word! [
-            make error! [
-                type: 'Script
+            make error! [  ; no Type, so no message
                 id: reason
             ]
         ]
         path! [
-            if word? last reason [
-                make error! [
-                    type: 'User
-                    id: last reason
-                    message: to text! reason
-                ]
-            ] else [
-                make error! to text! reason
+            assert [  ; limited idea for now
+                2 = length of reason
+                'core = first reason
+            ]
+            make error! [  ; will look up message in core error table
+                type: 'Script
+                id: last reason
             ]
         ]
         url! [make error! to text! reason]  ; should use URL! as ID
@@ -858,29 +868,16 @@ raise: func [
             ])
         ]
     ] else [
-        null? reason so make error! compose [
+        null? reason so make error! [
             type: 'Script
-            (spread case [
-                frame and (blame) '[
-                    id: 'invalid-arg
-                    arg1: label of frame
-                    arg2: as word! uppercase make text! blame
-                    arg3: get blame
-                ]
-                frame and (not blame) '[
-                    id: 'no-arg
-                    arg1: label of frame
-                    arg2: as word! uppercase make text! blame
-                ]
-                blame and (get blame) '[
-                    id: 'bad-value
-                    arg1: get blame
-                ]
-            ] else '[
-                id: 'unknown-error
-            ])
+            id: 'unknown-error
         ]
     ]
+
+    ; !!! PATH! doesn't do BINDING OF, and in the general case it couldn't
+    ; tell you where it resolved to without evaluating, just do WORD! for now.
+    ;
+    let frame: match frame! maybe binding of maybe match word! maybe blame
 
     if not pick error 'where [
         ;

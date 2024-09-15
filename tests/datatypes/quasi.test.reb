@@ -212,10 +212,10 @@
 
 
 (
-    a: ~bad~
-    ^a = '~bad~
+    a: ~okay~
+    ^a = '~okay~
 )
-(not error? trap [set $a '~bad~])
+(not error? trap [set $a '~okay~])
 
 
 [

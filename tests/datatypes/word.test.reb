@@ -144,9 +144,13 @@
     a-value: 0.0.0
     same? :a-value a-value
 )
+~bad-word-get~ !! (
+    a-value: ~<bad>~
+    a-value = ~<bad>~
+)
 (
-    a-value: ~bad~
-    a-value = ~bad~
+    a-value: ~<bad>~
+    ^a-value = '~<bad>~
 )
 (
     a-value: 'a

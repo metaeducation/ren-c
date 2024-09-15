@@ -82,7 +82,7 @@
     'zero-divide = (entrap [1 / 0]).id
 )
 #entrap (
-    f: make frame! lambda [] [raise ~test~]
+    f: make frame! lambda [] [raise 'test]
     all [
         error? e: entrap f
         e.id = 'test
@@ -102,7 +102,7 @@
     null? trap [10 + 20]
 )
 #trap (
-    e: trap [raise ~something~]  ; trap before assign attempt
+    e: trap [raise 'something]  ; trap before assign attempt
     all [
         error? e
         e.id = 'something
@@ -111,7 +111,7 @@
 #trap (
     a: <a>
     b: <b>
-    e: trap [[a b]: raise ~something~]  ; trap after assign attempt
+    e: trap [[a b]: raise 'something]  ; trap after assign attempt
     all [
         error? e
         e.id = 'something

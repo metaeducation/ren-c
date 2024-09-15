@@ -447,7 +447,7 @@ compiler-class: make object! [
         return: [logic?!]
         path [<maybe> any-string?]
     ][
-        fail ~tbd~
+        fail "TBD"
     ]
 ]
 

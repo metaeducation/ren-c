@@ -21,16 +21,13 @@
 
 
 ~bad-antiform~ !! (
-    compose [(~bad~) * <ok>]
+    compose [(~<bad>~) * <ok>]
 )
 ~need-non-null~ !! (
     compose [(null) * <ok>]
 )
 ~need-non-null~ !! (
     compose [(~null~) * <ok>]
-)
-~bad-antiform~ !! (
-    compose [(~false~)]
 )
 ([~false~] = compose [('~false~)])
 

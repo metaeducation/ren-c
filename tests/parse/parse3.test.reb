@@ -89,16 +89,15 @@
 ]
 
 
-; WORD! isotopes cause an error, quasi-word cannot be used as rule
 [
-    ~bad-antiform~ !! (
-        foo: ~bad~
+    ~bad-word-get~ !! (
+        foo: ~<bad>~
         parse3 "a" [foo]
         ok
     )
     ~???~ !! (
-        foo: '~bad~
-        parse3 [~bad~] [foo <end>]
+        foo: '~<bad>~
+        parse3 [~<bad>~] [foo <end>]
         ok
     )
 ]

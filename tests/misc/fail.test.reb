@@ -24,14 +24,14 @@
 
 ; Failing instead with a quasi-WORD? will make the error have that ID
 ;
-(e: sys.util/rescue [fail ~some-error-id~], e.id = 'some-error-id)
+(e: sys.util/rescue [fail 'some-error-id], e.id = 'some-error-id)
 
 
 ; FAIL can be given a /BLAME parameter.  This gives a more informative message,
 ; even when no text is provided.
 [
     (
-        foo: func [x] [fail $x]
+        foo: func [x] [fail @x]
 
         e: sys.util/rescue [foo 10]
         all [

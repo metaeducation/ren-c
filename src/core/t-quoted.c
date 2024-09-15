@@ -686,19 +686,19 @@ DECLARE_INTRINSIC(pack_q)
 
 
 //
-//  antiword?: native/intrinsic [
+//  keyword?: native/intrinsic [
 //
-//  "Tells you if argument is an antiform word"
+//  "Tells you if argument is an antiform word, reserved for special purposes"
 //
 //      return: [logic?]
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(antiword_q)
+DECLARE_INTRINSIC(keyword_q)
 {
     UNUSED(phase);
 
-    Init_Logic(out, Is_Antiword(arg));
+    Init_Logic(out, Is_Keyword(arg));
 }
 
 

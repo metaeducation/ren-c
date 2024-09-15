@@ -17,10 +17,7 @@ REBOL [
     }
 ]
 
-; !!! UPARSE is not available in SYS because it is higher level.  We hack it
-; up so that when %uparse.reb runs it pokes itself into sys.util/parse
-;
-parse: ~sys-util-parse-not-set-yet~
+parse: ~<higher-level %uparse.r hasn't set SYS.UTIL/PARSE yet>~
 
 make-port*: func [
     "SYS: Called by system on MAKE of PORT! port from a scheme."

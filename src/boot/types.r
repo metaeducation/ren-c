@@ -237,7 +237,7 @@ pair        "two dimensional point or size"
 <ANY-WORD?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     word        "evaluates a variable or action"
-    ~antiword~  (CELL_FLAG_FIRST_IS_NODE)  ; ??? Better name than antiword?
+    ~keyword~   (CELL_FLAG_FIRST_IS_NODE)
                 [any-utf8? any-plain-value?]
                 [word        *       +]
 

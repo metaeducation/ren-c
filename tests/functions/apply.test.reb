@@ -78,11 +78,11 @@
 [
     (
         non-detector: lambda [arg] [arg]
-        ~baddie~ = apply get $non-detector [~baddie~]
+        'a = apply get $non-detector [~['a 'b]~]
     )
     (
         detector: lambda [^arg] [arg]
-        '~baddie~ = apply get $detector [~baddie~]
+        '~['a 'b]~ = apply get $detector [~['a 'b]~]
     )
 ]
 

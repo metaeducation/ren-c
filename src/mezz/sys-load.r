@@ -408,7 +408,7 @@ import*: func [
     return: "Loaded module"
         [~null~ module!]
     @product' "Evaluative product of module body (only if WHERE is BLANK!)"
-        [~cached~ ~registered~ ~nameless~ quoted? quasi?]
+        [~<cached>~ ~<registered>~ ~<nameless>~ quoted? quasi?]
     where "Where to put exported definitions from SOURCE"
         [~null~ module!]
     source [
@@ -452,18 +452,18 @@ import*: func [
         assert [not into]  ; INTO isn't applicable unless scanning new source
 
         let name: (adjunct-of source).name else [
-            product': ~nameless~
+            product': ~<nameless>~
             return source  ; no name, so just do the RESOLVE to get variables
         ]
         let mod: (select/skip system.modules name 2) else [
             append system.modules spread :[name source]  ; not in mod list, add
-            product': ~registered~
+            product': ~<registered>~
             return source
         ]
         if mod != source [
             fail ["Conflict: more than one module instance named" name]
         ]
-        product': ~cached~
+        product': ~<cached>~
         return source
     ]
 
@@ -543,7 +543,7 @@ import*: func [
 
     let name: select maybe hdr 'name
     (select/skip system.modules maybe name 2) then cached -> [
-        product': ~cached~
+        product': ~<cached>~
         return cached
     ]
 

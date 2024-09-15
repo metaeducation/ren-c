@@ -247,7 +247,7 @@ main-startup: func [
                 if not empty? instruction [append/line instruction ',]
                 append/line instruction spread compose/deep/label item <*>
             ]
-            fail ~unreachable~
+            fail ~<unreachable>~
         ]
     ]
 
@@ -787,7 +787,7 @@ main-startup: func [
         ]
     ]
 
-    main-startup: ~<main-startup done>~  ; free function for GC
+    main-startup: ~<MAIN-STARTUP done>~  ; free function for GC
 
     if 'yes = quit-when-done [  ; can be null, YES? would complain...
         return <quit>  ; quits after instructions done

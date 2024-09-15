@@ -442,7 +442,7 @@ default-combinators: make map! reduce [
                 return unmeta result'
             ]
         ]
-        fail ~unreachable~
+        fail ~<unreachable>~
     ]
 
     'while combinator [
@@ -472,7 +472,7 @@ default-combinators: make map! reduce [
                 continue
             ]
         ]
-        fail ~unreachable~
+        fail ~<unreachable>~
     ]
 
     'cycle combinator [
@@ -492,7 +492,7 @@ default-combinators: make map! reduce [
                 continue
             ]
         ]
-        fail ~unreachable~
+        fail ~<unreachable>~
     ]
 
     'tally combinator [
@@ -513,7 +513,7 @@ default-combinators: make map! reduce [
             ]
             count: count + 1
         ]
-        fail ~unreachable~
+        fail ~<unreachable>~
     ]
 
     'break combinator [
@@ -717,7 +717,7 @@ default-combinators: make map! reduce [
             remainder: input  ; TO means do not include match range
             return unmeta result'
         ]
-        fail ~unreachable~
+        fail ~<unreachable>~
     ]
 
     'thru combinator [
@@ -737,7 +737,7 @@ default-combinators: make map! reduce [
             ]
             return unmeta result'
         ]
-        fail ~unreachable~
+        fail ~<unreachable>~
     ]
 
     'seek combinator [
@@ -795,7 +795,7 @@ default-combinators: make map! reduce [
             ]
             return copy/part start limit
         ]
-        fail ~unreachable~
+        fail ~<unreachable>~
     ]
 
     === TAG! SUB-DISPATCHING COMBINATOR ===

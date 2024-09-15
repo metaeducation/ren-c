@@ -244,7 +244,7 @@ trim: func [
     ;
     if any-context? series [
         if any [head_TRIM tail_TRIM auto lines all_TRIM with] [
-            fail ~bad-refines~
+            fail 'core/bad-refines
         ]
         trimmed: make (kind of series) collect [
             for-each [key val] series [
@@ -265,7 +265,7 @@ trim: func [
                 ; Note: /WITH might be able to work, e.g. if it were a MAP!
                 ; or BLOCK! of values to remove.
                 ;
-                fail ~bad-refines~
+                fail 'core/bad-refines
             ]
             rule: blank!
 
@@ -288,7 +288,7 @@ trim: func [
                     any [auto head_TRIM tail_TRIM lines]
                 ]
             ][
-                fail ~bad-refines~
+                fail 'core/bad-refines
             ]
 
             rule: case [
@@ -303,7 +303,7 @@ trim: func [
 
         binary? series [
             if any [auto lines] [
-                fail ~bad-refines~
+                fail 'core/bad-refines
             ]
 
             rule: case [

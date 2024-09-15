@@ -179,7 +179,7 @@ INLINE bool IS_QUOTED_WORD(const Atom* v) {
 INLINE bool Is_Anti_Word_With_Id(Need(const Value*) v, SymId id) {
     assert(id != 0);
 
-    if (not Is_Antiword(v))
+    if (not Is_Keyword(v))
         return false;
 
     return id == Cell_Word_Id(v);

@@ -70,7 +70,7 @@
 ; a pure NULL, for use with the API...and that this provoking quasivalue be
 ; something the API puts in automatically when a nullptr is given as input.
 (
-    null? (~null~ then [fail ~unreachable~])
+    null? (~null~ then [fail ~<unreachable>~])
 )
 
 (~ then [okay])
@@ -107,16 +107,16 @@
 [
     ~no-arg~ !! (else [~unused~])
     ~???~ !! (() else [okay])  ; should NIHIL with enfix look like no value?
-    ~???~ !! (1000 + 20 () then [fail ~unreachable~])
+    ~???~ !! (1000 + 20 () then [fail ~<unreachable>~])
 
     (void else [okay])
-    (1020 = (1000 + 20 elide-if-void (void then [fail ~unreachable~])))
+    (1020 = (1000 + 20 elide-if-void (void then [fail ~<unreachable>~])))
 
     ((void) else [okay])
-    (void? (1000 + 20 ((void) then [fail ~unreachable~])))
+    (void? (1000 + 20 ((void) then [fail ~<unreachable>~])))
 
     (eval [] else [okay])
-    (void? eval [] then [fail ~reachable~])
+    (void? eval [] then [fail ~<unreachable>~])
 ]
 
 [

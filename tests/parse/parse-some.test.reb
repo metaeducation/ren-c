@@ -22,7 +22,7 @@
         parse "abc" [
             some [to <end> (n: n + 1, if n = 50 [throw <infinite>])]
         ]
-        fail ~unreachable~
+        fail ~<unreachable>~
     ]
 )(
     n: 0

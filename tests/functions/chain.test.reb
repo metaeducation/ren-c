@@ -15,7 +15,7 @@
 
 (
     metaraise: cascade [get $raise, get $meta/except]
-    e: metaraise ~test~
+    e: metaraise 'test
     all [
         error? e
         e.id = 'test

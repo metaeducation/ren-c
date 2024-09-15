@@ -769,7 +769,7 @@ client-key-exchange: func [
             ; initialization vector, so the ctx does not use one for the whole
             ; session.  Poison session vectors to make sure they're unused.
             ;
-            ctx.client-iv: ctx.server-iv: ~per-message~
+            ctx.client-iv: ctx.server-iv: ~<per-message>~
         ]
     ]
 

@@ -1435,15 +1435,15 @@ DECLARE_NATIVE(switch)
 //
 //  default: enfix native [
 //
-//  "Set word or path to a default value if it is not set yet"
+//  "Set word or path to a calculated value if it is not set"
 //
-//      return: "Former value or branch result, can only be null if no target"
+//      return: "Former value or branch result"
 //          [any-value?]
-//      :target "Word or path which might be set appropriately (or not)"
+//      :target "Word or path which might be set (or not)"
 //          [set-group! set-word! set-tuple!]  ; to left of DEFAULT
 //      :branch "If target needs default, this is evaluated and stored there"
 //          [any-branch?]
-//      /predicate "Test for what's considered empty (default is null + void)"
+//      /predicate "Test for what's considered *not* needing to be defaulted"
 //          [<unrun> frame!]
 //  ]
 //
@@ -1455,8 +1455,11 @@ DECLARE_NATIVE(default)
 //    have an answer for this problem in the form of giving back a block of
 //    `steps` which can resolve the variable without doing more evaluations.
 //
-// 2. Usually we only want to consider variables with states that are known
-//    to mean "emptiness" as candidates for overriding.
+// 2. Antiforms of BLANK!, TAG!, and PARAMETER! are considered not set.
+//    NULL is considered not set, because DEFAULT is used in particular with
+//    unused refinement values...so it kind of has to be.  Not clear what
+//    should be done with VOID, but given that branches consider it empty
+//    the same as null it seems it might be good to include it as not set.
 {
     INCLUDE_PARAMS_OF_DEFAULT;
 
@@ -1491,7 +1494,7 @@ DECLARE_NATIVE(default)
         return CONTINUE(SPARE, predicate, OUT);
     }
 
-    if (not Is_Nothing(OUT) and not Is_Nulled(OUT))
+    if (not (Any_Vacancy(OUT) or Is_Nulled(OUT) or Is_Void(OUT)))
         return OUT;  // consider it a "value" [2]
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;
@@ -1499,8 +1502,8 @@ DECLARE_NATIVE(default)
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
 
-    if (Is_Trigger(stable_SPARE))
-        return OUT;
+    if (Is_Trigger(stable_SPARE))  // e.g. if INTEGER? no default needed
+        return OUT;  // so return the value as-is
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;
     return CONTINUE(SPARE, branch, OUT);
