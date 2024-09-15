@@ -8,12 +8,12 @@
 ; the built frame matches what we'd expect by building manually.
 (
     f1: make frame! unrun :append
-    assert [unspecialized? f1.return]
+    assert [unspecialized? $f1.return]
     f1.series: [a b c]
     f1.value: <d>
-    assert [unspecialized? f1.part]
-    assert [unspecialized? f1.dup]
-    assert [unspecialized? f1.line]
+    assert [unspecialized? $f1.part]
+    assert [unspecialized? $f1.dup]
+    assert [unspecialized? $f1.line]
 
     mirror: reframer lambda [f [frame!]] [f]
     f2: mirror append [a b c] <d>

@@ -289,7 +289,7 @@ INLINE void Set_Parameter_String(Cell* param, Option(const String*) string) {
 // interface of the function.
 //
 INLINE bool Is_Specialized(const Value* v) {
-    if (Is_Unspecialized(v)) {
+    if (Is_Hole(v)) {
         if (Get_Cell_Flag_Unchecked(v, VAR_MARKED_HIDDEN))
             assert(!"Unspecialized parameter is marked hidden!");
         return false;
@@ -327,4 +327,19 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
 
 INLINE bool Is_Parameter_Unconstrained(const Cell* param) {
     return Cell_Parameter_Spec(param) == nullptr;  // e.g. `[/refine]`
+}
+
+
+// There's no facility for making automatic typesets that include antiforms
+// in the %types.r table.  If there were, this would be defined there.
+//
+INLINE bool Any_Vacancy(Need(const Value*) a) {
+    if (not Is_Antiform(a))
+        return false;
+
+    Heart heart = Cell_Heart(a);
+    if (heart == REB_BLANK or heart == REB_PARAMETER or heart == REB_TAG)
+        return true;
+
+    return false;
 }

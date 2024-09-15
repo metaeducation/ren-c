@@ -86,14 +86,14 @@
     x: ~, y: 10
     all [
         <result> = parse "a" [x: y: (void) "a" (<result>)]
-        voided? $x
+        void? x
         void? y
     ]
 )(
     obj: make object! [x: ~, y: 10]
     all [
         <result> = parse "a" [obj.x: obj.y: (void) "a" (<result>)]
-        voided? $obj.x
+        void? obj.x
         void? obj.y
     ]
 )

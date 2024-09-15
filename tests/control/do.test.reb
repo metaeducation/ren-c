@@ -75,7 +75,7 @@
         x: (1 + 2 y: (void eval/undecayed [comment "HI"]))
         all [
             void? x
-            voided? $y
+            void? y
         ]
     )
 ]

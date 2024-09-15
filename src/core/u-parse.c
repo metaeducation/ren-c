@@ -393,7 +393,7 @@ static void Print_Parse_Index(Level* level_) {
 // a quasiform.  Fetched quasiforms are errors.
 //
 static const Element* Get_Parse_Value(
-    Sink(Value*) cell,  // storage for fetched values; must be GC protected
+    Sink(Value*) sink,  // storage for fetched values; must be GC protected
     const Element* rule,
     Specifier* specifier
 ){
@@ -401,40 +401,40 @@ static const Element* Get_Parse_Value(
         if (VAL_CMD(rule))  // includes IS_BAR()...also a "command"
             return rule;
 
-        Get_Word_May_Fail(cell, rule, specifier);
+        Get_Word_May_Fail(sink, rule, specifier);
     }
     else if (Is_Tuple(rule)) {
-        Get_Var_May_Fail(cell, rule, specifier, false);
+        Get_Var_May_Fail(sink, rule, specifier, false);
     }
     else
         return rule;
 
-    if (Is_Void(cell)) {  // void means ignore
-        Init_Quasi_Word(cell, Canon(VOID));
-        return cast(Element*, cell);
+    if (Is_Void(sink)) {  // void means ignore
+        Init_Quasi_Word(sink, Canon(VOID));
+        return cast(Element*, sink);
     }
 
-    if (Is_Quasiform(cell)) {
+    if (Is_Quasiform(sink)) {
         fail ("RULE should not look up to quasiforms");
     }
-    else if (Is_Antiform(cell)) {
-        if (Is_Nulled(cell))
+    else if (Is_Antiform(sink)) {
+        if (Is_Nulled(sink))
             fail (Error_Bad_Null(rule));
 
-        if (not Is_Antiform_Get_Friendly(cell))
-            fail (Error_Bad_Word_Get(rule, cell));
+        if (Any_Vacancy(sink))
+            fail (Error_Bad_Word_Get(rule, sink));
 
-        if (Is_Logic(cell) or Is_Splice(cell))
-            Quasify_Antiform(cell);
+        if (Is_Logic(sink) or Is_Splice(sink))
+            Quasify_Antiform(sink);
         else
-            fail (Error_Bad_Antiform(cell));
+            fail (Error_Bad_Antiform(sink));
     }
     else {
-        if (Is_Integer(cell))
+        if (Is_Integer(sink))
             fail ("Use REPEAT on integers https://forum.rebol.info/t/1578/6");
     }
 
-    return cast(Element*, cell);
+    return cast(Element*, sink);
 }
 
 //

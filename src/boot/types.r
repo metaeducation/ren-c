@@ -104,10 +104,10 @@ integer     "64 bit integer"
             [any-number? any-scalar? any-inert?]
             [integer     +       +]
 
-parameter         "function parameter description"
-~unspecialized~   (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
-                  [any-inert?]
-                  [parameter   +       +]
+parameter   "function parameter description"
+~hole~      (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
+            [any-inert?]
+            [parameter   +       +]
 
 bitset      "set of bit flags"
             (CELL_FLAG_FIRST_IS_NODE)
@@ -155,7 +155,7 @@ binary      "series of bytes"
                 [string      *       *]
 
     tag         "markup string (HTML or XML)"
-                (CELL_FLAG_FIRST_IS_NODE)
+    ~tripwire~  (CELL_FLAG_FIRST_IS_NODE)
                 [any-series? any-utf8? any-inert?]
                 [string      *       *]
 

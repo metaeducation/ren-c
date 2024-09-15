@@ -366,7 +366,8 @@ help: func [
 
     let print-args: [list /indent-words] -> [
         for-each key list [
-            let param: select :value to-word noquote key
+            let param: meta* select :value to-word noquote key
+            if param [param: my noquasi]
 
             print [_ _ _ _ key (if param.spec [mold param.spec])]
             if param.text [
@@ -379,7 +380,8 @@ help: func [
     ; that isn't intended for use as a definitional return is a return type.
     ; The concepts are still being fleshed out.
     ;
-    let return-param: select :value 'return
+    let return-param: meta* select :value 'return
+    if return-param [return-param: my noquasi]
 
     print newline
     print [

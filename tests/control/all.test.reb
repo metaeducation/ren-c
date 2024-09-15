@@ -14,16 +14,14 @@
         x: <overwritten>
         all [
             void? x: all []
-            voided? $x
-            void? :x
+            void? x
         ]
     )
     (
         x: <overwritten>
         all [
             void? x: all [void void]
-            voided? $x
-            void? :x
+            void? x
         ]
     )
     (void? if did all [] [<did>])

@@ -340,7 +340,7 @@ void Set_Parameter_Spec(
 
 
 //
-//  unspecialized?: native/intrinsic [
+//  hole?: native/intrinsic [
 //
 //  "Tells you if argument is parameter antiform, used for unspecialized args"
 //
@@ -348,7 +348,7 @@ void Set_Parameter_Spec(
 //      ^value  ; cannot take parameter antiform as normal argument [1]
 //  ]
 //
-DECLARE_INTRINSIC(unspecialized_q)
+DECLARE_INTRINSIC(hole_q)
 //
 // 1. Although the antiform of PARAMETER! is stable, it is fundamental to the
 //    argument gathering process that it represents an unspecialized slot.
@@ -357,7 +357,7 @@ DECLARE_INTRINSIC(unspecialized_q)
 {
     UNUSED(phase);
 
-    Init_Logic(out, Is_Meta_Of_Unspecialized(arg));
+    Init_Logic(out, Is_Meta_Of_Hole(arg));
 }
 
 

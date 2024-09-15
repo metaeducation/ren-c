@@ -764,15 +764,12 @@ Bounce Stepper_Executor(Level* L)
             goto process_action;
         }
 
-        if (
-            Is_Antiform(unwrap L_current_gotten)  // checked second
-            and not Is_Antiform_Get_Friendly(unwrap L_current_gotten)
-        ){
-            fail (Error_Bad_Word_Get(L_current, unwrap L_current_gotten));
-        }
-
         Copy_Cell(OUT, unwrap L_current_gotten);
-        break;
+
+        if (Any_Vacancy(stable_OUT))  // checked second
+            fail (Error_Bad_Word_Get(L_current, OUT));
+
+        break; }
 
 
     //=//// SET-WORD! /////////////////////////////////////////////////////=//
@@ -821,9 +818,6 @@ Bounce Stepper_Executor(Level* L)
         }
         else {
             Decay_If_Unstable(OUT);  // !!! See above regarding rethink
-
-            if (Is_Antiform(OUT) and not Is_Antiform_Set_Friendly(stable_OUT))
-                fail (Error_Bad_Antiform(OUT));
 
             if (Is_Action(OUT))  // !!! Review: When to update labels?
                 INIT_VAL_ACTION_LABEL(OUT, Cell_Word_Symbol(L_current));
@@ -945,7 +939,7 @@ Bounce Stepper_Executor(Level* L)
             if (Is_Action(OUT))
                 fail ("Can't fetch actions (FRAME! antiform) with TUPLE!");
 
-            if (not Is_Antiform_Get_Friendly(stable_OUT))
+            if (Any_Vacancy(stable_OUT))
                 fail (Error_Bad_Word_Get(L_current, stable_OUT));
         }
         break; }
@@ -1045,9 +1039,6 @@ Bounce Stepper_Executor(Level* L)
         }
         else {
             Decay_If_Unstable(OUT);
-
-            if (Is_Antiform(OUT) and not Is_Antiform_Set_Friendly(stable_OUT))
-                fail (Error_Bad_Antiform(OUT));
 
             if (Set_Var_Core_Throws(
                 SPARE,
@@ -1462,11 +1453,6 @@ Bounce Stepper_Executor(Level* L)
                 goto circled_check;
 
             if (
-                Is_Antiform(SPARE) and not Is_Antiform_Set_Friendly(stable_SPARE)
-            ){
-                fail (Error_Bad_Antiform(SPARE));
-            }
-            else if (
                 var_heart == REB_WORD or var_heart == REB_TUPLE
                 or var_heart == REB_THE_WORD or var_heart == REB_THE_TUPLE
             ){

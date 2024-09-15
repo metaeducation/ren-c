@@ -905,10 +905,8 @@ void Get_Var_May_Fail(
         fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 
     if (not any) {
-        if (Is_Antiform(out) and not Is_Antiform_Get_Friendly(out)) {
-            assert(not Is_Void(source));  // should have given null
-            fail (Error_Bad_Word_Get(c_cast(Element*, source), out));
-        }
+        if (Any_Vacancy(out))
+            fail (Error_Bad_Word_Get(var, out));
     }
 }
 
@@ -1153,7 +1151,7 @@ DECLARE_NATIVE(get)
     }
 
     if (not REF(any))
-        if (Is_Antiform(OUT) and not Is_Antiform_Get_Friendly(stable_OUT))
+        if (Any_Vacancy(stable_OUT))
             fail (Error_Bad_Word_Get(source, stable_OUT));
 
     return OUT;
@@ -1526,8 +1524,8 @@ DECLARE_NATIVE(set)
         steps = nullptr;  // no GROUP! evals
 
     if (not REF(any)) {
-        if (Is_Antiform(v) and not Is_Antiform_Set_Friendly(v))
-            fail ("Use SET/ANY to set variables to an antiform");
+        // !!! The only SET prohibitions will be on antiform actions, TBD
+        // (more general filtering available via accessors)
     }
 
     if (Set_Var_Core_Throws(SPARE, steps, target, SPECIFIED, v)) {
@@ -2666,6 +2664,24 @@ DECLARE_INTRINSIC(nothing_q)
     UNUSED(phase);
 
     Init_Logic(out, Is_Nothing(arg));
+}
+
+
+//
+//  tripwire?: native/intrinsic [
+//
+//  "Tells you if argument is a named variant of nothing (acts like unset)"
+//
+//      return: [logic?]
+//      value "Tested to see if it is antiform tag"
+//          [any-value?]
+//  ]
+//
+DECLARE_INTRINSIC(tripwire_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_Tripwire(arg));
 }
 
 

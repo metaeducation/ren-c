@@ -257,7 +257,7 @@ Bounce Action_Executor(Level* L)
 
       skip_fulfilling_arg_for_now:
         assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));
-        assert(Is_Unspecialized(ARG));
+        assert(Is_Hole(ARG));
         continue;
 
   //=//// ACTUAL LOOP BODY ////////////////////////////////////////////////=//
@@ -759,7 +759,7 @@ Bounce Action_Executor(Level* L)
             goto fulfill_and_any_pickups_done;
         }
 
-        assert(Is_Unspecialized(ARG));
+        assert(Is_Hole(ARG));
 
         Set_Action_Executor_Flag(L, DOING_PICKUPS);
         goto fulfill_arg;

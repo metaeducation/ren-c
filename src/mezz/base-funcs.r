@@ -312,6 +312,14 @@ unset?: func [
     return nothing? get/any var
 ]
 
+vacant?: func [
+    "Determine if a variable is nothing, antiform tag, or antiform parameter"
+    return: [logic?]
+    var [word! path! tuple!]
+][
+    return vacancy? get/any var
+]
+
 set?: func [
     {Determine if a variable does not look up to  `~` antiform}
     return: [logic?]
@@ -319,7 +327,6 @@ set?: func [
 ][
     return something? get/any var
 ]
-
 
 defined?: func [
     {Determine if a variable is both "attached", and not unset}
@@ -349,12 +356,20 @@ undefined?: func [
     ]
 ]
 
-voided?: func [
-    {Determine if a variable looks up to a void}
+unspecialized?: func [
+    "Determine if a variable looks up to a parameter antiform"
     return: [logic?]
-    var [word! path! tuple!]
+    var [word! tuple!]
 ][
-    return void? get/any var
+    return hole? get/any var
+]
+
+specialized?: func [
+    "Determine if a variable doesn't look up to a parameter antiform"
+    return: [logic?]
+    var [word! tuple!]
+][
+    return not hole? get/any var
 ]
 
 
@@ -787,18 +802,12 @@ raise: func [
 
     return: []
     reason "ERROR! value, ID, URL, message text, or failure spec"
-        [<end> error! path! url! text! block! antiword?]
+        [<end> error! word! path! url! text! block! tripwire?]
     /blame "Point to variable or parameter to blame"
         [word! frame!]
 ][
-    if (antiword? reason) and (not null? reason) [  ; <end> acts as null nonmeta
-        ;
-        ; !!! It's not clear that users will be able to create arbitrary
-        ; antiform words like ~unreachable~ to occupy the same space as
-        ; ~null~, ~void~, ~NaN~, etc.  But for a time they were allowed
-        ; to say things like (fail ~unreachable~)...permit for now.
-        ;
-        reason: noquasi reify reason
+    if tripwire? reason [
+        reason: as text! noquasi reify reason  ; antiform tag! ~<unreachable>~
     ]
     all [error? reason, not blame] then [
         return raise* reason  ; fast shortcut
@@ -826,9 +835,8 @@ raise: func [
         text! [make error! reason]
         word! [
             make error! [
-                type: 'User
+                type: 'Script
                 id: reason
-                message: to text! reason
             ]
         ]
         path! [

@@ -11,16 +11,14 @@
         x: <overwritten>
         all [
             void? x: any []
-            voided? $x
-            void? :x
+            void? x
         ]
     )
     (
         x: <overwritten>
         all [
             void? x: any [comment "hi"]
-            voided? $x
-            void? :x
+            void? x
         ]
     )
     (<didn't> = if didn't any [] [<didn't>])
