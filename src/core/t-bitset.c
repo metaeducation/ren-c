@@ -111,10 +111,9 @@ Bounce MAKE_Bitset(
     if (Is_Integer(arg))
         return OUT; // allocated at a size, no contents.
 
-    if (Is_Binary(arg)) {
-        Size size;
-        const Byte* at = Cell_Binary_Size_At(&size, arg);
-        memcpy(Binary_Head(bset), at, (size / 8) + 1);
+    if (Is_Binary(arg)) {  // size accounted for by Find_Max_Bit()
+        const Byte* at = Cell_Binary_Size_At(nullptr, arg);
+        memcpy(Binary_Head(bset), at, (len / 8) + 1);
         return OUT;
     }
 

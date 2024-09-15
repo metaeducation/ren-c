@@ -56,11 +56,14 @@
 
 ; From Red's %tests/source/units/series-test.red
 
-(
-    str: " ^(A0) ^-a b  ^- c  ^(2000) "
-    "a b  ^- c" = trim copy str
-)
 
+; &nbsp ^(A0) and EN QUAD ^(2000), we don't support trimming those yet:
+; https://forum.rebol.info/t/what-to-do-about-horrible-grievous-unicode/2280
+;
+; (
+;    str: " ^(A0) ^-a b  ^- c  ^(2000) "
+;    "a b  ^- c" = trim copy str
+; )
 
 [
     (
