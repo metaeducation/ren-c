@@ -160,8 +160,28 @@ clean-path: func [
 ]
 
 
+; This is a limited implementation of ASK just to get the ball rolling; could
+; do much more: https://forum.rebol.info/t/1124
+;
+; 1. Reading a single character is not something possible in buffered line
+;    I/O...you have to either be piping from a file or have a smart console.
+;    The PORT! model in R3-Alpha was less than half-baked, but this READ-CHAR
+;    has been added to try and help some piped I/O scenarios work (e.g. the
+;    Whitespace interpreter test scripts.)
+;
+; 2. Getting NULL from READ-LINE signals "end of file".  At present this only
+;    applies to redirected input--as there's no limit to how much you can type
+;    in the terminal.  But it might be useful to have a key sequence that will
+;    simulate end of file up until the current code finishes, so you can test
+;    eof handling interactively of code that expects to operate on files.
+;
+; 3. The error trapped during the conversion may contain more useful info than
+;    just saying "** Invalid input".  But there's no API for a "light" print
+;    of errors.  Scrub out all the extra information from the error so it isn't
+;    as verbose.
+;
 ask: func [
-    {Ask the user for input}
+    "Ask the user for input"
 
     return: "Null if the input was aborted (via ESCAPE, Ctrl-D, etc.)"
         [any-value?]
@@ -177,9 +197,6 @@ ask: func [
         ]
     ]
 
-    ; This is a limited implementation just to get the ball rolling; could
-    ; do much more: https://forum.rebol.info/t/1124
-    ;
     let prompt: null
     let type: text!
     switch/type question [
@@ -193,62 +210,37 @@ ask: func [
                 fail "ASK currently only supports [{Prompt:} type-block!]"
             ]
         ]
-        fail
+        fail ~<unreachable>~
     ]
 
-    ; !!! Reading a single character is not something possible in buffered line
-    ; I/O...you have to either be piping from a file or have a smart console.
-    ; The PORT! model in R3-Alpha was less than half-baked, but this READ-CHAR
-    ; has been added to try and help some piped I/O scenarios work (e.g. the
-    ; Whitespace interpreter test scripts.)
-    ;
-    if type = issue! [return read-char]
+    if type = issue! [
+        return read-char stdin  ; won't work buffered [1]
+    ]
 
-    ; Loop indefinitely so long as the input can't be converted to the type
-    ; requested (and there's no cancellation).  Print prompt each time.  Note
-    ; that if TEXT! is requested, conversion cannot fail.
-    ;
-    cycle [
+    cycle [  ; while not canceled, loop while input can't be converted to type
         if prompt [
             write-stdout prompt
             write-stdout space  ; space after prompt is implicit
         ]
 
-        let line: read-line else [
-            ;
-            ; NULL signals "end of file".  At present this only applies to
-            ; redirected input--as there's no limit to how much you can type
-            ; in the terminal.  But it might be useful to have a key sequence
-            ; that will simulate end of file up until the current code finishes
-            ; so you can test code interactively that expects to operate on
-            ; files where the end would be reached.
-            ;
+        let line: read-line stdin except e -> [
+            return null  ; escape key pressed, return as null
+        ]
+
+        if not line [  ; can't happen with interactive console [2]
             return null
         ]
 
-        if '~escape~ = line [  ; escape key pressed.
-            return null
+        if type = text! [
+            return line  ; allow empty line, TRIM is caller's responsibility
         ]
 
-        ; The original ASK would TRIM the output, so no leading or trailing
-        ; space.  This assumes that is the caller's responsibility.
-        ;
-        if type = text! [return line]
-
-        ; If not asking for text, currently we assume empty lines mean you
-        ; want to ask again.  (This is questionable...should `ask tag!` allow
-        ; you to give an empty string and return an empty tag?)
-        ;
-        if empty? line [continue]
+        if empty? line [  ; assume means ask again (what about empty TAG!?)
+            continue
+        ]
 
         return (to type line except e -> [
-            ;
-            ; !!! The error trapped during the conversion may contain more
-            ; useful information than just saying "** Invalid input".  But
-            ; there's no API for a "light" printing of errors.  Scrub out all
-            ; the extra information from the error so it isn't as verbose.
-            ;
-            e.file: null
+            e.file: null  ; scrub for light printing of error [3]
             e.line: null
             e.where: null
             e.near: null

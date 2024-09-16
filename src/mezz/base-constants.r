@@ -64,3 +64,11 @@ action?!: &action?
 ;
 blackhole: #
 void: ~void~
+
+
+; These should be aliases for things like system.ports.input and such, but
+; for now just to make the syntax of things look better we define them.
+
+stdin: @stdin
+stdout: @stdout
+stderr: @stderr

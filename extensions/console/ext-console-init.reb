@@ -272,10 +272,10 @@ export console!: make object! [
     input-hook: meth [
         "Receives line input, parse/transform, send back to CONSOLE eval"
 
-        return: "null if EOF, ~escape~ if canceled, else line of text input"
-            [~null~ text! quasi-word?]
+        return: "~escape~ if canceled, else line of text input"
+            [text! '~escape~]
     ][
-        return read-line
+        return read-line stdin except ['~escape~]
     ]
 
     dialect-hook: meth [
@@ -504,11 +504,11 @@ console*: func [
             ]
             <halt> [
                 emit [halt]
-                emit [fail "^-- Shouldn't get here, due to HALT"]
+                emit [fail "^^-- Shouldn't get here, due to HALT"]
             ]
             <die> [
                 emit [quit 1]  ; bash exit code for any generic error
-                emit [fail "^-- Shouldn't get here, due to QUIT"]
+                emit [fail "^^-- Shouldn't get here, due to QUIT"]
             ]
             <bad> [
                 emit #no-unskin-if-error

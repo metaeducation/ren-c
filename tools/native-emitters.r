@@ -133,6 +133,7 @@ export emit-include-params-macro: func [
     ;
     let output-param?: :issue?
     let output-param!: issue!
+    replace/all spec "'@" {#}
     replace/all spec "@" {#}
 
     spec: load-value spec
