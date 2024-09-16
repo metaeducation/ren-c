@@ -453,7 +453,8 @@ static Atom* Finalize_Composer_Level(
     }
 
     Heart heart = Cell_Heart(composee);
-    REBLEN quotes = Cell_Num_Quotes(composee);
+    Byte quote_byte = QUOTE_BYTE(composee);
+    assert(quote_byte != ANTIFORM_0);
 
     if (Any_Sequence_Kind(heart)) {
         if (not Try_Pop_Sequence_Or_Element_Or_Nulled(
@@ -467,7 +468,7 @@ static Atom* Finalize_Composer_Level(
             fail (Error_Bad_Sequence_Init(Stable_Unchecked(out)));
         }
 
-        Quotify(Stable_Unchecked(out), quotes);  // may not be sequence [2]
+        QUOTE_BYTE(out) = quote_byte;  // may shapeshift [2]
         return out;
     }
 
@@ -480,8 +481,8 @@ static Atom* Finalize_Composer_Level(
         heart,
         Pop_Stack_Values_Core(L->baseline.stack_base, flags)
     );
-
-    return Quotify(Stable_Unchecked(out), quotes);
+    QUOTE_BYTE(out) = quote_byte;
+    return out;
 }
 
 
