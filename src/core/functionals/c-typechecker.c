@@ -110,6 +110,42 @@ Phase* Make_Typechecker(Index decider_index) {
 
 
 //
+//  Typecheck_Pack: C
+//
+// It's possible in function type specs to check packs with ~[...]~ notation.
+// This routine itemwise checks a pack against one of those type specs.
+//
+// Note that blocks are legal, as in ~[[integer! word!] object!]~, which would
+// mean that the first item in the pack can be either an integer or word.
+//
+bool Typecheck_Pack(const Element* types, const Atom* pack) {
+    assert(Is_Quasi_Block(types));  // could relax this to any list
+    assert(Is_Pack(pack));  // could relax this also to any list
+    if (Cell_Series_Len_At(types) != Cell_Series_Len_At(pack))
+        return false;
+
+    const Element* pack_tail;
+    const Element* pack_at = Cell_List_At(&pack_tail, pack);
+
+    const Element* types_tail;
+    const Element* types_at = Cell_List_At(&types_tail, types);
+    Specifier* types_specifier = Cell_Specifier(types);
+
+    for (; types_at != types_tail; ++types_at, ++pack_at) {
+        DECLARE_ATOM (temp);  // !!! wasteful to make another cell, rethink
+        Copy_Cell(temp, pack_at);
+        Meta_Unquotify_Undecayed(temp);
+        if (Is_Raised(temp))
+            fail ("Can't have raised errors in packs!");
+        if (not Typecheck_Atom_Core(types_at, types_specifier, temp))
+            return false;
+    }
+
+    return true;
+}
+
+
+//
 //  Typecheck_Atom_Core: C
 //
 // Ren-C has eliminated the concept of TYPESET!, instead gaining behaviors
@@ -160,7 +196,9 @@ bool Typecheck_Atom_Core(
         match_all = true;
         break;
 
+      case REB_QUASIFORM:
       case REB_TYPE_WORD:
+      case REB_WORD:
         item = c_cast(Element*, tests);
         tail = c_cast(Element*, tests) + 1;
         derived = tests_specifier;
@@ -178,6 +216,14 @@ bool Typecheck_Atom_Core(
         Option(const Symbol*) label = nullptr;  // so goto doesn't cross
 
         if (Is_Quasiform(item)) {  // quasiforms e.g. [~null~] mean antiform
+            if (Cell_Heart(item) == REB_BLOCK) {  // typecheck pack
+                if (not Is_Pack(v))
+                    goto test_failed;
+                if (Typecheck_Pack(item, v))
+                    goto test_succeeded;
+                goto test_failed;
+            }
+
             assert(Is_Stable_Antiform_Heart(Cell_Heart(item)));
 
             if (not Is_Antiform(v) or Cell_Heart(item) != Cell_Heart(v))

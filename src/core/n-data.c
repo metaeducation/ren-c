@@ -1139,8 +1139,7 @@ bool Get_Path_Push_Refinements_Throws(
 //
 //  "Produce an invariant list structure for doing multiple GET or SET from"
 //
-//      return: [the-word! the-tuple! the-block!]
-//      @value [any-value?]
+//      return: [~[[the-word! the-tuple! the-block!] any-value?]~]
 //      source [any-word? any-sequence? any-group?]
 //  ]
 //
@@ -1160,9 +1159,13 @@ DECLARE_NATIVE(resolve)
     if (Get_Var_Core_Throws(SPARE, cast(Value*, OUT), source, SPECIFIED))
         return THROWN;
 
-    Move_Cell(ARG(value), stable_SPARE);
+    Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
+    Set_Flex_Len(pack, 2);
 
-    return Proxy_Multi_Returns(level_);
+    Copy_Meta_Cell(Array_At(pack, 0), stable_OUT);  // the steps
+    Copy_Meta_Cell(Array_At(pack, 1), stable_SPARE);  // the value
+
+    return Init_Pack(OUT, pack);
 }
 
 

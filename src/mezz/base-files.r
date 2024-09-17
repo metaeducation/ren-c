@@ -195,14 +195,13 @@ file-type?: func [
     ]
 ]
 
-split-path: func [
-    {Splits and returns file and directory path (either may be null)}
-    return: [~null~ file! url!]
-    @filename [~null~ file! url!]  ; /FILE used by AUGMENT in bootstrap shim
+split-path: func [  ; /FILE used in bootstrap vs. multi-return
+    "Splits and returns ~[directory filename]~ (either may be null)"
+    return: [~[[~null~ file! url!] [~null~ file! url!]]~]
 
     target [file! url!]
     /relax "Allow filenames to be . and .."
-    <local> text directory
+    <local> directory filename
 ][
     parse3 as text! target [
         directory: across opt some thru "/"
@@ -223,5 +222,5 @@ split-path: func [
             fail {. and .. are invalid filenames}
         ]
     ]
-    return directory
+    return pack [directory filename]
 ]

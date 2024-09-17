@@ -308,7 +308,7 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
     assert(pclass != PARAMCLASS_0);  // must have class
     if (flags & PARAMETER_FLAG_REFINEMENT) {
         assert(flags & PARAMETER_FLAG_NULL_DEFINITELY_OK);
-        assert(pclass != PARAMCLASS_RETURN and pclass != PARAMCLASS_OUTPUT);
+        assert(pclass != PARAMCLASS_RETURN);
     }
     UNUSED(pclass);
 

@@ -179,7 +179,7 @@ Array* Expanded_Combinator_Spec(const Value* original)
     ++item;
 
     const Byte utf8[] =
-        "@remainder [any-series?]\n"
+        "/remainder [any-series?]\n"
         "state [frame!]\n"
         "input [any-series?]\n";
 
@@ -621,7 +621,6 @@ static bool Combinator_Param_Hook(
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
     UNUSED(REF(path));  // used by caller of hook
-    UNUSED(ARG(advanced));  // used by caller of hook
 
     Option(SymId) symid = KEY_SYM(key);
 
@@ -723,9 +722,6 @@ static bool Combinator_Param_Hook(
         }
         break; }
 
-      case PARAMCLASS_OUTPUT:
-        break;  // just skip
-
       default:
         fail ("COMBINATOR parameters must be normal or quoted at this time");
     }
@@ -739,9 +735,8 @@ static bool Combinator_Param_Hook(
 //
 //  "Analyze combinator parameters in rules to produce a specialized parser"
 //
-//      return: "Parser function taking only input, returning value + remainder"
-//          [action?]
-//      @advanced [block!]
+//      return: "Parser function and advanced position in rules"
+//          [~[action? block!]~]
 //      c "Parser combinator taking input, but also other parameters"
 //          [frame!]
 //      rules [block!]
@@ -803,18 +798,17 @@ DECLARE_NATIVE(combinatorize)
 
     Drop_GC_Guard(s.ctx);
 
-    // Set the advanced parameter to how many rules were consumed (the hook
-    // steps through ARG(rules), updating its index)
-    //
-    Copy_Cell(ARG(advanced), ARG(rules));
-
     // For debug and tracing, combinators are told where their rule end is
     //
     Copy_Cell(s.rule_end, ARG(rules));
 
-    Init_Frame(OUT, s.ctx, label);
-    Actionify(OUT);
+    Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
+    Set_Flex_Len(pack, 2);
+
+    Quasify(Init_Frame(Array_At(pack, 0), s.ctx, label));  // meta-action
     UNUSED(coupling);  // !!! should be put in there somewhere
 
-    return Proxy_Multi_Returns(level_);
+    Copy_Meta_Cell(Array_At(pack, 1), ARG(rules));  // advanced by param hook
+
+    return Init_Pack(OUT, pack);
 }

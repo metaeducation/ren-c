@@ -1116,29 +1116,26 @@ REBTYPE(String)
         );
 
         if (find == NOT_FOUND)
-            return nullptr;  // don't Proxy_Multi_Returns
+            return nullptr;
 
         REBLEN ret = cast(REBLEN, find);
         assert(ret <= cast(REBLEN, tail));
         UNUSED(find);
 
         if (id == SYM_FIND) {
-            Init_Series_At(
-                ARG(tail),
-                Cell_Heart_Ensure_Noquote(v),
-                Cell_Flex(v),
-                ret + len
-            );
-            Init_Series_At(
-                OUT,
-                Cell_Heart_Ensure_Noquote(v),
-                Cell_Flex(v),
-                ret
-            );
-            return Proxy_Multi_Returns(level_);
-        }
+            Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
+            Set_Flex_Len(pack, 2);
 
-        assert(id == SYM_SELECT);
+            Copy_Meta_Cell(Array_At(pack, 0), v);
+            VAL_INDEX_RAW(Array_At(pack, 0)) = ret;
+
+            Copy_Meta_Cell(Array_At(pack, 1), v);
+            VAL_INDEX_RAW(Array_At(pack, 1)) = ret + len;
+
+            return Init_Pack(OUT, pack);
+        }
+        else
+            assert(id == SYM_SELECT);
 
         ++ret;
         if (ret == tail)

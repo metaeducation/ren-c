@@ -1021,28 +1021,32 @@ REBTYPE(List)
         );
 
         if (find == NOT_FOUND)
-            return nullptr;  // don't Proxy_Multi_Returns
+            return nullptr;
 
         REBLEN ret = cast(REBLEN, find);
         assert(ret <= limit);
         UNUSED(find);
 
         if (id == SYM_FIND) {
-            Copy_Cell(ARG(tail), list);
-            VAL_INDEX_RAW(ARG(tail)) = ret + len;
+            Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
+            Set_Flex_Len(pack, 2);
 
-            Copy_Cell(OUT, list);
-            VAL_INDEX_RAW(OUT) = ret;
+            Copy_Meta_Cell(Array_At(pack, 0), list);
+            VAL_INDEX_RAW(Array_At(pack, 0)) = ret;
 
-            return Proxy_Multi_Returns(level_);
+            Copy_Meta_Cell(Array_At(pack, 1), list);
+            VAL_INDEX_RAW(Array_At(pack, 1)) = ret + len;
+
+            return Init_Pack(OUT, pack);
         }
-        else {
-            ret += len;
-            if (ret >= limit)
-                return nullptr;
+        else
+            assert(id == SYM_SELECT);
 
-            Derelativize(OUT, Array_At(arr, ret), specifier);
-        }
+        ret += len;
+        if (ret >= limit)
+            return nullptr;
+
+        Derelativize(OUT, Array_At(arr, ret), specifier);
         return Inherit_Const(stable_OUT, list); }
 
     //-- Modification:

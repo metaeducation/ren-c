@@ -147,7 +147,7 @@ void Set_Parameter_Spec(
     uintptr_t* flags = &PARAMETER_FLAGS(param);
     if (*flags & PARAMETER_FLAG_REFINEMENT) {
         assert(*flags & PARAMETER_FLAG_NULL_DEFINITELY_OK);
-        assert(pclass != PARAMCLASS_RETURN and pclass != PARAMCLASS_OUTPUT);
+        assert(pclass != PARAMCLASS_RETURN);
     }
     UNUSED(pclass);
 
@@ -176,8 +176,10 @@ void Set_Parameter_Spec(
                 *flags |= PARAMETER_FLAG_NOTHING_DEFINITELY_OK;
                 continue;
             }
-            if (not Is_Stable_Antiform_Heart(Cell_Heart(item)))
-                fail (item);
+            if (not Is_Stable_Antiform_Heart(Cell_Heart(item))) {
+                if (Cell_Heart(item) != REB_BLOCK)  // typecheck packs ok
+                    fail (item);
+            }
 
             if (Cell_Heart(item) != REB_WORD) {
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;

@@ -313,13 +313,9 @@ at: generic [
 find: generic [
     {Searches for the position where a matching value is found}
 
-    return: "position found, else null - logic true if non-positional find"
-        [~null~ any-series? logic?]
-    @tail "Returns the end of the found data"
-        [~null~ any-series?]
-    series [
-        <maybe> blank! any-series? any-context? map!
-    ]
+    return: "position found and tail of find, else null"
+        [~null~ ~[any-series? any-series?]~]
+    series [<maybe> blank! any-series?]
     pattern "What to find, if an action call as a predicate on each item"
         [<maybe> element? splice? action?]
     /part "Limits the search to a given length or position"
@@ -334,7 +330,6 @@ select: generic [
     {Searches for a value; returns the value that follows, else null}
 
     return: [any-value?]
-    @tail []  ; for frame compatibility with FIND
     series [<maybe> blank! any-series? any-context? map! bitset!]
     value [<maybe> element? splice? action?]
     /part "Limits the search to a given length or position"

@@ -255,10 +255,8 @@ process-tests: func [
 export do-recover: func [
     {Executes tests in the FILE and recovers from crash}
 
-    return: "The log file that was generated"
-        [file!]
-    @summary "Textual summary of the test results"
-        [text!]
+    return: "The log file that was generated, and textual summary of results"
+        [~[file! text!]~]
     file [file!] {test file}
     flags [block!] {which flags to accept}
     code-checksum [binary! blank!]
@@ -394,6 +392,7 @@ export do-recover: func [
         return log-file
     ]
 
+    let summary
     process-tests test-sources :run-test-cluster then [
         summary: spaced [
             "system.version:" system.version LF
@@ -416,5 +415,5 @@ export do-recover: func [
         log [summary]
     ]
 
-    return log-file
+    return pack [log-file summary]
 ]

@@ -15,11 +15,8 @@
 ; that can take advantage of the shorthand.
 
 [
-    (test: func [x @y @z] [
-        y: <y-result>
-        z: <z-result>
-
-        return 304
+    (test: func [x] [
+        return pack [304 <y-result> <z-result>]
     ]
     ok)
 
@@ -89,9 +86,8 @@
 
 [
     (
-        foo: func [return: [integer!] @other [integer!] arg] [
-            other: 10
-            return 20
+        foo: func [return: [~[integer! integer!]~] arg] [
+            return pack [20 10]
         ]
         null? until [[@ _]: foo break]
     )
@@ -152,24 +148,22 @@
     )
 
     (
-        foo: func [return: [integer!] @other [integer!]] [
-            other: 10
-            return 20
+        foo: func [return: [~[integer! integer!]~]] [
+            return pack [20 10]
         ]
         all [
-            '~weird~ = ([^x /y]: foo then [~weird~])
-            x = '~weird~
+            '~<weird>~ = ([^x /y]: foo then [~<weird>~])
+            x = '~<weird>~
             y = null
         ]
     )
 
     (
-        foo: func [return: [integer!] @other [integer!]] [
-            other: 10
-            return 20
+        foo: func [return: [~[integer! integer!]~]] [
+            return pack [20 10]
         ]
         all [
-            '~weird~ <> [^x y]: foo then [~weird~]
+            '~<weird>~ <> [^x y]: foo then [~<weird>~]
             x = the '20
             y = 10
         ]
@@ -192,7 +186,7 @@
     item = 'ab
 ])
 
-; Propagates void signals, but sets variables to null
+; Propagates nihil signals, but sets variables to null
 [
     (all [
         null? [/x]: comment "hi"

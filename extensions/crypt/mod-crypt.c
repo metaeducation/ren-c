@@ -468,10 +468,8 @@ void Get_Padding_And_Hash_From_Spec(
 //
 //  "Generate a public and private key for encoding at most NUM-BITS of data"
 //
-//      return: "RSA public key object"
-//          [object!]
-//      @private-key "RSA private key object (required output)"
-//          [object!]
+//      return: "RSA ~[public private]~ key objects object"
+//          [~[object! object!]~]
 //      num-bits "How much data this key can encrypt (less when not [raw])"
 //          [integer!]
 //      /padding "Pad method and hash, [raw] [pkcs1-v15 #sha512] [pkcs1-v21]"
@@ -614,8 +612,7 @@ DECLARE_NATIVE(rsa_generate_keypair)
     if (error)
         rebJumps ("fail", error);
 
-    rebElide("private-key:", rebR(private_key));
-    return public_key;
+    return rebDelegate("pack [", rebR(public_key), rebR(private_key), "]");
 }
 
 

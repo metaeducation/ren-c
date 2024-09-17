@@ -137,10 +137,8 @@
     ; Function for main solution
 
     solve-n-queens: func [
-        return: "The number of solutions"
-            [integer!]
-        @solved "The solutions (if requested)"
-            [null? block!]
+        return: "The number of solutions, and solutions (if requested)"
+            [integer! ~[integer! block!]~]
         n "The number queens on to place the board of size nxn"
             [integer!]
         /countonly "Only print the number of solutions found"
@@ -183,9 +181,10 @@
             ]
         ]
 
-        solved: solved-boards  ; null if /countonly
-        solved-boards: null
-        return get-number-of-solutions
+        if countonly [
+            return get-number-of-solutions
+        ]
+        return pack [get-number-of-solutions solved-boards]
     ]
     ok
 )

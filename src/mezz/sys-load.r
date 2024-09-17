@@ -39,27 +39,35 @@ REBOL [
 transcode-header: func [
     {Try to match a data binary! as being a script, definitional fail if not}
 
-    return: [~null~ block!]
-    @rest [~null~ binary!]
-    @line [integer!]
+    return: "Null, or the ~[header rest line]~"
+        [~[[~null~ block!] [~null~ binary!] [~null~ integer!]]~ raised?]
 
     data [binary!]
     /file [file! url!]
 
-    <local> key hdr
+    <local> key hdr rest line
 ][
     line: 1
-    [rest /key]: transcode/next/file/line data file line except e -> [  ; "REBOL"
+    [rest /key]: transcode/next // [  ; "REBOL"
+        data
+        /file file
+        /line $line
+    ] except e -> [
         return raise e
     ]
     if not rest [
-        return null
+        return pack [null null null]  ; !!! rethink interface, impure null
     ]
-    [rest /hdr]: transcode/next/file/line rest file line except e -> [  ; BLOCK!
+    [rest /hdr]: transcode/next // [ ; BLOCK!
+        rest
+        /file file
+        /line $line
+    ] except e -> [
         return raise e
     ]
 
-    return all [key = 'REBOL, block? hdr] then [hdr]
+    hdr: all [key = 'REBOL, block? hdr, hdr]
+    return pack [hdr rest line]  ; !!! hdr can be null but not ELSE-reactive
 ]
 
 
@@ -94,11 +102,8 @@ transcode-header: func [
 load-header: func [
     {Loads script header object and body binary (not loaded)}
 
-    return: "header OBJECT! if present"
-        [~null~ object!]
-    @body [binary! text!]
-    @line [integer!]
-    @final [binary!]
+    return: "header OBJECT! if present, ~[hdr body line final]~"
+        [~[[~null~ object!] [binary! text!] [~null~ integer!] binary!]~]
     source "Source code (text! will be UTF-8 encoded)"
         [binary! text!]
     /file "Where source is being loaded from"
@@ -108,6 +113,8 @@ load-header: func [
 
     <static>
     non-ws (make bitset! [not 1 - 32])
+
+    <local> body line final
 ][
     line: 1
 
@@ -133,7 +140,7 @@ load-header: func [
         ]
         body: data
         final: tail of data
-        return null
+        return pack [null body line final]  ; !!! impure null
     ]
 
     hdr: construct/with (inert hdr) system.standard.header except [
@@ -161,7 +168,7 @@ load-header: func [
     if only [  ; when it's /ONLY, decompression is not performed
         body: rest
         final: end
-        return hdr
+        return [hdr body line final]
     ]
 
     let binary
@@ -210,29 +217,29 @@ load-header: func [
         ]
     ]
 
+    ; !!! pack typecheck should handle this
     body: ensure [binary! text!] rest
     ensure integer! line
     final: ensure [binary! text!] end
 
     ensure object! hdr
     ensure [~null~ block! blank!] hdr.options
-    return hdr
+
+    return pack [hdr body line final]
 ]
 
 
 load: func [
     {Loads code or data from a file, URL, text string, or binary.}
 
-    return: "BLOCK! if Rebol code, otherwise value(s) appropriate for codec"
-        [~null~ element?]
-    @header "Request the Rebol header object be returned as well"
-        [~null~ object!]
+    return: "BLOCK! if Rebol code (or codec value) plus optional header"
+        [~null~ ~[element? [~null~ object!]]~]
     source "Source of the information being loaded"
         [<maybe> file! url! tag! the-word! text! binary!]
     /type "E.g. rebol, text, markup, jpeg... (by default, auto-detected)"
         [word!]
 
-    <local> file line data
+    <local> header file line data
 ][
     if match [file! url! tag! the-word!] source [
         source: clean-path source
@@ -254,7 +261,7 @@ load: func [
             ; the tests until more work is done.
             ;
             header: null
-            return data
+            return pack [data header]
         ]
     ]
     else [
@@ -270,7 +277,7 @@ load: func [
     if not find [unbound rebol] type [
         if find system.options.file-types type [
             header: null
-            return decode type :data
+            return pack [(decode type data) header]
         ]
 
         fail ["No" type "LOADer found for" kind of source]
@@ -300,7 +307,7 @@ load: func [
 
     let mod: make module! inside system.contexts.lib '[]
 
-    return inside mod data
+    return pack [(inside mod data) header]
 ]
 
 load-value: redescribe [
@@ -405,10 +412,11 @@ adjust-url-for-raw: func [
 import*: func [
     {Imports a module; locate, load, make, and setup its bindings}
 
-    return: "Loaded module"
-        [~null~ module!]
-    @product' "Evaluative product of module body (only if WHERE is BLANK!)"
-        [~<cached>~ ~<registered>~ ~<nameless>~ quoted? quasi?]
+    return: "Loaded module and meta of evaluative product (or tripwire)"
+        [
+            ~null~
+            ~[module! [~<cached>~ ~<registered>~ ~<nameless>~ quoted? quasi?]]~
+        ]
     where "Where to put exported definitions from SOURCE"
         [~null~ module!]
     source [
@@ -439,10 +447,11 @@ import*: func [
         ; should maybe ban it as well (or at least make it inconvenient).  But
         ; do it for the moment since that is how it has worked in the past.
         ;
-        ensure module! unmeta value
+        assert [pack? unmeta value]
         if where [
-            let exports: select (maybe adjunct-of unmeta value) 'exports
-            proxy-exports where (unmeta value) (maybe exports)
+            let mod: ensure module! unquote first unquasi value
+            let exports: select (maybe adjunct-of mod) 'exports
+            proxy-exports where mod (maybe exports)
         ]
     ]
 
@@ -452,19 +461,16 @@ import*: func [
         assert [not into]  ; INTO isn't applicable unless scanning new source
 
         let name: (adjunct-of source).name else [
-            product': ~<nameless>~
-            return source  ; no name, so just do the RESOLVE to get variables
+            return pack [source ~<nameless>~]  ; just RESOLVE to get variables
         ]
         let mod: (select/skip system.modules name 2) else [
             append system.modules spread :[name source]  ; not in mod list, add
-            product': ~<registered>~
-            return source
+            return pack [source ~<registered>~]
         ]
         if mod != source [
             fail ["Conflict: more than one module instance named" name]
         ]
-        product': ~<cached>~
-        return source
+        return pack [source ~<cached>~]
     ]
 
 
@@ -543,8 +549,7 @@ import*: func [
 
     let name: select maybe hdr 'name
     (select/skip system.modules maybe name 2) then cached -> [
-        product': ~<cached>~
-        return cached
+        return pack [cached ~<cached>~]
     ]
 
     ensure [~null~ object!] hdr
@@ -620,7 +625,7 @@ import*: func [
     if not block? code [  ; review assumption of lib here (header guided?)
         code: inside lib transcode/file/line code file line
     ]
-    let [mod 'product']: module/into hdr code into
+    let [mod product']: module/into hdr code into
 
     ensure module! mod
 
@@ -635,7 +640,7 @@ import*: func [
 
     importing-remotely: old-importing-remotely
 
-    return mod
+    return pack [mod product']
 ]
 
 

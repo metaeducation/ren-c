@@ -51,10 +51,8 @@ DECLARE_NATIVE(form)
 //
 //  "Converts value to a REBOL-readable string"
 //
-//      return: "Returns null if input is void"
-//          [~null~ text!]
-//      @truncated "If mold was truncated, return the integer /LIMIT"
-//          [~null~ integer!]
+//      return: "null if input is void, if truncated returns integer /LIMIT "
+//          [~null~ ~[text! [~null~ integer!]]~]
 //      value [<maybe> element? splice?]
 //      /all "Use construction syntax"
 //      /flat "No indentation"
@@ -88,17 +86,20 @@ DECLARE_NATIVE(mold)
 
     Mold_Value(mo, cast(Element*, v));
 
+    Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
+    Set_Flex_Len(pack, 2);
+
     String* popped = Pop_Molded_String(mo);  // sets MOLD_FLAG_TRUNCATED
+    Meta_Quotify(Init_Text(Array_At(pack, 0), popped));
 
     if (mo->opts & MOLD_FLAG_WAS_TRUNCATED) {
         assert(REF(limit));
-        Copy_Cell(ARG(truncated), ARG(limit));
+        Copy_Meta_Cell(Array_At(pack, 1), ARG(limit));
     }
     else
-        Init_Nulled(ARG(truncated));
+        Init_Meta_Of_Null(Array_At(pack, 1));
 
-    Init_Text(OUT, popped);
-    return Proxy_Multi_Returns(level_);
+    return Init_Pack(OUT, pack);
 }
 
 

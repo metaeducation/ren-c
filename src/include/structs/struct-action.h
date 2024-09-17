@@ -193,8 +193,6 @@ typedef enum {
 
     PARAMCLASS_RETURN,
 
-    PARAMCLASS_OUTPUT,
-
     // `PARAMCLASS_HARD` is cued by a quoted WORD! in the function spec
     // dialect.  It indicates that a single value of content at the callsite
     // should be passed through *literally*, without any evaluation:

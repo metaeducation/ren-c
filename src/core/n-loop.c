@@ -1329,9 +1329,7 @@ DECLARE_NATIVE(every)
 //  "Removes values for each block that returns true"
 //
 //      return: "Modified Input"
-//          [~null~ any-series?]
-//      @removals "<output> Number of removed items"
-//          [integer!]
+//          [~null~ ~[[blank! any-series?] integer!]~]
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
 //      data "The series to traverse (modified)"
@@ -1379,11 +1377,16 @@ DECLARE_NATIVE(remove_each)
     Value* data = ARG(data);
     Value* body = ARG(body);
 
+    Count removals = 0;
+
     if (Is_Blank(data)) {
-        Init_Integer(ARG(removals), 0);
         Init_Blank(OUT);
-        return Proxy_Multi_Returns(LEVEL);
+        goto return_pack;
     }
+
+    goto process_non_blank;
+
+  process_non_blank: { ////////////////////////////////////////////////////=//
 
     Flex* flex = Cell_Flex_Ensure_Mutable(data);  // check even if empty
 
@@ -1538,8 +1541,6 @@ DECLARE_NATIVE(remove_each)
 
   finalize_remove_each: {  ///////////////////////////////////////////////////
 
-    REBLEN removals = 0;
-
     assert(Get_Flex_Info(flex, HOLD));
     Clear_Flex_Info(flex, HOLD);
 
@@ -1650,10 +1651,17 @@ DECLARE_NATIVE(remove_each)
     if (breaking)
         return nullptr;
 
-    Init_Integer(ARG(removals), removals);
     assert(VAL_TYPE(OUT) == VAL_TYPE(data));
 
-    return Proxy_Multi_Returns(LEVEL);
+}} return_pack: { //////////////////////////////////////////////////////////=//
+
+    Array* pack = Make_Array(2);
+    Set_Flex_Len(pack, 2);
+
+    Copy_Meta_Cell(Array_At(pack, 0), OUT);
+    Meta_Quotify(Init_Integer(Array_At(pack, 1), removals));
+
+    return Init_Pack(OUT, pack);
 }}
 
 

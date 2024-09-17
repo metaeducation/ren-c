@@ -131,28 +131,29 @@ combinator: func [
         ; Enforce a RETURN: definition.  RETURN: [...] is allowed w/no text
         (
             assert [spec.1 = 'return:]
-            if block? spec.2 [  ; no description
-                spread reduce [spec.1 spec.2]
+            let [description types]: if block? spec.2 [  ; no description
+                pack [null spec.2]
                 elide spec: my skip 2
             ] else [
-                assert [text? spec.2]
-                assert [block? spec.3]
-
-                spread reduce [spec.1 spec.2 spec.3]
+                pack [ensure text! spec.2, ensure block! spec.3]
                 elide spec: my skip 3
+            ]
+            spread compose/deep [
+                return: (maybe description)
+                    [~[(types) any-series? [blank! block!]]~]
             ]
         )
 
-        @remainder [any-series?]  ; all combinators have remainder
+        /remainder [any-series?]  ; all combinators have remainder
 
-        (if '@pending = try spec.1 [
+        (if '/pending = try spec.1 [
             assert [spec.2 = [blank! block!]]
             autopipe: 'no  ; they're asking to handle pending themselves
-            spread reduce ['@pending spec.2]
+            spread reduce ['/pending spec.2]
             elide spec: my skip 2
         ] else [
             autopipe: 'yes  ; they didn't mention pending, handle automatically
-            spread [@pending [blank! block!]]
+            spread [/pending [blank! block!]]
         ])
 
         state [frame!]
@@ -201,6 +202,14 @@ combinator: func [
                 ]
             ]
         ])
+
+        return: lambda [^atom] compose/deep [
+            (unrun :return) pack [
+                unmeta atom except e -> [(unrun :return) raise e]
+                remainder
+                pending
+            ]
+        ]
 
         ; ** Currently parsers unify RETURN where a failure is done with
         ; a `return raise`.  Should this instead be ACCEPT and REJECT, as
@@ -578,8 +587,8 @@ default-combinators: make map! reduce [
         ; things like PENDING (which gets type checked as a multi-return, so
         ; we can't leave it as unset).  Review.
         ;
-        state.pending: _
-        state/return unmeta value'
+        pending: _
+        state/return pack [(unmeta value') pending]
     ]
 
     === INDEX and MEASUREMENT COMBINATORS ===
@@ -1025,7 +1034,7 @@ default-combinators: make map! reduce [
     'collect combinator [
         return: "Block of collected values"
             [block!]
-        @pending [blank! block!]
+        /pending [blank! block!]
         parser [action?]
         <local> collected
     ][
@@ -1054,7 +1063,7 @@ default-combinators: make map! reduce [
     'keep combinator [
         return: "The kept value (same as input)"
             [any-value?]
-        @pending [blank! block!]
+        /pending [blank! block!]
         parser [action?]
         <local> result'
     ][
@@ -1143,7 +1152,7 @@ default-combinators: make map! reduce [
     'gather combinator [
         return: "The gathered object"
             [object!]
-        @pending [blank! block!]
+        /pending [blank! block!]
         parser [action?]
         <local> obj
     ][
@@ -1168,7 +1177,7 @@ default-combinators: make map! reduce [
     'emit combinator [
         return: "The emitted value"
             [any-value?]
-        @pending [blank! block!]
+        /pending [blank! block!]
         'target [set-word! set-group!]
         parser [action?]
         <local> result'
@@ -1470,7 +1479,7 @@ default-combinators: make map! reduce [
     group! combinator [
         return: "Result of evaluating the group (invisible if <delay>)"
             [any-value? pack?]
-        @pending [blank! block!]
+        /pending [blank! block!]
         value [any-list?]  ; allow any array to use this "EVAL combinator"
     ][
         remainder: input
@@ -1495,7 +1504,7 @@ default-combinators: make map! reduce [
     'phase combinator [
         return: "Result of the parser evaluation"
             [any-value? pack?]
-        @pending [blank! block!]
+        /pending [blank! block!]
         parser [action?]
         <local> result'
     ][
@@ -1560,7 +1569,7 @@ default-combinators: make map! reduce [
     get-group! combinator [
         return: "Result of running combinator from fetching the WORD!"
             [any-value? pack?]
-        @pending [blank! block!]   ; we retrigger combinator; it may KEEP, etc.
+        /pending [blank! block!]   ; we retrigger combinator; it may KEEP, etc.
 
         value [any-list?]  ; allow any array to use this "REPARSE-COMBINATOR"
         <local> r comb
@@ -1668,7 +1677,7 @@ default-combinators: make map! reduce [
     quoted! combinator [
         return: "The matched value"
             [element?]
-        @pending [blank! block!]
+        /pending [blank! block!]
         value [quoted?]
         /negated
         <local> comb neq?
@@ -1718,7 +1727,7 @@ default-combinators: make map! reduce [
 
     'lit combinator [  ; should long form be LITERALLY or LITERAL ?
         return: "Literal value" [element?]
-        @pending [blank! block!]
+        /pending [blank! block!]
         'value [element?]
         <local> comb
     ][
@@ -1752,7 +1761,7 @@ default-combinators: make map! reduce [
 
     quasiform! combinator compose [
         (spread quasi-return-spec)
-        @pending [blank! block!]
+        /pending [blank! block!]
         value [quasi?]
         <local> comb neq?
     ][
@@ -2122,7 +2131,7 @@ default-combinators: make map! reduce [
 
     the-word! combinator compose [
         (spread quasi-return-spec)
-        @pending [blank! block!]
+        /pending [blank! block!]
         value [the-word!]
         <local> comb lookup'
     ][
@@ -2136,7 +2145,7 @@ default-combinators: make map! reduce [
 
     the-tuple! combinator compose [
         (spread quasi-return-spec)
-        @pending [blank! block!]
+        /pending [blank! block!]
         value [the-tuple!]
         <local> comb lookup'
     ][
@@ -2148,7 +2157,7 @@ default-combinators: make map! reduce [
 
     the-group! combinator compose [
         (spread quasi-return-spec)
-        @pending [blank! block!]
+        /pending [blank! block!]
         value [the-group!]
         <local> result' comb subpending single
     ][
@@ -2171,7 +2180,7 @@ default-combinators: make map! reduce [
 
     the-block! combinator compose [  ; matching literal block is redundant [4]
         (spread quasi-return-spec)
-        @pending [blank! block!]
+        /pending [blank! block!]
         value [the-block!]
         <local> result' comb subpending
     ][
@@ -2216,7 +2225,7 @@ default-combinators: make map! reduce [
 
     meta-word! combinator [
         return: "Meta quoted" [~null~ quasi? quoted?]
-        @pending [blank! block!]
+        /pending [blank! block!]
         value [meta-word!]
         <local> comb
     ][
@@ -2227,7 +2236,7 @@ default-combinators: make map! reduce [
 
     meta-tuple! combinator [
         return: "Meta quoted" [~null~ quasi? quoted?]
-        @pending [blank! block!]
+        /pending [blank! block!]
         value [meta-tuple!]
         <local> comb
     ][
@@ -2238,7 +2247,7 @@ default-combinators: make map! reduce [
 
     meta-path! combinator [
         return: "Meta quoted" [~null~ quasi? quoted?]
-        @pending [blank! block!]
+        /pending [blank! block!]
         value [meta-path!]
         <local> comb
     ][
@@ -2249,7 +2258,7 @@ default-combinators: make map! reduce [
 
     meta-group! combinator [
         return: "Meta quoted" [~null~ quasi? quoted?]
-        @pending [blank! block!]
+        /pending [blank! block!]
         value [meta-group!]
         <local> comb
     ][
@@ -2260,7 +2269,7 @@ default-combinators: make map! reduce [
 
     meta-block! combinator [
         return: "Meta quoted" [~null~ quasi? quoted?]
-        @pending [blank! block!]
+        /pending [blank! block!]
         value [meta-block!]
         <local> comb
     ][
@@ -2374,7 +2383,7 @@ default-combinators: make map! reduce [
         {Run an ordinary action with parse rule products as its arguments}
         return: "The return value of the action"
             [any-value? pack?]
-        @pending [blank! block!]
+        /pending [blank! block!]
         value [frame!]
         ; AUGMENT is used to add param1, param2, param3, etc.
         /parsers "Sneaky argument of parsers collected from arguments"
@@ -2433,7 +2442,7 @@ default-combinators: make map! reduce [
     word! combinator [
         return: "Result of running combinator from fetching the WORD!"
             [any-value? pack?]
-        @pending [blank! block!]
+        /pending [blank! block!]
         value [word! tuple!]
         <local> r comb rule-start rule-end
     ][
@@ -2530,7 +2539,7 @@ default-combinators: make map! reduce [
     'any combinator [
         return: "Last result value"
             [any-value? pack?]
-        @pending [blank! block!]
+        /pending [blank! block!]
         'arg "To catch instances of old ANY, only GROUP! and THE-BLOCK!"
             [element?]  ; lie and take any element to report better error
         <local> result' block
@@ -2583,7 +2592,7 @@ default-combinators: make map! reduce [
     block! (block-combinator: combinator [
         return: "Last result value"
             [any-value? pack?]
-        @pending [blank! block!]
+        /pending [blank! block!]
         value [block!]
         /limit "Limit of how far to consider (used by ... recursion)"
             [block!]
@@ -2805,9 +2814,8 @@ comment [combinatorize: func [
 
     {Analyze combinator parameters in rules to produce a specialized "parser"}
 
-    return: "Parser function taking only input, returning value + remainder"
-        [action?]
-    @advanced [block!]
+    return: "Parser function taking only input, and advanced rules position"
+        [~[action? block!]~]
     combinator "Parser combinator taking input, but also other parameters"
         [frame!]
     rules [block!]
@@ -2911,8 +2919,7 @@ comment [combinatorize: func [
 
     f.rule-end: rules
 
-    advanced: rules
-    return runs f
+    return pack [(runs f) rules]  ; rules has been advanced
 ]]
 
 
@@ -2978,10 +2985,8 @@ comment [combinatorize: func [
 parsify: func [
     "Transform one step's worth of rules into a parser combinator action"
 
-    return: "Parser action for input processing corresponding to a full rule"
-        [action?]
-    @advanced "Rules position advanced past the elements used for the action"
-        [block!]
+    return: "Parser action for a full rule, advanced rules position"
+        [~[action? block!]~]
     state "Parse state"
         [frame!]
     rules "Parse rules to (partially) convert to a combinator action"
@@ -2997,7 +3002,7 @@ parsify: func [
 
     while [comb: try state.combinators.(r)] [  ; literal match first [2]
         if match frame! comb [
-            return [@ advanced]: combinatorize comb rules state
+            return combinatorize comb rules state
         ]
 
         r: comb  ; didn't look up to combinator, just element to substitute [3]
@@ -3015,7 +3020,7 @@ parsify: func [
 
             if comb: match frame! :value [  ; variable held a combinator [4]
                 if combinator? :comb [
-                    return [@ advanced]: combinatorize :comb rules state
+                    return combinatorize :comb rules state
                 ]
 
                 let name: uppercase to text! r
@@ -3064,7 +3069,7 @@ parsify: func [
                 ]
             ]
 
-            return [@ advanced]: combinatorize/value comb rules state gotten
+            return combinatorize/value comb rules state gotten
         ]
 
         ; !!! Here is where we would let GET-TUPLE! and GET-WORD! be used to
@@ -3075,7 +3080,7 @@ parsify: func [
         fail ["Unhandled type in PARSIFY:" mold kind of r "-" mold r]
     ]
 
-    return [@ advanced]: combinatorize/value comb rules state r
+    return combinatorize/value comb rules state r
 ]
 
 
@@ -3114,27 +3119,22 @@ parsify: func [
 parse*: func [
     "Process as much of the input as parse rules consume (see also PARSE)"
 
-    return: "Synthesized value from last match rule, or NULL if rules failed"
-        [any-value? pack?]
-    @pending "Values remaining in pending queue after reaching end"
-        [blank! block!]
-
+    return: "Synthesized value from last match rule, and any pending values"
+        [~[[any-value? pack?] [blank! block!]]~ raised?]
     input "Input data"
         [<maybe> any-series? url! any-sequence?]
     rules "Block of parse rules"
         [block!]
-
     /combinators "List of keyword and datatype handlers used for this parse"
         [map!]
     /case "Do case-sensitive matching"
     /relax "Don't require reaching the tail of the input for success"
     /part "FAKE /PART FEATURE - runs on a copy of the series!"
         [integer! any-series?]
-
     /hook "Call a hook on dispatch of each combinator"
         [<unrun> frame!]
 
-    <local> loops furthest synthesized' remainder env
+    <local> loops furthest synthesized' remainder pending env
 ][
     ; PATH!s, TUPLE!s, and URL!s are read only and don't have indices.  But we
     ; want to be able to parse them, so make them read-only series aliases:
@@ -3229,7 +3229,7 @@ parse*: func [
         synthesized': void'
     ]
 
-    return unmeta synthesized'
+    return pack [(unmeta synthesized') pending]
 ]
 
 parse: (comment [redescribe [  ; redescribe not working at the moment (?)

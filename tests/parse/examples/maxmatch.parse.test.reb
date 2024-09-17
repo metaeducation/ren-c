@@ -195,7 +195,7 @@
         {Match maximum of two rules, keeping side effects of both if match}
         return: "Result of the longest match (favors first parser if equal)"
            [any-value? pack?]
-        @pending [blank! block!]
+        /pending [blank! block!]
         parser1 [action?]
         parser2 [action?]
         <local>

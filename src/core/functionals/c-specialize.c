@@ -323,9 +323,9 @@ bool Specialize_Action_Throws(
         // in the external view of frames.  They should not be.
         //
         ParamClass pclass = Cell_ParamClass(param);
-        if (pclass == PARAMCLASS_OUTPUT or pclass == PARAMCLASS_RETURN) {
+        if (pclass == PARAMCLASS_RETURN) {
             if (Is_Specialized(arg))
-                fail ("Can't specialize RETURN or output parameters");
+                fail ("Can't specialize RETURN parameters");
             Copy_Cell(arg, param);
             continue;
         }
@@ -509,12 +509,8 @@ void For_Each_Unspecialized_Param(
         if (Get_Parameter_Flag(param, REFINEMENT))
             continue;
 
-        if (
-            Cell_ParamClass(param) == PARAMCLASS_RETURN
-            or Cell_ParamClass(param) == PARAMCLASS_OUTPUT
-        ){
+        if (Cell_ParamClass(param) == PARAMCLASS_RETURN)
             continue;
-        }
 
         Flags flags = 0;
 

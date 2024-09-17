@@ -116,10 +116,8 @@ get-msdos-date: func [
 zip-entry: func [
     {Compresses a file}
 
-    return: "local header"
-        [binary!]
-    @central-dir-entry "Central Directory entry"
-        [binary!]
+    return: "local header and central directory entry"
+        [~[binary! binary!]~]
     name "Name of file"
         [file!]
     date "Modification date of file"
@@ -148,10 +146,7 @@ zip-entry: func [
 
     let compressed-size: to-ilong length of compressed-data
 
-    ; central-dir file entry.  note that the file attributes are
-    ; interpreted based on the OS of origin--can't say Amiga :-(
-    ;
-    central-dir-entry: make binary! [
+    let central-dir-entry: make binary! [
         central-file-sig
         #{1E}  ; version of zip spec this encoder speaks (#{1E}=3.0)
         #{03}  ; OS of origin: 0=DOS, 3=Unix, 7=Mac, 1=Amiga...
@@ -175,9 +170,7 @@ zip-entry: func [
         comment <filecomment>  ; not used
     ]
 
-    ; local file entry
-    ;
-    return make binary! [
+    let local-file-entry: make binary! [
         local-file-sig
         #{0A00}  ; version (both Mac OS Zip and Linux Zip put #{0A00})
         #{0000}  ; flags
@@ -193,6 +186,8 @@ zip-entry: func [
         comment <extrafield>  ; not used
         compressed-data
     ]
+
+    return pack [local-file-entry central-dir-entry]
 ]
 
 to-path-file: func [

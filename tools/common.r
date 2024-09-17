@@ -351,7 +351,7 @@ export stripload: func [
         [text!]
     source "Code to process without LOAD (avoids bootstrap scan differences)"
         [text! file!]
-    /header "<output> Request the header as text"  ; no @output in bootstrap
+    /header "<output> Request the header as text"  ; no packs in bootstrap
         [word! path!]
     /gather "Collect what look like top-level declarations into variable"
         [word!]

@@ -67,7 +67,7 @@
 
 (
     wrapped: enclose (
-        func [@out in] [out: in + 1]
+        func [in] [return pack [~, in + 1]]
     ) f -> [
         x: f.in
         [_ o]: eval f
@@ -78,7 +78,7 @@
 
 ~bad-pick~ !! (
     wrapped: enclose (
-        func [@out in] [out: in + 1]
+        func [in] [return pack [~, in + 1]]
     ) f -> [
         x: f.in
         eval f

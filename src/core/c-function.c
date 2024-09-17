@@ -42,10 +42,6 @@ static bool Params_Of_Hook(
 ){
     struct Params_Of_State *s = cast(struct Params_Of_State*, opaque);
 
-    ParamClass pclass = Cell_ParamClass(param);
-    if (pclass == PARAMCLASS_OUTPUT)
-        return true;  // use `outputs of` instead of `parameters of` to get
-
     Init_Word(PUSH(), KEY_SYMBOL(key));
 
     if (not s->just_words) {
@@ -98,33 +94,6 @@ Array* Make_Action_Parameters_Arr(Action* act, bool just_words)
 
     StackIndex base = TOP_INDEX;
     For_Each_Unspecialized_Param(act, &Params_Of_Hook, &s);
-    return Pop_Stack_Values(base);
-}
-
-
-
-static bool Outputs_Of_Hook(
-    const Key* key,
-    const Param* param,
-    Flags flags,
-    void *opaque
-){
-    UNUSED(opaque);
-    UNUSED(flags);
-    if (Cell_ParamClass(param) == PARAMCLASS_OUTPUT)
-        Init_Word(PUSH(), KEY_SYMBOL(key));
-    return true;
-}
-
-//
-//  Make_Action_Outputs_Arr: C
-//
-// Returns array of function words, unbound.
-//
-Array* Make_Action_Outputs_Arr(Action* act)
-{
-    StackIndex base = TOP_INDEX;
-    For_Each_Unspecialized_Param(act, &Outputs_Of_Hook, nullptr);
     return Pop_Stack_Values(base);
 }
 
@@ -316,15 +285,7 @@ void Push_Keys_And_Parameters_May_Fail(
                 }
             }
             else if (heart == REB_THE_WORD) {  // output
-                if (not quoted) {
-                    if (not (*flags & MKF_RETURN)) {
-                        fail (
-                            "Function generator does not provide multi-RETURN"
-                        );
-                    }
-
-                    pclass = PARAMCLASS_OUTPUT;
-                }
+                fail ("Paramclass Output No Longer Supported");
             }
             else {
                 if (heart == REB_GET_WORD) {
@@ -793,7 +754,6 @@ Phase* Make_Action(
         ParamClass pclass = Cell_ParamClass(first);
         switch (pclass) {
           case PARAMCLASS_RETURN:
-          case PARAMCLASS_OUTPUT:
           case PARAMCLASS_NORMAL:
           case PARAMCLASS_META:
             break;

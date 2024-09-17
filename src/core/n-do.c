@@ -447,7 +447,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
         if (Is_Raised(OUT))  // can't put raised errors in PACK!s
             fail (VAL_CONTEXT(OUT));
 
-        Array *pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
+        Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
         Set_Flex_Len(pack, 2);
         Copy_Meta_Cell(Array_At(pack, 0), source);  // pack wants META values
         Copy_Meta_Cell(Array_At(pack, 1), OUT);
@@ -538,7 +538,6 @@ DECLARE_NATIVE(redo)
         if (
             Is_Specialized(param)  // must reset [2]
             or Cell_ParamClass(param) == PARAMCLASS_RETURN
-            or Cell_ParamClass(param) == PARAMCLASS_OUTPUT
         ){
             Copy_Cell(arg, param);
         }
@@ -790,7 +789,6 @@ DECLARE_NATIVE(apply)
 
             if (
                 Cell_ParamClass(e->param) == PARAMCLASS_RETURN
-                or Cell_ParamClass(e->param) == PARAMCLASS_OUTPUT
                 or Get_Parameter_Flag(e->param, REFINEMENT)
             ){
                 continue;
@@ -869,7 +867,7 @@ DECLARE_NATIVE(apply)
 //  "Infix version of APPLY with name of thing to apply literally on left"
 //
 //      return: [any-atom?]
-//      :operation [<unrun> word! tuple! frame! action?]
+//      :operation [<unrun> word! tuple! path! frame! action?]
 //      args "Arguments and Refinements, e.g. [arg1 arg2 /ref refine1]"
 //          [block!]
 //      /relax "Don't worry about too many arguments to the APPLY"

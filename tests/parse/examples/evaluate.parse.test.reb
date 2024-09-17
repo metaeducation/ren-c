@@ -19,15 +19,15 @@
 
 (
     keeper-saver: func [
-        return: [block!]
-        @saved [block!]
+        return: "Saved as secondary result"
+            [~[block! block!]~]
         input [block!]
-        <local> mode value
+        <local> mode value saved
     ][
         saved: copy []
 
         mode: #save
-        return parse input [collect [
+        return pack [parse input [collect [
             some [
                 mode: ['<K> (#keep) | '<S> (#save) | tag! (fail "BAD MODE")]
                 |
@@ -39,7 +39,7 @@
                     when (mode = #save) (if did value [append saved value])
                 ]
             ]
-        ]]
+        ]], saved]
     ]
     ok
 )

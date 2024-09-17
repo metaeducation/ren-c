@@ -479,23 +479,22 @@ REBTYPE(Binary)
         );
 
         if (ret >= cast(REBLEN, tail))
-            return nullptr;  // Don't Proxy_Multi_Returns()
+            return nullptr;
 
         if (id == SYM_FIND) {
-            Init_Series_At(
-                ARG(tail),
-                REB_BINARY,
-                Cell_Binary(v),
-                ret + size
-            );
-            Init_Series_At(
-                OUT,
-                REB_BINARY,
-                Cell_Binary(v),
-                ret
-            );
-            return Proxy_Multi_Returns(level_);
+            Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
+            Set_Flex_Len(pack, 2);
+
+            Copy_Meta_Cell(Array_At(pack, 0), v);
+            VAL_INDEX_RAW(Array_At(pack, 0)) = ret;
+
+            Copy_Meta_Cell(Array_At(pack, 1), v);
+            VAL_INDEX_RAW(Array_At(pack, 1)) = ret + size;
+
+            return Init_Pack(OUT, pack);
         }
+        else
+            assert(id == SYM_SELECT);
 
         ret++;
         if (ret >= cast(REBLEN, tail))

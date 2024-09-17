@@ -412,8 +412,6 @@ bool Did_Advance_Evars(EVARS *e) {
                 ParamClass pclass = Cell_ParamClass(e->param);
                 if (pclass == PARAMCLASS_RETURN)  // false "input" [2]
                     continue;
-                if (pclass == PARAMCLASS_OUTPUT)  // false "input" [2]
-                    continue;
               #endif
             }
         }
@@ -1249,7 +1247,6 @@ REBTYPE(Context)
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
         UNUSED(ARG(series));  // extracted as `c`
-        UNUSED(PARAM(tail));  // not supported
 
         if (REF(part) or REF(skip) or REF(match))
             fail (Error_Bad_Refines_Raw());
@@ -1268,9 +1265,6 @@ REBTYPE(Context)
         );
         if (n == 0)
             return nullptr;
-
-        if (Symbol_Id(verb) == SYM_FIND)
-            return Init_Logic(OUT, true); // !!! obscures non-LOGIC! result?
 
         return COPY(CTX_VAR(c, n)); }
 
@@ -1419,12 +1413,6 @@ REBTYPE(Frame)
             return Init_Block(
                 OUT,
                 Make_Action_Parameters_Arr(act, just_words)
-            ); }
-
-          case SYM_OUTPUTS: {
-            return Init_Block(
-                OUT,
-                Make_Action_Outputs_Arr(act)
             ); }
 
           case SYM_BODY:

@@ -120,9 +120,8 @@ make-quit: lambda [
 module: func [
     "Creates a new module (used by both IMPORT and DO)"
 
-    return: [module!]
-    @product' "Result of running the body (META, can be raised error!)"  ; [1]
-        [any-value?]
+    return: "Module and meta-result of running the body (may be raised)"  ; [1]
+        [~[module! [quasiform? quoted?]]~]
     spec "The header block of the module (modified)"
         [~null~ block! object!]
     body "The body of the module"
@@ -132,7 +131,7 @@ module: func [
     /into "Add data to existing MODULE! context (vs making a new one)"
         [module!]
     <local>
-        mod  ; note: overwrites MODULO shorthand in this function
+        mod product'  ; note: overwrites MODULO shorthand in this function
 ][
     mod: any [
         into
@@ -208,7 +207,7 @@ module: func [
         ]
     ]
 
-    return mod
+    return pack [mod product']
 ]
 
 

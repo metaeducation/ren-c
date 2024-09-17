@@ -710,10 +710,6 @@ INLINE Atom* Native_Copy_Result_Untracked(
     #define BASELINE   (&level_->baseline)
 #endif
 
-#define Proxy_Multi_Returns(L) \
-    Proxy_Multi_Returns_Core((L), level_->out)
-
-
 
 // !!! Numbered arguments got more complicated with the idea of moving the
 // definitional returns into the first slot (if applicable).  This makes it
@@ -726,7 +722,6 @@ INLINE Value* D_ARG_Core(Level* L, REBLEN n) {  // 1 for first arg
     while (
         Is_Specialized(param)  // e.g. slots for saving multi-return variables
         or Cell_ParamClass(param) == PARAMCLASS_RETURN
-        or Cell_ParamClass(param) == PARAMCLASS_OUTPUT
     ){
         ++param;
         ++arg;

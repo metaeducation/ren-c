@@ -391,15 +391,8 @@ help: func [
             "(undocumented)"
         ]
     ]
-    if return-param and (return-param.text) [
+    if return-param and return-param.text [
         print [_ _ _ _ return-param.text]
-    ]
-
-    let outputs: outputs of :value
-    if not empty? outputs [
-        print newline
-        print "ADDITIONAL OUTPUTS:"
-        print-args outputs
     ]
 
     if args [

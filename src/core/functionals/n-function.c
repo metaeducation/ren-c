@@ -151,7 +151,7 @@ Bounce Func_Dispatcher(Level* const L)
     if (not Typecheck_Coerce_Return(L, OUT))
         fail ("End of function without a RETURN, but ~ not in RETURN: spec");
 
-    return Proxy_Multi_Returns(L);
+    return OUT;
 }}
 
 
@@ -521,7 +521,6 @@ bool Typecheck_Coerce_Return(
 //
 //      return: []
 //      ^value [any-atom?]
-//      /only "Don't proxy output variables, return argument without typecheck"
 //      /run "Reuse stack level for another call (<redo> uses locals/args too)"
 //      ;   [<variadic> any-value?]  ; would force this frame managed
 //  ]
@@ -563,19 +562,12 @@ DECLARE_NATIVE(definitional_return)
     Level* target_level = CTX_LEVEL_MAY_FAIL(unwrap coupling);
 
     if (not REF(run)) {  // plain simple RETURN (not weird tail-call)
-        if (
-            not REF(only)  // typecheck NOW! [2]
-            and not Typecheck_Coerce_Return(target_level, atom)
-        ){
+        if (not Typecheck_Coerce_Return(target_level, atom))  // check now [2]
             fail (Error_Bad_Return_Type(target_level, atom));
-        }
 
         DECLARE_VALUE (label);
         Copy_Cell(label, Lib(UNWIND)); // see Make_Thrown_Unwind_Value
         g_ts.unwind_level = target_level;
-
-        if (not Is_Raised(atom) and not REF(only))
-            Proxy_Multi_Returns_Core(target_level, atom);
 
         return Init_Thrown_With_Label(LEVEL, atom, label);
     }
@@ -602,9 +594,6 @@ DECLARE_NATIVE(definitional_return)
     //    what the recursion expects.  We still have to reset specialized
     //    values back (including locals) to what a fresh call would have.
 
-    if (REF(only))
-        fail (Error_Bad_Refines_Raw());
-
     const Value* gather_args;
 
     if (
@@ -624,7 +613,6 @@ DECLARE_NATIVE(definitional_return)
             if (
                 Is_Specialized(param)  // must reset [2]
                 or Cell_ParamClass(param) == PARAMCLASS_RETURN
-                or Cell_ParamClass(param) == PARAMCLASS_OUTPUT
             ){
                 Copy_Cell(arg, param);
             }

@@ -127,53 +127,6 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed* feed) {
 
 
 //
-//  Proxy_Multi_Returns_Core: C
-//
-// This code has to be factored out because RETURN uses it before it does an
-// UNWIND.  We already force type checking through the returns, so this (along
-// with any typechecking) should also be done.
-//
-// 1. At one time this code would not do proxying if the value to return was
-//    null or void.  This was to have parity with a usermode RETURN which
-//    implemented the same policy.  However that policy proved to be a burden
-//    on usermode RETURN, so it was changed to require explicit suppression
-//    of multi-return proxying via RETURN/ONLY.  Hence natives now need to
-//    take that responsibility of choosing whether or not to proxy.
-//
-Bounce Proxy_Multi_Returns_Core(Level* L, Atom* v)
-{
-    assert(not Is_Raised(v));
-
-    StackIndex base = TOP_INDEX;
-
-    Copy_Meta_Cell(PUSH(), v);  // packs contain meta values
-
-    KEY = ACT_KEYS(&KEY_TAIL, L->u.action.original);
-    PARAM = ACT_PARAMS_HEAD(L->u.action.original);
-    ARG = Level_Args_Head(L);
-
-    for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
-        if (Is_Specialized(PARAM))
-            continue;
-        if (Cell_ParamClass(PARAM) != PARAMCLASS_OUTPUT)
-            continue;
-
-        if (not Typecheck_Coerce_Argument(PARAM, ARG))
-            fail (Error_Phase_Arg_Type(L, KEY, PARAM, stable_ARG));
-
-        Copy_Meta_Cell(PUSH(), stable_ARG);  // packs contain meta values
-    }
-
-    if (TOP_INDEX == base + 1)  // no multi return values
-        DROP();  // drop the initial push for the main result
-    else
-        Init_Pack(v, Pop_Stack_Values(base));
-
-    return v;
-}
-
-
-//
 //  Action_Executor: C
 //
 Bounce Action_Executor(Level* L)
@@ -358,7 +311,7 @@ Bounce Action_Executor(Level* L)
 
         // The return function is filled in by the dispatchers that provide it.
 
-        if (pclass == PARAMCLASS_RETURN or pclass == PARAMCLASS_OUTPUT) {
+        if (pclass == PARAMCLASS_RETURN) {
             assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));
             assert(Is_Cell_Erased(ARG));
             Copy_Cell(ARG, PARAM);
@@ -567,10 +520,6 @@ Bounce Action_Executor(Level* L)
 
   //=//// REGULAR ARG-OR-REFINEMENT-ARG (consumes 1 EVALUATE's worth) /////=//
 
-          case PARAMCLASS_OUTPUT:  // e.g. evaluate/next [1 + 2]
-            goto output_from_feed;
-
-        output_from_feed:
           case PARAMCLASS_NORMAL:
           case PARAMCLASS_META: {
             if (Is_Level_At_End(L)) {
@@ -826,10 +775,7 @@ Bounce Action_Executor(Level* L)
         if (Is_Specialized(PARAM))  // checked when specialized [1]
             continue;
 
-        if (
-            Cell_ParamClass(PARAM) == PARAMCLASS_RETURN
-            or Cell_ParamClass(PARAM) == PARAMCLASS_OUTPUT
-        ){
+        if (Cell_ParamClass(PARAM) == PARAMCLASS_RETURN) {
             assert(Not_Specialized(stable_ARG));
             continue;  // typeset is its legal return types, wants to be unset
         }
