@@ -51,7 +51,7 @@ REBOL [
 
 [%%]: lambda [
     {Quoting MAKE FILE! Operator}
-    'value [word! path! tuple! block! group!]
+    @value [word! path! tuple! block! group!]
 ][
     if group? value [value: eval value]
     make-file value

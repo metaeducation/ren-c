@@ -187,7 +187,11 @@ DECLARE_NATIVE(lambda)
             )){
                 fail (item);
             }
-            pclass = PARAMCLASS_HARD;
+            pclass = PARAMCLASS_JUST;
+            symbol = Cell_Word_Symbol(item);
+        }
+        else if (Is_The_Word(item)) {
+            pclass = PARAMCLASS_THE;
             symbol = Cell_Word_Symbol(item);
         }
         else if (Is_Path(item) and Is_Refinement(item)) {

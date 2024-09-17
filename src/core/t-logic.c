@@ -332,7 +332,7 @@ INLINE bool Do_Logic_Right_Side_Throws(
 //
 //      return: [logic?]
 //      left [any-value?]
-//      'right "Right is evaluated if left is true"
+//      @right "Right is evaluated if left is true"
 //          [group! tuple! word!]
 //  ]
 //
@@ -360,7 +360,7 @@ DECLARE_NATIVE(and_1)  // see TO-C-NAME
 //
 //      return: [logic?]
 //      left [any-value?]
-//      'right "Right is evaluated if left is false"
+//      @right "Right is evaluated if left is false"
 //          [group! tuple! word!]
 //  ]
 //
@@ -388,7 +388,7 @@ DECLARE_NATIVE(or_1)  // see TO-C-NAME
 //
 //      return: [logic?]
 //      left [any-value?]
-//      'right "Always evaluated"
+//      @right "Always evaluated"
 //          [group! tuple! word!]
 //  ]
 //

@@ -669,7 +669,8 @@ static bool Combinator_Param_Hook(
         return true;  // just leave unspecialized for now
     }
     else switch (Cell_ParamClass(param)) {
-      case PARAMCLASS_HARD: {
+      case PARAMCLASS_JUST:
+      case PARAMCLASS_THE: {
         //
         // Quoted parameters represent a literal element captured from rules.
         //
@@ -685,7 +686,12 @@ static bool Combinator_Param_Hook(
             Init_Nulled(var);
         }
         else {
-            Derelativize(var, item, Cell_Specifier(ARG(rules)));
+            if (Cell_ParamClass(param) == PARAMCLASS_THE)
+                Derelativize(var, item, Cell_Specifier(ARG(rules)));
+            else {
+                assert(Cell_ParamClass(param) == PARAMCLASS_JUST);
+                Copy_Cell(var, item);
+            }
             ++VAL_INDEX_UNBOUNDED(ARG(rules));
         }
         break; }

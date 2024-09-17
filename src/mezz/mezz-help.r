@@ -86,7 +86,7 @@ help: func [
     "Prints information about words and values (if no args, general help)."
 
     return: [~]
-    'topic [<end> element?]
+    @topic [<end> element?]
         "WORD! whose value to explain, or other HELP target (try HELP HELP)"
     /doc "Open web browser to related documentation."
 ][
@@ -338,7 +338,9 @@ help: func [
     let refinements  ; optional parameters (PARAMETERS OF puts at tail)
 
     parse parameters of :value [
-        args: opt across some [word! | meta-word! | get-word! | &lit-word?]
+        args: opt across some [
+            word! | meta-word! | get-word! | the-word! | &lit-word?
+        ]
         refinements: opt across some path!  ; as mentioned, these are at tail
     ] except [
         fail ["Unknown results in PARAMETERS OF:" mold parameters of :value]
@@ -415,7 +417,7 @@ source: func [
     "Prints the source code for an ACTION! (if available)"
 
     return: [~]
-    'arg [<unrun> word! path! frame! tag!]
+    @arg [<unrun> word! path! frame! tag!]
 ][
     let name
     let f
@@ -493,7 +495,7 @@ what: func [
     {Prints a list of known actions}
 
     return: [~ block!]
-    'name [<end> word! lit-word?]
+    @name [<end> word! lit-word?]
         "Optional module name"
     /args "Show arguments not titles"
     /as-block "Return data as block"

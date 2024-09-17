@@ -69,8 +69,12 @@ static bool Params_Of_Hook(
             Quotify(Getify(TOP), 1);
             break;
 
-          case PARAMCLASS_HARD:
+          case PARAMCLASS_JUST:
             Quotify(TOP, 1);
+            break;
+
+          case PARAMCLASS_THE:
+            Theify(TOP);
             break;
 
           default:
@@ -257,7 +261,7 @@ void Push_Keys_And_Parameters_May_Fail(
 
             if (heart == REB_PATH) {
                 if (quoted)
-                    pclass = PARAMCLASS_HARD;
+                    pclass = PARAMCLASS_JUST;
                 else
                     pclass = PARAMCLASS_NORMAL;
             }
@@ -285,7 +289,9 @@ void Push_Keys_And_Parameters_May_Fail(
                 }
             }
             else if (heart == REB_THE_WORD) {  // output
-                fail ("Paramclass Output No Longer Supported");
+                if (quoted)
+                    fail ("Can't quote THE-WORD! parameters");
+                pclass = PARAMCLASS_THE;
             }
             else {
                 if (heart == REB_GET_WORD) {
@@ -296,7 +302,7 @@ void Push_Keys_And_Parameters_May_Fail(
                 }
                 else if (heart == REB_WORD) {
                     if (quoted)
-                        pclass = PARAMCLASS_HARD;
+                        pclass = PARAMCLASS_JUST;
                     else
                         pclass = PARAMCLASS_NORMAL;
                 }
@@ -760,7 +766,8 @@ Phase* Make_Action(
 
           case PARAMCLASS_SOFT:
           case PARAMCLASS_MEDIUM:
-          case PARAMCLASS_HARD:
+          case PARAMCLASS_JUST:
+          case PARAMCLASS_THE:
             Set_Subclass_Flag(VARLIST, paramlist, PARAMLIST_QUOTES_FIRST);
             break;
 

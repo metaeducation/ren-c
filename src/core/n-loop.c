@@ -540,7 +540,7 @@ DECLARE_NATIVE(cfor)
 //
 //      return: "Last body result, or null if BREAK"
 //          [any-value?]
-//      'word "Variable set to each position in the series at skip distance"
+//      @word "Variable set to each position in the series at skip distance"
 //          [word! lit-word? blank!]
 //      series "The series to iterate over"
 //          [<maybe> blank! any-series?]

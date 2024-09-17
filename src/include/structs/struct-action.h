@@ -193,20 +193,45 @@ typedef enum {
 
     PARAMCLASS_RETURN,
 
-    // `PARAMCLASS_HARD` is cued by a quoted WORD! in the function spec
+    // `PARAMCLASS_JUST` is cued by a quoted WORD! in the function spec
     // dialect.  It indicates that a single value of content at the callsite
-    // should be passed through *literally*, without any evaluation:
+    // should be passed through *literally*, with no evaluation or binding:
     //
-    //     >> foo: function ['a] [print [{a is} a]]
+    //     >> foo: lambda ['a] [a]
     //
     //     >> foo (1 + 2)
-    //     a is (1 + 2)
+    //     == (1 + 2)
     //
     //     >> foo :(1 + 2)
-    //     a is :(1 + 2)
+    //     == :(1 + 2)
     //
+    //     >> x: 10, foo x
+    //     == x
     //
-    PARAMCLASS_HARD,
+    //     >> x: 10, get foo x
+    //     ** Error: not bound
+    //
+    PARAMCLASS_JUST,
+
+    // `PARAMCLASS_THE` is however cued by a THE-WORD! in the function spec
+    // dialect.  It indicates that a single value of content at the callsite
+    // should be passed through literally, BUT it will pick up binding:
+    //
+    //     >> foo: lambda [@a] [a]
+    //
+    //     >> foo (1 + 2)
+    //     == (1 + 2)
+    //
+    //     >> foo :(1 + 2)
+    //     == :(1 + 2)
+    //
+    //     >> x: 10, foo x
+    //     == x
+    //
+    //     >> x: 10, get foo x
+    //     == 10  ; different from (lambda ['a] [a]) result
+    //
+    PARAMCLASS_THE,
 
     // `PARAMCLASS_MEDIUM` is cued by a QUOTED GET-WORD! in the function spec
     // dialect.  It quotes with the exception of GET-GROUP!, GET-WORD!, and

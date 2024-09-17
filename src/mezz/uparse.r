@@ -1178,7 +1178,7 @@ default-combinators: make map! reduce [
         return: "The emitted value"
             [any-value?]
         /pending [blank! block!]
-        'target [set-word! set-group!]
+        @target [set-word! set-group!]
         parser [action?]
         <local> result'
     ][

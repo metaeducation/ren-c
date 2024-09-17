@@ -143,7 +143,7 @@ REBTYPE(Quoted)
 //
 //      return: "Input value, verbatim--unless /SOFT and soft quoted type"
 //          [any-value?]
-//      'value [element?]
+//      @value [element?]
 //      /soft "Evaluate if a GET-GROUP!, GET-WORD!, or GET-TUPLE!"
 //  ]
 //

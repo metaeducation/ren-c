@@ -109,7 +109,7 @@ elf-format: context [
     ; explicit at the callsites.
     ;
     mode: ~
-    handler: func [return: [~] 'name [word!] num-bytes [integer!]] [
+    handler: func [return: [~] @name [word!] num-bytes [integer!]] [
         assert [
             binary? begin, num-bytes <= length of begin,
             find [read write] mode

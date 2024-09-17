@@ -180,9 +180,9 @@
 ; order to quote top-level words.  It's done more efficiently now, but this
 ; tests a pretty weird piece of functionality...so preserved here.
 (
-    run func* [
+    run func [
         return: [~]
-        'set-words [<variadic> set-word! tag!]
+        @set-words [<variadic> set-word! tag!]
         <local>
             set-word type-name tester meta
     ][

@@ -651,7 +651,7 @@ export*: func [
         [any-value?]
     where "Specialized for each module via EXPORT"
         [module!]
-    'what [set-word! set-group! block!]
+    @what [set-word! set-group! block!]
     args "`export x: ...` for single or `export [...]` for words list"
         [any-value? <variadic>]
     <local>

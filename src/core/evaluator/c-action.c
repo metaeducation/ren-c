@@ -349,10 +349,10 @@ Bounce Action_Executor(Level* L)
     //    but not if they don't.  Should failing to TAKE be seen as an error?
     //    Failing to take first gives out-of-order evaluation.
     //
-    // 5. This can happen e.g. with `x: 10 | x >- the`.  We raise an error in
-    //    this case, while still allowing `10 >- the` to work, so people don't
-    //    have to go out of their way rethinking operators if it could just
-    //    work out for inert types.
+    // 5. The idea behind quoting not getting binding isn't that it *removes*
+    //    binding, but that it doesn't add it.  But the mechanics aren't
+    //    sorted out to communicate "don't add binding" here yet.  Give a
+    //    first-cut approximation by unbinding.
     //
     // 6. SOFT permits L->out to not carry the UNEVALUATED flag--enfixed
     //    operations which have evaluations on their left are treated as if
@@ -403,7 +403,11 @@ Bounce Action_Executor(Level* L)
                 Meta_Quotify(ARG);
                 break; }
 
-              case PARAMCLASS_HARD:
+              case PARAMCLASS_JUST:
+                Move_Cell(ARG, OUT);
+                break;
+
+              case PARAMCLASS_THE:
                 Move_Cell(ARG, OUT);
                 break;
 
@@ -539,21 +543,18 @@ Bounce Action_Executor(Level* L)
 
   //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG ///////////////////////////////=//
 
-          case PARAMCLASS_HARD:
-            //
-            // !!! Need to think about how cases like `source ||` or `help ||`
-            // are supposed to act.  They set the "barrier hit" and then we
-            // get here...if we don't clear the flag, then the presence of
-            // a non-void causes a later assert.  Review.
-            //
-            The_Next_In_Feed(ARG, L->feed);
+    // 1. Have to account for enfix deferrals in cases like:
+    //
+    //        return the 10 then (x => [x + 10])
 
-            // Have to account for enfix deferrals in cases like:
-            //
-            //     return the 1 then (x => [x + 1])
-            //
-            Lookahead_To_Sync_Enfix_Defer_Flag(L->feed);
+          case PARAMCLASS_JUST:
+            Just_Next_In_Feed(ARG, L->feed);  // don't pick up binding
+            Lookahead_To_Sync_Enfix_Defer_Flag(L->feed);  // [1]
+            goto continue_fulfilling;
 
+          case PARAMCLASS_THE:
+            The_Next_In_Feed(ARG, L->feed);  // pick up binding
+            Lookahead_To_Sync_Enfix_Defer_Flag(L->feed);  // [1]
             goto continue_fulfilling;
 
   //=//// SOFT QUOTED ARG-OR-REFINEMENT-ARG  //////////////////////////////=//

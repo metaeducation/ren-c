@@ -37,7 +37,7 @@ steal: lambda [
 
     evaluation "Takes assigned value (variadic enables STEAL X: DEFAULT [...])"
         [any-value? <variadic>]
-    'look [set-word! set-tuple! <variadic>]
+    @look [set-word! set-tuple! <variadic>]
 ][
     get first look  ; returned value
     elide take evaluation
@@ -422,7 +422,7 @@ curtail: reframer func [
 me: enfix redescribe [
     {Update variable using it as the left hand argument to an enfix operator}
 ](
-    macro ['left [set-word! set-tuple!] 'right [word! tuple! path!]] [
+    macro [@left [set-word! set-tuple!] @right [word! tuple! path!]] [
         :[left, plain left, right]
     ]
 )
@@ -430,7 +430,7 @@ me: enfix redescribe [
 my: enfix redescribe [
     {Update variable using it as the first argument to a prefix operator}
 ](
-    macro ['left [set-word! set-tuple!] 'right [word! tuple! path!]] [
+    macro [@left [set-word! set-tuple!] @right [word! tuple! path!]] [
         :[left, right, plain left]
     ]
 )

@@ -99,10 +99,12 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
     }
 
     if (op == VARARG_OP_FIRST) {
-        if (pclass != PARAMCLASS_HARD)
+        if (pclass == PARAMCLASS_JUST)
+            Copy_Cell(out, look);
+        else if (pclass == PARAMCLASS_THE)
+            Derelativize(out, look, specifier);
+        else
             fail (Error_Varargs_No_Look_Raw()); // hard quote only
-
-        Derelativize(out, look, specifier);
 
         return true; // only a lookahead, no need to advance
     }
@@ -210,12 +212,17 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             Drop_Level(L_temp);
             break; }
 
-        case PARAMCLASS_HARD:
+        case PARAMCLASS_THE:
             Derelativize(
                 out,
                 Cell_List_Item_At(shared),
                 Cell_Specifier(shared)
             );
+            VAL_INDEX_UNBOUNDED(shared) += 1;
+            break;
+
+        case PARAMCLASS_JUST:
+            Copy_Cell(out, Cell_List_Item_At(shared));
             VAL_INDEX_UNBOUNDED(shared) += 1;
             break;
 
@@ -289,7 +296,11 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 return true;
             break; }
 
-        case PARAMCLASS_HARD:
+        case PARAMCLASS_JUST:
+            Just_Next_In_Feed(out, L->feed);
+            break;
+
+        case PARAMCLASS_THE:
             The_Next_In_Feed(out, L->feed);
             break;
 
@@ -565,7 +576,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
     const Key* key;
     const Param* param = Param_For_Varargs_Maybe_Null(&key, v);
     if (param == NULL) {
-        pclass = PARAMCLASS_HARD;
+        pclass = PARAMCLASS_JUST;
         Append_Ascii(mo->string, "???"); // never bound to an argument
     }
     else {
@@ -576,8 +587,13 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
             heart = REB_WORD;
             break;
 
-        case PARAMCLASS_HARD:
+        case PARAMCLASS_JUST:
             heart = REB_WORD;
+            quoted = true;
+            break;
+
+        case PARAMCLASS_THE:
+            heart = REB_THE_WORD;
             quoted = true;
             break;
 
@@ -608,7 +624,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
     if (Is_Block_Style_Varargs(&shared, v)) {
         if (Is_Cell_Poisoned(shared))
             Append_Ascii(mo->string, "[]");
-        else if (pclass == PARAMCLASS_HARD)
+        else if (pclass == PARAMCLASS_JUST or pclass == PARAMCLASS_THE)
             Mold_Value(mo, shared); // full feed can be shown if hard quoted
         else
             Append_Ascii(mo->string, "[...]"); // can't look ahead
@@ -619,7 +635,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
         else if (Is_Feed_At_End(L->feed)) {
             Append_Ascii(mo->string, "[]");
         }
-        else if (pclass == PARAMCLASS_HARD) {
+        else if (pclass == PARAMCLASS_JUST or pclass == PARAMCLASS_THE) {
             Append_Ascii(mo->string, "[");
             Mold_Value(mo, At_Feed(L->feed)); // one value shown if hard quoted
             Append_Ascii(mo->string, " ...]");

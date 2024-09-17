@@ -146,7 +146,7 @@
         ; We need to know this within our recursive function
         either countonly [
             set-countonly-true
-            assert [solved-boards = null]
+            solved-boards: null
         ][
             solved-boards: copy []
             set-countonly-false

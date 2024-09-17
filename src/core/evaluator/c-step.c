@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2022 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -352,6 +352,10 @@ Bounce Stepper_Executor(Level* L)
     if (Not_Subclass_Flag(VARLIST, paramlist, PARAMLIST_QUOTES_FIRST))
         goto give_up_backward_quote_priority;
 
+    ParamClass pclass = Cell_ParamClass(  // !!! Should cache this in frame
+        First_Unspecialized_Param(nullptr, enfixed)
+    );
+
     // If the action soft quotes its left, that means it's aware that its
     // "quoted" argument may be evaluated sometimes.  If there's evaluative
     // material on the left, treat it like it's in a group.
@@ -363,22 +367,24 @@ Bounce Stepper_Executor(Level* L)
             and not Any_Set_Kind(VAL_TYPE_UNCHECKED(L_current))
         )
     ){
-        // !!! cache this test?
-        //
-        const Param* first = First_Unspecialized_Param(nullptr, enfixed);
-        if (
-            Cell_ParamClass(first) == PARAMCLASS_SOFT
-            or Cell_ParamClass(first) == PARAMCLASS_META
-        ){
+        if (pclass == PARAMCLASS_SOFT or pclass == PARAMCLASS_META)
             goto give_up_backward_quote_priority;  // yield as an exemption
-        }
     }
 
     // Lookback args are fetched from OUT, then copied into an arg slot.
     // Put the backwards quoted value into OUT.  (Do this before next
-    // step because we need derelativized value for type check)
+    // step because we need value for type check)
     //
-    Derelativize(OUT, L_current, L_specifier);  // for FULFILLING_ENFIX
+    if (pclass == PARAMCLASS_JUST)  // enfix func ['x ...] [...]
+        Copy_Cell(OUT, L_current);
+    else {
+        assert(
+            pclass == PARAMCLASS_THE  // enfix func [@x ...] [...]
+            or pclass == PARAMCLASS_SOFT
+            or pclass == PARAMCLASS_MEDIUM
+        );
+        Derelativize(OUT, L_current, L_specifier);
+    }
 
     // We skip over the word that invoked the action (e.g. ->-, OF, =>).
     // CURRENT will then hold that word.  (OUT holds what was to the left)
@@ -740,8 +746,12 @@ Bounce Stepper_Executor(Level* L)
                     flags |= LEVEL_FLAG_RAISED_RESULT_OK;
                     break;
 
-                  case PARAMCLASS_HARD:
+                  case PARAMCLASS_JUST:
                     Just_Next_In_Feed(SPARE, L->feed);
+                    goto intrinsic_arg_in_spare;
+
+                  case PARAMCLASS_THE:
+                    The_Next_In_Feed(SPARE, L->feed);
                     goto intrinsic_arg_in_spare;
 
                   default:
