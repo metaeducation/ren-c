@@ -74,7 +74,8 @@
     error? sys/util/rescue [for-each [:x] [] []]
 )
 
-; A LIT-WORD! does not create a new variable or binding, but a WORD! does
+; A GET-WORD! does not create a new variable or binding, but a WORD! does
+; (Note: New executables do this with THE-WORD!, e.g. @x)
 (
     x: 10
     sum: 0
@@ -84,14 +85,14 @@
 (
     x: 10
     sum: 0
-    for-each 'x [1 2 3] [sum: sum + x]
+    for-each #x [1 2 3] [sum: sum + x]
     did all [x = 3  sum = 6]
 )
 (
     x: 10
     y: 20
     sum: 0
-    for-each ['x y] [1 2 3 4] [sum: sum + x + y]
+    for-each [#x y] [1 2 3 4] [sum: sum + x + y]
     did all [x = 3  y = 20  sum = 10]
 )
 
@@ -110,7 +111,7 @@
         error? sys/util/rescue [for-each [x x] [1 2 3 4] [sum: sum + x]]
         error? sys/util/rescue [
             for-each (compose [ ;-- see above
-                x (bind the 'x obj1)
+                x (bind #x obj1)
             ])[
                 1 2 3 4
             ][
@@ -119,7 +120,7 @@
         ]
         error? sys/util/rescue [
             for-each (compose [ ;-- see above
-                (bind the 'x obj2) x
+                (bind #x obj2) x
             ])[
                 1 2 3 4
             ][
@@ -128,7 +129,7 @@
         ]
         not error? sys/util/rescue [
             for-each (compose [ ;-- see above
-                (bind the 'x obj1) (bind the 'x obj2)
+                (bind #x obj1) (bind #x obj2)
             ])[
                 1 2 3 4
             ][

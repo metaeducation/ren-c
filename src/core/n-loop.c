@@ -355,11 +355,11 @@ static Bounce Loop_Number_Common(
 }
 
 
-// Virtual_Bind_To_New_Context() allows LIT-WORD! syntax to reuse an existing
+// Virtual_Bind_To_New_Context() allows ISSUE! syntax to reuse an existing
 // variables binding:
 //
 //     x: 10
-//     for-each 'x [20 30 40] [...]
+//     for-each #x [20 30 40] [...]
 //     ;-- The 10 will be overwritten, and x will be equal to 40, here
 //
 // It accomplishes this by putting a word into the "variable" slot, and having
@@ -374,7 +374,7 @@ Value* Real_Var_From_Pseudo(Value* pseudo_var) {
     // expand and invalidate the location.  (The `context` for fabricated
     // variables is locked at fixed size.)
     //
-    assert(Is_Lit_Word(pseudo_var));
+    assert(Is_Issue(pseudo_var));
     return Get_Mutable_Var_May_Fail(pseudo_var, SPECIFIED);
 }
 
@@ -799,7 +799,7 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
 //  {Evaluate a block over a range of values. (See also: REPEAT)}
 //
 //      return: [~null~ any-value!]
-//      'word [word!]
+//      'word [word! lit-word! refinement!]
 //          "Variable to hold current value"
 //      start [any-series! any-number!]
 //          "Starting value"
@@ -879,7 +879,7 @@ DECLARE_NATIVE(for)
 //      return: "Last body result, or null if BREAK"
 //          [~null~ ~void~ any-value!]
 //      'word "Variable set to each position in the series at skip distance"
-//          [word! lit-word! blank!]
+//          [word! lit-word! refinement! issue! blank!]
 //      series "The series to iterate over"
 //          [<maybe> blank! any-series!]
 //      skip "Number of positions to skip each time"
@@ -950,7 +950,7 @@ DECLARE_NATIVE(for_skip)
 
         // Modifications to var are allowed, to another ANY-SERIES! value.
         //
-        // If `var` is movable (e.g. specified via LIT-WORD!) it must be
+        // If `var` is movable (e.g. specified via ISSUE!) it must be
         // refreshed each time arbitrary code runs, since the context may
         // expand and move the address, may get PROTECTed, etc.
         //
@@ -1055,7 +1055,7 @@ DECLARE_NATIVE(cycle)
 //
 //      return: [~null~ ~void~ any-value!]
 //          {Last body result, or null if BREAK}
-//      'vars [word! lit-word! block!]
+//      'vars [word! lit-word! refinement! issue! block!]
 //          "Word or block of words to set each time, no new var if LIT-WORD!"
 //      data [<maybe> blank! any-series! any-context! map! datatype! action!]
 //          "The series to traverse"
@@ -1076,7 +1076,7 @@ DECLARE_NATIVE(for_each)
 //
 //      return: [~null~ ~void~ any-value!]
 //          {null on BREAK, blank on empty, false or the last truthy value}
-//      'vars [word! block!]
+//      'vars [word! lit-word! refinement! issue! block!]
 //          "Word or block of words to set each time (local)"
 //      data [<maybe> blank! any-series! any-context! map! datatype! action!]
 //          "The series to traverse"
@@ -1373,7 +1373,7 @@ static Bounce Remove_Each_Core(struct Remove_Each_State *res)
 //
 //      return: [~null~ integer!]
 //          {Number of removed series items, or null if BREAK}
-//      'vars [word! block!]
+//      'vars [word! lit-word! refinement! issue! block!]
 //          "Word or block of words to set each time (local)"
 //      data [<maybe> blank! any-series!]
 //          "The series to traverse (modified)" ; should BLANK! opt-out?
@@ -1496,7 +1496,7 @@ DECLARE_NATIVE(remove_each)
 //
 //      return: [~null~ ~void~ block!]
 //          {Collected block (BREAK/WITH can add a final result to block)}
-//      'vars [word! block!]
+//      'vars [word! lit-word! refinement! issue! block!]
 //          "Word or block of words to set each time (local)"
 //      data [<maybe> blank! any-series! action!]
 //          "The series to traverse"
@@ -1567,59 +1567,13 @@ DECLARE_NATIVE(repeat)
 
 
 //
-//  count-up: native [
-//
-//  {Evaluates a block a number of times.}
-//
-//      return: [~null~ any-value!]
-//          {Last body result or null if BREAK}
-//      'word [word!]
-//          "Word to set each time"
-//      value [<maybe> any-number!]
-//          "Maximum number or series to traverse"
-//      body [block!]
-//          "Block to evaluate each time"
-//  ]
-//
-DECLARE_NATIVE(count_up)
-{
-    INCLUDE_PARAMS_OF_COUNT_UP;
-
-    Value* value = ARG(value);
-
-    if (Is_Decimal(value) or Is_Percent(value))
-        Init_Integer(value, Int64(value));
-
-    REBCTX *context;
-    Virtual_Bind_Deep_To_New_Context(
-        ARG(body),
-        &context,
-        ARG(word)
-    );
-    Init_Object(ARG(word), context); // keep GC safe
-
-    assert(CTX_LEN(context) == 1);
-
-    Value* var = CTX_VAR(context, 1); // not movable, see #2274
-
-    REBI64 n = VAL_INT64(value);
-    if (n < 1) // Loop_Integer from 1 to 0 with bump of 1 is infinite
-        return Init_Void(OUT);  // void if loop condition never runs
-
-    return Loop_Integer_Common(
-        OUT, var, ARG(body), 1, VAL_INT64(value), 1
-    );
-}
-
-
-//
 //  for-next: native [
 //
 //  {Evaluates a block over a series.}
 //
 //      return: [~null~ any-value!]
 //          {Last body result or BREAK value}
-//      'word [word!]
+//      'word [word! lit-word! refinement!]
 //          "Word to set each time"
 //      value [<maybe> any-number! any-series!]
 //          "Maximum number or series to traverse"

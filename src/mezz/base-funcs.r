@@ -522,7 +522,7 @@ iterate-skip: redescribe [
 ](
     specialize enclose 'for-skip function [f] [
         if blank? word: f/word [return null]
-        f/word: to lit-word! word ;-- do not create new virtual binding
+        f/word: to issue! word ;-- do not create new virtual binding
         saved: f/series: get word
 
         ; !!! https://github.com/rebol/rebol-issues/issues/2331

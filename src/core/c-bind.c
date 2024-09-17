@@ -380,9 +380,9 @@ void Rebind_Values_Deep(
 //     for-each x [1 2 3] [x-word: 'x | break]
 //     get x-word ;-- returns 3
 //
-// Ren-C adds a feature of letting LIT-WORD!s be used to indicate that the
+// Ren-C adds a feature of letting ISSUE!s be used to indicate that the
 // loop variable should be written into the existing bound variable that the
-// LIT-WORD! specified.  If all loop variables are of this form, then no
+// ISSUE! specified.  If all loop variables are of this form, then no
 // copy will be made.
 //
 // !!! Ren-C managed to avoid deep copying function bodies yet still get
@@ -420,9 +420,9 @@ void Virtual_Bind_Deep_To_New_Context(
 
         rebinding = false;
         for (; NOT_END(item); ++item) {
-            if (Is_Word(item))
+            if (Is_Word(item) or Is_Refinement(item) or Is_Lit_Word(item))
                 rebinding = true;
-            else if (not Is_Lit_Word(item)) {
+            else if (not Is_Issue(item)) {
                 //
                 // Better to fail here, because if we wait until we're in
                 // the middle of building the context, the managed portion
@@ -438,7 +438,12 @@ void Virtual_Bind_Deep_To_New_Context(
     else {
         item = spec;
         specifier = SPECIFIED;
-        rebinding = Is_Word(item);
+        if (Is_Word(item) or Is_Refinement(item) or Is_Lit_Word(item))
+            rebinding = true;
+        else if (Is_Issue(item))
+            rebinding = false;
+        else
+            fail (Error_Invalid_Core(item, specifier));
     }
 
     // If we need to copy the body, do that *first*, because copying can
@@ -492,7 +497,7 @@ void Virtual_Bind_Deep_To_New_Context(
 
     REBLEN index = 1;
     while (index <= num_vars) {
-        if (Is_Word(item)) {
+        if (Is_Word(item) or Is_Refinement(item) or Is_Lit_Word(item)) {
             Init_Typeset(
                 key,
                 TS_VALUE, // !!! Currently not paid attention to
@@ -524,16 +529,16 @@ void Virtual_Bind_Deep_To_New_Context(
             }
         }
         else {
-            assert(Is_Lit_Word(item)); // checked previously
+            assert(Is_Issue(item)); // checked previously
 
-            // A LIT-WORD! indicates that we wish to use the original binding.
-            // So `for-each 'x [1 2 3] [...]` will actually set that x
-            // instead of creating a new one.
+            // An ISSUE! indicates that we wish to use the original binding.
+            // So `for-each #x [1 2 3] [...]` will actually set that x
+            // instead of creating a new one.  (New executables use @x)
             //
             // !!! Enumerations in the code walks through the context varlist,
             // setting the loop variables as they go.  It doesn't walk through
-            // the array the user gave us, so if it's a LIT-WORD! the
-            // information is lost.  Do a trick where we put the LIT-WORD!
+            // the array the user gave us, so if it's a GET-WORD! the
+            // information is lost.  Do a trick where we put the GET-WORD!
             // itself into the slot, and give it NODE_FLAG_MARKED...then
             // hide it from the context and binding.
             //
@@ -548,7 +553,7 @@ void Virtual_Bind_Deep_To_New_Context(
             SET_VAL_FLAG(var, CELL_FLAG_PROTECTED);
             SET_VAL_FLAG(var, VAR_MARKED_REUSE);
 
-            // We don't want to stop `for-each ['x 'x] ...` necessarily,
+            // We don't want to stop `for-each [:x :x] ...` necessarily,
             // because if we're saying we're using the existing binding they
             // could be bound to different things.  But if they're not bound
             // to different things, the last one in the list gets the final
@@ -557,7 +562,7 @@ void Virtual_Bind_Deep_To_New_Context(
             // For now, don't bother trying to use a binder or otherwise to
             // stop it.
             //
-            // However, `for-each [x 'x] ...` is intrinsically contradictory.
+            // However, `for-each [x :x] ...` is intrinsically contradictory.
             // So we use negative indices in the binder, which the binding
             // process will ignore.
             //
