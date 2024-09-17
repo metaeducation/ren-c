@@ -181,7 +181,7 @@ console!: make object! [
     ]
 
     print-warning:  func [s] [print [warning reduce s]]
-    print-error:    func [e [error!]] [print [e]]
+    print-error:    func [e [error!]] [print [form e]]
 
     print-halted: func [] [
         print "[interrupted by Ctrl-C or HALT instruction]"
@@ -281,7 +281,7 @@ start-console: function [
         o/resources
         exists? skin-file: join o/resources skin-file
     ] then [
-        trap [
+        sys/util/rescue [
             new-skin: do load skin-file
 
             ;; if loaded skin returns console! object then use as prototype
@@ -313,7 +313,7 @@ start-console: function [
     ; the WHY function on the first error delivery.
     ;
     proto-skin/print-error: adapt :proto-skin/print-error [
-        if not system/state/last-error [
+        if not error? system/state/last-error [  ; NOT of ERROR! abrupt fails
             system/console/print-info "Note: use WHY for error information"
         ]
 
@@ -549,7 +549,7 @@ ext-console-impl: function [
             e: make error! "Can't RESUME top-level CONSOLE (use QUIT to exit)"
             e/near: result/near
             e/where: result/where
-            emit [system/console/print-error (<*> e)]
+            emit [system/console/print-error (<*> uneval e)]
             return <prompt>
         ]
         return :result/arg1
@@ -562,9 +562,9 @@ ext-console-impl: function [
         ; interpreter is being called non-interactively from the shell).
         ;
         if object? system/console [
-            emit [system/console/print-error (<*> :result)]
+            emit [system/console/print-error (<*> uneval result)]
         ] else [
-            emit [print [(<*> :result)]]
+            emit [print [form (<*> uneval result)]]
         ]
         if find directives #die-if-error [
             return <die>
@@ -653,7 +653,7 @@ ext-console-impl: function [
         return <prompt>
     ]
 
-    trap [
+    sys/util/rescue [
         ;
         ; Note that LOAD/ALL makes BLOCK! even for a single item,
         ; e.g. `load/all "word"` => `[word]`
@@ -699,7 +699,7 @@ ext-console-impl: function [
         ; Could be an unclosed double quote (unclosed tag?) which more input
         ; on a new line cannot legally close ATM
         ;
-        emit [system/console/print-error (<*> error)]
+        emit [system/console/print-error (<*> uneval error)]
         return <prompt>
     ]
 

@@ -225,6 +225,15 @@ INLINE REBCTX *VAL_CONTEXT(const Cell* v) {
     return c;
 }
 
+// We approximate definitional errors in the bootstrap executable by making
+// a lot of places not tolerant of ERROR!.  This isn't a good answer for the
+// new executable, but it's serviceable enough.
+//
+INLINE void FAIL_IF_ERROR(const Cell* c) {
+    if (Is_Error(c))
+        fail (VAL_CONTEXT(c));
+}
+
 INLINE void INIT_VAL_CONTEXT(Value* v, REBCTX *c) {
     v->payload.any_context.varlist = CTX_VARLIST(c);
 }

@@ -1,7 +1,7 @@
 ; functions/context/bind.r
 
 (
-    e: trap [do make block! ":a"]
+    e: sys/util/rescue [do make block! ":a"]
     e/id = 'not-bound
 )
 

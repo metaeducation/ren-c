@@ -899,6 +899,8 @@ REBTYPE(List)
         UNUSED(PAR(series));
         UNUSED(PAR(value));
 
+        FAIL_IF_ERROR(arg);
+
         REBLEN len; // length of target
         if (Cell_Word_Id(verb) == SYM_CHANGE)
             len = Part_Len_May_Modify_Index(list, ARG(limit));

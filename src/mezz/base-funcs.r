@@ -30,6 +30,10 @@ assert: func [
     ; there was no idea of a "debug mode"
 ]
 
+raise: func [error [error!]] [  ; poor man's definitional error
+    return error
+]
+
 so: enfix func [
     {Postfix assertion which won't keep running if left expression is false}
 
@@ -497,17 +501,8 @@ really: func [
 oneshot: specialize 'n-shot [n: 1]
 upshot: specialize 'n-shot [n: -1]
 
-attempt: func [
-    {Tries to evaluate a block and returns result or NULL on error.}
-
-    return: "null on error, if code runs and produces null it becomes void"
-        [~null~ any-value!]
-    code [block! action!]
-][
-    trap [
-        return do code  ; TRASHIFY of null avoids conflation, but is overkill
-    ]
-    null  ; don't look at trapped error value, just return null
+attempt: func [] [
+    fail/where "Use SYS/UTIL/RESCUE instead of ATTEMPT" 'return
 ]
 
 for-next: redescribe [
@@ -532,7 +527,7 @@ iterate-skip: redescribe [
 
         ; !!! https://github.com/rebol/rebol-issues/issues/2331
         comment [
-            trap [set the result: do f] then lambda e [
+            sys/util/rescue [set the result: do f] then lambda e [
                 set word saved
                 fail e
             ]
@@ -838,7 +833,11 @@ module: func [
     ;
     if block? :spec [
         unbind/deep spec
-        spec: attempt [construct/only system/standard/header :spec]
+        sys/util/rescue [
+            spec: construct/only system/standard/header :spec
+        ] then [
+            spec: null
+        ]
     ]
 
     ; Historically, the Name: and Type: fields would tolerate either LIT-WORD!

@@ -36,7 +36,7 @@
     step3: (three 10 20 30) ; 6000
     step4: (two-30 10 20) ; 6000
 
-    step5: trap [three/unavailable 10 20 30] ; error
+    step5: sys/util/rescue [three/unavailable 10 20 30] ; error
 
     step6: (three/available 10 20 30 40) ; 240000
 

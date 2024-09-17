@@ -14,7 +14,7 @@ REBOL [
 
 decode-lines: function [
     {Decode text encoded using a line prefix e.g. comments (modifies).}
-    text [text!]
+    text [text! error!]
     line-prefix [text! block!] {Usually "**" or "//". Matched using parse.}
     indent [text! block!] {Usually "  ". Matched using parse.}
 ] [
@@ -22,14 +22,14 @@ decode-lines: function [
     if not empty? indent [append pattern compose/only [opt (indent)]]
     line: [pos: pattern rest: (rest: remove/part pos rest) :rest thru newline]
     parse2/match text [opt some line] else [
-        fail [
+        return make error! [
             {Expected line} (reify text-line-of text pos)
             {to begin with} (mold line-prefix)
             {and end with newline.}
         ]
     ]
     if pos: back tail-of text [remove pos]
-    text
+    return text
 ]
 
 encode-lines: func [

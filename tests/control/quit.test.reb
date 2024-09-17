@@ -27,5 +27,5 @@
 )
 
 [#2190
-    (error? trap [catch/quit [attempt [quit]] 1 / 0])
+    (error? sys/util/rescue [catch/quit [sys/util/rescue [quit]] 1 / 0])
 ]

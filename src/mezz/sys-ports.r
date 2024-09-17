@@ -146,7 +146,7 @@ make-port*: function [
                     ; would always fail.  Ren-C permits this conversion.
 
                     if not empty? trim s1 [
-                        attempt [s1: to tuple! s1]
+                        sys/util/rescue [s1: to tuple! s1]
                         emit host s1
                     ]
                 )

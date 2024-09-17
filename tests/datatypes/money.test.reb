@@ -13,22 +13,22 @@
 (
     x: $999999999999999
     did any [
-        error? trap [x: x + $1]
-        not error? trap [mold x]
+        error? sys/util/rescue [x: x + $1]
+        not error? sys/util/rescue [mold x]
     ]
 )
 (
     x: -$999999999999999
     did any [
-        error? trap [x: x - $1]
-        not error? trap [mold x]
+        error? sys/util/rescue [x: x - $1]
+        not error? sys/util/rescue [mold x]
     ]
 )
 ; alternative form
 (
     did any [
-        error? trap [x: $1234567890123456]
-        not error? trap [mold x]
+        error? sys/util/rescue [x: $1234567890123456]
+        not error? sys/util/rescue [mold x]
     ]
 )
 ($11 = make money! 11)

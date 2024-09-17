@@ -21,7 +21,7 @@
     1 = f1
 )
 ; Test that errors do not stop the loop
-(1 = until [trap [1 / 0] 1])
+(1 = until [sys/util/rescue [1 / 0] 1])
 ; Recursion check
 (
     num1: 0

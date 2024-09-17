@@ -12,13 +12,13 @@
 ; void-in null-out
 ;
 (null = make blank! void)
-(error? trap [make blank! [a b c]])
+(error? sys/util/rescue [make blank! [a b c]])
 (null = make integer! void)
 (null = make object! void)
 
 (null? to blank! void)  ;-- TO's universal protocol for void 2nd argument
 (null? to void 1) ;-- TO's universal protocol for void 1st argument
-(error? trap [to blank! 1]) ;-- no other types allow "conversion" to blank
+(error? sys/util/rescue [to blank! 1]) ;-- no other types allow "conversion" to blank
 
 ("_" = mold blank)
 [#1666 #1650 (

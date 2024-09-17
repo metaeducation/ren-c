@@ -39,7 +39,7 @@
     same? :a-value a-value
 )
 (
-    error? a-value: trap [1 / 0]
+    error? a-value: sys/util/rescue [1 / 0]
     same? :a-value a-value
 )
 (

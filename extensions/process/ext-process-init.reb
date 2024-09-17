@@ -34,7 +34,7 @@ browse*: function [
         ][
             location
         ]
-        trap [
+        sys/util/rescue [
             call*/shell command ; don't use /WAIT
             return
         ] then [

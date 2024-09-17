@@ -1,24 +1,24 @@
 ; datatypes/error.r
-(error? trap [1 / 0])
+(error? sys/util/rescue [1 / 0])
 (not error? 1)
-(error! = type of trap [1 / 0])
+(error! = type of sys/util/rescue [1 / 0])
 
 ; error evaluation
-(error? do head of insert copy [] trap [1 / 0])
+(error? sys/util/rescue [1 / 0])
 
 ; error that does not exist in the SCRIPT category--all of whose ids are
 ; reserved by the system and must be formed from mezzanine/user code in
 ; accordance with the structure the system would form.  Hence, illegal.
 ;
-(trap [make error! [type: 'script id: 'nonexistent-id]] then [true])
+(sys/util/rescue [make error! [type: 'script id: 'nonexistent-id]] then [true])
 
 ; triggered errors should not be assignable
 ;
-(a: 1 error? trap [a: 1 / 0] :a =? 1)
-(a: 1 error? trap [set 'a 1 / 0] :a =? 1)
+(a: 1 error? sys/util/rescue [a: 1 / 0] :a =? 1)
+(a: 1 error? sys/util/rescue [set 'a 1 / 0] :a =? 1)
 
 [#2190
-    (127 = catch/quit [attempt [catch/quit [1 / 0]] quit/with 127])
+    (127 = catch/quit [sys/util/rescue [catch/quit [1 / 0]] quit/with 127])
 ]
 
 ; error types that should be predefined
@@ -129,13 +129,13 @@
 
 ; are error reports for DO and EVALUATE consistent?
 (
-    val1: trap [do [1 / 0]]
-    val2: trap [evaluate [1 / 0]]
+    val1: sys/util/rescue [do [1 / 0]]
+    val2: sys/util/rescue [evaluate [1 / 0]]
     val1/near = val2/near
 )
 
 (
-    e: trap [1 / 0]
+    e: sys/util/rescue [1 / 0]
     e/id = 'zero-divide
 )
 
@@ -148,8 +148,8 @@
 ; length path it actually retriggers divide inside the path dispatcher, so
 ; that complicated the error delivery.  Review.
 (
-    e1: trap [divide 1 0]
-    e2: trap [divide 2 0]
+    e1: sys/util/rescue [divide 1 0]
+    e2: sys/util/rescue [divide 2 0]
 
     did all [
         e1/id = 'zero-divide

@@ -6,7 +6,7 @@
 (1x2 = make pair! [1 2])
 (1x1 = to pair! 1)
 [#17
-    (error? trap [to pair! [0.4]])
+    (error? sys/util/rescue [to pair! [0.4]])
 ]
 (1x2 = to pair! [1 2])
 ("1x1" = mold 1x1)

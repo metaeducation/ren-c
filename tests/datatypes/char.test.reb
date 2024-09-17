@@ -159,11 +159,11 @@
 (0 = subtract #"^(ff)" #"^(ff)")
 
 (
-    e: trap [#"^(00)" - 1]
+    e: sys/util/rescue [#"^(00)" - 1]
     e/id = 'type-limit
 )
 (
-    e: trap [#"^(00)" + -1]
+    e: sys/util/rescue [#"^(00)" + -1]
     e/id = 'type-limit
 )
 

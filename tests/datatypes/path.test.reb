@@ -135,7 +135,7 @@
     a: make object! []
     path: 'a/a
     change/only back tail of path path
-    error? trap [do path]
+    error? sys/util/rescue [do path]
     true
 )
 
@@ -151,7 +151,7 @@
     )
 ]
 [#1977
-    (f: func [/r] [1] error? trap [f/r/%])
+    (f: func [/r] [1] error? sys/util/rescue [f/r/%])
 ]
 
 ; path evaluation order

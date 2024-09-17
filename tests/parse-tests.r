@@ -122,7 +122,7 @@
 
 [#1672 (
     a: [a <end>]
-    error? trap [parse/match [] a]
+    error? sys/util/rescue [parse/match [] a]
 )]
 
 ; repetition
@@ -197,7 +197,7 @@
 
 ; self-modifying rule, not legal in Ren-C if it's during the parse/match
 
-(error? trap [
+(error? sys/util/rescue [
     not parse/match "abcd" rule: ["ab" (remove back tail of rule) "cd"]
 ])
 
@@ -215,7 +215,7 @@
 
 ; INTO is not legal if a string parse/match is already running
 ;
-(error? trap [parse/match "aa" [into ["a" "a"]]])
+(error? sys/util/rescue [parse/match "aa" [into ["a" "a"]]])
 
 
 ; Should return the same series type as input (Rebol2 did not do this)

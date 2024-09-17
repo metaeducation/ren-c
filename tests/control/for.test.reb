@@ -68,7 +68,7 @@
 ; Test that errors do not stop the loop and errors can be returned
 (
     num: 0
-    e: for i 1 2 1 [num: i trap [1 / 0]]
+    e: for i 1 2 1 [num: i sys/util/rescue [1 / 0]]
     all [error? e num = 2]
 )
 
@@ -181,7 +181,7 @@
 ; infinite recursion
 (
     blk: [for i 1 1 1 blk]
-    error? trap blk
+    error? sys/util/rescue blk
 )
 ; local variable changeability - this is how it works in R3
 (
@@ -197,7 +197,7 @@
 ; local variable type safety
 (
     test: false
-    error? trap [
+    error? sys/util/rescue [
         for i 1 2 [
             either test [i == 2] [
                 test: true
@@ -212,7 +212,7 @@
 ]
 
 [#1136 (
-    e: trap [
+    e: sys/util/rescue [
         num: 0
         for i 9223372036854775806 9223372036854775807 2 [
             num: num + 1
@@ -222,7 +222,7 @@
     error? e and [e/id = 'overflow]
 )]
 (
-    e: trap [
+    e: sys/util/rescue [
         num: 0
         for i -9223372036854775807 -9223372036854775808 -2 [
             num: num + 1
@@ -233,7 +233,7 @@
 )
 
 [#1994 (
-    e: trap [
+    e: sys/util/rescue [
         num: 0
         for i 9223372036854775806 9223372036854775807 9223372036854775807 [
             num: num + 1
@@ -244,7 +244,7 @@
     error? e and [e/id = 'overflow]
 )]
 (
-    e: trap [
+    e: sys/util/rescue [
         num: 0
         for i -9223372036854775807 -9223372036854775808 -9223372036854775808 [
             num: num + 1

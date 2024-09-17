@@ -4,7 +4,7 @@
 (get-word! = type of first [:a])
 (
     ; context-less get-word
-    e: trap [do make block! ":a"]
+    e: sys/util/rescue [do make block! ":a"]
     e/id = 'not-bound
 )
 (
@@ -13,14 +13,14 @@
 )
 
 [#1477 (
-    e: trap [load ":/"]
+    e: sys/util/rescue [load ":/"]
     error? e and [e/id = 'scan-invalid]
 )]
 (
-    e: trap [load "://"]
+    e: sys/util/rescue [load "://"]
     error? e and [e/id = 'scan-invalid]
 )
 (
-    e: trap [load ":///"]
+    e: sys/util/rescue [load ":///"]
     error? e and [e/id = 'scan-invalid]
 )

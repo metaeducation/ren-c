@@ -264,7 +264,7 @@ typedef struct rebol_scan_state {
 
 enum {
     SCAN_FLAG_NEXT = 1 << 0, // load/next feature
-    SCAN_FLAG_RELAX = 1 << 1, // no error throw
+    SCAN_FLAG_1 = 1 << 1, // no error throw
     SCAN_FLAG_NULLEDS_LEGAL = 1 << 2, // NULL splice in top level of rebValue()
     SCAN_FLAG_LOCK_SCANNED = 1 << 3  // lock series as they are loaded
 };

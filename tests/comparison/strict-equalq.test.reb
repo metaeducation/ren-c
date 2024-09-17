@@ -106,7 +106,7 @@
     insert/only a-value a-value
     b-value: copy []
     insert/only b-value b-value
-    error? trap [strict-equal? a-value b-value]
+    error? sys/util/rescue [strict-equal? a-value b-value]
     true
 )]
 [#1068 #1066 (
@@ -394,7 +394,7 @@
 (
     p: make port! http://
     any [
-        error? trap [strict-equal? p p]
+        error? sys/util/rescue [strict-equal? p p]
         strict-equal? p p
     ]
 )

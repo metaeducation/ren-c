@@ -101,7 +101,7 @@
 ($100 == round/even $100.25)
 (-$100 == round/even -$100.25)
 ; round/even/to; divide by 0
-(error? trap [round/even/to 0.1 0])
+(error? sys/util/rescue [round/even/to 0.1 0])
 (zero? round/even/to 0.1 -1.0)
 (zero? round/even/to 0.1 -1)
 (zero? round/even/to 0.5 -1.0)

@@ -57,7 +57,7 @@
 (
     num: 0
     blk: [1 2]
-    e: for-each i blk [num: i trap [1 / 0]]
+    e: for-each i blk [num: i sys/util/rescue [1 / 0]]
     all [error? e num = 2]
 )
 ; "recursive safety", "locality" and "body constantness" test in one
@@ -71,7 +71,7 @@
     num = 10
 )
 (
-    error? trap [for-each [:x] [] []]
+    error? sys/util/rescue [for-each [:x] [] []]
 )
 
 ; A LIT-WORD! does not create a new variable or binding, but a WORD! does
@@ -107,8 +107,8 @@
     obj2: make object! [x: 30]
     sum: 0
     did all [
-        error? trap [for-each [x x] [1 2 3 4] [sum: sum + x]]
-        error? trap [
+        error? sys/util/rescue [for-each [x x] [1 2 3 4] [sum: sum + x]]
+        error? sys/util/rescue [
             for-each (compose [ ;-- see above
                 x (bind the 'x obj1)
             ])[
@@ -117,7 +117,7 @@
                 sum: sum + x
             ]
         ]
-        error? trap [
+        error? sys/util/rescue [
             for-each (compose [ ;-- see above
                 (bind the 'x obj2) x
             ])[
@@ -126,7 +126,7 @@
                 sum: sum + x
             ]
         ]
-        not error? trap [
+        not error? sys/util/rescue [
             for-each (compose [ ;-- see above
                 (bind the 'x obj1) (bind the 'x obj2)
             ])[
@@ -178,7 +178,7 @@
 )(
     block: copy [a b c]
     all [
-        e: trap [
+        error? e: sys/util/rescue [
             for-each item block [
                 append block <failure>
             ]

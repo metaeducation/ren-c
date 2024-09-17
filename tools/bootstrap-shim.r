@@ -74,7 +74,7 @@ maybe: func [] [fail/where "MAYBE+ => blank or MAYBE- => null" 'return]
 ; specific other version if push came to shove, but it would be work for no
 ; obvious reward.)
 ;
-trap [
+trap [  ; in even older bootstrap executable, this means SYS.UTIL/RESCUE
     func [i [<maybe> integer!]] [...]
 ] else [
     nulled?: func [var [word! path!]] [return null = get var]
@@ -116,6 +116,17 @@ print: lib/print: lib/func [value <local> pos] [
     prin3-buggy newline
 ]
 
+
+; With definitional errors, we're moving away from the buggy practice of
+; intercepting abrupt failures casually.  The RESCUE routine is put in
+; SYS/UTIL/RESCUE...and that's what old-school TRAP was.
+;
+append sys 'util
+sys/util: make object! [rescue: 1]
+sys/util/rescue: :trap
+trap: func [] [fail/where "USE RESCUE instead of TRAP for bootstrap" 'return]
+
+
 ; The bootstrap executable was picked without noticing it had an issue with
 ; reporting errors on file READ where it wouldn't tell you what file it was
 ; trying to READ.  It has been fixed, but won't be fixed until a new bootstrap
@@ -127,7 +138,7 @@ print: lib/print: lib/func [value <local> pos] [
 lib-read: copy :lib/read
 lib/read: read: enclose :lib-read function [f [frame!]] [
     saved-source: :f/source
-    if e: trap [bin: do f] [
+    if error? e: sys/util/rescue [bin: do f] [
         parse2 e/message [
             [
                 {The system cannot find the } ["file" | "path"] { specified.}
@@ -182,8 +193,11 @@ maybe+: :try  ; see [2]
 maybe-: func [x [<opt> any-value!]] [either blank? :x [null] [:x]]
 
 null-to-blank: :try  ; if we put null in variables, word accesses will fail
-try: func [] [fail/where "Use MAYBE instead of TRY for bootstrap" 'return]
 opt: func [] [fail/where "Use REIFY instead of OPT for bootstrap" 'return]
+try: func [value [<opt> any-value!]] [  ; poor man's definitional error handler
+    if error? :value [return null]
+    return :value
+]
 
 trash: :void
 nothing!: :void!
@@ -368,13 +382,20 @@ trim: adapt 'trim [ ; there's a bug in TRIM/AUTO in 8994d23
 ]
 
 transcode: lib/function [
-    return: [<opt> block! text! binary!] "full block or remainder if /next3"
+    return: "full block or remainder if /next3, or 'definitional' error"
+        [<opt> block! text! binary! error!]
     source [text! binary!]
     /next3
     next-arg [any-word!] "variable to set the transcoded element to"
 ][
-    values: lib/transcode/(either next3 ['next] [_])
-        either text? source [to binary! source] [source]
+    e: sys/util/rescue [  ; !!! Some weird interactions with THEN here
+        values: lib/transcode/(either next3 ['next] [_])
+            either text? source [to binary! source] [source]
+    ]
+    if error? :e [
+        return e  ; poor man's definitional error
+    ]
+
     pos: take/last values
     assert [binary? pos]
 
@@ -390,7 +411,7 @@ transcode: lib/function [
             pos: skip source subtract (length of source) (length of rest)
         ]
         if null? pick values 1 [
-            set next-arg null  ; match modern Ren-C optional pack item
+            set* next-arg null  ; match modern Ren-C optional pack item
             return null
         ]
         set next-arg pick values 1

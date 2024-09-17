@@ -25,16 +25,16 @@
 (-2147483648 == to integer! -2147483648.9)
 (2147483647 == to integer! 2147483647.9)
 <32bit>
-(error? trap [to integer! -2147483649.0])
+(error? sys/util/rescue [to integer! -2147483649.0])
 <32bit>
-(error? trap [to integer! 2147483648.0])
+(error? sys/util/rescue [to integer! 2147483648.0])
 [#921
-    (error? trap [to integer! 9.2233720368547765e18])
+    (error? sys/util/rescue [to integer! 9.2233720368547765e18])
 ]
-(error? trap [to integer! -9.2233720368547779e18])
+(error? sys/util/rescue [to integer! -9.2233720368547779e18])
 (0 == to integer! "0")
-(error? trap [to integer! false])
-(error? trap [to integer! true])
+(error? sys/util/rescue [to integer! false])
+(error? sys/util/rescue [to integer! true])
 (0 == to integer! #"^@")
 (1 == to integer! #"^a")
 (0 == to integer! #0)
@@ -47,7 +47,7 @@
 (-1 == to integer! #{ffffffffffffffff})
 <64bit>
 (302961000000 == to integer! "3.02961E+11")
-(error? trap [to integer! "t"])
+(error? sys/util/rescue [to integer! "t"])
 ("0" = mold 0)
 ("1" = mold 1)
 ("-1" = mold -1)

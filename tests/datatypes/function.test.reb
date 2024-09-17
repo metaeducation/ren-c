@@ -53,7 +53,7 @@
     same? a-value f
 )
 (
-    f: does [trap [1 / 0]]
+    f: does [sys/util/rescue [1 / 0]]
     error? f
 )
 (
@@ -208,7 +208,7 @@
 )
 ; "error out" of a function
 (
-    error? trap [
+    error? sys/util/rescue [
         f: does [1 / 0 2]
         f
         2
@@ -246,7 +246,7 @@
 (
     f: func [x] [
         either x = 1 [
-            error? trap [f 2]
+            error? sys/util/rescue [f 2]
             x = 1
         ] [1 / 0]
     ]
@@ -304,22 +304,22 @@
 (
     f: func [code value] [either blank? code ['value] [do code]]
     f-value: f blank blank
-    error? trap [f compose [2 * (f-value)] 21]  ; re-entering same function
+    error? sys/util/rescue [f compose [2 * (f-value)] 21]  ; re-entering same function
 )
 (
     f: func [code value] [either blank? code ['value] [do code]]
     g: func [code value] [either blank? code ['value] [do code]]
     f-value: f blank blank
-    error? trap [g compose [2 * (f-value)] 21]  ; re-entering different function
+    error? sys/util/rescue [g compose [2 * (f-value)] 21]  ; re-entering different function
 )
 [#19 ; but duplicate specializations currently not legal in Ren-C
     (
     f: func [/r x] [x]
-    error? trap [2 == f/r/r 1 2]
+    error? sys/util/rescue [2 == f/r/r 1 2]
     )
 ]
 [#27
-    (error? trap [(type of) 1])
+    (error? sys/util/rescue [(type of) 1])
 ]
 ; inline function test
 [#1659 (
@@ -334,7 +334,7 @@
     f: func [d] [a [d] do c]
     did all [
         1 = f 1
-        error? trap [2 = f 2]
+        error? sys/util/rescue [2 = f 2]
     ]
 )
 [#1528
@@ -352,7 +352,7 @@
     body: [x + y]
     f: make action! reduce [[x] body]
     g: make action! reduce [[y] body]
-    error? trap [f 1]
+    error? sys/util/rescue [f 1]
 )]
 [#2044 (
     o: make object! [f: func [x] ['x]]
@@ -390,16 +390,16 @@
 
 ; Duplicate arguments or refinements.
 (
-    error? trap [func [a b a] []]
+    error? sys/util/rescue [func [a b a] []]
 )
 (
-    error? trap [function [a b a] []]
+    error? sys/util/rescue [function [a b a] []]
 )
 (
-    error? trap [func [/test /test] []]
+    error? sys/util/rescue [func [/test /test] []]
 )
 (
-    error? trap [function [/test /test] []]
+    error? sys/util/rescue [function [/test /test] []]
 )
 
 ; /LOCAL is an ordinary refinement in Ren-C

@@ -11,7 +11,7 @@
 (not nothing? 1)
 
 [
-    ('no-value = (trap [a: ~ | a])/id)
+    ('no-value = (sys/util/rescue [a: ~ | a])/id)
 ]
 
 ; NULL and NOTHING assignments via SET are legal.  You are expected to do your
@@ -19,17 +19,17 @@
 ;
 (
     value: null
-    error? trap [set the a: non null value]
+    error? sys/util/rescue [set the a: non null value]
 )
-(not error? trap [set 'a null])
+(not error? sys/util/rescue [set 'a null])
 (
     value: ~
-    error? trap [set the a: non nothing! :value]
+    error? sys/util/rescue [set the a: non nothing! :value]
 )
-(not error? trap [set 'a ~])
+(not error? sys/util/rescue [set 'a ~])
 
 (
     a-value: null
-    e: trap [a-value/foo]
+    e: sys/util/rescue [a-value/foo]
     e/id = 'no-value
 )

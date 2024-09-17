@@ -55,16 +55,16 @@
 ])
 
 [#44 (
-    error? trap [redbol-apply 'append/only [copy [a b] 'c]]
+    error? sys/util/rescue [redbol-apply 'append/only [copy [a b] 'c]]
 )]
 (1 == redbol-apply :subtract [2 1])
 (1 = (redbol-apply :- [2 1]))
-(error? trap [redbol-apply func [a] [a] []])
-(error? trap [redbol-apply/only func [a] [a] []])
+(error? sys/util/rescue [redbol-apply func [a] [a] []])
+(error? sys/util/rescue [redbol-apply/only func [a] [a] []])
 
 ; CC#2237
-(error? trap [redbol-apply func [a] [a] [1 2]])
-(error? trap [redbol-apply/only func [a] [a] [1 2]])
+(error? sys/util/rescue [redbol-apply func [a] [a] [1 2]])
+(error? sys/util/rescue [redbol-apply/only func [a] [a] [1 2]])
 
 (error? redbol-apply :make [error! ""])
 
@@ -168,16 +168,6 @@
     ][
         make error! ""
     ]
-)
-(
-    error? redbol-apply/only func [x [~null~ any-value!]] [
-        return get 'x
-    ] head of insert copy [] make error! ""
-)
-(
-    error? redbol-apply/only func ['x [~null~ any-value!]] [
-        return get 'x
-    ] head of insert copy [] make error! ""
 )
 (use [x] [x: 1 strict-equal? 1 redbol-apply func ['x] [:x] [:x]])
 (use [x] [x: 1 strict-equal? 1 redbol-apply func ['x] [:x] [:x]])

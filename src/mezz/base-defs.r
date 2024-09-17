@@ -100,24 +100,6 @@ end: func [
     until [null? take omit]
 ]
 
-; Note: UNEVAL is done far more elegantly as the new QUOTE in a generalized
-; way in mainline.  This exists in R3C prior to arbitrary quoting.
-;
-uneval: func [
-    {Make expression that when evaluated, will produce the input}
-
-    return: {`(null)` if null, or `(the ...)` where ... is passed-in cell}
-        [group!]
-    optional [~null~ any-value!]
-][
-    case [
-        void? :optional [the (void)]
-        null? :optional [the (null)]
-        nothing? :optional [the (~)]
-        true [as group! reduce ['the :optional]]
-    ]
-]
-
 
 ; !!! NEXT and BACK seem somewhat "noun-like" and desirable to use as variable
 ; names, but are very entrenched in Rebol history.  Also, since they are

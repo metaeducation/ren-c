@@ -7,7 +7,7 @@
     foo: :+
     did all [
         not enfixed? 'foo
-        error? trap [1 foo 2]
+        error? sys/util/rescue [1 foo 2]
         3 = foo 1 2
     ]
 )
@@ -31,7 +31,7 @@
 
 ; Only hard-quoted parameters are <skip>-able
 (
-    error? trap [bad-skippy: func [x [<skip> integer!] y] [reduce [reify :x y]]]
+    error? sys/util/rescue [bad-skippy: func [x [<skip> integer!] y] [reduce [reify :x y]]]
 )
 
 [
@@ -110,7 +110,7 @@
         ]
     ])
 
-    (error? trap [1 obj/magic 2])
+    (error? sys/util/rescue [1 obj/magic 2])
 
     (3 = 1 >- obj/magic 2)
     (-1 = 1 >- obj/magic/minus 2)

@@ -7,5 +7,5 @@
 (-2 = log-10 0.01)
 (3 = log-10 1000)
 (-3 = log-10 0.001)
-(error? trap [log-10 0])
-(error? trap [log-10 -1])
+(error? sys/util/rescue [log-10 0])
+(error? sys/util/rescue [log-10 -1])

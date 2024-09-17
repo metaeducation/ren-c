@@ -4,5 +4,5 @@
 (1 = log-e 2.718281828459045)
 (-1 = log-e 1 / 2.718281828459045)
 (2 = log-e 2.718281828459045 * 2.718281828459045)
-(error? trap [log-e 0])
-(error? trap [log-e -1])
+(error? sys/util/rescue [log-e 0])
+(error? sys/util/rescue [log-e -1])

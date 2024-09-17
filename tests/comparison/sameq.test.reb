@@ -398,7 +398,7 @@
 (
     p: make port! http://
     any [
-        error? trap [same? p p]
+        error? sys/util/rescue [same? p p]
         same? p p
     ]
 )

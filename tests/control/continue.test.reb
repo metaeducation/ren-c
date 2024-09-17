@@ -15,7 +15,7 @@
     (repeat 1 [spec-of continue] true)
 ]
 ; continue should not be caught by try
-(a: 1 repeat 1 [a: error? trap [continue]] :a =? 1)
+(a: 1 repeat 1 [a: error? sys/util/rescue [continue]] :a =? 1)
 
 ; CONTINUE/WITH a value pretends loop body finished with that result.
 

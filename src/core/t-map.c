@@ -786,6 +786,8 @@ REBTYPE(Map)
     case SYM_APPEND: {
         INCLUDE_PARAMS_OF_INSERT;
 
+        FAIL_IF_ERROR(arg);
+
         if (Is_Nulled(arg) or Is_Blank(arg))
             RETURN (val); // don't fail on read only if it would be a no-op
 

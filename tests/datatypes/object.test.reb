@@ -28,7 +28,7 @@
 )]
 ; "error out" of make object!
 (
-    error? trap [
+    error? sys/util/rescue [
         make object! [1 / 0]
         2
     ]
@@ -90,7 +90,7 @@
 (
     o: make object! []
     ; currently disallowed..."would expose or modify hidden values"
-    error? trap [append o [self: 1]]
+    error? sys/util/rescue [append o [self: 1]]
 )
 
 
@@ -168,7 +168,7 @@
 
 [#2076 (
     o: make object! [x: 10]
-    e: trap [append o [self: 1]]
+    e: sys/util/rescue [append o [self: 1]]
     error? e and [e/id = 'hidden]
 )]
 

@@ -40,10 +40,8 @@
 // This is the code which is protected by the exception mechanism.  See the
 // rebRescue() API for more information.
 //
-static const Value* Trap_Dangerous(Level* level_) {
-    INCLUDE_PARAMS_OF_TRAP;
-    UNUSED(ARG(result));
-    UNUSED(ARG(valid));
+static const Value* Rescue_Dangerous(Level* level_) {
+    INCLUDE_PARAMS_OF_RESCUE;
 
     if (Do_Branch_Throws(OUT, ARG(code)))
         return NOTHING_VALUE;  // not API value, no proxying needed
@@ -53,65 +51,37 @@ static const Value* Trap_Dangerous(Level* level_) {
 
 
 //
-//  trap: native [
+//  rescue: native [
 //
-//  {Tries to DO a block, trapping raised errors}
+//  {Tries to DO a block, recovering from abrupt failures}
 //
-//      return: "ERROR! if raised, else null (ANY-VALUE! for ENCLOSE & CHAIN)"
-//          [~null~ error! any-value!]  ; see note about why ANY-VALUE!
+//      return: "ERROR! if failure intercepted, else null"
+//          [~null~ error!]
 //      code "Code to execute and monitor"
 //          [block! action!]
-//      /result "Optional output result of the evaluation if not an error"
-//      valid [word! path!]
 //  ]
 //
-DECLARE_NATIVE(trap)
-//
-// !!! R3C lacks multiple return value handling, but this gives parity with
-// a /RESULT refinement for getting the mechanical result in case of no error.
-// In mainline you could write:
-//
-//     [error valid]: trap [...]
-//
-// But R3C will have to do this as:
-//
-//     error: trap/result [...] 'valid
-//
-// !!! When the value being set is trash, SET/ANY must be used at this time.
-// This is a bit more inefficient in the API since it requires scanning.
-// Non-void cases are done with directly referencing the SET native.
-//
-// !!! Type widening of datatypes returned from derived functions is an
-// imperfect science at time of writing, and much of the work is post-R3C.
-// So the result is set to ANY-VALUE! so that ENCLOSE or ADAPT can make
-// wrappers more compatible with historical Rebol TRY's behavior.
+DECLARE_NATIVE(rescue)
 {
-    INCLUDE_PARAMS_OF_TRAP;
+    INCLUDE_PARAMS_OF_RESCUE;
 
-    Value* error = rebRescue(cast(REBDNG*, &Trap_Dangerous), level_);
+    Value* error = rebRescue(cast(REBDNG*, &Rescue_Dangerous), level_);
     UNUSED(ARG(code));  // gets used by the above call, via the level_ pointer
 
-    if (not error) {  // code didn't fail() or throw
-        if (REF(result))
-            rebElide(rebEval(NAT_VALUE(set)), ARG(valid), OUT);
-
+    if (not error)  // code didn't fail() or throw
         return nullptr;
-    }
 
     if (Is_Nothing(error))  // signal used to indicate a throw
         return BOUNCE_THROWN;
 
     assert(Is_Error(error));
 
-    if (REF(result))  // error case voids result to minimize likely use
-        rebElide(NAT_VALUE(set), ARG(valid), NOTHING_VALUE);
-
     return error;
 }
 
 
-static Value* Entrap_Dangerous(Level* level_) {
-    INCLUDE_PARAMS_OF_ENTRAP;
+static Value* Enrescue_Dangerous(Level* level_) {
+    INCLUDE_PARAMS_OF_ENRESCUE;
 
     if (Do_Branch_Throws(OUT, ARG(code))) {
         Init_Error(OUT, Error_No_Catch_For_Throw(OUT));
@@ -129,7 +99,7 @@ static Value* Entrap_Dangerous(Level* level_) {
 
 
 //
-//  entrap: native [
+//  enrescue: native [
 //
 //  {DO a block and put result in a 1-item BLOCK!, unless error is raised}
 //
@@ -139,11 +109,11 @@ static Value* Entrap_Dangerous(Level* level_) {
 //          [block! action!]
 //  ]
 //
-DECLARE_NATIVE(entrap)
+DECLARE_NATIVE(enrescue)
 {
-    INCLUDE_PARAMS_OF_ENTRAP;
+    INCLUDE_PARAMS_OF_ENRESCUE;
 
-    Bounce error = rebRescue(cast(REBDNG*, &Entrap_Dangerous), level_);
+    Bounce error = rebRescue(cast(REBDNG*, &Enrescue_Dangerous), level_);
     UNUSED(ARG(code)); // gets used by the above call, via the level_ pointer
 
     if (error)

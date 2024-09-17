@@ -410,7 +410,7 @@ ctx-zip: context [
                         ]
 
                         data: copy/part data compressed-size
-                        trap [
+                        sys/util/rescue [
                             data: inflate/max data uncompressed-size
                         ] then [
                             info "^- -> failed [deflate]^/"

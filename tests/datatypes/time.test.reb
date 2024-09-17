@@ -4,13 +4,13 @@
 (time! = type of 0:00)
 (0:0:10 = make time! 10)
 (0:0:10 = to time! 10)
-(error? trap [to time! "a"])
+(error? sys/util/rescue [to time! "a"])
 ("0:00" = mold 0:00)
 
 ; small value
 (
     did any [
-        error? trap [t: -596522:0:0 - 1:00]
+        error? sys/util/rescue [t: -596522:0:0 - 1:00]
         t = load mold t
     ]
 )
@@ -18,13 +18,13 @@
 ; big value
 (
     did any [
-        error? trap [t: 596522:0:0 + 1:00]
+        error? sys/util/rescue [t: 596522:0:0 + 1:00]
         t = load mold t
     ]
 )
 
 ; strange value
-(error? trap [load "--596523:-14:-07.772224"])
+(error? sys/util/rescue [load "--596523:-14:-07.772224"])
 
 ; minimal time
 (time? -596523:14:07.999999999)

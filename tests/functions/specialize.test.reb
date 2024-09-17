@@ -25,10 +25,10 @@
         [/B 20 /C 10] = fooCB 10 20
         [/A 30 /B 20 /C 10] = fooCB/A 10 20 30
 
-        error? trap [fooBC/B 1 2 3 4 5 6]
-        error? trap [fooBC/C 1 2 3 4 5 6]
-        error? trap [fooCB/B 1 2 3 4 5 6]
-        error? trap [fooCB/C 1 2 3 4 5 6]
+        error? sys/util/rescue [fooBC/B 1 2 3 4 5 6]
+        error? sys/util/rescue [fooBC/C 1 2 3 4 5 6]
+        error? sys/util/rescue [fooCB/B 1 2 3 4 5 6]
+        error? sys/util/rescue [fooCB/C 1 2 3 4 5 6]
     ]
 )
 
@@ -125,7 +125,7 @@
         [specialize 'append/asdf []]
         [specialize the (specialize 'append/only [])/only []]
     ][
-        is-bad: me and ['bad-refine = (trap [do code])/id]
+        is-bad: me and ['bad-refine = (sys/util/rescue [do code])/id]
     ]
 
     is-bad

@@ -51,7 +51,7 @@
 (
     num: 0
     blk: [1 2]
-    e: iterate-skip blk 1 [num: first blk trap [1 / 0]]
+    e: iterate-skip blk 1 [num: first blk sys/util/rescue [1 / 0]]
     all [error? e num = 2]
 )
 ; recursivity

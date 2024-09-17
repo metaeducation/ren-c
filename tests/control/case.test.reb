@@ -46,7 +46,7 @@
 )
 
 (
-    error? trap [
+    error? sys/util/rescue [
         case [
             true add 1 2 ;-- branch slots must be BLOCK!, ACTION!, softquote
         ]
@@ -101,5 +101,5 @@
 ; infinite recursion
 (
     blk: [case blk]
-    error? trap blk
+    error? sys/util/rescue blk
 )

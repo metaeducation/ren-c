@@ -918,11 +918,14 @@ INLINE Value* Nothingify_Branched(Value* cell) {
 #define TRUE_VALUE \
     c_cast(const Value*, &PG_True_Value[0])
 
+INLINE void FAIL_IF_ERROR(const Cell* c);
+
 INLINE bool IS_TRUTHY(const Cell* v) {
     if (GET_VAL_FLAG(v, VALUE_FLAG_FALSEY))
         return false;
     if (Is_Void(v))
         fail (Error_Void_Conditional_Raw());
+    FAIL_IF_ERROR(v);  // approximate definitional errors...
     return true;
 }
 

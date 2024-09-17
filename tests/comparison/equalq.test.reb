@@ -124,7 +124,7 @@
     insert/only a-value a-value
     b-value: copy []
     insert/only b-value b-value
-    error? trap [equal? a-value b-value]
+    error? sys/util/rescue [equal? a-value b-value]
     true
 )]
 (not equal? [] blank)
@@ -552,39 +552,39 @@
 
 
 ; error! reflexivity
-; Evaluates (trap [1 / 0]) to get error! value.
+; Evaluates (sys/util/rescue [1 / 0]) to get error! value.
 (
     a-value: blank
-    set 'a-value (trap [1 / 0])
+    set 'a-value (sys/util/rescue [1 / 0])
     equal? a-value a-value
 )
 ; error! structural equivalence
-; Evaluates (trap [1 / 0]) to get error! value.
-(equal? (trap [1 / 0]) (trap [1 / 0]))
+; Evaluates (sys/util/rescue [1 / 0]) to get error! value.
+(equal? (sys/util/rescue [1 / 0]) (sys/util/rescue [1 / 0]))
 ; error! structural equivalence
 (equal? (make error! "hello") (make error! "hello"))
 ; error! difference in code
-(not equal? (trap [1 / 0]) (make error! "hello"))
+(not equal? (sys/util/rescue [1 / 0]) (make error! "hello"))
 ; error! difference in data
 (not equal? (make error! "hello") (make error! "there"))
 ; error! basic comparison
-(not equal? (trap [1 / 0]) blank)
+(not equal? (sys/util/rescue [1 / 0]) blank)
 ; error! basic comparison
-(not equal? blank (trap [1 / 0]))
+(not equal? blank (sys/util/rescue [1 / 0]))
 ; error! basic comparison symmetry
-(equal? equal? (trap [1 / 0]) blank equal? blank (trap [1 / 0]))
+(equal? equal? (sys/util/rescue [1 / 0]) blank equal? blank (sys/util/rescue [1 / 0]))
 ; error! basic comparison with = op
-(not ((trap [1 / 0]) = blank))
+(not ((sys/util/rescue [1 / 0]) = blank))
 ; error! basic comparison with != op
-((trap [1 / 0]) != blank)
+((sys/util/rescue [1 / 0]) != blank)
 ; error! basic comparison with = op
-(not (blank = (trap [1 / 0])))
+(not (blank = (sys/util/rescue [1 / 0])))
 ; error! basic comparison with != op
-(blank != (trap [1 / 0]))
+(blank != (sys/util/rescue [1 / 0]))
 ; error! symmetry with = op
-(equal? not ((trap [1 / 0]) = blank) not (blank = (trap [1 / 0])))
+(equal? not ((sys/util/rescue [1 / 0]) = blank) not (blank = (sys/util/rescue [1 / 0])))
 ; error! symmetry with != op
-(equal? (trap [1 / 0]) != blank blank != (trap [1 / 0]))
+(equal? (sys/util/rescue [1 / 0]) != blank blank != (sys/util/rescue [1 / 0]))
 ; port! reflexivity
 ; Error in R2 (could be fixed).
 (equal? p: make port! http:// p)
@@ -594,5 +594,5 @@
 [#859 (
     a: copy the ()
     insert/only a a
-    error? trap [do a]
+    error? sys/util/rescue [do a]
 )]

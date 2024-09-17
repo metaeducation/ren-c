@@ -198,8 +198,8 @@
 
 [#1151 (
     did all [
-        error? trap [maximum-of [1 %]]
-        error? trap [greater? [a] "a"]
-        error? trap [lesser? [a] "a"]
+        error? sys/util/rescue [maximum-of [1 %]]
+        error? sys/util/rescue [greater? [a] "a"]
+        error? sys/util/rescue [lesser? [a] "a"]
     ]
 )]

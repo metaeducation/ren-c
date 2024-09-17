@@ -33,5 +33,5 @@
 ([1 2 3] = sort/compare [1 3 2] :<)
 ([3 2 1] = sort/compare [1 3 2] :>)
 [#1516 ; SORT/compare ignores the typespec of its function argument
-    (error? trap [sort/compare reduce [1 2 _] :>])
+    (error? sys/util/rescue [sort/compare reduce [1 2 _] :>])
 ]

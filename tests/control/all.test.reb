@@ -26,7 +26,6 @@
     a-value: me@here.com
     same? a-value all [a-value]
 )
-(error? all [trap [1 / 0]])
 (
     a-value: %""
     same? a-value all [a-value]
@@ -120,7 +119,6 @@
     a-value: me@here.com
     same? a-value all [true a-value]
 )
-(error? all [true trap [1 / 0]])
 (
     a-value: %""
     same? a-value all [true a-value]
@@ -211,7 +209,6 @@
     a-value: me@here.com
     true = all [a-value true]
 )
-(true = all [trap [1 / 0] true])
 (
     a-value: %""
     true = all [a-value true]
@@ -331,5 +328,5 @@
 ; infinite recursion
 (
     blk: [all blk]
-    error? trap blk
+    error? sys/util/rescue blk
 )

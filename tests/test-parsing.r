@@ -112,7 +112,7 @@ make object! [
         current-dir: what-dir
         print ["file:" mold test-file]
 
-        trap [
+        sys/util/rescue [
             if file? test-file [
                 test-file: clean-path test-file
                 change-dir split-path test-file
@@ -147,7 +147,7 @@ make object! [
         any-wsp: [opt some [wsp emit-token]]
 
         single-value: parsing-at x [
-            trap [
+            sys/util/rescue [
                 next-position: transcode/next3 x the value:
             ] else [
                 type: in types 'val
@@ -245,7 +245,7 @@ make object! [
             {collect the logged results here (modified)}
         log-file [file!]
     ][
-        trap [log-contents: read log-file] then [
+        sys/util/rescue [log-contents: read log-file] then [
             fail ["Unable to read " mold log-file]
         ]
 

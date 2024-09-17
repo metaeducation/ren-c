@@ -1441,3 +1441,93 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
             Append_Unencoded(mo->series, RM_BAD_ERROR_FORMAT);
     }
 }
+
+
+//
+//  try: native [
+//
+//  "Approximation of modern Ren-C definitional error try (nullify ERROR!)"
+//
+//      value [~null~ any-value!]
+//  ]
+//
+DECLARE_NATIVE(try)
+{
+    INCLUDE_PARAMS_OF_TRY;
+
+    Value *v = ARG(value);
+
+    if (Is_Error(v))
+        return nullptr;
+
+    return Copy_Cell(OUT, v);
+}
+
+
+//
+//  trap: native [
+//
+//  "Approximation of modern Ren-C definitional error trap (ERROR! => ERROR!)"
+//
+//      return: [~null~ any-value!]
+//      code [block!]
+//  ]
+//
+DECLARE_NATIVE(trap)
+{
+    INCLUDE_PARAMS_OF_TRAP;
+
+    Value *code = ARG(code);
+
+    DECLARE_LEVEL (L);
+    Push_Level(L, code);
+
+    while (NOT_END(L->value)) {
+        if (Eval_Step_Throws(SET_END(OUT), L)) {
+            Abort_Level(L);
+            return BOUNCE_THROWN;
+        }
+
+        if (IS_END(OUT)) { // e.g. `reduce [comment "hi"]`
+            assert(IS_END(L->value));
+            break;
+        }
+
+        if (Is_Error(OUT))
+            break;
+    }
+
+    Drop_Level_Unbalanced(L); // Drop_Level() asserts on accumulation
+
+    if (Is_Error(OUT))
+        return OUT;
+
+    return nullptr;
+}
+
+
+//
+//  except: enfix native [
+//
+//  "If left hand side is an ERROR!, run the branch"
+//
+//      return: "Input value if not error, or branch result"
+//          [~null~ any-value!]
+//      left "Run branch if this is an error"
+//          [~null~ ~void~ any-value!]
+//      branch [block! action!]
+//  ]
+//
+DECLARE_NATIVE(except)
+{
+    INCLUDE_PARAMS_OF_EXCEPT;
+
+    Value* left = ARG(left);
+    if (not Is_Error(left))
+        RETURN (left);
+
+    if (Do_Branch_With_Throws(OUT, ARG(branch), left))
+        return BOUNCE_THROWN;
+
+    return OUT;
+}

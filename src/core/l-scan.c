@@ -2585,63 +2585,6 @@ array_done:
 }
 
 
-
-//
-//  Scan_To_Stack_Relaxed: C
-//
-void Scan_To_Stack_Relaxed(SCAN_STATE *ss) {
-    SCAN_STATE ss_before = *ss;
-
-    Value* error = rebRescue(cast(REBDNG*, &Scan_To_Stack), ss);
-    if (error == nullptr)
-        return; // scan went fine, hopefully the common case...
-
-    // Because rebRescue() restores the data stack, the in-progress scan
-    // contents were lost.  But the `ss` state tells us where the token was
-    // that caused the problem.  Assuming a deterministic scanner, we can
-    // re-run the process...just stopping before the bad token.  Assuming
-    // errors aren't rampant, this is likely more efficient than rebRescue()
-    // on each individual token parse, and less invasive than trying to come
-    // up with a form of rescueing that leaves the data stack as-is.
-    //
-    if (ss->begin == ss_before.begin) {
-        //
-        // Couldn't consume *any* UTF-8 input...so don't bother re-running.
-    }
-    else {
-        // !!! The ss->limit feature was not implemented in R3-Alpha, it would
-        // stop on `\0` only.  May have immutable const data, so poking a `\0`
-        // into it may be unsafe.  Make a copy of the UTF-8 input that managed
-        // to get consumed, terminate it, and use that.  Hope errors are rare,
-        // and if this becomes a problem, implement ss->limit.
-        //
-        REBLEN limit = ss->begin - ss_before.begin;
-        Blob* bin = Make_Blob(limit);
-        memcpy(Blob_Head(bin), ss_before.begin, limit);
-        Term_Blob_Len(bin, limit);
-
-        Set_Flex_Flag(bin, DONT_RELOCATE); // Blob_Head() is cached
-        ss_before.begin = Blob_Head(bin);
-        Corrupt_Pointer_If_Debug(ss_before.end);
-
-        Scan_To_Stack(&ss_before); // !!! Shouldn't error...check that?
-
-        Free_Unmanaged_Flex(bin);
-    }
-
-    ss->begin = ss->end; // skip malformed token
-
-    // !!! R3-Alpha's /RELAX mode (called TRANSCODE/ERROR) just added the
-    // error to the end of the processed input.  This isn't distinguishable
-    // from loading a construction syntax error, so consider what the
-    // interface should be (perhaps raise an error parameterized by the
-    // partial scanned data plus the error raised?)
-    //
-    Copy_Cell(PUSH(), error);
-    rebRelease(error);
-}
-
-
 //
 //  Scan_Array: C
 //
@@ -2674,10 +2617,7 @@ static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char)
         base = TOP_INDEX;
 
     child.mode_char = mode_char;
-    if (child.opts & SCAN_FLAG_RELAX)
-        Scan_To_Stack_Relaxed(&child);
-    else
-        Scan_To_Stack(&child);
+    Scan_To_Stack(&child);
 
     Array* a = Pop_Stack_Values_Core(
         base,
@@ -2871,14 +2811,12 @@ void Shutdown_Scanner(void)
 //
 //  {Translates UTF-8 binary source to values.}
 //
-//      return: [~null~ block! binary! text!]
+//      return: [~null~ block! binary! text! error!]
 //      source [<maybe> binary! text!]
 //          "Must be Unicode UTF-8 encoded"
 //      /next3
 //          {Translate next complete value (blocks as single value)}
 //          next-arg [any-word!]  ; word to set to transcoded value
-//      /relax
-//          {Do not cause errors - return error object as value in place}
 //      /file
 //          file-name [file! url!]
 //      /line
@@ -2930,8 +2868,6 @@ DECLARE_NATIVE(transcode)
 
     if (REF(next3))
         ss.opts |= SCAN_FLAG_NEXT;
-    if (REF(relax))
-        ss.opts |= SCAN_FLAG_RELAX;
 
     // If the source data bytes are "1" then the scanner will push INTEGER! 1
     // if the source data is "[1]" then the scanner will push BLOCK! [1]
@@ -2939,12 +2875,13 @@ DECLARE_NATIVE(transcode)
     // Return a block of the results, so [1] and [[1]] in those cases.
     //
     StackIndex base = TOP_INDEX;
-    if (REF(relax)) {
-        ss.opts |= SCAN_FLAG_RELAX;
-        Scan_To_Stack_Relaxed(&ss);
+
+    Value* error = rebRescue(cast(REBDNG*, &Scan_To_Stack), &ss);
+    if (error != nullptr) {
+        if (Is_Text(ARG(source)))
+            rebRelease(source);  // release temporary binary created
+        return error;
     }
-    else
-        Scan_To_Stack(&ss);
 
     if (Is_Word(ARG(line_number))) {
         Value* ivar = Get_Mutable_Var_May_Fail(ARG(line_number), SPECIFIED);

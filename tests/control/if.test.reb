@@ -14,7 +14,7 @@
 (void? if false [])
 (nothing? if true [])
 
-(error? if true [trap [1 / 0]])
+(error? if true [sys/util/rescue [1 / 0]])
 ; RETURN stops the evaluation
 (
     f1: func [] [
@@ -30,7 +30,7 @@
 ; bitset
 (if make bitset! "" [true])
 
-(not error? trap [if [] [true]])  ; no error (CELL_FLAG_UNEVALUATED removed)
+(not error? sys/util/rescue [if [] [true]])  ; no error (CELL_FLAG_UNEVALUATED removed)
 (if identity [] [true])
 
 ; datatype
@@ -85,7 +85,7 @@
 ; infinite recursion
 (
     blk: [if true blk]
-    error? trap blk
+    error? sys/util/rescue blk
 )
 
 ; IF-NOT is for performance minded cases, or cases where one doesn't want to
@@ -110,7 +110,7 @@
 (null? if-not true [1])
 (nothing? if-not false [])
 
-(error? if-not false [trap [1 / 0]])
+(error? if-not false [sys/util/rescue [1 / 0]])
 
 ; RETURN stops the evaluation
 (

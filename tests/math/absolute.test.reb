@@ -27,6 +27,6 @@
 (2147483647x2147483647 = abs -2147483647x-2147483647)
 <64bit>
 [#833 (
-    a: trap [abs to integer! #{8000000000000000}]
+    a: sys/util/rescue [abs to integer! #{8000000000000000}]
     any [error? a not negative? a]
 )]

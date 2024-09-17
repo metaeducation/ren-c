@@ -1,11 +1,11 @@
 ; functions/control/try.r
 (
-    e: trap [1 / 0]
+    e: sys/util/rescue [1 / 0]
     e/id = 'zero-divide
 )
 (
     success: true
-    error? trap [
+    error? sys/util/rescue [
         1 / 0
         success: false
     ]
@@ -17,28 +17,28 @@
         1 / 0
         success: false
     ]
-    error? trap [f1]
+    error? sys/util/rescue [f1]
     success
 )
 [#822
-    (trap [make error! ""] then [<branch-not-run>] else [true])
+    (sys/util/rescue [make error! ""] then [<branch-not-run>] else [true])
 ]
-(trap [fail make error! ""] then [true])
-(trap [1 / 0] then :error?)
-(trap [1 / 0] then func [e] [error? e])
-(trap [] then func [e] [<handler-not-run>] else [true])
+(sys/util/rescue [fail make error! ""] then [true])
+(sys/util/rescue [1 / 0] then :error?)
+(sys/util/rescue [1 / 0] then func [e] [error? e])
+(sys/util/rescue [] then func [e] [<handler-not-run>] else [true])
 [#1514
-    (error? trap [trap [1 / 0] then :add])
+    (error? sys/util/rescue [sys/util/rescue [1 / 0] then :add])
 ]
 
 [#1506 ((
-    10 = reeval func [] [trap [return 10] 20]
+    10 = reeval func [] [sys/util/rescue [return 10] 20]
 ))]
 
-; ENTRAP (similar to TRAP, but puts normal result in a block)
+; ENRESCUE (similar to RESCUE, but puts normal result in a block)
 
-(void? first entrap [])
-(null? entrap [null])
-([3] = entrap [1 + 2])
-([[b c]] = entrap [skip [a b c] 1])
-('no-arg = (entrap [the])/id)
+(void? first sys/util/enrescue [])
+(null? sys/util/enrescue [null])
+([3] = sys/util/enrescue [1 + 2])
+([[b c]] = sys/util/enrescue [skip [a b c] 1])
+('no-arg = (sys/util/enrescue [the])/id)

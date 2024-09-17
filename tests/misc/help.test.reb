@@ -1,15 +1,15 @@
 ; misc/help
 
-(not error? trap [help])
-(not error? trap [help help])
-(not error? trap [help system])
-(not error? trap [help to])
-(not error? trap [help to-])
-(not error? trap [help "to"])
-(not error? trap [help nihil])
-(not error? trap [help nihil?])
-(not error? trap [help xxx])
-(not error? trap [help function])
+(not error? sys/util/rescue [help])
+(not error? sys/util/rescue [help help])
+(not error? sys/util/rescue [help system])
+(not error? sys/util/rescue [help to])
+(not error? sys/util/rescue [help to-])
+(not error? sys/util/rescue [help "to"])
+(not error? sys/util/rescue [help nihil])
+(not error? sys/util/rescue [help nihil?])
+(not error? sys/util/rescue [help xxx])
+(not error? sys/util/rescue [help function])
 
 ; !!! HELP and SOURCE have become more complex in Ren-C, due to the appearance
 ; of function compositions, and an attempt to have their "meta" information
@@ -23,7 +23,7 @@
 ; It has had a tendency to break, so these tests are here even though they
 ; spew a large amount of output, in the interests of making HELP stay working.
 ;
-(not error? trap [
+(not error? sys/util/rescue [
     for-each w words of lib [
         dump w
         if unset? w [continue]
@@ -34,7 +34,7 @@
         ]
     ]
 ])
-(not error? trap [
+(not error? sys/util/rescue [
     for-each w words of lib [
         dump w
         if action? get/any w

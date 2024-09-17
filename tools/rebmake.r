@@ -378,7 +378,7 @@ gcc: make compiler-class [
         digit (charset "0123456789")
     ][
         version: copy ""
-        attempt [
+        sys/util/rescue [
             exec-file: path: default ["gcc"]
             call/output reduce [path "--version"] version
             parse2/match version [
@@ -789,10 +789,8 @@ ld: make linker-class [
         /exec path [file!]
     ][
         version: copy ""
-        ;attempt [
-            exec-file: path: default ["gcc"]
-            call/output reduce [path "--version"] version
-        ;]
+        exec-file: path: default ["gcc"]
+        call/output reduce [path "--version"] version
     ]
 ]
 

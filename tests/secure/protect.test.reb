@@ -4,7 +4,7 @@
     value: copy original: [1 + 2 + 3]
     protect value
     all [
-        error? trap [insert value 4]
+        error? sys/util/rescue [insert value 4]
         equal? value original
     ]
 )]
@@ -12,7 +12,7 @@
     value: copy original: [1 + 2 + 3]
     protect value
     all [
-        error? trap [append value 4]
+        error? sys/util/rescue [append value 4]
         equal? value original
     ]
 )
@@ -20,7 +20,7 @@
     value: copy original: [1 + 2 + 3]
     protect value
     all [
-        error? trap [change value 4]
+        error? sys/util/rescue [change value 4]
         equal? value original
     ]
 )
@@ -28,7 +28,7 @@
     value: copy original: [1 + 2 + 3]
     protect value
     all [
-        error? trap [poke value 1 4]
+        error? sys/util/rescue [poke value 1 4]
         equal? value original
     ]
 )
@@ -36,7 +36,7 @@
     value: copy original: [1 + 2 + 3]
     protect value
     all [
-        error? trap [remove/part value 1]
+        error? sys/util/rescue [remove/part value 1]
         equal? value original
     ]
 )
@@ -44,7 +44,7 @@
     value: copy original: [1 + 2 + 3]
     protect value
     all [
-        error? trap [take value]
+        error? sys/util/rescue [take value]
         equal? value original
     ]
 )
@@ -52,7 +52,7 @@
     value: copy original: [1 + 2 + 3]
     protect value
     all [
-        error? trap [reverse value]
+        error? sys/util/rescue [reverse value]
         equal? value original
     ]
 )
@@ -60,7 +60,7 @@
     value: copy original: [1 + 2 + 3]
     protect value
     all [
-        error? trap [clear value]
+        error? sys/util/rescue [clear value]
         equal? value original
     ]
 )
@@ -69,7 +69,7 @@
     value: copy original: {1 + 2 + 3}
     protect value
     all [
-        error? trap [insert value 4]
+        error? sys/util/rescue [insert value 4]
         equal? value original
     ]
 )
@@ -77,7 +77,7 @@
     value: copy original: {1 + 2 + 3}
     protect value
     all [
-        error? trap [append value 4]
+        error? sys/util/rescue [append value 4]
         equal? value original
     ]
 )
@@ -85,7 +85,7 @@
     value: copy original: {1 + 2 + 3}
     protect value
     all [
-        error? trap [change value 4]
+        error? sys/util/rescue [change value 4]
         equal? value original
     ]
 )
@@ -93,7 +93,7 @@
     value: copy original: {1 + 2 + 3}
     protect value
     all [
-        error? trap [poke value 1 4]
+        error? sys/util/rescue [poke value 1 4]
         equal? value original
     ]
 )
@@ -101,7 +101,7 @@
     value: copy original: {1 + 2 + 3}
     protect value
     all [
-        error? trap [remove/part value 1]
+        error? sys/util/rescue [remove/part value 1]
         equal? value original
     ]
 )
@@ -109,7 +109,7 @@
     value: copy original: {1 + 2 + 3}
     protect value
     all [
-        error? trap [take value]
+        error? sys/util/rescue [take value]
         equal? value original
     ]
 )
@@ -117,7 +117,7 @@
     value: copy original: {1 + 2 + 3}
     protect value
     all [
-        error? trap [reverse value]
+        error? sys/util/rescue [reverse value]
         equal? value original
     ]
 )
@@ -125,7 +125,7 @@
     value: copy original: {1 + 2 + 3}
     protect value
     all [
-        error? trap [clear value]
+        error? sys/util/rescue [clear value]
         equal? value original
     ]
 )

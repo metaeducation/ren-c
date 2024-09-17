@@ -84,7 +84,6 @@
 %control/all.test.reb
 %control/any.test.reb
 %control/apply.test.reb
-%control/attempt.test.reb
 %control/break.test.reb
 %control/case.test.reb
 %control/catch.test.reb

@@ -6,9 +6,8 @@
     success
 )
 ([] = reduce [])
-(error? trap [first reduce [null]])
+(error? sys/util/rescue [first reduce [null]])
 ("1 + 1" = reduce "1 + 1")
-(error? first reduce [trap [1 / 0]])
 [#1760 ; unwind functions should stop evaluation
     (null? repeat 1 [reduce [break]])
 ]
@@ -22,12 +21,12 @@
 ; infinite recursion
 (
     blk: [reduce blk]
-    error? trap blk
+    error? sys/util/rescue blk
 )
 
 [
     (did blk: [1 + 2 null 100 + 200])
-    ('need-non-null = (trap [reduce blk])/id)
+    ('need-non-null = (sys/util/rescue [reduce blk])/id)
 ]
 
 [

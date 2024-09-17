@@ -1211,6 +1211,8 @@ REBTYPE(String)
 
         UNUSED(REF(only)); // all strings appends are /ONLY...currently unused
 
+        FAIL_IF_ERROR(arg);
+
         REBLEN len; // length of target
         if (Cell_Word_Id(verb) == SYM_CHANGE)
             len = Part_Len_May_Modify_Index(v, ARG(limit));

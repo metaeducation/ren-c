@@ -53,12 +53,12 @@
 )
 
 (
-    error? trap [
+    error? sys/util/rescue [
         evaluate evaluate [1 elide "a" + elide "b" 2 * 3 fail "too far"]
     ]
 )
 (
-    error? trap [
+    error? sys/util/rescue [
         evaluate evaluate [1 elide "a" elide "b" + 2 * 3 fail "too far"]
     ]
 )
@@ -108,10 +108,10 @@
     3 = do [1 + 2 end 10 + 20 | 100 + 200]
 )
 (
-    ok? trap [reeval (func [x [<end>]] []) end 1 2 3]
+    ok? sys/util/rescue [reeval (func [x [<end>]] []) end 1 2 3]
 )
 (
-    error? trap [reeval (func [x [~null~]] []) end 1 2 3]
+    error? sys/util/rescue [reeval (func [x [~null~]] []) end 1 2 3]
 )
 
 (
@@ -123,25 +123,25 @@
 (
     x: <unchanged>
     did all [
-        'no-arg = (trap [<discarded> set 'x ()])/id
+        'no-arg = (sys/util/rescue [<discarded> set 'x ()])/id
         x = <unchanged>
     ]
 )(
     x: <unchanged>
     did all [
-        'no-arg = (trap [<discarded> set 'x comment "hi"])/id
+        'no-arg = (sys/util/rescue [<discarded> set 'x comment "hi"])/id
         x = <unchanged>
     ]
 )(
     obj: make object! [x: <unchanged>]
     did all [
-        'no-arg = (trap [<discarded> set 'obj/x comment "hi"])/id
+        'no-arg = (sys/util/rescue [<discarded> set 'obj/x comment "hi"])/id
         obj/x = <unchanged>
     ]
 )(
     obj: make object! [x: <unchanged>]
     did all [
-        'no-arg = (trap [<discarded> set 'obj/x ()])/id
+        'no-arg = (sys/util/rescue [<discarded> set 'obj/x ()])/id
         obj/x = <unchanged>
     ]
 )

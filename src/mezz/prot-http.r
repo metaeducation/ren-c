@@ -323,14 +323,18 @@ check-response: function [port] [
                 <- to-integer/unsigned headers/content-length
         ]
         if headers/last-modified [
-            info/date: attempt [idate-to-date headers/last-modified]
+            sys/util/rescue [
+                info/date: idate-to-date headers/last-modified
+            ] then [
+                info/date: null
+            ]
         ]
         remove/part conn/data d2
         state/state: 'reading-data
         if the (txt) <> last body-of :net-log [ ; net-log is in active state
             print "Dumping Webserver headers and body"
             net-log/S info
-            trap [
+            sys/util/rescue [
                 body: to text! conn/data
                 dump body
             ] then [

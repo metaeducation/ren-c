@@ -25,7 +25,7 @@
 ; access symmetry
 (
     b: #{0b}
-    not error? trap [b/1: b/1]
+    not error? sys/util/rescue [b/1: b/1]
 )
 [#42 (
     b: #{0b}

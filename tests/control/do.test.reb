@@ -36,7 +36,7 @@
     a-value: me@here.com
     same? a-value do reduce [a-value]
 )
-(error? do [trap [1 / 0]])
+(error? do [sys/util/rescue [1 / 0]])
 (
     a-value: %""
     same? a-value do reduce [a-value]
@@ -117,7 +117,7 @@
     a-value: me@here.com
     same? a-value reeval a-value
 )
-(error? trap [do trap [1 / 0] 1])
+(error? sys/util/rescue [do sys/util/rescue [1 / 0] 1])
 (
     a-value: does [5]
     5 == reeval :a-value
@@ -174,7 +174,7 @@
     a-value: first [a/b:]
     all [
         set-path? :a-value
-        error? trap [reeval :a-value] ;-- no value to assign after it...
+        error? sys/util/rescue [reeval :a-value] ;-- no value to assign after it...
     ]
 )
 (
@@ -241,7 +241,7 @@
     ]
 )
 (
-    evaluate/set [trap [1 / 0]] 'value
+    evaluate/set [sys/util/rescue [1 / 0]] 'value
     error? value
 )
 (
@@ -256,15 +256,15 @@
 ; infinite recursion for block
 (
     blk: [do blk]
-    error? trap blk
+    error? sys/util/rescue blk
 )
 ; infinite recursion for string
 [#1896 (
     str: "do str"
-    error? trap [do str]
+    error? sys/util/rescue [do str]
 )]
 ; infinite recursion for evaluate
 (
     blk: [b: evaluate blk]
-    error? trap blk
+    error? sys/util/rescue blk
 )

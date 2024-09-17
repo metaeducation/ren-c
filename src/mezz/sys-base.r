@@ -33,6 +33,11 @@ print*: :print
 ;
 script-pre-load-hook: _
 
+rescue: :lib/rescue
+lib/rescue: ~
+
+enrescue: :lib/enrescue
+lib/enrescue: ~
 
 ; DO of functions, blocks, paths, and other do-able types is done directly by
 ; C code in DECLARE_NATIVE(do).  But that code delegates to this Rebol function

@@ -2,8 +2,8 @@
 
 ; DEHEX no longer tolerates non %xx or %XX patterns with % in source data
 ;
-(error? trap ["a%b" = dehex "a%b"])
-(error? trap ["a%~b" = dehex "a%~b"])
+(error? sys/util/rescue ["a%b" = dehex "a%b"])
+(error? sys/util/rescue ["a%~b" = dehex "a%~b"])
 
 ("a^@b" = dehex "a%00b")
 ("a b" = dehex "a%20b")

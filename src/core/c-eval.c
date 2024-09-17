@@ -274,6 +274,8 @@ INLINE void Finalize_Arg(
             return;
         }
 
+        FAIL_IF_ERROR(arg);  // simulate definitional error somewhat
+
         fail (Error_Arg_Type(L_state, param, VAL_TYPE(arg)));
     }
 

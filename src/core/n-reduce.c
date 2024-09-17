@@ -29,6 +29,60 @@
 
 #include "sys-core.h"
 
+
+static Value* Init_Lib_Word(Cell* out, SymId id) {
+    return Init_Any_Word_Bound(
+        out,
+        REB_WORD,
+        Canon(id),
+        Lib_Context,
+        Find_Canon_In_Context(Lib_Context, Canon(id), false)
+    );
+}
+
+
+//
+//  uneval: native [
+//
+//  "Make expression that when evaluated, will produce the input"
+//
+//      return: {`(null)` if null, or `(the ...)` where ... is passed-in cell}
+//          [word! group!]
+//      value [~null~ any-value!]
+//   ]
+//
+DECLARE_NATIVE(uneval)
+//
+// Note: UNEVAL is done far more elegantly as the new META concept in a
+// generalized way in mainline.  This exists in R3C prior to arbitrary quoting
+// and quasiforms and isotopes...
+//
+// (This was initially written in usermode, but since REDUCE and COMPOSE and
+// APPEND all won't let you put errors into blocks--as part of the bootstrap
+// executable's "simulation of definitional errors"--a native is needed.)
+{
+    INCLUDE_PARAMS_OF_UNEVAL;
+
+    Value* v = ARG(value);
+
+    if (Is_Void(v))
+        return Init_Lib_Word(OUT, SYM__TVOID_T);
+
+    if (Is_Nulled(v))
+        return Init_Lib_Word(OUT, SYM__TNULL_T);
+
+    if (Is_Nothing(v))
+        return Init_Lib_Word(OUT, SYM_TILDE_1);
+
+    Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
+    Set_Flex_Len(a, 2);
+    Init_Lib_Word(Array_At(a, 0), SYM_THE);
+    Copy_Cell(Array_At(a, 1), v);
+
+    return Init_Group(OUT, a);  // (the <whatever>)
+}
+
+
 //
 //  Reduce_To_Stack_Throws: C
 //
@@ -56,6 +110,8 @@ bool Reduce_To_Stack_Throws(
             assert(IS_END(L->value));
             break;
         }
+
+        FAIL_IF_ERROR(out);
 
         if (Is_Nulled(out))
             fail (Error_Need_Non_Null_Raw());
@@ -218,6 +274,8 @@ bool Compose_To_Stack_Throws(
                 Abort_Level(L);
                 return true;
             }
+
+            FAIL_IF_ERROR(out);
 
             if (Is_Nulled(out))
                 fail (Error_Need_Non_Null_Raw());

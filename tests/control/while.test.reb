@@ -116,7 +116,7 @@
 ; Test that disarmed errors do not stop the loop and errors can be returned
 (
     num: 0
-    e: while [num < 10] [num: num + 1 trap [1 / 0]]
+    e: while [num < 10] [num: num + 1 sys/util/rescue [1 / 0]]
     all [error? e num = 10]
 )
 ; Recursion check

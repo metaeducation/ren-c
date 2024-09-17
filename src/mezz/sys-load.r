@@ -128,14 +128,18 @@ load-header: function [
 
     ; get header block
     ;
-    rest: transcode/next3/line/relax rest the hdr: line-var
+    if error? rest: transcode/next3/line rest the hdr: line-var [
+        return 'no-header
+    ]
 
     if not block? :hdr [
         ; header block is incomplete
         return 'no-header
     ]
 
-    if not attempt [hdr: construct/only system/standard/header :hdr] [
+    sys/util/rescue [
+        hdr: construct/only system/standard/header :hdr
+    ] then [
         return 'bad-header
     ]
 

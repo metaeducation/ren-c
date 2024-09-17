@@ -25,7 +25,7 @@ info?: function [
     if file? target [
         return query target
     ]
-    trap [
+    sys/util/rescue [
         t: write target [HEAD]
         if only [return 'file]
         return make object! [
@@ -49,27 +49,32 @@ exists?: func [
         return info?/only target
     ]
 
-    select maybe attempt [query target] 'type
+    sys/util/rescue [
+        return select query target 'type
+    ]
+    return null
 ]
 
-size-of: size?: function [
+size-of: size?: func [
     {Returns the size of a file.}
     return: [~null~ integer!]
     target [file! url!]
+    <local> info
 ][
     all [
-        info: attempt [info? target] ;-- !!! Why not let the error report?
+        info: info? target
         info/size
     ]
 ]
 
-modified?: function [
+modified?: func [
     {Returns the last modified date of a file.}
     return: [~null~ date!]
     target [file! url!]
+    <local> info
 ][
     all [
-        info: attempt [info? target] ;-- !!! Why not let the error report?
+        info: info? target
         info/date
     ]
 ]
@@ -139,8 +144,10 @@ make-dir: func [
     for-each dir dirs [
         path: either empty? path [dir][path/:dir]
         append path slash
-        trap [make-dir path] then lambda e [
-            for-each dir created [attempt [delete dir]]
+        sys/util/rescue [make-dir path] then lambda e [
+            for-each dir created [
+                sys/util/rescue [delete dir]
+            ]
             fail e
         ]
         insert created path
@@ -156,11 +163,15 @@ delete-dir: func [
     if all [
         dir? dir
         dir: dirize dir
-        attempt [files: load dir]
+        sys/util/rescue [
+            files: load dir
+        ] then [
+            false
+        ]
     ] [
         for-each file files [delete-dir dir/:file]
     ]
-    attempt [delete dir]
+    sys/util/rescue [delete dir]
 ]
 
 script?: func [

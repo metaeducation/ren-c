@@ -191,7 +191,9 @@ list-dir: function [
     if r [l: true]
     if not l [l: make text! 62] ; approx width
 
-    files: attempt [read %./] else [
+    sys/util/rescue [
+        files: read %./
+    ] then [
         print ["Not found:" :path]
         change-dir save-dir
         return

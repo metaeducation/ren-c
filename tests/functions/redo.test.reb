@@ -58,7 +58,7 @@
         redo 'return
     ]
 
-    error? trap [foo 100]
+    error? sys/util/rescue [foo 100]
 )
 
 ; REDO phase test

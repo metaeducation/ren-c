@@ -21,7 +21,7 @@
     n: 1
     catch [forever [
         a: copy []
-        if error? trap [
+        if error? sys/util/rescue [
             repeat n [a: append/only copy [] a]
             mold a
         ] [throw true]

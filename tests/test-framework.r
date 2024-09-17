@@ -46,14 +46,14 @@ make object! compose [
         ]
 
         case [
-            error? trap [test-block: as block! load source] [
+            error? sys/util/rescue [test-block: as block! load source] [
                 "cannot load test source"
             ]
 
             elide (
                 print mold test-block ;-- !!! make this an option
 
-                set the result: entrap test-block
+                set the result: sys/util/enrescue test-block
                 recycle
             )
 

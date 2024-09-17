@@ -27,5 +27,5 @@
 [#1665 (
     fact: to group! []
     insert/only fact fact
-    error? trap [do fact]
+    error? sys/util/rescue [do fact]
 )]

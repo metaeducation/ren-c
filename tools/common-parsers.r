@@ -78,17 +78,15 @@ decode-key-value-text: function [
 
 load-until-blank: function [
     {Load rebol values from text until double newline.}
+    return: [blank! block!]
     text [text!]
     /next {Return values and next position.}
-] [
-
+][
     wsp: compose [some (charset { ^-})]
     dummy: _
 
     rebol-value: parsing-at x [
-        attempt [
-            transcode/next3 x 'dummy
-        ]
+        try transcode/next3 x 'dummy
     ]
 
     terminator: [opt wsp newline opt wsp newline]
@@ -211,11 +209,14 @@ proto-parser: context [
 
         is-fileheader: parsing-at position [
             null-to-blank all [
-                lines: attempt [decode-lines lines {//} { }]
+                lines: try decode-lines lines {//} { }
                 parse2/match lines [copy data to {=///} to end]
-                data: attempt [load-until-blank trim/auto data]
-                data: attempt [
-                    if set-word? first data/1 [data/1] else [_]
+                data: try load-until-blank trim/auto data
+                data: all [
+                    data/1
+                    block? data/1
+                    set-word? first data/1
+                    data/1
                 ]
                 position ; Success.
             ]
@@ -223,9 +224,9 @@ proto-parser: context [
 
         is-intro: parsing-at position [
             null-to-blank all [
-                lines: attempt [decode-lines lines {//} { }]
+                lines: try decode-lines lines {//} { }
                 data: load-until-blank lines
-                data: attempt [
+                data: all [
                     ;
                     ; !!! The recognition of Rebol-styled comment headers
                     ; originally looked for SET-WORD!, but the syntax for
@@ -239,13 +240,14 @@ proto-parser: context [
                     ; is a DECLARE_NATIVE() vs. worrying too much about the text
                     ; pattern in the comment being detected.
                     ;
-                    if any [
+                    data/1
+                    block? data/1
+                    any [
                         set-word? first data/1
                         'export = first data/1
-                    ][
-                        notes: data/2
-                        data/1
-                    ] else [_]
+                    ]
+                    notes: data/2
+                    data/1
                 ]
                 position ; Success.
             ]

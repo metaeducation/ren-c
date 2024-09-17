@@ -246,14 +246,14 @@ DECLARE_NATIVE(console)
     recover:;
 
         // This runs the HOST-CONSOLE, which returns *requests* to execute
-        // arbitrary code by way of its return results.  The TRAP and CATCH
-        // are thus here to intercept bugs *in HOST-CONSOLE itself*.  Any
+        // arbitrary code by way of its return results.  The ENRESCUE call
+        // is thus here to intercept bugs *in HOST-CONSOLE itself*.  Any
         // evaluations for the user (or on behalf of the console skin) are
         // done in Run_Sandboxed_Code().
         //
         Value* trapped; // goto crosses initialization
         trapped = rebValue(
-            "lib/entrap [",
+            "sys/util/enrescue [",
                 "ext-console-impl", // action! that takes 2 args, run it
                 rebUneval(code), // group!/block! executed prior (or blank!)
                 rebUneval(result), // prior result in a block, or error/null
@@ -287,7 +287,7 @@ DECLARE_NATIVE(console)
             goto recover;
         }
 
-        code = rebValue("first", trapped); // entrap []'s the output
+        code = rebValue("first", trapped); // enrescue []'s the output
         rebRelease(trapped); // don't need the outer block any more
 
       provoked:;

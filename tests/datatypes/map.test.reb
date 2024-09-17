@@ -12,7 +12,7 @@
 )
 (m: make map! [a 1 b 2] m/c: 3 3 == m/c)
 ; Maps contain key/value pairs and must be created from blocks of even length.
-(error? trap [make map! [1]])
+(error? sys/util/rescue [make map! [1]])
 (empty? clear make map! [a 1 b 2])
 [#1930 (
     m: make map! 8
@@ -55,16 +55,16 @@
     (50 = select/case m #"C")
     (60 = select/case m #"c")
 
-    ('conflicting-key = (trap [m/AA])/id)
-    ('conflicting-key = (trap [m/aa])/id)
-    ('conflicting-key = (trap [select m <BB>])/id)
-    ('conflicting-key = (trap [select m <bb>])/id)
-    ('conflicting-key = (trap [m/(#"C")])/id)
-    ('conflicting-key = (trap [m/(#"c")])/id)
+    ('conflicting-key = (sys/util/rescue [m/AA])/id)
+    ('conflicting-key = (sys/util/rescue [m/aa])/id)
+    ('conflicting-key = (sys/util/rescue [select m <BB>])/id)
+    ('conflicting-key = (sys/util/rescue [select m <bb>])/id)
+    ('conflicting-key = (sys/util/rescue [m/(#"C")])/id)
+    ('conflicting-key = (sys/util/rescue [m/(#"c")])/id)
 
-    ('conflicting-key = (trap [put m 'Aa 70])/id)
-    ('conflicting-key = (trap [m/(<Bb>): 80])/id)
-    ('conflicting-key = (trap [m/(#"C"): 90])/id)
+    ('conflicting-key = (sys/util/rescue [put m 'Aa 70])/id)
+    ('conflicting-key = (sys/util/rescue [m/(<Bb>): 80])/id)
+    ('conflicting-key = (sys/util/rescue [m/(#"C"): 90])/id)
 
     (
         put/case m 'Aa 100

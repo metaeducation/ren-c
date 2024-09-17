@@ -593,6 +593,8 @@ bool Form_Reduce_Throws(
         if (IS_END(out))
             break;  // e.g. `spaced [comment "hi"]`
 
+        FAIL_IF_ERROR(out);
+
         if (Is_Nulled(out))
             fail (Error_Need_Non_Null_Raw());
 

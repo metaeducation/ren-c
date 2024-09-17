@@ -1,5 +1,5 @@
 ; functions/series/last.r
 [#2
-    (error? trap [last #"c"])
+    (error? sys/util/rescue [last #"c"])
 ]
-(error? trap [last 7])
+(error? sys/util/rescue [last 7])

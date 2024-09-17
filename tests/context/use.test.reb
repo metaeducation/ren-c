@@ -8,7 +8,7 @@
 )
 (
     a: 1
-    error? trap [use 'a [a: 2]]
+    error? sys/util/rescue [use 'a [a: 2]]
     a = 1
 )
 
@@ -32,7 +32,7 @@
 )
 ; "error out" of USE
 (
-    error? trap [
+    error? sys/util/rescue [
         use [a] [1 / 0]
         2
     ]
@@ -50,6 +50,6 @@
 ; This particular nuance with 'SELF from #2076 thus no longer arises
 (
     o: binding of use [x] ['x]
-    e: trap [append o 'self]
+    e: sys/util/rescue [append o 'self]
     error? e and [e/id = 'locked-series]
 )

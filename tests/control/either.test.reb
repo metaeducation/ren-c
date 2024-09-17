@@ -13,8 +13,8 @@
 (null? either true [null] [1])
 (null? either false [1] [null])
 
-(error? either true [trap [1 / 0]] [])
-(error? either false [] [trap [1 / 0]])
+(error? either true [sys/util/rescue [1 / 0]] [])
+(error? either false [] [sys/util/rescue [1 / 0]])
 
 ; RETURN stops the evaluation
 (
@@ -63,11 +63,11 @@
 ; infinite recursion
 (
     blk: [either true blk []]
-    error? trap blk
+    error? sys/util/rescue blk
 )
 (
     blk: [either false [] blk]
-    error? trap blk
+    error? sys/util/rescue blk
 )
 
 [
@@ -84,5 +84,5 @@
 
     (takes-2-logics (~) = ~ false)
 
-    ('arg-required = (trap [takes-2-logics true infix-voider true false])/id)
+    ('arg-required = (sys/util/rescue [takes-2-logics true infix-voider true false])/id)
 ]

@@ -15,11 +15,6 @@
 (null? switch 2 [1 []])
 (nothing? switch 1 [1 []])
 
-(
-    cases: reduce [1 head of insert copy [] trap [1 / 0]]
-    error? switch 1 cases
-)
-
 [#2242 (
     11 = reeval func [] [switch/all 1 [1 [return 11 88]] 99]
 )]

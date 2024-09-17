@@ -397,7 +397,9 @@ host-start: function [
         {Return HOME path (e.g. $HOME on *nix)}
         return: [~null~ file!]
     ][
-        get-env: attempt [:system/modules/Process/get-env] or [
+        sys/util/rescue [
+            get-env: :system/modules/Process/get-env
+        ] then [
             loud-print [
                 "Interpreter not built with GET-ENV, can't detect HOME dir" LF
                 "(Build with Process extension enabled to address this)"
@@ -636,7 +638,7 @@ host-start: function [
     ; things could affect this, e.g. a complex userspace TRACE which was
     ; run during boot.
     ;
-    attempt [c-debug-break-at/compensate 1000] ;-- fails in release build
+    sys/util/rescue [c-debug-break-at/compensate 1000]  ; fail in release build
 
     ; As long as there was no `--script` pased on the command line explicitly,
     ; the first item after the options is implicitly the script.
@@ -679,7 +681,7 @@ host-start: function [
         elide (loud-print ["Checking for rebol.reb file in" o/bin])
         exists? o/bin/rebol.reb
     ] then [
-        trap [
+        sys/util/rescue [
             do o/bin/rebol.reb
             append o/loaded o/bin/rebol.reb
             loud-print ["Finished evaluating script:" o/bin/rebol.reb]
@@ -697,7 +699,7 @@ host-start: function [
         elide (loud-print ["Checking for user.reb file in" o/resources])
         exists? o/resources/user.reb
     ] then [
-        trap [
+        sys/util/rescue [
             do o/resources/user.reb
             append o/loaded o/resources/user.reb
             loud-print ["Finished evaluating script:" o/resources/user.reb]

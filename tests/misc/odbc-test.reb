@@ -53,7 +53,7 @@ for-each [name sqltype content] tables [
     ;
     ; Drop table if it exists
     ;
-    trap [
+    sys/util/rescue [
         insert statement unspaced [
             {DROP TABLE `test`.`} name {`}
         ]

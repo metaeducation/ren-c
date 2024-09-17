@@ -15,7 +15,7 @@
     null? f1
 )
 (
-    f1: func [] [return trap [1 / 0]]
+    f1: func [] [return sys/util/rescue [1 / 0]]
     error? f1
 )
 [#1515 ; the "result" of return should not be assignable
@@ -33,4 +33,4 @@
     (reeval func [] [spec-of return blank] true)
 ]
 ; return should not be caught by try
-(a: 1 reeval func [] [a: error? trap [return 2]] :a =? 1)
+(a: 1 reeval func [] [a: error? sys/util/rescue [return 2]] :a =? 1)

@@ -209,19 +209,19 @@
 <64bit>
 (strict-equal? to integer! #{8000000000000000} shift to integer! #{8000000000000000} 0)
 <64bit>
-(error? trap [shift to integer! #{8000000000000000} 1])
+(error? sys/util/rescue [shift to integer! #{8000000000000000} 1])
 <64bit>
-(error? trap [shift to integer! #{8000000000000000} 62])
+(error? sys/util/rescue [shift to integer! #{8000000000000000} 62])
 <64bit>
-(error? trap [shift to integer! #{8000000000000000} 63])
+(error? sys/util/rescue [shift to integer! #{8000000000000000} 63])
 <64bit>
-(error? trap [shift to integer! #{8000000000000000} 64])
+(error? sys/util/rescue [shift to integer! #{8000000000000000} 64])
 <64bit>
-(error? trap [shift to integer! #{8000000000000000} 65])
+(error? sys/util/rescue [shift to integer! #{8000000000000000} 65])
 <64bit>
-(error? trap [shift to integer! #{8000000000000000} to integer! #{7ffffffffffffffe}])
+(error? sys/util/rescue [shift to integer! #{8000000000000000} to integer! #{7ffffffffffffffe}])
 <64bit>
-(error? trap [shift to integer! #{8000000000000000} to integer! #{7fffffffffffffff}])
+(error? sys/util/rescue [shift to integer! #{8000000000000000} to integer! #{7fffffffffffffff}])
 <64bit>
 ; arithmetic shift of to integer! #{8000000000000001}
 <64bit>
@@ -241,19 +241,19 @@
 <64bit>
 (strict-equal? to integer! #{8000000000000001} shift to integer! #{8000000000000001} 0)
 <64bit>
-(error? trap [shift to integer! #{8000000000000001} 1])
+(error? sys/util/rescue [shift to integer! #{8000000000000001} 1])
 <64bit>
-(error? trap [shift to integer! #{8000000000000001} 62])
+(error? sys/util/rescue [shift to integer! #{8000000000000001} 62])
 <64bit>
-(error? trap [shift to integer! #{8000000000000001} 63])
+(error? sys/util/rescue [shift to integer! #{8000000000000001} 63])
 <64bit>
-(error? trap [shift to integer! #{8000000000000001} 64])
+(error? sys/util/rescue [shift to integer! #{8000000000000001} 64])
 <64bit>
-(error? trap [shift to integer! #{8000000000000001} 65])
+(error? sys/util/rescue [shift to integer! #{8000000000000001} 65])
 <64bit>
-(error? trap [shift to integer! #{8000000000000001} to integer! #{7ffffffffffffffe}])
+(error? sys/util/rescue [shift to integer! #{8000000000000001} to integer! #{7ffffffffffffffe}])
 <64bit>
-(error? trap [shift to integer! #{8000000000000001} to integer! #{7fffffffffffffff}])
+(error? sys/util/rescue [shift to integer! #{8000000000000001} to integer! #{7fffffffffffffff}])
 ; arithmetic shift of -1
 <64bit>
 (strict-equal? -1 shift -1 to integer! #{8000000000000000})
@@ -270,12 +270,12 @@
 (strict-equal? to integer! #{c000000000000000} shift -1 62)
 <64bit>
 (strict-equal? to integer! #{8000000000000000} shift -1 63)
-(error? trap [shift -1 64])
-(error? trap [shift -1 65])
+(error? sys/util/rescue [shift -1 64])
+(error? sys/util/rescue [shift -1 65])
 <64bit>
-(error? trap [shift -1 to integer! #{7ffffffffffffffe}])
+(error? sys/util/rescue [shift -1 to integer! #{7ffffffffffffffe}])
 <64bit>
-(error? trap [shift -1 to integer! #{7fffffffffffffff}])
+(error? sys/util/rescue [shift -1 to integer! #{7fffffffffffffff}])
 ; arithmetic shift of 0
 <64bit>
 (strict-equal? 0 shift 0 to integer! #{8000000000000000})
@@ -310,13 +310,13 @@
 (strict-equal? 2 shift 1 1)
 <64bit>
 (strict-equal? to integer! #{4000000000000000} shift 1 62)
-(error? trap [shift 1 63])
-(error? trap [shift 1 64])
-(error? trap [shift 1 65])
+(error? sys/util/rescue [shift 1 63])
+(error? sys/util/rescue [shift 1 64])
+(error? sys/util/rescue [shift 1 65])
 <64bit>
-(error? trap [shift 1 to integer! #{7ffffffffffffffe}])
+(error? sys/util/rescue [shift 1 to integer! #{7ffffffffffffffe}])
 <64bit>
-(error? trap [shift 1 to integer! #{7fffffffffffffff}])
+(error? sys/util/rescue [shift 1 to integer! #{7fffffffffffffff}])
 ; arithmetic shift of to integer! #{7ffffffffffffffe}
 <64bit>
 (strict-equal? 0 shift to integer! #{7ffffffffffffffe} to integer! #{8000000000000000})
@@ -335,19 +335,19 @@
 <64bit>
 (strict-equal? to integer! #{7ffffffffffffffe} shift to integer! #{7ffffffffffffffe} 0)
 <64bit>
-(error? trap [shift to integer! #{7ffffffffffffffe} 1])
+(error? sys/util/rescue [shift to integer! #{7ffffffffffffffe} 1])
 <64bit>
-(error? trap [shift to integer! #{7ffffffffffffffe} 62])
+(error? sys/util/rescue [shift to integer! #{7ffffffffffffffe} 62])
 <64bit>
-(error? trap [shift to integer! #{7ffffffffffffffe} 63])
+(error? sys/util/rescue [shift to integer! #{7ffffffffffffffe} 63])
 <64bit>
-(error? trap [shift to integer! #{7ffffffffffffffe} 64])
+(error? sys/util/rescue [shift to integer! #{7ffffffffffffffe} 64])
 <64bit>
-(error? trap [shift to integer! #{7ffffffffffffffe} 65])
+(error? sys/util/rescue [shift to integer! #{7ffffffffffffffe} 65])
 <64bit>
-(error? trap [shift to integer! #{7ffffffffffffffe} to integer! #{7ffffffffffffffe}])
+(error? sys/util/rescue [shift to integer! #{7ffffffffffffffe} to integer! #{7ffffffffffffffe}])
 <64bit>
-(error? trap [shift to integer! #{7ffffffffffffffe} to integer! #{7fffffffffffffff}])
+(error? sys/util/rescue [shift to integer! #{7ffffffffffffffe} to integer! #{7fffffffffffffff}])
 ; arithmetic shift of to integer! #{7fffffffffffffff}
 <64bit>
 (strict-equal? 0 shift to integer! #{7fffffffffffffff} to integer! #{8000000000000000})
@@ -366,16 +366,16 @@
 <64bit>
 (strict-equal? to integer! #{7fffffffffffffff} shift to integer! #{7fffffffffffffff} 0)
 <64bit>
-(error? trap [shift to integer! #{7fffffffffffffff} 1])
+(error? sys/util/rescue [shift to integer! #{7fffffffffffffff} 1])
 <64bit>
-(error? trap [shift to integer! #{7fffffffffffffff} 62])
+(error? sys/util/rescue [shift to integer! #{7fffffffffffffff} 62])
 <64bit>
-(error? trap [shift to integer! #{7fffffffffffffff} 63])
+(error? sys/util/rescue [shift to integer! #{7fffffffffffffff} 63])
 <64bit>
-(error? trap [shift to integer! #{7fffffffffffffff} 64])
+(error? sys/util/rescue [shift to integer! #{7fffffffffffffff} 64])
 <64bit>
-(error? trap [shift to integer! #{7fffffffffffffff} 65])
+(error? sys/util/rescue [shift to integer! #{7fffffffffffffff} 65])
 <64bit>
-(error? trap [shift to integer! #{7fffffffffffffff} to integer! #{7ffffffffffffffe}])
+(error? sys/util/rescue [shift to integer! #{7fffffffffffffff} to integer! #{7ffffffffffffffe}])
 <64bit>
-(error? trap [shift to integer! #{7fffffffffffffff} to integer! #{7fffffffffffffff}])
+(error? sys/util/rescue [shift to integer! #{7fffffffffffffff} to integer! #{7fffffffffffffff}])

@@ -55,9 +55,9 @@
 // and can only be intercepted by points up the stack that have explicitly
 // registered themselves interested.  So comparing these two bits of code:
 //
-//     catch [if 1 < 2 [trap [print ["Foo" (throw "Throwing")]]]]
+//     catch [if 1 < 2 [sys/util/rescue [print ["Foo" (throw "Throwing")]]]]
 //
-//     trap [if 1 < 2 [catch [print ["Foo" (fail "Failing")]]]]
+//     sys/util/rescue [if 1 < 2 [catch [print ["Foo" (fail "Failing")]]]]
 //
 // In the first case, the THROW is offered to each point up the chain as
 // a special sort of "return value" that only natives can examine.  The
