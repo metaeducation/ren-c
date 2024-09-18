@@ -12,7 +12,7 @@
         iteration [block!] "Step code"
     ][
         let words: make block! 2
-        for-each x reduce [init condition iteration] [
+        for-each 'x reduce [init condition iteration] [
             if not block? x [continue]
             let w: collect-words/deep/set x
             if not empty? intersect w [count result] [ fail [
@@ -104,26 +104,26 @@
 ( { GENERATE }
     { Start with 1 then double while x < 100 }
     {  => 1 2 4 8 16 32 64  }
-    for-each x sequence: giulio-generate [x: 1] [x < 100] [x: 2 * x] [t: x]
+    for-each 'x sequence: giulio-generate [x: 1] [x < 100] [x: 2 * x] [t: x]
     t = 64
 )
 ( { GENERATE/RESET }
     { restart sequence from 5}
     { => 5, 10, 20, 40, 80 }
     sequence/reset [x: 5]
-    for-each x :sequence [t: x]
+    for-each 'x :sequence [t: x]
     t = 80
 )( { GENERATE, use COUNT }
     { Start with 1, step 2, 3 terms }
     { => 1, 3, 6, 10 }
-    for-each x sequence: (
+    for-each 'x sequence: (
         giulio-generate [i: count] [count <= 4] [i: i + count] [t: x]
     )
     t = 10
 )
 ( { GENERATE, no stop }
     { Fibonacci numbers, forever }
-    for-each x giulio-generate
+    for-each 'x giulio-generate
         [a: b: 1]
         _
         [c: a + b a: b b: c]
@@ -134,8 +134,8 @@
     t = 13
 )
 ( { GENERATE, 20 prime numbers }
-    for-each x giulio-generate [primes: mutable [2] n: 2] [count <= 20] [
-        cycle [n: n + 1 nop: 'yes for-each p primes [
+    for-each 'x giulio-generate [primes: mutable [2] n: 2] [count <= 20] [
+        cycle [n: n + 1 nop: 'yes for-each 'p primes [
             if (n mod p = 0) [break]
             if (p * p > n) [nop: 'false, break]
         ] if no? nop [break]]

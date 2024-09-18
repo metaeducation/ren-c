@@ -257,7 +257,7 @@ gen-obj: func [
     append flags <msc:/wd4946>
 
     if block? s [
-        for-each flag next s [
+        for-each 'flag next s [
             switch flag [
                 #no-c++ [
                     ;
@@ -666,7 +666,7 @@ gen-obj: func [
     ; (e.g. third party files we don't want to edit to remove warnings from)
     ;
     if block? s [
-        for-each flag next s [
+        for-each 'flag next s [
             append flags spread (switch flag [  ; boot ELSE, ()
                 <no-uninitialized> [
                     [
@@ -854,7 +854,7 @@ parse-ext-build-spec: func [
 
 use [extension-dir entry][
     extension-dir: join repo-dir %extensions/
-    for-each entry read extension-dir [
+    for-each 'entry read extension-dir [
         all [
             dir? entry
             find read (join extension-dir entry) %make-spec.r
@@ -877,7 +877,7 @@ use [extension-dir entry][
     ]
 ]
 
-extension-names: map-each x extensions [to-lit-word x.name]
+extension-names: map-each 'x extensions [to-lit-word x.name]
 
 
 === "TARGETS" ===
@@ -943,7 +943,7 @@ targets: [
 ]
 
 target-names: make block! 16
-for-each x targets [
+for-each 'x targets [
     if lit-word? x [
         append target-names (noquote x)
         append target-names '|
@@ -993,7 +993,7 @@ MORE HELP:^/
     { config: | load: | do: } PATH/TO/CONFIG-FILE^/
 FILES IN %make/configs/ SUBFOLDER:^/
     }
-    indent/space form sort map-each x ;\
+    indent/space form sort map-each 'x ;\
         load (join repo-dir %configs/)
         [to-text x]
     newline ]
@@ -1017,7 +1017,7 @@ CURRENT OS:^/
     {^/
 LIST:^/
     OS-ID:  OS-NAME:}
-    indent form collect [for-each-platform p [
+    indent form collect [for-each-platform 'p [
         keep unspaced [
             newline format 8 p.id p.os-name
         ]
@@ -1050,7 +1050,7 @@ CURRENT VALUE:
 
 ; dynamically fill help topics list ;-)
 replace help-topics.usage "HELP-TOPICS" ;\
-    form append (map-each x help-topics [either text? x ['|] [x]]) 'all
+    form append (map-each 'x help-topics [either text? x ['|] [x]]) 'all
 
 help: func [
     return: [~]
@@ -1079,7 +1079,7 @@ help: func [
 ; process help: {-h | -help | --help} [TOPIC]
 
 if commands [
-    iterate commands [
+    iterate (inert inside [] 'commands) [
         if find ["-h" "-help" "--help"] commands.1 [
             if second commands [  ; bootstrap commands.2 errors if null
                 help/topic second commands
@@ -1351,7 +1351,7 @@ append app-config.libraries spread (
     let value: flatten/deep reduce (
         bind copy platform-config.libraries platform-libraries
     )
-    map-each w flatten value [
+    map-each 'w flatten value [
         make rebmake.ext-dynamic-class [
             output: w
         ]
@@ -1397,10 +1397,10 @@ libr3-core: make rebmake.object-library-class [
 
     optimization: app-config.optimization
     debug: app-config.debug
-    depends: map-each w file-base.core [
+    depends: map-each 'w file-base.core [
         gen-obj/dir w (join src-dir %core/)
     ]
-    append depends spread map-each w file-base.generated [
+    append depends spread map-each 'w file-base.generated [
         gen-obj/dir w "prep/core/"
     ]
 ]
@@ -1459,7 +1459,7 @@ add-new-obj-folders: func [
     obj
     dir
 ][
-    for-each lib objs [
+    for-each 'lib objs [
         switch lib.class [
             #object-file [
                 lib: reduce [lib]
@@ -1471,7 +1471,7 @@ add-new-obj-folders: func [
             fail ["unexpected class"]
         ]
 
-        for-each obj lib [
+        for-each 'obj lib [
             dir: split-path3 obj.output
             if not find folders dir [
                 append folders dir
@@ -1492,7 +1492,7 @@ for-each [category entries] file-base [
             assert [entries = %main.c]  ; !!! anomaly, ignore it for now
         ]
         block! [
-            for-each entry entries [
+            for-each 'entry entries [
                 if block? entry [entry: first entry]
                 switch kind of entry [
                     file!
@@ -1523,7 +1523,7 @@ for-each [category entries] file-base [
 ;
 ; This translates to an ext.mode of <builtin>, <dynamic>, or null.
 
-for-each ext extensions [
+for-each 'ext extensions [
     if mode: select user-config.extensions ext.name [
         ;
         ; Bootstrap executable (at least on mac) had problems setting to null.
@@ -1563,7 +1563,7 @@ for-each [mode label] [
 ][
     print label
     print mold collect [
-        for-each ext extensions [
+        for-each 'ext extensions [
             if ext.mode = mode [
                 keep ext.name
             ]
@@ -1639,8 +1639,8 @@ calculate-sequence: func [
     ext.visited: 'yes
     let seq: 0
     if word? ext.requires [ext.requires: reduce [ext.requires]]
-    for-each req ext.requires [
-        for-each b extensions [
+    for-each 'req ext.requires [
+        for-each 'b extensions [
             if b.name = req [
                 seq: seq + any [
                     match integer! maybe b.sequence
@@ -1655,7 +1655,7 @@ calculate-sequence: func [
     return ext.sequence: seq + 1
 ]
 
-for-each ext extensions [calculate-sequence ext]
+for-each 'ext extensions [calculate-sequence ext]
 sort/compare extensions func [a b] [return a.sequence < b.sequence]
 
 
@@ -1677,7 +1677,7 @@ dynamic-ext-objlibs: copy []  ; #object-library for each built in extension
 
 dynamic-libs: copy []  ; #dynamic-library for each DLL
 
-for-each ext extensions [
+for-each 'ext extensions [
     assert [ext.class = #extension]  ; basically what we read from %make-spec.r
 
     if not ext.mode [continue]  ; blank means extension not in use
@@ -1686,7 +1686,7 @@ for-each ext extensions [
 
     ext-objlib: make rebmake.object-library-class [  ; #object-library
         name: ext.name
-        depends: map-each s (
+        depends: map-each 's (
             append reduce [ext.source] maybe spread ext.depends
         )[
             dep: case [
@@ -1708,7 +1708,7 @@ for-each ext extensions [
         ]
         libraries: all [
             ext.libraries
-            map-each lib ext.libraries [
+            map-each 'lib ext.libraries [
                 case [
                     file? lib [
                         make rebmake.ext-dynamic-class [
@@ -1919,7 +1919,7 @@ prep: make rebmake.entry-class [
             unspaced ["OS_ID=" platform-config.id]
         ]
 
-        for-each ext extensions [
+        for-each 'ext extensions [
             keep [
                 "$(REBOL)" join tools-dir %prep-extension.r
                 unspaced ["MODULE=" ext.name]
@@ -1956,7 +1956,7 @@ prep: make rebmake.entry-class [
         keep [
             "$(REBOL)" join tools-dir %make-extensions-table.r
             unspaced [
-                "EXTENSIONS=" delimit ":" map-each ext extensions [
+                "EXTENSIONS=" delimit ":" map-each 'ext extensions [
                     if ext.mode = <builtin> [to text! ext.name]
                 ]
             ]
@@ -2000,7 +2000,7 @@ app: make rebmake.application-class [
 ; Now that app is created, make it a dependency of all the dynamic libs
 ; See `accept` method handling of #application for pulling in import lib
 ;
-for-each proj dynamic-libs [
+for-each 'proj dynamic-libs [
     append proj.depends app
 ]
 
@@ -2037,7 +2037,7 @@ t-folders: make rebmake.entry-class [
 
     ; Sort it so that the parent folder gets created first
     ;
-    commands: map-each dir sort folders [
+    commands: map-each 'dir sort folders [
         make rebmake.cmd-create-class compose [
             file: (dir)
         ]
@@ -2066,7 +2066,7 @@ check: make rebmake.entry-class [
         keep make rebmake.cmd-strip-class [
             file: join app.output maybe rebmake.target-platform.exe-suffix
         ]
-        for-each s dynamic-libs [
+        for-each 's dynamic-libs [
             keep make rebmake.cmd-strip-class [
                 file: join s.output maybe rebmake.target-platform.dll-suffix
             ]
@@ -2098,7 +2098,7 @@ solution: make rebmake.solution-class [
 
 target: user-config.target
 if not block? target [target: reduce [target]]
-for-each t target [
+for-each 't target [
     switch t targets else [
         fail [
             newline

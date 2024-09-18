@@ -145,7 +145,7 @@ export to-c-name: func [
         ]
     ]
 
-    for-next s string [
+    for-next 's string [
         all [
             scope <> #prefixed
             head? s
@@ -232,7 +232,7 @@ export parse-args: func [
 ][
     let ret: make block! 4
     let standalone: make block! 4
-    iterate args [
+    iterate (inert inside [] 'args) [
         let name: null
         let value: args.1
         case [
@@ -335,7 +335,7 @@ export relative-to-path: func [
         base: next base
         target: next target
     ]
-    iterate base [base.1: %..]
+    iterate (inert inside [] 'base) [base.1: %..]
     append base spread target
 
     base: to-file delimit "/" base
@@ -431,7 +431,7 @@ export stripload: func [
     ;
     if gather [
         append (ensure block! get gather) spread collect [
-            for-next t text [
+            for-next 't text [
                 let newline-pos: find t newline else [tail text]
                 if not let colon-pos: find/part t ":" newline-pos [
                     t: newline-pos

@@ -23,7 +23,7 @@
 (nothing? help function)
 
 (
-    for-each w words of lib [
+    for-each 'w words of lib [
         dump w
         if quasi? ^(get/any w) [continue]
         if action? get w
@@ -40,7 +40,7 @@
     nothing? source ||   ; Was once a tricky case, SOURCE of a barrier
 )
 (
-    for-each w words of lib [
+    for-each 'w words of lib [
         dump w
         if quasi? ^(get/any w) [continue]
         if action? get w

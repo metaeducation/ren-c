@@ -138,7 +138,7 @@
 
 (
     o-big: construct inside [] collect [
-        count-up n 256 [
+        count-up 'n 256 [
             ;
             ; var-1: 1
             ; var-2: 2
@@ -149,7 +149,7 @@
                 (as word! unspaced ["var-" n]): (n)
             ]
         ]
-        count-up n 256 [
+        count-up 'n 256 [
             ;
             ; fun-1: meth [] [.var-1]
             ; fun-2: meth [] [.var-1 + .var-2]
@@ -159,7 +159,7 @@
             keep spread compose [
                 (as word! unspaced ["meth-" n]): meth [] (collect [
                     keep 'return
-                    count-up i n [
+                    count-up 'i n [
                         keep spread compose/deep [
                             .(as word! unspaced ["var-" i]) (if i <> n ['+])
                         ]
@@ -175,7 +175,7 @@
     ; derived binding allows the derived object's methods to see the derived
     ; object's values.
     ;
-    count-up i 2048 [
+    count-up 'i 2048 [
         derived: make o-big [var-1: 100000 + i]
         if 132639 + i <> derived/meth-255 [
             fail "Unexpected Sum"

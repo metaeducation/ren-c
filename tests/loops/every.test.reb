@@ -1,10 +1,10 @@
-; EVERY is similar to FOR-EACH but returns null on any falsey body evals
+; EVERY is similar to FOR-EACH but returns null on any null body evals
 ; Still runs the body fully through for each value (assuming no BREAK)
 
 (
     sum: 0
     all [
-        okay = every x [1 3 7] [
+        okay = every 'x [1 3 7] [
             sum: me + x
             odd? x
         ]
@@ -15,7 +15,7 @@
 (
     sum: 0
     all [
-        null = every x [1 2 7] [
+        null = every 'x [1 2 7] [
             sum: me + x
             odd? x
         ]
@@ -26,7 +26,7 @@
 (
     sum: 0
     all [
-        null = every x [1 2 7] [
+        null = every 'x [1 2 7] [
             sum: me + x
             if even? x [break]
             okay
@@ -42,7 +42,7 @@
 (
     sum: 0
     all [
-        '~[~void~]~ = ^ every x [1 2 7] [
+        '~[~void~]~ = ^ every 'x [1 2 7] [
             sum: me + x
             if x = 7 [continue]  ; Doesn't force NULL return, drops the 2
             x
@@ -51,12 +51,12 @@
     ]
 )
 
-(void' = ^ every x [] [fail ~<unreachable>~])
+(void' = ^ every 'x [] [fail ~<unreachable>~])
 
 
-('~[~void~]~ = ^ every x [1 2 3 4] [maybe if odd? x [x]])
+('~[~void~]~ = ^ every 'x [1 2 3 4] [maybe if odd? x [x]])
 (
-    '~[~void~]~ = ^ every x [1 2 3 4] [if odd? x [x]]
+    '~[~void~]~ = ^ every 'x [1 2 3 4] [if odd? x [x]]
 )
 
-('~[~void~]~ = ^ every x [1 2 3 4] [comment "heavy"])
+('~[~void~]~ = ^ every 'x [1 2 3 4] [comment "heavy"])

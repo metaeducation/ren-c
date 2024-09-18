@@ -14,7 +14,7 @@
     ;     6
     ; ]
     before: collect [
-        for-next pos data [keep boolean new-line? pos]
+        for-next 'pos data [keep boolean new-line? pos]
         keep boolean new-line? tail data
     ]
 
@@ -25,7 +25,7 @@
     ;     2 1
     ; ]
     after: collect [
-        for-next pos data [keep boolean new-line? pos]
+        for-next 'pos data [keep boolean new-line? pos]
         keep boolean new-line? tail data
     ]
 

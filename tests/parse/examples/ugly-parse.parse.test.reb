@@ -21,7 +21,7 @@
     ;
     ugly-combinators.discard: combinator [
         return: "Don't return anything" [nihil?]
-        'group [group!]
+        @group [group!]
     ][
         eval group
         remainder: input

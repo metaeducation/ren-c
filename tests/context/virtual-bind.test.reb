@@ -97,7 +97,7 @@
 (
     data: array/initial 20 1
     sum: 0
-    for-each x data [
+    for-each 'x data [
         code: copy []  ; block captures binding that can see X
         for-each 'y data [  ; block can't see Y w/o overbind, let's COMPOSE it
             append code spread compose/deep [sum: sum + eval [x + (y) + z]]
@@ -137,7 +137,7 @@
         minus: (minus-global)
     ]
     [30 3000 -100 -100 30 -100 3000 -100 101 -100 101 -100] = collect [
-        for-each y [1] compose [
+        for-each 'y [1] compose [
             keep eval (alpha.plus)
             keep eval (beta.plus)
             keep eval (alpha.minus)

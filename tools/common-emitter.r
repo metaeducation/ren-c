@@ -133,7 +133,7 @@ export cscape: func [
     void-marker: "!?*VOID*?!"  ; should be taken out, good to disrupt if not
 
     let substitutions: collect [
-        for-each item list [
+        for-each 'item list [
             ;
             ; SET no longer takes BLOCK!, and bootstrap executable doesn't have
             ; SET-BLOCK! so no UNPACK.

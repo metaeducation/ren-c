@@ -43,10 +43,6 @@ INLINE bool ANY_ESCAPABLE_GET(const Atom* v) {
     //
     // !!! Doesn't include GET-BLOCK!, but should it, e.g. REDUCE escapability?
     //
-    //    for-each :[first [a b] second [c d] [...]
-    //    =>
-    //    for-each [a d] [...]
-    //
     return Is_Get_Group(v) or Is_Get_Word(v) or Is_Get_Tuple(v);
 }
 

@@ -55,7 +55,7 @@
 
 [#206 (
     any-char: complement charset ""
-    count-up n 512 [
+    count-up 'n 512 [
         if n = 1 [continue]
 
         parse3 (append copy "" codepoint-to-char n - 1) [
@@ -658,7 +658,7 @@
     countify: func [things data] [
         let counts: make map! []
         let rules: collect [
-            for-each t things [
+            for-each 't things [
                 counts.(t): 0
                 keep t
                 keep compose/deep $(counts.(t): me + 1)

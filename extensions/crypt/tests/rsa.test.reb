@@ -78,8 +78,8 @@
         return capacity
     ]
 
-    for-each num-key-bits [1024 2048 4096] [
-        for-each padding [  ; not just a "padding" scheme, but they call it that
+    for-each 'num-key-bits [1024 2048 4096] [
+        for-each 'padding [  ; not just a "padding" scheme, but they call it that
             [pkcs1-v15]
             [pkcs1-v15 #md5]
             [pkcs1-v15 #sha512]

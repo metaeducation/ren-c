@@ -497,7 +497,7 @@ import*: func [
 
     if word? source [
         let file
-        for-each path system.options.module-paths [
+        for-each 'path system.options.module-paths [
             file: join path spread reduce [source system.options.default-suffix]
             if not exists? file [
                 continue

@@ -16,7 +16,7 @@
 
 (
     valid: ["~abc~" "~a|b~"]
-    for-each str valid [
+    for-each 'str valid [
         word: parse str [to-word/ between '~ '~]
         bad: load-value str
         assert [quasi? bad]
@@ -29,7 +29,7 @@
 
 (
     invalid: ["~~" "~~~" "~a" "~~~a"]
-    for-each str invalid [
+    for-each 'str invalid [
         load-value str except e -> [
             assert [e.id = 'scan-invalid]
         ]

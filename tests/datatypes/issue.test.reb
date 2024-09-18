@@ -34,7 +34,7 @@
 ; and atomic type.  This means a wide range of visible characters are allowed
 ; in the ISSUE! for convenience as a CHAR! representation.
 (
-    for-each x [  ; TEXT! values are tested as *invalid* issues
+    for-each 'x [  ; TEXT! values are tested as *invalid* issues
         {#~} #`
         #1 #2 #3 #4 #5 #6 #7 #8 #9 #1 #0 #- #=
         #! #@ ## #$ #% {#^^} #& #* {#(} {#)} #_ #+  ; caret used for escaping

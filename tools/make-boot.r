@@ -143,9 +143,9 @@ add-sym: func [
 type-table: load %types.r
 
 for-each-datatype: func [
-    {Iterate type table by creating an object for each row}
+    "Iterate type table by creating an object for each row"
 
-    'var "Word to set each time to the row made into an object record"
+    var "Word to set each time to the row made into an object record"
         [word!]
     body "Block to evaluate each time"
         [block!]
@@ -153,6 +153,10 @@ for-each-datatype: func [
     name* antiname* description* typesets* class* make* mold* heart* cellmask*
     completed* running* is-unstable* decorated
 ][
+    obj: make object! compose [(to set-word! var) ~]  ; make variable
+    body: overbind obj body  ; make variable visible to body
+    var: has obj var
+
     heart*: 1  ; 0 is reserved
     parse3/match type-table [some [not <end>
         opt some tag!  ; <TYPE!> or </TYPE!> used by FOR-EACH-TYPERANGE
@@ -174,7 +178,7 @@ for-each-datatype: func [
                 cellmask: cellmask*
                 heart: ensure integer! heart*
                 description: ensure text! description*
-                typesets: map-each any-name! typesets* [
+                typesets: map-each 'any-name! typesets* [
                     decorated: to text! any-name!
                     assert [#"?" = take/last decorated]
                     assert ["any-" = take/part decorated 4]
@@ -199,14 +203,18 @@ for-each-datatype: func [
 ]
 
 for-each-typerange: func [
-    {Iterate type table and create object for each <TYPE!>...</TYPE!> range}
+    "Iterate type table and create object for each <TYPE!>...</TYPE!> range"
 
-    'var "Word to set each time to the typerange as an object record"
+    var "Word to set each time to the typerange as an object record"
         [word!]
     body "Block to evaluate each time"
         [block!]
     <local> name* heart* any-name!* stack types* starting
 ][
+    obj: make object! compose [(to set-word! var) ~]  ; make variable
+    body: overbind obj body  ; make variable visible to body
+    var: has obj var
+
     stack: copy []
     types*: _  ; will be put in a block, can't be null
 
@@ -279,7 +287,7 @@ e-types/emit [{
 e-types/emit newline
 
 rebs: collect [
-    for-each-datatype t [
+    for-each-datatype 't [
         assert [sym-n == t.heart]  ; SYM_XXX should equal REB_XXX value
         add-sym unspaced t.name
 
@@ -294,7 +302,7 @@ rebs: collect [
 ]
 
 kinds: collect [
-    for-each-datatype t [
+    for-each-datatype 't [
         any [
             t.name = "quasiform"
             t.name = "quoted"
@@ -363,7 +371,7 @@ e-types/emit {
 }
 e-types/emit newline
 
-for-each-datatype t [
+for-each-datatype 't [
     ;
     ; Pseudotypes don't make macros or cell masks.
     ;
@@ -388,14 +396,14 @@ for-each-datatype t [
 
 ; Type constraints: integer! is &(integer?) and distinct from &integer
 
-for-each-datatype t [
+for-each-datatype 't [
     add-sym unspaced [t.name "?"]
     add-sym unspaced [t.name "!"]
 ]
 
 typeset-sets: copy []
 
-for-each-datatype t [
+for-each-datatype 't [
     for-each ts-name t.typesets [
         if spot: select typeset-sets ts-name [
             append spot t.name  ; not the first time we've seen this typeset
@@ -418,7 +426,7 @@ for-each-datatype t [
     ]
 ]
 
-for-each-typerange tr [
+for-each-typerange 'tr [
     add-sym replace to text! tr.any-name! "!" "?"
 
     append typeset-sets spread reduce [tr.name tr.types]
@@ -457,7 +465,7 @@ e-types/emit newline
 
 add-sym 'datatypes  ; signal where the datatypes stop
 
-for-each-datatype t [
+for-each-datatype 't [
     if not t.antiname [continue]  ; no special name for antiform form
 
     need: either yes? t.unstable ["Atom"] ["Value"]
@@ -527,7 +535,7 @@ hook-list: collect [
         }
     }]
 
-    for-each-datatype t [
+    for-each-datatype 't [
         if t.name = "void" [
             keep cscape [{
                 {  /* VOID = $<T.HEART> */
@@ -585,7 +593,7 @@ e-typesets/emit newline
 decider-names: copy []
 memberships: copy []
 
-for-each-datatype t [
+for-each-datatype 't [
     e-typesets/emit [t {
         bool ${Propercase T.Name}_Decider(const Value* arg)
           { return Is_${Propercase T.Name}(arg); }
@@ -644,7 +652,7 @@ e-typesets/write-emitted
 ; establish their slots first.  Any natives or generics which have the same
 ; name will have to use the slot position established for these words.
 
-for-each term load %lib-words.r [
+for-each 'term load %lib-words.r [
     if issue? term [
         if not find syms-words as text! term [
             fail ["Expected symbol for" term "from native/generic/type"]
@@ -672,7 +680,7 @@ boot-natives: stripload/gather (
 
 insert boot-natives "["
 append boot-natives "]"
-for-each name native-names [
+for-each 'name native-names [
     if first-native-sym < ((add-sym/exists name) else [0]) [
         fail ["Native name collision found:" name]
     ]
@@ -689,7 +697,7 @@ first-generic-sym: sym-n
 generic-names: load-value join prep-dir %boot/tmp-generic-names.r
 boot-generics: as text! read join prep-dir %boot/tmp-generics-stripped.r
 
-for-each name generic-names [
+for-each 'name generic-names [
     assert [word? name]
     if first-generic-sym < ((add-sym/exists name) else [0]) [
         fail ["Generic name collision with Native or Generic found:" name]
@@ -707,7 +715,7 @@ lib-syms-max: sym-n  ; *DON'T* count the symbols in %symbols.r, added below...
 ; generic might come along and use one of these terms...meaning they have to
 ; yield to that position.  That's why there's no guarantee of order.
 
-for-each term load %symbols.r [
+for-each 'term load %symbols.r [
     if word? term [
         add-sym term
     ] else [
@@ -760,7 +768,7 @@ make-obj-defs: func [
     let items: collect [
         let n: 1
 
-        for-each field words-of obj [
+        for-each 'field words-of obj [
             keep cscape [prefix field n {${PREFIX}_${FIELD} = $<n>}]
             n: n + 1
         ]
@@ -775,7 +783,7 @@ make-obj-defs: func [
     }]
 
     if depth > 1 [
-        for-each field words-of obj [
+        for-each 'field words-of obj [
             if all [
                 field != 'standard
                 object? get has obj field
@@ -808,7 +816,7 @@ e-errfuncs: make-emitter "Error structure and functions" (
 )
 
 fields: collect [
-    for-each word words-of ob.standard.error [
+    for-each 'word words-of ob.standard.error [
         either word = 'near [
             keep {/* near & far are old C keywords */ Value nearest}
         ][
@@ -888,12 +896,12 @@ for-each [sw-cat list] boot-errors [
                 ; error generator, as they are copied before any evaluator
                 ; calls are made.
                 ;
-                count-up i arity [
+                count-up 'i arity [
                     keep unspaced ["const Cell* arg" i]
                 ]
             ]
             args: collect [
-                count-up i arity [keep unspaced ["arg" i]]
+                count-up 'i arity [keep unspaced ["arg" i]]
                 keep "rebEND"
             ]
         ]
@@ -927,10 +935,10 @@ mezz-files: load %../mezz/boot-files.r  ; base, sys, mezz
 
 sys-toplevel: copy []
 
-for-each section [boot-base boot-system-util boot-mezz] [
+for-each 'section [boot-base boot-system-util boot-mezz] [
     set (inside [] section) s: make text! 20000
     append/line s "["
-    for-each file first mezz-files [  ; doesn't use LOAD to strip
+    for-each 'file first mezz-files [  ; doesn't use LOAD to strip
         gather:  [null]
         text: stripload/gather (
             join %../mezz/ file
@@ -949,7 +957,7 @@ for-each section [boot-base boot-system-util boot-mezz] [
 ; are SYMIDs instead, so the SYM_XXX numbers can quickly produce canons that
 ; lead to the function definitions.
 
-for-each item sys-toplevel [
+for-each 'item sys-toplevel [
     add-sym/exists as word! item
 ]
 
@@ -990,13 +998,13 @@ nats: collect [
     ; into distinct tables, so they're all coerced to a CFunction, and then
     ; Make_Native() decides which actual function type to cast them to.
     ;
-    for-each name native-names [
+    for-each 'name native-names [
         keep cscape [name {cast(CFunction*, N_${name})}]
     ]
 ]
 
 symbol-strings: to binary! reduce collect [  ; no bootstrap MAKE BINARY!
-    for-each word syms-words [
+    for-each 'word syms-words [
         spelling: to text! word
         keep head change copy #{00} length of spelling
         keep spelling
@@ -1041,7 +1049,7 @@ e-bootblock/emit [nats {
 ; Build typespecs block (in same order as datatypes table)
 
 boot-typespecs: collect [
-    for-each-datatype t [
+    for-each-datatype 't [
         keep reduce [t.description]
     ]
 ]
@@ -1050,7 +1058,7 @@ boot-typespecs: collect [
 
 boot-molded: copy ""
 append/line boot-molded "["
-for-each sec sections [
+for-each 'sec sections [
     if get-word? sec [  ; wasn't LOAD-ed (no bootstrap compatibility issues)
         append boot-molded (get inside sections sec)
     ]
@@ -1089,7 +1097,7 @@ e-boot: make-emitter "Bootstrap Structure and Root Module" (
 )
 
 fields: collect [
-    for-each word sections [
+    for-each 'word sections [
         word: form as word! word
         remove/part word 5  ; 5 leading characters, [boot-]xxx
         word: to-c-name word

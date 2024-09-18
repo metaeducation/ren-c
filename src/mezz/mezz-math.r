@@ -81,7 +81,7 @@ extreme-of: func [
     skip: default [1]
     if 1 > skip [cause-error 'script 'out-of-range skip]
     let spot: series
-    iterate-skip series skip [
+    iterate-skip @series skip [
         if (comparator // [first series first spot]) [spot: series]
     ]
     return spot
@@ -107,5 +107,5 @@ factorial: func [n [integer!]] [
     if n < 2 [return 1]
     let res: 1
     ; should avoid doing the loop for i = 1...
-    return count-up i n [res: res * i]
+    return count-up 'i n [res: res * i]
 ]

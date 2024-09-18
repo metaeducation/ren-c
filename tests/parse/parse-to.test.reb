@@ -109,7 +109,7 @@
     ("23" == parse/part %234 ["23" to [<end>]] 3)
     ("23" == parse/part %234 ["23" to <end>] 3)
     (
-        count-up i 4 [
+        count-up 'i 4 [
             assert ["1" == parse/part "12" ["1" to [<end>]] i]
         ]
         ok

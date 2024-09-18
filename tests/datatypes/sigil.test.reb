@@ -16,7 +16,7 @@
 ;
 
 (
-    for-each sigil [:: : ^ & @ $ ' ~~] [
+    for-each 'sigil [:: : ^ & @ $ ' ~~] [
         if not sigil? sigil [
             fail [mold sigil]
         ]
@@ -100,7 +100,7 @@
         '       [ 'word   'tu.p.le   'pa/th   '[bl o ck]   '(gr o up)  ]
         ~~      [ ~word~      _         _     ~[bl o ck]~  ~(gr o up)~ ]
     ][
-        for-each item items [
+        for-each 'item items [
             if blank? item [continue]
             assert [any [quoted? item, quasi? item, bindable? item]]
             if (degrade sigil) <> sigil of item [

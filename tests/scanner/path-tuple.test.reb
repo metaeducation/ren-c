@@ -120,7 +120,7 @@
         mtype: select/skip mapping (kind of get/any $value) 2
         if mtype [
             value: to mtype collect [
-                count-up index (length of value) [
+                count-up 'index (length of value) [
                     keep (transform pick value index)
                 ]
             ]
@@ -179,7 +179,7 @@
         ]
 
         start: 'yes
-        for-each v items [
+        for-each 'v items [
             append compares iter.1
 
             all [

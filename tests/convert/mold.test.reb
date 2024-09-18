@@ -119,7 +119,7 @@
         <local> buff
     ][
         buff: copy ""
-        for-each val test-block [
+        for-each 'val test-block [
             repeat 5000 [
                 append buff form reduce [reduce [<td> 'OK </td>] cr lf]
             ]

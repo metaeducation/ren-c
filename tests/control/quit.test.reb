@@ -17,7 +17,7 @@
         do script
         elide delete %tmp-inner.reb
     ]
-    for-each value reduce [
+    for-each 'value reduce [
         0
         42
         {foo}

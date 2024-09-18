@@ -11,28 +11,28 @@
 (
     out: copy ""
     str: "abcdef"
-    for i each str [append out i]
+    for 'i each str [append out i]
     out = str
 )
 (
     blk: [1 2 3 4]
     sum: 0
-    for i each blk [sum: sum + i]
+    for 'i each blk [sum: sum + i]
     sum = 10
 )
 ; cycle return value
 (
     blk: [1 2 3 4]
-    'true = for i each blk ['true]
+    'true = for 'i each blk ['true]
 )
 (
     blk: [1 2 3 4]
-    'false = for i each blk ['false]
+    'false = for 'i each blk ['false]
 )
 ; break cycle
 (
     str: "abcdef"
-    for i each str [
+    for 'i each str [
         num: i
         if i = #"c" [break]
     ]
@@ -41,13 +41,13 @@
 ; break return value
 (
     blk: [1 2 3 4]
-    null? for i each blk [break]
+    null? for 'i each blk [break]
 )
 ; continue cycle
 (
     success: 'true
     all [
-        '~[~void~]~ = ^ for i each [1] [continue, success: 'false]
+        '~[~void~]~ = ^ for 'i each [1] [continue, success: 'false]
         true? success
     ]
 )
@@ -56,32 +56,32 @@
     success: 'true
     blk: []
     all [
-        void? for i each blk [success: 'false]
+        void? for 'i each blk [success: 'false]
         true? success
     ]
 )
 ; Test that return stops the loop
 (
     blk: [1]
-    f1: func [return: [integer!]] [for i each blk [return 1 2]]
+    f1: func [return: [integer!]] [for 'i each blk [return 1 2]]
     1 = f1
 )
 ; Test that errors do not stop the loop and errors can be returned
 (
     num: 0
     blk: [1 2]
-    e: for i each blk [num: i trap [1 / 0]]
+    e: for 'i each blk [num: i trap [1 / 0]]
     all [error? e num = 2]
 )
 
 ; "recursive safety", "locality" and "body constantness" test in one
-(for-each i [1] b: [not same? 'i b.3])
+(for-each 'i [1] b: [not same? 'i b.3])
 
 ; recursivity
 (
     num: 0
-    for-each i [1 2 3 4 5] [
-        for i each [1 2] [num: num + 1]
+    for-each 'i [1 2 3 4 5] [
+        for 'i each [1 2] [num: num + 1]
     ]
     num = 10
 )
@@ -89,24 +89,24 @@
     for [:x] each [] []
 )
 
-; A LIT-WORD! does not create a new variable or binding, but a WORD! does
+; A THE-WORD! does not create a new variable or binding, but a WORD! does
 (
     x: 10
     sum: 0
-    for x each [1 2 3] [sum: sum + x]
+    for 'x each [1 2 3] [sum: sum + x]
     all [x = 10, sum = 6]
 )
 (
     x: 10
     sum: 0
-    for 'x each [1 2 3] [sum: sum + x]
+    for @x each [1 2 3] [sum: sum + x]
     all [x = 3, sum = 6]
 )
 (
     x: 10
     y: 20
     sum: 0
-    for ['x y] each [1 2 3 4] [sum: sum + x + y]
+    for [@x y] each [1 2 3 4] [sum: sum + x + y]
     all [x = 3, y = 20, sum = 10]
 )
 
@@ -129,7 +129,7 @@
     )
     ~dup-vars~ !! (
         for :(compose [  ; see above
-            x (bind the 'x obj1)
+            x (bind '@x obj1)
         ]) each [
             1 2 3 4
         ][
@@ -138,7 +138,7 @@
     )
     ~dup-vars~ !! (
         for :(compose [  ; see above
-            (bind the 'x obj2) x
+            (bind '@x obj2) x
         ]) each [
             1 2 3 4
         ][
@@ -147,7 +147,7 @@
     )
     (
         for :(compose [  ; see above
-            (bind the 'x obj1) (bind the 'x obj2)
+            (bind '@x obj1) (bind '@x obj2)
         ]) each [
             1 2 3 4
         ][
@@ -169,7 +169,7 @@
     block: copy [a b c]
     all [
         <thrown> = catch [
-            for item each block [
+            for 'item each block [
                 throw <thrown>
             ]
         ]
@@ -179,7 +179,7 @@
     block: copy [a b c]
     all [
         e: sys.util/rescue [
-            for item each block [
+            for 'item each block [
                 append block <failure>
             ]
         ]
@@ -191,24 +191,24 @@
 ; paths are immutable, but for-each is legal on them
 
 (
-    [a b c] = collect [for x each 'a/b/c [keep x]]
+    [a b c] = collect [for 'x each 'a/b/c [keep x]]
 )(
-    [_ b] = collect [for x each '/b [keep x]]
+    [_ b] = collect [for 'x each '/b [keep x]]
 )(
-    [a _] = collect [for x each 'a/ [keep x]]
+    [a _] = collect [for 'x each 'a/ [keep x]]
 )
 
 (
-    [a b c] = collect [for x each 'a.b.c [keep x]]
+    [a b c] = collect [for 'x each 'a.b.c [keep x]]
 )(
-    [_ b] = collect [for x each '.b [keep x]]
+    [_ b] = collect [for 'x each '.b [keep x]]
 )(
-    [a _] = collect [for x each 'a. [keep x]]
+    [a _] = collect [for 'x each 'a. [keep x]]
 )
 
 ; FOR-EACH X is an alias of FOR X EACH
 ;
-([1 2 3] = collect [for-each x [1 2 3] [keep x]])
+([1 2 3] = collect [for-each 'x [1 2 3] [keep x]])
 
 ; BLANK! is legal for slots you want to opt out of
 (
@@ -217,7 +217,7 @@
     sum = 3
 )
 
-(5 = for-each x [1 2 3] [5 assert [x < 10]])
+(5 = for-each 'x [1 2 3] [5 assert [x < 10]])
 
 ; Abrupt failure (needs more comprehensive tests, but this is an example of
 ; where the enumeration state is held by the FOR-EACH frame, and the error
@@ -229,10 +229,10 @@
 
 ; BLANK! acts same as empty block, void opts out and generates BREAK signal
 [
-    (void? for-each x [] [fail])
-    (void? for-each x _ [fail])
-    (null? for-each x ~void~ [fail])
+    (void? for-each 'x [] [fail])
+    (void? for-each 'x _ [fail])
+    (null? for-each 'x ~void~ [fail])
 
-    ~expect-arg~ !! (for-each x '~ [fail])
-    ~expect-arg~ !! (for-each x ~ [fail])
+    ~expect-arg~ !! (for-each 'x '~ [fail])
+    ~expect-arg~ !! (for-each 'x ~ [fail])
 ]

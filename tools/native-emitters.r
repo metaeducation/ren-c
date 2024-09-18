@@ -200,7 +200,7 @@ export emit-include-params-macro: func [
             paramlist: next paramlist
         ]
 
-        for-each item paramlist [
+        for-each 'item paramlist [
             if not match [&any-word? &refinement? &lit-word? output-param!] item [
                 continue
             ]

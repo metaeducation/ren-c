@@ -156,7 +156,7 @@ export console!: make object! [
         if (pack? unmeta v) and (0 <> length of v) [
             v: unquasi v
 
-            for-each item v [
+            for-each 'item v [
                 any [quoted? item, quasi? item] else [
                     print "!!! MALFORMED PARAMETER PACK, NOT QUOTED/QUASI !!!"
                     print mold quasi v

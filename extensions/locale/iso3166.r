@@ -16,7 +16,7 @@ capitalize: func [
     ret: copy ""
     words: split to text! n " "
     return spaced [
-        map-each w words [
+        map-each 'w words [
             case [
                 w = "OF" [
                     "of"

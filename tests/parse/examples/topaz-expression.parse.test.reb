@@ -44,7 +44,7 @@
     factorial: func [n [integer!]] [
         if n < 2 [return 1]
         let res: 1
-        for i n - 1 [res: i + 1 * res]
+        for 'i n - 1 [res: i + 1 * res]
         return res
     ]
 

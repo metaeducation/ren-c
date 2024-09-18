@@ -23,16 +23,16 @@
 )]
 
 [
-    (void? for-each x _ [1020])
-    ([] = map-each x _ [1020])
-    (void? for-next x _ [1020])
+    (void? for-each 'x _ [1020])
+    ([] = map-each 'x _ [1020])
+    (void? for-next 'x _ [1020])
     (all [
-        _ = [result count]: remove-each x _ [fail "this never gets called"]
+        _ = [result count]: remove-each 'x _ [fail "this never gets called"]
         result = _
         count = 0
     ])
-    (void? every x _ [okay])
-    (void? for-skip x _ 2 [1020])
+    (void? every 'x _ [okay])
+    (void? for-skip 'x _ 2 [1020])
 
     ~nothing-to-take~ !! (take _)
     (null = try take _)

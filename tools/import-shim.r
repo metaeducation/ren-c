@@ -80,7 +80,7 @@ export: lib3/func [
         fail "EXPORT must be of form `export x: ...` or `export [...]`"
     ]
 
-    for-each word :items [
+    for-each 'word :items [
         if not word? :word [  ; no type checking in shim via BLOCK!s
             fail "EXPORT only exports block of words in bootstrap shim"
         ]

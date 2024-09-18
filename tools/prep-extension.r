@@ -135,7 +135,7 @@ all-protos: extract-native-protos c-src
 has-startup*: 'no
 
 num-natives: 0
-for-each info all-protos [
+for-each 'info all-protos [
     if info.name = "startup*" [
         if yes? info.exported [
             ;
@@ -167,7 +167,7 @@ for-each info all-protos [
 
 specs-uncompressed: make text! 10000
 
-for-each info all-protos [
+for-each 'info all-protos [
     append specs-uncompressed info.proto
     append specs-uncompressed newline
 ]
@@ -243,7 +243,7 @@ e1/emit {
 e1/emit newline
 
 if yes? use-librebol [
-    for-each info all-protos [
+    for-each 'info all-protos [
         parse3 info.proto [
             opt ["export" space] proto-name: across to ":"
             to <end>
@@ -264,7 +264,7 @@ if yes? use-librebol [
     ]
 ]
 else [
-    for-each info all-protos [
+    for-each 'info all-protos [
         emit-include-params-macro e1 info/proto
         e1/emit newline
     ]
@@ -279,7 +279,7 @@ else [
 ; to get at the addresses of those functions.
 
 dispatcher-forward-decls: collect [
-    for-each info all-protos [
+    for-each 'info all-protos [
         name: info.name
         if info.native-type = 'intrinsic [  ; not that hard to do if needed
             fail "Intrinsics not currently supported in extensions"
@@ -366,7 +366,7 @@ write (join output-dir %script-uncompressed.r) script-uncompressed
 script-compressed: gzip script-uncompressed
 
 dispatcher_c_names: collect [  ; must be in the order that NATIVE is called!
-    for-each info all-protos [
+    for-each 'info all-protos [
         name: info.name
         keep cscape [mod name {N_${MOD}_${Name}}]
     ]

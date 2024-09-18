@@ -50,7 +50,7 @@ void Shutdown_Extension_Loader(void)
     // enumerate over a copy of the list.  (See remarks on making this more
     // efficient.)
     //
-    rebElide("for-each ext copy system.extensions [unload-extension ext]");
+    rebElide("for-each 'ext copy system.extensions [unload-extension ext]");
 }
 
 

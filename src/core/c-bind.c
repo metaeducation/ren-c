@@ -1178,7 +1178,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
             }
             else if (Is_Word(check) or Is_Meta_Word(check))
                 rebinding = true;
-            else if (not IS_QUOTED_WORD(check)) {
+            else if (not Is_The_Word(check)) {
                 //
                 // Better to fail here, because if we wait until we're in
                 // the middle of building the context, the managed portion
@@ -1250,16 +1250,16 @@ Context* Virtual_Bind_Deep_To_New_Context(
                 // We just remember the first duplicate, but we go ahead
                 // and fill in all the keylist slots to make a valid array
                 // even though we plan on failing.  Duplicates count as a
-                // problem even if they are LIT-WORD! (negative index) as
-                // `for-each [x 'x] ...` is paradoxical.
+                // problem even if they are THE-WORD! (negative index) as
+                // `for-each [x @x] ...` is paradoxical.
                 //
                 if (duplicate == nullptr)
                     duplicate = symbol;
             }
         }
-        else if (IS_QUOTED_WORD(item)) {
+        else if (Is_The_Word(item)) {
 
-            // A LIT-WORD! indicates that we wish to use the original binding.
+            // A THE-WORD! indicates that we wish to use the original binding.
             // So `for-each 'x [1 2 3] [...]` will actually set that x
             // instead of creating a new one.
             //
@@ -1281,7 +1281,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
 
           add_binding_for_check:
 
-            // We don't want to stop `for-each ['x 'x] ...` necessarily,
+            // We don't want to stop `for-each [@x @x] ...` necessarily,
             // because if we're saying we're using the existing binding they
             // could be bound to different things.  But if they're not bound
             // to different things, the last one in the list gets the final
@@ -1290,7 +1290,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
             // For now, don't bother trying to use a binder or otherwise to
             // stop it.
             //
-            // However, `for-each [x 'x] ...` is intrinsically contradictory.
+            // However, `for-each [x @x] ...` is intrinsically contradictory.
             // So we use negative indices in the binder, which the binding
             // process will ignore.
             //

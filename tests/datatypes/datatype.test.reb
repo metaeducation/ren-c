@@ -5,7 +5,7 @@
 (type-block! = type of frame!)
 
 (
-    for-each typename [
+    for-each 'typename [
         frame! binary! bitset! block! type-word! date! decimal!
         email! error! file! get-tuple! get-word! handle! integer!
         issue! map! module! money! blank! object! pair! group!

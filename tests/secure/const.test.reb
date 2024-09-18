@@ -114,7 +114,7 @@
     https://github.com/metaeducation/ren-c/issues/633
 
     ~const-value~ !! (
-        count-up x 1 [append foo: [] x]
+        count-up 'x 1 [append foo: [] x]
     )
 ]
 

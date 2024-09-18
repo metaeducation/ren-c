@@ -111,7 +111,7 @@ compile: func [
         b: next b
 
         if block? var [  ; at present, this always means multiple paths
-            for-each item compose [(arg)] [
+            for-each 'item compose [(arg)] [
                 switch/type item [
                     text! []
                     file! [item: file-to-local/full item]
@@ -321,7 +321,7 @@ compile: func [
 
     let use-librebol: 'yes
 
-    compilables: map-each item compilables [
+    compilables: map-each 'item compilables [
         if match [word! path!] :item [item: get item]
 
         switch/type :item [

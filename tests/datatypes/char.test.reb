@@ -234,22 +234,22 @@
         #"漢"  ; 3 utf-8 bytes encoded
         #"😺"  ; 4 utf-8 bytes encoded
     ]
-    count-up size 4 [
+    count-up 'size 4 [
         c: codepoints.(size)
         if size != length of to binary! c [
             fail "test character doesn't match expected size"
         ]
-        count-up len 64 [
+        count-up 'len 64 [
             s: copy ""
             e: copy ""
             picks: copy []
-            count-up i len [
+            count-up 'i len [
                 append s random/only codepoints
                 append e c
                 append picks i
             ]
             random picks  ; randomize positions so not always in order
-            for-each i picks [
+            for-each 'i picks [
                 comment [
                     print ["Trying" i "/" len "in" mold s]
                 ]

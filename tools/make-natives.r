@@ -90,7 +90,7 @@ gather-natives: func [
     dir
 ][
     files: read dir
-    for-each file files [
+    for-each 'file files [
         file: join dir file
         case [
             dir? file [gather-natives file]
@@ -179,7 +179,7 @@ append output-buffer {REBOL [
 ; comments to warn you not to edit there.  (The comments and newlines are
 ; removed by the process that does embedding in the EXE.)
 
-for-each info all-protos [
+for-each 'info all-protos [
     if yes? info.exported [
         fail "EXPORT is implied on %tmp-natives.r"
     ]
@@ -235,7 +235,7 @@ e-params: make-emitter "PARAM() and REFINE() Automatic Macros" (
     join output-dir %include/tmp-paramlists.h
 )
 
-for-each info all-protos [
+for-each 'info all-protos [
     emit-include-params-macro e-params info.proto
 ]
 
@@ -281,7 +281,7 @@ e-forward/emit {
 }
 e-forward/emit newline
 
-for-each info all-protos [
+for-each 'info all-protos [
     if info.native-type = 'intrinsic [
         e-forward/emit [info {DECLARE_INTRINSIC(${info/name});}]
     ] else [

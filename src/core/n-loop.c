@@ -38,13 +38,13 @@
 //
 // 1. On a "void" continue, it may seem tempting to drop out the last result:
 //
-//        for-each x [1 2 3] [if x = 3 [continue] x]  => 2  ; would be bad
+//        for-each 'x [1 2 3] [if x = 3 [continue] x]  => 2  ; would be bad
 //
 //    But our goal is that a loop which never runs its body be distinguishable
 //    from one that has CONTINUE'd each body.  Unless those are allowed to be
 //    indistinguishable, loop compositions that work don't work.  So instead:
 //
-//        for-each x [1 2 3] [if x != 3 [x]]  =>  ~[~void~]~ antiform
+//        for-each 'x [1 2 3] [if x != 3 [x]]  =>  ~[~void~]~ antiform
 //
 bool Try_Catch_Break_Or_Continue(
     Sink(Value*) out,
@@ -426,11 +426,11 @@ static Bounce Loop_Number_Common(
 }
 
 
-// Virtual_Bind_To_New_Context() allows LIT-WORD! syntax to reuse an existing
+// Virtual_Bind_To_New_Context() allows THE-WORD! syntax to reuse an existing
 // variables binding:
 //
 //     x: 10
-//     for-each 'x [20 30 40] [...]
+//     for-each @x [20 30 40] [...]
 //     ; The 10 will be overwritten, and x will be equal to 40, here
 //
 // It accomplishes this by putting a word into the "variable" slot, and having
@@ -447,7 +447,7 @@ Value* Real_Var_From_Pseudo(Value* pseudo_var) {
     // expand and invalidate the location.  (The `context` for fabricated
     // variables is locked at fixed size.)
     //
-    assert(IS_QUOTED_WORD(pseudo_var));
+    assert(Is_The_Word(pseudo_var));
     return Lookup_Mutable_Word_May_Fail(cast(Element*, pseudo_var), SPECIFIED);
 }
 
@@ -540,8 +540,8 @@ DECLARE_NATIVE(cfor)
 //
 //      return: "Last body result, or null if BREAK"
 //          [any-value?]
-//      @word "Variable set to each position in the series at skip distance"
-//          [word! lit-word? blank!]
+//      word "Variable set to each position in the series at skip distance"
+//          [word! the-word? blank!]
 //      series "The series to iterate over"
 //          [<maybe> blank! any-series?]
 //      skip "Number of positions to skip each time"
@@ -616,7 +616,7 @@ DECLARE_NATIVE(for_skip)
 
         // Modifications to var are allowed, to another ANY-SERIES? value.
         //
-        // If `var` is movable (e.g. specified via LIT-WORD!) it must be
+        // If `var` is movable (e.g. specified via THE-WORD!) it must be
         // refreshed each time arbitrary code runs, since the context may
         // expand and move the address, may get PROTECTed, etc.
         //
@@ -989,11 +989,11 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
 
             if (CTX_LEN(vars_ctx) == 1) {
                 //
-                // Only wanted the key (`for-each key obj [...]`)
+                // Only wanted the key (`for-each 'key obj [...]`)
             }
             else if (CTX_LEN(vars_ctx) == 2) {
                 //
-                // Want keys and values (`for-each key val obj [...]`)
+                // Want keys and values (`for-each 'key val obj [...]`)
                 //
                 ++pseudo_var;
                 var = Real_Var_From_Pseudo(pseudo_var);
@@ -1032,11 +1032,11 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
 
             if (CTX_LEN(vars_ctx) == 1) {
                 //
-                // Only wanted the key (`for-each key map [...]`)
+                // Only wanted the key (`for-each 'key map [...]`)
             }
             else if (CTX_LEN(vars_ctx) == 2) {
                 //
-                // Want keys and values (`for-each key val map [...]`)
+                // Want keys and values (`for-each 'key val map [...]`)
                 //
                 ++pseudo_var;
                 var = Real_Var_From_Pseudo(pseudo_var);
@@ -1108,8 +1108,8 @@ void Shutdown_Loop_Each(Value* iterator)
 //
 //      return: "Last body result, or null if BREAK"
 //          [any-value?]
-//      :vars "Word or block of words to set each time, no new var if quoted"
-//          [blank! word! lit-word? block! group!]
+//      vars "Word or block of words to set each time, no new var if @word"
+//          [blank! word! the-word? block!]
 //      data "The series to traverse"
 //          [<maybe> blank! any-series? any-context? map! any-sequence?
 //           action?]  ; action support experimental, e.g. generators
@@ -1208,8 +1208,8 @@ DECLARE_NATIVE(for_each)
 //
 //      return: [any-value?]
 //          {null on BREAK, blank on empty, false or the last truthy value}
-//      :vars "Word or block of words to set each time, no new var if quoted"
-//          [blank! word! lit-word? block! group!]
+//      vars "Word or block of words to set each time, no new var if @word"
+//          [blank! word! the-word! block!]
 //      data "The series to traverse"
 //          [<maybe> blank! any-series? any-context? map! action?]
 //      body [<const> block! meta-block!]
@@ -1221,13 +1221,12 @@ DECLARE_NATIVE(every)
 // 1. In light of other tolerances in the system for voids in logic tests
 //    (see ALL & ANY), EVERY treats a void as "no vote".
 //
-//        every x [1 2 3 4] [if even? x [x]]  =>  4
+//        every 'x [1 2 3 4] [if even? x [x]]  =>  4
 //
-//        every x [1 2 3 4] [if odd? x [x]]  => ~[~void~]~ antiform
+//        every 'x [1 2 3 4] [if odd? x [x]]  => ~[~void~]~ antiform
 //
 //    It returns heavy void on skipped bodies, as loop composition breaks down
 //    if we try to keep old values.
-//
 {
     INCLUDE_PARAMS_OF_EVERY;
 
@@ -1330,8 +1329,8 @@ DECLARE_NATIVE(every)
 //
 //      return: "Modified Input"
 //          [~null~ ~[[blank! any-series?] integer!]~]
-//      :vars "Word or block of words to set each time, no new var if quoted"
-//          [blank! word! lit-word? block! group!]
+//      vars "Word or block of words to set each time, no new var if @word"
+//          [blank! word! the-word! block!]
 //      data "The series to traverse (modified)"
 //          [<maybe> blank! any-series?]
 //      body "Block to evaluate (return TRUE to remove)"
@@ -1672,8 +1671,8 @@ DECLARE_NATIVE(remove_each)
 //
 //      return: "Collected block"
 //          [~null~ block!]
-//      :vars "Word or block of words to set each time, no new var if quoted"
-//          [blank! word! lit-word? block! group!]
+//      vars "Word or block of words to set each time, no new var if @word"
+//          [blank! word! the-word! block!]
 //      data "The series to traverse"
 //          [<maybe> blank! any-series? any-sequence? any-context?
 //           action?]
@@ -1717,8 +1716,8 @@ DECLARE_NATIVE(map_each)
 //
 //      return: "Collected block"
 //          [~null~ block!]
-//      :vars "Word or block of words to set each time, no new var if quoted"
-//          [blank! word! lit-word? block! group!]
+//      vars "Word or block of words to set each time, no new var if @word"
+//          [blank! word! the-word! block!]
 //      data "The series to traverse (only QUOTED? BLOCK! at the moment...)"
 //          [<maybe> blank! quoted? action?]
 //      :body "Block to evaluate each time"
@@ -1953,8 +1952,8 @@ DECLARE_NATIVE(repeat)
 //
 //      return: "Last body result, or NULL if BREAK"
 //          [any-value?]
-//      :vars "Word or block of words to set each time, no new var if quoted"
-//          [blank! word! lit-word? block! group!]
+//      vars "Word or block of words to set each time, no new var if @word"
+//          [blank! word! the-word! block!]
 //      value "Maximum number or series to traverse"
 //          [<maybe> any-number? any-sequence? quoted? block! action?]
 //      body [<const> block!]
@@ -2000,7 +1999,7 @@ DECLARE_NATIVE(for)
         rebPushContinuation_internal(
             cast(Value*, OUT),  // <-- output cell
             LEVEL_MASK_NONE,
-            Canon(FOR_EACH), ARG(vars), rebQ(value), body
+            Canon(FOR_EACH), rebQ(ARG(vars)), rebQ(value), body
         );
         return BOUNCE_DELEGATE;
     }

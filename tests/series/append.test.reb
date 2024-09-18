@@ -152,7 +152,7 @@
 
 [#146 (
     b: append [] 0
-    count-up n 10 [
+    count-up 'n 10 [
         append b n
         remove b
     ]

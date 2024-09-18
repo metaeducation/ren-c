@@ -79,7 +79,7 @@ INLINE Element* Init_Frame_Details_Core(
 // from a WORD!...while non-antiform ACTION! is inert.  This means you cannot
 // accidentally run a function with the following code:
 //
-//     for-each item block [print ["The item's kind is" kind of item]]
+//     for-each 'item block [print ["The item's kind is" kind of item]]
 //
 // That reference to ITEM is guaranteed to not be the antiform form, since it
 // is enumerating over a block.  Various places in the system are geared for

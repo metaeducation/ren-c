@@ -32,7 +32,7 @@ read-deep-seq: func [
     let item: take queue
 
     if equal? #"/" last item [
-        insert queue spread map-each x read %% (repo-dir)/(item) [join item x]
+        insert queue spread map-each 'x read %% (repo-dir)/(item) [join item x]
     ]
 
     return item

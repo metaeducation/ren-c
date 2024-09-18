@@ -876,7 +876,7 @@ pe-format: context [
 
         ; check if there's section name conflicts
         ;
-        for-each sec sections [
+        for-each 'sec sections [
             if section-name = to text! trim/with sec.name #{00} [
                 fail [
                     "There is already a section named" section-name |
@@ -894,7 +894,7 @@ pe-format: context [
         let first-section-by-phy-offset: any [
             sections.1
             catch [
-                for-each sec sections [
+                for-each 'sec sections [
                     if not zero? sec.physical-offset [
                         throw sec
                     ]
@@ -1010,7 +1010,7 @@ pe-format: context [
         ; Check if there's section name conflicts
 
         let target-sec: catch [
-            for-each sec sections [
+            for-each 'sec sections [
                 if section-name = to text! trim/with sec.name #{00} [
                     throw sec
                 ]
@@ -1066,7 +1066,7 @@ pe-format: context [
         ]
 
         let pos: start-of-section-header
-        for-each sec sections [
+        for-each 'sec sections [
             if sec.physical-offset > target-sec.physical-size [
                 ;
                 ; Update the offset affected sections
@@ -1109,7 +1109,7 @@ pe-format: context [
         ]
 
         let pos: start-of-section-header
-        for-each sec sections [
+        for-each 'sec sections [
             print to text! sec.name
             case [
                 sec.physical-offset = target-sec.physical-offset [

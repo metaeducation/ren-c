@@ -149,7 +149,7 @@ join: func [
         value: reduce [value]  ; !!! should FOR-EACH take quoted?
     ]
 
-    for-each item value [  ; !!! or REDUCE-EACH, for implicit reduce...?
+    for-each 'item value [  ; !!! or REDUCE-EACH, for implicit reduce...?
         if blank? item [
             continue  ; old-rule, skips blanks
         ]

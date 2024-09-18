@@ -71,10 +71,10 @@
         board-values [block!]
     ][
         let a: copy ""
-        for-each b board-values [
-            count-up t b - 1 [append a ". "]
+        for-each 'b board-values [
+            count-up 't b - 1 [append a ". "]
             append a "Q "
-            count-up t n - b [append a ". "]
+            count-up 't n - b [append a ". "]
             take/last a  ; don't want trailing space
             append a newline
         ]
@@ -91,7 +91,7 @@
         let forbidden-places: copy []
         let can-see: 1
         let rsolution: reverse copy solution
-        for-each sol rsolution [
+        for-each 'sol rsolution [
             append forbidden-places sol
             append forbidden-places sol + can-see
             append forbidden-places sol - can-see  ; too lazy for bounds check
@@ -101,7 +101,7 @@
         if not empty? free-choices [
             either n = 1 [
                 ; now check for a solution, no more recursion possible
-                for-each place free-choices [
+                for-each 'place free-choices [
                     append solution place
                     if logic-countonly = 0 [
                         append solved-boards apply get $form-board [
@@ -125,7 +125,7 @@
                     clear skip solution ((length-of solution) - 1)
                 ]
             ][
-                for-each place free-choices [
+                for-each 'place free-choices [
                     append solution place
                     add-queen n - 1 solution free-places
                     clear skip solution ((length-of solution) - 1)
@@ -154,7 +154,7 @@
 
         ; make a basic block of the row / column numbers
         places-block: copy []
-        count-up i n [append places-block i]
+        count-up 'i n [append places-block i]
 
         reset-number-of-solutions
 
@@ -166,7 +166,7 @@
         ]
 
         either n > 1 [
-            count-up first-queen half [
+            count-up 'first-queen half [
                 solution: copy []
                 append solution first-queen
 

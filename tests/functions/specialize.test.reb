@@ -154,7 +154,7 @@
 (
     error: null
 
-    for-each code [
+    for-each 'code [
         [specialize get $append/asdf []]
         [
             flp: specialize get $file-to-local/pass []

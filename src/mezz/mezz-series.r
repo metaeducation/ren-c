@@ -349,7 +349,7 @@ extract: func [
 
     index: default [1]
     let out: make (kind of series) len
-    iterate-skip series width [
+    iterate-skip @series width [
         append out maybe (try pick series index)
     ]
     return out
@@ -446,7 +446,7 @@ format: func [
 
     ; Compute size of output (for better mem usage):
     let val: 0
-    for-each rule rules [
+    for-each 'rule rules [
         if word? rule [rule: get rule]
 
         val: me + switch/type rule [
@@ -460,7 +460,7 @@ format: func [
     insert/dup out pad val
 
     ; Process each rule:
-    for-each rule rules [
+    for-each 'rule rules [
         if word? rule [rule: get rule]
 
         switch/type rule [
@@ -536,7 +536,7 @@ split: func [
     ]
 
     if the-block? dlm [
-        return map-each len dlm [
+        return map-each 'len dlm [
             if not integer? len [
                 fail ["THE-BLOCK! in SPLIT must be all integers:" mold len]
             ]

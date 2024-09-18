@@ -105,7 +105,7 @@ shell: func [
     ; the expressions.
     ;
     let process-tag: func [container [path! tuple! block!]] [
-        return to type-of-container map-each item container [
+        return to type-of-container map-each 'item container [
             if group? item [
                 item: inside container eval item
             ]
@@ -114,7 +114,7 @@ shell: func [
         ]
     ]
 
-    let command: spaced collect [for-next pos code [
+    let command: spaced collect [for-next 'pos code [
         while [new-line? pos] [
             if pos.1 = '... [
                 pos: next pos  ; skip, don't output new-line

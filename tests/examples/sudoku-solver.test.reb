@@ -21,7 +21,7 @@
 
     form-grid: func [grid [block!] <local> text] [
         text: copy ""
-        count-up i 81 [
+        count-up 'i 81 [
             append text grid.(i)
             either i mod 9 = 0 [
                 append text newline
@@ -51,20 +51,20 @@
         n
         <local> x0 y0
     ][
-        count-up i 9 [
+        count-up 'i 9 [
             if n = input.(9 * (y - 1) + i) [
                 return null
             ]
         ]
-        count-up i 9 [
+        count-up 'i 9 [
             if n = input.(9 * (i - 1) + x) [
                 return null
             ]
         ]
         x0: ((to integer! (x - 1) / 3)) * 3 + 1
         y0: ((to integer! (y - 1) / 3)) * 3 + 1
-        count-up i 3 [
-            count-up j 3 [
+        count-up 'i 3 [
+            count-up 'j 3 [
                 if n = input.(9 * (y0 + (i - 1) - 1) + (x0 + (j - 1))) [
                     return null
                 ]
@@ -74,10 +74,10 @@
     ]
 
     solve: func [] [
-        count-up y 9 [
-            count-up x 9 [
+        count-up 'y 9 [
+            count-up 'x 9 [
                 if 0 = input.(9 * (y - 1) + x) [
-                    count-up n 9 [
+                    count-up 'n 9 [
                         if possible? y x n [
                             input.(9 * (y - 1) + x): n
                             solve

@@ -126,7 +126,7 @@ export analyse: context [
         return: [block!]
     ][
         return collect [
-            for-each source list/source-files [
+            for-each 'source list/source-files [
                 if find whitelisted source [continue]
 
                 keep maybe spread analyse/file source
@@ -389,7 +389,7 @@ export analyse: context [
             ]
         ]
 
-        for-each list :[$tabbed $whitespace-at-eol] [
+        for-each 'list :[$tabbed $whitespace-at-eol] [
             if not empty? get list [
                 emit as tag! list [(file) (get list)]
             ]
@@ -438,7 +438,7 @@ list: context [
 
         if equal? #"/" last item [
             let contents: read %% (repo-dir)/(item)
-            insert queue spread map-each x contents [join item x]
+            insert queue spread map-each 'x contents [join item x]
             item: null
         ] else [
             any [

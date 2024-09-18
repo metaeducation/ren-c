@@ -122,7 +122,7 @@ sys.util/make-scheme [
 
             let connection: port.locals
             if get maybe has connection 'hdbc [
-                for-each stmt-port connection.statements [close stmt-port]
+                for-each 'stmt-port connection.statements [close stmt-port]
                 clear connection.statements
                 close-connection connection
                 return port
@@ -179,7 +179,7 @@ sqlform: func [
         group! [  ; recurse so that nested @var get added to parameters
             spaced collect [
                 keep "("
-                for-next pos value [
+                for-next 'pos value [
                     if new-line? pos [keep newline]
                     keep sqlform parameters inside value :pos.1
                 ]
@@ -237,7 +237,7 @@ odbc-execute: func [
     if block? query [
         query: spaced collect [
             let is-first: 'true
-            for-next pos query [
+            for-next 'pos query [
                 if false? is-first [
                     if new-line? pos [keep newline]
                 ]

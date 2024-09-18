@@ -131,13 +131,13 @@
 [https://github.com/metaeducation/ren-c/issues/923
     (
         a: copy #{60}
-        count-up i 16 [
+        count-up 'i 16 [
             append a a
             deline to-text a
         ]
         all [
             (length of a) = 65536
-            every b a [b = 96]
+            every 'b a [b = 96]
         ]
     )
 ]

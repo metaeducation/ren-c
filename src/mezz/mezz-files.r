@@ -325,7 +325,7 @@ list-dir: func [
         return ~
     ]
 
-    for-each file files [
+    for-each 'file files [
         any [
             all [f, dir? file]
             all [d, not dir? file]

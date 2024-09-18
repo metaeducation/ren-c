@@ -24,7 +24,7 @@
 
 (<result> = repeat 1 [continue/with <result> <not-result>])
 (
-    [2 <big> <big>] = map-each x [1 2000 3000] [
+    [2 <big> <big>] = map-each 'x [1 2000 3000] [
         if x > 1000 [continue/with <big>]
         x + 1
     ]

@@ -12,12 +12,12 @@
 
 ; "return bug"
 (
-    integer? reeval does [map-each v [] [] 1]
+    integer? reeval does [map-each 'v [] [] 1]
 )
 
 ; PATH! is immutable, but MAP should work on it
 (
-    [a 1 b 1 c 1] = map x each 'a/b/c [spread reduce [x 1]]
+    [a 1 b 1 c 1] = map 'x each 'a/b/c [spread reduce [x 1]]
 )
 
 ; BLANK! is legal for slots you don't want to name variables for:
@@ -34,7 +34,7 @@
         if count = 5 [return null]
         return count: count + 1
     ]
-    [10 20 30 40 50] = map i :make-one-thru-five [
+    [10 20 30 40 50] = map 'i :make-one-thru-five [
         i * 10
     ]
 )(
@@ -52,21 +52,21 @@
 
 ; MAP uses APPEND rules, so SPREAD works
 [
-    ([1 <haha!> 2 <haha!>] = map x each [1 2] [spread reduce [x <haha!>]])
-    ([1 <haha!> 2 <haha!>] = map x each [1 2] [spread :[x <haha!>]])
+    ([1 <haha!> 2 <haha!>] = map 'x each [1 2] [spread reduce [x <haha!>]])
+    ([1 <haha!> 2 <haha!>] = map 'x each [1 2] [spread :[x <haha!>]])
 
-    ([[1 <haha!>] [2 <haha!>]] = map x each [1 2] [:[x <haha!>]])
-    (['[1 <haha!>] '[2 <haha!>]] = map x each [1 2] ^[:[x <haha!>]])
+    ([[1 <haha!>] [2 <haha!>]] = map 'x each [1 2] [:[x <haha!>]])
+    (['[1 <haha!>] '[2 <haha!>]] = map 'x each [1 2] ^[:[x <haha!>]])
 
     ; void opts out, as a twist on APPEND's rule disallowing it.
     ;
-    ([[1 <haha!>] [3 <haha!>]] = map x each [1 2 3] [if x <> 2 :[x <haha!>]])
+    ([[1 <haha!>] [3 <haha!>]] = map 'x each [1 2 3] [if x <> 2 :[x <haha!>]])
 ]
 
 ; ^META blocks collect the meta variation of the evaluation, including voids
 [
-    (['1 ~void~ '3] = map x each [1 2 3] ^[if x <> 2 [x]])
-    (['1 ~[~void~]~ '3] = map x each [1 2 3] ^[if x = 2 [void] else [x]])
+    (['1 ~void~ '3] = map 'x each [1 2 3] ^[if x <> 2 [x]])
+    (['1 ~[~void~]~ '3] = map 'x each [1 2 3] ^[if x = 2 [void] else [x]])
 ]
 
 ; MAP-EACH works with ANY-CONTEXT? now
@@ -78,10 +78,10 @@
 
 ; BLANK! acts same as empty block, void opts out and generates BREAK signal
 [
-    ([] = map-each x [] [fail])
-    ([] = map-each x _ [fail])
-    (null? map-each x ~void~ [fail])
+    ([] = map-each 'x [] [fail])
+    ([] = map-each 'x _ [fail])
+    (null? map-each 'x ~void~ [fail])
 
-    ~expect-arg~ !! (map-each x '~ [fail])
-    ~expect-arg~ !! (map-each x ~ [fail])
+    ~expect-arg~ !! (map-each 'x '~ [fail])
+    ~expect-arg~ !! (map-each 'x ~ [fail])
 ]

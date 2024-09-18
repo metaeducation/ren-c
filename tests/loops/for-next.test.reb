@@ -2,24 +2,24 @@
 
 (
     success: 'true
-    for-next i "a" [continue, success: 'false]
+    for-next 'i "a" [continue, success: 'false]
     true? success
 )
 (
     success: 'true
-    for-next i [a] [continue, success: 'false]
+    for-next 'i [a] [continue, success: 'false]
     true? success
 )
 ; text! test
 (
     out: copy ""
-    for-next i "abc" [append out i]
+    for-next 'i "abc" [append out i]
     out = "abcbcc"
 )
 ; block! test
 (
     out: copy []
-    for-next i [1 2 3] [append out spread i]
+    for-next 'i [1 2 3] [append out spread i]
     out = [1 2 3 2 3 3]
 )
 ; TODO: is hash! test and list! test needed too?
@@ -37,13 +37,13 @@
 ; https://trello.com/c/CjEfA0ef
 (
     out: copy ""
-    for-next i "abc" [append out first i]
+    for-next 'i "abc" [append out first i]
     out = "abc"
 )
 (
     out: copy []
-    for-next i [1 2 3] [append out first i]
+    for-next 'i [1 2 3] [append out first i]
     out = [1 2 3]
 )
 
-('~[~void~]~ = ^ for-each x [1 2 3] [maybe if x != 3 [x]])
+('~[~void~]~ = ^ for-each 'x [1 2 3] [maybe if x != 3 [x]])

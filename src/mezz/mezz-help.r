@@ -37,7 +37,7 @@ spec-of: func [
             ]
         ]
 
-        for-each param parameters of action [
+        for-each 'param parameters of action [
             keep spread compose [
                 (param)
                     (maybe select maybe types param)
@@ -197,7 +197,7 @@ help: func [
 
             if let types: summarize-obj/pattern make-libuser topic [
                 print "Found these related words:"
-                for-each line sort types [
+                for-each 'line sort types [
                     print line
                 ]
             ] else [
@@ -290,7 +290,7 @@ help: func [
     if type-word? :value [
         if instances: summarize-obj/pattern make-libuser value [
             print ["Found these" (uppercase form topic) "words:"]
-            for-each line instances [
+            for-each 'line instances [
                 print line
             ]
         ] else [
@@ -310,7 +310,7 @@ help: func [
                 keep "of value:"
                 if match [object! port!] value [
                     keep newline
-                    for-each line summarize-obj value [
+                    for-each 'line summarize-obj value [
                         keep line
                         keep newline
                     ]
@@ -367,7 +367,7 @@ help: func [
     print [_ _ _ _ (uppercase mold topic) {is an ACTION!}]
 
     let print-args: [list /indent-words] -> [
-        for-each key list [
+        for-each 'key list [
             let param: meta* select :value to-word noquote key
             if param [param: my noquasi]
 
@@ -424,7 +424,7 @@ source: func [
     switch/type arg [
         tag! [
             f: copy "unknown tag"
-            for-each location words of system.locale.library [
+            for-each 'location words of system.locale.library [
                 if location: select load get location arg [
                     f: form location.1
                     break

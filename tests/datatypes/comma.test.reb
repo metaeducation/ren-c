@@ -60,7 +60,7 @@
     commafied: [a, 1, <b>, #c, %def, http://example.com, "test",]
     normal: [a 1 <b> #c %def http://example.com "test"]
 
-    remove-each x commafied [comma? x]
+    remove-each 'x commafied [comma? x]
     commafied = normal
 )
 

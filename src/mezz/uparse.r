@@ -1052,7 +1052,7 @@ default-combinators: make map! reduce [
         ; unquoted forms.  Punt on such optimizations for now.
         ;
         collected: collect [
-            remove-each item pending [
+            remove-each 'item pending [
                 if quoted? item [keep unquote item, okay]
             ]
         ]
@@ -1093,7 +1093,7 @@ default-combinators: make map! reduce [
                 pending: glom pending result'  ; retain meta quote as signal
             ]
             splice? unmeta result' [
-                for-each item unquasi result' [
+                for-each 'item unquasi result' [
                     ;
                     ; We quote to signal that this pending item targets COLLECT.
                     ;
@@ -1164,7 +1164,7 @@ default-combinators: make map! reduce [
         ; intended for GATHER.
 
         obj: make object! collect [
-            remove-each item pending [
+            remove-each 'item pending [
                 if block? item [keep spread item, okay]
             ] else [
                 ; should it error or fail if pending was NULL ?
@@ -1514,7 +1514,7 @@ default-combinators: make map! reduce [
 
         ; Run GROUP!s in order, removing them as one goes
         ;
-        remove-each item pending [
+        remove-each 'item pending [
             if group? item [eval item, okay]
         ]
 
@@ -1794,7 +1794,7 @@ default-combinators: make map! reduce [
 
         if any-list? input [
             neq?: either state.case [:strict-not-equal?] [:not-equal?]
-            for-each item unquasi value [
+            for-each 'item unquasi value [
                 if neq? remainder.1 item [
                     return raise [
                         "Value at input position didn't match splice element"
@@ -1919,7 +1919,7 @@ default-combinators: make map! reduce [
 
         result': void'  ; `repeat (0) one` => void intent
 
-        count-up i max [  ; will count infinitely if max is #
+        count-up 'i max [  ; will count infinitely if max is #
             ;
             ; After the minimum number of repeats are fulfilled, the parser
             ; may not match and return the last successful result.  So
@@ -2404,7 +2404,7 @@ default-combinators: make map! reduce [
         pending: _
 
         let f: make frame! value
-        for-each param (parameters of f) [
+        for-each 'param (parameters of f) [
             if not path? param [
                 ensure frame! parsers.1
                 if meta-word? param [
@@ -2540,7 +2540,7 @@ default-combinators: make map! reduce [
         return: "Last result value"
             [any-value? pack?]
         /pending [blank! block!]
-        'arg "To catch instances of old ANY, only GROUP! and THE-BLOCK!"
+        @arg "To catch instances of old ANY, only GROUP! and THE-BLOCK!"
             [element?]  ; lie and take any element to report better error
         <local> result' block
     ][
@@ -2843,7 +2843,7 @@ comment [combinatorize: func [
 
     f: make frame! combinator
 
-    for-each param parameters of :combinator [
+    for-each 'param parameters of :combinator [
         case [
             param = 'input [
                 ; All combinators should have an input.  But the
@@ -3044,7 +3044,7 @@ parsify: func [
 
             comb: unrun adapt (augment comb inside [] collect [
                 let n: 1
-                for-each param parameters of gotten [
+                for-each 'param parameters of gotten [
                     if not path? param [
                         keep spread compose [
                             (to word! unspaced ["param" n]) [action?]
@@ -3061,7 +3061,7 @@ parsify: func [
                 let f: binding of $param1
 
                 let n: 1
-                for-each param (parameters of value) [
+                for-each 'param (parameters of value) [
                     if not path? param [
                         append parsers unrun :f.(as word! unspaced ["param" n])
                         n: n + 1

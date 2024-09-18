@@ -8,7 +8,7 @@
     countify: func [things data] [
         let counts: make map! []
         let rules: collect [
-            for-each t things [
+            for-each 't things [
                 counts.(t): 0
                 keep t
                 keep compose/deep $(counts.(t): me + 1)

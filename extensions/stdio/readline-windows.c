@@ -379,7 +379,7 @@ void Quit_Terminal(STD_TERM *t)
         if (t->pos >= t->columns)
             return;  // let it slide when you've gone to next line
         if (rebNot(
-            "for-each c", t->buffer, "[",
+            "for-each 'c", t->buffer, "[",
                 "if (to integer! c) > 65535 [break]",
                 "true",
             "]"

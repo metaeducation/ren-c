@@ -37,7 +37,7 @@ flags: [<64bit> <r3only> <r3>]
 check: checksum 'sha1 to binary! mold system.build
 
 log-file-prefix: join %r spread collect [
-    for i length of version: system.version [
+    for 'i length of version: system.version [
         keep "_"
         keep version.(i)
     ]
@@ -78,7 +78,7 @@ if try first system.options.args [
 if dir? tests [
     tests: dirize tests
     change-dir tests
-    for-each file read tests [
+    for-each 'file read tests [
         if %.test.reb = find-last file %.t [run-tests file]
     ]
 ] else [

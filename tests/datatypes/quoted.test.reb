@@ -195,7 +195,7 @@
 ; Smoke test for quoting items of every type
 
 (
-    for-each item compose [
+    for-each 'item compose [
         (^+)
         word
         set-word:

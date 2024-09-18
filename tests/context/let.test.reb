@@ -6,7 +6,7 @@
 # like USE it does have the effect of doing an allocation each time, which
 # means it can create a lot of load for the GC, especially in loops:
 #
-#     count-up x 1000000 [
+#     count-up 'x 1000000 [
 #         let y: x + 1  ; allocates y each time, hence a million allocs
 #
 

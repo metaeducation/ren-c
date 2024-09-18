@@ -134,7 +134,7 @@ DECLARE_NATIVE(request_file_p)
         // replace them in the extracted wide character buffer.
         //
         rebElide(
-            "for-each item filter [",
+            "for-each 'item filter [",
                 "if find item tab [fail {TAB chars not legal in filters}]",
             "]"
         );

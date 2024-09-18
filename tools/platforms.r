@@ -461,10 +461,14 @@ export for-each-platform: func [
     {Use PARSE to enumerate the platforms, and set 'var to a record object}
 
     return: [~]
-    'var [word!]
+    var [word!]
     body "Body of code to run for each platform"
         [block!]
 ][
+    obj: make object! compose [(to set-word! var) ~]  ; make variable
+    body: overbind obj body  ; make variable visible to body
+    var: has obj var
+
     let p: make object! [
         name: null
         number: null
@@ -497,16 +501,16 @@ export for-each-platform: func [
                 build-label: text! (build-label: to-word build-label)
             ]
             definitions: across [opt some issue!] (
-                definitions: map-each x definitions [to-word x]
+                definitions: map-each 'x definitions [to-word x]
             )
             cflags: across [opt some tag!] (
-                cflags: map-each x cflags [to-word to-text x]
+                cflags: map-each 'x cflags [to-word to-text x]
             )
             ldflags: across [opt some &refinement?] (
-                ldflags: map-each x ldflags [to-word x]
+                ldflags: map-each 'x ldflags [to-word x]
             )
             libraries: across [opt some file!] (
-                libraries: map-each x libraries [to-word to-text x]
+                libraries: map-each 'x libraries [to-word to-text x]
             )
 
             (
@@ -527,7 +531,7 @@ use [
     unknown-flags used-flags build-flags word context
 ][
     used-flags: copy []
-    for-each-platform p [
+    for-each-platform 'p [
         assert overbind p [
             word? name
             integer? number
@@ -549,10 +553,10 @@ use [
             block? ldflags
         ]
 
-        for-each flag p.definitions [assert [word? flag]]
-        for-each flag p.cflags [assert [word? flag]]
-        for-each flag p.libraries [assert [word? flag]]
-        for-each flag p.ldflags [assert [word? flag]]
+        for-each 'flag p.definitions [assert [word? flag]]
+        for-each 'flag p.cflags [assert [word? flag]]
+        for-each 'flag p.libraries [assert [word? flag]]
+        for-each 'flag p.ldflags [assert [word? flag]]
 
         for-each [word context] compose [
             definitions (platform-definitions)
@@ -607,7 +611,7 @@ export configure-platform: func [
     ]
 
     let result: null
-    for-each-platform p [
+    for-each-platform 'p [
         if p.id = version [
             result: copy p  ; could RETURN, but sanity-check whole table
         ]

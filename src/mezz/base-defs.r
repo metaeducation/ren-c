@@ -366,7 +366,7 @@ echo: func* [
             ]
         ]
     ]
-    write-stdout form map-each item line [
+    write-stdout form map-each 'item line [
         switch/type item [
             the-word! [get item]
             the-tuple! [get item]

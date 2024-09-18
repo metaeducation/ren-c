@@ -97,7 +97,7 @@ delta-profile: func [
     start: values of stats/profile
     eval block
     end: values of stats/profile
-    for-each num start [
+    for-each 'num start [
         change end end/1 - num
         end: next end
     ]
@@ -113,7 +113,7 @@ speed?: func [
 ][
     let result: copy []
     let calc
-    for-each block [
+    for-each 'block [
         [
             repeat 100'000 [
                 ; measure more than just loop func
@@ -133,7 +133,7 @@ speed?: func [
             ]
             calc: [(length of tmp) * 10 / secs / 1900]
         ][
-            count-up n 40 [
+            count-up 'n 40 [
                 change/dup tmp to-char n 500'000
             ]
             calc: [(length of tmp) * 40 / secs / 1024 / 1024]

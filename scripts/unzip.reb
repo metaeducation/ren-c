@@ -235,7 +235,7 @@ zip: func [
     ]
 
     source: to block! source
-    iterate source [
+    iterate @source [
         let name: match [file! url!] source.1 else [
             fail [
                 {ZIP dialect expected FILE! or URL!, not} mold kind of source.1
@@ -252,7 +252,7 @@ zip: func [
         all [deep, dir? name] then [
             name: dirize name
             let files: ensure block! read root+name
-            for-each file files [
+            for-each 'file files [
                 append source %% (name)/(file)
             ]
             continue

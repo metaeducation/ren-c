@@ -158,7 +158,7 @@
 )
 
 [#1461 #1478 (
-    for-each str [
+    for-each 'str [
         {<>} {<+>} {<|>} {<=>} {<->} {<>>} {<<>}
 
         {<} '{+} '{=} '{-} {>}  ; tick marks mean unescaped in path
@@ -221,7 +221,7 @@
 ]
 
 [(
-    for-each bad [  ; !!! This could be a much longer list of bad things!
+    for-each 'bad [  ; !!! This could be a much longer list of bad things!
         {<ab>cd} {>ab<cd} {<<ab-cd} {>abcd}
     ][
         assert ['scan-invalid = (trap [load bad]).id]

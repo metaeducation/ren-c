@@ -78,7 +78,7 @@ ok)
 (
     good: 'no
 
-    for-each code [
+    for-each 'code [
         [specialize get $append/only/only []]
         [specialize get $append/asdf []]
         [

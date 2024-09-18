@@ -319,7 +319,7 @@ main-startup: func [
     ; can be influenced by command line parameters as well.
     ;
     loud-print "Loading boot extensions..."
-    for-each collation builtin-extensions [
+    for-each 'collation builtin-extensions [
         load-extension collation
     ]
 

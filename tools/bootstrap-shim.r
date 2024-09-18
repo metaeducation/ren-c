@@ -300,6 +300,16 @@ of: enfix adapt get $of [
     if property = 'kind [property: 'type]
 ]
 
+=== "FAKE UP QUASIFORM! AND THE-WORD! TYPES" ===
+
+; In the case of the iteration functions, they take ISSUE! (a WORD! type in
+; the bootstrap executable) to mean that the variable has a binding already
+; to use vs. create a new one.  It's essential to use with ITERATE in modern
+; Ren-C, but we can't say `iterate @block [...]` in bootstrap (no @).  Hence
+; instead, INERT (which adds @ in new executables) is defined to add a #.
+
+inert: func3 [word [word!]] [return to-issue word]
+
 quasiform!: word!  ; conflated, but can work in a very limited sense
 quasi?: func3 [v <local> spelling] [
     if not word? v [return false]
@@ -445,7 +455,7 @@ append: func3 [series value [any-value!] /line <local> only] [
             if #splice! = (first value) [
                 value: second value
                 if not any-list? series [  ; itemwise appends for strings/etc.
-                    for-each item value [
+                    for-each 'item value [
                         append series item
                     ]
                     return series
@@ -467,7 +477,7 @@ insert: func3 [series value [any-value!] /line <local> only] [
             if #splice! = (first value) [
                 value: second value
                 if not any-list? series [  ; itemwise appends for strings/etc.
-                    for-each item value [
+                    for-each 'item value [
                         series: insert series item
                     ]
                     return series
@@ -595,7 +605,7 @@ collect-lets: func3 [
     <local> lets
 ][
     lets: copy []
-    for-next item list [
+    for-next 'item list [
         case [
             item.1 = 'let [
                 item: next item
@@ -887,7 +897,7 @@ cscape-inside: func3 [
 ][
     intern code  ; baseline user or lib binding
     obj: make object! []  ; can't bind individual words, fake w/proxy object
-    for-each item template [
+    for-each 'item template [
         if path? item [item: first item]
         case [
             text? item [continue]  ; should only be last item

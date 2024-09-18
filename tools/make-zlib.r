@@ -69,7 +69,7 @@ disable-user-includes: func [
         {"} name: across to {"}
     ]
 
-    for-next line-iter lines [
+    for-next 'line-iter lines [
         parse3/match line-iter.1 [
             opt some space {#}
             opt some space {include}
@@ -328,7 +328,7 @@ fix-const-char: func [
 
 header-lines: copy []
 
-for-each h-file [
+for-each 'h-file [
     %zconf.h
     %zutil.h
     %zlib.h
@@ -372,7 +372,7 @@ append source-lines spread [
     {#undef DO8  /* REBOL: see make-zlib.r */}
 ]
 
-for-each c-file [
+for-each 'c-file [
     %adler32.c
 
     %deflate.c

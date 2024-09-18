@@ -425,7 +425,7 @@ jobs:
                   | thru newline
               ]
           ]
-          for-each url list [
+          for-each 'url list [
               let [_ filename]: split-path url
               write filename (read url)
           ]

@@ -22,7 +22,7 @@
             delete f
             return ~
         ]
-        for-each item read f [
+        for-each 'item read f [
            name: join f item
            delete-recurse name
         ]

@@ -65,7 +65,7 @@
 
     (
         n: 0
-        for-each c t [
+        for-each 'c t [
             n: n + 1
             assert [c = t.(n)]
         ]

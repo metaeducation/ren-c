@@ -141,11 +141,11 @@ make-dir: func [
 
     ; Create directories forward:
     created: copy []
-    for-each dir dirs [
+    for-each 'dir dirs [
         path: if empty? path [dir] else [join path dir]
         append path slash
         make-dir path except e -> [
-            for-each dir created [
+            for-each 'dir created [
                 sys.util/rescue [delete dir]
             ]
             return raise e
@@ -165,7 +165,7 @@ delete-dir: func [
         dir: dirize dir
         files: try load dir
     ] [
-        for-each file files [delete-dir (join dir file)]
+        for-each 'file files [delete-dir (join dir file)]
     ]
     sys.util/rescue [
         delete dir

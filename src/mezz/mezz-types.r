@@ -35,7 +35,7 @@ to-event:
 
 ; Auto-build the functions for the above TO-* words.
 use [word] [
-    for-each type system.catalog.datatypes [
+    for-each 'type system.catalog.datatypes [
         word: make word! head of remove back tail of unspaced ["to-" type]
         word: has lib word else [continue]
         if set? word [continue]  ; don't overwrite existing definition

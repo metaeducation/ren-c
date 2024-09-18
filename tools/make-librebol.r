@@ -56,14 +56,14 @@ ver: load-value join repo-dir %src/boot/version.r
 api-objects: make block! 50
 
 map-each-api: func [code [block!]] [  ; lambda bootstrap doesn't support LET
-    return map-each api api-objects compose [  ; compose so bootstrap sees 'API
+    return map-each 'api api-objects compose [  ; compose so bootstrap sees 'API
         let aux: make object! compose [break: (^break) continue: (^continue)]
         eval overbind aux overbind api (code)
     ]
 ]
 
 for-each-api: func [code [block!]] [  ; lambda bootstrap doesn't support LET
-    return for-each api api-objects compose [  ; compose so bootstrap sees 'API
+    return for-each 'api api-objects compose [  ; compose so bootstrap sees 'API
         let aux: make object! compose [break: (^break) continue: (^continue)]
         eval overbind aux overbind api (code)
     ]

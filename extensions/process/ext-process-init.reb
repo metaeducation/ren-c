@@ -37,7 +37,7 @@ call*: adapt get $call-internal* [
             ; turned into their text equivalents.  This lets you write code in
             ; the CALL block that looks a bit more like a shell invocation.
             ;
-            map-each arg compose command [
+            map-each 'arg compose command [
                 switch/type arg [
                     text! [arg]  ; pass through as is
                     file! [file-to-local arg]
@@ -128,7 +128,7 @@ parse-command-to-argv*: func [
             "the command line is valid then help fix PARSE-COMMAND-TO-ARGV*"
         ]
     ]
-    for-each item result [replace/all item {\"} {"}]
+    for-each 'item result [replace/all item {\"} {"}]
     return result
 ]
 
@@ -139,7 +139,7 @@ argv-block-to-command*: func [
     return: [text!]
     argv [block!]
 ][
-    return spaced map-each arg argv [
+    return spaced map-each 'arg argv [
         any [
             find arg space
             find arg {"}
@@ -174,7 +174,7 @@ browse*: func [
     ; %1 be what needs to be substituted.  This may not be ideal, it was just
     ; easy to do rather than have to add processing on the C side.  Review.
     ;
-    for-each template get-os-browsers [
+    for-each 'template get-os-browsers [
         let command: replace/all (copy template) "%1" location
         call/shell command except [  ; CALL is synchronous by default
             continue  ; just keep trying

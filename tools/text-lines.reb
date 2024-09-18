@@ -84,17 +84,21 @@ for-each-line: func [
     {Iterate over text lines}
 
     return: [~]
-    'record "Word set to metadata for each line"
+    var "Word set to metadata for each line"
         [word!]
     text "Text with lines"
         [text!]
     body "Block to evaluate each time"
         [block!]
-] [
+][
+    obj: make object! compose [(to set-word! var) ~]  ; make variable
+    body: overbind obj body  ; make variable visible to body
+    var: has obj var
+
     while [not tail? text] [
         let eol: any [find text newline, tail of text]
 
-        set record compose [
+        set var compose [
             position (text) length (subtract index of eol index of text)
         ]
         text: next eol

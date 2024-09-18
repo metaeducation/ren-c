@@ -645,7 +645,7 @@ iterate-skip: redescribe [
 ](
     specialize enclose get $for-skip func [f] [
         if blank? let word: f.word [return null]
-        f.word: quote to word! word  ; do not create new virtual binding
+        assert [the-word? f.word]
         let saved: f.series: get word
 
         ; !!! https://github.com/rebol/rebol-issues/issues/2331
@@ -681,14 +681,14 @@ iterate-back: redescribe [
 count-up: func [
     {Loop the body, setting a word from 1 up to the end value given}
     return: [any-value?]
-    'var [word!]
+    var [word!]
     limit [<maybe> integer! issue!]
     body [block!]
     <local> start end result'
 ][
     ; REPEAT in UPARSE wanted to try out some cutting-edge ideas about
-    ; "opting in" to counting loops, e.g. `count-up i _` opts out and doesn't
-    ; loop at all.  But what if `count-up i #` meant loop forever?  This
+    ; "opting in" to counting loops, e.g. `count-up 'i _` opts out and doesn't
+    ; loop at all.  But what if `count-up 'i #` meant loop forever?  This
     ; clunky layer on top of cfor is a good test of loop abstraction, and
     ; is good enough to let UPARSE do its experiment without changing any
     ; native code.

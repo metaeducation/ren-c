@@ -47,7 +47,7 @@ change-dir repo-dir
 ; It would likely want to build on ZIP files to do this, so the unzip script
 ; is embedded as well.
 ;
-for-each file reduce [
+for-each 'file reduce [
     %scripts/unzip.reb
     %scripts/encap.reb
 

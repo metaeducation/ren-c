@@ -23,6 +23,6 @@
    [30 20 10] = flow [
        [1 2 3]
        reverse _
-       map-each x _ [x * 10]
+       map-each 'x _ [x * 10]
    ]
 )]

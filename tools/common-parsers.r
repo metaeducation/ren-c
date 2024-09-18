@@ -37,7 +37,7 @@ load-until-double-newline: func [
     let wsp: compose [some (charset { ^-})]
 
     let dummy: ~  ; /NEXT3 requires arg (could shim for plain /NEXT, but...)
-    let rebol-value: parsing-at x [
+    let rebol-value: parsing-at 'x [
         try transcode/next3 x 'dummy  ; transcode gives pos, null, or error
     ]
 
@@ -168,7 +168,7 @@ export proto-parser: context [
 
         doubleslashed-lines: [lines: across some ["//" thru newline]]
 
-        is-fileheader: parsing-at position [
+        is-fileheader: parsing-at 'position [
             all [  ; note: not LOGIC!, a series
                 lines: try decode-lines lines {//} { }
                 parse3/match lines [data: across to {=///} to <end>]
@@ -189,7 +189,7 @@ export proto-parser: context [
         ;
         ; !!! Could this be simpler, e.g. go by noticing DECLARE_NATIVE() etc?
         ;
-        is-intro: parsing-at position [
+        is-intro: parsing-at 'position [
             all [
                 lines: try decode-lines lines {//} { }
                 data: load-until-double-newline lines

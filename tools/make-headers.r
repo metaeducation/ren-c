@@ -180,7 +180,7 @@ e-funcs/emit {
 }
 e-funcs/emit newline
 
-for-each item file-base.core [
+for-each 'item file-base.core [
     ;
     ; Items can be blocks if there's special flags for the file (
     ; <no-make-header> marks it to be skipped by this script)
@@ -302,7 +302,7 @@ e-strings/emit {
      * to conveniently make the global data available in other source files.
      */
 }
-for-each line read/lines %a-constants.c [
+for-each 'line read/lines %a-constants.c [
     case [
         parse3/match line ["#define" to <end>] [
             e-strings/emit line

@@ -756,7 +756,7 @@ SQLRETURN ODBC_BindParameter(
           case CHAR_COL_LATIN1: {
             Value* temp = rebValue(
                 "append make binary! length of", v,
-                    "map-each ch", v, "["
+                    "map-each 'ch", v, "["
                         "if 255 < to integer! ch ["
                             "fail {Codepoint too high for Latin1}"
                          "]"
@@ -1582,7 +1582,7 @@ Value* ODBC_Column_To_Rebol_Value(
             );
             return rebValue(
                 "append make text!", rebI(len),
-                    "map-each byte", rebR(binary), "[codepoint-to-char byte]"
+                    "map-each 'byte", rebR(binary), "[codepoint-to-char byte]"
             ); }
         }
         break; }

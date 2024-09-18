@@ -158,7 +158,7 @@
 
     ; FOR-BOTH provides a proof of why this is the case:
     ;
-    ;     >> for-each x [1 2] [if x = 2 [continue]]
+    ;     >> for-each 'x [1 2] [if x = 2 [continue]]
     ;     == ~[~]~  ; anti
     ;
     ; Plain void is reserved for "loop didn't run", and we do not want

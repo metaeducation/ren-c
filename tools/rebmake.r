@@ -53,7 +53,7 @@ map-files-to-local: func [
     files [<maybe> file! block!]
 ][
     if not block? files [files: reduce [files]]
-    return map-each f files [
+    return map-each 'f files [
         file-to-local f
     ]
 ]
@@ -507,12 +507,12 @@ gcc: make compiler-class [
                 keep "-fPIC"
             ]
             if I [
-                for-each inc (map-files-to-local I) [
+                for-each 'inc (map-files-to-local I) [
                     keep unspaced ["-I" inc]
                 ]
             ]
             if D [
-                for-each flg D [
+                for-each 'flg D [
                     if word? flg [flg: as text! flg]
 
                     ; !!! For cases like `#include MBEDTLS_CONFIG_FILE` then
@@ -558,7 +558,7 @@ gcc: make compiler-class [
                 ]
             ]
             if F [
-                for-each flg F [
+                for-each 'flg F [
                     keep maybe filter-flag flg id
                 ]
             ]
@@ -622,12 +622,12 @@ cl: make compiler-class [
             keep "/FS"
 
             if I [
-                for-each inc (map-files-to-local I) [
+                for-each 'inc (map-files-to-local I) [
                     keep unspaced ["/I" inc]
                 ]
             ]
             if D [
-                for-each flg D [
+                for-each 'flg D [
                     if word? flg [flg: as text! flg]
 
                     ; !!! For cases like `#include MBEDTLS_CONFIG_FILE` then
@@ -668,7 +668,7 @@ cl: make compiler-class [
                 ]
             ]
             if F [
-                for-each flg F [
+                for-each 'flg F [
                     keep maybe filter-flag flg id
                 ]
             ]
@@ -758,15 +758,15 @@ ld: make linker-class [
                 keep unspaced [.output suffix]
             ]
 
-            for-each search (maybe map-files-to-local maybe .searches) [
+            for-each 'search (maybe map-files-to-local maybe .searches) [
                 keep unspaced ["-L" search]
             ]
 
-            for-each flg .ldflags [
+            for-each 'flg .ldflags [
                 keep maybe filter-flag flg id
             ]
 
-            for-each dep .depends [
+            for-each 'dep .depends [
                 keep maybe accept dep
             ]
         ]
@@ -798,7 +798,7 @@ ld: make linker-class [
                 file-to-local dep.output
             ]
             #object-library [
-                spaced map-each ddep dep.depends [
+                spaced map-each 'ddep dep.depends [
                     file-to-local ddep.output
                 ]
             ]
@@ -861,16 +861,16 @@ llvm-link: make linker-class [
 
             ; llvm-link doesn't seem to deal with libraries
             comment [
-                for-each search (maybe map-files-to-local maybe .searches) [
+                for-each 'search (maybe map-files-to-local maybe .searches) [
                     keep unspaced ["-L" search]
                 ]
             ]
 
-            for-each flg .ldflags [
+            for-each 'flg .ldflags [
                 keep maybe filter-flag flg id
             ]
 
-            for-each dep .depends [
+            for-each 'dep .depends [
                 keep maybe accept dep
             ]
         ]
@@ -891,7 +891,7 @@ llvm-link: make linker-class [
                 '~null~
             ]
             #object-library [
-                spaced map-each ddep dep.depends [
+                spaced map-each 'ddep dep.depends [
                     file-to-local ddep.output
                 ]
             ]
@@ -948,15 +948,15 @@ link: make linker-class [
                 ]
             ]
 
-            for-each search (maybe map-files-to-local maybe .searches) [
+            for-each 'search (maybe map-files-to-local maybe .searches) [
                 keep unspaced ["/LIBPATH:" search]
             ]
 
-            for-each flg .ldflags [
+            for-each 'flg .ldflags [
                 keep maybe filter-flag flg id
             ]
 
-            for-each dep .depends [
+            for-each 'dep .depends [
                 keep maybe accept dep
             ]
         ]
@@ -988,7 +988,7 @@ link: make linker-class [
                 file-to-local dep.output
             ]
             #object-library [
-                spaced map-each ddep dep.depends [
+                spaced map-each 'ddep dep.depends [
                     file-to-local to-file ddep.output
                 ]
             ]
@@ -1023,7 +1023,7 @@ strip-class: make object! [
             params: default [options]
             switch kind of params [  ; switch/type not in bootstrap
                 block! [
-                    for-each flag params [
+                    for-each 'flag params [
                         keep filter-flag flag id
                     ]
                 ]
@@ -1275,7 +1275,7 @@ generator-class: make object! [
         flip-flag solution 'no
 
         if find words-of solution 'depends [
-            for-each dep (maybe solution.depends) [
+            for-each 'dep (maybe solution.depends) [
                 if dep.class = #variable [
                     append vars spread reduce [
                         dep.name
@@ -1297,7 +1297,7 @@ generator-class: make object! [
         ] then [
             project.generated: to
             if find words-of project 'depends [
-                for-each dep project.depends [
+                for-each 'dep project.depends [
                     flip-flag dep to
                 ]
             ]
@@ -1370,7 +1370,7 @@ generator-class: make object! [
                 if yes? project.generated [return ~]
                 .setup-output project
                 project.generated: 'yes
-                for-each dep project.depends [
+                for-each 'dep project.depends [
                     setup-outputs dep
                 ]
             ]
@@ -1428,7 +1428,7 @@ makefile: make generator-class [
                         ]
                         fail ["Unknown entry.target type" entry.target]
                     ]
-                    for-each w (maybe entry.depends) [
+                    for-each 'w (maybe entry.depends) [
                         switch select (match object! w else [[]]) 'class [
                             #variable [
                                 keep unspaced ["$(" w.name ")"]
@@ -1453,7 +1453,7 @@ makefile: make generator-class [
                 ; may use escaped makefile variables that get substituted.
                 ;
                 if entry.commands [
-                    for-each cmd (ensure block! entry.commands) [
+                    for-each 'cmd (ensure block! entry.commands) [
                         let c: any [
                             match text! cmd
                             gen-cmd cmd
@@ -1480,7 +1480,7 @@ makefile: make generator-class [
         project [object!]
         /parent [object!]  ; !!! Not heeded?
     ][
-        for-each dep project.depends [
+        for-each 'dep project.depends [
             if not object? dep [continue]
             if not find [#dynamic-extension #static-extension] dep.class [
                 if yes? dep.generated [
@@ -1493,7 +1493,7 @@ makefile: make generator-class [
                 #dynamic-library
                 #static-library [
                     let objs: make block! 8
-                    for-each obj dep.depends [
+                    for-each 'obj dep.depends [
                         if obj.class = #object-library [
                             append objs spread obj.depends
                         ]
@@ -1501,7 +1501,7 @@ makefile: make generator-class [
                     append buf gen-rule make entry-class [
                         target: dep.output
                         depends: append copy objs (
-                            spread map-each ddep dep.depends [
+                            spread map-each 'ddep dep.depends [
                                 if ddep.class <> #object-library [ddep]
                             ]
                         )
@@ -1517,7 +1517,7 @@ makefile: make generator-class [
                         ; but was commented out (?)
                         assert [dep.class != #object-library]
                     ]
-                    for-each obj dep.depends [
+                    for-each 'obj dep.depends [
                         assert [obj.class = #object-file]
                         if no? obj.generated [
                             obj.generated: 'yes
@@ -1618,7 +1618,7 @@ export execution: make generator-class [
                     return ~
                 ]
                 either block? target.commands [
-                    for-each cmd target.commands [
+                    for-each 'cmd target.commands [
                         cmd: .do-substitutions/ cmd
                         print ["Running:" cmd]
                         call/shell cmd
@@ -1655,12 +1655,12 @@ export execution: make generator-class [
             #dynamic-library
             #static-library [
                 let objs: make block! 8
-                for-each obj project.depends [
+                for-each 'obj project.depends [
                     if obj.class = #object-library [
                         append objs spread obj.depends
                     ]
                 ]
-                for-each dep project.depends [
+                for-each 'dep project.depends [
                     .run/parent dep project
                 ]
                 .run-target/ make entry-class [
@@ -1670,7 +1670,7 @@ export execution: make generator-class [
                 ]
             ]
             #object-library [
-                for-each obj project.depends [
+                for-each 'obj project.depends [
                     assert [obj.class = #object-file]
                     if no? obj.generated [
                         obj.generated: 'yes
@@ -1692,7 +1692,7 @@ export execution: make generator-class [
                 ; nothing to do
             ]
             #solution [
-                for-each dep project.depends [
+                for-each 'dep project.depends [
                     run dep
                 ]
             ]

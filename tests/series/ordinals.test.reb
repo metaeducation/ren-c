@@ -1,7 +1,7 @@
 ; functions/series/ordinals.r
 
 (
-    for-each ordinal [
+    for-each 'ordinal [
         first second third fourth fifth sixth seventh eighth ninth tenth
     ][
         assert compose [null = try ($ ordinal) []]

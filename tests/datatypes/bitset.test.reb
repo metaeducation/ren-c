@@ -28,12 +28,12 @@
 
 (
     bs: make bitset! 8
-    for i 8 [
+    for 'i 8 [
         assert [bs.(i) = null]
         assert [not pick bs i]
         bs.(i): okay
     ]
-    for i 8 [
+    for 'i 8 [
         assert [bs.(i) = okay]
     ]
     ok
@@ -59,7 +59,7 @@
 (
     bs: make bitset! [1 2 3]
     invalid: exclude (complement bs) make bitset! [4 5]
-    for i 8 [
+    for 'i 8 [
         if i <= 5 [
             assert [null = pick invalid i]
         ] else [

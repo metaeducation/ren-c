@@ -6,7 +6,7 @@
 
 (
     obj: make object! [x: 1020]
-    for-each item bind [
+    for-each 'item bind [
         x 'x ''x '''x ''''x
         @x '@x ''@x '''@x ''''@x
         :x ':x '':x ''':x '''':x

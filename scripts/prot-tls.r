@@ -319,7 +319,7 @@ parse-asn: func [
     let mode: #type
     let [class tag val size constructed]
 
-    return collect [ iterate data [
+    return collect [ iterate @data [
         let byte: data.1
 
         switch mode [
@@ -511,7 +511,7 @@ client-hello: func [
     random/seed now/time/precise
     repeat 28 [append ctx.client-random (random-secure 256) - 1]
 
-    let cs-data: make binary! map-each item cipher-suites [
+    let cs-data: make binary! map-each 'item cipher-suites [
         maybe match binary! item
     ]
 
@@ -1772,10 +1772,10 @@ check-response: func [
     let is-complete: to-yesno tls-read-data tls-port.state port.data
     let is-application: 'no
 
-    for-each proto tls-port.state.resp [
+    for-each 'proto tls-port.state.resp [
         switch proto.type [
             #application [
-                for-each msg proto.messages [
+                for-each 'msg proto.messages [
                     if msg.type = 'app-data [
                         tls-port.data: default [
                             clear tls-port.state.port-data
@@ -1787,7 +1787,7 @@ check-response: func [
                 ]
             ]
             #alert [
-                for-each msg proto.messages [
+                for-each 'msg proto.messages [
                     if msg.description = "Close notify" [
                         do-commands tls-port [<close-notify>]
                         return okay
