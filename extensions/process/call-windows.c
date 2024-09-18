@@ -424,7 +424,12 @@ Bounce Call_Core(Level* level_) {
         goto stderr_error;
     }
 
-    //=//// COMMAND AND ARGUMENTS SETUP ///////////////////////////////////=//
+  //=//// COMMAND AND ARGUMENTS SETUP /////////////////////////////////////=//
+
+    // 1. Once we've passed in the handles to CreateProcess, we don't have
+    //    to worry about keeping those open--because the child process reads
+    //    the input and writes the output/error.  If we're involved in it
+    //    at all, we write the input and read the output/error.
 
     PROCESS_INFORMATION pi;
     result = CreateProcess(
@@ -436,7 +441,7 @@ Bounce Call_Core(Level* level_) {
         NORMAL_PRIORITY_CLASS | CREATE_DEFAULT_ERROR_MODE,  // creation flags
         nullptr,  // environment
         nullptr,  // current directory
-        &si,  // startup information
+        &si,  // startup information (has hStdInput, hStdOutput, hStdError) [1]
         &pi  // process information
     );
 
@@ -445,13 +450,13 @@ Bounce Call_Core(Level* level_) {
     pid = pi.dwProcessId;
 
     if (hInputRead != nullptr)
-        CloseHandle(hInputRead);
+        CloseHandle(hInputRead);  // we only need write side of input [1]
 
     if (hOutputWrite != nullptr)
-        CloseHandle(hOutputWrite);
+        CloseHandle(hOutputWrite);  // we only need read side of output [1]
 
     if (hErrorWrite != nullptr)
-        CloseHandle(hErrorWrite);
+        CloseHandle(hErrorWrite);  // we only need read side of error [1]
 
     if (result != 0 and flag_wait) {  // Wait for termination
         HANDLE handles[4];
@@ -671,19 +676,8 @@ Bounce Call_Core(Level* level_) {
     if (hErrorRead != nullptr)
         CloseHandle(hErrorRead);
 
-    if (Is_File(ARG(error)))
-        CloseHandle(si.hStdError);
-
   stderr_error:
-
-    if (Is_File(ARG(output)))
-        CloseHandle(si.hStdOutput);
-
   stdout_error:
-
-    if (Is_File(ARG(input)))
-        CloseHandle(si.hStdInput);
-
   stdin_error:
 
     // Call may not succeed if r != 0, but we still have to run cleanup
