@@ -162,8 +162,11 @@ make-port*: function [
         <end>
     ]
 
-    decode-url: func ["Decode a URL according to rules of sys/*parse-url." url] [
-        ; This function is bound in the context of sys/*parse-url
+    decode-url: func [
+        "Decode a URL according to rules of sys/util/*parse-url."
+        url
+    ][
+        ; This function is bound in the context of sys/util/*parse-url
         out: make block! 8
         parse url rules
         out
@@ -218,7 +221,7 @@ make-scheme: function [
 init-schemes: func [
     "INIT: Init system native schemes and ports."
 ][
-    sys/decode-url: lib/decode-url: :sys/*parse-url/decode-url
+    sys/util/decode-url: lib/decode-url: :sys/util/*parse-url/decode-url
 
     system/schemes: make object! 10
 

@@ -64,6 +64,8 @@ codecs: make object! [[][]]
 
 schemes: make object! [[][]]
 
+util: null
+
 ports: construct [] [
     wait-list: []   ; List of ports to add to 'wait
     pump: []

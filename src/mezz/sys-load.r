@@ -625,7 +625,7 @@ load-module: function [
 ]
 
 
-; See also: sys/make-module*, sys/load-module
+; See also: sys/util/make-module*, sys/util/load-module
 ;
 import: function [
     {Imports a module; locate, load, make, and setup its bindings.}

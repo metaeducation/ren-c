@@ -210,7 +210,7 @@ host-start: function [
     ensure action! :license
     ensure action! :about
     ensure action! :usage
-    sys/export [about usage license]
+    sys/util/export [about usage license]
 
     ; We hook the RETURN function so that it actually returns an instruction
     ; that the code can build up from multiple EMIT statements.
@@ -320,28 +320,28 @@ host-start: function [
     ; of Startup_Core(), but one small step is to push the decision into the
     ; host...which loads them all, but should be more selective.
     ;
-    sys/init-schemes
+    sys/util/init-schemes
 
     ; The text codecs should also probably be extensions as well.  But the
     ; old Register_Codec() function was C code taking up space in %b-init.c
     ; so this at least allows that function to be deleted...the registration
     ; as an extension would also be done like this in user-mode.
     ;
-    (sys/register-codec*
+    (sys/util/register-codec*
         'text
         %.txt
         :identify-text?
         :decode-text
         :encode-text)
 
-    (sys/register-codec*
+    (sys/util/register-codec*
         'utf-16le
         %.txt
         :identify-utf16le?
         :decode-utf16le
         :encode-utf16le)
 
-    (sys/register-codec*
+    (sys/util/register-codec*
         'utf-16be
         %.txt
         :identify-utf16be?
@@ -445,7 +445,7 @@ host-start: function [
         o/resources: resources-dir
     ]
 
-    sys/script-pre-load-hook: :host-script-pre-load
+    sys/util/script-pre-load-hook: :host-script-pre-load
 
     do-string: _ ;-- will be set if a string is given with --do
 

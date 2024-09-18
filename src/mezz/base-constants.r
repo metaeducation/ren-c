@@ -24,7 +24,8 @@ zero: 0
 
 ;-- Special values:
 REBOL: system
-sys: system/contexts/sys
+sys: system
+sys/util: system/contexts/sys
 lib: system/contexts/lib
 
 ;-- Char constants:

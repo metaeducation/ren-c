@@ -70,4 +70,4 @@ dh-make-key: func [
 
 ; !!! Kludgey export mechanism; review correct approach for modules
 ;
-sys/export [hmac-sha256 rsa-make-key dh-make-key]
+sys/util/export [hmac-sha256 rsa-make-key dh-make-key]

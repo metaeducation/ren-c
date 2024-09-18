@@ -653,7 +653,7 @@ check-data: function [
 ]
 
 hex-digits: charset "1234567890abcdefABCDEF"
-sys/make-scheme [
+sys/util/make-scheme [
     name: 'http
     title: "HyperText Transport Protocol v1.1"
 
@@ -814,7 +814,7 @@ sys/make-scheme [
     ]
 ]
 
-sys/make-scheme/with [
+sys/util/make-scheme/with [
     name: 'https
     title: "Secure HyperText Transport Protocol v1.1"
     spec: construct spec [

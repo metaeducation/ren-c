@@ -265,7 +265,7 @@ DECLARE_NATIVE(load_extension)
     // do that here.
     //
     rebElide(
-        "sys/load-module/into/exports", rebR(script_bin), module, exports
+        "sys/util/load-module/into/exports", rebR(script_bin), module, exports
     );
 
     // !!! Ideally we would be passing the lib, path,
