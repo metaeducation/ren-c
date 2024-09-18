@@ -18,7 +18,7 @@ import <bootstrap-shim.r>
 
 decode-lines: func [
     {Decode text encoded using a line prefix e.g. comments (modifies).}
-    text [text!]
+    text [~null~ text! error!]  ; raised? in modern exe, not ERROR!
     line-prefix [text! block!] {Usually "**" or "//". Matched using parse.}
     indent [text! block!] {Usually "  ". Matched using parse.}
 ] [
@@ -35,8 +35,8 @@ decode-lines: func [
         thru newline
     ]
     parse3/match text [opt some line-rule] else [
-        fail [
-            {Expected line} (try text-line-of text pos)
+        return raise [
+            {Expected line} (reify text-line-of text pos)
             {to begin with} (mold line-prefix)
             {and end with newline.}
         ]

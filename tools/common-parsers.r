@@ -36,9 +36,9 @@ load-until-double-newline: func [
 ][
     let wsp: compose [some (charset { ^-})]
 
-    let dummy  ; !!! collect as SET-WORD!s for locals, evolving...
+    let dummy: ~  ; /NEXT3 requires arg (could shim for plain /NEXT, but...)
     let rebol-value: parsing-at x [
-        attempt [transcode/next x]  ; ret = position or null
+        try transcode/next3 x 'dummy  ; transcode gives pos, null, or error
     ]
 
     let terminator: [opt wsp newline opt wsp newline]
@@ -170,11 +170,14 @@ export proto-parser: context [
 
         is-fileheader: parsing-at position [
             all [  ; note: not LOGIC!, a series
-                lines: attempt [decode-lines lines {//} { }]
+                lines: try decode-lines lines {//} { }
                 parse3/match lines [data: across to {=///} to <end>]
-                data: attempt [load-until-double-newline trim/auto data]
-                data: attempt [
-                    if set-word? first data.1 [data.1] else [null]
+                data: load-until-double-newline trim/auto data
+                all [
+                    data.1
+                    block? data.1
+                    set-word? first data.1
+                    data: data.1
                 ]
                 position ; Success.
             ]
@@ -188,7 +191,7 @@ export proto-parser: context [
         ;
         is-intro: parsing-at position [
             all [
-                lines: attempt [decode-lines lines {//} { }]
+                lines: try decode-lines lines {//} { }
                 data: load-until-double-newline lines
 
                 any [

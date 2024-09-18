@@ -49,7 +49,7 @@ exists?: func [
         return info?/only target
     ]
 
-    return select maybe attempt [query target] 'type
+    return select maybe query target 'type
 ]
 
 size-of: size?: func [
@@ -58,7 +58,7 @@ size-of: size?: func [
     target [file! url!]
 ][
     return all [
-        info: attempt [info? target]  ; !!! Why not let the error report?
+        info: info? target
         info.size
     ]
 ]
@@ -69,7 +69,7 @@ modified?: func [
     target [file! url!]
 ][
     return all [
-        info: attempt [info? target]  ; !!! Why not let the error report?
+        info: info? target
         info.date
     ]
 ]
@@ -145,7 +145,9 @@ make-dir: func [
         path: if empty? path [dir] else [join path dir]
         append path slash
         make-dir path except e -> [
-            for-each dir created [attempt [delete dir]]
+            for-each dir created [
+                sys.util/rescue [delete dir]
+            ]
             return raise e
         ]
         insert created path
@@ -161,11 +163,13 @@ delete-dir: func [
     if all [
         dir? dir
         dir: dirize dir
-        attempt [files: load dir]
+        files: try load dir
     ] [
         for-each file files [delete-dir (join dir file)]
     ]
-    return attempt [delete dir]
+    sys.util/rescue [
+        delete dir
+    ]
 ]
 
 script?: func [

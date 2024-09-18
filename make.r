@@ -150,8 +150,8 @@ for-each [name value] options [
             ]
         ]
     ] else [
-        set has user-config (to-word replace/all to text! name #"_" #"-")
-            attempt [load-value value] else [value]
+        name: to-word replace/all to text! name #"_" #"-"
+        set (has user-config name) load-value value  ; !!! else [value] ???
     ]
 ]
 

@@ -316,7 +316,10 @@ list-dir: func [
     if r [l: ok]
     if not l [l: make text! 62] ; approx width
 
-    let files: attempt [read %./] else [
+    let files
+    sys.util/rescue [
+        files: read %./
+    ] then [
         print ["Not found:" :path]
         change-dir save-dir
         return ~

@@ -463,25 +463,23 @@ gcc: make compiler-class [
         let digit: charset "0123456789"  ; no <static> in bootstrap
 
         version: copy ""
-        attempt [
-            .exec-file: exec: default ["gcc"]
-            call/output [(exec) "--version"] version
-            let letter: charset [#"a" - #"z" #"A" - #"Z"]
-            parse3/match version [
-                "gcc (" some [letter | digit | #"_"] ")" space
-                major: across some digit "."
-                minor: across some digit "."
-                macro: across some digit
-                to <end>
-            ] then [
-                version: reduce [  ; !!! It appears this is not used (?)
-                    to integer! major
-                    to integer! minor
-                    to integer! macro
-                ]
-                return ~
+
+        .exec-file: exec: default ["gcc"]
+        call/output [(exec) "--version"] version
+        let letter: charset [#"a" - #"z" #"A" - #"Z"]
+        parse3/match version [
+            "gcc (" some [letter | digit | #"_"] ")" space
+            major: across some digit "."
+            minor: across some digit "."
+            macro: across some digit
+            to <end>
+        ] then [
+            version: reduce [  ; !!! It appears this is not used (?)
+                to integer! major
+                to integer! minor
+                to integer! macro
             ]
-            return null
+            return ~
         ]
     ]
 

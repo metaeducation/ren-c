@@ -92,7 +92,6 @@
 
 %control/all.test.reb
 %control/any.test.reb
-%control/attempt.test.reb
 %control/case.test.reb
 %control/catch.test.reb
 %control/compose.test.reb
