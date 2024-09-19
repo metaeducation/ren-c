@@ -430,12 +430,12 @@ DECLARE_NATIVE(unless)
     INCLUDE_PARAMS_OF_UNLESS;
 
     Value* left = ARG(left);
-    Value* right = ARG(right);
+    Element* meta_right = cast(Element*, ARG(right));
 
-    if (Is_Meta_Of_Void(right) or Is_Meta_Of_Null(right))
+    if (Is_Meta_Of_Void(meta_right) or Is_Meta_Of_Null(meta_right))
         return COPY(left);
 
-    return UNMETA(right);  // preserve packs
+    return UNMETA(meta_right);  // preserve packs
 }
 
 

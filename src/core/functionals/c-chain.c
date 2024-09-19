@@ -277,7 +277,7 @@ DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
         &Cascader_Dispatcher,
         IDX_CASCADER_MAX  // details array capacity
     );
-    Force_Value_Frozen_Deep(pipeline);
+    Force_Value_Frozen_Shallow(pipeline);
     Copy_Cell(  // index of this block gets incremented as pipeline executes
         Array_At(Phase_Details(cascade), IDX_CASCADER_PIPELINE),
         pipeline

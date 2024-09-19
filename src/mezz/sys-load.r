@@ -412,10 +412,10 @@ adjust-url-for-raw: func [
 import*: func [
     {Imports a module; locate, load, make, and setup its bindings}
 
-    return: "Loaded module and meta of evaluative product (or tripwire)"
+    return: "Loaded module and evaluative product (if execution needed)"
         [
-            ~null~
-            ~[module! [~<cached>~ ~<registered>~ ~<nameless>~ quoted? quasi?]]~
+            ~[module! ['cached 'registered 'nameless]]~
+            ~[module! 'executed any-atom?]~
         ]
     where "Where to put exported definitions from SOURCE"
         [~null~ module!]
@@ -438,8 +438,8 @@ import*: func [
     return: adapt get $return [  ; make sure all return paths actually import vars
         ;
         ; Note: `value` below is the argument to RETURN.  It is a ^META
-        ; parameter so should be a quoted module.  We don't disrupt that, else
-        ; falling through to RETURN would get tripped up.
+        ; parameter so should be a quoted pack containing a module.  We don't
+        ; disrupt that, else falling through to RETURN would get tripped up.
         ;
         ; !!! The idea of `import *` is frowned upon as a practice, as it adds
         ; an unknown number of things to the namespace of the caller.  Most
@@ -461,16 +461,16 @@ import*: func [
         assert [not into]  ; INTO isn't applicable unless scanning new source
 
         let name: (adjunct-of source).name else [
-            return pack [source ~<nameless>~]  ; just RESOLVE to get variables
+            return pack [source 'nameless]  ; just RESOLVE to get variables
         ]
         let mod: (select/skip system.modules name 2) else [
             append system.modules spread :[name source]  ; not in mod list, add
-            return pack [source ~<registered>~]
+            return pack [source 'registered]
         ]
         if mod != source [
             fail ["Conflict: more than one module instance named" name]
         ]
-        return pack [source ~<cached>~]
+        return pack [source 'cached]
     ]
 
 
@@ -549,7 +549,7 @@ import*: func [
 
     let name: select maybe hdr 'name
     (select/skip system.modules maybe name 2) then cached -> [
-        return pack [cached ~<cached>~]
+        return pack [cached 'cached]
     ]
 
     ensure [~null~ object!] hdr
@@ -625,7 +625,7 @@ import*: func [
     if not block? code [  ; review assumption of lib here (header guided?)
         code: inside lib transcode/file/line code file line
     ]
-    let [mod product']: module/into hdr code into
+    let [mod ^product']: module/into hdr code into
 
     ensure module! mod
 
@@ -640,7 +640,7 @@ import*: func [
 
     importing-remotely: old-importing-remotely
 
-    return pack [mod product']
+    return pack* [mod 'executed (unmeta product')]  ; PACK* for raised errors
 ]
 
 

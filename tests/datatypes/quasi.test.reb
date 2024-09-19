@@ -227,10 +227,15 @@
     ((the '''a) = reify the '''a)
 ]
 
-; UNMETA* works on void, but not other "antiform" forms as a trick
+; UNMETA/LITE works on void and null, but not other "antiform" forms as a trick
 [
-    (void? unmeta* void)
+    (void? unmeta/lite void)
+    (null? unmeta/lite null)
+
     ~expect-arg~ !! (
-        unmeta* ~foo~
+        unmeta/lite okay
+    )
+    ~expect-arg~ !! (
+        unmeta/lite ~(a b c)~
     )
 ]

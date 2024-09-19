@@ -1595,22 +1595,22 @@ DECLARE_NATIVE(set)
 //  "Suppress failure from raised errors or VOID, by returning NULL"
 //
 //      return: [any-value?]
-//      ^optional [any-atom?]  ; e.g. TRY on a pack returns the pack
+//      ^atom [any-atom?]  ; e.g. TRY on a pack returns the pack
 //  ]
 //
 DECLARE_NATIVE(try)
 {
     INCLUDE_PARAMS_OF_TRY;
 
-    Value* v = ARG(optional);
+    Element* meta = cast(Element*, ARG(atom));
 
-    if (Is_Meta_Of_Void(v) or Is_Meta_Of_Null(v))
+    if (Is_Meta_Of_Void(meta) or Is_Meta_Of_Null(meta))
         return Init_Nulled(OUT);
 
-    if (Is_Meta_Of_Raised(v))
+    if (Is_Meta_Of_Raised(meta))
         return nullptr;
 
-    return UNMETA(v);  // !!! also tolerates other antiforms, should it?
+    return UNMETA(meta);  // !!! also tolerates other antiforms, should it?
 }
 
 
@@ -1755,9 +1755,9 @@ DECLARE_NATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
 {
     INCLUDE_PARAMS_OF_IDENTITY;
 
-    Value* v = ARG(value);
+    Element* meta = cast(Element*, ARG(value));
 
-    return UNMETA(v);
+    return UNMETA(meta);
 }
 
 
@@ -2778,21 +2778,21 @@ DECLARE_INTRINSIC(blackhole_q)
 //  "Make the heavy form of NULL or VOID (passes through all other values)"
 //
 //      return: [any-value? pack?]
-//      ^optional [any-value? pack?]
+//      ^atom [any-value? pack?]
 //  ]
 //
 DECLARE_NATIVE(heavy) {
     INCLUDE_PARAMS_OF_HEAVY;
 
-    Value* v = ARG(optional);
+    Element* meta = cast(Element*, ARG(atom));
 
-    if (Is_Meta_Of_Void(v))
+    if (Is_Meta_Of_Void(meta))
         return Init_Heavy_Void(OUT);
 
-    if (Is_Meta_Of_Null(v))
+    if (Is_Meta_Of_Null(meta))
         return Init_Heavy_Null(OUT);
 
-    return UNMETA(v);
+    return UNMETA(meta);
 }
 
 
@@ -2802,22 +2802,22 @@ DECLARE_NATIVE(heavy) {
 //  "Make the light form of NULL or VOID (passes through all other values)"
 //
 //      return: [any-value? pack?]
-//      ^value [any-value? pack?]
+//      ^atom [any-value? pack?]
 //  ]
 //
 DECLARE_NATIVE(light) {
     INCLUDE_PARAMS_OF_LIGHT;
 
-    Value* v = ARG(value);
+    Element* meta = cast(Element*, ARG(atom));
 
-    if (not Is_Meta_Of_Pack(v))
-        return UNMETA(v);
+    if (not Is_Meta_Of_Pack(meta))
+        return UNMETA(meta);
 
     Length len;
-    const Cell* first = Cell_List_Len_At(&len, v);
+    const Cell* first = Cell_List_Len_At(&len, meta);
 
     if (len != 1)
-        return UNMETA(v);
+        return UNMETA(meta);
 
     if (Is_Meta_Of_Void(first))
         return VOID;
@@ -2825,7 +2825,7 @@ DECLARE_NATIVE(light) {
     if (Is_Meta_Of_Null(first))
         return nullptr;
 
-    return UNMETA(v);
+    return UNMETA(meta);
 }
 
 

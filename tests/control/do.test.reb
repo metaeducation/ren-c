@@ -266,7 +266,7 @@
         result': meta/except eval [1 / 0 1 + 2]
     )
     (
-        [pos result']: meta/except eval/next [1 / 0 1 + 2]
+        result': meta/except [pos @]: eval/next [1 / 0 1 + 2]
         all [
             error? result'
             result'.id = 'zero-divide
@@ -276,9 +276,9 @@
     (
         block: [1 + 2 1 / 0 10 + 20]
         [3 ~zero-divide~ 30] = collect [
-            while [[block /result']: eval/next/entrap block] [
-                if error? result' [
-                    keep quasi result'.id
+            while [[block ^/result']: eval/next block] [
+                if raised? unmeta result' [
+                    keep quasi (unquasi result').id
                 ] else [
                     keep unmeta result'
                 ]

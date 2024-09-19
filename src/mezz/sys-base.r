@@ -121,7 +121,7 @@ module: func [
     "Creates a new module (used by both IMPORT and DO)"
 
     return: "Module and meta-result of running the body (may be raised)"  ; [1]
-        [~[module! [quasiform? quoted?]]~]
+        [~[module! any-atom?]~]
     spec "The header block of the module (modified)"
         [~null~ block! object!]
     body "The body of the module"
@@ -167,8 +167,11 @@ module: func [
     ]
 
     append mod 'import
-    mod.import: specialize get $sys.util/import* [  ; specialize low-level [3]
-        where: mod
+    mod.import: cascade [
+        specialize get $sys.util/import* [  ; specialize low-level [3]
+            where: mod
+        ]
+        :decay  ; don't want body evaluative result
     ]
 
     append mod 'export
@@ -207,7 +210,7 @@ module: func [
         ]
     ]
 
-    return pack [mod product']
+    return pack* [mod (unmeta product')]  ; pack* for raised error
 ]
 
 
@@ -264,5 +267,5 @@ do: func [
     /args "Args passed as system.script.args to a script (normally a string)"
         [element?]
 ][
-    return unmeta [_ @]: import*/args null source args
+    return [_ _ @]: import*/args null source args
 ]

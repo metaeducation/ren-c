@@ -194,13 +194,28 @@
     ])
 ]
 
-; Raised errors in PACKs are not legal or supported in practice.
+; Raised errors are not supported by the default PACK.
 [
     ~zero-divide~ !! (
         pack [1 / 0]
     )
     ~zero-divide~ !! (
         [^e]: pack [1 / 0]
+    )
+]
+
+; You must use PACK* to get errors
+[
+    (
+        pack? pack* [1 / 0]
+    )
+    (
+        all [
+            [^e n]: pack* [1 / 0, 1 + 0]
+            n = 1
+            raised? unmeta e
+            'zero-divide =(noquasi e).id
+        ]
     )
 ]
 

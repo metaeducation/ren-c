@@ -676,6 +676,10 @@ INLINE Cell* Move_Cell_Untracked(
 #define Move_Cell_Core(out,v,cell_mask) \
     TRACK(Move_Cell_Untracked((out), (v), (cell_mask)))
 
+#define Move_Meta_Cell(out,v) \
+    cast(Element*, \
+        Meta_Quotify(Move_Cell_Untracked((out), (v), CELL_MASK_COPY)))
+
 
 // !!! Super primordial experimental `const` feature.  Concept is that various
 // operations have to be complicit (e.g. SELECT or FIND) in propagating the

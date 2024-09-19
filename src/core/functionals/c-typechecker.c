@@ -135,8 +135,6 @@ bool Typecheck_Pack(const Element* types, const Atom* pack) {
         DECLARE_ATOM (temp);  // !!! wasteful to make another cell, rethink
         Copy_Cell(temp, pack_at);
         Meta_Unquotify_Undecayed(temp);
-        if (Is_Raised(temp))
-            fail ("Can't have raised errors in packs!");
         if (not Typecheck_Atom_Core(types_at, types_specifier, temp))
             return false;
     }
@@ -197,6 +195,7 @@ bool Typecheck_Atom_Core(
         break;
 
       case REB_QUASIFORM:
+      case REB_QUOTED:
       case REB_TYPE_WORD:
       case REB_WORD:
         item = c_cast(Element*, tests);

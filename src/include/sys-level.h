@@ -582,7 +582,7 @@ INLINE Bounce Native_Void_Result_Untracked(
     return Init_Void_Untracked(level_->out);
 }
 
-INLINE Bounce Native_Unmeta_Result(Level* level_, const Value* v) {
+INLINE Bounce Native_Unmeta_Result(Level* level_, const Element* v) {
     assert(not THROWING);
     return Meta_Unquotify_Undecayed(Copy_Cell(level_->out, v));
 }

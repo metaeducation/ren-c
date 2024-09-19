@@ -1249,7 +1249,6 @@ Bounce Stepper_Executor(Level* L)
             if (Is_Quoted(check))
                 fail ("QUOTED? not currently permitted in SET-BLOCK!s");
 
-            bool raised_ok = Is_Quasiform(check);  // quasi has meaning
             Heart heart = Cell_Heart(check);
 
             bool is_optional;
@@ -1299,9 +1298,6 @@ Bounce Stepper_Executor(Level* L)
 
             if (is_optional)  // so next phase won't worry about leading slash
                 Set_Cell_Flag(TOP, STACK_NOTE_OPTIONAL);
-
-            if (raised_ok and not Is_Quasiform(TOP))
-                Quasify(TOP);  // keep this as signal for raised ok
 
             if (
                 // @xxx is indicator of circled result [3]
@@ -1410,7 +1406,6 @@ Bounce Stepper_Executor(Level* L)
             Copy_Cell(var, cast(Element*, Data_Stack_At(stackindex_var)));
 
             assert(not Is_Quoted(var));
-            bool raised_ok = Is_Quasiform(var);  // quasi has meaning
             Heart var_heart = Cell_Heart(var);
 
             if (pack_meta_at == pack_meta_tail) {
@@ -1437,10 +1432,6 @@ Bounce Stepper_Executor(Level* L)
                     Set_Var_May_Fail(var, SPECIFIED, Lib(NULL));
                     goto circled_check;
                 }
-                if (Is_Meta_Of_Raised(SPARE) and not raised_ok) {
-                    QUOTE_BYTE(SPARE) = NOQUOTE_1;
-                    fail (VAL_CONTEXT(SPARE));
-                }
                 Set_Var_May_Fail(var, SPECIFIED, stable_SPARE);  // is meta'd
                 goto circled_check;
             }
@@ -1454,7 +1445,7 @@ Bounce Stepper_Executor(Level* L)
                 goto circled_check;
             }
 
-            if (Is_Raised(SPARE))  // don't hide raised errors if not @
+            if (Is_Raised(SPARE))  // don't pass thru raised errors if not @
                 fail (VAL_CONTEXT(SPARE));
 
             Decay_If_Unstable(SPARE);  // if pack in slot, resolve it

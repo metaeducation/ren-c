@@ -221,9 +221,10 @@ DECLARE_NATIVE(quote)
 //
 //  "antiforms -> quasiforms, adds a quote to rest (behavior of ^^)"
 //
-//      return: "Returns plain ERROR! if /EXCEPT used with raised error"
-//          [quoted? quasi? error!]
+//      return: "NULL or VOID ok if /LITE, plain ERROR! ok if /EXCEPT"
+//          [quoted? quasi? ~null~ ~void~ error!]
 //      ^atom [any-atom?]
+//      /lite "Pass thru ~null~ and ~void~ antiforms as-is"
 //      /except "If argument is antiform ERROR!, give back as plain ERROR!"
 //  ]
 //
@@ -241,32 +242,31 @@ DECLARE_NATIVE(meta)
         return COPY(meta);  // no longer meta, just a plain ERROR!
     }
 
+    if (REF(lite) and Is_Quasi_Word(meta)) {
+        if (Cell_Word_Id(meta) == SYM_NULL)
+            return nullptr;
+        if (Cell_Word_Id(meta) == SYM_VOID)
+            return VOID;
+    }
+
     return COPY(meta);
 }
 
 
 //
-//  meta*: native [
+//  meta*: native/intrinsic [
 //
-//  "META variant that passes through VOID and NULL, and doesn't take failures"
+//  "META operator that works on any value (errors, packs, barriers, etc.)"
 //
-//      return: [~null~ ~void~ quoted! quasi?]
-//      ^optional [pack? any-value?]
+//      return: [quoted! quasi?]
+//      ^optional [any-atom?]
 //  ]
 //
-DECLARE_NATIVE(meta_p)
+DECLARE_INTRINSIC(meta_p)
 {
-    INCLUDE_PARAMS_OF_META_P;
+    UNUSED(phase);
 
-    Value* v = ARG(optional);
-
-    if (Is_Meta_Of_Void(v))
-        return VOID;
-
-    if (Is_Meta_Of_Null(v))
-        return nullptr;
-
-    return COPY(v);  // argument was ^META, so no need to Meta_Quotify()
+    Copy_Cell(out, arg);  // argument was ^META, so no need to Meta_Quotify()
 }
 
 
@@ -391,46 +391,49 @@ DECLARE_NATIVE(anti)
 
 
 //
-//  unmeta: native/intrinsic [
+//  unmeta: native [
 //
 //  "Variant of UNQUOTE that also accepts quasiforms to make antiforms"
 //
 //      return: [any-atom?]
-//      value [quoted? quasi?]
+//      value [~null~ ~void~ quoted? quasi?]
+//      /lite "Pass thru ~null~ and ~void~ antiforms as-is"
 //  ]
 //
-DECLARE_INTRINSIC(unmeta)
+DECLARE_NATIVE(unmeta)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_UNMETA;
 
-    Copy_Cell(out, arg);
-    Meta_Unquotify_Undecayed(out);
+    Value* meta = ARG(value);
+
+    if (Is_Antiform(meta)) {
+        if (not REF(lite))
+            fail ("UNMETA only takes ~null~ and ~void~ antiforms if /LITE");
+        if (Cell_Word_Id(meta) == SYM_NULL)
+            return nullptr;
+        assert(Cell_Word_Id(meta) == SYM_VOID);
+        return VOID;
+    }
+
+    return UNMETA(cast(Element*, meta));
 }
 
 
 //
 //  unmeta*: native/intrinsic [
 //
-//  "Variant of UNMETA that passes thru VOID and NULL"
+//  "Variant of UNMETA that can synthesize any atom (raised, pack, barrier...)"
 //
 //      return: [any-atom?]
-//      value [~null~ ~void~ quoted? quasi?]
+//      value [quoted? quasi?]
 //  ]
 //
 DECLARE_INTRINSIC(unmeta_p)
 {
     UNUSED(phase);
 
-    if (Is_Void(arg)) {
-        Init_Void(out);
-    }
-    else if (Is_Nulled(arg)) {
-        Init_Nulled(out);
-    }
-    else {
-        Copy_Cell(out, arg);
-        Meta_Unquotify_Undecayed(out);
-    }
+    Copy_Cell(out, arg);
+    Meta_Unquotify_Undecayed(out);
 }
 
 
@@ -531,25 +534,7 @@ DECLARE_NATIVE(lazy)
 }
 
 
-//
-//  pack: native [
-//
-//  "Create a pack of arguments from a list"
-//
-//      return: "Antiform of BLOCK!"
-//          [pack?]
-//      array "Reduce if plain BLOCK!, not if THE-BLOCK!"
-//          [<maybe> the-block! block!]  ; accept quoted values?  [1]
-//  ]
-//
-DECLARE_NATIVE(pack)
-//
-// 1. The original implementation accepted quoted values as if they were
-//    blocks containing one item.  This semantic equivalence is presumably
-//    for some efficiency trick to let users avoid block allocations in
-//    some situations.  No usages existed, so it was scrapped.  Review.
-//
-// 2. In REDUCE, /PREDICATE functions are offered things like nihil and void
+// 1. In REDUCE, /PREDICATE functions are offered things like nihil and void
 //    if they can accept them (which META can).  But COMMA! antiforms that
 //    result from evaluating commas are -not- offered to any predicates.  This
 //    is by design, so we get:
@@ -557,34 +542,91 @@ DECLARE_NATIVE(pack)
 //        >> pack [1 + 2, comment "hi", if null [1020]]
 //        == ~[3 ~[]~ ']
 //
-// 3. Raised errors are not tolerated as things to pack.  This is by design:
+INLINE bool Pack_Native_Core_Throws(
+    Sink(Atom*) out,
+    const Value* block,
+    const Value* predicate
+){
+    if (Is_The_Block(block)) {
+        StackIndex base = TOP_INDEX;
+
+        const Element* tail;
+        const Element* at = Cell_List_At(&tail, block);
+        for (; at != tail; ++at)
+            Copy_Meta_Cell(PUSH(), at);
+
+        Init_Pack(out, Pop_Stack_Values(base));
+        return false;
+    }
+
+    assert(Is_Block(block));
+
+    if (rebRunThrows(
+        cast(Value*, out),  // output cell
+        Canon(QUASI), "reduce/predicate",  // commas excluded by /PREDICATE [1]
+            rebQ(block), rebQ(predicate)
+    )){
+        return true;
+    }
+
+    Meta_Unquotify_Undecayed(out);
+    return false;
+}
+
+
+//
+//  pack: native [
+//
+//  "Create a pack of arguments from a list, no raised errors (or see PACK*)"
+//
+//      return: "Antiform of BLOCK!"
+//          [pack?]
+//      block "Reduce if plain BLOCK!, not if THE-BLOCK!"
+//          [<maybe> the-block! block!]
+//  ]
+//
+DECLARE_NATIVE(pack)
+//
+// 1. Using the predicate META means that raised errors aren't tolerated in
+//    the main pack routine.  You have to use PACK*, which uses META* instead.
 //
 //        https://forum.rebol.info/t/2206
 {
     INCLUDE_PARAMS_OF_PACK;
 
-    Value* v = ARG(array);
+    Element* block = cast(Element*, ARG(block));
 
-    if (Is_The_Block(v)) {
-        const Element* tail;
-        const Element* at = Cell_List_At(&tail, v);
-        for (; at != tail; ++at)
-            Copy_Meta_Cell(PUSH(), at);
-
-        return Init_Pack(OUT, Pop_Stack_Values(BASELINE->stack_base));
-    }
-
-    assert(Is_Block(v));
-
-    if (rebRunThrows(
-        cast(Value*, SPARE),  // output cell
-        Canon(QUASI), "reduce/predicate",  // commas excluded by /PREDICATE [2]
-            v, rebQ(Lib(META))  // not META/EXCEPT, so raised errors fail [3]
-    )){
+    if (Pack_Native_Core_Throws(OUT, block, Lib(META)))  // no raised [1]
         return THROWN;
-    }
+    return OUT;
+}
 
-    return UNMETA(stable_SPARE);
+
+//
+//  pack*: native [
+//
+//  "Create a pack of arguments from a list, raised errors okay (or see PACK)"
+//
+//      return: "Antiform of BLOCK!"
+//          [pack?]
+//      block "Reduce if plain BLOCK!, not if THE-BLOCK!"
+//          [<maybe> the-block! block!]
+//  ]
+//
+DECLARE_NATIVE(pack_p)
+//
+// 1. Using the predicate META* means that raised errors will be tolerated
+//    by PACK*, whereas PACK does not.
+//
+//        https://forum.rebol.info/t/2206
+{
+    INCLUDE_PARAMS_OF_PACK_P;
+
+    Element* block = cast(Element*, ARG(block));
+
+    if (Pack_Native_Core_Throws(OUT, block, Lib(META_P)))  // raise ok [1]
+        return THROWN;
+    return OUT;
 }
 
 
