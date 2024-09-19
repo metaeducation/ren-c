@@ -2,7 +2,7 @@
 (path? 'a/b)
 ('a/b == first [a/b])
 (not path? 1)
-(path! = kind of 'a/b)
+(path! = type of 'a/b)
 ; the minimum
 [#1947
     (path? load-value "[a]/1")
@@ -207,16 +207,17 @@
     ]
 )
 
-; / is a length 2 PATH! in Ren-C
-(word! = kind of the /)
+; / was once a length 2 PATH! in Ren-C, but now it's a WORD!
+;
+(word! = type of the /)
 
 ~bad-sequence-item~ !! (
     to path! [_ _]
 )
 (the / = compose $(blank)/(blank))
 
-; foo/ is also a length 2 PATH! in Ren-C
-(path! = kind of the foo/ )
+; foo/ is a length 2 PATH! in Ren-C
+(path! = type of the foo/ )
 (2 = length of the foo/ )
 (the foo/ = to path! [foo _])
 

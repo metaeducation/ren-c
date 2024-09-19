@@ -1,7 +1,7 @@
 ; datatypes/error.r
 (error? trap [1 / 0])
 (not error? 1)
-(error! = kind of trap [1 / 0])
+(error! = type of trap [1 / 0])
 
 ; error evaluation
 (error? eval head of insert copy [] trap [1 / 0])

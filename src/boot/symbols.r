@@ -64,7 +64,7 @@ rule-end
 ; (e.g. BODY OF SOME-FUNCTION)
 ;
 type
-kind
+heart
 quotes
 index
 xy  ; !!! There was an INDEX?/XY, which is an XY reflector for the time being

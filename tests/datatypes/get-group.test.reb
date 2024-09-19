@@ -4,8 +4,8 @@
 ; idea of doing the same thing as (x) in the evaluator...freeing up shades
 ; of distinction in dialecting.
 
-(get-group! = kind of first [:(a b c)])
-(get-tuple! = kind of first [:(a b c).d])
+(get-group! = type of first [:(a b c)])
+(get-tuple! = type of first [:(a b c).d])
 
 (
     m: 1020

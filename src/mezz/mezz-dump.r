@@ -231,9 +231,9 @@ summarize-obj: func [
         for-each [word val] obj [
             if unset? $val [continue]  ; don't consider unset fields
 
-            let kind: kind of noantiform get/any $val
+            let type: type of noantiform get/any $val
 
-            let str: if kind = object! [
+            let str: if type = object! [
                 spaced [word, form words of val]
             ] else [
                 form word
@@ -243,7 +243,7 @@ summarize-obj: func [
                 null?! []
 
                 type-block! [
-                    if kind != pattern [continue]
+                    if type != pattern [continue]
                 ]
 
                 text! [
@@ -264,7 +264,7 @@ summarize-obj: func [
             ]
 
             keep spaced [
-                "  " (form-pad word 15) (form-pad kind 10) maybe desc
+                "  " (form-pad word 15) (form-pad type 10) maybe desc
             ]
         ]
     ]

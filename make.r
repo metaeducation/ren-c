@@ -135,7 +135,7 @@ for-each [name value] options [
                 if not block? user-ext [
                     fail [
                         "Selected extensions must be a block, not"
-                        (kind of user-ext)
+                        (type of user-ext)
                     ]
                 ]
                 all [
@@ -1103,8 +1103,8 @@ set-exec-path: func [
     tool [object!]
     path
 ][
-    switch kind of path [  ; can't use SWITCH/TYPE in bootstrap
-        blank! [tool.check/]
+    switch type of path [  ; can't use SWITCH/TYPE in bootstrap
+        blank! [tool/check]
         file! text! [tool.exec-file: path]
         fail "Tool path has to be a file!"
     ]
@@ -1485,7 +1485,7 @@ for-each [category entries] file-base [
     if find [generated made] category [
         continue  ; these categories are taken care of elsewhere
     ]
-    switch kind of entries [
+    switch type of entries [
         file!  ; can't use `foo.r` in bootstrap, scans as foo/r for hack
         word!  ; if bootstrap
         tuple! [  ; if generic-tuple enabled
@@ -1494,7 +1494,7 @@ for-each [category entries] file-base [
         block! [
             for-each 'entry entries [
                 if block? entry [entry: first entry]
-                switch kind of entry [
+                switch type of entry [
                     file!
                     word!  ; if bootstrap executable
                     tuple! [  ; if generic-tuple enabled
@@ -1703,7 +1703,7 @@ for-each 'ext extensions [
                 ]
             ] else [
                 dump s
-                fail [kind of s "can't be a dependency of a module"]
+                fail [type of s "can't be a dependency of a module"]
             ]
         ]
         libraries: all [
@@ -1923,7 +1923,7 @@ prep: make rebmake.entry-class [
             keep [
                 "$(REBOL)" join tools-dir %prep-extension.r
                 unspaced ["MODULE=" ext.name]
-                unspaced ["SRC=extensions/" switch kind of ext.source [
+                unspaced ["SRC=extensions/" switch type of ext.source [
                     file! [ext.source]
                     block! [first find ext.source matches file!]
                     fail "ext.source must be BLOCK! or FILE!"

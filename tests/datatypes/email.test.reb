@@ -2,7 +2,7 @@
 (email? me@here.com)
 (email? graham.chiu@mdh.health.nz)
 (not email? 1)
-(email! = kind of me@here.com)
+(email! = type of me@here.com)
 ; "minimum"
 (email? make email! "")
 (strict-equal? make email! "" make email! 0)
@@ -47,7 +47,7 @@
     assert [find [+ -] supported]
     trap [
         email: load-value text
-        type: kind of email
+        type: type of email
         if type <> email! [
             fail ["LOAD of" mold text "should've been email but was" mold type]
         ]

@@ -2,7 +2,7 @@
 (group? first [(1 + 1)])
 (not group? 1)
 ; minimum
-(group! = kind of first [()])
+(group! = type of first [()])
 ; alternative literal form
 (strict-equal? first [()] first compose [(make group! 1)])
 (strict-equal? first [()] make group! 0)

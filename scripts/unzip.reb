@@ -238,7 +238,7 @@ zip: func [
     iterate @source [
         let name: match [file! url!] source.1 else [
             fail [
-                {ZIP dialect expected FILE! or URL!, not} mold kind of source.1
+                "ZIP dialect expected FILE! or URL!, not" mold type of source.1
             ]
         ]
 

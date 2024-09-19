@@ -1,7 +1,7 @@
 ; datatypes/block.r
 (block? [1])
 (not block? 1)
-(block! = kind of [1])
+(block! = type of [1])
 
 ; minimum
 (block? [])

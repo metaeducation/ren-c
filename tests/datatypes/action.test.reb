@@ -3,8 +3,8 @@
 (action? :abs)
 (frame? unrun :abs)
 (not frame? 1)
-(antiform! = kind of :abs)
-(frame! = kind of unrun :abs)
+(antiform! = type of :abs)
+(frame! = type of unrun :abs)
 
 ; frames are active
 [#1659

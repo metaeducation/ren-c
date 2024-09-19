@@ -510,7 +510,7 @@ ensure: redescribe [
             ;
             fail [
                 "ENSURE failed with argument of type"
-                    (mold reify try kind of :value) else ["VOID"]
+                    (mold reify try type of :value) else ["VOID"]
             ]
         ]
         :value
@@ -543,7 +543,7 @@ prohibit: redescribe [
             ;
             fail [
                 "PROHIBIT failed with argument of type"
-                    (mold reify try kind of :value) else ["NULL"]
+                    (mold reify try type of :value) else ["NULL"]
             ]
         ]
         :value

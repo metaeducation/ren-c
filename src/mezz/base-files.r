@@ -214,7 +214,7 @@ split-path: func [  ; /FILE used in bootstrap vs. multi-return
     if empty? directory [
         directory: null
     ] else [
-        directory: as kind of target directory
+        directory: as type of target directory
     ]
     if empty? filename [
         filename: null

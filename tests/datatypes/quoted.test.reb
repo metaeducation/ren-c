@@ -3,6 +3,18 @@
 ;
 ; SET and GET should see through escaping and work anyway
 
+; HEART is how you get the lower-level type out
+(
+    (quoted! = type of first ['''10])
+    (integer! = heart of first ['''10])
+
+    (quasiform! = type of first [~()~])
+    (group! = heart of first [~()~])
+
+    (quoted! = type of first ['~()~])
+    (group! = heart of first ['~()~])
+)
+
 (
     unset $a
     set noquote the '''''a <seta>
@@ -134,12 +146,12 @@
 
 ; low level "KIND"
 [
-    (quoted! = kind of the '_)
-    (quoted! = kind of the 'foo)
+    (quoted! = type of the '_)
+    (quoted! = type of the 'foo)
 ]
 
-(quoted! = kind of the 'foo)
-(quoted! = kind of the ''[a b c])
+(quoted! = type of the 'foo)
+(quoted! = type of the ''[a b c])
 
 
 ; REQUOTE is a reframing action that removes quoting levels and then puts
@@ -252,7 +264,7 @@
         if e1 [e1.line: null]  ; ignore line difference (file should be same)
         if e2 [e2.line: null]
         if :e1 != :e2 [
-            print mold kind of get/any $item
+            print mold type of get/any $item
             print mold e1
             print mold e2
             fail "no error parity"

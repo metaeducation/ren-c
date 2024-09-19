@@ -11,8 +11,8 @@
 ;     == [a b c 3 7]
 ;
 
-(get-block! = kind of first [:[a b c]])
-(get-tuple! = kind of first [:[a b c].d])
+(get-block! = type of first [:[a b c]])
+(get-tuple! = type of first [:[a b c].d])
 
 (
     a: 10 b: 20

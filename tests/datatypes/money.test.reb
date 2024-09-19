@@ -1,7 +1,7 @@
 ; datatypes/money.r
 (money? $0.0)
 (not money? 0)
-(money! = kind of $0.0)
+(money! = type of $0.0)
 (money? $1.0)
 (money? -$1.0)
 (money? $1.5)

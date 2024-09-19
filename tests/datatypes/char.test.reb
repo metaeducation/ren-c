@@ -1,5 +1,5 @@
 ; datatypes/char.r
-(issue! = kind of #"a")
+(issue! = type of #"a")
 
 (char? #"a")
 (char? #a)

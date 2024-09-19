@@ -2,8 +2,8 @@
 (logic? okay)
 (logic? null)
 (not logic? 1)
-(antiform! = try kind of okay)
-(null = try kind of null)
+(antiform! = try type of okay)
+(null = try type of null)
 
 ((on? 'on) = true? 'true)
 ((on? 'off) = true? 'false)

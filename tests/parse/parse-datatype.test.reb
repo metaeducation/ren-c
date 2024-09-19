@@ -115,11 +115,10 @@
     ~parse-mismatch~ !! (parse to binary! "[" [blank!])
 ]
 
-; QUOTED! needs to be recognized (KIND OF VALUE and TYPE OF VALUE are currently
-; different, and this had caused a problem)
+; QUOTED! needs to be recognized
 [
     ((the 'x) == parse ['x] [quoted!])
-    ((the '[]) == parse ['_ '() '[]] [repeat 3 quoted!])
+    ((the '[]) == parse ['''_ ''() '[]] [repeat 3 quoted!])
 ]
 
 [https://github.com/red/red/issues/4863

@@ -1,7 +1,7 @@
 ; datatypes/set-word.r
 (set-word? first [a:])
 (not set-word? 1)
-(set-word! = kind of first [a:])
+(set-word! = type of first [a:])
 ; set-word is active
 (
     a: :abs

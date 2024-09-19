@@ -280,7 +280,7 @@ load: func [
             return pack [(decode type data) header]
         ]
 
-        fail ["No" type "LOADer found for" kind of source]
+        fail ["No" type "LOADer found for" type of source]
     ]
 
     ensure [text! binary!] data
@@ -521,7 +521,7 @@ import*: func [
         dir: as text! source
         let [before file]: find-last dir slash
         assert [before]
-        dir: as (kind of source) copy/part dir file
+        dir: as (type of source) copy/part dir file
     ]
 
     if url? source [
@@ -695,7 +695,7 @@ export*: func [
             (match types val) else [
                 fail [
                     {EXPORT expected} word {to be in} ^types
-                    {but it was} (mold kind of val) else ["null"]
+                    {but it was} (mold type of val) else ["null"]
                 ]
             ]
             items: next items

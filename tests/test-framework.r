@@ -107,7 +107,7 @@ run-single-test: func [
         (elide result: unmeta result)
 
         <default> [
-            spaced ["was" (mold kind of :result) ", not true or false"]
+            spaced ["was" (mold type of :result) ", not true or false"]
         ]
     ] then message -> [
         test-failures: me + 1

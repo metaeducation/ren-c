@@ -1,7 +1,7 @@
 ; datatypes/object.r
 (object? make object! [x: 1])
 (not object? 1)
-(object! = kind of make object! [x: 1])
+(object! = type of make object! [x: 1])
 ; minimum
 (object? make object! [])
 ; local words

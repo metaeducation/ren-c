@@ -258,7 +258,11 @@ Bounce Reflect_Core(Level* level_)
     }
 
     switch (id) {
-      case SYM_KIND:
+      case SYM_HEART:
+        if (Is_Nulled(v))
+            return RAISE(Error_Type_Of_Null_Raw());  // caller can TRY if meant
+        return Init_Builtin_Datatype(OUT, Cell_Heart(v));
+
       case SYM_TYPE:  // currently synonym for KIND, may change
         if (Is_Nulled(v))
             return RAISE(Error_Type_Of_Null_Raw());  // caller can TRY if meant

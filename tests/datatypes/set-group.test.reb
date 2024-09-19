@@ -14,8 +14,8 @@
 ; actions with the right hand side have been axed.
 
 
-(set-group! = kind of first [(a b c):])
-(set-tuple! = kind of first [a.(b c d):])
+(set-group! = type of first [(a b c):])
+(set-tuple! = type of first [a.(b c d):])
 
 (
     m: <before>

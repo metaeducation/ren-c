@@ -22,7 +22,7 @@
     let case_REWORD: case
     case: get $lib/case
 
-    let out: make (kind of source) length of source
+    let out: make (type of source) length of source
 
     let prefix: void  ; initialize with no-op rules
     let suffix: void

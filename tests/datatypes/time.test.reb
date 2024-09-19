@@ -1,7 +1,7 @@
 ; datatypes/time.r
 (time? 0:00)
 (not time? 1)
-(time! = kind of 0:00)
+(time! = type of 0:00)
 (0:0:10 = make time! 10)
 (0:0:10 = to time! 10)
 (error? trap [to time! "a"])

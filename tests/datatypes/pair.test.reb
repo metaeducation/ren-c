@@ -1,7 +1,7 @@
 ; datatypes/pair.r
 (pair? 1x2)
 (not pair? 1)
-(pair! = kind of 1x2)
+(pair! = type of 1x2)
 (1x1 = make pair! 1)
 (1x2 = make pair! [1 2])
 (1x1 = to pair! 1)

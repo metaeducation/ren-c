@@ -1,7 +1,7 @@
 ; datatypes/decimal.r
 (decimal? 0.0)
 (not decimal? 0)
-(decimal! = kind of 0.0)
+(decimal! = type of 0.0)
 (decimal? 1.0)
 (decimal? -1.0)
 (decimal? 1.5)

@@ -94,12 +94,12 @@ join: func [
         return copy base
     ]
 
-    let kind
+    let type
     if type-block? base [
         if not block? value [
             fail "JOIN with base as type only takes BLOCK! arguments"
         ]
-        kind: base
+        type: base
         if (any-sequence? first value) or (any-list? first value) [
             base: reduce [spread as block! first value]
             value: next value
@@ -108,10 +108,10 @@ join: func [
         ]
         set/any $value spread value  ; act like a splice
     ] else [
-        kind: kind of base
+        type: type of base
     ]
 
-    if kind = binary! [
+    if type = binary! [
         return as binary! append (to binary! base) :value
     ]
 
@@ -119,24 +119,24 @@ join: func [
     ; the append of two slashes in a row.  That is done by the MAKE-FILE code,
     ; and should be reviewed if it belongs here too.
     ;
-    if find/case reduce [url! issue! text! file! email! tag!] kind [
-        return as (kind of base) append (to text! base) :value
+    if find/case reduce [url! issue! text! file! email! tag!] type [
+        return as type append (to text! base) :value
     ]
 
     if find/case reduce [
         block! get-block! set-block! the-block! meta-block!
         group! get-group! set-group! the-group! meta-group!
-    ] kind [
+    ] type [
         return append (copy base) :value
     ]
 
     let sep
-    if find/case reduce [path! the-path! meta-path! type-path!] kind [
+    if find/case reduce [path! the-path! meta-path! type-path!] type [
         sep: '/
     ] else [
         assert [find/case reduce [
             tuple! get-tuple! set-tuple! the-tuple! meta-tuple! type-tuple!
-        ] kind]
+        ] type]
         sep: '.
     ]
 
@@ -192,7 +192,7 @@ join: func [
         ]
     ]
 
-    return as kind base
+    return as type base
 ]
 
 
@@ -246,7 +246,7 @@ trim: func [
         if any [head_TRIM tail_TRIM auto lines all_TRIM with] [
             fail 'core/bad-refines
         ]
-        trimmed: make (kind of series) collect [
+        trimmed: make (type of series) collect [
             for-each [key val] series [
                 if not blank? :val [keep key]
             ]

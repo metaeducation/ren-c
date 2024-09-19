@@ -141,7 +141,7 @@ export to-c-name: func [
     if empty? string [
         fail [
             "empty identifier produced by to-c-name for"
-            (mold value) "of kind" (mold kind of value)
+            (mold value) "of type" (mold type of value)
         ]
     ]
 

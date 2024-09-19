@@ -1,7 +1,7 @@
 ; datatypes/file.r
 (file? %myscript.r)
 (not file? 1)
-(file! = kind of %myscript.r)
+(file! = type of %myscript.r)
 ; minimum
 (file? %"")
 (%"" == make file! "")

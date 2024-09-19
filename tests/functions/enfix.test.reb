@@ -1,6 +1,6 @@
 ; %enfix.test.reb
 
-(antiform! = kind of :+)
+(antiform! = type of :+)
 (enfix? :+)
 
 (enfix? :+)

@@ -1,6 +1,6 @@
 ; The META-GROUP! type is new and needs testing.
 
-(meta-group! = kind of '^(a b c))
+(meta-group! = type of '^(a b c))
 
 ; nihils don't vanish in ordinary EVAL operations (just special constructs which
 ; choose to interpret them as vanishing).  But they are invalid as parameters

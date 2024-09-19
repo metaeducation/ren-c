@@ -117,7 +117,7 @@
             group! meta-group!
         ])
     ][
-        mtype: select/skip mapping (kind of get/any $value) 2
+        mtype: select/skip mapping (type of get/any $value) 2
         if mtype [
             value: to mtype collect [
                 count-up 'index (length of value) [

@@ -1,6 +1,6 @@
 (tag? <tag>)
 (not tag? 1)
-(tag! = kind of <tag>)
+(tag! = type of <tag>)
 
 (tag? make tag! "")
 (strict-equal? make tag! "" make tag! 0)

@@ -600,7 +600,7 @@ export configure-platform: func [
         hint: to tuple! reduce [0 system.version.4 system.version.5]
     ]
 
-    let version: switch kind of hint [  ; no switch/type in bootstrap
+    let version: switch type of hint [  ; no switch/type in bootstrap
         text! [load-value hint]
         tuple! [hint]
         fail

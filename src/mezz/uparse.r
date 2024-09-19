@@ -1600,8 +1600,8 @@ default-combinators: make map! reduce [
             r: :[r]  ; enable 0-arity combinators [4]
         ]
 
-        if not comb: select state.combinators kind of r [
-            fail ["Unhandled type in GET-GROUP! combinator:" mold kind of r]
+        if not comb: select state.combinators type of r [
+            fail ["Unhandled type in GET-GROUP! combinator:" mold type of r]
         ]
 
         return [@ remainder pending]: run comb state input r  ; [5]
@@ -2137,7 +2137,7 @@ default-combinators: make map! reduce [
     ][
         lookup': meta get value
         ensure [quoted? quasi?] lookup'  ; quasi means antiform [2]
-        comb: (state.combinators).(kind of lookup')
+        comb: (state.combinators).(type of lookup')
         return [@ remainder pending]: run comb state input lookup'
     ]
 
@@ -2151,7 +2151,7 @@ default-combinators: make map! reduce [
     ][
         lookup': meta get value
         ensure [quoted? quasi?] lookup'  ; quasi means antiform [2]
-        comb: (state.combinators).(kind of lookup')
+        comb: (state.combinators).(type of lookup')
         return [@ remainder pending]: run comb state input lookup'
     ]
 
@@ -2168,7 +2168,7 @@ default-combinators: make map! reduce [
         ]
 
         ensure [quoted? quasi?] result'  ; quasi means antiform [2]
-        comb: runs state.combinators.(kind of result')
+        comb: runs state.combinators.(type of result')
         [^result' remainder subpending]: comb state remainder result'
             except e -> [
                 return raise e
@@ -2506,8 +2506,8 @@ default-combinators: make map! reduce [
             ]
         ]
 
-        if not comb: select state.combinators kind of r [
-            fail ["Unhandled type in WORD! combinator:" mold kind of r]
+        if not comb: select state.combinators type of r [
+            fail ["Unhandled type in WORD! combinator:" mold type of r]
         ]
 
         ; !!! We don't need to call COMBINATORIZE because we can't handle
@@ -3076,8 +3076,8 @@ parsify: func [
         ; subvert keywords if SEEK were universally adopted.
     ]
 
-    if not comb: try state.combinators.(kind of r) [  ; datatype dispatch [6]
-        fail ["Unhandled type in PARSIFY:" mold kind of r "-" mold r]
+    if not comb: try state.combinators.(type of r) [  ; datatype dispatch [6]
+        fail ["Unhandled type in PARSIFY:" mold type of r "-" mold r]
     ]
 
     return combinatorize/value comb rules state r

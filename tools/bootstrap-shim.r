@@ -291,15 +291,6 @@ split-path: func3 [] [
 set '~done~ does [~]
 
 
-; Things like INTEGER! are now type constraints, not to be confused with
-; "cell kinds" like &integer.  SWITCH/TYPE does not exist in the bootstrap
-; so one must use the more limited `switch kind of` pattern.
-;
-of: enfix adapt get $of [
-    if property = 'type [fail "Use KIND OF not type of"]
-    if property = 'kind [property: 'type]
-]
-
 === "FAKE UP QUASIFORM! AND THE-WORD! TYPES" ===
 
 ; In the case of the iteration functions, they take ISSUE! (a WORD! type in
@@ -368,7 +359,7 @@ set '^break does [does [:break]]
 set '^continue does [does [:continue]]
 
 quote: func3 [x [~null~ any-value!]] [  ; see the more general UNEVAL
-    switch kind of x [
+    switch type of x [
         word! [to lit-word! x]  ; to lit-word! not legal in new EXE
         path! [to lit-path! x]  ; to lit-path! not legal in new EXE
 
@@ -811,7 +802,7 @@ mold: adapt get $lib/mold [  ; update so MOLD SPREAD works
 
 noquote: func3 [x [~null~ any-value!]] [
     assert [not action? get $x]
-    switch kind of x [
+    switch type of x [
         lit-word! [return to word! x]
         lit-path! [return to path! x]
     ]

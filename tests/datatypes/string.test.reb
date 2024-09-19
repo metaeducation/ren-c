@@ -1,7 +1,7 @@
 ; datatypes/string.r
 (text? "ahoj")
 (not text? 1)
-(text! = kind of "ahoj")
+(text! = type of "ahoj")
 ; minimum
 (text? "")
 ; alternative literal form

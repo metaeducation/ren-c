@@ -1,7 +1,7 @@
 ; datatypes/function.r
 (action? does ["OK"])
 (not frame? 1)
-(frame! = kind of unrun does ["OK"])
+(frame! = type of unrun does ["OK"])
 ; minimum
 (frame? unrun does [])
 

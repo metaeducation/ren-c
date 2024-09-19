@@ -4,7 +4,7 @@
 (path? '25/Sep/2006)  ; This was a DATE in R3-Alpha, but now it's a PATH!
 
 (not date? 1)
-(date! = kind of 25-Sep-2006)
+(date! = type of 25-Sep-2006)
 
 ; alternative formats
 (25-Sep-2006 = 25-9-2006)

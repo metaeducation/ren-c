@@ -1,7 +1,7 @@
 ; datatypes/url.r
 (url? http://www.fm.tul.cz/~ladislav/rebol)
 (not url? 1)
-(url! = kind of http://www.fm.tul.cz/~ladislav/rebol)
+(url! = type of http://www.fm.tul.cz/~ladislav/rebol)
 ; minimum; alternative literal form
 (url? make url! "")
 (strict-equal? make url! "" make url! 0)

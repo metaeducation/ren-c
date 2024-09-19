@@ -247,7 +247,7 @@ help: func [
             if not free? topic [keep mold topic]
             keep "is"
             if free? topic [keep "a *freed*"]
-            keep any [mold kind of topic, "VOID"]
+            keep any [mold type of topic, "VOID"]
         ]
         return ~
     ]
@@ -303,7 +303,7 @@ help: func [
         print collect [
             keep uppercase mold topic
             keep "is"
-            keep an any [mold kind of value, "VOID"]
+            keep an any [mold maybe type of value, "NULL"]
             if free? value [
                 keep "that has been FREEd"
             ] else [
@@ -453,7 +453,7 @@ source: func [
         ]
         not frame? (unrun :f) [
             print [
-                name "is" an any [mold kind of :f, "VOID"]
+                name "is" an any [mold maybe type of :f, "NULL"]
                 "and not a FRAME!"
             ]
         ]

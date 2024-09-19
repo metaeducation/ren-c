@@ -1,7 +1,7 @@
 ; datatypes/bitset.r
 (bitset? make bitset! "a")
 (not bitset? 1)
-(bitset! = kind of make bitset! "a")
+(bitset! = type of make bitset! "a")
 
 ; TS crash
 (bitset? charset ensure block! transcode {#"^(A0)"})

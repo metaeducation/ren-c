@@ -1,7 +1,7 @@
 ; datatypes/word.r
 (word? 'a)
 (not word? 1)
-(word! = kind of 'a)
+(word! = type of 'a)
 ; literal form
 (word? first [a])
 ; words are active; actions are word-active
@@ -88,7 +88,7 @@
     :a-value == a-value
 )
 ; natives are word-active
-(frame! == kind of unrun :reduce)
+(frame! == type of unrun :reduce)
 (:blank == blank)
 ; library test?
 (
