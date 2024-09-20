@@ -62,11 +62,11 @@ dump: func [
             ]
 
             word! [
-                print [to set-word! item, val-to-text get/any item]
+                print [@(to set-word! item) val-to-text get/any item]
             ]
 
             tuple! [
-                print [to set-tuple! item, val-to-text reduce item]
+                print [@(to set-tuple! item) val-to-text reduce item]
             ]
 
             path! [

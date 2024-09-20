@@ -82,296 +82,89 @@ browse: func [
     print "Browse needs redefining"
 ]
 
-help: func [
-    "Prints information about words and values (if no args, general help)."
 
+print-general-help: func [
     return: [~]
-    @topic [<end> element?]
-        "WORD! whose value to explain, or other HELP target (try HELP HELP)"
-    /doc "Open web browser to related documentation."
 ][
-    if null? topic [
-        ;
-        ; Was just `>> help` or `eval [help]` or similar.
-        ; Print out generic help message.
-        ;
-        print trim/auto copy {
-            Use HELP to see built-in info:
+    print trim/auto copy {
+        You are in a Rebol terminal.  QUIT or Ctrl-C should let you exit.
 
-                help insert
+        Here are some basic commands:
 
-            To search within the system, use quotes:
+            about - see general product info
+            bugs - open GitHub issues website
+            changes - show changelog
+            chat - open GitHub developer forum
+            help - help on functions and values
+            install - install (when applicable)
+            license - show user license
+            topics - open help topics website
+            upgrade - check for newer versions
+            usage - program cmd line options
 
-                help "insert"
+        Generally useful commands:
 
-            To browse online topics:
+            docs - open browser to web documentation
+            dump - display a variable and its value
+            probe - print a value (molded)
+            source - show source code of function
+            trace - trace evaluation steps
+            what - show a list of known functions
+            why - explain more about last error (via web)
 
-                help #compiling
+        Try HELP HELP for assistance on use of the help facility.
+    }
+    return ~
+]
 
-            To browse online documentation:
 
-                help/doc insert
-
-            To view words and values of a context or object:
-
-                help lib    - the runtime library
-                help system.contexts.user   - your user context
-                help system - the system object
-                help system.options - special settings
-
-            To see all words of a specific datatype:
-
-                help object!
-                help type-block!
-
-            Other debug helpers:
-
-                docs - open browser to web documentation
-                dump - display a variable and its value
-                probe - print a value (molded)
-                source func - show source code of func
-                trace - trace evaluation steps
-                what - show a list of known functions
-                why - explain more about last error (via web)
-
-            Other information:
-
-                about - see general product info
-                bugs - open GitHub issues website
-                changes - show changelog
-                chat - open GitHub developer forum
-                install - install (when applicable)
-                license - show user license
-                topics - open help topics website
-                upgrade - check for newer versions
-                usage - program cmd line options
-        }
-        return ~
-    ]
-
-    ; HELP quotes, but someone might want to use an expression, e.g.
-    ; `help (...)`.  However, enfix functions which hard quote the left would
-    ; win over a soft-quoting non-enfix function that quotes to the right.
-    ; (It is generally discouraged to make hard-quoting left enfix functions,
-    ; but they exist...e.g. DEFAULT.)  To make sure HELP DEFAULT works, HELP
-    ; must hard quote and simulate its own soft quote semantics.
-    ;
-    if match [group! get-word! get-tuple!] topic [
-        topic: reeval topic else [
-            print "NULL is a non-valued state that cannot be put in lists"
-            return ~
-        ]
-    ]
-
-    ; !!! R3-Alpha permitted "multiple inheritance" in objects, in the sense
-    ; that it would blindly overwrite fields of one object with another, which
-    ; wreaked havoc on the semantics of functions in unrelated objects.  It
-    ; doesn't work easily with derived binding, and doesn't make a lot of
-    ; sense.  But it was used here to unify the lib and user contexts to
-    ; remove potential duplicates (even if not actually identical).  This
-    ; does that manually, review.
-    ;
-    let make-libuser: does [
-        let libuser: copy system.contexts.lib
-        for-each [key val] system.contexts.user [
-            if set? $val [
-               append libuser spread reduce [key ^val]
-            ]
-        ]
-        libuser
-    ]
-
-    let value
-    let enfixed
-    switch/type topic [
-        issue! [
-            ; HELP #TOPIC will browse r3n for the topic
-
-            browse join https://r3n.github.io/topics/ as text! topic
-            print newline
-            return ~
-        ]
-
-        text! [
-            ; HELP "TEXT" wildcard searches things w/"TEXT" in their name
-
-            if let types: summarize-obj/pattern make-libuser topic [
-                print "Found these related words:"
-                for-each 'line sort types [
-                    print line
-                ]
-            ] else [
-                print ["No information on" topic]
-            ]
-            return ~
-        ]
-
-        path! word! [
-            ; PATH! and WORD! fall through for help on what they look up to
-
-            all [
-                word? topic
-                null? binding of topic
-            ] then [
-                print [topic "is an unbound WORD!"]
-                return ~
-            ]
-
-            if '~attached~ = binding of topic [
-                print [topic "is ~attached~ to a context, but has no variable"]
-                return ~
-            ]
-
-            switch/type value: get/any topic [
-                void?! [
-                    print [topic "is void"]
-                ]
-                null?! [
-                    print [topic "is null"]
-                ]
-                nothing?! [
-                    print [topic "is not defined (e.g. is antiform blank)"]
-                ]
-            ] then [
-                return ~
-            ]
-            enfixed: (action? :value) and (enfix? :value)
-        ]
+help-action: func [
+    return: [~]
+    frame [<unrun> frame!]
+    /name [word! tuple! path!]
+][
+    name: default [label of frame]
+    if name [
+        name: uppercase form name
     ] else [
-        ; !!! There may be interesting meanings to apply to things like
-        ; `HELP 2`, which could be distinct from `HELP (1 + 1)`, or the
-        ; same, and could be distinct from `HELP :(1)` or `HELP :[1]` etc.
-        ; For the moment, it just tells you the type.
-
-        print collect [
-            if not free? topic [keep mold topic]
-            keep "is"
-            if free? topic [keep "a *freed*"]
-            keep any [mold type of topic, "VOID"]
-        ]
-        return ~
+        name: "(anonymous)"
     ]
-
-    ; Open the web page for it?
-    all [doc, match [action? type-block!] :value] then [
-        let item: form :topic
-        if action? get :topic [
-            ;
-            ; !!! The logic here repeats somewhat the same thing that is done
-            ; by TO-C-NAME for generating C identifiers.  It might be worth it
-            ; to standardize how symbols are textualized for C with what the
-            ; documentation uses (though C must use underscores, not hyphen)
-            ;
-            for-each [a b] [
-                "!" "-ex"
-                "?" "-q"
-                "*" "-mul"
-                "+" "-plu"
-                "/" "-div"
-                "=" "-eq"
-                "<" "-lt"
-                ">" "-gt"
-                "|" "-bar"
-            ][
-                replace/all item a b
-            ]
-
-            browse to url! compose [
-                https://github.com/gchiu/reboldocs/blob/master/ (item) .MD
-            ]
-        ] else [
-            remove item  ; it's a &type-word, so remove the &
-            browse to url! compose [
-                http://www.rebol.com/r3/docs/datatypes/ (item) .html
-            ]
-        ]
-    ]
-
-    if type-word? :value [
-        if instances: summarize-obj/pattern make-libuser value [
-            print ["Found these" (uppercase form topic) "words:"]
-            for-each 'line instances [
-                print line
-            ]
-        ] else [
-            print [topic {is a datatype}]
-        ]
-        return ~
-    ]
-
-    match [frame! action?] :value else [
-        print collect [
-            keep uppercase mold topic
-            keep "is"
-            keep an any [mold maybe type of value, "NULL"]
-            if free? value [
-                keep "that has been FREEd"
-            ] else [
-                keep "of value:"
-                if match [object! port!] value [
-                    keep newline
-                    for-each 'line summarize-obj value [
-                        keep line
-                        keep newline
-                    ]
-                ] else [
-                    keep mold value
-                ]
-            ]
-        ]
-        return ~
-    ]
-
-    ; The HELP mechanics for ACTION! are more complex in Ren-C due to the
-    ; existence of function composition tools like SPECIALIZE, CHAIN, ADAPT,
-    ; HIJACK, etc.  Rather than keep multiple copies of the help strings,
-    ; the relationships are maintained in ADJUNCT-OF information on the ACTION!
-    ; and are "dug through" in order to dynamically inherit the information.
-    ;
-    ; Code to do this evolved rather organically, as automatically generating
-    ; help for complex function derivations is a research project in its
-    ; own right.  So it tends to break--test it as much as possible.
 
     print "USAGE:"
 
     let args  ; required parameters
     let refinements  ; optional parameters (PARAMETERS OF puts at tail)
 
-    parse parameters of :value [
-        args: opt across some [
-            word! | meta-word! | get-word! | the-word! | &lit-word?
+    parse parameters of frame [
+        args: across opt some [
+            word! | meta-word! | the-word! | &quoted?  ; quoted too generic?
         ]
-        refinements: opt across some path!  ; as mentioned, these are at tail
+        refinements: across opt some path!  ; as mentioned, these are at tail
     ] except [
-        fail ["Unknown results in PARAMETERS OF:" mold parameters of :value]
+        fail ["Unknown results in PARAMETERS OF:" mold parameters of frame]
     ]
 
     ; Output exemplar calling string, e.g. LEFT + RIGHT or FOO A B C
-    ; !!! Should refinement args be shown for enfixed case??
     ;
-    all [enfixed, args] then [
-        print [_ _ _ _ args.1 (uppercase mold topic) form next args]
+    all [enfix? frame, not empty? args] then [
+        print [_ _ _ _ @args.1 name @(spread next args)]
     ] else [
-        print [
-            _ _ _ _ (uppercase mold topic)
-                maybe form maybe args, maybe form maybe refinements
-        ]
+        print [_ _ _ _ name @(spread args) @(spread refinements)]
     ]
 
-    let adjunct: adjunct-of :value
+    let adjunct: adjunct-of frame
 
     print newline
 
     print "DESCRIPTION:"
-    print [_ _ _ _ (select maybe adjunct 'description) else ["(undocumented)"]]
-    print [_ _ _ _ (uppercase mold topic) {is an ACTION!}]
+    print [_ _ _ _ (any [select maybe adjunct 'description, "(undocumented)"])]
 
     let print-args: [list /indent-words] -> [
         for-each 'key list [
-            let param: meta/lite select :value to-word noquote key
+            let param: meta/lite select frame to-word noquote key
             if param [param: my noquasi]
 
-            print [_ _ _ _ key (if param.spec [mold param.spec])]
+            print [_ _ _ _ @key @(maybe param.spec)]
             if param.text [
                 print [_ _ _ _ _ _ _ _ param.text]
             ]
@@ -382,7 +175,7 @@ help: func [
     ; that isn't intended for use as a definitional return is a return type.
     ; The concepts are still being fleshed out.
     ;
-    let return-param: meta/lite select :value 'return
+    let return-param: meta/lite select frame 'return
     if return-param [return-param: my noquasi]
 
     print newline
@@ -397,16 +190,235 @@ help: func [
         print [_ _ _ _ return-param.text]
     ]
 
-    if args [
+    if not empty? args [
         print newline
         print "ARGUMENTS:"
         print-args args
     ]
 
-    if refinements [
+    if not empty? refinements [
         print newline
         print "REFINEMENTS:"
         print-args/indent-words refinements
+    ]
+
+    return ~
+]
+
+
+help-value: func [
+    "Give non-dialected help for an atom with any datatype"
+
+    return: [~]
+    ^atom' [any-atom?]
+    /name [word! tuple! path!]
+][
+    if name [
+        name: uppercase form name
+    ]
+
+    if quasiform? atom' [
+        let heart: heart of atom'
+        let antitype: switch heart [  ; !!! should come from %types.r
+            blank! ["nothing"]
+            tag! ["tripwire"]
+            word! ["keyword"]
+            group! ["splice"]
+            frame! ["action"]
+            parameter! ["hole"]
+            block! ["pack"]
+            comma! ["barrier"]
+            error! ["raised"]
+            object! ["lazy"]
+
+            fail "Invalid Antiform Heart Found - Please Report"
+        ]
+        print [
+            (maybe name) "is" (an antitype) ["(antiform of" _ (mold heart) ")"]
+        ]
+        if free? atom' [
+            print "!!! contents no longer available, as it has been FREE'd !!!"
+            return ~
+        ]
+        if action? unmeta atom' [
+            help-action unmeta atom'
+            return ~
+        ]
+        let [molded truncated]: mold/limit atom' 2000  ; quasiform
+        print unspaced [molded (if truncated ["..."]) _ _ "; anti"]
+        return ~
+    ]
+
+    let value: unmeta atom'
+    atom': ~
+
+    print [maybe name "is an element of type" mold type of value]
+    if free? value [
+        print "!!! contents no longer available, as it has been FREE'd !!!"
+        return ~
+    ]
+    if match [object! port!] value [
+        for-each 'line summarize-obj value [
+            print line
+        ]
+        return ~
+    ]
+    let [molded truncated]: mold/limit value 2000
+    print unspaced [molded (if truncated ["..."])]
+    return ~
+]
+
+
+help: func [
+    {HELP is a dialected function.  If you want non-dialected help on any
+    particular value, then pass that value in a GROUP! to get some very
+    literal information back:
+
+        help ('insert)   ; will tell you that INSERT is a WORD!
+        help (10 + 20)   ; will tell you 30 is an INTEGER!
+
+        help-value 10 + 20  ; alternative way to get this information
+
+    Other usages have meaning dependent on the datatype.
+
+    [WORD! TUPLE! PATH!] - Give help on what the value looks up to:
+
+        help insert  ; describe argument types and return value of INSERT
+
+    [TEXT!] - Search help strings in system for the given text as substring:
+
+        help "insert"  ; will find INSERT, INSERT-ITEMS, DO-INSERT, etc.
+
+    [ISSUE!] - Browse online topics with the given tag:
+
+        help #compiling
+
+    [TYPE-WORD!] - List all data instances of the type:
+
+        help integer!  ; shows all the integer variables in the system
+
+    [BLOCK!, etc.] - TBD.  Can you think of a good meaning for other types?
+
+    To browse online documentation:
+
+        help/web insert
+
+    To view words and values of a context or object:
+
+        help lib    - the runtime library
+        help system.contexts.user   - your user context
+        help system - the system object
+        help system.options - special settings
+
+    To see all words of a specific datatype:
+
+        help object!
+        help type-block!}
+
+    return: [~]
+    @topic "WORD! to explain, or other HELP target (if no args, general help)"
+        [<end> element?]
+    /web "Open web browser to related documentation."
+][
+    if null? topic [  ; just `>> help` or `eval [help]` or similar
+        print-general-help
+        return ~
+    ]
+
+    if web [
+        if not word? topic [
+            fail "HELP/WEB only works on WORD! at this time"
+        ]
+
+        let string: to text! topic
+        if "!" = last string [
+            browse to url! compose [
+                http://www.rebol.com/r3/docs/datatypes/ (string) .html
+            ]
+            return ~
+        ]
+
+        ; !!! The logic here repeats somewhat the same thing that is done
+        ; by TO-C-NAME for generating C identifiers.  It might be worth it
+        ; to standardize how symbols are textualized for C with what the
+        ; documentation uses (though C must use underscores, not hyphen)
+        ;
+        for-each [a b] [
+            "!" "-ex"
+            "?" "-q"
+            "*" "-mul"
+            "+" "-plu"
+            "/" "-div"
+            "=" "-eq"
+            "<" "-lt"
+            ">" "-gt"
+            "|" "-bar"
+        ][
+            replace/all item a b
+        ]
+
+        browse to url! compose [
+            https://github.com/gchiu/reboldocs/blob/master/ (item) .MD
+        ]
+        return ~
+    ]
+
+    let make-libuser: does [  ; hacky unified context for searching
+        let libuser: copy system.contexts.lib
+        for-each [key val] system.contexts.user [
+            if not vacant? $val [
+               append libuser spread reduce [key ^val]
+            ]
+        ]
+        libuser
+    ]
+
+    switch/type topic [
+        group! [
+            help-value eval/undecayed topic
+        ]
+
+        word! tuple! path! [
+            let value: get/any topic except [
+                print form e  ; not bound, etc.
+                return ~
+            ]
+            if action? :value [
+                help-action/name :value topic  ; bypass print name
+            ] else [
+                help-value/name value topic  ; prints name (should it?)
+            ]
+        ]
+
+        issue! [  ; look up hashtag on web
+            browse join https://r3n.github.io/topics/ as text! topic
+            print newline
+        ]
+
+        text! [  ; substring search for help
+            if let types: summarize-obj/pattern make-libuser topic [
+                print "Found these related words:"
+                for-each 'line sort types [
+                    print line
+                ]
+            ] else [
+                print ["No information on" topic]
+            ]
+        ]
+
+        type-word! [
+            if instances: summarize-obj/pattern make-libuser value [
+                print ["Found these" (uppercase form topic) "words:"]
+                for-each 'line instances [
+                    print line
+                ]
+            ] else [
+                print [no instances of {is a datatype}]
+            ]
+        ]
+    ] else [
+        print "No dialected meaning for" type of topic "in HELP (yet!)"
+        print "For info on what it evaluates to, try" ["HELP (" topic ")"]
     ]
 
     return ~
