@@ -1431,7 +1431,7 @@ Bounce Unchecked_Dispatcher(Level* L)
     Cell* body = Array_Head(details);
     assert(Is_Block(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
-    if (Do_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
+    if (Eval_Array_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
         return BOUNCE_THROWN;
 
     return L->out;
@@ -1451,7 +1451,7 @@ Bounce Eraser_Dispatcher(Level* L)
     Cell* body = Array_Head(details);
     assert(Is_Block(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
-    if (Do_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
+    if (Eval_Array_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
         return BOUNCE_THROWN;
 
     return Init_Nothing(L->out);
@@ -1473,7 +1473,7 @@ Bounce Returner_Dispatcher(Level* L)
     Cell* body = Array_Head(details);
     assert(Is_Block(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
-    if (Do_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
+    if (Eval_Array_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
         return BOUNCE_THROWN;
 
     Value* typeset = ACT_PARAM(phase, ACT_NUM_PARAMS(phase));
@@ -1511,7 +1511,7 @@ Bounce Elider_Dispatcher(Level* L)
     DECLARE_VALUE (dummy);
     SET_END(dummy);
 
-    if (Do_At_Throws(dummy, Cell_Array(body), 0, SPC(L->varlist))) {
+    if (Eval_Array_At_Throws(dummy, Cell_Array(body), 0, SPC(L->varlist))) {
         Copy_Cell(L->out, dummy); // can't return a local variable
         return BOUNCE_THROWN;
     }
@@ -1586,7 +1586,7 @@ Bounce Adapter_Dispatcher(Level* L)
     // spare cell but can't as Fetch_Next() uses it.
 
     DECLARE_VALUE (dummy);
-    if (Do_At_Throws(
+    if (Eval_Array_At_Throws(
         dummy,
         Cell_Array(prelude),
         VAL_INDEX(prelude),

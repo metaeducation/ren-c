@@ -527,7 +527,7 @@ bool Make_Error_Object_Throws(
         Bind_Values_Deep(Cell_List_At(arg), error);
 
         DECLARE_VALUE (evaluated);
-        if (Do_At_Throws(evaluated, arg)) {
+        if (Eval_List_At_Throws(evaluated, arg)) {
             Copy_Cell(out, evaluated);
             return true;
         }

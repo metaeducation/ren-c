@@ -101,7 +101,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             fail ("GROUP! in PATH! used with GET or SET (use REDUCE/EVAL)");
 
         Specifier* derived = Derive_Specifier(pvs->specifier, pvs->value);
-        if (Do_At_Throws(
+        if (Eval_Array_At_Throws(
             PVS_PICKER(pvs),
             Cell_Array(pvs->value),
             VAL_INDEX(pvs->value),
@@ -377,7 +377,7 @@ bool Eval_Path_Throws_Core(
             fail ("GROUP! in PATH! used with GET or SET (use REDUCE/EVAL)");
 
         Specifier* derived = Derive_Specifier(pvs->specifier, pvs->value);
-        if (Do_At_Throws(
+        if (Eval_Array_At_Throws(
             pvs->out,
             Cell_Array(pvs->value),
             VAL_INDEX(pvs->value),

@@ -434,7 +434,7 @@ bool Specialize_Action_Throws(
         // Run block and ignore result (unless it is thrown)
         //
         Push_GC_Guard(exemplar);
-        bool threw = Do_At_Throws(out, opt_def);
+        bool threw = Eval_List_At_Throws(out, opt_def);
         Drop_GC_Guard(exemplar);
 
         if (threw) {
@@ -935,7 +935,7 @@ Bounce Block_Dispatcher(Level* L)
 
     if (IS_SPECIFIC(block)) {
         if (LVL_BINDING(L) == UNBOUND) {
-            if (Do_At_Throws(L->out, KNOWN(block)))
+            if (Eval_List_At_Throws(L->out, KNOWN(block)))
                 return BOUNCE_THROWN;
             return L->out;
         }
@@ -983,7 +983,7 @@ Bounce Block_Dispatcher(Level* L)
 
     assert(IS_RELATIVE(block));
 
-    if (Do_At_Throws(
+    if (Eval_Array_At_Throws(
         L->out,
         Cell_Array(block),
         VAL_INDEX(block),

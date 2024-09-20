@@ -466,7 +466,7 @@ Bounce Process_Group_For_Parse(
     assert(Is_Group(group));
     Specifier* derived = Derive_Specifier(P_RULE_SPECIFIER, group);
 
-    if (Do_At_Throws(cell, Cell_Array(group), VAL_INDEX(group), derived))
+    if (Eval_Array_At_Throws(cell, Cell_Array(group), VAL_INDEX(group), derived))
         return BOUNCE_THROWN;
 
     // !!! The input is not locked from modification by agents other than the
@@ -1710,7 +1710,7 @@ DECLARE_NATIVE(subparse)
 
                         // might GC
                         DECLARE_VALUE (condition);
-                        if (Do_At_Throws(
+                        if (Eval_Array_At_Throws(
                             condition,
                             Cell_Array(P_RULE),
                             VAL_INDEX(P_RULE),
@@ -2338,7 +2338,7 @@ DECLARE_NATIVE(subparse)
                             P_RULE_SPECIFIER,
                             rule
                         );
-                        if (Do_At_Throws(
+                        if (Eval_Array_At_Throws(
                             evaluated,
                             Cell_Array(rule),
                             VAL_INDEX(rule),

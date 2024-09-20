@@ -35,7 +35,7 @@
 //
 
 
-INLINE bool Do_At_Throws(
+INLINE bool Eval_Array_At_Throws(
     Value* out,
     Array* array,
     REBLEN index,
@@ -52,17 +52,17 @@ INLINE bool Do_At_Throws(
 }
 
 
-INLINE bool Do_At_Throws(
+INLINE bool Eval_List_At_Throws(
     Value* out,
-    const Value* any_array // Note: can be same pointer as `out`
+    const Value* any_list  // Note: can be same pointer as `out`
 ){
-    assert(out != any_array); // Was legal at one time, but no longer
+    assert(out != any_list);  // Was legal at one time, but no longer
 
-    return Do_At_Throws(
+    return Eval_Array_At_Throws(
         out,
-        Cell_Array(any_array),
-        VAL_INDEX(any_array),
-        VAL_SPECIFIER(any_array)
+        Cell_Array(any_list),
+        VAL_INDEX(any_list),
+        VAL_SPECIFIER(any_list)
     );
 }
 
@@ -133,7 +133,7 @@ INLINE bool Do_Branch_Core_Throws(
     assert(branch != out and condition != out);
 
     if (Is_Block(branch))
-        return Do_At_Throws(out, branch);
+        return Eval_List_At_Throws(out, branch);
 
     assert(Is_Action(branch));
     return Apply_Only_Throws(

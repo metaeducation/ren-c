@@ -1015,7 +1015,7 @@ DECLARE_NATIVE(construct)
             Bind_Values_Deep(Cell_List_At(body), context);
 
             DECLARE_VALUE (temp);
-            if (Do_At_Throws(temp, body)) {
+            if (Eval_List_At_Throws(temp, body)) {
                 Copy_Cell(OUT, temp);
                 return BOUNCE_THROWN; // evaluation result ignored unless thrown
             }

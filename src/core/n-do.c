@@ -807,7 +807,7 @@ DECLARE_NATIVE(applique)
     //
     Push_GC_Guard(exemplar);
     DECLARE_VALUE (temp);
-    bool def_threw = Do_At_Throws(temp, ARG(def));
+    bool def_threw = Eval_List_At_Throws(temp, ARG(def));
     Drop_GC_Guard(exemplar);
 
     assert(CTX_KEYS_HEAD(exemplar) == ACT_PARAMS_HEAD(VAL_ACTION(applicand)));

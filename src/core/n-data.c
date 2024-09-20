@@ -272,7 +272,7 @@ DECLARE_NATIVE(use)
         ARG(vars) // similar to the "spec" of a loop: WORD!/LIT-WORD!/BLOCK!
     );
 
-    if (Do_At_Throws(OUT, ARG(body)))
+    if (Eval_List_At_Throws(OUT, ARG(body)))
         return BOUNCE_THROWN;
 
     return OUT;

@@ -236,7 +236,7 @@ bool Wait_Ports_Throws(
             fail ("system/ports/pump must be a block");
 
         DECLARE_VALUE (result);
-        if (Do_At_Throws(result, pump))
+        if (Eval_List_At_Throws(result, pump))
             fail (Error_No_Catch_For_Throw(result));
 
         if (timeout != ALL_BITS) {

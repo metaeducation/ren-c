@@ -205,7 +205,7 @@ static void Startup_Base(Array* boot_base)
     Bind_Values_Deep(head, Lib_Context);
 
     DECLARE_VALUE (result);
-    if (Do_At_Throws(result, boot_base, 0, SPECIFIED))
+    if (Eval_Array_At_Throws(result, boot_base, 0, SPECIFIED))
         panic (result);
 
     if (not Is_Blank(result))
@@ -240,7 +240,7 @@ static void Startup_Sys(Array* boot_sys) {
     Bind_Values_Deep(head, Sys_Context);
 
     DECLARE_VALUE (result);
-    if (Do_At_Throws(result, boot_sys, 0, SPECIFIED))
+    if (Eval_Array_At_Throws(result, boot_sys, 0, SPECIFIED))
         panic (result);
 
     if (not Is_Blank(result))
@@ -755,7 +755,7 @@ static Array* Startup_Generics(const Value* boot_generics)
     Bind_Values_Deep(head, Lib_Context);
 
     DECLARE_VALUE (result);
-    if (Do_At_Throws(result, boot_generics))
+    if (Eval_List_At_Throws(result, boot_generics))
         panic (result);
 
     if (not Is_Blank(result))
@@ -984,7 +984,7 @@ static void Init_System_Object(
     // Evaluate the block (will eval CONTEXTs within).  Expects void result.
     //
     DECLARE_VALUE (result);
-    if (Do_At_Throws(result, boot_sysobj_spec))
+    if (Eval_List_At_Throws(result, boot_sysobj_spec))
         panic (result);
     if (not Is_Blank(result))
         panic (result);

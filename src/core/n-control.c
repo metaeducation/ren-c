@@ -695,7 +695,7 @@ static Bounce Case_Choose_Core_May_Throw(
 
             Copy_Cell(block, OUT); // can't evaluate into ARG(block)
             if (Is_Block(block)) {
-                if (Do_At_Throws(OUT, block)) {
+                if (Eval_List_At_Throws(OUT, block)) {
                     Abort_Level(L);
                     Drop_GC_Guard(cell);
                     return BOUNCE_THROWN;
@@ -886,7 +886,7 @@ DECLARE_NATIVE(switch)
             Fetch_Next_In_Level(nullptr, L);
         }
 
-        if (Do_At_Throws( // it's a match, so run the BLOCK!
+        if (Eval_Array_At_Throws( // it's a match, so run the BLOCK!
             OUT,
             Cell_Array(L->value),
             VAL_INDEX(L->value),
@@ -1018,7 +1018,7 @@ DECLARE_NATIVE(catch)
     if (REF(any) and REF(name))
         fail (Error_Bad_Refines_Raw());
 
-    if (not Do_At_Throws(OUT, ARG(block))) {
+    if (not Eval_List_At_Throws(OUT, ARG(block))) {
         if (REF(result))
             rebElide(rebEval(NAT_VALUE(set)), ARG(uncaught), OUT);
 
