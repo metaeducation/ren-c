@@ -288,16 +288,23 @@ void MF_Issue(REB_MOLD *mo, const Cell* v, bool form)
 
     Append_Codepoint(mo->string, '#');
 
-    if (len == 0)
-        return;  // Just be `#`
+    if (len == 0) {
+        Append_Codepoint(mo->string, '"');
+        Append_Codepoint(mo->string, '"');
+        return;
+    }
+
+    bool no_quotes = true;
+    Codepoint c = Codepoint_At(cp);
+
+    if (len == 1 and c == ' ')
+        return;  // # is notationally a space character
 
     // !!! This should be smarter and share code with FILE! on whether
     // it's necessary to use double quotes or braces, and how escaping
     // should be done.  For now, just do a simple scan to get the gist
     // of what that logic *should* do.
 
-    bool no_quotes = true;
-    Codepoint c = Codepoint_At(cp);
     for (; c != '\0'; cp = Utf8_Next(&c, cp)) {
         if (
             c <= 32  // control codes up to 32 (space)

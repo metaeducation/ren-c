@@ -554,9 +554,9 @@ void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
 
         if (not form)
             New_Indented_Line(mo);
-        Mold_Value(mo, c_cast(Element*, key));
+        Mold_Element(mo, c_cast(Element*, key));
         Append_Codepoint(mo->string, ' ');
-        Mold_Value(mo, c_cast(Element*, key + 1));
+        Mold_Element(mo, c_cast(Element*, key + 1));
         if (form)
             Append_Codepoint(mo->string, '\n');
     }

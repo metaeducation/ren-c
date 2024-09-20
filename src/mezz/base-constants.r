@@ -29,8 +29,8 @@ lib: system.contexts.lib
 
 ; Char constants
 
-nul: NUL:  #"^(NULL)"
-space:     #" "
+nul: NUL:  #"^(NULL)" ; synonym for empty token, e.g. #""
+space:     #  ; more useful as space than as synonym for rarely-useful NUL
 sp: SP:    space
 backspace: #"^(BACK)"
 bs: BS:    backspace
@@ -51,18 +51,12 @@ null?!: &null?
 nothing?!: &nothing?
 void?!: &void?
 char?!: &char?
-blackhole?!: &blackhole?
+space?!: &space?
 splice?!: &splice?
 logic?!: &logic?
 action?!: &action?
 
 
-; A "blackhole" is a name for the usage of the NUL character in the sense of
-; "truthy emptiness".  e.g. `set # 10` will not error, while `set _ 10` will.
-; It was chosen for its looks, and since it also acts as the '\0' character it
-; feels a bit like "sending things to `/dev/null`".
-;
-blackhole: #
 void: ~void~
 
 

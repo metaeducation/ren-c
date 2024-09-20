@@ -614,7 +614,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
         Init_Any_Word(param_word, heart, KEY_SYMBOL(key));
         if (quoted)
             Quotify(param_word, 1);
-        Mold_Value(mo, param_word);
+        Mold_Element(mo, param_word);
     }
 
     Append_Ascii(mo->string, " => ");
@@ -625,7 +625,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
         if (Is_Cell_Poisoned(shared))
             Append_Ascii(mo->string, "[]");
         else if (pclass == PARAMCLASS_JUST or pclass == PARAMCLASS_THE)
-            Mold_Value(mo, shared); // full feed can be shown if hard quoted
+            Mold_Element(mo, shared); // full feed can be shown if hard quoted
         else
             Append_Ascii(mo->string, "[...]"); // can't look ahead
     }
@@ -637,7 +637,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
         }
         else if (pclass == PARAMCLASS_JUST or pclass == PARAMCLASS_THE) {
             Append_Ascii(mo->string, "[");
-            Mold_Value(mo, At_Feed(L->feed)); // one value shown if hard quoted
+            Mold_Element(mo, At_Feed(L->feed));  // 1 value shown if hard quote
             Append_Ascii(mo->string, " ...]");
         }
         else

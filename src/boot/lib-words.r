@@ -120,3 +120,8 @@ dummy6
 dummy7
 dummy8
 dummy9
+
+; usermode definitions in lib, want access from code
+;
+unspaced
+spaced

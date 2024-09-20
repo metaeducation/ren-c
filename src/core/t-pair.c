@@ -152,11 +152,11 @@ void Min_Max_Pair(
 //
 void MF_Pair(REB_MOLD *mo, const Cell* v, bool form)
 {
-    Mold_Or_Form_Value(mo, VAL_PAIR_X(v), form);
+    Mold_Or_Form_Element(mo, VAL_PAIR_X(v), form);
 
     Append_Codepoint(mo->string, 'x');
 
-    Mold_Or_Form_Value(mo, VAL_PAIR_Y(v), form);
+    Mold_Or_Form_Element(mo, VAL_PAIR_Y(v), form);
 }
 
 

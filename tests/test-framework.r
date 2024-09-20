@@ -65,7 +65,7 @@ run-single-test: func [
         (all [not result.id, expected-id = '???]) or (result.id = expected-id)
     ] then [
         successes: me + 1
-        log reduce [_ {"correct failure:"} _ quote quasi expected-id newline]
+        log reduce [_ {"correct failure:"} _ @(quasi expected-id) newline]
         return ~
     ]
 
@@ -79,7 +79,7 @@ run-single-test: func [
         ]
 
         expected-id [
-            spaced ["did not error, but expected:" mold quasi expected-id]
+            spaced ["did not error, but expected:" @(quasi expected-id)]
         ]
 
         nihil' = result [

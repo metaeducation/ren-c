@@ -179,9 +179,9 @@ host-script-pre-load: func [
     ; Print out the script info
     boot-print [
         (if yes? is-module ["Module:"] else ["Script:"])
-            reify select maybe hdr 'title
-            "Version:" reify select maybe hdr 'version
-            "Date:" reify select maybe hdr 'date
+            any [select maybe hdr 'title, "(anonymous)"]
+            "Version:" any [select maybe hdr 'version, "null"]
+            "Date:" any [select maybe hdr 'date, "null"]
     ]
 ]
 

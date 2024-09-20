@@ -157,7 +157,7 @@
     (
         res: ~
         all [
-            #{BABE} == parse bin [thru #{CAFE} one res: across to # to <end>]
+            #{BABE} == parse bin [thru #{CAFE} one res: across to NUL to <end>]
             res = #{BABE}
         ]
     )

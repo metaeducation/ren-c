@@ -42,7 +42,7 @@ DECLARE_NATIVE(form)
 
     Element* elem = cast(Element*, ARG(value));
 
-    return Init_Text(OUT, Copy_Form_Value(elem, 0));
+    return Init_Text(OUT, Copy_Form_Element(elem, 0));
 }
 
 
@@ -80,11 +80,11 @@ DECLARE_NATIVE(mold)
 
     if (Is_Splice(v)) {
         SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
-        QUOTE_BYTE(v) = NOQUOTE_1;  // !!! Should Mold_Value() take splices?
-        HEART_BYTE(v) = REB_BLOCK;  // !!! historical code for /ONLY was BLOCK!
+        bool form = false;
+        Mold_Or_Form_Cell_Ignore_Quotes(mo, v, form);
     }
-
-    Mold_Value(mo, cast(Element*, v));
+    else
+        Mold_Element(mo, cast(Element*, v));
 
     Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
     Set_Flex_Len(pack, 2);

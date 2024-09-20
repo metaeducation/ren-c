@@ -2756,19 +2756,19 @@ DECLARE_INTRINSIC(trash_q)
 
 
 //
-//  blackhole?: native/intrinsic [
+//  space?: native/intrinsic [
 //
-//  "Tells you if argument is a blackhole (#)"
+//  "Tells you if argument is a space character (#)"
 //
 //      return: [logic?]
-//      value
+//      value [any-value?]
 //  ]
 //
-DECLARE_INTRINSIC(blackhole_q)
+DECLARE_INTRINSIC(space_q)
 {
     UNUSED(phase);
 
-    Init_Logic(out, Is_Blackhole(arg));
+    Init_Logic(out, Is_Space(arg));
 }
 
 

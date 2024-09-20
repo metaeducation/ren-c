@@ -442,7 +442,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
             REBLEN remain = len;  // only want as many items as in the /PART
             const Element* item = Cell_List_Item_At(data);
             for (; remain != 0; --remain, ++item) {
-                Form_Value(mo, item);
+                Form_Element(mo, item);
                 if (REF(lines))
                     Append_Codepoint(mo->string, LF);
             }

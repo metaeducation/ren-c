@@ -320,7 +320,9 @@ const Byte Lower_Case[256] =
 //
 //  Scan_UTF8_Char_Escapable: C
 //
-// Scan a char, handling ^A, ^/, ^(null), ^(1234)
+// Scan a char, handling ^A, ^/, ^(1234)
+//
+// Note that ^(null) from historical Rebol is no longer supported.
 //
 // Returns the numeric value for char, or nullptr for errors.
 // 0 is a legal codepoint value which may be returned.
@@ -546,7 +548,7 @@ const Byte* Scan_Item_Push_Mold(
         if (c == '\0')
             break;  // End of stream
 
-        if ((opt_term == '\0') and IS_WHITE(c))
+        if ((opt_term == '\0') and Is_Codepoint_Whitespace(c))
             break;  // Unless terminator like '"' %"...", any whitespace ends
 
         if (c < ' ')
@@ -578,7 +580,7 @@ const Byte* Scan_Item_Push_Mold(
                 return nullptr;  // error if nothing follows ^
             if (not (bp = Scan_UTF8_Char_Escapable(&c, bp)))
                 return nullptr;
-            if (opt_term == '\0' and IS_WHITE(c))
+            if (opt_term == '\0' and Is_Codepoint_Whitespace(c))
                 break;
             --bp;
         }
@@ -1522,6 +1524,10 @@ static Token Maybe_Locate_Token_May_Push_Mold(
             if (*cp == '"') {  // CHAR #"C"
                 Codepoint dummy;
                 cp++;
+                if (*cp == '"') {  // #"" is NUL
+                    ss->end = cp + 1;
+                    return TOKEN_CHAR;
+                }
                 cp = Scan_UTF8_Char_Escapable(&dummy, cp);
                 if (cp and *cp == '"') {
                     ss->end = cp + 1;
@@ -2360,6 +2366,10 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_CHAR: {
         Codepoint uni;
         bp += 2;  // skip #", and subtract 1 from ep for "
+        if (bp + 1 == ep) {  // #"" is NUL
+            Init_Char_Unchecked(PUSH(), 0);
+            break;
+        }
         if (ep - 1 != Scan_UTF8_Char_Escapable(&uni, bp))
             return RAISE(Error_Syntax(ss, level->token));
 
@@ -3272,7 +3282,12 @@ const Byte* Scan_Issue(Cell* out, const Byte* cp, Size size)
     // !!! Review UTF-8 Safety, needs to use mold buffer the way TEXT! does
     // to scan the data.
     //
-    Init_Issue_Utf8(out, cast(Utf8(const*), cp), size, len);
+    if (size == 0) {  // plain # is space character, #"" is NUL character
+        assert(len == 0);
+        Init_Space(out);
+    }
+    else
+        Init_Issue_Utf8(out, cast(Utf8(const*), cp), size, len);
 
     return bp;
 }

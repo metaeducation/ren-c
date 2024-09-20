@@ -281,7 +281,7 @@ void Mold_Array_At(
 
         first_item = false;
 
-        Mold_Value(mo, item);
+        Mold_Element(mo, item);
 
         ++item;
         if (item == item_tail)
@@ -335,7 +335,7 @@ void Form_Array_At(
                     item = Ensure_Element(wval);
             }
         }
-        Mold_Or_Form_Value(mo, item, wval == nullptr);
+        Mold_Or_Form_Element(mo, item, wval == nullptr);
         n++;
         if (GET_MOLD_FLAG(mo, MOLD_FLAG_LINES)) {
             Append_Codepoint(mo->string, LF);
@@ -387,11 +387,11 @@ void MF_Unhooked(REB_MOLD *mo, const Cell* v, bool form)
 
 
 //
-//  Mold_Or_Form_Cell: C
+//  Mold_Or_Form_Cell_Ignore_Quotes: C
 //
 // Variation which molds a cell, e.g. no quoting is considered.
 //
-void Mold_Or_Form_Cell(
+void Mold_Or_Form_Cell_Ignore_Quotes(
     REB_MOLD *mo,
     const Cell* cell,
     bool form
@@ -422,34 +422,32 @@ void Mold_Or_Form_Cell(
 
 
 //
-//  Mold_Or_Form_Value: C
+//  Mold_Or_Form_Element: C
 //
-// Mold or form any value to string series tail.
+// Mold or form any reified value to string series tail.
 //
-void Mold_Or_Form_Value(REB_MOLD *mo, const Element* v, bool form)
+void Mold_Or_Form_Element(REB_MOLD *mo, const Element* e, bool form)
 {
     // Mold hooks take a noquote cell and not a Cell*, so they expect any
     // quotes applied to have already been done.
 
   #if DEBUG_UNREADABLE_CELLS
-    if (Is_Unreadable_Debug(v)) {  // would assert otherwise
+    if (Is_Unreadable_Debug(e)) {  // would assert otherwise
         Append_Ascii(mo->string, "\\\\unreadable\\\\");
         return;
     }
   #endif
 
-    REBLEN depth = Cell_Num_Quotes(v);
-
     REBLEN i;
-    for (i = 0; i < depth; ++i)
-        Append_Ascii(mo->string, "'");
+    for (i = 0; i < Cell_Num_Quotes(e); ++i)
+        Append_Codepoint(mo->string, '\'');
 
-    if (QUOTE_BYTE(v) & NONQUASI_BIT)
-        Mold_Or_Form_Cell(mo, v, form);
+    if (QUOTE_BYTE(e) & NONQUASI_BIT)
+        Mold_Or_Form_Cell_Ignore_Quotes(mo, e, form);
     else {
         Append_Codepoint(mo->string, '~');
-        if (HEART_BYTE(v) != REB_BLANK) {
-            Mold_Or_Form_Cell(mo, v, form);
+        if (HEART_BYTE(e) != REB_BLANK) {
+            Mold_Or_Form_Cell_Ignore_Quotes(mo, e, form);
             Append_Codepoint(mo->string, '~');
         }
     }
@@ -457,33 +455,32 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Element* v, bool form)
 
 
 //
-//  Copy_Mold_Or_Form_Value: C
+//  Copy_Mold_Or_Form_Element: C
 //
-// Form a value based on the mold opts provided.
-//
-String* Copy_Mold_Or_Form_Value(const Element* v, Flags opts, bool form)
+String* Copy_Mold_Or_Form_Element(const Element* v, Flags opts, bool form)
 {
     DECLARE_MOLD (mo);
     mo->opts = opts;
 
     Push_Mold(mo);
-    Mold_Or_Form_Value(mo, v, form);
+    Mold_Or_Form_Element(mo, v, form);
     return Pop_Molded_String(mo);
 }
 
 
 //
-//  Copy_Mold_Or_Form_Value: C
+//  Copy_Mold_Or_Form_Cell_Ignore_Quotes: C
 //
-// Form a value based on the mold opts provided.
-//
-String* Copy_Mold_Or_Form_Cell(const Cell* cell, Flags opts, bool form)
-{
+String* Copy_Mold_Or_Form_Cell_Ignore_Quotes(
+    const Cell* cell,
+    Flags opts,
+    bool form
+){
     DECLARE_MOLD (mo);
     mo->opts = opts;
 
     Push_Mold(mo);
-    Mold_Or_Form_Cell(mo, cell, form);
+    Mold_Or_Form_Cell_Ignore_Quotes(mo, cell, form);
     return Pop_Molded_String(mo);
 }
 
@@ -622,7 +619,7 @@ String* Pop_Molded_String_Core(String* buf, Size offset, Index index)
     memcpy(Binary_Head(popped), Binary_At(buf, offset), size);
     Term_String_Len_Size(popped, len, size);
 
-    // Though the protocol of Mold_Value does terminate, it only does so if
+    // Though the protocol of Mold_Element() does terminate, it only does so if
     // it adds content to the buffer.  If we did not terminate when we
     // reset the size, then these no-op molds (e.g. mold of "") would leave
     // whatever value in the terminator spot was there.  This could be
@@ -682,7 +679,7 @@ Binary* Pop_Molded_Binary(REB_MOLD *mo)
     memcpy(Binary_Head(b), Binary_At(mo->string, mo->base.size), size);
     Term_Binary_Len(b, size);
 
-    // Though the protocol of Mold_Value does terminate, it only does so if
+    // Though the protocol of Mold_Element() does terminate, it only does so if
     // it adds content to the buffer.  If we did not terminate when we
     // reset the size, then these no-op molds (e.g. mold of "") would leave
     // whatever value in the terminator spot was there.  This could be

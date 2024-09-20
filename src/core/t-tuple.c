@@ -478,10 +478,10 @@ void MF_Sequence(REB_MOLD *mo, const Cell* v, bool form)
                 assert(Not_Subclass_Flag(SYMBOL, sym, ILLEGAL_IN_ANY_TUPLE));
             UNUSED(sym);
 
-            Mold_Value(mo, element);
+            Mold_Element(mo, element);
         }
         else {
-            Mold_Value(mo, element);
+            Mold_Element(mo, element);
 
             // Note: Ignore VALUE_FLAG_NEWLINE_BEFORE here for ANY-PATH,
             // but any embedded BLOCK! or GROUP! which do have newlines in

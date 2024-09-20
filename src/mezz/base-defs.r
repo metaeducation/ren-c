@@ -325,7 +325,7 @@ print: func* [
     return: "Returns null if line outputs nothing, e.g. print [void]"
         [~ ~null~]
     line "Line of text or block, [] has NO output, CHAR! newline allowed"
-        [<maybe> char? text! block! quoted?]
+        [<maybe> char? text! block! any-the-value?]
 ][
     if char? line [
         if line <> newline [
@@ -335,8 +335,13 @@ print: func* [
         return ~
     ]
 
-    if quoted? line [  ; Speculative feature: quote mark as a mold request
-        line: mold unquote line
+    case [
+        the-block? line [
+            line: mold spread line  ; better than FORM-ing (what is FORM?)
+        ]
+        any-the-value? line [
+            line: reduce [line]  ; in block, let SPACED handle molding logic
+        ]
     ]
 
     write-stdout (maybe spaced line) then [

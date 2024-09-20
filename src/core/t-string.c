@@ -478,7 +478,7 @@ Bounce TO_String(Level* level_, Kind k, const Value* arg)
     return Init_Any_String(
         OUT,
         heart,
-        Copy_Form_Value(Ensure_Element(arg), MOLD_FLAG_TIGHT)
+        Copy_Form_Element(cast(const Element*, arg), MOLD_FLAG_TIGHT)
     );
 }
 

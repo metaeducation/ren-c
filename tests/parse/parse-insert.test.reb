@@ -123,7 +123,7 @@
     ])
     (all [
         '~remove~ == meta parse bin: #{DEADBEEF} [
-            some [<next> p: <here> insert (#)] seek (p) remove one
+            some [<next> p: <here> insert (NUL)] seek (p) remove one
         ]
         bin = #{DE00AD00BE00EF}
     ])

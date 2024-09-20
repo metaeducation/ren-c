@@ -554,7 +554,7 @@ REBLEN Find_Value_In_Binstr(
          ){
             // !!! `<tag>`, `set-word:` but FILE!, etc?
             //
-            formed = Copy_Form_Cell(pattern, 0);
+            formed = Copy_Form_Cell_Ignore_Quotes(pattern, 0);
         }
 
         DECLARE_ATOM (temp);  // !!! Note: unmanaged

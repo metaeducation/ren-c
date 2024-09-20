@@ -11,11 +11,13 @@
 (" A" = delimit ":" [_ "A" maybe null])
 (":A:" = delimit ":" ["" "A" ""])
 
-; now all blanks act as spaces in string contexts
+; Blanks act as spaces in some dialected contexts when seen literally, but
+; if fetched from variables the odds for misunderstanding are too great.
 [
-    ("a  c" = spaced ["a" _ comment <b> _ "c"])
-    ("a  c" = spaced ["a" blank comment <b> blank "c"])
-    ("a c" = spaced ["a" maybe null comment <b> (null else '_) "c"])
+    ("a  c" = unspaced ["a" _ comment <b> _ "c"])
+    ~???~ !! ("a  c" = spaced ["a" blank comment <b> blank "c"])
+    ("a c" = spaced ["a" maybe null comment <b> (null else '#) "c"])
+    ("a c" = unspaced ["a" maybe null comment <b> (null else '#) "c"])
 ]
 
 ; ISSUE! is to be merged with CHAR! and does not space
@@ -29,11 +31,11 @@
     str = "<<Ren-C>> The NEW War On Software Complexity"
 )
 
-; Empty groups vaporize and do not add delimiters.  There is no assumption
-; made on what blocks do--user must convert.
+; Empty groups vaporize and do not add delimiters.  Empty blocks vaporize
+; as well.
 ;
 ("some**stuff" = delimit "**" [() "some" () "stuff" ()])
-~???~ !! ("some**stuff" = delimit "**" [[] "some" [] "stuff" []])
+("some**stuff" = delimit "**" [[] "some" [] "stuff" []])
 
 ; Empty strings do NOT vaporize, because DELIMIT needs to be able to point
 ; out empty fields.  Use VOID for emptiness.
@@ -83,4 +85,30 @@
 
     (null = delimit/head/tail "," [void])
     (null = delimit/head/tail "," void)
+]
+
+; BLOCK!s to subvert delimiting (works one level deep)
+[
+    ("a bc d" = spaced ["a" ["b" "c"] "d"])
+
+    ~???~ !! (
+        block: ["b" "c"]
+        spaced ["a" block "d"]
+    )
+]
+
+; @ Now Means Mold
+[
+    (
+        block: [a b c]
+        "The block is: [a b c]" = spaced ["The block is:" @block]
+    )
+    (
+        block: [a b c]
+        "The block is: [c b a]" = spaced ["The block is:" @(reverse block)]
+    )
+    (
+        obj: make object! [block: [a b c]]
+        "The block is: [a b c]" = spaced ["The block is:" @obj.block]
+    )
 ]

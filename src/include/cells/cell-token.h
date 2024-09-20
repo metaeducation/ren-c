@@ -97,7 +97,7 @@ INLINE Element* Init_Issue_Utf8(
     Sink(Element*) out,
     Utf8(const*) utf8,  // previously validated UTF-8 (maybe not null term?)
     Size size,
-    REBLEN len  // while validating, you should have counted the codepoints
+    Length len  // while validating, you should have counted the codepoints
 ){
     if (size + 1 <= sizeof(PAYLOAD(Bytes, out)).at_least_8) {
         Reset_Unquoted_Header_Untracked(
@@ -174,110 +174,14 @@ INLINE Option(Context*) Trap_Init_Char_Untracked(Cell* out, uint32_t c) {
 #define Trap_Init_Char(out,c) \
     Trap_Init_Char_Untracked(TRACK(out), (c))
 
+#define Init_Space(out) \
+    Init_Char_Unchecked((out), ' ')
 
-//=//// "BLACKHOLE" (Empty ISSUE!, a.k.a. CODEPOINT 0) ////////////////////=//
-//
-// Validated string data is not supposed to contain zero bytes.  This means
-// APIs that return only a `char*`--like rebSpell()--can assure the only `\0`
-// in the data is the terminator.  BINARY! should be used for data with
-// embedded bytes.  There, the extractors--like rebBytes()--require asking for
-// the byte count as well as the data pointer.
-//
-// Since ISSUE! builds on the `heart` of a TEXT! implementation, it inherits
-// the inability to store zeros in its content.  But single-codepoint tokens
-// are supposed to be the replacement for CHAR!...which historically has been
-// able to hold a `0` codepoint.
-//
-// The solution to this is to declare `codepoint of #` to be 0.  So empty
-// tokens have the behavior of being appended to BINARY! and getting #{00}.
-// But attempting to append them to strings will cause an error, as opposed
-// to acting as a no-op.
-//
-// This gives `#` some attractive properties...as an "ornery-but-truthy" value
-// with a brief notation.  Because '\0' codepoints don't come up that often
-// in usermode code, they have another purpose which is called a "black hole".
-//
-// Black holes were first used to support a scenario in the multiple-return
-// value code.  They indicate you want to opt-IN to a calculation, but opt-OUT
-// of the result.  This is in contrast with BLANK!, which typically opts out
-// of both...and the truthy nature of ISSUE! helps write clean and mostly safe
-// code for it:
-//
-//     do-something [
-//         in
-//         /out [blank! word! path! blackhole?]
-//         <local> result
-//      ][
-//          process in
-//          if out [  ; unlike BLANK!, blackhole is truthy so branch runs
-//             result: process/more in
-//             set out result  ; blackhole SET is no-op (BLANK! would error)
-//          ]
-//     ]
-//
-// The alias "BLACKHOLE!" is a type constraint which is today just a synonym
-// for ISSUE!, but will hopefully have teeth in the future to enforce that
-// it is also length 0.
-//
-
-#define Init_Blackhole(out) \
-    Init_Char_Unchecked((out), 0)
-
-INLINE bool Is_Blackhole(const Atom* v) {
+INLINE bool Is_Space(const Value* v) {
     if (not IS_CHAR(v))
         return false;
 
-    if (Cell_Codepoint(v) == 0)
-        return true;
-
-    // Anything that accepts "blackholes" should not have broader meaning for
-    // ISSUE!s taken.  Ultimately this will be corrected for by having
-    // BLACKHOLE! be a type constraint with teeth, that doesn't pass through
-    // all ISSUE!s.  But for now, simplify callsites by handling the error
-    // raising for them when they do the blackhole test.
-    //
-    fail ("Only plain # can be used with 'blackhole' ISSUE! interpretation");
-}
-
-
-//=//// SIGILS ////////////////////////////////////////////////////////////=//
-//
-// At one time, things like $ and ^ and : were "special" WORD!s.  These words
-// caused problems since they could not be turned into forms with sigils,
-// without a complex escaping mechanism.  Once the 64 total datatypes limit
-// was lifted, it became feasible to give them the type SIGIL!
-//
-
-INLINE Element* Init_Sigil(Sink(Element*) out, Sigil sigil) {
-    if (sigil == SIGIL_SET)
-        Init_Issue_Utf8(out, cb_cast("::"), 2, 2);  // codepoints 2, size 2
-    else if (sigil == SIGIL_QUASI)
-        Init_Issue_Utf8(out, cb_cast("~~"), 2, 2);  // codepoints 2, size 2
-    else {
-        Codepoint c;
-        switch (sigil) {
-          case SIGIL_GET:   c = ':';    break;
-          case SIGIL_META:  c = '^';    break;
-          case SIGIL_TYPE:  c = '&';    break;
-          case SIGIL_THE:   c = '@';    break;
-          case SIGIL_VAR:   c = '$';    break;
-          case SIGIL_QUOTE: c = '\'';   break;
-          default:
-            assert(false);
-            c = 0;  // silence warning
-        }
-        Init_Char_Unchecked(out, c);
-    }
-    HEART_BYTE(out) = REB_SIGIL;
-    EXTRA(Bytes, out).at_least_4[IDX_EXTRA_SIGIL] = sigil;
-    return out;
-}
-
-INLINE Sigil Cell_Sigil(const Cell* cell) {
-    assert(Cell_Heart(cell) == REB_SIGIL);
-    Byte sigil_byte = EXTRA(Bytes, cell).at_least_4[IDX_EXTRA_SIGIL];
-    assert(sigil_byte != 0 and sigil_byte < SIGIL_MAX);
-    return u_cast(Sigil, sigil_byte);
+    return Cell_Codepoint(v) == 0;
 }
 
 

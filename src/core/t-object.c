@@ -975,7 +975,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
                 fail (Error_Bad_Antiform(e.var));  // can't FORM antiforms
             }
             else
-                Mold_Value(mo, cast(Element*, e.var));
+                Mold_Element(mo, cast(Element*, e.var));
 
             Append_Codepoint(mo->string, LF);
             had_output = true;
@@ -1007,16 +1007,15 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
         DECLARE_ELEMENT (set_word);
         Init_Set_Word(set_word, spelling);  // want escaping, e.g `|::|: 10`
 
-        Mold_Value(mo, set_word);
+        Mold_Element(mo, set_word);
         Append_Codepoint(mo->string, ' ');
 
         if (Is_Antiform(e.var)) {
             assert(Is_Antiform_Stable(cast(Atom*, e.var)));  // extra check
 
-            DECLARE_ATOM (reified);
-            Copy_Cell(reified, e.var);
-            Quasify_Antiform(reified);  // will become quasi...
-            Mold_Value(mo, cast(Element*, reified));  // ...molds as `~xxx~`
+            DECLARE_ELEMENT (reified);
+            Copy_Meta_Cell(reified, e.var);  // will become quasi...
+            Mold_Element(mo, cast(Element*, reified));  // ...molds as `~xxx~`
         }
         else {
             // We want the molded object to be able to "round trip" back to the
@@ -1029,7 +1028,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
             //
             if (not Any_Inert(e.var))
                 Append_Ascii(s, "'");
-            Mold_Value(mo, cast(Element*, e.var));
+            Mold_Element(mo, cast(Element*, e.var));
         }
     }
     Shutdown_Evars(&e);

@@ -1353,14 +1353,14 @@ void Shutdown_Stackoverflow(void)
 // to the mold.  It was only used in error molding and was kept working
 // without a general review of such a facility.  Review.
 //
-static void Mold_Value_Limit(REB_MOLD *mo, Element* v, REBLEN limit)
+static void Mold_Element_Limit(REB_MOLD *mo, Element* v, REBLEN limit)
 {
     String* str = mo->string;
 
     REBLEN start_len = String_Len(str);
     Size start_size = String_Size(str);
 
-    Mold_Value(mo, v);  // Note: can't cache pointer into `str` across this
+    Mold_Element(mo, v);  // Note: can't cache pointer into `str` across this
 
     REBLEN end_len = String_Len(str);
 
@@ -1412,7 +1412,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
         Form_Array_At(mo, Cell_Array(&vars->message), 0, error, relax);
     }
     else if (Is_Text(&vars->message))
-        Form_Value(mo, cast(Element*, &vars->message));
+        Form_Element(mo, cast(Element*, &vars->message));
     else
         Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
 
@@ -1425,7 +1425,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
         if (Is_Block(where)) {
             Append_Codepoint(mo->string, '\n');
             Append_Ascii(mo->string, RM_ERROR_WHERE);
-            Form_Value(mo, cast(Element*, where));
+            Form_Element(mo, cast(Element*, where));
         }
         else
             Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
@@ -1448,7 +1448,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
             Append_String(mo->string, nearest);
         }
         else if (Any_List(nearest) or Any_Path(nearest))
-            Mold_Value_Limit(mo, cast(Element*, nearest), 60);
+            Mold_Element_Limit(mo, cast(Element*, nearest), 60);
         else
             Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
     }
@@ -1465,7 +1465,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
         Append_Codepoint(mo->string, '\n');
         Append_Ascii(mo->string, RM_ERROR_FILE);
         if (Is_File(file))
-            Form_Value(mo, cast(Element*, file));
+            Form_Element(mo, cast(Element*, file));
         else
             Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
     }
@@ -1476,7 +1476,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
         Append_Codepoint(mo->string, '\n');
         Append_Ascii(mo->string, RM_ERROR_LINE);
         if (Is_Integer(line))
-            Form_Value(mo, cast(Element*, line));
+            Form_Element(mo, cast(Element*, line));
         else
             Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
     }

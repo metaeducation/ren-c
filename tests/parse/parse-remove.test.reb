@@ -111,7 +111,7 @@
         ]
     )
     (
-        ws: make bitset! [" ^- ^/^M" #]
+        ws: make bitset! [" ^- ^/^M" #""]
         bin: #{DEAD00BEEF}
         all [
             #{BEEF} == parse bin [remove thru ws #{BEEF}]
@@ -126,12 +126,12 @@
         ]
     )
     (all [
-        ws: make bitset! [" ^- ^/^M" #]
+        ws: make bitset! [" ^- ^/^M" #""]
         '~remove~ == meta parse s: #{00DE00AD00} [some [remove ws | <next>]]
         s = #{DEAD}
     ])
     (all [
-        ws: make bitset! [" ^- ^/^M" #]
+        ws: make bitset! [" ^- ^/^M" #""]
         '~remove~ == meta parse s: #{00DE00AD00} [some [remove ws | one]]
         s = #{DEAD}
     ])
@@ -139,7 +139,7 @@
         bin: #{DEAD0001020300BEEF}
         digit: charset [1 - 9]
         all [
-            239 == parse bin [some [remove [some digit #] | one]]
+            239 == parse bin [some [remove [some digit NUL] | one]]
             bin = #{DEAD00BEEF}
         ]
     )

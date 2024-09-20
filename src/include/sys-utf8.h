@@ -188,10 +188,10 @@ INLINE Codepoint UP_CASE(Codepoint c)
 INLINE Codepoint LO_CASE(Codepoint c)
   { assert(c != '\0'); return c < UNICODE_CASES ? Lower_Cases[c] : c; }
 
-INLINE bool IS_WHITE(Codepoint c)
+INLINE bool Is_Codepoint_Whitespace(Codepoint c)
   { assert(c != '\0'); return c <= 32 and ((White_Chars[c] & 1) != 0); }
 
-INLINE bool IS_SPACE(Codepoint c)
+INLINE bool Is_Codepoint_Space(Codepoint c)
   { assert(c != '\0'); return c <= 32 and ((White_Chars[c] & 2) != 0); }
 
 

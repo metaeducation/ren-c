@@ -42,20 +42,20 @@ struct rebol_mold {
 #define Drop_Mold(mo) \
     Drop_Mold_Core((mo), false)
 
-#define Mold_Value(mo,v) \
-    Mold_Or_Form_Value((mo), (v), false)
+#define Mold_Element(mo,v) \
+    Mold_Or_Form_Element((mo), (v), false)
 
-#define Form_Value(mo,v) \
-    Mold_Or_Form_Value((mo), (v), true)
+#define Form_Element(mo,v) \
+    Mold_Or_Form_Element((mo), (v), true)
 
-#define Copy_Mold_Value(v,opts) \
-    Copy_Mold_Or_Form_Value((v), (opts), false)
+#define Copy_Mold_Element(v,opts) \
+    Copy_Mold_Or_Form_Element((v), (opts), false)
 
-#define Copy_Form_Value(v,opts) \
-    Copy_Mold_Or_Form_Value((v), (opts), true)
+#define Copy_Form_Element(v,opts) \
+    Copy_Mold_Or_Form_Element((v), (opts), true)
 
-#define Copy_Form_Cell(v,opts) \
-    Copy_Mold_Or_Form_Cell((v), (opts), true)
+#define Copy_Form_Cell_Ignore_Quotes(v,opts) \
+    Copy_Mold_Or_Form_Cell_Ignore_Quotes((v), (opts), true)
 
 
 // Modes allowed by FORM

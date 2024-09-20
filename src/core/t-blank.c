@@ -52,16 +52,25 @@ void MF_Void(REB_MOLD *mo, const Cell* v, bool form)
 //    >> append [a b c] _
 //    == [a b c _]
 //
-//    >> append "abc" _
-//    == "abc "
+// But although some contexts (such as DELIMIT) will treat source-level blanks
+// as spaces, their general meaning when fetched is to be nothing.
+//
+//    >> unspaced ["a" _ "b"]
+//    == "a b"
+//
+//    >> unspaced ["a" blank "b"]
+//    == "ab"
+//
+//    >> append "abc" _   ; is it better to support this than not?
+//    == "abc"
 //
 void MF_Blank(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(v);
 
-    if (form)
-        Append_Ascii(mo->string, " ");
-    else
+    if (form) {
+        // render as nothingness (see above)
+    } else
         Append_Ascii(mo->string, "_");
 }
 

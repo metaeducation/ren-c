@@ -30,9 +30,9 @@
     issue: load-value "# ; comment after a zero-codepoint issue"
     all [
         issue? issue
-        0 = length of issue
-        0 = codepoint of issue
-        'illegal-zero-byte = (sys.util/rescue [to text! issue]).id
+        1 = length of issue
+        32 = codepoint of issue
+        " " = to text! issue
     ]
 )
 

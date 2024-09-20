@@ -47,70 +47,80 @@ DECLARE_NATIVE(delimit)
 // If all the items in the block are null, or no items are found, this will
 // return a nulled value.
 //
-// 1. Erroring on NULL has been found to catch real bugs in practice.  It also
-//    enables clever constructs like CURTAIL.
-//
-// 2. BLOCK!s are prohibitied in DELIMIT because it's too often the case the
-//    result is gibberish--guessing what to do is bad:
-//
-//        >> block: [1 2 <x> hello]
-//
-//        >> print ["Your block is:" block]
-//        Your block is: 12<x>hello  ; ugh.
-//
-// 3. Because blocks aren't allowed, the usual rule of thumb that blanks should
-//    act like empty blocks need not apply.  Instead, the concept is that
-//    they act like spaces.  This concept is a long-running experiment that
-//    may not pan out, but is cool enough to keep weighing the pros/cons.
-//
-// 4. CHAR! suppresses the delimiter logic.  Hence:
-//
-//        >> delimit ":" ["a" space "b" newline void "c" newline "d" "e"]
-//        == "a b^/c^/d:e"
-//
-//    Only the last interstitial is considered a candidate for delimiting.
-//
-// 5. Empty strings are distinct from voids in terms of still being delimited.
-//    This is important, e.g. in comma-delimited formats for empty fields.
-//
-//    >> delimit "," [field1 field2 field3]  ; field2 is ""
-//    one,,three
-//
-//    The same principle would apply to a "space-delimited format".
+// 1. It's hard to unify this mold with code below that uses a level due to
+//    the asserts on states balancing.  Easiest to repeat a small bit of code!
 {
     INCLUDE_PARAMS_OF_DELIMIT;
 
-    Option(Element*) delimiter;
+    Element* line = cast(Element*, ARG(line));
+
+    Option(const Element*) delimiter;
     if (REF(delimiter))
-        delimiter = cast(Element*, ARG(delimiter));
+        delimiter = cast(const Element*, ARG(delimiter));
     else
         delimiter = nullptr;
 
-    Value* line = ARG(line);
+    if (Is_Block(line) or Is_The_Block(line))
+        goto delimit_block;
 
-    if (Is_Text(line) or Is_Issue(line)) {  // can shortcut, no evals needed
-        //
-        // Note: It's hard to unify this mold with code below that uses a level
-        // due to the asserts on states balancing.  Easiest to repeat a small
-        // bit of code!
-        //
-        DECLARE_MOLD (mo);
-        Push_Mold(mo);
+  { ///////////////////////////////////////////////////////////////////////////
 
-        if (REF(head) and delimiter)
-            Form_Value(mo, unwrap delimiter);
+    assert(Is_Text(line) or Is_Issue(line));  // shortcut, no evals needed [1]
 
-        // Note: This path used to shortcut with running TO TEXT! if not using
-        // /HEAD or /TAIL options, but it's probably break-even to invoke the
-        // evaluator.  Review optimizations later.
-        //
-        Form_Value(mo, cast(Element*, line));
+    DECLARE_MOLD (mo);
+    Push_Mold(mo);
 
-        if (REF(tail) and delimiter)
-            Form_Value(mo, unwrap delimiter);
+    if (REF(head) and delimiter)
+        Form_Element(mo, unwrap delimiter);
 
-        return Init_Text(OUT, Pop_Molded_String(mo));
-    }
+    Form_Element(mo, cast(Element*, line));
+
+    if (REF(tail) and delimiter)
+        Form_Element(mo, unwrap delimiter);
+
+    return Init_Text(OUT, Pop_Molded_String(mo));
+
+} delimit_block: { ////////////////////////////////////////////////////////////
+
+    // 1. There's a concept that being able to put undelimited portions in the
+    //    delimit is useful--and it really is:
+    //
+    //       >> print ["Outer" "spaced" ["inner" "unspaced"] "is" "useful"]
+    //       Outer spaced innerunspaced is useful
+    //
+    //    Hacked in for the moment, but this routine should be reformulated
+    //    to make it part of one continuous mold.
+    //
+    // 2. Blanks at source-level count as spaces (deemed too potentially broken
+    //    to fetch them from variables and have them mean space).  This is
+    //    a long-running experiment that may not pan out, but is cool enough to
+    //    keep weighing the pros/cons.  Looked-up-to blanks are illegal.
+    //
+    // 3. Erroring on NULL has been found to catch real bugs in practice.  It
+    //    also enables clever constructs like CURTAIL.
+    //
+    // 4. BLOCK!s are prohibitied in DELIMIT because it's too often the case
+    //    the result is gibberish--guessing what to do is bad:
+    //
+    //        >> block: [1 2 <x> hello]
+    //
+    //        >> print ["Your block is:" block]
+    //        Your block is: 12<x>hello  ; ugh.
+    //
+    // 5. CHAR! suppresses the delimiter logic.  Hence:
+    //
+    //        >> delimit ":" ["a" space "b" newline void "c" newline "d" "e"]
+    //        == "a b^/c^/d:e"
+    //
+    //    Only the last interstitial is considered a candidate for delimiting.
+    //
+    // 6. Empty strings distinct from voids in terms of still being delimited.
+    //    This is important, e.g. in comma-delimited formats for empty fields.
+    //
+    //        >> delimit "," [field1 field2 field3]  ; field2 is ""
+    //        one,,three
+    //
+    //    The same principle would apply to a "space-delimited format".
 
     Flags flags = LEVEL_MASK_NONE;
     if (Is_The_Block(ARG(line)))
@@ -124,20 +134,63 @@ DECLARE_NATIVE(delimit)
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 
-    // If /HEAD is used, speculatively start the mold out with the delimiter
-    // (will be thrown away if the block turns out to make nothing)
-    //
-    if (REF(head) and delimiter)
-        Form_Value(mo, unwrap delimiter);
-
     bool pending = false;  // pending delimiter output, *if* more non-nulls
-    bool nothing = true;  // any elements seen so far have been null or blank
+    bool nothing = true;  // all elements seen so far have been void
 
-    for (; Not_Level_At_End(L); Restart_Stepper_Level(L)) {
-        if (Eval_Step_Throws(OUT, L)) {
-            Drop_Mold(mo);
-            Drop_Level(L);
-            return THROWN;
+    if (REF(head) and delimiter)  // speculatively start with delimiter
+        Form_Element(mo, unwrap delimiter);  // (thrown out if `nothing` made)
+
+    while (Not_Level_At_End(L)) {
+        const Element* item = At_Level(L);
+        if (Is_Block(item) and REF(delimiter)) {  // hack [1]
+            Derelativize(SPARE, item, Level_Specifier(L));
+            Fetch_Next_In_Feed(L->feed);
+
+            Value* unspaced = rebValue(Canon(UNSPACED), rebQ(SPARE));
+            if (unspaced == nullptr)  // vaporized, allow it
+                continue;
+
+            Copy_Cell(OUT, unspaced);
+            rebRelease(unspaced);
+        }
+        else if (Is_Blank(item)) {  // BLANK! acts as space [2]
+            Append_Codepoint(mo->string, ' ');
+            pending = false;
+            nothing = false;
+            Fetch_Next_In_Feed(L->feed);
+            continue;
+        }
+        else if (Any_The_Value(item)) {  // fetch and mold
+            if (Is_The_Word(item) or Is_The_Tuple(item)) {
+                bool any = false;
+                Get_Var_May_Fail(OUT, item, Level_Specifier(L), any);
+            }
+            else if (Is_The_Group(item)) {
+                if (Do_Any_List_At_Throws(
+                    OUT,
+                    item,
+                    Level_Specifier(L)
+                )){
+                    goto threw;
+                }
+            }
+            else
+                fail (item);
+
+            Fetch_Next_In_Feed(L->feed);
+
+            Decay_If_Unstable(OUT);
+            Value* molded = rebValue(Canon(MOLD), rebQ(stable_OUT));
+            if (molded == nullptr)  // vaporized (e.g. MOLD of VOID)
+                continue;
+            Copy_Cell(OUT, molded);
+            rebRelease(molded);
+        }
+        else {
+            if (Eval_Step_Throws(OUT, L))
+                goto threw;
+
+            Restart_Stepper_Level(L);
         }
 
         if (Is_Elision(OUT))  // spaced [elide print "hi"], etc
@@ -148,38 +201,34 @@ DECLARE_NATIVE(delimit)
         if (Is_Void(OUT))  // spaced [maybe null], spaced [if null [<a>]], etc
             continue;  // vaporize
 
-        if (Is_Nulled(OUT))  // catches bugs in practice [1]
+        if (Is_Nulled(OUT))  // catches bugs in practice [3]
             return RAISE(Error_Need_Non_Null_Raw());
 
         if (Is_Antiform(OUT))
             return RAISE(Error_Bad_Antiform(OUT));
 
-        if (Any_List(OUT))  // guessing a behavior is bad [2]
+        if (Any_List(OUT))  // guessing a behavior is bad [4]
             fail ("Desired list rendering in DELIMIT not known");
+
+        if (Sigil_Of(cast(Element*, OUT)))
+            fail ("DELIMIT requires @var to render elements with sigils");
+
+        if (Is_Blank(OUT))
+            fail ("DELIMIT only treats source-level BLANK! as space");
 
         nothing = false;
 
-        if (Is_Blank(OUT)) {  // BLANK! acts as space [3]
-            Append_Codepoint(mo->string, ' ');
-            pending = false;
-        }
-        else if (Is_Issue(OUT)) {  // do not delimit (unified w/char) [4]
-            Form_Value(mo, cast(Element*, OUT));
+        if (Is_Issue(OUT)) {  // do not delimit (unified w/char) [5]
+            Form_Element(mo, cast(Element*, OUT));
             pending = false;
         }
         else {
             if (pending and delimiter)
-                Form_Value(mo, unwrap delimiter);
+                Form_Element(mo, unwrap delimiter);
 
-            if (Is_Quoted(OUT)) {
-                Unquotify(OUT, 1);
-                Mold_Value(mo, cast(Element*, OUT));
-            }
-            else {
-                Form_Value(mo, Ensure_Element(OUT));
-            }
+            Form_Element(mo, cast(Element*, OUT));
 
-            pending = true;  // note this includes empty strings [5]
+            pending = true;  // note this includes empty strings [6]
         }
     } while (Not_Level_At_End(L));
 
@@ -189,14 +238,19 @@ DECLARE_NATIVE(delimit)
     }
     else {
         if (REF(tail) and delimiter)
-            Form_Value(mo, unwrap delimiter);
+            Form_Element(mo, unwrap delimiter);
         Init_Text(OUT, Pop_Molded_String(mo));
     }
 
     Drop_Level(L);
-
     return OUT;
-}
+
+  threw: //////////////////////////////////////////////////////////////////////
+
+    Drop_Mold(mo);
+    Drop_Level(L);
+    return THROWN;
+}}
 
 
 //

@@ -404,7 +404,7 @@ void MF_Parameter(REB_MOLD *mo, const Cell* v, bool form)
         Init_Block(temp, EMPTY_ARRAY);
 
     Push_GC_Guard(temp);
-    Mold_Or_Form_Value(mo, temp, form);
+    Mold_Or_Form_Element(mo, temp, form);
     Drop_GC_Guard(temp);
 
     if (not form) {

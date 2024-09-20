@@ -470,14 +470,14 @@ REBLEN Modify_String_Or_Binary(
             const Element* item_tail;
             const Element* item = Cell_List_At(&item_tail, src);
             for (; item != item_tail; ++item)
-                Form_Value(mo, item);
+                Form_Element(mo, item);
             goto use_mold_buffer;
         }
     }
     else { form:
 
         Push_Mold(mo);
-        Mold_Or_Form_Value(mo, cast(const Element*, src), true);
+        Mold_Or_Form_Element(mo, cast(const Element*, src), true);
 
         // Don't capture pointer until after mold (it may expand the buffer)
 

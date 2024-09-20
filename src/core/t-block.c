@@ -808,12 +808,7 @@ void MF_List(REB_MOLD *mo, const Cell* v, bool form)
           case REB_BLOCK:
           case REB_SET_BLOCK:
           block:
-            if (GET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)) {
-                CLEAR_MOLD_FLAG(mo, MOLD_FLAG_SPREAD); // only top level
-                sep = "\000\000";
-            }
-            else
-                sep = "[]";
+            sep = "[]";
             break;
 
           case REB_GET_GROUP:
@@ -839,7 +834,12 @@ void MF_List(REB_MOLD *mo, const Cell* v, bool form)
           case REB_GROUP:
           case REB_SET_GROUP:
           group:
-            sep = "()";
+            if (GET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)) {
+                CLEAR_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);  // only top level
+                sep = "\000\000";
+            }
+            else
+                sep = "()";
             break;
 
           default:

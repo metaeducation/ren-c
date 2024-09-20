@@ -143,11 +143,11 @@ INLINE void Probe_Molded_Value(const Value* v)
         DECLARE_VALUE (temp);
         Copy_Cell(temp, v);
         Element* elem = Quasify_Antiform(temp);
-        Mold_Value(mo, elem);
+        Mold_Element(mo, elem);
         Append_Ascii(mo->string, "  ; anti");
     }
     else {
-        Mold_Value(mo, c_cast(Element*, v));
+        Mold_Element(mo, c_cast(Element*, v));
     }
 
     printf("%s\n", c_cast(char*, Binary_At(mo->string, mo->base.size)));
@@ -165,26 +165,26 @@ void Probe_Cell_Print_Helper(
 ){
     Probe_Print_Helper(p, expr, "Value", file, line);
 
-    const Value* v = c_cast(Value*, p);
+    const Atom* atom = c_cast(Value*, p);
 
   #if DEBUG_UNREADABLE_CELLS
-    if (Is_Unreadable_Debug(v)) {  // Is_Nulled() asserts on unreadables
+    if (Is_Unreadable_Debug(atom)) {  // Is_Nulled() asserts on unreadables
         Append_Ascii(mo->string, "\\\\unreadable\\\\");
         return;
     }
   #endif
 
-    if (Is_Cell_Poisoned(v)) {
+    if (Is_Cell_Poisoned(atom)) {
         Append_Ascii(mo->string, "**POISONED CELL**");
     }
-    else if (Is_Antiform(v)) {
-        DECLARE_VALUE (reified);
-        Quasify_Antiform(Copy_Cell(reified, v));
-        Mold_Value(mo, cast(Element*, reified));
+    else if (Is_Antiform(atom)) {
+        DECLARE_ELEMENT (reified);
+        Copy_Meta_Cell(reified, atom);
+        Mold_Element(mo, reified);
         Append_Ascii(mo->string, "  ; anti");
     }
     else
-        Mold_Value(mo, cast(const Element*, v));
+        Mold_Element(mo, cast(const Element*, atom));
 }
 
 

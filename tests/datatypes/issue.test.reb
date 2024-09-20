@@ -23,11 +23,11 @@
 (issue? #<<)
 (issue? #>>)
 
-; Empty-looking issues are the zero codepoint (zero codepoints are illegal
-; in strings).
+; Empty-looking issues are space.
+; Issue with empty quotes are NUL (zero codepoint, illegal in strings).
 ;
-("" = as text! #)
-("#" = mold as issue! "")
+(" " = as text! #)
+({#""} = mold as issue! "")
 ({#} = mold #)
 
 ; Intent is to merge ISSUE! and CHAR! into cell-packable UTF-8 immutable
