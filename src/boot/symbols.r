@@ -26,6 +26,8 @@ REBOL [
     }
 ]
 
+unreadable  ; needed for Init_Unreadable()
+
 ; === WORD!-based LOGIC ===
 
 true

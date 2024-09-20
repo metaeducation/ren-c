@@ -432,7 +432,7 @@ void Mold_Or_Form_Element(REB_MOLD *mo, const Element* e, bool form)
     // quotes applied to have already been done.
 
   #if DEBUG_UNREADABLE_CELLS
-    if (Is_Unreadable_Debug(e)) {  // would assert otherwise
+    if (Is_Unreadable(e)) {  // !!! fall through in release?
         Append_Ascii(mo->string, "\\\\unreadable\\\\");
         return;
     }

@@ -343,7 +343,7 @@ static void Queue_Unmarked_Accessible_Flex_Deep(const Flex* f)
 static void Queue_Mark_Cell_Deep(const Cell* c)
 {
   #if DEBUG_UNREADABLE_CELLS
-    if (Is_Unreadable_Debug(c))  // tolerate write-only cells in debug builds
+    if (Is_Unreadable(c))  // !!! fall through in release?
         return;
   #endif
 
@@ -427,13 +427,7 @@ static void Propagate_All_GC_Marks(void)
 
             switch (QUOTE_BYTE(v)) {
               case ANTIFORM_0:
-                if (HEART_BYTE(v) == REB_BLANK) {
-                    if (flavor < FLAVOR_MIN_TRASH_OK)
-                        panic (v);  // voids not legal in many array types
-                    break;
-                }
-
-                if (flavor < FLAVOR_MIN_ISOTOPES_OK)
+                if (flavor < FLAVOR_MIN_ANTIFORMS_OK)
                     panic (v);  // antiforms not legal in many array types
 
                 if (Is_Antiform_Unstable(cast(Atom*, v)))  // always illegal
@@ -574,7 +568,7 @@ void Run_All_Handle_Cleaners(void) {
             Cell* item = Array_Head(cast(Array*, stub));
             for (; item != item_tail; ++item) {
               #if DEBUG_UNREADABLE_CELLS
-                if (Is_Unreadable_Debug(item))
+                if (Is_Unreadable(item))  // !!! fall through in release?
                     continue;
               #endif
                 if (Cell_Heart(item) != REB_HANDLE)

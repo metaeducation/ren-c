@@ -669,7 +669,7 @@ DECLARE_NATIVE(apply)
       case ST_APPLY_UNLABELED_EVAL_STEP :
         if (THROWING)
             goto finalize_apply;
-        if (Is_Nothing(iterator)) {
+        if (Is_Unreadable(iterator)) {
             assert(REF(relax));
             goto handle_next_item;
         }
@@ -763,7 +763,7 @@ DECLARE_NATIVE(apply)
 
         Init_Integer(ARG(index), index);
     }
-    else if (Is_Nothing(iterator)) {
+    else if (Is_Unreadable(iterator)) {
         STATE = ST_APPLY_UNLABELED_EVAL_STEP;
         param = nullptr;  // throw away result
     }
@@ -779,7 +779,7 @@ DECLARE_NATIVE(apply)
 
                 Shutdown_Evars(e);
                 Free(EVARS, e);
-                Init_Nothing(iterator);
+                Init_Unreadable(iterator);
                 param = nullptr;  // we're throwing away the evaluated product
                 break;
             }
@@ -838,13 +838,13 @@ DECLARE_NATIVE(apply)
 
 } finalize_apply: {  /////////////////////////////////////////////////////////
 
-    if (Is_Nothing(iterator))
+    if (Is_Unreadable(iterator))
         assert(REF(relax));
     else {
         EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
         Shutdown_Evars(e);
         Free(EVARS, e);
-        Init_Nothing(iterator);
+        Init_Unreadable(iterator);
     }
 
     if (THROWING)  // assume Drop_Level() called on SUBLEVEL?

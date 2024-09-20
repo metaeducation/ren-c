@@ -190,7 +190,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     Value* plug = Details_At(details, IDX_YIELDER_PLUG);
     Replug_Stack(yield_level, yielder_level, plug);
-    Assert_Is_Unreadable_If_Debug(plug);  // Replug wiped, make GC safe
+    assert(Is_Unreadable(plug));  // Replug wiped, make GC safe
 
     // Restore the in-progress output cell state that was going on when
     // the YIELD ran (e.g. if it interrupted a CASE or something, this
@@ -226,7 +226,9 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     // Clean up all the details fields so the GC can reclaim the memory
     //
-    Init_Unreadable(Details_At(details, IDX_YIELDER_LAST_YIELDER_CONTEXT));
+    Init_Unreadable(
+        Details_At(details, IDX_YIELDER_LAST_YIELDER_CONTEXT)
+    );
     Init_Unreadable(Details_At(details, IDX_YIELDER_LAST_YIELD_RESULT));
     Init_Unreadable(Details_At(details, IDX_YIELDER_PLUG));
     Init_Unreadable(Details_At(details, IDX_YIELDER_META_OUT));
@@ -292,7 +294,9 @@ DECLARE_NATIVE(yielder)
 
     assert(Is_Block(Array_At(details, IDX_YIELDER_BODY)));
     Init_Blank(Details_At(details, IDX_YIELDER_MODE));  // starting
-    Init_Unreadable(Details_At(details, IDX_YIELDER_LAST_YIELDER_CONTEXT));
+    Init_Unreadable(
+        Details_At(details, IDX_YIELDER_LAST_YIELDER_CONTEXT)
+    );
     Init_Unreadable(Details_At(details, IDX_YIELDER_LAST_YIELD_RESULT));
     Init_Unreadable(Details_At(details, IDX_YIELDER_PLUG));
     Init_Unreadable(Details_At(details, IDX_YIELDER_META_OUT));
@@ -385,7 +389,7 @@ DECLARE_NATIVE(yield)
     Copy_Meta_Cell(out_copy, yielder_level->out);
 
     Value* plug = Details_At(yielder_details, IDX_YIELDER_PLUG);
-    Assert_Is_Unreadable_If_Debug(plug);
+    assert(Is_Unreadable(plug));
     Unplug_Stack(plug, yield_level, yielder_level);
 
     // We preserve the fragment of call stack leading from the yield up to the

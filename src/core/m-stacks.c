@@ -252,7 +252,7 @@ Array* Pop_Stack_Values_Core_Masked(
       #if DEBUG
         if (Is_Antiform(src)) {
             Assert_Cell_Stable(src);
-            assert(flavor >= FLAVOR_MIN_ISOTOPES_OK);
+            assert(flavor >= FLAVOR_MIN_ANTIFORMS_OK);
         }
       #endif
 

@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -19,8 +19,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// The debug build has the idea of making an unreadable write-only cell that
-// will fail on most forms of access in the system.  However, it will behave
+// Unreadable cells are write-only cells that in the debug build, will fail
+// on most forms of read access in the system.  However, it will behave
 // neutrally as far as the garbage collector is concerned.
 //
 // This is useful anytime a placeholder is needed in a non-user-exposed slot,
@@ -29,50 +29,39 @@
 // it's accidentally read from.
 //
 // It will panic if you try to test it and will also refuse VAL_TYPE() checks.
-// The only way to check if something is unreadable is in the debug build, and
-// hence should only appear in asserts.
+// The only way to check if something is unreadable is with Is_Unreadable().
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * The low-level type used to store these cells is a quasi-blank (~) with
-//   NODE_FLAG_FREE set in the debug build.  While an antiform might seem
-//   more desirable to draw attention if these leak to userspace in the
-//   release build, quasiform cells can be used in blocks.  It would break
-//   more invariants and possibly cause more damage for antiforms to appear in
-//   those places.
+// * The low-level type used to store these cells is a quasiform ~unreadable~
+//   word with NODE_FLAG_FREE set.  While an antiform might seem more desirable
+//   to draw attention if these leak to userspace in the release build,
+//   quasiform cells can be used in blocks.  It would break more invariants and
+//   possibly cause more damage for antiforms to appear in those places.
 //
-// * Something like the quasi-word ~unreadable~ might be better in drawing
-//   attention to accidental exposure of unreadables to userspace in the
-//   release build.  But there were some bootstrap issues with unreadable
-//   cells being created before the symbol table was made.  Revisit.
-//
+// * This was originally a debug-build-only feature...so release builds would
+//   not set the NODE_FLAG_FREE bit on unreadable cells.  That means the
+//   unreadability couldn't be used for things like unused map elements,
+//   because the release build wouldn't see the bit.  Yet it turns out that
+//   it's fairly desirable to allow the unreadable bit to be meaningful for
+//   such cases.  So the only difference is that the release build does not
+//   raise alerts about the bit being set--not that the bit isn't there.
 
-#if DEBUG_UNREADABLE_CELLS
-    INLINE Element* Init_Unreadable_Untracked(Sink(Element*) out) {
-        Init_Quasi_Blank(out);
-        Set_Node_Free_Bit(out);  // won't be readable, but still writable
-        return out;
-    }
+INLINE Element* Init_Unreadable_Untracked(Sink(Element*) out) {
+    Init_Quasi_Word(out, Canon(UNREADABLE));
+    Set_Node_Free_Bit(out);  // won't be readable, but still writable
+    return out;
+}
 
-    INLINE bool Is_Unreadable_Debug(const Cell* v) {
-        if (not Is_Node_Free(v))
-            return false;
-        assert(Is_Node(v) and Is_Node_A_Cell(v));
-        assert(HEART_BYTE(v) == REB_BLANK);
-        assert(QUOTE_BYTE(v) == QUASIFORM_2);
-        return true;
-    }
-
-    #define Assert_Is_Unreadable_If_Debug(v) \
-        assert(Is_Unreadable_Debug(v))
-#else
-    #define Init_Unreadable_Untracked(out) \
-        Init_Quasi_Blank(out)
-
-    #undef Is_Unreadable_Debug  // testing in release builds is not meaningful
-
-    #define Assert_Is_Unreadable_If_Debug(v) NOOP
-#endif
+INLINE bool Is_Unreadable(const Cell* c) {
+    if (not Is_Node_Free(c))
+        return false;
+    assert(Is_Node(c) and Is_Node_A_Cell(c));
+    assert(HEART_BYTE(c) == REB_WORD);
+    assert(QUOTE_BYTE(c) == QUASIFORM_2);
+    assert(Cell_Word_Id(c) == SYM_UNREADABLE);
+    return true;
+}
 
 #define Init_Unreadable(out) \
     TRACK(Init_Unreadable_Untracked((out)))

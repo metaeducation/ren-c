@@ -28,8 +28,13 @@
 
 // "Zombie" keys in map, represent missing or deleted entries.
 //
-#define Is_Zombie Is_Nothing
-#define ZOMBIE_CELL NOTHING_VALUE
+// We use unreadable (vs. void or null) because it's not an antiform, and we'd
+// like to keep the arrays backing a MAP! free of antiforms (vs. making one
+// exception for the zombie).  Also, unreadable has nice properties of erroring
+// if you try to read it in the debug build.
+//
+#define Is_Zombie Is_Unreadable
+#define Init_Zombie Init_Unreadable
 
 
 //
@@ -178,8 +183,6 @@ static void Rehash_Map(Map* map)
 {
     Flex* hashlist = MAP_HASHLIST(map);
 
-    if (!hashlist) return;
-
     REBLEN *hashes = Flex_Head(REBLEN, hashlist);
     Array* pairlist = MAP_PAIRLIST(map);
 
@@ -189,16 +192,9 @@ static void Rehash_Map(Map* map)
     for (n = 0; n < Array_Len(pairlist); n += 2, key += 2) {
         const bool cased = true; // cased=true is always fine
 
-        if (Is_Zombie(key + 1)) {
-            //
-            // It's a "zombie", move last key to overwrite it
-            //
-            Copy_Cell(
-                key, Array_At(pairlist, Array_Len(pairlist) - 2)
-            );
-            Copy_Cell(
-                &key[1], Array_At(pairlist, Array_Len(pairlist) - 1)
-            );
+        if (Is_Zombie(key + 1)) {  // zombie: move last key to overwrite
+            Copy_Cell(key, Array_At(pairlist, Array_Len(pairlist) - 2));
+            Copy_Cell(&key[1], Array_At(pairlist, Array_Len(pairlist) - 1));
             Set_Flex_Len(pairlist, Array_Len(pairlist) - 2);
         }
 
@@ -209,11 +205,8 @@ static void Rehash_Map(Map* map)
 
         // discard zombies at end of pairlist
         //
-        while (
-            Is_Zombie(Flex_At(Value, pairlist, Array_Len(pairlist) - 1))
-        ){
+        while (Is_Zombie(Array_At(pairlist, Array_Len(pairlist) - 1)))
             Set_Flex_Len(pairlist, Array_Len(pairlist) - 2);
-        }
     }
 }
 
@@ -285,12 +278,14 @@ REBLEN Find_Map_Entry(
     //
     Force_Value_Frozen_Deep_Blame(key, MAP_PAIRLIST(map));
 
-    // Must set the value:
-    if (n) {  // re-set it:
-        Copy_Cell(
-            Flex_At(Value, pairlist, ((n - 1) * 2) + 1),
-            Is_Void(unwrap val) ? ZOMBIE_CELL : unwrap val
-        );
+    if (n) {  // found, must set or overwrite the value
+        Element* at = Array_At(pairlist, ((n - 1) * 2) + 1);
+        if (Is_Void(unwrap val))
+            Init_Zombie(at);
+        else {
+            assert(not Is_Antiform(unwrap val));
+            Copy_Cell(at, cast(const Element*, unwrap val));
+        }
         return n;
     }
 

@@ -168,7 +168,7 @@ void Probe_Cell_Print_Helper(
     const Atom* atom = c_cast(Value*, p);
 
   #if DEBUG_UNREADABLE_CELLS
-    if (Is_Unreadable_Debug(atom)) {  // Is_Nulled() asserts on unreadables
+    if (Is_Unreadable(atom)) {  // Is_Nulled() asserts on unreadables
         Append_Ascii(mo->string, "\\\\unreadable\\\\");
         return;
     }

@@ -80,13 +80,12 @@ enum StubFlavorEnum {
     //
     FLAVOR_INSTRUCTION_SPLICE,
 
-    // Pairlists are used by map!.  Maps can't hold antiforms, but void is
-    // used to signal missing keys.
+    // Pairlists are used by map! (note that Unreadable() is used for zombie
+    // keys, but it's not an antiform...)
     //
     FLAVOR_PAIRLIST,
-    FLAVOR_MIN_TRASH_OK = FLAVOR_PAIRLIST,
 
-    FLAVOR_MIN_ISOTOPES_OK,  //=//// BELOW HERE, THE ARRAYS CAN HOLD ISOTOPES
+    FLAVOR_MIN_ANTIFORMS_OK,  //=//// BELOW HERE, ARRAYS CAN HOLD ANTIFORMS
 
     // This indicates this Flex represents the "varlist" of a context (which
     // is interchangeable with the identity of the varlist itself).  A second
@@ -95,7 +94,7 @@ enum StubFlavorEnum {
     //
     // See notes on Context for further details about what a context is.
     //
-    FLAVOR_VARLIST = FLAVOR_MIN_ISOTOPES_OK,
+    FLAVOR_VARLIST = FLAVOR_MIN_ANTIFORMS_OK,
 
     FLAVOR_PARAMLIST = FLAVOR_VARLIST,  // review
 
