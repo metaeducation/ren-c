@@ -450,4 +450,8 @@ split-path: lib/func [
 
 join: :join-of  ; Note: JOIN now for strings and paths only (not arrays)
 
+; High-level CALL now defaults to being synchronous
+;
+call: specialize :call [wait: /wait]
+
 quit/with system/options/path  ; see [1]
