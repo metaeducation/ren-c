@@ -760,7 +760,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
 #endif
 
 
-#if CPLUSPLUS_11
+#if DEBUG_USE_CELL_SUBCLASSES
     //
     // rebReleaseAndNull is in the API, but because the API doesn't make
     // distinctions between Element and Value the double pointer trips it up
