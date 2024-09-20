@@ -353,14 +353,6 @@ Bounce Action_Executor(Level* L)
     //    binding, but that it doesn't add it.  But the mechanics aren't
     //    sorted out to communicate "don't add binding" here yet.  Give a
     //    first-cut approximation by unbinding.
-    //
-    // 6. SOFT permits L->out to not carry the UNEVALUATED flag--enfixed
-    //    operations which have evaluations on their left are treated as if
-    //    they were in a GROUP!.  This is important to `1 + 2 ->- lib/* 3`
-    //    being 9, while also allowing `1 + x: ->- lib/default [...]` to work.
-    //
-    // 7. MEDIUM escapability means that it only allows the escape of one unit.
-    //    Thus when reaching this point, it must carry the UENEVALUATED FLAG.
 
         if (STATE == ST_ACTION_BARRIER_HIT) {
             Init_Anti_Word(ARG, Canon(END));
@@ -399,8 +391,7 @@ Bounce Action_Executor(Level* L)
                 break;
 
               case PARAMCLASS_META: {
-                Move_Cell(ARG, OUT);
-                Meta_Quotify(ARG);
+                Move_Meta_Cell(ARG, OUT);
                 break; }
 
               case PARAMCLASS_JUST:
@@ -411,13 +402,7 @@ Bounce Action_Executor(Level* L)
                 Move_Cell(ARG, OUT);
                 break;
 
-              case PARAMCLASS_SOFT:  // can carry UNEVALUATED [6]
-                goto escapable;
-
-              case PARAMCLASS_MEDIUM:  // must carry UNEVALUATED [7]
-                goto escapable;
-
-              escapable:
+              case PARAMCLASS_SOFT:
                 if (ANY_ESCAPABLE_GET(OUT)) {
                     if (Eval_Value_Throws(ARG, cast(Element*, OUT), SPECIFIED))
                         goto handle_thrown_maybe_redo;
@@ -583,7 +568,6 @@ Bounce Action_Executor(Level* L)
     // into a nested evaluator before finishing the operation.
 
           case PARAMCLASS_SOFT:
-          case PARAMCLASS_MEDIUM:
             The_Next_In_Feed(ARG, L->feed);
 
             // See remarks on Lookahead_To_Sync_Enfix_Defer_Flag().  We
@@ -600,7 +584,7 @@ Bounce Action_Executor(Level* L)
             //
             if (
                 Lookahead_To_Sync_Enfix_Defer_Flag(L->feed) and  // ensure got
-                (pclass == PARAMCLASS_SOFT and Get_Subclass_Flag(
+                (Get_Subclass_Flag(
                     VARLIST,
                     ACT_PARAMLIST(VAL_ACTION(unwrap L->feed->gotten)),
                     PARAMLIST_QUOTES_FIRST
@@ -626,14 +610,22 @@ Bounce Action_Executor(Level* L)
                 // is something like a GET-GROUP!, GET-WORD!, or GET-TUPLE!...
                 // it has to be evaluated.
                 //
-                Move_Cell(SPARE, ARG);
-                if (Get_Var_Core_Throws(
-                    ARG,
-                    GROUPS_OK,
-                    Stable_Unchecked(SPARE),
-                    SPECIFIED
-                )){
-                    goto handle_thrown_maybe_redo;
+                if (Any_Group(ARG)) {
+                    Move_Cell(SPARE, ARG);
+                    if (Do_Any_List_At_Throws(ARG, SPARE, SPECIFIED))
+                        goto handle_thrown_maybe_redo;
+                }
+                else {
+                    assert(HEART_BYTE(ARG) != ANTIFORM_0);
+                    Move_Cell(SPARE, ARG);
+                    if (Get_Var_Core_Throws(
+                        ARG,
+                        GROUPS_OK,
+                        cast(Element*, SPARE),
+                        SPECIFIED
+                    )){
+                        goto handle_thrown_maybe_redo;
+                    }
                 }
             }
             break;

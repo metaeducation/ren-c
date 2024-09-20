@@ -147,7 +147,7 @@ Bounce Group_Branch_Executor(Level* level_)
 //      return: "void if branch not run, otherwise branch result (see HEAVY)"
 //          [any-atom?]
 //      condition [any-value?]  ; non-void-value? possible, but slower
-//      :branch "If arity-1 ACTION!, receives the evaluated condition"
+//      ':branch "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch?]
 //  ]
 //
@@ -182,9 +182,9 @@ DECLARE_NATIVE(if)
 //
 //      return: [any-atom?]
 //      condition [any-value?]  ; non-void-value? possible, but slower
-//      :true-branch "If arity-1 ACTION!, receives the evaluated condition"
+//      ':true-branch "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch?]
-//      :false-branch
+//      ':false-branch
 //          [any-branch?]
 //  ]
 //
@@ -512,7 +512,7 @@ DECLARE_NATIVE(didnt)
 //      ^atom "<deferred argument> Run branch if this is not null"
 //          [any-atom?]
 //      /decay
-//      :branch "If arity-1 ACTION!, receives value that triggered branch"
+//      ':branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> any-branch?]
 //  ]
 //
@@ -555,7 +555,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer' on` in %base-defs.r
 //      ^atom "<deferred argument> Run branch if this is null"
 //          [any-atom?]
 //      /decay
-//      :branch [<unrun> any-branch?]
+//      ':branch [<unrun> any-branch?]
 //  ]
 //
 DECLARE_NATIVE(else)  // see `tweak :else 'defer 'on` in %base-defs.r
@@ -597,7 +597,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer 'on` in %base-defs.r
 //      ^atom "<deferred argument> Run branch if this is not null"
 //          [any-atom?]
 //      /decay
-//      :branch "If arity-1 ACTION!, receives value that triggered branch"
+//      ':branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> any-branch?]
 //  ]
 //
@@ -1439,9 +1439,9 @@ DECLARE_NATIVE(switch)
 //
 //      return: "Former value or branch result"
 //          [any-value?]
-//      :target "Word or path which might be set (or not)"
+//      @target "Word or path which might be set (or not)"
 //          [set-group! set-word! set-tuple!]  ; to left of DEFAULT
-//      :branch "If target needs default, this is evaluated and stored there"
+//      ':branch "If target needs default, this is evaluated and stored there"
 //          [any-branch?]
 //      /predicate "Test for what's considered *not* needing to be defaulted"
 //          [<unrun> frame!]

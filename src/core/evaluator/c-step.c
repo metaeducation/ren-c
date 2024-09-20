@@ -367,7 +367,7 @@ Bounce Stepper_Executor(Level* L)
             and not Any_Set_Kind(VAL_TYPE_UNCHECKED(L_current))
         )
     ){
-        if (pclass == PARAMCLASS_SOFT or pclass == PARAMCLASS_META)
+        if (pclass == PARAMCLASS_NORMAL or pclass == PARAMCLASS_META)
             goto give_up_backward_quote_priority;  // yield as an exemption
     }
 
@@ -381,7 +381,6 @@ Bounce Stepper_Executor(Level* L)
         assert(
             pclass == PARAMCLASS_THE  // enfix func [@x ...] [...]
             or pclass == PARAMCLASS_SOFT
-            or pclass == PARAMCLASS_MEDIUM
         );
         Derelativize(OUT, L_current, L_specifier);
     }

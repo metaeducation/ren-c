@@ -176,14 +176,14 @@
         left-defer*: enfix tweak (copy unrun :left-normal*) 'defer 'on
 
         left-soft: enfix right-soft:
-            func [return: [~null~ word!] 'x [word!]] [return x]
+            func [return: [~null~ word!] ':x [word!]] [return x]
         left-soft*: enfix right-soft*:
-            func [return: [~null~ word!] 'x [word! <end>]] [return x]
+            func [return: [~null~ word!] ':x [word! <end>]] [return x]
 
         left-hard: enfix right-hard:
-            func [return: [~null~ word!] :x [word!]] [return x]
+            func [return: [~null~ word!] 'x [word!]] [return x]
         left-hard*: enfix right-hard*:
-            func [return: [~null~ word!] :x [word! <end>]] [return x]
+            func [return: [~null~ word!] 'x [word! <end>]] [return x]
 
         ok
     )
@@ -204,23 +204,16 @@
     ('|| = eval [right-soft* ||])
     (null? eval [right-soft*])
 
-    ; !!! At one point, when left quoting saw a "barrier" to the left, it would
-    ; perceive it as a null.  Today's barriers (commas or ||) make nihil, and
-    ; we have to distinguish between the case where it expects to see a nihil
-    ; vs. when that should act as an <end>.  This is not thought out well.
-    ;
-    ~expect-arg~ !! (<bug> eval [|| left-soft])
-    ~expect-arg~ !! (<bug> eval [|| left-soft*])
+    ~no-arg~ !! (eval [|| left-soft])
+    (null? eval [|| left-soft*])
     (null? eval [left-soft*])
 
     ('|| = eval [right-hard ||])
     ('|| = eval [right-hard* ||])
     (null? eval [right-hard*])
 
-    ; !!! See notes above.
-    ;
-    ~expect-arg~ !! (<bug> eval [|| left-hard])
-    ~expect-arg~ !! (<bug> eval [|| left-hard*])
+    ~no-arg~ !! (eval [|| left-hard])
+    (null? eval [|| left-hard*])
     (null? eval [left-hard*])
 ]
 
@@ -241,20 +234,20 @@
         left-defer*: enfix tweak (copy unrun :left-normal*) 'defer 'on
 
         left-soft: enfix right-soft:
-            func [return: [~null~ word!] 'x [word! <variadic>]] [
+            func [return: [~null~ word!] ':x [word! <variadic>]] [
                 return take x
             ]
         left-soft*: enfix right-soft*:
-            func [return: [~null~ word!] 'x [word! <variadic> <end>]] [
+            func [return: [~null~ word!] ':x [word! <variadic> <end>]] [
                 return try take x
             ]
 
         left-hard: enfix right-hard:
-            func [return: [~null~ word!] :x [word! <variadic>]] [
+            func [return: [~null~ word!] 'x [word! <variadic>]] [
                 return take x
             ]
         left-hard*: enfix right-hard*:
-            func [return: [~null~ word!] :x [word! <variadic> <end>]] [
+            func [return: [~null~ word!] 'x [word! <variadic> <end>]] [
                 return try take x
             ]
 
@@ -283,13 +276,8 @@
     ('|| = eval [right-soft* ||])
     (null? eval [right-soft*])
 
-    ; !!! At one point, when left quoting saw a "barrier" to the left, it would
-    ; perceive it as a null.  Today's barriers (commas or ||) make nihil, and
-    ; we have to distinguish between the case where it expects to see a nihil
-    ; vs. when that should act as an <end>.  This is not thought out well.
-    ;
-    ~expect-arg~ !! (<bug> eval [|| left-soft])
-    ~expect-arg~ !! (<bug> eval [|| left-soft*])
+    ~nothing-to-take~ !! (eval [|| left-soft])
+    (null? eval [|| left-soft*])
     (null? eval [left-soft*])
 
     ~nothing-to-take~ !! (eval [right-hard])
@@ -297,10 +285,8 @@
     ('|| = eval [right-hard* ||])
     (null? eval [right-hard*])
 
-    ; !!! See notes above.
-    ;
-    ~expect-arg~ !! (<bug> eval [|| left-hard])
-    ~expect-arg~ !! (<bug> eval [|| left-hard*])
+    ~nothing-to-take~ !! (eval [|| left-hard])
+    (null? eval [|| left-hard*])
     (null? eval [left-hard*])
 ]
 

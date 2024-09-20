@@ -177,17 +177,17 @@ DECLARE_NATIVE(lambda)
             symbol = Cell_Word_Symbol(item);
         }
         else if (Is_Get_Word(item)) {
-            pclass = PARAMCLASS_SOFT;
-            symbol = Cell_Word_Symbol(item);
+            fail ("SOFT parameter quoting no longer necessary");
         }
         else if (Is_Quoted(item)) {
-            if (not (
-                Cell_Num_Quotes(item) == 1
-                and Cell_Heart(item) == REB_WORD
-            )){
+            if (Cell_Num_Quotes(item) != 1)
                 fail (item);
-            }
-            pclass = PARAMCLASS_JUST;
+            if (Cell_Heart(item) == REB_WORD)
+                pclass = PARAMCLASS_JUST;
+            else if (Cell_Heart(item) == REB_GET_WORD)
+                pclass = PARAMCLASS_SOFT;
+            else
+                fail (item);
             symbol = Cell_Word_Symbol(item);
         }
         else if (Is_The_Word(item)) {

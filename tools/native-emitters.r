@@ -135,6 +135,7 @@ export emit-include-params-macro: func [
     let output-param!: issue!
     replace/all spec "'@" {#}
     replace/all spec "@" {#}
+    replace/all spec "':" ":"  ; escapable literal
 
     spec: load-value spec
 

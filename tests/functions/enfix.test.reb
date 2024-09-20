@@ -211,12 +211,12 @@
 ; first.
 [
     (
-        rightq: lambda [:x] [compose [<rightq> was (x)]]
-        leftq: enfix lambda [:y] [compose [<leftq> was (y)]]
+        rightq: lambda [':x] [compose [<rightq> was (x)]]
+        leftq: enfix lambda [':y] [compose [<leftq> was (y)]]
 
         [<rightq> was [<leftq> was foo]] = rightq foo leftq
     )(
-        rightq: lambda [:x] [compose [<rightq> was (x)]]
+        rightq: lambda [':x] [compose [<rightq> was (x)]]
         leftq: enfix lambda ['y] [compose [<leftq> was (y)]]
 
         [<rightq> was [<leftq> was foo]] = rightq foo leftq

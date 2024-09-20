@@ -1005,7 +1005,7 @@ grab: enfix func [
 
     return: "BINARY! (or INTEGER! if GRAB-INT enclosure is used)"
         [binary! integer!]
-    :left "Needs variable name for assignment (to deliver errors)"
+    @left "Needs variable name for assignment (to deliver errors)"
         [set-word!]
     'var "Variable containing the BINARY! to be extracted and advanced"
         [word!]

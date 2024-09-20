@@ -226,9 +226,6 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             VAL_INDEX_UNBOUNDED(shared) += 1;
             break;
 
-        case PARAMCLASS_MEDIUM:
-            fail ("Variadic medium parameters not yet implemented");
-
         case PARAMCLASS_SOFT:
             if (ANY_ESCAPABLE_GET(Cell_List_Item_At(shared))) {
                 if (Eval_Value_Throws(
@@ -304,7 +301,6 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             The_Next_In_Feed(out, L->feed);
             break;
 
-        case PARAMCLASS_MEDIUM:  // !!! Review nuance
         case PARAMCLASS_SOFT:
             if (ANY_ESCAPABLE_GET(At_Level(L))) {
                 if (Eval_Value_Throws(
@@ -597,13 +593,9 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
             quoted = true;
             break;
 
-        case PARAMCLASS_MEDIUM:
-            heart = REB_GET_WORD;
-            quoted = true;
-            break;
-
         case PARAMCLASS_SOFT:
             heart = REB_GET_WORD;
+            quoted = true;
             break;
 
         default:

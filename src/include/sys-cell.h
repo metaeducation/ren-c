@@ -556,7 +556,7 @@ INLINE void Copy_Cell_Header(
 INLINE Cell* Copy_Cell_Untracked(
     Cell* out,
     const Cell* v,
-    Flags copy_mask  // typically you don't copy UNEVALUATED, PROTECTED, etc
+    Flags copy_mask  // typically you don't copy PROTECTED, etc
 ){
     assert(out != v);  // usually a sign of a mistake; not worth supporting
     Assert_Cell_Readable(v);

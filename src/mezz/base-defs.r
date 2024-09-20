@@ -145,23 +145,23 @@ lesser-or-equal?: runs get $equal-or-lesser?
 ; Common "Invisibles"
 
 comment: func* [
-    {Ignores the argument value, but does no evaluation (see also ELIDE)}
+    "Ignores the argument value, but does no evaluation (see also ELIDE)"
 
     return: "Evaluator will skip over the result (not seen)"
         [nihil?]
-    :discarded "Literal value to be ignored."  ; `comment print "x"` disallowed
-        [block! any-string? binary! any-scalar?]
+    @discarded "Literal value to be ignored."  ; `comment print "x"` disallowed
+        [any-list? any-utf8? binary! any-scalar?]
 ][
     return nihil
 ]
 
 elide: func* [
-    {Argument is evaluative, but discarded (see also COMMENT)}
+    "Argument is evaluative, but discarded (see also COMMENT)"
 
     return: "The evaluator will skip over the result (not seen)"
         [nihil?]
     ^discarded "Evaluated value to be ignored"
-        [any-value? nihil?]  ; nihil? so (elide elide "x") works
+        [any-atom?]  ; e.g. (elide elide "x") is legal
 ][
     return nihil
 ]

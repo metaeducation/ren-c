@@ -75,7 +75,7 @@
     (28 = eval [multiply 3 9 defers])  ; seen as (multiply 3 9) defers))
 ][
     (
-        soft: enfix func [:v [any-value? <variadic>]] [
+        soft: enfix func [':v [any-value? <variadic>]] [
             return collect [
                 while [not tail? v] [
                     keep take v
@@ -93,7 +93,7 @@
     ([7] = eval [:(1 + 2) :(3 + 4) soft])
 ][
     (
-        hard: enfix func [:v [any-value? <variadic>]] [
+        hard: enfix func ['v [any-value? <variadic>]] [
             return collect [
                 while [not tail? v] [
                     keep take v
@@ -108,7 +108,7 @@
         a: ~end~
         (a hard)
     )
-    ([(3 + 4)] = eval [(1 + 2) (3 + 4) hard])
+    ([:(3 + 4)] = eval [:(1 + 2) :(3 + 4) hard])
 ]
 
 

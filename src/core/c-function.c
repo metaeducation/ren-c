@@ -62,10 +62,6 @@ static bool Params_Of_Hook(
             break;
 
           case PARAMCLASS_SOFT:
-            Getify(TOP);
-            break;
-
-          case PARAMCLASS_MEDIUM:
             Quotify(Getify(TOP), 1);
             break;
 
@@ -296,9 +292,9 @@ void Push_Keys_And_Parameters_May_Fail(
             else {
                 if (heart == REB_GET_WORD) {
                     if (quoted)
-                        pclass = PARAMCLASS_MEDIUM;
-                    else
                         pclass = PARAMCLASS_SOFT;
+                    else
+                        fail ("PARAMCLASS_MEDIUM not needed any longer");
                 }
                 else if (heart == REB_WORD) {
                     if (quoted)
@@ -765,7 +761,6 @@ Phase* Make_Action(
             break;
 
           case PARAMCLASS_SOFT:
-          case PARAMCLASS_MEDIUM:
           case PARAMCLASS_JUST:
           case PARAMCLASS_THE:
             Set_Subclass_Flag(VARLIST, paramlist, PARAMLIST_QUOTES_FIRST);

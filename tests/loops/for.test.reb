@@ -128,7 +128,7 @@
         for [x x] each [1 2 3 4] [sum: sum + x]
     )
     ~dup-vars~ !! (
-        for :(compose [  ; see above
+        for (compose [  ; see above
             x (bind '@x obj1)
         ]) each [
             1 2 3 4
@@ -137,7 +137,7 @@
         ]
     )
     ~dup-vars~ !! (
-        for :(compose [  ; see above
+        for (compose [  ; see above
             (bind '@x obj2) x
         ]) each [
             1 2 3 4
@@ -146,7 +146,7 @@
         ]
     )
     (
-        for :(compose [  ; see above
+        for (compose [  ; see above
             (bind '@x obj1) (bind '@x obj2)
         ]) each [
             1 2 3 4

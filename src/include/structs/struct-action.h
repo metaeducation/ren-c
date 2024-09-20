@@ -181,17 +181,24 @@ typedef enum {
 typedef enum {
     PARAMCLASS_0,  // temporary state for Option(ParamClass)
 
+    // `PARAMCLASS_RETURN` isn't really a parameter...but the slot which is
+    // used to hold a function's definitional return is also on the interface
+    // to hold the typechecking information for returning.  It isn't ideal
+    // to make it look like a parameter on the public interface of the
+    // function--it's more an artifact of the implementation that needs to
+    // be rethought.
+    //
+    PARAMCLASS_RETURN,
+
     // `PARAMCLASS_NORMAL` is cued by an ordinary WORD! in the function spec
     // to indicate that you would like that argument to be evaluated normally.
     //
-    //     >> foo: function [a] [print [{a is} a]]
+    //     >> foo: function [a] [print ["a is" a]]
     //
     //     >> foo 1 + 2
     //     a is 3
     //
     PARAMCLASS_NORMAL,
-
-    PARAMCLASS_RETURN,
 
     // `PARAMCLASS_JUST` is cued by a quoted WORD! in the function spec
     // dialect.  It indicates that a single value of content at the callsite
@@ -213,7 +220,7 @@ typedef enum {
     //
     PARAMCLASS_JUST,
 
-    // `PARAMCLASS_THE` is however cued by a THE-WORD! in the function spec
+    // `PARAMCLASS_THE` is cued by a THE-WORD! in the function spec
     // dialect.  It indicates that a single value of content at the callsite
     // should be passed through literally, BUT it will pick up binding:
     //
@@ -233,7 +240,7 @@ typedef enum {
     //
     PARAMCLASS_THE,
 
-    // `PARAMCLASS_MEDIUM` is cued by a QUOTED GET-WORD! in the function spec
+    // `PARAMCLASS_SOFT` is cued by a QUOTED GET-WORD! in the function spec
     // dialect.  It quotes with the exception of GET-GROUP!, GET-WORD!, and
     // GET-TUPLE!...which will be evaluated:
     //
@@ -245,33 +252,23 @@ typedef enum {
     //     >> foo :(1 + 2)
     //     a is 3
     //
-    // Although possible to implement medium quoting with hard quoting, it is
-    // a convenient way to allow callers to "escape" a quoted context when
-    // they need to.
+    // It is possible to *mostly* implement soft quoting with hard quoting,
+    // though it is a convenient way to allow callers to "escape" a quoted
+    // context when they need to.
     //
-    PARAMCLASS_MEDIUM,
-
-    // `PARAMCLASS_SOFT` is cued by a PLAIN GET-WORD!.  It's a more nuanced
-    // version of PARAMCLASS_MEDIUM which is escapable but will defer to enfix.
-    // This covers cases like:
+    // However there is a nuance which makes soft quoting fundamentally
+    // different from hard quoting, regarding how it resolves contention
+    // with other hard quotes.  If you have a situation like:
     //
-    //     if ok [...] then :(func [...] [...])  ; want escapability
-    //     if ok [...] then x -> [...]  ; but want enfix -> lookback to win
+    //     right-soft: func [':arg] [...]
+    //     left-literal: enfix func [@left right] [...]
     //
-    // Hence it is the main mode of quoting for branches.  It would be
-    // unsuitable for cases like OF, however, due to this problem:
+    // Soft quoting will "tie break" by assuming the soft literal operation
+    // is willing to let the hard literal operation run:
     //
-    //     integer! = kind of 1  ; want left quoting semantics on `kind` WORD!
-    //     integer! = :(first [kind length]) of 1  ; want escapability
-    //
-    // OF wants its left hand side to be escapable, however it wants the
-    // quoting behavior to out-prioritize the completion of enfix on the
-    // left.  Contrast this with how THEN wants the enfix on the right to
-    // win out ahead of its quoting.
-    //
-    // This is a subtlety that most functions don't have to worry about, so
-    // using soft quoting is favored to medium quoting for being one less
-    // character to type.
+    //     right-escapable X left-literal Y
+    //     =>
+    //     right-escapable (X left-literal Y)
     //
     PARAMCLASS_SOFT,
 

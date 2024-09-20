@@ -162,7 +162,7 @@ DECLARE_NATIVE(the)
     if (REF(soft) and ANY_ESCAPABLE_GET(v)) {
         if (Eval_Value_Throws(OUT, v, SPECIFIED))
             return THROWN;
-        return OUT;  // Don't set UNEVALUATED flag
+        return OUT;
     }
 
     Copy_Cell(OUT, v);

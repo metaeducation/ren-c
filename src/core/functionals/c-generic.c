@@ -73,7 +73,7 @@ Bounce Generic_Dispatcher(Level* L)
 //  "Creates datatype action (currently for internal use only)"
 //
 //      return: [~]
-//      :verb [set-word!]
+//      @verb [set-word!]
 //      spec [block!]
 //  ]
 //

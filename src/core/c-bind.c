@@ -513,8 +513,8 @@ Option(Stub*) Get_Word_Container(
 //          [any-value?]
 //      'vars "Variable(s) to create, GROUP!s must evaluate to BLOCK! or WORD!"
 //          [word! block! set-word! set-block! group! set-group!]
-//      :expression "Optional Expression to assign"
-//          [<variadic> any-value?]
+//      @expression "Optional Expression to assign"
+//          [<variadic> element?]
 //  ]
 //
 DECLARE_NATIVE(let)

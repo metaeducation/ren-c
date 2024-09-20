@@ -201,7 +201,7 @@ shell: func [
 
 shell+: func [  ; was $ but that now has a binding purpose
     {Run SHELL code to end of line (or continue on next line with `...`)}
-    :args "See documentation for SHELL"
+    ':args "See documentation for SHELL"
         [any-value? <variadic>]
     /inspect
     /pipe

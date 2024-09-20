@@ -304,8 +304,8 @@ Bounce Reflect_Core(Level* level_)
 //  "Infix form of REFLECT which quotes its left (X OF Y => REFLECT Y 'X)"
 //
 //      return: [any-value?]
-//      'property "Will be escapable, ':property (bootstrap permitting)"
-//          [word! get-word! get-tuple! get-group!]
+//      ':property "Escapable slot for WORD!"
+//          [word!]
 //      value [any-value?]
 //  ]
 //

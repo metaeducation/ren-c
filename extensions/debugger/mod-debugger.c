@@ -141,7 +141,7 @@ DECLARE_NATIVE(breakpoint_p)
 //
 //      return: [any-value?]
 //          "Result of the code evaluation, or RESUME/WITH value if override"
-//      :code [group!]  ; or LIT-WORD! name or BLOCK! for dialect
+//      @code [group!]  ; or LIT-WORD! name or BLOCK! for dialect
 //          "Run the given code if breakpoint does not override"
 //  ]
 //

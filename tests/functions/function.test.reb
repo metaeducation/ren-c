@@ -277,11 +277,11 @@
     )
 ]
 
-; Argument passing of "medium literal arguments"
+; Argument passing of "escapable (soft) literal arguments"
 [
     (
-        medium: func [':x <with> got] [got: :x, return 1000]
-        Lmedium: enfix :medium
+        soft: func [':x <with> got] [got: :x, return 1000]
+        Lsoft: enfix :soft
 
         got: null
         test: lambda [expr [block!]] [
@@ -291,46 +291,9 @@
         ok
     )
 
-    ([1000, 1] = test [medium 1])
-    ([1000, a] = test [medium a])
-    ([1000, 'a] = test [medium 'a])
-    ([1000, 304] = test [medium :(300 + 4)])
-    ([1000, (300 + 4)] = test [medium (300 + 4)])
-    ([1000, o.f] = test [medium o.f])
-    (
-        o: context [f: 304]
-        [1000, 304] = test [medium :o.f]
-    )
-
-    ; Key point on which MEDIUM and SOFT differ, enfix quote handling
-    (
-        +Q: enfix lambda ['x [<end> integer!] y] [if x [x + y] else [<null>]]
-        [<null>, 10] = test [medium 10 +Q 20]
-    )
-
-    ([1001, 2] = test [1 + 2 Lmedium])
-    ([1001, <hi>] = test [1 + :(first [<hi>]) Lmedium])
-
-]
-
-; Argument passing of "soft literal arguments"
-[
-    (
-        soft: lambda [:x <with> got] [got: :x, 1000]
-        Lsoft: enfix :soft
-
-        got: null
-        test: func [expr [block!]] [
-            got: '~junk~
-            return compose [(eval expr), (:got)]
-        ]
-        ok
-    )
-
     ([1000, 1] = test [soft 1])
     ([1000, a] = test [soft a])
     ([1000, 'a] = test [soft 'a])
-    ([1000, a:] = test [soft a:])
     ([1000, 304] = test [soft :(300 + 4)])
     ([1000, (300 + 4)] = test [soft (300 + 4)])
     ([1000, o.f] = test [soft o.f])
@@ -339,14 +302,17 @@
         [1000, 304] = test [soft :o.f]
     )
 
-    ; Key point on which MEDIUM and SOFT differ, enfix quote handling
+    (
+        +Q: enfix lambda ['x [<end> integer!] y] [if x [x + y] else [<null>]]
+        [1000, 30] = test [soft 10 +Q 20]
+    )
     (
         +Q: enfix lambda ['x y] [x + y]
         [1000, 30] = test [soft 10 +Q 20]
     )
 
-    ([1000, 3] = test [1 + 2 Lsoft])
-    ([1000, 6] = test [1 + :(2 + 3) Lsoft])
+    ([1001, 2] = test [1 + 2 Lsoft])
+    ([1001, <hi>] = test [1 + :(first [<hi>]) Lsoft])
 ]
 
 ; basic test for recursive action invocation
@@ -389,7 +355,7 @@
 
 ; inline function test
 [#1659 (
-    f: does :(reduce [unrun does [okay]])
+    f: does (reduce [unrun does [okay]])
     f
 )]
 
