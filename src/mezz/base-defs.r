@@ -228,7 +228,7 @@ reeval func [
     while [not equal? <end> set-word: take set-words] [
         type-name: copy as text! set-word
         change back tail of type-name "!" ;-- change ? at tail to !
-        tester: typechecker (get bind (as word! type-name) set-word)
+        tester: typechecker (get bind (as word! type-name) binding of set-word)
         set set-word :tester
 
         set-meta :tester construct system/standard/action-meta [

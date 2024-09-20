@@ -170,7 +170,7 @@ DECLARE_NATIVE(bind)
         if (IS_WORD_UNBOUND(target))
             fail (Error_Not_Bound_Raw(target));
 
-        context = VAL_WORD_CONTEXT(target);
+        fail ("Binding to WORD! only implemented via INSIDE at this time.");
     }
 
     if (Any_Word(v)) {

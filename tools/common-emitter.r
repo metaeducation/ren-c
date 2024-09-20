@@ -112,7 +112,11 @@ cscape: function [
             if with [
                 context: compose [(context)] ;-- convert to block
                 for-each item context [
-                    bind code item
+                    if any-context? item [
+                        bind code item
+                    ] else [
+                        bind code binding of item
+                    ]
                 ]
             ]
             sub: do code
