@@ -23,7 +23,7 @@
 // "Evaluation" refers to the general concept of processing an ANY-LIST! in
 // the Rebol language:
 //
-//     >> [pos value]: evaluate/next [1 + 2 10 + 20]  ; one step of evaluation
+//     >> [pos value]: evaluate/step [1 + 2 10 + 20]  ; one step of evaluation
 //     == [10 + 20]  ; next position
 //
 //     >> value

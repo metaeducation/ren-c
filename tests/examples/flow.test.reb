@@ -13,7 +13,7 @@
         replace/all block placeholder $flow-result
         while [not tail? block] [
             insert block $ 'flow-result:
-            [block flow-result]: evaluate/next block
+            [block flow-result]: evaluate/step block
         ]
         return flow-result
     ]

@@ -54,7 +54,7 @@
                 ]
 
                 match word! param [  ; ordinary parameter
-                    [block frame.(param)]: evaluate/next block
+                    [block frame.(param)]: evaluate/step block
                 ]
 
                 all [

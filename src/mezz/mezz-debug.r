@@ -21,7 +21,7 @@ verify: func [
         [<unrun> block! frame!]
     <local> pos result
 ][
-    while [[pos /result]: evaluate/next conditions] [
+    while [[pos /result]: evaluate/step conditions] [
         all [
             not void? :result
             not :result

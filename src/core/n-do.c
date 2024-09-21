@@ -253,7 +253,7 @@ DECLARE_NATIVE(shove)
 //          error!  ; raise the error
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
-//      /next "Do one step of evaluation (return null position if at tail)"
+//      /step "Do one step of evaluation (return null position if at tail)"
 //      /undecayed "Don't convert NIHIL or COMMA! antiforms to VOID"
 //  ]
 //
@@ -333,7 +333,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 
     if (Any_List(source)) {
         if (Cell_Series_Len_At(source) == 0) {
-            if (REF(next))  // `eval/next []` doesn't "count" [3]
+            if (REF(step))  // `eval/step []` doesn't "count" [3]
                 return nullptr;  // need pure null for THEN/ELSE to work right
 
             if (REF(undecayed))
@@ -352,17 +352,17 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 
         Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;
 
-        if (not REF(next))
+        if (not REF(step))
             Init_Nihil(Alloc_Evaluator_Primed_Result());
 
         Level* sub = Make_Level(
-            REF(next) ? &Stepper_Executor : &Evaluator_Executor,
+            REF(step) ? &Stepper_Executor : &Evaluator_Executor,
             feed,
             flags
         );
         Push_Level(OUT, sub);
 
-        if (not REF(next)) {  // plain evaluation to end, maybe invisible
+        if (not REF(step)) {  // plain evaluation to end, maybe invisible
             if (REF(undecayed))
                 return DELEGATE_SUBLEVEL(sub);
 
@@ -380,13 +380,13 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 
       case REB_FRAME : {
         //
-        // !!! It is likely that the return result for the NEXT: will actually
+        // !!! It is likely that the return result for the /STEP will actually
         // be a FRAME! when the input to EVALUATE is a BLOCK!, so that the
         // LET bindings can be preserved.  Binding is still a mess when it
         // comes to questions like backtracking in blocks, so review.
         //
-        if (REF(next))
-            fail ("/NEXT Behavior not implemented for FRAME! in EVALUATE");
+        if (REF(step))
+            fail ("/STEP Behavior not implemented for FRAME! in EVALUATE");
 
         if (Is_Frame_Details(source))
             if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
@@ -459,7 +459,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 
 } single_step_result_in_out: {  //////////////////////////////////////////////
 
-    assert(REF(next));
+    assert(REF(step));
 
     Specifier* specifier = Level_Specifier(SUBLEVEL);
     VAL_INDEX_UNBOUNDED(source) = Level_Array_Index(SUBLEVEL);  // new index
@@ -474,7 +474,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
             Init_Void(OUT);
     }
 
-    if (REF(next)) {
+    if (REF(step)) {
         Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
         Set_Flex_Len(pack, 2);
         Copy_Meta_Cell(Array_At(pack, 0), source);  // pack wants META values

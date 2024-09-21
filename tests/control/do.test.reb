@@ -228,11 +228,11 @@
 ; evaluate block tests
 (
     success: 'false
-    pos: evaluate/next [success: 'true success: 'false]
+    pos: evaluate/step [success: 'true success: 'false]
     (true? success) and (pos = [success: 'false])
 )
 (
-    [b value]: evaluate/next [1 2]
+    [b value]: evaluate/step [1 2]
     all [
         1 = value
         [2] = b
@@ -240,13 +240,13 @@
 )
 (
     all [
-        null? [pos /value]: evaluate/next/undecayed []
+        null? [pos /value]: evaluate/step/undecayed []
         pos = null
         null? value
     ]
 )
 (
-    [pos value]: evaluate/next [trap [1 / 0]]
+    [pos value]: evaluate/step [trap [1 / 0]]
     all [
         error? value
         pos = []
@@ -266,7 +266,7 @@
         result': meta/except eval [1 / 0 1 + 2]
     )
     (
-        result': meta/except [pos @]: eval/next [1 / 0 1 + 2]
+        result': meta/except [pos @]: eval/step [1 / 0 1 + 2]
         all [
             error? result'
             result'.id = 'zero-divide
@@ -276,7 +276,7 @@
     (
         block: [1 + 2 1 / 0 10 + 20]
         [3 ~zero-divide~ 30] = collect [
-            while [[block ^/result']: eval/next block] [
+            while [[block ^/result']: eval/step block] [
                 if raised? unmeta result' [
                     keep quasi (unquasi result').id
                 ] else [

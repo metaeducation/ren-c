@@ -21,12 +21,12 @@
 ; https://forum.rebol.info/t/1582
 
 ~no-value~ !! (
-    [pos val]: evaluate/next [
+    [pos val]: evaluate/step [
         1 + comment "a" comment "b" 2 * 3 fail "too far"
     ]
 )
 (
-    [pos val]: evaluate/next [
+    [pos val]: evaluate/step [
         1 comment "a" + comment "b" 2 * 3 fail "too far"
     ]
     all [
@@ -35,7 +35,7 @@
     ]
 )
 (
-    [pos val]: evaluate/next [
+    [pos val]: evaluate/step [
         1 comment "a" comment "b" + 2 * 3 fail "too far"
     ]
     all [
@@ -67,12 +67,12 @@
 )
 (
     code: [1 elide "a" elide "b" + 2 * 3 fail "too far"]
-    pos: evaluate/next code
-    pos: evaluate/next pos
+    pos: evaluate/step code
+    pos: evaluate/step pos
     pos = [elide "b" + 2 * 3 fail "too far"]
 )
 (
-    [pos val]: evaluate/next [
+    [pos val]: evaluate/step [
         1 + 2 * 3 elide "a" elide "b" fail "too far"
     ]
     all [
