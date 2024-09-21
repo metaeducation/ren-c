@@ -159,8 +159,8 @@ DECLARE_NATIVE(the)
 
     Element* v = cast(Element*, ARG(value));
 
-    if (REF(soft) and ANY_ESCAPABLE_GET(v)) {
-        if (Eval_Value_Throws(OUT, v, SPECIFIED))
+    if (REF(soft) and Is_Soft_Escapable_Group(v)) {
+        if (Eval_Any_List_At_Throws(OUT, v, SPECIFIED))
             return THROWN;
         return OUT;
     }

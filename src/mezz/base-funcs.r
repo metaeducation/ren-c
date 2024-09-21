@@ -703,7 +703,7 @@ count-up: func [
         limit
     ]
     return cycle [
-        result': ^ cfor :var start end 1 body except e -> [
+        result': ^ cfor (var) start end 1 body except e -> [
             return raise e
         ]
         if result' = null' [return null]  ; a BREAK was encountered

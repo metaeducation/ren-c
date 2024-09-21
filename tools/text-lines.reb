@@ -164,9 +164,6 @@ text-line-of: func [
         opt some [
             to newline cursor: <here>
 
-            ; IF deprecated in Ren-C, but :(...) with logic not available
-            ; in the bootstrap build.
-            ;
             when (lesser? index of cursor idx)
 
             advance-rule

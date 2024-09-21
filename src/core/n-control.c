@@ -53,12 +53,45 @@
 
 
 //
-//  Group_Branch_Executor: C
+//  The_Group_Branch_Executor: C
 //
-// To make it easier for anything that runs a branch, the double-evaluation in
-// a GROUP! branch has its own executor.  This means something like IF can
-// push a level with the branch executor which can complete and then run the
-// evaluated-to branch.
+// Branching code typically uses "soft" literal slots for the branch.  That
+// means that if you use a GROUP! there, the parameter gathering process will
+// pre-evaluate it.
+//
+//     >> branchy: func [flag] [either flag '[<a>] '[<b>]]
+//
+//     >> either okay (print "a" branchy true) (print "b" branchy false)
+//     a
+//     b
+//     == <a>
+//
+// That behavior might seem less useful than only evaluating the groups in
+// the event of the branch running.  And it might seem you could accomplish
+// that by taking the arguments as non-soft literal and then having the
+// branch handler evaluate the groups when the branch was taken.  However,
+// the use of the soft literal convention is important for another reason:
+// it's how lambdas are allowed to be implicitly grouped:
+//
+//     case [...] then x -> [...]
+//     =>
+//     case [...] then (x -> [...])
+//
+// This implicit grouping only happens with soft literals.  If THEN does a
+// hard literal argument forward, and -> does a hard literal backward, then
+// that is a deadlock and there is an error.
+//
+// So to accomplish the desire of a group that only evaluates to produce the
+// branch to run if the branch is to be taken, we use THE-GROUP!:
+//
+//     >> either okay @(print "a" branchy true) @(print "b" branchy false)
+//     a
+//     == <a>
+//
+// It's not super common to need this.  But if someone does...the way it is
+// accomplished is that THE-GROUP! branches have their own executor.  This
+// means something like IF can push a level with the branch executor that
+// can complete and run the evaluated-to branch.
 //
 // So the group branch executor is pushed with the feed of the GROUP! to run.
 // It gives this feed to an Stepper_Executor(), and then delegates to the
@@ -88,7 +121,7 @@
 //            eval f else (maybe def)
 //        ]
 //
-Bounce Group_Branch_Executor(Level* level_)
+Bounce The_Group_Branch_Executor(Level* level_)
 {
     if (THROWING)
         return THROWN;
@@ -126,7 +159,7 @@ Bounce Group_Branch_Executor(Level* level_)
 
     Decay_If_Unstable(SPARE);
 
-    if (Any_Group(SPARE))
+    if (Is_The_Group(SPARE))
         fail (Error_Bad_Branch_Type_Raw());  // stop infinite recursion (good?)
 
     if (Is_Void(SPARE)) {  // void branches giving their input is useful  [3]
@@ -304,7 +337,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
             Copy_Cell(in, SPARE);  // cheap reification... (e.g. quoted)
             Meta_Unquotify_Known_Stable(Stable_Unchecked(in));  // [1]
             assert(STATE == ST_THENABLE_INITIAL_ENTRY);
-            assert(not Is_Antiform(in));
+            assert(Not_Antiform(in));
             goto test_not_lazy;
         }
 
@@ -513,7 +546,7 @@ DECLARE_NATIVE(didnt)
 //          [any-atom?]
 //      /decay
 //      ':branch "If arity-1 ACTION!, receives value that triggered branch"
-//          [<unrun> any-branch?]
+//          [<unrun> ~void~ any-branch?]
 //  ]
 //
 DECLARE_NATIVE(then)  // see `tweak :then 'defer' on` in %base-defs.r
@@ -555,7 +588,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer' on` in %base-defs.r
 //      ^atom "<deferred argument> Run branch if this is null"
 //          [any-atom?]
 //      /decay
-//      ':branch [<unrun> any-branch?]
+//      ':branch [<unrun> ~void~ any-branch?]
 //  ]
 //
 DECLARE_NATIVE(else)  // see `tweak :else 'defer 'on` in %base-defs.r
@@ -598,7 +631,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer 'on` in %base-defs.r
 //          [any-atom?]
 //      /decay
 //      ':branch "If arity-1 ACTION!, receives value that triggered branch"
-//          [<unrun> any-branch?]
+//          [<unrun> ~void~ any-branch?]
 //  ]
 //
 DECLARE_NATIVE(also)  // see `tweak :also 'defer 'on` in %base-defs.r
@@ -1037,7 +1070,7 @@ DECLARE_NATIVE(any)
 //      /all "Do not stop after finding first logically true case"
 //      /predicate "Unary case-processing action (default is DID)"
 //          [<unrun> frame!]
-//      <local> discarded branch
+//      <local> branch
 //  ]
 //
 DECLARE_NATIVE(case)
@@ -1084,13 +1117,13 @@ DECLARE_NATIVE(case)
     Value* cases = ARG(cases);
     Value* predicate = ARG(predicate);
 
-    Atom* discarded = LOCAL(discarded);  // slot to write unused results to
+    Atom* branch = LOCAL(branch);  // evaluator-writable local slot
 
     enum {
         ST_CASE_INITIAL_ENTRY = STATE_0,
         ST_CASE_CONDITION_EVAL_STEP,
         ST_CASE_RUNNING_PREDICATE,
-        ST_CASE_DISCARDING_GET_GROUP,
+        ST_CASE_EVALUATING_GROUP_BRANCH,
         ST_CASE_RUNNING_BRANCH
     };
 
@@ -1104,8 +1137,9 @@ DECLARE_NATIVE(case)
       case ST_CASE_RUNNING_PREDICATE :
         goto predicate_result_in_spare;
 
-      case ST_CASE_DISCARDING_GET_GROUP :
-        goto check_discarded_product_was_branch;
+      case ST_CASE_EVALUATING_GROUP_BRANCH :
+        Decay_If_Unstable(branch);
+        goto handle_processed_branch;
 
       case ST_CASE_RUNNING_BRANCH :
         goto branch_result_in_out;
@@ -1165,30 +1199,34 @@ DECLARE_NATIVE(case)
 
 } processed_result_in_spare: {  //////////////////////////////////////////////
 
-    bool matched = Is_Trigger(stable_SPARE);
-
-    const Element* branch = Copy_Cell(ARG(branch), At_Level(SUBLEVEL));
+    Copy_Cell(branch, At_Level(SUBLEVEL));
     Fetch_Next_In_Feed(SUBLEVEL->feed);
 
+    if (not Is_Group(branch))
+        goto handle_processed_branch;
+
+    Init_Void(Alloc_Evaluator_Primed_Result());
+    Level* sub = Make_Level_At_Core(
+        &Evaluator_Executor,
+        branch,  // non "THE-" GROUP! branches are run unconditionally
+        Level_Specifier(SUBLEVEL),
+        LEVEL_MASK_NONE
+    );
+
+    STATE = ST_CASE_EVALUATING_GROUP_BRANCH;
+    SUBLEVEL->executor = &Just_Use_Out_Executor;
+    Push_Level(branch, sub);  // level captured array and index
+    return CONTINUE_SUBLEVEL(sub);
+
+} handle_processed_branch: {  ////////////////////////////////////////////////
+
+    bool matched = Is_Trigger(stable_SPARE);
+
     if (not matched) {
-        if (not Is_Get_Group(branch))
-            goto handle_next_clause;
-        else {
-            // GET-GROUP! run even on no-match (see IF), but result discarded
-        }
+        if (not Any_Branch(branch))
+            fail (Error_Bad_Value_Raw(branch));  // like IF [3]
 
-        Init_Void(Alloc_Evaluator_Primed_Result());
-        Level* sub = Make_Level_At_Core(
-            &Evaluator_Executor,
-            branch,  // turning into feed drops cell type, :(...) not special
-            Level_Specifier(SUBLEVEL),
-            LEVEL_MASK_NONE
-        );
-
-        STATE = ST_CASE_DISCARDING_GET_GROUP;
-        SUBLEVEL->executor = &Just_Use_Out_Executor;
-        Push_Level(discarded, sub);
-        return CONTINUE_SUBLEVEL(sub);
+        goto handle_next_clause;
     }
 
     STATE = ST_CASE_RUNNING_BRANCH;
@@ -1196,16 +1234,9 @@ DECLARE_NATIVE(case)
     return CONTINUE_CORE(
         OUT,
         LEVEL_FLAG_BRANCH,
-        Level_Specifier(SUBLEVEL), branch,
+        Level_Specifier(SUBLEVEL), cast(Value*, branch),
         SPARE
     );
-
-} check_discarded_product_was_branch: {  /////////////////////////////////////
-
-    if (not Any_Branch(discarded))
-        fail (Error_Bad_Value_Raw(discarded));  // like IF [3]
-
-    goto handle_next_clause;
 
 } branch_result_in_out: {  ///////////////////////////////////////////////////
 

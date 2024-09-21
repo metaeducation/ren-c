@@ -395,17 +395,25 @@ Bounce Action_Executor(Level* L)
                 break; }
 
               case PARAMCLASS_JUST:
+                assert(Not_Antiform(OUT));
                 Move_Cell(ARG, OUT);
                 break;
 
               case PARAMCLASS_THE:
+                assert(Not_Antiform(OUT));
                 Move_Cell(ARG, OUT);
                 break;
 
               case PARAMCLASS_SOFT:
-                if (ANY_ESCAPABLE_GET(OUT)) {
-                    if (Eval_Value_Throws(ARG, cast(Element*, OUT), SPECIFIED))
+                assert(Not_Antiform(OUT));
+                if (Is_Soft_Escapable_Group(cast(Element*, OUT))) {
+                    if (Eval_Any_List_At_Throws(
+                        ARG,
+                        cast(Element*, OUT),
+                        SPECIFIED
+                    )){
                         goto handle_thrown_maybe_redo;
+                    }
                     Freshen_Cell(OUT);
                 }
                 else
@@ -604,29 +612,14 @@ Bounce Action_Executor(Level* L)
                 Push_Level(ARG, sub);
                 return CATCH_CONTINUE_SUBLEVEL(sub);
             }
-            else if (ANY_ESCAPABLE_GET(ARG)) {
+            else if (Is_Soft_Escapable_Group(cast(Element*, ARG))) {
                 //
-                // We did not defer the quoted argument.  If the argument
-                // is something like a GET-GROUP!, GET-WORD!, or GET-TUPLE!...
-                // it has to be evaluated.
+                // We did not defer the literal argument.  If the argument
+                // is a GROUP!, it has to be evaluated.
                 //
-                if (Any_Group(ARG)) {
-                    Move_Cell(SPARE, ARG);
-                    if (Eval_Any_List_At_Throws(ARG, SPARE, SPECIFIED))
-                        goto handle_thrown_maybe_redo;
-                }
-                else {
-                    assert(HEART_BYTE(ARG) != ANTIFORM_0);
-                    Move_Cell(SPARE, ARG);
-                    if (Get_Var_Core_Throws(
-                        ARG,
-                        GROUPS_OK,
-                        cast(Element*, SPARE),
-                        SPECIFIED
-                    )){
-                        goto handle_thrown_maybe_redo;
-                    }
-                }
+                Move_Cell(SPARE, ARG);
+                if (Eval_Any_List_At_Throws(ARG, SPARE, SPECIFIED))
+                    goto handle_thrown_maybe_redo;
             }
             break;
 

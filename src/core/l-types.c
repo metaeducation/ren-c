@@ -311,50 +311,27 @@ Bounce Reflect_Core(Level* level_)
 //
 DECLARE_NATIVE(of)
 //
-// !!! ':PROPERTY is not loadable by the bootstrap executable at time of
-// writing.  But that is desired over 'PROPERTY or :PROPERTY so that both
-// these cases would work:
+// 1. Ugly hack to make OF frame-compatible with REFLECT.  If there was a
+//    separate dispatcher for REFLECT it could be called with proper
+//    parameterization, but as things are it expects the arguments to fit the
+//    type action dispatcher rule... dispatch item in first arg, property in
+//    the second.
 //
-//     >> integer! = kind of 1
-//     == ~true~  ; anti
-//
-//     >> integer! = :(second [length kind]) of 1
-//     == ~true~  ; anti
-//
-// For the moment the behavior is manually simulated.
-//
-// Common enough to be worth it to do some kind of optimization so it's not
-// much slower than a REFLECT; e.g. you don't want it building a separate
-// frame to make the REFLECT call in just because of the parameter reorder.
+// 2. OF is called often enough to be worth it to do some kind of optimization
+//    so it's not much slower than a REFLECT; e.g. you don't want it building
+//    a separate frame to make the REFLECT call in just because of the
+//    parameter reorder.
 {
     INCLUDE_PARAMS_OF_OF;
 
     Value* prop = ARG(property);
+    assert(Is_Word(prop));
 
-    if (ANY_ESCAPABLE_GET(prop)) {  // !!! See note above
-        if (Eval_Value_Throws(SPARE, cast(Element*, prop), SPECIFIED))
-            return THROWN;
+    Copy_Cell(SPARE, prop);
+    Copy_Cell(ARG(property), ARG(value));  // frame compatibility [1]
+    Copy_Cell(ARG(value), stable_SPARE);
 
-        Decay_If_Unstable(SPARE);
-
-        if (not Is_Word(SPARE)) {
-            Move_Cell(prop, stable_SPARE);
-            fail (Error_Invalid_Arg(level_, PARAM(property)));
-        }
-    }
-    else
-        Copy_Cell(SPARE, prop);
-
-    // !!! Ugly hack to make OF frame-compatible with REFLECT.  If there was
-    // a separate dispatcher for REFLECT it could be called with proper
-    // parameterization, but as things are it expects the arguments to
-    // fit the type action dispatcher rule... dispatch item in first arg,
-    // property in the second.
-    //
-    Copy_Cell(ARG(property), ARG(value));
-    Copy_Cell(ARG(value), cast(Element*, SPARE));  // is word
-
-    return Reflect_Core(level_);
+    return Reflect_Core(level_);  // use same frame [2]
 }
 
 

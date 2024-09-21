@@ -156,12 +156,6 @@ void Push_Frame_Continuation(
 //
 //////////////////////////////////////////////////////////////////////////////
 //
-// 2. GET-GROUP! is handled here although it isn't in the ANY-BRANCH? typeset.
-//    This is because some instances (like CASE) don't have this handled
-//    automatically by a parameter convention, the way IF does.  To make it
-//    easier for them, the GET-GROUP! type is allowed to act like GROUP!, to
-//    save on having to transform the cell in hand to a plain GROUP!.
-//
 // 3. Things like CASE currently ask for a branch-based continuation on types
 //    they haven't checked, but encounter via evaluation.  Hence we FAIL here
 //    instead of panic()...but that suggests this should be narrowed to the
@@ -180,13 +174,21 @@ bool Pushed_Continuation(
     if (Is_Action(branch))  // antiform frames are legal
         goto handle_action;
 
+    if (Is_Void(branch)) {
+        if (with) {
+            Copy_Cell(out, with);
+            goto just_use_out;
+        }
+        fail ("Branch has no default value to give with void");
+    }
+
     if (Is_Antiform(branch))  // no other antiforms can be branches
         fail (Error_Bad_Antiform(branch));
 
-    if (Is_Group(branch) or Is_Get_Group(branch)) {  // [2] for GET-GROUP!
+    if (Is_The_Group(branch)) {  // [2] for GET-GROUP!
         assert(flags & LEVEL_FLAG_BRANCH);  // needed for trick
         Level* grouper = Make_Level_At_Core(
-            &Group_Branch_Executor,  // evaluates to synthesize branch
+            &The_Group_Branch_Executor,  // evaluates to synthesize branch
             branch,
             branch_specifier,
             (flags & (~ LEVEL_FLAG_BRANCH))

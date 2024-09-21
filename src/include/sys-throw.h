@@ -120,7 +120,7 @@ INLINE void Drop_Level(Level* L);
 //    are hiding errors is to recursively decay.
 //
 INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
-    if (not Is_Antiform(v))
+    if (Not_Antiform(v))
         return u_cast(Value*, u_cast(Atom*, v));
 
     if (Is_Lazy(v)) {  // should this iterate?
@@ -143,7 +143,7 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
             fail (Error_Bad_Antiform(v));  // need more granular unpacking [2]
         if (Is_Raised(v))
             fail (VAL_CONTEXT(v));
-        assert(not Is_Antiform(v) or Is_Antiform_Stable(v));
+        assert(Not_Antiform(v) or Is_Antiform_Stable(v));
 
         while (++pack_meta_at != pack_meta_tail) {
             if (not Is_Quasiform(pack_meta_at))

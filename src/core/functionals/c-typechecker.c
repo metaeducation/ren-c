@@ -225,7 +225,7 @@ bool Typecheck_Atom_Core(
 
             assert(Is_Stable_Antiform_Heart(Cell_Heart(item)));
 
-            if (not Is_Antiform(v) or Cell_Heart(item) != Cell_Heart(v))
+            if (Not_Antiform(v) or Cell_Heart(item) != Cell_Heart(v))
                 goto test_failed;
 
             bool strict = false;  // !!! Is being case-insensitive good?

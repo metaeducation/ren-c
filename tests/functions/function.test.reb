@@ -294,12 +294,11 @@
     ([1000, 1] = test [soft 1])
     ([1000, a] = test [soft a])
     ([1000, 'a] = test [soft 'a])
-    ([1000, 304] = test [soft :(300 + 4)])
-    ([1000, (300 + 4)] = test [soft (300 + 4)])
+    ([1000, 304] = test [soft (300 + 4)])
     ([1000, o.f] = test [soft o.f])
     (
         o: context [f: 304]
-        [1000, 304] = test [soft :o.f]
+        [1000, 304] = test [soft (o.f)]
     )
 
     (
@@ -312,7 +311,7 @@
     )
 
     ([1001, 2] = test [1 + 2 Lsoft])
-    ([1001, <hi>] = test [1 + :(first [<hi>]) Lsoft])
+    ([1001, <hi>] = test [1 + (first [<hi>]) Lsoft])
 ]
 
 ; basic test for recursive action invocation

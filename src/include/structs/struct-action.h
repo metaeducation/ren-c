@@ -209,9 +209,6 @@ typedef enum {
     //     >> foo (1 + 2)
     //     == (1 + 2)
     //
-    //     >> foo :(1 + 2)
-    //     == :(1 + 2)
-    //
     //     >> x: 10, foo x
     //     == x
     //
@@ -229,9 +226,6 @@ typedef enum {
     //     >> foo (1 + 2)
     //     == (1 + 2)
     //
-    //     >> foo :(1 + 2)
-    //     == :(1 + 2)
-    //
     //     >> x: 10, foo x
     //     == x
     //
@@ -241,20 +235,19 @@ typedef enum {
     PARAMCLASS_THE,
 
     // `PARAMCLASS_SOFT` is cued by a QUOTED GET-WORD! in the function spec
-    // dialect.  It quotes with the exception of GET-GROUP!, GET-WORD!, and
-    // GET-TUPLE!...which will be evaluated:
+    // dialect.  It quotes with the exception of GROUP!, which is evaluated:
     //
     //     >> foo: function [':a] [print [{a is} a]
     //
-    //     >> foo (1 + 2)
-    //     a is (1 + 2)
+    //     >> foo x
+    //     a is x
     //
-    //     >> foo :(1 + 2)
+    //     >> foo (1 + 2)
     //     a is 3
     //
     // It is possible to *mostly* implement soft quoting with hard quoting,
     // though it is a convenient way to allow callers to "escape" a quoted
-    // context when they need to.
+    // context when they need to, and have type checking still applied.
     //
     // However there is a nuance which makes soft quoting fundamentally
     // different from hard quoting, regarding how it resolves contention

@@ -283,7 +283,7 @@ REBLEN Find_Map_Entry(
         if (Is_Void(unwrap val))
             Init_Zombie(at);
         else {
-            assert(not Is_Antiform(unwrap val));
+            assert(Not_Antiform(unwrap val));
             Copy_Cell(at, cast(const Element*, unwrap val));
         }
         return n;
@@ -292,7 +292,7 @@ REBLEN Find_Map_Entry(
     if (Is_Void(unwrap val))
         return 0;  // trying to remove non-existing key
 
-    assert(not Is_Antiform(unwrap val));
+    assert(Not_Antiform(unwrap val));
 
     // Create new entry.  Note that it does not copy the underlying Flex (e.g.
     // the data of a String), which is why the immutability test is necessary

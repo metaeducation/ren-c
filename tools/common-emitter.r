@@ -256,9 +256,6 @@ export cscape: func [
             |
             newline
             [
-                ; PARSE arity-1 IF deprecated in Ren-C, but :(...) with logic
-                ; not available in the bootstrap build.
-                ;
                 end-line: <here>
                 (all [
                     yes? allwhite

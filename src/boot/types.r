@@ -403,7 +403,7 @@ pair        "two dimensional point or size"
 
     group       "list that evaluates expressions as an isolated group"
     ~splice~    (CELL_FLAG_FIRST_IS_NODE)
-                [any-series? any-branch? any-plain-value?]
+                [any-series? any-plain-value?]
                 [list        *       *]
 
     set-group   "list that evaluates and runs SET on the result"
@@ -428,7 +428,7 @@ pair        "two dimensional point or size"
 
     the-group   "inert form of group"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-series? any-the-value?]
+                [any-series? any-the-value? any-branch?]
                 [list        *       *]
 
     var-group   "group that evaluates to the bound version of the group"

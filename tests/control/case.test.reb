@@ -38,12 +38,27 @@
     ]
 )
 
-(
-    3 = case [okay (reduce ['add 1 2])]
-)
-(
-    null? case [null (reduce ['add 1 2])]
-)
+; Plain GROUP!s run to generate a branch regardless of if the branch is taken.
+; THE-GROUP!s only run to generate the branch if it would be taken.
+[
+    (3 = case [okay (reduce ['add 1 2])])
+    (
+        ran: 'no
+        all [
+            null? case [null (ran: 'yes, reduce ['add 1 2])]
+            yes? ran
+        ]
+    )
+
+    (3 = case [okay @(reduce ['add 1 2])])
+    (
+        ran: 'no
+        all [
+            null? case [null @(ran: 'yes, reduce ['add 1 2])]
+            no? ran
+        ]
+    )
+]
 
 ~bad-branch-type~ !! (
     case [
@@ -137,24 +152,5 @@
 ~bad-void~ !! (case [(void) okay [1]])
 
 ~bad-antiform~ !! (case [~antiform~ [print "Causes error"]])
-
-; GET-GROUP! branches will be evaluated unconditionally, but their branches
-; are not run if the condition was null.
-[
-    (
-        called: null
-        all [
-            3 = case [okay :(called: okay, [1 + 2])]
-            called
-        ]
-    )
-    (
-        called: null
-        all [
-            null? case [null :(called: okay, [1 + 2])]
-            called
-        ]
-    )
-]
 
 ([a] = case [okay '[a]])

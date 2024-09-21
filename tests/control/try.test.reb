@@ -44,7 +44,7 @@
     sys.util/rescue [fail make error! ""] then [okay]
 )
 #trap (
-    trap [1 / 0] then :error?
+    trap [1 / 0] then (:error?)
 )
 #trap (
     trap [1 / 0] then e -> [error? e]
@@ -54,7 +54,7 @@
 )
 [#1514
     #trap (
-        error? sys.util/rescue [trap [1 / 0] then :add]
+        error? sys.util/rescue [trap [1 / 0] then (:add)]
     )
 ]
 

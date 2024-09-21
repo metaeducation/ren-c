@@ -46,11 +46,8 @@
 )
 
 (
-    test: [:x] -> [x]  ; :x -> [x] subverts *lambda's* parameter convention!
-    all [
-        3 = test :(1 + 2)
-        (the (1 + 2)) = test (1 + 2)
-    ]
+    test: [':x] -> [x]  ; ':x -> [x] subverts *lambda's* parameter convention!
+    3 = test (1 + 2)
 )
 
 (

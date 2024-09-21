@@ -534,7 +534,7 @@ DECLARE_INTRINSIC(lit_word_q)
 {
     UNUSED(phase);
 
-    Init_Logic(out, not Is_Antiform(arg) and IS_QUOTED_WORD(arg));
+    Init_Logic(out, Not_Antiform(arg) and IS_QUOTED_WORD(arg));
 }
 
 
@@ -570,7 +570,7 @@ DECLARE_INTRINSIC(any_inert_q)
 
     Init_Logic(
         out,
-        not Is_Antiform(arg) and Any_Inert(arg)
+        Not_Antiform(arg) and Any_Inert(arg)
     );
 }
 
@@ -2552,7 +2552,7 @@ DECLARE_INTRINSIC(element_q)
 {
     UNUSED(phase);
 
-    Init_Logic(out, not Is_Antiform(arg));
+    Init_Logic(out, Not_Antiform(arg));
 }
 
 

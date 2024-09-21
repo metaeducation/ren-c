@@ -120,7 +120,7 @@ REBLEN Modify_Array(
     else {
         // use passed in Cell
         ilen = 1;
-        assert(not Is_Antiform(src_val));
+        assert(Not_Antiform(src_val));
         src_rel = c_cast(Element*, src_val);
     }
 

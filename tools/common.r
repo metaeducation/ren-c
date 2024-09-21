@@ -368,10 +368,6 @@ export stripload: func [
     let pushed: copy []  ; <Q>uoted or <B>raced string delimiter stack
 
     let comment-or-space-rule: [
-        ;
-        ; Note: IF is deprecated in PARSE, and `:(...)` should be used instead
-        ; once the bootstrap executable supports it.
-        ;
         when (empty? pushed)  ; string not in effect, okay to proceed
 
         opt some [

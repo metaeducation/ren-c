@@ -481,7 +481,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
 
         do {
             Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
-            assert(not Is_Antiform(TOP));
+            assert(Not_Antiform(TOP));
             Fetch_Next_In_Feed(feed);
         } while (Not_Feed_At_End(feed));
 

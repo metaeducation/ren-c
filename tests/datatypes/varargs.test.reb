@@ -90,7 +90,7 @@
         a: ~end~
         (a soft)
     )
-    ([7] = eval [:(1 + 2) :(3 + 4) soft])
+    ([7] = eval [(1 + 2) (3 + 4) soft])
 ][
     (
         hard: enfix func ['v [any-value? <variadic>]] [

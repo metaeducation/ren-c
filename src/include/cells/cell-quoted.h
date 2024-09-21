@@ -164,6 +164,8 @@ INLINE Count Dequotify(Cell* v) {
 INLINE bool Is_Antiform(const Atom* a)
   { return QUOTE_BYTE(Ensure_Readable(a)) == ANTIFORM_0; }
 
+#define Not_Antiform(a) (not Is_Antiform(a))
+
 INLINE bool Is_Antiform_Unstable(const Atom* a) {
     // Assume Is_Antiform() checked Ensure_Readable()
     assert(QUOTE_BYTE(a) == ANTIFORM_0);

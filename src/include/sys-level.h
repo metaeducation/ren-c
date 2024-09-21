@@ -37,15 +37,6 @@
 // specific frame that function should exit.
 //
 
-// !!! Find a better place for this!
-//
-INLINE bool ANY_ESCAPABLE_GET(const Atom* v) {
-    //
-    // !!! Doesn't include GET-BLOCK!, but should it, e.g. REDUCE escapability?
-    //
-    return Is_Get_Group(v) or Is_Get_Word(v) or Is_Get_Tuple(v);
-}
-
 
 // There are 8 flags in a level header that are reserved for the use of the
 // level executor.  A nice idea was to make generic Get_Executor_Flag()

@@ -227,8 +227,8 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             break;
 
         case PARAMCLASS_SOFT:
-            if (ANY_ESCAPABLE_GET(Cell_List_Item_At(shared))) {
-                if (Eval_Value_Throws(
+            if (Is_Soft_Escapable_Group(Cell_List_Item_At(shared))) {
+                if (Eval_Any_List_At_Throws(
                     out, Cell_List_Item_At(shared), Cell_Specifier(shared)
                 )){
                     return true;
@@ -303,8 +303,8 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             break;
 
         case PARAMCLASS_SOFT:
-            if (ANY_ESCAPABLE_GET(At_Level(L))) {
-                if (Eval_Value_Throws(
+            if (Is_Soft_Escapable_Group(At_Level(L))) {
+                if (Eval_Any_List_At_Throws(
                     out,
                     At_Level(L),
                     Level_Specifier(L)

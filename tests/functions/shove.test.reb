@@ -123,18 +123,18 @@
         <whatever> = get first block  ; should not be bound [1]
     ])
     (all [
-        [value 1020] = block: (:('value) ->- left-soft-as-is 1020)
+        [value 1020] = block: (('value) ->- left-soft-as-is 1020)
         null = binding of first block
     ])
     (all [
-        [value 304] = block: (:('value) ->- right-soft-as-is 304)
+        [value 304] = block: (('value) ->- right-soft-as-is 304)
         null = binding of first block
     ])
     ~x~ !! (all [
-        block: (:(raise 'x) ->- left-soft-as-is 1020)
+        block: ((raise 'x) ->- left-soft-as-is 1020)
     ])
     ~x~ !! (all [
-        block: (:(raise 'x) ->- right-soft-as-is 304)
+        block: ((raise 'x) ->- right-soft-as-is 304)
     ])
 ]
 

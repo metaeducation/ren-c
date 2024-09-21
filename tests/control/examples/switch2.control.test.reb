@@ -72,7 +72,7 @@ switch2: func [
             ; Otherwise, run the branch.  Keep going if we are using /MULTI,
             ; else return whatever that branch gives back.
             (
-                result': ^ if ok :branch  ; IF semantics for null, void
+                result': ^ if ok (branch)  ; IF semantics for null, void
                 if not multi [return unmeta result']
                 found: 'no
             )

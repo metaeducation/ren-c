@@ -334,7 +334,7 @@ INLINE bool Is_Parameter_Unconstrained(const Cell* param) {
 // in the %types.r table.  If there were, this would be defined there.
 //
 INLINE bool Any_Vacancy(Need(const Value*) a) {
-    if (not Is_Antiform(a))
+    if (Not_Antiform(a))
         return false;
 
     Heart heart = Cell_Heart(a);
@@ -342,4 +342,32 @@ INLINE bool Any_Vacancy(Need(const Value*) a) {
         return true;
 
     return false;
+}
+
+
+// When it came to literal parameters that could be escaped, R3-Alpha and Red
+// consider GROUP!, GET-WORD!, and GET-PATH! to be things that at the callsite
+// will be evaluated.
+//
+// For a time Ren-C tried switching the GROUP! case to use GET-GROUP!, so that
+// groups would still be passed literally.  This went along with the idea of
+// using a colon on the parameter to indicate the escapability (':param), so it
+// was quoted and colon'd.  It was more consistent...but it turned out that
+// in practice, few escapable literal sites are interested in literal groups.
+// So it was just consistently ugly.
+//
+// Given that leading colons have nothing to do with getting in the modern
+// vision, it was switched around to where GROUP! is the only soft escape.
+// (This could be supplemented by '{fence} or '[block] escapable choices, but
+// there doesn't seem to be need for that.)
+//
+// This alias for Is_Group() is just provided to help find callsites that are
+// testing for groups for the reason of soft escaping them.  But it also
+// makes sure you're only using it on an Element--which is what you should
+// have in your hands literally before soft escaping.
+//
+INLINE bool Is_Soft_Escapable_Group(const Element* e) {
+    if (Any_Get_Value(e) and not Is_Get_Block(e))  // temp safety check
+        fail ("GET-XXX! type found in soft escapable slot...accident?");
+    return Is_Group(e);
 }
