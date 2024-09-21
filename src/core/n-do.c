@@ -82,14 +82,11 @@ DECLARE_NATIVE(reeval)
 //
 //  "Shove a parameter into an ACTION! as its first argument"
 //
-//      return: [any-value?]
-//          "REVIEW: How might this handle shoving enfix invisibles?"
-//      ':left [any-value?]
-//          "Requests parameter convention based on enfixee's first argument"
-//      'right [<variadic> <end> element?]
-//          "(uses magic -- SHOVE can't be written easily in usermode yet)"
-//      /prefix "Force either prefix or enfix behavior (vs. acting as is)"
-//          [yesno?]
+//      return: [any-atom?]
+//      'left "Hard literal, will be processed according to right's first arg"
+//          [element?]
+//      'right "Arbitrary variadic feed of expressions on the right"
+//          [<variadic> <end> element?]
 //  ]
 //
 DECLARE_NATIVE(shove)
@@ -97,12 +94,12 @@ DECLARE_NATIVE(shove)
 // PATH!s do not do infix lookup in Rebol, and there are good reasons for this
 // in terms of both performance and semantics.  However, it is sometimes
 // needed to dispatch via a path--for instance to call an enfix function that
-// lives in a context, or even to call one that has refinements.
+// lives in a context.
 //
 // The SHOVE operation is used to push values from the left to act as the
 // first argument of an operation, e.g.:
 //
-//      >> 10 >- lib/(print "Hi!" first [multiply]) 20
+//      >> 10 ->- lib/(print "Hi!" first [multiply]) 20
 //      Hi!
 //      200
 //
@@ -116,92 +113,128 @@ DECLARE_NATIVE(shove)
     if (not Is_Level_Style_Varargs_May_Fail(&L, ARG(right)))
         fail ("SHOVE (>-) not implemented for MAKE VARARGS! [...] yet");
 
-    Value* left = ARG(left);
+    Element* left = cast(Element*, ARG(left));
 
     if (Is_Level_At_End(L))  // shouldn't be for WORD!/PATH! unless APPLY
         return COPY(ARG(left));  // ...because evaluator wants `help <-` to work
 
-    // It's best for SHOVE to do type checking here, as opposed to setting
-    // some kind of LEVEL_FLAG_SHOVING and passing that into the evaluator, then
-    // expecting it to notice if you shoved into an INTEGER! or something.
-    //
-    // !!! To get the feature working as a first cut, this doesn't try get too
-    // fancy with apply-like mechanics and slipstream refinements on the
-    // stack to enfix functions with refinements.  It specializes the ACTION!.
-    // We can do better, but seeing as how you couldn't call enfix actions
-    // with refinements *at all* before, this is a step up.
+  //=//// RESOLVE ACTION ON RIGHT (LOOKUP VAR, EVAL GROUP...) /////////////=//
+  //
+  // 1. At one point, it was allowed to shove into SET-WORD! etc:
+  //
+  //        >> 10 ->- x:
+  //        >> x
+  //        == 10
+  //
+  //    Is that useful enough to bother supporting?
 
-    Value* shovee = ARG(right); // reuse arg cell for the shoved-into
+    Value* shovee = ARG(right); // reuse variadic arg cell for the shoved-into
     Option(const Symbol*) label = nullptr;
 
-    if (Is_Word(At_Level(L)) or Is_Path(At_Level(L)) or Is_Tuple(At_Level(L))) {
-        //
-        // !!! should get label from word
-        //
+    const Element* right = At_Level(L);
+    if (Is_Word(right) or Is_Path(right) or Is_Tuple(right)) {
         Get_Var_May_Fail(
-            OUT, // can't eval directly into arg slot
+            OUT,  // can't eval directly into arg slot
             At_Level(L),
             Level_Specifier(L),
             false
         );
-        Move_Cell(shovee, cast(Value*, OUT));
+        Move_Cell(shovee, stable_OUT);  // variable contents always stable
     }
-    else if (Is_Group(At_Level(L))) {
-        if (Do_Any_List_At_Throws(OUT, At_Level(L), Level_Specifier(L)))
+    else if (Is_Group(right)) {
+        if (Do_Any_List_At_Throws(OUT, right, Level_Specifier(L)))
             return THROWN;
 
         Move_Cell(shovee, Decay_If_Unstable(OUT));
     }
     else
-        Copy_Cell(shovee, At_Level(L));
+        Copy_Cell(shovee, right);
 
     Deactivate_If_Action(shovee);  // allow ACTION! to be run
 
-    if (not Is_Frame(shovee))
-        fail ("SHOVE's immediate right must be ACTION! or SET-XXX! type");
-
-    if (not label)
-        label = VAL_FRAME_LABEL(shovee);
-
-    // Basic operator `>-` will use the enfix status of the shovee.
-    // `->-` will force enfix evaluator behavior even if shovee is prefix.
-    // `>--` will force prefix evaluator behavior even if shovee is enfix.
-    //
     bool enfix;
-    if (REF(prefix))
-        enfix = Cell_No(ARG(prefix));
-    else if (Is_Frame(shovee))
+    if (Is_Frame(shovee)) {
+        if (not label)
+            label = VAL_FRAME_LABEL(shovee);
         enfix = Is_Enfixed(shovee);
-    else
-        enfix = false;
+    }
+    else {
+        fail ("SHOVE's immediate right must be FRAME! at this time");  // [1]
+    }
 
     Fetch_Next_In_Feed(L->feed);
 
-    // Since we're simulating enfix dispatch, we need to move the first arg
-    // where enfix gets it from...the frame output slot.
-    //
-    // We quoted the argument on the left, but the ACTION! we are feeding
-    // into may want it evaluative.  (Enfix handling itself does soft quoting)
-    //
-    if (
-        Not_Subclass_Flag(
-            VARLIST,
-            ACT_PARAMLIST(VAL_ACTION(shovee)),
-            PARAMLIST_QUOTES_FIRST
-        )
-    ){
-        if (Eval_Value_Throws(OUT, Ensure_Element(left), SPECIFIED))
+  //=//// PROCESS LITERALLY-TAKEN LEFT FOR PARAMETER CONVENTION ///////////=//
+  //
+  // 1. Because the SHOVE operator takes the left hand side as a hard literal,
+  //    evaluating that and shoving into a right hand enfix function will
+  //    out-prioritize an enfix operation's completion on the left:
+  //
+  //        >> 1 + (1 + 1) * 3
+  //        == 9  ; e.g. (1 + (1 + 1)) * 3
+  //
+  //        >> 1 + (1 + 1) ->- lib/* 3
+  //        == 7  ; e.g. 1 + ((1 + 1) * 3)
+  //
+  //    So it's not a precise match for evaluative left hand side semantics.
+  //    Offering any alternatives or workarounds besides "put your left hand
+  //    side in a group" is more complicated than it's possibly worth.
+  //
+  // 2. It's considered a generally bad idea to allow functions to get access
+  //    to the binding environment of the callsite.  That interferes with
+  //    abstraction, so any binding should
+
+    const Param* param = First_Unspecialized_Param(nullptr, VAL_ACTION(shovee));
+    ParamClass pclass = Cell_ParamClass(param);
+
+    switch (Cell_ParamClass(param)) {
+      case PARAMCLASS_NORMAL:  // we can't *quite* match evaluative enfix [1]
+      case PARAMCLASS_META: {
+        Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;  // will decay if normal
+        if (Eval_Value_Core_Throws(OUT, flags, left, Level_Specifier(L)))
             return THROWN;
-    }
-    else {
+        if (pclass == PARAMCLASS_NORMAL)
+            Decay_If_Unstable(OUT);
+        else {
+            // The enfix fulfillment code will Meta_Quotify() OUT
+        }
+        break; }
+
+      case PARAMCLASS_JUST:  // took the input as hard literal, so it's good
         Copy_Cell(OUT, left);
+        break;
+
+      case PARAMCLASS_THE:  // cheat and do something usermode can't ATM [2]
+        Derelativize(OUT, left, Level_Specifier(L));
+        break;
+
+      case PARAMCLASS_SOFT:  // !!! can we trust enfix to just do this part?
+        Derelativize(OUT, left, Level_Specifier(L));
+        break;
+
+      default:
+        assert(false);
+        break;
     }
 
-    Flags flags = FLAG_STATE_BYTE(ST_ACTION_INITIAL_ENTRY_ENFIX);
+  //=//// DISPATCH WITH FIRST ARG IN OUT SLOT /////////////////////////////=//
+  //
+  // 1. This uses the enfix mechanic regardless of whether the function we are
+  //    shoving into is enfix or not.  It's the easiest way to get the
+  //    argument into the first slot of the function.
+  //
+  // 2. While the evaluator state may be geared to running enfix parameter
+  //    acquisition, we still pass in a flag to Begin_Action() so that it
+  //    knows whether it was enfix or not.  This makes a difference, e.g.:
+  //
+  //        >> 1 + 2 ->- negate * 3
+  //
+
+    Flags flags = FLAG_STATE_BYTE(ST_ACTION_INITIAL_ENTRY_ENFIX);  // [1]
 
     Level* sub = Make_Level(&Action_Executor, level_->feed, flags);
     Push_Action(sub, VAL_ACTION(shovee), VAL_FRAME_COUPLING(shovee));
-    Begin_Action_Core(sub, label, enfix);
+    Begin_Action_Core(sub, label, enfix);  // still can know if it's enfix [2]
 
     Push_Level(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);

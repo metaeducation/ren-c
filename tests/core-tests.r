@@ -159,6 +159,7 @@
 %functions/redo.test.reb
 %functions/reframer.test.reb
 %functions/return.test.reb
+%functions/shove.test.reb
 %functions/specialize.test.reb
 %functions/unwind.test.reb
 

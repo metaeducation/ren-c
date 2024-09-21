@@ -37,55 +37,6 @@
 ~no-arg~ !! (eval reduce [unrun get $+ 1 2])  ; enfix no argument
 
 
-; ->- is the "SHOVE" operation.  It lets any ACTION!, including one dispatched
-; from PATH!, receive its first argument from the left.  It uses the parameter
-; conventions of that argument.
-
-; NORMAL parameter
-;
-(9 = (1 + 2 ->- multiply 3))
-(7 = (add 1 2 ->- multiply 3))
-(7 = (add 1 2 ->- (:multiply) 3))
-
-; :HARD-QUOTE parameter
-(
-    x: null
-    x: ->- default [10 + 20]
-    x: ->- default [1000000]
-    x = 30
-)
-
-; SHOVE should be able to handle refinements and contexts.
-[
-    (did obj: make object! [
-        magic: enfix lambda [a b /minus] [
-            either minus [a - b] [a + b]
-        ]
-    ])
-
-    ~???~ !! (1 obj/magic 2)  ; must use shove
-
-    (3 = (1 ->- obj.magic 2))
-    (-1 = (1 ->- obj.magic/minus 2))
-]
-
-
-; PATH! cannot be directly quoted left, must use ->-
-
-[
-    (
-        left-the: enfix :the
-        o: make object! [i: 10 f: does [20]]
-        ok
-    )
-
-    ('o.i = o.i left-the)
-    (o.i ->- left-the = 'o.i)
-
-    ~literal-left-path~ !! (o/f left-the)
-    (o/f ->- left-the = 'o/f)
-]
-
 ; Rather than error when SET-WORD! or SET-PATH! are used as the left hand
 ; side of a -> operation going into an operation that evaluates its left,
 ; the value of that SET-WORD! or SET-PATH! is fetched and passed right, then
@@ -104,53 +55,6 @@
     count: 0
     o.(count: count + 1 'x): me + 20
     (o.x = 30) and (count = 2)  ; !!! count should only be 1
-)
-
-
-; Right enfix always wins over left, unless the right is at list end
-
-((the ->-) = first [->-])
-((the ->- the) = 'the)
-('x = (x >- the))
-(1 = (1 ->- the))
-
-(1 = (1 >- the))
-('x = (x >- the))
-
-; "Precedence" manipulation via >- and ->-
-
-(9 = (1 + 2 ->- multiply 3))
-(9 = (1 + 2 >- multiply 3))
-(9 = (1 + 2 >-- lib/* 3))
-(9 = (1 + 2 ->- lib/* 3))
-
-(7 = (add 1 2 * 3))
-(7 = (add 1 2 ->- lib/* 3))
-(7 = (add 1 2 >- lib/* 3))
-
-~expect-arg~ !! (10 ->- lib/= 5 + 5)
-~expect-arg~ !! (10 >- lib/= 5 + 5)
-(10 >-- lib/= 5 + 5)
-(10 >- = (5 + 5))
-
-~no-arg~ !! (
-    add 1 + 2 >- multiply 3
-)
-(
-    x: add 1 + 2 3 + 4 >- multiply 5
-    x = 38
-)
-(-38 = (negate x: add 1 + 2 3 + 4 >- multiply 5))
-
-~no-arg~ !! (
-    divide negate x: add 1 + 2 3 + 4 >- multiply 5
-)
-(-1 = (divide negate x: add 1 + 2 3 + 4  2 >- multiply 5))
-
-
-(
-    (x: add 1 add 2 3 |> lib/* 4)
-    x = 24
 )
 
 (

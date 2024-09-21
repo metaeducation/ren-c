@@ -385,33 +385,35 @@ curtail: reframer func [
 ]
 
 
-; >- is the SHOVE operator.  It uses the item immediately to its left for
-; the first argument to whatever operation is on its right hand side.
-; Parameter conventions of that first argument apply when processing the
-; value, e.g. quoted arguments will act quoted.
+; ->- is the SHOVE operator.  It uses the item immediately to its left for
+; the first argument to whatever operation is on its right hand side.  While
+; most useful for calling enfix functions from PATH! (which can't be done
+; otherwise), it can also be used with ordinary functions...and precedence
+; will be handled accordingly:
 ;
-; By default, the evaluation rules proceed according to the enfix mode of
-; the operation being shoved into:
-;
-;    >> 10 >- lib/= 5 + 5  ; as if you wrote `10 = 5 + 5`
+;    >> 10 ->- lib/= 5 + 5  ; as if you wrote `10 = 5 + 5`
 ;    ** Script Error: + does not allow logic? for its value1 argument
 ;
-;    >> 10 >- equal? 5 + 5  ; as if you wrote `equal? 10 5 + 5`
-;    ; nothing, e.g. branch trigger
+;    >> 10 ->- equal? 5 + 5  ; as if you wrote `equal? 10 5 + 5`
+;    == ~okay~  ; anti
 ;
-; You can force processing to be enfix using `->-` (an infix-looking "icon"):
+; SHOVE's left hand side is taken as one literal unit, and then pre-processed
+; for the parameter conventions of the right hand side's first argument.  But
+; since literal arguments out-prioritize evaluative right enfix, these
+; "simulated evaluative left parameters" will act differently than if SHOVE
+; were not being used:
 ;
-;    >> 1 ->- lib/add 2 * 3  ; as if you wrote `1 + 2 * 3`
-;    == 9
+;     >> 1 + 2 * 3
+;     == 9  ; e.g. (1 + 2) * 3
 ;
-; Or force prefix processing using `>--` (multi-arg prefix "icon"):
+;     >> 1 + 2 ->- lib/* 3
+;     == 7  ; e.g. 1 + (2 * 3)
 ;
-;    >> 10 >-- lib/+ 2 * 3  ; as if you wrote `add 1 2 * 3`
-;    == 7
+; Offering ways to work around this with additional operators was deemed not
+; worth the cost, when you can just put the left hand side in parentheses
+; if this isn't what you want.
 ;
->-: enfix :shove
->--: enfix specialize get $>- [prefix: 'yes]
-->-: enfix specialize get $>- [prefix: 'no]
+->-: enfix :shove
 
 
 ; The -- and ++ operators were deemed too "C-like", so ME was created to allow
@@ -755,7 +757,7 @@ eval-all: func [
 ; `return: [nihil?]`) permit a more flexible version of the mechanic.
 
 <|: runs tweak copy unrun get $eval-all 'postpone 'on
-|>: runs tweak enfix copy get $shove 'postpone 'on
+
 
 ; Currently, METH is just a synonym for FUNC as a way of annotating that you
 ; are using the `.field` notation and as such depend on the function invocation
