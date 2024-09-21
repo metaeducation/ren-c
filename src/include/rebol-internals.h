@@ -683,6 +683,6 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
 #include "sys-level.h"  // needs words for frame-label helpers
 
 #include "sys-eval.h"  // low-level single-step evaluation API
-#include "sys-do.h"  // higher-level evaluate-until-end API
+#include "sys-bounce.h"
 
 #include "sys-pick.h"

@@ -166,7 +166,7 @@ DECLARE_NATIVE(delimit)
                 Get_Var_May_Fail(OUT, item, Level_Specifier(L), any);
             }
             else if (Is_The_Group(item)) {
-                if (Do_Any_List_At_Throws(
+                if (Eval_Any_List_At_Throws(
                     OUT,
                     item,
                     Level_Specifier(L)

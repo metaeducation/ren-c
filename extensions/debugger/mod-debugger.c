@@ -94,7 +94,7 @@ bool Do_Breakpoint_Throws(
 
     assert(Is_Meta_Group(inst));
 
-    bool threw = Do_Any_List_At_Throws(out, inst, SPECIFIED);
+    bool threw = Eval_Any_List_At_Throws(out, inst, SPECIFIED);
 
     rebRelease(inst);
 

@@ -635,7 +635,7 @@ DECLARE_NATIVE(let)
     if (
         Is_Group(vars) or Is_Set_Group(vars)
     ){
-        if (Do_Any_List_At_Throws(SPARE, vars, SPECIFIED))
+        if (Eval_Any_List_At_Throws(SPARE, vars, SPECIFIED))
             return THROWN;
 
         if (Is_Quoted(SPARE))  // should (let 'x: <whatever>) be legal? [3]
@@ -715,7 +715,7 @@ DECLARE_NATIVE(let)
             }
 
             if (Is_Group(temp)) {  // evaluate non-QUOTED? groups in LET block
-                if (Do_Any_List_At_Throws(OUT, temp, item_specifier))
+                if (Eval_Any_List_At_Throws(OUT, temp, item_specifier))
                     return THROWN;
 
                 if (Is_Void(OUT)) {
@@ -1150,7 +1150,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
     //
     if (Is_Group(spec)) {
         DECLARE_ATOM (temp);
-        if (Do_Any_List_At_Throws(temp, spec, SPECIFIED))
+        if (Eval_Any_List_At_Throws(temp, spec, SPECIFIED))
             fail (Error_No_Catch_For_Throw(TOP_LEVEL));
         Decay_If_Unstable(temp);
         Move_Cell(spec, cast(Value*, temp));

@@ -647,7 +647,7 @@ Bounce MAKE_Context(
         );
 
         DECLARE_ATOM (dummy);
-        if (Do_Any_List_At_Throws(dummy, virtual_arg, SPECIFIED))
+        if (Eval_Any_List_At_Throws(dummy, virtual_arg, SPECIFIED))
             return BOUNCE_THROWN;
 
         return OUT;

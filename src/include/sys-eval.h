@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2022 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -20,48 +20,62 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// The routine that powers a single EVAL or EVALUATE step is Eval_Core().
-// It takes one parameter which holds the running state of the evaluator.
-// This state may be allocated on the C variable stack...and fail() is
-// written such that a longjmp up to a failure handler above it can run
-// safely and clean up even though intermediate stacks have vanished.
+// "Evaluation" refers to the general concept of processing an ANY-LIST! in
+// the Rebol language:
 //
-// Ren-C can run the evaluator across an Array*-style input based on index.
-// It can also enumerate through C's `va_list`, providing the ability
-// to pass pointers as Value* to comma-separated input at the source level.
+//     >> [pos value]: evaluate/next [1 + 2 10 + 20]  ; one step of evaluation
+//     == [10 + 20]  ; next position
 //
-// To provide even greater flexibility, it allows the very first element's
-// pointer in an evaluation to come from an arbitrary source.  It doesn't
-// have to be resident in the same sequence from which ensuing values are
-// pulled, allowing a free head value (such as an ACTION! cell in a local
-// C variable) to be evaluated in combination from another source (like a
-// va_list or Array representing the arguments.)  This avoids the cost and
-// complexity of allocating an Array to combine the values together.
+//     >> value
+//     == 3  ; synthesized result
+//
+//     >> evaluate [1 + 2 10 + 20]  ; run to end, discard intermediate results
+//     == 30
+//
+// In historical Redbol, this was often done with "DO".  But Ren-C uses DO as
+// a more generic tool, which can run other languages (do %some-file.js) and
+// dialects.  (It also does not offer a /NEXT facility for stepping.)
 //
 //=//// NOTES ////////////////////////////////////////////////////////////=//
 //
+ // * Ren-C can run the evaluator across an Array*-style input based on index.
+//   It can also enumerate through C's `va_list`, providing the ability to
+//   pass pointers as Value* to comma-separated input at the source level.
+//
+//   To provide even greater flexibility, it allows the very first element's
+//   pointer in an evaluation to come from an arbitrary source.  It doesn't
+//   have to be resident in the same sequence from which ensuing values are
+//   pulled, allowing a free head value (such as an ACTION! cell in a local
+//   C variable) to be evaluated in combination from another source (like a
+//   va_list or Array representing the arguments.)  This avoids the cost and
+//   complexity of allocating an Array to combine the values together.
 //
 
 
-#if DEBUG && DEBUG_COUNT_TICKS  // <-- THIS IS VERY USEFUL, READ THIS SECTION!
-    //
-    // The evaluator `tick` should be visible in the C debugger watchlist as a
-    // local variable on each evaluator stack level.  So if a fail() happens
-    // at a deterministic moment in a run, capture the number from the level
-    // of interest and recompile for a breakpoint at that tick.
-    //
-    // If the tick is AFTER command line processing is done, you can request
-    // a tick breakpoint that way with `--breakpoint NNN`
-    //
-    // The debug build carries ticks many other places.  Stubs contain the
-    // `Stub.tick` where they were created, levels have a `Level.tick`,
-    // and the DEBUG_TRACK_EXTEND_CELLS switch will double the size of cells
-    // so they can carry the tick, file, and line where they were initialized.
-    //
-    // For custom updating of stored ticks to help debugging some scenarios,
-    // see Touch_Stub() and Touch_Cell().  Note also that BREAK_NOW() can be
-    // called to pause and dump state at any moment.
-
+//=////////////////////////////////////////////////////////////////////////=//
+//
+//     !!! EVALUATOR TICK COUNT - VERY USEFUL - READ THIS SECTION !!!
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// The evaluator `tick` should be visible in the C debugger watchlist as a
+// local variable on each evaluator stack level.  So if a fail() happens at a
+// deterministic moment in a run, capture the number from the level of interest
+// and recompile for a breakpoint at that tick.
+//
+// If the tick is AFTER command line processing is done, you can request a tick
+// breakpoint that way with `--breakpoint NNN`
+//
+// The debug build carries ticks many other places.  Stubs contain `Stub.tick`
+// when created, levels have a `Level.tick`, and the DEBUG_TRACK_EXTEND_CELLS
+// switch will double the size of cells so they can carry the tick, file, and
+// line where they were initialized.
+//
+// For custom updating of stored ticks to help debugging some scenarios, see
+// Touch_Stub() and Touch_Cell().  Note also that BREAK_NOW() can be called to
+// pause and dump state at any moment.
+//
+#if DEBUG && DEBUG_COUNT_TICKS
     #define Update_Tick_If_Enabled() \
         do { \
             if (TG_tick < UINTPTR_MAX) /* avoid rollover */ \
@@ -111,14 +125,11 @@ INLINE Value* Refinify_Pushed_Refinement(Value* v) {
 }
 
 
-// This is a very light wrapper over Eval_Core(), which is used with
-// operations like ANY or REDUCE that wish to perform several successive
-// operations on an array, without creating a new level each time.
+// !!! This is a non-stackless invocation of the evaluator to perform one
+// evaluation step.  Callsites that use it should be rewritten to yield to
+// the trampoline.
 //
-INLINE bool Eval_Step_Throws(
-    Atom* out,
-    Level* L
-){
+INLINE bool Eval_Step_Throws(Atom* out, Level* L) {
     assert(Not_Feed_Flag(L->feed, NO_LOOKAHEAD));
 
     assert(L->executor == &Stepper_Executor);
@@ -132,72 +143,34 @@ INLINE bool Eval_Step_Throws(
 }
 
 
-// It should not be necessary to use a sublevel unless there is meaningful
-// state which would be overwritten in the parent level.  For the moment,
-// that only happens if a function call is in effect -or- if a SET-WORD! or
-// SET-PATH! are running with an expiring `current` in effect.
+// !!! This is a non-stackless invocation of the evaluator to perform a full
+// evaluation.  Callsites that use it should be rewritten to yield to the
+// trampoline.
 //
-INLINE bool Eval_Step_In_Sublevel_Throws(
+INLINE bool Eval_Any_List_At_Core_Throws(
     Atom* out,
-    Level* L,
-    Flags flags
-){
-    Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
-
-    return Trampoline_Throws(out, sub);
-}
-
-
-INLINE bool Reevaluate_In_Sublevel_Throws(
-    Atom* out,
-    Level* L,
-    const Element* reval,
     Flags flags,
-    bool enfix
+    const Cell* list,
+    Specifier* specifier
 ){
-    assert(State_Byte_From_Flags(flags) == 0);
-    flags |= FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
+    Init_Void(Alloc_Evaluator_Primed_Result());
+    Level* L = Make_Level_At_Core(
+        &Evaluator_Executor,
+        list, specifier,
+        flags
+    );
 
-    Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
-    Copy_Cell(&sub->u.eval.current, reval);
-    sub->u.eval.current_gotten = nullptr;
-    sub->u.eval.enfix_reevaluate = enfix ? 'Y' : 'N';
-
-    return Trampoline_Throws(out, sub);
+    return Trampoline_Throws(out, L);
 }
 
-
-INLINE bool Eval_Step_In_Any_List_At_Throws(
-    Atom* out,
-    REBLEN *index_out,
-    const Cell* list,  // Note: legal to have list = out
-    Specifier* specifier,
-    Flags flags
-){
-    assert(Is_Cell_Erased(out));
-
-    Feed* feed = Make_At_Feed_Core(list, specifier);
-
-    if (Is_Feed_At_End(feed)) {
-        *index_out = 0xDECAFBAD;  // avoid compiler warning
-        return false;
-    }
-
-    Level* L = Make_Level(&Stepper_Executor, feed, flags);
-    Push_Level(out, L);
-
-    if (Trampoline_With_Top_As_Root_Throws()) {
-        *index_out = CORRUPT_INDEX;
-        Drop_Level(L);
-        return true;
-    }
-
-    *index_out = Level_Array_Index(L);
-    Drop_Level(L);
-    return false;
-}
+#define Eval_Any_List_At_Throws(out,list,specifier) \
+    Eval_Any_List_At_Core_Throws(out, LEVEL_MASK_NONE, (list), (specifier))
 
 
+// !!! This is a non-stackless invocation of the evaluator that evaluates a
+// single value.  Callsites that use it should be rewritten to yield to the
+// trampoline.
+//
 INLINE bool Eval_Value_Core_Throws(
     Atom* out,
     Flags flags,
@@ -225,3 +198,44 @@ INLINE bool Eval_Value_Core_Throws(
 
 #define Eval_Value_Throws(out,value,specifier) \
     Eval_Value_Core_Throws(out, LEVEL_MASK_NONE, (value), (specifier))
+
+
+// !!! This is a non-stackless invocation of the evaluator that evaluates a
+// single value.  Callsites that use it should be rewritten to yield to the
+// trampoline.
+//
+INLINE bool Eval_Branch_Throws(
+    Atom* out,
+    const Value* branch
+){
+    if (not Pushed_Continuation(
+        out,
+        LEVEL_FLAG_BRANCH,
+        SPECIFIED, branch,
+        nullptr
+    )){
+        return false;
+    }
+
+    bool threw = Trampoline_With_Top_As_Root_Throws();
+    Drop_Level(TOP_LEVEL);
+    return threw;
+}
+
+
+// !!! Review callsites for which ones should be interruptible and which ones
+// should not.
+//
+#define rebRunThrows(out,...) \
+    rebRunCoreThrows_internal( \
+        (out), \
+        EVAL_EXECUTOR_FLAG_NO_RESIDUE | LEVEL_FLAG_UNINTERRUPTIBLE, \
+        __VA_ARGS__ \
+    )
+
+#define rebRunThrowsInterruptible(out,...) \
+    rebRunCoreThrows_internal( \
+        (out), \
+        EVAL_EXECUTOR_FLAG_NO_RESIDUE, \
+        __VA_ARGS__ \
+    )

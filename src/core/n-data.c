@@ -388,7 +388,7 @@ DECLARE_NATIVE(use)
     );
     UNUSED(context);  // managed, but [1]
 
-    if (Do_Any_List_At_Throws(OUT, body, SPECIFIED))
+    if (Eval_Any_List_At_Throws(OUT, body, SPECIFIED))
         return THROWN;
 
     return OUT;
@@ -853,7 +853,7 @@ bool Get_Var_Push_Refinements_Throws(
 
               blockscope {
                 Atom* atom_out = out;
-                if (Do_Any_List_At_Throws(atom_out, at, at_specifier)) {
+                if (Eval_Any_List_At_Throws(atom_out, at, at_specifier)) {
                     Drop_Data_Stack_To(base);
                     return true;
                 }
@@ -1238,7 +1238,7 @@ DECLARE_NATIVE(get)
         if (steps != GROUPS_OK)
             fail ("GET on GROUP! with steps doesn't have answer ATM");
 
-        if (Do_Any_List_At_Throws(SPARE, source, SPECIFIED))
+        if (Eval_Any_List_At_Throws(SPARE, source, SPECIFIED))
             return Error_No_Catch_For_Throw(LEVEL);
 
         Decay_If_Unstable(SPARE);
@@ -1399,7 +1399,7 @@ bool Set_Var_Core_Updater_Throws(
                 if (not steps_out)
                     fail (Error_Bad_Get_Group_Raw(var));
 
-                if (Do_Any_List_At_Throws(temp, at, at_specifier)) {
+                if (Eval_Any_List_At_Throws(temp, at, at_specifier)) {
                     Drop_Data_Stack_To(base);
                     return true;
                 }
@@ -1636,7 +1636,7 @@ DECLARE_NATIVE(set)
         if (not REF(groups))
             fail (Error_Bad_Get_Group_Raw(target));
 
-        if (Do_Any_List_At_Throws(SPARE, target, SPECIFIED))
+        if (Eval_Any_List_At_Throws(SPARE, target, SPECIFIED))
             fail (Error_No_Catch_For_Throw(LEVEL));
 
         Decay_If_Unstable(SPARE);

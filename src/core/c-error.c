@@ -451,7 +451,7 @@ Bounce MAKE_Error(
         );
 
         DECLARE_ATOM (evaluated);
-        if (Do_Any_List_At_Throws(evaluated, virtual_arg, SPECIFIED))
+        if (Eval_Any_List_At_Throws(evaluated, virtual_arg, SPECIFIED))
             return BOUNCE_THROWN;
 
         vars = ERR_VARS(e);

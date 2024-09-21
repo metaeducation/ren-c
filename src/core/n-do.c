@@ -61,17 +61,15 @@ DECLARE_NATIVE(reeval)
         and HEART_BYTE(v) == REB_FRAME
         and Is_Enfixed(v);
 
-    Flags flags = LEVEL_MASK_NONE;
+    Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
 
-    if (Reevaluate_In_Sublevel_Throws(
-        OUT,  // reeval :comment "this should leave old input"
-        level_,
-        v,
-        flags,
-        enfix
-    )){
+    Level* sub = Make_Level(&Stepper_Executor, level_->feed, flags);
+    Copy_Cell(&sub->u.eval.current, v);
+    sub->u.eval.current_gotten = nullptr;
+    sub->u.eval.enfix_reevaluate = enfix ? 'Y' : 'N';
+
+    if (Trampoline_Throws(OUT, sub))  // review: rewrite stackless
         return THROWN;
-    }
 
     return OUT;
 }
@@ -142,7 +140,7 @@ DECLARE_NATIVE(shove)
         Move_Cell(shovee, stable_OUT);  // variable contents always stable
     }
     else if (Is_Group(right)) {
-        if (Do_Any_List_At_Throws(OUT, right, Level_Specifier(L)))
+        if (Eval_Any_List_At_Throws(OUT, right, Level_Specifier(L)))
             return THROWN;
 
         Move_Cell(shovee, Decay_If_Unstable(OUT));
@@ -416,7 +414,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
             // array during execution, there will be problems if it is TAKE'n
             // or DO'd while this operation is in progress.
             //
-            if (Do_Any_List_At_Throws(OUT, position, SPECIFIED)) {
+            if (Eval_Any_List_At_Throws(OUT, position, SPECIFIED)) {
                 //
                 // !!! A BLOCK! varargs doesn't technically need to "go bad"
                 // on a throw, since the block is still around.  But a FRAME!

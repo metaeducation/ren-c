@@ -45,6 +45,8 @@
 //    know how to handle them.
 //
 
+#define THROWING Is_Throwing(level_)
+
 INLINE const Value* VAL_THROWN_LABEL(Level* level_) {
     UNUSED(level_);
     assert(not Is_Cell_Erased(&g_ts.thrown_label));

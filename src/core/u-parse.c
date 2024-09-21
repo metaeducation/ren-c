@@ -461,7 +461,7 @@ bool Process_Group_For_Parse_Throws(
 
   blockscope {
     Atom* atom_out = out;
-    if (Do_Any_List_At_Throws(atom_out, group, derived))
+    if (Eval_Any_List_At_Throws(atom_out, group, derived))
         return true;
 
     if (Is_Group(group)) {
@@ -1610,7 +1610,7 @@ DECLARE_NATIVE(subparse)
                     fail (Error_Parse3_Rule());
 
                 DECLARE_ATOM (condition);
-                if (Do_Any_List_At_Throws(  // note: might GC
+                if (Eval_Any_List_At_Throws(  // note: might GC
                     condition,
                     P_RULE,
                     P_RULE_SPECIFIER
@@ -2264,7 +2264,7 @@ DECLARE_NATIVE(subparse)
 
               blockscope {
                 Atom* atom_evaluated = evaluated;
-                if (Do_Any_List_At_Throws(
+                if (Eval_Any_List_At_Throws(
                     atom_evaluated,
                     rule,
                     derived

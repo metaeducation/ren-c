@@ -1277,7 +1277,7 @@ Bounce Stepper_Executor(Level* L)
                 or heart == REB_THE_GROUP
                 or heart == REB_META_GROUP
             ){
-                if (Do_Any_List_At_Throws(SPARE, CURRENT, SPECIFIED)) {
+                if (Eval_Any_List_At_Throws(SPARE, CURRENT, SPECIFIED)) {
                     Drop_Data_Stack_To(BASELINE->stack_base);
                     goto return_thrown;
                 }

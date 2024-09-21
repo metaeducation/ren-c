@@ -339,7 +339,7 @@ Array* Startup_Natives(const Element* boot_natives)
     Init_Any_List_At(skipped, REB_BLOCK, Cell_Array(boot_natives), 3);
 
     DECLARE_ATOM (discarded);
-    if (Do_Any_List_At_Throws(discarded, skipped, specifier))
+    if (Eval_Any_List_At_Throws(discarded, skipped, specifier))
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
     if (not Is_Anti_Word_With_Id(discarded, SYM_DONE))
         panic (discarded);

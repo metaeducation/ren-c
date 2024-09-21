@@ -509,7 +509,7 @@ static void Init_System_Object(
     // Evaluate the block (will eval CONTEXTs within).
     //
     DECLARE_ATOM (result);
-    if (Do_Any_List_At_Throws(result, sysobj_spec_virtual, SPECIFIED))
+    if (Eval_Any_List_At_Throws(result, sysobj_spec_virtual, SPECIFIED))
         panic (result);
     if (not Is_Anti_Word_With_Id(result, SYM_DONE))  // ~done~ sanity check
         panic (result);

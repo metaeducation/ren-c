@@ -46,7 +46,7 @@
 //       >> if 1 < 2 [10 + 20] then x -> [print ["THEN got" x]]
 //       THEN got 30
 //
-//   (See Do_Branch_Throws() for supported ANY-BRANCH? types and behaviors.)
+//   (See Eval_Branch_Throws() for supported ANY-BRANCH? types and behaviors.)
 //
 
 #include "sys-core.h"

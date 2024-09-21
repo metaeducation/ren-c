@@ -25,7 +25,7 @@
 // for you.
 //
 // Even "friendlier" interfaces are available as macros on top of these.
-// See %sys-do.h for Do_Any_List_At_Throws() and similar macros.
+// See %sys-do.h for Eval_Any_List_At_Throws() and similar macros.
 //
 
 #include "sys-core.h"

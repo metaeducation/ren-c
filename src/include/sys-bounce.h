@@ -1,13 +1,13 @@
 //
-//  File: %sys-do.h
-//  Summary: {DO-until-end (of block or variadic feed) evaluation API}
+//  File: %sys-bounce.h
+//  Summary: "BOUNCE_CONTINUE, BOUNCE_DELEGATE, etc. and Helpers"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2019 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -20,63 +20,6 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// The "DO" helpers have names like Do_XXX(), and are a convenience layer
-// over making repeated calls into the Eval_XXX() routines.  DO-ing things
-// always implies running to the end of an input.  It also implies returning
-// void if nothing can be synthesized, otherwise let the last value fall out:
-//
-//     >> eval [1 + 2]
-//     == 3
-//
-//     >> eval []
-//     == ~void~  ; anti
-//
-//     >> eval [1 + 2 comment "hi"]
-//     == 3
-//
-// See %sys-eval.h for the lower level routines if this isn't enough control.
-//
-//=//// NOTES //////////////////////////////////////////////////////////////=//
-//
-
-// !!! Review callsites for which callsites should be interruptible and
-// which ones should not.
-//
-#define rebRunThrows(out,...) \
-    rebRunCoreThrows_internal( \
-        (out), \
-        EVAL_EXECUTOR_FLAG_NO_RESIDUE | LEVEL_FLAG_UNINTERRUPTIBLE, \
-        __VA_ARGS__ \
-    )
-
-#define rebRunThrowsInterruptible(out,...) \
-    rebRunCoreThrows_internal( \
-        (out), \
-        EVAL_EXECUTOR_FLAG_NO_RESIDUE, \
-        __VA_ARGS__ \
-    )
-
-
-INLINE bool Do_Any_List_At_Core_Throws(
-    Atom* out,
-    Flags flags,
-    const Cell* list,
-    Specifier* specifier
-){
-    Init_Void(Alloc_Evaluator_Primed_Result());
-    Level* L = Make_Level_At_Core(
-        &Evaluator_Executor,
-        list, specifier,
-        flags
-    );
-
-    return Trampoline_Throws(out, L);
-}
-
-#define Do_Any_List_At_Throws(out,list,specifier) \
-    Do_Any_List_At_Core_Throws(out, LEVEL_MASK_NONE, (list), (specifier))
-
-
 
 INLINE Bounce Run_Generic_Dispatch_Core(
     const Value* first_arg,  // !!! Is this always same as Level_Arg(L, 1)?
@@ -135,21 +78,59 @@ INLINE bool Run_Generic_Dispatch_Throws(
 }
 
 
-// Conveniences for returning a continuation.  The concept is that when a
-// BOUNCE_CONTINUE comes back via the C `return` for a native, that native's
-// C stack variables are all gone.  But the heap-allocated Rebol frame stays
-// intact and in the Rebol stack trace.  It will be resumed when the
-// continuation finishes.
+// If Eval_Core gets back an REB_R_REDO from a dispatcher, it will re-execute
+// the L->phase in the frame.  This function may be changed by the dispatcher
+// from what was originally called.
 //
-// Conditional constructs allow branches that are either BLOCK!s or ACTION!s.
-// If an action, the triggering condition is passed to it as an argument:
-// https://trello.com/c/ay9rnjIe
+// If EXTRA(Any).flag is not set on the cell, then the types will be checked
+// again.  Note it is not safe to let arbitrary user code change values in a
+// frame from expected types, and then let those reach an underlying native
+// who thought the types had been checked.
 //
-// Allowing other values was deemed to do more harm than good:
-// https://forum.rebol.info/t/backpedaling-on-non-block-branches/476
+#define C_REDO_UNCHECKED 'r'
+#define BOUNCE_REDO_UNCHECKED \
+    cast(Bounce, &PG_Bounce_Redo_Unchecked)
+
+#define C_REDO_CHECKED 'R'
+#define BOUNCE_REDO_CHECKED \
+    cast(Bounce, &PG_Bounce_Redo_Checked)
+
+
+// Continuations are used to mitigate the problems that occur when the C stack
+// contains a mirror of frames corresponding to the frames for each stack
+// level.  Avoiding this means that routines that would be conceived as doing
+// a recursion instead return to the evaluator with a new request.  This helps
+// avoid crashes from C stack overflows and has many other advantages.  For a
+// similar approach and explanation, see:
 //
-// !!! Review if @word, @pa/th, @tu.p.le would make good branch types.  :-/
+// https://en.wikipedia.org/wiki/Stackless_Python
 //
+// What happens is that when a BOUNCE_CONTINUE comes back via the C `return`
+// for a native, that native's C stack variables are all gone.  But the heap
+// allocated Level stays intact and in the Rebol stack trace.  The native's C
+// function will be called back again when the continuation finishes.
+//
+#define C_CONTINUATION 'C'
+#define BOUNCE_CONTINUE \
+    cast(Bounce, &PG_Bounce_Continuation)
+
+
+// A dispatcher may want to run a "continuation" but not be called back.
+// This is referred to as delegation.
+//
+#define C_DELEGATION 'D'
+#define BOUNCE_DELEGATE \
+    cast(Bounce, &PG_Bounce_Delegation)
+
+#define DELEGATE_255 255
+
+
+// For starters, a simple signal for suspending stacks in order to be able to
+// try not using Asyncify (or at least not relying on it so heavily)
+//
+#define C_SUSPEND 'S'
+#define BOUNCE_SUSPEND \
+    cast(Bounce, &PG_Bounce_Suspend)
 
 
 //=//// CONTINUATION HELPER MACROS ////////////////////////////////////////=//
@@ -250,23 +231,3 @@ INLINE Bounce Continue_Sublevel_Helper(
 #define DELEGATE_SUBLEVEL(sub) ( \
     Continue_Sublevel_Helper(level_, false, (sub)), \
     BOUNCE_DELEGATE)
-
-
-
-INLINE bool Do_Branch_Throws(  // !!! Legacy code, should be phased out
-    Atom* out,
-    const Value* branch
-){
-    if (not Pushed_Continuation(
-        out,
-        LEVEL_FLAG_BRANCH,
-        SPECIFIED, branch,
-        nullptr
-    )){
-        return false;
-    }
-
-    bool threw = Trampoline_With_Top_As_Root_Throws();
-    Drop_Level(TOP_LEVEL);
-    return threw;
-}

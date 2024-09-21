@@ -127,7 +127,7 @@ Bounce Macro_Dispatcher(Level* const L)
     // Must catch RETURN ourselves, as letting it bubble up to generic UNWIND
     // handling would return a BLOCK! instead of splice it.
     //
-    if (Do_Any_List_At_Throws(OUT, SPARE, SPECIFIED)) {
+    if (Eval_Any_List_At_Throws(OUT, SPARE, SPECIFIED)) {
         const Value* label = VAL_THROWN_LABEL(L);
         if (
             Is_Frame(label)  // catch UNWIND here [2]

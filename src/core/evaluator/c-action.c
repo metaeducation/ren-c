@@ -612,7 +612,7 @@ Bounce Action_Executor(Level* L)
                 //
                 if (Any_Group(ARG)) {
                     Move_Cell(SPARE, ARG);
-                    if (Do_Any_List_At_Throws(ARG, SPARE, SPECIFIED))
+                    if (Eval_Any_List_At_Throws(ARG, SPARE, SPECIFIED))
                         goto handle_thrown_maybe_redo;
                 }
                 else {

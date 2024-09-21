@@ -139,7 +139,7 @@ Array* Startup_Generics(const Element* boot_generics)
     Bind_Values_Set_Midstream_Shallow(head, tail, Lib_Context_Value);
 
     DECLARE_ATOM (discarded);
-    if (Do_Any_List_At_Throws(discarded, boot_generics, SPECIFIED))
+    if (Eval_Any_List_At_Throws(discarded, boot_generics, SPECIFIED))
         panic (discarded);
     if (not Is_Anti_Word_With_Id(discarded, SYM_DONE))
         panic (discarded);

@@ -190,8 +190,8 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             );
             Push_Level(out, L_temp);
 
-            // Note: Eval_Step_In_Sublevel() is not needed here because
-            // this is a single use level, whose state can be overwritten.
+            // Note: a sublevel is not needed here because this is a single use
+            // level, whose state can be overwritten.
             //
             if (Eval_Step_Throws(out, L_temp)) {
                 Drop_Level(L_temp);
@@ -281,15 +281,16 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             goto type_check_and_return;
         }
 
-        // Note that evaluative cases here need Eval_Step_In_Sublevel(),
-        // because a function is running and the level state can't be
-        // overwritten by an arbitrary evaluation.
+        // Note that evaluative cases here need a sublevel, because a function
+        // is running in L and its state can't be overwritten by an arbitrary
+        // evaluation.
         //
         switch (pclass) {
         case PARAMCLASS_NORMAL: {
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
-            if (Eval_Step_In_Sublevel_Throws(out, L, flags))
+            Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
+            if (Trampoline_Throws(out, sub))  // !!! Stackful, should yield!
                 return true;
             break; }
 

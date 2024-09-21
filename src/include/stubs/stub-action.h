@@ -193,56 +193,6 @@ INLINE bool Is_Throwing(Level* level_) {
     return false;
 }
 
-#define THROWING Is_Throwing(level_)
-
-
-// If Eval_Core gets back an REB_R_REDO from a dispatcher, it will re-execute
-// the L->phase in the frame.  This function may be changed by the dispatcher
-// from what was originally called.
-//
-// If EXTRA(Any).flag is not set on the cell, then the types will be checked
-// again.  Note it is not safe to let arbitrary user code change values in a
-// frame from expected types, and then let those reach an underlying native
-// who thought the types had been checked.
-//
-#define C_REDO_UNCHECKED 'r'
-#define BOUNCE_REDO_UNCHECKED \
-    cast(Bounce, &PG_Bounce_Redo_Unchecked)
-
-#define C_REDO_CHECKED 'R'
-#define BOUNCE_REDO_CHECKED \
-    cast(Bounce, &PG_Bounce_Redo_Checked)
-
-
-// Continuations are used to mitigate the problems that occur when the C stack
-// contains a mirror of frames corresponding to the frames for each stack
-// level.  Avoiding this means that routines that would be conceived as doing
-// a recursion instead return to the evaluator with a new request.  This helps
-// avoid crashes from C stack overflows and has many other advantages.  For a
-// similar approach and explanation, see:
-//
-// https://en.wikipedia.org/wiki/Stackless_Python
-//
-#define C_CONTINUATION 'C'
-#define BOUNCE_CONTINUE \
-    cast(Bounce, &PG_Bounce_Continuation)
-
-
-// A dispatcher may want to run a "continuation" but not be called back.
-// This is referred to as delegation.
-//
-#define C_DELEGATION 'D'
-#define BOUNCE_DELEGATE \
-    cast(Bounce, &PG_Bounce_Delegation)
-
-#define DELEGATE_255 255
-
-// For starters, a simple signal for suspending stacks in order to be able to
-// try not using Asyncify (or at least not relying on it so heavily)
-//
-#define C_SUSPEND 'S'
-#define BOUNCE_SUSPEND \
-    cast(Bounce, &PG_Bounce_Suspend)
 
 #define INIT_VAL_ACTION_DETAILS                 Init_Cell_Node1
 #define VAL_ACTION_PARTIALS_OR_LABEL(v)         cast(Flex*, Cell_Node2(v))

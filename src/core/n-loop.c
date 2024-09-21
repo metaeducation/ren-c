@@ -222,7 +222,7 @@ static Bounce Loop_Series_Common(
     //
     REBINT s = VAL_INDEX(start);
     if (s == end) {
-        if (Do_Branch_Throws(OUT, body)) {
+        if (Eval_Branch_Throws(OUT, body)) {
             bool breaking;
             if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
                 return THROWN;
@@ -246,7 +246,7 @@ static Bounce Loop_Series_Common(
             ? cast(REBINT, *state) <= end
             : cast(REBINT, *state) >= end
     ){
-        if (Do_Branch_Throws(OUT, body)) {
+        if (Eval_Branch_Throws(OUT, body)) {
             bool breaking;
             if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
                 return THROWN;
@@ -301,7 +301,7 @@ static Bounce Loop_Integer_Common(
     // Run only once if start is equal to end...edge case.
     //
     if (start == end) {
-        if (Do_Branch_Throws(OUT, body)) {
+        if (Eval_Branch_Throws(OUT, body)) {
             bool breaking;
             if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
                 return THROWN;
@@ -321,7 +321,7 @@ static Bounce Loop_Integer_Common(
         return nullptr;  // avoid infinite loops
 
     while (counting_up ? *state <= end : *state >= end) {
-        if (Do_Branch_Throws(OUT, body)) {
+        if (Eval_Branch_Throws(OUT, body)) {
             bool breaking;
             if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
                 return THROWN;
@@ -386,7 +386,7 @@ static Bounce Loop_Number_Common(
     // Run only once if start is equal to end...edge case.
     //
     if (s == e) {
-        if (Do_Branch_Throws(OUT, body)) {
+        if (Eval_Branch_Throws(OUT, body)) {
             bool breaking;
             if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
                 return THROWN;
@@ -404,7 +404,7 @@ static Bounce Loop_Number_Common(
         return VOID;  // avoid inf. loop, means never ran
 
     while (counting_up ? *state <= e : *state >= e) {
-        if (Do_Branch_Throws(OUT, body)) {
+        if (Eval_Branch_Throws(OUT, body)) {
             bool breaking;
             if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
                 return THROWN;
@@ -605,7 +605,7 @@ DECLARE_NATIVE(for_skip)
             VAL_INDEX_UNBOUNDED(var) = index;
         }
 
-        if (Do_Branch_Throws(OUT, ARG(body))) {
+        if (Eval_Branch_Throws(OUT, ARG(body))) {
             bool breaking;
             if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
                 return THROWN;
@@ -1459,7 +1459,7 @@ DECLARE_NATIVE(remove_each)
             ++index;
         }
 
-        if (Do_Any_List_At_Throws(OUT, body, SPECIFIED)) {
+        if (Eval_Any_List_At_Throws(OUT, body, SPECIFIED)) {
             if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking)) {
                 threw = true;
                 goto finalize_remove_each;
