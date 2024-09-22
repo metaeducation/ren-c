@@ -718,7 +718,7 @@ sys.util/make-scheme [
         reflect: func [port [port!] property [word!]] [
             return switch property [
                 'open? [
-                    did all [port.state, open? port.state.connection]
+                    all [port.state, open? port.state.connection]
                 ]
 
                 'length [

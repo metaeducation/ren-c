@@ -336,7 +336,7 @@ defined?: func [
     if tuple? var [
         return not trap [get var]  ; can't use BINDING OF on TUPLE! atm
     ]
-    return did all [
+    return all [
         '~attached~ != binding of var
         '~ <> ^ get/any var
     ]
@@ -350,7 +350,7 @@ undefined?: func [
     if tuple? var [
         return did trap [get var]  ; can't use BINDING OF on TUPLE! atm
     ]
-    return did any [
+    return any [
         '~attached~ = binding of var
         '~ = ^ get/any var
     ]

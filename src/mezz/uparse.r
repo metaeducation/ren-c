@@ -248,9 +248,9 @@ combinator?: func [
     ; could also check RETURNS OF for `pending` and `state`, but might exclude
     ; wrapped combinators which return packs directly.
     ;
-    return did all [
-        find keys 'input
-        find keys 'state
+    return all [
+        did find keys 'input
+        did find keys 'state
     ]
 ]
 

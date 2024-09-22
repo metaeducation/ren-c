@@ -52,9 +52,9 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
                 "]'"
             ])
         ] data
-        did all [
+        all [
             500'000 < length of data
-            find data "summary: {Initial commit}"
+            did find data "summary: {Initial commit}"
         ]
     ]
 )

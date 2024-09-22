@@ -9,7 +9,7 @@
         encrypted: aes-stream ctx as binary! data
         ctx: aes-key/decrypt key-128 _
         decrypted: aes-stream ctx encrypted
-        return did all [
+        return all [
             bin = copy/part decrypted bin-len
             check = encrypted
         ]
