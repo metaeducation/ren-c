@@ -68,7 +68,7 @@
 
 
 INLINE bool Has_Newline_At_Tail(const Array* a) {
-    if (Flex_Flavor(a) != FLAVOR_ARRAY)
+    if (Stub_Flavor(a) != FLAVOR_ARRAY)
         return false;  // only plain arrays can have newlines
 
     // Using Get_Subclass_Flag() would redundantly check it's a plain array.
@@ -77,7 +77,7 @@ INLINE bool Has_Newline_At_Tail(const Array* a) {
 }
 
 INLINE bool Has_File_Line(const Array* a) {
-    if (Flex_Flavor(a) != FLAVOR_ARRAY)
+    if (Stub_Flavor(a) != FLAVOR_ARRAY)
         return false;  // only plain arrays can have newlines
 
     // Using Get_Subclass_Flag() would redundantly check it's a plain array.
@@ -96,14 +96,14 @@ INLINE bool Has_File_Line(const Array* a) {
 
 INLINE Value* Stub_Cell(const_if_c Stub* s) {
     assert(Not_Flex_Flag(s, DYNAMIC));
-    assert(Is_Flex_Array(s));
+    assert(Is_Stub_Array(s));
     return x_cast(Value*, &s->content.fixed.cell);
 }
 
 #if CPLUSPLUS_11
     INLINE const Value* Stub_Cell(const Stub* s) {
         assert(Not_Flex_Flag(s, DYNAMIC));
-        assert(Is_Flex_Array(s));
+        assert(Is_Stub_Array(s));
         return u_cast(const Value*, &s->content.fixed.cell);
     }
 #endif
@@ -183,7 +183,7 @@ INLINE Array* Make_Array_Core_Into(
   #endif
 
     Array* a = x_cast(Array*, Make_Flex_Into(preallocated, capacity, flags));
-    assert(Is_Flex_Array(a));  // flavor should have been an array flavor
+    assert(Is_Stub_Array(a));  // flavor should have been an array flavor
 
     if (Get_Flex_Flag(a, DYNAMIC)) {
         Prep_Array(a, capacity);
@@ -285,7 +285,7 @@ INLINE Array* Alloc_Singular(Flags flags) {
         1,
         flags | FLEX_FLAG_FIXED_SIZE
     ));
-    assert(Is_Flex_Array(a));  // flavor should have been an array flavor
+    assert(Is_Stub_Array(a));  // flavor should have been an array flavor
     Erase_Cell(Stub_Cell(a));  // poison means length 0, erased length 1
     return a;
 }
@@ -334,7 +334,7 @@ enum {
         Assert_Array_Core(a)
 
     INLINE void Assert_Flex(const Flex* f) {
-        if (Is_Flex_Array(f))
+        if (Is_Stub_Array(f))
             Assert_Array_Core(c_cast(Array*, f));  // calls _Flex_Basics()
         else
             Assert_Flex_Basics_Core(f);

@@ -351,7 +351,7 @@ static void Print_Parse_Index(Level* level_) {
         P_HEART,
         P_INPUT,
         P_POS,
-        Is_Flex_Array(P_INPUT)
+        Is_Stub_Array(P_INPUT)
             ? P_INPUT_SPECIFIER
             : SPECIFIED
     );
@@ -620,7 +620,7 @@ static REBIXO Parse_One_Rule(
         // Other cases handled distinctly between blocks/strings/binaries...
     }
 
-    if (Is_Flex_Array(P_INPUT)) {
+    if (Is_Stub_Array(P_INPUT)) {
         const Element* item = Array_At(P_INPUT_ARRAY, pos);
 
         switch (VAL_TYPE(rule)) {
@@ -1035,7 +1035,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             fail ("TAG! combinator must be <here> or <end> ATM");
     }
 
-    if (Is_Flex_Array(P_INPUT)) {
+    if (Is_Stub_Array(P_INPUT)) {
         //
         // FOR ARRAY INPUT WITH NON-BLOCK RULES, USE Find_In_Array()
         //
@@ -1875,7 +1875,7 @@ DECLARE_NATIVE(subparse)
                 fail ("Use THE instead of QUOTE in PARSE3 for literal match");
 
               case SYM_THE: {
-                if (not Is_Flex_Array(P_INPUT))
+                if (not Is_Stub_Array(P_INPUT))
                     fail (Error_Parse3_Rule());  // see #2253
 
                 if (P_AT_END)
@@ -1917,7 +1917,7 @@ DECLARE_NATIVE(subparse)
                 // parse ["aa"] [into ["a" "a"]] ; is legal
                 // parse "aa" [into ["a" "a"]] ; is not...already "into"
                 //
-                if (not Is_Flex_Array(P_INPUT))
+                if (not Is_Stub_Array(P_INPUT))
                     fail (Error_Parse3_Rule());
 
                 const Element* input_tail = Array_Tail(P_INPUT_ARRAY);
@@ -2182,7 +2182,7 @@ DECLARE_NATIVE(subparse)
                             )
                         );
                 }
-                else if (Is_Flex_Array(P_INPUT)) {
+                else if (Is_Stub_Array(P_INPUT)) {
                     assert(count == 1);  // check for > 1 would have errored
 
                     Copy_Cell(
@@ -2275,7 +2275,7 @@ DECLARE_NATIVE(subparse)
                 Decay_If_Unstable(atom_evaluated);
               }
 
-                if (Is_Flex_Array(P_INPUT)) {
+                if (Is_Stub_Array(P_INPUT)) {
                     REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
                     if (not only and Any_List(evaluated))
                         mod_flags |= AM_SPLICE;

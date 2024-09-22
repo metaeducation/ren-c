@@ -256,7 +256,7 @@ void* Probe_Core_Debug(
   blockscope {
     const Flex* f = c_cast(Flex* , p);
     assert(not Is_Node_Free(f));  // Detect should have caught, above
-    Flavor flavor = Flex_Flavor(f);
+    Flavor flavor = Stub_Flavor(f);
     Assert_Flex(f);  // if corrupt, gives better info than a print crash
 
     switch (flavor) {
@@ -392,8 +392,8 @@ void* Probe_Core_Debug(
 
     //=//// FLEXES WITH ELEMENTS WIDTH 1 INTERPRETED AS UTF-8 /////////////=//
 
-      case FLAVOR_STRING: {
-        Probe_Print_Helper(p, expr, "String Flex", file, line);
+      case FLAVOR_NONSYMBOL: {
+        Probe_Print_Helper(p, expr, "Non-Symbol String Flex", file, line);
         Mold_Text_Flex_At(mo, c_cast(String*, f), 0);  // could be TAG!, etc.
         break; }
 
@@ -413,7 +413,7 @@ void* Probe_Core_Debug(
     #endif
 
       default:
-        Probe_Print_Helper(p, expr, "!!! Unknown Flex_Flavor() !!!", file, line);
+        Probe_Print_Helper(p, expr, "!!! Unknown Stub_Flavor() !!!", file, line);
         break;
     }
   }

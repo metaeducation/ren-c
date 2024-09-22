@@ -72,7 +72,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
     REBLEN index;
 
     BookmarkList* book = nullptr;  // updated at end if not nulled out
-    if (Is_String_NonSymbol(s))
+    if (not Is_String_Symbol(s))
         book = LINK(Bookmarks, s);
 
   #if DEBUG_SPORADICALLY_DROP_BOOKMARKS
@@ -91,14 +91,14 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
 
     if (at < len / 2) {
         if (len < sizeof(Cell)) {
-            if (Is_String_NonSymbol(s))
+            if (not Is_String_Symbol(s))
                 assert(
                     Get_Flex_Flag(s, DYNAMIC)  // e.g. mold buffer
                     or not book  // mutations must ensure this
                 );
             goto scan_from_head;  // good locality, avoid bookmark logic
         }
-        if (not book and Is_String_NonSymbol(s)) {
+        if (not book and not Is_String_Symbol(s)) {
             book = Alloc_BookmarkList();
             LINK(Bookmarks, m_cast(String*, s)) = book;
             goto scan_from_head;  // will fill in bookmark
@@ -106,14 +106,14 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
     }
     else {
         if (len < sizeof(Cell)) {
-            if (Is_String_NonSymbol(s))
+            if (not Is_String_Symbol(s))
                 assert(
                     not book  // mutations must ensure this usually but...
                     or Get_Flex_Flag(s, DYNAMIC)  // !!! mold buffer?
                 );
             goto scan_from_tail;  // good locality, avoid bookmark logic
         }
-        if (not book and Is_String_NonSymbol(s)) {
+        if (not book and not Is_String_Symbol(s)) {
             book = Alloc_BookmarkList();
             LINK(Bookmarks, m_cast(String*, s)) = book;
             goto scan_from_tail;  // will fill in bookmark

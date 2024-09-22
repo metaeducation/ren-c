@@ -39,7 +39,7 @@ String* Make_String_Core(Size encoded_capacity, Flags flags)
 
     String* str = Make_Flex(String,
         encoded_capacity + 1,  // + 1 makes room for '\0' terminator
-        FLAG_FLAVOR(STRING) | flags
+        FLAG_FLAVOR(NONSYMBOL) | flags
     );
     str->misc.length = 0;
     LINK(Bookmarks, str) = nullptr;  // generated on demand

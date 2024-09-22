@@ -202,7 +202,7 @@ void Protect_Flex(const Flex* f, REBLEN index, Flags flags)
         Clear_Flex_Info(f, PROTECTED);
     }
 
-    if (not Is_Flex_Array(f) or not (flags & PROT_DEEP))
+    if (not Is_Stub_Array(f) or not (flags & PROT_DEEP))
         return;
 
     Flip_Flex_To_Black(f);  // recursion protection

@@ -232,7 +232,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
 ){
     const Flex* f = c_cast(Flex*, feed->p);
 
-    switch (Flex_Flavor(f)) {
+    switch (Stub_Flavor(f)) {
       case FLAVOR_INSTRUCTION_SPLICE: {
         Array* inst1 = x_cast(Array*, f);
         Element* single = cast(Element*, Stub_Cell(inst1));

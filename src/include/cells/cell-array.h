@@ -18,7 +18,7 @@ INLINE bool Any_Listlike(const Cell* v) {
     const Node* node1 = Cell_Node1(v);
     if (Is_Node_A_Cell(node1))
         return true;  // Cell_List_At() works, but Cell_Array() won't work!
-    return Flex_Flavor(u_cast(const Flex*, node1)) == FLAVOR_ARRAY;
+    return Stub_Flavor(u_cast(const Flex*, node1)) == FLAVOR_ARRAY;
 }
 
 INLINE const Array* Cell_Array(const Cell* v) {

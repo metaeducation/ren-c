@@ -26,7 +26,7 @@ INLINE const String* Cell_Issue_String(const Cell* v) {
 //
 INLINE Length Cell_Series_Len_Head(const Cell* v) {
     const Flex* f = Cell_Flex(v);
-    if (Is_Flex_UTF8(f) and Cell_Heart(v) != REB_BINARY)
+    if (Is_Stub_String(f) and Cell_Heart(v) != REB_BINARY)
         return String_Len(c_cast(String*, f));
     return Flex_Used(f);
 }

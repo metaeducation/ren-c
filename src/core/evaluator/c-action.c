@@ -1156,7 +1156,6 @@ void Begin_Action_Core(
     ARG = L->rootvar + 1;
 
     assert(Is_Pointer_Corrupt_Debug(L->label));  // ACTION! makes valid
-    assert(not label or Is_String_Symbol(unwrap label));
     L->label = label;
   #if DEBUG_LEVEL_LABELS  // helpful for looking in the debugger
     L->label_utf8 = Level_Label_Or_Anonymous_UTF8(L);
@@ -1209,8 +1208,6 @@ void Begin_Action_Core(
 //    set...and right now, only DETAILS_FLAG_IS_NATIVE sets HOLD.  Clear that.
 //
 void Drop_Action(Level* L) {
-    assert(not L->label or Is_String_Symbol(unwrap L->label));
-
     Clear_Action_Executor_Flag(L, RUNNING_ENFIX);
     Clear_Action_Executor_Flag(L, FULFILL_ONLY);
 

@@ -268,7 +268,7 @@ static void Queue_Unmarked_Accessible_Flex_Deep(const Flex* f)
     if (Get_Flex_Flag(f, INFO_NODE_NEEDS_MARK) and node_INODE(Node, f))
         Queue_Mark_Node_Deep(&m_cast(Flex*, f)->info.any.node);
 
-    if (IS_KEYLIST(f)) {
+    if (Is_Stub_Keylist(f)) {
         //
         // !!! KeyLists may not be the only category that are just a straight
         // list of node pointers.
@@ -286,7 +286,7 @@ static void Queue_Unmarked_Accessible_Flex_Deep(const Flex* f)
             Queue_Unmarked_Accessible_Flex_Deep(*key);
         }
     }
-    else if (Is_Flex_Array(f)) {
+    else if (Is_Stub_Array(f)) {
         Array* a = x_cast(Array*, f);
 
     //=//// MARK BONUS (if not using slot for `bias`) /////////////////////=//
@@ -294,7 +294,7 @@ static void Queue_Unmarked_Accessible_Flex_Deep(const Flex* f)
         // Whether the bonus slot needs to be marked is dictated by internal
         // Flex Flavor, not an extension-usable flag (due to flag scarcity).
         //
-        if (IS_VARLIST(a) and node_BONUS(Node, f)) {
+        if (Is_Stub_Varlist(a) and node_BONUS(Node, f)) {
             //
             // !!! The keysource for varlists can be set to a Level*, which
             // at the moment pretends to be a cell to distinguish itself.
@@ -304,7 +304,7 @@ static void Queue_Unmarked_Accessible_Flex_Deep(const Flex* f)
             if (Is_Non_Cell_Node_A_Level(node_BONUS(Node, f)))
                 goto skip_mark_frame_bonus;
 
-            assert(IS_KEYLIST(cast(Flex*, node_BONUS(Node, a))));
+            assert(Is_Stub_Keylist(cast(Flex*, node_BONUS(Node, a))));
 
             Queue_Mark_Node_Deep(
                 &m_cast(Flex*, f)->content.dynamic.bonus.node
@@ -422,7 +422,7 @@ static void Propagate_All_GC_Marks(void)
         const Cell* tail = Array_Tail(a);
         for (; v != tail; ++v) {
           #if DEBUG
-            Flavor flavor = Flex_Flavor(a);
+            Flavor flavor = Stub_Flavor(a);
             assert(flavor <= FLAVOR_MAX_ARRAY);
 
             switch (QUOTE_BYTE(v)) {
@@ -561,7 +561,7 @@ void Run_All_Handle_Cleaners(void) {
             Stub* stub = cast(Stub*, unit);
             if (stub == g_ds.array)
                 continue;
-            if (not Is_Flex_Array(stub))
+            if (not Is_Stub_Array(stub))
                 continue;
 
             const Cell* item_tail = Array_Tail(cast(Array*, stub));
@@ -652,7 +652,7 @@ static void Mark_Root_Stubs(void)
                     Add_GC_Mark(f);
                 }
 
-                if (Is_Flex_Array(f)) {  // It's an Alloc_Value()
+                if (Is_Stub_Array(f)) {  // It's an Alloc_Value()
                     //
                     // 1. Mark_Level_Stack_Deep() marks the owner.
                     //
@@ -663,7 +663,7 @@ static void Mark_Root_Stubs(void)
                     Queue_Mark_Maybe_Fresh_Cell_Deep(Stub_Cell(f));  // [2]
                 }
                 else {  // It's a rebAlloc()
-                    assert(Flex_Flavor(f) == FLAVOR_BINARY);
+                    assert(Stub_Flavor(f) == FLAVOR_BINARY);
                 }
 
                 continue;
@@ -677,7 +677,7 @@ static void Mark_Root_Stubs(void)
             // this marking rather than keeping the length up to date.  Review.
             //
             if (
-                Is_Flex_Array(f)
+                Is_Stub_Array(f)
                 and f != g_ds.array  // !!! Review g_ds.array exemption!
             ){
                 if (Is_Node_Managed(f))
@@ -685,7 +685,7 @@ static void Mark_Root_Stubs(void)
 
                 Array* a = cast(Array*, f);
 
-                if (IS_VARLIST(a))
+                if (Is_Stub_Varlist(a))
                     if (CTX_TYPE(cast(Context*, a)) == REB_FRAME)
                         continue;  // Mark_Level_Stack_Deep() etc. mark it
 
@@ -700,9 +700,9 @@ static void Mark_Root_Stubs(void)
                 // Manage and use Push_GC_Guard and Drop_GC_Guard on them.
                 //
                 assert(
-                    not IS_VARLIST(a)
-                    and not IS_DETAILS(a)
-                    and not IS_PAIRLIST(a)
+                    not Is_Stub_Varlist(a)
+                    and not Is_Stub_Details(a)
+                    and not Is_Stub_Pairlist(a)
                 );
 
                 if (Get_Flex_Flag(a, LINK_NODE_NEEDS_MARK))

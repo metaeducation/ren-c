@@ -64,7 +64,7 @@
         if (not s)
             return SPECIFIED;
 
-        if (IS_LET(s) or IS_USE(s))
+        if (Is_Stub_Let(s) or Is_Stub_Use(s))
             return s;  // virtual bind
 
         assert(

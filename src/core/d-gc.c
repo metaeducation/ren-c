@@ -61,9 +61,9 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             break;
 
         assert(Is_Node_Managed(binding));
-        assert(Is_Flex_Array(binding));
+        assert(Is_Stub_Array(binding));
 
-        if (not IS_VARLIST(binding))
+        if (not Is_Stub_Varlist(binding))
             break;
 
         if (CTX_TYPE(cast(Context*, binding)) != REB_FRAME)
@@ -159,7 +159,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         const Map* map = VAL_MAP(v);
         assert(Is_Node_Marked(map));
-        assert(Is_Flex_Array(MAP_PAIRLIST(map)));
+        assert(Is_Stub_Array(MAP_PAIRLIST(map)));
         break; }
 
       case REB_HANDLE: { // See %sys-handle.h
@@ -220,7 +220,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Flex_Wide(s) == sizeof(Byte));
         assert(Is_Node_Marked(s));
 
-        if (Is_String_NonSymbol(s)) {
+        if (not Is_String_Symbol(s)) {
             BookmarkList* book = LINK(Bookmarks, s);
             if (book) {
                 assert(Flex_Used(book) == 1);  // just one for now
@@ -302,7 +302,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
                     assert(VAL_FRAME_COUPLING(v) == Level_Coupling(L)); */
             }
             else
-                assert(IS_LET(Singular_From_Cell(v)));
+                assert(Is_Stub_Let(Singular_From_Cell(v)));
         }
 
         if (PAYLOAD(Any, v).second.node) {
@@ -375,7 +375,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (Is_Node_A_Cell(node1)) {
             // it's a pairing
         }
-        else switch (Flex_Flavor(x_cast(Stub*, node1))) {
+        else switch (Stub_Flavor(x_cast(Stub*, node1))) {
           case FLAVOR_SYMBOL :
             break;
 
@@ -428,16 +428,16 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         REBINT index = VAL_WORD_INDEX_I32(v);
         Flex* binding = BINDING(v);
         if (binding) {
-            if (IS_VARLIST(binding)) {
+            if (Is_Stub_Varlist(binding)) {
                 if (CTX_TYPE(cast(Context*, binding)) == REB_MODULE)
                     assert(index == INDEX_ATTACHED);
                 else
                     assert(index != 0 and index != INDEX_ATTACHED);
             }
-            else if (IS_LET(binding))
+            else if (Is_Stub_Let(binding))
                 assert(index == INDEX_PATCHED);
             else
-                assert(index != 0 or IS_DETAILS(binding));
+                assert(index != 0 or Is_Stub_Details(binding));
         }
         else
             assert(index == 0);
@@ -473,10 +473,10 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         // and that it hasn't been freed.
         //
         assert(not Is_Node_Free(a));
-        assert(Is_Flex_Array(a));
+        assert(Is_Stub_Array(a));
     #endif
 
-    if (IS_DETAILS(a)) {
+    if (Is_Stub_Details(a)) {
         const Element* archetype = Array_Head(a);
         assert(Is_Frame(archetype));
         assert(not VAL_FRAME_COUPLING(archetype));
@@ -489,9 +489,9 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         assert(Is_Node_Marked(details));
 
         Array* list = CTX_VARLIST(ACT_EXEMPLAR(VAL_ACTION(archetype)));
-        assert(IS_VARLIST(list));
+        assert(Is_Stub_Varlist(list));
     }
-    else if (IS_VARLIST(a)) {
+    else if (Is_Stub_Varlist(a)) {
         const Value* archetype = CTX_ARCHETYPE(
             cast(Context*, m_cast(Array*, a))
         );
@@ -525,7 +525,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         }
         else {
             KeyList* keylist = cast(KeyList*, keysource);
-            assert(IS_KEYLIST(keylist));
+            assert(Is_Stub_Keylist(keylist));
 
             if (Is_Frame(archetype)) {
                 // Frames use paramlists as their "keylist", there is no
@@ -537,7 +537,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
             }
         }
     }
-    else if (IS_PAIRLIST(a)) {
+    else if (Is_Stub_Pairlist(a)) {
         //
         // There was once a "small map" optimization that wouldn't
         // produce a hashlist for small maps and just did linear search.
@@ -546,7 +546,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         // which case the hashlist may be NULL.
         //
         Flex* hashlist = LINK(Hashlist, a);
-        assert(Flex_Flavor(hashlist) == FLAVOR_HASHLIST);
+        assert(Stub_Flavor(hashlist) == FLAVOR_HASHLIST);
         UNUSED(hashlist);
     }
 }

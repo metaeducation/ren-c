@@ -146,7 +146,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
             PROBE(f);
         #endif
 
-        if (IS_VARLIST(f)) {
+        if (Is_Stub_Varlist(f)) {
             printf("VARLIST Flex detected.\n");
             Context* context = u_cast(Context*, f);  // avoid plain cast checks
             if (HEART_BYTE(CTX_ARCHETYPE(context)) == REB_ERROR) {

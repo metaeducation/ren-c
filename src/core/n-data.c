@@ -409,7 +409,7 @@ bool Did_Get_Binding_Of(Sink(Value*) out, const Value* v)
         if (IS_WORD_UNBOUND(v))
             return false;
 
-        if (IS_LET(BINDING(v))) {  // temporary (LETs not exposed)
+        if (Is_Stub_Let(BINDING(v))) {  // temporary (LETs not exposed)
             Init_Word(out, Canon(LET));
             return true;
         }
@@ -787,7 +787,7 @@ bool Get_Var_Push_Refinements_Throws(
         if (Is_Node_A_Cell(node1)) { // pair compressed
             // is considered "Listlike", can answer Cell_List_At()
         }
-        else switch (Flex_Flavor(x_cast(Flex*, node1))) {
+        else switch (Stub_Flavor(x_cast(Flex*, node1))) {
           case FLAVOR_SYMBOL: {
             if (Not_Cell_Flag(var, REFINEMENT_LIKE))  // `a.`
                 goto get_source;
@@ -797,12 +797,12 @@ bool Get_Var_Push_Refinements_Throws(
             Specifier* specifier = var_specifier;
             for (; specifier != nullptr; specifier = NextVirtual(specifier)) {
                 Context* ctx_frame;
-                if (IS_VARLIST(specifier)) {  // ordinary FUNC specifier
+                if (Is_Stub_Varlist(specifier)) {  // ordinary FUNC specifier
                     ctx_frame = cast(Context*, specifier);
                     if (CTX_TYPE(ctx_frame) != REB_FRAME)
                         continue;
                 }
-                else if (IS_USE(specifier)) {  // e.g. LAMBDA or DOES uses this
+                else if (Is_Stub_Use(specifier)) {  // e.g. LAMBDA or DOES uses this
                     if (not Is_Frame(Stub_Cell(specifier)))
                         continue;
                     ctx_frame = VAL_CONTEXT(Stub_Cell(specifier));
@@ -1017,7 +1017,7 @@ bool Get_Path_Push_Refinements_Throws(
     if (Is_Node_A_Cell(node1)) {
         // pairing, but "Listlike", so Cell_List_At() will work on it
     }
-    else switch (Flex_Flavor(c_cast(Flex*, node1))) {
+    else switch (Stub_Flavor(c_cast(Flex*, node1))) {
       case FLAVOR_SYMBOL : {  // `/a` or `a/`
         Get_Word_May_Fail(out, path, path_specifier);
 
@@ -1371,7 +1371,7 @@ bool Set_Var_Core_Updater_Throws(
         if (Is_Node_A_Cell(node1)) {  // pair optimization
             // pairings considered "Listlike", handled by Cell_List_At()
         }
-        else switch (Flex_Flavor(c_cast(Flex*, node1))) {
+        else switch (Stub_Flavor(c_cast(Flex*, node1))) {
           case FLAVOR_SYMBOL: {
             if (Get_Cell_Flag(var, REFINEMENT_LIKE))  // `/a` or `.a`
                goto set_target;
@@ -1939,7 +1939,7 @@ bool Try_As_String(
         const String* str;
         REBLEN index;
         if (
-            not Is_Flex_UTF8(bin)
+            not Is_Stub_String(bin)
             or strmode != STRMODE_ALL_CODEPOINTS
         ){
             // If the binary wasn't created as a view on string data to
@@ -1979,7 +1979,7 @@ bool Try_As_String(
 
                 ++num_codepoints;
             }
-            FLAVOR_BYTE(m_cast(Binary*, bin)) = FLAVOR_STRING;
+            FLAVOR_BYTE(m_cast(Binary*, bin)) = FLAVOR_NONSYMBOL;
             str = c_cast(String*, bin);
 
             Term_String_Len_Size(
@@ -2110,7 +2110,7 @@ DECLARE_NATIVE(as)
                 Freeze_Array_Shallow(a);
                 Init_Block(v, a);
             }
-            else switch (Flex_Flavor(c_cast(Flex*, node1))) {
+            else switch (Stub_Flavor(c_cast(Flex*, node1))) {
               case FLAVOR_SYMBOL: {
                 Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
                 Set_Flex_Len(a, 2);
@@ -2261,7 +2261,7 @@ DECLARE_NATIVE(as)
                     fail (Error_Alias_Constrains_Raw());
 
             const String* str;
-            if (Is_String_Symbol(b))
+            if (Is_Stub_String(b))
                 str = c_cast(String*, b);
             else {
                 // !!! There isn't yet a mechanic for interning an existing
@@ -2280,7 +2280,7 @@ DECLARE_NATIVE(as)
                 // Constrain the input in the way it would be if we were doing
                 // the more efficient reuse.
                 //
-                FLAVOR_BYTE(m_cast(Binary*, b)) = FLAVOR_STRING;
+                FLAVOR_BYTE(m_cast(Binary*, b)) = FLAVOR_NONSYMBOL;
                 Freeze_Flex(b);
             }
 

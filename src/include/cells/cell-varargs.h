@@ -104,7 +104,7 @@ INLINE bool Is_Block_Style_Varargs(
     assert(Cell_Heart(vararg) == REB_VARARGS);
 
     Array* source = VAL_VARARGS_SOURCE(vararg);
-    if (IS_VARLIST(source)) {
+    if (Is_Stub_Varlist(source)) {
         *shared_out = nullptr;  // avoid compiler warning in -Og build
         return false;  // it's an ordinary vararg, representing a FRAME!
     }
@@ -128,7 +128,7 @@ INLINE bool Is_Level_Style_Varargs_Maybe_Null(
     assert(Cell_Heart(vararg) == REB_VARARGS);
 
     Array* source = VAL_VARARGS_SOURCE(vararg);
-    if (IS_VARLIST(source)) {
+    if (Is_Stub_Varlist(source)) {
         // "Ordinary" case... use the original level implied by the VARARGS!
         // (so long as it is still live on the stack)
 
@@ -210,7 +210,7 @@ INLINE const Param* Param_For_Varargs_Maybe_Null(
     // A vararg created from a block AND never passed as an argument so no
     // typeset or quoting settings available.  Treat as "normal" parameter.
     //
-    assert(not IS_VARLIST(VAL_VARARGS_SOURCE(v)));
+    assert(not Is_Stub_Varlist(VAL_VARARGS_SOURCE(v)));
     return nullptr;
 }
 

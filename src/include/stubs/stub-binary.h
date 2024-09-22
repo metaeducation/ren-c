@@ -21,7 +21,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // A BLOB! value holds a byte-size Flex, which is called a "Binary".  The bytes
-// may be arbitrary, or if the Flex flavor is FLAVOR_STRING or FLAVOR_SYMBOL
+// may be arbitrary, or if the Flex flavor is FLAVOR_NONSYMBOL or FLAVOR_SYMBOL
 // then the data is constrained to only allow valid `\0`-terminated UTF-8 data.
 //
 // (Such binary "views" are possible due to things like the AS operator,

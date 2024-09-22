@@ -324,7 +324,7 @@ struct cast_helper<V*,const String*> {  // [2]
         }
 
         const Byte flavor = FLAVOR_BYTE(stub);
-        if (flavor != FLAVOR_STRING and flavor != FLAVOR_SYMBOL)
+        if (flavor != FLAVOR_NONSYMBOL and flavor != FLAVOR_SYMBOL)
             panic (p);
 
         return reinterpret_cast<const String*>(p);

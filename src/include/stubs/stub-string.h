@@ -59,7 +59,7 @@
 // a first try of this strategy, one bookmark is being used.
 //
 #define LINK_Bookmarks_TYPE     BookmarkList*  // alias of Flex for now
-#define HAS_LINK_Bookmarks      FLAVOR_STRING
+#define HAS_LINK_Bookmarks      FLAVOR_NONSYMBOL
 
 
 INLINE Utf8(*) Skip_Codepoint(Utf8(const_if_c*) utf8) {
@@ -235,7 +235,7 @@ INLINE REBLEN String_Index_At(
 
     assert(not Is_Continuation_Byte(*Binary_At(s, byteoffset)));
 
-    if (Is_String_NonSymbol(s)) {  // length is cached for non-ANY-WORD?
+    if (Is_Stub_NonSymbol(s)) {  // length is cached for non-ANY-WORD?
       #if DEBUG_UTF8_EVERYWHERE
         if (s->misc.length > Flex_Used(s))  // includes 0xDECAFBAD
             panic (s);
@@ -259,7 +259,7 @@ INLINE REBLEN String_Index_At(
 }
 
 INLINE void Set_String_Len_Size(String* s, Length len, Size used) {
-    assert(Is_String_NonSymbol(s));
+    assert(not Is_String_Symbol(s));
     assert(len <= used);
     assert(used == Flex_Used(s));
     s->misc.length = len;
@@ -268,7 +268,7 @@ INLINE void Set_String_Len_Size(String* s, Length len, Size used) {
 }
 
 INLINE void Term_String_Len_Size(String* s, Length len, Size used) {
-    assert(Is_String_NonSymbol(s));
+    assert(not Is_String_Symbol(s));
     assert(len <= used);
     Set_Flex_Used(s, used);
     s->misc.length = len;
@@ -306,7 +306,7 @@ INLINE BookmarkList* Alloc_BookmarkList(void) {
 }
 
 INLINE void Free_Bookmarks_Maybe_Null(String* str) {
-    assert(Is_String_NonSymbol(str));
+    assert(not Is_String_Symbol(str));
     if (LINK(Bookmarks, str)) {
         GC_Kill_Flex(LINK(Bookmarks, str));
         LINK(Bookmarks, str) = nullptr;
@@ -382,7 +382,7 @@ INLINE void Set_Char_At(String* s, REBLEN n, Codepoint c) {
     REBLEN len = String_Len(s);
   #endif
 
-    assert(Is_String_NonSymbol(s));
+    assert(not Is_String_Symbol(s));  // symbols are immutable
     assert(n < String_Len(s));
 
     Utf8(*) cp = String_At(s, n);

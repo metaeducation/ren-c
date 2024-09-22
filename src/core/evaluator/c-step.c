@@ -247,7 +247,7 @@ Bounce Stepper_Executor(Level* L)
       intrinsic_arg_in_spare:
       case ST_STEPPER_CALCULATING_INTRINSIC_ARG : {
         Action* action = VAL_ACTION(L_current);
-        assert(IS_DETAILS(action));
+        assert(Is_Stub_Details(action));
         Intrinsic* intrinsic = Extract_Intrinsic(cast(Phase*, action));
         Param* param = ACT_PARAM(action, 2);
 
@@ -729,7 +729,7 @@ Bounce Stepper_Executor(Level* L)
             if (
                 not enfixed  // too rare a case for intrinsic optimization
                 and ACT_DISPATCHER(action) == &Intrinsic_Dispatcher
-                and IS_DETAILS(action)  // don't do specializations
+                and Is_Stub_Details(action)  // don't do specializations
                 and Not_Level_At_End(L)  // can't do <end>, fallthru to error
                 and not SPORADICALLY(10)  // debug build bypass every 10th call
             ){

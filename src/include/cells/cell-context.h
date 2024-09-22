@@ -18,12 +18,12 @@ INLINE Context* VAL_CONTEXT(const Cell* v) {
         fail (Error_Series_Data_Freed_Raw());
     }
 
-    if (IS_VARLIST(cast(Stub*, Cell_Node1(v)))) {
+    if (Is_Stub_Varlist(cast(Stub*, Cell_Node1(v)))) {
         c = cast(Context*, Cell_Node1(v));
     }
     else {
         assert(Cell_Heart_Unchecked(v) == REB_FRAME);
-        assert(IS_DETAILS(cast(Stub*, Cell_Node1(v))));
+        assert(Is_Stub_Details(cast(Stub*, Cell_Node1(v))));
         c = INODE(Exemplar, cast(Array*, Cell_Node1(v)));
     }
     return c;
@@ -54,7 +54,7 @@ INLINE void INIT_VAL_FRAME_PHASE(Cell* v, Phase* phase) {
 
 INLINE Phase* VAL_FRAME_PHASE(const Cell* v) {
     Flex* f = VAL_FRAME_PHASE_OR_LABEL(v);
-    if (not f or Is_String_Symbol(f))  // ANONYMOUS or label, not a phase
+    if (not f or Is_Stub_Symbol(f))  // ANONYMOUS or label, not a phase
         return CTX_FRAME_PHASE(VAL_CONTEXT(v));  // use archetype
     return cast(Phase*, f);  // cell has its own phase, return it
 }
@@ -62,7 +62,7 @@ INLINE Phase* VAL_FRAME_PHASE(const Cell* v) {
 INLINE bool IS_FRAME_PHASED(const Cell* v) {
     assert(Cell_Heart(v) == REB_FRAME);
     Flex* f = VAL_FRAME_PHASE_OR_LABEL(v);
-    return f and not Is_String_Symbol(f);
+    return f and not Is_Stub_Symbol(f);
 }
 
 // 1. VAL_ACTION_PARTIALS_OR_LABEL as well
@@ -71,7 +71,7 @@ INLINE bool IS_FRAME_PHASED(const Cell* v) {
 //
 INLINE Option(const Symbol*) VAL_FRAME_LABEL(const Cell* v) {
     Flex* f = VAL_FRAME_PHASE_OR_LABEL(v);  // [1]
-    if (f and Is_String_Symbol(f))  // label in value
+    if (f and Is_Stub_Symbol(f))  // label in value
         return cast(Symbol*, f);
     return ANONYMOUS;  // [2]
 }

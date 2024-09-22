@@ -114,7 +114,7 @@
 INLINE void INIT_BONUS_KEYSOURCE(Array* varlist, Node* keysource) {
     if (keysource != nullptr) {
         if (Is_Node_A_Stub(keysource))
-            assert(IS_KEYLIST(cast(Flex*, keysource)));
+            assert(Is_Stub_Keylist(cast(Flex*, keysource)));
         else
             assert(Is_Non_Cell_Node_A_Level(keysource));
     }
@@ -202,7 +202,7 @@ INLINE bool Is_Throwing(Level* level_) {
 INLINE Phase* CTX_FRAME_PHASE(Context* c);
 
 INLINE Phase* ACT_IDENTITY(Action* action) {
-    if (IS_DETAILS(action))
+    if (Is_Stub_Details(action))
         return cast(Phase*, action);  // don't want hijacked archetype details
     return CTX_FRAME_PHASE(x_cast(Context*, action));  // always ACT_IDENTITY()
 }
@@ -226,7 +226,7 @@ INLINE Phase* ACT_IDENTITY(Action* action) {
 
 INLINE bool Is_Frame_Details(const Cell* v) {
     assert(HEART_BYTE(v) == REB_FRAME);
-    return IS_DETAILS(cast(Stub*, Cell_Node1(v)));
+    return Is_Stub_Details(cast(Stub*, Cell_Node1(v)));
 }
 
 #define Is_Frame_Exemplar(v) (not Is_Frame_Details(v))
@@ -251,7 +251,7 @@ INLINE bool Is_Frame_Details(const Cell* v) {
 // are running the implementation of a copy or are spliced in as a hijacker.
 //
 INLINE Details* Phase_Details(Phase* a) {
-    assert(IS_DETAILS(a));
+    assert(Is_Stub_Details(a));
     return x_cast(Details*, Phase_Archetype(a)->payload.Any.first.node);
 }
 
@@ -268,13 +268,13 @@ INLINE Details* Phase_Details(Phase* a) {
 
 
 INLINE Option(Array*) ACT_PARTIALS(Action* a) {
-    if (IS_DETAILS(a))
+    if (Is_Stub_Details(a))
         return x_cast(Array*, Cell_Node2(ACT_ARCHETYPE(a)));
     return nullptr;  // !!! how to preserve partials in exemplars?
 }
 
 INLINE Context* ACT_EXEMPLAR(Action* a) {
-    if (IS_DETAILS(a))
+    if (Is_Stub_Details(a))
         return INODE(Exemplar, a);
     return x_cast(Context*, a);
 }

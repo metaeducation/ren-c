@@ -93,7 +93,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
 
       case DETECTED_AS_STUB: {
         Flex* f = m_cast(Flex*, c_cast(Flex* , p));  // don't mutate
-        if (not IS_VARLIST(f))
+        if (not Is_Stub_Varlist(f))
             panic (f);  // only kind of Flex allowed are contexts of ERROR!
         error = cast(Context*, f);
         break; }

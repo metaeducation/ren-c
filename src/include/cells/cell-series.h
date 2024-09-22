@@ -83,11 +83,11 @@ INLINE void INIT_SPECIFIER(Cell* v, Stub* binding) {
 
     assert(Is_Node_Managed(binding));
     assert(
-        IS_DETAILS(binding)  // relative
-        or IS_VARLIST(binding)  // specific
+        Is_Stub_Details(binding)  // relative
+        or Is_Stub_Varlist(binding)  // specific
         or (
             Any_List_Kind(HEART_BYTE(v))
-            and (IS_LET(binding) or IS_USE(binding)) // virtual
+            and (Is_Stub_Let(binding) or Is_Stub_Use(binding)) // virtual
         ) or (
             HEART_BYTE(v) == REB_VARARGS and Not_Flex_Flag(binding, DYNAMIC)
         )  // varargs from MAKE VARARGS! [...], else is a varlist
@@ -121,10 +121,10 @@ INLINE Element* Init_Series_At_Core(
     Assert_Flex_Term_If_Needed(f);  // even binaries [1]
 
     if (Any_List_Kind(heart)) {
-        assert(Flex_Flavor(f) == FLAVOR_ARRAY);  // no antiforms [2]
+        assert(Stub_Flavor(f) == FLAVOR_ARRAY);  // no antiforms [2]
     }
     else if (Any_String_Kind(heart))
-        assert(Is_Flex_UTF8(f));
+        assert(Is_Stub_String(f));
     else {
         // Note: Binary is allowed to alias String
     }

@@ -108,6 +108,18 @@
     FLEX_FLAG_27
 
 
+INLINE bool Is_String_Symbol(const String* s) {
+    if (Stub_Flavor(s) == FLAVOR_SYMBOL)
+        return true;
+    assert(Stub_Flavor(s) == FLAVOR_NONSYMBOL);
+    return false;
+}
+
+#if CPLUSPLUS_11  // disable superfluous check that Symbol has FLAVOR_SYMBOL
+    INLINE bool Is_String_Symbol(const Symbol* s) = delete;
+#endif
+
+
 INLINE Option(SymId) Symbol_Id(const Symbol* s)
   { return cast(SymId, SECOND_UINT16(&s->info)); }
 

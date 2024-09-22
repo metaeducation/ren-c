@@ -236,7 +236,7 @@ REBLEN Modify_String_Or_Binary(
     Ensure_Mutable(dst);  // note this also rules out ANY-WORD?s
 
     Binary* dst_flex = cast(Binary*, Cell_Flex_Ensure_Mutable(dst));
-    assert(not Is_String_Symbol(dst_flex));  // would be immutable
+    assert(not Is_Stub_Symbol(dst_flex));  // would be immutable
 
     REBLEN dst_idx = VAL_INDEX(dst);
     Size dst_used = Flex_Used(dst_flex);
@@ -244,7 +244,7 @@ REBLEN Modify_String_Or_Binary(
     REBLEN dst_len_old = 0xDECAFBAD;  // only if IS_SER_STRING(dst_ser)
     Size dst_off;
     if (Is_Binary(dst)) {  // check invariants up front even if NULL / no-op
-        if (Is_String_NonSymbol(dst_flex)) {
+        if (Is_Stub_String(dst_flex)) {
             Byte at = *Binary_At(dst_flex, dst_idx);
             if (Is_Continuation_Byte(at))
                 fail (Error_Bad_Utf8_Bin_Edit_Raw());
@@ -254,7 +254,6 @@ REBLEN Modify_String_Or_Binary(
     }
     else {
         assert(Any_String(dst));
-        assert(Is_String_NonSymbol(dst_flex));
 
         dst_off = VAL_BYTEOFFSET_FOR_INDEX(dst, dst_idx);  // !!! review speed
         dst_len_old = String_Len(cast(String*, dst_flex));
@@ -289,7 +288,7 @@ REBLEN Modify_String_Or_Binary(
         dst_off = Flex_Used(dst_flex);
         dst_idx = dst_len_old;
     }
-    else if (Is_Binary(dst) and Is_String_NonSymbol(dst_flex)) {
+    else if (Is_Binary(dst) and Is_Stub_String(dst_flex)) {
         dst_idx = String_Index_At(cast(String*, dst_flex), dst_off);
     }
 
@@ -318,7 +317,7 @@ REBLEN Modify_String_Or_Binary(
             UNLIMITED
         );
 
-        if (Is_String_NonSymbol(dst_flex)) {
+        if (Is_Stub_String(dst_flex)) {
             if (src_len_raw == 0)
                 fail (Error_Illegal_Zero_Byte_Raw());  // no '\0' in strings
         }
@@ -351,7 +350,7 @@ REBLEN Modify_String_Or_Binary(
         // be cropping the /PART of the input via passing a parameter here.
         //
         src_size_raw = Cell_String_Size_Limit_At(&src_len_raw, src, UNLIMITED);
-        if (not Is_String_NonSymbol(dst_flex))
+        if (not Is_Stub_String(dst_flex))
             src_len_raw = src_size_raw;
     }
     else if (Is_Integer(src)) {
@@ -361,7 +360,7 @@ REBLEN Modify_String_Or_Binary(
         // otherwise `append #{123456} 10` is #{1234560A}, just the byte
 
         src_byte = VAL_UINT8(src);  // fails if out of range
-        if (Is_String_NonSymbol(dst_flex) and src_byte >= 0x80)
+        if (Is_Stub_String(dst_flex) and src_byte >= 0x80)
             fail (Error_Bad_Utf8_Bin_Edit_Raw());
 
         src_ptr = &src_byte;
@@ -374,13 +373,13 @@ REBLEN Modify_String_Or_Binary(
         src_ptr = Binary_At(b, offset);
         src_size_raw = Binary_Len(b) - offset;
 
-        if (not Is_String_NonSymbol(dst_flex)) {
+        if (not Is_Stub_String(dst_flex)) {
             if (limit > 0 and limit < src_size_raw)
                 src_size_raw = limit;  // /PART is in bytes for binary! dest
             src_len_raw = src_size_raw;
         }
         else {
-            if (Is_String_NonSymbol(b)) {  // guaranteed valid UTF-8
+            if (Is_Stub_String(b)) {  // guaranteed valid UTF-8
                 const String* str = c_cast(String*, b);
                 if (Is_Continuation_Byte(*src_ptr))
                     fail (Error_Bad_Utf8_Bin_Edit_Raw());
@@ -485,10 +484,10 @@ REBLEN Modify_String_Or_Binary(
 
         src_ptr = Binary_At(mo->string, mo->base.size);
         src_size_raw = String_Size(mo->string) - mo->base.size;
-        if (not Is_String_NonSymbol(dst_flex))
-            src_len_raw = src_size_raw;
-        else
+        if (Is_Stub_String(dst_flex))
             src_len_raw = String_Len(mo->string) - mo->base.index;
+        else
+            src_len_raw = src_size_raw;
     }
 
     // Here we are accounting for a /PART where we know the source series
@@ -497,7 +496,7 @@ REBLEN Modify_String_Or_Binary(
     //
     // !!! Bad first implementation; improve.
     //
-    if (Is_String_NonSymbol(dst_flex)) {
+    if (Is_Stub_String(dst_flex)) {
         Utf8(const*) t = cast(Utf8(const*), src_ptr + src_size_raw);
         while (src_len_raw > limit) {
             t = Step_Back_Codepoint(t);
@@ -542,7 +541,7 @@ REBLEN Modify_String_Or_Binary(
         Expand_Flex(dst_flex, dst_off, src_size_total);
         Set_Flex_Used(dst_flex, dst_used + src_size_total);
 
-        if (Is_String_NonSymbol(dst_flex)) {
+        if (Is_Stub_String(dst_flex)) {
             book = LINK(Bookmarks, dst_flex);
 
             if (book and BMK_INDEX(book) > dst_idx) {  // only INSERT
@@ -562,7 +561,7 @@ REBLEN Modify_String_Or_Binary(
 
         REBLEN dst_len_at;
         Size dst_size_at;
-        if (Is_String_NonSymbol(dst_flex)) {
+        if (Is_Stub_String(dst_flex)) {
             if (Is_Binary(dst)) {
                 dst_size_at = Cell_Series_Len_At(dst);  // byte count
                 dst_len_at = String_Index_At(
@@ -601,7 +600,7 @@ REBLEN Modify_String_Or_Binary(
         // have to be moved safely out of the way before being overwritten.
 
         Size part_size;
-        if (Is_String_NonSymbol(dst_flex)) {
+        if (Is_Stub_String(dst_flex)) {
             if (Is_Binary(dst)) {
                 //
                 // The calculations on the new length depend on `part` being
@@ -680,7 +679,7 @@ REBLEN Modify_String_Or_Binary(
         // complicated--but just assume that the start of the change is as
         // good a cache as any to be relevant for the next operation.
         //
-        if (Is_String_NonSymbol(dst_flex)) {
+        if (Is_Stub_String(dst_flex)) {
             book = LINK(Bookmarks, dst_flex);
 
             if (book and BMK_INDEX(book) > dst_idx) {

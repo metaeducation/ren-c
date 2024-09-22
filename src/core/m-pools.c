@@ -737,7 +737,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
         Subtract_Flex_Bias(f, delta);
 
       #if !defined(NDEBUG)
-        if (Is_Flex_Array(f)) {
+        if (Is_Stub_Array(f)) {
             //
             // When the bias region was marked, it was made "unsettable" if
             // this was a debug build.  Now that the memory is included in
@@ -781,7 +781,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
         );
 
       #if !defined(NDEBUG)
-        if (Is_Flex_Array(f)) {
+        if (Is_Stub_Array(f)) {
             //
             // The opened up area needs to be set to "settable" in the
             // debug build.  This takes care of making "unsettable" values
@@ -865,7 +865,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
         fail (Error_No_Memory((used_old + delta + x) * wide));
 
     assert(Get_Flex_Flag(f, DYNAMIC));
-    if (Is_Flex_Array(f))
+    if (Is_Stub_Array(f))
         Prep_Array(x_cast(Array*, f), 0);  // capacity doesn't matter to prep
 
     // If necessary, add Flex to the recently expanded list
@@ -921,7 +921,7 @@ void Swap_Flex_Content(Flex* a, Flex* b)
     // non-Array or vice versa.  Cases haven't come up for swapping Flexes
     // of varying width, either.
     //
-    assert(Is_Flex_Array(a) == Is_Flex_Array(b));
+    assert(Is_Stub_Array(a) == Is_Stub_Array(b));
     assert(Flex_Wide(a) == Flex_Wide(b));
 
     bool a_dynamic = Get_Flex_Flag(a, DYNAMIC);
@@ -1043,7 +1043,7 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
         fail (Error_No_Memory((units + 1) * wide));
     }
     assert(Get_Flex_Flag(f, DYNAMIC));
-    if (Is_Flex_Array(f))
+    if (Is_Stub_Array(f))
         Prep_Array(x_cast(Array*, f), 0);  // capacity doesn't matter to prep
 
     if (preserve) {
@@ -1061,7 +1061,7 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
         f->content.dynamic.used = 0;
 
   #if DEBUG_UTF8_EVERYWHERE
-    if (Is_String_NonSymbol(s)) {
+    if (Is_Stub_NonSymbol(s)) {
         f->misc.length = 0xDECAFBAD;
         (s);
     }
@@ -1079,8 +1079,8 @@ Stub *Decay_Flex(Flex* f)
 {
     Assert_Node_Accessible(f);
 
-    switch (Flex_Flavor(f)) {
-      case FLAVOR_STRING:
+    switch (Stub_Flavor(f)) {
+      case FLAVOR_NONSYMBOL:
         Free_Bookmarks_Maybe_Null(cast(String*, f));
         break;
 
@@ -1098,7 +1098,7 @@ Stub *Decay_Flex(Flex* f)
         Stub* temp = MISC(PatchHitch, f);
         while (node_MISC(Hitch, temp) != f) {
             temp = cast(Stub*, node_MISC(Hitch, temp));
-            assert(IS_PATCH(temp) or Is_String_Symbol(temp));
+            assert(Is_Stub_Patch(temp) or Is_Stub_Symbol(temp));
         }
         node_MISC(Hitch, temp) = node_MISC(Hitch, f);
         break; }
@@ -1149,7 +1149,7 @@ Stub *Decay_Flex(Flex* f)
         // Preserving ACTION!'s archetype is speculative--to point out the
         // possibility exists for the other array with a "canon" [0]
         //
-        if (IS_VARLIST(f) or IS_DETAILS(f))
+        if (Is_Stub_Varlist(f) or Is_Stub_Details(f))
             Mem_Copy(
                 &f->content.fixed.cell,
                 Array_Head(c_cast(Array*, f)),
@@ -1549,7 +1549,7 @@ REBU64 Inspect_Flex(bool show)
             if (Get_Flex_Flag(f, DYNAMIC))
                 tot_size += Flex_Total(f);
 
-            if (Is_Flex_Array(f)) {
+            if (Is_Stub_Array(f)) {
                 blks++;
                 if (Get_Flex_Flag(f, DYNAMIC))
                     blk_size += Flex_Total(f);

@@ -69,7 +69,7 @@ Context* Alloc_Context_Core(Heart heart, REBLEN capacity, Flags flags)
 bool Expand_Context_KeyList_Core(Context* context, REBLEN delta)
 {
     KeyList* keylist = CTX_KEYLIST(context);
-    assert(IS_KEYLIST(keylist));
+    assert(Is_Stub_Keylist(keylist));
 
     if (Get_Subclass_Flag(KEYLIST, keylist, SHARED)) {
         //
@@ -872,7 +872,7 @@ void Assert_Context_Core(Context* c)
 
     REBLEN n;
     for (n = 1; n < vars_len; n++, var++, key++) {
-        if (not Is_String_Symbol(*key))
+        if (Stub_Flavor(*key) != FLAVOR_SYMBOL)
             panic (*key);
 
       #if DEBUG_POISON_FLEX_TAILS

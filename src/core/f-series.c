@@ -91,7 +91,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 
           case SYM_FILE: {
             const Flex* f = Cell_Flex(v);
-            if (not Is_Flex_Array(f))
+            if (not Is_Stub_Array(f))
                 return nullptr;
             if (Not_Array_Flag(c_cast(Array*, f), HAS_FILE_LINE_UNMASKED))
                 return nullptr;
@@ -99,7 +99,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 
           case SYM_LINE: {
             const Flex* f = Cell_Flex(v);
-            if (not Is_Flex_Array(f))
+            if (not Is_Stub_Array(f))
                 return nullptr;
             if (Not_Array_Flag(c_cast(Array*, f), HAS_FILE_LINE_UNMASKED))
                 return nullptr;

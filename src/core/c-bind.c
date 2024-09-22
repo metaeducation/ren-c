@@ -265,7 +265,11 @@ Stub* Make_Let_Patch(
     Init_Nothing(x_cast(Value*, Stub_Cell(let)));  // start as unset
 
     if (specifier) {
-        assert(IS_LET(specifier) or IS_USE(specifier) or IS_VARLIST(specifier));
+        assert(
+            Is_Stub_Let(specifier)
+            or Is_Stub_Use(specifier)
+            or Is_Stub_Varlist(specifier)
+        );
         assert(Is_Node_Managed(specifier));
     }
     LINK(NextLet, let) = specifier;  // linked list [1]
@@ -373,7 +377,7 @@ Option(Stub*) Get_Word_Container(
 
       loop_body:
 
-        if (IS_VARLIST(specifier)) {
+        if (Is_Stub_Varlist(specifier)) {
             Context* ctx = cast(Context*, specifier);
 
             if (CTX_TYPE(ctx) == REB_MODULE) {
@@ -438,7 +442,7 @@ Option(Stub*) Get_Word_Container(
           goto next_virtual;
         }
 
-        if (IS_LET(specifier)) {
+        if (Is_Stub_Let(specifier)) {
             if (INODE(LetSymbol, specifier) == symbol) {
                 *index_out = INDEX_PATCHED;
                 return specifier;
@@ -446,7 +450,7 @@ Option(Stub*) Get_Word_Container(
             goto next_virtual;
         }
 
-        assert(IS_USE(specifier));
+        assert(Is_Stub_Use(specifier));
 
         if (  // some USEs only affect SET-WORD!s
             Get_Cell_Flag(Stub_Cell(specifier), USE_NOTE_SET_WORDS)
@@ -1446,18 +1450,18 @@ void Assert_Cell_Binding_Valid_Core(const Cell* cell)
     assert(Not_Node_Free(binding));
 
     if (heart == REB_FRAME) {
-        assert(IS_VARLIST(binding));  // actions/frames bind to contexts only
+        assert(Is_Stub_Varlist(binding));  // actions/frames bind to contexts only
         return;
     }
 
-    if (IS_LET(binding)) {
+    if (Is_Stub_Let(binding)) {
         if (Any_Word_Kind(heart))
             assert(VAL_WORD_INDEX_I32(cell) == INDEX_PATCHED);
         return;
     }
 
     if (
-        IS_VARLIST(binding)
+        Is_Stub_Varlist(binding)
         and CTX_TYPE(cast(Context*, binding)) == REB_MODULE
     ){
         if (not (

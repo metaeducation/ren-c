@@ -147,9 +147,9 @@ enum StubFlavorEnum {
 
     FLAVOR_BINARY = FLAVOR_MIN_BYTESIZE,
 
-    FLAVOR_MIN_UTF8,  //=/////////////// BELOW THIS LINE IS UTF-8 (OR CORRUPT)
+    FLAVOR_MIN_STRING,  //=////////////// BELOW THIS LINE IS UTF-8 (OR CORRUPT)
 
-    FLAVOR_STRING = FLAVOR_MIN_UTF8,
+    FLAVOR_NONSYMBOL = FLAVOR_MIN_STRING,
 
     // While the content format is UTF-8 for both ANY-STRING? and ANY-WORD?,
     // MISC() and LINK() fields are used differently.  String caches its length
@@ -173,7 +173,7 @@ enum StubFlavorEnum {
     //
     FLAVOR_THE_GLOBAL_INACCESSIBLE,
 
-  #if !defined(NDEBUG)
+  #if DEBUG
     FLAVOR_CORRUPT,
   #endif
 
@@ -186,7 +186,7 @@ typedef enum StubFlavorEnum Flavor;
 INLINE Flavor Flavor_From_Flags(Flags flags)
   { return u_cast(Flavor, THIRD_BYTE(&flags)); }
 
-#define Flex_Flavor(f) \
+#define Stub_Flavor(f) \
     u_cast(Flavor, FLAVOR_BYTE(f))
 
 
@@ -211,22 +211,21 @@ INLINE size_t Wide_For_Flavor(Flavor flavor) {
 }
 
 #define Flex_Wide(f) \
-    Wide_For_Flavor(Flex_Flavor(f))
+    Wide_For_Flavor(Stub_Flavor(f))
 
 
+#define Is_Stub_Array(f)            (Stub_Flavor(f) <= FLAVOR_MAX_ARRAY)
 
-#define Is_Flex_Array(f)      (Flex_Flavor(f) <= FLAVOR_MAX_ARRAY)
-#define Is_Flex_UTF8(f)       (Flex_Flavor(f) >= FLAVOR_MIN_UTF8)
+#define Is_Stub_String(f)           (Stub_Flavor(f) >= FLAVOR_MIN_STRING)
+#define Is_Stub_Symbol(f)           (Stub_Flavor(f) == FLAVOR_SYMBOL)
+#define Is_Stub_NonSymbol(f)        (Stub_Flavor(f) == FLAVOR_NONSYMBOL)
 
-#define Is_String_NonSymbol(f)  (Flex_Flavor(f) == FLAVOR_STRING)
-#define Is_String_Symbol(f)     (Flex_Flavor(f) == FLAVOR_SYMBOL)
+#define Is_Stub_Keylist(f)          (Stub_Flavor(f) == FLAVOR_KEYLIST)
 
-#define IS_KEYLIST(f)           (Flex_Flavor(f) == FLAVOR_KEYLIST)
-
-#define IS_LET(f)               (Flex_Flavor(f) == FLAVOR_LET)
-#define IS_USE(f)               (Flex_Flavor(f) == FLAVOR_USE)
-#define IS_PATCH(f)             (Flex_Flavor(f) == FLAVOR_PATCH)
-#define IS_VARLIST(f)           (Flex_Flavor(f) == FLAVOR_VARLIST)
-#define IS_PAIRLIST(f)          (Flex_Flavor(f) == FLAVOR_PAIRLIST)
-#define IS_DETAILS(f)           (Flex_Flavor(f) == FLAVOR_DETAILS)
-#define IS_PARTIALS(f)          (Flex_Flavor(f) == FLAVOR_PARTIALS)
+#define Is_Stub_Let(f)              (Stub_Flavor(f) == FLAVOR_LET)
+#define Is_Stub_Use(f)              (Stub_Flavor(f) == FLAVOR_USE)
+#define Is_Stub_Patch(f)            (Stub_Flavor(f) == FLAVOR_PATCH)
+#define Is_Stub_Varlist(f)          (Stub_Flavor(f) == FLAVOR_VARLIST)
+#define Is_Stub_Pairlist(f)         (Stub_Flavor(f) == FLAVOR_PAIRLIST)
+#define Is_Stub_Details(f)          (Stub_Flavor(f) == FLAVOR_DETAILS)
+#define Is_Stub_Partials(f)         (Stub_Flavor(f) == FLAVOR_PARTIALS)

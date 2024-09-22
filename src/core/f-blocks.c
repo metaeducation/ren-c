@@ -110,7 +110,7 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
     Value* dest = Flex_Head(Value, a);
     for (; count < len; ++count, ++src, ++dest) {
         if (Is_Antiform(src))
-            assert(IS_VARLIST(a));  // usually not legal
+            assert(Is_Stub_Varlist(a));  // usually not legal
 
         Copy_Cell(dest, src);
     }

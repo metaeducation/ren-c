@@ -148,7 +148,7 @@ void Extend_Flex_If_Necessary(Flex* f, REBLEN delta)
 //
 Flex* Copy_Flex_Core(const Flex* f, Flags flags)
 {
-    assert(not Is_Flex_Array(f));
+    assert(not Is_Stub_Array(f));
 
     REBLEN used = Flex_Used(f);
     Flex* copy;
@@ -157,7 +157,7 @@ Flex* Copy_Flex_Core(const Flex* f, Flags flags)
     // propagated.  This includes locks, etc.  But the string flag needs
     // to be copied, for sure.
     //
-    if (Is_Flex_UTF8(f)) {
+    if (Is_Stub_String(f)) {
         //
         // Note: If the string was a symbol (aliased via AS) it will lose
         // that information.
@@ -171,14 +171,14 @@ Flex* Copy_Flex_Core(const Flex* f, Flags flags)
     else if (Flex_Wide(f) == 1) {  // non-string BINARY!
         copy = Make_Flex_Core(
             used + 1,  // term space
-            FLAG_FLAVOR_BYTE(Flex_Flavor(f)) | flags
+            FLAG_FLAVOR_BYTE(Stub_Flavor(f)) | flags
         );
         Set_Flex_Used(copy, used);
     }
     else {
         copy = Make_Flex_Core(
             used,
-            FLAG_FLAVOR_BYTE(Flex_Flavor(f)) | flags
+            FLAG_FLAVOR_BYTE(Stub_Flavor(f)) | flags
         );
         Set_Flex_Used(copy, used);
     }
@@ -211,7 +211,7 @@ Flex* Copy_Flex_At_Len_Extra(
     REBLEN extra,
     Flags flags
 ){
-    assert(not Is_Flex_Array(f));
+    assert(not Is_Stub_Array(f));
 
     REBLEN capacity = len + extra;
     if (Flex_Wide(f) == 1)
@@ -447,7 +447,7 @@ Byte* Reset_Buffer(Flex* buf, REBLEN len)
 //
 void Assert_Flex_Term_Core(const Flex* f)
 {
-    if (Is_Flex_Array(f)) {
+    if (Is_Stub_Array(f)) {
       #if DEBUG_POISON_FLEX_TAILS
         if (Get_Flex_Flag(f, DYNAMIC)) {
             const Cell* tail = Array_Tail(x_cast(Array*, f));
@@ -458,7 +458,7 @@ void Assert_Flex_Term_Core(const Flex* f)
     }
     else if (Flex_Wide(f) == 1) {
         const Byte* tail = Binary_Tail(c_cast(Binary*, f));
-        if (Is_Flex_UTF8(f)) {
+        if (Is_Stub_String(f)) {
             if (*tail != '\0')
                 panic (f);
         }
@@ -480,7 +480,7 @@ void Assert_Flex_Basics_Core(const Flex* f)
     if (Is_Node_Free(f))
         panic (f);
 
-    assert(Flex_Flavor(f) != FLAVOR_CORRUPT);
+    assert(Stub_Flavor(f) != FLAVOR_CORRUPT);
     assert(Flex_Used(f) <= Flex_Rest(f));
 
     Assert_Flex_Term_Core(f);

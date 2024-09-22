@@ -126,8 +126,8 @@
 #else
     template<typename T>
     INLINE T ensure_flavor(Flavor flavor, T flex) {
-        if (Flex_Flavor(flex) != flavor) {
-            Flavor actual_flavor = Flex_Flavor(flex);
+        if (Stub_Flavor(flex) != flavor) {
+            Flavor actual_flavor = Stub_Flavor(flex);
             USED(actual_flavor);
             assert(!"Flex Flavor did not match what caller expected");
         }
@@ -166,7 +166,7 @@
 // LINK_NEEDS_MARKED and MISC_NEEDS_MARKED.
 //
 // Yet the link and misc actually mean different things for different subtypes.
-// A FLAVOR_STRING node's LINK points to a list that maps byte positions to
+// A FLAVOR_NONSYMBOL node's LINK points to a list that maps byte positions to
 // UTF-8 codepoint boundaries.  But a FLAVOR_SYMBOL Flex uses the LINK for a
 // pointer to another symbol's synonym.
 //
@@ -209,7 +209,7 @@
 // To use the LINK() and MISC(), you must define two macros, like this:
 //
 //      #define LINK_Bookmarks_TYPE     BookmarkList*
-//      #define HAS_LINK_Bookmarks      FLAVOR_STRING
+//      #define HAS_LINK_Bookmarks      FLAVOR_NONSYMBOL
 //
 // You get the desired properties of being easy to find cases of a particular
 // interpretation of the field, along with type checking on the assignment,
@@ -299,7 +299,7 @@
 
 INLINE bool Is_Flex_Biased(const Flex* f) {
     assert(Get_Flex_Flag(f, DYNAMIC));
-    return not IS_VARLIST(f);
+    return not Is_Stub_Varlist(f);
 }
 
 INLINE REBLEN Flex_Bias(const Flex* f) {
@@ -330,7 +330,7 @@ INLINE Length Flex_Rest(const Flex* f) {
     if (Get_Flex_Flag(f, DYNAMIC))
         return f->content.dynamic.rest;
 
-    if (Is_Flex_Array(f))
+    if (Is_Stub_Array(f))
         return 1;  // capacity of singular non-dynamic arrays is exactly 1
 
     assert(sizeof(f->content) % Flex_Wide(f) == 0);
@@ -439,7 +439,7 @@ INLINE size_t Flex_Total(const Flex* f)
 INLINE Length Flex_Used(const Flex* f) {
     if (Get_Flex_Flag(f, DYNAMIC))
         return f->content.dynamic.used;  // length stored in header [1]
-    if (Is_Flex_Array(f)) {
+    if (Is_Stub_Array(f)) {
         if (Is_Cell_Poisoned(&f->content.fixed.cell))  // empty singular [2]
             return 0;
         return 1;  // one-element singular array [2]
@@ -609,7 +609,7 @@ INLINE Byte* Flex_Data_Last(size_t wide, const_if_c Flex* f) {
                 ); */
             }
         }
-        else if (Is_Flex_Array(f) and Get_Flex_Flag(f, DYNAMIC)) {
+        else if (Is_Stub_Array(f) and Get_Flex_Flag(f, DYNAMIC)) {
             Cell* tail = Flex_At(Cell, f, f->content.dynamic.used);
             if (poison)
                 Poison_Cell(tail);
@@ -635,7 +635,7 @@ INLINE Byte* Flex_Data_Last(size_t wide, const_if_c Flex* f) {
 INLINE void Term_Flex_If_Necessary(Flex* f)
 {
     if (Flex_Wide(f) == 1) {
-        if (Is_Flex_UTF8(f))
+        if (Is_Stub_String(f))
             *Flex_Tail(Byte, f) = '\0';
         else {
           #if DEBUG_POISON_FLEX_TAILS
@@ -643,7 +643,7 @@ INLINE void Term_Flex_If_Necessary(Flex* f)
           #endif
         }
     }
-    else if (Get_Flex_Flag(f, DYNAMIC) and Is_Flex_Array(f)) {
+    else if (Get_Flex_Flag(f, DYNAMIC) and Is_Stub_Array(f)) {
       #if DEBUG_POISON_FLEX_TAILS
         Poison_Cell(Flex_Tail(Cell, f));
       #endif
@@ -683,7 +683,7 @@ INLINE void Set_Flex_Used_Internal(Flex* f, Count used) {
     else {
         assert(used < sizeof(f->content));
 
-        if (Is_Flex_Array(f)) {  // content used by cell, no room for length
+        if (Is_Stub_Array(f)) {  // content used by cell, no room for length
             if (used == 0)
                 Poison_Cell(&f->content.fixed.cell);  // poison means 0 used
             else {
@@ -699,7 +699,7 @@ INLINE void Set_Flex_Used_Internal(Flex* f, Count used) {
     }
 
   #if DEBUG_UTF8_EVERYWHERE
-    if (Is_String_NonSymbol(f)) {
+    if (Is_Stub_NonSymbol(f)) {
         Corrupt_If_Debug(f->misc.length);  // catch violators [2]
         Touch_Stub_If_Debug(f);
     }
@@ -713,7 +713,7 @@ INLINE void Set_Flex_Used(Flex* f, Count used) {
 }
 
 INLINE void Set_Flex_Len(Flex* f, Length len) {
-    assert(not Is_Flex_UTF8(f));  // use _Len_Size() instead [2]
+    assert(not Is_Stub_String(f));  // use _Len_Size() instead [2]
     Set_Flex_Used(f, len);
 }
 

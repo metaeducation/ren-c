@@ -241,9 +241,7 @@ Array* Pop_Stack_Values_Core_Masked(
     Array* a = Make_Array_Core(len, flags);
     Set_Flex_Len(a, len);
 
-  #if DEBUG
-    Flavor flavor = Flex_Flavor(a);  // flavor comes from flags
-  #endif
+    Flavor flavor = Stub_Flavor(a);  // flavor comes from flags
 
     Count count = 0;
     Atom* src = Data_Stack_At(base + 1);  // not const, will be Freshen_Cell()

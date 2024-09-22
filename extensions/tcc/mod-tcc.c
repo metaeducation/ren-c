@@ -107,7 +107,7 @@ bool Is_User_Native(Action* act) {
     if (not Is_Action_Native(act))
         return false;
 
-    if (Flex_Flavor(act) != FLAVOR_DETAILS)
+    if (Stub_Flavor(act) != FLAVOR_DETAILS)
         return false;
 
     Details* details = Phase_Details(cast(Phase*, act));

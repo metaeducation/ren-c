@@ -111,7 +111,7 @@ INLINE Value* Derelativize_Untracked(
       any_wordlike:
         if (
             binding
-            and not IS_DETAILS(binding)  // relativized binding is cache/hint
+            and not Is_Stub_Details(binding)  // relativized binding is cache/hint
         ){
             out->extra = v->extra;
         }
@@ -131,7 +131,7 @@ INLINE Value* Derelativize_Untracked(
     else if (Bindable_Heart_Is_Any_List(heart)) {  // any-block? or any-group?
       any_listlike:
         if (binding) {  // currently not overriding (review: hole punch)
-            assert(not IS_DETAILS(binding));  // shouldn't be relativized
+            assert(not Is_Stub_Details(binding));  // shouldn't be relativized
             out->extra = v->extra;
         }
         else
@@ -145,7 +145,7 @@ INLINE Value* Derelativize_Untracked(
         if (Is_Node_A_Cell(node1))  // x.y pairing
             goto any_listlike;
         Stub* stub1 = cast(Stub*, node1);
-        if (FLAVOR_SYMBOL == Flex_Flavor(stub1))  // x. or /x, wordlike
+        if (FLAVOR_SYMBOL == Stub_Flavor(stub1))  // x. or /x, wordlike
             goto any_wordlike;
         goto any_listlike;
     }
@@ -331,7 +331,7 @@ INLINE bool IS_WORD_UNBOUND(const Cell* v) {
     if (VAL_WORD_INDEX_I32(v) == INDEX_ATTACHED)
         return true;
     if (VAL_WORD_INDEX_I32(v) < 0)
-        assert(IS_DETAILS(BINDING(v)));
+        assert(Is_Stub_Details(BINDING(v)));
     return VAL_WORD_INDEX_I32(v) <= 0;
 }
 
@@ -355,11 +355,11 @@ INLINE void Unbind_Any_Word(Cell* v) {
 INLINE Context* VAL_WORD_CONTEXT(const Value* v) {
     assert(IS_WORD_BOUND(v));
     Stub* binding = BINDING(v);
-    if (IS_PATCH(binding)) {
+    if (Is_Stub_Patch(binding)) {
         Context* patch_context = INODE(PatchContext, binding);
         binding = CTX_VARLIST(patch_context);
     }
-    else if (IS_LET(binding))
+    else if (Is_Stub_Let(binding))
         fail ("LET variables have no context at this time");
 
     return cast(Context*, binding);
@@ -408,7 +408,7 @@ INLINE const Value* Lookup_Word_May_Fail(
     if (index == INDEX_ATTACHED)
         fail (Error_Unassigned_Attach_Raw(any_word));
 
-    if (IS_LET(f) or IS_PATCH(f))
+    if (Is_Stub_Let(f) or Is_Stub_Patch(f))
         return Stub_Cell(f);
 
     Assert_Node_Accessible(f);
@@ -429,7 +429,7 @@ INLINE Option(const Value*) Lookup_Word(
     );
     if (not f or index == INDEX_ATTACHED)
         return nullptr;
-    if (IS_LET(f) or IS_PATCH(f))
+    if (Is_Stub_Let(f) or Is_Stub_Patch(f))
         return Stub_Cell(f);
 
     Assert_Node_Accessible(f);
@@ -464,7 +464,7 @@ INLINE Value* Lookup_Mutable_Word_May_Fail(
         fail (Error_Not_Bound_Raw(any_word));
 
     Value* var;
-    if (IS_LET(f) or IS_PATCH(f))
+    if (Is_Stub_Let(f) or Is_Stub_Patch(f))
         var = Stub_Cell(f);
     else {
         Context* c = cast(Context*, f);
@@ -534,10 +534,10 @@ INLINE Value* Sink_Word_May_Fail(
 //
 INLINE Node** SPC_FRAME_CTX_ADDRESS(Specifier* specifier)
 {
-    assert(IS_LET(specifier) or IS_USE(specifier));
+    assert(Is_Stub_Let(specifier) or Is_Stub_Use(specifier));
     while (
         NextVirtual(specifier) != nullptr
-        and not IS_VARLIST(NextVirtual(specifier))
+        and not Is_Stub_Varlist(NextVirtual(specifier))
     ){
         specifier = NextVirtual(specifier);
     }
@@ -548,7 +548,7 @@ INLINE Option(Context*) SPC_FRAME_CTX(Specifier* specifier)
 {
     if (specifier == UNBOUND)  // !!! have caller check?
         return nullptr;
-    if (IS_VARLIST(specifier))
+    if (Is_Stub_Varlist(specifier))
         return cast(Context*, specifier);
     return cast(Context*, x_cast(Node*, *SPC_FRAME_CTX_ADDRESS(specifier)));
 }

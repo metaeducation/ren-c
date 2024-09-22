@@ -292,7 +292,7 @@ bool Typecheck_Atom_Core(
             Action* action = VAL_ACTION(test);
 
             if (ACT_DISPATCHER(action) == &Intrinsic_Dispatcher) {
-                assert(IS_DETAILS(action));
+                assert(Is_Stub_Details(action));
                 Intrinsic* intrinsic = Extract_Intrinsic(cast(Phase*, action));
 
                 Param* param = ACT_PARAM(action, 2);

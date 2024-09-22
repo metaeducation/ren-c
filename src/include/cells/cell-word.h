@@ -41,7 +41,7 @@ INLINE bool Any_Wordlike(const Cell* v) {
     const Node* node1 = Cell_Node1(v);
     if (Is_Node_A_Cell(node1))
         return false;
-    return Flex_Flavor(u_cast(const Flex*, node1)) == FLAVOR_SYMBOL;
+    return Stub_Flavor(u_cast(const Flex*, node1)) == FLAVOR_SYMBOL;
 }
 
 INLINE void INIT_CELL_WORD_SYMBOL(Cell* v, const Symbol* symbol)
@@ -118,12 +118,12 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
     VAL_WORD_INDEX_I32(out) = index;
     BINDING(out) = binding;
 
-    if (IS_VARLIST(binding)) {
+    if (Is_Stub_Varlist(binding)) {
         assert(CTX_TYPE(cast(Context*, binding)) != REB_MODULE);  // must patch
         assert(symbol == *CTX_KEY(cast(Context*, binding), index));
     }
     else {
-        assert(IS_LET(binding) or IS_PATCH(binding));
+        assert(Is_Stub_Let(binding) or Is_Stub_Patch(binding));
         assert(index == INDEX_PATCHED);
         assert(symbol == INODE(LetSymbol, binding));
     }

@@ -227,7 +227,7 @@ uint32_t Hash_Value(const Cell* cell)
         if (Is_Node_A_Cell(node1))
             goto hash_pair;
 
-        switch (Flex_Flavor(c_cast(Flex*, node1))) {
+        switch (Stub_Flavor(c_cast(Flex*, node1))) {
           case FLAVOR_SYMBOL:
             goto hash_any_word;
 

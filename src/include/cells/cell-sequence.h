@@ -477,7 +477,7 @@ INLINE Length Cell_Sequence_Len(const Cell* sequence) {
     if (Is_Node_A_Cell(node1))  // see if it's a pairing
         return 2;  // compressed 2-element sequence, sizeof(Stub)
 
-    switch (Flex_Flavor(c_cast(Flex*, node1))) {
+    switch (Stub_Flavor(c_cast(Flex*, node1))) {
       case FLAVOR_SYMBOL :  // compressed single WORD! sequence
         return 2;
 
@@ -532,7 +532,7 @@ INLINE Element* Derelativize_Sequence_At(
         );
     }
 
-    switch (Flex_Flavor(x_cast(Flex*, node1))) {
+    switch (Stub_Flavor(x_cast(Flex*, node1))) {
       case FLAVOR_SYMBOL : {  // compressed single WORD! sequence
         assert(n < 2);
         if (Get_Cell_Flag(sequence, REFINEMENT_LIKE) ? n == 0 : n != 0)
@@ -584,7 +584,7 @@ INLINE Specifier* Cell_Sequence_Specifier(const Cell* sequence) {
     if (Is_Node_A_Cell(node1))  // see if it's a pairing
         return SPECIFIED;  // compressed 2-element sequence
 
-    switch (Flex_Flavor(c_cast(Flex*, node1))) {
+    switch (Stub_Flavor(c_cast(Flex*, node1))) {
       case FLAVOR_SYMBOL :  // compressed single WORD! sequence
         return SPECIFIED;
 
@@ -663,7 +663,7 @@ INLINE bool IS_REFINEMENT_CELL(const Cell* v) {
     if (Is_Node_A_Cell(node1))
         return false;
 
-    if (Flex_Flavor(c_cast(Flex*, node1)) != FLAVOR_SYMBOL)
+    if (Stub_Flavor(c_cast(Flex*, node1)) != FLAVOR_SYMBOL)
         return false;
 
     return Get_Cell_Flag(v, REFINEMENT_LIKE);  // !!! Review: test this first?
@@ -685,7 +685,7 @@ INLINE bool IS_PREDICATE1_CELL(const Cell* v) {
     if (Is_Node_A_Cell(node1))
         return false;
 
-    if (Flex_Flavor(c_cast(Flex*, node1)) != FLAVOR_SYMBOL)
+    if (Stub_Flavor(c_cast(Flex*, node1)) != FLAVOR_SYMBOL)
         return false;
 
     return Get_Cell_Flag(v, REFINEMENT_LIKE);  // !!! Review: test this first?

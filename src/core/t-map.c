@@ -218,7 +218,7 @@ static void Rehash_Map(Map* map)
 //
 void Expand_Hash(Flex* hashlist)
 {
-    assert(not Is_Flex_Array(hashlist));
+    assert(not Is_Stub_Array(hashlist));
 
     REBINT prime = Get_Hash_Prime_May_Fail(Flex_Used(hashlist) + 1);
     Remake_Flex(

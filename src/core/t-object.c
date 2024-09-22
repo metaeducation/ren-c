@@ -1390,7 +1390,7 @@ REBTYPE(Frame)
         UNUSED(ARG(value));
 
         Phase* act = cast(Phase*, VAL_ACTION(frame));
-        assert(IS_DETAILS(act));
+        assert(Is_Stub_Details(act));
 
         Value* property = ARG(property);
         Option(SymId) sym = Cell_Word_Id(property);

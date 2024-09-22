@@ -322,7 +322,7 @@ Bounce MAKE_List(
             // so no typeset or quoting settings available.  Can't produce
             // any antiforms, because the data source is a block.
             //
-            assert(not IS_VARLIST(VAL_VARARGS_SOURCE(arg)));
+            assert(not Is_Stub_Varlist(VAL_VARARGS_SOURCE(arg)));
         }
         else {
             Context* context = cast(Context*, VAL_VARARGS_SOURCE(arg));
@@ -1611,11 +1611,11 @@ DECLARE_NATIVE(glom)
 //
 void Assert_Array_Core(const Array* a)
 {
-    assert(Flex_Flavor(a) != FLAVOR_DATASTACK);  // has special handling
+    assert(Stub_Flavor(a) != FLAVOR_DATASTACK);  // has special handling
 
     Assert_Flex_Basics_Core(a);  // not marked free, etc.
 
-    if (not Is_Flex_Array(a))
+    if (not Is_Stub_Array(a))
         panic (a);
 
     const Cell* item = Array_Head(a);

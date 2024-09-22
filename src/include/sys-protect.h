@@ -92,7 +92,7 @@ INLINE void Flip_Flex_To_White(const Flex* f) {
 //
 
 INLINE void Freeze_Flex(const Flex* f) {  // there is no unfreeze
-    assert(not Is_Flex_Array(f)); // use Deep_Freeze_Array
+    assert(not Is_Stub_Array(f)); // use Deep_Freeze_Array
 
     // We set the FROZEN_DEEP flag even though there is no structural depth
     // here, so that the generic test for deep-frozenness can be faster.
@@ -102,7 +102,7 @@ INLINE void Freeze_Flex(const Flex* f) {  // there is no unfreeze
 }
 
 INLINE bool Is_Flex_Frozen(const Flex* f) {
-    assert(not Is_Flex_Array(f));  // use Is_Array_Deeply_Frozen
+    assert(not Is_Stub_Array(f));  // use Is_Array_Deeply_Frozen
     if (Not_Flex_Info(f, FROZEN_SHALLOW))
         return false;
     assert(Get_Flex_Info(f, FROZEN_DEEP));  // true on frozen non-arrays
