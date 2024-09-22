@@ -304,52 +304,6 @@ static void Shutdown_Action_Spec_Tags(void)
 
 
 //
-//  Startup_Empty_Arrays: C
-//
-// Generic read-only empty array, which will be put into EMPTY_BLOCK when
-// Alloc_Value() is available.  Note it's too early for ARRAY_HAS_FILE_LINE.
-//
-// Warning: GC must not run before Init_Root_Vars() puts it in an API node!
-//
-static void Startup_Empty_Arrays(void)
-{
-  blockscope {
-    Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
-    Set_Flex_Len(a, 1);
-    Init_Quasi_Null(Array_At(a, 0));
-    Freeze_Array_Deep(a);
-    PG_1_Quasi_Null_Array = a;
-  }
-
-  blockscope {
-    Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
-    Set_Flex_Len(a, 1);
-    Init_Quasi_Void(Array_At(a, 0));
-    Freeze_Array_Deep(a);
-    PG_1_Quasi_Void_Array = a;
-  }
-
-    // "Empty" PATH!s that look like `/` are actually a WORD! cell format
-    // under the hood.  This allows them to have bindings and do double-duty
-    // for actions like division or other custom purposes.  But when they
-    // are accessed as an array, they give two blanks `[_ _]`.
-    //
-  blockscope {
-    Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
-    Set_Flex_Len(a, 2);
-    Init_Blank(Array_At(a, 0));
-    Init_Blank(Array_At(a, 1));
-    Freeze_Array_Deep(a);
-    PG_2_Blanks_Array = a;
-  }
-}
-
-static void Shutdown_Empty_Arrays(void) {
-    PG_2_Blanks_Array = nullptr;
-}
-
-
-//
 //  Init_Root_Vars: C
 //
 // Create some global variables that are useful, and need to be safe from
@@ -391,25 +345,25 @@ static void Init_Root_Vars(void)
     );
     Force_Value_Frozen_Deep(Root_Empty_Block);
 
-    // Note: has to be a BLOCK!, 2-element blank paths use SYM__SLASH_1_
-    //
-    ensure(nullptr, Root_2_Blanks_Block) = Init_Block(
-        Alloc_Value(),
-        PG_2_Blanks_Array
-      );
-    Force_Value_Frozen_Deep(Root_2_Blanks_Block);
+  blockscope {  // keep array alive via stable API handle (META PACK, not PACK)
+    Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
+    Set_Flex_Len(a, 1);
+    Init_Quasi_Null(Array_At(a, 0));
+    Freeze_Array_Deep(a);
+    ensure(nullptr, PG_1_Quasi_Null_Array) = a;
+    ensure(nullptr, Root_Meta_Heavy_Null) = Init_Meta_Pack(Alloc_Value(), a);
+    Force_Value_Frozen_Deep(Root_Meta_Heavy_Null);
+  }
 
-    ensure(nullptr, Root_Heavy_Null) = Init_Block(
-        Alloc_Value(),
-        PG_1_Quasi_Null_Array
-      );
-    Force_Value_Frozen_Deep(Root_Heavy_Null);
-
-    ensure(nullptr, Root_Heavy_Void) = Init_Block(
-        Alloc_Value(),
-        PG_1_Quasi_Void_Array
-      );
-    Force_Value_Frozen_Deep(Root_Heavy_Void);
+  blockscope {  // keep array alive via stable API handle (META PACK, not PACK)
+    Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
+    Set_Flex_Len(a, 1);
+    Init_Quasi_Void(Array_At(a, 0));
+    Freeze_Array_Deep(a);
+    ensure(nullptr, PG_1_Quasi_Void_Array) = a;
+    ensure(nullptr, Root_Meta_Heavy_Void) = Init_Meta_Pack(Alloc_Value(), a);
+    Force_Value_Frozen_Deep(Root_Meta_Heavy_Void);
+  }
 
     ensure(nullptr, Root_Feed_Null_Substitute) = Init_Quasi_Null(Alloc_Value());
     Set_Cell_Flag(Root_Feed_Null_Substitute, FEED_NOTE_META);
@@ -447,9 +401,10 @@ static void Shutdown_Root_Vars(void)
 
     rebReleaseAndNull(&Root_Empty_Text);
     rebReleaseAndNull(&Root_Empty_Block);
-    rebReleaseAndNull(&Root_2_Blanks_Block);
-    rebReleaseAndNull(&Root_Heavy_Null);
-    rebReleaseAndNull(&Root_Heavy_Void);
+    rebReleaseAndNull(&Root_Meta_Heavy_Null);
+    PG_1_Quasi_Null_Array = nullptr;
+    rebReleaseAndNull(&Root_Meta_Heavy_Void);
+    PG_1_Quasi_Void_Array = nullptr;
     rebReleaseAndNull(&Root_Feed_Null_Substitute);
     rebReleaseAndNull(&Root_Empty_Binary);
 }
@@ -664,7 +619,6 @@ void Startup_Core(void)
     Startup_Api();
 
     Startup_Symbols();
-    Startup_Empty_Arrays();
 
 //=//// CREATE GLOBAL OBJECTS /////////////////////////////////////////////=//
 
@@ -1041,8 +995,6 @@ void Shutdown_Core(bool clean)
     Shutdown_Char_Cases();  // case needed for hashes in Shutdown_Symbols()
 
     Shutdown_GC();
-
-    Shutdown_Empty_Arrays();  // should have been freed.
 
     // Shutting down the memory manager must be done after all the Free_Mem
     // calls have been made to balance their Alloc_Mem calls.

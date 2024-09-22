@@ -109,14 +109,12 @@ PVAR Element* Root_Here_Tag;  // https://forum.rebol.info/t/1558/5
 PVAR Element* Root_Empty_Text; // read-only ""
 PVAR Element* Root_Empty_Binary; // read-only #{}
 PVAR Element* Root_Empty_Block; // read-only []
-PVAR Element* Root_2_Blanks_Block;  // read-only [_ _]
 PVAR Array* PG_Empty_Array; // optimization of Cell_Array(Root_Empty_Block)
 PVAR Array* PG_1_Quasi_Null_Array;  // used by heavy nulls ~[~null~]~
 PVAR Array* PG_1_Quasi_Void_Array;  // used by heavy voids ~[~void~]~
-PVAR Array* PG_2_Blanks_Array;  // surrogate array used by `/` paths
 
-PVAR Value* Root_Heavy_Null;  // antiform block containing a blank
-PVAR Value* Root_Heavy_Void;  // antiform block containing a quasi null
+PVAR Value* Root_Meta_Heavy_Null;  // keeps PG_1_Quasi_Null_Array alive
+PVAR Value* Root_Meta_Heavy_Void;  // keeps PG_1_Quasi_Void_Array alive
 
 PVAR Element* Root_Feed_Null_Substitute;  // flagged with FEED_NOTE_META
 

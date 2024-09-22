@@ -113,9 +113,6 @@ INLINE bool Is_Quasi_Null(const Cell* v) {
 #define Init_Heavy_Null(out) \
     Init_Pack((out), PG_1_Quasi_Null_Array)
 
-#define Init_Meta_Of_Heavy_Null(out) \
-    TRACK(Init_Pack_Untracked((out), QUASIFORM_2, (a)))
-
 INLINE bool Is_Heavy_Null(const Cell* v) {
     if (not Is_Pack(v))
         return false;
