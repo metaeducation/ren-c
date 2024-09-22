@@ -2201,21 +2201,6 @@ DECLARE_NATIVE(subparse)
                         set_or_copy_word, P_RULE_SPECIFIER
                     );
 
-                    // A Git merge of UTF-8 everywhere put this here,
-                    // with no corresponding use of "captured".  It's not
-                    // clear what happened--leaving it here to investigate
-                    // if a pertinent bug has a smoking gun here.
-
-                    /*
-                    DECLARE_ATOM (begin_val);
-                    Init_Series_At(begin_val, P_HEART, P_INPUT, begin);
-                    Init_Series(
-                        captured,
-                        P_HEART,
-                        Copy_String_At_Limit(begin_val, count)
-                    );
-                    */
-
                     if (P_HEART == REB_BINARY)
                         Init_Integer(var, *Binary_At(P_INPUT_BINARY, begin));
                     else
@@ -2242,23 +2227,8 @@ DECLARE_NATIVE(subparse)
                 rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
                 FETCH_NEXT_RULE(L);
 
-                // If you say KEEP (whatever) then that acts like /ONLY did
-                // and KEEP (spread whatever) will splice
-                //
-                bool only;
-                if (Any_Meta_Kind(VAL_TYPE(rule))) {
-                    if (rule != P_SAVE) {  // move to mutable location
-                        Derelativize(P_SAVE, rule, P_RULE_SPECIFIER);
-                        rule = c_cast(Element*, P_SAVE);
-                    }
-                    Plainify(P_SAVE);  // take the ^ off
-                    only = true;
-                }
-                else
-                    only = false;
-
                 if (not Is_Group(rule))
-                    fail ("Only (...) or ^(...) in old PARSE's CHANGE/INSERT");
+                    fail ("Splicing (...) only in PARSE3's CHANGE/INSERT");
 
                 DECLARE_VALUE (evaluated);
                 Specifier* derived = Derive_Specifier(
@@ -2273,7 +2243,6 @@ DECLARE_NATIVE(subparse)
                     rule,
                     derived
                 )){
-                    Copy_Cell(OUT, evaluated);
                     goto return_thrown;
                 }
                 Decay_If_Unstable(atom_evaluated);
@@ -2281,8 +2250,7 @@ DECLARE_NATIVE(subparse)
 
                 if (Is_Stub_Array(P_INPUT)) {
                     REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
-                    if (not only and Any_List(evaluated))
-                        mod_flags |= AM_SPLICE;
+                    mod_flags |= AM_SPLICE;  // bootstrap r3 has no SPREAD
 
                     // Note: We could check for mutability at the start
                     // of the operation -but- by checking right at the
