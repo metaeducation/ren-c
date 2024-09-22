@@ -167,6 +167,7 @@ core: [
     %n-io.c
     %n-loop.c
     %n-math.c
+    %n-parse3.c
     %n-protect.c
     %n-reduce.c
     %n-sets.c
@@ -209,7 +210,6 @@ core: [
 
     ; (U)??? (3rd-party code extractions)
     %u-compress.c
-    %u-parse.c
     [
         %u-zlib.c
 

@@ -52,7 +52,7 @@ lib
 ; PARSE - These words must not be reserved above!!  The range of consecutive
 ; index numbers are used by PARSE to detect keywords.
 ;
-set  ; must be first first (SYM_SET referred to by GET_VAR() in %u-parse.c)
+set  ; must be first first (SYM_SET referred to by GET_VAR() in %n-parse3.c)
 let
 copy  ; `copy x rule` deprecated, use `x: across rule` for this intent
 across
@@ -92,7 +92,7 @@ the
 do
 into
 spread
-end  ; must be last (SYM_END referred to by GET_VAR() in %u-parse.c)
+end  ; must be last (SYM_END referred to by GET_VAR() in %n-parse3.c)
 
 ; definitional forms as DEFINITIONAL-RETURN, DEFINITIONAL-BREAK, ...
 #return
