@@ -981,7 +981,7 @@ INLINE Element* Init_Zeroed_Hack(Sink(Element*) out, Heart heart) {
         Init_Pair_Int(out, 0, 0);
     }
     else {
-        Reset_Unquoted_Header_Untracked(
+        Reset_Cell_Header_Untracked(
             TRACK(out), FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
         );
         memset(&out->extra, 0, sizeof(union ExtraUnion));

@@ -110,7 +110,7 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
 ){
     assert(Any_Word_Kind(heart));
     assert(index != 0);
-    Reset_Unquoted_Header_Untracked(
+    Reset_Cell_Header_Untracked(
         out,
         FLAG_HEART_BYTE(heart) | CELL_FLAG_FIRST_IS_NODE
     );

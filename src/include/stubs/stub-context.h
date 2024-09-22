@@ -202,7 +202,7 @@ INLINE void INIT_VAL_CONTEXT_ROOTVAR_Core(
 ){
     assert(heart != REB_FRAME);  // use INIT_VAL_FRAME_ROOTVAR() instead
     assert(out == Array_Head(varlist));
-    Reset_Unquoted_Header_Untracked(
+    Reset_Cell_Header_Untracked(
         out,
         FLAG_HEART_BYTE(heart) | CELL_MASK_ANY_CONTEXT
     );
@@ -225,7 +225,7 @@ INLINE void INIT_VAL_FRAME_ROOTVAR_Core(
 ){
     assert(out == Array_Head(varlist));
     assert(phase != nullptr);
-    Reset_Unquoted_Header_Untracked(out, CELL_MASK_FRAME);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_FRAME);
     INIT_VAL_CONTEXT_VARLIST(out, varlist);
     INIT_VAL_FRAME_COUPLING(out, coupling);
     INIT_VAL_FRAME_PHASE_OR_LABEL(out, phase);

@@ -394,7 +394,7 @@ INLINE void Reset_Antiform_Header_Untracked(Cell* v, uintptr_t flags)
         | flags | FLAG_QUOTE_BYTE(ANTIFORM_0));
 }
 
-INLINE void Reset_Unquoted_Header_Untracked(Cell* v, uintptr_t flags)
+INLINE void Reset_Cell_Header_Untracked(Cell* v, uintptr_t flags)
 {
     assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE(ANTIFORM_0));
     Freshen_Cell_Untracked(v);

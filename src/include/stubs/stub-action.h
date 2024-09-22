@@ -135,7 +135,7 @@ INLINE void INIT_BONUS_KEYSOURCE(Array* varlist, Node* keysource) {
 //
 
 INLINE Value* Init_Return_Signal_Untracked(Sink(Value*) out, char ch) {
-    Reset_Unquoted_Header_Untracked(
+    Reset_Cell_Header_Untracked(
         out,
         FLAG_HEART_BYTE(REB_T_RETURN_SIGNAL) | CELL_MASK_NO_NODES
     );

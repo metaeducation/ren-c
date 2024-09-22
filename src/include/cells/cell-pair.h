@@ -77,7 +77,7 @@ INLINE REBDEC VAL_PAIR_Y_INT(const Cell* v) {
 
 INLINE Element* Init_Pair_Untracked(Sink(Element*) out, Value* pairing) {
     assert(Is_Node_Managed(pairing));
-    Reset_Unquoted_Header_Untracked(out, CELL_MASK_PAIR);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_PAIR);
     INIT_VAL_PAIR(out, pairing);
 
   #ifdef ZERO_UNUSED_CELL_FIELDS

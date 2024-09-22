@@ -1429,7 +1429,7 @@ REBTYPE(Frame)
             // for the varlist could be reclaimed in this case and a label
             // used, as the read-only frame is archetypal.
             //
-            Reset_Unquoted_Header_Untracked(TRACK(OUT), CELL_MASK_FRAME);
+            Reset_Cell_Header_Untracked(TRACK(OUT), CELL_MASK_FRAME);
             INIT_VAL_CONTEXT_VARLIST(OUT, ACT_PARAMLIST(act));
             INIT_VAL_FRAME_COUPLING(OUT, VAL_FRAME_COUPLING(frame));
             INIT_VAL_FRAME_PHASE_OR_LABEL(OUT, act);

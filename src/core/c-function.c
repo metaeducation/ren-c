@@ -718,7 +718,7 @@ Phase* Make_Action(
     Set_Flex_Len(details, details_capacity);
 
     Cell* archetype = Array_Head(details);
-    Reset_Unquoted_Header_Untracked(TRACK(archetype), CELL_MASK_FRAME);
+    Reset_Cell_Header_Untracked(TRACK(archetype), CELL_MASK_FRAME);
     INIT_VAL_ACTION_DETAILS(archetype, details);
     BINDING(archetype) = UNBOUND;
     INIT_VAL_ACTION_PARTIALS_OR_LABEL(archetype, partials);
@@ -862,7 +862,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value*) out, const Value* action)
 
             // Note: clears VAL_FLAG_LINE
             //
-            Reset_Unquoted_Header_Untracked(TRACK(slot), CELL_MASK_GROUP);
+            Reset_Cell_Header_Untracked(TRACK(slot), CELL_MASK_GROUP);
             Init_Cell_Node1(slot, Cell_Array(body));
             VAL_INDEX_RAW(slot) = 0;
             INIT_SPECIFIER(slot, a);  // relative binding
@@ -873,7 +873,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value*) out, const Value* action)
         // Cannot give user a relative value back, so make the relative
         // body specific to a fabricated expired frame.  See #2221
 
-        Reset_Unquoted_Header_Untracked(TRACK(out), CELL_MASK_BLOCK);
+        Reset_Cell_Header_Untracked(TRACK(out), CELL_MASK_BLOCK);
         Init_Cell_Node1(out, maybe_fake_body);
         VAL_INDEX_RAW(out) = 0;
 

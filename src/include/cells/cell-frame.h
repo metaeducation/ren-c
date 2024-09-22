@@ -59,7 +59,7 @@ INLINE Element* Init_Frame_Details_Core(
   #endif
     Force_Flex_Managed(a);
 
-    Reset_Unquoted_Header_Untracked(out, CELL_MASK_FRAME);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_FRAME);
     INIT_VAL_ACTION_DETAILS(out, a);
     INIT_VAL_ACTION_LABEL(out, label);
     INIT_VAL_FRAME_COUPLING(out, coupling);

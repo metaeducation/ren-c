@@ -100,7 +100,7 @@ INLINE Element* Init_Issue_Utf8(
     Length len  // while validating, you should have counted the codepoints
 ){
     if (size + 1 <= sizeof(PAYLOAD(Bytes, out)).at_least_8) {
-        Reset_Unquoted_Header_Untracked(
+        Reset_Cell_Header_Untracked(
             out,
             FLAG_HEART_BYTE(REB_ISSUE) | CELL_MASK_NO_NODES
         );
@@ -124,7 +124,7 @@ INLINE Element* Init_Issue_Utf8(
 // this routine can be used.
 //
 INLINE Element* Init_Char_Unchecked_Untracked(Sink(Element*) out, Codepoint c) {
-    Reset_Unquoted_Header_Untracked(
+    Reset_Cell_Header_Untracked(
         out,
         FLAG_HEART_BYTE(REB_ISSUE) | CELL_MASK_NO_NODES
     );

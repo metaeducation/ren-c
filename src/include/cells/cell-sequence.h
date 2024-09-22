@@ -203,7 +203,7 @@ INLINE Element* Init_Any_Sequence_Bytes(
     Size size
 ){
     assert(Any_Sequence_Kind(heart));
-    Reset_Unquoted_Header_Untracked(
+    Reset_Cell_Header_Untracked(
         out,
         FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );
@@ -243,7 +243,7 @@ INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
     if (len < 2)
         return nullptr;
 
-    Reset_Unquoted_Header_Untracked(
+    Reset_Cell_Header_Untracked(
         out,
         FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );

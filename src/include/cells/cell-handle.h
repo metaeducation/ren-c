@@ -115,7 +115,7 @@ INLINE Element* Init_Handle_Cdata(
     uintptr_t length
 ){
     assert(length != 0);  // can't be 0 unless cfunc (see also malloc(0))
-    Reset_Unquoted_Header_Untracked(
+    Reset_Cell_Header_Untracked(
         out,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_MASK_NO_NODES
     );
@@ -131,7 +131,7 @@ INLINE Element* Init_Handle_Cfunc(
     Sink(Element*) out,
     CFunction* cfunc
 ){
-    Reset_Unquoted_Header_Untracked(
+    Reset_Cell_Header_Untracked(
         out,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_MASK_NO_NODES
     );
@@ -152,7 +152,7 @@ INLINE void Init_Handle_Managed_Common(
     singular->misc.cleaner = cleaner;
 
     Cell* single = Stub_Cell(singular);
-    Reset_Unquoted_Header_Untracked(
+    Reset_Cell_Header_Untracked(
         single,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_FLAG_FIRST_IS_NODE
     );
@@ -165,7 +165,7 @@ INLINE void Init_Handle_Managed_Common(
     // effectively update all instances...since the bits live in the shared
     // Flex component.
     //
-    Reset_Unquoted_Header_Untracked(
+    Reset_Cell_Header_Untracked(
         out,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_FLAG_FIRST_IS_NODE
     );

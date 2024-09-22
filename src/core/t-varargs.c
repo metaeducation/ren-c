@@ -389,7 +389,7 @@ Bounce MAKE_Varargs(
         else
             Copy_Cell(Stub_Cell(array1), arg);
 
-        Reset_Unquoted_Header_Untracked(TRACK(OUT), CELL_MASK_VARARGS);
+        Reset_Cell_Header_Untracked(TRACK(OUT), CELL_MASK_VARARGS);
         INIT_VAL_VARARGS_PHASE(OUT, nullptr);
         UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(OUT));  // corrupts in C++11
         INIT_VAL_VARARGS_SOURCE(OUT, array1);

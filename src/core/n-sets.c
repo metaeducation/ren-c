@@ -237,7 +237,7 @@ Flex* Make_Set_Operation_Flex(
                 if (!h) continue;
 
                 DECLARE_ATOM (mo_value);
-                Reset_Unquoted_Header_Untracked(TRACK(mo_value), CELL_MASK_TEXT);
+                Reset_Cell_Header_Untracked(TRACK(mo_value), CELL_MASK_TEXT);
                 Init_Cell_Node1(mo_value, mo->string);
                 VAL_INDEX_RAW(mo_value) = mo->base.index;
 
@@ -312,7 +312,7 @@ Flex* Make_Set_Operation_Flex(
                 if (!h) continue;
 
                 DECLARE_ATOM (buf_value);
-                Reset_Unquoted_Header_Untracked(
+                Reset_Cell_Header_Untracked(
                     TRACK(buf_value),
                     CELL_MASK_BINARY
                 );

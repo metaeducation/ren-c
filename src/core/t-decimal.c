@@ -112,7 +112,7 @@ bool almost_equal(REBDEC a, REBDEC b, REBLEN max_diff) {
 //
 Element* Init_Decimal_Bits(Sink(Element*) out, const Byte* bp)
 {
-    Reset_Unquoted_Header_Untracked(TRACK(out), CELL_MASK_DECIMAL);
+    Reset_Cell_Header_Untracked(TRACK(out), CELL_MASK_DECIMAL);
 
     Byte* dp = cast(Byte*, &VAL_DECIMAL(out));
 
@@ -282,7 +282,7 @@ Bounce MAKE_Decimal(
     if (!FINITE(d))
         return RAISE(Error_Overflow_Raw());
 
-    Reset_Unquoted_Header_Untracked(
+    Reset_Cell_Header_Untracked(
         TRACK(OUT),
         FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );
@@ -382,7 +382,7 @@ Bounce TO_Decimal(Level* level_, Kind k, const Value* arg)
     if (not FINITE(d))
         return RAISE(Error_Overflow_Raw());
 
-    Reset_Unquoted_Header_Untracked(
+    Reset_Cell_Header_Untracked(
         TRACK(OUT),
         FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );
@@ -684,7 +684,7 @@ setDec:
     if (not FINITE(d1))
         fail (Error_Overflow_Raw());
 
-    Reset_Unquoted_Header_Untracked(
+    Reset_Cell_Header_Untracked(
         TRACK(OUT),
         FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );

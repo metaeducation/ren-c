@@ -2315,7 +2315,7 @@ DECLARE_NATIVE(as)
                 //
                 // Payload can fit in a single issue cell.
                 //
-                Reset_Unquoted_Header_Untracked(
+                Reset_Cell_Header_Untracked(
                     TRACK(OUT),
                     FLAG_HEART_BYTE(REB_ISSUE) | CELL_MASK_NO_NODES
                 );

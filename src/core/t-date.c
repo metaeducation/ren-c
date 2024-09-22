@@ -363,7 +363,7 @@ static Element* Init_Normalized_Date(
     if (year < 0 or year > MAX_YEAR)
         fail (Error_Type_Limit_Raw(Datatype_From_Kind(REB_DATE)));
 
-    Reset_Unquoted_Header_Untracked(out, CELL_MASK_DATE);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_DATE);
     EXTRA(Date, out).year = year;
     EXTRA(Date, out).month = month + 1;
     EXTRA(Date, out).day = day + 1;
@@ -1191,7 +1191,7 @@ DECLARE_NATIVE(make_date_ymdsnz)
 {
     INCLUDE_PARAMS_OF_MAKE_DATE_YMDSNZ;
 
-    Reset_Unquoted_Header_Untracked(TRACK(OUT), CELL_MASK_DATE);
+    Reset_Cell_Header_Untracked(TRACK(OUT), CELL_MASK_DATE);
     VAL_YEAR(OUT) = VAL_INT32(ARG(year));
     VAL_MONTH(OUT) = VAL_INT32(ARG(month));
     VAL_DAY(OUT) = VAL_INT32(ARG(day));
@@ -1236,7 +1236,7 @@ DECLARE_NATIVE(make_time_sn)
 {
     INCLUDE_PARAMS_OF_MAKE_TIME_SN;
 
-    Reset_Unquoted_Header_Untracked(TRACK(OUT), CELL_MASK_TIME);
+    Reset_Cell_Header_Untracked(TRACK(OUT), CELL_MASK_TIME);
 
     REBI64 nano = Is_Nulled(ARG(nano)) ? 0 : VAL_INT64(ARG(nano));
     PAYLOAD(Time, OUT).nanoseconds

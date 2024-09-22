@@ -130,7 +130,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
     }
   #endif
 
-    Reset_Unquoted_Header_Untracked(
+    Reset_Cell_Header_Untracked(
         out,
         FLAG_HEART_BYTE(heart) | CELL_FLAG_FIRST_IS_NODE
     );

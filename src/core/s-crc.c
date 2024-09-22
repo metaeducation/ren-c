@@ -391,7 +391,7 @@ Element* Init_Map(Sink(Element*) out, Map* map)
 
     Force_Flex_Managed(MAP_PAIRLIST(map));
 
-    Reset_Unquoted_Header_Untracked(TRACK(out), CELL_MASK_MAP);
+    Reset_Cell_Header_Untracked(TRACK(out), CELL_MASK_MAP);
     Init_Cell_Node1(out, MAP_PAIRLIST(map));
     // second payload pointer not used
 
