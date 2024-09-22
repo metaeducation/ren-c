@@ -676,8 +676,6 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
 
 #include "cells/cell-sequence.h"  // needs Derelativize()
 
-#include "sys-isotope.h"  // needs cell definitions
-
 
 //=//// EVALUATOR SERVICES ////////////////////////////////////////////////=//
 
@@ -689,3 +687,8 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
 #include "sys-bounce.h"
 
 #include "sys-pick.h"
+
+
+//=//// ISOTOPE COERCION AND DECAY ////////////////////////////////////////=//
+
+#include "sys-isotope.h"  // needs cell definitions, Drop_Level()

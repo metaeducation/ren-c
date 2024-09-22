@@ -170,30 +170,6 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 }
 
 
-// This signals that the evaluator is in a "thrown state".
-//
-#define C_THROWN 'T'
-#define BOUNCE_THROWN \
-    cast(Bounce, &PG_Bounce_Thrown)
-
-INLINE bool Is_Throwing(Level* level_) {
-    //
-    // !!! An original constraint on asking if something was throwing was
-    // that only the top frame could be asked about.  But Action_Executor()
-    // is called to re-dispatch when there may be a frame above (kept there
-    // by request from something like REDUCE).  We relax the constraint to
-    // only be able to return *true* to a throw request if there are no
-    // frames above on the stack.
-    //
-    if (not Is_Cell_Erased(&g_ts.thrown_arg)) {
-        /*assert(level_ == TOP_LEVEL);*/  // forget even that check
-        UNUSED(level_);  // currently only used for debug build check
-        return true;
-    }
-    return false;
-}
-
-
 #define Tweak_Cell_Action_Details                 Tweak_Cell_Node1
 #define Extract_Cell_Action_Partials_Or_Label(c)  cast(Flex*, Cell_Node2(c))
 #define Tweak_Cell_Action_Partials_Or_Label       Tweak_Cell_Node2

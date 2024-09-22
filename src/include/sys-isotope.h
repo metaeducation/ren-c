@@ -123,3 +123,87 @@ INLINE Option(Context*) Trap_Coerce_To_Quasiform(Value* v) {
     QUOTE_BYTE(v) = QUASIFORM_2_COERCE_ONLY;  // few places should assign
     return nullptr;
 }
+
+
+// When you're sure that the value isn't going to be consumed by a multireturn
+// then use this to get the first value unmeta'd
+//
+// 1. We fall through in case result is pack or raised (should this iterate?)
+//
+// 2. If the first element in a pack is a pack, we could decay that.  Maybe
+//    we should, but my general feeling is that you should probably have to
+//    unpack more granularly, e.g. ([[a b] c]: packed-pack), and it would just
+//    create confusion to decay things automatically.  Experience may dictate
+//    that decaying automatically here is better, wait and see.
+//
+// 3. If there's a raised error in the non-primary slot of a pack, we don't
+//    want to just silently discard it.  The best way to make sure no packs
+//    are hiding errors is to recursively decay.
+//
+INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
+    if (Not_Antiform(v))
+        return u_cast(Value*, u_cast(Atom*, v));
+
+    if (Is_Lazy(v)) {  // should this iterate?
+        if (not Pushed_Decaying_Level(v, v, LEVEL_MASK_NONE))
+            return u_cast(Value*, u_cast(Atom*, v));  // cheap reification
+        if (Trampoline_With_Top_As_Root_Throws())
+            fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+        Drop_Level(TOP_LEVEL);
+        assert(not Is_Lazy(v));
+    }
+
+    if (Is_Pack(v)) {  // iterate until result is not multi-return [1]
+        const Element* pack_meta_tail;
+        const Element* pack_meta_at = Cell_List_At(&pack_meta_tail, v);
+        if (pack_meta_at == pack_meta_tail)
+            fail (Error_No_Value_Raw());  // treat as void?
+        Derelativize(v, pack_meta_at, Cell_Specifier(v));
+        Meta_Unquotify_Undecayed(v);
+        if (Is_Pack(v) or Is_Lazy(v))
+            fail (Error_Bad_Antiform(v));  // need more granular unpacking [2]
+        if (Is_Raised(v))
+            fail (VAL_CONTEXT(v));
+        assert(Not_Antiform(v) or Is_Antiform_Stable(v));
+
+        while (++pack_meta_at != pack_meta_tail) {
+            if (not Is_Quasiform(pack_meta_at))
+                continue;
+            if (Is_Stable_Antiform_Heart(Cell_Heart(pack_meta_at)))
+                continue;
+            DECLARE_ATOM (temp);
+            Copy_Cell(temp, pack_meta_at);
+            Decay_If_Unstable(temp);  // don't drop raised errors on floor [3]
+        }
+
+        return u_cast(Value*, u_cast(Atom*, v));
+    }
+
+    if (Is_Barrier(v))
+        fail (Error_No_Value_Raw());  // distinct error from nihil?
+
+    if (Is_Raised(v))
+        fail (VAL_CONTEXT(v));
+
+    return u_cast(Value*, u_cast(Atom*, v));
+}
+
+
+// Packs with unstable isotopes in their first cell are not able to be decayed.
+// Type checking has to be aware of this, and know that such packs shouldn't
+// raise errors.
+//
+INLINE bool Is_Pack_Undecayable(Atom* pack)
+{
+    assert(Is_Pack(pack));
+    if (Is_Nihil(pack))
+        return true;
+    const Element* at = Cell_List_At(nullptr, pack);
+    if (Is_Meta_Of_Raised(at))
+        return true;
+    if (Is_Meta_Of_Pack(at))
+        return true;
+    if (Is_Meta_Of_Lazy(at))
+        return true;
+    return false;
+}

@@ -20,9 +20,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// All THROWN values have two parts: the Atom arg being thrown and
-// a Value indicating the /NAME of a labeled throw.  (If the throw was
-// created with plain THROW instead of THROW/NAME then its name is BLANK!).
+// All THROWN values have two parts: the Atom arg being thrown and a Value
+// indicating the "label" of the throw.
 //
 // You cannot fit both values into a single value's bits of course.  One way
 // to approach the problem would be to create a new REB_THROWN type with
@@ -36,14 +35,37 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// 1. When an abrupt failure occurs, it is intercepted by the trampoline and
-//    converted into a throw state with an ERROR! as the label.  This state
-//    is bubbled up the stack much like a throw, however it cannot be
-//    intercepted by CATCH or definitional-error handlers like TRY.  Only
-//    special routines like SYS.UTIL/RESCUE can catch abrupt failures, as
-//    what they mean is too nebulous for arbitrary stacks to assume they
-//    know how to handle them.
+// * When an abrupt failure occurs, it is intercepted by the trampoline and
+//   converted into a throw state with an ERROR! as the label.  This state
+//   is bubbled up the stack much like a throw, however it cannot be
+//   intercepted by CATCH or definitional-error handlers like TRY.  Only
+//   special routines like SYS.UTIL/RESCUE can catch abrupt failures, as
+//   what they mean is too nebulous for arbitrary stacks to assume they
+//   know how to handle them.
 //
+
+
+// This signals that the evaluator is in a "thrown state".
+//
+#define C_THROWN 'T'
+#define BOUNCE_THROWN \
+    cast(Bounce, &PG_Bounce_Thrown)
+
+
+// 1. An original constraint on asking if something was throwing was that only
+//    the top frame could be asked about.  But Action_Executor() is called to
+//    re-dispatch when there may be a frame above (kept there by request from
+//    something like REDUCE).  We relax the constraint to only be able to
+//    return true *if* there are no frames above on the stack.
+//
+INLINE bool Is_Throwing(Level* level_) {
+    if (not Is_Cell_Erased(&g_ts.thrown_arg)) {
+        /*assert(level_ == TOP_LEVEL);*/  // forget even that check [1]
+        UNUSED(level_);  // currently only used for debug build check
+        return true;
+    }
+    return false;
+}
 
 #define THROWING Is_Throwing(level_)
 
@@ -99,89 +121,4 @@ INLINE void CATCH_THROWN(
     assert(not THROWING);
 
     g_ts.unwind_level = nullptr;
-}
-
-
-INLINE void Drop_Level(Level* L);
-
-// When you're sure that the value isn't going to be consumed by a multireturn
-// then use this to get the first value unmeta'd
-//
-// 1. We fall through in case result is pack or raised (should this iterate?)
-//
-// 2. If the first element in a pack is a pack, we could decay that.  Maybe
-//    we should, but my general feeling is that you should probably have to
-//    unpack more granularly, e.g. ([[a b] c]: packed-pack), and it would just
-//    create confusion to decay things automatically.  Experience may dictate
-//    that decaying automatically here is better, wait and see.
-//
-// 3. If there's a raised error in the non-primary slot of a pack, we don't
-//    want to just silently discard it.  The best way to make sure no packs
-//    are hiding errors is to recursively decay.
-//
-INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
-    if (Not_Antiform(v))
-        return u_cast(Value*, u_cast(Atom*, v));
-
-    if (Is_Lazy(v)) {  // should this iterate?
-        if (not Pushed_Decaying_Level(v, v, LEVEL_MASK_NONE))
-            return u_cast(Value*, u_cast(Atom*, v));  // cheap reification
-        if (Trampoline_With_Top_As_Root_Throws())
-            fail (Error_No_Catch_For_Throw(TOP_LEVEL));
-        Drop_Level(TOP_LEVEL);
-        assert(not Is_Lazy(v));
-    }
-
-    if (Is_Pack(v)) {  // iterate until result is not multi-return [1]
-        const Element* pack_meta_tail;
-        const Element* pack_meta_at = Cell_List_At(&pack_meta_tail, v);
-        if (pack_meta_at == pack_meta_tail)
-            fail (Error_No_Value_Raw());  // treat as void?
-        Derelativize(v, pack_meta_at, Cell_Specifier(v));
-        Meta_Unquotify_Undecayed(v);
-        if (Is_Pack(v) or Is_Lazy(v))
-            fail (Error_Bad_Antiform(v));  // need more granular unpacking [2]
-        if (Is_Raised(v))
-            fail (VAL_CONTEXT(v));
-        assert(Not_Antiform(v) or Is_Antiform_Stable(v));
-
-        while (++pack_meta_at != pack_meta_tail) {
-            if (not Is_Quasiform(pack_meta_at))
-                continue;
-            if (Is_Stable_Antiform_Heart(Cell_Heart(pack_meta_at)))
-                continue;
-            DECLARE_ATOM (temp);
-            Copy_Cell(temp, pack_meta_at);
-            Decay_If_Unstable(temp);  // don't drop raised errors on floor [3]
-        }
-
-        return u_cast(Value*, u_cast(Atom*, v));
-    }
-
-    if (Is_Barrier(v))
-        fail (Error_No_Value_Raw());  // distinct error from nihil?
-
-    if (Is_Raised(v))
-        fail (VAL_CONTEXT(v));
-
-    return u_cast(Value*, u_cast(Atom*, v));
-}
-
-// Packs with unstable isotopes in their first cell are not able to be decayed.
-// Type checking has to be aware of this, and know that such packs shouldn't
-// raise errors.
-//
-INLINE bool Is_Pack_Undecayable(Atom* pack)
-{
-    assert(Is_Pack(pack));
-    if (Is_Nihil(pack))
-        return true;
-    const Element* at = Cell_List_At(nullptr, pack);
-    if (Is_Meta_Of_Raised(at))
-        return true;
-    if (Is_Meta_Of_Pack(at))
-        return true;
-    if (Is_Meta_Of_Lazy(at))
-        return true;
-    return false;
 }
