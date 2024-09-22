@@ -139,11 +139,11 @@ DECLARE_NATIVE(augment)
     // into the paramlist...and reusing the Specializer_Dispatcher.
 
     assert(Is_Unreadable(Flex_Head(Value, paramlist)));
-    INIT_VAL_FRAME_ROOTVAR(
+    Tweak_Cell_Frame_Rootvar(
         Array_Head(paramlist),
         paramlist,
         ACT_IDENTITY(VAL_ACTION(ARG(original))),
-        VAL_FRAME_COUPLING(ARG(original))
+        Cell_Frame_Coupling(ARG(original))
     );
 
     Phase* augmentated = Make_Action(

@@ -532,7 +532,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
     Manage_Flex(paramlist);
 
-    INIT_BONUS_KEYSOURCE(paramlist, keylist);
+    Tweak_Bonus_Keysource(paramlist, keylist);
     MISC(VarlistAdjunct, paramlist) = nullptr;
     LINK(Patches, paramlist) = nullptr;
 
@@ -719,9 +719,9 @@ Phase* Make_Action(
 
     Cell* archetype = Array_Head(details);
     Reset_Cell_Header_Untracked(TRACK(archetype), CELL_MASK_FRAME);
-    INIT_VAL_ACTION_DETAILS(archetype, details);
+    Tweak_Cell_Action_Details(archetype, details);
     BINDING(archetype) = UNBOUND;
-    INIT_VAL_ACTION_PARTIALS_OR_LABEL(archetype, partials);
+    Tweak_Cell_Action_Partials_Or_Label(archetype, partials);
 
   #if !defined(NDEBUG)  // notice attempted mutation of the archetype cell
     Set_Cell_Flag(archetype, PROTECTED);
@@ -740,7 +740,7 @@ Phase* Make_Action(
     //
     Value* rootvar = Flex_Head(Value, paramlist);
     if (Is_Unreadable(rootvar))
-        INIT_VAL_FRAME_ROOTVAR(rootvar, paramlist, ACT_IDENTITY(act), UNBOUND);
+        Tweak_Cell_Frame_Rootvar(rootvar, paramlist, ACT_IDENTITY(act), UNBOUND);
 
     // Precalculate cached function flags.  This involves finding the first
     // unspecialized argument which would be taken at a callsite, which can
@@ -790,7 +790,7 @@ Phase* Make_Action(
 //
 void Get_Maybe_Fake_Action_Body(Sink(Value*) out, const Value* action)
 {
-    Option(Context*) coupling = VAL_FRAME_COUPLING(action);
+    Option(Context*) coupling = Cell_Frame_Coupling(action);
     Action* a = VAL_ACTION(action);
 
     // A Hijacker *might* not need to splice itself in with a dispatcher.
@@ -863,9 +863,9 @@ void Get_Maybe_Fake_Action_Body(Sink(Value*) out, const Value* action)
             // Note: clears VAL_FLAG_LINE
             //
             Reset_Cell_Header_Untracked(TRACK(slot), CELL_MASK_GROUP);
-            Init_Cell_Node1(slot, Cell_Array(body));
+            Tweak_Cell_Node1(slot, Cell_Array(body));
             VAL_INDEX_RAW(slot) = 0;
-            INIT_SPECIFIER(slot, a);  // relative binding
+            Tweak_Cell_Specifier(slot, a);  // relative binding
 
             maybe_fake_body = fake;
         }
@@ -874,7 +874,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value*) out, const Value* action)
         // body specific to a fabricated expired frame.  See #2221
 
         Reset_Cell_Header_Untracked(TRACK(out), CELL_MASK_BLOCK);
-        Init_Cell_Node1(out, maybe_fake_body);
+        Tweak_Cell_Node1(out, maybe_fake_body);
         VAL_INDEX_RAW(out) = 0;
 
         return;
@@ -1003,10 +1003,10 @@ DECLARE_NATIVE(couple)
     assert(Cell_Heart(action_or_frame) == REB_FRAME);
 
     if (Is_Nulled(coupling))
-        INIT_VAL_FRAME_COUPLING(action_or_frame, nullptr);
+        Tweak_Cell_Frame_Coupling(action_or_frame, nullptr);
     else {
         assert(Is_Object(coupling) or Is_Frame(coupling));
-        INIT_VAL_FRAME_COUPLING(action_or_frame, VAL_CONTEXT(coupling));
+        Tweak_Cell_Frame_Coupling(action_or_frame, VAL_CONTEXT(coupling));
     }
 
     return COPY(action_or_frame);

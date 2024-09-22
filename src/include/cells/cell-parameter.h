@@ -69,8 +69,8 @@ INLINE Option(const Array*) Cell_Parameter_Spec(const Cell* v) {
     return cast(Array*, Cell_Node1(v));
 }
 
-#define INIT_CELL_PARAMETER_SPEC(v, a) \
-    Init_Cell_Node1((v), (a))
+#define Tweak_Cell_Parameter_Spec(v,a) \
+    Tweak_Cell_Node1((v), (a))
 
 
 
@@ -279,7 +279,7 @@ INLINE Option(const String*) Cell_Parameter_String(const Cell* param) {
 
 INLINE void Set_Parameter_String(Cell* param, Option(const String*) string) {
     assert(HEART_BYTE(param) == REB_PARAMETER);
-    Init_Cell_Node2(param, maybe string);
+    Tweak_Cell_Node2(param, maybe string);
 }
 
 
@@ -314,8 +314,8 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
 
     Reset_Cell_Header_Untracked(out, CELL_MASK_PARAMETER);
     PARAMETER_FLAGS(out) = flags;
-    INIT_CELL_PARAMETER_SPEC(out, nullptr);
-    Init_Cell_Node2(out, nullptr);  // parameter string
+    Tweak_Cell_Parameter_Spec(out, nullptr);
+    Tweak_Cell_Node2(out, nullptr);  // parameter string
 
     return cast(Param*, Coerce_To_Stable_Antiform(out));
 }

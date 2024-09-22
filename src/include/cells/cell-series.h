@@ -69,7 +69,7 @@ INLINE REBLEN VAL_INDEX(const Cell* v) {
 }
 
 
-INLINE void INIT_SPECIFIER(Cell* v, Stub* binding) {
+INLINE void Tweak_Cell_Specifier(Cell* v, Stub* binding) {
     //
     // can be called on non-bindable series, but p must be nullptr
 
@@ -134,9 +134,9 @@ INLINE Element* Init_Series_At_Core_Untracked(
         out,
         FLAG_HEART_BYTE(heart) | CELL_FLAG_FIRST_IS_NODE
     );
-    Init_Cell_Node1(out, f);
+    Tweak_Cell_Node1(out, f);
     VAL_INDEX_RAW(out) = index;
-    INIT_SPECIFIER(out, specifier);  // asserts if unbindable type tries to bind
+    Tweak_Cell_Specifier(out, specifier);  // asserts if unbindable type tries to bind
     return out;
 }
 

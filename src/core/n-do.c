@@ -231,7 +231,7 @@ DECLARE_NATIVE(shove)
     Flags flags = FLAG_STATE_BYTE(ST_ACTION_INITIAL_ENTRY_ENFIX);  // [1]
 
     Level* sub = Make_Level(&Action_Executor, level_->feed, flags);
-    Push_Action(sub, VAL_ACTION(shovee), VAL_FRAME_COUPLING(shovee));
+    Push_Action(sub, VAL_ACTION(shovee), Cell_Frame_Coupling(shovee));
     Begin_Action_Core(sub, label, enfix);  // still can know if it's enfix [2]
 
     Push_Level(OUT, sub);
@@ -548,12 +548,12 @@ DECLARE_NATIVE(redo)
             fail ("/OTHER function passed to REDO has incompatible FRAME!");
         }
 
-        INIT_LVL_PHASE(L, ACT_IDENTITY(VAL_ACTION(sibling)));
-        INIT_LVL_COUPLING(L, VAL_FRAME_COUPLING(sibling));
+        Tweak_Level_Phase(L, ACT_IDENTITY(VAL_ACTION(sibling)));
+        Tweak_Level_Coupling(L, Cell_Frame_Coupling(sibling));
     }
     else {
-        INIT_LVL_PHASE(L, VAL_FRAME_PHASE(restartee));
-        INIT_LVL_COUPLING(L, VAL_FRAME_COUPLING(restartee));
+        Tweak_Level_Phase(L, VAL_FRAME_PHASE(restartee));
+        Tweak_Level_Coupling(L, Cell_Frame_Coupling(restartee));
     }
 
     Action* redo_action = u_cast(Action*, Level_Phase(L));
@@ -572,7 +572,7 @@ DECLARE_NATIVE(redo)
     }
 
     Copy_Cell(SPARE, Lib(REDO));  // label used for throw
-    INIT_VAL_FRAME_COUPLING(SPARE, c);  // coupling has restartee as varlist
+    Tweak_Cell_Frame_Coupling(SPARE, c);  // coupling has restartee as varlist
 
     const Value* gather_args = Lib(NULL);
     return Init_Thrown_With_Label(LEVEL, gather_args, stable_SPARE);
@@ -801,7 +801,7 @@ DECLARE_NATIVE(apply)
     else {
         STATE = ST_APPLY_UNLABELED_EVAL_STEP;
 
-        EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
+        EVARS *e = Cell_Handle_Pointer(EVARS, iterator);
 
         while (true) {
             if (not Did_Advance_Evars(e)) {
@@ -849,7 +849,7 @@ DECLARE_NATIVE(apply)
 
 } unlabeled_step_result_in_spare: {  /////////////////////////////////////////
 
-    EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
+    EVARS *e = Cell_Handle_Pointer(EVARS, iterator);
 
     var = e->var;
     param = e->param;
@@ -872,7 +872,7 @@ DECLARE_NATIVE(apply)
     if (Is_Unreadable(iterator))
         assert(REF(relax));
     else {
-        EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
+        EVARS *e = Cell_Handle_Pointer(EVARS, iterator);
         Shutdown_Evars(e);
         Free(EVARS, e);
         Init_Unreadable(iterator);
@@ -961,7 +961,7 @@ DECLARE_NATIVE(run)
     Push_Action(
         sub,
         VAL_ACTION(action),
-        VAL_FRAME_COUPLING(action)
+        Cell_Frame_Coupling(action)
     );
     Begin_Prefix_Action(sub, VAL_FRAME_LABEL(action));
 

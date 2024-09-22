@@ -198,7 +198,7 @@ INLINE void* Pointer_From_Heapaddr(heapaddr_t addr)
   { return p_cast(void*, cast(uintptr_t, addr)); }
 
 static void cleanup_js_object(const Value* v) {
-    heapaddr_t id = Heapaddr_From_Pointer(VAL_HANDLE_VOID_POINTER(v));
+    heapaddr_t id = Heapaddr_From_Pointer(Cell_Handle_Void_Pointer(v));
 
     // If a lot of JS items are GC'd, would it be better to queue this in
     // a batch, as `reb.UnregisterId_internal([304, 1020, ...])`?  (That was

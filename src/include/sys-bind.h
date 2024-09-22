@@ -123,7 +123,7 @@ INLINE Element* Derelativize_Untracked(
                 out->extra = v->extra;
             }
             else {
-                INIT_VAL_WORD_INDEX(out, index);
+                Tweak_Cell_Word_Index(out, index);
                 BINDING(out) = f;
             }
         }
@@ -339,11 +339,11 @@ struct Reb_Collector {
 
 INLINE bool IS_WORD_UNBOUND(const Cell* v) {
     assert(Any_Wordlike(v));
-    if (VAL_WORD_INDEX_I32(v) == INDEX_ATTACHED)
+    if (CELL_WORD_INDEX_I32(v) == INDEX_ATTACHED)
         return true;
-    if (VAL_WORD_INDEX_I32(v) < 0)
+    if (CELL_WORD_INDEX_I32(v) < 0)
         assert(Is_Stub_Details(BINDING(v)));
-    return VAL_WORD_INDEX_I32(v) <= 0;
+    return CELL_WORD_INDEX_I32(v) <= 0;
 }
 
 #define IS_WORD_BOUND(v) \
@@ -352,14 +352,14 @@ INLINE bool IS_WORD_UNBOUND(const Cell* v) {
 
 INLINE REBINT VAL_WORD_INDEX(const Cell* v) {
     assert(Any_Wordlike(v));
-    uint32_t i = VAL_WORD_INDEX_I32(v);
+    uint32_t i = CELL_WORD_INDEX_I32(v);
     assert(i > 0);
     return cast(REBLEN, i);
 }
 
 INLINE void Unbind_Any_Word(Cell* v) {
     assert(Any_Wordlike(v));
-    VAL_WORD_INDEX_I32(v) = 0;
+    CELL_WORD_INDEX_I32(v) = 0;
     BINDING(v) = nullptr;
 }
 

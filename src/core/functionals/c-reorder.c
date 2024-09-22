@@ -79,8 +79,8 @@ Bounce Reorderer_Dispatcher(Level* L) {
 
     Value* reorderee = Details_At(details, IDX_REORDERER_REORDEREE);
 
-    INIT_LVL_PHASE(L, ACT_IDENTITY(VAL_ACTION(reorderee)));
-    INIT_LVL_COUPLING(L, VAL_FRAME_COUPLING(reorderee));
+    Tweak_Level_Phase(L, ACT_IDENTITY(VAL_ACTION(reorderee)));
+    Tweak_Level_Coupling(L, Cell_Frame_Coupling(reorderee));
 
     return BOUNCE_REDO_UNCHECKED;  // exemplar unchanged; known to be valid
 }

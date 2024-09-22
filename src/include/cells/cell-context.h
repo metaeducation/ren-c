@@ -49,11 +49,11 @@ INLINE Context* VAL_CONTEXT(const Cell* v) {
 
 INLINE void INIT_VAL_FRAME_PHASE(Cell* v, Phase* phase) {
     assert(Cell_Heart(v) == REB_FRAME);  // may be protected (e.g. archetype)
-    INIT_VAL_FRAME_PHASE_OR_LABEL(v, phase);
+    Tweak_Cell_Frame_Phase_Or_Label(v, phase);
 }
 
 INLINE Phase* VAL_FRAME_PHASE(const Cell* v) {
-    Flex* f = VAL_FRAME_PHASE_OR_LABEL(v);
+    Flex* f = Extract_Cell_Frame_Phase_Or_Label(v);
     if (not f or Is_Stub_Symbol(f))  // ANONYMOUS or label, not a phase
         return CTX_FRAME_PHASE(VAL_CONTEXT(v));  // use archetype
     return cast(Phase*, f);  // cell has its own phase, return it
@@ -61,16 +61,16 @@ INLINE Phase* VAL_FRAME_PHASE(const Cell* v) {
 
 INLINE bool IS_FRAME_PHASED(const Cell* v) {
     assert(Cell_Heart(v) == REB_FRAME);
-    Flex* f = VAL_FRAME_PHASE_OR_LABEL(v);
+    Flex* f = Extract_Cell_Frame_Phase_Or_Label(v);
     return f and not Is_Stub_Symbol(f);
 }
 
-// 1. VAL_ACTION_PARTIALS_OR_LABEL as well
+// 1. Extract_Cell_Action_Partials_Or_Label as well
 //
 // 2. as a phase (or partials), so no label (maybe findable if running)
 //
 INLINE Option(const Symbol*) VAL_FRAME_LABEL(const Cell* v) {
-    Flex* f = VAL_FRAME_PHASE_OR_LABEL(v);  // [1]
+    Flex* f = Extract_Cell_Frame_Phase_Or_Label(v);  // [1]
     if (f and Is_Stub_Symbol(f))  // label in value
         return cast(Symbol*, f);
     return ANONYMOUS;  // [2]
@@ -82,7 +82,7 @@ INLINE void INIT_VAL_FRAME_LABEL(
 ){
     assert(Cell_Heart(v) == REB_FRAME);
     Assert_Cell_Writable(v);  // No label in archetype
-    INIT_VAL_FRAME_PHASE_OR_LABEL(v, maybe label);
+    Tweak_Cell_Frame_Phase_Or_Label(v, maybe label);
 }
 
 

@@ -181,12 +181,12 @@
 // flag bits of the node.  This could have a runtime check in debug build
 // with a C++ variation that only takes mutable pointers.
 //
-INLINE void Init_Cell_Node1(Cell* v, Option(const Node*) node) {
+INLINE void Tweak_Cell_Node1(Cell* v, Option(const Node*) node) {
     assert(v->header.bits & CELL_FLAG_FIRST_IS_NODE);
     PAYLOAD(Any, v).first.node = maybe node;
 }
 
-INLINE void Init_Cell_Node2(Cell* v, Option(const Node*) node) {
+INLINE void Tweak_Cell_Node2(Cell* v, Option(const Node*) node) {
     assert(v->header.bits & CELL_FLAG_SECOND_IS_NODE);
     PAYLOAD(Any, v).second.node = maybe node;
 }

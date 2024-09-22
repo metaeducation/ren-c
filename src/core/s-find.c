@@ -560,7 +560,7 @@ REBLEN Find_Value_In_Binstr(
         DECLARE_ATOM (temp);  // !!! Note: unmanaged
         if (formed) {
             Reset_Cell_Header_Untracked(temp, CELL_MASK_TEXT);
-            Init_Cell_Node1(temp, formed);
+            Tweak_Cell_Node1(temp, formed);
             PAYLOAD(Any, temp).second.u = 0;  // index
         }
 

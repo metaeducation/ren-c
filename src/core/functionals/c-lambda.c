@@ -77,7 +77,7 @@ Bounce Lambda_Dispatcher(Level* const L)
     );
 
     Copy_Cell(SPARE, block);
-    INIT_SPECIFIER(SPARE, specifier);
+    Tweak_Cell_Specifier(SPARE, specifier);
 
     return DELEGATE_CORE(
         OUT,
@@ -107,7 +107,7 @@ Bounce Lambda_Unoptimized_Dispatcher(Level* const L)
 
     Copy_Cell(SPARE, body);
     node_LINK(NextVirtual, L->varlist) = Cell_Specifier(body);
-    INIT_SPECIFIER(SPARE, L->varlist);
+    Tweak_Cell_Specifier(SPARE, L->varlist);
 
     return DELEGATE_CORE(
         OUT,  // output

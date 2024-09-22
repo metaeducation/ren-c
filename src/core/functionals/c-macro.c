@@ -122,7 +122,7 @@ Bounce Macro_Dispatcher(Level* const L)
 
     Copy_Cell(SPARE, body);
     node_LINK(NextVirtual, L->varlist) = Cell_Specifier(body);
-    INIT_SPECIFIER(SPARE, L->varlist);
+    Tweak_Cell_Specifier(SPARE, L->varlist);
 
     // Must catch RETURN ourselves, as letting it bubble up to generic UNWIND
     // handling would return a BLOCK! instead of splice it.

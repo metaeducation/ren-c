@@ -402,7 +402,7 @@ static const Element* Get_Parse_Value(
     Specifier* specifier
 ){
     if (Is_Word(rule)) {
-        if (VAL_CMD(rule))  // includes IS_BAR()...also a "command"
+        if (VAL_CMD(rule))  // includes Is_Bar()...also a "command"
             return rule;
 
         Get_Word_May_Fail(sink, rule, specifier);
@@ -774,7 +774,7 @@ static REBIXO To_Thru_Block_Rule(
         const Element* blk_tail = Array_Tail(Cell_Array(rule_block));
         const Element* blk = Array_Head(Cell_Array(rule_block));
         for (; blk != blk_tail; blk++) {
-            if (IS_BAR(blk))
+            if (Is_Bar(blk))
                 fail (Error_Parse3_Rule());  // !!! Shouldn't `TO [|]` succeed?
 
             const Element* rule;
@@ -989,7 +989,7 @@ static REBIXO To_Thru_Block_Rule(
                 ++blk;
                 if (blk == blk_tail)
                     goto next_input_position;
-            } while (not IS_BAR(blk));
+            } while (not Is_Bar(blk));
         }
 
       next_input_position:;  // not matched yet, keep trying to go THRU or TO
@@ -1345,7 +1345,7 @@ DECLARE_NATIVE(subparse)
     //
     // Note: First test, so `[| ...anything...]` is a "no-op" match
 
-    if (IS_BAR(rule))  // reached BAR! without a match failure, good!
+    if (Is_Bar(rule))  // reached BAR! without a match failure, good!
         return Init_Integer(OUT, P_POS);  // indicate match @ current pos
 
     //=//// HANDLE COMMA! (BEFORE GROUP...?) //////////////////////////////=//
@@ -1773,7 +1773,7 @@ DECLARE_NATIVE(subparse)
         fail ("Use TUPLE! a.b.c instead of PATH! a/b/c");
     }
 
-    if (IS_BAR(rule))
+    if (Is_Bar(rule))
         fail ("BAR! must be source level (else PARSE can't skip it)");
 
     if (Is_Quasiform(rule)) {
@@ -1832,7 +1832,7 @@ DECLARE_NATIVE(subparse)
     count = 0;
     while (count < maxcount) {
         assert(
-            not IS_BAR(rule)
+            not Is_Bar(rule)
             and not Is_Integer(rule)
             and not Is_Group(rule)
         );  // these should all have been handled before iterated section

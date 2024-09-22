@@ -230,7 +230,7 @@ Bounce Stepper_Executor(Level* L)
             Push_Action(
                 sub,
                 VAL_ACTION(L_current),
-                VAL_FRAME_COUPLING(L_current)
+                Cell_Frame_Coupling(L_current)
             );
             Begin_Enfix_Action(sub, VAL_FRAME_LABEL(L_current));
                 // ^-- invisibles cache NO_LOOKAHEAD
@@ -435,7 +435,7 @@ Bounce Stepper_Executor(Level* L)
     Push_Action(
         sub,
         VAL_ACTION(unwrap L_current_gotten),
-        VAL_FRAME_COUPLING(unwrap L_current_gotten)
+        Cell_Frame_Coupling(unwrap L_current_gotten)
     );
     if (Is_Word(L_current))
         Begin_Enfix_Action(sub, Cell_Word_Symbol(L_current));
@@ -519,7 +519,7 @@ Bounce Stepper_Executor(Level* L)
         Push_Action(
             sub,
             VAL_ACTION(L_current),
-            VAL_FRAME_COUPLING(L_current)
+            Cell_Frame_Coupling(L_current)
         );
         bool enfix = Is_Enfixed(L_current);
         assert(Is_Fresh(OUT));  // so nothing on left [1]
@@ -704,7 +704,7 @@ Bounce Stepper_Executor(Level* L)
         if (Is_Action(OUT)) {
             Action* action = VAL_ACTION(OUT);
             bool enfixed = Is_Enfixed(OUT);
-            Option(Context*) coupling = VAL_FRAME_COUPLING(OUT);
+            Option(Context*) coupling = Cell_Frame_Coupling(OUT);
             const Symbol* label = Cell_Word_Symbol(L_current);  // use WORD!
             Erase_Cell(OUT);  // sanity check, plus don't want enfix to see
 
@@ -1003,7 +1003,7 @@ Bounce Stepper_Executor(Level* L)
         sub->baseline.stack_base = BASELINE->stack_base;  // refinements
 
         Push_Level(OUT, sub);
-        Push_Action(sub, VAL_ACTION(SPARE), VAL_FRAME_COUPLING(SPARE));
+        Push_Action(sub, VAL_ACTION(SPARE), Cell_Frame_Coupling(SPARE));
         Begin_Prefix_Action(sub, VAL_FRAME_LABEL(SPARE));
         goto process_action; }
 
@@ -1903,7 +1903,7 @@ Bounce Stepper_Executor(Level* L)
 
     Level* sub = Make_Action_Sublevel(L);
     Push_Level(OUT, sub);
-    Push_Action(sub, enfixed, VAL_FRAME_COUPLING(unwrap L_next_gotten));
+    Push_Action(sub, enfixed, Cell_Frame_Coupling(unwrap L_next_gotten));
     Begin_Enfix_Action(
         sub,
         Is_Frame(L_next) ? VAL_FRAME_LABEL(L_next) : Cell_Word_Symbol(L_next)

@@ -77,7 +77,7 @@ Array* Startup_Datatypes(Array* boot_typespecs)
             REB_WORD,
             Canon_Symbol(datatype_sym)
         );
-        INIT_VAL_WORD_INDEX(word, INDEX_PATCHED);
+        Tweak_Cell_Word_Index(word, INDEX_PATCHED);
         BINDING(word) = &PG_Lib_Patches[datatype_sym];
     }
 

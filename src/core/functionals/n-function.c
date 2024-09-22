@@ -134,7 +134,7 @@ Bounce Func_Dispatcher(Level* const L)
 
     Copy_Cell(SPARE, body);
     node_LINK(NextVirtual, L->varlist) = Cell_Specifier(body);
-    INIT_SPECIFIER(SPARE, L->varlist);
+    Tweak_Cell_Specifier(SPARE, L->varlist);
 
     assert(Is_Fresh(OUT));
     return CONTINUE_CORE(
@@ -269,7 +269,7 @@ Phase* Make_Interpreted_Action_May_Fail(
         Array_At(details, IDX_NATIVE_BODY),
         copy
     );
-    INIT_SPECIFIER(rebound, Cell_Specifier(body));
+    Tweak_Cell_Specifier(rebound, Cell_Specifier(body));
 
     // Capture the mutability flag that was in effect when this action was
     // created.  This allows the following to work:
@@ -633,7 +633,7 @@ DECLARE_NATIVE(definitional_return)
         Push_Action(
             target_level,
             VAL_ACTION(atom),
-            VAL_FRAME_COUPLING(atom)
+            Cell_Frame_Coupling(atom)
         );
         Begin_Prefix_Action(target_level, VAL_FRAME_LABEL(atom));
 

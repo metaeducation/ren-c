@@ -111,7 +111,7 @@
 #define BONUS_KeySource_TYPE        Node*
 #define HAS_BONUS_KeySource         FLAVOR_VARLIST
 
-INLINE void INIT_BONUS_KEYSOURCE(Array* varlist, Node* keysource) {
+INLINE void Tweak_Bonus_Keysource(Array* varlist, Node* keysource) {
     if (keysource != nullptr) {
         if (Is_Node_A_Stub(keysource))
             assert(Is_Stub_Keylist(cast(Flex*, keysource)));
@@ -194,9 +194,9 @@ INLINE bool Is_Throwing(Level* level_) {
 }
 
 
-#define INIT_VAL_ACTION_DETAILS                 Init_Cell_Node1
-#define VAL_ACTION_PARTIALS_OR_LABEL(v)         cast(Flex*, Cell_Node2(v))
-#define INIT_VAL_ACTION_PARTIALS_OR_LABEL       Init_Cell_Node2
+#define Tweak_Cell_Action_Details                 Tweak_Cell_Node1
+#define Extract_Cell_Action_Partials_Or_Label(c)  cast(Flex*, Cell_Node2(c))
+#define Tweak_Cell_Action_Partials_Or_Label       Tweak_Cell_Node2
 
 
 INLINE Phase* CTX_FRAME_PHASE(Context* c);

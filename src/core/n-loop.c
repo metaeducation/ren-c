@@ -189,7 +189,7 @@ void Add_Definitional_Break_Continue(
         cast(Context*, loop_level->varlist)  // what to break
     );
 
-    INIT_SPECIFIER(body, let_break);  // extend chain
+    Tweak_Cell_Specifier(body, let_break);  // extend chain
 }
 
 
@@ -698,7 +698,7 @@ void Add_Definitional_Stop(
         cast(Context*, loop_level->varlist)  // what to stop
    );
 
-    INIT_SPECIFIER(body, let_stop);  // extend chain
+    Tweak_Cell_Specifier(body, let_stop);  // extend chain
 }
 
 
@@ -892,7 +892,7 @@ void Init_Loop_Each(Value* iterator, Value* data)
 static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
 {
     struct Loop_Each_State *les;
-    les = VAL_HANDLE_POINTER(struct Loop_Each_State, iterator);
+    les = Cell_Handle_Pointer(struct Loop_Each_State, iterator);
 
     if (not les->more_data)
         return false;
@@ -974,7 +974,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
                 );
 
                 if (heart == REB_MODULE) {
-                    INIT_VAL_WORD_INDEX(var, INDEX_PATCHED);
+                    Tweak_Cell_Word_Index(var, INDEX_PATCHED);
                     BINDING(var) = MOD_PATCH(
                         VAL_CONTEXT(les->data),
                         KEY_SYMBOL(les->u.evars.key),
@@ -982,7 +982,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
                     );
                 }
                 else {
-                    INIT_VAL_WORD_INDEX(var, les->u.evars.index);
+                    Tweak_Cell_Word_Index(var, les->u.evars.index);
                     BINDING(var) = VAL_CONTEXT(les->data);
                 }
             }
@@ -1085,7 +1085,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
 void Shutdown_Loop_Each(Value* iterator)
 {
     struct Loop_Each_State *les;
-    les = VAL_HANDLE_POINTER(struct Loop_Each_State, iterator);
+    les = Cell_Handle_Pointer(struct Loop_Each_State, iterator);
 
     if (les->took_hold)  // release read-only lock
         Clear_Flex_Flag(les->flex, FIXED_SIZE);
@@ -1701,8 +1701,8 @@ DECLARE_NATIVE(map_each)
     //
     Quotify(ARG(data), 1);
 
-    INIT_LVL_PHASE(LEVEL, ACT_IDENTITY(VAL_ACTION(Lib(MAP))));
-    // INIT_LVL_COUPLING ?
+    Tweak_Level_Phase(LEVEL, ACT_IDENTITY(VAL_ACTION(Lib(MAP))));
+    // Tweak_Level_Coupling ?
 
     Dispatcher* dispatcher = ACT_DISPATCHER(VAL_ACTION(Lib(MAP)));
     return dispatcher(LEVEL);

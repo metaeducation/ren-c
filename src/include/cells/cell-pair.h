@@ -50,7 +50,7 @@ INLINE bool Any_Pairlike(const Cell* v) {
 }
 
 #define INIT_VAL_PAIR(v,pairing) \
-    Init_Cell_Node1((v), (pairing))
+    Tweak_Cell_Node1((v), (pairing))
 
 INLINE Value* VAL_PAIRING(const Cell* v) {
     assert(Any_Pairlike(v));

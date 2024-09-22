@@ -879,7 +879,7 @@ void API_rebModifyHandleCData(
 
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));  // api only sees managed handles
 
-    SET_HANDLE_CDATA(v, data);
+    Tweak_Cell_Handle_Cdata(v, data);
 }
 
 
@@ -894,7 +894,7 @@ void API_rebModifyHandleLength(RebolValue* v, size_t length) {
 
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));  // api only sees managed handles
 
-    SET_HANDLE_LEN(v, length);
+    Tweak_Cell_Handle_Len(v, length);
 }
 
 
@@ -909,7 +909,7 @@ void API_rebModifyHandleCleaner(RebolValue* v, CLEANUP_CFUNC *cleaner) {
 
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));  // api only sees managed handles
 
-    VAL_HANDLE_STUB(v)->misc.cleaner = cleaner;
+    Extract_Cell_Handle_Stub(v)->misc.cleaner = cleaner;
 }
 
 
@@ -1866,8 +1866,8 @@ void* API_rebUnboxHandleCData(
         fail ("rebUnboxHandleCData() called on non-HANDLE!");
 
     if (size_out)
-        *size_out = VAL_HANDLE_LEN(v);
-    return VAL_HANDLE_POINTER(void*, v);
+        *size_out = Cell_Handle_Len(v);
+    return Cell_Handle_Pointer(void*, v);
 }
 
 
@@ -1886,7 +1886,7 @@ CLEANUP_CFUNC* API_rebExtractHandleCleaner(
     if (VAL_TYPE(v) != REB_HANDLE)
         fail ("rebUnboxHandleCleaner() called on non-HANDLE!");
 
-    Stub* stub = VAL_HANDLE_STUB(v);
+    Stub* stub = Extract_Cell_Handle_Stub(v);
     return stub->misc.cleaner;
 }
 
@@ -3098,7 +3098,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
 
     Value* cfunc_handle = Details_At(details, IDX_API_ACTION_CFUNC);
     RebolActionCFunction* cfunc = cast(RebolActionCFunction*,
-        VAL_HANDLE_CFUNC(cfunc_handle)
+        Cell_Handle_Cfunc(cfunc_handle)
     );
 
     Value *holder = Details_At(details, IDX_API_ACTION_SPECIFIER_BLOCK);
@@ -3192,7 +3192,7 @@ RebolValue* API_rebFunc(
     );
     Value* holder = Details_At(details, IDX_API_ACTION_SPECIFIER_BLOCK);
     Init_Block(holder, EMPTY_ARRAY);  // only care about specifier GC safety
-    INIT_SPECIFIER(holder, BINDING(spec));
+    Tweak_Cell_Specifier(holder, BINDING(spec));
 
     return Init_Action(Alloc_Value(), a, ANONYMOUS, UNBOUND);
 }

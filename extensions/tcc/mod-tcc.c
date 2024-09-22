@@ -244,7 +244,7 @@ static void Add_API_Symbol_Helper(
 //
 static void cleanup(const Value* val)
 {
-    TCCState *state = VAL_HANDLE_POINTER(TCCState, val);
+    TCCState *state = Cell_Handle_Pointer(TCCState, val);
     assert(state != nullptr);
     tcc_delete(state);
 }

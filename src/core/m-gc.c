@@ -572,7 +572,7 @@ void Run_All_Handle_Cleaners(void) {
                     continue;
                 if (Not_Node_Accessible(Cell_Node1(item)))
                     continue;
-                Stub* handle_stub = VAL_HANDLE_STUB(item);
+                Stub* handle_stub = Extract_Cell_Handle_Stub(item);
                 Decay_Flex(handle_stub);
             }
         }

@@ -466,7 +466,7 @@ static void Init_System_Object(
     DECLARE_ATOM (result);
     if (Eval_Any_List_At_Throws(result, sysobj_spec_virtual, SPECIFIED))
         panic (result);
-    if (not Is_Anti_Word_With_Id(result, SYM_DONE))  // ~done~ sanity check
+    if (not Is_Anti_Word_With_Id(Decay_If_Unstable(result), SYM_DONE))
         panic (result);
 
     // Init_Action_Adjunct_Shim() made Root_Action_Adjunct as a bootstrap hack
@@ -675,14 +675,14 @@ void Startup_Core(void)
     // boot->natives is from the automatically gathered list of natives found
     // by scanning comments in the C sources for `native: ...` declarations.
     //
-    INIT_SPECIFIER(&boot->natives, Lib_Context);
+    Tweak_Cell_Specifier(&boot->natives, Lib_Context);
     Array* natives_catalog = Startup_Natives(&boot->natives);
     Manage_Flex(natives_catalog);
     Push_GC_Guard(natives_catalog);
 
     // boot->generics is the list in %generics.r
     //
-    INIT_SPECIFIER(&boot->generics, Lib_Context);
+    Tweak_Cell_Specifier(&boot->generics, Lib_Context);
     Array* generics_catalog = Startup_Generics(&boot->generics);
     Manage_Flex(generics_catalog);
     Push_GC_Guard(generics_catalog);
@@ -692,7 +692,7 @@ void Startup_Core(void)
     Context* errors_catalog = Startup_Errors(&boot->errors);
     Push_GC_Guard(errors_catalog);
 
-    INIT_SPECIFIER(&boot->sysobj, Lib_Context);
+    Tweak_Cell_Specifier(&boot->sysobj, Lib_Context);
     Init_System_Object(
         &boot->sysobj,
         datatypes_catalog,

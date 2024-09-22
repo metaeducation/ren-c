@@ -674,7 +674,7 @@ static bool Combinator_Param_Hook(
 
         if (
             item == tail
-            or (Is_Comma(item) or IS_BAR(item) or IS_BAR_BAR(item))
+            or (Is_Comma(item) or Is_Bar(item) or Is_Bar_Bar(item))
         ){
             if (Not_Parameter_Flag(param, ENDABLE))
                 fail ("Too few parameters for combinator");  // !!! Error_No_Arg
@@ -699,7 +699,7 @@ static bool Combinator_Param_Hook(
         const Element* item = Cell_List_At(&tail, ARG(rules));
         if (
             item == tail
-            or (Is_Comma(item) or IS_BAR(item) or IS_BAR_BAR(item))
+            or (Is_Comma(item) or Is_Bar(item) or Is_Bar_Bar(item))
         ){
             if (Not_Parameter_Flag(param, ENDABLE))
                 fail ("Too few parameters for combinator");  // !!! Error_No_Arg
@@ -772,7 +772,7 @@ DECLARE_NATIVE(combinatorize)
 
     Action* act = VAL_ACTION(ARG(c));
     Option(const Symbol*) label = VAL_FRAME_LABEL(ARG(c));
-    Option(Context*) coupling = VAL_FRAME_COUPLING(ARG(c));
+    Option(Context*) coupling = Cell_Frame_Coupling(ARG(c));
 
     Value* rule_start = ARG(rule_start);
     Copy_Cell(rule_start, ARG(rules));

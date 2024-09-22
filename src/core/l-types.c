@@ -290,7 +290,7 @@ Bounce Reflect_Core(Level* level_)
 
     QUOTE_BYTE(ARG(value)) = NOQUOTE_1;  // ignore quasi or quoted
 
-    INIT_LVL_PHASE(
+    Tweak_Level_Phase(
         level_,
         ACT_IDENTITY(VAL_ACTION(Lib(REFLECT)))  // switch to generic
     );

@@ -40,73 +40,75 @@
 //   the spec and has different forms for functions and data.
 //
 
-#define INIT_VAL_HANDLE_STUB            Init_Cell_Node1
-#define VAL_HANDLE_STUB(v)              cast(Stub*, Cell_Node1(v))
+#define Tweak_Cell_Handle_Stub          Tweak_Cell_Node1
+#define Extract_Cell_Handle_Stub(c)     cast(Stub*, Cell_Node1(c))
 
-#define VAL_HANDLE_LENGTH_U(v)          PAYLOAD(Any, (v)).second.u
+#define CELL_HANDLE_LENGTH_U(v)         PAYLOAD(Any, (v)).second.u
 
-#define VAL_HANDLE_CDATA_P(v)           EXTRA(Any, (v)).p
-#define VAL_HANDLE_CFUNC_P(v)           EXTRA(Any, (v)).cfunc
+#define CELL_HANDLE_CDATA_P(v)          EXTRA(Any, (v)).p
+#define CELL_HANDLE_CFUNC_P(v)          EXTRA(Any, (v)).cfunc
 
 
 INLINE bool Is_Handle_Cfunc(const Cell* v) {
     assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
-    return VAL_HANDLE_LENGTH_U(v) == 0;
+    return CELL_HANDLE_LENGTH_U(v) == 0;
 }
 
-INLINE const Cell* VAL_HANDLE_CANON(const Cell* v) {
+INLINE Cell* Extract_Cell_Handle_Canon(const_if_c Cell* v) {
     assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return v;  // changing handle instance won't be seen by copies
-    return Stub_Cell(VAL_HANDLE_STUB(v));  // has shared node
+    return Stub_Cell(Extract_Cell_Handle_Stub(v));  // has shared node
 }
 
-INLINE Cell* mutable_VAL_HANDLE_CANON(Cell* v) {
-    assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
-    if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
-        return v;  // changing handle instance won't be seen by copies
-    return Stub_Cell(VAL_HANDLE_STUB(v));  // has shared node
-}
+#if CPLUSPLUS_11
+    INLINE const Cell* Extract_Cell_Handle_Canon(const Cell* v) {
+        assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
+        if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
+            return v;  // changing handle instance won't be seen by copies
+        return Stub_Cell(Extract_Cell_Handle_Stub(v));  // has shared node
+    }
+#endif
 
-INLINE uintptr_t VAL_HANDLE_LEN(const Cell* v) {
+INLINE uintptr_t Cell_Handle_Len(const Cell* v) {
     assert(not Is_Handle_Cfunc(v));
-    return VAL_HANDLE_LENGTH_U(VAL_HANDLE_CANON(v));
+    return CELL_HANDLE_LENGTH_U(Extract_Cell_Handle_Canon(v));
 }
 
-INLINE void *VAL_HANDLE_VOID_POINTER(const Cell* v) {
+INLINE void* Cell_Handle_Void_Pointer(const Cell* v) {
     assert(not Is_Handle_Cfunc(v));
-    return VAL_HANDLE_CDATA_P(VAL_HANDLE_CANON(v));
+    return CELL_HANDLE_CDATA_P(Extract_Cell_Handle_Canon(v));
 }
 
-#define VAL_HANDLE_POINTER(T, v) \
-    cast(T*, VAL_HANDLE_VOID_POINTER(v))
+#define Cell_Handle_Pointer(T, v) \
+    cast(T*, Cell_Handle_Void_Pointer(v))
 
-INLINE CFunction* VAL_HANDLE_CFUNC(const Cell* v) {
+INLINE CFunction* Cell_Handle_Cfunc(const Cell* v) {
     assert(Is_Handle_Cfunc(v));
-    return VAL_HANDLE_CFUNC_P(VAL_HANDLE_CANON(v));
+    return CELL_HANDLE_CFUNC_P(Extract_Cell_Handle_Canon(v));
 }
 
-INLINE CLEANUP_CFUNC *VAL_HANDLE_CLEANER(const Cell* v) {
+INLINE CLEANUP_CFUNC* Cell_Handle_Cleaner(const Cell* v) {
     assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return nullptr;
-    return VAL_HANDLE_STUB(v)->misc.cleaner;
+    return Extract_Cell_Handle_Stub(v)->misc.cleaner;
 }
 
-INLINE void SET_HANDLE_LEN(Cell* v, uintptr_t length)
-  { VAL_HANDLE_LENGTH_U(mutable_VAL_HANDLE_CANON(v)) = length; }
+INLINE void Tweak_Cell_Handle_Len(Cell* v, uintptr_t length)
+  { CELL_HANDLE_LENGTH_U(Extract_Cell_Handle_Canon(v)) = length; }
 
-INLINE void SET_HANDLE_CDATA(Cell* v, void *cdata) {
-    Cell* canon = mutable_VAL_HANDLE_CANON(v);
-    assert(VAL_HANDLE_LENGTH_U(canon) != 0);
-    VAL_HANDLE_CDATA_P(canon) = cdata;
+INLINE void Tweak_Cell_Handle_Cdata(Cell* v, void *cdata) {
+    Cell* canon = Extract_Cell_Handle_Canon(v);
+    assert(CELL_HANDLE_LENGTH_U(canon) != 0);
+    CELL_HANDLE_CDATA_P(canon) = cdata;
 }
 
-INLINE void SET_HANDLE_CFUNC(Cell* v, CFunction* cfunc) {
+INLINE void Tweak_Cell_Handle_Cfunc(Cell* v, CFunction* cfunc) {
     assert(Is_Handle_Cfunc(v));
-    Cell* canon = mutable_VAL_HANDLE_CANON(v);
-    assert(VAL_HANDLE_LENGTH_U(canon) == 0);
-    VAL_HANDLE_CFUNC_P(canon) = cfunc;
+    Cell* canon = Extract_Cell_Handle_Canon(v);
+    assert(CELL_HANDLE_LENGTH_U(canon) == 0);
+    CELL_HANDLE_CFUNC_P(canon) = cfunc;
 }
 
 INLINE Element* Init_Handle_Cdata(
@@ -122,8 +124,8 @@ INLINE Element* Init_Handle_Cdata(
   #ifdef ZERO_UNUSED_CELL_FIELDS
     PAYLOAD(Any, out).first.corrupt = CORRUPTZERO;
   #endif
-    VAL_HANDLE_CDATA_P(out) = cdata;
-    VAL_HANDLE_LENGTH_U(out) = length;  // non-zero signals cdata
+    CELL_HANDLE_CDATA_P(out) = cdata;
+    CELL_HANDLE_LENGTH_U(out) = length;  // non-zero signals cdata
     return out;
 }
 
@@ -138,8 +140,8 @@ INLINE Element* Init_Handle_Cfunc(
   #ifdef ZERO_UNUSED_CELL_FIELDS
     PAYLOAD(Any, out).first.corrupt = CORRUPTZERO;
   #endif
-    VAL_HANDLE_CFUNC_P(out) = cfunc;
-    VAL_HANDLE_LENGTH_U(out) = 0;  // signals cfunc
+    CELL_HANDLE_CFUNC_P(out) = cfunc;
+    CELL_HANDLE_LENGTH_U(out) = 0;  // signals cfunc
     return out;
 }
 
@@ -156,9 +158,9 @@ INLINE void Init_Handle_Managed_Common(
         single,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_FLAG_FIRST_IS_NODE
     );
-    INIT_VAL_HANDLE_STUB(single, singular);
-    VAL_HANDLE_LENGTH_U(single) = length;
-    // caller fills in VAL_HANDLE_CDATA_P or VAL_HANDLE_CFUNC_P
+    Tweak_Cell_Handle_Stub(single, singular);
+    CELL_HANDLE_LENGTH_U(single) = length;
+    // caller fills in CELL_HANDLE_CDATA_P or CELL_HANDLE_CFUNC_P
 
     // Don't fill the handle properties in the instance if it's the managed
     // form.  This way, you can set the properties in the canon value and
@@ -169,10 +171,10 @@ INLINE void Init_Handle_Managed_Common(
         out,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_FLAG_FIRST_IS_NODE
     );
-    INIT_VAL_HANDLE_STUB(out, singular);
+    Tweak_Cell_Handle_Stub(out, singular);
 
-    VAL_HANDLE_LENGTH_U(out) = 0xDECAFBAD;  // corrupt avoids compiler warning
-    VAL_HANDLE_CDATA_P(out) = nullptr;  // or complains about not initializing
+    CELL_HANDLE_LENGTH_U(out) = 0xDECAFBAD;  // corrupt avoids compiler warning
+    CELL_HANDLE_CDATA_P(out) = nullptr;  // or complains about not initializing
 }
 
 INLINE Element* Init_Handle_Cdata_Managed(
@@ -183,10 +185,10 @@ INLINE Element* Init_Handle_Cdata_Managed(
 ){
     Init_Handle_Managed_Common(out, length, cleaner);
 
-    // Leave the non-singular cfunc corrupt; clients should not be using
+    // Leave the non-singular cdata corrupt; clients should not be using
 
-    Stub* stub = VAL_HANDLE_STUB(out);
-    VAL_HANDLE_CDATA_P(Stub_Cell(stub)) = cdata;
+    Stub* stub = Extract_Cell_Handle_Stub(out);
+    CELL_HANDLE_CDATA_P(Stub_Cell(stub)) = cdata;
     return out;
 }
 
@@ -199,7 +201,7 @@ INLINE Element* Init_Handle_Cdata_Managed_Cfunc(
 
     // Leave the non-singular cfunc corrupt; clients should not be using
 
-    Stub* stub = VAL_HANDLE_STUB(out);
-    VAL_HANDLE_CFUNC_P(Stub_Cell(stub)) = cfunc;
+    Stub* stub = Extract_Cell_Handle_Stub(out);
+    CELL_HANDLE_CFUNC_P(Stub_Cell(stub)) = cfunc;
     return out;
 }

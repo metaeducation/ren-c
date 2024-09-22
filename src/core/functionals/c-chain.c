@@ -65,7 +65,7 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
     assert(sub->varlist == nullptr);
     sub->varlist = L->varlist;
     assert(BONUS(KeySource, sub->varlist) == L);
-    INIT_BONUS_KEYSOURCE(sub->varlist, sub);
+    Tweak_Bonus_Keysource(sub->varlist, sub);
     sub->rootvar = Array_Head(sub->varlist);
 
     // Note that it can occur that this may be a TRAMPOLINE_KEEPALIVE sublevel
@@ -166,11 +166,11 @@ Bounce Cascader_Dispatcher(Level* const L)
     const Cell* first = Cell_List_Item_At(pipeline);
     ++VAL_INDEX_RAW(pipeline);  // point series index to next FRAME! to call
 
-    INIT_LVL_PHASE(
+    Tweak_Level_Phase(
         sub,
         ACT_IDENTITY(VAL_ACTION(first))  // has varlist already [3]
     );
-    INIT_LVL_COUPLING(sub, VAL_FRAME_COUPLING(first));
+    Tweak_Level_Coupling(sub, Cell_Frame_Coupling(first));
 
     sub->u.action.original = VAL_ACTION(first);
     sub->label = VAL_FRAME_LABEL(first);
@@ -206,7 +206,7 @@ Bounce Cascader_Dispatcher(Level* const L)
     ++VAL_INDEX_RAW(pipeline);  // update series index to next FRAME! to call
 
     Restart_Action_Level(sub);  // see notes
-    Push_Action(sub, VAL_ACTION(pipeline_at), VAL_FRAME_COUPLING(pipeline_at));
+    Push_Action(sub, VAL_ACTION(pipeline_at), Cell_Frame_Coupling(pipeline_at));
 
     Begin_Prefix_Action(sub, VAL_FRAME_LABEL(pipeline_at));
 

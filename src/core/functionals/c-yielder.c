@@ -178,7 +178,7 @@ Bounce Yielder_Dispatcher(Level* const L)
         ACT_UNDERLYING(cast(Action*, BONUS(KeySource, last_yielder_context)))
         == ACT_UNDERLYING(yielder_level->u.action.original)
     ); */
-    INIT_BONUS_KEYSOURCE(CTX_VARLIST(last_yielder_context), yielder_level);
+    Tweak_Bonus_Keysource(CTX_VARLIST(last_yielder_context), yielder_level);
 
     // Now that the last call's context varlist is pointing at our current
     // invocation level, we point the other way from the level to the

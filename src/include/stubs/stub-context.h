@@ -112,14 +112,10 @@
 #define LINK_Patches_TYPE       Array*
 #define HAS_LINK_Patches        FLAVOR_VARLIST
 
+#define Tweak_Cell_Context_Varlist            Tweak_Cell_Node1
 
-// ANY-CONTEXT? value cell schematic
-//
-#define VAL_CONTEXT_VARLIST(v)              cast(Array*, Cell_Node1(v))
-#define INIT_VAL_CONTEXT_VARLIST            Init_Cell_Node1
-#define VAL_FRAME_PHASE_OR_LABEL_NODE       Cell_Node2  // faster in debug
-#define VAL_FRAME_PHASE_OR_LABEL(v)         cast(Flex*, Cell_Node2(v))
-#define INIT_VAL_FRAME_PHASE_OR_LABEL       Init_Cell_Node2
+#define Tweak_Cell_Frame_Phase_Or_Label       Tweak_Cell_Node2
+#define Extract_Cell_Frame_Phase_Or_Label(v)  cast(Flex*, Cell_Node2(v))
 
 
 //=//// CONTEXT ARCHETYPE VALUE CELL (ROOTVAR)  ///////////////////////////=//
@@ -160,7 +156,7 @@ INLINE Element* CTX_ROOTVAR(Context* c)  // mutable archetype access
 INLINE Phase* CTX_FRAME_PHASE(Context* c) {
     const Value* archetype = CTX_ARCHETYPE(c);
     assert(Cell_Heart_Ensure_Noquote(archetype) == REB_FRAME);
-    return cast(Phase*, VAL_FRAME_PHASE_OR_LABEL_NODE(archetype));
+    return cast(Phase*, Extract_Cell_Frame_Phase_Or_Label(archetype));
 }
 
 INLINE Context* CTX_FRAME_BINDING(Context* c) {
@@ -182,42 +178,39 @@ INLINE Context* CTX_FRAME_BINDING(Context* c) {
 // a running frame gets re-executed.  More study is needed.
 //
 
-INLINE Option(Context*) VAL_FRAME_COUPLING(const Cell* v) {
-    assert(HEART_BYTE(v) == REB_FRAME);
-    return cast(Context*, m_cast(Node*, EXTRA(Any, v).node));
+INLINE Option(Context*) Cell_Frame_Coupling(const Cell* c) {
+    assert(Cell_Heart(c) == REB_FRAME);
+    return cast(Context*, m_cast(Node*, EXTRA(Any, c).node));
 }
 
-INLINE void INIT_VAL_FRAME_COUPLING(
-    Cell* v,
-    Option(Context*) target
-){
-    assert(HEART_BYTE(v) == REB_FRAME);
-    EXTRA(Any, v).node = maybe target;
+INLINE void Tweak_Cell_Frame_Coupling(Cell* c, Option(Context*) coupling) {
+    assert(HEART_BYTE(c) == REB_FRAME);
+    EXTRA(Any, c).node = maybe coupling;
 }
 
-INLINE void INIT_VAL_CONTEXT_ROOTVAR_Core(
+INLINE void Tweak_Cell_Context_Rootvar_Untracked(
     Cell* out,
     Heart heart,
     Array* varlist
 ){
-    assert(heart != REB_FRAME);  // use INIT_VAL_FRAME_ROOTVAR() instead
+    assert(heart != REB_FRAME);  // use Tweak_Cell_Frame_Rootvar() instead
     assert(out == Array_Head(varlist));
     Reset_Cell_Header_Untracked(
         out,
         FLAG_HEART_BYTE(heart) | CELL_MASK_ANY_CONTEXT
     );
-    INIT_VAL_CONTEXT_VARLIST(out, varlist);
+    Tweak_Cell_Context_Varlist(out, varlist);
     BINDING(out) = UNBOUND;  // not a frame
-    INIT_VAL_FRAME_PHASE_OR_LABEL(out, nullptr);  // not a frame
+    Tweak_Cell_Frame_Phase_Or_Label(out, nullptr);  // not a frame
   #if !defined(NDEBUG)
     out->header.bits |= CELL_FLAG_PROTECTED;
   #endif
 }
 
-#define INIT_VAL_CONTEXT_ROOTVAR(out,heart,varlist) \
-    INIT_VAL_CONTEXT_ROOTVAR_Core(TRACK(out), (heart), (varlist))
+#define Tweak_Cell_Context_Rootvar(out,heart,varlist) \
+    Tweak_Cell_Context_Rootvar_Untracked(TRACK(out), (heart), (varlist))
 
-INLINE void INIT_VAL_FRAME_ROOTVAR_Core(
+INLINE void Tweak_Cell_Frame_Rootvar_Core(
     Cell* out,
     Array* varlist,
     Phase* phase,
@@ -226,16 +219,16 @@ INLINE void INIT_VAL_FRAME_ROOTVAR_Core(
     assert(out == Array_Head(varlist));
     assert(phase != nullptr);
     Reset_Cell_Header_Untracked(out, CELL_MASK_FRAME);
-    INIT_VAL_CONTEXT_VARLIST(out, varlist);
-    INIT_VAL_FRAME_COUPLING(out, coupling);
-    INIT_VAL_FRAME_PHASE_OR_LABEL(out, phase);
+    Tweak_Cell_Context_Varlist(out, varlist);
+    Tweak_Cell_Frame_Coupling(out, coupling);
+    Tweak_Cell_Frame_Phase_Or_Label(out, phase);
   #if !defined(NDEBUG)
     out->header.bits |= CELL_FLAG_PROTECTED;
   #endif
 }
 
-#define INIT_VAL_FRAME_ROOTVAR(out,varlist,phase,target) \
-    INIT_VAL_FRAME_ROOTVAR_Core(TRACK(out), (varlist), (phase), (target))
+#define Tweak_Cell_Frame_Rootvar(out,varlist,phase,target) \
+    Tweak_Cell_Frame_Rootvar_Core(TRACK(out), (varlist), (phase), (target))
 
 
 //=//// CONTEXT KEYLISTS //////////////////////////////////////////////////=//
@@ -264,14 +257,14 @@ INLINE KeyList* CTX_KEYLIST(Context* c) {
     return cast(KeyList*, node_BONUS(KeySource, CTX_VARLIST(c)));  // not Level
 }
 
-INLINE void INIT_CTX_KEYLIST_SHARED(Context* c, KeyList* keylist) {
+INLINE void Tweak_Context_Keylist_Shared(Context* c, KeyList* keylist) {
     Set_Subclass_Flag(KEYLIST, keylist, SHARED);
-    INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), keylist);
+    Tweak_Bonus_Keysource(CTX_VARLIST(c), keylist);
 }
 
-INLINE void INIT_CTX_KEYLIST_UNIQUE(Context* c, KeyList *keylist) {
+INLINE void Tweak_Context_Keylist_Unique(Context* c, KeyList *keylist) {
     assert(Not_Subclass_Flag(KEYLIST, keylist, SHARED));
-    INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), keylist);
+    Tweak_Bonus_Keysource(CTX_VARLIST(c), keylist);
 }
 
 
@@ -524,7 +517,7 @@ INLINE Context* Steal_Context_Vars(Context* c, Node* keysource) {
     LINK(Patches, copy) = nullptr;  // don't carry forward patches
 
     Value* rootvar = cast(Value*, copy->content.dynamic.data);
-    INIT_VAL_CONTEXT_VARLIST(rootvar, x_cast(Array*, copy));
+    Tweak_Cell_Context_Varlist(rootvar, x_cast(Array*, copy));
 
     Set_Flex_Inaccessible(stub);  // Make unusable [2]
   #if DEBUG

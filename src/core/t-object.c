@@ -257,7 +257,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
             }
             if (found) {
                 Init_Any_Word(PUSH(), REB_WORD, *psym);
-                INIT_VAL_WORD_INDEX(TOP, INDEX_PATCHED);
+                Tweak_Cell_Word_Index(TOP, INDEX_PATCHED);
                 BINDING(TOP) = found;
             }
         }
@@ -811,7 +811,7 @@ Context* Copy_Context_Extra_Managed(
     // copied rootvar to the one just created.
     //
     Copy_Cell(dest, CTX_ARCHETYPE(original));
-    INIT_VAL_CONTEXT_VARLIST(dest, varlist);
+    Tweak_Cell_Context_Varlist(dest, varlist);
 
     if (CTX_TYPE(original) == REB_MODULE) {
         //
@@ -831,7 +831,7 @@ Context* Copy_Context_Extra_Managed(
         else {
             MISC(VarlistAdjunct, varlist) = nullptr;
         }
-        INIT_BONUS_KEYSOURCE(varlist, nullptr);
+        Tweak_Bonus_Keysource(varlist, nullptr);
         LINK(Patches, varlist) = nullptr;
 
         Context* copy = cast(Context*, varlist); // now a well-formed context
@@ -888,7 +888,7 @@ Context* Copy_Context_Extra_Managed(
     Context* copy = cast(Context*, varlist); // now a well-formed context
 
     if (extra == 0)
-        INIT_CTX_KEYLIST_SHARED(copy, CTX_KEYLIST(original));  // ->link field
+        Tweak_Context_Keylist_Shared(copy, CTX_KEYLIST(original));  // ->link field
     else {
         assert(CTX_TYPE(original) != REB_FRAME);  // can't expand FRAME!s
 
@@ -902,7 +902,7 @@ Context* Copy_Context_Extra_Managed(
 
         LINK(Ancestor, keylist) = CTX_KEYLIST(original);
 
-        INIT_CTX_KEYLIST_UNIQUE(copy, keylist);  // ->link field
+        Tweak_Context_Keylist_Unique(copy, keylist);  // ->link field
     }
 
     // A FRAME! in particular needs to know if it points back to a stack
@@ -1124,7 +1124,7 @@ REBTYPE(Context)
         Copy_Cell(OUT, var);
 
         if (HEART_BYTE(var) == REB_FRAME)
-            INIT_VAL_FRAME_COUPLING(OUT, c);
+            Tweak_Cell_Frame_Coupling(OUT, c);
 
         return OUT; }
 
@@ -1326,7 +1326,7 @@ REBTYPE(Frame)
                 OUT,
                 VAL_FRAME_PHASE(frame),  // just a Action*, no binding
                 VAL_FRAME_LABEL(frame),
-                VAL_FRAME_COUPLING(frame)  // e.g. where RETURN returns to
+                Cell_Frame_Coupling(frame)  // e.g. where RETURN returns to
             );
         } */
 
@@ -1338,7 +1338,7 @@ REBTYPE(Frame)
                 ARG(value),
                 CTX_FRAME_PHASE(c),
                 VAL_FRAME_LABEL(frame),
-                VAL_FRAME_COUPLING(frame)
+                Cell_Frame_Coupling(frame)
             );
             goto handle_reflect_action;
         }
@@ -1430,9 +1430,9 @@ REBTYPE(Frame)
             // used, as the read-only frame is archetypal.
             //
             Reset_Cell_Header_Untracked(TRACK(OUT), CELL_MASK_FRAME);
-            INIT_VAL_CONTEXT_VARLIST(OUT, ACT_PARAMLIST(act));
-            INIT_VAL_FRAME_COUPLING(OUT, VAL_FRAME_COUPLING(frame));
-            INIT_VAL_FRAME_PHASE_OR_LABEL(OUT, act);
+            Tweak_Cell_Context_Varlist(OUT, ACT_PARAMLIST(act));
+            Tweak_Cell_Frame_Coupling(OUT, Cell_Frame_Coupling(frame));
+            Tweak_Cell_Frame_Phase_Or_Label(OUT, act);
             return OUT; }
 
           case SYM_TYPES:
@@ -1550,7 +1550,7 @@ REBTYPE(Frame)
             OUT,
             proxy,
             VAL_FRAME_LABEL(frame),  // keep symbol (if any) from original
-            VAL_FRAME_COUPLING(frame)  // same (e.g. RETURN to same frame)
+            Cell_Frame_Coupling(frame)  // same (e.g. RETURN to same frame)
         ); }
 
       default:
@@ -1577,7 +1577,7 @@ REBTYPE(Frame)
         // paramlist, but the binding is different in the cell instances
         // in order to know where to "exit from".
         //
-        return VAL_FRAME_COUPLING(a) == VAL_FRAME_COUPLING(b);
+        return Cell_Frame_Coupling(a) == Cell_Frame_Coupling(b);
     }
 
     return false;

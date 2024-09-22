@@ -136,7 +136,7 @@ REBTYPE(Port)
     // it's some other kind of handle value this could crash.
     //
     if (Is_Native_Port_Actor(actor)) {
-        Bounce b = cast(PORT_HOOK*, VAL_HANDLE_CFUNC(actor))(level_, port, verb);
+        Bounce b = cast(PORT_HOOK*, Cell_Handle_Cfunc(actor))(level_, port, verb);
 
         if (b == nullptr)
            Init_Nulled(OUT);

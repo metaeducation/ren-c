@@ -171,9 +171,9 @@ INLINE Cell* Init_Relative_Block_At(
     REBLEN index
 ){
     Reset_Cell_Header_Untracked(out, CELL_MASK_BLOCK);
-    Init_Cell_Node1(out, array);
+    Tweak_Cell_Node1(out, array);
     VAL_INDEX_RAW(out) = index;
-    INIT_SPECIFIER(out, action);
+    Tweak_Cell_Specifier(out, action);
     return out;
 }
 

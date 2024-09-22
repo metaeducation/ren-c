@@ -141,7 +141,7 @@ static void Close_Sock_If_Needed(SOCKREQ* sock) {
 }
 
 static void cleanup_sockreq(const Value* v) {
-    SOCKREQ* sock = VAL_HANDLE_POINTER(SOCKREQ, v);
+    SOCKREQ* sock = Cell_Handle_Pointer(SOCKREQ, v);
     Close_Sock_If_Needed(sock);
     Free(SOCKREQ, sock);
 }

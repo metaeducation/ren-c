@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2019 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -44,8 +44,8 @@ INLINE bool Any_Wordlike(const Cell* v) {
     return Stub_Flavor(u_cast(const Flex*, node1)) == FLAVOR_SYMBOL;
 }
 
-INLINE void INIT_CELL_WORD_SYMBOL(Cell* v, const Symbol* symbol)
-  { Init_Cell_Node1(v, symbol); }
+INLINE void Tweak_Cell_Word_Symbol(Cell* v, const Symbol* symbol)
+  { Tweak_Cell_Node1(v, symbol); }
 
 INLINE const Symbol* Cell_Word_Symbol(const Cell* cell) {
     assert(Any_Wordlike(cell));  // no _UNCHECKED variant :-(
@@ -61,12 +61,12 @@ INLINE const Symbol* Cell_Word_Symbol(const Cell* cell) {
 #define INDEX_PATCHED (INT32_MAX - 1)  // directly points at variable patch
 #define INDEX_ATTACHED INT32_MAX  // lazy creation of module variables
 
-#define VAL_WORD_INDEX_I32(v)         PAYLOAD(Any, (v)).second.i32
+#define CELL_WORD_INDEX_I32(v)         PAYLOAD(Any, (v)).second.i32
 
-INLINE void INIT_VAL_WORD_INDEX(Cell* v, REBINT i) {
+INLINE void Tweak_Cell_Word_Index(Cell* v, REBINT i) {
     assert(Any_Wordlike(v));
     assert(i != 0);
-    VAL_WORD_INDEX_I32(v) = i;
+    CELL_WORD_INDEX_I32(v) = i;
 }
 
 INLINE Element* Init_Any_Word_Untracked(
@@ -81,9 +81,9 @@ INLINE Element* Init_Any_Word_Untracked(
             | FLAG_HEART_BYTE(heart) | FLAG_QUOTE_BYTE(NOQUOTE_1)
             | CELL_FLAG_FIRST_IS_NODE
     );
-    VAL_WORD_INDEX_I32(out) = 0;
+    CELL_WORD_INDEX_I32(out) = 0;
     BINDING(out) = nullptr;
-    INIT_CELL_WORD_SYMBOL(out, sym);
+    Tweak_Cell_Word_Symbol(out, sym);
     return out;
 }
 
@@ -108,8 +108,8 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
         out,
         FLAG_HEART_BYTE(heart) | CELL_FLAG_FIRST_IS_NODE
     );
-    INIT_CELL_WORD_SYMBOL(out, symbol);
-    VAL_WORD_INDEX_I32(out) = index;
+    Tweak_Cell_Word_Symbol(out, symbol);
+    CELL_WORD_INDEX_I32(out) = index;
     BINDING(out) = binding;
 
     if (Is_Stub_Varlist(binding)) {
@@ -156,47 +156,39 @@ INLINE const String* Intern_Unsized_Managed(const char *utf8)
 // !!! The quick check that was here was undermined by words no longer always
 // storing their symbols in the word; this will likely have to hit a keylist.
 //
-INLINE bool IS_BAR(const Atom* v) {
-    return VAL_TYPE_UNCHECKED(v) == REB_WORD
-        and Cell_Word_Symbol(v) == Canon(BAR_1);  // caseless | always canon
+INLINE bool Is_Bar(const Value* v) {
+    return (
+        HEART_BYTE(v) == REB_WORD
+        and QUOTE_BYTE(v) == NOQUOTE_1
+        and Cell_Word_Symbol(v) == Canon(BAR_1)  // caseless | always canon
+    );
 }
 
-INLINE bool IS_BAR_BAR(const Atom* v) {
-    return VAL_TYPE_UNCHECKED(v) == REB_WORD
-        and Cell_Word_Symbol(v) == Canon(_B_B);  // caseless || always canon
+INLINE bool Is_Bar_Bar(const Atom* v) {
+    return (
+        HEART_BYTE(v) == REB_WORD
+        and QUOTE_BYTE(v) == NOQUOTE_1
+        and Cell_Word_Symbol(v) == Canon(_B_B)  // caseless || always canon
+    );
 }
 
-// !!! Temporary workaround for what was Is_Meta_Word() (now not its own type)
-//
-INLINE bool IS_QUOTED_WORD(const Atom* v) {
-    return Cell_Num_Quotes(v) == 1
-        and Cell_Heart(v) == REB_WORD;
-}
-
-INLINE bool Is_Anti_Word_With_Id(Need(const Value*) v, SymId id) {
+INLINE bool Is_Anti_Word_With_Id(const Atom* v, SymId id) {
     assert(id != 0);
-
     if (not Is_Keyword(v))
         return false;
-
     return id == Cell_Word_Id(v);
 }
 
-INLINE bool Is_Quasi_Word_With_Id(const Atom* v, SymId id) {
+INLINE bool Is_Quasi_Word_With_Id(const Value* v, SymId id) {
     assert(id != 0);
-
     if (not Is_Quasi_Word(v))
         return false;
-
     return id == Cell_Word_Id(v);
 }
 
-
-INLINE bool Is_Word_With_Id(const Atom* v, SymId id) {
+INLINE bool Is_Word_With_Id(const Value* v, SymId id) {
     assert(id != 0);
-
     if (not Is_Word(v))
         return false;
-
     return id == Cell_Word_Id(v);
 }

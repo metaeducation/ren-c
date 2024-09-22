@@ -306,7 +306,7 @@ DECLARE_NATIVE(has)
         return Init_Any_Word_Bound(OUT, heart, symbol, ctx, index);
 
     Init_Any_Word(OUT, heart, symbol);
-    INIT_VAL_WORD_INDEX(OUT, INDEX_PATCHED);
+    Tweak_Cell_Word_Index(OUT, INDEX_PATCHED);
     BINDING(OUT) = MOD_PATCH(ctx, symbol, strict);
     return OUT;
 }
@@ -457,12 +457,12 @@ bool Did_Get_Binding_Of(Sink(Value*) out, const Value* v)
         Level* L = CTX_LEVEL_IF_ON_STACK(c);
         if (L) {
             INIT_VAL_FRAME_PHASE(out, Level_Phase(L));
-            INIT_VAL_FRAME_COUPLING(out, Level_Coupling(L));
+            Tweak_Cell_Frame_Coupling(out, Level_Coupling(L));
         }
         else {
             // !!! Assume the canon FRAME! value in varlist[0] is useful?
             //
-            assert(not VAL_FRAME_COUPLING(out));  // canon, no binding
+            assert(not Cell_Frame_Coupling(out));  // canon, no binding
         }
     }
 
@@ -534,7 +534,10 @@ DECLARE_INTRINSIC(lit_word_q)
 {
     UNUSED(phase);
 
-    Init_Logic(out, Not_Antiform(arg) and IS_QUOTED_WORD(arg));
+    Init_Logic(
+        out,
+        QUOTE_BYTE(arg) == ONEQUOTE_3 and HEART_BYTE(arg) == REB_WORD
+    );
 }
 
 
@@ -828,7 +831,7 @@ bool Get_Var_Push_Refinements_Throws(
                 Copy_Cell(out, CTX_VAR(context, len));
 
                 if (Is_Action(out))  // if method in object, tell it object
-                    INIT_VAL_FRAME_COUPLING(out, context);
+                    Tweak_Cell_Frame_Coupling(out, context);
 
                 return false;
             }
@@ -2405,7 +2408,7 @@ DECLARE_NATIVE(as)
             OUT,
             VAL_FRAME_PHASE(v),
             ANONYMOUS,  // see note, we might have stored this in varlist slot
-            VAL_FRAME_COUPLING(v)
+            Cell_Frame_Coupling(v)
         );
       }
 

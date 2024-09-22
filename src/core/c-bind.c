@@ -54,7 +54,7 @@ void Bind_Values_Inner_Loop(
             bool strict = true;
             Value* lookup = MOD_VAR(context, symbol, strict);
             if (lookup) {
-                INIT_VAL_WORD_INDEX(v, INDEX_PATCHED);
+                Tweak_Cell_Word_Index(v, INDEX_PATCHED);
                 BINDING(v) = Singular_From_Cell(lookup);
             }
             else if (
@@ -81,7 +81,7 @@ void Bind_Values_Inner_Loop(
                 // We're overwriting any previous binding, which may have
                 // been relative.
 
-                INIT_VAL_WORD_INDEX(v, n);
+                Tweak_Cell_Word_Index(v, n);
                 BINDING(v) = context;
             }
             else if (
@@ -218,7 +218,7 @@ bool Try_Bind_Word(const Value* context, Value* word)
         );
         if (not patch)
             return false;
-        INIT_VAL_WORD_INDEX(word, INDEX_PATCHED);
+        Tweak_Cell_Word_Index(word, INDEX_PATCHED);
         BINDING(word) = patch;
         return true;
     }
@@ -231,7 +231,7 @@ bool Try_Bind_Word(const Value* context, Value* word)
     if (n == 0)
         return false;
     if (n != 0) {
-        INIT_VAL_WORD_INDEX(word, n);  // ^-- may have been relative
+        Tweak_Cell_Word_Index(word, n);  // ^-- may have been relative
         BINDING(word) = VAL_CONTEXT(context);
     }
     return true;
@@ -339,7 +339,7 @@ Option(Stub*) Get_Word_Container(
     Flex* binding = BINDING(any_word);
     const Symbol* symbol = Cell_Word_Symbol(any_word);
 
-    if (VAL_WORD_INDEX_I32(any_word) == INDEX_ATTACHED) {
+    if (CELL_WORD_INDEX_I32(any_word) == INDEX_ATTACHED) {
         //
         // Variable may have popped into existence since the original attach.
         //
@@ -411,10 +411,10 @@ Option(Stub*) Get_Word_Container(
                     CTX_FRAME_PHASE(ctx)
                 )
             ){
-                assert(VAL_WORD_INDEX_I32(any_word) <= 0);
-                if (VAL_WORD_INDEX_I32(any_word) == 0)
+                assert(CELL_WORD_INDEX_I32(any_word) <= 0);
+                if (CELL_WORD_INDEX_I32(any_word) == 0)
                     goto next_virtual;
-                *index_out = -(VAL_WORD_INDEX_I32(any_word));
+                *index_out = -(CELL_WORD_INDEX_I32(any_word));
                 return CTX_VARLIST(ctx);
             }
 
@@ -427,8 +427,8 @@ Option(Stub*) Get_Word_Container(
             // Note: if frame, caching here seems to slow things down?
           #ifdef CACHE_FINDINGS_BUT_SEEMS_TO_SLOW_THINGS_DOWN
             if (CTX_TYPE(ctx) == REB_FRAME) {
-                if (VAL_WORD_INDEX_I32(any_word) <= 0) {  // cache in unbounds
-                    VAL_WORD_INDEX_I32(m_cast(Cell*, any_word)) = -(len);
+                if (CELL_WORD_INDEX_I32(any_word) <= 0) {  // cache in unbounds
+                    CELL_WORD_INDEX_I32(m_cast(Cell*, any_word)) = -(len);
                     BINDING(m_cast(Cell*, any_word)) = CTX_FRAME_PHASE(ctx);
                 }
             }
@@ -690,8 +690,8 @@ DECLARE_NATIVE(let)
             where = stable_OUT;
 
         Copy_Cell_Header(where, vars);  // keep quasi state and word/setword
-        INIT_CELL_WORD_SYMBOL(where, symbol);
-        INIT_VAL_WORD_INDEX(where, INDEX_PATCHED);
+        Tweak_Cell_Word_Symbol(where, symbol);
+        Tweak_Cell_Word_Index(where, INDEX_PATCHED);
         BINDING(where) = bindings;
 
         Corrupt_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
@@ -747,7 +747,7 @@ DECLARE_NATIVE(let)
                 Derelativize(PUSH(), temp, temp_specifier);  // !!! no derel
                 const Symbol* symbol = Cell_Word_Symbol(temp);
                 bindings = Make_Let_Patch(symbol, bindings);
-                VAL_WORD_INDEX_I32(TOP) = INDEX_PATCHED;
+                CELL_WORD_INDEX_I32(TOP) = INDEX_PATCHED;
                 BINDING(TOP) = bindings;
                 break; }
 
@@ -961,7 +961,7 @@ void Clonify_And_Bind_Relative(
         and IS_WORD_UNBOUND(v)  // use unbound words as "in frame" cache [1]
     ){
         REBINT n = Get_Binder_Index_Else_0(unwrap binder, Cell_Word_Symbol(v));
-        VAL_WORD_INDEX_I32(v) = -(n);  // negative or zero signals unbound [2]
+        CELL_WORD_INDEX_I32(v) = -(n);  // negative or zero signals unbound [2]
         BINDING(v) = unwrap relative;
     }
     else if (deeply and (Any_Series_Kind(heart) or Any_Sequence_Kind(heart))) {
@@ -976,7 +976,7 @@ void Clonify_And_Bind_Relative(
                 VAL_PAIRING(v),
                 NODE_FLAG_MANAGED
             );
-            Init_Cell_Node1(v, copy);
+            Tweak_Cell_Node1(v, copy);
 
             deep = cast(Element*, copy);
             deep_tail = cast(Element*, Pairing_Tail(copy));
@@ -989,7 +989,7 @@ void Clonify_And_Bind_Relative(
                 NODE_FLAG_MANAGED
             );
 
-            Init_Cell_Node1(v, copy);
+            Tweak_Cell_Node1(v, copy);
 
             // See notes in Clonify()...need to copy immutable paths so that
             // binding pointers can be changed in the "immutable" copy.
@@ -1006,7 +1006,7 @@ void Clonify_And_Bind_Relative(
         }
         else if (Any_Series_Kind(heart)) {
             Flex* copy = Copy_Flex_Core(Cell_Flex(v), NODE_FLAG_MANAGED);
-            Init_Cell_Node1(v, copy);
+            Tweak_Cell_Node1(v, copy);
         }
 
         // If we're going to copy deeply, we go back over the shallow
@@ -1456,7 +1456,7 @@ void Assert_Cell_Binding_Valid_Core(const Cell* cell)
 
     if (Is_Stub_Let(binding)) {
         if (Any_Word_Kind(heart))
-            assert(VAL_WORD_INDEX_I32(cell) == INDEX_PATCHED);
+            assert(CELL_WORD_INDEX_I32(cell) == INDEX_PATCHED);
         return;
     }
 
@@ -1470,7 +1470,7 @@ void Assert_Cell_Binding_Valid_Core(const Cell* cell)
             or heart == REB_COMMA  // feed cells, use for specifier ATM
         )){
             assert(Any_Word_Kind(heart));
-            assert(VAL_WORD_INDEX_I32(cell) == INDEX_ATTACHED);
+            assert(CELL_WORD_INDEX_I32(cell) == INDEX_ATTACHED);
         }
     }
 }

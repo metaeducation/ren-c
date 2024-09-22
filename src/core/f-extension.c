@@ -171,8 +171,8 @@ DECLARE_NATIVE(load_extension)
     const Cell* cfuncs_handle
         = Array_At(collated, IDX_COLLATOR_CFUNCS);
 
-    REBLEN num_natives = VAL_HANDLE_LEN(cfuncs_handle);
-    CFunction* *cfuncs = VAL_HANDLE_POINTER(
+    REBLEN num_natives = Cell_Handle_Len(cfuncs_handle);
+    CFunction* *cfuncs = Cell_Handle_Pointer(
         CFunction*,
         cfuncs_handle
     );
@@ -192,8 +192,8 @@ DECLARE_NATIVE(load_extension)
     size_t script_size;
     Byte* script_utf8 = Decompress_Alloc_Core(
         &script_size,
-        VAL_HANDLE_POINTER(Byte, script_compressed),
-        VAL_HANDLE_LEN(script_compressed),
+        Cell_Handle_Pointer(Byte, script_compressed),
+        Cell_Handle_Len(script_compressed),
         -1,  // max
         SYM_GZIP
     );

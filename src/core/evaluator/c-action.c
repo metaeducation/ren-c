@@ -274,7 +274,7 @@ Bounce Action_Executor(Level* L)
                     continue;
 
                 REBLEN offset = ARG - cast(Atom*, Level_Args_Head(L));
-                INIT_VAL_WORD_INDEX(ordered, offset + 1);
+                Tweak_Cell_Word_Index(ordered, offset + 1);
                 BINDING(ordered) = L->u.action.original;
 
                 if (Is_Parameter_Unconstrained(PARAM)) {
@@ -795,7 +795,7 @@ Bounce Action_Executor(Level* L)
             if (not Is_Varargs(ARG))  // argument itself is always VARARGS!
                 fail (Error_Not_Varargs(L, KEY, PARAM, stable_ARG));
 
-            INIT_VAL_VARARGS_PHASE(ARG, Level_Phase(L));
+            Tweak_Cell_Varargs_Phase(ARG, Level_Phase(L));
 
             bool enfix = false;  // !!! how does enfix matter?
             VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) =  // store offset [4]
@@ -984,7 +984,7 @@ Bounce Action_Executor(Level* L)
     if (Is_Frame(label)) {
         if (
             VAL_ACTION(label) == VAL_ACTION(Lib(REDO))  // REDO [1]
-            and VAL_FRAME_COUPLING(label) == cast(Context*, L->varlist)
+            and Cell_Frame_Coupling(label) == cast(Context*, L->varlist)
         ){
             CATCH_THROWN(OUT, level_);
             assert(Is_Logic(OUT));  // signal if we want to gather args or not
@@ -1072,7 +1072,7 @@ void Push_Action(
             // not managed by default, see Force_Level_Varlist_Managed()
     );
     s->info.any.flags = FLEX_INFO_MASK_NONE;
-    INIT_BONUS_KEYSOURCE(x_cast(Array*, s), L);  // maps varlist back to L
+    Tweak_Bonus_Keysource(x_cast(Array*, s), L);  // maps varlist back to L
     MISC(VarlistAdjunct, s) = nullptr;
     LINK(Patches, s) = nullptr;
 
@@ -1097,10 +1097,10 @@ void Push_Action(
             | CELL_FLAG_PROTECTED  // payload/coupling tweaked, but not by user
             | CELL_MASK_FRAME
             | FLAG_QUOTE_BYTE(NOQUOTE_1);
-    INIT_VAL_CONTEXT_VARLIST(L->rootvar, L->varlist);
+    Tweak_Cell_Context_Varlist(L->rootvar, L->varlist);
 
     INIT_VAL_FRAME_PHASE(L->rootvar, ACT_IDENTITY(act));  // Level_Phase()
-    INIT_VAL_FRAME_COUPLING(L->rootvar, coupling);  // Level_Coupling()
+    Tweak_Cell_Frame_Coupling(L->rootvar, coupling);  // Level_Coupling()
 
     s->content.dynamic.used = num_args + 1;
 
@@ -1222,10 +1222,10 @@ void Drop_Action(Level* L) {
             )
         );
         assert(Not_Node_Managed(L->varlist));
-        INIT_BONUS_KEYSOURCE(L->varlist, L);
+        Tweak_Bonus_Keysource(L->varlist, L);
       #endif
 
-        INIT_BONUS_KEYSOURCE(L->varlist, ACT_KEYLIST(ORIGINAL));
+        Tweak_Bonus_Keysource(L->varlist, ACT_KEYLIST(ORIGINAL));
         L->varlist = nullptr;
     }
     else {  // no outstanding references [3]
@@ -1245,7 +1245,7 @@ void Drop_Action(Level* L) {
 
         Cell* rootvar = Array_Head(L->varlist);
         assert(CTX_VARLIST(VAL_CONTEXT(rootvar)) == L->varlist);
-        INIT_VAL_FRAME_PHASE_OR_LABEL(rootvar, nullptr);  // can't corrupt ptr
+        Tweak_Cell_Frame_Phase_Or_Label(rootvar, nullptr);  // can't corrupt ptr
         Corrupt_Pointer_If_Debug(BINDING(rootvar));
     }
   #endif

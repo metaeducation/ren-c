@@ -141,7 +141,7 @@ Array* Startup_Generics(const Element* boot_generics)
     DECLARE_ATOM (discarded);
     if (Eval_Any_List_At_Throws(discarded, boot_generics, SPECIFIED))
         panic (discarded);
-    if (not Is_Anti_Word_With_Id(discarded, SYM_DONE))
+    if (not Is_Anti_Word_With_Id(Decay_If_Unstable(discarded), SYM_DONE))
         panic (discarded);
 
     // Sanity check the symbol transformation

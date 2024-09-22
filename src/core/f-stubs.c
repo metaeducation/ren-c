@@ -301,9 +301,9 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, Context* c) {
     // Cell is reserved for future use in other context types...so make
     // sure it's null at this point in time.
     //
-    Node* archetype_phase = VAL_FRAME_PHASE_OR_LABEL_NODE(archetype);
+    Flex* archetype_phase = Extract_Cell_Frame_Phase_Or_Label(archetype);
     if (CTX_TYPE(c) == REB_FRAME)
-        assert(Is_Stub_Details(cast(Array*, archetype_phase)));
+        assert(Is_Stub_Details(archetype_phase));
     else
         assert(archetype_phase == nullptr);
 }

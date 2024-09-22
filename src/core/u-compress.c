@@ -543,8 +543,8 @@ DECLARE_NATIVE(inflate)
         data = Cell_Blob_At(ARG(data));  // after (in case index modified)
     }
     else {
-        size = VAL_HANDLE_LEN(ARG(data));
-        data = VAL_HANDLE_POINTER(Byte, ARG(data));
+        size = Cell_Handle_Len(ARG(data));
+        data = Cell_Handle_Pointer(Byte, ARG(data));
     }
 
     Option(SymId) envelope;

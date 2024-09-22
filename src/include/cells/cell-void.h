@@ -1,6 +1,6 @@
 //
 //  File: %cell-void.h
-//  Summary: {Non-"Element" for opting out, antiform used for unset variables}
+//  Summary: "Non-Array-Element antiform state used for opting out"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -20,9 +20,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// VOID is the result of branching constructs that don't take a branch, and if
-// code evaluates to void then there will be no `==` in the console.  It is
-// the antiform of the WORD! "void":
+// VOID is the result of branching constructs that don't take a branch.  It
+// is the antiform of the WORD! "void":
 //
 //     >> if null [<d>]
 //     == ~void~  ; anti
@@ -38,7 +37,7 @@
 // Other operations will use the "void-in, null out" convention to permit
 // opting out:
 //
-//     >> to-word! if null ["abc"]
+//     >> to word! if null ["abc"]
 //     == ~null~  ; anti
 //
 

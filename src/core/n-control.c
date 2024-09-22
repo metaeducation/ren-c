@@ -1600,7 +1600,7 @@ DECLARE_NATIVE(catch_p)  // specialized to plain CATCH w/ NAME="THROW" in boot
         cast(Context*, catch_level->varlist)  // what to continue
     );
 
-    INIT_SPECIFIER(block, let_throw);  // extend chain
+    Tweak_Cell_Specifier(block, let_throw);  // extend chain
 
     STATE = ST_CATCH_RUNNING_CODE;
     return CATCH_CONTINUE_BRANCH(OUT, ARG(block));

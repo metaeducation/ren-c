@@ -316,16 +316,16 @@ Bounce MAKE_List(
         // If there's any chance that the argument could produce nulls, we
         // can't guarantee an array can be made out of it.
         //
-        if (not VAL_VARARGS_PHASE(arg)) {
+        if (not Extract_Cell_Varargs_Phase(arg)) {
             //
             // A vararg created from a block AND never passed as an argument
             // so no typeset or quoting settings available.  Can't produce
             // any antiforms, because the data source is a block.
             //
-            assert(not Is_Stub_Varlist(VAL_VARARGS_SOURCE(arg)));
+            assert(not Is_Stub_Varlist(Cell_Varargs_Source(arg)));
         }
         else {
-            Context* context = cast(Context*, VAL_VARARGS_SOURCE(arg));
+            Context* context = cast(Context*, Cell_Varargs_Source(arg));
             Level* param_level = CTX_LEVEL_MAY_FAIL(context);
 
             Value* param = Array_Head(
@@ -1149,7 +1149,7 @@ REBTYPE(List)
         );
 
         Init_Any_List(OUT, Cell_Heart_Ensure_Noquote(list), copy);
-        INIT_SPECIFIER(OUT, Cell_Specifier(list));
+        Tweak_Cell_Specifier(OUT, Cell_Specifier(list));
         return OUT; }
 
     //-- Special actions:

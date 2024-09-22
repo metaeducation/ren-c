@@ -44,7 +44,7 @@ Intrinsic* Extract_Intrinsic(Phase* phase)
     assert(Array_Len(details) >= IDX_INTRINSIC_MAX);  // typecheck uses more
 
     Cell* handle = Details_At(details, IDX_INTRINSIC_CFUNC);
-    return cast(Intrinsic*, VAL_HANDLE_CFUNC(handle));
+    return cast(Intrinsic*, Cell_Handle_Cfunc(handle));
 }
 
 
@@ -341,7 +341,7 @@ Array* Startup_Natives(const Element* boot_natives)
     DECLARE_ATOM (discarded);
     if (Eval_Any_List_At_Throws(discarded, skipped, specifier))
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
-    if (not Is_Anti_Word_With_Id(discarded, SYM_DONE))
+    if (not Is_Anti_Word_With_Id(Decay_If_Unstable(discarded), SYM_DONE))
         panic (discarded);
 
   #if !defined(NDEBUG)

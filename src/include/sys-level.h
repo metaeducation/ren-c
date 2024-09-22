@@ -221,13 +221,13 @@ INLINE LineNumber LineNumber_Of_Level(Level* L) {
 // called *a lot*) this is a macro and is unchecked.
 //
 #define Level_Phase(L) \
-    cast(Phase*, VAL_FRAME_PHASE_OR_LABEL_NODE((L)->rootvar))
+    cast(Phase*, Extract_Cell_Frame_Phase_Or_Label((L)->rootvar))
 
-INLINE void INIT_LVL_PHASE(Level* L, Phase* phase)  // check types
-  { INIT_VAL_FRAME_PHASE_OR_LABEL(L->rootvar, phase); }  // ...only
+INLINE void Tweak_Level_Phase(Level* L, Phase* phase)  // check types
+  { Tweak_Cell_Frame_Phase_Or_Label(L->rootvar, phase); }  // ...only
 
-INLINE void INIT_LVL_COUPLING(Level* L, Option(Context*) coupling)
-  { INIT_VAL_FRAME_COUPLING(L->rootvar, coupling); }  // also fast
+INLINE void Tweak_Level_Coupling(Level* L, Option(Context*) coupling)
+  { Tweak_Cell_Frame_Coupling(L->rootvar, coupling); }  // also fast
 
 // Each ACTION! cell for things like RETURN/BREAK/CONTINUE has a piece of
 // information in it that can can be unique (the "coupling").  When invoked,
@@ -236,7 +236,7 @@ INLINE void INIT_LVL_COUPLING(Level* L, Option(Context*) coupling)
 // intended to return from (break out of, etc.)
 //
 #define Level_Coupling(L) \
-    VAL_FRAME_COUPLING((L)->rootvar)
+    Cell_Frame_Coupling((L)->rootvar)
 
 INLINE Option(const Symbol*) Level_Label(Level* L) {
     assert(Is_Action_Level(L));

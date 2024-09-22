@@ -193,7 +193,7 @@ REBINT CT_Handle(const Cell* a, const Cell* b, bool strict)
         if (not Is_Handle_Cfunc(b))
             return 1;
 
-        if (VAL_HANDLE_CFUNC(a) == VAL_HANDLE_CFUNC(b))
+        if (Cell_Handle_Cfunc(a) == Cell_Handle_Cfunc(b))
             return 0;
 
         // !!! Function pointers aren't > or < comparable in ISO C.  This is
@@ -208,14 +208,14 @@ REBINT CT_Handle(const Cell* a, const Cell* b, bool strict)
     else if (Is_Handle_Cfunc(b))
         return -1;
 
-    if (VAL_HANDLE_POINTER(Byte, a) == VAL_HANDLE_POINTER(Byte, b)) {
-        if (VAL_HANDLE_LEN(a) == VAL_HANDLE_LEN(b))
+    if (Cell_Handle_Pointer(Byte, a) == Cell_Handle_Pointer(Byte, b)) {
+        if (Cell_Handle_Len(a) == Cell_Handle_Len(b))
             return 0;
 
-        return VAL_HANDLE_LEN(a) > VAL_HANDLE_LEN(b) ? 1 : -1;
+        return Cell_Handle_Len(a) > Cell_Handle_Len(b) ? 1 : -1;
     }
 
-    return VAL_HANDLE_POINTER(Byte, a) > VAL_HANDLE_POINTER(Byte, b)
+    return Cell_Handle_Pointer(Byte, a) > Cell_Handle_Pointer(Byte, b)
         ? 1
         : -1;
 }

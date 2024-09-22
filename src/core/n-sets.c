@@ -238,7 +238,7 @@ Flex* Make_Set_Operation_Flex(
 
                 DECLARE_ATOM (mo_value);
                 Reset_Cell_Header_Untracked(TRACK(mo_value), CELL_MASK_TEXT);
-                Init_Cell_Node1(mo_value, mo->string);
+                Tweak_Cell_Node1(mo_value, mo->string);
                 VAL_INDEX_RAW(mo_value) = mo->base.index;
 
                 if (
@@ -316,7 +316,7 @@ Flex* Make_Set_Operation_Flex(
                     TRACK(buf_value),
                     CELL_MASK_BINARY
                 );
-                Init_Cell_Node1(buf_value, buf);
+                Tweak_Cell_Node1(buf_value, buf);
                 VAL_INDEX_RAW(buf_value) = buf_start_len;
 
                 if (

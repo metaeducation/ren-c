@@ -49,13 +49,13 @@ Context* Alloc_Context_Core(Heart heart, REBLEN capacity, Flags flags)
     );
     MISC(VarlistAdjunct, varlist) = nullptr;
     LINK(Patches, varlist) = nullptr;
-    INIT_CTX_KEYLIST_UNIQUE(  // hasn't been shared yet...
+    Tweak_Context_Keylist_Unique(  // hasn't been shared yet...
         cast(Context*, varlist),
         keylist
     );
 
     Cell* rootvar = Alloc_Tail_Array(varlist);
-    INIT_VAL_CONTEXT_ROOTVAR(rootvar, heart, varlist);
+    Tweak_Cell_Context_Rootvar(rootvar, heart, varlist);
 
     return cast(Context*, varlist);  // varlist pointer is context handle
 }
@@ -73,7 +73,7 @@ bool Expand_Context_KeyList_Core(Context* context, REBLEN delta)
 
     if (Get_Subclass_Flag(KEYLIST, keylist, SHARED)) {
         //
-        // INIT_CTX_KEYLIST_SHARED was used to set the flag that indicates
+        // Tweak_Context_Keylist_Shared was used to set the flag that indicates
         // this keylist is shared with one or more other contexts.  Can't
         // expand the shared copy without impacting the others, so break away
         // from the sharing group by making a new copy.
@@ -104,7 +104,7 @@ bool Expand_Context_KeyList_Core(Context* context, REBLEN delta)
             LINK(Ancestor, copy) = LINK(Ancestor, keylist);
 
         Manage_Flex(copy);
-        INIT_CTX_KEYLIST_UNIQUE(context, copy);
+        Tweak_Context_Keylist_Unique(context, copy);
 
         return true;
     }
@@ -112,8 +112,8 @@ bool Expand_Context_KeyList_Core(Context* context, REBLEN delta)
     if (delta == 0)
         return false;
 
-    // INIT_CTX_KEYLIST_UNIQUE was used to set this keylist in the
-    // context, and no INIT_CTX_KEYLIST_SHARED was used by another context
+    // Tweak_Context_Keylist_Unique was used to set this keylist in the
+    // context, and no Tweak_Context_Keylist_Shared was used by another context
     // to mark the flag indicating it's shared.  Extend it directly.
 
     Extend_Flex_If_Necessary(keylist, delta);
@@ -214,7 +214,7 @@ static Value* Append_Context_Core(
         MISC(Hitch, updating) = patch;
 
         if (any_word) {  // bind word while we're at it
-            INIT_VAL_WORD_INDEX(unwrap any_word, INDEX_PATCHED);
+            Tweak_Cell_Word_Index(unwrap any_word, INDEX_PATCHED);
             BINDING(unwrap any_word) = patch;
         }
 
@@ -241,7 +241,7 @@ static Value* Append_Context_Core(
 
     if (any_word) {
         REBLEN len = CTX_LEN(context);  // length we just bumped
-        INIT_VAL_WORD_INDEX(unwrap any_word, len);
+        Tweak_Cell_Word_Index(unwrap any_word, len);
         BINDING(unwrap any_word) = context;
     }
 
@@ -613,12 +613,12 @@ Context* Make_Context_Detect_Managed(
     // obvious what's going on.
     //
     if (not parent) {
-        INIT_CTX_KEYLIST_UNIQUE(context, keylist);
+        Tweak_Context_Keylist_Unique(context, keylist);
         LINK(Ancestor, keylist) = keylist;
     }
     else {
         if (keylist == CTX_KEYLIST(unwrap parent)) {
-            INIT_CTX_KEYLIST_SHARED(context, keylist);
+            Tweak_Context_Keylist_Shared(context, keylist);
 
             // We leave the ancestor link as-is in the shared keylist--so
             // whatever the parent had...if we didn't have to make a new
@@ -626,13 +626,13 @@ Context* Make_Context_Detect_Managed(
             // look at its keylist and its ancestor link points at itself.
         }
         else {
-            INIT_CTX_KEYLIST_UNIQUE(context, keylist);
+            Tweak_Context_Keylist_Unique(context, keylist);
             LINK(Ancestor, keylist) = CTX_KEYLIST(unwrap parent);
         }
     }
 
     Value* var = cast(Value*, Array_Head(varlist));
-    INIT_VAL_CONTEXT_ROOTVAR(var, heart, varlist);
+    Tweak_Cell_Context_Rootvar(var, heart, varlist);
 
     ++var;
 
@@ -696,11 +696,11 @@ Array* Context_To_Array(const Value* context, REBINT mode)
                 KEY_SYMBOL(e.key)
             );
             if (Is_Module(context)) {
-                INIT_VAL_WORD_INDEX(TOP, INDEX_PATCHED);
+                Tweak_Cell_Word_Index(TOP, INDEX_PATCHED);
                 BINDING(TOP) = MOD_PATCH(e.ctx, KEY_SYMBOL(e.key), true);
             }
             else {
-                INIT_VAL_WORD_INDEX(TOP, e.index);
+                Tweak_Cell_Word_Index(TOP, e.index);
                 BINDING(TOP) = e.ctx;
             }
 

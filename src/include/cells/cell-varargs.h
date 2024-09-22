@@ -27,7 +27,7 @@
 // the point of a running evaluation (as well as to safely check for when
 // that call is no longer on the stack, and can't provide data.)
 //
-// A second VARARGS! form is implemented as a thin proxy over an ANY-LIST?.
+// A second VARARGS! form is implemented as a thin proxy over a BLOCK!.
 // This mimics the interface of feeding forward through those arguments, to
 // allow for "parameter packs" that can be passed to variadic functions.
 //
@@ -35,10 +35,18 @@
 // another, they are still maintained in sync.  TAKE-ing a vararg off of one
 // is reflected in the others.  This means that the array index position of
 // the vararg is located through the level pointer.  If there is no level,
-// then a single element array (the `array`) holds an ANY-LIST? value that
+// then a single element array (the `array`) holds a BLOCK! value that
 // is shared between the instances, to reflect the state.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// * VARARGS! is mostly old code.  It was instrumental in pushing the design
+//   toward having `Level` structures that could model an evaluation in
+//   a persistent way...which eventually grew into the stackless model that
+//   is available today.  But VARARGS! has not been tended to very much, and
+//   has a lot of broken/sloppy/unfinished aspects.  It's not clear if it
+//   will be kept going forward, or if functions will just be able to get
+//   access to their FRAME! and simulate varargs-like behavior that way.
 //
 // * If the extra->node of the varargs is not nullptr, it represents the
 //   frame in which this VARARGS! was tied to a parameter.  This 0-based
@@ -49,15 +57,15 @@
 #define VAL_VARARGS_SIGNED_PARAM_INDEX(v) \
     PAYLOAD(Any, (v)).first.i
 
-#define INIT_VAL_VARARGS_PHASE          Init_Cell_Node2
-#define VAL_VARARGS_PHASE(v)            cast(Action*, Cell_Node2(v))
+#define Tweak_Cell_Varargs_Phase        Tweak_Cell_Node2
+#define Extract_Cell_Varargs_Phase(v)   cast(Action*, Cell_Node2(v))
 
-INLINE Array* VAL_VARARGS_SOURCE(const Cell* v) {
+INLINE Array* Cell_Varargs_Source(const Cell* v) {
     assert(Cell_Heart(v) == REB_VARARGS);
     return cast(Array*, m_cast(Node*, EXTRA(Any, v).node));
 }
 
-INLINE void INIT_VAL_VARARGS_SOURCE(
+INLINE void Tweak_Cell_Varargs_Source(
     Cell* v,
     Array* source  // either an array or a frame varlist
 ){
@@ -68,9 +76,9 @@ INLINE void INIT_VAL_VARARGS_SOURCE(
 
 INLINE Element* Init_Varargs_Untyped_Normal(Sink(Element*) out, Level* L) {
     Reset_Cell_Header_Untracked(out, CELL_MASK_VARARGS);
-    INIT_VAL_VARARGS_SOURCE(out, L->varlist);  // frame-based VARARGS!
+    Tweak_Cell_Varargs_Source(out, L->varlist);  // frame-based VARARGS!
     UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
-    INIT_VAL_VARARGS_PHASE(out, nullptr);  // set in typecheck
+    Tweak_Cell_Varargs_Phase(out, nullptr);  // set in typecheck
     return out;
 }
 
@@ -90,9 +98,9 @@ INLINE Element* Init_Varargs_Untyped_Enfix(
     }
 
     Reset_Cell_Header_Untracked(out, CELL_MASK_VARARGS);
-    INIT_VAL_VARARGS_SOURCE(out, feed);
+    Tweak_Cell_Varargs_Source(out, feed);
     UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
-    INIT_VAL_VARARGS_PHASE(out, nullptr);  // set in typecheck
+    Tweak_Cell_Varargs_Phase(out, nullptr);  // set in typecheck
     return out;
 }
 
@@ -103,7 +111,7 @@ INLINE bool Is_Block_Style_Varargs(
 ){
     assert(Cell_Heart(vararg) == REB_VARARGS);
 
-    Array* source = VAL_VARARGS_SOURCE(vararg);
+    Array* source = Cell_Varargs_Source(vararg);
     if (Is_Stub_Varlist(source)) {
         *shared_out = nullptr;  // avoid compiler warning in -Og build
         return false;  // it's an ordinary vararg, representing a FRAME!
@@ -127,7 +135,7 @@ INLINE bool Is_Level_Style_Varargs_Maybe_Null(
 ){
     assert(Cell_Heart(vararg) == REB_VARARGS);
 
-    Array* source = VAL_VARARGS_SOURCE(vararg);
+    Array* source = Cell_Varargs_Source(vararg);
     if (Is_Stub_Varlist(source)) {
         // "Ordinary" case... use the original level implied by the VARARGS!
         // (so long as it is still live on the stack)
@@ -179,7 +187,7 @@ INLINE const Param* Param_For_Varargs_Maybe_Null(
 ){
     assert(Cell_Heart(v) == REB_VARARGS);
 
-    Action* phase = VAL_VARARGS_PHASE(v);
+    Action* phase = Extract_Cell_Varargs_Phase(v);
     if (phase) {
         Array* paramlist = CTX_VARLIST(ACT_EXEMPLAR(phase));
         if (VAL_VARARGS_SIGNED_PARAM_INDEX(v) < 0) {  // e.g. enfix
@@ -210,7 +218,7 @@ INLINE const Param* Param_For_Varargs_Maybe_Null(
     // A vararg created from a block AND never passed as an argument so no
     // typeset or quoting settings available.  Treat as "normal" parameter.
     //
-    assert(not Is_Stub_Varlist(VAL_VARARGS_SOURCE(v)));
+    assert(not Is_Stub_Varlist(Cell_Varargs_Source(v)));
     return nullptr;
 }
 

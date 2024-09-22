@@ -132,11 +132,11 @@ Bounce Encloser_Dispatcher(Level* const L)
     Corrupt_Pointer_If_Debug(L->rootvar);
 
     assert(BONUS(KeySource, varlist) == L);  // need to change keysource [1]
-    INIT_BONUS_KEYSOURCE(varlist, ACT_KEYLIST(L->u.action.original));
+    Tweak_Bonus_Keysource(varlist, ACT_KEYLIST(L->u.action.original));
 
     Element* rootvar = CTX_ROOTVAR(c);  // don't phase run encloser again [2]
     INIT_VAL_FRAME_PHASE(rootvar, ACT_IDENTITY(VAL_ACTION(inner)));
-    INIT_VAL_FRAME_COUPLING(rootvar, VAL_FRAME_COUPLING(inner));
+    Tweak_Cell_Frame_Coupling(rootvar, Cell_Frame_Coupling(inner));
 
     assert(Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED));
     Clear_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED);  // [3]
@@ -144,7 +144,7 @@ Bounce Encloser_Dispatcher(Level* const L)
     Set_Node_Managed_Bit(varlist);  // can't use Force_Flex_Managed [4]
 
     Element* rootcopy = Copy_Cell(SPARE, rootvar);  // need phaseless copy [5]
-    INIT_VAL_FRAME_PHASE_OR_LABEL(SPARE, VAL_FRAME_LABEL(inner));
+    Tweak_Cell_Frame_Phase_Or_Label(SPARE, VAL_FRAME_LABEL(inner));
 
     assert(Is_Level_Dispatching(L));
     Clear_Executor_Flag(ACTION, L, IN_DISPATCH);  // reuse this level [6]

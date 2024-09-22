@@ -99,7 +99,7 @@ Bounce Adapter_Dispatcher(Level* const L)
 
     Copy_Cell(SPARE, prelude);
     node_LINK(NextVirtual, L->varlist) = Cell_Specifier(prelude);
-    INIT_SPECIFIER(SPARE, L->varlist);
+    Tweak_Cell_Specifier(SPARE, L->varlist);
 
     return CONTINUE_CORE(  // Note: we won't catch throws or errors
         OUT,  // result discarded [1]
@@ -112,8 +112,8 @@ Bounce Adapter_Dispatcher(Level* const L)
 
     Value* adaptee = Details_At(details, IDX_ADAPTER_ADAPTEE);
 
-    INIT_LVL_PHASE(L, ACT_IDENTITY(VAL_ACTION(adaptee)));
-    INIT_LVL_COUPLING(L, VAL_FRAME_COUPLING(adaptee));
+    Tweak_Level_Phase(L, ACT_IDENTITY(VAL_ACTION(adaptee)));
+    Tweak_Level_Coupling(L, Cell_Frame_Coupling(adaptee));
 
     return BOUNCE_REDO_CHECKED;  // redo uses updated phase & binding [3]
 }}
@@ -170,7 +170,7 @@ DECLARE_NATIVE(adapt)
         Array_At(details, IDX_ADAPTER_PRELUDE),
         prelude_copy
     );
-    INIT_SPECIFIER(rebound, Cell_Specifier(prelude));
+    Tweak_Cell_Specifier(rebound, Cell_Specifier(prelude));
 
     Copy_Cell(Details_At(details, IDX_ADAPTER_ADAPTEE), adaptee);
 

@@ -52,8 +52,8 @@ Bounce Specializer_Dispatcher(Level* L)
 {
     Context* exemplar = ACT_EXEMPLAR(Level_Phase(L));
 
-    INIT_LVL_PHASE(L, CTX_FRAME_PHASE(exemplar));
-    INIT_LVL_COUPLING(L, CTX_FRAME_BINDING(exemplar));
+    Tweak_Level_Phase(L, CTX_FRAME_PHASE(exemplar));
+    Tweak_Level_Coupling(L, CTX_FRAME_BINDING(exemplar));
 
     return BOUNCE_REDO_UNCHECKED; // redo uses the updated phase and binding
 }
@@ -89,14 +89,14 @@ Context* Make_Context_For_Action_Push_Partials(
     Array* varlist = Make_Array_Core(num_slots, FLEX_MASK_VARLIST);
     Set_Flex_Len(varlist, num_slots);
 
-    INIT_CTX_KEYLIST_SHARED(cast(Context*, varlist), ACT_KEYLIST(act));
+    Tweak_Context_Keylist_Shared(cast(Context*, varlist), ACT_KEYLIST(act));
 
     Element* rootvar = Array_Head(varlist);
-    INIT_VAL_FRAME_ROOTVAR(
+    Tweak_Cell_Frame_Rootvar(
         rootvar,
         varlist,
         ACT_IDENTITY(VAL_ACTION(action)),
-        VAL_FRAME_COUPLING(action)
+        Cell_Frame_Coupling(action)
     );
 
     // If there is a PARTIALS list, then push its refinements.
@@ -160,7 +160,7 @@ Context* Make_Context_For_Action_Push_Partials(
                 continue;  // just continuing this loop
 
             assert(BINDING(ordered) == nullptr);  // we bind only one
-            INIT_VAL_WORD_INDEX(ordered, index);
+            Tweak_Cell_Word_Index(ordered, index);
             BINDING(ordered) = act;
 
             if (not Is_Parameter_Unconstrained(param))  // needs argument

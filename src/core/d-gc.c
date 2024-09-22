@@ -167,7 +167,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             // simple handle, no GC interaction
         }
         else {
-            Stub* stub = VAL_HANDLE_STUB(v);
+            Stub* stub = Extract_Cell_Handle_Stub(v);
 
             // Handle was created with Init_Handle_XXX_Managed.  It holds a
             // singular array containing exactly one handle, and the actual
@@ -178,7 +178,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
             Value* single = Stub_Cell(stub);
             assert(Is_Handle(single));
-            assert(VAL_HANDLE_STUB(single) == stub);
+            assert(Extract_Cell_Handle_Stub(single) == stub);
             if (v != single) {
                 //
                 // In order to make it clearer that individual handles do not
@@ -189,7 +189,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
                 // (Corrupt not used because release build complains about lack
                 // of initialization, so null is always used)
                 //
-                assert(VAL_HANDLE_CDATA_P(v) == nullptr);
+                assert(CELL_HANDLE_CDATA_P(v) == nullptr);
             }
         }
         break; }
@@ -244,8 +244,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
         Phase* a = cast(Phase*, VAL_ACTION(v));
         assert(Is_Node_Marked(a));
-        if (VAL_ACTION_PARTIALS_OR_LABEL(v))
-            assert(Is_Node_Marked(VAL_ACTION_PARTIALS_OR_LABEL(v)));
+        if (Extract_Cell_Action_Partials_Or_Label(v))
+            assert(Is_Node_Marked(Extract_Cell_Action_Partials_Or_Label(v)));
 
         if (Is_Action_Native(a)) {
             Details* details = Phase_Details(a);
@@ -299,7 +299,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
                 // !!! Needs review
                 /*Level* L = CTX_LEVEL_IF_ON_STACK(context);
                 if (L)  // comes from execution, not MAKE FRAME!
-                    assert(VAL_FRAME_COUPLING(v) == Level_Coupling(L)); */
+                    assert(Cell_Frame_Coupling(v) == Level_Coupling(L)); */
             }
             else
                 assert(Is_Stub_Let(Singular_From_Cell(v)));
@@ -322,7 +322,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case REB_VARARGS: {
         assert((v->header.bits & CELL_MASK_VARARGS) == CELL_MASK_VARARGS);
-        Action* phase = VAL_VARARGS_PHASE(v);
+        Action* phase = Extract_Cell_Varargs_Phase(v);
         if (phase)  // null if came from MAKE VARARGS!
             assert(Is_Node_Marked(phase));
         break; }
@@ -425,7 +425,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         //
         assert(Not_Subclass_Flag(SYMBOL, spelling, MISC_IS_BINDINFO));
 
-        REBINT index = VAL_WORD_INDEX_I32(v);
+        REBINT index = CELL_WORD_INDEX_I32(v);
         Flex* binding = BINDING(v);
         if (binding) {
             if (Is_Stub_Varlist(binding)) {
@@ -479,7 +479,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
     if (Is_Stub_Details(a)) {
         const Element* archetype = Array_Head(a);
         assert(Is_Frame(archetype));
-        assert(not VAL_FRAME_COUPLING(archetype));
+        assert(not Cell_Frame_Coupling(archetype));
 
         // These queueings cannot be done in Queue_Mark_Function_Deep
         // because of the potential for overflowing the C stack with calls
