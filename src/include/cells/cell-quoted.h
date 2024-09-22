@@ -124,7 +124,7 @@ INLINE Count Dequotify(Cell* v) {
     if (QUOTE_BYTE(v) & NONQUASI_BIT)
         QUOTE_BYTE(v) = NOQUOTE_1;
     else
-        QUOTE_BYTE(v) = QUASIFORM_2;
+        QUOTE_BYTE(v) = QUASIFORM_2_COERCE_ONLY;  // exception--already quasi!
     return depth;
 }
 
@@ -237,6 +237,11 @@ INLINE Element* Ensure_Element(const_if_c Atom* cell) {
 //   operations in the ^META domain to easily use functions like ALL and ANY
 //   on the meta values.  (See the FOR-BOTH example.)
 
+INLINE Cell* Coerce_To_Antiform(Cell* c);
+INLINE Value* Coerce_To_Stable_Antiform(Value* v);
+INLINE Atom* Coerce_To_Unstable_Antiform(Atom* a);
+INLINE Element* Coerce_To_Quasiform(Value* v);
+
 #define Is_Quasiform(v) \
     (QUOTE_BYTE(Ensure_Readable(v)) == QUASIFORM_2)
 
@@ -248,26 +253,27 @@ INLINE Element* Unquasify(Value* v) {
 
 INLINE Element* Quasify(Value* v) {
     assert(QUOTE_BYTE(v) == NOQUOTE_1);  // e.g. can't quote void
-    QUOTE_BYTE(v) = QUASIFORM_2;
+    Coerce_To_Quasiform(v);
     return u_cast(Element*, v);
 }
 
 INLINE Element* Quasify_Antiform(Atom* v) {
     assert(Is_Antiform(v));
-    QUOTE_BYTE(v) = QUASIFORM_2;
+    QUOTE_BYTE(v) = QUASIFORM_2_COERCE_ONLY;  // all antiforms can be quasi
     return u_cast(Element*, v);
 }
 
 INLINE Value* Reify(Atom* v) {
     if (QUOTE_BYTE(v) == ANTIFORM_0)
-        QUOTE_BYTE(v) = QUASIFORM_2;
+        QUOTE_BYTE(v) = QUASIFORM_2_COERCE_ONLY;  // all antiforms can be quasi
     return cast(Value*, v);
 }
 
-INLINE Atom* Degrade(Atom* v) {
-    if (QUOTE_BYTE(v) == QUASIFORM_2)
-        QUOTE_BYTE(v) = ANTIFORM_0;
-    return v;
+INLINE Atom* Degrade(Atom* a) {
+    assert(not Is_Antiform(a));
+    if (QUOTE_BYTE(a) == QUASIFORM_2)
+        Coerce_To_Antiform(a);
+    return a;
 }
 
 
@@ -290,18 +296,18 @@ INLINE Atom* Degrade(Atom* v) {
 
 INLINE Element* Meta_Quotify(Cell* v) {
     if (QUOTE_BYTE(v) == ANTIFORM_0) {
-        QUOTE_BYTE(v) = QUASIFORM_2;
+        QUOTE_BYTE(v) = QUASIFORM_2_COERCE_ONLY;  // anti must mean valid quasi
         return cast(Element*, v);
     }
     return cast(Element*, Quotify(v, 1));  // a non-antiform winds up quoted
 }
 
-INLINE Atom* Meta_Unquotify_Undecayed(Atom* v) {
-    if (QUOTE_BYTE(v) == QUASIFORM_2)
-        QUOTE_BYTE(v) = ANTIFORM_0;
+INLINE Atom* Meta_Unquotify_Undecayed(Atom* a) {
+    if (QUOTE_BYTE(a) == QUASIFORM_2)
+        Coerce_To_Antiform(a);  // Note: not all quasiforms are valid antiforms
     else
-        Unquotify_Core(v, 1);  // will assert the input is quoted
-    return v;
+        Unquotify_Core(a, 1);  // will assert the input is quoted
+    return a;
 }
 
 INLINE Value* Meta_Unquotify_Known_Stable(Value* v) {

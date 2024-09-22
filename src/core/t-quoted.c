@@ -306,8 +306,8 @@ DECLARE_NATIVE(unquote)
 //  "Constructs a quasi form of the evaluated argument"
 //
 //      return: [quasi?]
-//      value "Any non-QUOTED! value"
-//          [~null~ element?]  ; there isn't an any-nonquoted! typeset
+//      value "Any non-QUOTED! value for which quasiforms are legal"
+//          [any-isotopic?]
 //  ]
 //
 DECLARE_NATIVE(quasi)
@@ -328,7 +328,7 @@ DECLARE_NATIVE(quasi)
 //
 //  "Turn quasiforms into common forms"
 //
-//      return: [element?]  ; more narrowly, a non-quasi non-quoted element
+//      return: [any-isotopic?]  ; a non-quasi, non-quoted element
 //      value [quasi?]
 //  ]
 //
@@ -365,28 +365,28 @@ DECLARE_INTRINSIC(antiform_q)
 //
 //  anti: native [
 //
-//  "Give the antiform of the plain argument (same as UNMETA QUASI)"
+//  "Give the antiform of the plain argument (like UNMETA QUASI)"
 //
-//      return: [antiform?]
-//      value "Any non-QUOTED!, non-QUASI value"
-//          [~null~ element?]  ; there isn't an any-nonquoted! typeset
+//      return: "Antiform of input (will be unbound)"
+//          [antiform?]
+//      element "Any non-QUOTED!, non-QUASI value"
+//          [element?]  ; there isn't an any-nonquoted! typeset
 //  ]
 //
 DECLARE_NATIVE(anti)
 {
     INCLUDE_PARAMS_OF_ANTI;
 
-    Value* v = ARG(value);
+    Element* e = cast(Element*, ARG(element));
 
-    if (Is_Quoted(v))
+    if (Is_Quoted(e))
         fail ("QUOTED! values have no antiform (antiforms are quoted -1");
 
-    if (Is_Quasiform(v))  // Review: Allow this?
+    if (Is_Quasiform(e))  // Review: Allow this?
         fail ("QUASIFORM! values can be made into antiforms with UNMETA");
 
-    Copy_Cell(OUT, v);
-    QUOTE_BYTE(OUT) = ANTIFORM_0;
-    return OUT;
+    Copy_Cell(OUT, e);
+    return Coerce_To_Antiform(OUT);
 }
 
 
@@ -444,7 +444,7 @@ DECLARE_INTRINSIC(unmeta_p)
 //
 //      return: "Antiform of GROUP! or unquoted value (pass null and void)"
 //          [~null~ ~void~ element? splice?]
-//      value [~null~ ~void~ blank! any-list? quoted? quasi?]  ; see [3]
+//      value [~null~ ~void~ blank! any-list? quasi?]  ; see [1] [2] [3]
 //  ]
 //
 DECLARE_INTRINSIC(spread)
@@ -456,39 +456,34 @@ DECLARE_INTRINSIC(spread)
 // 1. The current thinking on SPREAD is that it acts as passthru for null and
 //    for void, and whatever you were going to pass the result of spread to
 //    is responsible for raising errors or MAYBE'ing it.  Seems to work out.
-//    It also DEGRADEs quasiforms, so if you have reified intent in a block
-//    for voidness or nullness it passes thru those cases.
 //
-// 2. BLANK! is considered EMPTY? and hence legal to use with spread.  It
+// 2. Generally speaking, functions are not supposed to conflate quasiforms
+//    with their antiforms.  But it seems like being willing to DEGRADE a
+//    ~void~ or a ~null~ here instead of erroring helps more than it hurts.
+//    Should it turn out to be bad for some reason, this might be dropped.
+//
+// 3. BLANK! is considered EMPTY? and hence legal to use with spread.  It
 //    could return an empty splice...but that would then wind up having to
 //    make a decision on using a "cheap" shared read-only array, or making
 //    a new empty array to use.  Different usage situations would warrant
 //    one vs. the other, e.g. GLOM expects splices to be mutable.  Void is
 //    cheap and agnostic, so it's the logical choice here.
-//
-// 3. !!! The idea that quoted elements spread to be their unquoted forms was
-//    presumably added here to provide an efficiency hack, so that you could
-//    avoid making an Array.  It's probably a bad idea.  Leaving here to
-//    keep the concept under review, but expect it to go away.
 {
     UNUSED(phase);
 
     if (Any_List(arg)) {  // most common case
+        HEART_BYTE(arg) = REB_GROUP;
+        Coerce_To_Stable_Antiform(arg);
         Copy_Cell(out, arg);
-        HEART_BYTE(out) = REB_GROUP;
-        QUOTE_BYTE(out) = ANTIFORM_0;
     }
     else if (Is_Blank(arg)) {
-        Init_Void(out);  // empty array has problems if used with GLOM [2]
+        Init_Void(out);  // empty array has problems if used with GLOM [3]
     }
-    else if (Is_Void(arg) or Is_Quasi_Void(arg)) {
+    else if (Is_Void(arg) or Is_Quasi_Void(arg)) {  // quasi ok [2]
         Init_Void(out);  // pass through [1]
     }
-    else if (Is_Nulled(arg) or Is_Quasi_Null(arg)) {
+    else if (Is_Nulled(arg) or Is_Quasi_Null(arg)) {  // quasi ok [2]
         Init_Nulled(out);  // pass through [1]
-    }
-    else if (Is_Quoted(arg)) {
-        Unquotify(Copy_Cell(out, arg), 1);  // !!! good idea or not?  [3]
     }
     else {
         assert(Is_Quasiform(arg));
@@ -529,8 +524,7 @@ DECLARE_NATIVE(lazy)
         Copy_Cell(OUT, v);
 
     assert(Is_Object(OUT));
-    QUOTE_BYTE(OUT) = ANTIFORM_0;
-    return OUT;
+    return Coerce_To_Unstable_Antiform(OUT);;
 }
 
 
@@ -783,8 +777,8 @@ DECLARE_INTRINSIC(runs)
     Value* frame = arg;
 
     if (Is_Frame_Details(frame)) {
+        Coerce_To_Stable_Antiform(frame);
         Copy_Cell(out, frame);
-        QUOTE_BYTE(out) = ANTIFORM_0;
         return;
     }
 

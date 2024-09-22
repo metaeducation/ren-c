@@ -37,12 +37,9 @@ off
 yes
 no
 
-; === NAMED BAD WORDS (SEE %sys-bad-word.h) ===
+; === SPECULATIVE ~NaN~ ===
 
-unset
-#blank
-#false
-none  ; for legacy load of #[none]
+NaN
 
 errored  ; when rebRescue() has no handler and evaluates to non-fail ERROR!
 

@@ -69,8 +69,7 @@ INLINE Element* Init_Comma(Sink(Element*) out) {
 
 INLINE Atom* Init_Barrier(Sink(Atom*) out) {
     Init_Comma(out);
-    QUOTE_BYTE(out) = ANTIFORM_0;
-    return out;
+    return Coerce_To_Unstable_Antiform(out);
 }
 
 INLINE bool Is_Elision(Need(Atom*) v) {

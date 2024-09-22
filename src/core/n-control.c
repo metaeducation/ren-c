@@ -1440,7 +1440,7 @@ DECLARE_NATIVE(switch)
     STATE = ST_SWITCH_RUNNING_BRANCH;
     SUBLEVEL->executor = &Just_Use_Out_Executor;
     return CONTINUE_CORE(
-        Freshen_Cell(OUT),
+        OUT,
         LEVEL_FLAG_BRANCH,
         Level_Specifier(SUBLEVEL), at
     );

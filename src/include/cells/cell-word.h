@@ -72,19 +72,13 @@ INLINE void INIT_VAL_WORD_INDEX(Cell* v, REBINT i) {
 INLINE Element* Init_Any_Word_Untracked(
     Sink(Element*) out,
     Heart heart,
-    const Symbol* sym,
-    Byte quote_byte
+    const Symbol* sym
 ){
     assert(Any_Word_Kind(heart));
-    assert(not (
-        quote_byte == ANTIFORM_0
-        and Is_Node_Root_Bit_Set(out)  // Is_Api_Value()
-        and Symbol_Id(sym) == SYM_NULL  // nullptr only in API, no Is_Nulled()
-    ));
     Freshen_Cell_Untracked(out);
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL
-            | FLAG_HEART_BYTE(heart) | FLAG_QUOTE_BYTE(quote_byte)
+            | FLAG_HEART_BYTE(heart) | FLAG_QUOTE_BYTE(NOQUOTE_1)
             | CELL_FLAG_FIRST_IS_NODE
     );
     VAL_WORD_INDEX_I32(out) = 0;
@@ -94,7 +88,7 @@ INLINE Element* Init_Any_Word_Untracked(
 }
 
 #define Init_Any_Word(out,heart,spelling) \
-    TRACK(Init_Any_Word_Untracked((out), (heart), (spelling), NOQUOTE_1))
+    TRACK(Init_Any_Word_Untracked((out), (heart), (spelling)))
 
 #define Init_Word(out,str)          Init_Any_Word((out), REB_WORD, (str))
 #define Init_Get_Word(out,str)      Init_Any_Word((out), REB_GET_WORD, (str))
@@ -135,12 +129,15 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
     TRACK(Init_Any_Word_Bound_Untracked((out), \
             (heart), (symbol), CTX_VARLIST(context), (index)))
 
-#define Init_Anti_Word(out,label) \
-    TRACK(Init_Any_Word_Untracked(ensure(Sink(Value*), (out)), REB_WORD, \
-            (label), ANTIFORM_0))
-
 #define Init_Quasi_Word(out,label) \
-    TRACK(Init_Any_Word_Untracked((out), REB_WORD, (label), QUASIFORM_2))
+    TRACK(Coerce_To_Quasiform( \
+        Init_Any_Word_Untracked((out), REB_WORD, (label))))
+
+#define Init_Anti_Word_Untracked(out,label) \
+    Coerce_To_Stable_Antiform(Init_Any_Word_Untracked((out), REB_WORD, (label)))
+
+#define Init_Anti_Word(out,label) \
+    TRACK(Init_Anti_Word_Untracked((out), (label)))
 
 
 // Helper calls strsize() so you can more easily use literals at callsite.

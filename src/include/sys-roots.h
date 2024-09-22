@@ -78,8 +78,6 @@ INLINE void Link_Api_Handle_To_Level(Stub* stub, Level* L)
 
     if (not empty_list) {  // head of list exists, take its spot at the head
         Stub* head = cast(Stub*, L->alloc_value_list);
-        if (Is_Api_Value(Stub_Cell(head)))
-            assert(not Is_Nulled(Stub_Cell(head)));
         MISC(ApiPrev, head) = stub;  // link back
     }
 
@@ -100,21 +98,15 @@ INLINE void Unlink_Api_Handle_From_Level(Stub* stub)
 
         if (not at_tail) {  // only set next item's backlink if it exists
             Stub* next = cast(Stub*, next_node);
-            if (Is_Api_Value(Stub_Cell(next)))
-                assert(not Is_Nulled(Stub_Cell(next)));
             MISC(ApiPrev, next) = L;
         }
     }
     else {
         Stub* prev = cast(Stub*, prev_node);  // not at head, api val before us
-        if (Is_Api_Value(Stub_Cell(prev)))
-            assert(not Is_Nulled(Stub_Cell(prev)));
         LINK(ApiNext, prev) = next_node;  // forward prev's next to our next
 
         if (not at_tail) {  // only set next item's backlink if it exists
             Stub* next = cast(Stub*, next_node);
-            if (Is_Api_Value(Stub_Cell(next)))
-                assert(not Is_Nulled(Stub_Cell(next)));
             MISC(ApiPrev, next) = prev_node;
         }
     }
@@ -161,7 +153,7 @@ INLINE Value* Alloc_Value_Core(Flags flags)
     TRACK(Alloc_Value_Core(CELL_MASK_0_ROOT))  // don't use as eval target [3]
 
 #define Alloc_Element() \
-    Init_Trash(TRACK(Alloc_Value_Core(CELL_MASK_0_ROOT)))  // same [3]
+    Init_Trash(Alloc_Value_Core(CELL_MASK_0_ROOT))  // same [3]
 
 INLINE void Free_Value(Value* v)
 {
@@ -189,10 +181,6 @@ INLINE void Free_Value(Value* v)
 //
 INLINE void Release_Api_Value_If_Unmanaged(const Atom* r) {
     assert(Is_Node_Root_Bit_Set(r));
-
-    if (Is_Nulled(r))
-        assert(!"Dispatcher returned nulled cell, not C nullptr for API use");
-
     if (Not_Node_Managed(r))
         rebRelease(x_cast(Value*, r));
 }

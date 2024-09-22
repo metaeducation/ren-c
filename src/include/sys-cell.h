@@ -221,7 +221,7 @@ INLINE Heart Cell_Heart_Ensure_Noquote(const Cell* cell) {
 
 INLINE Kind VAL_TYPE_UNCHECKED(const Atom* v) {
     switch (QUOTE_BYTE(v)) {
-      case ANTIFORM_0: {
+      case ANTIFORM_0_COERCE_ONLY: {  // use this constant rarely!
         Byte heart = HEART_BYTE(v);
         assert(  // can't answer VAL_TYPE() for unstable isotopes
             heart != REB_BLOCK
@@ -235,7 +235,7 @@ INLINE Kind VAL_TYPE_UNCHECKED(const Atom* v) {
       case NOQUOTE_1:
         return u_cast(Kind, HEART_BYTE(v));
 
-      case QUASIFORM_2:
+      case QUASIFORM_2_COERCE_ONLY:  // use this constant rarely!
         return REB_QUASIFORM;
 
       default:
@@ -385,26 +385,17 @@ INLINE bool Is_Cell_Poisoned(const Cell* cell) {
     (v)->header.bits &= CELL_MASK_PERSIST;  /* Note: no CELL or NODE flags */ \
 } while (0)
 
-
-INLINE void Reset_Antiform_Header_Untracked(Cell* v, uintptr_t flags)
+INLINE void Reset_Cell_Header_Untracked(Cell* c, uintptr_t flags)
 {
-    assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE(ANTIFORM_0));
-    Freshen_Cell_Untracked(v);
-    v->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
-        | flags | FLAG_QUOTE_BYTE(ANTIFORM_0));
-}
-
-INLINE void Reset_Cell_Header_Untracked(Cell* v, uintptr_t flags)
-{
-    assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE(ANTIFORM_0));
-    Freshen_Cell_Untracked(v);
-    v->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
+    assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE_ANTIFORM_0);
+    Freshen_Cell_Untracked(c);
+    c->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
         | flags | FLAG_QUOTE_BYTE(NOQUOTE_1));
 }
 
-INLINE Value* Freshen_Cell_Untracked_Inline(Cell* v) {
-    Freshen_Cell_Untracked(v);
-    return cast(Value*, v);
+INLINE Cell* Freshen_Cell_Untracked_Inline(Cell* c) {
+    Freshen_Cell_Untracked(c);
+    return c;
 }
 
 #define Freshen_Cell(v) \

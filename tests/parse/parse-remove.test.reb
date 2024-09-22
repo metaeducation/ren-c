@@ -4,7 +4,7 @@
 ; from Topaz entirely.  For the moment they are being considered.
 
 (all [
-    '~remove~ == meta parse text: "a ^/ " [
+    '~<remove>~ == meta parse text: "a ^/ " [
         some [newline remove [to <end>] | "a" [remove [to newline]] | <next>]
     ]
     text = "a^/"
@@ -18,7 +18,7 @@
     (
         blk: [a]
         all [
-            '~remove~ == meta parse blk [remove one]
+            '~<remove>~ == meta parse blk [remove one]
             blk = []
         ]
     )
@@ -43,7 +43,7 @@
     (
         str: "a"
         all [
-            '~remove~ == meta parse str [remove one]
+            '~<remove>~ == meta parse str [remove one]
             str = ""
         ]
     )
@@ -69,11 +69,11 @@
         ]
     )
     (all [
-        '~remove~ == meta parse s: " t e s t " [some [remove ws | <next>]]
+        '~<remove>~ == meta parse s: " t e s t " [some [remove ws | <next>]]
         s = "test"
     ])
     (all [
-        '~remove~ == meta parse s: " t e s t " [some [remove ws | one]]
+        '~<remove>~ == meta parse s: " t e s t " [some [remove ws | one]]
         s = "test"
     ])
     (
@@ -99,7 +99,7 @@
     (
         bin: #{0A}
         all [
-            '~remove~ == meta parse bin [remove one]
+            '~<remove>~ == meta parse bin [remove one]
             bin = #{}
         ]
     )
@@ -127,12 +127,12 @@
     )
     (all [
         ws: make bitset! [" ^- ^/^M" #""]
-        '~remove~ == meta parse s: #{00DE00AD00} [some [remove ws | <next>]]
+        '~<remove>~ == meta parse s: #{00DE00AD00} [some [remove ws | <next>]]
         s = #{DEAD}
     ])
     (all [
         ws: make bitset! [" ^- ^/^M" #""]
-        '~remove~ == meta parse s: #{00DE00AD00} [some [remove ws | one]]
+        '~<remove>~ == meta parse s: #{00DE00AD00} [some [remove ws | one]]
         s = #{DEAD}
     ])
     (
@@ -159,11 +159,11 @@
 
 [#1251
     (all [
-        '~insert~ == meta parse e: "a" [remove one insert ("xxx")]
+        '~<insert>~ == meta parse e: "a" [remove one insert ("xxx")]
         e = "xxx"
     ])
     (all [
-        '~insert~ == meta parse e: "a" [[remove one] insert ("xxx")]
+        '~<insert>~ == meta parse e: "a" [[remove one] insert ("xxx")]
         e = "xxx"
     ])
 ]

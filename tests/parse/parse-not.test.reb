@@ -42,9 +42,9 @@
 ]
 
 [#1240
-    ('~not~ == meta parse "" [not ahead "a"])
-    ('~not~ == meta parse "" [not ahead <next>])
-    ('~not~ == meta parse "" [not ahead bypass])
+    ('~<not>~ == meta parse "" [not ahead "a"])
+    ('~<not>~ == meta parse "" [not ahead <next>])
+    ('~<not>~ == meta parse "" [not ahead bypass])
 ]
 
 [
@@ -58,7 +58,7 @@
         wb: ['b]
         'a == parse [a] [not ahead wb 'a]
     )
-    (~not~ == parse [a a] [not ahead [some 'b] to <end>])
+    (~<not>~ == parse [a a] [not ahead [some 'b] to <end>])
 
     ~parse-mismatch~ !! (parse [a a] [not ahead ['a 'a] to <end>])
 ]
@@ -74,7 +74,7 @@
         wb: [#b]
         #a == parse "a" [not ahead wb #a]
     )
-    (~not~ == parse "aa" [not ahead [some #b] to <end>])
+    (~<not>~ == parse "aa" [not ahead [some #b] to <end>])
 
     ~parse-mismatch~ !! (parse "aa" [not ahead [#a #a] to <end>])
 ]
@@ -90,7 +90,7 @@
         wb: [#b]
         #{0A} == parse #{0A} [not ahead wb #{0A}]
     )
-    (~not~ == parse #{0A0A} [not ahead [some #{0B}] to <end>])
+    (~<not>~ == parse #{0A0A} [not ahead [some #{0B}] to <end>])
 
     ~parse-mismatch~ !! (parse #{0A0A} [not ahead [#{0A} #{0A}] to <end>])
 ]

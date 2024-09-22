@@ -38,7 +38,7 @@
     all [
         url.scheme == 'http  ; Note: DECODE-URL returns BLOCK! with 'http
         url.user == null
-        ^url.pass == '~no-user~
+        ^url.pass == '~<no user>~
         url.host == "example.com"
         url.port-id == null
         url.path == "/get?q=ščř"
@@ -60,7 +60,7 @@
     all [
         url.scheme == 'http
         url.user == null
-        ^url.pass == '~no-user~
+        ^url.pass == '~<no user>~
         url.host == "host"
         url.port-id == null
         url.path == "?query"
@@ -80,7 +80,7 @@
     all [
         url.scheme == 'http
         url.user == null
-        ^url.pass == '~no-user~
+        ^url.pass == '~<no user>~
         tuple? url.host
         url.host == 10.20.30.40
         url.port-id == 8000
@@ -92,7 +92,7 @@
     all [
         url.scheme == 'http
         url.user == null
-        ^url.pass == '~no-user~
+        ^url.pass == '~<no user>~
         text? url.host
         url.host == "10.20.30.40a"
         url.port-id == 8000

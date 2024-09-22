@@ -6,7 +6,7 @@
 (
     str: "aaa"
     all [
-        '~change~ == meta parse str [
+        '~<change>~ == meta parse str [
             change [some "a"] (if ok ["literally"])
         ]
         str = "literally"
@@ -38,7 +38,7 @@
 (
     s: {aba}
     all [
-        '~change~ = ^ parse s [some [
+        '~<change>~ = ^ parse s [some [
             opt change "b" ("x")
             elide one
         ]]
@@ -50,11 +50,11 @@
 ; BLOCK! change tests from %parse-test.red
 [
     (all [
-        '~change~ == meta parse blk: [1] [change integer! (the a)]
+        '~<change>~ == meta parse blk: [1] [change integer! (the a)]
         blk = [a]
     ])
     (all [
-        '~change~ == meta parse blk: [1 2 3] [change [some integer!] (the a)]
+        '~<change>~ == meta parse blk: [1 2 3] [change [some integer!] (the a)]
         blk = [a]
     ])
     (all [
@@ -62,22 +62,22 @@
         blk = [1 #. 2 #. 3]
     ])
     (all [
-        '~change~ == meta parse blk: [1 2 3] [change [some integer!] (99)]
+        '~<change>~ == meta parse blk: [1 2 3] [change [some integer!] (99)]
         blk = [99]
     ])
     (all [
-        '~change~ == meta parse blk: [1 2 3] [change [some integer!] ([a])]
+        '~<change>~ == meta parse blk: [1 2 3] [change [some integer!] ([a])]
         blk = [[a]]
     ])
     (all [
-        '~change~ == meta parse blk: [1 2 3] [
+        '~<change>~ == meta parse blk: [1 2 3] [
             change [some integer!] (reduce [1 + 2])
         ]
         blk = [[3]]
     ])
     (
         b: ["long long long string" "long long long string" 1]
-        '~change~ == meta parse copy "." [change one (spread b)]
+        '~<change>~ == meta parse copy "." [change one (spread b)]
     )
 ]
 
@@ -85,11 +85,11 @@
 ; TEXT! change tests from %parse-test.red
 [
     (all [
-        '~change~ == meta parse str: "1" [change one (#a)]
+        '~<change>~ == meta parse str: "1" [change one (#a)]
         str = "a"
     ])
     (all [
-        '~change~ == meta parse str: "123" [change [repeat 3 one] (#a)]
+        '~<change>~ == meta parse str: "123" [change [repeat 3 one] (#a)]
         str = "a"
     ])
     (
@@ -102,11 +102,11 @@
         ]
     )
     (all [
-        '~change~ == meta parse str: "123" [change skip 3 (99)]
+        '~<change>~ == meta parse str: "123" [change skip 3 (99)]
         str = "99"
     ])
     (all [
-        '~change~ == meta parse str: "test" [some [change #t (#o) | one]]
+        '~<change>~ == meta parse str: "test" [some [change #t (#o) | one]]
         str = "oeso"
     ])
     (all [
@@ -121,24 +121,24 @@
 ; BINARY! change tests from %parse-test.red
 [
     (all [
-        '~change~ == meta parse bin: #{01} [change one (#{0A})]
+        '~<change>~ == meta parse bin: #{01} [change one (#{0A})]
         bin = #{0A}
     ])
     (all [
-        '~change~ == meta parse bin: #{010203} [change [skip 3] (#{0A})]
+        '~<change>~ == meta parse bin: #{010203} [change [skip 3] (#{0A})]
         bin = #{0A}
     ])
     (
         digit: charset [1 - 9]
         all [
-            '~change~ == meta parse bin: #{010A020B03} [
+            '~<change>~ == meta parse bin: #{010A020B03} [
                 some [change digit (#{00}) | <next>]
             ]
             bin = #{000A000B00}
         ]
     )
     (all [
-        '~change~ == meta parse bin: #{010203} [change skip 3 (99)]
+        '~<change>~ == meta parse bin: #{010203} [change skip 3 (99)]
         bin = #{63}
     ])
     (all [
@@ -157,7 +157,7 @@
 
 [#1245
     (all [
-        '~change~ == meta parse s: "(1)" [change "(1)" ("()")]
+        '~<change>~ == meta parse s: "(1)" [change "(1)" ("()")]
         s = "()"
     ])
 ]
@@ -166,7 +166,7 @@
 (
     s: ~
     all [
-        '~change~ == meta parse s: [1] [change n: integer! (n * 10)]
+        '~<change>~ == meta parse s: [1] [change n: integer! (n * 10)]
         s = [10]
     ]
 )

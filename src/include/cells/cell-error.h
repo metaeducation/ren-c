@@ -59,6 +59,5 @@ INLINE void Force_Location_Of_Error(Context* error, Level* where) {
 INLINE Atom* Raisify(Need(Atom*) v) {
     assert(Is_Error(v) and QUOTE_BYTE(v) == NOQUOTE_1);
     Force_Location_Of_Error(VAL_CONTEXT(v), TOP_LEVEL);  // ideally already set
-    QUOTE_BYTE(v) = ANTIFORM_0;
-    return v;
+    return Coerce_To_Unstable_Antiform(v);
 }

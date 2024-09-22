@@ -49,12 +49,11 @@ INLINE bool Is_Void(Need(const Value*) v) {
         and Cell_Word_Id(v) == SYM_VOID;
 }
 
-#define Init_Void(out) \
-    Init_Anti_Word((out), Canon(VOID))
-
 #define Init_Void_Untracked(out) \
-    Init_Any_Word_Untracked(ensure(Sink(Value*), (out)), REB_WORD, \
-        Canon(VOID), ANTIFORM_0)
+    Init_Anti_Word_Untracked((out), Canon(VOID))
+
+#define Init_Void(out) \
+    TRACK(Init_Void_Untracked(out))
 
 #define Init_Quasi_Void(out) \
     Init_Quasi_Word((out), Canon(VOID))

@@ -504,12 +504,12 @@ INLINE Value* Lookup_Mutable_Word_May_Fail(
     return var;
 }
 
-INLINE Value* Sink_Word_May_Fail(
+INLINE Sink(Value*) Sink_Word_May_Fail(
     const Element* any_word,
     Specifier* specifier
 ){
     Value* var = Lookup_Mutable_Word_May_Fail(any_word, specifier);
-    return Freshen_Cell(var);
+    return var;
 }
 
 

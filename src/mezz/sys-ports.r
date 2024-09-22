@@ -152,7 +152,7 @@ make-port*: func [
             "@"
             |
             emit user: (null)
-            emit pass: (~no-user~)  ; is this better than NULL?
+            emit pass: (~<no user>~)  ; is this better than NULL?
         ]
 
         ; optional host [:port]

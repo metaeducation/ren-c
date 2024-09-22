@@ -27,20 +27,14 @@ INLINE Bounce Run_Generic_Dispatch_Core(
     const Symbol* verb
 ){
     GENERIC_HOOK *hook;
-    switch (QUOTE_BYTE(first_arg)) {
-      case ANTIFORM_0:
-        hook = &T_Antiform;
-        break;
-      case NOQUOTE_1:
+    if (Is_Antiform(first_arg))
+        hook = &T_Antiform;  // has to support null/okay for LOGIC generics
+    else if (Is_Quasiform(first_arg))
+        hook = &T_Quasiform;  // supports COPY
+    else if (Is_Quoted(first_arg))
+        hook = &T_Quoted;  // supports COPY
+    else
         hook = Generic_Hook_For_Type_Of(first_arg);
-        break;
-      case QUASIFORM_2:
-        hook = &T_Quasiform;
-        break;
-      default:
-        hook = &T_Quoted;  // a few things like COPY are supported by QUOTED!
-        break;
-    }
 
     return hook(L, verb);  // Note QUOTED! has its own hook & handling;
 }

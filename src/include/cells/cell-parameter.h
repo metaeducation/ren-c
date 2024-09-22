@@ -301,7 +301,7 @@ INLINE bool Is_Specialized(const Value* v) {
 
 
 INLINE Param* Init_Unconstrained_Parameter_Untracked(
-    Cell* out,
+    Sink(Value*) out,
     Flags flags
 ){
     ParamClass pclass = u_cast(ParamClass, FIRST_BYTE(&flags));
@@ -312,13 +312,12 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
     }
     UNUSED(pclass);
 
-    Reset_Antiform_Header_Untracked(out, CELL_MASK_PARAMETER);
+    Reset_Cell_Header_Untracked(out, CELL_MASK_PARAMETER);
     PARAMETER_FLAGS(out) = flags;
     INIT_CELL_PARAMETER_SPEC(out, nullptr);
     Init_Cell_Node2(out, nullptr);  // parameter string
 
-    Param* param = cast(Param*, cast(Value*, out));
-    return param;
+    return cast(Param*, Coerce_To_Stable_Antiform(out));
 }
 
 #define Init_Unconstrained_Parameter(out,param_flags) \

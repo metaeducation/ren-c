@@ -100,8 +100,7 @@ INLINE Element* Init_Frame_Details_Core(
 
 INLINE Value* Actionify(Sink(Value*) v) {
     assert(Is_Frame(v) and QUOTE_BYTE(v) == NOQUOTE_1);
-    QUOTE_BYTE(v) = ANTIFORM_0;
-    return v;
+    return Coerce_To_Stable_Antiform(v);
 }
 
 INLINE Element* Deactivate_If_Action(Need(Value*) v) {

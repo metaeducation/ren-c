@@ -425,17 +425,12 @@ static void Propagate_All_GC_Marks(void)
             Flavor flavor = Stub_Flavor(a);
             assert(flavor <= FLAVOR_MAX_ARRAY);
 
-            switch (QUOTE_BYTE(v)) {
-              case ANTIFORM_0:
+            if (QUOTE_BYTE(v) == ANTIFORM_0) {
                 if (flavor < FLAVOR_MIN_ANTIFORMS_OK)
                     panic (v);  // antiforms not legal in many array types
 
                 if (Is_Antiform_Unstable(cast(Atom*, v)))  // always illegal
                     panic (v);
-                break;
-
-              default:
-                 break;
             }
           #endif
 

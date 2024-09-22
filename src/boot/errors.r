@@ -81,6 +81,8 @@ Script: [
     type-of-null:       {TYPE OF NULL illegal (use TRY TYPE OF NULL if meant)}
     bad-word-get:       [:arg1 {is} :arg2 {antiform (see ^^(...) and GET/ANY)}]
     bad-antiform:       [{Invalid use of} :arg1 {antiform}]
+    non-isotopic-type:  [{Quasiforms and antiforms not legal for value:} :arg1]
+    illegal-keyword:    [{Illegal antiform keyword:} :arg1]
     bad-void:           {Invalid use of void}
     need-non-end:       [{end was reached evaluating} :arg1]  ; SET-XXX!/SIGIL!
     not-bound:          [:arg1 {word is not bound to a context}]

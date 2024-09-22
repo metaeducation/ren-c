@@ -513,36 +513,6 @@ static void Init_System_Object(
 
 
 //
-//  Init_Contexts_Object: C
-//
-// This sets up the system.contexts object.
-//
-// !!! One of the critical areas in R3-Alpha that was not hammered out
-// completely was the question of how the binding process gets started, and
-// how contexts might inherit or relate.
-//
-// However, the basic model for bootstrap is that the "user context" is the
-// default area for new code evaluation.  It starts out as a copy of an
-// initial state set up in the lib context.  When native routines or other
-// content gets overwritten in the user context, it can be borrowed back
-// from `system.contexts.lib` (typically aliased as "lib" in the user context).
-//
-static void Init_Contexts_Object(void)
-{
-    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_LIB), Lib_Context_Value);
-
-    // We don't initialize the USER context...yet.  Make it more obvious what
-    // is wrong if it's used during boot.
-    //
-    const char *label = "startup-mezz-not-finished-yet";
-    Init_Anti_Word(
-        Get_System(SYS_CONTEXTS, CTX_USER),
-        Intern_UTF8_Managed(cb_cast(label), strsize(label))
-    );
-}
-
-
-//
 //  Startup_Core: C
 //
 // Initialize the interpreter core.
@@ -736,8 +706,6 @@ void Startup_Core(void)
     Drop_GC_Guard(natives_catalog);
     Drop_GC_Guard(datatypes_catalog);
 
-    Init_Contexts_Object();
-
     PG_Boot_Phase = BOOT_ERRORS;
 
   #if defined(TEST_MID_BOOT_PANIC)
@@ -754,6 +722,28 @@ void Startup_Core(void)
     Startup_Stackoverflow();
 
     assert(TOP_INDEX == 0 and TOP_LEVEL == BOTTOM_LEVEL);
+
+  //=//// INITIALIZE SYSTEM.CONTEXTS.LIB //////////////////////////////////=//
+
+    // The basic model for bootstrap is that the "user context" is the
+    // default area for new code evaluation.  It starts out as a copy of an
+    // initial state set up in the lib context.  When native routines or other
+    // content gets overwritten in the user context, it can be borrowed back
+    // from `system.contexts.lib` (aliased as "lib" in the user context).
+    //
+    // Set up the alias for lib, but put a "tripwire" (antiform tag) in the
+    // slot for the user context to give a more obvious error message if
+    // something tries to use it before startup finishes.
+
+  blockscope {
+    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_LIB), Lib_Context_Value);
+    bool threw = rebRunThrows(
+        Get_System(SYS_CONTEXTS, CTX_USER),  // where to write antiform tag
+        "~<SYS.CONTEXTS.USER not available: STARTUP-MEZZ not finished yet>~"
+    );
+    assert(not threw);
+    UNUSED(threw);
+  }
 
 //=//// RUN MEZZANINE CODE NOW THAT ERROR HANDLING IS INITIALIZED /////////=//
 

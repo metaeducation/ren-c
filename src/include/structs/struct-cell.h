@@ -175,21 +175,53 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // to check at compile-time so that different views of the same cell don't
 // get conflated, e.g. Cell* can't have VAL_TYPE() taken on it.
 //
+// 2. We want to control all the places where a cell becomes an antiform, to
+//    avoid letting them be created with bindings, and to avoid illegal
+//    types (e.g. paths aren't antiforms, because ~/foo/~ is a 3-element
+//    path with quasi-blanks at the head and tail, so no quasiform exists).
+//    So this makes it possible to read the antiform quote byte but not
+//    to write it through the ANTIFORM_0 definition.
+
 #define QUOTE_BYTE(cell) \
     THIRD_BYTE(&(cell)->header.bits)  // don't use ensure(), see HEART_BYTE [1]
 
-#define FLAG_QUOTE_BYTE(byte)       FLAG_THIRD_BYTE(byte)
+#define ANTIFORM_0_COERCE_ONLY      0  // also "QUASI" (NONQUASI_BIT is clear)
+#define NOQUOTE_1                   1
+#define NONQUASI_BIT                1
+#define QUASIFORM_2_COERCE_ONLY     2
+#define ONEQUOTE_3                  3  // non-QUASI state of one quote level
 
+#if DEBUG && CPLUSPLUS_11  // Discourage `QUOTE_BYTE(cell) = ANTIFORM_0` [2]
+    struct Antiform_0_Struct {};
+    INLINE bool operator==(Byte byte, const Antiform_0_Struct& a0)
+      { UNUSED(a0); return byte == ANTIFORM_0_COERCE_ONLY; }
+    INLINE bool operator!=(Byte byte, const Antiform_0_Struct& a0)
+      { UNUSED(a0); return byte != ANTIFORM_0_COERCE_ONLY; }
 
-#define ANTIFORM_0          0  // Also QUASI (e.g. with NONQUASI_BIT is clear)
-#define NOQUOTE_1           1
-#define NONQUASI_BIT        1
-#define QUASIFORM_2         2
-#define ONEQUOTE_3          3  // non-QUASI state of having one quote level
+    struct Quasiform_2_Struct {};
+    INLINE bool operator==(Byte byte, const Quasiform_2_Struct& a0)
+      { UNUSED(a0); return byte == QUASIFORM_2_COERCE_ONLY; }
+    INLINE bool operator!=(Byte byte, const Quasiform_2_Struct& a0)
+      { UNUSED(a0); return byte != QUASIFORM_2_COERCE_ONLY; }
+    INLINE bool operator>=(Byte byte, const Quasiform_2_Struct& a0)
+      { UNUSED(a0); return byte >= QUASIFORM_2_COERCE_ONLY; }
 
-#define MAX_QUOTE_DEPTH     126  // highest legal quoting level
+    constexpr Antiform_0_Struct antiform_0;
+    constexpr Quasiform_2_Struct quasiform_2;
 
+    #define ANTIFORM_0      antiform_0
+    #define QUASIFORM_2     quasiform_2
+#else
+    #define ANTIFORM_0      ANTIFORM_0_COERCE_ONLY
+    #define QUASIFORM_2     QUASIFORM_2_COERCE_ONLY
+#endif
+
+#define MAX_QUOTE_DEPTH     126         // highest legal quoting level
 #define Quote_Shift(n)      ((n) << 1)  // help find manipulation sites
+
+#define FLAG_QUOTE_BYTE(byte)         FLAG_THIRD_BYTE(byte)
+#define FLAG_QUOTE_BYTE_ANTIFORM_0    FLAG_THIRD_BYTE(ANTIFORM_0_COERCE_ONLY)
+#define FLAG_QUOTE_BYTE_QUASIFORM_2   FLAG_THIRD_BYTE(QUASIFORM_2_COERCE_ONLY)
 
 
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//

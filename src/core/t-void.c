@@ -46,8 +46,7 @@ Bounce MAKE_Quasiform(
     // but Quasify() does not.
 
     Copy_Cell(OUT, arg);
-    QUOTE_BYTE(OUT) = QUASIFORM_2;
-    return OUT;
+    return Coerce_To_Quasiform(stable_OUT);
 }
 
 

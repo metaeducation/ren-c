@@ -2827,8 +2827,14 @@ Bounce Scanner_Executor(Level* const L) {
     if (level->quasi_pending) {
         if (*ss->begin != '~')
             return RAISE(Error_Syntax(ss, TOKEN_TILDE));
+
+        Option(Context*) error = Trap_Coerce_To_Quasiform(TOP);
+        if (error) {
+            /* Free_Unmanaged_Flex(error); */  // !!! but it's managed :-(
+            return RAISE(Error_Syntax(ss, TOKEN_TILDE));  // !!! better error!
+        }
+
         ++ss->begin;
-        Quasify(TOP);
         level->quasi_pending = false;
     }
 

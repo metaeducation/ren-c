@@ -83,12 +83,8 @@
 //   so at time of writing, it's not certain if this will be kept.
 //
 
-INLINE Element* Init_Blank_Untracked(Cell* out, Byte quote_byte) {
-    Freshen_Cell_Untracked(out);
-    out->header.bits |= (
-        NODE_FLAG_NODE | NODE_FLAG_CELL
-            | FLAG_HEART_BYTE(REB_BLANK) | FLAG_QUOTE_BYTE(quote_byte)
-    );
+INLINE Element* Init_Blank_Untracked(Sink(Element*) out) {
+    Reset_Cell_Header_Untracked(out, CELL_MASK_BLANK);
 
   #ifdef ZERO_UNUSED_CELL_FIELDS
     EXTRA(Any, out).corrupt = CORRUPTZERO;  // not Cell_Extra_Needs_Mark()
@@ -96,11 +92,11 @@ INLINE Element* Init_Blank_Untracked(Cell* out, Byte quote_byte) {
     PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;
   #endif
 
-    return cast(Element*, out);
+    return out;
 }
 
 #define Init_Blank(out) \
-    TRACK(Init_Blank_Untracked((out), NOQUOTE_1))
+    TRACK(Init_Blank_Untracked(out))
 
 
 
@@ -123,8 +119,8 @@ INLINE Element* Init_Blank_Untracked(Cell* out, Byte quote_byte) {
 //
 
 #define Init_Nothing(out) \
-    u_cast(Value*, TRACK( \
-        Init_Blank_Untracked(ensure(Sink(Value*), (out)), ANTIFORM_0)))
+    TRACK(Coerce_To_Stable_Antiform(cast(Value*, \
+        Init_Blank_Untracked(ensure(Sink(Value*), (out))))))
 
 #define Init_Meta_Of_Nothing(out)     Init_Quasi_Blank(out)
 
@@ -139,7 +135,7 @@ INLINE Element* Init_Blank_Untracked(Cell* out, Byte quote_byte) {
 //
 
 #define Init_Quasi_Blank(out) \
-    TRACK(Init_Blank_Untracked((out), QUASIFORM_2))
+    TRACK(Coerce_To_Quasiform(Init_Blank_Untracked(out)))
 
 #define Init_Trash(out) Init_Quasi_Blank(out)
 

@@ -624,7 +624,14 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
 #include "sys-protect.h"
 
 
+//=//// API HANDLES ///////////////////////////////////////////////////////=//
+
+#include "sys-roots.h"
+
+
 //=//// CELL ACCESSOR FUNCTIONS ///////////////////////////////////////////=//
+
+#include "cells/cell-quoted.h"  // has special handling for voids/nones
 
 #include "cells/cell-blank.h"
 #include "cells/cell-integer.h"
@@ -640,7 +647,6 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
 
 #include "cells/cell-comma.h"  // Is_Elision() references nihil block antiform
 
-#include "cells/cell-quoted.h"  // has special handling for voids/nones
 
 #include "cells/cell-word.h"  // needs to know about QUOTED! for binding
 #include "cells/cell-unreadable.h"  // requires WORD! for `unreadable`
@@ -670,10 +676,7 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
 
 #include "cells/cell-sequence.h"  // needs Derelativize()
 
-
-//=//// API HANDLES ///////////////////////////////////////////////////////=//
-
-#include "sys-roots.h"  // ensures values aren't Is_Nulled()
+#include "sys-isotope.h"  // needs cell definitions
 
 
 //=//// EVALUATOR SERVICES ////////////////////////////////////////////////=//

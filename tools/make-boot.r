@@ -404,6 +404,10 @@ for-each-datatype 't [
 typeset-sets: copy []
 
 for-each-datatype 't [
+    if t.antiname [  ; if there was a ~antiname~ in types.r for this type
+        append t.typesets "isotopic"  ; add to the Any_Isotopic() typeset
+    ]
+
     for-each ts-name t.typesets [
         if spot: select typeset-sets ts-name [
             append spot t.name  ; not the first time we've seen this typeset
@@ -476,7 +480,7 @@ for-each-datatype 't [
     e-types/emit [t {
         INLINE bool Is_$<Propercase T.Antiname>_Core(Need(const $<Need>*) v) { \
             return ((v->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
-                == (FLAG_QUOTE_BYTE(ANTIFORM_0) | FLAG_HEART_BYTE(REB_$<T.NAME>))); \
+                == (FLAG_QUOTE_BYTE_ANTIFORM_0 | FLAG_HEART_BYTE(REB_$<T.NAME>))); \
         }
 
         #define Is_$<Propercase T.Antiname>(v) \
@@ -484,7 +488,7 @@ for-each-datatype 't [
 
         #define Is_Meta_Of_$<Propercase T.Antiname>(v) \
         ((Ensure_Readable(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
-            == (FLAG_QUOTE_BYTE(QUASIFORM_2) | FLAG_HEART_BYTE(REB_$<T.NAME>)))
+            == (FLAG_QUOTE_BYTE_QUASIFORM_2 | FLAG_HEART_BYTE(REB_$<T.NAME>)))
 
         #define Is_Quasi_$<Propercase T.Name>(v) \
             Is_Meta_Of_$<Propercase T.Antiname>(v)  /* alternative */

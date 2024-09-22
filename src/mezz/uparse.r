@@ -385,14 +385,14 @@ default-combinators: make map! reduce [
     'ahead combinator [
         {Leave the parse position at the same location, but fail if no match}
         return: "parser result if success, NULL if failure"
-            [any-value? pack?]
+            [any-value? pack? ~<not>~]
         parser [action?]
         /negated
     ][
         remainder: input  ; never advances
         if negated [
             parser input except e -> [
-                return ~not~
+                return ~<not>~
             ]
             return raise "Negated parser passed to AHEAD succeded"
         ]
@@ -660,7 +660,7 @@ default-combinators: make map! reduce [
 
     'change combinator [
         {Substitute a match with new data}
-        return: [~change~]
+        return: [~<change>~]
         parser [action?]
         replacer [action?]  ; !!! How to say result is used here?
         <local> replacement'
@@ -676,12 +676,12 @@ default-combinators: make map! reduce [
         ; CHANGE returns tail, use as new remainder
         ;
         remainder: change/part input (unmeta replacement') remainder
-        return ~change~
+        return ~<change>~
     ]
 
     'remove combinator [
         {Remove data that matches a parse rule}
-        return: [~remove~]
+        return: [~<remove>~]
         parser [action?]
     ][
         [^ remainder]: parser input except e -> [  ; first find end position
@@ -689,12 +689,12 @@ default-combinators: make map! reduce [
         ]
 
         remainder: remove/part input remainder
-        return ~remove~
+        return ~<remove>~
     ]
 
     'insert combinator [
         {Insert literal data into the input series}
-        return: [~insert~]
+        return: [~<insert>~]
         parser [action?]
         <local> insertion'
     ][
@@ -703,7 +703,7 @@ default-combinators: make map! reduce [
         ]
 
         remainder: insert input (unmeta insertion')
-        return ~insert~
+        return ~<insert>~
     ]
 
     === SEEKING KEYWORDS ===
