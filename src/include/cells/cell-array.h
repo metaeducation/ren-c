@@ -123,14 +123,14 @@ INLINE const Element* Cell_List_Item_At(const Cell* v) {
 // Declaring as inline with type signature ensures you use a Array* to
 // initialize, and the C++ build can also validate managed consistent w/const.
 
-INLINE Element* Init_Any_List_At_Core(
+INLINE Element* Init_Any_List_At_Core_Untracked(
     Cell* out,
     Heart heart,
     const_if_c Array* array,
     REBLEN index,
     Stub* binding
 ){
-    return Init_Series_At_Core(
+    return Init_Series_At_Core_Untracked(
         out,
         heart,
         Force_Flex_Managed_Core(array),
@@ -140,16 +140,19 @@ INLINE Element* Init_Any_List_At_Core(
 }
 
 #if CPLUSPLUS_11
-    INLINE Element* Init_Any_List_At_Core(
+    INLINE Element* Init_Any_List_At_Core_Untracked(
         Cell* out,
         Heart heart,
         const Array* array,  // all const arrays should be already managed
         REBLEN index,
         Stub* binding
     ){
-        return Init_Series_At_Core(out, heart, array, index, binding);
+        return Init_Series_At_Core_Untracked(out, heart, array, index, binding);
     }
 #endif
+
+#define Init_Any_List_At_Core(v,t,a,i,s) \
+    TRACK(Init_Any_List_At_Core_Untracked((v), (t), (a), (i), (s)))
 
 #define Init_Any_List_At(v,t,a,i) \
     Init_Any_List_At_Core((v), (t), (a), (i), UNBOUND)
@@ -202,13 +205,17 @@ INLINE Cell* Init_Relative_Block_At(
 //
 
 INLINE Atom* Init_Pack_Untracked(Sink(Atom*) out, Array* a) {
-    Init_Block(out, a);
+    Init_Any_List_At_Core_Untracked(out, REB_BLOCK, a, 0, SPECIFIED);
     QUOTE_BYTE(out) = ANTIFORM_0;
     return out;  // unstable
 }
 
 #define Init_Pack(out,a) \
     TRACK(Init_Pack_Untracked((out), (a)))
+
+#define Init_Meta_Pack(out,a) \
+    TRACK(Quasify(Init_Any_List_At_Core_Untracked( \
+        (out), REB_BLOCK, (a), 0, SPECIFIED)))
 
 
 //=//// "NIHIL" (empty BLOCK! Antiform Pack, ~[]~) ////////////////////////=//

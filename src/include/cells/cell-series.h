@@ -104,7 +104,7 @@ INLINE void INIT_SPECIFIER(Cell* v, Stub* binding) {
 //    these making it into things like BLOCK! or GROUP! values, as the user
 //    should never see antiforms in what they see as "ANY-ARRAY!".
 //
-INLINE Element* Init_Series_At_Core(
+INLINE Element* Init_Series_At_Core_Untracked(
     Sink(Element*) out,
     Heart heart,
     const Flex* f,  // ensured managed by calling macro
@@ -139,6 +139,9 @@ INLINE Element* Init_Series_At_Core(
     INIT_SPECIFIER(out, specifier);  // asserts if unbindable type tries to bind
     return out;
 }
+
+#define Init_Series_At_Core(v,t,f,i,s) \
+    TRACK(Init_Series_At_Core_Untracked((v), (t), (f), (i), (s)))
 
 #define Init_Series_At(v,t,f,i) \
     Init_Series_At_Core((v), (t), \
