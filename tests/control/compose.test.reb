@@ -274,11 +274,20 @@
     )
 ]
 
-; COMPOSE is by default willing to decay to other types than what was passed.
-; This may not be a good default, and some option like ":diminish" might be
-; a better idea.
+; COMPOSE is by default not willing to decay to other types than what's given.
+; Can override with /CONFLATE
 [
-    (the / = compose $(blank)/(blank))
-    (the . = compose $(blank).(blank))
-    (null? compose $(void).(void))
+    ~conflated-sequence~ !! (compose $(blank)/(blank))
+    ~conflated-sequence~ !! (compose $(blank).(blank))
+    ~conflated-sequence~ !! (compose $(void).(void))
+
+    (the / = compose/conflate $(blank)/(blank))
+    (the . = compose/conflate $(blank).(blank))
+    (null? compose/conflate $(void).(void))
+
+    (_ = compose/conflate $(void).(_))
+    (_ = compose/conflate $(_).(void))
+    ('a = compose/conflate $(void).('a))
+    ('a = compose/conflate $('a).(void))
+    (@a = compose/conflate the @('a).(void))
 ]

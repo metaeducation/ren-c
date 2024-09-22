@@ -436,11 +436,19 @@ REBTYPE(Sequence)
 //
 //  MF_Sequence: C
 //
-void MF_Sequence(REB_MOLD *mo, const Cell* v, bool form)
+// 1. We ignore CELL_FLAG_NEWLINE_BEFORE here for the sequence elements
+//    themselves.  But any embedded BLOCK! or GROUP! which do have newlines in
+//    them can make newlines, e.g.:
+//
+//         a/[
+//            b c d
+//         ]/e
+//
+void MF_Sequence(REB_MOLD *mo, const Cell* c, bool form)
 {
     UNUSED(form);
 
-    Heart heart = Cell_Heart(v);
+    Heart heart = Cell_Heart(c);
     char interstitial = Any_Tuple_Kind(heart) ? '.' : '/';
 
     if (heart == REB_GET_TUPLE)
@@ -454,44 +462,32 @@ void MF_Sequence(REB_MOLD *mo, const Cell* v, bool form)
     else if (heart == REB_VAR_PATH or heart == REB_VAR_TUPLE)
         Append_Codepoint(mo->string, '$');
 
-    bool first = true;
-
     DECLARE_ELEMENT (element);
-    Length len = Cell_Sequence_Len(v);
-    REBLEN i;
+    Length len = Cell_Sequence_Len(c);
+    Offset i;
     for (i = 0; i < len; ++i) {
-        Copy_Sequence_At(element, c_cast(Cell*, v), i);  // !!! cast
-        Heart element_heart = Cell_Heart_Ensure_Noquote(element);
+        Copy_Sequence_At(element, c, i);  // !!! cast
 
-        if (first)
-            first = false;  // don't print `.` or `/` before first element
-        else
+        if (i == 0) {
+            // don't print `.` or `/` before first element
+        } else {
             Append_Codepoint(mo->string, interstitial);
-
-        if (element_heart == REB_BLANK) {
-            // no blank molding; implicit
         }
-        else if (element_heart == REB_WORD) {
-            const Symbol* sym = Cell_Word_Symbol(element);
-            assert(Not_Subclass_Flag(SYMBOL, sym, ILLEGAL_IN_ANY_SEQUENCE));
-            if (Any_Tuple_Kind(heart))
-                assert(Not_Subclass_Flag(SYMBOL, sym, ILLEGAL_IN_ANY_TUPLE));
-            UNUSED(sym);
 
-            Mold_Element(mo, element);
+        if (Is_Blank(element)) {  // blank molds invisibly
+            assert(i == 0 or i == len - 1);  // head or tail only
         }
         else {
-            Mold_Element(mo, element);
+            if (Is_Word(element)) {  // double-check word legality in debug
+                const Symbol* s = Cell_Word_Symbol(element);
+                assert(Not_Subclass_Flag(SYMBOL, s, ILLEGAL_IN_ANY_SEQUENCE));
+                if (Any_Tuple_Kind(heart))
+                    assert(Not_Subclass_Flag(SYMBOL, s, ILLEGAL_IN_ANY_TUPLE));
+                UNUSED(s);
+            }
 
-            // Note: Ignore VALUE_FLAG_NEWLINE_BEFORE here for ANY-PATH,
-            // but any embedded BLOCK! or GROUP! which do have newlines in
-            // them can make newlines, e.g.:
-            //
-            //     a/[
-            //        b c d
-            //     ]/e
+            Mold_Element(mo, element);  // ignore CELL_FLAG_NEWLINE_BEFORE [1]
         }
-
     }
 
     if (heart == REB_SET_TUPLE)

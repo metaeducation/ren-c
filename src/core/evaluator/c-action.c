@@ -671,7 +671,7 @@ Bounce Action_Executor(Level* L)
         assert(Is_Pushed_Refinement(TOP));
 
         if (not BINDING(TOP)) {  // the loop didn't index it
-            Refinify_Pushed_Refinement(TOP);
+            Refinify_Pushed_Refinement(cast(Element*, TOP));
             fail (Error_Bad_Parameter_Raw(TOP));  // so duplicate or junk
         }
 

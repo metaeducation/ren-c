@@ -686,27 +686,26 @@ DECLARE_NATIVE(inert)
 //
 //  Plainify: C
 //
-// Turn a value into its "plain" equivalent.  This works for all values.
+// Turn a value into its "plain" equivalent.  This works for all Elements.
 //
-Value* Plainify(Value* out) {
-    Heart heart = Cell_Heart(out);
+Element* Plainify(Element* e) {
+    Heart heart = Cell_Heart(e);
     if (Any_Word_Kind(heart)) {
-        HEART_BYTE(out) = REB_WORD;
+        HEART_BYTE(e) = REB_WORD;
     }
     else if (Any_Path_Kind(heart)) {
-        HEART_BYTE(out) = REB_PATH;
+        HEART_BYTE(e) = REB_PATH;
     }
     else if (Any_Tuple_Kind(heart)) {
-        HEART_BYTE(out) = REB_TUPLE;
+        HEART_BYTE(e) = REB_TUPLE;
     }
     else if (Any_Block_Kind(heart)) {
-        HEART_BYTE(out) = REB_BLOCK;
+        HEART_BYTE(e) = REB_BLOCK;
     }
     else if (Any_Group_Kind(heart)) {
-        HEART_BYTE(out) = REB_GROUP;
+        HEART_BYTE(e) = REB_GROUP;
     }
-
-    return out;
+    return e;
 }
 
 
@@ -716,12 +715,14 @@ Value* Plainify(Value* out) {
 //  "Convert a value into its plain representation"
 //
 //      return: [~null~ element?]
-//      value [<maybe> element?]
+//      element [<maybe> element?]
 //  ]
 //
 DECLARE_NATIVE(plain)
 {
     INCLUDE_PARAMS_OF_PLAIN;
 
-    return COPY(Plainify(ARG(value)));
+    Element* e = cast(Element*, ARG(element));
+
+    return COPY(Plainify(e));
 }

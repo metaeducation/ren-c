@@ -119,9 +119,9 @@ INLINE void Restart_Stepper_Level(Level* L) {
 
 #define Is_Pushed_Refinement Is_The_Word
 
-INLINE Value* Refinify_Pushed_Refinement(Value* v) {
-    assert(Is_Pushed_Refinement(v));
-    return Refinify(Plainify(v));
+INLINE Element* Refinify_Pushed_Refinement(Element* e) {
+    assert(Is_Pushed_Refinement(e));
+    return Refinify(Plainify(e));
 }
 
 

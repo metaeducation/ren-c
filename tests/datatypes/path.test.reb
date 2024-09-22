@@ -211,17 +211,31 @@
 ;
 (word! = type of the /)
 
-~bad-sequence-item~ !! (
-    to path! [_ _]
-)
-
 ; foo/ is a length 2 PATH! in Ren-C
 (path! = type of the foo/ )
 (2 = length of the foo/ )
 (the foo/ = to path! [foo _])
 
+(all [
+    e: trap [to path! [_ _]]
+    e.id = 'conflated-sequence
+    e.arg1 = '/
+    word? e.arg1
+])
+(all [
+    e: trap [to path! [~ ~]]
+    e.id = 'conflated-sequence
+    e.arg1 = '~/~
+    quasiform? e.arg1
+    '/ = unquasi e.arg1
+])
+(all [
+    e: trap [to path! [a _ b]]
+    e.id = 'bad-sequence-blank
+])
+
 ; Not currently true, TO BLOCK! is acting like BLOCKIFY, review
-; ([_ _] = to block! the /)
+;
 ; ([foo _] = to block! the foo/ )  ; !!! low priority scanner bug on /)
 
 ; Voids vanish in GROUP!s, refinements allowed.  /REFINE form is permitted

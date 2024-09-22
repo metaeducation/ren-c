@@ -2090,7 +2090,7 @@ Bounce Scanner_Executor(Level* const L) {
         goto loop; }
 
       case TOKEN_TILDE: {
-        assert(*bp == '~');  // should be `len` sequential apostrophes
+        assert(*bp == '~');
 
         if (level->sigil_pending)  // can't do @~foo:~ or :~foo~
             return RAISE(Error_Syntax(ss, level->token));
@@ -2197,30 +2197,36 @@ Bounce Scanner_Executor(Level* const L) {
 
       case TOKEN_TUPLE:
         assert(*bp == '.');
-        goto slash_or_dot_needs_blank_on_left;
+        goto out_of_turn_slash_or_dot;
 
       case TOKEN_PATH:
         assert(*bp == '/');
-        goto slash_or_dot_needs_blank_on_left;
+        goto out_of_turn_slash_or_dot;
 
-      slash_or_dot_needs_blank_on_left:
-        assert(ep == bp + 1 and ss->begin == ep and ss->end == ep);
-
+      out_of_turn_slash_or_dot: {
+        //
         // A "normal" path or tuple like `a/b/c` or `a.b.c` always has a token
         // on the left of the interstitial.  So the dot or slash gets picked
         // up by a lookahead step after this switch().
         //
         // This point is reached when a slash or dot gets seen "out-of-turn",
-        // like `/a` or `a//b` or `a./b` etc
+        // like `/a` or `a./b` or `~/a` etc.
         //
-        // Easiest thing to do here is to push a blank and then let whatever
-        // processing would happen for a non-blank run (either start a new
-        // path or tuple, or continuing one in progress).  So just do that
-        // push and "unconsume" the token so the lookahead sees it.
-        //
-        Init_Blank(PUSH());
+        // Easiest thing to do here is to push an item and then let whatever
+        // processing would happen run (either start a new path or tuple, or
+        // continuing one in progress).  So just do that push and "unconsume"
+        // the '/' so the lookahead sees it.
+
+        assert(ep == bp + 1 and ss->begin == ep and ss->end == ep);
+
+        if (level->quasi_pending) {
+            Init_Trash(PUSH());  // if we end up with ~/~, we decay it to word
+            level->quasi_pending = false;  // quasi-sequences don't exist
+        }
+        else
+            Init_Blank(PUSH());
         ep = ss->begin = ss->end = bp;  // "unconsume" `.` or `/` token
-        break;
+        break; }
 
       case TOKEN_BLOCK_END: {
         if (level->mode == ']')
@@ -2687,7 +2693,7 @@ Bounce Scanner_Executor(Level* const L) {
         }
 
       blockscope {  // gotos would cross this initialization without
-        Option(Context*) error = Trap_Pop_Sequence(
+        Option(Context*) error = Trap_Pop_Sequence_Or_Conflation(
             temp,  // doesn't write directly to stack since popping stack
             level->token == TOKEN_TUPLE ? REB_TUPLE : REB_PATH,
             stackindex_path_head - 1
@@ -2698,7 +2704,11 @@ Bounce Scanner_Executor(Level* const L) {
         }
       }
 
-        assert(Is_Word(temp) or Any_Sequence(temp));  // `/` and `...` decay
+        assert(
+            Is_Quasi_Word(temp)     // [~ ~] => ~.~ or ~/~
+            or Is_Word(temp)        // [_ _] => . or /
+            or Any_Sequence(temp)
+        );
 
       push_temp:
         Copy_Cell(PUSH(), temp);

@@ -49,7 +49,7 @@ static bool Params_Of_Hook(
             not (flags & PHF_UNREFINED)
             and Get_Parameter_Flag(param, REFINEMENT)
         ){
-            Refinify(TOP);
+            Refinify(cast(Element*, TOP));
         }
 
         switch (Cell_ParamClass(param)) {

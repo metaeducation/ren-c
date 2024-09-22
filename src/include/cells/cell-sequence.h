@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A "Sequence" is a constrained type of array, with elements separated by
+// A "Sequence" is a constrained "arraylike" type with elements separated by
 // interstitial delimiters.  The two basic forms are PATH! (separated by `/`)
 // and TUPLE! (separated by `.`)
 //
@@ -33,20 +33,14 @@
 // of creation.)
 //
 // Both forms are allowed to contain WORD!, INTEGER!, GROUP!, BLOCK!, TEXT!,
-// QUASI-WORD?, and TAG!.  There are SET-, GET-, META-, THE-, and TYPE- forms:
+// and TAG!.  Quasiforms of these types (where legal) are also permitted.
+// There are SET-, GET-, META-, THE-, and TYPE- forms:
 //
 //     <abc>/(d e f)/[g h i]:   ; a 3-element SET-PATH!
 //     :foo.1.bar               ; a 3-element GET-TUPLE!
 //     ^abc.(def)               ; a 2-element META-TUPLE!
 //     @<a>/<b>/<c>             ; a 3-element THE-TUPLE!
-//
-// It is also legal to put BLANK! in sequence slots.  They will render
-// invisibly, allowing you to begin or terminate sequences with the delimiter:
-//
-//     .foo.bar     ; a 3-element TUPLE! with BLANK! in the first slot
-//     1/2/3/:      ; a 4-element SET-PATH! with BLANK! in the last slot
-//     /            ; a 2-element PATH! with BLANK! in the first and last slot
-//     a////b       ; a 5-element PATH! with BLANK! in the middle 3 slots
+//     ~/home/README            ; a 3-element PATH!
 //
 // PATH!s may contain TUPLE!s, but not vice versa.  This means that mixed
 // usage can be interpreted unambiguously:
@@ -54,10 +48,21 @@
 //     a.b.c/d.e.f    ; a 2-element PATH! containing 3-element TUPLEs
 //     a/b/c.d/e/f    ; a 5-element PATH! with 2-element TUPLE! in the middle
 //
+// It is also legal to put BLANK! in slots at the head or tail.  They render
+// invisibly, allowing you to begin or terminate sequences with the delimiter:
+//
+//     .foo.bar     ; a 3-element TUPLE! with BLANK! in the first slot
+//     1/2/3/:      ; a 4-element SET-PATH! with BLANK! in the last slot
+//     /            ; a 2-element PATH! with BLANK! in the first and last slot
+//
+// Internal blanks are not allowed.  Because although there might be some
+// theoretical use for `a//b` or similar sequences, those aren't as compelling
+// as being able to have `http://example.com` be URL! (vs. a 3-element PATH!)
+//
 // Neither PATH! nor TUPLE may contain "arrow-words" in any slot (those with
 // `>` or `<` in their spelling), so interpretation of TAG!s is unambiguous:
 //
-//     ..<..>..     ; a 5-element TUPLE! with TAG! <..> in slot 3, rest BLANK!
+//     .<.>.     ; a 3-element TUPLE! with TAG! <.> in slot 2
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
@@ -65,7 +70,8 @@
 //   are considered to be WORD!.  This was considered non-negotiable, that
 //   `/` be allowed to mean divide.  Making it a PATH! that ran code turned
 //   out to be much more convoluted than having special word flags.  (See
-//   SYMBOL_FLAG_ESCAPE_XXX for how these words are handled "gracefully".)
+//   SYMBOL_FLAG_ILLEGAL_IN_ANY_SEQUENCE etc. for how these are handled,
+//   where `.` can be put in paths but `/` can't appear in any path or tuple.)
 //
 // * The immutability of sequences allows important optimizations in the
 //   implementation that minimize allocations.  For instance, the 2-element
@@ -92,47 +98,62 @@
 //   - Uncompressed forms have the first node as FLAVOR_ARRAY
 //
 
-INLINE bool Is_Valid_Sequence_Element(
+
+// 1. Quasiforms are legal in paths--which is one of the reasons why paths
+//    themselves aren't allowed to be quasiforms.  Because `~/foo/~` is more
+//    useful as a 3-element path with quasiform blanks in the first and last
+//    positions, than a quasiform path is useful.
+//
+//    (Note that exceptions like [~/~ ~//~ ~...~] are quasi-words.)
+//
+INLINE Option(Context*) Trap_Check_Sequence_Element(
     Heart sequence_heart,
-    const Value* v  // current code paths check arbitrary pushed stack values
+    const Element* e
 ){
     assert(Any_Sequence_Kind(sequence_heart));
 
-    if (Is_Antiform(v) or Is_Quoted(v))
-        return false;
+    if (Is_Quoted(e))  // allow quasiforms, but not quoteds [1]
+        return Error_Bad_Sequence_Item_Raw(e);
 
-    // Quasi cases are legal, to support e.g. `~/home/Projects/ren-c/README.md`
-    //
-    // !!! Ambiguity with Quasi-Path, e.g. ~/foo/~
-    // https://github.com/metaeducation/ren-c/issues/1157
-    //
-    Heart h = Cell_Heart(v);
+    Heart h = Cell_Heart(e);
     if (
-        // REB_BLANK not legal except special handling at head and tail
         h == REB_INTEGER
         or h == REB_GROUP
         or h == REB_BLOCK
         or h == REB_TEXT
         or h == REB_TAG
     ){
-        return true;
+        return nullptr;
+    }
+
+    if (h == REB_BLANK) {
+        if (QUOTE_BYTE(e) == QUASIFORM_2)  // ~ is quasiform blank (trash)
+            return nullptr;  // Legal, e.g. `~/home/Projects/ren-c/README.md`
+
+        return Error_Bad_Sequence_Blank_Raw();  // blank only legal at head
     }
 
     if (h == REB_WORD) {
-        const Symbol* symbol = Cell_Word_Symbol(v);
+        const Symbol* symbol = Cell_Word_Symbol(e);
         if (Get_Subclass_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_SEQUENCE))
-            return false;  // e.g. no making path! [<| |>] to be tag! <|/|>
+            return Error_Bad_Sequence_Item_Raw(e);  //  [<| |>] => <|/|>  ; tag
         if (Any_Path_Kind(sequence_heart))
-            return true;
+            return nullptr;
         if (Get_Subclass_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_TUPLE))
-            return false;  // e.g. contains a slash
-        return true;
+            return Error_Bad_Sequence_Item_Raw(e);  // e.g. contains a slash
+        return nullptr;  // all other words should be okay
     }
 
-    if (h == REB_TUPLE)  // PATH! can have TUPLE!, not vice-versa
-        return Any_Path_Kind(sequence_heart);
+    if (h == REB_PATH)  // can't put PATH! in path or tuple
+        return Error_Bad_Sequence_Item_Raw(e);
 
-    return false;
+    if (h == REB_TUPLE) {
+        if (Any_Path_Kind(sequence_heart))
+            return nullptr;  // PATH! can have TUPLE! in it
+        return Error_Bad_Sequence_Item_Raw(e);  // tuple can't have tuple in it
+    }
+
+    return Error_Bad_Sequence_Item_Raw(e);
 }
 
 
@@ -152,29 +173,27 @@ INLINE bool Is_Valid_Sequence_Element(
 // as an ANY-WORD?
 
 INLINE Option(Context*) Trap_Leading_Blank_Pathify(
-    Value* v,
+    Element* e,
     Heart heart
 ){
     assert(Any_Sequence_Kind(heart));
 
-    if (not Is_Valid_Sequence_Element(heart, v))
-        return Error_Bad_Sequence_Item_Raw(v);
+    Option(Context*) trap = Trap_Check_Sequence_Element(heart, e);
+    if (trap)
+        return trap;
 
-    // See notes at top of file regarding optimizing `/a` into a single cell.
-    //
-    Heart inner_heart = Cell_Heart_Ensure_Noquote(v);
-    if (inner_heart == REB_WORD) {
-        Set_Cell_Flag(v, REFINEMENT_LIKE);
-        HEART_BYTE(v) = heart;
+    if (Is_Word(e)) {  // see notes at top of file on `/a` cell optimization
+        Set_Cell_Flag(e, REFINEMENT_LIKE);
+        HEART_BYTE(e) = heart;  // override REB_WORD with heart (e.g. REB_PATH)
         return nullptr;
     }
 
     Value* p = Alloc_Pairing(NODE_FLAG_MANAGED);
     Init_Blank(p);
-    Copy_Cell(Pairing_Second(p), v);
+    Copy_Cell(Pairing_Second(p), e);
 
-    Init_Pair(v, p);
-    HEART_BYTE(v) = heart;
+    Init_Pair(e, p);
+    HEART_BYTE(e) = heart;  // override REB_PAIR with heart (e.g. REB_PATH)
 
     return nullptr;
 }
@@ -270,7 +289,7 @@ INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
 
 //=//// 2-Element "PAIR" SEQUENCE OPTIMIZATION ////////////////////////////=//
 
-INLINE Option(Context*) Trap_Init_Any_Sequence_Pairlike(
+INLINE Option(Context*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
     Sink(Element*) out,
     Heart heart,
     const Element* first,
@@ -278,18 +297,32 @@ INLINE Option(Context*) Trap_Init_Any_Sequence_Pairlike(
 ){
     assert(Any_Sequence_Kind(heart));
 
-    if (Is_Blank(first)) {
+    if (
+        (Is_Trash(first) and Is_Trash(second))  // ~/~ is a WORD!
+        or (Is_Blank(first) and Is_Blank(second))  // plain / is a WORD!
+    ){
+        if (Any_Path_Kind(heart))
+            Init_Word(out, Canon(SLASH_1));
+        else {
+            assert(Any_Tuple_Kind(heart));
+            Init_Word(out, Canon(DOT_1));
+        }
+        if (Is_Trash(first))
+            Quasify(out);
+        return nullptr;
+    }
+
+    if (Is_Blank(first)) {  // try optimize e.g. `/a` or `.a`
         Copy_Cell(out, second);
         return Trap_Leading_Blank_Pathify(out, heart);
     }
+    else {
+        Option(Context*) trap = Trap_Check_Sequence_Element(heart, first);
+        if (trap)
+            return trap;
+      }
 
-    if (not Is_Valid_Sequence_Element(heart, first))
-        return Error_Bad_Sequence_Item_Raw(first);
-
-    // See notes at top of file regarding optimizing `/a` and `.a`
-    //
-    Heart inner_heart = Cell_Heart_Ensure_Noquote(first);
-    if (Is_Blank(second) and inner_heart == REB_WORD) {
+    if (Is_Blank(second) and Is_Word(first)) {  // optimize `a/` or `a.`
         Copy_Cell(out, first);
         HEART_BYTE(out) = heart;
         return nullptr;
@@ -309,8 +342,13 @@ INLINE Option(Context*) Trap_Init_Any_Sequence_Pairlike(
         // fall through
     }
 
-    if (not (Is_Blank(second) or Is_Valid_Sequence_Element(heart, second)))
-        return Error_Bad_Sequence_Item_Raw(second);
+    if (Is_Blank(second)) {
+        // okay at tail
+    } else {
+        Option(Context*) trap = Trap_Check_Sequence_Element(heart, second);
+        if (trap)
+            return trap;
+    }
 
     Value* pairing = Alloc_Pairing(NODE_FLAG_MANAGED);
     Copy_Cell(pairing, first);
@@ -321,8 +359,28 @@ INLINE Option(Context*) Trap_Init_Any_Sequence_Pairlike(
     return nullptr;
 }
 
+INLINE Option(Context*) Trap_Init_Any_Sequence_Pairlike(
+    Sink(Element*) out,
+    Heart heart,
+    const Element* first,
+    const Element* second
+){
+    Option(Context*) trap = Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
+        out,
+        heart,
+        first,
+        second
+    );
+    if (trap)
+        return trap;
 
-INLINE Option(Context*) Trap_Pop_Sequence(
+    if (not Any_Sequence(out))
+        return Error_Conflated_Sequence_Raw(out);
+
+    return nullptr;
+}
+
+INLINE Option(Context*) Trap_Pop_Sequence_Or_Conflation(
     Sink(Element*) out,
     Heart heart,
     StackIndex base
@@ -335,7 +393,7 @@ INLINE Option(Context*) Trap_Pop_Sequence(
     if (TOP_INDEX - base == 2) {  // two-element path optimization
         assert(not Is_Antiform(TOP - 1));
         assert(not Is_Antiform(TOP));
-        Option(Context*) trap = Trap_Init_Any_Sequence_Pairlike(
+        Option(Context*) trap = Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
             out,
             heart,
             cast(Element*, TOP - 1),
@@ -361,6 +419,21 @@ INLINE Option(Context*) Trap_Pop_Sequence(
     return Trap_Init_Any_Sequence_Listlike(out, heart, a);
 }
 
+INLINE Option(Context*) Trap_Pop_Sequence(
+    Sink(Element*) out,
+    Heart heart,
+    StackIndex base
+){
+    Option(Context*) trap = Trap_Pop_Sequence_Or_Conflation(out, heart, base);
+    if (trap)
+        return trap;
+
+    if (not Any_Sequence(out))
+        return Error_Conflated_Sequence_Raw(out);
+
+    return nullptr;
+}
+
 
 // This is a general utility for turning stack values into something that is
 // either pathlike or value like.  It is used in COMPOSE of paths, which
@@ -375,15 +448,14 @@ INLINE Option(Context*) Trap_Pop_Sequence(
 //     >> compose (void)/(void)/(void)
 //     == ~null~  ; anti
 //
-// 1. While you can't create a PATH! or TUPLE! out of just blanks, this
-//    function will decay two blanks in a path to the WORD! `/` and two
-//    blanks in a tuple to the WORD! '.' -- this could be extended to allow
-//    more blanks to get words like `///` if that were deemed interesting.
-//    But it's not legal to make paths like `a//b`, so this is a sketchy.
+// While you can't create a PATH! or TUPLE! out of just blanks, this function
+// will decay two blanks in a path to the WORD! `/` and two blanks in a tuple
+// to the WORD! '.' -- this could be extended to allow more blanks to get words
+// like `///` if that were deemed interesting.
 //
 INLINE Option(Context*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
     Sink(Value*) out,
-    Heart heart,
+    Heart sequence_heart,
     StackIndex base
 ){
     if (TOP_INDEX == base) {  // nothing to pop
@@ -392,46 +464,39 @@ INLINE Option(Context*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
     }
 
     if (TOP_INDEX - 1 == base) {  // only one item, use as-is if possible
-        if (not Is_Valid_Sequence_Element(heart, TOP)) {
-            DROP();
-            return Error_Bad_Sequence_Item_Raw(TOP);
-        }
+        assert(not Is_Antiform(TOP));
         Copy_Cell(out, TOP);
-        DROP();
+        DROP();  // stack now balanced
 
-        if (heart != REB_PATH) {  // carry over : or ^ decoration (if possible)
-            if (
-                not Is_Word(out)
-                and not Is_Block(out)
-                and not Is_Group(out)
-                and not Is_Block(out)
-                and not Is_Tuple(out)  // !!! TBD, will support decoration
-            ){
-                return Error_Cant_Decorate_Type_Raw(out);
-            }
+        Option(Context*) trap = Trap_Check_Sequence_Element(
+            sequence_heart,
+            cast(Element*, TOP)
+        );
+        if (trap)
+            return trap;
 
-            if (heart == REB_META_PATH)
-                Metafy(out);
+        Sigil sigil = Sigil_Of_Kind(sequence_heart);
+        if (not sigil)  // just wanted a plain pa/th or tu.p.le
+            return nullptr;  // let the item just decay to itself as-is
+
+        if (not Any_Plain_Value(out))
+            return Error_Cant_Decorate_Type_Raw(out);
+
+        if (
+            not Is_Word(out)
+            and not Is_Block(out)
+            and not Is_Group(out)
+            and not Is_Block(out)
+            and not Is_Tuple(out)
+        ){
+            return Error_Cant_Decorate_Type_Raw(out);
         }
 
-        return nullptr;  // valid path element, standing alone
+        HEART_BYTE(out) = Sigilize_Any_Plain_Kind(sigil, Cell_Heart(out));
+        return nullptr;  // pathness or tupleness vanished, just the value
     }
 
-    if (TOP_INDEX - 2 == base) {
-        if (Is_Blank(TOP) and Is_Blank(TOP - 1)) {  // decay to `/` or `.` [1]
-            if (Any_Path_Kind(heart))
-                Init_Word(out, Canon(SLASH_1));
-            else {
-                assert(Any_Tuple_Kind(heart));
-                Init_Word(out, Canon(DOT_1));
-            }
-            Drop_Data_Stack_To(base);
-            return nullptr;
-        }
-        // fallthrough
-    }
-
-    return Trap_Pop_Sequence(out, heart, base);
+    return Trap_Pop_Sequence_Or_Conflation(out, sequence_heart, base);
 }
 
 
@@ -624,11 +689,11 @@ INLINE void Get_Tuple_Bytes(
 
 //=//// REFINEMENTS AND PREDICATES ////////////////////////////////////////=//
 
-INLINE Value* Refinify(Value* v) {
-    Option(Context*) error = Trap_Leading_Blank_Pathify(v, REB_PATH);
+INLINE Element* Refinify(Element* e) {
+    Option(Context*) error = Trap_Leading_Blank_Pathify(e, REB_PATH);
     assert(not error);
     UNUSED(error);
-    return v;
+    return e;
 }
 
 INLINE bool IS_REFINEMENT_CELL(const Cell* v) {

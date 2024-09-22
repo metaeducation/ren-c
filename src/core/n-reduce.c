@@ -442,19 +442,19 @@ static void Push_Composer_Level(
 // 3. There are N instances of the NEWLINE_BEFORE flags on the pushed items,
 //    and we need N + 1 flags.  Borrow the tail flag from the input array.
 //
-static Atom* Finalize_Composer_Level(
-    Atom* out,
+// 4. It is legal to COMPOSE/DEEP into lists that are antiforms or quoted
+//    (or potentially both).  So we transfer the QUOTE_BYTE.
+//
+//        >> compose/deep [a ''~[(1 + 2)]~ b]
+//        == [a ''~[3]~ b]
+//
+static void Finalize_Composer_Level(
+    Sink(Value*) out,
     Level* L,
-    const Cell* composee  // special handling if the output kind is a sequence
+    const Element* composee,  // special handling if the output is a sequence
+    bool conflate
 ){
-    if (Is_Raised(out)) {
-        Drop_Data_Stack_To(L->baseline.stack_base);
-        return out;
-    }
-
     Heart heart = Cell_Heart(composee);
-    Byte quote_byte = QUOTE_BYTE(composee);
-    assert(quote_byte != ANTIFORM_0);
 
     if (Any_Sequence_Kind(heart)) {
         Option(Context*) error = Trap_Pop_Sequence_Or_Element_Or_Nulled(
@@ -465,11 +465,19 @@ static Atom* Finalize_Composer_Level(
         if (error)
             fail (unwrap error);
 
-        assert(quote_byte != QUASIFORM_2);  // quasi-sequences shouldn't exist
+        if (
+            not Any_Sequence(out)  // so instead, things like [~/~ . ///]
+            and not conflate  // do not allow decay to "sequence-looking" words
+        ){
+            fail (Error_Conflated_Sequence_Raw(out));
+        }
 
-        if (not Is_Nulled(out))
-            QUOTE_BYTE(out) = quote_byte;  // may shapeshift [2]
-        return out;
+        assert(QUOTE_BYTE(composee) & NONQUASI_BIT);  // no antiform/quasiform
+        Count num_quotes = Cell_Num_Quotes(composee);
+
+        if (not Is_Nulled(out))  // don't add quoting levels (?)
+            Quotify(out, num_quotes);
+        return;
     }
 
     Flags flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
@@ -481,8 +489,9 @@ static Atom* Finalize_Composer_Level(
         heart,
         Pop_Stack_Values_Core(L->baseline.stack_base, flags)
     );
-    QUOTE_BYTE(out) = quote_byte;
-    return out;
+
+    BINDING(out) = BINDING(composee);  // preserve binding
+    QUOTE_BYTE(out) = QUOTE_BYTE(composee);  // apply quote byte [4]
 }
 
 
@@ -542,24 +551,50 @@ Bounce Composer_Executor(Level* const L)
     if (THROWING)
         return THROWN;  // no state to cleanup (just data stack, auto-cleaned)
 
+  //=//// EXTRACT REFINEMENTS FROM THE COMPOSE CALL ///////////////////////=//
+
+    // We have levels for each "recursion" that processes the /DEEP blocks in
+    // the COMPOSE.  (These don't recurse as C functions, the levels are
+    // stacklessly processed by the trampoline, see %c-trampoline.c)
+    //
+    // But each level wants to access the refinements to the COMPOSE that
+    // kicked off the process.  A pointer to the Level of the main compose is
+    // tucked into each Composer_Executor() level to use.
+    //
     // !!! IF YOU REARRANGE THESE, YOU HAVE TO UPDATE THE NUMBERING ALSO !!!
+
     DECLARE_PARAM(1, return);
     DECLARE_PARAM(2, value);
     DECLARE_PARAM(3, deep);
     DECLARE_PARAM(4, label);
-    DECLARE_PARAM(5, predicate);
+    DECLARE_PARAM(5, conflate);
+    DECLARE_PARAM(6, predicate);
 
-    Level* main_level = L->u.compose.main_level;  // the invoked COMPOSE native
+    Level* main_level = L->u.compose.main_level;  // invoked COMPOSE native
 
     UNUSED(Level_Arg(main_level, p_return_));
-    Option(Element*) label = nullptr;
-    if (not Is_Nulled(Level_Arg(main_level, p_label_)))
-        label = cast(Element*, Level_Arg(main_level, p_label_));
     UNUSED(Level_Arg(main_level, p_value_));
-    bool deep = not Is_Nulled(Level_Arg(main_level, p_deep_));
-    Value* predicate = Level_Arg(main_level, p_predicate_);
 
+    bool deep = not Is_Nulled(Level_Arg(main_level, p_deep_));
+
+    Option(Element*) label;
+    if (Is_Nulled(Level_Arg(main_level, p_label_)))
+        label = nullptr;
+    else
+        label = cast(Element*, Level_Arg(main_level, p_label_));
+
+    bool conflate;
+    if (Is_Nulled(Level_Arg(main_level, p_conflate_)))
+        conflate = false;
+    else {
+        assert(Is_Okay(Level_Arg(main_level, p_conflate_)));
+        conflate = true;
+    }
+
+    Value* predicate = Level_Arg(main_level, p_predicate_);
     assert(Is_Nulled(predicate) or Is_Frame(predicate));
+
+  //=//////////////////////////////////////////////////////////////////////=//
 
     enum {
         ST_COMPOSER_INITIAL_ENTRY = STATE_0,
@@ -762,7 +797,7 @@ Bounce Composer_Executor(Level* const L)
         return OUT;
     }
 
-    assert(Is_Void(OUT));
+    assert(Is_Trash(OUT));  // "return values" are data stack contents
 
     if (not SUBLEVEL->u.compose.changed) {
         //
@@ -778,9 +813,16 @@ Bounce Composer_Executor(Level* const L)
         goto handle_next_item;
     }
 
-    Finalize_Composer_Level(OUT, SUBLEVEL, At_Level(L));
+    Finalize_Composer_Level(OUT, SUBLEVEL, At_Level(L), conflate);
     Drop_Level(SUBLEVEL);
-    Move_Cell(PUSH(), stable_OUT);
+
+    if (Is_Nulled(OUT)) {
+        // compose/deep [a (void)/(void) b] => path makes null, vaporize it
+    }
+    else {
+        assert(not Is_Antiform(OUT));
+        Move_Cell(PUSH(), stable_OUT);
+    }
 
     if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))
         Set_Cell_Flag(TOP, NEWLINE_BEFORE);
@@ -792,7 +834,7 @@ Bounce Composer_Executor(Level* const L)
 
     assert(Get_Level_Flag(L, TRAMPOLINE_KEEPALIVE));  // caller needs [5]
 
-    return Init_Void(OUT);  // signal finished, avoid leaking temp evaluations
+    return Init_Trash(OUT);  // signal finished, avoid leaking temp evaluations
 }}
 
 
@@ -801,12 +843,18 @@ Bounce Composer_Executor(Level* const L)
 //
 //  "Evaluates only contents of GROUP!-delimited expressions in the argument"
 //
-//      return: [~null~ any-list? any-sequence? any-word? action?]
-//      value "The template to fill in (no-op if WORD!, ACTION?, BLACKHOLE!)"
+//      return: "Strange types if /CONFLATE, like ('~)/('~) => ~/~ WORD!"
+//      [
+//          any-list? any-sequence?
+//          any-word?  ; passed through as-is, or /CONFLATE can produce
+//          ~null~ quasi-word? blank! trash?  ; /CONFLATE can produce these
+//      ]
+//      template "The template to fill in (no-op if WORD!)"
 //          [<maybe> any-list? any-sequence? any-word? action?]
 //      /deep "Compose deeply into nested lists and sequences"
 //      /label "Distinguish compose groups, e.g. [(plain) (<*> composed)]"
 //          [tag! file!]
+//      /conflate "Let illegal sequence compositions produce lookalike WORD!s"
 //      /predicate "Function to run on composed slots (default: META)"
 //          [<unrun> frame!]
 //  ]
@@ -828,7 +876,7 @@ DECLARE_NATIVE(compose)
 {
     INCLUDE_PARAMS_OF_COMPOSE;
 
-    Value* v = ARG(value);
+    Element* t = cast(Element*, ARG(template));
 
     USED(ARG(predicate));  // used by Composer_Executor() via main_level
     USED(ARG(label));
@@ -847,25 +895,22 @@ DECLARE_NATIVE(compose)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Any_Word(v) or Is_Action(v))
-        return COPY(v);  // makes it easier to `set compose target`
+    if (Any_Word(t))
+        return COPY(t);  // makes it easier to `set compose target`
 
-    Push_Composer_Level(OUT, level_, v, Cell_Specifier(v));
+    Push_Composer_Level(OUT, level_, t, Cell_Specifier(t));
 
     STATE = ST_COMPOSE_COMPOSING;
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } composer_finished: {  //////////////////////////////////////////////////////
 
-    Finalize_Composer_Level(OUT, SUBLEVEL, v);
+    if (not Is_Raised(OUT)) {  // sublevel was killed
+        assert(Is_Trash(OUT));
+        Finalize_Composer_Level(OUT, SUBLEVEL, t, REF(conflate));
+    }
+
     Drop_Level(SUBLEVEL);
-
-    if (Is_Raised(OUT))  // sublevel was killed
-        return OUT;
-
-    if (Any_Listlike(OUT))
-        BINDING(OUT) = BINDING(v);
-
     return OUT;
 }}
 

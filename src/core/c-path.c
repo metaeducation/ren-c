@@ -76,8 +76,9 @@ Option(Context*) Trap_Init_Any_Sequence_At_Listlike(
         if (item == tail - 1 and Is_Blank(item))
             continue;  // blank valid at tail
 
-        if (not Is_Valid_Sequence_Element(heart, item))
-            return Error_Bad_Sequence_Item_Raw(item);
+        Option(Context*) error = Trap_Check_Sequence_Element(heart, item);
+        if (error)
+            return error;
     }
 
     // Since sequences are always at their head, it might seem the index
@@ -313,9 +314,12 @@ Bounce TO_Sequence(Level* level_, Kind k, const Value* arg) {
     if (arg_kind != REB_BLOCK) {
         Copy_Cell(OUT, arg);  // move value so we can modify it
         Dequotify(stable_OUT);  // !!! should TO take Cell*?
-        Plainify(stable_OUT);  // remove any decorations like @ or :
+        Plainify(cast(Element*, OUT));  // remove any decorations like @ or :
 
-        Option(Context*) error = Trap_Leading_Blank_Pathify(stable_OUT, heart);
+        Option(Context*) error = Trap_Leading_Blank_Pathify(
+            cast(Element*, stable_OUT),
+            heart
+        );
         if (error)
             return RAISE(unwrap error);
         return OUT;

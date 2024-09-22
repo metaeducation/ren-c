@@ -14,10 +14,6 @@
 ;(.1 = to tuple! [_ 1])  ; No representation due to reservation
 ;(1. = to tuple! [1 _])  ; No representation due to reservation
 
-~bad-sequence-item~ !! (
-    to tuple! [_ _]
-)
-
 ("1.2.3" = mold 1.2.3)
 
 ; minimum
@@ -96,3 +92,21 @@
     ~type-has-no-index~ !! (index of 'a.b.c)
     (null = try index of 'a.b.c)
 ]
+
+(all [
+    e: trap [to tuple! [_ _]]
+    e.id = 'conflated-sequence
+    e.arg1 = '.
+    word? e.arg1
+])
+(all [
+    e: trap [to tuple! [~ ~]]
+    e.id = 'conflated-sequence
+    e.arg1 = '~.~
+    quasiform? e.arg1
+    '. = unquasi e.arg1
+])
+(all [
+    e: trap [to tuple! [a _ b]]
+    e.id = 'bad-sequence-blank
+])

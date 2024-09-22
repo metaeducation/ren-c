@@ -379,7 +379,7 @@ bool Specialize_Action_Throws(
             ordered_stackindex += 1;
             StackValue(*) ordered = Data_Stack_At(ordered_stackindex);
             if (not BINDING(ordered)) {  // specialize get $print/asdf
-                Refinify_Pushed_Refinement(ordered);
+                Refinify_Pushed_Refinement(cast(Element*, ordered));
                 fail (Error_Bad_Parameter_Raw(ordered));
             }
 

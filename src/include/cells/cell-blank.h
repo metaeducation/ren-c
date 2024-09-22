@@ -139,5 +139,5 @@ INLINE Element* Init_Blank_Untracked(Sink(Element*) out) {
 
 #define Init_Trash(out) Init_Quasi_Blank(out)
 
-INLINE bool Is_Trash(Value* v)
+INLINE bool Is_Trash(Need(const Element*) v)
   { return HEART_BYTE(v) == REB_BLANK and QUOTE_BYTE(v) == QUASIFORM_2; }

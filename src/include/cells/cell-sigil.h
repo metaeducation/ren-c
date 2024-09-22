@@ -57,25 +57,25 @@ INLINE Sigil Cell_Sigil(const Cell* cell) {
     return u_cast(Sigil, sigil_byte);
 }
 
-INLINE Option(Sigil) Sigil_Of(const Element* e) {
-    if (Is_Quoted(e))
+INLINE Option(Sigil) Sigil_Of_Kind(Kind k) {
+    if (k == REB_QUOTED)
         return SIGIL_QUOTE;
-    if (Is_Quasiform(e))
+    if (k == REB_QUASIFORM)
         return SIGIL_QUASI;
-
-    Kind k = VAL_TYPE(e);
     if (Any_Set_Kind(k))
         return SIGIL_SET;
-    else if (Any_Get_Kind(k))
+    if (Any_Get_Kind(k))
         return SIGIL_GET;
-    else if (Any_Meta_Kind(k))
+    if (Any_Meta_Kind(k))
         return SIGIL_META;
-    else if (Any_Type_Kind(k))
+    if (Any_Type_Kind(k))
         return SIGIL_TYPE;
-    else if (Any_The_Kind(k))
+    if (Any_The_Kind(k))
         return SIGIL_THE;
-    else if (Any_Var_Kind(k))
+    if (Any_Var_Kind(k))
         return SIGIL_VAR;
-    else
-        return SIGIL_0;
+    return SIGIL_0;
 }
+
+#define Sigil_Of(e) \
+    Sigil_Of_Kind(VAL_TYPE(e))

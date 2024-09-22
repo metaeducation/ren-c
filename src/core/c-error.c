@@ -1170,7 +1170,7 @@ Context* Error_No_Arg_Typecheck(Option(const Symbol*) label)
 //
 Context* Error_Bad_Argless_Refine(const Key* key)
 {
-    DECLARE_ATOM (word);
+    DECLARE_ELEMENT (word);
     Refinify(Init_Word(word, KEY_SYMBOL(key)));
     return Error_Bad_Argless_Refine_Raw(word);
 }

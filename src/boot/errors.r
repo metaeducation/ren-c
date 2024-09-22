@@ -108,6 +108,8 @@ Script: [
     literal-left-path:  {Use ->- to pass literal left PATH! parameters right}
 
     sequence-too-short: {ANY-PATH? and ANY-TUPLE? must have more than 2 items}
+    conflated-sequence: [{Illegal sequence - would conflate with:} :arg1]
+    bad-sequence-blank: {BLANK! only legal at head and tail of sequence}
     bad-sequence-item:  [{Value is not a valid ANY-SEQUENCE? element:} :arg1]
     cant-decorate-type: [{Cannot apply `:` or `^` decoration to:} :arg1]
 
