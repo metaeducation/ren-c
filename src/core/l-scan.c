@@ -2687,13 +2687,15 @@ Bounce Scanner_Executor(Level* const L) {
         }
 
       blockscope {  // gotos would cross this initialization without
-        Value* check = Try_Pop_Sequence_Or_Element_Or_Nulled(
+        Option(Context*) error = Trap_Pop_Sequence(
             temp,  // doesn't write directly to stack since popping stack
             level->token == TOKEN_TUPLE ? REB_TUPLE : REB_PATH,
             stackindex_path_head - 1
         );
-        if (not check)
+        if (error) {
+            /* Free_Unmanaged_Flex(unwrap error); */  // is managed?! :-(
             return RAISE(Error_Syntax(ss, level->token));
+        }
       }
 
         assert(Is_Word(temp) or Any_Sequence(temp));  // `/` and `...` decay

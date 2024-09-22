@@ -245,16 +245,20 @@ Array* Pop_Stack_Values_Core_Masked(
 
     Count count = 0;
     Atom* src = Data_Stack_At(base + 1);  // not const, will be Freshen_Cell()
-    Cell* dest = Array_Head(a);
+    Value* dest = Flex_Head(Value, a);
     for (; count < len; ++count, ++src, ++dest) {
-      #if DEBUG
-        if (Is_Antiform(src)) {
+        if (Is_Antiform(src)) {  // only ok in some arrays
             Assert_Cell_Stable(src);
-            assert(flavor >= FLAVOR_MIN_ANTIFORMS_OK);
+            if (flavor < FLAVOR_MIN_ANTIFORMS_OK) {
+              #if DEBUG
+                assert(!"Unexpected antiform found on data stack");
+              #else
+                Quasify_Antiform(src);  // "safe" release behavior
+              #endif
+            }
         }
-      #endif
 
-          Move_Cell_Untracked(dest, src, copy_mask);
+        Move_Cell_Untracked(dest, src, copy_mask);
 
         #if DEBUG_POISON_DROPPED_STACK_CELLS
           Poison_Cell(src);

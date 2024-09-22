@@ -214,7 +214,6 @@
 ~bad-sequence-item~ !! (
     to path! [_ _]
 )
-(the / = compose $(blank)/(blank))
 
 ; foo/ is a length 2 PATH! in Ren-C
 (path! = type of the foo/ )
@@ -234,8 +233,8 @@
 
 ; Made this example in a forum post, tested it working, so why not a test
 (
-    '+../foo.r+ = as path! reduce [
-        as tuple! [+ _ _]
+    '+./foo.r+ = as path! reduce [
+        as tuple! [+ _]
         as tuple! [foo r+]
     ]
 )

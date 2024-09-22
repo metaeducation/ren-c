@@ -273,3 +273,12 @@
         [a c] = compose [a (either condition ['b] [elide log "skipping"]) c]
     )
 ]
+
+; COMPOSE is by default willing to decay to other types than what was passed.
+; This may not be a good default, and some option like ":diminish" might be
+; a better idea.
+[
+    (the / = compose $(blank)/(blank))
+    (the . = compose $(blank).(blank))
+    (null? compose $(void).(void))
+]

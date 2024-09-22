@@ -2154,17 +2154,17 @@ DECLARE_NATIVE(as)
             if (not Is_Array_Frozen_Shallow(Cell_Array(v)))
                 Freeze_Array_Shallow(Cell_Array_Ensure_Mutable(v));
 
-            if (Try_Init_Any_Sequence_At_Listlike(
-                OUT,  // if failure, nulled if too short...else bad element
+            Option(Context*) error = Trap_Init_Any_Sequence_At_Listlike(
+                OUT,
                 new_heart,
                 Cell_Array(v),
                 VAL_INDEX(v)
-            )){
-                BINDING(OUT) = BINDING(v);
-                return OUT;
-            }
+            );
+            if (error)
+                fail (unwrap error);
 
-            fail (Error_Bad_Sequence_Init(stable_OUT));
+            BINDING(OUT) = BINDING(v);
+            return OUT;
         }
 
         if (Any_Sequence(v)) {

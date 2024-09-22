@@ -24,7 +24,9 @@
 
 ~???~ !! (join path! [a b])
 
-('a//b/c.c = join 'a/ spread [/b _ /c.c])
+~bad-sequence-item~ !! (join 'a/ spread [/b _ /c.c])
+
+('a/b/c.c = join 'a/ spread [b /c.c])
 
 ('.a.(b).c = join '.a spread [. (b) .c])
 
@@ -51,7 +53,7 @@
 
     ('a.b.c.d = join 'a.b '.c.d)
     ~scan-invalid~ !! (transcode "..c.d")
-    ('a.b..c.d = join 'a.b. '.c.d)
+    ~bad-sequence-item~ !! (join 'a.b. '.c.d)
     ('a.b.c.d = join 'a.b. 'c.d)
     ~???~ !! (join 'a.b 'c.d)  ; missing slash, can't glue b to c
 ]

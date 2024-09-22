@@ -108,8 +108,8 @@ INLINE bool Is_Valid_Sequence_Element(
     //
     Heart h = Cell_Heart(v);
     if (
-        h == REB_BLANK
-        or h == REB_INTEGER
+        // REB_BLANK not legal except special handling at head and tail
+        h == REB_INTEGER
         or h == REB_GROUP
         or h == REB_BLOCK
         or h == REB_TEXT
@@ -136,55 +136,10 @@ INLINE bool Is_Valid_Sequence_Element(
 }
 
 
-// The Try_Init_Any_Sequence_XXX variants will return nullptr if any of the
-// requested path elements are not valid.  Instead of an initialized sequence,
-// the output cell passed in will be either a null (if the data was
-// too short) or it will be the first badly-typed value that was problematic.
-//
-INLINE Context* Error_Bad_Sequence_Init(const Value* v) {
-    if (Is_Nulled(v))
-        return Error_Sequence_Too_Short_Raw();
-    fail (Error_Bad_Sequence_Item_Raw(v));
-}
-
-
 //=//// UNCOMPRESSED ARRAY SEQUENCE FORM //////////////////////////////////=//
 
-#define Try_Init_Any_Sequence_Listlike(out,heart,a) \
-    Try_Init_Any_Sequence_At_Listlike((out), (heart), (a), 0)
-
-
-//=//// ALL-BLANK! SEQUENCE OPTIMIZATION //////////////////////////////////=//
-//
-// At one time, the `/` path mapped to the 2-element array [_ _], and there
-// was a storage optimization here which put it into a single cell that was
-// a WORD! under the hood (with a PATH! veneer).  Same with `.` as a TUPLE!.
-// This was done for the sake of preventing the creation of a WORD! which
-// would be ambiguous if put in a PATH! or TUPLE!.
-//
-// But people still wanted `/` for division.  The battle was lost, so there
-// is no such thing as a PATH! with 2 blanks in it.
-//
-// However, we want to be able to insert dots into paths, e.g. to make:
-//
-//     >> [../foo/file.txt ./x]
-//
-// So the same rules doen't apply to dots, because it would prohibit them
-// from being put into paths.  There's also some plans to make the behavior
-// of leading dots do things with binding lookup in the evaluator.
-//
-INLINE Element* Init_Any_Sequence_1(
-    Sink(Element*) out,
-    Heart heart
-){
-    if (Any_Path_Kind(heart))
-        Init_Word(out, Canon(SLASH_1));
-    else {
-        assert(Any_Tuple_Kind(heart));
-        Init_Word(out, Canon(DOT_1));
-    }
-    return out;
-}
+#define Trap_Init_Any_Sequence_Listlike(out,heart,a) \
+    Trap_Init_Any_Sequence_At_Listlike((out), (heart), (a), 0)
 
 
 //=//// Leading-BLANK! SEQUENCE OPTIMIZATION //////////////////////////////=//
@@ -196,17 +151,14 @@ INLINE Element* Init_Any_Sequence_1(
 // R3-Alpha, the underlying representation of `/foo` in the cell is the same
 // as an ANY-WORD?
 
-INLINE Element* Try_Leading_Blank_Pathify(
+INLINE Option(Context*) Trap_Leading_Blank_Pathify(
     Value* v,
     Heart heart
 ){
     assert(Any_Sequence_Kind(heart));
 
-    if (Is_Blank(v))
-        return Init_Any_Sequence_1(v, heart);
-
     if (not Is_Valid_Sequence_Element(heart, v))
-        return nullptr;  // leave element in v to indicate "the bad element"
+        return Error_Bad_Sequence_Item_Raw(v);
 
     // See notes at top of file regarding optimizing `/a` into a single cell.
     //
@@ -214,7 +166,7 @@ INLINE Element* Try_Leading_Blank_Pathify(
     if (inner_heart == REB_WORD) {
         Set_Cell_Flag(v, REFINEMENT_LIKE);
         HEART_BYTE(v) = heart;
-        return cast(Element*, v);
+        return nullptr;
     }
 
     Value* p = Alloc_Pairing(NODE_FLAG_MANAGED);
@@ -224,7 +176,7 @@ INLINE Element* Try_Leading_Blank_Pathify(
     Init_Pair(v, p);
     HEART_BYTE(v) = heart;
 
-    return cast(Element*, v);
+    return nullptr;
 }
 
 
@@ -277,7 +229,7 @@ INLINE Element* Init_Any_Sequence_Bytes(
 #define Init_Tuple_Bytes(out,data,len) \
     Init_Any_Sequence_Bytes((out), REB_TUPLE, (data), (len));
 
-INLINE Element* Try_Init_Any_Sequence_All_Integers(
+INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
     Sink(Element*) out,
     Heart heart,
     const Value* head,  // NOTE: Can't use PUSH() or evaluation
@@ -318,58 +270,95 @@ INLINE Element* Try_Init_Any_Sequence_All_Integers(
 
 //=//// 2-Element "PAIR" SEQUENCE OPTIMIZATION ////////////////////////////=//
 
-INLINE Element* Try_Init_Any_Sequence_Pairlike(
-    Sink(Value*) out,  // holds illegal value if nullptr returned
+INLINE Option(Context*) Trap_Init_Any_Sequence_Pairlike(
+    Sink(Element*) out,
     Heart heart,
-    const Value* v1,
-    const Value* v2
+    const Element* first,
+    const Element* second
 ){
     assert(Any_Sequence_Kind(heart));
 
-    if (Is_Blank(v1)) {
-        Copy_Cell(out, v2);
-        return Try_Leading_Blank_Pathify(out, heart);
+    if (Is_Blank(first)) {
+        Copy_Cell(out, second);
+        return Trap_Leading_Blank_Pathify(out, heart);
     }
 
-    if (not Is_Valid_Sequence_Element(heart, v1)) {
-        Copy_Cell(out, v1);
-        return nullptr;
-    }
+    if (not Is_Valid_Sequence_Element(heart, first))
+        return Error_Bad_Sequence_Item_Raw(first);
 
     // See notes at top of file regarding optimizing `/a` and `.a`
     //
-    Heart inner_heart = Cell_Heart_Ensure_Noquote(v1);
-    if (Is_Blank(v2) and inner_heart == REB_WORD) {
-        Copy_Cell(out, v1);
+    Heart inner_heart = Cell_Heart_Ensure_Noquote(first);
+    if (Is_Blank(second) and inner_heart == REB_WORD) {
+        Copy_Cell(out, first);
         HEART_BYTE(out) = heart;
-        return cast(Element*, out);
+        return nullptr;
     }
 
-    if (Is_Integer(v1) and Is_Integer(v2)) {
+    if (Is_Integer(first) and Is_Integer(second)) {
         Byte buf[2];
-        REBI64 i1 = VAL_INT64(v1);
-        REBI64 i2 = VAL_INT64(v2);
+        REBI64 i1 = VAL_INT64(first);
+        REBI64 i2 = VAL_INT64(second);
         if (i1 >= 0 and i2 >= 0 and i1 <= 255 and i2 <= 255) {
             buf[0] = cast(Byte, i1);
             buf[1] = cast(Byte, i2);
-            return Init_Any_Sequence_Bytes(out, heart, buf, 2);
+            Init_Any_Sequence_Bytes(out, heart, buf, 2);
+            return nullptr;
         }
 
         // fall through
     }
 
-    if (not Is_Valid_Sequence_Element(heart, v2)) {
-        Copy_Cell(out, v2);
-        return nullptr;
-    }
+    if (not (Is_Blank(second) or Is_Valid_Sequence_Element(heart, second)))
+        return Error_Bad_Sequence_Item_Raw(second);
 
     Value* pairing = Alloc_Pairing(NODE_FLAG_MANAGED);
-    Copy_Cell(pairing, v1);
-    Copy_Cell(Pairing_Second(pairing), v2);
+    Copy_Cell(pairing, first);
+    Copy_Cell(Pairing_Second(pairing), second);
     Init_Pair(out, pairing);
     HEART_BYTE(out) = heart;
 
-    return cast(Element*, out);
+    return nullptr;
+}
+
+
+INLINE Option(Context*) Trap_Pop_Sequence(
+    Sink(Element*) out,
+    Heart heart,
+    StackIndex base
+){
+    if (TOP_INDEX - base < 2) {
+        Drop_Data_Stack_To(base);
+        return Error_Sequence_Too_Short_Raw();
+    }
+
+    if (TOP_INDEX - base == 2) {  // two-element path optimization
+        assert(not Is_Antiform(TOP - 1));
+        assert(not Is_Antiform(TOP));
+        Option(Context*) trap = Trap_Init_Any_Sequence_Pairlike(
+            out,
+            heart,
+            cast(Element*, TOP - 1),
+            cast(Element*, TOP)
+        );
+        Drop_Data_Stack_To(base);
+        return trap;
+    }
+
+    if (Try_Init_Any_Sequence_All_Integers(  // optimize e.g. 192.0.0.1
+        out,
+        heart,
+        Data_Stack_At(base) + 1,
+        TOP_INDEX - base
+    )){
+        Drop_Data_Stack_To(base);  // optimization worked! drop stack...
+        return nullptr;
+    }
+
+    assert(TOP_INDEX - base > 2);  // guaranteed from above
+    Array* a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
+    Freeze_Array_Shallow(a);
+    return Trap_Init_Any_Sequence_Listlike(out, heart, a);
 }
 
 
@@ -384,25 +373,29 @@ INLINE Element* Try_Init_Any_Sequence_Pairlike(
 //     == /a
 //
 //     >> compose (void)/(void)/(void)
-//     == ~null~  ; anti -- or should it be void?
+//     == ~null~  ; anti
 //
-// Not all clients will want to be this lenient, but that lack of lenience
-// should be done by calling this generic routine and raising an error if
-// it's not a PATH!...because the optimizations on special cases are all
-// in this code.
+// 1. While you can't create a PATH! or TUPLE! out of just blanks, this
+//    function will decay two blanks in a path to the WORD! `/` and two
+//    blanks in a tuple to the WORD! '.' -- this could be extended to allow
+//    more blanks to get words like `///` if that were deemed interesting.
+//    But it's not legal to make paths like `a//b`, so this is a sketchy.
 //
-INLINE Value* Try_Pop_Sequence_Or_Element_Or_Nulled(
-    Sink(Value*) out,  // the error-triggering value if nullptr returned
+INLINE Option(Context*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
+    Sink(Value*) out,
     Heart heart,
     StackIndex base
 ){
-    if (TOP_INDEX == base)
-        return Init_Nulled(out);
+    if (TOP_INDEX == base) {  // nothing to pop
+        Init_Nulled(out);
+        return nullptr;
+    }
 
     if (TOP_INDEX - 1 == base) {  // only one item, use as-is if possible
-        if (not Is_Valid_Sequence_Element(heart, TOP))
-            return nullptr;
-
+        if (not Is_Valid_Sequence_Element(heart, TOP)) {
+            DROP();
+            return Error_Bad_Sequence_Item_Raw(TOP);
+        }
         Copy_Cell(out, TOP);
         DROP();
 
@@ -414,50 +407,31 @@ INLINE Value* Try_Pop_Sequence_Or_Element_Or_Nulled(
                 and not Is_Block(out)
                 and not Is_Tuple(out)  // !!! TBD, will support decoration
             ){
-                // !!! `out` is reported as the erroring element for why the
-                // path is invalid, but this would be valid in a path if we
-                // weren't decorating it...rethink how to error on this.
-                //
-                return nullptr;
+                return Error_Cant_Decorate_Type_Raw(out);
             }
 
             if (heart == REB_META_PATH)
                 Metafy(out);
         }
 
-        return out;  // valid path element, standing alone
+        return nullptr;  // valid path element, standing alone
     }
 
-    if (TOP_INDEX - base == 2) {  // two-element path optimization
-        if (not Try_Init_Any_Sequence_Pairlike(out, heart, TOP - 1, TOP)) {
+    if (TOP_INDEX - 2 == base) {
+        if (Is_Blank(TOP) and Is_Blank(TOP - 1)) {  // decay to `/` or `.` [1]
+            if (Any_Path_Kind(heart))
+                Init_Word(out, Canon(SLASH_1));
+            else {
+                assert(Any_Tuple_Kind(heart));
+                Init_Word(out, Canon(DOT_1));
+            }
             Drop_Data_Stack_To(base);
             return nullptr;
         }
-
-        Drop_Data_Stack_To(base);
-        return out;
+        // fallthrough
     }
 
-    // Attempt optimization for all-INTEGER! tuple or path, e.g. IP addresses
-    // (192.0.0.1) or RGBA color constants 255.0.255.  If optimization fails,
-    // use normal array.
-    //
-    if (Try_Init_Any_Sequence_All_Integers(
-        out,
-        heart,
-        Data_Stack_At(base) + 1,
-        TOP_INDEX - base
-    )){
-        Drop_Data_Stack_To(base);
-        return out;
-    }
-
-    Array* a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
-    Freeze_Array_Shallow(a);
-    if (not Try_Init_Any_Sequence_Listlike(out, heart, a))
-        return nullptr;
-
-    return out;
+    return Trap_Pop_Sequence(out, heart, base);
 }
 
 
@@ -648,9 +622,9 @@ INLINE void Get_Tuple_Bytes(
 //=//// REFINEMENTS AND PREDICATES ////////////////////////////////////////=//
 
 INLINE Value* Refinify(Value* v) {
-    bool success = (Try_Leading_Blank_Pathify(v, REB_PATH) != nullptr);
-    assert(success);
-    UNUSED(success);
+    Option(Context*) error = Trap_Leading_Blank_Pathify(v, REB_PATH);
+    assert(not error);
+    UNUSED(error);
     return v;
 }
 

@@ -137,5 +137,5 @@
 
 ; Parsing ANY-SEQUENCE is allowed
 (
-    'c = parse [a//c] [subparse path! ['a _ 'c]]
+    'c = parse [/a/c/] [subparse path! [_ 'a 'c elide _]]
 )

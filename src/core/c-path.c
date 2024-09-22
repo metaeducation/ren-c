@@ -28,63 +28,56 @@
 
 
 //
-//  Try_Init_Any_Sequence_At_Listlike: C
+//  Trap_Init_Any_Sequence_At_Listlike: C
 //
-Value* Try_Init_Any_Sequence_At_Listlike(
-    Sink(Value*) out,  // NULL if array too short, violating value otherwise
+// REVIEW: This tries to do optimizations on the array you give it.
+//
+Option(Context*) Trap_Init_Any_Sequence_At_Listlike(
+    Sink(Element*) out,
     Heart heart,
     const Array* a,
-    REBLEN index
+    Offset offset
 ){
     assert(Any_Sequence_Kind(heart));
     assert(Is_Node_Managed(a));
     Assert_Flex_Term_If_Needed(a);
-    assert(index == 0);  // !!! current rule
     assert(Is_Array_Frozen_Shallow(a));  // must be immutable (may be aliased)
 
-    assert(index < Array_Len(a));
-    REBLEN len_at = Array_Len(a) - index;
+    assert(offset < Array_Len(a));
+    Length len_at = Array_Len(a) - offset;
 
-    if (len_at < 2) {
-        Init_Nulled(out);  // signal that array is too short
-        return nullptr;
-    }
+    if (len_at < 2)
+        return Error_Sequence_Too_Short_Raw();
 
-    if (len_at == 2) {
-        if (a == PG_2_Blanks_Array)  // can get passed back in
-            return Init_Any_Sequence_1(out, heart);
-
-        // !!! Note: at time of writing, this may just fall back and make
-        // a 2-element array vs. a pair optimization.
-        //
-        if (Try_Init_Any_Sequence_Pairlike(
+    if (len_at == 2) {  // use optimization
+        return Trap_Init_Any_Sequence_Pairlike(
             out,
             heart,
-            Array_At(a, index),
-            Array_At(a, index + 1)
-        )){
-            return out;
-        }
-
-        return nullptr;
+            Array_At(a, offset),
+            Array_At(a, offset + 1)
+        );
     }
 
     if (Try_Init_Any_Sequence_All_Integers(
         out,
         heart,
-        Array_At(a, index),
+        Array_At(a, offset),
         len_at
     )){
-        return out;
+        return nullptr;
     }
 
     const Element* tail = Array_Tail(a);
-    const Element* v = Array_Head(a);
-    for (; v != tail; ++v) {
-        if (not Is_Valid_Sequence_Element(heart, v)) {
-            Copy_Cell(out, v);
-            return nullptr;
-        }
+    const Element* at = Array_At(a, offset);
+    const Element* item = at;
+    for (; item != tail; ++item) {
+        if (item == at and Is_Blank(item))
+            continue;  // blank valid at head
+        if (item == tail - 1 and Is_Blank(item))
+            continue;  // blank valid at tail
+
+        if (not Is_Valid_Sequence_Element(heart, item))
+            return Error_Bad_Sequence_Item_Raw(item);
     }
 
     // Since sequences are always at their head, it might seem the index
@@ -97,10 +90,9 @@ Value* Try_Init_Any_Sequence_At_Listlike(
     // do it is that leaving it as an index allows for aliasing BLOCK! as
     // PATH! from non-head positions.
 
-    Init_Series_At_Core(out, REB_BLOCK, a, index, SPECIFIED);
+    Init_Series_At_Core(out, REB_BLOCK, a, offset, SPECIFIED);
     HEART_BYTE(out) = heart;
-
-    return out;
+    return nullptr;
 }
 
 
@@ -243,15 +235,12 @@ Bounce MAKE_Path(
         L->baseline.stack_base += 1;  // compensate for push
     }
 
-    Value* p = Try_Pop_Sequence_Or_Element_Or_Nulled(OUT, heart, base);
+    Option(Context*) error = Trap_Pop_Sequence(OUT, heart, base);
 
     Drop_Level_Unbalanced(L); // !!! L's stack_base got captured each loop
 
-    if (not p)
-        fail (Error_Bad_Sequence_Init(stable_OUT));
-
-    if (not Any_Path(OUT))  // e.g. `make path! ['x]` giving us the WORD! `x`
-        return RAISE(Error_Sequence_Too_Short_Raw());
+    if (error)
+        fail (unwrap error);
 
     return OUT;
 }
@@ -325,51 +314,26 @@ Bounce TO_Sequence(Level* level_, Kind k, const Value* arg) {
         Copy_Cell(OUT, arg);  // move value so we can modify it
         Dequotify(stable_OUT);  // !!! should TO take Cell*?
         Plainify(stable_OUT);  // remove any decorations like @ or :
-        if (not Try_Leading_Blank_Pathify(stable_OUT, heart))
-            return RAISE(Error_Bad_Sequence_Init(stable_OUT));
+
+        Option(Context*) error = Trap_Leading_Blank_Pathify(stable_OUT, heart);
+        if (error)
+            return RAISE(unwrap error);
         return OUT;
     }
 
-    // BLOCK! is universal container, and the only type that is converted.
-    // Paths are not allowed... use MAKE PATH! for that.  Not all paths
-    // will be valid here, so the initializatoinmay fail
+    // Easiest reuse of the scanner's work that won't create arrays without
+    // needing to: push everything to the stack.
 
-    REBLEN len = Cell_Series_Len_At(arg);
-    if (len < 2)
-        return RAISE(Error_Sequence_Too_Short_Raw());
+    const Element* tail;
+    const Element* at = Cell_List_At(&tail, arg);
+    for (; at != tail; ++at)
+        Copy_Cell(PUSH(), at);
 
-    if (len == 2) {
-        const Element* at = Cell_List_Item_At(arg);
-        if (not Try_Init_Any_Sequence_Pairlike(
-            OUT,
-            heart,
-            at,
-            at + 1
-        )){
-            return RAISE(Error_Bad_Sequence_Init(stable_OUT));
-        }
-    }
-    else {
-        // Assume it needs an array.  This might be a wrong assumption, e.g.
-        // if it knows other compressions (if there's no index, it could have
-        // "head blank" and "tail blank" bits, for instance).
+    Option(Context*) trap = Trap_Pop_Sequence(OUT, heart, STACK_BASE);
+    if (trap)
+        return RAISE(unwrap trap);
 
-        Array* a = Copy_Array_At_Shallow(
-            Cell_Array(arg),
-            VAL_INDEX(arg)
-        );
-        Freeze_Array_Shallow(a);
-        Force_Flex_Managed(a);
-
-        if (not Try_Init_Any_Sequence_Listlike(OUT, heart, a))
-            return RAISE(Error_Bad_Sequence_Init(stable_OUT));
-    }
-
-    if (VAL_TYPE(OUT) != heart) {
-        assert(VAL_TYPE(OUT) == REB_WORD);
-        return RAISE(Error_Bad_Sequence_Init(stable_OUT));
-    }
-
+    assert(VAL_TYPE(OUT) == heart);
     return OUT;
 }
 

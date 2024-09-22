@@ -457,18 +457,18 @@ static Atom* Finalize_Composer_Level(
     assert(quote_byte != ANTIFORM_0);
 
     if (Any_Sequence_Kind(heart)) {
-        if (not Try_Pop_Sequence_Or_Element_Or_Nulled(
+        Option(Context*) error = Trap_Pop_Sequence_Or_Element_Or_Nulled(
             out,
             Cell_Heart(composee),
             L->baseline.stack_base
-        )){
-            if (Is_Valid_Sequence_Element(heart, Stable_Unchecked(out)))
-                fail (Error_Cant_Decorate_Type_Raw(out));  // no `3:` [1]
+        );
+        if (error)
+            fail (unwrap error);
 
-            fail (Error_Bad_Sequence_Init(Stable_Unchecked(out)));
-        }
+        assert(quote_byte != QUASIFORM_2);  // quasi-sequences shouldn't exist
 
-        QUOTE_BYTE(out) = quote_byte;  // may shapeshift [2]
+        if (not Is_Nulled(out))
+            QUOTE_BYTE(out) = quote_byte;  // may shapeshift [2]
         return out;
     }
 
