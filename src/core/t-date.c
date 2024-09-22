@@ -62,10 +62,10 @@ REBINT CT_Date(const Cell* a_in, const Cell* b_in, bool strict)
     bool a_had_time = Does_Date_Have_Time(a_in);
     bool b_had_time = Does_Date_Have_Time(b_in);
 
-    DECLARE_VALUE (a);
-    DECLARE_VALUE (b);
-    Dequoted_Derelativize(a, a_in, SPECIFIED);
-    Dequoted_Derelativize(b, b_in, SPECIFIED);
+    DECLARE_ELEMENT (a);
+    DECLARE_ELEMENT (b);
+    Copy_Dequoted_Cell(a, a_in);
+    Copy_Dequoted_Cell(b, b_in);
 
     Adjust_Date_UTC(a);  // gets 00:00:00+0:00 filled in if no time info
     Adjust_Date_UTC(b);
@@ -106,8 +106,8 @@ void MF_Date(REB_MOLD *mo, const Cell* v_orig, bool form)
     // We can't/shouldn't modify the incoming date value we are molding, so we
     // make a copy that we can tweak during the emit process
 
-    DECLARE_ATOM (v);
-    Dequoted_Derelativize(v, v_orig, SPECIFIED);
+    DECLARE_ELEMENT (v);
+    Copy_Dequoted_Cell(v, v_orig);
 
     if (
         VAL_MONTH(v) == 0

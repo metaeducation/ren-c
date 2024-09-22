@@ -218,14 +218,14 @@ DECLARE_NATIVE(bind)
 //
 //      return: [~null~ any-value?]
 //      context [any-context? any-list?]
-//      value [<maybe> any-value?]  ; QUOTED? support?
+//      element [<maybe> element?]  ; QUOTED? support?
 //  ]
 //
 DECLARE_NATIVE(inside)
 {
     INCLUDE_PARAMS_OF_INSIDE;
 
-    Cell* v = ARG(value);
+    Element* element = cast(Element*, ARG(element));
     Value* context = ARG(context);
 
     Specifier* specifier;
@@ -236,7 +236,7 @@ DECLARE_NATIVE(inside)
         specifier = BINDING(context);
     }
 
-    Derelativize(OUT, v, specifier);
+    Derelativize(OUT, element, specifier);
     return OUT;
 }
 
@@ -2101,12 +2101,13 @@ DECLARE_NATIVE(as)
 
             const Node* node1 = Cell_Node1(v);
             if (Is_Node_A_Cell(node1)) {  // reusing node complicated [1]
-                const Cell* paired = c_cast(Cell*, node1);
+                const Element* first = c_cast(Element*, node1);
+                const Element* second = c_cast(Element*, Pairing_Second(first));
                 Specifier *specifier = Cell_Specifier(v);
                 Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
                 Set_Flex_Len(a, 2);
-                Derelativize(Array_At(a, 0), paired, specifier);
-                Derelativize(Array_At(a, 1), Pairing_Second(paired), specifier);
+                Derelativize(Array_At(a, 0), first, specifier);
+                Derelativize(Array_At(a, 1), second, specifier);
                 Freeze_Array_Shallow(a);
                 Init_Block(v, a);
             }

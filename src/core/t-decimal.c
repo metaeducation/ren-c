@@ -198,17 +198,17 @@ Bounce MAKE_Decimal(
         if (Cell_Sequence_Len(arg) != 2)
             goto bad_make;
 
-        DECLARE_VALUE (numerator);
-        DECLARE_VALUE (denominator);
+        DECLARE_ELEMENT (numerator);
+        DECLARE_ELEMENT (denominator);
         Derelativize_Sequence_At(
             numerator,
-            arg,
+            c_cast(Element*, arg),
             Cell_Sequence_Specifier(arg),
             0
         );
         Derelativize_Sequence_At(
             denominator,
-            arg,
+            c_cast(Element*, arg),
             Cell_Sequence_Specifier(arg),
             1
         );

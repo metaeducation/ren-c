@@ -380,7 +380,7 @@ Bounce TO_List(Level* level_, Kind k, const Value* arg) {
         for (i = 0; i < len; ++i) {
             Derelativize_Sequence_At(
                 PUSH(),
-                arg,
+                c_cast(Element*, arg),
                 Cell_Sequence_Specifier(arg),
                 i
             );

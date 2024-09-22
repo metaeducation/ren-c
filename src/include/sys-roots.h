@@ -177,19 +177,6 @@ INLINE void Free_Value(Value* v)
 }
 
 
-// If you're going to just fail() anyway, then loose API handles are safe to
-// GC.  It's mildly inefficient to do so compared to generating a local cell:
-//
-//      DECLARE_ATOM (specific);
-//      Derelativize(specific, Cell, specifier);
-//      fail (Error_Something(specific));
-//
-// But assuming errors don't happen that often, it's cleaner to have one call.
-//
-INLINE Value* rebSpecific(const Cell* v, Specifier* specifier)
-    { return Derelativize(Alloc_Value(), v, specifier);}
-
-
 // The evaluator accepts API handles back from action dispatchers, and the
 // path evaluator accepts them from path dispatch.  This code does common
 // checking used by both, which includes automatic release of the handle

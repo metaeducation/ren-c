@@ -2480,23 +2480,6 @@ const RebolNodeInternal* API_rebQUOTING(const void* p)
 
 
 //
-//  rebDERELATIVIZE: C
-//
-// This is stylized like an API, but actually not exported--it uses internal
-// types.  This makes an cell that will last through a call and be freed.
-//
-RebolNodeInternal* rebDERELATIVIZE(
-    const Cell* cell,
-    Specifier* specifier
-){
-    Value* v = Derelativize(Alloc_Value(), cell, specifier);
-    Stub* stub = Singular_From_Cell(v);
-    Set_Subclass_Flag(API, stub, RELEASE);
-    return cast(RebolNodeInternal*, stub);  // cast needed in C
-}
-
-
-//
 //  rebUNQUOTING: API
 //
 // This is #defined as rebU.

@@ -995,13 +995,13 @@ Context* Error_Invalid_Type(Kind kind)
 //
 // Accessors like VAL_UINT8() are written to be able to extract the value
 // from QUOTED? integers (used in applications like molding, where the quoted
-// status is supposed to be ignored).  Dequoted_Derelativize() is defined
+// status is supposed to be ignored).  Copy_Dequoted_Cell() is defined
 // after %cell-integer.h, so we handle the issue here.
 //
 Context* Error_Out_Of_Range(const Cell* arg)
 {
-    DECLARE_VALUE (unquoted);
-    Dequoted_Derelativize(unquoted, arg, SPECIFIED);
+    DECLARE_ELEMENT (unquoted);
+    Copy_Dequoted_Cell(unquoted, arg);
 
     return Error_Out_Of_Range_Raw(unquoted);
 }
@@ -1012,7 +1012,7 @@ Context* Error_Out_Of_Range(const Cell* arg)
 //
 Context* Error_Protected_Key(const Symbol* sym)
 {
-    DECLARE_ATOM (key_name);
+    DECLARE_ELEMENT (key_name);
     Init_Word(key_name, sym);
 
     return Error_Protected_Word_Raw(key_name);

@@ -157,7 +157,8 @@ static Bounce MAKE_TO_Binary_Common(Level* level_, const Value* arg)
       case REB_TUPLE: {
         REBLEN len = Cell_Sequence_Len(arg);
         Binary* b = Make_Binary(len);
-        if (Did_Get_Sequence_Bytes(Binary_Head(b), arg, len)) {
+        Byte* head = Binary_Head(b);
+        if (Did_Get_Sequence_Bytes(head, c_cast(Element*, arg), len)) {
             Term_Binary_Len(b, len);
             return Init_Blob(OUT, b);
         }

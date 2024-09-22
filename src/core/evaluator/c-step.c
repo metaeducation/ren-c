@@ -668,7 +668,9 @@ Bounce Stepper_Executor(Level* L)
             break;
 
           case SIGIL_VAR:  // $
-            Derelativize(SPARE, OUT, Level_Specifier(L));
+            if (Is_Antiform(OUT))
+                fail ("$ operator cannot bind antiforms");
+            Derelativize(SPARE, cast(Element*, OUT), Level_Specifier(L));
             Copy_Cell(OUT, SPARE);  // !!! inefficient
             break;
 

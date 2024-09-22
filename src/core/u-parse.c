@@ -257,7 +257,11 @@ static bool Subparse_Throws(
 
     Init_Nulled(Erase_Cell(ARG(return)));
 
-    Derelativize(Erase_Cell(ARG(input)), input, input_specifier);
+    Derelativize(
+        Erase_Cell(ARG(input)),
+        c_cast(Element*, input),
+        input_specifier
+    );
 
     assert((flags & PF_STATE_MASK) == 0);  // no "parse state" flags allowed
     Init_Integer(Erase_Cell(ARG(flags)), flags);

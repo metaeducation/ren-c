@@ -90,9 +90,9 @@ INLINE Specifier* Derive_Specifier(
     const Cell* list
 );
 
-INLINE Value* Derelativize_Untracked(
-    Cell* out,  // relative dest overwritten w/specific value
-    const Cell* v,
+INLINE Element* Derelativize_Untracked(
+    Sink(Element*) out,  // relative dest overwritten w/specific value
+    const Element* v,
     Specifier* specifier
 ){
     Copy_Cell_Header(out, v);
@@ -102,7 +102,7 @@ INLINE Value* Derelativize_Untracked(
 
     if (not Is_Bindable_Heart(heart)) {
         out->extra = v->extra;
-        return cast(Value*, out);
+        return out;
     }
 
     Stub* binding = BINDING(v);
@@ -150,17 +150,28 @@ INLINE Value* Derelativize_Untracked(
         goto any_listlike;
     }
 
-    return cast(Value*, out);
+    return out;
 }
 
 
 #define Derelativize(dest,v,specifier) \
     TRACK(Derelativize_Untracked((dest), (v), (specifier)))
 
-#define Dequoted_Derelativize(out,in,specifier) \
-    Dequotify(Derelativize((out), \
-        cast(const Cell*, ensure(const Cell*, (in))), (specifier)))
 
+// The concept behind `Cell` usage is that it represents a view of a cell
+// where the quoting doesn't matter.  This view is taken by things like the
+// handlers for MOLD, where it's assumed the quoting levels were rendered by
+// the MOLD routine itself...and so accessors for picking apart the payload
+// don't require the cell to not be quoted.  However some of those agnostic
+// routines want to do things like raise errors, and when they do they need
+// to strip the quotes off (typically).
+//
+INLINE Element* Copy_Dequoted_Cell(Sink(Element*) out, const Cell* in) {
+    assert(QUOTE_BYTE(in) != ANTIFORM_0);
+    Copy_Cell(out, c_cast(Element*, in));
+    QUOTE_BYTE(out) = NOQUOTE_1;
+    return out;
+}
 
 // Modes allowed by Bind related functions:
 enum {

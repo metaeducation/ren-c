@@ -176,7 +176,7 @@ bool Pushed_Continuation(
 
     if (Is_Void(branch)) {
         if (with) {
-            Copy_Cell(out, with);
+            Copy_Cell(out, unwrap with);
             goto just_use_out;
         }
         fail ("Branch has no default value to give with void");
@@ -211,7 +211,8 @@ bool Pushed_Continuation(
         goto just_use_out;
 
       case REB_QUOTED:
-        Unquotify(Derelativize(out, branch, branch_specifier), 1);
+        Derelativize(out, c_cast(Element*, branch), branch_specifier);
+        Unquotify(out, 1);
         if (Is_Nulled(out) and (flags & LEVEL_FLAG_BRANCH))
             Init_Heavy_Null(out);
         goto just_use_out;
@@ -251,7 +252,7 @@ bool Pushed_Continuation(
         }
 
         arg = First_Unspecialized_Arg(&param, L);
-        Derelativize(arg, branch, branch_specifier);
+        Derelativize(arg, c_cast(Element*, branch), branch_specifier);
         HEART_BYTE(arg) = REB_BLOCK;  // :[1 + 2] => [3], not :[3]
 
         Push_Level(out, L);

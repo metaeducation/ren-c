@@ -482,12 +482,12 @@ INLINE Length Cell_Sequence_Len(const Cell* sequence) {
 //
 INLINE Element* Derelativize_Sequence_At(
     Sink(Element*) out,
-    const Cell* sequence,
+    const Element* sequence,
     Specifier* specifier,
     REBLEN n
 ){
     assert(out != sequence);
-    assert(Any_Sequence_Kind(Cell_Heart(sequence)));
+    assert(Any_Sequence_Kind(Cell_Heart(sequence)));  // !!! should not be cell
 
     if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
         assert(n < PAYLOAD(Bytes, sequence).at_least_8[IDX_SEQUENCE_USED]);
@@ -496,13 +496,14 @@ INLINE Element* Derelativize_Sequence_At(
 
     const Node* node1 = Cell_Node1(sequence);
     if (Is_Node_A_Cell(node1)) {  // test if it's a pairing
-        const Cell* pairing = c_cast(Cell*, node1);  // 2 elements compressed
+        const Element* pairing = c_cast(Element*, node1);  // compressed pair
         if (n == 0)
-            return cast(Element*, Derelativize(out, pairing, specifier));
+            return Derelativize(out, pairing, specifier);
         assert(n == 1);
-        return cast(
-            Element*,
-            Derelativize(out, Pairing_Second(pairing), specifier)
+        return Derelativize(
+            out,
+            c_cast(Element*, Pairing_Second(pairing)),
+            specifier
         );
     }
 
@@ -521,7 +522,7 @@ INLINE Element* Derelativize_Sequence_At(
         const Array* a = c_cast(Array*, Cell_Node1(sequence));
         assert(Array_Len(a) >= 2);
         assert(Is_Array_Frozen_Shallow(a));
-        return cast(Element*, Derelativize(out, Array_At(a, n), specifier)); }
+        return Derelativize(out, Array_At(a, n), specifier); }
 
       default :
         assert(false);
@@ -529,13 +530,15 @@ INLINE Element* Derelativize_Sequence_At(
     }
 }
 
+// !!! Cell-based routines ignore quotes, and want to be able to see the
+// items in a sequence.  We hackily cast the cell to an element, and the
+// Derelativize routine checks only the cell heart.  This is backwards:
+// derelativizing should be on top of a cell routine.
+//
 #define Copy_Sequence_At(out,sequence,n) \
-    Derelativize_Sequence_At((out), (sequence), SPECIFIED, (n))
+    Derelativize_Sequence_At((out), c_cast(Element*, sequence), SPECIFIED, (n))
 
-INLINE Byte Cell_Sequence_Byte_At(
-    const Cell* sequence,
-    REBLEN n
-){
+INLINE Byte Cell_Sequence_Byte_At(const Cell* sequence, REBLEN n) {
     DECLARE_ATOM (at);
     Copy_Sequence_At(at, sequence, n);
     if (not Is_Integer(at))
@@ -586,7 +589,7 @@ INLINE bool Did_Get_Sequence_Bytes(
 
     Byte* dp = cast(Byte*, buf);
     Size i;
-    DECLARE_ATOM (temp);
+    DECLARE_ELEMENT (temp);
     for (i = 0; i < buf_size; ++i) {
         if (i >= len) {
             dp[i] = 0;

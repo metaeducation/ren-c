@@ -330,7 +330,7 @@ Stub* Make_Let_Patch(
 //
 Option(Stub*) Get_Word_Container(
     REBLEN *index_out,
-    const Cell* any_word,
+    const Element* any_word,
     Specifier* specifier_in,
     enum Reb_Attach_Mode mode
 ){
