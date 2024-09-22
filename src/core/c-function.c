@@ -467,9 +467,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     const Symbol* duplicate = nullptr;
 
   blockscope {
-    Value* param = 1 + Init_Anti_Word(
-        x_cast(Value*, Array_Head(paramlist)), Canon(ROOTVAR)
-    );
+    Value* param = 1 + Init_Unreadable(Array_Head(paramlist));
     Key* key = Flex_Head(Key, keylist);
 
     if (return_stackindex != 0) {
@@ -685,7 +683,7 @@ Phase* Make_Action(
 
     assert(Is_Node_Managed(paramlist));
     assert(
-        Is_Anti_Word_With_Id(Flex_Head(Value, paramlist), SYM_ROOTVAR)
+        Is_Unreadable(Flex_Head(Value, paramlist))
         or CTX_TYPE(cast(Context*, paramlist)) == REB_FRAME
     );
 
@@ -741,9 +739,8 @@ Phase* Make_Action(
     // !!! We may have to initialize the exemplar rootvar.
     //
     Value* rootvar = Flex_Head(Value, paramlist);
-    if (Is_Anti_Word_With_Id(rootvar, SYM_ROOTVAR)) {
+    if (Is_Unreadable(rootvar))
         INIT_VAL_FRAME_ROOTVAR(rootvar, paramlist, ACT_IDENTITY(act), UNBOUND);
-    }
 
     // Precalculate cached function flags.  This involves finding the first
     // unspecialized argument which would be taken at a callsite, which can

@@ -45,7 +45,6 @@ unset
 none  ; for legacy load of #[none]
 
 errored  ; when rebRescue() has no handler and evaluates to non-fail ERROR!
-rootvar  ; used as placeholder in rootvar cells
 
 optimized-out
 
