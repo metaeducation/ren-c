@@ -23,7 +23,7 @@ run lambda [':terms [tag! set-word! <variadic>]] [
         set w redescribe reduce [
             spaced [{Returns the} to word! w {value of a series}]
         ](
-            specialize get $pick [picker: n]
+            specialize pick/ [picker: n]
         )
         n: n + 1
     ]
@@ -37,7 +37,7 @@ run lambda [':terms [tag! set-word! <variadic>]] [
 last: redescribe [
     {Returns the last value of a series.}
 ](
-    specialize adapt get $pick [
+    specialize adapt pick/ [
         picker: length of :location
     ][
         picker: <removed-parameter>
@@ -230,11 +230,11 @@ trim: func [
         [char? text! binary! integer! block! bitset!]
 ][
     let tail_TRIM: tail
-    tail: runs get $lib/tail
+    tail: lib/tail/
     let head_TRIM: head
-    head: runs get $lib/head
+    head: lib/head/
     let all_TRIM: all
-    all: runs get $lib/all
+    all: lib/all/
 
     ; ACTION!s in the new object will still refer to fields in the original
     ; object.  That was true in R3-Alpha as well.  Fixing this would require

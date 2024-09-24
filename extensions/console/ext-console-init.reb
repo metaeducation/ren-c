@@ -44,14 +44,14 @@ boot-print: redescribe [
     "Prints during boot when not quiet."
 ](
     ; !!! Duplicates code in %main-startup.reb, where this isn't exported.
-    enclose get $print f -> [if no? system.options.quiet [eval f]]
+    enclose print/ f -> [if no? system.options.quiet [eval f]]
 )
 
 loud-print: redescribe [
     "Prints during boot when verbose."
 ](
     ; !!! Duplicates code in %main-startup.reb, where this isn't exported.
-    enclose get $print f -> [if yes? system.options.verbose [eval f]]
+    enclose print/ f -> [if yes? system.options.verbose [eval f]]
 )
 
 
@@ -387,7 +387,7 @@ start-console: func [
     ; hook to save the last error printed.  Also inform people of the
     ; existence of the WHY function on the first error delivery.
     ;
-    proto-skin.print-error: adapt get $proto-skin.print-error [
+    proto-skin.print-error: adapt proto-skin/print-error/ [
         if not system.state.last-error [
             system.console/print-info "Info: use WHY for error information"
         ]
@@ -631,7 +631,7 @@ console*: func [
         has lib 'resume
         error? result
         result.id = 'no-catch
-        result.arg2 = unrun :get $lib/resume  ; throw's /NAME
+        result.arg2 = unrun lib/resume/  ; throw's /NAME
     ] then [
         assert [match [meta-group! handle!] result.arg1]
         if no? resumable [

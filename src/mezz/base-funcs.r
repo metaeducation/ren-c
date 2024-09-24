@@ -43,7 +43,7 @@ steal: lambda [
     elide take evaluation
 ]
 
-assert [null = binding of :return]  ; it's archetypal, nowhere to return to
+assert [null = coupling of return/]  ; it's archetypal, nowhere to return to
 return: func* [] [
     fail "RETURN archetype called when no generator is providing it"
 ]
@@ -68,7 +68,7 @@ quit: func* [] [
     fail "QUIT archetype called when none no DO/IMPORT/console is providing it"
 ]
 
-catch: specialize :catch* [name: 'throw]
+catch: specialize catch*/ [name: 'throw]
 
 func: func* [
     {Augment action with <static>, <in>, <with> features}
@@ -301,7 +301,7 @@ redescribe: func [
 unset: redescribe [
     {Clear the value of a word to the unset state (in its current context)}
 ](
-    specialize get $set [value: meta ~]  ; SET's value is a ^META parameter
+    specialize set/ [value: meta ~]  ; SET's value is a ^META parameter
 )
 
 unset?: func [
@@ -413,7 +413,7 @@ curtail: reframer func [
 ; worth the cost, when you can just put the left hand side in parentheses
 ; if this isn't what you want.
 ;
-->-: enfix :shove
+->-: enfix shove/
 
 
 ; The -- and ++ operators were deemed too "C-like", so ME was created to allow
@@ -456,7 +456,7 @@ so: enfix func [
     if tail? feed [return ~]
     return take feed
 ]
-tweak :so 'postpone 'on
+tweak so/ 'postpone 'on
 
 
 was: enfix redescribe [
@@ -473,31 +473,31 @@ was: enfix redescribe [
         :left  ; choose left in case binding or case matters somehow
     ]
 )
-tweak :was 'postpone 'on
+tweak was/ 'postpone 'on
 
 
 zdeflate: redescribe [
     {Deflates data with zlib envelope: https://en.wikipedia.org/wiki/ZLIB}
 ](
-    specialize get $deflate [envelope: 'zlib]
+    specialize deflate/ [envelope: 'zlib]
 )
 
 zinflate: redescribe [
     {Inflates data with zlib envelope: https://en.wikipedia.org/wiki/ZLIB}
 ](
-    specialize get $inflate [envelope: 'zlib]
+    specialize inflate/ [envelope: 'zlib]
 )
 
 gzip: redescribe [
     {Deflates data with gzip envelope: https://en.wikipedia.org/wiki/Gzip}
 ](
-    specialize get $deflate [envelope: 'gzip]
+    specialize deflate/ [envelope: 'gzip]
 )
 
 gunzip: redescribe [
     {Inflates data with gzip envelope: https://en.wikipedia.org/wiki/Gzip}
 ](
-    specialize get $inflate [envelope: 'gzip]  ; What about GZIP-BADSIZE?
+    specialize inflate/ [envelope: 'gzip]  ; What about GZIP-BADSIZE?
 )
 
 ensure: redescribe [
@@ -526,7 +526,7 @@ ensure: redescribe [
 non: redescribe [
     {Pass through value if it *doesn't* match test, else null (MATCH/NOT)}
 ](
-    enclose get $match lambda [f] [
+    enclose match/ lambda [f] [
         let value: :f.value  ; EVAL makes frame arguments unavailable
         if f.meta [value: ^value]
         eval f then [null] else [:value]
@@ -553,8 +553,8 @@ prohibit: redescribe [
 )
 
 
-oneshot: specialize get $n-shot [n: 1]
-upshot: specialize get $n-shot [n: -1]
+oneshot: specialize n-shot/ [n: 1]
+upshot: specialize n-shot/ [n: -1]
 
 ;
 ; !!! The /REVERSE and /LAST refinements of FIND and SELECT caused a lot of
@@ -565,13 +565,13 @@ upshot: specialize get $n-shot [n: -1]
 find-reverse: redescribe [
     {Variant of FIND that uses a /SKIP of -1}
 ](
-    specialize get $find [skip: -1]
+    specialize find/ [skip: -1]
 )
 
 find-last: redescribe [
     {Variant of FIND that uses a /SKIP of -1 and seeks the TAIL of a series}
 ](
-    adapt get $find-reverse [
+    adapt find-reverse/ [
         if not any-series? series [
             fail/blame "Can only use FIND-LAST on ANY-SERIES?" $series
         ]
@@ -627,25 +627,25 @@ trap+: func [
 reduce*: redescribe [
     "REDUCE a block but vaporize NULL Expressions"
 ](
-    specialize get $reduce [predicate: unrun :maybe]
+    specialize reduce/ [predicate: maybe/]
 )
 
 for-next: redescribe [
     "Evaluates a block for each position until the end, using NEXT to skip"
 ](
-    specialize get $for-skip [skip: 1]
+    specialize for-skip/ [skip: 1]
 )
 
 for-back: redescribe [
     "Evaluates a block for each position until the start, using BACK to skip"
 ](
-    specialize get $for-skip [skip: -1]
+    specialize for-skip/ [skip: -1]
 )
 
 iterate-skip: redescribe [
     "Variant of FOR-SKIP that directly modifies a series variable in a word"
 ](
-    specialize enclose get $for-skip func [f] [
+    specialize enclose for-skip/ func [f] [
         if blank? let word: f.word [return null]
         assert [the-word? f.word]
         let saved: f.series: get word
@@ -670,13 +670,13 @@ iterate-skip: redescribe [
 iterate: iterate-next: redescribe [
     "Variant of FOR-NEXT that directly modifies a series variable in a word"
 ](
-    specialize get $iterate-skip [skip: 1]
+    specialize iterate-skip/ [skip: 1]
 )
 
 iterate-back: redescribe [
     "Variant of FOR-BACK that directly modifies a series variable in a word"
 ](
-    specialize get $iterate-skip [skip: -1]
+    specialize iterate-skip/ [skip: -1]
 )
 
 
@@ -723,7 +723,7 @@ count-up: func [
 count-down: redescribe [
     "Loop the body, setting a word from the end value given down to 1"
 ](
-    specialize adapt get $cfor [
+    specialize adapt cfor/ [
         start: end
         end: 1
     ][
@@ -736,7 +736,7 @@ count-down: redescribe [
 lock-of: redescribe [
     "If value is already locked, return it...otherwise CLONE it and LOCK it."
 ](
-    cascade [specialize get $copy [deep: ok], :freeze]
+    cascade [specialize copy/ [deep: ok], freeze/]
 )
 
 eval-all: func [
@@ -756,7 +756,7 @@ eval-all: func [
 ; to allow longer runs of evaluation.  "Invisible functions" (those which
 ; `return: [nihil?]`) permit a more flexible version of the mechanic.
 
-<|: runs tweak copy unrun get $eval-all 'postpone 'on
+<|: runs tweak copy unrun eval-all/ 'postpone 'on
 
 
 ; Currently, METH is just a synonym for FUNC as a way of annotating that you
@@ -765,7 +765,7 @@ eval-all: func [
 ; user with COUPLE or an implicit coupling will be supplied when a function
 ; is invoked from a TUPLE! where an object is on the left hand side.
 ;
-meth: :func
+meth: func/
 
 
 ; It's a bit odd that `foo: accessor does [...]` will evaluate to nothing.
@@ -778,7 +778,7 @@ accessor: enfix func [
     var [set-word!]
     action [action?]
 ][
-    set-accessor var get $action
+    set-accessor var action/
 ]
 
 
@@ -915,4 +915,4 @@ raise: func [
 ; generation of the NEAR and WHERE fields.  If we tried to ENCLOSE and DO
 ; the error it would add more overhead and confuse those matters.
 ;
-fail: cascade [get $raise, get $null?]
+fail: cascade [raise/ null?/]

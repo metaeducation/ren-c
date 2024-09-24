@@ -14,7 +14,7 @@
     ugly-combinators.(group!): default-combinators.(get-group!)
     ugly-combinators.(get-group!): void
 
-    ugly-parse: specialize get $parse [combinators: ugly-combinators]
+    ugly-parse: specialize parse/ [combinators: ugly-combinators]
 
     ; DISCARD is different from ELIDE when GROUP! acts like a GET-GROUP!,
     ; because we want to suppress the triggering of the generated rule

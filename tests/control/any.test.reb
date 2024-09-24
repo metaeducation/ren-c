@@ -96,7 +96,7 @@
     a-value: first [()]
     same? :a-value any [:a-value]
 )
-(same? get $+ any [get $+])
+(same? +/ any [+/])
 (0x0 == any [0x0])
 (
     a-value: 'a/b
@@ -195,7 +195,7 @@
     a-value: first [()]
     same? :a-value any [null :a-value]
 )
-(same? get $+ any [null get $+])
+(same? +/ any [null +/])
 (0x0 == any [null 0x0])
 (
     a-value: 'a/b
@@ -291,7 +291,7 @@
     a-value: first [()]
     same? :a-value any [:a-value null]
 )
-(same? get $+ any [get $+ null])
+(same? +/ any [+/ null])
 (0x0 == any [0x0 null])
 (
     a-value: 'a/b
@@ -382,12 +382,12 @@
 
 ; PREDICATES
 
-(10 = any/predicate [1 + 2 3 + 4 5 + 5 6 + 7] get $even?)
-(10 = any/predicate [1 + 2 3 + 4 5 + 5 6 + 7] cascade [get $odd?, get $not])
-(10 = any/predicate [1 + 2, comment "Hello", 3 + 4, 5 + 5, 6 + 7] get $even?)
-(10 = apply get $any [
+(10 = any/predicate [1 + 2 3 + 4 5 + 5 6 + 7] even?/)
+(10 = any/predicate [1 + 2 3 + 4 5 + 5 6 + 7] cascade [odd?/ not/])
+(10 = any/predicate [1 + 2, comment "Hello", 3 + 4, 5 + 5, 6 + 7] even?/)
+(10 = apply any/ [
     [1 + 2, 3 + 4 comment "No Comma" 5 + 5, 6 + 7]
-    /predicate cascade [get $odd?, get $not]
+    /predicate cascade [odd?/ not/]
 ])
 
 ('~[~null~]~ = ^ any/predicate [1 null 2] :not)

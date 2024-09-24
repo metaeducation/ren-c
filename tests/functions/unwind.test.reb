@@ -19,7 +19,7 @@
 ; Related to #1519
 (
     cycling: 'yes
-    if-not: adapt get $if [condition: not get/any $condition]
+    if-not: adapt if/ [condition: not get/any $condition]
     f1: does [
         if-not 1 > 2 [
             while [if yes? cycling [unwind :if-not <ret>] cycle?] [

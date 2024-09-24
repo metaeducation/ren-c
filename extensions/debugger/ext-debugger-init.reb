@@ -312,7 +312,7 @@ backtrace: func [
 ; message.  (By using ADAPT you won't see both BREAKPOINT and BREAKPOINT* on
 ; the stack during BACKTRACE...it uses only one frame.)
 ;
-breakpoint: adapt get $breakpoint* [
+breakpoint: adapt breakpoint*/ [
     system.console/print-info "BREAKPOINT hit"
 ]
 
@@ -327,7 +327,7 @@ breakpoint: adapt get $breakpoint* [
 ; thin air by using INTERRUPT, which is like a breakpoint but that the
 ; backtrace mechanics can choose not to show.
 ;
-interrupt: adapt get $breakpoint* [
+interrupt: adapt breakpoint*/ [
     ;
     ; !!! INTERRUPT doesn't currently print anything; it's assumed that
     ; changing the prompt would be enough (though a status bar message would
@@ -359,7 +359,7 @@ locals: func [return: [~]] [
 ]
 
 
-debug-console: adapt get $console [
+debug-console: adapt console/ [
     resumable: 'yes
 
     ; The debug skin is made as a global object, so changes to the skin will

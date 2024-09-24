@@ -450,7 +450,7 @@ if 'Windows <> first system.platform [
     "za" "Zhuang; Chuang"
     "zu" "Zulu" ]
 
-    hijack :locale func [
+    hijack locale/ func [
         return: [~null~ text!]
         type [word!]
         <static>

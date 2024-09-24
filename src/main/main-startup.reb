@@ -29,13 +29,13 @@ REBOL [
 boot-print: redescribe [
     "Prints during boot when not quiet."
 ](
-    enclose get $print f -> [if no? system.options.quiet [eval f]]
+    enclose print/ f -> [if no? system.options.quiet [eval f]]
 )
 
 loud-print: redescribe [
     "Prints during boot when verbose."
 ](
-    enclose get $print f -> [if yes? system.options.verbose [eval f]]
+    enclose print/ f -> [if yes? system.options.verbose [eval f]]
 )
 
 make-banner: func [
@@ -303,7 +303,7 @@ main-startup: func [
     ; useful to know that is what happened (and it demonstrates the ability
     ; to hook it, just to remind us that we can).
     ;
-    hijack :panic adapt (copy unrun :panic) [
+    hijack panic/ adapt (copy unrun panic/) [
         print "PANIC ACTION! is being triggered from a usermode call"
         print mold reason
         ;
@@ -431,7 +431,7 @@ main-startup: func [
         o.resources: resources-dir
     ]
 
-    sys.util.script-pre-load-hook: runs get $host-script-pre-load
+    sys.util.script-pre-load-hook: host-script-pre-load/
 
     let quit-when-done: null  ; by default run CONSOLE
 

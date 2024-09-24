@@ -29,16 +29,16 @@ REBOL [
 ;
 script-pre-load-hook: ~
 
-enrescue: get $lib/enrescue
+enrescue: lib/enrescue/
 lib.enrescue: ~  ; forcing long name of SYS.UTIL/ENRESCUE hints it is dangerous
 
 ; Returns NULL if no error, otherwise the error
 ;
-rescue: enclose get $enrescue func [f [frame!]] [
-    return match error! eval f
+rescue: enclose enrescue/ lambda [f] [
+    match error! eval f
 ]
 
-exit: get $lib/exit
+exit: lib/exit/
 lib.exit: ~  ; forcing long name of SYS.UTIL/EXIT
 
 
@@ -168,7 +168,7 @@ module: func [
 
     append mod 'import
     mod.import: cascade [
-        specialize get $sys.util/import* [  ; specialize low-level [3]
+        specialize sys.util/import*/ [  ; specialize low-level [3]
             where: mod
         ]
         :decay  ; don't want body evaluative result
@@ -176,11 +176,11 @@ module: func [
 
     append mod 'export
     mod.export: if spec and (spec.type = 'Module) [  ; only modules export
-        specialize get $sys.util/export* [  ; specialize low-level [3]
+        specialize sys.util/export*/ [  ; specialize low-level [3]
             where: mod
         ]
     ] else [
-        specialize get $fail [reason: [
+        specialize fail/ [reason: [
             "Scripts must be invoked via IMPORT to get EXPORT, not DO:"
             (file else ["<was run as text!/binary!>"])
         ]]

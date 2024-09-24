@@ -113,13 +113,13 @@ replace: func [
     if void? :pattern [return target]
 
     let all_REPLACE: all
-    all: get $lib/all
+    all: lib/all/
     let case_REPLACE: case
-    case: get $lib/case
+    case: lib/case/
 
     pos: target
 
-    while [[pos /tail]: apply get $find [
+    while [[pos /tail]: find // [
         pos
         :pattern
         /case case_REPLACE
@@ -175,7 +175,7 @@ reword: func [
     )
 ][
     let case_REWORD: case
-    case: runs get $lib/case
+    case: lib/case/
 
     let out: make (type of source) length of source
 
@@ -275,7 +275,7 @@ reword: func [
                     any-keyword-suffix-rule (
                         append/part out a offset? a b  ; output before prefix
 
-                        let v: apply get $select [
+                        let v: apply select/ [
                             values keyword-match
                             /case case_REWORD
                         ]
@@ -298,7 +298,7 @@ reword: func [
         (append out a)  ; finalize output - transfer any remainder verbatim
     ]
 
-    apply get $parse3 [source rule /case case_REWORD]  ; should succeed
+    apply parse3/ [source rule /case case_REWORD]  ; should succeed
     return out
 ]
 
@@ -365,7 +365,7 @@ alter: func [
     /case "Case-sensitive comparison"
 ][
     case_ALTER: case
-    case: runs get $lib/case
+    case: lib/case/
 
     if bitset? series [
         if find series value [
@@ -375,7 +375,7 @@ alter: func [
         append series value
         return okay
     ]
-    if remove apply get $find [series value, /case case_ALTER] [
+    if remove find // [series value, /case case_ALTER] [
         append series value
         return okay
     ]
@@ -393,7 +393,7 @@ collect*: func [
 ][
     let out: null
     let keeper: specialize (  ; SPECIALIZE to hide series argument
-        enclose get $append lambda [  ; Derive from APPEND for /LINE /DUP
+        enclose append/ lambda [  ; Derive from APPEND for /LINE /DUP
             f [frame!]
             <with> out
         ][
@@ -425,8 +425,8 @@ collect: redescribe [
     {Evaluate body, and return block of values collected via KEEP function.
     Returns empty block if nothing KEEPed.}
 ] cascade [
-    get $collect*,
-    specialize get $else [branch: [copy []]]
+    collect*/
+    specialize else/ [branch: [copy []]]
 ]
 
 format: func [

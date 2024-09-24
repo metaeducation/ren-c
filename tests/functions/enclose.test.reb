@@ -1,7 +1,7 @@
 ; better-than-nothing ENCLOSE tests
 
 (
-    e-multiply: enclose get $multiply lambda [f [frame!]] [
+    e-multiply: enclose multiply/ lambda [f [frame!]] [
         let diff: abs (f.value1 - f.value2)
         diff + eval f
     ]
@@ -9,7 +9,7 @@
     73 = e-multiply 7 10
 )
 (
-    n-add: enclose get $add lambda [f [frame!]] [
+    n-add: enclose add/ lambda [f [frame!]] [
         if 10 <> f.value1 [
             f.value1: 5
             eval f
@@ -28,7 +28,7 @@
     inner: func [] [
         return var: 1020
     ]
-    outer: enclose get $inner func [f] [
+    outer: enclose inner/ func [f] [
         assert [1020 = eval f]
         return nihil
     ]
@@ -43,7 +43,7 @@
         var: 1020
         return nihil
     ]
-    outer: enclose get $inner func [return: [quoted? quasiform!] f] [
+    outer: enclose inner/ func [return: [quoted? quasiform!] f] [
         return ^(eval f)  ; don't unquote it here
     ]
     all [
@@ -56,7 +56,7 @@
         var: 1020
         return nihil
     ]
-    outer: enclose get $inner func [return: [nihil? any-value?] f] [
+    outer: enclose inner/ func [return: [nihil? any-value?] f] [
         return eval f  ; now try unquoting
     ]
     all [

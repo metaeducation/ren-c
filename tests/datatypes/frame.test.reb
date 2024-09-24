@@ -72,7 +72,7 @@
     (
         f-inner-prelude: '~junk~
         private: <not-in-prelude>
-        adapted-foo: adapt get $foo [
+        adapted-foo: adapt foo/ [
             f-inner-prelude: binding of $public
             assert [private = <not-in-prelude>]  ; should not be bound
         ]

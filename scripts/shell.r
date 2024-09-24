@@ -218,7 +218,7 @@ shell+: func [  ; was $ but that now has a binding purpose
         ]
     ]
 
-    return apply get $shell [code, /inspect inspect, /pipe pipe]
+    return shell // [code, /inspect inspect, /pipe pipe]
 ]
 
 export [shell %% shell+]

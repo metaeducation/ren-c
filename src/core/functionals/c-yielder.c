@@ -277,7 +277,7 @@ DECLARE_NATIVE(yielder)
     // has a local "yield" which is bound to the frame upon execution.
     //
     Value* body = rebValue("compose [",
-        "let yield: runs bind get $lib/yield binding of $return",
+        "let yield: couple lib/yield/ coupling of return/",
         "(as group!", ARG(body), ")",  // GROUP! so it can't backquote 'YIELD
     "]");
 

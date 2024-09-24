@@ -249,7 +249,7 @@ int main(int argc, char *argv_ansi[])
     //     import module [Name: Encap ...] [...]
     //     ...
     //     import module [Name: Main-Startup ...] [...]
-    //     unrun get $main-startup
+    //     main-startup/
     //
     // There are no top-level SET-WORD!s, and it doesn't leak any declarations
     // into LIB.  The return of the MAIN-STARTUP function as the last item
@@ -257,7 +257,7 @@ int main(int argc, char *argv_ansi[])
     // command line arguments.
     //
     Value* main_startup = rebValue(
-        "ensure frame! eval inside lib transcode", rebR(startup_bin)
+        "ensure &action? eval inside lib transcode", rebR(startup_bin)
     );
 
     // This runs the MAIN-STARTUP, which returns *requests* to execute
@@ -266,7 +266,7 @@ int main(int argc, char *argv_ansi[])
     //
     Value* trapped = rebValue(
         "entrap [",  // MAIN-STARTUP frame takes one argument (argv[])
-            main_startup, rebR(argv_block),
+            rebRUN(main_startup), rebR(argv_block),
         "]"
     );
     rebRelease(main_startup);

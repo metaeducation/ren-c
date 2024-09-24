@@ -230,7 +230,7 @@
     buffer: copy #{}
     pos: buffer
 
-    fuzzwrite: adapt get $write [
+    fuzzwrite: adapt write/ [
       comment [
         print [
             "Writing"
@@ -242,7 +242,7 @@
         if seek [
             pos: skip buffer seek
         ]
-        pos: apply get $change [pos (copy/part data part) /part part]
+        pos: change // [pos (copy/part data part) /part part]
     ]
 
     repeat 128 [

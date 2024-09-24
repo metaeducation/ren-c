@@ -8,7 +8,7 @@ REBOL [
 
 ; Move the default filters to usermode code, instead of a hardcoded C literal
 ;
-request-file: adapt get $request-file* [
+request-file: adapt request-file*/ [
     ;
     ; !!! What notation should be used to indicate the default filter?
     ; Perhaps put in a GROUP!?
@@ -26,7 +26,7 @@ request-file: adapt get $request-file* [
 ; "Asks user to select a directory and returns it as file path"
 ;
 request-dir: cascade [
-    adapt get $request-dir* [
+    adapt request-dir*/ [
         if path [
             dir: lib/replace/all file-to-local dir "/" "//"
         ]

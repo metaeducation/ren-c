@@ -25,7 +25,7 @@ dump: func [
 
     <static> enablements (make map! [])
 ][
-    let print: enclose get $lib/print lambda [f [frame!]] [
+    let print: enclose lib/print/ lambda [f [frame!]] [
         if prefix [
             if #on <> select enablements prefix [return ~]
             write-stdout prefix
@@ -128,7 +128,7 @@ contains-newline: func [return: [logic?] pos [block! group!]] [
     return null
 ]
 
-dump-to-newline: adapt get $dump [
+dump-to-newline: adapt dump/ [
     if not tail? extra [
         ;
         ; Mutate VARARGS! into a BLOCK!, with passed-in value at the head
@@ -157,7 +157,7 @@ dumps: enfix func [
 ][
     let d
     if issue? value [
-        d: specialize get $dump-to-newline [prefix: as text! name]
+        d: specialize dump-to-newline/ [prefix: as text! name]
         if value <> #off [d #on]  ; note: d hard quotes its argument
     ] else [
         ; Make it easy to declare and dump a variable at the same time.
@@ -177,7 +177,7 @@ dumps: enfix func [
         ;
         d: func [return: [nihil?] /on /off <static> d'] compose/deep [
             let d': default [
-                let d'': specialize get $dump [prefix: (as text! name)]
+                let d'': specialize dump/ [prefix: (as text! name)]
                 d'' #on
             ]
             case [

@@ -51,7 +51,7 @@
 //   hold "references" to functions internally.  These references are also
 //   affected by the hijacking, which means it's easy to get infinite loops:
 //
-//       >> hijack :load (adapt get $load [print "LOADING!"])
+//       >> hijack :load (adapt load/ [print "LOADING!"])
 //
 //       >> load "<for example>"
 //       LOADING!
@@ -221,10 +221,10 @@ DECLARE_NATIVE(hijack)
 //    restore the behavior.  Because you can make such a copy yourself if
 //    you intend to put the behavior back:
 //
-//        foo-saved: copy unrun get $foo
-//        hijack get $foo get $bar
+//        foo-saved: copy unrun foo/  ; should antiform frame be copyable?
+//        hijack foo/ bar/
 //        ...
-//        hijack get $foo foo-saved
+//        hijack foo/ foo-saved
 //
 //    Making such a copy in this routine would be wasteful if it wasn't used.
 //

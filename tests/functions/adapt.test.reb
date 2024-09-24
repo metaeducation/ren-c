@@ -2,13 +2,13 @@
 
 (
     x: 10
-    foo: adapt get $any [x: 20]
+    foo: adapt any/ [x: 20]
     foo [1 2 3]
     x = 20
 )
 (
     capture: blank
-    foo: adapt get $any [capture: block]
+    foo: adapt any/ [capture: block]
     all [
       foo [1 2 3]
       capture = [1 2 3]
@@ -16,10 +16,10 @@
 )
 (
     v: copy []
-    append-v: specialize get $append [
+    append-v: specialize append/ [
         series: v
     ]
-    adapted-append-v: adapt get $append-v [
+    adapted-append-v: adapt append-v/ [
         value: to integer! value
     ]
     adapted-append-v "10"
@@ -32,7 +32,7 @@
     (
         captured-x: ~
         foo: func [x] [return "available now"]
-        bar: adapt get $foo [
+        bar: adapt foo/ [
             captured-x: x
             assert [unspecialized? $return]
         ]
@@ -48,6 +48,6 @@
 (
     y: <outside>
     test: func [x <local> y] [return :y]
-    adapted: adapt get $test [assert [y = <outside>]]
+    adapted: adapt test/ [assert [y = <outside>]]
     nothing? adapted 10
 )

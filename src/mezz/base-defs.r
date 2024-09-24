@@ -25,9 +25,10 @@ REBOL [
 
 ; Start with basic debugging
 
-c-break-debug: runs get $c-debug-break  ; easy to mix up
+c-break-debug: c-debug-break/  ; easy to mix up
 
-ok: :okay
+ok: okay
+ok?: okay?/
 
 ; These definitions have been helpful as the syntax has shuffled around,
 ; though today you can say '~void~ and it is considered stable (vs the old
@@ -39,8 +40,7 @@ okay': meta okay
 trash: nothing': meta nothing
 nihil': meta nihil
 
-eval: :evaluate  ; shorthands should be synonyms, too confusing otherwise
-ok?: :okay?
+eval: evaluate/  ; shorthands should be synonyms, too confusing otherwise
 
 probe: func* [
     {Debug print a molded value and returns that same value.}
@@ -62,7 +62,7 @@ probe: func* [
     return unmeta value'
 ]
 
-??: runs get $probe  ; shorthand for debug sessions, not to be committed
+??: probe/  ; shorthand for debug sessions, not to be committed
 
 ; Pre-decaying specializations for DID, DIDN'T, THEN, ELSE, ALSO
 ;
@@ -80,32 +80,32 @@ didn't*: get $didn't/decay
 ; known what would be best for them.  They aren't parameter conventions, they
 ; apply to the whole action.
 ;
-tweak :then 'defer 'on
-tweak :also 'defer 'on
-tweak :else 'defer 'on
-tweak :except 'defer 'on
-tweak :*then 'defer 'on
-tweak :*also 'defer 'on
-tweak :*else 'defer 'on
+tweak then/ 'defer 'on
+tweak also/ 'defer 'on
+tweak else/ 'defer 'on
+tweak except/ 'defer 'on
+tweak *then/ 'defer 'on
+tweak *also/ 'defer 'on
+tweak *else/ 'defer 'on
 
 
 ; ARITHMETIC OPERATORS
 ;
 ; Note that `/` is rather trickily not a PATH!, but a decayed form as a WORD!
 
-+: enfix :add
--: enfix :subtract
-*: enfix :multiply
-/: enfix :divide
++: enfix add/
+-: enfix subtract/
+*: enfix multiply/
+/: enfix divide/
 
 
 ; SET OPERATORS
 
-not+: runs get $bitwise-not
-and+: enfix get $bitwise-and
-or+: enfix get $bitwise-or
-xor+: enfix get $bitwise-xor
-and-not+: enfix get $bitwise-and-not
+not+: bitwise-not/
+and+: enfix bitwise-and/
+or+: enfix bitwise-or/
+xor+: enfix bitwise-xor/
+and-not+: enfix bitwise-and-not/
 
 
 ; COMPARISON OPERATORS
@@ -113,33 +113,33 @@ and-not+: enfix get $bitwise-and-not
 ; !!! See discussion about the future of comparison operators:
 ; https://forum.rebol.info/t/349
 
-=: enfix get $equal?
-<>: enfix get $not-equal?
-<: enfix get $lesser?
->: enfix get $greater?
+=: enfix equal?/
+<>: enfix not-equal?/
+<: enfix lesser?/
+>: enfix greater?/
 
 ; "Official" forms of the comparison operators.  This is what we would use
 ; if starting from scratch, and didn't have to deal with expectations people
 ; have coming from other languages: https://forum.rebol.info/t/349/
 ;
->=: enfix get $greater-or-equal?
-=<: enfix get $equal-or-lesser?
+>=: enfix greater-or-equal?/
+=<: enfix equal-or-lesser?/
 
 ; Compatibility Compromise: sacrifice what looks like left and right arrows
 ; for usage as comparison, even though the perfectly good `=<` winds up
 ; being unused as a result.  Compromise `=>` just to reinforce what is lost
 ; by not retraining: https://forum.rebol.info/t/349/11
 ;
-equal-or-greater?: runs get $greater-or-equal?
-lesser-or-equal?: runs get $equal-or-lesser?
-=>: enfix get $equal-or-greater?
-<=: enfix get $lesser-or-equal?
+equal-or-greater?: greater-or-equal?/
+lesser-or-equal?: equal-or-lesser?/
+=>: enfix equal-or-greater?/
+<=: enfix lesser-or-equal?/
 
-!=: enfix get $not-equal?  ; http://www.rebol.net/r3blogs/0017.html
-==: enfix get $strict-equal?  ; !!! https://forum.rebol.info/t/349
-!==: enfix get $strict-not-equal?  ; !!! bad pairing, most would think !=
+!=: enfix not-equal?/  ; http://www.rebol.net/r3blogs/0017.html
+==: enfix strict-equal?/  ; !!! https://forum.rebol.info/t/349
+!==: enfix strict-not-equal?/  ; !!! bad pairing, most would think !=
 
-=?: enfix :same?
+=?: enfix same?/
 
 
 ; Common "Invisibles"
@@ -193,17 +193,18 @@ elide-if-void: func* [
 ]
 
 
-; EACH will ultimately be a generator, but for now it acts as QUOTE so it can
-; be used with `map x each [a b c] [...]` and give you x as a, then b, then c.
+; EACH will ultimately be a generator, but for now it acts as QUOTE as a
+; quick and dirty container for the data, that things like MAP and FOR will
+; recognize.  map x each [a b c] [...]` will give you x as a, then b, then c.
 ;
-each: runs get $quote
+each: quote/
 
 
 ; It's easier to pre-process CASCADE's block in usermode, which also offers a
 ; lower-level version CASCADE* that just takes a block of frames.
 ;
-cascade: adapt get $cascade* [
-    pipeline: reduce/predicate pipeline get $/unrun
+cascade: adapt cascade*/ [
+    pipeline: reduce/predicate pipeline unrun/
 ]
 
 
@@ -247,18 +248,18 @@ requote: reframer lambda [
 ; specializations they don't fit easily into the NEXT OF SERIES model--this
 ; is a problem which hasn't been addressed.
 ;
-next: specialize get $skip [offset: 1]
-back: specialize get $skip [offset: -1]
+next: specialize skip/ [offset: 1]
+back: specialize skip/ [offset: -1]
 
 ; Function synonyms
 
-min: runs get $minimum
-max: runs get $maximum
-abs: runs get $absolute
+min: minimum/
+max: maximum/
+abs: absolute/
 
-unspaced: specialize get $delimit [delimiter: null]
-spaced: specialize get $delimit [delimiter: space]
-newlined: specialize get $delimit [delimiter: newline, tail: ok]
+unspaced: specialize delimit/ [delimiter: null]
+spaced: specialize delimit/ [delimiter: space]
+newlined: specialize delimit/ [delimiter: newline, tail: ok]
 
 an: lambda [
     {Prepends the correct "a" or "an" to a string, based on leading character}
@@ -287,10 +288,10 @@ an: lambda [
 ; {Returns TRUE if port is open.}
 ; port [port!]
 
-head?: specialize get $reflect [property: 'head?]
-tail?: specialize get $reflect [property: 'tail?]
-past?: specialize get $reflect [property: 'past?]
-open?: specialize get $reflect [property: 'open?]
+head?: specialize reflect/ [property: 'head?]
+tail?: specialize reflect/ [property: 'tail?]
+past?: specialize reflect/ [property: 'past?]
+open?: specialize reflect/ [property: 'open?]
 
 
 empty?: func* [
@@ -386,5 +387,5 @@ echo: func* [
 
 ; Convenient alternatives for readability
 ;
-neither?: runs get $nand?
-both?: runs get $and?
+neither?: nand?/
+both?: and?/

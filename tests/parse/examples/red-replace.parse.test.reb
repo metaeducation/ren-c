@@ -23,7 +23,7 @@
         ] else '[
             change f.pattern (f.replacement)
         ]
-        apply get $parse [/case f.case, f.target [
+        parse // [/case f.case, f.target [
             while [thru rule] (
                 if not f.all [return f.target]
             )

@@ -100,7 +100,7 @@
     same? :a-value a-value
 )
 (
-    a-value: get $+
+    a-value: +/
     (1 a-value 2) == 3
 )
 (
@@ -171,7 +171,7 @@
 
         {-<=>-} {-<>-} {>=<}
     ][
-        let assert: specialize get $assert [
+        let assert: specialize assert/ [
             handler: [echo Failure on: @str]
         ]
 

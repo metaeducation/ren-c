@@ -23,7 +23,7 @@
 // function, and then pipes its results through to several subsequent
 // post-processing actions:
 //
-//     >> negadd: cascade [get $add, get $negate]
+//     >> negadd: cascade [add/ negate/]
 //
 //     >> negadd 2 2
 //     == -4

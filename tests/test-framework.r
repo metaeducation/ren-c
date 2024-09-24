@@ -224,7 +224,7 @@ process-tests: func [
                 log ["@collect-tests" space mold body]
 
                 let [_ collected]: module null compose/deep [collect [
-                    let keep-test: adapt get $keep [
+                    let keep-test: adapt keep/ [
                         if not block? :value [
                             fail "KEEP-TEST takes BLOCK! (acts as GROUP!)"
                         ]

@@ -131,8 +131,8 @@
     same? :a-value f
 )
 (
-    f: does [get $+]
-    same? get $+ f
+    f: does [+/]
+    same? +/ f
 )
 (
     f: does [0x0]

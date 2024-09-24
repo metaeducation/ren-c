@@ -63,7 +63,7 @@
                 use [break] [
                     break: 1
                     f 2
-                    boolean 1 = get $break
+                    boolean 1 = get $break  ; assigned to integer above
                 ]
             ][
                 'false

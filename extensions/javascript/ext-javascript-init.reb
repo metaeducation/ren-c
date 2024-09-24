@@ -12,4 +12,4 @@ REBOL [
     License: {LGPL 3.0}
 ]
 
-export js-awaiter: runs get $js-native/awaiter
+export js-awaiter: specialize js-native/ [awaiter: okay]

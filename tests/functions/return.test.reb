@@ -148,7 +148,7 @@
         return/run <redo>  ; should redo INNER, not outer
     ]
 
-    outer: adapt get $inner [
+    outer: adapt inner/ [
         if n = 0 [
             fail "inner phase should have been run by redo"
         ]

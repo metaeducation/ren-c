@@ -55,11 +55,11 @@
 
 ; NON is an inverted form of ENSURE, that FAILs when the argument *matches*
 [
-    (null = non action?! :append)
+    (null = non action?! append/)
     (10 = non frame! 10)
 
     (null = non integer! 10)
-    (:append = non integer! :append)
+    (append/ = non integer! append/)
 
     ~need-non-null~ !! (non null null)
     ~???~ !! (non null 10)

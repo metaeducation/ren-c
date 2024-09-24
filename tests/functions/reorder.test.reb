@@ -64,15 +64,15 @@
 
 ; Functions modified with ADAPT, SPECIALIZE, etc. can be reordered.
 (
-    aplus: adapt get $append [value: value + 1000]
-    newaplus: reorder :aplus [value series]
+    aplus: adapt append/ [value: value + 1000]
+    newaplus: reorder aplus/ [value series]
     [a b c 1020] = newaplus 20 [a b c]
 )
 
 ; Reordered functions also preserve their reordering across compositions.
 (
-    newa: reorder :append [value series]
-    newaplus: adapt get $newa [value: value + 1000]
+    newa: reorder append/ [value series]
+    newaplus: adapt newa/ [value: value + 1000]
     [a b c 1020] = newaplus 20 [a b c]
 )
 

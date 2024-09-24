@@ -28,7 +28,7 @@
     ; 3. If the user does (pointfree :append [_ [d e]]) then the blank signals
     ;    an unspecialized slot.  So that would be like writing:
     ;
-    ;        specialize :append [value: [d e]]  ; leave series unspecialized
+    ;        specialize append/ [value: [d e]]  ; leave series unspecialized
     ;
     pointfree*: func* [
         "Specialize by example: https://en.wikipedia.org/wiki/Tacit_programming"
@@ -88,7 +88,7 @@
     ;      =>
     ;      pointfree* :append [_ [d e]]
     ;
-    pointfree: specialize (adapt get $pointfree* [
+    pointfree: specialize (adapt pointfree*/ [
         frame: (match frame! any [  ; no SET-WORD! namecache
             if match [word! path!] block.1 [
                 unrun get/any inside block block.1

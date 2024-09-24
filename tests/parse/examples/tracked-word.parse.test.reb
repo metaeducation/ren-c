@@ -68,9 +68,9 @@
     tracked-combinators: copy default-combinators
     tracked-combinators.(word!): unrun :tracked-word!
 
-    trackparse*: specialize get $parse [combinators: tracked-combinators]
+    trackparse*: specialize parse/ [combinators: tracked-combinators]
 
-    trackparse: enclose get $trackparse* lambda [f [frame!]] [
+    trackparse: enclose trackparse*/ lambda [f [frame!]] [
         stack: copy []
         eval f then [
             append stack ""  ; give final newline

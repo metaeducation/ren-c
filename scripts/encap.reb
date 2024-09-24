@@ -572,7 +572,7 @@ pe-format: context [
             [word! block!]
     ][
         let words: skip
-        skip: runs get $lib/skip
+        skip: lib/skip/
 
         let def: make block! 1
         let find-a-word: func [
@@ -1152,7 +1152,7 @@ pe-format: context [
         return (head of exe-data, elide reset)
     ]
 
-    update-embedding: specialize get $update-section [
+    update-embedding: specialize update-section/ [
         section-name: encap-section-name
     ]
 

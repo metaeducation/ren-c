@@ -21,7 +21,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // A specialization is an ACTION! which has some of its parameters fixed.
-// e.g. `ap10: specialize get $append [value: 5 + 5]` makes ap10 have all the same
+// e.g. `ap10: specialize append/ [value: 5 + 5]` makes ap10 have all the same
 // refinements available as APPEND, but otherwise just takes one series arg,
 // as it will always be appending 10.
 //

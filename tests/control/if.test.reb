@@ -24,7 +24,7 @@
     1 = f1
 )
 ; condition datatype tests; action
-(if get $abs [okay])
+(if abs/ [okay])
 ; binary
 (if #{00} [okay])
 ; bitset
@@ -63,10 +63,10 @@
 (if ok [okay])
 (void' = ^ if null [okay])
 (if $1 [okay])
-(if (specialize get $of [property: 'type]) [okay])
+(if (specialize of/ [property: 'type]) [okay])
 (okay = if blank [okay])
 (if make object! [] [okay])
-(if get $+ [okay])
+(if +/ [okay])
 (if 0x0 [okay])
 (if first [()] [okay])
 (if 'a/b [okay])

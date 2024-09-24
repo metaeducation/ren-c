@@ -652,7 +652,7 @@ Bounce Stepper_Executor(Level* L)
           default:
             assert(false);
         }
-        break; }
+        goto lookahead; }
 
       sigil_rightside_in_out: {
         switch (Cell_Sigil(L_current)) {
@@ -677,7 +677,7 @@ Bounce Stepper_Executor(Level* L)
           default:
             assert(false);
         }
-        break; }
+        goto lookahead; }
 
 
     //=//// WORD! //////////////////////////////////////////////////////////=//
@@ -783,7 +783,7 @@ Bounce Stepper_Executor(Level* L)
         if (Any_Vacancy(stable_OUT))  // checked second
             fail (Error_Bad_Word_Get(L_current, OUT));
 
-        break; }
+        goto lookahead; }
 
 
     //=//// SET-WORD! /////////////////////////////////////////////////////=//
@@ -850,7 +850,7 @@ Bounce Stepper_Executor(Level* L)
             }
         }
 
-        break; }
+        goto lookahead; }
 
 
     //=//// GET-WORD! /////////////////////////////////////////////////////=//
@@ -869,7 +869,8 @@ Bounce Stepper_Executor(Level* L)
 
         if (STATE == REB_META_WORD)
             Meta_Quotify(OUT);
-        break;
+
+        goto lookahead;
 
 
     //=//// GROUP!, GET-GROUP!, and META-GROUP! ///////////////////////////=//
@@ -937,7 +938,7 @@ Bounce Stepper_Executor(Level* L)
             and Any_Inert(SPARE)  // `1.2.3` is inert
         ){
             Derelativize(OUT, L_current, L_specifier);
-            break;
+            goto lookahead;
         }
 
         if (Get_Var_Core_Throws(OUT, GROUPS_OK, L_current, L_specifier))
@@ -953,7 +954,7 @@ Bounce Stepper_Executor(Level* L)
             if (Any_Vacancy(stable_OUT))
                 fail (Error_Bad_Word_Get(L_current, stable_OUT));
         }
-        break; }
+        goto lookahead; }
 
 
     //=//// PATH! //////////////////////////////////////////////////////////=//
@@ -973,19 +974,25 @@ Bounce Stepper_Executor(Level* L)
         Copy_Sequence_At(SPARE, L_current, 0);
         if (Any_Inert(SPARE)) {
             Derelativize(OUT, L_current, L_specifier);
-            break;
+            goto lookahead;
         }
 
+        Length len = Cell_Sequence_Len(L_current);
+        Copy_Sequence_At(SPARE, L_current, len - 1);
+        bool slash_at_tail = Is_Blank(SPARE);
+
         if (Get_Path_Push_Refinements_Throws(
-            SPARE,
-            OUT,
+            OUT,  // where to write action
+            SPARE,  // temporary GC-safe scratch space
             L_current,
             L_specifier
         )){
             goto return_thrown;
         }
 
-        assert(Is_Action(SPARE));
+        assert(Is_Action(OUT));
+        if (slash_at_tail)
+            goto lookahead;  // do not run action, just return it
 
         // PATH! dispatch is costly and can error in more ways than WORD!:
         //
@@ -994,17 +1001,21 @@ Bounce Stepper_Executor(Level* L)
         //
         // Plus with GROUP!s in a path, their evaluations can't be undone.
         //
-        if (Is_Enfixed(SPARE)) {
+        if (Is_Enfixed(OUT)) {
             Drop_Data_Stack_To(BASELINE->stack_base);
-            fail ("Use `>-` to shove left enfix operands into PATH!s");
+            fail ("Use `->-` to shove left enfix operands into PATH!s");
         }
 
         Level* sub = Make_Action_Sublevel(L);
         sub->baseline.stack_base = BASELINE->stack_base;  // refinements
 
+        Action* action = VAL_ACTION(OUT);
+        Option(Context*) coupling = Cell_Frame_Coupling(OUT);
+        Option(const Symbol*) label = VAL_FRAME_LABEL(OUT);
+
         Push_Level(OUT, sub);
-        Push_Action(sub, VAL_ACTION(SPARE), Cell_Frame_Coupling(SPARE));
-        Begin_Prefix_Action(sub, VAL_FRAME_LABEL(SPARE));
+        Push_Action(sub, action, coupling);
+        Begin_Prefix_Action(sub, label);
         goto process_action; }
 
 
@@ -1062,7 +1073,7 @@ Bounce Stepper_Executor(Level* L)
             }
         }
 
-        break; }
+        goto lookahead; }
 
 
     //=//// SET-GROUP! /////////////////////////////////////////////////////=//
@@ -1115,7 +1126,7 @@ Bounce Stepper_Executor(Level* L)
           default:
             fail ("Unknown type for use in SET-GROUP!");
         }
-      break; }
+        goto lookahead; }
 
 
     //=//// GET-TUPLE! and META-TUPLE! ////////////////////////////////////=//
@@ -1144,7 +1155,7 @@ Bounce Stepper_Executor(Level* L)
         else
             assert(STATE == REB_GET_TUPLE);
 
-        break;
+        goto lookahead;
 
 
     //=//// GET-BLOCK! ////////////////////////////////////////////////////=//
@@ -1164,7 +1175,7 @@ Bounce Stepper_Executor(Level* L)
         )){
             goto return_thrown;
         }
-        break; }
+        goto lookahead; }
 
 
     //=//// SET-BLOCK! ////////////////////////////////////////////////////=//
@@ -1506,7 +1517,7 @@ Bounce Stepper_Executor(Level* L)
     } set_block_drop_stack_and_continue: {  //////////////////////////////////
 
         Drop_Data_Stack_To(BASELINE->stack_base);  // drop writeback variables
-        break; }
+        goto lookahead; }
 
 
     //=//// META-BLOCK! ////////////////////////////////////////////////////=//
@@ -1522,7 +1533,7 @@ Bounce Stepper_Executor(Level* L)
         Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
         HEART_BYTE(OUT) = REB_BLOCK;
         Quotify(OUT, 1);
-        break;
+        goto lookahead;
 
 
     //=//// THE-XXX! //////////////////////////////////////////////////////=//
@@ -1565,7 +1576,7 @@ Bounce Stepper_Executor(Level* L)
       case REB_THE_TUPLE:
       case REB_THE_GROUP:
         Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
-        break;
+        goto lookahead;
 
 
     //=///// VAR-XXX! /////////////////////////////////////////////////////=//
@@ -1595,7 +1606,7 @@ Bounce Stepper_Executor(Level* L)
       case REB_VAR_GROUP:
         Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
         HEART_BYTE(OUT) = Plainify_Any_Var_Kind(STATE);
-        break;
+        goto lookahead;
 
 
       case REB_BLOCK:
@@ -1649,7 +1660,7 @@ Bounce Stepper_Executor(Level* L)
       case REB_HANDLE:
 
         Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
-        break;
+        goto lookahead;
 
 
     //=//// GARBAGE (pseudotypes or otherwise //////////////////////////////=//

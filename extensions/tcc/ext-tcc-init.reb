@@ -622,7 +622,7 @@ c99: func [
 
     ; !!! This doesn't return the C source from COMPILE, should it?
     ;
-    apply get $compile [
+    compile // [
         compilables
         /files true  ; compilables represents a list of files
         /inspect inspect  ; return C source as text but don't compile it

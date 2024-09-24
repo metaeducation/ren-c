@@ -32,17 +32,17 @@
 ]
 
 (
-    append-123: specialize get $append [value: [1 2 3]]  ; quoted by specialize
+    append-123: specialize append/ [value: [1 2 3]]  ; quoted by specialize
     [a b c [1 2 3] [1 2 3]] = append-123/dup copy [a b c] 2
 )
 (
-    append-123: specialize get $append [value: [1 2 3]]
-    append-123-twice: specialize get $append-123 [dup: 2]
+    append-123: specialize append/ [value: [1 2 3]]
+    append-123-twice: specialize append-123/ [dup: 2]
     [a b c [1 2 3] [1 2 3]] = append-123-twice copy [a b c]
 )
 (
-    append-10: specialize get $append [value: 10]
-    f: make frame! unrun :append-10
+    append-10: specialize append/ [value: 10]
+    f: make frame! unrun append-10/
     f.series: copy [a b c]
 
     comment {COPY before EVAL allows reuse of F, only the copy is "stolen"}
@@ -62,7 +62,7 @@
         ; is an implementation detail that affects code that subverts the
         ; traditional calling mode.
         ;
-        return-5: specialize get $return [value: quote 5]
+        return-5: specialize return/ [value: quote 5]
         return-5
         "this shouldn't be returned"
     ]
@@ -72,8 +72,8 @@
 [
     (
         apd: get $append/part/dup
-        apd3: specialize get $apd [dup: 3]
-        ap2d: specialize get $apd [part: 2]
+        apd3: specialize apd/ [dup: 3]
+        ap2d: specialize apd/ [part: 2]
 
         xy: [<X> #Y]
         abc: [A B C]
@@ -106,8 +106,8 @@
 [
     (
         adp: get $append/dup/part
-        adp2: specialize get $adp [part: 2]
-        ad3p: specialize get $adp [dup: 3]
+        adp2: specialize adp/ [part: 2]
+        ad3p: specialize adp/ [dup: 3]
 
         xy: [<X> #Y]
         abc: [A B C]
@@ -138,7 +138,7 @@
 ]
 
 (
-    aopd3: specialize get $append [
+    aopd3: specialize append/ [
         dup: 3
         part: 1
     ]

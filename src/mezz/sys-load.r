@@ -314,7 +314,7 @@ load-value: redescribe [
     {Do a LOAD of a single value}
 ](
     cascade [
-        get $load,
+        load/
         lambda [^x [raised? block!]] [
             either raised? unmeta x [
                 unmeta x  ; pipe error
@@ -435,7 +435,7 @@ import*: func [
     <static>
         importing-remotely ('no)
 ][
-    return: adapt get $return [  ; make sure all return paths actually import vars
+    return: adapt return/ [  ; make sure all return paths actually import vars
         ;
         ; Note: `value` below is the argument to RETURN.  It is a ^META
         ; parameter so should be a quoted pack containing a module.  We don't

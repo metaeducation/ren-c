@@ -146,7 +146,7 @@
 ; !!! RESKINNED is temporarily out of service, pending reworking of the way
 ; functions are built from frames.
 ;
-;    func-r2: reskinned [body [block!]] adapt get $func []
+;    func-r2: reskinned [body [block!]] adapt func/ []
 ;    aggregator: func-r2 [x] [data: [] append data x]
 ;    all [
 ;        [10] = aggregator 10

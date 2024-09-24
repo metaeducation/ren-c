@@ -72,8 +72,8 @@ verify: func [
 ; override a system-wide assert in this way should be examined, and perhaps
 ; copies of the function made at layer boundaries.
 ;
-native-assert: runs copy unrun get $assert
-hijack get $assert get $verify
+native-assert: runs copy unrun assert/
+hijack assert/ verify/
 
 
 delta-time: func [
@@ -83,7 +83,7 @@ delta-time: func [
     let timer: unrun get $lib/now/precise  ; Note: NOW comes from an Extension
     results: reduce reduce [  ; resolve word lookups first, run fetched items
         timer
-        (unrun :elide) (unrun :do) block
+        (unrun elide/) (unrun eval/) block
         timer
     ]
     return difference results.2 results.1
@@ -172,7 +172,7 @@ net-trace: func [
     val [logic?]
 ][
     either val [
-        hijack :net-log func [txt /C /S][
+        hijack net-log/ func [txt /C /S][
             print [
                 (if c ["C:"]) (if s ["S:"])
                     either block? txt [spaced txt] [txt]
@@ -181,6 +181,6 @@ net-trace: func [
         ]
         print "Net-trace is now on"
     ][
-        hijack :net-log func [txt /C /S][txt]
+        hijack net-log/ func [txt /C /S][txt]
     ]
 ]

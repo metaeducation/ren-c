@@ -50,7 +50,7 @@ ok)
 
 (
     append-123: specialize get $append/only [value: [1 2 3]]
-    append-123-twice: specialize get $append-123 [dup: 2]
+    append-123-twice: specialize append-123/ [dup: 2]
     [a b c [1 2 3] [1 2 3]] = append-123-twice copy [a b c]
 )
 

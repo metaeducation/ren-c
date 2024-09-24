@@ -92,7 +92,7 @@ for-each 'file reduce [
 ; (This organization lets us separate the moment of loading from the moment
 ; of running, in case that were interesting.)
 ;
-append/line buf "unrun get $main-startup"  ; need newline, else `[...]reify...`
+append/line buf "main-startup/"  ; need newline, else `[...]reify...`
 
 
 ; It's helpful to have an uncompressed readable copy of the bundled and

@@ -1300,7 +1300,7 @@ default-combinators: make map! reduce [
             ; no isolated value to capture.  Should we copy it?
 
             any-string? input [
-                [_ remainder]: apply get $find [
+                [_ remainder]: find // [
                     input value
                     /match ok
                     /case state.case
@@ -1310,7 +1310,7 @@ default-combinators: make map! reduce [
             ]
             <default> [
                 assert [binary? input]
-                [_ remainder]: apply get $find [
+                [_ remainder]: find // [
                     input value
                     /match ok
                     /case state.case
@@ -2608,7 +2608,7 @@ default-combinators: make map! reduce [
         result': nihil'  ; default result is invisible
 
         old-env: state.env
-        return: adapt get $return [state.env: old-env]
+        return: adapt return/ [state.env: old-env]
         state.env: rules  ; currently using blocks as surrogate for environment
 
         while [not same? rules limit] [
@@ -3235,7 +3235,7 @@ parse*: func [
 parse: (comment [redescribe [  ; redescribe not working at the moment (?)
     {Process input in the parse dialect, definitional error on failure}
 ] ]
-    enclose get $parse* func [f] [
+    enclose parse*/ func [f] [
         let [^synthesized' pending]: eval/undecayed f except e -> [
             return raise e
         ]
@@ -3249,7 +3249,7 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
 parse-: (comment [redescribe [  ; redescribe not working at the moment (?)
     {Process input in the parse dialect, return how far reached}
 ] ]
-    enclose get $parse* func [f] [
+    enclose parse*/ func [f] [
         f.rules: compose [(f.rules) || accept <here>]
 
         let [^synthesized' pending]: eval/undecayed f except [
@@ -3263,7 +3263,7 @@ parse-: (comment [redescribe [  ; redescribe not working at the moment (?)
 )
 
 
-sys.util.parse: runs get $parse  ; !!! expose UPARSE to SYS.UTIL module, hack...
+sys.util.parse: parse/  ; !!! expose UPARSE to SYS.UTIL module, hack...
 
 
 === HOOKS ===
@@ -3291,7 +3291,7 @@ parse-trace-hook: func [
     return unmeta result'
 ]
 
-parse-trace: specialize get $parse [hook: :parse-trace-hook]
+parse-trace: specialize parse/ [hook: parse-trace-hook/]
 
 
 parse-furthest-hook: func [
@@ -3315,7 +3315,7 @@ parse-furthest: adapt augment :parse [
     var "Variable to hold furthest position reached"
         [word! tuple!]
 ][
-    hook: specialize get $parse-furthest-hook compose [var: '(var)]
+    hook: specialize parse-furthest-hook/ compose [var: '(var)]
     set var input
 ]
 

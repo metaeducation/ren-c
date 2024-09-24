@@ -149,7 +149,7 @@
     a-value: first [()]
     same? :a-value eval [:a-value]
 )
-(same? get $+ eval [get $+])
+(same? +/ eval [+/])
 (0x0 == eval [0x0])
 (
     a-value: 'a/b

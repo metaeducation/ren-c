@@ -105,7 +105,7 @@
     a-value: first [()]
     same? :a-value all [:a-value]
 )
-(same? get $+ all [get $+])
+(same? +/ all [+/])
 (0x0 == all [0x0])
 (
     a-value: 'a/b
@@ -201,7 +201,7 @@
     a-value: first [()]
     same? :a-value all [okay :a-value]
 )
-(same? get $+ all [okay get $+])
+(same? +/ all [okay +/])
 (0x0 == all [okay 0x0])
 (
     a-value: 'a/b
@@ -296,7 +296,7 @@
     a-value: first [()]
     okay = all [:a-value okay]
 )
-(okay = all [get $+ okay])
+(okay = all [+/ okay])
 (okay = all [0x0 okay])
 (
     a-value: 'a/b
@@ -386,10 +386,10 @@
 
 ; PREDICATES
 
-(15 = all/predicate [1 + 2 3 + 4 5 + 6 7 + 8] get $odd?)
-(15 = all/predicate [1 + 2 3 + 4 5 + 6 7 + 8] cascade [get $even?, get $not])
-(15 = all/predicate [1 + 2, 3 + 4, comment "Hi" 5 + 6, 7 + 8] get $odd?)
-(15 = all/predicate [1 + 2, 3 + 4 5 + 6, 7 + 8,] cascade [get $even?, get $not])
+(15 = all/predicate [1 + 2 3 + 4 5 + 6 7 + 8] odd?/)
+(15 = all/predicate [1 + 2 3 + 4 5 + 6 7 + 8] cascade [even?/ not/])
+(15 = all/predicate [1 + 2, 3 + 4, comment "Hi" 5 + 6, 7 + 8] odd?/)
+(15 = all/predicate [1 + 2, 3 + 4 5 + 6, 7 + 8,] cascade [even?/ not/])
 
 ; ALL returns void when contents completely erase
 [

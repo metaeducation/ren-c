@@ -53,9 +53,9 @@
     two-a-plus-three-b: lambda [a [integer!] /b [integer!]] [
         (2 * a) + either b [3 * b] [0]
     ]
-    two-a-plus-six: specialize get $two-a-plus-three-b [b: 2]
+    two-a-plus-six: specialize two-a-plus-three-b/ [b: 2]
 
-    two-a-plus-six-plus-four-c: enclose augment :two-a-plus-six [
+    two-a-plus-six-plus-four-c: enclose augment two-a-plus-six/ [
         /c [integer!]
     ] lambda [f [frame!]] [
         let old-c: f.c

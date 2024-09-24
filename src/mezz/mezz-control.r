@@ -23,7 +23,7 @@ launch: func [
     if file? script [script: file-to-local clean-path script]
     let command: reduce [file-to-local system.options.boot script]
     append command maybe spread args
-    return apply get $call* [command, /wait wait]
+    return call* // [command, /wait wait]
 ]
 
 wrap: lambda [

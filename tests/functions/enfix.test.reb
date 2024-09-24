@@ -5,11 +5,11 @@
 
 (enfix? :+)
 ~expect-arg~ !! (enfix? 1)
-(action? get $+)
+(action? +/)
 
 ; #1934
-(3 = eval reduce [1 unrun get $+ 2])
-~no-arg~ !! (eval reduce [unrun :+ 1 2])
+(3 = eval reduce [1 unrun +/ 2])
+~no-arg~ !! (eval reduce [unrun +/ 1 2])
 
 
 (
@@ -34,7 +34,7 @@
     ]
 )
 
-~no-arg~ !! (eval reduce [unrun get $+ 1 2])  ; enfix no argument
+~no-arg~ !! (eval reduce [unrun +/ 1 2])  ; enfix no argument
 
 
 ; Rather than error when SET-WORD! or SET-PATH! are used as the left hand

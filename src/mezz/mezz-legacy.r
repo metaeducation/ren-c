@@ -60,14 +60,14 @@ input: func [] [
 
 repend: func [] [
     fail/blame [
-        "REPEND is just `adapt get $append [value: reduce :value]`, and is not"
+        "REPEND is just `adapt append/ [value: reduce :value]`, and is not"
         "provided in the box."
     ] $return
 ]
 
 remold: func [] [
     fail/blame [
-        "REMOLD is just `adapt get $mold [value: reduce :value]`, but is not"
+        "REMOLD is just `adapt mold/ [value: reduce :value]`, but is not"
         "provided in the box."
     ] $return
 ]
@@ -90,7 +90,7 @@ rejoin: func [] [
 ; ability to tolerate a spec of `[a:]` by transforming it to `[a: none].
 ; Ren-C hasn't decided yet, but will likely support `construct [a: b: c:]`
 ;
-context: specialize get $make [type: object!]
+context: specialize make/ [type: object!]
 
 
 ; To be more visually pleasing, properties like LENGTH can be extracted using
@@ -114,29 +114,29 @@ context: specialize get $make [type: object!]
 ; no information about specific return types, which could be given here
 ; with REDESCRIBE.
 ;
-length-of: specialize get $reflect [property: 'length]
-words-of: specialize get $reflect [property: 'words]
-values-of: specialize get $reflect [property: 'values]
-index-of: specialize get $reflect [property: 'index]
-type-of: specialize get $reflect [property: 'type]
-binding-of: specialize get $reflect [property: 'binding]
-head-of: specialize get $reflect [property: 'head]
-tail-of: specialize get $reflect [property: 'tail]
-file-of: specialize get $reflect [property: 'file]
-line-of: specialize get $reflect [property: 'line]
-body-of: specialize get $reflect [property: 'body]
+length-of: specialize reflect/ [property: 'length]
+words-of: specialize reflect/ [property: 'words]
+values-of: specialize reflect/ [property: 'values]
+index-of: specialize reflect/ [property: 'index]
+type-of: specialize reflect/ [property: 'type]
+binding-of: specialize reflect/ [property: 'binding]
+head-of: specialize reflect/ [property: 'head]
+tail-of: specialize reflect/ [property: 'tail]
+file-of: specialize reflect/ [property: 'file]
+line-of: specialize reflect/ [property: 'line]
+body-of: specialize reflect/ [property: 'body]
 
 
 ; General renamings away from non-LOGIC!-ending-in-?-functions
 ; https://trello.com/c/DVXmdtIb
 ;
-index?: specialize get $reflect [property: 'index]
-offset?: runs get $offset-of
-sign?: runs get $sign-of
-suffix?: runs get $suffix-of
-length?: runs get $length-of
-head: runs get $head-of
-tail: runs get $tail-of
+index?: index-of/
+offset?: offset-of/
+sign?: sign-of/
+suffix?: suffix-of/
+length?: length-of/
+head: head-of/
+tail: tail-of/
 
 comment [
     ; !!! Less common cases still linger as question mark routines that
@@ -174,7 +174,7 @@ prin: func [
 ; permanence.  It also is unique among loop constructs by supporting a value
 ; return via STOP, since it has no "normal" loop termination condition.
 ;
-forever: runs get $cycle
+forever: cycle/
 
 
 find: adapt (augment :find [/reverse /last]) [
