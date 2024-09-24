@@ -26,50 +26,6 @@
 
 
 //
-//  only*: native [  ; fallen from favor, kept as ONLY* instead of ONLY [1]
-//
-//  "Optimized native for creating a single-element wrapper block"
-//
-//     return: [block!]
-//     value "If VOID, the resulting block will be empty"  ; [2]
-//          [~void~ element?]
-//  ]
-//
-DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
-//
-// 1. Prior to SPLICE and antiform GROUP!--when blocks spliced by default--
-//    this was conceived as a replacement for things like APPEND/ONLY, e.g.
-//
-//        >> only [d]
-//        == [[d]]
-//
-//        >> append [a b c] only [d]
-//        == [a b c [d]]  ; pre-antiform-GROUP! concept of splice by default
-//
-//    Without that purpose, use of the word ONLY here for an optimized
-//    synonym for ENBLOCK is questionable.
-//
-// 2. How useful the VOID-makes-empty-block is (vs. returning null, void, or
-//    failing) is unclear, since there aren't really usage scenarios for this.
-//
-// 3. This uses a "singular" Array which is the size of a Stub (8 platform
-//    pointers).  The Cell is put in the portion of the Stub where tracking
-//    information for a dynamically allocated Series would ordinarily be.
-{
-    INCLUDE_PARAMS_OF_ONLY_P;
-
-    Value* v = ARG(value);
-
-    Array* a = Alloc_Singular(NODE_FLAG_MANAGED);  // semi-efficient [3]
-    if (Is_Void(v))
-        Set_Flex_Len(a, 0);  // singulars initialize at length 1
-    else
-        Copy_Cell(Stub_Cell(a), ARG(value));
-    return Init_Block(OUT, a);
-}
-
-
-//
 //  CT_List: C
 //
 // "Compare Type" dispatcher for ANY-BLOCK?, ANY-GROUP?
