@@ -823,8 +823,8 @@ raise: func [
     /blame "Point to variable or parameter to blame"
         [word! frame!]
 ][
-    if tripwire? reason [
-        reason: as text! noquasi reify reason  ; antiform tag! ~<unreachable>~
+    if tripwire? get/any $reason [
+        reason: as text! unquasi ^reason  ; antiform tag! ~<unreachable>~
     ]
     all [error? reason, not blame] then [
         return raise* reason  ; fast shortcut
