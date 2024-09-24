@@ -44,7 +44,7 @@
                 |
                 "</" thru ">" stop
                 |
-                keep to-word/ [between "<" ">"], opt keep rule
+                [keep /to-word between "<" ">"] opt keep rule
                 |
                 keep across to "<"  ; may be end tag or new start tag
             ]

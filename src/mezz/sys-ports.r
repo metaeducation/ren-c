@@ -143,7 +143,7 @@ make-port*: func [
         ; Required scheme name, but "//" is optional (without it is a "URN")
         ; https://en.wikipedia.org/wiki/Uniform_Resource_Name
         ;
-        emit scheme: [as/ (word!) across some scheme-char] ":" opt "//"
+        [emit scheme: /as (word!) across some scheme-char] ":" opt "//"
 
         ; optional user [:pass] @
         [
@@ -169,7 +169,7 @@ make-port*: func [
             emit host: [
                 ; IP-address style, make a TUPLE!
                 ;
-                to/ (tuple!) across [
+                /to (tuple!) across [
                     opt some [some digit "."], some digit
                     not ahead host-char  ; don't match "1.2.3.4a" as IP address
                 ]
@@ -182,14 +182,14 @@ make-port*: func [
                 ;
                 ahead [":" | <end>] (null)
             ]
-            emit port-id: opt [":", to/ (integer!) across digits]
+            emit port-id: opt [":", /to (integer!) across digits]
         ]
 
         emit path: opt [across some path-char]  ; optional path
 
         emit tag: opt ["#", across to <end>]  ; optional bookmark ("tag")
 
-        emit ref: as/ (url!) <input>  ; alway save original URL for reference
+        emit ref: /as (url!) <input>  ; alway save original URL for reference
     ]
 
     ; !!! Historically DECODE-URL returned a BLOCK!, but an object seems

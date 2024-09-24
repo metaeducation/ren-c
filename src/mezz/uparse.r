@@ -2966,7 +2966,7 @@ comment [combinatorize: func [
 ;    into the generic combinator for the WORD! datatype.
 ;
 ; 5. UPARSE introduced the idea of "action combinators", where if a PATH!
-;    ends in a slash, it is considered an invocation of a normal function with
+;    starts with slash, it's considered an invocation of a normal function with
 ;    the results of combinators as its arguments.  This has to be hacked in
 ;    variadically here, because the number of arguments needed depends on
 ;    the number of arguments taken by the action.  For the moment, be weird
@@ -3034,12 +3034,12 @@ parsify: func [
             ; fall through to datatype-based WORD! combinator handling
         ]
 
-        (path? r) and (blank? last r) [  ; "action combinator" [5]
+        (path? r) and (blank? first r) [  ; "action combinator" [5]
             if not frame? let gotten: unrun get/any r [
-                fail "In UPARSE PATH ending in / must be action or frame"
+                fail "In UPARSE PATH starting in / must be action or frame"
             ]
             if not comb: select state.combinators frame! [
-                fail "No frame! combinator, can't use PATH ending in /"
+                fail "No frame! combinator, can't use PATH starting with /"
             ]
 
             comb: unrun adapt (augment comb inside [] collect [

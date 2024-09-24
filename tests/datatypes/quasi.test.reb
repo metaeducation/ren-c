@@ -17,7 +17,7 @@
 (
     valid: ["~abc~" "~a|b~"]
     for-each 'str valid [
-        word: parse str [to-word/ between '~ '~]
+        word: parse str [/to-word between '~ '~]
         bad: load-value str
         assert [quasi? bad]
         assert [word = unquasi bad]

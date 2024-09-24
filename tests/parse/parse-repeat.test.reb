@@ -68,7 +68,7 @@
     (void? parse "a" ["a" repeat (0) "b"])
     (void' = parse "a" ["a" ^[repeat (0) "b"]])
 
-    ("a" = parse "a" ["a" elide-if-void/ repeat 0 "b"])
+    ("a" = parse "a" ["a" /elide-if-void repeat 0 "b"])
     (
         x: ~
         all [
@@ -77,8 +77,8 @@
         ]
     )
 
-    ("a" = parse "a" ["a" elide-if-void/ repeat 0 "b"])
-    ("a" = parse "a" ["a" elide-if-void/ [repeat 0 "b"]])
+    ("a" = parse "a" ["a" /elide-if-void repeat 0 "b"])
+    ("a" = parse "a" ["a" /elide-if-void [repeat 0 "b"]])
 ]
 
 [

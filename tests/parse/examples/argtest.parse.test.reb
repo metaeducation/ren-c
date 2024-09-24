@@ -27,7 +27,7 @@
             |
             port: subparse text! integer!
             |
-            root-dir: to-file/ text!
+            root-dir: /to-file text!
         ]]
         else [
             return null
