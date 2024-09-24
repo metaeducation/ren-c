@@ -12,8 +12,8 @@
 ; A naive implementation of this in Rebol2 might look like:
 ;
 ;     for-both-naive: func ['var blk1 blk2 body] [
-;         foreach :var blk1 body
-;         foreach :var blk2 body
+;         foreach (var) blk1 body
+;         foreach (var) blk2 body
 ;     ]
 ;
 ; But critically, that will not honor BREAK correctly:
@@ -44,10 +44,10 @@
 
 [
     (
-        for-both: lambda ['var blk1 blk2 body] [
+        for-both: lambda [var blk1 blk2 body] [
             unmeta/lite all [
-                meta/lite for-each (var) blk1 body
-                meta/lite for-each (var) blk2 body
+                meta/lite for-each var blk1 body
+                meta/lite for-each var blk2 body
             ]
         ]
 
@@ -59,7 +59,8 @@
     ; definition in effect).
     ;
     ; ^-- Note that this uses META/LITE and not META (a.k.a. `^`)  The reason
-    ; is that it wants to leave voids and nulls as-is:
+    ; is that it wants to leave voids and nulls as-is, to serve as the signal
+    ; for breaking or opting out of contributing to the final loop result:
     ;
     ;     >> meta void
     ;     == ~void~
@@ -73,14 +74,14 @@
     ; would write.  (Perhaps good enough for some Redbols, but not Ren-C!)
 
     ([1 2 3 4] = collect [
-        assert [40 = for-both x [1 2] [3 4] [keep x, x * 10]]
+        assert [40 = for-both 'x [1 2] [3 4] [keep x, x * 10]]
     ])
 
     ; Saves result from second loop output, due to META/LITE vanishing on the
     ; void produced by contract when FOR-EACH does not run.
 
     ([1 2] = collect [
-        assert [20 = for-both x [1 2] [] [keep x, x * 10]]
+        assert [20 = for-both 'x [1 2] [] [keep x, x * 10]]
     ])
 
     ; The all-important support of BREAK... META/LITE of NULL remains NULL, and
@@ -88,7 +89,7 @@
 
     ([1] = collect [
         assert [
-            null = for-both x [1 2] [3 4] [
+            null = for-both 'x [1 2] [3 4] [
                 if x = 2 [break]  ; break the first loop
                 keep x
             ]
@@ -97,7 +98,7 @@
 
     ([1 2 3] = collect [
         assert [
-            null = for-both x [1 2] [3 4] [
+            null = for-both 'x [1 2] [3 4] [
                 if x = 4 [break]  ; break the second loop
                 keep x
             ]
@@ -110,7 +111,7 @@
 
     ([1 2 3 4] = collect [
         assert [
-            '~[~null~]~ = result': ^ for-both x [1 2] [3 4] [
+            '~[~null~]~ = result': ^ for-both 'x [1 2] [3 4] [
                 keep x
                 null
             ]
@@ -120,7 +121,7 @@
 
     ([1 2 3 4] = collect [
         assert [
-            null = result: for-both x [1 2] [3 4] [
+            null = result: for-both 'x [1 2] [3 4] [
                 keep x
                 null
             ]
@@ -136,11 +137,12 @@
     ; for UNMETA/LITE to be willing to take VOID and return it as-is instead
     ; of raising an error, and that plays to our advantage here.
 
-    (void? for-both x [] [] [fail "Body Never Runs"])
+    (void? for-both 'x [] [] [fail "Body Never Runs"])
+
     (
         <something> = eval [
             <something>
-            elide-if-void for-both x [] [] [fail "Body Never Runs"]
+            elide-if-void for-both 'x [] [] [fail "Body Never Runs"]
         ]
     )
 
@@ -149,7 +151,7 @@
 
     ([1 2 3 4] = collect [
         assert [
-            '~<bad>~ = ^ for-both x [1 2] [3 4] [
+            '~<bad>~ = ^ for-both 'x [1 2] [3 4] [
                 keep x
                 ~<bad>~  ; makes antiform
             ]
@@ -159,13 +161,14 @@
     ; FOR-BOTH provides a proof of why this is the case:
     ;
     ;     >> for-each 'x [1 2] [if x = 2 [continue]]
-    ;     == ~[~]~  ; anti
+    ;     == ~[~void~]~  ; anti
     ;
     ; Plain void is reserved for "loop didn't run", and we do not want
     ; a loop that consists of just CONTINUE to lie and say the body of the
     ; loop didn't run.  It forces our hand to put a void in a pack--to still
     ; convey a void intent, but not truly be a void for ELSE/THEN purposes.
 
-    ('~[~void~]~ = ^ for-both x [1 2] [3 4] [if x > 2 [continue] x * 10])
-    ('~[~void~]~ = ^ for-both x [1 2] [3 4] [comment "Maintain invariant!"])
+    ('~[~void~]~ = ^ for-both 'x [1 2] [3 4] [if x > 2 [continue] x * 10])
+
+    ('~[~void~]~ = ^ for-both 'x [1 2] [3 4] [comment "Maintain invariant!"])
 ]

@@ -221,14 +221,19 @@ DECLARE_NATIVE(quote)
 //
 //  "antiforms -> quasiforms, adds a quote to rest (behavior of ^^)"
 //
-//      return: "NULL or VOID ok if /LITE, plain ERROR! ok if /EXCEPT"
-//          [quoted? quasi? ~null~ ~void~ error!]
+//      return: "Keywords and plain forms if /LITE, plain ERROR! ok if /EXCEPT"
+//          [quoted? quasi? keyword? element? error!]
 //      ^atom [any-atom?]
-//      /lite "Pass thru ~null~ and ~void~ antiforms as-is"
+//      /lite "Make plain forms vs. quasi, and pass thru keywords like ~null~"
 //      /except "If argument is antiform ERROR!, give back as plain ERROR!"
 //  ]
 //
 DECLARE_NATIVE(meta)
+//
+// 1. Most code has to go through Coerce_To_Antiform()...even code that has
+//    a quasiform in its hand (as not all quasiforms can be antiforms).  But
+//    ^META parameters are guaranteed to be things that were validated as
+//    antiforms.
 {
     INCLUDE_PARAMS_OF_META;
 
@@ -242,11 +247,16 @@ DECLARE_NATIVE(meta)
         return COPY(meta);  // no longer meta, just a plain ERROR!
     }
 
-    if (REF(lite) and Is_Quasi_Word(meta)) {
-        if (Cell_Word_Id(meta) == SYM_NULL)
-            return nullptr;
-        if (Cell_Word_Id(meta) == SYM_VOID)
-            return VOID;
+    if (
+        REF(lite)  // META/LITE handles quasiforms specially
+        and Is_Quasiform(meta)
+    ){
+        if (HEART_BYTE(meta) == REB_WORD) {  // keywords pass thru
+            QUOTE_BYTE(meta) = ANTIFORM_0_COERCE_ONLY;  // ^META validated [1]
+            return COPY(meta);
+        }
+        QUOTE_BYTE(meta) = NOQUOTE_1;  // META/LITE gives plain for the rest.
+        return COPY(meta);
     }
 
     return COPY(meta);
@@ -396,7 +406,8 @@ DECLARE_NATIVE(anti)
 //  "Variant of UNQUOTE that also accepts quasiforms to make antiforms"
 //
 //      return: [any-atom?]
-//      value [~null~ ~void~ quoted? quasi?]
+//      value "Can be plain or antiform like ~null~ or ~void~ if /LITE"
+//          [keyword? element? quoted? quasi?]
 //      /lite "Pass thru ~null~ and ~void~ antiforms as-is"
 //  ]
 //
@@ -406,16 +417,23 @@ DECLARE_NATIVE(unmeta)
 
     Value* meta = ARG(value);
 
-    if (Is_Antiform(meta)) {
-        if (not REF(lite))
-            fail ("UNMETA only takes ~null~ and ~void~ antiforms if /LITE");
-        if (Cell_Word_Id(meta) == SYM_NULL)
-            return nullptr;
-        assert(Cell_Word_Id(meta) == SYM_VOID);
-        return VOID;
+    if (QUOTE_BYTE(meta) == ANTIFORM_0) {
+        if (not REF(lite) or not Is_Keyword(meta))
+            fail ("UNMETA only keyword antiforms (e.g. ~null~) if /LITE");
+        return COPY(meta);
     }
 
-    return UNMETA(cast(Element*, meta));
+    if (QUOTE_BYTE(meta) == NOQUOTE_1) {
+        if (not REF(lite))
+            fail ("UNMETA only takes non-quoted non-quasi things if /LITE");
+        Copy_Cell(OUT, meta);
+        return Coerce_To_Antiform(OUT);
+    }
+
+    if (QUOTE_BYTE(meta) == QUASIFORM_2 and REF(lite))
+        fail ("UNMETA/LITE does not accept quasiforms (plain forms are meta)");
+
+    return UNMETA(cast(Element*, meta));  // quoted or quasi
 }
 
 

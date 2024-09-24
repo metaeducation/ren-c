@@ -227,15 +227,34 @@
     ((the '''a) = reify the '''a)
 ]
 
-; UNMETA/LITE works on void and null, but not other "antiform" forms as a trick
+; META/LITE does not produce quasiforms
+; It passes through keywords, and makes antiforms their plain forms
+; Other types receive a quoting level
+[
+    (null = meta/lite null)
+    (void = meta/lite void)
+    (okay = meta/lite okay)
+
+    (['1 '2] = meta/lite pack [1 2])
+
+    (the '[1 2] = meta/lite [1 2])
+    (the ''a = meta/lite first ['a])
+]
+
+; UNMETA/LITE works on keywords, but not other "antiform" forms as a trick
+; meta forms are plain forms, not quasiforms
 [
     (void? unmeta/lite void)
     (null? unmeta/lite null)
+    (okay? unmeta/lite okay)
 
-    ~expect-arg~ !! (
-        unmeta/lite okay
-    )
     ~expect-arg~ !! (
         unmeta/lite ~(a b c)~
     )
+
+    ~???~ !! (
+        unmeta/lite '~(a b c)~
+    )
+    (splice? unmeta/lite the (a b c))
+    (pack? unmeta/lite ['1 '2])
 ]

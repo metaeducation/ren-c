@@ -162,7 +162,6 @@ help-action: func [
     let print-args: [list /indent-words] -> [
         for-each 'key list [
             let param: meta/lite select frame to-word noquote key
-            if param [param: my noquasi]
 
             print [_ _ _ _ @key @(maybe param.spec)]
             if param.text [
@@ -176,7 +175,6 @@ help-action: func [
     ; The concepts are still being fleshed out.
     ;
     let return-param: meta/lite select frame 'return
-    if return-param [return-param: my noquasi]
 
     print newline
     print [
