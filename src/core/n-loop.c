@@ -1533,7 +1533,8 @@ DECLARE_NATIVE(remove_each)
             } while (start != index);
         }
 
-        Isotopify_If_Nulled(OUT);  // reserve NULL for BREAK
+        if (Is_Nulled(OUT))
+            Init_Heavy_Null(OUT);  // reserve pure NULL for BREAK
     }
 
     assert(start == len);  // normal completion (otherwise a `goto` happened)
