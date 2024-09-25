@@ -1655,7 +1655,7 @@ DECLARE_NATIVE(call_internal_p)
     }
     else if (Is_Binary(ARG(out))) {
         if (output_len > 0) {
-            Append_Unencoded_Len(Cell_Blob(ARG(out)), os_output, output_len);
+            Append_Unencoded_Len(Cell_Binary(ARG(out)), os_output, output_len);
             free(os_output);
         }
     }
@@ -1667,7 +1667,7 @@ DECLARE_NATIVE(call_internal_p)
         }
     } else if (Is_Binary(ARG(err))) {
         if (err_len > 0) {
-            Append_Unencoded_Len(Cell_Blob(ARG(err)), os_err, err_len);
+            Append_Unencoded_Len(Cell_Binary(ARG(err)), os_err, err_len);
             free(os_err);
         }
     }

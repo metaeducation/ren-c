@@ -536,7 +536,7 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
               case REB_BINARY:
                 Init_Integer(
                     var,
-                    Blob_Head(cast(Blob*, les->data_ser))[les->data_idx]
+                    Binary_Head(cast(Binary*, les->data_ser))[les->data_idx]
                 );
                 if (++les->data_idx == les->data_len)
                     more_data = false;
@@ -1186,7 +1186,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
         assert(res->start <= orig_len);
         Append_Unencoded_Len(
             res->mo->series,
-            cs_cast(Blob_At(cast(Blob*, res->series), res->start)),
+            cs_cast(Binary_At(cast(Binary*, res->series), res->start)),
             orig_len - res->start
         );
 
@@ -1194,7 +1194,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
         // into it.  Revisit if this inhibits cool UTF-8 based tricks the
         // mold buffer might do otherwise.
         //
-        Flex* popped = Pop_Molded_Blob(res->mo);
+        Flex* popped = Pop_Molded_Binary(res->mo);
 
         assert(Flex_Len(popped) <= VAL_LEN_HEAD(res->data));
         count = VAL_LEN_HEAD(res->data) - Flex_Len(popped);
@@ -1342,7 +1342,7 @@ static Bounce Remove_Each_Core(struct Remove_Each_State *res)
                     Append_Unencoded_Len(
                         res->mo->series,
                         cs_cast(
-                            Blob_At(cast(Blob*, res->series), res->start)
+                            Binary_At(cast(Binary*, res->series), res->start)
                         ),
                         1
                     );
@@ -1436,7 +1436,7 @@ DECLARE_NATIVE(remove_each)
         // array for those items we wish to remove later.
         //
         // !!! This may not be better than pushing kept values to the data
-        // stack and then creating a precisely-sized output blob to swap as
+        // stack and then creating a precisely-sized output binary to swap as
         // the underlying memory for the array.  (Imagine a large array from
         // which there are many removals, and the ensuing wasted space being
         // left behind).  But worth testing the technique of marking in case

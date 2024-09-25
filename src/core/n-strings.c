@@ -219,10 +219,10 @@ DECLARE_NATIVE(checksum)
             if (digests[i].sym != sym)
                 continue;
 
-            Blob* digest = Make_Blob(digests[i].len + 1);
+            Binary* digest = Make_Binary(digests[i].len + 1);
 
             if (not REF(key))
-                digests[i].digest(data, len, Blob_Head(digest));
+                digests[i].digest(data, len, Binary_Head(digest));
             else {
                 Value* key = ARG(key_value);
 
@@ -233,18 +233,18 @@ DECLARE_NATIVE(checksum)
                 Byte *keycp;
                 Size keylen;
                 if (Is_Binary(key)) {
-                    keycp = Cell_Binary_At(key);
+                    keycp = Cell_Blob_At(key);
                     keylen = Cell_Series_Len_At(key);
                 }
                 else {
                     assert(Is_Text(key));
 
                     Size offset;
-                    Blob* temp = Temp_UTF8_At_Managed(
+                    Binary* temp = Temp_UTF8_At_Managed(
                         &offset, &keylen, key, Cell_Series_Len_At(key)
                     );
                     Push_GC_Guard(temp);
-                    keycp = Blob_At(temp, offset);
+                    keycp = Binary_At(temp, offset);
                 }
 
                 if (keylen > blocklen) {
@@ -275,13 +275,13 @@ DECLARE_NATIVE(checksum)
                 digests[i].init(ctx);
                 digests[i].update(ctx,opad,blocklen);
                 digests[i].update(ctx,tmpdigest,digests[i].len);
-                digests[i].final(Blob_Head(digest),ctx);
+                digests[i].final(Binary_Head(digest),ctx);
 
                 FREE_N(char, digests[i].ctxsize(), ctx);
             }
 
-            Term_Blob_Len(digest, digests[i].len);
-            return Init_Binary(OUT, digest);
+            Term_Binary_Len(digest, digests[i].len);
+            return Init_Blob(OUT, digest);
         }
 
         fail (Error_Invalid(ARG(word)));
@@ -334,13 +334,13 @@ DECLARE_NATIVE(deflate)
     Size size;
     Byte *bp;
     if (Is_Binary(data)) {
-        bp = Cell_Binary_At(data);
+        bp = Cell_Blob_At(data);
         size = len; // width = sizeof(Byte), so limit = len
     }
     else {
         Size offset;
-        Blob* temp = Temp_UTF8_At_Managed(&offset, &size, data, len);
-        bp = Blob_At(temp, offset);
+        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, data, len);
+        bp = Binary_At(temp, offset);
     }
 
     Symbol* envelope;
@@ -427,7 +427,7 @@ DECLARE_NATIVE(inflate)
     size_t decompressed_size;
     void *decompressed = Decompress_Alloc_Core(
         &decompressed_size,
-        Cell_Binary_At(data),
+        Cell_Blob_At(data),
         len,
         max,
         envelope
@@ -458,7 +458,7 @@ DECLARE_NATIVE(debase)
 
     Size offset;
     Size size;
-    Blob* temp = Temp_UTF8_At_Managed(
+    Binary* temp = Temp_UTF8_At_Managed(
         &offset, &size, ARG(value), Cell_Series_Len_At(ARG(value))
     );
 
@@ -468,7 +468,7 @@ DECLARE_NATIVE(debase)
     else
         base = 64;
 
-    if (!Decode_Binary(OUT, Blob_At(temp, offset), size, base, 0))
+    if (!Decode_Binary(OUT, Binary_At(temp, offset), size, base, 0))
         fail (Error_Invalid_Data_Raw(ARG(value)));
 
     return OUT;
@@ -504,17 +504,17 @@ DECLARE_NATIVE(enbase)
     Size size;
     Byte *bp;
     if (Is_Binary(v)) {
-        bp = Cell_Binary_At(v);
+        bp = Cell_Blob_At(v);
         size = Cell_Series_Len_At(v);
     }
     else { // Convert the string to UTF-8
         assert(Any_String(v));
         Size offset;
-        Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
-        bp = Blob_At(temp, offset);
+        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
+        bp = Binary_At(temp, offset);
     }
 
-    Blob* enbased;
+    Binary* enbased;
     const bool brk = false;
     switch (base) {
     case 64:
@@ -539,7 +539,7 @@ DECLARE_NATIVE(enbase)
 
     Init_Text(
         OUT,
-        Make_Sized_String_UTF8(cs_cast(Blob_Head(enbased)), Blob_Len(enbased))
+        Make_Sized_String_UTF8(cs_cast(Binary_Head(enbased)), Binary_Len(enbased))
     );
     Free_Unmanaged_Flex(enbased);
 
@@ -701,7 +701,7 @@ DECLARE_NATIVE(enhex)
 
     *dp = '\0';
 
-    Set_Flex_Len(mo->series, dp - Blob_Head(mo->series));
+    Set_Flex_Len(mo->series, dp - Binary_Head(mo->series));
 
     return Init_Any_Series(
         OUT,
@@ -829,7 +829,7 @@ DECLARE_NATIVE(dehex)
 
     *dp = '\0';
 
-    Set_Flex_Len(mo->series, dp - Blob_Head(mo->series));
+    Set_Flex_Len(mo->series, dp - Binary_Head(mo->series));
 
     return Init_Any_Series(
         OUT,
@@ -1035,7 +1035,7 @@ DECLARE_NATIVE(entab)
         }
     }
 
-    Term_Blob_Len(mo->series, dp - Blob_Head(mo->series));
+    Term_Binary_Len(mo->series, dp - Binary_Head(mo->series));
 
     return Init_Any_Series(OUT, VAL_TYPE(val), Pop_Molded_String(mo));
 }
@@ -1114,7 +1114,7 @@ DECLARE_NATIVE(detab)
         dp += Encode_UTF8_Char(dp, c);
     }
 
-    Term_Blob_Len(mo->series, dp - Blob_Head(mo->series));
+    Term_Binary_Len(mo->series, dp - Binary_Head(mo->series));
 
     return Init_Any_Series(OUT, VAL_TYPE(val), Pop_Molded_String(mo));
 }
@@ -1242,7 +1242,7 @@ DECLARE_NATIVE(find_script)
 
     Value* arg = ARG(script);
 
-    REBINT offset = Scan_Header(Cell_Binary_At(arg), Cell_Series_Len_At(arg));
+    REBINT offset = Scan_Header(Cell_Blob_At(arg), Cell_Series_Len_At(arg));
     if (offset == -1)
         return nullptr;
 
@@ -1266,11 +1266,11 @@ DECLARE_NATIVE(invalid_utf8_q)
 
     Value* arg = ARG(data);
 
-    Byte *bp = Check_UTF8(Cell_Binary_At(arg), Cell_Series_Len_At(arg));
+    Byte *bp = Check_UTF8(Cell_Blob_At(arg), Cell_Series_Len_At(arg));
     if (not bp)
         return nullptr;
 
     Copy_Cell(OUT, arg);
-    VAL_INDEX(OUT) = bp - Cell_Binary_Head(arg);
+    VAL_INDEX(OUT) = bp - Cell_Blob_Head(arg);
     return OUT;
 }

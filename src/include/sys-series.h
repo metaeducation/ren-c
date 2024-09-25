@@ -540,11 +540,11 @@ INLINE Byte *VAL_RAW_DATA_AT(const Cell* v) {
 // implementation, but are not considered to be an ANY-SERIES! type.
 //
 
-INLINE Blob* Cell_Bitset(const Cell* cell) {
+INLINE Binary* Cell_Bitset(const Cell* cell) {
     assert(Is_Bitset(cell));
     Flex* s = Cell_Flex(cell);
     assert(Flex_Wide(s) == 1);
-    return cast(Blob*, s);
+    return cast(Binary*, s);
 }
 
 #define Init_Bitset(v,s) \

@@ -32,7 +32,7 @@
 
 
 //
-//  Make_Blob: C
+//  Make_Binary: C
 //
 // Make a byte series of length 0 with the given capacity.  The length will
 // be increased by one in order to allow for a null terminator.  Binaries are
@@ -40,10 +40,10 @@
 // as UTF-8 data later, e.g. `as word! binary`, since it would be too late
 // to give them that capacity after-the-fact to enable this.
 //
-Blob* Make_Blob(REBLEN capacity)
+Binary* Make_Binary(REBLEN capacity)
 {
-    Blob* bin = cast(Blob*, Make_Flex(capacity + 1, sizeof(Byte)));
-    Term_Blob(bin);
+    Binary* bin = cast(Binary*, Make_Flex(capacity + 1, sizeof(Byte)));
+    Term_Binary(bin);
     return bin;
 }
 
@@ -67,10 +67,10 @@ String* Make_String(REBLEN capacity)
 // Create a string series from the given bytes.
 // Source is always latin-1 valid. Result is always 8bit.
 //
-Blob* Copy_Bytes(const Byte *src, Size size)
+Binary* Copy_Bytes(const Byte *src, Size size)
 {
-    Blob* dst = Make_Blob(size);
-    memcpy(Blob_Head(dst), src, size);
+    Binary* dst = Make_Binary(size);
+    memcpy(Binary_Head(dst), src, size);
     Term_Non_Array_Flex_Len(dst, size);
 
     return dst;
@@ -118,11 +118,11 @@ Flex* Copy_String_At_Len(const Cell* src, REBINT limit)
 // Append unencoded data to a byte string, using plain memcpy().  If dst is
 // nullptr, a new byte-sized series will be created and returned.
 //
-Blob* Append_Unencoded_Len(Blob* dst, const char *src, REBLEN len)
+Binary* Append_Unencoded_Len(Binary* dst, const char *src, REBLEN len)
 {
     REBLEN tail;
     if (dst == nullptr) {
-        dst = Make_Blob(len);
+        dst = Make_Binary(len);
         tail = 0;
     }
     else {
@@ -130,7 +130,7 @@ Blob* Append_Unencoded_Len(Blob* dst, const char *src, REBLEN len)
         Expand_Flex_Tail(dst, len);
     }
 
-    memcpy(Blob_At(dst, tail), src, len);
+    memcpy(Binary_At(dst, tail), src, len);
     Term_Non_Array_Flex(dst);
     return dst;
 }
@@ -144,7 +144,7 @@ Blob* Append_Unencoded_Len(Blob* dst, const char *src, REBLEN len)
 //
 // !!! Should be in a header file so it can be inlined.
 //
-Blob* Append_Unencoded(Blob* dst, const char *src)
+Binary* Append_Unencoded(Binary* dst, const char *src)
 {
     return Append_Unencoded_Len(dst, src, strlen(src));
 }
@@ -175,14 +175,14 @@ String* Append_Codepoint(String* dst, REBUNI codepoint)
 //
 // Encode a codepoint onto a UTF-8 binary series.
 //
-Blob* Append_Utf8_Codepoint(Blob* dst, uint32_t codepoint)
+Binary* Append_Utf8_Codepoint(Binary* dst, uint32_t codepoint)
 {
     assert(Flex_Wide(dst) == sizeof(Byte));
 
     REBLEN tail = Flex_Len(dst);
     Expand_Flex_Tail(dst, 4); // !!! Conservative, assume long codepoint
-    tail += Encode_UTF8_Char(Blob_At(dst, tail), codepoint); // 1 to 4 bytes
-    Term_Blob_Len(dst, tail);
+    tail += Encode_UTF8_Char(Binary_At(dst, tail), codepoint); // 1 to 4 bytes
+    Term_Binary_Len(dst, tail);
     return dst;
 }
 
@@ -212,7 +212,7 @@ String* Make_Ser_Codepoint(REBLEN codepoint)
 // !!! Currently does the same thing as Append_Unencoded_Len.  Should it
 // check the bytes to make sure they're actually UTF8?
 //
-void Append_Utf8_Utf8(Blob* dst, const char *utf8, size_t size)
+void Append_Utf8_Utf8(Binary* dst, const char *utf8, size_t size)
 {
     Append_Unencoded_Len(dst, utf8, size);
 }
@@ -225,16 +225,16 @@ void Append_Utf8_Utf8(Blob* dst, const char *utf8, size_t size)
 //
 // !!! Used only with mold series at the moment.
 //
-void Append_Utf8_String(Blob* dst, const Cell* src, REBLEN length_limit)
+void Append_Utf8_String(Binary* dst, const Cell* src, REBLEN length_limit)
 {
     Size offset;
     Size size;
-    Blob* temp = Temp_UTF8_At_Managed(&offset, &size, src, length_limit);
+    Binary* temp = Temp_UTF8_At_Managed(&offset, &size, src, length_limit);
 
-    REBLEN tail = Blob_Len(dst);
+    REBLEN tail = Binary_Len(dst);
     Expand_Flex(dst, tail, size);  // tail changed too
 
-    memcpy(Blob_At(dst, tail), Blob_At(temp, offset), size);
+    memcpy(Binary_At(dst, tail), Binary_At(temp, offset), size);
 }
 
 
@@ -243,7 +243,7 @@ void Append_Utf8_String(Blob* dst, const Cell* src, REBLEN length_limit)
 //
 // Append an integer string.
 //
-void Append_Int(Blob* dst, REBINT num)
+void Append_Int(Binary* dst, REBINT num)
 {
     Byte buf[32];
 
@@ -257,7 +257,7 @@ void Append_Int(Blob* dst, REBINT num)
 //
 // Append an integer string.
 //
-void Append_Int_Pad(Blob* dst, REBINT num, REBINT digs)
+void Append_Int_Pad(Binary* dst, REBINT num, REBINT digs)
 {
     Byte buf[32];
     if (digs > 0)
@@ -360,9 +360,9 @@ String* Append_UTF8_May_Fail(
 //
 // WARNING: returns BYTE_BUF, not a copy!
 //
-Blob* Join_Binary(const Value* blk, REBINT limit)
+Binary* Join_Binary(const Value* blk, REBINT limit)
 {
-    Blob* series = BYTE_BUF;
+    Binary* series = BYTE_BUF;
 
     REBLEN tail = 0;
 
@@ -378,13 +378,13 @@ Blob* Join_Binary(const Value* blk, REBINT limit)
             if (VAL_INT64(val) > 255 || VAL_INT64(val) < 0)
                 fail (Error_Out_Of_Range(KNOWN(val)));
             Expand_Flex_Tail(series, 1);
-            *Blob_At(series, tail) = (Byte)VAL_INT32(val);
+            *Binary_At(series, tail) = (Byte)VAL_INT32(val);
             break;
 
         case REB_BINARY: {
             REBLEN len = Cell_Series_Len_At(val);
             Expand_Flex_Tail(series, len);
-            memcpy(Blob_At(series, tail), Cell_Binary_At(val), len);
+            memcpy(Binary_At(series, tail), Cell_Blob_At(val), len);
             break; }
 
         case REB_TEXT:
@@ -399,7 +399,7 @@ Blob* Join_Binary(const Value* blk, REBINT limit)
             Set_Flex_Len(
                 series,
                 tail + Encode_UTF8(
-                    Blob_At(series, tail),
+                    Binary_At(series, tail),
                     val_size,
                     Cell_String_At(val),
                     &val_len
@@ -410,7 +410,7 @@ Blob* Join_Binary(const Value* blk, REBINT limit)
         case REB_CHAR: {
             Expand_Flex_Tail(series, 6);
             REBLEN len =
-                Encode_UTF8_Char(Blob_At(series, tail), VAL_CHAR(val));
+                Encode_UTF8_Char(Binary_At(series, tail), VAL_CHAR(val));
             Set_Flex_Len(series, tail + len);
             break; }
 
@@ -421,7 +421,7 @@ Blob* Join_Binary(const Value* blk, REBINT limit)
         tail = Flex_Len(series);
     }
 
-    *Blob_At(series, tail) = 0;
+    *Binary_At(series, tail) = 0;
 
     return series;  // SHARED FORM SERIES!
 }

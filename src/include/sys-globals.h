@@ -175,8 +175,8 @@ TVAR Flex* TG_Mold_Stack; // Used to prevent infinite loop in cyclical molds
 
 TVAR Array* TG_Buf_Collect; // for collecting object keys or words
 TVAR String* TG_Buf_Ucs2; // UCS2 reused buffer
-TVAR Blob* TG_Byte_Buf; // temporary byte buffer used mainly by raw print
-TVAR Blob* TG_Mold_Buf; // temporary UTF8 buffer - used mainly by mold
+TVAR Binary* TG_Byte_Buf; // temporary byte buffer used mainly by raw print
+TVAR Binary* TG_Mold_Buf; // temporary UTF8 buffer - used mainly by mold
 
 TVAR Flex* GC_Manuals;    // Manually memory managed (not by GC)
 

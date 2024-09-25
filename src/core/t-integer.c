@@ -160,7 +160,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         // attempts to "future-proof" for other integer sizes and as an
         // interface could support BigNums in the future.
 
-        Byte *bp = Cell_Binary_At(value);
+        Byte *bp = Cell_Blob_At(value);
         REBLEN n = Cell_Series_Len_At(value);
         bool negative;
         REBINT fill;
@@ -641,10 +641,10 @@ DECLARE_NATIVE(enbin)
     // with BigNum conversions as well).  Improvements welcome, but trying
     // to be correct for starters...
 
-    Blob* bin = Make_Blob(num_bytes);
+    Binary* bin = Make_Binary(num_bytes);
 
     REBINT delta = little ? 1 : -1;
-    Byte* bp = Blob_Head(bin);
+    Byte* bp = Binary_Head(bin);
     if (not little)
         bp += num_bytes - 1;  // go backwards for big endian
 
@@ -691,8 +691,8 @@ DECLARE_NATIVE(enbin)
             "]"
         );
 
-    Term_Blob_Len(bin, num_bytes);
-    return Init_Binary(OUT, bin);
+    Term_Binary_Len(bin, num_bytes);
+    return Init_Blob(OUT, bin);
 }
 
 
@@ -760,7 +760,7 @@ DECLARE_NATIVE(debin)
     // to be correct for starters...
 
     REBINT delta = little ? -1 : 1;
-    Byte* bp = Cell_Binary_At(ARG(binary));
+    Byte* bp = Cell_Blob_At(ARG(binary));
     if (little)
         bp += num_bytes - 1;  // go backwards
 

@@ -104,7 +104,7 @@ static void swap_chars(Value* val1, Value* val2)
 
 static void reverse_binary(Value* v, REBLEN len)
 {
-    Byte *bp = Cell_Binary_At(v);
+    Byte *bp = Cell_Blob_At(v);
 
     REBLEN n = 0;
     REBLEN m = len - 1;
@@ -196,9 +196,9 @@ static REBLEN find_string(
             && !(flags & ~(AM_FIND_CASE|AM_FIND_MATCH))
         ) {
             return Find_Byte_Str(
-                cast(Blob*, series),
+                cast(Binary*, series),
                 start,
-                Cell_Binary_At(target),
+                Cell_Blob_At(target),
                 target_len,
                 not (flags & AM_FIND_CASE),
                 did (flags & AM_FIND_MATCH)
@@ -221,9 +221,9 @@ static REBLEN find_string(
     else if (Is_Binary(target)) {
         const bool uncase = false;
         return Find_Byte_Str(
-            cast(Blob*, series),
+            cast(Binary*, series),
             start,
-            Cell_Binary_At(target),
+            Cell_Blob_At(target),
             target_len,
             uncase, // "don't treat case insensitively"
             did (flags & AM_FIND_MATCH)
@@ -274,7 +274,7 @@ static Flex* MAKE_TO_String_Common(const Value* arg)
     // MAKE/TO <type> <binary!>
     if (Is_Binary(arg)) {
         flex = Make_Sized_String_UTF8(
-            cs_cast(Cell_Binary_At(arg)), Cell_Series_Len_At(arg)
+            cs_cast(Cell_Blob_At(arg)), Cell_Series_Len_At(arg)
         );
     }
     // MAKE/TO <type> <any-string>
@@ -296,11 +296,11 @@ static Flex* MAKE_TO_String_Common(const Value* arg)
 }
 
 
-static Blob* Make_Blob_BE64(const Value* arg)
+static Binary* Make_Binary_BE64(const Value* arg)
 {
-    Blob* flex = Make_Blob(8);
+    Binary* flex = Make_Binary(8);
 
-    Byte *bp = Blob_Head(flex);
+    Byte *bp = Binary_Head(flex);
 
     REBI64 i;
     REBDEC d;
@@ -328,26 +328,26 @@ static Blob* Make_Blob_BE64(const Value* arg)
     #error "Unsupported CPU endian"
 #endif
 
-    Term_Blob_Len(flex, 8);
+    Term_Binary_Len(flex, 8);
     return flex;
 }
 
 
-static Blob* make_binary(const Value* arg, bool make)
+static Binary* make_binary(const Value* arg, bool make)
 {
-    Blob* flex;
+    Binary* flex;
 
     // MAKE BINARY! 123
     switch (VAL_TYPE(arg)) {
     case REB_INTEGER:
     case REB_DECIMAL:
-        if (make) flex = Make_Blob(Int32s(arg, 0));
-        else flex = Make_Blob_BE64(arg);
+        if (make) flex = Make_Binary(Int32s(arg, 0));
+        else flex = Make_Binary_BE64(arg);
         break;
 
     // MAKE/TO BINARY! BINARY!
     case REB_BINARY:
-        flex = Copy_Bytes(Cell_Binary_At(arg), Cell_Series_Len_At(arg));
+        flex = Copy_Bytes(Cell_Blob_At(arg), Cell_Series_Len_At(arg));
         break;
 
     // MAKE/TO BINARY! <any-string>
@@ -363,7 +363,7 @@ static Blob* make_binary(const Value* arg, bool make)
     case REB_BLOCK:
         // Join_Binary returns a shared buffer, so produce a copy:
         flex = cast(
-            Blob*,
+            Binary*,
             Copy_Non_Array_Flex_Core(Join_Binary(arg, -1), FLEX_FLAGS_NONE)
         );
         break;
@@ -375,18 +375,18 @@ static Blob* make_binary(const Value* arg, bool make)
 
     // MAKE/TO BINARY! <char!>
     case REB_CHAR:
-        flex = Make_Blob(6);
-        Term_Non_Array_Flex_Len(flex, Encode_UTF8_Char(Blob_Head(flex), VAL_CHAR(arg)));
+        flex = Make_Binary(6);
+        Term_Non_Array_Flex_Len(flex, Encode_UTF8_Char(Binary_Head(flex), VAL_CHAR(arg)));
         break;
 
     // MAKE/TO BINARY! <bitset!>
     case REB_BITSET:
-        flex = Copy_Bytes(Cell_Binary_Head(arg), VAL_LEN_HEAD(arg));
+        flex = Copy_Bytes(Cell_Blob_Head(arg), VAL_LEN_HEAD(arg));
         break;
 
     case REB_MONEY:
-        flex = Make_Blob(12);
-        deci_to_binary(Blob_Head(flex), VAL_MONEY_AMOUNT(arg));
+        flex = Make_Binary(12);
+        deci_to_binary(Binary_Head(flex), VAL_MONEY_AMOUNT(arg));
         Term_Non_Array_Flex_Len(flex, 12);
         break;
 
@@ -410,7 +410,7 @@ Bounce MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
         // is semantically nebulous (round up, down?) and generally bad.
         //
         if (kind == REB_BINARY)
-            return Init_Binary(out, Make_Blob(Int32s(def, 0)));
+            return Init_Blob(out, Make_Binary(Int32s(def, 0)));
         else
             return Init_Any_Series(out, kind, Make_String(Int32s(def, 0)));
     }
@@ -613,7 +613,7 @@ Bounce PD_String(
                 return nullptr;
 
             if (Is_Binary(pvs->out))
-                Init_Integer(pvs->out, *Blob_At(cast(Blob*, flex), n));
+                Init_Integer(pvs->out, *Binary_At(cast(Binary*, flex), n));
             else
                 Init_Char(pvs->out, GET_ANY_CHAR(flex, n));
 
@@ -689,7 +689,7 @@ Bounce PD_String(
         const bool crlf_to_lf = false;
         Append_UTF8_May_Fail(
             copy, // dst
-            cs_cast(Blob_At(mo->series, mo->start + skip)), // src
+            cs_cast(Binary_At(mo->series, mo->start + skip)), // src
             Flex_Len(mo->series) - mo->start - skip, // len
             crlf_to_lf
         );
@@ -743,7 +743,7 @@ Bounce PD_String(
         if (c > 0xff)
             fail (Error_Out_Of_Range(opt_setval));
 
-        Blob_Head(cast(Blob*, flex))[n] = cast(Byte, c);
+        Binary_Head(cast(Binary*, flex))[n] = cast(Byte, c);
         return BOUNCE_INVISIBLE;
     }
 
@@ -939,7 +939,7 @@ void Mold_Text_Series_At(
         *dp++ = '"';
         *dp = '\0';
 
-        Term_Blob_Len(mo->series, dp - Blob_Head(mo->series));
+        Term_Binary_Len(mo->series, dp - Binary_Head(mo->series));
         return;
     }
 
@@ -986,7 +986,7 @@ void Mold_Text_Series_At(
     *dp++ = '}';
     *dp = '\0';
 
-    Term_Blob_Len(mo->series, dp - Blob_Head(mo->series));
+    Term_Binary_Len(mo->series, dp - Binary_Head(mo->series));
 }
 
 
@@ -1015,7 +1015,7 @@ static void Mold_Url(REB_MOLD *mo, const Cell* v)
 
     *dp = '\0';
 
-    Set_Flex_Len(mo->series, dp - Blob_Head(mo->series)); // correction
+    Set_Flex_Len(mo->series, dp - Binary_Head(mo->series)); // correction
 }
 
 
@@ -1051,7 +1051,7 @@ static void Mold_File(REB_MOLD *mo, const Cell* v)
 
     *dp = '\0';
 
-    Set_Flex_Len(mo->series, dp - Blob_Head(mo->series)); // correction
+    Set_Flex_Len(mo->series, dp - Binary_Head(mo->series)); // correction
 }
 
 
@@ -1061,8 +1061,8 @@ static void Mold_Tag(REB_MOLD *mo, const Cell* v)
 
     Size offset;
     Size size;
-    Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
-    Append_Utf8_Utf8(mo->series, cs_cast(Blob_At(temp, offset)), size);
+    Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
+    Append_Utf8_Utf8(mo->series, cs_cast(Binary_At(temp, offset)), size);
 
     Append_Utf8_Codepoint(mo->series, '>');
 }
@@ -1080,32 +1080,32 @@ void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
 
     REBLEN len = Cell_Series_Len_At(v);
 
-    Blob* enbased;
+    Binary* enbased;
     switch (Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16)) {
     default:
     case 16: {
         const bool brk = (len > 32);
-        enbased = Encode_Base16(Cell_Binary_At(v), len, brk);
+        enbased = Encode_Base16(Cell_Blob_At(v), len, brk);
         break; }
 
     case 64: {
         const bool brk = (len > 64);
         Append_Unencoded(mo->series, "64");
-        enbased = Encode_Base64(Cell_Binary_At(v), len, brk);
+        enbased = Encode_Base64(Cell_Blob_At(v), len, brk);
         break; }
 
     case 2: {
         const bool brk = (len > 8);
         Append_Utf8_Codepoint(mo->series, '2');
-        enbased = Encode_Base2(Cell_Binary_At(v), len, brk);
+        enbased = Encode_Base2(Cell_Blob_At(v), len, brk);
         break; }
     }
 
     Append_Unencoded(mo->series, "#{");
     Append_Utf8_Utf8(
         mo->series,
-        cs_cast(Blob_Head(enbased)),
-        Blob_Len(enbased)
+        cs_cast(Binary_Head(enbased)),
+        Binary_Len(enbased)
     );
     Append_Unencoded(mo->series, "}");
 
@@ -1121,7 +1121,7 @@ void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
 //
 void MF_String(REB_MOLD *mo, const Cell* v, bool form)
 {
-    Blob* s = mo->series;
+    Binary* s = mo->series;
 
     assert(Any_String(v));
 
@@ -1140,9 +1140,9 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
     if (form and not Is_Tag(v)) {
         Size offset;
         Size size;
-        Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
+        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
 
-        Append_Utf8_Utf8(mo->series, cs_cast(Blob_At(temp, offset)), size);
+        Append_Utf8_Utf8(mo->series, cs_cast(Binary_At(temp, offset)), size);
         return;
     }
 
@@ -1344,7 +1344,7 @@ REBTYPE(String)
                 return nullptr;
 
             if (Is_Binary(v)) {
-                Init_Integer(v, *Blob_At(Cell_Blob(v), ret));
+                Init_Integer(v, *Binary_At(Cell_Binary(v), ret));
             }
             else
                 str_to_char(v, v, ret);
@@ -1365,7 +1365,7 @@ REBTYPE(String)
         if (REF(part)) {
             len = Part_Len_May_Modify_Index(v, ARG(limit));
             if (len == 0)
-                return Init_Any_Series(OUT, VAL_TYPE(v), Make_Blob(0));
+                return Init_Any_Series(OUT, VAL_TYPE(v), Make_Binary(0));
         } else
             len = 1;
 
@@ -1383,7 +1383,7 @@ REBTYPE(String)
         if (cast(REBINT, VAL_INDEX(v)) >= tail) {
             if (not REF(part))
                 return nullptr;
-            return Init_Any_Series(OUT, VAL_TYPE(v), Make_Blob(0));
+            return Init_Any_Series(OUT, VAL_TYPE(v), Make_Binary(0));
         }
 
         Flex* flex = Cell_Flex(v);
@@ -1393,14 +1393,14 @@ REBTYPE(String)
         //
         if (not REF(part)) {
             if (Is_Binary(v))
-                Init_Integer(OUT, *Cell_Binary_At(v));
+                Init_Integer(OUT, *Cell_Blob_At(v));
             else
                 str_to_char(OUT, v, VAL_INDEX(v));
         }
         else {
             enum Reb_Kind kind = VAL_TYPE(v);
             if (Is_Binary(v)) {
-                Init_Binary(
+                Init_Blob(
                     OUT,
                     Copy_Sequence_At_Len(Cell_Flex(v), VAL_INDEX(v), len)
                 );
@@ -1520,7 +1520,7 @@ REBTYPE(String)
         while (amount != 0) {
             REBLEN wheel = VAL_LEN_HEAD(v) - 1;
             while (true) {
-                Byte *b = Cell_Binary_At_Head(v, wheel);
+                Byte *b = Cell_Blob_At_Head(v, wheel);
                 if (amount > 0) {
                     if (*b == 255) {
                         if (wheel == VAL_INDEX(v))
@@ -1635,7 +1635,7 @@ REBTYPE(String)
                 return nullptr;
             index += (REBLEN)Random_Int(REF(secure)) % (tail - index);
             if (Is_Binary(v)) // same as PICK
-                return Init_Integer(OUT, *Cell_Binary_At_Head(v, index));
+                return Init_Integer(OUT, *Cell_Blob_At_Head(v, index));
 
             str_to_char(OUT, v, index);
             return OUT;

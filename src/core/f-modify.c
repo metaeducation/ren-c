@@ -237,7 +237,7 @@ REBLEN Modify_Binary(
 
     assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
 
-    Blob* dst_ser = Cell_Blob(dst_val);
+    Binary* dst_ser = Cell_Binary(dst_val);
     REBLEN dst_idx = VAL_INDEX(dst_val);
 
     // For INSERT/PART and APPEND/PART
@@ -268,16 +268,16 @@ REBLEN Modify_Binary(
 
     REBLEN src_idx = 0;
     REBLEN src_len;
-    Blob* src_ser;
+    Binary* src_ser;
     bool needs_free;
     if (Is_Integer(src_val)) {
         REBI64 i = VAL_INT64(src_val);
         if (i > 255 || i < 0)
             fail ("Inserting out-of-range INTEGER! into BINARY!");
 
-        src_ser = Make_Blob(1);
-        *Blob_Head(src_ser) = cast(Byte, i);
-        Term_Blob_Len(src_ser, 1);
+        src_ser = Make_Binary(1);
+        *Binary_Head(src_ser) = cast(Byte, i);
+        Term_Binary_Len(src_ser, 1);
         needs_free = true;
         limit = -1;
     }
@@ -293,10 +293,10 @@ REBLEN Modify_Binary(
         // bytes max. to be more compatible to UTF-16."  So depending on
         // which RFC you consider "the UTF-8", max size is either 4 or 6.
         //
-        src_ser = Make_Blob(6);
+        src_ser = Make_Binary(6);
         Set_Flex_Len(
             src_ser,
-            Encode_UTF8_Char(Blob_Head(src_ser), VAL_CHAR(src_val))
+            Encode_UTF8_Char(Binary_Head(src_ser), VAL_CHAR(src_val))
         );
         needs_free = true;
         limit = -1;
@@ -322,7 +322,7 @@ REBLEN Modify_Binary(
         src_len = Flex_Len(src_ser);
     }
     else {
-        src_ser = Cell_Blob(src_val);
+        src_ser = Cell_Binary(src_val);
         src_idx = VAL_INDEX(src_val);
         src_len = Cell_Series_Len_At(src_val);
         assert(needs_free == false);
@@ -336,7 +336,7 @@ REBLEN Modify_Binary(
     // (Note: It may be possible to optimize special cases like append !!)
     if (dst_ser == src_ser) {
         assert(!needs_free);
-        src_ser = cast(Blob*,
+        src_ser = cast(Binary*,
             Copy_Sequence_At_Len(src_ser, src_idx, src_len)
         );
         needs_free = true;
@@ -363,8 +363,8 @@ REBLEN Modify_Binary(
     // For dup count:
     for (; dups > 0; dups--) {
         memcpy(
-            Blob_At(dst_ser, dst_idx),
-            Blob_At(src_ser, src_idx),
+            Binary_At(dst_ser, dst_idx),
+            Binary_At(src_ser, src_idx),
             src_len
         );
         dst_idx += src_len;

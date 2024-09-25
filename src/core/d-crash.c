@@ -251,9 +251,9 @@ DECLARE_NATIVE(panic)
     if (Is_Text(v)) {
         Size offset;
         Size size;
-        Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
+        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
 
-        p = Blob_At(temp, offset); // UTF-8 data
+        p = Binary_At(temp, offset); // UTF-8 data
     }
     else {
         assert(Is_Error(v));
@@ -268,8 +268,8 @@ DECLARE_NATIVE(panic)
     Option(String*) file = File_Of_Level(level_);
     const char* file_utf8;
     if (file) {
-        Blob* bin = Make_Utf8_From_String(unwrap(file));  // leak ok, panic
-        file_utf8 = cast(const char*, Blob_Head(bin));
+        Binary* bin = Make_Utf8_From_String(unwrap(file));  // leak ok, panic
+        file_utf8 = cast(const char*, Binary_Head(bin));
     }
     else
       file_utf8 = "(anonymous)";
@@ -299,8 +299,8 @@ DECLARE_NATIVE(panic_value)
     Option(String*) file = File_Of_Level(level_);
     const char* file_utf8;
     if (file) {
-        Blob* bin = Make_Utf8_From_String(unwrap(file));  // leak ok, panic
-        file_utf8 = cast(const char*, Blob_Head(bin));
+        Binary* bin = Make_Utf8_From_String(unwrap(file));  // leak ok, panic
+        file_utf8 = cast(const char*, Binary_Head(bin));
     }
     else
        file_utf8 = "(anonymous)";

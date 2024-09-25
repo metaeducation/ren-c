@@ -184,7 +184,7 @@ DECLARE_NATIVE(decode_text)
     // is to UTF-8 for source code, a .TXT file is a different beast, so
     // having wider format support might be a good thing.
 
-    Init_Text(OUT, Make_String_UTF8(cs_cast(Cell_Binary_At(ARG(data)))));
+    Init_Text(OUT, Make_String_UTF8(cs_cast(Cell_Blob_At(ARG(data)))));
     return OUT;
 }
 
@@ -211,7 +211,7 @@ DECLARE_NATIVE(encode_text)
         fail ("Can only write out strings to .txt if they are Latin1.");
     }
 
-    return Init_Binary(OUT, Copy_Sequence_At_Position(ARG(string)));
+    return Init_Blob(OUT, Copy_Sequence_At_Position(ARG(string)));
 }
 
 
@@ -223,8 +223,8 @@ static void Encode_Utf16_Core(
 ){
     Ucs2(const*) cp = data;
 
-    Blob* bin = Make_Blob(sizeof(uint16_t) * len);
-    uint16_t* up = cast(uint16_t*, Blob_Head(bin));
+    Binary* bin = Make_Binary(sizeof(uint16_t) * len);
+    uint16_t* up = cast(uint16_t*, Binary_Head(bin));
 
     REBLEN i = 0;
     for (i = 0; i < len; ++i) {
@@ -252,7 +252,7 @@ static void Encode_Utf16_Core(
     up[i] = '\0'; // needs two bytes worth of terminator, not just one.
 
     Set_Flex_Len(bin, len * sizeof(uint16_t));
-    Init_Binary(out, bin);
+    Init_Blob(out, bin);
 }
 
 
@@ -312,7 +312,7 @@ DECLARE_NATIVE(decode_utf16le)
 {
     INCLUDE_PARAMS_OF_DECODE_UTF16LE;
 
-    Byte *data = Cell_Binary_At(ARG(data));
+    Byte *data = Cell_Blob_At(ARG(data));
     REBLEN len = Cell_Series_Len_At(ARG(data));
 
     const bool little_endian = true;
@@ -397,7 +397,7 @@ DECLARE_NATIVE(decode_utf16be)
 {
     INCLUDE_PARAMS_OF_DECODE_UTF16BE;
 
-    Byte *data = Cell_Binary_At(ARG(data));
+    Byte *data = Cell_Blob_At(ARG(data));
     REBLEN len = Cell_Series_Len_At(ARG(data));
 
     const bool little_endian = false;

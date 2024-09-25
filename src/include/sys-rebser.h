@@ -907,9 +907,9 @@ struct StubStruct {
 typedef struct StubStruct Flex;
 
 #if CPLUSPLUS_11
-    struct Blob : public Flex {};
-    struct String : public Flex {};  // derives from Blob in main branch
-    struct Symbol : public Blob {};  // derives from String in main branch
+    struct Binary : public Flex {};
+    struct String : public Flex {};  // derives from Binary in main branch
+    struct Symbol : public Binary {};  // derives from String in main branch
 
     struct Array : public Flex {};
 
@@ -917,7 +917,7 @@ typedef struct StubStruct Flex;
     struct REBACT : public Stub {};
     struct REBMAP : public Stub {};
 #else
-    typedef Flex Blob;
+    typedef Flex Binary;
     typedef Flex String;
     typedef Flex Symbol;
 

@@ -31,7 +31,7 @@
 #include "sys-core.h"
 
 // For reference to port/state series that holds the file structure:
-#define AS_FILE(s) cast(REBREQ*, Cell_Binary_Head(s))
+#define AS_FILE(s) cast(REBREQ*, Cell_Blob_Head(s))
 #define READ_MAX ((REBLEN)(-1))
 #define HL64(v) (v##l + (v##h << 32))
 #define MAX_READ_MASK 0x7FFFFFFF // max size per chunk
@@ -153,11 +153,11 @@ static void Read_File_Port(
 
     REBREQ *req = AS_REBREQ(file);
 
-    Blob* flex = Make_Blob(len);  // read result buffer
-    Init_Binary(out, flex);
+    Binary* flex = Make_Binary(len);  // read result buffer
+    Init_Blob(out, flex);
 
     // Do the read, check for errors:
-    req->common.data = Blob_Head(flex);
+    req->common.data = Binary_Head(flex);
     req->length = len;
 
     OS_DO_DEVICE_SYNC(req, RDC_READ);
@@ -172,7 +172,7 @@ static void Read_File_Port(
 //
 static void Write_File_Port(struct devreq_file *file, Value* data, REBLEN len, bool lines)
 {
-    Blob* bin;
+    Binary* bin;
     REBREQ *req = AS_REBREQ(file);
 
     if (Is_Block(data)) {
@@ -191,12 +191,12 @@ static void Write_File_Port(struct devreq_file *file, Value* data, REBLEN len, b
     if (Is_Text(data)) {
         bin = Make_Utf8_From_Cell_String_At_Limit(data, len);
         Manage_Flex(bin);
-        req->common.data = Blob_Head(bin);
+        req->common.data = Binary_Head(bin);
         len = Flex_Len(bin);
         req->modes |= RFM_TEXT; // do LF => CR LF, e.g. on Windows
     }
     else {
-        req->common.data = Cell_Binary_At(data);
+        req->common.data = Cell_Blob_At(data);
         req->modes &= ~RFM_TEXT; // don't do LF => CR LF, e.g. on Windows
     }
     req->length = len;

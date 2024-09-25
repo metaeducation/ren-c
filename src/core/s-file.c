@@ -250,13 +250,13 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
                     REBLEN n = Flex_Len(mo->series);
                     if (n > mo->start) {
                         --n;
-                        assert(*Blob_At(mo->series, n) == OS_DIR_SEP);
+                        assert(*Binary_At(mo->series, n) == OS_DIR_SEP);
                         if (n > mo->start)
                             --n; // don't want the *ending* slash
 
                         while (
                             n > mo->start
-                            and *Blob_At(mo->series, n) != OS_DIR_SEP
+                            and *Binary_At(mo->series, n) != OS_DIR_SEP
                         ){
                             --n;
                         }
@@ -292,7 +292,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
             REBLEN n = Flex_Len(mo->series);
             if (
                 n > mo->start
-                and *Blob_At(mo->series, n - 1) == OS_DIR_SEP
+                and *Binary_At(mo->series, n - 1) == OS_DIR_SEP
             ){
                 // Collapse multiple sequential slashes into just one, by
                 // skipping to the next character without adding to mold.
@@ -328,7 +328,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
     //
     if (flags & REB_FILETOLOCAL_NO_TAIL_SLASH) {
         REBLEN n = Flex_Len(mo->series);
-        if (n > mo->start and *Blob_At(mo->series, n - 1) == OS_DIR_SEP)
+        if (n > mo->start and *Binary_At(mo->series, n - 1) == OS_DIR_SEP)
             Term_Non_Array_Flex_Len(mo->series, n - 1);
     }
 

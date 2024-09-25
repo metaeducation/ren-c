@@ -319,7 +319,7 @@ Flex* Make_Set_Operation_Flex(
             }
         } while (i);
 
-        out_ser = Pop_Molded_Blob(mo);
+        out_ser = Pop_Molded_Binary(mo);
     }
 
     return out_ser;

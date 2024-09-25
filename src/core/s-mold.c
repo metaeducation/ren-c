@@ -92,7 +92,7 @@
 //
 void Emit(REB_MOLD *mo, const char *fmt, ...)
 {
-    Blob* s = mo->series;
+    Binary* s = mo->series;
     assert(Flex_Wide(s) == 1);
 
     va_list va;
@@ -201,7 +201,7 @@ Byte *Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
 {
     REBLEN tail = Flex_Len(mo->series);
     Expand_Flex_Tail(mo->series, num_bytes); // terminates, if guessed right
-    return Blob_At(mo->series, tail);
+    return Binary_At(mo->series, tail);
 }
 
 
@@ -258,7 +258,7 @@ void New_Indented_Line(REB_MOLD *mo)
     if (Flex_Len(mo->series) == 0)
         bp = nullptr;
     else {
-        bp = Blob_Last(mo->series);
+        bp = Binary_Last(mo->series);
         if (*bp == ' ' || *bp == '\t')
             *bp = '\n';
         else
@@ -425,7 +425,7 @@ void Form_Array_At(
         else {
             // Add a space if needed:
             if (n < len && Flex_Len(mo->series)
-                && *Blob_Last(mo->series) != LF
+                && *Binary_Last(mo->series) != LF
                 && NOT_MOLD_FLAG(mo, MOLD_FLAG_TIGHT)
             ){
                 Append_Utf8_Codepoint(mo->series, ' ');
@@ -485,7 +485,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
 {
     assert(not THROWN(v)); // !!! Note: Thrown bit is being eliminated
 
-    Blob* s = mo->series;
+    Binary* s = mo->series;
     assert(Flex_Wide(s) == sizeof(Byte));
     Assert_Flex_Term(s);
 
@@ -682,7 +682,7 @@ void Push_Mold(REB_MOLD *mo)
     //
     assert(mo->series == nullptr);
 
-    Blob* s = mo->series = MOLD_BUF;
+    Binary* s = mo->series = MOLD_BUF;
     mo->start = Flex_Len(s);
 
     Assert_Flex_Term(s);
@@ -788,7 +788,7 @@ String* Pop_Molded_String_Core(REB_MOLD *mo, REBLEN len)
         len = Flex_Len(mo->series) - mo->start;
 
     String* result = Make_Sized_String_UTF8(
-        cs_cast(Blob_At(mo->series, mo->start)),
+        cs_cast(Binary_At(mo->series, mo->start)),
         len
     );
     assert(Flex_Wide(result) == sizeof(REBUNI));
@@ -799,7 +799,7 @@ String* Pop_Molded_String_Core(REB_MOLD *mo, REBLEN len)
     // whatever value in the terminator spot was there.  This could be
     // addressed by making no-op molds terminate.
     //
-    Term_Blob_Len(mo->series, mo->start);
+    Term_Binary_Len(mo->series, mo->start);
 
     mo->series = nullptr;  // indicates mold is not currently pushed
     return result;
@@ -830,7 +830,7 @@ Flex* Pop_Molded_UTF8(REB_MOLD *mo)
     // whatever value in the terminator spot was there.  This could be
     // addressed by making no-op molds terminate.
     //
-    Term_Blob_Len(mo->series, mo->start);
+    Term_Binary_Len(mo->series, mo->start);
 
     mo->series = nullptr;  // indicates mold is not currently pushed
     return bytes;
@@ -838,7 +838,7 @@ Flex* Pop_Molded_UTF8(REB_MOLD *mo)
 
 
 //
-//  Pop_Molded_Blob: C
+//  Pop_Molded_Binary: C
 //
 // !!! This particular use of the mold buffer might undermine tricks which
 // could be used with invalid UTF-8 bytes--for instance.  Review.
@@ -846,7 +846,7 @@ Flex* Pop_Molded_UTF8(REB_MOLD *mo)
 // In its current form, the implementation is not distinguishable from
 // Pop_Molded_UTF8.
 //
-Flex* Pop_Molded_Blob(REB_MOLD *mo)
+Flex* Pop_Molded_Binary(REB_MOLD *mo)
 {
     return Pop_Molded_UTF8(mo);
 }
@@ -888,7 +888,7 @@ void Drop_Mold_Core(REB_MOLD *mo, bool not_pushed_ok)
     //
     Note_Flex_Maybe_Term(mo->series);
 
-    Term_Blob_Len(mo->series, mo->start); // see Pop_Molded_String() notes
+    Term_Binary_Len(mo->series, mo->start); // see Pop_Molded_String() notes
 
     mo->series = nullptr;  // indicates mold is not currently pushed
 }
@@ -901,7 +901,7 @@ void Startup_Mold(REBLEN size)
 {
     TG_Mold_Stack = Make_Flex(10, sizeof(void*));
 
-    TG_Mold_Buf = Make_Blob(size);
+    TG_Mold_Buf = Make_Binary(size);
 }
 
 

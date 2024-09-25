@@ -84,20 +84,20 @@ static Bounce Console_Actor(Level* level_, Value* port, Value* verb)
         //
         Value* data = CTX_VAR(ctx, STD_PORT_DATA);
         if (not Is_Binary(data))
-            Init_Binary(data, Make_Blob(OUT_BUF_SIZE));
+            Init_Blob(data, Make_Binary(OUT_BUF_SIZE));
 
-        Blob* flex = Cell_Blob(data);
+        Binary* flex = Cell_Binary(data);
         Set_Flex_Len(flex, 0);
         Term_Flex(flex);
 
-        req->common.data = Blob_Head(flex);
+        req->common.data = Binary_Head(flex);
         req->length = Flex_Available_Space(flex);
 
         OS_DO_DEVICE_SYNC(req, RDC_READ);
 
         // !!! Among many confusions in this file, it said "Another copy???"
         //
-        Init_Binary(OUT, Copy_Bytes(req->common.data, req->actual));
+        Init_Blob(OUT, Copy_Bytes(req->common.data, req->actual));
         return OUT; }
 
     case SYM_OPEN: {

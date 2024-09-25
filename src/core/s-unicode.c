@@ -963,14 +963,14 @@ REBLEN Encode_UTF8(
 //
 //  Make_Utf8_From_String: C
 //
-Blob* Make_Utf8_From_String(String* string) {
+Binary* Make_Utf8_From_String(String* string) {
     assert(Is_Flex_Ucs2(string));
 
     const REBUNI* data = String_Head(string);
     size_t size = Size_As_UTF8(data, String_Len(string));
-    Blob* bin = Make_Blob(size);
+    Binary* bin = Make_Binary(size);
     REBLEN len = 0;
-    Set_Flex_Len(bin, Encode_UTF8(Blob_Head(bin), size, data, &len));
+    Set_Flex_Len(bin, Encode_UTF8(Binary_Head(bin), size, data, &len));
     assert(Flex_Len(bin) == size);
     Term_Non_Array_Flex(bin);
     return bin;
@@ -982,7 +982,7 @@ Blob* Make_Utf8_From_String(String* string) {
 //
 // !!! With UTF-8 Everywhere, strings will already be in UTF-8.
 //
-Blob* Make_Utf8_From_Cell_String_At_Limit(
+Binary* Make_Utf8_From_Cell_String_At_Limit(
     const Cell* any_string,
     REBLEN len
 ){
@@ -990,8 +990,8 @@ Blob* Make_Utf8_From_Cell_String_At_Limit(
 
     const REBUNI *data = Cell_String_At(any_string);
     size_t size = Size_As_UTF8(data, len);
-    Blob* bin = Make_Blob(size);
-    Set_Flex_Len(bin, Encode_UTF8(Blob_Head(bin), size, data, &len));
+    Binary* bin = Make_Binary(size);
+    Set_Flex_Len(bin, Encode_UTF8(Binary_Head(bin), size, data, &len));
     assert(Flex_Len(bin) == size);
     Term_Non_Array_Flex(bin);
     return bin;

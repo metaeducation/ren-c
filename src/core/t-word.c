@@ -141,7 +141,7 @@ void MF_Word(REB_MOLD *mo, const Cell* v, bool form) {
     const char *head = Symbol_Head(symbol);  // UTF-8
     size_t size = Symbol_Size(symbol);  // number of UTF-8 bytes
 
-    Blob* s = mo->series;
+    Binary* s = mo->series;
 
     switch (VAL_TYPE(v)) {
     case REB_WORD: {

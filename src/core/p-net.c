@@ -146,12 +146,12 @@ static Bounce Transport_Actor(
             if (Is_Text(arg)) {
                 Size offset;
                 Size size;
-                Blob* temp = Temp_UTF8_At_Managed(
+                Binary* temp = Temp_UTF8_At_Managed(
                     &offset, &size, arg, Cell_Series_Len_At(arg)
                 );
                 Push_GC_Guard(temp);
 
-                sock->common.data = Blob_At(temp, offset);
+                sock->common.data = Binary_At(temp, offset);
                 DEVREQ_NET(sock)->remote_port =
                     Is_Integer(port_id) ? VAL_INT32(port_id) : 80;
 
@@ -283,20 +283,20 @@ static Bounce Transport_Actor(
         // Setup the read buffer (allocate a buffer if needed):
         //
         Value* port_data = CTX_VAR(ctx, STD_PORT_DATA);
-        Blob* buffer;
+        Binary* buffer;
         if (not Is_Text(port_data) and not Is_Binary(port_data)) {
-            buffer = Make_Blob(NET_BUF_SIZE);
-            Init_Binary(port_data, buffer);
+            buffer = Make_Binary(NET_BUF_SIZE);
+            Init_Blob(port_data, buffer);
         }
         else {
-            buffer = Cell_Blob(port_data);
+            buffer = Cell_Binary(port_data);
 
             if (Flex_Available_Space(buffer) < NET_BUF_SIZE/2)
                 Extend_Flex(buffer, NET_BUF_SIZE);
         }
 
         sock->length = Flex_Available_Space(buffer);
-        sock->common.data = Blob_Tail(buffer); // write at tail
+        sock->common.data = Binary_Tail(buffer); // write at tail
         sock->actual = 0; // actual for THIS read (not for total)
 
         Value* result = OS_DO_DEVICE(sock, RDC_READ);
@@ -359,10 +359,10 @@ static Bounce Transport_Actor(
 
         // Setup the write:
 
-        Blob* temp;
+        Binary* temp;
         if (Is_Binary(data)) {
             temp = nullptr;
-            sock->common.data = Cell_Binary_At(data);
+            sock->common.data = Cell_Blob_At(data);
             sock->length = len;
 
             Copy_Cell(CTX_VAR(ctx, STD_PORT_DATA), data); // keep it GC safe
@@ -384,7 +384,7 @@ static Bounce Transport_Actor(
                 data,
                 len
             );
-            sock->common.data = Blob_At(temp, offset);
+            sock->common.data = Binary_At(temp, offset);
             sock->length = size;
 
             Push_GC_Guard(temp);

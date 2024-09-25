@@ -1013,7 +1013,7 @@ DECLARE_NATIVE(as)
         //
         if (Is_Binary(v)) {
             Flex* string = Make_Sized_String_UTF8(
-                cs_cast(Cell_Binary_At(v)),
+                cs_cast(Cell_Blob_At(v)),
                 Cell_Series_Len_At(v)
             );
             if (Is_Value_Immutable(v))
@@ -1056,13 +1056,13 @@ DECLARE_NATIVE(as)
 
             Size utf8_size;
             Size offset;
-            Blob* temp = Temp_UTF8_At_Managed(
+            Binary* temp = Temp_UTF8_At_Managed(
                 &offset, &utf8_size, v, Cell_Series_Len_At(v)
             );
             return Init_Any_Word(
                 OUT,
                 new_kind,
-                Intern_UTF8_Managed(Blob_At(temp, offset), utf8_size)
+                Intern_UTF8_Managed(Binary_At(temp, offset), utf8_size)
             );
         }
 
@@ -1079,7 +1079,7 @@ DECLARE_NATIVE(as)
             return Init_Any_Word(
                 OUT,
                 new_kind,
-                Intern_UTF8_Managed(Cell_Binary_At(v), Cell_Series_Len_At(v))
+                Intern_UTF8_Managed(Cell_Blob_At(v), Cell_Series_Len_At(v))
             );
         }
 
@@ -1096,11 +1096,11 @@ DECLARE_NATIVE(as)
         //
         if (Any_Word(v)) {
             assert(Is_Value_Immutable(v));
-            return Init_Binary(OUT, Cell_Word_Symbol(v));
+            return Init_Blob(OUT, Cell_Word_Symbol(v));
         }
 
         if (Any_String(v)) {
-            Blob* bin = Make_Utf8_From_Cell_String_At_Limit(v, Cell_Series_Len_At(v));
+            Binary* bin = Make_Utf8_From_Cell_String_At_Limit(v, Cell_Series_Len_At(v));
 
             // !!! Making a binary out of a UCS-2 encoded string currently
             // frees the string data if it's mutable, and if that's not
@@ -1111,7 +1111,7 @@ DECLARE_NATIVE(as)
             else
                 Decay_Flex(Cell_Flex(v));
 
-            return Init_Binary(OUT, bin);
+            return Init_Blob(OUT, bin);
         }
 
         fail (v); }

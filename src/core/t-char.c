@@ -72,7 +72,7 @@ Bounce MAKE_Char(Value* out, enum Reb_Kind kind, const Value* arg)
         return Init_Char(out, n); }
 
       case REB_BINARY: {
-        const Byte *bp = Cell_Binary_Head(arg);
+        const Byte *bp = Cell_Blob_Head(arg);
         Size len = Cell_Series_Len_At(arg);
         if (len == 0)
             goto bad_make;
@@ -138,7 +138,7 @@ static REBINT Math_Arg_For_Char(Value* arg, Value* verb)
 //
 void MF_Char(REB_MOLD *mo, const Cell* v, bool form)
 {
-    Blob* out = mo->series;
+    Binary* out = mo->series;
 
     bool parened = GET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
     REBUNI chr = VAL_CHAR(v);
@@ -147,21 +147,21 @@ void MF_Char(REB_MOLD *mo, const Cell* v, bool form)
 
     if (form) {
         Expand_Flex_Tail(out, 4); // 4 is worst case scenario of bytes
-        tail += Encode_UTF8_Char(Blob_At(out, tail), chr);
+        tail += Encode_UTF8_Char(Binary_At(out, tail), chr);
         Set_Flex_Len(out, tail);
     }
     else {
         Expand_Flex_Tail(out, 10); // worst case: #"^(1234)"
 
-        Byte *bp = Blob_At(out, tail);
+        Byte *bp = Binary_At(out, tail);
         *bp++ = '#';
         *bp++ = '"';
         bp = Emit_Uni_Char(bp, chr, parened);
         *bp++ = '"';
 
-        Set_Flex_Len(out, bp - Blob_Head(out));
+        Set_Flex_Len(out, bp - Binary_Head(out));
     }
-    Term_Blob(out);
+    Term_Binary(out);
 }
 
 

@@ -140,7 +140,7 @@ typedef struct StubStruct Stub;
 typedef Stub Flex;
 
 #if CPLUSPLUS_11
-    struct Blob;
+    struct Binary;
     struct Symbol;
     struct String;
 
@@ -150,7 +150,7 @@ typedef Stub Flex;
     struct REBACT;
     struct REBMAP;
 #else
-    typedef Flex Blob;
+    typedef Flex Binary;
     typedef Flex Symbol;
     typedef Flex String;
 

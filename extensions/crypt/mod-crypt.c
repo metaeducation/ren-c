@@ -170,8 +170,8 @@ DECLARE_NATIVE(rc4)
 
         RC4_crypt(
             rc4_ctx,
-            Cell_Binary_At(data), // input "message"
-            Cell_Binary_At(data), // output (same, since it modifies)
+            Cell_Blob_At(data), // input "message"
+            Cell_Blob_At(data), // output (same, since it modifies)
             Cell_Series_Len_At(data)
         );
 
@@ -186,7 +186,7 @@ DECLARE_NATIVE(rc4)
 
         RC4_setup(
             rc4_ctx,
-            Cell_Binary_At(ARG(crypt_key)),
+            Cell_Blob_At(ARG(crypt_key)),
             Cell_Series_Len_At(ARG(crypt_key))
         );
 
@@ -245,28 +245,28 @@ DECLARE_NATIVE(rsa)
         RSA_priv_key_new(
             &rsa_ctx
             ,
-            Cell_Binary_At(n)
+            Cell_Blob_At(n)
             , rebUnbox("length of", n)
             ,
-            Cell_Binary_At(e)
+            Cell_Blob_At(e)
             , rebUnbox("length of", e)
             ,
-            Cell_Binary_At(d)
+            Cell_Blob_At(d)
             , binary_len // taken as `length of d` above
             ,
-            p ? Cell_Binary_At(p) : nullptr
+            p ? Cell_Blob_At(p) : nullptr
             , p ? rebUnbox("length of", p) : 0
             ,
-            q ? Cell_Binary_At(q) : nullptr
+            q ? Cell_Blob_At(q) : nullptr
             , q ? rebUnbox("length of", q) : 0
             ,
-            dp ? Cell_Binary_At(dp) : nullptr
+            dp ? Cell_Blob_At(dp) : nullptr
             , dp ? rebUnbox("length of", dp) : 0
             ,
-            dq ? Cell_Binary_At(dq) : nullptr
+            dq ? Cell_Blob_At(dq) : nullptr
             , dp ? rebUnbox("length of", dq) : 0
             ,
-            qinv ? Cell_Binary_At(qinv) : nullptr
+            qinv ? Cell_Blob_At(qinv) : nullptr
             , qinv ? rebUnbox("length of", qinv) : 0
         );
 
@@ -282,10 +282,10 @@ DECLARE_NATIVE(rsa)
         RSA_pub_key_new(
             &rsa_ctx
             ,
-            Cell_Binary_At(n)
+            Cell_Blob_At(n)
             , binary_len // taken as `length of n` above
             ,
-            Cell_Binary_At(e)
+            Cell_Blob_At(e)
             , rebUnbox("length of", e)
         );
     }
@@ -295,7 +295,7 @@ DECLARE_NATIVE(rsa)
 
     // !!! See notes above about direct binary access via libRebol
     //
-    Byte *dataBuffer = Cell_Binary_At(ARG(data));
+    Byte *dataBuffer = Cell_Blob_At(ARG(data));
     REBINT data_len = rebUnbox("length of", ARG(data));
 
     BI_CTX *bi_ctx = rsa_ctx->bi_ctx;
@@ -381,10 +381,10 @@ DECLARE_NATIVE(dh_generate_key)
     Value* g = rebValue("ensure binary! pick", obj, "'g"); // generator
     Value* p = rebValue("ensure binary! pick", obj, "'p"); // modulus
 
-    dh_ctx.g = Cell_Binary_At(g);
+    dh_ctx.g = Cell_Blob_At(g);
     dh_ctx.glen = rebUnbox("length of", g);
 
-    dh_ctx.p = Cell_Binary_At(p);
+    dh_ctx.p = Cell_Blob_At(p);
     dh_ctx.len = rebUnbox("length of", p);
 
     // Generate the private and public keys into memory that can be
@@ -441,13 +441,13 @@ DECLARE_NATIVE(dh_compute_key)
     Value* p = rebValue("ensure binary! pick", obj, "'p");
     Value* priv_key = rebValue("ensure binary! pick", obj, "'priv-key");
 
-    dh_ctx.p = Cell_Binary_At(p);
+    dh_ctx.p = Cell_Blob_At(p);
     dh_ctx.len = rebUnbox("length of", p);
 
-    dh_ctx.x = Cell_Binary_At(priv_key);
+    dh_ctx.x = Cell_Blob_At(priv_key);
     // !!! No length check here, should there be?
 
-    dh_ctx.gy = Cell_Binary_At(ARG(public_key));
+    dh_ctx.gy = Cell_Blob_At(ARG(public_key));
     // !!! No length check here, should there be?
 
     dh_ctx.k = rebAllocN(Byte, dh_ctx.len);
@@ -503,7 +503,7 @@ DECLARE_NATIVE(aes)
 
         AES_CTX *aes_ctx = VAL_HANDLE_POINTER(AES_CTX, ARG(ctx));
 
-        Byte *dataBuffer = Cell_Binary_At(ARG(data));
+        Byte *dataBuffer = Cell_Blob_At(ARG(data));
         REBINT len = Cell_Series_Len_At(ARG(data));
 
         if (len == 0)
@@ -555,7 +555,7 @@ DECLARE_NATIVE(aes)
             if (Cell_Series_Len_At(ARG(iv)) < AES_IV_SIZE)
                 fail ("Length of initialization vector less than AES size");
 
-            memcpy(iv, Cell_Binary_At(ARG(iv)), AES_IV_SIZE);
+            memcpy(iv, Cell_Blob_At(ARG(iv)), AES_IV_SIZE);
         }
         else {
             assert(Is_Blank(ARG(iv)));
@@ -578,7 +578,7 @@ DECLARE_NATIVE(aes)
 
         AES_set_key(
             aes_ctx,
-            cast(const uint8_t *, Cell_Binary_At(ARG(crypt_key))),
+            cast(const uint8_t *, Cell_Blob_At(ARG(crypt_key))),
             cast(const uint8_t *, iv),
             (len == 128) ? AES_MODE_128 : AES_MODE_256
         );
@@ -614,15 +614,15 @@ DECLARE_NATIVE(sha256)
     Size size;
     if (Is_Text(data)) {
         Size offset;
-        Blob* temp = Temp_UTF8_At_Managed(
+        Binary* temp = Temp_UTF8_At_Managed(
             &offset, &size, data, Cell_Series_Len_At(data)
         );
-        bp = Blob_At(temp, offset);
+        bp = Binary_At(temp, offset);
     }
     else {
         assert(Is_Binary(data));
 
-        bp = Cell_Binary_At(data);
+        bp = Cell_Blob_At(data);
         size = Cell_Series_Len_At(data);
     }
 

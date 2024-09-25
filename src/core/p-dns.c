@@ -99,17 +99,17 @@ static Bounce DNS_Actor(Level* level_, Value* port, Value* verb)
         else if (Is_Text(arg)) {
             Size offset;
             Size size;
-            Blob* temp = Temp_UTF8_At_Managed(
+            Binary* temp = Temp_UTF8_At_Managed(
                 &offset, &size, arg, Cell_Series_Len_At(arg)
             );
 
             DECLARE_VALUE (tmp);
-            if (Scan_Tuple(tmp, Blob_At(temp, offset), size) != nullptr) {
+            if (Scan_Tuple(tmp, Binary_At(temp, offset), size) != nullptr) {
                 sock->modes |= RST_REVERSE;
                 memcpy(&(DEVREQ_NET(sock)->remote_ip), VAL_TUPLE(tmp), 4);
             }
             else // lookup string's IP address
-                sock->common.data = Cell_Binary_Head(arg);
+                sock->common.data = Cell_Blob_Head(arg);
         }
         else
             fail (Error_On_Port(SYM_INVALID_SPEC, port, -10));

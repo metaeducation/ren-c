@@ -123,11 +123,11 @@ Byte *Analyze_String_For_Scan(
     VAL_INDEX(reindexed) = index;
 
     Size offset;
-    Blob* temp = Temp_UTF8_At_Managed(
+    Binary* temp = Temp_UTF8_At_Managed(
         &offset, opt_size_out, reindexed, Cell_Series_Len_At(reindexed)
     );
 
-    return Blob_At(temp, offset);
+    return Binary_At(temp, offset);
 }
 
 
@@ -149,7 +149,7 @@ Byte *Analyze_String_For_Scan(
 // Mutation of the result is not allowed because those mutations will not
 // be reflected in the original string, due to generation.
 //
-Blob* Temp_UTF8_At_Managed(
+Binary* Temp_UTF8_At_Managed(
     Size *offset_out,
     Size *opt_size_out,
     const Cell* str,
@@ -164,7 +164,7 @@ Blob* Temp_UTF8_At_Managed(
 
     assert(length_limit <= Cell_Series_Len_At(str));
 
-    Blob* bin = Make_Utf8_From_Cell_String_At_Limit(str, length_limit);
+    Binary* bin = Make_Utf8_From_Cell_String_At_Limit(str, length_limit);
     assert(BYTE_SIZE(bin));
 
     Manage_Flex(bin);
@@ -172,7 +172,7 @@ Blob* Temp_UTF8_At_Managed(
 
     *offset_out = 0;
     if (opt_size_out != nullptr)
-        *opt_size_out = Blob_Len(bin);
+        *opt_size_out = Binary_Len(bin);
     return bin;
 }
 
@@ -182,21 +182,21 @@ Blob* Temp_UTF8_At_Managed(
 //
 // Only valid for BINARY data.
 //
-Blob* Xandor_Binary(Value* verb, Value* value, Value* arg)
+Binary* Xandor_Binary(Value* verb, Value* value, Value* arg)
 {
     Byte *p0 = Is_Binary(value)
-        ? Cell_Binary_At(value)
-        : Blob_Head(Cell_Bitset(value));
+        ? Cell_Blob_At(value)
+        : Binary_Head(Cell_Bitset(value));
     Byte *p1 = Is_Binary(arg)
-        ? Cell_Binary_At(arg)
-        : Blob_Head(Cell_Bitset(arg));
+        ? Cell_Blob_At(arg)
+        : Binary_Head(Cell_Bitset(arg));
 
     REBLEN t0 = Is_Binary(value)
         ? Cell_Series_Len_At(value)
-        : Blob_Len(Cell_Bitset(value));
+        : Binary_Len(Cell_Bitset(value));
     REBLEN t1 = Is_Binary(arg)
         ? Cell_Series_Len_At(arg)
-        : Blob_Len(Cell_Bitset(arg));
+        : Binary_Len(Cell_Bitset(arg));
 
     REBLEN mt = MIN(t0, t1); // smaller array size
 
@@ -211,7 +211,7 @@ Blob* Xandor_Binary(Value* verb, Value* value, Value* arg)
 
     REBLEN t2 = MAX(t0, t1);
 
-    Blob* series;
+    Binary* series;
     if (Is_Bitset(value)) {
         //
         // Although bitsets and binaries share some implementation here,
@@ -226,11 +226,11 @@ Blob* Xandor_Binary(Value* verb, Value* value, Value* arg)
     else {
         // Ordinary binary
         //
-        series = Make_Blob(t2);
+        series = Make_Binary(t2);
         Term_Non_Array_Flex_Len(series, t2);
     }
 
-    Byte *p2 = Blob_Head(series);
+    Byte *p2 = Binary_Head(series);
 
     switch (Cell_Word_Id(verb)) {
     case SYM_INTERSECT: { // and
@@ -278,13 +278,13 @@ Blob* Xandor_Binary(Value* verb, Value* value, Value* arg)
 //
 Flex* Complement_Binary(Value* value)
 {
-    const Byte *bp = Cell_Binary_At(value);
+    const Byte *bp = Cell_Blob_At(value);
     REBLEN len = Cell_Series_Len_At(value);
 
-    Blob* bin = Make_Blob(len);
-    Term_Blob_Len(bin, len);
+    Binary* bin = Make_Binary(len);
+    Term_Binary_Len(bin, len);
 
-    Byte *dp = Blob_Head(bin);
+    Byte *dp = Binary_Head(bin);
     for (; len > 0; len--, ++bp, ++dp)
         *dp = ~(*bp);
 
@@ -321,15 +321,15 @@ void Shuffle_String(Value* value, bool secure)
 //
 // Used to trim off hanging spaces during FORM and MOLD.
 //
-void Trim_Tail(Blob* src, Byte chr)
+void Trim_Tail(Binary* src, Byte chr)
 {
     REBLEN tail;
-    for (tail = Blob_Len(src); tail > 0; tail--) {
-        REBUNI c = *Blob_At(src, tail - 1);
+    for (tail = Binary_Len(src); tail > 0; tail--) {
+        REBUNI c = *Binary_At(src, tail - 1);
         if (c != chr)
             break;
     }
-    Term_Blob_Len(src, tail);
+    Term_Binary_Len(src, tail);
 }
 
 
@@ -359,7 +359,7 @@ void Change_Case(Value* out, Value* val, Value* part, bool upper)
     REBLEN n = 0;
 
     if (VAL_BYTE_SIZE(val)) {
-        Byte *bp = Cell_Binary_At(val);
+        Byte *bp = Cell_Blob_At(val);
         if (upper)
             for (; n != len; n++)
                 bp[n] = cast(Byte, UP_CASE(bp[n]));

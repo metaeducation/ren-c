@@ -83,7 +83,7 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
         //
         Size offset;
         Size size;
-        Blob* temp = Temp_UTF8_At_Managed(
+        Binary* temp = Temp_UTF8_At_Managed(
             &offset, &size, arg, Cell_Series_Len_At(arg)
         );
         Push_GC_Guard(temp);
@@ -91,7 +91,7 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
         Init_Any_List(
             out,
             kind,
-            Scan_UTF8_Managed(filename, Blob_At(temp, offset), size)
+            Scan_UTF8_Managed(filename, Binary_At(temp, offset), size)
         );
         Drop_GC_Guard(temp);
         return out;
@@ -173,7 +173,7 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
         return Init_Any_List(
             out,
             kind,
-            Scan_UTF8_Managed(filename, Cell_Binary_At(arg), Cell_Series_Len_At(arg))
+            Scan_UTF8_Managed(filename, Cell_Blob_At(arg), Cell_Series_Len_At(arg))
         );
     }
     else if (Is_Map(arg)) {

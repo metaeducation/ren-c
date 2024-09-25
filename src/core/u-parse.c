@@ -883,7 +883,7 @@ static REBIXO To_Thru_Block_Rule(
                 }
             }
             else if (P_TYPE == REB_BINARY) {
-                Byte ch1 = *Blob_At(Cell_Blob(P_INPUT_VALUE), pos);
+                Byte ch1 = *Binary_At(Cell_Binary(P_INPUT_VALUE), pos);
 
                 // Handle special string types:
                 if (Is_Char(rule)) {
@@ -897,7 +897,7 @@ static REBIXO To_Thru_Block_Rule(
                     }
                 }
                 else if (Is_Binary(rule)) {
-                    if (ch1 == *Cell_Binary_At(rule)) {
+                    if (ch1 == *Cell_Blob_At(rule)) {
                         REBLEN len = Cell_Series_Len_At(rule);
                         if (len == 1) {
                             if (is_thru)
@@ -906,8 +906,8 @@ static REBIXO To_Thru_Block_Rule(
                         }
 
                         if (0 == Compare_Bytes(
-                            Blob_At(Cell_Blob(P_INPUT_VALUE), pos),
-                            Cell_Binary_At(rule),
+                            Binary_At(Cell_Binary(P_INPUT_VALUE), pos),
+                            Cell_Blob_At(rule),
                             len,
                             false
                         )) {
@@ -2243,7 +2243,7 @@ DECLARE_NATIVE(subparse)
                         );
                     }
                     else if (Is_Binary(P_INPUT_VALUE)) {
-                        Init_Binary(
+                        Init_Blob(
                             temp,
                             Copy_Sequence_At_Len(P_INPUT, begin, count)
                         );

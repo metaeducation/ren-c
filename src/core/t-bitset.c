@@ -32,11 +32,11 @@
 
 #define MAX_BITSET 0x7fffffff
 
-INLINE bool BITS_NOT(Blob* s) {
+INLINE bool BITS_NOT(Binary* s) {
     return MISC(s).negated;
 }
 
-INLINE void INIT_BITS_NOT(Blob* s, bool negated) {
+INLINE void INIT_BITS_NOT(Binary* s, bool negated) {
     MISC(s).negated = negated;
 }
 
@@ -62,12 +62,12 @@ REBINT CT_Bitset(const Cell* a, const Cell* b, REBINT mode)
 //
 // len: the # of bits in the bitset.
 //
-Blob* Make_Bitset(REBLEN len)
+Binary* Make_Bitset(REBLEN len)
 {
-    Blob* flex;
+    Binary* flex;
 
     len = (len + 7) / 8;
-    flex = Make_Blob(len);
+    flex = Make_Binary(len);
     Clear_Flex(flex);
     Set_Flex_Len(flex, len);
     INIT_BITS_NOT(flex, false);
@@ -85,13 +85,13 @@ void MF_Bitset(REB_MOLD *mo, const Cell* v, bool form)
 
     Pre_Mold(mo, v); // #[bitset! or make bitset!
 
-    Blob* s = Cell_Bitset(v);
+    Binary* s = Cell_Bitset(v);
 
     if (BITS_NOT(s))
         Append_Unencoded(mo->series, "[not bits ");
 
     DECLARE_VALUE (alias);
-    Init_Binary(alias, s);  // MF_Binary expects positional BINARY!
+    Init_Blob(alias, s);  // MF_Binary expects positional BINARY!
     MF_Binary(mo, alias, false); // false = mold, don't form
 
     if (BITS_NOT(s))
@@ -119,14 +119,14 @@ Bounce MAKE_Bitset(Value* out, enum Reb_Kind kind, const Value* arg)
     if (len < 0 || len > 0x0FFFFFFF)
         fail (Error_Invalid(arg));
 
-    Blob* flex = Make_Bitset(len);
+    Binary* flex = Make_Bitset(len);
     Init_Bitset(out, flex);
 
     if (Is_Integer(arg))
         return out; // allocated at a size, no contents.
 
     if (Is_Binary(arg)) {
-        memcpy(Blob_Head(flex), Cell_Binary_At(arg), len/8 + 1);
+        memcpy(Binary_Head(flex), Cell_Blob_At(arg), len/8 + 1);
         return out;
     }
 
@@ -213,7 +213,7 @@ REBINT Find_Max_Bit(const Cell* val)
 // Check bit indicated. Returns true if set.
 // If uncased is true, try to match either upper or lower case.
 //
-bool Check_Bit(Blob* bset, REBLEN c, bool uncased)
+bool Check_Bit(Binary* bset, REBLEN c, bool uncased)
 {
     REBLEN i, n = c;
     REBLEN tail = Flex_Len(bset);
@@ -230,7 +230,7 @@ bool Check_Bit(Blob* bset, REBLEN c, bool uncased)
 retry:
     i = n >> 3;
     if (i < tail)
-        flag = did (Blob_Head(bset)[i] & (1 << (7 - (n & 7))));
+        flag = did (Binary_Head(bset)[i] & (1 << (7 - (n & 7))));
 
     // Check uppercase if needed:
     if (uncased && !flag) {
@@ -251,24 +251,24 @@ retry:
 //
 // Set/clear a single bit. Expand if needed.
 //
-void Set_Bit(Blob* bset, REBLEN n, bool set)
+void Set_Bit(Binary* bset, REBLEN n, bool set)
 {
     REBLEN i = n >> 3;
-    REBLEN tail = Blob_Len(bset);
+    REBLEN tail = Binary_Len(bset);
     Byte bit;
 
     // Expand if not enough room:
     if (i >= tail) {
         if (!set) return; // no need to expand
         Expand_Flex(bset, tail, (i - tail) + 1);
-        CLEAR(Blob_At(bset, tail), (i - tail) + 1);
+        CLEAR(Binary_At(bset, tail), (i - tail) + 1);
     }
 
     bit = 1 << (7 - ((n) & 7));
     if (set)
-        Blob_Head(bset)[i] |= bit;
+        Binary_Head(bset)[i] |= bit;
     else
-        Blob_Head(bset)[i] &= ~bit;
+        Binary_Head(bset)[i] &= ~bit;
 }
 
 
@@ -277,7 +277,7 @@ void Set_Bit(Blob* bset, REBLEN n, bool set)
 //
 // Set/clear bits indicated by strings and chars and ranges.
 //
-bool Set_Bits(Blob* bset, const Value* val, bool set)
+bool Set_Bits(Binary* bset, const Value* val, bool set)
 {
     Fail_If_Read_Only_Flex(bset);
 
@@ -297,7 +297,7 @@ bool Set_Bits(Blob* bset, const Value* val, bool set)
     if (Is_Binary(val)) {
         REBLEN i = VAL_INDEX(val);
 
-        Byte *bp = Cell_Binary_Head(val);
+        Byte *bp = Cell_Blob_Head(val);
         for (; i != VAL_LEN_HEAD(val); i++)
             Set_Bit(bset, bp[i], set);
 
@@ -404,9 +404,9 @@ bool Set_Bits(Blob* bset, const Value* val, bool set)
             REBUNI c = Flex_Len(bset);
             if (n >= c) {
                 Expand_Flex(bset, c, (n - c));
-                CLEAR(Blob_At(bset, c), (n - c));
+                CLEAR(Binary_At(bset, c), (n - c));
             }
-            memcpy(Blob_Head(bset), Cell_Binary_At(item), n);
+            memcpy(Binary_Head(bset), Cell_Blob_At(item), n);
             break; }
 
         default:
@@ -424,7 +424,7 @@ bool Set_Bits(Blob* bset, const Value* val, bool set)
 // Check bits indicated by strings and chars and ranges.
 // If uncased is true, try to match either upper or lower case.
 //
-bool Check_Bits(Blob* bset, const Value* val, bool uncased)
+bool Check_Bits(Binary* bset, const Value* val, bool uncased)
 {
     if (Is_Char(val))
         return Check_Bit(bset, VAL_CHAR(val), uncased);
@@ -434,7 +434,7 @@ bool Check_Bits(Blob* bset, const Value* val, bool uncased)
 
     if (Is_Binary(val)) {
         REBLEN i = VAL_INDEX(val);
-        Byte *bp = Cell_Binary_Head(val);
+        Byte *bp = Cell_Blob_Head(val);
         for (; i != VAL_LEN_HEAD(val); ++i)
             if (Check_Bit(bset, bp[i], uncased))
                 return true;
@@ -534,7 +534,7 @@ Bounce PD_Bitset(
     const Value* picker,
     const Value* opt_setval
 ){
-    Blob* flex = Cell_Bitset(pvs->out);
+    Binary* flex = Cell_Bitset(pvs->out);
 
     if (opt_setval == nullptr) {
         if (Check_Bits(flex, picker, false))
@@ -561,10 +561,10 @@ Bounce PD_Bitset(
 //
 // Remove extra zero bytes from end of byte string.
 //
-void Trim_Tail_Zeros(Blob* flex)
+void Trim_Tail_Zeros(Binary* flex)
 {
-    REBLEN len = Blob_Len(flex);
-    Byte *bp = Blob_Head(flex);
+    REBLEN len = Binary_Len(flex);
+    Byte *bp = Binary_Head(flex);
 
     while (len > 0 && bp[len] == 0)
         len--;
@@ -572,7 +572,7 @@ void Trim_Tail_Zeros(Blob* flex)
     if (bp[len] != 0)
         len++;
 
-    Term_Blob_Len(flex, len);
+    Term_Binary_Len(flex, len);
 }
 
 
@@ -583,7 +583,7 @@ REBTYPE(Bitset)
 {
     Value* value = D_ARG(1);
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
-    Blob* flex;
+    Binary* flex;
 
     // !!! Set_Bits does locked series check--what should the more general
     // responsibility be for checking?
@@ -644,7 +644,7 @@ REBTYPE(Bitset)
 
     case SYM_COMPLEMENT:
     case SYM_NEGATE:
-        flex = cast(Blob*,
+        flex = cast(Binary*,
             Copy_Non_Array_Flex_Core(Cell_Bitset(value), NODE_FLAG_MANAGED)
         );
         INIT_BITS_NOT(flex, not BITS_NOT(Cell_Bitset(value)));

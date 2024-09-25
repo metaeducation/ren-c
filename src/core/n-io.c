@@ -118,7 +118,7 @@ DECLARE_NATIVE(write_stdout)
         // from UTF-8 to wide characters, or not having CR turned into CR LF
         // sequences).
         //
-        Prin_OS_String(Cell_Binary_Head(v), Cell_Series_Len_At(v), OPT_ENC_RAW);
+        Prin_OS_String(Cell_Blob_Head(v), Cell_Series_Len_At(v), OPT_ENC_RAW);
     }
     else if (Is_Char(v)) {
         //
@@ -146,10 +146,10 @@ DECLARE_NATIVE(write_stdout)
 
         Size offset;
         Size size;
-        Blob* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
+        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
         Push_GC_Guard(temp);
 
-        Prin_OS_String(Blob_At(temp, offset), size, OPT_ENC_0);
+        Prin_OS_String(Binary_At(temp, offset), size, OPT_ENC_0);
 
         Drop_GC_Guard(temp);
     }

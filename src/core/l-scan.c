@@ -434,12 +434,12 @@ static const Byte *Scan_Quote_Push_Mold(
         switch (chr) {
 
         case 0:
-            Term_Blob(mo->series);
+            Term_Binary(mo->series);
             return nullptr; // Scan_state shows error location.
 
         case '^':
             if ((src = Scan_UTF8_Char_Escapable(&chr, src)) == nullptr) {
-                Term_Blob(mo->series);
+                Term_Binary(mo->series);
                 return nullptr;
             }
             --src;
@@ -460,7 +460,7 @@ static const Byte *Scan_Quote_Push_Mold(
             // fall thru
         case LF:
             if (term == '"') {
-                Term_Blob(mo->series);
+                Term_Binary(mo->series);
                 return nullptr;
             }
             lines++;
@@ -470,7 +470,7 @@ static const Byte *Scan_Quote_Push_Mold(
         default:
             if (chr >= 0x80) {
                 if ((src = Back_Scan_UTF8_Char(&chr, src, nullptr)) == nullptr) {
-                    Term_Blob(mo->series);
+                    Term_Binary(mo->series);
                     return nullptr;
                 }
             }
@@ -485,7 +485,7 @@ static const Byte *Scan_Quote_Push_Mold(
         if (Flex_Len(mo->series) + 4 >= Flex_Rest(mo->series)) // incl term
             Extend_Flex(mo->series, 4);
 
-        REBLEN encoded_len = Encode_UTF8_Char(Blob_Tail(mo->series), chr);
+        REBLEN encoded_len = Encode_UTF8_Char(Binary_Tail(mo->series), chr);
         Set_Flex_Len(mo->series, Flex_Len(mo->series) + encoded_len);
     }
 
@@ -493,7 +493,7 @@ static const Byte *Scan_Quote_Push_Mold(
 
     ss->line += lines;
 
-    Term_Blob(mo->series);
+    Term_Binary(mo->series);
     return src;
 }
 
@@ -582,14 +582,14 @@ const Byte *Scan_Item_Push_Mold(
         if (Flex_Len(mo->series) + 4 >= Flex_Rest(mo->series)) // incl term
             Extend_Flex(mo->series, 4);
 
-        REBLEN encoded_len = Encode_UTF8_Char(Blob_Tail(mo->series), c);
+        REBLEN encoded_len = Encode_UTF8_Char(Binary_Tail(mo->series), c);
         Set_Flex_Len(mo->series, Flex_Len(mo->series) + encoded_len);
     }
 
     if (*bp != '\0' and *bp == opt_term)
         ++bp;
 
-    Term_Blob(mo->series);
+    Term_Binary(mo->series);
 
     return bp;
 }
@@ -2862,7 +2862,7 @@ DECLARE_NATIVE(transcode)
         &ss,
         filename,
         start_line,
-        Cell_Binary_At(source),
+        Cell_Blob_At(source),
         Cell_Series_Len_At(source)
     );
 
@@ -2890,17 +2890,17 @@ DECLARE_NATIVE(transcode)
     if (REF(next3) and TOP_INDEX != base) {
         Copy_Cell(OUT, ARG(source));  // result will be new position
         if (Is_Text(ARG(source))) {
-            assert(ss.end <= Cell_Binary_Tail(source));
-            assert(ss.end >= Cell_Binary_Head(source));
+            assert(ss.end <= Cell_Blob_Tail(source));
+            assert(ss.end >= Cell_Blob_Head(source));
             assert(VAL_INDEX(source) == 0);  // binary converted
-            Byte* bp = Cell_Binary_Head(source);
+            Byte* bp = Cell_Blob_Head(source);
             for (; bp < ss.end; ++bp) {
                 if (not Is_Continuation_Byte(*bp))
                     ++VAL_INDEX(OUT);  // bump ahead for each utf8 codepoint
             }
         }
         else {
-            VAL_INDEX(OUT) = ss.end - Cell_Binary_Head(OUT);  // binary advance
+            VAL_INDEX(OUT) = ss.end - Cell_Blob_Head(OUT);  // binary advance
         }
     }
 
