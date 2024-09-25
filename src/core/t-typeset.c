@@ -282,10 +282,16 @@ void Set_Parameter_Spec(
             heart == REB_TYPE_WORD
             or heart == REB_TYPE_PATH or heart == REB_TYPE_TUPLE
         ){
-            lookup = Lookup_Word_May_Fail(Ensure_Element(lookup), SPECIFIED);
-            if (not Is_Action(lookup))
+            const Value* slot;
+            Option(Context*) error = Trap_Lookup_Word(
+                &slot, Ensure_Element(lookup), SPECIFIED
+            );
+            if (error)
+                fail (unwrap error);
+            if (not Is_Action(slot))
                 fail ("TYPE-WORD! must look up to an action for now");
             heart = REB_FRAME;
+            lookup = slot;
             goto handle_predicate;
         }
         else if (heart == REB_FRAME and QUOTE_BYTE(lookup) == ANTIFORM_0) {

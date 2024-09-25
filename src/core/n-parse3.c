@@ -405,10 +405,10 @@ static const Element* Get_Parse_Value(
         if (VAL_CMD(rule))  // includes Is_Bar()...also a "command"
             return rule;
 
-        Get_Word_May_Fail(sink, rule, specifier);
+        Get_Var_May_Fail(sink, rule, specifier);
     }
     else if (Is_Tuple(rule)) {
-        Get_Var_May_Fail(sink, rule, specifier, false);
+        Get_Var_May_Fail(sink, rule, specifier);
     }
     else
         return rule;
@@ -634,8 +634,7 @@ static REBIXO Parse_One_Rule(
             break;  // fall through to direct match
 
           case REB_THE_WORD: {
-            bool any = false;
-            Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER, any);
+            Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER);
             rule = Ensure_Element(SPARE);
             break; }  // all through to direct match
 
@@ -668,8 +667,7 @@ static REBIXO Parse_One_Rule(
         assert(Any_String_Kind(P_HEART) or P_HEART == REB_BINARY);
 
         if (Is_The_Word(rule)) {
-            bool any = false;
-            Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER, any);
+            Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER);
             if (Is_Antiform(SPARE))
                 fail (Error_Bad_Antiform(SPARE));
             rule = cast(Element*, SPARE);
@@ -810,9 +808,7 @@ static REBIXO To_Thru_Block_Rule(
                         fail (Error_Parse3_Rule());
                 }
                 else {
-                    Get_Word_May_Fail(cell, rule, P_RULE_SPECIFIER);
-                    if (Is_Antiform(cell))
-                        fail (Error_Bad_Antiform(cell));
+                    Get_Var_May_Fail(cell, rule, P_RULE_SPECIFIER);
                     rule = cast(Element*, cell);
                 }
             }
@@ -1053,8 +1049,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             Unquotify(temp, 1);
         }
         else if (Is_The_Word(rule)) {
-            bool any = false;
-            Get_Var_May_Fail(temp, rule, P_RULE_SPECIFIER, any);
+            Get_Var_May_Fail(temp, rule, P_RULE_SPECIFIER);
         }
         else if (Is_Type_Word(rule) or Is_Type_Block(rule)) {
             Init_Matcher(temp, rule);
@@ -1085,8 +1080,7 @@ static REBIXO To_Thru_Non_Block_Rule(
     }
     else {
         if (Is_The_Word(rule)) {
-            bool any = false;
-            Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER, any);
+            Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER);
             rule = Ensure_Element(SPARE);
         }
     }
@@ -1166,7 +1160,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
 
     Kind k = VAL_TYPE(rule);
     if (k == REB_WORD or k == REB_GET_WORD or k == REB_TUPLE) {
-        Get_Var_May_Fail(SPARE, rule, specifier, false);
+        Get_Var_May_Fail(SPARE, rule, specifier);
         if (Is_Antiform(SPARE))
             fail (Error_Bad_Antiform(SPARE));
         rule = cast(Element*, SPARE);
@@ -1737,7 +1731,7 @@ DECLARE_NATIVE(subparse)
         }
     }
     else if (Is_Tuple(rule)) {
-        Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER, false);
+        Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER);
         if (Is_Antiform(SPARE))
             fail (Error_Bad_Antiform(SPARE));
         rule = cast(Element*, Copy_Cell(P_SAVE, stable_SPARE));

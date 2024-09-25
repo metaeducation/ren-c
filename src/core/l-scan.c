@@ -3053,14 +3053,15 @@ DECLARE_NATIVE(transcode)
     else
         file = ANONYMOUS;
 
-    const Value* line_number;
+    Value* line_number = ARG(return);  // use as scratch space
     if (Any_Word(ARG(line)))
-        line_number = Lookup_Word_May_Fail(
+        Get_Var_May_Fail(
+            line_number,
             cast(Element*, ARG(line)),
             SPECIFIED
         );
     else
-        line_number = ARG(line);
+        Copy_Cell(line_number, ARG(line));
 
     LineNumber start_line;
     if (Is_Nulled(line_number)) {

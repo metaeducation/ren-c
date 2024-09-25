@@ -264,7 +264,9 @@ bool Typecheck_Atom_Core(
             or VAL_TYPE_UNCHECKED(item) == REB_TYPE_WORD
         ){
             label = Cell_Word_Symbol(item);
-            test = Lookup_Word_May_Fail(item, derived);
+            Option(Context*) error = Trap_Lookup_Word(&test, item, derived);
+            if (error)
+                fail (unwrap error);
             kind = VAL_TYPE(test);  // e.g. TYPE-BLOCK! <> BLOCK!
         }
         else {

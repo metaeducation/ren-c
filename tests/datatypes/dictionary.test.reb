@@ -151,7 +151,7 @@
         m.(null): 1020
     )
 
-    ~expect-arg~ !! (
+    ~bad-antiform~ !! (
         m: make map! []
         m.(spread [a b c]): 1020
     )

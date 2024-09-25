@@ -475,7 +475,7 @@ INLINE Option(Context*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
         if (trap)
             return trap;
 
-        Sigil sigil = Sigil_Of_Kind(sequence_heart);
+        Sigil sigil = maybe Sigil_Of_Kind(sequence_heart);
         if (not sigil)  // just wanted a plain pa/th or tu.p.le
             return nullptr;  // let the item just decay to itself as-is
 

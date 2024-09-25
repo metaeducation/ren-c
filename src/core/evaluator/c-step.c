@@ -697,11 +697,9 @@ Bounce Stepper_Executor(Level* L)
       word_common: ///////////////////////////////////////////////////////////
 
       case REB_WORD: {
-        /*if (not L_current_gotten)
-            L_current_gotten = Lookup_Word_May_Fail(L_current, L_specifier); */
-
-        const bool any = false;
-        Get_Var_May_Fail(OUT, L_current, L_specifier, any);
+        Option(Context*) error = Trap_Get_Any_Word(OUT, L_current, L_specifier);
+        if (error)
+            fail (unwrap error);  // else could conflate with function result
 
         if (Is_Action(OUT)) {
             Action* action = VAL_ACTION(OUT);
@@ -863,16 +861,19 @@ Bounce Stepper_Executor(Level* L)
     // https://forum.rebol.info/t/1301
 
       case REB_META_WORD:
-      case REB_GET_WORD:
-        if (not L_current_gotten)
-            L_current_gotten = Lookup_Word_May_Fail(L_current, L_specifier);
-
-        Copy_Cell(OUT, unwrap L_current_gotten);
+      case REB_GET_WORD: {
+        Option(Context*) error = Trap_Get_Any_Word_Maybe_Vacant(
+            OUT,
+            L_current,
+            L_specifier
+        );
+        if (error)
+            fail (unwrap error);
 
         if (STATE == REB_META_WORD)
             Meta_Quotify(OUT);
 
-        goto lookahead;
+        goto lookahead; }
 
 
     //=//// GROUP!, GET-GROUP!, and META-GROUP! ///////////////////////////=//
@@ -943,19 +944,21 @@ Bounce Stepper_Executor(Level* L)
             goto lookahead;
         }
 
-        if (Get_Var_Core_Throws(OUT, GROUPS_OK, L_current, L_specifier))
-            goto return_thrown;
-
-        if (Is_Antiform(OUT)) {
-            if (Is_Raised(OUT))
-                break;  // tuple access can raise definitional errors
-
-            if (Is_Action(OUT))
-                fail ("Can't fetch actions (FRAME! antiform) with TUPLE!");
-
-            if (Any_Vacancy(stable_OUT))
-                fail (Error_Bad_Word_Get(L_current, stable_OUT));
+        Option(Context*) error = Trap_Get_Tuple(  // vacant will cause error
+            OUT,
+            GROUPS_OK,
+            L_current,
+            L_specifier
+        );
+        if (error) {  // tuples never run actions, won't conflate to raise it
+            Init_Error(OUT, unwrap error);
+            Raisify(OUT);
+            goto lookahead;  // e.g. EXCEPT might want error
         }
+
+        if (Is_Action(OUT))  // don't conflate with NOT-FOUND for TRY
+            fail ("Can't fetch actions (FRAME! antiform) with TUPLE!");
+
         goto lookahead; }
 
 
@@ -968,14 +971,54 @@ Bounce Stepper_Executor(Level* L)
     // usual PICK process, and being able to say that "slashing" is not
     // methodized the way "dotting" is gives some hope of optimizing it.
     //
-    // PATH!s starting with inert values do not evaluate.  `/foo/bar` has a
-    // blank at its head, and it evaluates to itself.
+    // 1. It's likely that paths like 1/2 or otherwise inert-headed will be
+    //    inert and evaluate to themselves.
+    //
+    // 2. Slash at head will signal running actions soon enough.  But for the
+    //    moment it is still refinement.  Let's try not binding it by default
+    //    just to see what headaches that causes...if any.
+    //
+    // 3. It would not make sense to return a definitional error when a path
+    //    lookup does not exist.  Imagine making null back for `try lib/append`
+    //    if you wrote `try lib/append [a b c] [d e]` when lib/append did not
+    //    exist--that's completely broken.
+    //
+    // 4. Since paths with trailing slashes just return the action as-is, it's
+    //    an arity-0 operation.  So returning a definitional error isn't
+    //    complete nonsense, but still might not be great.  Review the choice.
+    //
+    // 5. Trailing slash notation is a particularly appealing way of denoting
+    //    that something is an action, and that you'd like to fetch it in a
+    //    way that does not take arguments:
+    //
+    //         for-next: specialize for-skip/ [skip: 1]
+    //         ;                         ---^
+    //         ; slash helps show block is not argument
+    //
+    // 6. The left hand side does not look ahead at paths to find enfix
+    //    functions.  This is because PATH! dispatch is costly and can error
+    //    in more ways than sniffing a simple WORD! for enfix can.  So the
+    //    prescribed way of running enfix with paths is `left ->- right/side`,
+    //    which uses an infix WORD! to mediate the interaction.
 
       path_common:
       case REB_PATH: {
+        bool slash_at_head;
         Copy_Sequence_At(SPARE, L_current, 0);
         if (Any_Inert(SPARE)) {
-            Derelativize(OUT, L_current, L_specifier);
+            if (Is_Blank(SPARE))
+                slash_at_head = true;  // leading slash means run action
+            else {
+                Derelativize(OUT, L_current, L_specifier);  // inert [2]
+                goto lookahead;
+            }
+        }
+        else
+            slash_at_head = false;
+
+        if (slash_at_head) {  // refinement behavior (for now)
+            /* Derelativize(OUT, L_current, L_specifier); */  // inert [2]
+            Copy_Cell(OUT, L_current);  // try unbound (for now)
             goto lookahead;
         }
 
@@ -983,27 +1026,23 @@ Bounce Stepper_Executor(Level* L)
         Copy_Sequence_At(SPARE, L_current, len - 1);
         bool slash_at_tail = Is_Blank(SPARE);
 
-        if (Get_Path_Push_Refinements_Throws(
+        Option(Context*) error = Trap_Get_Path_Push_Refinements(
             OUT,  // where to write action
             SPARE,  // temporary GC-safe scratch space
             L_current,
             L_specifier
-        )){
-            goto return_thrown;
+        );
+        if (error) {  // lookup failed, a GROUP! in path threw, etc.
+            if (not slash_at_tail)
+                fail (unwrap error);  // definitional error would conflate [3]
+            fail (unwrap error);  // don't definitional error for now [4]
         }
 
         assert(Is_Action(OUT));
         if (slash_at_tail)
-            goto lookahead;  // do not run action, just return it
+            goto lookahead;  // do not run action, just return it [5]
 
-        // PATH! dispatch is costly and can error in more ways than WORD!:
-        //
-        //     e: trap [eval transcode ":a"] e.id = 'not-bound
-        //                                   ^-- not ready @ lookahead
-        //
-        // Plus with GROUP!s in a path, their evaluations can't be undone.
-        //
-        if (Is_Enfixed(OUT)) {
+        if (Is_Enfixed(OUT)) {  // too late, left already evaluated [6]
             Drop_Data_Stack_To(BASELINE->stack_base);
             fail ("Use `->-` to shove left enfix operands into PATH!s");
         }
@@ -1148,16 +1187,25 @@ Bounce Stepper_Executor(Level* L)
     // the plain (unfriendly) forms.
 
       case REB_META_TUPLE:
-      case REB_GET_TUPLE:
-        if (Get_Var_Core_Throws(OUT, GROUPS_OK, L_current, L_specifier))
-            goto return_thrown;
+      case REB_GET_TUPLE: {
+        Option(Context*) error = Trap_Get_Tuple_Maybe_Vacant(
+            OUT,
+            GROUPS_OK,
+            L_current,
+            L_specifier
+        );
+        if (error) {
+            Init_Error(OUT, unwrap error);
+            Raisify(OUT);
+            goto lookahead;  // e.g. EXCEPT might want to see raised error
+        }
 
         if (STATE == REB_META_PATH or STATE == REB_META_TUPLE)
             Meta_Quotify(OUT);
         else
             assert(STATE == REB_GET_TUPLE);
 
-        goto lookahead;
+        goto lookahead; }
 
 
     //=//// GET-BLOCK! ////////////////////////////////////////////////////=//

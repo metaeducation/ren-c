@@ -23,52 +23,55 @@
 ; DATATYPE!s and type checking work...)
 [(
     all [  ; try with no RETURN:
-        foo: func ["description" a "a" b "b"] []
-        m: adjunct-of :foo
+        foo: meta/lite func ["description" a "a" b "b"] []
+        m: adjunct-of foo
         m.description = "description"
-        (select :foo 'return).spec = null
-        (select :foo 'return).text = null
-        (select :foo 'a).spec = null
-        (select :foo 'a).text = "a"
-        (select :foo 'b).spec = null
-        (select :foo 'b).text = "b"
+        (unquasi ^foo.return).spec = null
+        (unquasi ^foo.return).text = null
+        (unquasi ^foo.a).spec = null
+        (unquasi ^foo.a).text = "a"
+        (unquasi ^foo.b).spec = null
+        (unquasi ^foo.b).text = "b"
     ]
 )(
     all [  ; try RETURN: with no type
-        foo: func ["description" return: "returns" a "a" b "b"] []
-        m: adjunct-of :foo
+        foo: meta/lite func ["description" return: "returns" a "a" b "b"] []
+        m: adjunct-of foo
         m.description = "description"
-        (select :foo 'return).spec = null
-        (select :foo 'return).text = "returns"
-        (select :foo 'a).spec = null
-        (select :foo 'a).text = "a"
-        (select :foo 'b).spec = null
-        (select :foo 'b).text = "b"
+        (unquasi ^foo.return).spec = null
+        (unquasi ^foo.return).text = "returns"
+        (unquasi ^foo.a).spec = null
+        (unquasi ^foo.a).text = "a"
+        (unquasi ^foo.b).spec = null
+        (unquasi ^foo.b).text = "b"
     ]
 )(
     all [  ; try RETURN: with type
-        foo: func ["description" return: [integer!] "returns" a "a" b "b"] []
-        m: adjunct-of :foo
+        foo: meta/lite func [
+            "description" return: [integer!] "returns" a "a" b "b"
+        ][
+        ]
+        m: adjunct-of foo
         m.description = "description"
-        (select :foo 'return).spec = [integer!]
-        (select :foo 'return).text = "returns"
-        (select :foo 'a).spec = null
-        (select :foo 'a).text = "a"
-        (select :foo 'b).spec = null
-        (select :foo 'b).text = "b"
+        (unquasi ^foo.return).spec = [integer!]
+        (unquasi ^foo.return).text = "returns"
+        (unquasi ^foo.a).spec = null
+        (unquasi ^foo.a).text = "a"
+        (unquasi ^foo.b).spec = null
+        (unquasi ^foo.b).text = "b"
     ]
 )(
     all [  ; try without description
-        foo: func [return: [integer!] "returns" a "a" /b "b"] []
-        if m: adjunct-of :foo [
+        foo: meta/lite func [return: [integer!] "returns" a "a" /b "b"] []
+        if m: adjunct-of foo [
             m.description = null
         ]
-        (select :foo 'return).spec = [integer!]
-        (select :foo 'return).text = "returns"
-        (select :foo 'a).spec = null
-        (select :foo 'a).text = "a"
-        (select :foo 'b).spec = null
-        (select :foo 'b).text = "b"
+        (unquasi ^foo.return).spec = [integer!]
+        (unquasi ^foo.return).text = "returns"
+        (unquasi ^foo.a).spec = null
+        (unquasi ^foo.a).text = "a"
+        (unquasi ^foo.b).spec = null
+        (unquasi ^foo.b).text = "b"
     ]
 )]
 

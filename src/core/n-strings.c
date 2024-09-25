@@ -162,8 +162,7 @@ DECLARE_NATIVE(delimit)
         }
         else if (Any_The_Value(item)) {  // fetch and mold
             if (Is_The_Word(item) or Is_The_Tuple(item)) {
-                bool any = false;
-                Get_Var_May_Fail(OUT, item, Level_Specifier(L), any);
+                Get_Var_May_Fail(OUT, item, Level_Specifier(L));
             }
             else if (Is_The_Group(item)) {
                 if (Eval_Any_List_At_Throws(

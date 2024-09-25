@@ -392,49 +392,53 @@ INLINE Context* VAL_WORD_CONTEXT(const Value* v) {
 // because one instance is.  This is not one of the flags included in the
 // CELL_MASK_COPY, so it shouldn't be able to leak out of the varlist.
 //
-// The Lookup_Word_May_Fail() function takes the conservative default that
+// The Trap_Lookup_Word() function takes the conservative default that
 // only const access is needed.  A const pointer to a Value is given back
 // which may be inspected, but the contents not modified.  While a bound
 // variable that is not currently set will return an antiform void value,
-// Lookup_Word_May_Fail() on an *unbound* word will raise an error.
+// Trap_Lookup_Word() on an *unbound* word return an error.
 //
 // Lookup_Mutable_Word_May_Fail() offers a parallel facility for getting a
 // non-const Value back.  It will fail if the variable is either unbound
 // -or- marked with OPT_TYPESET_LOCKED to protect against modification.
 //
 
-INLINE const Value* Lookup_Word_May_Fail(
-    const Element* any_word,
+INLINE Option(Context*) Trap_Lookup_Word(
+    const Value** out,
+    const Element* word,
     Specifier* specifier
 ){
     REBLEN index;
     Flex* f = maybe Get_Word_Container(
         &index,
-        any_word,
+        word,
         specifier,
         ATTACH_READ
     );
     if (not f)
-        fail (Error_Not_Bound_Raw(any_word));
+        return Error_Not_Bound_Raw(word);
     if (index == INDEX_ATTACHED)
-        fail (Error_Unassigned_Attach_Raw(any_word));
+        return Error_Unassigned_Attach_Raw(word);
 
-    if (Is_Stub_Let(f) or Is_Stub_Patch(f))
-        return Stub_Cell(f);
+    if (Is_Stub_Let(f) or Is_Stub_Patch(f)) {
+        *out = Stub_Cell(f);
+        return nullptr;
+    }
 
     Assert_Node_Accessible(f);
     Context* c = cast(Context*, f);
-    return CTX_VAR(c, index);
+    *out = CTX_VAR(c, index);
+    return nullptr;
 }
 
 INLINE Option(const Value*) Lookup_Word(
-    const Element* any_word,
+    const Element* word,
     Specifier* specifier
 ){
     REBLEN index;
     Flex* f = maybe Get_Word_Container(
         &index,
-        any_word,
+        word,
         specifier,
         ATTACH_READ
     );
@@ -446,18 +450,6 @@ INLINE Option(const Value*) Lookup_Word(
     Assert_Node_Accessible(f);
     Context* c = cast(Context*, f);
     return CTX_VAR(c, index);
-}
-
-INLINE const Value* Get_Word_May_Fail(
-    Sink(Value*) out,
-    const Element* any_word,
-    Specifier* specifier
-){
-    const Value* var = Lookup_Word_May_Fail(any_word, specifier);
-    if (Any_Vacancy(var))
-        fail (Error_Bad_Word_Get(any_word, var));
-
-    return Copy_Cell(out, var);
 }
 
 INLINE Value* Lookup_Mutable_Word_May_Fail(

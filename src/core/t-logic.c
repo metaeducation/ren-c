@@ -316,7 +316,7 @@ INLINE bool Do_Logic_Right_Side_Throws(
 
     assert(Is_Word(right) or Is_Tuple(right));
 
-    Get_Var_May_Fail(out, right, SPECIFIED, false);
+    Get_Var_May_Fail(out, right, SPECIFIED);
 
     if (Is_Action(out))
         fail ("words/tuples can't be action as right hand of OR, AND, XOR");

@@ -1517,8 +1517,14 @@ DECLARE_NATIVE(default)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Get_Var_Core_Throws(OUT, steps, target, SPECIFIED))  // [1]
-        return THROWN;
+    Option(Context*) error = Trap_Get_Var_Maybe_Vacant(
+        OUT,
+        steps,  // use steps to avoid double-evaluation on GET/SET pair [1]
+        target,
+        SPECIFIED
+    );
+    if (error)
+        fail (unwrap error);
 
     if (not Is_Nulled(predicate)) {
         STATE = ST_DEFAULT_RUNNING_PREDICATE;

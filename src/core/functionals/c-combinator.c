@@ -717,8 +717,7 @@ static bool Combinator_Param_Hook(
             Value* parser = rebValue(
                 "[@", temp, "]: parsify", rebQ(ARG(state)), ARG(rules)
             );
-            bool any = false;
-            Get_Var_May_Fail(ARG(rules), temp, SPECIFIED, any);
+            Get_Var_May_Fail(ARG(rules), temp, SPECIFIED);
             Copy_Cell(var, parser);
             rebRelease(parser);
         }

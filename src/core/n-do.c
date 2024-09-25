@@ -134,8 +134,7 @@ DECLARE_NATIVE(shove)
         Get_Var_May_Fail(
             OUT,  // can't eval directly into arg slot
             At_Level(L),
-            Level_Specifier(L),
-            false
+            Level_Specifier(L)
         );
         Move_Cell(shovee, stable_OUT);  // variable contents always stable
     }
@@ -913,8 +912,11 @@ DECLARE_NATIVE(_s_s)  // [_s]lash [_s]lash (see TO-C-NAME)
 
     Element* operation = cast(Element*, ARG(operation));
 
-    if (Get_Var_Core_Throws(SPARE, GROUPS_OK, operation, SPECIFIED))
-        fail (Error_No_Catch_For_Throw(LEVEL));
+    Option(Context*) error = Trap_Get_Var(
+        SPARE, GROUPS_OK, operation, SPECIFIED
+    );
+    if (error)
+        fail (unwrap error);
 
     if (not Is_Action(SPARE) and not Is_Frame(SPARE))
         fail (SPARE);

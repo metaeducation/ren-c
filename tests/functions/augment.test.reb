@@ -77,13 +77,13 @@
 [(
     all [
         orig: func ["description" a "a" /b "b"] [return <unused>]
-        aug: augment :orig [c "c" /d "d"]
-        if m: adjunct-of :aug [
+        aug: meta/lite augment orig/ [c "c" /d "d"]
+        if m: adjunct-of aug [
             m.description = null  ; description not inherited ATM
         ]
-        (select :aug 'a).text = "a"
-        (select :aug 'b).text = "b"
-        (select :aug 'c).text = "c"
-        (select :aug 'd).text = "d"
+        (unquasi ^aug.a).text = "a"
+        (unquasi ^aug.b).text = "b"
+        (unquasi ^aug.c).text = "c"
+        (unquasi ^aug.d).text = "d"
     ]
 )]

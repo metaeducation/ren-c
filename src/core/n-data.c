@@ -706,210 +706,134 @@ DECLARE_NATIVE(set_accessor)
 }
 
 
+// This is the core implementation of Trap_Get_Any_Word(), that allows being
+// called on "wordlike" sequences (like `.a` or `a/`).  But it should really
+// only be called by things like Trap_Get_Any_Tuple(), because there are no
+// special adjustments for sequences like `.a`
 //
-//  Get_Var_Push_Refinements_Throws: C
-//
-bool Get_Var_Push_Refinements_Throws(
+static Option(Context*) Trap_Get_Any_Wordlike_Maybe_Vacant(
     Sink(Value*) out,
-    Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
-    const Element* var,
+    const Element* word,  // sigils ignored (META-WORD! doesn't "meta-get")
+    Specifier* var_specifier  // context for `.xxx` tuples not adjusted
+){
+    assert(Any_Wordlike(word));
+
+    const Value* lookup;
+    Option(Context*) error = Trap_Lookup_Word(&lookup, word, var_specifier);
+    if (error)
+        return error;
+
+    if (not (lookup->header.bits & CELL_FLAG_VAR_NOTE_ACCESSOR)) {
+        Copy_Cell(out, lookup);  // non-accessor variable, just plain value
+        return nullptr;
+    }
+
+    assert(HEART_BYTE(lookup) == REB_FRAME);  // alias accessors as WORD! ?
+    assert(QUOTE_BYTE(lookup) == ANTIFORM_0);
+
+    DECLARE_ELEMENT (accessor);
+    Push_GC_Guard(accessor);
+    accessor->header.bits |= (
+        NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
+        | (lookup->header.bits & CELL_MASK_COPY & (~ NODE_FLAG_FREE))
+    );
+    accessor->extra = lookup->extra;
+    accessor->payload = lookup->payload;
+    QUOTE_BYTE(accessor) = NOQUOTE_1;
+
+    bool threw = rebRunThrows(out, accessor);  // run accessor as GET
+    Drop_GC_Guard(accessor);
+    if (threw)
+        return Error_No_Catch_For_Throw(TOP_LEVEL);
+    return nullptr;
+}
+
+
+//
+//  Trap_Get_Any_Word: C
+//
+// This is the "high-level" chokepoint for looking up a word and getting a
+// value from it.  If the word is bound to a "getter" slot, then this will
+// actually run a function to retrieve the value.  For that reason, almost
+// all code should be going through this layer (or higher) when fetching an
+// ANY-WORD! variable.
+//
+Option(Context*) Trap_Get_Any_Word(
+    Sink(Value*) out,
+    const Element* word,  // sigils ignored (META-WORD! doesn't "meta-get")
     Specifier* var_specifier
 ){
-    assert(var != cast(Cell*, out));
-    assert(steps_out != out);  // Legal for SET, not for GET
+    Option(Context*) error = Trap_Get_Any_Wordlike_Maybe_Vacant(
+        out,
+        word,
+        var_specifier
+    );
+    if (error)
+        return error;
 
-    if (Any_Word(var)) {  // META-WORD! is not META'd, all act the same
+    if (Any_Vacancy(out))
+        return Error_Bad_Word_Get(word, out);
 
-      get_source:  // Note: source may be `out`, due to GROUP fetch above!
+    return nullptr;
+}
 
-        if (steps_out and steps_out != GROUPS_OK) {
-            //
-            // set the steps out *first* before overwriting out
-            //
-            Derelativize(unwrap steps_out, var, var_specifier);
-            HEART_BYTE(unwrap steps_out) = REB_THE_WORD;
-        }
 
-        const Value* lookup = Lookup_Word_May_Fail(
-            c_cast(Element*, var),
-            var_specifier
-        );
+//
+//  Trap_Get_Any_Word_Maybe_Vacant: C
+//
+// High-level: see notes on Trap_Get_Any_Word().  This version just gives back
+// "nothing" (antiform blank) or "tripwire" (antiform tag) vs. give an error.
+//
+Option(Context*) Trap_Get_Any_Word_Maybe_Vacant(
+    Sink(Value*) out,
+    const Element* word,  // sigils ignored (META-WORD! doesn't "meta-get")
+    Specifier* var_specifier
+){
+    assert(Any_Word(word));
+    return Trap_Get_Any_Wordlike_Maybe_Vacant(out, word, var_specifier);
+}
 
-        if (not (lookup->header.bits & CELL_FLAG_VAR_NOTE_ACCESSOR)) {
-            Copy_Cell(out, lookup);
-            return false;
-        }
 
-        assert(HEART_BYTE(lookup) == REB_FRAME);
-        assert(QUOTE_BYTE(lookup) == ANTIFORM_0);
-
-        DECLARE_ATOM (accessor);
-        Push_GC_Guard(accessor);
-        accessor->header.bits |= (
-            NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
-            | (lookup->header.bits & CELL_MASK_COPY & (~ NODE_FLAG_FREE))
-        );
-        accessor->extra = lookup->extra;
-        accessor->payload = lookup->payload;
-        QUOTE_BYTE(accessor) = NOQUOTE_1;
-
-        bool threw = rebRunThrows(out, accessor);  // run accessor as GET
-        Drop_GC_Guard(accessor);
-        return threw;
-    }
-
-    if (Any_Path(var)) {  // META-PATH! is not META'd, all act the same
-        DECLARE_ATOM (safe);
-        Push_GC_Guard(safe);
-        DECLARE_ATOM (result);
-        Push_GC_Guard(result);
-
-        bool threw = Get_Path_Push_Refinements_Throws(
-            result,
-            safe,
-            c_cast(Element*, var),
-            var_specifier  // var may be in `out`
-        );
-        Drop_GC_Guard(result);
-        Drop_GC_Guard(safe);
-
-        if (steps_out and steps_out != GROUPS_OK)
-            Init_Nothing(unwrap steps_out);  // !!! What to return?
-
-        Move_Cell(out, Decay_If_Unstable(result));
-        return threw;
-    }
-
-    StackIndex base = TOP_INDEX;
-
-    if (Any_Tuple(var)) {
-        if (Not_Cell_Flag(var, SEQUENCE_HAS_NODE))  // byte compressed
-            fail (var);
-
-        const Node* node1 = Cell_Node1(var);
-        if (Is_Node_A_Cell(node1)) { // pair compressed
-            // is considered "Listlike", can answer Cell_List_At()
-        }
-        else switch (Stub_Flavor(x_cast(Flex*, node1))) {
-          case FLAVOR_SYMBOL: {
-            if (Not_Cell_Flag(var, REFINEMENT_LIKE))  // `a.`
-                goto get_source;
-
-            // search specifier path for first FRAME!
-            //
-            Specifier* specifier = var_specifier;
-            for (; specifier != nullptr; specifier = NextVirtual(specifier)) {
-                Context* ctx_frame;
-                if (Is_Stub_Varlist(specifier)) {  // ordinary FUNC specifier
-                    ctx_frame = cast(Context*, specifier);
-                    if (CTX_TYPE(ctx_frame) != REB_FRAME)
-                        continue;
-                }
-                else if (Is_Stub_Use(specifier)) {  // e.g. LAMBDA or DOES uses this
-                    if (not Is_Frame(Stub_Cell(specifier)))
-                        continue;
-                    ctx_frame = VAL_CONTEXT(Stub_Cell(specifier));
-                }
-                else
-                    continue;
-
-                Level* level = CTX_LEVEL_IF_ON_STACK(ctx_frame);
-                if (not level)
-                    fail (".field access only in running functions");
-                Context* context = maybe Level_Coupling(level);
-                if (not context)
-                    fail (".field object used on frame with no coupling");
-
-                REBLEN len = Find_Symbol_In_Context(
-                    CTX_ARCHETYPE(context),
-                    x_cast(Symbol*, node1),
-                    true
-                );
-                if (len == 0)
-                    fail (".field name not found in coupled object");
-
-                Copy_Cell(out, CTX_VAR(context, len));
-
-                if (Is_Action(out))  // if method in object, tell it object
-                    Tweak_Cell_Frame_Coupling(out, context);
-
-                return false;
-            }
-
-            fail ("No self object to use with .field style access"); }
-
-          case FLAVOR_ARRAY:
-            break;
-
-          default:
-            panic (var);
-        }
-
-        const Element* tail;
-        const Element* head = Cell_List_At(&tail, var);
-        const Element* at;
-        Specifier* at_specifier = Derive_Specifier(var_specifier, var);
-        for (at = head; at != tail; ++at) {
-            if (Is_Group(at)) {
-                if (not steps_out)
-                    fail (Error_Bad_Get_Group_Raw(var));
-
-              blockscope {
-                Atom* atom_out = out;
-                if (Eval_Any_List_At_Throws(atom_out, at, at_specifier)) {
-                    Drop_Data_Stack_To(base);
-                    return true;
-                }
-                Decay_If_Unstable(atom_out);
-              }
-
-                Move_Cell(PUSH(), out);
-
-                // By convention, picker steps quote the first item if it was a
-                // GROUP!.  It has to be somehow different because `('a).b` is
-                // trying to pick B out of the WORD! a...not out of what is
-                // fetched from A.  So if the convention is that the first item
-                // of a "steps" block needs to be "fetched" we quote it.
-                //
-                if (at == head)
-                    Meta_Quotify(TOP);
-            }
-            else
-                Derelativize(PUSH(), at, at_specifier);
-        }
-    }
-    else if (Is_The_Block(var)) {
-        Specifier* at_specifier = Derive_Specifier(var_specifier, var);
-        const Element* tail;
-        const Element* head = Cell_List_At(&tail, var);
-        const Element* at;
-        for (at = head; at != tail; ++at)
-            Derelativize(PUSH(), at, at_specifier);
-    }
-    else
-        fail (var);
-
+//
+//  Trap_Get_From_Steps_On_Stack_Maybe_Vacant: C
+//
+// The GET and SET operations are able to tolerate /GROUPS, whereby you can
+// run somewhat-arbitrary code that appears in groups in tuples.  This can
+// mean that running GET on something and then SET on it could run that code
+// twice.  If you want to avoid that, a sequence of /STEPS can be requested
+// that can be used to find the same location after initially calculating
+// the groups, without doubly evaluating.
+//
+// This is a common service routine used for both tuples and "step lists",
+// which uses the stack (to avoid needing to generate an intermediate array
+// in the case evaluations were performed).
+//
+Option(Context*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
+    Sink(Value*) out,
+    StackIndex base
+){
     StackIndex stackindex = base + 1;
 
   blockscope {
     StackValue(*) at = Data_Stack_At(stackindex);
-    if (Is_Quoted(at) or Is_Quasiform(at)) {
+    assert(not Is_Antiform(at));
+    if (Is_Quoted(at)) {
         Copy_Cell(out, at);
-        Meta_Unquotify_Known_Stable(out);
-        if (Is_Nulled(out))
-            fail (Error_Need_Non_Null_Raw());
-        if (Is_Void(out))
-            fail (Error_Bad_Void());
+        Unquotify(out, 1);
     }
     else if (Is_Word(at)) {
-        Copy_Cell(
-            out,
-            Lookup_Word_May_Fail(cast(Element*, at), SPECIFIED)
+        const Value* slot;
+        Option(Context*) error = Trap_Lookup_Word(
+            &slot, cast(Element*, at), SPECIFIED
         );
+        if (error)
+            fail (unwrap error);
+        Copy_Cell(out, slot);
     }
     else
         fail (Copy_Cell(out, at));
   }
+
     ++stackindex;
 
     DECLARE_ATOM (temp);
@@ -928,12 +852,180 @@ bool Get_Var_Push_Refinements_Throws(
         )){
             Drop_Data_Stack_To(base);
             Drop_GC_Guard(temp);
-            fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+            return Error_No_Catch_For_Throw(TOP_LEVEL);
         }
+
+        if (Is_Raised(cast(Atom*, out))) {
+            Context* error = VAL_CONTEXT(out);  // extract error
+            bool last_step = (stackindex == TOP_INDEX);
+            Erase_Cell(out);  // suppress assert about unhandled raised error
+
+            Drop_Data_Stack_To(base);  // Note: changes TOP_INDEX
+            Drop_GC_Guard(temp);
+            if (last_step)
+                return error;  // last step, interceptible error
+            fail (error);  // intermediate step, must abrupt fail
+        }
+
+        if (Is_Antiform(cast(Atom*, out)))
+            assert(not Is_Antiform_Unstable(cast(Atom*, out)));
+
         ++stackindex;
     }
 
     Drop_GC_Guard(temp);
+    return nullptr;
+}
+
+
+// Ren-C injects the object from which a function was dispatched in a path
+// into the function call, as something called a "coupling".  This coupling is
+// tied in with the FRAME! for the function call, and can be used as a context
+// to do special lookups in.
+//
+static Specifier* Adjust_Specifier_For_Coupling(Specifier* specifier) {
+    for (; specifier != nullptr; specifier = NextVirtual(specifier)) {
+        Context* ctx_frame;
+        if (Is_Stub_Varlist(specifier)) {  // ordinary FUNC specifier
+            ctx_frame = cast(Context*, specifier);
+            if (CTX_TYPE(ctx_frame) != REB_FRAME)
+                continue;
+        }
+        else if (Is_Stub_Use(specifier)) {  // e.g. LAMBDA or DOES uses this
+            if (not Is_Frame(Stub_Cell(specifier)))
+                continue;
+            ctx_frame = VAL_CONTEXT(Stub_Cell(specifier));
+        }
+        else
+            continue;
+
+        Level* level = CTX_LEVEL_IF_ON_STACK(ctx_frame);
+        if (not level)
+            return Error_User(
+                ".field access only in running functions"
+            );
+        Context* context = maybe Level_Coupling(level);
+        if (not context)
+            return Error_User(
+                ".field object used on frame with no coupling"
+            );
+        return context;
+    }
+    fail (".field access used but no coupling found");
+}
+
+
+//
+//  Trap_Get_Tuple_Maybe_Vacant: C
+//
+// 1. Using a leading dot in a tuple is a cue to look up variables in the
+//    object from which a function was dispatched, so `var` and `.var` can
+//    look up differently inside a function's body.
+//
+Option(Context*) Trap_Get_Tuple_Maybe_Vacant(
+    Sink(Value*) out,
+    Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
+    const Element* tuple,
+    Specifier* tuple_specifier
+){
+    assert(Any_Tuple(tuple));
+
+    if (Not_Cell_Flag(tuple, SEQUENCE_HAS_NODE))  // byte compressed
+        return Error_User("Cannot GET a numeric tuple");
+
+    bool dot_at_head;  // dot at head means look in coupled context
+    DECLARE_ELEMENT (detect);
+    Copy_Sequence_At(detect, tuple, 0);
+    if (Is_Blank(detect))
+        dot_at_head = true;
+    else
+        dot_at_head = false;
+
+    if (dot_at_head)  // avoid adjust if tuple has non-cache binding?
+        tuple_specifier = Adjust_Specifier_For_Coupling(tuple_specifier);
+
+  //=//// HANDLE SIMPLE "WORDLIKE" CASE (.a or a.) ////////////////////////=//
+
+    const Node* node1 = Cell_Node1(tuple);
+    if (Is_Node_A_Cell(node1)) { // pair compressed
+        // is considered "Listlike", can answer Cell_List_At()
+    }
+    else switch (Stub_Flavor(x_cast(Flex*, node1))) {
+      case FLAVOR_SYMBOL: {
+        Option(Context*) error = Trap_Get_Any_Wordlike_Maybe_Vacant(
+            out,
+            tuple,  // optimized representation, like a. or .a
+            tuple_specifier
+        );
+        if (error)
+            return error;
+        if (steps_out and steps_out != GROUPS_OK) {
+            Derelativize(unwrap steps_out, tuple, tuple_specifier);
+            HEART_BYTE(unwrap steps_out) = REB_THE_TUPLE;  // REB_THE_WORD ?
+        }
+        return nullptr; }
+
+      case FLAVOR_ARRAY:
+        break;
+
+      default:
+        panic (tuple);
+    }
+
+  //=//// PUSH PROCESSED TUPLE ELEMENTS TO STACK //////////////////////////=//
+
+    // The tuple may contain GROUP!s that we evaluate.  Rather than process
+    // tuple elements directly, we push their possibly-evaluated elements to
+    // the stack.  This way we can share code with the "sequence of steps"
+    // formulation of tuple processing.
+    //
+    // 1. By convention, picker steps quote the first item if it was a GROUP!.
+    //    It has to be somehow different because `('a).b` is trying to pick B
+    //    out of the WORD! a...not out of what's fetched from A.  So if the
+    //    first item of a "steps" block needs to be "fetched" we ^META it.
+
+    StackIndex base = TOP_INDEX;
+
+    const Element* tail;
+    const Element* head = Cell_List_At(&tail, tuple);
+    const Element* at;
+    Specifier* at_specifier = Derive_Specifier(tuple_specifier, tuple);
+    for (at = head; at != tail; ++at) {
+        if (Is_Group(at)) {
+            if (not steps_out)
+                return Error_User("GET/GROUPS must be used to eval in GET");
+
+            if (Eval_Any_List_At_Throws(cast(Atom*, out), at, at_specifier)) {
+                Drop_Data_Stack_To(base);
+                return Error_No_Catch_For_Throw(TOP_LEVEL);
+            }
+            Decay_If_Unstable(cast(Atom*, out));
+
+            if (Is_Antiform(out))
+                fail (Error_Bad_Antiform(out));  // can't PICK on antifoms
+
+            Move_Cell(PUSH(), out);
+            if (at == head)
+                Quotify(TOP, 1);  // signify not literal
+        }
+        else  // Note: must keep words at head as-is for writeback!
+            Derelativize(PUSH(), at, at_specifier);
+    }
+
+  //=//// CALL COMMON CODE TO RUN CHAIN OF PICKS //////////////////////////=//
+
+    // The behavior of getting a TUPLE! is generalized, and based on PICK.  So
+    // in theory, as types in the system are extended, they only need to
+    // implement PICK in order to have tuples work with them.
+
+    Option(Context*) error = Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
+        out,
+        base
+    );
+    if (error) {
+        Drop_Data_Stack_To(base);
+        return error;
+    }
 
     if (steps_out and steps_out != GROUPS_OK) {
         Array* a = Pop_Stack_Values(base);
@@ -942,68 +1034,191 @@ bool Get_Var_Push_Refinements_Throws(
     else
         Drop_Data_Stack_To(base);
 
-    return false;
+    return nullptr;
 }
 
 
 //
-//  Get_Var_Core_Throws: C
+//  Trap_Get_Tuple: C
 //
-bool Get_Var_Core_Throws(
+// Convenience wrapper for getting tuples that errors on nothing and tripwires.
+//
+Option(Context*) Trap_Get_Tuple(
+    Sink(Value*) out,
+    Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
+    const Element* tuple,
+    Specifier* tuple_specifier
+){
+    Option(Context*) error = Trap_Get_Tuple_Maybe_Vacant(
+        out, steps_out, tuple, tuple_specifier
+    );
+    if (error)
+        return error;
+
+    if (Any_Vacancy(out))
+        return Error_Bad_Word_Get(tuple, out);
+
+    return nullptr;
+}
+
+
+//
+//  Trap_Get_Var_Maybe_Vacant: C
+//
+// This is a generalized service routine for getting variables that will
+// specialize paths into concrete actions.
+//
+// 1. This specialization process has cost.  So if you know you have a path in
+//    your hand--and all you plan to do with the result after getting it is
+//    to execute it--then use Trap_Get_Path_Push_Refinements() instead of
+//    this function, and then let the Action_Executor() use the refinements
+//    on the stack directly.  That avoids making an intermediate action.
+//
+Option(Context*) Trap_Get_Var_Maybe_Vacant(
+    Sink(Value*) out,
+    Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
+    const Element* var,
+    Specifier* var_specifier
+){
+    assert(var != cast(Cell*, out));
+    assert(steps_out != out);  // Legal for SET, not for GET
+
+    if (Any_Word(var)) {
+        Option(Context*) error = Trap_Get_Any_Word_Maybe_Vacant(
+            out, var, var_specifier
+        );
+        if (error)
+            return error;
+
+        if (steps_out and steps_out != GROUPS_OK) {
+            Derelativize(unwrap steps_out, var, var_specifier);
+            HEART_BYTE(unwrap steps_out) = REB_THE_WORD;
+        }
+        return nullptr;
+    }
+
+    if (Any_Path(var)) {  // META-PATH! is not META'd, all act the same
+        StackIndex base = TOP_INDEX;
+
+        DECLARE_ATOM (safe);
+        Push_GC_Guard(safe);
+
+        Option(Context*) error = Trap_Get_Path_Push_Refinements(
+            out, safe, var, var_specifier
+        );
+        Drop_GC_Guard(safe);
+
+        if (error)
+            return error;
+
+        assert(Is_Action(out));
+
+        DECLARE_VALUE (action);
+        Move_Cell(action, out);
+        Deactivate_If_Action(action);
+
+        Option(Value*) def = nullptr;  // !!! EMPTY_BLOCK causes problems, why?
+        bool threw = Specialize_Action_Throws(  // has cost, try to avoid [1]
+            out, action, def, base
+        );
+        assert(not threw);  // can only throw if `def`
+        UNUSED(threw);
+
+        if (steps_out and steps_out != GROUPS_OK)
+            Init_Nothing(unwrap steps_out);  // !!! What to return?
+
+        return nullptr;
+    }
+
+    if (Any_Tuple(var))
+        return Trap_Get_Tuple_Maybe_Vacant(
+            out, steps_out, var, var_specifier
+        );
+
+    if (Is_The_Block(var)) {  // "steps"
+        StackIndex base = TOP_INDEX;
+
+        Specifier* at_specifier = Derive_Specifier(var_specifier, var);
+        const Element* tail;
+        const Element* head = Cell_List_At(&tail, var);
+        const Element* at;
+        for (at = head; at != tail; ++at)
+            Derelativize(PUSH(), at, at_specifier);
+
+        Option(Context*) error = Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
+            out, base
+        );
+        Drop_Data_Stack_To(base);
+
+        if (error)
+            return error;
+
+        if (steps_out and steps_out != GROUPS_OK)
+            Copy_Cell(unwrap steps_out, var);
+
+        return nullptr;
+    }
+
+    fail (var);
+}
+
+
+//
+//  Trap_Get_Var: C
+//
+// May generate specializations for paths.  See Trap_Get_Var_Maybe_Vacant()
+//
+Option(Context*) Trap_Get_Var(
     Sink(Value*) out,
     Option(Value*) steps_out,  // if nullptr, then GROUP!s not legal
     const Element* var,
     Specifier* var_specifier
 ){
-    StackIndex base = TOP_INDEX;
-    bool threw = Get_Var_Push_Refinements_Throws(
+    Option(Context*) error = Trap_Get_Var_Maybe_Vacant(
         out, steps_out, var, var_specifier
     );
-    if (TOP_INDEX != base) {
-        assert(Is_Action(out) and not threw);
-        //
-        // !!! Note: passing EMPTY_BLOCK here for the def causes problems;
-        // that needs to be looked into.
-        //
-        DECLARE_VALUE (action);
-        Move_Cell(action, out);
-        Deactivate_If_Action(action);
-        return Specialize_Action_Throws(out, action, nullptr, base);
-    }
-    return threw;
+    if (error)
+        return error;
+
+    if (Any_Vacancy(out))
+        return Error_Bad_Word_Get(var, out);
+
+    return nullptr;
 }
 
 
 //
 //  Get_Var_May_Fail: C
 //
-// Simple interface, does not process GROUP!s (lone or in TUPLE!s)
+// Simplest interface.  Gets a variable, doesn't process groups, and will
+// fail if the variable is vacant (holding nothing or a tripwire).  Use the
+// appropriate Trap_Get_XXXX() interface if this is too simplistic.
 //
-void Get_Var_May_Fail(
+Value* Get_Var_May_Fail(
     Sink(Value*) out,  // variables never store unstable Atom* values
     const Element* var,
-    Specifier* var_specifier,
-    bool any
+    Specifier* var_specifier
 ){
-    Value* steps_out = nullptr;
+    Value* steps_out = nullptr;  // signal groups not allowed to run
 
-    if (Get_Var_Core_Throws(out, steps_out, var, var_specifier))
-        fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+    Option(Context*) error = Trap_Get_Var(  // vacant will give error
+        out, steps_out, var, var_specifier
+    );
+    if (error)
+        fail (unwrap error);
 
-    if (not any) {
-        if (Any_Vacancy(out))
-            fail (Error_Bad_Word_Get(var, out));
-    }
+    assert(not Any_Vacancy(out));  // shouldn't have returned it
+    return out;
 }
 
 
 //
-//  Get_Path_Push_Refinements_Throws: C
+//  Trap_Get_Path_Push_Refinements: C
 //
 // This form of Get_Path() is low-level, and may return a non-ACTION! value
 // if the path is inert (e.g. `/abc` or `.a.b/c/d`).
 //
-bool Get_Path_Push_Refinements_Throws(
+Option(Context*) Trap_Get_Path_Push_Refinements(
     Sink(Value*) out,
     Sink(Value*) safe,
     const Element* path,
@@ -1013,7 +1228,7 @@ bool Get_Path_Push_Refinements_Throws(
 
     if (Not_Cell_Flag(path, SEQUENCE_HAS_NODE)) {  // byte compressed, inert
         Derelativize(out, path, path_specifier);  // inert
-        return false;
+        return nullptr;
     }
 
     const Node* node1 = Cell_Node1(path);
@@ -1022,19 +1237,22 @@ bool Get_Path_Push_Refinements_Throws(
     }
     else switch (Stub_Flavor(c_cast(Flex*, node1))) {
       case FLAVOR_SYMBOL : {  // `/a` or `a/`
-        Get_Word_May_Fail(out, path, path_specifier);
+        Option(Context*) error = Trap_Get_Any_Word(out, path, path_specifier);
+        if (error)
+            return error;
 
         if (Get_Cell_Flag(path, REFINEMENT_LIKE))  // `/a` - maybe an action
-            return false;
+            return nullptr;
 
         // `a/` means it has to be an action, or error.  Frames allowed.
         //
-      trailing_slash_means_out_must_be_action:
+      } trailing_slash_means_out_must_be_action: {
+
         if (Is_Action(out))
-            return false;
+            return nullptr;
         if (Is_Frame(out)) {
             Actionify(out);
-            return false;
+            return nullptr;
         }
         fail ("Trailing slash notation must retrieve an action or frame."); }
 
@@ -1054,7 +1272,7 @@ bool Get_Path_Push_Refinements_Throws(
     }
     else if (Any_Inert(head)) {
         Derelativize(out, path, path_specifier);
-        return false;
+        return nullptr;
     }
 
     if (Is_Group(head)) {
@@ -1064,22 +1282,26 @@ bool Get_Path_Push_Refinements_Throws(
         //
         Specifier* derived = Derive_Specifier(path_specifier, path);
         if (Eval_Value_Throws(out, head, derived))
-            return true;
+            return Error_No_Catch_For_Throw(TOP_LEVEL);
     }
     else if (Is_Tuple(head)) {
         Specifier* derived = Derive_Specifier(path_specifier, path);
 
         DECLARE_VALUE (steps);
-        if (Get_Var_Core_Throws(out, steps, head, derived))
-            return true;
-    }
-    else if (Is_Word(head)) {
-        Specifier* derived = Derive_Specifier(path_specifier, path);
-        const Value* lookup = Lookup_Word_May_Fail(
+        Option(Context*) error = Trap_Get_Tuple(  // vacant is error
+            out,
+            steps,
             head,
             derived
         );
-        Copy_Cell(out, lookup);
+        if (error)
+            fail (unwrap error);  // must be abrupt
+    }
+    else if (Is_Word(head)) {
+        Specifier* derived = Derive_Specifier(path_specifier, path);
+        Option(Context*) error = Trap_Get_Any_Word(out, head, derived);
+        if (error)
+            fail (unwrap error);  // must be abrupt
     }
     else
         fail (head);  // what else could it have been?
@@ -1099,7 +1321,7 @@ bool Get_Path_Push_Refinements_Throws(
             cast(const RebolValue*, out),  // was quoted above
             rebQ(cast(const RebolValue*, head)))  // Cell, but is Element*
         ){
-            fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+            return Error_No_Catch_For_Throw(TOP_LEVEL);
         }
         Copy_Cell(out, Decay_If_Unstable(temp));
         ++head;
@@ -1108,11 +1330,11 @@ bool Get_Path_Push_Refinements_Throws(
     if (Is_Action(out))
         NOOP;  // it's good
     else if (Is_Antiform(out))
-        fail (Error_Bad_Antiform(out));
+        return Error_Bad_Antiform(out);
     else if (Is_Frame(out))
         Actionify(out);
     else
-        fail ("Head of PATH! did not evaluate to an ACTION!");
+        return Error_User("Head of PATH! did not evaluate to an ACTION!");
 
     // We push the remainder of the path in *reverse order* as words to act
     // as refinements to the function.  The action execution machinery will
@@ -1136,7 +1358,7 @@ bool Get_Path_Push_Refinements_Throws(
                 at
             );
             if (Eval_Value_Throws(temp, c_cast(Element*, at), derived))
-                return true;
+                return Error_No_Catch_For_Throw(TOP_LEVEL);
 
             item = Decay_If_Unstable(temp);
 
@@ -1144,7 +1366,7 @@ bool Get_Path_Push_Refinements_Throws(
                 continue;  // just skip it (voids are ignored, NULLs error)
 
             if (Is_Antiform(item))
-                fail (Error_Bad_Antiform(item));
+                return Error_Bad_Antiform(item);
         }
 
         // Note: NULL not supported intentionally, could represent an accident
@@ -1167,7 +1389,7 @@ bool Get_Path_Push_Refinements_Throws(
     if (last_is_blank)
         goto trailing_slash_means_out_must_be_action;
 
-    return false;
+    return nullptr;
 }
 
 
@@ -1193,14 +1415,17 @@ DECLARE_NATIVE(resolve)
 
     Element* source = cast(Element*, ARG(source));
 
-    if (Get_Var_Core_Throws(SPARE, cast(Value*, OUT), source, SPECIFIED))
-        return THROWN;
+    Option(Context*) error = Trap_Get_Var(
+        OUT, stable_SPARE, source, SPECIFIED
+    );
+    if (error)
+        fail (unwrap error);
 
     Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
     Set_Flex_Len(pack, 2);
 
-    Copy_Meta_Cell(Array_At(pack, 0), stable_OUT);  // the steps
-    Copy_Meta_Cell(Array_At(pack, 1), stable_SPARE);  // the value
+    Copy_Meta_Cell(Array_At(pack, 0), stable_SPARE);  // the steps
+    Copy_Meta_Cell(Array_At(pack, 1), stable_OUT);  // the value
 
     return Init_Pack(OUT, pack);
 }
@@ -1219,10 +1444,6 @@ DECLARE_NATIVE(resolve)
 //  ]
 //
 DECLARE_NATIVE(get)
-//
-// 1. Plain PICK can't throw (e.g. from a GROUP!) because it won't evaluate
-//    them.  However, we can get errors.  Confirm we only are raising errors
-//    unless steps_out were passed.
 {
     INCLUDE_PARAMS_OF_GET;
 
@@ -1258,14 +1479,15 @@ DECLARE_NATIVE(get)
         source = cast(Element*, SPARE);
     }
 
-    if (Get_Var_Core_Throws(OUT, steps, source, SPECIFIED)) {
-        assert(steps or Is_Throwing_Failure(LEVEL));  // [1]
-        return THROWN;
-    }
+    Option(Context*) error = Trap_Get_Var_Maybe_Vacant(
+        OUT, steps, source, SPECIFIED
+    );
+    if (error)
+        return RAISE(unwrap error);
 
     if (not REF(any))
         if (Any_Vacancy(stable_OUT))
-            fail (Error_Bad_Word_Get(source, stable_OUT));
+            return RAISE(Error_Bad_Word_Get(source, stable_OUT));
 
     return OUT;
 }
@@ -1406,18 +1628,15 @@ bool Set_Var_Core_Updater_Throws(
                     Drop_Data_Stack_To(base);
                     return true;
                 }
-                Move_Cell(PUSH(), Decay_If_Unstable(temp));
+                Decay_If_Unstable(temp);
+                if (Is_Antiform(temp))
+                    fail (Error_Bad_Antiform(temp));
 
-                // By convention, picker steps quote the first item if it was a
-                // GROUP!.  It has to be somehow different because `('a).b` is
-                // trying to pick B out of the WORD! a...not out of what is
-                // fetched from A.  So if the convention is that the first item
-                // of a "steps" block needs to be "fetched" we quote it.
-                //
+                Move_Cell(PUSH(), cast(Element*, temp));
                 if (at == head)
-                    Quotify(TOP, 1);
+                    Quotify(TOP, 1);  // signal it was not literally the head
             }
-            else
+            else  // Note: must keep WORD!s at head as-is for writeback
                 Derelativize(PUSH(), at, at_specifier);
         }
     }
@@ -1448,17 +1667,19 @@ bool Set_Var_Core_Updater_Throws(
 
   blockscope {
     StackValue(*) at = Data_Stack_At(stackindex);
+    assert(not Is_Antiform(at));
     if (Is_Quoted(at)) {
         Copy_Cell(out, at);
         Unquotify(out, 1);
     }
     else if (Is_Word(at)) {
-        Copy_Cell(
-            out,
-            Lookup_Word_May_Fail(cast(Element*, at), SPECIFIED)
+        const Value* slot;
+        Option(Context*) error = Trap_Lookup_Word(
+            &slot, cast(Element*, at), SPECIFIED
         );
-        if (Is_Antiform(out))
-            fail (Error_Bad_Word_Get(cast(Element*, at), out));
+        if (error)
+            fail (unwrap error);
+        Copy_Cell(out, slot);
     }
     else
         fail (Copy_Cell(out, at));

@@ -181,17 +181,8 @@ bool Init_Invokable_From_Feed_Throws(
 
     StackIndex base = TOP_INDEX;
 
-    if (Is_Word(v) or Is_Tuple(v) or Is_Path(v)) {
-        DECLARE_VALUE (steps);
-        if (Get_Var_Push_Refinements_Throws(
-            out,
-            steps,
-            v,
-            FEED_SPECIFIER(feed)
-        )){
-            return true;
-        }
-    }
+    if (Is_Word(v) or Is_Tuple(v) or Is_Path(v))
+        Get_Var_May_Fail(out, v, FEED_SPECIFIER(feed));  // !!! throws?
     else
         Derelativize(out, v, FEED_SPECIFIER(feed));
 

@@ -658,15 +658,7 @@ Value* Init_Matcher(Sink(Value*) out, const Element* types) {
 
     assert(Is_Type_Word(types));
 
-    if (Get_Var_Core_Throws(
-        out,
-        nullptr,
-        types,
-        SPECIFIED
-    )){
-        fail (Error_No_Catch_For_Throw(TOP_LEVEL));
-    }
-    return out;
+    return Get_Var_May_Fail(out, types, SPECIFIED);
 }
 
 

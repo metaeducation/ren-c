@@ -258,15 +258,17 @@ void Protect_Context(Context* c, Flags flags)
 static void Protect_Word_Value(Value* word, Flags flags)
 {
     if (Any_Word(word) and IS_WORD_BOUND(word)) {
-        const Value* var = Lookup_Word_May_Fail(
-            cast(Element*, word),
-            SPECIFIED
+        const Value* slot;
+        Option(Context*) error = Trap_Lookup_Word(
+            &slot, cast(Element*, word), SPECIFIED
         );
+        if (error)
+            fail (unwrap error);
 
-        Protect_Var(var, flags);
+        Protect_Var(slot, flags);
         if (flags & PROT_DEEP) {
-            Protect_Value(var, flags);
-            Uncolor(var);
+            Protect_Value(slot, flags);
+            Uncolor(slot);
         }
     }
     else if (Any_Sequence(word)) {
@@ -324,10 +326,11 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                     // Since we *are* PROTECT we allow ourselves to get mutable
                     // references to even protected values to protect them.
                     //
-                    var = m_cast(
-                        Value*,
-                        Lookup_Word_May_Fail(item, Cell_Specifier(value))
+                    Option(Context*) error = Trap_Lookup_Word(
+                        u_cast(const Value**, &var), item, Cell_Specifier(value)
                     );
+                    if (error)
+                        fail (unwrap error);
                 }
                 else if (Is_Path(value)) {
                     fail ("PATH! handling no longer in Protect_Unprotect");
