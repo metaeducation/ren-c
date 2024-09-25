@@ -11,7 +11,7 @@
 )
 (1 = if ok [1])
 
-(void' = ^ if null [])
+(^void = ^ if null [])
 ('~[~void~]~ = ^ if ok [])
 
 (error? if ok [trap [1 / 0]])
@@ -61,7 +61,7 @@
 (if first ['a/b] [okay])
 (if first ['a] [okay])
 (if ok [okay])
-(void' = ^ if null [okay])
+(^void = ^ if null [okay])
 (if $1 [okay])
 (if (specialize of/ [property: 'type]) [okay])
 (okay = if blank [okay])
@@ -106,7 +106,7 @@
 )
 (1 = if false? 'false [1])
 
-(void' = ^ if not okay [1])
+(^void = ^ if not okay [1])
 ('~[~null~]~ = ^ if no? 'no [null])
 
 (error? if off? 'off [trap [1 / 0]])

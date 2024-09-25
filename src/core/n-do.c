@@ -253,8 +253,8 @@ DECLARE_NATIVE(shove)
 //          error!  ; raise the error
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
-//      /step "Do one step of evaluation (return null position if at tail)"
 //      /undecayed "Don't convert NIHIL or COMMA! antiforms to VOID"
+//      /step "Do one step of evaluation (return null position if at tail)"
 //  ]
 //
 DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine

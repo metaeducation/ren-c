@@ -20,12 +20,12 @@
     ; because we want to suppress the triggering of the generated rule
     ;
     ugly-combinators.discard: combinator [
-        return: "Don't return anything" [nihil?]
+        return: "Don't return anything" [~[]~]
         @group [group!]
     ][
         eval group
         remainder: input
-        return nihil
+        return ~[]~
     ]
     ok
 )

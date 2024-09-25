@@ -10,22 +10,22 @@
 ; Actual vanishing stuff via nihil (empty packs) can only be observed via
 ; meta operations.
 [
-    (nihil' = ^())
-    (nihil' = ^(comment "hi"))
-    (void' = ^(void))
+    ('~[]~ = ^())
+    ('~[]~ = ^(comment "hi"))
+    (^void = ^(void))
 
-    (void' = ^(maybe void))
-    (void' = ^ (maybe void))
+    (^void = ^(maybe void))
+    (^void = ^ (maybe void))
     ~expect-arg~ !! (maybe comment "hi")
 
-    (nihil' = ^ ())
-    (nihil' = ^ (comment "hi"))
-    (void' = ^ (void))
+    ('~[]~ = ^ ())
+    ('~[]~ = ^ (comment "hi"))
+    (^void = ^ (void))
 ]
 
 ((the '10) = ^(10 comment "hi"))
 
-(null' = ^(null))
+(^null = ^(null))
 ('~[~null~]~ = ^(if ok [null]))
 
 ((the '1020) = ^(1000 + 20))

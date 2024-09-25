@@ -244,7 +244,7 @@ DECLARE_NATIVE(reduce_each)
 // !!! There used to be a /COMMAS refinement on this, which allowed you to
 // see source-level commas.  Once comma antiforms took over the barrier role,
 // they were distinguishable from nihils and could be filtered separately.
-// With this you can write `pack [1, nihil, 2]` and get a 3-element pack.
+// With this you can write `pack [1, ~[]~, 2]` and get a 3-element pack.
 // It may be that some use case requires /COMMAS to come back, but waiting
 // to see one.
 //

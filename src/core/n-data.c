@@ -2746,22 +2746,6 @@ DECLARE_INTRINSIC(elision_q)
 
 
 //
-//  nothing: native [
-//
-//  "Returns the value used to represent an unset variable (antiform blank)"
-//
-//      return: [~]  ; quasiform nothing (e.g. trash) notation means "nothing"
-//  ]
-//
-DECLARE_NATIVE(nothing)
-{
-    INCLUDE_PARAMS_OF_NOTHING;
-
-    return NOTHING;
-}
-
-
-//
 //  void?: native/intrinsic [
 //
 //  "Tells you if argument is void"
@@ -2903,21 +2887,6 @@ DECLARE_NATIVE(light) {
         return nullptr;
 
     return UNMETA(meta);
-}
-
-
-//
-//  nihil: native [
-//
-//  "Makes empty parameter pack (antiform ~[]~), representing 'vaporization'"
-//
-//      return: [nihil?]
-//  ]
-//
-DECLARE_NATIVE(nihil) {
-    INCLUDE_PARAMS_OF_NIHIL;
-
-    return Init_Nihil(OUT);
 }
 
 

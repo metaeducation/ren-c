@@ -124,7 +124,7 @@
 ; ^ is META
 [
     ((@ '3) = ^ 1 + 2)
-    (null' = ^ null)
+    (^null = ^ null)
 
     ~need-non-end~ !! (^)
 ]

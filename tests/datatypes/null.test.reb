@@ -40,18 +40,18 @@
 ; out of null and void and passes everything else through.  But it's what it
 ; was called, in line with the idea of "heavy isotopes".
 [
-    (null' = ^ null)
+    (^null = ^ null)
     ('~[~null~]~ = ^ heavy null)
 
     (x: heavy 10, 10 = x)
-    (x: heavy null, null' = ^ x)
-    (x: heavy null, null' = ^ :x)
+    (x: heavy null, ^null = ^ x)
+    (x: heavy null, ^null = ^ :x)
 
     (304 = (null then [1020] else [304]))
     (1020 = (heavy null then [1020] else [304]))
 
-    (null' = meta light heavy null)
-    (void' = meta light heavy void)
+    (^null = meta light heavy null)
+    (^void = meta light heavy void)
 ]
 
 ; Conditionals return VOID on failure, and ~[~null~]~ antiform on a branch that
@@ -63,13 +63,13 @@
     ('~custom~ = ^ if ok [~custom~])
     (''~custom~ = ^ if ok ['~custom~])
 
-    (void' <> ^ ~()~)
-    (not void' = first [~()~])
-    (not void' = ^ 'void)
+    (^void <> ^ ~()~)
+    (not ^void = first [~()~])
+    (not ^void = ^ 'void)
 
     ('~null~ = if ok ^[null])
     ('~[~null~]~ = if ok ^[heavy null])
-    (void' = if ok ^[])
+    (^void = if ok ^[])
     ('~custom~ = if ok ^[~custom~])
     (''~custom~ = if ok ^['~custom~])
 ]

@@ -20,7 +20,7 @@ REBOL [
 assert: func* [
     {Ensure conditions are branch triggers if hooked by debugging}
 
-    return: [nihil?]
+    return: [~[]~]
     conditions "Block of conditions to evaluate and test for logical truth"
         [block!]
     /handler "Optional code to run if the assertion fails, receives condition"
@@ -29,7 +29,7 @@ assert: func* [
     ; ASSERT has no default implementation, but can be HIJACKed by a debug
     ; mode with a custom validation or output routine.
     ;
-    return nihil
+    return ~[]~
 ]
 
 steal: lambda [
@@ -250,12 +250,12 @@ func: func* [
 ; (This is a good reason for retaking ==, as that looks like a divider.)
 ;
 ===: func [
-    return: [nihil?]
+    return: [~[]~]
     'remarks [element? <variadic>]
     /visibility [onoff?]
     <static> showing ('no)
 ][
-    if visibility [showing: visibility, return nihil]
+    if visibility [showing: visibility, return ~[]~]
 
     if yes? showing [
         print form collect [
@@ -265,7 +265,7 @@ func: func* [
     ] else [
         until [equal? '=== take remarks]
     ]
-    return nihil
+    return ~[]~
 ]
 
 what-dir: func [  ; This can be HIJACK'd by a "smarter" version
@@ -706,10 +706,10 @@ count-up: func [
         result': ^ cfor (var) start end 1 body except e -> [
             return raise e
         ]
-        if result' = null' [return null]  ; a BREAK was encountered
-        if result' = void' [
+        if result' = ^null [return null]  ; a BREAK was encountered
+        if result' = ^void [
             assert [start = end]  ; should only happen if body never runs
-            return void'
+            return ^void
         ]
         if limit <> # [  ; Note: /WITH not ^META, decays PACK! etc
             stop/with heavy unmeta result'  ; the limit was actually reached
@@ -742,19 +742,19 @@ lock-of: redescribe [
 eval-all: func [
     {Evaluate any number of expressions and discard them}
 
-    return: [nihil?]
+    return: [~[]~]
     expressions "Any number of expressions on the right"
         [any-value? <variadic>]
 ][
     eval expressions
-    return nihil
+    return ~[]~
 ]
 
 
 ; These constructs used to be enfix to complete their left hand side.  Yet
 ; that form of completion was only one expression's worth, when they wanted
 ; to allow longer runs of evaluation.  "Invisible functions" (those which
-; `return: [nihil?]`) permit a more flexible version of the mechanic.
+; `return: [~[]~]`) permit a more flexible version of the mechanic.
 
 <|: runs tweak copy unrun eval-all/ 'postpone 'on
 

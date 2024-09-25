@@ -7,10 +7,10 @@
     (did detector: lambda [^x [<end> any-value? pack?]] [x])
 
     ((the '10) = detector 10)
-    (null' = detector null)
+    (^null = detector null)
     ('~[~null~]~ = detector if ok [null])
 
-    (nihil' = detector (comment "hi"))
+    ('~[]~ = detector (comment "hi"))
     (null = detector)
 
     (did left-detector: enfix :detector)

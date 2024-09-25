@@ -238,19 +238,19 @@ enum {
     ST_ACTION_INITIAL_ENTRY_ENFIX,
     ST_ACTION_FULFILLING_ENFIX_FROM_OUT,
 
-    // While some special-purpose functions intentionally receive nihil, most
+    // While some special-purpose functions intentionally receive barrier, most
     // don't want to...so we can treat it as an expression barrier--whether
-    // it's produced by a COMMA! evaluating to nothing, or otherwise.
+    // it's produced by a COMMA! evaluating, or otherwise.
     //
     //    foo: func [x [integer! <end>]] [...]
     //
     //    (foo,)  ; sees an end
-    //    (foo comment "hi")  ; also sees an end
+    //    (foo anti ',)  ; also sees an end
     //
-    //    bar: func [^y [nihil? integer!]] [...]
+    //    bar: func [^y [barrier? integer!]] [...]
     //
-    //    (bar,)  ; sees an empty pack antiform (nihil) ~[]~
-    //    (bar comment "hi")  ; same
+    //    (bar,)  ; sees an barrier antiform ~,~
+    //    (bar anti ',)  ; same
     //
     ST_ACTION_BARRIER_HIT,
 

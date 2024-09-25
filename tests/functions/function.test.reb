@@ -182,7 +182,7 @@
 )
 (
     f: does [()]
-    void' = ^ f
+    ^void = ^ f
 )
 (
     f: does ['a]
@@ -441,15 +441,15 @@
         use [x] [return ~]
         42
     ]
-    nothing' = ^ f
+    ^nothing = ^ f
 )]
 
 (
     foo: lambda [^arg [~null~ pack? <end> ~void~ integer!]] [arg]
     all [
         (the '1020) = (foo 1020)
-        nihil' = (foo comment "HI")
-        null' = (foo any [1 > 2, 3 > 4])
+        '~[]~ = (foo comment "HI")
+        ^null = (foo any [1 > 2, 3 > 4])
         null? (foo)
     ]
 )

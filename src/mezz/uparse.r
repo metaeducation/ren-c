@@ -464,7 +464,7 @@ default-combinators: make map! reduce [
     ][
         append state.loops binding of $return
 
-        result': void'
+        result': ^void
 
         cycle [
             [^ input]: condition-parser input except [
@@ -477,7 +477,7 @@ default-combinators: make map! reduce [
             ; if it fails we disregard the result
             ;
             [^result' input]: body-parser input except [
-                result': nihil'
+                result': '~[]~
                 continue
             ]
         ]
@@ -493,11 +493,11 @@ default-combinators: make map! reduce [
     ][
         append state.loops binding of $return
 
-        result': void'
+        result': ^void
 
         cycle [
             [^result' input]: parser input except [
-                result': nothing'
+                result': ^nothing
                 continue
             ]
         ]
@@ -544,7 +544,7 @@ default-combinators: make map! reduce [
         parser [<end> action?]
         <local> f result'
     ][
-        result': nothing'  ; default `[stop]` returns nothing
+        result': ^nothing  ; default `[stop]` returns nothing
         if :parser [  ; parser argument is optional
             [^result' input]: parser input except e -> [
                 return raise e
@@ -824,8 +824,7 @@ default-combinators: make map! reduce [
 
     <end> combinator [
         {Only match if the input is at the end}
-        return: "Invisible"
-            [nihil?]
+        return: [~[]~]
         /negated
     ][
         remainder: input  ; never advances
@@ -833,10 +832,10 @@ default-combinators: make map! reduce [
             if negated [
                 return raise "PARSE position at <end> (but parser negated)"
             ]
-            return nihil
+            return ~[]~
         ]
         if negated [
-            return nihil
+            return ~[]~
         ]
         return raise "PARSE position not at <end>"
     ]
@@ -948,7 +947,7 @@ default-combinators: make map! reduce [
             return raise e
         ]
 
-        if void' = subseries [
+        if ^void = subseries [
             fail "Cannot SUPBARSE into a void"
         ]
 
@@ -993,7 +992,7 @@ default-combinators: make map! reduce [
             return raise e
         ]
 
-        if void' = subseries [
+        if ^void = subseries [
             fail "Cannot VALIDATE a void"
         ]
 
@@ -1486,7 +1485,7 @@ default-combinators: make map! reduce [
 
         if tail? value [
             pending: _
-            return nihil
+            return ~[]~
         ]
 
         if <delay> = first value [
@@ -1494,7 +1493,7 @@ default-combinators: make map! reduce [
                 fail "Use ('<delay>) to evaluate to the tag <delay> in GROUP!"
             ]
             pending: reduce [next value]  ; GROUP! signals delayed groups
-            return nihil  ; act invisible
+            return ~[]~  ; act invisible
         ]
 
         pending: _
@@ -1576,7 +1575,7 @@ default-combinators: make map! reduce [
     ][
         r: meta eval/undecayed value except e -> [fail e]  ; can't raise [1]
 
-        if r = null' [  ; like [:(1 = 0)]
+        if r = ^null [  ; like [:(1 = 0)]
             return raise "GET-GROUP! evaluated to NULL"  ; means no match [2]
         ]
 
@@ -1584,13 +1583,13 @@ default-combinators: make map! reduce [
         remainder: input
 
         any [
-            r = okay'  ; like [:(1 = 1)]
-            r = nihil'  ; like [:(comment "hi")]
+            r = ^okay  ; like [:(1 = 1)]
+            r = '~[]~  ; like [:(comment "hi")]
         ] then [
-            return nihil  ; invisible
+            return ~[]~  ; invisible
         ]
 
-        if r = void' [  ; like [:(if 1 = 0 [...])]
+        if r = ^void [  ; like [:(if 1 = 0 [...])]
             return void  ; couldn't produce void at all if vaporized [3]
         ]
 
@@ -1757,7 +1756,7 @@ default-combinators: make map! reduce [
     ; what you'd think a quasiform would do in source rules (by becoming an
     ; antiform) works.
 
-    elide let quasi-return-spec: [return: [~void~ nihil? element? splice?]]
+    elide let quasi-return-spec: [return: [~void~ ~[]~ element? splice?]]
 
     quasiform! combinator compose [
         (spread quasi-return-spec)
@@ -1777,11 +1776,11 @@ default-combinators: make map! reduce [
         ]
 
         if '~okay~ = value [
-            return nihil  ; let okay just act as a "guard", no influence
+            return ~[]~  ; let okay just act as a "guard", no influence
         ]
 
         if '~[]~ = value [
-            return nihil  ; act invisibly (same as ~okay~... make sense?)
+            return ~[]~  ; act invisibly (same as ~okay~... make sense?)
         ]
 
         if tail? input [
@@ -1878,7 +1877,7 @@ default-combinators: make map! reduce [
     ][
         [^times' input]: times-parser input except e -> [return raise e]
 
-        if times' = void' [  ; VOID-in-NULL-out
+        if times' = ^void [  ; VOID-in-NULL-out
             remainder: input
             return null
         ]
@@ -1917,7 +1916,7 @@ default-combinators: make map! reduce [
 
         append state.loops binding of $return
 
-        result': void'  ; `repeat (0) one` => void intent
+        result': ^void  ; `repeat (0) one` => void intent
 
         count-up 'i max [  ; will count infinitely if max is #
             ;
@@ -2287,18 +2286,16 @@ default-combinators: make map! reduce [
 
     'elide combinator [
         {Transform a result-bearing combinator into one that has no result}
-        return: "Invisible"
-            [nihil?]
+        return: [~[]~]
         parser [action?]
     ][
         [^ remainder]: parser input except e -> [return raise e]
-        return nihil
+        return ~[]~
     ]
 
     'comment combinator [
         {Comment out an arbitrary amount of PARSE material}
-        return: "Invisible"
-            [nihil?]
+        return: [~[]~]
         'ignored [block! text! tag! issue!]
     ][
         ; !!! This presents a dilemma, should it be quoting out a rule, or
@@ -2319,12 +2316,12 @@ default-combinators: make map! reduce [
         ; most useful, and the closest parallel to the plain COMMENT action.
         ;
         remainder: input
-        return nihil
+        return ~[]~
     ]
 
     'skip combinator [
         {Skip an integral number of items}
-        return: "Invisible" [nihil?]
+        return: [~[]~]
         parser [action?]
         <local> result
     ][
@@ -2332,7 +2329,7 @@ default-combinators: make map! reduce [
 
         if blank? :result [
             remainder: input
-            return nihil
+            return ~[]~
         ]
         if not integer? :result [
             fail "SKIP expects INTEGER! amount to skip"
@@ -2340,7 +2337,7 @@ default-combinators: make map! reduce [
         remainder: skip input result else [
             return raise "Attempt to SKIP past end of parse input"
         ]
-        return nihil
+        return ~[]~
     ]
 
     'one combinator [  ; historically used "SKIP" for this
@@ -2605,7 +2602,7 @@ default-combinators: make map! reduce [
 
         pending: _  ; can become GLOM'd into a BLOCK!
 
-        result': nihil'  ; default result is invisible
+        result': '~[]~  ; default result is invisible
 
         old-env: state.env
         return: adapt return/ [state.env: old-env]
@@ -2707,12 +2704,12 @@ default-combinators: make map! reduce [
                     print mold/limit rules 200
                     fail "Combinator did not set pending"
                 ]
-                if temp <> nihil' [
+                if temp <> '~[]~ [
                     result': temp  ; overwrite if was visible
                 ]
                 pending: glom pending spread subpending
             ] else [
-                result': nihil'  ; reset, e.g. `[bypass |]`
+                result': '~[]~  ; reset, e.g. `[bypass |]`
 
                 free pending  ; proactively release memory
                 pending: _
@@ -3225,8 +3222,8 @@ parse*: func [
 
     ; While combinators can vaporize, don't allow PARSE itself to vaporize
     ;
-    if synthesized' = nihil' [
-        synthesized': void'
+    if synthesized' = '~[]~ [
+        synthesized': ^void
     ]
 
     return pack [(unmeta synthesized') pending]

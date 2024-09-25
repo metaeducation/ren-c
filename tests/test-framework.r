@@ -82,7 +82,7 @@ run-single-test: func [
             spaced ["did not error, but expected:" @(quasi expected-id)]
         ]
 
-        nihil' = result [
+        '~[]~ = result [
             "test returned empty pack ~[]~ antiform"  ; UNMETA fails
         ]
         (elide if pack? unmeta result [result: first unquasi result])

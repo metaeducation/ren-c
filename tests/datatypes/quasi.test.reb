@@ -44,14 +44,14 @@
 (
     x: <overwritten>
     all [
-        void' = ^ x: eval []
-        void' = ^x
+        ^void = ^ x: eval []
+        ^void = ^x
     ]
 )
 (
     x: 10
     all [
-        nihil' = x: ^ eval/undecayed []
+        '~[]~ = x: ^ eval/undecayed []
         nihil? unmeta x
     ]
 )
@@ -65,10 +65,10 @@
 
     (void? foo)
 
-    (void' = ^ applique :foo [])
+    (^void = ^ applique :foo [])
     (void? applique :foo [])
 
-    (void' = ^ eval :foo)
+    (^void = ^ eval :foo)
     (void? eval :foo)
 
     (void? eval :foo)
@@ -79,13 +79,13 @@
 
     (nothing? foo)
 
-    (nothing' = ^ applique :foo [])
+    (^nothing = ^ applique :foo [])
     (nothing? applique :foo [])
 
-    (nothing' = ^ eval :foo)
+    (^nothing = ^ eval :foo)
     (nothing? eval :foo)
 
-    (nothing' = ^ eval :foo)
+    (^nothing = ^ eval :foo)
 ]
 
 ; Explicit return of VOID
@@ -93,7 +93,7 @@
     (did foo: func [return: [any-value?]] [return void])
 
     (void? foo)
-    (void' = ^ foo)
+    (^void = ^ foo)
 
     (void? (1 + 2 foo))
 ]
@@ -120,11 +120,11 @@
 
 [(
     foo: func [return: [~]] []
-    nothing' = ^ foo
+    ^nothing = ^ foo
 )(
     data: [a b c]
     f: func [return: [~]] [append data spread [1 2 3]]
-    nothing' = ^ f
+    ^nothing = ^ f
 )]
 
 ; locals are unset before they are assigned

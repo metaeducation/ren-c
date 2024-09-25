@@ -30,7 +30,7 @@
     ]
     outer: enclose inner/ func [f] [
         assert [1020 = eval f]
-        return nihil
+        return ~[]~
     ]
     all [
         304 = (304 outer)
@@ -39,28 +39,28 @@
     ]
 )(
     var: #before
-    inner: func [return: [nihil?]] [
+    inner: func [return: [~[]~]] [
         var: 1020
-        return nihil
+        return ~[]~
     ]
     outer: enclose inner/ func [return: [quoted? quasiform!] f] [
         return ^(eval f)  ; don't unquote it here
     ]
     all [
-        nihil' = outer
+        '~[]~ = outer
         var = 1020
     ]
 )(
     var: #before
-    inner: func [return: [nihil?]] [
+    inner: func [return: [~[]~]] [
         var: 1020
-        return nihil
+        return ~[]~
     ]
-    outer: enclose inner/ func [return: [nihil? any-value?] f] [
+    outer: enclose inner/ func [return: [~[]~ any-value?] f] [
         return eval f  ; now try unquoting
     ]
     all [
-        nihil' = ^(outer)
+        '~[]~ = ^(outer)
         var = 1020
     ]
 )]

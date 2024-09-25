@@ -184,7 +184,7 @@ export console!: make object! [
         ;
         ; https://forum.rebol.info/t/console-treatment-of-void-vs-nothing/2045
 
-        if v = nothing' [
+        if v = ^nothing [
             return ~
         ]
 

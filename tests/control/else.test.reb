@@ -91,7 +91,7 @@
     ~???~ !! (~[]~ *else x -> [1020])
     ~???~ !! (~[]~ *else ^x -> [1020])
 
-    (null *else ^x -> [null' = x])
+    (null *else ^x -> [^null = x])
 ]
 
 ; Variant forms react to heavy null as if they were null.  This can be

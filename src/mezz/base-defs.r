@@ -27,19 +27,6 @@ REBOL [
 
 c-break-debug: c-debug-break/  ; easy to mix up
 
-ok: okay
-ok?: okay?/
-
-; These definitions have been helpful as the syntax has shuffled around,
-; though today you can say '~void~ and it is considered stable (vs the old
-; way of saying '')
-;
-void': meta void
-null': meta null
-okay': meta okay
-trash: nothing': meta nothing
-nihil': meta nihil
-
 eval: evaluate/  ; shorthands should be synonyms, too confusing otherwise
 
 probe: func* [
@@ -52,7 +39,7 @@ probe: func* [
     ; Remember this is early in the boot, so many things not defined.
 
     write-stdout case [
-        value' = void' ["; void"]
+        value' = ^void ["; void"]
         quasi? value' [unspaced [mold value' space space "; anti"]]
     ] else [
         mold unmeta value'
@@ -148,22 +135,22 @@ comment: func* [
     "Ignores the argument value, but does no evaluation (see also ELIDE)"
 
     return: "Evaluator will skip over the result (not seen)"
-        [nihil?]
+        [~[]~]
     @discarded "Literal value to be ignored."  ; `comment print "x"` disallowed
         [any-list? any-utf8? binary! any-scalar?]
 ][
-    return nihil
+    return ~[]~
 ]
 
 elide: func* [
     "Argument is evaluative, but discarded (see also COMMENT)"
 
     return: "The evaluator will skip over the result (not seen)"
-        [nihil?]
+        [~[]~]
     ^discarded "Evaluated value to be ignored"
         [any-atom?]  ; e.g. (elide elide "x") is legal
 ][
-    return nihil
+    return ~[]~
 ]
 
 elide-if-void: func* [
@@ -173,7 +160,7 @@ elide-if-void: func* [
     ^value' "Evaluated value to be ignored"
         [any-value? pack?]  ; pack? is passed through
 ][
-    if value' = void' [return nihil]
+    if value' = ^void [return ~[]~]
     return unmeta value'
 ]
 
@@ -185,11 +172,11 @@ elide-if-void: func* [
 |||: func* [
     {Inertly consumes all subsequent data, evaluating to previous result.}
 
-    return: [nihil?]
+    return: [~[]~]
     'omit [element? <variadic>]
 ][
     until [null? try take omit]
-    return nihil
+    return ~[]~
 ]
 
 

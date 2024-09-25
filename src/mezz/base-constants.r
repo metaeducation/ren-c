@@ -58,6 +58,11 @@ action?!: &action?
 
 
 void: ~void~
+nothing: ~
+trash: '~
+
+ok: okay
+ok?: okay?/
 
 
 ; These should be aliases for things like system.ports.input and such, but

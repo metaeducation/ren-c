@@ -33,7 +33,7 @@
     ([1 2] = collect [for-parallel [x y] void [1 2] [keep maybe x, keep y]])
     ([a b] = collect [for-parallel [x y] [a b] void [keep x, keep maybe y]])
 
-    (null' = ^ for-parallel [x y] [a b] [1 2] [if x = 'b [break]])
+    (^null = ^ for-parallel [x y] [a b] [1 2] [if x = 'b [break]])
     ('~[~null~]~ = ^ for-parallel [x y] [a b] [1 2] [null])
 
     ('z = for-parallel [x y] [a b] [1 2] [if x = 'b [continue/with 'z]])

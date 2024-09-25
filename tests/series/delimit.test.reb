@@ -59,7 +59,7 @@
 
     ("HelloWorld" = unspaced ["Hello" void "World"])
     (
-        f: make frame! :nihil
+        f: make frame! func [] [return ~[]~]
         "HelloWorld" = unspaced ["Hello" eval f "World"]
     )
 

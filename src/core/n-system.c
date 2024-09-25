@@ -288,7 +288,7 @@ DECLARE_NATIVE(c_debug_tick)
 //
 //  "Break at next evaluation point (only use when running under C debugger)"
 //
-//      return: [nihil?]
+//      return: [~[]~]
 //          "Invisibly returns what the expression to the right would have"
 //  ]
 //

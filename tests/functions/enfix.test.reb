@@ -88,7 +88,7 @@
     )
 
     (
-        bar: func [return: [nihil?]] [bar: null, return nihil]
+        bar: func [return: [~[]~]] [bar: null, return ~[]~]
         all [
             [pos var]: evaluate/step [1020 bar 304]
             pos = [bar 304]

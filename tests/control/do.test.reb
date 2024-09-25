@@ -1,58 +1,58 @@
 ; functions/control/do.r
 
 [
-    (nihil' = ^ (eval/undecayed []))
-    (nihil' = ^(eval/undecayed []))
+    (nihil? eval/undecayed [])
+    ('~[]~ = ^(eval/undecayed []))
 
     (nihil? (eval/undecayed []))
     (3 = (1 + 2 eval/undecayed []))
     (3 = (1 + 2 unmeta ^ eval/undecayed []))
 
     (''30 = ^ (10 + 20 eval/undecayed []))
-    (void' = ^ (10 + 20 eval [void]))
+    (^void = ^ (10 + 20 eval [void]))
     (''30 = ^ (10 + 20 eval/undecayed [comment "hi"]))
-    (''30 = ^ (10 + 20 eval/undecayed make frame! :nihil))
+    (''30 = ^ (10 + 20 eval/undecayed make frame! func [] [return ~[]~]))
 
     (didn't eval [null])
     ('~[~null~]~ = ^ eval/undecayed [if okay [null]])
-    (void' = ^ eval/undecayed [if null [<a>]])
-    (void' = ^ eval/undecayed [10 + 20 if null [<a>]])
+    (^void = ^ eval/undecayed [if null [<a>]])
+    (^void = ^ eval/undecayed [10 + 20 if null [<a>]])
 
     (all [
         x: <overwritten>
-        nihil' = x: ^ comment "HI" comment "HI"  ; not eval'd in same step
-        x = nihil'
+        '~[]~ = x: ^ comment "HI" comment "HI"  ; not eval'd in same step
+        x = '~[]~
     ])
 
     (all [
         x: <overwritten>
-        nihil' = (x: ^(comment "HI") ^ eval/undecayed [comment "HI"])
-        nihil' = x
+        '~[]~ = (x: ^(comment "HI") ^ eval/undecayed [comment "HI"])
+        '~[]~ = x
     ])
 
-    (nihil' = (10 + 20 ^(eval/undecayed [])))
-    (nihil' = (10 + 20 ^(eval/undecayed [comment "hi"])))
-    (void' = (10 + 20 ^(eval/undecayed make frame! lambda [] [void])))
-    (null' = ^(eval [null]))
+    ('~[]~ = (10 + 20 ^(eval/undecayed [])))
+    ('~[]~ = (10 + 20 ^(eval/undecayed [comment "hi"])))
+    (^void = (10 + 20 ^(eval/undecayed make frame! lambda [] [void])))
+    (^null = ^(eval [null]))
     ('~[~null~]~ = ^(eval/undecayed [if okay [null]]))
 
     (30 = (10 + 20 eval/undecayed []))
     (30 = (10 + 20 eval/undecayed [comment "hi"]))
-    (30 = (10 + 20 eval/undecayed make frame! :nihil))
-    (null' = ^(eval/undecayed [null]))
+    (30 = (10 + 20 eval/undecayed make frame! func [] [return ~[]~]))
+    (^null = ^(eval/undecayed [null]))
     ('~[~null~]~ = ^ eval/undecayed [heavy null])
     ('~[~null~]~ = ^ eval/undecayed [if okay [null]])
 
     ; Try standalone ^ operator so long as we're at it.
-    (nihil' = ^ eval/undecayed [])
-    (nihil' = ^ eval/undecayed [comment "hi"])
-    (nihil' = ^ eval/undecayed make frame! :nihil)
-    (void' = ^ eval/undecayed [void])
+    ('~[]~ = ^ eval/undecayed [])
+    ('~[]~ = ^ eval/undecayed [comment "hi"])
+    ('~[]~ = ^ eval/undecayed make frame! func [] [return ~[]~])
+    (^void = ^ eval/undecayed [void])
 
-    (null' = ^ eval/undecayed [null])
-    (null' = ^(eval/undecayed [null]))
-    (null' = ^ (eval/undecayed [null]))
-    (null' = meta eval/undecayed [null])
+    (^null = ^ eval/undecayed [null])
+    (^null = ^(eval/undecayed [null]))
+    (^null = ^ (eval/undecayed [null]))
+    (^null = meta eval/undecayed [null])
 
     ('~[~null~]~ = ^ eval/undecayed [heavy null])
     ('~[~null~]~ = ^(eval/undecayed [heavy null]))
@@ -65,7 +65,7 @@
 
 [
     (''3 = ^ (1 + 2 eval/undecayed [comment "HI"]))
-    (nihil' = ^ eval/undecayed [comment "HI"])
+    ('~[]~ = ^ eval/undecayed [comment "HI"])
 
     (3 = (1 + 2 eval/undecayed [comment "HI"]))
     (nihil? eval/undecayed [comment "HI"])
@@ -178,7 +178,7 @@
 )
 (0:00 == eval [0:00])
 (0.0.0 == eval [0.0.0])
-(void' = ^ eval [()])
+(^void = ^ eval [()])
 ('a == eval ['a])
 
 ; !!! Currently, EVAL of an ERROR! is like FAIL; it is not definitional,

@@ -14,7 +14,7 @@ REBOL [
 verify: func [
     {Verify all the conditions in the passed-in block are conditionally true}
 
-    return: [nihil?]
+    return: [~[]~]
     conditions "Conditions to check"
         [block!]
     /handler "Optional code to run if the assertion fails, receives condition"
@@ -55,7 +55,7 @@ verify: func [
 
         conditions: pos   ; move expression position and continue
     ]
-    return nihil
+    return ~[]~
 ]
 
 

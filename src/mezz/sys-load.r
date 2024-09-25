@@ -664,7 +664,7 @@ export*: func [
         if set-group? what [
             what: ^ eval what
             case [
-                void' = what [word: null]
+                ^void = what [word: null]
                 any-word? unmeta what [word: as word! unmeta what]
                 fail "EXPORT of SET-GROUP! must be VOID or ANY-WORD?"
             ]

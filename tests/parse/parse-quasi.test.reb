@@ -39,15 +39,15 @@
     ; (parse [a b] ['a nihil 'b])  ; [1]
     ; ('b = parse [a b] ['a @nihil 'b])  ; [1]
     ; ('b = parse [a b] ['a @lib.nihil 'b])  ; [1]
-    ('b = parse [a b] ['a @(nihil) 'b])
-    ('b = parse [a b] ['a @[(nihil)] 'b])
+    ('b = parse [a b] ['a @(~[]~) 'b])
+    ('b = parse [a b] ['a @[(~[]~)] 'b])
 
     ('b = parse [a b] ['a 'b ~[]~])
     ; (parse [a b] ['a 'b nihil])  ; [1]
     ; ('b = parse [a b] ['a 'b @nihil])  ; [1]
     ; ('b = parse [a b] ['a 'b @lib.nihil])  ; [1]
-    ('b = parse [a b] ['a 'b @(nihil)])
-    ('b = parse [a b] ['a 'b @[(nihil)]])
+    ('b = parse [a b] ['a 'b @(~[]~)])
+    ('b = parse [a b] ['a 'b @[(~[]~)]])
 ]
 
 [

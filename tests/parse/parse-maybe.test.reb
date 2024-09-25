@@ -15,7 +15,7 @@
 ;    ][
 ;        [^result' remainder]: parser input except [
 ;            remainder: input  ; succeed on parser fail but don't advance input
-;            return nihil  ; act invisible
+;            return ~[]~  ; act invisible
 ;        ]
 ;        return unmeta result'  ; return successful parser result
 ;    ]
@@ -39,8 +39,8 @@
 ;         y: x: ^[maybe some "a"]  ; !!! maybe retention concept TBD
 ;         some "b"
 ;     ]
-;     nihil' = y
-;     nihil' = x
+;     '~[]~ = y
+;     '~[]~ = x
 ; ])
 ;
 ; (all [
