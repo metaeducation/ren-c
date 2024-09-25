@@ -114,7 +114,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     return CONTINUE_CORE(
         OUT,  // body evaluative result
         ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES,  // can't resume after failure
-        cast(Context*, L->varlist), body
+        cast(VarList*, L->varlist), body
     );
 
 } resume_body: {  ////////////////////////////////////////////////////////////
@@ -122,7 +122,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     assert(Is_Frame(mode));
 
     Level* yielder_level = L;  // alias for clarity
-    Level* yield_level = CTX_LEVEL_IF_ON_STACK(VAL_CONTEXT(mode));
+    Level* yield_level = Level_Of_Varlist_If_Running(Cell_Varlist(mode));
     assert(yield_level != nullptr);
 
     // The YIELD binding pointed to the context varlist we used in the
@@ -130,7 +130,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     // the identity for this new yielder frame for the YIELD to find it
     // in the stack walk.
     //
-    Context* last_yielder_context = VAL_CONTEXT(
+    VarList* last_yielder_varlist = Cell_Varlist(
         Details_At(details, IDX_YIELDER_LAST_YIELDER_CONTEXT)
     );
 
@@ -141,9 +141,9 @@ Bounce Yielder_Dispatcher(Level* const L)
     // prior identity.
     //
     const Key* key_tail;
-    const Key* key = CTX_KEYS(&key_tail, last_yielder_context);
+    const Key* key = Varlist_Keys(&key_tail, last_yielder_varlist);
     Param* param = ACT_PARAMS_HEAD(Level_Phase(yielder_level));
-    Value* dest = CTX_VARS_HEAD(last_yielder_context);
+    Value* dest = Varlist_Slots_Head(last_yielder_varlist);
     Value* src = Level_Args_Head(yielder_level);
     for (; key != key_tail; ++key, ++param, ++dest, ++src) {
         if (Is_Specialized(param))
@@ -175,18 +175,18 @@ Bounce Yielder_Dispatcher(Level* const L)
     // Now we have a new REBFRM*, so we can reattach the context to that.
     //
 /*    assert(
-        ACT_UNDERLYING(cast(Action*, BONUS(KeySource, last_yielder_context)))
+        ACT_UNDERLYING(cast(Action*, BONUS(KeySource, last_yielder_varlist)))
         == ACT_UNDERLYING(yielder_level->u.action.original)
     ); */
-    Tweak_Bonus_Keysource(CTX_VARLIST(last_yielder_context), yielder_level);
+    Tweak_Varlist_Keysource(last_yielder_varlist, yielder_level);
 
     // Now that the last call's context varlist is pointing at our current
     // invocation level, we point the other way from the level to the
     // varlist.  We also update the cached pointer to the rootvar of that
     // frame (used to speed up Level_Phase() and Level_Coupling())
     //
-    L->varlist = CTX_VARLIST(last_yielder_context);  // rootvar must match
-    L->rootvar = m_cast(Element*, CTX_ARCHETYPE(last_yielder_context));
+    L->varlist = Varlist_Array(last_yielder_varlist);  // rootvar must match
+    L->rootvar = m_cast(Element*, Varlist_Archetype(last_yielder_varlist));
 
     Value* plug = Details_At(details, IDX_YIELDER_PLUG);
     Replug_Stack(yield_level, yielder_level, plug);
@@ -359,11 +359,11 @@ DECLARE_NATIVE(yield)
     assert(Level_Phase(level_) == ACT_IDENTITY(VAL_ACTION(Lib(YIELD))));
     Level* yield_level = level_;  // ...make synonyms more obvious
 
-    Context* yielder_context = maybe Level_Coupling(yield_level);
+    VarList* yielder_context = maybe Level_Coupling(yield_level);
     if (not yielder_context)
         fail ("Must have yielder to jump to");
 
-    Level* yielder_level = CTX_LEVEL_MAY_FAIL(yielder_context);
+    Level* yielder_level = Level_Of_Varlist_May_Fail(yielder_context);
     if (not yielder_level)
         fail ("Cannot yield to generator that has completed");
 
@@ -399,9 +399,9 @@ DECLARE_NATIVE(yield)
     //
     Value* mode = Details_At(yielder_details, IDX_YIELDER_MODE);
     assert(Is_Quasi_Blank(mode));  // should be signal for "currently running"
-    Init_Frame(mode, Context_For_Level_May_Manage(yield_level), ANONYMOUS);
-    Assert_Flex_Managed(VAL_CONTEXT(mode));
-    assert(CTX_LEVEL_IF_ON_STACK(VAL_CONTEXT(mode)) == yield_level);
+    Init_Frame(mode, Varlist_Of_Level_Force_Managed(yield_level), ANONYMOUS);
+    Assert_Flex_Managed(Cell_Varlist(mode));
+    assert(Level_Of_Varlist_If_Running(Cell_Varlist(mode)) == yield_level);
 
     // We store the frame chain into the yielder, as a FRAME! value.  The
     // GC of the ACTION's details will keep it alive.
@@ -417,7 +417,7 @@ DECLARE_NATIVE(yield)
     // It should decay the keysource from a REBFRM* to the action paramlist,
     // but the next run of the yielder will swap in its new REBFRM* over that.
     //
-    assert(CTX_VARLIST(yielder_context) == yielder_level->varlist);
+    assert(yielder_context == Varlist_Of_Level_Maybe_Unmanaged(yielder_level));
     Assert_Flex_Managed(yielder_level->varlist);
 
     // We don't only write the yielded value into the output slot so it is

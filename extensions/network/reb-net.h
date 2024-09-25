@@ -71,7 +71,7 @@ typedef struct Reb_Sock_Port_State SOCKREQ;
 
 INLINE SOCKREQ *Sock_Of_Port(const Value* port)
 {
-    Value* state = CTX_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
+    Value* state = Varlist_Slot(Cell_Varlist(port), STD_PORT_STATE);
     return Cell_Handle_Pointer(SOCKREQ, state);
 }
 
@@ -79,7 +79,7 @@ INLINE SOCKREQ *Sock_Of_Port(const Value* port)
 typedef struct {
     uv_write_t req;  // make first member of struct so we can cast the address
 
-    Context* port_ctx;
+    VarList* port_ctx;
     Value* binary;
     Value* result;
 } Reb_Write_Request;
@@ -91,13 +91,13 @@ typedef struct {
 typedef struct {
     uv_connect_t req;  // make first member of struct so we can cast the address
 
-    Context* port_ctx;
+    VarList* port_ctx;
     Value* result;
 } Reb_Connect_Request;
 
 
 typedef struct {
-    Context* port_ctx;
+    VarList* port_ctx;
 
     ssize_t length;  // length to transfer (or -1 for UNLIMITED)
     size_t actual;  // length actually transferred

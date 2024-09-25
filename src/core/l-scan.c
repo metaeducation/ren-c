@@ -652,7 +652,7 @@ static const Byte* Skip_Tag(const Byte* cp)
 // clear that this is what's happening for the moment.
 //
 static void Update_Error_Near_For_Line(
-    Context* error,
+    VarList* error,
     SCAN_STATE *ss,
     REBLEN line,
     const Byte* line_head
@@ -718,7 +718,7 @@ static void Update_Error_Near_For_Line(
 // code size in some way, but having lots of calls help esp. when scanning
 // during boot and getting error line numbers printf'd in the Wasm build.
 //
-static Context* Error_Syntax(SCAN_STATE *ss, Token token) {
+static VarList* Error_Syntax(SCAN_STATE *ss, Token token) {
     //
     // The scanner code has `bp` and `ep` locals which mirror ss->begin and
     // ss->end.  However, they get out of sync.  If they are updated, they
@@ -744,7 +744,7 @@ static Context* Error_Syntax(SCAN_STATE *ss, Token token) {
         )
     );
 
-    Context* error = Error_Scan_Invalid_Raw(token_name, token_text);
+    VarList* error = Error_Scan_Invalid_Raw(token_name, token_text);
     Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
     return error;
 }
@@ -760,11 +760,11 @@ static Context* Error_Syntax(SCAN_STATE *ss, Token token) {
 // better form of this error would walk the scan state stack and be able to
 // report all the unclosed terms.
 //
-static Context* Error_Missing(SCAN_LEVEL *level, char wanted) {
+static VarList* Error_Missing(SCAN_LEVEL *level, char wanted) {
     DECLARE_ATOM (expected);
     Init_Text(expected, Make_Codepoint_String(wanted));
 
-    Context* error = Error_Scan_Missing_Raw(expected);
+    VarList* error = Error_Scan_Missing_Raw(expected);
 
     // We have two options of where to implicate the error...either the start
     // of the thing being scanned, or where we are now (or, both).  But we
@@ -795,11 +795,11 @@ static Context* Error_Missing(SCAN_LEVEL *level, char wanted) {
 //
 // For instance, `load "abc ]"`
 //
-static Context* Error_Extra(SCAN_STATE *ss, char seen) {
+static VarList* Error_Extra(SCAN_STATE *ss, char seen) {
     DECLARE_ATOM (unexpected);
     Init_Text(unexpected, Make_Codepoint_String(seen));
 
-    Context* error = Error_Scan_Extra_Raw(unexpected);
+    VarList* error = Error_Scan_Extra_Raw(unexpected);
     Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
     return error;
 }
@@ -814,8 +814,8 @@ static Context* Error_Extra(SCAN_STATE *ss, char seen) {
 // applications if it would point out the locations of both points.  R3-Alpha
 // only pointed out the location of the start token.
 //
-static Context* Error_Mismatch(SCAN_LEVEL *level, char wanted, char seen) {
-    Context* error = Error_Scan_Mismatch_Raw(rebChar(wanted), rebChar(seen));
+static VarList* Error_Mismatch(SCAN_LEVEL *level, char wanted, char seen) {
+    VarList* error = Error_Scan_Mismatch_Raw(rebChar(wanted), rebChar(seen));
     Update_Error_Near_For_Line(
         error,
         level->ss,
@@ -1003,7 +1003,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 // are currently in the ASCII range (< 128).
 //
 static Token Maybe_Locate_Token_May_Push_Mold(
-    Context** error,
+    VarList** error,
     REB_MOLD *mo,
     Level* L
 ){
@@ -1900,7 +1900,7 @@ Bounce Scanner_Executor(Level* const L) {
 } loop: {  //////////////////////////////////////////////////////////////////
 
     Drop_Mold_If_Pushed(mo);
-    Context* locate_error;
+    VarList* locate_error;
     level->token = Maybe_Locate_Token_May_Push_Mold(&locate_error, mo, L);
 
     if (level->token == TOKEN_0) {  // error signal
@@ -2379,7 +2379,7 @@ Bounce Scanner_Executor(Level* const L) {
         if (ep - 1 != Scan_UTF8_Char_Escapable(&uni, bp))
             return RAISE(Error_Syntax(ss, level->token));
 
-        Option(Context*) error = Trap_Init_Char(PUSH(), uni);
+        Option(VarList*) error = Trap_Init_Char(PUSH(), uni);
         if (error)
             return DROP(), RAISE(unwrap error);
         break; }
@@ -2693,7 +2693,7 @@ Bounce Scanner_Executor(Level* const L) {
         }
 
       blockscope {  // gotos would cross this initialization without
-        Option(Context*) error = Trap_Pop_Sequence_Or_Conflation(
+        Option(VarList*) error = Trap_Pop_Sequence_Or_Conflation(
             temp,  // doesn't write directly to stack since popping stack
             level->token == TOKEN_TUPLE ? REB_TUPLE : REB_PATH,
             stackindex_path_head - 1
@@ -2838,7 +2838,7 @@ Bounce Scanner_Executor(Level* const L) {
         if (*ss->begin != '~')
             return RAISE(Error_Syntax(ss, TOKEN_TILDE));
 
-        Option(Context*) error = Trap_Coerce_To_Quasiform(TOP);
+        Option(VarList*) error = Trap_Coerce_To_Quasiform(TOP);
         if (error) {
             /* Free_Unmanaged_Flex(error); */  // !!! but it's managed :-(
             return RAISE(Error_Syntax(ss, TOKEN_TILDE));  // !!! better error!
@@ -2890,7 +2890,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     assert(Is_Raised(OUT));
 
-    Drop_Level(SUBLEVEL);  // could `return RAISE(VAL_CONTEXT(OUT))`
+    Drop_Level(SUBLEVEL);  // could `return RAISE(Cell_Varlist(OUT))`
     return OUT;
 }}
 
@@ -3227,7 +3227,7 @@ const Byte* Scan_Any_Word(
 
     DECLARE_MOLD (mo);
 
-    Context* error;
+    VarList* error;
     Token token = Maybe_Locate_Token_May_Push_Mold(&error, mo, L);
     if (token != TOKEN_WORD)
         return nullptr;

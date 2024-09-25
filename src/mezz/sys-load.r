@@ -430,7 +430,7 @@ import*: func [
     ]
     /args "Args passed as system.script.args to a script (normally a string)"
         [element?]
-    /into "e.g. reuse Context* already made for NATIVEs loading from extension"
+    /into "e.g. reuse VarList* already made for NATIVEs loading from extension"
         [module!]
     <static>
         importing-remotely ('no)

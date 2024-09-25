@@ -111,6 +111,6 @@ typedef struct Reb_File_Port_State FILEREQ;
 
 INLINE FILEREQ *File_Of_Port(const Value* port)
 {
-    Value* state = CTX_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
+    Value* state = Varlist_Slot(Cell_Varlist(port), STD_PORT_STATE);
     return cast(FILEREQ*, Cell_Blob_At_Ensure_Mutable(state));
 }

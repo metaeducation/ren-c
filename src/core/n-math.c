@@ -740,7 +740,7 @@ DECLARE_NATIVE(same_q)
         );
 
     if (Any_Context(v1))  // same if varlists match
-        return Init_Logic(OUT, VAL_CONTEXT(v1) == VAL_CONTEXT(v2));
+        return Init_Logic(OUT, Cell_Varlist(v1) == Cell_Varlist(v2));
 
     if (Is_Map(v1))  // same if map pointer matches
         return Init_Logic(OUT, VAL_MAP(v1) == VAL_MAP(v2));

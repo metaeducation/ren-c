@@ -31,9 +31,9 @@
 REBINT CT_Port(const Cell* a, const Cell* b, bool strict)
 {
     UNUSED(strict);
-    if (VAL_CONTEXT(a) == VAL_CONTEXT(b))
+    if (Cell_Varlist(a) == Cell_Varlist(b))
         return 0;
-    return VAL_CONTEXT(a) > VAL_CONTEXT(b) ? 1 : -1;  // !!! Review
+    return Cell_Varlist(a) > Cell_Varlist(b) ? 1 : -1;  // !!! Review
 }
 
 
@@ -83,8 +83,8 @@ Bounce TO_Port(Level* level_, Kind kind, const Value* arg)
     // vs. making it as a port to begin with (?)  Look into why
     // system.standard.port is made with CONTEXT and not with MAKE PORT!
     //
-    Context* context = Copy_Context_Shallow_Managed(VAL_CONTEXT(arg));
-    Value* rootvar = CTX_ROOTVAR(context);
+    VarList* context = Copy_Varlist_Shallow_Managed(Cell_Varlist(arg));
+    Value* rootvar = Rootvar_Of_Varlist(context);
     HEART_BYTE(rootvar) = REB_PORT;
 
     return Init_Port(OUT, context);
@@ -127,8 +127,8 @@ REBTYPE(Port)
     if (id == SYM_PICK_P or id == SYM_POKE_P)
         return T_Context(level_, verb);
 
-    Context* ctx = VAL_CONTEXT(port);
-    Value* actor = CTX_VAR(ctx, STD_PORT_ACTOR);
+    VarList* ctx = Cell_Varlist(port);
+    Value* actor = Varlist_Slot(ctx, STD_PORT_ACTOR);
 
     // If actor is a HANDLE!, it should be a PAF
     //
@@ -160,7 +160,7 @@ REBTYPE(Port)
 
     Value* action = (n == 0)
         ? cast(Value*, nullptr)  // C++98 ambiguous w/o cast
-        : CTX_VAR(VAL_CONTEXT(actor), n);
+        : Varlist_Slot(Cell_Varlist(actor), n);
 
     if (not action or not Is_Action(action)) {
         DECLARE_ATOM (verb_cell);

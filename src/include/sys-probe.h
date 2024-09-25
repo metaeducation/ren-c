@@ -24,7 +24,7 @@
 //
 // The PROBE() macro can be used in debug builds to mold a cell much like the
 // Rebol2 `probe` operation.  But it's actually polymorphic, and if you have
-// a Flex*, Context*, or Array* it can be used with those as well.
+// a Flex*, VarList*, or Array* it can be used with those as well.
 //
 // A function Probe() is defined as well, which can be called directly from
 // C debuggers (without having to pass the file and line number needed by the

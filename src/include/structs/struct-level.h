@@ -413,13 +413,13 @@ typedef bool (Decider)(const Value* arg);
     Option(const Symbol*) label;
 
     // The varlist is where arguments for FRAME! are kept.  Though it is
-    // ultimately usable as an ordinary CTX_VARLIST() for a FRAME! value, it
+    // ultimately usable as an ordinary Varlist_Array() for a FRAME! value, it
     // is different because it is built progressively, with random bits in
     // its pending capacity that are specifically accounted for by the GC...
     // which limits its marking up to the progress point of `key`.
     //
     // It starts out unmanaged, so that if no usages by the user specifically
-    // ask for a FRAME! value, and the Context* isn't needed to store in a
+    // ask for a FRAME! value, and the VarList* isn't needed to store in a
     // Derelativize()'d or Move_Cell()'d value as a binding, it can be
     // reused or freed.  See Push_Action() and Drop_Action() for the logic.
     //
@@ -427,8 +427,8 @@ typedef bool (Decider)(const Value* arg);
     // grow to be able to capture evaluator state as a reified notion to
     // automate in debugging.  That's very speculative, but, possible.
     //
-    Array* varlist;
-    Element* rootvar;  // cached CTX_ARCHETYPE(varlist) if varlist is not null
+    Array* varlist;  // must be Array, isn't legit VarList* while being built
+    Element* rootvar;  // cached Varlist_Archetype() if varlist is not null
 
     // The "baseline" is a digest of the state of global variables at the
     // beginning of a level evaluation.  An example of one of the things the

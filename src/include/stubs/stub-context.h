@@ -29,7 +29,7 @@
 //   "VARLIST" - an Array which holds an archetypal ANY-CONTEXT? value in its
 //   [0] element, and then a cell-sized slot for each variable.
 //
-// A `Context*` is an alias of the varlist's `Array*`, and keylists are
+// A `VarList*` is an alias of the varlist's `Array*`, and keylists are
 // reached through the `->link` of the varlist.  The reason varlists
 // are used as the identity of the context is that keylists can be shared
 // between contexts.
@@ -37,7 +37,7 @@
 // Indices into the arrays are 0-based for keys and 1-based for values, with
 // the [0] elements of the varlist used an archetypal value:
 //
-//    VARLIST ARRAY (aka Context*)  --Link--+
+//    VARLIST ARRAY (aka VarList*)  --Link--+
 //  +------------------------------+        |
 //  +          "ROOTVAR"           |        |
 //  | Archetype ANY-CONTEXT? Value |        v         KEYLIST SERIES
@@ -54,9 +54,9 @@
 // frame stops running, the paramlist is written back to the link again.)
 //
 // The "ROOTVAR" is a canon value image of an ANY-CONTEXT?'s cell.  This
-// trick allows a single Context* pointer to be passed around rather than the
+// trick allows a single VarList* pointer to be passed around rather than the
 // cell struct which is 4x larger, yet use existing memory to make a Value*
-// when needed (using CTX_ARCHETYPE()).  ACTION!s have a similar trick.
+// when needed (using Varlist_Archetype()).  ACTION!s have a similar trick.
 //
 // Contexts coordinate with words, which can have their VAL_WORD_CONTEXT()
 // set to a context's Array pointer.  Then they cache the index of that
@@ -79,9 +79,9 @@
 
 
 #ifdef NDEBUG
-    #define Assert_Context(c) cast(void, 0)
+    #define Assert_Varlist(c) cast(void, 0)
 #else
-    #define Assert_Context(c) Assert_Context_Core(c)
+    #define Assert_Varlist(c) Assert_Varlist_Core(c)
 #endif
 
 
@@ -101,13 +101,13 @@
     FLEX_FLAG_24
 
 
-// Context* properties (note: shares BONUS_KEYSOURCE() with Action*)
+// VarList* properties (note: shares BONUS_KEYSOURCE() with Action*)
 //
 // Note: MODULE! contexts depend on a property stored in the META field, which
 // is another object's-worth of data *about* the module's contents (e.g. the
 // processed header)
 //
-#define CTX_ADJUNCT(c)     MISC(VarlistAdjunct, CTX_VARLIST(c))
+#define CTX_ADJUNCT(c)     MISC(VarlistAdjunct, Varlist_Array(c))
 
 #define LINK_Patches_TYPE       Array*
 #define HAS_LINK_Patches        FLAVOR_VARLIST
@@ -125,8 +125,8 @@
 // in the context itself as the [0] element of the varlist.  This means it is
 // always on hand when a Value* is needed, so you can do things like:
 //
-//     Context* c = ...;
-//     rebElide("print [pick", CTX_ARCHETYPE(c), "'field]");
+//     VarList* c = ...;
+//     rebElide("print [pick", Varlist_Archetype(c), "'field]");
 //
 // The archetype stores the varlist, and since it has a value header it also
 // encodes which specific type of context (OBJECT!, FRAME!, MODULE!...) the
@@ -142,27 +142,27 @@
 // For the moment that is done with the CTX_ADJUNCT() field instead.
 //
 
-INLINE const Element* CTX_ARCHETYPE(Context* c) {  // read-only form
-    const Flex* varlist = CTX_VARLIST(c);
+INLINE const Element* Varlist_Archetype(VarList* c) {  // read-only form
+    const Flex* varlist = Varlist_Array(c);
     return c_cast(Element*, varlist->content.dynamic.data);
 }
 
 #define CTX_TYPE(c) \
-    Cell_Heart(CTX_ARCHETYPE(c))
+    Cell_Heart(Varlist_Archetype(c))
 
-INLINE Element* CTX_ROOTVAR(Context* c)  // mutable archetype access
-  { return m_cast(Element*, CTX_ARCHETYPE(c)); }  // inline checks mutability
+INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
+  { return m_cast(Element*, Varlist_Archetype(c)); }  // inline checks mutability
 
-INLINE Phase* CTX_FRAME_PHASE(Context* c) {
-    const Value* archetype = CTX_ARCHETYPE(c);
+INLINE Phase* CTX_FRAME_PHASE(VarList* c) {
+    const Value* archetype = Varlist_Archetype(c);
     assert(Cell_Heart_Ensure_Noquote(archetype) == REB_FRAME);
     return cast(Phase*, Extract_Cell_Frame_Phase_Or_Label(archetype));
 }
 
-INLINE Context* CTX_FRAME_BINDING(Context* c) {
-    const Value* archetype = CTX_ARCHETYPE(c);
+INLINE VarList* CTX_FRAME_BINDING(VarList* c) {
+    const Value* archetype = Varlist_Archetype(c);
     assert(Cell_Heart_Ensure_Noquote(archetype) == REB_FRAME);
-    return cast(Context*, BINDING(archetype));
+    return cast(VarList*, BINDING(archetype));
 }
 
 //=//// FRAME TARGET //////////////////////////////////////////////////////=//
@@ -178,57 +178,55 @@ INLINE Context* CTX_FRAME_BINDING(Context* c) {
 // a running frame gets re-executed.  More study is needed.
 //
 
-INLINE Option(Context*) Cell_Frame_Coupling(const Cell* c) {
+INLINE Option(VarList*) Cell_Frame_Coupling(const Cell* c) {
     assert(Cell_Heart(c) == REB_FRAME);
-    return cast(Context*, m_cast(Node*, EXTRA(Any, c).node));
+    return cast(VarList*, m_cast(Node*, EXTRA(Any, c).node));
 }
 
-INLINE void Tweak_Cell_Frame_Coupling(Cell* c, Option(Context*) coupling) {
+INLINE void Tweak_Cell_Frame_Coupling(Cell* c, Option(VarList*) coupling) {
     assert(HEART_BYTE(c) == REB_FRAME);
     EXTRA(Any, c).node = maybe coupling;
 }
 
-INLINE void Tweak_Cell_Context_Rootvar_Untracked(
-    Cell* out,
-    Heart heart,
-    Array* varlist
+INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
+    Array* varlist,
+    Heart heart
 ){
-    assert(heart != REB_FRAME);  // use Tweak_Cell_Frame_Rootvar() instead
-    assert(out == Array_Head(varlist));
+    assert(heart != REB_FRAME);  // use Tweak_Frame_Varlist_Rootvar() instead
+    Cell* rootvar = Array_Head(varlist);
     Reset_Cell_Header_Untracked(
-        out,
+        rootvar,
         FLAG_HEART_BYTE(heart) | CELL_MASK_ANY_CONTEXT
     );
-    Tweak_Cell_Context_Varlist(out, varlist);
-    BINDING(out) = UNBOUND;  // not a frame
-    Tweak_Cell_Frame_Phase_Or_Label(out, nullptr);  // not a frame
+    Tweak_Cell_Context_Varlist(rootvar, varlist);
+    BINDING(rootvar) = UNBOUND;  // not a frame
+    Tweak_Cell_Frame_Phase_Or_Label(rootvar, nullptr);  // not a frame
   #if !defined(NDEBUG)
-    out->header.bits |= CELL_FLAG_PROTECTED;
+    rootvar->header.bits |= CELL_FLAG_PROTECTED;
   #endif
 }
 
-#define Tweak_Cell_Context_Rootvar(out,heart,varlist) \
-    Tweak_Cell_Context_Rootvar_Untracked(TRACK(out), (heart), (varlist))
+#define Tweak_Non_Frame_Varlist_Rootvar(heart,varlist) \
+    Tweak_Non_Frame_Varlist_Rootvar_Untracked((heart), (varlist))
 
-INLINE void Tweak_Cell_Frame_Rootvar_Core(
-    Cell* out,
+INLINE void Tweak_Frame_Varlist_Rootvar_Untracked(
     Array* varlist,
     Phase* phase,
-    Option(Context*) coupling
+    Option(VarList*) coupling
 ){
-    assert(out == Array_Head(varlist));
+    Cell* rootvar = Array_Head(varlist);
     assert(phase != nullptr);
-    Reset_Cell_Header_Untracked(out, CELL_MASK_FRAME);
-    Tweak_Cell_Context_Varlist(out, varlist);
-    Tweak_Cell_Frame_Coupling(out, coupling);
-    Tweak_Cell_Frame_Phase_Or_Label(out, phase);
+    Reset_Cell_Header_Untracked(rootvar, CELL_MASK_FRAME);
+    Tweak_Cell_Context_Varlist(rootvar, varlist);
+    Tweak_Cell_Frame_Coupling(rootvar, coupling);
+    Tweak_Cell_Frame_Phase_Or_Label(rootvar, phase);
   #if !defined(NDEBUG)
-    out->header.bits |= CELL_FLAG_PROTECTED;
+    rootvar->header.bits |= CELL_FLAG_PROTECTED;
   #endif
 }
 
-#define Tweak_Cell_Frame_Rootvar(out,varlist,phase,target) \
-    Tweak_Cell_Frame_Rootvar_Core(TRACK(out), (varlist), (phase), (target))
+#define Tweak_Frame_Varlist_Rootvar(varlist,phase,target) \
+    Tweak_Frame_Varlist_Rootvar_Untracked((varlist), (phase), (target))
 
 
 //=//// CONTEXT KEYLISTS //////////////////////////////////////////////////=//
@@ -246,36 +244,36 @@ INLINE void Tweak_Cell_Frame_Rootvar_Core(
 // is moved (see CELL_MASK_COPY regarding this mechanic)
 //
 
-INLINE KeyList* CTX_KEYLIST(Context* c) {
+INLINE KeyList* Keylist_Of_Varlist(VarList* c) {
     assert(CTX_TYPE(c) != REB_MODULE);
-    if (Is_Node_A_Cell(BONUS(KeySource, CTX_VARLIST(c)))) {
+    if (Is_Node_A_Cell(BONUS(KeySource, Varlist_Array(c)))) {
         //
         // running frame, KeySource is Level*, so use action's paramlist.
         //
         return ACT_KEYLIST(CTX_FRAME_PHASE(c));
     }
-    return cast(KeyList*, node_BONUS(KeySource, CTX_VARLIST(c)));  // not Level
+    return cast(KeyList*, node_BONUS(KeySource, Varlist_Array(c)));  // not Level
 }
 
-INLINE void Tweak_Context_Keylist_Shared(Context* c, KeyList* keylist) {
+INLINE void Tweak_Keylist_Of_Varlist_Shared(VarList* v, KeyList* keylist) {
     Set_Subclass_Flag(KEYLIST, keylist, SHARED);
-    Tweak_Bonus_Keysource(CTX_VARLIST(c), keylist);
+    Tweak_Varlist_Keysource(v, keylist);
 }
 
-INLINE void Tweak_Context_Keylist_Unique(Context* c, KeyList *keylist) {
+INLINE void Tweak_Keylist_Of_Varlist_Unique(VarList* v, KeyList *keylist) {
     assert(Not_Subclass_Flag(KEYLIST, keylist, SHARED));
-    Tweak_Bonus_Keysource(CTX_VARLIST(c), keylist);
+    Tweak_Varlist_Keysource(v, keylist);
 }
 
 
-//=//// Context* ACCESSORS /////////////////////////////////////////////////=//
+//=//// VarList* ACCESSORS /////////////////////////////////////////////////=//
 //
 // These are access functions that should be used when what you have in your
-// hand is just a Context*.  THIS DOES NOT ACCOUNT FOR PHASE...so there can
+// hand is just a VarList*.  THIS DOES NOT ACCOUNT FOR PHASE...so there can
 // actually be a difference between these two expressions for FRAME!s:
 //
 //     Value* x = VAL_CONTEXT_KEYS_HEAD(context);  // accounts for phase
-//     Value* y = CTX_KEYS_HEAD(VAL_CONTEXT(context), n);  // no phase
+//     Value* y = Varlist_Keys_Head(Cell_Varlist(context), n);  // no phase
 //
 // Context's "length" does not count the [0] cell of either the varlist or
 // the keylist arrays.  Hence it must subtract 1.  FLEX_MASK_VARLIST
@@ -283,18 +281,18 @@ INLINE void Tweak_Context_Keylist_Unique(Context* c, KeyList *keylist) {
 // as it is valid.
 //
 
-INLINE REBLEN CTX_LEN(Context* c) {
+INLINE REBLEN Varlist_Len(VarList* c) {
     assert(CTX_TYPE(c) != REB_MODULE);
-    return CTX_VARLIST(c)->content.dynamic.used - 1;  // -1 for archetype
+    return Varlist_Array(c)->content.dynamic.used - 1;  // -1 for archetype
 }
 
-INLINE const Key* CTX_KEY(Context* c, REBLEN n) {
-    assert(n != 0 and n <= CTX_LEN(c));
-    return Flex_At(const Key, CTX_KEYLIST(c), n - 1);
+INLINE const Key* Varlist_Key(VarList* c, REBLEN n) {
+    assert(n != 0 and n <= Varlist_Len(c));
+    return Flex_At(const Key, Keylist_Of_Varlist(c), n - 1);
 }
 
-INLINE Value* CTX_VAR(Context* c, REBLEN n) {  // 1-based, no Cell*
-    assert(n != 0 and n <= CTX_LEN(c));
+INLINE Value* Varlist_Slot(VarList* c, REBLEN n) {  // 1-based, no Cell*
+    assert(n != 0 and n <= Varlist_Len(c));
     return cast(Value*, cast(Flex*, c)->content.dynamic.data) + n;
 }
 
@@ -326,7 +324,7 @@ INLINE Value* Force_Lib_Var(SymId id) {
 #define SysUtil(name) \
     cast(const Value*, MOD_VAR(Sys_Context, Canon_Symbol(SYM_##name), true))
 
-INLINE Option(Stub*) MOD_PATCH(Context* c, const Symbol* sym, bool strict) {
+INLINE Option(Stub*) MOD_PATCH(VarList* c, const Symbol* sym, bool strict) {
     //
     // Optimization for Lib_Context for datatypes + natives + generics; use
     // tailored order of SYM_XXX constants to beeline for the storage.  The
@@ -366,7 +364,7 @@ INLINE Option(Stub*) MOD_PATCH(Context* c, const Symbol* sym, bool strict) {
     return nullptr;
 }
 
-INLINE Value* MOD_VAR(Context* c, const Symbol* sym, bool strict) {
+INLINE Value* MOD_VAR(VarList* c, const Symbol* sym, bool strict) {
     Stub* patch = maybe MOD_PATCH(c, sym, strict);
     if (not patch)
         return nullptr;
@@ -374,56 +372,56 @@ INLINE Value* MOD_VAR(Context* c, const Symbol* sym, bool strict) {
 }
 
 
-// CTX_VARS_HEAD() and CTX_KEYS_HEAD() allow CTX_LEN() to be 0, while
-// CTX_VAR() does not.  Also, CTX_KEYS_HEAD() gives back a mutable slot.
+// Varlist_Slots_Head() and Varlist_Keys_Head() allow Varlist_Len() to be 0,
+// Varlist_Slot() does not.  Also, Varlist_Keys_Head() gives a mutable slot.
 
-#define CTX_KEYS_HEAD(c) \
-    Flex_At(Key, CTX_KEYLIST(c), 0)  // 0-based
+#define Varlist_Keys_Head(c) \
+    Flex_At(Key, Keylist_Of_Varlist(c), 0)  // 0-based
 
-#define CTX_VARS_HEAD(c) \
+#define Varlist_Slots_Head(c) \
     (cast(Value*, x_cast(Flex*, (c))->content.dynamic.data) + 1)
 
-INLINE const Key* CTX_KEYS(const Key* * tail, Context* c) {
-    KeyList* keylist = CTX_KEYLIST(c);
-    *tail = Flex_Tail(Key, keylist);
+INLINE const Key* Varlist_Keys(const Key* * tail_out, VarList* c) {
+    KeyList* keylist = Keylist_Of_Varlist(c);
+    *tail_out = Flex_Tail(Key, keylist);
     return Flex_Head(Key, keylist);
 }
 
-INLINE Value* CTX_VARS(const Value* * tail, Context* c) {
-    Value* head = CTX_VARS_HEAD(c);
-    *tail = head + x_cast(Flex*, (c))->content.dynamic.used - 1;
+INLINE Value* Varlist_Slots(const Value* * tail_out, VarList* v) {
+    Value* head = Varlist_Slots_Head(v);
+    *tail_out = head + x_cast(Flex*, (v))->content.dynamic.used - 1;
     return head;
 }
 
 
-//=//// FRAME! Context* <-> Level* STRUCTURE //////////////////////////=//
+//=//// FRAME! VarList* <-> Level* STRUCTURE //////////////////////////=//
 //
 // For a FRAME! context, the keylist is redundant with the paramlist of the
 // CTX_FRAME_PHASE() that the frame is for.  That is taken advantage of when
 // a frame is executing in order to use the LINK() keysource to point at the
 // running Level* structure for that stack level.  This provides a cheap
-// way to navigate from a Context* to the Level* that's running it.
+// way to navigate from a VarList* to the Level* that's running it.
 //
 
-INLINE bool Is_Frame_On_Stack(Context* c) {
-    assert(Is_Frame(CTX_ARCHETYPE(c)));
-    return Is_Node_A_Cell(BONUS(KeySource, CTX_VARLIST(c)));
+INLINE bool Is_Frame_On_Stack(VarList* c) {
+    assert(Is_Frame(Varlist_Archetype(c)));
+    return Is_Node_A_Cell(BONUS(KeySource, Varlist_Array(c)));
 }
 
-INLINE Level* CTX_LEVEL_IF_ON_STACK(Context* c) {
-    Node* keysource = BONUS(KeySource, CTX_VARLIST(c));
+INLINE Level* Level_Of_Varlist_If_Running(VarList* c) {
+    Node* keysource = BONUS(KeySource, Varlist_Array(c));
     if (not Is_Node_A_Cell(keysource))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
 
-    assert(Is_Frame(CTX_ARCHETYPE(c)));
+    assert(Is_Frame(Varlist_Archetype(c)));
 
     Level* L = cast(Level*, keysource);
     assert(L->executor == &Action_Executor);
     return L;
 }
 
-INLINE Level* CTX_LEVEL_MAY_FAIL(Context* c) {
-    Level* L = CTX_LEVEL_IF_ON_STACK(c);
+INLINE Level* Level_Of_Varlist_May_Fail(VarList* c) {
+    Level* L = Level_Of_Varlist_If_Running(c);
     if (not L)
         fail (Error_Frame_Not_On_Stack_Raw());
     return L;
@@ -440,24 +438,15 @@ INLINE Level* CTX_LEVEL_MAY_FAIL(Context* c) {
 // compiler, rather than add an extra layer of function call.
 //
 
-#define Copy_Context_Shallow_Managed(src) \
-    Copy_Context_Extra_Managed((src), 0, 0)
-
-// Make sure a context's keylist is not shared.  Note any CTX_KEY() values
-// may go stale from this context after this call.
-//
-INLINE Context* Force_KeyList_Unique(Context* context) {
-    bool was_changed = Expand_Context_KeyList_Core(context, 0);
-    UNUSED(was_changed);  // keys wouldn't go stale if this was false
-    return context;
-}
+#define Copy_Varlist_Shallow_Managed(src) \
+    Copy_Varlist_Extra_Managed((src), 0, 0)
 
 // Useful if you want to start a context out as NODE_FLAG_MANAGED so it does
 // not have to go in the unmanaged roots list and be removed later.  (Be
 // careful not to do any evaluations or trigger GC until it's well formed)
 //
-#define Alloc_Context(kind,capacity) \
-    Alloc_Context_Core((kind), (capacity), FLEX_FLAGS_NONE)
+#define Alloc_Varlist(kind,capacity) \
+    Alloc_Varlist_Core((kind), (capacity), FLEX_FLAGS_NONE)
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -466,20 +455,20 @@ INLINE Context* Force_KeyList_Unique(Context* context) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-INLINE void Deep_Freeze_Context(Context* c) {
-    Protect_Context(
+INLINE void Deep_Freeze_Context(VarList* c) {
+    Protect_Varlist(
         c,
         PROT_SET | PROT_DEEP | PROT_FREEZE
     );
-    Uncolor_Array(CTX_VARLIST(c));
+    Uncolor_Array(Varlist_Array(c));
 }
 
 #define Is_Context_Frozen_Deep(c) \
-    Is_Array_Frozen_Deep(CTX_VARLIST(c))
+    Is_Array_Frozen_Deep(Varlist_Array(c))
 
 
 //
-//  Steal_Context_Vars: C
+//  Steal_Varlist_Vars: C
 //
 // This is a low-level trick which mutates a context's varlist into a stub
 // "free" node, while grabbing the underlying memory for its variables into
@@ -500,10 +489,10 @@ INLINE void Deep_Freeze_Context(Context* c) {
 //    single inaccessible node so it can free up the other stubs.  So it
 //    should lose all of its information.
 //
-INLINE Context* Steal_Context_Vars(Context* c, Node* keysource) {
+INLINE VarList* Steal_Varlist_Vars(VarList* c, Node* keysource) {
     UNUSED(keysource);
 
-    Stub* stub = CTX_VARLIST(c);
+    Stub* stub = Varlist_Array(c);
 
     Stub* copy = Prep_Stub(  // don't Mem_Copy() the incoming stub [1]
         Alloc_Stub(),  // not preallocated
@@ -528,5 +517,5 @@ INLINE Context* Steal_Context_Vars(Context* c, Node* keysource) {
     Corrupt_Pointer_If_Debug(stub->info.any.corrupt);
   #endif
 
-    return cast(Context*, copy);
+    return cast(VarList*, copy);
 }

@@ -241,7 +241,7 @@ DECLARE_NATIVE(meta)
 
     if (Is_Meta_Of_Raised(meta)) {
         if (not REF(except))
-            fail (VAL_CONTEXT(ARG(atom)));
+            fail (Cell_Varlist(ARG(atom)));
 
         QUOTE_BYTE(meta) = NOQUOTE_1;
         return COPY(meta);  // no longer meta, just a plain ERROR!
@@ -793,7 +793,7 @@ DECLARE_INTRINSIC(runs)
     }
 
     Phase* specialized = Make_Action(
-        CTX_VARLIST(VAL_CONTEXT(frame)),
+        Varlist_Array(Cell_Varlist(frame)),
         nullptr,
         &Specializer_Dispatcher,
         IDX_SPECIALIZER_MAX  // details array capacity

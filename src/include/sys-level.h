@@ -226,7 +226,7 @@ INLINE LineNumber LineNumber_Of_Level(Level* L) {
 INLINE void Tweak_Level_Phase(Level* L, Phase* phase)  // check types
   { Tweak_Cell_Frame_Phase_Or_Label(L->rootvar, phase); }  // ...only
 
-INLINE void Tweak_Level_Coupling(Level* L, Option(Context*) coupling)
+INLINE void Tweak_Level_Coupling(Level* L, Option(VarList*) coupling)
   { Tweak_Cell_Frame_Coupling(L->rootvar, coupling); }  // also fast
 
 // Each ACTION! cell for things like RETURN/BREAK/CONTINUE has a piece of
@@ -283,11 +283,15 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
 #define Is_Level_At_End(L)          Is_Feed_At_End((L)->feed)
 #define Not_Level_At_End(L)         Not_Feed_At_End((L)->feed)
 
+INLINE VarList* Varlist_Of_Level_Maybe_Unmanaged(Level* L) {
+    assert(not Is_Level_Fulfilling(L));
+    return cast(VarList*, L->varlist);
+}
 
-INLINE Context* Context_For_Level_May_Manage(Level* L) {
+INLINE VarList* Varlist_Of_Level_Force_Managed(Level* L) {
     assert(not Is_Level_Fulfilling(L));
     Force_Level_Varlist_Managed(L);  // may already be managed
-    return cast(Context*, L->varlist);
+    return cast(VarList*, L->varlist);
 }
 
 
@@ -591,18 +595,18 @@ INLINE Bounce Native_Nothing_Result_Untracked(
 INLINE Bounce Native_Raised_Result(Level* level_, const void *p) {
     assert(not THROWING);
 
-    Context* error;
+    VarList* error;
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_UTF8:
         error = Error_User(c_cast(char*, p));
         break;
       case DETECTED_AS_STUB: {
-        error = cast(Context*, m_cast(void*, p));
+        error = cast(VarList*, m_cast(void*, p));
         break; }
       case DETECTED_AS_CELL: {  // note: can be Is_Raised()
         const Value* cell = c_cast(Value*, p);
         assert(Is_Error(cell));
-        error = VAL_CONTEXT(cell);
+        error = Cell_Varlist(cell);
         break; }
       default:
         assert(false);

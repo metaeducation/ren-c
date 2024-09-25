@@ -50,7 +50,7 @@
 //    the symbol in a WORD!.  It also means the spelling can be found in
 //    that list looking for the symbol.
 
-#define INODE_PatchContext_TYPE          Context*
+#define INODE_PatchContext_TYPE          VarList*
 #define HAS_INODE_PatchContext           FLAVOR_PATCH
 
 #define LINK_PatchReserved_TYPE           void*

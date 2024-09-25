@@ -103,14 +103,14 @@ INLINE uint64_t File_Size_Cacheable_May_Fail(const Value* port)
 //
 Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
 {
-    Context* ctx = VAL_CONTEXT(port);
+    VarList* ctx = Cell_Varlist(port);
 
     // The first time the port code gets entered the state field will be NULL.
     // This code reacts to that by capturing the path out of the spec.  If the
     // operation is something like a RENAME that does not require a port to be
     // open, then this capturing of the specification is all the setup needed.
     //
-    Value* state = CTX_VAR(ctx, STD_PORT_STATE);
+    Value* state = Varlist_Slot(ctx, STD_PORT_STATE);
     FILEREQ *file;
     if (Is_Binary(state)) {
         file = File_Of_Port(port);
@@ -134,7 +134,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
     else {
         assert(Is_Nulled(state));
 
-        Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
+        Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
         if (not Is_Object(spec))
             fail (Error_Invalid_Spec_Raw(spec));
 

@@ -110,7 +110,7 @@ void Push_Frame_Continuation(
 
     if (Get_Subclass_Flag(
         VARLIST,
-        CTX_VARLIST(VAL_CONTEXT(frame)),
+        Varlist_Array(Cell_Varlist(frame)),
         FRAME_HAS_BEEN_INVOKED
     )){
         fail (Error_Stale_Frame_Raw());
@@ -120,27 +120,26 @@ void Push_Frame_Continuation(
 
     StackIndex lowest_stackindex = TOP_INDEX;  // for refinements
 
-    Context *c;
+    VarList* varlist;
     if (copy_frame) {
-        c = Make_Context_For_Action(
+        varlist = Make_Varlist_For_Action(
             frame,  // being used here as input (e.g. the ACTION!)
             lowest_stackindex,  // will weave in any refinements pushed
             nullptr  // no binder needed, not running any code
         );
     } else
-        c = VAL_CONTEXT(frame);
+        varlist = Cell_Varlist(frame);
 
     Level* L = Make_End_Level(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
     );
 
-    Array* varlist = CTX_VARLIST(c);
-    L->varlist = varlist;
-    L->rootvar = CTX_ROOTVAR(c);
-    Tweak_Bonus_Keysource(varlist, L);
+    L->varlist = Varlist_Array(varlist);
+    L->rootvar = Rootvar_Of_Varlist(varlist);
+    Tweak_Varlist_Keysource(varlist, L);
 
-    assert(Level_Phase(L) == CTX_FRAME_PHASE(c));
+    assert(Level_Phase(L) == CTX_FRAME_PHASE(varlist));
     Tweak_Level_Coupling(L, Cell_Frame_Coupling(frame));
 
     L->u.action.original = Level_Phase(L);

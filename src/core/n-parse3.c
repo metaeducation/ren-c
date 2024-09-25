@@ -329,19 +329,19 @@ static bool Subparse_Throws(
 // question, but now the `where` at the time of failure will indicate the
 // location in the parse dialect that's the problem.
 
-INLINE Context* Error_Parse3_Rule(void) {
+INLINE VarList* Error_Parse3_Rule(void) {
     return Error_Parse3_Rule_Raw();
 }
 
-INLINE Context* Error_Parse3_End(void) {
+INLINE VarList* Error_Parse3_End(void) {
     return Error_Parse3_End_Raw();
 }
 
-INLINE Context* Error_Parse3_Command(Level* level_) {
+INLINE VarList* Error_Parse3_Command(Level* level_) {
     return Error_Parse3_Command_Raw(P_RULE);
 }
 
-INLINE Context* Error_Parse3_Variable(Level* level_) {
+INLINE VarList* Error_Parse3_Variable(Level* level_) {
     return Error_Parse3_Variable_Raw(P_RULE);
 }
 

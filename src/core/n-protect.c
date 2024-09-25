@@ -174,7 +174,7 @@ void Protect_Value(const Value* v, Flags flags)
     else if (Is_Map(v))
         Protect_Flex(MAP_PAIRLIST(VAL_MAP(v)), 0, flags);
     else if (Any_Context(v))
-        Protect_Context(VAL_CONTEXT(v), flags);
+        Protect_Varlist(Cell_Varlist(v), flags);
 }
 
 
@@ -215,14 +215,12 @@ void Protect_Flex(const Flex* f, REBLEN index, Flags flags)
 
 
 //
-//  Protect_Context: C
+//  Protect_Varlist: C
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Context(Context* c, Flags flags)
+void Protect_Varlist(VarList* varlist, Flags flags)
 {
-    const Array* varlist = CTX_VARLIST(c);
-
     if (Is_Flex_Black(varlist))
         return; // avoid loop
 
@@ -246,7 +244,7 @@ void Protect_Context(Context* c, Flags flags)
     Flip_Flex_To_Black(varlist);  // for recursion
 
     const Value* var_tail;
-    Value* var = CTX_VARS(&var_tail, c);
+    Value* var = Varlist_Slots(&var_tail, varlist);
     for (; var != var_tail; ++var)
         Protect_Value(var, flags);
 }
@@ -259,7 +257,7 @@ static void Protect_Word_Value(Value* word, Flags flags)
 {
     if (Any_Word(word) and IS_WORD_BOUND(word)) {
         const Value* slot;
-        Option(Context*) error = Trap_Lookup_Word(
+        Option(VarList*) error = Trap_Lookup_Word(
             &slot, cast(Element*, word), SPECIFIED
         );
         if (error)
@@ -326,7 +324,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                     // Since we *are* PROTECT we allow ourselves to get mutable
                     // references to even protected values to protect them.
                     //
-                    Option(Context*) error = Trap_Lookup_Word(
+                    Option(VarList*) error = Trap_Lookup_Word(
                         u_cast(const Value**, &var), item, Cell_Specifier(value)
                     );
                     if (error)
@@ -541,13 +539,13 @@ void Force_Value_Frozen_Core(
             Set_Flex_Info(a, AUTO_LOCKED);
     }
     else if (Any_Context_Kind(heart)) {
-        Context* c = VAL_CONTEXT(v);
+        VarList* c = Cell_Varlist(v);
         if (deep)
             Deep_Freeze_Context(c);
         else
             fail ("What does a shallow freeze of a context mean?");
         if (locker)
-            Set_Flex_Info(CTX_VARLIST(c), AUTO_LOCKED);
+            Set_Flex_Info(c, AUTO_LOCKED);
     }
     else if (Any_Series_Kind(heart)) {
         const Flex* f = Cell_Flex(v);

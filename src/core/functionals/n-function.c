@@ -127,7 +127,7 @@ Bounce Func_Dispatcher(Level* const L)
         cell,
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_RETURN))),
         Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
-        cast(Context*, L->varlist)  // so RETURN knows where to return from
+        cast(VarList*, L->varlist)  // so RETURN knows where to return from
     );
 
     STATE = ST_FUNC_BODY_EXECUTING;
@@ -216,7 +216,7 @@ Phase* Make_Interpreted_Action_May_Fail(
     assert(Is_Block(spec) and Is_Block(body));
     assert(details_capacity >= 1);  // relativized body put in details[0]
 
-    Context* meta;
+    VarList* meta;
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
@@ -356,7 +356,7 @@ DECLARE_NATIVE(endable_q)
     if (not Is_Frame(SPARE))
         fail ("ENDABLE? requires a WORD! bound into a FRAME! at present");
 
-    Context* ctx = VAL_CONTEXT(SPARE);
+    VarList* ctx = Cell_Varlist(SPARE);
     Action* act = CTX_FRAME_PHASE(ctx);
 
     Param* param = ACT_PARAM(act, VAL_WORD_INDEX(v));
@@ -384,8 +384,8 @@ Bounce Init_Thrown_Unwind_Value(
     DECLARE_VALUE (label);
     Copy_Cell(label, Lib(UNWIND));
 
-    if (Is_Frame(seek) and Is_Frame_On_Stack(VAL_CONTEXT(seek))) {
-        g_ts.unwind_level = CTX_LEVEL_IF_ON_STACK(VAL_CONTEXT(seek));
+    if (Is_Frame(seek) and Is_Frame_On_Stack(Cell_Varlist(seek))) {
+        g_ts.unwind_level = Level_Of_Varlist_If_Running(Cell_Varlist(seek));
     }
     else if (Is_Frame(seek)) {
         Level* L = target->prior;
@@ -555,11 +555,11 @@ DECLARE_NATIVE(definitional_return)
 
     Level* return_level = LEVEL;  // Level of this RETURN call
 
-    Option(Context*) coupling = Level_Coupling(return_level);
+    Option(VarList*) coupling = Level_Coupling(return_level);
     if (not coupling)
         fail (Error_Archetype_Invoked_Raw());
 
-    Level* target_level = CTX_LEVEL_MAY_FAIL(unwrap coupling);
+    Level* target_level = Level_Of_Varlist_May_Fail(unwrap coupling);
 
     if (not REF(run)) {  // plain simple RETURN (not weird tail-call)
         if (not Typecheck_Coerce_Return(target_level, atom))  // check now [2]
@@ -605,7 +605,7 @@ DECLARE_NATIVE(definitional_return)
         const Key* key = ACT_KEYS(&key_tail, redo_action);
         target_level->u.action.key = key;
         target_level->u.action.key_tail = key_tail;
-        Param* param = cast(Param*, CTX_VARS_HEAD(ACT_EXEMPLAR(redo_action)));
+        Param* param = cast(Param*, Varlist_Slots_Head(ACT_EXEMPLAR(redo_action)));
         target_level->u.action.param = ACT_PARAMS_HEAD(redo_action);
         Value* arg = Level_Args_Head(target_level);
         target_level->u.action.arg = arg;

@@ -254,7 +254,7 @@ void Uncolor(const Value* v)
     else if (Is_Map(v))
         Uncolor_Array(MAP_PAIRLIST(VAL_MAP(v)));
     else if (Any_Context(v))
-        Uncolor_Array(CTX_VARLIST(VAL_CONTEXT(v)));
+        Uncolor_Array(Varlist_Array(Cell_Varlist(v)));
     else {
         // Shouldn't have marked recursively any non-Array Flexes (no need)
         //

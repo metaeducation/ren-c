@@ -272,7 +272,7 @@ REBTYPE(Pair)
 
     Value* frame = Init_Frame(
         OUT,
-        Context_For_Level_May_Manage(level_),
+        Varlist_Of_Level_Force_Managed(level_),
         Level_Label(level_)
     );
 

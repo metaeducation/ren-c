@@ -28,7 +28,7 @@
 // other series nodes).
 //
 // The API value content is in the single cell, with LINK().owner holding
-// a Context* of the FRAME! that controls its lifetime, or EMPTY_ARRAY.  This
+// a VarList* of the FRAME! that controls its lifetime, or EMPTY_ARRAY.  This
 // link field exists in the pointer immediately prior to the Value*, which
 // means it can be sniffed as NODE_FLAG_CELL, distinguished from handles that
 // were given back with rebAlloc(), so routines can discern them.

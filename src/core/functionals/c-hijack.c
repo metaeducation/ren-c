@@ -99,7 +99,7 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
     StackIndex base = TOP_INDEX;  // we push refinements as we find them
 
     EVARS e;  // use EVARS to get parameter reordering right (in theory?)
-    Init_Evars(&e, CTX_ARCHETYPE(Context_For_Level_May_Manage(L1)));
+    Init_Evars(&e, Varlist_Archetype(Varlist_Of_Level_Force_Managed(L1)));
 
     while (Did_Advance_Evars(&e)) {
         if (Is_Specialized(e.param))  // specialized or local
@@ -169,8 +169,8 @@ Bounce Hijacker_Dispatcher(Level* level_)
     // specalization etc. which was made *after* the hijack, the frame should
     // be compatible.  Check by seeing if the keylists are derived.
     //
-    KeyList* exemplar_keylist = CTX_KEYLIST(ACT_EXEMPLAR(hijacker));
-    KeyList* keylist = CTX_KEYLIST(cast(Context*, LEVEL->varlist));
+    KeyList* exemplar_keylist = Keylist_Of_Varlist(ACT_EXEMPLAR(hijacker));
+    KeyList* keylist = Keylist_Of_Varlist(cast(VarList*, LEVEL->varlist));
     while (true) {
         if (keylist == exemplar_keylist)
             return ACT_DISPATCHER(hijacker)(LEVEL);

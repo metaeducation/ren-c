@@ -88,7 +88,7 @@ DECLARE_NATIVE(generic)
     Element* verb = cast(Element*, ARG(verb));
     Element* spec = cast(Element*, ARG(spec));
 
-    Context* meta;
+    VarList* meta;
     Flags flags = MKF_RETURN;
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,

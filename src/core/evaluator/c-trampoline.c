@@ -325,7 +325,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   //    overwrite the result verbatim.
   //
   // 2. Note LEVEL->varlist may be garbage here.  This can happen in RETURN
-  //    during ENCLOSE.  Don't cast(Context*, LEVEL->varlist) here, as that
+  //    during ENCLOSE.  Don't cast(VarList*, LEVEL->varlist) here, as that
   //    would try to validate it in the DEBUG_CHECK_CASTS build.
   //
   // 3. Constructs like REDUCE-EACH keep a sublevel pushed to do evaluation,
@@ -357,7 +357,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             Clear_Level_Flag(LEVEL, NOTIFY_ON_ABRUPT_FAILURE);
             Clear_Level_Flag(LEVEL, ABRUPT_FAILURE);
             assert(Is_Throwing_Failure(LEVEL));
-            Context* ctx = VAL_CONTEXT(VAL_THROWN_LABEL(LEVEL));
+            VarList* ctx = Cell_Varlist(VAL_THROWN_LABEL(LEVEL));
             CATCH_THROWN(SPARE, LEVEL);
             fail (ctx);
         }
@@ -392,7 +392,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     assert(!"executor(L) not OUT, BOUNCE_THROWN, or BOUNCE_CONTINUE");
     panic (cast(void*, bounce));
 
-} ON_ABRUPT_FAILURE(Context* e) {  /////////////////////////////////////////
+} ON_ABRUPT_FAILURE(VarList* e) {  /////////////////////////////////////////
 
   // A fail() can happen at any moment--even due to something like a failed
   // memory allocation requested by an executor itself.  These are called
@@ -415,13 +415,13 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   //     decides to call fail(), the non-running stack level can be "TOP_LEVEL"
   //     above the ALL's "LEVEL".)
 
-    Assert_Context(e);
+    Assert_Varlist(e);
     assert(CTX_TYPE(e) == REB_ERROR);
 
     Set_Level_Flag(LEVEL, ABRUPT_FAILURE);
 
     Freshen_Moved_Cell_Untracked(OUT);  // avoid sweep error under rug assert
-    Init_Thrown_Failure(LEVEL, CTX_ARCHETYPE(e));  // non-definitional [1]
+    Init_Thrown_Failure(LEVEL, Varlist_Archetype(e));  // non-definitional [1]
 
     while (TOP_LEVEL != LEVEL) {  // drop idle levels above the fail [2]
         assert(Not_Level_Flag(TOP_LEVEL, NOTIFY_ON_ABRUPT_FAILURE));

@@ -50,7 +50,7 @@
 //
 Bounce Specializer_Dispatcher(Level* L)
 {
-    Context* exemplar = ACT_EXEMPLAR(Level_Phase(L));
+    VarList* exemplar = ACT_EXEMPLAR(Level_Phase(L));
 
     Tweak_Level_Phase(L, CTX_FRAME_PHASE(exemplar));
     Tweak_Level_Coupling(L, CTX_FRAME_BINDING(exemplar));
@@ -60,7 +60,7 @@ Bounce Specializer_Dispatcher(Level* L)
 
 
 //
-//  Make_Context_For_Action_Push_Partials: C
+//  Make_Varlist_For_Action_Push_Partials: C
 //
 // For partial refinement specializations in the action, this will push the
 // refinement to the stack.  In this way it retains the ordering information
@@ -76,7 +76,7 @@ Bounce Specializer_Dispatcher(Level* L)
 // refinements added on the stack) we go ahead and collect bindings from the
 // frame if needed.
 //
-Context* Make_Context_For_Action_Push_Partials(
+VarList* Make_Varlist_For_Action_Push_Partials(
     const Value* action,  // need ->binding, so can't just be a Action*
     StackIndex lowest_stackindex,  // caller can add refinements
     Option(struct Reb_Binder*) binder
@@ -85,15 +85,13 @@ Context* Make_Context_For_Action_Push_Partials(
 
     Action* act = VAL_ACTION(action);
 
-    REBLEN num_slots = ACT_NUM_PARAMS(act) + 1;  // +1 is for CTX_ARCHETYPE()
+    REBLEN num_slots = ACT_NUM_PARAMS(act) + 1;  // +1 is for Varlist_Archetype()
     Array* varlist = Make_Array_Core(num_slots, FLEX_MASK_VARLIST);
     Set_Flex_Len(varlist, num_slots);
 
-    Tweak_Context_Keylist_Shared(cast(Context*, varlist), ACT_KEYLIST(act));
+    Tweak_Keylist_Of_Varlist_Shared(cast(VarList*, varlist), ACT_KEYLIST(act));
 
-    Element* rootvar = Array_Head(varlist);
-    Tweak_Cell_Frame_Rootvar(
-        rootvar,
+    Tweak_Frame_Varlist_Rootvar(
         varlist,
         ACT_IDENTITY(VAL_ACTION(action)),
         Cell_Frame_Coupling(action)
@@ -115,7 +113,7 @@ Context* Make_Context_For_Action_Push_Partials(
     const Key* key = ACT_KEYS(&tail, act);
     const Param* param = ACT_PARAMS_HEAD(act);
 
-    Value* arg = cast(Value*, rootvar) + 1;
+    Value* arg = Varlist_Slots_Head(varlist);
 
     REBLEN index = 1;  // used to bind REFINEMENT? values to parameter slots
 
@@ -182,12 +180,12 @@ Context* Make_Context_For_Action_Push_Partials(
     MISC(VarlistAdjunct, varlist) = nullptr;
     LINK(Patches, varlist) = nullptr;
 
-    return cast(Context*, varlist);
+    return cast(VarList*, varlist);
 }
 
 
 //
-//  Make_Context_For_Action: C
+//  Make_Varlist_For_Action: C
 //
 // This creates a FRAME! context with parameter antiforms in all unspecialized
 // slots.
@@ -198,18 +196,18 @@ Context* Make_Context_For_Action_Push_Partials(
 // which to make it usable should be relative to the lowest ordered StackIndex
 // and not absolute.
 //
-Context* Make_Context_For_Action(
+VarList* Make_Varlist_For_Action(
     const Value* action, // need ->binding, so can't just be a Action*
     StackIndex lowest_stackindex,
     Option(struct Reb_Binder*) binder
 ){
-    Context* exemplar = Make_Context_For_Action_Push_Partials(
+    VarList* exemplar = Make_Varlist_For_Action_Push_Partials(
         action,
         lowest_stackindex,
         binder
     );
 
-    Manage_Flex(CTX_VARLIST(exemplar));  // !!! was needed before, review
+    Manage_Flex(exemplar);  // !!! was needed before, review
     Drop_Data_Stack_To(lowest_stackindex);
     return exemplar;
 }
@@ -246,12 +244,12 @@ bool Specialize_Action_Throws(
     // will be on the stack (including any we are adding "virtually", from
     // the current TOP_INDEX down to the lowest_stackindex).
     //
-    Context* exemplar = Make_Context_For_Action_Push_Partials(
+    VarList* exemplar = Make_Varlist_For_Action_Push_Partials(
         specializee,
         lowest_stackindex,
         def ? &binder : nullptr
     );
-    Manage_Flex(CTX_VARLIST(exemplar)); // destined to be managed, guarded
+    Manage_Flex(exemplar); // destined to be managed, guarded
 
     if (def) { // code that fills the frame...fully or partially
         //
@@ -300,7 +298,7 @@ bool Specialize_Action_Throws(
     const Key* key = ACT_KEYS(&tail, unspecialized);
     const Param* param = ACT_PARAMS_HEAD(unspecialized);
 
-    Value* arg = CTX_VARS_HEAD(exemplar);
+    Value* arg = Varlist_Slots_Head(exemplar);
 
     StackIndex ordered_stackindex = lowest_stackindex;
 
@@ -383,7 +381,7 @@ bool Specialize_Action_Throws(
                 fail (Error_Bad_Parameter_Raw(ordered));
             }
 
-            Value* slot = CTX_VAR(exemplar, VAL_WORD_INDEX(ordered));
+            Value* slot = Varlist_Slot(exemplar, VAL_WORD_INDEX(ordered));
             if (not Is_Specialized(cast(Param*, slot))) {
                 //
                 // It's still partial...
@@ -391,7 +389,7 @@ bool Specialize_Action_Throws(
                 assert(VAL_WORD_INDEX(ordered) != 0);
                 Init_Pushable_Refinement_Bound(
                     Alloc_Tail_Array(partials),
-                    KEY_SYMBOL(CTX_KEY(exemplar, VAL_WORD_INDEX(ordered))),
+                    KEY_SYMBOL(Varlist_Key(exemplar, VAL_WORD_INDEX(ordered))),
                     exemplar,
                     VAL_WORD_INDEX(ordered)
                 );
@@ -409,12 +407,12 @@ bool Specialize_Action_Throws(
     }
 
     Phase* specialized = Make_Action(
-        CTX_VARLIST(exemplar),
+        Varlist_Array(exemplar),
         partials,
         &Specializer_Dispatcher,
         IDX_SPECIALIZER_MAX  // details array capacity
     );
-    assert(CTX_KEYLIST(exemplar) == ACT_KEYLIST(unspecialized));
+    assert(Keylist_Of_Varlist(exemplar) == ACT_KEYLIST(unspecialized));
 
     Init_Action(out, specialized, VAL_FRAME_LABEL(specializee), UNBOUND);
 
@@ -708,7 +706,7 @@ Value* First_Unspecialized_Arg(Option(const Param* *) param_out, Level* L)
 // Leaves details blank, and lets you specify the dispatcher.
 //
 Phase* Alloc_Action_From_Exemplar(
-    Context* exemplar,
+    VarList* exemplar,
     Option(const Symbol*) label,
     Dispatcher* dispatcher,
     REBLEN details_capacity
@@ -718,7 +716,7 @@ Phase* Alloc_Action_From_Exemplar(
     const Key* tail;
     const Key* key = ACT_KEYS(&tail, unspecialized);
     const Param* param = ACT_PARAMS_HEAD(unspecialized);
-    Value* arg = CTX_VARS_HEAD(exemplar);
+    Value* arg = Varlist_Slots_Head(exemplar);
     for (; key != tail; ++key, ++arg, ++param) {
         if (Is_Specialized(param))
             continue;
@@ -740,7 +738,7 @@ Phase* Alloc_Action_From_Exemplar(
     // This code parallels Specialize_Action_Throws(), see comments there
 
     Phase* action = Make_Action(
-        CTX_VARLIST(exemplar),
+        Varlist_Array(exemplar),
         nullptr,  // no partials
         dispatcher,
         details_capacity

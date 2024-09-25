@@ -240,7 +240,7 @@ DECLARE_NATIVE(combinator)
     DECLARE_ELEMENT (expanded_spec);
     Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
 
-    Context* meta;
+    VarList* meta;
     Flags flags = MKF_RETURN;
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
@@ -304,10 +304,10 @@ void Push_Parser_Sublevel(
     assert(Any_Series(input));
     assert(Is_Frame(parser));
 
-    Context* ctx = Make_Context_For_Action(parser, TOP_INDEX, nullptr);
+    VarList* ctx = Make_Varlist_For_Action(parser, TOP_INDEX, nullptr);
 
-    const Key* remainder_key = CTX_KEY(ctx, IDX_COMBINATOR_PARAM_REMAINDER);
-    const Key* input_key = CTX_KEY(ctx, IDX_COMBINATOR_PARAM_INPUT);
+    const Key* remainder_key = Varlist_Key(ctx, IDX_COMBINATOR_PARAM_REMAINDER);
+    const Key* input_key = Varlist_Key(ctx, IDX_COMBINATOR_PARAM_INPUT);
     if (
         KEY_SYM(remainder_key) != SYM_REMAINDER
         or KEY_SYM(input_key) != SYM_INPUT
@@ -315,8 +315,8 @@ void Push_Parser_Sublevel(
         fail ("Push_Parser_Sublevel() only works on unadulterated combinators");
     }
 
-    Copy_Cell(CTX_VAR(ctx, IDX_COMBINATOR_PARAM_REMAINDER), remainder);
-    Copy_Cell(CTX_VAR(ctx, IDX_COMBINATOR_PARAM_INPUT), input);
+    Copy_Cell(Varlist_Slot(ctx, IDX_COMBINATOR_PARAM_REMAINDER), remainder);
+    Copy_Cell(Varlist_Slot(ctx, IDX_COMBINATOR_PARAM_INPUT), input);
 
     DECLARE_ELEMENT (temp);  // can't overwrite spare
     Init_Frame(temp, ctx, ANONYMOUS);
@@ -399,8 +399,8 @@ DECLARE_NATIVE(text_x_combinator)
 {
     INCLUDE_PARAMS_OF_TEXT_X_COMBINATOR;
 
-    Context* state = VAL_CONTEXT(ARG(state));
-    bool cased = Is_Trigger(CTX_VAR(state, IDX_UPARSE_PARAM_CASE));
+    VarList* state = Cell_Varlist(ARG(state));
+    bool cased = Is_Trigger(Varlist_Slot(state, IDX_UPARSE_PARAM_CASE));
 
     Value* v = ARG(value);
     Value* input = ARG(input);
@@ -478,7 +478,7 @@ DECLARE_NATIVE(some_combinator)
 
     Value* state = ARG(state);
     Array* loops = Cell_Array_Ensure_Mutable(
-        CTX_VAR(VAL_CONTEXT(state), IDX_UPARSE_PARAM_LOOPS)
+        Varlist_Slot(Cell_Varlist(state), IDX_UPARSE_PARAM_LOOPS)
     );
 
     enum {
@@ -503,8 +503,8 @@ DECLARE_NATIVE(some_combinator)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Cell* loop_last = Alloc_Tail_Array(loops);
-    Init_Frame(loop_last, cast(Context*, level_->varlist), Canon(SOME));
-    INIT_VAL_FRAME_PHASE(loop_last, Level_Phase(level_));  // need phase [1]
+    Init_Frame(loop_last, cast(VarList*, level_->varlist), Canon(SOME));
+    Tweak_Cell_Frame_Phase(loop_last, Level_Phase(level_));  // need phase [1]
 
     Push_Parser_Sublevel(OUT, remainder, parser, input);
 
@@ -596,7 +596,7 @@ DECLARE_NATIVE(further_combinator)
 
 
 struct Combinator_Param_State {
-    Context* ctx;
+    VarList* ctx;
     Level* level_;
     Value* rule_end;
 };
@@ -633,7 +633,7 @@ static bool Combinator_Param_Hook(
     // done based on the offset of the param from the head.
 
     REBLEN offset = param - ACT_PARAMS_HEAD(VAL_ACTION(ARG(c)));
-    Value* var = CTX_VARS_HEAD(s->ctx) + offset;
+    Value* var = Varlist_Slots_Head(s->ctx) + offset;
 
     if (symid == SYM_STATE) {  // the "state" is currently the UPARSE frame
         Copy_Cell(var, ARG(state));
@@ -771,7 +771,7 @@ DECLARE_NATIVE(combinatorize)
 
     Action* act = VAL_ACTION(ARG(c));
     Option(const Symbol*) label = VAL_FRAME_LABEL(ARG(c));
-    Option(Context*) coupling = Cell_Frame_Coupling(ARG(c));
+    Option(VarList*) coupling = Cell_Frame_Coupling(ARG(c));
 
     Value* rule_start = ARG(rule_start);
     Copy_Cell(rule_start, ARG(rules));
@@ -787,7 +787,7 @@ DECLARE_NATIVE(combinatorize)
         fail ("PATH! mechanics in COMBINATORIZE not supported ATM");
 
     struct Combinator_Param_State s;
-    s.ctx = Make_Context_For_Action(ARG(c), TOP_INDEX, nullptr);
+    s.ctx = Make_Varlist_For_Action(ARG(c), TOP_INDEX, nullptr);
     s.level_ = level_;
     s.rule_end = nullptr;  // argument found by param hook
 

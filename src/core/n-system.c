@@ -226,7 +226,7 @@ DECLARE_NATIVE(check)
         Assert_Array(Phase_Details(ACT_IDENTITY(VAL_ACTION(value))));
     }
     else if (Any_Context(value)) {
-        Assert_Context(VAL_CONTEXT(value));
+        Assert_Varlist(Cell_Varlist(value));
     }
 
     return COPY(value);

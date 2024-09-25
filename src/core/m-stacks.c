@@ -123,7 +123,7 @@ void Shutdown_Feeds(void) {
 // This is used to an advantage in the APIs like rebValue(), to be able to get
 // a notion of a "current context" applicable *only* to when natives run.
 //
-Context* Get_Context_From_Stack(void)
+VarList* Get_Context_From_Stack(void)
 {
     Level* L = TOP_LEVEL;
     Phase* phase = nullptr;  // avoid uninitialized variable warning
@@ -155,7 +155,7 @@ Context* Get_Context_From_Stack(void)
 
     Details* details = Phase_Details(phase);
     Value* context = Details_At(details, IDX_NATIVE_CONTEXT);
-    return VAL_CONTEXT(context);
+    return Cell_Varlist(context);
 }
 
 

@@ -912,7 +912,7 @@ for-each [sw-cat list] boot-errors [
 
         e-errfuncs/emit [message cat id f-name params args {
             /* $<Mold Message> */
-            INLINE Context* Error_${F-Name}_Raw($<Delimit ", " Params>) {
+            INLINE VarList* Error_${F-Name}_Raw($<Delimit ", " Params>) {
                 return Error(SYM_${CAT}, SYM_${ID}, $<Delimit ", " Args>);
             }
         }]

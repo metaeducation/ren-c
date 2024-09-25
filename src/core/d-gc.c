@@ -66,7 +66,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (not Is_Stub_Varlist(binding))
             break;
 
-        if (CTX_TYPE(cast(Context*, binding)) != REB_FRAME)
+        if (CTX_TYPE(cast(VarList*, binding)) != REB_FRAME)
             break;
 
         Node* keysource = BONUS(KeySource, binding);
@@ -281,7 +281,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             (v->header.bits & CELL_MASK_ANY_CONTEXT)
             == CELL_MASK_ANY_CONTEXT
         );
-        Context* context = VAL_CONTEXT(v);
+        VarList* context = Cell_Varlist(v);
         assert(Is_Node_Marked(context));
 
         // Currently the "binding" in a context is only used by FRAME! to
@@ -297,7 +297,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (BINDING(v) != UNBOUND) {
             if (CTX_TYPE(context) == REB_FRAME) {
                 // !!! Needs review
-                /*Level* L = CTX_LEVEL_IF_ON_STACK(context);
+                /*Level* L = Level_Of_Varlist_If_Running(context);
                 if (L)  // comes from execution, not MAKE FRAME!
                     assert(Cell_Frame_Coupling(v) == Level_Coupling(L)); */
             }
@@ -310,9 +310,9 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             assert(Is_Node_Marked(PAYLOAD(Any, v).second.node));  // phase or label
         }
 
-        const Value* archetype = CTX_ARCHETYPE(context);
+        const Value* archetype = Varlist_Archetype(context);
         assert(CTX_TYPE(context) == heart);
-        assert(VAL_CONTEXT(archetype) == context);
+        assert(Cell_Varlist(archetype) == context);
 
         // Note: for VAL_CONTEXT_FRAME, the FRM_CALL is either on the stack
         // (in which case it's already taken care of for marking) or it
@@ -430,7 +430,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         Flex* binding = BINDING(v);
         if (binding) {
             if (Is_Stub_Varlist(binding)) {
-                if (CTX_TYPE(cast(Context*, binding)) == REB_MODULE)
+                if (CTX_TYPE(cast(VarList*, binding)) == REB_MODULE)
                     assert(index == INDEX_ATTACHED);
                 else
                     assert(index != 0 and index != INDEX_ATTACHED);
@@ -489,12 +489,12 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         Details* details = cast(Details*, VAL_ACTION(archetype));
         assert(Is_Node_Marked(details));
 
-        Array* list = CTX_VARLIST(ACT_EXEMPLAR(VAL_ACTION(archetype)));
+        Array* list = Varlist_Array(ACT_EXEMPLAR(VAL_ACTION(archetype)));
         assert(Is_Stub_Varlist(list));
     }
     else if (Is_Stub_Varlist(a)) {
-        const Value* archetype = CTX_ARCHETYPE(
-            cast(Context*, m_cast(Array*, a))
+        const Value* archetype = Varlist_Archetype(
+            cast(VarList*, m_cast(Array*, a))
         );
 
         // Currently only FRAME! archetypes use binding

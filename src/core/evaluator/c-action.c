@@ -984,7 +984,7 @@ Bounce Action_Executor(Level* L)
     if (Is_Frame(label)) {
         if (
             VAL_ACTION(label) == VAL_ACTION(Lib(REDO))  // REDO [1]
-            and Cell_Frame_Coupling(label) == cast(Context*, L->varlist)
+            and Cell_Frame_Coupling(label) == cast(VarList*, L->varlist)
         ){
             CATCH_THROWN(OUT, level_);
             assert(Is_Logic(OUT));  // signal if we want to gather args or not
@@ -1054,7 +1054,7 @@ Bounce Action_Executor(Level* L)
 void Push_Action(
     Level* L,
     Action* act,
-    Option(Context*) coupling  // actions may only be coupled to contexts ATM
+    Option(VarList*) coupling  // actions may only be coupled to contexts ATM
 ){
     assert(L->executor == &Action_Executor);
 
@@ -1099,7 +1099,7 @@ void Push_Action(
             | FLAG_QUOTE_BYTE(NOQUOTE_1);
     Tweak_Cell_Context_Varlist(L->rootvar, L->varlist);
 
-    INIT_VAL_FRAME_PHASE(L->rootvar, ACT_IDENTITY(act));  // Level_Phase()
+    Tweak_Cell_Frame_Phase(L->rootvar, ACT_IDENTITY(act));  // Level_Phase()
     Tweak_Cell_Frame_Coupling(L->rootvar, coupling);  // Level_Coupling()
 
     s->content.dynamic.used = num_args + 1;
@@ -1152,7 +1152,7 @@ void Begin_Action_Core(
     Set_Subclass_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);
 
     KEY = ACT_KEYS(&KEY_TAIL, ACT_IDENTITY(ORIGINAL));
-    PARAM = cast(Param*, CTX_VARS_HEAD(ACT_EXEMPLAR(ORIGINAL)));
+    PARAM = cast(Param*, Varlist_Slots_Head(ACT_EXEMPLAR(ORIGINAL)));
     ARG = L->rootvar + 1;
 
     assert(Is_Pointer_Corrupt_Debug(L->label));  // ACTION! makes valid
@@ -1215,11 +1215,9 @@ void Drop_Action(Level* L) {
 
     if (Is_Node_Managed(L->varlist)) {  // outstanding references may exist [1]
       #if 0  // old behavior: keep stub alive, reuse memory [2]
-        L->varlist = CTX_VARLIST(
-            Steal_Context_Vars(
-                cast(Context*, L->varlist),
-                ORIGINAL  // degrade keysource from f
-            )
+        L->varlist = Steal_Varlist_Vars(
+            cast(VarList*, L->varlist),
+            ORIGINAL  // degrade keysource from f
         );
         assert(Not_Node_Managed(L->varlist));
         Tweak_Bonus_Keysource(L->varlist, L);
@@ -1244,7 +1242,7 @@ void Drop_Action(Level* L) {
         assert(Not_Node_Managed(L->varlist));
 
         Cell* rootvar = Array_Head(L->varlist);
-        assert(CTX_VARLIST(VAL_CONTEXT(rootvar)) == L->varlist);
+        assert(Varlist_Array(Cell_Varlist(rootvar)) == L->varlist);
         Tweak_Cell_Frame_Phase_Or_Label(rootvar, nullptr);  // can't corrupt ptr
         Corrupt_Pointer_If_Debug(BINDING(rootvar));
     }

@@ -311,7 +311,7 @@ DECLARE_NATIVE(make_native)
     Element* spec = cast(Element*, ARG(spec));
     Element* source = cast(Element*, ARG(source));
 
-    Context* meta;
+    VarList* meta;
     Flags flags = MKF_RETURN;
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,

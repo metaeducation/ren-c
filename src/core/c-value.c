@@ -270,7 +270,7 @@ void* Probe_Core_Debug(
 
       case FLAVOR_VARLIST:  // currently same as FLAVOR_PARAMLIST
         Probe_Print_Helper(p, expr, "Varlist (or Paramlist)", file, line);
-        Probe_Molded_Value(CTX_ARCHETYPE(x_cast(Context*, f)));
+        Probe_Molded_Value(Varlist_Archetype(x_cast(VarList*, f)));
         break;
 
       case FLAVOR_DETAILS:

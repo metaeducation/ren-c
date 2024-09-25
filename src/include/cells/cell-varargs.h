@@ -67,7 +67,7 @@ INLINE Array* Cell_Varargs_Source(const Cell* v) {
 
 INLINE void Tweak_Cell_Varargs_Source(
     Cell* v,
-    Array* source  // either an array or a frame varlist
+    Flex* source  // either an array, or a frame varlist
 ){
     assert(Cell_Heart(v) == REB_VARARGS);
     EXTRA(Any, v).node = source;
@@ -140,7 +140,7 @@ INLINE bool Is_Level_Style_Varargs_Maybe_Null(
         // "Ordinary" case... use the original level implied by the VARARGS!
         // (so long as it is still live on the stack)
 
-        *L_out = CTX_LEVEL_IF_ON_STACK(cast(Context*, source));
+        *L_out = Level_Of_Varlist_If_Running(cast(VarList*, source));
         return true;
     }
 
@@ -189,7 +189,7 @@ INLINE const Param* Param_For_Varargs_Maybe_Null(
 
     Action* phase = Extract_Cell_Varargs_Phase(v);
     if (phase) {
-        Array* paramlist = CTX_VARLIST(ACT_EXEMPLAR(phase));
+        Array* paramlist = Varlist_Array(ACT_EXEMPLAR(phase));
         if (VAL_VARARGS_SIGNED_PARAM_INDEX(v) < 0) {  // e.g. enfix
             if (key)
                 *key = ACT_KEY(

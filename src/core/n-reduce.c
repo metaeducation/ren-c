@@ -280,7 +280,7 @@ DECLARE_NATIVE(reduce_each)
         flags |= LEVEL_FLAG_META_RESULT | LEVEL_FLAG_RAISED_RESULT_OK;
     }
 
-    Context* context = Virtual_Bind_Deep_To_New_Context(
+    VarList* context = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
         ARG(vars)
     );
@@ -330,7 +330,7 @@ DECLARE_NATIVE(reduce_each)
 
     Decay_If_Unstable(SPARE);
 
-    Move_Cell(CTX_VAR(VAL_CONTEXT(vars), 1), stable_SPARE);  // multiple? [1]
+    Move_Cell(Varlist_Slot(Cell_Varlist(vars), 1), stable_SPARE);  // multiple? [1]
 
     SUBLEVEL->executor = &Just_Use_Out_Executor;  // pass through sublevel
 
@@ -457,7 +457,7 @@ static void Finalize_Composer_Level(
     Heart heart = Cell_Heart(composee);
 
     if (Any_Sequence_Kind(heart)) {
-        Option(Context*) error = Trap_Pop_Sequence_Or_Element_Or_Nulled(
+        Option(VarList*) error = Trap_Pop_Sequence_Or_Element_Or_Nulled(
             out,
             Cell_Heart(composee),
             L->baseline.stack_base

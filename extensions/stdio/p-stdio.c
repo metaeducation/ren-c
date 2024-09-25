@@ -296,7 +296,7 @@ Value* Read_Line(STD_TERM *t)
 //
 Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
 {
-    Context* ctx = VAL_CONTEXT(port);
+    VarList* ctx = Cell_Varlist(port);
 
     switch (Symbol_Id(verb)) {
       case SYM_REFLECT: {
@@ -363,7 +363,7 @@ Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
 
         const REBLEN readbuf_size = 30 * 1024;  // may back off to smaller size
 
-        Value* data = CTX_VAR(ctx, STD_PORT_DATA);
+        Value* data = Varlist_Slot(ctx, STD_PORT_DATA);
         if (not Is_Binary(data)) {
             Init_Blob(data, Make_Binary(readbuf_size));
         }

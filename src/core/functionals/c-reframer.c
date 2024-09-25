@@ -227,7 +227,7 @@ bool Init_Invokable_From_Feed_Throws(
 
     assert(Not_Node_Managed(L->varlist));
 
-    Array* varlist = L->varlist;
+    Array* varlist = L->varlist;  // !!! still is fulfilling?
     L->varlist = nullptr;  // don't let Drop_Level() free varlist (we want it)
     Tweak_Bonus_Keysource(varlist, ACT_KEYLIST(act));  // disconnect from f
     Drop_Level(L);
@@ -235,7 +235,7 @@ bool Init_Invokable_From_Feed_Throws(
 
     Set_Node_Managed_Bit(varlist);  // can't use Manage_Flex
 
-    Init_Frame(out, cast(Context*, varlist), label);
+    Init_Frame(out, cast(VarList*, varlist), label);
     return false;  // didn't throw
 }
 
@@ -262,13 +262,13 @@ bool Init_Frame_From_Feed_Throws(
         return false;
 
     assert(Is_Quoted(out));
-    Context* exemplar = Make_Context_For_Action(
+    VarList* exemplar = Make_Varlist_For_Action(
         Lib(IDENTITY),
         TOP_INDEX,
         nullptr
     );
 
-    Unquotify(Copy_Cell(CTX_VAR(exemplar, 2), out), 1);
+    Unquotify(Copy_Cell(Varlist_Slot(exemplar, 2), out), 1);
 
     // Should we save the WORD! from a variable access to use as the name of
     // the identity alias?
@@ -354,13 +354,13 @@ DECLARE_NATIVE(reframer)
 
     struct Reb_Binder binder;
     INIT_BINDER(&binder);
-    Context* exemplar = Make_Context_For_Action_Push_Partials(
+    VarList* exemplar = Make_Varlist_For_Action_Push_Partials(
         ARG(shim),
         base,
         &binder
     );
 
-    Option(Context*) error = nullptr;  // can't fail() with binder in effect
+    Option(VarList*) error = nullptr;  // can't fail() with binder in effect
 
     REBLEN param_index = 0;
 
@@ -380,8 +380,8 @@ DECLARE_NATIVE(reframer)
             error = Error_No_Arg(label, symbol);
             goto cleanup_binder;
         }
-        key = CTX_KEY(exemplar, param_index);
-        param = cast_PAR(CTX_VAR(exemplar, param_index));
+        key = Varlist_Key(exemplar, param_index);
+        param = cast_PAR(Varlist_Slot(exemplar, param_index));
     }
     else {
         param = Last_Unspecialized_Param(&key, shim);
@@ -445,14 +445,14 @@ DECLARE_NATIVE(reframer)
     // !!! An expired frame would be better, or tweaking the argument so it
     // takes a void and giving it ~pending~; would make bugs more obvious.
     //
-    Value* var = CTX_VAR(exemplar, param_index);
+    Value* var = Varlist_Slot(exemplar, param_index);
     assert(Not_Specialized(var));
-    Copy_Cell(var, CTX_ARCHETYPE(exemplar));
+    Copy_Cell(var, Varlist_Archetype(exemplar));
 
     // Make action with enough space to store the implementation phase and
     // which parameter to fill with the *real* frame instance.
     //
-    Manage_Flex(CTX_VARLIST(exemplar));
+    Manage_Flex(exemplar);
     Phase* reframer = Alloc_Action_From_Exemplar(
         exemplar,  // shim minus the frame argument
         label,

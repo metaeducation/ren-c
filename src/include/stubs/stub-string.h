@@ -512,7 +512,7 @@ INLINE Binary* Copy_Binary_At_Len(
 // not been checked to see if they are valid UTF-8.  We assume all the bytes
 // *prior* are known to be valid.
 //
-INLINE Context* Error_Illegal_Cr(const Byte* at, const Byte* start)
+INLINE VarList* Error_Illegal_Cr(const Byte* at, const Byte* start)
 {
     assert(*at == CR);
     REBLEN back_len = 0;
@@ -525,7 +525,7 @@ INLINE Context* Error_Illegal_Cr(const Byte* at, const Byte* start)
         c_cast(char*, back),
         at - c_cast(Byte*, back) + 1  // include CR (escaped, e.g. ^M)
     );
-    Context* error = Error_Illegal_Cr_Raw(str);
+    VarList* error = Error_Illegal_Cr_Raw(str);
     rebRelease(str);
     return error;
 }

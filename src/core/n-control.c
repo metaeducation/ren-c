@@ -1517,7 +1517,7 @@ DECLARE_NATIVE(default)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Option(Context*) error = Trap_Get_Var_Maybe_Vacant(
+    Option(VarList*) error = Trap_Get_Var_Maybe_Vacant(
         OUT,
         steps,  // use steps to avoid double-evaluation on GET/SET pair [1]
         target,
@@ -1603,7 +1603,7 @@ DECLARE_NATIVE(catch_p)  // specialized to plain CATCH w/ NAME="THROW" in boot
         Stub_Cell(let_throw),
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_THROW))),
         Cell_Word_Symbol(name),  // relabel (THROW in lib is a dummy action)
-        cast(Context*, catch_level->varlist)  // what to continue
+        cast(VarList*, catch_level->varlist)  // what to continue
     );
 
     Tweak_Cell_Specifier(block, let_throw);  // extend chain
@@ -1620,8 +1620,8 @@ DECLARE_NATIVE(catch_p)  // specialized to plain CATCH w/ NAME="THROW" in boot
     if (not Any_Context(label))
         return THROWN;  // not a context throw, not from DEFINITIONAL-THROW
 
-    Array *throw_varlist = CTX_VARLIST(VAL_CONTEXT(label));
-    if (throw_varlist != catch_level->varlist)
+    VarList* throw_varlist = Cell_Varlist(label);
+    if (throw_varlist != Varlist_Of_Level_Maybe_Unmanaged(catch_level))
         return THROWN;  // context throw, but not to this CATCH*, keep going
 
     CATCH_THROWN(OUT, level_); // thrown value
@@ -1648,11 +1648,11 @@ DECLARE_NATIVE(definitional_throw)
 
     Level* throw_level = LEVEL;  // Level of this RETURN call
 
-    Option(Context*) coupling = Level_Coupling(throw_level);
+    Option(VarList*) coupling = Level_Coupling(throw_level);
     if (not coupling)
         fail (Error_Archetype_Invoked_Raw());
 
-    const Value* label = CTX_ARCHETYPE(unwrap coupling);
+    const Value* label = Varlist_Archetype(unwrap coupling);
     return Init_Thrown_With_Label(LEVEL, atom, label);
 }
 

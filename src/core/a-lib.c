@@ -217,7 +217,7 @@ unsigned char* API_rebTryAllocBytes(size_t size)
         p = API_rebAllocBytes(size);
         CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
         return p;
-    } ON_ABRUPT_FAILURE (Context* e) {
+    } ON_ABRUPT_FAILURE (VarList* e) {
         UNUSED(e);
         return nullptr;
     }
@@ -633,7 +633,7 @@ RebolValue* API_rebChar(uint32_t codepoint)
     ENTER_API;
 
     Value* v = Alloc_Value();
-    Option(Context*) error = Trap_Init_Char(v, codepoint);
+    Option(VarList*) error = Trap_Init_Char(v, codepoint);
     if (error) {
         rebRelease(v);
         fail (unwrap error);
@@ -2358,7 +2358,7 @@ RebolValue* API_rebRescueWith(
     CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
     return result;
 
-} ON_ABRUPT_FAILURE(Context* e) {  /////////////////////////////////////////
+} ON_ABRUPT_FAILURE(VarList* e) {  /////////////////////////////////////////
 
     Drop_Level(dummy);
 
@@ -2789,7 +2789,7 @@ RebolValue* API_rebError_OS(int errnum)  // see also macro rebFail_OS()
 {
     ENTER_API;
 
-    Context* error;
+    VarList* error;
 
   #if TO_WINDOWS
     if (errnum == 0)
@@ -3021,7 +3021,7 @@ RebolSpecifier* API_rebSpecifierFromLevel_internal(
     assert(Get_Action_Flag(phase, IS_NATIVE));
     Details* details = Phase_Details(phase);
     Value* module = Details_At(details, IDX_NATIVE_CONTEXT);
-    node_LINK(NextVirtual, level->varlist) = VAL_CONTEXT(module);
+    node_LINK(NextVirtual, level->varlist) = Cell_Varlist(module);
 
     return cast(RebolSpecifier*, level->varlist);
 }
@@ -3091,7 +3091,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
         cell,
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_RETURN))),
         Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
-        cast(Context*, L->varlist)  // so RETURN knows where to return from
+        cast(VarList*, L->varlist)  // so RETURN knows where to return from
     );
 
     Details* details = Phase_Details(Level_Phase(L));
@@ -3168,7 +3168,7 @@ RebolValue* API_rebFunc(
 
     Flags mkf_flags = MKF_RETURN;
 
-    Context* meta;
+    VarList* meta;
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,

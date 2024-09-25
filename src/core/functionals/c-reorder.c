@@ -108,7 +108,7 @@ DECLARE_NATIVE(reorder)
     // information from the interface.  But that's what we want, as the
     // caller is to specify a complete ordering.
     //
-    Context* exemplar = ACT_EXEMPLAR(reorderee);
+    VarList* exemplar = ACT_EXEMPLAR(reorderee);
 
     // We need a binder to efficiently map arguments to their position in
     // the parameters array, and track which parameters are mentioned.
@@ -132,7 +132,7 @@ DECLARE_NATIVE(reorder)
     // without cleaning the binder up first, balancing it all out to zeros.
     // Errors must be stored and reported after the cleanup.
     //
-    Option(Context*) error = nullptr;
+    Option(VarList*) error = nullptr;
 
     StackIndex base = TOP_INDEX;
 
@@ -233,7 +233,7 @@ DECLARE_NATIVE(reorder)
     );
 
     Phase* reordered = Make_Action(
-        CTX_VARLIST(exemplar),
+        Varlist_Array(exemplar),
         partials,
         &Reorderer_Dispatcher,
         IDX_REORDERER_MAX

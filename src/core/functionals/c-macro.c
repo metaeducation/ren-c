@@ -117,7 +117,7 @@ Bounce Macro_Dispatcher(Level* const L)
         cell,
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_RETURN))),
         Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
-        cast(Context*, L->varlist)  // so RETURN knows where to return from
+        cast(VarList*, L->varlist)  // so RETURN knows where to return from
     );
 
     Copy_Cell(SPARE, body);

@@ -103,7 +103,7 @@
 //    that does the cast for free.  This is because every Array is-a Flex,
 //    and if you have an Array* in your hand we can assume you got it through
 //    a means that you knew it was valid.  But if you downcast (e.g. from a
-//    Node* to a Context*), then it's a riskier operation, so validation
+//    Node* to a VarList*), then it's a riskier operation, so validation
 //    code is run:
 //
 //      https://en.wikipedia.org/wiki/Downcasting
@@ -450,24 +450,24 @@ struct cast_helper<V*,Array*> {
 };
 
 
-//=//// cast(Context*, ...) ///////////////////////////////////////////////=//
+//=//// cast(VarList*, ...) ///////////////////////////////////////////////=//
 
 template<typename V>  // [1]
-struct cast_helper<V*,Context*> {  // [2]
+struct cast_helper<V*,VarList*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
     template<typename V_ = V>
     static typename std::enable_if<
         std::is_same<V_, V>::value  // [3]
         and not std::is_const<V>::value,
-    Context*>::type convert(V_* p) {
+    VarList*>::type convert(V_* p) {
         static_assert(
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value
                 or std::is_same<V0, Node>::value
                 or std::is_same<V0, Flex>::value
                 or std::is_same<V0, Array>::value,
-            "downcast(Context*) works on [void* Byte* Node* Flex* Array*]"
+            "downcast(VarList*) works on [void* Byte* Node* Flex* Array*]"
         );
 
         if (not p)
@@ -484,19 +484,19 @@ struct cast_helper<V*,Context*> {  // [2]
             panic (p);
         }
 
-        return reinterpret_cast<Context*>(p);
+        return reinterpret_cast<VarList*>(p);
     }
 };
 
 template<typename V>
-struct cast_helper<V*,const Context*> {
+struct cast_helper<V*,const VarList*> {
     template<typename V_ = V>
     static constexpr typename std::enable_if<
         std::is_same<V_, V>::value,  // [3]
-    const Context*>::type convert(V_* p) {
+    const VarList*>::type convert(V_* p) {
         static_assert(
             not std::is_same<V_,V>::value,
-            "const Context* pointers currently shouldn't exist, can't cast to"
+            "const VarList* pointers currently shouldn't exist, can't cast to"
         );
         UNUSED(p);
         return nullptr;

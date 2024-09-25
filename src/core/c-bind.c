@@ -39,7 +39,7 @@ void Bind_Values_Inner_Loop(
     struct Reb_Binder *binder,
     Element* head,
     const Element* tail,
-    Context* context,
+    VarList* context,
     Option(SymId) add_midstream_types,
     Flags flags
 ){
@@ -76,7 +76,7 @@ void Bind_Values_Inner_Loop(
                 // which provides a feature of building up state about some
                 // words while still not including them in the bind.
                 //
-                assert(cast(REBLEN, n) <= CTX_LEN(context));
+                assert(cast(REBLEN, n) <= Varlist_Len(context));
 
                 // We're overwriting any previous binding, which may have
                 // been relative.
@@ -135,7 +135,7 @@ void Bind_Values_Core(
     struct Reb_Binder binder;
     INIT_BINDER(&binder);
 
-    Context* c = VAL_CONTEXT(context);
+    VarList* c = Cell_Varlist(context);
 
     // Associate the canon of a word with an index number.  (This association
     // is done by poking the index into the Stub of the Symbol behind the
@@ -144,8 +144,8 @@ void Bind_Values_Core(
   if (not Is_Module(context)) {
     REBLEN index = 1;
     const Key* key_tail;
-    const Key* key = CTX_KEYS(&key_tail, c);
-    const Value* var = CTX_VARS_HEAD(c);
+    const Key* key = Varlist_Keys(&key_tail, c);
+    const Value* var = Varlist_Slots_Head(c);
     for (; key != key_tail; key++, var++, index++)
         Add_Binder_Index(&binder, KEY_SYMBOL(key), index);
   }
@@ -161,8 +161,8 @@ void Bind_Values_Core(
 
   if (not Is_Module(context)) {  // Reset all the binder indices to zero
     const Key* key_tail;
-    const Key* key = CTX_KEYS(&key_tail, c);
-    const Value* var = CTX_VARS_HEAD(c);
+    const Key* key = Varlist_Keys(&key_tail, c);
+    const Value* var = Varlist_Slots_Head(c);
     for (; key != key_tail; ++key, ++var)
         Remove_Binder_Index(&binder, KEY_SYMBOL(key));
   }
@@ -181,7 +181,7 @@ void Bind_Values_Core(
 void Unbind_Values_Core(
     Element* head,
     const Element* tail,
-    Option(Context*) context,
+    Option(VarList*) context,
     bool deep
 ){
     Element* v = head;
@@ -212,7 +212,7 @@ bool Try_Bind_Word(const Value* context, Value* word)
     const bool strict = true;
     if (Is_Module(context)) {
         Stub* patch = maybe MOD_PATCH(
-            VAL_CONTEXT(context),
+            Cell_Varlist(context),
             Cell_Word_Symbol(word),
             strict
         );
@@ -232,7 +232,7 @@ bool Try_Bind_Word(const Value* context, Value* word)
         return false;
     if (n != 0) {
         Tweak_Cell_Word_Index(word, n);  // ^-- may have been relative
-        BINDING(word) = VAL_CONTEXT(context);
+        BINDING(word) = Cell_Varlist(context);
     }
     return true;
 }
@@ -343,7 +343,7 @@ Option(Stub*) Get_Word_Container(
         //
         // Variable may have popped into existence since the original attach.
         //
-        Context* ctx = cast(Context*, binding);
+        VarList* ctx = cast(VarList*, binding);
         Value* var = MOD_VAR(ctx, symbol, true);
         if (var) {
             *index_out = INDEX_PATCHED;
@@ -366,7 +366,7 @@ Option(Stub*) Get_Word_Container(
         return binding;
     }
 
-    Context* attach = nullptr;  // where to attach variable if not found
+    VarList* attach = nullptr;  // where to attach variable if not found
 
     while (specifier) {
         goto loop_body;  // avoid compiler warnings on `goto next_virtual` [1]
@@ -378,7 +378,7 @@ Option(Stub*) Get_Word_Container(
       loop_body:
 
         if (Is_Stub_Varlist(specifier)) {
-            Context* ctx = cast(Context*, specifier);
+            VarList* ctx = cast(VarList*, specifier);
 
             if (CTX_TYPE(ctx) == REB_MODULE) {
                 Value* var = MOD_VAR(ctx, symbol, true);
@@ -415,11 +415,11 @@ Option(Stub*) Get_Word_Container(
                 if (CELL_WORD_INDEX_I32(any_word) == 0)
                     goto next_virtual;
                 *index_out = -(CELL_WORD_INDEX_I32(any_word));
-                return CTX_VARLIST(ctx);
+                return ctx;
             }
 
             REBINT len = Find_Symbol_In_Context(  // have to search manually
-                CTX_ARCHETYPE(ctx),
+                Varlist_Archetype(ctx),
                 symbol,
                 true
             );
@@ -460,7 +460,7 @@ Option(Stub*) Get_Word_Container(
         }
 
         if (Is_Module(Stub_Cell(specifier))) {
-            Context* mod = VAL_CONTEXT(Stub_Cell(specifier));
+            VarList* mod = Cell_Varlist(Stub_Cell(specifier));
 
             Value* var = MOD_VAR(mod, symbol, true);
             if (var) {
@@ -479,20 +479,20 @@ Option(Stub*) Get_Word_Container(
             goto next_virtual;
         }
 
-        Context* overload = VAL_CONTEXT(Stub_Cell(specifier));
+        VarList* overload = Cell_Varlist(Stub_Cell(specifier));
 
         REBLEN index = 1;
         const Key* key_tail;
-        const Key* key = CTX_KEYS(&key_tail, overload);
+        const Key* key = Varlist_Keys(&key_tail, overload);
         for (; key != key_tail; ++key, ++index) {
             if (KEY_SYMBOL(key) != symbol)
                 continue;
 
-            if (Get_Cell_Flag(CTX_VAR(overload, index), BIND_NOTE_REUSE))
+            if (Get_Cell_Flag(Varlist_Slot(overload, index), BIND_NOTE_REUSE))
                 break;  // FOR-EACH uses context slots weirdly [4]
 
             *index_out = index;
-            return CTX_VARLIST(overload);
+            return overload;
         }
 
         goto next_virtual;
@@ -867,7 +867,7 @@ DECLARE_NATIVE(add_let_binding)
     Specifier* before;
 
     if (Is_Frame(env)) {
-        Level* L = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(env));
+        Level* L = Level_Of_Varlist_May_Fail(Cell_Varlist(env));
         before = Level_Specifier(L);
         if (before)
             Set_Node_Managed_Bit(before);
@@ -881,7 +881,7 @@ DECLARE_NATIVE(add_let_binding)
     Move_Cell(Stub_Cell(let), ARG(value));
 
     if (Is_Frame(env)) {
-        Level* L = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(env));
+        Level* L = Level_Of_Varlist_May_Fail(Cell_Varlist(env));
         BINDING(FEED_SINGLE(L->feed)) = let;
     }
     else {
@@ -907,7 +907,7 @@ DECLARE_NATIVE(add_use_object) {
 
     Element* object = cast(Element*, ARG(object));
 
-    Level* L = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
+    Level* L = Level_Of_Varlist_May_Fail(Cell_Varlist(ARG(frame)));
     Specifier* L_specifier = Level_Specifier(L);
 
     if (L_specifier)
@@ -1144,7 +1144,7 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
 //
 // !!! Loops should probably free their objects by default when finished
 //
-Context* Virtual_Bind_Deep_To_New_Context(
+VarList* Virtual_Bind_Deep_To_New_Context(
     Value* body_in_out, // input *and* output parameter
     Value* spec
 ){
@@ -1203,7 +1203,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
     // KeyLists are always managed, but varlist is unmanaged by default (so
     // it can be freed if there is a problem)
     //
-    Context* c = Alloc_Context(REB_OBJECT, num_vars);
+    VarList* c = Alloc_Varlist(REB_OBJECT, num_vars);
 
     // We want to check for duplicates and a Binder can be used for that
     // purpose--but note that a fail() cannot happen while binders are
@@ -1333,9 +1333,9 @@ Context* Virtual_Bind_Deep_To_New_Context(
     // it on creation we can't make the context via Append_Context().  Review
     // this mechanic; and for now forego the protection.
     //
-    /* Set_Flex_Flag(CTX_VARLIST(c), DONT_RELOCATE); */
+    /* Set_Flex_Flag(c, DONT_RELOCATE); */
 
-    Manage_Flex(CTX_VARLIST(c));  // must be managed to use in binding
+    Manage_Flex(c);  // must be managed to use in binding
 
     if (not rebinding)
         return c;  // nothing else needed to do
@@ -1358,8 +1358,8 @@ Context* Virtual_Bind_Deep_To_New_Context(
     //
   blockscope {
     const Key* key_tail;
-    const Key* key = CTX_KEYS(&key_tail, c);
-    Value* var = CTX_VARS_HEAD(c); // only needed for debug, optimized out
+    const Key* key = Varlist_Keys(&key_tail, c);
+    Value* var = Varlist_Slots_Head(c); // only needed for debug, optimized out
     for (; key != key_tail; ++key, ++var) {
         REBINT stored = Remove_Binder_Index_Else_0(
             &binder, KEY_SYMBOL(key)
@@ -1385,7 +1385,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
     // able to expand them...because things like FOR-EACH have historically
     // not been robust to the memory moving.
     //
-    Set_Flex_Flag(CTX_VARLIST(c), FIXED_SIZE);
+    Set_Flex_Flag(c, FIXED_SIZE);
 
     return c;
 }
@@ -1396,7 +1396,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
 //
 void Virtual_Bind_Deep_To_Existing_Context(
     Value* list,
-    Context* context,
+    VarList* context,
     struct Reb_Binder *binder,
     Heart affected
 ){
@@ -1424,7 +1424,7 @@ void Virtual_Bind_Deep_To_Existing_Context(
  */
 
     BINDING(list) = Make_Use_Core(
-        CTX_ARCHETYPE(context),
+        Varlist_Archetype(context),
         Cell_Specifier(list),
         affected
     );
@@ -1462,7 +1462,7 @@ void Assert_Cell_Binding_Valid_Core(const Cell* cell)
 
     if (
         Is_Stub_Varlist(binding)
-        and CTX_TYPE(cast(Context*, binding)) == REB_MODULE
+        and CTX_TYPE(cast(VarList*, binding)) == REB_MODULE
     ){
         if (not (
             Any_List_Kind(heart)

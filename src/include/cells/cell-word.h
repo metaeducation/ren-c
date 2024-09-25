@@ -113,8 +113,8 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
     BINDING(out) = binding;
 
     if (Is_Stub_Varlist(binding)) {
-        assert(CTX_TYPE(cast(Context*, binding)) != REB_MODULE);  // must patch
-        assert(symbol == *CTX_KEY(cast(Context*, binding), index));
+        assert(CTX_TYPE(cast(VarList*, binding)) != REB_MODULE);  // must patch
+        assert(symbol == *Varlist_Key(cast(VarList*, binding), index));
     }
     else {
         assert(Is_Stub_Let(binding) or Is_Stub_Patch(binding));
@@ -127,7 +127,7 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
 
 #define Init_Any_Word_Bound(out,heart,symbol,context,index) \
     TRACK(Init_Any_Word_Bound_Untracked((out), \
-            (heart), (symbol), CTX_VARLIST(context), (index)))
+            (heart), (symbol), Varlist_Array(context), (index)))
 
 #define Init_Quasi_Word(out,label) \
     TRACK(Coerce_To_Quasiform( \

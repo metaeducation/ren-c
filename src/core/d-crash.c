@@ -148,8 +148,8 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 
         if (Is_Stub_Varlist(f)) {
             printf("VARLIST Flex detected.\n");
-            Context* context = u_cast(Context*, f);  // avoid plain cast checks
-            if (HEART_BYTE(CTX_ARCHETYPE(context)) == REB_ERROR) {
+            VarList* context = u_cast(VarList*, f);  // avoid plain cast checks
+            if (HEART_BYTE(Varlist_Archetype(context)) == REB_ERROR) {
                 printf("...and that VARLIST is of an ERROR!...");
                 Force_Location_Of_Error(context, TOP_LEVEL);
                 PROBE(context);
@@ -243,7 +243,7 @@ DECLARE_NATIVE(panic)
             p = Cell_Utf8_At(v);
         }
         else if (Is_Error(v)) {
-            p = VAL_CONTEXT(v);
+            p = Cell_Varlist(v);
         }
         else {
             assert(!"Called PANIC without /VALUE on non-TEXT!, non-ERROR!");

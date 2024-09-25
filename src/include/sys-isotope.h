@@ -112,7 +112,7 @@ INLINE Element* Coerce_To_Quasiform(Value* v) {
     return cast(Element*, v);
 }
 
-INLINE Option(Context*) Trap_Coerce_To_Quasiform(Value* v) {
+INLINE Option(VarList*) Trap_Coerce_To_Quasiform(Value* v) {
     Heart heart = Cell_Heart(v);
 
     if (not Any_Isotopic_Kind(heart)) {
@@ -163,7 +163,7 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
         if (Is_Pack(v) or Is_Lazy(v))
             fail (Error_Bad_Antiform(v));  // need more granular unpacking [2]
         if (Is_Raised(v))
-            fail (VAL_CONTEXT(v));
+            fail (Cell_Varlist(v));
         assert(Not_Antiform(v) or Is_Antiform_Stable(v));
 
         while (++pack_meta_at != pack_meta_tail) {
@@ -183,7 +183,7 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
         fail (Error_No_Value_Raw());  // distinct error from nihil?
 
     if (Is_Raised(v))
-        fail (VAL_CONTEXT(v));
+        fail (Cell_Varlist(v));
 
     return u_cast(Value*, u_cast(Atom*, v));
 }

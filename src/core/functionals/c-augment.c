@@ -109,7 +109,7 @@ DECLARE_NATIVE(augment)
     }
   }
 
-    Context* adjunct = nullptr;
+    VarList* adjunct = nullptr;
 
     // Now we reuse the spec analysis logic, which pushes more parameters to
     // the stack.  This may add duplicates--which will be detected when we
@@ -139,8 +139,7 @@ DECLARE_NATIVE(augment)
     // into the paramlist...and reusing the Specializer_Dispatcher.
 
     assert(Is_Unreadable(Flex_Head(Value, paramlist)));
-    Tweak_Cell_Frame_Rootvar(
-        Array_Head(paramlist),
+    Tweak_Frame_Varlist_Rootvar(
         paramlist,
         ACT_IDENTITY(VAL_ACTION(ARG(original))),
         Cell_Frame_Coupling(ARG(original))

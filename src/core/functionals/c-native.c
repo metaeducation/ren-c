@@ -95,7 +95,7 @@ Phase* Make_Native(
     Element* spec,
     NativeType native_type,
     CFunction* cfunc,  // may be Dispatcher*, may be Intrinsic*
-    Context* module
+    VarList* module
 ){
     // There are implicit parameters to both NATIVE/COMBINATOR and usermode
     // COMBINATOR.  The native needs the full spec.
@@ -113,7 +113,7 @@ Phase* Make_Native(
     // the Natives table.  The associated C function is provided by a
     // table built in the bootstrap scripts, `g_core_native_cfuncs`.
 
-    Context* meta;
+    VarList* meta;
     Flags flags = MKF_RETURN;
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
@@ -147,7 +147,7 @@ Phase* Make_Native(
         Init_Blank(Details_At(details, IDX_NATIVE_BODY));
         Copy_Cell(
             Details_At(details, IDX_NATIVE_CONTEXT),
-            CTX_ARCHETYPE(module)
+            Varlist_Archetype(module)
         );
 
         Set_Action_Flag(native, IS_NATIVE);
@@ -251,7 +251,7 @@ static void Init_Action_Adjunct_Shim(void) {
     SymId field_syms[1] = {
         SYM_DESCRIPTION
     };
-    Context* adjunct = Alloc_Context_Core(REB_OBJECT, 2, NODE_FLAG_MANAGED);
+    VarList* adjunct = Alloc_Varlist_Core(REB_OBJECT, 2, NODE_FLAG_MANAGED);
     REBLEN i = 1;
     for (; i != 2; ++i)
         Init_Nulled(Append_Context(adjunct, Canon_Symbol(field_syms[i - 1])));

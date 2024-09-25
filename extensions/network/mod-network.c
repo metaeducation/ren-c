@@ -256,7 +256,7 @@ Value* Lookup_Socket_Synchronously(
 //
 static void on_connect(uv_connect_t *req, int status) {
     Reb_Connect_Request *rebreq = cast(Reb_Connect_Request*, req);
-    const Value* port = CTX_ARCHETYPE(rebreq->port_ctx);
+    const Value* port = Varlist_Archetype(rebreq->port_ctx);
     SOCKREQ *sock = Sock_Of_Port(port);
 
     if (status < 0) {
@@ -297,7 +297,7 @@ Value* Request_Connect_Socket(const Value* port)
     // nullptr to get a synchronous connection.
     //
     Reb_Connect_Request *rebreq = rebAlloc(Reb_Connect_Request);
-    rebreq->port_ctx = VAL_CONTEXT(port);  // !!! keepalive as API handle?
+    rebreq->port_ctx = Cell_Varlist(port);  // !!! keepalive as API handle?
     rebreq->result = nullptr;
 
     int r = uv_tcp_connect(
@@ -327,8 +327,8 @@ Value* Request_Connect_Socket(const Value* port)
 // Accept an inbound connection on a TCP listen socket.
 //
 void on_new_connection(uv_stream_t *server, int status) {
-    Context* listener_port_ctx = cast(Context*, server->data);
-    const Value* listening_port = CTX_ARCHETYPE(listener_port_ctx);
+    VarList* listener_port_ctx = cast(VarList*, server->data);
+    const Value* listening_port = Varlist_Archetype(listener_port_ctx);
     SOCKREQ *listening_sock = Sock_Of_Port(listening_port);
     UNUSED(listening_sock);
 
@@ -339,18 +339,18 @@ void on_new_connection(uv_stream_t *server, int status) {
     if (status < 0)
         fail (rebError_UV(status));
 
-    Context* client = Copy_Context_Shallow_Managed(listener_port_ctx);
+    VarList* client = Copy_Varlist_Shallow_Managed(listener_port_ctx);
     Push_GC_Guard(client);
 
-    Init_Nulled(CTX_VAR(client, STD_PORT_DATA));  // just to be sure
+    Init_Nulled(Varlist_Slot(client, STD_PORT_DATA));  // just to be sure
 
-    Value* c_state = CTX_VAR(client, STD_PORT_STATE);
+    Value* c_state = Varlist_Slot(client, STD_PORT_STATE);
     SOCKREQ* sock = Try_Alloc(SOCKREQ);
     memset(sock, 0, sizeof(SOCKREQ));
 
     Init_Handle_Cdata_Managed(c_state, sock, sizeof(SOCKREQ), &cleanup_sockreq);
 
-    SOCKREQ *sock_new = Sock_Of_Port(CTX_ARCHETYPE(client));
+    SOCKREQ *sock_new = Sock_Of_Port(Varlist_Archetype(client));
 
     // Create a new port using ACCEPT
 
@@ -374,7 +374,7 @@ void on_new_connection(uv_stream_t *server, int status) {
 
     Drop_GC_Guard(client);
 
-    rebElide("(", listening_port, ").spec.accept", CTX_ARCHETYPE(client));
+    rebElide("(", listening_port, ").spec.accept", Varlist_Archetype(client));
 }
 
 
@@ -412,7 +412,7 @@ Value* Start_Listening_On_Socket(const Value* port)
   }
 
   blockscope {
-    sock->tcp.data = VAL_CONTEXT(port);
+    sock->tcp.data = Cell_Varlist(port);
     int r = uv_listen(
         cast(uv_stream_t*, &sock->tcp),
         DEFAULT_BACKLOG,
@@ -463,8 +463,8 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
 
     Reb_Read_Request *rebreq = cast(Reb_Read_Request*, handle->data);
 
-    Context* port_ctx = rebreq->port_ctx;
-    Value* port_data = CTX_VAR(port_ctx, STD_PORT_DATA);
+    VarList* port_ctx = rebreq->port_ctx;
+    Value* port_data = Varlist_Slot(port_ctx, STD_PORT_DATA);
 
     size_t bufsize;
     if (rebreq->length == UNLIMITED)  // read maximum amount possible
@@ -507,9 +507,9 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
 void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 {
     Reb_Read_Request *rebreq = cast(Reb_Read_Request*, stream->data);
-    Context* port_ctx = rebreq->port_ctx;
+    VarList* port_ctx = rebreq->port_ctx;
 
-    Value* port_data = CTX_VAR(port_ctx, STD_PORT_DATA);
+    Value* port_data = Varlist_Slot(port_ctx, STD_PORT_DATA);
 
     Binary* bin;
     if (Is_Nulled(port_data)) {
@@ -669,8 +669,8 @@ static Bounce Transport_Actor(
     if (transport == TRANSPORT_UDP)  // disabled for now
         fail ("https://forum.rebol.info/t/fringe-udp-support-archiving/1730");
 
-    Context* ctx = VAL_CONTEXT(port);
-    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    VarList* ctx = Cell_Varlist(port);
+    Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
 
     // If a transfer is in progress, the port_data is a BINARY!.  Its index
     // represents how much of the transfer has finished.  The data starts
@@ -679,11 +679,11 @@ static Bounce Transport_Actor(
     // being written...and text was allowed (even though it might be wide
     // characters, a likely oversight from the addition of unicode).
     //
-    Value* port_data = CTX_VAR(ctx, STD_PORT_DATA);
+    Value* port_data = Varlist_Slot(ctx, STD_PORT_DATA);
     assert(Is_Binary(port_data) or Is_Nulled(port_data));
 
     SOCKREQ *sock;
-    Value* state = CTX_VAR(ctx, STD_PORT_STATE);
+    Value* state = Varlist_Slot(ctx, STD_PORT_STATE);
     if (Is_Handle(state)) {
         sock = Sock_Of_Port(port);
         assert(sock->transport == transport);
@@ -844,7 +844,7 @@ static Bounce Transport_Actor(
             fail (Error_On_Port(SYM_NOT_CONNECTED, port, -15));
 
         Reb_Read_Request *rebreq = rebAlloc(Reb_Read_Request);
-        rebreq->port_ctx = VAL_CONTEXT(port);
+        rebreq->port_ctx = Cell_Varlist(port);
         rebreq->actual = 0;
         rebreq->result = nullptr;
 
@@ -908,7 +908,7 @@ static Bounce Transport_Actor(
         // the same pointer as the rebreq (first struct member).
         //
         Reb_Write_Request *rebreq = rebAlloc(Reb_Write_Request);
-        rebreq->port_ctx = VAL_CONTEXT(port);  // API handle for GC safety?
+        rebreq->port_ctx = Cell_Varlist(port);  // API handle for GC safety?
         rebreq->result = nullptr;
 
         // Make a copy of the BINARY! to put in the request, so that you can
@@ -962,25 +962,25 @@ static Bounce Transport_Actor(
             "copy ensure object! (@", port, ").scheme.info"
         );  // shallow copy
 
-        Context* info = VAL_CONTEXT(result);
+        VarList* info = Cell_Varlist(result);
 
         Init_Tuple_Bytes(
-            CTX_VAR(info, STD_NET_INFO_LOCAL_IP),
+            Varlist_Slot(info, STD_NET_INFO_LOCAL_IP),
             cast(Byte*, &sock->local_ip),
             4
         );
         Init_Integer(
-            CTX_VAR(info, STD_NET_INFO_LOCAL_PORT),
+            Varlist_Slot(info, STD_NET_INFO_LOCAL_PORT),
             sock->local_port_number
         );
 
         Init_Tuple_Bytes(
-            CTX_VAR(info, STD_NET_INFO_REMOTE_IP),
+            Varlist_Slot(info, STD_NET_INFO_REMOTE_IP),
             cast(Byte*, &sock->remote_ip),
             4
         );
         Init_Integer(
-            CTX_VAR(info, STD_NET_INFO_REMOTE_PORT),
+            Varlist_Slot(info, STD_NET_INFO_REMOTE_PORT),
             sock->remote_port_number
         );
 

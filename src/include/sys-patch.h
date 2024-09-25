@@ -68,8 +68,8 @@
             return s;  // virtual bind
 
         assert(
-            CTX_TYPE(cast(Context*, s)) == REB_FRAME
-            or CTX_TYPE(cast(Context*, s)) == REB_MODULE
+            CTX_TYPE(cast(VarList*, s)) == REB_FRAME
+            or CTX_TYPE(cast(VarList*, s)) == REB_MODULE
         );
         return cast(Specifier*, s);
     }

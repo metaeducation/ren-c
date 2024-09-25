@@ -125,17 +125,16 @@ Bounce Encloser_Dispatcher(Level* const L)
     Value* outer = Details_At(details, IDX_ENCLOSER_OUTER);
     assert(Is_Frame(outer));  // takes 1 arg (a FRAME!)
 
-    Array* varlist = L->varlist;
-    Context* c = cast(Context*, varlist);
+    VarList* varlist = Varlist_Of_Level_Maybe_Unmanaged(L);
 
     L->varlist = nullptr;  // we're going to push new action in this level
     Corrupt_Pointer_If_Debug(L->rootvar);
 
     assert(BONUS(KeySource, varlist) == L);  // need to change keysource [1]
-    Tweak_Bonus_Keysource(varlist, ACT_KEYLIST(L->u.action.original));
+    Tweak_Varlist_Keysource(varlist, ACT_KEYLIST(L->u.action.original));
 
-    Element* rootvar = CTX_ROOTVAR(c);  // don't phase run encloser again [2]
-    INIT_VAL_FRAME_PHASE(rootvar, ACT_IDENTITY(VAL_ACTION(inner)));
+    Element* rootvar = Rootvar_Of_Varlist(varlist);  // no more encloser [2]
+    Tweak_Cell_Frame_Phase(rootvar, ACT_IDENTITY(VAL_ACTION(inner)));
     Tweak_Cell_Frame_Coupling(rootvar, Cell_Frame_Coupling(inner));
 
     assert(Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED));

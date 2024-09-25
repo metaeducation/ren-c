@@ -310,4 +310,4 @@ INLINE void Drop_Data_Stack_To(StackIndex i) {
 // error allocations...just use an already made error.
 //
 #define Fail_Stack_Overflow() \
-    fail (VAL_CONTEXT(Root_Stackoverflow_Error));
+    fail (Cell_Varlist(Root_Stackoverflow_Error));

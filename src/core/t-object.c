@@ -27,7 +27,7 @@
 
 static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
 {
-    Context* c = VAL_CONTEXT(context);
+    VarList* c = Cell_Varlist(context);
 
     assert(Is_Group(block));
 
@@ -39,7 +39,7 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
     // Can't actually fail() during a collect, so make sure any errors are
     // set and then jump to a Collect_End()
     //
-    Option(Context*) error = nullptr;
+    Option(VarList*) error = nullptr;
 
   if (not Is_Module(context)) {
     Collect_Start(&collector, COLLECT_ANY_WORD);
@@ -83,7 +83,7 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
 
   blockscope {  // Append new words to obj
     REBLEN num_added = Collector_Index_If_Pushed(&collector) - first_new_index;
-    Expand_Context(c, num_added);
+    Expand_Varlist(c, num_added);
 
     StackValue(*) new_word = Data_Stack_At(collector.stack_base) + first_new_index;
     for (; new_word != TOP + 1; ++new_word)
@@ -107,8 +107,8 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
         else {
             REBLEN i = Get_Binder_Index_Else_0(&collector.binder, symbol);
             assert(i != 0);
-            assert(*CTX_KEY(c, i) == symbol);
-            var = CTX_VAR(c, i);
+            assert(*Varlist_Key(c, i) == symbol);
+            var = Varlist_Slot(c, i);
         }
 
         if (Get_Cell_Flag(var, PROTECTED)) {
@@ -227,7 +227,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
     else if (heart == REB_MODULE) {  // !!! module enumeration is bad/slow [2]
         e->index = INDEX_PATCHED;
 
-        e->ctx = VAL_CONTEXT(v);
+        e->ctx = Cell_Varlist(v);
 
         StackIndex base = TOP_INDEX;
 
@@ -275,24 +275,24 @@ void Init_Evars(EVARS *e, const Cell* v) {
     else {
         e->index = 0;  // will be bumped to 1
 
-        e->ctx = VAL_CONTEXT(v);
+        e->ctx = Cell_Varlist(v);
 
-        e->var = CTX_VARS_HEAD(e->ctx) - 1;
+        e->var = Varlist_Slots_Head(e->ctx) - 1;
 
-        assert(Flex_Used(CTX_KEYLIST(e->ctx)) <= CTX_LEN(e->ctx));
+        assert(Flex_Used(Keylist_Of_Varlist(e->ctx)) <= Varlist_Len(e->ctx));
 
         if (heart != REB_FRAME) {
             e->param = nullptr;
-            e->key = CTX_KEYS(&e->key_tail, e->ctx) - 1;
+            e->key = Varlist_Keys(&e->key_tail, e->ctx) - 1;
         }
         else {
-            e->var = CTX_VARS_HEAD(e->ctx) - 1;
+            e->var = Varlist_Slots_Head(e->ctx) - 1;
 
             Phase* phase;
             if (not IS_FRAME_PHASED(v)) {  // not running, inputs visible [3]
                 phase = CTX_FRAME_PHASE(e->ctx);
 
-                Array* varlist = CTX_VARLIST(e->ctx);
+                Array* varlist = Varlist_Array(e->ctx);
                 if (Get_Subclass_Flag(
                     VARLIST,
                     varlist,
@@ -305,7 +305,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
             else {  // is running, phase determines field visibility
                 phase = VAL_FRAME_PHASE(v);
 
-                Context* exemplar = ACT_EXEMPLAR(phase);
+                VarList* exemplar = ACT_EXEMPLAR(phase);
                 if (CTX_FRAME_PHASE(exemplar) == phase)  // phase reuses [4]
                     e->visibility = VAR_VISIBILITY_ALL;
                 else
@@ -453,8 +453,8 @@ REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
     if (Cell_Heart(a) != Cell_Heart(b))  // e.g. ERROR! won't equal OBJECT!
         return Cell_Heart(a) > Cell_Heart(b) ? 1 : 0;
 
-    Context* c1 = VAL_CONTEXT(a);
-    Context* c2 = VAL_CONTEXT(b);
+    VarList* c1 = Cell_Varlist(a);
+    VarList* c2 = Cell_Varlist(b);
     if (c1 == c2)
         return 0;  // short-circuit, always equal if same context pointer
 
@@ -568,7 +568,7 @@ Bounce MAKE_Frame(
     if (not Is_Frame(arg))
         return RAISE(Error_Bad_Make(kind, arg));
 
-    Context* exemplar = Make_Context_For_Action(
+    VarList* exemplar = Make_Varlist_For_Action(
         arg,  // being used here as input (e.g. the ACTION!)
         lowest_stackindex,  // will weave in any refinements pushed
         nullptr  // no binder needed, not running any code
@@ -615,20 +615,20 @@ Bounce MAKE_Context(
 
         assert(not parent);
 
-        Context* ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+        VarList* ctx = Alloc_Varlist_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
         node_LINK(NextVirtual, ctx) = BINDING(arg);
         return Init_Context_Cell(OUT, REB_MODULE, ctx);
     }
 
-    Option(Context*) parent_ctx = parent
-        ? VAL_CONTEXT(unwrap parent)
+    Option(VarList*) parent_ctx = parent
+        ? Cell_Varlist(unwrap parent)
         : nullptr;
 
     if (Is_Block(arg)) {
         const Element* tail;
         const Element* at = Cell_List_At(&tail, arg);
 
-        Context* ctx = Make_Context_Detect_Managed(
+        VarList* ctx = Make_Varlist_Detect_Managed(
             heart,
             at,
             tail,
@@ -656,7 +656,7 @@ Bounce MAKE_Context(
     // `make object! 10` - currently not prohibited for any context type
     //
     if (Any_Number(arg)) {
-        Context* context = Make_Context_Detect_Managed(
+        VarList* context = Make_Varlist_Detect_Managed(
             heart,
             nullptr,  // values to scan for toplevel set-words (empty)
             nullptr,
@@ -671,7 +671,7 @@ Bounce MAKE_Context(
 
     // make object! map!
     if (Is_Map(arg)) {
-        Context* c = Alloc_Context_From_Map(VAL_MAP(arg));
+        VarList* c = Alloc_Varlist_From_Map(VAL_MAP(arg));
         return Init_Context_Cell(OUT, heart, c);
     }
 
@@ -693,7 +693,7 @@ Bounce TO_Context(Level* level_, Kind kind, const Value* arg)
         // !!! Contexts hold canon values now that are typed, this init
         // will assert--a TO conversion would thus need to copy the varlist
         //
-        return Init_Object(OUT, VAL_CONTEXT(arg));
+        return Init_Object(OUT, Cell_Varlist(arg));
     }
 
     return RAISE(Error_Bad_Make(kind, arg));
@@ -715,7 +715,7 @@ DECLARE_NATIVE(adjunct_of)
 
     Value* v = ARG(value);
 
-    Context* meta;
+    VarList* meta;
     if (Is_Frame(v)) {
         if (not Is_Frame_Details(v))
             return nullptr;
@@ -724,13 +724,13 @@ DECLARE_NATIVE(adjunct_of)
     }
     else {
         assert(Any_Context(v));
-        meta = CTX_ADJUNCT(VAL_CONTEXT(v));
+        meta = CTX_ADJUNCT(Cell_Varlist(v));
     }
 
     if (not meta)
         return nullptr;
 
-    return COPY(CTX_ARCHETYPE(meta));
+    return COPY(Varlist_Archetype(meta));
 }
 
 
@@ -752,12 +752,12 @@ DECLARE_NATIVE(set_adjunct)
 
     Value* adjunct = ARG(adjunct);
 
-    Context* ctx;
+    VarList* ctx;
     if (Any_Context(adjunct)) {
         if (Is_Frame(adjunct))
             fail ("SET-ADJUNCT can't store bindings, FRAME! disallowed");
 
-        ctx = VAL_CONTEXT(adjunct);
+        ctx = Cell_Varlist(adjunct);
     }
     else {
         assert(Is_Nulled(adjunct));
@@ -771,14 +771,14 @@ DECLARE_NATIVE(set_adjunct)
             MISC(DetailsAdjunct, ACT_IDENTITY(VAL_ACTION(v))) = ctx;
     }
     else
-        MISC(VarlistAdjunct, CTX_VARLIST(VAL_CONTEXT(v))) = ctx;
+        MISC(VarlistAdjunct, Varlist_Array(Cell_Varlist(v))) = ctx;
 
     return COPY(adjunct);
 }
 
 
 //
-//  Copy_Context_Extra_Managed: C
+//  Copy_Varlist_Extra_Managed: C
 //
 // If no extra space is requested, the same keylist will be reused.
 //
@@ -787,12 +787,12 @@ DECLARE_NATIVE(set_adjunct)
 // in cells gets duplicated (so new context has the same VAR_MARKED_HIDDEN
 // settings on its variables).  Review if the copying can be cohered better.
 //
-Context* Copy_Context_Extra_Managed(
-    Context* original,
+VarList* Copy_Varlist_Extra_Managed(
+    VarList* original,
     REBLEN extra,
     bool deeply
 ){
-    REBLEN len = (CTX_TYPE(original) == REB_MODULE) ? 0 : CTX_LEN(original);
+    REBLEN len = (CTX_TYPE(original) == REB_MODULE) ? 0 : Varlist_Len(original);
 
     Array* varlist = Make_Array_For_Copy(
         len + extra + 1,
@@ -802,7 +802,7 @@ Context* Copy_Context_Extra_Managed(
     if (CTX_TYPE(original) == REB_MODULE)
         Set_Flex_Used(varlist, 1);  // all variables linked from word table
     else
-        Set_Flex_Len(varlist, CTX_LEN(original) + 1);
+        Set_Flex_Len(varlist, Varlist_Len(original) + 1);
 
     Value* dest = Flex_Head(Value, varlist);
 
@@ -810,7 +810,7 @@ Context* Copy_Context_Extra_Managed(
     // get filled in with a copy, but the varlist needs to be updated in the
     // copied rootvar to the one just created.
     //
-    Copy_Cell(dest, CTX_ARCHETYPE(original));
+    Copy_Cell(dest, Varlist_Archetype(original));
     Tweak_Cell_Context_Varlist(dest, varlist);
 
     if (CTX_TYPE(original) == REB_MODULE) {
@@ -824,7 +824,7 @@ Context* Copy_Context_Extra_Managed(
         assert(extra == 0);
 
         if (CTX_ADJUNCT(original)) {
-            MISC(VarlistAdjunct, varlist) = Copy_Context_Shallow_Managed(
+            MISC(VarlistAdjunct, varlist) = Copy_Varlist_Shallow_Managed(
                 CTX_ADJUNCT(original)
             );
         }
@@ -834,7 +834,7 @@ Context* Copy_Context_Extra_Managed(
         Tweak_Bonus_Keysource(varlist, nullptr);
         LINK(Patches, varlist) = nullptr;
 
-        Context* copy = cast(Context*, varlist); // now a well-formed context
+        VarList* copy = cast(VarList*, varlist); // now a well-formed context
         assert(Get_Flex_Flag(varlist, DYNAMIC));
 
         Symbol** psym = Flex_Head(Symbol*, g_symbols.by_hash);
@@ -863,7 +863,7 @@ Context* Copy_Context_Extra_Managed(
         return copy;
     }
 
-    Assert_Flex_Managed(CTX_KEYLIST(original));
+    Assert_Flex_Managed(Keylist_Of_Varlist(original));
 
     ++dest;
 
@@ -871,7 +871,7 @@ Context* Copy_Context_Extra_Managed(
     // (might be in an array, or might be in the chunk stack for FRAME!)
     //
     const Value* src_tail;
-    Value* src = CTX_VARS(&src_tail, original);
+    Value* src = Varlist_Slots(&src_tail, original);
     for (; src != src_tail; ++src, ++dest) {
         Copy_Cell_Core(  // trying to duplicate slot precisely
             dest,
@@ -885,24 +885,24 @@ Context* Copy_Context_Extra_Managed(
 
     varlist->leader.bits |= FLEX_MASK_VARLIST;
 
-    Context* copy = cast(Context*, varlist); // now a well-formed context
+    VarList* copy = cast(VarList*, varlist); // now a well-formed context
 
     if (extra == 0)
-        Tweak_Context_Keylist_Shared(copy, CTX_KEYLIST(original));  // ->link field
+        Tweak_Keylist_Of_Varlist_Shared(copy, Keylist_Of_Varlist(original));  // ->link field
     else {
         assert(CTX_TYPE(original) != REB_FRAME);  // can't expand FRAME!s
 
         KeyList* keylist = cast(KeyList*, Copy_Flex_At_Len_Extra(
-            CTX_KEYLIST(original),
+            Keylist_Of_Varlist(original),
             0,
-            CTX_LEN(original),
+            Varlist_Len(original),
             extra,
             FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED
         ));
 
-        LINK(Ancestor, keylist) = CTX_KEYLIST(original);
+        LINK(Ancestor, keylist) = Keylist_Of_Varlist(original);
 
-        Tweak_Context_Keylist_Unique(copy, keylist);  // ->link field
+        Tweak_Keylist_Of_Varlist_Unique(copy, keylist);  // ->link field
     }
 
     // A FRAME! in particular needs to know if it points back to a stack
@@ -931,7 +931,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 {
     String* s = mo->string;
 
-    Context* c = VAL_CONTEXT(v);
+    VarList* c = Cell_Varlist(v);
 
     // Prevent endless mold loop:
     //
@@ -951,7 +951,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
     Push_Pointer_To_Flex(g_mold.stack, c);
 
     if (Cell_Heart(v) == REB_FRAME and not IS_FRAME_PHASED(v)) {
-        Array* varlist = CTX_VARLIST(VAL_CONTEXT(v));
+        Array* varlist = Varlist_Array(Cell_Varlist(v));
         if (Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED)) {
             Append_Ascii(s, "make frame! [...invoked frame...]\n");
             Drop_Pointer_From_Flex(g_mold.stack, c);
@@ -1062,7 +1062,7 @@ const Symbol* Symbol_From_Picker(const Value* context, const Value* picker)
 REBTYPE(Context)
 {
     Value* context = D_ARG(1);
-    Context* c = VAL_CONTEXT(context);
+    VarList* c = Cell_Varlist(context);
 
     Option(SymId) symid = Symbol_Id(verb);
 
@@ -1087,10 +1087,10 @@ REBTYPE(Context)
 
         switch (prop) {
           case SYM_LENGTH: // !!! Should this be legal?
-            return Init_Integer(OUT, CTX_LEN(c));
+            return Init_Integer(OUT, Varlist_Len(c));
 
           case SYM_TAIL_Q: // !!! Should this be legal?
-            return Init_Logic(OUT, CTX_LEN(c) == 0);
+            return Init_Logic(OUT, Varlist_Len(c) == 0);
 
           case SYM_WORDS:
             return Init_Block(OUT, Context_To_Array(context, 1));
@@ -1146,7 +1146,7 @@ REBTYPE(Context)
 
         assert(Not_Cell_Flag(var, PROTECTED));
         Copy_Cell(var, setval);
-        return nullptr; }  // caller's Context* is not stale, no update needed
+        return nullptr; }  // caller's VarList* is not stale, no update needed
 
 
     //=//// PROTECT* ///////////////////////////////////////////////////////=//
@@ -1184,7 +1184,7 @@ REBTYPE(Context)
             fail (var);
         }
 
-        return nullptr; }  // caller's Context* is not stale, no update needed
+        return nullptr; }  // caller's VarList* is not stale, no update needed
 
       case SYM_APPEND: {
         Value* arg = D_ARG(2);
@@ -1232,7 +1232,7 @@ REBTYPE(Context)
         if (Is_Frame(context)) {
             return Init_Frame(
                 OUT,
-                Copy_Context_Extra_Managed(c, 0, did REF(deep)),
+                Copy_Varlist_Extra_Managed(c, 0, did REF(deep)),
                 VAL_FRAME_LABEL(context)
             );
         }
@@ -1240,7 +1240,7 @@ REBTYPE(Context)
         return Init_Context_Cell(
             OUT,
             Cell_Heart_Ensure_Noquote(context),
-            Copy_Context_Extra_Managed(c, 0, did REF(deep))
+            Copy_Varlist_Extra_Managed(c, 0, did REF(deep))
         ); }
 
       case SYM_SELECT: {
@@ -1265,7 +1265,7 @@ REBTYPE(Context)
         if (n == 0)
             return nullptr;
 
-        return COPY(CTX_VAR(c, n)); }
+        return COPY(Varlist_Slot(c, n)); }
 
       default:
         break;
@@ -1284,7 +1284,7 @@ REBTYPE(Context)
 REBTYPE(Frame)
 {
     Value* frame = D_ARG(1);
-    Context* c = VAL_CONTEXT(frame);
+    VarList* c = Cell_Varlist(frame);
 
     Option(SymId) symid = Symbol_Id(verb);
 
@@ -1343,7 +1343,7 @@ REBTYPE(Frame)
             goto handle_reflect_action;
         }
 
-        Level* L = CTX_LEVEL_MAY_FAIL(c);
+        Level* L = Level_Of_Varlist_May_Fail(c);
 
         switch (prop) {
           case SYM_FILE: {
@@ -1375,8 +1375,8 @@ REBTYPE(Frame)
                 if (not Is_Action_Level(parent))
                     continue;
 
-                Context* ctx_parent = Context_For_Level_May_Manage(parent);
-                return COPY(CTX_ARCHETYPE(ctx_parent));
+                VarList* v_parent = Varlist_Of_Level_Force_Managed(parent);
+                return COPY(Varlist_Archetype(v_parent));
             }
             return nullptr; }
 
@@ -1436,7 +1436,7 @@ REBTYPE(Frame)
             return OUT; }
 
           case SYM_TYPES:
-            return Copy_Cell(OUT, CTX_ARCHETYPE(ACT_EXEMPLAR(act)));
+            return Copy_Cell(OUT, Varlist_Archetype(ACT_EXEMPLAR(act)));
 
           case SYM_FILE:
           case SYM_LINE: {
@@ -1529,7 +1529,7 @@ REBTYPE(Frame)
             1  // copy doesn't need details of its own, just archetype
         );
 
-        Context* meta = ACT_ADJUNCT(act);
+        VarList* meta = ACT_ADJUNCT(act);
         assert(ACT_ADJUNCT(proxy) == nullptr);
         mutable_ACT_ADJUNCT(proxy) = meta;  // !!! Note: not a copy of meta
 
@@ -1690,14 +1690,14 @@ DECLARE_NATIVE(construct)
 
     Value* spec = ARG(spec);
 
-    Context* parent = REF(with)
-        ? VAL_CONTEXT(ARG(with))
+    VarList* parent = REF(with)
+        ? Cell_Varlist(ARG(with))
         : nullptr;
 
     const Element* tail;
     const Element* at = Cell_List_At(&tail, spec);
 
-    Context* ctx = Make_Context_Detect_Managed(  // scan top-level SET-WORD!s
+    VarList* ctx = Make_Varlist_Detect_Managed(  // scan top-level SET-WORD!s
         parent ? CTX_TYPE(parent) : REB_OBJECT,  // !!! Presume object?
         at,
         tail,
@@ -1752,19 +1752,19 @@ DECLARE_NATIVE(construct)
 
 } eval_step_result_in_spare: {  ///////////////////////////////////////////////
 
-    Context* ctx = VAL_CONTEXT(OUT);
+    VarList* ctx = Cell_Varlist(OUT);
 
     while (TOP_INDEX != BASELINE->stack_base) {
         assert(Is_Set_Word(TOP));
 
         REBINT len = Find_Symbol_In_Context(
-            CTX_ARCHETYPE(ctx),
+            Varlist_Archetype(ctx),
             Cell_Word_Symbol(TOP),
             true
         );
         assert(len != 0);  // created a key for every SET-WORD! above!
 
-        Copy_Cell(CTX_VAR(ctx, len), stable_SPARE);
+        Copy_Cell(Varlist_Slot(ctx, len), stable_SPARE);
 
         DROP();
     }

@@ -311,7 +311,7 @@ void Form_Array_At(
     REB_MOLD *mo,
     const Array* array,
     REBLEN index,
-    Option(Context*) context,
+    Option(VarList*) context,
     bool relax  // make antiforms into quasiforms instead of erroring
 ){
     REBINT len = Array_Len(array) - index;
@@ -325,7 +325,7 @@ void Form_Array_At(
         Value* wval = nullptr;
         if (context and (Is_Word(item) or Is_Get_Word(item))) {
             wval = maybe Select_Symbol_In_Context(
-                CTX_ARCHETYPE(unwrap context),
+                Varlist_Archetype(unwrap context),
                 Cell_Word_Symbol(item)
             );
             if (wval) {

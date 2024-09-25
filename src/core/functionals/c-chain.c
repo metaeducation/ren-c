@@ -65,7 +65,7 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
     assert(sub->varlist == nullptr);
     sub->varlist = L->varlist;
     assert(BONUS(KeySource, sub->varlist) == L);
-    Tweak_Bonus_Keysource(sub->varlist, sub);
+    Tweak_Varlist_Keysource(Varlist_Of_Level_Maybe_Unmanaged(sub), sub);
     sub->rootvar = Array_Head(sub->varlist);
 
     // Note that it can occur that this may be a TRAMPOLINE_KEEPALIVE sublevel

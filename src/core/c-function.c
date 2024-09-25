@@ -106,12 +106,12 @@ enum Reb_Spec_Mode {
 };
 
 
-static void Ensure_Adjunct(Context* *adjunct_out) {
+static void Ensure_Adjunct(VarList* *adjunct_out) {
     if (*adjunct_out)
         return;
 
-    *adjunct_out = Copy_Context_Shallow_Managed(
-        VAL_CONTEXT(Root_Action_Adjunct)
+    *adjunct_out = Copy_Varlist_Shallow_Managed(
+        Cell_Varlist(Root_Action_Adjunct)
     );
 }
 
@@ -125,7 +125,7 @@ static void Ensure_Adjunct(Context* *adjunct_out) {
 // be broken out in a particularly elegant way, but it's a start.
 //
 void Push_Keys_And_Parameters_May_Fail(
-    Context* *adjunct_out,
+    VarList* *adjunct_out,
     const Value* spec,
     Flags *flags,
     StackIndex *return_stackindex
@@ -176,7 +176,7 @@ void Push_Keys_And_Parameters_May_Fail(
                 Manage_Flex(string);
                 Freeze_Flex(string);
                 Init_Text(
-                    CTX_VAR(*adjunct_out, STD_ACTION_ADJUNCT_DESCRIPTION),
+                    Varlist_Slot(*adjunct_out, STD_ACTION_ADJUNCT_DESCRIPTION),
                     string
                 );
             }
@@ -399,7 +399,7 @@ void Push_Keys_And_Parameters_May_Fail(
 // as part of this popping process.
 //
 Array* Pop_Paramlist_With_Adjunct_May_Fail(
-    Context* *adjunct_out,
+    VarList* *adjunct_out,
     StackIndex base,
     Flags flags,
     StackIndex return_stackindex
@@ -619,7 +619,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 // variable.  But it won't be a void at the start.
 //
 Array* Make_Paramlist_Managed_May_Fail(
-    Context* *adjunct_out,
+    VarList* *adjunct_out,
     const Element* spec,
     Flags *flags  // flags may be modified to carry additional information
 ){
@@ -684,7 +684,7 @@ Phase* Make_Action(
     assert(Is_Node_Managed(paramlist));
     assert(
         Is_Unreadable(Flex_Head(Value, paramlist))
-        or CTX_TYPE(cast(Context*, paramlist)) == REB_FRAME
+        or CTX_TYPE(cast(VarList*, paramlist)) == REB_FRAME
     );
 
     // !!! There used to be more validation code needed here when it was
@@ -732,7 +732,7 @@ Phase* Make_Action(
     mutable_LINK_DISPATCHER(details) = cast(CFunction*, dispatcher);
     MISC(DetailsAdjunct, details) = nullptr;  // caller can fill in
 
-    INODE(Exemplar, details) = cast(Context*, paramlist);
+    INODE(Exemplar, details) = cast(VarList*, paramlist);
 
     Action* act = cast(Action*, details);  // now it's a legitimate Action
 
@@ -740,7 +740,7 @@ Phase* Make_Action(
     //
     Value* rootvar = Flex_Head(Value, paramlist);
     if (Is_Unreadable(rootvar))
-        Tweak_Cell_Frame_Rootvar(rootvar, paramlist, ACT_IDENTITY(act), UNBOUND);
+        Tweak_Frame_Varlist_Rootvar(paramlist, ACT_IDENTITY(act), UNBOUND);
 
     // Precalculate cached function flags.  This involves finding the first
     // unspecialized argument which would be taken at a callsite, which can
@@ -790,7 +790,7 @@ Phase* Make_Action(
 //
 void Get_Maybe_Fake_Action_Body(Sink(Value*) out, const Value* action)
 {
-    Option(Context*) coupling = Cell_Frame_Coupling(action);
+    Option(VarList*) coupling = Cell_Frame_Coupling(action);
     Action* a = VAL_ACTION(action);
 
     // A Hijacker *might* not need to splice itself in with a dispatcher.
@@ -885,7 +885,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value*) out, const Value* action)
         // The FRAME! stored in the body for the specialization has a phase
         // which is actually the function to be run.
         //
-        const Value* frame = CTX_ARCHETYPE(ACT_EXEMPLAR(a));
+        const Value* frame = Varlist_Archetype(ACT_EXEMPLAR(a));
         assert(Is_Frame(frame));
         Copy_Cell(out, frame);
         return;
@@ -1006,7 +1006,7 @@ DECLARE_NATIVE(couple)
         Tweak_Cell_Frame_Coupling(action_or_frame, nullptr);
     else {
         assert(Is_Object(coupling) or Is_Frame(coupling));
-        Tweak_Cell_Frame_Coupling(action_or_frame, VAL_CONTEXT(coupling));
+        Tweak_Cell_Frame_Coupling(action_or_frame, Cell_Varlist(coupling));
     }
 
     return COPY(action_or_frame);

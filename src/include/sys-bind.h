@@ -36,7 +36,7 @@
 // matches the set count.
 //
 // The binding will be either a REBACT (relative to a function) or a
-// Context* (specific to a context), or simply a plain Array* such as
+// VarList* (specific to a context), or simply a plain Array* such as
 // EMPTY_ARRAY which indicates UNBOUND.  The FLAVOR_BYTE() says what it is
 //
 //     ANY-WORD?: binding is the word's binding
@@ -363,17 +363,17 @@ INLINE void Unbind_Any_Word(Cell* v) {
     BINDING(v) = nullptr;
 }
 
-INLINE Context* VAL_WORD_CONTEXT(const Value* v) {
+INLINE VarList* VAL_WORD_CONTEXT(const Value* v) {
     assert(IS_WORD_BOUND(v));
     Stub* binding = BINDING(v);
     if (Is_Stub_Patch(binding)) {
-        Context* patch_context = INODE(PatchContext, binding);
-        binding = CTX_VARLIST(patch_context);
+        VarList* patch_context = INODE(PatchContext, binding);
+        binding = Varlist_Array(patch_context);
     }
     else if (Is_Stub_Let(binding))
         fail ("LET variables have no context at this time");
 
-    return cast(Context*, binding);
+    return cast(VarList*, binding);
 }
 
 
@@ -403,7 +403,7 @@ INLINE Context* VAL_WORD_CONTEXT(const Value* v) {
 // -or- marked with OPT_TYPESET_LOCKED to protect against modification.
 //
 
-INLINE Option(Context*) Trap_Lookup_Word(
+INLINE Option(VarList*) Trap_Lookup_Word(
     const Value** out,
     const Element* word,
     Specifier* specifier
@@ -426,8 +426,8 @@ INLINE Option(Context*) Trap_Lookup_Word(
     }
 
     Assert_Node_Accessible(f);
-    Context* c = cast(Context*, f);
-    *out = CTX_VAR(c, index);
+    VarList* c = cast(VarList*, f);
+    *out = Varlist_Slot(c, index);
     return nullptr;
 }
 
@@ -448,8 +448,8 @@ INLINE Option(const Value*) Lookup_Word(
         return Stub_Cell(f);
 
     Assert_Node_Accessible(f);
-    Context* c = cast(Context*, f);
-    return CTX_VAR(c, index);
+    VarList* c = cast(VarList*, f);
+    return Varlist_Slot(c, index);
 }
 
 INLINE Value* Lookup_Mutable_Word_May_Fail(
@@ -470,7 +470,7 @@ INLINE Value* Lookup_Mutable_Word_May_Fail(
     if (Is_Stub_Let(f) or Is_Stub_Patch(f))
         var = Stub_Cell(f);
     else {
-        Context* c = cast(Context*, f);
+        VarList* c = cast(VarList*, f);
 
         // A context can be permanently frozen (`lock obj`) or temporarily
         // protected, e.g. `protect obj | unprotect obj`.  A native will
@@ -479,9 +479,9 @@ INLINE Value* Lookup_Mutable_Word_May_Fail(
         //
         // Lock bits are all in SER->info and checked in the same instruction.
         //
-        Fail_If_Read_Only_Flex(CTX_VARLIST(c));
+        Fail_If_Read_Only_Flex(Varlist_Array(c));
 
-        var = CTX_VAR(c, index);
+        var = Varlist_Slot(c, index);
     }
 
     // The PROTECT command has a finer-grained granularity for marking
@@ -547,13 +547,13 @@ INLINE Node** SPC_FRAME_CTX_ADDRESS(Specifier* specifier)
     return &node_LINK(NextLet, specifier);
 }
 
-INLINE Option(Context*) SPC_FRAME_CTX(Specifier* specifier)
+INLINE Option(VarList*) SPC_FRAME_CTX(Specifier* specifier)
 {
     if (specifier == UNBOUND)  // !!! have caller check?
         return nullptr;
     if (Is_Stub_Varlist(specifier))
-        return cast(Context*, specifier);
-    return cast(Context*, x_cast(Node*, *SPC_FRAME_CTX_ADDRESS(specifier)));
+        return cast(VarList*, specifier);
+    return cast(VarList*, x_cast(Node*, *SPC_FRAME_CTX_ADDRESS(specifier)));
 }
 
 

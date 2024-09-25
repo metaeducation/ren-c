@@ -681,7 +681,7 @@ static void Mark_Root_Stubs(void)
                 Array* a = cast(Array*, f);
 
                 if (Is_Stub_Varlist(a))
-                    if (CTX_TYPE(cast(Context*, a)) == REB_FRAME)
+                    if (CTX_TYPE(cast(VarList*, a)) == REB_FRAME)
                         continue;  // Mark_Level_Stack_Deep() etc. mark it
 
                 // This means someone did something like Make_Array() and then
@@ -893,7 +893,7 @@ static void Mark_Level_Stack_Deep(void)
                 or Level_State_Byte(L) == ST_ACTION_TYPECHECKING  // filled/safe
             );
 
-            // "may not pass cast(Context*) test in DEBUG_CHECK_CASTS"
+            // "may not pass cast(VarList*) test in DEBUG_CHECK_CASTS"
             //
             Queue_Mark_Node_Deep(
                 cast(const Node**, m_cast(const Array**, &L->varlist))
@@ -1286,12 +1286,12 @@ REBLEN Recycle_Core(Flex* sweeplist)
                 patch != *psym;
                 patch = cast(Stub*, node_MISC(Hitch, patch))
             ){
-                Context* context = INODE(PatchContext, patch);
+                VarList* context = INODE(PatchContext, patch);
                 if (Is_Node_Marked(patch)) {
-                    assert(Is_Node_Marked(CTX_VARLIST(context)));
+                    assert(Is_Node_Marked(context));
                     continue;
                 }
-                if (Is_Node_Marked(CTX_VARLIST(context))) {
+                if (Is_Node_Marked(context)) {
                     Add_GC_Mark(patch);
                     added_marks = true;
 
@@ -1529,7 +1529,7 @@ void Startup_GC(void)
     // the user explicitly saying FREE), then there can still be references to
     // that Flex around.  Since we don't want to trigger a GC synchronously
     // each time this happens, the NODE_FLAG_FREE flag is added to Flex...and
-    // it is checked for by value extractors (like VAL_CONTEXT()).  But once
+    // it is checked for by value extractors (like Cell_Varlist()).  But once
     // the GC gets a chance to run, those stubs can be swept with all the
     // inaccessible references canonized to this one global Stub.
     //

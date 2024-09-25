@@ -53,7 +53,7 @@
 // precision) but it's not enough for a generic BLOCK!, FRAME!, TEXT!, etc.
 // So these slots are often used to point to one or more Rebol "stubs" (see
 // %sys-stub.h for an explanation of stubs, which are the base class of
-// things like Flex*, Array*, Context*, and Map*.)
+// things like Flex*, Array*, VarList*, and Map*.)
 //
 // So the next part of the structure is the "Extra".  This is the size of one
 // pointer, which sits immediately after the header (that's also the size of

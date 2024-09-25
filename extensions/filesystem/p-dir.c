@@ -68,9 +68,9 @@ Value* Try_Read_Directory_Entry(FILEREQ *dir);
 //
 Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
 {
-    Context* ctx = VAL_CONTEXT(port);
+    VarList* ctx = Cell_Varlist(port);
 
-    Value* state = CTX_VAR(ctx, STD_PORT_STATE);
+    Value* state = Varlist_Slot(ctx, STD_PORT_STATE);
     FILEREQ *dir;
     if (Is_Binary(state)) {
         dir = File_Of_Port(port);
@@ -78,7 +78,7 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
     else {
         assert(Is_Nulled(state));
 
-        Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
+        Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
         if (not Is_Object(spec))
             fail (Error_Invalid_Spec_Raw(spec));
 

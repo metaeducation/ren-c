@@ -122,6 +122,9 @@ INLINE void Tweak_Bonus_Keysource(Array* varlist, Node* keysource) {
     BONUS(KeySource, varlist) = keysource;
 }
 
+#define Tweak_Varlist_Keysource(varlist,keysource) \
+    Tweak_Bonus_Keysource(Varlist_Array(varlist), (keysource))
+
 
 //=//// PSEUDOTYPES FOR RETURN VALUES /////////////////////////////////////=//
 //
@@ -175,12 +178,12 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 #define Tweak_Cell_Action_Partials_Or_Label       Tweak_Cell_Node2
 
 
-INLINE Phase* CTX_FRAME_PHASE(Context* c);
+INLINE Phase* CTX_FRAME_PHASE(VarList* c);
 
 INLINE Phase* ACT_IDENTITY(Action* action) {
     if (Is_Stub_Details(action))
         return cast(Phase*, action);  // don't want hijacked archetype details
-    return CTX_FRAME_PHASE(x_cast(Context*, action));  // always ACT_IDENTITY()
+    return CTX_FRAME_PHASE(x_cast(VarList*, action));  // always ACT_IDENTITY()
 }
 
 
@@ -238,7 +241,7 @@ INLINE Details* Phase_Details(Phase* a) {
 // before the place where the exemplar is to be found.
 //
 
-#define INODE_Exemplar_TYPE     Context*
+#define INODE_Exemplar_TYPE     VarList*
 #define INODE_Exemplar_CAST     CTX
 #define HAS_INODE_Exemplar      FLAVOR_DETAILS
 
@@ -249,13 +252,13 @@ INLINE Option(Array*) ACT_PARTIALS(Action* a) {
     return nullptr;  // !!! how to preserve partials in exemplars?
 }
 
-INLINE Context* ACT_EXEMPLAR(Action* a) {
+INLINE VarList* ACT_EXEMPLAR(Action* a) {
     if (Is_Stub_Details(a))
         return INODE(Exemplar, a);
-    return x_cast(Context*, a);
+    return x_cast(VarList*, a);
 }
 
-// Note: This is a more optimized version of CTX_KEYLIST(ACT_EXEMPLAR(a)),
+// Note: This is a more optimized version of Keylist_Of_Varlist(ACT_EXEMPLAR(a)),
 // and also forward declared.
 //
 #define ACT_KEYLIST(a) \
@@ -265,12 +268,12 @@ INLINE Context* ACT_EXEMPLAR(Action* a) {
     Flex_Head(const Key, ACT_KEYLIST(a))
 
 #define ACT_KEYS(tail,a) \
-    CTX_KEYS((tail), ACT_EXEMPLAR(a))
+    Varlist_Keys((tail), ACT_EXEMPLAR(a))
 
-#define ACT_PARAMLIST(a)            CTX_VARLIST(ACT_EXEMPLAR(a))
+#define ACT_PARAMLIST(a)            Varlist_Array(ACT_EXEMPLAR(a))
 
 INLINE Param* ACT_PARAMS_HEAD(Action* a) {
-    Array* list = CTX_VARLIST(ACT_EXEMPLAR(a));
+    Array* list = Varlist_Array(ACT_EXEMPLAR(a));
     return cast(Param*, list->content.dynamic.data) + 1;  // skip archetype
 }
 
@@ -337,11 +340,11 @@ INLINE void Init_Key(Key* dest, const Symbol* symbol)
 #define KEY_SYM(key) \
     Symbol_Id(KEY_SYMBOL(key))
 
-#define ACT_KEY(a,n)            CTX_KEY(ACT_EXEMPLAR(a), (n))
-#define ACT_PARAM(a,n)          cast_PAR(CTX_VAR(ACT_EXEMPLAR(a), (n)))
+#define ACT_KEY(a,n)            Varlist_Key(ACT_EXEMPLAR(a), (n))
+#define ACT_PARAM(a,n)          cast_PAR(Varlist_Slot(ACT_EXEMPLAR(a), (n)))
 
 #define ACT_NUM_PARAMS(a) \
-    CTX_LEN(ACT_EXEMPLAR(a))
+    Varlist_Len(ACT_EXEMPLAR(a))
 
 
 //=//// META OBJECT ///////////////////////////////////////////////////////=//

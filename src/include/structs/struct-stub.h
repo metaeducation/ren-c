@@ -74,7 +74,7 @@
 //   specific to special treatment and handling, in interaction with the
 //   garbage collector as well as handling "relative vs specific" values.
 //
-// * Several related types (Action* for function, Context* for context) are
+// * Several related types (Action* for function, VarList* for context) are
 //   actually stylized Arrays.  They are laid out with special values in their
 //   content (e.g. at the [0] index), or by links to other Flexes in their
 //   `->misc` and `->link` fields of the Flex Stub.  Hence Flexes are the basic
@@ -739,9 +739,9 @@ typedef Stub Flex;
     struct String : public Binary {};  // UTF8-constrained Binary
     struct Symbol : public String {};  // WORD!-constrained immutable String
 
-    struct BookmarkList : public Flex {};
+    struct VarList : public Flex {};  // Array is implementation detail
 
-    struct Context : public Flex {};
+    struct BookmarkList : public Flex {};
 
     struct Map : public Flex {};  // the "pairlist" is the identity
 
@@ -751,9 +751,9 @@ typedef Stub Flex;
     typedef Flex String;
     typedef Flex Symbol;
 
-    typedef Flex BookmarkList;
+    typedef Flex VarList;
 
-    typedef Flex Context;
+    typedef Flex BookmarkList;
 
     typedef Flex Map;
 

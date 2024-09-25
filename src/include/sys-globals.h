@@ -38,12 +38,12 @@ PVAR Element* Lib_Context_Value;
 PVAR Element* Sys_Util_Module;
 PVAR Element* User_Context_Value;
 
-PVAR Context* Lib_Context;
-PVAR Context* Sys_Context;
-PVAR Context* User_Context;
+PVAR VarList* Lib_Context;
+PVAR VarList* Sys_Context;
+PVAR VarList* User_Context;
 
 PVAR CFunction* const* g_native_cfunc_pos;
-PVAR Context* PG_Currently_Loading_Module;
+PVAR VarList* PG_Currently_Loading_Module;
 
 //-- Various char tables:
 PVAR Byte* White_Chars;

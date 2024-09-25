@@ -216,7 +216,7 @@ static void cleanup_js_object(const Value* v) {
 //
 // !!! Outdated comment, review what happened here:
 //
-// "We go ahead and use the Context* instead of the raw Level* to act as
+// "We go ahead and use the VarList* instead of the raw Level* to act as
 //  the unique pointer to identify a level.  That's because if the JavaScript
 //  code throws and that throw needs to make it to a promise higher up the
 //  stack, it uses that pointer as an ID in a mapping table to associate the
@@ -442,7 +442,7 @@ void RunPromise(void)
     Value* metaresult;
     if (r == BOUNCE_THROWN) {
         assert(Is_Throwing(TOP_LEVEL));
-        Context* error = Error_No_Catch_For_Throw(TOP_LEVEL);
+        VarList* error = Error_No_Catch_For_Throw(TOP_LEVEL);
         metaresult = Init_Error(TOP_LEVEL->out, error);
     }
     else
@@ -775,7 +775,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
     }
 
     TRACE("Calling fail() with error context");
-    Context* ctx = VAL_CONTEXT(OUT);
+    VarList* ctx = Cell_Varlist(OUT);
     fail (ctx);  // better than Init_Thrown_With_Label(), gives location
 }}
 
@@ -801,7 +801,7 @@ DECLARE_NATIVE(js_native)
     Element* spec = cast(Element*, ARG(spec));
     Element* source = cast(Element*, ARG(source));
 
-    Context* meta;
+    VarList* meta;
     Flags flags = MKF_RETURN;
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
@@ -933,7 +933,7 @@ DECLARE_NATIVE(js_native)
     );
     Value* error = cast(Value*, Pointer_From_Heapaddr(error_addr));
     if (error) {
-        Context* ctx = VAL_CONTEXT(error);
+        VarList* ctx = Cell_Varlist(error);
         rebRelease(error);  // !!! failing, so not actually needed (?)
 
         TRACE("JS-NATIVE had malformed JS, calling fail() w/error context");
@@ -1058,7 +1058,7 @@ DECLARE_NATIVE(js_eval_p)
 
     Value* error = Value_From_Value_Id(addr);
     assert(Is_Error(error));
-    Context* ctx = VAL_CONTEXT(error);
+    VarList* ctx = Cell_Varlist(error);
     rebRelease(error);
     fail (ctx);  // better than Init_Thrown_With_Label(), identifies source
 }}

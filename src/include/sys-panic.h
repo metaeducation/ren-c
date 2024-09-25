@@ -26,7 +26,7 @@
 // to provide the most diagnostic information possible to devleopers.
 //
 // The best thing to do is to pass in whatever Cell or Flex subclass
-// (including Array*, Context*, Action*...) is a useful "smoking gun":
+// (including Array*, VarList*, Action*...) is a useful "smoking gun":
 //
 //     if (VAL_TYPE(value) == REB_QUASIFORM)
 //         panic (value);  // debug build points out this file and line

@@ -11,7 +11,7 @@ efficiency at the cost of needing to worry about details, as well as being
 more likely to need to change the code if the internals change.
 
 Code written to the external API in Ren-C operates on RebolValue pointers only,
-and has no API for extracting things like Flex* or Context*.  Values created
+and has no API for extracting things like Flex* or VarList*.  Values created
 by this API cannot live on the data stack, and the nodes they reference will be
 protected from garbage collection until they are rebRelease()'d
 

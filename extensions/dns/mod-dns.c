@@ -144,8 +144,8 @@ static void Get_Local_Ip_Via_Google_DNS_May_Fail(Sink(Value*) out)
 //
 static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
 {
-    Context* ctx = VAL_CONTEXT(port);
-    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    VarList* ctx = Cell_Varlist(port);
+    Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
 
     switch (Symbol_Id(verb)) {
       case SYM_REFLECT: {

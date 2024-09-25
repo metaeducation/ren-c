@@ -78,7 +78,7 @@ Phase* Make_Typechecker(Index decider_index) {
     Init_Word(Stub_Cell(spec_array), Canon(VALUE));
     Init_Block(spec, spec_array);
 
-    Context* meta;
+    VarList* meta;
     Flags flags = MKF_RETURN;
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
@@ -264,7 +264,7 @@ bool Typecheck_Atom_Core(
             or VAL_TYPE_UNCHECKED(item) == REB_TYPE_WORD
         ){
             label = Cell_Word_Symbol(item);
-            Option(Context*) error = Trap_Lookup_Word(&test, item, derived);
+            Option(VarList*) error = Trap_Lookup_Word(&test, item, derived);
             if (error)
                 fail (unwrap error);
             kind = VAL_TYPE(test);  // e.g. TYPE-BLOCK! <> BLOCK!

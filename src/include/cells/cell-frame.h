@@ -52,7 +52,7 @@ INLINE Element* Init_Frame_Details_Core(
     Sink(Element*) out,
     Phase* a,
     Option(const Symbol*) label,
-    Option(Context*) coupling
+    Option(VarList*) coupling
 ){
   #if !defined(NDEBUG)
     Extra_Init_Frame_Details_Checks_Debug(a);

@@ -448,7 +448,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
         return DELEGATE_SUBLEVEL(sub); }
 
       case REB_ERROR :
-        fail (VAL_CONTEXT(source));  // would fail anyway [7]
+        fail (Cell_Varlist(source));  // would fail anyway [7]
 
       default:
         fail (PARAM(source));
@@ -532,9 +532,9 @@ DECLARE_NATIVE(redo)
         Move_Cell(restartee, stable_OUT);
     }
 
-    Context* c = VAL_CONTEXT(restartee);
+    VarList* c = Cell_Varlist(restartee);
 
-    Level* L = CTX_LEVEL_IF_ON_STACK(c);
+    Level* L = Level_Of_Varlist_If_Running(c);
     if (L == NULL)
         fail ("Use EVAL to start a not-currently running FRAME! (not REDO)");
 
@@ -621,12 +621,12 @@ DECLARE_NATIVE(applique)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Context* exemplar = Make_Context_For_Action_Push_Partials(  // [1]
+    VarList* exemplar = Make_Varlist_For_Action_Push_Partials(  // [1]
         op,
         STACK_BASE,  // lowest_stackindex of refinements to weave in
         nullptr  // no binder needed
     );
-    Manage_Flex(CTX_VARLIST(exemplar));
+    Manage_Flex(Varlist_Array(exemplar));
     Init_Frame(frame, exemplar, VAL_FRAME_LABEL(op));
 
     Drop_Data_Stack_To(STACK_BASE);  // refinement order unimportant
@@ -719,12 +719,12 @@ DECLARE_NATIVE(apply)
     // 2. Binders cannot be held across evaluations at this time.  Do slow
     //    lookups for refinements, but this is something that needs rethinking.
 
-    Context* exemplar = Make_Context_For_Action_Push_Partials(  // [1]
+    VarList* exemplar = Make_Varlist_For_Action_Push_Partials(  // [1]
         op,
         STACK_BASE,  // lowest_stackindex of refinements to weave in
         nullptr  // doesn't use a Binder [2]
     );
-    Manage_Flex(CTX_VARLIST(exemplar)); // Putting into a frame
+    Manage_Flex(Varlist_Array(exemplar)); // Putting into a frame
     Init_Frame(frame, exemplar, VAL_FRAME_LABEL(op));  // GC guarded
 
     Drop_Data_Stack_To(STACK_BASE);  // partials ordering unimportant
@@ -737,7 +737,7 @@ DECLARE_NATIVE(apply)
     Push_Level(SPARE, L);
 
     EVARS *e = Try_Alloc(EVARS);
-    Init_Evars(e, frame);  // CTX_ARCHETYPE(exemplar) is phased, sees locals
+    Init_Evars(e, frame);  // Varlist_Archetype(exemplar) is phased, sees locals
     Init_Handle_Cdata(iterator, e, sizeof(EVARS));
 
     Set_Level_Flag(level_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
@@ -774,7 +774,7 @@ DECLARE_NATIVE(apply)
         if (index == 0)
             fail (Error_Bad_Parameter_Raw(at));
 
-        var = CTX_VAR(VAL_CONTEXT(frame), index);
+        var = Varlist_Slot(Cell_Varlist(frame), index);
         param = ACT_PARAM(VAL_ACTION(op), index);
 
         if (Is_Specialized(var))
@@ -841,7 +841,7 @@ DECLARE_NATIVE(apply)
 
     REBLEN index = VAL_UINT32(ARG(index));
 
-    var = CTX_VAR(VAL_CONTEXT(frame), index);
+    var = Varlist_Slot(Cell_Varlist(frame), index);
     param = ACT_PARAM(VAL_ACTION(op), index);
 
     goto copy_spare_to_var_in_frame;
@@ -912,7 +912,7 @@ DECLARE_NATIVE(_s_s)  // [_s]lash [_s]lash (see TO-C-NAME)
 
     Element* operation = cast(Element*, ARG(operation));
 
-    Option(Context*) error = Trap_Get_Var(
+    Option(VarList*) error = Trap_Get_Var(
         SPARE, GROUPS_OK, operation, SPECIFIED
     );
     if (error)

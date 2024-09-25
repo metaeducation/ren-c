@@ -157,7 +157,7 @@ INLINE Element* Init_Char_Unchecked_Untracked(Sink(Element*) out, Codepoint c) {
 #define Init_Char_Unchecked(out,c) \
     TRACK(Init_Char_Unchecked_Untracked((out), (c)))
 
-INLINE Option(Context*) Trap_Init_Char_Untracked(Cell* out, uint32_t c) {
+INLINE Option(VarList*) Trap_Init_Char_Untracked(Cell* out, uint32_t c) {
     if (c > MAX_UNI) {
         DECLARE_ATOM (temp);
         return Error_Codepoint_Too_High_Raw(Init_Integer(temp, c));

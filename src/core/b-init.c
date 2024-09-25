@@ -160,10 +160,10 @@ static void Check_Basics(void)
 //
 static void Startup_Lib(void)
 {
-    Context* lib = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+    VarList* lib = Alloc_Varlist_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
     ensure(nullptr, Lib_Context_Value) = Alloc_Element();
     Init_Context_Cell(Lib_Context_Value, REB_MODULE, lib);
-    ensure(nullptr, Lib_Context) = VAL_CONTEXT(Lib_Context_Value);
+    ensure(nullptr, Lib_Context) = Cell_Varlist(Lib_Context_Value);
 
   //=//// INITIALIZE LIB PATCHES ///////////////////////////////////////////=//
 
@@ -422,7 +422,7 @@ static void Init_System_Object(
     Array* datatypes_catalog,
     Array* natives_catalog,
     Array* generics_catalog,
-    Context* errors_catalog
+    VarList* errors_catalog
 ) {
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
     const Element* spec_tail;
@@ -431,7 +431,7 @@ static void Init_System_Object(
 
     // Create the system object from the sysobj block (defined in %sysobj.r)
     //
-    Context* system = Make_Context_Detect_Managed(
+    VarList* system = Make_Varlist_Detect_Managed(
         REB_OBJECT, // type
         spec_head, // scan for toplevel set-words
         spec_tail,
@@ -493,7 +493,7 @@ static void Init_System_Object(
     //
     Init_Object(
         Freshen_Cell(Get_System(SYS_CODECS, 0)),
-        Alloc_Context_Core(REB_OBJECT, 10, NODE_FLAG_MANAGED)
+        Alloc_Varlist_Core(REB_OBJECT, 10, NODE_FLAG_MANAGED)
     );
 
     // The "standard error" template was created as an OBJECT!, because the
@@ -502,10 +502,10 @@ static void Init_System_Object(
     //
   blockscope {
     Value* std_error = Get_System(SYS_STANDARD, STD_ERROR);
-    Context* c = VAL_CONTEXT(std_error);
+    VarList* c = Cell_Varlist(std_error);
     HEART_BYTE(std_error) = REB_ERROR;
 
-    Value* rootvar = CTX_ROOTVAR(c);
+    Value* rootvar = Rootvar_Of_Varlist(c);
     assert(Get_Cell_Flag(rootvar, PROTECTED));
     HEART_BYTE(rootvar) = REB_ERROR;
   }
@@ -689,7 +689,7 @@ void Startup_Core(void)
 
     // boot->errors is the error definition list from %errors.r
     //
-    Context* errors_catalog = Startup_Errors(&boot->errors);
+    VarList* errors_catalog = Startup_Errors(&boot->errors);
     Push_GC_Guard(errors_catalog);
 
     Tweak_Cell_Specifier(&boot->sysobj, Lib_Context);
@@ -795,11 +795,11 @@ void Startup_Core(void)
     //  being confused with "the system object", which is a different thing.
     //  Better was to say SYS was just an abbreviation for SYSTEM.)
 
-    Context* util = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+    VarList* util = Alloc_Varlist_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
     node_LINK(NextVirtual, util) = Lib_Context;
     ensure(nullptr, Sys_Util_Module) = Alloc_Element();
     Init_Context_Cell(Sys_Util_Module, REB_MODULE, util);
-    ensure(nullptr, Sys_Context) = VAL_CONTEXT(Sys_Util_Module);
+    ensure(nullptr, Sys_Context) = Cell_Varlist(Sys_Util_Module);
 
     rebElide(
         //
@@ -870,7 +870,7 @@ void Startup_Core(void)
         Get_System(SYS_CONTEXTS, CTX_USER)
     ));
     rebUnmanage(User_Context_Value);
-    User_Context = VAL_CONTEXT(User_Context_Value);
+    User_Context = Cell_Varlist(User_Context_Value);
 
   //=//// FINISH UP ///////////////////////////////////////////////////////=//
 

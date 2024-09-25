@@ -240,12 +240,12 @@ const Value* Type_Of(const Atom* value)
 //
 Value* Get_System(REBLEN i1, REBLEN i2)
 {
-    Value* obj = CTX_VAR(VAL_CONTEXT(Lib(SYSTEM)), i1);
+    Value* obj = Varlist_Slot(Cell_Varlist(Lib(SYSTEM)), i1);
     if (i2 == 0)
         return obj;
 
     assert(Is_Object(obj));
-    return CTX_VAR(VAL_CONTEXT(obj), i2);
+    return Varlist_Slot(Cell_Varlist(obj), i2);
 }
 
 
@@ -267,42 +267,39 @@ REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 //
 //  Extra_Init_Context_Cell_Checks_Debug: C
 //
-// !!! Overlaps with Assert_Context, review folding them together.
+// !!! Overlaps with Assert_Varlist, review folding them together.
 //
-void Extra_Init_Context_Cell_Checks_Debug(Kind kind, Context* c) {
-    assert(
-        (CTX_VARLIST(c)->leader.bits & FLEX_MASK_VARLIST)
-        == FLEX_MASK_VARLIST
-    );
+void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
+    assert((v->leader.bits & FLEX_MASK_VARLIST) == FLEX_MASK_VARLIST);
 
-    const Value* archetype = CTX_ARCHETYPE(c);
-    assert(VAL_CONTEXT(archetype) == c);
-    assert(CTX_TYPE(c) == kind);
+    const Value* archetype = Varlist_Archetype(v);
+    assert(Cell_Varlist(archetype) == v);
+    assert(CTX_TYPE(v) == kind);
 
     // Currently only FRAME! uses the ->binding field, in order to capture the
     // ->binding of the function value it links to (which is in ->phase)
     //
     assert(
         BINDING(archetype) == UNBOUND
-        or CTX_TYPE(c) == REB_FRAME
+        or CTX_TYPE(v) == REB_FRAME
     );
 
     // KeyLists are uniformly managed, or certain routines would return
     // "sometimes managed, sometimes not" keylists...a bad invariant.
     //
-    if (CTX_TYPE(c) != REB_MODULE) {  // keylist is global symbol table
-        KeyList* keylist = CTX_KEYLIST(c);
+    if (CTX_TYPE(v) != REB_MODULE) {  // keylist is global symbol table
+        KeyList* keylist = Keylist_Of_Varlist(v);
         Assert_Flex_Managed(keylist);
     }
 
-    assert(not CTX_ADJUNCT(c) or Any_Context_Kind(CTX_TYPE(CTX_ADJUNCT(c))));
+    assert(not CTX_ADJUNCT(v) or Any_Context_Kind(CTX_TYPE(CTX_ADJUNCT(v))));
 
     // FRAME!s must always fill in the phase slot, but that piece of the
     // Cell is reserved for future use in other context types...so make
     // sure it's null at this point in time.
     //
     Flex* archetype_phase = Extract_Cell_Frame_Phase_Or_Label(archetype);
-    if (CTX_TYPE(c) == REB_FRAME)
+    if (CTX_TYPE(v) == REB_FRAME)
         assert(Is_Stub_Details(archetype_phase));
     else
         assert(archetype_phase == nullptr);

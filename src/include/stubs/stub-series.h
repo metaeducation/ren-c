@@ -47,7 +47,7 @@
 // * It is desirable to have Flex subclasses be different types, even though
 //   there are some common routines for processing them.  e.g. not every
 //   function that would take a Flex* would actually be handled in the same
-//   way for a Array*.  Plus, just because a Context* is implemented as a
+//   way for a Array*.  Plus, just because a VarList* is implemented as a
 //   Array* with a link to another Array* doesn't mean most clients should
 //   be accessing the Array.  In a C++ build, very simple inheritance is used
 //   to implement these type safeties--but in a C build, all the sublcass

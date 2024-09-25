@@ -281,11 +281,11 @@ Bounce MAKE_List(
             assert(not Is_Stub_Varlist(Cell_Varargs_Source(arg)));
         }
         else {
-            Context* context = cast(Context*, Cell_Varargs_Source(arg));
-            Level* param_level = CTX_LEVEL_MAY_FAIL(context);
+            VarList* context = cast(VarList*, Cell_Varargs_Source(arg));
+            Level* param_level = Level_Of_Varlist_May_Fail(context);
 
             Value* param = Array_Head(
-                CTX_VARLIST(ACT_EXEMPLAR(Level_Phase(param_level)))
+                Varlist_Array(ACT_EXEMPLAR(Level_Phase(param_level)))
             );
             if (VAL_VARARGS_SIGNED_PARAM_INDEX(arg) < 0)
                 param += - VAL_VARARGS_SIGNED_PARAM_INDEX(arg);
@@ -710,7 +710,7 @@ void MF_List(REB_MOLD *mo, const Cell* v, bool form)
     Heart heart = Cell_Heart(v);
 
     if (form) {
-        Option(Context*) context = nullptr;
+        Option(VarList*) context = nullptr;
         bool relax = false;
         Form_Array_At(mo, Cell_Array(v), VAL_INDEX(v), context, relax);
         return;

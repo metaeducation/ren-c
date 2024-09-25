@@ -101,17 +101,17 @@ DECLARE_NATIVE(definitional_break)
 
     Level* break_level = LEVEL;  // Level of this BREAK call
 
-    Option(Context*) coupling = Level_Coupling(break_level);
+    Option(VarList*) coupling = Level_Coupling(break_level);
     if (not coupling)
         fail (Error_Archetype_Invoked_Raw());
 
-    Level* loop_level = CTX_LEVEL_MAY_FAIL(unwrap coupling);
+    Level* loop_level = Level_Of_Varlist_May_Fail(unwrap coupling);
 
     Init_Action(
         SPARE,  // use as label for throw
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_BREAK))),
         Canon(BREAK),
-        cast(Context*, loop_level->varlist)
+        cast(VarList*, loop_level->varlist)
     );
 
     return Init_Thrown_With_Label(LEVEL, Lib(NULL), stable_SPARE);
@@ -145,17 +145,17 @@ DECLARE_NATIVE(definitional_continue)
 
     Level* continue_level = LEVEL;  // Level of this CONTINUE call
 
-    Option(Context*) coupling = Level_Coupling(continue_level);
+    Option(VarList*) coupling = Level_Coupling(continue_level);
     if (not coupling)
         fail (Error_Archetype_Invoked_Raw());
 
-    Level* loop_level = CTX_LEVEL_MAY_FAIL(unwrap coupling);
+    Level* loop_level = Level_Of_Varlist_May_Fail(unwrap coupling);
 
     Init_Action(
         SPARE,  // use as label for throw
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_CONTINUE))),
         Canon(CONTINUE),
-        cast(Context*, loop_level->varlist)
+        cast(VarList*, loop_level->varlist)
     );
 
     return Init_Thrown_With_Label(LEVEL, v, stable_SPARE);
@@ -178,7 +178,7 @@ void Add_Definitional_Break_Continue(
         Stub_Cell(let_continue),
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_CONTINUE))),
         Canon(CONTINUE),  // relabel (the CONTINUE in lib is a dummy action)
-        cast(Context*, loop_level->varlist)  // what to continue
+        cast(VarList*, loop_level->varlist)  // what to continue
     );
 
     Stub* let_break = Make_Let_Patch(Canon(BREAK), let_continue);
@@ -186,7 +186,7 @@ void Add_Definitional_Break_Continue(
         Stub_Cell(let_break),
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_BREAK))),
         Canon(BREAK),  // relabel (the BREAK in lib is a dummy action)
-        cast(Context*, loop_level->varlist)  // what to break
+        cast(VarList*, loop_level->varlist)  // what to break
     );
 
     Tweak_Cell_Specifier(body, let_break);  // extend chain
@@ -476,7 +476,7 @@ DECLARE_NATIVE(cfor)
 
     Value* body = ARG(body);
 
-    Context* context = Virtual_Bind_Deep_To_New_Context(
+    VarList* context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
         ARG(word)
     );
@@ -485,7 +485,7 @@ DECLARE_NATIVE(cfor)
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
 
-    Value* var = CTX_VAR(context, 1);  // not movable, see #2274
+    Value* var = Varlist_Slot(context, 1);  // not movable, see #2274
 
     if (
         Is_Integer(ARG(start))
@@ -568,7 +568,7 @@ DECLARE_NATIVE(for_skip)
         return VOID;
     }
 
-    Context* context = Virtual_Bind_Deep_To_New_Context(
+    VarList* context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
         ARG(word)
     );
@@ -577,7 +577,7 @@ DECLARE_NATIVE(for_skip)
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
 
-    Value* pseudo_var = CTX_VAR(context, 1); // not movable, see #2274
+    Value* pseudo_var = Varlist_Slot(context, 1); // not movable, see #2274
     Value* var = Real_Var_From_Pseudo(pseudo_var);
     Copy_Cell(var, series);
 
@@ -662,17 +662,17 @@ DECLARE_NATIVE(definitional_stop)  // See CYCLE for notes about STOP
 
     Level* stop_level = LEVEL;  // Level of this STOP call
 
-    Option(Context*) coupling = Level_Coupling(stop_level);
+    Option(VarList*) coupling = Level_Coupling(stop_level);
     if (not coupling)
         fail (Error_Archetype_Invoked_Raw());
 
-    Level* loop_level = CTX_LEVEL_MAY_FAIL(unwrap coupling);
+    Level* loop_level = Level_Of_Varlist_May_Fail(unwrap coupling);
 
     Init_Action(
         SPARE,  // use as label for throw
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_STOP))),
         Canon(STOP),
-        cast(Context*, loop_level->varlist)
+        cast(VarList*, loop_level->varlist)
     );
 
     return Init_Thrown_With_Label(LEVEL, v, stable_SPARE);
@@ -695,7 +695,7 @@ void Add_Definitional_Stop(
         Stub_Cell(let_stop),
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_STOP))),
         Canon(STOP),  // relabel (the STOP in lib is a dummy action)
-        cast(Context*, loop_level->varlist)  // what to stop
+        cast(VarList*, loop_level->varlist)  // what to stop
    );
 
     Tweak_Cell_Specifier(body, let_stop);  // extend chain
@@ -843,7 +843,7 @@ void Init_Loop_Each(Value* iterator, Value* data)
             les->u.eser.len = Cell_Series_Len_Head(data);  // has HOLD, won't change
         }
         else if (Any_Context(data)) {
-            les->flex = CTX_VARLIST(VAL_CONTEXT(data));
+            les->flex = Varlist_Array(Cell_Varlist(data));
             Init_Evars(&les->u.evars, data);
         }
         else if (Is_Map(data)) {
@@ -889,7 +889,7 @@ void Init_Loop_Each(Value* iterator, Value* data)
 //
 // It's possible to opt out of variable slots using BLANK!.
 //
-static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
+static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
 {
     struct Loop_Each_State *les;
     les = Cell_Handle_Pointer(struct Loop_Each_State, iterator);
@@ -898,7 +898,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
         return false;
 
     const Value* pseudo_tail;
-    Value* pseudo_var = CTX_VARS(&pseudo_tail, vars_ctx);
+    Value* pseudo_var = Varlist_Slots(&pseudo_tail, vars_ctx);
     for (; pseudo_var != pseudo_tail; ++pseudo_var) {
         Value* var = Real_Var_From_Pseudo(pseudo_var);
 
@@ -918,7 +918,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
             }
             else {
                 les->more_data = false;  // any remaining vars must be unset
-                if (pseudo_var == CTX_VARS_HEAD(vars_ctx)) {
+                if (pseudo_var == Varlist_Slots_Head(vars_ctx)) {
                     //
                     // If we don't have at least *some* of the variables
                     // set for this body loop run, don't run the body.
@@ -976,22 +976,22 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
                 if (heart == REB_MODULE) {
                     Tweak_Cell_Word_Index(var, INDEX_PATCHED);
                     BINDING(var) = MOD_PATCH(
-                        VAL_CONTEXT(les->data),
+                        Cell_Varlist(les->data),
                         KEY_SYMBOL(les->u.evars.key),
                         true
                     );
                 }
                 else {
                     Tweak_Cell_Word_Index(var, les->u.evars.index);
-                    BINDING(var) = VAL_CONTEXT(les->data);
+                    BINDING(var) = Cell_Varlist(les->data);
                 }
             }
 
-            if (CTX_LEN(vars_ctx) == 1) {
+            if (Varlist_Len(vars_ctx) == 1) {
                 //
                 // Only wanted the key (`for-each 'key obj [...]`)
             }
-            else if (CTX_LEN(vars_ctx) == 2) {
+            else if (Varlist_Len(vars_ctx) == 2) {
                 //
                 // Want keys and values (`for-each 'key val obj [...]`)
                 //
@@ -1030,11 +1030,11 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
             if (var)
                 Copy_Cell(var, key);
 
-            if (CTX_LEN(vars_ctx) == 1) {
+            if (Varlist_Len(vars_ctx) == 1) {
                 //
                 // Only wanted the key (`for-each 'key map [...]`)
             }
-            else if (CTX_LEN(vars_ctx) == 2) {
+            else if (Varlist_Len(vars_ctx) == 2) {
                 //
                 // Want keys and values (`for-each 'key val map [...]`)
                 //
@@ -1150,7 +1150,7 @@ DECLARE_NATIVE(for_each)
     if (Is_Blank(data))  // same response as to empty series
         return VOID;
 
-    Context* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
+    VarList* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
         vars
     );
@@ -1166,7 +1166,7 @@ DECLARE_NATIVE(for_each)
 
 } next_iteration: {  /////////////////////////////////////////////////////////
 
-    if (not Try_Loop_Each_Next(iterator, VAL_CONTEXT(vars)))
+    if (not Try_Loop_Each_Next(iterator, Cell_Varlist(vars)))
         goto finalize_for_each;
 
     STATE = ST_FOR_EACH_RUNNING_BODY;
@@ -1255,7 +1255,7 @@ DECLARE_NATIVE(every)
     if (Is_Blank(data))  // same response as to empty series
         return VOID;
 
-    Context* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
+    VarList* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
         ARG(vars)
     );
@@ -1271,7 +1271,7 @@ DECLARE_NATIVE(every)
 
 } next_iteration: {  /////////////////////////////////////////////////////////
 
-    if (not Try_Loop_Each_Next(iterator, VAL_CONTEXT(vars)))
+    if (not Try_Loop_Each_Next(iterator, Cell_Varlist(vars)))
         goto finalize_every;
 
     STATE = ST_EVERY_RUNNING_BODY;
@@ -1392,7 +1392,7 @@ DECLARE_NATIVE(remove_each)
     if (VAL_INDEX(data) >= Cell_Series_Len_At(data))  // past series end
         return nullptr;
 
-    Context* context = Virtual_Bind_Deep_To_New_Context(
+    VarList* context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
         ARG(vars)
     );
@@ -1432,7 +1432,7 @@ DECLARE_NATIVE(remove_each)
         assert(start == index);
 
         const Value* var_tail;
-        Value* var = CTX_VARS(&var_tail, context);  // fixed (#2274)
+        Value* var = Varlist_Slots(&var_tail, context);  // fixed (#2274)
         for (; var != var_tail; ++var) {
             if (index == len) {
                 Init_Nulled(var);  // Y on 2nd step of remove-each [x y] "abc"
@@ -1785,7 +1785,7 @@ DECLARE_NATIVE(map)
         fail ("MAP only supports one-level QUOTED? series/path/context ATM");
     }
 
-    Context* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
+    VarList* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
         ARG(vars)
     );
@@ -1798,7 +1798,7 @@ DECLARE_NATIVE(map)
 
 } next_iteration: {  /////////////////////////////////////////////////////////
 
-    if (not Try_Loop_Each_Next(iterator, VAL_CONTEXT(vars)))
+    if (not Try_Loop_Each_Next(iterator, Cell_Varlist(vars)))
         goto finalize_map;
 
     STATE = ST_MAP_RUNNING_BODY;
@@ -2012,12 +2012,12 @@ DECLARE_NATIVE(for)
     if (n < 1)  // Loop_Integer from 1 to 0 with bump of 1 is infinite
         return VOID;
 
-    Context* context = Virtual_Bind_Deep_To_New_Context(body, vars);
+    VarList* context = Virtual_Bind_Deep_To_New_Context(body, vars);
     Init_Object(ARG(vars), context);  // keep GC safe
 
-    assert(CTX_LEN(context) == 1);
+    assert(Varlist_Len(context) == 1);
 
-    Value* var = CTX_VAR(VAL_CONTEXT(vars), 1);  // not movable, see #2274
+    Value* var = Varlist_Slot(Cell_Varlist(vars), 1);  // not movable, see #2274
     Init_Integer(var, 1);
 
     STATE = ST_FOR_RUNNING_BODY;
@@ -2034,7 +2034,7 @@ DECLARE_NATIVE(for)
             return nullptr;
     }
 
-    Value* var = CTX_VAR(VAL_CONTEXT(vars), 1);  // not movable, see #2274
+    Value* var = Varlist_Slot(Cell_Varlist(vars), 1);  // not movable, see #2274
 
     if (not Is_Integer(var))
         fail (Error_Invalid_Type(VAL_TYPE(var)));

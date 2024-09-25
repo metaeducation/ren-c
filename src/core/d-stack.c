@@ -159,11 +159,11 @@ Element* Init_Near_For_Level(Sink(Element*) out, Level* L)
 
 
 //
-//  Is_Context_Running_Or_Pending: C
+//  Is_Varlist_Running_Or_Pending: C
 //
-bool Is_Context_Running_Or_Pending(Context* frame_ctx)
+bool Is_Varlist_Running_Or_Pending(VarList* varlist)
 {
-    Level* L = CTX_LEVEL_IF_ON_STACK(frame_ctx);
+    Level* L = Level_Of_Varlist_If_Running(varlist);
     if (not L)
         return false;
 
@@ -187,9 +187,9 @@ DECLARE_NATIVE(running_q)
 {
     INCLUDE_PARAMS_OF_RUNNING_Q;
 
-    Context* frame_ctx = VAL_CONTEXT(ARG(frame));
+    VarList* frame_ctx = Cell_Varlist(ARG(frame));
 
-    Level* L = CTX_LEVEL_MAY_FAIL(frame_ctx);
+    Level* L = Level_Of_Varlist_May_Fail(frame_ctx);
 
     if (Is_Level_Fulfilling(L))
         return Init_Logic(OUT, false);
@@ -211,9 +211,9 @@ DECLARE_NATIVE(pending_q)
 {
     INCLUDE_PARAMS_OF_PENDING_Q;
 
-    Context* frame_ctx = VAL_CONTEXT(ARG(frame));
+    VarList* frame_ctx = Cell_Varlist(ARG(frame));
 
-    Level* L = CTX_LEVEL_MAY_FAIL(frame_ctx);
+    Level* L = Level_Of_Varlist_May_Fail(frame_ctx);
 
     if (Is_Level_Fulfilling(L))
         return Init_Logic(OUT, true);

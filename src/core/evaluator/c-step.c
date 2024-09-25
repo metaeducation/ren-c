@@ -697,14 +697,14 @@ Bounce Stepper_Executor(Level* L)
       word_common: ///////////////////////////////////////////////////////////
 
       case REB_WORD: {
-        Option(Context*) error = Trap_Get_Any_Word(OUT, L_current, L_specifier);
+        Option(VarList*) error = Trap_Get_Any_Word(OUT, L_current, L_specifier);
         if (error)
             fail (unwrap error);  // else could conflate with function result
 
         if (Is_Action(OUT)) {
             Action* action = VAL_ACTION(OUT);
             bool enfixed = Is_Enfixed(OUT);
-            Option(Context*) coupling = Cell_Frame_Coupling(OUT);
+            Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
             const Symbol* label = Cell_Word_Symbol(L_current);  // use WORD!
             Erase_Cell(OUT);  // sanity check, plus don't want enfix to see
 
@@ -862,7 +862,7 @@ Bounce Stepper_Executor(Level* L)
 
       case REB_META_WORD:
       case REB_GET_WORD: {
-        Option(Context*) error = Trap_Get_Any_Word_Maybe_Vacant(
+        Option(VarList*) error = Trap_Get_Any_Word_Maybe_Vacant(
             OUT,
             L_current,
             L_specifier
@@ -944,7 +944,7 @@ Bounce Stepper_Executor(Level* L)
             goto lookahead;
         }
 
-        Option(Context*) error = Trap_Get_Tuple(  // vacant will cause error
+        Option(VarList*) error = Trap_Get_Tuple(  // vacant will cause error
             OUT,
             GROUPS_OK,
             L_current,
@@ -1026,7 +1026,7 @@ Bounce Stepper_Executor(Level* L)
         Copy_Sequence_At(SPARE, L_current, len - 1);
         bool slash_at_tail = Is_Blank(SPARE);
 
-        Option(Context*) error = Trap_Get_Path_Push_Refinements(
+        Option(VarList*) error = Trap_Get_Path_Push_Refinements(
             OUT,  // where to write action
             SPARE,  // temporary GC-safe scratch space
             L_current,
@@ -1051,7 +1051,7 @@ Bounce Stepper_Executor(Level* L)
         sub->baseline.stack_base = BASELINE->stack_base;  // refinements
 
         Action* action = VAL_ACTION(OUT);
-        Option(Context*) coupling = Cell_Frame_Coupling(OUT);
+        Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
         Option(const Symbol*) label = VAL_FRAME_LABEL(OUT);
 
         Push_Level(OUT, sub);
@@ -1188,7 +1188,7 @@ Bounce Stepper_Executor(Level* L)
 
       case REB_META_TUPLE:
       case REB_GET_TUPLE: {
-        Option(Context*) error = Trap_Get_Tuple_Maybe_Vacant(
+        Option(VarList*) error = Trap_Get_Tuple_Maybe_Vacant(
             OUT,
             GROUPS_OK,
             L_current,
@@ -1508,7 +1508,7 @@ Bounce Stepper_Executor(Level* L)
             }
 
             if (Is_Raised(SPARE))  // don't pass thru raised errors if not @
-                fail (VAL_CONTEXT(SPARE));
+                fail (Cell_Varlist(SPARE));
 
             Decay_If_Unstable(SPARE);  // if pack in slot, resolve it
 

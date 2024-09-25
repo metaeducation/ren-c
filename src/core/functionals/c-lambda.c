@@ -71,7 +71,7 @@ Bounce Lambda_Dispatcher(Level* const L)
     Force_Level_Varlist_Managed(L);
 
     Specifier* specifier = Make_Use_Core(  // have to USE here
-        CTX_ARCHETYPE(cast(Context*, L->varlist)),
+        Varlist_Archetype(cast(VarList*, L->varlist)),
         Cell_Specifier(block),
         REB_WORD
     );
@@ -231,7 +231,7 @@ DECLARE_NATIVE(lambda)
         return Init_Action(OUT, lambda, ANONYMOUS, UNBOUND);
     }
 
-    Context* adjunct;  // reuses Pop_Paramlist() [1]
+    VarList* adjunct;  // reuses Pop_Paramlist() [1]
     Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
         &adjunct,
         STACK_BASE,

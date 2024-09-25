@@ -106,7 +106,7 @@
 //
 //    (Note that exceptions like [~/~ ~//~ ~...~] are quasi-words.)
 //
-INLINE Option(Context*) Trap_Check_Sequence_Element(
+INLINE Option(VarList*) Trap_Check_Sequence_Element(
     Heart sequence_heart,
     const Element* e
 ){
@@ -172,13 +172,13 @@ INLINE Option(Context*) Trap_Check_Sequence_Element(
 // R3-Alpha, the underlying representation of `/foo` in the cell is the same
 // as an ANY-WORD?
 
-INLINE Option(Context*) Trap_Leading_Blank_Pathify(
+INLINE Option(VarList*) Trap_Leading_Blank_Pathify(
     Element* e,
     Heart heart
 ){
     assert(Any_Sequence_Kind(heart));
 
-    Option(Context*) trap = Trap_Check_Sequence_Element(heart, e);
+    Option(VarList*) trap = Trap_Check_Sequence_Element(heart, e);
     if (trap)
         return trap;
 
@@ -289,7 +289,7 @@ INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
 
 //=//// 2-Element "PAIR" SEQUENCE OPTIMIZATION ////////////////////////////=//
 
-INLINE Option(Context*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
+INLINE Option(VarList*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
     Sink(Element*) out,
     Heart heart,
     const Element* first,
@@ -317,7 +317,7 @@ INLINE Option(Context*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
         return Trap_Leading_Blank_Pathify(out, heart);
     }
     else {
-        Option(Context*) trap = Trap_Check_Sequence_Element(heart, first);
+        Option(VarList*) trap = Trap_Check_Sequence_Element(heart, first);
         if (trap)
             return trap;
       }
@@ -345,7 +345,7 @@ INLINE Option(Context*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
     if (Is_Blank(second)) {
         // okay at tail
     } else {
-        Option(Context*) trap = Trap_Check_Sequence_Element(heart, second);
+        Option(VarList*) trap = Trap_Check_Sequence_Element(heart, second);
         if (trap)
             return trap;
     }
@@ -359,13 +359,13 @@ INLINE Option(Context*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
     return nullptr;
 }
 
-INLINE Option(Context*) Trap_Init_Any_Sequence_Pairlike(
+INLINE Option(VarList*) Trap_Init_Any_Sequence_Pairlike(
     Sink(Element*) out,
     Heart heart,
     const Element* first,
     const Element* second
 ){
-    Option(Context*) trap = Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
+    Option(VarList*) trap = Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
         out,
         heart,
         first,
@@ -380,7 +380,7 @@ INLINE Option(Context*) Trap_Init_Any_Sequence_Pairlike(
     return nullptr;
 }
 
-INLINE Option(Context*) Trap_Pop_Sequence_Or_Conflation(
+INLINE Option(VarList*) Trap_Pop_Sequence_Or_Conflation(
     Sink(Element*) out,
     Heart heart,
     StackIndex base
@@ -393,7 +393,7 @@ INLINE Option(Context*) Trap_Pop_Sequence_Or_Conflation(
     if (TOP_INDEX - base == 2) {  // two-element path optimization
         assert(not Is_Antiform(TOP - 1));
         assert(not Is_Antiform(TOP));
-        Option(Context*) trap = Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
+        Option(VarList*) trap = Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
             out,
             heart,
             cast(Element*, TOP - 1),
@@ -419,12 +419,12 @@ INLINE Option(Context*) Trap_Pop_Sequence_Or_Conflation(
     return Trap_Init_Any_Sequence_Listlike(out, heart, a);
 }
 
-INLINE Option(Context*) Trap_Pop_Sequence(
+INLINE Option(VarList*) Trap_Pop_Sequence(
     Sink(Element*) out,
     Heart heart,
     StackIndex base
 ){
-    Option(Context*) trap = Trap_Pop_Sequence_Or_Conflation(out, heart, base);
+    Option(VarList*) trap = Trap_Pop_Sequence_Or_Conflation(out, heart, base);
     if (trap)
         return trap;
 
@@ -453,7 +453,7 @@ INLINE Option(Context*) Trap_Pop_Sequence(
 // to the WORD! '.' -- this could be extended to allow more blanks to get words
 // like `///` if that were deemed interesting.
 //
-INLINE Option(Context*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
+INLINE Option(VarList*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
     Sink(Value*) out,
     Heart sequence_heart,
     StackIndex base
@@ -468,7 +468,7 @@ INLINE Option(Context*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
         Copy_Cell(out, TOP);
         DROP();  // stack now balanced
 
-        Option(Context*) trap = Trap_Check_Sequence_Element(
+        Option(VarList*) trap = Trap_Check_Sequence_Element(
             sequence_heart,
             cast(Element*, TOP)
         );
@@ -690,7 +690,7 @@ INLINE void Get_Tuple_Bytes(
 //=//// REFINEMENTS AND PREDICATES ////////////////////////////////////////=//
 
 INLINE Element* Refinify(Element* e) {
-    Option(Context*) error = Trap_Leading_Blank_Pathify(e, REB_PATH);
+    Option(VarList*) error = Trap_Leading_Blank_Pathify(e, REB_PATH);
     assert(not error);
     UNUSED(error);
     return e;

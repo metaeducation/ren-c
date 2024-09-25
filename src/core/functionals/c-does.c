@@ -85,15 +85,15 @@ DECLARE_NATIVE(does)
 
     assert(!"DOES with types other than BLOCK! not currently active");  // [1]
 
-    Context* exemplar = Make_Context_For_Action(
+    VarList* exemplar = Make_Varlist_For_Action(
         Lib(EVALUATE),
         TOP_INDEX,  // lower stackindex would be if wanting to add refinements
         nullptr  // don't set up a binder; just poke specializee in frame
     );
-    assert(Is_Node_Managed(CTX_VARLIST(exemplar)));
+    assert(Is_Node_Managed(exemplar));
 
-    assert(KEY_SYM(CTX_KEY(exemplar, 1)) == SYM_RETURN);
-    Copy_Cell(CTX_VAR(exemplar, 2), source);
+    assert(KEY_SYM(Varlist_Key(exemplar, 1)) == SYM_RETURN);
+    Copy_Cell(Varlist_Slot(exemplar, 2), source);
 
     const Symbol* label = Canon(EVALUATE);  // !!! Better answer?
     Init_Frame(OUT, exemplar, label);

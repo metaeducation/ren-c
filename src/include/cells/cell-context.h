@@ -9,9 +9,9 @@
 // be checked elsewhere...or also check it before use.
 //
 
-INLINE Context* VAL_CONTEXT(const Cell* v) {
+INLINE VarList* Cell_Varlist(const Cell* v) {
     assert(Any_Context_Kind(Cell_Heart_Unchecked(v)));
-    Context* c;
+    VarList* c;
     if (Not_Node_Accessible(Cell_Node1(v))) {
         if (HEART_BYTE(v) == REB_FRAME)
             fail (Error_Expired_Frame_Raw());  // !!! different error?
@@ -19,7 +19,7 @@ INLINE Context* VAL_CONTEXT(const Cell* v) {
     }
 
     if (Is_Stub_Varlist(cast(Stub*, Cell_Node1(v)))) {
-        c = cast(Context*, Cell_Node1(v));
+        c = cast(VarList*, Cell_Node1(v));
     }
     else {
         assert(Cell_Heart_Unchecked(v) == REB_FRAME);
@@ -47,7 +47,7 @@ INLINE Context* VAL_CONTEXT(const Cell* v) {
 // So extraction of the phase has to be sensitive to this.
 //
 
-INLINE void INIT_VAL_FRAME_PHASE(Cell* v, Phase* phase) {
+INLINE void Tweak_Cell_Frame_Phase(Cell* v, Phase* phase) {
     assert(Cell_Heart(v) == REB_FRAME);  // may be protected (e.g. archetype)
     Tweak_Cell_Frame_Phase_Or_Label(v, phase);
 }
@@ -55,7 +55,7 @@ INLINE void INIT_VAL_FRAME_PHASE(Cell* v, Phase* phase) {
 INLINE Phase* VAL_FRAME_PHASE(const Cell* v) {
     Flex* f = Extract_Cell_Frame_Phase_Or_Label(v);
     if (not f or Is_Stub_Symbol(f))  // ANONYMOUS or label, not a phase
-        return CTX_FRAME_PHASE(VAL_CONTEXT(v));  // use archetype
+        return CTX_FRAME_PHASE(Cell_Varlist(v));  // use archetype
     return cast(Phase*, f);  // cell has its own phase, return it
 }
 
@@ -86,33 +86,6 @@ INLINE void INIT_VAL_FRAME_LABEL(
 }
 
 
-//=//// ANY-CONTEXT? VALUE EXTRACTORS /////////////////////////////////////=//
-//
-// There once were more helpers like `VAL_CONTEXT_VAR(v,n)` which were macros
-// for things like `CTX_VAR(VAL_CONTEXT(v), n)`.  However, once VAL_CONTEXT()
-// became a test point for failure on inaccessibility, it's not desirable to
-// encourage calling with repeated extractions that pay that cost each time.
-//
-// However, this does not mean that all functions should early extract a
-// VAL_CONTEXT() and then do all operations in terms of that...because this
-// potentially loses information present in the Cell* cell.  If the value
-// is a frame, then the phase information conveys which fields should be
-// visible for that phase of execution and which aren't.
-//
-
-INLINE const Key* VAL_CONTEXT_KEYS_HEAD(const Cell* context)
-{
-    if (Cell_Heart(context) != REB_FRAME)
-        return CTX_KEYS_HEAD(VAL_CONTEXT(context));
-
-    Phase* phase = VAL_FRAME_PHASE(context);
-    return ACT_KEYS_HEAD(phase);
-}
-
-#define VAL_CONTEXT_VARS_HEAD(context) \
-    CTX_VARS_HEAD(VAL_CONTEXT(context))  // all views have same varlist
-
-
 // Common routine for initializing OBJECT, MODULE!, PORT!, and ERROR!
 //
 // A fully constructed context can reconstitute the ANY-CONTEXT? cell
@@ -122,16 +95,16 @@ INLINE const Key* VAL_CONTEXT_KEYS_HEAD(const Cell* context)
 INLINE Element* Init_Context_Cell(
     Sink(Element*) out,
     Heart heart,
-    Context* c
+    VarList* c
 ){
   #if !defined(NDEBUG)
     Extra_Init_Context_Cell_Checks_Debug(heart, c);
   #endif
     UNUSED(heart);
-    Assert_Flex_Managed(CTX_VARLIST(c));
+    Assert_Flex_Managed(Varlist_Array(c));
     if (CTX_TYPE(c) != REB_MODULE)
-        Assert_Flex_Managed(CTX_KEYLIST(c));
-    return Copy_Cell(out, CTX_ARCHETYPE(c));
+        Assert_Flex_Managed(Keylist_Of_Varlist(c));
+    return Copy_Cell(out, Varlist_Archetype(c));
 }
 
 #define Init_Object(out,c) \
@@ -142,7 +115,7 @@ INLINE Element* Init_Context_Cell(
 
 INLINE Element* Init_Frame(
     Sink(Element*) out,
-    Context* c,
+    VarList* c,
     Option(const String*) label  // nullptr (ANONYMOUS) is okay
 ){
     Init_Context_Cell(out, REB_FRAME, c);
@@ -161,10 +134,10 @@ INLINE void FAIL_IF_BAD_PORT(Value* port) {
     if (not Any_Context(port))
         fail (Error_Invalid_Port_Raw());
 
-    Context* ctx = VAL_CONTEXT(port);
+    VarList* ctx = Cell_Varlist(port);
     if (
-        CTX_LEN(ctx) < (STD_PORT_MAX - 1)
-        or not Is_Object(CTX_VAR(ctx, STD_PORT_SPEC))
+        Varlist_Len(ctx) < (STD_PORT_MAX - 1)
+        or not Is_Object(Varlist_Slot(ctx, STD_PORT_SPEC))
     ){
         fail (Error_Invalid_Port_Raw());
     }
@@ -189,14 +162,14 @@ INLINE const Value* TRY_VAL_CONTEXT_VAR_CORE(
     bool strict = false;
     Value* var;
     if (Is_Module(context)) {
-        var = MOD_VAR(VAL_CONTEXT(context), symbol, strict);
+        var = MOD_VAR(Cell_Varlist(context), symbol, strict);
     }
     else {
         REBLEN n = Find_Symbol_In_Context(context, symbol, strict);
         if (n == 0)
             var = nullptr;
         else
-            var = CTX_VAR(VAL_CONTEXT(context), n);
+            var = Varlist_Slot(Cell_Varlist(context), n);
     }
     if (var and writable and Get_Cell_Flag(var, PROTECTED))
         fail (Error_Protected_Key(symbol));

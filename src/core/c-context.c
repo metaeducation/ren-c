@@ -28,12 +28,12 @@
 
 
 //
-//  Alloc_Context_Core: C
+//  Alloc_Varlist_Core: C
 //
 // Create context with capacity, allocating space for both words and values.
-// Context will report actual CTX_LEN() of 0 after this call.
+// Context will report actual Varlist_Len() of 0 after this call.
 //
-Context* Alloc_Context_Core(Heart heart, REBLEN capacity, Flags flags)
+VarList* Alloc_Varlist_Core(Heart heart, REBLEN capacity, Flags flags)
 {
     KeyList* keylist = Make_Flex(KeyList,
         capacity,  // no terminator
@@ -49,62 +49,68 @@ Context* Alloc_Context_Core(Heart heart, REBLEN capacity, Flags flags)
     );
     MISC(VarlistAdjunct, varlist) = nullptr;
     LINK(Patches, varlist) = nullptr;
-    Tweak_Context_Keylist_Unique(  // hasn't been shared yet...
-        cast(Context*, varlist),
+    Tweak_Keylist_Of_Varlist_Unique(  // hasn't been shared yet...
+        cast(VarList*, varlist),
         keylist
     );
 
-    Cell* rootvar = Alloc_Tail_Array(varlist);
-    Tweak_Cell_Context_Rootvar(rootvar, heart, varlist);
+    Alloc_Tail_Array(varlist);  // allocate rootvar
+    Tweak_Non_Frame_Varlist_Rootvar(varlist, heart);
 
-    return cast(Context*, varlist);  // varlist pointer is context handle
+    return cast(VarList*, varlist);  // varlist pointer is context handle
 }
 
 
 //
-//  Expand_Context_KeyList_Core: C
+//  Expand_Keylist_Of_Varlist_Core: C
 //
 // Returns whether or not the expansion invalidated existing keys.
 //
-bool Expand_Context_KeyList_Core(Context* context, REBLEN delta)
+// 1. Tweak_Keylist_Of_Varlist_Shared was used to set the flag that indicates
+//    this keylist is shared with one or more other contexts.  Can't expand
+//    the shared copy without impacting the others, so break away from the
+//    sharing group by making a new copy.
+//
+//    (If all shared copies break away in this fashion, then the last copy of
+//    the dangling keylist will be GC'd.)
+//
+// 2. Preserve link to ancestor keylist.  Note that if it pointed to itself,
+//    we update this keylist to point to itself.
+//
+//    !!! Any extant derivations to the old keylist will still point to that
+//    keylist at the time the derivation was performed...it will not consider
+//    this new keylist to be an ancestor match.  Hence expanded objects are
+//    essentially all new objects as far as derivation are concerned, though
+//    they can still run against ancestor methods.
+//
+//    !!! NOTE: Ancestor keylists are no longer used for what they used to be
+//    and may be gotten rid of or rethought.
+//
+// 3. Tweak_Keylist_Of_Varlist_Unique() was used to set this keylist in the
+//    varlist, and no Tweak_Keylist_Of_Varlist_Shared() was used by another
+//    varlist to mark the flag indicating it's shared.  Extend it directly.
+//
+bool Expand_Keylist_Of_Varlist_Core(VarList* varlist, REBLEN delta)
 {
-    KeyList* keylist = CTX_KEYLIST(context);
-    assert(Is_Stub_Keylist(keylist));
+    KeyList* k = Keylist_Of_Varlist(varlist);
+    assert(Is_Stub_Keylist(k));
 
-    if (Get_Subclass_Flag(KEYLIST, keylist, SHARED)) {
-        //
-        // Tweak_Context_Keylist_Shared was used to set the flag that indicates
-        // this keylist is shared with one or more other contexts.  Can't
-        // expand the shared copy without impacting the others, so break away
-        // from the sharing group by making a new copy.
-        //
-        // (If all shared copies break away in this fashion, then the last
-        // copy of the dangling keylist will be GC'd.)
-
-        KeyList* copy = cast(KeyList*, Copy_Flex_At_Len_Extra(
-            keylist,
+    if (Get_Subclass_Flag(KEYLIST, k, SHARED)) {  // need new keylist [1]
+        KeyList* k_copy = cast(KeyList*, Copy_Flex_At_Len_Extra(
+            k,
             0,
-            Flex_Used(keylist),
+            Flex_Used(k),
             delta,
             FLEX_MASK_KEYLIST
         ));
 
-        // Preserve link to ancestor keylist.  Note that if it pointed to
-        // itself, we update this keylist to point to itself.
-        //
-        // !!! Any extant derivations to the old keylist will still point to
-        // that keylist at the time the derivation was performed...it will not
-        // consider this new keylist to be an ancestor match.  Hence expanded
-        // objects are essentially all new objects as far as derivation are
-        // concerned, though they can still run against ancestor methods.
-        //
-        if (LINK(Ancestor, keylist) == keylist)
-            LINK(Ancestor, copy) = copy;
+        if (LINK(Ancestor, k) == k)  // preserve ancestor link [2]
+            LINK(Ancestor, k_copy) = k_copy;
         else
-            LINK(Ancestor, copy) = LINK(Ancestor, keylist);
+            LINK(Ancestor, k_copy) = LINK(Ancestor, k);
 
-        Manage_Flex(copy);
-        Tweak_Context_Keylist_Unique(context, copy);
+        Manage_Flex(k_copy);
+        Tweak_Keylist_Of_Varlist_Unique(varlist, k_copy);
 
         return true;
     }
@@ -112,28 +118,20 @@ bool Expand_Context_KeyList_Core(Context* context, REBLEN delta)
     if (delta == 0)
         return false;
 
-    // Tweak_Context_Keylist_Unique was used to set this keylist in the
-    // context, and no Tweak_Context_Keylist_Shared was used by another context
-    // to mark the flag indicating it's shared.  Extend it directly.
-
-    Extend_Flex_If_Necessary(keylist, delta);
-
+    Extend_Flex_If_Necessary(k, delta);  // unshared, extend in place [3]
     return false;
 }
 
 
 //
-//  Expand_Context: C
+//  Expand_Varlist: C
 //
-// Expand a context. Copy words if keylist is not unique.
+// Expand a varlist. Copy keylist if is not unique.
 //
-void Expand_Context(Context* context, REBLEN delta)
+void Expand_Varlist(VarList* varlist, REBLEN delta)
 {
-    // varlist is unique to each object--expand without making a copy.
-    //
-    Extend_Flex_If_Necessary(CTX_VARLIST(context), delta);
-
-    Expand_Context_KeyList_Core(context, delta);
+    Extend_Flex_If_Necessary(varlist, delta);
+    Expand_Keylist_Of_Varlist_Core(varlist, delta);
 }
 
 
@@ -145,7 +143,7 @@ void Expand_Context(Context* context, REBLEN delta)
 // to this context after the operation.
 //
 static Value* Append_Context_Core(
-    Context* context,
+    VarList* context,
     const Symbol* symbol,
     Option(Cell*) any_word  // binding modified (Note: quoted words allowed)
 ) {
@@ -221,7 +219,9 @@ static Value* Append_Context_Core(
         return Stub_Cell(patch);
     }
 
-    KeyList* keylist = CTX_KEYLIST(context);
+    VarList* varlist = context;
+    KeyList* keylist = Keylist_Of_Varlist(varlist);
+    Corrupt_Pointer_If_Debug(context);  // prep for varlist != module
 
     // Add the key to key list
     //
@@ -233,16 +233,12 @@ static Value* Append_Context_Core(
     Expand_Flex_Tail(keylist, 1);  // updates the used count
     Init_Key(Flex_Last(Key, keylist), symbol);
 
-    // Add a slot to the var list
-    //
-    Expand_Flex_Tail(CTX_VARLIST(context), 1);
-
-    Cell* value = Erase_Cell(Array_Last(CTX_VARLIST(context)));
+    Cell* value = Alloc_Tail_Array(Varlist_Array(varlist));
 
     if (any_word) {
-        REBLEN len = CTX_LEN(context);  // length we just bumped
+        REBLEN len = Varlist_Len(varlist);  // length we just bumped
         Tweak_Cell_Word_Index(unwrap any_word, len);
-        BINDING(unwrap any_word) = context;
+        BINDING(unwrap any_word) = varlist;
     }
 
     return cast(Value*, value);  // location we just added (void cell)
@@ -253,7 +249,7 @@ static Value* Append_Context_Core(
 //  Append_Context_Bind_Word: C
 //
 Value* Append_Context_Bind_Word(
-    Context* context,
+    VarList* context,
     Cell* any_word  // binding modified (Note: quoted words allowed)
 ){
     return Append_Context_Core(context, Cell_Word_Symbol(any_word), any_word);
@@ -262,7 +258,7 @@ Value* Append_Context_Bind_Word(
 //
 //  Apend_Context: C
 //
-Value* Append_Context(Context* context, const Symbol* symbol)
+Value* Append_Context(VarList* context, const Symbol* symbol)
 {
     return Append_Context_Core(context, symbol, nullptr);
 }
@@ -311,10 +307,10 @@ void Collect_End(struct Reb_Collector *cl)
 void Collect_Context_Keys(
     Option(const Symbol**) duplicate,
     struct Reb_Collector *cl,
-    Context* context
+    VarList* context
 ){
     const Key* tail;
-    const Key* key = CTX_KEYS(&tail, context);
+    const Key* key = Varlist_Keys(&tail, context);
 
     if (duplicate)
         *(unwrap duplicate) = nullptr;
@@ -408,7 +404,7 @@ static void Collect_Inner_Loop(
 KeyList* Collect_KeyList_Managed(
     Option(const Cell*) head,
     Option(const Cell*) tail,
-    Option(Context*) prior,
+    Option(VarList*) prior,
     Flags flags  // see %sys-core.h for COLLECT_ANY_WORD, etc.
 ){
     struct Reb_Collector collector;
@@ -434,8 +430,8 @@ KeyList* Collect_KeyList_Managed(
     // array, otherwise reuse the original
     //
     KeyList* keylist;
-    if (prior and CTX_LEN(unwrap prior) == num_collected)
-        keylist = CTX_KEYLIST(unwrap prior);
+    if (prior and Varlist_Len(unwrap prior) == num_collected)
+        keylist = Keylist_Of_Varlist(unwrap prior);
     else {
         keylist = Make_Flex(KeyList,
             num_collected,  // no terminator
@@ -514,7 +510,7 @@ Array* Collect_Unique_Words_Managed(
     }
     else if (Any_Context(ignorables)) {
         const Key* key_tail;
-        const Key* key = CTX_KEYS(&key_tail, VAL_CONTEXT(ignorables));
+        const Key* key = Varlist_Keys(&key_tail, Cell_Varlist(ignorables));
         for (; key != key_tail; ++key) {
             //
             // Shouldn't be possible to have an object with duplicate keys,
@@ -558,7 +554,7 @@ Array* Collect_Unique_Words_Managed(
     }
     else if (Any_Context(ignorables)) {
         const Key* key_tail;
-        const Key* key = CTX_KEYS(&key_tail, VAL_CONTEXT(ignorables));
+        const Key* key = Varlist_Keys(&key_tail, Cell_Varlist(ignorables));
         for (; key != key_tail; ++key)
             Remove_Binder_Index(&cl->binder, KEY_SYMBOL(key));
     }
@@ -571,7 +567,7 @@ Array* Collect_Unique_Words_Managed(
 
 
 //
-//  Make_Context_Detect_Managed: C
+//  Make_Varlist_Detect_Managed: C
 //
 // Create a context by detecting top-level set-words in an array of values.
 // So if the values were the contents of the block `[a: 10 b: 20]` then the
@@ -580,11 +576,11 @@ Array* Collect_Unique_Words_Managed(
 // Optionally a parent context may be passed in, which will contribute its
 // keylist of words to the result if provided.
 //
-Context* Make_Context_Detect_Managed(
+VarList* Make_Varlist_Detect_Managed(
     Heart heart,
     Option(const Cell*) head,
     Option(const Cell*) tail,
-    Option(Context*) parent
+    Option(VarList*) parent
 ) {
     assert(heart != REB_MODULE);
 
@@ -605,7 +601,7 @@ Context* Make_Context_Detect_Managed(
     MISC(VarlistAdjunct, varlist) = nullptr;
     LINK(Patches, varlist) = nullptr;  // start w/no virtual binds
 
-    Context* context = cast(Context*, varlist);
+    VarList* context = cast(VarList*, varlist);
 
     // This isn't necessarily the clearest way to determine if the keylist is
     // shared.  Note Collect_KeyList_Managed() isn't called from anywhere
@@ -613,12 +609,12 @@ Context* Make_Context_Detect_Managed(
     // obvious what's going on.
     //
     if (not parent) {
-        Tweak_Context_Keylist_Unique(context, keylist);
+        Tweak_Keylist_Of_Varlist_Unique(context, keylist);
         LINK(Ancestor, keylist) = keylist;
     }
     else {
-        if (keylist == CTX_KEYLIST(unwrap parent)) {
-            Tweak_Context_Keylist_Shared(context, keylist);
+        if (keylist == Keylist_Of_Varlist(unwrap parent)) {
+            Tweak_Keylist_Of_Varlist_Shared(context, keylist);
 
             // We leave the ancestor link as-is in the shared keylist--so
             // whatever the parent had...if we didn't have to make a new
@@ -626,14 +622,13 @@ Context* Make_Context_Detect_Managed(
             // look at its keylist and its ancestor link points at itself.
         }
         else {
-            Tweak_Context_Keylist_Unique(context, keylist);
-            LINK(Ancestor, keylist) = CTX_KEYLIST(unwrap parent);
+            Tweak_Keylist_Of_Varlist_Unique(context, keylist);
+            LINK(Ancestor, keylist) = Keylist_Of_Varlist(unwrap parent);
         }
     }
 
     Value* var = cast(Value*, Array_Head(varlist));
-    Tweak_Cell_Context_Rootvar(var, heart, varlist);
-
+    Tweak_Non_Frame_Varlist_Rootvar(varlist, heart);  // rootvar
     ++var;
 
     for (; len > 0; --len, ++var)  // [0] is rootvar (context), already done
@@ -644,9 +639,9 @@ Context* Make_Context_Detect_Managed(
         // Copy parent values, and for values we copied that were ANY-SERIES!,
         // replace their Flex components with deep copies.
         //
-        Value* dest = CTX_VARS_HEAD(context);
+        Value* dest = Varlist_Slots_Head(context);
         const Value* src_tail;
-        Value* src = CTX_VARS(&src_tail, unwrap parent);
+        Value* src = Varlist_Slots(&src_tail, unwrap parent);
         for (; src != src_tail; ++dest, ++src) {
             Flags flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
             assert(Is_Nothing(dest));
@@ -656,7 +651,7 @@ Context* Make_Context_Detect_Managed(
         }
     }
 
-    Assert_Context(context);
+    Assert_Varlist(context);
 
   #if DEBUG_COLLECT_STATS
     g_mem.objects_made += 1;
@@ -751,7 +746,7 @@ REBLEN Find_Symbol_In_Context(
         // Modules hang their variables off the symbol itself, in a linked
         // list with other modules who also have variables of that name.
         //
-        Context* c = VAL_CONTEXT(context);
+        VarList* c = Cell_Varlist(context);
         return MOD_VAR(c, symbol, strict) ? INDEX_PATCHED : 0;
     }
 
@@ -792,7 +787,7 @@ Option(Value*) Select_Symbol_In_Context(
     if (n == 0)
         return nullptr;
 
-    return CTX_VAR(VAL_CONTEXT(context), n);
+    return Varlist_Slot(Cell_Varlist(context), n);
 }
 
 
@@ -808,10 +803,10 @@ Option(Value*) Select_Symbol_In_Context(
 //
 Value* Obj_Value(Value* value, REBLEN index)
 {
-    Context* context = VAL_CONTEXT(value);
+    VarList* context = Cell_Varlist(value);
 
-    if (index > CTX_LEN(context)) return 0;
-    return CTX_VAR(context, index);
+    if (index > Varlist_Len(context)) return 0;
+    return Varlist_Slot(context, index);
 }
 
 
@@ -840,45 +835,42 @@ void Shutdown_Collector(void)
 #ifndef NDEBUG
 
 //
-//  Assert_Context_Core: C
+//  Assert_Varlist_Core: C
 //
-void Assert_Context_Core(Context* c)
+void Assert_Varlist_Core(VarList* varlist)
 {
-    Array* varlist = CTX_VARLIST(c);
+    Array* a = Varlist_Array(varlist);
 
-    if (
-        (varlist->leader.bits & FLEX_MASK_VARLIST) != FLEX_MASK_VARLIST
-    ){
+    if ((a->leader.bits & FLEX_MASK_VARLIST) != FLEX_MASK_VARLIST)
         panic (varlist);
-    }
 
-    Value* rootvar = CTX_ROOTVAR(c);
-    if (not Any_Context(rootvar) or VAL_CONTEXT(rootvar) != c)
+    Value* rootvar = Rootvar_Of_Varlist(varlist);
+    if (not Any_Context(rootvar) or Cell_Varlist(rootvar) != varlist)
         panic (rootvar);
 
-    KeyList* keylist = CTX_KEYLIST(c);
+    KeyList* keylist = Keylist_Of_Varlist(varlist);
 
-    REBLEN keys_len = Flex_Used(keylist);
-    REBLEN vars_len = Array_Len(varlist);
+    Length keys_len = Flex_Used(keylist);
+    Length array_len = Array_Len(a);
 
-    if (vars_len < 1)
+    if (array_len < 1)
         panic (varlist);
 
-    if (keys_len + 1 != vars_len)
-        panic (c);
+    if (keys_len + 1 != array_len)
+        panic (varlist);
 
-    const Key* key = CTX_KEYS_HEAD(c);
-    Value* var = CTX_VARS_HEAD(c);
+    const Key* key = Varlist_Keys_Head(varlist);
+    Value* var = Varlist_Slots_Head(varlist);
 
-    REBLEN n;
-    for (n = 1; n < vars_len; n++, var++, key++) {
+    Length n;
+    for (n = 1; n < array_len; n++, var++, key++) {
         if (Stub_Flavor(*key) != FLAVOR_SYMBOL)
             panic (*key);
 
       #if DEBUG_POISON_FLEX_TAILS
         if (Is_Cell_Poisoned(var)) {
             printf("** Early var end at index: %d\n", cast(int, n));
-            panic (c);
+            panic (varlist);
         }
       #endif
     }

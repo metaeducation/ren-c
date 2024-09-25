@@ -179,7 +179,7 @@ DECLARE_NATIVE(load_extension)
 
     // !!! used to use STD_EXT_CTX, now this would go in META OF
 
-    Context* module_ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+    VarList* module_ctx = Alloc_Varlist_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
     node_LINK(NextVirtual, module_ctx) = Lib_Context;
 
     g_native_cfunc_pos = cfuncs;
@@ -248,7 +248,7 @@ DECLARE_NATIVE(load_extension)
     Drop_GC_Guard(module);
     Drop_GC_Guard(collated);
 
-    rebElide("append system.extensions", CTX_ARCHETYPE(module_ctx));
+    rebElide("append system.extensions", Varlist_Archetype(module_ctx));
 
     // !!! If modules are to be "unloadable", they would need some kind of
     // finalizer to clean up their resources.  There are shutdown actions
@@ -339,7 +339,7 @@ DECLARE_NATIVE(unload_extension)
     */
 
    Value* shutdown_action = MOD_VAR(
-       VAL_CONTEXT(extension),
+       Cell_Varlist(extension),
        Canon(SHUTDOWN_P),
        true
     );

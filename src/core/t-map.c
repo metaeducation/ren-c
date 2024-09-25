@@ -476,9 +476,9 @@ Array* Map_To_Array(const Map* map, REBINT what)
 
 
 //
-//  Alloc_Context_From_Map: C
+//  Alloc_Varlist_From_Map: C
 //
-Context* Alloc_Context_From_Map(const Map* map)
+VarList* Alloc_Varlist_From_Map(const Map* map)
 {
     // Doesn't use Length_Map because it only wants to consider words.
     //
@@ -497,9 +497,9 @@ Context* Alloc_Context_From_Map(const Map* map)
     }
   }
 
-    // See Alloc_Context() - cannot use it directly because no Collect_Words
+    // See Alloc_Varlist() - cannot use it directly because no Collect_Words
 
-    Context* c = Alloc_Context(REB_OBJECT, count);
+    VarList* c = Alloc_Varlist(REB_OBJECT, count);
 
     const Value* mval_tail = Flex_Tail(Value, MAP_PAIRLIST(map));
     const Value* mval = Flex_Head(Value, MAP_PAIRLIST(map));

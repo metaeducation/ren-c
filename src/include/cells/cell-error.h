@@ -36,15 +36,15 @@
 //
 
 #define ERR_VARS(e) \
-    cast(ERROR_VARS*, CTX_VARS_HEAD(e))
+    cast(ERROR_VARS*, Varlist_Slots_Head(e))
 
 #define VAL_ERR_VARS(v) \
-    ERR_VARS(VAL_CONTEXT(v))
+    ERR_VARS(Cell_Varlist(v))
 
 #define Init_Error(v,c) \
     Init_Context_Cell((v), REB_ERROR, (c))
 
-INLINE void Force_Location_Of_Error(Context* error, Level* where) {
+INLINE void Force_Location_Of_Error(VarList* error, Level* where) {
     ERROR_VARS *vars = ERR_VARS(error);
     if (Is_Nulled(&vars->where))
         Set_Location_Of_Error(error, where);
@@ -58,6 +58,6 @@ INLINE void Force_Location_Of_Error(Context* error, Level* where) {
 
 INLINE Atom* Raisify(Need(Atom*) v) {
     assert(Is_Error(v) and QUOTE_BYTE(v) == NOQUOTE_1);
-    Force_Location_Of_Error(VAL_CONTEXT(v), TOP_LEVEL);  // ideally already set
+    Force_Location_Of_Error(Cell_Varlist(v), TOP_LEVEL);  // ideally already set
     return Coerce_To_Unstable_Antiform(v);
 }

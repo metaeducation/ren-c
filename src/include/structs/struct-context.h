@@ -24,7 +24,7 @@
 // This file just defines basic structures and flags.
 //
 
-#define MISC_VarlistAdjunct_TYPE      Context*
+#define MISC_VarlistAdjunct_TYPE      VarList*
 #define HAS_MISC_VarlistAdjunct       FLAVOR_VARLIST
 
 
@@ -112,5 +112,5 @@
         | FLEX_FLAG_LINK_NODE_NEEDS_MARK  /* ancestor */ )
 
 
-#define CTX_VARLIST(ctx) \
-    x_cast(Array*, ensure(Context*, ctx))
+#define Varlist_Array(ctx) \
+    x_cast(Array*, ensure(VarList*, ctx))
