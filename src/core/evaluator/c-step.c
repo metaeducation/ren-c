@@ -253,6 +253,8 @@ Bounce Stepper_Executor(Level* L)
 
         if (Cell_ParamClass(param) == PARAMCLASS_META)
             Meta_Quotify(SPARE);
+        else
+            Decay_If_Unstable(SPARE);  // error parity with non-intrinsic
         if (not Typecheck_Coerce_Argument(param, SPARE)) {
             Option(const Symbol*) label = VAL_FRAME_LABEL(L_current);
             const Key* key = ACT_KEY(action, 2);

@@ -834,7 +834,7 @@ DECLARE_INTRINSIC(unrun)
 //
 //  "If argument is null, make it void (also pass through voids)"
 //
-//      return: "Null if input value was void"
+//      return: "Void if input value was null"
 //      value
 //  ]
 //
