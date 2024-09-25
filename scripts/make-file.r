@@ -80,9 +80,7 @@ make-file-block-parts: func [
         item: predicate item
 
         switch/type item [
-            null?! []  ; !!! Review
-
-            blank! []
+            void?! []
 
             path! [
                 case [
