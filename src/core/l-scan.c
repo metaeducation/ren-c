@@ -921,8 +921,19 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
     LEX_FLAG(LEX_SPECIAL_BAR))
 
 
+// Make it a little cleaner to return tokens from Trap_Locate_Token, returning
+// nullptr for the error, captures the pattern:
 //
-//  Maybe_Locate_Token_May_Push_Mold: C
+//    *token = TOKEN_XXX;
+//    return nullptr;
+//
+// as just `return LOCATED(TOKEN_XXX);`
+//
+#define LOCATED(tok) (*token_out = tok, nullptr)
+
+
+//
+//  Trap_Locate_Token_May_Push_Mold: C
 //
 // Find the beginning and end character pointers for the next token in the
 // scanner state.  If the scanner is being fed variadically by a list of UTF-8
@@ -957,7 +968,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 //
 // !!! This is a somewhat weird separation of responsibilities, that seems to
 // arise from a desire to make "Scan_XXX" functions independent of the
-// "Maybe_Locate_Token_May_Push_Mold" function.  But if work on locating the
+// "Trap_Locate_Token_May_Push_Mold" function.  But if work on locating the
 // value means you have to basically do what you'd do to read it into a cell
 // anyway, why split it?  This is especially true now that the variadic
 // splicing pushes values directly from this routine.
@@ -1000,8 +1011,8 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 // encoded source is because all the characters that dictate the tokenization
 // are currently in the ASCII range (< 128).
 //
-static Token Maybe_Locate_Token_May_Push_Mold(
-    VarList** error,
+static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
+    Sink(Token*) token_out,
     REB_MOLD *mo,
     Level* L
 ){
@@ -1031,7 +1042,7 @@ static Token Maybe_Locate_Token_May_Push_Mold(
         else switch (Detect_Rebol_Pointer(L->feed->p)) {
           case DETECTED_AS_END:
             L->feed->p = &PG_Feed_At_End;
-            return TOKEN_END;
+            return LOCATED(TOKEN_END);
 
           case DETECTED_AS_CELL: {
             Copy_Reified_Variadic_Feed_Cell(
@@ -1093,23 +1104,23 @@ static Token Maybe_Locate_Token_May_Push_Mold(
 
     if (*cp == ':') {
         ss->end = cp + 1;
-        return TOKEN_COLON;
+        return LOCATED(TOKEN_COLON);
     }
     if (*cp == '^') {
         ss->end = cp + 1;
-        return TOKEN_CARET;
+        return LOCATED(TOKEN_CARET);
     }
     if (*cp == '@') {
         ss->end = cp + 1;
-        return TOKEN_AT;
+        return LOCATED(TOKEN_AT);
     }
     if (*cp == '&') {
         ss->end = cp + 1;
-        return TOKEN_AMPERSAND;
+        return LOCATED(TOKEN_AMPERSAND);
     }
     if (*cp == '$' and Get_Lex_Class(cp[1]) != LEX_CLASS_NUMBER) {
         ss->end = cp + 1;
-        return TOKEN_DOLLAR;
+        return LOCATED(TOKEN_DOLLAR);
     }
 
     Token token;  // only set if falling through to `scan_word`
@@ -1168,11 +1179,11 @@ static Token Maybe_Locate_Token_May_Push_Mold(
             if (seen_angles and (*temp == '/' or *temp == '.'))
                 break;
 
-            return TOKEN_WORD;
+            return LOCATED(TOKEN_WORD);
         }
         if (*temp == ':' and temp + 1 == ss->end) {
             ss->end = temp;
-            return TOKEN_WORD;
+            return LOCATED(TOKEN_WORD);
         }
     }
 
@@ -1201,27 +1212,27 @@ static Token Maybe_Locate_Token_May_Push_Mold(
             else
                 assert(strmode == STRMODE_NO_CR);
 
-            *error = Error_Illegal_Cr(cp, ss->begin);
-            Update_Error_Near_For_Line(*error, ss, ss->line, ss->line_head);
-            return TOKEN_0; }
+            VarList* error = Error_Illegal_Cr(cp, ss->begin);
+            Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
+            return error; }
 
           case LEX_DELIMIT_LINEFEED:
           delimit_line_feed:
             ss->line++;
             ss->end = cp + 1;
-            return TOKEN_NEWLINE;
+            return LOCATED(TOKEN_NEWLINE);
 
           case LEX_DELIMIT_LEFT_BRACKET:  // [BLOCK] begin
-            return TOKEN_BLOCK_BEGIN;
+            return LOCATED(TOKEN_BLOCK_BEGIN);
 
           case LEX_DELIMIT_RIGHT_BRACKET:  // [BLOCK] end
-            return TOKEN_BLOCK_END;
+            return LOCATED(TOKEN_BLOCK_END);
 
           case LEX_DELIMIT_LEFT_PAREN:  // (GROUP) begin
-            return TOKEN_GROUP_BEGIN;
+            return LOCATED(TOKEN_GROUP_BEGIN);
 
           case LEX_DELIMIT_RIGHT_PAREN:  // (GROUP) end
-            return TOKEN_GROUP_END;
+            return LOCATED(TOKEN_GROUP_END);
 
           case LEX_DELIMIT_DOUBLE_QUOTE:  // "QUOTES"
             cp = Scan_Quote_Push_Mold(mo, cp, ss);
@@ -1233,26 +1244,24 @@ static Token Maybe_Locate_Token_May_Push_Mold(
           check_str:
             if (cp) {
                 ss->end = cp;
-                return TOKEN_STRING;
+                return LOCATED(TOKEN_STRING);
             }
             // try to recover at next new line...
             cp = ss->begin + 1;
             while (not ANY_CR_LF_END(*cp))
                 ++cp;
             ss->end = cp;
-            if (ss->begin[0] == '"') {
-                *error = Error_Missing(level, '"');
-                return TOKEN_0;
-            }
-            if (ss->begin[0] == '{') {
-                *error = Error_Missing(level, '}');
-                return TOKEN_0;
-            }
+
+            if (ss->begin[0] == '"')
+                return Error_Missing(level, '"');
+
+            if (ss->begin[0] == '{')
+                return Error_Missing(level, '}');
+
             panic ("Invalid string start delimiter");
 
           case LEX_DELIMIT_RIGHT_BRACE:
-            *error = Error_Extra(ss, '}');
-            return TOKEN_0;
+            return Error_Extra(ss, '}');
 
           case LEX_DELIMIT_SLASH:  // a /REFINEMENT-style PATH! or /// WORD!
             assert(*cp == '/');
@@ -1274,13 +1283,13 @@ static Token Maybe_Locate_Token_May_Push_Mold(
                     or cp[1] == ':'
                 ){
                     ss->end = cp + 1;
-                    return TOKEN_WORD;  // something like / or // or ///
+                    return LOCATED(TOKEN_WORD);  // like / or // or ///
                 }
                 cp = ss->begin;
             }
 
             ss->end = ss->begin + 1;
-            return TOKEN_PATH;
+            return LOCATED(TOKEN_PATH);
 
           case LEX_DELIMIT_PERIOD:  // a .PREDICATE-style TUPLE! or ... WORD!
             assert(*cp == '.');
@@ -1302,12 +1311,12 @@ static Token Maybe_Locate_Token_May_Push_Mold(
                     or cp[1] == ':'
                 ){
                     ss->end = cp + 1;
-                    return TOKEN_WORD;  // something like . or .. or ...
+                    return LOCATED(TOKEN_WORD);  // like . or .. or ...
                 }
             }
 
             ss->end = ss->begin + 1;
-            return TOKEN_TUPLE;
+            return LOCATED(TOKEN_TUPLE);
 
           case LEX_DELIMIT_END:
             //
@@ -1325,19 +1334,17 @@ static Token Maybe_Locate_Token_May_Push_Mold(
             ss->end = cp;
             if (*cp == ',' or not IS_LEX_DELIMIT(*cp)) {
                 ++ss->end;  // don't allow `,,` or `a,b` etc.
-                *error = Error_Syntax(ss, TOKEN_COMMA);
-                return TOKEN_0;
+                return Error_Syntax(ss, TOKEN_COMMA);
             }
-            return TOKEN_COMMA;
+            return LOCATED(TOKEN_COMMA);
 
           case LEX_DELIMIT_TILDE:
             assert(*cp == '~');
             ss->end = cp + 1;
-            return TOKEN_TILDE;
+            return LOCATED(TOKEN_TILDE);
 
           case LEX_DELIMIT_UTF8_ERROR:
-            *error = Error_Syntax(ss, TOKEN_WORD);
-            return TOKEN_0;
+            return Error_Syntax(ss, TOKEN_WORD);
 
           default:
             panic ("Invalid LEX_DELIMIT class");
@@ -1348,7 +1355,7 @@ static Token Maybe_Locate_Token_May_Push_Mold(
             while (not ANY_CR_LF_END(*cp))
                 ++cp;
             if (*cp == '\0')
-                return TOKEN_END;  // `load ";"` is [] with no newline on tail
+                return LOCATED(TOKEN_END);  // load ";" is [] w/no tail newline
             if (*cp == LF)
                 goto delimit_line_feed;
             assert(*cp == CR);
@@ -1361,10 +1368,8 @@ static Token Maybe_Locate_Token_May_Push_Mold(
             and *cp != '\''  // want '@foo to be a ... ?
             and *cp != '#'  // want #@ to be an ISSUE! (charlike)
         ){
-            if (*cp == '@') {  // consider `@a@b`, `@@`, etc. ambiguous
-                *error = Error_Syntax(ss, TOKEN_EMAIL);
-                return TOKEN_0;
-            }
+            if (*cp == '@')  // consider `@a@b`, `@@`, etc. ambiguous
+                return Error_Syntax(ss, TOKEN_EMAIL);
 
             token = TOKEN_EMAIL;
             goto prescan_subsume_all_dots;
@@ -1381,11 +1386,10 @@ static Token Maybe_Locate_Token_May_Push_Mold(
             if (cp[1] == '%') {  // %% is WORD! exception
                 if (not IS_LEX_DELIMIT(cp[2]) and cp[2] != ':') {
                     ss->end = cp + 3;
-                    *error = Error_Syntax(ss, TOKEN_FILE);
-                    return TOKEN_0;
+                    return Error_Syntax(ss, TOKEN_FILE);
                 }
                 ss->end = cp + 2;
-                return TOKEN_WORD;
+                return LOCATED(TOKEN_WORD);
             }
 
             token = TOKEN_FILE;
@@ -1401,17 +1405,15 @@ static Token Maybe_Locate_Token_May_Push_Mold(
                 // a single character.
                 //
                 ss->end = cp;
-                *error = Error_Syntax(ss, token);
-                return TOKEN_0;
+                return Error_Syntax(ss, token);
             }
             if (*cp == '"') {
                 cp = Scan_Quote_Push_Mold(mo, cp, ss);
                 if (not cp) {
-                    *error = Error_Syntax(ss, token);
-                    return TOKEN_0;
+                    return Error_Syntax(ss, token);
                 }
                 ss->end = cp;
-                return token;
+                return LOCATED(token);
             }
             while (*cp == '~' or *cp == '/' or *cp == '.') {  // "delimiters"
                 cp++;
@@ -1421,7 +1423,7 @@ static Token Maybe_Locate_Token_May_Push_Mold(
             }
 
             ss->end = cp;
-            return token;
+            return LOCATED(token);
 
           case LEX_SPECIAL_COLON:  // :word :12 (time)
             assert(false);  // !!! Time form not supported ATM (use 0:12)
@@ -1437,11 +1439,10 @@ static Token Maybe_Locate_Token_May_Push_Mold(
             while (*cp == '\'')  // get sequential apostrophes as one token
                 ++cp;
             ss->end = cp;
-            return TOKEN_APOSTROPHE;
+            return LOCATED(TOKEN_APOSTROPHE);
 
           case LEX_SPECIAL_GREATER:  // arrow words like `>` handled above
-            *error = Error_Syntax(ss, TOKEN_TAG);
-            return TOKEN_0;
+            return Error_Syntax(ss, TOKEN_TAG);
 
           case LEX_SPECIAL_LESSER:
             cp = Skip_Tag(cp);
@@ -1452,11 +1453,10 @@ static Token Maybe_Locate_Token_May_Push_Mold(
                     or IS_LEX_ANY_SPACE(*cp)  // `<abc>def` not legal
                 )
             ){
-                *error = Error_Syntax(ss, TOKEN_TAG);
-                return TOKEN_0;
+                return Error_Syntax(ss, TOKEN_TAG);
             }
             ss->end = cp;
-            return TOKEN_TAG;
+            return LOCATED(TOKEN_TAG);
 
           case LEX_SPECIAL_PLUS:  // +123 +123.45 +$123
           case LEX_SPECIAL_MINUS:  // -123 -123.45 -$123
@@ -1491,8 +1491,7 @@ static Token Maybe_Locate_Token_May_Push_Mold(
                     token = TOKEN_WORD;
                     goto prescan_word;
                 }
-                *error = Error_Syntax(ss, TOKEN_WORD);
-                return TOKEN_0;
+                return Error_Syntax(ss, TOKEN_WORD);
             }
             token = TOKEN_WORD;
             goto prescan_word;
@@ -1508,7 +1507,7 @@ static Token Maybe_Locate_Token_May_Push_Mold(
             // legal words (at least for the time being).
             //
             if (IS_LEX_DELIMIT(cp[1]) or IS_LEX_ANY_SPACE(cp[1]))
-                return TOKEN_BLANK;
+                return LOCATED(TOKEN_BLANK);
             token = TOKEN_WORD;
             goto prescan_word;
 
@@ -1517,27 +1516,26 @@ static Token Maybe_Locate_Token_May_Push_Mold(
             cp++;
             if (*cp == '[') {
                 ss->end = ++cp;
-                return TOKEN_CONSTRUCT;
+                return LOCATED(TOKEN_CONSTRUCT);
             }
             if (*cp == '"') {  // CHAR #"C"
                 Codepoint dummy;
                 cp++;
                 if (*cp == '"') {  // #"" is NUL
                     ss->end = cp + 1;
-                    return TOKEN_CHAR;
+                    return LOCATED(TOKEN_CHAR);
                 }
                 cp = Scan_UTF8_Char_Escapable(&dummy, cp);
                 if (cp and *cp == '"') {
                     ss->end = cp + 1;
-                    return TOKEN_CHAR;
+                    return LOCATED(TOKEN_CHAR);
                 }
                 // try to recover at next new line...
                 cp = ss->begin + 1;
                 while (not ANY_CR_LF_END(*cp))
                     ++cp;
                 ss->end = cp;
-                *error = Error_Syntax(ss, TOKEN_CHAR);
-                return TOKEN_0;
+                return Error_Syntax(ss, TOKEN_CHAR);
             }
             if (*cp == '{') {  // BINARY #{12343132023902902302938290382}
                 ss->end = ss->begin;  // save start
@@ -1546,7 +1544,7 @@ static Token Maybe_Locate_Token_May_Push_Mold(
                 ss->begin = ss->end;  // restore start
                 if (cp) {
                     ss->end = cp;
-                    return TOKEN_BINARY;
+                    return LOCATED(TOKEN_BINARY);
                 }
                 // try to recover at next new line...
                 cp = ss->begin + 1;
@@ -1560,17 +1558,14 @@ static Token Maybe_Locate_Token_May_Push_Mold(
                 // have bad characters in it, but that would be detected by
                 // the caller, so we mention the missing `}` first.)
                 //
-                *error = Error_Missing(level, '}');
-                return TOKEN_0;
+                return Error_Missing(level, '}');
             }
             if (cp - 1 == ss->begin) {
                 --cp;
                 token = TOKEN_ISSUE;
                 goto issue_or_file_token;  // same policies on including `/`
             }
-
-            *error = Error_Syntax(ss, TOKEN_INTEGER);
-            return TOKEN_0;
+            return Error_Syntax(ss, TOKEN_INTEGER);
 
           case LEX_SPECIAL_DOLLAR:
             if (
@@ -1579,7 +1574,7 @@ static Token Maybe_Locate_Token_May_Push_Mold(
                 while (*cp == '$')
                     ++cp;
                 ss->end = cp;
-                return TOKEN_WORD;
+                return LOCATED(TOKEN_WORD);
             }
             if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
                 token = TOKEN_EMAIL;
@@ -1589,24 +1584,23 @@ static Token Maybe_Locate_Token_May_Push_Mold(
             goto prescan_subsume_up_to_one_dot;
 
           default:
-            *error = Error_Syntax(ss, TOKEN_WORD);
-            return TOKEN_0;
+            return Error_Syntax(ss, TOKEN_WORD);
         }
 
       case LEX_CLASS_WORD:
         if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD))
-            return TOKEN_WORD;
+            return LOCATED(TOKEN_WORD);
         token = TOKEN_WORD;
         goto prescan_word;
 
       case LEX_CLASS_NUMBER:  // Note: "order of tests is important"
       num:;
         if (flags == 0)
-            return TOKEN_INTEGER;  // simple integer e.g. `123`
+            return LOCATED(TOKEN_INTEGER);  // simple integer e.g. `123`
 
         if (*(ss->end - 1) == ':') {  // terminal only valid if `a/1:`
             --ss->end;
-            return TOKEN_INTEGER;
+            return LOCATED(TOKEN_INTEGER);
         }
 
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
@@ -1637,8 +1631,7 @@ static Token Maybe_Locate_Token_May_Push_Mold(
                     goto pound;  // base-2 binary, "very rare"
                 }
             }
-            *error = Error_Syntax(ss, TOKEN_INTEGER);
-            return TOKEN_0;
+            return Error_Syntax(ss, TOKEN_INTEGER);
         }
 
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) {
@@ -1657,10 +1650,9 @@ static Token Maybe_Locate_Token_May_Push_Mold(
                     )
                 )
             ){
-                *error = Error_Syntax(ss, TOKEN_INTEGER);
-                return TOKEN_0;
+                return Error_Syntax(ss, TOKEN_INTEGER);
             }
-            return TOKEN_INTEGER;
+            return LOCATED(TOKEN_INTEGER);
         }
 
         // Note: R3-Alpha supported dates like `1/2/1998`, despite the main
@@ -1671,26 +1663,25 @@ static Token Maybe_Locate_Token_May_Push_Mold(
         for (; cp != ss->end; cp++) {
             // what do we hit first? 1-AUG-97 or 123E-4
             if (*cp == '-')
-                return TOKEN_DATE;  // 1-2-97 1-jan-97
+                return LOCATED(TOKEN_DATE);  // 1-2-97 1-jan-97
             if (*cp == 'x' or *cp == 'X')
-                return TOKEN_PAIR;  // 320x200
+                return LOCATED(TOKEN_PAIR);  // 320x200
             if (*cp == 'E' or *cp == 'e') {
                 if (Skip_To_Byte(cp, ss->end, 'x'))
-                    return TOKEN_PAIR;
-                return TOKEN_DECIMAL;  // 123E4
+                    return LOCATED(TOKEN_PAIR);
+                return LOCATED(TOKEN_DECIMAL);  // 123E4
             }
             if (*cp == '%')
-                return TOKEN_PERCENT;
+                return LOCATED(TOKEN_PERCENT);
 
             if (Is_Dot_Or_Slash(*cp)) {  // will be part of a TUPLE! or PATH!
                 ss->end = cp;
-                return TOKEN_INTEGER;
+                return LOCATED(TOKEN_INTEGER);
             }
         }
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_APOSTROPHE))  // 1'200
-            return TOKEN_INTEGER;
-        *error = Error_Syntax(ss, TOKEN_INTEGER);
-        return TOKEN_0;
+            return LOCATED(TOKEN_INTEGER);
+        return Error_Syntax(ss, TOKEN_INTEGER);
 
       default:
         break;  // panic after switch, so no cases fall through accidentally
@@ -1702,7 +1693,7 @@ static Token Maybe_Locate_Token_May_Push_Mold(
 
     if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) { // word:  url:words
         if (token != TOKEN_WORD)  // only valid with WORD (not set or lit)
-            return token;
+            return LOCATED(token);
         cp = unwrap Skip_To_Byte(cp, ss->end, ':');
         assert(*cp == ':');
         if (not Is_Dot_Or_Slash(cp[1]) and Lex_Map[cp[1]] < LEX_SPECIAL) {
@@ -1711,11 +1702,10 @@ static Token Maybe_Locate_Token_May_Push_Mold(
                 flags,
                 ~LEX_FLAG(LEX_SPECIAL_COLON) & LEX_WORD_FLAGS
             )){
-                *error = Error_Syntax(ss, TOKEN_WORD);
-                return TOKEN_0;
+                return Error_Syntax(ss, TOKEN_WORD);
             }
             --ss->end;  // don't actually include the colon
-            return TOKEN_WORD;
+            return LOCATED(TOKEN_WORD);
         }
         cp = ss->end;  // then, must be a URL
         while (Is_Dot_Or_Slash(*cp)) {  // deal with path delimiter
@@ -1724,7 +1714,7 @@ static Token Maybe_Locate_Token_May_Push_Mold(
                 ++cp;
         }
         ss->end = cp;
-        return TOKEN_URL;
+        return LOCATED(TOKEN_URL);
     }
     if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
         token = TOKEN_EMAIL;
@@ -1734,19 +1724,16 @@ static Token Maybe_Locate_Token_May_Push_Mold(
         token = TOKEN_MONEY;
         goto prescan_subsume_up_to_one_dot;
     }
-    if (HAS_LEX_FLAGS(flags, LEX_WORD_FLAGS)) {
-        *error = Error_Syntax(ss, TOKEN_WORD);  // has non-word chars (eg % \ )
-        return TOKEN_0;
-    }
+    if (HAS_LEX_FLAGS(flags, LEX_WORD_FLAGS))
+        return Error_Syntax(ss, TOKEN_WORD);  // has non-word chars (eg % \ )
     if (
         HAS_LEX_FLAG(flags, LEX_SPECIAL_LESSER)
         or HAS_LEX_FLAG(flags, LEX_SPECIAL_GREATER)
     ){
-        *error = Error_Syntax(ss, token);  // arrow words handled at beginning
-        return TOKEN_0;
+        return Error_Syntax(ss, token);  // arrow words handled at beginning
     }
 
-    return token;
+    return LOCATED(token);
 
   prescan_subsume_up_to_one_dot:
     assert(token == TOKEN_MONEY or token == TOKEN_TIME);
@@ -1757,14 +1744,14 @@ static Token Maybe_Locate_Token_May_Push_Mold(
     // its own code)
 
     if (*ss->end != '.' and *ss->end != ',')
-        return token;
+        return LOCATED(token);
 
     cp = ss->end + 1;
     while (not IS_LEX_DELIMIT(*cp) and not IS_LEX_ANY_SPACE(*cp))
         ++cp;
     ss->end = cp;
 
-    return token;
+    return LOCATED(token);
 
   prescan_subsume_all_dots:
     assert(token == TOKEN_EMAIL);
@@ -1779,7 +1766,7 @@ static Token Maybe_Locate_Token_May_Push_Mold(
     // (This is just good enough to lets the existing tests work on EMAIL!)
 
     if (*ss->end != '.')
-        return token;
+        return LOCATED(token);
 
     cp = ss->end + 1;
     while (
@@ -1790,7 +1777,7 @@ static Token Maybe_Locate_Token_May_Push_Mold(
     }
     ss->end = cp;
 
-    return token;
+    return LOCATED(token);
 }
 
 
@@ -1897,14 +1884,14 @@ Bounce Scanner_Executor(Level* const L) {
 
 } loop: {  //////////////////////////////////////////////////////////////////
 
+  blockscope {
     Drop_Mold_If_Pushed(mo);
-    VarList* locate_error;
-    level->token = Maybe_Locate_Token_May_Push_Mold(&locate_error, mo, L);
-
-    if (level->token == TOKEN_0) {  // error signal
-        assert(CTX_TYPE(locate_error) == REB_ERROR);
-        return RAISE(locate_error);
-    }
+    Option(VarList*) error = Trap_Locate_Token_May_Push_Mold(
+        &level->token, mo, L
+    );
+    if (error)
+        return RAISE(unwrap error);
+  }
 
     if (level->token == TOKEN_END) {  // reached '\0'
         //
@@ -3225,8 +3212,11 @@ const Byte* Scan_Any_Word(
 
     DECLARE_MOLD (mo);
 
-    VarList* error;
-    Token token = Maybe_Locate_Token_May_Push_Mold(&error, mo, L);
+    Token token;
+    Option(VarList*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, L);
+    if (error)
+        fail (unwrap error);
+
     if (token != TOKEN_WORD)
         return nullptr;
 
