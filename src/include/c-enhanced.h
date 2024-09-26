@@ -708,43 +708,6 @@
 #endif
 
 
-//=//// PREVENT NULL ASSIGNMENTS /////////////////////////////////////////=//
-//
-// This came in handly for a debugging scenario.  But because it uses deep
-// voodoo to accomplish its work (like overloading -> and &), it interferes
-// with more important applications of that voodoo.  So it shouldn't be used
-// on types that depend on that (like Cell pointers).
-//
-
-#if (! DEBUG_CHECK_NEVERNULL)
-    #define NeverNull(type) \
-        type
-#else
-    template <typename P>
-    class NeverNullEnforcer {  // named so error message hints what's wrong
-        typedef typename std::remove_pointer<P>::type T;
-        P p;
-
-      public:
-        NeverNullEnforcer () : p () {}
-        NeverNullEnforcer (P & p) : p (p) {
-            assert(p != nullptr);
-        }
-        T& operator*() { return *p; }
-        P operator->() { return p; }
-        operator P() { return p; }
-        P operator= (const P rhs) {  // if it returned reference, loses check
-            assert(rhs != nullptr);
-            this->p = rhs;
-            return p;
-        }
-    };
-
-    #define NeverNull(type) \
-        NeverNullEnforcer<type>
-#endif
-
-
 //=//// STATIC ASSERT LVALUE TO HELP EVIL MACRO USAGE /////////////////////=//
 //
 // Macros are generally bad, but especially bad if they use their arguments
@@ -770,129 +733,6 @@
             "must be lvalue reference")
 #else
     #define STATIC_ASSERT_LVALUE(x) NOOP
-#endif
-
-
-//=//// OPTIONAL TRICK FOR BOOLEAN COERCIBLE TYPES ////////////////////////=//
-//
-// This is a light wrapper class that uses a trick to provide limited
-// functionality in the vein of `std::optional` and Rust's `Option`:
-//
-//     Option(char*) abc = "abc";
-//     Option(char*) xxx = nullptr;
-//
-//     if (abc)
-//        printf("abc is truthy, so `unwrap abc` is safe!\n")
-//
-//     if (xxx)
-//        printf("XXX is falsey, so don't `unwrap xxx`...\n")
-//
-//     char* s1 = abc;                  // **compile time error
-//     Option(char*) s2 = abc;          // legal
-//
-//     char* s3 = unwrap xxx;           // **runtime error
-//     char* s4 = maybe xxx;            // gets nullptr out
-//
-// The trick is that in a plain C build, it doesn't use a wrapper class at all.
-// It falls back on the natural boolean coercibility of the standalone type.
-// Hence you can only use this with things like pointers, integers or enums
-// where 0 means no value.  If used in the C++ build with smart pointer
-// classes, they must be boolean coercible, e.g. `operator bool() const {...}`
-//
-// Comparison is lenient, allowing direct comparison to the contained value.
-//
-// 1. Uppercase Option() is chosen vs. option(), to keep `option` available
-//    as a variable name, and to better fit the new DataType NamingConvention.
-//
-// 2. This needs special handling in %make-headers.r to recognize the format.
-//    See the `typemacro_parentheses` rule.
-//
-// 3. Because we want this to work in plain C, we can't take advantage of a
-//    default construction to a zeroed value.  But we also can't disable the
-//    default constructor, because we want to be able to default construct
-//    structures with members that are Option().  :-(
-//
-// 4. While the combinatorics may seem excessive with repeating the equality
-//    and inequality operators, this is the way std::optional does it too.
-//
-// 5. To avoid the need for parentheses and give a "keyword" look to the
-//    `unwrap` and `maybe` operators they are defined as putting a global
-//    variable on the left of an output stream operator.  The variable holds
-//    a dummy class which only implements the extraction.
-//
-#if (! DEBUG_CHECK_OPTIONALS)
-    #define Option(T) T
-    #define unwrap
-    #define maybe
-#else
-    template<typename T>
-    struct OptionWrapper {
-        T wrapped;
-
-        OptionWrapper () = default;  // garbage, or 0 if global [2]
-
-        template <typename U>
-        OptionWrapper (U something) : wrapped (something) {}
-
-        template <typename X>
-        OptionWrapper (OptionWrapper<X> other) : wrapped (other.wrapped) {}
-
-        operator uintptr_t() const  // so it works in switch() statements
-          { return cast(uintptr_t, wrapped); }
-
-        explicit operator T()  // must be an *explicit* cast
-          { return wrapped; }
-
-        explicit operator bool() {
-           // explicit exception in if https://stackoverflow.com/q/39995573/
-           return wrapped ? true : false;
-        }
-    };
-
-    template<typename L, typename R>
-    bool operator==(OptionWrapper<L> left, OptionWrapper<R> right)
-        { return left.wrapped == right.wrapped; }
-
-    template<typename L, typename R>
-    bool operator==(OptionWrapper<L> left, R right)
-        { return left.wrapped == right; }
-
-    template<typename L, typename R>
-    bool operator==(L left, OptionWrapper<R> right)
-        { return left == right.wrapped; }
-
-    template<typename L, typename R>
-    bool operator!=(OptionWrapper<L> left, OptionWrapper<R> right)
-        { return left.wrapped != right.wrapped; }
-
-    template<typename L, typename R>
-    bool operator!=(OptionWrapper<L> left, R right)
-        { return left.wrapped != right; }
-
-    template<typename L, typename R>
-    bool operator!=(L left, OptionWrapper<R> right)
-        { return left != right.wrapped; }
-
-    struct UnwrapHelper {
-        template<typename T>
-        T operator<<(OptionWrapper<T> v) const {  // [5]
-            assert(v.wrapped);  // non-null pointers or int/enum checks != 0
-            return v.wrapped;
-        }
-    };
-    constexpr UnwrapHelper g_unwrap_helper = {};
-
-    struct MaybeHelper {
-        template<typename T>
-        T operator<<(OptionWrapper<T> v) const {  // [5]
-            return v.wrapped;
-        }
-    };
-    constexpr MaybeHelper g_maybe_helper = {};
-
-    #define Option(T) OptionWrapper<T>
-    #define unwrap g_unwrap_helper <<      // [5]
-    #define maybe g_maybe_helper <<        // [5]
 #endif
 
 
@@ -981,26 +821,6 @@
     template<class T>
     INLINE bool Is_Pointer_Corrupt_Debug(T* p)
       { return (p == p_cast(T*, cast(uintptr_t, 0xDECAFBAD))); }
-
-    #if DEBUG_CHECK_OPTIONALS
-        template<class P>
-        INLINE void Corrupt_Pointer_If_Debug(Option(P) &option)
-          { Corrupt_Pointer_If_Debug(option.wrapped); }
-
-        template<class P>
-        INLINE bool Is_Pointer_Corrupt_Debug(Option(P) &option)
-          { return Is_Pointer_Corrupt_Debug(option.wrapped); }
-    #endif
-
-    #if DEBUG_CHECK_NEVERNULL
-        template<class P>
-        INLINE void Corrupt_Pointer_If_Debug(NeverNull(P) &nn)
-          { Corrupt_Pointer_If_Debug(nn.p); }
-
-        template<class P>
-        INLINE bool Is_Pointer_Corrupt_Debug(NeverNull(P) &nn)
-          { return Is_Pointer_Corrupt_Debug(nn.p); }
-    #endif
 #endif
 
 
@@ -1228,10 +1048,10 @@
 
 #if CPLUSPLUS_11
     INLINE size_t strsize(const char *cp)
-        { return strlen(cp); }
+      { return strlen(cp); }
 
     INLINE size_t strsize(const unsigned char *bp)
-        { return strlen((const char*)bp); }
+      { return strlen((const char*)bp); }
 #else
     #define strsize(bp) \
         strlen((const char*)bp)
@@ -1252,16 +1072,16 @@
      * functions check in both C and C++ (here only during Debug builds):
      */
     INLINE unsigned char *b_cast(char *s)
-        { return (unsigned char*)s; }
+      { return (unsigned char*)s; }
 
     INLINE const unsigned char *cb_cast(const char *s)
-        { return (const unsigned char*)s; }
+      { return (const unsigned char*)s; }
 
     INLINE char *s_cast(unsigned char *s)
-        { return (char*)s; }
+      { return (char*)s; }
 
     INLINE const char *cs_cast(const unsigned char *s)
-        { return (const char*)s; }
+      { return (const char*)s; }
 #endif
 
 
@@ -1292,3 +1112,180 @@
     PP_EXPAND(PP_NARGS_IMPL(__VA_ARGS__,10,9,8,7,6,5,4,3,2,1,0))
 
 #endif  // !defined(C_ENHANCED_H)
+
+
+//=//// PREVENT NULL ASSIGNMENTS /////////////////////////////////////////=//
+//
+// This came in handly for a debugging scenario.  But because it uses deep
+// voodoo to accomplish its work (like overloading -> and &), it interferes
+// with more important applications of that voodoo.  So it shouldn't be used
+// on types that depend on that (like Cell pointers).
+//
+#if (! DEBUG_CHECK_NEVERNULL)
+    #define NeverNull(type) \
+        type
+#else
+    template <typename P>
+    class NeverNullEnforcer {  // named so error message hints what's wrong
+        typedef typename std::remove_pointer<P>::type T;
+        P p;
+
+      public:
+        NeverNullEnforcer () : p () {}
+        NeverNullEnforcer (P & p) : p (p) {
+            assert(p != nullptr);
+        }
+        T& operator*() { return *p; }
+        P operator->() { return p; }
+        operator P() { return p; }
+        P operator= (const P rhs) {  // if it returned reference, loses check
+            assert(rhs != nullptr);
+            this->p = rhs;
+            return p;
+        }
+    };
+
+    #define NeverNull(type) \
+        NeverNullEnforcer<type>
+
+    template<class P>
+    INLINE void Corrupt_Pointer_If_Debug(NeverNull(P) &nn)
+        { Corrupt_Pointer_If_Debug(nn.p); }
+
+    template<class P>
+    INLINE bool Is_Pointer_Corrupt_Debug(NeverNull(P) &nn)
+        { return Is_Pointer_Corrupt_Debug(nn.p); }
+#endif
+
+
+//=//// OPTIONAL TRICK FOR BOOLEAN COERCIBLE TYPES ////////////////////////=//
+//
+// This is a light wrapper class that uses a trick to provide limited
+// functionality in the vein of `std::optional` and Rust's `Option`:
+//
+//     Option(char*) abc = "abc";
+//     Option(char*) xxx = nullptr;
+//
+//     if (abc)
+//        printf("abc is truthy, so `unwrap abc` is safe!\n")
+//
+//     if (xxx)
+//        printf("XXX is falsey, so don't `unwrap xxx`...\n")
+//
+//     char* s1 = abc;                  // **compile time error
+//     Option(char*) s2 = abc;          // legal
+//
+//     char* s3 = unwrap xxx;           // **runtime error
+//     char* s4 = maybe xxx;            // gets nullptr out
+//
+// The trick is that in a plain C build, it doesn't use a wrapper class at all.
+// It falls back on the natural boolean coercibility of the standalone type.
+// Hence you can only use this with things like pointers, integers or enums
+// where 0 means no value.  If used in the C++ build with smart pointer
+// classes, they must be boolean coercible, e.g. `operator bool() const {...}`
+//
+// Comparison is lenient, allowing direct comparison to the contained value.
+//
+// 1. Uppercase Option() is chosen vs. option(), to keep `option` available
+//    as a variable name, and to better fit the new DataType NamingConvention.
+//
+// 2. This needs special handling in %make-headers.r to recognize the format.
+//    See the `typemacro_parentheses` rule.
+//
+// 3. Because we want this to work in plain C, we can't take advantage of a
+//    default construction to a zeroed value.  But we also can't disable the
+//    default constructor, because we want to be able to default construct
+//    structures with members that are Option().  :-(
+//
+// 4. While the combinatorics may seem excessive with repeating the equality
+//    and inequality operators, this is the way std::optional does it too.
+//
+// 5. To avoid the need for parentheses and give a "keyword" look to the
+//    `unwrap` and `maybe` operators they are defined as putting a global
+//    variable on the left of an output stream operator.  The variable holds
+//    a dummy class which only implements the extraction.
+//
+#if (! DEBUG_CHECK_OPTIONALS)
+    #define Option(T) T
+    #define unwrap
+    #define maybe
+#else
+    template<typename T>
+    struct OptionWrapper {
+        T wrapped;
+
+        OptionWrapper () = default;  // garbage, or 0 if global [2]
+
+        template <typename U>
+        OptionWrapper (U something) : wrapped (something) {}
+
+        template <typename X>
+        OptionWrapper (OptionWrapper<X> other) : wrapped (other.wrapped) {}
+
+        operator uintptr_t() const  // so it works in switch() statements
+          { return cast(uintptr_t, wrapped); }
+
+        explicit operator T()  // must be an *explicit* cast
+          { return wrapped; }
+
+        explicit operator bool() {
+           // explicit exception in if https://stackoverflow.com/q/39995573/
+           return wrapped ? true : false;
+        }
+    };
+
+    template<typename L, typename R>
+    bool operator==(OptionWrapper<L> left, OptionWrapper<R> right)
+        { return left.wrapped == right.wrapped; }
+
+    template<typename L, typename R>
+    bool operator==(OptionWrapper<L> left, R right)
+        { return left.wrapped == right; }
+
+    template<typename L, typename R>
+    bool operator==(L left, OptionWrapper<R> right)
+        { return left == right.wrapped; }
+
+    template<typename L, typename R>
+    bool operator!=(OptionWrapper<L> left, OptionWrapper<R> right)
+        { return left.wrapped != right.wrapped; }
+
+    template<typename L, typename R>
+    bool operator!=(OptionWrapper<L> left, R right)
+        { return left.wrapped != right; }
+
+    template<typename L, typename R>
+    bool operator!=(L left, OptionWrapper<R> right)
+        { return left != right.wrapped; }
+
+    struct UnwrapHelper {};
+    struct MaybeHelper {};
+
+    template<typename T>
+    T operator<<(const UnwrapHelper& left, OptionWrapper<T> option) {  // [5]
+        UNUSED(left);
+        assert(option.wrapped);  // non-null pointers or int/enum checks != 0
+        return option.wrapped;
+    }
+
+    template<typename T>
+    T operator<<(const MaybeHelper& left, OptionWrapper<T> option) {  // [5]
+        UNUSED(left);
+        return option.wrapped;
+    }
+
+    constexpr UnwrapHelper g_unwrap_helper = {};
+    constexpr MaybeHelper g_maybe_helper = {};
+
+    #define Option(T) OptionWrapper<T>
+    #define unwrap g_unwrap_helper <<      // [5]
+    #define maybe g_maybe_helper <<        // [5]
+
+    template<class P>
+    INLINE void Corrupt_Pointer_If_Debug(Option(P) &option)
+      { Corrupt_Pointer_If_Debug(option.wrapped); }
+
+    template<class P>
+    INLINE bool Is_Pointer_Corrupt_Debug(Option(P) &option)
+      { return Is_Pointer_Corrupt_Debug(option.wrapped); }
+#endif
