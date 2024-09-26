@@ -487,10 +487,10 @@ INLINE Offset First_Hash_Candidate_Slot(
 }
 
 
-//=//// REBSTR COPY HELPERS ///////////////////////////////////////////////=//
+//=//// STRING COPY HELPERS ///////////////////////////////////////////////=//
 
 #define Copy_String_At(v) \
-    Copy_String_At_Limit((v), -1)
+    Copy_String_At_Limit((v), UNLIMITED)
 
 INLINE Binary* Copy_Binary_At_Len(
     const Binary* b,

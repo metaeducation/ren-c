@@ -1420,7 +1420,7 @@ void Dump_All_Series_Of_Width(Size wide)
 //
 //  Dump_All_Flex_In_Pool: C
 //
-// Dump all the Flex in pool, or UNLIMITED (-1) for all pools
+// Dump all the Flex in pool.
 //
 void Dump_All_Flex_In_Pool(PoolId pool_id)
 {
@@ -1439,11 +1439,8 @@ void Dump_All_Flex_In_Pool(PoolId pool_id)
 
             Flex* f = x_cast(Flex*, unit);
             if (
-                pool_id == UNLIMITED
-                or (
-                    Get_Flex_Flag(f, DYNAMIC)
-                    and pool_id == Pool_Id_For_Size(Flex_Total(f))
-                )
+                Get_Flex_Flag(f, DYNAMIC)
+                and pool_id == Pool_Id_For_Size(Flex_Total(f))
             ){
                 Dump_Flex(f, "Dump_All_Flex_In_Pool");
             }

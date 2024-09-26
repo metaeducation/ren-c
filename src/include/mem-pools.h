@@ -163,7 +163,7 @@ typedef struct PoolStruct {
 //
 #define MEM_BALLAST 3000000
 
-typedef signed int PoolId;  // used with UNLIMITED (-1)
+typedef Offset PoolId;
 
 enum PoolSpecEnum {
     MEM_TINY_POOL = 0,

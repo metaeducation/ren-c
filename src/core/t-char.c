@@ -333,7 +333,7 @@ void MF_Issue(REB_MOLD *mo, const Cell* v, bool form)
             Append_Codepoint(mo->string, '"');
         }
         else
-            Append_String_Limit(mo->string, v, len);
+            Append_String_Limit(mo->string, v, &len);
     }
     else {
         const String* s = Cell_Issue_String(v);  // !!! needs node

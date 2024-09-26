@@ -2144,7 +2144,7 @@ DECLARE_NATIVE(subparse)
                     //
                     Init_Text(
                         sink,
-                        Copy_String_At_Limit(begin_val, count)
+                        Copy_String_At_Limit(begin_val, &count)
                     );
                 }
 

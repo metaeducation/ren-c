@@ -136,12 +136,14 @@ REBINT Compare_UTF8(const Byte* s1, const Byte* s2, Size l2)
 // byte, and there'd be no way to return that match measured as a codepoint
 // position in the searched string (which is what FIND and PARSE require).
 //
+// 1. `limit2` is typically Cell_Series_Len_At(binstr2))
+//
 REBINT Find_Binstr_In_Binstr(
     REBLEN *len_out,  // length in output units of match
     const Cell* binstr1,
     REBLEN end1,  // end binstr1 *index* (not a limiting *length*)
     const Cell* binstr2,  // pattern to be found
-    REBLEN limit2,  // in units of binstr2 (usually Cell_Series_Len_At(binstr2))
+    Option(const Length*) limit2,  // in units of binstr2 [1]
     Flags flags,  // AM_FIND_CASE, AM_FIND_MATCH
     REBINT skip1  // in length units of binstr1 (bytes or codepoints)
 ){
@@ -162,8 +164,8 @@ REBINT Find_Binstr_In_Binstr(
         assert(Cell_Heart(binstr1) == REB_BINARY);
         head2 = c_cast(Byte*, "\0");
         size2 = 1;
-        if (limit2 < size2)
-            size2 = limit2;
+        if (limit2 and *(unwrap limit2) < size2)
+            size2 = *(unwrap limit2);
         len2 = 1;
         is_2_str = false;
     }
@@ -177,8 +179,8 @@ REBINT Find_Binstr_In_Binstr(
     }
     else {
         head2 = Cell_Binary_Size_At(&size2, binstr2);
-        if (limit2 < size2)
-            size2 = limit2;
+        if (limit2 and *(unwrap limit2) < size2)
+            size2 = *(unwrap limit2);
         len2 = size2;
     }
 

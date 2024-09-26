@@ -633,7 +633,7 @@ REBLEN Modify_String_Or_Binary(
                 }
                 else {
                     REBLEN check;  // v-- !!! This call uses bookmark, review
-                    part_size = Cell_String_Size_Limit_At(&check, dst, part);
+                    part_size = Cell_String_Size_Limit_At(&check, dst, &part);
                     assert(check == part);
                     UNUSED(check);
                 }

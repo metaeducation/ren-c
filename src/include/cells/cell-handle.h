@@ -57,7 +57,7 @@ INLINE bool Is_Handle_Cfunc(const Cell* v) {
 INLINE Cell* Extract_Cell_Handle_Canon(const_if_c Cell* v) {
     assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
-        return v;  // changing handle instance won't be seen by copies
+        return m_cast(Cell*, v);  // changing instance won't be seen by copies
     return Stub_Cell(Extract_Cell_Handle_Stub(v));  // has shared node
 }
 

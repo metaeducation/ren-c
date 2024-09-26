@@ -99,7 +99,8 @@ typedef struct {
 typedef struct {
     VarList* port_ctx;
 
-    REBINT length;  // length to transfer (or -1 for UNLIMITED)
+    Length length_store;  // if length isn't nullptr, then points here
+    Option(const Length*) length;  // length to transfer, nullptr is UNLIMITED
     Size actual;  // length actually transferred
 
     // !!! the binary is assumed to just live in the port's "data", this

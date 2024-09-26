@@ -64,10 +64,15 @@ INLINE const Byte* Cell_Binary_Size_At(
 INLINE const Byte* Cell_Bytes_Limit_At(
     Size* size_out,
     const Cell* v,
-    REBINT limit
+    Option(const Length*) limit_in
 ){
-    if (limit == UNLIMITED or limit > Cell_Series_Len_At(v))
+    Length limit;
+    if (limit_in == UNLIMITED or *(unwrap limit_in) > Cell_Series_Len_At(v))
         limit = Cell_Series_Len_At(v);
+    else
+        limit = *(unwrap limit_in);
+
+    Corrupt_Pointer_If_Debug(limit_in);
 
     if (Cell_Heart(v) == REB_BINARY) {
         *size_out = limit;
@@ -75,7 +80,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
     }
 
     if (Any_String_Kind(Cell_Heart(v))) {
-        *size_out = Cell_String_Size_Limit_At(nullptr, v, limit);
+        *size_out = Cell_String_Size_Limit_At(nullptr, v, &limit);
         return Cell_String_At(v);
     }
 

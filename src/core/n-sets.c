@@ -220,13 +220,15 @@ Flex* Make_Set_Operation_Flex(
             ){
                 REBLEN len_match;
 
+                Length single_codepoint_len = 1;  // Length, not size in bytes
+
                 if (flags & SOP_FLAG_CHECK) {
                     h = (NOT_FOUND != Find_Binstr_In_Binstr(
                         &len_match,
                         val2,
                         Cell_Series_Len_Head(val2),
                         iter,
-                        1,  // single codepoint length
+                        &single_codepoint_len,  // "part as 1 codepoint
                         cased ? AM_FIND_CASE : 0,
                         skip
                     ));
@@ -247,12 +249,12 @@ Flex* Make_Set_Operation_Flex(
                         mo_value,
                         String_Len(mo->string),  // tail
                         iter,
-                        1,  // single codepoint length
+                        &single_codepoint_len,  // "part" as one codepoint
                         cased ? AM_FIND_CASE : 0,  // flags
                         skip  // skip
                     )
                 ){
-                    Append_String_Limit(mo->string, iter, skip);
+                    Append_String_Limit(mo->string, iter, &skip);
                 }
             }
 
@@ -295,13 +297,15 @@ Flex* Make_Set_Operation_Flex(
             ){
                 REBLEN len_match;
 
+                Length single_byte_len = 1;
+
                 if (flags & SOP_FLAG_CHECK) {
                     h = (NOT_FOUND != Find_Binstr_In_Binstr(
                         &len_match,
                         val2,  // searched
                         Cell_Series_Len_Head(val2),  // limit (highest index)
                         iter,  // pattern
-                        1,  // "part", e.g. matches only 1 byte
+                        &single_byte_len,  // "part" as one byte
                         cased ? AM_FIND_CASE : 0,
                         skip
                     ));
@@ -325,7 +329,7 @@ Flex* Make_Set_Operation_Flex(
                         buf_value,  // searched
                         Cell_Series_Len_Head(buf_value),  // limit (highest index)
                         iter,  // pattern
-                        1,  // "part", e.g. matches only 1 byte
+                        &single_byte_len,  // "part" as one byte
                         cased ? AM_FIND_CASE : 0,  // flags
                         skip
                     )

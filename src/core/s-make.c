@@ -68,7 +68,7 @@ Binary* Make_Binary_From_Sized_Bytes(const Byte* src, Size len)
 // Copying a String is distinct from copying a Binary due to the length being
 // counted in characters, and not units of the Flex width (1).
 //
-String* Copy_String_At_Limit(const Cell* src, REBINT limit)
+String* Copy_String_At_Limit(const Cell* src, Option(const Length*) limit)
 {
     Size limited_size;
     Length limited_length;
@@ -216,8 +216,11 @@ void Append_Spelling(String* dst, const String* spelling)
 //
 // Append a partial string to a String*.
 //
-void Append_String_Limit(String* dst, const Cell* src, REBLEN limit)
-{
+void Append_String_Limit(
+    String* dst,
+    const Cell* src,
+    Option(const Length*) limit
+){
     assert(not Is_String_Symbol(dst));
     assert(Any_Utf8_Kind(Cell_Heart(src)));
 

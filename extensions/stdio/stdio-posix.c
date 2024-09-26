@@ -160,7 +160,7 @@ void Write_IO(const Value* data, REBLEN len)
         }
         else {
             REBLEN len_check;
-            bp = Cell_Utf8_Len_Size_At_Limit(&len_check, &size, data, len);
+            bp = Cell_Utf8_Len_Size_At_Limit(&len_check, &size, data, &len);
             assert(len_check == len);
             UNUSED(len_check);
         }

@@ -358,7 +358,7 @@ Value* Write_File(const Value* port, const Value* value, REBLEN limit)
             nullptr,
             &size,
             value,
-            limit
+            &limit
         );
 
         // !!! In the quest to purify the universe, we've been checking to

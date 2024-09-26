@@ -993,13 +993,13 @@ DECLARE_NATIVE(to_hex)
     if (REF(size))
         len = VAL_INT64(ARG(size));
     else
-        len = UNLIMITED;
+        len = 0;  // !!! avoid compiler warning--but rethink this routine
 
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 
     if (Is_Integer(arg)) {
-        if (len == UNLIMITED || len > MAX_HEX_LEN)
+        if (not REF(size) or len > MAX_HEX_LEN)
             len = MAX_HEX_LEN;
 
         Form_Hex_Pad(mo, VAL_INT64(arg), len);
@@ -1007,9 +1007,9 @@ DECLARE_NATIVE(to_hex)
     else if (Is_Tuple(arg)) {
         REBLEN n;
         if (
-            len == UNLIMITED
-            || len > 2 * MAX_TUPLE
-            || len > 2 * Cell_Sequence_Len(arg)
+            not REF(size)
+            or len > 2 * MAX_TUPLE
+            or len > 2 * Cell_Sequence_Len(arg)
         ){
             len = 2 * Cell_Sequence_Len(arg);
         }

@@ -101,15 +101,20 @@ typedef uintptr_t LineNumber; // type used to store line numbers in Rebol files
 typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
 
 
-// These were used in R3-Alpha, with the benefit that UNLIMITED will cast to
-// a very large unsigned integer.  With sign checks turned up, it's possible to
-// catch cases that are looking for unsigned integers but don't test for
-// the -1 condition.
-//
 // https://github.com/LambdaSchool/CS-Wiki/wiki/Casting-Signed-to-Unsigned-in-C
 //
 #define NOT_FOUND (-1)
-#define UNLIMITED (-1)
+
+// R3-Alpha cast -1 to a a very large integer for limits and used that as a
+// signal.  That is error prone, but we can't use Optional(Length) because
+// the optional trick relies on making 0 the optional state...and 0 is a valid
+// in-band value.
+//
+// So instead Ren-C uses Optional(Length*) instead...with nullptr serving as
+// the special "no limit" state.  Debug builds then check that you don't
+// accidentally use the limit value when it is null (see Optional's `unwrap`)
+//
+#define UNLIMITED cast(const intptr_t*, nullptr)
 
 
 // !!! Review this choice from R3-Alpha:

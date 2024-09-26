@@ -466,11 +466,11 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
     VarList* port_ctx = rebreq->port_ctx;
     Value* port_data = Varlist_Slot(port_ctx, STD_PORT_DATA);
 
-    size_t bufsize;
+    Size bufsize;
     if (rebreq->length == UNLIMITED)  // read maximum amount possible
         bufsize = NET_BUF_SIZE;  // !!! use libuv's (large) suggestion instead?
     else
-        bufsize = rebreq->length - rebreq->actual;  // !!! use suggestion here?
+        bufsize = *(unwrap rebreq->length) - rebreq->actual;  // suggestion?
 
     Binary* bin;
     if (Is_Nulled(port_data)) {
@@ -578,9 +578,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
             // data they actually got with a READ/PART call.  But this is
             // where you could handle that situation differently.
 
-            // Note: cast of UNLIMITED to unsigned will be a very large value.
-            //
-            assert(rebreq->actual < rebreq->length);
+            assert(rebreq->actual < *(unwrap rebreq->length));
 
             goto post_read_finished_event;
         }
@@ -607,9 +605,9 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
             goto post_read_finished_event;
         }
 
-        assert(rebreq->length >= 0);
+        assert(*(unwrap rebreq->length) >= 0);
 
-        if (rebreq->actual == rebreq->length) {
+        if (rebreq->actual == *(unwrap rebreq->length)) {
             //
             // We've read as much as we wanted to, so ask to stop reading.
             //
@@ -852,7 +850,8 @@ static Bounce Transport_Actor(
             if (not Is_Integer(ARG(part)))
                 fail (ARG(part));
 
-            rebreq->length = VAL_INT32(ARG(part));
+            rebreq->length_store = VAL_INT32(ARG(part));
+            rebreq->length = &rebreq->length_store;
         }
         else {
             // !!! R3-Alpha didn't have a working READ/PART for networking; it

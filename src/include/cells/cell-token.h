@@ -196,8 +196,11 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
     Option(Length*) length_out,
     Option(Size*) size_out,
     const Cell* v,
-    REBINT limit
+    Option(const Length*) limit  // nullptr means no limit
 ){
+    if (limit)
+        assert(*(unwrap limit) >= 0);
+
   #if !defined(NDEBUG)
     Size dummy_size;
     if (not size_out)
@@ -209,17 +212,17 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
     if (Not_Cell_Flag(v, STRINGLIKE_HAS_NODE)) {  // SIGIL!, some ISSUE!...
         REBLEN len;
         Size size;
-        //
-        // Note that unsigned cast of UNLIMITED as -1 to REBLEN is a large #
-        //
-        if (limit >= EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN]) {
+        if (
+            not limit
+            or *(unwrap limit) >= EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN]
+        ){
             len = EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN];
             size = EXTRA(Bytes, v).at_least_4[IDX_EXTRA_USED];
         }
         else {
             len = 0;
             Utf8(const*) at = cast(Utf8(const*), PAYLOAD(Bytes, v).at_least_8);
-            for (; limit != 0; --limit, ++len)
+            for (; len < *(unwrap limit); ++len)
                 at = Skip_Codepoint(at);
             size = at - PAYLOAD(Bytes, v).at_least_8;
         }
@@ -238,8 +241,12 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
         utf8 = String_Head(s);
         if (size_out)
             *(unwrap size_out) = Flex_Used(s);
-        if (length_out)
-            *(unwrap length_out) = s->misc.length;
+        if (length_out) {
+            if (not limit)
+                *(unwrap length_out) = s->misc.length;
+            else
+                *(unwrap length_out) = MIN(s->misc.length, *(unwrap limit));
+        }
     }
     else {
         utf8 = Cell_String_At(v);
@@ -248,7 +255,6 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
             Size utf8_size = Cell_String_Size_Limit_At(length_out, v, limit);
             if (size_out)
                 *(unwrap size_out) = utf8_size;
-            // length_out handled by Cell_String_Size_Limit_At, even if nullptr
         }
     }
 

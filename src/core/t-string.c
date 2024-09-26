@@ -1012,7 +1012,7 @@ REBTYPE(String)
             return COPY(v);
 
         Length len;
-        Size size = Cell_String_Size_Limit_At(&len, v, limit);
+        Size size = Cell_String_Size_Limit_At(&len, v, &limit);
 
         Size offset = VAL_BYTEOFFSET_FOR_INDEX(v, index);
         Size size_old = String_Size(s);
@@ -1190,7 +1190,7 @@ REBTYPE(String)
         //
         if (REF(part)) {
             Heart heart = Cell_Heart_Ensure_Noquote(v);
-            Init_Any_String(OUT, heart, Copy_String_At_Limit(v, len));
+            Init_Any_String(OUT, heart, Copy_String_At_Limit(v, &len));
         }
         else
             Init_Char_Unchecked(OUT, Codepoint_At(Cell_String_At(v)));
@@ -1234,7 +1234,7 @@ REBTYPE(String)
         return Init_Any_String(
             OUT,
             Cell_Heart_Ensure_Noquote(v),
-            Copy_String_At_Limit(v, len)
+            Copy_String_At_Limit(v, &len)
         ); }
 
     //-- Special actions:
@@ -1293,7 +1293,7 @@ REBTYPE(String)
 
         Length len;
         Size size;
-        const Byte* utf8 = Cell_Utf8_Len_Size_At_Limit(&len, &size, v, limit);
+        const Byte* utf8 = Cell_Utf8_Len_Size_At_Limit(&len, &size, v, &limit);
 
         // Test for if the range is all ASCII can just be if (len == size)...
         // that means every codepoint is one byte.

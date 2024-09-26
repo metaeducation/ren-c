@@ -110,26 +110,29 @@ INLINE REBLEN Cell_String_Len_At(const Cell* c) {
 }
 
 INLINE Size Cell_String_Size_Limit_At(
-    Option(REBLEN*) length_out,  // length in chars to end (including limit)
+    Option(Length*) length_out,  // length in chars to end (including limit)
     const Cell* v,
-    REBINT limit  // UNLIMITED (e.g. a very large number) for no limit
+    Option(const Length*) limit
 ){
+    if (limit)
+        assert(*(unwrap limit) >= 0);
+
     Utf8(const*) at = Cell_String_At(v);  // !!! update cache if needed
     Utf8(const*) tail;
 
     REBLEN len_at = Cell_String_Len_At(v);
-    if (limit >= len_at) {  // UNLIMITED casts to large unsigned
+    if (not limit or *(unwrap limit) >= len_at) {
         if (length_out)
             *(unwrap length_out) = len_at;
         tail = Cell_String_Tail(v);  // byte count known (fast)
     }
     else {
-        assert(limit >= 0);
-        if (length_out)
-            *(unwrap length_out) = limit;
         tail = at;
-        for (; limit > 0; --limit)
+        Length len = 0;
+        for (; len < *(unwrap limit); ++len)
             tail = Skip_Codepoint(tail);
+        if (length_out)
+            *(unwrap length_out) = len;
     }
 
     return tail - at;

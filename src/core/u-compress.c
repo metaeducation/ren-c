@@ -417,7 +417,7 @@ DECLARE_NATIVE(checksum_core)
     REBLEN len = Part_Len_May_Modify_Index(ARG(data), ARG(part));
 
     Size size;
-    const Byte* data = Cell_Bytes_Limit_At(&size, ARG(data), len);
+    const Byte* data = Cell_Bytes_Limit_At(&size, ARG(data), &len);
 
     uLong crc;  // Note: zlib.h defines "crc32" as "z_crc32"
     switch (Cell_Word_Id(ARG(method))) {
@@ -469,7 +469,7 @@ DECLARE_NATIVE(deflate)
     REBLEN limit = Part_Len_May_Modify_Index(ARG(data), ARG(part));
 
     Size size;
-    const Byte* bp = Cell_Bytes_Limit_At(&size, ARG(data), limit);
+    const Byte* bp = Cell_Bytes_Limit_At(&size, ARG(data), &limit);
 
     Option(SymId) envelope;
     if (not REF(envelope))
