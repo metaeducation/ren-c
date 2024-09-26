@@ -135,7 +135,7 @@ module: func [
 ][
     mod: any [
         into
-        make module! body  ; inherits specifier from body, does not run it
+        make module! body  ; inherits binding from body, does not run it
     ]
     body: inside mod bindable body
 

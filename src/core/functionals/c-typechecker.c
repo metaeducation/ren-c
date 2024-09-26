@@ -129,13 +129,13 @@ bool Typecheck_Pack(const Element* types, const Atom* pack) {
 
     const Element* types_tail;
     const Element* types_at = Cell_List_At(&types_tail, types);
-    Specifier* types_specifier = Cell_Specifier(types);
+    Context* types_binding = Cell_List_Binding(types);
 
     for (; types_at != types_tail; ++types_at, ++pack_at) {
         DECLARE_ATOM (temp);  // !!! wasteful to make another cell, rethink
         Copy_Cell(temp, pack_at);
         Meta_Unquotify_Undecayed(temp);
-        if (not Typecheck_Atom_Core(types_at, types_specifier, temp))
+        if (not Typecheck_Atom_Core(types_at, types_binding, temp))
             return false;
     }
 
@@ -156,7 +156,7 @@ bool Typecheck_Pack(const Element* types, const Atom* pack) {
 //
 bool Typecheck_Atom_Core(
     const Value* tests,  // PARAMETER!, TYPE-BLOCK!, GROUP!, TYPE-GROUP!...
-    Specifier* tests_specifier,
+    Context* tests_binding,
     const Atom* v
 ){
     assert(not (Is_Antiform(v) and HEART_BYTE(v) == REB_PARAMETER));  // [1]
@@ -165,7 +165,7 @@ bool Typecheck_Atom_Core(
 
     const Element* tail;
     const Element* item;
-    Specifier* derived;
+    Context* derived;
     bool match_all;
 
     if (Cell_Heart(tests) == REB_PARAMETER) {  // usually antiform
@@ -183,14 +183,14 @@ bool Typecheck_Atom_Core(
 
       case REB_BLOCK:
         item = Cell_List_At(&tail, tests);
-        derived = Derive_Specifier(tests_specifier, tests);
+        derived = Derive_Binding(tests_binding, tests);
         match_all = false;
         break;
 
       case REB_GROUP:
       case REB_TYPE_GROUP:
         item = Cell_List_At(&tail, tests);
-        derived = Derive_Specifier(tests_specifier, tests);
+        derived = Derive_Binding(tests_binding, tests);
         match_all = true;
         break;
 
@@ -200,7 +200,7 @@ bool Typecheck_Atom_Core(
       case REB_WORD:
         item = c_cast(Element*, tests);
         tail = c_cast(Element*, tests) + 1;
-        derived = tests_specifier;
+        derived = tests_binding;
         match_all = true;
         break;
 
@@ -361,9 +361,13 @@ bool Typecheck_Atom_Core(
             break; }
 
           case REB_TYPE_WORD:
+            if (not Typecheck_Atom_Core(test, tests_binding, v))
+                goto test_failed;
+            break;
+
           case REB_TYPE_GROUP: {
-            Specifier* subspecifier = Derive_Specifier(tests_specifier, test);
-            if (not Typecheck_Atom_Core(test, subspecifier, v))
+            Context* sub_binding = Derive_Binding(tests_binding, test);
+            if (not Typecheck_Atom_Core(test, sub_binding, v))
                 goto test_failed;
             break; }
 

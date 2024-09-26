@@ -3151,9 +3151,9 @@ parse*: func [
     rules: inside rules bindable reduce ['phase bindable rules]
 
     ; There's no first-class ENVIRONMENT! type, so lists are used as a
-    ; surrogate for exposing their specifiers.  When the environment is
+    ; surrogate for exposing their bindings.  When the environment is
     ; expanded (e.g. by LET) the rules block in effect is changed to a block
-    ; with the same contents (array+position) but a different specifier.
+    ; with the same contents (array+position) but a different binding.
     ;
     env: rules
 

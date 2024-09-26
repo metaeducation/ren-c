@@ -24,7 +24,7 @@
 #include "sys-core.h"
 
 
-#define L_specifier         Level_Specifier(L)
+#define L_binding         Level_Binding(L)
 
 
 //
@@ -186,7 +186,7 @@ DECLARE_NATIVE(reduce)
         const Element* at = Cell_List_At(&tail, OUT);
         bool newline = Get_Cell_Flag(v, NEWLINE_BEFORE);
         for (; at != tail; ++at) {
-            Derelativize(PUSH(), at, Cell_Specifier(OUT));
+            Derelativize(PUSH(), at, Cell_List_Binding(OUT));
             SUBLEVEL->baseline.stack_base += 1;  // [4]
             if (newline) {
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // [2]
@@ -401,7 +401,7 @@ static void Push_Composer_Level(
     Atom* out,
     Level* main_level,
     const Value* arraylike,
-    Specifier* specifier
+    Context* context
 ){
     const Value* adjusted = nullptr;
     if (Any_Sequence(arraylike)) {  // allow sequences [1]
@@ -411,7 +411,7 @@ static void Push_Composer_Level(
     Level* sub = Make_Level_At_Core(
         &Composer_Executor,
         adjusted ? adjusted : arraylike,
-        Derive_Specifier(specifier, adjusted ? adjusted : arraylike),
+        Derive_Binding(context, adjusted ? adjusted : arraylike),
         EVAL_EXECUTOR_FLAG_NO_EVALUATIONS
             | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
             | LEVEL_FLAG_RAISED_RESULT_OK  // bubbles up definitional errors
@@ -636,7 +636,7 @@ Bounce Composer_Executor(Level* const L)
 
     Heart heart = Cell_Heart(at);  // quoted groups match [1]
 
-    Specifier* match_specifier = nullptr;
+    Context* match_binding = nullptr;
     const Element* match = nullptr;
 
     if (not Any_Group_Kind(heart)) {
@@ -647,7 +647,7 @@ Bounce Composer_Executor(Level* const L)
     else {  // plain compose, if match
         if (not label or Match_For_Compose(at, unwrap label)) {
             match = at;
-            match_specifier = L_specifier;
+            match_binding = L_binding;
         }
     }
 
@@ -655,7 +655,7 @@ Bounce Composer_Executor(Level* const L)
         if (deep) {
             // compose/deep [does [(1 + 2)] nested] => [does [3] nested]
 
-            Push_Composer_Level(OUT, main_level, at, L_specifier);
+            Push_Composer_Level(OUT, main_level, at, L_binding);
             STATE = ST_COMPOSER_RECURSING_DEEP;
             return CATCH_CONTINUE_SUBLEVEL(SUBLEVEL);
         }
@@ -669,7 +669,7 @@ Bounce Composer_Executor(Level* const L)
     if (Is_Nulled(predicate))
         goto evaluate_group;
 
-    Derelativize(SPARE, match, L_specifier);
+    Derelativize(SPARE, match, L_binding);
     Dequotify(SPARE);  // cast was needed because there may have been quotes
     HEART_BYTE(SPARE) = REB_GROUP;  // don't confuse with decoration
     if (label)
@@ -682,7 +682,7 @@ Bounce Composer_Executor(Level* const L)
 
     // If <*> is the label and (<*> 1 + 2) is found, run just (1 + 2).
     //
-    Feed* subfeed = Make_At_Feed_Core(match, match_specifier);
+    Feed* subfeed = Make_At_Feed_Core(match, match_binding);
     if (label)
         Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
 
@@ -898,7 +898,7 @@ DECLARE_NATIVE(compose)
     if (Any_Word(t))
         return COPY(t);  // makes it easier to `set compose target`
 
-    Push_Composer_Level(OUT, level_, t, Cell_Specifier(t));
+    Push_Composer_Level(OUT, level_, t, Cell_List_Binding(t));
 
     STATE = ST_COMPOSE_COMPOSING;
     return CONTINUE_SUBLEVEL(SUBLEVEL);
@@ -925,13 +925,13 @@ enum FLATTEN_LEVEL {
 static void Flatten_Core(
     Element* head,
     const Element* tail,
-    Specifier* specifier,
+    Context* binding,
     enum FLATTEN_LEVEL level
 ) {
     Element* item = head;
     for (; item != tail; ++item) {
         if (Is_Block(item) and level != FLATTEN_NOT) {
-            Specifier* derived = Derive_Specifier(specifier, item);
+            Context* derived = Derive_Binding(binding, item);
 
             const Element* sub_tail;
             Element* sub = Cell_List_At_Ensure_Mutable(&sub_tail, item);
@@ -943,7 +943,7 @@ static void Flatten_Core(
             );
         }
         else
-            Derelativize(PUSH(), item, specifier);
+            Derelativize(PUSH(), item, binding);
     }
 }
 
@@ -971,7 +971,7 @@ DECLARE_NATIVE(flatten)
     Flatten_Core(
         at,
         tail,
-        Cell_Specifier(ARG(block)),
+        Cell_List_Binding(ARG(block)),
         REF(deep) ? FLATTEN_DEEP : FLATTEN_ONCE
     );
 

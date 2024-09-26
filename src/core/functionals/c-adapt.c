@@ -98,8 +98,8 @@ Bounce Adapter_Dispatcher(Level* const L)
     Force_Level_Varlist_Managed(L);
 
     Copy_Cell(SPARE, prelude);
-    node_LINK(NextVirtual, L->varlist) = Cell_Specifier(prelude);
-    Tweak_Cell_Specifier(SPARE, L->varlist);
+    node_LINK(NextVirtual, L->varlist) = BINDING(prelude);
+    BINDING(SPARE) = L->varlist;
 
     return CONTINUE_CORE(  // Note: we won't catch throws or errors
         OUT,  // result discarded [1]
@@ -170,7 +170,7 @@ DECLARE_NATIVE(adapt)
         Array_At(details, IDX_ADAPTER_PRELUDE),
         prelude_copy
     );
-    Tweak_Cell_Specifier(rebound, Cell_Specifier(prelude));
+    BINDING(rebound) = Cell_List_Binding(prelude);
 
     Copy_Cell(Details_At(details, IDX_ADAPTER_ADAPTEE), adaptee);
 

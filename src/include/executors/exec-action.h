@@ -115,7 +115,7 @@ STATIC_ASSERT(
 // Action dispatchers don't really want to delegate control with R_DELEGATE,
 // because the action wants to appear to be on the stack.  For some it's even
 // more technically important--because the varlist must stay alive to be a
-// specifier, so you can't Drop_Action() etc.  Something like a FUNC or LAMBDA
+// binding, so you can't Drop_Action() etc.  Something like a FUNC or LAMBDA
 // cannot delegate to the body block if there is a variadic, because it will
 // look like the function isn't running.
 //
@@ -190,7 +190,7 @@ struct ActionExecutorStateStruct {
     // Compositions of functions (adaptations, specializations, hijacks, etc)
     // update the FRAME!'s payload in the L->varlist archetype to say what
     // the current "phase" is.  The reason it is updated there instead of
-    // as a frame field is because specifiers use it.  Similarly, that is
+    // as a frame field is because bindings use it.  Similarly, that is
     // where the binding is stored.
     //
     Action* original;

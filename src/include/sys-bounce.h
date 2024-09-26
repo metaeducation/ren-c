@@ -205,7 +205,7 @@ INLINE Bounce Continue_Sublevel_Helper(
     Pushed_Continuation( \
         level_->out, \
         (sub_flags) | (level_->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK), \
-        __VA_ARGS__  /* branch_specifier, branch, and "with" argument */ \
+        __VA_ARGS__  /* binding, branch, and "with" argument */ \
     ) ? BOUNCE_DELEGATE \
         : level_->out)  // no need to give callback to delegator
 

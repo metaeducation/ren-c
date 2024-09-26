@@ -217,7 +217,7 @@ DECLARE_NATIVE(bind)
 //  "Returns a view of the input bound virtually to the context"
 //
 //      return: [~null~ any-value?]
-//      context [any-context? any-list?]
+//      where [any-context? any-list?]
 //      element [<maybe> element?]  ; QUOTED? support?
 //  ]
 //
@@ -226,17 +226,17 @@ DECLARE_NATIVE(inside)
     INCLUDE_PARAMS_OF_INSIDE;
 
     Element* element = cast(Element*, ARG(element));
-    Value* context = ARG(context);
+    Value* where = ARG(where);
 
-    Specifier* specifier;
-    if (Any_Context(context))
-        specifier = Cell_Varlist(context);
+    Context* context;
+    if (Any_Context(where))
+        context = Cell_Varlist(where);
     else {
-        assert(Any_List(context));
-        specifier = BINDING(context);
+        assert(Any_List(where));
+        context = BINDING(where);
     }
 
-    Derelativize(OUT, element, specifier);
+    Derelativize(OUT, element, context);
     return OUT;
 }
 
@@ -269,7 +269,7 @@ DECLARE_NATIVE(overbind)
 
     BINDING(v) = Make_Use_Core(
         defs,
-        Cell_Specifier(v),
+        Cell_List_Binding(v),
         affected
     );
 
@@ -714,12 +714,12 @@ DECLARE_NATIVE(set_accessor)
 static Option(VarList*) Trap_Get_Any_Wordlike_Maybe_Vacant(
     Sink(Value*) out,
     const Element* word,  // sigils ignored (META-WORD! doesn't "meta-get")
-    Specifier* var_specifier  // context for `.xxx` tuples not adjusted
+    Context* context  // context for `.xxx` tuples not adjusted
 ){
     assert(Any_Wordlike(word));
 
     const Value* lookup;
-    Option(VarList*) error = Trap_Lookup_Word(&lookup, word, var_specifier);
+    Option(VarList*) error = Trap_Lookup_Word(&lookup, word, context);
     if (error)
         return error;
 
@@ -761,12 +761,10 @@ static Option(VarList*) Trap_Get_Any_Wordlike_Maybe_Vacant(
 Option(VarList*) Trap_Get_Any_Word(
     Sink(Value*) out,
     const Element* word,  // sigils ignored (META-WORD! doesn't "meta-get")
-    Specifier* var_specifier
+    Context* context
 ){
     Option(VarList*) error = Trap_Get_Any_Wordlike_Maybe_Vacant(
-        out,
-        word,
-        var_specifier
+        out, word, context
     );
     if (error)
         return error;
@@ -787,10 +785,10 @@ Option(VarList*) Trap_Get_Any_Word(
 Option(VarList*) Trap_Get_Any_Word_Maybe_Vacant(
     Sink(Value*) out,
     const Element* word,  // sigils ignored (META-WORD! doesn't "meta-get")
-    Specifier* var_specifier
+    Context* context
 ){
     assert(Any_Word(word));
-    return Trap_Get_Any_Wordlike_Maybe_Vacant(out, word, var_specifier);
+    return Trap_Get_Any_Wordlike_Maybe_Vacant(out, word, context);
 }
 
 
@@ -883,50 +881,50 @@ Option(VarList*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
 // tied in with the FRAME! for the function call, and can be used as a context
 // to do special lookups in.
 //
-static Specifier* Adjust_Specifier_For_Coupling(Specifier* specifier) {
-    for (; specifier != nullptr; specifier = NextVirtual(specifier)) {
-        VarList* ctx_frame;
-        if (Is_Stub_Varlist(specifier)) {  // ordinary FUNC specifier
-            ctx_frame = cast(VarList*, specifier);
-            if (CTX_TYPE(ctx_frame) != REB_FRAME)
+static Context* Adjust_Context_For_Coupling(Context* c) {
+    for (; c != nullptr; c = Context_Parent(c)) {
+        VarList* frame_varlist;
+        if (Is_Stub_Varlist(c)) {  // ordinary FUNC frame context
+            frame_varlist = cast(VarList*, c);
+            if (CTX_TYPE(frame_varlist) != REB_FRAME)
                 continue;
         }
-        else if (Is_Stub_Use(specifier)) {  // e.g. LAMBDA or DOES uses this
-            if (not Is_Frame(Stub_Cell(specifier)))
+        else if (Is_Stub_Use(c)) {  // e.g. LAMBDA or DOES uses this
+            if (not Is_Frame(Stub_Cell(c)))
                 continue;
-            ctx_frame = Cell_Varlist(Stub_Cell(specifier));
+            frame_varlist = Cell_Varlist(Stub_Cell(c));
         }
         else
             continue;
 
-        Level* level = Level_Of_Varlist_If_Running(ctx_frame);
+        Level* level = Level_Of_Varlist_If_Running(frame_varlist);
         if (not level)
             return Error_User(
                 ".field access only in running functions"
             );
-        VarList* context = maybe Level_Coupling(level);
-        if (not context)
+        VarList* coupling = maybe Level_Coupling(level);
+        if (not coupling)
             return Error_User(
                 ".field object used on frame with no coupling"
             );
-        return context;
+        return coupling;
     }
     fail (".field access used but no coupling found");
 }
 
 
 //
-//  Trap_Get_Tuple_Maybe_Vacant: C
+//  Trap_Get_Any_Tuple_Maybe_Vacant: C
 //
 // 1. Using a leading dot in a tuple is a cue to look up variables in the
 //    object from which a function was dispatched, so `var` and `.var` can
 //    look up differently inside a function's body.
 //
-Option(VarList*) Trap_Get_Tuple_Maybe_Vacant(
+Option(VarList*) Trap_Get_Any_Tuple_Maybe_Vacant(
     Sink(Value*) out,
     Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* tuple,
-    Specifier* tuple_specifier
+    Context* context
 ){
     assert(Any_Tuple(tuple));
 
@@ -942,7 +940,7 @@ Option(VarList*) Trap_Get_Tuple_Maybe_Vacant(
         dot_at_head = false;
 
     if (dot_at_head)  // avoid adjust if tuple has non-cache binding?
-        tuple_specifier = Adjust_Specifier_For_Coupling(tuple_specifier);
+        context = Adjust_Context_For_Coupling(context);
 
   //=//// HANDLE SIMPLE "WORDLIKE" CASE (.a or a.) ////////////////////////=//
 
@@ -954,13 +952,13 @@ Option(VarList*) Trap_Get_Tuple_Maybe_Vacant(
       case FLAVOR_SYMBOL: {
         Option(VarList*) error = Trap_Get_Any_Wordlike_Maybe_Vacant(
             out,
-            tuple,  // optimized representation, like a. or .a
-            tuple_specifier
+            tuple,  // optimized "wordlike" representation, like a. or .a
+            context
         );
         if (error)
             return error;
         if (steps_out and steps_out != GROUPS_OK) {
-            Derelativize(unwrap steps_out, tuple, tuple_specifier);
+            Derelativize(unwrap steps_out, tuple, context);
             HEART_BYTE(unwrap steps_out) = REB_THE_TUPLE;  // REB_THE_WORD ?
         }
         return nullptr; }
@@ -989,13 +987,13 @@ Option(VarList*) Trap_Get_Tuple_Maybe_Vacant(
     const Element* tail;
     const Element* head = Cell_List_At(&tail, tuple);
     const Element* at;
-    Specifier* at_specifier = Derive_Specifier(tuple_specifier, tuple);
+    Context* at_binding = Derive_Binding(context, tuple);
     for (at = head; at != tail; ++at) {
         if (Is_Group(at)) {
             if (not steps_out)
                 return Error_User("GET/GROUPS must be used to eval in GET");
 
-            if (Eval_Any_List_At_Throws(cast(Atom*, out), at, at_specifier)) {
+            if (Eval_Any_List_At_Throws(cast(Atom*, out), at, at_binding)) {
                 Drop_Data_Stack_To(base);
                 return Error_No_Catch_For_Throw(TOP_LEVEL);
             }
@@ -1009,7 +1007,7 @@ Option(VarList*) Trap_Get_Tuple_Maybe_Vacant(
                 Quotify(TOP, 1);  // signify not literal
         }
         else  // Note: must keep words at head as-is for writeback!
-            Derelativize(PUSH(), at, at_specifier);
+            Derelativize(PUSH(), at, at_binding);
     }
 
   //=//// CALL COMMON CODE TO RUN CHAIN OF PICKS //////////////////////////=//
@@ -1039,18 +1037,18 @@ Option(VarList*) Trap_Get_Tuple_Maybe_Vacant(
 
 
 //
-//  Trap_Get_Tuple: C
+//  Trap_Get_Any_Tuple: C
 //
 // Convenience wrapper for getting tuples that errors on nothing and tripwires.
 //
-Option(VarList*) Trap_Get_Tuple(
+Option(VarList*) Trap_Get_Any_Tuple(
     Sink(Value*) out,
     Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* tuple,
-    Specifier* tuple_specifier
+    Context* context
 ){
-    Option(VarList*) error = Trap_Get_Tuple_Maybe_Vacant(
-        out, steps_out, tuple, tuple_specifier
+    Option(VarList*) error = Trap_Get_Any_Tuple_Maybe_Vacant(
+        out, steps_out, tuple, context
     );
     if (error)
         return error;
@@ -1078,20 +1076,20 @@ Option(VarList*) Trap_Get_Var_Maybe_Vacant(
     Sink(Value*) out,
     Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* var,
-    Specifier* var_specifier
+    Context* context
 ){
     assert(var != cast(Cell*, out));
     assert(steps_out != out);  // Legal for SET, not for GET
 
     if (Any_Word(var)) {
         Option(VarList*) error = Trap_Get_Any_Word_Maybe_Vacant(
-            out, var, var_specifier
+            out, var, context
         );
         if (error)
             return error;
 
         if (steps_out and steps_out != GROUPS_OK) {
-            Derelativize(unwrap steps_out, var, var_specifier);
+            Derelativize(unwrap steps_out, var, context);
             HEART_BYTE(unwrap steps_out) = REB_THE_WORD;
         }
         return nullptr;
@@ -1104,7 +1102,7 @@ Option(VarList*) Trap_Get_Var_Maybe_Vacant(
         Push_GC_Guard(safe);
 
         Option(VarList*) error = Trap_Get_Path_Push_Refinements(
-            out, safe, var, var_specifier
+            out, safe, var, context
         );
         Drop_GC_Guard(safe);
 
@@ -1131,19 +1129,19 @@ Option(VarList*) Trap_Get_Var_Maybe_Vacant(
     }
 
     if (Any_Tuple(var))
-        return Trap_Get_Tuple_Maybe_Vacant(
-            out, steps_out, var, var_specifier
+        return Trap_Get_Any_Tuple_Maybe_Vacant(
+            out, steps_out, var, context
         );
 
     if (Is_The_Block(var)) {  // "steps"
         StackIndex base = TOP_INDEX;
 
-        Specifier* at_specifier = Derive_Specifier(var_specifier, var);
+        Context* at_binding = Derive_Binding(context, var);
         const Element* tail;
         const Element* head = Cell_List_At(&tail, var);
         const Element* at;
         for (at = head; at != tail; ++at)
-            Derelativize(PUSH(), at, at_specifier);
+            Derelativize(PUSH(), at, at_binding);
 
         Option(VarList*) error = Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
             out, base
@@ -1172,10 +1170,10 @@ Option(VarList*) Trap_Get_Var(
     Sink(Value*) out,
     Option(Value*) steps_out,  // if nullptr, then GROUP!s not legal
     const Element* var,
-    Specifier* var_specifier
+    Context* context
 ){
     Option(VarList*) error = Trap_Get_Var_Maybe_Vacant(
-        out, steps_out, var, var_specifier
+        out, steps_out, var, context
     );
     if (error)
         return error;
@@ -1197,12 +1195,12 @@ Option(VarList*) Trap_Get_Var(
 Value* Get_Var_May_Fail(
     Sink(Value*) out,  // variables never store unstable Atom* values
     const Element* var,
-    Specifier* var_specifier
+    Context* context
 ){
     Value* steps_out = nullptr;  // signal groups not allowed to run
 
     Option(VarList*) error = Trap_Get_Var(  // vacant will give error
-        out, steps_out, var, var_specifier
+        out, steps_out, var, context
     );
     if (error)
         fail (unwrap error);
@@ -1222,12 +1220,12 @@ Option(VarList*) Trap_Get_Path_Push_Refinements(
     Sink(Value*) out,
     Sink(Value*) safe,
     const Element* path,
-    Specifier* path_specifier
+    Context* context
 ){
     UNUSED(safe);
 
     if (Not_Cell_Flag(path, SEQUENCE_HAS_NODE)) {  // byte compressed, inert
-        Derelativize(out, path, path_specifier);  // inert
+        Derelativize(out, path, context);  // inert
         return nullptr;
     }
 
@@ -1237,7 +1235,7 @@ Option(VarList*) Trap_Get_Path_Push_Refinements(
     }
     else switch (Stub_Flavor(c_cast(Flex*, node1))) {
       case FLAVOR_SYMBOL : {  // `/a` or `a/`
-        Option(VarList*) error = Trap_Get_Any_Word(out, path, path_specifier);
+        Option(VarList*) error = Trap_Get_Any_Word(out, path, context);
         if (error)
             return error;
 
@@ -1271,7 +1269,7 @@ Option(VarList*) Trap_Get_Path_Push_Refinements(
         assert(not Is_Blank(head));  // two blanks would be `/` as WORD!
     }
     else if (Any_Inert(head)) {
-        Derelativize(out, path, path_specifier);
+        Derelativize(out, path, context);
         return nullptr;
     }
 
@@ -1280,15 +1278,15 @@ Option(VarList*) Trap_Get_Path_Push_Refinements(
         // Note: Historical Rebol did not allow GROUP! at the head of path.
         // We can thus restrict head-of-path evaluations to ACTION!.
         //
-        Specifier* derived = Derive_Specifier(path_specifier, path);
+        Context* derived = Derive_Binding(context, path);
         if (Eval_Value_Throws(out, head, derived))
             return Error_No_Catch_For_Throw(TOP_LEVEL);
     }
     else if (Is_Tuple(head)) {
-        Specifier* derived = Derive_Specifier(path_specifier, path);
+        Context* derived = Derive_Binding(context, path);
 
         DECLARE_VALUE (steps);
-        Option(VarList*) error = Trap_Get_Tuple(  // vacant is error
+        Option(VarList*) error = Trap_Get_Any_Tuple(  // vacant is error
             out,
             steps,
             head,
@@ -1298,7 +1296,7 @@ Option(VarList*) Trap_Get_Path_Push_Refinements(
             fail (unwrap error);  // must be abrupt
     }
     else if (Is_Word(head)) {
-        Specifier* derived = Derive_Specifier(path_specifier, path);
+        Context* derived = Derive_Binding(context, path);
         Option(VarList*) error = Trap_Get_Any_Word(out, head, derived);
         if (error)
             fail (unwrap error);  // must be abrupt
@@ -1353,10 +1351,7 @@ Option(VarList*) Trap_Get_Path_Push_Refinements(
 
         DECLARE_ATOM (temp);
         if (Is_Group(at)) {
-            Specifier* derived = Derive_Specifier(
-                path_specifier,
-                at
-            );
+            Context* derived = Derive_Binding(context, at);
             if (Eval_Value_Throws(temp, c_cast(Element*, at), derived))
                 return Error_No_Catch_For_Throw(TOP_LEVEL);
 
@@ -1515,7 +1510,7 @@ DECLARE_NATIVE(get)
 //    `out` is the level's spare
 //    `steps_out` is also level spare
 //    `target` is the currently processed value (v)
-//    `target_specifier` is the feed's specifier (v_specifier)
+//    `context` is where var is to be bound (if not bound already)
 //    `setval` is the value held in the output (L->out)
 //
 // It is legal to have `target == out`.  It means the target may be overwritten
@@ -1525,7 +1520,7 @@ bool Set_Var_Core_Updater_Throws(
     Sink(Value*) out,  // GC-safe cell to write steps to, or put thrown value
     Option(Value*) steps_out,  // no GROUP!s if nulled
     const Element* var,
-    Specifier* var_specifier,
+    Context* context,
     const Value* setval,  // e.g. L->out (in the evaluator, right hand side)
     const Value* updater
 ){
@@ -1547,7 +1542,7 @@ bool Set_Var_Core_Updater_Throws(
             // review that case.)
             //
             Copy_Cell(
-                Sink_Word_May_Fail(var, var_specifier),
+                Sink_Word_May_Fail(var, context),
                 setval
             );
         }
@@ -1556,7 +1551,7 @@ bool Set_Var_Core_Updater_Throws(
             // Things are in roughly the right place, but very shaky.  Revisit
             // as BINDING OF is reviewed in terms of answers for LET.
             //
-            Derelativize(temp, var, var_specifier);
+            Derelativize(temp, var, context);
             QUOTE_BYTE(temp) = ONEQUOTE_3;
             Push_GC_Guard(temp);
             if (rebRunThrows(
@@ -1571,7 +1566,7 @@ bool Set_Var_Core_Updater_Throws(
 
         if (steps_out and steps_out != GROUPS_OK) {
             if (steps_out != var)  // could be true if GROUP eval
-                Derelativize(unwrap steps_out, var, var_specifier);
+                Derelativize(unwrap steps_out, var, context);
 
             // If the variable is a compressed path form like `a.` then turn
             // it into a plain word.
@@ -1618,13 +1613,13 @@ bool Set_Var_Core_Updater_Throws(
         const Element* tail;
         const Element* head = Cell_List_At(&tail, var);
         const Element* at;
-        Specifier* at_specifier = Derive_Specifier(var_specifier, var);
+        Context* at_binding = Derive_Binding(context, var);
         for (at = head; at != tail; ++at) {
             if (Is_Group(at)) {
                 if (not steps_out)
                     fail (Error_Bad_Get_Group_Raw(var));
 
-                if (Eval_Any_List_At_Throws(temp, at, at_specifier)) {
+                if (Eval_Any_List_At_Throws(temp, at, at_binding)) {
                     Drop_Data_Stack_To(base);
                     return true;
                 }
@@ -1637,16 +1632,16 @@ bool Set_Var_Core_Updater_Throws(
                     Quotify(TOP, 1);  // signal it was not literally the head
             }
             else  // Note: must keep WORD!s at head as-is for writeback
-                Derelativize(PUSH(), at, at_specifier);
+                Derelativize(PUSH(), at, at_binding);
         }
     }
     else if (Is_The_Block(var)) {
         const Element* tail;
         const Element* head = Cell_List_At(&tail, var);
         const Element* at;
-        Specifier* at_specifier = Derive_Specifier(var_specifier, var);
+        Context* at_binding = Derive_Binding(context, var);
         for (at = head; at != tail; ++at)
-            Derelativize(PUSH(), at, at_specifier);
+            Derelativize(PUSH(), at, at_binding);
     }
     else
         fail (var);
@@ -1767,14 +1762,14 @@ bool Set_Var_Core_Throws(
     Sink(Value*) out,  // GC-safe cell to write steps to
     Option(Value*) steps_out,  // no GROUP!s if nulled
     const Element* var,
-    Specifier* var_specifier,
+    Context* context,
     const Value* setval  // e.g. L->out (in the evaluator, right hand side)
 ){
     return Set_Var_Core_Updater_Throws(
         out,
         steps_out,
         var,
-        var_specifier,
+        context,
         setval,
         Lib(POKE_P)
     );
@@ -1789,13 +1784,13 @@ bool Set_Var_Core_Throws(
 //
 void Set_Var_May_Fail(
     const Element* var,
-    Specifier* var_specifier,
+    Context* context,
     const Value* setval
 ){
     Option(Value*) steps_out = nullptr;
 
     DECLARE_ATOM (dummy);
-    if (Set_Var_Core_Throws(dummy, steps_out, var, var_specifier, setval))
+    if (Set_Var_Core_Throws(dummy, steps_out, var, context, setval))
         fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 }
 
@@ -2327,11 +2322,11 @@ DECLARE_NATIVE(as)
             if (Is_Node_A_Cell(node1)) {  // reusing node complicated [1]
                 const Element* first = c_cast(Element*, node1);
                 const Element* second = c_cast(Element*, Pairing_Second(first));
-                Specifier *specifier = Cell_Specifier(v);
+                Context *binding = Cell_List_Binding(v);
                 Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
                 Set_Flex_Len(a, 2);
-                Derelativize(Array_At(a, 0), first, specifier);
-                Derelativize(Array_At(a, 1), second, specifier);
+                Derelativize(Array_At(a, 0), first, binding);
+                Derelativize(Array_At(a, 1), second, binding);
                 Freeze_Array_Shallow(a);
                 Init_Block(v, a);
             }
@@ -2379,8 +2374,9 @@ DECLARE_NATIVE(as)
             if (not Is_Array_Frozen_Shallow(Cell_Array(v)))
                 Freeze_Array_Shallow(Cell_Array_Ensure_Mutable(v));
 
+            DECLARE_ELEMENT (temp);  // need to rebind
             Option(VarList*) error = Trap_Init_Any_Sequence_At_Listlike(
-                OUT,
+                temp,
                 new_heart,
                 Cell_Array(v),
                 VAL_INDEX(v)
@@ -2388,7 +2384,9 @@ DECLARE_NATIVE(as)
             if (error)
                 fail (unwrap error);
 
-            BINDING(OUT) = BINDING(v);
+            /* BINDING(temp) = BINDING(v); */  // may be unfit after compress
+            Derelativize(OUT, temp, BINDING(v));  // try this instead (?)
+
             return OUT;
         }
 

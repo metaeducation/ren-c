@@ -113,14 +113,14 @@
 
 #define P_AT_END            Is_Level_At_End(level_)
 #define P_RULE              At_Level(level_)  // rvalue
-#define P_RULE_SPECIFIER    Level_Specifier(level_)
+#define P_RULE_BINDING      Level_Binding(level_)
 
 #define P_HEART             Cell_Heart_Ensure_Noquote(ARG(input))
 #define P_INPUT             Cell_Flex(ARG(input))
 #define P_INPUT_BINARY      Cell_Binary(ARG(input))
 #define P_INPUT_STRING      Cell_String(ARG(input))
 #define P_INPUT_ARRAY       Cell_Array(ARG(input))
-#define P_INPUT_SPECIFIER   Cell_Specifier(ARG(input))
+#define P_INPUT_SPECIFIER   Cell_List_Binding(ARG(input))
 #define P_INPUT_IDX         VAL_INDEX_UNBOUNDED(ARG(input))
 #define P_INPUT_LEN         Cell_Series_Len_Head(ARG(input))
 
@@ -132,16 +132,16 @@
 
 // !!! The way that PARSE works, it will sometimes run the thing it finds
 // in the list...but if it's a WORD! or PATH! it will look it up and run
-// the result.  When it's in the list, the specifier for that list needs
-// to be applied to it.  But when the value has been fetched, that specifier
+// the result.  When it's in the list, the binding for that list needs
+// to be applied to it.  But when the value has been fetched, that binding
 // shouldn't be used again...because virtual binding isn't supposed to
 // carry through references.  The hack to get virtual binding running is to
-// always put the fetched rule in the same place...and then the specifier
+// always put the fetched rule in the same place...and then the binding
 // is only used when the rule *isn't* in that cell.
 //
 #define P_SAVE              ARG(save)
-#define rule_specifier() \
-    (rule == ARG(save) ? SPECIFIED : P_RULE_SPECIFIER)
+#define rule_binding() \
+    (rule == ARG(save) ? SPECIFIED : P_RULE_BINDING)
 
 
 #define FETCH_NEXT_RULE(L) \
@@ -233,7 +233,7 @@ static bool Subparse_Throws(
     bool *interrupted_out,
     Sink(Value*) out,
     const Cell* input,
-    Specifier* input_specifier,
+    Context* input_binding,
     Level* const L,
     Flags flags
 ){
@@ -260,7 +260,7 @@ static bool Subparse_Throws(
     Derelativize(
         Erase_Cell(ARG(input)),
         c_cast(Element*, input),
-        input_specifier
+        input_binding
     );
 
     assert((flags & PF_STATE_MASK) == 0);  // no "parse state" flags allowed
@@ -374,7 +374,7 @@ static void Print_Parse_Index(Level* level_) {
     }
     else {
         DECLARE_ATOM (rule);
-        Derelativize(rule, P_RULE, P_RULE_SPECIFIER);
+        Derelativize(rule, P_RULE, P_RULE_BINDING);
 
         if (P_POS >= cast(REBIDX, P_INPUT_LEN))
             rebElide("print [mold", rule, "{** END **}]");
@@ -399,16 +399,16 @@ static void Print_Parse_Index(Level* level_) {
 static const Element* Get_Parse_Value(
     Sink(Value*) sink,  // storage for fetched values; must be GC protected
     const Element* rule,
-    Specifier* specifier
+    Context* context
 ){
     if (Is_Word(rule)) {
         if (VAL_CMD(rule))  // includes Is_Bar()...also a "command"
             return rule;
 
-        Get_Var_May_Fail(sink, rule, specifier);
+        Get_Var_May_Fail(sink, rule, context);
     }
     else if (Is_Tuple(rule)) {
-        Get_Var_May_Fail(sink, rule, specifier);
+        Get_Var_May_Fail(sink, rule, context);
     }
     else
         return rule;
@@ -459,9 +459,9 @@ bool Process_Group_For_Parse_Throws(
     assert(out != group);
 
     assert(Is_Group(group) or Is_Get_Group(group));
-    Specifier* derived = (group == P_SAVE)
+    Context* derived = (group == P_SAVE)
         ? SPECIFIED
-        : Derive_Specifier(P_RULE_SPECIFIER, group);
+        : Derive_Binding(P_RULE_BINDING, group);
 
   blockscope {
     Atom* atom_out = out;
@@ -592,7 +592,7 @@ static REBIXO Parse_One_Rule(
 
         Level* sub = Make_Level_At_Core(
             &Action_Executor,  // !!! Parser_Executor?
-            rule, rule_specifier(),
+            rule, rule_binding(),
             LEVEL_MASK_NONE
         );
 
@@ -634,7 +634,7 @@ static REBIXO Parse_One_Rule(
             break;  // fall through to direct match
 
           case REB_THE_WORD: {
-            Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER);
+            Get_Var_May_Fail(SPARE, rule, P_RULE_BINDING);
             rule = Ensure_Element(SPARE);
             break; }  // all through to direct match
 
@@ -642,7 +642,7 @@ static REBIXO Parse_One_Rule(
           case REB_TYPE_BLOCK:
           case REB_TYPE_GROUP:
           case REB_PARAMETER: {
-            if (Typecheck_Atom_Core(rule, P_RULE_SPECIFIER, item))
+            if (Typecheck_Atom_Core(rule, P_RULE_BINDING, item))
                 return pos + 1;  // type was in typeset
             return END_FLAG; }
 
@@ -667,7 +667,7 @@ static REBIXO Parse_One_Rule(
         assert(Any_String_Kind(P_HEART) or P_HEART == REB_BINARY);
 
         if (Is_The_Word(rule)) {
-            Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER);
+            Get_Var_May_Fail(SPARE, rule, P_RULE_BINDING);
             if (Is_Antiform(SPARE))
                 fail (Error_Bad_Antiform(SPARE));
             rule = cast(Element*, SPARE);
@@ -808,7 +808,7 @@ static REBIXO To_Thru_Block_Rule(
                         fail (Error_Parse3_Rule());
                 }
                 else {
-                    Get_Var_May_Fail(cell, rule, P_RULE_SPECIFIER);
+                    Get_Var_May_Fail(cell, rule, P_RULE_BINDING);
                     rule = cast(Element*, cell);
                 }
             }
@@ -826,7 +826,7 @@ static REBIXO To_Thru_Block_Rule(
                     fail ("TAG! combinator must be <here> or <end> ATM");
             }
             else if (Is_Tuple(rule))
-                rule = Get_Parse_Value(cell, rule, P_RULE_SPECIFIER);
+                rule = Get_Parse_Value(cell, rule, P_RULE_BINDING);
             else if (Is_Path(rule))
                 fail ("Use TUPLE! a.b.c instead of PATH! a/b/c");
 
@@ -1045,11 +1045,11 @@ static REBIXO To_Thru_Non_Block_Rule(
         Flags find_flags = (P_FLAGS & AM_FIND_CASE);
         DECLARE_VALUE (temp);
         if (Is_Quoted(rule)) {  // make `'[foo bar]` match `[foo bar]`
-            Derelativize(temp, rule, P_RULE_SPECIFIER);
+            Derelativize(temp, rule, P_RULE_BINDING);
             Unquotify(temp, 1);
         }
         else if (Is_The_Word(rule)) {
-            Get_Var_May_Fail(temp, rule, P_RULE_SPECIFIER);
+            Get_Var_May_Fail(temp, rule, P_RULE_BINDING);
         }
         else if (Is_Type_Word(rule) or Is_Type_Block(rule)) {
             Init_Matcher(temp, rule);
@@ -1080,7 +1080,7 @@ static REBIXO To_Thru_Non_Block_Rule(
     }
     else {
         if (Is_The_Word(rule)) {
-            Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER);
+            Get_Var_May_Fail(SPARE, rule, P_RULE_BINDING);
             rule = Ensure_Element(SPARE);
         }
     }
@@ -1113,7 +1113,7 @@ static REBIXO To_Thru_Non_Block_Rule(
 static void Handle_Mark_Rule(
     Level* level_,
     const Element* rule,
-    Specifier* specifier
+    Context* context
 ){
     USE_PARAMS_OF_SUBPARSE;
 
@@ -1126,7 +1126,7 @@ static void Handle_Mark_Rule(
 
     Kind k = VAL_TYPE(rule);
     if (k == REB_WORD or k == REB_SET_WORD) {
-        Copy_Cell(Sink_Word_May_Fail(rule, specifier), ARG(position));
+        Copy_Cell(Sink_Word_May_Fail(rule, context), ARG(position));
     }
     else if (
         k == REB_PATH or k == REB_TUPLE or k == REB_SET_TUPLE
@@ -1135,7 +1135,7 @@ static void Handle_Mark_Rule(
         // in SPARE?)
         //
         DECLARE_ATOM (temp);
-        Quotify(Derelativize(OUT, rule, specifier), 1);
+        Quotify(Derelativize(OUT, rule, context), 1);
         if (rebRunThrows(
             cast(Value*, temp),  // <-- output cell
             Canon(SET), OUT, ARG(position)
@@ -1154,13 +1154,13 @@ static void Handle_Mark_Rule(
 static void Handle_Seek_Rule_Dont_Update_Begin(
     Level* level_,
     const Element* rule,
-    Specifier* specifier
+    Context* context
 ){
     USE_PARAMS_OF_SUBPARSE;
 
     Kind k = VAL_TYPE(rule);
     if (k == REB_WORD or k == REB_GET_WORD or k == REB_TUPLE) {
-        Get_Var_May_Fail(SPARE, rule, specifier);
+        Get_Var_May_Fail(SPARE, rule, context);
         if (Is_Antiform(SPARE))
             fail (Error_Bad_Antiform(SPARE));
         rule = cast(Element*, SPARE);
@@ -1181,7 +1181,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
     }
     else {  // #1263
         DECLARE_ATOM (specific);
-        Derelativize(specific, rule, P_RULE_SPECIFIER);
+        Derelativize(specific, rule, P_RULE_BINDING);
         fail (Error_Parse3_Series_Raw(specific));
     }
 
@@ -1201,8 +1201,8 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
 // meaning to seeking a parse in mid rule or not.  So only reset the begin
 // position if the seek appears to be a "separate rule" in its own right.
 //
-#define HANDLE_SEEK_RULE_UPDATE_BEGIN(f,rule,specifier) \
-    Handle_Seek_Rule_Dont_Update_Begin((L), (rule), (specifier)); \
+#define HANDLE_SEEK_RULE_UPDATE_BEGIN(f,rule,context) \
+    Handle_Seek_Rule_Dont_Update_Begin((L), (rule), (context)); \
     if (not (P_FLAGS & PF_STATE_MASK)) \
         begin = P_POS;
 
@@ -1475,10 +1475,10 @@ DECLARE_NATIVE(subparse)
                 FETCH_NEXT_RULE(L);
                 assert(Is_Fresh(OUT));
                 if (Is_Group(P_RULE)) {
-                    if (Eval_Value_Throws(OUT, P_RULE, P_RULE_SPECIFIER))
+                    if (Eval_Value_Throws(OUT, P_RULE, P_RULE_BINDING))
                         goto return_thrown;
                 } else {
-                    Derelativize(OUT, P_RULE, P_RULE_SPECIFIER);
+                    Derelativize(OUT, P_RULE, P_RULE_BINDING);
                 }
 
                 if (Is_Integer(OUT)) {
@@ -1539,12 +1539,12 @@ DECLARE_NATIVE(subparse)
                     fail (Error_Parse3_Command(L));
 
                 // We need to add a new binding before we derelativize w.r.t.
-                // the in-effect specifier.
+                // the in-effect binding.
                 //
                 if (cmd == SYM_LET) {
-                    BINDING(FEED_SINGLE(L->feed)) = Make_Let_Patch(
+                    BINDING(FEED_SINGLE(L->feed)) = Make_Let_Variable(
                         Cell_Word_Symbol(P_RULE),
-                        P_RULE_SPECIFIER
+                        P_RULE_BINDING
                     );
                     if (Is_Word(P_RULE)) {  // no further action
                         FETCH_NEXT_RULE(L);
@@ -1611,7 +1611,7 @@ DECLARE_NATIVE(subparse)
                 if (Eval_Any_List_At_Throws(  // note: might GC
                     condition,
                     P_RULE,
-                    P_RULE_SPECIFIER
+                    P_RULE_BINDING
                 )) {
                     goto return_thrown;
                 }
@@ -1639,7 +1639,7 @@ DECLARE_NATIVE(subparse)
                         fail ("PARSE3 ACCEPT TAG! only works with <here>");
                 }
                 else if (Is_Group(P_RULE)) {
-                    if (Eval_Value_Throws(thrown_arg, P_RULE, P_RULE_SPECIFIER))
+                    if (Eval_Value_Throws(thrown_arg, P_RULE, P_RULE_BINDING))
                         goto return_thrown;
                 }
                 else
@@ -1686,7 +1686,7 @@ DECLARE_NATIVE(subparse)
               case SYM_SEEK: {
                 FETCH_NEXT_RULE(L);  // skip the SEEK word
                 // !!! what about `seek ^(first x)` ?
-                HANDLE_SEEK_RULE_UPDATE_BEGIN(L, P_RULE, P_RULE_SPECIFIER);
+                HANDLE_SEEK_RULE_UPDATE_BEGIN(L, P_RULE, P_RULE_BINDING);
                 FETCH_NEXT_RULE(L);  // e.g. skip the `x` in `seek x`
                 goto pre_rule; }
 
@@ -1725,13 +1725,13 @@ DECLARE_NATIVE(subparse)
                 assert(Is_Word(rule));  // word - some other variable
 
                 if (rule != P_SAVE) {
-                    rule = Get_Parse_Value(P_SAVE, rule, P_RULE_SPECIFIER);
+                    rule = Get_Parse_Value(P_SAVE, rule, P_RULE_BINDING);
                 }
             }
         }
     }
     else if (Is_Tuple(rule)) {
-        Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER);
+        Get_Var_May_Fail(SPARE, rule, P_RULE_BINDING);
         if (Is_Antiform(SPARE))
             fail (Error_Bad_Antiform(SPARE));
         rule = cast(Element*, Copy_Cell(P_SAVE, stable_SPARE));
@@ -1756,7 +1756,7 @@ DECLARE_NATIVE(subparse)
             else
                 fail ("SET-WORD! works with <HERE> tag in PARSE3");
 
-            Handle_Mark_Rule(L, set_or_copy_word, P_RULE_SPECIFIER);
+            Handle_Mark_Rule(L, set_or_copy_word, P_RULE_BINDING);
             goto pre_rule;
         }
 
@@ -1856,7 +1856,7 @@ DECLARE_NATIVE(subparse)
 
                 if (!subrule) {  // capture only on iteration #1
                     subrule = Get_Parse_Value(
-                        P_SAVE, P_RULE, P_RULE_SPECIFIER
+                        P_SAVE, P_RULE, P_RULE_BINDING
                     );
                     FETCH_NEXT_RULE(L);
                 }
@@ -1904,7 +1904,7 @@ DECLARE_NATIVE(subparse)
 
                 if (!subrule) {
                     subrule = Get_Parse_Value(
-                        P_SAVE, P_RULE, P_RULE_SPECIFIER
+                        P_SAVE, P_RULE, P_RULE_BINDING
                     );
                     FETCH_NEXT_RULE(L);
                 }
@@ -1944,7 +1944,7 @@ DECLARE_NATIVE(subparse)
 
                 Level* sub = Make_Level_At_Core(
                     &Action_Executor,  // !!! Parser_Executor?
-                    subrule, P_RULE_SPECIFIER,
+                    subrule, P_RULE_BINDING,
                     LEVEL_MASK_NONE
                 );
 
@@ -1986,7 +1986,7 @@ DECLARE_NATIVE(subparse)
 
             Level* sub = Make_Level_At_Core(
                 &Action_Executor,  // !!! Parser_Executor?
-                rule, rule_specifier(),
+                rule, rule_binding(),
                 LEVEL_MASK_NONE
             );
 
@@ -2111,7 +2111,7 @@ DECLARE_NATIVE(subparse)
             if (P_FLAGS & PF_ACROSS) {
                 Value* sink = Sink_Word_May_Fail(
                     set_or_copy_word,
-                    P_RULE_SPECIFIER
+                    P_RULE_BINDING
                 );
                 if (Any_List_Kind(P_HEART)) {
                     //
@@ -2176,7 +2176,7 @@ DECLARE_NATIVE(subparse)
                         Init_Nulled(
                             Sink_Word_May_Fail(
                                 set_or_copy_word,
-                                P_RULE_SPECIFIER
+                                P_RULE_BINDING
                             )
                         );
                 }
@@ -2184,7 +2184,7 @@ DECLARE_NATIVE(subparse)
                     assert(count == 1);  // check for > 1 would have errored
 
                     Copy_Cell(
-                        Sink_Word_May_Fail(set_or_copy_word, P_RULE_SPECIFIER),
+                        Sink_Word_May_Fail(set_or_copy_word, P_RULE_BINDING),
                         Array_At(P_INPUT_ARRAY, begin)
                     );
                 }
@@ -2192,7 +2192,7 @@ DECLARE_NATIVE(subparse)
                     assert(count == 1);  // check for > 1 would have errored
 
                     Value* var = Sink_Word_May_Fail(
-                        set_or_copy_word, P_RULE_SPECIFIER
+                        set_or_copy_word, P_RULE_BINDING
                     );
 
                     if (P_HEART == REB_BINARY)
@@ -2218,15 +2218,15 @@ DECLARE_NATIVE(subparse)
                     fail (Error_Parse3_End());
 
                 // new value...comment said "CHECK FOR QUOTE!!"
-                rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
+                rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_BINDING);
                 FETCH_NEXT_RULE(L);
 
                 if (not Is_Group(rule))
                     fail ("Splicing (...) only in PARSE3's CHANGE/INSERT");
 
                 DECLARE_VALUE (evaluated);
-                Specifier* derived = Derive_Specifier(
-                    P_RULE_SPECIFIER,
+                Context* derived = Derive_Binding(
+                    P_RULE_BINDING,
                     rule
                 );
 

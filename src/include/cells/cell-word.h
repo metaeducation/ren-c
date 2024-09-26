@@ -99,7 +99,7 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
     Sink(Element*) out,
     Heart heart,
     const Symbol* symbol,
-    Stub* binding,  // spelling determined by linked-to thing
+    Context* binding,  // spelling determined by linked-to thing
     REBLEN index  // must be INDEX_PATCHED if LET patch
 ){
     assert(Any_Word_Kind(heart));

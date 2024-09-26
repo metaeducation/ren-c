@@ -203,13 +203,13 @@ Bounce MAKE_Decimal(
         Derelativize_Sequence_At(
             numerator,
             c_cast(Element*, arg),
-            Cell_Sequence_Specifier(arg),
+            Cell_Sequence_Binding(arg),
             0
         );
         Derelativize_Sequence_At(
             denominator,
             c_cast(Element*, arg),
-            Cell_Sequence_Specifier(arg),
+            Cell_Sequence_Binding(arg),
             1
         );
         Push_GC_Guard(numerator);  // might be GROUP!, so (1.2)/4

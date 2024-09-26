@@ -219,7 +219,7 @@ void Push_Keys_And_Parameters_May_Fail(
             if (Cell_Parameter_Spec(param))  // `func [x [integer!] [blank!]]`
                 fail (Error_Bad_Func_Def_Raw(item));  // too many spec blocks
 
-            Specifier* derived = Derive_Specifier(Cell_Specifier(spec), item);
+            Context* derived = Derive_Binding(Cell_List_Binding(spec), item);
             Set_Parameter_Spec(param, item, derived);
 
             continue;
@@ -865,7 +865,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value*) out, const Value* action)
             Reset_Cell_Header_Untracked(TRACK(slot), CELL_MASK_GROUP);
             Tweak_Cell_Node1(slot, Cell_Array(body));
             VAL_INDEX_RAW(slot) = 0;
-            Tweak_Cell_Specifier(slot, a);  // relative binding
+            BINDING(slot) = a;  // relative binding
 
             maybe_fake_body = fake;
         }

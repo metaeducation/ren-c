@@ -440,11 +440,11 @@ INLINE Cell* Freshen_Cell_Untracked_Inline(Cell* c) {
 #endif
 
 #define Cell_Binding(v) \
-    x_cast(Stub*, (v)->extra.Any.node)
+    x_cast(Context*, (v)->extra.Any.node)
 
 #if (! DEBUG || ! CPLUSPLUS_11)
     #define BINDING(v) \
-        *x_cast(Stub**, m_cast(Node**, &(v)->extra.Any.node))
+        *x_cast(Context**, m_cast(Node**, &(v)->extra.Any.node))
 #else
     struct BindingHolder {
         Cell* & ref;
@@ -470,11 +470,11 @@ INLINE Cell* Freshen_Cell_Untracked_Inline(Cell* c) {
             Assert_Cell_Binding_Valid(ref);
         }
 
-        Stub* operator-> () const
-          { return x_cast(Stub*, ref->extra.Any.node); }
+        Context* operator-> () const
+          { return x_cast(Context*, ref->extra.Any.node); }
 
-        operator Stub* () const
-          { return x_cast(Stub*, ref->extra.Any.node); }
+        operator Context* () const
+          { return x_cast(Context*, ref->extra.Any.node); }
     };
 
     #define BINDING(v) \
@@ -483,16 +483,17 @@ INLINE Cell* Freshen_Cell_Untracked_Inline(Cell* c) {
     template<typename T>
     struct cast_helper<BindingHolder,T> {
         static constexpr T convert(BindingHolder const& holder) {
-            return cast(T, x_cast(Stub*, holder.ref->extra.Any.node));
+            return cast(T, x_cast(Context*, holder.ref->extra.Any.node));
         }
     };
 
-    INLINE void Corrupt_Pointer_If_Debug(BindingHolder const& bh)
-      { bh.ref->extra.Any.node = p_cast(Stub*, cast(uintptr_t, 0xDECAFBAD)); }
+    INLINE void Corrupt_Pointer_If_Debug(BindingHolder const& bh) {
+        bh.ref->extra.Any.node = p_cast(Context*, cast(uintptr_t, 0xDECAFBAD));
+    }
 #endif
 
 #define SPECIFIED \
-    x_cast(Specifier*, nullptr)  // x_cast (don't want DEBUG_CHECK_CASTS)
+    x_cast(Context*, nullptr)  // x_cast (don't want DEBUG_CHECK_CASTS)
 
 #define UNBOUND nullptr  // making this a stub did not improve performance [1]
 #define UNSPECIFIED nullptr

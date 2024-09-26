@@ -475,7 +475,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
             Init_Quasi_Word(PUSH(), Canon(OPTIMIZED_OUT));
 
         do {
-            Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
+            Derelativize(PUSH(), At_Feed(feed), FEED_BINDING(feed));
             assert(Not_Antiform(TOP));
             Fetch_Next_In_Feed(feed);
         } while (Not_Feed_At_End(feed));
@@ -825,7 +825,7 @@ static void Mark_Level_Stack_Deep(void)
         // using va_copy, but probably not worth it).  All values in feed
         // should be covered in terms of GC protection.
 
-        Specifier* L_specifier = Level_Specifier(L);
+        Context* L_binding = Level_Binding(L);
 
         // If ->gotten is set, it usually shouldn't need markeding because
         // it's fetched via L->value and so would be kept alive by it.  Any
@@ -833,13 +833,13 @@ static void Mark_Level_Stack_Deep(void)
         // would fetch differently should have meant clearing ->gotten.
         //
         if (L->feed->gotten)
-            assert(L->feed->gotten == Lookup_Word(At_Level(L), L_specifier));
+            assert(L->feed->gotten == Lookup_Word(At_Level(L), L_binding));
 
         if (
-            L_specifier != SPECIFIED
-            and (L_specifier->leader.bits & NODE_FLAG_MANAGED)
+            L_binding != SPECIFIED
+            and (L_binding->leader.bits & NODE_FLAG_MANAGED)
         ){
-            // Expand L_specifier.
+            // Expand L_binding.
             //
             // !!! Should this instead check that it isn't inaccessible?
             //

@@ -159,22 +159,22 @@ Array* Expanded_Combinator_Spec(const Value* original)
 
     const Element* tail;
     const Element* item = Cell_List_At(&tail, original);
-    Specifier* specifier = Cell_Specifier(original);
+    Context* binding = Cell_List_Binding(original);
 
     if (Is_Text(item)) {
-        Derelativize(PUSH(), item, specifier);  // {combinator description}
+        Derelativize(PUSH(), item, binding);  // {combinator description}
         if (item == tail) fail("too few combinator args");
         ++item;
     }
-    Derelativize(PUSH(), item, specifier);  // return:
+    Derelativize(PUSH(), item, binding);  // return:
     if (item == tail) fail("too few combinator args");
     ++item;
     if (Is_Text(item)) {
-        Derelativize(PUSH(), item, specifier);  // "return description"
+        Derelativize(PUSH(), item, binding);  // "return description"
         if (item == tail) fail("too few combinator args");
     }
     ++item;
-    Derelativize(PUSH(), item, specifier);  // [return type block]
+    Derelativize(PUSH(), item, binding);  // [return type block]
     if (item == tail) fail("too few combinator args");
     ++item;
 
@@ -190,7 +190,7 @@ Array* Expanded_Combinator_Spec(const Value* original)
     Sync_Feed_At_Cell_Or_End_May_Fail(feed);
 
     while (Not_Feed_At_End(feed)) {
-        Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
+        Derelativize(PUSH(), At_Feed(feed), FEED_BINDING(feed));
         Fetch_Next_In_Feed(feed);
     }
 
@@ -199,7 +199,7 @@ Array* Expanded_Combinator_Spec(const Value* original)
     // Note: We pushed unbound code, won't find FRAME! etc.
 
     for (; item != tail; ++item)
-        Derelativize(PUSH(), item, specifier);  // everything else
+        Derelativize(PUSH(), item, binding);  // everything else
 
     // The scanned material is not bound.  The natives were bound into the
     // Lib_Context initially.  Hack around the issue by repeating that binding
@@ -209,7 +209,7 @@ Array* Expanded_Combinator_Spec(const Value* original)
     Bind_Values_Deep(
         Array_Head(expanded),
         Array_Tail(expanded),
-        Lib_Context_Value
+        Lib_Module
     );
 
     return expanded;
@@ -416,7 +416,7 @@ DECLARE_NATIVE(text_x_combinator)
         ++VAL_INDEX_UNBOUNDED(input);
         Copy_Cell(ARG(remainder), input);
 
-        Derelativize(OUT, at, Cell_Specifier(input));
+        Derelativize(OUT, at, Cell_List_Binding(input));
         return OUT;  // Note: returns item in array, not rule, when an array!
     }
 
@@ -682,7 +682,7 @@ static bool Combinator_Param_Hook(
         }
         else {
             if (Cell_ParamClass(param) == PARAMCLASS_THE)
-                Derelativize(var, item, Cell_Specifier(ARG(rules)));
+                Derelativize(var, item, Cell_List_Binding(ARG(rules)));
             else {
                 assert(Cell_ParamClass(param) == PARAMCLASS_JUST);
                 Copy_Cell(var, item);

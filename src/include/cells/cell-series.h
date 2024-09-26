@@ -69,33 +69,6 @@ INLINE REBLEN VAL_INDEX(const Cell* v) {
 }
 
 
-INLINE void Tweak_Cell_Specifier(Cell* v, Stub* binding) {
-    //
-    // can be called on non-bindable series, but p must be nullptr
-
-    BINDING(v) = binding;
-
-  #if !defined(NDEBUG)
-    if (not binding)
-        return;  // e.g. UNBOUND
-
-    assert(Is_Bindable(v));  // works on partially formed values
-
-    assert(Is_Node_Managed(binding));
-    assert(
-        Is_Stub_Details(binding)  // relative
-        or Is_Stub_Varlist(binding)  // specific
-        or (
-            Any_List_Kind(HEART_BYTE(v))
-            and (Is_Stub_Let(binding) or Is_Stub_Use(binding)) // virtual
-        ) or (
-            HEART_BYTE(v) == REB_VARARGS and Not_Flex_Flag(binding, DYNAMIC)
-        )  // varargs from MAKE VARARGS! [...], else is a varlist
-    );
-  #endif
-}
-
-
 // 1. An advantage of making all binaries terminate in 0 is that it means
 //    that if they were valid UTF-8, they could be aliased as Rebol strings,
 //    which are zero terminated.  So it's the rule.
@@ -109,7 +82,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
     Heart heart,
     const Flex* f,  // ensured managed by calling macro
     REBLEN index,
-    Stub* specifier
+    Context* binding
 ){
     if (heart == REB_GET_DEAD or heart == REB_SET_DEAD)
         fail ("Cannot create GET-PATH! or SET-PATH! (chains are below paths)");
@@ -136,7 +109,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
     );
     Tweak_Cell_Node1(out, f);
     VAL_INDEX_RAW(out) = index;
-    Tweak_Cell_Specifier(out, specifier);  // asserts if unbindable type tries to bind
+    BINDING(out) = binding;  // asserts if unbindable type tries to bind
     return out;
 }
 

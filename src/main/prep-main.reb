@@ -73,7 +73,7 @@ for-each 'file reduce [
 
     ; The import will happen in the lib context, so the body block being
     ; unquoted means it will reach MODULE with the lib definitions in it.
-    ; Module will add itself in the specifier chain.
+    ; Module will add itself in the binding chain.
     ;
     ; !!! This currently imports all these modules into LIB, which is an
     ; unsustainable pattern set by historical Redbols that needs to be

@@ -20,48 +20,6 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A "context" is the abstraction behind OBJECT!, PORT!, FRAME!, ERROR!, etc.
-// It maps keys to values using two parallel Flexes, whose indices line up in
-// correspondence:
-//
-//   "KEYLIST" - a Flex of pointer-sized elements holding Symbol* pointers
-//
-//   "VARLIST" - an Array which holds an archetypal ANY-CONTEXT? value in its
-//   [0] element, and then a cell-sized slot for each variable.
-//
-// A `VarList*` is an alias of the varlist's `Array*`, and keylists are
-// reached through the `->link` of the varlist.  The reason varlists
-// are used as the identity of the context is that keylists can be shared
-// between contexts.
-//
-// Indices into the arrays are 0-based for keys and 1-based for values, with
-// the [0] elements of the varlist used an archetypal value:
-//
-//    VARLIST ARRAY (aka VarList*)  --Link--+
-//  +------------------------------+        |
-//  +          "ROOTVAR"           |        |
-//  | Archetype ANY-CONTEXT? Value |        v         KEYLIST SERIES
-//  +------------------------------+        +-------------------------------+
-//  |         Value Cell 1         |        |         Symbol* Key 1         |
-//  +------------------------------+        +-------------------------------+
-//  |         Value Cell 2         |        |         Symbol* key 2         |
-//  +------------------------------+        +-------------------------------+
-//  |         Value Cell ...       |        |         Symbol* key ...       |
-//  +------------------------------+        +-------------------------------+
-//
-// (For executing frames, the ---Link--> is actually to its Level* structure
-// so the paramlist of the CTX_FRAME_PHASE() must be consulted.  When the
-// frame stops running, the paramlist is written back to the link again.)
-//
-// The "ROOTVAR" is a canon value image of an ANY-CONTEXT?'s cell.  This
-// trick allows a single VarList* pointer to be passed around rather than the
-// cell struct which is 4x larger, yet use existing memory to make a Value*
-// when needed (using Varlist_Archetype()).  ACTION!s have a similar trick.
-//
-// Contexts coordinate with words, which can have their VAL_WORD_CONTEXT()
-// set to a context's Array pointer.  Then they cache the index of that
-// word's symbol in the context's KeyList, for a fast lookup to get to the
-// corresponding var.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //

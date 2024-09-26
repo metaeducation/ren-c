@@ -41,12 +41,13 @@
 //
 //     ANY-WORD?: binding is the word's binding
 //
-//     ANY-LIST?: binding is the relativization or specifier for the REBVALs
+//     ANY-LIST?: binding is the relativization or for the REBVALs
 //     which can be found in the frame (for recursive resolution of ANY-WORD?s)
 //
-//     ACTION!: binding is the instance data for archetypal invocation, so
-//     although all the RETURN instances have the same paramlist, it is
-//     the binding which is unique to the cell specifying which to exit
+//     ACTION!: slot where binding would be is the instance data for archetypal
+//     invocation, so although all the RETURN instances have the same
+//     paramlist, it is the coupling which is unique to the cell specifying
+//     which to exit
 //
 //     ANY-CONTEXT?: if a FRAME!, the binding carries the instance data from
 //     the function it is for.  So if the frame was produced for an instance
@@ -68,13 +69,13 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // If the Cell is indeed relative and needs to be made specific to be put into
-// the target, then the specifier is used to do that.
+// the target, then the binding is used to do that.
 //
 // It is nearly as fast as just assigning the value directly in the release
-// build, though debug builds assert that the function in the specifier
+// build, though debug builds assert that the function in the binding
 // indeed matches the target in the relative value (because relative values
 // in an array may only be relative to the function that deep copied them, and
-// that is the only kind of specifier you can use with them).
+// that is the only kind of binding you can use with them).
 //
 // Interface designed to line up with Copy_Cell()
 //
@@ -85,15 +86,15 @@
 // a mechanic between both...TBD.
 //
 
-INLINE Specifier* Derive_Specifier(
-    Specifier* parent,
+INLINE Context* Derive_Binding(
+    Context* binding,
     const Cell* list
 );
 
 INLINE Element* Derelativize_Untracked(
     Sink(Element*) out,  // relative dest overwritten w/specific value
     const Element* v,
-    Specifier* specifier
+    Context* context
 ){
     Copy_Cell_Header(out, v);
     out->payload = v->payload;
@@ -105,7 +106,7 @@ INLINE Element* Derelativize_Untracked(
         return out;
     }
 
-    Stub* binding = BINDING(v);
+    Context* binding = BINDING(v);
 
     if (Bindable_Heart_Is_Any_Word(heart)) {  // any-word?
       any_wordlike:
@@ -118,7 +119,7 @@ INLINE Element* Derelativize_Untracked(
         else {
             REBLEN index;
             Flex* f =
-                maybe Get_Word_Container(&index, v, specifier, ATTACH_READ);
+                maybe Get_Word_Container(&index, v, context, ATTACH_READ);
             if (not f) {
                 out->extra = v->extra;
             }
@@ -135,7 +136,7 @@ INLINE Element* Derelativize_Untracked(
             out->extra = v->extra;
         }
         else
-            BINDING(out) = specifier;
+            BINDING(out) = context;
     }
     else if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE)) {
         out->extra = v->extra;  // packed numeric sequence, 1.2.3 or similar
@@ -154,8 +155,8 @@ INLINE Element* Derelativize_Untracked(
 }
 
 
-#define Derelativize(dest,v,specifier) \
-    TRACK(Derelativize_Untracked((dest), (v), (specifier)))
+#define Derelativize(dest,v,context) \
+    TRACK(Derelativize_Untracked((dest), (v), (context)))
 
 
 // The concept behind `Cell` usage is that it represents a view of a cell
@@ -365,7 +366,7 @@ INLINE void Unbind_Any_Word(Cell* v) {
 
 INLINE VarList* VAL_WORD_CONTEXT(const Value* v) {
     assert(IS_WORD_BOUND(v));
-    Stub* binding = BINDING(v);
+    Context* binding = BINDING(v);
     if (Is_Stub_Patch(binding)) {
         VarList* patch_context = INODE(PatchContext, binding);
         binding = Varlist_Array(patch_context);
@@ -379,40 +380,30 @@ INLINE VarList* VAL_WORD_CONTEXT(const Value* v) {
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  VARIABLE ACCESS
+//  ***LOW-LEVEL*** LOOKUP OF CELL SLOTS
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// When a word is bound to a context by an index, it becomes a means of
-// reading and writing from a persistent storage location.
+// PLEASE TAKE NOTE: Most code should use higher level routines, like
+// Trap_Get_Any_Word() or Trap_Get_Var_XXX().
 //
-// All variables can be put in a CELL_FLAG_PROTECTED state.  This is a flag
-// on the variable cell itself--not the key--so different instances of
-// the same object sharing the keylist don't all have to be protected just
-// because one instance is.  This is not one of the flags included in the
-// CELL_MASK_COPY, so it shouldn't be able to leak out of the varlist.
-//
-// The Trap_Lookup_Word() function takes the conservative default that
-// only const access is needed.  A const pointer to a Value is given back
-// which may be inspected, but the contents not modified.  While a bound
-// variable that is not currently set will return an antiform void value,
-// Trap_Lookup_Word() on an *unbound* word return an error.
-//
-// Lookup_Mutable_Word_May_Fail() offers a parallel facility for getting a
-// non-const Value back.  It will fail if the variable is either unbound
-// -or- marked with OPT_TYPESET_LOCKED to protect against modification.
+// These routines will get the cell which a word looks up to, but that cell
+// may *not* hold the intended "varible".  For instance: it may hold functions
+// that the system has to call to generate the variable (an "Accessor").  So
+// trying to read or write cells coming from this routine without using the
+// proper higher layers will result in asserts.
 //
 
 INLINE Option(VarList*) Trap_Lookup_Word(
-    const Value** out,
+    const Value** out,  // returns read-only pointer to cell
     const Element* word,
-    Specifier* specifier
+    Context* context
 ){
     REBLEN index;
     Flex* f = maybe Get_Word_Container(
         &index,
         word,
-        specifier,
+        context,
         ATTACH_READ
     );
     if (not f)
@@ -433,13 +424,13 @@ INLINE Option(VarList*) Trap_Lookup_Word(
 
 INLINE Option(const Value*) Lookup_Word(
     const Element* word,
-    Specifier* specifier
+    Context* context
 ){
     REBLEN index;
     Flex* f = maybe Get_Word_Container(
         &index,
         word,
-        specifier,
+        context,
         ATTACH_READ
     );
     if (not f or index == INDEX_ATTACHED)
@@ -452,15 +443,27 @@ INLINE Option(const Value*) Lookup_Word(
     return Varlist_Slot(c, index);
 }
 
+// 1. Contexts can be permanently frozen (`lock obj`) or temporarily protected,
+//    e.g. `protect obj | unprotect obj`.  A native will use FLEX_FLAG_HOLD on
+//    a FRAME! context in order to prevent setting values to types with bit
+//    patterns the C might crash on.  Lock bits are all in SER->info and
+//    checked in the same instruction.
+//
+// 2. All variables can be put in a CELL_FLAG_PROTECTED state.  This is a flag
+//    on the variable cell itself--not the key--so different instances of
+//    the same object sharing the keylist don't all have to be protected just
+//    because one instance is.  This is not one of the flags included in the
+//    CELL_MASK_COPY, so it shouldn't be able to leak out of a cell.
+//
 INLINE Value* Lookup_Mutable_Word_May_Fail(
     const Element* any_word,
-    Specifier* specifier
+    Context* context
 ){
     REBLEN index;
     Flex* f = maybe Get_Word_Container(
         &index,
         any_word,
-        specifier,
+        context,
         ATTACH_WRITE
     );
     if (not f)
@@ -471,23 +474,11 @@ INLINE Value* Lookup_Mutable_Word_May_Fail(
         var = Stub_Cell(f);
     else {
         VarList* c = cast(VarList*, f);
-
-        // A context can be permanently frozen (`lock obj`) or temporarily
-        // protected, e.g. `protect obj | unprotect obj`.  A native will
-        // use FLEX_FLAG_HOLD on a FRAME! context in order to prevent
-        // setting values to types with bit patterns the C might crash on.
-        //
-        // Lock bits are all in SER->info and checked in the same instruction.
-        //
-        Fail_If_Read_Only_Flex(Varlist_Array(c));
-
+        Fail_If_Read_Only_Flex(Varlist_Array(c));  // check lock bits [1]
         var = Varlist_Slot(c, index);
     }
 
-    // The PROTECT command has a finer-grained granularity for marking
-    // not just contexts, but individual fields as protected.
-    //
-    if (Get_Cell_Flag(var, PROTECTED)) {
+    if (Get_Cell_Flag(var, PROTECTED)) {  // protect is per-cell [2]
         DECLARE_ATOM (unwritable);
         Init_Word(unwritable, Cell_Word_Symbol(any_word));
         fail (Error_Protected_Word_Raw(unwritable));
@@ -498,28 +489,28 @@ INLINE Value* Lookup_Mutable_Word_May_Fail(
 
 INLINE Sink(Value*) Sink_Word_May_Fail(
     const Element* any_word,
-    Specifier* specifier
+    Context* context
 ){
-    Value* var = Lookup_Mutable_Word_May_Fail(any_word, specifier);
+    Value* var = Lookup_Mutable_Word_May_Fail(any_word, context);
     return var;
 }
 
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  DETERMINING SPECIFIER FOR CHILDREN IN AN ARRAY
+//  DETERMINING BINDING FOR CHILDREN IN A LIST
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A relative array must be combined with a specifier in order to find the
+// A relative array must be combined with a binding in order to find the
 // actual context instance where its values can be found.  Since today's
-// specifiers are always nothing or a FRAME!'s context, this is fairly easy...
+// bindings are always nothing or a FRAME!'s context, this is fairly easy...
 // if you find a specific child value resident in a relative array then
-// it's that child's specifier that overrides the specifier in effect.
+// it's that child's binding that overrides the binding in effect.
 //
-// With virtual binding this could get more complex, since a specifier may
+// With virtual binding this could get more complex, since a binding may
 // wish to augment or override the binding in a deep way on read-only blocks.
-// That means specifiers may need to be chained together.  This would create
+// That means bindings may need to be chained together.  This would create
 // needs for GC or reference counting mechanics, which may defy a simple
 // solution in pure C.
 //
@@ -527,48 +518,21 @@ INLINE Sink(Value*) Sink_Word_May_Fail(
 // would need such derivation.
 //
 
-// A specifier can be a FRAME! context for fulfilling relative words.  Or it
-// may be a chain of virtual binds where the last link in the chain is to
-// a frame context.
-//
-// It's Derive_Specifier()'s job to make sure that if specifiers get linked on
-// top of each other, the chain always bottoms out on the same FRAME! that
-// the original specifier was pointing to.
-//
-INLINE Node** SPC_FRAME_CTX_ADDRESS(Specifier* specifier)
-{
-    assert(Is_Stub_Let(specifier) or Is_Stub_Use(specifier));
-    while (
-        NextVirtual(specifier) != nullptr
-        and not Is_Stub_Varlist(NextVirtual(specifier))
-    ){
-        specifier = NextVirtual(specifier);
-    }
-    return &node_LINK(NextLet, specifier);
-}
-
-INLINE Option(VarList*) SPC_FRAME_CTX(Specifier* specifier)
-{
-    if (specifier == UNBOUND)  // !!! have caller check?
-        return nullptr;
-    if (Is_Stub_Varlist(specifier))
-        return cast(VarList*, specifier);
-    return cast(VarList*, x_cast(Node*, *SPC_FRAME_CTX_ADDRESS(specifier)));
-}
-
 
 // An ANY-LIST? cell has a pointer's-worth of spare space in it, which is
 // used to keep track of the information required to further resolve the
 // words and lists that reside in it.
 //
-INLINE Specifier* Derive_Specifier(
-    Specifier* specifier,
+INLINE Context* Derive_Binding(
+    Context* binding,
     const Cell* list
 ){
+    assert(Any_Listlike(list));
+
     if (BINDING(list) != UNBOUND)
         return BINDING(list);
 
-    return specifier;
+    return binding;
 }
 
 

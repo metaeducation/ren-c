@@ -20,7 +20,7 @@
 
 ; One of the first trip-ups for virtual binding was Brett's PARSING-AT,
 ; which exposed an issue with virtual binding and PARSE (which was applying
-; specifiers twice in cases of fetched words).  This is isolated from that
+; bindings twice in cases of fetched words).  This is isolated from that
 (
     make-rule: func [/make-rule] [  ; refinement helps recognize in C Probe()
         use [rule position][
@@ -38,7 +38,7 @@
     ]
 )
 
-; Compounding specifiers is tricky, and many of the situations only arise
+; Compounding bindingss is tricky, and many of the situations only arise
 ; when you return still-relative material (e.g. from nested blocks in a
 ; function body) that has only been derelativized at the topmost level.
 ; Using GROUP!s is a good way to catch this since they're easy to evaluate

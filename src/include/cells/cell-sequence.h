@@ -548,7 +548,7 @@ INLINE Length Cell_Sequence_Len(const Cell* sequence) {
 INLINE Element* Derelativize_Sequence_At(
     Sink(Element*) out,
     const Element* sequence,
-    Specifier* specifier,
+    Context* context,
     REBLEN n
 ){
     assert(out != sequence);
@@ -563,12 +563,12 @@ INLINE Element* Derelativize_Sequence_At(
     if (Is_Node_A_Cell(node1)) {  // test if it's a pairing
         const Element* pairing = c_cast(Element*, node1);  // compressed pair
         if (n == 0)
-            return Derelativize(out, pairing, specifier);
+            return Derelativize(out, pairing, context);
         assert(n == 1);
         return Derelativize(
             out,
             c_cast(Element*, Pairing_Second(pairing)),
-            specifier
+            context
         );
     }
 
@@ -578,7 +578,7 @@ INLINE Element* Derelativize_Sequence_At(
         if (Get_Cell_Flag(sequence, REFINEMENT_LIKE) ? n == 0 : n != 0)
             return Init_Blank(out);
 
-        Derelativize(out, sequence, specifier);  // [2]
+        Derelativize(out, sequence, context);  // [2]
         HEART_BYTE(out) = REB_WORD;
         QUOTE_BYTE(out) = NOQUOTE_1;  // [3]
         return out; }
@@ -587,7 +587,7 @@ INLINE Element* Derelativize_Sequence_At(
         const Array* a = c_cast(Array*, Cell_Node1(sequence));
         assert(Array_Len(a) >= 2);
         assert(Is_Array_Frozen_Shallow(a));
-        return Derelativize(out, Array_At(a, n), specifier); }
+        return Derelativize(out, Array_At(a, n), context); }
 
       default :
         assert(false);
@@ -611,11 +611,11 @@ INLINE Byte Cell_Sequence_Byte_At(const Cell* sequence, REBLEN n) {
     return VAL_UINT8(at);  // !!! All callers of this routine need vetting
 }
 
-INLINE Specifier* Cell_Sequence_Specifier(const Cell* sequence) {
+INLINE Context* Cell_Sequence_Binding(const Cell* sequence) {
     assert(Any_Sequence_Kind(Cell_Heart(sequence)));
 
-    // Getting the specifier for any of the optimized types means getting
-    // the specifier for *that item in the sequence*; the sequence itself
+    // Getting the binding for any of the optimized types means getting
+    // the binding for *that item in the sequence*; the sequence itself
     // does not provide a layer of communication connecting the interior
     // to a frame instance (because there is no actual layer).
 
@@ -631,7 +631,7 @@ INLINE Specifier* Cell_Sequence_Specifier(const Cell* sequence) {
         return SPECIFIED;
 
       case FLAVOR_ARRAY :  // uncompressed sequence
-        return Cell_Specifier(sequence);
+        return Cell_List_Binding(sequence);
 
       default :
         assert(false);

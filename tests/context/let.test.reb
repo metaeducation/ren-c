@@ -88,7 +88,7 @@
     ]
 )
 
-; Evaluation steps need to be able to carry forward the aggregate specifier
+; Evaluation steps need to be able to carry forward the aggregate binding
 ; on their return results, otherwise the LET would be forgotten each time
 ; you make a step.
 ;
@@ -146,7 +146,7 @@
 )
 
 ; we want to create a situation where two LET based chains of patches need
-; to be merged.  Such merging only is necessary when a specifier is being
+; to be merged.  Such merging only is necessary when a binding is being
 ; derived, e.g. the meeting of two blocks with LET chains in their binding.
 (
     block1: eval [let x: 10, [x + y]]

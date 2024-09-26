@@ -226,7 +226,7 @@ export emit-include-params-macro: func [
     ; result in a crash.  The native itself doesn't care because it's not
     ; using ordinary variable assignment.
     ;
-    ; !!! This prevents API use inside natives which is specifier-based.  That
+    ; !!! This prevents API use inside natives which is binding-based.  That
     ; is an inconvenience, and if a native wants to do it for expedience then
     ; it needs to clear this bit itself (and set it back when done).
     ;

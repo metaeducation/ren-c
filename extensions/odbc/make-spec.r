@@ -22,7 +22,7 @@ source: [
     ;
     <msc:/wd4201>
 
-    <msc:/wd4459>  ; global shadowing ok, see LIBREBOL_SPECIFIER
+    <msc:/wd4459>  ; global shadowing ok, see LIBREBOL_BINDING
 ]
 
 includes: [

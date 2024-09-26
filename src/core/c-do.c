@@ -163,7 +163,7 @@ void Push_Frame_Continuation(
 bool Pushed_Continuation(
     Atom* out,
     Flags flags,  // LEVEL_FLAG_BRANCH, etc. for pushed levels
-    Specifier* branch_specifier,  // before branch forces non-empty variadic call
+    Context* binding,  // before branch forces non-empty variadic call
     const Value* branch,
     Option(const Atom*) with  // can be same as out or not GC-safe, may copy
 ){
@@ -189,7 +189,7 @@ bool Pushed_Continuation(
         Level* grouper = Make_Level_At_Core(
             &The_Group_Branch_Executor,  // evaluates to synthesize branch
             branch,
-            branch_specifier,
+            binding,
             (flags & (~ LEVEL_FLAG_BRANCH))
                 | FLAG_STATE_BYTE(ST_GROUP_BRANCH_ENTRY_DONT_ERASE_OUT)
         );
@@ -210,7 +210,7 @@ bool Pushed_Continuation(
         goto just_use_out;
 
       case REB_QUOTED:
-        Derelativize(out, c_cast(Element*, branch), branch_specifier);
+        Derelativize(out, c_cast(Element*, branch), binding);
         Unquotify(out, 1);
         if (Is_Nulled(out) and (flags & LEVEL_FLAG_BRANCH))
             Init_Heavy_Null(out);
@@ -220,9 +220,7 @@ bool Pushed_Continuation(
       case REB_BLOCK: {
         Init_Void(Alloc_Evaluator_Primed_Result());
         Level* L = Make_Level_At_Core(
-            &Evaluator_Executor,
-            branch, branch_specifier,
-            flags
+            &Evaluator_Executor, branch, binding, flags
         );
         if (Cell_Heart_Unchecked(branch) == REB_META_BLOCK) {
             Set_Level_Flag(L, META_RESULT);
@@ -251,7 +249,7 @@ bool Pushed_Continuation(
         }
 
         arg = First_Unspecialized_Arg(&param, L);
-        Derelativize(arg, c_cast(Element*, branch), branch_specifier);
+        Derelativize(arg, c_cast(Element*, branch), binding);
         HEART_BYTE(arg) = REB_BLOCK;  // :[1 + 2] => [3], not :[3]
 
         Push_Level(out, L);

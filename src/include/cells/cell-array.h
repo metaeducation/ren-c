@@ -128,7 +128,7 @@ INLINE Element* Init_Any_List_At_Core_Untracked(
     Heart heart,
     const_if_c Array* array,
     REBLEN index,
-    Stub* binding
+    Context* binding
 ){
     return Init_Series_At_Core_Untracked(
         out,
@@ -145,14 +145,14 @@ INLINE Element* Init_Any_List_At_Core_Untracked(
         Heart heart,
         const Array* array,  // all const arrays should be already managed
         REBLEN index,
-        Stub* binding
+        Context* binding
     ){
         return Init_Series_At_Core_Untracked(out, heart, array, index, binding);
     }
 #endif
 
-#define Init_Any_List_At_Core(v,t,a,i,s) \
-    TRACK(Init_Any_List_At_Core_Untracked((v), (t), (a), (i), (s)))
+#define Init_Any_List_At_Core(v,t,a,i,b) \
+    TRACK(Init_Any_List_At_Core_Untracked((v), (t), (a), (i), (b)))
 
 #define Init_Any_List_At(v,t,a,i) \
     Init_Any_List_At_Core((v), (t), (a), (i), UNBOUND)
@@ -173,7 +173,7 @@ INLINE Cell* Init_Relative_Block_At(
     Reset_Cell_Header_Untracked(out, CELL_MASK_BLOCK);
     Tweak_Cell_Node1(out, array);
     VAL_INDEX_RAW(out) = index;
-    Tweak_Cell_Specifier(out, action);
+    BINDING(out) = action;
     return out;
 }
 

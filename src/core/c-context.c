@@ -135,6 +135,80 @@ void Expand_Varlist(VarList* varlist, REBLEN delta)
 }
 
 
+// 1. Low symbol IDs are all in PG_Lib_Patches for fast access, and were
+//    created as a continguous array of memory in Startup_Lib().
+//
+// 2. The GC behavior of these patches is special and does not fit into the
+//    usual patterns.  There is a pass in the GC that propagates context
+//    survival into the patches from the global bind table.  Although we say
+//    INFO_NODE_NEEDS_MARK to keep a context alive, that marking isn't done in
+//    that pass...otherwise the variables could never GC.  Instead, it only
+//    happens if the patch is cached in a variable...then that reference
+//    touches the patch which touches the context.  But if not cached, the
+//    context keeps vars alive; not vice-versa (e.g. the mere existence of a
+//    variable--not cached in a cell reference--should not keep it alive).
+//    MISC_NODE_NEEDS_MARK is not done as that would keep alive patches from
+//    other contexts in the hitch chain.
+//
+//    !!! Should there be a "decay and forward" general mechanic, so a node
+//    can tell the GC to touch up all references and point to something else,
+//    e.g. to forward references to a cache back to the context in order to
+//    "delete" variables?
+//
+static Value* Append_To_Sea_Core(
+    SeaOfVars* sea,
+    const Symbol* symbol,
+    Option(Cell*) any_word  // binding modified (Note: quoted words allowed)
+){
+    Option(SymId) id;
+    if (sea == Lib_Context)
+        id = Symbol_Id(symbol);
+    else
+        id = SYM_0;
+
+    Array* patch;
+    if (id and id < LIB_SYMS_MAX) {
+        patch = &PG_Lib_Patches[id];  // patch memory pre-allocated at boot [1]
+        assert(INODE(PatchContext, patch) == nullptr);  // don't double add
+        // patch->header.bits should be already set
+    }
+    else {
+        patch = Alloc_Singular(
+            NODE_FLAG_MANAGED
+            | FLAG_FLAVOR(PATCH)
+            | FLEX_FLAG_INFO_NODE_NEEDS_MARK  // mark context through cache [2]
+        );
+    }
+
+  //=//// ADD TO CIRCULARLY LINKED LIST HUNG ON SYMBOL ////////////////////=//
+
+    // The variables are linked reachable from the symbol node for the word's
+    // spelling, and can be directly linked to from a word as a singular value
+    // (with binding index as INDEX_PATCHED).  A circularly linked list is
+    // used, to facilitate circling around to remove from the list (in lieu of
+    // a back pointer.)
+    //
+    // 1. During binding of non-sea-of-words contexts, another kind of link is
+    //    added into the chain to help accelerate finding the slot to bind
+    //    for that symbol.  We skip over those.
+
+    Flex* updating = m_cast(Symbol*, symbol);  // skip binding hitches [1]
+    if (Get_Subclass_Flag(SYMBOL, updating, MISC_IS_BINDINFO))
+        updating = cast(Stub*, node_MISC(Hitch, updating));  // skip
+
+    node_MISC(Hitch, patch) = node_MISC(Hitch, updating);
+    INODE(PatchContext, patch) = sea;
+    MISC(Hitch, updating) = patch;
+
+    if (any_word) {  // bind word while we're at it
+        Tweak_Cell_Word_Index(unwrap any_word, INDEX_PATCHED);
+        BINDING(unwrap any_word) = patch;
+    }
+
+    return Stub_Cell(patch);
+}
+
+
 // Append a word to the context word list. Expands the list if necessary.
 // Returns the value cell for the word, which is reset.
 //
@@ -143,83 +217,14 @@ void Expand_Varlist(VarList* varlist, REBLEN delta)
 // to this context after the operation.
 //
 static Value* Append_Context_Core(
-    VarList* context,
+    Context* context,
     const Symbol* symbol,
     Option(Cell*) any_word  // binding modified (Note: quoted words allowed)
-) {
-    if (CTX_TYPE(context) == REB_MODULE) {
-        //
-        // !!! In order to make MODULE more friendly to the idea of very
-        // large number of words, variable instances for a module are stored
-        // not in an indexed block form...but distributed as individual Stub
-        // Node allocations.  The variables are linked reachable from the
-        // symbol node for the word's spelling, and can be directly linked
-        // to from a word as a singular value (with binding index "1").
+){
+    if (CTX_TYPE(cast(VarList*, context)) == REB_MODULE)
+        return Append_To_Sea_Core(cast(SeaOfVars*, context), symbol, any_word);
 
-        Option(SymId) id;
-        if (context == Lib_Context)
-            id = Symbol_Id(symbol);
-        else
-            id = SYM_0;
-
-        Array* patch;
-        if (id and id < LIB_SYMS_MAX) {
-            //
-            // Low symbol IDs are all in PG_Lib_Patches for fast access, and
-            // were created as a continguous array of memory in Startup_Lib().
-            //
-            patch = &PG_Lib_Patches[id];
-            assert(INODE(PatchContext, patch) == nullptr);  // don't double add
-            // patch->header.bits should be already set
-        }
-        else patch = Alloc_Singular(
-            NODE_FLAG_MANAGED
-            | FLAG_FLAVOR(PATCH)
-            //
-            // Note: The GC behavior of these patches is special and does not
-            // fit into the usual patterns.  There is a pass in the GC
-            // that propagates context survival into the patches from the
-            // global bind table.  Although we say INFO_NODE_NEEDS_MARK to
-            // keep a context alive, that marking isn't done in that pass...
-            // otherwise the variables could never GC.  Instead, it only
-            // happens if the patch is cached in a variable...then that
-            // reference touches the patch which touches the context.  But
-            // if not cached, the context keeps vars alive; not vice-versa
-            // (e.g. the mere existence of a variable--not cached in a cell
-            // reference--should not keep it alive).  MISC_NODE_NEEDS_MARK
-            // is not done as that would keep alive patches from other
-            // contexts in the hitch chain.
-            //
-            // !!! Should there be a "decay and forward" general mechanic,
-            // so a node can tell the GC to touch up all references and point
-            // to something else...e.g. to forward references to a cache back
-            // to the context in order to "delete" variables?
-            //
-            | FLEX_FLAG_INFO_NODE_NEEDS_MARK  // mark context through cache
-        );
-
-        // We circularly link the variable into the list of hitches so that you
-        // can find the spelling again.
-
-        // skip over binding-related hitches
-        //
-        Flex* updating = m_cast(Symbol*, symbol);
-        if (Get_Subclass_Flag(SYMBOL, updating, MISC_IS_BINDINFO))
-            updating = cast(Stub*, node_MISC(Hitch, updating));  // skip
-
-        node_MISC(Hitch, patch) = node_MISC(Hitch, updating);
-        INODE(PatchContext, patch) = context;
-        MISC(Hitch, updating) = patch;
-
-        if (any_word) {  // bind word while we're at it
-            Tweak_Cell_Word_Index(unwrap any_word, INDEX_PATCHED);
-            BINDING(unwrap any_word) = patch;
-        }
-
-        return Stub_Cell(patch);
-    }
-
-    VarList* varlist = context;
+    VarList* varlist = cast(VarList*, context);
     KeyList* keylist = Keylist_Of_Varlist(varlist);
     Corrupt_Pointer_If_Debug(context);  // prep for varlist != module
 
@@ -249,7 +254,7 @@ static Value* Append_Context_Core(
 //  Append_Context_Bind_Word: C
 //
 Value* Append_Context_Bind_Word(
-    VarList* context,
+    Context* context,
     Cell* any_word  // binding modified (Note: quoted words allowed)
 ){
     return Append_Context_Core(context, Cell_Word_Symbol(any_word), any_word);
@@ -258,7 +263,7 @@ Value* Append_Context_Bind_Word(
 //
 //  Apend_Context: C
 //
-Value* Append_Context(VarList* context, const Symbol* symbol)
+Value* Append_Context(Context* context, const Symbol* symbol)
 {
     return Append_Context_Core(context, symbol, nullptr);
 }

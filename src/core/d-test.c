@@ -28,7 +28,7 @@
 // built only in certain debug builds.
 //
 
-#define LIBREBOL_SPECIFIER (&librebol_specifier)
+#define LIBREBOL_BINDING (&librebol_binding)
 
 #include "sys-core.h"
 
@@ -37,7 +37,7 @@
     // Altered to fit into this file's automated testing.
 
     static int Subroutine(void) {
-        RebolSpecifier* librebol_specifier = nullptr;
+        RebolContext* librebol_binding = nullptr;
 
         return rebUnboxInteger(
             "assert [action? :print]",
@@ -50,7 +50,7 @@
         assert [integer!] \
         add [integer!] \
     ]";
-    static RebolBounce Sum_Plus_1000_Impl(RebolSpecifier* librebol_specifier) {
+    static RebolBounce Sum_Plus_1000_Impl(RebolContext* librebol_binding) {
         int thousand = Subroutine();
         return rebValue("add + assert +", rebI(thousand));
     }
@@ -81,7 +81,7 @@ DECLARE_NATIVE(test_librebol)
         )
     );
   #else
-    RebolSpecifier* librebol_specifier = nullptr;
+    RebolContext* librebol_binding = nullptr;
 
     StackIndex base = TOP_INDEX;
 
@@ -157,7 +157,7 @@ DECLARE_NATIVE(test_librebol)
         assert [integer!]
         add [integer!]
     ])",
-    [](RebolSpecifier* librebol_specifier) -> RebolBounce {
+    [](RebolContext* librebol_binding) -> RebolBounce {
         int thousand = Subroutine();
         return rebValue("add + assert +", rebI(thousand));
     });

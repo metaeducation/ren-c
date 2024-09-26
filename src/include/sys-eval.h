@@ -151,31 +151,32 @@ INLINE bool Eval_Any_List_At_Core_Throws(
     Atom* out,
     Flags flags,
     const Cell* list,
-    Specifier* specifier
+    Context* context
 ){
     Init_Void(Alloc_Evaluator_Primed_Result());
     Level* L = Make_Level_At_Core(
         &Evaluator_Executor,
-        list, specifier,
+        list,
+        context,
         flags
     );
 
     return Trampoline_Throws(out, L);
 }
 
-#define Eval_Any_List_At_Throws(out,list,specifier) \
-    Eval_Any_List_At_Core_Throws(out, LEVEL_MASK_NONE, (list), (specifier))
+#define Eval_Any_List_At_Throws(out,list,binding) \
+    Eval_Any_List_At_Core_Throws(out, LEVEL_MASK_NONE, (list), (binding))
 
 
 // !!! This is a non-stackless invocation of the evaluator that evaluates a
 // single value.  Callsites that use it should be rewritten to yield to the
 // trampoline.
 //
-INLINE bool Eval_Value_Core_Throws(
+INLINE bool Eval_Element_Core_Throws(
     Atom* out,
     Flags flags,
     const Element* value,  // e.g. a BLOCK! here would just evaluate to itself!
-    Specifier* specifier
+    Context* context
 ){
     if (Any_Inert(value)) {
         Copy_Cell(out, value);
@@ -187,7 +188,7 @@ INLINE bool Eval_Value_Core_Throws(
         value,  // first--in this case, the only value in the feed...
         EMPTY_ARRAY,  // ...because we're using the empty array after that
         0,  // ...at index 0
-        specifier,
+        context,
         FEED_MASK_DEFAULT | (value->header.bits & FEED_FLAG_CONST)
     );
 
@@ -196,8 +197,8 @@ INLINE bool Eval_Value_Core_Throws(
     return Trampoline_Throws(out, L);
 }
 
-#define Eval_Value_Throws(out,value,specifier) \
-    Eval_Value_Core_Throws(out, LEVEL_MASK_NONE, (value), (specifier))
+#define Eval_Value_Throws(out,value,context) \
+    Eval_Element_Core_Throws(out, LEVEL_MASK_NONE, (value), (context))
 
 
 // !!! This is a non-stackless invocation of the evaluator that evaluates a

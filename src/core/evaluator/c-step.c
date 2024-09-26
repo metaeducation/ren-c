@@ -92,14 +92,14 @@
 
 #define CURRENT cast(Element*, &(L->u.eval.current))
 
-// We make the macro for getting specifier a bit more complex here, to
-// account for reevaluation.
+// We make the macro for getting binding a bit more complex here, to account
+// for reevaluation.
 //
 // https://forum.rebol.info/t/should-reevaluate-apply-let-bindings/1521
 //
-#undef L_specifier
-#define L_specifier \
-    (STATE == ST_STEPPER_REEVALUATING ? SPECIFIED : Level_Specifier(L))
+#undef L_binding
+#define L_binding \
+    (STATE == ST_STEPPER_REEVALUATING ? SPECIFIED : Level_Binding(L))
 
 
 // !!! In earlier development, the Level* for evaluating across a block was
@@ -193,7 +193,7 @@ Bounce Stepper_Executor(Level* L)
     if (Get_Eval_Executor_Flag(L, NO_EVALUATIONS)) {  // see flag for rationale
         if (Is_Feed_At_End(L->feed))
             return OUT;
-        Derelativize(OUT, At_Feed(L->feed), FEED_SPECIFIER(L->feed));
+        Derelativize(OUT, At_Feed(L->feed), FEED_BINDING(L->feed));
         Fetch_Next_In_Feed(L->feed);
         return OUT;
     }
@@ -213,7 +213,7 @@ Bounce Stepper_Executor(Level* L)
         //
         // It's important to leave STATE as ST_STEPPER_REEVALUATING
         // during the switch state, because that's how the evaluator knows
-        // not to redundantly apply LET bindings.  See `L_specifier` above.
+        // not to redundantly apply LET bindings.  See `L_binding` above.
 
         // The re-evaluate functionality may not want to heed the enfix state
         // in the action itself.  See DECLARE_NATIVE(shove)'s /ENFIX for instance.
@@ -327,12 +327,12 @@ Bounce Stepper_Executor(Level* L)
 
     if (VAL_TYPE_UNCHECKED(L_next) == REB_WORD) {  // right's kind
         //
-        // !!! Using L_specifier here instead of FEED_SPECIFIER(L->feed)
+        // !!! Using L_binding here instead of FEED_BINDING(L->feed)
         // seems to break `let x: me + 1`, due to something about the
-        // conditionality on reevaluation.  L_specifier's conditionality
+        // conditionality on reevaluation.  L_binding's conditionality
         // should be reviewed for relevance in the modern binding model.
         //
-        L_next_gotten = Lookup_Word(L_next, FEED_SPECIFIER(L->feed));
+        L_next_gotten = Lookup_Word(L_next, FEED_BINDING(L->feed));
 
         if (
             not L_next_gotten
@@ -384,7 +384,7 @@ Bounce Stepper_Executor(Level* L)
             pclass == PARAMCLASS_THE  // enfix func [@x ...] [...]
             or pclass == PARAMCLASS_SOFT
         );
-        Derelativize(OUT, L_current, L_specifier);
+        Derelativize(OUT, L_current, L_binding);
     }
 
     // We skip over the word that invoked the action (e.g. ->-, OF, =>).
@@ -461,7 +461,7 @@ Bounce Stepper_Executor(Level* L)
     //
     // 1. Quasiforms produce antiforms, and quoted values drop one quote
     //    level.  Binding is left as-is in both cases, and not influenced by
-    //    the current specifier of the evaluator.
+    //    the current binding of the evaluator (antiforms are always unbound).
     //
     // 2. The Stepper_Executor()'s state bytes are a superset of the VAL_TYPE
     //    of processed values.  See the ST_STEPPER_XXX enumeration.
@@ -672,7 +672,7 @@ Bounce Stepper_Executor(Level* L)
           case SIGIL_VAR:  // $
             if (Is_Antiform(OUT))
                 fail ("$ operator cannot bind antiforms");
-            Derelativize(SPARE, cast(Element*, OUT), Level_Specifier(L));
+            Derelativize(SPARE, cast(Element*, OUT), Level_Binding(L));
             Copy_Cell(OUT, SPARE);  // !!! inefficient
             break;
 
@@ -697,7 +697,7 @@ Bounce Stepper_Executor(Level* L)
       word_common: ///////////////////////////////////////////////////////////
 
       case REB_WORD: {
-        Option(VarList*) error = Trap_Get_Any_Word(OUT, L_current, L_specifier);
+        Option(VarList*) error = Trap_Get_Any_Word(OUT, L_current, L_binding);
         if (error)
             fail (unwrap error);  // else could conflate with function result
 
@@ -836,7 +836,7 @@ Bounce Stepper_Executor(Level* L)
             if (Is_Action(OUT))  // !!! Review: When to update labels?
                 INIT_VAL_ACTION_LABEL(OUT, Cell_Word_Symbol(L_current));
 
-            Set_Var_May_Fail(L_current, L_specifier, stable_OUT);
+            Set_Var_May_Fail(L_current, L_binding, stable_OUT);
 
             if (L_next_gotten) {  // cache can tamper with lookahead [1]
                 if (VAL_TYPE_UNCHECKED(L_next) == REB_FRAME) {
@@ -865,7 +865,7 @@ Bounce Stepper_Executor(Level* L)
         Option(VarList*) error = Trap_Get_Any_Word_Maybe_Vacant(
             OUT,
             L_current,
-            L_specifier
+            L_binding
         );
         if (error)
             fail (unwrap error);
@@ -911,7 +911,7 @@ Bounce Stepper_Executor(Level* L)
         Level* sub = Make_Level_At_Core(
             &Evaluator_Executor,
             L_current,
-            L_specifier,
+            L_binding,
             flags
         );
         Push_Level(OUT, sub);
@@ -940,15 +940,15 @@ Bounce Stepper_Executor(Level* L)
             not Is_Blank(SPARE)  // `.a` means pick member from "self"
             and Any_Inert(SPARE)  // `1.2.3` is inert
         ){
-            Derelativize(OUT, L_current, L_specifier);
+            Derelativize(OUT, L_current, L_binding);
             goto lookahead;
         }
 
-        Option(VarList*) error = Trap_Get_Tuple(  // vacant will cause error
+        Option(VarList*) error = Trap_Get_Any_Tuple(  // vacant will cause error
             OUT,
             GROUPS_OK,
             L_current,
-            L_specifier
+            L_binding
         );
         if (error) {  // tuples never run actions, won't conflate to raise it
             Init_Error(OUT, unwrap error);
@@ -1009,7 +1009,7 @@ Bounce Stepper_Executor(Level* L)
             if (Is_Blank(SPARE))
                 slash_at_head = true;  // leading slash means run action
             else {
-                Derelativize(OUT, L_current, L_specifier);  // inert [2]
+                Derelativize(OUT, L_current, L_binding);  // inert [2]
                 goto lookahead;
             }
         }
@@ -1017,7 +1017,7 @@ Bounce Stepper_Executor(Level* L)
             slash_at_head = false;
 
         if (slash_at_head) {  // refinement behavior (for now)
-            /* Derelativize(OUT, L_current, L_specifier); */  // inert [2]
+            /* Derelativize(OUT, L_current, L_binding); */  // inert [2]
             Copy_Cell(OUT, L_current);  // try unbound (for now)
             goto lookahead;
         }
@@ -1030,7 +1030,7 @@ Bounce Stepper_Executor(Level* L)
             OUT,  // where to write action
             SPARE,  // temporary GC-safe scratch space
             L_current,
-            L_specifier
+            L_binding
         );
         if (error) {  // lookup failed, a GROUP! in path threw, etc.
             if (not slash_at_tail)
@@ -1107,7 +1107,7 @@ Bounce Stepper_Executor(Level* L)
                 SPARE,
                 GROUPS_OK,
                 L_current,
-                L_specifier,
+                L_binding,
                 stable_OUT
             )){
                 goto return_thrown;
@@ -1129,7 +1129,7 @@ Bounce Stepper_Executor(Level* L)
         Level* sub = Make_Level_At_Core(
             &Evaluator_Executor,
             L_current,
-            L_specifier,
+            L_binding,
             LEVEL_MASK_NONE
         );
         Push_Level(SPARE, sub);
@@ -1188,11 +1188,11 @@ Bounce Stepper_Executor(Level* L)
 
       case REB_META_TUPLE:
       case REB_GET_TUPLE: {
-        Option(VarList*) error = Trap_Get_Tuple_Maybe_Vacant(
+        Option(VarList*) error = Trap_Get_Any_Tuple_Maybe_Vacant(
             OUT,
             GROUPS_OK,
             L_current,
-            L_specifier
+            L_binding
         );
         if (error) {
             Init_Error(OUT, unwrap error);
@@ -1217,7 +1217,7 @@ Bounce Stepper_Executor(Level* L)
     // Note that GET-BLOCK! is available as a branch type, `if ok :[a b]`
 
       case REB_GET_BLOCK: {
-        Derelativize(SPARE, L_current, L_specifier);
+        Derelativize(SPARE, L_current, L_binding);
         HEART_BYTE(SPARE) = REB_BLOCK;
         if (rebRunThrows(
             cast(Value*, OUT),  // <-- output cell, API won't make atoms
@@ -1301,7 +1301,7 @@ Bounce Stepper_Executor(Level* L)
 
         const Element* tail;
         const Element* check = Cell_List_At(&tail, L_current);
-        Specifier* check_specifier = Derive_Specifier(L_specifier, L_current);
+        Context* check_binding = Derive_Binding(L_binding, L_current);
 
         // we've extracted the array at and tail, can reuse current now
 
@@ -1323,7 +1323,7 @@ Bounce Stepper_Executor(Level* L)
                 Derelativize_Sequence_At(
                     CURRENT,
                     check,
-                    check_specifier,
+                    check_binding,
                     1
                 );
                 if (heart == REB_META_PATH)
@@ -1332,7 +1332,7 @@ Bounce Stepper_Executor(Level* L)
             }
             else {
                 is_optional = false;  // no leading slash means required
-                Derelativize(CURRENT, check, check_specifier);
+                Derelativize(CURRENT, check, check_binding);
             }
 
             if (
@@ -1785,9 +1785,9 @@ Bounce Stepper_Executor(Level* L)
     switch (VAL_TYPE_UNCHECKED(L_next)) {
       case REB_WORD:
         if (not L_next_gotten)
-            L_next_gotten = Lookup_Word(L_next, FEED_SPECIFIER(L->feed));
+            L_next_gotten = Lookup_Word(L_next, FEED_BINDING(L->feed));
         else
-            assert(L_next_gotten == Lookup_Word(L_next, FEED_SPECIFIER(L->feed)));
+            assert(L_next_gotten == Lookup_Word(L_next, FEED_BINDING(L->feed)));
         break;  // need to check for lookahead
 
       case REB_FRAME:

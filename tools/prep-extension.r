@@ -183,7 +183,7 @@ if yes? use-librebol [
     e1/emit [{
         /* extension configuration says [use-librebol: 'yes] */
 
-        #define LIBREBOL_SPECIFIER (&librebol_specifier)
+        #define LIBREBOL_BINDING (&librebol_binding)
         #include "rebol.h"  /* not %rebol-internals.h ! */
 
         /*
@@ -193,15 +193,15 @@ if yes? use-librebol [
          * to use the stack to find which module the native is running in.
          * This needs to be revisited.
          */
-        static RebolSpecifier* librebol_specifier = 0;  /* nullptr */
+        static RebolContext* librebol_binding = 0;  /* nullptr */
 
         /*
          * Helpful warnings tell us when static variables are unused.  We
          * could turn off that warning, but instead just have the natives
-         * do it before they define their own specifier.  As long as at least
+         * do it before they define their own binding.  As long as at least
          * one native is in the file, this works.
          */
-        #define LIBREBOL_SPECIFIER_USED() (void)librebol_specifier
+        #define LIBREBOL_BINDING_USED() (void)librebol_binding
     }]
 ] else [
     e1/emit [{
@@ -209,10 +209,10 @@ if yes? use-librebol [
         #include "rebol-internals.h"  /* superset of %rebol.h */
 
         /*
-         * No specifier used currently for core API extensions, but need the
+         * No binding used currently for core API extensions, but need the
          * macro for the module init to compile.
          */
-        #define LIBREBOL_SPECIFIER_USED()
+        #define LIBREBOL_BINDING_USED()
     }]
 ]
 e1/emit newline
@@ -250,15 +250,15 @@ if yes? use-librebol [
         ]
         proto-name: to-c-name proto-name
 
-        ; We trickily shadow the global `librebol_specifier` with a version
+        ; We trickily shadow the global `librebol_binding` with a version
         ; extracted from the passed-in level.
         ;
         e1/emit [info {
             #define INCLUDE_PARAMS_OF_${PROTO-NAME} \
-                LIBREBOL_SPECIFIER_USED();  /* global, before local define */ \
-                RebolSpecifier* librebol_specifier; \
-                librebol_specifier = rebSpecifierFromLevel_internal(level_); \
-                LIBREBOL_SPECIFIER_USED();  /* local, after shadowing */
+                LIBREBOL_BINDING_USED();  /* global, before local define */ \
+                RebolContext* librebol_binding; \
+                librebol_binding = rebBindingFromLevel_internal(level_); \
+                LIBREBOL_BINDING_USED();  /* local, after shadowing */
         }]
         e1/emit newline
     ]
@@ -433,9 +433,9 @@ e/emit [{
      */
     DECLARE_EXTENSION_COLLATOR(${Mod}) {
         /*
-         * Compiler will warn if static librebol_specifier is defined w/o use.
+         * Compiler will warn if static librebol_binding is defined w/o use.
          */
-        LIBREBOL_SPECIFIER_USED();
+        LIBREBOL_BINDING_USED();
 
       #ifdef LIBREBOL_USES_API_TABLE
         /*

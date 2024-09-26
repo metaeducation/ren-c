@@ -185,7 +185,7 @@ Bounce TO_Word(Level* level_, Kind k, const Value* arg)
                 return RAISE(
                     "Can't make ANY-WORD? from path w/more than one WORD!"
                 );
-            Derelativize(OUT, item, Cell_Sequence_Specifier(arg));
+            Derelativize(OUT, item, Cell_Sequence_Binding(arg));
         }
 
         if (Is_Fresh(OUT))

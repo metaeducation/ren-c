@@ -139,16 +139,13 @@ INLINE Option(va_list*) FEED_VAPTR(Feed* feed) {
 
 
 
-// For performance, we always get the specifier from the same location, even
+// For performance, we always get the binding from the same location, even
 // if we're not using an array.  So for the moment, that means using a
 // COMMA! (which for technical reasons has a nullptr binding and is thus
-// always SPECIFIED).  However, Cell_Specifier() only runs on arrays, so
+// always SPECIFIED).  However, Cell_List_Binding() only runs on arrays, so
 // we sneak past that by accessing the node directly.
 //
-#define FEED_SPECIFIER(feed) \
-    cast(Array*, BINDING(FEED_SINGLE(feed)))
-
-#define mutable_FEED_SPECIFIER(feed) \
+#define FEED_BINDING(feed) \
     BINDING(FEED_SINGLE(feed))
 
 #define FEED_ARRAY(feed) \
@@ -354,7 +351,7 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
         // !!! Scans that produce only one value (which are likely very
         // common) can go into feed->fetched and not make an array at all.
         //
-        Specifier* specifier = FEED_SPECIFIER(feed);
+        Context* binding = FEED_BINDING(feed);
         Array* reified = maybe Try_Scan_Variadic_Feed_Utf8_Managed(feed);
 
         if (not reified) {  // rebValue("", ...) [1]
@@ -371,7 +368,7 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
 
         feed->p = Array_Head(reified);
         Init_Any_List_At(FEED_SINGLE(feed), REB_BLOCK, reified, 1);
-        mutable_FEED_SPECIFIER(feed) = specifier;
+        FEED_BINDING(feed) = binding;
         break; }
 
       default:
@@ -515,7 +512,7 @@ INLINE void Inertly_Derelativize_Inheriting_Const(
     const Element* v,
     Feed* feed
 ){
-    Derelativize(out, v, FEED_SPECIFIER(feed));
+    Derelativize(out, v, FEED_BINDING(feed));
 
     if (Not_Cell_Flag(v, EXPLICITLY_MUTABLE))
         out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);
@@ -623,17 +620,17 @@ INLINE Feed* Prep_Array_Feed(
     Option(const Cell*) first,
     const Array* array,
     REBLEN index,
-    Specifier* specifier,
+    Context* binding,
     Flags flags
 ){
-    assert(not specifier or Is_Node_Managed(specifier));
+    assert(not binding or Is_Node_Managed(binding));
 
     Feed* feed = Prep_Feed_Common(preallocated, flags);
 
     if (first) {
         feed->p = unwrap first;
         Init_Any_List_At_Core(
-            FEED_SINGLE(feed), REB_BLOCK, array, index, specifier
+            FEED_SINGLE(feed), REB_BLOCK, array, index, binding
         );
     }
     else {
@@ -641,7 +638,7 @@ INLINE Feed* Prep_Array_Feed(
         if (feed->p == Array_Tail(array))
             feed->p = &PG_Feed_At_End;
         Init_Any_List_At_Core(
-            FEED_SINGLE(feed), REB_BLOCK, array, index + 1, specifier
+            FEED_SINGLE(feed), REB_BLOCK, array, index + 1, binding
         );
     }
 
@@ -667,10 +664,10 @@ INLINE Feed* Prep_Array_Feed(
     return feed;
 }
 
-#define Make_Array_Feed_Core(array,index,specifier) \
+#define Make_Array_Feed_Core(array,index,binding) \
     Prep_Array_Feed( \
         Alloc_Feed(), \
-        nullptr, (array), (index), (specifier), \
+        nullptr, (array), (index), (binding), \
         FEED_MASK_DEFAULT \
     )
 
@@ -741,7 +738,7 @@ INLINE Feed* Prep_Variadic_Feed(
 INLINE Feed* Prep_At_Feed(
     void *preallocated,
     const Cell* list,  // array is extracted and HOLD put on
-    Specifier* specifier,
+    Context* binding,
     Flags parent_flags  // only reads FEED_FLAG_CONST out of this
 ){
     STATIC_ASSERT(CELL_FLAG_CONST == FEED_FLAG_CONST);
@@ -759,15 +756,15 @@ INLINE Feed* Prep_At_Feed(
         nullptr,  // `first` = nullptr, don't inject arbitrary 1st element
         Cell_Array(list),
         VAL_INDEX(list),
-        Derive_Specifier(specifier, list),
+        Derive_Binding(binding, list),
         flags
     );
 }
 
-#define Make_At_Feed_Core(list,specifier) \
+#define Make_At_Feed_Core(list,binding) \
     Prep_At_Feed( \
         Alloc_Feed(), \
-        (list), (specifier), TOP_LEVEL->feed->flags.bits \
+        (list), (binding), TOP_LEVEL->feed->flags.bits \
     );
 
 #define Make_At_Feed(name,list) \

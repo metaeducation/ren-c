@@ -134,12 +134,12 @@ DECLARE_NATIVE(shove)
         Get_Var_May_Fail(
             OUT,  // can't eval directly into arg slot
             At_Level(L),
-            Level_Specifier(L)
+            Level_Binding(L)
         );
         Move_Cell(shovee, stable_OUT);  // variable contents always stable
     }
     else if (Is_Group(right)) {
-        if (Eval_Any_List_At_Throws(OUT, right, Level_Specifier(L)))
+        if (Eval_Any_List_At_Throws(OUT, right, Level_Binding(L)))
             return THROWN;
 
         Move_Cell(shovee, Decay_If_Unstable(OUT));
@@ -188,7 +188,7 @@ DECLARE_NATIVE(shove)
       case PARAMCLASS_NORMAL:  // we can't *quite* match evaluative enfix [1]
       case PARAMCLASS_META: {
         Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;  // will decay if normal
-        if (Eval_Value_Core_Throws(OUT, flags, left, Level_Specifier(L)))
+        if (Eval_Element_Core_Throws(OUT, flags, left, Level_Binding(L)))
             return THROWN;
         if (pclass == PARAMCLASS_NORMAL)
             Decay_If_Unstable(OUT);
@@ -202,11 +202,11 @@ DECLARE_NATIVE(shove)
         break;
 
       case PARAMCLASS_THE:  // cheat and do something usermode can't ATM [2]
-        Derelativize(OUT, left, Level_Specifier(L));
+        Derelativize(OUT, left, Level_Binding(L));
         break;
 
       case PARAMCLASS_SOFT:  // !!! can we trust enfix to just do this part?
-        Derelativize(OUT, left, Level_Specifier(L));
+        Derelativize(OUT, left, Level_Binding(L));
         break;
 
       default:
@@ -460,11 +460,11 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 
     assert(REF(step));
 
-    Specifier* specifier = Level_Specifier(SUBLEVEL);
+    Context* binding = Level_Binding(SUBLEVEL);
     VAL_INDEX_UNBOUNDED(source) = Level_Array_Index(SUBLEVEL);  // new index
     Drop_Level(SUBLEVEL);
 
-    BINDING(source) = specifier;  // integrate LETs [6]
+    BINDING(source) = binding;  // integrate LETs [6]
 
 } result_in_out: {  //////////////////////////////////////////////////////////
 

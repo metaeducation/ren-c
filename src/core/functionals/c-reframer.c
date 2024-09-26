@@ -182,9 +182,9 @@ bool Init_Invokable_From_Feed_Throws(
     StackIndex base = TOP_INDEX;
 
     if (Is_Word(v) or Is_Tuple(v) or Is_Path(v))
-        Get_Var_May_Fail(out, v, FEED_SPECIFIER(feed));  // !!! throws?
+        Get_Var_May_Fail(out, v, FEED_BINDING(feed));  // !!! throws?
     else
-        Derelativize(out, v, FEED_SPECIFIER(feed));
+        Derelativize(out, v, FEED_BINDING(feed));
 
     if (not first)  // nothing passed in, so we used a feed value
         Fetch_Next_In_Feed(feed);  // we've seen it now

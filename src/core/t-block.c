@@ -183,7 +183,7 @@ Bounce MAKE_List(
         // paths should be part of the MOLDing logic -or- a path with embedded
         // line markers should use construction syntax to preserve them.
 
-        Specifier* derived = Derive_Specifier(Cell_Specifier(arg), list);
+        Context* derived = Derive_Binding(Cell_List_Binding(arg), list);
         return Init_Series_At_Core(
             OUT,
             heart,
@@ -337,7 +337,7 @@ Bounce TO_List(Level* level_, Kind k, const Value* arg) {
             Derelativize_Sequence_At(
                 PUSH(),
                 c_cast(Element*, arg),
-                Cell_Sequence_Specifier(arg),
+                Cell_Sequence_Binding(arg),
                 i
             );
         }
@@ -819,7 +819,7 @@ REBTYPE(List)
 {
     Value* list = D_ARG(1);
 
-    Specifier* specifier = Cell_Specifier(list);
+    Context* binding = Cell_List_Binding(list);
 
     Option(SymId) id = Symbol_Id(verb);
 
@@ -929,7 +929,7 @@ REBTYPE(List)
                 Copy_Array_At_Max_Shallow(arr, index, len)
             );
         else
-            Derelativize(OUT, &Array_Head(arr)[index], specifier);
+            Derelativize(OUT, &Array_Head(arr)[index], binding);
 
         Remove_Flex_Units(arr, index, len);
         return OUT; }
@@ -1002,7 +1002,7 @@ REBTYPE(List)
         if (ret >= limit)
             return nullptr;
 
-        Derelativize(OUT, Array_At(arr, ret), specifier);
+        Derelativize(OUT, Array_At(arr, ret), binding);
         return Inherit_Const(stable_OUT, list); }
 
     //-- Modification:
@@ -1105,7 +1105,7 @@ REBTYPE(List)
         );
 
         Init_Any_List(OUT, Cell_Heart_Ensure_Noquote(list), copy);
-        Tweak_Cell_Specifier(OUT, Cell_Specifier(list));
+        BINDING(OUT) = Cell_List_Binding(list);
         return OUT; }
 
     //-- Special actions:

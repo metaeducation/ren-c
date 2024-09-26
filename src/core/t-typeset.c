@@ -139,7 +139,7 @@ void Shutdown_Typesets(void)
 void Set_Parameter_Spec(
     Cell* param,  // target is usually a stack value [1]
     const Cell* spec,
-    Specifier* spec_specifier
+    Context* spec_binding
 ){
     ParamClass pclass = Cell_ParamClass(param);
     assert(pclass != PARAMCLASS_0);  // must have class
@@ -168,7 +168,7 @@ void Set_Parameter_Spec(
     Byte* optimized_tail = optimized + sizeof(uintptr_t);
 
     for (; item != tail; ++item, ++dest) {
-        Derelativize(dest, item, spec_specifier);
+        Derelativize(dest, item, spec_binding);
         Clear_Cell_Flag(dest, NEWLINE_BEFORE);
 
         if (Is_Quasiform(item)) {
@@ -247,7 +247,7 @@ void Set_Parameter_Spec(
 
         const Value* lookup;
         if (Cell_Heart(item) == REB_WORD) {  // allow abstraction [3]
-            lookup = maybe Lookup_Word(item, spec_specifier);
+            lookup = maybe Lookup_Word(item, spec_binding);
             if (not lookup)  // not even bound to anything
                 fail (item);
             if (Is_Nothing(lookup)) {  // bound but not set

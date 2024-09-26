@@ -47,7 +47,7 @@
 
 #define L_next          At_Feed(L->feed)
 #define L_next_gotten   L->feed->gotten
-#define L_specifier     Level_Specifier(L)
+#define L_binding     Level_Binding(L)
 
 #if DEBUG_COUNT_TICKS && DEBUG_HAS_PROBE
 
@@ -62,7 +62,7 @@ void Dump_Level_Location(Level* L)
         L->executor == &Stepper_Executor  // looks ahead by one
         and Level_State_Byte(L) != ST_STEPPER_INITIAL_ENTRY  // L->u corrupt
     ){
-        Derelativize(dump, cast(Element*, &L->u.eval.current), L_specifier);
+        Derelativize(dump, cast(Element*, &L->u.eval.current), L_binding);
         printf("Dump_Level_Location() current\n");
         PROBE(dump);
     }
@@ -77,7 +77,7 @@ void Dump_Level_Location(Level* L)
         }
     }
     else {
-        Derelativize(dump, L_next, L_specifier);
+        Derelativize(dump, L_next, L_binding);
         printf("Dump_Level_Location() next\n");
         PROBE(dump);
 
@@ -99,7 +99,7 @@ void Dump_Level_Location(Level* L)
             REB_BLOCK,
             Level_Array(L),
             Level_Array_Index(L),
-            L_specifier
+            L_binding
         );
         PROBE(dump);
     }
@@ -128,7 +128,7 @@ static void Evaluator_Shared_Checks_Debug(Level* L)
     //
     if (L_next_gotten and not Is_Frame(L_next)) {
         assert(Is_Word(L_next));
-        assert(Lookup_Word(L_next, L_specifier) == L_next_gotten);
+        assert(Lookup_Word(L_next, L_binding) == L_next_gotten);
     }
 
     assert(L == TOP_LEVEL);
@@ -180,7 +180,7 @@ static void Evaluator_Shared_Checks_Debug(Level* L)
 //
 //     L->feed
 //     Contains the Array* or C va_list of subsequent values to fetch...as
-//     well as the specifier.  The current value, its cached "gotten" value if
+//     well as the binding.  The current value, its cached "gotten" value if
 //     it is a WORD!, and other information is stored here through a level of
 //     indirection so it may be shared and updated between recursions.
 //

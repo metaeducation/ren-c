@@ -32,7 +32,7 @@
 // from, because all relative words are created during the copy of the
 // bodies of functions.  The array accessors must err on the safe side and
 // give back a relative value.  Many inspection operations are legal on
-// a relative value, but it cannot be copied without a "specifier" FRAME!
+// a relative value, but it cannot be copied without a "binding" FRAME!
 // context (which is also required to do a GET_VAR lookup).
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//

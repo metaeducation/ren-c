@@ -16,7 +16,7 @@ source: [
     ;
     <msc:/wd4204>
 
-    <msc:/wd4459>  ; global shadowing ok, see LIBREBOL_SPECIFIER
+    <msc:/wd4459>  ; global shadowing ok, see LIBREBOL_BINDING
 ]
 includes: copy [
     %prep/extensions/locale ;for %tmp-extensions-locale-init.inc

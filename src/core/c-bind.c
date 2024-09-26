@@ -239,7 +239,7 @@ bool Try_Bind_Word(const Value* context, Value* word)
 
 
 //
-//  Make_Let_Patch: C
+//  Make_Let_Variable: C
 //
 // Efficient form of "mini-object" allocation that can hold exactly one
 // variable.  Unlike a context, it does not have the ability to hold an
@@ -248,12 +248,12 @@ bool Try_Bind_Word(const Value* context, Value* word)
 //
 // 1. The way it is designed, the list of lets terminates in either a nullptr
 //    or a context pointer that represents the specifying frame for the chain.
-//    So we can simply point to the existing specifier...whether it is a let,
+//    So we can simply point to the existing binding...whether it is a let,
 //    a use, a frame context, or nullptr.
 //
-Stub* Make_Let_Patch(
+Let* Make_Let_Variable(
     const Symbol* symbol,
-    Specifier* specifier
+    Context* parent
 ){
     Stub* let = Alloc_Singular(  // payload is one variable
         FLAG_FLAVOR(LET)
@@ -264,15 +264,15 @@ Stub* Make_Let_Patch(
 
     Init_Nothing(x_cast(Value*, Stub_Cell(let)));  // start as unset
 
-    if (specifier) {
+    if (parent) {
         assert(
-            Is_Stub_Let(specifier)
-            or Is_Stub_Use(specifier)
-            or Is_Stub_Varlist(specifier)
+            Is_Stub_Let(parent)
+            or Is_Stub_Use(parent)
+            or Is_Stub_Varlist(parent)
         );
-        assert(Is_Node_Managed(specifier));
+        assert(Is_Node_Managed(parent));
     }
-    LINK(NextLet, let) = specifier;  // linked list [1]
+    LINK(NextLet, let) = parent;  // linked list [1]
 
     MISC(LetReserved, let) = nullptr;  // not currently used
 
@@ -298,7 +298,7 @@ Stub* Make_Let_Patch(
 // failure mode while it's running...even if the context is inaccessible or
 // the word is unbound.  Errors should be raised by callers if applicable.
 //
-// 1. We want to continue the next_virtual loop from inside sub-loops, which
+// 1. We want to continue the next_context loop from inside sub-loops, which
 //    means we need a `goto` and not a `continue`.  But putting the goto at
 //    the end of the loop would jump over variable initializations.  Stylizing
 //    this way makes it work without a warning.
@@ -331,12 +331,12 @@ Stub* Make_Let_Patch(
 Option(Stub*) Get_Word_Container(
     REBLEN *index_out,
     const Element* any_word,
-    Specifier* specifier_in,
+    Context* context,
     enum Reb_Attach_Mode mode
 ){
     Corrupt_If_Debug(*index_out);  // corrupt index to make sure it gets set
 
-    Flex* binding = BINDING(any_word);
+    Context* binding = BINDING(any_word);
     const Symbol* symbol = Cell_Word_Symbol(any_word);
 
     if (CELL_WORD_INDEX_I32(any_word) == INDEX_ATTACHED) {
@@ -359,8 +359,6 @@ Option(Stub*) Get_Word_Container(
         return Singular_From_Cell(var);
     }
 
-    Specifier* specifier = specifier_in;
-
     if (IS_WORD_BOUND(any_word)) {  // leave binding alone
         *index_out = VAL_WORD_INDEX(any_word);
         return binding;
@@ -368,118 +366,126 @@ Option(Stub*) Get_Word_Container(
 
     VarList* attach = nullptr;  // where to attach variable if not found
 
-    while (specifier) {
-        goto loop_body;  // avoid compiler warnings on `goto next_virtual` [1]
+    Context* c = context;
 
-      next_virtual:
-        specifier = NextVirtual(specifier);
+  #if DEBUG
+    Corrupt_Pointer_If_Debug(context);  // make sure we use `c` below
+    Context* context_in = c;  // save in local for easier debugging
+    USED(context_in);
+  #endif
+
+    while (c) {
+        goto loop_body;  // avoid compiler warnings on `goto next_context` [1]
+
+      next_context:
+        c = Context_Parent(c);
         continue;
 
       loop_body:
 
-        if (Is_Stub_Varlist(specifier)) {
-            VarList* ctx = cast(VarList*, specifier);
+        if (Is_Stub_Varlist(c)) {
+            VarList* vlist = cast(VarList*, c);
 
-            if (CTX_TYPE(ctx) == REB_MODULE) {
-                Value* var = MOD_VAR(ctx, symbol, true);
-                if (var) {
+            if (CTX_TYPE(vlist) == REB_MODULE) {
+                Value* slot = MOD_VAR(vlist, symbol, true);
+                if (slot) {
                     *index_out = INDEX_PATCHED;
-                    return Singular_From_Cell(var);
+                    return Singular_From_Cell(slot);
                 }
 
-                if (ctx == Lib_Context or ctx == Sys_Context)  // "strict"
-                    goto next_virtual;
+                if (vlist == Lib_Context or vlist == Sys_Context)  // "strict"
+                    goto next_context;
 
                 if (mode == ATTACH_WRITE) {  // only write to first module
                     *index_out = INDEX_PATCHED;
-                    var = Append_Context(ctx, symbol);
-                    Init_Nothing(var);
-                    return Singular_From_Cell(var);
+                    slot = Append_Context(vlist, symbol);
+                    Init_Nothing(slot);
+                    return Singular_From_Cell(slot);
                 }
 
                 if (not attach)  // non-strict, allow later emergence
-                    attach = ctx;
+                    attach = vlist;
 
-                goto next_virtual;
+                goto next_context;
             }
 
             if (
-                CTX_TYPE(ctx) == REB_FRAME
+                CTX_TYPE(vlist) == REB_FRAME
                 and binding  // word has a cache for if it's in an action frame
                 and Action_Is_Base_Of(
                     cast(Action*, binding),
-                    CTX_FRAME_PHASE(ctx)
+                    CTX_FRAME_PHASE(vlist)
                 )
             ){
                 assert(CELL_WORD_INDEX_I32(any_word) <= 0);
                 if (CELL_WORD_INDEX_I32(any_word) == 0)
-                    goto next_virtual;
+                    goto next_context;
                 *index_out = -(CELL_WORD_INDEX_I32(any_word));
-                return ctx;
+                return vlist;
             }
 
             REBINT len = Find_Symbol_In_Context(  // have to search manually
-                Varlist_Archetype(ctx),
+                Varlist_Archetype(vlist),
                 symbol,
                 true
             );
 
             // Note: if frame, caching here seems to slow things down?
           #ifdef CACHE_FINDINGS_BUT_SEEMS_TO_SLOW_THINGS_DOWN
-            if (CTX_TYPE(ctx) == REB_FRAME) {
+            if (CTX_TYPE(vlist) == REB_FRAME) {
                 if (CELL_WORD_INDEX_I32(any_word) <= 0) {  // cache in unbounds
                     CELL_WORD_INDEX_I32(m_cast(Cell*, any_word)) = -(len);
-                    BINDING(m_cast(Cell*, any_word)) = CTX_FRAME_PHASE(ctx);
+                    BINDING(m_cast(Cell*, any_word)) = CTX_FRAME_PHASE(vlist);
                 }
             }
           #endif
 
             if (len != 0) {
                 *index_out = len;
-                return specifier;
+                return vlist;
             }
 
-          goto next_virtual;
+          goto next_context;
         }
 
-        if (Is_Stub_Let(specifier)) {
-            if (INODE(LetSymbol, specifier) == symbol) {
+        if (Is_Stub_Let(c)) {
+            if (INODE(LetSymbol, c) == symbol) {
                 *index_out = INDEX_PATCHED;
-                return specifier;
+                return c;
             }
-            goto next_virtual;
+            goto next_context;
         }
 
-        assert(Is_Stub_Use(specifier));
+        assert(Is_Stub_Use(c));
 
         if (  // some USEs only affect SET-WORD!s
-            Get_Cell_Flag(Stub_Cell(specifier), USE_NOTE_SET_WORDS)
+            Get_Cell_Flag(Stub_Cell(c), USE_NOTE_SET_WORDS)
             and REB_SET_WORD != Cell_Heart(any_word)
         ){
-            goto next_virtual;
+            goto next_context;
         }
 
-        if (Is_Module(Stub_Cell(specifier))) {
-            VarList* mod = Cell_Varlist(Stub_Cell(specifier));
+        if (Is_Module(Stub_Cell(c))) {
+            VarList* mod = Cell_Varlist(Stub_Cell(c));
 
             Value* var = MOD_VAR(mod, symbol, true);
             if (var) {
                 *index_out = INDEX_PATCHED;
                 return Singular_From_Cell(var);
             }
-            goto next_virtual;
+            goto next_context;
         }
 
-        if (Is_Word(Stub_Cell(specifier))) {  // OVERBIND use of single WORD!
-            Element* word = u_cast(Element*, Stub_Cell(specifier));
+        if (Is_Word(Stub_Cell(c))) {  // OVERBIND use of single WORD!
+            Element* word = u_cast(Element*, Stub_Cell(c));
             if (Cell_Word_Symbol(word) == symbol) {
                 *index_out = VAL_WORD_INDEX(word);
                 return BINDING(word);
             }
-            goto next_virtual;
+            goto next_context;
         }
 
-        VarList* overload = Cell_Varlist(Stub_Cell(specifier));
+        VarList* overload = Cell_Varlist(Stub_Cell(c));
 
         REBLEN index = 1;
         const Key* key_tail;
@@ -495,7 +501,7 @@ Option(Stub*) Get_Word_Container(
             return overload;
         }
 
-        goto next_virtual;
+        goto next_context;
     }
 
     if (attach) {
@@ -608,7 +614,7 @@ DECLARE_NATIVE(let)
 
     UNUSED(ARG(expression));
     Level* L = level_;  // fake variadic [1]
-    Specifier* L_specifier = Level_Specifier(L);
+    Context* L_binding = Level_Binding(L);
 
     Value* bindings_holder = ARG(return);
 
@@ -672,14 +678,14 @@ DECLARE_NATIVE(let)
     // so it can be used in a reevaluation.  For WORD!/BLOCK! forms of LET it
     // just writes the rebound copy into the OUT cell.
 
-    Specifier* bindings = L_specifier;  // specifier chain we may be adding to
+    Context* bindings = L_binding;  // context chain we may be adding to
 
     if (bindings and Not_Node_Managed(bindings))
         Set_Node_Managed_Bit(bindings);  // natives don't always manage
 
     if (Cell_Heart(vars) == REB_WORD or Cell_Heart(vars) == REB_SET_WORD) {
         const Symbol* symbol = Cell_Word_Symbol(vars);
-        bindings = Make_Let_Patch(symbol, bindings);
+        bindings = Make_Let_Variable(symbol, bindings);
 
         Value* where;
         if (Cell_Heart(vars) == REB_SET_WORD) {
@@ -701,7 +707,7 @@ DECLARE_NATIVE(let)
 
         const Element* tail;
         const Element* item = Cell_List_At(&tail, vars);
-        Specifier* item_specifier = Cell_Specifier(vars);
+        Context* item_binding = Cell_List_Binding(vars);
 
         StackIndex base = TOP_INDEX;
 
@@ -709,17 +715,17 @@ DECLARE_NATIVE(let)
 
         for (; item != tail; ++item) {
             const Element* temp = item;
-            Specifier* temp_specifier = item_specifier;
+            Context* temp_binding = item_binding;
 
             if (Is_Quoted(temp)) {
-                Derelativize(PUSH(), temp, temp_specifier);
+                Derelativize(PUSH(), temp, temp_binding);
                 Unquotify(TOP, 1);  // drop quote in output block [5]
                 altered = true;
                 continue;  // do not make binding
             }
 
             if (Is_Group(temp)) {  // evaluate non-QUOTED? groups in LET block
-                if (Eval_Any_List_At_Throws(OUT, temp, item_specifier))
+                if (Eval_Any_List_At_Throws(OUT, temp, item_binding))
                     return THROWN;
 
                 if (Is_Void(OUT)) {
@@ -729,7 +735,7 @@ DECLARE_NATIVE(let)
                     fail (Error_Bad_Antiform(OUT));
 
                 temp = cast(Element*, OUT);
-                temp_specifier = SPECIFIED;
+                temp_binding = SPECIFIED;
 
                 altered = true;
             }
@@ -737,16 +743,16 @@ DECLARE_NATIVE(let)
             switch (Cell_Heart(temp)) {  // permit quasi
               case REB_ISSUE:  // is multi-return opt-in for dialect, passthru
               case REB_BLANK:  // is multi-return opt-out for dialect, passthru
-                Derelativize(PUSH(), temp, temp_specifier);
+                Derelativize(PUSH(), temp, temp_binding);
                 break;
 
               case REB_WORD:
               case REB_SET_WORD:
               case REB_META_WORD:
               case REB_THE_WORD: {
-                Derelativize(PUSH(), temp, temp_specifier);  // !!! no derel
+                Derelativize(PUSH(), temp, temp_binding);  // !!! no derel
                 const Symbol* symbol = Cell_Word_Symbol(temp);
-                bindings = Make_Let_Patch(symbol, bindings);
+                bindings = Make_Let_Variable(symbol, bindings);
                 CELL_WORD_INDEX_I32(TOP) = INDEX_PATCHED;
                 BINDING(TOP) = bindings;
                 break; }
@@ -831,7 +837,7 @@ DECLARE_NATIVE(let)
     // that this can create the problem of applying the binding twice; this
     // needs systemic review.
 
-    Specifier* bindings = Cell_Specifier(bindings_holder);
+    Context* bindings = Cell_List_Binding(bindings_holder);
     BINDING(FEED_SINGLE(L->feed)) = bindings;
 
     if (Is_Pack(OUT))
@@ -858,25 +864,25 @@ DECLARE_NATIVE(add_let_binding)
 // expose the "Specifier" chain in arrays.  So the arrays themselves are
 // used as proxies for that.  Usermode dialects (like UPARSE) update their
 // environment by passing in a rule block with a version of that rule block
-// with an updated specifier.  A function that wants to add to the evaluator
+// with an updated binding.  A function that wants to add to the evaluator
 // environment uses the frame at the moment.
 {
     INCLUDE_PARAMS_OF_ADD_LET_BINDING;
 
     Value* env = ARG(environment);
-    Specifier* before;
+    Context* parent;
 
     if (Is_Frame(env)) {
         Level* L = Level_Of_Varlist_May_Fail(Cell_Varlist(env));
-        before = Level_Specifier(L);
-        if (before)
-            Set_Node_Managed_Bit(before);
+        parent = Level_Binding(L);
+        if (parent)
+            Set_Node_Managed_Bit(parent);
     } else {
         assert(Any_List(env));
-        before = Cell_Specifier(env);
+        parent = Cell_List_Binding(env);
     }
 
-    Specifier* let = Make_Let_Patch(Cell_Word_Symbol(ARG(word)), before);
+    Let* let = Make_Let_Variable(Cell_Word_Symbol(ARG(word)), parent);
 
     Move_Cell(Stub_Cell(let), ARG(value));
 
@@ -908,12 +914,12 @@ DECLARE_NATIVE(add_use_object) {
     Element* object = cast(Element*, ARG(object));
 
     Level* L = Level_Of_Varlist_May_Fail(Cell_Varlist(ARG(frame)));
-    Specifier* L_specifier = Level_Specifier(L);
+    Context* L_binding = Level_Binding(L);
 
-    if (L_specifier)
-        Set_Node_Managed_Bit(L_specifier);
+    if (L_binding)
+        Set_Node_Managed_Bit(L_binding);
 
-    Specifier* use = Make_Use_Core(object, L_specifier, REB_WORD);
+    Use* use = Make_Use_Core(object, L_binding, REB_WORD);
 
     BINDING(FEED_SINGLE(L->feed)) = use;
 
@@ -932,7 +938,7 @@ DECLARE_NATIVE(add_use_object) {
 // values we are operating on here live in an array.
 //
 // 1. In Ren-C's binding model, function bodies are conceptually unbound, and
-//    need the specifier of the frame instance plus whatever specifier was
+//    need the binding of the frame instance plus whatever binding was
 //    on the body to resolve the words.  That resolution happens every time
 //    the body is run.  Since function frames don't expand in size, we can
 //    speed the lookup process for unbound words by reusing their binding
@@ -1068,7 +1074,7 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
   blockscope {
     const Array* original = Cell_Array(body);
     REBLEN index = VAL_INDEX(body);
-   /* Specifier* specifier = Cell_Specifier(body); */
+   /* Context* binding = Cell_List_Binding(body); */
     REBLEN tail = Cell_Series_Len_At(body);
     assert(tail <= Array_Len(original));
 
@@ -1133,13 +1139,13 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
 //
 // The context is effectively an ordinary object, and outlives the loop:
 //
-//     x-word: ~s
-//     for-each x [1 2 3] [x-word: 'x, break]
+//     x-word: ~
+//     for-each x [1 2 3] [x-word: $x, break]
 //     get x-word  ; returns 3
 //
-// Ren-C adds a feature of letting LIT-WORD!s be used to indicate that the
+// Ren-C adds a feature of letting THE-WORD!s be used to indicate that the
 // loop variable should be written into the existing bound variable that the
-// LIT-WORD! specified.  If all loop variables are of this form, then no
+// THE-WORD! specified.  If all loop variables are of this form, then no
 // copy will be made.
 //
 // !!! Loops should probably free their objects by default when finished
@@ -1167,10 +1173,10 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     const Element* tail;
     const Element* item;
 
-    Specifier* specifier;
+    Context* binding;  // needed if looking up @var to write to
     bool rebinding;
     if (Is_Block(spec)) {  // walk the block for errors BEFORE making binder
-        specifier = Cell_Specifier(spec);
+        binding = Cell_List_Binding(spec);
         item = Cell_List_At(&tail, spec);
 
         const Element* check = item;
@@ -1196,7 +1202,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     else {
         item = cast(Element*, spec);
         tail = cast(Element*, spec);
-        specifier = SPECIFIED;
+        binding = SPECIFIED;
         rebinding = Is_Word(item) or Is_Meta_Word(item);
     }
 
@@ -1278,7 +1284,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
 
           blockscope {
             Value* var = Append_Context(c, symbol);
-            Derelativize(var, item, specifier);
+            Derelativize(var, item, binding);
             Set_Cell_Flag(var, BIND_NOTE_REUSE);
             Set_Cell_Flag(var, PROTECTED);
           }
@@ -1425,7 +1431,7 @@ void Virtual_Bind_Deep_To_Existing_Context(
 
     BINDING(list) = Make_Use_Core(
         Varlist_Archetype(context),
-        Cell_Specifier(list),
+        Cell_List_Binding(list),
         affected
     );
 }
@@ -1438,11 +1444,15 @@ void Virtual_Bind_Deep_To_Existing_Context(
 //
 void Assert_Cell_Binding_Valid_Core(const Cell* cell)
 {
-    Stub* binding = BINDING(cell);
+    /* assert(Is_Bindable_Heart(cell)); */  // called with nullptr on text/etc.
+
+    Context* binding = BINDING(cell);  // read doesn't assert, only write
     if (not binding)
         return;
 
     Heart heart = Cell_Heart_Unchecked(cell);
+    if (heart != REB_COMMA)  // weird trick used by va_list feeds
+        assert(Is_Bindable_Heart(heart));
 
     assert(Is_Node(binding));
     assert(Is_Node_Managed(binding));
@@ -1450,26 +1460,42 @@ void Assert_Cell_Binding_Valid_Core(const Cell* cell)
     assert(Not_Node_Free(binding));
 
     if (heart == REB_FRAME) {
-        assert(Is_Stub_Varlist(binding));  // actions/frames bind to contexts only
+        assert(Is_Stub_Varlist(binding));  // actions/frames bind contexts only
         return;
     }
 
     if (Is_Stub_Let(binding)) {
-        if (Any_Word_Kind(heart))
+        if (Any_Wordlike(cell))
             assert(CELL_WORD_INDEX_I32(cell) == INDEX_PATCHED);
         return;
     }
 
-    if (
-        Is_Stub_Varlist(binding)
-        and CTX_TYPE(cast(VarList*, binding)) == REB_MODULE
-    ){
+    if (Is_Stub_Patch(binding)) {
+        assert(
+            Any_Wordlike(cell)
+            and CELL_WORD_INDEX_I32(cell) == INDEX_PATCHED
+        );
+        return;
+    }
+
+    if (Is_Stub_Use(binding)) {
+        assert(Any_Listlike(cell));  // can't bind words to use
+        return;
+    }
+
+    if (Is_Stub_Details(binding)) {  // relative binding
+        /* assert(Any_Listlike(cell)); */  // weird word cache trick uses
+        return;
+    }
+
+    assert(Is_Stub_Varlist(binding));  // or SeaOfVars...
+
+    if (CTX_TYPE(cast(VarList*, binding)) == REB_MODULE) {
         if (not (
-            Any_List_Kind(heart)
-            or Any_Sequence_Kind(heart)
-            or heart == REB_COMMA  // feed cells, use for specifier ATM
+            Any_Listlike(cell)
+            or heart == REB_COMMA  // feed cells, use for binding ATM
         )){
-            assert(Any_Word_Kind(heart));
+            assert(Any_Wordlike(cell));
             assert(CELL_WORD_INDEX_I32(cell) == INDEX_ATTACHED);
         }
     }

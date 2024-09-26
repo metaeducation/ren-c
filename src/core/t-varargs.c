@@ -47,7 +47,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
     Atom* out,
     enum Reb_Vararg_Op op,
     Option(const Element*) opt_look, // the first value in the varargs input
-    Specifier* specifier,
+    Context* binding,
     ParamClass pclass
 ){
     if (not opt_look) {
@@ -75,7 +75,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         // Look ahead, and if actively bound see if it's to an enfix function
         // and the rules apply.
 
-        const Value* child_gotten = maybe Lookup_Word(look, specifier);
+        const Value* child_gotten = maybe Lookup_Word(look, binding);
 
         if (child_gotten and Is_Action(child_gotten)) {
             if (Is_Enfixed(child_gotten)) {
@@ -102,7 +102,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         if (pclass == PARAMCLASS_JUST)
             Copy_Cell(out, look);
         else if (pclass == PARAMCLASS_THE)
-            Derelativize(out, look, specifier);
+            Derelativize(out, look, binding);
         else
             fail (Error_Varargs_No_Look_Raw()); // hard quote only
 
@@ -164,7 +164,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             out,
             op,
             Is_Cell_Poisoned(shared) ? nullptr : Cell_List_Item_At(shared),
-            Is_Cell_Poisoned(shared) ? SPECIFIED : Cell_Specifier(shared),
+            Is_Cell_Poisoned(shared) ? SPECIFIED : Cell_List_Binding(shared),
             pclass
         )){
             goto type_check_and_return;
@@ -216,7 +216,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             Derelativize(
                 out,
                 Cell_List_Item_At(shared),
-                Cell_Specifier(shared)
+                Cell_List_Binding(shared)
             );
             VAL_INDEX_UNBOUNDED(shared) += 1;
             break;
@@ -229,7 +229,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         case PARAMCLASS_SOFT:
             if (Is_Soft_Escapable_Group(Cell_List_Item_At(shared))) {
                 if (Eval_Any_List_At_Throws(
-                    out, Cell_List_Item_At(shared), Cell_Specifier(shared)
+                    out, Cell_List_Item_At(shared), Cell_List_Binding(shared)
                 )){
                     return true;
                 }
@@ -238,7 +238,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 Derelativize(
                     out,
                     Cell_List_Item_At(shared),
-                    Cell_Specifier(shared)
+                    Cell_List_Binding(shared)
                 );
             }
             VAL_INDEX_UNBOUNDED(shared) += 1;
@@ -275,7 +275,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             out,
             op,
             look,
-            Level_Specifier(L),
+            Level_Binding(L),
             pclass
         )){
             goto type_check_and_return;
@@ -307,7 +307,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 if (Eval_Any_List_At_Throws(
                     out,
                     At_Level(L),
-                    Level_Specifier(L)
+                    Level_Binding(L)
                 )){
                     return true;
                 }

@@ -739,31 +739,18 @@ typedef Stub Flex;
     struct String : public Binary {};  // UTF8-constrained Binary
     struct Symbol : public String {};  // WORD!-constrained immutable String
 
-    struct VarList : public Flex {};  // Array is implementation detail
-
     struct BookmarkList : public Flex {};
 
     struct Map : public Flex {};  // the "pairlist" is the identity
-
-    struct KeyList : public Flex {};
 #else
     typedef Flex Binary;
     typedef Flex String;
     typedef Flex Symbol;
 
-    typedef Flex VarList;
-
     typedef Flex BookmarkList;
 
     typedef Flex Map;
-
-    typedef Flex KeyList;
 #endif
-
-// It may become interesting to say that a specifier can be a pairing or
-// a Value* of some kind, but currently all instances are array-derived.
-//
-typedef Stub Specifier;
 
 
 #define FLEX_MASK_SYMBOL \

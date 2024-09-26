@@ -40,38 +40,36 @@
 //
 //  Splice_Block_Into_Feed: C
 //
+//
+// 1. The mechanics for taking and releasing holds on arrays needs work, but
+//    this effectively releases the hold on the code array while the splice is
+//    running.  It does so because the holding flag is currently on a
+//    feed-by-feed basis.  It should be on a splice-by-splice basis.
+//
+// 2. Each feed has a static allocation of a Stub-sized entity for managing
+//    its "current splice".  This splicing action will pre-empt that, so it
+//    is moved into a dynamically allocated splice which is then linked to
+//    be used once the splice runs out.
+//
+// 3. The feed->p (retrieved by At_Feed()) which would have been seen next has
+//    to be preserved as the first thing to get when the saved splice happens.
+//
 void Splice_Block_Into_Feed(Feed* feed, const Value* splice) {
-    //
-    // !!! The mechanics for taking and releasing holds on arrays needs work,
-    // but this effectively releases the hold on the code array while the
-    // splice is running.  It does so because the holding flag is currently
-    // on a feed-by-feed basis.  It should be on a splice-by-splice basis.
-    //
-    if (Get_Feed_Flag(feed, TOOK_HOLD)) {
+    if (Get_Feed_Flag(feed, TOOK_HOLD)) {  // !!! holds need work [1]
         assert(Get_Flex_Info(FEED_ARRAY(feed), HOLD));
         Clear_Flex_Info(FEED_ARRAY(feed), HOLD);
         Clear_Feed_Flag(feed, TOOK_HOLD);
     }
 
-    // Each feed has a static allocation of a Stub-sized entity for managing
-    // its "current splice".  This splicing action will pre-empt that, so it
-    // is moved into a dynamically allocated splice which is then linked to
-    // be used once the splice runs out.
-    //
     if (FEED_IS_VARIADIC(feed) or Not_End(feed->p)) {
-        Stub* saved = Alloc_Singular(
+        Stub* saved = Alloc_Singular(  // save old feed stub [2]
             FLAG_FLAVOR(FEED) | NODE_FLAG_MANAGED  // no tracking
         );
         Mem_Copy(saved, FEED_SINGULAR(feed), sizeof(Stub));
         assert(Not_Node_Managed(saved));
 
-        // old feed data resumes after the splice
-        LINK(Splice, &feed->singular) = saved;
-
-        // The feed->p which would have been seen next has to be preserved
-        // as the first thing to run when the next splice happens.
-        //
-        MISC(Pending, saved) = At_Feed(feed);
+        LINK(Splice, &feed->singular) = saved;  // old feed now after splice
+        MISC(Pending, saved) = At_Feed(feed);  // save feed->p [3]
     }
 
     feed->p = Cell_List_Item_At(splice);
@@ -80,10 +78,10 @@ void Splice_Block_Into_Feed(Feed* feed, const Value* splice) {
 
     MISC(Pending, &feed->singular) = nullptr;
 
-    // !!! See remarks above about this per-feed hold logic that should be
-    // per-splice hold logic.  Pending whole system review of iteration.
-    //
-    if (Not_Feed_At_End(feed) and Not_Flex_Info(FEED_ARRAY(feed), HOLD)) {
+    if (  // take per-feed hold, should be per-splice [1]
+        Not_Feed_At_End(feed)
+        and Not_Flex_Info(FEED_ARRAY(feed), HOLD)
+    ){
         Set_Flex_Info(FEED_ARRAY(feed), HOLD);
         Set_Feed_Flag(feed, TOOK_HOLD);
     }
@@ -121,8 +119,8 @@ Bounce Macro_Dispatcher(Level* const L)
     );
 
     Copy_Cell(SPARE, body);
-    node_LINK(NextVirtual, L->varlist) = Cell_Specifier(body);
-    Tweak_Cell_Specifier(SPARE, L->varlist);
+    node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(body);
+    BINDING(SPARE) = L->varlist;
 
     // Must catch RETURN ourselves, as letting it bubble up to generic UNWIND
     // handling would return a BLOCK! instead of splice it.

@@ -933,12 +933,12 @@ void API_rebModifyHandleCleaner(RebolValue* v, CLEANUP_CFUNC *cleaner) {
 // recent ACTION! on the stack.
 //
 const RebolNodeInternal* API_rebArgR(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
-    UNUSED(specifier_ref);  // not used...should not be a variadic
+    UNUSED(binding_ref);  // not used...should not be a variadic
 
     Level* L = TOP_LEVEL;
     Phase* act = Level_Phase(L);
@@ -982,12 +982,12 @@ const RebolNodeInternal* API_rebArgR(
 // an "safer" API handle to the argument.
 //
 RebolValue* API_rebArg(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
-    const void* argR = API_rebArgR(specifier_ref, p, vaptr);
+    const void* argR = API_rebArgR(binding_ref, p, vaptr);
     if (not argR)
         return nullptr;
 
@@ -1058,7 +1058,7 @@ RebolValue* API_rebArg(
 //    designed to give back errors react, e.g. rebEntrapInterruptible()
 //
 static bool Run_Va_Throws(  // va_end() handled by feed for all cases [1]
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     Atom* out,
     bool interruptible,  // whether a HALT can cause a longjmp/throw
     Flags flags,
@@ -1070,12 +1070,12 @@ static bool Run_Va_Throws(  // va_end() handled by feed for all cases [1]
         FEED_MASK_DEFAULT
     );
 
-    if (specifier_ref and *specifier_ref) {
-        assert(Is_Node_Managed(*specifier_ref));
-        mutable_FEED_SPECIFIER(feed) = cast(Stub*, *specifier_ref);
+    if (binding_ref and *binding_ref) {
+        assert(Is_Node_Managed(*binding_ref));
+        FEED_BINDING(feed) = cast(Stub*, *binding_ref);
     }
     else
-        mutable_FEED_SPECIFIER(feed) = Get_Context_From_Stack();
+        FEED_BINDING(feed) = Get_Context_From_Stack();
 
     Init_Void(Alloc_Evaluator_Primed_Result());
     Level* L = Make_Level(&Evaluator_Executor, feed, flags);
@@ -1107,14 +1107,14 @@ static bool Run_Va_Throws(  // va_end() handled by feed for all cases [1]
 // executed code passed to not have it evaluate to nihil)
 //
 INLINE void Run_Va_Undecayed_May_Fail_Calls_Va_End(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     Atom* out,
     const void* p,  // first pointer (may be END, nullptr means NULLED)
     void* vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
     bool interruptible = false;
     if (Run_Va_Throws(
-        specifier_ref,
+        binding_ref,
         out,
         interruptible,
         LEVEL_MASK_NONE,
@@ -1134,12 +1134,12 @@ INLINE void Run_Va_Undecayed_May_Fail_Calls_Va_End(
 // about multi-return packs etc.
 //
 INLINE void Run_Va_Decay_May_Fail_Calls_Va_End(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     Value* out,
     const void* p,  // first pointer (may be END, nullptr means NULLED)
     void* vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
-    Run_Va_Undecayed_May_Fail_Calls_Va_End(specifier_ref, out, p, vaptr);
+    Run_Va_Undecayed_May_Fail_Calls_Va_End(binding_ref, out, p, vaptr);
 
     Decay_If_Unstable(cast(Atom*, out));
 }
@@ -1166,7 +1166,7 @@ INLINE void Run_Va_Decay_May_Fail_Calls_Va_End(
 //    large things more responsive.)
 //
 bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     RebolValue* out,
     uintptr_t flags,  // Flags not exported in API
     const void* p, void* vaptr
@@ -1176,12 +1176,12 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
         FEED_MASK_DEFAULT
     );
 
-    if (specifier_ref and *specifier_ref) {
-        assert(Is_Node_Managed(*specifier_ref));
-        mutable_FEED_SPECIFIER(feed) = cast(Stub*, *specifier_ref);
+    if (binding_ref and *binding_ref) {
+        assert(Is_Node_Managed(*binding_ref));
+        FEED_BINDING(feed) = cast(Stub*, *binding_ref);
     }
     else
-        mutable_FEED_SPECIFIER(feed) = Get_Context_From_Stack();
+        FEED_BINDING(feed) = Get_Context_From_Stack();
 
     Level* L = Make_Level(&Stepper_Executor, feed, flags);
     Push_Level(out, L);
@@ -1213,13 +1213,13 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
 // Most basic evaluator that returns a Value*, which must be rebRelease()'d.
 //
 RebolValue* API_rebValue(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     Value* result = Alloc_Value_Core(CELL_MASK_0);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, result, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, result, p, vaptr);
 
     if (Is_Nulled(result)) {
         Free_Value(result);
@@ -1237,7 +1237,7 @@ RebolValue* API_rebValue(
 // Just scans the source given into a BLOCK! without executing it.
 //
 RebolValue* API_rebTranscodeInto(
-    RebolSpecifier** specifier_ref,  // Note: corrupt on purpose in debug build
+    RebolContext** binding_ref,  // Note: corrupt on purpose in debug build
     RebolValue* out,
     const void* p, void* vaptr
 ){
@@ -1250,11 +1250,11 @@ RebolValue* API_rebTranscodeInto(
     Add_Feed_Reference(feed);
     Sync_Feed_At_Cell_Or_End_May_Fail(feed);
 
-    UNUSED(specifier_ref);  // transcode should not heed specifier
+    UNUSED(binding_ref);  // transcode should not heed binding
 
     StackIndex base = TOP_INDEX;
     while (Not_Feed_At_End(feed)) {
-        Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
+        Derelativize(PUSH(), At_Feed(feed), FEED_BINDING(feed));
         Fetch_Next_In_Feed(feed);
     }
 
@@ -1281,10 +1281,10 @@ RebolValue* API_rebTranscodeInto(
 //    as they're encodings of variadic parameters--not the actual parameters!
 //
 // 2. TRANSCODE does not put any binding in the block it takes, so we have
-//    to apply the specifier here.
+//    to apply the context here.
 //
 void API_rebPushContinuation_internal(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     RebolValue* out,
     uintptr_t flags,
     const void* p, void* vaptr
@@ -1292,12 +1292,12 @@ void API_rebPushContinuation_internal(
     ENTER_API;
 
     DECLARE_VALUE (block);
-    RebolSpecifier** dummy_ref = nullptr;  // transcode ignores
+    RebolContext** dummy_ref = nullptr;  // transcode ignores
     Corrupt_Pointer_If_Debug(dummy_ref);
     API_rebTranscodeInto(dummy_ref, block, p, vaptr);  // use "API_" [1]
 
-    if (specifier_ref)
-        BINDING(block) = *cast(Specifier**, specifier_ref);  // [2]
+    if (binding_ref)
+        BINDING(block) = *cast(Context**, binding_ref);  // [2]
     else
         BINDING(block) = Lib_Context;  // [3]
 
@@ -1315,13 +1315,13 @@ void API_rebPushContinuation_internal(
 // return values.  Review.
 //
 RebolBounce API_rebDelegate(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     API_rebPushContinuation_internal(
-        specifier_ref,
+        binding_ref,
         cast(Value*, TOP_LEVEL->out),
         LEVEL_FLAG_RAISED_RESULT_OK,  // definitional error if raised
         p, vaptr
@@ -1347,7 +1347,7 @@ RebolBounce API_rebDelegate(
 //     );
 //
 RebolBounce API_rebContinue(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1355,7 +1355,7 @@ RebolBounce API_rebContinue(
     Level_State_Byte(TOP_LEVEL) = 1;  // rebFunction() can't see, can't be 0
 
     API_rebPushContinuation_internal(
-        specifier_ref,
+        binding_ref,
         cast(Value*, TOP_LEVEL->out),  // rebFunction() also won't see result
         LEVEL_FLAG_UNINTERRUPTIBLE,  // default, see rebContinueInterruptbile()
         p, vaptr
@@ -1370,7 +1370,7 @@ RebolBounce API_rebContinue(
 // If you want an interruptible continuation,
 //
 RebolBounce API_rebContinueInterruptible(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1378,7 +1378,7 @@ RebolBounce API_rebContinueInterruptible(
     Level_State_Byte(TOP_LEVEL) = 1;  // rebFunction() can't see, can't be 0
 
     API_rebPushContinuation_internal(
-        specifier_ref,
+        binding_ref,
         cast(Value*, TOP_LEVEL->out),  // rebFunction() also won't see result
         LEVEL_MASK_NONE,  // will inherit interruptibility of parent.
         p, vaptr
@@ -1398,7 +1398,7 @@ RebolBounce API_rebContinueInterruptible(
 // Will return parameter packs as-is.
 //
 RebolValue* API_rebMeta(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1406,7 +1406,7 @@ RebolValue* API_rebMeta(
     Value* v = Alloc_Value_Core(CELL_MASK_0);
     bool interruptible = false;
     if (Run_Va_Throws(
-        specifier_ref,
+        binding_ref,
         v,
         interruptible,
         LEVEL_FLAG_META_RESULT,
@@ -1429,7 +1429,7 @@ RebolValue* API_rebMeta(
 //     rebEntrap(...) => rebValue("entrap [", ..., "]")
 //
 RebolValue* API_rebEntrap(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1437,7 +1437,7 @@ RebolValue* API_rebEntrap(
     Value* v = Alloc_Value_Core(CELL_MASK_0);
     bool interruptible = false;
     if (Run_Va_Throws(
-        specifier_ref,
+        binding_ref,
         v,
         interruptible,
         LEVEL_FLAG_META_RESULT,
@@ -1467,7 +1467,7 @@ RebolValue* API_rebEntrap(
 // points to one routine for now.
 //
 RebolValue* API_rebEntrapInterruptible(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1475,7 +1475,7 @@ RebolValue* API_rebEntrapInterruptible(
     Value* v = Alloc_Value_Core(CELL_MASK_0);
     bool interruptible = true;
     if (Run_Va_Throws(
-        specifier_ref,
+        binding_ref,
         v,
         interruptible,
         LEVEL_FLAG_META_RESULT,
@@ -1509,13 +1509,13 @@ RebolValue* API_rebEntrapInterruptible(
 // able to quote it without the backtrace showing a QUOTE stack frame.)
 //
 RebolValue* API_rebQuote(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     Value* result = Alloc_Value();
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, result, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, result, p, vaptr);
 
     return Quotify(result, 1);  // nulled cells legal for API if quoted
 }
@@ -1531,13 +1531,13 @@ RebolValue* API_rebQuote(
 // that is not an issue.
 //
 void API_rebElide(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     DECLARE_ATOM (discarded);
-    Run_Va_Undecayed_May_Fail_Calls_Va_End(specifier_ref, discarded, p, vaptr);
+    Run_Va_Undecayed_May_Fail_Calls_Va_End(binding_ref, discarded, p, vaptr);
 }
 
 
@@ -1563,13 +1563,13 @@ void API_rebElide(
 //    rebStop(...) -- STOP is rather final sounding, the code keeps going
 //
 void API_rebJumps(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (dummy);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, dummy,p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, dummy,p, vaptr);
 
     // Note: If we just `fail()` here, then while MSVC compiles %a-lib.c at
     // higher optimization levels it can conclude that API_rebJumps() never
@@ -1600,13 +1600,13 @@ void API_rebJumps(
 // this in light of whether antiform objects are going to be kept.
 //
 bool API_rebDid(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     DECLARE_ATOM (condition);
-    Run_Va_Undecayed_May_Fail_Calls_Va_End(specifier_ref, condition, p, vaptr);
+    Run_Va_Undecayed_May_Fail_Calls_Va_End(binding_ref, condition, p, vaptr);
 
     return not Is_Nulled(condition) and not Is_Void(condition);
 }
@@ -1623,13 +1623,13 @@ bool API_rebDid(
 // this in light of whether antiform objects are going to be kept.
 //
 bool API_rebDidnt(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     DECLARE_ATOM (condition);
-    Run_Va_Undecayed_May_Fail_Calls_Va_End(specifier_ref, condition, p, vaptr);
+    Run_Va_Undecayed_May_Fail_Calls_Va_End(binding_ref, condition, p, vaptr);
 
     return Is_Nulled(condition) or Is_Void(condition);
 }
@@ -1644,13 +1644,13 @@ bool API_rebDidnt(
 // at all possible.
 //
 bool API_rebTruthy(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (condition);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, condition, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, condition, p, vaptr);
 
     return Is_Trigger(condition);  // will fail() on (most) antiforms
 }
@@ -1663,13 +1663,13 @@ bool API_rebTruthy(
 // would have to be a variadic macro.  Not worth it. use separate entry point.
 //
 bool API_rebNot(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (condition);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, condition, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, condition, p, vaptr);
 
     return Is_Inhibitor(condition);  // will fail() on (most) antiforms
 }
@@ -1687,13 +1687,13 @@ bool API_rebNot(
 // short name is worth it.
 //
 intptr_t API_rebUnbox(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, result, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, result, p, vaptr);
 
     if (Is_Logic(result)) {
         return Cell_Logic(result) ? 1 : 0;
@@ -1715,13 +1715,13 @@ intptr_t API_rebUnbox(
 //  rebUnboxLogic: API
 //
 bool API_rebUnboxLogic(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, result, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, result, p, vaptr);
 
     if (not Is_Logic(result))
         fail ("rebUnboxLogic() called on non-LOGIC!");
@@ -1734,13 +1734,13 @@ bool API_rebUnboxLogic(
 //  rebUnboxBoolean: API
 //
 bool API_rebUnboxBoolean(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, result, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, result, p, vaptr);
 
     if (not Is_Boolean(result))
         fail ("rebUnboxBoolean() called on non-[true false]!");
@@ -1753,13 +1753,13 @@ bool API_rebUnboxBoolean(
 //  rebUnboxYesNo: API
 //
 bool API_rebUnboxYesNo(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, result, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, result, p, vaptr);
 
     if (not Is_YesNo(result))
         fail ("rebUnboxYesNo() called on non-[yes no]!");
@@ -1772,13 +1772,13 @@ bool API_rebUnboxYesNo(
 //  rebUnboxOnOff: API
 //
 bool API_rebUnboxOnOff(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, result, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, result, p, vaptr);
 
     if (not Is_OnOff(result))
         fail ("rebUnboxOnOff() called on non-[on off]!");
@@ -1793,13 +1793,13 @@ bool API_rebUnboxOnOff(
 //  rebUnboxInteger: API
 //
 intptr_t API_rebUnboxInteger(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, result, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, result, p, vaptr);
 
     if (not Is_Integer(result))
         fail ("rebUnboxInteger() called on non-INTEGER!");
@@ -1812,13 +1812,13 @@ intptr_t API_rebUnboxInteger(
 //  rebUnboxDecimal: API
 //
 double API_rebUnboxDecimal(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, result, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, result, p, vaptr);
 
     if (Is_Decimal(result))
         return VAL_DECIMAL(result);
@@ -1834,13 +1834,13 @@ double API_rebUnboxDecimal(
 //  rebUnboxChar: API
 //
 uint32_t API_rebUnboxChar(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, result, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, result, p, vaptr);
 
     if (not IS_CHAR(result))
         fail ("rebUnboxChar() called on non-CHAR");
@@ -1853,14 +1853,14 @@ uint32_t API_rebUnboxChar(
 //  rebUnboxHandleCData: API
 //
 void* API_rebUnboxHandleCData(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     size_t* size_out,
     const void* p, void* vaptr
 ){
     ENTER_API_RECYCLING_OK;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, v, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, v, p, vaptr);
 
     if (VAL_TYPE(v) != REB_HANDLE)
         fail ("rebUnboxHandleCData() called on non-HANDLE!");
@@ -1875,13 +1875,13 @@ void* API_rebUnboxHandleCData(
 //  rebExtractHandleCleaner: API
 //
 CLEANUP_CFUNC* API_rebExtractHandleCleaner(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API_RECYCLING_OK;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, v, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, v, p, vaptr);
 
     if (VAL_TYPE(v) != REB_HANDLE)
         fail ("rebUnboxHandleCleaner() called on non-HANDLE!");
@@ -1926,7 +1926,7 @@ static size_t Spell_Into(
 // The more immediate quantity of concern to return is the number of bytes.
 //
 size_t API_rebSpellInto(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     char* buf,
     size_t buf_size,  // number of bytes
     const void* p, void* vaptr
@@ -1934,7 +1934,7 @@ size_t API_rebSpellInto(
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, v, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, v, p, vaptr);
 
     return Spell_Into(buf, buf_size, v);
 }
@@ -1950,13 +1950,13 @@ size_t API_rebSpellInto(
 // Can return nullptr.  Use rebSpell() if you want a failure instead.
 //
 char* API_rebSpellMaybe(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, v, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, v, p, vaptr);
 
     if (Is_Nulled(v))
         return nullptr;
@@ -1978,10 +1978,10 @@ char* API_rebSpellMaybe(
 // Raises error on NULL input
 //
 char* API_rebSpell(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
-    char* spell = API_rebSpellMaybe(specifier_ref, p, vaptr);
+    char* spell = API_rebSpellMaybe(binding_ref, p, vaptr);
     if (spell == nullptr)
         fail ("rebSpell() does not take NULL, see rebSpellMaybe()");
     return spell;
@@ -2051,7 +2051,7 @@ static unsigned int Spell_Into_Wide(
 // wchar units...not *necesssarily* a length in codepoints.
 //
 unsigned int API_rebSpellIntoWide(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     REBWCHAR* buf,
     unsigned int buf_chars,  // chars buf can hold (not including terminator)
     const void* p, void* vaptr
@@ -2059,7 +2059,7 @@ unsigned int API_rebSpellIntoWide(
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, v, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, v, p, vaptr);
 
     return Spell_Into_Wide(buf, buf_chars, v);
 }
@@ -2072,13 +2072,13 @@ unsigned int API_rebSpellIntoWide(
 // won't fit in single WCHARs.
 //
 REBWCHAR* API_rebSpellWideMaybe(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, v, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, v, p, vaptr);
 
     if (Is_Nulled(v))
         return nullptr;
@@ -2102,10 +2102,10 @@ REBWCHAR* API_rebSpellWideMaybe(
 // Raises error on NULL
 //
 REBWCHAR* API_rebSpellWide(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
-    REBWCHAR* spelling = API_rebSpellWideMaybe(specifier_ref, p, vaptr);
+    REBWCHAR* spelling = API_rebSpellWideMaybe(binding_ref, p, vaptr);
     if (spelling == nullptr)
         fail ("rebSpellWide() does not take NULL, see rebSpellWideMaybe()");
     return spelling;
@@ -2176,7 +2176,7 @@ static size_t Bytes_Into(
 // zero termination of Rebol TEXT! and BINARY!.
 //
 size_t API_rebBytesInto(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     unsigned char* buf,
     size_t buf_size,
     const void* p, void* vaptr
@@ -2184,7 +2184,7 @@ size_t API_rebBytesInto(
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, v, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, v, p, vaptr);
 
     return Bytes_Into(buf, buf_size, v);
 }
@@ -2198,14 +2198,14 @@ size_t API_rebBytesInto(
 // for strings it is like rebSpell() except telling you how many bytes.)
 //
 unsigned char* API_rebBytesMaybe(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     size_t* size_out,  // !!! Enforce non-null, to ensure type safety?
     const void* p, void* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(specifier_ref, v, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, v, p, vaptr);
 
     if (Is_Nulled(v)) {
         *size_out = 0;
@@ -2229,11 +2229,11 @@ unsigned char* API_rebBytesMaybe(
 // Raises error on NULL
 //
 unsigned char* API_rebBytes(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     size_t* size_out,  // !!! Enforce non-null, to ensure type safety?
     const void* p, void* vaptr
 ){
-    unsigned char* bytes = API_rebBytesMaybe(specifier_ref, size_out, p, vaptr);
+    unsigned char* bytes = API_rebBytesMaybe(binding_ref, size_out, p, vaptr);
     if (bytes == nullptr)
         fail ("rebBytes() does not take NULL, see rebBytesMaybe()");
     return bytes;
@@ -2978,7 +2978,7 @@ DECLARE_NATIVE(api_transient)
 
 
 //
-//  rebSpecifierFromLevel_internal: API
+//  rebBindingFromLevel_internal: API
 //
 // This is used by the INCLUDE_PARAMS_OF_XXX macros in extensions that use
 // #include "rebol.h" instead of #include "sys-core.h".  The source is like:
@@ -2991,24 +2991,24 @@ DECLARE_NATIVE(api_transient)
 // This expands to:
 //
 //     RebolBounce N_native_name_here(RebolLevel* level_) {
-//         RebolSpecifier librebol_specifier;
-//         librebol_specifier = rebSpecifierFromLevel_internal(level_)
-//         (void)librebol_specifier  /* USED(librebol_specifier) */
+//         RebolContext librebol_binding;
+//         librebol_binding = rebBindingFromLevel_internal(level_)
+//         (void)librebol_binding  /* USED(librebol_binding) */
 //         ...
 //     }
 //
-// `librebol_specifier` is implicitly picked up by the macros that implement
-// things like `rebValue()`.  By also declaring `librebol_specifier` as a
+// `librebol_binding` is implicitly picked up by the macros that implement
+// things like `rebValue()`.  By also declaring `librebol_binding` as a
 // global static, those macros are able to detect whether they are being used
 // inside a native or not, in order to find the arguments of the native when
 // scanning the text source passed.
 //
-RebolSpecifier* API_rebSpecifierFromLevel_internal(
+RebolContext* API_rebBindingFromLevel_internal(
     RebolLevel* level
 ){
     Set_Node_Managed_Bit(level->varlist);
 
-    // We want to be able to use the specifier to not only look up arguments
+    // We want to be able to use the binding to not only look up arguments
     // but also things in the module where the native lives.  This requires
     // setting the `NextVirtual` property of the frame's varlist.  Typically
     // this is set by the `Dispatcher`, but since natives are their own
@@ -3023,7 +3023,7 @@ RebolSpecifier* API_rebSpecifierFromLevel_internal(
     Value* module = Details_At(details, IDX_NATIVE_CONTEXT);
     node_LINK(NextVirtual, level->varlist) = Cell_Varlist(module);
 
-    return cast(RebolSpecifier*, level->varlist);
+    return cast(RebolContext*, level->varlist);
 }
 
 
@@ -3033,24 +3033,24 @@ RebolSpecifier* API_rebSpecifierFromLevel_internal(
 // This bridges being able to do a pointer-to-pointer in JavaScript without
 // needing to use low-level Webassembly byte fiddling.
 //
-RebolSpecifier** API_rebAllocSpecifierRefFromLevel_internal(
+RebolContext** API_rebAllocSpecifierRefFromLevel_internal(
     RebolLevel* level
 ){
     ENTER_API;
 
-    RebolSpecifier** ref = cast(
-        RebolSpecifier**,
-        API_rebAllocBytes(sizeof(RebolSpecifier*))
+    RebolContext** ref = cast(
+        RebolContext**,
+        API_rebAllocBytes(sizeof(RebolContext*))
     );
 
-    *ref = API_rebSpecifierFromLevel_internal(level);
+    *ref = API_rebBindingFromLevel_internal(level);
     return ref;
 }
 
 
 enum {
     IDX_API_ACTION_CFUNC = 1,  // HANDLE! of RebolActionCFunction*
-    IDX_API_ACTION_SPECIFIER_BLOCK = 2,  // BLOCK! so specifier is GC marked
+    IDX_API_ACTION_BINDING_BLOCK = 2,  // BLOCK! so binding is GC marked
     IDX_API_ACTION_MAX
 };
 
@@ -3071,12 +3071,12 @@ enum {
 //
 // 2. The Level L gives us the visibility of variables for the function args,
 //    but we need to see more than that to run code.  When rebFunction() was
-//    run there was a specifier in effect.  We stored it in a dummy BLOCK!
-//    so that the GC will keep it alive (if we poked the specifier into a
-//    HANDLE! it would not be marked).  Make the specifier passed to the
+//    run there was a context in effect.  We stored it in a dummy BLOCK!
+//    so that the GC will keep it alive (if we poked the context into a
+//    HANDLE! it would not be marked).  Make the context passed to the
 //    CFunction inherit that original environment.
 //
-// 3. RebolSpecifier accepts an Array* in the C++ build, but not the C build.
+// 3. RebolContext accepts an Array* in the C++ build, but not the C build.
 //    So the cast is needed here.
 //
 Bounce Api_Function_Dispatcher(Level* const L)
@@ -3101,11 +3101,11 @@ Bounce Api_Function_Dispatcher(Level* const L)
         Cell_Handle_Cfunc(cfunc_handle)
     );
 
-    Value *holder = Details_At(details, IDX_API_ACTION_SPECIFIER_BLOCK);
-    node_LINK(NextVirtual, L->varlist) = Cell_Specifier(holder);  // [2]
-    RebolSpecifier* specifier = cast(RebolSpecifier*, L->varlist);  // [3]
+    Value *holder = Details_At(details, IDX_API_ACTION_BINDING_BLOCK);
+    node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(holder);  // [2]
+    RebolContext* context = cast(RebolContext*, L->varlist);  // [3]
 
-    Bounce bounce = cast(Bounce, (*cfunc)(specifier));
+    Bounce bounce = cast(Bounce, (*cfunc)(context));
 
     if (not Is_Bounce_An_Atom(bounce))
         return bounce;  // e.g. a continuation.
@@ -3135,7 +3135,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
 //    write to lib by default.)
 //
 RebolValue* API_rebFunc(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     RebolActionCFunction* cfunc,  // for typechecking, must be first [1]
     const void* p, void* vaptr
 ){
@@ -3161,8 +3161,8 @@ RebolValue* API_rebFunc(
 
     Release_Feed(feed);  // Note: exhausting feed takes care of the va_end()
 
-    if (specifier_ref and *specifier_ref)
-        BINDING(spec) = *cast(Specifier**, specifier_ref);  // [2]
+    if (binding_ref and *binding_ref)
+        BINDING(spec) = *cast(Context**, binding_ref);  // [2]
     else
         BINDING(spec) = Lib_Context;  // !!! Review: needs module isolation!
 
@@ -3190,9 +3190,9 @@ RebolValue* API_rebFunc(
         Details_At(details, IDX_API_ACTION_CFUNC),
         cast(CFunction*, cfunc)
     );
-    Value* holder = Details_At(details, IDX_API_ACTION_SPECIFIER_BLOCK);
-    Init_Block(holder, EMPTY_ARRAY);  // only care about specifier GC safety
-    Tweak_Cell_Specifier(holder, BINDING(spec));
+    Value* holder = Details_At(details, IDX_API_ACTION_BINDING_BLOCK);
+    Init_Block(holder, EMPTY_ARRAY);  // only care about binding GC safety
+    BINDING(holder) = BINDING(spec);
 
     return Init_Action(Alloc_Value(), a, ANONYMOUS, UNBOUND);
 }
@@ -3208,7 +3208,7 @@ RebolValue* API_rebFunc(
 // situations (e.g. C++ lambdas as second arg).
 //
 RebolValue* API_rebFunction(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     const void* spec,
     RebolActionCFunction* cfunc
 ){
@@ -3221,20 +3221,20 @@ RebolValue* API_rebFunction(
     PointerDetect detect = Detect_Rebol_Pointer(spec);
     switch (detect) {
       case DETECTED_AS_UTF8:
-        return rebFuncCore(specifier_ref, cfunc, cast(const char*, spec));
+        return rebFuncCore(binding_ref, cfunc, cast(const char*, spec));
 
       case DETECTED_AS_CELL:
-        return rebFuncCore(specifier_ref, cfunc, cast(const RebolValue*, spec));
+        return rebFuncCore(binding_ref, cfunc, cast(const RebolValue*, spec));
 
       case DETECTED_AS_STUB:
         return rebFuncCore(
-            specifier_ref,
+            binding_ref,
             cfunc,
             cast(const RebolNodeInternal*, spec)
         );
 
       case DETECTED_AS_END:
-        return rebFuncCore(specifier_ref, cfunc, rebEND);
+        return rebFuncCore(binding_ref, cfunc, rebEND);
 
       default:
         panic ("Invalid spec pointer passed to rebFunction()");

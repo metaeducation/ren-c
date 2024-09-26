@@ -281,7 +281,7 @@ Array* Startup_Natives(const Element* boot_natives)
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
     const Element* tail;
     Element* item = Cell_List_At_Known_Mutable(&tail, boot_natives);
-    Specifier* specifier = Cell_Specifier(boot_natives);
+    Context* binding = Cell_List_Binding(boot_natives);
 
     // !!! We could avoid this by making NATIVE a specialization of a NATIVE*
     // function which carries those arguments, which would be cleaner.  The
@@ -302,7 +302,7 @@ Array* Startup_Natives(const Element* boot_natives)
     ++item;
     assert(Is_Block(item));
     DECLARE_ELEMENT (spec);
-    Derelativize(spec, item, specifier);
+    Derelativize(spec, item, binding);
     ++item;
 
     Phase* the_native_action = Make_Native(
@@ -333,13 +333,13 @@ Array* Startup_Natives(const Element* boot_natives)
     // (first one at time of writing is `api-transient: native [...]`) and
     // BIND/SET them.
     //
-    Bind_Values_Set_Midstream_Shallow(item, tail, Lib_Context_Value);
+    Bind_Values_Set_Midstream_Shallow(item, tail, Lib_Module);
 
     DECLARE_ATOM (skipped);
     Init_Any_List_At(skipped, REB_BLOCK, Cell_Array(boot_natives), 3);
 
     DECLARE_ATOM (discarded);
-    if (Eval_Any_List_At_Throws(discarded, skipped, specifier))
+    if (Eval_Any_List_At_Throws(discarded, skipped, binding))
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
     if (not Is_Anti_Word_With_Id(Decay_If_Unstable(discarded), SYM_DONE))
         panic (discarded);

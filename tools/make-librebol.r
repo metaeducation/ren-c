@@ -138,9 +138,9 @@ emit-proto: func [return: [~] proto] [
             ;     #define rebFoo(...) API_rebFoo(0, __VA_ARGS__, rebEND)
             ;     #define rebFooQ(...) API_rebFoo(1, __VA_ARGS__, rebEND)
             ;
-            ; But now, it's needed for passing in the specifier.
+            ; But now, it's needed for passing in the binding.
 
-            "RebolSpecifier**" 'specifier_ref
+            "RebolContext**" 'binding_ref
 
             paramlist: across to "const void*"  ; signal start of variadic
 
@@ -188,7 +188,7 @@ extern-prototypes: map-each-api [
 
 lib-struct-fields: map-each-api [
     cfunc-params: delimit ", " compose [
-        (if yes? is-variadic ["RebolSpecifier** specifier_ref"])
+        (if yes? is-variadic ["RebolContext** binding_ref"])
         (spread map-each [type var] paramlist [spaced [type var]])
         (if yes? is-variadic [
             spread ["const void* p" "void* vaptr"]
@@ -243,7 +243,7 @@ for-each-api [
     append variadic-api-c-helpers cscape [:api {
         $<Maybe Attributes>
         static inline $<Return-Type> $<Name>_helper(  /* C version */
-            RebolSpecifier** specifier_ref,
+            RebolContext** binding_ref,
             $<Helper-Params, >
             const void* p, ...
         ){
@@ -251,7 +251,7 @@ for-each-api [
             va_start(va, p);  /* $<Name>() calls va_end() */
 
             $<maybe return-keyword >LIBREBOL_PREFIX($<Name>)(
-                specifier_ref,  /* pointer-to-pointer, may update variable */
+                binding_ref,  /* pointer-to-pointer, may update variable */
                 $<Proxied-Args, >
                 p, &va  /* non-null vaptr means p is first item */
             );
@@ -263,7 +263,7 @@ for-each-api [
         template <typename... Ts>
         $<Maybe Attributes>
         inline $<Return-Type> $<Name>_helper(  /* C++ version */
-            RebolSpecifier** specifier_ref,
+            RebolContext** binding_ref,
             $<Helper-Params, >
             const Ts & ...args
         ){
@@ -271,7 +271,7 @@ for-each-api [
             rebVariadicPacker_internal(0, p, args...);
 
             $<maybe return-keyword >LIBREBOL_PREFIX($<Name>)(
-                specifier_ref,  /* pointer-to-pointer, may be updated */
+                binding_ref,  /* pointer-to-pointer, may be updated */
                 $<Proxied-Args, >
                 p, nullptr  /* null vaptr means p is array of items */
             );
@@ -280,7 +280,7 @@ for-each-api [
     }]
 ]
 
-variadic-api-specifier-capturing-macros: map-each-api [
+variadic-api-binding-capturing-macros: map-each-api [
     if yes? is-variadic [
         fixed-params: map-each [type var] paramlist [
             to-text var
@@ -289,23 +289,23 @@ variadic-api-specifier-capturing-macros: map-each-api [
         cscape [:api {
             #define $<Name>($<Fixed-Params,>...) \
                 $<Name>_helper( \
-                    LIBREBOL_SPECIFIER,  /* captured from callsite! */ \
+                    LIBREBOL_BINDING,  /* captured from callsite! */ \
                     $<Fixed-Params, >__VA_ARGS__, rebEND \
                 )
         }]
     ]
 ]
 
-variadic-api-specifier-explicit-macros: map-each-api [
+variadic-api-explicit-binding-macros: map-each-api [
     if yes? is-variadic [
         fixed-params: map-each [type var] paramlist [
             to-text var
         ]
 
         cscape [:api {
-            #define $<Name>Core(specifier_ref, $<Fixed-Params,>...) \
+            #define $<Name>Core(binding_ref, $<Fixed-Params,>...) \
                 $<Name>_helper( \
-                    specifier_ref, \
+                    binding_ref, \
                     $<Fixed-Params, >__VA_ARGS__, rebEND \
                 )
         }]
@@ -339,8 +339,8 @@ variadic-api-c89-alias-macros: map-each-api [
 
 assert [newline = take/last last variadic-api-c-helpers]
 assert [newline = take/last last variadic-api-c++-helpers]
-assert [newline = take/last last variadic-api-specifier-capturing-macros]
-assert [newline = take/last last variadic-api-specifier-explicit-macros]
+assert [newline = take/last last variadic-api-binding-capturing-macros]
+assert [newline = take/last last variadic-api-explicit-binding-macros]
 
 
 === "GENERATE REBOL.H" ===
@@ -372,7 +372,7 @@ e-lib/emit [ver {
      *   LIBREBOL_NO_STDINT       Suppress inclusion of <stdint.h>
      *   LIBREBOL_NO_STDBOOL      Suppress inclusion of <stdbool.h>
      *
-     *   LIBREBOL_SPECIFIER       Variable name variadics implicitly capture
+     *   LIBREBOL_BINDING         Variable name variadics implicitly capture
      *
      *   LIBREBOL_USES_API_TABLE  No plain linker access to API exports
      *
@@ -618,23 +618,26 @@ e-lib/emit [ver {
 
 
     /*
-     * SPECIFIER TYPE (internal)
+     * CONTEXT TYPE (internal)
      *
-     * Specifiers are an evolving idea, which represent "binding environments"
-     * for looking up values.  They are a chain of contexts...such as a
-     * FRAME! for a function, inheriting from the module in which that
-     * function was defined.  There's not currently an exposed datatype in
-     * the language for specifiers, so the only currency for them are BLOCK!
-     * or other arrays that have captured the specifier as their binding.
+     * Contexts represent "binding environments" for looking up values.  They
+     * can inherit from other contexts: such as when a FRAME! for a function
+     * (where local variables and arguments are looked up) inherits from the
+     * module in which that function was defined.
      *
-     * The API needs to speak in terms of specifiers in order to know where
+     * At time of writing there's not an exposed datatype for contexts that
+     * inherit.  So the only currency for them are BLOCK! or other arrays that
+     * have captured inheriting contexts as their binding.  However, it is
+     * seeming like the inheriting contexts will be exposed eventually.
+     *
+     * The API needs to speak in terms of contexts in order to know where
      * to bind the source code that's scanned in variadic calls.  So there is
      * some exposure of the type, but it's not meant to be manipulated
-     * directly by API clients at this time.  Instead, specifiers are captured
+     * directly by API clients at this time.  Instead, contexts are captured
      * implicitly by the macros that implement variadic API functions.
      */
 
-    typedef struct RebolNodeStruct RebolSpecifier;
+    typedef struct RebolNodeStruct RebolContext;
 
 
     /*
@@ -688,7 +691,7 @@ e-lib/emit [ver {
 
     /*
      * RebolActionCFunction is used when creating your own Rebol natives in C.
-     * It takes exactly one RebolSpecifier* parameter, and acts as the
+     * It takes exactly one RebolContext* parameter, and acts as the
      * implementation of an action.
      *
      * To use it with rebFunction(), you pass your C function as the first
@@ -700,14 +703,14 @@ e-lib/emit [ver {
      *
      * It requires a little boilerplate to do the trick, but it's a neat one!
      *
-     *     #define LIBREBOL_SPECIFIER (&specifier)
+     *     #define LIBREBOL_BINDING (&binding)
      *
      *     #include "rebol.h"
      *     typedef RebolValue Value;
-     *     typedef RebolSpecifier Specifier;
+     *     typedef RebolContext Context;
      *     typedef RebolBounce Bounce;
      *
-     *     static Specifier* specifier = nullptr;  // default inherit of LIB
+     *     static Context* context = nullptr;  // default inherit of LIB
      *
      *     void Subroutine(void) {
      *         rebElide(
@@ -721,7 +724,7 @@ e-lib/emit [ver {
      *         assert [integer!]" \
      *         print [integer!]" \
      *     ]";
-     *     Bounce Sum_Plus_1000_Impl(Specifier* specifier) {
+     *     Bounce Sum_Plus_1000_Impl(Context* binding) {
      *         Value* hundred = rebValue("fourth [1 10 100 1000]");
      *         Subroutine();
      *         return rebValue("print + assert +", rebR(hundred));
@@ -752,12 +755,12 @@ e-lib/emit [ver {
      *
      * It's a very elegant bridge, working without resorting to FFI or similar.
      * The smarts of the API macros like rebElide() and rebValue() is that they
-     * pick up the specifier by name that you give, so you don't have to pass
+     * pick up the binding by name that you give, so you don't have to pass
      * it every time.  When you're inside your native's implementation, the
      * shadowing of the argument overrides the global variable.
      *
      * (If you don't like shadowing, you can use variants that pass the address
-     * of the specifier explicitly on each call...but this is better!)
+     * of the binding explicitly on each call...but this is better!)
      *
      * With C++ you can use raw strings and lambdas:
      *
@@ -765,13 +768,13 @@ e-lib/emit [ver {
      *         {Another way to do functions}
      *         message [text!]
      *     ])",
-     *     [](Specifier* specifier) {
+     *     [](Context* binding) {
      *         rebElide("print [{The message is:}", message, "]");
      *         return rebTrash();
      *     });
      */
 
-    typedef RebolBounce (RebolActionCFunction)(RebolSpecifier*);
+    typedef RebolBounce (RebolActionCFunction)(RebolContext*);
 
 
     /*
@@ -1044,7 +1047,7 @@ e-lib/emit [ver {
      * VARIADIC API HELPERS
      *
      * These helpers are called by variadic macros.  Those macros pass the
-     * parameters they receive with a specifier at the beginning and `rebEND`
+     * parameters they receive with a binding at the beginning and `rebEND`
      * tacked on in the final position.  (See rebEND above for why.)
      *
      * As with non-variadic API entry points, these translate a raw name like
@@ -1106,9 +1109,9 @@ e-lib/emit [ver {
 
 
     /*
-     * VARIADIC API SPECIFIER CAPTURING MACROS
+     * VARIADIC API BINDING CAPTURING MACROS
      *
-     * LIBREBOL_SPECIFIER defines the name of the variable which will be
+     * LIBREBOL_BINDING defines the name of the variable which will be
      * sneakily picked up by these variadic API macros, in order to provide a
      * binding context that is relevant.  e.g. if you're inside a native, then
      * the context should be for that native's function parameters, chained to
@@ -1127,21 +1130,21 @@ e-lib/emit [ver {
      * 1. rebFunction() is an oddity in that it wants to do some parameter
      *    reversal to put the spec first and the function last, so it can't
      *    be variadic or the C version wouldn't compile-time type check the
-     *    passed in C function.  But it also wants to capture the specifier.
+     *    passed in C function.  But it also wants to capture the binding.
      *    Easiest just to hardcode it here.
      */
 
     #if (! LIBREBOL_USE_C89)
 
-        #if !defined(LIBREBOL_SPECIFIER)
-            #define LIBREBOL_SPECIFIER 0  /* nullptr may not be available */
+        #if !defined(LIBREBOL_BINDING)
+            #define LIBREBOL_BINDING 0  /* nullptr may not be available */
         #endif
 
-        $[Variadic-Api-Specifier-Capturing-Macros]
+        $[Variadic-Api-Binding-Capturing-Macros]
 
         #define rebFunction(spec,cfunc)  /* not variadic, but captures [1] */ \
             LIBREBOL_PREFIX(rebFunction)( \
-                LIBREBOL_SPECIFIER,  /* captured from callsite! */ \
+                LIBREBOL_BINDING,  /* captured from callsite! */ \
                 spec, cfunc \
             )
 
@@ -1149,20 +1152,20 @@ e-lib/emit [ver {
 
 
     /*
-     * VARIADIC API SPECIFIER EXPLICIT MACROS
+     * VARIADIC API EXPLICIT BINDING MACROS
      *
-     * Variant where you pass in the pointer-to-pointer-to-specifier manually.
+     * Variant where you pass in the pointer-to-pointer-to-binding manually.
      *
-     * 1. See remarks on rebFunction() in the SPECIFIER CAPTURING MACROS above.
+     * 1. See remarks on rebFunction() in the BINDING CAPTURING MACROS above.
      */
 
     #if (! LIBREBOL_USE_C89)
 
-        $[Variadic-Api-Specifier-Explicit-Macros]
+        $[Variadic-Api-Explicit-Binding-Macros]
 
-        #define rebFunctionCore(specifier_ref,spec,cfunc)  /* anomaly [1] */ \
+        #define rebFunctionCore(binding_ref,spec,cfunc)  /* anomaly [1] */ \
             LIBREBOL_PREFIX(rebFunction)( \
-                specifier_ref, \
+                binding_ref, \
                 spec, cfunc \
             )
 

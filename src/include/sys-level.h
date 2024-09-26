@@ -133,8 +133,8 @@ INLINE const Array* Level_Array(Level* L) {
     return FEED_ARRAY(L->feed);
 }
 
-INLINE Specifier *Level_Specifier(Level *L) {
-    return FEED_SPECIFIER(L->feed);
+INLINE Context* Level_Binding(Level *L) {
+    return FEED_BINDING(L->feed);
 }
 
 
@@ -435,6 +435,19 @@ INLINE void Drop_Level(Level* L)
 }
 
 
+// 1. The evaluator executor uses some of its fixed-size storage in the Level
+//    for a cell, which the GC marks when it sees &Evaluator_Executor as what
+//    runs that level.  But recycling is done in the trampoline before the
+//    level gets a chance to run.  So it's hard for the GC to know if it's
+//    okay to mark at "current" cell.  We cheaply erase the cell in case the
+//    executor is the evaluator (it's just writing a single zero).  Review.
+//
+// 2. Previously just TOP_STACK was captured in L->baseline.stack_base, but
+//    then redundantly captured via a Snap_State() in Push_Level().  The
+//    responsibilities of Prep_Level() vs Push_Level() aren't clearly laid
+//    out, but some clients do depend on the StackIndex being captured before
+//    Push_Level() is called, so this snaps the whole baseline here.
+//
 INLINE Level* Prep_Level_Core(
     Executor* executor,
     Level* L,
@@ -457,11 +470,6 @@ INLINE Level* Prep_Level_Core(
 
     Corrupt_If_Debug(L->u);  // fills with garbage bytes in debug build
 
-    // !!! Recycling is done in the trampoline before the level gets a chance
-    // to run.  So it's hard for the GC to know if it's okay to mark the
-    // current cell.  We cheaply erase the cell in case it stays as the
-    // evaluator executor (it's just writing a single zero).  Review.
-    //
     Erase_Cell(&L->u.eval.current);
 
     Corrupt_Pointer_If_Debug(L->label);
@@ -469,13 +477,7 @@ INLINE Level* Prep_Level_Core(
     Corrupt_Pointer_If_Debug(L->label_utf8);
   #endif
 
-    // !!! Previously just TOP_STACK was captured in L->baseline.stack_base,
-    // but then redundantly captured via a Snap_State() in Push_Level().  The
-    // responsibilities of Prep_Level() vs Push_Level() aren't clearly laid
-    // out, but some clients do depend on the StackIndex being captured before
-    // Push_Level() is called, so this snaps the whole baseline here.
-    //
-    Snap_State(&L->baseline);  // see notes on `baseline` in Level
+    Snap_State(&L->baseline);  // [2] (also see notes on `baseline` in Level)
 
   #if DEBUG_COUNT_TICKS
     L->tick = TG_tick;
@@ -488,13 +490,13 @@ INLINE Level* Prep_Level_Core(
     Prep_Level_Core(executor, u_cast(Level*, Alloc_Pooled(LEVEL_POOL)), \
         Add_Feed_Reference(feed), (flags))
 
-#define Make_Level_At_Core(executor,list,specifier,level_flags) \
+#define Make_Level_At_Core(executor,list,binding,level_flags) \
     Make_Level( \
         (executor), \
         Prep_At_Feed( \
             Alloc_Feed(), \
             (list), \
-            (specifier), \
+            (binding), \
             TOP_LEVEL->feed->flags.bits \
         ), \
         (level_flags) \

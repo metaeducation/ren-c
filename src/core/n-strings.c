@@ -143,7 +143,7 @@ DECLARE_NATIVE(delimit)
     while (Not_Level_At_End(L)) {
         const Element* item = At_Level(L);
         if (Is_Block(item) and REF(delimiter)) {  // hack [1]
-            Derelativize(SPARE, item, Level_Specifier(L));
+            Derelativize(SPARE, item, Level_Binding(L));
             Fetch_Next_In_Feed(L->feed);
 
             Value* unspaced = rebValue(Canon(UNSPACED), rebQ(SPARE));
@@ -162,13 +162,13 @@ DECLARE_NATIVE(delimit)
         }
         else if (Any_The_Value(item)) {  // fetch and mold
             if (Is_The_Word(item) or Is_The_Tuple(item)) {
-                Get_Var_May_Fail(OUT, item, Level_Specifier(L));
+                Get_Var_May_Fail(OUT, item, Level_Binding(L));
             }
             else if (Is_The_Group(item)) {
                 if (Eval_Any_List_At_Throws(
                     OUT,
                     item,
-                    Level_Specifier(L)
+                    Level_Binding(L)
                 )){
                     goto threw;
                 }

@@ -155,7 +155,7 @@ DECLARE_NATIVE(definitional_continue)
         SPARE,  // use as label for throw
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_CONTINUE))),
         Canon(CONTINUE),
-        cast(VarList*, loop_level->varlist)
+        Varlist_Of_Level_Force_Managed(loop_level)
     );
 
     return Init_Thrown_With_Label(LEVEL, v, stable_SPARE);
@@ -169,27 +169,25 @@ void Add_Definitional_Break_Continue(
     Value* body,
     Level* loop_level
 ){
-    Specifier* body_specifier = Cell_Specifier(body);
+    Context* parent = Cell_List_Binding(body);
+    Let* let_continue = Make_Let_Variable(Canon(CONTINUE), parent);
 
-    Force_Level_Varlist_Managed(loop_level);
-
-    Stub* let_continue = Make_Let_Patch(Canon(CONTINUE), body_specifier);
     Init_Action(
         Stub_Cell(let_continue),
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_CONTINUE))),
         Canon(CONTINUE),  // relabel (the CONTINUE in lib is a dummy action)
-        cast(VarList*, loop_level->varlist)  // what to continue
+        Varlist_Of_Level_Force_Managed(loop_level)  // what to continue
     );
 
-    Stub* let_break = Make_Let_Patch(Canon(BREAK), let_continue);
+    Let* let_break = Make_Let_Variable(Canon(BREAK), let_continue);
     Init_Action(
         Stub_Cell(let_break),
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_BREAK))),
         Canon(BREAK),  // relabel (the BREAK in lib is a dummy action)
-        cast(VarList*, loop_level->varlist)  // what to break
+        Varlist_Of_Level_Force_Managed(loop_level)  // what to break
     );
 
-    Tweak_Cell_Specifier(body, let_break);  // extend chain
+    BINDING(body) = let_break;  // extend chain
 }
 
 
@@ -686,11 +684,11 @@ void Add_Definitional_Stop(
     Value* body,
     Level* loop_level
 ){
-    Specifier* body_specifier = Cell_Specifier(body);
+    Context* parent = Cell_List_Binding(body);
 
     Force_Level_Varlist_Managed(loop_level);
 
-    Stub* let_stop = Make_Let_Patch(Canon(STOP), body_specifier);
+    Let* let_stop = Make_Let_Variable(Canon(STOP), parent);
     Init_Action(
         Stub_Cell(let_stop),
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_STOP))),
@@ -698,7 +696,7 @@ void Add_Definitional_Stop(
         cast(VarList*, loop_level->varlist)  // what to stop
    );
 
-    Tweak_Cell_Specifier(body, let_stop);  // extend chain
+    BINDING(body) = let_stop;  // extend chain
 }
 
 
@@ -1443,7 +1441,7 @@ DECLARE_NATIVE(remove_each)
                 Derelativize(
                     var,
                     Array_At(Cell_Array(data), index),
-                    Cell_Specifier(data)
+                    Cell_List_Binding(data)
                 );
             else if (Is_Binary(data)) {
                 Binary* b = cast(Binary*, flex);
@@ -1827,7 +1825,7 @@ DECLARE_NATIVE(map)
         const Element* tail;
         const Element* v = Cell_List_At(&tail, SPARE);
         for (; v != tail; ++v)
-            Derelativize(PUSH(), v, Cell_Specifier(SPARE));
+            Derelativize(PUSH(), v, Cell_List_Binding(SPARE));
     }
     else if (Is_Antiform(SPARE)) {
         Init_Error(SPARE, Error_Bad_Antiform(SPARE));

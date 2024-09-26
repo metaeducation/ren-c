@@ -181,7 +181,7 @@ struct FeedStruct {
     // the initial value in order to display full error messages.
     //
     const void *p;  // nullptr if feed is finished (Is_Feed_At_End())
-    // Note: The specifier comes from FEED_SPECIFIER()
+    // Note: The binding comes from FEED_BINDING()
 
     //=//// ^-- be sure above fields align cells below to 64-bits --v /////=//
     // (two intptr_t sized things should take care of it on both 32/64-bit) //
@@ -209,7 +209,7 @@ struct FeedStruct {
     // and there is no index.
     //
     // This is used for relatively bound words to be looked up to become
-    // specific.  Typically the specifier is extracted from the payload of the
+    // specific.  Typically the binding is extracted from the payload of the
     // ANY-LIST? value that provided the source.array for the call to DO.
     // It may also be NULL if it is known that there are no relatively bound
     // words that will be encountered from the source--as in va_list calls.

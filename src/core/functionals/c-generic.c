@@ -111,7 +111,7 @@ DECLARE_NATIVE(generic)
     Details* details = Phase_Details(generic);
 
     Init_Word(Details_At(details, IDX_NATIVE_BODY), Cell_Word_Symbol(verb));
-    Copy_Cell(Details_At(details, IDX_NATIVE_CONTEXT), Lib_Context_Value);
+    Copy_Cell(Details_At(details, IDX_NATIVE_CONTEXT), Lib_Module);
 
     Value* verb_var = Sink_Word_May_Fail(verb, SPECIFIED);
     Init_Action(verb_var, generic, Cell_Word_Symbol(verb), UNBOUND);
@@ -130,13 +130,13 @@ Array* Startup_Generics(const Element* boot_generics)
     assert(VAL_INDEX(boot_generics) == 0); // should be at head, sanity check
     const Element* tail;
     Element* head = Cell_List_At_Known_Mutable(&tail, boot_generics);
-    Specifier* specifier = Cell_Specifier(boot_generics);
+    Context* context = Cell_List_Binding(boot_generics);
 
     // Add SET-WORD!s that are top-level in the generics block to the lib
     // context, so there is a variable for each action.  This means that the
     // assignments can execute.
     //
-    Bind_Values_Set_Midstream_Shallow(head, tail, Lib_Context_Value);
+    Bind_Values_Set_Midstream_Shallow(head, tail, Lib_Module);
 
     DECLARE_ATOM (discarded);
     if (Eval_Any_List_At_Throws(discarded, boot_generics, SPECIFIED))
@@ -154,7 +154,7 @@ Array* Startup_Generics(const Element* boot_generics)
     Element* item = head;
     for (; item != tail; ++item)
         if (Is_Set_Word(item)) {
-            Derelativize(PUSH(), item, specifier);
+            Derelativize(PUSH(), item, context);
             HEART_BYTE(TOP) = REB_WORD;  // change pushed to WORD!
         }
 

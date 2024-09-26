@@ -58,7 +58,7 @@
 
 #define L_next              cast(const Cell*, L->feed->p)
 #define L_next_gotten       L->feed->gotten
-#define L_specifier         Level_Specifier(L)
+#define L_binding           Level_Binding(L)
 
 #undef ARG                       // undefine the ARG(x) macro that natives use
 #define ARG L->u.action.arg      // ...aredefine as currently fulfilling arg
@@ -108,7 +108,7 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed* feed) {
     if (VAL_TYPE_UNCHECKED(At_Feed(feed)) != REB_WORD)
         return false;
 
-    feed->gotten = Lookup_Word(At_Feed(feed), FEED_SPECIFIER(feed));
+    feed->gotten = Lookup_Word(At_Feed(feed), FEED_BINDING(feed));
 
     if (
         not feed->gotten

@@ -299,7 +299,7 @@ enum Reb_Promise_State {
 struct Reb_Promise_Info {
     enum Reb_Promise_State state;
     heapaddr_t promise_id;
-    Specifier* specifier;  // where code is to be run
+    Context* binding;  // where code is to be run
 
     struct Reb_Promise_Info *next;
 };
@@ -332,7 +332,7 @@ enum Reb_Native_State {
 // actual JavaScript ES6 Promise.
 //
 EXTERN_C intptr_t API_rebPromise(
-    RebolSpecifier** specifier_ref,
+    RebolContext** binding_ref,
     void* p, void* vaptr
 ){
     TRACE("rebPromise() called");
@@ -365,8 +365,8 @@ EXTERN_C intptr_t API_rebPromise(
     // already exists.
 
     DECLARE_VALUE (block);
-    UNUSED(specifier_ref);  // shouldn't use one if we're transcoding?
-    API_rebTranscodeInto(specifier_ref, block, p, vaptr);
+    UNUSED(binding_ref);  // shouldn't use one if we're transcoding?
+    API_rebTranscodeInto(binding_ref, block, p, vaptr);
 
     Array* code = Cell_Array_Ensure_Mutable(block);
     assert(Is_Node_Managed(code));
@@ -380,7 +380,7 @@ EXTERN_C intptr_t API_rebPromise(
     struct Reb_Promise_Info *info = Try_Alloc(struct Reb_Promise_Info);
     info->state = PROMISE_STATE_QUEUEING;
     info->promise_id = Heapaddr_From_Pointer(code);
-    info->specifier = Get_Context_From_Stack();
+    info->binding = Get_Context_From_Stack();
     info->next = PG_Promises;
     PG_Promises = info;
 
@@ -421,7 +421,7 @@ void RunPromise(void)
 
     DECLARE_ATOM (code);
     Init_Block(code, a);
-    BINDING(code) = info->specifier;
+    BINDING(code) = info->binding;
 
     Level* L = Make_Level_At(&Stepper_Executor, code, LEVEL_FLAG_ROOT_LEVEL);
 
@@ -858,9 +858,9 @@ DECLARE_NATIVE(js_native)
     //
     //    Instead, the function receives an updated `reb` API interface, that
     //    is intended to "shadow" the global `reb` interface and override it
-    //    during the body of the function.  This local `reb` has a specifier
+    //    during the body of the function.  This local `reb` has a binding
     //    for the JS-NATIVE's frame, such that when reb.Value("argname")
-    //    is called, this reb passes that specifier through to API_rebValue(),
+    //    is called, this reb passes that binding through to API_rebValue(),
     //    and the argument can be resolved this way.
     //
     //     !!! There should be some customization here where if the interface

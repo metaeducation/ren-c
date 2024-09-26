@@ -1672,7 +1672,7 @@ DECLARE_NATIVE(ecc_generate_keypair)
 DECLARE_NATIVE(ecdh_shared_secret)
 //
 // 1. It's not clear whether if you omit the parentheses in this case if the
-//    specifier should be updated to include the LET.  Bracket with a group
+//    binding should be updated to include the LET.  Bracket with a group
 //    just to be sure it wouldn't, even if those were the semantics.
 {
     INCLUDE_PARAMS_OF_ECDH_SHARED_SECRET;

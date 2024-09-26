@@ -1209,7 +1209,7 @@ DECLARE_NATIVE(case)
     Level* sub = Make_Level_At_Core(
         &Evaluator_Executor,
         branch,  // non "THE-" GROUP! branches are run unconditionally
-        Level_Specifier(SUBLEVEL),
+        Level_Binding(SUBLEVEL),
         LEVEL_MASK_NONE
     );
 
@@ -1234,7 +1234,7 @@ DECLARE_NATIVE(case)
     return CONTINUE_CORE(
         OUT,
         LEVEL_FLAG_BRANCH,
-        Level_Specifier(SUBLEVEL), cast(Value*, branch),
+        Level_Binding(SUBLEVEL), cast(Value*, branch),
         SPARE
     );
 
@@ -1442,7 +1442,7 @@ DECLARE_NATIVE(switch)
     return CONTINUE_CORE(
         OUT,
         LEVEL_FLAG_BRANCH,
-        Level_Specifier(SUBLEVEL), at
+        Level_Binding(SUBLEVEL), at
     );
 
 } reached_end: {  ////////////////////////////////////////////////////////////
@@ -1594,19 +1594,17 @@ DECLARE_NATIVE(catch_p)  // specialized to plain CATCH w/ NAME="THROW" in boot
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Specifier* block_specifier = Cell_Specifier(block);
+    Context* parent = Cell_List_Binding(block);
+    Let* let_throw = Make_Let_Variable(Cell_Word_Symbol(name), parent);
 
-    Force_Level_Varlist_Managed(catch_level);
-
-    Stub* let_throw = Make_Let_Patch(Cell_Word_Symbol(name), block_specifier);
     Init_Action(
         Stub_Cell(let_throw),
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_THROW))),
         Cell_Word_Symbol(name),  // relabel (THROW in lib is a dummy action)
-        cast(VarList*, catch_level->varlist)  // what to continue
+        Varlist_Of_Level_Force_Managed(catch_level)  // what to continue
     );
 
-    Tweak_Cell_Specifier(block, let_throw);  // extend chain
+    BINDING(block) = let_throw;  // extend chain
 
     STATE = ST_CATCH_RUNNING_CODE;
     return CATCH_CONTINUE_BRANCH(OUT, ARG(block));

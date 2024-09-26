@@ -812,10 +812,10 @@ e-cwrap/emit {
          * knows what frame it's in.
          */
         let reb_shadow = {
-            specifier_ref: (
+            binding_ref: (
                 reb.m._API_rebAllocSpecifierRefFromLevel_internal(level_id)
             ),
-            getSpecifierRef: function() { return this.specifier_ref },
+            getSpecifierRef: function() { return this.binding_ref },
             __proto__: reb
         }
 
@@ -849,7 +849,7 @@ e-cwrap/emit {
             /* resolve() or reject() guaranteed to be signaled in this case */
         }
 
-        reb.m._API_rebFree(reb_shadow.specifier_ref)
+        reb.m._API_rebFree(reb_shadow.binding_ref)
     }
 
     reb.ResolvePromise_internal = function(promise_id, rebval) {

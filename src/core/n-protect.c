@@ -306,7 +306,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
             const Element* item = Cell_List_At(&tail, value);
             for (; item != tail; ++item) {
                 DECLARE_VALUE (word); // need binding, can't pass Cell
-                Derelativize(word, item, Cell_Specifier(value));
+                Derelativize(word, item, Cell_List_Binding(value));
                 Protect_Word_Value(word, flags);  // will unmark if deep
             }
             return COPY(ARG(value));
@@ -325,7 +325,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                     // references to even protected values to protect them.
                     //
                     Option(VarList*) error = Trap_Lookup_Word(
-                        u_cast(const Value**, &var), item, Cell_Specifier(value)
+                        u_cast(const Value**, &var), item, Cell_List_Binding(value)
                     );
                     if (error)
                         fail (unwrap error);

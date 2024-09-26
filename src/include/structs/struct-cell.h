@@ -501,8 +501,7 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
 #define IDX_EXTRA_SIGIL 2
 
 // optimized TUPLE! and PATH! byte forms must leave extra field empty, as
-// it's used for binding/specifiers on these types.  So the length is in
-// the payload itself.
+// it's used for binding on these types.  Length is in the payload itself.
 //
 #define IDX_SEQUENCE_USED 0  // index into at_least_8 when used for storage
 
@@ -553,7 +552,7 @@ struct BytesPayloadStruct
 // COMMA! is not Cell_Extra_Needs_Mark(), and doesn't use its payload.
 //
 // That is exploited by feeds when they are variadic instead of arrays.  The
-// feed cell is used to store va_list information along with a specifier in
+// feed cell is used to store va_list information along with a binding in
 // a value cell slot.
 //
 // !!! Now that more than 64 types are available, it is probably clearer to

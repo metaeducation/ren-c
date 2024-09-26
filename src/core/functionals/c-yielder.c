@@ -98,7 +98,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 
 } first_run: {  //////////////////////////////////////////////////////////////
 
-    // Whatever we pass through here as the specifier has to stay working,
+    // Whatever we pass through here as the binding has to stay working,
     // because it will be threaded and preserved in variables by the
     // running code (also, it's the binding of the YIELD statement, which
     // needs to be able to find the right frame).

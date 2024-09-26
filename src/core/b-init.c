@@ -161,9 +161,9 @@ static void Check_Basics(void)
 static void Startup_Lib(void)
 {
     VarList* lib = Alloc_Varlist_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
-    ensure(nullptr, Lib_Context_Value) = Alloc_Element();
-    Init_Context_Cell(Lib_Context_Value, REB_MODULE, lib);
-    ensure(nullptr, Lib_Context) = Cell_Varlist(Lib_Context_Value);
+    ensure(nullptr, Lib_Module) = Alloc_Element();
+    Init_Context_Cell(Lib_Module, REB_MODULE, lib);
+    ensure(nullptr, Lib_Context) = cast(SeaOfVars*, lib);
 
   //=//// INITIALIZE LIB PATCHES ///////////////////////////////////////////=//
 
@@ -256,7 +256,7 @@ static void Shutdown_Lib(void)
         MISC(PatchHitch, patch) = nullptr;
     }
 
-    rebReleaseAndNull(&Lib_Context_Value);
+    rebReleaseAndNull(&Lib_Module);
     Lib_Context = nullptr;
 }
 
@@ -598,7 +598,7 @@ void Startup_Core(void)
 
 //=//// CREATE SYSTEM MODULES //////////////////////////////////////////////=//
 
-    Startup_Lib();  // establishes Lib_Context and Lib_Context_Value
+    Startup_Lib();  // establishes Lib_Context and Lib_Module
 
   #if !defined(NDEBUG)
     Assert_Pointer_Detection_Working();  // uses root Flex/Values to test
@@ -675,14 +675,14 @@ void Startup_Core(void)
     // boot->natives is from the automatically gathered list of natives found
     // by scanning comments in the C sources for `native: ...` declarations.
     //
-    Tweak_Cell_Specifier(&boot->natives, Lib_Context);
+    BINDING(&boot->natives) = Lib_Context;
     Array* natives_catalog = Startup_Natives(&boot->natives);
     Manage_Flex(natives_catalog);
     Push_GC_Guard(natives_catalog);
 
     // boot->generics is the list in %generics.r
     //
-    Tweak_Cell_Specifier(&boot->generics, Lib_Context);
+    BINDING(&boot->generics) = Lib_Context;
     Array* generics_catalog = Startup_Generics(&boot->generics);
     Manage_Flex(generics_catalog);
     Push_GC_Guard(generics_catalog);
@@ -692,7 +692,7 @@ void Startup_Core(void)
     VarList* errors_catalog = Startup_Errors(&boot->errors);
     Push_GC_Guard(errors_catalog);
 
-    Tweak_Cell_Specifier(&boot->sysobj, Lib_Context);
+    BINDING(&boot->sysobj) = Lib_Context;
     Init_System_Object(
         &boot->sysobj,
         datatypes_catalog,
@@ -736,7 +736,7 @@ void Startup_Core(void)
     // something tries to use it before startup finishes.
 
   blockscope {
-    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_LIB), Lib_Context_Value);
+    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_LIB), Lib_Module);
     bool threw = rebRunThrows(
         Get_System(SYS_CONTEXTS, CTX_USER),  // where to write antiform tag
         "~<SYS.CONTEXTS.USER not available: STARTUP-MEZZ not finished yet>~"
@@ -776,8 +776,8 @@ void Startup_Core(void)
         //
         // Create actual variables for top-level SET-WORD!s only, and run.
         //
-        "bind/only/set", &boot->base, Lib_Context_Value,
-        "evaluate inside", Lib_Context_Value, rebQ(&boot->base)
+        "bind/only/set", &boot->base, Lib_Module,
+        "evaluate inside", Lib_Module, rebQ(&boot->base)
         //
         // Note: ENSURE not available yet.
     );
@@ -799,7 +799,7 @@ void Startup_Core(void)
     node_LINK(NextVirtual, util) = Lib_Context;
     ensure(nullptr, Sys_Util_Module) = Alloc_Element();
     Init_Context_Cell(Sys_Util_Module, REB_MODULE, util);
-    ensure(nullptr, Sys_Context) = Cell_Varlist(Sys_Util_Module);
+    ensure(nullptr, Sys_Context) = cast(SeaOfVars*, util);
 
     rebElide(
         //
@@ -821,7 +821,7 @@ void Startup_Core(void)
             "Name: 'System",  // this is MAKE OBJECT!, not MODULE, must quote
             "Exports: [do module load load-value decode encode encoding-of]",
         "]",
-        "sys.util/import*", Lib_Context_Value, Sys_Util_Module
+        "sys.util/import*", Lib_Module, Sys_Util_Module
     );
 
     // !!! It was a stated goal at one point that it should be possible to
@@ -840,8 +840,8 @@ void Startup_Core(void)
 
         // Create actual variables for top-level SET-WORD!s only, and run.
         //
-        "bind/only/set", &boot->mezz, Lib_Context_Value,
-        "evaluate inside", Lib_Context_Value, rebQ(&boot->mezz)
+        "bind/only/set", &boot->mezz, Lib_Module,
+        "evaluate inside", Lib_Module, rebQ(&boot->mezz)
     );
 
   //=//// MAKE USER CONTEXT ////////////////////////////////////////////////=//
@@ -870,7 +870,7 @@ void Startup_Core(void)
         Get_System(SYS_CONTEXTS, CTX_USER)
     ));
     rebUnmanage(User_Context_Value);
-    User_Context = Cell_Varlist(User_Context_Value);
+    User_Context = cast(SeaOfVars*, Cell_Varlist(User_Context_Value));
 
   //=//// FINISH UP ///////////////////////////////////////////////////////=//
 

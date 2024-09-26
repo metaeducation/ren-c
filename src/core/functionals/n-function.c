@@ -133,8 +133,8 @@ Bounce Func_Dispatcher(Level* const L)
     STATE = ST_FUNC_BODY_EXECUTING;
 
     Copy_Cell(SPARE, body);
-    node_LINK(NextVirtual, L->varlist) = Cell_Specifier(body);
-    Tweak_Cell_Specifier(SPARE, L->varlist);
+    node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(body);
+    BINDING(SPARE) = L->varlist;
 
     assert(Is_Fresh(OUT));
     return CONTINUE_CORE(
@@ -269,7 +269,7 @@ Phase* Make_Interpreted_Action_May_Fail(
         Array_At(details, IDX_NATIVE_BODY),
         copy
     );
-    Tweak_Cell_Specifier(rebound, Cell_Specifier(body));
+    BINDING(rebound) = Cell_List_Binding(body);
 
     // Capture the mutability flag that was in effect when this action was
     // created.  This allows the following to work:
@@ -653,7 +653,10 @@ DECLARE_NATIVE(definitional_return)
     // identify for that behavior.
     //
     Copy_Cell(SPARE, Lib(REDO));
-    BINDING(SPARE) = target_level->varlist;  // may have changed
+    Tweak_Cell_Frame_Coupling(  // comment said "may have changed"?
+        SPARE,
+        Varlist_Of_Level_Force_Managed(target_level)
+    );
 
     return Init_Thrown_With_Label(LEVEL, gather_args, stable_SPARE);
 }

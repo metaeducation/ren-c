@@ -70,14 +70,15 @@ Bounce Lambda_Dispatcher(Level* const L)
 
     Force_Level_Varlist_Managed(L);
 
-    Specifier* specifier = Make_Use_Core(  // have to USE here
-        Varlist_Archetype(cast(VarList*, L->varlist)),
-        Cell_Specifier(block),
+    Context* parent = Cell_List_Binding(block);
+    Use* use = Make_Use_Core(  // have to USE here
+        Varlist_Archetype(Varlist_Of_Level_Force_Managed(L)),
+        parent,
         REB_WORD
     );
 
     Copy_Cell(SPARE, block);
-    Tweak_Cell_Specifier(SPARE, specifier);
+    BINDING(SPARE) = use;
 
     return DELEGATE_CORE(
         OUT,
@@ -106,13 +107,13 @@ Bounce Lambda_Unoptimized_Dispatcher(Level* const L)
     Force_Level_Varlist_Managed(L);
 
     Copy_Cell(SPARE, body);
-    node_LINK(NextVirtual, L->varlist) = Cell_Specifier(body);
-    Tweak_Cell_Specifier(SPARE, L->varlist);
+    node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(body);
+    BINDING(SPARE) = L->varlist;
 
     return DELEGATE_CORE(
         OUT,  // output
         LEVEL_MASK_NONE,  // flags
-        SPECIFIED,  // branch specifier
+        SPECIFIED,  // branch binding
         stable_SPARE  // branch
     );
 }

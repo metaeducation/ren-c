@@ -62,7 +62,7 @@
 
 //=//// "LET" FOR VIRTUAL BINDING OF "MINI-OBJECT" ////////////////////////=//
 //
-// Next node is either to another let, a frame specifier context, or nullptr.
+// Next node is either to another let, a frame binding context, or nullptr.
 //
 
 #define INODE_LetSymbol_TYPE           const Symbol*
@@ -96,5 +96,5 @@
 
 // Common extractor for the next field, used on either LET or USE
 //
-#define NextVirtual(let_or_use) \
+#define Context_Parent(let_or_use) \
     cast(Stub*, node_LINK(NextLet, let_or_use))
