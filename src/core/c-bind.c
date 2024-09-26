@@ -76,7 +76,7 @@ void Bind_Values_Inner_Loop(
                 // which provides a feature of building up state about some
                 // words while still not including them in the bind.
                 //
-                assert(cast(REBLEN, n) <= Varlist_Len(context));
+                assert(n <= Varlist_Len(context));
 
                 // We're overwriting any previous binding, which may have
                 // been relative.

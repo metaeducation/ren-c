@@ -228,7 +228,7 @@ INLINE Element* Init_Any_Sequence_Bytes(
     );
     BINDING(out) = nullptr;  // paths are bindable, can't have garbage
 
-    if (size > sizeof(PAYLOAD(Bytes, out).at_least_8) - 1) {  // too big
+    if (size > Size_Of(PAYLOAD(Bytes, out).at_least_8) - 1) {  // too big
         Array* a = Make_Array_Core(size, NODE_FLAG_MANAGED);
         for (; size > 0; --size, ++data)
             Init_Integer(Alloc_Tail_Array(a), *data);
@@ -256,7 +256,7 @@ INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
 ){
     assert(Any_Sequence_Kind(heart));
 
-    if (len > sizeof(PAYLOAD(Bytes, out)).at_least_8 - 1)
+    if (len > Size_Of(PAYLOAD(Bytes, out).at_least_8) - 1)
         return nullptr;  // no optimization yet if won't fit in payload bytes
 
     if (len < 2)
@@ -683,7 +683,7 @@ INLINE void Get_Tuple_Bytes(
 }
 
 #define MAX_TUPLE \
-    ((sizeof(uint32_t) * 2))  // !!! No longer a "limit", review callsites
+    ((Size_Of(uint32_t) * 2))  // !!! No longer a "limit", review callsites
 
 
 

@@ -297,12 +297,12 @@ DECLARE_NATIVE(unquote)
 
     Value* v = ARG(value);
 
-    REBINT depth = (REF(depth) ? VAL_INT32(ARG(depth)) : 1);
+    Count depth = (REF(depth) ? VAL_INT32(ARG(depth)) : 1);
 
     if (depth < 0)
         fail (PARAM(depth));
 
-    if (cast(REBLEN, depth) > Cell_Num_Quotes(v))
+    if (depth > Cell_Num_Quotes(v))
         fail ("Value not quoted enough for unquote depth requested");
 
     Unquotify(Copy_Cell(OUT, v), depth);

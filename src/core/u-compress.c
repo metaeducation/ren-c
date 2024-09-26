@@ -178,7 +178,7 @@ Byte* Compress_Alloc_Core(
 
     // http://stackoverflow.com/a/4938401
     //
-    REBLEN buf_size = deflateBound(&strm, size_in);
+    uLong buf_size = deflateBound(&strm, size_in);  // easier as uLong not Size
 
     strm.avail_in = size_in;
     strm.next_in = c_cast(z_Bytef*, input);
@@ -294,7 +294,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
     if (ret_init != Z_OK)
         fail (Error_Compression(&strm, ret_init));
 
-    Size buf_size;
+    uLong buf_size;  // easiest to speak in zlib uLong vs. signed `Size`
     if (
         envelope == SYM_GZIP  // not DETECT, trust stored size
         and size_in < 4161808  // (2^32 / 1032 + 18) ->1032 max deflate ratio
@@ -308,7 +308,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
         );
     }
     else {  // no decompressed size in envelope (or untrusted), must guess [3]
-        if (max >= 0 and (cast(Size, max) < size_in * 6))
+        if (max >= 0 and max < size_in * 6)
             buf_size = max;
         else
             buf_size = size_in * 3;
@@ -335,7 +335,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
         //
         assert(strm.next_out == output + buf_size - strm.avail_out);
 
-        if (max >= 0 and buf_size >= cast(Size, max)) {
+        if (max >= 0 and Cast_Signed(buf_size) >= max) {
             DECLARE_ELEMENT (temp);
             Init_Integer(temp, max);
             fail (Error_Size_Limit_Raw(temp));
@@ -346,7 +346,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
         //
         Size old_size = buf_size;
         buf_size = buf_size + strm.avail_in * 3;
-        if (max >= 0 and buf_size > cast(Size, max))
+        if (max >= 0 and Cast_Signed(buf_size) > max)
             buf_size = max;
 
         output = rebReallocBytes(output, buf_size);
@@ -486,7 +486,7 @@ DECLARE_NATIVE(deflate)
         }
     }
 
-    size_t compressed_size;
+    Size compressed_size;
     void *compressed = Compress_Alloc_Core(
         &compressed_size,
         bp,
@@ -563,7 +563,7 @@ DECLARE_NATIVE(inflate)
         }
     }
 
-    size_t decompressed_size;
+    Size decompressed_size;
     void *decompressed = Decompress_Alloc_Core(
         &decompressed_size,
         data,

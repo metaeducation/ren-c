@@ -170,7 +170,7 @@ REBINT Find_Key_Hashed(
             Append_Value(array, src);
     }
 
-    return (mode > 0) ? -1 : cast(REBINT, slot);
+    return (mode > 0) ? -1 : slot;
 }
 
 

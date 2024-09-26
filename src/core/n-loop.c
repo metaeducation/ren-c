@@ -204,8 +204,8 @@ static Bounce Loop_Series_Common(
 ){
     // !!! This limits incoming `end` to the array bounds.  Should it assert?
     //
-    if (end >= cast(REBINT, Cell_Series_Len_Head(start)))
-        end = cast(REBINT, Cell_Series_Len_Head(start));
+    if (end >= Cell_Series_Len_Head(start))
+        end = Cell_Series_Len_Head(start);
     if (end < 0)
         end = 0;
 
@@ -214,7 +214,7 @@ static Bounce Loop_Series_Common(
     // it must be checked for changing to another series, or non-series.
     //
     Copy_Cell(var, start);
-    REBIDX *state = &VAL_INDEX_UNBOUNDED(var);
+    REBIDX* state = &VAL_INDEX_UNBOUNDED(var);
 
     // Run only once if start is equal to end...edge case.
     //
@@ -241,8 +241,8 @@ static Bounce Loop_Series_Common(
 
     while (
         counting_up
-            ? cast(REBINT, *state) <= end
-            : cast(REBINT, *state) >= end
+            ? *state <= end
+            : *state >= end
     ){
         if (Eval_Branch_Throws(OUT, body)) {
             bool breaking;
@@ -264,8 +264,8 @@ static Bounce Loop_Series_Common(
         // can be mutated during the loop body, so the end has to be refreshed
         // on each iteration.  Review ramifications of HOLD-ing it.
         //
-        if (end >= cast(REBINT, Cell_Series_Len_Head(start)))
-            end = cast(REBINT, Cell_Series_Len_Head(start));
+        if (end >= Cell_Series_Len_Head(start))
+            end = Cell_Series_Len_Head(start);
 
         *state += bump;
     }
@@ -583,7 +583,7 @@ DECLARE_NATIVE(for_skip)
     //
     if (
         skip < 0
-        and VAL_INDEX_UNBOUNDED(var) >= cast(REBIDX, Cell_Series_Len_Head(var))
+        and VAL_INDEX_UNBOUNDED(var) >= Cell_Series_Len_Head(var)
     ){
         VAL_INDEX_UNBOUNDED(var) = Cell_Series_Len_Head(var) + skip;
     }

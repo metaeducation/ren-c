@@ -215,7 +215,7 @@ Flex* Make_Set_Operation_Flex(
             //
             for (
                 ;
-                VAL_INDEX_RAW(iter) < cast(REBIDX, String_Len(str));
+                VAL_INDEX_RAW(iter) < String_Len(str);
                 VAL_INDEX_RAW(iter) += skip
             ){
                 REBLEN len_match;
@@ -290,7 +290,7 @@ Flex* Make_Set_Operation_Flex(
 
             for (
                 ;
-                VAL_INDEX_RAW(iter) < cast(REBIDX, Binary_Len(b));
+                VAL_INDEX_RAW(iter) < Binary_Len(b);
                 VAL_INDEX_RAW(iter) += skip
             ){
                 REBLEN len_match;

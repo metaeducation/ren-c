@@ -105,7 +105,7 @@ void *Try_Alloc_Core(size_t size)
             if (g_mem.fuzz_factor == 0)
                 return nullptr;
         }
-        else if ((TG_tick % 10000) <= cast(REBLEN, g_mem.fuzz_factor)) {
+        else if ((TG_tick % 10000) <= cast(Tick, g_mem.fuzz_factor)) {
             g_mem.fuzz_factor = 0;
             return nullptr;
         }
@@ -756,9 +756,9 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
 
     // Width adjusted variables:
 
-    REBLEN start = index * wide;
-    REBLEN extra = delta * wide;
-    REBLEN size = Flex_Used(f) * wide;
+    Size start = index * wide;
+    Size extra = delta * wide;
+    Size size = Flex_Used(f) * wide;
 
     // + wide for terminator
     if ((size + extra + wide) <= Flex_Rest(f) * Flex_Wide(f)) {

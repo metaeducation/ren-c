@@ -44,7 +44,7 @@ INLINE Length Cell_Series_Len_At(const Cell* v) {
     // This is a longstanding historical Rebol issue that needs review.
     //
     REBIDX i = VAL_INDEX(v);
-    if (i > cast(REBIDX, Cell_Series_Len_Head(v)))
+    if (i > Cell_Series_Len_Head(v))
         fail ("Index past end of series");
     if (i < 0)
         fail ("Index before beginning of series");
@@ -70,7 +70,7 @@ INLINE Utf8(const*) Cell_String_At(const Cell* v) {
 
     const String* str = c_cast(String*, Cell_Flex(v));
     REBIDX i = VAL_INDEX_RAW(v);
-    if (i < 0 or i > cast(REBIDX, String_Len(str)))
+    if (i < 0 or i > String_Len(str))
         fail (Error_Index_Out_Of_Range_Raw());
 
     return i == 0 ? String_Head(str) : String_At(str, i);
@@ -118,7 +118,7 @@ INLINE Size Cell_String_Size_Limit_At(
     Utf8(const*) tail;
 
     REBLEN len_at = Cell_String_Len_At(v);
-    if (cast(REBLEN, limit) >= len_at) {  // UNLIMITED casts to large unsigned
+    if (limit >= len_at) {  // UNLIMITED casts to large unsigned
         if (length_out)
             *(unwrap length_out) = len_at;
         tail = Cell_String_Tail(v);  // byte count known (fast)

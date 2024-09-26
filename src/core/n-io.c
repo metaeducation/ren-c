@@ -302,7 +302,7 @@ REBLEN Milliseconds_From_Value(const Value* v) {
     if (msec < 0)
         fail (Error_Out_Of_Range(v));
 
-    return cast(REBLEN, msec);
+    return msec;
 }
 
 

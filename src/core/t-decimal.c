@@ -87,7 +87,7 @@ static char *gcvt(double value, int digits, char *buffer)
     }
 */
 
-bool almost_equal(REBDEC a, REBDEC b, REBLEN max_diff) {
+bool almost_equal(REBDEC a, REBDEC b, REBI64 max_diff) {
     union {REBDEC d; REBI64 i;} ua, ub;
     REBI64 int_diff;
 
@@ -103,7 +103,7 @@ bool almost_equal(REBDEC a, REBDEC b, REBLEN max_diff) {
     int_diff = ua.i - ub.i;
     if (int_diff < 0) int_diff = -int_diff;
 
-    return cast(REBU64, int_diff) <= max_diff;
+    return int_diff <= max_diff;
 }
 
 

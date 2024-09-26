@@ -991,15 +991,15 @@ DECLARE_NATIVE(to_hex)
 
     REBLEN len;
     if (REF(size))
-        len = cast(REBLEN, VAL_INT64(ARG(size)));
+        len = VAL_INT64(ARG(size));
     else
-        len = cast(REBLEN, UNLIMITED);
+        len = UNLIMITED;
 
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 
     if (Is_Integer(arg)) {
-        if (len == cast(REBLEN, UNLIMITED) || len > MAX_HEX_LEN)
+        if (len == UNLIMITED || len > MAX_HEX_LEN)
             len = MAX_HEX_LEN;
 
         Form_Hex_Pad(mo, VAL_INT64(arg), len);
@@ -1007,9 +1007,9 @@ DECLARE_NATIVE(to_hex)
     else if (Is_Tuple(arg)) {
         REBLEN n;
         if (
-            len == cast(REBLEN, UNLIMITED)
+            len == UNLIMITED
             || len > 2 * MAX_TUPLE
-            || len > cast(REBLEN, 2 * Cell_Sequence_Len(arg))
+            || len > 2 * Cell_Sequence_Len(arg)
         ){
             len = 2 * Cell_Sequence_Len(arg);
         }

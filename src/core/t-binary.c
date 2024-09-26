@@ -479,7 +479,7 @@ REBTYPE(Binary)
             &size, v, tail, pattern, flags, skip
         );
 
-        if (ret >= cast(REBLEN, tail))
+        if (ret == NOT_FOUND)
             return nullptr;
 
         if (id == SYM_FIND) {
@@ -498,7 +498,7 @@ REBTYPE(Binary)
             assert(id == SYM_SELECT);
 
         ret++;
-        if (ret >= cast(REBLEN, tail))
+        if (ret >= tail)
             return nullptr;
 
         return Init_Integer(OUT, *Binary_At(Cell_Binary(v), ret)); }
@@ -525,7 +525,7 @@ REBTYPE(Binary)
 
         // Note that /PART can change index
 
-        REBINT tail = cast(REBINT, Cell_Series_Len_Head(v));
+        REBINT tail = Cell_Series_Len_Head(v);
 
         if (REF(last)) {
             if (tail - len < 0) {
@@ -533,10 +533,10 @@ REBTYPE(Binary)
                 len = tail;
             }
             else
-                VAL_INDEX_RAW(v) = cast(REBLEN, tail - len);
+                VAL_INDEX_RAW(v) = tail - len;
         }
 
-        if (cast(REBINT, VAL_INDEX(v)) >= tail) {
+        if (VAL_INDEX(v) >= tail) {
             if (not REF(part))
                 return RAISE(Error_Nothing_To_Take_Raw());
 
@@ -561,8 +561,8 @@ REBTYPE(Binary)
       case SYM_CLEAR: {
         Binary* b = Cell_Binary_Ensure_Mutable(v);
 
-        REBINT tail = cast(REBINT, Cell_Series_Len_Head(v));
-        REBINT index = cast(REBINT, VAL_INDEX(v));
+        REBINT tail = Cell_Series_Len_Head(v);
+        REBINT index = VAL_INDEX(v);
 
         if (index >= tail)
             return COPY(v); // clearing after available data has no effect
@@ -574,7 +574,7 @@ REBTYPE(Binary)
         if (index == 0 and Get_Flex_Flag(b, DYNAMIC))
             Unbias_Flex(b, false);
 
-        Term_Binary_Len(b, cast(REBLEN, index));  // may have string alias
+        Term_Binary_Len(b, index);  // may have string alias
         return COPY(v); }
 
     //-- Creation:
@@ -755,8 +755,8 @@ REBTYPE(Binary)
         Byte* v_at = Cell_Blob_At_Ensure_Mutable(v);
         Byte* arg_at = Cell_Blob_At_Ensure_Mutable(arg);
 
-        REBINT tail = cast(REBINT, Cell_Series_Len_Head(v));
-        REBINT index = cast(REBINT, VAL_INDEX(v));
+        REBINT tail = Cell_Series_Len_Head(v);
+        REBINT index = VAL_INDEX(v);
 
         if (index < tail and VAL_INDEX(arg) < Cell_Series_Len_Head(arg)) {
             Byte temp = *v_at;
@@ -846,15 +846,14 @@ REBTYPE(Binary)
             return NOTHING;
         }
 
-        REBINT tail = cast(REBINT, Cell_Series_Len_Head(v));
-        REBINT index = cast(REBINT, VAL_INDEX(v));
+        REBINT tail = Cell_Series_Len_Head(v);
+        REBINT index = VAL_INDEX(v);
 
         if (REF(only)) {
             if (index >= tail)
                 return Init_Blank(OUT);
 
-            index += cast(REBLEN, Random_Int(REF(secure)))
-                % (tail - index);
+            index += Random_Int(REF(secure)) % (tail - index);
             const Binary* b = Cell_Binary(v);
             return Init_Integer(OUT, *Binary_At(b, index));  // PICK
         }
@@ -864,7 +863,7 @@ REBTYPE(Binary)
         bool secure = REF(secure);
         REBLEN n;
         for (n = Binary_Len(b) - index; n > 1;) {
-            REBLEN k = index + cast(REBLEN, Random_Int(secure)) % n;
+            REBLEN k = index + Random_Int(secure) % n;
             n--;
             Byte swap = *Binary_At(b, k);
             *Binary_At(b, k) = *Binary_At(b, n + index);

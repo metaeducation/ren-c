@@ -114,7 +114,7 @@ void Write_IO(const Value* data, REBLEN len)
             Term_Insert(Term_IO, data);
         }
         else if (Is_Text(data)) {
-            if (cast(REBLEN, rebUnbox("length of", data)) == len)
+            if (rebUnbox("length of", data) == len)
                 Term_Insert(Term_IO, data);
             else {
                 Value* part = rebValue("copy/part", data, rebI(len));
@@ -170,7 +170,7 @@ void Write_IO(const Value* data, REBLEN len)
         if (total < 0)
             rebFail_OS(errno);
 
-        assert(cast(size_t, total) == size);
+        assert(total == size);
     }
 }
 

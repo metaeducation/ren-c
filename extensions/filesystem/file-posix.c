@@ -351,7 +351,7 @@ Value* Write_File(const Value* port, const Value* value, REBLEN limit)
     }
 
     const Byte* data;
-    size_t size;
+    Size size;
 
     if (Is_Text(value) or Is_Issue(value)) {
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At_Limit(

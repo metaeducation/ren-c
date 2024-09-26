@@ -104,7 +104,7 @@ Bounce MAKE_Bitset(
     if (len == NOT_FOUND)
         return RAISE(arg);
 
-    Binary* bset = Make_Bitset(cast(REBLEN, len));
+    Binary* bset = Make_Bitset(len);
     Manage_Flex(bset);
     Init_Bitset(OUT, bset);
 
@@ -158,8 +158,8 @@ REBINT Find_Max_Bit(const Value* val)
         for (; len > 0; --len) {
             Codepoint c;
             up = Utf8_Next(&c, up);
-            if (c > maxi)
-                maxi = cast(REBINT, c);
+            if (Cast_Signed(c) > maxi)
+                maxi = c;
         }
         maxi++;
         break; }
@@ -174,8 +174,8 @@ REBINT Find_Max_Bit(const Value* val)
         const Element* item = Cell_List_At(&tail, val);
         for (; item != tail; ++item) {
             REBINT n = Find_Max_Bit(item);
-            if (n != NOT_FOUND and cast(REBLEN, n) > maxi)
-                maxi = cast(REBLEN, n);
+            if (n != NOT_FOUND and n > maxi)
+                maxi = n;
         }
         //maxi++;
         break; }
@@ -351,7 +351,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
                 && Is_Word(item + 1)
                 && Cell_Word_Symbol(item + 1) == Canon(HYPHEN_1)
             ){
-                Codepoint c = n;
+                REBINT c = n;
                 item += 2;
                 if (Is_Integer(item)) {
                     n = Int32s(item, 0);
@@ -388,7 +388,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
             const Byte* at = Cell_Binary_Size_At(&n, item);
 
             Codepoint c = Binary_Len(bset);
-            if (n >= c) {
+            if (n >= Cast_Signed(c)) {
                 Expand_Flex(bset, c, (n - c));
                 memset(Binary_At(bset, c), 0, (n - c));
             }
@@ -486,7 +486,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
                 Is_Word(item + 1)
                 && Cell_Word_Symbol(item + 1) == Canon(HYPHEN_1)
             ){
-                Codepoint c = n;
+                REBINT c = n;
                 item += 2;
                 if (Is_Integer(item)) {
                     n = Int32s(item, 0);

@@ -531,7 +531,7 @@ REBTYPE(Antiform)
             // it wasn't used elsewhere:
             //
             //     /* random/seed false restarts; true randomizes */
-            //     Set_Random(b1 ? cast(REBINT, OS_DELTA_TIME(0)) : 1);
+            //     Set_Random(b1 ? OS_DELTA_TIME(0) : 1);
             //
             // This created a dependency on the host's model for time, which
             // the core is trying to be agnostic about.  This one appearance

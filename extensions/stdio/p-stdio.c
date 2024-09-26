@@ -361,7 +361,7 @@ Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
         //
         // https://github.com/golang/go/issues/13697
 
-        const REBLEN readbuf_size = 30 * 1024;  // may back off to smaller size
+        const Size readbuf_size = 30 * 1024;  // may back off to smaller size
 
         Value* data = Varlist_Slot(ctx, STD_PORT_DATA);
         if (not Is_Binary(data)) {
@@ -391,7 +391,7 @@ Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
             // be able to go byte level, however.  Those wishing to interpret
             // Windows data as text with lines will thus have to deline it (!)
             //
-            size_t size = readbuf_size - Cell_Series_Len_At(data);
+            Size size = readbuf_size - Cell_Series_Len_At(data);
             Binary* bin = Cell_Binary_Ensure_Mutable(data);
             REBLEN orig_len = Cell_Series_Len_At(data);
 
@@ -399,7 +399,7 @@ Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
 
             Byte* buf = Binary_At(bin, orig_len);
 
-            size_t actual = Read_IO(buf, size);  // appends to tail
+            Size actual = Read_IO(buf, size);  // appends to tail
 
             Term_Binary_Len(bin, orig_len + actual);
         }

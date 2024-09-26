@@ -131,12 +131,12 @@ void MF_Date(REB_MOLD *mo, const Cell* v_orig, bool form)
     Byte buf[64];
     Byte* bp = &buf[0];
 
-    bp = Form_Int(bp, cast(REBINT, VAL_DAY(v)));
+    bp = Form_Int(bp, VAL_DAY(v));
     *bp++ = dash;
     memcpy(bp, Month_Names[VAL_MONTH(v) - 1], 3);
     bp += 3;
     *bp++ = dash;
-    bp = Form_Int_Pad(bp, cast(REBINT, VAL_YEAR(v)), 6, -4, '0');
+    bp = Form_Int_Pad(bp, VAL_YEAR(v), 6, -4, '0');
     *bp = '\0';
 
     Append_Ascii(mo->string, s_cast(buf));
@@ -198,7 +198,7 @@ REBLEN Julian_Date(const Cell* date)
     REBLEN days = 0;
 
     REBLEN i;
-    for (i = 0; i < cast(REBLEN, VAL_MONTH(date) - 1); i++)
+    for (i = 0; i < VAL_MONTH(date) - 1; i++)
         days += Month_Length(i, VAL_YEAR(date));
 
     return VAL_DAY(date) + days;
@@ -267,10 +267,10 @@ REBINT Days_Between_Dates(const Value* a_in, const Value* b_in)
                 ((y % 400) == 0)))  // but not when divisible by 400
                 ? 366u : 365u;
         }
-        return sign * (REBINT)(days + Julian_Date(a));
+        return sign * (days + Julian_Date(a));
     }
 
-    return sign * (REBINT)(Julian_Date(a) - Julian_Date(b));
+    return sign * (Julian_Date(a) - Julian_Date(b));
 }
 
 
@@ -343,7 +343,7 @@ static Element* Init_Normalized_Date(
     // Now adjust the days by stepping through each month
 
     REBINT d;
-    while (day >= (d = cast(REBINT, Month_Length(month, year)))) {
+    while (day >= (d = Month_Length(month, year))) {
         day -= d;
         if (++month >= 12) {
             month = 0;
@@ -357,7 +357,7 @@ static Element* Init_Normalized_Date(
         }
         else
             month--;
-        day += cast(REBINT, Month_Length(month, year));
+        day += Month_Length(month, year);
     }
 
     if (year < 0 or year > MAX_YEAR)
@@ -498,7 +498,7 @@ Value* Time_Between_Dates(
 
     // Note: abs() takes `int`, but there is a labs(), and C99 has llabs()
     //
-    if (cast(REBLEN, abs(cast(int, diff))) > (((1U << 31) - 1) / SECS_IN_DAY))
+    if (abs(cast(int, diff)) > (((1U << 31) - 1) / SECS_IN_DAY))
         fail (Error_Overflow_Raw());
 
 
@@ -749,7 +749,7 @@ void Pick_Or_Poke_Date(
 
           case SYM_JULIAN:
           case SYM_YEARDAY:
-            Init_Integer(out, cast(REBINT, Julian_Date(adjusted)));
+            Init_Integer(out, Julian_Date(adjusted));
             break;
 
           case SYM_UTC: {
@@ -829,7 +829,7 @@ void Pick_Or_Poke_Date(
             day = Int_From_Date_Arg(poke);
             if (
                 day < 1
-                or day > cast(REBINT, Month_Length(VAL_MONTH(v), VAL_YEAR(v)))
+                or day > Month_Length(VAL_MONTH(v), VAL_YEAR(v))
             ){
                 fail (Error_Out_Of_Range(poke));
             }
@@ -1103,9 +1103,9 @@ REBTYPE(Date)
 
             if (year == 0) break;
 
-            year = cast(REBLEN, Random_Range(year, secure));
-            month = cast(REBLEN, Random_Range(12, secure));
-            day = cast(REBLEN, Random_Range(31, secure));
+            year = Random_Range(year, secure);
+            month = Random_Range(12, secure);
+            day = Random_Range(31, secure);
 
             if (secs != NO_DATE_TIME)
                 secs = Random_Range(TIME_IN_DAY, secure);

@@ -69,7 +69,7 @@ Bounce MAKE_Sequence(
         const Byte* ep;
         REBLEN size = 1;
         REBINT n;
-        for (n = cast(REBINT, len), ep = cp; n > 0; n--, ep++) { // count '.'
+        for (n = len, ep = cp; n > 0; n--, ep++) { // count '.'
             if (*ep == '.')
                 ++size;
         }
@@ -83,7 +83,7 @@ Bounce MAKE_Sequence(
         Byte buf[MAX_TUPLE];
 
         Byte* tp = buf;
-        for (ep = cp; len > cast(REBLEN, ep - cp); ++ep) {
+        for (ep = cp; len > ep - cp; ++ep) {
             ep = Grab_Int(ep, &n);
             if (n < 0 || n > 255)
                 return RAISE(arg);
@@ -93,7 +93,7 @@ Bounce MAKE_Sequence(
                 break;
         }
 
-        if (len > cast(REBLEN, ep - cp))
+        if (len > ep - cp)
             return RAISE(arg);
 
         return Init_Tuple_Bytes(OUT, buf, size);
@@ -137,7 +137,7 @@ Bounce MAKE_Sequence(
 
         const String* spelling = Cell_String(arg);
         const Byte* ap = String_Head(spelling);
-        size_t size = String_Size(spelling); // UTF-8 len
+        Size size = String_Size(spelling);  // UTF-8 len
         if (size & 1)
             fail (arg); // must have even # of chars
         size /= 2;
@@ -246,7 +246,7 @@ REBTYPE(Sequence)
         for (; temp > 0; --temp, ++vp) {
             REBINT v = *vp;
             if (ap)
-                a = (REBINT) *ap++;
+                a = *ap++;
 
             switch (id) {
             case SYM_ADD: v += a; break;
@@ -269,7 +269,7 @@ REBTYPE(Sequence)
                     // talk directly to ROUND frames, cases like this that
                     // don't have round frames need one.  Can't run:
                     //
-                    //    v = cast(REBINT, Round_Dec(v / dec, 0, 1.0));
+                    //    v = Round_Dec(v / dec, 0, 1.0);
                     //
                     // The easiest way to do it is to call ROUND.  Methods for
                     // this are being improved all the time, so the slowness
@@ -398,7 +398,7 @@ REBTYPE(Sequence)
         else
             fail (picker);
 
-        if (n < 0 or n >= cast(REBINT, Cell_Sequence_Len(sequence)))
+        if (n < 0 or n >= Cell_Sequence_Len(sequence))
             return RAISE(Error_Bad_Pick_Raw(picker));
 
         Copy_Sequence_At(OUT, sequence, n);

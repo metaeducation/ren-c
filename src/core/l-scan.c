@@ -739,9 +739,7 @@ static VarList* Error_Syntax(SCAN_STATE *ss, Token token) {
     DECLARE_ATOM (token_text);
     Init_Text(
         token_text,
-        Make_Sized_String_UTF8(
-            cs_cast(ss->begin), cast(REBLEN, ss->end - ss->begin)
-        )
+        Make_Sized_String_UTF8(cs_cast(ss->begin), ss->end - ss->begin)
     );
 
     VarList* error = Error_Scan_Invalid_Raw(token_name, token_text);
@@ -1879,13 +1877,13 @@ Bounce Scanner_Executor(Level* const L) {
       case ST_SCANNER_SCANNING_CHILD_ARRAY :
         bp = ss->begin;
         ep = ss->end;
-        len = cast(REBLEN, ep - bp);
+        len = ep - bp;
         goto child_array_scanned;
 
       case ST_SCANNER_SCANNING_CONSTRUCT:
         bp = ss->begin;
         ep = ss->end;
-        len = cast(REBLEN, ep - bp);
+        len = ep - bp;
         goto construct_scan_to_stack_finished;
 
       default : assert(false);
@@ -1924,7 +1922,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     bp = ss->begin;
     ep = ss->end;
-    len = cast(REBLEN, ep - bp);
+    len = ep - bp;
 
     ss->begin = ss->end;  // accept token
 
@@ -2358,7 +2356,7 @@ Bounce Scanner_Executor(Level* const L) {
             ep++;
             while (*ep == '.' or IS_LEX_NOT_DELIMIT(*ep))
                 ++ep;
-            len = cast(REBLEN, ep - bp);
+            len = ep - bp;
             if (len > 50) {
                 // prevent infinite loop, should never be longer than this
                 break;
@@ -3233,7 +3231,7 @@ const Byte* Scan_Any_Word(
         return nullptr;
 
     assert(ss.end >= ss.begin);
-    if (size > cast(Size, ss.end - ss.begin))
+    if (size > ss.end - ss.begin)
         return nullptr;  // e.g. `as word! "ab cd"` just sees "ab"
 
     Init_Any_Word(out, heart, Intern_UTF8_Managed(utf8, size));

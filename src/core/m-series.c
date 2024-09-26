@@ -249,7 +249,7 @@ void Remove_Flex_Units(Flex* f, Size byteoffset, REBLEN quantity)
     // add "bias" to the head...rather than move any bytes.
 
     if (is_dynamic and byteoffset == 0) {
-        if (cast(REBLEN, quantity) > used_old)
+        if (quantity > used_old)
             quantity = used_old;
 
         f->content.dynamic.used -= quantity;

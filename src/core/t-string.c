@@ -90,7 +90,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
   #endif
 
     if (at < len / 2) {
-        if (len < sizeof(Cell)) {
+        if (len < Size_Of(Cell)) {
             if (not Is_String_Symbol(s))
                 assert(
                     Get_Flex_Flag(s, DYNAMIC)  // e.g. mold buffer
@@ -105,7 +105,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
         }
     }
     else {
-        if (len < sizeof(Cell)) {
+        if (len < Size_Of(Cell)) {
             if (not Is_String_Symbol(s))
                 assert(
                     not book  // mutations must ensure this usually but...
@@ -134,8 +134,8 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
     // `at` is always positive.  `booked - at` may be negative, but if it
     // is positive and bigger than `at`, faster to seek from head.
     //
-    if (cast(REBINT, at) < cast(REBINT, booked) - cast(REBINT, at)) {
-        if (at < sizeof(Cell))
+    if (at < booked - at) {
+        if (at < Size_Of(Cell))
             book = nullptr;  // don't update bookmark for near head search
         goto scan_from_head;
     }
@@ -143,8 +143,8 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
     // `len - at` is always positive.  `at - booked` may be negative, but if
     // it is positive and bigger than `len - at`, faster to seek from tail.
     //
-    if (cast(REBINT, len - at) < cast(REBINT, at) - cast(REBINT, booked)) {
-        if (len - at < sizeof(Cell))
+    if ((len - at) < at - booked) {
+        if (len - at < Size_Of(Cell))
             book = nullptr;  // don't update bookmark for near tail search
         goto scan_from_tail;
     }
@@ -248,9 +248,9 @@ REBINT CT_String(const Cell* a, const Cell* b, bool strict)
 
         REBINT d;
         if (strict)
-            d = c1 - c2;
+            d = Cast_Signed(c1) - Cast_Signed(c2);
         else
-            d = LO_CASE(c1) - LO_CASE(c2);
+            d = Cast_Signed(LO_CASE(c1)) - Cast_Signed(LO_CASE(c2));
 
         if (d != 0)
             return d > 0 ? 1 : -1;
@@ -411,7 +411,7 @@ Bounce MAKE_String(
             goto bad_make;
 
         REBINT i = Int32(index) - 1 + VAL_INDEX(first);
-        if (i < 0 or i > cast(REBINT, Cell_Series_Len_At(first)))
+        if (i < 0 or i > Cell_Series_Len_At(first))
             goto bad_make;
 
         return Init_Series_At(OUT, heart, Cell_Flex(first), i);
@@ -901,7 +901,7 @@ bool Did_Get_Series_Index_From_Picker(
 
     n += VAL_INDEX(v) - 1;
 
-    if (n < 0 or cast(REBLEN, n) >= Cell_Series_Len_Head(v))
+    if (n < 0 or n >= Cell_Series_Len_Head(v))
         return false;  // out of range, null unless POKE or more PICK-ing
 
     *out = n;
@@ -1118,8 +1118,8 @@ REBTYPE(String)
         if (find == NOT_FOUND)
             return nullptr;
 
-        REBLEN ret = cast(REBLEN, find);
-        assert(ret <= cast(REBLEN, tail));
+        REBLEN ret = find;
+        assert(ret <= tail);
         UNUSED(find);
 
         if (id == SYM_FIND) {
@@ -1176,7 +1176,7 @@ REBTYPE(String)
                 len = tail;
             }
             else
-                VAL_INDEX_RAW(v) = cast(REBLEN, tail - len);
+                VAL_INDEX_RAW(v) = tail - len;
         }
 
         if (VAL_INDEX(v) >= tail) {
@@ -1218,7 +1218,7 @@ REBTYPE(String)
         Size offset = VAL_BYTEOFFSET_FOR_INDEX(v, index);
         Free_Bookmarks_Maybe_Null(s);
 
-        Term_String_Len_Size(s, cast(REBLEN, index), offset);
+        Term_String_Len_Size(s, index, offset);
         return COPY(v); }
 
     //-- Creation:
@@ -1352,8 +1352,7 @@ REBTYPE(String)
         if (REF(only)) {
             if (index >= tail)
                 return nullptr;
-            index += cast(REBLEN, Random_Int(REF(secure)))
-                % (tail - index);
+            index += Random_Int(REF(secure)) % (tail - index);
 
             return Init_Char_Unchecked(
                 OUT,
@@ -1370,7 +1369,7 @@ REBTYPE(String)
 
         REBLEN n;
         for (n = String_Len(str) - index; n > 1;) {
-            REBLEN k = index + cast(REBLEN, Random_Int(secure)) % n;
+            REBLEN k = index + (Random_Int(secure) % n);
             n--;
             Codepoint swap = Get_Char_At(str, k);
             Set_Char_At(str, k, Get_Char_At(str, n + index));

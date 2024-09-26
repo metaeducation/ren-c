@@ -613,7 +613,7 @@ void Startup_Core(void)
     // includes the type list, word list, error message templates, system
     // object, mezzanines, etc.
 
-    size_t utf8_size;
+    Size utf8_size;
     const int max = -1;  // trust size in gzip data
     Byte* utf8 = Decompress_Alloc_Core(
         &utf8_size,

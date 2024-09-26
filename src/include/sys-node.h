@@ -200,7 +200,7 @@ INLINE void *Try_Alloc_Pooled(PoolId pool_id)
             if (g_mem.fuzz_factor == 0)
                 return nullptr;
         }
-        else if ((TG_tick % 10000) <= cast(REBLEN, g_mem.fuzz_factor)) {
+        else if ((TG_tick % 10000) <= cast(Tick, g_mem.fuzz_factor)) {
             g_mem.fuzz_factor = 0;
             return nullptr;
         }

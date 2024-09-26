@@ -99,8 +99,8 @@ typedef struct {
 typedef struct {
     VarList* port_ctx;
 
-    ssize_t length;  // length to transfer (or -1 for UNLIMITED)
-    size_t actual;  // length actually transferred
+    REBINT length;  // length to transfer (or -1 for UNLIMITED)
+    Size actual;  // length actually transferred
 
     // !!! the binary is assumed to just live in the port's "data", this
     // prevents multiple in-flight reads and is a design flaw, but translating

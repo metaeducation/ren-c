@@ -173,7 +173,7 @@ Bounce MAKE_List(
         const Cell* list = at;
         REBINT index = VAL_INDEX(list) + Int32(at + 1) - 1;
 
-        if (index < 0 or index > cast(REBINT, Cell_Series_Len_Head(list)))
+        if (index < 0 or index > Cell_Series_Len_Head(list))
             goto bad_make;
 
         // !!! Previously this code would clear line break options on path
@@ -688,7 +688,7 @@ bool Did_Pick_Block(
 ){
     REBINT n = Get_Num_From_Arg(picker);
     n += VAL_INDEX(block) - 1;
-    if (n < 0 or cast(REBLEN, n) >= Cell_Series_Len_Head(block))
+    if (n < 0 or n >= Cell_Series_Len_Head(block))
         return false;
 
     const Element* slot = Array_At(Cell_Array(block), n);
@@ -839,7 +839,7 @@ REBTYPE(List)
 
         const Value* picker = ARG(picker);
         REBINT n = Try_Get_Array_Index_From_Picker(list, picker);
-        if (n < 0 or n >= cast(REBINT, Cell_Series_Len_Head(list)))
+        if (n < 0 or n >= Cell_Series_Len_Head(list))
             return RAISE(Error_Bad_Pick_Raw(picker));
 
         const Element* at = Array_At(Cell_Array(list), n);
@@ -871,7 +871,7 @@ REBTYPE(List)
         // of an update if we don't lock the array for the poke duration.
         //
         REBINT n = Try_Get_Array_Index_From_Picker(list, picker);
-        if (n < 0 or n >= cast(REBINT, Cell_Series_Len_Head(list)))
+        if (n < 0 or n >= Cell_Series_Len_Head(list))
             fail (Error_Out_Of_Range(picker));
 
         Array* mut_arr = Cell_Array_Ensure_Mutable(list);
@@ -979,7 +979,7 @@ REBTYPE(List)
         if (find == NOT_FOUND)
             return nullptr;
 
-        REBLEN ret = cast(REBLEN, find);
+        REBLEN ret = find;
         assert(ret <= limit);
         UNUSED(find);
 
@@ -1071,7 +1071,7 @@ REBTYPE(List)
             if (index == 0)
                 Reset_Array(arr);
             else
-                Set_Flex_Len(arr, cast(REBLEN, index));
+                Set_Flex_Len(arr, index);
         }
         return COPY(list);
     }

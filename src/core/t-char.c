@@ -77,7 +77,9 @@ REBINT CT_Issue(const Cell* a, const Cell* b, bool strict)
     UNUSED(strict);  // always strict
 
     if (IS_CHAR_CELL(a) and IS_CHAR_CELL(b)) {
-        REBINT num = Cell_Codepoint(a) - Cell_Codepoint(b);
+        Codepoint ca = Cell_Codepoint(a);
+        Codepoint cb = Cell_Codepoint(b);
+        REBINT num = Cast_Signed(ca) - Cast_Signed(cb);
         if (num == 0)
             return 0;
         return (num > 0) ? 1 : -1;
@@ -409,7 +411,7 @@ REBTYPE(Issue)
 
         REBLEN len;
         Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, issue);
-        if (cast(REBLEN, n) > len)
+        if (n > len)
             return nullptr;
 
         Codepoint c;
@@ -504,9 +506,7 @@ REBTYPE(Issue)
         }
         if (chr == 0)
             break;
-        chr = cast(Codepoint,
-            1 + cast(REBLEN, Random_Int(REF(secure)) % chr)
-        );
+        chr = cast(Codepoint, 1 + (Random_Int(REF(secure)) % chr));
         break; }
 
       default:

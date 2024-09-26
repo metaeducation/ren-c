@@ -384,13 +384,13 @@ REBLEN Part_Len_May_Modify_Index(
             fail (Error_Invalid_Part_Raw(part));
         }
 
-        len = cast(REBINT, VAL_INDEX(part)) - cast(REBINT, iseries);
+        len = VAL_INDEX(part) - iseries;
     }
 
     // Restrict length to the size available
     //
     if (len >= 0) {
-        REBINT maxlen = cast(REBINT, Cell_Series_Len_At(series));
+        REBINT maxlen = Cell_Series_Len_At(series);
         if (len > maxlen)
             len = maxlen;
     }
@@ -401,7 +401,7 @@ REBLEN Part_Len_May_Modify_Index(
         len = -len;
         if (len > cast(REBI64, iseries))
             len = iseries;
-        VAL_INDEX_RAW(series) -= cast(REBLEN, len);
+        VAL_INDEX_RAW(series) -= len;
     }
 
     if (len > UINT32_MAX) {
@@ -415,8 +415,8 @@ REBLEN Part_Len_May_Modify_Index(
 
     assert(len >= 0);
     if (not Is_Issue(series))
-        assert(Cell_Series_Len_Head(series) >= cast(REBLEN, len));
-    return cast(REBLEN, len);
+        assert(Cell_Series_Len_Head(series) >= len);
+    return len;
 }
 
 
@@ -456,7 +456,7 @@ REBLEN Part_Limit_Append_Insert(const Value* part) {
         REBINT i = Int32(part);
         if (i < 0)  // Clip negative numbers to mean 0
             return 0;  // !!! Would it be better to error?
-        return cast(REBLEN, i);
+        return i;
     }
 
     fail ("APPEND and INSERT only take /PART limit as INTEGER!");

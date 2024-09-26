@@ -157,8 +157,8 @@ static Bounce Clipboard_Actor(
 
         // Extract text as UTF-16
         //
-        REBINT check = rebSpellIntoWide(wide, num_wchars, data);
-        assert(check == cast(REBINT, num_wchars));
+        Length check = rebSpellIntoWide(wide, num_wchars, data);
+        assert(check == num_wchars);
         assert(len <= check); // may only be writing /PART of the string
         UNUSED(check);
 

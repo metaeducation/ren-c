@@ -302,10 +302,10 @@ INLINE bool Is_Flex_Biased(const Flex* f) {
     return not Is_Stub_Varlist(f);
 }
 
-INLINE REBLEN Flex_Bias(const Flex* f) {
+INLINE Length Flex_Bias(const Flex* f) {
     if (not Is_Flex_Biased(f))
         return 0;
-    return cast(REBLEN, ((f)->content.dynamic.bonus.bias >> 16) & 0xffff);
+    return ((f)->content.dynamic.bonus.bias >> 16) & 0xffff;
 }
 
 #define MAX_FLEX_BIAS 0x1000
@@ -337,7 +337,7 @@ INLINE Length Flex_Rest(const Flex* f) {
     return sizeof(f->content) / Flex_Wide(f);
 }
 
-INLINE size_t Flex_Total(const Flex* f)
+INLINE Size Flex_Total(const Flex* f)
   { return (Flex_Rest(f) + Flex_Bias(f)) * Flex_Wide(f); }
 
 
@@ -681,7 +681,7 @@ INLINE void Set_Flex_Used_Internal(Flex* f, Count used) {
     if (Get_Flex_Flag(f, DYNAMIC))
         f->content.dynamic.used = used;
     else {
-        assert(used < sizeof(f->content));
+        assert(used < Size_Of(f->content));
 
         if (Is_Stub_Array(f)) {  // content used by cell, no room for length
             if (used == 0)

@@ -99,7 +99,7 @@ INLINE Element* Init_Issue_Utf8(
     Size size,
     Length len  // while validating, you should have counted the codepoints
 ){
-    if (size + 1 <= sizeof(PAYLOAD(Bytes, out)).at_least_8) {
+    if (size + 1 <= Size_Of(PAYLOAD(Bytes, out).at_least_8)) {
         Reset_Cell_Header_Untracked(
             out,
             FLAG_HEART_BYTE(REB_ISSUE) | CELL_MASK_NO_NODES
@@ -212,7 +212,7 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
         //
         // Note that unsigned cast of UNLIMITED as -1 to REBLEN is a large #
         //
-        if (cast(REBLEN, limit) >= EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN]) {
+        if (limit >= EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN]) {
             len = EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN];
             size = EXTRA(Bytes, v).at_least_4[IDX_EXTRA_USED];
         }

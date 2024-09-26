@@ -189,7 +189,7 @@ DECLARE_NATIVE(load_extension)
     Init_Context_Cell(module, REB_MODULE, module_ctx);
     Push_GC_Guard(module);  // !!! Is GC guard unnecessary due to references?
 
-    size_t script_size;
+    Size script_size;
     Byte* script_utf8 = Decompress_Alloc_Core(
         &script_size,
         Cell_Handle_Pointer(Byte, script_compressed),

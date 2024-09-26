@@ -353,9 +353,9 @@ INLINE bool IS_WORD_UNBOUND(const Cell* v) {
 
 INLINE REBINT VAL_WORD_INDEX(const Cell* v) {
     assert(Any_Wordlike(v));
-    uint32_t i = CELL_WORD_INDEX_I32(v);
+    REBINT i = CELL_WORD_INDEX_I32(v);
     assert(i > 0);
-    return cast(REBLEN, i);
+    return i;
 }
 
 INLINE void Unbind_Any_Word(Cell* v) {

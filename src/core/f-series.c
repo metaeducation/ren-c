@@ -80,13 +80,13 @@ Bounce Series_Common_Action_Maybe_Unhandled(
           case SYM_TAIL_Q:
             return Init_Logic(
                 OUT,
-                VAL_INDEX_RAW(v) == cast(REBIDX, Cell_Series_Len_Head(v))
+                VAL_INDEX_RAW(v) == Cell_Series_Len_Head(v)
             );
 
           case SYM_PAST_Q:
             return Init_Logic(
                 OUT,
-                VAL_INDEX_RAW(v) > cast(REBIDX, Cell_Series_Len_Head(v))
+                VAL_INDEX_RAW(v) > Cell_Series_Len_Head(v)
             );
 
           case SYM_FILE: {
@@ -189,7 +189,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
             len = 1;
 
         REBIDX index = VAL_INDEX_RAW(v);
-        if (index < cast(REBIDX, Cell_Series_Len_Head(v)) and len != 0)
+        if (index < Cell_Series_Len_Head(v) and len != 0)
             Remove_Any_Series_Len(v, index, len);
 
         return COPY(v); }

@@ -255,14 +255,15 @@ unsigned char* API_rebReallocBytes(void *ptr, size_t new_size)
     Binary* b = *pb;
     assert(Is_Node_Root_Bit_Set(b));
 
-    REBLEN old_size = Binary_Len(b) - ALIGN_SIZE;
+    Size old_size = Binary_Len(b) - ALIGN_SIZE;
 
     // !!! It's less efficient to create a new Flex with another call to
     // rebAlloc(), but simpler for the time being.  Switch to do this with
     // the same Flex Stub.
     //
+    Size nsize = new_size;  // see `Size`: we use unsigned sizes internally
     Byte* reallocated = API_rebAllocBytes(new_size);
-    memcpy(reallocated, ptr, old_size < new_size ? old_size : new_size);
+    memcpy(reallocated, ptr, old_size < nsize ? old_size : nsize);
     API_rebFree(ptr);
 
     return reallocated;
@@ -1893,23 +1894,25 @@ CLEANUP_CFUNC* API_rebExtractHandleCleaner(
 
 // Helper function for `rebSpellInto()` and `rebSpell()`
 //
-static size_t Spell_Into(
+static Size Spell_Into(
     char* buf,
-    size_t buf_size,  // number of bytes
+    Size buf_size,  // number of bytes
     const Value* v
 ){
     if (not Any_Utf8(v))
         fail ("rebSpell() APIs require UTF-8 types (strings, words, tokens)");
 
+    Size bsize = buf_size;  // see `Size`: we use signed sizes internally
+
     Size utf8_size;
     Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, v);
 
     if (not buf) {
-        assert(buf_size == 0);
+        assert(bsize == 0);
         return utf8_size;  // caller must allocate a buffer of size + 1
     }
 
-    Size limit = MIN(buf_size, utf8_size);
+    Size limit = MIN(bsize, utf8_size);
     memcpy(buf, utf8, limit);
     buf[limit] = 0;
     return utf8_size;
@@ -2123,15 +2126,17 @@ static size_t Bytes_Into(
     size_t buf_size,
     const Value* v
 ){
+    Size bsize = buf_size;  // see `Size`: we use signed sizes internally
+
     if (Is_Binary(v)) {
         Size size;
         const Byte* data = Cell_Binary_Size_At(&size, v);
         if (buf == nullptr) {
-            assert(buf_size == 0);
+            assert(bsize == 0);
             return size;
         }
 
-        Size limit = MIN(buf_size, size);
+        Size limit = MIN(bsize, size);
         memcpy(buf, data, limit);
         return size;
     }
@@ -2139,11 +2144,11 @@ static size_t Bytes_Into(
     if (IS_CHAR(v)) {  // Note: CHAR! caches its UTF-8 encoding in the cell
         Size size = Cell_Char_Encoded_Size(v);
         if (buf == nullptr) {
-            assert(buf_size == 0);
+            assert(bsize == 0);
             return size;
         }
 
-        Size limit = MIN(buf_size, size);
+        Size limit = MIN(bsize, size);
         memcpy(buf, VAL_CHAR_ENCODED(v), limit);
         return size;
     }
@@ -2155,7 +2160,7 @@ static size_t Bytes_Into(
             return size;
         }
 
-        Size check = Spell_Into(s_cast(buf), buf_size, v);
+        Size check = Spell_Into(s_cast(buf), bsize, v);
         assert(check == size);
         UNUSED(check);
 
@@ -2730,7 +2735,11 @@ void* API_rebZdeflateAlloc(
 ){
     ENTER_API;
 
-    return Compress_Alloc_Core(out_len, input, in_len, SYM_ZLIB);
+    Size len;  // see `Size`: we use signed sizes internally
+    void* deflated = Compress_Alloc_Core(&len, input, in_len, SYM_ZLIB);
+    assert(len > 0);
+    *out_len = len;
+    return deflated;
 }
 
 
@@ -2752,7 +2761,11 @@ void *API_rebZinflateAlloc(
 ){
     ENTER_API;
 
-    return Decompress_Alloc_Core(len_out, input, len_in, max, SYM_ZLIB);
+    Size len;  // see `Size`: we use signed sizes internally
+    void* inflated = Decompress_Alloc_Core(&len, input, len_in, max, SYM_ZLIB);
+    assert(len >= 0);
+    *len_out = len;
+    return inflated;
 }
 
 

@@ -139,7 +139,7 @@ REBINT Compare_UTF8(const Byte* s1, const Byte* s2, Size l2)
 REBINT Find_Binstr_In_Binstr(
     REBLEN *len_out,  // length in output units of match
     const Cell* binstr1,
-    REBLEN end1_unsigned,  // end binstr1 *index* (not a limiting *length*)
+    REBLEN end1,  // end binstr1 *index* (not a limiting *length*)
     const Cell* binstr2,  // pattern to be found
     REBLEN limit2,  // in units of binstr2 (usually Cell_Series_Len_At(binstr2))
     Flags flags,  // AM_FIND_CASE, AM_FIND_MATCH
@@ -218,8 +218,7 @@ REBINT Find_Binstr_In_Binstr(
     //
     // !!! ^-- is this comment still relevant?
     //
-    assert(end1_unsigned >= cast(REBLEN, index1));
-    REBINT end1 = end1_unsigned - window1;
+    end1 = end1 - window1;
 
     // If is_2_str then we have to treat the data in binstr1 as characters,
     // even if it's not validated UTF-8.  This requires knowing the size_at

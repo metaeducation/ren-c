@@ -197,7 +197,7 @@ INLINE Flavor Flavor_From_Flags(Flags flags)
 // This doesn't need to be particularly fast...so a lookup table is probably
 // not needed.  Still, the common cases (array and strings) are put first.
 //
-INLINE size_t Wide_For_Flavor(Flavor flavor) {
+INLINE Size Wide_For_Flavor(Flavor flavor) {
     assert(flavor != FLAVOR_CORRUPT);
     if (flavor <= FLAVOR_MAX_ARRAY)
         return sizeof(Cell);

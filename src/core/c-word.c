@@ -502,7 +502,7 @@ void Startup_Interning(void)
 //
 void Startup_Symbols(void)
 {
-    size_t uncompressed_size;
+    Size uncompressed_size;
     const int max = -1;  // trust size in gzip data
     Byte* bytes = Decompress_Alloc_Core(
         &uncompressed_size,
@@ -522,7 +522,7 @@ void Startup_Symbols(void)
     while (at != tail) {
         assert(at < tail);
 
-        size_t size = *at;  // length prefix byte
+        Size size = *at;  // length prefix byte
         ++at;
 
         Symbol* canon = &g_symbols.builtin_canons[id];  // not a Symbol*...yet

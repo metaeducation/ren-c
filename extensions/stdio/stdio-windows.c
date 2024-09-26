@@ -237,7 +237,7 @@ void Write_IO(const Value* data, REBLEN len)
             // !!! Having to subset the string is wasteful, so Term_Insert()
             // should take a length -or- series slicing needs to be solved.
             //
-            if (cast(REBLEN, rebUnbox("length of", data)) == len)
+            if (rebUnbox("length of", data) == len)
                 Term_Insert(Term_IO, data);
             else {
                 Value* part = rebValue("copy/part", data, rebI(len));

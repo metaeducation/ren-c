@@ -73,7 +73,7 @@ const Byte* Analyze_String_For_Scan(
     // Skip leading whitespace
     //
     Codepoint c;
-    Codepoint i;
+    Offset i;
     for (
         i = 0;
         Is_Codepoint_Space(c = Codepoint_At(up)) and (i < len);

@@ -124,7 +124,7 @@ REBLEN Modify_Array(
         src_rel = c_cast(Element*, src_val);
     }
 
-    REBLEN size = cast(REBLEN, dups) * ilen;  // total to insert (dups is > 0)
+    REBLEN size = dups * ilen;  // total to insert (dups is > 0)
 
     // If data is being tacked onto an array, beyond the newlines on the values
     // in that array there is also the chance that there's a newline tail flag
@@ -151,7 +151,7 @@ REBLEN Modify_Array(
     tail_idx = (op == SYM_APPEND) ? 0 : size + dst_idx;
 
     REBLEN dup_index = 0;
-    for (; dup_index < cast(REBLEN, dups); ++dup_index) {  // dups checked > 0
+    for (; dup_index < dups; ++dup_index) {  // dups checked > 0
         REBLEN index = 0;
         for (; index < ilen; ++index, ++dst_idx) {
             Copy_Cell(
@@ -696,7 +696,7 @@ REBLEN Modify_String_Or_Binary(
     Byte* dst_ptr = Flex_At(Byte, dst_flex, dst_off);
 
     REBLEN d;
-    for (d = 0; d < cast(REBLEN, dups); ++d) {  // dups checked above as > 0
+    for (d = 0; d < dups; ++d) {  // dups checked above as > 0
         memcpy(dst_ptr, src_ptr, src_size_raw);
         dst_ptr += src_size_raw;
 
@@ -723,7 +723,7 @@ REBLEN Modify_String_Or_Binary(
             Check_Bookmarks_Debug(dst_str);
           #endif
 
-            if (String_Len(dst_str) < sizeof(Cell))  // not kept if small
+            if (String_Len(dst_str) < Size_Of(Cell))  // not kept if small
                 Free_Bookmarks_Maybe_Null(dst_str);
         }
     }

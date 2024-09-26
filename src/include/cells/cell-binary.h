@@ -19,7 +19,7 @@ INLINE const Byte* Cell_Binary_Size_At(
     const Binary* b = Cell_Binary(v);
     REBIDX i = VAL_INDEX_RAW(v);
     Size size = Binary_Len(b);
-    if (i < 0 or i > cast(REBIDX, size))
+    if (i < 0 or i > size)
         fail (Error_Index_Out_Of_Range_Raw());
     if (size_at_out)
         *(unwrap size_at_out) = size - i;
@@ -66,7 +66,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
     const Cell* v,
     REBINT limit
 ){
-    if (limit == UNLIMITED or limit > cast(REBINT, Cell_Series_Len_At(v)))
+    if (limit == UNLIMITED or limit > Cell_Series_Len_At(v))
         limit = Cell_Series_Len_At(v);
 
     if (Cell_Heart(v) == REB_BINARY) {
@@ -80,7 +80,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
     }
 
     assert(Any_Word_Kind(Cell_Heart(v)));
-    assert(cast(REBLEN, limit) == Cell_Series_Len_At(v));
+    assert(limit == Cell_Series_Len_At(v));
 
     const String* spelling = Cell_Word_Symbol(v);
     *size_out = String_Size(spelling);

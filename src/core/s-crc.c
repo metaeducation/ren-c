@@ -160,7 +160,7 @@ uint32_t Hash_Value(const Cell* cell)
 
       case REB_TIME:
       case REB_DATE:
-        hash = cast(REBLEN, VAL_NANO(cell) ^ (VAL_NANO(cell) / SEC_SEC));
+        hash = VAL_NANO(cell) ^ (VAL_NANO(cell) / SEC_SEC);
         if (heart == REB_DATE) {
             //
             // !!! This hash used to be done with an illegal-in-C union alias
@@ -309,7 +309,7 @@ uint32_t Hash_Value(const Cell* cell)
         //
         if (Is_Frame_Exemplar(cell))
             goto hash_object;
-        hash = cast(REBLEN, i_cast(uintptr_t, VAL_ACTION(cell)) >> 4);
+        hash = i_cast(uintptr_t, VAL_ACTION(cell)) >> 4;
         break;
 
       hash_object:
@@ -471,14 +471,14 @@ Flex* Hash_Block(const Value* block, REBLEN skip, bool cased)
 //
 // Return a 32-bit hash value for the bytes.
 //
-REBINT Hash_Bytes(const Byte* data, REBLEN len) {
+uint32_t Hash_Bytes(const Byte* data, REBLEN len) {
     uint32_t crc = 0x00000000;
 
     REBLEN n;
     for (n = 0; n != len; ++n)
         crc = (crc >> 8) ^ crc32_table[(crc ^ data[n]) & 0xff];
 
-    return cast(REBINT, ~crc);
+    return (~ crc);
 }
 
 

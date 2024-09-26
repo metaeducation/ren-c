@@ -125,7 +125,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             // live on something that doesn't need to be live, and also makes
             // the invariants more complex.
             //
-            assert(Flex_Used(f) + 1 > sizeof(PAYLOAD(Bytes, v).at_least_8));
+            assert(Flex_Used(f) + 1 > Size_Of(PAYLOAD(Bytes, v).at_least_8));
         }
         else {
             // it's bytes

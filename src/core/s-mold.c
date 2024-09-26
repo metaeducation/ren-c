@@ -561,7 +561,7 @@ void Push_Mold(REB_MOLD *mo)
             if (idigits < 0)
                 mo->digits = 0;
             else if (idigits > MAX_DIGITS)
-                mo->digits = cast(REBLEN, idigits);
+                mo->digits = idigits;
             else
                 mo->digits = MAX_DIGITS;
         }

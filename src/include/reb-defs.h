@@ -58,19 +58,39 @@
 // that are deemed by the compiler to be the fastest representation for 32-bit
 // integers...even if that might be larger.
 //
-typedef int_fast32_t REBINT; // series index, signed, at *least* 32 bits
+typedef intptr_t REBINT; // series index, signed, at *least* 32 bits
 typedef intptr_t REBIDX; // series index, signed, at *least* 32 bits
-typedef uint_fast32_t REBLEN; // series length, unsigned, at *least* 32 bits
+typedef intptr_t REBLEN; // series length, unsigned, at *least* 32 bits
 
 // !!! These values are an attempt to differentiate 0-based indexing from
 // 1-based indexing, and try to be type-incompatible.
 //
-typedef int_fast32_t Index;
-typedef uint_fast32_t Offset;
-typedef uint_fast32_t Length;
-typedef uint_fast32_t Count;
+typedef intptr_t Index;
+typedef intptr_t Offset;
+typedef intptr_t Length;
+typedef intptr_t Count;
 
-typedef size_t Size;  // Size (in bytes)
+// Bjarne Stroustrup himself believes size_t being unsigned is a mistake
+// https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1428r0.pdf
+//
+typedef intptr_t Size;  // Size (in bytes)
+#define Size_Of(x) u_cast(Size, sizeof(x))
+
+// For comparisons of mixed signage, prefer casting to signed just because
+// signed is our status quo.
+//
+// !!! Should this be folded in as the behavior of `cast(intptr_t, u)`?
+// For now, having it be "weird" calls out that you really should be working
+// in signed integers where possible.
+//
+#if CPLUSPLUS_11 && DEBUG
+    INLINE intptr_t Cast_Signed(uintptr_t u) {
+        assert(u <= INTPTR_MAX);
+        return u;
+    }
+#else
+    #define Cast_Signed(u) cast(intptr_t, (u))
+#endif
 
 typedef int64_t REBI64; // 64 bit integer
 typedef uint64_t REBU64; // 64 bit unsigned integer
@@ -104,7 +124,18 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
 //
 // We use the <stdint.h> fast 32 bit unsigned for Codepoint, as it doesn't need
 // to be a standardized size (not persisted in files, etc.)
-
+//
+// !!! Choosing an unsigned type seems to be what most people do, but it
+// creates problems.  e.g. in the sorting code there was:
+//
+//      REBINT d = c1 - c2;  // c1 and c2 are codepoints
+//      if (d != 0)
+//         return d > 0 ? 1 : -1;
+//
+// When c2 > c1 the unsigned subtraction creates a large number...not a
+// negative one.  It may be worth it to switch to signed values, but people
+// definitely do use unsigned ones most of the time.
+//
 typedef uint_fast32_t Codepoint;
 
 
@@ -127,7 +158,7 @@ typedef struct JumpStruct Jump;
 
 //=//// DATA STACK ////////////////////////////////////////////////////////=//
 
-typedef uint_fast32_t StackIndex;  // 0 for empty stack ([0] entry poison)
+typedef intptr_t StackIndex;  // 0 for empty stack ([0] entry poison)
 
 
 //=//// SYMBOL IDs ////////////////////////////////////////////////////////=//

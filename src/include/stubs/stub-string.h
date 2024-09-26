@@ -395,7 +395,7 @@ INLINE void Set_Char_At(String* s, REBLEN n, Codepoint c) {
         // to be updated.
     }
     else {
-        size_t cp_offset = cp - String_Head(s);  // for updating bookmark, expand
+        Size cp_offset = cp - String_Head(s);  // for updating bookmark, expand
 
         int delta = size - old_size;
         if (delta < 0) {  // shuffle forward, memmove() vs memcpy(), overlaps!

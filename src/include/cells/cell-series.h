@@ -63,7 +63,7 @@ INLINE REBLEN VAL_INDEX(const Cell* v) {
     assert(Any_Series_Kind(Cell_Heart(v)));
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));
     REBIDX i = VAL_INDEX_RAW(v);
-    if (i < 0 or i > cast(REBIDX, Cell_Series_Len_Head(v)))
+    if (i < 0 or i > Cell_Series_Len_Head(v))
         fail (Error_Index_Out_Of_Range_Raw());
     return i;
 }

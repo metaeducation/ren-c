@@ -60,7 +60,7 @@ INLINE const Element* Cell_List_Len_At(
     const Array* arr = c_cast(Array*, node);
     REBIDX i = VAL_INDEX_RAW(v);  // Cell_Array() already checks it's a series
     Length len = Array_Len(arr);
-    if (i < 0 or i > cast(REBIDX, len))
+    if (i < 0 or i > len)
         fail (Error_Index_Out_Of_Range_Raw());
     if (len_at_out)  // inlining should remove this if() for Cell_List_At()
         *(unwrap len_at_out) = len - i;
@@ -82,7 +82,7 @@ INLINE const Element* Cell_List_At(
     const Array* arr = c_cast(Array*, node);
     REBIDX i = VAL_INDEX_RAW(v);  // Cell_Array() already checks it's arraylike
     Length len = Array_Len(arr);
-    if (i < 0 or i > cast(REBIDX, len))
+    if (i < 0 or i > len)
         fail (Error_Index_Out_Of_Range_Raw());
     const Element* at = Array_At(arr, i);
     if (tail_out)  // inlining should remove this if() for no tail

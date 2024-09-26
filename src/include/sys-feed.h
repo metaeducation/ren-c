@@ -452,7 +452,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
         Force_Variadic_Feed_At_Cell_Or_End_May_Fail(feed);
     }
     else {
-        if (FEED_INDEX(feed) != cast(REBINT, Array_Len(FEED_ARRAY(feed)))) {
+        if (FEED_INDEX(feed) != Array_Len(FEED_ARRAY(feed))) {
             feed->p = Array_At(FEED_ARRAY(feed), FEED_INDEX(feed));
             ++FEED_INDEX(feed);
         }

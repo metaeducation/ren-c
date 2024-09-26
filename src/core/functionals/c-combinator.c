@@ -434,7 +434,7 @@ DECLARE_NATIVE(text_x_combinator)
     if (index == NOT_FOUND)
         return nullptr;
 
-    assert(cast(REBLEN, index) == VAL_INDEX(input));  // asked for AM_FIND_MATCH
+    assert(index == VAL_INDEX(input));  // asked for AM_FIND_MATCH
     VAL_INDEX_UNBOUNDED(input) += len;
     Copy_Cell(ARG(remainder), input);
 

@@ -25,7 +25,7 @@
 #include "sys-core.h"
 
 
-static bool Check_Char_Range(const Value* val, REBLEN limit)
+static bool Check_Char_Range(const Value* val, Codepoint limit)
 {
     if (IS_CHAR(val))
         return Cell_Codepoint(val) <= limit;
@@ -2245,7 +2245,7 @@ bool Try_As_String(
         REBLEN len;
         Size size;
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
-        assert(size + 1 <= sizeof(PAYLOAD(Bytes, v).at_least_8));  // must fit
+        assert(size + 1 <= Size_Of(PAYLOAD(Bytes, v).at_least_8));  // must fit
 
         String* str = Make_String_Core(size, FLEX_FLAGS_NONE);
         memcpy(Flex_Data(str), utf8, size + 1);  // +1 to include '\0'
@@ -2533,7 +2533,7 @@ DECLARE_NATIVE(as)
             REBLEN len;
             Size utf8_size = Cell_String_Size_Limit_At(&len, v, UNLIMITED);
 
-            if (utf8_size + 1 <= sizeof(PAYLOAD(Bytes, v).at_least_8)) {
+            if (utf8_size + 1 <= Size_Of(PAYLOAD(Bytes, v).at_least_8)) {
                 //
                 // Payload can fit in a single issue cell.
                 //

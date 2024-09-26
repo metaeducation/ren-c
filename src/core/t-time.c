@@ -454,8 +454,8 @@ void Poke_Time_Immediate(
             if (f < 0.0)
                 fail (Error_Out_Of_Range(poke));
 
-            tf.s = cast(REBINT, f);
-            tf.n = cast(REBINT, (f - tf.s) * SEC_SEC);
+            tf.s = f;
+            tf.n = (f - tf.s) * SEC_SEC;
         }
         else {
             tf.s = n;

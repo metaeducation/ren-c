@@ -580,7 +580,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 
             // Note: cast of UNLIMITED to unsigned will be a very large value.
             //
-            assert(rebreq->actual < cast(size_t, rebreq->length));
+            assert(rebreq->actual < rebreq->length);
 
             goto post_read_finished_event;
         }
@@ -609,7 +609,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 
         assert(rebreq->length >= 0);
 
-        if (rebreq->actual == cast(size_t, rebreq->length)) {
+        if (rebreq->actual == rebreq->length) {
             //
             // We've read as much as we wanted to, so ask to stop reading.
             //

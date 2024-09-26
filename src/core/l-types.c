@@ -578,7 +578,7 @@ const Byte* Scan_Decimal(
 
     *ep = '\0';
 
-    if (cast(REBLEN, cp - bp) != len)
+    if (cp - bp != len)
         return_NULL;
 
     Reset_Cell_Header_Untracked(TRACK(out), CELL_MASK_DECIMAL);
@@ -626,7 +626,7 @@ const Byte* Scan_Integer(
 
     bool neg = false;
 
-    REBINT num = cast(REBINT, len);
+    REBINT num = len;
 
     // Strip leading signs:
     if (*cp == '-') {
@@ -727,7 +727,7 @@ const Byte* Scan_Date(
     REBINT tz = NO_DATE_ZONE;
     PAYLOAD(Time, out).nanoseconds = NO_DATE_TIME; // may be overwritten
 
-    REBLEN size = cast(REBLEN, ep - cp);
+    Size size = ep - cp;
     if (size >= 4) {
         // year is set in this branch (we know because day is 0)
         // Ex: 2009/04/20/19:00:00+0:00
@@ -761,7 +761,7 @@ const Byte* Scan_Date(
     if (num < 0)
         return_NULL;
 
-    size = cast(REBLEN, ep - cp);
+    size = ep - cp;
 
     if (size > 0)
         month = num; // got a number
@@ -769,7 +769,7 @@ const Byte* Scan_Date(
         for (ep = cp; IS_LEX_WORD(*ep); ep++)
             NOOP; // scan word
 
-        size = cast(REBLEN, ep - cp);
+        size = ep - cp;
         if (size < 3)
             return_NULL;
 
@@ -793,7 +793,7 @@ const Byte* Scan_Date(
     if (*cp == '-' || num < 0)
         return_NULL;
 
-    size = cast(REBLEN, ep - cp);
+    size = ep - cp;
     if (size == 0)
         return_NULL;
 
@@ -1096,7 +1096,7 @@ const Byte* Scan_Pair(
     else
         Init_Decimal(Pairing_Second(paired), atof(cast(char*, &buf[0])));
 
-    if (len > cast(REBLEN, xp - cp)) {
+    if (len > xp - cp) {
         Free_Pairing(paired);
         return_NULL;
     }
@@ -1123,7 +1123,7 @@ const Byte* Scan_Binary(
         const Byte* ep = Grab_Int(cp, &base);
         if (cp == ep || *ep != '#')
             return_NULL;
-        len -= cast(REBLEN, ep - cp);
+        len -= ep - cp;
         cp = ep;
     }
 

@@ -367,7 +367,7 @@ static void Print_Parse_Index(Level* level_) {
     // when seeking a position given in a variable or modifying?
     //
     if (P_AT_END) {
-        if (P_POS >= cast(REBIDX, P_INPUT_LEN))
+        if (P_POS >= P_INPUT_LEN)
             rebElide("print {[]: ** END **}");
         else
             rebElide("print [{[]:} mold", input, "]");
@@ -376,7 +376,7 @@ static void Print_Parse_Index(Level* level_) {
         DECLARE_ATOM (rule);
         Derelativize(rule, P_RULE, P_RULE_BINDING);
 
-        if (P_POS >= cast(REBIDX, P_INPUT_LEN))
+        if (P_POS >= P_INPUT_LEN)
             rebElide("print [mold", rule, "{** END **}]");
         else {
             rebElide("print ["
@@ -489,7 +489,7 @@ bool Process_Group_For_Parse_Throws(
     // PARSE's own REMOVE/etc.  This is a sketchy idea, but as long as it's
     // allowed, each time arbitrary user code runs, rules have to be adjusted
     //
-    if (P_POS > cast(REBIDX, P_INPUT_LEN))
+    if (P_POS > P_INPUT_LEN)
         P_POS = P_INPUT_LEN;
 
     return false;
@@ -708,7 +708,7 @@ static REBIXO Parse_One_Rule(
             );
             if (index == NOT_FOUND)
                 return END_FLAG;
-            return cast(REBLEN, index) + len;
+            return index + len;
         }
         else switch (VAL_TYPE(rule)) {
           case REB_BITSET: {
@@ -766,7 +766,7 @@ static REBIXO To_Thru_Block_Rule(
     Copy_Cell(iter, ARG(position));  // need to slide pos
     for (
         ;
-        VAL_INDEX_RAW(iter) <= cast(REBIDX, P_INPUT_LEN);
+        VAL_INDEX_RAW(iter) <= P_INPUT_LEN;
         ++VAL_INDEX_RAW(iter)
     ){  // see note
         const Element* blk_tail = Array_Tail(Cell_Array(rule_block));
@@ -964,8 +964,8 @@ static REBIXO To_Thru_Block_Rule(
 
                     if (i != NOT_FOUND) {
                         if (is_thru)
-                            return cast(REBLEN, i) + len;
-                        return cast(REBLEN, i);
+                            return i + len;
+                        return i;
                     }
                 }
                 else if (Is_Integer(rule)) {
@@ -1074,9 +1074,9 @@ static REBIXO To_Thru_Non_Block_Rule(
             return END_FLAG;
 
         if (is_thru)
-            return cast(REBLEN, i) + len;
+            return i + len;
 
-        return cast(REBLEN, i);
+        return i;
     }
     else {
         if (Is_The_Word(rule)) {
@@ -1185,7 +1185,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
         fail (Error_Parse3_Series_Raw(specific));
     }
 
-    if (cast(REBLEN, index) > P_INPUT_LEN)
+    if (index > P_INPUT_LEN)
         P_POS = P_INPUT_LEN;
     else
         P_POS = index;
@@ -1266,12 +1266,8 @@ DECLARE_NATIVE(subparse)
     Dequotify(ARG(input));
 
     // Make sure index position is not past END
-    if (
-        VAL_INDEX_UNBOUNDED(ARG(input))
-        > cast(REBIDX, Cell_Series_Len_Head(ARG(input)))
-    ){
+    if (VAL_INDEX_UNBOUNDED(ARG(input)) > Cell_Series_Len_Head(ARG(input)))
         VAL_INDEX_RAW(ARG(input)) = Cell_Series_Len_Head(ARG(input));
-    }
 
     assert(Is_Nothing(ARG(position)));
     Copy_Cell(ARG(position), ARG(input));
@@ -1841,8 +1837,8 @@ DECLARE_NATIVE(subparse)
                 fail ("Use ONE instead of SKIP in PARSE3");
 
               case SYM_ONE:
-                i = (P_POS < cast(REBIDX, P_INPUT_LEN))
-                    ? cast(REBLEN, P_POS + 1)
+                i = (P_POS < P_INPUT_LEN)
+                    ? P_POS + 1
                     : END_FLAG;
                 break;
 
@@ -2023,7 +2019,7 @@ DECLARE_NATIVE(subparse)
         else if (false) {
           handle_end:
             count = 0;
-            i = (P_POS < cast(REBIDX, P_INPUT_LEN))
+            i = (P_POS < P_INPUT_LEN)
                 ? END_FLAG
                 : P_INPUT_LEN;
         }
@@ -2058,13 +2054,13 @@ DECLARE_NATIVE(subparse)
         // If FURTHER was used then the parse must advance the input; it can't
         // be at the saem position.
         //
-        if (P_POS == cast(REBINT, i) and (P_FLAGS & PF_FURTHER)) {
+        if (P_POS == i and (P_FLAGS & PF_FURTHER)) {
             if (not (P_FLAGS & PF_LOOPING))
                 Init_Nulled(ARG(position));  // fail the rule, not loop
             break;
         }
 
-        P_POS = cast(REBLEN, i);
+        P_POS = i;
     }
 
     // !!! This out of bounds check is necessary because GROUP!s execute
@@ -2074,7 +2070,7 @@ DECLARE_NATIVE(subparse)
     // after potential group executions (which includes subrules).
     //
     if (not Is_Nulled(ARG(position)))
-        if (P_POS > cast(REBIDX, P_INPUT_LEN))
+        if (P_POS > P_INPUT_LEN)
             Init_Nulled(ARG(position));  // not found
 
 
