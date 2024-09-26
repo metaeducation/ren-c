@@ -406,10 +406,14 @@ INLINE Option(VarList*) Trap_Lookup_Word(
         context,
         ATTACH_READ
     );
-    if (not f)
+    if (not f) {
+        *out = nullptr;  // avoid aggressive callsite warnings
         return Error_Not_Bound_Raw(word);
-    if (index == INDEX_ATTACHED)
+    }
+    if (index == INDEX_ATTACHED) {
+        *out = nullptr;  // avoid aggressive callsite warnings
         return Error_Unassigned_Attach_Raw(word);
+    }
 
     if (Is_Stub_Let(f) or Is_Stub_Patch(f)) {
         *out = Stub_Cell(f);
