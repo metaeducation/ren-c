@@ -1884,16 +1884,16 @@ Bounce Scanner_Executor(Level* const L) {
 
 } loop: {  //////////////////////////////////////////////////////////////////
 
+    Token token;
+
   blockscope {
     Drop_Mold_If_Pushed(mo);
-    Option(VarList*) error = Trap_Locate_Token_May_Push_Mold(
-        &level->token, mo, L
-    );
+    Option(VarList*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, L);
     if (error)
         return RAISE(unwrap error);
   }
 
-    if (level->token == TOKEN_END) {  // reached '\0'
+    if (token == TOKEN_END) {  // reached '\0'
         //
         // If we were scanning a BLOCK! or a GROUP!, then we should have hit
         // an ending `]` or `)` and jumped to `done`.  If an end token gets
@@ -1913,7 +1913,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     ss->begin = ss->end;  // accept token
 
-    switch (level->token) {
+    switch (token) {
       case TOKEN_NEWLINE:
         Set_Scan_Executor_Flag(L, NEWLINE_PENDING);
         ss->line_head = ep;
@@ -2029,31 +2029,31 @@ Bounce Scanner_Executor(Level* const L) {
 
       token_prefixable_sigil:
         if (level->sigil_pending)
-            return RAISE(Error_Syntax(ss, level->token));  // no "GET-GET-WORD!"
+            return RAISE(Error_Syntax(ss, token));  // no "GET-GET-WORD!"
 
-        level->sigil_pending = Sigil_From_Token(level->token);
+        level->sigil_pending = Sigil_From_Token(token);
         goto loop;
 
       case TOKEN_WORD:
         if (len == 0)
-            return RAISE(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, token));
 
         Init_Word(PUSH(), Intern_UTF8_Managed(bp, len));
         break;
 
       case TOKEN_ISSUE:
         if (ep != Scan_Issue(PUSH(), bp + 1, len - 1))
-            return DROP(), RAISE(Error_Syntax(ss, level->token));
+            return DROP(), RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_APOSTROPHE: {
         assert(*bp == '\'');  // should be `len` sequential apostrophes
 
         if (level->sigil_pending)  // can't do @'foo: or :'foo
-            return RAISE(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, token));
 
         if (level->quasi_pending)  // can't do ~'foo~, no quoted quasiforms
-            return RAISE(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, token));
 
         if (
             IS_LEX_ANY_SPACE(*ep)
@@ -2078,7 +2078,7 @@ Bounce Scanner_Executor(Level* const L) {
         assert(*bp == '~');
 
         if (level->sigil_pending)  // can't do @~foo:~ or :~foo~
-            return RAISE(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, token));
 
         assert(not level->quasi_pending);
 
@@ -2095,7 +2095,7 @@ Bounce Scanner_Executor(Level* const L) {
                 Corrupt_Pointer_If_Debug(ss->end);
                 goto loop;
             }
-            return RAISE(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, token));
         }
 
         if (
@@ -2133,52 +2133,10 @@ Bounce Scanner_Executor(Level* const L) {
         sub->u.scan.start_line = ss->line;
         sub->u.scan.start_line_head = ss->line_head;
 
-        sub->u.scan.mode = (level->token == TOKEN_BLOCK_BEGIN ? ']' : ')');
+        sub->u.scan.mode = (token == TOKEN_BLOCK_BEGIN ? ']' : ')');
         STATE = ST_SCANNER_SCANNING_CHILD_ARRAY;
         Push_Level(OUT, sub);
         return CATCH_CONTINUE_SUBLEVEL(sub); }
-
-  child_array_scanned: {  ////////////////////////////////////////////////////
-
-        if (Is_Raised(OUT))
-            goto handle_failure;
-
-        Flags flags = NODE_FLAG_MANAGED;
-        if (Get_Scan_Executor_Flag(SUBLEVEL, NEWLINE_PENDING))
-            flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
-
-        Array* a = Pop_Stack_Values_Core(
-            SUBLEVEL->baseline.stack_base,
-            flags
-        );
-        Drop_Level(SUBLEVEL);
-
-        // Tag array with line where the beginning bracket/group/etc. was found
-        //
-        a->misc.line = ss->line;
-        LINK(Filename, a) = maybe ss->file;
-        Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
-        Set_Flex_Flag(a, LINK_NODE_NEEDS_MARK);
-
-        Heart heart =
-            (level->token == TOKEN_GROUP_BEGIN) ? REB_GROUP : REB_BLOCK;
-
-        if (
-            *ss->end == ':'  // `...(foo):` or `...[bar]:`
-            and not Is_Dot_Or_Slash(level->mode)  // leave `:` for SET-PATH!
-        ){
-            Heart new_heart = Sigilize_Any_Plain_Kind(SIGIL_SET, heart);
-            if (new_heart == REB_SET_DEAD or new_heart == REB_GET_DEAD)
-                return RAISE(Error_Syntax(ss, TOKEN_PATH));
-
-            Init_Any_List(PUSH(), new_heart, a);
-            ++ss->begin;
-            ++ss->end;
-        }
-        else
-            Init_Any_List(PUSH(), heart, a);
-        ep = ss->end;
-        break; }
 
       case TOKEN_TUPLE:
         assert(*bp == '.');
@@ -2281,7 +2239,7 @@ Bounce Scanner_Executor(Level* const L) {
             REBLEN temp_len = len + 1;
             for (; *temp != '.'; ++temp, ++temp_len) {
                 if (IS_LEX_DELIMIT(*temp)) {
-                    level->token = TOKEN_DECIMAL;
+                    token = TOKEN_DECIMAL;
                     ss->begin = ss->end = ep = temp;
                     len = temp_len;
                     goto scan_decimal;
@@ -2292,17 +2250,17 @@ Bounce Scanner_Executor(Level* const L) {
         // Wasn't beginning of a DECIMAL!, so scan as a normal INTEGER!
         //
         if (ep != Scan_Integer(PUSH(), bp, len))
-            return RAISE(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_DECIMAL:
       case TOKEN_PERCENT:
       scan_decimal:
         if (Is_Dot_Or_Slash(*ep))
-            return RAISE(Error_Syntax(ss, level->token));  // No `1.2/abc`
+            return RAISE(Error_Syntax(ss, token));  // No `1.2/abc`
 
         if (ep != Scan_Decimal(PUSH(), bp, len, false))
-            return DROP(), RAISE(Error_Syntax(ss, level->token));
+            return DROP(), RAISE(Error_Syntax(ss, token));
 
         if (bp[len - 1] == '%') {
             HEART_BYTE(TOP) = REB_PERCENT;
@@ -2318,10 +2276,10 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_MONEY:
         if (Is_Dot_Or_Slash(*ep)) {  // Do not allow $1/$2
             ++ep;
-            return RAISE(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, token));
         }
         if (ep != Scan_Money(PUSH(), bp, len))
-            return DROP(), RAISE(Error_Syntax(ss, level->token));
+            return DROP(), RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_TIME:
@@ -2330,12 +2288,12 @@ Bounce Scanner_Executor(Level* const L) {
             and Is_Dot_Or_Slash(level->mode)  // could be path/10: set
         ){
             if (ep - 1 != Scan_Integer(PUSH(), bp, len - 1))
-                return DROP(), RAISE(Error_Syntax(ss, level->token));
+                return DROP(), RAISE(Error_Syntax(ss, token));
             ss->end--;  // put ':' back on end but not beginning
             break;
         }
         if (ep != Scan_Time(PUSH(), bp, len))
-            return DROP(), RAISE(Error_Syntax(ss, level->token));
+            return DROP(), RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_DATE:
@@ -2351,7 +2309,7 @@ Bounce Scanner_Executor(Level* const L) {
             ss->begin = ep;  // End point extended to cover time
         }
         if (ep != Scan_Date(PUSH(), bp, len))
-            return DROP(), RAISE(Error_Syntax(ss, level->token));
+            return DROP(), RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_CHAR: {
@@ -2362,7 +2320,7 @@ Bounce Scanner_Executor(Level* const L) {
             break;
         }
         if (ep - 1 != Scan_UTF8_Char_Escapable(&uni, bp))
-            return RAISE(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, token));
 
         Option(VarList*) error = Trap_Init_Char(PUSH(), uni);
         if (error)
@@ -2375,27 +2333,27 @@ Bounce Scanner_Executor(Level* const L) {
 
       case TOKEN_BINARY:
         if (ep != Scan_Binary(PUSH(), bp, len))
-            return DROP(), RAISE(Error_Syntax(ss, level->token));
+            return DROP(), RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_PAIR:
         if (ep != Scan_Pair(PUSH(), bp, len))
-            return DROP(), RAISE(Error_Syntax(ss, level->token));
+            return DROP(), RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_FILE:
         if (ep != Scan_File(PUSH(), bp, len))
-            return DROP(), RAISE(Error_Syntax(ss, level->token));
+            return DROP(), RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_EMAIL:
         if (ep != Scan_Email(PUSH(), bp, len))
-            return DROP(), RAISE(Error_Syntax(ss, level->token));
+            return DROP(), RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_URL:
         if (ep != Scan_URL(PUSH(), bp, len))
-            return DROP(), RAISE(Error_Syntax(ss, level->token));
+            return DROP(), RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_TAG:
@@ -2410,7 +2368,7 @@ Bounce Scanner_Executor(Level* const L) {
             REB_TAG,
             STRMODE_NO_CR
         )){
-            return DROP(), RAISE(Error_Syntax(ss, level->token));
+            return DROP(), RAISE(Error_Syntax(ss, token));
         }
         break;
 
@@ -2436,68 +2394,12 @@ Bounce Scanner_Executor(Level* const L) {
         Push_Level(OUT, sub);
         return CATCH_CONTINUE_SUBLEVEL(sub); }
 
-  construct_scan_to_stack_finished: {  ///////////////////////////////////////
-
-        if (Is_Raised(OUT))
-            goto handle_failure;
-
-        Flags flags = NODE_FLAG_MANAGED;
-        if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING))
-            flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
-
-        Array* array = Pop_Stack_Values_Core(
-            SUBLEVEL->baseline.stack_base,
-            flags
-        );
-
-        Drop_Level(SUBLEVEL);
-
-        // Tag array with line where the beginning bracket/group/etc. was found
-        //
-        array->misc.line = ss->line;
-        LINK(Filename, array) = maybe ss->file;
-        Set_Array_Flag(array, HAS_FILE_LINE_UNMASKED);
-        Set_Flex_Flag(array, LINK_NODE_NEEDS_MARK);
-
-        if (Array_Len(array) == 0 or not Is_Word(Array_Head(array))) {
-            DECLARE_ATOM (temp);
-            Init_Block(temp, array);
-            return RAISE(Error_Malconstruct_Raw(temp));
-        }
-
-        if (Array_Len(array) == 1) {
-            //
-            // #[true] #[false] #[none] #[unset] -- no equivalents.
-            //
-            DECLARE_ATOM (temp);
-            Init_Block(temp, array);
-            return RAISE(Error_Malconstruct_Raw(temp));
-        }
-        else if (Array_Len(array) == 2) {  // #[xxx! [...]], #[xxx! yyy!], etc.
-            //
-            // !!! At one time, Ren-C attempted to merge "construction syntax"
-            // with MAKE, so that `#[xxx! [...]]` matched `make xxx! [...]`.
-            // But the whole R3-Alpha concept was flawed, as round-tripping
-            // structures neglected binding...and the scanner is just supposed
-            // to be making a data structure.
-            //
-            // Hence this doesn't really work in any general sense.
-
-            fail ("#[xxx! [...]] construction syntax no longer supported");
-        }
-        else {
-            DECLARE_ATOM (temp);
-            Init_Block(temp, array);
-            return RAISE(Error_Malconstruct_Raw(temp));
-        }
-        break; }  // case TOKEN_CONSTRUCT
-
       case TOKEN_END:  // handled way above, before the switch()
       default:
         panic ("Invalid TOKEN in Scanner.");
     }
 
-  lookahead:
+} lookahead: {  //////////////////////////////////////////////////////////////
 
     // At this point the item at TOP is the last token pushed.  It has
     // not had any `sigil_pending` or `quotes_pending` applied...so when
@@ -2512,19 +2414,16 @@ Bounce Scanner_Executor(Level* const L) {
         // of a new child scan.
         //
         if (level->mode == '/' and *ep == '.') {
-            level->token = TOKEN_TUPLE;
             ++ss->begin;
-            goto scan_path_or_tuple_head_is_TOP;
+            goto scan_tuple_head_is_TOP;
         }
 
         // If we are scanning `a.b` and see `/c`, we want to defer to the
         // path scanning and consider the tuple finished.  This means we
         // want the level above to finish but then see the `/`.  Review.
 
-        if (level->mode == '.' and *ep == '/') {
-            level->token = TOKEN_PATH;  // ...?
+        if (level->mode == '.' and *ep == '/')
             goto done;  // !!! need to return, but...?
-        }
 
         if (not Interstitial_Match(*ep, level->mode))
             goto done;  // e.g. `a/b`, just finished scanning b
@@ -2554,227 +2453,12 @@ Bounce Scanner_Executor(Level* const L) {
         ++ss->begin;
 
         if (*ep == '.')
-            level->token = TOKEN_TUPLE;
-        else
-            level->token = TOKEN_PATH;
+            goto scan_tuple_head_is_TOP;
 
-      scan_path_or_tuple_head_is_TOP: ;
-
-        StackIndex stackindex_path_head = TOP_INDEX;
-
-        if (
-            *ss->begin == '\0'  // `foo/`
-            or IS_LEX_ANY_SPACE(*ss->begin)  // `foo/ bar`
-            or *ss->begin == ';'  // `foo/;bar`
-        ){
-            // Don't bother scanning recursively if we don't have to.
-            // Note we still might come up empty (e.g. `foo/)`)
-        }
-        else {
-            Level* sub = Make_Level(
-                &Scanner_Executor,
-                L->feed,
-                LEVEL_FLAG_RAISED_RESULT_OK
-            );
-
-            SCAN_LEVEL *child = &sub->u.scan;
-            child->ss = ss;
-            child->start_line = level->start_line;
-            child->start_line_head = level->start_line_head;
-            if (level->token == TOKEN_TUPLE)
-                child->mode = '.';
-            else
-                child->mode = '/';
-
-            Push_Level(OUT, sub);
-
-            bool threw = Trampoline_With_Top_As_Root_Throws();
-
-            Drop_Level_Unbalanced(sub);  // allow stack accrual
-
-            if (threw)  // drop failing stack before throwing
-                fail (Error_No_Catch_For_Throw(L));
-
-            if (Is_Raised(OUT))
-                return OUT;
-        }
-
-        // The scanning process for something like `.` or `a/` will not have
-        // pushed anything to represent the last "blank".  Doing so would
-        // require lookahead, which would overlap with this lookahead logic.
-        // So notice if a trailing `.` or `/` requires pushing a blank.
-        //
-        if (ss->begin and (
-            (level->token == TOKEN_TUPLE and *ss->end == '.')
-            or (level->token == TOKEN_PATH and *ss->end == '/')
-        )){
-            Init_Blank(PUSH());
-        }
-
-        // R3-Alpha permitted GET-WORD! and other aberrations internally
-        // to PATH!.  Ren-C does not, and it will optimize the immutable
-        // GROUP! so that it lives in a cell (TBD).
-        //
-        // For interim compatibility, allow GET-WORD! at LOAD-time by
-        // mutating it into a single element GROUP!.
-        //
-      blockscope {
-        StackValue(*) head = Data_Stack_At(stackindex_path_head);
-        StackValue(*) cleanup = head + 1;
-        for (; cleanup <= TOP; ++cleanup) {
-            if (Is_Get_Word(cleanup)) {
-                Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
-                HEART_BYTE(cleanup) = REB_GET_WORD;
-
-                Move_Cell(Stub_Cell(a), cleanup);
-                Init_Group(cleanup, a);
-            }
-        }
-      }
-
-        // Run through the generalized pop path code, which does any
-        // applicable compression...and validates the array.
-        //
-        DECLARE_VALUE (temp);
-
-        // !!! The scanner needs an overhaul and rewrite to be less ad hoc.
-        // Right now, dots act as delimiters for tuples which messes with
-        // email addresses that contain dots.  It isn't obvious how to
-        // patch support in for that, but we can notice when a tuple tries
-        // to be made with an email address in it (which is not a legal
-        // tuple) and mutate that into an email address.  Clearly this is
-        // bad, but details of scanning isn't the focus at this time.
-        //
-        if (level->token == TOKEN_TUPLE) {
-            bool any_email = false;
-            StackIndex stackindex = TOP_INDEX;
-            for (; stackindex != stackindex_path_head - 1; --stackindex) {
-                if (Is_Email(Data_Stack_At(stackindex))) {
-                    if (any_email)
-                        return RAISE(Error_Syntax(ss, level->token));
-                    any_email = true;
-                }
-            }
-            if (any_email) {
-                //
-                // There's one and only one email address.  Fuse the parts
-                // together, inefficiently with usermode code.  (Recall that
-                // this is an egregious hack in lieu of actually redesigning
-                // the scanner, but still pretty cool we can do it this way.)
-                //
-                DECLARE_ATOM (items);
-                Init_Any_List(
-                    items,
-                    REB_THE_BLOCK,  // don't want to evaluate
-                    Pop_Stack_Values(stackindex_path_head - 1)
-                );
-                Push_GC_Guard(items);
-                Value* email = rebValue("as email! delimit {.}", items);
-                Drop_GC_Guard(items);
-                Copy_Cell(temp, email);
-                rebRelease(email);
-                goto push_temp;
-            }
-        }
-
-      blockscope {  // gotos would cross this initialization without
-        Option(VarList*) error = Trap_Pop_Sequence_Or_Conflation(
-            temp,  // doesn't write directly to stack since popping stack
-            level->token == TOKEN_TUPLE ? REB_TUPLE : REB_PATH,
-            stackindex_path_head - 1
-        );
-        if (error) {
-            /* Free_Unmanaged_Flex(unwrap error); */  // is managed?! :-(
-            return RAISE(Error_Syntax(ss, level->token));
-        }
-      }
-
-        assert(
-            Is_Quasi_Word(temp)     // [~ ~] => ~.~ or ~/~
-            or Is_Word(temp)        // [_ _] => . or /
-            or Any_Sequence(temp)
-        );
-
-      push_temp:
-        Copy_Cell(PUSH(), temp);
-
-        // !!! Temporarily raise attention to usage like `.5` or `5.` to guide
-        // people that these are contentious with tuples.  There is no way
-        // to represent such tuples--while DECIMAL! has an alternative by
-        // including the zero.  This doesn't put any decision in stone, but
-        // reserves the right to make a decision at a later time.
-        //
-        if (Is_Tuple(TOP) and Cell_Sequence_Len(TOP) == 2) {
-            if (
-                Is_Integer(Copy_Sequence_At(temp, TOP, 0))
-                and Is_Blank(Copy_Sequence_At(temp, TOP, 1))
-            ){
-                DROP();
-                return RAISE("`5.` currently reserved, please use 5.0");
-            }
-            if (
-                Is_Blank(Copy_Sequence_At(temp, TOP, 0))
-                and Is_Integer(Copy_Sequence_At(temp, TOP, 1))
-            ){
-                DROP();
-                return RAISE("`.5` currently reserved, please use 0.5");
-            }
-        }
-
-        // Can only store file and line information if it has an array
-        //
-        if (
-            Get_Cell_Flag(TOP, FIRST_IS_NODE)
-            and Cell_Node1(TOP) != nullptr  // null legal in node slots ATM
-            and not Is_Node_A_Cell(Cell_Node1(TOP))
-            and Is_Stub_Array(cast(Flex*, Cell_Node1(TOP)))
-        ){
-            Array* a = cast(Array*, Cell_Node1(TOP));
-            a->misc.line = ss->line;
-            LINK(Filename, a) = maybe ss->file;
-            Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
-            Set_Flex_Flag(a, LINK_NODE_NEEDS_MARK);
-
-            // !!! Does this mean anything for paths?  The initial code
-            // had it, but it was exploratory and predates the ideas that
-            // are currently being used to solidify paths.
-            //
-            if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING))
-                Set_Array_Flag(a, NEWLINE_AT_TAIL);
-        }
-
-        if (level->token == TOKEN_TUPLE) {
-            assert(level->mode != '.');  // shouldn't scan tuple-in-tuple!
-
-            if (level->mode == '/') {
-                //
-                // If we were scanning a PATH! and interrupted it to scan
-                // a tuple, then we did so at a moment that a `/` was
-                // being tested for.  Now that we're resuming, we need
-                // to pick that test back up and quit picking up tokens
-                // if we don't see a `/` after that tuple we just scanned.
-                //
-                if (*ss->begin != '/')
-                    goto done;
-
-                ep = ss->end;
-                goto lookahead;  // stay in path mode
-            }
-            else {
-                // If we just finished a TUPLE! that was being scanned
-                // all on its own (not as part of a path), then if a
-                // slash follows, we want to process that like a PATH! on
-                // the same level (otherwise we would start a new token,
-                // and "a.b/c" would be `a.b /c`).
-                //
-                if (ss->begin != nullptr and *ss->begin == '/') {
-                    ++ss->begin;
-                    level->token = TOKEN_PATH;
-                    goto scan_path_or_tuple_head_is_TOP;
-                }
-            }
-        }
+        goto scan_path_head_is_TOP;
     }
+
+} complete_token_pushed: {  //////////////////////////////////////////////////
 
     // If we get here without jumping somewhere else, we have pushed a
     // *complete* token (vs. just a component of a path).  While we know that
@@ -2782,14 +2466,19 @@ Bounce Scanner_Executor(Level* const L) {
     // colon means "SET" and not "GET".  We also apply any pending sigils
     // or quote levels that were noticed at the beginning of a token scan,
     // but had to wait for the completed token to be used.
+    //
+    // 1. Set the newline on the new value, indicating molding should put a
+    //    line break *before* this value (needs to be done after recursion to
+    //    process paths or other arrays...because the newline belongs on the
+    //    whole array...not the first element of it).
 
     if (ss->begin and *ss->begin == ':') {  // no whitespace, interpret as SET
         if (level->sigil_pending)
-            return RAISE(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, TOKEN_COLON));
 
         Heart heart = Cell_Heart_Ensure_Noquote(TOP);
         if (not Any_Plain_Value_Kind(heart))
-            return RAISE(Error_Syntax(ss, level->token));
+            return RAISE(Error_Syntax(ss, TOKEN_BLANK));  // !!! token?
 
         Heart new_heart = Sigilize_Any_Plain_Kind(SIGIL_SET, heart);
         if (new_heart == REB_SET_DEAD or new_heart == REB_GET_DEAD)
@@ -2802,7 +2491,7 @@ Bounce Scanner_Executor(Level* const L) {
     else if (level->sigil_pending) {
         Heart heart = Cell_Heart_Ensure_Noquote(TOP);
         if (not Any_Plain_Kind(heart))
-            return DROP(), RAISE(Error_Syntax(ss, level->token));
+            return DROP(), RAISE(Error_Syntax(ss, TOKEN_BLANK));  // !!! token?
 
         Heart new_heart = Sigilize_Any_Plain_Kind(
             unwrap level->sigil_pending,
@@ -2815,7 +2504,6 @@ Bounce Scanner_Executor(Level* const L) {
         }
 
         HEART_BYTE(TOP) = new_heart;
-
         level->sigil_pending = SIGIL_0;
     }
 
@@ -2833,31 +2521,356 @@ Bounce Scanner_Executor(Level* const L) {
         level->quasi_pending = false;
     }
 
-    if (level->quotes_pending != 0) {
-        //
-        // Transform the topmost value on the stack into a QUOTED?, to
-        // account for the ''' that was preceding it.
-        //
+    if (level->quotes_pending != 0) {  // make QUOTED? to account for '''
+        assert(QUOTE_BYTE(TOP) <= QUASIFORM_2);
         Quotify(TOP, level->quotes_pending);
         level->quotes_pending = 0;
     }
 
-    // Set the newline on the new value, indicating molding should put a
-    // line break *before* this value (needs to be done after recursion to
-    // process paths or other arrays...because the newline belongs on the
-    // whole array...not the first element of it).
-    //
     if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING)) {
         Clear_Scan_Executor_Flag(L, NEWLINE_PENDING);
-        Set_Cell_Flag(TOP, NEWLINE_BEFORE);
+        Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // must do after recursion [2]
     }
 
-    // Added for TRANSCODE/NEXT (LOAD/NEXT is deprecated, see #1703)
-    //
-    if (Get_Scan_Executor_Flag(L, JUST_ONCE))
+    if (Get_Scan_Executor_Flag(L, JUST_ONCE))  // e.g. TRANSCODE/NEXT
         goto done;
 
     goto loop;
+
+} child_array_scanned: {  ////////////////////////////////////////////////////
+
+    if (Is_Raised(OUT))
+        goto handle_failure;
+
+    Flags flags = NODE_FLAG_MANAGED;
+    if (Get_Scan_Executor_Flag(SUBLEVEL, NEWLINE_PENDING))
+        flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
+
+    Heart heart;
+    if (SUBLEVEL->u.scan.mode == ']')
+        heart = REB_BLOCK;
+    else {
+        assert(SUBLEVEL->u.scan.mode == ')');
+        heart = REB_GROUP;
+    }
+
+    Array* a = Pop_Stack_Values_Core(
+        SUBLEVEL->baseline.stack_base,
+        flags
+    );
+    Drop_Level(SUBLEVEL);
+
+    // Tag array with line where the beginning bracket/group/etc. was found
+    //
+    a->misc.line = ss->line;
+    LINK(Filename, a) = maybe ss->file;
+    Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
+    Set_Flex_Flag(a, LINK_NODE_NEEDS_MARK);
+
+    if (
+        *ss->end == ':'  // `...(foo):` or `...[bar]:`
+        and not Is_Dot_Or_Slash(level->mode)  // leave `:` for SET-PATH!
+    ){
+        Heart new_heart = Sigilize_Any_Plain_Kind(SIGIL_SET, heart);
+        if (new_heart == REB_SET_DEAD or new_heart == REB_GET_DEAD)
+            return RAISE(Error_Syntax(ss, TOKEN_PATH));
+
+        Init_Any_List(PUSH(), new_heart, a);
+        ++ss->begin;
+        ++ss->end;
+    }
+    else
+        Init_Any_List(PUSH(), heart, a);
+
+    ep = ss->end;
+    goto lookahead;
+
+} scan_path_head_is_TOP: {  /////////////////////////////////////////////////
+
+    Token token;
+
+    token = TOKEN_PATH;
+    goto scan_path_or_tuple_head_is_TOP;
+
+  scan_tuple_head_is_TOP:  //////////////////////////////////////////////////
+
+    token = TOKEN_TUPLE;
+    goto scan_path_or_tuple_head_is_TOP;
+
+  scan_path_or_tuple_head_is_TOP: { /////////////////////////////////////////
+
+    StackIndex stackindex_path_head = TOP_INDEX;
+
+    if (
+        *ss->begin == '\0'  // `foo/`
+        or IS_LEX_ANY_SPACE(*ss->begin)  // `foo/ bar`
+        or *ss->begin == ';'  // `foo/;bar`
+    ){
+        // Don't bother scanning recursively if we don't have to.
+        // Note we still might come up empty (e.g. `foo/)`)
+    }
+    else {
+        Level* sub = Make_Level(
+            &Scanner_Executor,
+            L->feed,
+            LEVEL_FLAG_RAISED_RESULT_OK
+        );
+
+        SCAN_LEVEL *child = &sub->u.scan;
+        child->ss = ss;
+        child->start_line = level->start_line;
+        child->start_line_head = level->start_line_head;
+        if (token == TOKEN_TUPLE)
+            child->mode = '.';
+        else
+            child->mode = '/';
+
+        Push_Level(OUT, sub);
+
+        bool threw = Trampoline_With_Top_As_Root_Throws();
+
+        Drop_Level_Unbalanced(sub);  // allow stack accrual
+
+        if (threw)  // drop failing stack before throwing
+            fail (Error_No_Catch_For_Throw(L));
+
+        if (Is_Raised(OUT))
+            return OUT;
+    }
+
+    // The scanning process for something like `.` or `a/` will not have
+    // pushed anything to represent the last "blank".  Doing so would
+    // require lookahead, which would overlap with this lookahead logic.
+    // So notice if a trailing `.` or `/` requires pushing a blank.
+    //
+    if (ss->begin and (
+        (token == TOKEN_TUPLE and *ss->end == '.')
+        or (token == TOKEN_PATH and *ss->end == '/')
+    )){
+        Init_Blank(PUSH());
+    }
+
+    // R3-Alpha permitted GET-WORD! and other aberrations internally
+    // to PATH!.  Ren-C does not, and it will optimize the immutable
+    // GROUP! so that it lives in a cell (TBD).
+    //
+    // For interim compatibility, allow GET-WORD! at LOAD-time by
+    // mutating it into a single element GROUP!.
+    //
+  blockscope {
+    StackValue(*) head = Data_Stack_At(stackindex_path_head);
+    StackValue(*) cleanup = head + 1;
+    for (; cleanup <= TOP; ++cleanup) {
+        if (Is_Get_Word(cleanup)) {
+            Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
+            HEART_BYTE(cleanup) = REB_GET_WORD;
+
+            Move_Cell(Stub_Cell(a), cleanup);
+            Init_Group(cleanup, a);
+        }
+    }
+  }
+
+    // Run through the generalized pop path code, which does any
+    // applicable compression...and validates the array.
+    //
+    DECLARE_VALUE (temp);
+
+    // !!! The scanner needs an overhaul and rewrite to be less ad hoc.
+    // Right now, dots act as delimiters for tuples which messes with
+    // email addresses that contain dots.  It isn't obvious how to
+    // patch support in for that, but we can notice when a tuple tries
+    // to be made with an email address in it (which is not a legal
+    // tuple) and mutate that into an email address.  Clearly this is
+    // bad, but details of scanning isn't the focus at this time.
+    //
+    if (token == TOKEN_TUPLE) {
+        bool any_email = false;
+        StackIndex stackindex = TOP_INDEX;
+        for (; stackindex != stackindex_path_head - 1; --stackindex) {
+            if (Is_Email(Data_Stack_At(stackindex))) {
+                if (any_email)
+                    return RAISE(Error_Syntax(ss, token));
+                any_email = true;
+            }
+        }
+        if (any_email) {
+            //
+            // There's one and only one email address.  Fuse the parts
+            // together, inefficiently with usermode code.  (Recall that
+            // this is an egregious hack in lieu of actually redesigning
+            // the scanner, but still pretty cool we can do it this way.)
+            //
+            DECLARE_ATOM (items);
+            Init_Any_List(
+                items,
+                REB_THE_BLOCK,  // don't want to evaluate
+                Pop_Stack_Values(stackindex_path_head - 1)
+            );
+            Push_GC_Guard(items);
+            Value* email = rebValue("as email! delimit {.}", items);
+            Drop_GC_Guard(items);
+            Copy_Cell(temp, email);
+            rebRelease(email);
+            goto push_temp;
+        }
+    }
+
+    blockscope {  // gotos would cross this initialization without
+    Option(VarList*) error = Trap_Pop_Sequence_Or_Conflation(
+        temp,  // doesn't write directly to stack since popping stack
+        token == TOKEN_TUPLE ? REB_TUPLE : REB_PATH,
+        stackindex_path_head - 1
+    );
+    if (error) {
+        /* Free_Unmanaged_Flex(unwrap error); */  // is managed?! :-(
+        return RAISE(Error_Syntax(ss, token));
+    }
+    }
+
+    assert(
+        Is_Quasi_Word(temp)     // [~ ~] => ~.~ or ~/~
+        or Is_Word(temp)        // [_ _] => . or /
+        or Any_Sequence(temp)
+    );
+
+  push_temp:
+    Copy_Cell(PUSH(), temp);
+
+    // !!! Temporarily raise attention to usage like `.5` or `5.` to guide
+    // people that these are contentious with tuples.  There is no way
+    // to represent such tuples--while DECIMAL! has an alternative by
+    // including the zero.  This doesn't put any decision in stone, but
+    // reserves the right to make a decision at a later time.
+    //
+    if (Is_Tuple(TOP) and Cell_Sequence_Len(TOP) == 2) {
+        if (
+            Is_Integer(Copy_Sequence_At(temp, TOP, 0))
+            and Is_Blank(Copy_Sequence_At(temp, TOP, 1))
+        ){
+            DROP();
+            return RAISE("`5.` currently reserved, please use 5.0");
+        }
+        if (
+            Is_Blank(Copy_Sequence_At(temp, TOP, 0))
+            and Is_Integer(Copy_Sequence_At(temp, TOP, 1))
+        ){
+            DROP();
+            return RAISE("`.5` currently reserved, please use 0.5");
+        }
+    }
+
+    // Can only store file and line information if it has an array
+    //
+    if (
+        Get_Cell_Flag(TOP, FIRST_IS_NODE)
+        and Cell_Node1(TOP) != nullptr  // null legal in node slots ATM
+        and not Is_Node_A_Cell(Cell_Node1(TOP))
+        and Is_Stub_Array(cast(Flex*, Cell_Node1(TOP)))
+    ){
+        Array* a = cast(Array*, Cell_Node1(TOP));
+        a->misc.line = ss->line;
+        LINK(Filename, a) = maybe ss->file;
+        Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
+        Set_Flex_Flag(a, LINK_NODE_NEEDS_MARK);
+
+        // !!! Does this mean anything for paths?  The initial code
+        // had it, but it was exploratory and predates the ideas that
+        // are currently being used to solidify paths.
+        //
+        if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING))
+            Set_Array_Flag(a, NEWLINE_AT_TAIL);
+    }
+
+    if (token == TOKEN_TUPLE) {
+        assert(level->mode != '.');  // shouldn't scan tuple-in-tuple!
+
+        if (level->mode == '/') {
+            //
+            // If we were scanning a PATH! and interrupted it to scan
+            // a tuple, then we did so at a moment that a `/` was
+            // being tested for.  Now that we're resuming, we need
+            // to pick that test back up and quit picking up tokens
+            // if we don't see a `/` after that tuple we just scanned.
+            //
+            if (*ss->begin != '/')
+                goto done;
+
+            ep = ss->end;
+            goto lookahead;  // stay in path mode
+        }
+        else {
+            // If we just finished a TUPLE! that was being scanned
+            // all on its own (not as part of a path), then if a
+            // slash follows, we want to process that like a PATH! on
+            // the same level (otherwise we would start a new token,
+            // and "a.b/c" would be `a.b /c`).
+            //
+            if (ss->begin != nullptr and *ss->begin == '/') {
+                ++ss->begin;
+                goto scan_path_head_is_TOP;
+            }
+        }
+    }
+
+    goto complete_token_pushed;
+
+}} construct_scan_to_stack_finished: {  ///////////////////////////////////////
+
+    if (Is_Raised(OUT))
+        goto handle_failure;
+
+    Flags flags = NODE_FLAG_MANAGED;
+    if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING))
+        flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
+
+    Array* array = Pop_Stack_Values_Core(
+        SUBLEVEL->baseline.stack_base,
+        flags
+    );
+
+    Drop_Level(SUBLEVEL);
+
+    // Tag array with line where the beginning bracket/group/etc. was found
+    //
+    array->misc.line = ss->line;
+    LINK(Filename, array) = maybe ss->file;
+    Set_Array_Flag(array, HAS_FILE_LINE_UNMASKED);
+    Set_Flex_Flag(array, LINK_NODE_NEEDS_MARK);
+
+    if (Array_Len(array) == 0 or not Is_Word(Array_Head(array))) {
+        DECLARE_ATOM (temp);
+        Init_Block(temp, array);
+        return RAISE(Error_Malconstruct_Raw(temp));
+    }
+
+    if (Array_Len(array) == 1) {
+        //
+        // #[true] #[false] #[none] #[unset] -- no equivalents.
+        //
+        DECLARE_ATOM (temp);
+        Init_Block(temp, array);
+        return RAISE(Error_Malconstruct_Raw(temp));
+    }
+    else if (Array_Len(array) == 2) {  // #[xxx! [...]], #[xxx! yyy!], etc.
+        //
+        // !!! At one time, Ren-C attempted to merge "construction syntax"
+        // with MAKE, so that `#[xxx! [...]]` matched `make xxx! [...]`.
+        // But the whole R3-Alpha concept was flawed, as round-tripping
+        // structures neglected binding...and the scanner is just supposed
+        // to be making a data structure.
+        //
+        // Hence this doesn't really work in any general sense.
+
+        fail ("#[xxx! [...]] construction syntax no longer supported");
+    }
+    else {
+        DECLARE_ATOM (temp);
+        Init_Block(temp, array);
+        return RAISE(Error_Malconstruct_Raw(temp));
+    }
+
+    goto lookahead;
 
 } done: {  ///////////////////////////////////////////////////////////////////
 

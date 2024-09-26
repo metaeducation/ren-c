@@ -205,6 +205,8 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
       { UNUSED(a0); return byte != QUASIFORM_2_COERCE_ONLY; }
     INLINE bool operator>=(Byte byte, const Quasiform_2_Struct& a0)
       { UNUSED(a0); return byte >= QUASIFORM_2_COERCE_ONLY; }
+    INLINE bool operator<=(Byte byte, const Quasiform_2_Struct& a0)
+      { UNUSED(a0); return byte <= QUASIFORM_2_COERCE_ONLY; }
 
     constexpr Antiform_0_Struct antiform_0;
     constexpr Quasiform_2_Struct quasiform_2;
