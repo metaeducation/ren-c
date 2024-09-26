@@ -27,14 +27,26 @@
 //
 // http://rgchris.github.io/Rebol-Notation/
 //
-// Because Red is implemented using Rebol, it has a more abstract definition
-// in the sense that it uses PARSE rules:
+// Red once used a PARSE-rule-based file called %lexer.r, where the rules
+// were formulated declaratively:
 //
-// https://github.com/red/red/bin/master/lexer.r
+//     not-tag-1st: complement union ws-ASCII charset "=><[](){};^""
 //
-// It would likely be desirable to bring more formalism and generativeness
-// to Rebol's scanner; though the current method of implementation was
-// ostensibly chosen for performance.
+//     not-tag-char: complement charset ">"
+//
+//     tag-rule: [
+//         #"<" s: not-tag-1st (type: tag!)
+//         any [#"^"" thru #"^"" | #"'" thru #"'" | not-tag-char] e: #">"
+//     ]
+//
+// But for "performance reasons", they moved toward something much more like
+// the R3-Alpha scanner from which this scanner inherits.  :-(
+//
+// For expedience, Ren-C has been resigned to hacking on this scanner to add
+// the many features that have been needed.  But the ultimate goal has always
+// been to redo it in terms of a clear and declarative dialect that is used
+// to generate efficient code.  It's a mess for now, but hopefully at some
+// point the time will be made to create its replacement.
 //
 
 #include "sys-core.h"
@@ -179,7 +191,7 @@ const Byte Lex_Map[256] =
     /* 5C \   */    LEX_SPECIAL|LEX_SPECIAL_BACKSLASH,
     /* 5D ]   */    LEX_DELIMIT|LEX_DELIMIT_RIGHT_BRACKET,
     /* 5E ^   */    LEX_WORD,
-    /* 5F _   */    LEX_SPECIAL|LEX_SPECIAL_BLANK,
+    /* 5F _   */    LEX_SPECIAL|LEX_SPECIAL_UNDERSCORE,
 
     /* 60 `   */    LEX_WORD,
     /* 61 a   */    LEX_WORD|10,
@@ -425,13 +437,24 @@ static const Byte* Scan_UTF8_Char_Escapable(Codepoint *out, const Byte* bp)
 
 
 //
-//  Scan_Quote_Push_Mold: C
+//  Scan_Quoted_Or_Braced_String_Push_Mold: C
 //
 // Scan a quoted string, handling all the escape characters.  e.g. an input
 // stream might have "a^(1234)b" and need to turn "^(1234)" into the right
 // UTF-8 bytes for that codepoint in the string.
 //
-static const Byte* Scan_Quote_Push_Mold(
+// 1. The '\0' codepoint is not legal in ANY-STRING!.  Among the many reasons
+//    to disallow it is that APIs like rebSpell() for getting string data
+//    return only a pointer--not a pointer and a size, so clients must assume
+//    that '\0' is the termination.  With UTF-8 everywhere, Ren-C has made it
+//    as easy as possible to work with BINARY! using string-based routines
+//    like FIND, etc., so use BINARY! if you need UTF-8 with '\0' in it.
+//
+// 2. Historically CR LF was scanned as just an LF.  While a tolerant mode of
+//    the scanner might be created someday, for the moment we are being more
+//    prescriptive about it by default.
+//
+static const Byte* Scan_Quoted_Or_Braced_String_Push_Mold(
     REB_MOLD *mo,
     const Byte* src,
     SCAN_STATE *ss
@@ -453,10 +476,7 @@ static const Byte* Scan_Quote_Push_Mold(
         Codepoint c = *src;
 
         switch (c) {
-          case '\0':
-            // TEXT! literals can have embedded "NUL"s if escaped, but an
-            // actual `\0` codepoint in the scanned text is not legal.
-            //
+          case '\0':  // illegal in strings [1]
             return nullptr;
 
           case '^':
@@ -476,11 +496,6 @@ static const Byte* Scan_Quote_Push_Mold(
             break;
 
           case CR: {
-            //
-            // !!! Historically CR LF was scanned as just an LF.  While a
-            // tolerant mode of the scanner might be created someday, for
-            // the moment we are being more prescriptive.
-            //
             enum Reb_Strmode strmode = STRMODE_NO_CR;
             if (strmode == STRMODE_CRLF_TO_LF) {
                 if (src[1] == LF) {
@@ -531,6 +546,16 @@ static const Byte* Scan_Quote_Push_Mold(
 // Returns continuation point or NULL for error.  Puts result into the
 // temporary mold buffer as UTF-8.
 //
+// 1. !!! This code forces %\foo\bar to become %/foo/bar.  But it may be that
+//    this kind of lossy scanning is a poor idea, and it's better to preserve
+//    what the user entered then have FILE-TO-LOCAL complain it's malformed
+//    when turning to a TEXT!--or be overridden explicitly to be lax and
+//    tolerate it.
+//
+//    (URL! has already come under scrutiny for these kinds of automatic
+//    translations that affect round-trip copy and paste, and it seems
+//    applicable to FILE! too.)
+//
 const Byte* Scan_Item_Push_Mold(
     REB_MOLD *mo,
     const Byte* bp,
@@ -554,18 +579,8 @@ const Byte* Scan_Item_Push_Mold(
         if (c < ' ')
             return nullptr;  // Ctrl characters not valid in filenames, fail
 
-        // !!! The branches below do things like "forces %\foo\bar to become
-        // %/foo/bar".  But it may be that this kind of lossy scanning is a
-        // poor idea, and it's better to preserve what the user entered then
-        // have FILE-TO-LOCAL complain it's malformed when turning to a
-        // STRING!--or be overridden explicitly to be lax and tolerate it.
-        //
-        // (URL! has already come under scrutiny for these kinds of automatic
-        // translations that affect round-trip copy and paste, and it seems
-        // applicable to FILE! too.)
-        //
         if (c == '\\') {
-            c = '/';
+            c = '/';  // !!! Implicit conversion of \ to / is sketchy [1]
         }
         else if (c == '%') { // Accept %xx encoded char:
             Byte decoded;
@@ -612,12 +627,12 @@ const Byte* Scan_Item_Push_Mold(
 
 
 //
-//  Skip_Tag: C
+//  Seek_To_End_Of_Tag: C
 //
 // Skip the entire contents of a tag, including quoted strings and newlines.
 // The argument points to the opening '<'.  nullptr is returned on errors.
 //
-static const Byte* Skip_Tag(const Byte* cp)
+static const Byte* Seek_To_End_Of_Tag(const Byte* cp)
 {
     assert(*cp == '<');
     ++cp;
@@ -651,41 +666,32 @@ static const Byte* Skip_Tag(const Byte* cp)
 // While this is probably a bad overloading of NEAR, it is being made more
 // clear that this is what's happening for the moment.
 //
+// 1. !!! The error should actually report both the file and line that is
+//    running as well as the file and line being scanned.  Review.
+//
+// 2. !!! The file and line should likely be separated into an INTEGER! and
+//    a FILE! so those processing the error don't have to parse it back out.
+//
 static void Update_Error_Near_For_Line(
     VarList* error,
     SCAN_STATE *ss,
     REBLEN line,
     const Byte* line_head
 ){
-    // This sets the "where" for the error (e.g. the stack).  But then it
-    // overrides the NEAR and FILE and LINE.
-    //
-    // !!! The error should actually report both the file and line that is
-    // running as well as the file and line being scanned.  Review.
-    //
-    Set_Location_Of_Error(error, TOP_LEVEL);
+    Set_Location_Of_Error(error, TOP_LEVEL);  // sets WHERE NEAR FILE LINE [1]
 
-    // Skip indentation (don't include in the NEAR)
-    //
-    const Byte* cp = line_head;
+    const Byte* cp = line_head;  // skip indent (don't include in the NEAR
     while (IS_LEX_SPACE(*cp))
         ++cp;
 
-    // Find end of line to capture in error message
-    //
     REBLEN len = 0;
     const Byte* bp = cp;
-    while (not ANY_CR_LF_END(*cp)) {
+    while (not ANY_CR_LF_END(*cp)) {  // find end of line to capture in message
         cp++;
         len++;
     }
 
-    // Put the line count and the line's text into a string.
-    //
-    // !!! This should likely be separated into an integer and a string, so
-    // that those processing the error don't have to parse it back out.
-    //
-    DECLARE_MOLD (mo);
+    DECLARE_MOLD (mo);  // put line count and line's text into string [2]
     Push_Mold(mo);
     Append_Ascii(mo->string, "(line ");
     Append_Int(mo->string, line);
@@ -712,26 +718,19 @@ static void Update_Error_Near_For_Line(
 // the NEAR field of the error with the "current" line number and line text,
 // e.g. where the end point of the token is seen.
 //
-// !!! Note: the scanning process had a `goto scan_error` as a single point
-// at the end of the routine, but that made it harder to break on where the
-// actual error was occurring.  Goto may be more beneficial and cut down on
-// code size in some way, but having lots of calls help esp. when scanning
-// during boot and getting error line numbers printf'd in the Wasm build.
+// 1. The scanner code has `bp` and `ep` locals which mirror ss->begin and
+//    ss->end.  However, they get out of sync.  If they are updated, they
+//    should be sync'd before calling here, since it's used to find the
+//    range of text to report.
+//
+//    !!! Would it be safer to go to ss->b and ss->e, or something similar,
+//    to get almost as much brevity and not much less clarity than bp and
+//    ep, while avoiding the possibility of the state getting out of sync?
 //
 static VarList* Error_Syntax(SCAN_STATE *ss, Token token) {
-    //
-    // The scanner code has `bp` and `ep` locals which mirror ss->begin and
-    // ss->end.  However, they get out of sync.  If they are updated, they
-    // should be sync'd before calling here, since it's used to find the
-    // range of text to report.
-    //
-    // !!! Would it be safer to go to ss->b and ss->e, or something similar,
-    // to get almost as much brevity and not much less clarity than bp and
-    // ep, while avoiding the possibility of the state getting out of sync?
-    //
     assert(ss->begin and not Is_Pointer_Corrupt_Debug(ss->begin));
     assert(ss->end and not Is_Pointer_Corrupt_Debug(ss->end));
-    assert(ss->end >= ss->begin);
+    assert(ss->end >= ss->begin);  // can get out of sync [1]
 
     DECLARE_ATOM (token_name);
     Init_Text(token_name, Make_String_UTF8(Token_Names[token]));
@@ -758,18 +757,18 @@ static VarList* Error_Syntax(SCAN_STATE *ss, Token token) {
 // better form of this error would walk the scan state stack and be able to
 // report all the unclosed terms.
 //
+// We have two options of where to implicate the error...either the start
+// of the thing being scanned, or where we are now (or, both).  But we
+// only have the start line information for GROUP! and BLOCK!...strings
+// don't cause recursions.  So using a start line on a string would point
+// at the block the string is in, which isn't as useful.
+//
 static VarList* Error_Missing(SCAN_LEVEL *level, char wanted) {
     DECLARE_ATOM (expected);
     Init_Text(expected, Make_Codepoint_String(wanted));
 
     VarList* error = Error_Scan_Missing_Raw(expected);
 
-    // We have two options of where to implicate the error...either the start
-    // of the thing being scanned, or where we are now (or, both).  But we
-    // only have the start line information for GROUP! and BLOCK!...strings
-    // don't cause recursions.  So using a start line on a string would point
-    // at the block the string is in, which isn't as useful.
-    //
     if (wanted == ')' or wanted == ']')
         Update_Error_Near_For_Line(
             error,
@@ -1235,11 +1234,11 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
             return LOCATED(TOKEN_GROUP_END);
 
           case LEX_DELIMIT_DOUBLE_QUOTE:  // "QUOTES"
-            cp = Scan_Quote_Push_Mold(mo, cp, ss);
+            cp = Scan_Quoted_Or_Braced_String_Push_Mold(mo, cp, ss);
             goto check_str;
 
           case LEX_DELIMIT_LEFT_BRACE:  // {BRACES}
-            cp = Scan_Quote_Push_Mold(mo, cp, ss);
+            cp = Scan_Quoted_Or_Braced_String_Push_Mold(mo, cp, ss);
 
           check_str:
             if (cp) {
@@ -1408,7 +1407,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
                 return Error_Syntax(ss, token);
             }
             if (*cp == '"') {
-                cp = Scan_Quote_Push_Mold(mo, cp, ss);
+                cp = Scan_Quoted_Or_Braced_String_Push_Mold(mo, cp, ss);
                 if (not cp) {
                     return Error_Syntax(ss, token);
                 }
@@ -1445,7 +1444,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
             return Error_Syntax(ss, TOKEN_TAG);
 
           case LEX_SPECIAL_LESSER:
-            cp = Skip_Tag(cp);
+            cp = Seek_To_End_Of_Tag(cp);
             if (
                 not cp  // couldn't find ending `>`
                 or not (
@@ -1500,7 +1499,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
             token = TOKEN_WORD;
             goto prescan_word;
 
-          case LEX_SPECIAL_BLANK:
+          case LEX_SPECIAL_UNDERSCORE:
             //
             // `_` standalone should become a BLANK!, so if followed by a
             // delimiter or space.  However `_a_` and `a_b` are left as
@@ -1540,7 +1539,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
             if (*cp == '{') {  // BINARY #{12343132023902902302938290382}
                 ss->end = ss->begin;  // save start
                 ss->begin = cp;
-                cp = Scan_Quote_Push_Mold(mo, cp, ss);
+                cp = Scan_Quoted_Or_Braced_String_Push_Mold(mo, cp, ss);
                 ss->begin = ss->end;  // restore start
                 if (cp) {
                     ss->end = cp;
@@ -1800,13 +1799,6 @@ void Init_Scan_Level(
 
     ss->file = file;
 
-    // !!! Splicing REBVALs into a scan as it goes creates complexities for
-    // error messages based on line numbers.  Fortunately the splice of a
-    // Value* itself shouldn't cause a fail()-class error if there's no
-    // data corruption, so it should be able to pick up *a* line head before
-    // any errors occur...it just might not give the whole picture when used
-    // to offer an error message of what's happening with the spliced values.
-    //
     level->start_line_head = ss->line_head = ss->begin;
     level->start_line = ss->line = line;
     level->mode = '\0';
@@ -2458,10 +2450,10 @@ Bounce Scanner_Executor(Level* const L) {
         goto scan_path_head_is_TOP;
     }
 
-} complete_token_pushed: {  //////////////////////////////////////////////////
+} apply_pending_sigils_and_quotes: {  ////////////////////////////////////////
 
     // If we get here without jumping somewhere else, we have pushed a
-    // *complete* token (vs. just a component of a path).  While we know that
+    // *complete* element (vs. just a component of a path).  While we know that
     // no whitespace has been consumed, this is a good time to tell that a
     // colon means "SET" and not "GET".  We also apply any pending sigils
     // or quote levels that were noticed at the beginning of a token scan,
@@ -2813,7 +2805,7 @@ Bounce Scanner_Executor(Level* const L) {
         }
     }
 
-    goto complete_token_pushed;
+    goto apply_pending_sigils_and_quotes;
 
 }} construct_scan_to_stack_finished: {  ///////////////////////////////////////
 

@@ -431,7 +431,7 @@ DECLARE_NATIVE(enhex)
                   case LEX_SPECIAL_APOSTROPHE:
                   case LEX_SPECIAL_PLUS:
                   case LEX_SPECIAL_MINUS:
-                  case LEX_SPECIAL_BLANK:
+                  case LEX_SPECIAL_UNDERSCORE:
                   case LEX_SPECIAL_POUND:
                   case LEX_SPECIAL_DOLLAR:
                   case LEX_SPECIAL_SEMICOLON:
