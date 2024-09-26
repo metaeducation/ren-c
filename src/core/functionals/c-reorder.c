@@ -124,7 +124,7 @@ DECLARE_NATIVE(reorder)
     for (; key != tail; ++key, ++param, ++index) {
         if (Is_Specialized(param))
             continue;
-        Add_Binder_Index(&binder, KEY_SYMBOL(key), index);
+        Add_Binder_Index(&binder, Key_Symbol(key), index);
     }
   }
 
@@ -206,7 +206,7 @@ DECLARE_NATIVE(reorder)
         if (Is_Specialized(param))
             continue;
 
-        const Symbol* symbol = KEY_SYMBOL(key);
+        const Symbol* symbol = Key_Symbol(key);
 
         // If we saw the parameter, we removed its index from the binder.
         //
@@ -217,7 +217,7 @@ DECLARE_NATIVE(reorder)
             and not mentioned
             and Not_Parameter_Flag(param, REFINEMENT)  // okay to leave out
         ){
-            error = Error_No_Arg(label, KEY_SYMBOL(key));
+            error = Error_No_Arg(label, Key_Symbol(key));
         }
     }
   }

@@ -42,7 +42,7 @@ static bool Params_Of_Hook(
 ){
     struct Params_Of_State *s = cast(struct Params_Of_State*, opaque);
 
-    Init_Word(PUSH(), KEY_SYMBOL(key));
+    Init_Word(PUSH(), Key_Symbol(key));
 
     if (not s->just_words) {
         if (
@@ -556,7 +556,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
             assert(Is_Specialized(param));
         }
         else {
-            if (Remove_Binder_Index_Else_0(&binder, KEY_SYMBOL(key)) == 0)
+            if (Remove_Binder_Index_Else_0(&binder, Key_Symbol(key)) == 0)
                 assert(duplicate);  // erroring on this is pending
         }
     }

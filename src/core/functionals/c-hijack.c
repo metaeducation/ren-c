@@ -112,7 +112,7 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
             if (Is_Nulled(e.var))  // don't add to PATH!
                 continue;
 
-            Init_Pushed_Refinement(PUSH(), KEY_SYMBOL(e.key));
+            Init_Pushed_Refinement(PUSH(), Key_Symbol(e.key));
 
             if (Is_Parameter_Unconstrained(e.param)) {
                 assert(Is_Okay(e.var));  // used but argless refinement

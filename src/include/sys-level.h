@@ -557,7 +557,7 @@ INLINE Level* Prep_Level_Core(
     ACT_PARAM(Level_Phase(level_), (p_##name##_))  // a TYPESET!
 
 #define PARAM_SYMBOL(name) \
-    KEY_SYMBOL(ACT_KEY(Level_Phase(level_), (p_##name##_)))
+    Key_Symbol(ACT_KEY(Level_Phase(level_), (p_##name##_)))
 
 #define REF(name) \
     (not Is_Nulled(ARG(name)))

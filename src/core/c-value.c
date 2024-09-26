@@ -340,7 +340,7 @@ void* Probe_Core_Debug(
         const Key* key = Flex_Head(Key, f);
         Append_Ascii(mo->string, "<< ");
         for (; key != tail; ++key) {
-            Mold_Text_Flex_At(mo, KEY_SYMBOL(key), 0);
+            Mold_Text_Flex_At(mo, Key_Symbol(key), 0);
             Append_Codepoint(mo->string, ' ');
         }
         Append_Ascii(mo->string, ">>");

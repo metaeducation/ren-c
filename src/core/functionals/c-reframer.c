@@ -406,7 +406,7 @@ DECLARE_NATIVE(reframer)
             Init_Blank(label_word);
 
         DECLARE_ATOM (param_word);
-        Init_Word(param_word, KEY_SYMBOL(key));
+        Init_Word(param_word, Key_Symbol(key));
 
         error = Error_Expect_Arg_Raw(
             label_word,
@@ -425,7 +425,7 @@ DECLARE_NATIVE(reframer)
         if (Is_Specialized(param))
             continue;
 
-        const Symbol* symbol = KEY_SYMBOL(key);
+        const Symbol* symbol = Key_Symbol(key);
         REBLEN index = Remove_Binder_Index_Else_0(&binder, symbol);
         assert(index != 0);
         UNUSED(index);

@@ -604,7 +604,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
         };
 
         DECLARE_ELEMENT (param_word);
-        Init_Any_Word(param_word, heart, KEY_SYMBOL(key));
+        Init_Any_Word(param_word, heart, Key_Symbol(key));
         if (quoted)
             Quotify(param_word, 1);
         Mold_Element(mo, param_word);

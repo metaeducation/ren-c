@@ -968,14 +968,14 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                 Init_Any_Word(
                     var,
                     REB_WORD,
-                    KEY_SYMBOL(les->u.evars.key)
+                    Key_Symbol(les->u.evars.key)
                 );
 
                 if (heart == REB_MODULE) {
                     Tweak_Cell_Word_Index(var, INDEX_PATCHED);
                     BINDING(var) = MOD_PATCH(
                         Cell_Varlist(les->data),
-                        KEY_SYMBOL(les->u.evars.key),
+                        Key_Symbol(les->u.evars.key),
                         true
                     );
                 }

@@ -330,7 +330,7 @@ enum {
 };
 
 
-INLINE const Symbol* KEY_SYMBOL(const Key* key)
+INLINE const Symbol* Key_Symbol(const Key* key)
   { return *key; }
 
 
@@ -338,7 +338,7 @@ INLINE void Init_Key(Key* dest, const Symbol* symbol)
   { *dest = symbol; }
 
 #define KEY_SYM(key) \
-    Symbol_Id(KEY_SYMBOL(key))
+    Symbol_Id(Key_Symbol(key))
 
 #define ACT_KEY(a,n)            Varlist_Key(ACT_EXEMPLAR(a), (n))
 #define ACT_PARAM(a,n)          cast_PAR(Varlist_Slot(ACT_EXEMPLAR(a), (n)))

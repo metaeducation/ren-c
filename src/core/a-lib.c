@@ -968,7 +968,7 @@ const RebolNodeInternal* API_rebArgR(
     const Key* key = ACT_KEYS(&tail, act);
     Value* arg = Level_Args_Head(L);
     for (; key != tail; ++key, ++arg) {
-        if (Are_Synonyms(KEY_SYMBOL(key), symbol))
+        if (Are_Synonyms(Key_Symbol(key), symbol))
             return c_cast(RebolNodeInternal*, NULLIFY_NULLED(arg));
     }
 

@@ -147,7 +147,7 @@ void Bind_Values_Core(
     const Key* key = Varlist_Keys(&key_tail, c);
     const Value* var = Varlist_Slots_Head(c);
     for (; key != key_tail; key++, var++, index++)
-        Add_Binder_Index(&binder, KEY_SYMBOL(key), index);
+        Add_Binder_Index(&binder, Key_Symbol(key), index);
   }
 
     Bind_Values_Inner_Loop(
@@ -164,7 +164,7 @@ void Bind_Values_Core(
     const Key* key = Varlist_Keys(&key_tail, c);
     const Value* var = Varlist_Slots_Head(c);
     for (; key != key_tail; ++key, ++var)
-        Remove_Binder_Index(&binder, KEY_SYMBOL(key));
+        Remove_Binder_Index(&binder, Key_Symbol(key));
   }
 
     SHUTDOWN_BINDER(&binder);
@@ -492,7 +492,7 @@ Option(Stub*) Get_Word_Container(
         const Key* key_tail;
         const Key* key = Varlist_Keys(&key_tail, overload);
         for (; key != key_tail; ++key, ++index) {
-            if (KEY_SYMBOL(key) != symbol)
+            if (Key_Symbol(key) != symbol)
                 continue;
 
             if (Get_Cell_Flag(Varlist_Slot(overload, index), BIND_NOTE_REUSE))
@@ -1066,7 +1066,7 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
     Init_Evars(&e, ACT_ARCHETYPE(relative));
     e.visibility = visibility;
     while (Did_Advance_Evars(&e))
-        Add_Binder_Index(&binder, KEY_SYMBOL(e.key), e.index);
+        Add_Binder_Index(&binder, Key_Symbol(e.key), e.index);
     Shutdown_Evars(&e);
   }
 
@@ -1112,7 +1112,7 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
     Init_Evars(&e, ACT_ARCHETYPE(relative));
     e.visibility = visibility;
     while (Did_Advance_Evars(&e))
-        Remove_Binder_Index(&binder, KEY_SYMBOL(e.key));
+        Remove_Binder_Index(&binder, Key_Symbol(e.key));
     Shutdown_Evars(&e);
   }
 
@@ -1369,7 +1369,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     Value* var = Varlist_Slots_Head(c); // only needed for debug, optimized out
     for (; key != key_tail; ++key, ++var) {
         REBINT stored = Remove_Binder_Index_Else_0(
-            &binder, KEY_SYMBOL(key)
+            &binder, Key_Symbol(key)
         );
         if (stored == 0)
             assert(duplicate);

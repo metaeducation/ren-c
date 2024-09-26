@@ -321,7 +321,7 @@ void Collect_Context_Keys(
         *(unwrap duplicate) = nullptr;
 
     for (; key != tail; ++key) {
-        const Symbol* symbol = KEY_SYMBOL(key);
+        const Symbol* symbol = Key_Symbol(key);
         if (not Try_Add_Binder_Index(
             &cl->binder,
             symbol,
@@ -521,7 +521,7 @@ Array* Collect_Unique_Words_Managed(
             // Shouldn't be possible to have an object with duplicate keys,
             // use plain Add_Binder_Index.
             //
-            Add_Binder_Index(&cl->binder, KEY_SYMBOL(key), -1);
+            Add_Binder_Index(&cl->binder, Key_Symbol(key), -1);
         }
     }
     else
@@ -561,7 +561,7 @@ Array* Collect_Unique_Words_Managed(
         const Key* key_tail;
         const Key* key = Varlist_Keys(&key_tail, Cell_Varlist(ignorables));
         for (; key != key_tail; ++key)
-            Remove_Binder_Index(&cl->binder, KEY_SYMBOL(key));
+            Remove_Binder_Index(&cl->binder, Key_Symbol(key));
     }
     else
         assert(Is_Nulled(ignorables));
@@ -693,11 +693,11 @@ Array* Context_To_Array(const Value* context, REBINT mode)
             Init_Any_Word(
                 PUSH(),
                 (mode & 2) ? REB_SET_WORD : REB_WORD,
-                KEY_SYMBOL(e.key)
+                Key_Symbol(e.key)
             );
             if (Is_Module(context)) {
                 Tweak_Cell_Word_Index(TOP, INDEX_PATCHED);
-                BINDING(TOP) = MOD_PATCH(e.ctx, KEY_SYMBOL(e.key), true);
+                BINDING(TOP) = MOD_PATCH(e.ctx, Key_Symbol(e.key), true);
             }
             else {
                 Tweak_Cell_Word_Index(TOP, e.index);
@@ -760,11 +760,11 @@ Option(Index) Find_Symbol_In_Context(
 
     while (Did_Advance_Evars(&e)) {
         if (strict) {
-            if (symbol != KEY_SYMBOL(e.key))
+            if (symbol != Key_Symbol(e.key))
                 continue;
         }
         else {
-            if (not Are_Synonyms(symbol, KEY_SYMBOL(e.key)))
+            if (not Are_Synonyms(symbol, Key_Symbol(e.key)))
                 continue;
         }
 

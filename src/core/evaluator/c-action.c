@@ -265,7 +265,7 @@ Bounce Action_Executor(Level* L)
         if (TOP_INDEX != BASELINE->stack_base) {  // reorderings/refinements
             StackValue(*) ordered = TOP;
             StackValue(*) lowest_ordered = Data_Stack_At(BASELINE->stack_base);
-            const Symbol* param_symbol = KEY_SYMBOL(KEY);
+            const Symbol* param_symbol = Key_Symbol(KEY);
 
             for (; ordered != lowest_ordered; --ordered) {
                 assert(Is_Pushed_Refinement(ordered));
@@ -372,7 +372,7 @@ Bounce Action_Executor(Level* L)
                 }
 
                 if (Not_Parameter_Flag(PARAM, ENDABLE))
-                    fail (Error_No_Arg(L->label, KEY_SYMBOL(KEY)));
+                    fail (Error_No_Arg(L->label, Key_Symbol(KEY)));
 
                 Init_Nulled(ARG);
                 goto continue_fulfilling;
@@ -684,7 +684,7 @@ Bounce Action_Executor(Level* L)
         ARG += offset;
         PARAM += offset;
 
-        assert(Cell_Word_Symbol(TOP) == KEY_SYMBOL(KEY));
+        assert(Cell_Word_Symbol(TOP) == Key_Symbol(KEY));
         DROP();
 
         if (Is_Parameter_Unconstrained(PARAM)) {  // no callsite arg, just drop
@@ -786,7 +786,7 @@ Bounce Action_Executor(Level* L)
         }
         else if (Is_Anti_Word_With_Id(ARG, SYM_END)) {
             if (Not_Parameter_Flag(PARAM, ENDABLE))
-                fail (Error_No_Arg(L->label, KEY_SYMBOL(KEY)));
+                fail (Error_No_Arg(L->label, Key_Symbol(KEY)));
             Init_Nulled(ARG);  // more convenient, use ^META for nuance
             continue;
         }

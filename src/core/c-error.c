@@ -282,7 +282,7 @@ const Value* Find_Error_For_Sym(SymId id)
 
         Index n = 1;
         for (; n <= Varlist_Len(category); ++n) {
-            if (Are_Synonyms(KEY_SYMBOL(Varlist_Key(category, n)), canon)) {
+            if (Are_Synonyms(Key_Symbol(Varlist_Key(category, n)), canon)) {
                 Value* message = Varlist_Slot(category, n);
                 assert(Is_Block(message) or Is_Text(message));
                 return message;
@@ -919,7 +919,7 @@ VarList* Error_Invalid_Arg(Level* L, const Param* param)
         Init_Word(label, unwrap L->label);
 
     DECLARE_ATOM (param_name);
-    Init_Word(param_name, KEY_SYMBOL(ACT_KEY(Level_Phase(L), index)));
+    Init_Word(param_name, Key_Symbol(ACT_KEY(Level_Phase(L), index)));
 
     Value* arg = Level_Arg(L, index);
     return Error_Invalid_Arg_Raw(label, param_name, arg);
@@ -1079,7 +1079,7 @@ VarList* Error_Arg_Type(
         return Cell_Varlist(arg);
 
     DECLARE_ATOM (param_word);
-    Init_Word(param_word, KEY_SYMBOL(key));
+    Init_Word(param_word, Key_Symbol(key));
 
     DECLARE_ATOM (label);
     if (name)
@@ -1171,7 +1171,7 @@ VarList* Error_No_Arg_Typecheck(Option(const Symbol*) label)
 VarList* Error_Bad_Argless_Refine(const Key* key)
 {
     DECLARE_ELEMENT (word);
-    Refinify(Init_Word(word, KEY_SYMBOL(key)));
+    Refinify(Init_Word(word, Key_Symbol(key)));
     return Error_Bad_Argless_Refine_Raw(word);
 }
 

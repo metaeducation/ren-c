@@ -128,7 +128,7 @@ VarList* Make_Varlist_For_Action_Push_Partials(
             continue;
         }
 
-        const Symbol* symbol = KEY_SYMBOL(key);  // added to binding
+        const Symbol* symbol = Key_Symbol(key);  // added to binding
         if (Not_Parameter_Flag(param, REFINEMENT)) {  // nothing to push
 
           continue_unspecialized:
@@ -276,7 +276,7 @@ bool Specialize_Action_Throws(
             if (Is_Specialized(param))
                 continue;  // maybe refinement from stack, now specialized out
 
-            Remove_Binder_Index(&binder, KEY_SYMBOL(key));
+            Remove_Binder_Index(&binder, Key_Symbol(key));
         }
         SHUTDOWN_BINDER(&binder);
 
@@ -389,7 +389,7 @@ bool Specialize_Action_Throws(
                 assert(VAL_WORD_INDEX(ordered) != 0);
                 Init_Pushable_Refinement_Bound(
                     Alloc_Tail_Array(partials),
-                    KEY_SYMBOL(Varlist_Key(exemplar, VAL_WORD_INDEX(ordered))),
+                    Key_Symbol(Varlist_Key(exemplar, VAL_WORD_INDEX(ordered))),
                     exemplar,
                     VAL_WORD_INDEX(ordered)
                 );
@@ -518,7 +518,7 @@ void For_Each_Unspecialized_Param(
             for (; partial != partial_tail; ++partial) {
                 if (Are_Synonyms(
                     Cell_Word_Symbol(partial),
-                    KEY_SYMBOL(key)
+                    Key_Symbol(key)
                 )){
                     goto skip_in_first_pass;
                 }
@@ -575,7 +575,7 @@ void For_Each_Unspecialized_Param(
             for (; partial != partial_tail; ++partial) {
                 if (Are_Synonyms(
                     Cell_Word_Symbol(partial),
-                    KEY_SYMBOL(key)
+                    Key_Symbol(key)
                 )){
                     goto continue_unspecialized_loop;
                 }

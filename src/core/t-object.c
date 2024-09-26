@@ -490,8 +490,8 @@ REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
             }
         }
 
-        const Symbol* symbol1 = KEY_SYMBOL(e1.key);
-        const Symbol* symbol2 = KEY_SYMBOL(e2.key);
+        const Symbol* symbol1 = Key_Symbol(e1.key);
+        const Symbol* symbol2 = Key_Symbol(e2.key);
         diff = Compare_Spellings(symbol1, symbol2, strict);
         if (diff != 0)
             goto finished;
@@ -968,7 +968,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
         //
         bool had_output = false;
         while (Did_Advance_Evars(&e)) {
-            Append_Spelling(mo->string, KEY_SYMBOL(e.key));
+            Append_Spelling(mo->string, Key_Symbol(e.key));
             Append_Ascii(mo->string, ": ");
 
             if (Is_Antiform(e.var)) {
@@ -1002,7 +1002,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
     while (Did_Advance_Evars(&e)) {
         New_Indented_Line(mo);
 
-        const Symbol* spelling = KEY_SYMBOL(e.key);
+        const Symbol* spelling = Key_Symbol(e.key);
 
         DECLARE_ELEMENT (set_word);
         Init_Set_Word(set_word, spelling);  // want escaping, e.g `|::|: 10`
