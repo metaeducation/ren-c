@@ -165,11 +165,11 @@ INLINE const Value* TRY_VAL_CONTEXT_VAR_CORE(
         var = MOD_VAR(Cell_Varlist(context), symbol, strict);
     }
     else {
-        REBLEN n = Find_Symbol_In_Context(context, symbol, strict);
-        if (n == 0)
+        Option(Index) index = Find_Symbol_In_Context(context, symbol, strict);
+        if (not index)
             var = nullptr;
         else
-            var = Varlist_Slot(Cell_Varlist(context), n);
+            var = Varlist_Slot(Cell_Varlist(context), unwrap index);
     }
     if (var and writable and Get_Cell_Flag(var, PROTECTED))
         fail (Error_Protected_Key(symbol));

@@ -770,12 +770,12 @@ DECLARE_NATIVE(apply)
 
         const Symbol* symbol = VAL_REFINEMENT_SYMBOL(At_Level(L));
 
-        REBLEN index = Find_Symbol_In_Context(frame, symbol, false);
-        if (index == 0)
+        Option(Index) index = Find_Symbol_In_Context(frame, symbol, false);
+        if (not index)
             fail (Error_Bad_Parameter_Raw(at));
 
-        var = Varlist_Slot(Cell_Varlist(frame), index);
-        param = ACT_PARAM(VAL_ACTION(op), index);
+        var = Varlist_Slot(Cell_Varlist(frame), unwrap index);
+        param = ACT_PARAM(VAL_ACTION(op), unwrap index);
 
         if (Is_Specialized(var))
             fail (Error_Bad_Parameter_Raw(at));
@@ -791,7 +791,7 @@ DECLARE_NATIVE(apply)
         if (Is_Path(at) and Is_Refinement(at))  // catch e.g. /DUP /LINE [1]
             fail (Error_Need_Non_End_Raw(lookback));
 
-        Init_Integer(ARG(index), index);
+        Init_Integer(ARG(index), unwrap index);
     }
     else if (Is_Unreadable(iterator)) {
         STATE = ST_APPLY_UNLABELED_EVAL_STEP;

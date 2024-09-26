@@ -244,12 +244,12 @@ INLINE REBLEN Varlist_Len(VarList* c) {
     return Varlist_Array(c)->content.dynamic.used - 1;  // -1 for archetype
 }
 
-INLINE const Key* Varlist_Key(VarList* c, REBLEN n) {
+INLINE const Key* Varlist_Key(VarList* c, Index n) {  // 1-based
     assert(n != 0 and n <= Varlist_Len(c));
     return Flex_At(const Key, Keylist_Of_Varlist(c), n - 1);
 }
 
-INLINE Value* Varlist_Slot(VarList* c, REBLEN n) {  // 1-based, no Cell*
+INLINE Value* Varlist_Slot(VarList* c, Index n) {  // 1-based
     assert(n != 0 and n <= Varlist_Len(c));
     return cast(Value*, cast(Flex*, c)->content.dynamic.data) + n;
 }

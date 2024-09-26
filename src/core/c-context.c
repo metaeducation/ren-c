@@ -739,7 +739,7 @@ Array* Context_To_Array(const Value* context, REBINT mode)
 // Note that since contexts like FRAME! can have multiple keys with the same
 // name, the VAL_FRAME_PHASE() of the context has to be taken into account.
 //
-REBLEN Find_Symbol_In_Context(
+Option(Index) Find_Symbol_In_Context(
     const Cell* context,
     const Symbol* symbol,
     bool strict
@@ -788,11 +788,11 @@ Option(Value*) Select_Symbol_In_Context(
     const Symbol* symbol
 ){
     const bool strict = false;
-    REBLEN n = Find_Symbol_In_Context(context, symbol, strict);
-    if (n == 0)
+    Option(Index) index = Find_Symbol_In_Context(context, symbol, strict);
+    if (not index)
         return nullptr;
 
-    return Varlist_Slot(Cell_Varlist(context), n);
+    return Varlist_Slot(Cell_Varlist(context), unwrap index);
 }
 
 
@@ -802,15 +802,17 @@ Option(Value*) Select_Symbol_In_Context(
 // Return pointer to the nth VALUE of an object.
 // Return NULL if the index is not valid.
 //
-// !!! All cases of this should be reviewed...mostly for getting an indexed
-// field out of a port.  If the port doesn't have the index, should it always
-// be an error?
+// 1. !!! All cases of this should be reviewed...mostly for getting an indexed
+//    field out of a port.  If the port doesn't have the index, should it
+//    always be an error?
 //
-Value* Obj_Value(Value* value, REBLEN index)
+Value* Obj_Value(Value* value, Index index)
 {
     VarList* context = Cell_Varlist(value);
 
-    if (index > Varlist_Len(context)) return 0;
+    if (index > Varlist_Len(context))
+        fail ("Could not pick index out of object");  // !!! Review [1]
+
     return Varlist_Slot(context, index);
 }
 

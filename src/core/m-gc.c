@@ -484,7 +484,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         if (FEED_IS_VARIADIC(feed))  // UTF-8 scan may have finalized it
             Finalize_Variadic_Feed(feed);
 
-        Index index = truncated ? 2 : 1;  // skip --optimized-out--
+        Offset index = truncated ? 2 : 1;  // skip --optimized-out--
 
         Array* a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
         Init_Any_List_At(FEED_SINGLE(feed), REB_BLOCK, a, index);
@@ -520,7 +520,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         feed->p = &PG_Feed_At_End;
     }
 
-    assert(FEED_INDEX(feed) <= cast(Index, Array_Len(FEED_ARRAY(feed))));
+    assert(FEED_INDEX(feed) <= Array_Len(FEED_ARRAY(feed)));
 }
 
 

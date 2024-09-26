@@ -156,11 +156,13 @@ REBTYPE(Port)
     // Dispatch object function:
 
     const bool strict = false;
-    REBLEN n = Find_Symbol_In_Context(actor, verb, strict);
+    Option(Index) index = Find_Symbol_In_Context(actor, verb, strict);
 
-    Value* action = (n == 0)
-        ? cast(Value*, nullptr)  // C++98 ambiguous w/o cast
-        : Varlist_Slot(Cell_Varlist(actor), n);
+    Value* action;
+    if (not index)
+        action = nullptr;
+    else
+        action = Varlist_Slot(Cell_Varlist(actor), unwrap index);
 
     if (not action or not Is_Action(action)) {
         DECLARE_ATOM (verb_cell);

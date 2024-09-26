@@ -72,7 +72,7 @@ void Typechecker_Intrinsic(Atom* out, Phase* phase, Value* arg)
 // 1. We need a spec for our typecheckers, which is really just `value` with
 //    no type restrictions as the argument.  !!! REVIEW: add help strings?
 //
-Phase* Make_Typechecker(Index decider_index) {
+Phase* Make_Typechecker(Offset decider_index) {
     DECLARE_ELEMENT (spec);  // simple spec [1]
     Array* spec_array = Alloc_Singular(NODE_FLAG_MANAGED);
     Init_Word(Stub_Cell(spec_array), Canon(VALUE));

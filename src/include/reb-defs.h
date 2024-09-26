@@ -65,7 +65,6 @@ typedef intptr_t REBLEN; // series length, unsigned, at *least* 32 bits
 // !!! These values are an attempt to differentiate 0-based indexing from
 // 1-based indexing, and try to be type-incompatible.
 //
-typedef intptr_t Index;
 typedef intptr_t Offset;
 typedef intptr_t Length;
 typedef intptr_t Count;
@@ -123,6 +122,77 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
 //
 #define MIN_D64 ((double)-9.2233720368547758e18)
 #define MAX_D64 ((double) 9.2233720368547758e18)
+
+
+//=//// 1-BASED INDEX TYPE ////////////////////////////////////////////////=//
+//
+// The Index type is not allowed to be 0 unless it is an Optional(Index).
+//
+// 1. Due to the fact that Optional(Index) is just `Index` when not using the
+//    DEBUG_CHECK_OPTIONALS switch, we cannot enforce Index's "never 0"
+//    property without that switch.
+
+#if (! CPLUSPLUS_11) || (! DEBUG_CHECK_OPTIONALS)
+    typedef intptr_t Index;
+    #define Index_To_Offset(i) ((i) - 1)
+    #define Offset_To_Index(i) ((i) + 1)
+#else
+    struct Index {
+        intptr_t value;
+        Index(intptr_t i) : value {i}  // explicit would be too painful
+          { assert(i != 0); }  // can't do unless DEBUG_CHECK_OPTIONALS [1]
+
+        operator intptr_t() const
+          { return value; }
+
+        Index& operator++()  // prefix
+          { ++value; return *this; }
+        Index& operator--()  // prefix
+          { --value; return *this; }
+        Index operator++(int)  // postfix
+          { Index temp = *this; ++value; return temp; }
+        Index operator--(int)  // postifx
+          { Index temp = *this; --value; return temp; }
+    };
+
+    INLINE Offset Index_To_Offset(Index i)
+     { return i.value - 1; }
+
+    INLINE Index Offset_To_Index(Offset o)
+     { return Index {o + 1}; }
+
+  #if DEBUG_CHECK_OPTIONALS
+    template<>
+    struct OptionWrapper<Index> {  // bypass the 0 assert
+        intptr_t wrapped;
+        OptionWrapper(intptr_t i) : wrapped {i} {}  // no assert
+
+        explicit operator bool() {
+           // explicit exception in if https://stackoverflow.com/q/39995573/
+           return wrapped ? true : false;
+        }
+    };
+
+    template<typename T>
+    T operator<<(  // see definition of Option() for explanation
+        const UnwrapHelper& left,
+        OptionWrapper<Index> option
+    ){
+        UNUSED(left);
+        assert(option.wrapped);  // non-0 check
+        return option.wrapped;
+    }
+
+    template<typename T>
+    T operator<<(  // see definition of Option() for explanation
+        const MaybeHelper& left,
+        OptionWrapper<Index> option
+    ){
+        UNUSED(left);
+        return option.wrapped;
+    }
+  #endif
+#endif
 
 
 //=//// UNICODE CODEPOINT /////////////////////////////////////////////////=//

@@ -1201,7 +1201,7 @@ REBTYPE(Context)
         else if (Any_Word(arg)) {
             // Add an unset word: `append context 'some-word`
             const bool strict = true;
-            if (0 == Find_Symbol_In_Context(
+            if (not Find_Symbol_In_Context(
                 context,
                 Cell_Word_Symbol(arg),
                 strict
@@ -1257,15 +1257,15 @@ REBTYPE(Context)
         if (not Is_Word(pattern))
             return nullptr;
 
-        REBLEN n = Find_Symbol_In_Context(
+        Option(Index) index = Find_Symbol_In_Context(
             context,
             Cell_Word_Symbol(pattern),
             REF(case)
         );
-        if (n == 0)
+        if (not index)
             return nullptr;
 
-        return COPY(Varlist_Slot(c, n)); }
+        return COPY(Varlist_Slot(c, unwrap index)); }
 
       default:
         break;
@@ -1757,14 +1757,14 @@ DECLARE_NATIVE(construct)
     while (TOP_INDEX != BASELINE->stack_base) {
         assert(Is_Set_Word(TOP));
 
-        REBINT len = Find_Symbol_In_Context(
+        Option(Index) index = Find_Symbol_In_Context(
             Varlist_Archetype(ctx),
             Cell_Word_Symbol(TOP),
             true
         );
-        assert(len != 0);  // created a key for every SET-WORD! above!
+        assert(index);  // created a key for every SET-WORD! above!
 
-        Copy_Cell(Varlist_Slot(ctx, len), stable_SPARE);
+        Copy_Cell(Varlist_Slot(ctx, unwrap index), stable_SPARE);
 
         DROP();
     }

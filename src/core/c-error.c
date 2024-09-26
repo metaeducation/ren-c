@@ -276,12 +276,12 @@ const Value* Find_Error_For_Sym(SymId id)
 
     VarList* categories = Cell_Varlist(Get_System(SYS_CATALOG, CAT_ERRORS));
 
-    REBLEN ncat = 1;
+    Index ncat = 1;
     for (; ncat <= Varlist_Len(categories); ++ncat) {
         VarList* category = Cell_Varlist(Varlist_Slot(categories, ncat));
 
-        REBLEN n = 1;
-        for (; n != Varlist_Len(category) + 1; ++n) {
+        Index n = 1;
+        for (; n <= Varlist_Len(category); ++n) {
             if (Are_Synonyms(KEY_SYMBOL(Varlist_Key(category, n)), canon)) {
                 Value* message = Varlist_Slot(category, n);
                 assert(Is_Block(message) or Is_Text(message));

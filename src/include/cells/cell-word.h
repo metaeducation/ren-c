@@ -63,7 +63,7 @@ INLINE const Symbol* Cell_Word_Symbol(const Cell* cell) {
 
 #define CELL_WORD_INDEX_I32(v)         PAYLOAD(Any, (v)).second.i32
 
-INLINE void Tweak_Cell_Word_Index(Cell* v, REBINT i) {
+INLINE void Tweak_Cell_Word_Index(Cell* v, Index i) {
     assert(Any_Wordlike(v));
     assert(i != 0);
     CELL_WORD_INDEX_I32(v) = i;

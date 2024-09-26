@@ -610,7 +610,7 @@ void Throttle_Mold(REB_MOLD *mo) {
 //
 //  Pop_Molded_String_Core: C
 //
-String* Pop_Molded_String_Core(String* buf, Size offset, Index index)
+String* Pop_Molded_String_Core(String* buf, Size offset, Length index)
 {
     Size size = String_Size(buf) - offset;
     Length len = String_Len(buf) - index;

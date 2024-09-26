@@ -223,17 +223,16 @@ bool Try_Bind_Word(const Value* context, Value* word)
         return true;
     }
 
-    REBLEN n = Find_Symbol_In_Context(
+    Option(Index) index = Find_Symbol_In_Context(
         context,
         Cell_Word_Symbol(word),
         strict
     );
-    if (n == 0)
+    if (not index)
         return false;
-    if (n != 0) {
-        Tweak_Cell_Word_Index(word, n);  // ^-- may have been relative
-        BINDING(word) = Cell_Varlist(context);
-    }
+
+    Tweak_Cell_Word_Index(word, unwrap index);  // ^-- may have been relative
+    BINDING(word) = Cell_Varlist(context);
     return true;
 }
 
@@ -424,7 +423,7 @@ Option(Stub*) Get_Word_Container(
                 return vlist;
             }
 
-            REBINT len = Find_Symbol_In_Context(  // have to search manually
+            Option(Index) index = Find_Symbol_In_Context(  // must search
                 Varlist_Archetype(vlist),
                 symbol,
                 true
@@ -434,14 +433,16 @@ Option(Stub*) Get_Word_Container(
           #ifdef CACHE_FINDINGS_BUT_SEEMS_TO_SLOW_THINGS_DOWN
             if (CTX_TYPE(vlist) == REB_FRAME) {
                 if (CELL_WORD_INDEX_I32(any_word) <= 0) {  // cache in unbounds
-                    CELL_WORD_INDEX_I32(m_cast(Cell*, any_word)) = -(len);
+                    CELL_WORD_INDEX_I32(
+                        m_cast(Cell*, any_word)
+                    ) = -(maybe index);
                     BINDING(m_cast(Cell*, any_word)) = CTX_FRAME_PHASE(vlist);
                 }
             }
           #endif
 
-            if (len != 0) {
-                *index_out = len;
+            if (index) {
+                *index_out = unwrap index;
                 return vlist;
             }
 

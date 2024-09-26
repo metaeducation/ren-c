@@ -299,11 +299,11 @@ DECLARE_NATIVE(has)
 
     const Symbol* symbol = Cell_Word_Symbol(v);
     const bool strict = true;
-    REBLEN index = Find_Symbol_In_Context(ARG(context), symbol, strict);
-    if (index == 0)
+    Option(Index) index = Find_Symbol_In_Context(ARG(context), symbol, strict);
+    if (not index)
         return nullptr;
     if (CTX_TYPE(ctx) != REB_MODULE)
-        return Init_Any_Word_Bound(OUT, heart, symbol, ctx, index);
+        return Init_Any_Word_Bound(OUT, heart, symbol, ctx, unwrap index);
 
     Init_Any_Word(OUT, heart, symbol);
     Tweak_Cell_Word_Index(OUT, INDEX_PATCHED);
@@ -338,15 +338,17 @@ DECLARE_NATIVE(without)
     if (Any_Word(v)) {
         const Symbol* symbol = Cell_Word_Symbol(v);
         const bool strict = true;
-        REBLEN index = Find_Symbol_In_Context(ARG(context), symbol, strict);
-        if (index == 0)
+        Option(Index) index = Find_Symbol_In_Context(
+            ARG(context), symbol, strict
+        );
+        if (not index)
             return nullptr;
         return Init_Any_Word_Bound(
             OUT,
             Cell_Heart_Ensure_Noquote(v),
             symbol,  // !!! incoming case...consider impact of strict if false?
             ctx,
-            index
+            unwrap index
         );
     }
 
