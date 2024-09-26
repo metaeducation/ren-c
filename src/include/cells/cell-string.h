@@ -110,7 +110,7 @@ INLINE REBLEN Cell_String_Len_At(const Cell* c) {
 }
 
 INLINE Size Cell_String_Size_Limit_At(
-    Option(Length*) length_out,  // length in chars to end (including limit)
+    Option(Sink(Length*)) length_out,  // length in chars to end or limit
     const Cell* v,
     Option(const Length*) limit
 ){

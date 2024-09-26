@@ -44,71 +44,50 @@
 #endif
 
 
+#define Stable_Unchecked(atom) \
+    x_cast(Value*, ensure(const Atom*, (atom)))
+
+
 // Because atoms are supersets of value, you may want to pass an atom to a
 // function that writes a value.  But such passing is usually illegal, due
 // to wanting to protect functions that only expect stable isotopes from
 // getting unstable ones.  So you need to specifically point out that the
 // atom is being written into and its contents not heeded.
 //
+// We do this with the Sink() wrapper class (which must be enabled in order
+// for the DEBUG_USE_CELL_SUBCLASSES to work).  We have to extend it with
+// some helpers.
+//
 // In the debug build we can give this extra teeth by wiping the contents
 // of the atom, to ensure they are not examined.
 //
-#define Stable_Unchecked(atom) \
-    x_cast(Value*, ensure(const Atom*, (atom)))
-
-#if DEBUG_USE_CELL_SUBCLASSES  // wrapper has runtime cost
-    template<typename T>
-    struct SinkWrapper {
-        T* p;
-
-        SinkWrapper() = default;  // or MSVC warns making Option(Sink(Value*))
-        SinkWrapper(nullptr_t) : p (nullptr) {}
-
-        template<
-            typename U,
-            typename std::enable_if<
-                std::is_base_of<U,T>::value  // e.g. pass Atom to Sink(Element)
-            >::type* = nullptr
-        >
-        SinkWrapper(U* u) : p (u_cast(T*, u)) {
-            /* Init_Unreadable(p); */
-        }
-
-        template<
-            typename U,
-            typename std::enable_if<
-                std::is_base_of<U,T>::value  // e.g. pass Atom to Sink(Element)
-            >::type* = nullptr
-        >
-        SinkWrapper(SinkWrapper<U> u) : p (u_cast(T*, u.p)) {
-        }
-
-        operator bool () const { return p != nullptr; }
-
-        operator T* () const { return p; }
-
-        operator copy_const_t<Node,T>* () const { return p; }
-
-        explicit operator copy_const_t<Byte,T>* () const
-          { return reinterpret_cast<copy_const_t<Byte,T>*>(p); }
-
-        T* operator->() const { return p; }
-    };
-
-    #define Sink(T) SinkWrapper<std::remove_pointer<T>::type>
-    #define Need(T) SinkWrapper<std::remove_pointer<T>::type>
-
+#if DEBUG_USE_CELL_SUBCLASSES  // Note: Sink(Value*) wrapper has runtime cost
     template<>
-    struct c_cast_helper<Byte*, Sink(Value*) const&> {
-        typedef Byte* type;
-    };
+    struct c_cast_helper<Byte*, Sink(Value*) const&>
+      { typedef Byte* type; };
 
     template<typename V, typename T>
-    struct cast_helper<SinkWrapper<V>,T>
-      { static T convert(SinkWrapper<V> v) { return (T)(v.p);} };
-#else
-    #define Sink(T) T
-    #define Need(T) T
+    struct cast_helper<SinkWrapper<V, true>,T>
+      { static T convert(SinkWrapper<V, true> v) { return (T)(v.p);} };
+
+    template<typename V, typename T>
+    struct cast_helper<SinkWrapper<V, false>,T>
+      { static T convert(SinkWrapper<V, false> v) { return (T)(v.p);} };
+
+    // !!! Originally when SinkWrapper was specific to Cell* subclasses, it
+    // had these methods.  But commenting them out didn't break anything.
+    // Now that it's generic it shouldn't mention Node...and it's unclear why
+    // they were there.  It may be that this predated the cast operator being
+    // generalized and what it was for is now done a better way, but hold onto
+    // for a bit until sure.
+    /*
+        struct SinkWrapper { ...
+            operator copy_const_t<Node,T>* () const
+              { return p; }
+            explicit operator copy_const_t<Byte,T>* () const
+              { return reinterpret_cast<copy_const_t<Byte,T>*>(p); }
+        ... };
+    */
 #endif
 
 

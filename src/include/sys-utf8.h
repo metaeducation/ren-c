@@ -303,7 +303,7 @@ INLINE bool Is_Legal_UTF8(const Byte* source, int length) {
 INLINE const Byte* Back_Scan_UTF8_Char(
     Codepoint *out,  // the valid codepoint, no NUL or substitution chars [1]
     const Byte* bp,
-    Option(Size*) size
+    Option(Sink(Size*)) size
 ){
     *out = 0;
 

@@ -395,7 +395,7 @@ INLINE VarList* VAL_WORD_CONTEXT(const Value* v) {
 //
 
 INLINE Option(VarList*) Trap_Lookup_Word(
-    const Value** out,  // returns read-only pointer to cell
+    Sink(const Value**) out,  // returns read-only pointer to cell
     const Element* word,
     Context* context
 ){

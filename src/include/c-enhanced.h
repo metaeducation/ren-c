@@ -56,6 +56,10 @@
     #define DEBUG_CHECK_NEVERNULL 0
 #endif
 
+#if !defined(DEBUG_USE_SINKS)
+    #define DEBUG_USE_SINKS 0
+#endif
+
 
 //=//// STDINT.H AND STDBOOL.H ////////////////////////////////////////////=//
 //
@@ -1288,4 +1292,87 @@
     template<class P>
     INLINE bool Is_Pointer_Corrupt_Debug(Option(P) &option)
       { return Is_Pointer_Corrupt_Debug(option.wrapped); }
+#endif
+
+
+//=//// SINK (OUTPUT ARGUMENTS) AND "NEED" ////////////////////////////////=//
+//
+// The idea behind a Sink() is to be able to mark on a function's interface
+// when a function argument passed by pointer is intended as an output.
+//
+// This has benefits of documentation, and can also be somewhat enforced by
+// scrambling the memory that the pointer points at (so long as it isn't an
+// "in-out" parameter).
+//
+// But more than that: This can be used to address the case when a type would
+// not be accepted as an input parameter (e.g. how an Atom* cannot be passed
+// to an Element* as it may contain states invalid for an Element*).  It can
+// invert the class heirarchy (e.g. it's okay to take a pointer to an Atom*
+// for an Element* if you're going to -write- to it, because an Atom is
+// suitable for -holding- an Element.)
+//
+#if DEBUG_USE_SINKS
+    template<typename T, bool need>
+    struct SinkWrapper {
+        T* p;
+
+        SinkWrapper() = default;  // or MSVC warns making Option(Sink(Value*))
+        SinkWrapper(nullptr_t) : p (nullptr) {}
+
+        template<
+            typename U,
+            typename std::enable_if<
+                !std::is_same<U,T>::value &&
+                std::is_base_of<U,T>::value  // e.g. pass Atom to Sink(Element)
+            >::type* = nullptr
+        >
+        SinkWrapper(U* u) : p (u_cast(T*, u)) {
+          /*  if (not need)
+                Corrupt_If_Debug(*p); */
+        }
+
+        template<
+            typename U,
+            bool Uneed,
+            typename std::enable_if<
+                !std::is_same<U,T>::value &&
+                std::is_base_of<U,T>::value  // e.g. pass Atom to Sink(Element)
+            >::type* = nullptr
+        >
+        SinkWrapper(SinkWrapper<U, Uneed> u) : p (u_cast(T*, u.p)) {
+        }
+
+        template<
+            typename U,
+            typename std::enable_if<
+                std::is_same<U,T>::value
+            >::type* = nullptr
+        >
+        SinkWrapper(U* u) : p (u) {
+           /* if (not need)
+                Corrupt_If_Debug(*p); */
+        }
+
+        template<
+            typename U,
+            bool Uneed,
+            typename std::enable_if<
+                std::is_same<U,T>::value
+            >::type* = nullptr
+        >
+        SinkWrapper(SinkWrapper<U, Uneed> u) : p (u_cast(T*, u.p)) {
+        }
+
+        operator bool () const { return p != nullptr; }
+
+        operator T* () const { return p; }
+
+        T* operator->() const { return p; }
+    };
+
+    #define Sink(T) SinkWrapper<typename std::remove_pointer<T>::type, false>
+    #define Need(T) SinkWrapper<typename std::remove_pointer<T>::type, true>
+#else
+    #define Sink(T) T
+    #define Need(T) T
 #endif

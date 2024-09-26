@@ -127,6 +127,10 @@
         operator Sink(const Value*) () const { return p; }
         operator Sink(Element*) () const { return p; }
         operator Sink(const Element*) () const { return p; }
+        operator Need(Value*) () const { return p; }
+        operator Need(const Value*) () const { return p; }
+        operator Need(Element*) () const { return p; }
+        operator Need(const Element*) () const { return p; }
 
         explicit operator Byte* () const { return cast(Byte*, p); }
 

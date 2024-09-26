@@ -193,8 +193,8 @@ INLINE bool Is_Space(const Value* v) {
 // routine for handling that.
 //
 INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
-    Option(Length*) length_out,
-    Option(Size*) size_out,
+    Option(Sink(Length*)) length_out,
+    Option(Sink(Size*)) size_out,
     const Cell* v,
     Option(const Length*) limit  // nullptr means no limit
 ){

@@ -138,7 +138,7 @@ static VarList* Error_Compression(const z_stream *strm, int ret)
 //    at the tail of the compressed data.  Sanity check that it's right.
 //
 Byte* Compress_Alloc_Core(
-    Option(Size*) size_out,
+    Option(Sink(Size*)) size_out,
     const void* input,
     Size size_in,
     Option(SymId) envelope  // SYM_ZLIB, or SYM_GZIP

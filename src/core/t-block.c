@@ -374,7 +374,7 @@ Bounce TO_List(Level* level_, Kind k, const Value* arg) {
 //    the pattern to complement the "never matches" option of NULL.
 //
 REBINT Find_In_Array(
-    Length* len,
+    Sink(Length*) len,
     const Array* array,
     REBLEN index_unsigned, // index to start search
     REBLEN end_unsigned, // ending position

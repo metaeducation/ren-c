@@ -46,7 +46,7 @@ INLINE const Array* Cell_Array(const Cell* v) {
 // arrays meaningfully, it should work with VAL_INDEX_UNBOUNDED().
 //
 INLINE const Element* Cell_List_Len_At(
-    Option(Length*) len_at_out,
+    Option(Sink(Length*)) len_at_out,
     const Cell* v
 ){
     const Node* node = Cell_Node1(v);

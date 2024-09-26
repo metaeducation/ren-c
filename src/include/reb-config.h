@@ -550,6 +550,19 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
+// Sinks are a feature which lets you mark a parameter as being output on an
+// interface--which is good to know.  But the Sink()/Need() functions are
+// actually crucial to DEBUG_USE_CELL_SUBCLASSES working.
+//
+#if !defined(DEBUG_USE_SINKS)
+    #define DEBUG_USE_SINKS DEBUG_USE_CELL_SUBCLASSES
+#else
+    #if (! DEBUG_USE_SINKS) && DEBUG_USE_CELL_SUBCLASSES
+        #error "DEBUG_USE_SINKS muts be enabled for DEBUG_USE_CELL_SUBCLASSES"
+    #endif
+#endif
+
+
 // Natives can be decorated with a RETURN: annotation, but this is not
 // checked in the release build.  It's assumed they will only return the
 // correct types.  This switch is used to panic() if they're wrong.
