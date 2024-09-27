@@ -620,7 +620,6 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
 
 //=//// GENERAL CELL SERVICES THAT NEED SERIES DEFINED ////////////////////=//
 
-#include "sys-stack.h"
 #include "sys-protect.h"
 
 
@@ -632,6 +631,8 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
 //=//// CELL ACCESSOR FUNCTIONS ///////////////////////////////////////////=//
 
 #include "cells/cell-quoted.h"  // has special handling for voids/nones
+
+#include "sys-stack.h"
 
 #include "cells/cell-blank.h"
 #include "cells/cell-integer.h"

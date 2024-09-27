@@ -293,6 +293,17 @@ INLINE void Drop_Data_Stack_To(StackIndex i) {
         DROP();
 }
 
+INLINE Value* Move_Drop_Top_Stack_Value(Sink(Value*) out)
+  { Move_Cell(out, TOP); DROP(); return out; }
+
+INLINE Element* Move_Drop_Top_Stack_Element(Sink(Element*) out) {
+    assert(not Is_Antiform(TOP));
+    Move_Cell(out, cast(Element*, TOP));
+    DROP();
+    return out;
+}
+
+
 // If Pop_Stack_Values_Core is used ARRAY_HAS_FILE_LINE, it means the system
 // will try to capture the file and line number associated with the current
 // level into the generated array.  But if there are other flags--like

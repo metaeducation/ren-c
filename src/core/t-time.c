@@ -65,13 +65,15 @@ REBI64 Join_Time(REB_TIMEF *tf, bool neg)
 }
 
 //
-//  Scan_Time: C
+//  Try_Scan_Time_To_Stack: C
 //
 // Scan string and convert to time.  Return zero if error.
 //
-const Byte* Scan_Time(Cell* out, const Byte* cp, REBLEN len)
-{
-    UNUSED(len); // !!! should len be paid attention to?
+Option(const Byte*) Try_Scan_Time_To_Stack(
+    const Byte* cp,
+    Option(Length) len  // !!! Does not requre a length... should it?
+){
+    UNUSED(len);
 
     bool neg;
     if (*cp == '-') {
@@ -86,7 +88,7 @@ const Byte* Scan_Time(Cell* out, const Byte* cp, REBLEN len)
         neg = false;
 
     if (*cp == '-' || *cp == '+')
-        return NULL; // small hole: --1:23
+        return nullptr;  // small hole: --1:23
 
     // Can be:
     //    HH:MM       as part1:part2
@@ -97,17 +99,17 @@ const Byte* Scan_Time(Cell* out, const Byte* cp, REBLEN len)
     REBINT part1 = -1;
     cp = Grab_Int(cp, &part1);
     if (part1 > MAX_HOUR)
-        return NULL;
+        return nullptr;
 
     if (*cp++ != ':')
-        return NULL;
+        return nullptr;
 
     const Byte* sp;
 
     REBINT part2 = -1;
     sp = Grab_Int(cp, &part2);
     if (part2 < 0 || sp == cp)
-        return NULL;
+        return nullptr;
 
     cp = sp;
 
@@ -116,7 +118,7 @@ const Byte* Scan_Time(Cell* out, const Byte* cp, REBLEN len)
         sp = cp + 1;
         cp = Grab_Int(sp, &part3);
         if (part3 < 0 || cp == sp)
-            return NULL;
+            return nullptr;
     }
 
     REBINT part4 = -1;
@@ -170,7 +172,7 @@ const Byte* Scan_Time(Cell* out, const Byte* cp, REBLEN len)
     if (neg)
         nanoseconds = -nanoseconds;
 
-    Init_Time_Nanoseconds(out, nanoseconds);
+    Init_Time_Nanoseconds(PUSH(), nanoseconds);
     return cp;
 }
 
@@ -244,16 +246,18 @@ Bounce MAKE_Time(
         fail (Error_Bad_Make_Parent(kind, unwrap parent));
 
     switch (VAL_TYPE(arg)) {
-    case REB_TIME: // just copy it (?)
+      case REB_TIME: // just copy it (?)
         return Copy_Cell(OUT, arg);
 
     case REB_TEXT: { // scan using same decoding as LOAD would
         Size size;
         const Byte* bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TIME);
+        const Byte* ep;
 
-        if (Scan_Time(OUT, bp, size) == nullptr)
+        if (not (ep = maybe Try_Scan_Time_To_Stack(bp, size)))
             goto bad_make;
 
+        UNUSED(ep);  // !!! check this?
         return OUT; }
 
     case REB_INTEGER: // interpret as seconds

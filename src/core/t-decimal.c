@@ -332,9 +332,10 @@ Bounce TO_Decimal(Level* level_, Kind k, const Value* arg)
         const Byte* bp
             = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DECIMAL);
 
-        if (NULL == Scan_Decimal(OUT, bp, size, heart != REB_PERCENT))
+        if (not Try_Scan_Decimal_To_Stack(bp, size, heart != REB_PERCENT))
             goto bad_to;
 
+        Move_Drop_Top_Stack_Element(OUT);
         d = VAL_DECIMAL(OUT); // may need to divide if percent, fall through
         break; }
 

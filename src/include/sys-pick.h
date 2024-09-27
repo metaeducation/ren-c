@@ -49,8 +49,7 @@ INLINE Bounce Run_Pickpoke_Dispatch(
     Copy_Cell(PUSH(), D_ARG(1));
     Copy_Cell(D_ARG(1), new_location);
     Bounce r = Run_Generic_Dispatch_Core(D_ARG(1), level_, verb);
-    Copy_Cell(D_ARG(1), TOP);
-    DROP();
+    Move_Drop_Top_Stack_Value(D_ARG(1));
     return r;
 }
 

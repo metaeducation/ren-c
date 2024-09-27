@@ -27,17 +27,11 @@
 #include "cells/cell-money.h"
 
 //
-//  Scan_Money: C
+//  Try_Scan_Money_To_Stack: C
 //
 // Scan and convert money.  Return zero if error.
 //
-const Byte* Scan_Money(
-    Cell* out,
-    const Byte* cp,
-    REBLEN len
-){
-    const Byte* end;
-
+Option(const Byte*) Try_Scan_Money_To_Stack(const Byte* cp, REBLEN len) {
     if (*cp == '$') {
         ++cp;
         --len;
@@ -45,11 +39,13 @@ const Byte* Scan_Money(
     if (len == 0)
         return nullptr;
 
-    Init_Money(out, string_to_deci(cp, &end));
-    if (end != cp + len)
+    const Byte* ep;
+    deci d = string_to_deci(cp, &ep);
+    if (ep != cp + len)
         return nullptr;
 
-    return end;
+    Init_Money(PUSH(), d);
+    return ep;
 }
 
 

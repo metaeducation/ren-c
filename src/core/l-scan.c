@@ -330,7 +330,7 @@ const Byte Lower_Case[256] =
 
 
 //
-//  Scan_UTF8_Char_Escapable: C
+//  Try_Scan_UTF8_Char_Escapable: C
 //
 // Scan a char, handling ^A, ^/, ^(1234)
 //
@@ -343,8 +343,10 @@ const Byte Lower_Case[256] =
 //
 // test: to-integer load to-binary mold to-char 1234
 //
-static const Byte* Scan_UTF8_Char_Escapable(Codepoint *out, const Byte* bp)
-{
+static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
+    Codepoint *out,
+    const Byte* bp
+){
     Byte c = *bp;
     if (c == '\0')
         return nullptr;  // signal error if end of string
@@ -403,12 +405,11 @@ static const Byte* Scan_UTF8_Char_Escapable(Codepoint *out, const Byte* bp)
 
         // Check for identifiers
         for (c = 0; c < ESC_MAX; c++) {
-            if ((cp = Try_Diff_Bytes_Uncased(bp, cb_cast(Esc_Names[c])))) {
-                if (cp != nullptr and *cp == ')') {
-                    bp = cp + 1;
-                    *out = Esc_Codes[c];
-                    return bp;
-                }
+            cp = maybe Try_Diff_Bytes_Uncased(bp, cb_cast(Esc_Names[c]));
+            if (cp and *cp == ')') {
+                bp = cp + 1;
+                *out = Esc_Codes[c];
+                return bp;
             }
         }
         return nullptr; }
@@ -431,7 +432,7 @@ static const Byte* Scan_UTF8_Char_Escapable(Codepoint *out, const Byte* bp)
 
 
 //
-//  Scan_Quoted_Or_Braced_String_Push_Mold: C
+//  Try_Scan_Quoted_Or_Braced_String_Push_Mold: C
 //
 // Scan a quoted string, handling all the escape characters.  e.g. an input
 // stream might have "a^(1234)b" and need to turn "^(1234)" into the right
@@ -448,7 +449,7 @@ static const Byte* Scan_UTF8_Char_Escapable(Codepoint *out, const Byte* bp)
 //    the scanner might be created someday, for the moment we are being more
 //    prescriptive about it by default.
 //
-static const Byte* Scan_Quoted_Or_Braced_String_Push_Mold(
+static Option(const Byte*) Try_Scan_Quoted_Or_Braced_String_Push_Mold(
     REB_MOLD *mo,
     const Byte* src,
     SCAN_STATE *ss
@@ -474,8 +475,8 @@ static const Byte* Scan_Quoted_Or_Braced_String_Push_Mold(
             return nullptr;
 
           case '^':
-            if ((src = Scan_UTF8_Char_Escapable(&c, src)) == NULL)
-                return NULL;
+            if (not (src = maybe Try_Scan_UTF8_Char_Escapable(&c, src)))
+                return nullptr;
             --src;  // unlike Back_Scan_XXX, no compensation for ++src later
             break;
 
@@ -532,7 +533,7 @@ static const Byte* Scan_Quoted_Or_Braced_String_Push_Mold(
 
 
 //
-//  Scan_Item_Push_Mold: C
+//  Try_Scan_Utf8_Item_Push_Mold: C
 //
 // Scan as UTF8 an item like a file.  Handles *some* forms of escaping, which
 // may not be a great idea (see notes below on how URL! moved away from that)
@@ -550,24 +551,24 @@ static const Byte* Scan_Quoted_Or_Braced_String_Push_Mold(
 //    translations that affect round-trip copy and paste, and it seems
 //    applicable to FILE! too.)
 //
-const Byte* Scan_Item_Push_Mold(
+Option(const Byte*) Try_Scan_Utf8_Item_Push_Mold(
     REB_MOLD *mo,
     const Byte* bp,
     const Byte* ep,
-    Byte opt_term,  // '\0' if file like %foo - '"' if file like %"foo bar"
-    const Byte* opt_invalids
+    Option(Byte) term,  // '\0' if file like %foo - '"' if file like %"foo bar"
+    Option(const Byte*) invalids
 ){
-    assert(opt_term < 128);  // method below doesn't search for high chars
+    assert(maybe term < 128);  // method below doesn't search for high chars
 
     Push_Mold(mo);
 
-    while (bp != ep and *bp != opt_term) {
+    while (bp != ep and *bp != maybe term) {
         Codepoint c = *bp;
 
         if (c == '\0')
             break;  // End of stream
 
-        if ((opt_term == '\0') and Is_Codepoint_Whitespace(c))
+        if (not term and Is_Codepoint_Whitespace(c))
             break;  // Unless terminator like '"' %"...", any whitespace ends
 
         if (c < ' ')
@@ -578,8 +579,7 @@ const Byte* Scan_Item_Push_Mold(
         }
         else if (c == '%') { // Accept %xx encoded char:
             Byte decoded;
-            bp = Scan_Hex2(&decoded, bp + 1);
-            if (bp == nullptr)
+            if (not (bp = maybe Try_Scan_Hex2(&decoded, bp + 1)))
                 return nullptr;
             c = decoded;
             --bp;
@@ -587,9 +587,9 @@ const Byte* Scan_Item_Push_Mold(
         else if (c == '^') {  // Accept ^X encoded char:
             if (bp + 1 == ep)
                 return nullptr;  // error if nothing follows ^
-            if (not (bp = Scan_UTF8_Char_Escapable(&c, bp)))
+            if (not (bp = maybe Try_Scan_UTF8_Char_Escapable(&c, bp)))
                 return nullptr;
-            if (opt_term == '\0' and Is_Codepoint_Whitespace(c))
+            if (not term and Is_Codepoint_Whitespace(c))
                 break;
             --bp;
         }
@@ -597,7 +597,7 @@ const Byte* Scan_Item_Push_Mold(
             if (not (bp = Back_Scan_UTF8_Char(&c, bp, nullptr)))
                 return nullptr;
         }
-        else if (opt_invalids and strchr(cs_cast(opt_invalids), c)) {
+        else if (invalids and strchr(cs_cast(unwrap invalids), c)) {
             //
             // Is char as literal valid? (e.g. () [] etc.)
             // Only searches ASCII characters.
@@ -613,7 +613,7 @@ const Byte* Scan_Item_Push_Mold(
         Append_Codepoint(mo->string, c);
     }
 
-    if (*bp != '\0' and *bp == opt_term)
+    if (*bp != '\0' and *bp == maybe term)
         ++bp;
 
     return bp;
@@ -1228,11 +1228,11 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             return LOCATED(TOKEN_GROUP_END);
 
           case LEX_DELIMIT_DOUBLE_QUOTE:  // "QUOTES"
-            cp = Scan_Quoted_Or_Braced_String_Push_Mold(mo, cp, ss);
+            cp = maybe Try_Scan_Quoted_Or_Braced_String_Push_Mold(mo, cp, ss);
             goto check_str;
 
           case LEX_DELIMIT_LEFT_BRACE:  // {BRACES}
-            cp = Scan_Quoted_Or_Braced_String_Push_Mold(mo, cp, ss);
+            cp = maybe Try_Scan_Quoted_Or_Braced_String_Push_Mold(mo, cp, ss);
 
           check_str:
             if (cp) {
@@ -1401,7 +1401,9 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 return Error_Syntax(ss, token);
             }
             if (*cp == '"') {
-                cp = Scan_Quoted_Or_Braced_String_Push_Mold(mo, cp, ss);
+                cp = maybe Try_Scan_Quoted_Or_Braced_String_Push_Mold(
+                    mo, cp, ss
+                );
                 if (not cp) {
                     return Error_Syntax(ss, token);
                 }
@@ -1518,7 +1520,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                     ss->end = cp + 1;
                     return LOCATED(TOKEN_CHAR);
                 }
-                cp = Scan_UTF8_Char_Escapable(&dummy, cp);
+                cp = maybe Try_Scan_UTF8_Char_Escapable(&dummy, cp);
                 if (cp and *cp == '"') {
                     ss->end = cp + 1;
                     return LOCATED(TOKEN_CHAR);
@@ -1533,7 +1535,9 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             if (*cp == '{') {  // BINARY #{12343132023902902302938290382}
                 ss->end = ss->begin;  // save start
                 ss->begin = cp;
-                cp = Scan_Quoted_Or_Braced_String_Push_Mold(mo, cp, ss);
+                cp = maybe Try_Scan_Quoted_Or_Braced_String_Push_Mold(
+                    mo, cp, ss
+                );
                 ss->begin = ss->end;  // restore start
                 if (cp) {
                     ss->end = cp;
@@ -2028,8 +2032,8 @@ Bounce Scanner_Executor(Level* const L) {
         break;
 
       case TOKEN_ISSUE:
-        if (ep != Scan_Issue(PUSH(), bp + 1, len - 1))
-            return DROP(), RAISE(Error_Syntax(ss, token));
+        if (ep != Try_Scan_Issue_To_Stack(bp + 1, len - 1))
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_APOSTROPHE: {
@@ -2193,7 +2197,7 @@ Bounce Scanner_Executor(Level* const L) {
         //
         return RAISE(Error_Extra(ss, ')')); }
 
-      case TOKEN_INTEGER:
+      case TOKEN_INTEGER: {
         //
         // We treat `10.20.30` as a TUPLE!, but `10.20` has a cultural lock on
         // being a DECIMAL! number.  Due to the overlap, Locate_Token() does
@@ -2235,9 +2239,10 @@ Bounce Scanner_Executor(Level* const L) {
 
         // Wasn't beginning of a DECIMAL!, so scan as a normal INTEGER!
         //
-        if (ep != Scan_Integer(PUSH(), bp, len))
+        if (ep != Try_Scan_Integer_To_Stack(bp, len))
             return RAISE(Error_Syntax(ss, token));
-        break;
+
+        break; }
 
       case TOKEN_DECIMAL:
       case TOKEN_PERCENT:
@@ -2245,16 +2250,11 @@ Bounce Scanner_Executor(Level* const L) {
         if (Is_Dot_Or_Slash(*ep))
             return RAISE(Error_Syntax(ss, token));  // No `1.2/abc`
 
-        if (ep != Scan_Decimal(PUSH(), bp, len, false))
-            return DROP(), RAISE(Error_Syntax(ss, token));
+        if (ep != Try_Scan_Decimal_To_Stack(bp, len, false))
+            return RAISE(Error_Syntax(ss, token));
 
         if (bp[len - 1] == '%') {
             HEART_BYTE(TOP) = REB_PERCENT;
-
-            // !!! DEBUG_EXTANT_STACK_POINTERS can't resolve if this is
-            // a const Cell* or Value* overload with DEBUG_CHECK_CASTS.
-            // Have to cast explicitly.
-            //
             VAL_DECIMAL(x_cast(Value*, TOP)) /= 100.0;
         }
         break;
@@ -2264,8 +2264,8 @@ Bounce Scanner_Executor(Level* const L) {
             ++ep;
             return RAISE(Error_Syntax(ss, token));
         }
-        if (ep != Scan_Money(PUSH(), bp, len))
-            return DROP(), RAISE(Error_Syntax(ss, token));
+        if (ep != Try_Scan_Money_To_Stack(bp, len))
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_TIME:
@@ -2273,13 +2273,14 @@ Bounce Scanner_Executor(Level* const L) {
             bp[len - 1] == ':'
             and Is_Dot_Or_Slash(level->mode)  // could be path/10: set
         ){
-            if (ep - 1 != Scan_Integer(PUSH(), bp, len - 1))
-                return DROP(), RAISE(Error_Syntax(ss, token));
+            if (ep - 1 != Try_Scan_Integer_To_Stack(bp, len - 1))
+                return RAISE(Error_Syntax(ss, token));
+
             ss->end--;  // put ':' back on end but not beginning
             break;
         }
-        if (ep != Scan_Time(PUSH(), bp, len))
-            return DROP(), RAISE(Error_Syntax(ss, token));
+        if (ep != Try_Scan_Time_To_Stack(bp, len))
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_DATE:
@@ -2294,8 +2295,8 @@ Bounce Scanner_Executor(Level* const L) {
             }
             ss->begin = ep;  // End point extended to cover time
         }
-        if (ep != Scan_Date(PUSH(), bp, len))
-            return DROP(), RAISE(Error_Syntax(ss, token));
+        if (ep != Try_Scan_Date_To_Stack(bp, len))
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_CHAR: {
@@ -2305,12 +2306,12 @@ Bounce Scanner_Executor(Level* const L) {
             Init_Char_Unchecked(PUSH(), 0);
             break;
         }
-        if (ep - 1 != Scan_UTF8_Char_Escapable(&uni, bp))
+        if (ep - 1 != Try_Scan_UTF8_Char_Escapable(&uni, bp))
             return RAISE(Error_Syntax(ss, token));
 
         Option(Error*) error = Trap_Init_Char(PUSH(), uni);
         if (error)
-            return DROP(), RAISE(unwrap error);
+            return RAISE(unwrap error);
         break; }
 
       case TOKEN_STRING:  // UTF-8 pre-scanned above, and put in mold buffer
@@ -2318,43 +2319,38 @@ Bounce Scanner_Executor(Level* const L) {
         break;
 
       case TOKEN_BINARY:
-        if (ep != Scan_Binary(PUSH(), bp, len))
-            return DROP(), RAISE(Error_Syntax(ss, token));
+        if (ep != Try_Scan_Binary_To_Stack(bp, len))
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_PAIR:
-        if (ep != Scan_Pair(PUSH(), bp, len))
-            return DROP(), RAISE(Error_Syntax(ss, token));
+        if (ep != Try_Scan_Pair_To_Stack(bp, len))
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_FILE:
-        if (ep != Scan_File(PUSH(), bp, len))
-            return DROP(), RAISE(Error_Syntax(ss, token));
+        if (ep != Try_Scan_File_To_Stack(bp, len))
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_EMAIL:
-        if (ep != Scan_Email(PUSH(), bp, len))
-            return DROP(), RAISE(Error_Syntax(ss, token));
+        if (ep != Try_Scan_Email_To_Stack(bp, len))
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_URL:
-        if (ep != Scan_URL(PUSH(), bp, len))
-            return DROP(), RAISE(Error_Syntax(ss, token));
+        if (ep != Try_Scan_URL_To_Stack(bp, len))
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_TAG:
-        //
-        // The Scan_Any routine (only used here for tag) doesn't
-        // know where the tag ends, so it scans the len.
-        //
-        if (ep - 1 != Scan_Any(
-            PUSH(),
+        if (ep - 1 != Try_Scan_Unencoded_String_To_Stack(
             bp + 1,
-            len - 2,
+            len - 2,  // !!! doesn't know where tag actually ends (?)
             REB_TAG,
             STRMODE_NO_CR
         )){
-            return DROP(), RAISE(Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
         }
         break;
 
@@ -2385,7 +2381,7 @@ Bounce Scanner_Executor(Level* const L) {
         panic ("Invalid TOKEN in Scanner.");
     }
 
-} lookahead: {  //////////////////////////////////////////////////////////////
+} lookahead_for_sequencing_token: {  /////////////////////////////////////////
 
     // At this point the item at TOP is the last token pushed.  It has
     // not had any `sigil_pending` or `quotes_pending` applied...so when
@@ -2477,7 +2473,7 @@ Bounce Scanner_Executor(Level* const L) {
     else if (level->sigil_pending) {
         Heart heart = Cell_Heart_Ensure_Noquote(TOP);
         if (not Any_Plain_Kind(heart))
-            return DROP(), RAISE(Error_Syntax(ss, TOKEN_BLANK));  // !!! token?
+            return RAISE(Error_Syntax(ss, TOKEN_BLANK));  // !!! token?
 
         Heart new_heart = Sigilize_Any_Plain_Kind(
             unwrap level->sigil_pending,
@@ -2569,7 +2565,7 @@ Bounce Scanner_Executor(Level* const L) {
         Init_Any_List(PUSH(), heart, a);
 
     ep = ss->end;
-    goto lookahead;
+    goto lookahead_for_sequencing_token;
 
 } scan_path_head_is_TOP: {  /////////////////////////////////////////////////
 
@@ -2734,14 +2730,12 @@ Bounce Scanner_Executor(Level* const L) {
             Is_Integer(Copy_Sequence_At(temp, TOP, 0))
             and Is_Blank(Copy_Sequence_At(temp, TOP, 1))
         ){
-            DROP();
             return RAISE("`5.` currently reserved, please use 5.0");
         }
         if (
             Is_Blank(Copy_Sequence_At(temp, TOP, 0))
             and Is_Integer(Copy_Sequence_At(temp, TOP, 1))
         ){
-            DROP();
             return RAISE("`.5` currently reserved, please use 0.5");
         }
     }
@@ -2783,7 +2777,7 @@ Bounce Scanner_Executor(Level* const L) {
                 goto done;
 
             ep = ss->end;
-            goto lookahead;  // stay in path mode
+            goto lookahead_for_sequencing_token;  // stay in path mode
         }
         else {
             // If we just finished a TUPLE! that was being scanned
@@ -2856,7 +2850,7 @@ Bounce Scanner_Executor(Level* const L) {
         return RAISE(Error_Malconstruct_Raw(temp));
     }
 
-    goto lookahead;
+    goto lookahead_for_sequencing_token;
 
 } done: {  ///////////////////////////////////////////////////////////////////
 
@@ -3109,8 +3103,8 @@ DECLARE_NATIVE(transcode)
         if (TOP_INDEX == STACK_BASE)
             Init_Nulled(OUT);
         else {
-            Move_Cell(OUT, TOP);
-            DROP();
+            assert(TOP_INDEX == STACK_BASE + 1);
+            Move_Drop_Top_Stack_Element(OUT);
         }
     }
     else {
@@ -3231,7 +3225,7 @@ const Byte* Scan_Any_Word(
 
 
 //
-//  Scan_Issue: C
+//  Try_Scan_Issue_To_Stack: C
 //
 // Scan an issue word, allowing special characters.
 // Returning null should trigger an error in the caller.
@@ -3242,7 +3236,7 @@ const Byte* Scan_Any_Word(
 // !!! Since this follows the same rules as FILE!, the code should merge,
 // though FILE! will make mutable strings and not have in-cell optimization.
 //
-const Byte* Scan_Issue(Cell* out, const Byte* cp, Size size)
+Option(const Byte*) Try_Scan_Issue_To_Stack(const Byte* cp, Size size)
 {
     const Byte* bp = cp;
 
@@ -3291,10 +3285,10 @@ const Byte* Scan_Issue(Cell* out, const Byte* cp, Size size)
     //
     if (size == 0) {  // plain # is space character, #"" is NUL character
         assert(len == 0);
-        Init_Space(out);
+        Init_Space(PUSH());
     }
     else
-        Init_Issue_Utf8(out, cast(Utf8(const*), cp), size, len);
+        Init_Issue_Utf8(PUSH(), cast(Utf8(const*), cp), size, len);
 
     return bp;
 }

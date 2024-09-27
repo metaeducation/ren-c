@@ -66,11 +66,12 @@ Bounce MAKE_Pair(
         Size size;
         const Byte* bp
             = Analyze_String_For_Scan(&size, arg, Cell_Series_Len_At(arg));
+        const Byte* ep;
 
-        if (NULL == Scan_Pair(OUT, bp, size))
+        if (not (ep = maybe Try_Scan_Pair_To_Stack(bp, size)))
             goto bad_make;
-
-        return OUT;
+        UNUSED(ep);  // !!! don't check?
+        return Move_Drop_Top_Stack_Element(OUT);
     }
 
     const Cell* x;

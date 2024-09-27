@@ -28,17 +28,6 @@
 
 
 //
-// The scanning code in R3-Alpha used NULL to return failure during the scan
-// of a value, possibly leaving the value itself in an incomplete or invalid
-// state.  Rather than write stray incomplete values into these spots, Ren-C
-// puts it back to an erased cell.
-//
-
-#define return_NULL \
-    do { Erase_Cell(out); return nullptr; } while (1)
-
-
-//
 //  MAKE_Fail: C
 //
 Bounce MAKE_Fail(
@@ -336,7 +325,7 @@ DECLARE_NATIVE(of)
 
 
 //
-//  Scan_Hex: C
+//  Try_Scan_Hex_Integer: C
 //
 // Scans hex while it is valid and does not exceed the maxlen.
 // If the hex string is longer than maxlen - it's an error.
@@ -344,14 +333,14 @@ DECLARE_NATIVE(of)
 // String must not include # - ~ or other invalid chars.
 // If minlen is zero, and no string, that's a valid zero value.
 //
-const Byte* Scan_Hex(
+Option(const Byte*) Try_Scan_Hex_Integer(
     Sink(Element*) out,
     const Byte* cp,
     REBLEN minlen,
     REBLEN maxlen
 ){
     if (maxlen > MAX_HEX_LEN)
-        return_NULL;
+        return nullptr;
 
     REBI64 i = 0;
     REBLEN len = 0;
@@ -362,7 +351,7 @@ const Byte* Scan_Hex(
     }
 
     if (len < minlen)
-        return_NULL;
+        return nullptr;
 
     Init_Integer(out, i);
     return cp;
@@ -370,7 +359,7 @@ const Byte* Scan_Hex(
 
 
 //
-//  Scan_Hex2: C
+//  Try_Scan_Hex2: C
 //
 // Decode a %xx hex encoded sequence into a byte value.
 //
@@ -379,7 +368,7 @@ const Byte* Scan_Hex(
 // Returns new position after advancing or NULL.  On success, it always
 // consumes two bytes (which are two codepoints).
 //
-const Byte* Scan_Hex2(Byte* decoded_out, const Byte* bp)
+Option(const Byte*) Try_Scan_Hex2(Byte* decoded_out, const Byte* bp)
 {
     Byte nibble1;
     if (not Try_Get_Lex_Hexdigit(&nibble1, bp[0]))
@@ -396,7 +385,7 @@ const Byte* Scan_Hex2(Byte* decoded_out, const Byte* bp)
 
 
 //
-//  Scan_Dec_Buf: C
+//  Try_Scan_Decimal_Buf: C
 //
 // Validate a decimal number. Return on first invalid char (or end).
 // Returns NULL if not valid.
@@ -405,8 +394,8 @@ const Byte* Scan_Hex2(Byte* decoded_out, const Byte* bp)
 //
 // !!! Is this redundant with Scan_Decimal?  Appears to be similar code.
 //
-const Byte* Scan_Dec_Buf(
-    Byte* out, // may live in data stack (do not call PUSH(), GC, eval)
+Option(const Byte*) Try_Scan_Decimal_Buf(
+    Sink(Byte*) out,
     bool *is_integral,
     const Byte* cp,
     REBLEN len // max size of buffer
@@ -426,7 +415,7 @@ const Byte* Scan_Dec_Buf(
         if (*cp != '\'') {
             *bp++ = *cp++;
             if (bp >= be)
-                return NULL;
+                return nullptr;
             digit_present = true;
         }
         else
@@ -440,13 +429,13 @@ const Byte* Scan_Dec_Buf(
 
     *bp++ = '.';
     if (bp >= be)
-        return NULL;
+        return nullptr;
 
     while (Is_Lex_Number(*cp) || *cp == '\'') {
         if (*cp != '\'') {
             *bp++ = *cp++;
             if (bp >= be)
-                return NULL;
+                return nullptr;
             digit_present = true;
         }
         else
@@ -454,30 +443,30 @@ const Byte* Scan_Dec_Buf(
     }
 
     if (not digit_present)
-        return NULL;
+        return nullptr;
 
     if (*cp == 'E' || *cp == 'e') {
         *bp++ = *cp++;
         if (bp >= be)
-            return NULL;
+            return nullptr;
 
         digit_present = false;
 
         if (*cp == '-' || *cp == '+') {
             *bp++ = *cp++;
             if (bp >= be)
-                return NULL;
+                return nullptr;
         }
 
         while (Is_Lex_Number(*cp)) {
             *bp++ = *cp++;
             if (bp >= be)
-                return NULL;
+                return nullptr;
             digit_present = true;
         }
 
         if (not digit_present)
-            return NULL;
+            return nullptr;
     }
 
     *bp = '\0';
@@ -486,12 +475,11 @@ const Byte* Scan_Dec_Buf(
 
 
 //
-//  Scan_Decimal: C
+//  Try_Scan_Decimal_To_Stack: C
 //
-// Scan and convert a decimal value.  Return zero if error.
+// Scan and convert a decimal value.  Return new character position or null.
 //
-const Byte* Scan_Decimal(
-    Sink(Element*) out,
+Option(const Byte*) Try_Scan_Decimal_To_Stack(
     const Byte* cp,
     REBLEN len,
     bool dec_only
@@ -499,7 +487,7 @@ const Byte* Scan_Decimal(
     Byte buf[MAX_NUM_LEN + 4];
     Byte* ep = buf;
     if (len > MAX_NUM_LEN)
-        return_NULL;
+        return nullptr;
 
     const Byte* bp = cp;
 
@@ -532,7 +520,7 @@ const Byte* Scan_Decimal(
     }
 
     if (not digit_present)
-        return_NULL;
+        return nullptr;
 
     if (*cp == 'E' || *cp == 'e') {
         *ep++ = *cp++;
@@ -547,12 +535,12 @@ const Byte* Scan_Decimal(
         }
 
         if (not digit_present)
-            return_NULL;
+            return nullptr;
     }
 
     if (*cp == '%') {
         if (dec_only)
-            return_NULL;
+            return nullptr;
 
         ++cp; // ignore it
     }
@@ -560,48 +548,36 @@ const Byte* Scan_Decimal(
     *ep = '\0';
 
     if (cp - bp != len)
-        return_NULL;
-
-    Reset_Cell_Header_Untracked(TRACK(out), CELL_MASK_DECIMAL);
+        return nullptr;
 
     char *se;
-    VAL_DECIMAL(out) = strtod(s_cast(buf), &se);
-
-    // !!! TBD: need check for NaN, and INF
-
-    if (fabs(VAL_DECIMAL(out)) == HUGE_VAL)
+    double d = strtod(s_cast(buf), &se);
+    if (fabs(d) == HUGE_VAL)  // !!! TBD: need check for NaN, and INF
         fail (Error_Overflow_Raw());
 
+    Init_Decimal(PUSH(), d);
     return cp;
 }
 
 
 //
-//  Scan_Integer: C
+//  Try_Scan_Integer_To_Stack: C
 //
-// Scan and convert an integer value.  Return zero if error.
+// Scan and convert an integer value.  Return new position or null if error.
 // Allow preceding + - and any combination of ' marks.
 //
-const Byte* Scan_Integer(
-    Sink(Element*) out,
+const Byte* Try_Scan_Integer_To_Stack(
     const Byte* cp,
     REBLEN len
 ){
-    // Super-fast conversion of zero and one (most common cases):
-    if (len == 1) {
-        if (*cp == '0') {
-            Init_Integer(out, 0);
-            return cp + 1;
-        }
-        if (*cp == '1') {
-            Init_Integer(out, 1);
-            return cp + 1;
-         }
+    if (len == 1 and Is_Lex_Number(*cp)) {  // fast convert single digit #s
+        Init_Integer(PUSH(), Get_Lex_Number(*cp));
+        return cp + 1;
     }
 
     Byte buf[MAX_NUM_LEN + 4];
     if (len > MAX_NUM_LEN)
-        return_NULL; // prevent buffer overflow
+        return nullptr;  // prevent buffer overflow
 
     Byte* bp = buf;
 
@@ -630,7 +606,7 @@ const Byte* Scan_Integer(
 
     if (num == 0) { // all zeros or '
         // return early to avoid platform dependant error handling in CHR_TO_INT
-        Init_Integer(out, 0);
+        Init_Integer(PUSH(), 0);
         return cp;
     }
 
@@ -641,7 +617,7 @@ const Byte* Scan_Integer(
         else if (*cp == '\'')
             ++cp;
         else
-            return_NULL;
+            return nullptr;
     }
     *bp = '\0';
 
@@ -651,35 +627,30 @@ const Byte* Scan_Integer(
         --len;
     if (len > 19) {
         // !!! magic number :-( How does it relate to MAX_INT_LEN (also magic)
-        return_NULL;
+        return nullptr;
     }
 
     // Convert, check, and return:
     errno = 0;
 
-    Reset_Cell_Header_Untracked(TRACK(out), CELL_MASK_INTEGER);
-
-    mutable_VAL_INT64(out) = CHR_TO_INT(buf);
+    REBI64 i = CHR_TO_INT(buf);
     if (errno != 0)
-        return_NULL; // overflow
+        return nullptr;  // overflow
 
-    if ((VAL_INT64(out) > 0 && neg) || (VAL_INT64(out) < 0 && !neg))
-        return_NULL;
+    if ((i > 0 and neg) or (i < 0 and not neg))
+        return nullptr;
 
+    Init_Integer(PUSH(), i);
     return cp;
 }
 
 
 //
-//  Scan_Date: C
+//  Try_Scan_Date_To_Stack: C
 //
 // Scan and convert a date. Also can include a time and zone.
 //
-const Byte* Scan_Date(
-    Atom* out,
-    const Byte* cp,
-    REBLEN len
-) {
+Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
     const Byte* end = cp + len;
 
     // Skip spaces:
@@ -693,20 +664,20 @@ const Byte* Scan_Date(
         while (*cp == ' ' && cp != end) cp++;
     }
     if (cp == end)
-        return_NULL;
+        return nullptr;
 
     REBINT num;
 
     // Day or 4-digit year:
     ep = Grab_Int(cp, &num);
     if (num < 0)
-        return_NULL;
+        return nullptr;
 
     REBINT day;
     REBINT month;
     REBINT year;
     REBINT tz = NO_DATE_ZONE;
-    PAYLOAD(Time, out).nanoseconds = NO_DATE_TIME; // may be overwritten
+    REBI64 nanoseconds = NO_DATE_TIME; // may be overwritten
 
     Size size = ep - cp;
     if (size >= 4) {
@@ -720,27 +691,27 @@ const Byte* Scan_Date(
         // Ex: 12-Dec-2012
         day = num;
         if (day == 0)
-            return_NULL;
+            return nullptr;
 
         // !!! Clang static analyzer doesn't know from test of `day` below
         // how it connects with year being set or not.  Suppress warning.
         year = INT32_MIN; // !!! Garbage, should not be read.
     }
     else
-        return_NULL;
+        return nullptr;
 
     cp = ep;
 
     // Determine field separator:
     if (*cp != '/' && *cp != '-' && *cp != '.' && *cp != ' ')
-        return_NULL;
+        return nullptr;
 
     Byte sep = *cp++;
 
     // Month as number or name:
     ep = Grab_Int(cp, &num);
     if (num < 0)
-        return_NULL;
+        return nullptr;
 
     size = ep - cp;
 
@@ -752,7 +723,7 @@ const Byte* Scan_Date(
 
         size = ep - cp;
         if (size < 3)
-            return_NULL;
+            return nullptr;
 
         for (num = 0; num != 12; ++num) {
             const Byte* month_name = cb_cast(Month_Names[num]);
@@ -763,20 +734,20 @@ const Byte* Scan_Date(
     }
 
     if (month < 1 || month > 12)
-        return_NULL;
+        return nullptr;
 
     cp = ep;
     if (*cp++ != sep)
-        return_NULL;
+        return nullptr;
 
     // Year or day (if year was first):
     ep = Grab_Int(cp, &num);
     if (*cp == '-' || num < 0)
-        return_NULL;
+        return nullptr;
 
     size = ep - cp;
     if (size == 0)
-        return_NULL;
+        return nullptr;
 
     if (day == 0) {
         // year already set, but day hasn't been
@@ -807,7 +778,7 @@ const Byte* Scan_Date(
     }
 
     if (year > MAX_YEAR || day < 1 || day > Month_Max_Days[month-1])
-        return_NULL;
+        return nullptr;
 
     // Check February for leap year or century:
     if (month == 2 && day == 29) {
@@ -816,7 +787,7 @@ const Byte* Scan_Date(
             ((year % 100) == 0 &&       // century?
             (year % 400) != 0)
         ){
-            return_NULL; // not leap century
+            return nullptr;  // not leap century
         }
     }
 
@@ -831,16 +802,19 @@ const Byte* Scan_Date(
         if (cp >= end)
             goto end_date;
 
-        cp = Scan_Time(out, cp, 0); // writes PAYLOAD(Time, out).nanoseconds
+        Option(Length) time_len = 0;  // !!! not used/required by time scan?
+        if (not (cp = maybe Try_Scan_Time_To_Stack(cp, time_len)))
+            return nullptr;
+
         if (
-            cp == NULL
-            or not Is_Time(out)
-            or VAL_NANO(out) < 0
-            or VAL_NANO(out) >= SECS_TO_NANO(24 * 60 * 60)
+            VAL_NANO(TOP) < 0
+            or VAL_NANO(TOP) >= SECS_TO_NANO(24 * 60 * 60)
         ){
-            return_NULL;
+            return nullptr;
         }
-        assert(PAYLOAD(Time, out).nanoseconds != NO_DATE_TIME);
+        assert(PAYLOAD(Time, TOP).nanoseconds != NO_DATE_TIME);
+        nanoseconds = VAL_NANO(TOP);
+        DROP();  // !!! could reuse top cell for "efficiency"
     }
 
     // past this point, header is set, so `goto end_date` is legal.
@@ -855,11 +829,11 @@ const Byte* Scan_Date(
 
         ep = Grab_Int(cp + 1, &num);
         if (ep - cp == 0)
-            return_NULL;
+            return nullptr;
 
         if (*ep != ':') {
             if (num < -1500 || num > 1500)
-                return_NULL;
+                return nullptr;
 
             int h = (num / 100);
             int m = (num - (h * 100));
@@ -868,21 +842,21 @@ const Byte* Scan_Date(
         }
         else {
             if (num < -15 || num > 15)
-                return_NULL;
+                return nullptr;
 
             tz = num * (60 / ZONE_MINS);
 
             if (*ep == ':') {
                 ep = Grab_Int(ep + 1, &num);
                 if (num % ZONE_MINS != 0)
-                    return_NULL;
+                    return nullptr;
 
                 tz += num / ZONE_MINS;
             }
         }
 
         if (ep != end)
-            return_NULL;
+            return nullptr;
 
         if (*cp == '-')
             tz = -tz;
@@ -894,74 +868,69 @@ const Byte* Scan_Date(
 
     // Overwriting scanned REB_TIME...
     //
-    Reset_Cell_Header_Untracked(TRACK(out), CELL_MASK_DATE);
+    Reset_Cell_Header_Untracked(PUSH(), CELL_MASK_DATE);
 
     // payload.time.nanoseconds is set, may be NO_DATE_TIME, don't Freshen_Cell()
 
-    VAL_YEAR(out) = year;
-    VAL_MONTH(out) = month;
-    VAL_DAY(out) = day;
-    VAL_ZONE(out) = NO_DATE_ZONE;  // Adjust_Date_Zone() requires this
+    VAL_YEAR(TOP) = year;
+    VAL_MONTH(TOP) = month;
+    VAL_DAY(TOP) = day;
+    VAL_ZONE(cast(Element*, TOP)) = NO_DATE_ZONE;  // Adjust_Date_Zone() needs
+    PAYLOAD(Time, TOP).nanoseconds = nanoseconds;
 
-    Adjust_Date_Zone_Core(out, tz);
+    Adjust_Date_Zone_Core(TOP, tz);
 
-    VAL_ZONE(out) = tz;
+    VAL_ZONE(cast(Element*, TOP)) = tz;
 
     return cp;
 }
 
 
 //
-//  Scan_File: C
+//  Try_Scan_File_To_Stack: C
 //
 // Scan and convert a file name.
 //
-const Byte* Scan_File(
-    Cell* out,
-    const Byte* cp,
-    REBLEN len
-){
+Option(const Byte*) Try_Scan_File_To_Stack(const Byte* cp, REBLEN len)
+{
     if (*cp == '%') {
         cp++;
         len--;
     }
 
     Codepoint term;
-    const Byte* invalid;
+    const Byte* invalids;
     if (*cp == '"') {
         cp++;
         len--;
         term = '"';
-        invalid = cb_cast(":;\"");
+        invalids = cb_cast(":;\"");
     }
     else {
         term = '\0';
-        invalid = cb_cast(":;()[]\"");
+        invalids = cb_cast(":;()[]\"");
     }
 
     DECLARE_MOLD (mo);
 
-    cp = Scan_Item_Push_Mold(mo, cp, cp + len, term, invalid);
-    if (cp == NULL) {
+    cp = maybe Try_Scan_Utf8_Item_Push_Mold(mo, cp, cp + len, term, invalids);
+    if (cp == nullptr) {
         Drop_Mold(mo);
-        return_NULL;
+        return nullptr;
     }
 
-    Init_File(out, Pop_Molded_String(mo));
+    Init_File(PUSH(), Pop_Molded_String(mo));
     return cp;
 }
 
 
 //
-//  Scan_Email: C
+//  Try_Scan_Email_To_Stack: C
 //
 // Scan and convert email.
 //
-const Byte* Scan_Email(
-    Cell* out,
-    const Byte* cp,
-    REBLEN len
-){
+Option(const Byte*) Try_Scan_Email_To_Stack(const Byte* cp, REBLEN len)
+{
     String* s = Make_String(len * 2);  // !!! guess...use mold buffer instead?
     Utf8(*) up = String_Head(s);
 
@@ -971,18 +940,17 @@ const Byte* Scan_Email(
     for (; len > 0; len--) {
         if (*cp == '@') {
             if (found_at)
-                return_NULL;
+                return nullptr;
             found_at = true;
         }
 
         if (*cp == '%') {
             if (len <= 2)
-                return_NULL;
+                return nullptr;
 
             Byte decoded;
-            cp = Scan_Hex2(&decoded, cp + 1);
-            if (cp == NULL)
-                return_NULL;
+            if (not (cp = maybe Try_Scan_Hex2(&decoded, cp + 1)))
+                return nullptr;
 
             up = Write_Codepoint(up, decoded);
             ++num_chars;
@@ -995,17 +963,17 @@ const Byte* Scan_Email(
     }
 
     if (not found_at)
-        return_NULL;
+        return nullptr;
 
     Term_String_Len_Size(s, num_chars, up - String_Head(s));
 
-    Init_Email(out, s);
+    Init_Email(PUSH(), s);
     return cp;
 }
 
 
 //
-//  Scan_URL: C
+//  Try_Scan_URL_To_Stack: C
 //
 // While Rebol2, R3-Alpha, and Red attempted to apply some amount of decoding
 // (e.g. how %20 is "space" in http:// URL!s), Ren-C leaves URLs "as-is".
@@ -1027,145 +995,137 @@ const Byte* Scan_Email(
 // (This is similar to how local FILE!s, where e.g. slashes become backslash
 // on Windows, are expressed as TEXT!.)
 //
-const Byte* Scan_URL(
-    Cell* out,
-    const Byte* cp,
-    REBLEN len
-){
-    return Scan_Any(out, cp, len, REB_URL, STRMODE_NO_CR);
+Option(const Byte*) Try_Scan_URL_To_Stack(const Byte* cp, REBLEN len)
+{
+    return Try_Scan_Unencoded_String_To_Stack(cp, len, REB_URL, STRMODE_NO_CR);
 }
 
 
 //
-//  Scan_Pair: C
+//  Try_Scan_Pair_To_Stack: C
 //
 // Scan and convert a pair
 //
-const Byte* Scan_Pair(
-    Sink(Element*) out,
+Option(const Byte*) Try_Scan_Pair_To_Stack(
     const Byte* cp,
     REBLEN len
 ) {
     Byte buf[MAX_NUM_LEN + 4];
 
     bool is_integral;
-    const Byte* ep = Scan_Dec_Buf(&buf[0], &is_integral, cp, MAX_NUM_LEN);
-    if (ep == NULL)
-        return_NULL;
-    if (*ep != 'x' && *ep != 'X')
-        return_NULL;
+    const Byte* ep = maybe Try_Scan_Decimal_Buf(
+        buf, &is_integral, cp, MAX_NUM_LEN
+    );
+    if (ep == nullptr)
+        return nullptr;
+    if (*ep != 'x' and *ep != 'X')
+        return nullptr;
+    if (not is_integral)
+        return nullptr;  // floating point pairs no longer supported
 
     Value* paired = Alloc_Pairing(CELL_MASK_0);
 
-    // X is in the first pairing cell
-    if (is_integral)
-        Init_Integer(paired, atoi(cast(char*, &buf[0])));
-    else
-        Init_Decimal(paired, atof(cast(char*, &buf[0])));
+    Init_Integer(paired, atoi(cast(char*, &buf[0])));  // X
 
     ep++;
 
-    const Byte* xp = Scan_Dec_Buf(&buf[0], &is_integral, ep, MAX_NUM_LEN);
-    if (!xp) {
+    const Byte* xp = maybe Try_Scan_Decimal_Buf(
+        buf, &is_integral, ep, MAX_NUM_LEN
+    );
+    if (xp == nullptr) {
         Free_Pairing(paired);
-        return_NULL;
+        return nullptr;
     }
-
-    // Y is in the second pairing cell
-    if (is_integral)
-        Init_Integer(Pairing_Second(paired), atoi(cast(char*, &buf[0])));
-    else
-        Init_Decimal(Pairing_Second(paired), atof(cast(char*, &buf[0])));
 
     if (len > xp - cp) {
         Free_Pairing(paired);
-        return_NULL;
+        return nullptr;
     }
 
+    Init_Integer(Pairing_Second(paired), atoi(cast(char*, &buf[0])));  // Y
+
     Manage_Pairing(paired);
-    Init_Pair(out, paired);
+    Init_Pair(PUSH(), paired);
     return xp;
 }
 
 
 //
-//  Scan_Binary: C
+//  Try_Scan_Binary_To_Stack: C
 //
 // Scan and convert binary strings.
 //
-const Byte* Scan_Binary(
-    Cell* out,
+Option(const Byte*) Try_Scan_Binary_To_Stack(
     const Byte* cp,
     REBLEN len
-) {
+){
     REBINT base = 16;
 
     if (*cp != '#') {
         const Byte* ep = Grab_Int(cp, &base);
-        if (cp == ep || *ep != '#')
-            return_NULL;
+        if (cp == ep or *ep != '#')
+            return nullptr;
         len -= ep - cp;
         cp = ep;
     }
 
     cp++;  // skip #
     if (*cp++ != '{')
-        return_NULL;
+        return nullptr;
 
     len -= 2;
 
     Binary* decoded = maybe Decode_Enbased_Utf8_As_Binary(&cp, len, base, '}');
     if (not decoded)
-        return_NULL;
+        return nullptr;
 
     cp = maybe Skip_To_Byte(cp, cp + len, '}');
     if (not cp) {
         Free_Unmanaged_Flex(decoded);
-        return_NULL;
+        return nullptr;
     }
 
-    Init_Blob(out, decoded);
+    Init_Blob(PUSH(), decoded);
 
-    return cp + 1; // include the "}" in the scan total
+    return cp + 1;  // include the "}" in the scan total
 }
 
 
 //
-//  Scan_Any: C
+//  Try_Scan_Unencoded_String_To_Stack: C
 //
 // Scan any string that does not require special decoding.
 //
-const Byte* Scan_Any(
-    Cell* out,
+// 1. Curly braced strings may span multiple lines, and some files may have CR
+//    and LF in the data:
+//
+//     {line one  ; imagine this line has CR LF...not just LF
+//     line two}
+//
+//    Despite the presence of the CR in the source file, the scanned literal
+//    should only support LF (if it supports files with it at all)
+//
+//      http://blog.hostilefork.com/death-to-carriage-return/
+//
+//    So at time of writing it is always STRMODE_NO_CR, but the option is
+//    being left open to make the scanner flexible in this respect...to
+//    either convert CR LF sequences to just LF, or to preserve the CR.
+//
+Option(const Byte*) Try_Scan_Unencoded_String_To_Stack(
     const Byte* cp,
-    REBLEN num_bytes,
+    Size size,
     Heart heart,
-    enum Reb_Strmode strmode
+    enum Reb_Strmode strmode  // currently always STRMODE_NO_CR
 ){
-    // The range for a curly braced string may span multiple lines, and some
-    // files may have CR and LF in the data:
-    //
-    //     {line one  ; imagine this line has CR LF...not just LF
-    //     line two}
-    //
-    // Despite the presence of the CR in the source file, the scanned literal
-    // should only support LF (if it supports files with it at all)
-    //
-    // http://blog.hostilefork.com/death-to-carriage-return/
-    //
-    // So at time of writing it is always STRMODE_NO_CR, but the option is
-    // being left open to make the scanner flexible in this respect...to
-    // either convert CR LF sequences to just LF, or to preserve the CR.
-    //
     String* s = Append_UTF8_May_Fail(
         nullptr,
         cs_cast(cp),
-        num_bytes,
+        size,
         strmode
     );
-    Init_Any_String(out, heart, s);
+    Init_Any_String(PUSH(), heart, s);
 
-    return cp + num_bytes;
+    return cp + size;
 }
 
 

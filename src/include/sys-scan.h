@@ -286,6 +286,10 @@ typedef enum LexSpecialEnum LexSpecial;
     u_cast(LexSpecial, Get_Lex_Value(LEX_CLASS_SPECIAL, (b)))
 
 
+#define Get_Lex_Number(b) \
+    Get_Lex_Value(LEX_CLASS_NUMBER, (b))
+
+
 #define LEX_DEFAULT (LEX_DELIMIT|LEX_DELIMIT_SPACE)  // control chars = spaces
 
 // In UTF8 C0, C1, F5, and FF are invalid.  Ostensibly set to default because

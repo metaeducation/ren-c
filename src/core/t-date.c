@@ -528,9 +528,11 @@ Bounce MAKE_Date(
     if (Is_Text(arg)) {
         Size size;
         const Byte* bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DATE);
-        if (NULL == Scan_Date(OUT, bp, size))
+        const Byte* ep;
+        if (not (ep = maybe Try_Scan_Date_To_Stack(bp, size)))
             goto bad_make;
-        return OUT;
+        UNUSED(ep); // !!! not checked, okay?
+        return Move_Drop_Top_Stack_Element(OUT);
     }
 
     if (Any_List(arg))

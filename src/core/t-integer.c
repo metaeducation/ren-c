@@ -110,7 +110,7 @@ Bounce TO_Integer(Level* level_, Kind kind, const Value* arg)
 // Unsigned makes more sense as these would be hexes likely typed in by users,
 // who rarely do 2s-complement math in their head.
 //
-void Hex_String_To_Integer(Value* out, const Value* value)
+void Hex_String_To_Integer(Value* out, const Value* value)  // !!! UNUSED
 {
     Size utf8_size;
     Utf8(const*) bp = Cell_Utf8_Size_At(&utf8_size, value);
@@ -120,7 +120,7 @@ void Hex_String_To_Integer(Value* out, const Value* value)
         fail (Error_Out_Of_Range_Raw(value));
     }
 
-    if (not Scan_Hex(out, bp, utf8_size, utf8_size))
+    if (not Try_Scan_Hex_Integer(out, bp, utf8_size, utf8_size))
         fail (Error_Bad_Make(REB_INTEGER, value));
 
     // !!! Unlike binary, always assumes unsigned (should it?).  Yet still
@@ -208,21 +208,24 @@ Option(Error*) Trap_Value_To_Int64(
             || memchr(bp, 'e', size)
             || memchr(bp, 'E', size)
         ){
-            DECLARE_ATOM (d);
-            if (Scan_Decimal(d, bp, size, true)) {
+            if (Try_Scan_Decimal_To_Stack(bp, size, true)) {
                 if (
-                    VAL_DECIMAL(d) < INT64_MAX
-                    && VAL_DECIMAL(d) >= INT64_MIN
+                    VAL_DECIMAL(TOP) < INT64_MAX
+                    && VAL_DECIMAL(TOP) >= INT64_MIN
                 ){
-                    Init_Integer(out, cast(REBI64, VAL_DECIMAL(d)));
+                    Init_Integer(out, cast(REBI64, VAL_DECIMAL(TOP)));
+                    DROP();
                     goto check_sign;
                 }
 
+                DROP();
                 return Error_Overflow_Raw();
             }
         }
-        if (Scan_Integer(out, bp, size))
+        if (Try_Scan_Integer_To_Stack(bp, size)) {
+            Move_Drop_Top_Stack_Element(out);
             goto check_sign;
+        }
 
         return Error_Bad_Make(REB_INTEGER, value);
     }

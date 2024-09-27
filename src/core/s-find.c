@@ -57,15 +57,15 @@ REBINT Compare_Ascii_Uncased(
 // Compare two binary strings case insensitively, stopping at '\0' terminator.
 // Return where the first differed.
 //
-const Byte* Try_Diff_Bytes_Uncased(const Byte* src, const Byte* pat)
+Option(const Byte*) Try_Diff_Bytes_Uncased(const Byte* src, const Byte* pat)
 {
     while (*src != '\0' and *pat != '\0') {
         if (LO_CASE(*src++) != LO_CASE(*pat++))
-            return 0;
+            return nullptr;
     }
 
     if (*pat != '\0')
-        return 0; // if not at end of pat, then error
+        return nullptr;  // if not at end of pat, then error
 
     return src;
 }

@@ -145,7 +145,7 @@ Bounce MAKE_Sequence(
             fail (arg); // valid even for UTF-8
         for (alen = 0; alen < size; alen++) {
             Byte decoded;
-            if ((ap = Scan_Hex2(&decoded, ap)) == NULL)
+            if (not (ap = maybe Try_Scan_Hex2(&decoded, ap)))
                 fail (arg);
             *vp++ = decoded;
         }

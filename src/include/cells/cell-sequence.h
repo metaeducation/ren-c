@@ -461,13 +461,11 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
     }
 
     if (TOP_INDEX - 1 == base) {  // only one item, use as-is if possible
-        assert(not Is_Antiform(TOP));
-        Copy_Cell(out, TOP);
-        DROP();  // stack now balanced
+        Move_Drop_Top_Stack_Element(out);  // balances stack, ensures element
 
         Option(Error*) error = Trap_Check_Sequence_Element(
             sequence_heart,
-            cast(Element*, TOP)
+            cast(Element*, out)
         );
         if (error)
             return error;

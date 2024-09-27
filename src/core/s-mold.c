@@ -715,7 +715,7 @@ void Drop_Mold_Core(
     }
 
     // When pushed data are to be discarded, mo->string may be unterminated.
-    // (Indeed that happens when Scan_Item_Push_Mold returns NULL/0.)
+    // (Indeed that happens when Try_Scan_Utf8_Item_Push_Mold returns NULL/0.)
     //
     Note_Flex_Maybe_Term(mo->string);
 

@@ -1014,9 +1014,10 @@ DECLARE_NATIVE(to_hex)
     // UTF-8 Everywhere unification of ANY-WORD? and ANY-STRING? is done.
     //
     assert(len == String_Size(mo->string) - mo->base.size);
-    if (NULL == Scan_Issue(OUT, Binary_At(mo->string, mo->base.size), len))
+    if (not Try_Scan_Issue_To_Stack(Binary_At(mo->string, mo->base.size), len))
         fail (PARAM(value));
 
+    Move_Drop_Top_Stack_Element(OUT);
     Drop_Mold(mo);
     return OUT;
 }
