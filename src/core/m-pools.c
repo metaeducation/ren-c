@@ -861,7 +861,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
 
     Set_Flex_Flag(f, DYNAMIC);
     Set_Flex_Flag(f, POWER_OF_2);
-    if (not Did_Flex_Data_Alloc(f, used_old + delta + x))
+    if (not Try_Flex_Data_Alloc(f, used_old + delta + x))
         fail (Error_No_Memory((used_old + delta + x) * wide));
 
     assert(Get_Flex_Flag(f, DYNAMIC));
@@ -1036,7 +1036,7 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
     // audit, so that should be one of the things considered.
 
     Set_Flex_Flag(f, DYNAMIC);
-    if (not Did_Flex_Data_Alloc(f, units + 1)) {
+    if (not Try_Flex_Data_Alloc(f, units + 1)) {
         // Put Flex back how it was (there may be extant references)
         f->content.dynamic.data = cast(char*, data_old);
 

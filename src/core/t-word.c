@@ -319,7 +319,7 @@ REBTYPE(Word)
             return Init_Integer(OUT, len); }
 
           case SYM_BINDING: {
-            if (not Did_Get_Binding_Of(OUT, v))
+            if (not Try_Get_Binding_Of(OUT, v))
                 return nullptr;
 
             return OUT; }

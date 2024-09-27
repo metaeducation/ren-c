@@ -350,7 +350,7 @@ DECLARE_NATIVE(endable_q)
 
     Value* v = ARG(parameter);
 
-    if (not Did_Get_Binding_Of(SPARE, v))
+    if (not Try_Get_Binding_Of(SPARE, v))
         fail (PARAM(parameter));
 
     if (not Is_Frame(SPARE))

@@ -523,7 +523,7 @@ DECLARE_NATIVE(redo)
 
     Value* restartee = ARG(restartee);
     if (not Is_Frame(restartee)) {
-        if (not Did_Get_Binding_Of(OUT, restartee))
+        if (not Try_Get_Binding_Of(OUT, restartee))
             fail ("No context found from restartee in REDO");
 
         if (not Is_Frame(OUT))
@@ -803,7 +803,7 @@ DECLARE_NATIVE(apply)
         EVARS *e = Cell_Handle_Pointer(EVARS, iterator);
 
         while (true) {
-            if (not Did_Advance_Evars(e)) {
+            if (not Try_Advance_Evars(e)) {
                 if (not REF(relax))
                     fail (Error_Apply_Too_Many_Raw());
 

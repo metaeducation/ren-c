@@ -398,9 +398,9 @@ DECLARE_NATIVE(use)
 
 
 //
-//  Did_Get_Binding_Of: C
+//  Try_Get_Binding_Of: C
 //
-bool Did_Get_Binding_Of(Sink(Value*) out, const Value* v)
+bool Try_Get_Binding_Of(Sink(Value*) out, const Value* v)
 {
     switch (VAL_TYPE(v)) {
     case REB_WORD:

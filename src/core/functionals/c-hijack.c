@@ -101,7 +101,7 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
     EVARS e;  // use EVARS to get parameter reordering right (in theory?)
     Init_Evars(&e, Varlist_Archetype(Varlist_Of_Level_Force_Managed(L1)));
 
-    while (Did_Advance_Evars(&e)) {
+    while (Try_Advance_Evars(&e)) {
         if (Is_Specialized(e.param))  // specialized or local
             continue;
 

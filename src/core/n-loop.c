@@ -859,7 +859,7 @@ void Init_Loop_Each(Value* iterator, Value* data)
             Set_Flex_Flag(les->flex, FIXED_SIZE);
 
         if (Any_Context(data)) {
-            les->more_data = Did_Advance_Evars(&les->u.evars);
+            les->more_data = Try_Advance_Evars(&les->u.evars);
         }
         else {
             les->more_data = (les->u.eser.index < les->u.eser.len);
@@ -1000,7 +1000,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
             else
                 fail ("Loop enumeration of contexts must be 1 or 2 vars");
 
-            les->more_data = Did_Advance_Evars(&les->u.evars);
+            les->more_data = Try_Advance_Evars(&les->u.evars);
             break; }
 
           case REB_MAP: {

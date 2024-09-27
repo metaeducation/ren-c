@@ -176,7 +176,7 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
 //  Init_Evars: C
 //
 // The init initializes to one behind the enumeration, so you have to call
-// Did_Advance_Evars() on even the first.
+// Try_Advance_Evars() on even the first.
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -330,7 +330,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
 
 
 //
-//  Did_Advance_Evars: C
+//  Try_Advance_Evars: C
 //
 // !!! When enumerating an ordinary context, this currently does not put a
 // HOLD on the context.  So running user code during the enumeration that can
@@ -357,7 +357,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
 //    will be needed to keep HELP working if we actually suppress these from
 //    the "input" view of a FRAME!.
 //
-bool Did_Advance_Evars(EVARS *e) {
+bool Try_Advance_Evars(EVARS *e) {
     if (e->visibility == VAR_VISIBILITY_NONE)
         return false;
 
@@ -476,15 +476,15 @@ REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
     //
     REBINT diff = 0;
     while (true) {
-        if (not Did_Advance_Evars(&e1)) {
-            if (not Did_Advance_Evars(&e2))
+        if (not Try_Advance_Evars(&e1)) {
+            if (not Try_Advance_Evars(&e2))
                 diff = 0;  // if both exhausted, they're equal
             else
                 diff = -1;  // else the first had fewer fields
             goto finished;
         }
         else {
-            if (not Did_Advance_Evars(&e2)) {
+            if (not Try_Advance_Evars(&e2)) {
                 diff = 1;  // the second had fewer fields
                 goto finished;
             }
@@ -967,7 +967,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
         // Mold all words and their values ("key: <molded value>").
         //
         bool had_output = false;
-        while (Did_Advance_Evars(&e)) {
+        while (Try_Advance_Evars(&e)) {
             Append_Spelling(mo->string, Key_Symbol(e.key));
             Append_Ascii(mo->string, ": ");
 
@@ -999,7 +999,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 
     mo->indent++;
 
-    while (Did_Advance_Evars(&e)) {
+    while (Try_Advance_Evars(&e)) {
         New_Indented_Line(mo);
 
         const Symbol* spelling = Key_Symbol(e.key);
@@ -1396,7 +1396,7 @@ REBTYPE(Frame)
         Option(SymId) sym = Cell_Word_Id(property);
         switch (sym) {
           case SYM_BINDING: {
-            if (Did_Get_Binding_Of(OUT, frame))
+            if (Try_Get_Binding_Of(OUT, frame))
                 return OUT;
             return nullptr; }
 

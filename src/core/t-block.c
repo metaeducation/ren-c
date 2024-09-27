@@ -677,11 +677,11 @@ static REBINT Try_Get_Array_Index_From_Picker(
 
 
 //
-//  Did_Pick_Block: C
+//  Try_Pick_Block: C
 //
 // Fills out with NULL if no pick.
 //
-bool Did_Pick_Block(
+bool Try_Pick_Block(
     Sink(Value*) out,
     const Value* block,
     const Value* picker
@@ -1284,7 +1284,7 @@ REBTYPE(List)
                     % (Cell_Series_Len_Head(list) - index))
             );
 
-            if (not Did_Pick_Block(OUT, list, ARG(seed)))
+            if (not Try_Pick_Block(OUT, list, ARG(seed)))
                 return nullptr;
             return Inherit_Const(stable_OUT, list);
         }

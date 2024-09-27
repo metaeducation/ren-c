@@ -189,7 +189,7 @@ REBTYPE(Sequence)
     Length len = Cell_Sequence_Len(sequence);
     if (len > MAX_TUPLE)
         len = MAX_TUPLE;
-    bool all_byte_sized_ints = Did_Get_Sequence_Bytes(buf, sequence, len);
+    bool all_byte_sized_ints = Try_Get_Sequence_Bytes(buf, sequence, len);
     UNUSED(all_byte_sized_ints);
     Byte* vp = buf;
 

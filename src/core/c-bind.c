@@ -1065,7 +1065,7 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
     EVARS e;
     Init_Evars(&e, ACT_ARCHETYPE(relative));
     e.visibility = visibility;
-    while (Did_Advance_Evars(&e))
+    while (Try_Advance_Evars(&e))
         Add_Binder_Index(&binder, Key_Symbol(e.key), e.index);
     Shutdown_Evars(&e);
   }
@@ -1111,7 +1111,7 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
     EVARS e;
     Init_Evars(&e, ACT_ARCHETYPE(relative));
     e.visibility = visibility;
-    while (Did_Advance_Evars(&e))
+    while (Try_Advance_Evars(&e))
         Remove_Binder_Index(&binder, Key_Symbol(e.key));
     Shutdown_Evars(&e);
   }

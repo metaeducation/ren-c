@@ -27,7 +27,7 @@
 
 
 //
-//  Did_Flex_Data_Alloc: C
+//  Try_Flex_Data_Alloc: C
 //
 // Allocates the data array for an already allocated Flex Stub structure.
 // Resets the bias and tail to zero, and sets the new width.  Flags like
@@ -57,7 +57,7 @@
 //    feature in the future again.  So since Set_Flex_Bias() uses bit masks
 //    on an existing value, clear out the whole value for starters.
 //
-bool Did_Flex_Data_Alloc(Stub* s, REBLEN capacity) {
+bool Try_Flex_Data_Alloc(Stub* s, REBLEN capacity) {
     assert(Get_Flex_Flag(s, DYNAMIC));  // once set, never shrinks [1]
 
     Byte wide = Flex_Wide(s);

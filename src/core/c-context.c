@@ -687,7 +687,7 @@ Array* Context_To_Array(const Value* context, REBINT mode)
     EVARS e;
     Init_Evars(&e, context);
 
-    while (Did_Advance_Evars(&e)) {
+    while (Try_Advance_Evars(&e)) {
         if (mode & 1) {
             assert(e.index != 0);
             Init_Any_Word(
@@ -758,7 +758,7 @@ Option(Index) Find_Symbol_In_Context(
     EVARS e;
     Init_Evars(&e, context);
 
-    while (Did_Advance_Evars(&e)) {
+    while (Try_Advance_Evars(&e)) {
         if (strict) {
             if (symbol != Key_Symbol(e.key))
                 continue;

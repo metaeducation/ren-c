@@ -879,12 +879,12 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
 
 
 //
-//  Did_Get_Series_Index_From_Picker: C
+//  Try_Get_Series_Index_From_Picker: C
 //
 // Will fail if the picker is outright invalid, but return false if it should
 // be NULL on the last step of a PICK.
 //
-bool Did_Get_Series_Index_From_Picker(
+bool Try_Get_Series_Index_From_Picker(
     REBINT *out,
     const Value* v,
     const Value* picker
@@ -931,7 +931,7 @@ REBTYPE(String)
 
         const Value* picker = ARG(picker);
         REBINT n;
-        if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
+        if (not Try_Get_Series_Index_From_Picker(&n, v, picker))
             return RAISE(Error_Bad_Pick_Raw(picker));
 
         Codepoint c = Get_Char_At(Cell_String(v), n);
@@ -947,7 +947,7 @@ REBTYPE(String)
 
         const Value* picker = ARG(picker);
         REBINT n;
-        if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
+        if (not Try_Get_Series_Index_From_Picker(&n, v, picker))
             fail (Error_Out_Of_Range(picker));
 
         Value* setval = ARG(value);

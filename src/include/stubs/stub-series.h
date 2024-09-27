@@ -810,7 +810,7 @@ INLINE Flex* Make_Flex_Into(
     ){
         Set_Flex_Flag(s, DYNAMIC);
 
-        if (not Did_Flex_Data_Alloc(s, capacity)) {
+        if (not Try_Flex_Data_Alloc(s, capacity)) {
             Clear_Node_Managed_Bit(s);
             Set_Flex_Inaccessible(s);
             GC_Kill_Stub(s);

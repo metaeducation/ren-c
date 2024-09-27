@@ -1076,7 +1076,7 @@ void Push_Action(
     MISC(VarlistAdjunct, s) = nullptr;
     LINK(Patches, s) = nullptr;
 
-    if (not Did_Flex_Data_Alloc(
+    if (not Try_Flex_Data_Alloc(
         s,
         num_args + 1 + ONE_IF_POISON_TAILS  // +1 is rootvar
     )){

@@ -642,7 +642,7 @@ INLINE Context* Cell_Sequence_Binding(const Cell* sequence) {
 // tuples could only contain byte-sized integers.  All callsites referring
 // to it are transitional.
 //
-INLINE bool Did_Get_Sequence_Bytes(
+INLINE bool Try_Get_Sequence_Bytes(
     void* buf,
     const Cell* sequence,
     Size buf_size
@@ -675,7 +675,7 @@ INLINE void Get_Tuple_Bytes(
     Size buf_size
 ){
     assert(Cell_Heart(tuple) == REB_TUPLE);
-    if (not Did_Get_Sequence_Bytes(buf, tuple, buf_size))
+    if (not Try_Get_Sequence_Bytes(buf, tuple, buf_size))
         fail ("non-INTEGER! found used with Get_Tuple_Bytes()");
 }
 
