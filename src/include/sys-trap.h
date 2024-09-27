@@ -102,7 +102,7 @@ struct JumpStruct {
         jmp_buf cpu_state;
     #endif
 
-    VarList* error;  // longjmp() case tunnels pointer back via this [2]
+    Error* error;  // longjmp() case tunnels pointer back via this [2]
   #endif
 
     struct JumpStruct* last_jump;
@@ -310,11 +310,11 @@ struct JumpStruct {
     template <class T>
     INLINE ATTRIBUTE_NO_RETURN void Fail_Macro_Helper(T *p) {
         static_assert(
-            std::is_same<T, VarList>::value
+            std::is_same<T, Error>::value
             or std::is_same<T, const char>::value
             or std::is_base_of<const Value, T>::value
             or std::is_base_of<Cell, T>::value,
-            "fail() works on: VarList*, Cell*, const char*"
+            "fail() works on: Error*, Cell*, const char*"
         );
         Fail_Core(p);
     }

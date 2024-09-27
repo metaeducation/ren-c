@@ -110,7 +110,7 @@ Bounce MAKE_Issue(
       case REB_INTEGER:
       case REB_DECIMAL: {
         REBINT n = Int32(arg);
-        Option(VarList*) error = Trap_Init_Char(OUT, n);
+        Option(Error*) error = Trap_Init_Char(OUT, n);
         if (error)
             return RAISE(unwrap error);
         return OUT; }
@@ -136,7 +136,7 @@ Bounce MAKE_Issue(
             if (size != 0)
                 return MAKE_String(level_, REB_ISSUE, nullptr, arg);
         }
-        Option(VarList*) error = Trap_Init_Char(OUT, c);
+        Option(Error*) error = Trap_Init_Char(OUT, c);
         if (error)
             return RAISE(unwrap error);
         return OUT; }
@@ -173,7 +173,7 @@ DECLARE_NATIVE(codepoint_to_char)
 
     uint32_t c = VAL_UINT32(ARG(codepoint));
 
-    Option(VarList*) error = Trap_Init_Char(OUT, c);
+    Option(Error*) error = Trap_Init_Char(OUT, c);
     if (error)
         fail (unwrap error);
     return OUT;
@@ -521,7 +521,7 @@ REBTYPE(Issue)
     if (chr < 0)
         return RAISE(Error_Type_Limit_Raw(Datatype_From_Kind(REB_ISSUE)));
 
-    Option(VarList*) error = Trap_Init_Char(OUT, cast(Codepoint, chr));
+    Option(Error*) error = Trap_Init_Char(OUT, cast(Codepoint, chr));
     if (error)
         return RAISE(unwrap error);
     return OUT;

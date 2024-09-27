@@ -106,7 +106,7 @@
 //
 //    (Note that exceptions like [~/~ ~//~ ~...~] are quasi-words.)
 //
-INLINE Option(VarList*) Trap_Check_Sequence_Element(
+INLINE Option(Error*) Trap_Check_Sequence_Element(
     Heart sequence_heart,
     const Element* e
 ){
@@ -172,15 +172,15 @@ INLINE Option(VarList*) Trap_Check_Sequence_Element(
 // R3-Alpha, the underlying representation of `/foo` in the cell is the same
 // as an ANY-WORD?
 
-INLINE Option(VarList*) Trap_Leading_Blank_Pathify(
+INLINE Option(Error*) Trap_Leading_Blank_Pathify(
     Element* e,
     Heart heart
 ){
     assert(Any_Sequence_Kind(heart));
 
-    Option(VarList*) trap = Trap_Check_Sequence_Element(heart, e);
-    if (trap)
-        return trap;
+    Option(Error*) error = Trap_Check_Sequence_Element(heart, e);
+    if (error)
+        return error;
 
     if (Is_Word(e)) {  // see notes at top of file on `/a` cell optimization
         Set_Cell_Flag(e, REFINEMENT_LIKE);
@@ -289,7 +289,7 @@ INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
 
 //=//// 2-Element "PAIR" SEQUENCE OPTIMIZATION ////////////////////////////=//
 
-INLINE Option(VarList*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
+INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
     Sink(Element*) out,
     Heart heart,
     const Element* first,
@@ -317,9 +317,9 @@ INLINE Option(VarList*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
         return Trap_Leading_Blank_Pathify(out, heart);
     }
     else {
-        Option(VarList*) trap = Trap_Check_Sequence_Element(heart, first);
-        if (trap)
-            return trap;
+        Option(Error*) error = Trap_Check_Sequence_Element(heart, first);
+        if (error)
+            return error;
       }
 
     if (Is_Blank(second) and Is_Word(first)) {  // optimize `a/` or `a.`
@@ -345,9 +345,9 @@ INLINE Option(VarList*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
     if (Is_Blank(second)) {
         // okay at tail
     } else {
-        Option(VarList*) trap = Trap_Check_Sequence_Element(heart, second);
-        if (trap)
-            return trap;
+        Option(Error*) error = Trap_Check_Sequence_Element(heart, second);
+        if (error)
+            return error;
     }
 
     Value* pairing = Alloc_Pairing(NODE_FLAG_MANAGED);
@@ -359,20 +359,17 @@ INLINE Option(VarList*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
     return nullptr;
 }
 
-INLINE Option(VarList*) Trap_Init_Any_Sequence_Pairlike(
+INLINE Option(Error*) Trap_Init_Any_Sequence_Pairlike(
     Sink(Element*) out,
     Heart heart,
     const Element* first,
     const Element* second
 ){
-    Option(VarList*) trap = Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
-        out,
-        heart,
-        first,
-        second
+    Option(Error*) error = Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
+        out, heart, first, second
     );
-    if (trap)
-        return trap;
+    if (error)
+        return error;
 
     if (not Any_Sequence(out))
         return Error_Conflated_Sequence_Raw(out);
@@ -380,7 +377,7 @@ INLINE Option(VarList*) Trap_Init_Any_Sequence_Pairlike(
     return nullptr;
 }
 
-INLINE Option(VarList*) Trap_Pop_Sequence_Or_Conflation(
+INLINE Option(Error*) Trap_Pop_Sequence_Or_Conflation(
     Sink(Element*) out,
     Heart heart,
     StackIndex base
@@ -393,7 +390,7 @@ INLINE Option(VarList*) Trap_Pop_Sequence_Or_Conflation(
     if (TOP_INDEX - base == 2) {  // two-element path optimization
         assert(not Is_Antiform(TOP - 1));
         assert(not Is_Antiform(TOP));
-        Option(VarList*) trap = Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
+        Option(Error*) trap = Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
             out,
             heart,
             cast(Element*, TOP - 1),
@@ -419,14 +416,14 @@ INLINE Option(VarList*) Trap_Pop_Sequence_Or_Conflation(
     return Trap_Init_Any_Sequence_Listlike(out, heart, a);
 }
 
-INLINE Option(VarList*) Trap_Pop_Sequence(
+INLINE Option(Error*) Trap_Pop_Sequence(
     Sink(Element*) out,
     Heart heart,
     StackIndex base
 ){
-    Option(VarList*) trap = Trap_Pop_Sequence_Or_Conflation(out, heart, base);
-    if (trap)
-        return trap;
+    Option(Error*) error = Trap_Pop_Sequence_Or_Conflation(out, heart, base);
+    if (error)
+        return error;
 
     if (not Any_Sequence(out))
         return Error_Conflated_Sequence_Raw(out);
@@ -453,7 +450,7 @@ INLINE Option(VarList*) Trap_Pop_Sequence(
 // to the WORD! '.' -- this could be extended to allow more blanks to get words
 // like `///` if that were deemed interesting.
 //
-INLINE Option(VarList*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
+INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
     Sink(Value*) out,
     Heart sequence_heart,
     StackIndex base
@@ -468,12 +465,12 @@ INLINE Option(VarList*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
         Copy_Cell(out, TOP);
         DROP();  // stack now balanced
 
-        Option(VarList*) trap = Trap_Check_Sequence_Element(
+        Option(Error*) error = Trap_Check_Sequence_Element(
             sequence_heart,
             cast(Element*, TOP)
         );
-        if (trap)
-            return trap;
+        if (error)
+            return error;
 
         Sigil sigil = maybe Sigil_Of_Kind(sequence_heart);
         if (not sigil)  // just wanted a plain pa/th or tu.p.le
@@ -690,9 +687,9 @@ INLINE void Get_Tuple_Bytes(
 //=//// REFINEMENTS AND PREDICATES ////////////////////////////////////////=//
 
 INLINE Element* Refinify(Element* e) {
-    Option(VarList*) error = Trap_Leading_Blank_Pathify(e, REB_PATH);
-    assert(not error);
-    UNUSED(error);
+    Option(Error*) error = Trap_Leading_Blank_Pathify(e, REB_PATH);
+    if (error)
+        fail (unwrap error);
     return e;
 }
 

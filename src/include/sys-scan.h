@@ -316,7 +316,7 @@ typedef enum LexSpecialEnum LexSpecial;
 // field of zero, except for hex values.
 //
 INLINE bool Try_Get_Lex_Hexdigit_Helper(Sink(Byte*) nibble, Lex lex) {
-    if (lex < LEX_WORD)  // all the word and number states are >= LEX_WORD
+    if (not (lex >= LEX_WORD))  // inlining of Is_Lex_Word_Or_Number()
         return false;
     Byte value = lex & LEX_VALUE;
     if (lex < LEX_NUMBER and value == 0)  // not A-F or a-f

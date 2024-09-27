@@ -597,18 +597,16 @@ INLINE Bounce Native_Nothing_Result_Untracked(
 INLINE Bounce Native_Raised_Result(Level* level_, const void *p) {
     assert(not THROWING);
 
-    VarList* error;
+    Error* error;
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_UTF8:
         error = Error_User(c_cast(char*, p));
         break;
       case DETECTED_AS_STUB: {
-        error = cast(VarList*, m_cast(void*, p));
+        error = cast(Error*, m_cast(void*, p));
         break; }
       case DETECTED_AS_CELL: {  // note: can be Is_Raised()
-        const Value* cell = c_cast(Value*, p);
-        assert(Is_Error(cell));
-        error = Cell_Varlist(cell);
+        error = Cell_Error(c_cast(Cell*, p));
         break; }
       default:
         assert(false);

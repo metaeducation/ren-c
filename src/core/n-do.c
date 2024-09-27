@@ -448,7 +448,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
         return DELEGATE_SUBLEVEL(sub); }
 
       case REB_ERROR :
-        fail (Cell_Varlist(source));  // would fail anyway [7]
+        fail (Cell_Error(source));  // would fail anyway [7]
 
       default:
         fail (PARAM(source));
@@ -912,7 +912,7 @@ DECLARE_NATIVE(_s_s)  // [_s]lash [_s]lash (see TO-C-NAME)
 
     Element* operation = cast(Element*, ARG(operation));
 
-    Option(VarList*) error = Trap_Get_Var(
+    Option(Error*) error = Trap_Get_Var(
         SPARE, GROUPS_OK, operation, SPECIFIED
     );
     if (error)

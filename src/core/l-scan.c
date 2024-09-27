@@ -667,7 +667,7 @@ static const Byte* Seek_To_End_Of_Tag(const Byte* cp)
 //    a FILE! so those processing the error don't have to parse it back out.
 //
 static void Update_Error_Near_For_Line(
-    VarList* error,
+    Error* error,
     SCAN_STATE *ss,
     REBLEN line,
     const Byte* line_head
@@ -721,7 +721,7 @@ static void Update_Error_Near_For_Line(
 //    to get almost as much brevity and not much less clarity than bp and
 //    ep, while avoiding the possibility of the state getting out of sync?
 //
-static VarList* Error_Syntax(SCAN_STATE *ss, Token token) {
+static Error* Error_Syntax(SCAN_STATE *ss, Token token) {
     assert(ss->begin and not Is_Pointer_Corrupt_Debug(ss->begin));
     assert(ss->end and not Is_Pointer_Corrupt_Debug(ss->end));
     assert(ss->end >= ss->begin);  // can get out of sync [1]
@@ -735,7 +735,7 @@ static VarList* Error_Syntax(SCAN_STATE *ss, Token token) {
         Make_Sized_String_UTF8(cs_cast(ss->begin), ss->end - ss->begin)
     );
 
-    VarList* error = Error_Scan_Invalid_Raw(token_name, token_text);
+    Error* error = Error_Scan_Invalid_Raw(token_name, token_text);
     Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
     return error;
 }
@@ -757,11 +757,11 @@ static VarList* Error_Syntax(SCAN_STATE *ss, Token token) {
 // don't cause recursions.  So using a start line on a string would point
 // at the block the string is in, which isn't as useful.
 //
-static VarList* Error_Missing(SCAN_LEVEL *level, char wanted) {
+static Error* Error_Missing(SCAN_LEVEL *level, char wanted) {
     DECLARE_ATOM (expected);
     Init_Text(expected, Make_Codepoint_String(wanted));
 
-    VarList* error = Error_Scan_Missing_Raw(expected);
+    Error* error = Error_Scan_Missing_Raw(expected);
 
     if (wanted == ')' or wanted == ']')
         Update_Error_Near_For_Line(
@@ -786,11 +786,11 @@ static VarList* Error_Missing(SCAN_LEVEL *level, char wanted) {
 //
 // For instance, `load "abc ]"`
 //
-static VarList* Error_Extra(SCAN_STATE *ss, char seen) {
+static Error* Error_Extra(SCAN_STATE *ss, char seen) {
     DECLARE_ATOM (unexpected);
     Init_Text(unexpected, Make_Codepoint_String(seen));
 
-    VarList* error = Error_Scan_Extra_Raw(unexpected);
+    Error* error = Error_Scan_Extra_Raw(unexpected);
     Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
     return error;
 }
@@ -805,8 +805,8 @@ static VarList* Error_Extra(SCAN_STATE *ss, char seen) {
 // applications if it would point out the locations of both points.  R3-Alpha
 // only pointed out the location of the start token.
 //
-static VarList* Error_Mismatch(SCAN_LEVEL *level, char wanted, char seen) {
-    VarList* error = Error_Scan_Mismatch_Raw(rebChar(wanted), rebChar(seen));
+static Error* Error_Mismatch(SCAN_LEVEL *level, char wanted, char seen) {
+    Error* error = Error_Scan_Mismatch_Raw(rebChar(wanted), rebChar(seen));
     Update_Error_Near_For_Line(
         error,
         level->ss,
@@ -1004,7 +1004,7 @@ static LexFlags Prescan_Token(SCAN_STATE *ss)
 // encoded source is because all the characters that dictate the tokenization
 // are currently in the ASCII range (< 128).
 //
-static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
+static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     Sink(Token*) token_out,
     REB_MOLD *mo,
     Level* L
@@ -1205,7 +1205,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
             else
                 assert(strmode == STRMODE_NO_CR);
 
-            VarList* error = Error_Illegal_Cr(cp, ss->begin);
+            Error* error = Error_Illegal_Cr(cp, ss->begin);
             Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
             return error; }
 
@@ -1874,7 +1874,7 @@ Bounce Scanner_Executor(Level* const L) {
 
   blockscope {
     Drop_Mold_If_Pushed(mo);
-    Option(VarList*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, L);
+    Option(Error*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, L);
     if (error)
         return RAISE(unwrap error);
   }
@@ -2308,7 +2308,7 @@ Bounce Scanner_Executor(Level* const L) {
         if (ep - 1 != Scan_UTF8_Char_Escapable(&uni, bp))
             return RAISE(Error_Syntax(ss, token));
 
-        Option(VarList*) error = Trap_Init_Char(PUSH(), uni);
+        Option(Error*) error = Trap_Init_Char(PUSH(), uni);
         if (error)
             return DROP(), RAISE(unwrap error);
         break; }
@@ -2497,7 +2497,7 @@ Bounce Scanner_Executor(Level* const L) {
         if (*ss->begin != '~')
             return RAISE(Error_Syntax(ss, TOKEN_TILDE));
 
-        Option(VarList*) error = Trap_Coerce_To_Quasiform(TOP);
+        Option(Error*) error = Trap_Coerce_To_Quasiform(TOP);
         if (error) {
             /* Free_Unmanaged_Flex(error); */  // !!! but it's managed :-(
             return RAISE(Error_Syntax(ss, TOKEN_TILDE));  // !!! better error!
@@ -2702,8 +2702,8 @@ Bounce Scanner_Executor(Level* const L) {
         }
     }
 
-    blockscope {  // gotos would cross this initialization without
-    Option(VarList*) error = Trap_Pop_Sequence_Or_Conflation(
+  blockscope {  // gotos would cross this initialization without
+    Option(Error*) error = Trap_Pop_Sequence_Or_Conflation(
         temp,  // doesn't write directly to stack since popping stack
         token == TOKEN_TUPLE ? REB_TUPLE : REB_PATH,
         stackindex_path_head - 1
@@ -2712,7 +2712,7 @@ Bounce Scanner_Executor(Level* const L) {
         /* Free_Unmanaged_Flex(unwrap error); */  // is managed?! :-(
         return RAISE(Error_Syntax(ss, token));
     }
-    }
+  }
 
     assert(
         Is_Quasi_Word(temp)     // [~ ~] => ~.~ or ~/~
@@ -3212,7 +3212,7 @@ const Byte* Scan_Any_Word(
     DECLARE_MOLD (mo);
 
     Token token;
-    Option(VarList*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, L);
+    Option(Error*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, L);
     if (error)
         fail (unwrap error);
 

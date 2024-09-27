@@ -1517,7 +1517,7 @@ DECLARE_NATIVE(default)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Option(VarList*) error = Trap_Get_Var_Maybe_Vacant(
+    Option(Error*) error = Trap_Get_Var_Maybe_Vacant(
         OUT,
         steps,  // use steps to avoid double-evaluation on GET/SET pair [1]
         target,

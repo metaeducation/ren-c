@@ -283,7 +283,7 @@ void Set_Parameter_Spec(
             or heart == REB_TYPE_PATH or heart == REB_TYPE_TUPLE
         ){
             const Value* slot;
-            Option(VarList*) error = Trap_Lookup_Word(
+            Option(Error*) error = Trap_Lookup_Word(
                 &slot, Ensure_Element(lookup), SPECIFIED
             );
             if (error)

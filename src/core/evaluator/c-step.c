@@ -697,7 +697,7 @@ Bounce Stepper_Executor(Level* L)
       word_common: ///////////////////////////////////////////////////////////
 
       case REB_WORD: {
-        Option(VarList*) error = Trap_Get_Any_Word(OUT, L_current, L_binding);
+        Option(Error*) error = Trap_Get_Any_Word(OUT, L_current, L_binding);
         if (error)
             fail (unwrap error);  // else could conflate with function result
 
@@ -862,7 +862,7 @@ Bounce Stepper_Executor(Level* L)
 
       case REB_META_WORD:
       case REB_GET_WORD: {
-        Option(VarList*) error = Trap_Get_Any_Word_Maybe_Vacant(
+        Option(Error*) error = Trap_Get_Any_Word_Maybe_Vacant(
             OUT,
             L_current,
             L_binding
@@ -944,7 +944,7 @@ Bounce Stepper_Executor(Level* L)
             goto lookahead;
         }
 
-        Option(VarList*) error = Trap_Get_Any_Tuple(  // vacant will cause error
+        Option(Error*) error = Trap_Get_Any_Tuple(  // vacant will cause error
             OUT,
             GROUPS_OK,
             L_current,
@@ -1026,7 +1026,7 @@ Bounce Stepper_Executor(Level* L)
         Copy_Sequence_At(SPARE, L_current, len - 1);
         bool slash_at_tail = Is_Blank(SPARE);
 
-        Option(VarList*) error = Trap_Get_Path_Push_Refinements(
+        Option(Error*) error = Trap_Get_Path_Push_Refinements(
             OUT,  // where to write action
             SPARE,  // temporary GC-safe scratch space
             L_current,
@@ -1188,7 +1188,7 @@ Bounce Stepper_Executor(Level* L)
 
       case REB_META_TUPLE:
       case REB_GET_TUPLE: {
-        Option(VarList*) error = Trap_Get_Any_Tuple_Maybe_Vacant(
+        Option(Error*) error = Trap_Get_Any_Tuple_Maybe_Vacant(
             OUT,
             GROUPS_OK,
             L_current,
@@ -1508,7 +1508,7 @@ Bounce Stepper_Executor(Level* L)
             }
 
             if (Is_Raised(SPARE))  // don't pass thru raised errors if not @
-                fail (Cell_Varlist(SPARE));
+                fail (Cell_Error(SPARE));
 
             Decay_If_Unstable(SPARE);  // if pack in slot, resolve it
 

@@ -457,7 +457,7 @@ static void Finalize_Composer_Level(
     Heart heart = Cell_Heart(composee);
 
     if (Any_Sequence_Kind(heart)) {
-        Option(VarList*) error = Trap_Pop_Sequence_Or_Element_Or_Nulled(
+        Option(Error*) error = Trap_Pop_Sequence_Or_Element_Or_Nulled(
             out,
             Cell_Heart(composee),
             L->baseline.stack_base

@@ -155,6 +155,20 @@ typedef Context Let;
 typedef Context Use;
 
 
+//=//// ERROR VARLIST SUBLCASS ////////////////////////////////////////////=//
+//
+// Several implementation functions (e.g. Trap_XXX()) will return an optional
+// error.  This isn't very clear as Option(VarList*), so although "Error" is
+// a word that conflates the Stub with the ERROR! cell, we go along with
+// Option(Error*) as the pragmatically cleanest answer.
+//
+#if CPLUSPLUS_11
+    struct Error : public VarList {};
+#else
+    typedef VarList Error;
+#endif
+
+
 #define MISC_VarlistAdjunct_TYPE      VarList*
 #define HAS_MISC_VarlistAdjunct       FLAVOR_VARLIST
 

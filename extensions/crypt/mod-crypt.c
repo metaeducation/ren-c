@@ -1230,7 +1230,7 @@ DECLARE_NATIVE(dh_compute_secret)
     // let the system take care of the cleanup in the event of a problem.
     //
     // !!! used to ensure object only had other fields SELF, PUB-KEY, G
-    // otherwise gave Error(RE_EXT_CRYPT_INVALID_KEY_FIELD)
+    // otherwise gave Make_Error_Managed(RE_EXT_CRYPT_INVALID_KEY_FIELD)
     //
     Value* modulus = rebValue("ensure binary! obj.modulus");
     Value* generator = rebValue("ensure binary! obj.generator");

@@ -132,7 +132,7 @@ DECLARE_NATIVE(reorder)
     // without cleaning the binder up first, balancing it all out to zeros.
     // Errors must be stored and reported after the cleanup.
     //
-    Option(VarList*) error = nullptr;
+    Option(Error*) error = nullptr;
 
     StackIndex base = TOP_INDEX;
 

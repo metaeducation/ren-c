@@ -840,10 +840,10 @@ e-errfuncs/emit [fields {
 
 e-errfuncs/emit {
     /*
-     * The variadic Error() function must be passed the exact right number of
-     * fully resolved Value* that the error spec specifies.  This is easy
-     * to get wrong in C, since variadics aren't checked.  Also, the category
-     * symbol needs to be right for the error ID.
+     * The variadic Make_Error_Managed() function must be passed the exact
+     * number of fully resolved Value* that the error spec specifies.  This is
+     * easy to get wrong in C, since variadics aren't checked.  Also, the
+     * category symbol needs to be right for the error ID.
      *
      * These are inline function stubs made for each "raw" error in %errors.r.
      * They shouldn't add overhead in release builds, but help catch mistakes
@@ -912,8 +912,10 @@ for-each [sw-cat list] boot-errors [
 
         e-errfuncs/emit [message cat id f-name params args {
             /* $<Mold Message> */
-            INLINE VarList* Error_${F-Name}_Raw($<Delimit ", " Params>) {
-                return Error(SYM_${CAT}, SYM_${ID}, $<Delimit ", " Args>);
+            INLINE Error* Error_${F-Name}_Raw($<Delimit ", " Params>) {
+                return Make_Error_Managed(
+                    SYM_${CAT}, SYM_${ID}, $<Delimit ", " Args>
+                );
             }
         }]
         e-errfuncs/emit newline

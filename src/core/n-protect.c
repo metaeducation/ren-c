@@ -257,7 +257,7 @@ static void Protect_Word_Value(Value* word, Flags flags)
 {
     if (Any_Word(word) and IS_WORD_BOUND(word)) {
         const Value* slot;
-        Option(VarList*) error = Trap_Lookup_Word(
+        Option(Error*) error = Trap_Lookup_Word(
             &slot, cast(Element*, word), SPECIFIED
         );
         if (error)
@@ -324,7 +324,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                     // Since we *are* PROTECT we allow ourselves to get mutable
                     // references to even protected values to protect them.
                     //
-                    Option(VarList*) error = Trap_Lookup_Word(
+                    Option(Error*) error = Trap_Lookup_Word(
                         u_cast(const Value**, &var), item, Cell_List_Binding(value)
                     );
                     if (error)

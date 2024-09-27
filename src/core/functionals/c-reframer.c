@@ -360,7 +360,7 @@ DECLARE_NATIVE(reframer)
         &binder
     );
 
-    Option(VarList*) error = nullptr;  // can't fail() with binder in effect
+    Option(Error*) error = nullptr;  // can't fail() with binder in effect
 
     REBLEN param_index = 0;
 

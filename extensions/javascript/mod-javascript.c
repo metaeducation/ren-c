@@ -442,7 +442,7 @@ void RunPromise(void)
     Value* metaresult;
     if (r == BOUNCE_THROWN) {
         assert(Is_Throwing(TOP_LEVEL));
-        VarList* error = Error_No_Catch_For_Throw(TOP_LEVEL);
+        Error* error = Error_No_Catch_For_Throw(TOP_LEVEL);
         metaresult = Init_Error(TOP_LEVEL->out, error);
     }
     else

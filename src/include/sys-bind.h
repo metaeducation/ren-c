@@ -394,7 +394,7 @@ INLINE VarList* VAL_WORD_CONTEXT(const Value* v) {
 // proper higher layers will result in asserts.
 //
 
-INLINE Option(VarList*) Trap_Lookup_Word(
+INLINE Option(Error*) Trap_Lookup_Word(
     Sink(const Value**) out,  // returns read-only pointer to cell
     const Element* word,
     Context* context

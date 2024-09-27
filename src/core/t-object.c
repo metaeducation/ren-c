@@ -39,7 +39,7 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
     // Can't actually fail() during a collect, so make sure any errors are
     // set and then jump to a Collect_End()
     //
-    Option(VarList*) error = nullptr;
+    Option(Error*) error = nullptr;
 
   if (not Is_Module(context)) {
     Collect_Start(&collector, COLLECT_ANY_WORD);

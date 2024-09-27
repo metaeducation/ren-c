@@ -312,7 +312,7 @@ DECLARE_NATIVE(set_location_of_error)
 
     Level* where = Level_Of_Varlist_May_Fail(context);
 
-    VarList* error = Cell_Varlist(ARG(error));
+    Error* error = Cell_Error(ARG(error));
     Set_Location_Of_Error(error, where);
 
     return nullptr;

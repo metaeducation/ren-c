@@ -634,7 +634,7 @@ RebolValue* API_rebChar(uint32_t codepoint)
     ENTER_API;
 
     Value* v = Alloc_Value();
-    Option(VarList*) error = Trap_Init_Char(v, codepoint);
+    Option(Error*) error = Trap_Init_Char(v, codepoint);
     if (error) {
         rebRelease(v);
         fail (unwrap error);
@@ -2802,7 +2802,7 @@ RebolValue* API_rebError_OS(int errnum)  // see also macro rebFail_OS()
 {
     ENTER_API;
 
-    VarList* error;
+    Error* error;
 
   #if TO_WINDOWS
     if (errnum == 0)
@@ -2845,7 +2845,7 @@ RebolValue* API_rebError_OS(int errnum)  // see also macro rebFail_OS()
         Value* message = rebTextWide(lpMsgBuf);
         LocalFree(lpMsgBuf);
 
-        error = Error(SYM_0, SYM_0, message, rebEND);
+        error = Make_Error_Managed(SYM_0, SYM_0, message, rebEND);
         rebRelease(message);
     }
   #elif defined(USE_STRERROR_NOT_STRERROR_R)

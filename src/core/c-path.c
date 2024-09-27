@@ -32,7 +32,7 @@
 //
 // REVIEW: This tries to do optimizations on the array you give it.
 //
-Option(VarList*) Trap_Init_Any_Sequence_At_Listlike(
+Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
     Sink(Element*) out,
     Heart heart,
     const Array* a,
@@ -76,7 +76,7 @@ Option(VarList*) Trap_Init_Any_Sequence_At_Listlike(
         if (item == tail - 1 and Is_Blank(item))
             continue;  // blank valid at tail
 
-        Option(VarList*) error = Trap_Check_Sequence_Element(heart, item);
+        Option(Error*) error = Trap_Check_Sequence_Element(heart, item);
         if (error)
             return error;
     }
@@ -236,7 +236,7 @@ Bounce MAKE_Path(
         L->baseline.stack_base += 1;  // compensate for push
     }
 
-    Option(VarList*) error = Trap_Pop_Sequence(OUT, heart, base);
+    Option(Error*) error = Trap_Pop_Sequence(OUT, heart, base);
 
     Drop_Level_Unbalanced(L); // !!! L's stack_base got captured each loop
 
@@ -316,7 +316,7 @@ Bounce TO_Sequence(Level* level_, Kind k, const Value* arg) {
         Dequotify(stable_OUT);  // !!! should TO take Cell*?
         Plainify(cast(Element*, OUT));  // remove any decorations like @ or :
 
-        Option(VarList*) error = Trap_Leading_Blank_Pathify(
+        Option(Error*) error = Trap_Leading_Blank_Pathify(
             cast(Element*, stable_OUT),
             heart
         );
@@ -333,7 +333,7 @@ Bounce TO_Sequence(Level* level_, Kind k, const Value* arg) {
     for (; at != tail; ++at)
         Copy_Cell(PUSH(), at);
 
-    Option(VarList*) trap = Trap_Pop_Sequence(OUT, heart, STACK_BASE);
+    Option(Error*) trap = Trap_Pop_Sequence(OUT, heart, STACK_BASE);
     if (trap)
         return RAISE(unwrap trap);
 

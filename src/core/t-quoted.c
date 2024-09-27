@@ -241,7 +241,7 @@ DECLARE_NATIVE(meta)
 
     if (Is_Meta_Of_Raised(meta)) {
         if (not REF(except))
-            fail (Cell_Varlist(ARG(atom)));
+            fail (Cell_Error(ARG(atom)));
 
         QUOTE_BYTE(meta) = NOQUOTE_1;
         return COPY(meta);  // no longer meta, just a plain ERROR!

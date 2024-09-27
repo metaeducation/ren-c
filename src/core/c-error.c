@@ -82,7 +82,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     //
     assert(TOP_LEVEL->executor != nullptr);
 
-    VarList* error;
+    Error* error;
     if (p == nullptr) {
         error = Error_Unknown_Error_Raw();
     }
@@ -95,7 +95,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         Flex* f = m_cast(Flex*, c_cast(Flex* , p));  // don't mutate
         if (not Is_Stub_Varlist(f))
             panic (f);  // only kind of Flex allowed are contexts of ERROR!
-        error = cast(VarList*, f);
+        error = cast(Error*, f);
         break; }
 
       case DETECTED_AS_CELL: {
@@ -117,7 +117,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
             // the error as an error and not erroring on "some value"
             //
             if (Is_Error(v)) {
-                error = Cell_Varlist(v);
+                error = Cell_Error(v);
             }
             else {
                 assert(!"fail() given API handle that is not an ERROR!");
@@ -308,7 +308,7 @@ const Value* Find_Error_For_Sym(SymId id)
 // file and line information can be captured in the debug build.
 //
 void Set_Location_Of_Error(
-    VarList* error,
+    Error* error,
     Level* where  // must be valid and executing on the stack
 ) {
     while (Get_Level_Flag(where, BLAME_PARENT))  // e.g. Apply_Only_Throws()
@@ -580,7 +580,7 @@ Bounce TO_Error(Level* level_, Kind kind, const Value* arg)
 
 
 //
-//  Make_Error_Managed_Core: C
+//  Make_Error_Managed_Vaptr: C
 //
 // (WARNING va_list by pointer: http://stackoverflow.com/a/3369762/211160)
 //
@@ -593,10 +593,10 @@ Bounce TO_Error(Level* level_, Kind kind, const Value* arg)
 // %errors.r has not been loaded).  Hence the caller can assume it will
 // regain control to properly call va_end with no longjmp to skip it.
 //
-VarList* Make_Error_Managed_Core(
+Error* Make_Error_Managed_Vaptr(
     SymId cat_id,
     SymId id,
-    va_list *vaptr
+    va_list* vaptr
 ){
     if (PG_Boot_Phase < BOOT_ERRORS) { // no STD_ERROR or template table yet
       #if !defined(NDEBUG)
@@ -612,7 +612,7 @@ VarList* Make_Error_Managed_Core(
         panic (id_value);
     }
 
-    VarList* root_error = Cell_Varlist(Get_System(SYS_STANDARD, STD_ERROR));
+    VarList* root_varlist = Cell_Varlist(Get_System(SYS_STANDARD, STD_ERROR));
 
     DECLARE_VALUE (id_value);
     DECLARE_VALUE (type);
@@ -656,8 +656,8 @@ VarList* Make_Error_Managed_Core(
     // the "standard format" error as a meta object instead.
     //
     bool deeply = false;
-    VarList* error = Copy_Varlist_Extra_Managed(
-        root_error,
+    VarList* varlist = Copy_Varlist_Extra_Managed(
+        root_varlist,
         expected_args,  // Note: won't make new keylist if expected_args is 0
         deeply
     );
@@ -674,7 +674,7 @@ VarList* Make_Error_Managed_Core(
                 continue;
 
             const Symbol* symbol = Cell_Word_Symbol(msg_item);
-            Value* var = Append_Context(error, symbol);
+            Value* var = Append_Context(varlist, symbol);
 
             const void *p = va_arg(*vaptr, const void*);
 
@@ -683,7 +683,7 @@ VarList* Make_Error_Managed_Core(
                 // !!! Should variadic error take `nullptr` instead of
                 // "nulled cells"?
                 //
-                assert(!"nullptr passed to Make_Error_Managed_Core()");
+                assert(!"nullptr passed to Make_Error_Managed_Vaptr()");
                 Init_Nulled(var);
             }
             else switch (Detect_Rebol_Pointer(p)) {
@@ -698,24 +698,24 @@ VarList* Make_Error_Managed_Core(
 
               default:
                 assert(false);
-                fail ("Bad pointer passed to Error()");
+                fail ("Bad pointer passed to Make_Error_Managed()");
             }
         }
     }
 
-    assert(Varlist_Len(error) == Varlist_Len(root_error) + expected_args);
+    assert(Varlist_Len(varlist) == Varlist_Len(root_varlist) + expected_args);
 
-    HEART_BYTE(Rootvar_Of_Varlist(error)) = REB_ERROR;
+    HEART_BYTE(Rootvar_Of_Varlist(varlist)) = REB_ERROR;
 
     // C struct mirroring fixed portion of error fields
     //
-    ERROR_VARS *vars = ERR_VARS(error);
+    ERROR_VARS *vars = ERR_VARS(varlist);
 
     Copy_Cell(&vars->message, message);
     Copy_Cell(&vars->id, id_value);
     Copy_Cell(&vars->type, type);
 
-    return error;
+    return cast(Error*, varlist);
 }
 
 
@@ -725,10 +725,10 @@ VarList* Make_Error_Managed_Core(
 // This variadic function takes a number of Value* arguments appropriate for
 // the error category and ID passed.  It is commonly used with fail():
 //
-//     fail (Error(SYM_CATEGORY, SYM_SOMETHING, arg1, arg2, ...));
+//     fail (Make_Error_Managed(SYM_CATEGORY, SYM_SOMETHING, arg1, arg2, ...));
 //
 // Note that in C, variadic functions don't know how many arguments they were
-// passed.  Make_Error_Managed_Core() knows how many arguments are in an
+// passed.  Make_Error_Managed_Vaptr() knows how many arguments are in an
 // error's template in %errors.r for a given error id, so that is the number
 // of arguments it will *attempt* to use--reading invalid memory if wrong.
 //
@@ -740,7 +740,7 @@ VarList* Make_Error_Managed_Core(
 //
 //     fail (Error_Something(arg1, thing_processed_to_make_arg2));
 //
-VarList* Error(
+Error* Make_Error_Managed(
     int cat_id,
     int id, // can't be SymId, see note below
     ... /* Value* arg1, Value* arg2, ... */
@@ -752,7 +752,7 @@ VarList* Error(
     //
     va_start(va, id);
 
-    VarList* error = Make_Error_Managed_Core(
+    Error* error = Make_Error_Managed_Vaptr(
         cast(SymId, cat_id),
         cast(SymId, id),
         &va
@@ -770,10 +770,10 @@ VarList* Error(
 // "user error" since MAKE ERROR! of a STRING! would produce them in usermode
 // without any error template in %errors.r)
 //
-VarList* Error_User(const char *utf8) {
+Error* Error_User(const char *utf8) {
     DECLARE_ATOM (message);
     Init_Text(message, Make_String_UTF8(utf8));
-    return Error(SYM_0, SYM_0, message, rebEND);
+    return Make_Error_Managed(SYM_0, SYM_0, message, rebEND);
 }
 
 
@@ -786,7 +786,7 @@ VarList* Error_User(const char *utf8) {
 // So the message was changed to "error while evaluating VAR:" instead of
 // "error while setting VAR:", so "error while evaluating @" etc. make sense.
 //
-VarList* Error_Need_Non_End(const Element* target) {
+Error* Error_Need_Non_End(const Element* target) {
     assert(Any_Set_Kind(VAL_TYPE(target)) or Is_Sigil(target));
     return Error_Need_Non_End_Raw(target);
 }
@@ -795,7 +795,7 @@ VarList* Error_Need_Non_End(const Element* target) {
 //
 //  Error_Bad_Word_Get: C
 //
-VarList* Error_Bad_Word_Get(
+Error* Error_Bad_Word_Get(
     const Element* target,
     const Atom* anti
 ){
@@ -822,7 +822,7 @@ VarList* Error_Bad_Word_Get(
 //
 //  Error_Bad_Func_Def: C
 //
-VarList* Error_Bad_Func_Def(const Element* spec, const Element* body)
+Error* Error_Bad_Func_Def(const Element* spec, const Element* body)
 {
     // !!! Improve this error; it's simply a direct emulation of arity-1
     // error that existed before refactoring code out of MAKE_Function().
@@ -831,7 +831,7 @@ VarList* Error_Bad_Func_Def(const Element* spec, const Element* body)
     Append_Value(a, spec);
     Append_Value(a, body);
 
-    DECLARE_ATOM (def);
+    DECLARE_ELEMENT (def);
     Init_Block(def, a);
 
     return Error_Bad_Func_Def_Raw(def);
@@ -841,12 +841,12 @@ VarList* Error_Bad_Func_Def(const Element* spec, const Element* body)
 //
 //  Error_No_Arg: C
 //
-VarList* Error_No_Arg(Option(const Symbol*) label, const Symbol* symbol)
+Error* Error_No_Arg(Option(const Symbol*) label, const Symbol* symbol)
 {
-    DECLARE_ATOM (param_word);
+    DECLARE_ELEMENT (param_word);
     Init_Word(param_word, symbol);
 
-    DECLARE_ATOM (label_word);
+    DECLARE_ELEMENT (label_word);
     if (label)
         Init_Word(label_word, unwrap label);
     else
@@ -864,17 +864,17 @@ VarList* Error_No_Arg(Option(const Symbol*) label, const Symbol* symbol)
 // same needs to apply to out of memory errors--they shouldn't be allocating
 // a new error object.
 //
-VarList* Error_No_Memory(REBLEN bytes)
+Error* Error_No_Memory(REBLEN bytes)
 {
     UNUSED(bytes);  // !!! Revisit how this information could be tunneled
-    return Cell_Varlist(Root_No_Memory_Error);
+    return cast(Error*, Cell_Varlist(Root_No_Memory_Error));
 }
 
 
 //
 //  Error_Not_Varargs: C
 //
-VarList* Error_Not_Varargs(
+Error* Error_Not_Varargs(
     Level* L,
     const Key* key,
     const Param* param,
@@ -902,7 +902,7 @@ VarList* Error_Not_Varargs(
 //
 //  Error_Invalid_Arg: C
 //
-VarList* Error_Invalid_Arg(Level* L, const Param* param)
+Error* Error_Invalid_Arg(Level* L, const Param* param)
 {
     assert(Is_Hole(c_cast(Value*, param)));
 
@@ -937,7 +937,7 @@ VarList* Error_Invalid_Arg(Level* L, const Param* param)
 // distinguished from `fail (some_context)` meaning that the context iss for
 // an actual intended error.
 //
-VarList* Error_Bad_Value(const Value* value)
+Error* Error_Bad_Value(const Value* value)
 {
     if (Is_Antiform(value))
         return Error_Bad_Antiform(value);
@@ -949,7 +949,7 @@ VarList* Error_Bad_Value(const Value* value)
 //
 //  Error_Bad_Null: C
 //
-VarList* Error_Bad_Null(const Cell* target) {
+Error* Error_Bad_Null(const Cell* target) {
     return Error_Bad_Null_Raw(target);
 }
 
@@ -957,7 +957,7 @@ VarList* Error_Bad_Null(const Cell* target) {
 //
 //  Error_No_Catch_For_Throw: C
 //
-VarList* Error_No_Catch_For_Throw(Level* level_)
+Error* Error_No_Catch_For_Throw(Level* level_)
 {
     DECLARE_ATOM (label);
     Copy_Cell(label, VAL_THROWN_LABEL(level_));
@@ -967,7 +967,7 @@ VarList* Error_No_Catch_For_Throw(Level* level_)
 
     if (Is_Error(label)) {  // what would have been fail()
         assert(Is_Nulled(arg));
-        return Cell_Varlist(label);
+        return Cell_Error(label);
     }
 
     if (Is_Antiform(label))
@@ -984,7 +984,7 @@ VarList* Error_No_Catch_For_Throw(Level* level_)
 //
 // <type> type is not allowed here.
 //
-VarList* Error_Invalid_Type(Kind kind)
+Error* Error_Invalid_Type(Kind kind)
 {
     return Error_Invalid_Type_Raw(Datatype_From_Kind(kind));
 }
@@ -998,7 +998,7 @@ VarList* Error_Invalid_Type(Kind kind)
 // status is supposed to be ignored).  Copy_Dequoted_Cell() is defined
 // after %cell-integer.h, so we handle the issue here.
 //
-VarList* Error_Out_Of_Range(const Cell* arg)
+Error* Error_Out_Of_Range(const Cell* arg)
 {
     DECLARE_ELEMENT (unquoted);
     Copy_Dequoted_Cell(unquoted, arg);
@@ -1010,7 +1010,7 @@ VarList* Error_Out_Of_Range(const Cell* arg)
 //
 //  Error_Protected_Key: C
 //
-VarList* Error_Protected_Key(const Symbol* sym)
+Error* Error_Protected_Key(const Symbol* sym)
 {
     DECLARE_ELEMENT (key_name);
     Init_Word(key_name, sym);
@@ -1022,7 +1022,7 @@ VarList* Error_Protected_Key(const Symbol* sym)
 //
 //  Error_Math_Args: C
 //
-VarList* Error_Math_Args(Kind type, const Symbol* verb)
+Error* Error_Math_Args(Kind type, const Symbol* verb)
 {
     DECLARE_ATOM (verb_cell);
     Init_Word(verb_cell, verb);
@@ -1032,7 +1032,7 @@ VarList* Error_Math_Args(Kind type, const Symbol* verb)
 //
 //  Error_Cannot_Use: C
 //
-VarList* Error_Cannot_Use(const Symbol* verb, const Value* first_arg)
+Error* Error_Cannot_Use(const Symbol* verb, const Value* first_arg)
 {
     DECLARE_ATOM (verb_cell);
     Init_Word(verb_cell, verb);
@@ -1047,7 +1047,7 @@ VarList* Error_Cannot_Use(const Symbol* verb, const Value* first_arg)
 //
 //  Error_Unexpected_Type: C
 //
-VarList* Error_Unexpected_Type(Kind expected, Kind actual)
+Error* Error_Unexpected_Type(Kind expected, Kind actual)
 {
     assert(expected < REB_MAX);
     assert(actual < REB_MAX);
@@ -1069,14 +1069,14 @@ VarList* Error_Unexpected_Type(Kind expected, Kind actual)
 // potentially lead to some big molding, and the error machinery isn't
 // really equipped to handle it.
 //
-VarList* Error_Arg_Type(
+Error* Error_Arg_Type(
     Option(const Symbol*) name,
     const Key* key,
     const Param* param,
     const Value* arg
 ){
     if (Cell_ParamClass(param) == PARAMCLASS_META and Is_Meta_Of_Raised(arg))
-        return Cell_Varlist(arg);
+        return Cell_Error(arg);
 
     DECLARE_ATOM (param_word);
     Init_Word(param_word, Key_Symbol(key));
@@ -1111,7 +1111,7 @@ VarList* Error_Arg_Type(
 // interface.  A different message is helpful, so this does that by coercing
 // the ordinary error into one making it clear it's an internal phase.
 //
-VarList* Error_Phase_Arg_Type(
+Error* Error_Phase_Arg_Type(
     Level* L,
     const Key* key,
     const Param* param,
@@ -1121,9 +1121,9 @@ VarList* Error_Phase_Arg_Type(
         return Error_Arg_Type(L->label, key, param, arg);
 
     if (Cell_ParamClass(param) == PARAMCLASS_META and Is_Meta_Of_Raised(arg))
-        return Cell_Varlist(arg);
+        return Cell_Error(arg);
 
-    VarList* error = Error_Arg_Type(L->label, key, param, arg);
+    Error* error = Error_Arg_Type(L->label, key, param, arg);
     ERROR_VARS* vars = ERR_VARS(error);
     assert(Is_Word(&vars->id));
     assert(Cell_Word_Id(&vars->id) == SYM_EXPECT_ARG);
@@ -1135,7 +1135,7 @@ VarList* Error_Phase_Arg_Type(
 //
 //  Error_No_Logic_Typecheck: C
 //
-VarList* Error_No_Logic_Typecheck(Option(const Symbol*) label)
+Error* Error_No_Logic_Typecheck(Option(const Symbol*) label)
 {
     DECLARE_ATOM (name);
     if (label)
@@ -1150,7 +1150,7 @@ VarList* Error_No_Logic_Typecheck(Option(const Symbol*) label)
 //
 //  Error_No_Arg_Typecheck: C
 //
-VarList* Error_No_Arg_Typecheck(Option(const Symbol*) label)
+Error* Error_No_Arg_Typecheck(Option(const Symbol*) label)
 {
     DECLARE_ATOM (name);
     if (label)
@@ -1168,7 +1168,7 @@ VarList* Error_No_Arg_Typecheck(Option(const Symbol*) label)
 // is concerned.  (Some higher level mechanisms like APPLY will editorialize
 // and translate true => # and false => NULL, but the core mechanics don't.)
 //
-VarList* Error_Bad_Argless_Refine(const Key* key)
+Error* Error_Bad_Argless_Refine(const Key* key)
 {
     DECLARE_ELEMENT (word);
     Refinify(Init_Word(word, Key_Symbol(key)));
@@ -1179,7 +1179,7 @@ VarList* Error_Bad_Argless_Refine(const Key* key)
 //
 //  Error_Bad_Return_Type: C
 //
-VarList* Error_Bad_Return_Type(Level* L, Atom* atom) {
+Error* Error_Bad_Return_Type(Level* L, Atom* atom) {
     DECLARE_VALUE (label);
     Get_Level_Label_Or_Nulled(label, L);
 
@@ -1197,7 +1197,7 @@ VarList* Error_Bad_Return_Type(Level* L, Atom* atom) {
 //
 //  Error_Bad_Make: C
 //
-VarList* Error_Bad_Make(Kind type, const Cell* spec)
+Error* Error_Bad_Make(Kind type, const Cell* spec)
 {
     return Error_Bad_Make_Arg_Raw(Datatype_From_Kind(type), spec);
 }
@@ -1206,7 +1206,7 @@ VarList* Error_Bad_Make(Kind type, const Cell* spec)
 //
 //  Error_Bad_Make_Parent: C
 //
-VarList* Error_Bad_Make_Parent(Kind type, const Cell* parent)
+Error* Error_Bad_Make_Parent(Kind type, const Cell* parent)
 {
     assert(parent != nullptr);
     return Error_Bad_Make_Parent_Raw(Datatype_From_Kind(type), parent);
@@ -1216,7 +1216,7 @@ VarList* Error_Bad_Make_Parent(Kind type, const Cell* parent)
 //
 //  Error_Cannot_Reflect: C
 //
-VarList* Error_Cannot_Reflect(Kind type, const Value* arg)
+Error* Error_Cannot_Reflect(Kind type, const Value* arg)
 {
     return Error_Cannot_Use_Raw(arg, Datatype_From_Kind(type));
 }
@@ -1225,7 +1225,7 @@ VarList* Error_Cannot_Reflect(Kind type, const Value* arg)
 //
 //  Error_On_Port: C
 //
-VarList* Error_On_Port(SymId id, Value* port, REBINT err_code)
+Error* Error_On_Port(SymId id, Value* port, REBINT err_code)
 {
     FAIL_IF_BAD_PORT(port);
 
@@ -1239,14 +1239,14 @@ VarList* Error_On_Port(SymId id, Value* port, REBINT err_code)
     DECLARE_ATOM (err_code_value);
     Init_Integer(err_code_value, err_code);
 
-    return Error(SYM_ACCESS, id, val, err_code_value, rebEND);
+    return Make_Error_Managed(SYM_ACCESS, id, val, err_code_value, rebEND);
 }
 
 
 //
 //  Error_Bad_Antiform: C
 //
-VarList* Error_Bad_Antiform(const Atom* anti) {
+Error* Error_Bad_Antiform(const Atom* anti) {
     assert(Is_Antiform(anti));
 
     DECLARE_ELEMENT (reified);
@@ -1259,7 +1259,7 @@ VarList* Error_Bad_Antiform(const Atom* anti) {
 //
 //  Error_Bad_Void: C
 //
-VarList* Error_Bad_Void(void) {
+Error* Error_Bad_Void(void) {
     return Error_Bad_Void_Raw();
 }
 
@@ -1393,7 +1393,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
         return;
     }
 
-    VarList* error = Cell_Varlist(v);
+    Error* error = Cell_Error(v);
     ERROR_VARS *vars = ERR_VARS(error);
 
     // Form: ** <type> Error:

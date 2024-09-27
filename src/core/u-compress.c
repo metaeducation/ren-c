@@ -109,7 +109,7 @@ static void zfree(void *opaque, void *addr)
 // 1. rebAlloc() fails vs. returning nullptr, so as long as zalloc() is used
 //    then Z_MEM_ERROR should never happen.
 //
-static VarList* Error_Compression(const z_stream *strm, int ret)
+static Error* Error_Compression(const z_stream *strm, int ret)
 {
     assert(ret != Z_MEM_ERROR);  // memory errors should have fail()'d [1]
 

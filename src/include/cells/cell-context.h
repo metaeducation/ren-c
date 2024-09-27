@@ -29,6 +29,11 @@ INLINE VarList* Cell_Varlist(const Cell* v) {
     return c;
 }
 
+INLINE Error* Cell_Error(const Cell* c) {
+    assert(Cell_Heart(c) == REB_ERROR);
+    return cast(Error*, Cell_Varlist(c));
+}
+
 
 //=//// FRAME PHASE AND LABELING //////////////////////////////////////////=//
 //

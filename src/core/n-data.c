@@ -713,7 +713,7 @@ DECLARE_NATIVE(set_accessor)
 // only be called by things like Trap_Get_Any_Tuple(), because there are no
 // special adjustments for sequences like `.a`
 //
-static Option(VarList*) Trap_Get_Any_Wordlike_Maybe_Vacant(
+static Option(Error*) Trap_Get_Any_Wordlike_Maybe_Vacant(
     Sink(Value*) out,
     const Element* word,  // sigils ignored (META-WORD! doesn't "meta-get")
     Context* context  // context for `.xxx` tuples not adjusted
@@ -721,7 +721,7 @@ static Option(VarList*) Trap_Get_Any_Wordlike_Maybe_Vacant(
     assert(Any_Wordlike(word));
 
     const Value* lookup;
-    Option(VarList*) error = Trap_Lookup_Word(&lookup, word, context);
+    Option(Error*) error = Trap_Lookup_Word(&lookup, word, context);
     if (error)
         return error;
 
@@ -760,12 +760,12 @@ static Option(VarList*) Trap_Get_Any_Wordlike_Maybe_Vacant(
 // all code should be going through this layer (or higher) when fetching an
 // ANY-WORD! variable.
 //
-Option(VarList*) Trap_Get_Any_Word(
+Option(Error*) Trap_Get_Any_Word(
     Sink(Value*) out,
     const Element* word,  // sigils ignored (META-WORD! doesn't "meta-get")
     Context* context
 ){
-    Option(VarList*) error = Trap_Get_Any_Wordlike_Maybe_Vacant(
+    Option(Error*) error = Trap_Get_Any_Wordlike_Maybe_Vacant(
         out, word, context
     );
     if (error)
@@ -784,7 +784,7 @@ Option(VarList*) Trap_Get_Any_Word(
 // High-level: see notes on Trap_Get_Any_Word().  This version just gives back
 // "nothing" (antiform blank) or "tripwire" (antiform tag) vs. give an error.
 //
-Option(VarList*) Trap_Get_Any_Word_Maybe_Vacant(
+Option(Error*) Trap_Get_Any_Word_Maybe_Vacant(
     Sink(Value*) out,
     const Element* word,  // sigils ignored (META-WORD! doesn't "meta-get")
     Context* context
@@ -808,7 +808,7 @@ Option(VarList*) Trap_Get_Any_Word_Maybe_Vacant(
 // which uses the stack (to avoid needing to generate an intermediate array
 // in the case evaluations were performed).
 //
-Option(VarList*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
+Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
     Sink(Value*) out,
     StackIndex base
 ){
@@ -823,7 +823,7 @@ Option(VarList*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
     }
     else if (Is_Word(at)) {
         const Value* slot;
-        Option(VarList*) error = Trap_Lookup_Word(
+        Option(Error*) error = Trap_Lookup_Word(
             &slot, cast(Element*, at), SPECIFIED
         );
         if (error)
@@ -856,7 +856,7 @@ Option(VarList*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
         }
 
         if (Is_Raised(cast(Atom*, out))) {
-            VarList* error = Cell_Varlist(out);  // extract error
+            Error* error = Cell_Error(out);  // extract error
             bool last_step = (stackindex == TOP_INDEX);
             Erase_Cell(out);  // suppress assert about unhandled raised error
 
@@ -922,7 +922,7 @@ static Context* Adjust_Context_For_Coupling(Context* c) {
 //    object from which a function was dispatched, so `var` and `.var` can
 //    look up differently inside a function's body.
 //
-Option(VarList*) Trap_Get_Any_Tuple_Maybe_Vacant(
+Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
     Sink(Value*) out,
     Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* tuple,
@@ -952,7 +952,7 @@ Option(VarList*) Trap_Get_Any_Tuple_Maybe_Vacant(
     }
     else switch (Stub_Flavor(x_cast(Flex*, node1))) {
       case FLAVOR_SYMBOL: {
-        Option(VarList*) error = Trap_Get_Any_Wordlike_Maybe_Vacant(
+        Option(Error*) error = Trap_Get_Any_Wordlike_Maybe_Vacant(
             out,
             tuple,  // optimized "wordlike" representation, like a. or .a
             context
@@ -1018,9 +1018,8 @@ Option(VarList*) Trap_Get_Any_Tuple_Maybe_Vacant(
     // in theory, as types in the system are extended, they only need to
     // implement PICK in order to have tuples work with them.
 
-    Option(VarList*) error = Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
-        out,
-        base
+    Option(Error*) error = Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
+        out, base
     );
     if (error) {
         Drop_Data_Stack_To(base);
@@ -1043,13 +1042,13 @@ Option(VarList*) Trap_Get_Any_Tuple_Maybe_Vacant(
 //
 // Convenience wrapper for getting tuples that errors on nothing and tripwires.
 //
-Option(VarList*) Trap_Get_Any_Tuple(
+Option(Error*) Trap_Get_Any_Tuple(
     Sink(Value*) out,
     Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* tuple,
     Context* context
 ){
-    Option(VarList*) error = Trap_Get_Any_Tuple_Maybe_Vacant(
+    Option(Error*) error = Trap_Get_Any_Tuple_Maybe_Vacant(
         out, steps_out, tuple, context
     );
     if (error)
@@ -1074,7 +1073,7 @@ Option(VarList*) Trap_Get_Any_Tuple(
 //    this function, and then let the Action_Executor() use the refinements
 //    on the stack directly.  That avoids making an intermediate action.
 //
-Option(VarList*) Trap_Get_Var_Maybe_Vacant(
+Option(Error*) Trap_Get_Var_Maybe_Vacant(
     Sink(Value*) out,
     Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* var,
@@ -1084,7 +1083,7 @@ Option(VarList*) Trap_Get_Var_Maybe_Vacant(
     assert(steps_out != out);  // Legal for SET, not for GET
 
     if (Any_Word(var)) {
-        Option(VarList*) error = Trap_Get_Any_Word_Maybe_Vacant(
+        Option(Error*) error = Trap_Get_Any_Word_Maybe_Vacant(
             out, var, context
         );
         if (error)
@@ -1103,7 +1102,7 @@ Option(VarList*) Trap_Get_Var_Maybe_Vacant(
         DECLARE_ATOM (safe);
         Push_GC_Guard(safe);
 
-        Option(VarList*) error = Trap_Get_Path_Push_Refinements(
+        Option(Error*) error = Trap_Get_Path_Push_Refinements(
             out, safe, var, context
         );
         Drop_GC_Guard(safe);
@@ -1145,7 +1144,7 @@ Option(VarList*) Trap_Get_Var_Maybe_Vacant(
         for (at = head; at != tail; ++at)
             Derelativize(PUSH(), at, at_binding);
 
-        Option(VarList*) error = Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
+        Option(Error*) error = Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
             out, base
         );
         Drop_Data_Stack_To(base);
@@ -1168,13 +1167,13 @@ Option(VarList*) Trap_Get_Var_Maybe_Vacant(
 //
 // May generate specializations for paths.  See Trap_Get_Var_Maybe_Vacant()
 //
-Option(VarList*) Trap_Get_Var(
+Option(Error*) Trap_Get_Var(
     Sink(Value*) out,
     Option(Value*) steps_out,  // if nullptr, then GROUP!s not legal
     const Element* var,
     Context* context
 ){
-    Option(VarList*) error = Trap_Get_Var_Maybe_Vacant(
+    Option(Error*) error = Trap_Get_Var_Maybe_Vacant(
         out, steps_out, var, context
     );
     if (error)
@@ -1201,7 +1200,7 @@ Value* Get_Var_May_Fail(
 ){
     Value* steps_out = nullptr;  // signal groups not allowed to run
 
-    Option(VarList*) error = Trap_Get_Var(  // vacant will give error
+    Option(Error*) error = Trap_Get_Var(  // vacant will give error
         out, steps_out, var, context
     );
     if (error)
@@ -1218,7 +1217,7 @@ Value* Get_Var_May_Fail(
 // This form of Get_Path() is low-level, and may return a non-ACTION! value
 // if the path is inert (e.g. `/abc` or `.a.b/c/d`).
 //
-Option(VarList*) Trap_Get_Path_Push_Refinements(
+Option(Error*) Trap_Get_Path_Push_Refinements(
     Sink(Value*) out,
     Sink(Value*) safe,
     const Element* path,
@@ -1237,7 +1236,7 @@ Option(VarList*) Trap_Get_Path_Push_Refinements(
     }
     else switch (Stub_Flavor(c_cast(Flex*, node1))) {
       case FLAVOR_SYMBOL : {  // `/a` or `a/`
-        Option(VarList*) error = Trap_Get_Any_Word(out, path, context);
+        Option(Error*) error = Trap_Get_Any_Word(out, path, context);
         if (error)
             return error;
 
@@ -1288,18 +1287,15 @@ Option(VarList*) Trap_Get_Path_Push_Refinements(
         Context* derived = Derive_Binding(context, path);
 
         DECLARE_VALUE (steps);
-        Option(VarList*) error = Trap_Get_Any_Tuple(  // vacant is error
-            out,
-            steps,
-            head,
-            derived
+        Option(Error*) error = Trap_Get_Any_Tuple(  // vacant is error
+            out, steps, head, derived
         );
         if (error)
             fail (unwrap error);  // must be abrupt
     }
     else if (Is_Word(head)) {
         Context* derived = Derive_Binding(context, path);
-        Option(VarList*) error = Trap_Get_Any_Word(out, head, derived);
+        Option(Error*) error = Trap_Get_Any_Word(out, head, derived);
         if (error)
             fail (unwrap error);  // must be abrupt
     }
@@ -1412,7 +1408,7 @@ DECLARE_NATIVE(resolve)
 
     Element* source = cast(Element*, ARG(source));
 
-    Option(VarList*) error = Trap_Get_Var(
+    Option(Error*) error = Trap_Get_Var(
         OUT, stable_SPARE, source, SPECIFIED
     );
     if (error)
@@ -1476,7 +1472,7 @@ DECLARE_NATIVE(get)
         source = cast(Element*, SPARE);
     }
 
-    Option(VarList*) error = Trap_Get_Var_Maybe_Vacant(
+    Option(Error*) error = Trap_Get_Var_Maybe_Vacant(
         OUT, steps, source, SPECIFIED
     );
     if (error)
@@ -1671,7 +1667,7 @@ bool Set_Var_Core_Updater_Throws(
     }
     else if (Is_Word(at)) {
         const Value* slot;
-        Option(VarList*) error = Trap_Lookup_Word(
+        Option(Error*) error = Trap_Lookup_Word(
             &slot, cast(Element*, at), SPECIFIED
         );
         if (error)
@@ -2377,7 +2373,7 @@ DECLARE_NATIVE(as)
                 Freeze_Array_Shallow(Cell_Array_Ensure_Mutable(v));
 
             DECLARE_ELEMENT (temp);  // need to rebind
-            Option(VarList*) error = Trap_Init_Any_Sequence_At_Listlike(
+            Option(Error*) error = Trap_Init_Any_Sequence_At_Listlike(
                 temp,
                 new_heart,
                 Cell_Array(v),
@@ -2525,7 +2521,7 @@ DECLARE_NATIVE(as)
 
       case REB_ISSUE: {
         if (Is_Integer(v)) {
-            Option(VarList*) error = Trap_Init_Char(OUT, VAL_UINT32(v));
+            Option(Error*) error = Trap_Init_Char(OUT, VAL_UINT32(v));
             if (error)
                 return RAISE(unwrap error);
             return OUT;

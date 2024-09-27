@@ -357,9 +357,9 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             Clear_Level_Flag(LEVEL, NOTIFY_ON_ABRUPT_FAILURE);
             Clear_Level_Flag(LEVEL, ABRUPT_FAILURE);
             assert(Is_Throwing_Failure(LEVEL));
-            VarList* ctx = Cell_Varlist(VAL_THROWN_LABEL(LEVEL));
+            Error* error = Cell_Error(VAL_THROWN_LABEL(LEVEL));
             CATCH_THROWN(SPARE, LEVEL);
-            fail (ctx);
+            fail (error);
         }
 
         const Value* label = VAL_THROWN_LABEL(LEVEL);  // unwind [1]
