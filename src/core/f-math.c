@@ -44,8 +44,9 @@
 //     2. If no integer found, pointer doesn't change position.
 //     3. Integers may contain REBOL tick (') marks.
 //
-const Byte* Grab_Int(const Byte* cp, REBINT *val)
+Option(const Byte*) Try_Grab_Int(Sink(REBINT*) out, const Byte* cp)
 {
+    const Byte* bp = cp;
     REBINT value = 0;
     bool neg = false;
 
@@ -56,25 +57,30 @@ const Byte* Grab_Int(const Byte* cp, REBINT *val)
     else if (*cp == '+')
         ++cp;
 
-    while (*cp >= '0' && *cp <= '9') {
+    while (*cp >= '0' and *cp <= '9') {  // !!! use Is_Lex_Number()?
         value = (value * 10) + (*cp - '0');
         cp++;
     }
 
-    *val = neg ? -value : value;
+    if (cp == bp)
+        return nullptr;
 
+    *out = neg ? -value : value;
     return cp;
 }
 
 
 //
-//  Grab_Int_Scale: C
+//  Grab_Int_Scale_Zero_Default: C
 //
 // Return integer scaled to the number of digits specified.
 // Used for the decimal part of numbers (e.g. times).
 //
-const Byte* Grab_Int_Scale(const Byte* cp, REBINT *val, REBLEN scale)
-{
+const Byte* Grab_Int_Scale_Zero_Default(
+    Sink(REBINT*) out,
+    const Byte* cp,
+    REBLEN scale
+){
     REBI64 value = 0;
 
     for (;scale > 0 && *cp >= '0' && *cp <= '9'; scale--) {
@@ -91,7 +97,7 @@ const Byte* Grab_Int_Scale(const Byte* cp, REBINT *val, REBLEN scale)
     // Make sure its full scale:
     for (;scale > 0; scale--) value *= 10;
 
-    *val = (REBINT)value;
+    *out = cast(REBINT, value);
     return cp;
 }
 

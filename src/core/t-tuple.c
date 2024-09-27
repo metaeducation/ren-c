@@ -84,8 +84,8 @@ Bounce MAKE_Sequence(
 
         Byte* tp = buf;
         for (ep = cp; len > ep - cp; ++ep) {
-            ep = Grab_Int(ep, &n);
-            if (n < 0 || n > 255)
+            ep = maybe Try_Grab_Int(&n, ep);
+            if (not ep or n < 0 or n > 255)
                 return RAISE(arg);
 
             *tp++ = cast(Byte, n);

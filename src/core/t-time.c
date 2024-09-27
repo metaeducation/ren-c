@@ -96,35 +96,36 @@ Option(const Byte*) Try_Scan_Time_To_Stack(
     //    HH:MM:SS.DD as part1:part2:part3.part4
     //    MM:SS.DD    as part1:part2.part4
 
-    REBINT part1 = -1;
-    cp = Grab_Int(cp, &part1);
-    if (part1 > MAX_HOUR)
+    REBINT part1;
+    if (not (cp = maybe Try_Grab_Int(&part1, cp)))
+        return nullptr;
+    if (part1 < 0 or part1 > MAX_HOUR)
         return nullptr;
 
     if (*cp++ != ':')
         return nullptr;
 
-    const Byte* sp;
-
-    REBINT part2 = -1;
-    sp = Grab_Int(cp, &part2);
-    if (part2 < 0 || sp == cp)
+    REBINT part2;
+    if (not (cp = maybe Try_Grab_Int(&part2, cp)))
+        return nullptr;
+    if (part2 < 0)
         return nullptr;
 
-    cp = sp;
-
     REBINT part3 = -1;
-    if (*cp == ':') {   // optional seconds
-        sp = cp + 1;
-        cp = Grab_Int(sp, &part3);
-        if (part3 < 0 || cp == sp)
+    if (*cp == ':') {  // optional seconds
+        ++cp;
+        if (not (cp = maybe Try_Grab_Int(&part3, cp)))
+            return nullptr;
+        if (part3 < 0)
             return nullptr;
     }
+
+    const Byte* sp;
 
     REBINT part4 = -1;
     if (*cp == '.' || *cp == ',') {
         sp = ++cp;
-        cp = Grab_Int_Scale(sp, &part4, 9);
+        cp = Grab_Int_Scale_Zero_Default(&part4, sp, 9);
         if (part4 == 0)
             part4 = -1;
     }

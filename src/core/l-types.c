@@ -668,8 +668,8 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
 
     REBINT num;
 
-    // Day or 4-digit year:
-    ep = Grab_Int(cp, &num);
+    if (not (ep = maybe Try_Grab_Int(&num, cp)))  // Day or 4-digit year
+        return nullptr;
     if (num < 0)
         return nullptr;
 
@@ -686,7 +686,9 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
         year = num;
         day = 0;
     }
-    else if (size) {
+    else {
+        assert(size != 0);  // because Try_Grab_Int() succeeded
+
         // year is not set in this branch (we know because day ISN'T 0)
         // Ex: 12-Dec-2012
         day = num;
@@ -697,8 +699,6 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
         // how it connects with year being set or not.  Suppress warning.
         year = INT32_MIN; // !!! Garbage, should not be read.
     }
-    else
-        return nullptr;
 
     cp = ep;
 
@@ -708,16 +708,16 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
 
     Byte sep = *cp++;
 
-    // Month as number or name:
-    ep = Grab_Int(cp, &num);
-    if (num < 0)
-        return nullptr;
+    const Byte *ep_num = maybe Try_Grab_Int(&num, cp);
 
-    size = ep - cp;
+    if (ep_num) {  // month was a number
+        if (num < 0)
+            return nullptr;
 
-    if (size > 0)
-        month = num; // got a number
-    else { // must be a word
+        month = num;
+        ep = ep_num;
+    }
+    else { // month must be a word
         for (ep = cp; Is_Lex_Word(*ep); ep++)
             NOOP; // scan word
 
@@ -740,14 +740,12 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
     if (*cp++ != sep)
         return nullptr;
 
-    // Year or day (if year was first):
-    ep = Grab_Int(cp, &num);
-    if (*cp == '-' || num < 0)
+    ep = maybe Try_Grab_Int(&num, cp);  // Year or day (if year was first)
+    if (not ep or *cp == '-' or num < 0)
         return nullptr;
 
     size = ep - cp;
-    if (size == 0)
-        return nullptr;
+    assert(size > 0);  // because Try_Grab_Int() succeeded
 
     if (day == 0) {
         // year already set, but day hasn't been
@@ -827,8 +825,7 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
         if (cp >= end)
             goto end_date;
 
-        ep = Grab_Int(cp + 1, &num);
-        if (ep - cp == 0)
+        if (not (ep = maybe Try_Grab_Int(&num, cp + 1)))
             return nullptr;
 
         if (*ep != ':') {
@@ -847,8 +844,8 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
             tz = num * (60 / ZONE_MINS);
 
             if (*ep == ':') {
-                ep = Grab_Int(ep + 1, &num);
-                if (num % ZONE_MINS != 0)
+                ep = maybe Try_Grab_Int(&num, ep + 1);
+                if (not ep or num % ZONE_MINS != 0)
                     return nullptr;
 
                 tz += num / ZONE_MINS;
@@ -1062,8 +1059,8 @@ Option(const Byte*) Try_Scan_Binary_To_Stack(
     REBINT base = 16;
 
     if (*cp != '#') {
-        const Byte* ep = Grab_Int(cp, &base);
-        if (cp == ep or *ep != '#')
+        const Byte* ep = maybe Try_Grab_Int(&base, cp);
+        if (not ep or *ep != '#')
             return nullptr;
         len -= ep - cp;
         cp = ep;
