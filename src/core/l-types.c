@@ -344,9 +344,6 @@ DECLARE_NATIVE(of)
 // String must not include # - ~ or other invalid chars.
 // If minlen is zero, and no string, that's a valid zero value.
 //
-// Note, this function relies on LEX_WORD lex values having a LEX_VALUE
-// field of zero, except for hex values.
-//
 const Byte* Scan_Hex(
     Sink(Element*) out,
     const Byte* cp,
@@ -358,15 +355,9 @@ const Byte* Scan_Hex(
 
     REBI64 i = 0;
     REBLEN len = 0;
-    Byte lex;
-    while ((lex = Lex_Map[*cp]) > LEX_WORD) {
-        Byte v;
-        if (++len > maxlen)
-            return_NULL;
-        v = cast(Byte, lex & LEX_VALUE); // char num encoded into lex
-        if (!v && lex < LEX_NUMBER)
-            return_NULL;  // invalid char (word but no val)
-        i = (i << 4) + v;
+    Byte nibble;
+    while (Try_Get_Lex_Hexdigit(&nibble, *cp)) {
+        i = (i << 4) + nibble;
         cp++;
     }
 
@@ -390,25 +381,15 @@ const Byte* Scan_Hex(
 //
 const Byte* Scan_Hex2(Byte* decoded_out, const Byte* bp)
 {
-    Byte c1 = bp[0];
-    if (c1 >= 0x80)
-        return NULL;
+    Byte nibble1;
+    if (not Try_Get_Lex_Hexdigit(&nibble1, bp[0]))
+        return nullptr;
 
-    Byte c2 = bp[1];
-    if (c2 >= 0x80)
-        return NULL;
+    Byte nibble2;
+    if (not Try_Get_Lex_Hexdigit(&nibble2, bp[1]))
+        return nullptr;
 
-    Byte lex1 = Lex_Map[c1];
-    Byte d1 = lex1 & LEX_VALUE;
-    if (lex1 < LEX_WORD || (d1 == 0 && lex1 < LEX_NUMBER))
-        return NULL;
-
-    Byte lex2 = Lex_Map[c2];
-    Byte d2 = lex2 & LEX_VALUE;
-    if (lex2 < LEX_WORD || (d2 == 0 && lex2 < LEX_NUMBER))
-        return NULL;
-
-    *decoded_out = cast(Codepoint, (d1 << 4) + d2);
+    *decoded_out = cast(Codepoint, (nibble1 << 4) + nibble2);
 
     return bp + 2;
 }
@@ -441,7 +422,7 @@ const Byte* Scan_Dec_Buf(
         *bp++ = *cp++;
 
     bool digit_present = false;
-    while (IS_LEX_NUMBER(*cp) || *cp == '\'') {
+    while (Is_Lex_Number(*cp) || *cp == '\'') {
         if (*cp != '\'') {
             *bp++ = *cp++;
             if (bp >= be)
@@ -461,7 +442,7 @@ const Byte* Scan_Dec_Buf(
     if (bp >= be)
         return NULL;
 
-    while (IS_LEX_NUMBER(*cp) || *cp == '\'') {
+    while (Is_Lex_Number(*cp) || *cp == '\'') {
         if (*cp != '\'') {
             *bp++ = *cp++;
             if (bp >= be)
@@ -488,7 +469,7 @@ const Byte* Scan_Dec_Buf(
                 return NULL;
         }
 
-        while (IS_LEX_NUMBER(*cp)) {
+        while (Is_Lex_Number(*cp)) {
             *bp++ = *cp++;
             if (bp >= be)
                 return NULL;
@@ -527,7 +508,7 @@ const Byte* Scan_Decimal(
 
     bool digit_present = false;
 
-    while (IS_LEX_NUMBER(*cp) || *cp == '\'') {
+    while (Is_Lex_Number(*cp) || *cp == '\'') {
         if (*cp != '\'') {
             *ep++ = *cp++;
             digit_present = true;
@@ -541,7 +522,7 @@ const Byte* Scan_Decimal(
 
     *ep++ = '.';
 
-    while (IS_LEX_NUMBER(*cp) || *cp == '\'') {
+    while (Is_Lex_Number(*cp) || *cp == '\'') {
         if (*cp != '\'') {
             *ep++ = *cp++;
             digit_present = true;
@@ -560,7 +541,7 @@ const Byte* Scan_Decimal(
         if (*cp == '-' || *cp == '+')
             *ep++ = *cp++;
 
-        while (IS_LEX_NUMBER(*cp)) {
+        while (Is_Lex_Number(*cp)) {
             *ep++ = *cp++;
             digit_present = true;
         }
@@ -766,7 +747,7 @@ const Byte* Scan_Date(
     if (size > 0)
         month = num; // got a number
     else { // must be a word
-        for (ep = cp; IS_LEX_WORD(*ep); ep++)
+        for (ep = cp; Is_Lex_Word(*ep); ep++)
             NOOP; // scan word
 
         size = ep - cp;
@@ -1218,17 +1199,17 @@ DECLARE_NATIVE(scan_net_header)
     const Byte* cp = Cell_Bytes_At(&size, header);
     UNUSED(size);  // !!! Review semantics
 
-    while (IS_LEX_ANY_SPACE(*cp)) cp++; // skip white space
+    while (Is_Lex_Whitespace(*cp)) cp++; // skip white space
 
     const Byte* start;
     REBINT len;
 
     while (true) {
         // Scan valid word:
-        if (IS_LEX_WORD(*cp)) {
+        if (Is_Lex_Word(*cp)) {
             start = cp;
             while (
-                IS_LEX_WORD_OR_NUMBER(*cp)
+                Is_Lex_Word_Or_Number(*cp)
                 || *cp == '.'
                 || *cp == '-'
                 || *cp == '_'
@@ -1279,7 +1260,7 @@ DECLARE_NATIVE(scan_net_header)
             val = Alloc_Tail_Array(result);
         }
 
-        while (IS_LEX_SPACE(*cp)) cp++;
+        while (Is_Lex_Space(*cp)) cp++;
         start = cp;
         len = 0;
         while (!ANY_CR_LF_END(*cp)) {
@@ -1292,9 +1273,9 @@ DECLARE_NATIVE(scan_net_header)
                 ++cp;
             if (*cp == LF)
                 ++cp;
-            if (not IS_LEX_SPACE(*cp))
+            if (not Is_Lex_Space(*cp))
                 break;
-            while (IS_LEX_SPACE(*cp))
+            while (Is_Lex_Space(*cp))
                 ++cp;
             while (!ANY_CR_LF_END(*cp)) {
                 ++len;
@@ -1322,9 +1303,9 @@ DECLARE_NATIVE(scan_net_header)
                 ++cp;
             if (*cp == LF)
                 ++cp;
-            if (not IS_LEX_SPACE(*cp))
+            if (not Is_Lex_Space(*cp))
                 break;
-            while (IS_LEX_SPACE(*cp))
+            while (Is_Lex_Space(*cp))
                 ++cp;
             while (!ANY_CR_LF_END(*cp))
                 str = Write_Codepoint(str, *cp++);

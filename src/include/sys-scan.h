@@ -21,8 +21,6 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-extern const Byte Lex_Map[256];  // declared in %l-scan.c
-
 
 //=//// SIGIL ORDER ///////////////////////////////////////////////////////=//
 //
@@ -103,16 +101,13 @@ STATIC_ASSERT(TOKEN_AT == cast(int, SIGIL_THE));
 STATIC_ASSERT(TOKEN_DOLLAR == cast(int, SIGIL_VAR));
 
 
-/*
-**  Lexical Table Entry Encoding
-*/
-#define LEX_SHIFT       5               /* shift for encoding classes */
-#define LEX_CLASS       (3<<LEX_SHIFT)  /* class bit field */
-#define LEX_VALUE       (0x1F)          /* value bit field */
 
-
+//=//// "LEX MAP" /////////////////////////////////////////////////////////=//
 //
-// General Lexical Classes (encoded in the LEX_CLASS field)
+// There's a table that encodes a byte's worth of properties for each
+// character.  It divides them into 4 "Lex Classes", and then each class can
+// encode an additional value.  For example: the LEX_NUMBER class uses the
+// bits in the byte that aren't the class to encode the value of the digit.
 //
 // 1. Macros do make assumptions on the order, and it's important that this
 //    fits in two bits
@@ -122,7 +117,21 @@ STATIC_ASSERT(TOKEN_DOLLAR == cast(int, SIGIL_VAR));
 //    like (Get_Lex_Class(b) == LEX_DELIMIT) instead of LEX_CLASS_DELIMIT.
 //    So wrapping in an enum catches that with a -Wenum-compare warning.
 //
-enum LexClassEnum {  // order is important [1]
+// 3. The g_lex_map[] only has byte range, so it's important that it's only
+//    called on bytes.  But that's not really enforceable in C, you need a
+//    C++ template function.  We don't burden the debug build with this as
+//    yet-another-runtime cost when inlines aren't optimized out...instead
+//    just do it in release/optimized builds.
+
+extern const Byte g_lex_map[256];  // declared in %l-scan.c
+
+typedef Byte Lex;
+
+#define LEX_SHIFT   5                   // shift for encoding classes
+#define LEX_CLASS   (3 << LEX_SHIFT)    // class bit field
+#define LEX_VALUE   (0x1F)              // value bit field
+
+enum LexClassEnum {  // encoded in LEX_CLASS field, order is important [1]
     LEX_CLASS_DELIMIT = 0,
     LEX_CLASS_SPECIAL,
     LEX_CLASS_WORD,
@@ -132,7 +141,7 @@ STATIC_ASSERT(LEX_CLASS_NUMBER < 4);
 typedef enum LexClassEnum LexClass;
 
 #define Get_Lex_Class(b) \
-    u_cast(LexClass, Lex_Map[b] >> LEX_SHIFT)
+    u_cast(LexClass, Lex_Of(b) >> LEX_SHIFT)
 
 enum LexClassMasksEnum {  // using an enum helps catch incorrect uses [2]
     LEX_DELIMIT =   (LEX_CLASS_DELIMIT << LEX_SHIFT),
@@ -141,24 +150,50 @@ enum LexClassMasksEnum {  // using an enum helps catch incorrect uses [2]
     LEX_NUMBER =    (LEX_CLASS_NUMBER << LEX_SHIFT)
 };
 
+#if DEBUG || (! CPLUSPLUS_11)
+    #define Lex_Of(b) \
+        g_lex_map[b]
+
+    INLINE Byte Get_Lex_Value(LexClass lexclass, Byte b) {
+        assert(Get_Lex_Class(b) == lexclass);
+        UNUSED(lexclass);
+        return g_lex_map[b] & LEX_VALUE;
+    }
+#else  // ensure Byte when optimizing, it's "free" [3]
+
+    template<typename B>
+    INLINE Lex Lex_Of(B b) {
+        static_assert(std::is_same<B,Byte>::value, "Lex_Of() not Byte");
+        return g_lex_map[b];
+    }
+
+    template<typename B>
+    INLINE Byte Get_Lex_Value(LexClass lexclass, B b) {
+        static_assert(std::is_same<B,Byte>::value, "Get_Lex_Value() not Byte");
+        UNUSED(lexclass);  // not DEBUG, we assert it's right in debug build
+        return g_lex_map[b] & LEX_VALUE;
+    }
+#endif
 
 
-/*
-**  Delimiting Chars (encoded in the LEX_VALUE field)
-**  NOTE: Macros do make assumption that _RETURN is the last space delimiter
-*/
+//
+// Delimiting Chars (encoded in the LEX_VALUE field)
+//
 enum LexDelimitEnum {
-    LEX_DELIMIT_SPACE,              /* 20 space */
-    LEX_DELIMIT_END,                /* 00 null terminator, end of input */
-    LEX_DELIMIT_LINEFEED,           /* 0A line-feed */
-    LEX_DELIMIT_RETURN,             /* 0D return */
-    LEX_DELIMIT_COMMA,              /* 2C , - expression barrier */
-    LEX_DELIMIT_LEFT_PAREN,         /* 28 ( */
-    LEX_DELIMIT_RIGHT_PAREN,        /* 29 ) */
-    LEX_DELIMIT_LEFT_BRACKET,       /* 5B [ */
-    LEX_DELIMIT_RIGHT_BRACKET,      /* 5D ] */
+    LEX_DELIMIT_SPACE,              // 20 space
+    LEX_DELIMIT_END,                // 00 null terminator, end of input
+    LEX_DELIMIT_LINEFEED,           // 0A line-feed
+    LEX_DELIMIT_RETURN,             // 0D return
 
-    LEX_DELIMIT_HARD = LEX_DELIMIT_RIGHT_BRACKET,
+    LEX_DELIMIT_MAX_WHITESPACE = LEX_DELIMIT_RETURN,
+
+    LEX_DELIMIT_COMMA,              // 2C , - expression barrier
+    LEX_DELIMIT_LEFT_PAREN,         // 28 (
+    LEX_DELIMIT_RIGHT_PAREN,        // 29 )
+    LEX_DELIMIT_LEFT_BRACKET,       // 5B [
+    LEX_DELIMIT_RIGHT_BRACKET,      // 5D ]
+
+    LEX_DELIMIT_MAX_HARD = LEX_DELIMIT_RIGHT_BRACKET,
     //
     // ^-- As a step toward "Plan -4", the above delimiters are considered to
     // always terminate, e.g. a URL `http://example.com/a)` will not pick up
@@ -167,12 +202,12 @@ enum LexDelimitEnum {
     //
     // https://github.com/metaeducation/ren-c/issues/1046
 
-    LEX_DELIMIT_LEFT_BRACE,         /* 7B } */
-    LEX_DELIMIT_RIGHT_BRACE,        /* 7D } */
-    LEX_DELIMIT_DOUBLE_QUOTE,       /* 22 " */
-    LEX_DELIMIT_SLASH,              /* 2F / - date, path, file */
-    LEX_DELIMIT_PERIOD,             /* 2E . - decimal, tuple, file */
-    LEX_DELIMIT_TILDE,              /* 7E ~ - used only by quasiforms */
+    LEX_DELIMIT_LEFT_BRACE,         // 7B }
+    LEX_DELIMIT_RIGHT_BRACE,        // 7D }
+    LEX_DELIMIT_DOUBLE_QUOTE,       // 22 "
+    LEX_DELIMIT_SLASH,              // 2F / - date, path, file
+    LEX_DELIMIT_PERIOD,             // 2E . - decimal, tuple, file
+    LEX_DELIMIT_TILDE,              // 7E ~ - used only by quasiforms
 
     LEX_DELIMIT_UTF8_ERROR,
 
@@ -181,60 +216,64 @@ enum LexDelimitEnum {
 STATIC_ASSERT(LEX_DELIMIT_MAX <= 16);
 typedef enum LexDelimitEnum LexDelimit;
 
-INLINE LexDelimit Get_Lex_Delimit(Byte byte) {
-    assert(Get_Lex_Class(byte) == LEX_CLASS_DELIMIT);
-    return u_cast(LexDelimit, Lex_Map[byte] & LEX_VALUE);
-}
+#define Get_Lex_Delimit(b) \
+    u_cast(LexDelimit, Get_Lex_Value(LEX_CLASS_DELIMIT, (b)))
 
 
-typedef uint16_t LEXFLAGS;  // 16 flags per lex class
+typedef uint16_t LexFlags;  // 16 flags per lex class
 
 #define LEX_FLAG(n)             (1 << (n))
-#define SET_LEX_FLAG(f,l)       (f = f | LEX_FLAG(l))
-#define HAS_LEX_FLAGS(f,l)      (f & (l))
-#define HAS_LEX_FLAG(f,l)       (f & LEX_FLAG(l))
-#define ONLY_LEX_FLAG(f,l)      (f == LEX_FLAG(l))
+#define Set_Lex_Flag(f,l)       (f = f | LEX_FLAG(l))
+#define Has_Lex_Flags(f,l)      (f & (l))
+#define Has_Lex_Flag(f,l)       (f & LEX_FLAG(l))
+#define Only_Lex_Flag(f,l)      (f == LEX_FLAG(l))
 
-#define MASK_LEX_CLASS(c)               (Lex_Map[(Byte)c] & LEX_CLASS)
-#define IS_LEX_SPACE(c)                 (!Lex_Map[(Byte)c])
-#define IS_LEX_ANY_SPACE(c)             (Lex_Map[(Byte)c]<=LEX_DELIMIT_RETURN)
-#define IS_LEX_DELIMIT(c)               (MASK_LEX_CLASS(c) == LEX_DELIMIT)
-#define IS_LEX_SPECIAL(c)               (MASK_LEX_CLASS(c) == LEX_SPECIAL)
-#define IS_LEX_WORD(c)                  (MASK_LEX_CLASS(c) == LEX_WORD)
-// Optimization (necessary?)
-#define IS_LEX_NUMBER(c)                (Lex_Map[(Byte)c] >= LEX_NUMBER)
+#define Mask_Lex_Class(b)       (Lex_Of(b) & LEX_CLASS)
 
-#define IS_LEX_NOT_DELIMIT(c)           (Lex_Map[(Byte)c] >= LEX_SPECIAL)
-#define IS_LEX_WORD_OR_NUMBER(c)        (Lex_Map[(Byte)c] >= LEX_WORD)
+#define Is_Lex_Delimit(b)       (Mask_Lex_Class(b) == LEX_DELIMIT)
+#define Is_Lex_Special(b)       (Mask_Lex_Class(b) == LEX_SPECIAL)
+#define Is_Lex_Word(b)          (Mask_Lex_Class(b) == LEX_WORD)
+#define Is_Lex_Number(b)        (Lex_Of(b) >= LEX_NUMBER)
 
-#define IS_LEX_DELIMIT_HARD(byte) \
-    (Get_Lex_Delimit(byte) <= LEX_DELIMIT_HARD)
+STATIC_ASSERT(LEX_DELIMIT == 0 and LEX_DELIMIT_SPACE == 0);
+
+#define Is_Lex_Space(b) \
+    (0 == Lex_Of(b))  // requires LEX_DELIMIT == 0 and LEX_DELIMIT_SPACE == 0
+
+#define Is_Lex_Whitespace(b) \
+    (Lex_Of(b) <= LEX_DELIMIT_MAX_WHITESPACE)  // requires LEX_DELIMIT == 0
+
+#define Is_Lex_Not_Delimit(b)           (Lex_Of(b) >= LEX_SPECIAL)
+#define Is_Lex_Word_Or_Number(b)        (Lex_Of(b) >= LEX_WORD)
+
+#define Is_Lex_Delimit_Hard(byte) \
+    (Get_Lex_Delimit(byte) <= LEX_DELIMIT_MAX_HARD)
 
 //
 //  Special Chars (encoded in the LEX_VALUE field)
 //
-enum LexSpecialEnum {               /* The order is important! */
-    LEX_SPECIAL_AT,                 /* 40 @ - email */
-    LEX_SPECIAL_PERCENT,            /* 25 % - file name */
-    LEX_SPECIAL_BACKSLASH,          /* 5C \  */
-    LEX_SPECIAL_COLON,              /* 3A : - time, get, set */
-    LEX_SPECIAL_APOSTROPHE,         /* 27 ' - literal */
-    LEX_SPECIAL_LESSER,             /* 3C < - compare or tag */
-    LEX_SPECIAL_GREATER,            /* 3E > - compare or end tag */
-    LEX_SPECIAL_PLUS,               /* 2B + - positive number */
-    LEX_SPECIAL_MINUS,              /* 2D - - date, negative number */
-    LEX_SPECIAL_BAR,                /* 7C | - can be part of an "arrow word" */
-    LEX_SPECIAL_UNDERSCORE,              /* 5F _ - blank */
+enum LexSpecialEnum {               // The order is important!
 
-                                    /** Any of these can follow - or ~ : */
-    LEX_SPECIAL_POUND,              /* 23 # - hex number */
-    LEX_SPECIAL_DOLLAR,             /* 24 $ - money */
-    LEX_SPECIAL_SEMICOLON,          /* 3B ; - comment */
+    LEX_SPECIAL_AT,                 // 40 @ - email
+    LEX_SPECIAL_PERCENT,            // 25 % - file name
+    LEX_SPECIAL_BACKSLASH,          // 5C \ - not used at present
+    LEX_SPECIAL_COLON,              // 3A : - time, get, set
+    LEX_SPECIAL_APOSTROPHE,         // 27 ' - quoted
+    LEX_SPECIAL_LESSER,             // 3C < - compare or tag
+    LEX_SPECIAL_GREATER,            // 3E > - compare or end tag
+    LEX_SPECIAL_PLUS,               // 2B + - positive number
+    LEX_SPECIAL_MINUS,              // 2D - - date, negative number
+    LEX_SPECIAL_BAR,                // 7C | - can be part of an "arrow word"
+    LEX_SPECIAL_UNDERSCORE,         // 5F _ - blank
+
+                                    // Any of these can follow - or ~ :
+
+    LEX_SPECIAL_POUND,              // 23 # - hex number
+    LEX_SPECIAL_DOLLAR,             // 24 $ - money
+    LEX_SPECIAL_SEMICOLON,          // 3B ; - comment
 
     // LEX_SPECIAL_WORD is not a LEX_VALUE() of anything in LEX_CLASS_SPECIAL,
     // it is used to set a flag by Prescan_Token().
-    //
-    // !!! Comment said "for nums"
     //
     LEX_SPECIAL_WORD,
 
@@ -243,15 +282,10 @@ enum LexSpecialEnum {               /* The order is important! */
 STATIC_ASSERT(LEX_SPECIAL_MAX <= 16);
 typedef enum LexSpecialEnum LexSpecial;
 
-INLINE LexSpecial Get_Lex_Special(Byte byte) {
-    assert(Get_Lex_Class(byte) == LEX_CLASS_SPECIAL);
-    return u_cast(LexSpecial, Lex_Map[byte] & LEX_VALUE);
-}
+#define Get_Lex_Special(b) \
+    u_cast(LexSpecial, Get_Lex_Value(LEX_CLASS_SPECIAL, (b)))
 
 
-/*
-**  Special Encodings
-*/
 #define LEX_DEFAULT (LEX_DELIMIT|LEX_DELIMIT_SPACE)  // control chars = spaces
 
 // In UTF8 C0, C1, F5, and FF are invalid.  Ostensibly set to default because
@@ -262,9 +296,9 @@ INLINE LexSpecial Get_Lex_Special(Byte byte) {
 //
 #define LEX_UTFE LEX_DEFAULT
 
-/*
-**  Characters not allowed in Words
-*/
+//
+// Characters not allowed in Words
+//
 #define LEX_WORD_FLAGS (LEX_FLAG(LEX_SPECIAL_AT) |              \
                         LEX_FLAG(LEX_SPECIAL_PERCENT) |         \
                         LEX_FLAG(LEX_SPECIAL_BACKSLASH) |       \
@@ -273,8 +307,28 @@ INLINE LexSpecial Get_Lex_Special(Byte byte) {
                         LEX_FLAG(LEX_SPECIAL_COLON) |           \
                         LEX_FLAG(LEX_SPECIAL_SEMICOLON))
 
-enum rebol_esc_codes {
-    // Must match Esc_Names[]!
+
+// If class LEX_WORD or LEX_NUMBER, there is a value contained in the mask
+// which is the value of that "digit".  So A-F and a-f can quickly get their
+// numeric values, alongside 0-9 getting its numeric value.
+//
+// Note, this function relies on LEX_WORD lex values having a LEX_VALUE
+// field of zero, except for hex values.
+//
+INLINE bool Try_Get_Lex_Hexdigit_Helper(Sink(Byte*) nibble, Lex lex) {
+    if (lex < LEX_WORD)  // all the word and number states are >= LEX_WORD
+        return false;
+    Byte value = lex & LEX_VALUE;
+    if (lex < LEX_NUMBER and value == 0)  // not A-F or a-f
+        return false;
+    *nibble = value;
+    return true;
+}
+
+#define Try_Get_Lex_Hexdigit(nibble,b) \
+    Try_Get_Lex_Hexdigit_Helper((nibble), Lex_Of(b))  // make sure it's a Byte
+
+enum EscapeCodeEnum {  // Must match Esc_Names[]!
     ESC_LINE,
     ESC_TAB,
     ESC_PAGE,

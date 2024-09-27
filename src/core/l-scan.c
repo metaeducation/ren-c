@@ -89,7 +89,7 @@ INLINE Sigil Sigil_From_Token(Token t) {
 //
 // UTF8: The values C0, C1, F5 to FF never appear.
 //
-const Byte Lex_Map[256] =
+const Byte g_lex_map[256] =
 {
     /* 00 EOF */    LEX_DELIMIT|LEX_DELIMIT_END,
     /* 01     */    LEX_DEFAULT,
@@ -227,8 +227,8 @@ const Byte Lex_Map[256] =
     /* 7E ~   */    LEX_DELIMIT|LEX_DELIMIT_TILDE,
     /* 7F DEL */    LEX_DEFAULT,
 
-    /* Odd Control Chars */
-    LEX_WORD,LEX_WORD,LEX_WORD,LEX_WORD,    /* 80 */
+    // Odd Control Chars
+    LEX_WORD,LEX_WORD,LEX_WORD,LEX_WORD,    // 0x80
     LEX_WORD,LEX_WORD,LEX_WORD,LEX_WORD,
     LEX_WORD,LEX_WORD,LEX_WORD,LEX_WORD,
     LEX_WORD,LEX_WORD,LEX_WORD,LEX_WORD,
@@ -237,7 +237,7 @@ const Byte Lex_Map[256] =
     LEX_WORD,LEX_WORD,LEX_WORD,LEX_WORD,
     LEX_WORD,LEX_WORD,LEX_WORD,LEX_WORD,
 
-    /* Alternate Chars */
+    // Alternate Chars
     LEX_WORD,LEX_WORD,LEX_WORD,LEX_WORD,
     LEX_WORD,LEX_WORD,LEX_WORD,LEX_WORD,
     LEX_WORD,LEX_WORD,LEX_WORD,LEX_WORD,
@@ -345,9 +345,6 @@ const Byte Lower_Case[256] =
 //
 static const Byte* Scan_UTF8_Char_Escapable(Codepoint *out, const Byte* bp)
 {
-    const Byte* cp;
-    Byte lex;
-
     Byte c = *bp;
     if (c == '\0')
         return nullptr;  // signal error if end of string
@@ -369,37 +366,34 @@ static const Byte* Scan_UTF8_Char_Escapable(Codepoint *out, const Byte* bp)
     bp++;
 
     switch (c) {
-
-    case 0:
+      case 0:
         *out = 0;
         break;
 
-    case '/':
+      case '/':
         *out = LF;
         break;
 
-    case '^':
+      case '^':
         *out = c;
         break;
 
-    case '-':
+      case '-':
         *out = '\t';  // tab character
         break;
 
-    case '!':
+      case '!':
         *out = '\036';  // record separator
         break;
 
-    case '(':  // ^(tab) ^(1234)
-        cp = bp; // restart location
+      case '(': {  // ^(tab) ^(1234)
+        const Byte* cp = bp;  // restart location
         *out = 0;
 
         // Check for hex integers ^(1234)
-        while ((lex = Lex_Map[*cp]) > LEX_WORD) {
-            c = lex & LEX_VALUE;
-            if (c == 0 and lex < LEX_NUMBER)
-                break;
-            *out = (*out << 4) + c;
+        Byte nibble;
+        while (Try_Get_Lex_Hexdigit(&nibble, *cp)) {
+            *out = (*out << 4) + nibble;
             cp++;
         }
         if (*cp == ')') {
@@ -417,9 +411,9 @@ static const Byte* Scan_UTF8_Char_Escapable(Codepoint *out, const Byte* bp)
                 }
             }
         }
-        return nullptr;
+        return nullptr; }
 
-    default:
+      default:
         *out = c;
 
         c = UP_CASE(c);
@@ -681,7 +675,7 @@ static void Update_Error_Near_For_Line(
     Set_Location_Of_Error(error, TOP_LEVEL);  // sets WHERE NEAR FILE LINE [1]
 
     const Byte* cp = line_head;  // skip indent (don't include in the NEAR
-    while (IS_LEX_SPACE(*cp))
+    while (Is_Lex_Space(*cp))
         ++cp;
 
     REBLEN len = 0;
@@ -849,14 +843,14 @@ static VarList* Error_Mismatch(SCAN_LEVEL *level, char wanted, char seen) {
 // Get_Lex_Class(ss->begin[0]).  Fingerprinting just helps accelerate further
 // categorization.
 //
-static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
+static LexFlags Prescan_Token(SCAN_STATE *ss)
 {
     assert(Is_Pointer_Corrupt_Debug(ss->end));  // prescan only uses ->begin
 
     const Byte* cp = ss->begin;
-    LEXFLAGS flags = 0;  // flags for all LEX_SPECIALs seen after ss->begin[0]
+    LexFlags flags = 0;  // flags for all LEX_SPECIALs seen after ss->begin[0]
 
-    while (IS_LEX_SPACE(*cp))  // skip whitespace (if any)
+    while (Is_Lex_Space(*cp))  // skip whitespace (if any)
         ++cp;
     ss->begin = cp;  // don't count leading whitespace as part of token
 
@@ -883,7 +877,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
             if (cp != ss->begin) {
                 // As long as it isn't the first character, we union a flag
                 // in the result mask to signal this special char's presence
-                SET_LEX_FLAG(flags, Get_Lex_Special(*cp));
+                Set_Lex_Flag(flags, Get_Lex_Special(*cp));
             }
             ++cp;
             break;
@@ -894,13 +888,13 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
             // that are returned.  But if any member of LEX_CLASS_WORD is
             // found, then a flag will be set indicating that also.
             //
-            SET_LEX_FLAG(flags, LEX_SPECIAL_WORD);
-            while (IS_LEX_WORD_OR_NUMBER(*cp))
+            Set_Lex_Flag(flags, LEX_SPECIAL_WORD);
+            while (Is_Lex_Word_Or_Number(*cp))
                 ++cp;
             break;
 
           case LEX_CLASS_NUMBER:
-            while (IS_LEX_NUMBER(*cp))
+            while (Is_Lex_Number(*cp))
                 ++cp;
             break;
         }
@@ -1097,7 +1091,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
             L->feed->p = *FEED_PACKED(L->feed)++;
     }
 
-    LEXFLAGS flags = Prescan_Token(ss);  // sets ->begin, ->end
+    LexFlags flags = Prescan_Token(ss);  // sets ->begin, ->end
 
     const Byte* cp = ss->begin;
 
@@ -1268,7 +1262,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
 
             if (
                 cp[1] == '/'
-                or IS_LEX_ANY_SPACE(cp[1])
+                or Is_Lex_Whitespace(cp[1])
                 or cp[1] == ']'
                 or cp[1] == ')'
                 or cp[1] == ':'
@@ -1276,7 +1270,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
                 while (cp[1] == '/')
                     ++cp;
                 if (
-                    IS_LEX_ANY_SPACE(cp[1])
+                    Is_Lex_Whitespace(cp[1])
                     or cp[1] == ']'
                     or cp[1] == ')'
                     or cp[1] == ':'
@@ -1296,7 +1290,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
 
             if (
                 cp[1] == '.'
-                or IS_LEX_ANY_SPACE(cp[1])
+                or Is_Lex_Whitespace(cp[1])
                 or cp[1] == ']'
                 or cp[1] == ')'
                 or cp[1] == ':'
@@ -1304,7 +1298,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
                 while (cp[1] == '.')
                     ++cp;
                 if (
-                    IS_LEX_ANY_SPACE(cp[1])
+                    Is_Lex_Whitespace(cp[1])
                     or cp[1] == ']'
                     or cp[1] == ')'
                     or cp[1] == ':'
@@ -1331,7 +1325,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
           case LEX_DELIMIT_COMMA:
             ++cp;
             ss->end = cp;
-            if (*cp == ',' or not IS_LEX_DELIMIT(*cp)) {
+            if (*cp == ',' or not Is_Lex_Delimit(*cp)) {
                 ++ss->end;  // don't allow `,,` or `a,b` etc.
                 return Error_Syntax(ss, TOKEN_COMMA);
             }
@@ -1362,7 +1356,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
         }
 
         if (
-            HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)  // @ anywhere but at the head
+            Has_Lex_Flag(flags, LEX_SPECIAL_AT)  // @ anywhere but at the head
             and *cp != '<'  // want <foo="@"> to be a TAG!, not an EMAIL!
             and *cp != '\''  // want '@foo to be a ... ?
             and *cp != '#'  // want #@ to be an ISSUE! (charlike)
@@ -1383,7 +1377,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
 
           case LEX_SPECIAL_PERCENT:  // %filename
             if (cp[1] == '%') {  // %% is WORD! exception
-                if (not IS_LEX_DELIMIT(cp[2]) and cp[2] != ':') {
+                if (not Is_Lex_Delimit(cp[2]) and cp[2] != ':') {
                     ss->end = cp + 3;
                     return Error_Syntax(ss, TOKEN_FILE);
                 }
@@ -1417,7 +1411,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
             while (*cp == '~' or *cp == '/' or *cp == '.') {  // "delimiters"
                 cp++;
 
-                while (IS_LEX_NOT_DELIMIT(*cp))
+                while (Is_Lex_Not_Delimit(*cp))
                     ++cp;
             }
 
@@ -1427,7 +1421,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
           case LEX_SPECIAL_COLON:  // :word :12 (time)
             assert(false);  // !!! Time form not supported ATM (use 0:12)
 
-            if (IS_LEX_NUMBER(cp[1])) {
+            if (Is_Lex_Number(cp[1])) {
                 token = TOKEN_TIME;
                 goto prescan_subsume_up_to_one_dot;
             }
@@ -1448,8 +1442,8 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
             if (
                 not cp  // couldn't find ending `>`
                 or not (
-                    IS_LEX_DELIMIT(*cp)
-                    or IS_LEX_ANY_SPACE(*cp)  // `<abc>def` not legal
+                    Is_Lex_Delimit(*cp)
+                    or Is_Lex_Whitespace(*cp)  // `<abc>def` not legal
                 )
             ){
                 return Error_Syntax(ss, TOKEN_TAG);
@@ -1459,16 +1453,16 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
 
           case LEX_SPECIAL_PLUS:  // +123 +123.45 +$123
           case LEX_SPECIAL_MINUS:  // -123 -123.45 -$123
-            if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
+            if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
                 token = TOKEN_EMAIL;
                 goto prescan_subsume_all_dots;
             }
-            if (HAS_LEX_FLAG(flags, LEX_SPECIAL_DOLLAR)) {
+            if (Has_Lex_Flag(flags, LEX_SPECIAL_DOLLAR)) {
                 ++cp;
                 token = TOKEN_MONEY;
                 goto prescan_subsume_up_to_one_dot;
             }
-            if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) {
+            if (Has_Lex_Flag(flags, LEX_SPECIAL_COLON)) {
                 cp = maybe Skip_To_Byte(cp, ss->end, ':');
                 if (cp and (cp + 1) != ss->end) {  // 12:34
                     token = TOKEN_TIME;
@@ -1481,9 +1475,9 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
                 }
             }
             cp++;
-            if (IS_LEX_NUMBER(*cp))
+            if (Is_Lex_Number(*cp))
                 goto num;
-            if (IS_LEX_SPECIAL(*cp)) {
+            if (Is_Lex_Special(*cp)) {
                 if ((Get_Lex_Special(*cp)) == LEX_SPECIAL_WORD)
                     goto next_lex_special;
                 if (*cp == '+' or *cp == '-') {
@@ -1505,7 +1499,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
             // delimiter or space.  However `_a_` and `a_b` are left as
             // legal words (at least for the time being).
             //
-            if (IS_LEX_DELIMIT(cp[1]) or IS_LEX_ANY_SPACE(cp[1]))
+            if (Is_Lex_Delimit(cp[1]) or Is_Lex_Whitespace(cp[1]))
                 return LOCATED(TOKEN_BLANK);
             token = TOKEN_WORD;
             goto prescan_word;
@@ -1568,14 +1562,14 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
 
           case LEX_SPECIAL_DOLLAR:
             if (
-                cp[1] == '$' or cp[1] == ':' or IS_LEX_DELIMIT(cp[1])
+                cp[1] == '$' or cp[1] == ':' or Is_Lex_Delimit(cp[1])
             ){
                 while (*cp == '$')
                     ++cp;
                 ss->end = cp;
                 return LOCATED(TOKEN_WORD);
             }
-            if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
+            if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
                 token = TOKEN_EMAIL;
                 goto prescan_subsume_all_dots;
             }
@@ -1587,7 +1581,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
         }
 
       case LEX_CLASS_WORD:
-        if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD))
+        if (Only_Lex_Flag(flags, LEX_SPECIAL_WORD))
             return LOCATED(TOKEN_WORD);
         token = TOKEN_WORD;
         goto prescan_word;
@@ -1602,12 +1596,12 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
             return LOCATED(TOKEN_INTEGER);
         }
 
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
+        if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
             token = TOKEN_EMAIL;
             goto prescan_subsume_all_dots;  // `123@example.com`
         }
 
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_POUND)) {
+        if (Has_Lex_Flag(flags, LEX_SPECIAL_POUND)) {
             if (cp == ss->begin) {  // no +2 +16 +64 allowed
                 if (
                     (
@@ -1633,14 +1627,14 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
             return Error_Syntax(ss, TOKEN_INTEGER);
         }
 
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) {
+        if (Has_Lex_Flag(flags, LEX_SPECIAL_COLON)) {
             token = TOKEN_TIME;  // `12:34`
             goto prescan_subsume_up_to_one_dot;
         }
 
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_POUND)) { // -#123 2#1010
+        if (Has_Lex_Flag(flags, LEX_SPECIAL_POUND)) { // -#123 2#1010
             if (
-                HAS_LEX_FLAGS(
+                Has_Lex_Flags(
                     flags,
                     ~(
                         LEX_FLAG(LEX_SPECIAL_POUND)
@@ -1678,7 +1672,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
                 return LOCATED(TOKEN_INTEGER);
             }
         }
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_APOSTROPHE))  // 1'200
+        if (Has_Lex_Flag(flags, LEX_SPECIAL_APOSTROPHE))  // 1'200
             return LOCATED(TOKEN_INTEGER);
         return Error_Syntax(ss, TOKEN_INTEGER);
 
@@ -1690,14 +1684,14 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
 
   prescan_word:  // `token` should be set, compiler warnings catch if not
 
-    if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) { // word:  url:words
+    if (Has_Lex_Flag(flags, LEX_SPECIAL_COLON)) { // word:  url:words
         if (token != TOKEN_WORD)  // only valid with WORD (not set or lit)
             return LOCATED(token);
         cp = unwrap Skip_To_Byte(cp, ss->end, ':');
         assert(*cp == ':');
-        if (not Is_Dot_Or_Slash(cp[1]) and Lex_Map[cp[1]] < LEX_SPECIAL) {
+        if (not Is_Dot_Or_Slash(cp[1]) and Lex_Of(cp[1]) < LEX_SPECIAL) {
             // a valid delimited word SET?
-            if (HAS_LEX_FLAGS(
+            if (Has_Lex_Flags(
                 flags,
                 ~LEX_FLAG(LEX_SPECIAL_COLON) & LEX_WORD_FLAGS
             )){
@@ -1709,25 +1703,25 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
         cp = ss->end;  // then, must be a URL
         while (Is_Dot_Or_Slash(*cp)) {  // deal with path delimiter
             cp++;
-            while (IS_LEX_NOT_DELIMIT(*cp) or not IS_LEX_DELIMIT_HARD(*cp))
+            while (Is_Lex_Not_Delimit(*cp) or not Is_Lex_Delimit_Hard(*cp))
                 ++cp;
         }
         ss->end = cp;
         return LOCATED(TOKEN_URL);
     }
-    if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
+    if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
         token = TOKEN_EMAIL;
         goto prescan_subsume_all_dots;
     }
-    if (HAS_LEX_FLAG(flags, LEX_SPECIAL_DOLLAR)) {  // !!! XYZ$10.20 ??
+    if (Has_Lex_Flag(flags, LEX_SPECIAL_DOLLAR)) {  // !!! XYZ$10.20 ??
         token = TOKEN_MONEY;
         goto prescan_subsume_up_to_one_dot;
     }
-    if (HAS_LEX_FLAGS(flags, LEX_WORD_FLAGS))
+    if (Has_Lex_Flags(flags, LEX_WORD_FLAGS))
         return Error_Syntax(ss, TOKEN_WORD);  // has non-word chars (eg % \ )
     if (
-        HAS_LEX_FLAG(flags, LEX_SPECIAL_LESSER)
-        or HAS_LEX_FLAG(flags, LEX_SPECIAL_GREATER)
+        Has_Lex_Flag(flags, LEX_SPECIAL_LESSER)
+        or Has_Lex_Flag(flags, LEX_SPECIAL_GREATER)
     ){
         return Error_Syntax(ss, token);  // arrow words handled at beginning
     }
@@ -1746,7 +1740,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
         return LOCATED(token);
 
     cp = ss->end + 1;
-    while (not IS_LEX_DELIMIT(*cp) and not IS_LEX_ANY_SPACE(*cp))
+    while (not Is_Lex_Delimit(*cp) and not Is_Lex_Whitespace(*cp))
         ++cp;
     ss->end = cp;
 
@@ -1770,7 +1764,7 @@ static Option(VarList*) Trap_Locate_Token_May_Push_Mold(
     cp = ss->end + 1;
     while (
         *cp == '.'
-        or (not IS_LEX_DELIMIT(*cp) and not IS_LEX_ANY_SPACE(*cp))
+        or (not Is_Lex_Delimit(*cp) and not Is_Lex_Whitespace(*cp))
     ){
         ++cp;
     }
@@ -1932,7 +1926,7 @@ Bounce Scanner_Executor(Level* const L) {
 
       case TOKEN_CARET:
         assert(*bp == '^');
-        if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
+        if (Is_Lex_Whitespace(*ep) or *ep == ']' or *ep == ')') {
             Init_Sigil(PUSH(), SIGIL_META);
             break;
         }
@@ -1940,7 +1934,7 @@ Bounce Scanner_Executor(Level* const L) {
 
       case TOKEN_AT:
         assert(*bp == '@');
-        if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
+        if (Is_Lex_Whitespace(*ep) or *ep == ']' or *ep == ')') {
             Init_Sigil(PUSH(), SIGIL_THE);
             break;
         }
@@ -1948,7 +1942,7 @@ Bounce Scanner_Executor(Level* const L) {
 
       case TOKEN_AMPERSAND:
         assert(*bp == '&');
-        if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
+        if (Is_Lex_Whitespace(*ep) or *ep == ']' or *ep == ')') {
             Init_Sigil(PUSH(), SIGIL_TYPE);
             break;
         }
@@ -1956,7 +1950,7 @@ Bounce Scanner_Executor(Level* const L) {
 
       case TOKEN_DOLLAR:
         assert(*bp == '$');
-        if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
+        if (Is_Lex_Whitespace(*ep) or *ep == ']' or *ep == ')') {
             Init_Sigil(PUSH(), SIGIL_VAR);  // $
             break;
         }
@@ -1972,7 +1966,7 @@ Bounce Scanner_Executor(Level* const L) {
         // with `a/: 10`.  We temporarily discern the cases.
         //
         if (level->mode == '/' or level->mode == '.') {
-            if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
+            if (Is_Lex_Whitespace(*ep) or *ep == ']' or *ep == ')') {
                 Init_Blank(PUSH());  // `a.:` or `b/:` need a blank
                 ss->end = ss->begin = ep = bp;  // let parent see `:`
                 goto done;
@@ -1988,8 +1982,8 @@ Bounce Scanner_Executor(Level* const L) {
             ++bp;
             ++ep;
             while (not (
-                IS_LEX_ANY_SPACE(*ep)
-                or IS_LEX_DELIMIT(*ep)
+                Is_Lex_Whitespace(*ep)
+                or Is_Lex_Delimit(*ep)
                 or *ep == ':'  // The dreaded `foo/:x: 10` syntax
             )){
                 ++ep;
@@ -2002,14 +1996,14 @@ Bounce Scanner_Executor(Level* const L) {
           #endif
         }
 
-        if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
+        if (Is_Lex_Whitespace(*ep) or *ep == ']' or *ep == ')') {
             Init_Sigil(PUSH(), SIGIL_GET);  // :
             ss->begin = ss->end = ep;
             break;
         }
 
         if (*ep == ':') {  // second colon
-            if (IS_LEX_ANY_SPACE(ep[1]) or ep[1] == ']' or ep[1] == ')') {
+            if (Is_Lex_Whitespace(ep[1]) or ep[1] == ']' or ep[1] == ')') {
                 Init_Sigil(PUSH(), SIGIL_SET);  // ::
                 ep = ep + 1;
                 ss->begin = ss->end = ep;
@@ -2048,7 +2042,7 @@ Bounce Scanner_Executor(Level* const L) {
             return RAISE(Error_Syntax(ss, token));
 
         if (
-            IS_LEX_ANY_SPACE(*ep)
+            Is_Lex_Whitespace(*ep)
             or *ep == ']' or *ep == ')'
             or *ep == ';'
         ){
@@ -2076,7 +2070,7 @@ Bounce Scanner_Executor(Level* const L) {
 
         if (*ep == '~') {
             if (
-                IS_LEX_ANY_SPACE(ep[1])
+                Is_Lex_Whitespace(ep[1])
                 or ep[1] == ']' or ep[1] == ')'
             ){
                 Init_Sigil(PUSH(), SIGIL_QUASI);  // it's ~~
@@ -2091,7 +2085,7 @@ Bounce Scanner_Executor(Level* const L) {
         }
 
         if (
-            IS_LEX_ANY_SPACE(*ep)
+            Is_Lex_Whitespace(*ep)
             or *ep == ']' or *ep == ')'
             or *ep == ';'
             or (*ep == ',' and ep[1] != '~')  // (x: ~, y: 10) isn't quasi-comma
@@ -2222,7 +2216,7 @@ Bounce Scanner_Executor(Level* const L) {
         if (
             (*ep == '.' or *ep == ',')  // still allow `1,2` as `1.2` synonym
             and not Is_Dot_Or_Slash(level->mode)  // not in PATH!/TUPLE! (yet)
-            and IS_LEX_NUMBER(ep[1])  // If # digit, we're seeing `###.#???`
+            and Is_Lex_Number(ep[1])  // If # digit, we're seeing `###.#???`
         ){
             // If we will be scanning a TUPLE!, then we're at the head of it.
             // But it could also be a DECIMAL! if there aren't any more dots.
@@ -2230,7 +2224,7 @@ Bounce Scanner_Executor(Level* const L) {
             const Byte* temp = ep + 1;
             REBLEN temp_len = len + 1;
             for (; *temp != '.'; ++temp, ++temp_len) {
-                if (IS_LEX_DELIMIT(*temp)) {
+                if (Is_Lex_Delimit(*temp)) {
                     token = TOKEN_DECIMAL;
                     ss->begin = ss->end = ep = temp;
                     len = temp_len;
@@ -2291,7 +2285,7 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_DATE:
         while (*ep == '/' and level->mode != '/') {  // Is date/time?
             ep++;
-            while (*ep == '.' or IS_LEX_NOT_DELIMIT(*ep))
+            while (*ep == '.' or Is_Lex_Not_Delimit(*ep))
                 ++ep;
             len = ep - bp;
             if (len > 50) {
@@ -2424,7 +2418,7 @@ Bounce Scanner_Executor(Level* const L) {
         ss->begin = ep;
 
         if (
-            *ep == '\0' or IS_LEX_SPACE(*ep) or ANY_CR_LF_END(*ep)
+            *ep == '\0' or Is_Lex_Space(*ep) or ANY_CR_LF_END(*ep)
             or *ep == ')' or *ep == ']'
         ){
             goto done;
@@ -2595,7 +2589,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     if (
         *ss->begin == '\0'  // `foo/`
-        or IS_LEX_ANY_SPACE(*ss->begin)  // `foo/ bar`
+        or Is_Lex_Whitespace(*ss->begin)  // `foo/ bar`
         or *ss->begin == ';'  // `foo/;bar`
     ){
         // Don't bother scanning recursively if we don't have to.

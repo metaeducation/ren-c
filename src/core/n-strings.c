@@ -388,7 +388,7 @@ DECLARE_NATIVE(enhex)
             Encode_UTF8_Char(encoded, c, encoded_size);
         }
         else {
-            // "Everything else must be url-encoded".  Rebol's LEX_MAP does
+            // "Everything else must be url-encoded".  Rebol's g_lex_map does
             // not have a bit for this in particular, though maybe it could
             // be retooled to help more with this.  For now just use it to
             // speed things up a little.
@@ -396,9 +396,9 @@ DECLARE_NATIVE(enhex)
             encoded[0] = cast(Byte, c);
             encoded_size = 1;
 
-            switch (Get_Lex_Class(c)) {
+            switch (Get_Lex_Class(encoded[0])) {
               case LEX_CLASS_DELIMIT:
-                switch (Get_Lex_Delimit(c)) {
+                switch (Get_Lex_Delimit(encoded[0])) {
                   case LEX_DELIMIT_LEFT_PAREN:
                   case LEX_DELIMIT_RIGHT_PAREN:
                   case LEX_DELIMIT_LEFT_BRACKET:
@@ -425,7 +425,7 @@ DECLARE_NATIVE(enhex)
                 goto leave_as_is;
 
               case LEX_CLASS_SPECIAL:
-                switch (Get_Lex_Special(c)) {
+                switch (Get_Lex_Special(encoded[0])) {
                   case LEX_SPECIAL_AT:
                   case LEX_SPECIAL_COLON:
                   case LEX_SPECIAL_APOSTROPHE:
@@ -535,37 +535,26 @@ DECLARE_NATIVE(dehex)
             if (i + 2 >= len)
                fail ("Percent decode has less than two codepoints after %");
 
-            cp = Utf8_Next(&c, cp);
+            Codepoint c1;
+            Codepoint c2;
+            cp = Utf8_Next(&c1, cp);
             ++i;
-            if (c > UINT8_MAX)
-                c = '\0'; // LEX_DELIMIT, will cause error below
-            Byte lex1 = Lex_Map[cast(Byte, c)];
-
-            cp = Utf8_Next(&c, cp);
+            cp = Utf8_Next(&c2, cp);
             ++i;
-            if (c > UINT8_MAX)
-                c = '\0'; // LEX_DELIMIT, will cause error below
-            Byte lex2 = Lex_Map[cast(Byte, c)];
 
-            // If class LEX_WORD or LEX_NUMBER, there is a value contained in
-            // the mask which is the value of that "digit".  So A-F and
-            // a-f can quickly get their numeric values.
-            //
-            Byte d1 = lex1 & LEX_VALUE;
-            Byte d2 = lex2 & LEX_VALUE;
-
+            Byte nibble1;
+            Byte nibble2;
             if (
-                lex1 < LEX_WORD or (d1 == 0 and lex1 < LEX_NUMBER)
-                or lex2 < LEX_WORD or (d2 == 0 and lex2 < LEX_NUMBER)
+                c1 > UINT8_MAX
+                or not Try_Get_Lex_Hexdigit(&nibble1, cast(Byte, c1))
+                or
+                c2 > UINT8_MAX
+                or not Try_Get_Lex_Hexdigit(&nibble2, cast(Byte, c2))
             ){
                 fail ("Percent must be followed by 2 hex digits, e.g. %XX");
             }
 
-            // !!! We might optimize here for ASCII codepoints, but would
-            // need to consider it a "flushing point" for the scan buffer,
-            // in order to not gloss over incomplete UTF-8 sequences.
-            //
-            Byte b = (d1 << 4) + d2;
+            Byte b = (nibble1 << 4) + nibble2;
             scan[scan_size++] = b;
         }
 

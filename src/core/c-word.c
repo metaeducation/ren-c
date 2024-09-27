@@ -305,7 +305,7 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
   blockscope {
     assert(Get_Lex_Class(utf8[0]) != LEX_CLASS_NUMBER);  // no leading digit
     for (Offset i = 0; i < utf8_size; ++i) {
-        assert(not IS_LEX_ANY_SPACE(utf8[i]));  // spaces/newlines illegal
+        assert(not Is_Lex_Whitespace(utf8[i]));  // spaces/newlines illegal
 
         assert(
             utf8[i] != ':'

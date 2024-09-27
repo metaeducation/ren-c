@@ -182,7 +182,7 @@ static Binary* Decode_Base2(const Byte* *src, REBLEN len, Byte delim)
         if (delim && *cp == delim)
             break;
 
-        Byte lex = Lex_Map[*cp];
+        Lex lex = Lex_Of(*cp);
 
         if (lex >= LEX_NUMBER) {
             if (*cp == '0')
@@ -198,7 +198,7 @@ static Binary* Decode_Base2(const Byte* *src, REBLEN len, Byte delim)
                 accum = 0;
             }
         }
-        else if (!*cp || lex > LEX_DELIMIT_RETURN)
+        else if (!*cp || lex > LEX_DELIMIT_MAX_WHITESPACE)
             goto err;
     }
     if (count)
@@ -230,17 +230,13 @@ static Binary* Decode_Base16(const Byte* *src, REBLEN len, Byte delim)
         if (delim && *cp == delim)
             break;
 
-        Byte lex = Lex_Map[*cp];
-
-        if (lex > LEX_WORD) {
-            REBINT val = lex & LEX_VALUE;  // char num encoded into lex
-            if (!val && lex < LEX_NUMBER)
-                goto err;  // invalid char (word but no val)
-            accum = (accum << 4) + val;
+        Byte nibble;
+        if (Try_Get_Lex_Hexdigit(&nibble, *cp)) {
+            accum = (accum << 4) + nibble;
             if (count++ & 1)
                 *bp++ = cast(Byte, accum);
         }
-        else if (!*cp || lex > LEX_DELIMIT_RETURN)
+        else if (*cp == '\0' or not Is_Lex_Whitespace(*cp))
             goto err;
     }
     if (count & 1) goto err; // improper modulus

@@ -308,6 +308,8 @@ void MF_Issue(REB_MOLD *mo, const Cell* v, bool form)
     // of what that logic *should* do.
 
     for (; c != '\0'; cp = Utf8_Next(&c, cp)) {
+        if (c > UINT8_MAX)
+            continue;
         if (
             c <= 32  // control codes up to 32 (space)
             or (
@@ -318,7 +320,10 @@ void MF_Issue(REB_MOLD *mo, const Cell* v, bool form)
             no_quotes = false;
             break;
         }
-        if (IS_LEX_DELIMIT(c) and IS_LEX_DELIMIT_HARD(c)) {
+        if (
+            Is_Lex_Delimit(cast(Byte, c))
+            and Is_Lex_Delimit_Hard(cast(Byte, c))
+        ){
             no_quotes = false;  // comma, bracket, parentheses...
             break;
         }
