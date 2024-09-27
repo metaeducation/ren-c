@@ -463,12 +463,14 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
     if (TOP_INDEX - 1 == base) {  // only one item, use as-is if possible
         Move_Drop_Top_Stack_Element(out);  // balances stack, ensures element
 
-        Option(Error*) error = Trap_Check_Sequence_Element(
-            sequence_heart,
-            cast(Element*, out)
-        );
-        if (error)
-            return error;
+        if (not Is_Blank(out)) {  // allow _.(void) to be _ if COMPOSE'd
+            Option(Error*) error = Trap_Check_Sequence_Element(
+                sequence_heart,
+                cast(Element*, out)
+            );
+            if (error)
+                return error;
+        }
 
         Sigil sigil = maybe Sigil_Of_Kind(sequence_heart);
         if (not sigil)  // just wanted a plain pa/th or tu.p.le
