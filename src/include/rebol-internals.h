@@ -191,6 +191,9 @@ typedef RebolValue Value;
 #include "structs/struct-node.h"
 #include "mem-pools.h"
 
+#include "tmp-hearts.h"  // HeartEnum and KindEnum (REB_BLOCK, REB_TEXT, etc.)
+#include "sys-kinds.h"  // defines Heart and Kind as safe wrappers if C++
+
 #include "structs/struct-cell.h"
 #include "structs/struct-value.h"
 
@@ -208,9 +211,7 @@ typedef RebolValue Value;
 #include "structs/struct-state.h"  // state of variables restored on jumps
 #include "structs/struct-level.h"  // C struct for running level, uses feed
 
-
-#include "tmp-kinds.h"  // HeartEnum and KindEnum (REB_BLOCK, REB_TEXT, etc.)
-#include "sys-kinds.h"  // defines Heart and Kind as safe wrappers if C++
+#include "tmp-typesets.h"
 
 #include "sys-ordered.h"  // changing the type enum *must* update these macros
 #include "sys-flavor.h"  // Flex subclass byte (uses sizeof(Cell))

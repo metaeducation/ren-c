@@ -150,15 +150,6 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // Most of the time code wants to check the VAL_TYPE() of a cell and not it's
 // HEART, because that treats quoted cells differently.  If you only check
 // the heart, then (''''x) will equal (x) because both hearts are WORD!.
-//
-// 1. In lieu of typechecking cell is-a cell, we assume the macro finding
-//    a field called ->header with .bits in it is good enough.  All methods of
-//    checking seem to add overhead in the debug build that isn't worth it.
-//    To help avoid accidentally passing stubs, the HeaderUnion in a Stub
-//    is named "leader" instead of "header".
-//
-#define HEART_BYTE(cell) \
-    SECOND_BYTE(&(cell)->header.bits)  // don't use ensure() [1]
 
 #define FLAG_HEART_BYTE(heart)       FLAG_SECOND_BYTE(heart)
 
@@ -697,6 +688,45 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
 
 #define Mem_Fill(dst,val,size) \
     memset(cast(void*, (dst)), (val), (size))  // [4]
+
+
+//=//// HOOKABLE HEART_BYTE() ACCESSOR ////////////////////////////////////=//
+//
+// This has to be defined after `Cell` is fully defined.
+//
+// 1. In lieu of typechecking cell is-a cell, we assume the macro finding
+//    a field called ->header with .bits in it is good enough.  All methods of
+//    checking seem to add overhead in the debug build that isn't worth it.
+//    To help avoid accidentally passing stubs, the HeaderUnion in a Stub
+//    is named "leader" instead of "header".
+//
+// 2. It can often be helpful to inject code to when the HEART_BYTE() is being
+//    assigned.  This mechanism also intercepts reads of the HEART_BYTE() too,
+//    which is done pervasively.  It slows down the code in debug builds by
+//    a noticeable amount, so we don't put it in all debug builds...only
+//    special situations.
+//
+#if (! DEBUG_HOOK_HEART_BYTE)
+    #define HEART_BYTE(cell) \
+        SECOND_BYTE(&(cell)->header.bits)  // don't use ensure() [1]
+#else
+    struct HeartHolder {  // class for intercepting heart assignments [2]
+        Cell* & ref;
+
+        HeartHolder(const Cell* const& ref)
+            : ref (const_cast<Cell* &>(ref))
+          {}
+
+        void operator=(Byte right) {
+            SECOND_BYTE(&(ref)->header.bits) = right;
+        }
+
+        operator Heart () const
+          { return static_cast<Heart>(SECOND_BYTE(&(ref)->header.bits)); }
+    };
+    #define HEART_BYTE(cell) \
+        HeartHolder {cell}
+#endif
 
 
 //=//// CELL SUBCLASSES FOR QUARANTINING STABLE AND UNSTABLE ANTIFORMS /////=//

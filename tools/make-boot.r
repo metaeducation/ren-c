@@ -275,16 +275,12 @@ for-each-typerange: func [
     ]
 ]
 
-e-types: make-emitter "Datatype Definitions" (
-    join prep-dir %include/tmp-kinds.h
-)
 
-e-types/emit [{
-    /* Tables generated from %types.r for builtin typesets */
-    extern Decider* const g_type_deciders[];
-    extern uint_fast32_t const g_typeset_memberships[];
-}]
-e-types/emit newline
+=== "HEARTS ENUM FILE" ===
+
+e-hearts: make-emitter "Cell Hearts Enum" (
+    join prep-dir %include/tmp-hearts.h
+)
 
 rebs: collect [
     for-each-datatype 't [
@@ -313,9 +309,9 @@ kinds: collect [
     ]
 ]
 
-e-types/emit [rebs {
+e-hearts/emit [rebs {
     /*
-     * INTERNAL DATATYPE CONSTANTS, e.g. REB_BLOCK or REB_TAG
+     * INTERNAL CELL HEART ENUM, e.g. REB_BLOCK or REB_TAG
      *
      * GENERATED FROM %TYPES.R
      *
@@ -361,6 +357,22 @@ e-types/emit [rebs {
 
     STATIC_ASSERT(u_cast(int, REB_QUASIFORM) == u_cast(int, REB_MAX_HEART));
     STATIC_ASSERT(REB_MAX < 256);  /* Stored in bytes */
+}]
+e-hearts/emit newline
+
+e-hearts/write-emitted
+
+
+=== "MACROS LIKE Is_Block(), OTHER DATATYPE DEFINITIONS" ===
+
+e-types: make-emitter "Datatype Definitions" (
+    join prep-dir %include/tmp-typesets.h
+)
+
+e-types/emit [{
+    /* Tables generated from %types.r for builtin typesets */
+    extern Decider* const g_type_deciders[];
+    extern uint_fast32_t const g_typeset_memberships[];
 }]
 e-types/emit newline
 

@@ -770,6 +770,10 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
+#if !defined(DEBUG_HOOK_HEART_BYTE)
+    #define DEBUG_HOOK_HEART_BYTE 0
+#endif
+
 // It can be very difficult in release builds to know where a fail came
 // from.  This arises in pathological cases where an error only occurs in
 // release builds, or if making a full debug build bloats the code too much.
