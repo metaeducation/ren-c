@@ -458,7 +458,7 @@ static void Init_System_Object(
         sysobj_spec_virtual,
         system,
         nullptr,  // !!! no binder made at present
-        REB_WORD  // all internal refs are to the object
+        CELL_MASK_0  // all internal refs are to the object
     );
 
     // Evaluate the block (will eval CONTEXTs within).

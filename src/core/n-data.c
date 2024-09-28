@@ -265,13 +265,7 @@ DECLARE_NATIVE(overbind)
     else
         assert(Any_Context(defs));
 
-    Heart affected = REB_WORD;
-
-    BINDING(v) = Make_Use_Core(
-        defs,
-        Cell_List_Binding(v),
-        affected
-    );
+    BINDING(v) = Make_Use_Core(defs, Cell_List_Binding(v), CELL_MASK_0);
 
     return COPY(v);
 }
@@ -353,7 +347,7 @@ DECLARE_NATIVE(without)
     }
 
     assert(Any_List(v));
-    Virtual_Bind_Deep_To_Existing_Context(v, ctx, nullptr, REB_WORD);
+    Virtual_Bind_Deep_To_Existing_Context(v, ctx, nullptr, CELL_MASK_0);
     return COPY(v);
 }
 

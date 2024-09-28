@@ -263,7 +263,7 @@ bool Specialize_Action_Throws(
             unwrap def,
             exemplar,
             &binder,
-            REB_SET_WORD
+            CELL_FLAG_USE_NOTE_SET_WORDS
         );
 
         // !!! Only one binder can be in effect, and we're calling arbitrary

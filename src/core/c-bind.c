@@ -855,7 +855,7 @@ DECLARE_NATIVE(let)
 //
 //      return: [frame! any-list?]
 //      environment [frame! any-list?]
-//      word [any-word?]
+//      word [word!]
 //      value [any-value?]
 //  ]
 //
@@ -920,7 +920,7 @@ DECLARE_NATIVE(add_use_object) {
     if (L_binding)
         Set_Node_Managed_Bit(L_binding);
 
-    Use* use = Make_Use_Core(object, L_binding, REB_WORD);
+    Use* use = Make_Use_Core(object, L_binding, CELL_MASK_0);
 
     BINDING(FEED_SINGLE(L->feed)) = use;
 
@@ -1357,7 +1357,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
             body_in_out,
             c,
             &binder,
-            REB_WORD
+            CELL_MASK_0
         );
     }
 
@@ -1405,35 +1405,17 @@ void Virtual_Bind_Deep_To_Existing_Context(
     Value* list,
     VarList* context,
     struct Reb_Binder *binder,
-    Heart affected
+    Flags note
 ){
     // Most of the time if the context isn't trivially small then it's
     // probably best to go ahead and cache bindings.
     //
     UNUSED(binder);
 
-/*
-    // Bind any SET-WORD!s in the supplied code block into the FRAME!, so
-    // e.g. APPLY 'APPEND [VALUE: 10]` will set VALUE in exemplar to 10.
-    //
-    // !!! Today's implementation mutates the bindings on the passed-in block,
-    // like R3-Alpha's MAKE OBJECT!.  See Virtual_Bind_Deep_To_New_Context()
-    // for potential future directions.
-    //
-    Bind_Values_Inner_Loop(
-        &binder,
-        Cell_List_At_Mutable_Hack(ARG(def)),  // mutates bindings
-        exemplar,
-        FLAGIT_KIND(REB_SET_WORD),  // types to bind (just set-word!),
-        0,  // types to "add midstream" to binding as we go (nothing)
-        BIND_DEEP
-    );
- */
-
     BINDING(list) = Make_Use_Core(
         Varlist_Archetype(context),
         Cell_List_Binding(list),
-        affected
+        note
     );
 }
 

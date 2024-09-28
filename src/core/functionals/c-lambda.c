@@ -74,7 +74,7 @@ Bounce Lambda_Dispatcher(Level* const L)
     Use* use = Make_Use_Core(  // have to USE here
         Varlist_Archetype(Varlist_Of_Level_Force_Managed(L)),
         parent,
-        REB_WORD
+        CELL_MASK_0
     );
 
     Copy_Cell(SPARE, block);

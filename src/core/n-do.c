@@ -118,7 +118,7 @@ DECLARE_NATIVE(shove)
 
   //=//// RESOLVE ACTION ON RIGHT (LOOKUP VAR, EVAL GROUP...) /////////////=//
   //
-  // 1. At one point, it was allowed to shove into SET-WORD! etc:
+  // 1. At one point, it was allowed to shove into set-words etc:
   //
   //        >> 10 ->- x:
   //        >> x
@@ -635,7 +635,7 @@ DECLARE_NATIVE(applique)
         def,
         exemplar,
         nullptr,  // !!! Unused binder parameter
-        REB_SET_WORD
+        CELL_FLAG_USE_NOTE_SET_WORDS
     );
 
     STATE = ST_APPLIQUE_RUNNING_DEF_BLOCK;

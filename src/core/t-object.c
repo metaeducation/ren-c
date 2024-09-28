@@ -56,8 +56,8 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
     // binder.  But don't modify the object yet, in case the block turns out
     // to be malformed (we don't want partial expansions applied).
     //
-    // !!! This allows plain WORD! in the key spot, in addition to SET-WORD!.
-    // Should it allow ANY-WORD?  Restrict to just SET-WORD?
+    // !!! This allows plain WORD! in the key spot.  Review, this should
+    // really be EXTEND!
     //
   blockscope {
     const Element* word;
@@ -643,7 +643,7 @@ Bounce MAKE_Context(
             virtual_arg,
             ctx,
             nullptr,  // !!! no binder made at present
-            REB_WORD  // all internal refs are to the object
+            CELL_MASK_0  // all internal refs are to the object
         );
 
         DECLARE_ATOM (dummy);

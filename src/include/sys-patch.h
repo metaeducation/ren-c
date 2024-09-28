@@ -90,8 +90,10 @@
 INLINE Use* Make_Use_Core(
     const Element* defs,  // must be a context or a WORD!
     Context* parent,
-    Heart affected
+    Flags note
 ){
+    assert(note == CELL_MASK_0 or note == CELL_FLAG_USE_NOTE_SET_WORDS);
+
     Stub* use = Alloc_Singular(
         FLAG_FLAVOR(USE)
             | NODE_FLAG_MANAGED
@@ -103,10 +105,8 @@ INLINE Use* Make_Use_Core(
     assert(Any_Context(defs) or Is_Word(defs));
     Copy_Cell(Stub_Cell(use), defs);
 
-    if (affected == REB_SET_WORD)
-        Set_Cell_Flag(Stub_Cell(use), USE_NOTE_SET_WORDS);
-    else
-        assert(affected == REB_WORD);
+    if (note)
+        Stub_Cell(use)->header.bits |= note;
 
     LINK(NextUse, use) = parent;  // use, let, frame context, nullptr... [5]
     MISC(Variant, use) = nullptr;  // "Variant" feature removed for now [6]

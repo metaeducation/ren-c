@@ -447,7 +447,7 @@ Bounce MAKE_Error(
             virtual_arg,
             e,
             nullptr,  // binder
-            REB_WORD
+            CELL_MASK_0
         );
 
         DECLARE_ATOM (evaluated);
