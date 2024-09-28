@@ -25,26 +25,28 @@
 // was lifted, it became feasible to give them the type SIGIL!
 //
 
+INLINE char Symbol_For_Sigil(Sigil sigil) {
+    switch (sigil) {
+      case SIGIL_GET:   return ':';
+      case SIGIL_META:  return '^';
+      case SIGIL_TYPE:  return '&';
+      case SIGIL_THE:   return '@';
+      case SIGIL_VAR:   return '$';
+      case SIGIL_QUOTE: return '\'';
+      default:
+        assert(false);
+        return 0;  // silence warning
+    }
+}
+
 INLINE Element* Init_Sigil(Sink(Element*) out, Sigil sigil) {
     if (sigil == SIGIL_SET)
         Init_Issue_Utf8(out, cb_cast("::"), 2, 2);  // codepoints 2, size 2
     else if (sigil == SIGIL_QUASI)
         Init_Issue_Utf8(out, cb_cast("~~"), 2, 2);  // codepoints 2, size 2
-    else {
-        Codepoint c;
-        switch (sigil) {
-          case SIGIL_GET:   c = ':';    break;
-          case SIGIL_META:  c = '^';    break;
-          case SIGIL_TYPE:  c = '&';    break;
-          case SIGIL_THE:   c = '@';    break;
-          case SIGIL_VAR:   c = '$';    break;
-          case SIGIL_QUOTE: c = '\'';   break;
-          default:
-            assert(false);
-            c = 0;  // silence warning
-        }
-        Init_Char_Unchecked(out, c);
-    }
+    else
+        Init_Char_Unchecked(out, Symbol_For_Sigil(sigil));
+
     HEART_BYTE(out) = REB_SIGIL;
     EXTRA(Bytes, out).at_least_4[IDX_EXTRA_SIGIL] = sigil;
     return out;
