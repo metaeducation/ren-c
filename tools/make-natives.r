@@ -112,50 +112,41 @@ gather-natives join src-dir %core/
 ; special way.  Startup constructs it manually, before skipping it and invoking
 ; the evaluator to do the other `xxx: native/yyy [...]` evaluations.
 
-native-proto: null
-antiform?-proto: null
-logic?-proto: null
-action?-proto: null
-enfix-proto: null
-any-value?-proto: null
-any-atom?-proto: null
-element?-proto: null
-quasi?-proto: null
-quoted?-proto: null
+leaders: [
+    native
+    antiform?
+    logic?
+    action?
+    enfix
+    any-value?
+    any-atom?
+    element?
+    quasi?
+    quoted?
+    set-word?
+    get-word?
+]
+leader-protos: make map! []
 
 info: all-protos
 while [not tail? info] [
-    case [
-        info.1.name = "native" [native-proto: take info]
-        info.1.name = "logic?" [logic?-proto: take info]
-        info.1.name = "antiform?" [antiform?-proto: take info]
-        info.1.name = "action?" [action?-proto: take info]
-        info.1.name = "enfix" [enfix-proto: take info]
-        info.1.name = "any-value?" [any-value?-proto: take info]
-        info.1.name = "any-atom?" [any-atom?-proto: take info]
-        info.1.name = "element?" [element?-proto: take info]
-        info.1.name = "quasi?" [quasi?-proto: take info]
-        info.1.name = "quoted?" [quoted?-proto: take info]
-    ]
-    else [
+    assert [text? info.1.name]  ; allows native names illegal in bootstrap
+    name: to word! info.1.name  ; extract name to avoid left-before-right eval
+    if find leaders name [
+        leader-protos.(name): take info  ; (info.1.name) would eval after TAKE!
+    ] else [
         info: next info
     ]
 ]
 
-assert [native-proto logic?-proto antiform?-proto action?-proto enfix-proto
-    any-value?-proto any-atom?-proto element?-proto
-    quasi?-proto quoted?-proto]
-
-insert all-protos quoted?-proto  ; last before unsorted natives
-insert all-protos quasi?-proto
-insert all-protos element?-proto
-insert all-protos any-atom?-proto
-insert all-protos any-value?-proto
-insert all-protos enfix-proto
-insert all-protos action?-proto
-insert all-protos antiform?-proto
-insert all-protos logic?-proto
-insert all-protos native-proto  ; so now it's first
+insert all-protos spread collect [
+    for-each 'l leaders [
+        if not leader-protos.(l) [
+            fail ["Did not find" l "to put at head of natives list"]
+        ]
+        keep leader-protos.(l)
+    ]
+]
 
 
 === "MOLD AS TEXT TO BE EMBEDDED IN THE EXECUTABLE AND SCANNED AT BOOT" ===

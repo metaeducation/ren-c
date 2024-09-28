@@ -490,6 +490,40 @@ DECLARE_INTRINSIC(refinement_q)
 
 
 //
+//  set-word?: native/intrinsic [
+//
+//  "Test if an argument is a chain with a word and trailing blank"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_INTRINSIC(set_word_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_Set_Word(arg));
+}
+
+
+//
+//  get-word?: native/intrinsic [
+//
+//  "Test if an argument is a chain with a leading blank and a word"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_INTRINSIC(get_word_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_Get_Word(arg));
+}
+
+
+//
 //  quasi-word?: native/intrinsic [
 //
 //  "Test if an argument is an QUASI form of word"
