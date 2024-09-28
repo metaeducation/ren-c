@@ -171,7 +171,7 @@
 (
     run func [
         return: [~]
-        @set-words [<variadic> set-word! tag!]
+        @set-words [<variadic> set-word? tag!]
         <local>
             set-word type-name tester meta
     ][

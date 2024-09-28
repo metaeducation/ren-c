@@ -37,11 +37,6 @@
 ~no-arg~ !! (eval reduce [unrun +/ 1 2])  ; enfix no argument
 
 
-; Rather than error when SET-WORD! or SET-PATH! are used as the left hand
-; side of a -> operation going into an operation that evaluates its left,
-; the value of that SET-WORD! or SET-PATH! is fetched and passed right, then
-; written back into the variable.
-
 (
     x: 10
     x: me + 20

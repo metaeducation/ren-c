@@ -342,7 +342,7 @@ select: generic [
 
 
 pick*: generic [
-    {Low-level hook for PICK, used also by TUPLE! and GET-TUPLE!}
+    "Low-level hook for PICK, used also by TUPLE!"
 
     return: "PICK: the retrieved value"
         [any-value?]  ; PICK doesn't return void, but GET can
@@ -354,7 +354,7 @@ pick*: generic [
 
 
 poke*: generic [
-    {Low-level hook for POKE, used also by SET-PATH!}
+    "Low-level hook for POKE, used also by SET-TUPLE!"
 
     return: "Bits referencing cell must update (nullptr if no update needed)"
         [~null~ element?]

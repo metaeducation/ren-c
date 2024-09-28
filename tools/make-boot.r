@@ -153,7 +153,7 @@ for-each-datatype: func [
     name* antiname* description* typesets* class* make* mold* heart* cellmask*
     completed* running* is-unstable* decorated
 ][
-    obj: make object! compose [(to set-word! var) ~]  ; make variable
+    obj: make object! compose [(to-set-word var) ~]  ; make variable
     body: overbind obj body  ; make variable visible to body
     var: has obj var
 
@@ -211,7 +211,7 @@ for-each-typerange: func [
         [block!]
     <local> name* heart* any-name!* stack types* starting
 ][
-    obj: make object! compose [(to set-word! var) ~]  ; make variable
+    obj: make object! compose [(to-set-word var) ~]  ; make variable
     body: overbind obj body  ; make variable visible to body
     var: has obj var
 
@@ -856,13 +856,15 @@ first-error-sym: sym-n
 boot-errors: load %errors.r
 
 for-each [sw-cat list] boot-errors [
-    cat: to word! ensure set-word! sw-cat
+    assert [set-word? sw-cat]
+    cat: to word! sw-cat
     ensure block! list
 
     add-sym cat  ; category might incidentally exist as SYM_XXX
 
     for-each [sw-id t-message] list [
-        id: to word! ensure set-word! sw-id
+        assert [set-word? sw-id]
+        id: to word! sw-id
         message: t-message
 
         ; Add a SYM_XXX constant for the error's ID word

@@ -59,7 +59,7 @@ export parsing-at: func [
     <local> code-group obj
 ][
     use [instruction position] [  ; vars need to outlive this function call
-        obj: make object! compose [(to set-word! var) ~]  ; make variable [3]
+        obj: make object! compose [(to-set-word var) ~]  ; make variable [3]
         code: overbind obj code  ; make variable visible to code
         var: has obj var
 
@@ -79,6 +79,6 @@ export parsing-at: func [
             ]
         ]
 
-        return compose [(as set-word! var) <here>, (code-group), instruction]
+        return compose [(to-set-word var) <here>, (code-group), instruction]
     ]
 ]

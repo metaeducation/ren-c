@@ -228,7 +228,7 @@ combinator: func [
     ; Enclosing with the wrapper permits us to inject behavior before and
     ; after each combinator is executed.
     ;
-    return unrun enclose augment :action [
+    return unrun enclose augment action/ [
         /rule-start [block!] /rule-end [block!]
     ] :wrapper  ; returns plain ACTION!
 ]
@@ -1177,7 +1177,7 @@ default-combinators: make map! reduce [
         return: "The emitted value"
             [any-value?]
         /pending [blank! block!]
-        @target [set-word! set-group!]
+        @target [set-word? set-group?]
         parser [action?]
         <local> result'
     ][
@@ -1206,7 +1206,7 @@ default-combinators: make map! reduce [
         ; The value is quoted or quasi because of ^ on ^(parser input).
         ; This lets us emit antiforms, since the MAKE OBJECT! evaluates.
         ;
-        pending: glom pending :[as set-word! unbind target result']
+        pending: glom pending reduce [target result']
         return unmeta result'
     ]
 
@@ -1222,8 +1222,8 @@ default-combinators: make map! reduce [
     set-word! combinator [
         return: "The set value"
             [any-value?]
-        value [set-word!]
-        parser "Failed parser will means target SET-WORD! will be unchanged"
+        value [set-word?]
+        parser "If assignment, failed parser means target will be unchanged"
             [action?]
         <local> result'
     ][
@@ -1434,7 +1434,7 @@ default-combinators: make map! reduce [
     'let combinator [
         return: "Result of the LET if assignment, else bound word"
             [any-value?]
-        'vars [set-word!]
+        'vars [set-word?]
         parser [action?]
         <local> result'
     ][

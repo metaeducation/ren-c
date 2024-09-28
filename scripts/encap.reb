@@ -568,49 +568,43 @@ pe-format: context [
         return: [block!]
         name [word!]
         rule [block!]
-        /skip "Do not collect these words"
+        /ignore "Do not collect these words"
             [word! block!]
     ][
-        let words: skip
-        skip: lib/skip/
-
         let def: make block! 1
         let find-a-word: func [
             return: [~]
-            word [any-word?]
+            word [word!]
         ][
             any [
-                find words to word! word
-                find def to set-word! word
+                find (maybe ignore) word
+                find def (setify word)
             ] else [
-                append def to set-word! word
+                append def setify word
             ]
         ]
 
-        either words [
-            if word? words [
-                words: reduce [words]
+        if ignore [
+            if word? ignore [
+                ignore: reduce [ignore]  ; !!! should FIND on WORD! work?
             ]
-            if locked? words [
-                words: copy words
+            else [
+                ; assert [all:word? ignore]  ; coming soon!
             ]
-            append words 'err
-        ][
-            words: [err]
         ]
 
         let word
         let block-rule
         let group-rule: [
             word: set-word!
-            (find-a-word word)
+            (find-a-word to word! word)
             | ahead block! into block-rule  ; recursively look into the array
             | one
         ]
         block-rule: [
             ahead group! into [opt some group-rule]
             | ahead block! into [opt some block-rule]
-            | word: set-word! (find-a-word word)
+            | word: set-word! (find-a-word to word! word)
             | one
         ]
 
@@ -650,7 +644,7 @@ pe-format: context [
     ]
 
     COFF-header: ~
-    COFF-header-rule: gen-rule/skip $COFF-header [
+    COFF-header-rule: gen-rule/ignore $COFF-header [
         and [
             #{4c01} (machine: 'i386)
             | #{6486} (machine: 'x86-64 uintptr-le: uintptr-64-le)

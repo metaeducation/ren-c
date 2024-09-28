@@ -37,7 +37,7 @@ steal: lambda [
 
     evaluation "Takes assigned value (variadic enables STEAL X: DEFAULT [...])"
         [any-value? <variadic>]
-    @look [set-word! set-tuple! <variadic>]
+    @look [set-word? set-tuple? <variadic>]
 ][
     get first look  ; returned value
     elide take evaluation
@@ -122,7 +122,9 @@ func: func* [
 
     parse3 spec [opt some [
         :(if var '[  ; so long as we haven't reached any <local> or <with> etc.
-            var: [&any-word? | &any-path? | quoted!] (
+            var: [
+                &set-word? | &get-word? | &any-word? | &refinement? | quoted!
+            ] (
                 append new-spec var
             )
             |
@@ -205,8 +207,11 @@ func: func* [
         )
         opt some [
             var: word!, other: opt group! (
-                append statics (as set-word! var)
-                append statics ((bindable other) else '~)  ; !!! ignore binding
+                append statics setify var
+                append statics any [
+                    bindable maybe other  ; !!! ignore binding on group
+                    '~
+                ]
             )
         ]
         (var: null)
@@ -217,8 +222,8 @@ func: func* [
             fail [
                 ; <where> spec
                 ; <near> other
-                "Invalid spec item:" (mold ^other.1)
-                "in spec" ^spec
+                "Invalid spec item:" @(other.1)
+                "in spec" @spec
             ]
         )
     ]]
@@ -775,7 +780,7 @@ meth: func/
 ;
 accessor: enfix func [
     return: [~]
-    var [set-word!]
+    var [set-word?]
     action [action?]
 ][
     set-accessor var action/

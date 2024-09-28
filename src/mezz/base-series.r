@@ -16,7 +16,7 @@ REBOL [
     }
 ]
 
-run lambda [':terms [tag! set-word! <variadic>]] [
+run lambda [':terms [tag! set-word? <variadic>]] [
     let n: 1
     let w
     while [<end> != w: take terms] [

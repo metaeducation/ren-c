@@ -36,8 +36,8 @@
 // and TAG!.  Quasiforms of these types (where legal) are also permitted.
 // There are SET-, GET-, META-, THE-, and TYPE- forms:
 //
-//     <abc>/(d e f)/[g h i]:   ; a 3-element SET-PATH!
-//     :foo.1.bar               ; a 3-element GET-TUPLE!
+//     <abc>/(d e f)/[g h i]    ; a 3-element PATH!
+//     foo.1.bar                ; a 3-element TUPLE!
 //     ^abc.(def)               ; a 2-element META-TUPLE!
 //     @<a>/<b>/<c>             ; a 3-element THE-TUPLE!
 //     ~/home/README            ; a 3-element PATH!
@@ -52,8 +52,8 @@
 // invisibly, allowing you to begin or terminate sequences with the delimiter:
 //
 //     .foo.bar     ; a 3-element TUPLE! with BLANK! in the first slot
-//     1/2/3/:      ; a 4-element SET-PATH! with BLANK! in the last slot
-//     /            ; a 2-element PATH! with BLANK! in the first and last slot
+//     1/2/3/       ; a 4-element PATH! with BLANK! in the last slot
+//     /a           ; a 2-element PATH! with BLANK! in the first slot
 //
 // Internal blanks are not allowed.  Because although there might be some
 // theoretical use for `a//b` or similar sequences, those aren't as compelling
@@ -66,9 +66,9 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * Reduced cases like the 2-element path `/` and the 2-element tuple `.`
-//   are considered to be WORD!.  This was considered non-negotiable, that
-//   `/` be allowed to mean divide.  Making it a PATH! that ran code turned
+// * Reduced cases such as "2-element path" `/` and the "2-element tuple" `.`
+//   are instead chosen as WORD!.  This was considered non-negotiable, that
+//   `/` be allowed to mean divide.  Making it a PATH! that divided turned
 //   out to be much more convoluted than having special word flags.  (See
 //   SYMBOL_FLAG_ILLEGAL_IN_ANY_SEQUENCE etc. for how these are handled,
 //   where `.` can be put in paths but `/` can't appear in any path or tuple.)

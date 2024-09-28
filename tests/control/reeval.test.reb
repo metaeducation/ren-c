@@ -13,7 +13,7 @@
     (1 == reeval :abs -1)
 ]
 
-; REEVAL can handle other variadic cases, such as SET-WORD!
+; REEVAL can handle other variadic cases
 (
     x: 10
     reeval (first [x:]) 20

@@ -52,7 +52,7 @@ make-banner: func [
         some [
             [
                 a: text! (s: format ["**  " 68 "**"] a)
-              | '= a: [text! | word! | set-word!] [
+              | '= a: [text! | word! | &set-word?] [
                         b: <here>
                           tuple! (b: get inside fmt b.1)
                         | word! (b: get inside fmt b.1)

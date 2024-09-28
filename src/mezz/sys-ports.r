@@ -109,7 +109,7 @@ make-port*: func [
     let overloads: copy []
     for-each [key val] spec [
         if not any [quasi? ^val, null? :val, blank? :val] [
-            append overloads spread :[to set-word! key :val]  ; override
+            append overloads spread reduce [setify key :val]  ; override
         ]
     ]
     append port.spec spread overloads

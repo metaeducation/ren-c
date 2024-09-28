@@ -61,20 +61,8 @@ dump: func [
                 ]
             ]
 
-            word! [
-                print [@(to set-word! item) val-to-text get/any item]
-            ]
-
-            tuple! [
-                print [@(to set-tuple! item) val-to-text reduce item]
-            ]
-
-            path! [
-                print [unspaced [mold item ":"] val-to-text reduce item]
-            ]
-
-            group! [
-                print [unspaced [mold item ":"], val-to-text reeval item]
+            word! tuple! group! [
+                print [@(setify item) val-to-text get/groups/any item]
             ]
 
             issue! [
@@ -89,7 +77,7 @@ dump: func [
 
     let swp
     case [
-        swp: match [set-word! set-tuple!] :value [  ; `dump x: 1 + 2`
+        swp: match [set-word? set-tuple?] :value [  ; `dump x: 1 + 2`
             let [pos result]: evaluate/step extra
             set swp :result
             print [swp, result]
@@ -97,7 +85,7 @@ dump: func [
 
         let b: match block! value [
             while [not tail? b] [
-                if swp: match [set-word! set-tuple!] :b.1 [  ; `dump [x: 1 + 2]`
+                if swp: match [set-word? set-tuple?] :b.1 [  ; `dump [x: 1 + 2]`
                     [b result]: evaluate/step b
                     print [swp, result]
                 ] else [
@@ -149,9 +137,9 @@ dumps: enfix func [
     {Fast generator for dumping function that uses assigned name for prefix}
 
     return: [action?]
-    ':name [set-word!]
+    ':name [set-word?]
     ':value "If issue, create non-specialized dumper...#on or #off by default"
-        [issue! text! integer! word! set-word! set-tuple! group! block!]
+        [issue! text! integer! word! set-word? set-tuple? group! block!]
     extra "Optional variadic data for SET-WORD!, e.g. `dv: dump var: 1 + 2`"
         [~null~ any-value? <variadic>]
 ][
@@ -162,9 +150,9 @@ dumps: enfix func [
     ] else [
         ; Make it easy to declare and dump a variable at the same time.
         ;
-        if match [set-word! set-tuple!] value [
+        if match [set-word? set-tuple?] value [
             value: evaluate extra
-            value: either set-word? value [as word! value] [as path! value]
+            value: either set-word? value [as word! value] [as tuple! value]
         ]
 
         ; No way to enable/disable full specializations unless there is

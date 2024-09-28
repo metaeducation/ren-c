@@ -76,7 +76,7 @@ make-http-request: func [
     target [file! text!]
         {In case of text!, no escaping is performed.}
         {(eg. useful to override escaping etc.). Careful!}
-    headers [block!] "Request headers (set-word! text! pairs)"
+    headers [block!] "Request headers (set-word? text! pairs)"
     content [~null~ text! binary!]
         {Request contents (Content-Length is created automatically).}
         {Empty string not exactly like blank.}

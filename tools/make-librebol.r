@@ -121,7 +121,7 @@ emit-proto: func [return: [~] proto] [
         ]
     ]
 
-    if (to set-word! name) != header.1 [  ; e.g. `//  rebValue: API`
+    if (to-set-word name) != header.1 [  ; e.g. `//  rebValue: API`
         fail [
             "Name in comment header (" header.1 ") isn't C function name"
             "minus API_ prefix to match" (name)

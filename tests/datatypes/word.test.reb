@@ -207,15 +207,15 @@
 
         [pos s]: transcode/next unspaced [str ":"]
         assert [pos = ""]
-        assert [s = as set-word! word]
+        assert [s = setify word]
 
         [pos g]: transcode/next unspaced [":" str]
         assert [pos = ""]
-        assert [g = as get-word! word]
+        assert [g = getify word]
 
         [pos l]: transcode/next unspaced ["^^" str]
         assert [pos = ""]
-        assert [l = as get-word! word]
+        assert [l = metafy word]
     ]
     ok)
 ]
@@ -238,11 +238,11 @@
 ; it is up in the air, so only %% is legal for now.
 [
     ("%%" = as text! match word! '%%)
-    ("%%" = as text! match set-word! '%%:)
-    ("%%" = as text! match get-word! ':%%)
+    ("%%" = as text! match [set-word?] '%%:)
+    ("%%" = as text! match [get-word?] ':%%)
     ("%%" = as text! match meta-word! '^%%)
     ("%%" = as text! match word! first [%%])
-    ("%%" = as text! match set-word! first [%%:])
-    ("%%" = as text! match get-word! first [:%%])
+    ("%%" = as text! match [set-word?] first [%%:])
+    ("%%" = as text! match [get-word?] first [:%%])
     ("%%" = as text! match meta-word! first [^%%])
 ]
