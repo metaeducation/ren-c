@@ -74,10 +74,10 @@ INLINE const Element* Cell_List_At(
     const Node* node = Cell_Node1(v);
     if (Is_Node_A_Cell(node)) {
         assert(Any_Sequence_Kind(Cell_Heart(v)));
-        const Element* elem = c_cast(Element*, node);
+        const Pairing* p = c_cast(Pairing*, node);
         if (tail_out)
-            *(unwrap tail_out) = Pairing_Tail(elem);
-        return elem;
+            *(unwrap tail_out) = Pairing_Tail(p);
+        return Pairing_Head(p);
     }
     const Array* arr = c_cast(Array*, node);
     REBIDX i = VAL_INDEX_RAW(v);  // Cell_Array() already checks it's arraylike

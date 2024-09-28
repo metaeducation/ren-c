@@ -724,6 +724,16 @@ union StubInfoUnion {
 typedef Stub Flex;
 
 
+// Pairings live in the stub pool (if not unusually sized cells), but are not
+// actually stubs--they are the size of two cells.
+//
+#if CPLUSPLUS_11
+    struct Pairing : public Node {};
+#else
+    typedef Cell Pairing;
+#endif
+
+
 // In C++, Binary, String, Array, etc. are derived from Flex.  This gives
 // desirable type checking properties (like being able to pass an Array to
 // a routine that needs a Flex, but not vice versa).  And it also means

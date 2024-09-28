@@ -37,8 +37,8 @@ REBINT CT_Pair(const Cell* a, const Cell* b, bool strict)
 
     REBI64 diff;
 
-    if ((diff = VAL_PAIR_Y_INT(a) - VAL_PAIR_Y_INT(b)) == 0)
-        diff = VAL_PAIR_X_INT(a) - VAL_PAIR_X_INT(b);
+    if ((diff = Cell_Pair_Y(a) - Cell_Pair_Y(b)) == 0)
+        diff = Cell_Pair_X(a) - Cell_Pair_X(b);
     return (diff > 0.0) ? 1 : ((diff < 0.0) ? -1 : 0);
 }
 
@@ -106,7 +106,7 @@ Bounce MAKE_Pair(
     else
         goto bad_make;
 
-    return Init_Pair_Int(OUT, VAL_INT64(x), VAL_INT64(y));
+    return Init_Pair(OUT, VAL_INT64(x), VAL_INT64(y));
 
   bad_make:
 
@@ -133,18 +133,18 @@ void Min_Max_Pair(
     bool maxed
 ){
     REBI64 x;
-    if (VAL_PAIR_X_INT(a) > VAL_PAIR_X_INT(b))
-        x = maxed ? VAL_PAIR_X_INT(a) : VAL_PAIR_X_INT(b);
+    if (Cell_Pair_X(a) > Cell_Pair_X(b))
+        x = maxed ? Cell_Pair_X(a) : Cell_Pair_X(b);
     else
-        x = maxed ? VAL_PAIR_X_INT(b) : VAL_PAIR_X_INT(a);
+        x = maxed ? Cell_Pair_X(b) : Cell_Pair_X(a);
 
     REBI64 y;
-    if (VAL_PAIR_Y_INT(a) > VAL_PAIR_Y_INT(b))
-        y = maxed ? VAL_PAIR_Y_INT(a) : VAL_PAIR_Y_INT(b);
+    if (Cell_Pair_Y(a) > Cell_Pair_Y(b))
+        y = maxed ? Cell_Pair_Y(a) : Cell_Pair_Y(b);
     else
-        y = maxed ? VAL_PAIR_Y_INT(b) : VAL_PAIR_Y_INT(a);
+        y = maxed ? Cell_Pair_Y(b) : Cell_Pair_Y(a);
 
-    Init_Pair_Int(out, x, y);
+    Init_Pair(out, x, y);
 }
 
 
@@ -153,11 +153,11 @@ void Min_Max_Pair(
 //
 void MF_Pair(REB_MOLD *mo, const Cell* v, bool form)
 {
-    Mold_Or_Form_Element(mo, VAL_PAIR_X(v), form);
+    Mold_Or_Form_Element(mo, Cell_Pair_First(v), form);
 
     Append_Codepoint(mo->string, 'x');
 
-    Mold_Or_Form_Element(mo, VAL_PAIR_Y(v), form);
+    Mold_Or_Form_Element(mo, Cell_Pair_Second(v), form);
 }
 
 
@@ -206,8 +206,8 @@ REBTYPE(Pair)
 {
     Value* v = D_ARG(1);
 
-    Value* x1 = VAL_PAIR_X(v);
-    Value* y1 = VAL_PAIR_Y(v);
+    Value* x1 = Cell_Pair_First(v);
+    Value* y1 = Cell_Pair_Second(v);
 
     Value* x2 = nullptr;
     Value* y2 = nullptr;
@@ -222,7 +222,7 @@ REBTYPE(Pair)
 
         const Value* picker = ARG(picker);
         REBINT n = Index_From_Picker_For_Pair(v, picker);
-        const Value* which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
+        const Value* which = (n == 1) ? Cell_Pair_First(v) : Cell_Pair_Second(v);
 
         return Copy_Cell(OUT, which); }
 
@@ -241,22 +241,22 @@ REBTYPE(Pair)
         if (not Is_Integer(setval))
             fail (PARAM(value));
 
-        Value* which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
+        Value* which = (n == 1) ? Cell_Pair_First(v) : Cell_Pair_Second(v);
         Copy_Cell(which, setval);
 
         return nullptr; }
 
 
       case SYM_REVERSE:
-        return Init_Pair_Int(OUT, VAL_PAIR_Y_INT(v), VAL_PAIR_X_INT(v));
+        return Init_Pair(OUT, Cell_Pair_Y(v), Cell_Pair_X(v));
 
       case SYM_ADD:
       case SYM_SUBTRACT:
       case SYM_DIVIDE:
       case SYM_MULTIPLY:
         if (Is_Pair(D_ARG(2))) {
-            x2 = VAL_PAIR_X(D_ARG(2));
-            y2 = VAL_PAIR_Y(D_ARG(2));
+            x2 = Cell_Pair_First(D_ARG(2));
+            y2 = Cell_Pair_Second(D_ARG(2));
         }
         break;  // delegate to pairwise operation
 

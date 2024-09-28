@@ -147,7 +147,7 @@ INLINE void Queue_Mark_Maybe_Fresh_Cell_Deep(const Cell* v) {
 //
 // Hence we cheat and don't actually queue, for now.
 //
-static void Queue_Mark_Pairing_Deep(const Cell* paired)
+static void Queue_Mark_Pairing_Deep(const Pairing* p)
 {
     // !!! Hack doesn't work generically, review
 
@@ -156,10 +156,10 @@ static void Queue_Mark_Pairing_Deep(const Cell* paired)
     in_mark = false;  // would assert about the recursion otherwise
   #endif
 
-    Queue_Mark_Cell_Deep(paired);
-    Queue_Mark_Cell_Deep(Pairing_Second(paired));  // QUOTED? uses void
+    Queue_Mark_Cell_Deep(Pairing_First(p));
+    Queue_Mark_Cell_Deep(Pairing_Second(p));  // QUOTED? uses void
 
-    Add_GC_Mark(paired);
+    Add_GC_Mark(p);
 
   #if !defined(NDEBUG)
     in_mark = was_in_mark;
@@ -181,9 +181,9 @@ static void Queue_Mark_Node_Deep(const Node** npp) {
         return;  // may not be finished marking yet, but has been queued
 
     if (nodebyte & NODE_BYTEMASK_0x01_CELL) {  // e.g. a pairing
-        const Value* v = x_cast(const Value*, *npp);
-        if (Is_Node_Managed(v))
-            Queue_Mark_Pairing_Deep(v);
+        const Pairing* p = x_cast(const Pairing*, *npp);
+        if (Is_Node_Managed(p))
+            Queue_Mark_Pairing_Deep(p);
         else {
             // !!! It's a frame?  API handle?  Skip frame case (keysource)
             // for now, but revisit as technique matures.
@@ -620,9 +620,9 @@ static void Mark_Root_Stubs(void)
 
                 assert(!"unmanaged Pairing not believed to exist yet");
 
-                Value* paired = x_cast(Value*, cast(void*, unit));
-                Queue_Mark_Cell_Deep(paired);
-                Queue_Mark_Cell_Deep(Pairing_Second(paired));
+                Pairing* p = x_cast(Pairing*, cast(void*, unit));
+                Queue_Mark_Cell_Deep(Pairing_First(p));
+                Queue_Mark_Cell_Deep(Pairing_Second(p));
                 continue;
             }
 
@@ -1161,8 +1161,8 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
                 //
                 // !!! It is (usually) in the STUB_POOL, but *not* a "Stub".
                 //
-                Value* pairing = x_cast(Value*, cast(void*, stub));
-                assert(pairing->header.bits & NODE_FLAG_MANAGED);
+                Pairing* pairing = x_cast(Pairing*, stub);
+                assert(Is_Node_Managed(pairing));
                 if (Is_Node_Marked(pairing)) {
                     Remove_GC_Mark(pairing);
                 }

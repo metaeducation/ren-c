@@ -154,8 +154,8 @@ uint32_t Hash_Value(const Cell* cell)
       hash_pair:
         //
       case REB_PAIR:
-        hash = Hash_Value(VAL_PAIRING(cell));
-        hash ^= Hash_Value(Pairing_Second(VAL_PAIRING(cell)));
+        hash = Hash_Value(Cell_Pair_First(cell));
+        hash ^= Hash_Value(Cell_Pair_Second(cell));
         break;
 
       case REB_TIME:

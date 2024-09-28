@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -22,21 +22,29 @@
 //
 // A "pairing" fits in a STUB_POOL allocation, but actually holds two Cells.
 //
-// !!! PAIR! is now generic, so it could theoretically store any type.  This
-// was done to avoid creating new numeric representations in the core (e.g.
-// 32-bit integers or lower precision floats) just so they could both fit in a
-// Cell.  But while it's technically possible, no rendering formats for
-// other-valued pairs has been proposed.  So only integers are accepted for
-// now in the PAIR! type.
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// * R3-Alpha's PAIR! type compressed two integers into a single cell, which
+//   meant using smaller integer representations than the INTEGER! cell.
+//   Ren-C didn't want to manage the limits and math on different types of
+//   integer, so created a new compact generalized allocation for exactly
+//   two cells.
 //
 
 #define PAIRING_LEN 2
 
-#define Pairing_Second(paired) \
-    (ensure(const Cell*, (paired)) + 1)
+#define Pairing_Head(p) \
+    c_cast(Element*, ensure(const Pairing*, (p)))
 
-#define Pairing_Tail(paired) \
-    (ensure(const Cell*, (paired)) + 2)
+#define Pairing_Tail(p) \
+    (Pairing_Head(p) + 2)
+
+#define Pairing_First(p) \
+    Pairing_Head(p)
+
+#define Pairing_Second(p) \
+    (Pairing_Head(p) + 1)
+
 
 INLINE bool Any_Pairlike(const Cell* v) {
     // called by core code, sacrifice Ensure_Readable() checks
@@ -49,54 +57,43 @@ INLINE bool Any_Pairlike(const Cell* v) {
     return Is_Node_A_Cell(Cell_Node1(v));
 }
 
-#define INIT_VAL_PAIR(v,pairing) \
+#define Tweak_Cell_Pairing(v,pairing) \
     Tweak_Cell_Node1((v), (pairing))
 
-INLINE Value* VAL_PAIRING(const Cell* v) {
+INLINE Pairing* Cell_Pairing(const Cell* v) {
     assert(Any_Pairlike(v));
-    return x_cast(Value*, Cell_Node1(v));
+    return x_cast(Pairing*, Cell_Node1(v));
 }
 
-#define VAL_PAIR_X(v) \
-    cast(Element*, VAL_PAIRING(v))
+#define Cell_Pair_First(v) \
+    Pairing_First(Cell_Pairing(v))
 
-#define VAL_PAIR_Y(v) \
-    cast(Element*, Pairing_Second(VAL_PAIRING(v)))
+#define Cell_Pair_Second(v) \
+    Pairing_Second(Cell_Pairing(v))
 
-INLINE REBI64 VAL_PAIR_X_INT(const Cell* v) {
-    if (Is_Integer(VAL_PAIR_X(v)))
-        return VAL_INT64(VAL_PAIR_X(v));
-    return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_X(v)));
-}
+INLINE REBI64 Cell_Pair_X(const Cell* v)
+  { return VAL_INT64(Cell_Pair_First(v)); }
 
-INLINE REBDEC VAL_PAIR_Y_INT(const Cell* v) {
-    if (Is_Integer(VAL_PAIR_Y(v)))
-        return VAL_INT64(VAL_PAIR_Y(v));
-    return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_Y(v)));
-}
+INLINE REBI64 Cell_Pair_Y(const Cell* v)
+  { return VAL_INT64(Cell_Pair_Second(v)); }
 
-INLINE Element* Init_Pair_Untracked(Sink(Element*) out, Value* pairing) {
-    assert(Is_Node_Managed(pairing));
-    Reset_Cell_Header_Untracked(out, CELL_MASK_PAIR);
-    INIT_VAL_PAIR(out, pairing);
+INLINE Value* Init_Pair_Untracked(Sink(Element*) out, REBI64 x, REBI64 y) {
+    Pairing* p = Alloc_Pairing(NODE_FLAG_MANAGED);
+    Init_Integer(Pairing_First(p), x);
+    Init_Integer(Pairing_Second(p), y);
 
+    Reset_Cell_Header_Untracked(
+        out,
+        CELL_MASK_PAIR | FLAG_HEART_BYTE(REB_PAIR)
+    );
+    Tweak_Cell_Pairing(out, p);
   #ifdef ZERO_UNUSED_CELL_FIELDS
     PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;  // payload second not used
   #endif
-
     BINDING(out) = UNBOUND;  // "arraylike", needs binding
+
     return out;
 }
 
-#define Init_Pair(out,pairing) \
-    TRACK(Init_Pair_Untracked((out), (pairing)))
-
-INLINE Value* Init_Pair_Int_Untracked(Cell* out, REBI64 x, REBI64 y) {
-    Value* p = Alloc_Pairing(NODE_FLAG_MANAGED);
-    Init_Integer(p, x);
-    Init_Integer(Pairing_Second(p), y);
-    return Init_Pair_Untracked(out, p);
-}
-
-#define Init_Pair_Int(out,x,y) \
-    TRACK(Init_Pair_Int_Untracked((out), (x), (y)))
+#define Init_Pair(out,x,y) \
+    TRACK(Init_Pair_Untracked((out), (x), (y)))

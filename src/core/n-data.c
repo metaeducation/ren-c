@@ -98,7 +98,7 @@ DECLARE_NATIVE(as_pair)
 {
     INCLUDE_PARAMS_OF_AS_PAIR;
 
-    return Init_Pair_Int(OUT, VAL_INT64(ARG(x)), VAL_INT64(ARG(y)));
+    return Init_Pair(OUT, VAL_INT64(ARG(x)), VAL_INT64(ARG(y)));
 }
 
 
@@ -2318,13 +2318,12 @@ DECLARE_NATIVE(as)
 
             const Node* node1 = Cell_Node1(v);
             if (Is_Node_A_Cell(node1)) {  // reusing node complicated [1]
-                const Element* first = c_cast(Element*, node1);
-                const Element* second = c_cast(Element*, Pairing_Second(first));
+                const Pairing* p = c_cast(Pairing*, node1);
                 Context *binding = Cell_List_Binding(v);
                 Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
                 Set_Flex_Len(a, 2);
-                Derelativize(Array_At(a, 0), first, binding);
-                Derelativize(Array_At(a, 1), second, binding);
+                Derelativize(Array_At(a, 0), Pairing_First(p), binding);
+                Derelativize(Array_At(a, 1), Pairing_Second(p), binding);
                 Freeze_Array_Shallow(a);
                 Init_Block(v, a);
             }

@@ -133,8 +133,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break; }
 
       case REB_PAIR: {
-        Value* paired = x_cast(Value*, Cell_Node1(v));
-        assert(Is_Node_Marked(paired));
+        Pairing* pairing = x_cast(Pairing*, Cell_Node1(v));
+        assert(Is_Node_Marked(pairing));
         break; }
 
       case REB_TIME:

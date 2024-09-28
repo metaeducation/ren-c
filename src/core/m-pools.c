@@ -502,9 +502,9 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
                 continue;
 
             if (unit[0] & NODE_BYTEMASK_0x01_CELL) {  // a "pairing"
-                Value* pairing = x_cast(Value*, unit);
-                if (p >= cast(void*, pairing) and p < cast(void*, pairing + 1))
-                    return pairing;  // this Stub is actually Cell[2]
+                Pairing* pairing = x_cast(Pairing*, unit);
+                if (p >= Pairing_Head(pairing) and p < Pairing_Tail(pairing))
+                    return pairing;  // in stub pool, but actually Cell[2]
                 continue;
             }
 
@@ -574,27 +574,28 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
 // leak if not freed or managed.  This shouldn't be hard to fix--it just
 // means the GC manuals list needs to be Node* and not just Flex*.
 //
-Value* Alloc_Pairing(Flags flags) {
+Pairing* Alloc_Pairing(Flags flags) {
     assert(flags == 0 or flags == NODE_FLAG_MANAGED);
-    Value* paired = cast(Value*, Alloc_Pooled(PAIR_POOL));  // 2x cell size
+    Pairing* p = cast(Pairing*, Alloc_Pooled(PAIR_POOL));  // 2x cell size
 
-    Erase_Cell(paired);
-    Erase_Cell(Pairing_Second(paired));
+    Erase_Cell(Pairing_First(p));
+    Erase_Cell(Pairing_Second(p));
 
     if (flags)
-        Manage_Pairing(paired);
-    return paired;
+        Manage_Pairing(p);
+    return p;
 }
 
 
 //
 //  Copy_Pairing: C
 //
-Value* Copy_Pairing(const Value* paired, Flags flags) {
-    Value* copy = Alloc_Pairing(flags);
+Pairing* Copy_Pairing(const Pairing* p, Flags flags) {
+    assert(flags == 0 or flags == NODE_FLAG_MANAGED);
 
-    Copy_Cell(copy, paired);
-    Copy_Cell(Pairing_Second(copy), Pairing_Second(paired));
+    Pairing* copy = Alloc_Pairing(flags);
+    Copy_Cell(Pairing_First(copy), Pairing_First(p));
+    Copy_Cell(Pairing_Second(copy), Pairing_Second(p));
 
     return copy;
 }
@@ -606,9 +607,9 @@ Value* Copy_Pairing(const Value* paired, Flags flags) {
 // The paired management status is handled by bits directly in the first (the
 // paired value) header.
 //
-void Manage_Pairing(Cell* paired) {
-    assert(Not_Node_Managed(paired));
-    Set_Node_Managed_Bit(paired);
+void Manage_Pairing(Pairing* p) {
+    assert(Not_Node_Managed(p));
+    Set_Node_Managed_Bit(p);
 }
 
 
@@ -621,9 +622,9 @@ void Manage_Pairing(Cell* paired) {
 // It may be desirable to extend, shorten, or otherwise explicitly control
 // their lifetime.
 //
-void Unmanage_Pairing(Value* paired) {
-    assert(Is_Node_Managed(paired));
-    Clear_Node_Managed_Bit(paired);
+void Unmanage_Pairing(Pairing* p) {
+    assert(Is_Node_Managed(p));
+    Clear_Node_Managed_Bit(p);
 }
 
 

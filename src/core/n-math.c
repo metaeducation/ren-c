@@ -978,7 +978,7 @@ INLINE Element* Init_Zeroed_Hack(Sink(Element*) out, Heart heart) {
     // it the `zero?` of that type.  Review uses.
     //
     if (heart == REB_PAIR) {
-        Init_Pair_Int(out, 0, 0);
+        Init_Pair(out, 0, 0);
     }
     else {
         Reset_Cell_Header_Untracked(

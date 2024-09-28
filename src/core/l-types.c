@@ -385,96 +385,6 @@ Option(const Byte*) Try_Scan_Hex2(Byte* decoded_out, const Byte* bp)
 
 
 //
-//  Try_Scan_Decimal_Buf: C
-//
-// Validate a decimal number. Return on first invalid char (or end).
-// Returns NULL if not valid.
-//
-// Scan is valid for 1 1.2 1,2 1'234.5 1x 1.2x 1% 1.2% etc.
-//
-// !!! Is this redundant with Scan_Decimal?  Appears to be similar code.
-//
-Option(const Byte*) Try_Scan_Decimal_Buf(
-    Sink(Byte*) out,
-    bool *is_integral,
-    const Byte* cp,
-    REBLEN len // max size of buffer
-) {
-    assert(len >= MAX_NUM_LEN);
-
-    *is_integral = true;
-
-    Byte* bp = out;
-    Byte* be = bp + len - 1;
-
-    if (*cp == '+' || *cp == '-')
-        *bp++ = *cp++;
-
-    bool digit_present = false;
-    while (Is_Lex_Number(*cp) || *cp == '\'') {
-        if (*cp != '\'') {
-            *bp++ = *cp++;
-            if (bp >= be)
-                return nullptr;
-            digit_present = true;
-        }
-        else
-            ++cp;
-    }
-
-    if (*cp == ',' || *cp == '.') {
-        *is_integral = false;
-        cp++;
-    }
-
-    *bp++ = '.';
-    if (bp >= be)
-        return nullptr;
-
-    while (Is_Lex_Number(*cp) || *cp == '\'') {
-        if (*cp != '\'') {
-            *bp++ = *cp++;
-            if (bp >= be)
-                return nullptr;
-            digit_present = true;
-        }
-        else
-            ++cp;
-    }
-
-    if (not digit_present)
-        return nullptr;
-
-    if (*cp == 'E' || *cp == 'e') {
-        *bp++ = *cp++;
-        if (bp >= be)
-            return nullptr;
-
-        digit_present = false;
-
-        if (*cp == '-' || *cp == '+') {
-            *bp++ = *cp++;
-            if (bp >= be)
-                return nullptr;
-        }
-
-        while (Is_Lex_Number(*cp)) {
-            *bp++ = *cp++;
-            if (bp >= be)
-                return nullptr;
-            digit_present = true;
-        }
-
-        if (not digit_present)
-            return nullptr;
-    }
-
-    *bp = '\0';
-    return cp;
-}
-
-
-//
 //  Try_Scan_Decimal_To_Stack: C
 //
 // Scan and convert a decimal value.  Return new character position or null.
@@ -1006,44 +916,26 @@ Option(const Byte*) Try_Scan_URL_To_Stack(const Byte* cp, REBLEN len)
 Option(const Byte*) Try_Scan_Pair_To_Stack(
     const Byte* cp,
     REBLEN len
-) {
-    Byte buf[MAX_NUM_LEN + 4];
+){
+    const Byte* bp = cp;
 
-    bool is_integral;
-    const Byte* ep = maybe Try_Scan_Decimal_Buf(
-        buf, &is_integral, cp, MAX_NUM_LEN
-    );
-    if (ep == nullptr)
+    REBINT x;
+    if (not (cp = maybe Try_Grab_Int(&x, cp)))
         return nullptr;
-    if (*ep != 'x' and *ep != 'X')
+    if (*cp != 'x' and *cp != 'X')
         return nullptr;
-    if (not is_integral)
-        return nullptr;  // floating point pairs no longer supported
 
-    Value* paired = Alloc_Pairing(CELL_MASK_0);
+    cp++;
 
-    Init_Integer(paired, atoi(cast(char*, &buf[0])));  // X
-
-    ep++;
-
-    const Byte* xp = maybe Try_Scan_Decimal_Buf(
-        buf, &is_integral, ep, MAX_NUM_LEN
-    );
-    if (xp == nullptr) {
-        Free_Pairing(paired);
+    REBINT y;
+    if (not (cp = maybe Try_Grab_Int(&y, cp)))
         return nullptr;
-    }
 
-    if (len > xp - cp) {
-        Free_Pairing(paired);
+    if (len > cp - bp)  // !!! scanner checks if not precisely equal...
         return nullptr;
-    }
 
-    Init_Integer(Pairing_Second(paired), atoi(cast(char*, &buf[0])));  // Y
-
-    Manage_Pairing(paired);
-    Init_Pair(PUSH(), paired);
-    return xp;
+    Init_Pair(PUSH(), x, y);
+    return cp;
 }
 
 

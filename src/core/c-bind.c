@@ -979,14 +979,14 @@ void Clonify_And_Bind_Relative(
         Element* deep_tail = nullptr;
 
         if (Any_Pairlike(v)) {
-            Value* copy = Copy_Pairing(
-                VAL_PAIRING(v),
+            Pairing* copy = Copy_Pairing(
+                Cell_Pairing(v),
                 NODE_FLAG_MANAGED
             );
-            Tweak_Cell_Node1(v, copy);
+            Tweak_Cell_Pairing(v, copy);
 
-            deep = cast(Element*, copy);
-            deep_tail = cast(Element*, Pairing_Tail(copy));
+            deep = Pairing_Head(copy);
+            deep_tail = Pairing_Tail(copy);
         }
         else if (Any_Listlike(v)) {  // ruled out pairlike sequences above...
             Array* copy = Copy_Array_At_Extra_Shallow(

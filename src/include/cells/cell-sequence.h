@@ -188,13 +188,19 @@ INLINE Option(Error*) Trap_Leading_Blank_Pathify(
         return nullptr;
     }
 
-    Value* p = Alloc_Pairing(NODE_FLAG_MANAGED);
-    Init_Blank(p);
+    Pairing* p = Alloc_Pairing(NODE_FLAG_MANAGED);
+    Init_Blank(Pairing_First(p));
     Copy_Cell(Pairing_Second(p), e);
 
-    Init_Pair(e, p);
-    HEART_BYTE(e) = heart;  // override REB_PAIR with heart (e.g. REB_PATH)
-
+    Reset_Cell_Header_Untracked(
+        e,
+        CELL_FLAG_FIRST_IS_NODE | FLAG_HEART_BYTE(heart)
+    );
+    Tweak_Cell_Pairing(e, p);
+  #ifdef ZERO_UNUSED_CELL_FIELDS
+    PAYLOAD(Any, e).second.corrupt = CORRUPTZERO;  // payload second not used
+  #endif
+    BINDING(e) = UNBOUND;  // "arraylike", needs binding
     return nullptr;
 }
 
@@ -350,14 +356,22 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
             return error;
     }
 
-    Value* pairing = Alloc_Pairing(NODE_FLAG_MANAGED);
-    Copy_Cell(pairing, first);
+    Pairing* pairing = Alloc_Pairing(NODE_FLAG_MANAGED);
+    Copy_Cell(Pairing_First(pairing), first);
     Copy_Cell(Pairing_Second(pairing), second);
-    Init_Pair(out, pairing);
-    HEART_BYTE(out) = heart;
 
+    Reset_Cell_Header_Untracked(
+        out,
+        CELL_FLAG_FIRST_IS_NODE | FLAG_HEART_BYTE(heart)
+    );
+    Tweak_Cell_Pairing(out, pairing);
+  #ifdef ZERO_UNUSED_CELL_FIELDS
+    PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;  // payload second not used
+  #endif
+    BINDING(out) = UNBOUND;  // "arraylike", needs binding
     return nullptr;
 }
+
 
 INLINE Option(Error*) Trap_Init_Any_Sequence_Pairlike(
     Sink(Element*) out,
@@ -558,15 +572,11 @@ INLINE Element* Derelativize_Sequence_At(
 
     const Node* node1 = Cell_Node1(sequence);
     if (Is_Node_A_Cell(node1)) {  // test if it's a pairing
-        const Element* pairing = c_cast(Element*, node1);  // compressed pair
+        const Pairing* p = c_cast(Pairing*, node1);  // compressed pair
         if (n == 0)
-            return Derelativize(out, pairing, context);
+            return Derelativize(out, Pairing_First(p), context);
         assert(n == 1);
-        return Derelativize(
-            out,
-            c_cast(Element*, Pairing_Second(pairing)),
-            context
-        );
+        return Derelativize(out, Pairing_Second(p), context);
     }
 
     switch (Stub_Flavor(x_cast(Flex*, node1))) {
