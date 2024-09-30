@@ -110,45 +110,53 @@
     all [x = 3, y = 20, sum = 10]
 )
 
-; Redundancy is checked for.  LIT-WORD! redundancy is legal because those
+; Redundancy is checked for.  THE-WORD! redundancy is legal because those
 ; words may have distinct bindings and the same spelling, and they're not
 ; being fabricated.
 ;
-; !!! Note that because FOR-EACH soft quotes, the COMPOSE would be interpreted
-; as the loop variable if you didn't put it in parentheses!
 [#2273
     (
-        x: 10
+        x: ~<shouldn't be seen>~
         obj1: make object! [x: 20]
         obj2: make object! [x: 30]
-        sum: 0
         ok
     )
     ~dup-vars~ !! (
         for [x x] each [1 2 3 4] [sum: sum + x]
     )
-    ~dup-vars~ !! (
-        for (compose [  ; see above
+    (
+        sum: 0
+        for compose [
             x (bind '@x obj1)
-        ]) each [
+        ] each [
             1 2 3 4
         ][
             sum: sum + x
         ]
-    )
-    ~dup-vars~ !! (
-        for (compose [  ; see above
-            (bind '@x obj2) x
-        ]) each [
-            1 2 3 4
-        ][
-            sum: sum + x
+        all [
+            sum = 4
+            obj1.x = 4
         ]
     )
     (
-        for (compose [  ; see above
+        sum: 0
+        for compose [
+            (bind '@x obj2) x
+        ] each [
+            1 2 3 4
+        ][
+            sum: sum + x
+        ]
+        all [
+            sum = 6
+            obj2.x = 3
+        ]
+    )
+    (
+        sum: 0
+        for compose [
             (bind '@x obj1) (bind '@x obj2)
-        ]) each [
+        ] each [
             1 2 3 4
         ][
             sum: sum + obj1.x + obj2.x

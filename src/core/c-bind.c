@@ -1221,7 +1221,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     if (rebinding)
         INIT_BINDER(&binder);
 
-    const Symbol* duplicate = nullptr;
+    Option(Error*) error = nullptr;
 
     SymId dummy_sym = SYM_DUMMY1;
 
@@ -1231,7 +1231,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
 
         if (Is_Blank(item)) {
             if (dummy_sym == SYM_DUMMY9)
-                fail ("Current limitation: only up to 9 BLANK! keys");
+                fail ("Current limitation: only up to 9 foreign/blank keys");
 
             symbol = Canon_Symbol(dummy_sym);
             dummy_sym = cast(SymId, cast(int, dummy_sym) + 1);
@@ -1241,86 +1241,56 @@ VarList* Virtual_Bind_Deep_To_New_Context(
             Set_Cell_Flag(var, BIND_NOTE_REUSE);
             Set_Cell_Flag(var, PROTECTED);
 
-            goto add_binding_for_check;
+            if (rebinding)
+                Add_Binder_Index(&binder, symbol, -1);  // for remove
         }
         else if (Is_Word(item) or Is_Meta_Word(item)) {
-            symbol = Cell_Word_Symbol(item);
-            Value* var = Append_Context(c, symbol);
-
-            // !!! For loops, nothing should be able to be aware of this
-            // synthesized variable until the loop code has initialized it
-            // with something.  But this code is shared with USE, so the user
-            // can get their hands on the variable.  Can't be unreadable.
-            //
-            Init_Nothing(var);
-
             assert(rebinding); // shouldn't get here unless we're rebinding
 
-            if (not Try_Add_Binder_Index(&binder, symbol, index)) {
-                //
-                // We just remember the first duplicate, but we go ahead
-                // and fill in all the keylist slots to make a valid array
-                // even though we plan on failing.  Duplicates count as a
-                // problem even if they are THE-WORD! (negative index) as
-                // `for-each [x @x] ...` is paradoxical.
-                //
-                if (duplicate == nullptr)
-                    duplicate = symbol;
+            symbol = Cell_Word_Symbol(item);
+
+            if (Try_Add_Binder_Index(&binder, symbol, index)) {
+                Value* var = Append_Context(c, symbol);
+                Init_Nothing(var);  // code shared with USE, user may see
+            }
+            else {  // note for-each [x @x] is bad, too
+                DECLARE_ELEMENT (word);
+                Init_Word(word, symbol);
+                error = Error_Dup_Vars_Raw(word);
+                break;
             }
         }
         else if (Is_The_Word(item)) {
 
             // A THE-WORD! indicates that we wish to use the original binding.
-            // So `for-each 'x [1 2 3] [...]` will actually set that x
+            // So `for-each @x [1 2 3] [...]` will actually set that x
             // instead of creating a new one.
             //
             // !!! Enumerations in the code walks through the context varlist,
             // setting the loop variables as they go.  It doesn't walk through
-            // the array the user gave us, so if it's a LIT-WORD! the
-            // information is lost.  Do a trick where we put the LIT-WORD!
-            // itself into the slot, and give it NODE_FLAG_MARKED...then
+            // the array the user gave us, so if it's a THE-WORD! the
+            // information is lost.  Do a trick where we put the THE-WORD!
+            // itself into the slot, and give it CELL_FLAG_NOTE...then
             // hide it from the context and binding.
             //
-            symbol = Cell_Word_Symbol(item);
+            if (dummy_sym == SYM_DUMMY9)
+                fail ("Current limitation: only up to 9 foreign/blank keys");
 
-          blockscope {
+            symbol = Canon_Symbol(dummy_sym);
+            dummy_sym = cast(SymId, cast(int, dummy_sym) + 1);
+
             Value* var = Append_Context(c, symbol);
             Derelativize(var, item, binding);
             Set_Cell_Flag(var, BIND_NOTE_REUSE);
             Set_Cell_Flag(var, PROTECTED);
-          }
 
-          add_binding_for_check:
-
-            // We don't want to stop `for-each [@x @x] ...` necessarily,
-            // because if we're saying we're using the existing binding they
-            // could be bound to different things.  But if they're not bound
-            // to different things, the last one in the list gets the final
-            // assignment.  This would be harder to check against, but at
-            // least allowing it doesn't make new objects with duplicate keys.
-            // For now, don't bother trying to use a binder or otherwise to
-            // stop it.
-            //
-            // However, `for-each [x @x] ...` is intrinsically contradictory.
-            // So we use negative indices in the binder, which the binding
-            // process will ignore.
-            //
-            if (rebinding) {
-                REBINT stored = Get_Binder_Index_Else_0(&binder, symbol);
-                if (stored > 0) {
-                    if (duplicate == nullptr)
-                        duplicate = symbol;
-                }
-                else if (stored == 0) {
-                    Add_Binder_Index(&binder, symbol, -1);
-                }
-                else {
-                    assert(stored == -1);
-                }
-            }
+            if (rebinding)
+                Add_Binder_Index(&binder, symbol, -1);  // for remove
         }
-        else
-            fail (item);
+        else {
+            error = Error_User("Bad datatype in variable spec");
+            break;
+        }
 
         ++item;
         ++index;
@@ -1342,57 +1312,48 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     //
     /* Set_Flex_Flag(c, DONT_RELOCATE); */
 
+    if (rebinding) {  // even if failing, must remove bind indices for words
+        const Key* key_tail;
+        const Key* key = Varlist_Keys(&key_tail, c);
+        Value* var = Varlist_Slots_Head(c);  // only needed for debug
+        for (; key != key_tail; ++key, ++var) {
+            REBINT stored = Remove_Binder_Index_Else_0(
+                &binder, Key_Symbol(key)
+            );
+            assert(stored != 0);
+            if (stored > 0)
+                assert(Not_Cell_Flag(var, BIND_NOTE_REUSE));
+            else
+                assert(Get_Cell_Flag(var, BIND_NOTE_REUSE));
+        }
+
+        SHUTDOWN_BINDER(&binder);
+    }
+
+    if (error) {
+        Free_Unmanaged_Flex(c);
+        fail (unwrap error);
+    }
+
     Manage_Flex(c);  // must be managed to use in binding
-
-    if (not rebinding)
-        return c;  // nothing else needed to do
-
-    if (not duplicate) {
-        //
-        // Effectively `Bind_Values_Deep(Array_Head(body_out), context)`
-        // but we want to reuse the binder we had anyway for detecting the
-        // duplicates.
-        //
-        Virtual_Bind_Deep_To_Existing_Context(
-            body_in_out,
-            c,
-            &binder,
-            CELL_MASK_0
-        );
-    }
-
-    // Must remove binder indexes for all words, even if about to fail
-    //
-  blockscope {
-    const Key* key_tail;
-    const Key* key = Varlist_Keys(&key_tail, c);
-    Value* var = Varlist_Slots_Head(c); // only needed for debug, optimized out
-    for (; key != key_tail; ++key, ++var) {
-        REBINT stored = Remove_Binder_Index_Else_0(
-            &binder, Key_Symbol(key)
-        );
-        if (stored == 0)
-            assert(duplicate);
-        else if (stored > 0)
-            assert(Not_Cell_Flag(var, BIND_NOTE_REUSE));
-        else
-            assert(Get_Cell_Flag(var, BIND_NOTE_REUSE));
-    }
-  }
-
-    SHUTDOWN_BINDER(&binder);
-
-    if (duplicate) {
-        DECLARE_ATOM (word);
-        Init_Word(word, duplicate);
-        fail (Error_Dup_Vars_Raw(word));
-    }
 
     // If the user gets ahold of these contexts, we don't want them to be
     // able to expand them...because things like FOR-EACH have historically
     // not been robust to the memory moving.
     //
     Set_Flex_Flag(c, FIXED_SIZE);
+
+    // Effectively `Bind_Values_Deep(Array_Head(body_out), context)`
+    // but we want to reuse the binder we had anyway for detecting the
+    // duplicates.
+    //
+    if (rebinding)
+        Virtual_Bind_Deep_To_Existing_Context(
+            body_in_out,
+            c,
+            &binder,
+            CELL_MASK_0
+        );
 
     return c;
 }
