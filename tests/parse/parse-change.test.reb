@@ -49,27 +49,27 @@
 
 ; BLOCK! change tests from %parse-test.red
 [
-    (all [
+    (all wrap [
         '~<change>~ == meta parse blk: [1] [change integer! (the a)]
         blk = [a]
     ])
-    (all [
+    (all wrap [
         '~<change>~ == meta parse blk: [1 2 3] [change [some integer!] (the a)]
         blk = [a]
     ])
-    (all [
+    (all wrap [
         3 == parse blk: [1 a 2 b 3] [some [change word! (#.) | integer!]]
         blk = [1 #. 2 #. 3]
     ])
-    (all [
+    (all wrap [
         '~<change>~ == meta parse blk: [1 2 3] [change [some integer!] (99)]
         blk = [99]
     ])
-    (all [
+    (all wrap [
         '~<change>~ == meta parse blk: [1 2 3] [change [some integer!] ([a])]
         blk = [[a]]
     ])
-    (all [
+    (all wrap [
         '~<change>~ == meta parse blk: [1 2 3] [
             change [some integer!] (reduce [1 + 2])
         ]
@@ -84,32 +84,32 @@
 
 ; TEXT! change tests from %parse-test.red
 [
-    (all [
+    (all wrap [
         '~<change>~ == meta parse str: "1" [change one (#a)]
         str = "a"
     ])
-    (all [
+    (all wrap [
         '~<change>~ == meta parse str: "123" [change [repeat 3 one] (#a)]
         str = "a"
     ])
     (
         alpha: charset [#a - #z]
-        all [
+        all wrap [
             #3 == parse str: "1a2b3" [
                 some [change alpha (#.) | one]
             ]
             str = "1.2.3"
         ]
     )
-    (all [
+    (all wrap [
         '~<change>~ == meta parse str: "123" [change skip 3 (99)]
         str = "99"
     ])
-    (all [
+    (all wrap [
         '~<change>~ == meta parse str: "test" [some [change #t (#o) | one]]
         str = "oeso"
     ])
-    (all [
+    (all wrap [
         #4 == parse str: "12abc34" [
             some [to alpha change [some alpha] ("zzzz")] repeat 2 one
         ]
@@ -120,34 +120,34 @@
 
 ; BINARY! change tests from %parse-test.red
 [
-    (all [
+    (all wrap [
         '~<change>~ == meta parse bin: #{01} [change one (#{0A})]
         bin = #{0A}
     ])
-    (all [
+    (all wrap [
         '~<change>~ == meta parse bin: #{010203} [change [skip 3] (#{0A})]
         bin = #{0A}
     ])
     (
         digit: charset [1 - 9]
-        all [
+        all wrap [
             '~<change>~ == meta parse bin: #{010A020B03} [
                 some [change digit (#{00}) | <next>]
             ]
             bin = #{000A000B00}
         ]
     )
-    (all [
+    (all wrap [
         '~<change>~ == meta parse bin: #{010203} [change skip 3 (99)]
         bin = #{63}
     ])
-    (all [
+    (all wrap [
         239 == parse bin: #{BEADBEEF} [
             some [change #{BE} (#{DE}) | one]
         ]
         bin = #{DEADDEEF}
     ])
-    (all [
+    (all wrap [
         14 == parse bin: #{0A0B0C03040D0E} [
             some [to digit change [some digit] (#{BEEF})] repeat 2 one
         ]
@@ -156,7 +156,7 @@
 ]
 
 [#1245
-    (all [
+    (all wrap [
         '~<change>~ == meta parse s: "(1)" [change "(1)" ("()")]
         s = "()"
     ])
@@ -165,7 +165,8 @@
 ; https://github.com/metaeducation/rebol-issues/issues/1279
 (
     s: ~
-    all [
+    all wrap [
+        let n
         '~<change>~ == meta parse s: [1] [change n: integer! (n * 10)]
         s = [10]
     ]

@@ -25,7 +25,7 @@
                 [1 + 2 + 3]
                 {1 + 2 + 3}
                 #{01FF02FF03}
-            ][
+            ] (wrap [
                 protect value: copy original
                 sys.util/rescue code then e -> [
                     any [
@@ -38,7 +38,7 @@
                         fail e
                     ]
                 ]
-            ]
+            ])
             return ok
         ]
         ok
@@ -55,7 +55,7 @@
 ]
 
 [#1764
-    (unset $blk protect/deep $blk, ok)
+    (blk: ~ protect/deep $blk, ok)
     (unprotect $blk, ok)
 ]
 

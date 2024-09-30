@@ -52,19 +52,19 @@
     ]
     ok)
 
-    (all [
+    (all wrap [
         [null 1020] = block: (null ->- left-lit-bound 1020)
         null = get first block
     ])
-    (all [
+    (all wrap [
         [null 304] = block: (null ->- right-lit-bound 304)
         null = get first block
     ])
-    (all [
+    (all wrap [
         [(raise 'x) 1020] = block: ((raise 'x) ->- left-lit-bound 1020)
         :raise = get inside block.1 block.1.1
     ])
-    (all [
+    (all wrap [
         [(raise 'x) 304] = block: ((raise 'x) ->- right-lit-bound 304)
         :raise = get inside block.1 block.1.1
     ])
@@ -81,19 +81,19 @@
     value: <whatever>
     ok)
 
-    (all [
+    (all wrap [
         [value 1020] = block: (value ->- left-lit-as-is 1020)
         null = binding of first block
     ])
-    (all [
+    (all wrap [
         [value 304] = block: (value ->- right-lit-as-is 304)
         null = binding of first block
     ])
-    (all [
+    (all wrap [
         [(raise 'x) 1020] = block: ((raise 'x) ->- left-lit-as-is 1020)
         null = binding of inside block.1 block.1.1
     ])
-    (all [
+    (all wrap [
         [(raise 'x) 304] = block: ((raise 'x) ->- right-lit-as-is 304)
         null = binding of inside block.1 block.1.1
     ])
@@ -114,26 +114,26 @@
     value: <whatever>
     ok)
 
-    (all [
+    (all wrap [
         [value 1020] = block: (value ->- left-soft-as-is 1020)
         <whatever> = get first block  ; should not be bound [1]
     ])
-    (all [
+    (all wrap [
         [value 304] = block: (value ->- right-soft-as-is 304)
         <whatever> = get first block  ; should not be bound [1]
     ])
-    (all [
+    (all wrap [
         [value 1020] = block: (('value) ->- left-soft-as-is 1020)
         null = binding of first block
     ])
-    (all [
+    (all wrap [
         [value 304] = block: (('value) ->- right-soft-as-is 304)
         null = binding of first block
     ])
-    ~x~ !! (all [
+    ~x~ !! (all wrap [
         block: ((raise 'x) ->- left-soft-as-is 1020)
     ])
-    ~x~ !! (all [
+    ~x~ !! (all wrap [
         block: ((raise 'x) ->- right-soft-as-is 304)
     ])
 ]
@@ -204,4 +204,6 @@
 ~no-arg~ !! (
     divide negate x: add 1 + 2 3 + 4 ->- multiply 5
 )
-(-1 = (divide negate x: add 1 + 2 3 + 4 2 ->- multiply 5))
+(-1 = eval wrap [
+    divide negate x: add 1 + 2 3 + 4 2 ->- multiply 5
+])

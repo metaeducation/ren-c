@@ -52,7 +52,7 @@ void Bind_Values_Inner_Loop(
 
           if (CTX_TYPE(context) == REB_MODULE) {
             bool strict = true;
-            Value* lookup = MOD_VAR(context, symbol, strict);
+            Value* lookup = MOD_VAR(cast(SeaOfVars*, context), symbol, strict);
             if (lookup) {
                 Tweak_Cell_Word_Index(v, INDEX_PATCHED);
                 BINDING(v) = Singular_From_Cell(lookup);
@@ -212,7 +212,7 @@ bool Try_Bind_Word(const Value* context, Value* word)
     const bool strict = true;
     if (Is_Module(context)) {
         Stub* patch = maybe MOD_PATCH(
-            Cell_Varlist(context),
+            cast(SeaOfVars*, Cell_Varlist(context)),
             Cell_Word_Symbol(word),
             strict
         );
@@ -330,40 +330,17 @@ Let* Make_Let_Variable(
 Option(Stub*) Get_Word_Container(
     REBLEN *index_out,
     const Element* any_word,
-    Context* context,
-    enum Reb_Attach_Mode mode
+    Context* context
 ){
     Corrupt_If_Debug(*index_out);  // corrupt index to make sure it gets set
 
     Context* binding = BINDING(any_word);
     const Symbol* symbol = Cell_Word_Symbol(any_word);
 
-    if (CELL_WORD_INDEX_I32(any_word) == INDEX_ATTACHED) {
-        //
-        // Variable may have popped into existence since the original attach.
-        //
-        VarList* ctx = cast(VarList*, binding);
-        Value* var = MOD_VAR(ctx, symbol, true);
-        if (var) {
-            *index_out = INDEX_PATCHED;
-            return Singular_From_Cell(var);
-        }
-        if (mode != ATTACH_WRITE) {
-            *index_out = INDEX_ATTACHED;
-            return binding;
-        }
-        *index_out = INDEX_PATCHED;
-        var = Append_Context(ctx, symbol);
-        Init_Nothing(var);
-        return Singular_From_Cell(var);
-    }
-
     if (IS_WORD_BOUND(any_word)) {  // leave binding alone
         *index_out = VAL_WORD_INDEX(any_word);
         return binding;
     }
-
-    VarList* attach = nullptr;  // where to attach variable if not found
 
     Context* c = context;
 
@@ -386,24 +363,11 @@ Option(Stub*) Get_Word_Container(
             VarList* vlist = cast(VarList*, c);
 
             if (CTX_TYPE(vlist) == REB_MODULE) {
-                Value* slot = MOD_VAR(vlist, symbol, true);
+                Value* slot = MOD_VAR(cast(SeaOfVars*, vlist), symbol, true);
                 if (slot) {
                     *index_out = INDEX_PATCHED;
                     return Singular_From_Cell(slot);
                 }
-
-                if (vlist == Lib_Context or vlist == Sys_Context)  // "strict"
-                    goto next_context;
-
-                if (mode == ATTACH_WRITE) {  // only write to first module
-                    *index_out = INDEX_PATCHED;
-                    slot = Append_Context(vlist, symbol);
-                    Init_Nothing(slot);
-                    return Singular_From_Cell(slot);
-                }
-
-                if (not attach)  // non-strict, allow later emergence
-                    attach = vlist;
 
                 goto next_context;
             }
@@ -467,9 +431,9 @@ Option(Stub*) Get_Word_Container(
         }
 
         if (Is_Module(Stub_Cell(c))) {
-            VarList* mod = Cell_Varlist(Stub_Cell(c));
+            SeaOfVars* sea = cast(SeaOfVars*, Cell_Varlist(Stub_Cell(c)));
 
-            Value* var = MOD_VAR(mod, symbol, true);
+            Value* var = MOD_VAR(sea, symbol, true);
             if (var) {
                 *index_out = INDEX_PATCHED;
                 return Singular_From_Cell(var);
@@ -503,12 +467,6 @@ Option(Stub*) Get_Word_Container(
         }
 
         goto next_context;
-    }
-
-    if (attach) {
-        assert(mode == ATTACH_READ);
-        *index_out = INDEX_ATTACHED;
-        return attach;
     }
 
     return nullptr;
@@ -1435,13 +1393,11 @@ void Assert_Cell_Binding_Valid_Core(const Cell* cell)
     assert(Is_Stub_Varlist(binding));  // or SeaOfVars...
 
     if (CTX_TYPE(cast(VarList*, binding)) == REB_MODULE) {
-        if (not (
+        assert(
             Any_Listlike(cell)
             or heart == REB_COMMA  // feed cells, use for binding ATM
-        )){
-            assert(Any_Wordlike(cell));
-            assert(CELL_WORD_INDEX_I32(cell) == INDEX_ATTACHED);
-        }
+        );
+        // attachment binding no longer exists
     }
 }
 

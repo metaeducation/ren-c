@@ -3,7 +3,7 @@
 ; Mutating operations in UPARSE raise some large questions; they were removed
 ; from Topaz entirely.  For the moment they are being considered.
 
-(all [
+(all wrap [
     '~<remove>~ == meta parse text: "a ^/ " [
         some [newline remove [to <end>] | "a" [remove [to newline]] | <next>]
     ]
@@ -69,10 +69,12 @@
         ]
     )
     (all [
+        let s
         '~<remove>~ == meta parse s: " t e s t " [some [remove ws | <next>]]
         s = "test"
     ])
     (all [
+        let s
         '~<remove>~ == meta parse s: " t e s t " [some [remove ws | one]]
         s = "test"
     ])
@@ -125,12 +127,12 @@
             bin = #{00BEEF}
         ]
     )
-    (all [
+    (all wrap [
         ws: make bitset! [" ^- ^/^M" #""]
         '~<remove>~ == meta parse s: #{00DE00AD00} [some [remove ws | <next>]]
         s = #{DEAD}
     ])
-    (all [
+    (all wrap [
         ws: make bitset! [" ^- ^/^M" #""]
         '~<remove>~ == meta parse s: #{00DE00AD00} [some [remove ws | one]]
         s = #{DEAD}
@@ -159,10 +161,12 @@
 
 [#1251
     (all [
+        let e
         '~<insert>~ == meta parse e: "a" [remove one insert ("xxx")]
         e = "xxx"
     ])
     (all [
+        let e
         '~<insert>~ == meta parse e: "a" [[remove one] insert ("xxx")]
         e = "xxx"
     ])
@@ -170,11 +174,13 @@
 
 [#1244
     (all [
+        let [a v]
         raised? parse a: "12" [remove v: across one]
         a = "2"
         v = "1"
     ])
     (all [
+        let [a v]
         raised? parse a: "12" [remove [v: across one]]
         a = "2"
         v = "1"

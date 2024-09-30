@@ -85,6 +85,7 @@
 
 [https://github.com/red/red/issues/563
     (
+        res: ~
         f563: lambda [t [text!]] [did try parse t [opt some r]]
 
         r: [#+, :(res: f563 "-", assert [not res], maybe res)]
@@ -107,6 +108,7 @@
         f: func [
             s [text!]
         ][
+            let [r l x]
             r: [
                 l: across one (l: load-value l)
                 x: across repeat (l) one

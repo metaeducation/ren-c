@@ -32,6 +32,7 @@
 ; break cycle
 (
     str: "abcdef"
+    num: ~
     for 'i each str [
         num: i
         if i = #"c" [break]
@@ -186,7 +187,7 @@
 )(
     block: copy [a b c]
     all [
-        e: sys.util/rescue [
+        let e: sys.util/rescue [
             for 'item each block [
                 append block <failure>
             ]

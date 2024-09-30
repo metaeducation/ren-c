@@ -83,7 +83,7 @@
 )
 ; infinite recursion
 (
-    <deep-enough> = catch [
+    <deep-enough> = catch wrap [
         x: 0
         blk: [(x: x + 1, if x = 5000 [throw <deep-enough>]) (compose blk)]
         eval blk

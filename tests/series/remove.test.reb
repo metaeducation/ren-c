@@ -52,16 +52,20 @@
 
 ; Types should match when you TAKE/PART from a List
 [
-    (all [
+    (
         group: '(a b c d e f)
-        '(a b c) = take/part group 3
-        group = '(d e f)
-    ])
-    (all [
+        all [
+            '(a b c) = take/part group 3
+            group = '(d e f)
+        ]
+    )
+    (
         block: [a b c d e f]
-        [a b c] = take/part block 3
-        block = [d e f]
-    ])
+        all [
+            [a b c] = take/part block 3
+            block = [d e f]
+        ]
+    )
 ]
 
 ; UTF-8 Removals in binary alias should not allow bad strings

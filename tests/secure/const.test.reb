@@ -6,7 +6,7 @@
     data: mutable [a b c]
     data-readonly: const data
     all [
-        e: sys.util/rescue [append data-readonly <readonly>]
+        let e: sys.util/rescue [append data-readonly <readonly>]
         e.id = 'const-value
         append data <readwrite>
         data = [a b c <readwrite>]
@@ -47,15 +47,18 @@
 ; as const...it shouldn't be inheriting a "wave of constness" otherwise.
 [
     ~const-value~ !! (
+        d: ~
         repeat 2 [eval [append d: [] <item>]]
     )
 
     (
+        d: ~
         block: [append d: [] <item>]
         [<item> <item>] = repeat 2 [eval block]
     )
 
     ~const-value~ !! (
+        d: ~
         block: [append d: [] <item>]
         repeat 2 [eval const block]
     )
@@ -86,6 +89,7 @@
 ; only make the outermost level mutable...referenced series will be const
 ; if they weren't copied (and weren't mutable explicitly)
 (
+    data: ~
     repeat 1 [data: copy [a [b [c]]]]
     append data <success>
     e2: sys.util/rescue [append data.2 <failure>]
@@ -96,12 +100,14 @@
         e22.id = 'const-value
     ]
 )(
+    data: ~
     repeat 1 [data: copy/deep [a [b [c]]]]
     append data <success>
     append data.2 <success>
     append data.2.2 <success>
     data = [a [b [c <success>] <success>] <success>]
 )(
+    sub: ~
     repeat 1 [sub: copy/deep [b [c]]]
     data: copy compose [a (sub)]
     append data <success>
@@ -114,6 +120,7 @@
     https://github.com/metaeducation/ren-c/issues/633
 
     ~const-value~ !! (
+        foo: ~
         count-up 'x 1 [append foo: [] x]
     )
 ]

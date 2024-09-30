@@ -16,7 +16,7 @@
 
 (
     valid: ["~abc~" "~a|b~"]
-    for-each 'str valid [
+    for-each 'str valid wrap [
         word: parse str [/to-word between '~ '~]
         bad: load-value str
         assert [quasi? bad]
@@ -150,11 +150,13 @@
 ; to do such an emergence, though something like a JavaScript strict mode
 ; would demand some kind of prior declaration of intent to use the name).
 ;
-(all [
+(
     e: sys.util/rescue [get/any $asiieiajiaosdfbjakbsjxbjkchasdf]
-    e.id = 'unassigned-attach
-    e.arg1 = 'asiieiajiaosdfbjakbsjxbjkchasdf
-])
+    all [
+        e.id = 'not-bound
+        e.arg1 = 'asiieiajiaosdfbjakbsjxbjkchasdf
+    ]
+)
 
 ; Note: QUITs are definitional and provided by things like DO when they run
 ; a script, or IMPORT.  They are variants of THROW.
@@ -215,7 +217,10 @@
     a: ~okay~
     ^a = '~okay~
 )
-(not error? trap [set $a '~okay~])
+(
+    a: ~
+    not error? trap [set $a '~okay~]
+)
 
 
 [

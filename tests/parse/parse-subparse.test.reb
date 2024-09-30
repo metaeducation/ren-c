@@ -38,6 +38,7 @@
 
 (
     all [
+        let x
         "aaa" == parse ["aaa"] [subparse text! [x: across some "a"]]
         x = "aaa"
     ]
@@ -45,6 +46,7 @@
 
 (
     all [
+        let x
         "aaa" == parse ["aaa"] [subparse one [x: across some "a"]]
         x = "aaa"
     ]
@@ -52,6 +54,7 @@
 
 (
     all [
+        let x
         "aaa" == parse "((aaa)))" [
             subparse [between some "(" some ")"] [x: across some "a"]
         ]
@@ -61,6 +64,7 @@
 
 (
     all [
+        let [x content]
         [some some some] == parse [| | some some some | | |] [
             content: between some '| some '|
             subparse (content) [x: collect [some keep ['some]]]
@@ -99,6 +103,7 @@
 ; Note: If functions with INPUT that return progress would act implicitly as
 ; combinators, then SUBPARSE <HERE> would be how PARSE would act.
 [(
+    b: bb: ~
     x: parse "aaabbb" [
         some "a"
         subparse <here> ["bbb" (b: "yep, Bs")]
@@ -110,6 +115,7 @@
         bb = "Bs again"
     ]
 )(
+    b: bb: c: ~
     x: parse "aaabbbccc" [
         some "a"
         subparse <here> ["bbb" to <end> (b: "yep, Bs")]
@@ -130,9 +136,12 @@
 
 ; Manual SUBPARSE via a recursion
 [
-    ("test" = parse [a "test"] [
-        'a s: text! (assert [#t == parse s [repeat 4 one]])
-    ])
+    (
+        s: ~
+        "test" = parse [a "test"] [
+            'a s: text! (assert [#t == parse s [repeat 4 one]])
+        ]
+    )
 ]
 
 ; Parsing ANY-SEQUENCE is allowed

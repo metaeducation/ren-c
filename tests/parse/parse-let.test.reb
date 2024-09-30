@@ -38,7 +38,7 @@
 
 ; https://forum.rebol.info/t/question-about-binding-in-parse/461
 (
-    [hello -hi-there-] = collect [
+    [hello -hi-there-] = collect wrap [
         function-rule: [
            subparse group! [
                let code: word!

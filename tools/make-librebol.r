@@ -658,6 +658,11 @@ e-lib/emit [ver {
      * A "Bounce" is the return result from a native.  It can be a RebolValue
      * in the case of being the final resolution of the return result.  Or it
      * can be a signal of a continuation (or delegation) of code.
+     *
+     * !!! Technically this is a Node* ... but we do not export the derived
+     * relationship between Value and Node in C++ builds (and cannot do so in
+     * a C build).  So a void* is the only way to get a `return` in a libRebol
+     * native to accept either RebolNodeInternal* or RebolValue*.
      */
 
     typedef void* RebolBounce;

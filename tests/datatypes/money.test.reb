@@ -27,6 +27,7 @@
 ; alternative form
 ($1.1 == $1,1)
 (
+    x: ~
     any [
         error? trap [x: $1234567890123456]
         not error? trap [mold x]

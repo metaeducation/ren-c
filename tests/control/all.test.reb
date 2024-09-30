@@ -377,7 +377,7 @@
 
 ; infinite recursion
 (
-    <deep-enough> = catch [
+    <deep-enough> = catch wrap [
         counter: 0
         blk: [counter: me + 1, if counter = 5000 [throw <deep-enough>], all blk]
         eval blk

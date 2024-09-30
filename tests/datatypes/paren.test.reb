@@ -32,8 +32,8 @@
 ;
 [#859 #1665 (
     <deep-enough> = catch [
-        n: 0
-        fact: $(n: n + 1 if n = 5000 [throw <deep-enough>])
+        let n: 0
+        let fact: $(n: n + 1 if n = 5000 [throw <deep-enough>])
         append fact fact
         eval fact
     ]

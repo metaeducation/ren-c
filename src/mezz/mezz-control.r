@@ -25,10 +25,3 @@ launch: func [
     append command maybe spread args
     return call* // [command, /wait wait]
 ]
-
-wrap: lambda [
-    "Evaluates a block, wrapping all set-words as locals."
-    body [block!] "Block to evaluate"
-][
-    eval bind/copy/set body make object! 0
-]

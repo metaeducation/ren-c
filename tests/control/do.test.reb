@@ -19,13 +19,13 @@
     (^void = ^ eval/undecayed [10 + 20 if null [<a>]])
 
     (all [
-        x: <overwritten>
+        let x: ~
         '~[]~ = x: ^ comment "HI" comment "HI"  ; not eval'd in same step
         x = '~[]~
     ])
 
     (all [
-        x: <overwritten>
+        let x: ~
         '~[]~ = (x: ^(comment "HI") ^ eval/undecayed [comment "HI"])
         '~[]~ = x
     ])
@@ -239,7 +239,7 @@
     ]
 )
 (
-    all [
+    all wrap [
         null? [pos /value]: evaluate/step/undecayed []
         pos = null
         null? value
@@ -299,7 +299,7 @@
 (3 = reeval unrun :reeval unrun :add 1 2)
 ; infinite recursion for block
 (
-    <deep-enough> = catch [
+    <deep-enough> = catch wrap [
         x: 0
         blk: [x: x + 1, if x = 2000 [throw <deep-enough>] eval blk]
         eval blk
@@ -310,7 +310,7 @@
 ; work using module isolation.  Review.
 ;
 [#1896
-    ~unassigned-attach~ !! (
+    ~not-bound~ !! (
         str: "Rebol [] do str"
         do str
     )
@@ -318,9 +318,9 @@
 
 ; infinite recursion for evaluate
 (
-    <deep-enough> = catch [
+    <deep-enough> = catch wrap [
         x: 0
-        blk: [x: x + 1, if x = 2000 [throw <deep-enough>] b: evaluate blk]
+        blk: [x: x + 1, if x = 2000 [throw <deep-enough>] evaluate blk]
         eval blk
     ]
 )

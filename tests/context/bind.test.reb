@@ -18,7 +18,7 @@
 [#1549 (
     b1: [self]
     f: lambda [<local> b2] [
-        b2: [self]
+        let b2: [self]
         same? first b2 first bind/copy b1 binding of $b2
     ]
     f
@@ -27,7 +27,7 @@
 [#1549 (
     b1: [self]
     count-up 'i 1 [
-        b2: [self]
+        let b2: [self]
         same? first b2 first bind/copy b1 binding of $i
     ]
 )]

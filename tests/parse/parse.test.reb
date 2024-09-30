@@ -9,11 +9,12 @@
     combs.here: <here>
     [b c] = parse/combinators [a b c] [skip 1, here, skip 2] combs
 )(
+    foo: ~
     combs: copy default-combinators
-    combs.aaa: [foo: across some "a"]
-    combs.bbb: [tally "b"]
+    combs.across-a: [foo: across some "a"]
+    combs.tally-b: [tally "b"]
     all [
-        3 = parse/combinators "aaabbb" [aaa bbb] combs
+        3 = parse/combinators "aaabbb" [across-a tally-b] combs
         foo = "aaa"
     ]
 )]

@@ -27,8 +27,9 @@
 ; break cycle
 (
     str: "abcdef"
-    iterate @str [if #"c" = char: str.1 [break]]
-    char = #"c"
+    char: ~
+    iterate @str [if #c = char: str.1 [break]]
+    char = #c
 )
 ; break return value
 (

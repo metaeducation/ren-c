@@ -46,8 +46,8 @@
 ][
     assert [find [+ -] supported]
     trap [
-        email: load-value text
-        type: type of email
+        let email: load-value text
+        let type: type of email
         if type <> email! [
             fail ["LOAD of" mold text "should've been email but was" mold type]
         ]

@@ -7,8 +7,8 @@
 ; An error is raised for now.
 ;
 (all [
-    e: sys.util/rescue [set? $utternonsense]
-    e.id = 'unassigned-attach
+    let e: sys.util/rescue [set? $utternonsense]
+    e.id = 'not-bound
     e.arg1 = 'utternonsense
 ])
 

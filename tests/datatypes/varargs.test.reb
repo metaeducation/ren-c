@@ -1,11 +1,12 @@
 (
     foo: lambda [x [integer! <variadic>]] [
-        sum: 0
+        let sum: 0
         while [not tail? x] [
             sum: sum + take x
         ]
         sum
     ]
+    z: ~
     y: (z: foo 1 2 3, 4 5)
     all [y = 5, z = 6, 0 = (foo)]
 )
@@ -17,12 +18,12 @@
 ; leaked VARARGS! cannot be accessed after call is over
 ;
 ~frame-not-on-stack~ !! (
-    take reeval (unrun foo: lambda [x [integer! <variadic>]] [x])
+    take reeval (unrun lambda [x [integer! <variadic>]] [x])
 )
 
 (
     f: func [args [any-value? <variadic>]] [
-       b: take args
+       let b: take args
        return either tail? args [b] ["not at end"]
     ]
     x: make varargs! [~null~]
@@ -53,7 +54,7 @@
     (1 = eval [normal])
     (11 = eval [10 normal])
     (21 = eval [10 20 normal])
-    (31 = eval [x: 30, y: 'x, 1 2 x normal])
+    (31 = eval wrap [x: 30, y: 'x, 1 2 x normal])
     (30 = eval [multiply 3 9 normal])  ; seen as ((multiply 3 (9 normal))
 ][
     (
@@ -71,7 +72,7 @@
     (1 = eval [defers])
     (11 = eval [10 defers])
     (21 = eval [10 20 defers])
-    (31 = eval [x: 30, y: 'x, 1 2 x defers])
+    (31 = eval wrap [x: 30, y: 'x, 1 2 x defers])
     (28 = eval [multiply 3 9 defers])  ; seen as (multiply 3 9) defers))
 ][
     (
@@ -118,8 +119,8 @@
 ; <| and |> were originally enfix, so the following tests would have meant x
 ; would be unset
 (
-    unset $value
-    unset $x
+    value: ~
+    x: ~
 
     3 = (value: 1 + 2 <| 30 + 40 x: value  () ())
 
@@ -136,7 +137,7 @@
 ; https://github.com/metaeducation/ren-c/issues/912
 
 (
-    vblock: collect [
+    vblock: collect wrap [
         log: adapt keep/ [set/any $value spread reduce value]
         variadic2: func [return: [text!] v [any-value? <variadic>]] [
            log [<1> take v]
@@ -148,7 +149,7 @@
        log [<result> result]
     ]
 
-    nblock: collect [
+    nblock: collect wrap [
         log: adapt keep/ [set/any $value spread reduce value]
         normal2: func [return: [text!] n1 n2] [
             log [<1> n1 <2> n2]

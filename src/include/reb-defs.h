@@ -44,6 +44,16 @@
 #define Byte unsigned char  // don't change to uint8_t, see note
 
 
+//=//// FLAGS TYPE ////////////////////////////////////////////////////////=//
+//
+// !!! Originally the Flags type was a `uint_fast32_t`.  However, there were
+// several cases of the type being used with macros that only work with
+// platform sized ints.  But really, uintptr_t and uint_fast32_t are likely
+// the same type on most platforms anyway.
+//
+typedef uintptr_t Flags;
+
+
 //=//// REBOL NUMERIC TYPES ("REBXXX") ////////////////////////////////////=//
 //
 // The 64-bit build modifications to R3-Alpha after its open sourcing changed
@@ -226,7 +236,9 @@ typedef struct BookmarkStruct Bookmark;
 //=//// BINDING ///////////////////////////////////////////////////////////=//
 
 struct Reb_Binder;
-struct Reb_Collector;
+
+struct CollectorStruct;
+typedef struct CollectorStruct Collector;
 
 typedef struct JumpStruct Jump;
 
@@ -351,12 +363,6 @@ typedef struct rebol_time_fields {
 
 #include "sys-deci.h"
 
-
-enum Reb_Attach_Mode {
-    ATTACH_READ,
-    ATTACH_WRITE
-};
-
 enum act_modify_mask {
     AM_PART = 1 << 0,
     AM_SPLICE = 1 << 1,
@@ -377,3 +383,14 @@ enum {
     PROT_WORD = 1 << 3,
     PROT_FREEZE = 1 << 4
 };
+
+
+// Modes allowed by Collect keys functions:
+enum {
+    COLLECT_ONLY_SET_WORDS = 0,
+    COLLECT_ANY_WORD = 1 << 1,
+    COLLECT_ANY_LIST_DEEP = 1 << 2,
+    COLLECT_DEEP_BLOCKS = 1 << 3,  // only deep if BLOCK!
+    COLLECT_NO_DUP = 1 << 4  // Do not allow dups during collection (for specs)
+};
+typedef Flags CollectFlags;

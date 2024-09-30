@@ -169,8 +169,8 @@
 ; Note: This matches Red but is different from R3-Alpha, which gets b as 1
 (
     a: 1x2
+    b: a.(a: [3 4] 1)
     all [
-        b: a.(a: [3 4] 1)
         b = 3
         a = [3 4]
     ]
@@ -216,23 +216,29 @@
 (2 = length of the foo/ )
 (the foo/ = to path! [foo _])
 
-(all [
+(
     e: trap [to path! [_ _]]
-    e.id = 'conflated-sequence
-    e.arg1 = '/
-    word? e.arg1
-])
-(all [
+    all [
+        e.id = 'conflated-sequence
+        e.arg1 = '/
+        word? e.arg1
+    ]
+)
+(
     e: trap [to path! [~ ~]]
-    e.id = 'conflated-sequence
-    e.arg1 = '~/~
-    quasiform? e.arg1
-    '/ = unquasi e.arg1
-])
-(all [
+    all [
+        e.id = 'conflated-sequence
+        e.arg1 = '~/~
+        quasiform? e.arg1
+        '/ = unquasi e.arg1
+    ]
+)
+(
     e: trap [to path! [a _ b]]
-    e.id = 'bad-sequence-blank
-])
+    all [
+        e.id = 'bad-sequence-blank
+    ]
+)
 
 ; Not currently true, TO BLOCK! is acting like BLOCKIFY, review
 ;

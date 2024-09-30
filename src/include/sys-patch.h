@@ -41,10 +41,7 @@
         if (Is_Stub_Let(c) or Is_Stub_Use(c))
             return c;  // virtual bind
 
-        assert(
-            CTX_TYPE(cast(VarList*, c)) == REB_FRAME
-            or CTX_TYPE(cast(VarList*, c)) == REB_MODULE
-        );
+        assert(Is_Stub_Varlist(c));
         return c;
     }
 #endif

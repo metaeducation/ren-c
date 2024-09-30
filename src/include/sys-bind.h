@@ -118,8 +118,7 @@ INLINE Element* Derelativize_Untracked(
         }
         else {
             REBLEN index;
-            Flex* f =
-                maybe Get_Word_Container(&index, v, context, ATTACH_READ);
+            Flex* f = maybe Get_Word_Container(&index, v, context);
             if (not f) {
                 out->extra = v->extra;
             }
@@ -182,19 +181,18 @@ enum {
 
 
 struct Reb_Binder {
-  #if !defined(NDEBUG)
-    REBLEN count;
-  #endif
-
-  #if CPLUSPLUS_11
-    //
-    // The C++ debug build can help us make sure that no binder ever fails to
-    // get an INIT_BINDER() and SHUTDOWN_BINDER() pair called on it, which
-    // would leave lingering binding values on symbol stubs.
-    //
-    bool initialized;
-    Reb_Binder () { initialized = false; }
-    ~Reb_Binder () { assert(not initialized); }
+  #if DEBUG
+    Count count;
+    #if CPLUSPLUS_11
+        //
+        // C++ debug build can help us make sure that no binder ever fails to
+        // get an INIT_BINDER() and SHUTDOWN_BINDER() pair called on it, which
+        // would leave lingering binding values on symbol stubs.
+        //
+        bool initialized;
+        Reb_Binder () { initialized = false; }
+        ~Reb_Binder () { assert(not initialized); }
+    #endif
   #else
     int pedantic_warnings_dont_allow_empty_struct;
   #endif
@@ -202,20 +200,20 @@ struct Reb_Binder {
 
 
 INLINE void INIT_BINDER(struct Reb_Binder *binder) {
-  #if defined(NDEBUG)
-    UNUSED(binder);
-  #else
+  #if DEBUG
     binder->count = 0;
 
     #if CPLUSPLUS_11
         binder->initialized = true;
     #endif
   #endif
+
+    UNUSED(binder);
 }
 
 
 INLINE void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
-  #if !defined(NDEBUG)
+  #if DEBUG
     assert(binder->count == 0);
 
     #if CPLUSPLUS_11
@@ -234,6 +232,10 @@ INLINE bool Try_Add_Binder_Index(
     const Symbol* s,
     REBINT index
 ){
+  #if CPLUSPLUS_11 && DEBUG
+    assert(binder->initialized);
+  #endif
+
     assert(index != 0);
     if (Get_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO))
         return false;  // already has a mapping
@@ -275,6 +277,10 @@ INLINE REBINT Get_Binder_Index_Else_0( // 0 if not present
     struct Reb_Binder *binder,
     const Symbol* s
 ){
+  #if CPLUSPLUS_11 && DEBUG
+    assert(binder->initialized);
+  #endif
+
     UNUSED(binder);
     if (Not_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO))
         return 0;
@@ -288,6 +294,10 @@ INLINE REBINT Remove_Binder_Index_Else_0( // return old value if there
     struct Reb_Binder *binder,
     const Symbol* s
 ){
+  #if CPLUSPLUS_11 && DEBUG
+    assert(binder->initialized);
+  #endif
+
     if (Not_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO))
         return 0;
 
@@ -319,29 +329,22 @@ INLINE void Remove_Binder_Index(
     UNUSED(old_index);
 }
 
-
-// Modes allowed by Collect keys functions:
-enum {
-    COLLECT_ONLY_SET_WORDS = 0,
-    COLLECT_ANY_WORD = 1 << 1,
-    COLLECT_DEEP = 1 << 2,
-    COLLECT_NO_DUP = 1 << 3  // Do not allow dups during collection (for specs)
-};
-
-struct Reb_Collector {
-    Flags flags;
+struct CollectorStruct {
+    CollectFlags initial_flags;
     StackIndex stack_base;
+    Option(SeaOfVars*) sea;
     struct Reb_Binder binder;
 };
+
+#define DECLARE_COLLECTOR(name) \
+    struct CollectorStruct collector_struct; \
+    struct CollectorStruct* name = &collector_struct; \
 
 #define Collector_Index_If_Pushed(collector) \
     ((TOP_INDEX - (collector)->stack_base) + 1)  // index of *next* item to add
 
-
 INLINE bool IS_WORD_UNBOUND(const Cell* v) {
     assert(Any_Wordlike(v));
-    if (CELL_WORD_INDEX_I32(v) == INDEX_ATTACHED)
-        return true;
     if (CELL_WORD_INDEX_I32(v) < 0)
         assert(Is_Stub_Details(BINDING(v)));
     return CELL_WORD_INDEX_I32(v) <= 0;
@@ -400,26 +403,16 @@ INLINE Option(Error*) Trap_Lookup_Word(
     Context* context
 ){
     REBLEN index;
-    Flex* f = maybe Get_Word_Container(
-        &index,
-        word,
-        context,
-        ATTACH_READ
-    );
+    Flex* f = maybe Get_Word_Container(&index, word, context);
     if (not f) {
         *out = nullptr;  // avoid aggressive callsite warnings
         return Error_Not_Bound_Raw(word);
-    }
-    if (index == INDEX_ATTACHED) {
-        *out = nullptr;  // avoid aggressive callsite warnings
-        return Error_Unassigned_Attach_Raw(word);
     }
 
     if (Is_Stub_Let(f) or Is_Stub_Patch(f)) {
         *out = Stub_Cell(f);
         return nullptr;
     }
-
     Assert_Node_Accessible(f);
     VarList* c = cast(VarList*, f);
     *out = Varlist_Slot(c, index);
@@ -431,14 +424,10 @@ INLINE Option(const Value*) Lookup_Word(
     Context* context
 ){
     REBLEN index;
-    Flex* f = maybe Get_Word_Container(
-        &index,
-        word,
-        context,
-        ATTACH_READ
-    );
-    if (not f or index == INDEX_ATTACHED)
+    Flex* f = maybe Get_Word_Container(&index, word, context);
+    if (not f)
         return nullptr;
+
     if (Is_Stub_Let(f) or Is_Stub_Patch(f))
         return Stub_Cell(f);
 
@@ -464,12 +453,7 @@ INLINE Value* Lookup_Mutable_Word_May_Fail(
     Context* context
 ){
     REBLEN index;
-    Flex* f = maybe Get_Word_Container(
-        &index,
-        any_word,
-        context,
-        ATTACH_WRITE
-    );
+    Flex* f = maybe Get_Word_Container(&index, any_word, context);
     if (not f)
         fail (Error_Not_Bound_Raw(any_word));
 

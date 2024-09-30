@@ -16,6 +16,7 @@
     ok
 )
 (
+    let pos: ~
     parse3 [a b] ['a void pos: <here> 'b]
     pos = [b]
 )
@@ -58,6 +59,7 @@
     count-up 'n 512 [
         if n = 1 [continue]
 
+        let c
         parse3 (append copy "" codepoint-to-char n - 1) [
             c: any-char <end>
         ]
@@ -175,30 +177,37 @@
 ; SET-WORD! (store current input position)
 
 (
+    let pos
     parse3 ser: [x y] [pos: <here>, one, one]
     pos = ser
 )
 (
+    let pos
     parse3 ser: [x y] [one, pos: <here>, one]
     pos = next ser
 )
 (
+    let pos
     parse3 ser: [x y] [one, one, pos: <here>]
     pos = tail of ser
 )
 [#2130 (
+    val: pos: ~
     parse3 ser: [x] [pos: <here>, val: word!]
     all [val = 'x, pos = ser]
 )]
 [#2130 (
+    val: pos: ~
     parse3 ser: [x] [pos: <here>, val: word!]
     all [val = 'x, pos = ser]
 )]
 [#2130 (
+    val: pos: ~
     res: parse3/match ser: "foo" [pos: <here>, val: across one]
     all [res = null, val = "f", pos = ser]
 )]
 [#2130 (
+    val: pos: ~
     res: parse3/match ser: "foo" [pos: <here>, val: across one]
     all [res = null, val = "f", pos = ser]
 )]
@@ -253,6 +262,7 @@
 
 (
     i: 0
+    j: ~
     parse3 "a" [
         some [thru "a" (i: i + 1, j: if i > 1 [<end> one]) j]
     ]
@@ -303,6 +313,7 @@
 ; repetition
 
 [#1280 (
+    i: ~
     parse3 "" [(i: 0) repeat 3 [["a" |] (i: i + 1)]]
     i == 3
 )]
@@ -314,6 +325,7 @@
 )]
 [#1268 (
     i: 0
+    j: ~
     parse3 "a" [some [opt "a" (i: i + 1, j: if i = 2 [[bypass]]) j]]
     i == 2
 )]
@@ -415,11 +427,13 @@
 ; PATH! cannot be PARSE'd due to restrictions of the implementation
 (
     a-value: first [a/b]
+    b-value: ~
     'true = parse3 as block! a-value [b-value: <here>, accept ('true)]
     a-value = to path! b-value
 )
 (
     a-value: first [()]
+    b-value: ~
     'true = parse3 a-value [b-value: <here>, accept ('true)]
     same? a-value b-value
 )
@@ -427,6 +441,7 @@
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
 (
     i: 1
+    j: ~
     all [
         raised? parse3 "a" [
             some [opt "a" (i: i + 1 j: if i = 2 [[<end> one]]) j]
@@ -507,6 +522,7 @@
 ; Quote level is not retained by captured content
 ;
 (
+    x: ~
     pos: parse3 [''[1 + 2]] [into [x: across to <end>], accept <here>]
     all [
         [] == pos
@@ -534,6 +550,7 @@
 ;
 ; Unlike R3-Alpha, changing the series being parsed is not allowed.
 (
+    x: y: z: ~
     parse3 "aabbcc" [
         some "a", x: <here>, some "b", y: <here>
         seek x, z: across to <end>
@@ -545,6 +562,7 @@
     ]
 )(
     pos: 5
+    nums: ~
     parse3 "123456789" [seek pos nums: across to <end>]
     nums = "56789"
 )
@@ -599,6 +617,7 @@
 
 (
     test: to-binary {The C😺T Test}
+    x: ~
     parse3 test [to {c😺t} x: across to space to <end>]
     all [
         x = #{43F09F98BA54}
@@ -644,7 +663,7 @@
     s: {abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ}
     t: {----------------------------------------------------}
     cfor n 2 50 1 [
-        sub: copy/part s n
+        let sub: copy/part s n
         parse3 sub [some [
             remove one
             insert ("-")
@@ -802,11 +821,13 @@
 
 [#1244
     (all [
+        let [a v]
         raised? parse3 a: "12" [remove v: across one]
         a = "2"
         v = "1"
     ])
     (all [
+        let [a v]
         raised? parse3 a: "12" [remove [v: across one]]
         a = "2"
         v = "1"
@@ -838,9 +859,11 @@
 
 ; Parsing URL!s and ANY-SEQUENCE? is read-only
 [(
+    name: ~
     parse3 http://example.com ["http:" some "/" name: across to "." ".com"]
     name = "example"
 )(
+    tags: ~
     parse3 'abc.<def>.<ghi>.jkl [word! tags: across some tag! word!]
     tags = [<def> <ghi>]
 )]

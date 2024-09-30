@@ -1,5 +1,5 @@
 (
-    unset $x
+    x: ~
     x: default [10]
     x = 10
 )

@@ -2,7 +2,11 @@
 
 [
     (
-        split-test5: func [series [text!] dlm [text! char?] <local> value] [
+        split-test5: func [
+            series [text!]
+            dlm [text! char?]
+            <local> value rule
+        ][
             rule: complement charset dlm
             return parse series [collect opt some [
                 keep value: across some rule | <next>

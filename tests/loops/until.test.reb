@@ -26,6 +26,7 @@
 ; Recursion check
 (
     num1: 0
+    num2: ~
     num3: 0
     until [
         num2: 0

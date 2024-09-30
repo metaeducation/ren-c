@@ -82,8 +82,8 @@
 
 [#2516 (
     all [
-        code: [1 / 2]
-        obj: make object! [
+        let code: [1 / 2]
+        let obj: make object! [
             /: enfix func [a b] [
                 return reduce @(b a)
             ]

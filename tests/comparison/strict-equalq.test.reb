@@ -118,6 +118,7 @@
 (equal? strict-equal? [] blank strict-equal? blank [])
 [#1068 #1066 (
     a-value: first [()]
+    b-value: ~
     parse a-value [b-value: <here>, to <end>]
     strict-equal? a-value b-value
 )]

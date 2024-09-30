@@ -4,7 +4,7 @@
 
 (
     all [
-        pos: parse- [... [a b]] [to '[a b]]
+        let pos: parse- [... [a b]] [to '[a b]]
         pos = [[a b]]
     ]
 )
@@ -78,15 +78,15 @@
 ; tick marks from everything like ["ab"] to become ['ab]
 [
     (all [
-        pos: parse- "abbbbbc" ['a some ['b]]
+        let pos: parse- "abbbbbc" ['a some ['b]]
         "c" = pos
     ])
     (all [
-        pos: parse- "abbbbc" ['ab, some ['bc | 'b]]
+        let pos: parse- "abbbbc" ['ab, some ['bc | 'b]]
         "" = pos
     ])
     (all [
-        pos: parse- "abc10def" ['abc '10]
+        let pos: parse- "abc10def" ['abc '10]
         "def" = pos
     ])
 

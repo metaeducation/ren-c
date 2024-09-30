@@ -59,7 +59,6 @@ INLINE const Symbol* Cell_Word_Symbol(const Cell* cell) {
 // to avoid confusing with actual indices into objects.
 //
 #define INDEX_PATCHED (INT32_MAX - 1)  // directly points at variable patch
-#define INDEX_ATTACHED INT32_MAX  // lazy creation of module variables
 
 #define CELL_WORD_INDEX_I32(v)         PAYLOAD(Any, (v)).second.i32
 

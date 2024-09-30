@@ -24,6 +24,7 @@
 ]
 
 [#2129 (
+    x: ~
     rule: [x: across thru some "0"]
     all [
         "000000" == parse "000000" rule
@@ -64,6 +65,7 @@
 ; THRU advances the input position correctly.
 (
     i: 0
+    j: ~
     try parse "a." [
         some [thru "a" (i: i + 1 j: if i > 1 [<end> one]) j]
     ]

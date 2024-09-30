@@ -46,7 +46,7 @@
     (
         tcopy: copy t
         n: 0
-        while [c: try take tcopy] [
+        while [try take tcopy] c -> [
             n: n + 1
             assert [c = t.(n)]
         ]
@@ -56,6 +56,7 @@
     (
         tcopy: copy t
         n: length of t
+        c: ~
         while [c: try take/last tcopy] [
             assert [c = t.(n)]
             n: n - 1
@@ -73,6 +74,7 @@
     )
 
     (
+        b: ~
         parse3 t [to braille b: across to newline to <end>]
         b = braille
     )

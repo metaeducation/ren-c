@@ -339,7 +339,7 @@ DECLARE_NATIVE(unload_extension)
     */
 
    Value* shutdown_action = MOD_VAR(
-       Cell_Varlist(extension),
+       cast(SeaOfVars*, Cell_Varlist(extension)),
        Canon(SHUTDOWN_P),
        true
     );

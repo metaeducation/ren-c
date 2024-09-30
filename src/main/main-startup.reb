@@ -662,7 +662,7 @@ main-startup: func [
         ; Also on Windows, things like `C:` represent drive letters, so the
         ; heuristic is to check for more than one letter.
         ;
-        alphanum: charset [#"A" - #"Z" #"a" - #"z" #"0" #"9"]
+        let alphanum: charset [#"A" - #"Z" #"a" - #"z" #"0" #"9"]
         o.script: parse3 o.script [
             some alphanum ":"  ; SOME, e.g. more than one letter
             accept (to url! o.script)

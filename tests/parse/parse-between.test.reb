@@ -4,6 +4,7 @@
 
 (
     all [
+        let x
         "a" == parse "aaaa(((How cool is this?))aaaa" [
             some "a", x: between some "(" some ")", some "a"
         ]
@@ -13,6 +14,7 @@
 
 (
     all [
+        let x
         <c> == parse [<a> <b> * * * {Thing!} * * <c>] [
             some tag!, x: between [repeat 3 '*] [repeat 2 '*], some tag!
         ]

@@ -338,13 +338,7 @@ defined?: func [
     return: [logic?]
     var [word! path! tuple!]
 ][
-    if tuple? var [
-        return not trap [get var]  ; can't use BINDING OF on TUPLE! atm
-    ]
-    return all [
-        '~attached~ != binding of var
-        '~ <> ^ get/any var
-    ]
+    return not trap [get var]
 ]
 
 undefined?: func [
@@ -352,13 +346,7 @@ undefined?: func [
     return: [logic?]
     var [word! path! tuple!]
 ][
-    if tuple? var [
-        return did trap [get var]  ; can't use BINDING OF on TUPLE! atm
-    ]
-    return any [
-        '~attached~ = binding of var
-        '~ = ^ get/any var
-    ]
+    return did trap [get var]
 ]
 
 unspecialized?: func [

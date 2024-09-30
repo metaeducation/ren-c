@@ -75,7 +75,7 @@
 
 ; Check to see that AUGMENT of the help expands it.
 [(
-    all [
+    all wrap [
         orig: func ["description" a "a" /b "b"] [return <unused>]
         aug: meta/lite augment orig/ [c "c" /d "d"]
         if m: adjunct-of aug [

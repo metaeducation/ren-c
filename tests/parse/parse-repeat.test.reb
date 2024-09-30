@@ -57,6 +57,7 @@
 )
 
 (
+    rule: ~
     "b" == parse ["b" 3 "b" "b" "b"] [rule: one, repeat integer! rule]
 )
 
@@ -198,6 +199,7 @@
 ]
 
 [#1280 (
+    i: ~
     parse "" [(i: 0) repeat 3 [["a" |] (i: i + 1)]]
     i == 3
 )]

@@ -39,6 +39,7 @@
 
     (
         digit: charset "0123456789"
+        v: ~
         [#2] = parse "123" [
             collect [some [
                 keep [v: digit, elide when (even? load-value as text! v)]
@@ -49,6 +50,7 @@
     )
     (
         digit: charset [0 - 9]
+        v: ~
         [2] = parse #{010203} [
             collect [some [
                 keep [v: digit, elide when (even? v)]
@@ -60,12 +62,14 @@
 
     (
         digit: charset "0123456789"
+        d: ~
         [1 2 3] = parse "123" [
             collect [some [d: across digit keep (load-value d)]]
         ]
     )
     (
         digit: charset [0 - 9]
+        d: ~
         [2 3 4] = parse #{010203} [
             collect [some [d: across digit keep (1 + first d)]]
         ]
@@ -170,6 +174,7 @@
         ]
     )
     (all [
+        let block: ~
         'yay = parse [1 2 3 yay] [
             block: collect [some keep integer!] word!
         ]
@@ -250,18 +255,22 @@
 ; SOME KEEP vs KEEP SOME
 [
     (all [
+        let x
         [3] == parse [1 2 3] [x: collect [keep some integer!]]
         x = [3]
     ])
     (all [
+        let x
         [1 2 3] == parse [1 2 3] [x: collect [some keep integer!]]
         x = [1 2 3]
     ])
     (all [
+        let x
         [3] == parse [1 2 3] [x: collect [keep [some integer!]]]
         x = [3]
     ])
     (all [
+        let x
         [1 2 3] == parse [1 2 3] [x: collect [some [keep integer!]]]
         x = [1 2 3]
     ])
@@ -270,12 +279,14 @@
 ; Collecting non-list series fragments
 [
     (all [
-        pos: parse- "aaabbb" [x: collect [keep [across some "a"]]]
+        let x
+        let pos: parse- "aaabbb" [x: collect [keep [across some "a"]]]
         "bbb" = pos
         x = ["aaa"]
     ])
     (all [
-        pos: parse- "aaabbbccc" [
+        let x
+        let pos: parse- "aaabbbccc" [
             x: collect [keep [across some "a"] some "b" keep [across some "c"]]
         ]
         "" = pos
@@ -286,7 +297,8 @@
 ; "Backtracking" (more tests needed!)
 [
     (all [
-        pos: parse- [1 2 3] [
+        let x
+        let pos: parse- [1 2 3] [
             x: collect [
                 keep integer! keep integer! keep text!
                 |
@@ -302,7 +314,7 @@
 ; behaviors w.r.t SET and COPY)
 [
     (all [
-        x: <before>
+        let x: <before>
         raised? parse [1 2] [x: collect [keep integer! keep text!]]
         x = <before>
     ])
@@ -311,6 +323,7 @@
 ; Nested collect
 [
     (all [
+        let [a b]
         [1 4] == parse [1 2 3 4] [
             a: collect [
                 keep integer!
@@ -329,7 +342,8 @@
 ; input series or a match rule.
 [
     (all [
-        pos: parse- [1 2 3] [
+        let x
+        let pos: parse- [1 2 3] [
             x: collect [
                 keep integer!
                 keep spread (second [A [<pick> <me>] B])
@@ -340,7 +354,8 @@
         x = [1 <pick> <me> 2]
     ])
     (all [
-        pos: parse- [1 2 3] [
+        let x
+        let pos: parse- [1 2 3] [
             x: collect [
                 keep integer!
                 keep (second [A [<pick> <me>] B])
@@ -351,6 +366,7 @@
         x = [1 [<pick> <me>] 2]
     ])
     (all [
+        let x
         [[a b c]] == parse [1 2 3] [x: collect [keep ([a b c]) to <end>]]
         x = [[a b c]]
     ])
@@ -360,6 +376,7 @@
 https://github.com/metaeducation/ren-c/issues/935
 [
     (all [
+        let x
         ["aaa" "b"] == parse "aaabbb" [
             x: collect [keep across some "a" keep some "b"]
         ]
@@ -367,11 +384,13 @@ https://github.com/metaeducation/ren-c/issues/935
     ])
 
     (all [
+        let x
         ["aaa"] == parse "aaabbb" [x: collect [keep across to "b"] to <end>]
         x = ["aaa"]
     ])
 
     (all [
+        let [outer inner]
         ["b"] == parse "aaabbb" [
             outer: collect [
                 some [inner: collect keep across some "a" | keep some "b"]
@@ -385,6 +404,7 @@ https://github.com/metaeducation/ren-c/issues/935
 ; Filtering tests (from %parse-test.red)
 [
     (
+        v: ~
         [2] = parse [1 2 3] [
             collect [some [keep [v: integer! elide when (even? v)] | <next>]]
         ]
@@ -420,6 +440,7 @@ https://github.com/metaeducation/ren-c/issues/935
 
 [https://github.com/red/red/issues/567
     (
+        value: ~
         ["12"] = parse "12" [collect [keep value: across repeat 2 one]]
     )
 ]
@@ -427,9 +448,11 @@ https://github.com/metaeducation/ren-c/issues/935
 [https://github.com/red/red/issues/569
     (
         size: 1
+        value: ~
         ["1"] = parse "1" [collect [keep value: across repeat (size) one]]
     )(
         size: 2
+        value: ~
         ["12"] = parse "12" [collect [keep value: across repeat (size) one]]
     )
 ]
@@ -488,6 +511,7 @@ https://github.com/metaeducation/ren-c/issues/935
 [
     (
         foo: func [value] [return value]
+        let p
         res: parse [a 3 4 t [t 9] "test" 8] [
             collect [
                 some [
@@ -510,6 +534,7 @@ https://github.com/metaeducation/ren-c/issues/935
 https://github.com/metaeducation/ren-c/issues/939
 (
     thing: ~
+    foo: ~
     all [
         raised? parse "a" [thing: collect [foo: <here>, "a", keep seek (foo)]]
         foo = "a"
@@ -547,6 +572,7 @@ https://github.com/metaeducation/ren-c/issues/939
 )
 
     (
+        c: ~
         parse str b: [c: collect rule (insert out spread c)]
         out == res
     )
@@ -554,10 +580,12 @@ https://github.com/metaeducation/ren-c/issues/939
     (take/last append str "¿", ok)
 
     (
+        c: ~
         parse str b: [c: collect rule (insert out spread c)]
         out == res
     )
     (
+        c: ~
         parse str b: [c: collect rule (append out spread c)]
         out == res
     )

@@ -33,7 +33,7 @@
         ]
     ]
     all [
-        r: make-rule
+        let r: make-rule
         did parse3 "a" r  ; this was where the problem was
     ]
 )
@@ -97,7 +97,7 @@
 (
     data: array/initial 20 1
     sum: 0
-    for-each 'x data [
+    for-each 'x data wrap [
         code: copy []  ; block captures binding that can see X
         for-each 'y data [  ; block can't see Y w/o overbind, let's COMPOSE it
             append code spread compose/deep [sum: sum + eval [x + (y) + z]]

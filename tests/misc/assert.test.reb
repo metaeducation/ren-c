@@ -71,6 +71,7 @@
         ]
     )
     (
+        e: ~
         all [
             ["hooked"] = collect [e: sys.util/rescue [
                 assert/handler [1 = 2, 2 = 2, 2 = 3] [keep "hooked"]

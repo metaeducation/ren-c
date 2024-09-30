@@ -156,6 +156,7 @@
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
 (
     i: 1
+    j: ~
     try parse "a" [opt some [
         (
             i: i + 1
@@ -173,6 +174,7 @@
     ]
 )(
     i: 0
+    j: ~
     all [
         raised? parse "a" [opt some [(i: i + 1, j: if i = 2 '[bypass]) j]]
         i == 2

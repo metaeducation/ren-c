@@ -170,13 +170,13 @@
         {<<} {>>} {>>=} {<<=} {>>=<->}
 
         {-<=>-} {-<>-} {>=<}
-    ][
-        let assert: specialize assert/ [
+    ] wrap [
+        assert: specialize lib/assert/ [
             handler: [echo Failure on: @str]
         ]
 
-        let unescaped-in-path: quoted? str
-        str: noquote str
+        valid-in-path: quoted? str
+        set $str noquote str  ; use SET to avoid WRAP
 
         [pos word]: transcode/next str
         assert [pos = ""]
@@ -184,16 +184,14 @@
         assert [word = to word! str]
         assert [str = as text! word]
 
-        if unescaped-in-path [
-            [pos path]: transcode/next unspaced ["a/" str "/b"]
+        if valid-in-path [
+            let ['pos path]: transcode/next unspaced ["a/" str "/b"]
             assert [pos = ""]
             assert [path = compose $a/(word)/b]
         ] else [
-            ; !!! The logistics for making this work aren't finished, and
-            ; there are higher priorities than rewriting the scanner.
-            ;
-            comment [
-                [pos path]: transcode/next unspaced ["a/|" str "|/b"]
+            comment [  ; !!! Path scan with arrow words is buggy, scans tags
+                let e: trap [transcode/next unspaced ["a/" str "/b"]]
+                assert [e]
             ]
         ]
 

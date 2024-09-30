@@ -13,19 +13,23 @@
 ([1 [2] <3>] = transcode "1 [2] <3>")
 
 ; When asking for a block's worth of values, an empty string gives empty block
-(all [
+(
     result: transcode ""
-    [] = result
-    not new-line? result
-])
-(all [
+    all [
+        [] = result
+        not new-line? result
+    ]
+)
+(
     result: transcode "^/    ^/    ^/"
-    [] = result
-    new-line? result
-])
+    all [
+        [] = result
+        new-line? result
+    ]
+)
 
 (
-    all [
+    all wrap [
         1 = [pos @value]: transcode/next "1 [2] <3>"
         value = 1
         pos = " [2] <3>"
@@ -53,7 +57,7 @@
 (
     str: "Cat😺: [😺 😺] (😺)"
 
-    all [
+    all wrap [
         'Cat😺: = [pos @value]: transcode/next str
         set-word? value
         value = 'Cat😺:
@@ -70,7 +74,7 @@
     bin: as binary! "Cat😺: [😺 😺] (😺)"
     bin =  #{436174F09F98BA3A205BF09F98BA20F09F98BA5D2028F09F98BA29}
 
-    all [
+    all wrap [
         'Cat😺: = [pos @value]: transcode/next bin
         set-word? value
         value = 'Cat😺:

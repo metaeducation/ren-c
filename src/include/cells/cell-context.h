@@ -167,7 +167,7 @@ INLINE const Value* TRY_VAL_CONTEXT_VAR_CORE(
     bool strict = false;
     Value* var;
     if (Is_Module(context)) {
-        var = MOD_VAR(Cell_Varlist(context), symbol, strict);
+        var = MOD_VAR(cast(SeaOfVars*, Cell_Varlist(context)), symbol, strict);
     }
     else {
         Option(Index) index = Find_Symbol_In_Context(context, symbol, strict);

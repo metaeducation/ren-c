@@ -219,6 +219,7 @@ export analyse: context [
                     ]
                 ]
 
+                let name: ~
                 if true? (parse3 proto-parser.data [
                     opt 'export
                     name: &set-word? (name: to-word name)

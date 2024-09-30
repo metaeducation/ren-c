@@ -27,6 +27,8 @@
 [#852 (
     n: 25000
     s4: 0.0
+    k: ~
+    ks: ~
     count-up 'l n [
         k: to decimal! l
         ks: sine/radians k

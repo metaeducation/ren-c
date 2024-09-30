@@ -51,7 +51,7 @@
                 assert [x = as issue! load-value mold x]
             ]
             text? x [
-                id: (match error! trap [load x]).id
+                let id: (match error! trap [load x]).id
                 assert [find [scan-invalid scan-extra scan-missing] id]
             ]
             fail "wrong type"

@@ -432,6 +432,7 @@ static void Init_System_Object(
     // Create the system object from the sysobj block (defined in %sysobj.r)
     //
     VarList* system = Make_Varlist_Detect_Managed(
+        COLLECT_ONLY_SET_WORDS,
         REB_OBJECT, // type
         spec_head, // scan for toplevel set-words
         spec_tail,

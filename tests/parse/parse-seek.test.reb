@@ -9,13 +9,17 @@
 
 ("a" = parse "a" [seek (void) "a"])  ; void seeks are no-ops
 
-("b" == parse "aaabbb" [
-    "a" pos: <here> repeat 2 "a" seek (pos) repeat 2 "a" repeat 3 "b"
-])
+(
+    pos: ~
+    "b" == parse "aaabbb" [
+        "a" pos: <here> repeat 2 "a" seek (pos) repeat 2 "a" repeat 3 "b"
+    ]
+)
 ("b" == parse "aaabbb" ["a" repeat 2 "a" seek (2) repeat 2 "a" repeat 3 "b"])
 
 (
     all [
+        let [x y z]
         "bbcc" == parse "aabbcc" [
             some "a", x: <here>, some "b", y: <here>
             seek (x), z: across to <end>
@@ -28,6 +32,7 @@
 
 (
     pos: 5
+    nums: ~
     parse "123456789" [seek (pos) nums: across to <end>]
     nums = "56789"
 )

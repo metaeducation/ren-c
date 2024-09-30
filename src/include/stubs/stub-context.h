@@ -67,9 +67,6 @@
 //
 #define CTX_ADJUNCT(c)     MISC(VarlistAdjunct, Varlist_Array(c))
 
-#define LINK_Patches_TYPE       Array*
-#define HAS_LINK_Patches        FLAVOR_VARLIST
-
 #define Tweak_Cell_Context_Varlist            Tweak_Cell_Node1
 
 #define Tweak_Cell_Frame_Phase_Or_Label       Tweak_Cell_Node2
@@ -105,8 +102,9 @@ INLINE const Element* Varlist_Archetype(VarList* c) {  // read-only form
     return c_cast(Element*, varlist->content.dynamic.data);
 }
 
-#define CTX_TYPE(c) \
-    Cell_Heart(Varlist_Archetype(c))
+INLINE Heart CTX_TYPE(Context* c) {
+    return Cell_Heart(Varlist_Archetype(cast(VarList*, c)));
+}
 
 INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
   { return m_cast(Element*, Varlist_Archetype(c)); }  // inline checks mutability
@@ -213,14 +211,16 @@ INLINE KeyList* Keylist_Of_Varlist(VarList* c) {
     return cast(KeyList*, node_BONUS(KeySource, Varlist_Array(c)));  // not Level
 }
 
-INLINE void Tweak_Keylist_Of_Varlist_Shared(VarList* v, KeyList* keylist) {
+INLINE void Tweak_Keylist_Of_Varlist_Shared(Array* a, KeyList* keylist) {
+    assert(Is_Stub_Varlist(a));  // may not be complete yet
     Set_Subclass_Flag(KEYLIST, keylist, SHARED);
-    Tweak_Varlist_Keysource(v, keylist);
+    Tweak_Bonus_Keysource(a, keylist);
 }
 
-INLINE void Tweak_Keylist_Of_Varlist_Unique(VarList* v, KeyList *keylist) {
+INLINE void Tweak_Keylist_Of_Varlist_Unique(Array* a, KeyList *keylist) {
+    assert(Is_Stub_Varlist(a));  // may not be complete yet
     assert(Not_Subclass_Flag(KEYLIST, keylist, SHARED));
-    Tweak_Varlist_Keysource(v, keylist);
+    Tweak_Bonus_Keysource(a, keylist);
 }
 
 
@@ -282,23 +282,21 @@ INLINE Value* Force_Lib_Var(SymId id) {
 #define SysUtil(name) \
     cast(const Value*, MOD_VAR(Sys_Context, Canon_Symbol(SYM_##name), true))
 
-INLINE Option(Stub*) MOD_PATCH(VarList* c, const Symbol* sym, bool strict) {
-    //
-    // Optimization for Lib_Context for datatypes + natives + generics; use
-    // tailored order of SYM_XXX constants to beeline for the storage.  The
-    // entries were all allocated during Startup_Lib().
-    //
-    // Note: Call Lib() macro directly if you have a SYM in hand vs. a canon.
-    //
-    if (c == Lib_Context) {
+// Optimization for Lib_Context for datatypes + natives + generics; usage is
+// tailored in order for SYM_XXX constants to beeline for the storage.  The
+// entries were all allocated during Startup_Lib().
+//
+// Note: Call Lib() macro directly if you have a SYM in hand vs. a canon.
+//
+// 1. !!! We need to consider the strictness here, with case sensitive binding
+//    we can't be sure it's a match.  :-/  For this moment hope lib doesn't
+//    have two-cased variations of anything.
+//
+INLINE Option(Stub*) MOD_PATCH(SeaOfVars* sea, const Symbol* sym, bool strict) {
+    if (sea == Lib_Context) {
         Option(SymId) id = Symbol_Id(sym);
         if (id != 0 and id < LIB_SYMS_MAX) {
-            //
-            // !!! We need to consider the strictness here, with case sensitive
-            // binding we can't be sure it's a match.  :-/  For this moment
-            // hope lib doesn't have two-cased variations of anything.
-            //
-            if (INODE(PatchContext, &PG_Lib_Patches[id]) == nullptr)
+            if (INODE(PatchContext, &PG_Lib_Patches[id]) == nullptr)  // [1]
                 return nullptr;
 
             return &PG_Lib_Patches[id];
@@ -312,18 +310,19 @@ INLINE Option(Stub*) MOD_PATCH(VarList* c, const Symbol* sym, bool strict) {
             patch = cast(Stub*, node_MISC(Hitch, patch));  // skip bindinfo
 
         for (; patch != sym; patch = cast(Stub*, node_MISC(Hitch, patch))) {
-            if (INODE(PatchContext, patch) == c)
+            if (INODE(PatchContext, patch) == sea)
                 return patch;
         }
         if (strict)
             return nullptr;
         sym = LINK(Synonym, sym);
     } while (synonym != sym);
+
     return nullptr;
 }
 
-INLINE Value* MOD_VAR(VarList* c, const Symbol* sym, bool strict) {
-    Stub* patch = maybe MOD_PATCH(c, sym, strict);
+INLINE Value* MOD_VAR(SeaOfVars* sea, const Symbol* sym, bool strict) {
+    Stub* patch = maybe MOD_PATCH(sea, sym, strict);
     if (not patch)
         return nullptr;
     return cast(Value*, Stub_Cell(patch));
@@ -461,7 +460,7 @@ INLINE VarList* Steal_Varlist_Vars(VarList* c, Node* keysource) {
     Corrupt_Pointer_If_Debug(BONUS(KeySource, copy)); // needs update
     Mem_Copy(&copy->content, &stub->content, sizeof(union StubContentUnion));
     MISC(VarlistAdjunct, copy) = nullptr;  // let stub have the meta
-    LINK(Patches, copy) = nullptr;  // don't carry forward patches
+    node_LINK(NextVirtual, copy) = nullptr;
 
     Value* rootvar = cast(Value*, copy->content.dynamic.data);
     Tweak_Cell_Context_Varlist(rootvar, x_cast(Array*, copy));

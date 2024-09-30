@@ -278,18 +278,40 @@ export console!: make object! [
         return read-line stdin except ['~escape~]
     ]
 
+    ; See the Debug console skin for example of binding to the currently
+    ; "focused" FRAME!, or this example on the forum of last value injection:
+    ;
+    ;   https://forum.rebol.info/t/1071
+    ;
+    ; 1. The WRAP* operation will collect the top-level SET-WORD declarations
+    ;    and add them to the passed in context, and then run the block bound
+    ;    into that context.  This allows:
+    ;
+    ;        >> x: 10
+    ;        == 10
+    ;
+    ;    But it does not allow:
+    ;
+    ;        >> (y: 20)
+    ;        ** Error: y is not bound
+    ;
+    ;    See: https://forum.rebol.info/t/2128/6
+    ;
+    ; 2. We know the higher-level WRAP will create a context that inherits
+    ;    from the block it's passed, and then run it.  But with the lower
+    ;    level code working with modules, it's less clear--virtually binding
+    ;    the module via a "USE!" won't get the inheritance, and if we make
+    ;    the module the binding literally then that would have to override
+    ;    whatever binding was on the block.  Leave it open for now, as these
+    ;    unbound block cases aren't the only ones to consider.
+    ;
     dialect-hook: meth [
         "Receives code block, parse/transform/bind, send back to CONSOLE eval"
         return: [block!]
         b [block!]
     ][
-        ; See the Debug console skin for example of binding the code to the
-        ; currently "focused" FRAME!, or this example on the forum of injecting
-        ; the last value:
-        ;
-        ; https://forum.rebol.info/t/1071
-
-        return inside system.contexts.user b
+        wrap* system.contexts.user b  ; expand w/top-level set-word [1]
+        return inside system.contexts.user b  ; two operations for now [2]
     ]
 
     shortcuts: make object! compose/deep [
@@ -741,7 +763,7 @@ console*: func [
         return <prompt>
     ]
 
-    code: (
+    let code: (
         transcode (delimit newline result)
     ) except error -> [
         ;

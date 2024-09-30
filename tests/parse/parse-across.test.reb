@@ -8,7 +8,8 @@
 ; while hybrid syntax is still around.
 
 
-(all [
+(all wrap [
+    x: y: ~
     "bbb" == parse "aaabbb" [x: across some "a", y: across [some "b"]]
     x = "aaa"
     y = "bbb"
@@ -17,6 +18,7 @@
 [https://github.com/red/red/issues/1093
    (
         se53-copied: copy ""
+        s: ~
         all [
             "abcde" == parse "abcde" [
                 "xyz" | s: across to <end> (se53-copied: :s)
@@ -26,6 +28,7 @@
     )
     (
         se53-copied: copy #{}
+        s: ~
         all [
             #{0102030405} == parse #{0102030405} [
                 #{AABBCC} | s: across to <end> (se53-copied: :s)
@@ -777,6 +780,7 @@
 ; Parsing URL!s and ANY-SEQUENCE? is read-only
 [(
     all [
+        let name
         "example" == parse http://example.com [
             "http:" some "/" name: between <here> ".com"
         ]
@@ -784,6 +788,7 @@
     ]
 )(
     all [
+        let tags
         'jkl == parse 'abc.<def>.<ghi>.jkl [word! tags: across some tag! word!]
         tags = [<def> <ghi>]
     ]

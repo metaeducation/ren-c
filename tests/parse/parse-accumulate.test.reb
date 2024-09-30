@@ -3,6 +3,8 @@
 ([a b] = parse ["a" a <a> "b" b <b>] [accumulate [text! word! elide tag!]])
 
 (
+    words: ~
+    strings: ~
     parse [x: $y z "a" <b> %c] [
         words: accumulate &any-word?
         strings: accumulate &any-string?
@@ -14,6 +16,8 @@
 )
 
 (
+    words: ~
+    strings: ~
     parse ["a" <b> %c] [
         words: accumulate &any-word?
         strings: accumulate &any-string?
@@ -25,6 +29,8 @@
 )
 
 (
+    words: ~
+    strings: ~
     parse [x: [$y z] "a" <b> %c] [
         words: accumulate [
             &any-word?

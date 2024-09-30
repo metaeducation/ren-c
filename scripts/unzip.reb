@@ -350,7 +350,7 @@ unzip: func [
     ; Finding the central directory is done empirically by scanning from
     ; the end of file, looking for the end-of-central-sig.
     ;
-    if not central-end-pos: find-reverse (tail source) end-of-central-sig [
+    if not let central-end-pos: find-reverse (tail source) end-of-central-sig [
         fail "Could not find end of central directory signature"
     ]
     let num-central-entries
@@ -405,7 +405,7 @@ unzip: func [
     let local-header-offset
     let name
     let temp
-    central-directory-entry-rule: [
+    let central-directory-entry-rule: [
         [central-file-sig | (fail "CENTRAL-FILE-SIG mismatch")]
 
         version-created-by: across skip 2  ; version that made this file
@@ -440,7 +440,7 @@ unzip: func [
     ; However, consider making these checks downgradable to warnings.
     ;
     let x
-    check-local-directory-entry-rule: [
+    let check-local-directory-entry-rule: [
         [local-file-sig | (fail "LOCAL-FILE-SIG mismatch")]
 
         x: across skip 2, (assert [x = version-needed])
@@ -481,7 +481,7 @@ unzip: func [
         ; putting 9 byte timestamps in the global header and 5 byte
         ; timestamps in the local header.
         ;
-        local-extra-field-length: uint16-rule
+        let local-extra-field-length: uint16-rule
 
         x: across skip (name-length), (assert [(to-file x) = name])
 
@@ -501,7 +501,7 @@ unzip: func [
             ; into local variables for this function.
             ;
             central-directory-entry-rule
-            central-file-end: <here>
+            let central-file-end: <here>
 
             (info [name])
 
@@ -620,7 +620,7 @@ unzip: func [
         ; We shouldn't just be at *an* end-of-central signature, we should
         ; be at the end record we started the search from.
         ;
-        pos: <here>, (assert [pos = central-end-pos])
+        let pos: <here>, (assert [pos = central-end-pos])
 
         accept (~)  ; allow parse to succeed even though not at end
     ] except [

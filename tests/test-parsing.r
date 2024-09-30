@@ -103,9 +103,7 @@ export collect-tests: func [
     append into clean-path file
 
     let pos
-    let item
-    let body
-    append into spread collect [parse3 code [
+    append into spread collect [parse3 code [  ; PARSE3...lame but faster
         opt some [
             pos: <here>
 
@@ -116,19 +114,21 @@ export collect-tests: func [
             ; Also, accommodate new feature, marking an expected error ID, e.g.
             ;
             ;    ~bad-pick~ !! (pick #{00} 'x)
-            [
+            ;
+            [let expected  ; PARSE3 can't assign BLOCK! rule
+              [
                 expected: quasiform! ['!! | (fail "!! must follow ~error-id~")]
                 |
                 (expected: null)
-            ]
-            group: group! (
+              ]
+            let group: group! (
                 keep flags, flags: copy []
 
                 ; Treat a top level group (...) as if you wrote [(...)].
                 ; Put it in a block, along with its optional expected error ID.
                 ;
                 keep/line reduce [(maybe expected) (if expected '!!) group]
-            )
+            )]
             |
             ; A BLOCK! groups together several tests that rely on common
             ; definitions.  They are isolated together.  The block is not
@@ -136,10 +136,10 @@ export collect-tests: func [
             ; runs all groups that start newlines as tests...interleaved
             ; with whatever other code there is.
             ;
-            item: block! (
+            [let block: block! (
                 keep flags, flags: copy []
-                keep/line item
-            )
+                keep/line block
+            )]
             |
             ; ISSUE! and URL! have historically just been ignored, they are a
             ; kind of comment that you don't have to put a semicolon on.  It
@@ -155,28 +155,26 @@ export collect-tests: func [
             ; the feature will shape up to be, but there were stray tags,
             ; so just collect them... nothing looks at them right now.
             ;
-            item: tag! (
-                append flags item
-            )
+            [let tag: tag! (
+                append flags tag
+            )]
             |
             ; The test dialect should probably let you reference a file from
             ; another file, to sub-factor tests.  Right now the top level
             ; %core-tests.r is the only one that accepts subfiles.
             ;
-            item: file! (
-                let referenced-file: item
-
+            [let referenced-file: file! (
                 change-dir maybe split-path file
                 collect-tests/into referenced-file into
                 change-dir current-dir
-            )
+            )]
             |
             ; New feature: test generation and collection
             ;
-            '@collect-tests, body: block! (
+            '@collect-tests, [let body: block! (
                 keep @collect-tests
                 keep body
-            )
+            )]
         ]  ; ends TRY SOME
     ] except [  ; ends PARSE
         append into spread reduce [

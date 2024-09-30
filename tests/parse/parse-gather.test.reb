@@ -5,6 +5,7 @@
 
 (
     all [
+        let g
         '* == parse [* * * 1 <foo> * * *] [
             some '*
             g: gather [

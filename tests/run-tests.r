@@ -37,7 +37,7 @@ flags: [<64bit> <r3only> <r3>]
 check: checksum 'sha1 to binary! mold system.build
 
 log-file-prefix: join %r spread collect [
-    for 'i length of version: system.version [
+    for 'i length of let version: system.version [
         keep "_"
         keep version.(i)
     ]
@@ -68,6 +68,8 @@ run-tests: func [
 === RUN TESTS SPECIFIED BY COMMAND LINE (SINGLE FILE OR DIRECTORY) ===
 
 print newline
+
+tests: ~<https://forum.rebol.info/t/2165/2>~
 
 if try first system.options.args [
     tests: local-to-file first system.options.args

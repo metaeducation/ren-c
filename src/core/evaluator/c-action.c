@@ -1074,7 +1074,7 @@ void Push_Action(
     s->info.any.flags = FLEX_INFO_MASK_NONE;
     Tweak_Bonus_Keysource(x_cast(Array*, s), L);  // maps varlist back to L
     MISC(VarlistAdjunct, s) = nullptr;
-    LINK(Patches, s) = nullptr;
+    node_LINK(NextVirtual, s) = nullptr;
 
     if (not Try_Flex_Data_Alloc(
         s,

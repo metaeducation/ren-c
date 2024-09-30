@@ -19,6 +19,7 @@
     ; BREAK in order to keep going with the rule.
     (
         ws: charset " ^-^/^M"
+        name: str: ~
         res: parse html rule: [
             collect opt some [
                 ws

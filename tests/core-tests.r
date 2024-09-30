@@ -89,6 +89,7 @@
 %context/use.test.reb
 %context/valueq.test.reb
 %context/virtual-bind.test.reb
+%context/wrap.test.reb
 
 %control/all.test.reb
 %control/any.test.reb

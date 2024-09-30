@@ -86,7 +86,6 @@ Script: [
     bad-void:           {Invalid use of void}
     need-non-end:       [{end was reached evaluating} :arg1]  ; SET-XXX!/SIGIL!
     not-bound:          [:arg1 {word is not bound to a context}]
-    unassigned-attach:  [:arg1 {word is attached to a context, but unassigned}]
     not-in-context:     [:arg1 {is not in the specified context}]
 
     assertion-failure:  [{assertion failure:} :arg1]

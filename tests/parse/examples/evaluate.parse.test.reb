@@ -44,7 +44,7 @@
     ok
 )
 
-    (all [
+    (all wrap [
         [35 13 23] = [k s]: keeper-saver [
             1 + 2
             <K> (3 + 4) * 5 if ok [6 + 7]

@@ -1,10 +1,10 @@
 ; functions/control/either.r
 (
-    either okay [success: 'yes] [success: 'no]
+    success: either okay ['yes] ['no]
     yes? success
 )
 (
-    either null [success: 'no] [success: 'yes]
+    success: either null ['no] ['yes]
     yes? success
 )
 (1 = either okay [1] [2])
@@ -66,7 +66,7 @@
 
     ; Infinite recursion
 
-    (<deep-enough> = catch [
+    (<deep-enough> = catch wrap [
         depth: 0
         eval blk: [
             depth: me + 1
@@ -74,7 +74,7 @@
             either okay (blk) []
         ]
     ])
-    (<deep-enough> = catch [
+    (<deep-enough> = catch wrap [
         depth: 0
         eval blk: [
             depth: me + 1

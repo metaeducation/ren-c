@@ -3,7 +3,7 @@
 ; REDO via a direct FRAME! value
 (
     foo: func [return: [tag!] n] [
-        frame: binding of $n
+        let frame: binding of $n
         if n = 0 [
             return <success>
         ]

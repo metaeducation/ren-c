@@ -301,7 +301,7 @@ DECLARE_NATIVE(has)
 
     Init_Any_Word(OUT, heart, symbol);
     Tweak_Cell_Word_Index(OUT, INDEX_PATCHED);
-    BINDING(OUT) = MOD_PATCH(ctx, symbol, strict);
+    BINDING(OUT) = MOD_PATCH(cast(SeaOfVars*, ctx), symbol, strict);
     return OUT;
 }
 
@@ -665,41 +665,6 @@ DECLARE_NATIVE(bindable)
     }
 
     return COPY(v);
-}
-
-
-//
-//  collect-words: native [
-//
-//  "Collect unique words used in a block (used for context construction)"
-//
-//      return: [block!]
-//      block [block!]
-//      /deep "Include nested blocks"
-//      /set "Only include set-words"
-//      /ignore "Ignore prior words"
-//          [any-context? block!]
-//  ]
-//
-DECLARE_NATIVE(collect_words)
-{
-    INCLUDE_PARAMS_OF_COLLECT_WORDS;
-
-    Flags flags;
-    if (REF(set))
-        flags = COLLECT_ONLY_SET_WORDS;
-    else
-        flags = COLLECT_ANY_WORD;
-
-    if (REF(deep))
-        flags |= COLLECT_DEEP;
-
-    const Element* tail;
-    const Element* at = Cell_List_At(&tail, ARG(block));
-    return Init_Block(
-        OUT,
-        Collect_Unique_Words_Managed(at, tail, flags, ARG(ignore))
-    );
 }
 
 
@@ -1972,8 +1937,8 @@ DECLARE_NATIVE(proxy_exports)
 {
     INCLUDE_PARAMS_OF_PROXY_EXPORTS;
 
-    VarList* where = Cell_Varlist(ARG(where));
-    VarList* source = Cell_Varlist(ARG(source));
+    SeaOfVars* where = cast(SeaOfVars*, Cell_Varlist(ARG(where)));
+    SeaOfVars* source = cast(SeaOfVars*, Cell_Varlist(ARG(source)));
 
     const Element* tail;
     const Element* v = Cell_List_At(&tail, ARG(exports));

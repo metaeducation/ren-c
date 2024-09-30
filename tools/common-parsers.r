@@ -48,7 +48,7 @@ load-until-double-newline: func [
         opt wsp opt [newline opt newline] position: <here>
         to <end>
     ] then [
-        values: load copy/part text position
+        let values: load copy/part text position
         return reduce [values position]
     ]
 
@@ -222,6 +222,8 @@ export proto-parser: context [
             | "(const Cell*)"
             | "(const Cell* )" (fail "use (const Cell*) not (const Cell* )")
         ]
+
+        proto: ~
 
         function-proto: [
             proto: across [

@@ -17,6 +17,7 @@
 )
 
 (
+    x: ~
     3 = parse [3 3 3] [x: when (1 + 2) some :(quote x) | (fail "boo")]
 )(
     x: <untouched>

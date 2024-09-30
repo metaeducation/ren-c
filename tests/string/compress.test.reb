@@ -14,6 +14,7 @@
     list: compose [
         %abc.txt (str) %test.r (read %../core-tests.r) %def.txt #{646566}
     ]
+    zipped: unzipped: ~
     zip (zipped: copy #{}) list
     unzip (unzipped: copy []) zipped
     all [
@@ -25,6 +26,7 @@
 
 ;  test a "foreign" file
 (
+    unzipped: ~
     did unzip (unzipped: copy []) %../fixtures/test.docx
 )
 

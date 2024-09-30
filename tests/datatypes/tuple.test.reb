@@ -44,7 +44,7 @@
     ]
 
     for-each [text structure] tests [
-        tuple: ensure tuple! to tuple! text
+        let tuple: ensure tuple! to tuple! text
         assert [(length of tuple) = (length of structure)]
         cfor i 1 (length of tuple) 1 [
             assert [tuple.(i) = structure.(i)]
@@ -93,20 +93,26 @@
     (null = try index of 'a.b.c)
 ]
 
-(all [
+(
     e: trap [to tuple! [_ _]]
-    e.id = 'conflated-sequence
-    e.arg1 = '.
-    word? e.arg1
-])
-(all [
+    all [
+        e.id = 'conflated-sequence
+        e.arg1 = '.
+        word? e.arg1
+    ]
+)
+(
     e: trap [to tuple! [~ ~]]
-    e.id = 'conflated-sequence
-    e.arg1 = '~.~
-    quasiform? e.arg1
-    '. = unquasi e.arg1
-])
-(all [
+    all [
+        e.id = 'conflated-sequence
+        e.arg1 = '~.~
+        quasiform? e.arg1
+        '. = unquasi e.arg1
+    ]
+)
+(
     e: trap [to tuple! [a _ b]]
-    e.id = 'bad-sequence-blank
-])
+    all [
+        e.id = 'bad-sequence-blank
+    ]
+)

@@ -16,11 +16,11 @@
 )
 
 (
-    unset $a
+    a: ~
     set noquote the '''''a <seta>
     <seta> = get noquote the ''a
 )(
-    unset $a
+    a: ~
     set noquote the 'a <seta>
     <seta> = get noquote the '''''''a
 )(
@@ -207,6 +207,7 @@
 ; Smoke test for quoting items of every type
 
 (
+    port: ~
     for-each 'item compose [
         (^+)
         word
@@ -249,7 +250,9 @@
         _
         |
         ~(_)~
-    ][
+    ] wrap [
+        e1: e2: equal1: equal2: ~
+
         lit-item: quote get/any $item
 
         comment "Just testing for crashes; discards mold result"
@@ -279,6 +282,7 @@
 
 
 (
+    x: ~
     all [
         quasi? x: '~()~
         quasi? get/any $x

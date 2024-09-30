@@ -47,6 +47,7 @@
 ; Recursion check
 (
     num1: 0
+    num2: ~
     num3: 0
     cycle [
         if num1 = 5 [break]

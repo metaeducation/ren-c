@@ -430,6 +430,7 @@ Bounce MAKE_Error(
         const Element* head = Cell_List_At(&tail, arg);
 
         e = Make_Varlist_Detect_Managed(
+            COLLECT_ONLY_SET_WORDS,
             REB_ERROR, // type
             head, // values to scan for toplevel set-words
             tail,

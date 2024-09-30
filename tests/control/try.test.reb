@@ -83,14 +83,14 @@
 )
 #entrap (
     f: make frame! lambda [] [raise 'test]
-    all [
+    all wrap [
         error? e: entrap f
         e.id = 'test
     ]
 )
 #entrap (
     f: make frame! lambda [] [1000 + 20]
-    all [
+    all wrap [
         quoted? q: entrap f
         1020 = unquote q
     ]

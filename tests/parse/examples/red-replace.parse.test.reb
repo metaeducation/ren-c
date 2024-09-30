@@ -37,7 +37,12 @@
     ("!racadabra" = replace "abracadabra" ["ra" | "ab"] #"!")
     ("!!cad!!" = replace/all "abracadabra" ["ra" | "ab"] #"!")
     ("!!cad!!" = replace/all "abracadabra" ["ra" | "ab"] does ["!"])
-    ("AbrACAdAbrA" == replace/all "abracadabra" [s: ["a" | "c"]] does [uppercase s.1])
+    (
+        s: ~
+        "AbrACAdAbrA" == replace/all "abracadabra" [s: ["a" | "c"]] does [
+            uppercase s.1
+        ]
+    )
     ("a-babAA-" = replace/case/all "aAbbabAAAa" ["Ab" | "Aa"] "-")
 
     ; We actually do better than that, by passing in const references to the

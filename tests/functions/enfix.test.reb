@@ -20,14 +20,14 @@
     ]
 )
 (
-    set $foo enfix :add
+    foo: enfix :add
     all [
         enfix? :foo
         1 foo 2 = 3
     ]
 )
 (
-    set $postfix-thing enfix lambda [x] [x * 2]
+    postfix-thing: enfix lambda [x] [x * 2]
     all [
        enfix? :postfix-thing
        20 = (10 postfix-thing)
@@ -68,14 +68,15 @@
 
     (
         foo: func [] [
-            fail "foo should not run, it's prefix and runs on *next* step"]
-        all [
+            fail "foo should not run, it's prefix and runs on *next* step"
+        ]
+        all wrap [
             1020 == [pos @]: evaluate/step [1020 foo 304]
             pos == [foo 304]
         ]
     )(
         enfoo: enfix func [] [return <enfoo>]
-        all [
+        all wrap [
             <enfoo> == [pos @]: evaluate/step [1020 enfoo 304]
             pos = [304]
         ]
@@ -84,7 +85,7 @@
 
     (
         bar: func [return: [~[]~]] [bar: null, return ~[]~]
-        all [
+        all wrap [
             [pos var]: evaluate/step [1020 bar 304]
             pos = [bar 304]
             var == 1020
@@ -95,7 +96,7 @@
         comment {Invisible normal arity-0 function should run on next eval}
     )(
         enbar: enfix func [left] [enbar: null, return left]
-        all [
+        all wrap [
             [pos var]: evaluate/step [1020 enbar 304]
             pos = [304]
             var == 1020

@@ -153,13 +153,13 @@
         ]
 
         ; make a basic block of the row / column numbers
-        places-block: copy []
+        let places-block: copy []
         count-up 'i n [append places-block i]
 
         reset-number-of-solutions
 
         ; We need only do half of the first row/column for reasons of symmetry
-        half: either odd? n [(n + 1) / 2] [n / 2]
+        let half: either odd? n [(n + 1) / 2] [n / 2]
         reset-symmetry-limit
         if odd? n [
             repeat half [add-to-symmetry-limit]
@@ -167,7 +167,7 @@
 
         either n > 1 [
             count-up 'first-queen half [
-                solution: copy []
+                let solution: copy []
                 append solution first-queen
 
                 add-queen n - 1 solution places-block

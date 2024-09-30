@@ -29,28 +29,27 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
 {
     VarList* c = Cell_Varlist(context);
 
+    if (CTX_TYPE(c) == REB_MODULE)
+        fail ("Appending KEY/VALUE pairs to modules not working yet");
+
     assert(Is_Group(block));
 
     const Element* tail;
     const Element* item = Cell_List_At(&tail, block);
 
-    struct Reb_Collector collector;
-    //
     // Can't actually fail() during a collect, so make sure any errors are
     // set and then jump to a Collect_End()
     //
     Option(Error*) error = nullptr;
 
-  if (not Is_Module(context)) {
-    Collect_Start(&collector, COLLECT_ANY_WORD);
+    DECLARE_COLLECTOR (cl);
+    Collect_Start(
+        cl,
+        COLLECT_ONLY_SET_WORDS,
+        c  // preload binder with words already in context
+    );
 
-  blockscope {  // Start out binding table with words already in context
-    const Symbol* duplicate;
-    Collect_Context_Keys(&duplicate, &collector, c);
-    assert(not duplicate);  // context should have all unique keys
-  }
-
-    REBLEN first_new_index = Collector_Index_If_Pushed(&collector);
+    REBLEN first_new_index = Collector_Index_If_Pushed(cl);
 
     // Do a pass to collect the [set-word: <value>] keys and add them to the
     // binder.  But don't modify the object yet, in case the block turns out
@@ -70,9 +69,9 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
         const Symbol* symbol = Cell_Word_Symbol(word);
 
         if (Try_Add_Binder_Index(
-            &collector.binder,
+            &cl->binder,
             symbol,
-            Collector_Index_If_Pushed(&collector)
+            Collector_Index_If_Pushed(cl)
         )){
             Init_Word(PUSH(), Cell_Word_Symbol(word));
         }
@@ -82,34 +81,23 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
   }
 
   blockscope {  // Append new words to obj
-    REBLEN num_added = Collector_Index_If_Pushed(&collector) - first_new_index;
+    REBLEN num_added = Collector_Index_If_Pushed(cl) - first_new_index;
     Expand_Varlist(c, num_added);
 
-    StackValue(*) new_word = Data_Stack_At(collector.stack_base) + first_new_index;
+    StackValue(*) new_word = Data_Stack_At(cl->stack_base) + first_new_index;
     for (; new_word != TOP + 1; ++new_word)
         Init_Nothing(Append_Context(c, Cell_Word_Symbol(new_word)));
   }
-  }  // end the non-module part
 
   blockscope {  // Set new values to obj words
     const Element* word = item;
     for (; word != tail; word += 2) {
         const Symbol* symbol = Cell_Word_Symbol(word);
-        Value* var;
-        if (Is_Module(context)) {
-            bool strict = true;
-            var = MOD_VAR(c, symbol, strict);
-            if (not var) {
-                var = Append_Context(c, symbol);
-                Init_Nothing(var);
-            }
-        }
-        else {
-            REBLEN i = Get_Binder_Index_Else_0(&collector.binder, symbol);
-            assert(i != 0);
-            assert(*Varlist_Key(c, i) == symbol);
-            var = Varlist_Slot(c, i);
-        }
+
+        REBLEN i = Get_Binder_Index_Else_0(&cl->binder, symbol);
+        assert(i != 0);
+        assert(*Varlist_Key(c, i) == symbol);
+        Value* var = Varlist_Slot(c, i);
 
         if (Get_Cell_Flag(var, PROTECTED)) {
             error = Error_Protected_Key(symbol);
@@ -140,8 +128,7 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
   }
 
   collect_end:
-    if (not Is_Module(context))
-        Collect_End(&collector);
+    Collect_End(cl);
 
     if (error)
         fail (unwrap error);
@@ -363,7 +350,9 @@ bool Try_Advance_Evars(EVARS *e) {
 
     if (e->word) {
         while (++e->word != e->word_tail) {
-            e->var = MOD_VAR(e->ctx, Cell_Word_Symbol(e->word), true);
+            e->var = MOD_VAR(
+                cast(SeaOfVars*, e->ctx), Cell_Word_Symbol(e->word), true
+            );
             if (Get_Cell_Flag(e->var, VAR_MARKED_HIDDEN))
                 continue;
             e->keybuf = Cell_Word_Symbol(e->word);
@@ -629,6 +618,7 @@ Bounce MAKE_Context(
         const Element* at = Cell_List_At(&tail, arg);
 
         VarList* ctx = Make_Varlist_Detect_Managed(
+            COLLECT_ONLY_SET_WORDS,
             heart,
             at,
             tail,
@@ -657,9 +647,10 @@ Bounce MAKE_Context(
     //
     if (Any_Number(arg)) {
         VarList* context = Make_Varlist_Detect_Managed(
+            COLLECT_ONLY_SET_WORDS,
             heart,
-            nullptr,  // values to scan for toplevel set-words (empty)
-            nullptr,
+            Array_Head(EMPTY_ARRAY),  // scan for toplevel set-words (empty)
+            Array_Tail(EMPTY_ARRAY),
             parent_ctx
         );
 
@@ -832,7 +823,7 @@ VarList* Copy_Varlist_Extra_Managed(
             MISC(VarlistAdjunct, varlist) = nullptr;
         }
         Tweak_Bonus_Keysource(varlist, nullptr);
-        LINK(Patches, varlist) = nullptr;
+        node_LINK(NextVirtual, varlist) = nullptr;
 
         VarList* copy = cast(VarList*, varlist); // now a well-formed context
         assert(Get_Flex_Flag(varlist, DYNAMIC));
@@ -888,7 +879,10 @@ VarList* Copy_Varlist_Extra_Managed(
     VarList* copy = cast(VarList*, varlist); // now a well-formed context
 
     if (extra == 0)
-        Tweak_Keylist_Of_Varlist_Shared(copy, Keylist_Of_Varlist(original));  // ->link field
+        Tweak_Keylist_Of_Varlist_Shared(
+            Varlist_Array(copy),
+            Keylist_Of_Varlist(original)
+        );
     else {
         assert(CTX_TYPE(original) != REB_FRAME);  // can't expand FRAME!s
 
@@ -902,7 +896,7 @@ VarList* Copy_Varlist_Extra_Managed(
 
         LINK(Ancestor, keylist) = Keylist_Of_Varlist(original);
 
-        Tweak_Keylist_Of_Varlist_Unique(copy, keylist);  // ->link field
+        Tweak_Keylist_Of_Varlist_Unique(Varlist_Array(copy), keylist);
     }
 
     // A FRAME! in particular needs to know if it points back to a stack
@@ -918,7 +912,7 @@ VarList* Copy_Varlist_Extra_Managed(
         MISC(VarlistAdjunct, varlist) = nullptr;
     }
 
-    LINK(Patches, varlist) = nullptr;  // no virtual bind patches yet
+    node_LINK(NextVirtual, varlist) = nullptr;
 
     return copy;
 }
@@ -1697,13 +1691,14 @@ DECLARE_NATIVE(construct)
     const Element* tail;
     const Element* at = Cell_List_At(&tail, spec);
 
-    VarList* ctx = Make_Varlist_Detect_Managed(  // scan top-level SET-WORD!s
+    VarList* varlist = Make_Varlist_Detect_Managed(
+        COLLECT_ONLY_SET_WORDS,
         parent ? CTX_TYPE(parent) : REB_OBJECT,  // !!! Presume object?
         at,
         tail,
         parent
     );
-    Init_Object(OUT, ctx);  // GC protects context
+    Init_Object(OUT, varlist);  // GC protects context
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
@@ -1752,19 +1747,19 @@ DECLARE_NATIVE(construct)
 
 } eval_step_result_in_spare: {  ///////////////////////////////////////////////
 
-    VarList* ctx = Cell_Varlist(OUT);
+    VarList* varlist = Cell_Varlist(OUT);
 
     while (TOP_INDEX != BASELINE->stack_base) {
         assert(Is_Set_Word(TOP));
 
         Option(Index) index = Find_Symbol_In_Context(
-            Varlist_Archetype(ctx),
+            Varlist_Archetype(varlist),
             Cell_Word_Symbol(TOP),
             true
         );
         assert(index);  // created a key for every SET-WORD! above!
 
-        Copy_Cell(Varlist_Slot(ctx, unwrap index), stable_SPARE);
+        Copy_Cell(Varlist_Slot(varlist, unwrap index), stable_SPARE);
 
         DROP();
     }

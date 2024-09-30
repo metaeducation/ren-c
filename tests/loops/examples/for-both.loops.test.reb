@@ -111,6 +111,7 @@
 
     ([1 2 3 4] = collect [
         assert [
+            let result': ~
             '~[~null~]~ = result': ^ for-both 'x [1 2] [3 4] [
                 keep x
                 null
@@ -121,6 +122,7 @@
 
     ([1 2 3 4] = collect [
         assert [
+            let result: ~
             null = result: for-both 'x [1 2] [3 4] [
                 keep x
                 null

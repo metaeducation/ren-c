@@ -63,6 +63,7 @@
 ; raise an error.
 [
     (
+        x': ~
         all [
             (raised? unmeta [x']: ^ raise "hi" void)
             raised? unmeta x'
@@ -76,15 +77,19 @@
     (null? until [x: raise "hi" except [break]])
     (null? until [[x]: raise "hi" except [break]])
     (
+        x: ~
         all [
             'true = until [x: raise "hi" except ['true]]
             x = 'true
         ]
     )
-    (all [
-        'true = until [[x]: raise "hi" except ['true]]
-        x = 'true
-    ])
+    (
+        x: ~
+            all [
+            'true = until [[x]: raise "hi" except ['true]]
+            x = 'true
+        ]
+    )
 
     (e: 1020, all [(trap [e: raise "hi"]).message = "hi", e = 1020])
     (e: 1020, all [(trap [[e]: raise "hi"]).message = "hi", e = 1020])

@@ -10,7 +10,7 @@
 ; not permit this.  At one point Ren-C limited GET-WORD! use to functions, but
 ; the rise of more antiform forms leans to doing it like R3-Alpha and Red.
 (
-    unset $a
+    a: ~
     e: sys.util/rescue [a]
     all [
        'bad-word-get = e.id
@@ -19,28 +19,34 @@
     ]
 )
 (
-    unset $a
+    a: ~
     nothing? :a
 )
 
 [#1477
-    (all [
+    (
         x: load-value ":/"
-        ':/ = x
-        get-word? x
-    ])
+        all [
+            ':/ = x
+            get-word? x
+        ]
+    )
 
-    (all [
+    (
         x: load-value "://"
-        ':// = x
-        get-word? x
-    ])
+        all [
+            ':// = x
+            get-word? x
+        ]
+    )
 
-    (all [
+    (
         x: load-value ":///"
-        ':/// = x
-        get-word? x
-    ])
+        all [
+            ':/// = x
+            get-word? x
+        ]
+    )
 ]
 
 ; Terminal dotted access inhibits action invocation, while slashed access

@@ -75,6 +75,7 @@
 [ ; infinite loop tests
     (
         num: 0
+        b: ~
         cfor i (b: next [1]) (back b) 1 [
             num: num + 1
             break

@@ -119,7 +119,7 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
     let line: null
     let [eol bol]
 
-    count-line-rule: [
+    let count-line-rule: [
         (
             line: 1 + any [line, 0]
             if line-length < subtract index-of eol index of bol [
@@ -160,6 +160,7 @@ text-line-of: func [
 
     let advance-rule: [one (line: line + 1)]
 
+    let cursor
     parse3/match text [
         opt some [
             to newline cursor: <here>

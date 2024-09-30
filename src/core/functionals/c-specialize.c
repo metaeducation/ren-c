@@ -86,13 +86,13 @@ VarList* Make_Varlist_For_Action_Push_Partials(
     Action* act = VAL_ACTION(action);
 
     REBLEN num_slots = ACT_NUM_PARAMS(act) + 1;  // +1 is for Varlist_Archetype()
-    Array* varlist = Make_Array_Core(num_slots, FLEX_MASK_VARLIST);
-    Set_Flex_Len(varlist, num_slots);
+    Array* a = Make_Array_Core(num_slots, FLEX_MASK_VARLIST);
+    Set_Flex_Len(a, num_slots);
 
-    Tweak_Keylist_Of_Varlist_Shared(cast(VarList*, varlist), ACT_KEYLIST(act));
+    Tweak_Keylist_Of_Varlist_Shared(a, ACT_KEYLIST(act));
 
     Tweak_Frame_Varlist_Rootvar(
-        varlist,
+        a,
         ACT_IDENTITY(VAL_ACTION(action)),
         Cell_Frame_Coupling(action)
     );
@@ -113,7 +113,7 @@ VarList* Make_Varlist_For_Action_Push_Partials(
     const Key* key = ACT_KEYS(&tail, act);
     const Param* param = ACT_PARAMS_HEAD(act);
 
-    Value* arg = Varlist_Slots_Head(varlist);
+    Value* arg = Flex_At(Value, a, 1);
 
     REBLEN index = 1;  // used to bind REFINEMENT? values to parameter slots
 
@@ -177,10 +177,10 @@ VarList* Make_Varlist_For_Action_Push_Partials(
         goto continue_unspecialized;
     }
 
-    MISC(VarlistAdjunct, varlist) = nullptr;
-    LINK(Patches, varlist) = nullptr;
+    MISC(VarlistAdjunct, a) = nullptr;
+    node_LINK(NextVirtual, a) = nullptr;
 
-    return cast(VarList*, varlist);
+    return cast(VarList*, a);
 }
 
 

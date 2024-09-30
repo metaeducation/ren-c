@@ -42,22 +42,19 @@ VarList* Alloc_Varlist_Core(Heart heart, REBLEN capacity, Flags flags)
     LINK(Ancestor, keylist) = keylist;  // default to keylist itself
     assert(Flex_Used(keylist) == 0);
 
-    Array* varlist = Make_Array_Core(
+    Array* a = Make_Array_Core(
         capacity + 1,  // size + room for rootvar (array terminator implicit)
         FLEX_MASK_VARLIST  // includes assurance of dynamic allocation
             | flags  // e.g. NODE_FLAG_MANAGED
     );
-    MISC(VarlistAdjunct, varlist) = nullptr;
-    LINK(Patches, varlist) = nullptr;
-    Tweak_Keylist_Of_Varlist_Unique(  // hasn't been shared yet...
-        cast(VarList*, varlist),
-        keylist
-    );
+    MISC(VarlistAdjunct, a) = nullptr;
+    node_LINK(NextVirtual, a) = nullptr;
+    Tweak_Keylist_Of_Varlist_Unique(a, keylist);  // hasn't been shared yet...
 
-    Alloc_Tail_Array(varlist);  // allocate rootvar
-    Tweak_Non_Frame_Varlist_Rootvar(varlist, heart);
+    Alloc_Tail_Array(a);  // allocate rootvar
+    Tweak_Non_Frame_Varlist_Rootvar(a, heart);
 
-    return cast(VarList*, varlist);  // varlist pointer is context handle
+    return cast(VarList*, a);  // varlist pointer is context handle
 }
 
 
@@ -110,7 +107,7 @@ bool Expand_Keylist_Of_Varlist_Core(VarList* varlist, REBLEN delta)
             LINK(Ancestor, k_copy) = LINK(Ancestor, k);
 
         Manage_Flex(k_copy);
-        Tweak_Keylist_Of_Varlist_Unique(varlist, k_copy);
+        Tweak_Keylist_Of_Varlist_Unique(Varlist_Array(varlist), k_copy);
 
         return true;
     }
@@ -155,7 +152,7 @@ void Expand_Varlist(VarList* varlist, REBLEN delta)
 //    e.g. to forward references to a cache back to the context in order to
 //    "delete" variables?
 //
-static Value* Append_To_Sea_Core(
+Value* Append_To_Sea_Core(
     SeaOfVars* sea,
     const Symbol* symbol,
     Option(Cell*) any_word  // binding modified (Note: quoted words allowed)
@@ -166,7 +163,7 @@ static Value* Append_To_Sea_Core(
     else
         id = SYM_0;
 
-    Array* patch;
+    Stub* patch;
     if (id and id < LIB_SYMS_MAX) {
         patch = &PG_Lib_Patches[id];  // patch memory pre-allocated at boot [1]
         assert(INODE(PatchContext, patch) == nullptr);  // don't double add
@@ -196,16 +193,62 @@ static Value* Append_To_Sea_Core(
     if (Get_Subclass_Flag(SYMBOL, updating, MISC_IS_BINDINFO))
         updating = cast(Stub*, node_MISC(Hitch, updating));  // skip
 
-    node_MISC(Hitch, patch) = node_MISC(Hitch, updating);
+    node_MISC(PatchHitch, patch) = node_MISC(Hitch, updating);
     INODE(PatchContext, patch) = sea;
-    MISC(Hitch, updating) = patch;
+    node_MISC(Hitch, updating) = patch;  // may be bindinfo
 
     if (any_word) {  // bind word while we're at it
         Tweak_Cell_Word_Index(unwrap any_word, INDEX_PATCHED);
         BINDING(unwrap any_word) = patch;
     }
 
+  #if DEBUG  // ensure we didn't just add a duplicate patch for this sea
+  blockscope {
+    Stub *check = MISC(PatchHitch, patch);
+    while (check != symbol) {  // walk chain to look for duplicates
+        assert(INODE(PatchContext, check) != sea);
+        check = MISC(PatchHitch, check);
+    }
+  }
+  #endif
+
     return Stub_Cell(patch);
+}
+
+
+// 1. !!! This doesn't seem to consider the shared flag of the keylist (?)
+//    though the callsites seem to pre-expand with consideration for that.
+//    Review why this is expanding when the callers are expanding.  Should
+//    also check that redundant keys aren't getting added here.
+//
+static Value* Append_To_Varlist_Core(
+    VarList* varlist,
+    const Symbol* symbol,
+    Option(Cell*) any_word
+){
+    KeyList* keylist = Keylist_Of_Varlist(varlist);
+
+  #if DEBUG  // catch duplicate insertions
+  blockscope {
+    const Key* check_tail = Flex_Tail(Key, keylist);
+    const Key* check = Flex_Head(Key, keylist);
+    for (; check != check_tail; ++check)
+        assert(Key_Symbol(check) != symbol);
+  }
+  #endif
+
+    Expand_Flex_Tail(keylist, 1);  // updates the used count
+    Init_Key(Flex_Last(Key, keylist), symbol);  // !!! shared flag? [1]
+
+    Cell* value = Alloc_Tail_Array(Varlist_Array(varlist));
+
+    if (any_word) {
+        Length len = Varlist_Len(varlist);  // length we just bumped
+        Tweak_Cell_Word_Index(unwrap any_word, len);
+        BINDING(unwrap any_word) = varlist;
+    }
+
+    return cast(Value*, value);  // location we just added (void cell)
 }
 
 
@@ -224,29 +267,7 @@ static Value* Append_Context_Core(
     if (CTX_TYPE(cast(VarList*, context)) == REB_MODULE)
         return Append_To_Sea_Core(cast(SeaOfVars*, context), symbol, any_word);
 
-    VarList* varlist = cast(VarList*, context);
-    KeyList* keylist = Keylist_Of_Varlist(varlist);
-    Corrupt_Pointer_If_Debug(context);  // prep for varlist != module
-
-    // Add the key to key list
-    //
-    // !!! This doesn't seem to consider the shared flag of the keylist (?)
-    // though the callsites seem to pre-expand with consideration for that.
-    // Review why this is expanding when the callers are expanding.  Should
-    // also check that redundant keys aren't getting added here.
-    //
-    Expand_Flex_Tail(keylist, 1);  // updates the used count
-    Init_Key(Flex_Last(Key, keylist), symbol);
-
-    Cell* value = Alloc_Tail_Array(Varlist_Array(varlist));
-
-    if (any_word) {
-        REBLEN len = Varlist_Len(varlist);  // length we just bumped
-        Tweak_Cell_Word_Index(unwrap any_word, len);
-        BINDING(unwrap any_word) = varlist;
-    }
-
-    return cast(Value*, value);  // location we just added (void cell)
+    return Append_To_Varlist_Core(cast(VarList*, context), symbol, any_word);
 }
 
 
@@ -274,13 +295,46 @@ Value* Append_Context(Context* context, const Symbol* symbol)
 //
 // Begin using a "binder" to start mapping canon symbol names to integer
 // indices.  The symbols are collected on the stack.  Use Collect_End() to
-// free the map.
+// free the binder.
 //
-void Collect_Start(struct Reb_Collector* collector, Flags flags)
-{
-    collector->flags = flags;
-    collector->stack_base = TOP_INDEX;
-    INIT_BINDER(&collector->binder);
+// 1. If you're doing a collection on behalf of a module, its variables are
+//    already distributed across the symbol table.  There is no need to put
+//    entries in the bind table for what's already in it, duplicate detection
+//    will already be fast enough.
+//
+// 2. If you're collecting on behalf of a varlist-based object, each check
+//    of a word would require a linear search of the keylist to see if there
+//    were duplicates.  For small objects that might be fast, but we put
+//    a binder link right on the symbol itself to be even faster.  (Review
+//    the actual performance tradeoffs of this, esp. for small objects).
+//
+void Collect_Start(
+    Collector* cl,
+    CollectFlags flags,
+    Option(Context*) context
+){
+    cl->initial_flags = flags;
+
+    cl->stack_base = TOP_INDEX;
+
+    INIT_BINDER(&cl->binder);
+
+    if (context) {
+        if (CTX_TYPE(unwrap context) == REB_MODULE)  // no binder preload [1]
+            cl->sea = cast(SeaOfVars*, unwrap context);
+        else {
+            cl->sea = nullptr;
+            const Symbol* duplicate;
+            Collect_Context_Keys(  // preload binder, assist dup detection [2]
+                &duplicate,
+                cl,
+                cast(VarList*, unwrap context)
+            );
+            assert(not duplicate);  // context should have had all unique keys
+        }
+    }
+    else
+        cl->sea = nullptr;
 }
 
 
@@ -290,7 +344,7 @@ void Collect_Start(struct Reb_Collector* collector, Flags flags)
 // Reset the bind markers in the canon Stub Nodes so they can be reused,
 // and drop the collected words from the stack.
 //
-void Collect_End(struct Reb_Collector *cl)
+void Collect_End(Collector *cl)
 {
     StackIndex index = TOP_INDEX;
     for (; index != cl->stack_base; --index) {
@@ -300,6 +354,8 @@ void Collect_End(struct Reb_Collector *cl)
     }
 
     SHUTDOWN_BINDER(&cl->binder);
+
+    Corrupt_If_Debug(*cl);
 }
 
 
@@ -311,9 +367,11 @@ void Collect_End(struct Reb_Collector *cl)
 //
 void Collect_Context_Keys(
     Option(const Symbol**) duplicate,
-    struct Reb_Collector *cl,
+    Collector *cl,
     VarList* context
 ){
+    assert(CTX_TYPE(context) != REB_MODULE);
+
     const Key* tail;
     const Key* key = Varlist_Keys(&tail, context);
 
@@ -342,27 +400,38 @@ void Collect_Context_Keys(
 //
 // The inner recursive loop used for collecting context keys or ANY-WORD?s.
 //
+// 1. !!! Should this consider sequences, or their embedded groups/arrays?
+//    This is less certain as the purpose of collect words is not clear given
+//    stepping away from SET-WORD! gathering as locals.
+//
+//      https://github.com/rebol/rebol-issues/issues/2276
+//
 static void Collect_Inner_Loop(
-    struct Reb_Collector *cl,
-    const Cell* head,
-    const Cell* tail
+    Collector *cl,
+    CollectFlags flags,
+    const Element* head,
+    const Element* tail
 ){
-    const Cell* v = head;
+    const Element* v = head;
     for (; v != tail; ++v) {
-        Heart heart = Cell_Heart(v);
-
-        if (Any_Word_Kind(heart)) {
-            if (heart != REB_SET_WORD and not (cl->flags & COLLECT_ANY_WORD))
-                continue;  // kind of word we're not interested in collecting
-
+        if (
+            Is_Set_Word(v)
+            or ((flags & COLLECT_ANY_WORD) and Any_Wordlike(v))
+        ){
             const Symbol* symbol = Cell_Word_Symbol(v);
+
+            if (cl->sea) {
+                bool strict = true;
+                if (MOD_VAR(unwrap cl->sea, symbol, strict))
+                    continue;
+            }
 
             if (not Try_Add_Binder_Index(
                 &cl->binder,
                 symbol,
                 Collector_Index_If_Pushed(cl)
             )){
-                if (cl->flags & COLLECT_NO_DUP) {
+                if (flags & COLLECT_NO_DUP) {
                     Collect_End(cl);  // IMPORTANT: Can't fail with binder
 
                     DECLARE_ATOM (duplicate);
@@ -376,135 +445,193 @@ static void Collect_Inner_Loop(
             continue;
         }
 
-        if (not (cl->flags & COLLECT_DEEP))
-            continue;
-
-        // !!! Should this consider paths, or their embedded groups/arrays?
-        // This is less certain as the purpose of collect words is not clear
-        // given stepping away from SET-WORD! gathering as locals.
-        // https://github.com/rebol/rebol-issues/issues/2276
-        //
-        if (Any_List_Kind(heart)) {
+        if (Is_Set_Block(v)) {  // `[[a b] ^c :d (e)]:` collects all but E
             const Element* sub_tail;
             const Element* sub_at = Cell_List_At(&sub_tail, v);
-            Collect_Inner_Loop(cl, sub_at, sub_tail);
+            Collect_Inner_Loop(
+                cl,
+                COLLECT_ANY_WORD | COLLECT_DEEP_BLOCKS,
+                sub_at,
+                sub_tail
+            );
+            continue;
         }
+
+        if (
+            not ((flags & COLLECT_ANY_LIST_DEEP) and Any_List(v))  // !!! paths? [1]
+            and not ((flags & COLLECT_DEEP_BLOCKS) and Is_Block(v))
+        ){
+            continue;
+        }
+
+        const Element* sub_tail;
+        const Element* sub_at = Cell_List_At(&sub_tail, v);
+        Collect_Inner_Loop(cl, flags, sub_at, sub_tail);
     }
 }
 
 
 //
-//  Collect_KeyList_Managed: C
+//  wrap*: native [
 //
-// Scans a block for words to extract and make into symbol keys to use for
-// a context.  The Bind_Table is used to quickly determine duplicate entries.
+//  "Expand context with top-level set-words from a block"
 //
-// A `prior` context can be provided to serve as a basis; all the keys in
-// the prior will be returned, with only new entries contributed by the
-// data coming from the head[] array.  If no new values are needed (the
-// array has no relevant words, or all were just duplicates of words already
-// in prior) then then `prior`'s keylist may be returned.  The result is
-// always pre-managed, because it may not be legal to free prior's keylist.
+//      return: [~]
+//      context [any-context?]
+//      list [<maybe> any-list?]
+//  ]
 //
-KeyList* Collect_KeyList_Managed(
-    Option(const Cell*) head,
-    Option(const Cell*) tail,
-    Option(VarList*) prior,
-    Flags flags  // see %sys-core.h for COLLECT_ANY_WORD, etc.
-){
-    struct Reb_Collector collector;
-    struct Reb_Collector *cl = &collector;
+DECLARE_NATIVE(wrap_p)
+//
+// 1. !!! It's not clear what the right set of primitives are...we may want
+//    to expand based on a block and then run the block with a different
+//    binding.  Be conservative for now...routine will need review and
+//    renaming based on emerging uses.
+{
+    INCLUDE_PARAMS_OF_WRAP_P;
 
-    Collect_Start(cl, flags);
+    CollectFlags flags = COLLECT_ONLY_SET_WORDS;
 
-    if (prior) {
-        const Symbol* duplicate;
-        Collect_Context_Keys(&duplicate, cl, unwrap prior);
-        assert(not duplicate);  // context should have had all unique keys
-    }
+    DECLARE_COLLECTOR (cl);
+    Context* context = Cell_Varlist(ARG(context));
+    Collect_Start(cl, flags, context);  // may not preload binder if module
 
-    if (head)
-        Collect_Inner_Loop(cl, unwrap head, unwrap tail);
-    else
-        assert(not tail);
+    Element* list = cast(Element*, ARG(list));
+    const Element* tail;
+    const Element* at = Cell_List_At(&tail, list);
 
-    Count num_collected = TOP_INDEX - cl->stack_base;
+    Collect_Inner_Loop(cl, flags, at, tail);
 
-    // If new keys were added to the collect buffer (as evidenced by a longer
-    // collect buffer than the original keylist) then make a new keylist
-    // array, otherwise reuse the original
-    //
-    KeyList* keylist;
-    if (prior and Varlist_Len(unwrap prior) == num_collected)
-        keylist = Keylist_Of_Varlist(unwrap prior);
-    else {
-        keylist = Make_Flex(KeyList,
-            num_collected,  // no terminator
-            FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED
-        );
-
-        StackValue(*) word = Data_Stack_At(cl->stack_base) + 1;
-        Key* key = Flex_Head(Key, keylist);
-        for (; word != TOP + 1; ++word, ++key)
-            Init_Key(key, Cell_Word_Symbol(word));
-
-        Set_Flex_Used(keylist, num_collected);  // no terminator
+    StackIndex i;
+    for (i = cl->stack_base + 1; i <= TOP_INDEX; ++i) {
+        const Symbol* symbol = Cell_Word_Symbol(Data_Stack_At(i));
+        Init_Nothing(Append_Context(context, symbol));
     }
 
     Collect_End(cl);
-    return keylist;
+
+    /* Virtual_Bind_Deep_To_Existing_Context(  // !!! what should do what? [1]
+        list, context, nullptr, CELL_MASK_0
+    );
+    return COPY(list); */
+
+    return NOTHING;
 }
 
 
 //
-//  Collect_Unique_Words_Managed: C
+//  wrap: native [
 //
-// Collect unique words from a block, possibly deeply...maybe just SET-WORD!s.
+//  "Bind code in context made from top-level set-words from a block"
 //
-Array* Collect_Unique_Words_Managed(
-    const Element* head,
-    const Element* tail,
-    Flags flags,  // See COLLECT_XXX
-    const Value* ignorables  // BLOCK!, ANY-CONTEXT?, or BLANK!
-){
-    // We do not want to fail() during the bind at this point in time (the
-    // system doesn't know how to clean up, and the only cleanup it does
-    // assumes you were collecting for a keylist...it doesn't have access to
-    // the "ignore" bindings.)  Do a pre-pass to fail first, if there are
-    // any non-words in a block the user passed in.
+//      return: "List with added binding, and context created for variables"
+//          [~[any-list? object!]~]
+//      list [<maybe> any-list?]
+//      /deep "Look for assigning constructs deeply"
+//      /set "Use semantics for WRAP of a SET-BLOCK for list argument"
+//  ]
+//
+DECLARE_NATIVE(wrap)
+{
+    INCLUDE_PARAMS_OF_WRAP;
+
+    Element* list = cast(Element*, ARG(list));
+
+    const Element* tail;
+    const Element* at = Cell_List_At(&tail, list);
+    VarList* parent = nullptr;
+
+    CollectFlags flags = COLLECT_ONLY_SET_WORDS;
+    if (REF(set))
+        flags = COLLECT_DEEP_BLOCKS | COLLECT_ANY_WORD;
+    if (REF(deep))
+        flags |= COLLECT_ANY_LIST_DEEP;
+
+    VarList* varlist = Make_Varlist_Detect_Managed(
+        flags,
+        REB_OBJECT,  // !!! Presume object?
+        at,
+        tail,
+        parent
+    );
+    node_LINK(NextVirtual, varlist) = Cell_Binding(list);
+    BINDING(list) = varlist;
+
+    Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
+    Set_Flex_Len(pack, 2);
+    Copy_Meta_Cell(Array_At(pack, 0), list);
+    Meta_Quotify(Init_Object(Array_At(pack, 1), varlist));
+
+    return Init_Pack(OUT, pack);
+}
+
+
+//
+//  collect-words: native [
+//
+//  "Collect unique words used in a block (used for context construction)"
+//
+//      return: [block!]
+//      block [block!]
+//      /deep "Include nested blocks"
+//      /set "Only include set-words"
+//      /ignore "Ignore these words"
+//          [block! object!]
+//  ]
+//
+DECLARE_NATIVE(collect_words)
+{
+    INCLUDE_PARAMS_OF_COLLECT_WORDS;
+
+    Flags flags;
+    if (REF(set))
+        flags = COLLECT_ONLY_SET_WORDS;
+    else
+        flags = COLLECT_ANY_WORD;
+
+    if (REF(deep))
+        flags |= COLLECT_ANY_LIST_DEEP;
+
+  //=//// GENERATE DUMMY BINDINGS FOR THE IGNORED SYMBOLS /////////////////=//
+
+    // 1. We do not want to fail() during the bind at this point in time (the
+    //    system doesn't know how to clean up, and the only cleanup it does
+    //    assumes you were collecting for a keylist...it doesn't have access to
+    //    the "ignore" bindings.)  Do a pre-pass to fail first, if there are
+    //    any non-words in a block the user passed in.
     //
-    if (not Is_Nulled(ignorables)) {
+    // 2. The way words get ignored in the collecting process is to give them
+    //    dummy bindings so it appears they've "already been collected", but
+    //    not actually add them to the collection.  Then, duplicates don't
+    //    cause an error...so they will just be skipped when encountered.
+    //
+    // 3. /IGNORE may have duplicate words in it (this situation arises when
+    //    `function [/test /test] []` calls COLLECT-WORDS and tries to ignore
+    //    both tests.  Debug build counts the number (overkill, tests binder).
+
+    Value* ignore = ARG(ignore);
+
+    if (Is_Block(ignore)) {  // avoid fail in mid-collect [1]
         const Element* check_tail;
-        const Element* check = Cell_List_At(&check_tail, ignorables);
+        const Element* check = Cell_List_At(&check_tail, ignore);
         for (; check != check_tail; ++check) {
             if (not Any_Word_Kind(Cell_Heart(check)))
                 fail (Error_Bad_Value(check));
         }
     }
 
-    struct Reb_Collector collector;
-    struct Reb_Collector *cl = &collector;
+    DECLARE_COLLECTOR (cl);
+    Option(Context*) no_context = nullptr;
+    Collect_Start(cl, flags, no_context);
 
-    Collect_Start(cl, flags);
-
-    // The way words get "ignored" in the collecting process is to give them
-    // dummy bindings so it appears they've "already been collected", but
-    // not actually add them to the collection.  Then, duplicates don't cause
-    // an error...so they will just be skipped when encountered.
-    //
-    if (Is_Block(ignorables)) {
+    if (Is_Block(ignore)) {  // ignore via dummy bindings [2]
         const Element* ignore_tail;
-        const Element* ignore = Cell_List_At(&ignore_tail, ignorables);
-        for (; ignore != ignore_tail; ++ignore) {
-            const Symbol* symbol = Cell_Word_Symbol(ignore);
+        const Element* ignore_at = Cell_List_At(&ignore_tail, ignore);
+        for (; ignore_at != ignore_tail; ++ignore_at) {
+            const Symbol* symbol = Cell_Word_Symbol(ignore_at);
 
-            // A block may have duplicate words in it (this situation could
-            // arise when `function [/test /test] []` calls COLLECT-WORDS
-            // and tries to ignore both tests.  Have debug build count the
-            // number (overkill, but helps test binders).
-            //
             if (not Try_Add_Binder_Index(&cl->binder, symbol, -1)) {
-              #if !defined(NDEBUG)
+              #if !defined(NDEBUG)  // count dups, overkill [3]
                 REBINT i = Get_Binder_Index_Else_0(&cl->binder, symbol);
                 assert(i < 0);
                 Remove_Binder_Index_Else_0(&cl->binder, symbol);
@@ -513,36 +640,37 @@ Array* Collect_Unique_Words_Managed(
             }
         }
     }
-    else if (Any_Context(ignorables)) {
+    else if (Is_Object(ignore)) {
         const Key* key_tail;
-        const Key* key = Varlist_Keys(&key_tail, Cell_Varlist(ignorables));
-        for (; key != key_tail; ++key) {
-            //
-            // Shouldn't be possible to have an object with duplicate keys,
-            // use plain Add_Binder_Index.
-            //
-            Add_Binder_Index(&cl->binder, Key_Symbol(key), -1);
-        }
+        const Key* key = Varlist_Keys(&key_tail, Cell_Varlist(ignore));
+        for (; key != key_tail; ++key)
+            Add_Binder_Index(&cl->binder, Key_Symbol(key), -1);  // no dups
     }
     else
-        assert(Is_Nulled(ignorables));
+        assert(Is_Nulled(ignore));
 
-    Collect_Inner_Loop(cl, head, tail);
+  //=//// RUN COMMON COLLECTION CODE //////////////////////////////////////=//
 
-    // We don't use Pop_Stack_Values_Core() because we want to keep the values
-    // on the stack so that Collect_End() can remove them from the binder.
-    //
-    Array* array = Copy_Values_Len_Shallow_Core(
+    // 1. We don't use Pop_Stack_Values_Core() because we want the symbols
+    //    on the stack so that Collect_End() can remove them from the binder.
+
+    const Element* block_tail;
+    const Element* block_at = Cell_List_At(&block_tail, ARG(block));
+    Collect_Inner_Loop(cl, flags, block_at, block_tail);
+
+    Array* array = Copy_Values_Len_Shallow_Core(  // let Collect_End() pop [1]
         Data_Stack_At(cl->stack_base + 1),
         TOP_INDEX - cl->stack_base,
         NODE_FLAG_MANAGED
     );
 
-    if (Is_Block(ignorables)) {
+  //=//// REMOVE DUMMY BINDINGS FOR THE IGNORED SYMBOLS ///////////////////=//
+
+    if (Is_Block(ignore)) {
         const Element* ignore_tail;
-        const Element* ignore = Cell_List_At(&ignore_tail, ignorables);
-        for (; ignore != ignore_tail; ++ignore) {
-            const Symbol* symbol = Cell_Word_Symbol(ignore);
+        const Element* ignore_at = Cell_List_At(&ignore_tail, ignore);
+        for (; ignore_at != ignore_tail; ++ignore_at) {
+            const Symbol* symbol = Cell_Word_Symbol(ignore_at);
 
           #if !defined(NDEBUG)
             REBINT i = Get_Binder_Index_Else_0(&cl->binder, symbol);
@@ -557,17 +685,18 @@ Array* Collect_Unique_Words_Managed(
             Remove_Binder_Index(&cl->binder, symbol);
         }
     }
-    else if (Any_Context(ignorables)) {
+    else if (Is_Object(ignore)) {
         const Key* key_tail;
-        const Key* key = Varlist_Keys(&key_tail, Cell_Varlist(ignorables));
+        const Key* key = Varlist_Keys(&key_tail, Cell_Varlist(ignore));
         for (; key != key_tail; ++key)
             Remove_Binder_Index(&cl->binder, Key_Symbol(key));
     }
     else
-        assert(Is_Nulled(ignorables));
+        assert(Is_Nulled(ignore));
 
     Collect_End(cl);
-    return array;
+
+    return Init_Block(OUT, array);
 }
 
 
@@ -579,90 +708,107 @@ Array* Collect_Unique_Words_Managed(
 // resulting context would be for two words, `a` and `b`.
 //
 // Optionally a parent context may be passed in, which will contribute its
-// keylist of words to the result if provided.
+// keylist of words to the result if provided, as well as give defaults for
+// the values of those keys.
 //
 VarList* Make_Varlist_Detect_Managed(
+    CollectFlags flags,
     Heart heart,
-    Option(const Cell*) head,
-    Option(const Cell*) tail,
+    const Element* head,
+    const Element* tail,
     Option(VarList*) parent
 ) {
     assert(heart != REB_MODULE);
 
-    KeyList* keylist = Collect_KeyList_Managed(
-        head,
-        tail,
-        parent,
-        COLLECT_ONLY_SET_WORDS
-    );
+  //=//// COLLECT KEYS (FROM PARENT AND WALKING HEAD->TAIL) ///////////////=//
 
-    REBLEN len = Flex_Used(keylist);
-    Array* varlist = Make_Array_Core(
+    DECLARE_COLLECTOR (cl);
+    Collect_Start(cl, flags, parent);  // preload binder with parent's keys
+
+    Collect_Inner_Loop(cl, flags, head, tail);  // collect keys from array
+
+    Length len = TOP_INDEX - cl->stack_base;
+
+  //=//// CREATE NEW VARLIST AND CREATE (OR REUSE) KEYLIST ////////////////=//
+
+    Array* a = Make_Array_Core(
         1 + len,  // needs room for rootvar
         FLEX_MASK_VARLIST
             | NODE_FLAG_MANAGED // Note: Rebind below requires managed context
     );
-    Set_Flex_Len(varlist, 1 + len);
-    MISC(VarlistAdjunct, varlist) = nullptr;
-    LINK(Patches, varlist) = nullptr;  // start w/no virtual binds
+    Set_Flex_Len(a, 1 + len);
+    MISC(VarlistAdjunct, a) = nullptr;
+    node_LINK(NextVirtual, a) = nullptr;
 
-    VarList* context = cast(VarList*, varlist);
-
-    // This isn't necessarily the clearest way to determine if the keylist is
-    // shared.  Note Collect_KeyList_Managed() isn't called from anywhere
-    // else, so it could probably be inlined here and it would be more
-    // obvious what's going on.
-    //
-    if (not parent) {
-        Tweak_Keylist_Of_Varlist_Unique(context, keylist);
-        LINK(Ancestor, keylist) = keylist;
+    if (
+        parent
+        and Varlist_Len(unwrap parent) == len  // no new keys, reuse list
+    ){
+        Tweak_Keylist_Of_Varlist_Shared(
+            a,
+            Keylist_Of_Varlist(unwrap parent)  // leave ancestor link as-is
+        );
     }
-    else {
-        if (keylist == Keylist_Of_Varlist(unwrap parent)) {
-            Tweak_Keylist_Of_Varlist_Shared(context, keylist);
+    else {  // new keys, need new keylist
+        KeyList* keylist = Make_Flex(
+            KeyList,
+            len,  // no terminator, 0-based
+            FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED
+        );
 
-            // We leave the ancestor link as-is in the shared keylist--so
-            // whatever the parent had...if we didn't have to make a new
-            // keylist.  This means that an object may be derived, even if you
-            // look at its keylist and its ancestor link points at itself.
-        }
-        else {
-            Tweak_Keylist_Of_Varlist_Unique(context, keylist);
+        StackValue(*) word = Data_Stack_At(cl->stack_base) + 1;
+        Key* key = Flex_Head(Key, keylist);
+        for (; word != TOP + 1; ++word, ++key)
+            Init_Key(key, Cell_Word_Symbol(word));
+
+        Set_Flex_Used(keylist, len);
+
+        Tweak_Keylist_Of_Varlist_Unique(a, keylist);
+        if (parent)
             LINK(Ancestor, keylist) = Keylist_Of_Varlist(unwrap parent);
-        }
+        else
+            LINK(Ancestor, keylist) = keylist;  // ancestors terminate in self
     }
 
-    Value* var = cast(Value*, Array_Head(varlist));
-    Tweak_Non_Frame_Varlist_Rootvar(varlist, heart);  // rootvar
+    Collect_End(cl);  // !!! binder might be useful for ensuing operations...
+
+  //=//// COPY INHERITED VALUES FROM PARENT, OR INIT TO NOTHING ///////////=//
+
+    // 1. !!! Lacking constructors, there is an idea that extending an object
+    //    means copying its series values deeply.  This is kind of clearly
+    //    dumb...what should happen depends on the semantics of why you are
+    //    doing the instantiation and what the thing is.  Better ideas are
+    //    hopefully coming down the pipe, but this is what R3-Alpha did.  :-/
+
+    Value* var = Flex_Head(Value, a);
+    Tweak_Non_Frame_Varlist_Rootvar(a, heart);  // rootvar
     ++var;
 
-    for (; len > 0; --len, ++var)  // [0] is rootvar (context), already done
+    REBINT i;
+    for (i = 1; i <= len; ++i, ++var)  // 0th item is rootvar, already filled
         Init_Nothing(var);
 
     if (parent) {
-        //
-        // Copy parent values, and for values we copied that were ANY-SERIES!,
-        // replace their Flex components with deep copies.
-        //
-        Value* dest = Varlist_Slots_Head(context);
+        Value* dest = Flex_At(Value, a, 1);
         const Value* src_tail;
         Value* src = Varlist_Slots(&src_tail, unwrap parent);
         for (; src != src_tail; ++dest, ++src) {
-            Flags flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
+            Flags clone_flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
             assert(Is_Nothing(dest));
             Copy_Cell(dest, src);
-            bool deeply = true;
-            Clonify(dest, flags, deeply);
+            bool deeply = true;  // !!! Copies series deeply, why? [1]
+            Clonify(dest, clone_flags, deeply);
         }
     }
 
-    Assert_Varlist(context);
+    VarList* varlist = cast(VarList*, a);
+    Assert_Varlist(varlist);
 
   #if DEBUG_COLLECT_STATS
     g_mem.objects_made += 1;
   #endif
 
-    return context;
+    return varlist;
 }
 
 
@@ -697,7 +843,9 @@ Array* Context_To_Array(const Value* context, REBINT mode)
             );
             if (Is_Module(context)) {
                 Tweak_Cell_Word_Index(TOP, INDEX_PATCHED);
-                BINDING(TOP) = MOD_PATCH(e.ctx, Key_Symbol(e.key), true);
+                BINDING(TOP) = MOD_PATCH(
+                    cast(SeaOfVars*, e.ctx), Key_Symbol(e.key), true
+                );
             }
             else {
                 Tweak_Cell_Word_Index(TOP, e.index);
@@ -751,8 +899,8 @@ Option(Index) Find_Symbol_In_Context(
         // Modules hang their variables off the symbol itself, in a linked
         // list with other modules who also have variables of that name.
         //
-        VarList* c = Cell_Varlist(context);
-        return MOD_VAR(c, symbol, strict) ? INDEX_PATCHED : 0;
+        SeaOfVars* sea = cast(SeaOfVars*, Cell_Varlist(context));
+        return MOD_VAR(sea, symbol, strict) ? INDEX_PATCHED : 0;
     }
 
     EVARS e;

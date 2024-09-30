@@ -65,11 +65,12 @@
     ], ok)
 
     (
+        y: ~
         test: lambda [x] [x + 1000]
         wrapper: returnproxy :test
         all [
             1020 = wrapper 20
-            1020 = wrapper/return 20 'y
+            1020 = wrapper/return 20 $y
             1020 = y
         ]
     )
@@ -78,9 +79,10 @@
         test: lambda [x] [x + 1000]
         wrapper: returnproxy :test
 
+        y: ~
         f: make frame! unrun :wrapper
         f.x: 20
-        f.return: 'out
+        f.return: $y
 
         all [
             1020 = eval f

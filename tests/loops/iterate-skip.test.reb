@@ -18,10 +18,11 @@
 ; break cycle
 (
     str: "abcdef"
+    char: ~
     iterate-skip @str 2 [
-        if #"c" = char: str.1 [break]
+        if #c = char: str.1 [break]
     ]
-    char = #"c"
+    char = #c
 )
 ; break return value
 (

@@ -83,7 +83,6 @@ values
 types
 title
 binding
-attach
 #file
 line
 near

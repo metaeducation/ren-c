@@ -32,6 +32,7 @@
 ; BLANK! as a no-op.
 [
     (
+        y: ~
         x: 1 + inline [2 y: negate] 10
         all [
             x = 3

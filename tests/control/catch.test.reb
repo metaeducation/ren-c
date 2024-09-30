@@ -1,6 +1,7 @@
 ; functions/control/catch.r
 ; see also functions/control/throw.r
 (
+    success: ~
     catch [
         throw success: okay
         sucess: null
@@ -120,8 +121,8 @@
 
 ; Multiple return values
 (
-    all [
-        304 = ([j b]: catch [throw pack [304 1020]])
+    all wrap [
+        304 = [j b]: catch [throw pack [304 1020]]
         j = 304
         b = 1020
     ]

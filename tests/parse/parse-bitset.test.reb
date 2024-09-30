@@ -12,6 +12,7 @@
     count-up 'n 512 [
         if n = 1 [continue]
 
+        let c
         if raised? parse (append copy "" codepoint-to-char n - 1) [
             c: any-char <end>
         ][
@@ -40,6 +41,7 @@
     (
         digit: charset [0 - 9]
         all [
+            let p
             #{010203} = parse #{0BADCAFE010203} [to digit p: <here> skip 3]
             p = #{010203}
         ]
@@ -82,6 +84,7 @@
 
 [#753
     (
+        b: ~
         ws: to-bitset unspaced [tab newline CR SP]
         abc: charset ["a" "b" "c"]
         rls: ["a", some ws, b: across some abc, some ws, "c"]
@@ -164,6 +167,7 @@
     (
         digit: charset "0123456789"
         all [
+            let p
             "123" = parse "hello 123" [to digit p: <here> skip 3]
             p = "123"
         ]

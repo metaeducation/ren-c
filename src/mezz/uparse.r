@@ -1166,7 +1166,7 @@ default-combinators: make map! reduce [
             remove-each 'item pending [
                 if block? item [keep spread item, okay]
             ] else [
-                ; should it error or fail if pending was NULL ?
+                ; should it error or fail if pending was blank ?
             ]
         ]
 
@@ -1206,7 +1206,7 @@ default-combinators: make map! reduce [
         ; The value is quoted or quasi because of ^ on ^(parser input).
         ; This lets us emit antiforms, since the MAKE OBJECT! evaluates.
         ;
-        pending: glom pending reduce [target result']
+        pending: glom pending reduce [to-set-word target result']
         return unmeta result'
     ]
 
@@ -1441,7 +1441,7 @@ default-combinators: make map! reduce [
         [^result' remainder]: parser input except e -> [
             return raise e
         ]
-        state.env: add-let-binding state.env vars unmeta result'
+        state.env: add-let-binding state.env (to word! vars) unmeta result'
 
         return unmeta result'
     ]

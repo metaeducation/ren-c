@@ -534,7 +534,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
     Tweak_Bonus_Keysource(paramlist, keylist);
     MISC(VarlistAdjunct, paramlist) = nullptr;
-    LINK(Patches, paramlist) = nullptr;
+    node_LINK(NextVirtual, paramlist) = nullptr;
 
     // With all the values extracted from stack to array, restore stack pointer
     //

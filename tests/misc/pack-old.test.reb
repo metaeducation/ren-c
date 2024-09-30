@@ -90,7 +90,7 @@
 
 (
     a: b: ~<bad>~
-    all [
+    all wrap [
         1 = [a b c]: pack-old @[1 + 2]
         a = 1
         b = '+
@@ -100,7 +100,7 @@
 
 ; <...> is used to indicate willingness to discard extra values
 (
-    all [
+    all wrap [
         1 = [a b <...>]: pack-old @[1 2 3 4 5]
         a = 1
         b = 2
@@ -125,7 +125,7 @@
 (
     a: 10
     b: 20
-    all [blank = [a b]: pack-old @[_ _], blank? a, blank? b]
+    all wrap [blank = [a b]: pack-old @[_ _], blank? a, blank? b]
 )
 (
     a: 10

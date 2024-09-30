@@ -69,10 +69,12 @@
     ok
 )
 
-(all [
+(
     b: make bitset! #{0060000080}
-    select b newline
-    select b space
-    select b tab
-    not select b #A
-])
+    all [
+        select b newline
+        select b space
+        select b tab
+        not select b #A
+    ]
+)

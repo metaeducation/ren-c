@@ -128,7 +128,7 @@ sys.util/rescue [
             return eval f
         ]
         f.next: okay
-        let dummy
+        let [dummy block]
         block: compose [dummy (to path! f.next3)]  ; no SET-BLOCK, @, in boot
         return eval compose [(as set-block! block) eval f]
     ]
@@ -154,6 +154,16 @@ sys.util/rescue [
 
     quit 0
 ]
+
+
+=== "ENCLOSE REST OF MODULE IN GROUP TO AVOID OVERWRITING TOP-LEVEL DECLS" ===
+
+; This module does things like overwrite IF.  But were we to make a top-level
+; statement like `if: ...` then in a modern executable, before any code in
+; the module ran, IF would be WRAP*'d as a module-level declaration and set
+; to nothing.  To avoid this, we simply put all the emulation code in a group.
+
+(  ; closed at end of file
 
 
 === "SHORT NAMES FOR LIB3/XXX, CATCH USES OF SHIMMED FUNCTIONS BEFORE SHIM" ===
@@ -906,3 +916,8 @@ cscape-inside: func3 [
     bind code obj  ; simulates ability to bind to single words
     return code
 ]
+
+
+=== "END ENCLOSURE THAT AVOIDED OVERWRITING TOP-LEVEL DECLS" ===
+
+)  ; see earlier remarks for why this group exists, close it now

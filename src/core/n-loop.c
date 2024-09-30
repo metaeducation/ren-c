@@ -974,7 +974,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                 if (heart == REB_MODULE) {
                     Tweak_Cell_Word_Index(var, INDEX_PATCHED);
                     BINDING(var) = MOD_PATCH(
-                        Cell_Varlist(les->data),
+                        cast(SeaOfVars*, Cell_Varlist(les->data)),
                         Key_Symbol(les->u.evars.key),
                         true
                     );
@@ -2202,7 +2202,10 @@ DECLARE_NATIVE(while)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Add_Definitional_Break_Continue(body, LEVEL);  // don't bind condition [2]
+    if (Is_Block(body))
+        Add_Definitional_Break_Continue(body, LEVEL);  // no condition bind [2]
+    else
+        assert(Is_Frame(body));
 
 } evaluate_condition: {  /////////////////////////////////////////////////////
 

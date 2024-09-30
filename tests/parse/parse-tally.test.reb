@@ -9,8 +9,9 @@
 (0 = parse "aaa" [accept tally "b"])
 
 (all [
+    let inner
     parse "(((stuff)))" [
-        n: tally "("
+        let n: tally "("
         inner: between <here> repeat (n) ")"
     ]
     inner = "stuff"

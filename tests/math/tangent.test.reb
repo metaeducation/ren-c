@@ -25,6 +25,8 @@
 (
     n: 25000
     s4t: 0.0
+    k: ~
+    kt: ~
     count-up 'l n [
         k: to decimal! l
         kt: tangent/radians k

@@ -18,13 +18,15 @@
 ]
 [#1152 ; SORT not stable (order not preserved)
     (
-    [c d]: pack inert sort reduce [a: "a" b: "a"]
-    all [
-        same? c a
-        same? d b
-        not same? c b
-        not same? d a
-    ]
+        a: ~
+        b: ~
+        [c d]: pack inert sort reduce [a: "a" b: "a"]
+        all [
+            same? c a
+            same? d b
+            not same? c b
+            not same? d a
+        ]
     )
 ]
 [#1152 ; SORT not stable (order not preserved)

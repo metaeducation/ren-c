@@ -343,7 +343,7 @@ echo: func* [
     {Freeform output of text, with @WORD, @TU.P.LE, and @(GR O UP) as escapes}
 
     return: [~]
-    'args "If a BLOCK!, then just that block's contents--else to end of line"
+    @args "If a BLOCK!, then just that block's contents--else to end of line"
         [element? <variadic>]
     <local> line
 ][
@@ -361,9 +361,11 @@ echo: func* [
     ]
     write-stdout form map-each 'item line [
         switch/type item [
-            the-word! [get item]
-            the-tuple! [get item]
-            the-group! [eval item]
+            the-word!
+            the-tuple!
+            the-group! [
+                get/groups inside line item
+            ]
         ] else [
             item
         ]

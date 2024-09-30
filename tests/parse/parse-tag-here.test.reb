@@ -18,11 +18,13 @@
 
 [(
     all [
+        let pos
         "b" == parse "aaabbb" [some "a", pos: <here>, some "b"]
         pos = "bbb"
     ]
 )(
     all [
+        let [left n x]
         "stuff" == parse "<<<stuff>>>" [
             left: across some "<"
             (n: length of left)
@@ -32,26 +34,31 @@
     ]
 )]
 
-(all [
+(all wrap [
+    pos: ~
     [x y] = res: parse ser: [x y] [pos: <here>, elide [one, one]]
     pos = ser
 ])
-(all [
+(all wrap [
+    pos: ~
     [y] == res: parse ser: [x y] [one, pos: <here>, elide one]
     pos = next ser
 ])
-(all [
+(all wrap [
+    pos: ~
     [] == res: parse ser: [x y] [one, one, pos: <here>]
     pos = tail of ser
 ])
 [#2130 (
-    all [
+    all wrap [
+        pos: val: ~
         'x == res: parse ser: [x] [pos: <here>, val: word!]
         val = 'x
         pos = ser
     ]
 )(
-    all [
+    all wrap  [
+        pos: val: ~
         'true = res: parse ser: "foo" [
             pos: <here>
             val: across one

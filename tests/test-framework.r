@@ -141,7 +141,7 @@ run-test-cluster: func [
     ;
     ; Modules created with module "inherit" from LIB by default.
     ;
-    let isolate: module null [
+    let isolate: module void [
         print: lambda [x] [
             fail/blame "Don't use PRINT in tests" $x
         ]
@@ -155,7 +155,6 @@ run-test-cluster: func [
     ; *inherited* from the cluster.  Hopefully modules will be able to do
     ; things like that in the "near future"(tm).
     ;
-    let group
     parse cluster [while not <end> [
         ;
         ; !!! Skip any ISSUE! or URL!, as this style has been used:
@@ -166,6 +165,7 @@ run-test-cluster: func [
         ;
         opt some [url! | issue!]
 
+        let expected-id: (~)
         (expected-id: null)  ; default expects a true result, not error w/id
 
         opt [
@@ -174,11 +174,15 @@ run-test-cluster: func [
                 | (fail "~error-id~ must be followed by !! and a GROUP!")
             ]
         ]
+        let group: (~)
         [
             group: group!
             | (fail "GROUP! expected in tests")
         ]
-        (run-single-test inside isolate group expected-id)
+        (
+            wrap* isolate group  ; gather top-level declarations
+            run-single-test inside isolate group expected-id
+        )
     ]]
 ]
 
@@ -223,7 +227,7 @@ process-tests: func [
             'collect-tests body: block! (
                 log ["@collect-tests" space mold body]
 
-                let [_ collected]: module null compose/deep [collect [
+                let [_ collected]: module void compose/deep [collect [
                     let keep-test: adapt keep/ [
                         if not block? :value [
                             fail "KEEP-TEST takes BLOCK! (acts as GROUP!)"
@@ -393,7 +397,7 @@ export do-recover: func [
     ]
 
     let summary
-    process-tests test-sources :run-test-cluster then [
+    process-tests test-sources run-test-cluster/ then [
         summary: spaced [
             "system.version:" system.version LF
             "code-checksum:" code-checksum LF

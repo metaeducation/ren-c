@@ -7,6 +7,7 @@
 
 (
     obj: make object! [x: 1020]
+    steps: ~
     all [
         @[obj x] = steps: resolve $obj.(first [x y])
         1020 = get steps
@@ -24,7 +25,9 @@
             [<unrun> frame!]
         <local> steps
     ][
-        ([steps @v]: resolve target) else [set steps eval branch]
+        if not [steps @]: resolve target [  ; `defaultable?` or `default?`
+            set steps eval branch
+        ]
     ],
     ok)
 

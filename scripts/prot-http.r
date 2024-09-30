@@ -131,7 +131,7 @@ do-request: func [
 
     info.headers: info.response-line: info.response-parsed: port.data:
     info.size: info.date: info.name: null
-    req: (make-http-request spec.method any [spec.path %/]
+    let req: (make-http-request spec.method any [spec.path %/]
         spec.headers spec.content)
 
     write port.state.connection req

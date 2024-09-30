@@ -114,6 +114,7 @@
     ; https://forum.rebol.info/t/1084
     (
         a-value: first [a/b]
+        b-value: ~
         parse as block! :a-value [b-value: <here>, to <end>]
         equal? as block! :a-value :b-value
         not same? as block! :a-value :b-value  ; !!! as makes new array, review
@@ -125,12 +126,14 @@
 (equal? same? [] blank same? blank [])
 [#1068 #1066 (
     a-value: first [()]
+    b-value: ~
     parse a-value [b-value: <here>, to <end>]
     same? a-value b-value
 )]
 ; symmetry
 (
     a-value: first [()]
+    b-value: ~
     parse a-value [b-value: <here>, to <end>]
     equal? same? a-value b-value same? b-value a-value
 )

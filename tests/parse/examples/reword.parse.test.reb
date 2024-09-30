@@ -3,7 +3,7 @@
 ; Test of REWORD written with UPARSE instead of parse.
 ; See comments on non-UPARSE REWORD implementation.
 
-[(did uparse-reword: func [
+[(uparse-reword: func [
     return: [any-string? binary!]
     source [any-string? binary!]
     values [map! object! block!]
@@ -90,7 +90,7 @@
             let b: <here>  ; End marking text to copy verbatim to output
             prefix  ; consume prefix (if no-op, may not be at start of match)
             ||
-            [keyword-match: any (keyword-suffix-rules)] (
+            [let keyword-match: any (keyword-suffix-rules), (
                 append/part out a offset? a b  ; output before prefix
 
                 let v: select // [values keyword-match, /case case_REWORD]
@@ -102,7 +102,7 @@
                 ] else [
                     v
                 ]
-            )
+            )]
             a: <here>  ; Restart mark of text to copy verbatim to output
                 |
             <next>  ; if wasn't at match, keep the SOME rule scanning ahead
@@ -113,7 +113,8 @@
 
     parse- // [source rule, /case case_REWORD] else [fail]  ; why fail?
     return out
-])
+]
+ok)
 
 ("Multiple Search and Replace" = uparse-reword/escape "Multiple Foo and Bar" [
     "Foo" "Search" "Bar" "Replace"

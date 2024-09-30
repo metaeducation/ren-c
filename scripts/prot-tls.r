@@ -214,7 +214,7 @@ emit: func [
 
     while [code] [
         if set-word? code.1 [  ; set the word to the binary at current position
-            add-let-binding (binding of $return) code.1 (tail ctx.msg)
+            add-let-binding (binding of $return) to word! code.1 (tail ctx.msg)
             code: my next
         ]
         else [

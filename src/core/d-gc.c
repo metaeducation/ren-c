@@ -430,10 +430,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         Context* binding = BINDING(v);
         if (binding) {
             if (Is_Stub_Varlist(binding)) {
-                if (CTX_TYPE(cast(VarList*, binding)) == REB_MODULE)
-                    assert(index == INDEX_ATTACHED);
-                else
-                    assert(index != 0 and index != INDEX_ATTACHED);
+                assert(CTX_TYPE(cast(VarList*, binding)) != REB_MODULE);
+                assert(index != 0);
             }
             else if (Is_Stub_Let(binding))
                 assert(index == INDEX_PATCHED);

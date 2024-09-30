@@ -7,6 +7,7 @@
 ~parse-incomplete~ !! (parse [aaa] [(10)])
 
 (
+    x: ~
     three: 3
     all [
         3 == parse "" [x: (three)]
@@ -14,6 +15,7 @@
     ]
 )
 (
+    x: ~
     all [
         3 == parse "" [x: (1 + 2)]
         x = 3

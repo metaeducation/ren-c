@@ -127,7 +127,7 @@
 
 
 [#1672 (  ; infinite recursion
-    <deep-enough> = catch [
+    <deep-enough> = catch wrap [
         x: 0
         a: [(x: x + 1, if x = 200 [throw <deep-enough>]) a]
         parse [] a

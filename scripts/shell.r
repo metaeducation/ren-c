@@ -49,7 +49,7 @@ REBOL [
 ]
 
 
-[%%]: lambda [
+%%: lambda [
     {Quoting MAKE FILE! Operator}
     @value [word! path! tuple! block! group!]
 ][

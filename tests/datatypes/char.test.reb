@@ -234,12 +234,12 @@
         #"漢"  ; 3 utf-8 bytes encoded
         #"😺"  ; 4 utf-8 bytes encoded
     ]
-    count-up 'size 4 [
+    count-up 'size 4 wrap [
         c: codepoints.(size)
         if size != length of to binary! c [
             fail "test character doesn't match expected size"
         ]
-        count-up 'len 64 [
+        count-up 'len 64 wrap [
             s: copy ""
             e: copy ""
             picks: copy []

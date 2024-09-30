@@ -11,7 +11,8 @@ if 'Windows <> first system.platform [
 
     ;DO NOT EDIT this table
     ;It's updated by iso3166.r
-    iso-3166-table: make map! [
+
+  let iso-3166: make map! [
     "AF" "Afghanistan"
     "AX" "Åland Islands"
     "AL" "Albania"
@@ -264,7 +265,8 @@ if 'Windows <> first system.platform [
 
     ;DO NOT EDIT this table
     ;It's updated by iso639.r
-    iso-639-table: make map! [
+
+  let iso-639: make map! [
     "aa" "Afar"
     "ab" "Abkhazian"
     "af" "Afrikaans"
@@ -453,10 +455,7 @@ if 'Windows <> first system.platform [
     hijack locale/ func [
         return: [~null~ text!]
         type [word!]
-        <static>
-        iso-639 (iso-639-table)
-        iso-3166 (iso-3166-table)
-        <local> env-lang lang territory
+        <local> env-lang lang territory letter
     ][
         env-lang: get-env "LANG" else [return null]  ; e.g. "en_US.UTF-8"
         territory: null
@@ -484,8 +483,6 @@ if 'Windows <> first system.platform [
         ]
         fail ["Invalid locale type:" type]
     ]
-
-    iso-3166-table: iso-639-table: ~captured-by-LOCALE-function~
 ]
 
 === Initialize SYSTEM.LOCALE ===

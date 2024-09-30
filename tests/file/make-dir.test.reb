@@ -3,7 +3,7 @@
 ; #1703
 ; #1711
 (
-    any [
+    any wrap [
         not error? e: sys.util/rescue [make-dir %/folder-to-save-test-files]
         e.type = 'access
     ]

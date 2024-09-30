@@ -22,7 +22,7 @@
             delete f
             return ~
         ]
-        for-each 'item read f [
+        for-each 'item (read f) wrap [
            name: join f item
            delete-recurse name
         ]
@@ -245,14 +245,14 @@
         pos: change // [pos (copy/part data part) /part part]
     ]
 
-    repeat 128 [
+    repeat 128 wrap [
         ; Make a random thing of data up to 1k in size
         ;
         len: random 1024
         data: make binary! len
         repeat len [append data (-1 + random 256)]
 
-        applique :fuzzwrite [
+        applique fuzzwrite/ [
             destination: p
             data: data
             if 4 = random 4 [  ; give it a /PART every 4th write or so

@@ -99,7 +99,7 @@
 )
 
 ; THROW should stop the loop
-(1 = catch [cycling: 'yes while [yes? cycling] [throw 1 cycling: 'no]])
+(1 = catch [let cycling: 'yes while [yes? cycling] [throw 1 cycling: 'no]])
 
 [#1519 (
     cycling: 'yes
@@ -115,6 +115,7 @@
 ; Recursion check
 (
     num1: 0
+    num2: ~
     num3: 0
     while [num1 < 5] [
         num2: 0

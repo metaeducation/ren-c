@@ -7,7 +7,7 @@
     s: {abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ}
     t: {----------------------------------------------------}
     cfor n 2 50 1 [
-        sub: copy/part s n
+        let sub: copy/part s n
         parse sub [some [
             remove one
             insert ("-")
@@ -18,11 +18,11 @@
 )]
 
 [https://github.com/red/red/issues/3357
-    (all [
+    (all wrap [
         '~<insert>~ == meta parse x3357: [] [insert ('foo)]
         x3357 = [foo]
     ])
-    (all [
+    (all wrap [
         '~<insert>~ == meta parse x3357b: [] [insert (the foo)]
         x3357b = [foo]
     ])
@@ -30,25 +30,26 @@
 
 ; Block insertion tests from %parse-test.red
 [
-    (all [
+    (all wrap [
         '~<insert>~ == meta parse blk: [] [insert (1)]
         blk = [1]
     ])
-    (all [
+    (all wrap [
         'a == parse blk: [a a] [<next> insert (the b) one]
         blk = [a b a]
     ])
-    (all [
+    (all wrap [
+        p: ~
         '~<remove>~ == meta parse blk: [] [
             p: <here> insert (the a) seek (p) remove 'a
         ]
         blk = []
     ])
-    (all [
+    (all wrap [
         '~<insert>~ == meta parse blk: [] [insert (spread [a b])]
         blk = [a b]
     ])
-    (all [
+    (all wrap [
         '~<insert>~ == meta parse blk: [] [insert ([a b])]
         blk = [[a b]]
     ])
@@ -83,21 +84,23 @@
 
 ; TEXT! insertion tests from %parse-test.red
 [
-    (all [
+    (all wrap [
         '~<insert>~ == meta parse str: "" [insert (#1)]
         str = "1"
     ])
-    (all [
+    (all wrap [
         #a == parse str: "aa" [<next> insert (#b) one]
         str = "aba"
     ])
-    (all [
+    (all wrap [
+        p: ~
         '~<remove>~ == meta parse str: "" [
             p: <here> insert (#a) seek (p) remove #a
         ]
         str = ""
     ])
-    (all [
+    (all wrap [
+        p: ~
         '~<remove>~ == meta parse str: "test" [
             some [<next> p: <here> insert (#_)] seek (p) remove one
         ]
@@ -107,21 +110,23 @@
 
 ; BINARY! insertion tests from %parse-test.red
 [
-   (all [
+   (all wrap [
         '~<insert>~ == meta parse bin: #{} [insert (#"^A")]
         bin = #{01}
     ])
-    (all [
+    (all wrap [
         10 == parse bin: #{0A0A} [<next> insert (#{0B}) one]
         bin = #{0A0B0A}
     ])
-    (all [
+    (all wrap [
+        p: ~
         '~<remove>~ == meta parse bin: #{} [
             p: <here> insert (#{0A}) seek (p) remove #{0A}
         ]
         bin = #{}
     ])
-    (all [
+    (all wrap [
+        p: ~
         '~<remove>~ == meta parse bin: #{DEADBEEF} [
             some [<next> p: <here> insert (NUL)] seek (p) remove one
         ]
@@ -141,6 +146,7 @@
         series: [a b c]
         letters: [x y z]
         all [
+            let [mark pos after]
             'c == parse series [
                 mark: <here>
                 'a
@@ -168,6 +174,7 @@
         series: [a b c]
         letter: 'x
         all [
+            let [mark pos after]
             'c == parse series [
                 mark: <here> insert (letter) 'a 'b
 
@@ -187,6 +194,7 @@
         series: [a b c]
         letters: [x y z]
         all [
+            let [mark pos after]
             [x y z] == parse series [
                 to <end> mark: <here> [bypass]
                 |

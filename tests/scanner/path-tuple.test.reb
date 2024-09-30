@@ -21,19 +21,19 @@
 [(
     tests: [
         "/"  ->  /
-        "//"  ->  [_ _ _]
-        "///"  ->  [_ _ _ _]
+        "//"  ->  //
+        "///"  ->  ///
 
         "."  ->  .
-        ".."  ->  (_ _ _)
-        "..."  ->  (_ _ _ _)
+        ".."  ->  ..
+        "..."  ->  ...
 
         "/a"  ->  [_ a]
-        "//a"  ->  [_ _ a]
+        "//a"  !!  ~scan-invalid~
         "a/"  ->  [a _]
-        "a//"  ->  [a _ _]
+        "a//"  !!  ~scan-invalid~
         "/a/"  ->  [_ a _]
-        "//a//"  ->  [_ _ a _ _]
+        "//a//"  !!  ~scan-invalid~
 
         "(a b)/c"  ->  [^(a b) c]
         "(a b) /c"  ->  ^(a b)  [_ c]
@@ -49,9 +49,9 @@
 
         "[a].(b)"  ->  (^[a] ^(b))
 
-        "a.. b"  ->  (a _ _)  b
-        "a.. /b"  ->  (a _ _)  [_ b]
-        "a../b"  ->  [(a _ _) b]
+        "a.. b"  !!  ~scan-invalid~
+        "a.. /b"  !!  ~scan-invalid~
+        "a../b"  !!  ~scan-invalid~
 
         "/./(a b)/./"  ->  [_ . ^(a b) . _]
 
@@ -117,7 +117,7 @@
             group! meta-group!
         ])
     ][
-        mtype: select/skip mapping (type of get/any $value) 2
+        mtype: select/skip/case mapping (type of get/any $value) 2
         if mtype [
             value: to mtype collect [
                 count-up 'index (length of value) [
@@ -138,9 +138,10 @@
             until [iter: my next, new-line? iter]
         ]
 
-        text: ensure text! iter.1
+        let text: ensure text! iter.1
         iter: my next
 
+        let items
         trap [
             items: transcode text
         ] then error -> [
@@ -171,14 +172,14 @@
         assert [iter.1 = '->]
         iter: my next
 
-        compares: copy []
+        let compares: copy []
 
-        !!failure!!: does [
+        let !!failure!!: does [
             print [mold text "=>" mold items "vs." mold compares]
             fail ["Transformation mismatch for" text]
         ]
 
-        start: 'yes
+        let start: 'yes
         for-each 'v items [
             append compares iter.1
 
@@ -191,7 +192,7 @@
 
             start: 'no
 
-            t: transform v  ; turns path & tuples to block & group structure
+            let t: transform v  ; turns path/tuples to block/group structure
 
             if t <> iter.1 [
                 print ["Expected:" mold iter.1]

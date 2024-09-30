@@ -196,7 +196,7 @@
 ; BREAK out of a function
 (
     null? repeat 1 [
-        f: does [break]
+        let f: does [break]
         f
         2
     ]
@@ -204,7 +204,7 @@
 ; THROW out of a function
 (
     1 = catch [
-        f: does [throw 1]
+        let f: does [throw 1]
         f
         2
     ]
@@ -212,7 +212,7 @@
 
 ~zero-divide~ !! (
     error? trap [
-        f: does [1 / 0 2]  ; "error out" of a function
+        let f: does [1 / 0 2]  ; "error out" of a function
         f
         2
     ]
@@ -220,7 +220,7 @@
 
 ; The BREAK designates breaking the outer repeat (definitional BREAK)
 (
-    null = repeat 1 [
+    null = repeat 1 wrap [
         f: lambda [x] [
             either x = 1 [
                 repeat 1 [f 2]
@@ -234,7 +234,7 @@
 (
     result: <before>
     all [
-        2 = catch [  ; outer catch
+        2 = catch wrap [  ; outer catch
             f: lambda [x] [
                 either x = 1 [
                     catch [f 2]  ; inner catch--no throws in block
@@ -347,7 +347,7 @@
 ]
 
 [#27
-    ~unassigned-attach~ !! (
+    ~not-bound~ !! (
         error? trap [(kind of) 1]
     )
 ]
@@ -364,8 +364,9 @@
 ; closure semantics for functions so the c: [d] where d is 1 survives.
 ; R3-Alpha recycles variables based on stack searching (non-specific binding).
 (
+    c: ~
     a: lambda [b] [
-        a: null  comment "erases a so only first call saves c"
+        a: null  ; erases a so only first call saves c
         c: b
     ]
     f: lambda [d] [
@@ -378,8 +379,8 @@
     ]
 )
 [#2025
-    ~unassigned-attach~ !! (
-        assert [unset? $x, unset? $y]
+    ~not-bound~ !! (
+        assert [undefined? $x, undefined? $y]
 
         body: [return x + y]
         f: func [x] body

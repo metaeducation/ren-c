@@ -35,6 +35,7 @@
 
 (
     all [
+        let [t i]
         1020 == parse "***{A String} 1020" [some "*", t: text!, i: integer!]
         t = {A String}
         i = 1020
@@ -96,13 +97,14 @@
 
     (
         bin: #{68747470733A2F2F6578616D706C652E6F726722}
+        let x
         bin = parse to binary! {https://example.org"} [
             x: across url!
             (assert [{https://example.org"} == as text! to url! x])
         ]
     )
     ({"} == parse to binary! {a@b.com"} [
-        x: across email! (assert [a@b.com == to email! to text! x])
+        let x: across email! (assert [a@b.com == to email! to text! x])
         {"}
     ])
 ]

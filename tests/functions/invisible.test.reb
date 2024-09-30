@@ -83,6 +83,7 @@
 
 
 (
+    y: ~
     x: ~
     x: 1 + 2 * 3
     elide (y: :x)
@@ -90,6 +91,7 @@
     all [x = 9, y = 9]
 )
 ~no-value~ !! (
+    y: ~
     x: ~
     x: 1 + elide (y: 10) 2 * 3  ; non-interstitial, no longer legal
 )

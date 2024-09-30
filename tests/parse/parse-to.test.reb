@@ -74,9 +74,9 @@
 ]
 
 [https://github.com/red/red/issues/2818
-    (#c == parse "abc" [to [s: <here> "bc"] repeat 2 one])
-    (#c == parse "abc" [to [s: <here> () "bc"] repeat 2 one])
-    (#c == parse "abc" [to [s: <here> (123) "bc"] repeat 2 one])
+    (s: ~, #c == parse "abc" [to [s: <here> "bc"] repeat 2 one])
+    (s: ~, #c == parse "abc" [to [s: <here> () "bc"] repeat 2 one])
+    (s: ~, #c == parse "abc" [to [s: <here> (123) "bc"] repeat 2 one])
 ]
 
 [

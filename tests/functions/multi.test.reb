@@ -22,25 +22,25 @@
 
     (304 = test 1020)
 
-    (all [
+    (all wrap [
         304 = [a]: test 1020
         a = 304
     ])
 
-    (all [
+    (all wrap [
         304 = [b c]: test 1020
         b = 304
         c = <y-result>
     ])
 
-    (all [
+    (all wrap [
         304 = [d e f]: test 1020
         d = 304
         e = <y-result>
         f = <z-result>
     ])
 
-    (all [
+    (all wrap [
         304 = [g _ h]: test 1020
         g = 304
         h = <z-result>
@@ -94,12 +94,12 @@
 ]
 
 [(
-    all [
+    all wrap [
         'abc = [rest @]: transcode/next "abc def"
         rest = " def"
     ]
 )(
-    all [
+    all wrap [
         'abc = [rest @(void)]: transcode/next "abc def"
         rest = " def"
     ]
@@ -151,8 +151,8 @@
         foo: func [return: [~[integer! integer!]~]] [
             return pack [20 10]
         ]
-        all [
-            '~<weird>~ = ([^x /y]: foo then [~<weird>~])
+        all wrap [
+            '~<weird>~ = [^x /y]: (foo then [~<weird>~])
             x = '~<weird>~
             y = null
         ]
@@ -162,7 +162,7 @@
         foo: func [return: [~[integer! integer!]~]] [
             return pack [20 10]
         ]
-        all [
+        all wrap [
             '~<weird>~ <> [^x y]: foo then [~<weird>~]
             x = the '20
             y = 10
@@ -170,7 +170,7 @@
     )
 
     (
-        all [
+        all wrap [
             x: find "abc" 'b then [10]
             x = 10
             [y]: find "abc" 'b then [10]
@@ -181,14 +181,14 @@
 
 ; You can use a @ without a variable to get a return result
 ;
-(all [
+(all wrap [
     " cd" = [@ item]: transcode/next "ab cd"
     item = 'ab
 ])
 
 ; Propagates nihil signals, but sets variables to null
 [
-    (all [
+    (all wrap [
         null? [/x]: comment "hi"
         null? x
     ])
@@ -210,7 +210,7 @@
         pack? pack* [1 / 0]
     )
     (
-        all [
+        all wrap [
             [^e n]: pack* [1 / 0, 1 + 0]
             n = 1
             raised? unmeta e
@@ -223,7 +223,7 @@
 [
     ~???~ !! ([a b]: 10)
     (
-        all [
+        all wrap [
             10 = [a /b]: 10
             a = 10
             b = null

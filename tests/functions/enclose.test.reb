@@ -68,7 +68,7 @@
 (
     wrapped: enclose (
         func [in] [return pack [~, in + 1]]
-    ) f -> [
+    ) f -> wrap [
         x: f.in
         [_ o]: eval f
         o * 10
@@ -80,7 +80,7 @@
     wrapped: enclose (
         func [in] [return pack [~, in + 1]]
     ) f -> [
-        x: f.in
+        let x: f.in
         eval f
         f.in
     ]

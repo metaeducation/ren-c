@@ -25,6 +25,8 @@
 ; https://forum.rebol.info/t/getting-hooks-into-events-during-parse/1640/5
 
 [(
+    stack: ~
+
     tracked-word!: enclose get/groups $default-combinators.(word!) func [
         return: [~null~ pack?]
         f [frame!]

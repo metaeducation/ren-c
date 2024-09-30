@@ -123,7 +123,7 @@ module: func [
     return: "Module and meta-result of running the body (may be raised)"  ; [1]
         [~[module! any-atom?]~]
     spec "The header block of the module (modified)"
-        [~null~ block! object!]
+        [~void~ block! object!]
     body "The body of the module"
         [block!]
     /mixin "Bind body to this additional object before executing"
@@ -133,11 +133,12 @@ module: func [
     <local>
         mod product'  ; note: overwrites MODULO shorthand in this function
 ][
+    if void? spec [spec: null]  ; safer to use void on interface (blank?)
+
     mod: any [
         into
         make module! body  ; inherits binding from body, does not run it
     ]
-    body: inside mod bindable body
 
     if block? spec [  ; turn spec into an object if it was a block
         ;; !!! unbind/deep spec
@@ -193,7 +194,9 @@ module: func [
             append mod 'quit
             mod.quit: make-quit :quit
 
-            eval body  ; ignore body result, only QUIT returns non-nothing
+            wrap* mod body  ; add top-level declarations to module
+            body: bindable body  ; MOD inherited body's binding, we rebind
+            eval inside mod body  ; ignore body result, only QUIT returns value
             quit ~  ; this is the "THROW" to the customized CATCH* above
         ]
         then ^arg-to-quit -> [  ; !!! should THEN with ^META get errors?
