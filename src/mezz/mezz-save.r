@@ -35,11 +35,10 @@ mold64: func [
     "Temporary function to mold binary base 64." ; fix the need for this! -CS
     data
 ][
-    let base: system.options.binary-base
-    system.options.binary-base: 64
-    let data: mold data
-    system.options.binary-base: base
-    return data
+    let molded: enbase data  ; default
+    insert molded "64#{"
+    append molded "}"
+    return molded
 ]
 
 ; 1. Script compression was a weird feature that is not a priority in Ren-C,

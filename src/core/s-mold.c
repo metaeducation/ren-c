@@ -544,30 +544,7 @@ void Push_Mold(REB_MOLD *mo)
         Term_String_Len_Size(mo->string, len, Flex_Used(s));
     }
 
-    if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL))
-        mo->digits = MAX_DIGITS;
-    else {
-        // If there is no notification when the option is changed, this
-        // must be retrieved each time.
-        //
-        // !!! It may be necessary to mold out values before the options
-        // block is loaded, and this 'Get_System_Int' is a bottleneck which
-        // crashes that in early debugging.  BOOT_ERRORS is sufficient.
-        //
-        if (PG_Boot_Phase >= BOOT_ERRORS) {
-            REBINT idigits = Get_System_Int(
-                SYS_OPTIONS, OPTIONS_DECIMAL_DIGITS, MAX_DIGITS
-            );
-            if (idigits < 0)
-                mo->digits = 0;
-            else if (idigits > MAX_DIGITS)
-                mo->digits = idigits;
-            else
-                mo->digits = MAX_DIGITS;
-        }
-        else
-            mo->digits = MAX_DIGITS;
-    }
+    mo->digits = MAX_DIGITS;
 
   #if !defined(NDEBUG)
     g_mold.currently_pushing = false;

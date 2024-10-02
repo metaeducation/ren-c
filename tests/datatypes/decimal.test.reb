@@ -28,12 +28,6 @@
 ; 64-bit IEEE 754 minimum
 (equal? #{FFEFFFFFFFFFFFFF} to binary! -1.7976931348623157e308)
 
-; MOLD decimal accuracy tests
-[#729 (
-    system.options.decimal-digits: 17
-    system.options.decimal-digits = 17
-)]
-
 ; 64-bit IEEE 754 maximum
 (zero? 1.7976931348623157e308 - load-value mold 1.7976931348623157e308)
 (same? 1.7976931348623157e308 load-value mold 1.7976931348623157e308)

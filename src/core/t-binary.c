@@ -269,6 +269,12 @@ static int Compare_Byte(void *thunk, const void *v1, const void *v2)
 //
 //  MF_Binary: C
 //
+// 1. Historial Rebol let you set your binary base molding in a global way.
+//    If this is to be a console setting, that's one thing...but having a
+//    flag like this changing the fundamental behavior is bad.  In addition
+//    to the general variability of how a program would run, it was using
+//    a setting in the system object...which is not avaliable in early boot.
+//
 void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(form);
@@ -279,7 +285,10 @@ void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
     Size size;
     const Byte* data = Cell_Binary_Size_At(&size, v);
 
-    switch (Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16)) {
+    REBINT binary_base = 16;  // molding based on system preference is bad [1]
+    /* binary_base = Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16); */
+
+    switch (binary_base) {
       default:
       case 16: {
         Append_Ascii(mo->string, "#{"); // default, so #{...} not #16{...}
