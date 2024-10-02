@@ -437,9 +437,6 @@ STATIC_ASSERT(FLEX_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 // For Binary and other non-Arrays the length has to be stored somewhere.
 // The third byte of the INFO is set aside for the purpose.
 //
-#define USED_BYTE(f) \
-    SECOND_BYTE(&FLEX_INFO(f))
-
 #define FLAG_USED_BYTE(len)     FLAG_SECOND_BYTE(len)
 
 
