@@ -615,6 +615,28 @@ DECLARE_INTRINSIC(vacancy_q)
 }
 
 
+//
+//  defaultable?: native/intrinsic [
+//
+//  "Tells you if default would overwrite a value (VACANCY?, NULL?, VOID?)"
+//
+//      return: [logic?]
+//      ^value [any-value?]
+//  ]
+//
+DECLARE_INTRINSIC(defaultable_q)
+//
+// 1. Because PARAMETER! antiforms signify unspecialized function call slots,
+//    they must be taken as ^META values if passed as an argument--even
+//    though they are stable antiforms.
+{
+    UNUSED(phase);
+
+    Meta_Unquotify_Known_Stable(arg);  // checked as ANY-VALUE?, so stable [1]
+    Init_Logic(out, Any_Vacancy(arg) or Is_Void(arg) or Is_Nulled(arg));
+}
+
+
 //  EQUAL? < EQUIV? < STRICT-EQUAL? < SAME?
 
 //

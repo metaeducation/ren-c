@@ -25,9 +25,11 @@
             [<unrun> frame!]
         <local> steps
     ][
-        if not [steps @]: resolve target [  ; `defaultable?` or `default?`
-            set steps eval branch
-        ]
+        unmeta (
+            (non/meta [defaultable?] [steps @]: resolve target) else [
+                meta set steps eval branch
+            ]
+        )
     ],
     ok)
 

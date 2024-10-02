@@ -693,7 +693,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer 'on` in %base-defs.r
 //          [~null~ block! type-word! type-group! type-block! parameter!]
 //      value "If not /META, NULL values illegal, and VOID returns NULL"  ; [2]
 //          [any-value?]
-//      /meta "Return the ^META result (allows checks on NULL and VOID)"
+//      /meta "Return the ^^META result (allows checks on NULL and VOID)"
 //  ]
 //
 DECLARE_NATIVE(match)

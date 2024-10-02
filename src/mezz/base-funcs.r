@@ -517,12 +517,12 @@ ensure: redescribe [
 ; with the failure signal.  You need to use
 ;
 non: redescribe [
-    {Pass through value if it *doesn't* match test, else null (MATCH/NOT)}
+    "Pass through value if it *doesn't* match test, else null (MATCH/NOT)"
 ](
-    enclose match/ lambda [f] [
+    enclose match/ func [f] [
         let value: :f.value  ; EVAL makes frame arguments unavailable
         if f.meta [value: ^value]
-        eval f then [null] else [:value]
+        eval f then [return null] else [return :value]
     ]
 )
 
