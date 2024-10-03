@@ -1255,60 +1255,38 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
           case LEX_DELIMIT_RIGHT_BRACE:
             return Error_Extra(ss, '}');
 
-          case LEX_DELIMIT_SLASH:  // a /REFINEMENT-style PATH! or /// WORD!
-            assert(*cp == '/');
-            assert(ss->begin == cp);
+          case LEX_DELIMIT_SLASH:  // a /RUN-style PATH! or /// WORD!
+            goto handle_delimit_interstitial;
 
-            if (
-                cp[1] == '/'
-                or Is_Lex_Whitespace(cp[1])
-                or cp[1] == ']'
-                or cp[1] == ')'
-                or cp[1] == ':'
-            ){
-                while (cp[1] == '/')
-                    ++cp;
+          case LEX_DELIMIT_PERIOD:  // a .FIELD-style TUPLE! or ... WORD!
+            goto handle_delimit_interstitial;
+
+          handle_delimit_interstitial: {
+            Byte which = *cp;
+            assert(which == '.' or which == ':' or which == '/');
+            do {
                 if (
                     Is_Lex_Whitespace(cp[1])
                     or cp[1] == ']'
                     or cp[1] == ')'
                     or cp[1] == ':'
-                ){
-                    ss->end = cp + 1;
-                    return LOCATED(TOKEN_WORD);  // like / or // or ///
-                }
-                cp = ss->begin;
-            }
-
-            ss->end = ss->begin + 1;
-            return LOCATED(TOKEN_PATH);
-
-          case LEX_DELIMIT_PERIOD:  // a .PREDICATE-style TUPLE! or ... WORD!
-            assert(*cp == '.');
-            assert(ss->begin == cp);
-
-            if (
-                cp[1] == '.'
-                or Is_Lex_Whitespace(cp[1])
-                or cp[1] == ']'
-                or cp[1] == ')'
-                or cp[1] == ':'
-            ){
-                while (cp[1] == '.')
-                    ++cp;
-                if (
-                    Is_Lex_Whitespace(cp[1])
-                    or cp[1] == ']'
-                    or cp[1] == ')'
-                    or cp[1] == ':'
+                    or (cp[1] != which and Is_Dot_Or_Slash(cp[1]))
                 ){
                     ss->end = cp + 1;
                     return LOCATED(TOKEN_WORD);  // like . or .. or ...
                 }
-            }
+                ++cp;
+            } while (*cp == which);
 
             ss->end = ss->begin + 1;
-            return LOCATED(TOKEN_TUPLE);
+            switch (which) {
+              case '.': return LOCATED(TOKEN_TUPLE);
+              /*case ':': return LOCATED(TOKEN_CHAIN);*/
+              case '/': return LOCATED(TOKEN_PATH);
+              default:
+                assert(false);
+            }
+            return Error_Unknown_Error_Raw(); }
 
           case LEX_DELIMIT_END:
             //
