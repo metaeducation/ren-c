@@ -52,7 +52,7 @@
 //
 // UTF8: The values C0, C1, F5 to FF never appear.
 //
-const Byte Lex_Map[256] =
+const Byte g_lex_map[256] =
 {
     /* 00 EOF */    LEX_DELIMIT|LEX_DELIMIT_END,
     /* 01     */    LEX_DEFAULT,
@@ -356,7 +356,7 @@ static const Byte *Scan_UTF8_Char_Escapable(REBUNI *out, const Byte *bp)
         // Check for hex integers ^(1234):
         cp = bp; // restart location
         *out = 0;
-        while ((lex = Lex_Map[*cp]) > LEX_WORD) {
+        while ((lex = g_lex_map[*cp]) > LEX_WORD) {
             c = lex & LEX_VALUE;
             if (c == 0 and lex < LEX_NUMBER)
                 break;
@@ -644,7 +644,7 @@ static void Update_Error_Near_For_Line(
     // Skip indentation (don't include in the NEAR)
     //
     const Byte *cp = line_head;
-    while (IS_LEX_SPACE(*cp))
+    while (Is_Lex_Space(*cp))
         ++cp;
 
     // Find end of line to capture in error message
@@ -799,7 +799,7 @@ static REBCTX *Error_Mismatch(SCAN_STATE *ss, char wanted, char seen) {
 //
 // Note: The reason the first character's lexical class is not
 // considered is because it's important to know it exactly, so
-// the caller will use GET_LEX_CLASS(ss->begin[0]).
+// the caller will use Get_Lex_Class(ss->begin[0]).
 // Fingerprinting just helps accelerate further categorization.
 //
 static REBLEN Prescan_Token(SCAN_STATE *ss)
@@ -810,11 +810,11 @@ static REBLEN Prescan_Token(SCAN_STATE *ss)
     REBLEN flags = 0;
 
     // Skip whitespace (if any) and update the ss
-    while (IS_LEX_SPACE(*cp)) cp++;
+    while (Is_Lex_Space(*cp)) cp++;
     ss->begin = cp;
 
     while (true) {
-        switch (GET_LEX_CLASS(*cp)) {
+        switch (Get_Lex_Class(*cp)) {
 
         case LEX_CLASS_DELIMIT:
             if (cp == ss->begin) {
@@ -823,7 +823,7 @@ static REBLEN Prescan_Token(SCAN_STATE *ss)
                 ss->end = cp + 1;
 
                 // Note: We'd liked to have excluded LEX_DELIMIT_END, but
-                // would require a GET_LEX_VALUE() call to know to do so.
+                // would require a Get_Lex_Value() call to know to do so.
                 // Locate_Token_May_Push_Mold() does a `switch` on that,
                 // so it can subtract this addition back out itself.
             }
@@ -835,7 +835,7 @@ static REBLEN Prescan_Token(SCAN_STATE *ss)
             if (cp != ss->begin) {
                 // As long as it isn't the first character, we union a flag
                 // in the result mask to signal this special char's presence
-                SET_LEX_FLAG(flags, GET_LEX_VALUE(*cp));
+                Set_Lex_Flag(flags, Get_Lex_Value(*cp));
             }
             cp++;
             break;
@@ -846,12 +846,12 @@ static REBLEN Prescan_Token(SCAN_STATE *ss)
             // that are returned.  But if any member of LEX_CLASS_WORD is
             // found, then a flag will be set indicating that also.
             //
-            SET_LEX_FLAG(flags, LEX_SPECIAL_WORD);
-            while (IS_LEX_WORD_OR_NUMBER(*cp)) cp++;
+            Set_Lex_Flag(flags, LEX_SPECIAL_WORD);
+            while (Is_Lex_Word_Or_Number(*cp)) cp++;
             break;
 
         case LEX_CLASS_NUMBER:
-            while (IS_LEX_NUMBER(*cp)) cp++;
+            while (Is_Lex_Number(*cp)) cp++;
             break;
         }
     }
@@ -1088,10 +1088,10 @@ acquisition_loop:
 
     const Byte *cp = ss->begin;
 
-    switch (GET_LEX_CLASS(*cp)) {
+    switch (Get_Lex_Class(*cp)) {
 
     case LEX_CLASS_DELIMIT:
-        switch (GET_LEX_VALUE(*cp)) {
+        switch (Get_Lex_Value(*cp)) {
         case LEX_DELIMIT_SPACE:
             panic ("Prescan_Token did not skip whitespace");
 
@@ -1186,7 +1186,7 @@ acquisition_loop:
             while (*cp == '/')  // `//` or `///` etc.
                 ++cp;
             if (
-                IS_LEX_ANY_SPACE(*cp)
+                Is_Lex_Whitespace(*cp)
                 or *cp == ']'
                 or *cp == ')'
             ){
@@ -1253,7 +1253,7 @@ acquisition_loop:
                 ++cp;
 
             if (
-                IS_LEX_ANY_SPACE(cp[1])
+                Is_Lex_Whitespace(cp[1])
                 or cp[1] == ']'
                 or cp[1] == ')'
             ){
@@ -1269,12 +1269,12 @@ acquisition_loop:
         }
 
     case LEX_CLASS_SPECIAL:
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT) and *cp != '<') {
+        if (Has_Lex_Flag(flags, LEX_SPECIAL_AT) and *cp != '<') {
             ss->token = TOKEN_EMAIL;
             goto prescan_subsume_all_dots;
         }
     next_ls:
-        switch (GET_LEX_VALUE(*cp)) {
+        switch (Get_Lex_Value(*cp)) {
 
         case LEX_SPECIAL_AT:
             ss->token = TOKEN_EMAIL;
@@ -1293,7 +1293,7 @@ acquisition_loop:
             }
             while (*cp == '/' or *cp == '.') {  /* deal with delimiter */
                 cp++;
-                while (IS_LEX_NOT_DELIMIT(*cp))
+                while (Is_Lex_Not_Delimit(*cp))
                     ++cp;
             }
             ss->end = cp;
@@ -1301,11 +1301,11 @@ acquisition_loop:
             return;
 
         case LEX_SPECIAL_COLON:         /* :word :12 (time) */
-            if (IS_LEX_NUMBER(cp[1])) {
+            if (Is_Lex_Number(cp[1])) {
                 ss->token = TOKEN_TIME;
                 return;
             }
-            if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD)) {
+            if (Only_Lex_Flag(flags, LEX_SPECIAL_WORD)) {
                 ss->token = TOKEN_GET;
                 return; // common case
             }
@@ -1319,7 +1319,7 @@ acquisition_loop:
                 if (cp[1] == '<' or cp[1] == '>' or cp[1] == '=')
                     ++cp;
                 ss->token = TOKEN_GET;
-                if (not IS_LEX_DELIMIT(cp[1]))
+                if (not Is_Lex_Delimit(cp[1]))
                     fail (Error_Syntax(ss));
                 ss->end = cp + 1;
                 return;
@@ -1330,7 +1330,7 @@ acquisition_loop:
 
         treat_dollar_as_apostrophe:
         case LEX_SPECIAL_APOSTROPHE:
-            if (IS_LEX_NUMBER(cp[1])) { // no '2nd
+            if (Is_Lex_Number(cp[1])) { // no '2nd
                 ss->token = TOKEN_LIT;
                 fail (Error_Syntax(ss));
             }
@@ -1343,7 +1343,7 @@ acquisition_loop:
                     ++cp;
 
                 if (
-                    IS_LEX_ANY_SPACE(cp[1])
+                    Is_Lex_Whitespace(cp[1])
                     or cp[1] == ']'
                     or cp[1] == ')'
                 ){
@@ -1354,13 +1354,13 @@ acquisition_loop:
                 ss->token = TOKEN_LIT;
                 fail (Error_Syntax(ss));
             }
-            if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD)) {
+            if (Only_Lex_Flag(flags, LEX_SPECIAL_WORD)) {
                 ss->token = TOKEN_LIT;
                 return; // common case
             }
-            if (not IS_LEX_WORD(cp[1])) {
+            if (not Is_Lex_Word(cp[1])) {
                 // Various special cases of < << <> >> > >= <=
-                if ((cp[1] == '-' or cp[1] == '+') and IS_LEX_NUMBER(cp[2])) {
+                if ((cp[1] == '-' or cp[1] == '+') and Is_Lex_Number(cp[2])) {
                     ss->token = TOKEN_WORD;
                     fail (Error_Syntax(ss));
                 }
@@ -1369,7 +1369,7 @@ acquisition_loop:
                     if (cp[1] == '<' or cp[1] == '>' or cp[1] == '=')
                         ++cp;
                     ss->token = TOKEN_LIT;
-                    if (not IS_LEX_DELIMIT(cp[1]))
+                    if (not Is_Lex_Delimit(cp[1]))
                         fail (Error_Syntax(ss));
                     ss->end = cp + 1;
                     return;
@@ -1383,19 +1383,19 @@ acquisition_loop:
             goto scanword;
 
         case LEX_SPECIAL_GREATER:
-            if (IS_LEX_DELIMIT(cp[1])) {
+            if (Is_Lex_Delimit(cp[1])) {
                 ss->token = TOKEN_WORD;
                 return;
             }
             if (cp[1] == '>') {
                 ss->token = TOKEN_WORD;
-                if (IS_LEX_DELIMIT(cp[2]))
+                if (Is_Lex_Delimit(cp[2]))
                     return;
                 fail (Error_Syntax(ss));
             }
             // falls through
         case LEX_SPECIAL_LESSER:
-            if (IS_LEX_ANY_SPACE(cp[1]) or cp[1] == ']' or cp[1] == 0) {
+            if (Is_Lex_Whitespace(cp[1]) or cp[1] == ']' or cp[1] == 0) {
                 ss->token = TOKEN_WORD; // changed for </tag>
                 return;
             }
@@ -1403,25 +1403,25 @@ acquisition_loop:
                 (cp[0] == '<' and cp[1] == '<') or cp[1] == '=' or cp[1] == '>'
             ){
                 ss->token = TOKEN_WORD;
-                if (IS_LEX_DELIMIT(cp[2]))
+                if (Is_Lex_Delimit(cp[2]))
                     return;
                 fail (Error_Syntax(ss));
             }
             if (
                 cp[0] == '<' and (cp[1] == '-' or cp[1] == '|')
-                and (IS_LEX_DELIMIT(cp[2]) or IS_LEX_ANY_SPACE(cp[2]))
+                and (Is_Lex_Delimit(cp[2]) or Is_Lex_Whitespace(cp[2]))
             ){
                 ss->token = TOKEN_WORD;
                 return; // "<|" and "<-"
             }
             if (
                 cp[0] == '>' and (cp[1] == '-' or cp[1] == '|')
-                and (IS_LEX_DELIMIT(cp[2]) or IS_LEX_ANY_SPACE(cp[2]))
+                and (Is_Lex_Delimit(cp[2]) or Is_Lex_Whitespace(cp[2]))
             ){
                 ss->token = TOKEN_WORD;
                 return; // ">|" and ">-"
             }
-            if (GET_LEX_VALUE(*cp) == LEX_SPECIAL_GREATER) {
+            if (Get_Lex_Value(*cp) == LEX_SPECIAL_GREATER) {
                 ss->token = TOKEN_WORD;
                 fail (Error_Syntax(ss));
             }
@@ -1434,15 +1434,15 @@ acquisition_loop:
 
         case LEX_SPECIAL_PLUS:          /* +123 +123.45 +$123 */
         case LEX_SPECIAL_MINUS:         /* -123 -123.45 -$123 */
-            if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
+            if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
                 ss->token = TOKEN_EMAIL;
                 goto prescan_subsume_all_dots;
             }
-            if (HAS_LEX_FLAG(flags, LEX_SPECIAL_DOLLAR)) {
+            if (Has_Lex_Flag(flags, LEX_SPECIAL_DOLLAR)) {
                 ss->token = TOKEN_MONEY;
                 goto prescan_subsume_up_to_one_dot;
             }
-            if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) {
+            if (Has_Lex_Flag(flags, LEX_SPECIAL_COLON)) {
                 cp = Skip_To_Byte(cp, ss->end, ':');
                 if (cp != nullptr and (cp + 1) != ss->end) { // 12:34
                     ss->token = TOKEN_TIME;
@@ -1455,10 +1455,10 @@ acquisition_loop:
                 }
             }
             cp++;
-            if (IS_LEX_NUMBER(*cp))
+            if (Is_Lex_Number(*cp))
                 goto num;
-            if (IS_LEX_SPECIAL(*cp)) {
-                if ((GET_LEX_VALUE(*cp)) >= LEX_SPECIAL_POUND)
+            if (Is_Lex_Special(*cp)) {
+                if ((Get_Lex_Value(*cp)) >= LEX_SPECIAL_POUND)
                     goto next_ls;
                 if (*cp == '+' or *cp == '-') {
                     ss->token = TOKEN_WORD;
@@ -1466,7 +1466,7 @@ acquisition_loop:
                 }
                 if (
                     *cp == '>'
-                    and (IS_LEX_DELIMIT(cp[1]) or IS_LEX_ANY_SPACE(cp[1]))
+                    and (Is_Lex_Delimit(cp[1]) or Is_Lex_Whitespace(cp[1]))
                 ){
                     // Special exemption for ->
                     ss->token = TOKEN_WORD;
@@ -1484,7 +1484,7 @@ acquisition_loop:
             // delimiter or space.  However `_a_` and `a_b` are left as
             // legal words (at least for the time being).
             //
-            if (IS_LEX_DELIMIT(cp[1]) or IS_LEX_ANY_SPACE(cp[1])) {
+            if (Is_Lex_Delimit(cp[1]) or Is_Lex_Whitespace(cp[1])) {
                 ss->token = TOKEN_BLANK;
                 return;
             }
@@ -1544,7 +1544,7 @@ acquisition_loop:
 
         case LEX_SPECIAL_DOLLAR:
             if (
-                GET_LEX_CLASS(cp[1]) == LEX_CLASS_WORD
+                Get_Lex_Class(cp[1]) == LEX_CLASS_WORD
                 or cp[1] == '-'
                 or cp[1] == '+'
             ){
@@ -1560,7 +1560,7 @@ acquisition_loop:
                 ss->token = TOKEN_LIT;
                 fail (Error_Syntax(ss));
             }
-            if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
+            if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
                 ss->token = TOKEN_EMAIL;
                 goto prescan_subsume_all_dots;
             }
@@ -1586,11 +1586,11 @@ acquisition_loop:
             cp = ss->end;
             while (
                 *cp == '.'
-                or GET_LEX_CLASS(*cp) == LEX_CLASS_WORD
-                or GET_LEX_CLASS(*cp) == LEX_CLASS_NUMBER
-                or (GET_LEX_CLASS(*cp) == LEX_CLASS_SPECIAL and (
-                    GET_LEX_VALUE(*cp) == LEX_SPECIAL_MINUS
-                    or GET_LEX_VALUE(*cp) == LEX_SPECIAL_PLUS
+                or Get_Lex_Class(*cp) == LEX_CLASS_WORD
+                or Get_Lex_Class(*cp) == LEX_CLASS_NUMBER
+                or (Get_Lex_Class(*cp) == LEX_CLASS_SPECIAL and (
+                    Get_Lex_Value(*cp) == LEX_SPECIAL_MINUS
+                    or Get_Lex_Value(*cp) == LEX_SPECIAL_PLUS
                 ))
             ){
                 ++cp;
@@ -1598,7 +1598,7 @@ acquisition_loop:
             ss->end = cp;
             cp = ss->begin;
         }
-        if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD))
+        if (Only_Lex_Flag(flags, LEX_SPECIAL_WORD))
             return;
         goto scanword;
 
@@ -1608,11 +1608,11 @@ acquisition_loop:
             ss->token = TOKEN_INTEGER;
             return;
         }
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
+        if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
             ss->token = TOKEN_EMAIL;
             goto prescan_subsume_all_dots;
         }
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_POUND)) {
+        if (Has_Lex_Flag(flags, LEX_SPECIAL_POUND)) {
             if (cp == ss->begin) { // no +2 +16 +64 allowed
                 if (
                     (
@@ -1639,21 +1639,21 @@ acquisition_loop:
             ss->token = TOKEN_INTEGER;
             fail (Error_Syntax(ss));
         }
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) { // 12:34
+        if (Has_Lex_Flag(flags, LEX_SPECIAL_COLON)) { // 12:34
             if (ss->end[-1] != ':') {  // colon at the end could come from `a.1:`
                 ss->token = TOKEN_TIME;
                 goto prescan_subsume_up_to_one_dot;
             }
             cp = ss->begin;
-            while (GET_LEX_CLASS(*cp) == LEX_CLASS_NUMBER)
+            while (Get_Lex_Class(*cp) == LEX_CLASS_NUMBER)
                 ++cp;
             ss->end = cp;
             ss->token = TOKEN_INTEGER;
             return;
         }
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_POUND)) { // -#123 2#1010
+        if (Has_Lex_Flag(flags, LEX_SPECIAL_POUND)) { // -#123 2#1010
             if (
-                HAS_LEX_FLAGS(
+                Has_Lex_FlagS(
                     flags,
                     ~(
                         LEX_FLAG(LEX_SPECIAL_POUND)
@@ -1694,7 +1694,7 @@ acquisition_loop:
             }
         }
         ss->token = TOKEN_INTEGER;
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_APOSTROPHE)) // 1'200
+        if (Has_Lex_Flag(flags, LEX_SPECIAL_APOSTROPHE)) // 1'200
             return;
         fail (Error_Syntax(ss));
 
@@ -1709,17 +1709,17 @@ scanword:
     assert(ss->token != TOKEN_MAX);
 #endif
 
-    if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) { // word:  url:words
+    if (Has_Lex_Flag(flags, LEX_SPECIAL_COLON)) { // word:  url:words
         if (ss->token != TOKEN_WORD) {
             // only valid with WORD (not set or lit)
             return;
         }
         // This Skip_To_Byte always returns a pointer (always a ':')
         cp = Skip_To_Byte(cp, ss->end, ':');
-        if (cp[1] != '/' and cp[1] != '.' and Lex_Map[cp[1]] < LEX_SPECIAL) {
+        if (cp[1] != '/' and cp[1] != '.' and g_lex_map[cp[1]] < LEX_SPECIAL) {
             // a valid delimited word SET?
             if (
-                HAS_LEX_FLAGS(
+                Has_Lex_FlagS(
                     flags, ~LEX_FLAG(LEX_SPECIAL_COLON) & LEX_WORD_FLAGS
                 )
             ){
@@ -1732,30 +1732,30 @@ scanword:
         cp = ss->end;   /* then, must be a URL */
         while (*cp == '/' or *cp == '.') {    /* deal with path delimiter */
             cp++;
-            while (IS_LEX_NOT_DELIMIT(*cp) or *cp == '/' or *cp == '.')
+            while (Is_Lex_Not_Delimit(*cp) or *cp == '/' or *cp == '.')
                 ++cp;
         }
         ss->end = cp;
         ss->token = TOKEN_URL;
         return;
     }
-    if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
+    if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
         ss->token = TOKEN_EMAIL;
         goto prescan_subsume_all_dots;
     }
-    if (HAS_LEX_FLAG(flags, LEX_SPECIAL_DOLLAR)) {
+    if (Has_Lex_Flag(flags, LEX_SPECIAL_DOLLAR)) {
         ss->token = TOKEN_MONEY;
         goto prescan_subsume_up_to_one_dot;
     }
-    if (HAS_LEX_FLAGS(flags, LEX_WORD_FLAGS)) {
+    if (Has_Lex_FlagS(flags, LEX_WORD_FLAGS)) {
         // has chars not allowed in word (eg % \ )
         fail (Error_Syntax(ss));
     }
 
-    if (HAS_LEX_FLAG(flags, LEX_SPECIAL_LESSER)) {
+    if (Has_Lex_Flag(flags, LEX_SPECIAL_LESSER)) {
         // Allow word<tag> and word</tag> but not word< word<= word<> etc.
 
-        if (*cp == '=' and cp[1] == '<' and IS_LEX_DELIMIT(cp[2])) {
+        if (*cp == '=' and cp[1] == '<' and Is_Lex_Delimit(cp[2])) {
             ss->token = TOKEN_WORD; // enable `=<`
             return;
         }
@@ -1763,15 +1763,15 @@ scanword:
         cp = Skip_To_Byte(cp, ss->end, '<');
         if (
             cp[1] == '<' or cp[1] == '>' or cp[1] == '='
-            or IS_LEX_SPACE(cp[1])
-            or (cp[1] != '/' and IS_LEX_DELIMIT(cp[1]))
+            or Is_Lex_Space(cp[1])
+            or (cp[1] != '/' and Is_Lex_Delimit(cp[1]))
         ){
             fail (Error_Syntax(ss));
         }
         ss->end = cp;
     }
-    else if (HAS_LEX_FLAG(flags, LEX_SPECIAL_GREATER)) {
-        if ((*cp == '=' or *cp == '|') and cp[1] == '>' and IS_LEX_DELIMIT(cp[2])) {
+    else if (Has_Lex_Flag(flags, LEX_SPECIAL_GREATER)) {
+        if ((*cp == '=' or *cp == '|') and cp[1] == '>' and Is_Lex_Delimit(cp[2])) {
             ss->token = TOKEN_WORD; // enable `=>`
             return;
         }
@@ -1796,7 +1796,7 @@ scanword:
         return;
 
     cp = ss->end + 1;
-    while (not IS_LEX_DELIMIT(*cp) and not IS_LEX_ANY_SPACE(*cp))
+    while (not Is_Lex_Delimit(*cp) and not Is_Lex_Whitespace(*cp))
         ++cp;
     ss->end = cp;
 
@@ -1820,7 +1820,7 @@ scanword:
     cp = ss->end + 1;
     while (
         *cp == '.'
-        or (not IS_LEX_DELIMIT(*cp) and not IS_LEX_ANY_SPACE(*cp))
+        or (not Is_Lex_Delimit(*cp) and not Is_Lex_Whitespace(*cp))
     ){
         ++cp;
     }
@@ -1948,7 +1948,7 @@ static REBINT Scan_Head(SCAN_STATE *ss)
     REBLEN count = ss->line;
 
     while (true) {
-        while (IS_LEX_SPACE(*cp)) cp++; /* skip white space */
+        while (Is_Lex_Space(*cp)) cp++; /* skip white space */
         switch (*cp) {
         case '[':
             if (rp) {
@@ -2177,7 +2177,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             if (
                 (*ep == '.')
                 and not Is_Interstitial_Scan(ss)  // not in PATH! (yet)
-                and IS_LEX_NUMBER(ep[1])  // If # digit, we're seeing `###.#???`
+                and Is_Lex_Number(ep[1])  // If # digit, we're seeing `###.#???`
             ){
                 // If we will be scanning a TUPLE!, then we're at the head of it.
                 // But it could also be a DECIMAL! if there aren't any more dots.
@@ -2185,13 +2185,13 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 const Byte* temp = ep + 1;
                 REBLEN temp_len = len + 1;
                 for (; *temp != '.'; ++temp, ++temp_len) {
-                    if (IS_LEX_DELIMIT(*temp)) {
+                    if (Is_Lex_Delimit(*temp)) {
                         ss->begin = ss->end = ep = temp;
                         len = temp_len;
                         goto scan_decimal;
                     }
                 }
-                while (*temp == '.' or not IS_LEX_DELIMIT(*temp))
+                while (*temp == '.' or not Is_Lex_Delimit(*temp))
                     { ++temp; ++temp_len; }
 
                 ss->token = TOKEN_COMMA;  // skip
@@ -2252,7 +2252,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         case TOKEN_DATE:
             while (*ep == '/' and ss->mode_char != '/') {  // Is it date/time?
                 ep++;
-                while (IS_LEX_NOT_DELIMIT(*ep)) ep++;
+                while (Is_Lex_Not_Delimit(*ep)) ep++;
                 len = cast(REBLEN, ep - bp);
                 if (len > 50) {
                     // prevent infinite loop, should never be longer than this
@@ -2473,7 +2473,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 ss->mode_char = '/';
 
             ep++;
-            if (*ep != '(' and *ep != '[' and IS_LEX_DELIMIT(*ep)) {
+            if (*ep != '(' and *ep != '[' and Is_Lex_Delimit(*ep)) {
                 ss->begin = ep;
                 goto array_done;  // we want `a.b/` to scan as `a/b`
             }
@@ -2489,7 +2489,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
 
             if (
                 *ss->begin == '\0' // `foo/`
-                or IS_LEX_ANY_SPACE(*ss->begin) // `foo/ bar`
+                or Is_Lex_Whitespace(*ss->begin) // `foo/ bar`
                 or *ss->begin == ';' // `foo/;--bar`
             ){
                 // These are valid paths in modern Ren-C with blanks at
@@ -2972,21 +2972,21 @@ const Byte *Scan_Issue(Value* out, const Byte *cp, REBLEN len)
 {
     if (len == 0) return nullptr; // will trigger error
 
-    while (IS_LEX_SPACE(*cp)) cp++; /* skip white space */
+    while (Is_Lex_Space(*cp)) cp++; /* skip white space */
 
     const Byte *bp = cp;
 
     REBLEN l = len;
     while (l > 0) {
-        switch (GET_LEX_CLASS(*bp)) {
+        switch (Get_Lex_Class(*bp)) {
           case LEX_CLASS_DELIMIT: {
-            REBLEN c = GET_LEX_VALUE(*bp);
+            REBLEN c = Get_Lex_Value(*bp);
             if (c == LEX_DELIMIT_PERIOD)  // periods legal in ISSUE!
                 goto lex_word_or_number;
             return nullptr; }  // will trigger error
 
           case LEX_CLASS_SPECIAL: { // Flag all but first special char
-            REBLEN c = GET_LEX_VALUE(*bp);
+            REBLEN c = Get_Lex_Value(*bp);
             if (
                 LEX_SPECIAL_APOSTROPHE != c
                 and LEX_SPECIAL_PLUS != c

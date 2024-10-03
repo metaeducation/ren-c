@@ -76,15 +76,15 @@ enum Reb_Token {
 #define LEX_CLASS       (3<<LEX_SHIFT)  /* class bit field */
 #define LEX_VALUE       (0x1F)          /* value bit field */
 
-#define GET_LEX_CLASS(c)  (Lex_Map[(Byte)c] >> LEX_SHIFT)
-#define GET_LEX_VALUE(c)  (Lex_Map[(Byte)c] & LEX_VALUE)
+#define Get_Lex_Class(c)  (g_lex_map[(Byte)c] >> LEX_SHIFT)
+#define Get_Lex_Value(c)  (g_lex_map[(Byte)c] & LEX_VALUE)
 
 
 /*
 **  Delimiting Chars (encoded in the LEX_VALUE field)
 **  NOTE: Macros do make assumption that _RETURN is the last space delimiter
 */
-enum LEX_DELIMIT_ENUM {
+enum LexDelimitEnum {
     LEX_DELIMIT_SPACE,              /* 20 space */
     LEX_DELIMIT_END,                /* 00 null terminator, end of input */
     LEX_DELIMIT_LINEFEED,           /* 0A line-feed */
@@ -102,6 +102,7 @@ enum LEX_DELIMIT_ENUM {
     LEX_DELIMIT_PERIOD,
     LEX_DELIMIT_MAX
 };
+typedef enum LexDelimitEnum LexDelimit;
 
 STATIC_ASSERT(LEX_DELIMIT_MAX <= 16);
 
@@ -110,12 +111,13 @@ STATIC_ASSERT(LEX_DELIMIT_MAX <= 16);
 **  General Lexical Classes (encoded in the LEX_CLASS field)
 **  NOTE: macros do make assumptions on the order, and that there are 4!
 */
-enum LEX_CLASS_ENUM {
+enum LexClassEnum {
     LEX_CLASS_DELIMIT = 0,
     LEX_CLASS_SPECIAL,
     LEX_CLASS_WORD,
     LEX_CLASS_NUMBER
 };
+typedef enum LexClassEnum LexClass;
 
 #define LEX_DELIMIT     (LEX_CLASS_DELIMIT<<LEX_SHIFT)
 #define LEX_SPECIAL     (LEX_CLASS_SPECIAL<<LEX_SHIFT)
@@ -123,22 +125,22 @@ enum LEX_CLASS_ENUM {
 #define LEX_NUMBER      (LEX_CLASS_NUMBER<<LEX_SHIFT)
 
 #define LEX_FLAG(n)             (1 << (n))
-#define SET_LEX_FLAG(f,l)       (f = f | LEX_FLAG(l))
-#define HAS_LEX_FLAGS(f,l)      (f & (l))
-#define HAS_LEX_FLAG(f,l)       (f & LEX_FLAG(l))
-#define ONLY_LEX_FLAG(f,l)      (f == LEX_FLAG(l))
+#define Set_Lex_Flag(f,l)       (f = f | LEX_FLAG(l))
+#define Has_Lex_FlagS(f,l)      (f & (l))
+#define Has_Lex_Flag(f,l)       (f & LEX_FLAG(l))
+#define Only_Lex_Flag(f,l)      (f == LEX_FLAG(l))
 
-#define MASK_LEX_CLASS(c)               (Lex_Map[(Byte)c] & LEX_CLASS)
-#define IS_LEX_SPACE(c)                 (!Lex_Map[(Byte)c])
-#define IS_LEX_ANY_SPACE(c)             (Lex_Map[(Byte)c]<=LEX_DELIMIT_RETURN)
-#define IS_LEX_DELIMIT(c)               (MASK_LEX_CLASS(c) == LEX_DELIMIT)
-#define IS_LEX_SPECIAL(c)               (MASK_LEX_CLASS(c) == LEX_SPECIAL)
-#define IS_LEX_WORD(c)                  (MASK_LEX_CLASS(c) == LEX_WORD)
+#define Mask_Lex_Class(c)               (g_lex_map[(Byte)c] & LEX_CLASS)
+#define Is_Lex_Space(c)                 (!g_lex_map[(Byte)c])
+#define Is_Lex_Whitespace(c)            (g_lex_map[(Byte)c]<=LEX_DELIMIT_RETURN)
+#define Is_Lex_Delimit(c)               (Mask_Lex_Class(c) == LEX_DELIMIT)
+#define Is_Lex_Special(c)               (Mask_Lex_Class(c) == LEX_SPECIAL)
+#define Is_Lex_Word(c)                  (Mask_Lex_Class(c) == LEX_WORD)
 // Optimization (necessary?)
-#define IS_LEX_NUMBER(c)                (Lex_Map[(Byte)c] >= LEX_NUMBER)
+#define Is_Lex_Number(c)                (g_lex_map[(Byte)c] >= LEX_NUMBER)
 
-#define IS_LEX_NOT_DELIMIT(c)           (Lex_Map[(Byte)c] >= LEX_SPECIAL)
-#define IS_LEX_WORD_OR_NUMBER(c)        (Lex_Map[(Byte)c] >= LEX_WORD)
+#define Is_Lex_Not_Delimit(c)           (g_lex_map[(Byte)c] >= LEX_SPECIAL)
+#define Is_Lex_Word_Or_Number(c)        (g_lex_map[(Byte)c] >= LEX_WORD)
 
 //
 //  Special Chars (encoded in the LEX_VALUE field)
@@ -146,7 +148,7 @@ enum LEX_CLASS_ENUM {
 // !!! This used to have "LEX_SPECIAL_TILDE" for "7E ~ - complement number",
 // but that was removed at some point and it was made a legal word character.
 //
-enum LEX_SPECIAL_ENUM {             /* The order is important! */
+enum LexSpecialEnum {             /* The order is important! */
     LEX_SPECIAL_AT,                 /* 40 @ - email */
     LEX_SPECIAL_PERCENT,            /* 25 % - file name */
     LEX_SPECIAL_BACKSLASH,          /* 5C \  */
@@ -171,6 +173,7 @@ enum LEX_SPECIAL_ENUM {             /* The order is important! */
 
     LEX_SPECIAL_MAX
 };
+typedef enum LexSpecialEnum LexSpecial;
 
 /*
 **  Special Encodings
@@ -301,7 +304,7 @@ enum {
 /*
 **  Externally Accessed Variables
 */
-extern const Byte Lex_Map[256];
+extern const Byte g_lex_map[256];
 
 
 //=////////////////////////////////////////////////////////////////////////=//

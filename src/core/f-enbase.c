@@ -192,7 +192,7 @@ static Binary* Decode_Base2(const Byte **src, REBLEN len, Byte delim)
 
         if (delim && *cp == delim) break;
 
-        lex = Lex_Map[*cp];
+        lex = g_lex_map[*cp];
 
         if (lex >= LEX_NUMBER) {
 
@@ -243,7 +243,7 @@ static Binary* Decode_Base16(const Byte **src, REBLEN len, Byte delim)
 
         if (delim && *cp == delim) break;
 
-        lex = Lex_Map[*cp];
+        lex = g_lex_map[*cp];
 
         if (lex > LEX_WORD) {
             val = lex & LEX_VALUE; // char num encoded into lex

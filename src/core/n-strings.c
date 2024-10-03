@@ -613,9 +613,9 @@ DECLARE_NATIVE(enhex)
             encoded[0] = cast(Byte, c);
             encoded_size = 1;
 
-            switch (GET_LEX_CLASS(c)) {
+            switch (Get_Lex_Class(c)) {
               case LEX_CLASS_DELIMIT:
-                switch (GET_LEX_VALUE(c)) {
+                switch (Get_Lex_Value(c)) {
                   case LEX_DELIMIT_LEFT_PAREN:
                   case LEX_DELIMIT_RIGHT_PAREN:
                   case LEX_DELIMIT_LEFT_BRACKET:
@@ -641,7 +641,7 @@ DECLARE_NATIVE(enhex)
                 }
 
               case LEX_CLASS_SPECIAL:
-                switch (GET_LEX_VALUE(c)) {
+                switch (Get_Lex_Value(c)) {
                   case LEX_SPECIAL_AT:
                   case LEX_SPECIAL_COLON:
                   case LEX_SPECIAL_APOSTROPHE:
@@ -758,8 +758,8 @@ DECLARE_NATIVE(dehex)
             if (i + 2 >= len)
                fail ("Percent decode has less than two codepoints after %");
 
-            Byte lex1 = Lex_Map[GET_ANY_CHAR(s, i + 1)];
-            Byte lex2 = Lex_Map[GET_ANY_CHAR(s, i + 2)];
+            Byte lex1 = g_lex_map[GET_ANY_CHAR(s, i + 1)];
+            Byte lex2 = g_lex_map[GET_ANY_CHAR(s, i + 2)];
             i += 3;
 
             // If class LEX_WORD or LEX_NUMBER, there is a value contained in

@@ -359,7 +359,7 @@ const Byte *Scan_Hex(
     REBI64 i = 0;
     REBLEN cnt = 0;
     Byte lex;
-    while ((lex = Lex_Map[*cp]) > LEX_WORD) {
+    while ((lex = g_lex_map[*cp]) > LEX_WORD) {
         Byte v;
         if (++cnt > maxlen)
             return_NULL;
@@ -403,12 +403,12 @@ bool Scan_Hex2(REBUNI *out, const void *p, bool unicode)
         c2 = bp[1];
     }
 
-    Byte lex1 = Lex_Map[c1];
+    Byte lex1 = g_lex_map[c1];
     Byte d1 = lex1 & LEX_VALUE;
     if (lex1 < LEX_WORD || (d1 == 0 && lex1 < LEX_NUMBER))
         return false;
 
-    Byte lex2 = Lex_Map[c2];
+    Byte lex2 = g_lex_map[c2];
     Byte d2 = lex2 & LEX_VALUE;
     if (lex2 < LEX_WORD || (d2 == 0 && lex2 < LEX_NUMBER))
         return false;
@@ -445,7 +445,7 @@ const Byte *Scan_Dec_Buf(
         *bp++ = *cp++;
 
     bool digit_present = false;
-    while (IS_LEX_NUMBER(*cp) || *cp == '\'') {
+    while (Is_Lex_Number(*cp) || *cp == '\'') {
         if (*cp != '\'') {
             *bp++ = *cp++;
             if (bp >= be)
@@ -465,7 +465,7 @@ const Byte *Scan_Dec_Buf(
     if (bp >= be)
         return nullptr;
 
-    while (IS_LEX_NUMBER(*cp) || *cp == '\'') {
+    while (Is_Lex_Number(*cp) || *cp == '\'') {
         if (*cp != '\'') {
             *bp++ = *cp++;
             if (bp >= be)
@@ -492,7 +492,7 @@ const Byte *Scan_Dec_Buf(
                 return nullptr;
         }
 
-        while (IS_LEX_NUMBER(*cp)) {
+        while (Is_Lex_Number(*cp)) {
             *bp++ = *cp++;
             if (bp >= be)
                 return nullptr;
@@ -533,7 +533,7 @@ const Byte *Scan_Decimal(
 
     bool digit_present = false;
 
-    while (IS_LEX_NUMBER(*cp) || *cp == '\'') {
+    while (Is_Lex_Number(*cp) || *cp == '\'') {
         if (*cp != '\'') {
             *ep++ = *cp++;
             digit_present = true;
@@ -547,7 +547,7 @@ const Byte *Scan_Decimal(
 
     *ep++ = '.';
 
-    while (IS_LEX_NUMBER(*cp) || *cp == '\'') {
+    while (Is_Lex_Number(*cp) || *cp == '\'') {
         if (*cp != '\'') {
             *ep++ = *cp++;
             digit_present = true;
@@ -566,7 +566,7 @@ const Byte *Scan_Decimal(
         if (*cp == '-' || *cp == '+')
             *ep++ = *cp++;
 
-        while (IS_LEX_NUMBER(*cp)) {
+        while (Is_Lex_Number(*cp)) {
             *ep++ = *cp++;
             digit_present = true;
         }
@@ -804,7 +804,7 @@ const Byte *Scan_Date(
     if (size > 0)
         month = num; // got a number
     else { // must be a word
-        for (ep = cp; IS_LEX_WORD(*ep); ep++)
+        for (ep = cp; Is_Lex_Word(*ep); ep++)
             NOOP; // scan word
 
         size = cast(REBLEN, ep - cp);
@@ -1310,17 +1310,17 @@ DECLARE_NATIVE(scan_net_header)
 
     Byte *cp = Binary_Head(utf8) + index;
 
-    while (IS_LEX_ANY_SPACE(*cp)) cp++; // skip white space
+    while (Is_Lex_Whitespace(*cp)) cp++; // skip white space
 
     Byte *start;
     REBINT len;
 
     while (true) {
         // Scan valid word:
-        if (IS_LEX_WORD(*cp)) {
+        if (Is_Lex_Word(*cp)) {
             start = cp;
             while (
-                IS_LEX_WORD_OR_NUMBER(*cp)
+                Is_Lex_Word_Or_Number(*cp)
                 || *cp == '.'
                 || *cp == '-'
                 || *cp == '_'
@@ -1370,7 +1370,7 @@ DECLARE_NATIVE(scan_net_header)
             val = Init_Unreadable(Alloc_Tail_Array(result));
         }
 
-        while (IS_LEX_SPACE(*cp)) cp++;
+        while (Is_Lex_Space(*cp)) cp++;
         start = cp;
         len = 0;
         while (!ANY_CR_LF_END(*cp)) {
@@ -1383,9 +1383,9 @@ DECLARE_NATIVE(scan_net_header)
                 ++cp;
             if (*cp == LF)
                 ++cp;
-            if (not IS_LEX_SPACE(*cp))
+            if (not Is_Lex_Space(*cp))
                 break;
-            while (IS_LEX_SPACE(*cp))
+            while (Is_Lex_Space(*cp))
                 ++cp;
             while (!ANY_CR_LF_END(*cp)) {
                 ++len;
@@ -1413,9 +1413,9 @@ DECLARE_NATIVE(scan_net_header)
                 ++cp;
             if (*cp == LF)
                 ++cp;
-            if (not IS_LEX_SPACE(*cp))
+            if (not Is_Lex_Space(*cp))
                 break;
-            while (IS_LEX_SPACE(*cp))
+            while (Is_Lex_Space(*cp))
                 ++cp;
             while (!ANY_CR_LF_END(*cp))
                 str = Write_Codepoint(str, *cp++);
