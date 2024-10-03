@@ -30,7 +30,7 @@
 //
 //  Tokens returned by the scanner.  Keep in sync with Token_Names[].
 //
-enum Reb_Token {
+enum TokenEnum {
     TOKEN_END = 0,
     TOKEN_NEWLINE,
     TOKEN_COMMA,
@@ -65,6 +65,7 @@ enum Reb_Token {
     TOKEN_CONSTRUCT,
     TOKEN_MAX
 };
+typedef enum TokenEnum Token;
 
 #define KIND_OF_WORD_FROM_TOKEN(t) \
     cast(enum Reb_Kind, REB_WORD + ((t) - TOKEN_WORD))
@@ -126,7 +127,7 @@ typedef enum LexClassEnum LexClass;
 
 #define LEX_FLAG(n)             (1 << (n))
 #define Set_Lex_Flag(f,l)       (f = f | LEX_FLAG(l))
-#define Has_Lex_FlagS(f,l)      (f & (l))
+#define Has_Lex_Flags(f,l)      (f & (l))
 #define Has_Lex_Flag(f,l)       (f & LEX_FLAG(l))
 #define Only_Lex_Flag(f,l)      (f == LEX_FLAG(l))
 
@@ -253,7 +254,6 @@ typedef struct rebol_scan_state {
     bool newline_pending;
 
     REBFLGS opts;
-    enum Reb_Token token;
 
     // If the binder isn't nullptr, then any words or arrays are bound into it
     // during the loading process.
