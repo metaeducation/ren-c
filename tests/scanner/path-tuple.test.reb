@@ -73,12 +73,17 @@
         "/#a"  !!  ~scan-invalid~
         "blk/#{}"  !!  ~scan-invalid~
 
+        === CHAIN TESTS ===
+
+        ; Various places do less exhaustive testing, they should be moved
+
+        "2022:"  ->  @[2022 _]
+        ":2022"  ->  @[_ 2022]
+
         === CHAIN INSIDE OF PATH ===
 
-        ; Coming soon: CHAIN! datatype
-
-        "a/:b"  ->  [a ^(:b)]
-        "a/:b/c"  ->  [a ^(:b) c]
+        "a/:b"  ->  [a @[_ b]]
+        "a/:b/c"  ->  [a @[_ b] c]
 
         === TAG AMBIGUITY RESOLUTION ===
 
@@ -113,6 +118,7 @@
         <static> mapping (reduce [
             path! block!
             tuple! group!
+            chain! the-block!
             block! meta-block!
             group! meta-group!
         ])

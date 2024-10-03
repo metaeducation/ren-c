@@ -67,11 +67,14 @@
     ((L)->flags.bits &= ~SCAN_EXECUTOR_FLAG_##name)
 
 
-INLINE bool Is_Dot_Or_Slash(char c)
+INLINE bool Is_Interstitial(char c)
+  { return c == '/' or c == '.' or c == ':'; }
+
+INLINE bool Is_Dot_Or_Slash(char c)  // !!! Review lingering instances
   { return c == '/' or c == '.'; }
 
 INLINE bool Interstitial_Match(char c, char mode) {
-    assert(mode == '/' or mode == '.');
+    assert(mode == '/' or mode == ':' or mode == '.');
     return c == mode;
 }
 
@@ -151,7 +154,7 @@ const Byte g_lex_map[256] =
     /* 37 7   */    LEX_NUMBER|7,
     /* 38 8   */    LEX_NUMBER|8,
     /* 39 9   */    LEX_NUMBER|9,
-    /* 3A :   */    LEX_SPECIAL|LEX_SPECIAL_COLON,
+    /* 3A :   */    LEX_DELIMIT|LEX_DELIMIT_COLON,
     /* 3B ;   */    LEX_SPECIAL|LEX_SPECIAL_SEMICOLON,
     /* 3C <   */    LEX_SPECIAL|LEX_SPECIAL_LESSER,
     /* 3D =   */    LEX_WORD,
@@ -968,7 +971,7 @@ static LexFlags Prescan_Token(SCAN_STATE *ss)
 // Error handling is limited for most types, as an additional phase is needed
 // to load their data into a REBOL value.  Yet if a "cheap" error is
 // incidentally found during this routine without extra cost to compute, it
-// can fail here.
+// will return that error.
 //
 // Examples with ss's (B)egin (E)nd and return value:
 //
@@ -1094,10 +1097,6 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
     const Byte* cp = ss->begin;
 
-    if (*cp == ':') {
-        ss->end = cp + 1;
-        return LOCATED(TOKEN_COLON);
-    }
     if (*cp == '^') {
         ss->end = cp + 1;
         return LOCATED(TOKEN_CARET);
@@ -1127,7 +1126,6 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         0 == (flags & ~(  // check flags for any obvious non-arrow characters
             LEX_FLAGS_ARROW_EXCEPT_EQUAL
             // don't count LEX_SPECIAL_AT; only valid at head, so not in flags
-            | LEX_FLAG(LEX_SPECIAL_COLON)  // may be last char if SET-WORD!
             | LEX_FLAG(LEX_SPECIAL_WORD)  // `=` is WORD!-character, sets this
         ))
     ){
@@ -1171,10 +1169,6 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             if (seen_angles and (*temp == '/' or *temp == '.'))
                 break;
 
-            return LOCATED(TOKEN_WORD);
-        }
-        if (*temp == ':' and temp + 1 == ss->end) {
-            ss->end = temp;
             return LOCATED(TOKEN_WORD);
         }
     }
@@ -1258,6 +1252,9 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
           case LEX_DELIMIT_SLASH:  // a /RUN-style PATH! or /// WORD!
             goto handle_delimit_interstitial;
 
+          case LEX_DELIMIT_COLON:  // a :REFINEMENT-style CHAIN! or ::: WORD!
+            goto handle_delimit_interstitial;
+
           case LEX_DELIMIT_PERIOD:  // a .FIELD-style TUPLE! or ... WORD!
             goto handle_delimit_interstitial;
 
@@ -1269,10 +1266,13 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                     Is_Lex_Whitespace(cp[1])
                     or cp[1] == ']'
                     or cp[1] == ')'
-                    or cp[1] == ':'
-                    or (cp[1] != which and Is_Dot_Or_Slash(cp[1]))
+                    or (cp[1] != which and Is_Interstitial(cp[1]))
                 ){
                     ss->end = cp + 1;
+                    if (which == ':' and cp[1] == '/')
+                        break;  // load `://` with / being the word
+                    if (which == '/' and cp[1] == '.')
+                        break;  // load `/.a` with / acting as path
                     return LOCATED(TOKEN_WORD);  // like . or .. or ...
                 }
                 ++cp;
@@ -1281,7 +1281,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             ss->end = ss->begin + 1;
             switch (which) {
               case '.': return LOCATED(TOKEN_TUPLE);
-              /*case ':': return LOCATED(TOKEN_CHAIN);*/
+              case ':': return LOCATED(TOKEN_CHAIN);
               case '/': return LOCATED(TOKEN_PATH);
               default:
                 assert(false);
@@ -1312,9 +1312,6 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             assert(*cp == '~');
             ss->end = cp + 1;
             return LOCATED(TOKEN_TILDE);
-
-          case LEX_DELIMIT_UTF8_ERROR:
-            return Error_Syntax(ss, TOKEN_WORD);
 
           default:
             panic ("Invalid LEX_DELIMIT class");
@@ -1387,7 +1384,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 ss->end = cp;
                 return LOCATED(token);
             }
-            while (*cp == '~' or *cp == '/' or *cp == '.') {  // "delimiters"
+            while (*cp == '~' or Is_Interstitial(*cp)) {  // #: and #/ legal
                 cp++;
 
                 while (Is_Lex_Not_Delimit(*cp))
@@ -1396,16 +1393,6 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
             ss->end = cp;
             return LOCATED(token);
-
-          case LEX_SPECIAL_COLON:  // :word :12 (time)
-            assert(false);  // !!! Time form not supported ATM (use 0:12)
-
-            if (Is_Lex_Number(cp[1])) {
-                token = TOKEN_TIME;
-                goto prescan_subsume_up_to_one_dot;
-            }
-
-            panic (": dead end");
 
           case LEX_SPECIAL_APOSTROPHE:
             while (*cp == '\'')  // get sequential apostrophes as one token
@@ -1441,21 +1428,15 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 token = TOKEN_MONEY;
                 goto prescan_subsume_up_to_one_dot;
             }
-            if (Has_Lex_Flag(flags, LEX_SPECIAL_COLON)) {
-                cp = maybe Skip_To_Byte(cp, ss->end, ':');
-                if (cp and (cp + 1) != ss->end) {  // 12:34
+            cp++;
+            if (Is_Lex_Number(*cp)) {
+                if (*ss->end == ':') {  // thinks it was "delimited" by colon
+                    cp = ss->end;
                     token = TOKEN_TIME;
                     goto prescan_subsume_up_to_one_dot;  // -596523:14:07.9999
                 }
-                cp = ss->begin;
-                if (cp[1] == ':') {  // +: -:
-                    token = TOKEN_WORD;
-                    goto prescan_word;
-                }
+                goto num;  // -123
             }
-            cp++;
-            if (Is_Lex_Number(*cp))
-                goto num;
             if (Is_Lex_Special(*cp)) {
                 if ((Get_Lex_Special(*cp)) == LEX_SPECIAL_WORD)
                     goto next_lex_special;
@@ -1557,30 +1538,45 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             token = TOKEN_MONEY;
             goto prescan_subsume_up_to_one_dot;
 
+          case LEX_SPECIAL_UTF8_ERROR:
+            return Error_Syntax(ss, TOKEN_WORD);
+
           default:
             return Error_Syntax(ss, TOKEN_WORD);
         }
 
       case LEX_CLASS_WORD:
-        if (Only_Lex_Flag(flags, LEX_SPECIAL_WORD))
+        if (
+            Only_Lex_Flag(flags, LEX_SPECIAL_WORD)
+            and *ss->end != ':'  // need additional scan for URL if word://
+        ){
             return LOCATED(TOKEN_WORD);
+        }
         token = TOKEN_WORD;
         goto prescan_word;
 
       case LEX_CLASS_NUMBER:  // Note: "order of tests is important"
       num:;
-        if (flags == 0)
-            return LOCATED(TOKEN_INTEGER);  // simple integer e.g. `123`
-
-        if (*(ss->end - 1) == ':') {  // terminal only valid if `a/1:`
-            --ss->end;
-            return LOCATED(TOKEN_INTEGER);
-        }
-
         if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
             token = TOKEN_EMAIL;
             goto prescan_subsume_all_dots;  // `123@example.com`
         }
+
+        if (*ss->end == ':') {  // special interpretation for 10:00 etc
+            if (not Is_Lex_Number(ss->end[1]))  // but not special for `a.1:`
+                return LOCATED(TOKEN_INTEGER);
+            token = TOKEN_TIME;
+            goto prescan_subsume_up_to_one_dot;
+        }
+
+        if (*ss->end == '.') {  // special interpretation for 1.2 etc
+            if (not Is_Lex_Number(ss->end[1]))  // but not special for `1.a`
+                return LOCATED(TOKEN_INTEGER);
+            return LOCATED(TOKEN_INTEGER);  // !!! see TOKEN_INTEGER hack!
+        }
+
+        if (flags == 0)
+            return LOCATED(TOKEN_INTEGER);  // simple integer e.g. `123`
 
         if (Has_Lex_Flag(flags, LEX_SPECIAL_POUND)) {
             if (cp == ss->begin) {  // no +2 +16 +64 allowed
@@ -1606,11 +1602,6 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 }
             }
             return Error_Syntax(ss, TOKEN_INTEGER);
-        }
-
-        if (Has_Lex_Flag(flags, LEX_SPECIAL_COLON)) {
-            token = TOKEN_TIME;  // `12:34`
-            goto prescan_subsume_up_to_one_dot;
         }
 
         if (Has_Lex_Flag(flags, LEX_SPECIAL_POUND)) { // -#123 2#1010
@@ -1665,28 +1656,21 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
   prescan_word:  // `token` should be set, compiler warnings catch if not
 
-    if (Has_Lex_Flag(flags, LEX_SPECIAL_COLON)) { // word:  url:words
+   if (*ss->end == ':') {  // word:  url:words
         if (token != TOKEN_WORD)  // only valid with WORD (not set or lit)
             return LOCATED(token);
-        cp = unwrap Skip_To_Byte(cp, ss->end, ':');
-        assert(*cp == ':');
-        if (not Is_Dot_Or_Slash(cp[1]) and Lex_Of(cp[1]) < LEX_SPECIAL) {
-            // a valid delimited word SET?
-            if (Has_Lex_Flags(
-                flags,
-                ~LEX_FLAG(LEX_SPECIAL_COLON) & LEX_WORD_FLAGS
-            )){
-                return Error_Syntax(ss, TOKEN_WORD);
-            }
-            --ss->end;  // don't actually include the colon
+        cp = ss->end + 1;
+        if (*cp != '/')
             return LOCATED(TOKEN_WORD);
-        }
-        cp = ss->end;  // then, must be a URL
-        while (Is_Dot_Or_Slash(*cp)) {  // deal with path delimiter
-            cp++;
+        ++cp;  // saw `:/`
+        if (*cp != '/')
+            return LOCATED(TOKEN_WORD);
+        // saw `://`, okay treat as URL, look for its end
+        do {
+            ++cp;
             while (Is_Lex_Not_Delimit(*cp) or not Is_Lex_Delimit_Hard(*cp))
-                ++cp;
-        }
+                ++cp;  // not delimiter, e.g. `http://example.com]` stops it
+        } while (Is_Interstitial(*cp));  // slash, dots, and colons legal
         ss->end = cp;
         return LOCATED(TOKEN_URL);
     }
@@ -1709,23 +1693,36 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
     return LOCATED(token);
 
-  prescan_subsume_up_to_one_dot:
+  prescan_subsume_up_to_one_dot: {
     assert(token == TOKEN_MONEY or token == TOKEN_TIME);
 
     // By default, `.` is a delimiter class which stops token scaning.  So if
     // scanning +$10.20 or -$10.20 or $3.04, there is common code to look
     // past the delimiter hit.  The same applies to times.  (DECIMAL! has
     // its own code)
+    //
+    // !!! This is all hacked together at this point, CHAIN! threw in more
+    // curveballs as a delimiter class.  It is now believed that backtick
+    // literals are the right answer, e.g. `10:20` can be a time while 10:20
+    // can be a CHAIN!.
 
-    if (*ss->end != '.' and *ss->end != ',')
+    bool dot_subsumed = false;
+    if (*ss->end == '.')
+        dot_subsumed = true;
+    else if (*ss->end != ':' and *ss->end != ',')
         return LOCATED(token);
 
     cp = ss->end + 1;
-    while (not Is_Lex_Delimit(*cp) and not Is_Lex_Whitespace(*cp))
+    while (
+        *cp == ':'
+        or (not dot_subsumed and *cp == '.' and (dot_subsumed = true))
+        or (not Is_Lex_Delimit(*cp) and not Is_Lex_Whitespace(*cp))
+    ){
         ++cp;
+    }
     ss->end = cp;
 
-    return LOCATED(token);
+    return LOCATED(token); }
 
   prescan_subsume_all_dots:
     assert(token == TOKEN_EMAIL);
@@ -1870,7 +1867,7 @@ Bounce Scanner_Executor(Level* const L) {
             return RAISE(Error_Missing(level, level->mode));
 
         goto done;
-      }
+    }
 
     assert(ss->begin and ss->end and ss->begin < ss->end);  // else good token
 
@@ -1891,11 +1888,14 @@ Bounce Scanner_Executor(Level* const L) {
         break;
 
       case TOKEN_COMMA:
-        if (level->mode == '/' or level->mode == '.') {
+        if (Is_Interstitial(level->mode)) {
             //
             // We only see a comma during a PATH! or TUPLE! scan in cases where
-            // a blank is needed.  So we'll get here with [/a/, xxx] but won't
-            // get here with [/a, xxx]
+            // a blank is needed.  So we'll get here with [/a/ , xxx] but won't
+            // get here with [/a , xxx].
+            //
+            // Note that `[/a/, xxx]` will bypass the recursion, so we also
+            // only get here if there's space before the comma.
             //
             Init_Blank(PUSH());
             ss->end = ss->begin = ep = bp;  // let parent see `,`
@@ -1936,57 +1936,6 @@ Bounce Scanner_Executor(Level* const L) {
             break;
         }
         goto token_prefixable_sigil;
-
-      case TOKEN_COLON:
-        assert(*bp == ':');
-        assert(ep == bp + 1);
-
-        // !!! If we are scanning a PATH! and see `:`, then classically that
-        // could mean a GET-WORD! as they were allowed in paths.  Now the
-        // only legal case of seeing a colon would be to end a PATH!, as
-        // with `a/: 10`.  We temporarily discern the cases.
-        //
-        if (level->mode == '/' or level->mode == '.') {
-            if (Is_Lex_Whitespace(*ep) or *ep == ']' or *ep == ')') {
-                Init_Blank(PUSH());  // `a.:` or `b/:` need a blank
-                ss->end = ss->begin = ep = bp;  // let parent see `:`
-                goto done;
-            }
-
-          #if !defined(NO_GET_WORDS_IN_PATHS)  // R3-Alpha compatibility hack
-            //
-            // !!! This is about the least invasive way to shove a GET-WORD!
-            // into a PATH!, as trying to use ordinary token processing
-            // only sets a pending get state which applies to the whole path,
-            // not to individual tokens.
-            //
-            ++bp;
-            ++ep;
-            while (not (
-                Is_Lex_Whitespace(*ep)
-                or Is_Lex_Delimit(*ep)
-                or *ep == ':'  // The dreaded `foo/:x: 10` syntax
-            )){
-                ++ep;
-            }
-            Init_Get_Word(PUSH(), Intern_UTF8_Managed(bp, ep - bp));
-            ss->begin = ss->end = ep;
-            break;
-          #else
-            return RAISE(Error_Syntax(ss, token));
-          #endif
-        }
-
-        if (Is_Lex_Whitespace(*ep) or *ep == ']' or *ep == ')') {
-            Init_Word(PUSH(), Canon(COLON_1));  // :
-            ss->begin = ss->end = ep;
-            break;
-        }
-        if (level->sigil_pending)
-            return RAISE(Error_Syntax(ss, token));  // no "GET-GET-WORD!"
-
-        level->sigil_pending = SIGIL_GET_P;  // !!! dead! need new approach
-        goto loop;
 
       token_prefixable_sigil:
         if (level->sigil_pending)
@@ -2101,13 +2050,17 @@ Bounce Scanner_Executor(Level* const L) {
 
       case TOKEN_TUPLE:
         assert(*bp == '.');
-        goto out_of_turn_slash_or_dot;
+        goto out_of_turn_interstitial;
+
+      case TOKEN_CHAIN:
+        assert(*bp == ':');
+        goto out_of_turn_interstitial;
 
       case TOKEN_PATH:
         assert(*bp == '/');
-        goto out_of_turn_slash_or_dot;
+        goto out_of_turn_interstitial;
 
-      out_of_turn_slash_or_dot: {
+      out_of_turn_interstitial: {
         //
         // A "normal" path or tuple like `a/b/c` or `a.b.c` always has a token
         // on the left of the interstitial.  So the dot or slash gets picked
@@ -2119,7 +2072,7 @@ Bounce Scanner_Executor(Level* const L) {
         // Easiest thing to do here is to push an item and then let whatever
         // processing would happen run (either start a new path or tuple, or
         // continuing one in progress).  So just do that push and "unconsume"
-        // the '/' so the lookahead sees it.
+        // the delimiter so the lookahead sees it.
 
         assert(ep == bp + 1 and ss->begin == ep and ss->end == ep);
 
@@ -2129,14 +2082,14 @@ Bounce Scanner_Executor(Level* const L) {
         }
         else
             Init_Blank(PUSH());
-        ep = ss->begin = ss->end = bp;  // "unconsume" `.` or `/` token
+        ep = ss->begin = ss->end = bp;  // "unconsume" .` or `/` or `:` token
         break; }
 
       case TOKEN_BLOCK_END: {
         if (level->mode == ']')
             goto done;
 
-        if (Is_Dot_Or_Slash(level->mode)) {  // implicit end, e.g. [just /]
+        if (Is_Interstitial(level->mode)) {  // implicit end, e.g. [just /]
             Init_Blank(PUSH());
             --ss->begin;
             --ss->end;
@@ -2154,7 +2107,7 @@ Bounce Scanner_Executor(Level* const L) {
         if (level->mode == ')')
             goto done;
 
-        if (Is_Dot_Or_Slash(level->mode)) {  // implicit end e.g. (the /)
+        if (Is_Interstitial(level->mode)) {  // implicit end e.g. (the /)
             Init_Blank(PUSH());
             --ss->begin;
             --ss->end;
@@ -2218,7 +2171,7 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_DECIMAL:
       case TOKEN_PERCENT:
       scan_decimal:
-        if (Is_Dot_Or_Slash(*ep))
+        if (Is_Interstitial(*ep))
             return RAISE(Error_Syntax(ss, token));  // No `1.2/abc`
 
         if (ep != Try_Scan_Decimal_To_Stack(bp, len, false))
@@ -2231,7 +2184,7 @@ Bounce Scanner_Executor(Level* const L) {
         break;
 
       case TOKEN_MONEY:
-        if (Is_Dot_Or_Slash(*ep)) {  // Do not allow $1/$2
+        if (Is_Interstitial(*ep)) {  // Do not allow $1/$2
             ++ep;
             return RAISE(Error_Syntax(ss, token));
         }
@@ -2257,7 +2210,7 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_DATE:
         while (*ep == '/' and level->mode != '/') {  // Is date/time?
             ep++;
-            while (*ep == '.' or Is_Lex_Not_Delimit(*ep))
+            while (*ep == '.' or *ep == ':' or Is_Lex_Not_Delimit(*ep))
                 ++ep;
             len = ep - bp;
             if (len > 50) {
@@ -2354,28 +2307,62 @@ Bounce Scanner_Executor(Level* const L) {
 
 } lookahead_for_sequencing_token: {  /////////////////////////////////////////
 
+  // Quasiforms are currently legal in PATH!/CHAIN!/TUPLE!.  There's not a
+  // particularly great reason as to why...it's just that `~/foo/bar.txt` is
+  // a very useful path form (more useful than quasipaths and antituples).
+  // Given that we know tildes in paths don't mean the path itself is a
+  // quasiform, we are able to unambiguously interpret `~abc~.~def~` or
+  // similar.  It may be useful, so enabling it for now.
+
+    if (level->quasi_pending) {
+        if (*ep != '~')
+            return RAISE(Error_Syntax(ss, TOKEN_TILDE));
+
+        Option(Error*) error = Trap_Coerce_To_Quasiform(TOP);
+        if (error) {
+            /* Free_Unmanaged_Flex(error); */  // !!! but it's managed :-(
+            return RAISE(Error_Syntax(ss, TOKEN_TILDE));  // !!! better error!
+        }
+
+        ++ss->begin;  // loop does ss->begin = ss->end, we must compensate
+        ++ep;  // sequence checking below looks at this, too
+        ss->end = ep;  // it seems this has to be in sync as well?
+        level->quasi_pending = false;
+    }
+
     // At this point the item at TOP is the last token pushed.  It has
     // not had any `sigil_pending` or `quotes_pending` applied...so when
     // processing something like `:foo/bar` on the first step we'd only see
     // `foo` pushed.  This is the point where we look for the `/` or `.`
     // to either start or continue a tuple or path.
 
-    if (Is_Dot_Or_Slash(level->mode)) {  // adding to existing path or tuple
+    if (Is_Interstitial(level->mode)) {  // adding to existing path/chain/tuple
         //
         // If we are scanning `a/b` and see `.c`, then we want the tuple
         // to stick to the `b`...which means using the `b` as the head
         // of a new child scan.
         //
-        if (level->mode == '/' and *ep == '.') {
-            ++ss->begin;
-            goto scan_tuple_head_is_TOP;
+        if (level->mode == '/') {
+            if (*ep == '.' or *ep == ':') {
+                ++ss->begin;
+                goto scan_sequence_ep_is_delimiter_top_is_head;
+            }
+        }
+        else if (level->mode == ':') {
+            if (*ep == '.') {
+                ++ss->begin;
+                goto scan_sequence_ep_is_delimiter_top_is_head;
+            }
         }
 
         // If we are scanning `a.b` and see `/c`, we want to defer to the
         // path scanning and consider the tuple finished.  This means we
         // want the level above to finish but then see the `/`.  Review.
 
-        if (level->mode == '.' and *ep == '/')
+        if (level->mode == '.' and (*ep == '/' or *ep == ':'))
+            goto done;  // !!! need to return, but...?
+
+        if (level->mode == ':' and (*ep == '/'))
             goto done;  // !!! need to return, but...?
 
         if (not Interstitial_Match(*ep, level->mode))
@@ -2398,83 +2385,39 @@ Bounce Scanner_Executor(Level* const L) {
         //
         goto loop;
     }
-    else if (Is_Dot_Or_Slash(*ep)) {  // starting a new path or tuple
+    else if (Is_Interstitial(*ep)) {  // starting a new path/chain/tuple
         //
-        // We're noticing a path was actually starting with the token
+        // We're noticing a sequence was actually starting with the element
         // that just got pushed, so it should be a part of that path.
 
         ++ss->begin;
 
-        if (*ep == '.')
-            goto scan_tuple_head_is_TOP;
-
-        goto scan_path_head_is_TOP;
+        goto scan_sequence_ep_is_delimiter_top_is_head;
     }
 
-} apply_pending_sigils_and_quotes: {  ////////////////////////////////////////
+  //=//// APPLY PENDING SIGILS AND QUOTES /////////////////////////////////=//
 
     // If we get here without jumping somewhere else, we have pushed a
-    // *complete* element (vs. just a component of a path).  While we know that
-    // no whitespace has been consumed, this is a good time to tell that a
-    // colon means "SET" and not "GET".  We also apply any pending sigils
-    // or quote levels that were noticed at the beginning of a token scan,
-    // but had to wait for the completed token to be used.
+    // *complete* element (vs. just a component of a path).  We apply any
+    // pending sigils or quote levels that were noticed at the beginning of a
+    // token scan, but had to wait for the completed token to be used.
     //
-    // 1. Set the newline on the new value, indicating molding should put a
+    // 2. Set the newline on the new value, indicating molding should put a
     //    line break *before* this value (needs to be done after recursion to
     //    process paths or other arrays...because the newline belongs on the
     //    whole array...not the first element of it).
 
-    if (ss->begin and *ss->begin == ':') {  // no whitespace, interpret as SET
-        if (level->sigil_pending)
-            return RAISE(Error_Syntax(ss, TOKEN_COLON));
-
-        Heart heart = Cell_Heart_Ensure_Noquote(TOP);
-        if (not Any_Plain_Value_Kind(heart))
-            return RAISE(Error_Syntax(ss, TOKEN_BLANK));  // !!! token?
-
-        Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(  // setify
-            cast(Element*, TOP), REB_CHAIN, CELL_MASK_0
-        );
-        if (error)
-            return RAISE(unwrap error);
-
-        ss->begin = ++ss->end;  // !!! ?
-    }
-    else if (level->sigil_pending) {
+    if (level->sigil_pending) {
         Heart heart = Cell_Heart_Ensure_Noquote(TOP);
         if (not Any_Plain_Kind(heart))
             return RAISE(Error_Syntax(ss, TOKEN_BLANK));  // !!! token?
 
-        if (level->sigil_pending == SIGIL_GET_P) {  // needs "getify"
-            Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
-               cast(Element*, TOP), REB_CHAIN, CELL_FLAG_REFINEMENT_LIKE
-            );
-            if (error)
-                return RAISE(unwrap error);
-        }
-        else {
-            HEART_BYTE(TOP) = Sigilize_Any_Plain_Kind(
-                unwrap level->sigil_pending,
-                heart
-            );
-        }
+        HEART_BYTE(TOP) = Sigilize_Any_Plain_Kind(
+            unwrap level->sigil_pending,
+            heart
+        );
 
         level->sigil_pending = SIGIL_0;
-    }
-
-    if (level->quasi_pending) {
-        if (*ss->begin != '~')
-            return RAISE(Error_Syntax(ss, TOKEN_TILDE));
-
-        Option(Error*) error = Trap_Coerce_To_Quasiform(TOP);
-        if (error) {
-            /* Free_Unmanaged_Flex(error); */  // !!! but it's managed :-(
-            return RAISE(Error_Syntax(ss, TOKEN_TILDE));  // !!! better error!
-        }
-
-        ++ss->begin;
-        level->quasi_pending = false;
     }
 
     if (level->quotes_pending != 0) {  // make QUOTED? to account for '''
@@ -2523,40 +2466,46 @@ Bounce Scanner_Executor(Level* const L) {
     Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
     Set_Flex_Flag(a, LINK_NODE_NEEDS_MARK);
 
-    if (
-        *ss->end == ':'  // `...(foo):` or `...[bar]:`
-        and not Is_Dot_Or_Slash(level->mode)  // leave `:` for SET-PATH!
-    ){
-        Setify(Init_Any_List(PUSH(), heart, a));
-        ++ss->begin;
-        ++ss->end;
-    }
-    else
-        Init_Any_List(PUSH(), heart, a);
+    Init_Any_List(PUSH(), heart, a);
 
     ep = ss->end;
     goto lookahead_for_sequencing_token;
 
-} scan_path_head_is_TOP: {  /////////////////////////////////////////////////
+} scan_sequence_ep_is_delimiter_top_is_head: { ///////////////////////////////
 
     Token token;
+    Heart heart;
+    Byte mode;
 
-    token = TOKEN_PATH;
-    goto scan_path_or_tuple_head_is_TOP;
+    switch (*ep) {
+      case '/':
+        token = TOKEN_PATH;
+        heart = REB_PATH;
+        mode = '/';
+        break;
 
-  scan_tuple_head_is_TOP:  //////////////////////////////////////////////////
+      case ':':
+        token = TOKEN_CHAIN;
+        heart = REB_CHAIN;
+        mode = ':';
+        break;
 
-    token = TOKEN_TUPLE;
-    goto scan_path_or_tuple_head_is_TOP;
+      case '.':
+        token = TOKEN_TUPLE;
+        heart = REB_TUPLE;
+        mode = '.';
+        break;
 
-  scan_path_or_tuple_head_is_TOP: { /////////////////////////////////////////
-
+      default:
+        panic (nullptr);
+    }
     StackIndex stackindex_path_head = TOP_INDEX;
 
     if (
         *ss->begin == '\0'  // `foo/`
         or Is_Lex_Whitespace(*ss->begin)  // `foo/ bar`
         or *ss->begin == ';'  // `foo/;bar`
+        or *ss->begin == ','  // `a:, b`
     ){
         // Don't bother scanning recursively if we don't have to.
         // Note we still might come up empty (e.g. `foo/)`)
@@ -2572,10 +2521,7 @@ Bounce Scanner_Executor(Level* const L) {
         child->ss = ss;
         child->start_line = level->start_line;
         child->start_line_head = level->start_line_head;
-        if (token == TOKEN_TUPLE)
-            child->mode = '.';
-        else
-            child->mode = '/';
+        child->mode = mode;
 
         Push_Level(OUT, sub);
 
@@ -2595,11 +2541,9 @@ Bounce Scanner_Executor(Level* const L) {
     // require lookahead, which would overlap with this lookahead logic.
     // So notice if a trailing `.` or `/` requires pushing a blank.
     //
-    if (ss->begin and (
-        (token == TOKEN_TUPLE and *ss->end == '.')
-        or (token == TOKEN_PATH and *ss->end == '/')
-    )){
+    if (ss->begin and *ss->end == mode) {
         Init_Blank(PUSH());
+        ++ss->end;
     }
 
     // Run through the generalized pop path code, which does any
@@ -2650,7 +2594,7 @@ Bounce Scanner_Executor(Level* const L) {
   blockscope {  // gotos would cross this initialization without
     Option(Error*) error = Trap_Pop_Sequence_Or_Conflation(
         temp,  // doesn't write directly to stack since popping stack
-        token == TOKEN_TUPLE ? REB_TUPLE : REB_PATH,
+        heart,
         stackindex_path_head - 1
     );
     if (error) {
@@ -2662,32 +2606,12 @@ Bounce Scanner_Executor(Level* const L) {
     assert(
         Is_Quasi_Word(temp)     // [~ ~] => ~.~ or ~/~
         or Is_Word(temp)        // [_ _] => . or /
+        or Is_Time(temp)        // [12 34] => 12:34
         or Any_Sequence(temp)
     );
 
   push_temp:
     Copy_Cell(PUSH(), temp);
-
-    // !!! Temporarily raise attention to usage like `.5` or `5.` to guide
-    // people that these are contentious with tuples.  There is no way
-    // to represent such tuples--while DECIMAL! has an alternative by
-    // including the zero.  This doesn't put any decision in stone, but
-    // reserves the right to make a decision at a later time.
-    //
-    if (Is_Tuple(TOP) and Cell_Sequence_Len(TOP) == 2) {
-        if (
-            Is_Integer(Copy_Sequence_At(temp, TOP, 0))
-            and Is_Blank(Copy_Sequence_At(temp, TOP, 1))
-        ){
-            return RAISE("`5.` currently reserved, please use 5.0");
-        }
-        if (
-            Is_Blank(Copy_Sequence_At(temp, TOP, 0))
-            and Is_Integer(Copy_Sequence_At(temp, TOP, 1))
-        ){
-            return RAISE("`.5` currently reserved, please use 0.5");
-        }
-    }
 
     // Can only store file and line information if it has an array
     //
@@ -2711,40 +2635,10 @@ Bounce Scanner_Executor(Level* const L) {
             Set_Array_Flag(a, NEWLINE_AT_TAIL);
     }
 
-    if (token == TOKEN_TUPLE) {
-        assert(level->mode != '.');  // shouldn't scan tuple-in-tuple!
+    ep = ss->end;
+    goto lookahead_for_sequencing_token;
 
-        if (level->mode == '/') {
-            //
-            // If we were scanning a PATH! and interrupted it to scan
-            // a tuple, then we did so at a moment that a `/` was
-            // being tested for.  Now that we're resuming, we need
-            // to pick that test back up and quit picking up tokens
-            // if we don't see a `/` after that tuple we just scanned.
-            //
-            if (*ss->begin != '/')
-                goto done;
-
-            ep = ss->end;
-            goto lookahead_for_sequencing_token;  // stay in path mode
-        }
-        else {
-            // If we just finished a TUPLE! that was being scanned
-            // all on its own (not as part of a path), then if a
-            // slash follows, we want to process that like a PATH! on
-            // the same level (otherwise we would start a new token,
-            // and "a.b/c" would be `a.b /c`).
-            //
-            if (ss->begin != nullptr and *ss->begin == '/') {
-                ++ss->begin;
-                goto scan_path_head_is_TOP;
-            }
-        }
-    }
-
-    goto apply_pending_sigils_and_quotes;
-
-}} construct_scan_to_stack_finished: {  ///////////////////////////////////////
+} construct_scan_to_stack_finished: {  ///////////////////////////////////////
 
     if (Is_Raised(OUT))
         goto handle_failure;
@@ -3205,8 +3099,9 @@ Option(const Byte*) Try_Scan_Issue_To_Stack(const Byte* cp, Size size)
         switch (Get_Lex_Class(*bp)) {
           case LEX_CLASS_DELIMIT:
             switch (Get_Lex_Delimit(*bp)) {
-              case LEX_DELIMIT_SLASH:  // internal slashes are legal
-              case LEX_DELIMIT_PERIOD:  // internal dots also legal
+              case LEX_DELIMIT_SLASH:  // `#/` is not a PATH!
+              case LEX_DELIMIT_COLON:  // `#:` is not a CHAIN!
+              case LEX_DELIMIT_PERIOD:  // `#.` is not a TUPLE!
                 break;
 
               default:

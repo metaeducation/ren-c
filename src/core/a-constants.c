@@ -105,8 +105,6 @@ const char * const Month_Names[12] = {
 //
 const char * const Token_Names[] = {
     "!token-0!",
-    "end-of-script",
-    "colon",
     "caret",
     "ampersand",
     "at",
@@ -133,6 +131,7 @@ const char * const Token_Names[] = {
     "binary",
     "pair",
     "tuple",
+    "chain",
     "file",
     "email",
     "url",
@@ -140,6 +139,7 @@ const char * const Token_Names[] = {
     "tag",
     "path",
     "construct",
+    "end-of-script",
     nullptr
 };
 

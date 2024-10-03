@@ -404,6 +404,7 @@ DECLARE_NATIVE(enhex)
                   case LEX_DELIMIT_LEFT_BRACKET:
                   case LEX_DELIMIT_RIGHT_BRACKET:
                   case LEX_DELIMIT_SLASH:
+                  case LEX_DELIMIT_COLON:
                   case LEX_DELIMIT_PERIOD:
                   case LEX_DELIMIT_COMMA:
                   case LEX_DELIMIT_TILDE:
@@ -418,7 +419,6 @@ DECLARE_NATIVE(enhex)
                   case LEX_DELIMIT_DOUBLE_QUOTE:
                     goto needs_encoding;
 
-                  case LEX_DELIMIT_UTF8_ERROR:  // not for c < 0x80
                   default:
                     panic ("Internal LEX_DELIMIT table error");
                 }
@@ -427,7 +427,6 @@ DECLARE_NATIVE(enhex)
               case LEX_CLASS_SPECIAL:
                 switch (Get_Lex_Special(encoded[0])) {
                   case LEX_SPECIAL_AT:
-                  case LEX_SPECIAL_COLON:
                   case LEX_SPECIAL_APOSTROPHE:
                   case LEX_SPECIAL_PLUS:
                   case LEX_SPECIAL_MINUS:
@@ -440,6 +439,10 @@ DECLARE_NATIVE(enhex)
                   case LEX_SPECIAL_WORD:
                     assert(false);  // only occurs in use w/Prescan_Token()
                     goto leave_as_is;
+
+                  case LEX_SPECIAL_UTF8_ERROR:  // not for c < 0x80
+                    assert(false);
+                    panic (nullptr);
 
                   default:
                     goto needs_encoding;

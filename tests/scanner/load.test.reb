@@ -6,9 +6,15 @@
 [#22 ; a
     ((quote the :a) = load-value "':a")
 ]
-[#22 ; b
-    (error? trap [load-value "':a:"])
-]
+[#22 (all [
+    let v: load-value "':a:"
+    quoted? v
+    v: match chain! unquote v
+    3 = length of v
+    _ = first v
+    'a = second v
+    _ = last v
+])]
 [#858 (
     a: [ < ]
     a = load-value mold a

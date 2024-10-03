@@ -181,7 +181,13 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
 // In order to make this not cost more than a "REFINEMENT!" word type did in
 // R3-Alpha, the underlying representation of `/foo` in the cell is the same
 // as an ANY-WORD?
-
+//
+// 1. !!! Temporarily raise attention to usage like `.5` or `5.` to guide
+//    people that these are contentious with tuples.  There is no other way
+//    to represent such tuples--while DECIMAL! has an alternative by
+//    including the zero.  This doesn't put any decision in stone, but
+//    reserves the right to make a decision at a later time.
+//
 INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
     Element* e,
     Heart heart,
@@ -209,6 +215,15 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
             e->header.bits |= flag;
             return nullptr;
         }
+    }
+
+    if (Is_Integer(e)) {
+        if (heart == REB_TUPLE) {
+            return Error_User(  // reserve notation for future use [1]
+                "5. and .5 currently reserved, please use 5.0 and 0.5"
+            );
+        }
+        // fallthrough (should be able to single cell optimize any INTEGER!)
     }
 
     Pairing* p = Alloc_Pairing(NODE_FLAG_MANAGED);

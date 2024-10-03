@@ -100,8 +100,6 @@
 )
 
 [
-    ('scan-invalid = pick trap [transcode "2022:"] 'id)
-    ('scan-invalid = pick trap [transcode ":2022"] 'id)
     ('scan-invalid = pick trap [transcode "^^2022"] 'id)  ; escaped
     ('scan-invalid = pick trap [transcode "@2022"] 'id)
 ]

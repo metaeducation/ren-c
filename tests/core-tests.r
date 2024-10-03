@@ -22,6 +22,7 @@
 %datatypes/bitset.test.reb
 %datatypes/blank.test.reb
 %datatypes/block.test.reb
+%datatypes/chain.test.reb
 %datatypes/char.test.reb
 %datatypes/datatype.test.reb
 %datatypes/date.test.reb
@@ -141,7 +142,7 @@
 
 %functions/adapt.test.reb
 %functions/augment.test.reb
-%functions/chain.test.reb
+%functions/cascade.test.reb
 %functions/does.test.reb
 %functions/enclose.test.reb
 %functions/enfix.test.reb

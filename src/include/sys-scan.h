@@ -38,7 +38,6 @@ enum SigilEnum {
     SIGIL_VAR = 4,      // $
     SIGIL_QUOTE = 5,    // '
     SIGIL_QUASI = 6,    // ~~
-    SIGIL_GET_P = 7,    // <dead>
     SIGIL_MAX
 };
 typedef enum SigilEnum Sigil;
@@ -80,7 +79,7 @@ enum TokenEnum {
     TOKEN_BINARY,
     TOKEN_PAIR,
     TOKEN_TUPLE,  // only triggered in leading dot cases (. .. .foo .foo.bar)
-    TOKEN_COLON,
+    TOKEN_CHAIN,
     TOKEN_FILE,
     TOKEN_EMAIL,
     TOKEN_URL,
@@ -204,10 +203,9 @@ enum LexDelimitEnum {
     LEX_DELIMIT_RIGHT_BRACE,        // 7D }
     LEX_DELIMIT_DOUBLE_QUOTE,       // 22 "
     LEX_DELIMIT_SLASH,              // 2F / - date, path, file
+    LEX_DELIMIT_COLON,              // 3A : - chain (get, set), time
     LEX_DELIMIT_PERIOD,             // 2E . - decimal, tuple, file
     LEX_DELIMIT_TILDE,              // 7E ~ - used only by quasiforms
-
-    LEX_DELIMIT_UTF8_ERROR,
 
     LEX_DELIMIT_MAX
 };
@@ -255,7 +253,6 @@ enum LexSpecialEnum {               // The order is important!
     LEX_SPECIAL_AT,                 // 40 @ - email
     LEX_SPECIAL_PERCENT,            // 25 % - file name
     LEX_SPECIAL_BACKSLASH,          // 5C \ - not used at present
-    LEX_SPECIAL_COLON,              // 3A : - time, get, set
     LEX_SPECIAL_APOSTROPHE,         // 27 ' - quoted
     LEX_SPECIAL_LESSER,             // 3C < - compare or tag
     LEX_SPECIAL_GREATER,            // 3E > - compare or end tag
@@ -274,6 +271,8 @@ enum LexSpecialEnum {               // The order is important!
     // it is used to set a flag by Prescan_Token().
     //
     LEX_SPECIAL_WORD,
+
+    LEX_SPECIAL_UTF8_ERROR,  // !!! This wasn't actually used e.g. by UTFE
 
     LEX_SPECIAL_MAX
 };
@@ -306,7 +305,6 @@ typedef enum LexSpecialEnum LexSpecial;
                         LEX_FLAG(LEX_SPECIAL_BACKSLASH) |       \
                         LEX_FLAG(LEX_SPECIAL_POUND) |           \
                         LEX_FLAG(LEX_SPECIAL_DOLLAR) |          \
-                        LEX_FLAG(LEX_SPECIAL_COLON) |           \
                         LEX_FLAG(LEX_SPECIAL_SEMICOLON))
 
 
