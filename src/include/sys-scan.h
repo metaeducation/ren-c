@@ -39,7 +39,7 @@ enum TokenEnum {
     TOKEN_WORD,
     TOKEN_SET, // order matters (see KIND_OF_WORD_FROM_TOKEN)
     TOKEN_GET, // ^-- same
-    TOKEN_LIT, // ^-- same
+    TOKEN_APOSTROPHE,
     TOKEN_BLANK, // not needed
     TOKEN_LOGIC, // not needed
     TOKEN_INTEGER,
@@ -252,6 +252,9 @@ typedef struct rebol_scan_state {
     // value to be scanned will receive the flag.
     //
     bool newline_pending;
+
+    // Number of quotes pending (this old system supports 1, on a few types)
+    REBLEN quotes_pending;
 
     REBFLGS opts;
 

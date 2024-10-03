@@ -1309,45 +1309,10 @@ acquisition_loop:
             goto scanword;
 
         case LEX_SPECIAL_APOSTROPHE:
-            if (Is_Lex_Number(cp[1]))  // no '2nd
-                return (Error_Syntax(ss, TOKEN_LIT));
-            if (cp[1] == ':')  // no ':X
-                return (Error_Syntax(ss, TOKEN_LIT));
-            if (cp[1] == '.') {
-                while (cp[1] == '.')
-                    ++cp;
-
-                if (
-                    Is_Lex_Whitespace(cp[1])
-                    or cp[1] == ']'
-                    or cp[1] == ')'
-                ){
-                    ss->end = cp + 1;
-                    return LOCATED(TOKEN_LIT);  // not perfect, allows ..a etc.
-                }
-                return (Error_Syntax(ss, TOKEN_LIT));
-            }
-            if (Only_Lex_Flag(flags, LEX_SPECIAL_WORD))
-                return LOCATED(TOKEN_LIT);  // common case
-            if (not Is_Lex_Word(cp[1])) {
-                // Various special cases of < << <> >> > >= <=
-                if ((cp[1] == '-' or cp[1] == '+') and Is_Lex_Number(cp[2]))
-                    return (Error_Syntax(ss, TOKEN_WORD));
-                if (cp[1] == '<' or cp[1] == '>') {
-                    cp++;
-                    if (cp[1] == '<' or cp[1] == '>' or cp[1] == '=')
-                        ++cp;
-                    if (not Is_Lex_Delimit(cp[1]))
-                        return (Error_Syntax(ss, TOKEN_LIT));
-                    ss->end = cp + 1;
-                    return LOCATED(TOKEN_LIT);
-                }
-            }
-            if (cp[1] == '\'')
-                return (Error_Syntax(ss, TOKEN_WORD));
-
-            token = TOKEN_LIT;
-            goto scanword;
+            while (*cp == '\'')  // get sequential apostrophes as one token
+                ++cp;
+            ss->end = cp;
+            return LOCATED(TOKEN_APOSTROPHE);
 
         case LEX_SPECIAL_GREATER:
             if (Is_Lex_Delimit(cp[1]))
@@ -1359,7 +1324,7 @@ acquisition_loop:
             }
             // falls through
         case LEX_SPECIAL_LESSER:
-            if (Is_Lex_Whitespace(cp[1]) or cp[1] == ']' or cp[1] == 0)
+            if (Is_Lex_Whitespace(cp[1]) or cp[1] == ']' or cp[1] == ')' or cp[1] == 0)
                 return LOCATED(TOKEN_WORD);  // changed for </tag>
             if (
                 (cp[0] == '<' and cp[1] == '<') or cp[1] == '=' or cp[1] == '>'
@@ -1486,14 +1451,6 @@ acquisition_loop:
             return (Error_Syntax(ss, TOKEN_INTEGER));
 
         case LEX_SPECIAL_DOLLAR:
-            if (cp[1] == '.') {
-                ++cp;
-                ++ss->begin;
-                token = TOKEN_LIT;
-                goto prescan_subsume_up_to_one_dot;
-            }
-            if (cp[1] == '/')
-                return (Error_Syntax(ss, TOKEN_LIT));
             if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
                 token = TOKEN_EMAIL;
                 goto prescan_subsume_all_dots;
@@ -1693,7 +1650,6 @@ scanword:
     assert(
         token == TOKEN_MONEY
         or token == TOKEN_TIME
-        or token == TOKEN_LIT
     );
 
     // By default, `.` is a delimiter class which stops token scaning.  So if
@@ -1774,6 +1730,7 @@ void Init_Va_Scan_State_Core(
     ss->file = file;
 
     ss->newline_pending = false;
+    ss->quotes_pending = 0;
 
     ss->opts = 0;
 
@@ -1811,6 +1768,7 @@ void Init_Scan_State(
     ss->start_line = ss->line = line;
 
     ss->newline_pending = false;
+    ss->quotes_pending = 0;
 
     if (file)
         assert(Is_Flex_Ucs2(unwrap(file)));
@@ -1890,6 +1848,10 @@ static REBINT Scan_Head(SCAN_STATE *ss)
 
 static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char);
 
+
+#define RAISE(error) error  // define for compatibility
+
+
 //
 //  Scan_To_Stack: C
 //
@@ -1908,7 +1870,9 @@ static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char);
 // (It only has a return value because it may be called by rebRescue(), and
 // that's the convention it uses.)
 //
-Value* Scan_To_Stack(SCAN_STATE *ss) {
+Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
+    SCAN_STATE* level = ss;  // alias for compatibility with newer scanner
+
     DECLARE_MOLD (mo);
 
     if (C_STACK_OVERFLOWING(&mo))
@@ -1963,31 +1927,39 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         ++bp;
         break;
 
-      case TOKEN_LIT:
-        //
-        // !!! Special-case hack added for '/ ... a better answer would
-        // be needed here to properly handle comments/tabs/etc.  Hacks for
-        // :/ and :/ are purposefully omitted, in the event that SET-PATH!
-        // and GET-PATH! are replaced by SET/GET variants of other types.
-        //
+      case TOKEN_APOSTROPHE: {
+        assert(*bp == '\'');  // should be `len` sequential apostrophes
+
+        /*if (level->sigil_pending)  // can't do @'foo: or :'foo
+            return RAISE(Error_Syntax(ss, token));*/
+
+        /*if (level->quasi_pending)  // can't do ~'foo~, no quoted quasiforms
+            return RAISE(Error_Syntax(ss, token));*/
+
         if (
-            len == 1 and bp[1] == '/' and ep == bp + 1
-            and (bp[2] == '\0' or bp[2] == ' ' or bp[2] == '\n')
+            Is_Lex_Whitespace(*ep)
+            or *ep == ']' or *ep == ')'
+            or *ep == ';'
         ){
-            ++ss->begin;
-            ++bp;
-            ++ep;
-            Init_Any_List(
-                PUSH(),
-                token == TOKEN_LIT ? REB_LIT_PATH : REB_GET_PATH,
-                Make_Array(0)
-            );
-            break;
+            /*assert(len > 0);
+            assert(level->quotes_pending == 0);
+
+            // A single ' is the SIGIL_QUOTE
+            // If you have something like '' then that is quoted quote SIGIL!
+            // The number of quote levels is len - 1
+            //
+            Init_Sigil(PUSH(), SIGIL_QUOTE);
+            Quotify(TOP, len - 1); */
+            fail ("Old EXE, Isolated quote SIGIL! ' not supported");
         }
-        goto token_get;
+        else {
+            if (len != 1)
+                fail ("Old EXE, multiple quoting (e.g. '''x) not supported");
+            level->quotes_pending = len;  // apply quoting to next token
+        }
+        goto loop; }
 
       case TOKEN_GET:
-      token_get:
         if (ep[-1] == ':') {
             if (len == 1)
                 fail (Error_Syntax(ss, token));
@@ -2427,11 +2399,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             assert(TOP_INDEX == check - 1);  // should only take one!
             #endif
 
-            if (token == TOKEN_LIT) {
-                RESET_VAL_HEADER(PUSH(), REB_LIT_PATH);
-                CHANGE_VAL_TYPE_BITS(Array_Head(arr), REB_WORD);
-            }
-            else if (Is_Get_Word(Array_Head(arr))) {
+            if (Is_Get_Word(Array_Head(arr))) {
                 if (ss->begin and *ss->end == ':')
                     fail (Error_Syntax(ss, token));
                 RESET_VAL_HEADER(PUSH(), REB_GET_PATH);
@@ -2468,6 +2436,21 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         Force_Value_Frozen_Deep(TOP, locker);
     }
 
+    if (level->quotes_pending) {
+        assert(level->quotes_pending == 1);
+        switch (KIND_BYTE(TOP)) {
+          case REB_WORD:
+            KIND_BYTE(TOP) = REB_LIT_WORD;
+            break;
+          case REB_PATH:
+            KIND_BYTE(TOP) = REB_LIT_PATH;
+            break;
+          default:
+            fail ("Old EXE, only REB_WORD/REB_PATH can be quoted...once!");
+        }
+        level->quotes_pending = 0;
+    }
+
     // Set the newline on the new value, indicating molding should put a
     // line break *before* this value (needs to be done after recursion to
     // process paths or other arrays...because the newline belongs on the
@@ -2488,6 +2471,8 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
 } done: {  ///////////////////////////////////////////////////////////////////
 
     Drop_Mold_If_Pushed(mo);
+
+    assert(level->quotes_pending == 0);
 
     // ss->newline_pending may be true; used for ARRAY_FLAG_NEWLINE_AT_TAIL
 
@@ -2513,6 +2498,7 @@ static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char)
     child.start_line = ss->line;
     child.start_line_head = ss->line_head;
     child.newline_pending = false;
+    child.quotes_pending = 0;
     child.opts &= ~(SCAN_FLAG_NULLEDS_LEGAL | SCAN_FLAG_NEXT);
 
     // The way that path scanning works is that after one item has been
@@ -2527,7 +2513,9 @@ static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char)
         base = TOP_INDEX;
 
     child.mode_char = mode_char;
-    Scan_To_Stack(&child);
+    Option(Error*) error = Scan_To_Stack(&child);
+    if (error)
+        fail (unwrap(error));
 
     Array* a = Pop_Stack_Values_Core(
         base,
@@ -2596,7 +2584,9 @@ Array* Scan_Va_Managed(
 
     SCAN_STATE ss;
     Init_Va_Scan_State_Core(&ss, filename, start_line, nullptr, &va);
-    Scan_To_Stack(&ss);
+    Option(Error*) error = Scan_To_Stack(&ss);
+    if (error)
+        fail (unwrap(error));
 
     // Because a variadic rebValue() can have rebEval() entries, when it
     // delegates to the scanner that may mean it sees those entries.  They
@@ -2646,7 +2636,9 @@ Array* Scan_UTF8_Managed(
     Init_Scan_State(&ss, filename, start_line, utf8, size);
 
     StackIndex base = TOP_INDEX;
-    Scan_To_Stack(&ss);
+    Option(Error*) error = Scan_To_Stack(&ss);
+    if (error)
+        fail (unwrap(error));
 
     Array* a = Pop_Stack_Values_Core(
         base,
