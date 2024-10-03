@@ -23,8 +23,8 @@ destructure: func [
     let result': ^void
     let combinators: copy default-combinators
     parse dialect [while [not <end>] [
-        let set-word: *in* set-word!, let rule: *in* block! (
-            combinators.(to word! set-word): compose [(set-word) (rule)]
+        let set-word: *in* &set-word?, let rule: *in* block! (
+            combinators.(unchain set-word): compose [(set-word) (rule)]
         )
         |
         let pattern: *in* block!, '=>, let branch: *in* block!

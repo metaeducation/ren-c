@@ -1,6 +1,6 @@
 (set-tuple? first [a.b:])
 (not set-tuple? 1)
-(set-tuple! = type of first [a.b:])
+(set-tuple? first [a.b:])
 ; the minimum
 [#1947
     (set-tuple? load-value "[a].1:")

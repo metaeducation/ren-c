@@ -935,9 +935,18 @@ void Swap_Flex_Content(Flex* a, Flex* b)
     else
         Clear_Flex_Flag(b, DYNAMIC);
 
-    Byte a_len = USED_BYTE(a);  // unused (for now) when FLEX_FLAG_DYNAMIC()
-    USED_BYTE(a) = USED_BYTE(b);
-    USED_BYTE(b) = a_len;
+    // !!! Sequences that have put mirror bytes into arrays intend that to
+    // encode a list type, and the sequence needs that to persist.  Review
+    // what to do if such arrays ever are seen to be used with this routine.
+    //
+    if (Stub_Flavor(a) == FLAVOR_ARRAY)
+        assert(MIRROR_BYTE(a) == REB_0);
+    if (Stub_Flavor(b) == FLAVOR_ARRAY)
+        assert(MIRROR_BYTE(b) == REB_0);
+
+    Byte a_second = SECOND_BYTE(&FLEX_INFO(a));  // may be USED_BYTE()
+    SECOND_BYTE(&FLEX_INFO(a)) = SECOND_BYTE(&FLEX_INFO(b));
+    SECOND_BYTE(&FLEX_INFO(b)) = a_second;
 
     union StubContentUnion a_content;
     Mem_Copy(&a_content, &a->content, sizeof(union StubContentUnion));

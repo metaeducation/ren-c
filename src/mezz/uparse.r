@@ -1182,10 +1182,12 @@ default-combinators: make map! reduce [
         <local> result'
     ][
         if set-group? target [
-            if not any-word? (target: eval as block! target) [
+            if not match [
+                any-word? set-word? get-word?
+            ] (target: eval target) [
                 fail [
                     "GROUP! from EMIT (...): must produce an ANY-WORD?, not"
-                    ^target
+                    @target
                 ]
             ]
 
@@ -1195,6 +1197,7 @@ default-combinators: make map! reduce [
             if binding of target [
                 fail ["EMIT can't use bound words for object keys:" target]
             ]
+            target: setify to-word target
         ] else [
             target: unbind target  ; `emit foo:` okay in function defining foo
         ]
@@ -1206,7 +1209,7 @@ default-combinators: make map! reduce [
         ; The value is quoted or quasi because of ^ on ^(parser input).
         ; This lets us emit antiforms, since the MAKE OBJECT! evaluates.
         ;
-        pending: glom pending reduce [to-set-word target result']
+        pending: glom pending reduce [target result']
         return unmeta result'
     ]
 
@@ -1219,30 +1222,21 @@ default-combinators: make map! reduce [
     ;
     ; !!! SET-PATH! is not supported, as paths will be used for functions only.
 
-    set-word! combinator [
+    '*: combinator [
         return: "The set value"
             [any-value?]
-        value [set-word?]
+        value [set-word? set-tuple? set-group?]
         parser "If assignment, failed parser means target will be unchanged"
             [action?]
-        <local> result'
+        <local> result' var
     ][
+        if group? var: inside value value.1 [  ; eval left hand group first
+            var: eval var
+        ]
+
         [^result' remainder]: parser input except e -> [return raise e]
 
-        return set value unmeta result'
-    ]
-
-    set-tuple! combinator [
-        return: "The set value"
-            [any-value?]
-        value [set-tuple!]
-        parser "Failed parser will means target SET-TUPLE! will be unchanged"
-            [action?]
-        <local> result'
-    ][
-        [^result' remainder]: parser input except e -> [return raise e]
-
-        return set value unmeta result'
+        return set var unmeta result'
     ]
 
     'set combinator [
@@ -1254,19 +1248,6 @@ default-combinators: make map! reduce [
             "come back it would be done differently:"
             https://forum.rebol.info/t/1139
         ]
-    ]
-
-    set-group! combinator [
-        return: "The set value"
-            [any-value?]
-        value [set-group!]
-        parser "Failed parser will means target will be unchanged"
-            [action?]
-        <local> result'
-    ][
-        let var: eval value
-        [^result' remainder]: parser input except e -> [return raise e]
-        return set var unmeta result'
     ]
 
     === TEXT! COMBINATOR ===
@@ -1441,7 +1422,7 @@ default-combinators: make map! reduce [
         [^result' remainder]: parser input except e -> [
             return raise e
         ]
-        state.env: add-let-binding state.env (to word! vars) unmeta result'
+        state.env: add-let-binding state.env (unchain vars) unmeta result'
 
         return unmeta result'
     ]
@@ -1565,15 +1546,15 @@ default-combinators: make map! reduce [
     ;    arity-0 combinators here.  But this should have better errors if the
     ;    datatype combinator takes arguments.
 
-    get-group! combinator [
+    ':* combinator [
         return: "Result of running combinator from fetching the WORD!"
             [any-value? pack?]
         /pending [blank! block!]   ; we retrigger combinator; it may KEEP, etc.
 
-        value [any-list?]  ; allow any array to use this "REPARSE-COMBINATOR"
+        value [get-group?]
         <local> r comb
     ][
-        r: meta eval/undecayed value except e -> [fail e]  ; can't raise [1]
+        r: meta eval/undecayed value.2 except e -> [fail e]  ; can't raise [1]
 
         if r = ^null [  ; like [:(1 = 0)]
             return raise "GET-GROUP! evaluated to NULL"  ; means no match [2]
@@ -1618,12 +1599,7 @@ default-combinators: make map! reduce [
     ; It's hard offhand to think of great uses for that, but that isn't to say
     ; that they don't exist.
 
-    get-block! combinator [
-        return: []
-        value [get-block!]
-    ][
-        fail "No current meaning for GET-BLOCK! combinator"
-    ]
+    ; !!! No current meaning, has to be part of ':* at this time
 
     === BITSET! COMBINATOR ===
 
@@ -2975,9 +2951,10 @@ comment [combinatorize: func [
 ;    semantics to look up variables via PATH!.)
 ;
 ; 6. If all else fails, dispatch is given to the datatype.  To reiterate,
-;    this kind of dispatch is not variadic--and hence no arguments are taken.
-;    (That's fine for BLOCK!, TAG!, TEXT! etc. in the general case, though
-;    this limitation may be overcome someday.)
+;    this kind of dispatch is not variadic.  For that reason, we are stuck
+;    on the case of things like dispatch to CHAIN!, because we want `word:`
+;    to take an argument while `:(code)` does not.  Hence this hacks up an
+;    answer of calling the types *: and :* depending.  Better answer needed.
 ;
 parsify: func [
     "Transform one step's worth of rules into a parser combinator action"
@@ -3073,7 +3050,19 @@ parsify: func [
         ; subvert keywords if SEEK were universally adopted.
     ]
 
-    if not comb: try state.combinators.(type of r) [  ; datatype dispatch [6]
+    if not comb: any [  ; datatype dispatch, special case sequences [6]
+        if any-sequence? r [any [
+            all [
+                blank? last r
+                comb: try state.combinators.(to type of r [* _])  ; hack!
+            ]
+            all [
+                blank? first r
+                comb: try state.combinators.(to type of r [_ *])  ; hack!
+            ]
+        ]]
+        try state.combinators.(type of r)
+    ] [
         fail ["Unhandled type in PARSIFY:" mold type of r "-" mold r]
     ]
 

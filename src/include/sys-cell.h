@@ -232,8 +232,8 @@ INLINE Kind VAL_TYPE_UNCHECKED(const Atom* v) {
         UNUSED(heart);
         return REB_ANTIFORM; }
 
-      case NOQUOTE_1:
-        return u_cast(Kind, HEART_BYTE(v));
+      case NOQUOTE_1: {
+        return u_cast(Kind, HEART_BYTE(v)); }
 
       case QUASIFORM_2_COERCE_ONLY:  // use this constant rarely!
         return REB_QUASIFORM;

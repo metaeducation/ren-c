@@ -236,11 +236,11 @@
 ; it is up in the air, so only %% is legal for now.
 [
     ("%%" = as text! match word! '%%)
-    ("%%" = as text! match [set-word?] '%%:)
-    ("%%" = as text! match [get-word?] ':%%)
+    ("%%" = as text! unchain match [set-word?] '%%:)
+    ("%%" = as text! unchain match [get-word?] ':%%)
     ("%%" = as text! match meta-word! '^%%)
     ("%%" = as text! match word! first [%%])
-    ("%%" = as text! match [set-word?] first [%%:])
-    ("%%" = as text! match [get-word?] first [:%%])
+    ("%%" = as text! unchain match [set-word?] first [%%:])
+    ("%%" = as text! unchain match [get-word?] first [:%%])
     ("%%" = as text! match meta-word! first [^%%])
 ]

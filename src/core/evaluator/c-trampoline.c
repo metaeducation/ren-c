@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2023 Ren-C Open Source Contributors
+// Copyright 2022-2024 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //
@@ -38,8 +38,6 @@
 //
 // 1. Trampoline stack levels are called "Levels" and not "Frames", in order
 //    to avoid confusion with the usermode FRAME! datatype's implementation.
-//    (This was a major renaming effort, so some comments might be out of
-//    sync and use the wrong term.)
 //
 // 2. The instigating call to the Trampoline cannot be unwound across, as it
 //    represents a "stackful" invocation of the evaluator.  Functions like

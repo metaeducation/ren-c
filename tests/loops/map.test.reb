@@ -60,7 +60,9 @@
 
     ; void opts out, as a twist on APPEND's rule disallowing it.
     ;
-    ([[1 <haha!>] [3 <haha!>]] = map 'x each [1 2 3] [if x <> 2 :[x <haha!>]])
+    ([[1 <haha!>] [3 <haha!>]] = map 'x each [1 2 3] [
+        if x <> 2 [:[x <haha!>]]
+    ])
 ]
 
 ; ^META blocks collect the meta variation of the evaluation, including voids

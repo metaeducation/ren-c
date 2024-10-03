@@ -255,7 +255,7 @@ export console!: make object! [
         if e.file = 'tmp-boot.r [
             e.file: e.line: null  ; errors in console showed this, junk
         ]
-        print [e]
+        print form e
     ]
 
     print-halted: meth [return: [~]] [
@@ -514,7 +514,7 @@ console*: func [
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
             [integer! tag! group! type-block! meta-group! handle!]
         <with> instruction prior
-        <local> return-to-c (runs :return)  ; capture HOST-CONSOLE's RETURN
+        <local> return-to-c (return/)  ; capture HOST-CONSOLE's RETURN
     ][
         switch state [
             <prompt> [
@@ -675,7 +675,7 @@ console*: func [
         if object? system.console [
             emit [system.console/print-error (<*> result)]
         ] else [
-            emit [print [(<*> result)]]
+            emit [print [(<*> form result)]]
         ]
         if find directives #die-if-error [
             return <die>

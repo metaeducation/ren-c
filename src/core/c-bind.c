@@ -45,10 +45,8 @@ void Bind_Values_Inner_Loop(
 ){
     Element* v = head;
     for (; v != tail; ++v) {
-        Heart heart = Cell_Heart(v);
-
-        if (Any_Word_Kind(heart)) {
-            const Symbol* symbol = Cell_Word_Symbol(v);
+        if (Any_Wordlike(v)) {
+          const Symbol* symbol = Cell_Word_Symbol(v);
 
           if (CTX_TYPE(context) == REB_MODULE) {
             bool strict = true;
@@ -61,7 +59,7 @@ void Bind_Values_Inner_Loop(
                 add_midstream_types == SYM_ANY
                 or (
                     add_midstream_types == SYM_SET
-                    and heart == REB_SET_WORD
+                    and Is_Like_Set_Word(v)
                 )
             ){
                 Init_Nothing(Append_Context_Bind_Word(context, v));
@@ -88,7 +86,7 @@ void Bind_Values_Inner_Loop(
                 add_midstream_types == SYM_ANY
                 or (
                     add_midstream_types == SYM_SET
-                    and heart == REB_SET_WORD
+                    and Is_Like_Set_Word(v)
                 )
             ){
                 //
@@ -425,7 +423,7 @@ Option(Stub*) Get_Word_Container(
 
         if (  // some USEs only affect SET-WORD!s
             Get_Cell_Flag(Stub_Cell(c), USE_NOTE_SET_WORDS)
-            and REB_SET_WORD != Cell_Heart(any_word)
+            and not Is_Like_Set_Word(any_word)
         ){
             goto next_context;
         }
@@ -480,13 +478,20 @@ Option(Stub*) Get_Word_Container(
 //
 //      return: "Expression result if SET form, else gives the new vars"
 //          [any-value?]
-//      'vars "Variable(s) to create, GROUP!s must evaluate to BLOCK! or WORD!"
-//          [word! block! set-word! set-block! group! set-group!]
+//      'vars "Variable(s) to create"  ; can't soft quote ATM [0]
+//          [word! block! group! set-word? set-block? set-group?]
 //      @expression "Optional Expression to assign"
 //          [<variadic> element?]
 //  ]
 //
 DECLARE_NATIVE(let)
+//
+// 0. There's a contention at the moment with `let (...): default [...]`, as
+//    we want the LET to win.  So this means we have to make left win in a
+//    prioritization battle with right, if they're both soft literal.  At
+//    the moment, left will defer if right is literal at all.  It needs some
+//    conscious tweaking when there is time for it...but the code was
+//    written to do the eval here in LET with a hard literal...works for now.
 //
 // 1. Though LET shows as a variadic function on its interface, it does not
 //    need to use the variadic argument...since it is a native (and hence
@@ -607,26 +612,20 @@ DECLARE_NATIVE(let)
         if (Eval_Any_List_At_Throws(SPARE, vars, SPECIFIED))
             return THROWN;
 
+        Decay_If_Unstable(SPARE);
+
         if (Is_Quoted(SPARE))  // should (let 'x: <whatever>) be legal? [3]
             fail ("QUOTED? escapes not supported at top level of LET");
 
-        switch (Cell_Heart(SPARE)) {  // quasi states mean antiforms ok
-          case REB_WORD:
-          case REB_BLOCK:
-            if (Is_Set_Group(vars))
-                Setify(stable_SPARE);  // convert `(word):` to be SET-WORD!
-            break;
-
-          case REB_SET_WORD:
-          case REB_SET_BLOCK:
-            if (Is_Set_Group(vars)) {
-                // Allow `(set-word):` to ignore "redundant colon" [2]
-            }
-            break;
-
-          default:
-            fail ("LET GROUP! limited to WORD! and BLOCK!");  // [4]
+        if (Is_Set_Word(stable_SPARE) or Is_Set_Block(stable_SPARE)) {
+            // Allow `(set-word):` to ignore redundant colon [2]
         }
+        else if (Is_Word(stable_SPARE) or Is_Block(stable_SPARE)) {
+            if (Is_Set_Group(vars))
+                Setify(cast(Element*, SPARE));  //  let ('word): -> let word:
+        }
+        else
+            fail ("LET GROUP! limited to WORD! and BLOCK!");  // [4]
 
         vars = stable_SPARE;
     }
@@ -642,12 +641,12 @@ DECLARE_NATIVE(let)
     if (bindings and Not_Node_Managed(bindings))
         Set_Node_Managed_Bit(bindings);  // natives don't always manage
 
-    if (Cell_Heart(vars) == REB_WORD or Cell_Heart(vars) == REB_SET_WORD) {
+    if (Cell_Heart(vars) == REB_WORD or Is_Like_Set_Word(vars)) {
         const Symbol* symbol = Cell_Word_Symbol(vars);
         bindings = Make_Let_Variable(symbol, bindings);
 
         Value* where;
-        if (Cell_Heart(vars) == REB_SET_WORD) {
+        if (Is_Like_Set_Word(vars)) {
             STATE = ST_LET_EVAL_STEP;
             where = stable_SPARE;
         }
@@ -699,14 +698,16 @@ DECLARE_NATIVE(let)
                 altered = true;
             }
 
-            switch (Cell_Heart(temp)) {  // permit quasi
+            if (Is_Set_Word(temp))
+                goto wordlike;
+            else switch (Cell_Heart(temp)) {  // permit quasi
               case REB_ISSUE:  // is multi-return opt-in for dialect, passthru
               case REB_BLANK:  // is multi-return opt-out for dialect, passthru
                 Derelativize(PUSH(), temp, temp_binding);
                 break;
 
+              wordlike:
               case REB_WORD:
-              case REB_SET_WORD:
               case REB_META_WORD:
               case REB_THE_WORD: {
                 Derelativize(PUSH(), temp, temp_binding);  // !!! no derel
@@ -730,11 +731,12 @@ DECLARE_NATIVE(let)
             where = stable_OUT;
 
         if (altered) {  // elements altered, can't reuse input block rebound
-            Init_Any_List(
+            assert(Is_Set_Block(vars));
+            Setify(Init_Any_List(
                 where,  // may be SPARE, and vars may point to it
-                Cell_Heart_Ensure_Noquote(vars),
+                REB_BLOCK,
                 Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED)
-            );
+            ));
         }
         else {
             Drop_Data_Stack_To(base);
@@ -765,7 +767,7 @@ DECLARE_NATIVE(let)
         goto update_feed_binding;
     }
 
-    assert(Is_Set_Word(SPARE) or Is_Set_Block(SPARE));
+    assert(Is_Set_Word(stable_SPARE) or Is_Set_Block(stable_SPARE));
 
     Flags flags =
         FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
@@ -909,6 +911,11 @@ DECLARE_NATIVE(add_use_object) {
 //    action at the positive index.  If it has zero and a binding, that
 //    means it CAN'T be found in the action's frame.
 //
+// 3. If we're cloning a sequence, we have to copy the mirror byte.  If it's
+//    a plain array that happens to have been aliased somewhere as a sequence,
+//    we don't know if it's going to be aliased as that same sequence type
+//    again...but is that worth testing if it's a sequence here?
+//
 void Clonify_And_Bind_Relative(
     Value* v,
     Flags flags,
@@ -953,6 +960,8 @@ void Clonify_And_Bind_Relative(
                 0,
                 NODE_FLAG_MANAGED
             );
+            /* if (Any_Sequence(v)) */  // copy regardless? [3]
+                Copy_Mirror_Byte(copy, Cell_Array(v));
 
             Tweak_Cell_Node1(v, copy);
 

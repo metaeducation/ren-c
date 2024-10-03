@@ -6,7 +6,7 @@
     words: ~
     strings: ~
     parse [x: $y z "a" <b> %c] [
-        words: accumulate &any-word?
+        words: accumulate [&any-word? | &set-word?]
         strings: accumulate &any-string?
     ]
     all [
@@ -33,7 +33,7 @@
     strings: ~
     parse [x: [$y z] "a" <b> %c] [
         words: accumulate [
-            &any-word?
+            &any-word? | &set-word?
             | b: subparse block! [some &any-word? <subinput>] (spread b)
         ]
         strings: accumulate &any-string?

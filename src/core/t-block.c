@@ -741,10 +741,6 @@ void MF_List(REB_MOLD *mo, const Cell* v, bool form)
         const char *sep;
 
         switch (heart) {
-          case REB_GET_BLOCK:
-            Append_Codepoint(mo->string, ':');
-            goto block;
-
           case REB_META_BLOCK:
             Append_Codepoint(mo->string, '^');
             goto block;
@@ -762,14 +758,9 @@ void MF_List(REB_MOLD *mo, const Cell* v, bool form)
             goto block;
 
           case REB_BLOCK:
-          case REB_SET_BLOCK:
           block:
             sep = "[]";
             break;
-
-          case REB_GET_GROUP:
-            Append_Codepoint(mo->string, ':');
-            goto group;
 
           case REB_META_GROUP:
             Append_Codepoint(mo->string, '^');
@@ -788,7 +779,6 @@ void MF_List(REB_MOLD *mo, const Cell* v, bool form)
             goto group;
 
           case REB_GROUP:
-          case REB_SET_GROUP:
           group:
             if (GET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)) {
                 CLEAR_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);  // only top level
@@ -803,9 +793,6 @@ void MF_List(REB_MOLD *mo, const Cell* v, bool form)
         }
 
         Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
-
-        if (heart == REB_SET_GROUP or heart == REB_SET_BLOCK)
-            Append_Codepoint(mo->string, ':');
     }
 }
 

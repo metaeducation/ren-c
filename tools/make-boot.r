@@ -887,7 +887,7 @@ for-each [sw-cat list] boot-errors [
 
         arity: 0
         if block? message [  ; can have N GET-WORD! substitution slots
-            parse3 message [opt some [get-word! (arity: arity + 1) | one]]
+            parse3 message [opt some [get-word?! (arity: arity + 1) | one]]
         ] else [
             ensure text! message  ; textual message, no arguments
         ]

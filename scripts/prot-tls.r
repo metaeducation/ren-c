@@ -172,7 +172,7 @@ cipher-suites: compose [
 
 === SUPPORT FUNCTIONS ===
 
-debug: (comment [runs :print] blank)
+debug: (comment [print/] blank)
 
 ; !!! There was a /SECURE refinement to RANDOM, which implemented the
 ; following after generating the REBI64 into a tmp variable:

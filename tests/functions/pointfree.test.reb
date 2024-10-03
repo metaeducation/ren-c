@@ -44,7 +44,7 @@
         for-each 'param (parameters of frame) [
             if tail? block [break]  ; no more args, leave rest unspecialized
 
-            match [word! lit-word? get-word!] param else [
+            match [word! lit-word? get-word?] param else [
                 continue  ; skip unused refinements [2]
             ]
 
@@ -59,7 +59,7 @@
 
                 all [
                     match [lit-word?] param
-                    match [group! get-word! get-tuple!] block.1
+                    match [group! get-word? get-tuple?] block.1
                 ][
                     frame.(param): reeval block.1
                     block: skip block 1  ; avoided NEXT when mezzanine

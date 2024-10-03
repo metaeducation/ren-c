@@ -417,16 +417,16 @@ curtail: reframer func [
 me: enfix redescribe [
     {Update variable using it as the left hand argument to an enfix operator}
 ](
-    macro [@left [set-word! set-tuple!] @right [word! tuple! path!]] [
-        :[left, plain left, right]
+    macro [@left [set-word? set-tuple?] @right [word! path!]] [
+        :[left, unchain left, right]
     ]
 )
 
 my: enfix redescribe [
     {Update variable using it as the first argument to a prefix operator}
 ](
-    macro [@left [set-word! set-tuple!] @right [word! tuple! path!]] [
-        :[left, right, plain left]
+    macro [@left [set-word? set-tuple?] @right [word! path!]] [
+        :[left, right, unchain left]
     ]
 )
 

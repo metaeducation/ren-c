@@ -258,7 +258,7 @@ main-startup: func [
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
             [integer! tag! group! type-block!]
         <with> instruction prior
-        <local> return-to-c (runs :return)  ; capture HOST-CONSOLE's RETURN
+        <local> return-to-c (return/)  ; capture HOST-CONSOLE's RETURN
     ][
         switch state [
             <die> [

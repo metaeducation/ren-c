@@ -665,11 +665,12 @@ export*: func [
             what: ^ eval what
             case [
                 ^void = what [word: null]
-                any-word? unmeta what [word: as word! unmeta what]
-                fail "EXPORT of SET-GROUP! must be VOID or ANY-WORD?"
+                word? unmeta what [word: unmeta what]
+                set-word? unmeta what [word: unchain unmeta what]
+                fail "EXPORT of SET-GROUP! must be VOID, WORD! or SET-WORD?"
             ]
         ] else [
-            word: as word! what
+            word: to word! what
         ]
         return (  ; can't append until after, if prev. definition used in expr
             (

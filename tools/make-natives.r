@@ -125,6 +125,12 @@ leaders: [
     quoted?
     set-word?
     get-word?
+    set-tuple?
+    get-tuple?
+    set-group?
+    get-group?
+    get-block?
+    set-block?
 ]
 leader-protos: make map! []
 

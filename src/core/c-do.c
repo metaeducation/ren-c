@@ -230,7 +230,10 @@ bool Pushed_Continuation(
         Push_Level(out, L);
         goto pushed_continuation; }  // trampoline handles LEVEL_FLAG_BRANCH
 
-      case REB_GET_BLOCK: {  // effectively REDUCE
+      case REB_CHAIN: {  // effectively REDUCE
+        if (not Is_Get_Block(branch))
+            fail ("GET-BLOCK! is only CHAIN branch currently working");
+
         Level* L = Make_End_Level(
             &Action_Executor,
             FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)

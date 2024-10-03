@@ -99,12 +99,6 @@ Bounce MAKE_Word(
         fail (Error_Bad_Make_Parent(heart, unwrap parent));
 
     if (Any_Word(arg)) {
-        //
-        // !!! This only reset the type, not header bits...as it used to be
-        // that header bits related to the binding state.  That's no longer
-        // true since EXTRA(Binding, ...) conveys the entire bind state.
-        // Rethink what it means to preserve the bits vs. not.
-        //
         Copy_Cell(OUT, arg);
         HEART_BYTE(OUT) = heart;
         return OUT;
@@ -158,15 +152,7 @@ Bounce TO_Word(Level* level_, Kind k, const Value* arg)
 {
     Heart heart = cast(Heart, k);
 
-    // This is here to convert `to word! /a` into `a`.  It also allows
-    // `to word! ////a////` and variants, because it seems interesting to try
-    // that vs. erroring for a bit, to see if it turns out to be useful.
-    //
-    // !!! This seems like something TO does more generally, e.g.
-    // `to integer! /"10"` making 10.  We might call these "solo paths" as
-    // a generalization of "refinement paths"
-    //
-    if (Is_Path(arg) or Is_Tuple(arg)) {
+    if (Any_Sequence(arg)) {  // (to word! '/a) or (to word! 'a:) etc.
         Freshen_Cell(OUT);
 
         DECLARE_ATOM (temp);
@@ -177,19 +163,14 @@ Bounce TO_Word(Level* level_, Kind k, const Value* arg)
             const Element* item = Copy_Sequence_At(temp, arg, i);
             if (Is_Blank(item))
                 continue;
-            if (not Is_Word(item))
+            if (not Is_Fresh(OUT) or not Is_Word(item))
                 return RAISE(
-                    "Can't make ANY-WORD? from path unless it's one WORD!"
-                );
-            if (not Is_Fresh(OUT))
-                return RAISE(
-                    "Can't make ANY-WORD? from path w/more than one WORD!"
+                    "Can't make ANY-WORD? from sequence unless it's one WORD!"
                 );
             Derelativize(OUT, item, Cell_Sequence_Binding(arg));
         }
 
-        if (Is_Fresh(OUT))
-            return RAISE("Can't MAKE ANY-WORD? from PATH! that's all BLANK!s");
+        assert(not Is_Fresh(OUT));
 
         HEART_BYTE(OUT) = heart;
         return OUT;
@@ -215,74 +196,13 @@ Bounce TO_Word(Level* level_, Kind k, const Value* arg)
 //
 void MF_Word(REB_MOLD *mo, const Cell* v, bool form) {
     UNUSED(form);
+
+    Option(Sigil) sigil = Sigil_Of_Kind(Cell_Heart(v));
+    if (sigil)
+        Append_Codepoint(mo->string, Symbol_For_Sigil(unwrap sigil));
+
     const Symbol* symbol = Cell_Word_Symbol(v);
     Append_Utf8(mo->string, String_UTF8(symbol), String_Size(symbol));
-}
-
-
-INLINE void Mold_Decorable_Word(REB_MOLD *mo, const Cell* v)
-{
-    const Symbol* symbol = Cell_Word_Symbol(v);
-    Append_Utf8(mo->string, String_UTF8(symbol), String_Size(symbol));
-}
-
-
-//
-//  MF_Set_Word: C
-//
-void MF_Set_Word(REB_MOLD *mo, const Cell* v, bool form) {
-    UNUSED(form);
-    Mold_Decorable_Word(mo, v);
-    Append_Codepoint(mo->string, ':');
-}
-
-
-//
-//  MF_Get_Word: C
-//
-void MF_Get_Word(REB_MOLD *mo, const Cell* v, bool form) {
-    UNUSED(form);
-    Append_Codepoint(mo->string, ':');
-    Mold_Decorable_Word(mo, v);
-}
-
-
-//
-//  MF_Meta_Word: C
-//
-void MF_Meta_Word(REB_MOLD *mo, const Cell* v, bool form) {
-    UNUSED(form);
-    Append_Codepoint(mo->string, '^');
-    Mold_Decorable_Word(mo, v);
-}
-
-
-//
-//  MF_The_Word: C
-//
-void MF_The_Word(REB_MOLD *mo, const Cell* v, bool form) {
-    UNUSED(form);
-    Append_Codepoint(mo->string, '@');
-    Mold_Decorable_Word(mo, v);
-}
-
-
-//
-//  MF_Var_Word: C
-//
-void MF_Var_Word(REB_MOLD *mo, const Cell* v, bool form) {
-    UNUSED(form);
-    Append_Codepoint(mo->string, '$');
-    Mold_Decorable_Word(mo, v);
-}
-
-//
-//  MF_Type_Word: C
-//
-void MF_Type_Word(REB_MOLD *mo, const Cell* v, bool form) {
-    UNUSED(form);
-    Append_Codepoint(mo->string, '&');
-    Mold_Decorable_Word(mo, v);
 }
 
 

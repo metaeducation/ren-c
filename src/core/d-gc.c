@@ -329,15 +329,11 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case REB_BLOCK:
       case REB_THE_BLOCK:
-      case REB_SET_BLOCK:
-      case REB_GET_BLOCK:
       case REB_META_BLOCK:
       case REB_TYPE_BLOCK:
       case REB_VAR_BLOCK:
       case REB_GROUP:
       case REB_THE_GROUP:
-      case REB_SET_GROUP:
-      case REB_GET_GROUP:
       case REB_META_GROUP:
       case REB_TYPE_GROUP:
       case REB_VAR_GROUP: {
@@ -352,11 +348,16 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case REB_TUPLE:
       case REB_THE_TUPLE:
-      case REB_SET_TUPLE:
-      case REB_GET_TUPLE:
       case REB_META_TUPLE:
       case REB_TYPE_TUPLE:
       case REB_VAR_TUPLE:
+        goto any_sequence;
+
+      case REB_CHAIN:
+      case REB_THE_CHAIN:
+      case REB_META_CHAIN:
+      case REB_TYPE_CHAIN:
+      case REB_VAR_CHAIN:
         goto any_sequence;
 
       case REB_PATH:
@@ -371,47 +372,11 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             break;  // should be just bytes
 
         const Node* node1 = Cell_Node1(v);
-
-        if (Is_Node_A_Cell(node1)) {
-            // it's a pairing
-        }
-        else switch (Stub_Flavor(x_cast(Stub*, node1))) {
-          case FLAVOR_SYMBOL :
-            break;
-
-          // With most arrays we may risk direct recursion, hence we have to
-          // use Queue_Mark_Array_Deep().  But paths are guaranteed to not have
-          // other paths directly in them.  Walk it here so that we can also
-          // check that there are no paths embedded.
-          //
-          // Note: This doesn't catch cases which don't wind up reachable from
-          // the root set, e.g. anything that would be GC'd.
-          //
-          // !!! Optimization abandoned
-          //
-          case FLAVOR_ARRAY : {
-            Assert_Node_Accessible(node1);
-            Array* a = x_cast(Array*, node1);
-
-            assert(Array_Len(a) >= 2);
-            const Element* tail = Array_Tail(a);
-            const Element* item = Array_Head(a);
-            for (; item != tail; ++item) {
-                assert(not Is_Quoted(item));
-                assert(not Any_Path_Kind(Cell_Heart(item)));
-            }
-            assert(Is_Node_Marked(a));
-            break; }
-
-          default:
-            panic (v);
-        }
+        assert(Is_Node_Marked(node1));
         break; }
 
       case REB_WORD:
       case REB_THE_WORD:
-      case REB_SET_WORD:
-      case REB_GET_WORD:
       case REB_META_WORD:
       case REB_TYPE_WORD:
       case REB_VAR_WORD: {

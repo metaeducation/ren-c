@@ -88,8 +88,8 @@
 )
 ~need-non-end~ !! (
     a-value: first [a.b:]
-    assert [set-tuple? :a-value]
-    (reeval :a-value)  ; no value to assign after it...
+    assert [chain? a-value]
+    (reeval a-value)  ; no value to assign after it...
 )
 (
     a-value: make tag! ""

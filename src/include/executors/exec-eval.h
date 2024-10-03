@@ -169,7 +169,15 @@ enum {
     // the mode of an evaluator level is, and makes the value on hand for
     // easy use in the "hot" level header location.
 
-    ST_STEPPER_LOOKING_AHEAD = 100,
+    ST_STEPPER_LOOKING_AHEAD = REB_MAX,
     ST_STEPPER_REEVALUATING,
-    ST_STEPPER_CALCULATING_INTRINSIC_ARG
+    ST_STEPPER_CALCULATING_INTRINSIC_ARG,
+
+    ST_STEPPER_GET_WORD,
+    ST_STEPPER_SET_WORD,
+    ST_STEPPER_GET_TUPLE,
+    ST_STEPPER_SET_TUPLE,
+    ST_STEPPER_SET_VOID,
+    ST_STEPPER_SET_BLOCK,
+    ST_STEPPER_SET_GROUP
 };

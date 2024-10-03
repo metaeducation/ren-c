@@ -67,7 +67,10 @@ void Dump_Level_Location(Level* L)
         PROBE(dump);
     }
 
-    if (Is_Feed_At_End(L->feed)) {
+    if (Get_Feed_Flag(L->feed, NEEDS_SYNC)) {
+        printf("...feed is at a non-synchronized point (is it scanning?)\n");
+    }
+    else if (Is_Feed_At_End(L->feed)) {
         printf("...then Dump_Level_Location() is at end of array\n");
         if (L->prior == BOTTOM_LEVEL)
             printf("...and no parent frame, so you're out of luck\n");

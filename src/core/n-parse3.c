@@ -458,15 +458,23 @@ bool Process_Group_For_Parse_Throws(
 
     assert(out != group);
 
-    assert(Is_Group(group) or Is_Get_Group(group));
     Context* derived = (group == P_SAVE)
         ? SPECIFIED
         : Derive_Binding(P_RULE_BINDING, group);
 
-  blockscope {
     Atom* atom_out = out;
-    if (Eval_Any_List_At_Throws(atom_out, group, derived))
-        return true;
+    if (Is_Group(group)) {
+        if (Eval_Any_List_At_Throws(atom_out, group, derived))
+            return true;
+    }
+    else {
+        assert(Is_Get_Group(group));
+        DECLARE_ELEMENT (inner);
+        Derelativize_Sequence_At(inner, group, derived, 1);
+        assert(Is_Group(inner));
+        if (Eval_Any_List_At_Throws(atom_out, inner, SPECIFIED))
+            return true;
+    }
 
     if (Is_Group(group)) {
         Erase_Cell(out);
@@ -483,7 +491,6 @@ bool Process_Group_For_Parse_Throws(
                 fail (Error_Bad_Antiform(atom_out));
         }
     }
-  }
 
     // !!! The input is not locked from modification by agents other than the
     // PARSE's own REMOVE/etc.  This is a sketchy idea, but as long as it's
@@ -1125,11 +1132,11 @@ static void Handle_Mark_Rule(
     Quotify(ARG(position), P_NUM_QUOTES);
 
     Kind k = VAL_TYPE(rule);
-    if (k == REB_WORD or k == REB_SET_WORD) {
+    if (k == REB_WORD or Is_Set_Word(rule)) {
         Copy_Cell(Sink_Word_May_Fail(rule, context), ARG(position));
     }
     else if (
-        k == REB_PATH or k == REB_TUPLE or k == REB_SET_TUPLE
+        k == REB_PATH or k == REB_TUPLE or Is_Set_Tuple(rule)
     ){
         // !!! Assume we might not be able to corrupt SPARE (rule may be
         // in SPARE?)
@@ -1159,7 +1166,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
     USE_PARAMS_OF_SUBPARSE;
 
     Kind k = VAL_TYPE(rule);
-    if (k == REB_WORD or k == REB_GET_WORD or k == REB_TUPLE) {
+    if (k == REB_WORD or k == REB_TUPLE) {
         Get_Var_May_Fail(SPARE, rule, context);
         if (Is_Antiform(SPARE))
             fail (Error_Bad_Antiform(SPARE));

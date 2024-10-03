@@ -177,7 +177,7 @@
             set-word type-name tester meta
     ][
         while [<end> != set-word: take set-words] [
-            type-name: parse as text! set-word [
+            type-name: parse as text! unchain set-word [
                 between "usermode-" "?"
             ]
             append type-name "!"

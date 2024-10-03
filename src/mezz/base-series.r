@@ -16,7 +16,7 @@ REBOL [
     }
 ]
 
-run lambda [':terms [tag! set-word? <variadic>]] [
+run lambda [@terms [tag! set-word? <variadic>]] [
     let n: 1
     let w
     while [<end> != w: take terms] [
@@ -124,8 +124,8 @@ join: func [
     ]
 
     if find/case reduce [
-        block! get-block! set-block! the-block! meta-block!
-        group! get-group! set-group! the-group! meta-group!
+        block! the-block! meta-block!
+        group! the-group! meta-group!
     ] type [
         return append (copy base) :value
     ]
@@ -135,7 +135,7 @@ join: func [
         sep: '/
     ] else [
         assert [find/case reduce [
-            tuple! get-tuple! set-tuple! the-tuple! meta-tuple! type-tuple!
+            tuple! the-tuple! meta-tuple! type-tuple!
         ] type]
         sep: '.
     ]

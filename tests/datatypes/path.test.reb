@@ -84,7 +84,7 @@
 )
 (
     a-value: first [a.b:]
-    'a == a-value.1
+    'a.b == a-value.1
 )
 (
     a-value: "12"

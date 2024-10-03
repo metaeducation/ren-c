@@ -836,11 +836,9 @@ Array* Context_To_Array(const Value* context, REBINT mode)
     while (Try_Advance_Evars(&e)) {
         if (mode & 1) {
             assert(e.index != 0);
-            Init_Any_Word(
-                PUSH(),
-                (mode & 2) ? REB_SET_WORD : REB_WORD,
-                Key_Symbol(e.key)
-            );
+            Init_Word(PUSH(), Key_Symbol(e.key));
+            if (mode & 2)
+                Setify(cast(Element*, TOP));
             if (Is_Module(context)) {
                 Tweak_Cell_Word_Index(TOP, INDEX_PATCHED);
                 BINDING(TOP) = MOD_PATCH(

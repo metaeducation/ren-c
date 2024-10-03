@@ -145,11 +145,11 @@
 ([a ''[b 3 c] d] == compose/deep [a ''[b (1 + 2) c] d])
 
 
-; Using a SET-GROUP! will *try* to convert the composed value to a set form
+; COMPOSE no longer tries to convert set-forms
 
 ([x:] = compose [('x):])
-([x:] = compose [('x:):])
-([x:] = compose [(':x):])
+~bad-sequence-item~ !! ([x:] = compose [('x:):])
+~bad-sequence-item~ !! ([x:] = compose [(':x):])
 
 ; Running code during SETIFY/GETIFY internally was dropped, because the
 ; scanner was using it...and it had PUSH()es extant.  The feature is still
@@ -157,23 +157,21 @@
 ; getify or setify things that aren't guaranteed to succeed (e.g. a string
 ; might have spaces in it, and can't be turned into a SET-WORD!)
 ;
-~???~ !! ([x:] = compose [(#x):])
-~???~ !! ([x:] = compose [("x"):])
+~bad-sequence-item~ !! ([x:] = compose [(#x):])
+((reduce [to chain! ["x" _]]) = compose [("x"):])
 
 ; Can't put colons "on top" of paths
-~???~ !! (compose [( 'x/y ):])
+~bad-sequence-item~ !!  (compose [( 'x/y ):])
 
 ([(x y):] = compose [( '(x y) ):])
-([(x y):] = compose [( '(x y): ):])
-([(x y):] = compose [( ':(x y) ):])
+~bad-sequence-item~ !! (compose [( '(x y): ):])
+~bad-sequence-item~ !! (compose [( ':(x y) ):])
 
 ([[x y]:] = compose [( '[x y] ):])
-([[x y]:] = compose [( '[x y]: ):])
-([[x y]:] = compose [( ':[x y] ):])
+~bad-sequence-item~ !! (compose [( '[x y]: ):])
+~bad-sequence-item~ !! (compose [( ':[x y] ):])
 
 
-; Using a GET-GROUP! will *try* to convert the composed value to a get form
-;
 ; Note: string conversions to unbound words were done at one point, but have
 ; been dropped, at least for the moment:
 ;
@@ -183,19 +181,19 @@
 ; They may be worth considering for the future.
 
 ([:x] = compose [:('x)])
-([:x] = compose [:('x:)])
-([:x] = compose [:(':x)])
+~bad-sequence-item~ !! (compose [:('x:)])
+~bad-sequence-item~ !! (compose [:(':x)])
 
 ; Can't put colons on top of paths
-~???~ !! (compose [:( 'x/y )])
+~bad-sequence-item~ !! (compose [:( 'x/y )])
 
 ([:(x y)] = compose [:( '(x y) )])
-([:(x y)] = compose [:( '(x y): )])
-([:(x y)] = compose [:( ':(x y) )])
+~bad-sequence-item~ !! (compose [:( '(x y): )])
+~bad-sequence-item~ !! (compose [:( ':(x y) )])
 
 ([:[x y]] = compose [:( '[x y] )])
-([:[x y]] = compose [:( '[x y]: )])
-([:[x y]] = compose [:( ':[x y] )])
+~bad-sequence-item~ !! (compose [:( '[x y]: )])
+~bad-sequence-item~ !! (compose [:( ':[x y] )])
 
 ; !!! This was an interesting concept, but now that REFINEMENT and PATH! are
 ; unified it can't be done with PATH!, as you might say `compose obj/block`

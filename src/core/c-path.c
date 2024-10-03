@@ -316,9 +316,10 @@ Bounce TO_Sequence(Level* level_, Kind k, const Value* arg) {
         Dequotify(stable_OUT);  // !!! should TO take Cell*?
         Plainify(cast(Element*, OUT));  // remove any decorations like @ or :
 
-        Option(Error*) error = Trap_Leading_Blank_Pathify(
+        Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
             cast(Element*, stable_OUT),
-            heart
+            heart,
+            CELL_FLAG_REFINEMENT_LIKE
         );
         if (error)
             return RAISE(unwrap error);

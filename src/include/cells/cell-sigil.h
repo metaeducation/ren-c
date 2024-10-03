@@ -27,7 +27,6 @@
 
 INLINE char Symbol_For_Sigil(Sigil sigil) {
     switch (sigil) {
-      case SIGIL_GET:   return ':';
       case SIGIL_META:  return '^';
       case SIGIL_TYPE:  return '&';
       case SIGIL_THE:   return '@';
@@ -40,9 +39,7 @@ INLINE char Symbol_For_Sigil(Sigil sigil) {
 }
 
 INLINE Element* Init_Sigil(Sink(Element*) out, Sigil sigil) {
-    if (sigil == SIGIL_SET)
-        Init_Issue_Utf8(out, cb_cast("::"), 2, 2);  // codepoints 2, size 2
-    else if (sigil == SIGIL_QUASI)
+    if (sigil == SIGIL_QUASI)
         Init_Issue_Utf8(out, cb_cast("~~"), 2, 2);  // codepoints 2, size 2
     else
         Init_Char_Unchecked(out, Symbol_For_Sigil(sigil));
@@ -64,10 +61,6 @@ INLINE Option(Sigil) Sigil_Of_Kind(Kind k) {
         return SIGIL_QUOTE;
     if (k == REB_QUASIFORM)
         return SIGIL_QUASI;
-    if (Any_Set_Kind(k))
-        return SIGIL_SET;
-    if (Any_Get_Kind(k))
-        return SIGIL_GET;
     if (Any_Meta_Kind(k))
         return SIGIL_META;
     if (Any_Type_Kind(k))

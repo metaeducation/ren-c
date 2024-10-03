@@ -308,8 +308,7 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
         assert(not Is_Lex_Whitespace(utf8[i]));  // spaces/newlines illegal
 
         assert(
-            utf8[i] != ':'
-            and utf8[i] != '$'
+            utf8[i] != '$'
             and utf8[i] != '@'
             and utf8[i] != '^'
             and utf8[i] != '&'
@@ -321,6 +320,11 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
             or utf8[i] == '>'
         ){
             Set_Subclass_Flag(SYMBOL, b, ILLEGAL_IN_ANY_SEQUENCE);
+            continue;
+        }
+
+        if (utf8[i] == ':') {
+            Set_Subclass_Flag(SYMBOL, b, ILLEGAL_IN_ANY_CHAIN);
             continue;
         }
 

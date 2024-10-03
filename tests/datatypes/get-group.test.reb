@@ -4,27 +4,34 @@
 ; idea of doing the same thing as (x) in the evaluator...freeing up shades
 ; of distinction in dialecting.
 
-(get-group! = type of first [:(a b c)])
-(get-tuple! = type of first [:(a b c).d])
+(get-group? first [:(a b c)])
+(get-tuple? first [:(a b c).d])
 
-(
-    m: 1020
-    word: 'm
-    :(word) = the m
-)
+(chain! = type of first [:(a b c)])
+(chain! = type of first [:(a b c).d])
 
-(
-    o: make object! [f: 304]
-    tuple: 'o.f
-    :(tuple) = the o.f
-)
+; !!! What was a GET-GROUP! is now a CHAIN!, and a meaning has not yet been
+; decided on--if there will be any--for the regular evaluator.
+[
+    (comment [
+        m: 1020
+        word: 'm
+        :(word) = the m
+    ] ok)
 
-(
-    m: 1020
-    o: make object! [f: 304]
-    block: [m o.f]
-    :(block) = [m o.f]
-)
+    (comment [
+        o: make object! [f: 304]
+        tuple: 'o.f
+        :(tuple) = the o.f
+    ] ok)
+
+    (comment [
+        m: 1020
+        o: make object! [f: 304]
+        block: [m o.f]
+        :(block) = [m o.f]
+    ] ok)
+]
 
 ; Groups can pass on raised errors that happens as their last slot.  Otherwise
 ; you need to use SYS.UTIL/RESCUE... it's not a definitional error.

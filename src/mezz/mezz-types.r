@@ -27,13 +27,17 @@ REBOL [
 to-integer: to-decimal: to-percent: to-money: to-pair:
 to-tuple: to-time: to-date: to-binary: to-file: to-email: to-url: to-tag:
 to-bitset: to-image: to-vector: to-block: to-group:
-to-path: to-set-tuple: to-get-tuple: to-map: to-datatype:
-to-word: to-set-word: to-get-word: to-issue:
+to-path: to-map: to-datatype:
+to-word: to-issue:
 to-function: to-object: to-module: to-error: to-port:
 to-event:
     ~
 
 ; Auto-build the functions for the above TO-* words.
+;
+; !!! Should there be TO-SET-WORD, TO-GET-TUPLE, etc.?  They are no longer
+; basic types.
+;
 use [word] [
     for-each 'type system.catalog.datatypes [
         word: make word! head of remove back tail of unspaced ["to-" type]

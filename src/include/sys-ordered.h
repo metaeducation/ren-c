@@ -37,8 +37,8 @@
 //   optimization in the future...see notes on the tokens regarding this.
 
 
-#define FLAGIT_KIND(t) \
-    (u_cast(uint_fast64_t, 1) << (t))  // makes a 64-bit bitflag
+#undef Is_Set_Word
+#undef Is_Get_Word
 
 
 //=//// EXTRA NEEDING GC MARK /////////////////////////////////////////////=//
@@ -96,30 +96,30 @@ INLINE bool Bindable_Heart_Is_Any_List(Heart heart) {
 
 INLINE Heart Sigilize_Any_Plain_Kind(Sigil sigil, Byte k) {
     assert(Any_Plain_Kind(k));
+    assert(sigil != SIGIL_0 and sigil < SIGIL_QUOTE);
     return cast(Heart, k + u_cast(Byte, sigil));
-}
-
-INLINE Heart Plainify_Any_Set_Kind(Byte k) {
-    assert(Any_Set_Kind(k));
-    return cast(Heart, k - 1);
-}
-
-INLINE Heart Plainify_Any_Get_Kind(Byte k) {
-    assert(Any_Get_Kind(k));
-    return cast(Heart, k - 2);
 }
 
 INLINE Heart Plainify_Any_Meta_Kind(Byte k) {
     assert(Any_Meta_Kind(k));
-    return cast(Heart, k - 3);
+    return cast(Heart, k - 1);
+}
+
+INLINE Heart Plainify_Any_Type_Kind(Byte k) {
+    assert(Any_Meta_Kind(k));
+    return cast(Heart, k - 2);
 }
 
 INLINE Heart Plainify_Any_The_Kind(Byte k) {
     assert(Any_The_Kind(k));
-    return cast(Heart, k - 5);
+    return cast(Heart, k - 3);
 }
 
 INLINE Heart Plainify_Any_Var_Kind(Byte k) {
     assert(Any_Var_Kind(k));
-    return cast(Heart, k - 6);
+    return cast(Heart, k - 4);
 }
+
+
+INLINE bool Any_Sequence_Or_List_Kind(Byte k)  // !!! optimize?
+  { return Any_Sequence_Kind(k) or Any_List_Kind(k); }

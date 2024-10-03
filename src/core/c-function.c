@@ -62,7 +62,7 @@ static bool Params_Of_Hook(
             break;
 
           case PARAMCLASS_SOFT:
-            Quotify(Getify(TOP), 1);
+            Quotify(Getify(cast(Element*, TOP)), 1);
             break;
 
           case PARAMCLASS_JUST:
@@ -276,27 +276,39 @@ void Push_Keys_And_Parameters_May_Fail(
             //
             fail ("TUPLE! behavior in func spec not defined at present");
         }
+        else if (heart == REB_CHAIN) {
+            bool leading_blank;
+            Option(Heart) h = Try_Get_Sequence_Singleheart(
+                &leading_blank, item
+            );
+            if (h) {  // xxx: or :xxx, where xxx is BLOCK!/WORD!/TUPLE!/etc.
+                if (not leading_blank) {
+                    if (
+                        h == REB_WORD and not quoted
+                        and Cell_Word_Id(item) == SYM_RETURN
+                    ){
+                        symbol = Cell_Word_Symbol(item);
+                        pclass = PARAMCLASS_RETURN;
+                    }
+                }
+                else {
+                    if (h == REB_WORD and quoted) {  // ':x -> will be changed
+                        pclass = PARAMCLASS_SOFT;
+                        symbol = Cell_Word_Symbol(item);
+                    }
+                }
+            }
+        }
         else if (Any_Word_Kind(heart)) {
             symbol = Cell_Word_Symbol(item);
 
-            if (heart == REB_SET_WORD) {
-                if (Cell_Word_Id(item) == SYM_RETURN and not quoted) {
-                    pclass = PARAMCLASS_RETURN;
-                }
-            }
-            else if (heart == REB_THE_WORD) {  // output
+            if (heart == REB_THE_WORD) {  // output
                 if (quoted)
                     fail ("Can't quote THE-WORD! parameters");
                 pclass = PARAMCLASS_THE;
             }
             else {
-                if (heart == REB_GET_WORD) {
-                    if (quoted)
-                        pclass = PARAMCLASS_SOFT;
-                    else
-                        fail ("PARAMCLASS_MEDIUM not needed any longer");
-                }
-                else if (heart == REB_WORD) {
+                if (heart == REB_WORD) {
                     if (quoted)
                         pclass = PARAMCLASS_JUST;
                     else

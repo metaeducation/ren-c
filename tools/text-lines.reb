@@ -91,7 +91,7 @@ for-each-line: func [
     body "Block to evaluate each time"
         [block!]
 ][
-    obj: make object! compose [(to-set-word var) ~]  ; make variable
+    obj: make object! compose [(setify var) ~]  ; make variable
     body: overbind obj body  ; make variable visible to body
     var: has obj var
 

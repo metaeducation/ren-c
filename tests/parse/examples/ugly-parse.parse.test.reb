@@ -11,10 +11,46 @@
 
 [(
     ugly-combinators: copy default-combinators
-    ugly-combinators.(group!): default-combinators.(get-group!)
-    ugly-combinators.(get-group!): void
 
-    ugly-parse: specialize parse/ [combinators: ugly-combinators]
+    ugly-combinators.(group!): combinator [
+        return: [any-value? pack?]
+        /pending [blank! block!]   ; we retrigger combinator; it may KEEP, etc.
+
+        value [group?]
+        <local> r comb
+    ][
+        r: meta eval/undecayed value except e -> [fail e]  ; can't raise
+
+        if r = ^null [  ; like [:(1 = 0)]
+            return raise "GET-GROUP! evaluated to NULL"  ; means no match
+        ]
+
+        pending: _
+        remainder: input
+
+        any [
+            r = ^okay  ; like [:(1 = 1)]
+            r = '~[]~  ; like [:(comment "hi")]
+        ] then [
+            return ~[]~  ; invisible
+        ]
+
+        if r = ^void [  ; like [:(if 1 = 0 [...])]
+            return void  ; couldn't produce void at all if vaporized
+        ]
+
+        r: unmeta r  ; only needed as ^META to check for NIHIL
+
+        if word? r [
+            r: :[r]  ; enable 0-arity combinators
+        ]
+
+        if not comb: select state.combinators type of r [
+            fail ["Unhandled type in GROUP! combinator:" mold type of r]
+        ]
+
+        return [@ remainder pending]: run comb state input r
+    ]
 
     ; DISCARD is different from ELIDE when GROUP! acts like a GET-GROUP!,
     ; because we want to suppress the triggering of the generated rule
@@ -27,6 +63,9 @@
         remainder: input
         return ~[]~
     ]
+
+    ugly-parse: specialize parse/ [combinators: ugly-combinators]
+
     ok
 )
 

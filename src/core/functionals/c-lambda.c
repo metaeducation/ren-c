@@ -185,7 +185,7 @@ DECLARE_NATIVE(lambda)
                 fail (item);
             if (Cell_Heart(item) == REB_WORD)
                 pclass = PARAMCLASS_JUST;
-            else if (Cell_Heart(item) == REB_GET_WORD)
+            else if (Is_Like_Get_Word(item))
                 pclass = PARAMCLASS_SOFT;
             else
                 fail (item);

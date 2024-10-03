@@ -330,22 +330,24 @@ REBINT Compare_Cells_Ignore_Quotes(const Cell* s, const Value* t, bool strict)
         return CT_Date(s, t, strict);
 
       case REB_BLOCK:
-      case REB_SET_BLOCK:
-      case REB_GET_BLOCK:
       case REB_META_BLOCK:
       case REB_THE_BLOCK:
       case REB_TYPE_BLOCK:
       case REB_VAR_BLOCK:
         //
       case REB_GROUP:
-      case REB_SET_GROUP:
-      case REB_GET_GROUP:
       case REB_META_GROUP:
       case REB_THE_GROUP:
       case REB_TYPE_GROUP:
       case REB_VAR_GROUP:
         return CT_List(s, t, strict);
 
+      case REB_CHAIN:
+      case REB_META_CHAIN:
+      case REB_THE_CHAIN:
+      case REB_TYPE_CHAIN:
+      case REB_VAR_CHAIN:
+        //
       case REB_PATH:
       case REB_META_PATH:
       case REB_THE_PATH:
@@ -353,8 +355,6 @@ REBINT Compare_Cells_Ignore_Quotes(const Cell* s, const Value* t, bool strict)
       case REB_VAR_PATH:
         //
       case REB_TUPLE:
-      case REB_SET_TUPLE:
-      case REB_GET_TUPLE:
       case REB_META_TUPLE:
       case REB_THE_TUPLE:
       case REB_TYPE_TUPLE:
@@ -384,8 +384,6 @@ REBINT Compare_Cells_Ignore_Quotes(const Cell* s, const Value* t, bool strict)
         return CT_Binary(s, t, strict);
 
       case REB_WORD:
-      case REB_SET_WORD:
-      case REB_GET_WORD:
       case REB_META_WORD:
       case REB_THE_WORD:
       case REB_TYPE_WORD:

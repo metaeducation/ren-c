@@ -3,20 +3,18 @@
 ; Sigils cover symbols that aren't legal words, but are useful to have
 ; in the evaluator and dialects:
 ;
-;     SIGIL_SET = 1,      // trailing : (represented as `::` in isolation)
-;     SIGIL_GET = 2,      // leading : (represented as `:` in isolation)
-;     SIGIL_META = 3,     // ^
-;     SIGIL_TYPE = 4,     // &
-;     SIGIL_THE = 5,      // @
-;     SIGIL_VAR = 6,      // $
-;     SIGIL_QUOTE = 7     // '
-;     SIGIL_QUASI = 8     // ~~
+;     SIGIL_META = 1,     // ^
+;     SIGIL_TYPE = 2,     // &
+;     SIGIL_THE = 3,      // @
+;     SIGIL_VAR = 4,      // $
+;     SIGIL_QUOTE = 5     // '
+;     SIGIL_QUASI = 6     // ~~
 ;
 ; REVIEW: AS TEXT! behavior for SIGIL! ?
 ;
 
 (
-    for-each 'sigil [:: : ^ & @ $ ' ~~] [
+    for-each 'sigil [^ & @ $ ' ~~] [
         if not sigil? sigil [
             fail [mold sigil]
         ]
@@ -26,8 +24,6 @@
 
 ; try termination by delimiter (and molding)
 [
-    ("::" = mold first [::])
-    (":" = mold first [:])
     ("^^" = mold first [^])  ; caret is escape in Rebol strings
     ("&" = mold first [&])
     ("@" = mold first [@])
@@ -38,8 +34,6 @@
 
 ; try termination by whitespace (and forming)
 [
-    ("::" = form first [:: <something>])
-    (":" = form first [: <something>])
     ("^^" = form first [^ <something>])  ; caret is escape in Rebol strings
     ("&" = form first [& <something>])
     ("@" = form first [@ <something>])
@@ -50,8 +44,6 @@
 
 ; Try quoted forms (and molding)
 [
-    ("'::" = mold first ['::])
-    ("':" = mold first [':])
     ("'^^" = mold first ['^])  ; caret is escape in Rebol strings
     ("'&" = mold first ['&])
     ("'@" = mold first ['@])
@@ -62,8 +54,6 @@
 
 ; Try TO TEXT! and MATCH
 [
-    ("::" = to text! match sigil! '::)
-    (":" = to text! match sigil! ':)
     ("^^" = to text! match sigil! '^)  ; caret is escape in Rebol strings
     ("&" = to text! match sigil! '&)
     ("@" = to text! match sigil! '@)
@@ -76,8 +66,6 @@
 ; tildes with the sigil symbols is considered undesirable, so unless there
 ; is a really good reason sigils shouldn't have quasi/antiforms)
 [
-    ~scan-invalid~ !! (transcode "~::~")
-    ~scan-invalid~ !! (transcode "~:~")
     ~scan-invalid~ !! (transcode "~^^~")  ; caret is escape in Rebol strings
     ~scan-invalid~ !! (transcode "~&~")
     ~scan-invalid~ !! (transcode "~@~")
@@ -91,8 +79,6 @@
 (
     for-each [sigil items] [
         ~null~  [  word    tu.p.le    pa/th    [bl o ck]    (gr o up)  ]
-        ::      [  word:   tu.p.le:     _      [bl o ck]:   (gr o up): ]
-        :       [ :word   :tu.p.le      _     :[bl o ck]   :(gr o up)  ]
         ^       [ ^word   ^tu.p.le   ^pa/th   ^[bl o ck]   ^(gr o up)  ]
         &       [ &word   &tu.p.le   &pa/th   &[bl o ck]   &(gr o up)  ]
         @       [ @word   @tu.p.le   @pa/th   @[bl o ck]   @(gr o up)  ]
@@ -110,16 +96,6 @@
     ]
     ok
 )
-
-; : has no meaning in the evaluator yet
-[
-    ~???~ !! (: <no> <meaning>)
-]
-
-; :: has no meaning in the evaluator yet
-[
-    ~???~ !! (:: <no> <meaning>)
-]
 
 ; ^ is META
 [

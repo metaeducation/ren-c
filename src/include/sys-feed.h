@@ -742,6 +742,7 @@ INLINE Feed* Prep_At_Feed(
     Flags parent_flags  // only reads FEED_FLAG_CONST out of this
 ){
     STATIC_ASSERT(CELL_FLAG_CONST == FEED_FLAG_CONST);
+    assert(Any_List_Kind(Cell_Heart(list)));
 
     Flags flags;
     if (Get_Cell_Flag(list, EXPLICITLY_MUTABLE))

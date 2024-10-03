@@ -217,7 +217,7 @@ DECLARE_NATIVE(bind)
 //  "Returns a view of the input bound virtually to the context"
 //
 //      return: [~null~ any-value?]
-//      where [any-context? any-list?]
+//      where [any-context? any-list? any-sequence?]
 //      element [<maybe> element?]  ; QUOTED? support?
 //  ]
 //
@@ -231,9 +231,11 @@ DECLARE_NATIVE(inside)
     Context* context;
     if (Any_Context(where))
         context = Cell_Varlist(where);
-    else {
-        assert(Any_List(where));
+    else if (Any_List(where))
         context = BINDING(where);
+    else {
+        assert(Any_Sequence(where));
+        context = Cell_Sequence_Binding(where);
     }
 
     Derelativize(OUT, element, context);
@@ -398,8 +400,6 @@ bool Try_Get_Binding_Of(Sink(Value*) out, const Value* v)
 {
     switch (VAL_TYPE(v)) {
     case REB_WORD:
-    case REB_SET_WORD:
-    case REB_GET_WORD:
     case REB_META_WORD:
     case REB_THE_WORD: {
         if (IS_WORD_UNBOUND(v))
@@ -518,6 +518,142 @@ DECLARE_INTRINSIC(get_word_q)
 
 
 //
+//  set-tuple?: native/intrinsic [
+//
+//  "Test if an argument is a chain with a tuple and trailing blank"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_INTRINSIC(set_tuple_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_Set_Tuple(arg));
+}
+
+
+//
+//  get-tuple?: native/intrinsic [
+//
+//  "Test if an argument is a chain with a leading blank and a tuple"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_INTRINSIC(get_tuple_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_Get_Tuple(arg));
+}
+
+
+//
+//  set-group?: native/intrinsic [
+//
+//  "Test if an argument is a chain with a group and trailing blank"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_INTRINSIC(set_group_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_Set_Group(arg));
+}
+
+
+//
+//  get-group?: native/intrinsic [
+//
+//  "Test if an argument is a chain with a leading blank and a group"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_INTRINSIC(get_group_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_Get_Group(arg));
+}
+
+
+//
+//  set-block?: native/intrinsic [
+//
+//  "Test if an argument is a chain with a block and trailing blank"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_INTRINSIC(set_block_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_Set_Block(arg));
+}
+
+
+//
+//  get-block?: native/intrinsic [
+//
+//  "Test if an argument is a chain with a leading blank and a block"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_INTRINSIC(get_block_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_Get_Block(arg));
+}
+
+
+//
+//  any-set-value?: native/intrinsic [
+//
+//  "Test if an argument is a 2-element chain with a trailing blank"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_INTRINSIC(any_set_value_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Any_Set_Value(arg));
+}
+
+
+//
+//  any-get-value?: native/intrinsic [
+//
+//  "Test if an argument is a 2-element chain with a leading blank"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_INTRINSIC(any_get_value_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Any_Get_Value(arg));
+}
+
+
+//
 //  quasi-word?: native/intrinsic [
 //
 //  "Test if an argument is an QUASI form of word"
@@ -613,8 +749,8 @@ DECLARE_INTRINSIC(any_inert_q)
 //
 //  "Unbinds words from context"
 //
-//      return: [block! any-word?]
-//      word [block! any-word?]
+//      return: [block! any-word? set-word?]
+//      word [block! any-word? set-word?]
 //          "A word or block (modified) (returned)"
 //      /deep
 //          "Process nested blocks"
@@ -626,7 +762,7 @@ DECLARE_NATIVE(unbind)
 
     Value* word = ARG(word);
 
-    if (Any_Word(word))
+    if (Any_Word(word) or Is_Set_Word(word))
         Unbind_Any_Word(word);
     else {
         assert(Is_Block(word));
@@ -1076,7 +1212,7 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
     assert(steps_out != out);  // Legal for SET, not for GET
 
     if (Any_Word(var)) {
-        Option(Error*) error = Trap_Get_Any_Word_Maybe_Vacant(
+        Option(Error*) error = Trap_Get_Any_Wordlike_Maybe_Vacant(
             out, var, context
         );
         if (error)
@@ -1385,7 +1521,9 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
 //  "Produce an invariant list structure for doing multiple GET or SET from"
 //
 //      return: [~[[the-word! the-tuple! the-block!] any-value?]~]
-//      source [any-word? any-sequence? any-group?]
+//      source [any-word? any-sequence? any-group?
+//          set-word? set-tuple? set-group?
+//          get-word? get-tuple? get-group?]
 //  ]
 //
 DECLARE_NATIVE(resolve)
@@ -1400,6 +1538,8 @@ DECLARE_NATIVE(resolve)
     INCLUDE_PARAMS_OF_RESOLVE;
 
     Element* source = cast(Element*, ARG(source));
+    if (Is_Chain(source))  // a: or a.b/ or .(a b) etc.
+        Unchain(source);
 
     Option(Error*) error = Trap_Get_Var(
         OUT, stable_SPARE, source, SPECIFIED
@@ -1424,7 +1564,8 @@ DECLARE_NATIVE(resolve)
 //
 //      return: [any-value?]
 //      source "Word or tuple to get, or block of PICK steps (see RESOLVE)"
-//          [<maybe> any-word? any-sequence? any-group? the-block!]
+//          [<maybe> any-word? any-sequence? any-group?
+//          any-get-value? any-set-value? the-block!]
 //      /any "Do not error on unset words"
 //      /groups "Allow GROUP! Evaluations"
 //  ]
@@ -1434,6 +1575,8 @@ DECLARE_NATIVE(get)
     INCLUDE_PARAMS_OF_GET;
 
     Element* source = cast(Element*, ARG(source));
+    if (Any_Chain(source))  // GET-WORD, SET-WORD, SET-GROUP, etc.
+        Unchain(source);
 
     Value* steps;
     if (REF(groups))
@@ -1492,17 +1635,8 @@ DECLARE_NATIVE(get)
 //
 // **Almost all parts of the system should go through this code for assignment,
 // even when they know they have just a WORD! in their hand and don't need path
-// dispatch.**  It handles other details like isotope decay.  Only a few places
-// bypass this code for reasons of optimization, but they must do so carefully.
-//
-// The evaluator cases for SET_TUPLE and SET_GROUP use this routine, while the
-// SET_WORD is (currently) its own optimized case.  When they run:
-//
-//    `out` is the level's spare
-//    `steps_out` is also level spare
-//    `target` is the currently processed value (v)
-//    `context` is where var is to be bound (if not bound already)
-//    `setval` is the value held in the output (L->out)
+// dispatch.**  Only a few places bypass this code for reasons of optimization,
+// but they must do so carefully.
 //
 // It is legal to have `target == out`.  It means the target may be overwritten
 // in the course of the assignment.
@@ -1794,7 +1928,8 @@ void Set_Var_May_Fail(
 //      return: "Same value as input (pass through if target is void)"
 //          [any-value?]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
-//          [~void~ any-word? any-sequence? any-group? the-block!]
+//          [~void~ any-word? any-sequence? any-group?
+//          any-get-value? any-set-value? the-block!]
 //      ^value [raised? any-value?]  ; tunnels failure
 //      /any "Do not error on unset words"
 //      /groups "Allow GROUP! Evaluations"
@@ -1830,6 +1965,8 @@ DECLARE_NATIVE(set)
         return COPY(setval);   // same behavior for SET as [10 = (void): 10]
 
     Element* target = cast(Element*, ARG(target));
+    if (Any_Chain(target))  // GET-WORD, SET-WORD, SET-GROUP, etc.
+        Unchain(target);
 
     Value* steps;
     if (REF(groups))
@@ -2338,10 +2475,29 @@ DECLARE_NATIVE(as)
                 Init_Block(v, a);
                 break; }
 
-              case FLAVOR_ARRAY:
-                assert(Is_Array_Frozen_Shallow(Cell_Array(v)));
-                HEART_BYTE(v) = REB_BLOCK;
-                break;
+              case FLAVOR_ARRAY: {
+                const Array* a = Cell_Array(v);
+                if (MIRROR_BYTE(a)) {  // .[a] or (xxx): compression
+                    Array* two = Make_Array(2);
+                    Set_Flex_Len(two, 2);
+                    Cell* tweak;
+                    if (Get_Cell_Flag(v, REFINEMENT_LIKE)) {
+                        Init_Blank(Array_At(two, 0));
+                        tweak = Copy_Cell(Array_At(two, 1), v);
+                    }
+                    else {
+                        tweak = Copy_Cell(Array_At(two, 0), v);
+                        Init_Blank(Array_At(two, 1));
+                    }
+                    HEART_BYTE(tweak) = unwrap MIRROR_BYTE(a);
+                    Clear_Cell_Flag(tweak, REFINEMENT_LIKE);
+                    Init_Block(v, two);
+                }
+                else {
+                    assert(Is_Array_Frozen_Shallow(a));
+                    HEART_BYTE(v) = REB_BLOCK;
+                }
+                break; }
 
               default:
                 assert(false);
@@ -2503,6 +2659,7 @@ DECLARE_NATIVE(as)
 
         if (not Any_Word(v))
             goto bad_cast;
+
         goto adjust_v_heart;
     }
     else switch (new_heart) {

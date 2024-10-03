@@ -239,37 +239,27 @@ pair        "two dimensional point or size"
     word        "evaluates a variable or action"
     ~keyword~   (CELL_FLAG_FIRST_IS_NODE)
                 [any-utf8? any-plain-value?]
-                [word        *       +]
-
-    set-word    "definition of a word's value"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-utf8? any-set-value?]
-                [word        *       +]
-
-    get-word    "the value of a word (variable)"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-utf8? any-get-value?]
-                [word        *       +]
+                [word        *       *]
 
     meta-word   "word that quotes product or turns quasiforms to antiforms"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-utf8? any-meta-value?]
-                [word        *       +]
+                [word        *       *]
 
     type-word   "inert form of word"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-utf8? any-type-value?]
-                [word        *       +]
+                [word        *       *]
 
     the-word    "inert form of word"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-utf8? any-the-value?]
-                [word        *       +]
+                [word        *       *]
 
     var-word    "word that evaluates to the bound version of the word"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-utf8? any-var-value?]
-                [word        *       +]
+                [word        *       *]
 
 </ANY-WORD?>
 
@@ -281,16 +271,6 @@ pair        "two dimensional point or size"
     tuple       "member selection with inert bias"
                 ()
                 [any-scalar? any-plain-value?]
-                [sequence    *       *]
-
-    set-tuple   "definition of a tuple's value"
-                ()
-                [any-set-value?]
-                [sequence    *       *]
-
-    get-tuple   "the value of a tuple"
-                ()
-                [any-get-value?]
                 [sequence    *       *]
 
     meta-tuple  "tuple that quotes product or turns quasiforms to antiforms"
@@ -315,21 +295,40 @@ pair        "two dimensional point or size"
 
   </ANY-TUPLE?>
 
+  <ANY-CHAIN?>  ; (order matters, see Sigilize_Any_Plain_Kind())
+
+    chain       "refinement and function call dialect"
+                ()
+                [any-scalar? any-plain-value?]
+                [sequence    *       *]
+
+    meta-chain  "chain that quotes product or turns quasiforms to antiforms"
+                ()
+                [any-meta-value?]
+                [sequence    *       *]
+
+    type-chain  "inert form of chain"
+                ()
+                [any-type-value?]
+                [sequence    *       *]
+
+    the-chain   "inert form of chain"
+                ()
+                [any-the-value?]
+                [sequence    *       *]
+
+    var-chain   "chain that evaluates to the bound form of the chain"
+                ()
+                [any-var-value?]
+                [sequence    *       *]
+
+  </ANY-CHAIN?>
+
   <ANY-PATH?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     path        "member or refinement selection with execution bias"
                 ()
                 [any-plain-value?]
-                [sequence    *       *]
-
-    set-dead    "WAS SET-PATH!, WILL NOT EXIST AFTER BIG ALIEN PROPOSAL"
-                ()
-                []
-                [sequence    *       *]
-
-    get-dead    "WAS GET-PATH!, WILL NOT EXIST AFTER BIG ALIEN PROPOSAL"
-                ()
-                []
                 [sequence    *       *]
 
     meta-path   "path that quotes product or turns quasiforms to antiforms"
@@ -366,16 +365,6 @@ pair        "two dimensional point or size"
     #unstable   [any-series? any-branch? any-plain-value?]
                 [list        *       *]
 
-    set-block   "list of elements that unpack the right hand side in evaluation"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-series? any-set-value?]
-                [list        *       *]
-
-    get-block   "list of elements that are reduced if evaluated"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-series? any-branch? any-get-value?]
-                [list        *       *]
-
     meta-block  "block that evaluates to produce a quoted block"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-series? any-branch? any-meta-value?]
@@ -404,16 +393,6 @@ pair        "two dimensional point or size"
     group       "list that evaluates expressions as an isolated group"
     ~splice~    (CELL_FLAG_FIRST_IS_NODE)
                 [any-series? any-plain-value?]
-                [list        *       *]
-
-    set-group   "list that evaluates and runs SET on the result"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-series? any-set-value?]
-                [list        *       *]
-
-    get-group   "list that evaluates and runs GET on the resulting word/path"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-series? any-get-value?]
                 [list        *       *]
 
     meta-group  "group that quotes product or turns antiforms to quasiforms"

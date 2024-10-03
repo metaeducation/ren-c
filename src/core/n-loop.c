@@ -929,21 +929,15 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
         }
         else switch ((heart = Cell_Heart_Ensure_Noquote(les->data))) {
           case REB_BLOCK:
-          case REB_SET_BLOCK:
-          case REB_GET_BLOCK:
           case REB_META_BLOCK:
           case REB_THE_BLOCK:
           case REB_GROUP:
-          case REB_SET_GROUP:
-          case REB_GET_GROUP:
           case REB_META_GROUP:
           case REB_THE_GROUP:
           case REB_PATH:
           case REB_META_PATH:
           case REB_THE_PATH:
           case REB_TUPLE:
-          case REB_SET_TUPLE:
-          case REB_GET_TUPLE:
           case REB_META_TUPLE:
           case REB_THE_TUPLE:
             if (var)

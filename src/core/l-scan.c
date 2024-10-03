@@ -78,7 +78,6 @@ INLINE bool Interstitial_Match(char c, char mode) {
 INLINE Sigil Sigil_From_Token(Token t) {
     assert(t < u_cast(int, SIGIL_MAX));
     assert(t != u_cast(int, SIGIL_0));
-    assert(t != u_cast(int, SIGIL_SET));
     return u_cast(Sigil, t);
 }
 
@@ -2001,21 +2000,15 @@ Bounce Scanner_Executor(Level* const L) {
         }
 
         if (Is_Lex_Whitespace(*ep) or *ep == ']' or *ep == ')') {
-            Init_Sigil(PUSH(), SIGIL_GET);  // :
+            Init_Word(PUSH(), Canon(COLON_1));  // :
             ss->begin = ss->end = ep;
             break;
         }
+        if (level->sigil_pending)
+            return RAISE(Error_Syntax(ss, token));  // no "GET-GET-WORD!"
 
-        if (*ep == ':') {  // second colon
-            if (Is_Lex_Whitespace(ep[1]) or ep[1] == ']' or ep[1] == ')') {
-                Init_Sigil(PUSH(), SIGIL_SET);  // ::
-                ep = ep + 1;
-                ss->begin = ss->end = ep;
-                break;
-            }
-        }
-
-        goto token_prefixable_sigil;
+        level->sigil_pending = SIGIL_GET_P;  // !!! dead! need new approach
+        goto loop;
 
       token_prefixable_sigil:
         if (level->sigil_pending)
@@ -2462,11 +2455,11 @@ Bounce Scanner_Executor(Level* const L) {
         if (not Any_Plain_Value_Kind(heart))
             return RAISE(Error_Syntax(ss, TOKEN_BLANK));  // !!! token?
 
-        Heart new_heart = Sigilize_Any_Plain_Kind(SIGIL_SET, heart);
-        if (new_heart == REB_SET_DEAD or new_heart == REB_GET_DEAD)
-            return RAISE(Error_Syntax(ss, TOKEN_PATH));
-
-        HEART_BYTE(TOP) = new_heart;
+        Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(  // setify
+            cast(Element*, TOP), REB_CHAIN, CELL_MASK_0
+        );
+        if (error)
+            return RAISE(unwrap error);
 
         ss->begin = ++ss->end;  // !!! ?
     }
@@ -2475,17 +2468,20 @@ Bounce Scanner_Executor(Level* const L) {
         if (not Any_Plain_Kind(heart))
             return RAISE(Error_Syntax(ss, TOKEN_BLANK));  // !!! token?
 
-        Heart new_heart = Sigilize_Any_Plain_Kind(
-            unwrap level->sigil_pending,
-            heart
-        );
-        if (new_heart == REB_SET_DEAD or new_heart == REB_GET_DEAD) {
-            if (ss->end < ss->begin)
-                ss->end = ss->begin;
-            return RAISE(Error_Syntax(ss, TOKEN_PATH));
+        if (level->sigil_pending == SIGIL_GET_P) {  // needs "getify"
+            Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
+               cast(Element*, TOP), REB_CHAIN, CELL_FLAG_REFINEMENT_LIKE
+            );
+            if (error)
+                return RAISE(unwrap error);
+        }
+        else {
+            HEART_BYTE(TOP) = Sigilize_Any_Plain_Kind(
+                unwrap level->sigil_pending,
+                heart
+            );
         }
 
-        HEART_BYTE(TOP) = new_heart;
         level->sigil_pending = SIGIL_0;
     }
 
@@ -2553,11 +2549,7 @@ Bounce Scanner_Executor(Level* const L) {
         *ss->end == ':'  // `...(foo):` or `...[bar]:`
         and not Is_Dot_Or_Slash(level->mode)  // leave `:` for SET-PATH!
     ){
-        Heart new_heart = Sigilize_Any_Plain_Kind(SIGIL_SET, heart);
-        if (new_heart == REB_SET_DEAD or new_heart == REB_GET_DEAD)
-            return RAISE(Error_Syntax(ss, TOKEN_PATH));
-
-        Init_Any_List(PUSH(), new_heart, a);
+        Setify(Init_Any_List(PUSH(), heart, a));
         ++ss->begin;
         ++ss->end;
     }
@@ -2631,27 +2623,6 @@ Bounce Scanner_Executor(Level* const L) {
     )){
         Init_Blank(PUSH());
     }
-
-    // R3-Alpha permitted GET-WORD! and other aberrations internally
-    // to PATH!.  Ren-C does not, and it will optimize the immutable
-    // GROUP! so that it lives in a cell (TBD).
-    //
-    // For interim compatibility, allow GET-WORD! at LOAD-time by
-    // mutating it into a single element GROUP!.
-    //
-  blockscope {
-    StackValue(*) head = Data_Stack_At(stackindex_path_head);
-    StackValue(*) cleanup = head + 1;
-    for (; cleanup <= TOP; ++cleanup) {
-        if (Is_Get_Word(cleanup)) {
-            Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
-            HEART_BYTE(cleanup) = REB_GET_WORD;
-
-            Move_Cell(Stub_Cell(a), cleanup);
-            Init_Group(cleanup, a);
-        }
-    }
-  }
 
     // Run through the generalized pop path code, which does any
     // applicable compression...and validates the array.

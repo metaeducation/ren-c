@@ -788,7 +788,11 @@ Error* Error_User(const char *utf8) {
 // "error while setting VAR:", so "error while evaluating @" etc. make sense.
 //
 Error* Error_Need_Non_End(const Element* target) {
-    assert(Any_Set_Kind(VAL_TYPE(target)) or Is_Sigil(target));
+    assert(
+        Is_Sigil(target)  // ^ needs things on the right
+        or Is_Meta_Of_Void(target)
+        or Any_Word(target) or Any_Tuple(target)
+    );
     return Error_Need_Non_End_Raw(target);
 }
 
@@ -796,25 +800,17 @@ Error* Error_Need_Non_End(const Element* target) {
 //
 //  Error_Bad_Word_Get: C
 //
+// 1. Don't want the error message to have an antiform version as argument, as
+//    they're already paying for an error regarding the state.
+//
 Error* Error_Bad_Word_Get(
     const Element* target,
-    const Atom* anti
+    const Atom* vacancy
 ){
-    // SET calls this, and doesn't work on just SET-WORD! and SET-PATH!
-    //
-    assert(
-        Any_Word(target)
-        or Any_Sequence(target)
-        or Any_Block(target)
-        or Any_Group(target)
-    );
-    assert(Is_Antiform(anti));
+    assert(Any_Vacancy(vacancy));
 
-    // Don't want the error message to have an antiform version as argument, as
-    // they're already paying for an error regarding the state.
-    //
     DECLARE_ELEMENT (reified);
-    Copy_Meta_Cell(reified, anti);
+    Copy_Meta_Cell(reified, vacancy);  // avoid failures in error message [1]
 
     return Error_Bad_Word_Get_Raw(target, reified);
 }

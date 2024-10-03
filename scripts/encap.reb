@@ -596,15 +596,15 @@ pe-format: context [
         let word
         let block-rule
         let group-rule: [
-            word: set-word!
-            (find-a-word to word! word)
+            word: &set-word?
+            (find-a-word unchain word)
             | ahead block! into block-rule  ; recursively look into the array
             | one
         ]
         block-rule: [
             ahead group! into [opt some group-rule]
             | ahead block! into [opt some block-rule]
-            | word: set-word! (find-a-word to word! word)
+            | word: &set-word? (find-a-word unchain word)
             | one
         ]
 

@@ -497,23 +497,74 @@ int64_t Mul_Max(Heart heart, int64_t n, int64_t m, int64_t maxi)
 // "be smart" so even a TEXT! can be turned into a SET-WORD! (just an
 // unbound one).
 //
-Value* Setify(Value* out) {  // called on stack values; can't call evaluator
-    Heart heart = Cell_Heart(out);
-    if (Any_Word_Kind(heart)) {
-        HEART_BYTE(out) = REB_SET_WORD;
-    }
-    else if (Any_Tuple_Kind(heart)) {
-        HEART_BYTE(out) = REB_SET_TUPLE;
-    }
-    else if (Any_Block_Kind(heart)) {
-        HEART_BYTE(out) = REB_SET_BLOCK;
-    }
-    else if (Any_Group_Kind(heart)) {
-        HEART_BYTE(out) = REB_SET_GROUP;
-    }
-    else
-        fail ("Cannot SETIFY");
+Element* Setify(Element* out) {  // called on stack values; can't call eval
+    Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
+        out, REB_CHAIN, CELL_MASK_0
+    );
+    if (error)
+        fail (unwrap error);
+    return out;
+}
 
+
+//
+//  Trap_Unchain: C
+//
+// Evolve a cell containing a chain that's just an element and a blank into
+// the element alone, e.g. `a:` -> `a` or `:[a b]` -> `[a b]`
+//
+Option(Error*) Trap_Unchain(Element* out) {
+    assert(Any_Chain_Kind(Cell_Heart(out)));
+    assert(Get_Cell_Flag(out, SEQUENCE_HAS_NODE));  // not compressed bytes
+
+    const Node* node1 = Cell_Node1(out);
+    if (Is_Node_A_Cell(node1)) {  // compressed 2-elements, sizeof(Stub)
+        const Pairing* pairing = c_cast(Pairing*, node1);
+        if (Is_Blank(Pairing_First(pairing))) {
+            assert(not Is_Blank(Pairing_Second(pairing)));
+            Derelativize(out, Pairing_Second(pairing), Cell_Binding(out));
+            return nullptr;
+        }
+        if (Is_Blank(Pairing_Second(pairing))) {
+            Derelativize(out, Pairing_First(pairing), Cell_Binding(out));
+            return nullptr;
+        }
+        goto unchain_error;
+    }
+
+  { //////////////////////////////////////////////////////////////////////////
+
+    const Stub* s = c_cast(Stub*, node1);
+    if (Is_Stub_Symbol(s)) {
+        HEART_BYTE(out) = REB_WORD;
+        Clear_Cell_Flag(out, REFINEMENT_LIKE);  // !!! necessary?
+        return nullptr;
+    }
+
+    Heart h = u_cast(Heart, MIRROR_BYTE(s));
+    if (h != REB_0) {  // no length 2 sequence arrays unless mirror
+        HEART_BYTE(out) = h;
+        Clear_Cell_Flag(out, REFINEMENT_LIKE);  // !!! necessary
+        return nullptr;
+    }
+
+} unchain_error: {
+
+    return Error_User(
+        "Can only UNCHAIN length 2 chains (when 1 item is blank)"
+    );
+}}
+
+
+//
+//  Unchain: C
+//
+// Version of Unchain when you don't expect it to fail.
+//
+Element* Unchain(Element* out) {
+    Option(Error*) error = Trap_Unchain(out);
+    assert(not error);
+    UNUSED(error);
     return out;
 }
 
@@ -523,15 +574,17 @@ Value* Setify(Value* out) {  // called on stack values; can't call evaluator
 //
 //  "If possible, convert a value to a SET-XXX! representation"
 //
-//      return: [~null~ any-set-value?]
-//      value [<maybe> element?]
+//      return: [~null~ any-set-value? set-word?]
+//      element [<maybe> element?]
 //  ]
 //
 DECLARE_NATIVE(setify)
 {
     INCLUDE_PARAMS_OF_SETIFY;
 
-    return COPY(Setify(ARG(value)));
+    Element* e = cast(Element*, ARG(element));
+
+    return COPY(Setify(e));
 }
 
 
@@ -540,23 +593,12 @@ DECLARE_NATIVE(setify)
 //
 // Like Setify() but Makes GET-XXX! instead of SET-XXX!.
 //
-Value* Getify(Value* out) {  // called on stack values; can't call evaluator
-    Heart heart = Cell_Heart(out);
-    if (Any_Block_Kind(heart)) {
-        HEART_BYTE(out) = REB_GET_BLOCK;
-    }
-    else if (Any_Group_Kind(heart)) {
-        HEART_BYTE(out) = REB_GET_GROUP;
-    }
-    else if (Any_Tuple_Kind(heart)) {
-        HEART_BYTE(out) = REB_GET_TUPLE;
-    }
-    else if (Any_Word_Kind(heart)) {
-        HEART_BYTE(out) = REB_GET_WORD;
-    }
-    else
-        fail ("Cannot GETIFY");
-
+Element* Getify(Element* out) {  // called on stack values; can't call eval
+    Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
+        out, REB_CHAIN, CELL_FLAG_REFINEMENT_LIKE
+    );
+    if (error)
+        fail (unwrap error);
     return out;
 }
 
@@ -566,15 +608,17 @@ Value* Getify(Value* out) {  // called on stack values; can't call evaluator
 //
 //  "If possible, convert a value to a GET-XXX! representation"
 //
-//      return: [~null~ any-get-value?]
-//      value [<maybe> element?]
+//      return: [~null~ any-get-value? get-word?]
+//      element [<maybe> element?]
 //  ]
 //
 DECLARE_NATIVE(getify)
 {
     INCLUDE_PARAMS_OF_GETIFY;
 
-    return COPY(Getify(ARG(value)));
+    Element* e = cast(Element*, ARG(element));
+
+    return COPY(Getify(e));
 }
 
 
@@ -722,4 +766,27 @@ DECLARE_NATIVE(plain)
     Element* e = cast(Element*, ARG(element));
 
     return COPY(Plainify(e));
+}
+
+
+//
+//  unchain: native [
+//
+//  "Remove CHAIN!, e.g. leading colon or trailing colon from an element"
+//
+//      return: [~null~ element?]
+//      chain [<maybe> chain! set-word? set-tuple?]
+//  ]
+//
+DECLARE_NATIVE(unchain)
+{
+    INCLUDE_PARAMS_OF_UNCHAIN;
+
+    Element* e = cast(Element*, ARG(chain));
+
+    Option(Error*) error = Trap_Unchain(e);
+    if (error)
+        return RAISE(unwrap error);
+
+    return COPY(e);
 }

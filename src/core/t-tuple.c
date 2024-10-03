@@ -449,17 +449,24 @@ void MF_Sequence(REB_MOLD *mo, const Cell* c, bool form)
     UNUSED(form);
 
     Heart heart = Cell_Heart(c);
-    char interstitial = Any_Tuple_Kind(heart) ? '.' : '/';
 
-    if (heart == REB_GET_TUPLE)
-        Append_Codepoint(mo->string, ':');
-    else if (heart == REB_META_PATH or heart == REB_META_TUPLE)
+    char interstitial;
+    if (Any_Tuple_Kind(heart))
+        interstitial = '.';
+    else if (Any_Chain_Kind(heart))
+        interstitial = ':';
+    else {
+        assert(Any_Path_Kind(heart));
+        interstitial = '/';
+    }
+
+    if (Any_Meta_Kind(heart))
         Append_Codepoint(mo->string, '^');
-    else if (heart == REB_THE_PATH or heart == REB_THE_TUPLE)
+    else if (Any_The_Kind(heart))
         Append_Codepoint(mo->string, '@');
-    else if (heart == REB_TYPE_PATH or heart == REB_TYPE_TUPLE)
+    else if (Any_Type_Kind(heart))
         Append_Codepoint(mo->string, '&');
-    else if (heart == REB_VAR_PATH or heart == REB_VAR_TUPLE)
+    else if (Any_Var_Kind(heart))
         Append_Codepoint(mo->string, '$');
 
     DECLARE_ELEMENT (element);
@@ -480,7 +487,11 @@ void MF_Sequence(REB_MOLD *mo, const Cell* c, bool form)
         else {
             if (Is_Word(element)) {  // double-check word legality in debug
                 const Symbol* s = Cell_Word_Symbol(element);
-                assert(Not_Subclass_Flag(SYMBOL, s, ILLEGAL_IN_ANY_SEQUENCE));
+                if (Get_Subclass_Flag(SYMBOL, s, ILLEGAL_IN_ANY_SEQUENCE))
+                    assert(
+                        Any_Chain_Kind(heart)
+                        and Cell_Sequence_Len(c) == 2
+                    );
                 if (Any_Tuple_Kind(heart))
                     assert(Not_Subclass_Flag(SYMBOL, s, ILLEGAL_IN_ANY_TUPLE));
                 UNUSED(s);
@@ -489,7 +500,4 @@ void MF_Sequence(REB_MOLD *mo, const Cell* c, bool form)
             Mold_Element(mo, element);  // ignore CELL_FLAG_NEWLINE_BEFORE [1]
         }
     }
-
-    if (heart == REB_SET_TUPLE)
-        Append_Codepoint(mo->string, ':');
 }

@@ -247,7 +247,7 @@ DECLARE_NATIVE(shove)
 //          [any-atom?]  ; /NEXT changes primary return product [1]
 //      source [
 //          <maybe>  ; useful for `evaluate maybe ...` scenarios
-//          any-list?  ; source code
+//          any-list? get-group? set-group? get-block? set-block?  ; code
 //          <unrun> frame!  ; invoke the frame (no arguments, see RUN)
 //          error!  ; raise the error
 //          varargs!  ; simulates as if frame! or block! is being executed
@@ -302,6 +302,8 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
     INCLUDE_PARAMS_OF_EVALUATE;
 
     Element* source = cast(Element*, ARG(source));  // hold for GC [2]
+    if (Is_Chain(source))  // e.g. :(...) or [...]/
+        Unchain(source);
 
     enum {
         ST_EVALUATE_INITIAL_ENTRY = STATE_0,

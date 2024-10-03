@@ -32,14 +32,13 @@
 
 enum SigilEnum {
     SIGIL_0 = 0,
-    SIGIL_SET = 1,      // trailing : (represented as `::` in isolation)
-    SIGIL_GET = 2,      // leading : (represented as `:` in isolation)
-    SIGIL_META = 3,     // ^
-    SIGIL_TYPE = 4,     // &
-    SIGIL_THE = 5,      // @
-    SIGIL_VAR = 6,      // $
-    SIGIL_QUOTE = 7,    // '
-    SIGIL_QUASI = 8,    // ~~
+    SIGIL_META = 1,     // ^
+    SIGIL_TYPE = 2,     // &
+    SIGIL_THE = 3,      // @
+    SIGIL_VAR = 4,      // $
+    SIGIL_QUOTE = 5,    // '
+    SIGIL_QUASI = 6,    // ~~
+    SIGIL_GET_P = 7,    // <dead>
     SIGIL_MAX
 };
 typedef enum SigilEnum Sigil;
@@ -55,12 +54,10 @@ typedef enum SigilEnum Sigil;
 //
 enum TokenEnum {
     TOKEN_0 = 0,
-    TOKEN_END,  // SIGIL_SET is not done the same way (it's two characters)
-    TOKEN_COLON = 2,  // SIGIL_GET
-    TOKEN_CARET = 3,  // SIGIL_META
-    TOKEN_AMPERSAND = 4,  // SIGIL_TYPE
-    TOKEN_AT = 5,  // SIGIL_THE
-    TOKEN_DOLLAR = 6,  // SIGIL_VAR
+    TOKEN_CARET = 1,  // SIGIL_META
+    TOKEN_AMPERSAND = 2,  // SIGIL_TYPE
+    TOKEN_AT = 3,  // SIGIL_THE
+    TOKEN_DOLLAR = 4,  // SIGIL_VAR
     TOKEN_NEWLINE,
     TOKEN_BLANK,
     TOKEN_COMMA,
@@ -83,6 +80,7 @@ enum TokenEnum {
     TOKEN_BINARY,
     TOKEN_PAIR,
     TOKEN_TUPLE,  // only triggered in leading dot cases (. .. .foo .foo.bar)
+    TOKEN_COLON,
     TOKEN_FILE,
     TOKEN_EMAIL,
     TOKEN_URL,
@@ -90,11 +88,11 @@ enum TokenEnum {
     TOKEN_TAG,
     TOKEN_PATH,  // only triggered in leading slash cases (/ // /foo /foo.bar)
     TOKEN_CONSTRUCT,
+    TOKEN_END,
     TOKEN_MAX
 };
 typedef enum TokenEnum Token;
 
-STATIC_ASSERT(TOKEN_COLON == cast(int, SIGIL_GET));
 STATIC_ASSERT(TOKEN_CARET == cast(int, SIGIL_META));
 STATIC_ASSERT(TOKEN_AMPERSAND == cast(int, SIGIL_TYPE));
 STATIC_ASSERT(TOKEN_AT == cast(int, SIGIL_THE));

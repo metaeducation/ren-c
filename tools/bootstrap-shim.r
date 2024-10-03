@@ -130,7 +130,7 @@ sys.util/rescue [
         f.next: okay
         let [dummy block]
         block: compose [dummy (to path! f.next3)]  ; no SET-BLOCK, @, in boot
-        return eval compose [(as set-block! block) eval f]
+        return eval compose [(setify block) eval f]
     ]
 
     export cscape-inside: :inside  ; modern string interpolation tool
@@ -391,6 +391,27 @@ blank-to-void: func3 [x [~null~ any-value!]] [
 
 char?!: char!  ; modern char is ISSUE! constraint
 logic?!: logic!  ; modern logic is ANTIFORM! constraint
+set-word?!: set-word!  ; modern set-word is CHAIN constraint
+get-word?!: get-word!  ; modern get-word is CHAIN constraint
+set-tuple?!: set-path!  ; modern tuple exists, set-tuple is CHAIN constraint
+get-tuple?!: get-path!  ; modern tuple exists, set-tuple is CHAIN constraint
+set-word!: func3 [] [
+    fail/where "SET-WORD! is now a CHAIN!, try SET-WORD?!" 'return
+]
+get-word!: func3 [] [
+    fail/where "GET-WORD! is now a CHAIN!, try GET-WORD?!" 'return
+]
+set-path!: func3 [] [
+    fail/where "SET-PATH! can no longer exist, try SET-TUPLE?!" 'return
+]
+get-path!: func3 [] [
+    fail/where "GET-PATH! can no longer exist, try GET-TUPLE?!" 'return
+]
+
+setify: func3 [plain [word! path!]] [
+    either word? plain [to-set-word plain] [to-set-path plain]
+]
+
 
 ; LIT-WORD and REFINEMENT will never be datatypes, so shim the type constraint
 ; so it works in old parse.
@@ -610,7 +631,7 @@ collect-lets: func3 [
         case [
             item.1 = 'let [
                 item: next item
-                if match [set-word! word! block!] item.1 [
+                if match [set-word?! word! block!] item.1 [
                     append3 lets item.1
                 ]
             ]
@@ -681,10 +702,6 @@ modernize-action: function3 [
                 ; have a fake proxying parameter.
 
                 if not block? spec.1 [
-                    ; append3 proxiers compose3 [  ; no longer turn blank->null
-                    ;    (as set-word! last-refine-word)
-                    ;        (as get-word! last-refine-word)
-                    ;]
                     continue
                 ]
 
@@ -693,8 +710,8 @@ modernize-action: function3 [
                 keep3/only modernize-typespec spec.1
 
                 append3 proxiers compose [
-                    (as set-word! last-refine-word) (as get-word! proxy)
-                    (as set-word! proxy) ~
+                    (to-set-word last-refine-word) (to-get-word proxy)
+                    (to-set-word proxy) ~
                 ]
                 spec: my next
                 continue
@@ -722,7 +739,7 @@ modernize-action: function3 [
                 ; https://forum.rebol.info/t/1433
                 ;
                 keep3 case [
-                    lit-word? w [to get-word! w]
+                    lit-word? w [to-get-word w]
                     get-word? w [to lit-word! w]
                     true [w]
                 ]

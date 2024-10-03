@@ -529,8 +529,6 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
             break;
 
           case REB_WORD:
-          case REB_SET_WORD:
-          case REB_GET_WORD:
           case REB_META_WORD:
             if (Any_Word_Kind(b_heart))
                 goto compare;

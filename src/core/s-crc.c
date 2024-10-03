@@ -201,11 +201,14 @@ uint32_t Hash_Value(const Cell* cell)
         hash = Hash_UTF8_Len_Caseless(utf8, len);
         break; }
 
+      case REB_CHAIN:
+      case REB_THE_CHAIN:
+      case REB_META_CHAIN:
+      case REB_TYPE_CHAIN:
+      case REB_VAR_CHAIN:
+        //
       case REB_TUPLE:
-      case REB_SET_TUPLE:
-      case REB_GET_TUPLE:
       case REB_THE_TUPLE:
-      case REB_META_TUPLE:
       case REB_TYPE_TUPLE:
       case REB_VAR_TUPLE:
         //
@@ -242,16 +245,12 @@ uint32_t Hash_Value(const Cell* cell)
       hash_any_list:
         //
       case REB_GROUP:
-      case REB_SET_GROUP:
-      case REB_GET_GROUP:
       case REB_THE_GROUP:
       case REB_META_GROUP:
       case REB_TYPE_GROUP:
       case REB_VAR_GROUP:
         //
       case REB_BLOCK:
-      case REB_SET_BLOCK:
-      case REB_GET_BLOCK:
       case REB_THE_BLOCK:
       case REB_META_BLOCK:
       case REB_TYPE_BLOCK:
@@ -283,8 +282,6 @@ uint32_t Hash_Value(const Cell* cell)
       hash_any_word:
         //
       case REB_WORD:
-      case REB_SET_WORD:
-      case REB_GET_WORD:
       case REB_THE_WORD:
       case REB_META_WORD:
       case REB_TYPE_WORD:

@@ -366,7 +366,5 @@ INLINE bool Any_Vacancy(Need(const Value*) a) {
 // have in your hands literally before soft escaping.
 //
 INLINE bool Is_Soft_Escapable_Group(const Element* e) {
-    if (Any_Get_Value(e) and not Is_Get_Block(e))  // temp safety check
-        fail ("GET-XXX! type found in soft escapable slot...accident?");
-    return Is_Group(e);
+    return Is_Group(e);  // should escape other groups, e.g. ('foo): -> foo:
 }

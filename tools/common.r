@@ -78,14 +78,15 @@ export to-c-name: func [
         "~" ["tilde_1"]
         "|" ["bar_1"]
 
-        ; Special mechanics are required so that PATH! and TUPLE! collapse
-        ; to make these words:
+        ; Special mechanics are required so that PATH! and TUPLE! and CHAIN!
+        ; collapse to make these words:
         ;
         ;     >> compose $(_)/(_)
         ;     == /  ; a word
         ;
         "." ["dot_1"]
         "/" ["slash_1"]
+        ":" ["colon_1"]
 
         ">" ["greater_1"]
         "<" ["lesser_1"]

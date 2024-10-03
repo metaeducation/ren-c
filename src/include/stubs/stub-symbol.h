@@ -87,13 +87,22 @@
     FLEX_FLAG_25
 
 
+//=//// SYMBOL_FLAG_ILLEGAL_IN_ANY_CHAIN //////////////////////////////////=//
+//
+// This basically just means the symbol has a colon in it...other prohibitions
+// are covered by ILLEGAL_IN_ANY_SEQUENCE.
+//
+#define SYMBOL_FLAG_ILLEGAL_IN_ANY_CHAIN \
+    FLEX_FLAG_26
+
+
 //=//// SYMBOL_FLAG_ILLEGAL_IN_ANY_TUPLE ///////////////////////////////////=//
 //
 // This basically just means the symbol has a dot in it...other prohibitions
 // are covered by ILLEGAL_IN_ANY_SEQUENCE.
 //
 #define SYMBOL_FLAG_ILLEGAL_IN_ANY_TUPLE \
-    FLEX_FLAG_26
+    FLEX_FLAG_27
 
 
 //=//// SYMBOL_FLAG_MISC_IS_BINDINFO ///////////////////////////////////////=//
@@ -105,7 +114,7 @@
 // on the next pointer that was reached, which was slower).
 //
 #define SYMBOL_FLAG_MISC_IS_BINDINFO \
-    FLEX_FLAG_27
+    FLEX_FLAG_28
 
 
 INLINE bool Is_String_Symbol(const String* s) {

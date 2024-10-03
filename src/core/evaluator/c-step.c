@@ -245,7 +245,7 @@ Bounce Stepper_Executor(Level* L)
         goto evaluate; }
 
       intrinsic_arg_in_spare:
-      case ST_STEPPER_CALCULATING_INTRINSIC_ARG : {
+      case ST_STEPPER_CALCULATING_INTRINSIC_ARG: {
         Action* action = VAL_ACTION(L_current);
         assert(Is_Stub_Details(action));
         Intrinsic* intrinsic = Extract_Intrinsic(cast(Phase*, action));
@@ -266,27 +266,25 @@ Bounce Stepper_Executor(Level* L)
       case REB_SIGIL:
         goto sigil_rightside_in_out;
 
-      case REB_GROUP :
-      case REB_GET_GROUP :
-      case REB_META_GROUP :
+      case REB_GROUP:
+      case REB_META_GROUP:
         goto lookahead;
 
-      case REB_SET_GROUP :
+      case ST_STEPPER_SET_GROUP:
         goto set_group_result_in_spare;
 
-      case REB_SET_WORD :
-        goto set_word_rightside_in_out;
+      case ST_STEPPER_SET_WORD:
+      case ST_STEPPER_SET_TUPLE:
+      case ST_STEPPER_SET_VOID:
+        goto generic_set_rightside_in_out;
 
-      case REB_SET_TUPLE :
-        goto set_generic_rightside_in_out;
-
-      case REB_SET_BLOCK :
+      case ST_STEPPER_SET_BLOCK:
         if (Is_Raised(OUT))  // don't assign variables [1]
             goto set_block_drop_stack_and_continue;
 
         goto set_block_rightside_result_in_out;
 
-      case REB_FRAME :
+      case REB_FRAME:
         goto lookahead;
 
       default:
@@ -366,7 +364,7 @@ Bounce Stepper_Executor(Level* L)
         Get_Action_Flag(enfixed, POSTPONES_ENTIRELY)
         or (
             Get_Feed_Flag(L->feed, NO_LOOKAHEAD)
-            and not Any_Set_Kind(VAL_TYPE_UNCHECKED(L_current))
+            and not Any_Set_Value(L_current)
         )
     ){
         if (pclass == PARAMCLASS_NORMAL or pclass == PARAMCLASS_META)
@@ -566,10 +564,6 @@ Bounce Stepper_Executor(Level* L)
     //     >> get word
     //     == 10
     //
-    // :: has no use at time of writing
-    //
-    // : has no use at time of writing.
-    //
     // ' acts like JUST (literal, no added binding)
     //
     //      >> abc: 10
@@ -580,10 +574,6 @@ Bounce Stepper_Executor(Level* L)
     //      ** Script Error: abc word is not bound to a context
     //
     // ~~ has no use at time of writing.
-    //
-    // 1. Because :: is an infix operator that quotes its left-hand side, it
-    //    is handled during the pre-lookahead for quoting.  Look for SIGIL_SET
-    //    much earlier in this function.
     //
     // 2. There's a twist, that @ can actually handle antiforms if they are
     //    coming in via an API feed.  This is a convenience so you can write:
@@ -611,12 +601,6 @@ Bounce Stepper_Executor(Level* L)
       case REB_SIGIL: {
         Sigil sigil = Cell_Sigil(L_current);
         switch (sigil) {
-          case SIGIL_SET:  // ::
-            fail (":: must be used as an infix operator");  // too late [1]
-
-          case SIGIL_GET:  // :
-            fail ("No evaluator behavior defined for : yet");
-
           case SIGIL_QUOTE:
           case SIGIL_THE: {
             if (Is_Feed_At_End(L->feed))  // no literal to take if (@), (')
@@ -786,71 +770,80 @@ Bounce Stepper_Executor(Level* L)
         goto lookahead; }
 
 
-    //=//// SET-WORD! /////////////////////////////////////////////////////=//
+    //=//// CHAIN! ////////////////////////////////////////////////////////=//
     //
-    // Right side is evaluated into `out`, and then copied to the variable.
-    //
-    // Null and void assigns are allowed: https://forum.rebol.info/t/895/4
-    //
-    //////////////////////////////////////////////////////////////////////////
-    //
-    // 1. Running functions flushes the L_next_gotten cache.  But a plain
-    //    assignment can cause trouble too:
-    //
-    //        >> x: <before> x: 1 x
-    //                            ^-- x value was cached in infix lookahead
-    //
-    //    It used to not be a problem, when variables didn't just pop into
-    //    existence.  Reconsidered in light of "emergence".  Review.
+    // Due to the consolidation of all the SET-XXX! and GET-XXX! types as
+    // CHAIN! with leading or trailing blanks, CHAIN! has to break that down
+    // and dispatch to the appropriate behavior.
 
-    set_word_common_maybe_blank: /////////////////////////////////////////////
+      case REB_CHAIN: {
+        bool leading_blank;
+        switch (
+            Try_Get_Sequence_Singleheart(&leading_blank, L_current)
+        ){
+          case REB_0:
+            break;  // wasn't xxx: or :xxx where xxx is BLOCK!/CHAIN!/WORD!/etc
 
-      case REB_SET_WORD: {
-        assert(Is_Set_Word(L_current) or Is_Blank(L_current));
-        assert(STATE == REB_SET_WORD);
-
-        Level* right = Maybe_Rightward_Continuation_Needed(L);
-        if (not right)
-            goto set_word_rightside_in_out;
-
-        return CATCH_CONTINUE_SUBLEVEL(right);
-
-      } set_word_rightside_in_out: {  ////////////////////////////////////////
-
-        if (Is_Pack(OUT)) {  // !!! Needs rethinking, this isn't generalized
-            Decay_If_Unstable(OUT);
-        }
-
-        if (Is_Barrier(OUT))  // e.g. (x:,) where comma makes antiform
-            fail (Error_Need_Non_End(L_current));
-
-        if (Is_Blank(L_current)) {
-            // can happen with SET-GROUP! e.g. `(void): ...`, current in spare
-        }
-        else if (Is_Raised(OUT)) {
-            // Don't assign, but let (trap [a: transcode "1&aa"]) work
-        }
-        else {
-            Decay_If_Unstable(OUT);  // !!! See above regarding rethink
-
-            if (Is_Action(OUT))  // !!! Review: When to update labels?
-                INIT_VAL_ACTION_LABEL(OUT, Cell_Word_Symbol(L_current));
-
-            Set_Var_May_Fail(L_current, L_binding, stable_OUT);
-
-            if (L_next_gotten) {  // cache can tamper with lookahead [1]
-                if (VAL_TYPE_UNCHECKED(L_next) == REB_FRAME) {
-                    // not a cache
-                }
-                else {
-                    assert(VAL_TYPE_UNCHECKED(L_next) == REB_WORD);
-                    if (Cell_Word_Symbol(L_next) == Cell_Word_Symbol(L_current))
-                        L_next_gotten = nullptr;
-                }
+          case REB_WORD:  // GET-WORD! or SET-WORD!
+            if (leading_blank) {  // will be refinement, likely error on eval
+                Unchain(CURRENT);
+                STATE = ST_STEPPER_GET_WORD;
+                goto handle_get_word;
             }
+            Derelativize(  // !!! binding may be sensitive to "set-words only"
+                SPARE, L_current, L_binding
+            );
+            Unchain(Copy_Cell(CURRENT, cast(Element*, SPARE)));
+            STATE = ST_STEPPER_SET_WORD;
+            goto handle_generic_set;
+
+          case REB_BLOCK:  // GET-BLOCK! or SET-BLOCK!
+            Unchain(CURRENT);
+            if (leading_blank) {  // REDUCE, not the best idea...
+                Derelativize(SPARE, L_current, L_binding);
+                if (rebRunThrows(
+                    cast(Value*, OUT),  // <-- output, API won't make atoms
+                    Canon(REDUCE), SPARE
+                )){
+                    goto return_thrown;
+                }
+                goto lookahead;
+            }
+            STATE = ST_STEPPER_SET_BLOCK;
+            goto handle_set_block;
+
+          case REB_TUPLE:
+            Unchain(CURRENT);
+            if (leading_blank) {
+                STATE = ST_STEPPER_GET_TUPLE;
+                goto handle_get_tuple;
+            }
+            STATE = ST_STEPPER_SET_TUPLE;
+            goto handle_generic_set;
+
+          case REB_GROUP: {
+            Unchain(CURRENT);
+            if (leading_blank)
+                fail ("GET-GROUP! has no evaluator meaning at this time");
+
+            L_next_gotten = nullptr;  // arbitrary code changes fetched vars
+            Init_Void(Alloc_Evaluator_Primed_Result());
+            Level* sub = Make_Level_At_Core(
+                &Evaluator_Executor,
+                L_current,
+                L_binding,
+                LEVEL_MASK_NONE
+            );
+            Push_Level(SPARE, sub);
+
+            STATE = ST_STEPPER_SET_GROUP;
+            return CATCH_CONTINUE_SUBLEVEL(sub); }
+
+          default:  // it's just something like :1 or <tag>:
+            fail ("No current eval behavior for things like :1 or <tag>:");
         }
 
-        goto lookahead; }
+        fail ("CHAIN! will dispatch functions soon enough!"); }
 
 
     //=//// GET-WORD! /////////////////////////////////////////////////////=//
@@ -860,8 +853,12 @@ Bounce Stepper_Executor(Level* L)
     //
     // https://forum.rebol.info/t/1301
 
-      case REB_META_WORD:
-      case REB_GET_WORD: {
+      handle_get_word:  // jumps here for CHAIN! that's like a GET-WORD!
+      case REB_META_WORD: {
+        assert(
+            (STATE == ST_STEPPER_GET_WORD and Is_Word(L_current))
+            or (STATE == REB_META_WORD and Is_Meta_Word(L_current))
+        );
         Option(Error*) error = Trap_Get_Any_Word_Maybe_Vacant(
             OUT,
             L_current,
@@ -885,19 +882,12 @@ Bounce Stepper_Executor(Level* L)
     //
     //////////////////////////////////////////////////////////////////////////
     //
-    // 1. It was initially theorized that `:(x)` would act a shorthand for the
-    //   expression `get x`.  But that's already pretty short--and arguably a
-    //   cleaner way of saying the same thing.  Making it a synonym for GROUP!
-    //   seems wasteful on the surface, but it means dialects can be free to
-    //   use it to make a distinction--like escaping soft-quoted slots.
-    //
     // 2. We prime the array executor with nihil in order to avoid generating
     //    voids from thin air when using GROUP!s
     //
     //        >> 1 + 2 (comment "hi")
     //        == 3  ; e.g. not void
 
-      case REB_GET_GROUP:  // synonym for GROUP! [1]
       case REB_GROUP:
       case REB_META_GROUP: {
         L_next_gotten = nullptr;  // arbitrary code changes fetched variables
@@ -1060,7 +1050,9 @@ Bounce Stepper_Executor(Level* L)
         goto process_action; }
 
 
-    //=//// SET-TUPLE! /////////////////////////////////////////////////////=//
+    //=//// TUPLE! or WORD! VARIABLE ASSIGNMENT ///////////////////////////=//
+    //
+    // Right side is evaluated into `out`, and then copied to the variable.
     //
     // !!! The evaluation ordering is dictated by the fact that there isn't a
     // separate "evaluate path to target location" and "set target' step.
@@ -1075,94 +1067,91 @@ Bounce Stepper_Executor(Level* L)
     //     right
     //     left
     //     == 20
+    //
+    // 1. Running functions flushes the L_next_gotten cache.  But a plain
+    //    assignment can cause trouble too:
+    //
+    //        >> x: <before> x: 1 x
+    //                            ^-- x value was cached in infix lookahead
+    //
+    //    It used to not be a problem, when variables didn't just pop into
+    //    existence.  Reconsidered in light of "emergence".  Review.
+    //
+    // * Antiform assignments are allowed: https://forum.rebol.info/t/895/4
 
-    generic_set_common: //////////////////////////////////////////////////////
-
-      case REB_SET_TUPLE: {
-        assert(STATE == REB_SET_TUPLE);
+    handle_generic_set: { ////////////////////////////////////////////////////
+        assert(
+            (STATE == ST_STEPPER_SET_WORD and Is_Word(L_current))
+            or (STATE == ST_STEPPER_SET_TUPLE and Is_Tuple(L_current))
+            or (STATE == ST_STEPPER_SET_VOID and Is_Meta_Of_Void(L_current))
+        );
 
         Level* right = Maybe_Rightward_Continuation_Needed(L);
         if (not right)
-            goto set_generic_rightside_in_out;
+            goto generic_set_rightside_in_out;
 
         return CATCH_CONTINUE_SUBLEVEL(right);
 
-      } set_generic_rightside_in_out: {  /////////////////////////////////////
+    } generic_set_rightside_in_out: {  ///////////////////////////////////////
 
-        /*  // !!! Should we figure out how to cache a label in the cell?
-        if (Is_Frame(OUT))
-            INIT_VAL_ACTION_LABEL(OUT, Cell_Word_Symbol(v));
-        */
+        if (Is_Barrier(OUT))  // even `(void):,` needs to error
+            fail (Error_Need_Non_End(L_current));  // !!! vs. return_thrown ?
 
-        if (Is_Raised(OUT)) {
+        if (STATE == ST_STEPPER_SET_VOID) {
+            // can happen with SET-GROUP! e.g. `(void): ...`, current in spare
+        }
+        else if (Is_Raised(OUT)) {
             // Don't assign, but let (trap [a.b: transcode "1&aa"]) work
         }
-        else if (Is_Barrier(OUT)) {
-            fail (Error_Need_Non_End(L_current));
-        }
         else {
-            Decay_If_Unstable(OUT);
+            Decay_If_Unstable(OUT);  // !!! should likely pass through packs
 
-            if (Set_Var_Core_Throws(
+            if (  // !!! Review: When to update labels?  Use tuple word?
+                Is_Action(OUT)
+                and STATE == ST_STEPPER_SET_WORD
+            ){
+                INIT_VAL_ACTION_LABEL(OUT, Cell_Word_Symbol(L_current));
+            }
+
+            if (Set_Var_Core_Throws(  // cheaper on fail vs. Set_Var_May_Fail()
                 SPARE,
                 GROUPS_OK,
                 L_current,
                 L_binding,
-                stable_OUT
+                stable_OUT  // should take unstable?  handle blocks?
             )){
                 goto return_thrown;
             }
+
+            L_next_gotten = nullptr;  // cache can tamper with lookahead [1]
         }
 
         goto lookahead; }
 
-
-    //=//// SET-GROUP! /////////////////////////////////////////////////////=//
-    //
-    // A SET-GROUP! will act as a SET-WORD!, SET-TUPLE!, or SET-BLOCK! based
-    // on what the group evaluates to.
-
-      case REB_SET_GROUP: {
-        L_next_gotten = nullptr;  // arbitrary code changes fetched variables
-
-        Init_Void(Alloc_Evaluator_Primed_Result());
-        Level* sub = Make_Level_At_Core(
-            &Evaluator_Executor,
-            L_current,
-            L_binding,
-            LEVEL_MASK_NONE
-        );
-        Push_Level(SPARE, sub);
-
-        return CATCH_CONTINUE_SUBLEVEL(sub);
-
-      } set_group_result_in_spare: {  ////////////////////////////////////////
+      set_group_result_in_spare: {  ////////////////////////////////////////
 
         assert(L_current_gotten == nullptr);
 
         if (Is_Void(SPARE)) {
-            STATE = REB_SET_WORD;
-            Init_Blank(CURRENT);  // can't put voids in feed position
-            goto set_word_common_maybe_blank;
+            STATE = ST_STEPPER_SET_VOID;
+            Init_Meta_Of_Void(CURRENT);  // can't put voids in feed position
+            goto handle_generic_set;
         }
         else switch (VAL_TYPE(SPARE)) {
           case REB_BLOCK :
             Copy_Cell(CURRENT, cast(Element*, SPARE));
-            HEART_BYTE(CURRENT) = REB_SET_BLOCK;
-            STATE = REB_SET_BLOCK;
-            goto set_block;
+            STATE = ST_STEPPER_SET_BLOCK;
+            goto handle_set_block;
 
           case REB_WORD :
             Copy_Cell(CURRENT, cast(Element*, SPARE));
-            HEART_BYTE(CURRENT) = REB_SET_WORD;
-            STATE = REB_SET_WORD;
-            goto set_word_common_maybe_blank;
+            STATE = ST_STEPPER_SET_WORD;
+            goto handle_generic_set;
 
           case REB_TUPLE :
             Copy_Cell(CURRENT, cast(Element*, SPARE));
-            HEART_BYTE(CURRENT) = REB_SET_TUPLE;
-            STATE = REB_SET_TUPLE;
-            goto generic_set_common;
+            STATE = ST_STEPPER_SET_TUPLE;
+            goto handle_generic_set;
 
           default:
             fail ("Unknown type for use in SET-GROUP!");
@@ -1186,8 +1175,12 @@ Bounce Stepper_Executor(Level* L)
     // Consistent with GET-WORD!, a GET-TUPLE! won't allow nothing access on
     // the plain (unfriendly) forms.
 
-      case REB_META_TUPLE:
-      case REB_GET_TUPLE: {
+      handle_get_tuple:
+      case REB_META_TUPLE: {
+        assert(
+            (STATE == ST_STEPPER_GET_TUPLE and Is_Tuple(L_current))
+            or (STATE == REB_META_TUPLE and Is_Meta_Tuple(L_current))
+        );
         Option(Error*) error = Trap_Get_Any_Tuple_Maybe_Vacant(
             OUT,
             GROUPS_OK,
@@ -1200,31 +1193,9 @@ Bounce Stepper_Executor(Level* L)
             goto lookahead;  // e.g. EXCEPT might want to see raised error
         }
 
-        if (STATE == REB_META_PATH or STATE == REB_META_TUPLE)
+        if (STATE == REB_META_TUPLE)
             Meta_Quotify(OUT);
-        else
-            assert(STATE == REB_GET_TUPLE);
 
-        goto lookahead; }
-
-
-    //=//// GET-BLOCK! ////////////////////////////////////////////////////=//
-    //
-    // The most useful evaluative operation for GET-BLOCK! was deemed to be
-    // a REDUCE.  This does not correspond to what one would think of as an
-    // "itemwise get" of a block as GET of BLOCK! acted in historical Rebol.
-    //
-    // Note that GET-BLOCK! is available as a branch type, `if ok :[a b]`
-
-      case REB_GET_BLOCK: {
-        Derelativize(SPARE, L_current, L_binding);
-        HEART_BYTE(SPARE) = REB_BLOCK;
-        if (rebRunThrows(
-            cast(Value*, OUT),  // <-- output cell, API won't make atoms
-            Canon(REDUCE), SPARE
-        )){
-            goto return_thrown;
-        }
         goto lookahead; }
 
 
@@ -1263,8 +1234,6 @@ Bounce Stepper_Executor(Level* L)
     // to be the overall result of the expression (defaults to the normal
     // main return value).
 
-    set_block: ///////////////////////////////////////////////////////////////
-
       // 1. Empty SET-BLOCK! are not supported, although it could be argued
       //    that an empty set-block could receive a NIHIL (~[]~) pack.
       //
@@ -1293,8 +1262,8 @@ Bounce Stepper_Executor(Level* L)
       //    something like that to add more?  :-/
       //
 
-      case REB_SET_BLOCK: {
-        assert(STATE == REB_SET_BLOCK);
+      handle_set_block: {
+        assert(STATE == ST_STEPPER_SET_BLOCK and Is_Block(L_current));
 
         if (Cell_Series_Len_At(L_current) == 0)  // not supported [1]
             fail ("SET-BLOCK! must not be empty for now.");
@@ -1926,9 +1895,9 @@ Bounce Stepper_Executor(Level* L)
             Is_Action_Level(L->prior)
             //
             // ^-- !!! Before stackless it was always the case when we got
-            // here that a function level was fulfilling, because SET-WORD!
+            // here that a function level was fulfilling, because setting word
             // would reuse levels while fulfilling arguments...but stackless
-            // changed this and has SET-WORD! start new Levels.  Review.
+            // changed this and has setting words start new Levels.  Review.
             //
             and not Is_Level_Fulfilling(L->prior)
         ){

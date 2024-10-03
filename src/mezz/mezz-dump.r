@@ -145,7 +145,7 @@ dumps: enfix func [
 ][
     let d
     if issue? value [
-        d: specialize dump-to-newline/ [prefix: as text! name]
+        d: specialize dump-to-newline/ [prefix: as text! unchain name]
         if value <> #off [d #on]  ; note: d hard quotes its argument
     ] else [
         ; Make it easy to declare and dump a variable at the same time.
@@ -176,7 +176,7 @@ dumps: enfix func [
             return ~[]~
         ]
     ]
-    return set name runs :d
+    return set name d/
 ]
 
 ; Handy specialization for dumping, prefer to DUMP when doing temp output

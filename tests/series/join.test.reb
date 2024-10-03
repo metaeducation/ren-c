@@ -32,7 +32,7 @@
 
 ('/a/ = join '/a spread [/])
 
-(':a.b = join get-tuple! [a . b])
+('^a.b = join meta-tuple! [a . b])
 
 ; VOID is not a no-op, because you still get a copy made for ANY-SERIES?
 (

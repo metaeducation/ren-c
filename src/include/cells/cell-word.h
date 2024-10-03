@@ -90,9 +90,10 @@ INLINE Element* Init_Any_Word_Untracked(
     TRACK(Init_Any_Word_Untracked((out), (heart), (spelling)))
 
 #define Init_Word(out,str)          Init_Any_Word((out), REB_WORD, (str))
-#define Init_Get_Word(out,str)      Init_Any_Word((out), REB_GET_WORD, (str))
-#define Init_Set_Word(out,str)      Init_Any_Word((out), REB_SET_WORD, (str))
+#define Init_Type_Word(out,str)     Init_Any_Word((out), REB_TYPE_WORD, (str))
+#define Init_The_Word(out,str)      Init_Any_Word((out), REB_THE_WORD, (str))
 #define Init_Meta_Word(out,str)     Init_Any_Word((out), REB_META_WORD, (str))
+#define Init_Var_Word(out,str)      Init_Any_Word((out), REB_VAR_WORD, (str))
 
 INLINE Value* Init_Any_Word_Bound_Untracked(
     Sink(Element*) out,

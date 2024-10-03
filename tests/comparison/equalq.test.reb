@@ -395,7 +395,7 @@
 ; word binding symmetry
 (equal? equal? 'a use [a] ['a] equal? use [a] ['a] 'a)
 ; word! vs. get-word!
-(equal? 'a first [:a])
+(not equal? 'a first [:a])
 ; word! vs. get-word! symmetry
 (equal? equal? 'a first [:a] equal? first [:a] 'a)
 ; {word! vs. lit-word?
@@ -408,7 +408,7 @@
 ; word! vs. refinement? symmetry
 (equal? equal? 'a /a equal? /a 'a)
 ; word! vs. set-word!
-(equal? 'a first [a:])
+(not equal? 'a first [a:])
 ; word! vs. set-word! symmetry
 (equal? equal? 'a first [a:] equal? first [a:] 'a)
 ; get-word! reflexivity
@@ -422,7 +422,7 @@
 ; get-word! vs. refinement? symmetry
 (equal? equal? first [:a] /a equal? /a first [:a])
 ; get-word! vs. set-word!
-(equal? first [:a] first [a:])
+(not equal? first [:a] first [a:])
 ; get-word! vs. set-word! symmetry
 (equal? equal? first [:a] first [a:] equal? first [a:] first [:a])
 ; lit-word? reflexivity
@@ -502,12 +502,12 @@
         f: ["a" #a http://a a@a.com <a>]
         g: a/b/(c: 'd/e/f)/(b.d: [:f.g h/i])
     ]
-    b-value: construct compose @[
+    b-value: construct compose/label @[
         a: 1.0 b: $1 c: 100% d: 0.01
-        e: [/a a 'a :a a: #"A" (next #{0000})]
+        e: [/a a 'a :a a: #"A" (<*> next #{0000})]
         f: [#a <A> http://A a@A.com "A"]
         g: a/b/(c: 'd/e/f)/(b.d: [:f.g h/i])
-    ]
+    ] <*>
     test: :equal?
     equal?
         test a-value b-value

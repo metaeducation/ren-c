@@ -484,7 +484,7 @@ export for-each-platform: func [
     ]
 
     parse3/match platforms overbind p [ some [
-        name: set-word! (
+        name: set-word?! (
             name: to-word name
         )
         number: integer!

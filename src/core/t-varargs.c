@@ -577,36 +577,27 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
         Append_Ascii(mo->string, "???"); // never bound to an argument
     }
     else {
-        Heart heart;
-        bool quoted = false;
+        DECLARE_ELEMENT (param_word);
         switch ((pclass = Cell_ParamClass(param))) {
-        case PARAMCLASS_NORMAL:
-            heart = REB_WORD;
+          case PARAMCLASS_NORMAL:
+            Init_Word(param_word, Key_Symbol(key));
             break;
 
-        case PARAMCLASS_JUST:
-            heart = REB_WORD;
-            quoted = true;
+          case PARAMCLASS_JUST:
+            Quotify(Init_Word(param_word, Key_Symbol(key)), 1);
             break;
 
-        case PARAMCLASS_THE:
-            heart = REB_THE_WORD;
-            quoted = true;
+          case PARAMCLASS_THE:
+            Init_Any_Word(param_word, REB_THE_WORD, Key_Symbol(key));
             break;
 
-        case PARAMCLASS_SOFT:
-            heart = REB_GET_WORD;
-            quoted = true;
+          case PARAMCLASS_SOFT:
+            Quotify(Getify(Init_Word(param_word, Key_Symbol(key))), 1);
             break;
 
-        default:
+          default:
             panic (NULL);
         };
-
-        DECLARE_ELEMENT (param_word);
-        Init_Any_Word(param_word, heart, Key_Symbol(key));
-        if (quoted)
-            Quotify(param_word, 1);
         Mold_Element(mo, param_word);
     }
 

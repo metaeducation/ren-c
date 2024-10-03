@@ -400,18 +400,20 @@ bool Match_For_Compose(const Cell* group, const Element* label) {
 static void Push_Composer_Level(
     Atom* out,
     Level* main_level,
-    const Value* arraylike,
+    const Element* e,  // list or sequence, may be quasi or quoted
     Context* context
 ){
+    Heart heart = Cell_Heart(e);
     const Value* adjusted = nullptr;
-    if (Any_Sequence(arraylike)) {  // allow sequences [1]
-        adjusted = rebValue(Canon(AS), Canon(BLOCK_X), rebQ(arraylike));
-    }
+    if (Any_Sequence_Kind(heart))  // allow sequences [1]
+        adjusted = rebValue(Canon(TO), Canon(BLOCK_X), rebQ(e));  // AS BLOCK! broken, review
+    else
+        assert(Any_List_Kind(heart));
 
     Level* sub = Make_Level_At_Core(
         &Composer_Executor,
-        adjusted ? adjusted : arraylike,
-        Derive_Binding(context, adjusted ? adjusted : arraylike),
+        adjusted ? adjusted : e,
+        Derive_Binding(context, adjusted ? adjusted : e),
         EVAL_EXECUTOR_FLAG_NO_EVALUATIONS
             | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
             | LEVEL_FLAG_RAISED_RESULT_OK  // bubbles up definitional errors
@@ -629,12 +631,12 @@ Bounce Composer_Executor(Level* const L)
 
     const Element* at = At_Level(L);
 
-    if (not Any_Listlike(at)) {  // won't substitute/recurse
+    Heart heart = Cell_Heart(at);  // quoted groups match [1]
+
+    if (not Any_Sequence_Or_List_Kind(heart)) {  // won't substitute/recurse
         Copy_Cell(PUSH(), at);  // keep newline flag
         goto handle_next_item;
     }
-
-    Heart heart = Cell_Heart(at);  // quoted groups match [1]
 
     Context* match_binding = nullptr;
     const Element* match = nullptr;
@@ -652,7 +654,7 @@ Bounce Composer_Executor(Level* const L)
     }
 
     if (not match) {
-        if (deep) {
+        if (deep or Any_Sequence_Kind(heart)) {  // sequences same level
             // compose/deep [does [(1 + 2)] nested] => [does [3] nested]
 
             Push_Composer_Level(OUT, main_level, at, L_binding);
@@ -733,11 +735,7 @@ Bounce Composer_Executor(Level* const L)
     else
         Copy_Cell(PUSH(), cast(Element*, OUT));
 
-    if (group_heart == REB_SET_GROUP)
-        Setify(TOP);
-    else if (group_heart == REB_GET_GROUP)
-        Getify(TOP);
-    else if (group_heart == REB_META_GROUP)
+    if (group_heart == REB_META_GROUP)
         Metafy(TOP);
     else if (group_heart == REB_THE_GROUP)
         Theify(TOP);

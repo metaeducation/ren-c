@@ -26,11 +26,11 @@
 [(pack-old: enfix func [
     "Prepare a BLOCK! of values for storing each in a SET-BLOCK!"
     return: [any-value?]
-    @vars [set-block! set-group!]
+    @vars [set-block? set-group?]
     block "Reduced if normal [block], but values used as-is if @[block]"
         [block! the-block!]
 ][
-    if set-group? vars [vars: eval vars]
+    if group? vars: unchain vars [vars: eval vars]
 
     ; Want to reduce the block ahead of time, because we don't want partial
     ; writes to the results (if one is written, all should be)
