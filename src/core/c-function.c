@@ -644,10 +644,10 @@ Array* Make_Paramlist_Managed_May_Fail(
 
     // !!! See notes on ACTION-META in %sysobj.r
 
-    REBCTX *meta = nullptr;
+    VarList* meta = nullptr;
 
     if (has_description or has_types or has_notes)
-        meta = Copy_Context_Shallow_Managed(VAL_CONTEXT(Root_Action_Meta));
+        meta = Copy_Context_Shallow_Managed(Cell_Varlist(Root_Action_Meta));
 
     MISC(paramlist).meta = meta;
 
@@ -657,7 +657,7 @@ Array* Make_Paramlist_Managed_May_Fail(
     if (has_description) {
         assert(Is_Text(Data_Stack_At(base + 3)));
         Copy_Cell(
-            CTX_VAR(meta, STD_ACTION_META_DESCRIPTION),
+            Varlist_Slot(meta, STD_ACTION_META_DESCRIPTION),
             Data_Stack_At(base + 3)
         );
     }
@@ -670,7 +670,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED
         );
         MISC(types_varlist).meta = nullptr;  // GC sees this, must initialize
-        INIT_CTX_KEYLIST_SHARED(CTX(types_varlist), paramlist);
+        Tweak_Keylist_Of_Varlist_Shared(CTX(types_varlist), paramlist);
 
         Value* rootvar = RESET_CELL(Array_Head(types_varlist), REB_FRAME);
         rootvar->payload.any_context.varlist = types_varlist; // canon FRAME!
@@ -704,7 +704,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             //
             if (VAL_ARRAY_LEN_AT(definitional_return + 1) != 0) {
                 Copy_Cell(
-                    CTX_VAR(meta, STD_ACTION_META_RETURN_TYPE),
+                    Varlist_Slot(meta, STD_ACTION_META_RETURN_TYPE),
                     &definitional_return[1]
                 );
             }
@@ -718,7 +718,7 @@ Array* Make_Paramlist_Managed_May_Fail(
         Term_Array_Len(types_varlist, num_slots);
 
         Init_Any_Context(
-            CTX_VAR(meta, STD_ACTION_META_PARAMETER_TYPES),
+            Varlist_Slot(meta, STD_ACTION_META_PARAMETER_TYPES),
             REB_FRAME,
             CTX(types_varlist)
         );
@@ -732,7 +732,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED
         );
         MISC(notes_varlist).meta = nullptr;  // GC sees this, must initialize
-        INIT_CTX_KEYLIST_SHARED(CTX(notes_varlist), paramlist);
+        Tweak_Keylist_Of_Varlist_Shared(CTX(notes_varlist), paramlist);
 
         Value* rootvar = RESET_CELL(Array_Head(notes_varlist), REB_FRAME);
         rootvar->payload.any_context.varlist = notes_varlist; // canon FRAME!
@@ -762,10 +762,10 @@ Array* Make_Paramlist_Managed_May_Fail(
             // parameter in the list
             //
             if (Flex_Len(Cell_Flex(definitional_return + 2)) == 0)
-                Init_Nulled(CTX_VAR(meta, STD_ACTION_META_RETURN_NOTE));
+                Init_Nulled(Varlist_Slot(meta, STD_ACTION_META_RETURN_NOTE));
             else {
                 Copy_Cell(
-                    CTX_VAR(meta, STD_ACTION_META_RETURN_NOTE),
+                    Varlist_Slot(meta, STD_ACTION_META_RETURN_NOTE),
                     &definitional_return[2]
                 );
             }
@@ -779,7 +779,7 @@ Array* Make_Paramlist_Managed_May_Fail(
         Term_Array_Len(notes_varlist, num_slots);
 
         Init_Frame(
-            CTX_VAR(meta, STD_ACTION_META_PARAMETER_NOTES),
+            Varlist_Slot(meta, STD_ACTION_META_PARAMETER_NOTES),
             CTX(notes_varlist)
         );
     }
@@ -843,7 +843,7 @@ REBACT *Make_Action(
     Array* paramlist,
     REBNAT dispatcher, // native C function called by Eval_Core
     REBACT *opt_underlying, // optional underlying function
-    REBCTX *opt_exemplar, // if provided, should be consistent w/next level
+    VarList* opt_exemplar, // if provided, should be consistent w/next level
     REBLEN details_capacity // desired capacity of the ACT_DETAILS() array
 ){
     Assert_Flex_Managed(paramlist);
@@ -965,14 +965,14 @@ REBACT *Make_Action(
         // specialization, see REB_TS_HIDDEN).
         //
         assert(Is_Node_Managed(opt_exemplar));
-        assert(CTX_LEN(opt_exemplar) == Array_Len(paramlist) - 1);
+        assert(Varlist_Len(opt_exemplar) == Array_Len(paramlist) - 1);
 
-        LINK(details).specialty = CTX_VARLIST(opt_exemplar);
+        LINK(details).specialty = Varlist_Array(opt_exemplar);
     }
 
     // The meta information may already be initialized, since the native
     // version of paramlist construction sets up the FUNCTION-META information
-    // used by HELP.  If so, it must be a valid REBCTX*.  Otherwise nullptr.
+    // used by HELP.  If so, it must be a valid VarList*.  Otherwise nullptr.
     //
     assert(
         not MISC(paramlist).meta
@@ -1001,7 +1001,7 @@ REBACT *Make_Action(
 // There could be an additional "archetype" state for the relative binding
 // machinery.  But making a one-off expired frame is an inexpensive option.
 //
-REBCTX *Make_Expired_Level_Ctx_Managed(REBACT *a)
+VarList* Make_Expired_Level_Ctx_Managed(REBACT *a)
 {
     // Since passing SERIES_MASK_CONTEXT includes FLEX_FLAG_ALWAYS_DYNAMIC,
     // don't pass it in to the allocation...it needs to be set, but will be
@@ -1020,8 +1020,8 @@ REBCTX *Make_Expired_Level_Ctx_Managed(REBACT *a)
     rootvar->payload.any_context.phase = a;
     INIT_BINDING(rootvar, UNBOUND); // !!! is a binding relevant?
 
-    REBCTX *expired = CTX(varlist);
-    INIT_CTX_KEYLIST_SHARED(expired, ACT_PARAMLIST(a));
+    VarList* expired = CTX(varlist);
+    Tweak_Keylist_Of_Varlist_Shared(expired, ACT_PARAMLIST(a));
 
     return expired;
 }
@@ -1623,7 +1623,7 @@ Bounce Encloser_Dispatcher(Level* L)
     // call to the encloser.  If it isn't managed, there's no worries about
     // user handles on it...so just take it.  Otherwise, "steal" its vars.
     //
-    REBCTX *c = Steal_Context_Vars(CTX(L->varlist), Level_Phase(L));
+    VarList* c = Steal_Context_Vars(CTX(L->varlist), Level_Phase(L));
     LINK(c).keysource = VAL_ACTION(inner);
 
     assert(Get_Flex_Info(L->varlist, INACCESSIBLE)); // look dead
@@ -1637,7 +1637,7 @@ Bounce Encloser_Dispatcher(Level* L)
     // When the DO of the FRAME! executes, we don't want it to run the
     // encloser again (infinite loop).
     //
-    Value* rootvar = CTX_ARCHETYPE(c);
+    Value* rootvar = Varlist_Archetype(c);
     rootvar->payload.any_context.phase = VAL_ACTION(inner);
     INIT_BINDING_MAY_MANAGE(rootvar, VAL_BINDING(inner));
 

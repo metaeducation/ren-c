@@ -42,8 +42,8 @@ static Bounce DNS_Actor(Level* level_, Value* port, Value* verb)
     REBREQ *sock = Ensure_Port_State(port, RDI_DNS);
     sock->timeout = 4000; // where does this go? !!!
 
-    REBCTX *ctx = VAL_CONTEXT(port);
-    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    VarList* ctx = Cell_Varlist(port);
+    Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
 
     REBLEN len;
 

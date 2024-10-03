@@ -58,7 +58,7 @@ REBMAP *Make_Map(REBLEN capacity)
 }
 
 
-static REBCTX *Error_Conflicting_Key(const Cell* key, Specifier* specifier)
+static Error* Error_Conflicting_Key(const Cell* key, Specifier* specifier)
 {
     DECLARE_VALUE (specific);
     Derelativize(specific, key, specifier);
@@ -576,7 +576,7 @@ Array* Map_To_Array(REBMAP *map, REBINT what)
 //
 //  Alloc_Context_From_Map: C
 //
-REBCTX *Alloc_Context_From_Map(REBMAP *map)
+VarList* Alloc_Context_From_Map(REBMAP *map)
 {
     // Doesn't use Length_Map because it only wants to consider words.
     //
@@ -595,9 +595,9 @@ REBCTX *Alloc_Context_From_Map(REBMAP *map)
 
     // See Alloc_Context() - cannot use it directly because no Collect_Words
 
-    REBCTX *context = Alloc_Context(REB_OBJECT, count);
-    Value* key = CTX_KEYS_HEAD(context);
-    Value* var = CTX_VARS_HEAD(context);
+    VarList* context = Alloc_Context(REB_OBJECT, count);
+    Value* key = Varlist_Keys_Head(context);
+    Value* var = Varlist_Slots_Head(context);
 
     mval = KNOWN(Array_Head(MAP_PAIRLIST(map)));
 
@@ -618,8 +618,8 @@ REBCTX *Alloc_Context_From_Map(REBMAP *map)
         }
     }
 
-    Term_Array_Len(CTX_VARLIST(context), count + 1);
-    Term_Array_Len(CTX_KEYLIST(context), count + 1);
+    Term_Array_Len(Varlist_Array(context), count + 1);
+    Term_Array_Len(Keylist_Of_Varlist(context), count + 1);
     assert(IS_END(key));
     assert(IS_END(var));
 

@@ -604,18 +604,18 @@ struct LevelStruct {
     // `varlist`
     //
     // The varlist is where arguments for the frame are kept.  Though it is
-    // ultimately usable as an ordinary CTX_VARLIST() for a FRAME! value, it
+    // ultimately usable as an ordinary Varlist_Array() for a FRAME! value, it
     // is different because it is built progressively, with random bits in
     // its pending capacity that are specifically accounted for by the GC...
     // which limits its marking up to the progress point of `L->param`.
     //
     // It starts out unmanaged, so that if no usages by the user specifically
-    // ask for a FRAME! value, and the REBCTX* isn't needed to store in a
+    // ask for a FRAME! value, and the VarList* isn't needed to store in a
     // Derelativize()'d or Move_Velue()'d value as a binding, it can be
     // reused or freed.  See Push_Action() and Drop_Action() for the logic.
     //
     Array* varlist;
-    Value* rootvar; // cache of CTX_ARCHETYPE(varlist) if varlist is not null
+    Value* rootvar; // cache of Varlist_Archetype(varlist) if varlist is not null
 
     // `param`
     //

@@ -408,7 +408,7 @@ chkDecimal:
     case REB_OBJECT:
     case REB_MODULE:
     case REB_PORT:
-        return VAL_CONTEXT(s) - VAL_CONTEXT(t);
+        return Cell_Varlist(s) - Cell_Varlist(t);
 
     case REB_ACTION:
         return VAL_ACT_PARAMLIST(s) - VAL_ACT_PARAMLIST(t);

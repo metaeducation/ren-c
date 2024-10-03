@@ -42,13 +42,13 @@
 #if !defined(DEBUG_CHECK_CASTS) || (! CPLUSPLUS_11)
 
     #define CTX(p) \
-        cast(REBCTX*, (p))
+        cast(VarList*, (p))
 
 #elif CPLUSPLUS_11
 
     template<typename T>
-    INLINE REBCTX *CTX(T *p) {
-        constexpr bool derived = std::is_same<T, REBCTX>::value;
+    INLINE VarList* CTX(T *p) {
+        constexpr bool derived = std::is_same<T, VarList>::value;
 
         constexpr bool base = std::is_same<T, void>::value
             or std::is_same<T, Node>::value
@@ -57,7 +57,7 @@
 
         static_assert(
             derived or base,
-            "CTX() works on Node/Flex/Array/REBCTX"
+            "CTX() works on Node/Flex/Array/VarList"
         );
 
         if (base)
@@ -73,7 +73,7 @@
                 )
             );
 
-        return reinterpret_cast<REBCTX*>(p);
+        return reinterpret_cast<VarList*>(p);
     }
 
 #endif

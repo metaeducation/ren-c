@@ -79,7 +79,7 @@ void Make_Thrown_Unwind_Value(
     Copy_Cell(out, NAT_VALUE(unwind));
 
     if (Is_Frame(level)) {
-        INIT_BINDING(out, VAL_CONTEXT(level));
+        INIT_BINDING(out, Cell_Varlist(level));
     }
     else if (Is_Integer(level)) {
         REBLEN count = VAL_INT32(level);
@@ -185,7 +185,7 @@ DECLARE_NATIVE(return)
         fail (Error_Return_Archetype_Raw()); // must have binding to jump to
 
     assert(L_binding->leader.bits & ARRAY_FLAG_IS_VARLIST);
-    target_level = CTX_LEVEL_MAY_FAIL(CTX(L_binding));
+    target_level = Level_Of_Varlist_May_Fail(CTX(L_binding));
 
     // !!! We only have a Level* via the binding.  We don't have distinct
     // knowledge about exactly which "phase" the original RETURN was
@@ -364,10 +364,10 @@ DECLARE_NATIVE(cascade)
     // GET-WORD!s in the block.  Consider for the future.
     //
     Value* std_meta = Get_System(SYS_STANDARD, STD_CASCADED_META);
-    REBCTX *meta = Copy_Context_Shallow_Managed(VAL_CONTEXT(std_meta));
-    Init_Nulled(CTX_VAR(meta, STD_CASCADED_META_DESCRIPTION)); // default
-    Init_Block(CTX_VAR(meta, STD_CASCADED_META_PIPELINE), pipeline);
-    Init_Nulled(CTX_VAR(meta, STD_CASCADED_META_PIPELINE_NAMES));
+    VarList* meta = Copy_Context_Shallow_Managed(Cell_Varlist(std_meta));
+    Init_Nulled(Varlist_Slot(meta, STD_CASCADED_META_DESCRIPTION)); // default
+    Init_Block(Varlist_Slot(meta, STD_CASCADED_META_PIPELINE), pipeline);
+    Init_Nulled(Varlist_Slot(meta, STD_CASCADED_META_PIPELINE_NAMES));
     MISC(paramlist).meta = meta; // must initialize before Make_Action
 
     REBACT *cascade = Make_Action(
@@ -432,14 +432,14 @@ DECLARE_NATIVE(adapt)
 
     Value* example = Get_System(SYS_STANDARD, STD_ADAPTED_META);
 
-    REBCTX *meta = Copy_Context_Shallow_Managed(VAL_CONTEXT(example));
-    Init_Nulled(CTX_VAR(meta, STD_ADAPTED_META_DESCRIPTION)); // default
-    Copy_Cell(CTX_VAR(meta, STD_ADAPTED_META_ADAPTEE), adaptee);
+    VarList* meta = Copy_Context_Shallow_Managed(Cell_Varlist(example));
+    Init_Nulled(Varlist_Slot(meta, STD_ADAPTED_META_DESCRIPTION)); // default
+    Copy_Cell(Varlist_Slot(meta, STD_ADAPTED_META_ADAPTEE), adaptee);
     if (opt_adaptee_name == nullptr)
-        Init_Nulled(CTX_VAR(meta, STD_ADAPTED_META_ADAPTEE_NAME));
+        Init_Nulled(Varlist_Slot(meta, STD_ADAPTED_META_ADAPTEE_NAME));
     else
         Init_Word(
-            CTX_VAR(meta, STD_ADAPTED_META_ADAPTEE_NAME),
+            Varlist_Slot(meta, STD_ADAPTED_META_ADAPTEE_NAME),
             opt_adaptee_name
         );
 
@@ -549,22 +549,22 @@ DECLARE_NATIVE(enclose)
 
     Value* example = Get_System(SYS_STANDARD, STD_ENCLOSED_META);
 
-    REBCTX *meta = Copy_Context_Shallow_Managed(VAL_CONTEXT(example));
-    Init_Nulled(CTX_VAR(meta, STD_ENCLOSED_META_DESCRIPTION)); // default
-    Copy_Cell(CTX_VAR(meta, STD_ENCLOSED_META_INNER), inner);
+    VarList* meta = Copy_Context_Shallow_Managed(Cell_Varlist(example));
+    Init_Nulled(Varlist_Slot(meta, STD_ENCLOSED_META_DESCRIPTION)); // default
+    Copy_Cell(Varlist_Slot(meta, STD_ENCLOSED_META_INNER), inner);
     if (opt_inner_name == nullptr)
-        Init_Nulled(CTX_VAR(meta, STD_ENCLOSED_META_INNER_NAME));
+        Init_Nulled(Varlist_Slot(meta, STD_ENCLOSED_META_INNER_NAME));
     else
         Init_Word(
-            CTX_VAR(meta, STD_ENCLOSED_META_INNER_NAME),
+            Varlist_Slot(meta, STD_ENCLOSED_META_INNER_NAME),
             opt_inner_name
         );
-    Copy_Cell(CTX_VAR(meta, STD_ENCLOSED_META_OUTER), outer);
+    Copy_Cell(Varlist_Slot(meta, STD_ENCLOSED_META_OUTER), outer);
     if (opt_outer_name == nullptr)
-        Init_Nulled(CTX_VAR(meta, STD_ENCLOSED_META_OUTER_NAME));
+        Init_Nulled(Varlist_Slot(meta, STD_ENCLOSED_META_OUTER_NAME));
     else
         Init_Word(
-            CTX_VAR(meta, STD_ENCLOSED_META_OUTER_NAME),
+            Varlist_Slot(meta, STD_ENCLOSED_META_OUTER_NAME),
             opt_outer_name
         );
 

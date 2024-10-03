@@ -806,7 +806,7 @@ RebolValue* API_rebRescue(
     void *opaque
 ){
     struct Reb_State state;
-    REBCTX *error_ctx;
+    Error* error_ctx;
 
     PUSH_TRAP(&error_ctx, &state);
 
@@ -903,7 +903,7 @@ RebolValue* API_rebRescueWith(
     void *opaque
 ){
     struct Reb_State state;
-    REBCTX *error_ctx;
+    Error* error_ctx;
 
     PUSH_TRAP(&error_ctx, &state);
 
@@ -1378,7 +1378,7 @@ RebolValue* API_rebManage(RebolValue* v)
 
     Set_Node_Managed_Bit(a);
     assert(not LINK(a).owner);
-    LINK(a).owner = Context_For_Level_May_Manage(TOP_LEVEL);
+    LINK(a).owner = Varlist_For_Level_May_Manage(TOP_LEVEL);
 
     return v;
 }
@@ -1759,7 +1759,7 @@ void *API_rebDeflateDetectAlloc(
 //
 RebolValue* API_rebError_OS(int errnum)
 {
-    REBCTX *error;
+    Error* error;
 
   #ifdef TO_WINDOWS
     if (errnum == 0)
@@ -1802,7 +1802,7 @@ RebolValue* API_rebError_OS(int errnum)
         Value* message = rebTextWide(lpMsgBuf);
         LocalFree(lpMsgBuf);
 
-        error = Error(SYM_0, SYM_0, message, END_NODE);
+        error = Make_Error_Managed(SYM_0, SYM_0, message, END_NODE);
     }
   #else
     // strerror() is not thread-safe, but strerror_r is. Unfortunately, at

@@ -34,9 +34,9 @@
 //
 //  Protect_Key: C
 //
-static void Protect_Key(REBCTX *context, REBLEN index, REBFLGS flags)
+static void Protect_Key(VarList* context, REBLEN index, REBFLGS flags)
 {
-    Value* var = CTX_VAR(context, index);
+    Value* var = Varlist_Slot(context, index);
 
     // Due to the fact that not all the bits in a value header are copied when
     // Copy_Cell is done, it's possible to set the protection status of a
@@ -60,7 +60,7 @@ static void Protect_Key(REBCTX *context, REBLEN index, REBFLGS flags)
         //
         Ensure_Keylist_Unique_Invalidated(context);
 
-        Value* key = CTX_KEY(context, index);
+        Value* key = Varlist_Key(context, index);
 
         if (flags & PROT_SET) {
             TYPE_SET(key, REB_TS_HIDDEN);
@@ -86,7 +86,7 @@ void Protect_Value(Cell* v, REBFLGS flags)
     else if (Is_Map(v))
         Protect_Flex(MAP_PAIRLIST(VAL_MAP(v)), 0, flags);
     else if (Any_Context(v))
-        Protect_Context(VAL_CONTEXT(v), flags);
+        Protect_Context(Cell_Varlist(v), flags);
 }
 
 
@@ -129,9 +129,9 @@ void Protect_Flex(Flex* s, REBLEN index, REBFLGS flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Context(REBCTX *c, REBFLGS flags)
+void Protect_Context(VarList* c, REBFLGS flags)
 {
-    if (Is_Flex_Black(CTX_VARLIST(c)))
+    if (Is_Flex_Black(Varlist_Array(c)))
         return; // avoid loop
 
     if (flags & PROT_SET) {
@@ -144,15 +144,15 @@ void Protect_Context(REBCTX *c, REBFLGS flags)
     }
     else {
         assert(not (flags & PROT_FREEZE));
-        Clear_Flex_Info(CTX_VARLIST(c), PROTECTED);
+        Clear_Flex_Info(Varlist_Array(c), PROTECTED);
     }
 
     if (not (flags & PROT_DEEP))
         return;
 
-    Flip_Flex_To_Black(CTX_VARLIST(c));  // for recursion
+    Flip_Flex_To_Black(Varlist_Array(c));  // for recursion
 
-    Value* var = CTX_VARS_HEAD(c);
+    Value* var = Varlist_Slots_Head(c);
     for (; NOT_END(var); ++var)
         Protect_Value(var, flags);
 }
@@ -180,14 +180,14 @@ static void Protect_Word_Value(Value* word, REBFLGS flags)
     }
     else if (Any_Path(word)) {
         REBLEN index;
-        REBCTX *context = Resolve_Path(word, &index);
+        VarList* context = Resolve_Path(word, &index);
         if (index == 0)
             fail ("Couldn't resolve PATH! in Protect_Word_Value");
 
         if (context != nullptr) {
             Protect_Key(context, index, flags);
             if (flags & PROT_DEEP) {
-                Value* var = CTX_VAR(context, index);
+                Value* var = Varlist_Slot(context, index);
                 Protect_Value(var, flags);
                 Uncolor(var);
             }
@@ -366,7 +366,7 @@ bool Is_Value_Immutable(const Cell* v) {
         return Is_Array_Deeply_Frozen(Cell_Array(v));
 
     if (Any_Context(v))
-        return Is_Context_Deeply_Frozen(VAL_CONTEXT(v));
+        return Is_Context_Deeply_Frozen(Cell_Varlist(v));
 
     if (Any_Series(v))
         return Is_Flex_Frozen(Cell_Flex(v));
@@ -412,9 +412,9 @@ void Force_Value_Frozen_Deep(const Cell* v, Flex* opt_locker) {
             Set_Flex_Info(Cell_Array(v), AUTO_LOCKED);
     }
     else if (Any_Context(v)) {
-        Deep_Freeze_Context(VAL_CONTEXT(v));
+        Deep_Freeze_Context(Cell_Varlist(v));
         if (opt_locker)
-            Set_Flex_Info(VAL_CONTEXT(v), AUTO_LOCKED);
+            Set_Flex_Info(Cell_Varlist(v), AUTO_LOCKED);
     }
     else if (Any_Series(v)) {
         Freeze_Non_Array_Flex(Cell_Flex(v));
@@ -480,7 +480,7 @@ DECLARE_NATIVE(lock)
             Init_Any_Context(
                 OUT,
                 VAL_TYPE(v),
-                Copy_Context_Core_Managed(VAL_CONTEXT(v), TS_STD_SERIES)
+                Copy_Context_Core_Managed(Cell_Varlist(v), TS_STD_SERIES)
             );
         }
         else if (Any_Series(v)) {

@@ -109,7 +109,7 @@
 //
 //     specialize 'append/dup [dup: false] ; Note DUP: isn't frame /DUP
 //
-REBCTX *Make_Context_For_Action_Int_Partials(
+VarList* Make_Context_For_Action_Int_Partials(
     const Value* action,   // need ->binding, so can't just be a REBACT*
     StackIndex lowest_stackindex, // caller can add refinement specializations
     struct Reb_Binder *opt_binder
@@ -120,7 +120,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
 
     REBLEN num_slots = ACT_NUM_PARAMS(act) + 1;
     Array* varlist = Make_Array_Core(
-        num_slots, // includes +1 for the CTX_ARCHETYPE() at [0]
+        num_slots, // includes +1 for the Varlist_Archetype() at [0]
         SERIES_MASK_CONTEXT
     );
 
@@ -139,9 +139,9 @@ REBCTX *Make_Context_For_Action_Int_Partials(
 
     REBLEN index = 1; // used to bind REFINEMENT! values to parameter slots
 
-    REBCTX *exemplar = ACT_EXEMPLAR(act); // may be null
+    VarList* exemplar = ACT_EXEMPLAR(act); // may be null
     if (exemplar)
-        assert(special == CTX_VARS_HEAD(exemplar));
+        assert(special == Varlist_Slots_Head(exemplar));
     else
         assert(special == ACT_PARAMS_HEAD(act));
 
@@ -207,7 +207,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
                 assert(
                     VAL_STORED_CANON(special) ==
                     Cell_Param_Canon(
-                        CTX_KEYS_HEAD(exemplar) + partial_index - 1
+                        Varlist_Keys_Head(exemplar) + partial_index - 1
                     )
                 );
 
@@ -300,7 +300,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
     Term_Array_Len(varlist, num_slots);
     MISC(varlist).meta = nullptr;  // GC sees this, we must initialize
 
-    INIT_CTX_KEYLIST_SHARED(CTX(varlist), ACT_PARAMLIST(act));
+    Tweak_Keylist_Of_Varlist_Shared(CTX(varlist), ACT_PARAMLIST(act));
     return CTX(varlist);
 }
 
@@ -314,18 +314,18 @@ REBCTX *Make_Context_For_Action_Int_Partials(
 // which to make it usable should be relative to the lowest ordered stackindex
 // and not absolute.
 //
-REBCTX *Make_Context_For_Action(
+VarList* Make_Context_For_Action(
     const Value* action, // need ->binding, so can't just be a REBACT*
     StackIndex lowest_stackindex,
     struct Reb_Binder *opt_binder
 ){
-    REBCTX *exemplar = Make_Context_For_Action_Int_Partials(
+    VarList* exemplar = Make_Context_For_Action_Int_Partials(
         action,
         lowest_stackindex,
         opt_binder
     );
 
-    Manage_Flex(CTX_VARLIST(exemplar)); // !!! was needed before, review
+    Manage_Flex(Varlist_Array(exemplar)); // !!! was needed before, review
     Drop_Data_Stack_To(lowest_stackindex);
     return exemplar;
 }
@@ -383,12 +383,12 @@ bool Specialize_Action_Throws(
     // Note that REB_X_PARTIAL can't be used in slots yet, because the GC
     // will be able to see this frame (code runs bound into it).
     //
-    REBCTX *exemplar = Make_Context_For_Action_Int_Partials(
+    VarList* exemplar = Make_Context_For_Action_Int_Partials(
         specializee,
         lowest_stackindex,
         opt_def ? &binder : nullptr
     );
-    Manage_Flex(CTX_VARLIST(exemplar)); // destined to be managed, guarded
+    Manage_Flex(Varlist_Array(exemplar)); // destined to be managed, guarded
 
     if (opt_def) { // code that fills the frame...fully or partially
         //
@@ -416,8 +416,8 @@ bool Specialize_Action_Throws(
         // !!! Only one binder can be in effect, and we're calling arbitrary
         // code.  Must clean up now vs. in loop we do at the end.  :-(
         //
-        Cell* key = CTX_KEYS_HEAD(exemplar);
-        Value* var = CTX_VARS_HEAD(exemplar);
+        Cell* key = Varlist_Keys_Head(exemplar);
+        Value* var = Varlist_Slots_Head(exemplar);
         for (; NOT_END(key); ++key, ++var) {
             if (Is_Param_Unbindable(key))
                 continue; // !!! is this flag still relevant?
@@ -453,7 +453,7 @@ bool Specialize_Action_Throws(
     Copy_Cell(PUSH(), ACT_ARCHETYPE(unspecialized));
 
     Value* param = rootkey + 1;
-    Value* arg = CTX_VARS_HEAD(exemplar);
+    Value* arg = Varlist_Slots_Head(exemplar);
     Value* refine = ORDINARY_ARG; // parallels states in Eval_Core_Throw()
     REBLEN index = 1;
 
@@ -788,18 +788,18 @@ bool Specialize_Action_Throws(
 
     Value* example = Get_System(SYS_STANDARD, STD_SPECIALIZED_META);
 
-    REBCTX *meta = Copy_Context_Shallow_Managed(VAL_CONTEXT(example));
+    VarList* meta = Copy_Context_Shallow_Managed(Cell_Varlist(example));
 
-    Init_Nulled(CTX_VAR(meta, STD_SPECIALIZED_META_DESCRIPTION)); // default
+    Init_Nulled(Varlist_Slot(meta, STD_SPECIALIZED_META_DESCRIPTION)); // default
     Copy_Cell(
-        CTX_VAR(meta, STD_SPECIALIZED_META_SPECIALIZEE),
+        Varlist_Slot(meta, STD_SPECIALIZED_META_SPECIALIZEE),
         specializee
     );
     if (not opt_specializee_name)
-        Init_Nulled(CTX_VAR(meta, STD_SPECIALIZED_META_SPECIALIZEE_NAME));
+        Init_Nulled(Varlist_Slot(meta, STD_SPECIALIZED_META_SPECIALIZEE_NAME));
     else
         Init_Word(
-            CTX_VAR(meta, STD_SPECIALIZED_META_SPECIALIZEE_NAME),
+            Varlist_Slot(meta, STD_SPECIALIZED_META_SPECIALIZEE_NAME),
             opt_specializee_name
         );
 
@@ -812,7 +812,7 @@ bool Specialize_Action_Throws(
         exemplar, // also provide a context of specialization values
         1 // details array capacity
     );
-    assert(CTX_KEYLIST(exemplar) == ACT_PARAMLIST(unspecialized));
+    assert(Keylist_Of_Varlist(exemplar) == ACT_PARAMLIST(unspecialized));
 
     // The "body" is the FRAME! value of the specialization.  It takes on the
     // binding we want to use (which we can't put in the exemplar archetype,
@@ -820,7 +820,7 @@ bool Specialize_Action_Throws(
     // action in the phase, so Specializer_Dispatcher() knows what to call.
     //
     Cell* body = Array_Head(ACT_DETAILS(specialized));
-    Copy_Cell(body, CTX_ARCHETYPE(exemplar));
+    Copy_Cell(body, Varlist_Archetype(exemplar));
     INIT_BINDING(body, VAL_BINDING(specializee));
     body->payload.any_context.phase = unspecialized;
 

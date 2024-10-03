@@ -61,7 +61,7 @@
     INLINE Specifier* SPC(void *p) {
         assert(p != SPECIFIED);  // use SPECIFIED, not SPC(SPECIFIED)
 
-        REBCTX *c = CTX(p);
+        VarList* c = CTX(p);
         assert(CTX_TYPE(c) == REB_FRAME);
 
         // Note: May be managed or unamanged.
@@ -79,7 +79,7 @@
         // The keylist for a frame's context should come from a function's
         // paramlist, which should have an ACTION! value in keylist[0]
         //
-        REBCTX *c = CTX(v->extra.binding);
+        VarList* c = CTX(v->extra.binding);
         assert(CTX_TYPE(c) == REB_FRAME); // may be inaccessible
         return cast(Specifier*, c);
     }
@@ -104,7 +104,7 @@
 // is at MAKE-time, o3 put its binding into any functions bound to o2 or o1,
 // thus getting its overriding behavior.
 //
-INLINE bool Is_Overriding_Context(REBCTX *stored, REBCTX *override)
+INLINE bool Is_Overriding_Context(VarList* stored, VarList* override)
 {
     Node* stored_source = LINK(stored).keysource;
     Node* temp = LINK(override).keysource;
@@ -155,7 +155,7 @@ enum {
 
 
 struct Reb_Binder {
-    REBCTX *context;
+    VarList* context;
   #if !defined(NDEBUG)
     REBLEN count;
   #endif
@@ -173,7 +173,7 @@ struct Reb_Binder {
 };
 
 
-INLINE void INIT_BINDER(struct Reb_Binder *binder, REBCTX *context) {
+INLINE void INIT_BINDER(struct Reb_Binder *binder, VarList* context) {
     binder->context = context;
 
   #if !defined(NDEBUG)
@@ -305,7 +305,7 @@ struct Reb_Collector {
 // the frame contributed might still matter.
 //
 // !!! The functioning of Decay_Flex() should be reviewed to see if it
-// actually needs to preserve the CTX_ARCHETYPE().  It's not entirely clear
+// actually needs to preserve the Varlist_Archetype().  It's not entirely clear
 // if the scenarios are meaningful--but Derelativize cannot fail(), and
 // it would without this.  It might also put in some "fake" element that
 // would fail later, but given that the Level's captured binding can outlive
@@ -314,7 +314,7 @@ struct Reb_Collector {
 INLINE Stub* SPC_BINDING(Specifier* specifier)
 {
     assert(specifier != UNBOUND);
-    Value* rootvar = CTX_ARCHETYPE(CTX(specifier)); // works even if Decay()d
+    Value* rootvar = Varlist_Archetype(CTX(specifier)); // works even if Decay()d
     assert(Is_Frame(rootvar));
     return rootvar->extra.binding;
 }
@@ -361,7 +361,7 @@ INLINE Stub* SPC_BINDING(Specifier* specifier)
 // Due to the performance-critical nature of this routine, it is declared
 // as inline so that locations using it can avoid overhead in invocation.
 //
-INLINE REBCTX *Get_Var_Context(
+INLINE VarList* Get_Var_Context(
     const Cell* any_word,
     Specifier* specifier
 ){
@@ -370,7 +370,7 @@ INLINE REBCTX *Get_Var_Context(
     Stub* binding = VAL_BINDING(any_word);
     assert(binding); // caller should check so context won't be null
 
-    REBCTX *c;
+    VarList* c;
 
     if (binding->leader.bits & ARRAY_FLAG_IS_VARLIST) {
 
@@ -437,10 +437,10 @@ INLINE REBCTX *Get_Var_Context(
   #ifdef DEBUG_BINDING_NAME_MATCH // this is expensive, and hasn't happened
     assert(
         VAL_WORD_CANON(any_word)
-        == Key_Canon(CTX_KEY(c, VAL_WORD_INDEX(any_word))));
+        == Key_Canon(Varlist_Key(c, VAL_WORD_INDEX(any_word))));
   #endif
 
-    FAIL_IF_INACCESSIBLE_CTX(c); // usually VAL_CONTEXT() checks, need to here
+    FAIL_IF_INACCESSIBLE_CTX(c); // usually Cell_Varlist() checks, need to here
     return c;
 }
 
@@ -451,11 +451,11 @@ INLINE const Value* Get_Opt_Var_May_Fail(
     if (not VAL_BINDING(any_word))
         fail (Error_Not_Bound_Raw(KNOWN(any_word)));
 
-    REBCTX *c = Get_Var_Context(any_word, specifier);
+    VarList* c = Get_Var_Context(any_word, specifier);
     if (Get_Flex_Info(c, INACCESSIBLE))
         fail (Error_No_Relative_Core(any_word));
 
-    return CTX_VAR(c, VAL_WORD_INDEX(any_word));
+    return Varlist_Slot(c, VAL_WORD_INDEX(any_word));
 }
 
 INLINE const Value* Try_Get_Opt_Var(
@@ -465,11 +465,11 @@ INLINE const Value* Try_Get_Opt_Var(
     if (not VAL_BINDING(any_word))
         return nullptr;
 
-    REBCTX *c = Get_Var_Context(any_word, specifier);
+    VarList* c = Get_Var_Context(any_word, specifier);
     if (Get_Flex_Info(c, INACCESSIBLE))
         return nullptr;
 
-    return CTX_VAR(c, VAL_WORD_INDEX(any_word));
+    return Varlist_Slot(c, VAL_WORD_INDEX(any_word));
 }
 
 INLINE void Move_Opt_Var_May_Fail(
@@ -487,7 +487,7 @@ INLINE Value* Get_Mutable_Var_May_Fail(
     if (not VAL_BINDING(any_word))
         fail (Error_Not_Bound_Raw(KNOWN(any_word)));
 
-    REBCTX *context = Get_Var_Context(any_word, specifier);
+    VarList* context = Get_Var_Context(any_word, specifier);
 
     // A context can be permanently frozen (`lock obj`) or temporarily
     // protected, e.g. `protect obj | unprotect obj`.  A native will
@@ -498,7 +498,7 @@ INLINE Value* Get_Mutable_Var_May_Fail(
     //
     FAIL_IF_READ_ONLY_CONTEXT(context);
 
-    Value* var = CTX_VAR(context, VAL_WORD_INDEX(any_word));
+    Value* var = Varlist_Slot(context, VAL_WORD_INDEX(any_word));
 
     // The PROTECT command has a finer-grained granularity for marking
     // not just contexts, but individual fields as protected.

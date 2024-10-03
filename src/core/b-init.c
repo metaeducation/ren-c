@@ -290,7 +290,7 @@ static Array* Startup_Datatypes(Array* boot_types, Array* boot_typespecs)
         // a limited sense.)
         //
         assert(value == Datatype_From_Kind(cast(enum Reb_Kind, n)));
-        SET_VAL_FLAG(CTX_VAR(Lib_Context, n), CELL_FLAG_PROTECTED);
+        SET_VAL_FLAG(Varlist_Slot(Lib_Context, n), CELL_FLAG_PROTECTED);
 
         Append_Value(catalog, KNOWN(word));
     }
@@ -496,12 +496,12 @@ static void Init_Action_Meta_Shim(void) {
         SYM_SELF, SYM_DESCRIPTION, SYM_RETURN_TYPE, SYM_RETURN_NOTE,
         SYM_PARAMETER_TYPES, SYM_PARAMETER_NOTES
     };
-    REBCTX *meta = Alloc_Context_Core(REB_OBJECT, 6, NODE_FLAG_MANAGED);
+    VarList* meta = Alloc_Context_Core(REB_OBJECT, 6, NODE_FLAG_MANAGED);
     REBLEN i = 1;
     for (; i != 7; ++i)
         Init_Nulled(Append_Context(meta, nullptr, Canon(field_syms[i - 1])));
 
-    Init_Object(CTX_VAR(meta, 1), meta); // it's "selfish"
+    Init_Object(Varlist_Slot(meta, 1), meta); // it's "selfish"
 
     Root_Action_Meta = Init_Object(Alloc_Value(), meta);
 
@@ -635,7 +635,7 @@ Value* Make_Native(
 
     // Append the native to the module under the name given.
     //
-    Value* var = Append_Context(VAL_CONTEXT(module), name, nullptr);
+    Value* var = Append_Context(Cell_Varlist(module), name, nullptr);
     Init_Action_Unbound(var, act);
     if (enfix)
         SET_VAL_FLAG(var, VALUE_FLAG_ENFIXED);
@@ -699,7 +699,7 @@ static Array* Startup_Natives(const Value* boot_natives)
             &item,
             specifier,
             Native_C_Funcs[n],
-            CTX_ARCHETYPE(Lib_Context)
+            Varlist_Archetype(Lib_Context)
         );
 
         // While the lib context natives can be overwritten, the system
@@ -962,14 +962,14 @@ static void Init_System_Object(
     Array* datatypes_catalog,
     Array* natives_catalog,
     Array* generics_catalog,
-    REBCTX *errors_catalog
+    VarList* errors_catalog
 ) {
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
     Cell* spec_head = Cell_List_At(boot_sysobj_spec);
 
     // Create the system object from the sysobj block (defined in %sysobj.r)
     //
-    REBCTX *system = Make_Selfish_Context_Detect_Managed(
+    VarList* system = Make_Selfish_Context_Detect_Managed(
         REB_OBJECT, // type
         Cell_List_At(boot_sysobj_spec), // scan for toplevel set-words
         nullptr  // parent
@@ -1036,9 +1036,9 @@ static void Init_System_Object(
     Value* std_error = Get_System(SYS_STANDARD, STD_ERROR);
     assert(Is_Object(std_error));
     CHANGE_VAL_TYPE_BITS(std_error, REB_ERROR);
-    CHANGE_VAL_TYPE_BITS(CTX_ARCHETYPE(VAL_CONTEXT(std_error)), REB_ERROR);
-    assert(CTX_KEY_SYM(VAL_CONTEXT(std_error), 1) == SYM_SELF);
-    CHANGE_VAL_TYPE_BITS(VAL_CONTEXT_VAR(std_error, 1), REB_ERROR);
+    CHANGE_VAL_TYPE_BITS(Varlist_Archetype(Cell_Varlist(std_error)), REB_ERROR);
+    assert(CTX_KEY_SYM(Cell_Varlist(std_error), 1) == SYM_SELF);
+    CHANGE_VAL_TYPE_BITS(Cell_Varlist_VAR(std_error, 1), REB_ERROR);
 }
 
 void Shutdown_System_Object(void)
@@ -1469,7 +1469,7 @@ void Startup_Core(void)
 
     // boot->errors is the error definition list from %errors.r
     //
-    REBCTX *errors_catalog = Startup_Errors(KNOWN(&boot->errors));
+    VarList* errors_catalog = Startup_Errors(KNOWN(&boot->errors));
     Push_GC_Guard(errors_catalog);
 
     Init_System_Object(
@@ -1557,7 +1557,7 @@ static Value* Startup_Mezzanine(BOOT_BLK *boot)
 
     Startup_Sys(Cell_Array(&boot->sys));
 
-    Value* finish_init = CTX_VAR(Sys_Context, SYS_CTX_FINISH_INIT_CORE);
+    Value* finish_init = Varlist_Slot(Sys_Context, SYS_CTX_FINISH_INIT_CORE);
     assert(Is_Action(finish_init));
 
     // The FINISH-INIT-CORE function should likely do very little.  But right

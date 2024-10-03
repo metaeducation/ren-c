@@ -692,7 +692,7 @@ DECLARE_NATIVE(same_q)
         //
         // ANY-CONTEXT! are the same if the varlists match.
         //
-        if (VAL_CONTEXT(value1) != VAL_CONTEXT(value2))
+        if (Cell_Varlist(value1) != Cell_Varlist(value2))
             return Init_False(OUT);
         return Init_True(OUT);
     }

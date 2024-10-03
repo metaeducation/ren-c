@@ -47,7 +47,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A Series is a contiguous-memory structure with an optimization of behaving
+// A Flex is a contiguous-memory structure with an optimization of behaving
 // like a kind of "double-ended queue".  It is able to reserve capacity at
 // both the tail and the head, and when data is taken from the head it will
 // retain that capacity...reusing it on later insertions at the head.
@@ -58,17 +58,17 @@
 // must be subtracted completely to free the pointer using the address
 // originally given by the allocator.
 //
-// The element size in a Series is known as the "width".  It is designed
+// The element size in a Flex is known as the "width".  It is designed
 // to support widths of elements up to 255 bytes.  (See note on SER_FREED
 // about accomodating 256-byte elements.)
 //
-// REBSERs may be either manually memory managed or delegated to the garbage
+// A Flex may be either manually memory managed or delegated to the garbage
 // collector.  Free_Unmanaged_Flex() may only be called on manual series.
 // See Manage_Flex()/Push_GC_Guard() for remarks on how to work safely
 // with pointers to garbage-collected series, to avoid having them be GC'd
 // out from under the code while working with them.
 //
-// Series subclasses Array, REBCTX, REBACT, REBMAP are defined which are
+// Flex subclasses Array, VarList, REBACT, REBMAP are defined which are
 // type-incompatible with Series for safety.  (In C++ they would be derived
 // classes, so common operations would not require casting...but it is seen
 // as worthwhile to offer some protection even compiling as C.)  The
@@ -76,13 +76,13 @@
 //
 // Notes:
 //
-// * For the struct definition underlying Series, see Stub in %sys-rebser.h
+// * For the struct definition underlying Flex, see Stub in %sys-rebser.h
 //
 // * It is desirable to have series subclasses be different types, even though
 //   there are some common routines for processing them.  e.g. not every
 //   function that would take a Flex* would actually be handled in the same
-//   way for a Array*.  Plus, just because a REBCTX* is implemented as a
-//   Array* with a link to another Array* doesn't mean most clients should
+//   way for a Array.  Plus, just because a VarList is implemented as an
+//   Array with a link to another Array doesn't mean most clients should
 //   be accessing the array--in a C++ build this would mean it would have some
 //   kind of protected inheritance scheme.
 //
@@ -164,7 +164,7 @@ INLINE void Set_Flex_Len(Flex* s, REBLEN len) {
 INLINE Byte *Flex_Data(Flex* s) {
     // if updating, also update manual inlining in SER_AT_RAW
 
-    // The VAL_CONTEXT(), Cell_Flex(), Cell_Array() extractors do the failing
+    // The Cell_Varlist(), Cell_Flex(), Cell_Array() extractors do the failing
     // upon extraction--that's meant to catch it before it gets this far.
     //
     assert(not (s->info.bits & FLEX_INFO_INACCESSIBLE));
@@ -189,7 +189,7 @@ INLINE Byte *Flex_Data_At(Byte w, Flex* s, REBLEN i) {
             printf("Flex_Data_At() asked %d on width=%d\n", w, Flex_Wide(s));
         panic (s);
     }
-    // The VAL_CONTEXT(), Cell_Flex(), Cell_Array() extractors do the failing
+    // The Cell_Varlist(), Cell_Flex(), Cell_Array() extractors do the failing
     // upon extraction--that's meant to catch it before it gets this far.
     //
     assert(not (s->info.bits & FLEX_INFO_INACCESSIBLE));

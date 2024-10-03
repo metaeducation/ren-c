@@ -31,7 +31,7 @@
 // describe "object-like" things (lists of TYPESET! keys and corresponding
 // variable values).  They are used by OBJECT!, PORT!, FRAME!, etc.
 //
-// The REBCTX* is how contexts are passed around as a single pointer.  This
+// The VarList* is how contexts are passed around as a single pointer.  This
 // pointer is actually just an Array Flex which represents the variable
 // values.  The keylist can be reached through the ->link field of that
 // stub, and the [0] value of the variable array is an "archetype instance"
@@ -76,7 +76,7 @@
 // configured, hence this is an "Alloc" instead of a "Make" (because there
 // is still work to be done before it will pass ASSERT_CONTEXT).
 //
-REBCTX *Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
+VarList* Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
 {
     assert(not (flags & ARRAY_FLAG_HAS_FILE_LINE)); // LINK and MISC are taken
 
@@ -110,7 +110,7 @@ REBCTX *Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
 
     // varlists link keylists via LINK().keysource, sharable hence managed
 
-    INIT_CTX_KEYLIST_UNIQUE(CTX(varlist), keylist);
+    Tweak_Keylist_Of_Varlist_Unique(CTX(varlist), keylist);
 
     return CTX(varlist); // varlist pointer is context handle
 }
@@ -121,9 +121,9 @@ REBCTX *Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
 //
 // Returns whether or not the expansion invalidated existing keys.
 //
-bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
+bool Expand_Context_Keylist_Core(VarList* context, REBLEN delta)
 {
-    Array* keylist = CTX_KEYLIST(context);
+    Array* keylist = Keylist_Of_Varlist(context);
 
     // can't expand or unshare a FRAME!'s list
     //
@@ -131,7 +131,7 @@ bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
 
     if (Get_Flex_Info(keylist, SHARED_KEYLIST)) {
         //
-        // INIT_CTX_KEYLIST_SHARED was used to set the flag that indicates
+        // Tweak_Keylist_Of_Varlist_Shared was used to set the flag that indicates
         // this keylist is shared with one or more other contexts.  Can't
         // expand the shared copy without impacting the others, so break away
         // from the sharing group by making a new copy.
@@ -158,7 +158,7 @@ bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
             LINK(copy).ancestor = LINK(keylist).ancestor;
 
         Manage_Flex(copy);
-        INIT_CTX_KEYLIST_UNIQUE(context, copy);
+        Tweak_Keylist_Of_Varlist_Unique(context, copy);
 
         return true;
     }
@@ -166,8 +166,8 @@ bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
     if (delta == 0)
         return false;
 
-    // INIT_CTX_KEYLIST_UNIQUE was used to set this keylist in the
-    // context, and no INIT_CTX_KEYLIST_SHARED was used by another context
+    // Tweak_Keylist_Of_Varlist_Unique was used to set this keylist in the
+    // context, and no Tweak_Keylist_Of_Varlist_Shared was used by another context
     // to mark the flag indicating it's shared.  Extend it directly.
 
     Extend_Flex(keylist, delta);
@@ -182,12 +182,12 @@ bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
 //
 // Expand a context. Copy words if keylist is not unique.
 //
-void Expand_Context(REBCTX *context, REBLEN delta)
+void Expand_Context(VarList* context, REBLEN delta)
 {
     // varlist is unique to each object--expand without making a copy.
     //
-    Extend_Flex(CTX_VARLIST(context), delta);
-    Term_Array_Len(CTX_VARLIST(context), Array_Len(CTX_VARLIST(context)));
+    Extend_Flex(Varlist_Array(context), delta);
+    Term_Array_Len(Varlist_Array(context), Array_Len(Varlist_Array(context)));
 
     Expand_Context_Keylist_Core(context, delta);
 }
@@ -209,11 +209,11 @@ void Expand_Context(REBCTX *context, REBLEN delta)
 // they usually likely don't need the result directly.
 //
 Value* Append_Context(
-    REBCTX *context,
+    VarList* context,
     Option(Cell*) any_word,
     Option(Symbol*) symbol
 ) {
-    Array* keylist = CTX_KEYLIST(context);
+    Array* keylist = Keylist_Of_Varlist(context);
     if (any_word) {
         assert(not symbol);
         symbol = Cell_Word_Symbol(unwrap(any_word));
@@ -239,12 +239,12 @@ Value* Append_Context(
 
     // Add a slot to the var list
     //
-    Expand_Flex_Tail(CTX_VARLIST(context), 1);
-    REBLEN len = Array_Len(CTX_VARLIST(context)); // length we just bumped
+    Expand_Flex_Tail(Varlist_Array(context), 1);
+    REBLEN len = Array_Len(Varlist_Array(context)); // length we just bumped
     REBLEN index = len - 1;
 
-    Value* value = Init_Nothing(Array_Last(CTX_VARLIST(context)));
-    Term_Array_Len(CTX_VARLIST(context), len);
+    Value* value = Init_Nothing(Array_Last(Varlist_Array(context)));
+    Term_Array_Len(Varlist_Array(context), len);
 
     if (any_word) {
         //
@@ -270,19 +270,19 @@ Value* Append_Context(
 // Makes a copy of a context.  If no extra storage space is requested, then
 // the same keylist will be used.
 //
-REBCTX *Copy_Context_Shallow_Extra_Managed(REBCTX *src, REBLEN extra) {
+VarList* Copy_Context_Shallow_Extra_Managed(VarList* src, REBLEN extra) {
     assert(Get_Array_Flag(src, IS_VARLIST));
-    Assert_Flex_Managed(CTX_KEYLIST(src));
+    Assert_Flex_Managed(Keylist_Of_Varlist(src));
 
     // Note that keylists contain only typesets (hence no relative values),
     // and no varlist is part of a function body.  All the values here should
     // be fully specified.
     //
-    REBCTX *dest;
+    VarList* dest;
     Array* varlist;
     if (extra == 0) {
         varlist = Copy_Array_Shallow_Flags(
-            CTX_VARLIST(src),
+            Varlist_Array(src),
             SPECIFIED,
             SERIES_MASK_CONTEXT // includes assurance of non-dynamic
                 | NODE_FLAG_MANAGED
@@ -292,18 +292,18 @@ REBCTX *Copy_Context_Shallow_Extra_Managed(REBCTX *src, REBLEN extra) {
 
         // Leave ancestor link as-is in shared keylist.
         //
-        INIT_CTX_KEYLIST_SHARED(dest, CTX_KEYLIST(src));
+        Tweak_Keylist_Of_Varlist_Shared(dest, Keylist_Of_Varlist(src));
     }
     else {
         Array* keylist = Copy_Array_At_Extra_Shallow(
-            CTX_KEYLIST(src),
+            Keylist_Of_Varlist(src),
             0,
             SPECIFIED,
             extra,
             NODE_FLAG_MANAGED
         );
         varlist = Copy_Array_At_Extra_Shallow(
-            CTX_VARLIST(src),
+            Varlist_Array(src),
             0,
             SPECIFIED,
             extra,
@@ -312,12 +312,12 @@ REBCTX *Copy_Context_Shallow_Extra_Managed(REBCTX *src, REBLEN extra) {
 
         dest = CTX(varlist);
 
-        LINK(keylist).ancestor = CTX_KEYLIST(src);
+        LINK(keylist).ancestor = Keylist_Of_Varlist(src);
 
-        INIT_CTX_KEYLIST_UNIQUE(dest, keylist);
+        Tweak_Keylist_Of_Varlist_Unique(dest, keylist);
     }
 
-    CTX_ARCHETYPE(dest)->payload.any_context.varlist = CTX_VARLIST(dest);
+    Varlist_Archetype(dest)->payload.any_context.varlist = Varlist_Array(dest);
 
     // !!! Should the new object keep the meta information, or should users
     // have to copy that manually?  If it's copied would it be a shallow or
@@ -430,12 +430,12 @@ void Collect_End(struct Reb_Collector *cl)
 //
 void Collect_Context_Keys(
     struct Reb_Collector *cl,
-    REBCTX *context,
+    VarList* context,
     bool check_dups // check for duplicates (otherwise assume unique)
 ){
     assert(cl->flags & COLLECT_AS_TYPESET);
 
-    Value* key = CTX_KEYS_HEAD(context);
+    Value* key = Varlist_Keys_Head(context);
 
     assert(cl->index >= 1); // 0 in bind table means "not present"
 
@@ -444,7 +444,7 @@ void Collect_Context_Keys(
     // necessary if duplicates are found, but the actual buffer length will be
     // set correctly by the end.)
     //
-    Expand_Flex_Tail(BUF_COLLECT, CTX_LEN(context));
+    Expand_Flex_Tail(BUF_COLLECT, Varlist_Len(context));
     SET_ARRAY_LEN_NOTERM(BUF_COLLECT, cl->index);
 
     Cell* collect = Array_Tail(BUF_COLLECT); // get address *after* expansion
@@ -477,7 +477,7 @@ void Collect_Context_Keys(
             Add_Binder_Index(&cl->binder, Key_Canon(key), cl->index);
         }
         SET_ARRAY_LEN_NOTERM(
-            BUF_COLLECT, Array_Len(BUF_COLLECT) + CTX_LEN(context)
+            BUF_COLLECT, Array_Len(BUF_COLLECT) + Varlist_Len(context)
         );
     }
 
@@ -564,7 +564,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
 Array* Collect_Keylist_Managed(
     REBLEN *self_index_out, // which context index SELF is in (if COLLECT_SELF)
     const Cell* head,
-    REBCTX *prior,
+    VarList* prior,
     REBFLGS flags // see %sys-core.h for COLLECT_ANY_WORD, etc.
 ) {
     struct Reb_Collector collector;
@@ -630,8 +630,8 @@ Array* Collect_Keylist_Managed(
     // array, otherwise reuse the original
     //
     Array* keylist;
-    if (prior != nullptr and Array_Len(CTX_KEYLIST(prior)) == Array_Len(BUF_COLLECT))
-        keylist = CTX_KEYLIST(prior);
+    if (prior != nullptr and Array_Len(Keylist_Of_Varlist(prior)) == Array_Len(BUF_COLLECT))
+        keylist = Keylist_Of_Varlist(prior);
     else
         keylist = Grab_Collected_Array_Managed(cl);
 
@@ -702,7 +702,7 @@ Array* Collect_Unique_Words_Managed(
         }
     }
     else if (Any_Context(ignore)) {
-        Value* key = CTX_KEYS_HEAD(VAL_CONTEXT(ignore));
+        Value* key = Varlist_Keys_Head(Cell_Varlist(ignore));
         for (; NOT_END(key); ++key) {
             //
             // Shouldn't be possible to have an object with duplicate keys,
@@ -738,7 +738,7 @@ Array* Collect_Unique_Words_Managed(
         }
     }
     else if (Any_Context(ignore)) {
-        Value* key = CTX_KEYS_HEAD(VAL_CONTEXT(ignore));
+        Value* key = Varlist_Keys_Head(Cell_Varlist(ignore));
         for (; NOT_END(key); ++key) {
             Remove_Binder_Index(&cl->binder, Key_Canon(key));
         }
@@ -758,11 +758,11 @@ Array* Collect_Unique_Words_Managed(
 // which types of values need to be copied, deep copied, and rebound.
 //
 void Rebind_Context_Deep(
-    REBCTX *source,
-    REBCTX *dest,
+    VarList* source,
+    VarList* dest,
     struct Reb_Binder *opt_binder
 ) {
-    Rebind_Values_Deep(source, dest, CTX_VARS_HEAD(dest), opt_binder);
+    Rebind_Values_Deep(source, dest, Varlist_Slots_Head(dest), opt_binder);
 }
 
 
@@ -788,10 +788,10 @@ void Rebind_Context_Deep(
 // nuance that is expected of the generators, which will have an equivalent
 // to `<with> return` to suppress it.
 //
-REBCTX *Make_Selfish_Context_Detect_Managed(
+VarList* Make_Selfish_Context_Detect_Managed(
     enum Reb_Kind kind,
     const Cell* head,
-    REBCTX *opt_parent
+    VarList* opt_parent
 ) {
     REBLEN self_index;
     Array* keylist = Collect_Keylist_Managed(
@@ -810,7 +810,7 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
     Term_Array_Len(varlist, len);
     MISC(varlist).meta = nullptr;  // clear meta object (GC sees this)
 
-    REBCTX *context = CTX(varlist);
+    VarList* context = CTX(varlist);
 
     // This isn't necessarily the clearest way to determine if the keylist is
     // shared.  Note Collect_Keylist_Managed() isn't called from anywhere
@@ -818,12 +818,12 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
     // obvious what's going on.
     //
     if (opt_parent == nullptr) {
-        INIT_CTX_KEYLIST_UNIQUE(context, keylist);
+        Tweak_Keylist_Of_Varlist_Unique(context, keylist);
         LINK(keylist).ancestor = keylist;
     }
     else {
-        if (keylist == CTX_KEYLIST(opt_parent)) {
-            INIT_CTX_KEYLIST_SHARED(context, keylist);
+        if (keylist == Keylist_Of_Varlist(opt_parent)) {
+            Tweak_Keylist_Of_Varlist_Shared(context, keylist);
 
             // We leave the ancestor link as-is in the shared keylist--so
             // whatever the parent had...if we didn't have to make a new
@@ -831,8 +831,8 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
             // look at its keylist and its ancestor link points at itself.
         }
         else {
-            INIT_CTX_KEYLIST_UNIQUE(context, keylist);
-            LINK(keylist).ancestor = CTX_KEYLIST(opt_parent);
+            Tweak_Keylist_Of_Varlist_Unique(context, keylist);
+            LINK(keylist).ancestor = Keylist_Of_Varlist(opt_parent);
         }
     }
 
@@ -854,8 +854,8 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
         // None of these should be relative, because they came from object
         // vars (that were not part of the deep copy of a function body)
         //
-        Value* dest = CTX_VARS_HEAD(context);
-        Value* src = CTX_VARS_HEAD(opt_parent);
+        Value* dest = Varlist_Slots_Head(context);
+        Value* src = Varlist_Slots_Head(opt_parent);
         for (; NOT_END(src); ++dest, ++src)
             Move_Var(dest, src);
 
@@ -863,9 +863,9 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
         // their series components with deep copies of themselves:
         //
         Clonify_Values_Len_Managed(
-            CTX_VARS_HEAD(context),
+            Varlist_Slots_Head(context),
             SPECIFIED,
-            CTX_LEN(context),
+            Varlist_Len(context),
             TS_CLONE
         );
     }
@@ -876,7 +876,7 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
     // won't destroy the integrity of the context.)
     //
     assert(CTX_KEY_SYM(context, self_index) == SYM_SELF);
-    Copy_Cell(CTX_VAR(context, self_index), CTX_ARCHETYPE(context));
+    Copy_Cell(Varlist_Slot(context, self_index), Varlist_Archetype(context));
 
     if (opt_parent)
         Rebind_Context_Deep(opt_parent, context, nullptr);  // no more binds
@@ -915,13 +915,13 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
 // !!! Because this is a work in progress, set-words would be gathered if
 // they were used as values, so they are not currently permitted.
 //
-REBCTX *Construct_Context_Managed(
+VarList* Construct_Context_Managed(
     enum Reb_Kind kind,
     Cell* head, // !!! Warning: modified binding
     Specifier* specifier,
-    REBCTX *opt_parent
+    VarList* opt_parent
 ) {
-    REBCTX *context = Make_Selfish_Context_Detect_Managed(
+    VarList* context = Make_Selfish_Context_Detect_Managed(
         kind, // type
         head, // values to scan for toplevel set-words
         opt_parent // parent
@@ -963,12 +963,12 @@ REBCTX *Construct_Context_Managed(
 //     2 for value
 //     3 for words and values
 //
-Array* Context_To_Array(REBCTX *context, REBINT mode)
+Array* Context_To_Array(VarList* context, REBINT mode)
 {
     StackIndex base = TOP_INDEX;
 
-    Value* key = CTX_KEYS_HEAD(context);
-    Value* var = CTX_VARS_HEAD(context);
+    Value* key = Varlist_Keys_Head(context);
+    Value* var = Varlist_Slots_Head(context);
 
     assert(!(mode & 4));
 
@@ -1016,7 +1016,7 @@ Array* Context_To_Array(REBCTX *context, REBINT mode)
 //
 // Deep copy and rebind the child.
 //
-REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
+VarList* Merge_Contexts_Selfish_Managed(VarList* parent1, VarList* parent2)
 {
     if (parent2 != nullptr) {
         assert(CTX_TYPE(parent1) == CTX_TYPE(parent2));
@@ -1069,7 +1069,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
     if (parent1 == nullptr)
         LINK(keylist).ancestor = keylist;
     else
-        LINK(keylist).ancestor = CTX_KEYLIST(parent1);
+        LINK(keylist).ancestor = Keylist_Of_Varlist(parent1);
 
     Array* varlist = Make_Array_Core(
         Array_Len(keylist),
@@ -1078,8 +1078,8 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
     );
     MISC(varlist).meta = nullptr;  // GC sees this, it must be initialized
 
-    REBCTX *merged = CTX(varlist);
-    INIT_CTX_KEYLIST_UNIQUE(merged, keylist);
+    VarList* merged = CTX(varlist);
+    Tweak_Keylist_Of_Varlist_Unique(merged, keylist);
 
     // !!! Currently we assume the child will be of the same type as the
     // parent...so if the parent was an OBJECT! so will the child be, if
@@ -1094,34 +1094,34 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
     // Copy parent1 values.  (Can't use memcpy() because it would copy things
     // like protected bits...)
     //
-    Value* copy_dest = CTX_VARS_HEAD(merged);
-    const Value* copy_src = CTX_VARS_HEAD(parent1);
+    Value* copy_dest = Varlist_Slots_Head(merged);
+    const Value* copy_src = Varlist_Slots_Head(parent1);
     for (; NOT_END(copy_src); ++copy_src, ++copy_dest)
         Move_Var(copy_dest, copy_src);
 
-    // Update the child tail before making calls to CTX_VAR(), because the
+    // Update the child tail before making calls to Varlist_Slot(), because the
     // debug build does a length check.
     //
     Term_Array_Len(varlist, Array_Len(keylist));
 
     // Copy parent2 values:
-    Value* key = CTX_KEYS_HEAD(parent2);
-    Value* value = CTX_VARS_HEAD(parent2);
+    Value* key = Varlist_Keys_Head(parent2);
+    Value* value = Varlist_Slots_Head(parent2);
     for (; NOT_END(key); key++, value++) {
         // no need to search when the binding table is available
         REBINT n = Get_Binder_Index_Else_0(
             &collector.binder, Key_Canon(key)
         );
         assert(n != 0);
-        Move_Var(CTX_VAR(merged, n), value);
+        Move_Var(Varlist_Slot(merged, n), value);
     }
 
     // Deep copy the child.  Context vars are REBVALs, already fully specified
     //
     Clonify_Values_Len_Managed(
-        CTX_VARS_HEAD(merged),
+        Varlist_Slots_Head(merged),
         SPECIFIED,
-        CTX_LEN(merged),
+        Varlist_Len(merged),
         TS_CLONE
     );
 
@@ -1139,7 +1139,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
     REBLEN self_index = Find_Canon_In_Context(merged, Canon(SYM_SELF), true);
     assert(self_index != 0);
     assert(CTX_KEY_SYM(merged, self_index) == SYM_SELF);
-    Copy_Cell(CTX_VAR(merged, self_index), CTX_ARCHETYPE(merged));
+    Copy_Cell(Varlist_Slot(merged, self_index), Varlist_Archetype(merged));
 
     return merged;
 }
@@ -1152,8 +1152,8 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
 // (for new words).
 //
 void Resolve_Context(
-    REBCTX *target,
-    REBCTX *source,
+    VarList* target,
+    VarList* source,
     Value* only_words,
     bool all,
     bool expand
@@ -1165,7 +1165,7 @@ void Resolve_Context(
         i = VAL_INT32(only_words);
         if (i == 0)
             i = 1;
-        if (i > CTX_LEN(target))
+        if (i > Varlist_Len(target))
             return;
     }
     else
@@ -1182,9 +1182,9 @@ void Resolve_Context(
     // If limited resolve, tag the word ids that need to be copied:
     if (i != 0) {
         // Only the new words of the target:
-        for (key = CTX_KEY(target, i); NOT_END(key); key++)
+        for (key = Varlist_Key(target, i); NOT_END(key); key++)
             Add_Binder_Index(&binder, Key_Canon(key), -1);
-        n = CTX_LEN(target);
+        n = Varlist_Len(target);
     }
     else if (Is_Block(only_words)) {
         // Limit exports to only these words:
@@ -1203,7 +1203,7 @@ void Resolve_Context(
     // Expand target as needed:
     if (expand and n > 0) {
         // Determine how many new words to add:
-        for (key = CTX_KEYS_HEAD(target); NOT_END(key); key++)
+        for (key = Varlist_Keys_Head(target); NOT_END(key); key++)
             if (Get_Binder_Index_Else_0(&binder, Key_Canon(key)) != 0)
                 --n;
 
@@ -1216,7 +1216,7 @@ void Resolve_Context(
 
     // Maps a word to its value index in the source context.
     // Done by marking all source words (in bind table):
-    key = CTX_KEYS_HEAD(source);
+    key = Varlist_Keys_Head(source);
     for (n = 1; NOT_END(key); n++, key++) {
         Symbol* canon = Key_Canon(key);
         if (Is_Nulled(only_words))
@@ -1231,8 +1231,8 @@ void Resolve_Context(
 
     // Foreach word in target, copy the correct value from source:
     //
-    var = i != 0 ? CTX_VAR(target, i) : CTX_VARS_HEAD(target);
-    key = i != 0 ? CTX_KEY(target, i) : CTX_KEYS_HEAD(target);
+    var = i != 0 ? Varlist_Slot(target, i) : Varlist_Slots_Head(target);
+    key = i != 0 ? Varlist_Key(target, i) : Varlist_Keys_Head(target);
     for (; NOT_END(key); key++, var++) {
         REBINT m = Remove_Binder_Index_Else_0(&binder, Key_Canon(key));
         if (m != 0) {
@@ -1244,14 +1244,14 @@ void Resolve_Context(
                 if (m < 0)
                     Init_Nothing(var);  // treat as undefined in source context
                 else
-                    Move_Var(var, CTX_VAR(source, m)); // preserves enfix
+                    Move_Var(var, Varlist_Slot(source, m)); // preserves enfix
             }
         }
     }
 
     // Add any new words and values:
     if (expand) {
-        key = CTX_KEYS_HEAD(source);
+        key = Varlist_Keys_Head(source);
         for (n = 1; NOT_END(key); n++, key++) {
             Symbol* canon = Key_Canon(key);
             if (Remove_Binder_Index_Else_0(&binder, canon) != 0) {
@@ -1259,7 +1259,7 @@ void Resolve_Context(
                 // Note: no protect check is needed here
                 //
                 var = Append_Context(target, nullptr, canon);
-                Move_Var(var, CTX_VAR(source, n)); // preserves enfix
+                Move_Var(var, Varlist_Slot(source, n)); // preserves enfix
             }
         }
     }
@@ -1271,7 +1271,7 @@ void Resolve_Context(
         // but the fault-tolerant Remove_Binder_Index_Else_0()
         //
         if (i != 0) {
-            for (key = CTX_KEY(target, i); NOT_END(key); key++)
+            for (key = Varlist_Key(target, i); NOT_END(key); key++)
                 Remove_Binder_Index_Else_0(&binder, Key_Canon(key));
         }
         else if (Is_Block(only_words)) {
@@ -1282,7 +1282,7 @@ void Resolve_Context(
             }
         }
         else {
-            for (key = CTX_KEYS_HEAD(source); NOT_END(key); key++)
+            for (key = Varlist_Keys_Head(source); NOT_END(key); key++)
                 Remove_Binder_Index_Else_0(&binder, Key_Canon(key));
         }
     }
@@ -1297,12 +1297,12 @@ void Resolve_Context(
 // Search a context looking for the given canon symbol.  Return the index or
 // 0 if not found.
 //
-REBLEN Find_Canon_In_Context(REBCTX *context, Symbol* canon, bool always)
+REBLEN Find_Canon_In_Context(VarList* context, Symbol* canon, bool always)
 {
     assert(Get_Flex_Info(canon, CANON_SYMBOL));
 
-    Value* key = CTX_KEYS_HEAD(context);
-    REBLEN len = CTX_LEN(context);
+    Value* key = Varlist_Keys_Head(context);
+    REBLEN len = Varlist_Len(context);
 
     REBLEN n;
     for (n = 1; n <= len; n++, key++) {
@@ -1326,14 +1326,14 @@ REBLEN Find_Canon_In_Context(REBCTX *context, Symbol* canon, bool always)
 // Search a context's keylist looking for the given canon symbol, and return
 // the value for the word.  Return nullptr if the canon is not found.
 //
-Value* Select_Canon_In_Context(REBCTX *context, Symbol* canon)
+Value* Select_Canon_In_Context(VarList* context, Symbol* canon)
 {
     const bool always = false;
     REBLEN n = Find_Canon_In_Context(context, canon, always);
     if (n == 0)
         return nullptr;
 
-    return CTX_VAR(context, n);
+    return Varlist_Slot(context, n);
 }
 
 
@@ -1349,10 +1349,10 @@ Value* Select_Canon_In_Context(REBCTX *context, Symbol* canon)
 //
 Value* Obj_Value(Value* value, REBLEN index)
 {
-    REBCTX *context = VAL_CONTEXT(value);
+    VarList* context = Cell_Varlist(value);
 
-    if (index > CTX_LEN(context)) return 0;
-    return CTX_VAR(context, index);
+    if (index > Varlist_Len(context)) return 0;
+    return Varlist_Slot(context, index);
 }
 
 
@@ -1386,18 +1386,18 @@ void Shutdown_Collector(void)
 //
 //  Assert_Context_Core: C
 //
-void Assert_Context_Core(REBCTX *c)
+void Assert_Context_Core(VarList* c)
 {
-    Array* varlist = CTX_VARLIST(c);
+    Array* varlist = Varlist_Array(c);
 
     if (not (varlist->leader.bits & SERIES_MASK_CONTEXT))
         panic (varlist);
 
-    Array* keylist = CTX_KEYLIST(c);
+    Array* keylist = Keylist_Of_Varlist(c);
     if (keylist == nullptr)
         panic (c);
 
-    Value* rootvar = CTX_ARCHETYPE(c);
+    Value* rootvar = Varlist_Archetype(c);
     if (not Any_Context(rootvar))
         panic (rootvar);
 
@@ -1452,7 +1452,7 @@ void Assert_Context_Core(REBCTX *c)
             panic (rootvar);
         }
 
-        Level* L = CTX_LEVEL_IF_ON_STACK(c);
+        Level* L = Level_Of_Varlist_If_Running(c);
         if (L != nullptr) {
             //
             // If the frame is on the stack, the phase should be something
@@ -1469,8 +1469,8 @@ void Assert_Context_Core(REBCTX *c)
     else
         panic (rootkey);
 
-    Value* key = CTX_KEYS_HEAD(c);
-    Value* var = CTX_VARS_HEAD(c);
+    Value* key = Varlist_Keys_Head(c);
+    Value* var = Varlist_Slots_Head(c);
 
     REBLEN n;
     for (n = 1; n < keys_len; n++, var++, key++) {

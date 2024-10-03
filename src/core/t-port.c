@@ -37,7 +37,7 @@
 REBINT CT_Port(const Cell* a, const Cell* b, REBINT mode)
 {
     if (mode < 0) return -1;
-    return VAL_CONTEXT(a) == VAL_CONTEXT(b);
+    return Cell_Varlist(a) == Cell_Varlist(b);
 }
 
 
@@ -54,7 +54,7 @@ Bounce MAKE_Port(Value* out, enum Reb_Kind kind, const Value* arg)
 
     const bool fully = true; // error if not all arguments consumed
 
-    Value* make_port_helper = CTX_VAR(Sys_Context, SYS_CTX_MAKE_PORT_P);
+    Value* make_port_helper = Varlist_Slot(Sys_Context, SYS_CTX_MAKE_PORT_P);
     assert(Is_Action(make_port_helper));
 
     assert(not Is_Nulled(arg)); // would need to DEVOID it otherwise
@@ -85,8 +85,8 @@ Bounce TO_Port(Value* out, enum Reb_Kind kind, const Value* arg)
     // vs. making it as a port to begin with (?)  Look into why
     // system/standard/port is made with CONTEXT and not with MAKE PORT!
     //
-    REBCTX *context = Copy_Context_Shallow_Managed(VAL_CONTEXT(arg));
-    RESET_VAL_HEADER(CTX_ARCHETYPE(context), REB_PORT);
+    VarList* context = Copy_Context_Shallow_Managed(Cell_Varlist(arg));
+    RESET_VAL_HEADER(Varlist_Archetype(context), REB_PORT);
 
     return Init_Port(out, context);
 }

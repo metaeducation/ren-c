@@ -83,11 +83,11 @@ static bool Set_Event_Var(Value* event, const Value* word, const Value* val)
     case SYM_PORT:
         if (Is_Port(val)) {
             VAL_EVENT_MODEL(event) = EVM_PORT;
-            VAL_EVENT_FLEX(event) = CTX_VARLIST(VAL_CONTEXT(val));
+            VAL_EVENT_FLEX(event) = Varlist_Array(Cell_Varlist(val));
         }
         else if (Is_Object(val)) {
             VAL_EVENT_MODEL(event) = EVM_OBJECT;
-            VAL_EVENT_FLEX(event) = CTX_VARLIST(VAL_CONTEXT(val));
+            VAL_EVENT_FLEX(event) = Varlist_Array(Cell_Varlist(val));
         }
         else
             return false;

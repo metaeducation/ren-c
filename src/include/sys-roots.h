@@ -34,7 +34,7 @@
 // other series nodes).
 //
 // The API value content is in the single cell, with LINK().owner holding
-// a REBCTX* of the FRAME! that controls its lifetime, or EMPTY_ARRAY.  This
+// a VarList* of the FRAME! that controls its lifetime, or EMPTY_ARRAY.  This
 // link field exists in the pointer immediately prior to the Value*, which
 // means it can be sniffed as a Node* and distinguished from handles that
 // were given back with rebMalloc(), so routines can discern them.
@@ -72,7 +72,7 @@ INLINE Value* Alloc_Value(void)
     Value* v = KNOWN(ARR_SINGLE(a));
     v->header.bits |= NODE_FLAG_ROOT; // it's trash (can't use SET_VAL_FLAGS)
 
-    LINK(a).owner = Context_For_Level_May_Manage(TOP_LEVEL);
+    LINK(a).owner = Varlist_For_Level_May_Manage(TOP_LEVEL);
     return v;
 }
 

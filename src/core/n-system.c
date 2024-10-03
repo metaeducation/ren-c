@@ -240,7 +240,7 @@ DECLARE_NATIVE(check)
         Assert_Flex(Cell_Flex(value));
     }
     else if (Any_Context(value)) {
-        ASSERT_CONTEXT(VAL_CONTEXT(value));
+        ASSERT_CONTEXT(Cell_Varlist(value));
     }
     else if (Is_Action(value)) {
         Assert_Array(VAL_ACT_PARAMLIST(value));

@@ -48,7 +48,7 @@ struct Reb_State {
     struct Reb_Chunk *top_chunk;
     Level* level;
     REBLEN guarded_len;
-    REBCTX *error;
+    Error* error;
 
     REBLEN manuals_len; // Where GC_Manuals was when state started
     REBLEN mold_buf_len;

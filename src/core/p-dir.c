@@ -134,8 +134,8 @@ static void Init_Dir_Path(
 //
 static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
 {
-    REBCTX *ctx = VAL_CONTEXT(port);
-    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    VarList* ctx = Cell_Varlist(port);
+    Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
     if (not Is_Object(spec))
         fail (Error_Invalid_Spec_Raw(spec));
 
@@ -148,7 +148,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
     else if (not Is_File(path))
         fail (Error_Invalid_Spec_Raw(path));
 
-    Value* state = CTX_VAR(ctx, STD_PORT_STATE); // BLOCK! means port open
+    Value* state = Varlist_Slot(ctx, STD_PORT_STATE); // BLOCK! means port open
 
     //const Byte *flags = Security_Policy(SYM_FILE, path);
 

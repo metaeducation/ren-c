@@ -164,7 +164,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 
         if (Get_Array_Flag(s, IS_VARLIST)) {
             printf("Series VARLIST detected.\n");
-            REBCTX *context = CTX(s);
+            VarList* context = CTX(s);
             if (CTX_TYPE(context) == REB_ERROR) {
                 printf("...and that VARLIST is of an ERROR!...");
                 PROBE(context);
@@ -257,7 +257,7 @@ DECLARE_NATIVE(panic)
     }
     else {
         assert(Is_Error(v));
-        p = VAL_CONTEXT(v);
+        p = Cell_Varlist(v);
     }
 
     // Note that by using the frame's tick instead of TG_Tick, we don't count

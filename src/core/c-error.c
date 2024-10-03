@@ -215,7 +215,7 @@ void Trapped_Helper(struct Reb_State *s)
 // CONTINUE, RETURN, LEAVE, HALT...)
 //
 // The function will auto-detect if the pointer it is given is an ERROR!'s
-// REBCTX* or a UTF-8 string.  If it's a string, an error will be created from
+// VarList* or a UTF-8 string.  If it's a string, an error will be created from
 // it automatically.
 //
 // !!! Previously, detecting a value would use that value as the ubiquitous
@@ -232,7 +232,7 @@ void Trapped_Helper(struct Reb_State *s)
 //
 ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
 {
-    REBCTX *error;
+    Error* error;
 
   #ifdef DEBUG_HAS_PROBE
     //
@@ -242,7 +242,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     if (PG_Probe_Failures) {
         static bool probing = false;
 
-        if (p == cast(void*, VAL_CONTEXT(Root_Stackoverflow_Error))) {
+        if (p == cast(void*, Cell_Varlist(Root_Stackoverflow_Error))) {
             printf("PROBE(Stack Overflow): mold in PROBE would recurse\n");
             fflush(stdout);
         }
@@ -267,7 +267,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         Flex* s = m_cast(Flex*, cast(const Flex*, p)); // don't mutate
         if (Not_Array_Flag(s, IS_VARLIST))
             panic (s);
-        error = CTX(s);
+        error = cast(Error*, s);
         break; }
 
     default:
@@ -367,17 +367,17 @@ const Value* Find_Error_For_Sym(SymId id_sym)
 {
     Symbol* id_canon = Canon(id_sym);
 
-    REBCTX *categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
+    VarList* categories = Cell_Varlist(Get_System(SYS_CATALOG, CAT_ERRORS));
     assert(CTX_KEY_SYM(categories, 1) == SYM_SELF);
 
     REBLEN ncat = SELFISH(1);
-    for (; ncat <= CTX_LEN(categories); ++ncat) {
-        REBCTX *category = VAL_CONTEXT(CTX_VAR(categories, ncat));
+    for (; ncat <= Varlist_Len(categories); ++ncat) {
+        VarList* category = Cell_Varlist(Varlist_Slot(categories, ncat));
 
         REBLEN n = SELFISH(1);
-        for (; n <= CTX_LEN(category); ++n) {
+        for (; n <= Varlist_Len(category); ++n) {
             if (Are_Synonyms(CTX_KEY_SPELLING(category, n), id_canon)) {
-                Value* message = CTX_VAR(category, n);
+                Value* message = Varlist_Slot(category, n);
                 assert(Is_Block(message) or Is_Text(message));
                 return message;
             }
@@ -402,7 +402,7 @@ const Value* Find_Error_For_Sym(SymId id_sym)
 // file and line information can be captured in the debug build.
 //
 void Set_Location_Of_Error(
-    REBCTX *error,
+    Error* error,
     Level* where // must be valid and executing on the stack
 ) {
     assert(where != nullptr);
@@ -490,9 +490,9 @@ bool Make_Error_Object_Throws(
 ) {
     // Frame from the error object template defined in %sysobj.r
     //
-    REBCTX *root_error = VAL_CONTEXT(Get_System(SYS_STANDARD, STD_ERROR));
+    VarList* root_error = Cell_Varlist(Get_System(SYS_STANDARD, STD_ERROR));
 
-    REBCTX *error;
+    VarList* varlist;
     ERROR_VARS *vars; // C struct mirroring fixed portion of error fields
 
     if (Is_Error(arg) or Is_Object(arg)) {
@@ -502,8 +502,8 @@ bool Make_Error_Object_Throws(
         // be inconsistent with a Rebol system error, an error will be
         // raised later in the routine.
 
-        error = Merge_Contexts_Selfish_Managed(root_error, VAL_CONTEXT(arg));
-        vars = ERR_VARS(error);
+        varlist = Merge_Contexts_Selfish_Managed(root_error, Cell_Varlist(arg));
+        vars = ERR_VARS(varlist);
     }
     else if (Is_Block(arg)) {
         // If a block, then effectively MAKE OBJECT! on it.  Afterward,
@@ -512,7 +512,7 @@ bool Make_Error_Object_Throws(
         // Bind and do an evaluation step (as with MAKE OBJECT! with A_MAKE
         // code in REBTYPE(Context) and code in DECLARE_NATIVE(construct))
 
-        error = Make_Selfish_Context_Detect_Managed(
+        varlist = Make_Selfish_Context_Detect_Managed(
             REB_ERROR, // type
             Cell_List_At(arg), // values to scan for toplevel set-words
             root_error // parent
@@ -521,10 +521,10 @@ bool Make_Error_Object_Throws(
         // Protect the error from GC by putting into out, which must be
         // passed in as a GC-protecting value slot.
         //
-        Init_Error(out, error);
+        Init_Error(out, cast(Error*, varlist));
 
-        Rebind_Context_Deep(root_error, error, nullptr);  // no more binds
-        Bind_Values_Deep(Cell_List_At(arg), error);
+        Rebind_Context_Deep(root_error, varlist, nullptr);  // no more binds
+        Bind_Values_Deep(Cell_List_At(arg), varlist);
 
         DECLARE_VALUE (evaluated);
         if (Eval_List_At_Throws(evaluated, arg)) {
@@ -532,7 +532,7 @@ bool Make_Error_Object_Throws(
             return true;
         }
 
-        vars = ERR_VARS(error);
+        vars = ERR_VARS(varlist);
     }
     else if (Is_Text(arg)) {
         //
@@ -545,9 +545,9 @@ bool Make_Error_Object_Throws(
         //
         // Minus the message, this is the default state of root_error.
 
-        error = Copy_Context_Shallow_Managed(root_error);
+        varlist = Copy_Context_Shallow_Managed(root_error);
 
-        vars = ERR_VARS(error);
+        vars = ERR_VARS(varlist);
         assert(Is_Nulled(&vars->type));
         assert(Is_Nulled(&vars->id));
 
@@ -570,7 +570,7 @@ bool Make_Error_Object_Throws(
         // this may overlap a combination used by Rebol where we wish to
         // fill in the code.  (No fast lookup for this, must search.)
 
-        REBCTX *categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
+        VarList* categories = Cell_Varlist(Get_System(SYS_CATALOG, CAT_ERRORS));
 
         // Find correct category for TYPE: (if any)
         Value* category
@@ -578,12 +578,12 @@ bool Make_Error_Object_Throws(
 
         if (category) {
             assert(Is_Object(category));
-            assert(CTX_KEY_SYM(VAL_CONTEXT(category), 1) == SYM_SELF);
+            assert(CTX_KEY_SYM(Cell_Varlist(category), 1) == SYM_SELF);
 
             // Find correct message for ID: (if any)
 
             Value* message = Select_Canon_In_Context(
-                VAL_CONTEXT(category), VAL_WORD_CANON(&vars->id)
+                Cell_Varlist(category), VAL_WORD_CANON(&vars->id)
             );
 
             if (message) {
@@ -607,7 +607,7 @@ bool Make_Error_Object_Throws(
                 //
                 //     make error! [type: 'script id: 'set-self]
 
-                fail (Error_Invalid_Error_Raw(CTX_ARCHETYPE(error)));
+                fail (Error_Invalid_Error_Raw(Varlist_Archetype(varlist)));
             }
         }
         else {
@@ -633,10 +633,11 @@ bool Make_Error_Object_Throws(
                 or Is_Nulled(&vars->message)
             )
         )){
-            fail (Error_Invalid_Error_Raw(CTX_ARCHETYPE(error)));
+            fail (Error_Invalid_Error_Raw(Varlist_Archetype(varlist)));
         }
     }
 
+    Error* error = cast(Error*, varlist);
     Set_Location_Of_Error(error, TOP_LEVEL);
 
     Init_Error(out, error);
@@ -645,7 +646,7 @@ bool Make_Error_Object_Throws(
 
 
 //
-//  Make_Error_Managed_Core: C
+//  Make_Error_Managed_Vaptr: C
 //
 // (WARNING va_list by pointer: http://stackoverflow.com/a/3369762/211160)
 //
@@ -658,7 +659,7 @@ bool Make_Error_Object_Throws(
 // %errors.r has not been loaded).  Hence the caller can assume it will
 // regain control to properly call va_end with no longjmp to skip it.
 //
-REBCTX *Make_Error_Managed_Core(
+Error* Make_Error_Managed_Vaptr(
     SymId cat_sym,
     SymId id_sym,
     va_list *vaptr
@@ -677,7 +678,7 @@ REBCTX *Make_Error_Managed_Core(
         panic (id_value);
     }
 
-    REBCTX *root_error = VAL_CONTEXT(Get_System(SYS_STANDARD, STD_ERROR));
+    VarList* root_error = Cell_Varlist(Get_System(SYS_STANDARD, STD_ERROR));
 
     DECLARE_VALUE (id);
     DECLARE_VALUE (type);
@@ -714,13 +715,13 @@ REBCTX *Make_Error_Managed_Core(
     else // Just a string, no arguments expected.
         assert(Is_Text(message));
 
-    REBCTX *error;
+    VarList* varlist;
     if (expected_args == 0) {
 
         // If there are no arguments, we don't need to make a new keylist...
         // just a new varlist to hold this instance's settings.
 
-        error = Copy_Context_Shallow_Managed(root_error);
+        varlist = Copy_Context_Shallow_Managed(root_error);
     }
     else {
         // !!! See remarks on how the modern way to handle this may be to
@@ -728,21 +729,21 @@ REBCTX *Make_Error_Managed_Core(
         // hold the generic error parameters.  Investigate how this ties in
         // with user-defined types.
 
-        REBLEN root_len = CTX_LEN(root_error);
+        REBLEN root_len = Varlist_Len(root_error);
 
         // Should the error be well-formed, we'll need room for the new
         // expected values *and* their new keys in the keylist.
         //
-        error = Copy_Context_Shallow_Extra_Managed(root_error, expected_args);
+        varlist = Copy_Context_Shallow_Extra_Managed(root_error, expected_args);
 
-        // Fix up the tail first so CTX_KEY and CTX_VAR don't complain
+        // Fix up the tail first so Varlist_Key and Varlist_Slot don't complain
         // in the debug build that they're accessing beyond the error length
         //
-        Term_Array_Len(CTX_VARLIST(error), root_len + expected_args + 1);
-        Term_Array_Len(CTX_KEYLIST(error), root_len + expected_args + 1);
+        Term_Array_Len(Varlist_Array(varlist), root_len + expected_args + 1);
+        Term_Array_Len(Keylist_Of_Varlist(varlist), root_len + expected_args + 1);
 
-        Value* key = CTX_KEY(error, root_len) + 1;
-        Value* value = CTX_VAR(error, root_len) + 1;
+        Value* key = Varlist_Key(varlist, root_len) + 1;
+        Value* value = Varlist_Slot(varlist, root_len) + 1;
 
     #ifdef NDEBUG
         const Cell* temp = VAL_ARRAY_HEAD(message);
@@ -813,12 +814,13 @@ REBCTX *Make_Error_Managed_Core(
 
     // C struct mirroring fixed portion of error fields
     //
-    ERROR_VARS *vars = ERR_VARS(error);
+    ERROR_VARS *vars = ERR_VARS(varlist);
 
     Copy_Cell(&vars->message, message);
     Copy_Cell(&vars->id, id);
     Copy_Cell(&vars->type, type);
 
+    Error* error = cast(Error*, varlist);
     Set_Location_Of_Error(error, TOP_LEVEL);
     return error;
 }
@@ -833,7 +835,7 @@ REBCTX *Make_Error_Managed_Core(
 //     fail (Error(SYM_CATEGORY, SYM_SOMETHING, arg1, arg2, ...));
 //
 // Note that in C, variadic functions don't know how many arguments they were
-// passed.  Make_Error_Managed_Core() knows how many arguments are in an
+// passed.  Make_Error_Managed_Vaptr() knows how many arguments are in an
 // error's template in %errors.r for a given error id, so that is the number
 // of arguments it will *attempt* to use--reading invalid memory if wrong.
 //
@@ -845,7 +847,7 @@ REBCTX *Make_Error_Managed_Core(
 //
 //     fail (Error_Something(arg1, thing_processed_to_make_arg2));
 //
-REBCTX *Error(
+Error* Make_Error_Managed(
     int cat_sym,
     int id_sym, // can't be SymId, see note below
     ... /* Value* arg1, Value* arg2, ... */
@@ -857,7 +859,7 @@ REBCTX *Error(
     //
     va_start(va, id_sym);
 
-    REBCTX *error = Make_Error_Managed_Core(
+    Error* error = Make_Error_Managed_Vaptr(
         cast(SymId, cat_sym),
         cast(SymId, id_sym),
         &va
@@ -875,17 +877,17 @@ REBCTX *Error(
 // "user error" since MAKE ERROR! of a STRING! would produce them in usermode
 // without any error template in %errors.r)
 //
-REBCTX *Error_User(const char *utf8) {
+Error* Error_User(const char *utf8) {
     DECLARE_VALUE (message);
     Init_Text(message, Make_String_UTF8(utf8));
-    return Error(SYM_0, SYM_0, message, rebEND);
+    return Make_Error_Managed(SYM_0, SYM_0, message, rebEND);
 }
 
 
 //
 //  Error_Need_Non_End_Core: C
 //
-REBCTX *Error_Need_Non_End_Core(const Cell* target, Specifier* specifier) {
+Error* Error_Need_Non_End_Core(const Cell* target, Specifier* specifier) {
     assert(Is_Set_Word(target) or Is_Set_Path(target));
 
     DECLARE_VALUE (specific);
@@ -902,7 +904,7 @@ REBCTX *Error_Need_Non_End_Core(const Cell* target, Specifier* specifier) {
 // corresponding to refinements must be canonized to either TRUE or FALSE
 // by these specializations, because that's what the called function expects.
 //
-REBCTX *Error_Non_Logic_Refinement(const Cell* param, const Value* arg) {
+Error* Error_Non_Logic_Refinement(const Cell* param, const Value* arg) {
     DECLARE_VALUE (word);
     Init_Word(word, Cell_Parameter_Symbol(param));
     return Error_Non_Logic_Refine_Raw(word, Type_Of(arg));
@@ -912,7 +914,7 @@ REBCTX *Error_Non_Logic_Refinement(const Cell* param, const Value* arg) {
 //
 //  Error_Bad_Func_Def: C
 //
-REBCTX *Error_Bad_Func_Def(const Value* spec, const Value* body)
+Error* Error_Bad_Func_Def(const Value* spec, const Value* body)
 {
     // !!! Improve this error; it's simply a direct emulation of arity-1
     // error that existed before refactoring code out of MAKE_Function().
@@ -931,7 +933,7 @@ REBCTX *Error_Bad_Func_Def(const Value* spec, const Value* body)
 //
 //  Error_No_Arg: C
 //
-REBCTX *Error_No_Arg(Level* L, const Cell* param)
+Error* Error_No_Arg(Level* L, const Cell* param)
 {
     assert(Is_Typeset(param));
 
@@ -948,7 +950,7 @@ REBCTX *Error_No_Arg(Level* L, const Cell* param)
 //
 //  Error_No_Memory: C
 //
-REBCTX *Error_No_Memory(REBLEN bytes)
+Error* Error_No_Memory(REBLEN bytes)
 {
     DECLARE_VALUE (bytes_value);
 
@@ -960,7 +962,7 @@ REBCTX *Error_No_Memory(REBLEN bytes)
 //
 //  Error_No_Relative_Core: C
 //
-REBCTX *Error_No_Relative_Core(const Cell* any_word)
+Error* Error_No_Relative_Core(const Cell* any_word)
 {
     DECLARE_VALUE (unbound);
     Init_Any_Word(
@@ -976,7 +978,7 @@ REBCTX *Error_No_Relative_Core(const Cell* any_word)
 //
 //  Error_Not_Varargs: C
 //
-REBCTX *Error_Not_Varargs(
+Error* Error_Not_Varargs(
     Level* L,
     const Cell* param,
     enum Reb_Kind kind
@@ -1014,7 +1016,7 @@ REBCTX *Error_Not_Varargs(
 // incompatibility with rebFail(), where the non-exposure of raw context
 // pointers meant passing Value* was literally failing on an error value.
 //
-REBCTX *Error_Invalid(const Value* value)
+Error* Error_Invalid(const Value* value)
 {
     return Error_Invalid_Arg_Raw(value);
 }
@@ -1023,7 +1025,7 @@ REBCTX *Error_Invalid(const Value* value)
 //
 //  Error_Invalid_Core: C
 //
-REBCTX *Error_Invalid_Core(const Cell* value, Specifier* specifier)
+Error* Error_Invalid_Core(const Cell* value, Specifier* specifier)
 {
     DECLARE_VALUE (specific);
     Derelativize(specific, value, specifier);
@@ -1035,7 +1037,7 @@ REBCTX *Error_Invalid_Core(const Cell* value, Specifier* specifier)
 //
 //  Error_Bad_Func_Def_Core: C
 //
-REBCTX *Error_Bad_Func_Def_Core(const Cell* item, Specifier* specifier)
+Error* Error_Bad_Func_Def_Core(const Cell* item, Specifier* specifier)
 {
     DECLARE_VALUE (specific);
     Derelativize(specific, item, specifier);
@@ -1051,7 +1053,7 @@ REBCTX *Error_Bad_Func_Def_Core(const Cell* item, Specifier* specifier)
 // by the error handling).  See the remarks about the state of L->refine in
 // the LevelStruct definition.
 //
-REBCTX *Error_Bad_Refine_Revoke(const Cell* param, const Value* arg)
+Error* Error_Bad_Refine_Revoke(const Cell* param, const Value* arg)
 {
     assert(Is_Typeset(param));
 
@@ -1076,7 +1078,7 @@ REBCTX *Error_Bad_Refine_Revoke(const Cell* param, const Value* arg)
 //
 //  Error_No_Value_Core: C
 //
-REBCTX *Error_No_Value_Core(const Cell* target, Specifier* specifier) {
+Error* Error_No_Value_Core(const Cell* target, Specifier* specifier) {
     DECLARE_VALUE (specified);
     Derelativize(specified, target, specifier);
 
@@ -1087,7 +1089,7 @@ REBCTX *Error_No_Value_Core(const Cell* target, Specifier* specifier) {
 //
 //  Error_No_Value: C
 //
-REBCTX *Error_No_Value(const Value* target) {
+Error* Error_No_Value(const Value* target) {
     return Error_No_Value_Core(target, SPECIFIED);
 }
 
@@ -1095,7 +1097,7 @@ REBCTX *Error_No_Value(const Value* target) {
 //
 //  Error_No_Catch_For_Throw: C
 //
-REBCTX *Error_No_Catch_For_Throw(Value* thrown)
+Error* Error_No_Catch_For_Throw(Value* thrown)
 {
     DECLARE_VALUE (arg);
 
@@ -1111,7 +1113,7 @@ REBCTX *Error_No_Catch_For_Throw(Value* thrown)
 //
 // <type> type is not allowed here.
 //
-REBCTX *Error_Invalid_Type(enum Reb_Kind kind)
+Error* Error_Invalid_Type(enum Reb_Kind kind)
 {
     return Error_Invalid_Type_Raw(Datatype_From_Kind(kind));
 }
@@ -1122,7 +1124,7 @@ REBCTX *Error_Invalid_Type(enum Reb_Kind kind)
 //
 // value out of range: <value>
 //
-REBCTX *Error_Out_Of_Range(const Value* arg)
+Error* Error_Out_Of_Range(const Value* arg)
 {
     return Error_Out_Of_Range_Raw(arg);
 }
@@ -1131,7 +1133,7 @@ REBCTX *Error_Out_Of_Range(const Value* arg)
 //
 //  Error_Protected_Key: C
 //
-REBCTX *Error_Protected_Key(Value* key)
+Error* Error_Protected_Key(Value* key)
 {
     assert(Is_Typeset(key));
 
@@ -1145,7 +1147,7 @@ REBCTX *Error_Protected_Key(Value* key)
 //
 //  Error_Illegal_Action: C
 //
-REBCTX *Error_Illegal_Action(enum Reb_Kind type, Value* verb)
+Error* Error_Illegal_Action(enum Reb_Kind type, Value* verb)
 {
     assert(Is_Word(verb));
     return Error_Cannot_Use_Raw(verb, Datatype_From_Kind(type));
@@ -1155,7 +1157,7 @@ REBCTX *Error_Illegal_Action(enum Reb_Kind type, Value* verb)
 //
 //  Error_Math_Args: C
 //
-REBCTX *Error_Math_Args(enum Reb_Kind type, Value* verb)
+Error* Error_Math_Args(enum Reb_Kind type, Value* verb)
 {
     assert(Is_Word(verb));
     return Error_Not_Related_Raw(verb, Datatype_From_Kind(type));
@@ -1165,7 +1167,7 @@ REBCTX *Error_Math_Args(enum Reb_Kind type, Value* verb)
 //
 //  Error_Unexpected_Type: C
 //
-REBCTX *Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
+Error* Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 {
     assert(expected < REB_MAX);
     assert(actual < REB_MAX);
@@ -1183,7 +1185,7 @@ REBCTX *Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 // Function in frame of `call` expected parameter `param` to be
 // a type different than the arg given (which had `arg_type`)
 //
-REBCTX *Error_Arg_Type(
+Error* Error_Arg_Type(
     Level* L,
     const Cell* param,
     enum Reb_Kind actual
@@ -1213,7 +1215,7 @@ REBCTX *Error_Arg_Type(
 //
 //  Error_Bad_Return_Type: C
 //
-REBCTX *Error_Bad_Return_Type(Level* L, enum Reb_Kind kind) {
+Error* Error_Bad_Return_Type(Level* L, enum Reb_Kind kind) {
     DECLARE_VALUE (label);
     Get_Level_Label_Or_Blank(label, L);
 
@@ -1230,7 +1232,7 @@ REBCTX *Error_Bad_Return_Type(Level* L, enum Reb_Kind kind) {
 //
 //  Error_Bad_Make: C
 //
-REBCTX *Error_Bad_Make(enum Reb_Kind type, const Value* spec)
+Error* Error_Bad_Make(enum Reb_Kind type, const Value* spec)
 {
     return Error_Bad_Make_Arg_Raw(Datatype_From_Kind(type), spec);
 }
@@ -1239,7 +1241,7 @@ REBCTX *Error_Bad_Make(enum Reb_Kind type, const Value* spec)
 //
 //  Error_Cannot_Reflect: C
 //
-REBCTX *Error_Cannot_Reflect(enum Reb_Kind type, const Value* arg)
+Error* Error_Cannot_Reflect(enum Reb_Kind type, const Value* arg)
 {
     return Error_Cannot_Use_Raw(arg, Datatype_From_Kind(type));
 }
@@ -1248,21 +1250,21 @@ REBCTX *Error_Cannot_Reflect(enum Reb_Kind type, const Value* arg)
 //
 //  Error_On_Port: C
 //
-REBCTX *Error_On_Port(SymId id_sym, Value* port, REBINT err_code)
+Error* Error_On_Port(SymId id_sym, Value* port, REBINT err_code)
 {
     FAIL_IF_BAD_PORT(port);
 
-    REBCTX *ctx = VAL_CONTEXT(port);
-    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    VarList* ctx = Cell_Varlist(port);
+    Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
 
-    Value* val = VAL_CONTEXT_VAR(spec, STD_PORT_SPEC_HEAD_REF);
+    Value* val = Cell_Varlist_VAR(spec, STD_PORT_SPEC_HEAD_REF);
     if (Is_Nulled(val))
-        val = VAL_CONTEXT_VAR(spec, STD_PORT_SPEC_HEAD_TITLE); // less info
+        val = Cell_Varlist_VAR(spec, STD_PORT_SPEC_HEAD_TITLE); // less info
 
     DECLARE_VALUE (err_code_value);
     Init_Integer(err_code_value, err_code);
 
-    return Error(SYM_ACCESS, id_sym, val, err_code_value, rebEND);
+    return Make_Error_Managed(SYM_ACCESS, id_sym, val, err_code_value, rebEND);
 }
 
 
@@ -1271,7 +1273,7 @@ REBCTX *Error_On_Port(SymId id_sym, Value* port, REBINT err_code)
 //
 // Create error objects and error type objects
 //
-REBCTX *Startup_Errors(const Value* boot_errors)
+VarList* Startup_Errors(const Value* boot_errors)
 {
   #ifdef DEBUG_HAS_PROBE
     const char *env_probe_failures = getenv("R3_PROBE_FAILURES");
@@ -1288,7 +1290,7 @@ REBCTX *Startup_Errors(const Value* boot_errors)
   #endif
 
     assert(VAL_INDEX(boot_errors) == 0);
-    REBCTX *catalog = Construct_Context_Managed(
+    VarList* catalog = Construct_Context_Managed(
         REB_OBJECT,
         Cell_List_At(boot_errors),
         VAL_SPECIFIER(boot_errors),
@@ -1299,8 +1301,8 @@ REBCTX *Startup_Errors(const Value* boot_errors)
     // so self is in slot 1 and the actual errors start at context slot 2)
     //
     Value* val;
-    for (val = CTX_VAR(catalog, SELFISH(1)); NOT_END(val); val++) {
-        REBCTX *error = Construct_Context_Managed(
+    for (val = Varlist_Slot(catalog, SELFISH(1)); NOT_END(val); val++) {
+        VarList* error = Construct_Context_Managed(
             REB_OBJECT,
             VAL_ARRAY_HEAD(val),
             SPECIFIED, // source array not in a function body
@@ -1361,7 +1363,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
         return;
     }
 
-    REBCTX *error = VAL_CONTEXT(v);
+    VarList* error = Cell_Varlist(v);
     ERROR_VARS *vars = ERR_VARS(error);
 
     // Form: ** <type> Error:

@@ -156,8 +156,8 @@
 // passed which it will write into--which is a black box that clients
 // shouldn't inspect.
 //
-// The routine also takes a pointer-to-a-REBCTX-pointer which represents
-// an error.  Using the tricky mechanisms of setjmp/longjmp, there will
+// The routine also takes a pointer-to-a-VarList-pointer which represents
+// an Error.  Using the tricky mechanisms of setjmp/longjmp, there will
 // be a first pass of execution where the line of code after the PUSH_TRAP
 // will see the error pointer as being nullptr.  If a trap occurs during
 // code before the paired DROP_TRAP happens, then the C state will be
@@ -281,11 +281,11 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
         template <class T>
         INLINE ATTRIBUTE_NO_RETURN void Fail_Core_Cpp(T *p) {
             static_assert(
-                std::is_same<T, REBCTX>::value
+                std::is_same<T, Error>::value
                 or std::is_same<T, const char>::value
                 or std::is_same<T, const Value>::value
                 or std::is_same<T, Value>::value,
-                "fail() works on: REBCTX*, Value*, const char*"
+                "fail() works on: Error*, Value*, const char*"
             );
             Fail_Core(p);
         }
@@ -315,7 +315,7 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
 // to provide the most diagnostic information possible.
 //
 // So the best thing to do is to pass in whatever Value* or Flex* subclass
-// (including Array*, REBCTX*, REBACT*...) is the most useful "smoking gun":
+// (including Array*, VarList*, REBACT*...) is the most useful "smoking gun":
 //
 //     if (VAL_TYPE(value) == REB_NOTHING)
 //         panic (value);

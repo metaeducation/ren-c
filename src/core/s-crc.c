@@ -353,7 +353,7 @@ uint32_t Hash_Value(const Cell* v)
         // However, since it was historically allowed it is allowed for
         // all ANY-CONTEXT! types at the moment.
         //
-        hash = cast(uint32_t, i_cast(uintptr_t, VAL_CONTEXT(v)) >> 4);
+        hash = cast(uint32_t, i_cast(uintptr_t, Cell_Varlist(v)) >> 4);
         break;
 
     case REB_MAP:

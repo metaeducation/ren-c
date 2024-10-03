@@ -286,7 +286,7 @@ DEVICE_CMD Lookup_Socket(REBREQ *req)
 
     rebElide("insert system/ports/system make event! [",
         "type: 'lookup",
-        "port:", CTX_ARCHETYPE(CTX(req->port_ctx)),
+        "port:", Varlist_Archetype(CTX(req->port_ctx)),
     "]");
 
     return DR_DONE;
@@ -326,7 +326,7 @@ DEVICE_CMD Connect_Socket(REBREQ *req)
 
         rebElide("insert system/ports/system make event! [",
             "type: 'connect",
-            "port:", CTX_ARCHETYPE(CTX(req->port_ctx)),
+            "port:", Varlist_Archetype(CTX(req->port_ctx)),
         "]");
 
         if (req->modes & RST_LISTEN)
@@ -375,7 +375,7 @@ DEVICE_CMD Connect_Socket(REBREQ *req)
 
     rebElide("insert system/ports/system make event! [",
         "type: 'connect",
-        "port:", CTX_ARCHETYPE(CTX(req->port_ctx)),
+        "port:", Varlist_Archetype(CTX(req->port_ctx)),
     "]");
 
     return DR_DONE;
@@ -443,7 +443,7 @@ DEVICE_CMD Transfer_Socket(REBREQ *req)
             if (req->actual >= req->length) {
                 rebElide("insert system/ports/system make event! [",
                     "type: 'wrote",
-                    "port:", CTX_ARCHETYPE(CTX(req->port_ctx)),
+                    "port:", Varlist_Archetype(CTX(req->port_ctx)),
                 "]");
 
                 return DR_DONE;
@@ -471,7 +471,7 @@ DEVICE_CMD Transfer_Socket(REBREQ *req)
 
             rebElide("insert system/ports/system make event! [",
                 "type: 'read",
-                "port:", CTX_ARCHETYPE(CTX(req->port_ctx)),
+                "port:", Varlist_Archetype(CTX(req->port_ctx)),
             "]");
 
             return DR_DONE;
@@ -482,7 +482,7 @@ DEVICE_CMD Transfer_Socket(REBREQ *req)
 
             rebElide("insert system/ports/system make event! [",
                 "type: 'close",
-                "port:", CTX_ARCHETYPE(CTX(req->port_ctx)),
+                "port:", Varlist_Archetype(CTX(req->port_ctx)),
             "]");
 
             return DR_DONE;
@@ -654,7 +654,7 @@ DEVICE_CMD Accept_Socket(REBREQ *req)
     if (req->modes & RST_UDP) {
         rebElide("insert system/ports/system make event! [",
             "type: 'accept",
-            "port:", CTX_ARCHETYPE(CTX(req->port_ctx)),
+            "port:", Varlist_Archetype(CTX(req->port_ctx)),
         "]");
 
         return DR_PEND;
@@ -679,16 +679,16 @@ DEVICE_CMD Accept_Socket(REBREQ *req)
 
     // Create a new port using ACCEPT
 
-    REBCTX *listener = CTX(req->port_ctx);
-    REBCTX *connection = Copy_Context_Shallow_Managed(listener);
+    VarList* listener = CTX(req->port_ctx);
+    VarList* connection = Copy_Context_Shallow_Managed(listener);
     Push_GC_Guard(connection);
 
-    Init_Nulled(CTX_VAR(connection, STD_PORT_DATA));  // just to be sure.
-    Init_Nulled(CTX_VAR(connection, STD_PORT_STATE));  // just to be sure.
+    Init_Nulled(Varlist_Slot(connection, STD_PORT_DATA));  // just to be sure.
+    Init_Nulled(Varlist_Slot(connection, STD_PORT_STATE));  // just to be sure.
 
     struct devreq_net *sock = cast(
         struct devreq_net*,
-        Ensure_Port_State(CTX_ARCHETYPE(connection), RDI_NET)
+        Ensure_Port_State(Varlist_Archetype(connection), RDI_NET)
     );
 
     memset(sock, '\0', sizeof(struct devreq_net));
@@ -708,8 +708,8 @@ DEVICE_CMD Accept_Socket(REBREQ *req)
     AS_REBREQ(sock)->port_ctx = connection;
 
     rebElide(
-        "append ensure block!", CTX_VAR(listener, STD_PORT_CONNECTIONS),
-        CTX_ARCHETYPE(connection)  // will GC protect during run
+        "append ensure block!", Varlist_Slot(listener, STD_PORT_CONNECTIONS),
+        Varlist_Archetype(connection)  // will GC protect during run
     );
 
     Drop_GC_Guard(connection);
@@ -719,7 +719,7 @@ DEVICE_CMD Accept_Socket(REBREQ *req)
     //
     rebElide("insert system/ports/system make event! [",
         "type: 'accept",
-        "port:", CTX_ARCHETYPE(listener),
+        "port:", Varlist_Archetype(listener),
     "]");
 
     // Even though we signalled, we keep the listen pending to

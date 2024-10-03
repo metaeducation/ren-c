@@ -146,7 +146,9 @@ typedef Stub Flex;
 
     struct Array;
 
-    struct REBCTX;
+    struct VarList;
+    struct Error;
+
     struct REBACT;
     struct REBMAP;
 #else
@@ -156,7 +158,9 @@ typedef Stub Flex;
 
     typedef Flex Array;
 
-    typedef Flex REBCTX;
+    typedef Flex VarList;
+    typedef Flex Error;
+
     typedef Flex REBACT;
     typedef Flex REBMAP;
 #endif

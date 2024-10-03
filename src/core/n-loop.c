@@ -383,7 +383,7 @@ struct Loop_Each_State {
     Value* out; // where to write the output data (must be GC safe)
     const Value* body; // body to run on each loop iteration
     LOOP_MODE mode; // FOR-EACH, MAP-EACH, EVERY
-    REBCTX *pseudo_vars_ctx; // vars made by Virtual_Bind_To_New_Context()
+    VarList* pseudo_vars_ctx; // vars made by Virtual_Bind_To_New_Context()
     Value* data; // the data argument passed in
     Flex* data_ser; // series data being enumerated (if applicable)
     REBLEN data_idx; // index into the data for filling current variable
@@ -412,7 +412,7 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
         //
         // ANY-CONTEXT! and MAP! allow one var (keys) or two vars (keys/vals)
         //
-        Value* pseudo_var = CTX_VAR(les->pseudo_vars_ctx, 1);
+        Value* pseudo_var = Varlist_Slot(les->pseudo_vars_ctx, 1);
         for (; NOT_END(pseudo_var); ++pseudo_var) {
             Value* var = Real_Var_From_Pseudo(pseudo_var);
 
@@ -461,8 +461,8 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
                 Value* val;
                 REBLEN bind_index;
                 while (true) { // find next non-hidden key (if any)
-                    key = VAL_CONTEXT_KEY(les->data, les->data_idx);
-                    val = VAL_CONTEXT_VAR(les->data, les->data_idx);
+                    key = Cell_Varlist_KEY(les->data, les->data_idx);
+                    val = Cell_Varlist_VAR(les->data, les->data_idx);
                     bind_index = les->data_idx;
                     if (++les->data_idx == les->data_len)
                         more_data = false;
@@ -476,15 +476,15 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
                     var,
                     REB_WORD,
                     Cell_Parameter_Symbol(key),
-                    VAL_CONTEXT(les->data),
+                    Cell_Varlist(les->data),
                     bind_index
                 );
 
-                if (CTX_LEN(les->pseudo_vars_ctx) == 1) {
+                if (Varlist_Len(les->pseudo_vars_ctx) == 1) {
                     //
                     // Only wanted the key (`for-each key obj [...]`)
                 }
-                else if (CTX_LEN(les->pseudo_vars_ctx) == 2) {
+                else if (Varlist_Len(les->pseudo_vars_ctx) == 2) {
                     //
                     // Want keys and values (`for-each key val obj [...]`)
                     //
@@ -516,11 +516,11 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
 
                 Copy_Cell(var, key);
 
-                if (CTX_LEN(les->pseudo_vars_ctx) == 1) {
+                if (Varlist_Len(les->pseudo_vars_ctx) == 1) {
                     //
                     // Only wanted the key (`for-each key map [...]`)
                 }
-                else if (CTX_LEN(les->pseudo_vars_ctx) == 2) {
+                else if (Varlist_Len(les->pseudo_vars_ctx) == 2) {
                     //
                     // Want keys and values (`for-each key val map [...]`)
                     //
@@ -560,7 +560,7 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
                 }
                 else {
                     more_data = false; // any remaining vars must be unset
-                    if (pseudo_var == CTX_VARS_HEAD(les->pseudo_vars_ctx)) {
+                    if (pseudo_var == Varlist_Slots_Head(les->pseudo_vars_ctx)) {
                         //
                         // If we don't have at least *some* of the variables
                         // set for this body loop run, don't run the body.
@@ -681,7 +681,7 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
             les.data_idx = VAL_INDEX(les.data);
         }
         else if (Any_Context(les.data)) {
-            les.data_ser = CTX_VARLIST(VAL_CONTEXT(les.data));
+            les.data_ser = Varlist_Array(Cell_Varlist(les.data));
             les.data_idx = 1;
         }
         else if (Is_Map(les.data)) {
@@ -815,7 +815,7 @@ DECLARE_NATIVE(for)
 {
     INCLUDE_PARAMS_OF_FOR;
 
-    REBCTX *context;
+    VarList* context;
     Virtual_Bind_Deep_To_New_Context(
         ARG(body), // may be updated, will still be GC safe
         &context,
@@ -823,7 +823,7 @@ DECLARE_NATIVE(for)
     );
     Init_Object(ARG(word), context); // keep GC safe
 
-    Value* var = CTX_VAR(context, 1); // not movable, see #2274
+    Value* var = Varlist_Slot(context, 1); // not movable, see #2274
 
     if (
         Is_Integer(ARG(start))
@@ -907,7 +907,7 @@ DECLARE_NATIVE(for_skip)
         return OUT;  // void is loop protocol if body never ran
     }
 
-    REBCTX *context;
+    VarList* context;
     Virtual_Bind_Deep_To_New_Context(
         ARG(body), // may be updated, will still be GC safe
         &context,
@@ -915,7 +915,7 @@ DECLARE_NATIVE(for_skip)
     );
     Init_Object(ARG(word), context); // keep GC safe
 
-    Value* pseudo_var = CTX_VAR(context, 1); // not movable, see #2274
+    Value* pseudo_var = Varlist_Slot(context, 1); // not movable, see #2274
     Value* var = Real_Var_From_Pseudo(pseudo_var);
     Copy_Cell(var, series);
 
@@ -1112,7 +1112,7 @@ struct Remove_Each_State {
     Flex* series;
     bool broke; // e.g. a BREAK ran
     const Value* body;
-    REBCTX *context;
+    VarList* context;
     REBLEN start;
     REB_MOLD *mo;
 };
@@ -1261,7 +1261,7 @@ static Bounce Remove_Each_Core(struct Remove_Each_State *res)
     while (index < len) {
         assert(res->start == index);
 
-        Value* var = CTX_VAR(res->context, 1); // not movable, see #2274
+        Value* var = Varlist_Slot(res->context, 1); // not movable, see #2274
         for (; NOT_END(var); ++var) {
             if (index == len) {
                 //
@@ -1590,7 +1590,7 @@ DECLARE_NATIVE(for_next)
     if (Is_Decimal(value) or Is_Percent(value))
         Init_Integer(value, Int64(value));
 
-    REBCTX *context;
+    VarList* context;
     Virtual_Bind_Deep_To_New_Context(
         ARG(body),
         &context,
@@ -1598,9 +1598,9 @@ DECLARE_NATIVE(for_next)
     );
     Init_Object(ARG(word), context); // keep GC safe
 
-    assert(CTX_LEN(context) == 1);
+    assert(Varlist_Len(context) == 1);
 
-    Value* var = CTX_VAR(context, 1); // not movable, see #2274
+    Value* var = Varlist_Slot(context, 1); // not movable, see #2274
     return Loop_Series_Common(
         OUT, var, ARG(body), value, VAL_LEN_HEAD(value) - 1, 1
     );

@@ -1584,14 +1584,14 @@ bool Eval_Core_Throws(Level* const L)
                     // loop.  Hence, do a pre-pass here to fill in just the
                     // specializations and leave everything else alone.
                     //
-                    REBCTX *exemplar;
+                    VarList* exemplar;
                     if (
                         Level_Phase(L) != L->out->payload.any_context.phase
                         and did (exemplar = ACT_EXEMPLAR(
                             L->out->payload.any_context.phase
                         ))
                     ){
-                        L->special = CTX_VARS_HEAD(exemplar);
+                        L->special = Varlist_Slots_Head(exemplar);
                         L->arg = Level_Args_Head(L);
                         for (; NOT_END(L->arg); ++L->arg, ++L->special) {
                             if (Is_Nulled(L->special)) // no specialization

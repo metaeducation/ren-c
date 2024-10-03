@@ -162,7 +162,7 @@ INLINE Value* ACT_PARAM(REBACT *a, REBLEN n) {
 // nullptr in the LINK(info).specialty node in that case--instead the params.
 // This makes Push_Action() slightly faster in assigning L->special.
 //
-INLINE REBCTX *ACT_EXEMPLAR(REBACT *a) {
+INLINE VarList* ACT_EXEMPLAR(REBACT *a) {
     Array* details = ACT_ARCHETYPE(a)->payload.action.details;
     Array* specialty = LINK(details).specialty;
     if (Get_Array_Flag(specialty, IS_VARLIST))
@@ -289,7 +289,7 @@ INLINE REBNAT VAL_ACT_DISPATCHER(const Cell* v) {
     return MISC(v->payload.action.details).dispatcher;
 }
 
-INLINE REBCTX *VAL_ACT_META(const Cell* v) {
+INLINE VarList* VAL_ACT_META(const Cell* v) {
     assert(Is_Action(v));
     return MISC(v->payload.action.paramlist).meta;
 }

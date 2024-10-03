@@ -155,7 +155,7 @@ DECLARE_NATIVE(bind)
     else
         add_midstream_types = 0;
 
-    REBCTX *context;
+    VarList* context;
 
     // !!! For now, force reification before doing any binding.
 
@@ -163,7 +163,7 @@ DECLARE_NATIVE(bind)
         //
         // Get target from an OBJECT!, ERROR!, PORT!, MODULE!, FRAME!
         //
-        context = VAL_CONTEXT(target);
+        context = Cell_Varlist(target);
     }
     else {
         assert(Any_Word(target));
@@ -265,7 +265,7 @@ DECLARE_NATIVE(use)
 {
     INCLUDE_PARAMS_OF_USE;
 
-    REBCTX *context;
+    VarList* context;
     Virtual_Bind_Deep_To_New_Context(
         ARG(body), // may be replaced with rebound copy, or left the same
         &context, // winds up managed; if no references exist, GC is ok
@@ -311,8 +311,8 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
         // moved (e.g. OUT would be examined here to determine if it would
         // have a longer lifetime than the Level* or other node)
         //
-        REBCTX *c = VAL_WORD_CONTEXT(v);
-        Copy_Cell(out, CTX_ARCHETYPE(c));
+        VarList* c = VAL_WORD_CONTEXT(v);
+        Copy_Cell(out, Varlist_Archetype(c));
         break; }
 
     default:
@@ -334,8 +334,8 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
     // practice...keep an eye out for counterexamples.
     //
     if (Is_Frame(out)) {
-        REBCTX *c = VAL_CONTEXT(out);
-        Level* L = CTX_LEVEL_IF_ON_STACK(c);
+        VarList* c = Cell_Varlist(out);
+        Level* L = Level_Of_Varlist_If_Running(c);
         if (L) {
             out->payload.any_context.phase = Level_Phase(L);
             INIT_BINDING(out, LVL_BINDING(L));
@@ -757,7 +757,7 @@ DECLARE_NATIVE(in)
 
                 v = safe;
                 if (Is_Object(v)) {
-                    REBCTX *context = VAL_CONTEXT(v);
+                    VarList* context = Cell_Varlist(v);
                     REBLEN index = Find_Canon_In_Context(
                         context, VAL_WORD_CANON(word), false
                     );
@@ -777,7 +777,7 @@ DECLARE_NATIVE(in)
         fail (Error_Invalid(word));
     }
 
-    REBCTX *context = VAL_CONTEXT(val);
+    VarList* context = Cell_Varlist(val);
 
     // Special form: IN object block
     if (Is_Block(word) or Is_Group(word)) {
@@ -827,8 +827,8 @@ DECLARE_NATIVE(resolve)
 
     UNUSED(REF(only)); // handled by noticing if ARG(from) is void
     Resolve_Context(
-        VAL_CONTEXT(ARG(target)),
-        VAL_CONTEXT(ARG(source)),
+        Cell_Varlist(ARG(target)),
+        Cell_Varlist(ARG(source)),
         ARG(from),
         REF(all),
         REF(extend)
@@ -942,7 +942,7 @@ DECLARE_NATIVE(free_q)
 
     Flex* s;
     if (Any_Context(v))
-        s = v->payload.any_context.varlist;  // VAL_CONTEXT fails if freed
+        s = v->payload.any_context.varlist;  // Cell_Varlist fails if freed
     else if (Is_Handle(v))
         s = v->extra.singular;
     else if (Any_Series(v))

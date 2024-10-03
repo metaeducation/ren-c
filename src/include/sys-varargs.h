@@ -116,7 +116,7 @@ INLINE bool Is_Level_Style_Varargs_Maybe_Null(
     // "Ordinary" case... use the original frame implied by the VARARGS!
     // (so long as it is still live on the stack)
 
-    *L_out = CTX_LEVEL_IF_ON_STACK(CTX(vararg->extra.binding));
+    *L_out = Level_Of_Varlist_If_Running(CTX(vararg->extra.binding));
     return true;
 }
 

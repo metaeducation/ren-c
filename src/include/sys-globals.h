@@ -62,8 +62,8 @@ PVAR REBLEN PG_Num_Canon_Slots_In_Use;  // Total canon hash slots (+ deleteds)
     PVAR REBLEN PG_Num_Canon_Deleteds;  // Deleted canon hash slots "in use"
 #endif
 
-PVAR REBCTX *Lib_Context;
-PVAR REBCTX *Sys_Context;
+PVAR VarList* Lib_Context;
+PVAR VarList* Sys_Context;
 
 //-- Various char tables:
 PVAR Byte *White_Chars;

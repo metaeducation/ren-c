@@ -214,7 +214,7 @@ void* Probe_Core_Debug(
         else if (Is_Flex_Array(s)) {
             if (Get_Array_Flag(s, IS_VARLIST)) {
                 Probe_Print_Helper(p, "Context Varlist", file, line);
-                Probe_Molded_Value(CTX_ARCHETYPE(CTX(s)));
+                Probe_Molded_Value(Varlist_Archetype(CTX(s)));
             }
             else {
                 Probe_Print_Helper(p, "Array Flex", file, line);

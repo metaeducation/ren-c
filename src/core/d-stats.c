@@ -81,7 +81,7 @@ DECLARE_NATIVE(stats)
     if (REF(profile)) {
         Copy_Cell(OUT, Get_System(SYS_STANDARD, STD_STATS));
         if (Is_Object(OUT)) {
-            Value* stats = VAL_CONTEXT_VAR(OUT, 1);
+            Value* stats = Cell_Varlist_VAR(OUT, 1);
 
             RESET_CELL(stats, REB_TIME);
             VAL_NANO(stats) = OS_DELTA_TIME(PG_Boot_Time) * 1000;

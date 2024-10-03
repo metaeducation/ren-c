@@ -582,7 +582,7 @@ INLINE void Drop_Action(Level* L) {
         // call.  That's done by making an adjusted copy of the stub, which
         // steals its dynamic memory (by setting the stub not HAS_DYNAMIC).
         //
-        L->varlist = CTX_VARLIST(
+        L->varlist = Varlist_Array(
             Steal_Context_Vars(
                 CTX(L->varlist),
                 L->original  // degrade keysource from L
@@ -629,9 +629,9 @@ INLINE void Drop_Action(Level* L) {
 
 
 //
-//  Context_For_Level_May_Manage: C
+//  Varlist_For_Level_May_Manage: C
 //
-INLINE REBCTX *Context_For_Level_May_Manage(Level* L)
+INLINE VarList* Varlist_For_Level_May_Manage(Level* L)
 {
     assert(not Is_Action_Level_Fulfilling(L));
     Set_Node_Managed_Bit(L->varlist);

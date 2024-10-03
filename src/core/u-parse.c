@@ -316,21 +316,21 @@ static bool Subparse_Throws(
 // question, but now the `where` at the time of failure will indicate the
 // location in the parse dialect that's the problem.
 
-INLINE REBCTX *Error_Parse_Rule(void) {
+INLINE Error* Error_Parse_Rule(void) {
     return Error_Parse_Rule_Raw();
 }
 
-INLINE REBCTX *Error_Parse_End(void) {
+INLINE Error* Error_Parse_End(void) {
     return Error_Parse_End_Raw();
 }
 
-INLINE REBCTX *Error_Parse_Command(Level* L) {
+INLINE Error* Error_Parse_Command(Level* L) {
     DECLARE_VALUE (command);
     Derelativize(command, P_RULE, P_RULE_SPECIFIER);
     return Error_Parse_Command_Raw(command);
 }
 
-INLINE REBCTX *Error_Parse_Variable(Level* L) {
+INLINE Error* Error_Parse_Variable(Level* L) {
     DECLARE_VALUE (variable);
     Derelativize(variable, P_RULE, P_RULE_SPECIFIER);
     return Error_Parse_Variable_Raw(variable);

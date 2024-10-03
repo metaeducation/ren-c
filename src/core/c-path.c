@@ -170,7 +170,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             //
             // If we had a reference before we called in, we saved it in
             // pvs->u.ref.  So in the example case of `month/year:`, that
-            // would be the CTX_VAR() where month was found initially, and so
+            // would be the Varlist_Slot() where month was found initially, and so
             // we write the updated bits from pvs->out there.
 
             if (pvs->flags.bits & DO_FLAG_SET_PATH_ENFIXED)
@@ -520,7 +520,7 @@ void Get_Simple_Value_Into(Value* out, const Cell* val, Specifier* specifier)
 // does not execute GROUP! (and perhaps shouldn't?) and only supports a
 // path that picks contexts out of other contexts, via word selection.
 //
-REBCTX *Resolve_Path(const Value* path, REBLEN *index_out)
+VarList* Resolve_Path(const Value* path, REBLEN *index_out)
 {
     Array* array = Cell_Array(path);
     Cell* picker = Array_Head(array);
@@ -536,15 +536,15 @@ REBCTX *Resolve_Path(const Value* path, REBLEN *index_out)
 
     while (Any_Context(var) and Is_Word(picker)) {
         REBLEN i = Find_Canon_In_Context(
-            VAL_CONTEXT(var), VAL_WORD_CANON(picker), false
+            Cell_Varlist(var), VAL_WORD_CANON(picker), false
         );
         ++picker;
         if (IS_END(picker)) {
             *index_out = i;
-            return VAL_CONTEXT(var);
+            return Cell_Varlist(var);
         }
 
-        var = CTX_VAR(VAL_CONTEXT(var), i);
+        var = Varlist_Slot(Cell_Varlist(var), i);
     }
 
     return nullptr;

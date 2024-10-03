@@ -64,7 +64,7 @@
 //   concerns specific to special treatment and handling, in interaction with
 //   the garbage collector as well as handling "relative vs specific" values.
 //
-// * Several related types (REBACT for function, REBCTX for context) are
+// * Several related types (REBACT for function, VarList for context) are
 //   actually stylized arrays.  They are laid out with special values in their
 //   content (e.g. at the [0] index), or by links to other series in their
 //   `->misc` field of the Stub node.  Hence series are the basic building
@@ -261,7 +261,7 @@
 // can be reached from it via the `->misc` field in the series node, which is
 // a second Array known as a "KeyList".
 //
-// See notes on REBCTX for further details about what a context is.
+// See notes on VarList definition for further details.
 //
 #define ARRAY_FLAG_IS_VARLIST \
     FLAG_LEFT_BIT(19)
@@ -686,7 +686,7 @@ union StubLinkUnion {
     // it is.  If it's an array-type series, it is either the varlist of
     // the owning frame *or* the EMPTY_ARRAY (to avoid a nullptr check)
     //
-    REBCTX* owner;
+    VarList* owner;
 
     // Ordinary source Arraus use their ->link field to point to an
     // interned file name string from which the code was loaded.  If an
@@ -696,7 +696,7 @@ union StubLinkUnion {
     //
     String* file;
 
-    // REBCTX types use this field of their varlist (which is the identity of
+    // Context types use this field of their varlist (which is the identity of
     // an ANY-CONTEXT!) to find their "keylist".  It is stored in the Stub
     // node of the varlist Array vs. in the cell of the ANY-CONTEXT! so
     // that the keylist can be changed without needing to update all the
@@ -747,7 +747,7 @@ union StubLinkUnion {
     // REBACT uses this.  It can hold either the varlist of a frame containing
     // specialized values (e.g. an "exemplar"), with ARRAY_FLAG_IS_VARLIST set.
     // Or just hold the paramlist.  This speeds up Push_Action() because
-    // if this were `REBCTX *exemplar;` then it would have to test it for null
+    // if this were `VarList* exemplar;` then it would have to test it for null
     // explicitly to default L->special to L->param.
     //
     Array* specialty;
@@ -817,7 +817,7 @@ union StubMiscUnion {
     // object.  It's where information for HELP is saved, and it's how modules
     // store out-of-band information that doesn't appear in their body.
     //
-    REBCTX *meta;
+    VarList* meta;
 
     // native dispatcher code, see Reb_Function's body_holder
     //
@@ -913,7 +913,9 @@ typedef struct StubStruct Flex;
 
     struct Array : public Flex {};
 
-    struct REBCTX : public Stub {};
+    struct VarList : public Stub {};
+    struct Error : public VarList {};
+
     struct REBACT : public Stub {};
     struct REBMAP : public Stub {};
 #else
@@ -923,7 +925,9 @@ typedef struct StubStruct Flex;
 
     typedef Flex Array;
 
-    typedef Flex REBCTX;
+    typedef Flex VarList;
+    typedef Flex Error;
+
     typedef Flex REBACT;
     typedef Flex REBMAP;
 #endif

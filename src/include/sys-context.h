@@ -54,7 +54,7 @@
 // Frame key/var indices start at one, and they leave two cell slots open
 // in the 0 spot for other uses.  With an ANY-CONTEXT!, the use for the
 // "ROOTVAR" is to store a canon value image of the ANY-CONTEXT!'s cell
-// itself.  This trick allows a single REBCTX* to be passed around rather
+// itself.  This trick allows a single VarList* to be passed around rather
 // than the cell struct which is 4x larger, yet still reconstitute the
 // entire cell if it is needed.
 //
@@ -65,7 +65,7 @@
     #define ASSERT_CONTEXT(c) Assert_Context_Core(c)
 #endif
 
-INLINE Array* CTX_VARLIST(REBCTX* c) {
+INLINE Array* Varlist_Array(VarList* c) {
     assert(Get_Array_Flag(c, IS_VARLIST));
     return cast(Array*, c);
 }
@@ -75,8 +75,8 @@ INLINE Array* CTX_VARLIST(REBCTX* c) {
 // allocated context, and in that case it will have to come out of the
 // Stub node data itself.
 //
-INLINE Value* CTX_ARCHETYPE(REBCTX *c) {
-    Array* varlist = CTX_VARLIST(c);
+INLINE Value* Varlist_Archetype(VarList* c) {
+    Array* varlist = Varlist_Array(c);
     if (not Is_Flex_Dynamic(varlist))
         return cast(Value*, &varlist->content.fixed);
 
@@ -87,10 +87,10 @@ INLINE Value* CTX_ARCHETYPE(REBCTX *c) {
     return cast(Value*, varlist->content.dynamic.data);
 }
 
-// CTX_KEYLIST is called often, and it's worth it to make it as fast as
+// Keylist_Of_Varlist is called often, and it's worth it to make it as fast as
 // possible--even in an unoptimized build.
 //
-INLINE Array* CTX_KEYLIST(REBCTX *c) {
+INLINE Array* Keylist_Of_Varlist(VarList* c) {
     if (Is_Node_A_Stub(LINK(c).keysource))
         return cast_Array(LINK(c).keysource);  // not a Level, so use keylist
 
@@ -102,17 +102,17 @@ INLINE Array* CTX_KEYLIST(REBCTX *c) {
     // phase changes, a fixed value can't be put into the keylist...that is
     // just the keylist of the underlying function.
     //
-    Value* archetype = CTX_ARCHETYPE(c);
+    Value* archetype = Varlist_Archetype(c);
     assert(VAL_TYPE_RAW(archetype) == REB_FRAME);
     return ACT_PARAMLIST(archetype->payload.any_context.phase);
 }
 
-INLINE void INIT_CTX_KEYLIST_SHARED(REBCTX *c, Array* keylist) {
+INLINE void Tweak_Keylist_Of_Varlist_Shared(VarList* c, Array* keylist) {
     Set_Flex_Info(keylist, SHARED_KEYLIST);
     LINK(c).keysource = keylist;
 }
 
-INLINE void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, Array* keylist) {
+INLINE void Tweak_Keylist_Of_Varlist_Unique(VarList* c, Array* keylist) {
     assert(Not_Flex_Info(keylist, SHARED_KEYLIST));
     LINK(c).keysource = keylist;
 }
@@ -125,76 +125,76 @@ INLINE void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, Array* keylist) {
 // (and getting an answer for the length back that was the same as the length
 // requested in context creation).
 //
-#define CTX_LEN(c) \
+#define Varlist_Len(c) \
     (cast(Flex*, (c))->content.dynamic.len - 1) // len > 1 => dynamic
 
 #define CTX_ROOTKEY(c) \
-    cast(Value*, CTX_KEYLIST(c)->content.dynamic.data) // len > 1
+    cast(Value*, Keylist_Of_Varlist(c)->content.dynamic.data) // len > 1
 
 #define CTX_TYPE(c) \
-    VAL_TYPE(CTX_ARCHETYPE(c))
+    VAL_TYPE(Varlist_Archetype(c))
 
 // The keys and vars are accessed by positive integers starting at 1
 //
-#define CTX_KEYS_HEAD(c) \
-    Flex_At(Value, CTX_KEYLIST(c), 1)  // a CTX_KEY is always "specific"
+#define Varlist_Keys_Head(c) \
+    Flex_At(Value, Keylist_Of_Varlist(c), 1)  // always "specific"
 
-INLINE Level* CTX_LEVEL_IF_ON_STACK(REBCTX *c) {
+INLINE Level* Level_Of_Varlist_If_Running(VarList* c) {
     Node* keysource = LINK(c).keysource;
     if (Is_Node_A_Stub(keysource))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
 
-    assert(Not_Flex_Info(CTX_VARLIST(c), INACCESSIBLE));
-    assert(Is_Frame(CTX_ARCHETYPE(c)));
+    assert(Not_Flex_Info(Varlist_Array(c), INACCESSIBLE));
+    assert(Is_Frame(Varlist_Archetype(c)));
 
     Level* L = LVL(keysource);
     assert(L->original); // inline Is_Action_Level() to break dependency
     return L;
 }
 
-INLINE Level* CTX_LEVEL_MAY_FAIL(REBCTX *c) {
-    Level* L = CTX_LEVEL_IF_ON_STACK(c);
+INLINE Level* Level_Of_Varlist_May_Fail(VarList* c) {
+    Level* L = Level_Of_Varlist_If_Running(c);
     if (not L)
         fail (Error_Frame_Not_On_Stack_Raw());
     return L;
 }
 
-#define CTX_VARS_HEAD(c) \
-    Flex_At(Value, CTX_VARLIST(c), 1)  // may fail() if inaccessible
+#define Varlist_Slots_Head(c) \
+    Flex_At(Value, Varlist_Array(c), 1)  // may fail() if inaccessible
 
-INLINE Value* CTX_KEY(REBCTX *c, REBLEN n) {
+INLINE Value* Varlist_Key(VarList* c, REBLEN n) {
     assert(Not_Flex_Info(c, INACCESSIBLE));
     assert(Get_Array_Flag(c, IS_VARLIST));
-    assert(n != 0 and n <= CTX_LEN(c));
-    return cast(Value*, cast(Flex*, CTX_KEYLIST(c))->content.dynamic.data)
+    assert(n != 0 and n <= Varlist_Len(c));
+    return cast(Value*, cast(Flex*, Keylist_Of_Varlist(c))->content.dynamic.data)
         + n;
 }
 
-INLINE Value* CTX_VAR(REBCTX *c, REBLEN n) {
+INLINE Value* Varlist_Slot(VarList* c, REBLEN n) {
     assert(Not_Flex_Info(c, INACCESSIBLE));
     assert(Get_Array_Flag(c, IS_VARLIST));
-    assert(n != 0 and n <= CTX_LEN(c));
+    assert(n != 0 and n <= Varlist_Len(c));
     return cast(Value*, cast(Flex*, c)->content.dynamic.data) + n;
 }
 
-INLINE Symbol* CTX_KEY_SPELLING(REBCTX *c, REBLEN n) {
-    return CTX_KEY(c, n)->extra.key_symbol;
+INLINE Symbol* CTX_KEY_SPELLING(VarList* c, REBLEN n) {
+    return Varlist_Key(c, n)->extra.key_symbol;
 }
 
-INLINE Symbol* CTX_KEY_CANON(REBCTX *c, REBLEN n) {
+INLINE Symbol* CTX_KEY_CANON(VarList* c, REBLEN n) {
     return Canon_Symbol(CTX_KEY_SPELLING(c, n));
 }
 
-INLINE Option(SymId) CTX_KEY_SYM(REBCTX *c, REBLEN n) {
+INLINE Option(SymId) CTX_KEY_SYM(VarList* c, REBLEN n) {
     return Symbol_Id(CTX_KEY_SPELLING(c, n)); // should be same as canon
 }
 
 #define FAIL_IF_READ_ONLY_CONTEXT(c) \
-    Fail_If_Read_Only_Flex(CTX_VARLIST(c))
+    Fail_If_Read_Only_Flex(Varlist_Array(c))
 
-INLINE void FREE_CONTEXT(REBCTX *c) {
-    Free_Unmanaged_Flex(CTX_KEYLIST(c));
-    Free_Unmanaged_Flex(CTX_VARLIST(c));
+INLINE void FREE_CONTEXT(VarList* c) {
+    Free_Unmanaged_Flex(Keylist_Of_Varlist(c));
+    Free_Unmanaged_Flex(Varlist_Array(c));
 }
 
 
@@ -205,11 +205,11 @@ INLINE void FREE_CONTEXT(REBCTX *c) {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // The Reb_Any_Context is the basic struct used currently for OBJECT!,
-// MODULE!, ERROR!, and PORT!.  It builds upon the context datatype REBCTX,
+// MODULE!, ERROR!, and PORT!.  It builds upon the context datatype VarList,
 // which permits the storage of associated KEYS and VARS.
 //
 
-INLINE void FAIL_IF_INACCESSIBLE_CTX(REBCTX *c) {
+INLINE void FAIL_IF_INACCESSIBLE_CTX(VarList* c) {
     if (Get_Flex_Info(c, INACCESSIBLE)) {
         if (CTX_TYPE(c) == REB_FRAME)
             fail (Error_Do_Expired_Frame_Raw()); // !!! different error?
@@ -217,10 +217,10 @@ INLINE void FAIL_IF_INACCESSIBLE_CTX(REBCTX *c) {
     }
 }
 
-INLINE REBCTX *VAL_CONTEXT(const Cell* v) {
+INLINE VarList* Cell_Varlist(const Cell* v) {
     assert(Any_Context(v));
     assert(not v->payload.any_context.phase or VAL_TYPE(v) == REB_FRAME);
-    REBCTX *c = CTX(v->payload.any_context.varlist);
+    VarList* c = CTX(v->payload.any_context.varlist);
     FAIL_IF_INACCESSIBLE_CTX(c);
     return c;
 }
@@ -231,20 +231,20 @@ INLINE REBCTX *VAL_CONTEXT(const Cell* v) {
 //
 INLINE void FAIL_IF_ERROR(const Cell* c) {
     if (Is_Error(c))
-        fail (VAL_CONTEXT(c));
+        fail (cast(Error*, Cell_Varlist(c)));
 }
 
-INLINE void INIT_VAL_CONTEXT(Value* v, REBCTX *c) {
-    v->payload.any_context.varlist = CTX_VARLIST(c);
+INLINE void INIT_Cell_Varlist(Value* v, VarList* c) {
+    v->payload.any_context.varlist = Varlist_Array(c);
 }
 
 // Convenience macros to speak in terms of object values instead of the context
 //
-#define VAL_CONTEXT_VAR(v,n) \
-    CTX_VAR(VAL_CONTEXT(v), (n))
+#define Cell_Varlist_VAR(v,n) \
+    Varlist_Slot(Cell_Varlist(v), (n))
 
-#define VAL_CONTEXT_KEY(v,n) \
-    CTX_KEY(VAL_CONTEXT(v), (n))
+#define Cell_Varlist_KEY(v,n) \
+    Varlist_Key(Cell_Varlist(v), (n))
 
 
 // The movement of the SELF word into the domain of the object generators
@@ -273,15 +273,15 @@ INLINE void INIT_VAL_CONTEXT(Value* v, REBCTX *c) {
 INLINE Value* Init_Any_Context(
     Cell* out,
     enum Reb_Kind kind,
-    REBCTX *c
+    VarList* c
 ){
   #if !defined(NDEBUG)
     Extra_Init_Any_Context_Checks_Debug(kind, c);
   #endif
     UNUSED(kind);
-    assert(Is_Flex_Managed(CTX_VARLIST(c)));
-    assert(Is_Flex_Managed(CTX_KEYLIST(c)));
-    return Copy_Cell(out, CTX_ARCHETYPE(c));
+    assert(Is_Flex_Managed(Varlist_Array(c)));
+    assert(Is_Flex_Managed(Keylist_Of_Varlist(c)));
+    return Copy_Cell(out, Varlist_Archetype(c));
 }
 
 #define Init_Object(out,c) \
@@ -326,15 +326,15 @@ INLINE Value* Init_Any_Context(
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-INLINE void Deep_Freeze_Context(REBCTX *c) {
+INLINE void Deep_Freeze_Context(VarList* c) {
     Protect_Context(
         c,
         PROT_SET | PROT_DEEP | PROT_FREEZE
     );
-    Uncolor_Array(CTX_VARLIST(c));
+    Uncolor_Array(Varlist_Array(c));
 }
 
-INLINE bool Is_Context_Deeply_Frozen(REBCTX *c) {
+INLINE bool Is_Context_Deeply_Frozen(VarList* c) {
     return Get_Flex_Info(c, FROZEN_DEEP);
 }
 
@@ -361,10 +361,10 @@ INLINE bool Is_Context_Deeply_Frozen(REBCTX *c) {
 //
 
 #define ERR_VARS(e) \
-    cast(ERROR_VARS*, CTX_VARS_HEAD(e))
+    cast(ERROR_VARS*, Varlist_Slots_Head(e))
 
 #define VAL_ERR_VARS(v) \
-    ERR_VARS(VAL_CONTEXT(v))
+    ERR_VARS(Cell_Varlist(v))
 
 #define Init_Error(v,c) \
     Init_Any_Context((v), REB_ERROR, (c))
@@ -380,10 +380,10 @@ INLINE void FAIL_IF_BAD_PORT(Value* port) {
     if (not Any_Context(port))
         fail (Error_Invalid_Port_Raw());
 
-    REBCTX *ctx = VAL_CONTEXT(port);
+    VarList* ctx = Cell_Varlist(port);
     if (
-        CTX_LEN(ctx) < (STD_PORT_MAX - 1)
-        or not Is_Object(CTX_VAR(ctx, STD_PORT_SPEC))
+        Varlist_Len(ctx) < (STD_PORT_MAX - 1)
+        or not Is_Object(Varlist_Slot(ctx, STD_PORT_SPEC))
     ){
         fail (Error_Invalid_Port_Raw());
     }
@@ -411,7 +411,7 @@ INLINE bool Is_Native_Port_Actor(const Value* actor) {
 // filled-in heap memory can be directly used as the args for the invocation,
 // instead of needing to push a redundant run of stack-based memory cells.
 //
-INLINE REBCTX *Steal_Context_Vars(REBCTX *c, Node* keysource) {
+INLINE VarList* Steal_Context_Vars(VarList* c, Node* keysource) {
     Flex* stub = c;
 
     // Rather than memcpy() and touch up the header and info to remove
@@ -437,7 +437,7 @@ INLINE REBCTX *Steal_Context_Vars(REBCTX *c, Node* keysource) {
     Value* rootvar = cast(Value*, copy->content.dynamic.data);
 
     // Convert the old varlist that had outstanding references into a
-    // singular "stub", holding only the CTX_ARCHETYPE.  This is needed
+    // singular "stub", holding only the Varlist_Archetype.  This is needed
     // for the ->binding to allow Derelativize(), see SPC_BINDING().
     //
     // Note: previously this had to preserve FLEX_INFO_FRAME_FAILED, but now

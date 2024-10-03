@@ -46,7 +46,7 @@
 // (at least until they become arbitrary precision) but it's not enough for
 // a generic BLOCK! or an ACTION! (for instance).  So the remaining bits
 // often will point to one or more Rebol "nodes" (see %sys-series.h for an
-// explanation of Series, Array, REBCTX, and REBMAP.)
+// explanation of Series, Array, VarList, and REBMAP.)
 //
 // So the next part of the structure is the "Extra".  This is the size of one
 // pointer, which sits immediately after the header (that's also the size of
@@ -596,7 +596,7 @@ union Reb_Value_Extra {
     void *corrupt;
 
     // The binding will be either a REBACT (relative to a function) or a
-    // REBCTX (specific to a context), or simply a plain Array such as
+    // VarList (specific to a context), or simply a plain Array such as
     // EMPTY_ARRAY which indicates UNBOUND.  ARRAY_FLAG_IS_VARLIST and
     // ARRAY_FLAG_IS_PARAMLIST can be used to tell which it is.
     //

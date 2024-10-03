@@ -34,8 +34,8 @@
 
 static bool Equal_Context(const Cell* val, const Cell* arg)
 {
-    REBCTX *f1;
-    REBCTX *f2;
+    VarList* f1;
+    VarList* f2;
     Value* key1;
     Value* key2;
     Value* var1;
@@ -47,8 +47,8 @@ static bool Equal_Context(const Cell* val, const Cell* arg)
     if (VAL_TYPE(arg) != VAL_TYPE(val))
         return false;
 
-    f1 = VAL_CONTEXT(val);
-    f2 = VAL_CONTEXT(arg);
+    f1 = Cell_Varlist(val);
+    f2 = Cell_Varlist(arg);
 
     // Short circuit equality: `same?` objects always equal
     //
@@ -59,10 +59,10 @@ static bool Equal_Context(const Cell* val, const Cell* arg)
     // fields of objects (notably `self`) do not figure into the `equal?`
     // of their public portions.
 
-    key1 = CTX_KEYS_HEAD(f1);
-    key2 = CTX_KEYS_HEAD(f2);
-    var1 = CTX_VARS_HEAD(f1);
-    var2 = CTX_VARS_HEAD(f2);
+    key1 = Varlist_Keys_Head(f1);
+    key2 = Varlist_Keys_Head(f2);
+    var1 = Varlist_Slots_Head(f1);
+    var2 = Varlist_Slots_Head(f2);
 
     // Compare each entry, in order.  This order dependence suggests that
     // an object made with `make object! [[a b][a: 1 b: 2]]` will not be equal
@@ -123,7 +123,7 @@ static bool Equal_Context(const Cell* val, const Cell* arg)
 }
 
 
-static void Append_To_Context(REBCTX *context, Value* arg)
+static void Append_To_Context(VarList* context, Value* arg)
 {
     // Can be a word:
     if (Any_Word(arg)) {
@@ -145,7 +145,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
     // Can't actually fail() during a collect, so make sure any errors are
     // set and then jump to a Collect_End()
     //
-    REBCTX *error = nullptr;
+    Error* error = nullptr;
 
     struct Reb_Collector collector;
     Collect_Start(&collector, COLLECT_ANY_WORD | COLLECT_AS_TYPESET);
@@ -194,7 +194,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
     // Append new words to obj
     //
     REBLEN len; // goto crosses initialization
-    len = CTX_LEN(context) + 1;
+    len = Varlist_Len(context) + 1;
     Expand_Context(context, Array_Len(BUF_COLLECT) - len);
 
     Cell* collect_key;
@@ -214,8 +214,8 @@ static void Append_To_Context(REBCTX *context, Value* arg)
         );
         assert(i != 0);
 
-        Value* key = CTX_KEY(context, i);
-        Value* var = CTX_VAR(context, i);
+        Value* key = Varlist_Key(context, i);
+        Value* var = Varlist_Slot(context, i);
 
         if (GET_VAL_FLAG(var, CELL_FLAG_PROTECTED)) {
             error = Error_Protected_Key(key);
@@ -285,7 +285,7 @@ Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         if (not Is_Action(out))
             fail (Error_Bad_Make(kind, arg));
 
-        REBCTX *exemplar = Make_Context_For_Action(
+        VarList* exemplar = Make_Context_For_Action(
             out,  // being used here as input (e.g. the ACTION!)
             lowest_stackindex,  // will weave in the refinements pushed
             nullptr  // no binder needed, not running any code
@@ -349,7 +349,7 @@ Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         // what will be responsibility of the generators, just to
         // get "completely fake SELF" out of index slot [0]
         //
-        REBCTX *context = Make_Selfish_Context_Detect_Managed(
+        VarList* context = Make_Selfish_Context_Detect_Managed(
             kind, // type
             END_NODE, // values to scan for toplevel set-words (empty)
             nullptr  // parent
@@ -361,7 +361,7 @@ Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         /*
         REBINT n = Int32s(arg, 0);
         context = Alloc_Context(kind, n);
-        RESET_VAL_HEADER(CTX_ARCHETYPE(context), target);
+        RESET_VAL_HEADER(Varlist_Archetype(context), target);
         CTX_SPEC(context) = nullptr;
         CTX_BODY(context) = nullptr; */
 
@@ -370,7 +370,7 @@ Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
 
     // make object! map!
     if (Is_Map(arg)) {
-        REBCTX *c = Alloc_Context_From_Map(VAL_MAP(arg));
+        VarList* c = Alloc_Context_From_Map(VAL_MAP(arg));
         return Init_Any_Context(out, kind, c);
     }
 
@@ -398,7 +398,7 @@ Bounce TO_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         // !!! Contexts hold canon values now that are typed, this init
         // will assert--a TO conversion would thus need to copy the varlist
         //
-        return Init_Object(out, VAL_CONTEXT(arg));
+        return Init_Object(out, Cell_Varlist(arg));
     }
 
     fail (Error_Bad_Make(kind, arg));
@@ -413,7 +413,7 @@ Bounce PD_Context(
     const Value* picker,
     const Value* opt_setval
 ){
-    REBCTX *c = VAL_CONTEXT(pvs->out);
+    VarList* c = Cell_Varlist(pvs->out);
 
     if (not Is_Word(picker))
         return BOUNCE_UNHANDLED;
@@ -427,11 +427,11 @@ Bounce PD_Context(
     if (opt_setval) {
         FAIL_IF_READ_ONLY_CONTEXT(c);
 
-        if (GET_VAL_FLAG(CTX_VAR(c, n), CELL_FLAG_PROTECTED))
+        if (GET_VAL_FLAG(Varlist_Slot(c, n), CELL_FLAG_PROTECTED))
             fail (Error_Protected_Word_Raw(picker));
     }
 
-    pvs->u.ref.cell = CTX_VAR(c, n);
+    pvs->u.ref.cell = Varlist_Slot(c, n);
     pvs->u.ref.specifier = SPECIFIED;
     return BOUNCE_REFERENCE;
 }
@@ -454,18 +454,18 @@ DECLARE_NATIVE(meta_of)
 
     Value* v = ARG(value);
 
-    REBCTX *meta;
+    VarList* meta;
     if (Is_Action(v))
         meta = VAL_ACT_META(v);
     else {
         assert(Any_Context(v));
-        meta = MISC(VAL_CONTEXT(v)).meta;
+        meta = MISC(Cell_Varlist(v)).meta;
     }
 
     if (not meta)
         return nullptr;
 
-    RETURN (CTX_ARCHETYPE(meta));
+    RETURN (Varlist_Archetype(meta));
 }
 
 
@@ -485,12 +485,12 @@ DECLARE_NATIVE(set_meta)
 {
     INCLUDE_PARAMS_OF_SET_META;
 
-    REBCTX *meta;
+    VarList* meta;
     if (Any_Context(ARG(meta))) {
         if (VAL_BINDING(ARG(meta)) != UNBOUND)
             fail ("SET-META can't store context bindings, must be unbound");
 
-        meta = VAL_CONTEXT(ARG(meta));
+        meta = Cell_Varlist(ARG(meta));
     }
     else {
         assert(Is_Nulled(ARG(meta)));
@@ -503,13 +503,13 @@ DECLARE_NATIVE(set_meta)
         MISC(VAL_ACT_PARAMLIST(v)).meta = meta;
     else {
         assert(Any_Context(v));
-        MISC(VAL_CONTEXT(v)).meta = meta;
+        MISC(Cell_Varlist(v)).meta = meta;
     }
 
     if (not meta)
         return nullptr;
 
-    RETURN (CTX_ARCHETYPE(meta));
+    RETURN (Varlist_Archetype(meta));
 }
 
 
@@ -523,12 +523,12 @@ DECLARE_NATIVE(set_meta)
 // have to be touched up to ensure consistency of the rootval and the
 // relevant ->link and ->misc fields in the series node.
 //
-REBCTX *Copy_Context_Core_Managed(REBCTX *original, REBU64 types)
+VarList* Copy_Context_Core_Managed(VarList* original, REBU64 types)
 {
     assert(Not_Flex_Info(original, INACCESSIBLE));
 
     Array* varlist = Make_Arr_For_Copy(
-        CTX_LEN(original) + 1,
+        Varlist_Len(original) + 1,
         SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED,
         nullptr // original_array, N/A because LINK()/MISC() used otherwise
     );
@@ -538,7 +538,7 @@ REBCTX *Copy_Context_Core_Managed(REBCTX *original, REBU64 types)
     // get filled in with a copy, but the varlist needs to be updated in the
     // copied rootvar to the one just created.
     //
-    Copy_Cell(dest, CTX_ARCHETYPE(original));
+    Copy_Cell(dest, Varlist_Archetype(original));
     dest->payload.any_context.varlist = varlist;
 
     ++dest;
@@ -546,19 +546,19 @@ REBCTX *Copy_Context_Core_Managed(REBCTX *original, REBU64 types)
     // Now copy the actual vars in the context, from wherever they may be
     // (might be in an array, or might be in the chunk stack for FRAME!)
     //
-    Value* src = CTX_VARS_HEAD(original);
+    Value* src = Varlist_Slots_Head(original);
     for (; NOT_END(src); ++src, ++dest)
         Move_Var(dest, src); // keep VALUE_FLAG_ENFIXED, ARG_MARKED_CHECKED
 
-    Term_Array_Len(varlist, CTX_LEN(original) + 1);
+    Term_Array_Len(varlist, Varlist_Len(original) + 1);
 
-    REBCTX *copy = CTX(varlist); // now a well-formed context
+    VarList* copy = CTX(varlist); // now a well-formed context
 
     // Reuse the keylist of the original.  (If the context of the source or
     // the copy are expanded, the sharing is unlinked and a copy is made).
     // This goes into the ->link field of the Stub node.
     //
-    INIT_CTX_KEYLIST_SHARED(copy, CTX_KEYLIST(original));
+    Tweak_Keylist_Of_Varlist_Shared(copy, Keylist_Of_Varlist(original));
 
     // A FRAME! in particular needs to know if it points back to a stack
     // frame.  The pointer is NULLed out when the stack level completes.
@@ -575,9 +575,9 @@ REBCTX *Copy_Context_Core_Managed(REBCTX *original, REBU64 types)
 
     if (types != 0) {
         Clonify_Values_Len_Managed(
-            CTX_VARS_HEAD(copy),
+            Varlist_Slots_Head(copy),
             SPECIFIED,
-            CTX_LEN(copy),
+            Varlist_Len(copy),
             types
         );
     }
@@ -593,7 +593,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 {
     Binary* out = mo->series;
 
-    REBCTX *c = VAL_CONTEXT(v);
+    VarList* c = Cell_Varlist(v);
 
     // Prevent endless mold loop:
     //
@@ -616,8 +616,8 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
         //
         // Mold all words and their values:
         //
-        Value* key = CTX_KEYS_HEAD(c);
-        Value* var = CTX_VARS_HEAD(c);
+        Value* key = Varlist_Keys_Head(c);
+        Value* var = Varlist_Slots_Head(c);
         bool had_output = false;
         for (; NOT_END(key); key++, var++) {
             if (not Is_Param_Hidden(key)) {
@@ -656,8 +656,8 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
     // the object...but regenerate one from the keylist.  If this were done
     // with functions, they would "forget" their help strings in MOLDing.
 
-    Value* keys_head = CTX_KEYS_HEAD(c);
-    Value* vars_head = CTX_VARS_HEAD(VAL_CONTEXT(v));
+    Value* keys_head = Varlist_Keys_Head(c);
+    Value* vars_head = Varlist_Slots_Head(Cell_Varlist(v));
 
     mo->indent++;
 
@@ -705,7 +705,7 @@ Bounce Context_Common_Action_Maybe_Unhandled(
     Value* value = D_ARG(1);
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
-    REBCTX *c = VAL_CONTEXT(value);
+    VarList* c = Cell_Varlist(value);
 
     switch (Cell_Word_Id(verb)) {
 
@@ -715,10 +715,10 @@ Bounce Context_Common_Action_Maybe_Unhandled(
 
         switch (property) {
         case SYM_LENGTH: // !!! Should this be legal?
-            return Init_Integer(OUT, CTX_LEN(c));
+            return Init_Integer(OUT, Varlist_Len(c));
 
         case SYM_TAIL_Q: // !!! Should this be legal?
-            return Init_Logic(OUT, CTX_LEN(c) == 0);
+            return Init_Logic(OUT, Varlist_Len(c) == 0);
 
         case SYM_WORDS:
             //
@@ -730,7 +730,7 @@ Bounce Context_Common_Action_Maybe_Unhandled(
             if (Is_Frame(value))
                 return Init_Block(
                     OUT,
-                    List_Func_Words(ACT_ARCHETYPE(ACT(CTX_KEYLIST(c))), true)
+                    List_Func_Words(ACT_ARCHETYPE(ACT(Keylist_Of_Varlist(c))), true)
                 );
 
             return Init_Block(OUT, Context_To_Array(c, 1));
@@ -771,7 +771,7 @@ REBTYPE(Context)
     Value* value = D_ARG(1);
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
-    REBCTX *c = VAL_CONTEXT(value);
+    VarList* c = Cell_Varlist(value);
 
     switch (Cell_Word_Id(verb)) {
 
@@ -780,7 +780,7 @@ REBTYPE(Context)
         if (VAL_TYPE(value) != REB_FRAME)
             break;
 
-        Level* L = CTX_LEVEL_MAY_FAIL(c);
+        Level* L = Level_Of_Varlist_May_Fail(c);
 
         switch (sym) {
           case SYM_FILE: {
@@ -822,8 +822,8 @@ REBTYPE(Context)
                 if (LVL_PHASE_OR_DUMMY(parent) == PG_Dummy_Action)
                     continue;
 
-                REBCTX* ctx_parent = Context_For_Level_May_Manage(parent);
-                RETURN (CTX_ARCHETYPE(ctx_parent));
+                VarList* ctx_parent = Varlist_For_Level_May_Manage(parent);
+                RETURN (Varlist_Archetype(ctx_parent));
             }
             return nullptr; }
 
@@ -885,7 +885,7 @@ REBTYPE(Context)
         if (Cell_Word_Id(verb) == SYM_FIND)
             return Init_Nothing(OUT); // TRUE would obscure non-LOGIC! result
 
-        RETURN (CTX_VAR(c, n)); }
+        RETURN (Varlist_Slot(c, n)); }
 
       default:
         break;
@@ -927,10 +927,10 @@ DECLARE_NATIVE(construct)
 
     Value* spec = ARG(spec);
     Value* body = ARG(body);
-    REBCTX *parent = nullptr;
+    VarList* parent = nullptr;
 
     enum Reb_Kind target;
-    REBCTX *context;
+    VarList* context;
 
     if (Is_Event(spec)) {
         //
@@ -949,7 +949,7 @@ DECLARE_NATIVE(construct)
         return OUT;
     }
     else if (Any_Context(spec)) {
-        parent = VAL_CONTEXT(spec);
+        parent = Cell_Varlist(spec);
         target = VAL_TYPE(spec);
     }
     else if (Is_Datatype(spec)) {
@@ -1034,7 +1034,7 @@ DECLARE_NATIVE(construct)
         // be selfish should not be hardcoded in the C, but part of
         // the generator choice by the person doing the derivation.
         //
-        context = Merge_Contexts_Selfish_Managed(parent, VAL_CONTEXT(body));
+        context = Merge_Contexts_Selfish_Managed(parent, Cell_Varlist(body));
         return Init_Object(OUT, context);
     }
 

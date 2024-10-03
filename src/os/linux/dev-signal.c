@@ -66,7 +66,7 @@ DEVICE_CMD Open_Signal(REBREQ *req)
 
     rebElide("insert system/ports/system make event! [",
         "type: 'open",
-        "port:", CTX_ARCHETYPE(CTX(req->port_ctx)),
+        "port:", Varlist_Archetype(CTX(req->port_ctx)),
     "]");
 
     return DR_DONE;
@@ -120,7 +120,7 @@ DEVICE_CMD Read_Signal(REBREQ *req)
 
     rebElide("insert system/ports/system make event! [",
         "type: 'read",
-        "port:", CTX_ARCHETYPE(CTX(req->port_ctx)),
+        "port:", Varlist_Archetype(CTX(req->port_ctx)),
     "]");
 
     return DR_DONE;

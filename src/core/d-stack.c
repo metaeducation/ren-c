@@ -196,9 +196,9 @@ Value* Init_Near_For_Frame(Cell* out, Level* L)
 //
 //  Is_Context_Running_Or_Pending: C
 //
-bool Is_Context_Running_Or_Pending(REBCTX *frame_ctx)
+bool Is_Context_Running_Or_Pending(VarList* frame_ctx)
 {
-    Level* L = CTX_LEVEL_IF_ON_STACK(frame_ctx);
+    Level* L = Level_Of_Varlist_If_Running(frame_ctx);
     if (not L)
         return false;
 
@@ -221,9 +221,9 @@ DECLARE_NATIVE(running_q)
 {
     INCLUDE_PARAMS_OF_RUNNING_Q;
 
-    REBCTX *frame_ctx = VAL_CONTEXT(ARG(frame));
+    VarList* frame_ctx = Cell_Varlist(ARG(frame));
 
-    Level* L = CTX_LEVEL_MAY_FAIL(frame_ctx);
+    Level* L = Level_Of_Varlist_May_Fail(frame_ctx);
 
     if (Is_Action_Level_Fulfilling(L))
         return Init_False(OUT);
@@ -244,9 +244,9 @@ DECLARE_NATIVE(pending_q)
 {
     INCLUDE_PARAMS_OF_PENDING_Q;
 
-    REBCTX *frame_ctx = VAL_CONTEXT(ARG(frame));
+    VarList* frame_ctx = Cell_Varlist(ARG(frame));
 
-    Level* L = CTX_LEVEL_MAY_FAIL(frame_ctx);
+    Level* L = Level_Of_Varlist_May_Fail(frame_ctx);
 
     if (Is_Action_Level_Fulfilling(L))
         return Init_True(OUT);

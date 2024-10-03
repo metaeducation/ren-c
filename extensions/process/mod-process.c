@@ -1676,7 +1676,7 @@ DECLARE_NATIVE(call_internal_p)
         rebFree(os_input);
 
     if (REF(info)) {
-        REBCTX *info = Alloc_Context(REB_OBJECT, 2);
+        VarList* info = Alloc_Context(REB_OBJECT, 2);
 
         Init_Integer(Append_Context(info, nullptr, Canon(SYM_ID)), pid);
         if (REF(wait))
@@ -1945,7 +1945,7 @@ DECLARE_NATIVE(get_env)
 
     Value* variable = ARG(variable);
 
-    REBCTX *error = nullptr;
+    Error* error = nullptr;
 
   #ifdef TO_WINDOWS
     // Note: The Windows variant of this API is NOT case-sensitive

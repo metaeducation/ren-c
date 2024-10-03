@@ -142,7 +142,7 @@ INLINE void Unmark_Stub(Stub* s) {
 // during the propagation.  This is to prevent recursion from within the
 // subclass queueing routine itself.  Hence this routine is the workhorse for
 // the subclasses, but there are type-checked specializations for clarity
-// if you have a REBACT*, REBCTX*, etc.
+// if you have a REBACT*, VarList*, etc.
 //
 // (Note: The data structure used for this processing is a "stack" and not
 // a "queue".  But when you use 'queue' as a verb, it has more leeway than as
@@ -183,8 +183,8 @@ INLINE void Queue_Mark_Array_Deep(Array* a) { // plain array
     Queue_Mark_Array_Subclass_Deep(a);
 }
 
-INLINE void Queue_Mark_Context_Deep(REBCTX *c) { // ARRAY_FLAG_IS_VARLIST
-    Array* varlist = CTX_VARLIST(c);
+INLINE void Queue_Mark_Context_Deep(VarList* c) { // ARRAY_FLAG_IS_VARLIST
+    Array* varlist = Varlist_Array(c);
     assert(
         Get_Flex_Info(varlist, INACCESSIBLE)
         or SERIES_MASK_CONTEXT == (varlist->leader.bits & (
@@ -498,8 +498,8 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
     case REB_FRAME:
     case REB_MODULE:
     case REB_ERROR:
-    case REB_PORT: { // Note: VAL_CONTEXT() fails on SER_INFO_INACCESSIBLE
-        REBCTX *context = CTX(v->payload.any_context.varlist);
+    case REB_PORT: { // Note: Cell_Varlist() fails on SER_INFO_INACCESSIBLE
+        VarList* context = CTX(v->payload.any_context.varlist);
         Queue_Mark_Context_Deep(context);
 
         // Currently the "binding" in a context is only used by FRAME! to
@@ -528,7 +528,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
                 //
             }
             else {
-                Level* L = CTX_LEVEL_IF_ON_STACK(context);
+                Level* L = Level_Of_Varlist_If_Running(context);
                 if (L) // comes from execution, not MAKE FRAME!
                     assert(VAL_BINDING(v) == LVL_BINDING(L));
             }
@@ -547,12 +547,12 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
             break;
 
       #if !defined(NDEBUG)
-        Value* archetype = CTX_ARCHETYPE(context);
+        Value* archetype = Varlist_Archetype(context);
         assert(CTX_TYPE(context) == kind);
-        assert(VAL_CONTEXT(archetype) == context);
+        assert(Cell_Varlist(archetype) == context);
       #endif
 
-        // Note: for VAL_CONTEXT_FRAME, the LVL_CALL is either on the stack
+        // Note: for Cell_Varlist_FRAME, the LVL_CALL is either on the stack
         // (in which case it's already taken care of for marking) or it
         // has gone bad, in which case it should be ignored.
 
@@ -666,7 +666,7 @@ static void Propagate_All_GC_Marks(void)
             else
                 assert(specialty == a);
 
-            REBCTX *meta = MISC(a).meta;
+            VarList* meta = MISC(a).meta;
             if (meta)
                 Queue_Mark_Context_Deep(meta);
 
@@ -677,7 +677,7 @@ static void Propagate_All_GC_Marks(void)
             ++v; // function archetype completely marked by this process
         }
         else if (Get_Array_Flag(a, IS_VARLIST)) {
-            v = CTX_ARCHETYPE(CTX(a)); // works if FLEX_INFO_INACCESSIBLE
+            v = Varlist_Archetype(CTX(a)); // works if FLEX_INFO_INACCESSIBLE
 
             // Currently only FRAME! uses binding
             //
@@ -718,7 +718,7 @@ static void Propagate_All_GC_Marks(void)
                 Queue_Mark_Array_Subclass_Deep(keylist);
             }
 
-            REBCTX *meta = MISC(a).meta;
+            VarList* meta = MISC(a).meta;
             if (meta != nullptr)
                 Queue_Mark_Context_Deep(meta);
 
@@ -870,7 +870,7 @@ static void Mark_Root_Stubs(void)
                 if (not (s->leader.bits & NODE_FLAG_MANAGED))
                     assert(not LINK(s).owner);
                 else if (
-                    CTX_VARLIST(LINK(s).owner)->info.bits
+                    Varlist_Array(LINK(s).owner)->info.bits
                     & FLEX_INFO_INACCESSIBLE
                 ){
                     if (Not_Flex_Info(LINK(s).owner, FRAME_FAILED)) {
@@ -931,7 +931,7 @@ static void Mark_Root_Stubs(void)
                 // root set.
 
                 // Only plain arrays are supported as unmanaged across
-                // evaluations, because REBCTX and REBACT and REBMAP are too
+                // evaluations, because VarList and REBACT and REBMAP are too
                 // complex...they must be managed before evaluations happen.
                 // Manage and use Push_GC_Guard and Drop_GC_Guard on them.
                 //

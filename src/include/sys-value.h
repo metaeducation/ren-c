@@ -60,7 +60,7 @@
 //
 // The PROBE macro can be used in debug builds to mold a cell much like the
 // Rebol `probe` operation.  But it's actually polymorphic, and if you have
-// a Flex*, REBCTX*, or Array* it can be used with those as well.  In C++,
+// a Flex*, VarList*, or Array* it can be used with those as well.  In C++,
 // you can even get the same value and type out as you put in...just like in
 // Rebol, permitting things like `return PROBE(Make_Some_Flex(...));`
 //

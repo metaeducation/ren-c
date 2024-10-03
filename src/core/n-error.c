@@ -139,7 +139,7 @@ DECLARE_NATIVE(set_location_of_error)
 
     Value* location = ARG(location);
 
-    REBCTX *context;
+    VarList* context;
     if (Is_Word(location)) {
         if (not IS_WORD_BOUND(location))
             fail ("SET-LOCATION-OF-ERROR requires bound WORD!");
@@ -147,12 +147,12 @@ DECLARE_NATIVE(set_location_of_error)
     }
     else {
         assert(Is_Frame(location));
-        context = VAL_CONTEXT(location);
+        context = Cell_Varlist(location);
     }
 
-    Level* where = CTX_LEVEL_MAY_FAIL(context);
+    Level* where = Level_Of_Varlist_May_Fail(context);
 
-    REBCTX *error = VAL_CONTEXT(ARG(error));
+    Error* error = cast(Error*, Cell_Varlist(ARG(error)));
     Set_Location_Of_Error(error, where);
 
     return nullptr;

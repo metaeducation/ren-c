@@ -51,8 +51,8 @@ REBREQ *Ensure_Port_State(Value* port, REBLEN device)
     if (not dev)
         return nullptr;
 
-    REBCTX *ctx = VAL_CONTEXT(port);
-    Value* state = CTX_VAR(ctx, STD_PORT_STATE);
+    VarList* ctx = Cell_Varlist(port);
+    Value* state = Varlist_Slot(ctx, STD_PORT_STATE);
     REBLEN req_size = dev->req_size;
 
     if (!Is_Binary(state)) {
@@ -87,7 +87,7 @@ bool Pending_Port(Value* port)
     REBREQ *req;
 
     if (Is_Port(port)) {
-        state = CTX_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
+        state = Varlist_Slot(Cell_Varlist(port), STD_PORT_STATE);
         if (Is_Binary(state)) {
             req = cast(REBREQ*, Cell_Blob_Head(state));
             if (not (req->flags & RRF_PENDING))
@@ -114,12 +114,12 @@ REBINT Awake_System(Array* ports, bool only)
         return -10; // verify it is a port object
 
     // Get wait queue block (the state field):
-    Value* state = VAL_CONTEXT_VAR(port, STD_PORT_STATE);
+    Value* state = Cell_Varlist_VAR(port, STD_PORT_STATE);
     if (!Is_Block(state))
         return -10;
 
     // Get waked queue block:
-    Value* waked = VAL_CONTEXT_VAR(port, STD_PORT_DATA);
+    Value* waked = Cell_Varlist_VAR(port, STD_PORT_DATA);
     if (!Is_Block(waked))
         return -10;
 
@@ -128,7 +128,7 @@ REBINT Awake_System(Array* ports, bool only)
         return -1;
 
     // Get the system port AWAKE function:
-    Value* awake = VAL_CONTEXT_VAR(port, STD_PORT_AWAKE);
+    Value* awake = Cell_Varlist_VAR(port, STD_PORT_AWAKE);
     if (not Is_Action(awake))
         return -1;
 
@@ -275,7 +275,7 @@ void Sieve_Ports(Array* ports)
 
     port = Get_System(SYS_PORTS, PORTS_SYSTEM);
     if (!Is_Port(port)) return;
-    waked = VAL_CONTEXT_VAR(port, STD_PORT_DATA);
+    waked = Cell_Varlist_VAR(port, STD_PORT_DATA);
     if (!Is_Block(waked)) return;
 
     for (n = 0; ports and n < Array_Len(ports);) {
@@ -413,8 +413,8 @@ Bounce Do_Port_Action(Level* level_, Value* port, Value* verb)
 {
     FAIL_IF_BAD_PORT(port);
 
-    REBCTX *ctx = VAL_CONTEXT(port);
-    Value* actor = CTX_VAR(ctx, STD_PORT_ACTOR);
+    VarList* ctx = Cell_Varlist(port);
+    Value* actor = Varlist_Slot(ctx, STD_PORT_ACTOR);
 
     Bounce bounce;
 
@@ -435,13 +435,13 @@ Bounce Do_Port_Action(Level* level_, Value* port, Value* verb)
 
     REBLEN n; // goto would cross initialization
     n = Find_Canon_In_Context(
-        VAL_CONTEXT(actor),
+        Cell_Varlist(actor),
         VAL_WORD_CANON(verb),
         false // !always
     );
 
     Value* action;
-    if (n == 0 or not Is_Action(action = VAL_CONTEXT_VAR(actor, n)))
+    if (n == 0 or not Is_Action(action = Cell_Varlist_VAR(actor, n)))
         fail (Error_No_Port_Action_Raw(verb));
 
     if (Redo_Action_Throws(level_, VAL_ACTION(action)))

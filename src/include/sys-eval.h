@@ -403,7 +403,7 @@ INLINE void Set_Level_Detected_Fetch(
         Shutdown_Interning_Binder(&binder, ss.context);
 
         if (error) {
-            REBCTX *error_ctx = VAL_CONTEXT(error);
+            Error* error_ctx = cast(Error*, Cell_Varlist(error));
             rebRelease(error);
             fail (error_ctx);
         }

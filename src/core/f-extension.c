@@ -185,7 +185,7 @@ DECLARE_NATIVE(load_extension)
 
     // !!! used to use STD_EXT_CTX, now this would go in META OF
 
-    REBCTX *module_ctx = Alloc_Context_Core(
+    VarList* module_ctx = Alloc_Context_Core(
         REB_MODULE,
         80,
         NODE_FLAG_MANAGED // !!! Is GC guard unnecessary due to references?

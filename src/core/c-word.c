@@ -627,7 +627,7 @@ void INIT_WORD_INDEX_Extra_Checks_Debug(Cell* v, REBLEN i)
     else if (Get_Array_Flag(binding, IS_PARAMLIST))
         keysource = ACT_PARAMLIST(ACT(binding));
     else
-        keysource = CTX_KEYLIST(CTX(binding));
+        keysource = Keylist_Of_Varlist(CTX(binding));
     assert(Are_Synonyms(
         Key_Symbol(Array_At(keysource, i)),
         Cell_Word_Symbol(v)

@@ -636,7 +636,7 @@ static const Byte *Skip_Tag(const Byte *cp)
 // clear that this is what's happening for the moment.
 //
 static void Update_Error_Near_For_Line(
-    REBCTX *error,
+    Error* error,
     SCAN_STATE *ss,
     REBLEN line,
     const Byte *line_head
@@ -686,7 +686,7 @@ static void Update_Error_Near_For_Line(
 // the NEAR field of the error with the "current" line number and line text,
 // e.g. where the end point of the token is seen.
 //
-static REBCTX *Error_Syntax(SCAN_STATE *ss, Token token) {
+static Error* Error_Syntax(SCAN_STATE *ss, Token token) {
     //
     // The scanner code has `bp` and `ep` locals which mirror ss->begin and
     // ss->end.  However, they get out of sync.  If they are updated, they
@@ -715,7 +715,7 @@ static REBCTX *Error_Syntax(SCAN_STATE *ss, Token token) {
         )
     );
 
-    REBCTX *error = Error_Scan_Invalid_Raw(token_name, token_text);
+    Error* error = Error_Scan_Invalid_Raw(token_name, token_text);
     Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
     return error;
 }
@@ -731,11 +731,11 @@ static REBCTX *Error_Syntax(SCAN_STATE *ss, Token token) {
 // better form of this error would walk the scan state stack and be able to
 // report all the unclosed terms.
 //
-static REBCTX *Error_Missing(SCAN_STATE *ss, char wanted) {
+static Error* Error_Missing(SCAN_STATE *ss, char wanted) {
     DECLARE_VALUE (expected);
     Init_Text(expected, Make_Ser_Codepoint(wanted));
 
-    REBCTX *error = Error_Scan_Missing_Raw(expected);
+    Error* error = Error_Scan_Missing_Raw(expected);
     Update_Error_Near_For_Line(error, ss, ss->start_line, ss->start_line_head);
     return error;
 }
@@ -746,11 +746,11 @@ static REBCTX *Error_Missing(SCAN_STATE *ss, char wanted) {
 //
 // For instance, `load "abc ]"`
 //
-static REBCTX *Error_Extra(SCAN_STATE *ss, char seen) {
+static Error* Error_Extra(SCAN_STATE *ss, char seen) {
     DECLARE_VALUE (unexpected);
     Init_Text(unexpected, Make_Ser_Codepoint(seen));
 
-    REBCTX *error = Error_Scan_Extra_Raw(unexpected);
+    Error* error = Error_Scan_Extra_Raw(unexpected);
     Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
     return error;
 }
@@ -765,8 +765,8 @@ static REBCTX *Error_Extra(SCAN_STATE *ss, char seen) {
 // applications if it would point out the locations of both points.  R3-Alpha
 // only pointed out the location of the start token.
 //
-static REBCTX *Error_Mismatch(SCAN_STATE *ss, char wanted, char seen) {
-    REBCTX *error = Error_Scan_Mismatch_Raw(rebChar(wanted), rebChar(seen));
+static Error* Error_Mismatch(SCAN_STATE *ss, char wanted, char seen) {
+    Error* error = Error_Scan_Mismatch_Raw(rebChar(wanted), rebChar(seen));
     Update_Error_Near_For_Line(error, ss, ss->start_line, ss->start_line_head);
     return error;
 }
@@ -956,7 +956,7 @@ static REBLEN Prescan_Token(SCAN_STATE *ss)
 // encoded source is because all the characters that dictate the tokenization
 // are currently in the ASCII range (< 128).
 //
-static Option(REBCTX*) Trap_Locate_Token_May_Push_Mold(
+static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     Token* token_out,
     REB_MOLD *mo,
     SCAN_STATE *ss
@@ -1932,7 +1932,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
 
   {
     Drop_Mold_If_Pushed(mo);
-    Option(REBCTX*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, ss);
+    Option(Error*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, ss);
     if (error)
         fail (unwrap(error));  // no definitional errors
   }
@@ -2366,7 +2366,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 Expand_Context(ss->context, 1);
                 Move_Var( // preserve enfix state
                     Append_Context(ss->context, TOP, nullptr),
-                    CTX_VAR(ss->lib, MISC(canon).bind_index.lib)
+                    Varlist_Slot(ss->lib, MISC(canon).bind_index.lib)
                 );
                 Add_Binder_Index(ss->binder, canon, VAL_WORD_INDEX(TOP));
             }
@@ -2876,7 +2876,7 @@ const Byte *Scan_Any_Word(
     DECLARE_MOLD (mo);
 
     Token token;
-    Option(REBCTX*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, &ss);
+    Option(Error*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, &ss);
     if (error)
         fail (unwrap(error));
 

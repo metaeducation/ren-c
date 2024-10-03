@@ -78,7 +78,7 @@ Value* Append_Event(void)
     if (!Is_Port(port)) return 0; // verify it is a port object
 
     // Get queue block:
-    Value* state = VAL_CONTEXT_VAR(port, STD_PORT_STATE);
+    Value* state = Cell_Varlist_VAR(port, STD_PORT_STATE);
     if (!Is_Block(state)) return 0;
 
     // Append to tail if room:
@@ -110,7 +110,7 @@ Value* Find_Last_Event(REBINT model, REBINT type)
     if (!Is_Port(port)) return nullptr;  // verify it is a port object
 
     // Get queue block:
-    state = VAL_CONTEXT_VAR(port, STD_PORT_STATE);
+    state = Cell_Varlist_VAR(port, STD_PORT_STATE);
     if (!Is_Block(state)) return nullptr;
 
     value = VAL_ARRAY_TAIL(state) - 1;
@@ -138,9 +138,9 @@ static Bounce Event_Actor(Level* level_, Value* port, Value* verb)
 
     // Validate and fetch relevant PORT fields:
     //
-    REBCTX *ctx = VAL_CONTEXT(port);
-    Value* state = CTX_VAR(ctx, STD_PORT_STATE);
-    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    VarList* ctx = Cell_Varlist(port);
+    Value* state = Varlist_Slot(ctx, STD_PORT_STATE);
+    Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
     if (!Is_Object(spec))
         fail (Error_Invalid_Spec_Raw(spec));
 

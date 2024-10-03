@@ -48,25 +48,25 @@ static void Query_Net(Value* out, Value* port, struct devreq_net *sock)
         "copy ensure object! (", port , ")/scheme/info"
     ); // shallow copy
 
-    REBCTX *ctx = VAL_CONTEXT(info);
+    VarList* ctx = Cell_Varlist(info);
 
     Set_Tuple(
-        CTX_VAR(ctx, STD_NET_INFO_LOCAL_IP),
+        Varlist_Slot(ctx, STD_NET_INFO_LOCAL_IP),
         cast(Byte*, &sock->local_ip),
         4
     );
     Init_Integer(
-        CTX_VAR(ctx, STD_NET_INFO_LOCAL_PORT),
+        Varlist_Slot(ctx, STD_NET_INFO_LOCAL_PORT),
         sock->local_port
     );
 
     Set_Tuple(
-        CTX_VAR(ctx, STD_NET_INFO_REMOTE_IP),
+        Varlist_Slot(ctx, STD_NET_INFO_REMOTE_IP),
         cast(Byte*, &sock->remote_ip),
         4
     );
     Init_Integer(
-        CTX_VAR(ctx, STD_NET_INFO_REMOTE_PORT),
+        Varlist_Slot(ctx, STD_NET_INFO_REMOTE_PORT),
         sock->remote_port
     );
 
@@ -90,8 +90,8 @@ static Bounce Transport_Actor(
     if (proto == TRANSPORT_UDP)
         sock->modes |= RST_UDP;
 
-    REBCTX *ctx = VAL_CONTEXT(port);
-    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    VarList* ctx = Cell_Varlist(port);
+    Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
 
     // sock->timeout = 4000; // where does this go? !!!
 
@@ -182,7 +182,7 @@ static Bounce Transport_Actor(
                 // to a BLOCK! of connections.
                 //
                 Init_Block(
-                    CTX_VAR(ctx, STD_PORT_CONNECTIONS),
+                    Varlist_Slot(ctx, STD_PORT_CONNECTIONS),
                     Make_Array(2)
                 );
                 goto open_socket_actions;
@@ -215,7 +215,7 @@ static Bounce Transport_Actor(
 
         switch (property) {
         case SYM_LENGTH: {
-            Value* port_data = CTX_VAR(ctx, STD_PORT_DATA);
+            Value* port_data = Varlist_Slot(ctx, STD_PORT_DATA);
             return Init_Integer(
                 OUT,
                 Any_Series(port_data) ? VAL_LEN_HEAD(port_data) : 0
@@ -241,7 +241,7 @@ static Bounce Transport_Actor(
         // Update the port object after a READ or WRITE operation.
         // This is normally called by the WAKE-UP function.
         //
-        Value* port_data = CTX_VAR(ctx, STD_PORT_DATA);
+        Value* port_data = Varlist_Slot(ctx, STD_PORT_DATA);
         if (sock->command == RDC_READ) {
             if (Is_Binary(port_data) or Any_String(port_data)) {
                 Set_Flex_Len(
@@ -282,7 +282,7 @@ static Bounce Transport_Actor(
 
         // Setup the read buffer (allocate a buffer if needed):
         //
-        Value* port_data = CTX_VAR(ctx, STD_PORT_DATA);
+        Value* port_data = Varlist_Slot(ctx, STD_PORT_DATA);
         Binary* buffer;
         if (not Is_Text(port_data) and not Is_Binary(port_data)) {
             buffer = Make_Binary(NET_BUF_SIZE);
@@ -365,7 +365,7 @@ static Bounce Transport_Actor(
             sock->common.data = Cell_Blob_At(data);
             sock->length = len;
 
-            Copy_Cell(CTX_VAR(ctx, STD_PORT_DATA), data); // keep it GC safe
+            Copy_Cell(Varlist_Slot(ctx, STD_PORT_DATA), data); // keep it GC safe
         }
         else {
             // !!! R3-Alpha did not lay out the invariants of the port model,
@@ -410,7 +410,7 @@ static Bounce Transport_Actor(
             rebRelease(result); // ignore result
         }
 
-        Init_Blank(CTX_VAR(ctx, STD_PORT_DATA));
+        Init_Blank(Varlist_Slot(ctx, STD_PORT_DATA));
         RETURN (port); }
 
     case SYM_TAKE: {
@@ -424,7 +424,7 @@ static Bounce Transport_Actor(
 
         return rebValue(
             "take/part/(", ARG(deep), ")/(", ARG(last), ")",
-                CTX_VAR(ctx, STD_PORT_CONNECTIONS),
+                Varlist_Slot(ctx, STD_PORT_CONNECTIONS),
                 ARG(limit)
         ); }
 

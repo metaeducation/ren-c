@@ -286,7 +286,7 @@ typedef RebolValue Value;
 #include "sys-rebval.h" // Cell and Value structure definitions
 #include "sys-rebser.h" // Series Stub definition (embeds Cell definition)
 #include "sys-rebact.h" // REBACT and ACT()
-#include "sys-rebctx.h" // REBCTX and CTX()
+#include "sys-rebctx.h" // VarList and CTX()
 
 #include "sys-state.h"
 #include "sys-rebfrm.h" // `Level` definition (also used by value)

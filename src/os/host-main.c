@@ -246,7 +246,7 @@ int main(int argc, char *argv_ansi[])
     // then the console would die.  General API point to consider, as the
     // design emerges.
     //
-    REBCTX *startup_ctx = Alloc_Context_Core(
+    VarList* startup_ctx = Alloc_Context_Core(
         REB_OBJECT,
         80,
         NODE_FLAG_MANAGED // no Push_GC_Guard needed, gets referenced

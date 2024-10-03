@@ -276,7 +276,7 @@ REBTYPE(Pair)
     // mechanical trick vs. the standard DO, because the frame thinks it is
     // already running...and the check for that would be subverted.
 
-    Value* frame = Init_Frame(OUT, Context_For_Level_May_Manage(level_));
+    Value* frame = Init_Frame(OUT, Varlist_For_Level_May_Manage(level_));
 
     Copy_Cell(D_ARG(1), first1);
     if (first2)

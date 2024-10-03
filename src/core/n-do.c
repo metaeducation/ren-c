@@ -357,7 +357,7 @@ DECLARE_NATIVE(do)
         //
         // See code called in system/intrinsic/do*
         //
-        Value* sys_do_helper = CTX_VAR(Sys_Context, SYS_CTX_DO_P);
+        Value* sys_do_helper = Varlist_Slot(Sys_Context, SYS_CTX_DO_P);
         assert(Is_Action(sys_do_helper));
 
         UNUSED(REF(args)); // detected via `value? :arg`
@@ -385,7 +385,7 @@ DECLARE_NATIVE(do)
         // anyway, so it might as well raise the one it is given...and this
         // allows the more complex logic of FAIL to be written in Rebol code.
         //
-        fail (VAL_CONTEXT(source));
+        fail (cast(Error*, Cell_Varlist(source)));
 
     case REB_ACTION: {
         //
@@ -407,10 +407,10 @@ DECLARE_NATIVE(do)
         return OUT; }
 
     case REB_FRAME: {
-        REBCTX *c = VAL_CONTEXT(source); // checks for INACCESSIBLE
+        VarList* c = Cell_Varlist(source); // checks for INACCESSIBLE
         REBACT *phase = VAL_PHASE(source);
 
-        if (CTX_LEVEL_IF_ON_STACK(c)) // see REDO for tail-call recursion
+        if (Level_Of_Varlist_If_Running(c)) // see REDO for tail-call recursion
             fail ("Use REDO to restart a running FRAME! (not DO)");
 
         // To DO a FRAME! will "steal" its data.  If a user wishes to use a
@@ -425,10 +425,10 @@ DECLARE_NATIVE(do)
             DO_FLAG_FULLY_SPECIALIZED | DO_FLAG_PROCESS_ACTION
         );
 
-        assert(CTX_KEYS_HEAD(c) == ACT_PARAMS_HEAD(phase));
-        L->param = CTX_KEYS_HEAD(c);
-        REBCTX *stolen = Steal_Context_Vars(c, phase);
-        LINK(stolen).keysource = L;  // changes CTX_KEYS_HEAD() result
+        assert(Varlist_Keys_Head(c) == ACT_PARAMS_HEAD(phase));
+        L->param = Varlist_Keys_Head(c);
+        VarList* stolen = Steal_Context_Vars(c, phase);
+        LINK(stolen).keysource = L;  // changes Varlist_Keys_Head() result
 
         // Its data stolen, the context's node should now be GC'd when
         // references in other FRAME! value cells have all gone away.
@@ -436,8 +436,8 @@ DECLARE_NATIVE(do)
         assert(Is_Node_Managed(c));
         assert(Get_Flex_Info(c, INACCESSIBLE));
 
-        L->varlist = CTX_VARLIST(stolen);
-        L->rootvar = CTX_ARCHETYPE(stolen);
+        L->varlist = Varlist_Array(stolen);
+        L->rootvar = Varlist_Archetype(stolen);
         L->arg = L->rootvar + 1;
         //L->param set above
         L->special = L->arg;
@@ -657,9 +657,9 @@ DECLARE_NATIVE(redo)
         Copy_Cell(restartee, OUT);
     }
 
-    REBCTX *c = VAL_CONTEXT(restartee);
+    VarList* c = Cell_Varlist(restartee);
 
-    Level* L = CTX_LEVEL_IF_ON_STACK(c);
+    Level* L = Level_Of_Varlist_If_Running(c);
     if (L == nullptr)
         fail ("Use DO to start a not-currently running FRAME! (not REDO)");
 
@@ -767,12 +767,12 @@ DECLARE_NATIVE(applique)
     //
     struct Reb_Binder binder;
     INIT_BINDER(&binder, nullptr);
-    REBCTX *exemplar = Make_Context_For_Action_Int_Partials(
+    VarList* exemplar = Make_Context_For_Action_Int_Partials(
         applicand,
         L->stack_base,  // lowest_stackindex of refinements to weave in
         &binder
     );
-    Manage_Flex(CTX_VARLIST(exemplar)); // binding code into it
+    Manage_Flex(Varlist_Array(exemplar)); // binding code into it
 
     // Bind any SET-WORD!s in the supplied code block into the FRAME!, so
     // e.g. APPLY 'APPEND [VALUE: 10]` will set VALUE in exemplar to 10.
@@ -792,8 +792,8 @@ DECLARE_NATIVE(applique)
 
     // Reset all the binder indices to zero, balancing out what was added.
     //
-    Value* key = CTX_KEYS_HEAD(exemplar);
-    Value* var = CTX_VARS_HEAD(exemplar);
+    Value* key = Varlist_Keys_Head(exemplar);
+    Value* var = Varlist_Slots_Head(exemplar);
     for (; NOT_END(key); key++, ++var) {
         if (Is_Param_Unbindable(key))
             continue; // shouldn't have been in the binder
@@ -810,16 +810,16 @@ DECLARE_NATIVE(applique)
     bool def_threw = Eval_List_At_Throws(temp, ARG(def));
     Drop_GC_Guard(exemplar);
 
-    assert(CTX_KEYS_HEAD(exemplar) == ACT_PARAMS_HEAD(VAL_ACTION(applicand)));
-    L->param = CTX_KEYS_HEAD(exemplar);
-    REBCTX *stolen = Steal_Context_Vars(
+    assert(Varlist_Keys_Head(exemplar) == ACT_PARAMS_HEAD(VAL_ACTION(applicand)));
+    L->param = Varlist_Keys_Head(exemplar);
+    VarList* stolen = Steal_Context_Vars(
         exemplar,
         VAL_ACTION(applicand)
     );
-    LINK(stolen).keysource = L;  // changes CTX_KEYS_HEAD result
+    LINK(stolen).keysource = L;  // changes Varlist_Keys_Head result
 
     if (def_threw) {
-        Free_Unmanaged_Flex(CTX_VARLIST(stolen)); // could TG_Reuse it
+        Free_Unmanaged_Flex(Varlist_Array(stolen)); // could TG_Reuse it
         RETURN (temp);
     }
 
@@ -838,8 +838,8 @@ DECLARE_NATIVE(applique)
         Drop_Data_Stack_To(lowest_stackindex);  // zero refinements on stack, now
     }
 
-    L->varlist = CTX_VARLIST(stolen);
-    L->rootvar = CTX_ARCHETYPE(stolen);
+    L->varlist = Varlist_Array(stolen);
+    L->rootvar = Varlist_Archetype(stolen);
     L->arg = L->rootvar + 1;
     // L->param assigned above
     L->special = L->arg; // signal only type-check the existing data

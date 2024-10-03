@@ -221,7 +221,7 @@ REBI64 Int64s(const Value* val, REBINT sign)
 const Value* Datatype_From_Kind(enum Reb_Kind kind)
 {
     assert(kind > REB_0 and kind < REB_MAX);
-    Value* type = CTX_VAR(Lib_Context, SYM_FROM_KIND(kind));
+    Value* type = Varlist_Slot(Lib_Context, SYM_FROM_KIND(kind));
     assert(Is_Datatype(type));
     return type;
 }
@@ -246,7 +246,7 @@ Value* Init_Datatype(Cell* out, enum Reb_Kind kind)
 //
 Value* Type_Of(const Cell* value)
 {
-    return CTX_VAR(Lib_Context, SYM_FROM_KIND(VAL_TYPE(value)));
+    return Varlist_Slot(Lib_Context, SYM_FROM_KIND(VAL_TYPE(value)));
 }
 
 
@@ -259,10 +259,10 @@ Value* Get_System(REBLEN i1, REBLEN i2)
 {
     Value* obj;
 
-    obj = CTX_VAR(VAL_CONTEXT(Root_System), i1);
+    obj = Varlist_Slot(Cell_Varlist(Root_System), i1);
     if (i2 == 0) return obj;
     assert(Is_Object(obj));
-    return CTX_VAR(VAL_CONTEXT(obj), i2);
+    return Varlist_Slot(Cell_Varlist(obj), i2);
 }
 
 
@@ -343,11 +343,11 @@ void Set_Tuple(Value* value, Byte *bytes, REBLEN len)
 //
 // !!! Overlaps with ASSERT_CONTEXT, review folding them together.
 //
-void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
-    assert(CTX_VARLIST(c)->leader.bits & SERIES_MASK_CONTEXT);
+void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, VarList* c) {
+    assert(Varlist_Array(c)->leader.bits & SERIES_MASK_CONTEXT);
 
-    Value* archetype = CTX_ARCHETYPE(c);
-    assert(VAL_CONTEXT(archetype) == c);
+    Value* archetype = Varlist_Archetype(c);
+    assert(Cell_Varlist(archetype) == c);
     assert(CTX_TYPE(c) == kind);
 
     // Currently only FRAME! uses the ->binding field, in order to capture the
@@ -355,13 +355,13 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
     //
     assert(VAL_BINDING(archetype) == UNBOUND or CTX_TYPE(c) == REB_FRAME);
 
-    Array* varlist = CTX_VARLIST(c);
-    Array* keylist = CTX_KEYLIST(c);
+    Array* varlist = Varlist_Array(c);
+    Array* keylist = Keylist_Of_Varlist(c);
     assert(Not_Array_Flag(keylist, HAS_FILE_LINE));
 
     assert(
         not MISC(varlist).meta
-        or Any_Context(CTX_ARCHETYPE(MISC(varlist).meta)) // current rule
+        or Any_Context(Varlist_Archetype(MISC(varlist).meta)) // current rule
     );
 
     // FRAME!s must always fill in the phase slot, but that piece of the
@@ -382,7 +382,7 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
     // Keylists are uniformly managed, or certain routines would return
     // "sometimes managed, sometimes not" keylists...a bad invariant.
     //
-    Assert_Flex_Managed(CTX_KEYLIST(c));
+    Assert_Flex_Managed(Keylist_Of_Varlist(c));
 }
 
 
@@ -405,7 +405,7 @@ void Extra_Init_Action_Checks_Debug(REBACT *a) {
     //
     assert(
         MISC(paramlist).meta == nullptr
-        or Any_Context(CTX_ARCHETYPE(MISC(paramlist).meta))
+        or Any_Context(Varlist_Archetype(MISC(paramlist).meta))
     );
 }
 

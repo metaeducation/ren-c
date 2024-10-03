@@ -563,9 +563,9 @@ DECLARE_NATIVE(wake_up)
 
     FAIL_IF_BAD_PORT(ARG(port));
 
-    REBCTX *ctx = VAL_CONTEXT(ARG(port));
+    VarList* ctx = Cell_Varlist(ARG(port));
 
-    Value* actor = CTX_VAR(ctx, STD_PORT_ACTOR);
+    Value* actor = Varlist_Slot(ctx, STD_PORT_ACTOR);
     if (Is_Native_Port_Actor(actor)) {
         //
         // We don't pass `actor` or `event` in, because we just pass the
@@ -584,7 +584,7 @@ DECLARE_NATIVE(wake_up)
 
     bool woke_up = true; // start by assuming success
 
-    Value* awake = CTX_VAR(ctx, STD_PORT_AWAKE);
+    Value* awake = Varlist_Slot(ctx, STD_PORT_AWAKE);
     if (Is_Action(awake)) {
         const bool fully = true; // error if not all arguments consumed
 

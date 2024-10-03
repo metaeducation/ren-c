@@ -711,8 +711,10 @@ for-each [sw-cat list] boot-errors [
 
         e-errfuncs/emit [message cat id f-name params args] {
             /* $<Mold Message> */
-            INLINE REBCTX *Error_${F-Name}_Raw($<Delimit ", " Params>) {
-                return Error(SYM_${CAT}, SYM_${ID}, $<Delimit ", " Args>);
+            INLINE Error* Error_${F-Name}_Raw($<Delimit ", " Params>) {
+                return Make_Error_Managed(
+                    SYM_${CAT}, SYM_${ID}, $<Delimit ", " Args>
+                );
             }
         }
         e-errfuncs/emit newline

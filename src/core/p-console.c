@@ -38,7 +38,7 @@
 //
 static Bounce Console_Actor(Level* level_, Value* port, Value* verb)
 {
-    REBCTX *ctx = VAL_CONTEXT(port);
+    VarList* ctx = Cell_Varlist(port);
     REBREQ *req = Ensure_Port_State(port, RDI_STDIO);
 
     switch (Cell_Word_Id(verb)) {
@@ -82,7 +82,7 @@ static Bounce Console_Actor(Level* level_, Value* port, Value* verb)
 
         // If no buffer, create a buffer:
         //
-        Value* data = CTX_VAR(ctx, STD_PORT_DATA);
+        Value* data = Varlist_Slot(ctx, STD_PORT_DATA);
         if (not Is_Binary(data))
             Init_Blob(data, Make_Binary(OUT_BUF_SIZE));
 

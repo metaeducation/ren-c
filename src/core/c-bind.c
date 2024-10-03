@@ -44,7 +44,7 @@
 void Bind_Values_Inner_Loop(
     struct Reb_Binder *binder,
     Cell* head,
-    REBCTX *context,
+    VarList* context,
     REBU64 bind_types, // !!! REVIEW: force word types low enough for 32-bit?
     REBU64 add_midstream_types,
     REBFLGS flags
@@ -63,7 +63,7 @@ void Bind_Values_Inner_Loop(
                 // which provides a feature of building up state about some
                 // words while still not including them in the bind.
                 //
-                assert(cast(REBLEN, n) <= CTX_LEN(context));
+                assert(cast(REBLEN, n) <= Varlist_Len(context));
 
                 // We're overwriting any previous binding, which may have
                 // been relative.
@@ -106,7 +106,7 @@ void Bind_Values_Inner_Loop(
 //
 void Bind_Values_Core(
     Cell* head,
-    REBCTX *context,
+    VarList* context,
     REBU64 bind_types,
     REBU64 add_midstream_types,
     REBFLGS flags // see %sys-core.h for BIND_DEEP, etc.
@@ -123,8 +123,8 @@ void Bind_Values_Core(
     }
     else {
         REBLEN index = 1;
-        Value* key = CTX_KEYS_HEAD(context);
-        for (; index <= CTX_LEN(context); key++, index++)
+        Value* key = Varlist_Keys_Head(context);
+        for (; index <= Varlist_Len(context); key++, index++)
             if (not Is_Param_Unbindable(key))
                 Add_Binder_Index(&binder, Key_Canon(key), index);
     }
@@ -139,7 +139,7 @@ void Bind_Values_Core(
         // leave bind indices cached in canon symbol bind_index.lib
     }
     else {
-        Value* key = CTX_KEYS_HEAD(context);
+        Value* key = Varlist_Keys_Head(context);
         for (; NOT_END(key); key++)
             if (not Is_Param_Unbindable(key))
                 Remove_Binder_Index(&binder, Key_Canon(key));
@@ -156,7 +156,7 @@ void Bind_Values_Core(
 // bound to a particular target (if target is NULL, then all
 // words will be unbound regardless of their VAL_WORD_CONTEXT).
 //
-void Unbind_Values_Core(Cell* head, REBCTX *context, bool deep)
+void Unbind_Values_Core(Cell* head, VarList* context, bool deep)
 {
     Cell* v = head;
     for (; NOT_END(v); ++v) {
@@ -178,7 +178,7 @@ void Unbind_Values_Core(Cell* head, REBCTX *context, bool deep)
 // Returns 0 if word is not part of the context, otherwise the index of the
 // word in the context.
 //
-REBLEN Try_Bind_Word(REBCTX *context, Value* word)
+REBLEN Try_Bind_Word(VarList* context, Value* word)
 {
     REBLEN n = Find_Canon_In_Context(context, VAL_WORD_CANON(word), false);
     if (n != 0) {
@@ -306,8 +306,8 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
 // Rebind is always deep.
 //
 void Rebind_Values_Deep(
-    REBCTX *src,
-    REBCTX *dst,
+    VarList* src,
+    VarList* dst,
     Cell* head,
     struct Reb_Binder *opt_binder
 ) {
@@ -344,7 +344,7 @@ void Rebind_Values_Deep(
                 // used to do it implicitly.
             }
             else {
-                REBCTX *stored = CTX(binding);
+                VarList* stored = CTX(binding);
                 if (Is_Overriding_Context(stored, dst))
                     INIT_BINDING(v, dst);
                 else {
@@ -402,7 +402,7 @@ void Rebind_Values_Deep(
 //
 void Virtual_Bind_Deep_To_New_Context(
     Value* body_in_out, // input *and* output parameter
-    REBCTX **context_out,
+    VarList* *context_out,
     const Value* spec
 ) {
     assert(Is_Block(body_in_out));
@@ -479,7 +479,7 @@ void Virtual_Bind_Deep_To_New_Context(
     //
     *context_out = Alloc_Context(REB_OBJECT, num_vars);
 
-    REBCTX *c = *context_out; // for convenience...
+    VarList* c = *context_out; // for convenience...
 
     // We want to check for duplicates and a Binder can be used for that
     // purpose--but note that a fail() cannot happen while binders are
@@ -492,8 +492,8 @@ void Virtual_Bind_Deep_To_New_Context(
 
     Symbol* duplicate = nullptr;
 
-    Value* key = CTX_KEYS_HEAD(c);
-    Value* var = CTX_VARS_HEAD(c);
+    Value* key = Varlist_Keys_Head(c);
+    Value* var = Varlist_Slots_Head(c);
 
     REBLEN index = 1;
     while (index <= num_vars) {
@@ -590,8 +590,8 @@ void Virtual_Bind_Deep_To_New_Context(
         ++index;
     }
 
-    Term_Array_Len(CTX_VARLIST(c), num_vars + 1);
-    Term_Array_Len(CTX_KEYLIST(c), num_vars + 1);
+    Term_Array_Len(Varlist_Array(c), num_vars + 1);
+    Term_Array_Len(Keylist_Of_Varlist(c), num_vars + 1);
 
     // As currently written, the loop constructs which use these contexts
     // will hold pointers into the arrays across arbitrary user code running.
@@ -600,7 +600,7 @@ void Virtual_Bind_Deep_To_New_Context(
     //
     // https://github.com/rebol/rebol-issues/issues/2274
     //
-    Set_Flex_Flag(CTX_VARLIST(c), DONT_RELOCATE);
+    Set_Flex_Flag(Varlist_Array(c), DONT_RELOCATE);
 
     // !!! In virtual binding, there would not be a Bind_Values call below;
     // so it wouldn't necessarily be required to manage the augmented
@@ -609,7 +609,7 @@ void Virtual_Bind_Deep_To_New_Context(
     // things unless they are stack-based.  Virtual bindings will be, but
     // contexts like this won't.
     //
-    Manage_Flex(CTX_VARLIST(c));
+    Manage_Flex(Varlist_Array(c));
 
     if (not rebinding)
         return; // nothing else needed to do
@@ -627,8 +627,8 @@ void Virtual_Bind_Deep_To_New_Context(
 
     // Must remove binder indexes for all words, even if about to fail
     //
-    key = CTX_KEYS_HEAD(c);
-    var = CTX_VARS_HEAD(c); // only needed for debug, optimized out
+    key = Varlist_Keys_Head(c);
+    var = Varlist_Slots_Head(c); // only needed for debug, optimized out
     for (; NOT_END(key); ++key, ++var) {
         REBINT stored = Remove_Binder_Index_Else_0(
             &binder, Cell_Param_Canon(key)
@@ -660,14 +660,14 @@ void Virtual_Bind_Deep_To_New_Context(
 //
 void Init_Interning_Binder(
     struct Reb_Binder *binder,
-    REBCTX *ctx // location to bind into (in addition to lib)
+    VarList* ctx // location to bind into (in addition to lib)
 ){
     INIT_BINDER(binder, ctx);
     if (ctx == Lib_Context) {
         // indices already cached in bind_index.lib
     }
     else {
-        Value* key = CTX_KEYS_HEAD(ctx);
+        Value* key = Varlist_Keys_Head(ctx);
         REBINT index = 1;
         for (; NOT_END(key); ++key, ++index)
             Add_Binder_Index(binder, Key_Canon(key), index);
@@ -681,13 +681,13 @@ void Init_Interning_Binder(
 // This will remove the bindings added in Init_Interning_Binder, along with
 // any other bindings which were incorporated along the way.
 //
-void Shutdown_Interning_Binder(struct Reb_Binder *binder, REBCTX *ctx)
+void Shutdown_Interning_Binder(struct Reb_Binder *binder, VarList* ctx)
 {
     if (ctx == Lib_Context) {
         // indices cached in bind_index.lib, don't need removing
     }
     else {
-        Value* key = CTX_KEYS_HEAD(ctx);
+        Value* key = Varlist_Keys_Head(ctx);
         REBINT index = 1;
         for (; NOT_END(key); ++key, ++index) {
             REBINT n = Remove_Binder_Index_Else_0(binder, Key_Canon(key));

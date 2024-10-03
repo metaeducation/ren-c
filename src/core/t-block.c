@@ -180,7 +180,7 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
         return Init_Any_List(out, kind, Map_To_Array(VAL_MAP(arg), 0));
     }
     else if (Any_Context(arg)) {
-        return Init_Any_List(out, kind, Context_To_Array(VAL_CONTEXT(arg), 3));
+        return Init_Any_List(out, kind, Context_To_Array(Cell_Varlist(arg), 3));
     }
     else if (Is_Varargs(arg)) {
         //
@@ -207,8 +207,8 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
             assert(Not_Array_Flag(arg->extra.binding, IS_VARLIST));
         }
         else {
-            REBCTX *context = CTX(arg->extra.binding);
-            Level* param_level = CTX_LEVEL_MAY_FAIL(context);
+            VarList* context = CTX(arg->extra.binding);
+            Level* param_level = Level_Of_Varlist_May_Fail(context);
 
             Value* param = ACT_PARAMS_HEAD(Level_Phase(param_level))
                 + arg->payload.varargs.param_offset;

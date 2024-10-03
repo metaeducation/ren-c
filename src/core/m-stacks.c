@@ -200,7 +200,7 @@ void Shutdown_Level_Stack(void)
 // This is used to an advantage in the APIs like rebValue(), to be able to get
 // a notion of a "current context" applicable *only* to when natives run.
 //
-REBCTX *Get_Context_From_Stack(void)
+VarList* Get_Context_From_Stack(void)
 {
     Level* L = TOP_LEVEL;
     REBACT *phase;
@@ -213,7 +213,7 @@ REBCTX *Get_Context_From_Stack(void)
             // user, though console code would probably prefer to be in the
             // console module (configure this in rebStartup()?).
             //
-            return VAL_CONTEXT(Get_System(SYS_CONTEXTS, CTX_USER));
+            return Cell_Varlist(Get_System(SYS_CONTEXTS, CTX_USER));
         }
 
         phase = LVL_PHASE_OR_DUMMY(L);
@@ -244,7 +244,7 @@ REBCTX *Get_Context_From_Stack(void)
 
     Array* details = ACT_DETAILS(phase);
     Value* context = KNOWN(Array_At(details, 1));
-    return VAL_CONTEXT(context);
+    return Cell_Varlist(context);
 }
 
 

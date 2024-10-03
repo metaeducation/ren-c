@@ -116,7 +116,8 @@
             or std::is_same<T, Stub>::value
             or std::is_same<T, Symbol>::value
             or std::is_same<T, Array>::value
-            or std::is_same<T, REBCTX>::value
+            or std::is_same<T, VarList>::value
+            or std::is_same<T, Error>::value
             or std::is_same<T, REBACT>::value
             or std::is_same<T, REBMAP>::value
             or std::is_same<T, Level>::value;
@@ -125,7 +126,7 @@
 
         static_assert(
             derived or base,
-            "NOD() works on void/Value/Stub/Symbol/Array/REBCTX/REBACT" \
+            "NOD() works on void/Value/Stub/Symbol/Array/VarList/REBACT" \
                "/REBMAP/Level"
         );
 

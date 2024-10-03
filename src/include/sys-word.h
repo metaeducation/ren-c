@@ -86,7 +86,7 @@ INLINE Option(SymId) Cell_Word_Id(const Cell* v) {
     return Symbol_Id(v->payload.any_word.symbol);
 }
 
-INLINE REBCTX *VAL_WORD_CONTEXT(const Value* v) {
+INLINE VarList* VAL_WORD_CONTEXT(const Value* v) {
     assert(IS_WORD_BOUND(v));
     Stub* binding = VAL_BINDING(v);
     assert(
@@ -156,7 +156,7 @@ INLINE Value* Init_Any_Word_Bound(
     Cell* out,
     enum Reb_Kind type,
     Symbol* symbol,
-    REBCTX *context,
+    VarList* context,
     REBLEN index
 ) {
     RESET_CELL(out, type);

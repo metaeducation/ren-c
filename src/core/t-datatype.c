@@ -98,14 +98,14 @@ REBTYPE(Datatype)
             // wants to give back an object.  Combine the array with the
             // standard object that mirrors its field order.
             //
-            REBCTX *context = Copy_Context_Shallow_Managed(
-                VAL_CONTEXT(Get_System(SYS_STANDARD, STD_TYPE_SPEC))
+            VarList* context = Copy_Context_Shallow_Managed(
+                Cell_Varlist(Get_System(SYS_STANDARD, STD_TYPE_SPEC))
             );
 
             assert(CTX_TYPE(context) == REB_OBJECT);
 
-            Value* var = CTX_VARS_HEAD(context);
-            Value* key = CTX_KEYS_HEAD(context);
+            Value* var = Varlist_Slots_Head(context);
+            Value* key = Varlist_Keys_Head(context);
 
             // !!! Account for the "invisible" self key in the current
             // stop-gap implementation of self, still default on MAKE OBJECT!s
@@ -114,7 +114,7 @@ REBTYPE(Datatype)
             ++key; ++var;
 
             Cell* item = Array_Head(
-                VAL_TYPE_SPEC(CTX_VAR(Lib_Context, SYM_FROM_KIND(kind)))
+                VAL_TYPE_SPEC(Varlist_Slot(Lib_Context, SYM_FROM_KIND(kind)))
             );
 
             for (; NOT_END(var); ++var, ++key) {

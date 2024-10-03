@@ -165,10 +165,10 @@ void Clonify_Values_Len_Managed(
             //
             Flex* series;
             if (Any_Context(v)) {
-                v->payload.any_context.varlist = CTX_VARLIST(
-                    Copy_Context_Shallow_Managed(VAL_CONTEXT(v))
+                v->payload.any_context.varlist = Varlist_Array(
+                    Copy_Context_Shallow_Managed(Cell_Varlist(v))
                 );
-                series = CTX_VARLIST(VAL_CONTEXT(v));
+                series = Varlist_Array(Cell_Varlist(v));
             }
             else {
                 if (Is_Flex_Array(Cell_Flex(v))) {
@@ -430,7 +430,7 @@ void Uncolor(Cell* v)
     else if (Is_Map(v))
         array = MAP_PAIRLIST(VAL_MAP(v));
     else if (Any_Context(v))
-        array = CTX_VARLIST(VAL_CONTEXT(v));
+        array = Varlist_Array(Cell_Varlist(v));
     else {
         // Shouldn't have marked recursively any non-array series (no need)
         //

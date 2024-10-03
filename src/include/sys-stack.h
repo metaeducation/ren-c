@@ -233,4 +233,4 @@ INLINE Value* PUSH() {
 // error allocations...just use an already made error.
 //
 #define Fail_Stack_Overflow() \
-    fail (VAL_CONTEXT(Root_Stackoverflow_Error));
+    fail (cast(Error*, Cell_Varlist(Root_Stackoverflow_Error)));

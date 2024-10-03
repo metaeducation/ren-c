@@ -90,20 +90,20 @@ void Query_File_Or_Dir(Value* out, Value* port, struct devreq_file *file)
         "copy ensure object! (", port , ")/scheme/info"
     ); // shallow copy
 
-    REBCTX *ctx = VAL_CONTEXT(info);
+    VarList* ctx = Cell_Varlist(info);
 
     Init_Word(
-        CTX_VAR(ctx, STD_FILE_INFO_TYPE),
+        Varlist_Slot(ctx, STD_FILE_INFO_TYPE),
         (req->modes & RFM_DIR) ? Canon(SYM_DIR) : Canon(SYM_FILE)
     );
-    Init_Integer(CTX_VAR(ctx, STD_FILE_INFO_SIZE), file->size);
+    Init_Integer(Varlist_Slot(ctx, STD_FILE_INFO_SIZE), file->size);
 
     Value* timestamp = OS_FILE_TIME(file);
-    Copy_Cell(CTX_VAR(ctx, STD_FILE_INFO_DATE), timestamp);
+    Copy_Cell(Varlist_Slot(ctx, STD_FILE_INFO_DATE), timestamp);
     rebRelease(timestamp);
 
     assert(Is_File(file->path));
-    Copy_Cell(CTX_VAR(ctx, STD_FILE_INFO_NAME), file->path);
+    Copy_Cell(Varlist_Slot(ctx, STD_FILE_INFO_NAME), file->path);
 
     Copy_Cell(out, info);
     rebRelease(info);
@@ -257,8 +257,8 @@ static void Set_Seek(struct devreq_file *file, Value* arg)
 //
 static Bounce File_Actor(Level* level_, Value* port, Value* verb)
 {
-    REBCTX *ctx = VAL_CONTEXT(port);
-    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    VarList* ctx = Cell_Varlist(port);
+    Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
     if (!Is_Object(spec))
         fail (Error_Invalid_Spec_Raw(spec));
 
