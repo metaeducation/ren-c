@@ -1940,554 +1940,550 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         goto done;
     }
 
-        assert(ss->begin != nullptr and ss->end != nullptr);
-        assert(ss->begin < ss->end);
+    assert(ss->begin != nullptr and ss->end != nullptr);
+    assert(ss->begin < ss->end);
 
-        const Byte *bp = ss->begin;
-        const Byte *ep = ss->end;
-        REBLEN len = cast(REBLEN, ep - bp);
+    const Byte *bp = ss->begin;
+    const Byte *ep = ss->end;
+    REBLEN len = cast(REBLEN, ep - bp);
 
-        ss->begin = ss->end; // accept token
+    ss->begin = ss->end; // accept token
 
-        // Process each lexical token appropriately:
-        switch (token) {
+    switch (token) {
+      case TOKEN_NEWLINE:
+        ss->newline_pending = true;
+        ss->line_head = ep;
+        goto loop;
 
-        case TOKEN_NEWLINE:
-            ss->newline_pending = true;
-            ss->line_head = ep;
-            goto loop;
+      case TOKEN_COMMA:
+        goto loop;
 
-        case TOKEN_COMMA:
-            goto loop;
+      case TOKEN_BLANK:
+        Init_Blank(PUSH());
+        ++bp;
+        break;
 
-        case TOKEN_BLANK:
-            Init_Blank(PUSH());
+      case TOKEN_LIT:
+        //
+        // !!! Special-case hack added for '/ ... a better answer would
+        // be needed here to properly handle comments/tabs/etc.  Hacks for
+        // :/ and :/ are purposefully omitted, in the event that SET-PATH!
+        // and GET-PATH! are replaced by SET/GET variants of other types.
+        //
+        if (
+            len == 1 and bp[1] == '/' and ep == bp + 1
+            and (bp[2] == '\0' or bp[2] == ' ' or bp[2] == '\n')
+        ){
+            ++ss->begin;
             ++bp;
-            break;
-
-        case TOKEN_LIT:
-            //
-            // !!! Special-case hack added for '/ ... a better answer would
-            // be needed here to properly handle comments/tabs/etc.  Hacks for
-            // :/ and :/ are purposefully omitted, in the event that SET-PATH!
-            // and GET-PATH! are replaced by SET/GET variants of other types.
-            //
-            if (
-                len == 1 and bp[1] == '/' and ep == bp + 1
-                and (bp[2] == '\0' or bp[2] == ' ' or bp[2] == '\n')
-            ){
-                ++ss->begin;
-                ++bp;
-                ++ep;
-                Init_Any_List(
-                    PUSH(),
-                    token == TOKEN_LIT ? REB_LIT_PATH : REB_GET_PATH,
-                    Make_Array(0)
-                );
-                break;
-            }
-            goto token_get;
-
-        case TOKEN_GET:
-        token_get:
-            if (ep[-1] == ':') {
-                if (len == 1)
-                    fail (Error_Syntax(ss, token));
-                --len;
-                --ss->end;
-            }
-            bp++;
-            goto token_set;
-
-        case TOKEN_SET:
-        token_set:
-            len--;
-            if (Is_Interstitial_Scan(ss) and token == TOKEN_SET) {
-                token = TOKEN_WORD; // will be a PATH_SET
-                ss->end--;  // put ':' back on end but not beginning
-            }
-            goto token_word;
-
-        case TOKEN_WORD: {
-        token_word:
-            if (len == 0) {
-                --bp;
-                fail (Error_Syntax(ss, token));
-            }
-
-            Symbol* symbol = Intern_UTF8_Managed(bp, len);
-            enum Reb_Kind kind = KIND_OF_WORD_FROM_TOKEN(token);
-
-            Init_Any_Word(PUSH(), kind, symbol);
-            break; }
-
-        case TOKEN_REFINE: {
-            Symbol* symbol = Intern_UTF8_Managed(bp + 1, len - 1);
-            Init_Refinement(PUSH(), symbol);
-            break; }
-
-        case TOKEN_ISSUE:
-            if (ep != Scan_Issue(PUSH(), bp + 1, len - 1))
-                fail (Error_Syntax(ss, token));
-            break;
-
-        case TOKEN_BLOCK_BEGIN:
-        case TOKEN_GROUP_BEGIN: {
-            Array* array = Scan_Array(
-                ss, (token == TOKEN_BLOCK_BEGIN) ? ']' : ')'
-            );
-
-            ep = ss->end;
-
+            ++ep;
             Init_Any_List(
                 PUSH(),
-                (token == TOKEN_BLOCK_BEGIN) ? REB_BLOCK : REB_GROUP,
-                array
+                token == TOKEN_LIT ? REB_LIT_PATH : REB_GET_PATH,
+                Make_Array(0)
             );
-            break; }
-
-        case TOKEN_PATH:
-            assert(Is_Interstitial_Scan(ss));  // leading slash should be WORD!
             break;
+        }
+        goto token_get;
 
-        case TOKEN_BLOCK_END: {
-            if (ss->mode_char == ']')
-                goto done;
+      case TOKEN_GET:
+      token_get:
+        if (ep[-1] == ':') {
+            if (len == 1)
+                fail (Error_Syntax(ss, token));
+            --len;
+            --ss->end;
+        }
+        bp++;
+        goto token_set;
 
-            if (ss->mode_char != '\0') // expected e.g. `)` before the `]`
-                fail (Error_Mismatch(ss, ss->mode_char, ']'));
+      case TOKEN_SET:
+      token_set:
+        len--;
+        if (Is_Interstitial_Scan(ss) and token == TOKEN_SET) {
+            token = TOKEN_WORD; // will be a PATH_SET
+            ss->end--;  // put ':' back on end but not beginning
+        }
+        goto token_word;
 
-            // just a stray unexpected ']'
+      case TOKEN_WORD: {
+      token_word:
+        if (len == 0) {
+            --bp;
+            fail (Error_Syntax(ss, token));
+        }
+
+        Symbol* symbol = Intern_UTF8_Managed(bp, len);
+        enum Reb_Kind kind = KIND_OF_WORD_FROM_TOKEN(token);
+
+        Init_Any_Word(PUSH(), kind, symbol);
+        break; }
+
+      case TOKEN_REFINE: {
+        Symbol* symbol = Intern_UTF8_Managed(bp + 1, len - 1);
+        Init_Refinement(PUSH(), symbol);
+        break; }
+
+      case TOKEN_ISSUE:
+        if (ep != Scan_Issue(PUSH(), bp + 1, len - 1))
+            fail (Error_Syntax(ss, token));
+        break;
+
+      case TOKEN_BLOCK_BEGIN:
+      case TOKEN_GROUP_BEGIN: {
+        Array* array = Scan_Array(
+            ss, (token == TOKEN_BLOCK_BEGIN) ? ']' : ')'
+        );
+
+        ep = ss->end;
+
+        Init_Any_List(
+            PUSH(),
+            (token == TOKEN_BLOCK_BEGIN) ? REB_BLOCK : REB_GROUP,
+            array
+        );
+        break; }
+
+      case TOKEN_PATH:
+        assert(Is_Interstitial_Scan(ss));  // leading slash should be WORD!
+        break;
+
+      case TOKEN_BLOCK_END: {
+        if (ss->mode_char == ']')
+            goto done;
+
+        if (ss->mode_char != '\0') // expected e.g. `)` before the `]`
+            fail (Error_Mismatch(ss, ss->mode_char, ']'));
+
+        // just a stray unexpected ']'
+        //
+        fail (Error_Extra(ss, ']')); }
+
+      case TOKEN_GROUP_END: {
+        if (ss->mode_char == ')')
+            goto done;
+
+        if (ss->mode_char != '\0') // expected e.g. ']' before the ')'
+            fail (Error_Mismatch(ss, ss->mode_char, ')'));
+
+        // just a stray unexpected ')'
+        //
+        fail (Error_Extra(ss, ')')); }
+
+    // We treat `10.20.30` as a TUPLE!, but `10.20` has a cultural lock on
+    // being a DECIMAL! number.  Due to the overlap, Locate_Token() does
+    // not have enough information in hand to discern TOKEN_DECIMAL; it
+    // just returns TOKEN_INTEGER and the decision is made here.
+    //
+    // (Imagine we're in a tuple scan and INTEGER! 10 was pushed, and are
+    // at "20.30" in the 10.20.30 case.  Locate_Token() would need access
+    // to level->mode to know that the tuple scan was happening, else
+    // it would have to conclude "20.30" was TOKEN_DECIMAL.  Deeper study
+    // would be needed to know if giving Locate_Token() more information
+    // is wise.  But that study would likely lead to the conclusion that
+    // the whole R3-Alpha scanner concept needs a full rewrite!)
+    //
+    // Note: We can't merely start with assuming it's a TUPLE!, scan the
+    // values, and then decide it's a DECIMAL! when the tuple is popped
+    // if it's two INTEGER!.  Because the integer scanning will lose
+    // leading digits on the second number (1.002 would become 1.2).
+
+      case TOKEN_INTEGER:     // or start of DATE
+        if (
+            (*ep == '.')
+            and not Is_Interstitial_Scan(ss)  // not in PATH! (yet)
+            and Is_Lex_Number(ep[1])  // If # digit, we're seeing `###.#???`
+        ){
+            // If we will be scanning a TUPLE!, then we're at the head of it.
+            // But it could also be a DECIMAL! if there aren't any more dots.
             //
-            fail (Error_Extra(ss, ']')); }
-
-        case TOKEN_GROUP_END: {
-            if (ss->mode_char == ')')
-                goto done;
-
-            if (ss->mode_char != '\0') // expected e.g. ']' before the ')'
-                fail (Error_Mismatch(ss, ss->mode_char, ')'));
-
-            // just a stray unexpected ')'
-            //
-            fail (Error_Extra(ss, ')')); }
-
-
-        // We treat `10.20.30` as a TUPLE!, but `10.20` has a cultural lock on
-        // being a DECIMAL! number.  Due to the overlap, Locate_Token() does
-        // not have enough information in hand to discern TOKEN_DECIMAL; it
-        // just returns TOKEN_INTEGER and the decision is made here.
-        //
-        // (Imagine we're in a tuple scan and INTEGER! 10 was pushed, and are
-        // at "20.30" in the 10.20.30 case.  Locate_Token() would need access
-        // to level->mode to know that the tuple scan was happening, else
-        // it would have to conclude "20.30" was TOKEN_DECIMAL.  Deeper study
-        // would be needed to know if giving Locate_Token() more information
-        // is wise.  But that study would likely lead to the conclusion that
-        // the whole R3-Alpha scanner concept needs a full rewrite!)
-        //
-        // Note: We can't merely start with assuming it's a TUPLE!, scan the
-        // values, and then decide it's a DECIMAL! when the tuple is popped
-        // if it's two INTEGER!.  Because the integer scanning will lose
-        // leading digits on the second number (1.002 would become 1.2).
-        //
-        case TOKEN_INTEGER:     // or start of DATE
-            if (
-                (*ep == '.')
-                and not Is_Interstitial_Scan(ss)  // not in PATH! (yet)
-                and Is_Lex_Number(ep[1])  // If # digit, we're seeing `###.#???`
-            ){
-                // If we will be scanning a TUPLE!, then we're at the head of it.
-                // But it could also be a DECIMAL! if there aren't any more dots.
-                //
-                const Byte* temp = ep + 1;
-                REBLEN temp_len = len + 1;
-                for (; *temp != '.'; ++temp, ++temp_len) {
-                    if (Is_Lex_Delimit(*temp)) {
-                        ss->begin = ss->end = ep = temp;
-                        len = temp_len;
-                        goto scan_decimal;
-                    }
+            const Byte* temp = ep + 1;
+            REBLEN temp_len = len + 1;
+            for (; *temp != '.'; ++temp, ++temp_len) {
+                if (Is_Lex_Delimit(*temp)) {
+                    ss->begin = ss->end = ep = temp;
+                    len = temp_len;
+                    goto scan_decimal;
                 }
-                while (*temp == '.' or not Is_Lex_Delimit(*temp))
-                    { ++temp; ++temp_len; }
+            }
+            while (*temp == '.' or not Is_Lex_Delimit(*temp))
+                { ++temp; ++temp_len; }
 
-                token = TOKEN_COMMA;  // skip
-                if (bp + temp_len != Scan_Tuple(PUSH(), bp, temp_len))
-                    fail (Error_Syntax(ss, TOKEN_COMMA));
-                ss->begin = ss->end = ep = bp + temp_len;
+            token = TOKEN_COMMA;  // skip
+            if (bp + temp_len != Scan_Tuple(PUSH(), bp, temp_len))
+                fail (Error_Syntax(ss, TOKEN_COMMA));
+            ss->begin = ss->end = ep = bp + temp_len;
+            break;
+        }
+
+        // Wasn't beginning of a DECIMAL!, so scan as a normal INTEGER!
+        //
+        if (ep != Scan_Integer(PUSH(), bp, len))
+            fail (Error_Syntax(ss, token));
+        break;
+
+      case TOKEN_DECIMAL:
+      case TOKEN_PERCENT:
+      scan_decimal:
+        // Do not allow 1.2/abc:
+        if (*ep == '/')
+            fail (Error_Syntax(ss, token));
+
+        if (ep != Scan_Decimal(PUSH(), bp, len, false))
+            fail (Error_Syntax(ss, token));
+
+        if (bp[len - 1] == '%') {
+            RESET_VAL_HEADER(TOP, REB_PERCENT);
+            VAL_DECIMAL(TOP) /= 100.0;
+        }
+        break;
+
+      case TOKEN_MONEY:
+        // Do not allow $1/$2:
+        if (*ep == '/') {
+            ++ep;
+            fail (Error_Syntax(ss, token));
+        }
+
+        if (ep != Scan_Money(PUSH(), bp, len))
+            fail (Error_Syntax(ss, token));
+        break;
+
+      case TOKEN_TIME:
+        if (
+            bp[len - 1] == ':'
+            and ss->mode_char == '/' // could be path/10: set
+        ){
+            if (ep - 1 != Scan_Integer(PUSH(), bp, len - 1))
+                fail (Error_Syntax(ss, token));
+            ss->end--;  // put ':' back on end but not beginning
+            break;
+        }
+        if (ep != Scan_Time(PUSH(), bp, len))
+            fail (Error_Syntax(ss, token));
+        break;
+
+      case TOKEN_DATE:
+        while (*ep == '/' and ss->mode_char != '/') {  // Is it date/time?
+            ep++;
+            while (Is_Lex_Not_Delimit(*ep)) ep++;
+            len = cast(REBLEN, ep - bp);
+            if (len > 50) {
+                // prevent infinite loop, should never be longer than this
                 break;
             }
+            ss->begin = ep;  // End point extended to cover time
+        }
+        if (ep != Scan_Date(PUSH(), bp, len))
+            fail (Error_Syntax(ss, token));
+        break;
 
-            // Wasn't beginning of a DECIMAL!, so scan as a normal INTEGER!
-            //
-            if (ep != Scan_Integer(PUSH(), bp, len))
-                fail (Error_Syntax(ss, token));
-            break;
+      case TOKEN_CHAR:
+        bp += 2; // skip #", and subtract 1 from ep for "
+        if (ep - 1 != Scan_UTF8_Char_Escapable(&VAL_CHAR(PUSH()), bp))
+            fail (Error_Syntax(ss, token));
+        RESET_VAL_HEADER(TOP, REB_CHAR);
+        break;
 
+      case TOKEN_STRING: {
+        // During scan above, string was stored in MOLD_BUF (UTF-8)
+        //
+        Flex* s = Pop_Molded_String(mo);
+        Init_Text(PUSH(), s);
+        break; }
 
-        case TOKEN_DECIMAL:
-        case TOKEN_PERCENT:
-        scan_decimal:
-            // Do not allow 1.2/abc:
-            if (*ep == '/')
-                fail (Error_Syntax(ss, token));
+      case TOKEN_BINARY:
+        if (ep != Scan_Binary(PUSH(), bp, len))
+            fail (Error_Syntax(ss, token));
+        break;
 
-            if (ep != Scan_Decimal(PUSH(), bp, len, false))
-                fail (Error_Syntax(ss, token));
+      case TOKEN_PAIR:
+        if (ep != Scan_Pair(PUSH(), bp, len))
+            fail (Error_Syntax(ss, token));
+        break;
 
-            if (bp[len - 1] == '%') {
-                RESET_VAL_HEADER(TOP, REB_PERCENT);
-                VAL_DECIMAL(TOP) /= 100.0;
-            }
-            break;
+      case TOKEN_TUPLE:
+        assert(!"Tuple scanning is handled in TOKEN_INTEGER case");
+        break;
 
-        case TOKEN_MONEY:
-            // Do not allow $1/$2:
-            if (*ep == '/') {
-                ++ep;
-                fail (Error_Syntax(ss, token));
-            }
+      case TOKEN_FILE:
+        if (ep != Scan_File(PUSH(), bp, len))
+            fail (Error_Syntax(ss, token));
+        break;
 
-            if (ep != Scan_Money(PUSH(), bp, len))
-                fail (Error_Syntax(ss, token));
-            break;
+      case TOKEN_EMAIL:
+        if (ep != Scan_Email(PUSH(), bp, len))
+            fail (Error_Syntax(ss, token));
+        break;
 
-        case TOKEN_TIME:
-            if (
-                bp[len - 1] == ':'
-                and ss->mode_char == '/' // could be path/10: set
-            ){
-                if (ep - 1 != Scan_Integer(PUSH(), bp, len - 1))
-                    fail (Error_Syntax(ss, token));
-                ss->end--;  // put ':' back on end but not beginning
-                break;
-            }
-            if (ep != Scan_Time(PUSH(), bp, len))
-                fail (Error_Syntax(ss, token));
-            break;
+      case TOKEN_URL:
+        if (ep != Scan_URL(PUSH(), bp, len))
+            fail (Error_Syntax(ss, token));
+        break;
 
-        case TOKEN_DATE:
-            while (*ep == '/' and ss->mode_char != '/') {  // Is it date/time?
-                ep++;
-                while (Is_Lex_Not_Delimit(*ep)) ep++;
-                len = cast(REBLEN, ep - bp);
-                if (len > 50) {
-                    // prevent infinite loop, should never be longer than this
-                    break;
-                }
-                ss->begin = ep;  // End point extended to cover time
-            }
-            if (ep != Scan_Date(PUSH(), bp, len))
-                fail (Error_Syntax(ss, token));
-            break;
+      case TOKEN_TAG:
+        // The Scan_Any routine (only used here for tag) doesn't
+        // know where the tag ends, so it scans the len.
+        //
+        if (ep - 1 != Scan_Any(PUSH(), bp + 1, len - 2, REB_TAG))
+            fail (Error_Syntax(ss, token));
+        break;
 
-        case TOKEN_CHAR:
-            bp += 2; // skip #", and subtract 1 from ep for "
-            if (ep - 1 != Scan_UTF8_Char_Escapable(&VAL_CHAR(PUSH()), bp))
-                fail (Error_Syntax(ss, token));
-            RESET_VAL_HEADER(TOP, REB_CHAR);
-            break;
+      case TOKEN_CONSTRUCT: {
+        Array* array = Scan_Array(ss, ']');
 
-        case TOKEN_STRING: {
-            // During scan above, string was stored in MOLD_BUF (UTF-8)
-            //
-            Flex* s = Pop_Molded_String(mo);
-            Init_Text(PUSH(), s);
-            break; }
+        // !!! Should the scanner be doing binding at all, and if so why
+        // just Lib_Context?  Not binding would break functions entirely,
+        // but they can't round-trip anyway.  See #2262.
+        //
+        Bind_Values_All_Deep(Array_Head(array), Lib_Context);
 
-        case TOKEN_BINARY:
-            if (ep != Scan_Binary(PUSH(), bp, len))
-                fail (Error_Syntax(ss, token));
-            break;
+        if (Array_Len(array) == 0 or not Is_Word(Array_Head(array))) {
+            DECLARE_VALUE (temp);
+            Init_Block(temp, array);
+            fail (Error_Malconstruct_Raw(temp));
+        }
 
-        case TOKEN_PAIR:
-            if (ep != Scan_Pair(PUSH(), bp, len))
-                fail (Error_Syntax(ss, token));
-            break;
+        Option(SymId) id = Cell_Word_Id(Array_Head(array));
+        if (not id)
+            fail (Error_Syntax(ss, token));
 
-        case TOKEN_TUPLE:
-            assert(!"Tuple scanning is handled in TOKEN_INTEGER case");
-            break;
+        if (IS_KIND_SYM(unwrap(id))) {
+            enum Reb_Kind kind = KIND_FROM_SYM(unwrap(id));
 
-        case TOKEN_FILE:
-            if (ep != Scan_File(PUSH(), bp, len))
-                fail (Error_Syntax(ss, token));
-            break;
+            MAKE_HOOK hook = Make_Hooks[kind];
 
-        case TOKEN_EMAIL:
-            if (ep != Scan_Email(PUSH(), bp, len))
-                fail (Error_Syntax(ss, token));
-            break;
-
-        case TOKEN_URL:
-            if (ep != Scan_URL(PUSH(), bp, len))
-                fail (Error_Syntax(ss, token));
-            break;
-
-        case TOKEN_TAG:
-            // The Scan_Any routine (only used here for tag) doesn't
-            // know where the tag ends, so it scans the len.
-            //
-            if (ep - 1 != Scan_Any(PUSH(), bp + 1, len - 2, REB_TAG))
-                fail (Error_Syntax(ss, token));
-            break;
-
-        case TOKEN_CONSTRUCT: {
-            Array* array = Scan_Array(ss, ']');
-
-            // !!! Should the scanner be doing binding at all, and if so why
-            // just Lib_Context?  Not binding would break functions entirely,
-            // but they can't round-trip anyway.  See #2262.
-            //
-            Bind_Values_All_Deep(Array_Head(array), Lib_Context);
-
-            if (Array_Len(array) == 0 or not Is_Word(Array_Head(array))) {
+            if (hook == nullptr or Array_Len(array) != 2) {
                 DECLARE_VALUE (temp);
                 Init_Block(temp, array);
                 fail (Error_Malconstruct_Raw(temp));
             }
 
-            Option(SymId) id = Cell_Word_Id(Array_Head(array));
-            if (not id)
-                fail (Error_Syntax(ss, token));
+            // !!! As written today, MAKE may call into the evaluator, and
+            // hence a GC may be triggered.  Performing evaluations during
+            // the scanner is a questionable idea, but at the very least
+            // `array` must be guarded, and a data stack cell can't be
+            // used as the destination...because a raw pointer into the
+            // data stack could go bad on any DS_PUSH or DROP().
+            //
+            DECLARE_VALUE (cell);
+            Init_Unreadable(cell);
+            Push_GC_Guard(cell);
 
-            if (IS_KIND_SYM(unwrap(id))) {
-                enum Reb_Kind kind = KIND_FROM_SYM(unwrap(id));
-
-                MAKE_HOOK hook = Make_Hooks[kind];
-
-                if (hook == nullptr or Array_Len(array) != 2) {
-                    DECLARE_VALUE (temp);
-                    Init_Block(temp, array);
-                    fail (Error_Malconstruct_Raw(temp));
-                }
-
-                // !!! As written today, MAKE may call into the evaluator, and
-                // hence a GC may be triggered.  Performing evaluations during
-                // the scanner is a questionable idea, but at the very least
-                // `array` must be guarded, and a data stack cell can't be
-                // used as the destination...because a raw pointer into the
-                // data stack could go bad on any DS_PUSH or DROP().
-                //
-                DECLARE_VALUE (cell);
-                Init_Unreadable(cell);
-                Push_GC_Guard(cell);
-
-                Push_GC_Guard(array);
-                Bounce bounce = hook(cell, kind, KNOWN(Array_At(array, 1)));
-                if (bounce == BOUNCE_THROWN) { // !!! good argument against MAKE
-                    assert(false);
-                    fail ("MAKE during construction syntax threw--illegal");
-                }
-                if (bounce != cell) { // !!! not yet supported
-                    assert(false);
-                    fail ("MAKE during construction syntax not out cell");
-                }
-                Drop_GC_Guard(array);
-
-                Copy_Cell(PUSH(), cell);
-                Drop_GC_Guard(cell);
+            Push_GC_Guard(array);
+            Bounce bounce = hook(cell, kind, KNOWN(Array_At(array, 1)));
+            if (bounce == BOUNCE_THROWN) { // !!! good argument against MAKE
+                assert(false);
+                fail ("MAKE during construction syntax threw--illegal");
             }
-            else {
-                if (Array_Len(array) != 1) {
-                    DECLARE_VALUE (temp);
-                    Init_Block(temp, array);
-                    fail (Error_Malconstruct_Raw(temp));
-                }
+            if (bounce != cell) { // !!! not yet supported
+                assert(false);
+                fail ("MAKE during construction syntax not out cell");
+            }
+            Drop_GC_Guard(array);
 
-                // !!! Construction syntax allows the "type" slot to be one of
-                // the literals #[false], #[true]... along with legacy #[none]
-                // while the legacy #[unset] is no longer possible (but
-                // could load some kind of erroring function value)
-                //
-                switch (id) {
+            Copy_Cell(PUSH(), cell);
+            Drop_GC_Guard(cell);
+        }
+        else {
+            if (Array_Len(array) != 1) {
+                DECLARE_VALUE (temp);
+                Init_Block(temp, array);
+                fail (Error_Malconstruct_Raw(temp));
+            }
+
+            // !!! Construction syntax allows the "type" slot to be one of
+            // the literals #[false], #[true]... along with legacy #[none]
+            // while the legacy #[unset] is no longer possible (but
+            // could load some kind of erroring function value)
+            //
+            switch (id) {
             #if !defined(NDEBUG)
-                case SYM_NONE:
-                    // Should be under a LEGACY flag...
-                    Init_Blank(PUSH());
-                    break;
+              case SYM_NONE:
+                // Should be under a LEGACY flag...
+                Init_Blank(PUSH());
+                break;
             #endif
 
-                case SYM_FALSE:
-                    Init_False(PUSH());
-                    break;
+              case SYM_FALSE:
+                Init_False(PUSH());
+                break;
 
-                case SYM_TRUE:
-                    Init_True(PUSH());
-                    break;
+              case SYM_TRUE:
+                Init_True(PUSH());
+                break;
 
-                case SYM_TRASH:
-                    Init_Nothing(PUSH());
-                    break;
+              case SYM_TRASH:
+                Init_Nothing(PUSH());
+                break;
 
-                default: {
-                    DECLARE_VALUE (temp);
-                    Init_Block(temp, array);
-                    fail (Error_Malconstruct_Raw(temp)); }
-                }
-            }
-            break; } // case TOKEN_CONSTRUCT
-
-        case TOKEN_END:
-            goto loop;
-
-        default:
-            panic ("Invalid TOKEN in Scanner.");
-        }
-
-        // !!! If there is a binder in effect, we also bind the item while
-        // we have loaded it.  For now, assume any negative numbers are into
-        // the lib context (which we do not expand) and any positive numbers
-        // are into the user context (which we will expand).
-        //
-        if (ss->binder and Any_Word(TOP)) {
-            Symbol* canon = VAL_WORD_CANON(TOP);
-            REBINT n = Get_Binder_Index_Else_0(ss->binder, canon);
-            if (n > 0) {
-                //
-                // Exists in user context at the given positive index.
-                //
-                INIT_BINDING(TOP, ss->context);
-                INIT_WORD_INDEX(TOP, n);
-            }
-            else if (MISC(canon).bind_index.lib) {
-                //
-                // A proxy needs to be imported from lib to context.
-                //
-                Expand_Context(ss->context, 1);
-                Move_Var( // preserve enfix state
-                    Append_Context(ss->context, TOP, nullptr),
-                    Varlist_Slot(ss->lib, MISC(canon).bind_index.lib)
-                );
-                Add_Binder_Index(ss->binder, canon, VAL_WORD_INDEX(TOP));
-            }
-            else {
-                // Doesn't exist in either lib or user, create a new binding
-                // in user (this is not the preferred behavior for modules
-                // and isolation, but going with it for the API for now).
-                //
-                Expand_Context(ss->context, 1);
-                Append_Context(ss->context, TOP, nullptr);
-                Add_Binder_Index(ss->binder, canon, VAL_WORD_INDEX(TOP));
+              default: {
+                DECLARE_VALUE (temp);
+                Init_Block(temp, array);
+                fail (Error_Malconstruct_Raw(temp)); }
             }
         }
+        break; } // case TOKEN_CONSTRUCT
 
-        // Check for end of path:
-        if (Is_Interstitial_Scan(ss)) {
-            if (*ep != '/' and *ep != '.')
-                goto done;
+      case TOKEN_END:
+        goto loop;
 
-            // For bootstrap we want `abc.def.ghi` to scan as `abc/def/ghi`
-            // But we want `abc/def/ghi.txt` to have a WORD! in the last
-            // position containing a dot, for how bootstrap uses PATH! in
-            // order to represent files.
+      default:
+        panic ("Invalid TOKEN in Scanner.");
+    }
+
+    // !!! If there is a binder in effect, we also bind the item while
+    // we have loaded it.  For now, assume any negative numbers are into
+    // the lib context (which we do not expand) and any positive numbers
+    // are into the user context (which we will expand).
+    //
+    if (ss->binder and Any_Word(TOP)) {
+        Symbol* canon = VAL_WORD_CANON(TOP);
+        REBINT n = Get_Binder_Index_Else_0(ss->binder, canon);
+        if (n > 0) {
             //
-            // The best way to go about this is to have a separate scan
-            // mode for `.` that shifts into `/` if a slash is seen, and
-            // only the `.` mode will do the conversions.
+            // Exists in user context at the given positive index.
             //
-            if (ss->mode_char == '.' and *ep == '/')
-                ss->mode_char = '/';
-
-            ep++;
-            if (*ep != '(' and *ep != '[' and Is_Lex_Delimit(*ep)) {
-                ss->begin = ep;
-                goto done;  // we want `a.b/` to scan as `a/b`
-            }
-
-            ss->begin = ep;  // skip next /
+            INIT_BINDING(TOP, ss->context);
+            INIT_WORD_INDEX(TOP, n);
         }
-        else if (*ep == '/' or *ep == '.') {
+        else if (MISC(canon).bind_index.lib) {
             //
-            // We're noticing a path was actually starting with the token
-            // that just got pushed, so it should be a part of that path.
-
-            ++ss->begin;
-
-            if (
-                *ss->begin == '\0' // `foo/`
-                or Is_Lex_Whitespace(*ss->begin) // `foo/ bar`
-                or *ss->begin == ';' // `foo/;--bar`
-            ){
-                // These are valid paths in modern Ren-C with blanks at
-                // their tails.  But in the bootstrap build we just treat
-                // these as if the slash is not there, and don't enforce
-                // the evaluator rule for these (ensure the path resolves
-                // to an action)
-            }
-            else {
-              #if !defined(NDEBUG)
-                StackIndex check = TOP_INDEX;
-              #endif
-
-                // When `mode_char` is '/', the scan needs to steal the last
-                // pushed item from us...as it's the head of the path it
-                // couldn't see coming in the future.
-
-                Array* arr = Scan_Array(ss, *ep);
-
-              #if !defined(NDEBUG)
-                assert(TOP_INDEX == check - 1);  // should only take one!
-              #endif
-
-                if (token == TOKEN_LIT) {
-                    RESET_VAL_HEADER(PUSH(), REB_LIT_PATH);
-                    CHANGE_VAL_TYPE_BITS(Array_Head(arr), REB_WORD);
-                }
-                else if (Is_Get_Word(Array_Head(arr))) {
-                    if (ss->begin and *ss->end == ':')
-                        fail (Error_Syntax(ss, token));
-                    RESET_VAL_HEADER(PUSH(), REB_GET_PATH);
-                    CHANGE_VAL_TYPE_BITS(Array_Head(arr), REB_WORD);
-                }
-                else {
-                    if (ss->begin and *ss->end == ':') {
-                        RESET_VAL_HEADER(PUSH(), REB_SET_PATH);
-                        ss->begin = ++ss->end;
-                    }
-                    else
-                        RESET_VAL_HEADER(PUSH(), REB_PATH);
-                }
-                INIT_VAL_ARRAY(TOP, arr);
-                VAL_INDEX(TOP) = 0;
-                token = TOKEN_PATH;
-            }
+            // A proxy needs to be imported from lib to context.
+            //
+            Expand_Context(ss->context, 1);
+            Move_Var( // preserve enfix state
+                Append_Context(ss->context, TOP, nullptr),
+                Varlist_Slot(ss->lib, MISC(canon).bind_index.lib)
+            );
+            Add_Binder_Index(ss->binder, canon, VAL_WORD_INDEX(TOP));
         }
-
-        // If we get to this point, it means that the value came from UTF-8
-        // source data--it was not "spliced" out of the variadic as a plain
-        // value.  From the API's point of view, such runs of UTF-8 are
-        // considered "evaluator active", vs. the inert default.  (A spliced
-        // value would have to use `rebEval()` to become active.)  To signal
-        // the active state, add a special flag which only the API heeds.
-        // (Ordinary Pop_Stack_Values() will not copy out this bit, as it is
-        // not legal in ordinary user arrays--just as voids aren't--only in
-        // arrays which are internally held by the evaluator)
-        //
-        SET_VAL_FLAG(TOP, VALUE_FLAG_EVAL_FLIP);
-
-        if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
-            Flex* locker = nullptr;
-            Force_Value_Frozen_Deep(TOP, locker);
+        else {
+            // Doesn't exist in either lib or user, create a new binding
+            // in user (this is not the preferred behavior for modules
+            // and isolation, but going with it for the API for now).
+            //
+            Expand_Context(ss->context, 1);
+            Append_Context(ss->context, TOP, nullptr);
+            Add_Binder_Index(ss->binder, canon, VAL_WORD_INDEX(TOP));
         }
+    }
 
-        // Set the newline on the new value, indicating molding should put a
-        // line break *before* this value (needs to be done after recursion to
-        // process paths or other arrays...because the newline belongs on the
-        // whole array...not the first element of it).
-        //
-        if (ss->newline_pending) {
-            ss->newline_pending = false;
-            SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
-        }
-
-        // Added for TRANSCODE/NEXT (LOAD/NEXT is deprecated, see #1703)
-        //
-        if (just_once)
+    // Check for end of path:
+    if (Is_Interstitial_Scan(ss)) {
+        if (*ep != '/' and *ep != '.')
             goto done;
 
-        goto loop;
+        // For bootstrap we want `abc.def.ghi` to scan as `abc/def/ghi`
+        // But we want `abc/def/ghi.txt` to have a WORD! in the last
+        // position containing a dot, for how bootstrap uses PATH! in
+        // order to represent files.
+        //
+        // The best way to go about this is to have a separate scan
+        // mode for `.` that shifts into `/` if a slash is seen, and
+        // only the `.` mode will do the conversions.
+        //
+        if (ss->mode_char == '.' and *ep == '/')
+            ss->mode_char = '/';
+
+        ep++;
+        if (*ep != '(' and *ep != '[' and Is_Lex_Delimit(*ep)) {
+            ss->begin = ep;
+            goto done;  // we want `a.b/` to scan as `a/b`
+        }
+
+        ss->begin = ep;  // skip next /
+    }
+    else if (*ep == '/' or *ep == '.') {
+        //
+        // We're noticing a path was actually starting with the token
+        // that just got pushed, so it should be a part of that path.
+
+        ++ss->begin;
+
+        if (
+            *ss->begin == '\0' // `foo/`
+            or Is_Lex_Whitespace(*ss->begin) // `foo/ bar`
+            or *ss->begin == ';' // `foo/;--bar`
+        ){
+            // These are valid paths in modern Ren-C with blanks at
+            // their tails.  But in the bootstrap build we just treat
+            // these as if the slash is not there, and don't enforce
+            // the evaluator rule for these (ensure the path resolves
+            // to an action)
+        }
+        else {
+            #if !defined(NDEBUG)
+            StackIndex check = TOP_INDEX;
+            #endif
+
+            // When `mode_char` is '/', the scan needs to steal the last
+            // pushed item from us...as it's the head of the path it
+            // couldn't see coming in the future.
+
+            Array* arr = Scan_Array(ss, *ep);
+
+            #if !defined(NDEBUG)
+            assert(TOP_INDEX == check - 1);  // should only take one!
+            #endif
+
+            if (token == TOKEN_LIT) {
+                RESET_VAL_HEADER(PUSH(), REB_LIT_PATH);
+                CHANGE_VAL_TYPE_BITS(Array_Head(arr), REB_WORD);
+            }
+            else if (Is_Get_Word(Array_Head(arr))) {
+                if (ss->begin and *ss->end == ':')
+                    fail (Error_Syntax(ss, token));
+                RESET_VAL_HEADER(PUSH(), REB_GET_PATH);
+                CHANGE_VAL_TYPE_BITS(Array_Head(arr), REB_WORD);
+            }
+            else {
+                if (ss->begin and *ss->end == ':') {
+                    RESET_VAL_HEADER(PUSH(), REB_SET_PATH);
+                    ss->begin = ++ss->end;
+                }
+                else
+                    RESET_VAL_HEADER(PUSH(), REB_PATH);
+            }
+            INIT_VAL_ARRAY(TOP, arr);
+            VAL_INDEX(TOP) = 0;
+            token = TOKEN_PATH;
+        }
+    }
+
+    // If we get to this point, it means that the value came from UTF-8
+    // source data--it was not "spliced" out of the variadic as a plain
+    // value.  From the API's point of view, such runs of UTF-8 are
+    // considered "evaluator active", vs. the inert default.  (A spliced
+    // value would have to use `rebEval()` to become active.)  To signal
+    // the active state, add a special flag which only the API heeds.
+    // (Ordinary Pop_Stack_Values() will not copy out this bit, as it is
+    // not legal in ordinary user arrays--just as voids aren't--only in
+    // arrays which are internally held by the evaluator)
+    //
+    SET_VAL_FLAG(TOP, VALUE_FLAG_EVAL_FLIP);
+
+    if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
+        Flex* locker = nullptr;
+        Force_Value_Frozen_Deep(TOP, locker);
+    }
+
+    // Set the newline on the new value, indicating molding should put a
+    // line break *before* this value (needs to be done after recursion to
+    // process paths or other arrays...because the newline belongs on the
+    // whole array...not the first element of it).
+    //
+    if (ss->newline_pending) {
+        ss->newline_pending = false;
+        SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
+    }
+
+    // Added for TRANSCODE/NEXT (LOAD/NEXT is deprecated, see #1703)
+    //
+    if (just_once)
+        goto done;
+
+    goto loop;
 
 } done: {  ///////////////////////////////////////////////////////////////////
 
