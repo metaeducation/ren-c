@@ -1308,7 +1308,6 @@ acquisition_loop:
             ++cp; // skip ':'
             goto scanword;
 
-        treat_dollar_as_apostrophe:
         case LEX_SPECIAL_APOSTROPHE:
             if (Is_Lex_Number(cp[1]))  // no '2nd
                 return (Error_Syntax(ss, TOKEN_LIT));
@@ -1487,13 +1486,6 @@ acquisition_loop:
             return (Error_Syntax(ss, TOKEN_INTEGER));
 
         case LEX_SPECIAL_DOLLAR:
-            if (
-                Get_Lex_Class(cp[1]) == LEX_CLASS_WORD
-                or cp[1] == '-'
-                or cp[1] == '+'
-            ){
-                goto treat_dollar_as_apostrophe;
-            }
             if (cp[1] == '.') {
                 ++cp;
                 ++ss->begin;
