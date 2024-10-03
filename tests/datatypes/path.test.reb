@@ -200,4 +200,4 @@
 ; / is no longer a length 0 PATH! in Ren-C
 (type of the / = word!)
 
-(type of the foo/ = word!)  ; bootstrap compatibliity, scan foo/ as foo
+(type of the foo/ = path!)  ; bootstrap compatibliity, we want this!

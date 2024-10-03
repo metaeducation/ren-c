@@ -757,13 +757,7 @@ void MF_List(REB_MOLD *mo, const Cell* v, bool form)
             sep = nullptr;
         }
 
-        if (Cell_Series_Len_At(v) == 0 and sep[0] == '/')
-            Append_Utf8_Codepoint(mo->series, '/'); // 0-arity path is `/`
-        else {
-            Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
-            if (Cell_Series_Len_At(v) == 1 and sep [0] == '/')
-                Append_Utf8_Codepoint(mo->series, '/'); // 1-arity path `foo/`
-        }
+        Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
 
         if (VAL_TYPE(v) == REB_SET_PATH)
             Append_Utf8_Codepoint(mo->series, ':');

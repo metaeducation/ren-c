@@ -144,7 +144,6 @@ const char * const Token_Names[] = {
     "issue",
     "tag",
     "path",
-    "refine",
     "construct",
     nullptr
 };

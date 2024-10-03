@@ -64,11 +64,11 @@
     ([abc/def] = transcode "/abc/def")
 ]
 
-; Stripping trailing slashes
+; Keeping trailing slashes
 [
-    ([a] = transcode "a/")
-    ([a] = transcode ".a/")
-    ([a/b] = transcode "a.b/")
+    ([a/] = transcode "a/")
+    ([a/] = transcode ".a/")
+    ([a/b/] = transcode "a.b/")
 ]
 
 ; Turning tuples into paths

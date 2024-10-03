@@ -369,7 +369,11 @@ void Mold_Array_At(
             New_Indented_Line(mo);
         }
 
-        Mold_Value(mo, item);
+        if (sep[0] == '/' and Is_Blank(item) and IS_END(item + 1)) {
+            // don't render blanks at tails of paths
+        }
+        else
+            Mold_Value(mo, item);
 
         ++item;
         if (IS_END(item))

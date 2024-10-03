@@ -399,8 +399,11 @@ static const Byte *Scan_UTF8_Char_Escapable(REBUNI *out, const Byte *bp)
 
 
 static bool Is_Interstitial_Scan(SCAN_STATE* ss) {
-    return ss->mode_char == '.' or ss->mode_char == '/';
+    return ss->mode == '.' or ss->mode == '/';
 }
+
+INLINE bool Is_Interstitial(char c)
+  { return c == '/' or c == '.' /*or c == ':'*/; }
 
 
 //
@@ -1175,51 +1178,45 @@ acquisition_loop:
             return (Error_Extra(ss, '}'));
 
 
-        // /REFINEMENT, or /
+          case LEX_DELIMIT_SLASH:  // a /RUN-style PATH! or /// WORD!
+            goto handle_delimit_interstitial;
 
-        case LEX_DELIMIT_SLASH:
-            assert(*cp == '/');
-            if (Is_Interstitial_Scan(ss))  // handled in token processing
-                return (Error_Syntax(ss, TOKEN_PATH));  // weird cases, `=///`
-            ++cp;
-            while (*cp == '/')  // `//` or `///` etc.
+/*          case LEX_DELIMIT_COLON:  // a :REFINEMENT-style CHAIN! or ::: WORD!
+            goto handle_delimit_interstitial; */
+
+          case LEX_DELIMIT_PERIOD:  // a .FIELD-style TUPLE! or ... WORD!
+            goto handle_delimit_interstitial;
+
+          handle_delimit_interstitial: {
+            Byte which = *cp;
+            assert(which == '.' or which == ':' or which == '/');
+            do {
+                if (
+                    Is_Lex_Whitespace(cp[1])
+                    or cp[1] == ']'
+                    or cp[1] == ')'
+                    or (cp[1] != which and Is_Interstitial(cp[1]))
+                ){
+                    ss->end = cp + 1;
+/*                    if (which == ':' and cp[1] == '/')
+                        break;  // load `://` with / being the word */
+                    if (which == '/' and cp[1] == '.')
+                        break;  // load `/.a` with / acting as path
+                    return LOCATED(TOKEN_WORD);  // like . or .. or ...
+                }
                 ++cp;
-            if (
-                Is_Lex_Whitespace(*cp)
-                or *cp == ']'
-                or *cp == ')'
-            ){
-                ss->end = cp;
-                return LOCATED(TOKEN_WORD);  // `//` or `///` etc.
-            }
-            if (cp != ss->begin + 1)  // only /REFINEMENT, not ///REFINEMENT
-                return (Error_Syntax(ss, TOKEN_PATH));
+            } while (*cp == which);
 
-            ss->begin = cp;
-            Corrupt_Pointer_If_Debug(ss->end);
-            flags = Prescan_Token(ss);
-            ss->begin--;
-
-            if (*ss->end == '.' or *ss->end == '/') {
-                //
-                // Bootstrap needs to support `/foo.bar: :append` which has
-                // special meaning in modern Ren-C (accept action antiforms).
-                // But since that feature does not exist in the bootstrap
-                // executable, just scan that as `foo.bar: :append`.  Drop
-                // the slash.
-                //
-                ss->end = cp;
-                return LOCATED(TOKEN_COMMA);
+            ss->end = ss->begin + 1;
+            switch (which) {
+              case '.': return LOCATED(TOKEN_TUPLE);
+              /*case ':': return LOCATED(TOKEN_CHAIN);*/
+              case '/': return LOCATED(TOKEN_PATH);
+              default:
+                assert(false);
             }
+            panic (nullptr); }
 
-            if (0 != (flags & (~ (
-                LEX_FLAG(LEX_SPECIAL_WORD)
-                | LEX_FLAG(LEX_SPECIAL_MINUS)
-                | LEX_FLAG(LEX_SPECIAL_PLUS)
-            )))){
-                return (Error_Syntax(ss, TOKEN_REFINE));
-            }
-            return LOCATED(TOKEN_REFINE);
 
         case LEX_DELIMIT_END:
             //
@@ -1231,29 +1228,6 @@ acquisition_loop:
             ss->begin = nullptr;
             Corrupt_Pointer_If_Debug(ss->end);
             goto acquisition_loop;
-
-        // 1. Internal dots are picked up at the end of scanning each token.
-        // This is only for leading periods, which we discard in order
-        // to make `.foo` (used in new executables ot pick object members)
-        // scan as simply foo.
-        //
-        case LEX_DELIMIT_PERIOD:        /* only [. .. ...] etc. are WORD! */
-            assert(*cp == '.');
-            if (Is_Interstitial_Scan(ss))  // handled in token processing
-                return (Error_Syntax(ss, TOKEN_TUPLE));  // weird, e.g. `=...`
-
-            while (cp[1] == '.')
-                ++cp;
-
-            if (
-                Is_Lex_Whitespace(cp[1])
-                or cp[1] == ']'
-                or cp[1] == ')'
-            ){
-                ss->end = cp + 1;
-                return LOCATED(TOKEN_WORD);  // not perfect, allows ..a etc.
-            }
-            return LOCATED(TOKEN_COMMA);  // `.abc` => `abc`, see [1]
 
         default:
             panic ("Invalid LEX_DELIMIT class");
@@ -1463,7 +1437,7 @@ acquisition_loop:
         }
 
     case LEX_CLASS_WORD:
-        if (ss->mode_char == '/') {
+        if (ss->mode == '/') {
             //
             // If we're in the mode of scanning a path, we don't want words
             // to consider dot to be a delimiter...rather we want to embed
@@ -1707,7 +1681,7 @@ void Init_Va_Scan_State_Core(
     const Byte *opt_begin, // preload the scanner outside the va_list
     va_list *vaptr
 ){
-    ss->mode_char = '\0';
+    ss->mode = '\0';
 
     ss->vaptr = vaptr;
 
@@ -1757,7 +1731,7 @@ void Init_Scan_State(
     assert(utf8[limit] == '\0');
     UNUSED(limit);
 
-    ss->mode_char = '\0';
+    ss->mode = '\0';
 
     ss->vaptr = nullptr; // signal Locate_Token to not use vaptr
     ss->begin = utf8;
@@ -1846,7 +1820,7 @@ static REBINT Scan_Head(SCAN_STATE *ss)
 }
 
 
-static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char);
+static Array* Scan_Array(SCAN_STATE *ss, Byte mode);
 
 
 #define RAISE(error) error  // define for compatibility
@@ -1855,7 +1829,7 @@ static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char);
 //
 //  Scan_To_Stack: C
 //
-// Scans values to the data stack, based on a mode_char.  This mode can be
+// Scans values to the data stack, based on a mode.  This mode can be
 // ']', ')', or '/' to indicate the processing type...or '\0'.
 //
 // If the source bytes are "1" then it will be the array [1]
@@ -1898,8 +1872,11 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
         // At some point, a token for an end of block or group needed to jump
         // to `done`.  If it didn't, we never got a proper closing.
         //
-        if (ss->mode_char == ']' or ss->mode_char == ')')
-            fail (Error_Missing(ss, ss->mode_char));
+        if (ss->mode == ']' or ss->mode == ')')
+            fail (Error_Missing(ss, ss->mode));
+
+        if (Is_Interstitial(level->mode))  // implicit transcode "a.b/"
+            Init_Blank(PUSH());  // add a blank
 
         goto done;
     }
@@ -1991,11 +1968,6 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
         Init_Any_Word(PUSH(), kind, symbol);
         break; }
 
-      case TOKEN_REFINE: {
-        Symbol* symbol = Intern_UTF8_Managed(bp + 1, len - 1);
-        Init_Refinement(PUSH(), symbol);
-        break; }
-
       case TOKEN_ISSUE:
         if (ep != Scan_Issue(PUSH(), bp + 1, len - 1))
             fail (Error_Syntax(ss, token));
@@ -2016,31 +1988,72 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
         );
         break; }
 
+      case TOKEN_TUPLE:
+        // 1. Internal dots are picked up at the end of scanning each token.
+        // This is only for leading periods, which we discard in order
+        // to make `.foo` (used in new executables to pick object members)
+        // scan as simply `foo`
+        //
+        assert(*bp == '.');
+        goto loop;
+
+ /*     case TOKEN_CHAIN:
+        assert(*bp == ':');
+        goto out_of_turn_interstitial; */
+
       case TOKEN_PATH:
-        assert(Is_Interstitial_Scan(ss));  // leading slash should be WORD!
-        break;
+        assert(*bp == '/');
+        goto out_of_turn_interstitial;
 
-      case TOKEN_BLOCK_END: {
-        if (ss->mode_char == ']')
+      out_of_turn_interstitial: {
+        //
+        // A "normal" path or tuple like `a/b/c` or `a.b.c` always has a token
+        // on the left of the interstitial.  So the dot or slash gets picked
+        // up by a lookahead step after this switch().
+        //
+        // This point is reached when a slash or dot gets seen "out-of-turn",
+        // like `/a` or `a./b` or `~/a` etc.
+        //
+        // Easiest thing to do here is to push an item and then let whatever
+        // processing would happen run (either start a new path or tuple, or
+        // continuing one in progress).  So just do that push and "unconsume"
+        // the delimiter so the lookahead sees it.
+
+        assert(ep == bp + 1 and ss->begin == ep and ss->end == ep);
+
+/*        if (level->quasi_pending) {
+            Init_Trash(PUSH());  // if we end up with ~/~, we decay it to word
+            level->quasi_pending = false;  // quasi-sequences don't exist
+        }
+        else */
+            Init_Blank(PUSH());
+        ep = ss->begin = ss->end = bp;  // "unconsume" .` or `/` or `:` token
+        break; }
+
+      case TOKEN_BLOCK_END:
+        assert(*bp == ']' and len == 1);
+        goto handle_list_end_delimiter;
+
+      case TOKEN_GROUP_END:
+        assert(*bp == ')' and len == 1);
+        goto handle_list_end_delimiter;
+
+      handle_list_end_delimiter: {
+        Byte end_delimiter = *bp;
+        if (level->mode == end_delimiter)
             goto done;
 
-        if (ss->mode_char != '\0') // expected e.g. `)` before the `]`
-            fail (Error_Mismatch(ss, ss->mode_char, ']'));
-
-        // just a stray unexpected ']'
-        //
-        fail (Error_Extra(ss, ']')); }
-
-      case TOKEN_GROUP_END: {
-        if (ss->mode_char == ')')
+        if (Is_Interstitial(level->mode)) {  // implicit end [the /] (abc/)
+            Init_Blank(PUSH());  // add a blank
+            --ss->begin;
+            --ss->end;
             goto done;
+        }
 
-        if (ss->mode_char != '\0') // expected e.g. ']' before the ')'
-            fail (Error_Mismatch(ss, ss->mode_char, ')'));
+        if (level->mode != '\0')  // expected ']' before ')' or vice-versa
+            return RAISE(Error_Mismatch(level, level->mode, end_delimiter));
 
-        // just a stray unexpected ')'
-        //
-        fail (Error_Extra(ss, ')')); }
+        return RAISE(Error_Extra(ss, end_delimiter)); }  // stray end delimiter
 
     // We treat `10.20.30` as a TUPLE!, but `10.20` has a cultural lock on
     // being a DECIMAL! number.  Due to the overlap, Locate_Token() does
@@ -2124,7 +2137,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
       case TOKEN_TIME:
         if (
             bp[len - 1] == ':'
-            and ss->mode_char == '/' // could be path/10: set
+            and ss->mode == '/' // could be path/10: set
         ){
             if (ep - 1 != Scan_Integer(PUSH(), bp, len - 1))
                 fail (Error_Syntax(ss, token));
@@ -2136,7 +2149,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
         break;
 
       case TOKEN_DATE:
-        while (*ep == '/' and ss->mode_char != '/') {  // Is it date/time?
+        while (*ep == '/' and ss->mode != '/') {  // Is it date/time?
             ep++;
             while (Is_Lex_Not_Delimit(*ep)) ep++;
             len = cast(REBLEN, ep - bp);
@@ -2172,10 +2185,6 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
       case TOKEN_PAIR:
         if (ep != Scan_Pair(PUSH(), bp, len))
             fail (Error_Syntax(ss, token));
-        break;
-
-      case TOKEN_TUPLE:
-        assert(!"Tuple scanning is handled in TOKEN_INTEGER case");
         break;
 
       case TOKEN_FILE:
@@ -2355,15 +2364,10 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
         // mode for `.` that shifts into `/` if a slash is seen, and
         // only the `.` mode will do the conversions.
         //
-        if (ss->mode_char == '.' and *ep == '/')
-            ss->mode_char = '/';
+        if (ss->mode == '.' and *ep == '/')
+            ss->mode = '/';
 
         ep++;
-        if (*ep != '(' and *ep != '[' and Is_Lex_Delimit(*ep)) {
-            ss->begin = ep;
-            goto done;  // we want `a.b/` to scan as `a/b`
-        }
-
         ss->begin = ep;  // skip next /
     }
     else if (*ep == '/' or *ep == '.') {
@@ -2373,51 +2377,103 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
 
         ++ss->begin;
 
+        LineNumber captured_line = ss->line;
+        bool captured_newline_pending = false;
+
+        // The way that path scanning works is that after one item has been
+        // scanned it is *retroactively* decided to begin picking up more
+        // items.  Hence, we take over one pushed item.
+        //
+        StackIndex base = TOP_INDEX - 1;  // consume item
+
         if (
             *ss->begin == '\0' // `foo/`
             or Is_Lex_Whitespace(*ss->begin) // `foo/ bar`
             or *ss->begin == ';' // `foo/;--bar`
         ){
-            // These are valid paths in modern Ren-C with blanks at
-            // their tails.  But in the bootstrap build we just treat
-            // these as if the slash is not there, and don't enforce
-            // the evaluator rule for these (ensure the path resolves
-            // to an action)
+            // These are valid paths in modern Ren-C with blanks at their
+            // tails, which mean "fetch action but don't run it".  That is
+            // useful and better than the old GET-WORD!, so support it!
+
+            Init_Blank(PUSH());
         }
         else {
-            #if !defined(NDEBUG)
-            StackIndex check = TOP_INDEX;
-            #endif
+            // Capture current line and head of line into the starting points,
+            // some errors wish to report the start of the array's location.
+            //
+            SCAN_STATE child = *ss;
+            child.start_line = ss->line;
+            child.start_line_head = ss->line_head;
+            child.newline_pending = false;
+            child.quotes_pending = 0;
+            child.opts &= ~(SCAN_FLAG_NULLEDS_LEGAL | SCAN_FLAG_NEXT);
 
-            // When `mode_char` is '/', the scan needs to steal the last
-            // pushed item from us...as it's the head of the path it
-            // couldn't see coming in the future.
+            child.mode = *ep;
+            Option(Error*) error = Scan_To_Stack(&child);
+            if (error)
+                fail (unwrap(error));
 
-            Array* arr = Scan_Array(ss, *ep);
+            ss->begin = child.begin;  // !!! see comments in Scan_Array()
+            ss->end = child.end;
+            ss->vaptr = child.vaptr;
+            ss->line = child.line;
+            ss->line_head = child.line_head;
 
-            #if !defined(NDEBUG)
-            assert(TOP_INDEX == check - 1);  // should only take one!
-            #endif
-
-            if (Is_Get_Word(Array_Head(arr))) {
-                if (ss->begin and *ss->end == ':')
-                    fail (Error_Syntax(ss, token));
-                RESET_VAL_HEADER(PUSH(), REB_GET_PATH);
-                CHANGE_VAL_TYPE_BITS(Array_Head(arr), REB_WORD);
-            }
-            else {
-                if (ss->begin and *ss->end == ':') {
-                    RESET_VAL_HEADER(PUSH(), REB_SET_PATH);
-                    ss->begin = ++ss->end;
-                }
-                else
-                    RESET_VAL_HEADER(PUSH(), REB_PATH);
-            }
-            INIT_VAL_ARRAY(TOP, arr);
-            VAL_INDEX(TOP) = 0;
-            token = TOKEN_PATH;
+            captured_newline_pending = true;
         }
+
+        assert(TOP_INDEX - base >= 2);  // must push at least 2 things
+
+        if (  // look for refinement-style paths [_ word]
+            TOP_INDEX - base == 2
+            and Is_Blank(TOP - 1)
+            and Is_Word(TOP)
+        ){
+            Copy_Cell(TOP - 1, TOP);
+            DROP();
+            if (*ss->end == ':') {  // we want /foo: to be foo:
+                ss->begin = ++ss->end;
+                KIND_BYTE(TOP) = REB_SET_WORD;
+            }
+            else
+                KIND_BYTE(TOP) = REB_REFINEMENT;
+            goto finished_path_scan;
+        }
+
+        bool leading_blank = Is_Blank(Data_Stack_At(base + 1));
+        Array* a = Pop_Stack_Values_Core(
+            leading_blank ? base + 1 : base,
+            NODE_FLAG_MANAGED
+                | (captured_newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
+        );
+        if (leading_blank)
+            DROP();
+
+        // Tag array with line where the beginning slash was found
+        //
+        MISC(a).line = captured_line;
+        LINK(a).file = try_unwrap(ss->file);
+        Set_Array_Flag(a, HAS_FILE_LINE);
+
+        if (Is_Get_Word(Array_Head(a))) {
+            if (ss->begin and *ss->end == ':')
+                fail (Error_Syntax(ss, token));
+            RESET_VAL_HEADER(PUSH(), REB_GET_PATH);
+            CHANGE_VAL_TYPE_BITS(Array_Head(a), REB_WORD);
+        }
+        else {
+            if (ss->begin and *ss->end == ':') {
+                RESET_VAL_HEADER(PUSH(), REB_SET_PATH);
+                ss->begin = ++ss->end;
+            }
+            else
+                RESET_VAL_HEADER(PUSH(), REB_PATH);
+        }
+        INIT_VAL_ARRAY(TOP, a);
+        VAL_INDEX(TOP) = 0;
     }
+
+  finished_path_scan:
 
     // If we get to this point, it means that the value came from UTF-8
     // source data--it was not "spliced" out of the variadic as a plain
@@ -2488,7 +2544,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
 // reflection, allowing for better introspection and error messages.  (This
 // is similar to the benefits of LevelStruct.)
 //
-static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char)
+static Array* Scan_Array(SCAN_STATE *ss, Byte mode)
 {
     SCAN_STATE child = *ss;
 
@@ -2506,13 +2562,13 @@ static Array* Scan_Array(SCAN_STATE *ss, Byte mode_char)
     // in the path.  Hence, we take over one pushed item from the caller.
     //
     StackIndex base;
-    if (mode_char == '/' or mode_char == '.') {
+    if (mode == '/' or mode == '.') {
         assert(TOP_INDEX > 0);
         base = TOP_INDEX - 1;
     } else
         base = TOP_INDEX;
 
-    child.mode_char = mode_char;
+    child.mode = mode;
     Option(Error*) error = Scan_To_Stack(&child);
     if (error)
         fail (unwrap(error));

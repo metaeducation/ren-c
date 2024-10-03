@@ -61,7 +61,6 @@ enum TokenEnum {
     TOKEN_ISSUE,
     TOKEN_TAG,
     TOKEN_PATH,
-    TOKEN_REFINE,
     TOKEN_CONSTRUCT,
     TOKEN_MAX
 };
@@ -219,9 +218,9 @@ enum rebol_esc_codes {
 
 typedef struct rebol_scan_state {
     //
-    // The mode_char can be '\0', ']', ')', or '/'
+    // The mode can be '\0', ']', ')', or '/'
     //
-    Byte mode_char;
+    Byte mode;
 
     // If vaptr is nullptr, then it's assumed that the `begin` is the source of
     // the UTF-8 data to scan.  Otherwise, it is a variadic feed of UTF-8
