@@ -355,11 +355,11 @@ INLINE void Set_Level_Detected_Fetch(
       case DETECTED_AS_UTF8: {
         StackIndex base = TOP_INDEX;
 
-        SCAN_STATE ss;
+        TranscodeState transcode;
         String* filename = nullptr;
         const LineNumber start_line = 1;
-        Init_Va_Scan_State_Core(
-            &ss,
+        Init_Transcode_Vaptr(
+            &transcode,
             filename,
             start_line,
             cast(const Byte*, p),
@@ -385,28 +385,28 @@ INLINE void Set_Level_Detected_Fetch(
         // which elements came from strings and which were existing blocks
         // from elsewhere.  This is not ideal, but it's just to start.
         //
-        ss.opts |= SCAN_FLAG_NULLEDS_LEGAL;
+        ScanState scan;
+        Init_Scan_Level(&scan, SCAN_FLAG_NULLEDS_LEGAL, &transcode, '\0');
 
         // !!! Current hack is to just allow one binder to be passed in for
         // use binding any newly loaded portions (spliced ones are left with
         // their bindings, though there may be special "binding instructions"
         // or otherwise, that get added).
         //
-        ss.context = Get_Context_From_Stack();
-        ss.lib = (ss.context != Lib_Context) ? Lib_Context : nullptr;
+        transcode.context = Get_Context_From_Stack();
+        transcode.lib = (transcode.context != Lib_Context)
+            ? Lib_Context
+            : nullptr;
 
         struct Reb_Binder binder;
-        Init_Interning_Binder(&binder, ss.context);
-        ss.binder = &binder;
+        Init_Interning_Binder(&binder, transcode.context);
+        transcode.binder = &binder;
 
-        Value* error = rebRescue(cast(REBDNG*, &Scan_To_Stack), &ss);
-        Shutdown_Interning_Binder(&binder, ss.context);
+        Option(Error*) error = Scan_To_Stack(&scan);
+        Shutdown_Interning_Binder(&binder, transcode.context);
 
-        if (error) {
-            Error* error_ctx = cast(Error*, Cell_Varlist(error));
-            rebRelease(error);
-            fail (error_ctx);
-        }
+        if (error)
+            fail (unwrap(error));
 
         // !!! for now, assume scan went to the end; ultimately it would need
         // to pass the "source".

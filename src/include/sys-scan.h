@@ -239,12 +239,8 @@ enum rebol_esc_codes {
 **  Scanner State Structure
 */
 
-typedef struct rebol_scan_state {
+struct TranscodeStateStruct {
     //
-    // The mode can be '\0', ']', ')', or '/'
-    //
-    Byte mode;
-
     // If vaptr is nullptr, then it's assumed that the `begin` is the source of
     // the UTF-8 data to scan.  Otherwise, it is a variadic feed of UTF-8
     // strings and values that are spliced in.
@@ -264,12 +260,32 @@ typedef struct rebol_scan_state {
     REBLEN line;
     const Byte *line_head; // head of current line (used for errors)
 
-    REBLEN start_line;
-    const Byte *start_line_head;
-
     Option(String*) file;
 
+    // If the binder isn't nullptr, then any words or arrays are bound into it
+    // during the loading process.
+    //
+    struct Reb_Binder *binder;
+    VarList* lib; // does not expand, has negative indices in binder
+    VarList* context; // expands, has positive indices in binder
+};
+
+typedef TranscodeStateStruct TranscodeState;
+
+
+struct ScanStateStruct {
+    TranscodeState* ss;
+
     StackIndex stack_base;
+
+    REBFLGS opts;
+
+    // The mode can be '\0', ']', ')', or '/'
+    //
+    Byte mode;
+
+    REBLEN start_line;
+    const Byte *start_line_head;
 
     // VALUE_FLAG_LINE appearing on a value means that there is a line break
     // *before* that value.  Hence when a newline is seen, it means the *next*
@@ -278,24 +294,21 @@ typedef struct rebol_scan_state {
     bool newline_pending;
 
     // Number of quotes pending (this old system supports 1, on a few types)
+    //
     REBLEN quotes_pending;
 
     // If we see an "out of turn" : in the scan, we remember that we did so
     // we can produce a GET-WORD! or GET-PATH!.
     //
-    bool get_sigil_pending;
+    bool sigil_pending;
+};
 
-    REBFLGS opts;
+typedef struct ScanStateStruct ScanState;
 
-    // If the binder isn't nullptr, then any words or arrays are bound into it
-    // during the loading process.
-    //
-    struct Reb_Binder *binder;
-    VarList* lib; // does not expand, has negative indices in binder
-    VarList* context; // expands, has positive indices in binder
-} SCAN_STATE;
 
 #define ANY_CR_LF_END(c) ((c) == '\0' or (c) == CR or (c) == LF)
+
+#define SCAN_MASK_NONE 0
 
 enum {
     SCAN_FLAG_NEXT = 1 << 0, // load/next feature

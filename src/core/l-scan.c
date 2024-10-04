@@ -398,8 +398,8 @@ static const Byte *Scan_UTF8_Char_Escapable(REBUNI *out, const Byte *bp)
 }
 
 
-static bool Is_Interstitial_Scan(SCAN_STATE* ss) {
-    return ss->mode == '.' or ss->mode == '/';
+static bool Is_Interstitial_Scan(ScanState* S) {
+    return S->mode == '.' or S->mode == '/';
 }
 
 INLINE bool Is_Interstitial(char c)
@@ -422,7 +422,7 @@ INLINE bool Is_Interstitial(char c)
 static const Byte *Scan_Quote_Push_Mold(
     REB_MOLD *mo,
     const Byte *src,
-    SCAN_STATE *ss
+    TranscodeState* ss
 ){
     Push_Mold(mo);
 
@@ -640,7 +640,7 @@ static const Byte *Skip_Tag(const Byte *cp)
 //
 static void Update_Error_Near_For_Line(
     Error* error,
-    SCAN_STATE *ss,
+    TranscodeState* ss,
     REBLEN line,
     const Byte *line_head
 ){
@@ -689,7 +689,7 @@ static void Update_Error_Near_For_Line(
 // the NEAR field of the error with the "current" line number and line text,
 // e.g. where the end point of the token is seen.
 //
-static Error* Error_Syntax(SCAN_STATE *ss, Token token) {
+static Error* Error_Syntax(TranscodeState* ss, Token token) {
     //
     // The scanner code has `bp` and `ep` locals which mirror ss->begin and
     // ss->end.  However, they get out of sync.  If they are updated, they
@@ -759,9 +759,9 @@ static Error* Error_Extra(char seen) {
 // applications if it would point out the locations of both points.  R3-Alpha
 // only pointed out the location of the start token.
 //
-static Error* Error_Mismatch(SCAN_STATE *ss, char wanted, char seen) {
+static Error* Error_Mismatch(ScanState* S, char wanted, char seen) {
     Error* error = Error_Scan_Mismatch_Raw(rebChar(wanted), rebChar(seen));
-    Update_Error_Near_For_Line(error, ss, ss->start_line, ss->start_line_head);
+    Update_Error_Near_For_Line(error, S->ss, S->start_line, S->start_line_head);
     return error;
 }
 
@@ -796,7 +796,7 @@ static Error* Error_Mismatch(SCAN_STATE *ss, char wanted, char seen) {
 // the caller will use Get_Lex_Class(ss->begin[0]).
 // Fingerprinting just helps accelerate further categorization.
 //
-static REBLEN Prescan_Token(SCAN_STATE *ss)
+static REBLEN Prescan_Token(TranscodeState* ss)
 {
     assert(Is_Pointer_Corrupt_Debug(ss->end)); // prescan only uses ->begin
 
@@ -953,8 +953,10 @@ static REBLEN Prescan_Token(SCAN_STATE *ss)
 static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     Token* token_out,
     REB_MOLD *mo,
-    SCAN_STATE *ss
+    ScanState* S
 ) {
+    TranscodeState* ss = S->ss;
+
   #if !defined(NDEBUG)
     Corrupt_Pointer_If_Debug(ss->end);
   #endif
@@ -977,7 +979,7 @@ acquisition_loop:
 
         if (not p) { // libRebol representation of ~null~/nullptr
 
-            if (not (ss->opts & SCAN_FLAG_NULLEDS_LEGAL))
+            if (not (S->opts & SCAN_FLAG_NULLEDS_LEGAL))
                 return Error_User(
                     "can't splice null in ANY-ARRAY!...use rebUneval()"
                 );
@@ -1003,12 +1005,12 @@ acquisition_loop:
             if (GET_VAL_FLAG(splice, VALUE_FLAG_EVAL_FLIP))
                 SET_VAL_FLAG(TOP, VALUE_FLAG_EVAL_FLIP);
 
-            if (ss->newline_pending) {
-                ss->newline_pending = false;
+            if (S->newline_pending) {
+                S->newline_pending = false;
                 SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
             }
 
-            if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
+            if (S->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
                 Flex* locker = nullptr;
                 Force_Value_Frozen_Deep(TOP, locker);
             }
@@ -1029,7 +1031,7 @@ acquisition_loop:
             Value* single = KNOWN(ARR_SINGLE(instruction));
 
             if (GET_VAL_FLAG(single, VALUE_FLAG_EVAL_FLIP)) { // rebEval()
-                if (not (ss->opts & SCAN_FLAG_NULLEDS_LEGAL))
+                if (not (S->opts & SCAN_FLAG_NULLEDS_LEGAL))
                     return Error_User(
                         "can only use rebEval() at top level of run"
                     );
@@ -1053,12 +1055,12 @@ acquisition_loop:
                 Copy_Cell(PUSH(), single);
             }
 
-            if (ss->newline_pending) {
-                ss->newline_pending = false;
+            if (S->newline_pending) {
                 SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
+                S->newline_pending = false;
             }
 
-            if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
+            if (S->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
                 Flex* locker = nullptr;
                 Force_Value_Frozen_Deep(TOP, locker);
             }
@@ -1080,8 +1082,7 @@ acquisition_loop:
             //
             if (ss->line_head == nullptr) {
                 assert(ss->vaptr != nullptr);
-                assert(ss->start_line_head == nullptr);
-                ss->line_head = ss->start_line_head = ss->begin;
+                ss->line_head = ss->begin;
             }
             break; } // fallthrough to "ordinary" scanning
 
@@ -1626,23 +1627,21 @@ acquisition_loop:
 
 
 //
-//  Init_Va_Scan_State_Core: C
+//  Init_Transcode_Vaptr: C
 //
-// Initialize a scanner state structure, using variadic C arguments.
+// Initialize a transcode session, using variadic C arguments.
 //
-void Init_Va_Scan_State_Core(
-    SCAN_STATE *ss,
+void Init_Transcode_Vaptr(
+    TranscodeState* transcode,
     Option(String*) file,
     LineNumber line,
-    const Byte *opt_begin, // preload the scanner outside the va_list
+    Option(const Byte*) begin,  // preload the scanner outside the va_list
     va_list *vaptr
 ){
-    ss->mode = '\0';
+    transcode->vaptr = vaptr;
 
-    ss->vaptr = vaptr;
-
-    ss->begin = opt_begin; // if nullptr Locate_Token does first fetch from vaptr
-    Corrupt_Pointer_If_Debug(ss->end);
+    transcode->begin = unwrap(begin);  // if null, first fetch from vaptr
+    Corrupt_Pointer_If_Debug(transcode->end);
 
     // !!! Splicing REBVALs into a scan as it goes creates complexities for
     // error messages based on line numbers.  Fortunately the splice of a
@@ -1651,32 +1650,24 @@ void Init_Va_Scan_State_Core(
     // any errors occur...it just might not give the whole picture when used
     // to offer an error message of what's happening with the spliced values.
     //
-    ss->start_line_head = ss->line_head = nullptr;
-
-    ss->start_line = ss->line = line;
+    transcode->line_head = nullptr;
+    transcode->line = line;
 
     if (file)
         assert(Is_Flex_Ucs2(unwrap(file)));
-    ss->file = file;
+    transcode->file = file;
 
-    ss->newline_pending = false;
-    ss->quotes_pending = 0;
-    ss->get_sigil_pending = false;
-
-    ss->opts = 0;
-
-    ss->binder = nullptr;
+    transcode->binder = nullptr;
 }
 
 
 //
-//  Init_Scan_State: C
+//  Init_Transcode: C
 //
-// Initialize a scanner state structure.  Set the standard
-// scan pointers and the limit pointer.
+// Initialize a transcode session, using a plain UTF-8 byte argument.
 //
-void Init_Scan_State(
-    SCAN_STATE *ss,
+void Init_Transcode(
+    TranscodeState* transcode,
     Option(String*) file,
     LineNumber line,
     const Byte *utf8,
@@ -1688,27 +1679,46 @@ void Init_Scan_State(
     assert(utf8[limit] == '\0');
     UNUSED(limit);
 
-    ss->mode = '\0';
+    transcode->vaptr = nullptr; // signal Locate_Token to not use vaptr
+    transcode->begin = utf8;
+    Corrupt_Pointer_If_Debug(transcode->end);
 
-    ss->vaptr = nullptr; // signal Locate_Token to not use vaptr
-    ss->begin = utf8;
-    Corrupt_Pointer_If_Debug(ss->end);
-
-    ss->start_line_head = ss->line_head = utf8;
-
-    ss->start_line = ss->line = line;
-
-    ss->newline_pending = false;
-    ss->quotes_pending = 0;
-    ss->get_sigil_pending = false;
+    transcode->line_head = utf8;
+    transcode->line = line;
 
     if (file)
         assert(Is_Flex_Ucs2(unwrap(file)));
-    ss->file = file;
+    transcode->file = file;
 
-    ss->opts = 0;
+    transcode->binder = nullptr;
+}
 
-    ss->binder = nullptr;
+
+//
+//  Init_Scan_Level: C
+//
+// 1. Capture current line and head of line into the starting points, because
+//    some errors wish to report the start of the array's location (for
+//    instance if you're at the end of the file and you find there is an
+//    unmatched open brace, you want to report the start location of the
+//    brace...not the end of the file.)
+//
+void Init_Scan_Level(
+    ScanState* S,
+    REBFLGS opts,
+    TranscodeState* ss,
+    Byte mode
+){
+    S->opts = opts;
+    S->ss = ss;
+    S->mode = mode;
+
+    S->start_line = ss->line;  // capture for error messages [1]
+    S->start_line_head = ss->line_head;
+
+    S->newline_pending = false;
+    S->quotes_pending = 0;
+    S->sigil_pending = false;
 }
 
 
@@ -1731,7 +1741,7 @@ void Init_Scan_State(
 // The ss structure is updated to point to the
 // beginning of the source text.
 //
-static REBINT Scan_Head(SCAN_STATE *ss)
+static REBINT Scan_Head(TranscodeState* ss)
 {
     const Byte *rp = 0;   /* pts to the REBOL word */
     const Byte *bp = 0;   /* pts to optional [ just before REBOL */
@@ -1778,23 +1788,23 @@ static REBINT Scan_Head(SCAN_STATE *ss)
 }
 
 
-static Option(Error*) Trap_Scan_Array(Array** out, SCAN_STATE *ss, Byte mode);
+static Option(Error*) Trap_Scan_Array(Array** out, ScanState* S, Byte mode);
 
 
 // define for compatibility, adds location to error
 //
-INLINE Error* Raise_Helper(SCAN_STATE* ss, const void* p) {
-    Drop_Data_Stack_To(ss->stack_base);
+INLINE Error* Raise_Helper(ScanState* S, const void* p) {
+    Drop_Data_Stack_To(S->stack_base);
     Error* e;
     if (Detect_Rebol_Pointer(p) == DETECTED_AS_UTF8)
         e = Error_User(cast(const char*, p));
     else
         e = cast(Error*, m_cast(void*, p));
-    Update_Error_Near_For_Line(e, ss, ss->line, ss->line_head);
+    Update_Error_Near_For_Line(e, S->ss, S->ss->line, S->ss->line_head);
     return e;
 }
 
-#define RAISE(p) Raise_Helper(ss,(p))  // capture ss from callsite
+#define RAISE(p) Raise_Helper(S,(p))  // capture ss from callsite
 
 //
 //  Scan_To_Stack: C
@@ -1814,18 +1824,22 @@ INLINE Error* Raise_Helper(SCAN_STATE* ss, const void* p) {
 // (It only has a return value because it may be called by rebRescue(), and
 // that's the convention it uses.)
 //
-Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
-    SCAN_STATE* level = ss;  // alias for compatibility with newer scanner
-    ss->stack_base = TOP_INDEX;  // roll back to here on RAISE()
+Option(Error*) Scan_To_Stack(ScanState* S) {
+    TranscodeState* ss = S->ss;
+
+    S->stack_base = TOP_INDEX;  // roll back to here on RAISE()
+    assert(not S->newline_pending);
+    assert(S->quotes_pending == 0);
+    assert(not S->sigil_pending);
 
     DECLARE_MOLD (mo);
 
     if (C_STACK_OVERFLOWING(&mo))
         Fail_Stack_Overflow();
 
-    const bool just_once = did (ss->opts & SCAN_FLAG_NEXT);
+    const bool just_once = did (S->opts & SCAN_FLAG_NEXT);
     if (just_once)
-        ss->opts &= ~SCAN_FLAG_NEXT; // e.g. recursion loads one entire BLOCK!
+        S->opts &= ~SCAN_FLAG_NEXT; // e.g. recursion loads one entire BLOCK!
 
   loop: { ////////////////////////////////////////////////////////////////////
 
@@ -1833,7 +1847,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
 
   {
     Drop_Mold_If_Pushed(mo);
-    Option(Error*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, ss);
+    Option(Error*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, S);
     if (error)
         return RAISE(unwrap(error));  // no definitional errors
   }
@@ -1843,10 +1857,10 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
         // At some point, a token for an end of block or group needed to jump
         // to `done`.  If it didn't, we never got a proper closing.
         //
-        if (ss->mode == ']' or ss->mode == ')')
-            return RAISE(Error_Missing(ss->mode));
+        if (S->mode == ']' or S->mode == ')')
+            return RAISE(Error_Missing(S->mode));
 
-        if (Is_Interstitial(level->mode))  // implicit transcode "a.b/"
+        if (Is_Interstitial(S->mode))  // implicit transcode "a.b/"
             Init_Blank(PUSH());  // add a blank
 
         goto done;
@@ -1863,7 +1877,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
 
     switch (token) {
       case TOKEN_NEWLINE:
-        ss->newline_pending = true;
+        S->newline_pending = true;
         ss->line_head = ep;
         goto loop;
 
@@ -1878,7 +1892,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
       case TOKEN_APOSTROPHE: {
         assert(*bp == '\'');  // should be `len` sequential apostrophes
 
-        /*if (level->sigil_pending)  // can't do @'foo: or :'foo
+        /*if (S->sigil_pending)  // can't do @'foo: or :'foo
             return RAISE(Error_Syntax(ss, token));*/
 
         /*if (level->quasi_pending)  // can't do ~'foo~, no quoted quasiforms
@@ -1890,7 +1904,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
             or *ep == ';'
         ){
             /*assert(len > 0);
-            assert(level->quotes_pending == 0);
+            assert(S->quotes_pending == 0);
 
             // A single ' is the SIGIL_QUOTE
             // If you have something like '' then that is quoted quote SIGIL!
@@ -1907,7 +1921,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
                 return RAISE(
                     "Old EXE, multiple quoting (e.g. '''x) not supported"
                 );
-            level->quotes_pending = len;  // apply quoting to next token
+            S->quotes_pending = len;  // apply quoting to next token
         }
         goto loop; }
 
@@ -1928,7 +1942,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
       case TOKEN_GROUP_BEGIN: {
         Array* array;
         Option(Error*) error = Trap_Scan_Array(
-            &array, ss, (token == TOKEN_BLOCK_BEGIN) ? ']' : ')'
+            &array, S, (token == TOKEN_BLOCK_BEGIN) ? ']' : ')'
         );
         if (error)
             return RAISE(unwrap(error));
@@ -1957,11 +1971,11 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
         // for GET-WORD! and GET-PATH!.
         //
         assert(*bp == ':');
-        if (level->get_sigil_pending)
+        if (S->sigil_pending)
             return RAISE(Error_Syntax(ss, TOKEN_CHAIN));
-        if (Is_Interstitial(level->mode))
+        if (Is_Interstitial(S->mode))
             return RAISE(Error_Syntax(ss, TOKEN_CHAIN));  // foo/:bar illegal
-        level->get_sigil_pending = true;
+        S->sigil_pending = true;
         goto loop;
 
       case TOKEN_PATH:
@@ -2003,18 +2017,18 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
 
       handle_list_end_delimiter: {
         Byte end_delimiter = *bp;
-        if (level->mode == end_delimiter)
+        if (S->mode == end_delimiter)
             goto done;
 
-        if (Is_Interstitial(level->mode)) {  // implicit end [the /] (abc/)
+        if (Is_Interstitial(S->mode)) {  // implicit end [the /] (abc/)
             Init_Blank(PUSH());  // add a blank
             --ss->begin;
             --ss->end;
             goto done;
         }
 
-        if (level->mode != '\0')  // expected ']' before ')' or vice-versa
-            return RAISE(Error_Mismatch(level, level->mode, end_delimiter));
+        if (S->mode != '\0')  // expected ']' before ')' or vice-versa
+            return RAISE(Error_Mismatch(S, S->mode, end_delimiter));
 
         return RAISE(Error_Extra(end_delimiter)); }  // stray end delimiter
 
@@ -2025,7 +2039,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
     //
     // (Imagine we're in a tuple scan and INTEGER! 10 was pushed, and are
     // at "20.30" in the 10.20.30 case.  Locate_Token() would need access
-    // to level->mode to know that the tuple scan was happening, else
+    // to S->mode to know that the tuple scan was happening, else
     // it would have to conclude "20.30" was TOKEN_DECIMAL.  Deeper study
     // would be needed to know if giving Locate_Token() more information
     // is wise.  But that study would likely lead to the conclusion that
@@ -2039,7 +2053,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
       case TOKEN_INTEGER:     // or start of DATE
         if (
             (*ep == '.')
-            and not Is_Interstitial_Scan(ss)  // not in PATH! (yet)
+            and not Is_Interstitial_Scan(S)  // not in PATH! (yet)
             and Is_Lex_Number(ep[1])  // If # digit, we're seeing `###.#???`
         ){
             // If we will be scanning a TUPLE!, then we're at the head of it.
@@ -2100,7 +2114,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
       case TOKEN_TIME:
         if (
             bp[len - 1] == ':'
-            and ss->mode == '/' // could be path/10: set
+            and S->mode == '/'  // could be path/10: set
         ){
             if (ep - 1 != Scan_Integer(PUSH(), bp, len - 1))
                 return RAISE(Error_Syntax(ss, token));
@@ -2112,7 +2126,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
         break;
 
       case TOKEN_DATE:
-        while (*ep == '/' and level->mode != '/') {  // Is date/time?
+        while (*ep == '/' and S->mode != '/') {  // Is date/time?
             ep++;
             while (*ep == '.' or *ep == ':' or Is_Lex_Not_Delimit(*ep))
                 ++ep;
@@ -2176,7 +2190,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
 
       case TOKEN_CONSTRUCT: {
         Array* array;
-        Option(Error*) error = Trap_Scan_Array(&array, ss, ']');
+        Option(Error*) error = Trap_Scan_Array(&array, S, ']');
         if (error)
             return RAISE(unwrap(error));
 
@@ -2318,7 +2332,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
     }
 
     // Check for end of path:
-    if (Is_Interstitial_Scan(ss)) {
+    if (Is_Interstitial_Scan(S)) {
         if (
             *ep == ':'  // we want a:b:c -> a/b/c, but a.b: -> a/b:
             and (
@@ -2342,8 +2356,8 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
         // mode for `.` that shifts into `/` if a slash is seen, and
         // only the `.` mode will do the conversions.
         //
-        if (ss->mode == '.' and *ep == '/')
-            ss->mode = '/';
+        if (S->mode == '.' and *ep == '/')
+            S->mode = '/';
 
         ++ep;
         ss->end = ep;
@@ -2387,26 +2401,19 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
             // Capture current line and head of line into the starting points,
             // some errors wish to report the start of the array's location.
             //
-            SCAN_STATE child = *ss;
-            child.start_line = ss->line;
-            child.start_line_head = ss->line_head;
-            child.newline_pending = false;
-            child.quotes_pending = 0;
-            child.get_sigil_pending = false;
-            child.opts &= ~(SCAN_FLAG_NULLEDS_LEGAL | SCAN_FLAG_NEXT);
+            ScanState child;
+            Init_Scan_Level(
+                &child,
+                S->opts & ~(SCAN_FLAG_NULLEDS_LEGAL | SCAN_FLAG_NEXT),
+                ss,
+                *ep == ':' ? '/' : *ep
+            );
 
-            child.mode = *ep == ':' ? '/' : *ep;
             Option(Error*) error = Scan_To_Stack(&child);
             if (error)
                 return RAISE(unwrap(error));
 
-            ss->begin = child.begin;  // !!! see comments in Scan_Array()
-            ss->end = child.end;
-            ss->vaptr = child.vaptr;
-            ss->line = child.line;
-            ss->line_head = child.line_head;
-
-            captured_newline_pending = true;
+            captured_newline_pending = child.newline_pending;
         }
 
         assert(TOP_INDEX - base >= 2);  // must push at least 2 things
@@ -2458,12 +2465,12 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
     //
     SET_VAL_FLAG(TOP, VALUE_FLAG_EVAL_FLIP);
 
-    if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
+    if (S->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
         Flex* locker = nullptr;
         Force_Value_Frozen_Deep(TOP, locker);
     }
 
-    if (level->get_sigil_pending) {
+    if (S->sigil_pending) {
         switch (KIND_BYTE(TOP)) {
           case REB_WORD:
             KIND_BYTE(TOP) = REB_GET_WORD;
@@ -2476,7 +2483,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
                 "Old EXE, only REB_WORD/REB_PATH can be colon-prefixed"
             );
         }
-        level->get_sigil_pending = false;
+        S->sigil_pending = false;
     }
 
     if (*ss->end == ':') {
@@ -2497,8 +2504,8 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
         ss->begin = ss->end;
     }
 
-    if (level->quotes_pending) {
-        assert(level->quotes_pending == 1);
+    if (S->quotes_pending) {
+        assert(S->quotes_pending == 1);
         switch (KIND_BYTE(TOP)) {
           case REB_WORD:
             KIND_BYTE(TOP) = REB_LIT_WORD;
@@ -2511,7 +2518,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
                 "Old EXE, only REB_WORD/REB_PATH can be quoted...once!"
             );
         }
-        level->quotes_pending = 0;
+        S->quotes_pending = 0;
     }
 
     // Set the newline on the new value, indicating molding should put a
@@ -2519,9 +2526,9 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
     // process paths or other arrays...because the newline belongs on the
     // whole array...not the first element of it).
     //
-    if (ss->newline_pending) {
-        ss->newline_pending = false;
+    if (S->newline_pending) {
         SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
+        S->newline_pending = false;
     }
 
     // Added for TRANSCODE/NEXT (LOAD/NEXT is deprecated, see #1703)
@@ -2535,10 +2542,10 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
 
     Drop_Mold_If_Pushed(mo);
 
-    assert(level->quotes_pending == 0);
-    assert(not level->get_sigil_pending);
+    assert(S->quotes_pending == 0);
+    assert(not S->sigil_pending);
 
-    // ss->newline_pending may be true; used for ARRAY_FLAG_NEWLINE_AT_TAIL
+    // S->newline_pending may be true; used for ARRAY_FLAG_NEWLINE_AT_TAIL
 
     return nullptr;  // used with rebRescue(), so protocol requires a return
 }}
@@ -2552,32 +2559,22 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
 // reflection, allowing for better introspection and error messages.  (This
 // is similar to the benefits of LevelStruct.)
 //
-static Option(Error*) Trap_Scan_Array(Array** out, SCAN_STATE *ss, Byte mode)
+static Option(Error*) Trap_Scan_Array(Array** out, ScanState* S, Byte mode)
 {
-    SCAN_STATE child = *ss;
+    assert(mode == ')' or mode == ']');
 
-    // Capture current line and head of line into the starting points, because
-    // some errors wish to report the start of the array's location.
-    //
-    child.start_line = ss->line;
-    child.start_line_head = ss->line_head;
-    child.newline_pending = false;
-    child.quotes_pending = 0;
-    child.get_sigil_pending = false;
-    child.opts &= ~(SCAN_FLAG_NULLEDS_LEGAL | SCAN_FLAG_NEXT);
+    TranscodeState* ss = S->ss;
 
-    // The way that path scanning works is that after one item has been
-    // scanned it is *retroactively* decided to begin picking up more items
-    // in the path.  Hence, we take over one pushed item from the caller.
-    //
-    StackIndex base;
-    if (mode == '/' or mode == '.') {
-        assert(TOP_INDEX > 0);
-        base = TOP_INDEX - 1;
-    } else
-        base = TOP_INDEX;
+    ScanState child;
+    Init_Scan_Level(
+        &child,
+        S->opts & ~(SCAN_FLAG_NULLEDS_LEGAL | SCAN_FLAG_NEXT),
+        ss,
+        mode
+    );
 
-    child.mode = mode;
+    StackIndex base = TOP_INDEX;
+
     Option(Error*) error = Scan_To_Stack(&child);
     if (error)
         return error;
@@ -2594,18 +2591,6 @@ static Option(Error*) Trap_Scan_Array(Array** out, SCAN_STATE *ss, Byte mode)
     LINK(a).file = try_unwrap(ss->file);
     Set_Array_Flag(a, HAS_FILE_LINE);
 
-    // The only variables that should actually be written back into the
-    // parent ss are those reflecting an update in the "feed" of data.
-    //
-    // Don't update the start line for the parent, because that's still
-    // the line where that array scan started.
-
-    ss->begin = child.begin;
-    ss->end = child.end;
-    ss->vaptr = child.vaptr;
-    ss->line = child.line;
-    ss->line_head = child.line_head;
-
     *out = a;
     return nullptr;
 }
@@ -2621,23 +2606,26 @@ Array* Scan_UTF8_Managed(
     const Byte *utf8,
     REBLEN size
 ){
-    SCAN_STATE ss;
+    TranscodeState transcode;
     const LineNumber start_line = 1;
-    Init_Scan_State(&ss, filename, start_line, utf8, size);
+    Init_Transcode(&transcode, filename, start_line, utf8, size);
+
+    ScanState scan;
+    Init_Scan_Level(&scan, SCAN_MASK_NONE, &transcode, '\0');
 
     StackIndex base = TOP_INDEX;
-    Option(Error*) error = Scan_To_Stack(&ss);
+    Option(Error*) error = Scan_To_Stack(&scan);
     if (error)
         fail (unwrap(error));
 
     Array* a = Pop_Stack_Values_Core(
         base,
         NODE_FLAG_MANAGED
-            | (ss.newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
+            | (scan.newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
     );
 
-    MISC(a).line = ss.line;
-    LINK(a).file = try_unwrap(ss.file);
+    MISC(a).line = transcode.line;
+    LINK(a).file = try_unwrap(transcode.file);
     Set_Array_Flag(a, HAS_FILE_LINE);
 
     return a;
@@ -2651,10 +2639,10 @@ Array* Scan_UTF8_Managed(
 //
 REBINT Scan_Header(const Byte *utf8, REBLEN len)
 {
-    SCAN_STATE ss;
+    TranscodeState ss;
     String* filename = nullptr;
     const LineNumber start_line = 1;
-    Init_Scan_State(&ss, filename, start_line, utf8, len);
+    Init_Transcode(&ss, filename, start_line, utf8, len);
 
     REBINT result = Scan_Head(&ss);
     if (result == 0)
@@ -2749,17 +2737,22 @@ DECLARE_NATIVE(transcode)
     else
         start_line = 1;
 
-    SCAN_STATE ss;
-    Init_Scan_State(
-        &ss,
+    TranscodeState transcode;
+    Init_Transcode(
+        &transcode,
         filename,
         start_line,
         Cell_Blob_At(source),
         Cell_Series_Len_At(source)
     );
 
-    if (REF(next3))
-        ss.opts |= SCAN_FLAG_NEXT;
+    ScanState scan;
+    Init_Scan_Level(
+        &scan,
+        REF(next3) ? SCAN_FLAG_NEXT : SCAN_MASK_NONE,
+        &transcode,
+        '\0'
+    );
 
     // If the source data bytes are "1" then the scanner will push INTEGER! 1
     // if the source data is "[1]" then the scanner will push BLOCK! [1]
@@ -2768,7 +2761,7 @@ DECLARE_NATIVE(transcode)
     //
     StackIndex base = TOP_INDEX;
 
-    Option(Error*) error = Scan_To_Stack(&ss);
+    Option(Error*) error = Scan_To_Stack(&scan);
     if (error) {
         if (Is_Text(ARG(source)))
             rebRelease(source);  // release temporary binary created
@@ -2777,22 +2770,22 @@ DECLARE_NATIVE(transcode)
 
     if (Is_Word(ARG(line_number))) {
         Value* ivar = Get_Mutable_Var_May_Fail(ARG(line_number), SPECIFIED);
-        Init_Integer(ivar, ss.line);
+        Init_Integer(ivar, transcode.line);
     }
     if (REF(next3) and TOP_INDEX != base) {
         Copy_Cell(OUT, ARG(source));  // result will be new position
         if (Is_Text(ARG(source))) {
-            assert(ss.end <= Cell_Blob_Tail(source));
-            assert(ss.end >= Cell_Blob_Head(source));
+            assert(transcode.end <= Cell_Blob_Tail(source));
+            assert(transcode.end >= Cell_Blob_Head(source));
             assert(VAL_INDEX(source) == 0);  // binary converted
             Byte* bp = Cell_Blob_Head(source);
-            for (; bp < ss.end; ++bp) {
+            for (; bp < transcode.end; ++bp) {
                 if (not Is_Continuation_Byte(*bp))
                     ++VAL_INDEX(OUT);  // bump ahead for each utf8 codepoint
             }
         }
         else {
-            VAL_INDEX(OUT) = ss.end - Cell_Blob_Head(OUT);  // binary advance
+            VAL_INDEX(OUT) = transcode.end - Cell_Blob_Head(OUT);  // advance
         }
     }
 
@@ -2815,10 +2808,10 @@ DECLARE_NATIVE(transcode)
     Array* a = Pop_Stack_Values_Core(
         base,
         NODE_FLAG_MANAGED
-            | (ss.newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
+            | (scan.newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
     );
-    MISC(a).line = ss.line;
-    LINK(a).file = try_unwrap(ss.file);
+    MISC(a).line = transcode.line;
+    LINK(a).file = try_unwrap(transcode.file);
     Set_Array_Flag(a, HAS_FILE_LINE);
 
     return Init_Block(OUT, a);
@@ -2838,15 +2831,18 @@ const Byte *Scan_Any_Word(
     const Byte *utf8,
     REBLEN len
 ) {
-    SCAN_STATE ss;
+    TranscodeState transcode;
     String* filename = nullptr;
     const LineNumber start_line = 1;
-    Init_Scan_State(&ss, filename, start_line, utf8, len);
+    Init_Transcode(&transcode, filename, start_line, utf8, len);
+
+    ScanState scan;
+    Init_Scan_Level(&scan, SCAN_MASK_NONE, &transcode, '\0');
 
     DECLARE_MOLD (mo);
 
     Token token;
-    Option(Error*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, &ss);
+    Option(Error*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, &scan);
     if (error)
         fail (unwrap(error));
 
@@ -2855,7 +2851,7 @@ const Byte *Scan_Any_Word(
 
     Init_Any_Word(out, kind, Intern_UTF8_Managed(utf8, len));
     Drop_Mold_If_Pushed(mo);
-    return ss.begin; // !!! is this right?
+    return transcode.begin;  // !!! is this right?
 }
 
 
