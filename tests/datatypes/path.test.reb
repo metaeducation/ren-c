@@ -19,11 +19,11 @@
 (
     a-word: 1
     data: #{0201}
-    2 = data/:a-word
+    2 = data/(a-word)
 )
 (
     blk: reduce [:abs 2]
-    2 == blk/:abs
+    2 == blk/(:abs)
 )
 (
     blk: [#{} 2]
@@ -203,3 +203,20 @@
 (type of the / = word!)
 
 (type of the foo/ = path!)  ; bootstrap compatibliity, we want this!
+
+; Terminal slash now means get action, works also with specialization and
+; with chains!
+[
+    (append/ = get 'append)
+
+    (
+        apd: append:dup/
+        [a b c d e d e] = apd [a b c] [d e] 2
+    )
+
+    (
+        x: 10
+        e: sys.util.rescue [x/]
+        e.id = 'bad-get-action
+    )
+]

@@ -260,8 +260,12 @@ bool Next_Path_Throws(REBPVS *pvs)
             pvs->opt_label = Cell_Word_Symbol(PVS_PICKER(pvs));
     }
 
-    if (IS_END(pvs->value))
+    if (
+        IS_END(pvs->value)
+        or (Is_Blank(pvs->value) and IS_END(pvs->value + 1))
+    ){
         return false; // did not throw
+    }
 
     return Next_Path_Throws(pvs);
 }
@@ -397,17 +401,20 @@ bool Eval_Path_Throws_Core(
 
     Fetch_Next_In_Level(nullptr, pvs);
 
-    if (IS_END(pvs->value)) {
-        // If it was a single element path, return the value rather than
-        // try to dispatch it (would cause a crash at time of writing)
+    assert(NOT_END(pvs->value));  // paths must be at least 2 long
+    if (Is_Blank(pvs->value) and IS_END(pvs->value + 1)) {
         //
-        // !!! Is this the desired behavior, or should it be an error?
+        // Paths like `append/` will get the value and ensure it is an
+        // action.  so `x: 10 x/` should fail.  !!! Fail in callers or here?
     }
     else {
         if (Next_Path_Throws(pvs))
             goto return_thrown;
 
-        assert(IS_END(pvs->value));
+        assert(
+            IS_END(pvs->value)
+            or (Is_Blank(pvs->value) and IS_END(pvs->value + 1))
+        );
     }
 
     if (opt_setval) {

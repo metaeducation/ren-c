@@ -1914,15 +1914,8 @@ bool Eval_Core_Throws(Level* const L)
         if (not EVALUATING(current))
             goto inert;
 
-        // Length-0 paths look like `/`, and do a special dispatch (currently
-        // hacked up to just act as the DIVIDE native, but ultimtely would
-        // be another form of dispatch based on the left type...and numbers
-        // would use this for division).  This dispatch happens after the
-        // switch statement along with enfix, so if we see it here that means
-        // there was nothing to the left.
-        //
-        if (Cell_Series_Len_At(current) == 0)
-            fail ("Empty path must have left argument for 'split' behavior");
+        assert(Cell_Series_Len_At(current) >= 2);
+        bool tail_blank = Is_Blank(Array_Last(Cell_Array(current)));
 
         Symbol* opt_label;
         if (Eval_Path_Throws_Core(
@@ -1932,13 +1925,21 @@ bool Eval_Core_Throws(Level* const L)
             VAL_INDEX(current),
             Derive_Specifier(L->specifier, current),
             nullptr, // `setval`: null means don't treat as SET-PATH!
-            DO_FLAG_PUSH_PATH_REFINEMENTS
+            tail_blank ? DO_MASK_NONE : DO_FLAG_PUSH_PATH_REFINEMENTS
         )){
             goto return_thrown;
         }
 
         if (Is_Nothing(L->out))  // need GET/ANY if path is trash
             fail (Error_No_Value_Core(current, L->specifier));
+
+        if (tail_blank) {  // like/this/ means GET action
+            if (not Is_Action(L->out)) {
+                Derelativize(Level_Spare(L), current, L->specifier);
+                fail (Error_Bad_Get_Action_Raw(Level_Spare(L)));
+            }
+            break;
+        }
 
         if (Is_Action(L->out)) {
             //
