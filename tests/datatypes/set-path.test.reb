@@ -3,9 +3,11 @@
 (not set-path? 1)
 (set-path! = type of first [a/b:])
 ; the minimum
-[#1947
-    (set-path? load "#[set-path! [[a] 1]]")
-]
+[#1947 (
+    error? sys.util/rescue [
+        load "#[set-path! [[a] 1]]"
+    ]
+)]
 (
     all [
         set-path? a: load "#[set-path! [[a b c] 2]]"

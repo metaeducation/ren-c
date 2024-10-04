@@ -308,6 +308,11 @@ Value* Init_Any_Series_At_Core(
     VAL_INDEX(out) = index;
     INIT_BINDING(out, binding);
 
+    if (Any_Path_Kind(type)) {
+        if (Cell_Series_Len_At(out) < 2)
+            fail ("ANY-PATH! must have at least 2 elements");
+    }
+
   #if !defined(NDEBUG)
     if (Any_String(out)) {
         if (Flex_Wide(series) != 2)

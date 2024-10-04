@@ -3,9 +3,9 @@
 (not lit-path? 1)
 (lit-path! = type of first ['a/b])
 ; minimum
-[#1947
-    (lit-path? load "#[lit-path! [[a] 1]]")
-]
+[#1947 (
+    error? sys.util/rescue [load "#[lit-path! [[a] 1]]"]
+)]
 (
     all [
         lit-path? a: load "#[lit-path! [[a b c] 2]]"

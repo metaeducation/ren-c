@@ -4,9 +4,11 @@
 (not path? 1)
 (path! = type of 'a/b)
 ; the minimum
-[#1947
-    (path? load "#[path! [[a] 1]]")
-]
+[#1947 (
+    error? sys.util/rescue [
+        load "#[path! [[a] 1]]"
+    ]
+)]
 (
     all [
         path? a: load "#[path! [[a b c] 2]]"
@@ -37,7 +39,7 @@
 )
 (
     blk: [_ 3]
-    3 == do [blk/_]
+    3 == do [blk/(_)]
 )
 (
     blk: [blank 3]

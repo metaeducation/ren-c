@@ -36,57 +36,75 @@
 )
 ; path
 (
-    a: make path! 0
-    insert a 0
-    a == as path! [0]
+    error? sys.util.rescue [
+        a: make path! 0
+        insert a 0
+        a == as path! [0]
+    ]
 )
 (
-    a: copy as path! [0]
-    b: make path! 0
-    insert b first a
-    a == b
+    error? sys.util.rescue [
+        a: copy as path! [0]
+        b: make path! 0
+        insert b first a
+        a == b
+    ]
 )
 (
-    a: copy as path! [0]
-    b: make path! 0
-    insert :b a
-    a == b
+    error? sys.util.rescue [
+        a: copy as path! [0]
+        b: make path! 0
+        insert :b a
+        a == b
+    ]
 )
 ; lit-path
 (
-    a: make lit-path! 0
-    insert :a 0
-    :a == to lit-path! [0]
+    error? sys.util.rescue [
+        a: make lit-path! 0
+        insert :a 0
+        :a == to lit-path! [0]
+    ]
 )
 (
-    a: to lit-path! [0]
-    b: make lit-path! 0
-    insert :b first :a
-    :a == :b
+    error? sys.util.rescue [
+        a: to lit-path! [0]
+        b: make lit-path! 0
+        insert :b first :a
+        :a == :b
+    ]
 )
 (
-    a: to lit-path! [0]
-    b: make lit-path! 0
-    insert :b :a
-    :a == :b
+    error? sys.util.rescue [
+        a: to lit-path! [0]
+        b: make lit-path! 0
+        insert :b :a
+        :a == :b
+    ]
 )
 ; set-path
 (
-    a: make set-path! 0
-    insert :a 0
-    :a == to set-path! [0]
+    error? sys.util.rescue [
+        a: make set-path! 0
+        insert :a 0
+        :a == to set-path! [0]
+    ]
 )
 (
-    a: to set-path! [0]
-    b: make set-path! 0
-    insert :b first :a
-    :a == :b
+    error? sys.util.rescue [
+        a: to set-path! [0]
+        b: make set-path! 0
+        insert :b first :a
+        :a == :b
+    ]
 )
 (
-    a: to set-path! [0]
-    b: make set-path! 0
-    insert :b :a
-    :a == :b
+    error? sys.util.rescue [
+        a: to set-path! [0]
+        b: make set-path! 0
+        insert :b :a
+        :a == :b
+    ]
 )
 ; text
 (

@@ -2440,6 +2440,8 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         if (leading_blank)
             DROP();
 
+        assert(Array_Len(a) >= 2);
+
         // Tag array with line where the beginning slash was found
         //
         MISC(a).line = captured_line;
@@ -2553,7 +2555,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
 
 
 //
-//  Scan_Array: C
+//  Trap_Scan_Array: C
 //
 // This routine would create a new structure on the scanning stack.  Putting
 // what would be local variables for each level into a structure helps with

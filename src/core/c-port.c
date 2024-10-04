@@ -322,13 +322,12 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
     Array* code_arr = Make_Array(Level_Num_Args(L)); // max, e.g. no refines
     Cell* code = Array_Head(code_arr);
 
-    // The first element of our path will be the ACTION!, followed by its
-    // refinements...which in the worst case, all args will be refinements:
+    // Build a PATH! on the stack (may decay to just an action).  The first
+    // element of our path will be the ACTION!, followed by refinements...which
+    // in the worst case, all args will be refinements
     //
-    Array* path_arr = Make_Array(Level_Num_Args(L) + 1);
-    Cell* path = Array_Head(path_arr);
-    Init_Action_Unbound(path, run); // !!! What if there's a binding?
-    ++path;
+    StackIndex base = TOP_INDEX;
+    Init_Action_Unbound(PUSH(), run);  // !!! What if there's a coupling?
 
     assert(IS_END(L->param)); // okay to reuse, if it gets put back...
     L->param = ACT_PARAMS_HEAD(Level_Phase(L));
@@ -360,8 +359,7 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
 
             assert(Is_Refinement(L->arg));
             ignoring = false;
-            Init_Word(path, Cell_Parameter_Symbol(L->param));
-            ++path;
+            Init_Word(PUSH(), Cell_Parameter_Symbol(L->param));
             continue;
         }
 
@@ -376,9 +374,14 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
     Manage_Flex(code_arr);
 
     DECLARE_VALUE (first);
-    Term_Array_Len(path_arr, path - Array_Head(path_arr));
-    Init_Path(first, path_arr);
-    SET_VAL_FLAG(first, VALUE_FLAG_EVAL_FLIP); // make the PATH! invoke action
+    if (TOP_INDEX - base == 1) {
+        Copy_Cell(first, TOP);  // just the action
+        DROP();
+    }
+    else {
+        Init_Path(first, Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED));
+    }
+    SET_VAL_FLAG(first, VALUE_FLAG_EVAL_FLIP);  // make path/action active
 
     // Invoke DO with the special mode requesting non-evaluation on all
     // args, as they were evaluated the first time around.
