@@ -62,7 +62,7 @@ read-deep: function [
         len: length of root
         for i 1 length of result 1 [
             ; Strip off root path from locked paths.
-            poke result i copy skip result/:i len
+            poke result i copy skip result/(i) len
         ]
     ]
 

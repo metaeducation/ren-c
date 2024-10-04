@@ -272,7 +272,7 @@ ctx-zip: context [
             root+name: if find "\/" name/1 [
                 if verbose [print ["Warning: absolute path" name]]
                 name
-            ] else [root/:name]
+            ] else [root/(name)]
 
             no-modes: (url? root+name) or [dir? root+name]
 
@@ -280,7 +280,7 @@ ctx-zip: context [
                 name: dirize name
                 files: ensure block! read root+name
                 for-each file files [
-                    append source name/:file
+                    append source name/(file)
                 ]
                 continue
             ]
@@ -449,20 +449,20 @@ ctx-zip: context [
                     ][
                         ; make directory and/or write file
                         either #"/" = last name [
-                            if not exists? where/:name [
-                                make-dir/deep where/:name
+                            if not exists? where/(name) [
+                                make-dir/deep where/(name)
                             ]
                         ][
                             path: split-path/file name the file:
-                            if not exists? where/:path [
-                                make-dir/deep where/:path
+                            if not exists? where/(path) [
+                                make-dir/deep where/(path)
                             ]
                             if uncompressed-data [
-                                write where/:name uncompressed-data
+                                write where/(name) uncompressed-data
 
                                 ; !!! R3-Alpha didn't support SET-MODES
                                 comment [
-                                    set-modes where/:name [
+                                    set-modes where/(name) [
                                         modification-date: date
                                     ]
                                 ]

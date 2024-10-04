@@ -615,13 +615,13 @@ DECLARE_NATIVE(enhex)
 
             switch (Get_Lex_Class(c)) {
               case LEX_CLASS_DELIMIT:
-                switch (Get_Lex_Value(c)) {
+                switch (Get_Lex_Delimit(c)) {
                   case LEX_DELIMIT_LEFT_PAREN:
                   case LEX_DELIMIT_RIGHT_PAREN:
                   case LEX_DELIMIT_LEFT_BRACKET:
                   case LEX_DELIMIT_RIGHT_BRACKET:
                   case LEX_DELIMIT_SLASH:
-                  case LEX_DELIMIT_SEMICOLON:
+                  case LEX_DELIMIT_COLON:
                   case LEX_DELIMIT_COMMA:
                   case LEX_DELIMIT_PERIOD:
                     goto leave_as_is;
@@ -641,15 +641,15 @@ DECLARE_NATIVE(enhex)
                 }
 
               case LEX_CLASS_SPECIAL:
-                switch (Get_Lex_Value(c)) {
+                switch (Get_Lex_Special(c)) {
                   case LEX_SPECIAL_AT:
-                  case LEX_SPECIAL_COLON:
                   case LEX_SPECIAL_APOSTROPHE:
                   case LEX_SPECIAL_PLUS:
                   case LEX_SPECIAL_MINUS:
                   case LEX_SPECIAL_BLANK:
                   case LEX_SPECIAL_POUND:
                   case LEX_SPECIAL_DOLLAR:
+                  case LEX_SPECIAL_SEMICOLON:
                     goto leave_as_is;
 
                   default:

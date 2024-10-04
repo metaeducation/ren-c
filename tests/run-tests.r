@@ -44,7 +44,7 @@ do-core-tests: function [return: [~]] [
     log-file-prefix: copy %r
     count-up i length of version: system/version [
         append log-file-prefix "_"
-        append log-file-prefix mold version/:i
+        append log-file-prefix mold version/(i)
     ]
 
     print "Testing ..."

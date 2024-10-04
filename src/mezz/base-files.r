@@ -142,7 +142,7 @@ make-dir: func [
     ; Create directories forward:
     created: copy []
     for-each dir dirs [
-        path: either empty? path [dir][path/:dir]
+        path: either empty? path [dir][path/(dir)]
         append path slash
         sys/util/rescue [make-dir path] then lambda e [
             for-each dir created [
@@ -169,7 +169,7 @@ delete-dir: func [
             false
         ]
     ] [
-        for-each file files [delete-dir dir/:file]
+        for-each file files [delete-dir dir/(file)]
     ]
     sys/util/rescue [delete dir]
 ]

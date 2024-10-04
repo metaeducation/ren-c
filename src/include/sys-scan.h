@@ -37,8 +37,6 @@ enum TokenEnum {
     TOKEN_BLOCK_END,
     TOKEN_GROUP_END,
     TOKEN_WORD,
-    TOKEN_SET, // order matters (see KIND_OF_WORD_FROM_TOKEN)
-    TOKEN_GET, // ^-- same
     TOKEN_APOSTROPHE,
     TOKEN_BLANK, // not needed
     TOKEN_LOGIC, // not needed
@@ -55,6 +53,7 @@ enum TokenEnum {
     TOKEN_BINARY,
     TOKEN_PAIR,
     TOKEN_TUPLE,
+    TOKEN_CHAIN,
     TOKEN_FILE,
     TOKEN_EMAIL,
     TOKEN_URL,
@@ -85,26 +84,44 @@ typedef enum TokenEnum Token;
 **  NOTE: Macros do make assumption that _RETURN is the last space delimiter
 */
 enum LexDelimitEnum {
-    LEX_DELIMIT_SPACE,              /* 20 space */
-    LEX_DELIMIT_END,                /* 00 null terminator, end of input */
-    LEX_DELIMIT_LINEFEED,           /* 0A line-feed */
-    LEX_DELIMIT_RETURN,             /* 0D return */
-    LEX_DELIMIT_LEFT_PAREN,         /* 28 ( */
-    LEX_DELIMIT_RIGHT_PAREN,        /* 29 ) */
-    LEX_DELIMIT_LEFT_BRACKET,       /* 5B [ */
-    LEX_DELIMIT_RIGHT_BRACKET,      /* 5D ] */
-    LEX_DELIMIT_LEFT_BRACE,         /* 7B } */
-    LEX_DELIMIT_RIGHT_BRACE,        /* 7D } */
-    LEX_DELIMIT_DOUBLE_QUOTE,       /* 22 " */
-    LEX_DELIMIT_SLASH,              /* 2F / - date, path, file */
-    LEX_DELIMIT_SEMICOLON,          /* 3B ; */
-    LEX_DELIMIT_COMMA,              /* 2C , */
-    LEX_DELIMIT_PERIOD,
+    LEX_DELIMIT_SPACE,              // 20 space
+    LEX_DELIMIT_END,                // 00 null terminator, end of input
+    LEX_DELIMIT_LINEFEED,           // 0A line-feed
+    LEX_DELIMIT_RETURN,             // 0D return
+
+    LEX_DELIMIT_MAX_WHITESPACE = LEX_DELIMIT_RETURN,
+
+    LEX_DELIMIT_COMMA,              // 2C , - expression barrier
+    LEX_DELIMIT_LEFT_PAREN,         // 28 (
+    LEX_DELIMIT_RIGHT_PAREN,        // 29 )
+    LEX_DELIMIT_LEFT_BRACKET,       // 5B [
+    LEX_DELIMIT_RIGHT_BRACKET,      // 5D ]
+
+    LEX_DELIMIT_MAX_HARD = LEX_DELIMIT_RIGHT_BRACKET,
+    //
+    // ^-- As a step toward "Plan -4", the above delimiters are considered to
+    // always terminate, e.g. a URL `http://example.com/a)` will not pick up
+    // the parenthesis as part of the URL.  But the below delimiters will be
+    // picked up, so that `http://example.com/{a} is valid:
+    //
+    // https://github.com/metaeducation/ren-c/issues/1046
+
+    LEX_DELIMIT_LEFT_BRACE,         // 7B {
+    LEX_DELIMIT_RIGHT_BRACE,        // 7D }
+    LEX_DELIMIT_DOUBLE_QUOTE,       // 22 "
+    LEX_DELIMIT_SLASH,              // 2F / - date, path, file
+    LEX_DELIMIT_COLON,              // 3A : - chain (get, set), time
+    LEX_DELIMIT_PERIOD,             // 2E . - decimal, tuple, file
+    /*LEX_DELIMIT_TILDE,              // 7E ~ - used only by quasiforms */
+
     LEX_DELIMIT_MAX
 };
 typedef enum LexDelimitEnum LexDelimit;
 
 STATIC_ASSERT(LEX_DELIMIT_MAX <= 16);
+
+#define Get_Lex_Delimit(b) \
+    u_cast(LexDelimit, Get_Lex_Value(b))
 
 
 /*
@@ -142,6 +159,9 @@ typedef enum LexClassEnum LexClass;
 #define Is_Lex_Not_Delimit(c)           (g_lex_map[(Byte)c] >= LEX_SPECIAL)
 #define Is_Lex_Word_Or_Number(c)        (g_lex_map[(Byte)c] >= LEX_WORD)
 
+#define Is_Lex_Delimit_Hard(byte) \
+    (Get_Lex_Delimit(byte) <= LEX_DELIMIT_MAX_HARD)
+
 //
 //  Special Chars (encoded in the LEX_VALUE field)
 //
@@ -152,7 +172,6 @@ enum LexSpecialEnum {             /* The order is important! */
     LEX_SPECIAL_AT,                 /* 40 @ - email */
     LEX_SPECIAL_PERCENT,            /* 25 % - file name */
     LEX_SPECIAL_BACKSLASH,          /* 5C \  */
-    LEX_SPECIAL_COLON,              /* 3A : - time, get, set */
     LEX_SPECIAL_APOSTROPHE,         /* 27 ' - literal */
     LEX_SPECIAL_LESSER,             /* 3C < - compare or tag */
     LEX_SPECIAL_GREATER,            /* 3E > - compare or end tag */
@@ -163,6 +182,7 @@ enum LexSpecialEnum {             /* The order is important! */
                                     /** Any of these can follow - or ~ : */
     LEX_SPECIAL_POUND,              /* 23 # - hex number */
     LEX_SPECIAL_DOLLAR,             /* 24 $ - money */
+    LEX_SPECIAL_SEMICOLON,          // 3B ; - comment
 
     // LEX_SPECIAL_WORD is not a LEX_VALUE() of anything in LEX_CLASS_SPECIAL,
     // it is used to set a flag by Prescan_Token().
@@ -174,6 +194,9 @@ enum LexSpecialEnum {             /* The order is important! */
     LEX_SPECIAL_MAX
 };
 typedef enum LexSpecialEnum LexSpecial;
+
+#define Get_Lex_Special(b) \
+    u_cast(LexSpecial, Get_Lex_Value(b))
 
 /*
 **  Special Encodings
@@ -191,12 +214,12 @@ typedef enum LexSpecialEnum LexSpecial;
 /*
 **  Characters not allowed in Words
 */
-#define LEX_WORD_FLAGS (LEX_FLAG(LEX_SPECIAL_AT) |              \
-                        LEX_FLAG(LEX_SPECIAL_PERCENT) |         \
-                        LEX_FLAG(LEX_SPECIAL_BACKSLASH) |       \
-                        LEX_FLAG(LEX_SPECIAL_POUND) |           \
-                        LEX_FLAG(LEX_SPECIAL_DOLLAR) |          \
-                        LEX_FLAG(LEX_SPECIAL_COLON))
+#define LEX_FLAGS_NONWORD_SPECIALS \
+    (LEX_FLAG(LEX_SPECIAL_AT) \
+        | LEX_FLAG(LEX_SPECIAL_PERCENT) \
+        | LEX_FLAG(LEX_SPECIAL_BACKSLASH) \
+        | LEX_FLAG(LEX_SPECIAL_POUND) \
+        | LEX_FLAG(LEX_SPECIAL_DOLLAR))
 
 enum rebol_esc_codes {
     // Must match Esc_Names[]!
@@ -254,6 +277,11 @@ typedef struct rebol_scan_state {
 
     // Number of quotes pending (this old system supports 1, on a few types)
     REBLEN quotes_pending;
+
+    // If we see an "out of turn" : in the scan, we remember that we did so
+    // we can produce a GET-WORD! or GET-PATH!.
+    //
+    bool get_sigil_pending;
 
     REBFLGS opts;
 

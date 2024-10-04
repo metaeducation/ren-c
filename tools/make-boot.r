@@ -599,7 +599,7 @@ make-obj-defs: function [
                 object? get in obj field
             ][
                 extended-prefix: uppercase unspaced [prefix "_" field]
-                make-obj-defs e obj/:field extended-prefix (depth - 1)
+                make-obj-defs e obj/(field) extended-prefix (depth - 1)
             ]
         ]
     ]

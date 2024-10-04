@@ -673,7 +673,7 @@ import: function [
             for-each path system/options/module-paths [
                 if set [name: mod:] (
                     applique 'load-module [
-                        source: path/:file
+                        source: path/(file)
                         version: version
                         set the ver: :ver
                         no-share: :no-share

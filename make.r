@@ -1005,7 +1005,7 @@ pthread: make rebmake/ext-dynamic-class [
 builtin-extensions: copy available-extensions
 assert [map? user-config/extensions]
 for-each name user-config/extensions [
-    action: user-config/extensions/:name
+    action: user-config/extensions/(name)
     modules: _
     if block? action [modules: action action: '*]
     switch action [
