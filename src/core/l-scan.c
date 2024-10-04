@@ -1757,28 +1757,49 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
 
 //
-//  Init_Scan_Level: C
+//  Init_Transcode: C
 //
-// Initialize a scanner state structure, using variadic C arguments.
+// Initialize a state structure for capturing the global state of a transcode.
 //
-void Init_Scan_Level(
-    ScanState* S,
-    TranscodeState* ss,
+void Init_Transcode(
+    TranscodeState* transcode,
     Option(const String*) file,
     LineNumber line,
     Option(const Byte*) bp
 ){
-    S->ss = ss;
+    transcode->file = file;
+
+    transcode->at = maybe bp;
+    transcode->line_head = transcode->at;
+    transcode->line = line;
+}
+
+
+//
+//  Init_Scan_Level: C
+//
+// Initialize the per-level scanner state structure.  Note that whether this
+// will be a variadic transcode or not is based on the Level's "Feed".
+//
+void Init_Scan_Level(
+    Level* L,
+    TranscodeState* transcode,
+    Byte mode
+){
+    assert(L->executor == &Scanner_Executor);
+    ScanState* S = &L->u.scan;
+
+    S->ss = transcode;
+
+    S->start_line_head = transcode->line_head;
+    S->start_line = transcode->line;
+    S->mode = mode;
+
+    S->quotes_pending = 0;
+    S->sigil_pending = SIGIL_0;
 
     Corrupt_Pointer_If_Debug(S->begin);
     Corrupt_Pointer_If_Debug(S->end);
-
-    ss->file = file;
-
-    ss->at = maybe bp;
-    S->start_line_head = ss->line_head = ss->at;
-    S->start_line = ss->line = line;
-    S->mode = '\0';
 }
 
 
@@ -1870,8 +1891,8 @@ Bounce Scanner_Executor(Level* const L) {
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    S->quotes_pending = 0;
-    S->sigil_pending = SIGIL_0;
+    assert(S->quotes_pending == 0);
+    assert(S->sigil_pending == SIGIL_0);
 
 } loop: {  //////////////////////////////////////////////////////////////////
 
@@ -1910,7 +1931,7 @@ Bounce Scanner_Executor(Level* const L) {
     switch (token) {
       case TOKEN_NEWLINE:
         Set_Scan_Executor_Flag(L, NEWLINE_PENDING);
-        transcode->line_head = ep;
+        transcode->line_head = transcode->at;
         goto loop;
 
       case TOKEN_BLANK:
@@ -2062,16 +2083,12 @@ Bounce Scanner_Executor(Level* const L) {
                 | (L->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
                 | LEVEL_FLAG_RAISED_RESULT_OK
         );
+        Init_Scan_Level(
+            sub,
+            transcode,
+            token == TOKEN_BLOCK_BEGIN ? ']' : ')'
+        );
 
-        sub->u.scan.ss = transcode;
-
-        // Capture current line and head of line into the starting points.
-        // (Some errors wish to report the start of the array's location.)
-        //
-        sub->u.scan.start_line = transcode->line;
-        sub->u.scan.start_line_head = transcode->line_head;
-
-        sub->u.scan.mode = (token == TOKEN_BLOCK_BEGIN ? ']' : ')');
         STATE = ST_SCANNER_SCANNING_CHILD_ARRAY;
         Push_Level(OUT, sub);
         return CATCH_CONTINUE_SUBLEVEL(sub); }
@@ -2128,7 +2145,8 @@ Bounce Scanner_Executor(Level* const L) {
 
         if (Is_Interstitial(S->mode)) {  // implicit end [the /] (abc/)
             Init_Blank(PUSH());  // add a blank
-            --transcode->at;  // !!! necessary?
+            assert(transcode->at == S->end);  // falsely accepted end_delimiter
+            --transcode->at;  // unaccept, and end the interstitial scan first
             goto done;
         }
 
@@ -2306,16 +2324,8 @@ Bounce Scanner_Executor(Level* const L) {
                 | (L->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
                 | LEVEL_FLAG_RAISED_RESULT_OK
         );
+        Init_Scan_Level(sub, transcode, ']');
 
-        sub->u.scan.ss = transcode;
-
-        // Capture current line and head of line into the starting points.
-        // (Some errors wish to report the start of the array's location.)
-        //
-        sub->u.scan.start_line = transcode->line;
-        sub->u.scan.start_line_head = transcode->line_head;
-
-        sub->u.scan.mode = ']';
         STATE = ST_SCANNER_SCANNING_CONSTRUCT;
         Push_Level(OUT, sub);
         return CATCH_CONTINUE_SUBLEVEL(sub); }
@@ -2530,14 +2540,7 @@ Bounce Scanner_Executor(Level* const L) {
             L->feed,
             LEVEL_FLAG_RAISED_RESULT_OK
         );
-
-        ScanState* child = &sub->u.scan;
-        child->ss = transcode;
-        child->start_line = S->start_line;
-        child->start_line_head = S->start_line_head;
-        child->mode = mode;
-        Corrupt_Pointer_If_Debug(child->begin);
-        Corrupt_Pointer_If_Debug(child->end);
+        Init_Scan_Level(sub, transcode, mode);
 
         Push_Level(OUT, sub);
 
@@ -2921,19 +2924,16 @@ DECLARE_NATIVE(transcode)
     if (REF(next))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
 
-    Level* sub = Make_Level(&Scanner_Executor, feed, flags);
-    ScanState* S = &sub->u.scan;
-
     Binary* bin = Make_Binary(sizeof(TranscodeState));
     ss = cast(TranscodeState*, Binary_Head(bin));
+    Init_Transcode(ss, file, start_line, bp);
+    Term_Binary_Len(bin, sizeof(TranscodeState));
+    Init_Blob(ss_buffer, bin);
 
     UNUSED(size);  // currently we don't use this information
 
-    Init_Scan_Level(S, ss, file, start_line, bp);
-
-    Term_Binary_Len(bin, sizeof(TranscodeState));
-
-    Init_Blob(ss_buffer, bin);
+    Level* sub = Make_Level(&Scanner_Executor, feed, flags);
+    Init_Scan_Level(sub, ss, '\0');
 
     Push_Level(OUT, sub);
     STATE = ST_TRANSCODE_SCANNING;
@@ -3049,11 +3049,10 @@ const Byte* Scan_Any_Word(
     TranscodeState ss;
     Option(const String*) file = ANONYMOUS;
     const LineNumber start_line = 1;
+    Init_Transcode(&ss, file, start_line, utf8);
 
     Level* L = Make_End_Level(&Scanner_Executor, LEVEL_MASK_NONE);
-    ScanState* S = &L->u.scan;
-
-    Init_Scan_Level(S, &ss, file, start_line, utf8);
+    Init_Scan_Level(L, &ss, '\0');
 
     DECLARE_MOLD (mo);
 
@@ -3065,6 +3064,7 @@ const Byte* Scan_Any_Word(
     if (token != TOKEN_WORD)
         return nullptr;
 
+    ScanState* S = &L->u.scan;
     assert(S->end >= S->begin);
     if (size > S->end - S->begin)
         return nullptr;  // e.g. `as word! "ab cd"` just sees "ab"
@@ -3161,18 +3161,17 @@ Option(Array*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
 {
     assert(Detect_Rebol_Pointer(feed->p) == DETECTED_AS_UTF8);
 
-    Level* L = Make_Level(&Scanner_Executor, feed, LEVEL_MASK_NONE);
-
-    ScanState* S = &L->u.scan;
     TranscodeState ss;
     const LineNumber start_line = 1;
-    Init_Scan_Level(
-        S,
+    Init_Transcode(
         &ss,
         ANONYMOUS,  // %tmp-boot.r name in boot overwritten currently by this
         start_line,
         nullptr  // let scanner fetch feed->p Utf8 as new S->begin
     );
+
+    Level* L = Make_Level(&Scanner_Executor, feed, LEVEL_MASK_NONE);
+    Init_Scan_Level(L, &ss, '\0');
 
     DECLARE_ATOM (temp);
     Push_Level(temp, L);
