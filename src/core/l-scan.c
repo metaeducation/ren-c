@@ -2708,12 +2708,6 @@ DECLARE_NATIVE(transcode)
 {
     INCLUDE_PARAMS_OF_TRANSCODE;
 
-    Value* source;
-    if (Is_Text(ARG(source)))
-        source = rebValue("to binary!", ARG(source));
-    else
-        source = ARG(source);
-
     // !!! Should the base name and extension be stored, or whole path?
     //
     String* filename = REF(file)
@@ -2738,13 +2732,21 @@ DECLARE_NATIVE(transcode)
     else
         start_line = 1;
 
+    Value* source = ARG(source);
+    Binary* converted = nullptr;
+    if (Is_Text(source)) {
+        converted = Make_Utf8_From_Cell_String_At_Limit(
+            source, Cell_Series_Len_At(source)
+        );
+    }
+
     TranscodeState transcode;
     Init_Transcode(
         &transcode,
         filename,
         start_line,
-        Cell_Blob_At(source),
-        Cell_Series_Len_At(source)
+        converted ? Binary_Head(converted) : Cell_Blob_At(source),
+        converted ? Binary_Len(converted) : Cell_Series_Len_At(source)
     );
 
     ScanState scan;
@@ -2764,9 +2766,9 @@ DECLARE_NATIVE(transcode)
 
     Option(Error*) error = Scan_To_Stack(&scan);
     if (error) {
-        if (Is_Text(ARG(source)))
-            rebRelease(source);  // release temporary binary created
-        return Init_Error(OUT, error);
+        if (converted)
+            Free_Unmanaged_Flex(converted);  // release temporary binary
+        return Init_Error(OUT, unwrap(error));
     }
 
     if (Is_Word(ARG(line_number))) {
@@ -2774,24 +2776,25 @@ DECLARE_NATIVE(transcode)
         Init_Integer(ivar, transcode.line);
     }
     if (REF(next3) and TOP_INDEX != base) {
-        Copy_Cell(OUT, ARG(source));  // result will be new position
-        if (Is_Text(ARG(source))) {
-            assert(transcode.at <= Cell_Blob_Tail(source));
-            assert(transcode.at >= Cell_Blob_Head(source));
-            assert(VAL_INDEX(source) == 0);  // binary converted
-            Byte* bp = Cell_Blob_Head(source);
+        Copy_Cell(OUT, source);  // result will be new position
+        if (converted) {
+            assert(Is_Text(OUT));  // had to be binary converted
+            assert(transcode.at <= Binary_Tail(converted));
+            assert(transcode.at >= Binary_Head(converted));
+            Byte* bp = Binary_Head(converted);
             for (; bp < transcode.at; ++bp) {
                 if (not Is_Continuation_Byte(*bp))
                     ++VAL_INDEX(OUT);  // bump ahead for each utf8 codepoint
             }
         }
         else {
+            assert(Is_Binary(OUT));  // was utf-8 data
             VAL_INDEX(OUT) = transcode.at - Cell_Blob_Head(OUT);  // advance
         }
     }
 
-    if (Is_Text(ARG(source)))
-        rebRelease(source);  // release temporary binary created
+    if (converted)
+        Free_Unmanaged_Flex(converted);  // release temporary binary created
 
     if (REF(next3)) {
         Value* nvar = Get_Mutable_Var_May_Fail(ARG(next_arg), SPECIFIED);
