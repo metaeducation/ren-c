@@ -1856,9 +1856,6 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         if (S->mode == ']' or S->mode == ')')
             return RAISE(Error_Missing(S->mode));
 
-        if (Is_Interstitial(S->mode))  // implicit transcode "a.b/"
-            Init_Blank(PUSH());  // add a blank
-
         goto done;
     }
 
@@ -2354,6 +2351,18 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
             S->mode = '/';
 
         ++ss->at;  // skip next /
+
+        if (
+            *ss->at == '\0'
+            or Is_Lex_Space(*ss->at)
+            or ANY_CR_LF_END(*ss->at)
+            or *ss->at == ')' or *ss->at == ']'
+        ){
+            Init_Blank(PUSH());
+            goto done;
+        }
+
+        goto loop;
     }
     else if (
         *ss->at == '/' or *ss->at == '.'
