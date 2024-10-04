@@ -1406,6 +1406,15 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
     case LEX_CLASS_WORD:
         if (
+            *S->end == '.'
+            and S->mode == '/'
+            and not (flags & LEX_FLAGS_NONWORD_SPECIALS)
+
+        ){
+            token = TOKEN_WORD;
+            goto prescan_subsume_all_dots;
+        }
+        if (
             Only_Lex_Flag(flags, LEX_SPECIAL_WORD)
             and *S->end != ':'  // need additional scan for URL if word://
         ){
@@ -1592,7 +1601,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
 } prescan_subsume_all_dots: { ////////////////////////////////////////////////
 
-    assert(token == TOKEN_EMAIL);
+    assert(token == TOKEN_WORD or token == TOKEN_EMAIL);
 
     // Similar to the above, email scanning in R3-Alpha relied on the non
     // delimiter status of periods to incorporate them into the EMAIL!.

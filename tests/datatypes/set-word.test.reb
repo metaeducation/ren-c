@@ -34,6 +34,6 @@
 [#1477 (
     all [
         sw: load "/:"
-        refinement? sw
+        set-word? sw
     ]
 )]

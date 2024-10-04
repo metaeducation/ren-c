@@ -13,14 +13,23 @@
 )
 
 [#1477 (
-    e: sys/util/rescue [load ":/"]
-    error? e and [e/id = 'scan-invalid]
+    all [
+        gw: first transcode ":/"
+        get-word? gw
+        '/ = to word! gw
+    ]
 )]
 (
-    e: sys/util/rescue [load "://"]
-    error? e and [e/id = 'scan-invalid]
+    all [
+        gw: first transcode "://"
+        get-word? gw
+        '// = to word! gw
+    ]
 )
 (
-    e: sys/util/rescue [load ":///"]
-    error? e and [e/id = 'scan-invalid]
+    all [
+        gw: first transcode ":///"
+        get-word? gw
+        '/// = to word! gw
+    ]
 )
