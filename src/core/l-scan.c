@@ -717,10 +717,7 @@ static Error* Error_Syntax(SCAN_STATE *ss, Token token) {
             cs_cast(ss->begin), cast(REBLEN, ss->end - ss->begin)
         )
     );
-
-    Error* error = Error_Scan_Invalid_Raw(token_name, token_text);
-    Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
-    return error;
+    return Error_Scan_Invalid_Raw(token_name, token_text);
 }
 
 
@@ -734,13 +731,10 @@ static Error* Error_Syntax(SCAN_STATE *ss, Token token) {
 // better form of this error would walk the scan state stack and be able to
 // report all the unclosed terms.
 //
-static Error* Error_Missing(SCAN_STATE *ss, char wanted) {
+static Error* Error_Missing(char wanted) {
     DECLARE_VALUE (expected);
     Init_Text(expected, Make_Ser_Codepoint(wanted));
-
-    Error* error = Error_Scan_Missing_Raw(expected);
-    Update_Error_Near_For_Line(error, ss, ss->start_line, ss->start_line_head);
-    return error;
+    return Error_Scan_Missing_Raw(expected);;
 }
 
 
@@ -749,13 +743,10 @@ static Error* Error_Missing(SCAN_STATE *ss, char wanted) {
 //
 // For instance, `load "abc ]"`
 //
-static Error* Error_Extra(SCAN_STATE *ss, char seen) {
+static Error* Error_Extra(char seen) {
     DECLARE_VALUE (unexpected);
     Init_Text(unexpected, Make_Ser_Codepoint(seen));
-
-    Error* error = Error_Scan_Extra_Raw(unexpected);
-    Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
-    return error;
+    return Error_Scan_Extra_Raw(unexpected);
 }
 
 
@@ -987,7 +978,9 @@ acquisition_loop:
         if (not p) { // libRebol representation of ~null~/nullptr
 
             if (not (ss->opts & SCAN_FLAG_NULLEDS_LEGAL))
-                fail ("can't splice null in ANY-ARRAY!...use rebUneval()");
+                return Error_User(
+                    "can't splice null in ANY-ARRAY!...use rebUneval()"
+                );
 
             Init_Nulled(PUSH());  // convert to cell null for evaluator
 
@@ -999,7 +992,7 @@ acquisition_loop:
         case DETECTED_AS_CELL: {
             const Value* splice = cast(const Value*, p);
             if (Is_Nulled(splice) and Is_Api_Value(splice))
-                fail ("NULL cell leaked to API");
+                return Error_User("NULL cell leaked to API");
 
             Copy_Cell(PUSH(), splice);
 
@@ -1037,7 +1030,9 @@ acquisition_loop:
 
             if (GET_VAL_FLAG(single, VALUE_FLAG_EVAL_FLIP)) { // rebEval()
                 if (not (ss->opts & SCAN_FLAG_NULLEDS_LEGAL))
-                    fail ("can only use rebEval() at top level of run");
+                    return Error_User(
+                        "can only use rebEval() at top level of run"
+                    );
 
                 Copy_Cell(PUSH(), single);
                 SET_VAL_FLAG(TOP, VALUE_FLAG_EVAL_FLIP);
@@ -1091,7 +1086,9 @@ acquisition_loop:
             break; } // fallthrough to "ordinary" scanning
 
         default:
-            panic ("Scanned pointer not END, Value*, or valid UTF-8 string");
+            return Error_User(
+                "Scanned pointer not END, Value*, or valid UTF-8 string"
+            );
         }
     }
 
@@ -1160,13 +1157,13 @@ acquisition_loop:
                 ++cp;
             ss->end = cp;
             if (ss->begin[0] == '"')
-                return (Error_Missing(ss, '"'));
+                return Error_Missing('"');
             if (ss->begin[0] == '{')
-                return (Error_Missing(ss, '}'));
+                return Error_Missing('}');
             panic ("Invalid string start delimiter");
 
         case LEX_DELIMIT_RIGHT_BRACE:
-            return (Error_Extra(ss, '}'));
+            return Error_Extra('}');
 
 
           case LEX_DELIMIT_SLASH:  // a /RUN-style PATH! or /// WORD!
@@ -1244,14 +1241,14 @@ acquisition_loop:
         switch (Get_Lex_Special(*cp)) {
 
         case LEX_SPECIAL_AT:
-            return (Error_Syntax(ss, TOKEN_EMAIL));
+            return Error_Syntax(ss, TOKEN_EMAIL);
 
         case LEX_SPECIAL_PERCENT:       /* %filename */
             cp = ss->end;
             if (*cp == '"') {
                 cp = Scan_Quote_Push_Mold(mo, cp, ss);
                 if (cp == nullptr)
-                    return (Error_Syntax(ss, TOKEN_FILE));
+                    return Error_Syntax(ss, TOKEN_FILE);
                 ss->end = cp;
                 return LOCATED(TOKEN_FILE);
             }
@@ -1275,7 +1272,7 @@ acquisition_loop:
             if (cp[1] == '>') {
                 if (Is_Lex_Delimit(cp[2]))
                     return LOCATED(TOKEN_WORD);
-                return (Error_Syntax(ss, TOKEN_WORD));
+                return Error_Syntax(ss, TOKEN_WORD);
             }
             // falls through
         case LEX_SPECIAL_LESSER:
@@ -1286,7 +1283,7 @@ acquisition_loop:
             ){
                 if (Is_Lex_Delimit(cp[2]))
                     return LOCATED(TOKEN_WORD);
-                return (Error_Syntax(ss, TOKEN_WORD));
+                return Error_Syntax(ss, TOKEN_WORD);
             }
             if (
                 cp[0] == '<' and (cp[1] == '-' or cp[1] == '|')
@@ -1301,10 +1298,10 @@ acquisition_loop:
                 return LOCATED(TOKEN_WORD); // ">|" and ">-"
             }
             if (Get_Lex_Special(*cp) == LEX_SPECIAL_GREATER)
-                return (Error_Syntax(ss, TOKEN_WORD));
+                return Error_Syntax(ss, TOKEN_WORD);
             cp = Skip_Tag(cp);
             if (cp == nullptr)
-                return (Error_Syntax(ss, TOKEN_TAG));
+                return Error_Syntax(ss, TOKEN_TAG);
             ss->end = cp;
             return LOCATED(TOKEN_TAG);
 
@@ -1342,7 +1339,7 @@ acquisition_loop:
                 ){
                     return LOCATED(TOKEN_WORD);  // Special exemption for ->
                 }
-                return (Error_Syntax(ss, TOKEN_WORD));
+                return Error_Syntax(ss, TOKEN_WORD);
             }
             token = TOKEN_WORD;
             goto scanword;
@@ -1378,7 +1375,7 @@ acquisition_loop:
                 while (not ANY_CR_LF_END(*cp))
                     ++cp;
                 ss->end = cp;
-                return (Error_Syntax(ss, TOKEN_CHAR));
+                return Error_Syntax(ss, TOKEN_CHAR);
             }
             if (*cp == '{') { /* BINARY #{12343132023902902302938290382} */
                 ss->end = ss->begin;  /* save start */
@@ -1394,12 +1391,12 @@ acquisition_loop:
                 while (not ANY_CR_LF_END(*cp))
                     ++cp;
                 ss->end = cp;
-                return (Error_Syntax(ss, TOKEN_BINARY));
+                return Error_Syntax(ss, TOKEN_BINARY);
             }
             if (cp - 1 == ss->begin)
                 return LOCATED(TOKEN_ISSUE);
 
-            return (Error_Syntax(ss, TOKEN_INTEGER));
+            return Error_Syntax(ss, TOKEN_INTEGER);
 
         case LEX_SPECIAL_DOLLAR:
             if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
@@ -1410,7 +1407,7 @@ acquisition_loop:
             goto prescan_subsume_up_to_one_dot;
 
         default:
-            return (Error_Syntax(ss, TOKEN_WORD));
+            return Error_Syntax(ss, TOKEN_WORD);
         }
 
     case LEX_CLASS_WORD:
@@ -1470,7 +1467,7 @@ acquisition_loop:
                     goto pound;
                 }
             }
-            return (Error_Syntax(ss, TOKEN_INTEGER));
+            return Error_Syntax(ss, TOKEN_INTEGER);
         }
         if (Has_Lex_Flag(flags, LEX_SPECIAL_POUND)) { // -#123 2#1010
             if (
@@ -1482,7 +1479,7 @@ acquisition_loop:
                     )
                 )
             ){
-                return (Error_Syntax(ss, TOKEN_INTEGER));
+                return Error_Syntax(ss, TOKEN_INTEGER);
             }
             return LOCATED(TOKEN_INTEGER);
         }
@@ -1507,7 +1504,7 @@ acquisition_loop:
         }
         if (Has_Lex_Flag(flags, LEX_SPECIAL_APOSTROPHE)) // 1'200
             return LOCATED(TOKEN_INTEGER);
-        return (Error_Syntax(ss, TOKEN_INTEGER));
+        return Error_Syntax(ss, TOKEN_INTEGER);
 
     default:
         ; // put panic after switch, so no cases fall through
@@ -1542,7 +1539,7 @@ acquisition_loop:
         goto prescan_subsume_up_to_one_dot;
     }
     if (Has_Lex_Flags(flags, LEX_FLAGS_NONWORD_SPECIALS))  // like \ or %
-        return (Error_Syntax(ss, TOKEN_WORD));
+        return Error_Syntax(ss, TOKEN_WORD);
 
     if (Has_Lex_Flag(flags, LEX_SPECIAL_LESSER)) {
         // Allow word<tag> and word</tag> but not word< word<= word<> etc.
@@ -1556,7 +1553,7 @@ acquisition_loop:
             or Is_Lex_Space(cp[1])
             or (cp[1] != '/' and Is_Lex_Delimit(cp[1]))
         ){
-            return (Error_Syntax(ss, TOKEN_WORD));
+            return Error_Syntax(ss, TOKEN_WORD);
         }
         ss->end = cp;
     }
@@ -1564,7 +1561,7 @@ acquisition_loop:
         if ((*cp == '=' or *cp == '|') and cp[1] == '>' and Is_Lex_Delimit(cp[2])) {
             return LOCATED(TOKEN_WORD);  // enable `=>`
         }
-        return (Error_Syntax(ss, TOKEN_WORD));
+        return Error_Syntax(ss, TOKEN_WORD);
     }
 
     return LOCATED(TOKEN_WORD);
@@ -1781,15 +1778,23 @@ static REBINT Scan_Head(SCAN_STATE *ss)
 }
 
 
-static Array* Scan_Array(SCAN_STATE *ss, Byte mode);
+static Option(Error*) Trap_Scan_Array(Array** out, SCAN_STATE *ss, Byte mode);
 
 
-INLINE Error* RAISE(const void* p) {  // define for compatibility
+// define for compatibility, adds location to error
+//
+INLINE Error* Raise_Helper(SCAN_STATE* ss, const void* p) {
+    Drop_Data_Stack_To(ss->stack_base);
+    Error* e;
     if (Detect_Rebol_Pointer(p) == DETECTED_AS_UTF8)
-        return Error_User(cast(const char*, p));
-    return cast(Error*, m_cast(void*, p));
+        e = Error_User(cast(const char*, p));
+    else
+        e = cast(Error*, m_cast(void*, p));
+    Update_Error_Near_For_Line(e, ss, ss->line, ss->line_head);
+    return e;
 }
 
+#define RAISE(p) Raise_Helper(ss,(p))  // capture ss from callsite
 
 //
 //  Scan_To_Stack: C
@@ -1811,6 +1816,7 @@ INLINE Error* RAISE(const void* p) {  // define for compatibility
 //
 Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
     SCAN_STATE* level = ss;  // alias for compatibility with newer scanner
+    ss->stack_base = TOP_INDEX;  // roll back to here on RAISE()
 
     DECLARE_MOLD (mo);
 
@@ -1829,7 +1835,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
     Drop_Mold_If_Pushed(mo);
     Option(Error*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, ss);
     if (error)
-        fail (unwrap(error));  // no definitional errors
+        return RAISE(unwrap(error));  // no definitional errors
   }
 
     if (token == TOKEN_END) {  // reached '\0'
@@ -1838,7 +1844,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
         // to `done`.  If it didn't, we never got a proper closing.
         //
         if (ss->mode == ']' or ss->mode == ')')
-            fail (Error_Missing(ss, ss->mode));
+            return RAISE(Error_Missing(ss->mode));
 
         if (Is_Interstitial(level->mode))  // implicit transcode "a.b/"
             Init_Blank(PUSH());  // add a blank
@@ -1892,18 +1898,22 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
             //
             Init_Sigil(PUSH(), SIGIL_QUOTE);
             Quotify(TOP, len - 1); */
-            fail ("Old EXE, Isolated quote SIGIL! ' not supported");
+            return RAISE(
+                "Old EXE, Isolated quote SIGIL! ' not supported"
+            );
         }
         else {
             if (len != 1)
-                fail ("Old EXE, multiple quoting (e.g. '''x) not supported");
+                return RAISE(
+                    "Old EXE, multiple quoting (e.g. '''x) not supported"
+                );
             level->quotes_pending = len;  // apply quoting to next token
         }
         goto loop; }
 
       case TOKEN_WORD: {
         if (len == 0)
-            fail (Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
 
         Symbol* symbol = Intern_UTF8_Managed(bp, len);
         Init_Word(PUSH(), symbol);
@@ -1911,14 +1921,17 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
 
       case TOKEN_ISSUE:
         if (ep != Scan_Issue(PUSH(), bp + 1, len - 1))
-            fail (Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_BLOCK_BEGIN:
       case TOKEN_GROUP_BEGIN: {
-        Array* array = Scan_Array(
-            ss, (token == TOKEN_BLOCK_BEGIN) ? ']' : ')'
+        Array* array;
+        Option(Error*) error = Trap_Scan_Array(
+            &array, ss, (token == TOKEN_BLOCK_BEGIN) ? ']' : ')'
         );
+        if (error)
+            return RAISE(unwrap(error));
 
         ep = ss->end;
 
@@ -1945,9 +1958,9 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
         //
         assert(*bp == ':');
         if (level->get_sigil_pending)
-            return Error_Syntax(ss, TOKEN_CHAIN);
+            return RAISE(Error_Syntax(ss, TOKEN_CHAIN));
         if (Is_Interstitial(level->mode))
-            return Error_Syntax(ss, TOKEN_CHAIN);  // no foo/:bar in bootstrap
+            return RAISE(Error_Syntax(ss, TOKEN_CHAIN));  // foo/:bar illegal
         level->get_sigil_pending = true;
         goto loop;
 
@@ -2003,7 +2016,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
         if (level->mode != '\0')  // expected ']' before ')' or vice-versa
             return RAISE(Error_Mismatch(level, level->mode, end_delimiter));
 
-        return RAISE(Error_Extra(ss, end_delimiter)); }  // stray end delimiter
+        return RAISE(Error_Extra(end_delimiter)); }  // stray end delimiter
 
     // We treat `10.20.30` as a TUPLE!, but `10.20` has a cultural lock on
     // being a DECIMAL! number.  Due to the overlap, Locate_Token() does
@@ -2046,7 +2059,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
 
             token = TOKEN_COMMA;  // skip
             if (bp + temp_len != Scan_Tuple(PUSH(), bp, temp_len))
-                fail (Error_Syntax(ss, TOKEN_COMMA));
+                return RAISE(Error_Syntax(ss, TOKEN_COMMA));
             ss->begin = ss->end = ep = bp + temp_len;
             break;
         }
@@ -2054,7 +2067,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
         // Wasn't beginning of a DECIMAL!, so scan as a normal INTEGER!
         //
         if (ep != Scan_Integer(PUSH(), bp, len))
-            fail (Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_DECIMAL:
@@ -2062,10 +2075,10 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
       scan_decimal:
         // Do not allow 1.2/abc:
         if (*ep == '/')
-            fail (Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
 
         if (ep != Scan_Decimal(PUSH(), bp, len, false))
-            fail (Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
 
         if (bp[len - 1] == '%') {
             RESET_VAL_HEADER(TOP, REB_PERCENT);
@@ -2077,11 +2090,11 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
         // Do not allow $1/$2:
         if (*ep == '/') {
             ++ep;
-            fail (Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
         }
 
         if (ep != Scan_Money(PUSH(), bp, len))
-            fail (Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_TIME:
@@ -2090,12 +2103,12 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
             and ss->mode == '/' // could be path/10: set
         ){
             if (ep - 1 != Scan_Integer(PUSH(), bp, len - 1))
-                fail (Error_Syntax(ss, token));
+                return RAISE(Error_Syntax(ss, token));
             ss->end--;  // put ':' back on end but not beginning
             break;
         }
         if (ep != Scan_Time(PUSH(), bp, len))
-            fail (Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_DATE:
@@ -2111,13 +2124,13 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
             ss->begin = ep;  // End point extended to cover time
         }
         if (ep != Scan_Date(PUSH(), bp, len))
-            fail (Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_CHAR:
         bp += 2; // skip #", and subtract 1 from ep for "
         if (ep - 1 != Scan_UTF8_Char_Escapable(&VAL_CHAR(PUSH()), bp))
-            fail (Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
         RESET_VAL_HEADER(TOP, REB_CHAR);
         break;
 
@@ -2130,27 +2143,27 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
 
       case TOKEN_BINARY:
         if (ep != Scan_Binary(PUSH(), bp, len))
-            fail (Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_PAIR:
         if (ep != Scan_Pair(PUSH(), bp, len))
-            fail (Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_FILE:
         if (ep != Scan_File(PUSH(), bp, len))
-            fail (Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_EMAIL:
         if (ep != Scan_Email(PUSH(), bp, len))
-            fail (Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_URL:
         if (ep != Scan_URL(PUSH(), bp, len))
-            fail (Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_TAG:
@@ -2158,11 +2171,14 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
         // know where the tag ends, so it scans the len.
         //
         if (ep - 1 != Scan_Any(PUSH(), bp + 1, len - 2, REB_TAG))
-            fail (Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
         break;
 
       case TOKEN_CONSTRUCT: {
-        Array* array = Scan_Array(ss, ']');
+        Array* array;
+        Option(Error*) error = Trap_Scan_Array(&array, ss, ']');
+        if (error)
+            return RAISE(unwrap(error));
 
         // !!! Should the scanner be doing binding at all, and if so why
         // just Lib_Context?  Not binding would break functions entirely,
@@ -2173,12 +2189,12 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
         if (Array_Len(array) == 0 or not Is_Word(Array_Head(array))) {
             DECLARE_VALUE (temp);
             Init_Block(temp, array);
-            fail (Error_Malconstruct_Raw(temp));
+            return RAISE(Error_Malconstruct_Raw(temp));
         }
 
         Option(SymId) id = Cell_Word_Id(Array_Head(array));
         if (not id)
-            fail (Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(ss, token));
 
         if (IS_KIND_SYM(unwrap(id))) {
             enum Reb_Kind kind = KIND_FROM_SYM(unwrap(id));
@@ -2188,7 +2204,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
             if (hook == nullptr or Array_Len(array) != 2) {
                 DECLARE_VALUE (temp);
                 Init_Block(temp, array);
-                fail (Error_Malconstruct_Raw(temp));
+                return RAISE(Error_Malconstruct_Raw(temp));
             }
 
             // !!! As written today, MAKE may call into the evaluator, and
@@ -2206,11 +2222,11 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
             Bounce bounce = hook(cell, kind, KNOWN(Array_At(array, 1)));
             if (bounce == BOUNCE_THROWN) { // !!! good argument against MAKE
                 assert(false);
-                fail ("MAKE during construction syntax threw--illegal");
+                return RAISE("MAKE during construction syntax threw--illegal");
             }
             if (bounce != cell) { // !!! not yet supported
                 assert(false);
-                fail ("MAKE during construction syntax not out cell");
+                return RAISE("MAKE during construction syntax not out cell");
             }
             Drop_GC_Guard(array);
 
@@ -2221,7 +2237,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
             if (Array_Len(array) != 1) {
                 DECLARE_VALUE (temp);
                 Init_Block(temp, array);
-                fail (Error_Malconstruct_Raw(temp));
+                return RAISE(Error_Malconstruct_Raw(temp));
             }
 
             // !!! Construction syntax allows the "type" slot to be one of
@@ -2252,7 +2268,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
               default: {
                 DECLARE_VALUE (temp);
                 Init_Block(temp, array);
-                fail (Error_Malconstruct_Raw(temp)); }
+                return RAISE(Error_Malconstruct_Raw(temp)); }
             }
         }
         break; } // case TOKEN_CONSTRUCT
@@ -2382,7 +2398,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
             child.mode = *ep == ':' ? '/' : *ep;
             Option(Error*) error = Scan_To_Stack(&child);
             if (error)
-                fail (unwrap(error));
+                return RAISE(unwrap(error));
 
             ss->begin = child.begin;  // !!! see comments in Scan_Array()
             ss->end = child.end;
@@ -2536,7 +2552,7 @@ Option(Error*) Scan_To_Stack(SCAN_STATE *ss) {
 // reflection, allowing for better introspection and error messages.  (This
 // is similar to the benefits of LevelStruct.)
 //
-static Array* Scan_Array(SCAN_STATE *ss, Byte mode)
+static Option(Error*) Trap_Scan_Array(Array** out, SCAN_STATE *ss, Byte mode)
 {
     SCAN_STATE child = *ss;
 
@@ -2564,7 +2580,7 @@ static Array* Scan_Array(SCAN_STATE *ss, Byte mode)
     child.mode = mode;
     Option(Error*) error = Scan_To_Stack(&child);
     if (error)
-        fail (unwrap(error));
+        return error;
 
     Array* a = Pop_Stack_Values_Core(
         base,
@@ -2590,83 +2606,8 @@ static Array* Scan_Array(SCAN_STATE *ss, Byte mode)
     ss->line = child.line;
     ss->line_head = child.line_head;
 
-    return a;
-}
-
-
-//
-//  Scan_Va_Managed: C
-//
-// Variadic form of source scanning.  Due to the nature of Nodes (see
-// %sys-node.h), it's possible to feed the scanner with a list of pointers
-// that may be to UTF-8 strings or to Rebol values.  The behavior is to
-// "splice" in the values at the point in the scan that they occur, e.g.
-//
-//     Value* item1 = ...;
-//     Value* item2 = ...;
-//     Value* item3 = ...;
-//     String* filename = ...; // where to say code came from (or nullptr)
-//
-//     Array* result = Scan_Va_Managed(filename,
-//         "if not", item1, "[\n",
-//             item2, "| print {Close brace separate from content}\n",
-//         "] else [\n",
-//             item3, "| print {Close brace with content}]\n",
-//         rebEND
-//     );
-//
-// While the approach is flexible, any token must appear fully inside its
-// UTF-8 string component.  So you can't--for instance--divide a scan up like
-// ("{abc", "def", "ghi}") and get the STRING! {abcdefghi}.  On that note,
-// ("a", "/", "b") produces `a / b` and not the PATH! `a/b`.
-//
-Array* Scan_Va_Managed(
-    String* filename, // NOTE: va_start must get last parameter before ...
-    ...
-){
-    StackIndex base = TOP_INDEX;
-
-    const LineNumber start_line = 1;
-
-    va_list va;
-    va_start(va, filename);
-
-    SCAN_STATE ss;
-    Init_Va_Scan_State_Core(&ss, filename, start_line, nullptr, &va);
-    Option(Error*) error = Scan_To_Stack(&ss);
-    if (error)
-        fail (unwrap(error));
-
-    // Because a variadic rebValue() can have rebEval() entries, when it
-    // delegates to the scanner that may mean it sees those entries.  They
-    // should only be accepted in the shallowest level of the rebValue().
-    //
-    // (See also Pop_Stack_Values_Keep_Eval_Flip(), which we don't want to use
-    // since we're setting the file and line information from scan state.)
-    //
-    Array* a = Pop_Stack_Values_Core(
-        base,
-        ARRAY_FLAG_NULLEDS_LEGAL | NODE_FLAG_MANAGED
-            | (ss.newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
-    );
-
-    MISC(a).line = ss.line;
-    LINK(a).file = try_unwrap(ss.file);
-    Set_Array_Flag(a, HAS_FILE_LINE);
-
-    // !!! While in practice every system has va_end() as a no-op, it's not
-    // necessarily true from a standards point of view:
-    //
-    // https://stackoverflow.com/q/32259543/
-    //
-    // It needs to be called before the longjmp in fail() crosses this stack
-    // level.  That means either PUSH_TRAP here, or coming up with
-    // some more generic mechanism to register cleanup code that runs during
-    // the fail().
-    //
-    va_end(va);
-
-    return a;
+    *out = a;
+    return nullptr;
 }
 
 
@@ -2827,11 +2768,11 @@ DECLARE_NATIVE(transcode)
     //
     StackIndex base = TOP_INDEX;
 
-    Value* error = rebRescue(cast(REBDNG*, &Scan_To_Stack), &ss);
-    if (error != nullptr) {
+    Option(Error*) error = Scan_To_Stack(&ss);
+    if (error) {
         if (Is_Text(ARG(source)))
             rebRelease(source);  // release temporary binary created
-        return error;
+        return Init_Error(OUT, error);
     }
 
     if (Is_Word(ARG(line_number))) {
