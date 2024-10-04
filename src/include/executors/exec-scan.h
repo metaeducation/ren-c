@@ -107,7 +107,7 @@
         | SCAN_EXECUTOR_FLAG_LOCK_SCANNED)
 
 
-typedef struct rebol_scan_state {  // shared across all levels of a scan
+struct TranscodeStateStruct {  // shared across all levels of a scan
     //
     // Beginning and end positions of currently processed token.
     //
@@ -124,10 +124,13 @@ typedef struct rebol_scan_state {  // shared across all levels of a scan
     // scanning variadics which merge cells and UTF-8 strings together...
     //
     /* const Byte* limit; */
-} SCAN_STATE;
+};
 
-typedef struct ScannerExecutorStateStruct {  // each array scan has a level
-    SCAN_STATE *ss;  // shared state of where the scanner head currently is
+typedef struct TranscodeStateStruct TranscodeState;
+
+
+struct ScannerExecutorStateStruct {  // each array scan has a level
+    TranscodeState* ss;  // shared state of where the scanner head currently is
 
     // '\0' => top level scan
     // ']' => this level is scanning a block
@@ -140,7 +143,7 @@ typedef struct ScannerExecutorStateStruct {  // each array scan has a level
     //
     Byte mode;
 
-    REBLEN start_line;
+    LineNumber start_line;
     const Byte* start_line_head;
 
     // !!! Before stackless, these were locals in Scan_To_Stack()
@@ -148,5 +151,6 @@ typedef struct ScannerExecutorStateStruct {  // each array scan has a level
     REBLEN quotes_pending;
     Option(Sigil) sigil_pending;
     bool quasi_pending;
+};
 
-} SCAN_LEVEL;
+typedef struct ScannerExecutorStateStruct ScanState;
