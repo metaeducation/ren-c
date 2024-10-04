@@ -332,6 +332,106 @@ const Byte Lower_Case[256] =
 
 
 //
+//  Update_Error_Near_For_Line: C
+//
+// The NEAR information in an error is typically expressed in terms of loaded
+// Rebol code.  Scanner errors have historically used the NEAR not to tell you
+// where the LOAD that is failing is in Rebol, but to form a string of the
+// "best place" to report the textual error.
+//
+// While this is probably a bad overloading of NEAR, it is being made more
+// clear that this is what's happening for the moment.
+//
+// 1. While there is a line number and head of line in the TranscodeState, it
+//    reflects the current position which isn't always the most useful.  e.g.
+//    when you have a missing closing bracket, you want to know the bracket
+//    that is not closed.
+//
+// 2. !!! The error should actually report both the file and line that is
+//    running as well as the file and line being scanned.  Review.
+//
+// 3. !!! The file and line should likely be separated into an INTEGER! and
+//    a FILE! so those processing the error don't have to parse it back out.
+//
+static void Update_Error_Near_For_Line(
+    Error* error,
+    TranscodeState* transcode,
+    LineNumber line,  // may not come from transcode [1]
+    const Byte* line_head  // [1]
+){
+    Set_Location_Of_Error(error, TOP_LEVEL);  // sets WHERE NEAR FILE LINE [2]
+
+    const Byte* cp = line_head;  // skip indent (don't include in the NEAR
+    while (Is_Lex_Space(*cp))
+        ++cp;
+
+    REBLEN len = 0;
+    const Byte* bp = cp;
+    while (not ANY_CR_LF_END(*cp)) {  // find end of line to capture in message
+        cp++;
+        len++;
+    }
+
+    DECLARE_MOLD (mo);  // put line count and line's text into string [3]
+    Push_Mold(mo);
+    Append_Ascii(mo->string, "(line ");
+    Append_Int(mo->string, line);  // (maybe) different from line below
+    Append_Ascii(mo->string, ") ");
+    Append_Utf8(mo->string, cs_cast(bp), len);
+
+    ERROR_VARS *vars = ERR_VARS(error);
+    Init_Text(&vars->nearest, Pop_Molded_String(mo));
+
+    if (transcode->file)
+        Init_File(&vars->file, unwrap transcode->file);
+    else
+        Init_Nulled(&vars->file);
+
+    Init_Integer(&vars->line, transcode->line);  // different from line above
+}
+
+
+//
+//  Error_Missing: C
+//
+// Caused by code like: `load "( abc"`.
+//
+// Note: This error is useful for things like multi-line input, because it
+// indicates a state which could be reconciled by adding more text.  A
+// better form of this error would walk the scan state stack and be able to
+// report all the unclosed terms.
+//
+// We have two options of where to implicate the error...either the start
+// of the thing being scanned, or where we are now (or, both).  But we
+// only have the start line information for GROUP! and BLOCK!...strings
+// don't cause recursions.  So using a start line on a string would point
+// at the block the string is in, which isn't as useful.
+//
+static Error* Error_Missing(ScanState* S, char wanted) {
+    DECLARE_ELEMENT (expected);
+    Init_Text(expected, Make_Codepoint_String(wanted));
+
+    Error* error = Error_Scan_Missing_Raw(expected);
+
+    if (wanted == ')' or wanted == ']')
+        Update_Error_Near_For_Line(
+            error,
+            S->ss,
+            S->start_line,
+            S->start_line_head
+        );
+    else
+        Update_Error_Near_For_Line(
+            error,
+            S->ss,
+            S->ss->line,
+            S->ss->line_head
+        );
+    return error;
+}
+
+
+//
 //  Try_Scan_UTF8_Char_Escapable: C
 //
 // Scan a char, handling ^A, ^/, ^(1234)
@@ -440,22 +540,22 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
 // stream might have "a^(1234)b" and need to turn "^(1234)" into the right
 // UTF-8 bytes for that codepoint in the string.
 //
-// 1. The '\0' codepoint is not legal in ANY-STRING!.  Among the many reasons
+// 1. Historically CR LF was scanned as just an LF.  While a tolerant mode of
+//    the scanner might be created someday, for the moment we are being more
+//    prescriptive about it by default.
+//
+// 2. The '\0' codepoint is not legal in ANY-STRING!.  Among the many reasons
 //    to disallow it is that APIs like rebSpell() for getting string data
 //    return only a pointer--not a pointer and a size, so clients must assume
 //    that '\0' is the termination.  With UTF-8 everywhere, Ren-C has made it
 //    as easy as possible to work with BINARY! using string-based routines
 //    like FIND, etc., so use BINARY! if you need UTF-8 with '\0' in it.
 //
-// 2. Historically CR LF was scanned as just an LF.  While a tolerant mode of
-//    the scanner might be created someday, for the moment we are being more
-//    prescriptive about it by default.
-//
 static Option(Error*) Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
     Sink(const Byte**) out,
     REB_MOLD *mo,
     const Byte* src,
-    TranscodeState* ss
+    ScanState* S
 ){
     Push_Mold(mo);
     const Byte* bp = src;
@@ -475,12 +575,12 @@ static Option(Error*) Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
         Codepoint c = *bp;
 
         switch (c) {
-          case '\0':  // illegal in strings [1]
-            return nullptr;
+          case '\0':
+            return Error_Missing(S, term);
 
           case '^':
             if (not (bp = maybe Try_Scan_UTF8_Char_Escapable(&c, bp)))
-                return nullptr;
+                return Error_User("Bad character literal in string");
             --bp;  // unlike Back_Scan_XXX, no compensation for ++bp later
             break;
 
@@ -495,7 +595,7 @@ static Option(Error*) Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
             break;
 
           case CR: {
-            enum Reb_Strmode strmode = STRMODE_NO_CR;
+            enum Reb_Strmode strmode = STRMODE_NO_CR;  // avoid CR [1]
             if (strmode == STRMODE_CRLF_TO_LF) {
                 if (bp[1] == LF) {
                     ++bp;
@@ -510,26 +610,26 @@ static Option(Error*) Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
           case LF:
           linefeed:
             if (term == '"')
-                return nullptr;
+                return Error_User("Plain quoted strings not multi-line");
             ++lines;
             break;
 
           default:
             if (c >= 0x80) {
                 if ((bp = Back_Scan_UTF8_Char(&c, bp, nullptr)) == nullptr)
-                    return nullptr;
+                    return Error_Bad_Utf8_Raw();
             }
         }
 
         ++bp;
 
         if (c == '\0')  // e.g. ^(00) or ^@
-            fail (Error_Illegal_Zero_Byte_Raw());  // legal CHAR!, not string
+            fail (Error_Illegal_Zero_Byte_Raw());  // illegal in strings [2]
 
         Append_Codepoint(mo->string, c);
     }
 
-    ss->line += lines;
+    S->ss->line += lines;
 
     ++bp;  // Skip ending quote or brace.
     *out = bp;
@@ -655,61 +755,6 @@ static const Byte* Seek_To_End_Of_Tag(const Byte* cp)
 
 
 //
-//  Update_Error_Near_For_Line: C
-//
-// The NEAR information in an error is typically expressed in terms of loaded
-// Rebol code.  Scanner errors have historically used the NEAR not to tell you
-// where the LOAD that is failing is in Rebol, but to form a string of the
-// "best place" to report the textual error.
-//
-// While this is probably a bad overloading of NEAR, it is being made more
-// clear that this is what's happening for the moment.
-//
-// 1. !!! The error should actually report both the file and line that is
-//    running as well as the file and line being scanned.  Review.
-//
-// 2. !!! The file and line should likely be separated into an INTEGER! and
-//    a FILE! so those processing the error don't have to parse it back out.
-//
-static void Update_Error_Near_For_Line(
-    Error* error,
-    TranscodeState* ss,
-    REBLEN line,
-    const Byte* line_head
-){
-    Set_Location_Of_Error(error, TOP_LEVEL);  // sets WHERE NEAR FILE LINE [1]
-
-    const Byte* cp = line_head;  // skip indent (don't include in the NEAR
-    while (Is_Lex_Space(*cp))
-        ++cp;
-
-    REBLEN len = 0;
-    const Byte* bp = cp;
-    while (not ANY_CR_LF_END(*cp)) {  // find end of line to capture in message
-        cp++;
-        len++;
-    }
-
-    DECLARE_MOLD (mo);  // put line count and line's text into string [2]
-    Push_Mold(mo);
-    Append_Ascii(mo->string, "(line ");
-    Append_Int(mo->string, line);
-    Append_Ascii(mo->string, ") ");
-    Append_Utf8(mo->string, cs_cast(bp), len);
-
-    ERROR_VARS *vars = ERR_VARS(error);
-    Init_Text(&vars->nearest, Pop_Molded_String(mo));
-
-    if (ss->file)
-        Init_File(&vars->file, unwrap ss->file);
-    else
-        Init_Nulled(x_cast(Value*, &vars->file));
-
-    Init_Integer(&vars->line, ss->line);
-}
-
-
-//
 //  Error_Syntax: C
 //
 // Catch-all scanner error handler.  Reports the name of the token that gives
@@ -731,49 +776,7 @@ static Error* Error_Syntax(ScanState* S, Token token) {
         Make_Sized_String_UTF8(cs_cast(S->begin), S->end - S->begin)
     );
 
-    Error* error = Error_Scan_Invalid_Raw(token_name, token_text);
-    Update_Error_Near_For_Line(error, S->ss, S->ss->line, S->ss->line_head);
-    return error;
-}
-
-
-//
-//  Error_Missing: C
-//
-// Caused by code like: `load "( abc"`.
-//
-// Note: This error is useful for things like multi-line input, because it
-// indicates a state which could be reconciled by adding more text.  A
-// better form of this error would walk the scan state stack and be able to
-// report all the unclosed terms.
-//
-// We have two options of where to implicate the error...either the start
-// of the thing being scanned, or where we are now (or, both).  But we
-// only have the start line information for GROUP! and BLOCK!...strings
-// don't cause recursions.  So using a start line on a string would point
-// at the block the string is in, which isn't as useful.
-//
-static Error* Error_Missing(ScanState* S, char wanted) {
-    DECLARE_ATOM (expected);
-    Init_Text(expected, Make_Codepoint_String(wanted));
-
-    Error* error = Error_Scan_Missing_Raw(expected);
-
-    if (wanted == ')' or wanted == ']')
-        Update_Error_Near_For_Line(
-            error,
-            S->ss,
-            S->start_line,
-            S->start_line_head
-        );
-    else
-        Update_Error_Near_For_Line(
-            error,
-            S->ss,
-            S->ss->line,
-            S->ss->line_head
-        );
-    return error;
+    return Error_Scan_Invalid_Raw(token_name, token_text);
 }
 
 
@@ -782,13 +785,10 @@ static Error* Error_Missing(ScanState* S, char wanted) {
 //
 // For instance, `load "abc ]"`
 //
-static Error* Error_Extra(TranscodeState* ss, char seen) {
-    DECLARE_ATOM (unexpected);
+static Error* Error_Extra(char seen) {
+    DECLARE_ELEMENT (unexpected);
     Init_Text(unexpected, Make_Codepoint_String(seen));
-
-    Error* error = Error_Scan_Extra_Raw(unexpected);
-    Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
-    return error;
+    return Error_Scan_Extra_Raw(unexpected);
 }
 
 
@@ -801,15 +801,12 @@ static Error* Error_Extra(TranscodeState* ss, char seen) {
 // applications if it would point out the locations of both points.  R3-Alpha
 // only pointed out the location of the start token.
 //
-static Error* Error_Mismatch(ScanState* S, char wanted, char seen) {
-    Error* error = Error_Scan_Mismatch_Raw(rebChar(wanted), rebChar(seen));
-    Update_Error_Near_For_Line(
-        error,
-        S->ss,
-        S->start_line,
-        S->start_line_head
-    );
-    return error;
+static Error* Error_Mismatch(char wanted, char seen) {
+    DECLARE_ELEMENT (w);
+    Init_Char_Unchecked(w, wanted);
+    DECLARE_ELEMENT (s);
+    Init_Char_Unchecked(w, seen);
+    return Error_Scan_Mismatch_Raw(w, s);
 }
 
 
@@ -1202,9 +1199,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             else
                 assert(strmode == STRMODE_NO_CR);
 
-            Error* error = Error_Illegal_Cr(cp, S->begin);
-            Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
-            return error; }
+            return Error_Illegal_Cr(cp, S->begin); }
 
           case LEX_DELIMIT_LINEFEED:
           delimit_line_feed:
@@ -1226,7 +1221,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
           case LEX_DELIMIT_DOUBLE_QUOTE: {  // "QUOTES"
             Option(Error*) error = Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
-                &cp, mo, cp, ss
+                &cp, mo, cp, S
             );
             if (error)
                 return error;
@@ -1234,7 +1229,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
           case LEX_DELIMIT_LEFT_BRACE: {  // {BRACES}
             Option(Error*) error = Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
-                &cp, mo, cp, ss
+                &cp, mo, cp, S
             );
             if (error)
                 return error;
@@ -1260,7 +1255,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             panic ("Invalid string start delimiter");
 
           case LEX_DELIMIT_RIGHT_BRACE:
-            return Error_Extra(ss, '}');
+            return Error_Extra('}');
 
           case LEX_DELIMIT_SLASH:  // a /RUN-style PATH! or /// WORD!
             goto handle_delimit_interstitial;
@@ -1390,7 +1385,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             }
             if (*cp == '"') {
                 Option(Error*) e = Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
-                    &cp, mo, cp, ss
+                    &cp, mo, cp, S
                 );
                 if (e)
                     return e;
@@ -1502,7 +1497,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 S->end = S->begin;  // save start
                 S->begin = cp;
                 Option(Error*) e = Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
-                    &cp, mo, cp, ss
+                    &cp, mo, cp, S
                 );
                 if (e)
                     return e;
@@ -1787,6 +1782,45 @@ void Init_Scan_Level(
 }
 
 
+//=//// SCANNER-SPECIFIC RAISE HELPER /////////////////////////////////////=//
+//
+// Override the RAISE macro for returning definitional errors.  It adds a
+// capture of the `transcode` state local variable in Scanner_Executor(),
+// so it can augment any error you give with the scanner's location.
+//
+// 1. Some errors have more useful information to put in the "near", so this
+//    only adds it to errors that don't have that.  An example of a more
+//    specific error is that when you have an unclosed brace, it reports the
+//    opening location--not the end of the file (which is where the global
+//    transcode state would be when it made the discovery it was unmatched).
+//
+
+#define NORMAL_RAISE RAISE
+
+INLINE Bounce Scanner_Raise_Helper(
+    TranscodeState* transcode,
+    Level* level_,
+    const void* p
+){
+    Error* error;
+    if (Detect_Rebol_Pointer(p) == DETECTED_AS_UTF8)
+        error = Error_User(u_cast(const char*, p));
+    else {
+        assert(Detect_Rebol_Pointer(p) == DETECTED_AS_STUB);
+        error = cast(Error*, m_cast(void*, p));
+    }
+    ERROR_VARS *vars = ERR_VARS(error);
+    if (Is_Nulled(&vars->nearest))  // only update if it doesn't have it [1]
+        Update_Error_Near_For_Line(
+            error, transcode, transcode->line, transcode->line_head
+        );
+    return NORMAL_RAISE(error);
+}
+
+#undef RAISE
+#define RAISE(p) Scanner_Raise_Helper(transcode, level_, (p))
+
+
 //
 //  Scanner_Executor: C
 //
@@ -1862,7 +1896,7 @@ Bounce Scanner_Executor(Level* const L) {
         goto done;
     }
 
-    assert(S->begin and S->end and S->begin < S->end);  // else good token
+    assert(S->begin and S->end and S->begin < S->end);  // !!! triggered
 
     // "bp" and "ep" capture the beginning and end pointers of the token.
     // They may be manipulated during the scan process if desired.
@@ -2099,9 +2133,9 @@ Bounce Scanner_Executor(Level* const L) {
         }
 
         if (S->mode != '\0')  // expected ']' before ')' or vice-versa
-            return RAISE(Error_Mismatch(S, S->mode, end_delimiter));
+            return RAISE(Error_Mismatch(S->mode, end_delimiter));
 
-        return RAISE(Error_Extra(transcode, end_delimiter)); }
+        return RAISE(Error_Extra(end_delimiter)); }
 
       case TOKEN_INTEGER: {
         //
@@ -2305,10 +2339,8 @@ Bounce Scanner_Executor(Level* const L) {
             return RAISE(Error_Syntax(S, TOKEN_TILDE));
 
         Option(Error*) error = Trap_Coerce_To_Quasiform(TOP);
-        if (error) {
-            /* Free_Unmanaged_Flex(error); */  // !!! but it's managed :-(
-            return RAISE(Error_Syntax(S, TOKEN_TILDE));  // !!! better error!
-        }
+        if (error)
+            return RAISE(unwrap error);
 
         ++transcode->at;  // must compensate the `transcode->at = S->end`
         S->sigil_pending = SIGIL_0;
@@ -2684,6 +2716,13 @@ Bounce Scanner_Executor(Level* const L) {
     Drop_Level(SUBLEVEL);  // could `return RAISE(Cell_Varlist(OUT))`
     return OUT;
 }}
+
+
+//=//// UNDEFINE THE AUGMENTED SCANNER RAISE //////////////////////////////=//
+
+#undef RAISE
+#define RAISE NORMAL_RAISE
+#undef NORMAL_RAISE
 
 
 //

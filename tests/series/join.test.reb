@@ -47,12 +47,12 @@
 ; DIRECT PATH AND TUPLE SPLICING WITHOUT A BLOCK
 [
     ('a/b/c/d = join 'a/b '/c/d)
-    ~scan-invalid~ !! (transcode "//c/d")
+    ~bad-sequence-blank~ !! (transcode "//c/d")
     ('a/b/c/d = join 'a/b/ 'c/d)
     ~???~ !! (join 'a/b 'c/d)  ; missing slash, can't glue b to c
 
     ('a.b.c.d = join 'a.b '.c.d)
-    ~scan-invalid~ !! (transcode "..c.d")
+    ~bad-sequence-blank~ !! (transcode "..c.d")
     ~bad-sequence-blank~ !! (join 'a.b. '.c.d)
     ('a.b.c.d = join 'a.b. 'c.d)
     ~???~ !! (join 'a.b 'c.d)  ; missing slash, can't glue b to c

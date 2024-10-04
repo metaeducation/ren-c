@@ -31,6 +31,7 @@
 (
     words: ~
     strings: ~
+    b: ~
     parse [x: [$y z] "a" <b> %c] [
         words: accumulate [
             &any-word? | &set-word?
