@@ -146,11 +146,8 @@ struct ScannerExecutorStateStruct {  // each array scan has a level
     LineNumber start_line;
     const Byte* start_line_head;
 
-    // !!! Before stackless, these were locals in Scan_To_Stack()
-    //
-    REBLEN quotes_pending;
-    Option(Sigil) sigil_pending;
-    bool quasi_pending;
+    Count quotes_pending;
+    Option(Sigil) sigil_pending;  // includes SIGIL_QUASI
 };
 
 typedef struct ScannerExecutorStateStruct ScanState;

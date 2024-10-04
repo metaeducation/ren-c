@@ -1838,7 +1838,6 @@ Bounce Scanner_Executor(Level* const L) {
 
     S->quotes_pending = 0;
     S->sigil_pending = SIGIL_0;
-    S->quasi_pending = false;
 
 } loop: {  //////////////////////////////////////////////////////////////////
 
@@ -1953,10 +1952,7 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_APOSTROPHE: {
         assert(*bp == '\'');  // should be `len` sequential apostrophes
 
-        if (S->sigil_pending)  // can't do @'foo: or :'foo
-            return RAISE(Error_Syntax(ss, token));
-
-        if (S->quasi_pending)  // can't do ~'foo~, no quoted quasiforms
+        if (S->sigil_pending)  // can't do @'foo: or :'foo or ~'foo~
             return RAISE(Error_Syntax(ss, token));
 
         if (
@@ -1981,10 +1977,8 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_TILDE: {
         assert(*bp == '~');
 
-        if (S->sigil_pending)  // can't do @~foo:~ or :~foo~
+        if (S->sigil_pending)  // can't do @~foo:~ or :~foo~ or ~~foo~~
             return RAISE(Error_Syntax(ss, token));
-
-        assert(not S->quasi_pending);
 
         if (*ep == '~') {
             if (
@@ -2016,7 +2010,7 @@ Bounce Scanner_Executor(Level* const L) {
             break;
         }
         else
-            S->quasi_pending = true;  // apply quasi to next token
+            S->sigil_pending = SIGIL_QUASI;  // apply quasi to next token
         goto loop; }
 
       case TOKEN_GROUP_BEGIN:
@@ -2070,9 +2064,9 @@ Bounce Scanner_Executor(Level* const L) {
 
         assert(ep == bp + 1 and ss->begin == ep and ss->end == ep);
 
-        if (S->quasi_pending) {
+        if (S->sigil_pending == SIGIL_QUASI) {
             Init_Trash(PUSH());  // if we end up with ~/~, we decay it to word
-            S->quasi_pending = false;  // quasi-sequences don't exist
+            S->sigil_pending = SIGIL_0;  // quasi-sequences don't exist
         }
         else
             Init_Blank(PUSH());
@@ -2297,7 +2291,7 @@ Bounce Scanner_Executor(Level* const L) {
   // quasiform, we are able to unambiguously interpret `~abc~.~def~` or
   // similar.  It may be useful, so enabling it for now.
 
-    if (S->quasi_pending) {
+    if (S->sigil_pending == SIGIL_QUASI) {
         if (*ep != '~')
             return RAISE(Error_Syntax(ss, TOKEN_TILDE));
 
@@ -2310,7 +2304,7 @@ Bounce Scanner_Executor(Level* const L) {
         ++ss->begin;  // loop does ss->begin = ss->end, we must compensate
         ++ep;  // sequence checking below looks at this, too
         ss->end = ep;  // it seems this has to be in sync as well?
-        S->quasi_pending = false;
+        S->sigil_pending = SIGIL_0;
     }
 
     // At this point the item at TOP is the last token pushed.  It has
@@ -2684,7 +2678,6 @@ Bounce Scanner_Executor(Level* const L) {
 
     assert(S->quotes_pending == 0);
     assert(S->sigil_pending == SIGIL_0);
-    assert(S->quasi_pending == false);
 
     // Note: ss->newline_pending may be true; used for ARRAY_NEWLINE_AT_TAIL
 
