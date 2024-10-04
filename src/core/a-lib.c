@@ -1486,7 +1486,7 @@ intptr_t API_rebPromise(const void *p, va_list *vaptr)
     // the code the GC uses to reify va_lists in frames, which we presume does
     // all the ps and qs.  It's messy, but refactor if it turns out to work.
 
-    const REBFLGS flags = DO_FLAG_TO_END | DO_FLAG_EXPLICIT_EVALUATE;
+    const Flags flags = DO_FLAG_TO_END | DO_FLAG_EXPLICIT_EVALUATE;
 
     // !!! The following code is derived from Eval_Va_Core()
 

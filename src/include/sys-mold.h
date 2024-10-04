@@ -30,7 +30,7 @@
 struct rebol_mold {
     Binary* series;     // destination series (uni)
     REBLEN start;       // index where this mold starts within series
-    REBFLGS opts;        // special option flags
+    Flags opts;        // special option flags
     REBLEN limit;       // how many characters before cutting off with "..."
     REBLEN reserve;     // how much capacity to reserve at the outset
     REBINT indent;      // indentation amount

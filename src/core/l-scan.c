@@ -1705,7 +1705,7 @@ void Init_Transcode(
 //
 void Init_Scan_Level(
     ScanState* S,
-    REBFLGS opts,
+    Flags opts,
     TranscodeState* ss,
     Byte mode
 ){

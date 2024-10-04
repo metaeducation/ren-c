@@ -573,7 +573,7 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 #include "sys-value.h" // basic definitions that don't need series accessrors
 #include "sys-time.h"
 
-INLINE void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
+INLINE void SET_SIGNAL(Flags f) { // used in %sys-series.h
     Eval_Signals |= f;
     Eval_Count = 1;
 }

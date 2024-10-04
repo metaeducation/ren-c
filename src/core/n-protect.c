@@ -34,7 +34,7 @@
 //
 //  Protect_Key: C
 //
-static void Protect_Key(VarList* context, REBLEN index, REBFLGS flags)
+static void Protect_Key(VarList* context, REBLEN index, Flags flags)
 {
     Value* var = Varlist_Slot(context, index);
 
@@ -79,7 +79,7 @@ static void Protect_Key(VarList* context, REBLEN index, REBFLGS flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Value(Cell* v, REBFLGS flags)
+void Protect_Value(Cell* v, Flags flags)
 {
     if (Any_Series(v))
         Protect_Flex(Cell_Flex(v), VAL_INDEX(v), flags);
@@ -95,7 +95,7 @@ void Protect_Value(Cell* v, REBFLGS flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Flex(Flex* s, REBLEN index, REBFLGS flags)
+void Protect_Flex(Flex* s, REBLEN index, Flags flags)
 {
     if (Is_Flex_Black(s))
         return; // avoid loop
@@ -129,7 +129,7 @@ void Protect_Flex(Flex* s, REBLEN index, REBFLGS flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Context(VarList* c, REBFLGS flags)
+void Protect_Context(VarList* c, Flags flags)
 {
     if (Is_Flex_Black(Varlist_Array(c)))
         return; // avoid loop
@@ -161,7 +161,7 @@ void Protect_Context(VarList* c, REBFLGS flags)
 //
 //  Protect_Word_Value: C
 //
-static void Protect_Word_Value(Value* word, REBFLGS flags)
+static void Protect_Word_Value(Value* word, Flags flags)
 {
     if (Any_Word(word) and IS_WORD_BOUND(word)) {
         Protect_Key(VAL_WORD_CONTEXT(word), VAL_WORD_INDEX(word), flags);
@@ -201,7 +201,7 @@ static void Protect_Word_Value(Value* word, REBFLGS flags)
 //
 // Common arguments between protect and unprotect:
 //
-static Bounce Protect_Unprotect_Core(Level* level_, REBFLGS flags)
+static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 
@@ -304,7 +304,7 @@ DECLARE_NATIVE(protect)
     UNUSED(PAR(words));
     UNUSED(PAR(values));
 
-    REBFLGS flags = PROT_SET;
+    Flags flags = PROT_SET;
 
     if (REF(hide))
         flags |= PROT_HIDE;

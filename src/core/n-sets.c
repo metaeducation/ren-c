@@ -40,7 +40,7 @@
 Flex* Make_Set_Operation_Flex(
     const Value* val1,
     const Value* val2,
-    REBFLGS flags,
+    Flags flags,
     bool cased,
     REBLEN skip
 ){

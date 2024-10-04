@@ -154,7 +154,7 @@ DECLARE_NATIVE(reduce)
         if (Reduce_To_Stack_Throws(OUT, value))
             return BOUNCE_THROWN;
 
-        REBFLGS pop_flags = NODE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE;
+        Flags pop_flags = NODE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE;
         if (Get_Array_Flag(Cell_Array(value), NEWLINE_AT_TAIL))
             pop_flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
@@ -333,7 +333,7 @@ bool Compose_To_Stack_Throws(
                 return true;
             }
 
-            REBFLGS flags = NODE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE;
+            Flags flags = NODE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE;
             if (Get_Array_Flag(Cell_Array(L->value), NEWLINE_AT_TAIL))
                 flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
@@ -398,7 +398,7 @@ DECLARE_NATIVE(compose)
     // The stack values contain N NEWLINE_BEFORE flags, and we need N + 1
     // flags.  Borrow the one for the tail directly from the input Array.
     //
-    REBFLGS flags = NODE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE;
+    Flags flags = NODE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE;
     if (Get_Array_Flag(Cell_Array(ARG(value)), NEWLINE_AT_TAIL))
         flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 

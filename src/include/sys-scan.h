@@ -278,7 +278,7 @@ struct ScanStateStruct {
 
     StackIndex stack_base;
 
-    REBFLGS opts;
+    Flags opts;
 
     // The mode can be '\0', ']', ')', or '/'
     //

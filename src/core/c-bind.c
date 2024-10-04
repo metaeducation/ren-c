@@ -47,7 +47,7 @@ void Bind_Values_Inner_Loop(
     VarList* context,
     REBU64 bind_types, // !!! REVIEW: force word types low enough for 32-bit?
     REBU64 add_midstream_types,
-    REBFLGS flags
+    Flags flags
 ) {
     Cell* v = head;
     for (; NOT_END(v); ++v) {
@@ -109,7 +109,7 @@ void Bind_Values_Core(
     VarList* context,
     REBU64 bind_types,
     REBU64 add_midstream_types,
-    REBFLGS flags // see %sys-core.h for BIND_DEEP, etc.
+    Flags flags // see %sys-core.h for BIND_DEEP, etc.
 ) {
     struct Reb_Binder binder;
     INIT_BINDER(&binder, context);

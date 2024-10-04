@@ -194,7 +194,7 @@ static bool Subparse_Throws(
     Specifier* input_specifier,
     const Cell* rules,
     Specifier* rules_specifier,
-    REBFLGS flags
+    Flags flags
 ){
     assert(Any_List(rules));
     assert(Any_Series(input));

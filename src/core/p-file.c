@@ -42,7 +42,7 @@
 //
 // Convert native action refinements to file modes.
 //
-static void Setup_File(struct devreq_file *file, REBFLGS flags, Value* path)
+static void Setup_File(struct devreq_file *file, Flags flags, Value* path)
 {
     REBREQ *req = AS_REBREQ(file);
 
@@ -142,7 +142,7 @@ static void Read_File_Port(
     Value* port,
     struct devreq_file *file,
     Value* path,
-    REBFLGS flags,
+    Flags flags,
     REBLEN len
 ) {
     assert(Is_File(path));
@@ -331,7 +331,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
         UNUSED(PAR(string)); // handled in dispatcher
         UNUSED(PAR(lines)); // handled in dispatcher
 
-        REBFLGS flags = 0;
+        Flags flags = 0;
 
         // Handle the READ %file shortcut case, where the FILE! has been
         // converted into a PORT! but has not been opened yet.
@@ -448,7 +448,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
             fail (Error_Bad_Refines_Raw());
         }
 
-        REBFLGS flags = (
+        Flags flags = (
             (REF(new) ? AM_OPEN_NEW : 0)
             | (REF(read) or not REF(write) ? AM_OPEN_READ : 0)
             | (REF(write) or not REF(read) ? AM_OPEN_WRITE : 0)
@@ -478,7 +478,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
             fail (Error_Not_Open_Raw(path)); // !!! wrong msg
 
         REBLEN len = Set_Length(file, REF(part) ? VAL_INT64(ARG(limit)) : -1);
-        REBFLGS flags = 0;
+        Flags flags = 0;
         Read_File_Port(OUT, port, file, path, flags, len);
         return OUT; }
 

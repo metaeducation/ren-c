@@ -156,7 +156,7 @@ enum Reb_Spec_Mode {
 //
 Array* Make_Paramlist_Managed_May_Fail(
     const Value* spec,
-    REBFLGS flags
+    Flags flags
 ) {
     assert(Any_List(spec));
 
@@ -1197,7 +1197,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
 REBACT *Make_Interpreted_Action_May_Fail(
     const Value* spec,
     const Value* code,
-    REBFLGS mkf_flags // MKF_RETURN, etc.
+    Flags mkf_flags // MKF_RETURN, etc.
 ) {
     assert(Is_Block(spec) and Is_Block(code));
 

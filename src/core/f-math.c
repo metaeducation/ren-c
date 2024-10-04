@@ -253,7 +253,7 @@ REBINT Emit_Integer(Byte *buf, REBI64 val)
 REBINT Emit_Decimal(
     Byte *cp,
     REBDEC d,
-    REBFLGS flags, // DEC_MOLD_PERCENT, DEC_MOLD_MINIMAL
+    Flags flags, // DEC_MOLD_PERCENT, DEC_MOLD_MINIMAL
     Byte point,
     REBINT decimal_digits
 ) {

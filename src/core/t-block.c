@@ -296,7 +296,7 @@ REBLEN Find_In_Array(
     REBLEN end, // ending position
     const Cell* target,
     REBLEN len, // length of target
-    REBFLGS flags, // see AM_FIND_XXX
+    Flags flags, // see AM_FIND_XXX
     REBINT skip // skip factor
 ){
     REBLEN start = index;
@@ -849,7 +849,7 @@ REBTYPE(List)
 
         REBLEN index = VAL_INDEX(list);
 
-        REBFLGS flags = (
+        Flags flags = (
             (REF(only) ? AM_FIND_ONLY : 0)
             | (REF(match) ? AM_FIND_MATCH : 0)
             | (REF(reverse) ? AM_FIND_REVERSE : 0)
@@ -913,7 +913,7 @@ REBTYPE(List)
 
         REBLEN index = VAL_INDEX(list);
 
-        REBFLGS flags = 0;
+        Flags flags = 0;
         if (
             not REF(only)
             and Splices_Into_Type_Without_Only(VAL_TYPE(list), arg)

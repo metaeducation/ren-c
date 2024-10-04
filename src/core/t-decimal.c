@@ -477,7 +477,7 @@ REBTYPE(Decimal)
 
         UNUSED(PAR(value));
 
-        REBFLGS flags = (
+        Flags flags = (
             (REF(to) ? RF_TO : 0)
             | (REF(even) ? RF_EVEN : 0)
             | (REF(down) ? RF_DOWN : 0)

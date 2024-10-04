@@ -1229,7 +1229,7 @@ REBTYPE(String)
         }
         Fail_If_Read_Only_Flex(Cell_Flex(v));
 
-        REBFLGS flags = 0;
+        Flags flags = 0;
         if (REF(part))
             flags |= AM_PART;
         if (REF(line))
@@ -1271,7 +1271,7 @@ REBTYPE(String)
         UNUSED(PAR(series));
         UNUSED(PAR(value));
 
-        REBFLGS flags = (
+        Flags flags = (
             (REF(only) ? AM_FIND_ONLY : 0)
             | (REF(match) ? AM_FIND_MATCH : 0)
             | (REF(reverse) ? AM_FIND_REVERSE : 0)

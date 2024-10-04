@@ -556,7 +556,7 @@ INLINE Binary* Cell_Bitset(const Cell* cell) {
 // is a particularly efficient default state, so separating the dynamic
 // allocation into a separate routine is not a huge cost.
 //
-INLINE Flex* Alloc_Flex_Stub(REBFLGS flags) {
+INLINE Flex* Alloc_Flex_Stub(Flags flags) {
     assert(not (flags & NODE_FLAG_CELL));
 
     Flex* s = cast(Flex*, Alloc_Pooled(STUB_POOL));
@@ -699,7 +699,7 @@ INLINE bool Did_Flex_Data_Alloc(Flex* s, REBLEN length) {
 INLINE Flex* Make_Flex_Core(
     REBLEN capacity,
     Byte wide,
-    REBFLGS flags
+    Flags flags
 ){
     assert(not (flags & ARRAY_FLAG_HAS_FILE_LINE));
 

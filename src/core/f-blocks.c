@@ -43,7 +43,7 @@ Array* Copy_Array_At_Extra_Shallow(
     REBLEN index,
     Specifier* specifier,
     REBLEN extra,
-    REBFLGS flags
+    Flags flags
 ){
     REBLEN len = Array_Len(original);
 
@@ -78,7 +78,7 @@ Array* Copy_Array_At_Max_Shallow(
     Specifier* specifier,
     REBLEN max
 ){
-    const REBFLGS flags = 0;
+    const Flags flags = 0;
 
     if (index > Array_Len(original))
         return Make_Arr_For_Copy(0, flags, original);
@@ -111,7 +111,7 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
     Specifier* specifier,
     REBLEN len,
     REBLEN extra,
-    REBFLGS flags
+    Flags flags
 ){
     Array* a = Make_Array_Core(len + extra, flags);
 
@@ -251,7 +251,7 @@ static Array* Copy_Array_Core_Managed_Inner_Loop(
     Specifier* specifier,
     REBLEN tail,
     REBLEN extra, // currently no one uses--would it also apply deep (?)
-    REBFLGS flags,
+    Flags flags,
     REBU64 types
 ){
     assert(index <= tail and tail <= Array_Len(original));
@@ -295,7 +295,7 @@ Array* Copy_Array_Core_Managed(
     Specifier* specifier,
     REBLEN tail,
     REBLEN extra,
-    REBFLGS flags,
+    Flags flags,
     REBU64 types
 ){
     if (index > tail) // !!! should this be asserted?
@@ -338,7 +338,7 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
     REBACT *before, // references to `before` will be changed to `after`
     REBACT *after
 ){
-    const REBFLGS flags = NODE_FLAG_MANAGED;
+    const Flags flags = NODE_FLAG_MANAGED;
 
     Array* copy = Make_Arr_For_Copy(Array_Len(original), flags, original);
     Cell* src = Array_Head(original);

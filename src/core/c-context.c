@@ -76,7 +76,7 @@
 // configured, hence this is an "Alloc" instead of a "Make" (because there
 // is still work to be done before it will pass ASSERT_CONTEXT).
 //
-VarList* Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
+VarList* Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
 {
     assert(not (flags & ARRAY_FLAG_HAS_FILE_LINE)); // LINK and MISC are taken
 
@@ -341,7 +341,7 @@ VarList* Copy_Context_Shallow_Extra_Managed(VarList* src, REBLEN extra) {
 // Therefore do not call code that might call BIND or otherwise
 // make use of the Bind_Table or BUF_COLLECT.
 //
-void Collect_Start(struct Reb_Collector* collector, REBFLGS flags)
+void Collect_Start(struct Reb_Collector* collector, Flags flags)
 {
     collector->flags = flags;
     collector->base = TOP_INDEX;
@@ -565,7 +565,7 @@ Array* Collect_Keylist_Managed(
     REBLEN *self_index_out, // which context index SELF is in (if COLLECT_SELF)
     const Cell* head,
     VarList* prior,
-    REBFLGS flags // see %sys-core.h for COLLECT_ANY_WORD, etc.
+    Flags flags // see %sys-core.h for COLLECT_ANY_WORD, etc.
 ) {
     struct Reb_Collector collector;
     struct Reb_Collector *cl = &collector;
@@ -653,7 +653,7 @@ Array* Collect_Keylist_Managed(
 //
 Array* Collect_Unique_Words_Managed(
     const Cell* head,
-    REBFLGS flags, // See COLLECT_XXX
+    Flags flags, // See COLLECT_XXX
     const Value* ignore // BLOCK!, ANY-CONTEXT!, or void for none
 ){
     // We do not want to fail() during the bind at this point in time (the

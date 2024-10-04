@@ -414,7 +414,7 @@ REBLEN Find_Str_Char(
     REBLEN index_orig,  // first index to examine (if out of range, NOT_FOUND)
     REBLEN highest,     // *one past* highest return result (e.g. SER_LEN)
     REBINT skip,        // step amount while searching, can be negative!
-    REBFLGS flags       // AM_FIND_CASE, AM_FIND_MATCH
+    Flags flags       // AM_FIND_CASE, AM_FIND_MATCH
 ) {
     // Because the skip may be negative, and we don't check before we step
     // and may "cross zero", it's necessary to use a signed index to be

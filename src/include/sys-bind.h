@@ -292,7 +292,7 @@ enum {
 };
 
 struct Reb_Collector {
-    REBFLGS flags;
+    Flags flags;
     StackIndex base;
     struct Reb_Binder binder;
     REBLEN index;

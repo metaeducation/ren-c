@@ -153,7 +153,7 @@ INLINE void Set_Path_Core(
     //
     DECLARE_VALUE (out);
 
-    REBFLGS flags = DO_FLAG_NO_PATH_GROUPS;
+    Flags flags = DO_FLAG_NO_PATH_GROUPS;
     if (enfix)
         flags |= DO_FLAG_SET_PATH_ENFIXED;
 

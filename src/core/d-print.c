@@ -106,7 +106,7 @@ void Print_OS_Line(void)
 //
 // The encoding options are OPT_ENC_XXX flags OR'd together.
 //
-void Prin_OS_String(const Byte *utf8, Size size, REBFLGS opts)
+void Prin_OS_String(const Byte *utf8, Size size, Flags opts)
 {
     Req_SIO->flags |= RRF_FLUSH;
     if (opts & OPT_ENC_RAW)

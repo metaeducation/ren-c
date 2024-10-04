@@ -236,7 +236,7 @@ INLINE void Prep_Array(
 // Make a series that is the right size to store REBVALs (and marked for the
 // garbage collector to look into recursively).  Array_Len() will be 0.
 //
-INLINE Array* Make_Array_Core(REBLEN capacity, REBFLGS flags) {
+INLINE Array* Make_Array_Core(REBLEN capacity, Flags flags) {
     const REBLEN wide = sizeof(Cell);
 
     Flex* s = Alloc_Flex_Stub(flags);
@@ -321,7 +321,7 @@ INLINE Array* Make_Array_Core(REBLEN capacity, REBFLGS flags) {
 //
 INLINE Array* Make_Arr_For_Copy(
     REBLEN capacity,
-    REBFLGS flags,
+    Flags flags,
     Array* original
 ){
     if (original and Get_Array_Flag(original, NEWLINE_AT_TAIL)) {
@@ -357,7 +357,7 @@ INLINE Array* Make_Arr_For_Copy(
 //
 // For `flags`, be sure to consider if you need FLEX_FLAG_FILE_LINE.
 //
-INLINE Array* Alloc_Singular(REBFLGS flags) {
+INLINE Array* Alloc_Singular(Flags flags) {
     assert(not (flags & FLEX_FLAG_ALWAYS_DYNAMIC));
     Array* a = Make_Array_Core(1, flags | FLEX_FLAG_FIXED_SIZE);
     LEN_BYTE_OR_255(a) = 1; // non-dynamic length (defaulted to 0)
@@ -425,7 +425,7 @@ INLINE Array* Copy_Array_At_Extra_Deep_Flags_Managed(
     REBLEN index,
     Specifier* specifier,
     REBLEN extra,
-    REBFLGS flags
+    Flags flags
 ){
     return Copy_Array_Core_Managed(
         original,

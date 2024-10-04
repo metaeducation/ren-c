@@ -108,7 +108,7 @@ void Append_Values_Len(Array* a, const Value* head, REBLEN len)
 // Use Copy_Array routines (which specify Shallow, Deep, etc.) for
 // greater detail needed when expressing intent for Rebol Arrays.
 //
-Flex* Copy_Non_Array_Flex_Core(Flex* s, REBFLGS flags)
+Flex* Copy_Non_Array_Flex_Core(Flex* s, Flags flags)
 {
     assert(not Is_Flex_Array(s));
 

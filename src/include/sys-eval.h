@@ -220,7 +220,7 @@ INLINE void Push_Level_Core(Level* L)
 
 // Pretend the input source has ended; used with REB_E_PROCESS_ACTION.
 //
-INLINE void Push_Level_At_End(Level* L, REBFLGS flags) {
+INLINE void Push_Level_At_End(Level* L, Flags flags) {
     L->flags = Endlike_Header(flags);
 
     assert(L->source == &TG_Level_Source_End); // see DECLARE_END_LEVEL
@@ -252,7 +252,7 @@ INLINE void Push_Level_At(
     Array* array,
     REBLEN index,
     Specifier* specifier,
-    REBFLGS flags
+    Flags flags
 ){
     L->flags = Endlike_Header(flags);
 
@@ -769,10 +769,10 @@ INLINE bool Eval_Step_Maybe_Stale_Throws(
 // the SET-WORD! needs to be put back in place before returning, so that the
 // set knows where to write.  The caller handles this with the data stack.
 //
-INLINE bool Eval_Step_Mid_Level_Throws(Level* L, REBFLGS flags) {
+INLINE bool Eval_Step_Mid_Level_Throws(Level* L, Flags flags) {
     assert(L->stack_base == TOP_INDEX);
 
-    REBFLGS prior_flags = L->flags.bits;
+    Flags prior_flags = L->flags.bits;
     L->flags = Endlike_Header(flags);
 
     bool threw = Eval_Core_Throws(L); // should already be pushed
@@ -803,7 +803,7 @@ INLINE bool Eval_Step_Mid_Level_Throws(Level* L, REBFLGS flags) {
 INLINE bool Eval_Step_In_Subframe_Throws(
     Value* out,
     Level* higher,  // may not be direct parent (not child->prior upon push!)
-    REBFLGS flags,
+    Flags flags,
     Level* child  // passed w/base preload, refinements can be on stack
 ){
     child->out = out;
@@ -866,7 +866,7 @@ INLINE REBIXO Eval_At_Core(
     Array* array,
     REBLEN index,
     Specifier* specifier, // must match array, but also opt_first if relative
-    REBFLGS flags // DO_FLAG_TO_END, DO_FLAG_EXPLICIT_EVALUATE, etc.
+    Flags flags // DO_FLAG_TO_END, DO_FLAG_EXPLICIT_EVALUATE, etc.
 ){
     DECLARE_LEVEL (L);
     L->flags = Endlike_Header(flags); // SET_FRAME_VALUE() *could* use
@@ -1016,7 +1016,7 @@ INLINE REBIXO Eval_Va_Core(
     Value* out, // must be initialized, marked stale if empty / all invisible
     const void *opt_first,
     va_list *vaptr,
-    REBFLGS flags
+    Flags flags
 ){
     DECLARE_LEVEL (L);
     L->flags = Endlike_Header(flags); // read by Set_Level_Detected_Fetch

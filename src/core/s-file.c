@@ -50,7 +50,7 @@
 // volume when no root slash was provided.  It was an odd case to support
 // the MSDOS convention of `c:file`.  That is not done here.
 //
-Flex* To_REBOL_Path(const Cell* string, REBFLGS flags)
+Flex* To_REBOL_Path(const Cell* string, Flags flags)
 {
     assert(Is_Text(string));
 
@@ -139,7 +139,7 @@ restart:;
 // Implementation routine of To_Local_Path which leaves the path in the mold
 // buffer (e.g. for further appending or just counting the number of bytes)
 //
-void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
+void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, Flags flags) {
     assert(Is_File(file));
 
     Ucs2(const*) up = Cell_String_At(file);
@@ -346,7 +346,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
 // Convert Rebol-format filename to a local-format filename.  This is the
 // opposite operation of To_REBOL_Path.
 //
-Flex* To_Local_Path(const Cell* file, REBFLGS flags) {
+Flex* To_Local_Path(const Cell* file, Flags flags) {
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 

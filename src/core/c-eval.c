@@ -1250,7 +1250,7 @@ bool Eval_Core_Throws(Level* const L)
             // put off before, this time using the 10 as AND's left-hand arg.
             //
             if (L->u.defer.arg) {
-                REBFLGS flags =
+                Flags flags =
                     DO_FLAG_FULFILLING_ARG
                     | (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
 
@@ -1301,7 +1301,7 @@ bool Eval_Core_Throws(Level* const L)
    //=//// REGULAR ARG-OR-REFINEMENT-ARG (consumes 1 EVALUATE's worth) ////=//
 
               case PARAM_CLASS_NORMAL: {
-                REBFLGS flags = DO_FLAG_FULFILLING_ARG
+                Flags flags = DO_FLAG_FULFILLING_ARG
                     | (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
 
                 DECLARE_SUBLEVEL (child, L);  // capture TOP_INDEX *now*
@@ -1320,7 +1320,7 @@ bool Eval_Core_Throws(Level* const L)
                 // act as `(square 1) + 2`, by not applying lookahead to see
                 // the `+` during the argument evaluation.
                 //
-                REBFLGS flags =
+                Flags flags =
                     DO_FLAG_NO_LOOKAHEAD
                     | DO_FLAG_FULFILLING_ARG
                     | (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
@@ -1785,7 +1785,7 @@ bool Eval_Core_Throws(Level* const L)
         if (IS_END(L->value)) // `do [a:]` is illegal
             fail (Error_Need_Non_End_Core(current, L->specifier));
 
-        REBFLGS flags = (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
+        Flags flags = (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
 
         Init_Nothing(L->out);  // `1 x: comment "hi"` shouldn't set x to 1!
 
@@ -2003,7 +2003,7 @@ bool Eval_Core_Throws(Level* const L)
         if (IS_END(L->value)) // `do [a/b:]` is illegal
             fail (Error_Need_Non_End_Core(current, L->specifier));
 
-        REBFLGS flags = (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
+        Flags flags = (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
 
         Init_Nothing(L->out);  // `1 o/x: comment "hi"` shouldn't set o/x to 1!
 

@@ -92,7 +92,7 @@ static void Assert_Basics(void)
     //
     // Sanity check the platform byte-ordering sensitive flag macros
     //
-    REBFLGS flags
+    Flags flags
         = FLAG_LEFT_BIT(5) | FLAG_SECOND_BYTE(21) | FLAG_SECOND_UINT16(1975);
 
     Byte m = FIRST_BYTE(&flags); // 6th bit from left set (0b00000100 is 4)
@@ -352,7 +352,7 @@ DECLARE_NATIVE(generic)
     // especially to get the optimization for 1 argument to go in the cell
     // and not need to push arguments.
     //
-    REBFLGS flags = MKF_KEYWORDS | MKF_FAKE_RETURN;
+    Flags flags = MKF_KEYWORDS | MKF_FAKE_RETURN;
 
     REBACT *generic = Make_Action(
         Make_Paramlist_Managed_May_Fail(spec, flags),
@@ -600,7 +600,7 @@ Value* Make_Native(
     // especially to get the optimization for 1 argument to go in the cell
     // and not need to push arguments.
     //
-    REBFLGS flags = MKF_KEYWORDS | MKF_FAKE_RETURN;
+    Flags flags = MKF_KEYWORDS | MKF_FAKE_RETURN;
 
     REBACT *act = Make_Action(
         Make_Paramlist_Managed_May_Fail(KNOWN(spec), flags),

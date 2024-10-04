@@ -956,7 +956,7 @@ void Swap_Flex_Content(Flex* a, Flex* b)
 // Reallocate a Flex as a given maximum size.  Content in the retained
 // portion of the length will be preserved if NODE_FLAG_NODE is passed in.
 //
-void Remake_Flex(Flex* s, REBLEN units, Byte wide, REBFLGS flags)
+void Remake_Flex(Flex* s, REBLEN units, Byte wide, Flags flags)
 {
     // !!! This routine is being scaled back in terms of what it's allowed to
     // do for the moment; so the method of passing in flags is a bit strange.

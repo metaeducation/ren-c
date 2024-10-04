@@ -140,7 +140,7 @@ PVAR Value* Root_Stackoverflow_Error; // made in advance, avoids extra calls
 
 // This signal word should be thread-local, but it will not work
 // when implemented that way. Needs research!!!!
-PVAR REBFLGS Eval_Signals;   // Signal flags
+PVAR Flags Eval_Signals;   // Signal flags
 
 // The "dummy" action is used in frames which are marked as being action
 // frames because they need a varlist, that don't actually execute.
@@ -234,4 +234,4 @@ TVAR struct Reb_State *Saved_State; // Saved state for Catch (CPU state, etc.)
 TVAR REBI64 Eval_Cycles;    // Total evaluation counter (upward)
 TVAR int_fast32_t Eval_Count;     // Evaluation counter (downward)
 TVAR uint_fast32_t Eval_Dose;      // Evaluation counter reset value
-TVAR REBFLGS Eval_Sigmask;   // Masking out signal flags
+TVAR Flags Eval_Sigmask;   // Masking out signal flags

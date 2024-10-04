@@ -541,7 +541,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
 //
 // Form a value based on the mold opts provided.
 //
-String* Copy_Mold_Or_Form_Value(const Cell* v, REBFLGS opts, bool form)
+String* Copy_Mold_Or_Form_Value(const Cell* v, Flags opts, bool form)
 {
     DECLARE_MOLD (mo);
     mo->opts = opts;

@@ -320,7 +320,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
 //
 // Pops computed values from the stack to make a new ARRAY.
 //
-Array* Pop_Stack_Values_Core(StackIndex base, REBFLGS flags)
+Array* Pop_Stack_Values_Core(StackIndex base, Flags flags)
 {
     Array* array = Copy_Values_Len_Shallow_Core(
         Data_Stack_At(base + 1),  // start somewhere in the stack, end at TOP

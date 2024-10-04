@@ -229,7 +229,7 @@ REBLEN Modify_Binary(
     Value* dst_val,        // target
     SymId op,            // INSERT, APPEND, CHANGE
     const Value* src_val,  // source
-    REBFLGS flags,          // AM_PART
+    Flags flags,          // AM_PART
     REBINT dst_len,         // length to remove
     REBINT dups             // dup count
 ){
@@ -388,7 +388,7 @@ REBLEN Modify_String(
     Value* dst_val,        // target
     SymId op,            // INSERT, APPEND, CHANGE
     const Value* src_val,  // source
-    REBFLGS flags,          // AM_PART
+    Flags flags,          // AM_PART
     REBINT dst_len,         // length to remove
     REBINT dups             // dup count
 ){

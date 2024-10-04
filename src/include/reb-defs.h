@@ -57,6 +57,16 @@
 typedef unsigned char Byte; // don't change to uint8_t, see note
 
 
+//=//// FLAGS TYPE ////////////////////////////////////////////////////////=//
+//
+// !!! Originally the Flags type was a `uint_fast32_t`.  However, there were
+// several cases of the type being used with macros that only work with
+// platform sized ints.  But really, uintptr_t and uint_fast32_t are likely
+// the same type on most platforms anyway.
+//
+typedef uintptr_t Flags;
+
+
 //=//// REBOL NUMERIC TYPES ("REBXXX") ////////////////////////////////////=//
 //
 // The 64-bit build modifications to R3-Alpha after its open sourcing changed
@@ -78,7 +88,6 @@ typedef int64_t REBI64; // 64 bit integer
 typedef uint64_t REBU64; // 64 bit unsigned integer
 typedef float REBD32; // 32 bit decimal
 typedef double REBDEC; // 64 bit decimal
-typedef uintptr_t REBFLGS; // platform-pointer-size unsigned for bit flags
 typedef uintptr_t LineNumber; // type used to store line numbers in Rebol files
 typedef uintptr_t Tick; // type the debug build uses for evaluator "ticks"
 

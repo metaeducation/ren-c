@@ -69,7 +69,7 @@ DECLARE_NATIVE(reeval)
     //
     child->u.reval.value = ARG(value);
 
-    REBFLGS flags = DO_FLAG_REEVALUATE_CELL;
+    Flags flags = DO_FLAG_REEVALUATE_CELL;
     if (REF(only)) {
         flags |= DO_FLAG_EXPLICIT_EVALUATE;
         ARG(value)->header.bits ^= VALUE_FLAG_EVAL_FLIP;
@@ -226,7 +226,7 @@ DECLARE_NATIVE(eval_enfix)
     assert(Is_Pointer_Corrupt_Debug(TOP_LEVEL->u.defer.arg));
     TOP_LEVEL->u.defer.arg = m_cast(Value*, BLANK_VALUE); // !!! signal our hack
 
-    REBFLGS flags = DO_FLAG_FULFILLING_ARG | DO_FLAG_POST_SWITCH;
+    Flags flags = DO_FLAG_FULFILLING_ARG | DO_FLAG_POST_SWITCH;
     if (Eval_Step_In_Subframe_Throws(OUT, L, flags, child)) {
         Drop_GC_Guard(temp);
         return BOUNCE_THROWN;
@@ -340,7 +340,7 @@ DECLARE_NATIVE(do)
         // to disrupt its state.  Use a subframe.
         //
         DECLARE_SUBLEVEL (child, L);
-        REBFLGS flags = 0;
+        Flags flags = 0;
         Init_Nothing(OUT);
         while (NOT_END(L->value)) {
             if (Eval_Step_In_Subframe_Throws(OUT, L, flags, child))
@@ -577,7 +577,7 @@ DECLARE_NATIVE(evaluate)
         // to disrupt its state.  Use a subframe.
         //
         DECLARE_SUBLEVEL (child, L);
-        REBFLGS flags = 0;
+        Flags flags = 0;
         if (IS_END(L->value))
             return nullptr;
 

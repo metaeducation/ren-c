@@ -298,7 +298,7 @@ bool Eval_Path_Throws_Core(
     REBLEN index,
     Specifier* specifier,
     const Value* opt_setval, // Note: may be the same as out!
-    REBFLGS flags
+    Flags flags
 ){
     if (flags & DO_FLAG_SET_PATH_ENFIXED)
         assert(opt_setval); // doesn't make any sense for GET-PATH! or PATH!
