@@ -434,7 +434,7 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
 
 
 //
-//  Try_Scan_Quoted_Or_Braced_String_Push_Mold: C
+//  Trap_Scan_Quoted_Or_Braced_String_Push_Mold: C
 //
 // Scan a quoted string, handling all the escape characters.  e.g. an input
 // stream might have "a^(1234)b" and need to turn "^(1234)" into the right
@@ -451,35 +451,37 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
 //    the scanner might be created someday, for the moment we are being more
 //    prescriptive about it by default.
 //
-static Option(const Byte*) Try_Scan_Quoted_Or_Braced_String_Push_Mold(
+static Option(Error*) Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
+    Sink(const Byte**) out,
     REB_MOLD *mo,
     const Byte* src,
     TranscodeState* ss
 ){
     Push_Mold(mo);
+    const Byte* bp = src;
 
     Codepoint term; // pick termination
-    if (*src == '{')
+    if (*bp == '{')
         term = '}';
     else {
-        assert(*src == '"');
+        assert(*bp == '"');
         term = '"';
     }
-    ++src;
+    ++bp;
 
     REBINT nest = 0;
     REBLEN lines = 0;
-    while (*src != term or nest > 0) {
-        Codepoint c = *src;
+    while (*bp != term or nest > 0) {
+        Codepoint c = *bp;
 
         switch (c) {
           case '\0':  // illegal in strings [1]
             return nullptr;
 
           case '^':
-            if (not (src = maybe Try_Scan_UTF8_Char_Escapable(&c, src)))
+            if (not (bp = maybe Try_Scan_UTF8_Char_Escapable(&c, bp)))
                 return nullptr;
-            --src;  // unlike Back_Scan_XXX, no compensation for ++src later
+            --bp;  // unlike Back_Scan_XXX, no compensation for ++bp later
             break;
 
           case '{':
@@ -495,15 +497,15 @@ static Option(const Byte*) Try_Scan_Quoted_Or_Braced_String_Push_Mold(
           case CR: {
             enum Reb_Strmode strmode = STRMODE_NO_CR;
             if (strmode == STRMODE_CRLF_TO_LF) {
-                if (src[1] == LF) {
-                    ++src;
+                if (bp[1] == LF) {
+                    ++bp;
                     c = LF;
                     goto linefeed;
                 }
             }
             else
                 assert(strmode == STRMODE_NO_CR);
-            fail (Error_Illegal_Cr(src, ss->begin)); }
+            return (Error_Illegal_Cr(bp, src)); }
 
           case LF:
           linefeed:
@@ -514,12 +516,12 @@ static Option(const Byte*) Try_Scan_Quoted_Or_Braced_String_Push_Mold(
 
           default:
             if (c >= 0x80) {
-                if ((src = Back_Scan_UTF8_Char(&c, src, nullptr)) == nullptr)
+                if ((bp = Back_Scan_UTF8_Char(&c, bp, nullptr)) == nullptr)
                     return nullptr;
             }
         }
 
-        ++src;
+        ++bp;
 
         if (c == '\0')  // e.g. ^(00) or ^@
             fail (Error_Illegal_Zero_Byte_Raw());  // legal CHAR!, not string
@@ -529,8 +531,9 @@ static Option(const Byte*) Try_Scan_Quoted_Or_Braced_String_Push_Mold(
 
     ss->line += lines;
 
-    ++src; // Skip ending quote or brace.
-    return src;
+    ++bp;  // Skip ending quote or brace.
+    *out = bp;
+    return nullptr;  // not an error (success)
 }
 
 
@@ -714,31 +717,22 @@ static void Update_Error_Near_For_Line(
 // the NEAR field of the error with the "current" line number and line text,
 // e.g. where the end point of the token is seen.
 //
-// 1. The scanner code has `bp` and `ep` locals which mirror ss->begin and
-//    ss->end.  However, they get out of sync.  If they are updated, they
-//    should be sync'd before calling here, since it's used to find the
-//    range of text to report.
-//
-//    !!! Would it be safer to go to ss->b and ss->e, or something similar,
-//    to get almost as much brevity and not much less clarity than bp and
-//    ep, while avoiding the possibility of the state getting out of sync?
-//
-static Error* Error_Syntax(TranscodeState* ss, Token token) {
-    assert(ss->begin and not Is_Pointer_Corrupt_Debug(ss->begin));
-    assert(ss->end and not Is_Pointer_Corrupt_Debug(ss->end));
-    assert(ss->end >= ss->begin);  // can get out of sync [1]
+static Error* Error_Syntax(ScanState* S, Token token) {
+    assert(S->begin and not Is_Pointer_Corrupt_Debug(S->begin));
+    assert(S->end and not Is_Pointer_Corrupt_Debug(S->end));
+    assert(S->end >= S->begin);  // can get out of sync [1]
 
-    DECLARE_ATOM (token_name);
+    DECLARE_ELEMENT (token_name);
     Init_Text(token_name, Make_String_UTF8(Token_Names[token]));
 
-    DECLARE_ATOM (token_text);
+    DECLARE_ELEMENT (token_text);
     Init_Text(
         token_text,
-        Make_Sized_String_UTF8(cs_cast(ss->begin), ss->end - ss->begin)
+        Make_Sized_String_UTF8(cs_cast(S->begin), S->end - S->begin)
     );
 
     Error* error = Error_Scan_Invalid_Raw(token_name, token_text);
-    Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
+    Update_Error_Near_For_Line(error, S->ss, S->ss->line, S->ss->line_head);
     return error;
 }
 
@@ -822,7 +816,7 @@ static Error* Error_Mismatch(ScanState* S, char wanted, char seen) {
 //
 //  Prescan_Token: C
 //
-// This function updates `ss->begin` to skip past leading whitespace.  If the
+// This function updates `S->begin` to skip past leading whitespace.  If the
 // first character it finds after that is a LEX_DELIMITER (`"`, `[`, `)`, `{`,
 // etc. or a space/newline) then it will advance the end position to just past
 // that one character.  For all other leading characters, it will advance the
@@ -842,29 +836,29 @@ static Error* Error_Mismatch(ScanState* S, char wanted, char seen) {
 //
 // Note: The reason the first character's lexical class is not considered is
 // because it's important to know it *exactly*, so the caller will use
-// Get_Lex_Class(ss->begin[0]).  Fingerprinting just helps accelerate further
+// Get_Lex_Class(S->begin[0]).  Fingerprinting just helps accelerate further
 // categorization.
 //
-static LexFlags Prescan_Token(TranscodeState* ss)
+static LexFlags Prescan_Token(ScanState* S)
 {
-    assert(Is_Pointer_Corrupt_Debug(ss->end));  // prescan only uses ->begin
+    assert(Is_Pointer_Corrupt_Debug(S->end));  // prescan only uses ->begin
 
-    const Byte* cp = ss->begin;
-    LexFlags flags = 0;  // flags for all LEX_SPECIALs seen after ss->begin[0]
+    const Byte* cp = S->ss->at;
+    LexFlags flags = 0;  // flags for all LEX_SPECIALs seen after S->begin[0]
 
     while (Is_Lex_Space(*cp))  // skip whitespace (if any)
         ++cp;
-    ss->begin = cp;  // don't count leading whitespace as part of token
+    S->begin = cp;  // don't count leading whitespace as part of token
 
     while (true) {
         switch (Get_Lex_Class(*cp)) {
           case LEX_CLASS_DELIMIT:
-            if (cp == ss->begin) {
+            if (cp == S->begin) {
                 //
                 // Include the delimiter if it is the only character we
                 // are returning in the range (leave it out otherwise)
                 //
-                ss->end = cp + 1;
+                S->end = cp + 1;
 
                 // Note: We'd liked to have excluded LEX_DELIMIT_END, but
                 // would require a Get_Lex_Delimit() call to know to do so.
@@ -872,11 +866,11 @@ static LexFlags Prescan_Token(TranscodeState* ss)
                 // so it can subtract this addition back out itself.
             }
             else
-                ss->end = cp;
+                S->end = cp;
             return flags;
 
           case LEX_CLASS_SPECIAL:
-            if (cp != ss->begin) {
+            if (cp != S->begin) {
                 // As long as it isn't the first character, we union a flag
                 // in the result mask to signal this special char's presence
                 Set_Lex_Flag(flags, Get_Lex_Special(*cp));
@@ -936,8 +930,8 @@ static LexFlags Prescan_Token(TranscodeState* ss)
 // spliced into the array being currently gathered by pushing them to the data
 // stack (as tokens can only be located in UTF-8 strings encountered).
 //
-// The scan state will be updated so that `ss->begin` has been moved past any
-// leading whitespace that was pending in the buffer.  `ss->end` will hold the
+// The scan state will be updated so that `S->begin` has been moved past any
+// leading whitespace that was pending in the buffer.  `S->end` will hold the
 // conclusion at a delimiter.  The calculated token will be returned.
 //
 // The TOKEN_XXX type returned will correspond directly to a Rebol datatype
@@ -1013,19 +1007,29 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 ){
     ScanState* S = &L->u.scan;
     TranscodeState* ss = S->ss;
-    Corrupt_Pointer_If_Debug(ss->end);  // this routine should set ss->end
 
-  acquisition_loop:
+    Corrupt_Pointer_If_Debug(S->begin);  // S->begin skips ss->at's whitespace
+    Corrupt_Pointer_If_Debug(S->end);  // this routine should set S->end
+
+  acquisition_loop: //////////////////////////////////////////////////////////
+
+    // This supports scanning of variadic material, e.g. C code like:
     //
-    // If a non-variadic scan of a UTF-8 string is being done, then ss->vaptr
-    // is nullptr and ss->begin will be set to the data to scan.  A variadic
-    // scan will start ss->begin at nullptr also.
+    //     Value* some_value = rebInteger(3);
+    //     rebElide("print [{The value is}", some_value, "]");
     //
-    // Each time a string component being scanned gets exhausted, ss->begin
+    // We scan one string component at a time, pushing the appropriate items.
+    // Each time a UTF-8 source fragment being scanned is exhausted, ss->at
     // will be set to nullptr and this loop is run to see if there's more
-    // input to be processed.
+    // input to be processed--either values to splice, or other fragments
+    // of UTF-8 source.
     //
-    while (not ss->begin) {
+    // See the "Feed" abstraction for the mechanics by which these text and
+    // spliced components are fed to the scanner (and then optionally to the
+    // evaluator), potentially bypassing the need to create an intermediary
+    // BLOCK! structure to hold the code.
+    //
+    while (not ss->at) {
         if (L->feed->p == nullptr) {  // API null, can't be in feed, use BLANK
             Init_Quasi_Null(PUSH());
             Set_Cell_Flag(TOP, FEED_NOTE_META);
@@ -1063,7 +1067,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             break; }
 
           case DETECTED_AS_UTF8: {  // String segment, scan it ordinarily.
-            ss->begin = c_cast(Byte*, L->feed->p);  // breaks the loop...
+            ss->at = c_cast(Byte*, L->feed->p);  // breaks the loop...
 
             // If we're using a va_list, we start the scan with no C string
             // pointer to serve as the beginning of line for an error message.
@@ -1077,7 +1081,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             if (not ss->line_head) {
                 assert(FEED_VAPTR(L->feed) or FEED_PACKED(L->feed));
                 assert(not S->start_line_head);
-                S->start_line_head = ss->line_head = ss->begin;
+                S->start_line_head = ss->line_head = S->begin;
             }
             break; }
 
@@ -1093,24 +1097,24 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             L->feed->p = *FEED_PACKED(L->feed)++;
     }
 
-    LexFlags flags = Prescan_Token(ss);  // sets ->begin, ->end
+    LexFlags flags = Prescan_Token(S);  // sets ->begin, ->end
 
-    const Byte* cp = ss->begin;
+    const Byte* cp = S->begin;
 
     if (*cp == '^') {
-        ss->end = cp + 1;
+        S->end = cp + 1;
         return LOCATED(TOKEN_CARET);
     }
     if (*cp == '@') {
-        ss->end = cp + 1;
+        S->end = cp + 1;
         return LOCATED(TOKEN_AT);
     }
     if (*cp == '&') {
-        ss->end = cp + 1;
+        S->end = cp + 1;
         return LOCATED(TOKEN_AMPERSAND);
     }
     if (*cp == '$' and Get_Lex_Class(cp[1]) != LEX_CLASS_NUMBER) {
-        ss->end = cp + 1;
+        S->end = cp + 1;
         return LOCATED(TOKEN_DOLLAR);
     }
 
@@ -1139,7 +1143,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             or *temp == '=' or *temp == '|'
         ){
             ++temp;
-            if (temp != ss->end)
+            if (temp != S->end)
                 continue;
 
             // There has been a change from where things like `<.>` are no
@@ -1198,14 +1202,14 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             else
                 assert(strmode == STRMODE_NO_CR);
 
-            Error* error = Error_Illegal_Cr(cp, ss->begin);
+            Error* error = Error_Illegal_Cr(cp, S->begin);
             Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
             return error; }
 
           case LEX_DELIMIT_LINEFEED:
           delimit_line_feed:
             ss->line++;
-            ss->end = cp + 1;
+            S->end = cp + 1;
             return LOCATED(TOKEN_NEWLINE);
 
           case LEX_DELIMIT_LEFT_BRACKET:  // [BLOCK] begin
@@ -1220,28 +1224,37 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
           case LEX_DELIMIT_RIGHT_PAREN:  // (GROUP) end
             return LOCATED(TOKEN_GROUP_END);
 
-          case LEX_DELIMIT_DOUBLE_QUOTE:  // "QUOTES"
-            cp = maybe Try_Scan_Quoted_Or_Braced_String_Push_Mold(mo, cp, ss);
-            goto check_str;
+          case LEX_DELIMIT_DOUBLE_QUOTE: {  // "QUOTES"
+            Option(Error*) error = Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
+                &cp, mo, cp, ss
+            );
+            if (error)
+                return error;
+            goto check_str; }
 
-          case LEX_DELIMIT_LEFT_BRACE:  // {BRACES}
-            cp = maybe Try_Scan_Quoted_Or_Braced_String_Push_Mold(mo, cp, ss);
+          case LEX_DELIMIT_LEFT_BRACE: {  // {BRACES}
+            Option(Error*) error = Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
+                &cp, mo, cp, ss
+            );
+            if (error)
+                return error;
+            goto check_str; }
 
           check_str:
             if (cp) {
-                ss->end = cp;
+                S->end = cp;
                 return LOCATED(TOKEN_STRING);
             }
             // try to recover at next new line...
-            cp = ss->begin + 1;
+            cp = S->begin + 1;
             while (not ANY_CR_LF_END(*cp))
                 ++cp;
-            ss->end = cp;
+            S->end = cp;
 
-            if (ss->begin[0] == '"')
+            if (S->begin[0] == '"')
                 return Error_Missing(S, '"');
 
-            if (ss->begin[0] == '{')
+            if (S->begin[0] == '{')
                 return Error_Missing(S, '}');
 
             panic ("Invalid string start delimiter");
@@ -1268,7 +1281,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                     or cp[1] == ')'
                     or (cp[1] != which and Is_Interstitial(cp[1]))
                 ){
-                    ss->end = cp + 1;
+                    S->end = cp + 1;
                     if (which == ':' and cp[1] == '/')
                         break;  // load `://` with / being the word
                     if (which == '/' and cp[1] == '.')
@@ -1278,7 +1291,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 ++cp;
             } while (*cp == which);
 
-            ss->end = ss->begin + 1;
+            S->end = S->begin + 1;
             switch (which) {
               case '.': return LOCATED(TOKEN_TUPLE);
               case ':': return LOCATED(TOKEN_CHAIN);
@@ -1291,26 +1304,27 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
           case LEX_DELIMIT_END:
             //
             // We've reached the end of this string token's content.  By
-            // putting nullptr in ss->begin, that cues the acquisition loop
+            // putting nullptr in S->begin, that cues the acquisition loop
             // to check if there's a variadic pointer in effect to see if
             // there's more content yet to come.
             //
-            ss->begin = nullptr;
-            Corrupt_Pointer_If_Debug(ss->end);
+            ss->at = nullptr;
+            Corrupt_Pointer_If_Debug(S->begin);
+            Corrupt_Pointer_If_Debug(S->end);
             goto acquisition_loop;
 
           case LEX_DELIMIT_COMMA:
             ++cp;
-            ss->end = cp;
+            S->end = cp;
             if (*cp == ',' or not Is_Lex_Delimit(*cp)) {
-                ++ss->end;  // don't allow `,,` or `a,b` etc.
-                return Error_Syntax(ss, TOKEN_COMMA);
+                ++S->end;  // don't allow `,,` or `a,b` etc.
+                return Error_Syntax(S, TOKEN_COMMA);
             }
             return LOCATED(TOKEN_COMMA);
 
           case LEX_DELIMIT_TILDE:
             assert(*cp == '~');
-            ss->end = cp + 1;
+            S->end = cp + 1;
             return LOCATED(TOKEN_TILDE);
 
           default:
@@ -1336,7 +1350,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             and *cp != '#'  // want #@ to be an ISSUE! (charlike)
         ){
             if (*cp == '@')  // consider `@a@b`, `@@`, etc. ambiguous
-                return Error_Syntax(ss, TOKEN_EMAIL);
+                return Error_Syntax(S, TOKEN_EMAIL);
 
             token = TOKEN_EMAIL;
             goto prescan_subsume_all_dots;
@@ -1352,10 +1366,10 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
           case LEX_SPECIAL_PERCENT:  // %filename
             if (cp[1] == '%') {  // %% is WORD! exception
                 if (not Is_Lex_Delimit(cp[2]) and cp[2] != ':') {
-                    ss->end = cp + 3;
-                    return Error_Syntax(ss, TOKEN_FILE);
+                    S->end = cp + 3;
+                    return Error_Syntax(S, TOKEN_FILE);
                 }
-                ss->end = cp + 2;
+                S->end = cp + 2;
                 return LOCATED(TOKEN_WORD);
             }
 
@@ -1364,24 +1378,23 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
           issue_or_file_token:  // issue jumps here, should set `token`
             assert(token == TOKEN_FILE or token == TOKEN_ISSUE);
 
-            cp = ss->end;
+            cp = S->end;
             if (*cp == ';') {
                 //
                 // !!! Help catch errors when writing `#;` which is an easy
                 // mistake to make thinking it's like `#:` and a way to make
                 // a single character.
                 //
-                ss->end = cp;
-                return Error_Syntax(ss, token);
+                S->end = cp;
+                return Error_Syntax(S, token);
             }
             if (*cp == '"') {
-                cp = maybe Try_Scan_Quoted_Or_Braced_String_Push_Mold(
-                    mo, cp, ss
+                Option(Error*) e = Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
+                    &cp, mo, cp, ss
                 );
-                if (not cp) {
-                    return Error_Syntax(ss, token);
-                }
-                ss->end = cp;
+                if (e)
+                    return e;
+                S->end = cp;
                 return LOCATED(token);
             }
             while (*cp == '~' or Is_Interstitial(*cp)) {  // #: and #/ legal
@@ -1391,17 +1404,17 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                     ++cp;
             }
 
-            ss->end = cp;
+            S->end = cp;
             return LOCATED(token);
 
           case LEX_SPECIAL_APOSTROPHE:
             while (*cp == '\'')  // get sequential apostrophes as one token
                 ++cp;
-            ss->end = cp;
+            S->end = cp;
             return LOCATED(TOKEN_APOSTROPHE);
 
           case LEX_SPECIAL_GREATER:  // arrow words like `>` handled above
-            return Error_Syntax(ss, TOKEN_TAG);
+            return Error_Syntax(S, TOKEN_TAG);
 
           case LEX_SPECIAL_LESSER:
             cp = Seek_To_End_Of_Tag(cp);
@@ -1412,9 +1425,9 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                     or Is_Lex_Whitespace(*cp)  // `<abc>def` not legal
                 )
             ){
-                return Error_Syntax(ss, TOKEN_TAG);
+                return Error_Syntax(S, TOKEN_TAG);
             }
-            ss->end = cp;
+            S->end = cp;
             return LOCATED(TOKEN_TAG);
 
           case LEX_SPECIAL_PLUS:  // +123 +123.45 +$123
@@ -1430,8 +1443,8 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             }
             cp++;
             if (Is_Lex_Number(*cp)) {
-                if (*ss->end == ':') {  // thinks it was "delimited" by colon
-                    cp = ss->end;
+                if (*S->end == ':') {  // thinks it was "delimited" by colon
+                    cp = S->end;
                     token = TOKEN_TIME;
                     goto prescan_subsume_up_to_one_dot;  // -596523:14:07.9999
                 }
@@ -1442,7 +1455,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                     goto next_lex_special;
                 if (*cp == '+' or *cp == '-')
                     goto prescan_word;
-                return Error_Syntax(ss, TOKEN_WORD);
+                return Error_Syntax(S, TOKEN_WORD);
             }
             goto prescan_word;
 
@@ -1463,46 +1476,48 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
           pound:
             cp++;
             if (*cp == '[') {
-                ss->end = ++cp;
+                S->end = ++cp;
                 return LOCATED(TOKEN_CONSTRUCT);
             }
             if (*cp == '"') {  // CHAR #"C"
                 Codepoint dummy;
                 cp++;
                 if (*cp == '"') {  // #"" is NUL
-                    ss->end = cp + 1;
+                    S->end = cp + 1;
                     return LOCATED(TOKEN_CHAR);
                 }
                 cp = maybe Try_Scan_UTF8_Char_Escapable(&dummy, cp);
                 if (cp and *cp == '"') {
-                    ss->end = cp + 1;
+                    S->end = cp + 1;
                     return LOCATED(TOKEN_CHAR);
                 }
                 // try to recover at next new line...
-                cp = ss->begin + 1;
+                cp = S->begin + 1;
                 while (not ANY_CR_LF_END(*cp))
                     ++cp;
-                ss->end = cp;
-                return Error_Syntax(ss, TOKEN_CHAR);
+                S->end = cp;
+                return Error_Syntax(S, TOKEN_CHAR);
             }
             if (*cp == '{') {  // BINARY #{12343132023902902302938290382}
-                ss->end = ss->begin;  // save start
-                ss->begin = cp;
-                cp = maybe Try_Scan_Quoted_Or_Braced_String_Push_Mold(
-                    mo, cp, ss
+                S->end = S->begin;  // save start
+                S->begin = cp;
+                Option(Error*) e = Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
+                    &cp, mo, cp, ss
                 );
-                ss->begin = ss->end;  // restore start
+                if (e)
+                    return e;
+                S->begin = S->end;  // restore start
                 if (cp) {
-                    ss->end = cp;
+                    S->end = cp;
                     return LOCATED(TOKEN_BINARY);
                 }
                 // try to recover at next new line...
-                cp = ss->begin + 1;
+                cp = S->begin + 1;
                 while (not ANY_CR_LF_END(*cp))
                     ++cp;
-                ss->end = cp;
+                S->end = cp;
 
-                // !!! This was Error_Syntax(ss, TOKEN_BINARY), but if we use
+                // !!! This was Error_Syntax(S, TOKEN_BINARY), but if we use
                 // the same error as for an unclosed string the console uses
                 // that to realize the binary may be incomplete.  It may also
                 // have bad characters in it, but that would be detected by
@@ -1510,12 +1525,12 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 //
                 return Error_Missing(S, '}');
             }
-            if (cp - 1 == ss->begin) {
+            if (cp - 1 == S->begin) {
                 --cp;
                 token = TOKEN_ISSUE;
                 goto issue_or_file_token;  // same policies on including `/`
             }
-            return Error_Syntax(ss, TOKEN_INTEGER);
+            return Error_Syntax(S, TOKEN_INTEGER);
 
           case LEX_SPECIAL_DOLLAR:
             if (
@@ -1523,7 +1538,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             ){
                 while (*cp == '$')
                     ++cp;
-                ss->end = cp;
+                S->end = cp;
                 return LOCATED(TOKEN_WORD);
             }
             if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
@@ -1534,16 +1549,16 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             goto prescan_subsume_up_to_one_dot;
 
           case LEX_SPECIAL_UTF8_ERROR:
-            return Error_Syntax(ss, TOKEN_WORD);
+            return Error_Syntax(S, TOKEN_WORD);
 
           default:
-            return Error_Syntax(ss, TOKEN_WORD);
+            return Error_Syntax(S, TOKEN_WORD);
         }
 
       case LEX_CLASS_WORD:
         if (
             Only_Lex_Flag(flags, LEX_SPECIAL_WORD)
-            and *ss->end != ':'  // need additional scan for URL if word://
+            and *S->end != ':'  // need additional scan for URL if word://
         ){
             return LOCATED(TOKEN_WORD);
         }
@@ -1556,15 +1571,15 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             goto prescan_subsume_all_dots;  // `123@example.com`
         }
 
-        if (*ss->end == ':') {  // special interpretation for 10:00 etc
-            if (not Is_Lex_Number(ss->end[1]))  // but not special for `a.1:`
+        if (*S->end == ':') {  // special interpretation for 10:00 etc
+            if (not Is_Lex_Number(S->end[1]))  // but not special for `a.1:`
                 return LOCATED(TOKEN_INTEGER);
             token = TOKEN_TIME;
             goto prescan_subsume_up_to_one_dot;
         }
 
-        if (*ss->end == '.') {  // special interpretation for 1.2 etc
-            if (not Is_Lex_Number(ss->end[1]))  // but not special for `1.a`
+        if (*S->end == '.') {  // special interpretation for 1.2 etc
+            if (not Is_Lex_Number(S->end[1]))  // but not special for `1.a`
                 return LOCATED(TOKEN_INTEGER);
             return LOCATED(TOKEN_INTEGER);  // !!! see TOKEN_INTEGER hack!
         }
@@ -1573,7 +1588,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             return LOCATED(TOKEN_INTEGER);  // simple integer e.g. `123`
 
         if (Has_Lex_Flag(flags, LEX_SPECIAL_POUND)) {
-            if (cp == ss->begin) {  // no +2 +16 +64 allowed
+            if (cp == S->begin) {  // no +2 +16 +64 allowed
                 if (
                     (
                         cp[0] == '6'
@@ -1595,7 +1610,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                     goto pound;  // base-2 binary, "very rare"
                 }
             }
-            return Error_Syntax(ss, TOKEN_INTEGER);
+            return Error_Syntax(S, TOKEN_INTEGER);
         }
 
         if (Has_Lex_Flag(flags, LEX_SPECIAL_POUND)) { // -#123 2#1010
@@ -1609,7 +1624,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                     )
                 )
             ){
-                return Error_Syntax(ss, TOKEN_INTEGER);
+                return Error_Syntax(S, TOKEN_INTEGER);
             }
             return LOCATED(TOKEN_INTEGER);
         }
@@ -1619,14 +1634,14 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         // because it is more useful to have `1/2` and other numeric-styled
         // PATH!s for use in dialecting.
         //
-        for (; cp != ss->end; cp++) {
+        for (; cp != S->end; cp++) {
             // what do we hit first? 1-AUG-97 or 123E-4
             if (*cp == '-')
                 return LOCATED(TOKEN_DATE);  // 1-2-97 1-jan-97
             if (*cp == 'x' or *cp == 'X')
                 return LOCATED(TOKEN_PAIR);  // 320x200
             if (*cp == 'E' or *cp == 'e') {
-                if (Skip_To_Byte(cp, ss->end, 'x'))
+                if (Skip_To_Byte(cp, S->end, 'x'))
                     return LOCATED(TOKEN_PAIR);
                 return LOCATED(TOKEN_DECIMAL);  // 123E4
             }
@@ -1634,13 +1649,13 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 return LOCATED(TOKEN_PERCENT);
 
             if (Is_Dot_Or_Slash(*cp)) {  // will be part of a TUPLE! or PATH!
-                ss->end = cp;
+                S->end = cp;
                 return LOCATED(TOKEN_INTEGER);
             }
         }
         if (Has_Lex_Flag(flags, LEX_SPECIAL_APOSTROPHE))  // 1'200
             return LOCATED(TOKEN_INTEGER);
-        return Error_Syntax(ss, TOKEN_INTEGER);
+        return Error_Syntax(S, TOKEN_INTEGER);
 
       default:
         break;  // panic after switch, so no cases fall through accidentally
@@ -1650,8 +1665,8 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
   prescan_word: { /////////////////////////////////////////////////////////////
 
-   if (*ss->end == ':') {  // word:  url:words
-        cp = ss->end + 1;
+   if (*S->end == ':') {  // word:  url:words
+        cp = S->end + 1;
         if (*cp != '/')
             return LOCATED(TOKEN_WORD);
         ++cp;  // saw `:/`
@@ -1663,7 +1678,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             while (Is_Lex_Not_Delimit(*cp) or not Is_Lex_Delimit_Hard(*cp))
                 ++cp;  // not delimiter, e.g. `http://example.com]` stops it
         } while (Is_Interstitial(*cp));  // slash, dots, and colons legal
-        ss->end = cp;
+        S->end = cp;
         return LOCATED(TOKEN_URL);
     }
     if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
@@ -1675,12 +1690,12 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         goto prescan_subsume_up_to_one_dot;
     }
     if (Has_Lex_Flags(flags, LEX_FLAGS_NONWORD_SPECIALS))
-        return Error_Syntax(ss, TOKEN_WORD);  // has non-word chars (eg % \ )
+        return Error_Syntax(S, TOKEN_WORD);  // has non-word chars (eg % \ )
     if (
         Has_Lex_Flag(flags, LEX_SPECIAL_LESSER)
         or Has_Lex_Flag(flags, LEX_SPECIAL_GREATER)
     ){
-        return Error_Syntax(ss, TOKEN_WORD);  // arrow words handled way above
+        return Error_Syntax(S, TOKEN_WORD);  // arrow words handled way above
     }
 
     return LOCATED(TOKEN_WORD);
@@ -1700,12 +1715,12 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     // can be a CHAIN!.
 
     bool dot_subsumed = false;
-    if (*ss->end == '.')
+    if (*S->end == '.')
         dot_subsumed = true;
-    else if (*ss->end != ':' and *ss->end != ',')
+    else if (*S->end != ':' and *S->end != ',')
         return LOCATED(token);
 
-    cp = ss->end + 1;
+    cp = S->end + 1;
     while (
         *cp == ':'
         or (not dot_subsumed and *cp == '.' and (dot_subsumed = true))
@@ -1713,7 +1728,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     ){
         ++cp;
     }
-    ss->end = cp;
+    S->end = cp;
 
     return LOCATED(token);
 
@@ -1730,17 +1745,17 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     //
     // (This is just good enough to lets the existing tests work on EMAIL!)
 
-    if (*ss->end != '.')
+    if (*S->end != '.')
         return LOCATED(token);
 
-    cp = ss->end + 1;
+    cp = S->end + 1;
     while (
         *cp == '.'
         or (not Is_Lex_Delimit(*cp) and not Is_Lex_Whitespace(*cp))
     ){
         ++cp;
     }
-    ss->end = cp;
+    S->end = cp;
 
     return LOCATED(token);
 }}
@@ -1760,12 +1775,13 @@ void Init_Scan_Level(
 ){
     S->ss = ss;
 
-    ss->begin = maybe bp;  // Locate_Token's first fetch from vaptr
-    Corrupt_Pointer_If_Debug(ss->end);
+    Corrupt_Pointer_If_Debug(S->begin);
+    Corrupt_Pointer_If_Debug(S->end);
 
     ss->file = file;
 
-    S->start_line_head = ss->line_head = ss->begin;
+    ss->at = maybe bp;
+    S->start_line_head = ss->line_head = ss->at;
     S->start_line = ss->line = line;
     S->mode = '\0';
 }
@@ -1795,19 +1811,9 @@ Bounce Scanner_Executor(Level* const L) {
         return THROWN;  // no state to cleanup (just data stack, auto-cleaned)
 
     ScanState* S = &level_->u.scan;
-    TranscodeState* ss = S->ss;
+    TranscodeState* transcode = S->ss;
 
     DECLARE_MOLD (mo);
-
-    // "bp" and "ep" capture the beginning and end pointers of the token.
-    // They may be manipulated during the scan process if desired.
-    //
-    const Byte* bp;
-    const Byte* ep;
-    REBLEN len;
-
-    Corrupt_Pointer_If_Debug(bp);
-    Corrupt_Pointer_If_Debug(ep);
 
     enum {
         ST_SCANNER_INITIAL_ENTRY = STATE_0,
@@ -1820,15 +1826,9 @@ Bounce Scanner_Executor(Level* const L) {
         goto initial_entry;
 
       case ST_SCANNER_SCANNING_CHILD_ARRAY :
-        bp = ss->begin;
-        ep = ss->end;
-        len = ep - bp;
         goto child_array_scanned;
 
       case ST_SCANNER_SCANNING_CONSTRUCT:
-        bp = ss->begin;
-        ep = ss->end;
-        len = ep - bp;
         goto construct_scan_to_stack_finished;
 
       default : assert(false);
@@ -1862,18 +1862,21 @@ Bounce Scanner_Executor(Level* const L) {
         goto done;
     }
 
-    assert(ss->begin and ss->end and ss->begin < ss->end);  // else good token
+    assert(S->begin and S->end and S->begin < S->end);  // else good token
 
-    bp = ss->begin;
-    ep = ss->end;
-    len = ep - bp;
+    // "bp" and "ep" capture the beginning and end pointers of the token.
+    // They may be manipulated during the scan process if desired.
+    //
+    const Byte* bp = S->begin;
+    const Byte* ep = S->end;
+    REBLEN len = ep - bp;
 
-    ss->begin = ss->end;  // accept token
+    transcode->at = S->end;  // accept token (may adjust for token length)
 
     switch (token) {
       case TOKEN_NEWLINE:
         Set_Scan_Executor_Flag(L, NEWLINE_PENDING);
-        ss->line_head = ep;
+        transcode->line_head = ep;
         goto loop;
 
       case TOKEN_BLANK:
@@ -1891,7 +1894,7 @@ Bounce Scanner_Executor(Level* const L) {
             // only get here if there's space before the comma.
             //
             Init_Blank(PUSH());
-            ss->end = ss->begin = ep = bp;  // let parent see `,`
+            transcode->at = bp;  // let parent see `,`
             goto done;
         }
 
@@ -1932,28 +1935,28 @@ Bounce Scanner_Executor(Level* const L) {
 
       token_prefixable_sigil:
         if (S->sigil_pending)
-            return RAISE(Error_Syntax(ss, token));  // no "GET-GET-WORD!"
+            return RAISE(Error_Syntax(S, token));  // no "GET-GET-WORD!"
 
         S->sigil_pending = Sigil_From_Token(token);
         goto loop;
 
       case TOKEN_WORD:
         if (len == 0)
-            return RAISE(Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(S, token));
 
         Init_Word(PUSH(), Intern_UTF8_Managed(bp, len));
         break;
 
       case TOKEN_ISSUE:
         if (ep != Try_Scan_Issue_To_Stack(bp + 1, len - 1))
-            return RAISE(Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(S, token));
         break;
 
       case TOKEN_APOSTROPHE: {
         assert(*bp == '\'');  // should be `len` sequential apostrophes
 
         if (S->sigil_pending)  // can't do @'foo: or :'foo or ~'foo~
-            return RAISE(Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(S, token));
 
         if (
             Is_Lex_Whitespace(*ep)
@@ -1975,35 +1978,38 @@ Bounce Scanner_Executor(Level* const L) {
         goto loop; }
 
       case TOKEN_TILDE: {
-        assert(*bp == '~');
+        assert(*S->begin == '~' and len == 1);
 
         if (S->sigil_pending)  // can't do @~foo:~ or :~foo~ or ~~foo~~
-            return RAISE(Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(S, token));
 
-        if (*ep == '~') {
+        if (*S->end == '~') {  // Note: looking past bounds of token!
             if (
-                Is_Lex_Whitespace(ep[1])
-                or ep[1] == ']' or ep[1] == ')'
+                Is_Lex_Whitespace(S->end[1])
+                or S->end[1] == ']' or S->end[1] == ')'
             ){
                 Init_Sigil(PUSH(), SIGIL_QUASI);  // it's ~~
                 Quotify(TOP, S->quotes_pending);
                 S->quotes_pending = 0;
 
-                ss->begin = ep + 1;
-                Corrupt_Pointer_If_Debug(ss->end);
+                assert(transcode->at == S->end);  // token consumed one tilde
+                transcode->at = S->end + 1;  // extend amount consumed by 1
                 goto loop;
             }
-            return RAISE(Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(S, token));
         }
 
         if (
-            Is_Lex_Whitespace(*ep)
-            or *ep == ']' or *ep == ')'
-            or *ep == ';'
-            or (*ep == ',' and ep[1] != '~')  // (x: ~, y: 10) isn't quasi-comma
+            Is_Lex_Whitespace(*S->end)
+            or *S->end == ']' or *S->end == ')'
+            or *S->end == ';'
+            or (
+                *S->end == ','  // (x: ~, y: 10) isn't quasi-comma
+                and S->end[1] != '~'
+            )
         ){
             // If we have something like [~] there won't be another token
-            // push coming along to apply the quotes to, so quasi a null.
+            // push coming along to apply the tildes to, so quasi a blank.
             // This also applies to comments.
             //
             Init_Quasi_Blank(PUSH());
@@ -2023,13 +2029,13 @@ Bounce Scanner_Executor(Level* const L) {
                 | LEVEL_FLAG_RAISED_RESULT_OK
         );
 
-        sub->u.scan.ss = ss;
+        sub->u.scan.ss = transcode;
 
         // Capture current line and head of line into the starting points.
         // (Some errors wish to report the start of the array's location.)
         //
-        sub->u.scan.start_line = ss->line;
-        sub->u.scan.start_line_head = ss->line_head;
+        sub->u.scan.start_line = transcode->line;
+        sub->u.scan.start_line_head = transcode->line_head;
 
         sub->u.scan.mode = (token == TOKEN_BLOCK_BEGIN ? ']' : ')');
         STATE = ST_SCANNER_SCANNING_CHILD_ARRAY;
@@ -2037,15 +2043,15 @@ Bounce Scanner_Executor(Level* const L) {
         return CATCH_CONTINUE_SUBLEVEL(sub); }
 
       case TOKEN_TUPLE:
-        assert(*bp == '.');
+        assert(*S->begin == '.' and len == 1);
         goto out_of_turn_interstitial;
 
       case TOKEN_CHAIN:
-        assert(*bp == ':');
+        assert(*S->begin == ':' and len == 1);
         goto out_of_turn_interstitial;
 
       case TOKEN_PATH:
-        assert(*bp == '/');
+        assert(*S->begin == '/' and len == 1);
         goto out_of_turn_interstitial;
 
       out_of_turn_interstitial: {
@@ -2061,42 +2067,41 @@ Bounce Scanner_Executor(Level* const L) {
         // processing would happen run (either start a new path or tuple, or
         // continuing one in progress).  So just do that push and "unconsume"
         // the delimiter so the lookahead sees it.
-
-        assert(ep == bp + 1 and ss->begin == ep and ss->end == ep);
-
+        //
         if (S->sigil_pending == SIGIL_QUASI) {
             Init_Trash(PUSH());  // if we end up with ~/~, we decay it to word
             S->sigil_pending = SIGIL_0;  // quasi-sequences don't exist
         }
         else
             Init_Blank(PUSH());
-        ep = ss->begin = ss->end = bp;  // "unconsume" .` or `/` or `:` token
+
+        assert(transcode->at == S->end);
+        transcode->at = S->begin;  // "unconsume" .` or `/` or `:` token
         break; }
 
       case TOKEN_BLOCK_END:
-        assert(*bp == ']' and len == 1);
+        assert(*S->begin == ']' and len == 1);
         goto handle_list_end_delimiter;
 
       case TOKEN_GROUP_END:
-        assert(*bp == ')' and len == 1);
+        assert(*S->begin == ')' and len == 1);
         goto handle_list_end_delimiter;
 
       handle_list_end_delimiter: {
-        Byte end_delimiter = *bp;
+        Byte end_delimiter = *S->begin;
         if (S->mode == end_delimiter)
             goto done;
 
         if (Is_Interstitial(S->mode)) {  // implicit end [the /] (abc/)
             Init_Blank(PUSH());  // add a blank
-            --ss->begin;
-            --ss->end;
+            --transcode->at;  // !!! necessary?
             goto done;
         }
 
         if (S->mode != '\0')  // expected ']' before ')' or vice-versa
             return RAISE(Error_Mismatch(S, S->mode, end_delimiter));
 
-        return RAISE(Error_Extra(ss, end_delimiter)); }  // stray end delimiter
+        return RAISE(Error_Extra(transcode, end_delimiter)); }
 
       case TOKEN_INTEGER: {
         //
@@ -2131,7 +2136,7 @@ Bounce Scanner_Executor(Level* const L) {
             for (; *temp != '.'; ++temp, ++temp_len) {
                 if (Is_Lex_Delimit(*temp)) {
                     token = TOKEN_DECIMAL;
-                    ss->begin = ss->end = ep = temp;
+                    transcode->at = S->begin = S->end = ep = temp;
                     len = temp_len;
                     goto scan_decimal;
                 }
@@ -2141,7 +2146,7 @@ Bounce Scanner_Executor(Level* const L) {
         // Wasn't beginning of a DECIMAL!, so scan as a normal INTEGER!
         //
         if (ep != Try_Scan_Integer_To_Stack(bp, len))
-            return RAISE(Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(S, token));
 
         break; }
 
@@ -2149,10 +2154,10 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_PERCENT:
       scan_decimal:
         if (Is_Interstitial(*ep))
-            return RAISE(Error_Syntax(ss, token));  // No `1.2/abc`
+            return RAISE(Error_Syntax(S, token));  // No `1.2/abc`
 
         if (ep != Try_Scan_Decimal_To_Stack(bp, len, false))
-            return RAISE(Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(S, token));
 
         if (bp[len - 1] == '%') {
             HEART_BYTE(TOP) = REB_PERCENT;
@@ -2163,10 +2168,10 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_MONEY:
         if (Is_Interstitial(*ep)) {  // Do not allow $1/$2
             ++ep;
-            return RAISE(Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(S, token));
         }
         if (ep != Try_Scan_Money_To_Stack(bp, len))
-            return RAISE(Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(S, token));
         break;
 
       case TOKEN_TIME:
@@ -2175,13 +2180,13 @@ Bounce Scanner_Executor(Level* const L) {
             and Is_Dot_Or_Slash(S->mode)  // could be path/10: set
         ){
             if (ep - 1 != Try_Scan_Integer_To_Stack(bp, len - 1))
-                return RAISE(Error_Syntax(ss, token));
+                return RAISE(Error_Syntax(S, token));
 
-            ss->end--;  // put ':' back on end but not beginning
+            S->end--;  // put ':' back on end but not beginning
             break;
         }
         if (ep != Try_Scan_Time_To_Stack(bp, len))
-            return RAISE(Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(S, token));
         break;
 
       case TOKEN_DATE:
@@ -2194,10 +2199,10 @@ Bounce Scanner_Executor(Level* const L) {
                 // prevent infinite loop, should never be longer than this
                 break;
             }
-            ss->begin = ep;  // End point extended to cover time
+            transcode->at = S->begin = ep;  // End point extended to cover time
         }
         if (ep != Try_Scan_Date_To_Stack(bp, len))
-            return RAISE(Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(S, token));
         break;
 
       case TOKEN_CHAR: {
@@ -2208,7 +2213,7 @@ Bounce Scanner_Executor(Level* const L) {
             break;
         }
         if (ep - 1 != Try_Scan_UTF8_Char_Escapable(&uni, bp))
-            return RAISE(Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(S, token));
 
         Option(Error*) error = Trap_Init_Char(PUSH(), uni);
         if (error)
@@ -2220,38 +2225,42 @@ Bounce Scanner_Executor(Level* const L) {
         break;
 
       case TOKEN_BINARY:
-        if (ep != Try_Scan_Binary_To_Stack(bp, len))
-            return RAISE(Error_Syntax(ss, token));
+        if (S->end != Try_Scan_Binary_To_Stack(S->begin, len))
+            return RAISE(Error_Syntax(S, token));
         break;
 
       case TOKEN_PAIR:
-        if (ep != Try_Scan_Pair_To_Stack(bp, len))
-            return RAISE(Error_Syntax(ss, token));
+        if (S->end != Try_Scan_Pair_To_Stack(S->begin, len))
+            return RAISE(Error_Syntax(S, token));
         break;
 
       case TOKEN_FILE:
-        if (ep != Try_Scan_File_To_Stack(bp, len))
-            return RAISE(Error_Syntax(ss, token));
+        if (S->end != Try_Scan_File_To_Stack(S->begin, len))
+            return RAISE(Error_Syntax(S, token));
         break;
 
       case TOKEN_EMAIL:
-        if (ep != Try_Scan_Email_To_Stack(bp, len))
-            return RAISE(Error_Syntax(ss, token));
+        if (S->end != Try_Scan_Email_To_Stack(S->begin, len))
+            return RAISE(Error_Syntax(S, token));
         break;
 
       case TOKEN_URL:
-        if (ep != Try_Scan_URL_To_Stack(bp, len))
-            return RAISE(Error_Syntax(ss, token));
+        if (S->end != Try_Scan_URL_To_Stack(S->begin, len))
+            return RAISE(Error_Syntax(S, token));
         break;
 
       case TOKEN_TAG:
-        if (ep - 1 != Try_Scan_Unencoded_String_To_Stack(
-            bp + 1,
+        assert(
+            len >= 2 and *S->begin == '<'
+            /* and *S->end == '>' */  // !!! doesn't know, scan ignores length
+        );
+        if (S->end - 1 != Try_Scan_Unencoded_String_To_Stack(
+            S->begin + 1,
             len - 2,  // !!! doesn't know where tag actually ends (?)
             REB_TAG,
             STRMODE_NO_CR
         )){
-            return RAISE(Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(S, token));
         }
         break;
 
@@ -2264,13 +2273,13 @@ Bounce Scanner_Executor(Level* const L) {
                 | LEVEL_FLAG_RAISED_RESULT_OK
         );
 
-        sub->u.scan.ss = ss;
+        sub->u.scan.ss = transcode;
 
         // Capture current line and head of line into the starting points.
         // (Some errors wish to report the start of the array's location.)
         //
-        sub->u.scan.start_line = ss->line;
-        sub->u.scan.start_line_head = ss->line_head;
+        sub->u.scan.start_line = transcode->line;
+        sub->u.scan.start_line_head = transcode->line_head;
 
         sub->u.scan.mode = ']';
         STATE = ST_SCANNER_SCANNING_CONSTRUCT;
@@ -2292,18 +2301,16 @@ Bounce Scanner_Executor(Level* const L) {
   // similar.  It may be useful, so enabling it for now.
 
     if (S->sigil_pending == SIGIL_QUASI) {
-        if (*ep != '~')
-            return RAISE(Error_Syntax(ss, TOKEN_TILDE));
+        if (*transcode->at != '~')
+            return RAISE(Error_Syntax(S, TOKEN_TILDE));
 
         Option(Error*) error = Trap_Coerce_To_Quasiform(TOP);
         if (error) {
             /* Free_Unmanaged_Flex(error); */  // !!! but it's managed :-(
-            return RAISE(Error_Syntax(ss, TOKEN_TILDE));  // !!! better error!
+            return RAISE(Error_Syntax(S, TOKEN_TILDE));  // !!! better error!
         }
 
-        ++ss->begin;  // loop does ss->begin = ss->end, we must compensate
-        ++ep;  // sequence checking below looks at this, too
-        ss->end = ep;  // it seems this has to be in sync as well?
+        ++transcode->at;  // must compensate the `transcode->at = S->end`
         S->sigil_pending = SIGIL_0;
     }
 
@@ -2320,38 +2327,36 @@ Bounce Scanner_Executor(Level* const L) {
         // of a new child scan.
         //
         if (S->mode == '/') {
-            if (*ep == '.' or *ep == ':') {
-                ++ss->begin;
-                goto scan_sequence_ep_is_delimiter_top_is_head;
-            }
+            if (*transcode->at == '.' or *transcode->at == ':')
+                goto scan_sequence_at_is_delimiter_top_is_head;
         }
         else if (S->mode == ':') {
-            if (*ep == '.') {
-                ++ss->begin;
-                goto scan_sequence_ep_is_delimiter_top_is_head;
-            }
+            if (*transcode->at == '.')
+                goto scan_sequence_at_is_delimiter_top_is_head;
         }
 
         // If we are scanning `a.b` and see `/c`, we want to defer to the
         // path scanning and consider the tuple finished.  This means we
         // want the level above to finish but then see the `/`.  Review.
 
-        if (S->mode == '.' and (*ep == '/' or *ep == ':'))
+        if (S->mode == '.' and (*transcode->at == '/' or *transcode->at == ':'))
             goto done;  // !!! need to return, but...?
 
-        if (S->mode == ':' and (*ep == '/'))
+        if (S->mode == ':' and (*transcode->at == '/'))
             goto done;  // !!! need to return, but...?
 
-        if (not Interstitial_Match(*ep, S->mode))
+        if (not Interstitial_Match(*transcode->at, S->mode))
             goto done;  // e.g. `a/b`, just finished scanning b
 
-        ++ep;
-        ss->begin = ep;
+        ++transcode->at;
 
         if (
-            *ep == '\0' or Is_Lex_Space(*ep) or ANY_CR_LF_END(*ep)
-            or *ep == ')' or *ep == ']'
+            *transcode->at == '\0'
+            or Is_Lex_Space(*transcode->at)
+            or ANY_CR_LF_END(*transcode->at)
+            or *transcode->at == ')' or *transcode->at == ']'
         ){
+            Init_Blank(PUSH());
             goto done;
         }
 
@@ -2362,14 +2367,12 @@ Bounce Scanner_Executor(Level* const L) {
         //
         goto loop;
     }
-    else if (Is_Interstitial(*ep)) {  // starting a new path/chain/tuple
+    else if (Is_Interstitial(*transcode->at)) {  // a new path/chain/tuple
         //
         // We're noticing a sequence was actually starting with the element
         // that just got pushed, so it should be a part of that path.
-
-        ++ss->begin;
-
-        goto scan_sequence_ep_is_delimiter_top_is_head;
+        //
+        goto scan_sequence_at_is_delimiter_top_is_head;
     }
 
   //=//// APPLY PENDING SIGILS AND QUOTES /////////////////////////////////=//
@@ -2387,7 +2390,7 @@ Bounce Scanner_Executor(Level* const L) {
     if (S->sigil_pending) {
         Heart heart = Cell_Heart_Ensure_Noquote(TOP);
         if (not Any_Plain_Kind(heart))
-            return RAISE(Error_Syntax(ss, TOKEN_BLANK));  // !!! token?
+            return RAISE(Error_Syntax(S, TOKEN_BLANK));  // !!! token?
 
         HEART_BYTE(TOP) = Sigilize_Any_Plain_Kind(
             unwrap S->sigil_pending,
@@ -2438,54 +2441,56 @@ Bounce Scanner_Executor(Level* const L) {
 
     // Tag array with line where the beginning bracket/group/etc. was found
     //
-    a->misc.line = ss->line;
-    LINK(Filename, a) = maybe ss->file;
+    a->misc.line = transcode->line;
+    LINK(Filename, a) = maybe transcode->file;
     Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
     Set_Flex_Flag(a, LINK_NODE_NEEDS_MARK);
 
     Init_Any_List(PUSH(), heart, a);
 
-    ep = ss->end;
     goto lookahead_for_sequencing_token;
 
-} scan_sequence_ep_is_delimiter_top_is_head: { ///////////////////////////////
+} scan_sequence_at_is_delimiter_top_is_head: { ///////////////////////////////
 
     Token token;
     Heart heart;
-    Byte mode;
+    Byte mode = *transcode->at;
 
-    switch (*ep) {
+    switch (mode) {
       case '/':
         token = TOKEN_PATH;
         heart = REB_PATH;
-        mode = '/';
         break;
 
       case ':':
         token = TOKEN_CHAIN;
         heart = REB_CHAIN;
-        mode = ':';
         break;
 
       case '.':
         token = TOKEN_TUPLE;
         heart = REB_TUPLE;
-        mode = '.';
         break;
 
       default:
         panic (nullptr);
     }
+
+    ++transcode->at;
+
     StackIndex stackindex_path_head = TOP_INDEX;
 
     if (
-        *ss->begin == '\0'  // `foo/`
-        or Is_Lex_Whitespace(*ss->begin)  // `foo/ bar`
-        or *ss->begin == ';'  // `foo/;bar`
-        or *ss->begin == ','  // `a:, b`
+        *transcode->at == '\0'  // `foo/`
+        or Is_Lex_Whitespace(*transcode->at)  // `foo/ bar`
+        or *transcode->at == ';'  // `foo/;bar`
+        or *transcode->at == ','  // `a:, b`
     ){
-        // Don't bother scanning recursively if we don't have to.
-        // Note we still might come up empty (e.g. `foo/)`)
+        // Optimization: Don't bother scanning recursively if we would just
+        // wind up pushing a blank.  Note this is not exhaustive, and there
+        // are other ways to get a blank...like `foo/)`
+        //
+        Init_Blank(PUSH());  // don't recurse if we'd just push blank [1]
     }
     else {
         Level* sub = Make_Level(
@@ -2495,10 +2500,12 @@ Bounce Scanner_Executor(Level* const L) {
         );
 
         ScanState* child = &sub->u.scan;
-        child->ss = ss;
+        child->ss = transcode;
         child->start_line = S->start_line;
         child->start_line_head = S->start_line_head;
         child->mode = mode;
+        Corrupt_Pointer_If_Debug(child->begin);
+        Corrupt_Pointer_If_Debug(child->end);
 
         Push_Level(OUT, sub);
 
@@ -2511,16 +2518,6 @@ Bounce Scanner_Executor(Level* const L) {
 
         if (Is_Raised(OUT))
             return OUT;
-    }
-
-    // The scanning process for something like `.` or `a/` will not have
-    // pushed anything to represent the last "blank".  Doing so would
-    // require lookahead, which would overlap with this lookahead logic.
-    // So notice if a trailing `.` or `/` requires pushing a blank.
-    //
-    if (ss->begin and *ss->end == mode) {
-        Init_Blank(PUSH());
-        ++ss->end;
     }
 
     // Run through the generalized pop path code, which does any
@@ -2542,7 +2539,7 @@ Bounce Scanner_Executor(Level* const L) {
         for (; stackindex != stackindex_path_head - 1; --stackindex) {
             if (Is_Email(Data_Stack_At(stackindex))) {
                 if (any_email)
-                    return RAISE(Error_Syntax(ss, token));
+                    return RAISE(Error_Syntax(S, token));
                 any_email = true;
             }
         }
@@ -2574,10 +2571,8 @@ Bounce Scanner_Executor(Level* const L) {
         heart,
         stackindex_path_head - 1
     );
-    if (error) {
-        /* Free_Unmanaged_Flex(unwrap error); */  // is managed?! :-(
-        return RAISE(Error_Syntax(ss, token));
-    }
+    if (error)
+        return RAISE(unwrap error);
   }
 
     assert(
@@ -2599,8 +2594,8 @@ Bounce Scanner_Executor(Level* const L) {
         and Is_Stub_Array(cast(Flex*, Cell_Node1(TOP)))
     ){
         Array* a = cast(Array*, Cell_Node1(TOP));
-        a->misc.line = ss->line;
-        LINK(Filename, a) = maybe ss->file;
+        a->misc.line = transcode->line;
+        LINK(Filename, a) = maybe transcode->file;
         Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
         Set_Flex_Flag(a, LINK_NODE_NEEDS_MARK);
 
@@ -2612,7 +2607,6 @@ Bounce Scanner_Executor(Level* const L) {
             Set_Array_Flag(a, NEWLINE_AT_TAIL);
     }
 
-    ep = ss->end;
     goto lookahead_for_sequencing_token;
 
 } construct_scan_to_stack_finished: {  ///////////////////////////////////////
@@ -2633,8 +2627,8 @@ Bounce Scanner_Executor(Level* const L) {
 
     // Tag array with line where the beginning bracket/group/etc. was found
     //
-    array->misc.line = ss->line;
-    LINK(Filename, array) = maybe ss->file;
+    array->misc.line = transcode->line;
+    LINK(Filename, array) = maybe transcode->file;
     Set_Array_Flag(array, HAS_FILE_LINE_UNMASKED);
     Set_Flex_Flag(array, LINK_NODE_NEEDS_MARK);
 
@@ -2875,7 +2869,7 @@ DECLARE_NATIVE(transcode)
     // Because we're building a frame, we can't make a {bp, END} packed array
     // and start up a variadic feed...because the stack variable would go
     // bad as soon as we yielded to the trampoline.  Have to use an END feed
-    // and preload the ss->begin of the scanner here.
+    // and preload the ss->at of the scanner here.
     //
     // Note: Could reuse global TG_End_Feed if context was null.
 
@@ -2966,8 +2960,8 @@ DECLARE_NATIVE(transcode)
 
     if (Is_Binary(source)) {
         const Binary* b = Cell_Binary(source);
-        if (ss->begin)
-            VAL_INDEX_UNBOUNDED(rest) = ss->begin - Binary_Head(b);
+        if (ss->at)
+            VAL_INDEX_UNBOUNDED(rest) = ss->at - Binary_Head(b);
         else
             VAL_INDEX_UNBOUNDED(rest) = Binary_Len(b);
     }
@@ -2984,8 +2978,8 @@ DECLARE_NATIVE(transcode)
         // (It would probably be better if the scanner kept count, though
         // maybe that would make it slower when this isn't needed?)
         //
-        if (ss->begin)
-            VAL_INDEX_RAW(rest) += Num_Codepoints_For_Bytes(bp, ss->begin);
+        if (ss->at)
+            VAL_INDEX_RAW(rest) += Num_Codepoints_For_Bytes(bp, ss->at);
         else
             VAL_INDEX_RAW(rest) += Binary_Tail(Cell_String(source)) - bp;
     }
@@ -3032,14 +3026,14 @@ const Byte* Scan_Any_Word(
     if (token != TOKEN_WORD)
         return nullptr;
 
-    assert(ss.end >= ss.begin);
-    if (size > ss.end - ss.begin)
+    assert(S->end >= S->begin);
+    if (size > S->end - S->begin)
         return nullptr;  // e.g. `as word! "ab cd"` just sees "ab"
 
     Init_Any_Word(out, heart, Intern_UTF8_Managed(utf8, size));
     Drop_Mold_If_Pushed(mo);
     Free_Level_Internal(L);
-    return ss.begin;
+    return S->begin;
 }
 
 
@@ -3138,7 +3132,7 @@ Option(Array*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
         &ss,
         ANONYMOUS,  // %tmp-boot.r name in boot overwritten currently by this
         start_line,
-        nullptr  // let scanner fetch feed->p Utf8 as new ss->begin
+        nullptr  // let scanner fetch feed->p Utf8 as new S->begin
     );
 
     DECLARE_ATOM (temp);

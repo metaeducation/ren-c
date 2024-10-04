@@ -108,16 +108,12 @@
 
 
 struct TranscodeStateStruct {  // shared across all levels of a scan
-    //
-    // Beginning and end positions of currently processed token.
-    //
-    const Byte* begin;
-    const Byte* end;
-
     Option(const String*) file;  // currently scanning (or anonymous)
 
     LineNumber line;  // line number where current scan position is
     const Byte* line_head;  // pointer to head of current line (for errors)
+
+    const Byte* at;  // where the next ScanState should consume material from
 
     // The "limit" feature was not implemented, scanning just stopped at '\0'.
     // It may be interesting in the future, but it doesn't mix well with
@@ -142,6 +138,11 @@ struct ScannerExecutorStateStruct {  // each array scan has a level
     // character we are seeking to find a match for).
     //
     Byte mode;
+
+    // Beginning and end positions of currently processed token.
+    //
+    const Byte* begin;
+    const Byte* end;
 
     LineNumber start_line;
     const Byte* start_line_head;
