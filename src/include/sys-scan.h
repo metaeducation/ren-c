@@ -241,14 +241,12 @@ enum rebol_esc_codes {
 
 struct TranscodeStateStruct {
     //
-    // If vaptr is nullptr, then it's assumed that the `begin` is the source of
+    // If vaptr is nullptr, then it's assumed that the `at` is the source of
     // the UTF-8 data to scan.  Otherwise, it is a variadic feed of UTF-8
     // strings and values that are spliced in.
     //
-    va_list *vaptr;
-
-    const Byte *begin;
-    const Byte *end;
+    va_list* vaptr;
+    const Byte* at;
 
     // The "limit" feature was not implemented, scanning stopped on a null
     // terminator.  It may be interesting in the future, but it doesn't mix
@@ -301,6 +299,9 @@ struct ScanStateStruct {
     // we can produce a GET-WORD! or GET-PATH!.
     //
     bool sigil_pending;
+
+    const Byte* begin;
+    const Byte* end;
 };
 
 typedef struct ScanStateStruct ScanState;

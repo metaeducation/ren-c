@@ -689,20 +689,10 @@ static void Update_Error_Near_For_Line(
 // the NEAR field of the error with the "current" line number and line text,
 // e.g. where the end point of the token is seen.
 //
-static Error* Error_Syntax(TranscodeState* ss, Token token) {
-    //
-    // The scanner code has `bp` and `ep` locals which mirror ss->begin and
-    // ss->end.  However, they get out of sync.  If they are updated, they
-    // should be sync'd before calling here, since it's used to find the
-    // range of text to report.
-    //
-    // !!! Would it be safer to go to ss->b and ss->e, or something similar,
-    // to get almost as much brevity and not much less clarity than bp and
-    // ep, while avoiding the possibility of the state getting out of sync?
-    //
-    assert(ss->begin != nullptr and not Is_Pointer_Corrupt_Debug(ss->begin));
-    assert(ss->end != nullptr and not Is_Pointer_Corrupt_Debug(ss->end));
-    assert(ss->end >= ss->begin);
+static Error* Error_Syntax(ScanState* S, Token token) {
+    assert(S->begin and not Is_Pointer_Corrupt_Debug(S->begin));
+    assert(S->end and not Is_Pointer_Corrupt_Debug(S->end));
+    assert(S->end >= S->begin);
 
     DECLARE_VALUE (token_name);
     Init_Text(
@@ -714,7 +704,7 @@ static Error* Error_Syntax(TranscodeState* ss, Token token) {
     Init_Text(
         token_text,
         Make_Sized_String_UTF8(
-            cs_cast(ss->begin), cast(REBLEN, ss->end - ss->begin)
+            cs_cast(S->begin), cast(REBLEN, S->end - S->begin)
         )
     );
     return Error_Scan_Invalid_Raw(token_name, token_text);
@@ -769,7 +759,7 @@ static Error* Error_Mismatch(ScanState* S, char wanted, char seen) {
 //
 //  Prescan_Token: C
 //
-// This function updates `ss->begin` to skip past leading
+// This function updates `S->begin` to skip past leading
 // whitespace.  If the first character it finds after that is a
 // LEX_DELIMITER (`"`, `[`, `)`, `{`, etc. or a space/newline)
 // then it will advance the end position to just past that one
@@ -793,28 +783,31 @@ static Error* Error_Mismatch(ScanState* S, char wanted, char seen) {
 //
 // Note: The reason the first character's lexical class is not
 // considered is because it's important to know it exactly, so
-// the caller will use Get_Lex_Class(ss->begin[0]).
+// the caller will use Get_Lex_Class(S->begin[0]).
 // Fingerprinting just helps accelerate further categorization.
 //
-static REBLEN Prescan_Token(TranscodeState* ss)
+static REBLEN Prescan_Token(ScanState* S)
 {
-    assert(Is_Pointer_Corrupt_Debug(ss->end)); // prescan only uses ->begin
+    TranscodeState* ss = S->ss;
 
-    const Byte *cp = ss->begin;
+    assert(Is_Pointer_Corrupt_Debug(S->begin));
+    assert(Is_Pointer_Corrupt_Debug(S->end));
+
+    const Byte *cp = ss->at;
     REBLEN flags = 0;
 
     // Skip whitespace (if any) and update the ss
     while (Is_Lex_Space(*cp)) cp++;
-    ss->begin = cp;
+    S->begin = cp;
 
     while (true) {
         switch (Get_Lex_Class(*cp)) {
 
         case LEX_CLASS_DELIMIT:
-            if (cp == ss->begin) {
+            if (cp == S->begin) {
                 // Include the delimiter if it is the only character we
                 // are returning in the range (leave it out otherwise)
-                ss->end = cp + 1;
+                S->end = cp + 1;
 
                 // Note: We'd liked to have excluded LEX_DELIMIT_END, but
                 // would require a Get_Lex_Delimit() call to know to do so.
@@ -822,11 +815,11 @@ static REBLEN Prescan_Token(TranscodeState* ss)
                 // so it can subtract this addition back out itself.
             }
             else
-                ss->end = cp;
+                S->end = cp;
             return flags;
 
         case LEX_CLASS_SPECIAL:
-            if (cp != ss->begin) {
+            if (cp != S->begin) {
                 // As long as it isn't the first character, we union a flag
                 // in the result mask to signal this special char's presence
                 Set_Lex_Flag(flags, Get_Lex_Special(*cp));
@@ -874,8 +867,8 @@ static REBLEN Prescan_Token(TranscodeState* ss)
 // spliced into the array being currently gathered by pushing them to the data
 // stack (as tokens can only be located in UTF-8 strings encountered).
 //
-// The scan state will be updated so that `ss->begin` has been moved past any
-// leading whitespace that was pending in the buffer.  `ss->end` will hold the
+// The scan state will be updated so that `S->begin` has been moved past any
+// leading whitespace that was pending in the buffer.  `S->end` will hold the
 // conclusion at a delimiter.  `token_out` will return the calculated token.
 //
 // The TOKEN_XXX type returned will correspond directly to a Rebol datatype
@@ -914,7 +907,7 @@ static REBLEN Prescan_Token(TranscodeState* ss)
 // incidentally found during this routine without extra cost to compute, it
 // can fail here.
 //
-// Examples with ss's (B)egin (E)nd and return value:
+// Examples with S->(B)egin and S->(E)nd and return value:
 //
 //     foo baz bar => TOKEN_WORD
 //     B  E
@@ -957,21 +950,20 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 ) {
     TranscodeState* ss = S->ss;
 
-  #if !defined(NDEBUG)
-    Corrupt_Pointer_If_Debug(ss->end);
-  #endif
+  acquisition_loop: {
 
-acquisition_loop:
-    //
+    Corrupt_Pointer_If_Debug(S->begin);
+    Corrupt_Pointer_If_Debug(S->end);
+
     // If a non-variadic scan of a UTF-8 string is being done, then ss->vaptr
-    // will be nullptr and ss->begin will be set to the data to scan.  A variadic
-    // scan will start ss->begin at nullptr also.
+    // will be nullptr and ss->at will be set to the data to scan.  A variadic
+    // scan will start ss->at at nullptr also.
     //
-    // Each time a string component being scanned gets exhausted, ss->begin
+    // Each time a string component being scanned gets exhausted, ss->at
     // will be set to nullptr and this loop is run to see if there's more input
     // to be processed.
     //
-    while (ss->begin == nullptr) {
+    while (ss->at == nullptr) {
         if (ss->vaptr == nullptr)  // not a variadic va_list-based scan...
             return LOCATED(TOKEN_END);  // ...so end of utf-8 input was the end
 
@@ -1069,7 +1061,7 @@ acquisition_loop:
             break; }
 
         case DETECTED_AS_UTF8: {
-            ss->begin = cast(const Byte*, p);
+            ss->at = cast(const Byte*, p);
 
             // If we're using a va_list, we start the scan with no C string
             // pointer to serve as the beginning of line for an error message.
@@ -1082,7 +1074,7 @@ acquisition_loop:
             //
             if (ss->line_head == nullptr) {
                 assert(ss->vaptr != nullptr);
-                ss->line_head = ss->begin;
+                ss->line_head = ss->at;
             }
             break; } // fallthrough to "ordinary" scanning
 
@@ -1092,12 +1084,13 @@ acquisition_loop:
             );
         }
     }
+  }
 
     Token token;
 
-    REBLEN flags = Prescan_Token(ss); // sets ->begin, ->end
+    REBLEN flags = Prescan_Token(S);  // sets S->begin, S->end
 
-    const Byte *cp = ss->begin;
+    const Byte *cp = S->begin;
 
     switch (Get_Lex_Class(*cp)) {
 
@@ -1115,11 +1108,11 @@ acquisition_loop:
         delimit_line_feed:;
         case LEX_DELIMIT_LINEFEED:
             ss->line++;
-            ss->end = cp + 1;
+            S->end = cp + 1;
             return LOCATED(TOKEN_NEWLINE);
 
         case LEX_DELIMIT_COMMA:
-            ss->end = cp + 1;
+            S->end = cp + 1;
             return LOCATED(TOKEN_COMMA);
 
         // [BRACKETS]
@@ -1149,17 +1142,17 @@ acquisition_loop:
             cp = Scan_Quote_Push_Mold(mo, cp, ss);
         check_str:
             if (cp) {
-                ss->end = cp;
+                S->end = cp;
                 return LOCATED(TOKEN_STRING);
             }
             // try to recover at next new line...
-            cp = ss->begin + 1;
+            cp = S->begin + 1;
             while (not ANY_CR_LF_END(*cp))
                 ++cp;
-            ss->end = cp;
-            if (ss->begin[0] == '"')
+            S->end = cp;
+            if (S->begin[0] == '"')
                 return Error_Missing('"');
-            if (ss->begin[0] == '{')
+            if (S->begin[0] == '{')
                 return Error_Missing('}');
             panic ("Invalid string start delimiter");
 
@@ -1186,7 +1179,7 @@ acquisition_loop:
                     or cp[1] == ')'
                     or (cp[1] != which and Is_Interstitial(cp[1]))
                 ){
-                    ss->end = cp + 1;
+                    S->end = cp + 1;
                     if (which == ':' and cp[1] == '/')
                         break;  // load `://` with / being the word
                     if (which == '/' and cp[1] == '.')
@@ -1196,7 +1189,7 @@ acquisition_loop:
                 ++cp;
             } while (*cp == which);
 
-            ss->end = ss->begin + 1;
+            S->end = S->begin + 1;
             switch (which) {
               case '.': return LOCATED(TOKEN_TUPLE);
               case ':': return LOCATED(TOKEN_CHAIN);
@@ -1210,12 +1203,12 @@ acquisition_loop:
         case LEX_DELIMIT_END:
             //
             // We've reached the end of this string token's content.  By
-            // putting a nullptr in ss->begin, that will cue the acquisition loop
+            // putting a nullptr in S->begin, that cues the acquisition loop
             // to check if there's a variadic pointer in effect to see if
             // there's more content yet to come.
             //
-            ss->begin = nullptr;
-            Corrupt_Pointer_If_Debug(ss->end);
+            ss->at = nullptr;
+            Corrupt_Pointer_If_Debug(S->end);
             goto acquisition_loop;
 
         default:
@@ -1242,15 +1235,15 @@ acquisition_loop:
         switch (Get_Lex_Special(*cp)) {
 
         case LEX_SPECIAL_AT:
-            return Error_Syntax(ss, TOKEN_EMAIL);
+            return Error_Syntax(S, TOKEN_EMAIL);
 
         case LEX_SPECIAL_PERCENT:       /* %filename */
-            cp = ss->end;
+            cp = S->end;
             if (*cp == '"') {
                 cp = Scan_Quote_Push_Mold(mo, cp, ss);
                 if (cp == nullptr)
-                    return Error_Syntax(ss, TOKEN_FILE);
-                ss->end = cp;
+                    return Error_Syntax(S, TOKEN_FILE);
+                S->end = cp;
                 return LOCATED(TOKEN_FILE);
             }
             while (*cp == '/' or *cp == '.') {  /* deal with delimiter */
@@ -1258,13 +1251,13 @@ acquisition_loop:
                 while (Is_Lex_Not_Delimit(*cp))
                     ++cp;
             }
-            ss->end = cp;
+            S->end = cp;
             return LOCATED(TOKEN_FILE);
 
         case LEX_SPECIAL_APOSTROPHE:
             while (*cp == '\'')  // get sequential apostrophes as one token
                 ++cp;
-            ss->end = cp;
+            S->end = cp;
             return LOCATED(TOKEN_APOSTROPHE);
 
         case LEX_SPECIAL_GREATER:
@@ -1273,7 +1266,7 @@ acquisition_loop:
             if (cp[1] == '>') {
                 if (Is_Lex_Delimit(cp[2]))
                     return LOCATED(TOKEN_WORD);
-                return Error_Syntax(ss, TOKEN_WORD);
+                return Error_Syntax(S, TOKEN_WORD);
             }
             // falls through
         case LEX_SPECIAL_LESSER:
@@ -1284,7 +1277,7 @@ acquisition_loop:
             ){
                 if (Is_Lex_Delimit(cp[2]))
                     return LOCATED(TOKEN_WORD);
-                return Error_Syntax(ss, TOKEN_WORD);
+                return Error_Syntax(S, TOKEN_WORD);
             }
             if (
                 cp[0] == '<' and (cp[1] == '-' or cp[1] == '|')
@@ -1299,11 +1292,11 @@ acquisition_loop:
                 return LOCATED(TOKEN_WORD); // ">|" and ">-"
             }
             if (Get_Lex_Special(*cp) == LEX_SPECIAL_GREATER)
-                return Error_Syntax(ss, TOKEN_WORD);
+                return Error_Syntax(S, TOKEN_WORD);
             cp = Skip_Tag(cp);
             if (cp == nullptr)
-                return Error_Syntax(ss, TOKEN_TAG);
-            ss->end = cp;
+                return Error_Syntax(S, TOKEN_TAG);
+            S->end = cp;
             return LOCATED(TOKEN_TAG);
 
         case LEX_SPECIAL_PLUS:          /* +123 +123.45 +$123 */
@@ -1319,8 +1312,8 @@ acquisition_loop:
             }
             cp++;
             if (Is_Lex_Number(*cp)) {
-                if (*ss->end == ':') {  // thinks it was "delimited" by colon
-                    cp = ss->end;
+                if (*S->end == ':') {  // thinks it was "delimited" by colon
+                    cp = S->end;
                     token = TOKEN_TIME;
                     goto prescan_subsume_up_to_one_dot;  // -596523:14:07.9999
                 }
@@ -1340,7 +1333,7 @@ acquisition_loop:
                 ){
                     return LOCATED(TOKEN_WORD);  // Special exemption for ->
                 }
-                return Error_Syntax(ss, TOKEN_WORD);
+                return Error_Syntax(S, TOKEN_WORD);
             }
             token = TOKEN_WORD;
             goto scanword;
@@ -1360,7 +1353,7 @@ acquisition_loop:
         pound:
             cp++;
             if (*cp == '[') {
-                ss->end = ++cp;
+                S->end = ++cp;
                 return LOCATED(TOKEN_CONSTRUCT);
             }
             if (*cp == '"') { /* CHAR #"C" */
@@ -1368,36 +1361,36 @@ acquisition_loop:
                 cp++;
                 cp = Scan_UTF8_Char_Escapable(&dummy, cp);
                 if (cp != nullptr and *cp == '"') {
-                    ss->end = cp + 1;
+                    S->end = cp + 1;
                     return LOCATED(TOKEN_CHAR);
                 }
                 // try to recover at next new line...
-                cp = ss->begin + 1;
+                cp = S->begin + 1;
                 while (not ANY_CR_LF_END(*cp))
                     ++cp;
-                ss->end = cp;
-                return Error_Syntax(ss, TOKEN_CHAR);
+                S->end = cp;
+                return Error_Syntax(S, TOKEN_CHAR);
             }
             if (*cp == '{') { /* BINARY #{12343132023902902302938290382} */
-                ss->end = ss->begin;  /* save start */
-                ss->begin = cp;
+                S->end = S->begin;  /* save start */
+                S->begin = cp;
                 cp = Scan_Quote_Push_Mold(mo, cp, ss);
-                ss->begin = ss->end;  /* restore start */
+                S->begin = S->end;  /* restore start */
                 if (cp) {
-                    ss->end = cp;
+                    S->end = cp;
                     return LOCATED(TOKEN_BINARY);
                 }
                 // try to recover at next new line...
-                cp = ss->begin + 1;
+                cp = S->begin + 1;
                 while (not ANY_CR_LF_END(*cp))
                     ++cp;
-                ss->end = cp;
-                return Error_Syntax(ss, TOKEN_BINARY);
+                S->end = cp;
+                return Error_Syntax(S, TOKEN_BINARY);
             }
-            if (cp - 1 == ss->begin)
+            if (cp - 1 == S->begin)
                 return LOCATED(TOKEN_ISSUE);
 
-            return Error_Syntax(ss, TOKEN_INTEGER);
+            return Error_Syntax(S, TOKEN_INTEGER);
 
         case LEX_SPECIAL_DOLLAR:
             if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
@@ -1408,13 +1401,13 @@ acquisition_loop:
             goto prescan_subsume_up_to_one_dot;
 
         default:
-            return Error_Syntax(ss, TOKEN_WORD);
+            return Error_Syntax(S, TOKEN_WORD);
         }
 
     case LEX_CLASS_WORD:
         if (
             Only_Lex_Flag(flags, LEX_SPECIAL_WORD)
-            and *ss->end != ':'  // need additional scan for URL if word://
+            and *S->end != ':'  // need additional scan for URL if word://
         ){
             return LOCATED(TOKEN_WORD);
         }
@@ -1428,15 +1421,15 @@ acquisition_loop:
             goto prescan_subsume_all_dots;  // `123@example.com`
         }
 
-        if (*ss->end == ':') {  // special interpretation for 10:00 etc
-            if (not Is_Lex_Number(ss->end[1]))  // but not special for `a.1:`
+        if (*S->end == ':') {  // special interpretation for 10:00 etc
+            if (not Is_Lex_Number(S->end[1]))  // but not special for `a.1:`
                 return LOCATED(TOKEN_INTEGER);
             token = TOKEN_TIME;
             goto prescan_subsume_up_to_one_dot;
         }
 
-        if (*ss->end == '.') {  // special interpretation for 1.2 etc
-            if (not Is_Lex_Number(ss->end[1]))  // but not special for `1.a`
+        if (*S->end == '.') {  // special interpretation for 1.2 etc
+            if (not Is_Lex_Number(S->end[1]))  // but not special for `1.a`
                 return LOCATED(TOKEN_INTEGER);
             return LOCATED(TOKEN_INTEGER);  // !!! see TOKEN_INTEGER hack!
         }
@@ -1445,7 +1438,7 @@ acquisition_loop:
             return LOCATED(TOKEN_INTEGER);  // simple integer e.g. `123`
 
         if (Has_Lex_Flag(flags, LEX_SPECIAL_POUND)) {
-            if (cp == ss->begin) { // no +2 +16 +64 allowed
+            if (cp == S->begin) { // no +2 +16 +64 allowed
                 if (
                     (
                         cp[0] == '6'
@@ -1468,7 +1461,7 @@ acquisition_loop:
                     goto pound;
                 }
             }
-            return Error_Syntax(ss, TOKEN_INTEGER);
+            return Error_Syntax(S, TOKEN_INTEGER);
         }
         if (Has_Lex_Flag(flags, LEX_SPECIAL_POUND)) { // -#123 2#1010
             if (
@@ -1480,14 +1473,14 @@ acquisition_loop:
                     )
                 )
             ){
-                return Error_Syntax(ss, TOKEN_INTEGER);
+                return Error_Syntax(S, TOKEN_INTEGER);
             }
             return LOCATED(TOKEN_INTEGER);
         }
         /* Note: cannot detect dates of the form 1/2/1998 because they
         ** may appear within a path, where they are not actually dates!
         ** Special parsing is required at the next level up. */
-        for (;cp != ss->end; cp++) {
+        for (;cp != S->end; cp++) {
             // what do we hit first? 1-AUG-97 or 123E-4
             if (*cp == '-')
                 return LOCATED(TOKEN_DATE);  // 1-2-97 1-jan-97
@@ -1496,7 +1489,7 @@ acquisition_loop:
                 return LOCATED(TOKEN_PAIR); // 320x200
 
             if (*cp == 'E' or *cp == 'e') {
-                if (Skip_To_Byte(cp, ss->end, 'x'))
+                if (Skip_To_Byte(cp, S->end, 'x'))
                     return LOCATED(TOKEN_PAIR);
                 return LOCATED(TOKEN_DECIMAL);  // 123E4
             }
@@ -1505,7 +1498,7 @@ acquisition_loop:
         }
         if (Has_Lex_Flag(flags, LEX_SPECIAL_APOSTROPHE)) // 1'200
             return LOCATED(TOKEN_INTEGER);
-        return Error_Syntax(ss, TOKEN_INTEGER);
+        return Error_Syntax(S, TOKEN_INTEGER);
 
     default:
         ; // put panic after switch, so no cases fall through
@@ -1515,8 +1508,8 @@ acquisition_loop:
 
   scanword: { /////////////////////////////////////////////////////////////////
 
-   if (*ss->end == ':') {  // word:  url:words
-        cp = ss->end + 1;
+   if (*S->end == ':') {  // word:  url:words
+        cp = S->end + 1;
         if (*cp != '/')
             return LOCATED(TOKEN_WORD);
         ++cp;  // saw `:/`
@@ -1528,7 +1521,7 @@ acquisition_loop:
             while (Is_Lex_Not_Delimit(*cp) or not Is_Lex_Delimit_Hard(*cp))
                 ++cp;  // not delimiter, e.g. `http://example.com]` stops it
         } while (Is_Interstitial(*cp));  // slash, dots, and colons legal
-        ss->end = cp;
+        S->end = cp;
         return LOCATED(TOKEN_URL);
     }
     if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
@@ -1540,7 +1533,7 @@ acquisition_loop:
         goto prescan_subsume_up_to_one_dot;
     }
     if (Has_Lex_Flags(flags, LEX_FLAGS_NONWORD_SPECIALS))  // like \ or %
-        return Error_Syntax(ss, TOKEN_WORD);
+        return Error_Syntax(S, TOKEN_WORD);
 
     if (Has_Lex_Flag(flags, LEX_SPECIAL_LESSER)) {
         // Allow word<tag> and word</tag> but not word< word<= word<> etc.
@@ -1548,21 +1541,21 @@ acquisition_loop:
         if (*cp == '=' and cp[1] == '<' and Is_Lex_Delimit(cp[2]))
             return LOCATED(TOKEN_WORD);  // enable `=<`
 
-        cp = Skip_To_Byte(cp, ss->end, '<');
+        cp = Skip_To_Byte(cp, S->end, '<');
         if (
             cp[1] == '<' or cp[1] == '>' or cp[1] == '='
             or Is_Lex_Space(cp[1])
             or (cp[1] != '/' and Is_Lex_Delimit(cp[1]))
         ){
-            return Error_Syntax(ss, TOKEN_WORD);
+            return Error_Syntax(S, TOKEN_WORD);
         }
-        ss->end = cp;
+        S->end = cp;
     }
     else if (Has_Lex_Flag(flags, LEX_SPECIAL_GREATER)) {
         if ((*cp == '=' or *cp == '|') and cp[1] == '>' and Is_Lex_Delimit(cp[2])) {
             return LOCATED(TOKEN_WORD);  // enable `=>`
         }
-        return Error_Syntax(ss, TOKEN_WORD);
+        return Error_Syntax(S, TOKEN_WORD);
     }
 
     return LOCATED(TOKEN_WORD);
@@ -1580,12 +1573,12 @@ acquisition_loop:
     // its own code)
 
     bool dot_subsumed = false;
-    if (*ss->end == '.')
+    if (*S->end == '.')
         dot_subsumed = true;
-    else if (*ss->end != ':' and *ss->end != ',')
+    else if (*S->end != ':' and *S->end != ',')
         return LOCATED(token);
 
-    cp = ss->end + 1;
+    cp = S->end + 1;
     while (
         *cp == ':'
         or (not dot_subsumed and *cp == '.' and (dot_subsumed = true))
@@ -1593,7 +1586,7 @@ acquisition_loop:
     ){
         ++cp;
     }
-    ss->end = cp;
+    S->end = cp;
 
     return LOCATED(token);
 
@@ -1610,17 +1603,17 @@ acquisition_loop:
     //
     // (This is just good enough to lets the existing tests work on EMAIL!)
 
-    if (*ss->end != '.')
+    if (*S->end != '.')
         return LOCATED(token);
 
-    cp = ss->end + 1;
+    cp = S->end + 1;
     while (
         *cp == '.'
         or (not Is_Lex_Delimit(*cp) and not Is_Lex_Whitespace(*cp))
     ){
         ++cp;
     }
-    ss->end = cp;
+    S->end = cp;
 
     return LOCATED(token);
 }}
@@ -1640,8 +1633,7 @@ void Init_Transcode_Vaptr(
 ){
     transcode->vaptr = vaptr;
 
-    transcode->begin = unwrap(begin);  // if null, first fetch from vaptr
-    Corrupt_Pointer_If_Debug(transcode->end);
+    transcode->at = unwrap(begin);  // if null, first fetch from vaptr
 
     // !!! Splicing REBVALs into a scan as it goes creates complexities for
     // error messages based on line numbers.  Fortunately the splice of a
@@ -1680,8 +1672,7 @@ void Init_Transcode(
     UNUSED(limit);
 
     transcode->vaptr = nullptr; // signal Locate_Token to not use vaptr
-    transcode->begin = utf8;
-    Corrupt_Pointer_If_Debug(transcode->end);
+    transcode->at = utf8;
 
     transcode->line_head = utf8;
     transcode->line = line;
@@ -1712,6 +1703,11 @@ void Init_Scan_Level(
     S->opts = opts;
     S->ss = ss;
     S->mode = mode;
+    assert(
+        S->mode == '\0'
+        or S->mode == '.' or S->mode == '/'
+        or S->mode == ']' or S->mode == ')'
+    );
 
     S->start_line = ss->line;  // capture for error messages [1]
     S->start_line_head = ss->line_head;
@@ -1745,7 +1741,7 @@ static REBINT Scan_Head(TranscodeState* ss)
 {
     const Byte *rp = 0;   /* pts to the REBOL word */
     const Byte *bp = 0;   /* pts to optional [ just before REBOL */
-    const Byte *cp = ss->begin;
+    const Byte *cp = ss->at;
     REBLEN count = ss->line;
 
     while (true) {
@@ -1753,7 +1749,7 @@ static REBINT Scan_Head(TranscodeState* ss)
         switch (*cp) {
         case '[':
             if (rp) {
-                ss->begin = ++cp; //(bp ? bp : cp);
+                ss->at = ++cp; //(bp ? bp : cp);
                 ss->line = count;
                 return (bp ? -1 : 1);
             }
@@ -1866,19 +1862,16 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         goto done;
     }
 
-    assert(ss->begin != nullptr and ss->end != nullptr);
-    assert(ss->begin < ss->end);
+    assert(S->begin and S->end and S->begin < S->end);
 
-    const Byte *bp = ss->begin;
-    const Byte *ep = ss->end;
-    REBLEN len = cast(REBLEN, ep - bp);
+    REBLEN len = cast(REBLEN, S->end - S->begin);
 
-    ss->begin = ss->end; // accept token
+    ss->at = S->end;  // accept token (may be adjusted if token is adjusted)
 
     switch (token) {
       case TOKEN_NEWLINE:
         S->newline_pending = true;
-        ss->line_head = ep;
+        ss->line_head = S->end;
         goto loop;
 
       case TOKEN_COMMA:
@@ -1886,22 +1879,18 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
 
       case TOKEN_BLANK:
         Init_Blank(PUSH());
-        ++bp;
         break;
 
       case TOKEN_APOSTROPHE: {
-        assert(*bp == '\'');  // should be `len` sequential apostrophes
+        assert(*S->begin == '\'');  // should be `len` sequential apostrophes
 
-        /*if (S->sigil_pending)  // can't do @'foo: or :'foo
-            return RAISE(Error_Syntax(ss, token));*/
-
-        /*if (level->quasi_pending)  // can't do ~'foo~, no quoted quasiforms
-            return RAISE(Error_Syntax(ss, token));*/
+        if (S->sigil_pending)  // can't do @'foo: or :'foo
+            return RAISE(Error_Syntax(S, token));
 
         if (
-            Is_Lex_Whitespace(*ep)
-            or *ep == ']' or *ep == ')'
-            or *ep == ';'
+            Is_Lex_Whitespace(*S->end)
+            or *S->end == ']' or *S->end == ')'
+            or *S->end == ';'
         ){
             /*assert(len > 0);
             assert(S->quotes_pending == 0);
@@ -1927,15 +1916,15 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
 
       case TOKEN_WORD: {
         if (len == 0)
-            return RAISE(Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(S, token));
 
-        Symbol* symbol = Intern_UTF8_Managed(bp, len);
+        Symbol* symbol = Intern_UTF8_Managed(S->begin, len);
         Init_Word(PUSH(), symbol);
         break; }
 
       case TOKEN_ISSUE:
-        if (ep != Scan_Issue(PUSH(), bp + 1, len - 1))
-            return RAISE(Error_Syntax(ss, token));
+        if (S->end != Scan_Issue(PUSH(), S->begin + 1, len - 1))
+            return RAISE(Error_Syntax(S, token));
         break;
 
       case TOKEN_BLOCK_BEGIN:
@@ -1946,8 +1935,6 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         );
         if (error)
             return RAISE(unwrap(error));
-
-        ep = ss->end;
 
         Init_Any_List(
             PUSH(),
@@ -1962,7 +1949,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         // to make `.foo` (used in new executables to pick object members)
         // scan as simply `foo`
         //
-        assert(*bp == '.');
+        assert(*S->begin == '.' and len == 1);
         goto loop;
 
       case TOKEN_CHAIN:
@@ -1970,16 +1957,16 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         // These out-of-turn colons are only used in this bootstrap executable
         // for GET-WORD! and GET-PATH!.
         //
-        assert(*bp == ':');
+        assert(*S->begin == ':' and len == 1);
         if (S->sigil_pending)
-            return RAISE(Error_Syntax(ss, TOKEN_CHAIN));
+            return RAISE(Error_Syntax(S, TOKEN_CHAIN));
         if (Is_Interstitial(S->mode))
-            return RAISE(Error_Syntax(ss, TOKEN_CHAIN));  // foo/:bar illegal
+            return RAISE(Error_Syntax(S, TOKEN_CHAIN));  // foo/:bar illegal
         S->sigil_pending = true;
         goto loop;
 
       case TOKEN_PATH:
-        assert(*bp == '/');
+        assert(*S->begin == '/' and len == 1);
         goto out_of_turn_interstitial;
 
       out_of_turn_interstitial: {
@@ -1996,34 +1983,33 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         // continuing one in progress).  So just do that push and "unconsume"
         // the delimiter so the lookahead sees it.
 
-        assert(ep == bp + 1 and ss->begin == ep and ss->end == ep);
-
-/*        if (level->quasi_pending) {
+        /* if (level->quasi_pending) {
             Init_Trash(PUSH());  // if we end up with ~/~, we decay it to word
             level->quasi_pending = false;  // quasi-sequences don't exist
         }
         else */
             Init_Blank(PUSH());
-        ep = ss->begin = ss->end = bp;  // "unconsume" .` or `/` or `:` token
+        assert(ss->at == S->end);
+        ss->at = S->begin;  // "unconsume" .` or `/` or `:` token
         break; }
 
       case TOKEN_BLOCK_END:
-        assert(*bp == ']' and len == 1);
+        assert(*S->begin == ']' and len == 1);
         goto handle_list_end_delimiter;
 
       case TOKEN_GROUP_END:
-        assert(*bp == ')' and len == 1);
+        assert(*S->begin == ')' and len == 1);
         goto handle_list_end_delimiter;
 
       handle_list_end_delimiter: {
-        Byte end_delimiter = *bp;
+        Byte end_delimiter = *S->begin;
         if (S->mode == end_delimiter)
             goto done;
 
         if (Is_Interstitial(S->mode)) {  // implicit end [the /] (abc/)
             Init_Blank(PUSH());  // add a blank
-            --ss->begin;
-            --ss->end;
+            assert(ss->at == S->end);  // falsely accepted end_delimiter
+            --ss->at;  // unaccept, and end the interstitial scan first
             goto done;
         }
 
@@ -2052,18 +2038,19 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
 
       case TOKEN_INTEGER:     // or start of DATE
         if (
-            (*ep == '.')
+            (*S->end == '.')
             and not Is_Interstitial_Scan(S)  // not in PATH! (yet)
-            and Is_Lex_Number(ep[1])  // If # digit, we're seeing `###.#???`
+            and Is_Lex_Number(S->end[1])  // If #, we're seeing `###.#???`
         ){
             // If we will be scanning a TUPLE!, then we're at the head of it.
             // But it could also be a DECIMAL! if there aren't any more dots.
             //
-            const Byte* temp = ep + 1;
+            const Byte* temp = S->end + 1;
             REBLEN temp_len = len + 1;
             for (; *temp != '.'; ++temp, ++temp_len) {
-                if (Is_Lex_Delimit(*temp)) {
-                    ss->begin = ss->end = ep = temp;
+                if (Is_Lex_Delimit(*temp)) {  // non-dot delimiter before dot
+                    S->end = temp;  // note that S->begin hasn't moved
+                    ss->at = S->end;  // accept new token material
                     len = temp_len;
                     goto scan_decimal;
                 }
@@ -2071,82 +2058,85 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
             while (*temp == '.' or not Is_Lex_Delimit(*temp))
                 { ++temp; ++temp_len; }
 
-            token = TOKEN_COMMA;  // skip
-            if (bp + temp_len != Scan_Tuple(PUSH(), bp, temp_len))
-                return RAISE(Error_Syntax(ss, TOKEN_COMMA));
-            ss->begin = ss->end = ep = bp + temp_len;
+            S->end = S->begin + temp_len;
+            if (S->end != Scan_Tuple(PUSH(), S->begin, temp_len))
+                return RAISE(Error_Syntax(S, TOKEN_TUPLE));
+            ss->at = S->end;  // accept expanded tuple-token
             break;
         }
 
         // Wasn't beginning of a DECIMAL!, so scan as a normal INTEGER!
         //
-        if (ep != Scan_Integer(PUSH(), bp, len))
-            return RAISE(Error_Syntax(ss, token));
+        if (S->end != Scan_Integer(PUSH(), S->begin, len))
+            return RAISE(Error_Syntax(S, token));
         break;
 
+      scan_decimal:  // we jump here from TOKEN_INTEGER if it expands the token
       case TOKEN_DECIMAL:
       case TOKEN_PERCENT:
-      scan_decimal:
-        // Do not allow 1.2/abc:
-        if (*ep == '/')
-            return RAISE(Error_Syntax(ss, token));
+        if (*S->end == '/') {  // Do not allow 1.2/abc:
+            ++S->end;  // include the slash in the error
+            return RAISE(Error_Syntax(S, token));
+        }
+        if (S->end != Scan_Decimal(PUSH(), S->begin, len, false))
+            return RAISE(Error_Syntax(S, token));
 
-        if (ep != Scan_Decimal(PUSH(), bp, len, false))
-            return RAISE(Error_Syntax(ss, token));
-
-        if (bp[len - 1] == '%') {
+        if (S->begin[len - 1] == '%') {
             RESET_VAL_HEADER(TOP, REB_PERCENT);
             VAL_DECIMAL(TOP) /= 100.0;
         }
         break;
 
       case TOKEN_MONEY:
-        // Do not allow $1/$2:
-        if (*ep == '/') {
-            ++ep;
-            return RAISE(Error_Syntax(ss, token));
+        if (*S->end == '/') {  // Do not allow $1/$2:
+            ++S->end;  // include the slash in the error
+            return RAISE(Error_Syntax(S, token));
         }
-
-        if (ep != Scan_Money(PUSH(), bp, len))
-            return RAISE(Error_Syntax(ss, token));
+        if (S->end != Scan_Money(PUSH(), S->begin, len))
+            return RAISE(Error_Syntax(S, token));
         break;
 
-      case TOKEN_TIME:
+      case TOKEN_TIME: {
+        const Byte* bp = S->begin;
+        const Byte* ep = S->end;
         if (
             bp[len - 1] == ':'
             and S->mode == '/'  // could be path/10: set
         ){
             if (ep - 1 != Scan_Integer(PUSH(), bp, len - 1))
-                return RAISE(Error_Syntax(ss, token));
-            ss->end--;  // put ':' back on end but not beginning
+                return RAISE(Error_Syntax(S, token));
+            S->end--;  // put ':' back on end but not beginning
             break;
         }
         if (ep != Scan_Time(PUSH(), bp, len))
-            return RAISE(Error_Syntax(ss, token));
-        break;
+            return RAISE(Error_Syntax(S, token));
+        break; }
 
-      case TOKEN_DATE:
+      case TOKEN_DATE: {
+        const Byte* ep = S->end;
         while (*ep == '/' and S->mode != '/') {  // Is date/time?
             ep++;
             while (*ep == '.' or *ep == ':' or Is_Lex_Not_Delimit(*ep))
                 ++ep;
-            len = ep - bp;
+            len = ep - S->begin;
             if (len > 50) {
                 // prevent infinite loop, should never be longer than this
                 break;
             }
-            ss->begin = ep;  // End point extended to cover time
+            S->end = ep;  // End point extended to cover time
         }
-        if (ep != Scan_Date(PUSH(), bp, len))
-            return RAISE(Error_Syntax(ss, token));
-        break;
+        if (S->end != Scan_Date(PUSH(), S->begin, len))
+            return RAISE(Error_Syntax(S, token));
+        ss->at = S->end;  // accept the extended token
+        break; }
 
-      case TOKEN_CHAR:
-        bp += 2; // skip #", and subtract 1 from ep for "
-        if (ep - 1 != Scan_UTF8_Char_Escapable(&VAL_CHAR(PUSH()), bp))
-            return RAISE(Error_Syntax(ss, token));
+      case TOKEN_CHAR: {
+        const Byte* bp = S->begin + 2;  // skip #"
+        const Byte* ep = S->end - 1;  // drop "
+        if (ep != Scan_UTF8_Char_Escapable(&VAL_CHAR(PUSH()), bp))
+            return RAISE(Error_Syntax(S, token));
         RESET_VAL_HEADER(TOP, REB_CHAR);
-        break;
+        break; }
 
       case TOKEN_STRING: {
         // During scan above, string was stored in MOLD_BUF (UTF-8)
@@ -2156,37 +2146,39 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         break; }
 
       case TOKEN_BINARY:
-        if (ep != Scan_Binary(PUSH(), bp, len))
-            return RAISE(Error_Syntax(ss, token));
+        if (S->end != Scan_Binary(PUSH(), S->begin, len))
+            return RAISE(Error_Syntax(S, token));
         break;
 
       case TOKEN_PAIR:
-        if (ep != Scan_Pair(PUSH(), bp, len))
-            return RAISE(Error_Syntax(ss, token));
+        if (S->end != Scan_Pair(PUSH(), S->begin, len))
+            return RAISE(Error_Syntax(S, token));
         break;
 
       case TOKEN_FILE:
-        if (ep != Scan_File(PUSH(), bp, len))
-            return RAISE(Error_Syntax(ss, token));
+        if (S->end != Scan_File(PUSH(), S->begin, len))
+            return RAISE(Error_Syntax(S, token));
         break;
 
       case TOKEN_EMAIL:
-        if (ep != Scan_Email(PUSH(), bp, len))
-            return RAISE(Error_Syntax(ss, token));
+        if (S->end != Scan_Email(PUSH(), S->begin, len))
+            return RAISE(Error_Syntax(S, token));
         break;
 
       case TOKEN_URL:
-        if (ep != Scan_URL(PUSH(), bp, len))
-            return RAISE(Error_Syntax(ss, token));
+        if (S->end != Scan_URL(PUSH(), S->begin, len))
+            return RAISE(Error_Syntax(S, token));
         break;
 
-      case TOKEN_TAG:
+      case TOKEN_TAG: {
         // The Scan_Any routine (only used here for tag) doesn't
         // know where the tag ends, so it scans the len.
         //
-        if (ep - 1 != Scan_Any(PUSH(), bp + 1, len - 2, REB_TAG))
-            return RAISE(Error_Syntax(ss, token));
-        break;
+        const Byte* bp = S->begin + 1;  // skip '<'
+        const Byte* ep = S->end - 1;  // !!! subtract out what ???
+        if (ep != Scan_Any(PUSH(), bp, len - 2, REB_TAG))
+            return RAISE(Error_Syntax(S, token));
+        break; }
 
       case TOKEN_CONSTRUCT: {
         Array* array;
@@ -2208,7 +2200,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
 
         Option(SymId) id = Cell_Word_Id(Array_Head(array));
         if (not id)
-            return RAISE(Error_Syntax(ss, token));
+            return RAISE(Error_Syntax(S, token));
 
         if (IS_KIND_SYM(unwrap(id))) {
             enum Reb_Kind kind = KIND_FROM_SYM(unwrap(id));
@@ -2294,6 +2286,8 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         panic ("Invalid TOKEN in Scanner.");
     }
 
+} { //=//// FINISHED SWITCHING ON TOKEN ///////////////////////////////////=//
+
     // !!! If there is a binder in effect, we also bind the item while
     // we have loaded it.  For now, assume any negative numbers are into
     // the lib context (which we do not expand) and any positive numbers
@@ -2334,17 +2328,17 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
     // Check for end of path:
     if (Is_Interstitial_Scan(S)) {
         if (
-            *ep == ':'  // we want a:b:c -> a/b/c, but a.b: -> a/b:
+            *ss->at == ':'  // we want a:b:c -> a/b/c, but a.b: -> a/b:
             and (
-                Is_Lex_Whitespace(ep[1])
-                or ep[1] == ')'
-                or ep[1] == ']'
+                Is_Lex_Whitespace(ss->at[1])
+                or ss->at[1] == ')'
+                or ss->at[1] == ']'
             )
         ){
             goto done;
         }
 
-        if (*ep != '/' and *ep != '.' and *ep != ':')
+        if (*ss->at != '/' and *ss->at != '.' and *ss->at != ':')
             goto done;
 
         // For bootstrap we want `abc.def.ghi` to scan as `abc/def/ghi`
@@ -2356,26 +2350,25 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         // mode for `.` that shifts into `/` if a slash is seen, and
         // only the `.` mode will do the conversions.
         //
-        if (S->mode == '.' and *ep == '/')
+        if (S->mode == '.' and *ss->at == '/')
             S->mode = '/';
 
-        ++ep;
-        ss->end = ep;
-        ss->begin = ep;  // skip next /
+        ++ss->at;  // skip next /
     }
     else if (
-        *ep == '/' or *ep == '.'
+        *ss->at == '/' or *ss->at == '.'
         or (
-            *ep == ':'  // we want a:b:c -> a/b/c, but a.b: -> a/b:
-            and not Is_Lex_Whitespace(ep[1])
-            and ep[1] != ')'
-            and ep[1] != ']'
+            *ss->at == ':'  // we want a:b:c -> a/b/c, but a.b: -> a/b:
+            and not Is_Lex_Whitespace(ss->at[1])
+            and ss->at[1] != ')'
+            and ss->at[1] != ']'
         )
     ){
         // We're noticing a path was actually starting with the token
         // that just got pushed, so it should be a part of that path.
 
-        ++ss->begin;
+        Byte mode = *ss->at == ':' ? '/' : *ss->at;
+        ++ss->at;
 
         LineNumber captured_line = ss->line;
         bool captured_newline_pending = false;
@@ -2387,9 +2380,9 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         StackIndex base = TOP_INDEX - 1;  // consume item
 
         if (
-            *ss->begin == '\0' // `foo/`
-            or Is_Lex_Whitespace(*ss->begin) // `foo/ bar`
-            or *ss->begin == ';' // `foo/;--bar`
+            *ss->at == '\0' // `foo/`
+            or Is_Lex_Whitespace(*ss->at) // `foo/ bar`
+            or *ss->at == ';' // `foo/;--bar`
         ){
             // These are valid paths in modern Ren-C with blanks at their
             // tails, which mean "fetch action but don't run it".  That is
@@ -2406,7 +2399,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
                 &child,
                 S->opts & ~(SCAN_FLAG_NULLEDS_LEGAL | SCAN_FLAG_NEXT),
                 ss,
-                *ep == ':' ? '/' : *ep
+                mode
             );
 
             Option(Error*) error = Scan_To_Stack(&child);
@@ -2451,7 +2444,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         VAL_INDEX(TOP) = 0;
     }
 
-  finished_path_scan:
+} finished_path_scan: { ///////////////////////////////////////////////////////
 
     // If we get to this point, it means that the value came from UTF-8
     // source data--it was not "spliced" out of the variadic as a plain
@@ -2486,7 +2479,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         S->sigil_pending = false;
     }
 
-    if (*ss->end == ':') {
+    if (*ss->at == ':') {
          switch (KIND_BYTE(TOP)) {
           case REB_WORD:
           case REB_REFINEMENT:  // we want /foo: to be foo: (assigns action)
@@ -2500,8 +2493,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
                 "Old EXE, only REB_WORD/REB_PATH can be colon-prefixed"
             );
         }
-        ++ss->end;
-        ss->begin = ss->end;
+        ++ss->at;
     }
 
     if (S->quotes_pending) {
@@ -2648,7 +2640,7 @@ REBINT Scan_Header(const Byte *utf8, REBLEN len)
     if (result == 0)
         return -1;
 
-    const Byte *cp = ss.begin - 2;
+    const Byte *cp = ss.at - 2;
 
     // Backup to start of it:
     if (result > 0) { // normal header found
@@ -2775,17 +2767,17 @@ DECLARE_NATIVE(transcode)
     if (REF(next3) and TOP_INDEX != base) {
         Copy_Cell(OUT, ARG(source));  // result will be new position
         if (Is_Text(ARG(source))) {
-            assert(transcode.end <= Cell_Blob_Tail(source));
-            assert(transcode.end >= Cell_Blob_Head(source));
+            assert(transcode.at <= Cell_Blob_Tail(source));
+            assert(transcode.at >= Cell_Blob_Head(source));
             assert(VAL_INDEX(source) == 0);  // binary converted
             Byte* bp = Cell_Blob_Head(source);
-            for (; bp < transcode.end; ++bp) {
+            for (; bp < transcode.at; ++bp) {
                 if (not Is_Continuation_Byte(*bp))
                     ++VAL_INDEX(OUT);  // bump ahead for each utf8 codepoint
             }
         }
         else {
-            VAL_INDEX(OUT) = transcode.end - Cell_Blob_Head(OUT);  // advance
+            VAL_INDEX(OUT) = transcode.at - Cell_Blob_Head(OUT);  // advance
         }
     }
 
@@ -2851,7 +2843,7 @@ const Byte *Scan_Any_Word(
 
     Init_Any_Word(out, kind, Intern_UTF8_Managed(utf8, len));
     Drop_Mold_If_Pushed(mo);
-    return transcode.begin;  // !!! is this right?
+    return transcode.at;  // !!! is this right?
 }
 
 
