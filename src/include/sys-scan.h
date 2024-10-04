@@ -300,12 +300,13 @@ typedef enum LexSpecialEnum LexSpecial;
 //
 // Characters not allowed in Words
 //
-#define LEX_WORD_FLAGS (LEX_FLAG(LEX_SPECIAL_AT) |              \
-                        LEX_FLAG(LEX_SPECIAL_PERCENT) |         \
-                        LEX_FLAG(LEX_SPECIAL_BACKSLASH) |       \
-                        LEX_FLAG(LEX_SPECIAL_POUND) |           \
-                        LEX_FLAG(LEX_SPECIAL_DOLLAR) |          \
-                        LEX_FLAG(LEX_SPECIAL_SEMICOLON))
+#define LEX_FLAGS_NONWORD_SPECIALS \
+    (LEX_FLAG(LEX_SPECIAL_AT) \
+        | LEX_FLAG(LEX_SPECIAL_PERCENT) \
+        | LEX_FLAG(LEX_SPECIAL_BACKSLASH) \
+        | LEX_FLAG(LEX_SPECIAL_POUND) \
+        | LEX_FLAG(LEX_SPECIAL_DOLLAR) \
+        | LEX_FLAG(LEX_SPECIAL_SEMICOLON))
 
 
 // If class LEX_WORD or LEX_NUMBER, there is a value contained in the mask

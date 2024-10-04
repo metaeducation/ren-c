@@ -1440,17 +1440,13 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             if (Is_Lex_Special(*cp)) {
                 if ((Get_Lex_Special(*cp)) == LEX_SPECIAL_WORD)
                     goto next_lex_special;
-                if (*cp == '+' or *cp == '-') {
-                    token = TOKEN_WORD;
+                if (*cp == '+' or *cp == '-')
                     goto prescan_word;
-                }
                 return Error_Syntax(ss, TOKEN_WORD);
             }
-            token = TOKEN_WORD;
             goto prescan_word;
 
           case LEX_SPECIAL_BAR:
-            token = TOKEN_WORD;
             goto prescan_word;
 
           case LEX_SPECIAL_UNDERSCORE:
@@ -1461,7 +1457,6 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             //
             if (Is_Lex_Delimit(cp[1]) or Is_Lex_Whitespace(cp[1]))
                 return LOCATED(TOKEN_BLANK);
-            token = TOKEN_WORD;
             goto prescan_word;
 
           case LEX_SPECIAL_POUND:
@@ -1552,7 +1547,6 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         ){
             return LOCATED(TOKEN_WORD);
         }
-        token = TOKEN_WORD;
         goto prescan_word;
 
       case LEX_CLASS_NUMBER:  // Note: "order of tests is important"
@@ -1654,11 +1648,9 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
     panic ("Invalid LEX class");
 
-  prescan_word:  // `token` should be set, compiler warnings catch if not
+  prescan_word: { /////////////////////////////////////////////////////////////
 
    if (*ss->end == ':') {  // word:  url:words
-        if (token != TOKEN_WORD)  // only valid with WORD (not set or lit)
-            return LOCATED(token);
         cp = ss->end + 1;
         if (*cp != '/')
             return LOCATED(TOKEN_WORD);
@@ -1682,18 +1674,19 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         token = TOKEN_MONEY;
         goto prescan_subsume_up_to_one_dot;
     }
-    if (Has_Lex_Flags(flags, LEX_WORD_FLAGS))
+    if (Has_Lex_Flags(flags, LEX_FLAGS_NONWORD_SPECIALS))
         return Error_Syntax(ss, TOKEN_WORD);  // has non-word chars (eg % \ )
     if (
         Has_Lex_Flag(flags, LEX_SPECIAL_LESSER)
         or Has_Lex_Flag(flags, LEX_SPECIAL_GREATER)
     ){
-        return Error_Syntax(ss, token);  // arrow words handled at beginning
+        return Error_Syntax(ss, TOKEN_WORD);  // arrow words handled way above
     }
 
-    return LOCATED(token);
+    return LOCATED(TOKEN_WORD);
 
-  prescan_subsume_up_to_one_dot: {
+} prescan_subsume_up_to_one_dot: { ////////////////////////////////////////////
+
     assert(token == TOKEN_MONEY or token == TOKEN_TIME);
 
     // By default, `.` is a delimiter class which stops token scaning.  So if
@@ -1722,9 +1715,10 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     }
     ss->end = cp;
 
-    return LOCATED(token); }
+    return LOCATED(token);
 
-  prescan_subsume_all_dots:
+} prescan_subsume_all_dots: { ////////////////////////////////////////////////
+
     assert(token == TOKEN_EMAIL);
 
     // Similar to the above, email scanning in R3-Alpha relied on the non
@@ -1749,7 +1743,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     ss->end = cp;
 
     return LOCATED(token);
-}
+}}
 
 
 //
@@ -2085,41 +2079,30 @@ Bounce Scanner_Executor(Level* const L) {
         ep = ss->begin = ss->end = bp;  // "unconsume" .` or `/` or `:` token
         break; }
 
-      case TOKEN_BLOCK_END: {
-        if (level->mode == ']')
+      case TOKEN_BLOCK_END:
+        assert(*bp == ']' and len == 1);
+        goto handle_list_end_delimiter;
+
+      case TOKEN_GROUP_END:
+        assert(*bp == ')' and len == 1);
+        goto handle_list_end_delimiter;
+
+      handle_list_end_delimiter: {
+        Byte end_delimiter = *bp;
+        if (level->mode == end_delimiter)
             goto done;
 
-        if (Is_Interstitial(level->mode)) {  // implicit end, e.g. [just /]
-            Init_Blank(PUSH());
+        if (Is_Interstitial(level->mode)) {  // implicit end [the /] (abc/)
+            Init_Blank(PUSH());  // add a blank
             --ss->begin;
             --ss->end;
             goto done;
         }
 
-        if (level->mode != '\0')  // expected e.g. `)` before the `]`
-            return RAISE(Error_Mismatch(level, level->mode, ']'));
+        if (level->mode != '\0')  // expected ']' before ')' or vice-versa
+            return RAISE(Error_Mismatch(level, level->mode, end_delimiter));
 
-        // just a stray unexpected ']'
-        //
-        return RAISE(Error_Extra(ss, ']')); }
-
-      case TOKEN_GROUP_END: {
-        if (level->mode == ')')
-            goto done;
-
-        if (Is_Interstitial(level->mode)) {  // implicit end e.g. (the /)
-            Init_Blank(PUSH());
-            --ss->begin;
-            --ss->end;
-            goto done;
-        }
-
-        if (level->mode != '\0')  // expected e.g. ']' before the ')'
-            return RAISE(Error_Mismatch(level, level->mode, ')'));
-
-        // just a stray unexpected ')'
-        //
-        return RAISE(Error_Extra(ss, ')')); }
+        return RAISE(Error_Extra(ss, end_delimiter)); }  // stray end delimiter
 
       case TOKEN_INTEGER: {
         //
