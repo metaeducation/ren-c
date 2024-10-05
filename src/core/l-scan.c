@@ -67,15 +67,18 @@
     ((L)->flags.bits &= ~SCAN_EXECUTOR_FLAG_##name)
 
 
-INLINE bool Is_Interstitial(char c)
-  { return c == '/' or c == '.' or c == ':'; }
+INLINE bool Is_Lex_Interstitial(Byte b)
+  { return b == '/' or b == '.' or b == ':'; }
 
-INLINE bool Is_Dot_Or_Slash(char c)  // !!! Review lingering instances
-  { return c == '/' or c == '.'; }
+INLINE bool Is_Lex_End_List(Byte b)
+  { return b == ']' or b == ')'; }
 
-INLINE bool Interstitial_Match(char c, char mode) {
-    assert(mode == '/' or mode == ':' or mode == '.');
-    return c == mode;
+INLINE bool Is_Dot_Or_Slash(Byte b)  // !!! Review lingering instances
+  { return b == '/' or b == '.'; }
+
+INLINE bool Interstitial_Match(Byte b, Byte mode) {
+    assert(Is_Lex_Interstitial(mode));
+    return b == mode;
 }
 
 INLINE Sigil Sigil_From_Token(Token t) {
@@ -407,13 +410,13 @@ static void Update_Error_Near_For_Line(
 // don't cause recursions.  So using a start line on a string would point
 // at the block the string is in, which isn't as useful.
 //
-static Error* Error_Missing(ScanState* S, char wanted) {
+static Error* Error_Missing(ScanState* S, Byte wanted) {
     DECLARE_ELEMENT (expected);
     Init_Text(expected, Make_Codepoint_String(wanted));
 
     Error* error = Error_Scan_Missing_Raw(expected);
 
-    if (wanted == ')' or wanted == ']')
+    if (Is_Lex_End_List(wanted))
         Update_Error_Near_For_Line(
             error,
             S->ss,
@@ -785,7 +788,7 @@ static Error* Error_Syntax(ScanState* S, Token token) {
 //
 // For instance, `load "abc ]"`
 //
-static Error* Error_Extra(char seen) {
+static Error* Error_Extra(Byte seen) {
     DECLARE_ELEMENT (unexpected);
     Init_Text(unexpected, Make_Codepoint_String(seen));
     return Error_Scan_Extra_Raw(unexpected);
@@ -801,7 +804,7 @@ static Error* Error_Extra(char seen) {
 // applications if it would point out the locations of both points.  R3-Alpha
 // only pointed out the location of the start token.
 //
-static Error* Error_Mismatch(char wanted, char seen) {
+static Error* Error_Mismatch(Byte wanted, Byte seen) {
     DECLARE_ELEMENT (w);
     Init_Char_Unchecked(w, wanted);
     DECLARE_ELEMENT (s);
@@ -1272,9 +1275,8 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             do {
                 if (
                     Is_Lex_Whitespace(cp[1])
-                    or cp[1] == ']'
-                    or cp[1] == ')'
-                    or (cp[1] != which and Is_Interstitial(cp[1]))
+                    or Is_Lex_End_List(cp[1])
+                    or (cp[1] != which and Is_Lex_Interstitial(cp[1]))
                 ){
                     S->end = cp + 1;
                     if (which == ':' and cp[1] == '/')
@@ -1392,7 +1394,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 S->end = cp;
                 return LOCATED(token);
             }
-            while (*cp == '~' or Is_Interstitial(*cp)) {  // #: and #/ legal
+            while (*cp == '~' or Is_Lex_Interstitial(*cp)) {  // #: and #/ ok
                 cp++;
 
                 while (Is_Lex_Not_Delimit(*cp))
@@ -1672,7 +1674,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             ++cp;
             while (Is_Lex_Not_Delimit(*cp) or not Is_Lex_Delimit_Hard(*cp))
                 ++cp;  // not delimiter, e.g. `http://example.com]` stops it
-        } while (Is_Interstitial(*cp));  // slash, dots, and colons legal
+        } while (Is_Lex_Interstitial(*cp));  // slash, dots, and colons legal
         S->end = cp;
         return LOCATED(TOKEN_URL);
     }
@@ -1911,22 +1913,17 @@ Bounce Scanner_Executor(Level* const L) {
         // an ending `]` or `)` and jumped to `done`.  If an end token gets
         // hit first, there was never a proper closing.
         //
-        if (S->mode == ']' or S->mode == ')')
+        if (Is_Lex_End_List(S->mode))
             return RAISE(Error_Missing(S, S->mode));
 
         goto done;
     }
 
-    assert(S->begin and S->end and S->begin < S->end);  // !!! triggered
+    assert(S->begin and S->end and S->begin < S->end);
 
-    // "bp" and "ep" capture the beginning and end pointers of the token.
-    // They may be manipulated during the scan process if desired.
-    //
-    const Byte* bp = S->begin;
-    const Byte* ep = S->end;
-    REBLEN len = ep - bp;
+    REBLEN len = S->end - S->begin;
 
-    transcode->at = S->end;  // accept token (may adjust for token length)
+    transcode->at = S->end;  // accept token, may adjust below if token "grows"
 
     switch (token) {
       case TOKEN_NEWLINE:
@@ -1935,11 +1932,13 @@ Bounce Scanner_Executor(Level* const L) {
         goto loop;
 
       case TOKEN_BLANK:
+        assert(*S->begin == '_' and len == 1);
         Init_Blank(PUSH());
         break;
 
       case TOKEN_COMMA:
-        if (Is_Interstitial(S->mode)) {
+        assert(*S->begin == ',' and len == 1);
+        if (Is_Lex_Interstitial(S->mode)) {
             //
             // We only see a comma during a PATH! or TUPLE! scan in cases where
             // a blank is needed.  So we'll get here with [/a/ , xxx] but won't
@@ -1949,40 +1948,40 @@ Bounce Scanner_Executor(Level* const L) {
             // only get here if there's space before the comma.
             //
             Init_Blank(PUSH());
-            transcode->at = bp;  // let parent see `,`
+            assert(transcode->at == S->end);  // token was "accepted"
+            --transcode->at;  // "unaccept" token so interstitial scan sees `,`
             goto done;
         }
-
         Init_Comma(PUSH());
         break;
 
       case TOKEN_CARET:
-        assert(*bp == '^');
-        if (Is_Lex_Whitespace(*ep) or *ep == ']' or *ep == ')') {
+        assert(*S->begin == '^' and len == 1);
+        if (Is_Lex_Whitespace(*S->end) or Is_Lex_End_List(*S->end)) {
             Init_Sigil(PUSH(), SIGIL_META);
             break;
         }
         goto token_prefixable_sigil;
 
       case TOKEN_AT:
-        assert(*bp == '@');
-        if (Is_Lex_Whitespace(*ep) or *ep == ']' or *ep == ')') {
+        assert(*S->begin == '@' and len == 1);
+        if (Is_Lex_Whitespace(*S->end) or Is_Lex_End_List(*S->end)) {
             Init_Sigil(PUSH(), SIGIL_THE);
             break;
         }
         goto token_prefixable_sigil;
 
       case TOKEN_AMPERSAND:
-        assert(*bp == '&');
-        if (Is_Lex_Whitespace(*ep) or *ep == ']' or *ep == ')') {
+        assert(*S->begin == '&' and len == 1);
+        if (Is_Lex_Whitespace(*S->end) or Is_Lex_End_List(*S->end)) {
             Init_Sigil(PUSH(), SIGIL_TYPE);
             break;
         }
         goto token_prefixable_sigil;
 
       case TOKEN_DOLLAR:
-        assert(*bp == '$');
-        if (Is_Lex_Whitespace(*ep) or *ep == ']' or *ep == ')') {
+        assert(*S->begin == '$' and len == 1);
+        if (Is_Lex_Whitespace(*S->end) or Is_Lex_End_List(*S->end)) {
             Init_Sigil(PUSH(), SIGIL_VAR);  // $
             break;
         }
@@ -1996,27 +1995,25 @@ Bounce Scanner_Executor(Level* const L) {
         goto loop;
 
       case TOKEN_WORD:
-        if (len == 0)
-            return RAISE(Error_Syntax(S, token));
-
-        Init_Word(PUSH(), Intern_UTF8_Managed(bp, len));
+        assert(len != 0);
+        Init_Word(PUSH(), Intern_UTF8_Managed(S->begin, len));
         break;
 
       case TOKEN_ISSUE:
-        if (ep != Try_Scan_Issue_To_Stack(bp + 1, len - 1))
+        if (S->end != Try_Scan_Issue_To_Stack(S->begin + 1, len - 1))
             return RAISE(Error_Syntax(S, token));
         break;
 
       case TOKEN_APOSTROPHE: {
-        assert(*bp == '\'');  // should be `len` sequential apostrophes
+        assert(*S->begin == '\'');  // should be `len` sequential apostrophes
 
         if (S->sigil_pending)  // can't do @'foo: or :'foo or ~'foo~
             return RAISE(Error_Syntax(S, token));
 
         if (
-            Is_Lex_Whitespace(*ep)
-            or *ep == ']' or *ep == ')'
-            or *ep == ';'
+            Is_Lex_Whitespace(*S->end)
+            or Is_Lex_End_List(*S->end)
+            or *S->end == ';'
         ){
             assert(len > 0);
             assert(S->quotes_pending == 0);
@@ -2041,7 +2038,7 @@ Bounce Scanner_Executor(Level* const L) {
         if (*S->end == '~') {  // Note: looking past bounds of token!
             if (
                 Is_Lex_Whitespace(S->end[1])
-                or S->end[1] == ']' or S->end[1] == ')'
+                or Is_Lex_End_List(S->end[1])
             ){
                 Init_Sigil(PUSH(), SIGIL_QUASI);  // it's ~~
                 Quotify(TOP, S->quotes_pending);
@@ -2056,7 +2053,7 @@ Bounce Scanner_Executor(Level* const L) {
 
         if (
             Is_Lex_Whitespace(*S->end)
-            or *S->end == ']' or *S->end == ')'
+            or Is_Lex_End_List(*S->end)
             or *S->end == ';'
             or (
                 *S->end == ','  // (x: ~, y: 10) isn't quasi-comma
@@ -2143,7 +2140,7 @@ Bounce Scanner_Executor(Level* const L) {
         if (S->mode == end_delimiter)
             goto done;
 
-        if (Is_Interstitial(S->mode)) {  // implicit end [the /] (abc/)
+        if (Is_Lex_Interstitial(S->mode)) {  // implicit end [the /] (abc/)
             Init_Blank(PUSH());  // add a blank
             assert(transcode->at == S->end);  // falsely accepted end_delimiter
             --transcode->at;  // unaccept, and end the interstitial scan first
@@ -2176,20 +2173,23 @@ Bounce Scanner_Executor(Level* const L) {
         // leading digits on the second number (1.002 would become 1.2).
         //
         if (
-            (*ep == '.' or *ep == ',')  // still allow `1,2` as `1.2` synonym
-            and not Is_Dot_Or_Slash(S->mode)  // not in PATH!/TUPLE! (yet)
-            and Is_Lex_Number(ep[1])  // If # digit, we're seeing `###.#???`
+            (
+                *S->end == '.'
+                or *S->end == ','  // still allow `1,2` as `1.2` synonym
+            )
+            and not Is_Lex_Interstitial(S->mode)  // not in PATH!/TUPLE! (yet)
+            and Is_Lex_Number(S->end[1])  // If # digit, we're seeing `###.#???`
         ){
             // If we will be scanning a TUPLE!, then we're at the head of it.
             // But it could also be a DECIMAL! if there aren't any more dots.
             //
-            const Byte* temp = ep + 1;
-            REBLEN temp_len = len + 1;
-            for (; *temp != '.'; ++temp, ++temp_len) {
-                if (Is_Lex_Delimit(*temp)) {
+            const Byte* ep = S->end + 1;
+            for (; *ep != '.'; ++ep) {
+                if (Is_Lex_Delimit(*ep)) {
                     token = TOKEN_DECIMAL;
-                    transcode->at = S->begin = S->end = ep = temp;
-                    len = temp_len;
+                    S->end = ep;  // extend token
+                    len = S->end - S->begin;
+                    transcode->at = S->end;  // "accept" extended token
                     goto scan_decimal;
                 }
             }
@@ -2197,7 +2197,7 @@ Bounce Scanner_Executor(Level* const L) {
 
         // Wasn't beginning of a DECIMAL!, so scan as a normal INTEGER!
         //
-        if (ep != Try_Scan_Integer_To_Stack(bp, len))
+        if (S->end != Try_Scan_Integer_To_Stack(S->begin, len))
             return RAISE(Error_Syntax(S, token));
 
         break; }
@@ -2205,66 +2205,58 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_DECIMAL:
       case TOKEN_PERCENT:
       scan_decimal:
-        if (Is_Interstitial(*ep))
+        if (Is_Lex_Interstitial(*S->end)) {
+            ++S->end;  // include / in error
             return RAISE(Error_Syntax(S, token));  // No `1.2/abc`
-
-        if (ep != Try_Scan_Decimal_To_Stack(bp, len, false))
+        }
+        if (S->end != Try_Scan_Decimal_To_Stack(S->begin, len, false))
             return RAISE(Error_Syntax(S, token));
 
-        if (bp[len - 1] == '%') {
+        if (S->begin[len - 1] == '%') {
             HEART_BYTE(TOP) = REB_PERCENT;
             VAL_DECIMAL(x_cast(Value*, TOP)) /= 100.0;
         }
         break;
 
       case TOKEN_MONEY:
-        if (Is_Interstitial(*ep)) {  // Do not allow $1/$2
-            ++ep;
+        if (Is_Lex_Interstitial(*S->end)) {  // Do not allow $1/$2
+            ++S->end;  // include / in error message
             return RAISE(Error_Syntax(S, token));
         }
-        if (ep != Try_Scan_Money_To_Stack(bp, len))
+        if (S->end != Try_Scan_Money_To_Stack(S->begin, len))
             return RAISE(Error_Syntax(S, token));
         break;
 
       case TOKEN_TIME:
-        if (
-            bp[len - 1] == ':'
-            and Is_Dot_Or_Slash(S->mode)  // could be path/10: set
-        ){
-            if (ep - 1 != Try_Scan_Integer_To_Stack(bp, len - 1))
-                return RAISE(Error_Syntax(S, token));
-
-            S->end--;  // put ':' back on end but not beginning
-            break;
-        }
-        if (ep != Try_Scan_Time_To_Stack(bp, len))
+        if (S->end != Try_Scan_Time_To_Stack(S->begin, len))
             return RAISE(Error_Syntax(S, token));
         break;
 
-      case TOKEN_DATE:
+      case TOKEN_DATE: {
+        const Byte* ep = S->end;
         while (*ep == '/' and S->mode != '/') {  // Is date/time?
             ep++;
             while (*ep == '.' or *ep == ':' or Is_Lex_Not_Delimit(*ep))
                 ++ep;
-            len = ep - bp;
-            if (len > 50) {
-                // prevent infinite loop, should never be longer than this
+            len = ep - S->begin;
+            if (len > 50)  // prevent infinite loop, should never be longer
                 break;
-            }
-            transcode->at = S->begin = ep;  // End point extended to cover time
+            S->end = ep;
         }
-        if (ep != Try_Scan_Date_To_Stack(bp, len))
+        if (S->end != Try_Scan_Date_To_Stack(S->begin, len))
             return RAISE(Error_Syntax(S, token));
-        break;
+        transcode->at = S->end;  // consume extended token
+        break; }
 
       case TOKEN_CHAR: {
         Codepoint uni;
-        bp += 2;  // skip #", and subtract 1 from ep for "
-        if (bp + 1 == ep) {  // #"" is NUL
+        const Byte* bp = S->begin + 2;  // skip #"
+        const Byte* ep = S->end - 1;  // subtract 1 for "
+        if (bp == ep) {  // #"" is NUL
             Init_Char_Unchecked(PUSH(), 0);
             break;
         }
-        if (ep - 1 != Try_Scan_UTF8_Char_Escapable(&uni, bp))
+        if (ep != Try_Scan_UTF8_Char_Escapable(&uni, bp))
             return RAISE(Error_Syntax(S, token));
 
         Option(Error*) error = Trap_Init_Char(PUSH(), uni);
@@ -2272,9 +2264,10 @@ Bounce Scanner_Executor(Level* const L) {
             return RAISE(unwrap error);
         break; }
 
-      case TOKEN_STRING:  // UTF-8 pre-scanned above, and put in mold buffer
-        Init_Text(PUSH(), Pop_Molded_String(mo));
-        break;
+      case TOKEN_STRING: {  // UTF-8 pre-scanned above, and put in mold buffer
+        String* s = Pop_Molded_String(mo);
+        Init_Text(PUSH(), s);
+        break; }
 
       case TOKEN_BINARY:
         if (S->end != Try_Scan_Binary_To_Stack(S->begin, len))
@@ -2362,7 +2355,7 @@ Bounce Scanner_Executor(Level* const L) {
     // `foo` pushed.  This is the point where we look for the `/` or `.`
     // to either start or continue a tuple or path.
 
-    if (Is_Interstitial(S->mode)) {  // adding to existing path/chain/tuple
+    if (Is_Lex_Interstitial(S->mode)) {  // adding to existing path/chain/tuple
         //
         // If we are scanning `a/b` and see `.c`, then we want the tuple
         // to stick to the `b`...which means using the `b` as the head
@@ -2396,7 +2389,7 @@ Bounce Scanner_Executor(Level* const L) {
             *transcode->at == '\0'
             or Is_Lex_Space(*transcode->at)
             or ANY_CR_LF_END(*transcode->at)
-            or *transcode->at == ')' or *transcode->at == ']'
+            or Is_Lex_End_List(*transcode->at)
         ){
             Init_Blank(PUSH());
             goto done;
@@ -2409,7 +2402,7 @@ Bounce Scanner_Executor(Level* const L) {
         //
         goto loop;
     }
-    else if (Is_Interstitial(*transcode->at)) {  // a new path/chain/tuple
+    else if (Is_Lex_Interstitial(*transcode->at)) {  // a new path/chain/tuple
         //
         // We're noticing a sequence was actually starting with the element
         // that just got pushed, so it should be a part of that path.

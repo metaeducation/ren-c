@@ -199,7 +199,7 @@ enum LexDelimitEnum {
     //
     // https://github.com/metaeducation/ren-c/issues/1046
 
-    LEX_DELIMIT_LEFT_BRACE,         // 7B }
+    LEX_DELIMIT_LEFT_BRACE,         // 7B {
     LEX_DELIMIT_RIGHT_BRACE,        // 7D }
     LEX_DELIMIT_DOUBLE_QUOTE,       // 22 "
     LEX_DELIMIT_SLASH,              // 2F / - date, path, file
