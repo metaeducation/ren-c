@@ -1393,6 +1393,15 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             return Error_Syntax(S, TOKEN_INTEGER);
 
         case LEX_SPECIAL_DOLLAR:
+            if (Get_Lex_Class(cp[1]) != LEX_CLASS_NUMBER) {
+                //
+                // In the bootstrap process, (get 'x) won't work because X
+                // will be unbound.  Allow (get $x) to act like (get 'x) so
+                // when the code is run in a new executable it will be bound.
+                //
+                S->end = cp + 1;
+                return LOCATED(TOKEN_APOSTROPHE);
+            }
             if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
                 token = TOKEN_EMAIL;
                 goto prescan_subsume_all_dots;
@@ -1887,8 +1896,8 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         Init_Blank(PUSH());
         break;
 
-      case TOKEN_APOSTROPHE: {
-        assert(*S->begin == '\'');  // should be `len` sequential apostrophes
+      case TOKEN_APOSTROPHE: {  // allows $ for bootstrap
+        assert(*S->begin == '\'' or *S->begin == '$');
 
         if (S->sigil_pending)  // can't do @'foo: or :'foo
             return RAISE(Error_Syntax(S, token));
