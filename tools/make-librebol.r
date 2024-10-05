@@ -14,7 +14,7 @@ REBOL [
     Needs: 2.100.100
 ]
 
-if not find (words of :import) 'into [  ; See %import-shim.r
+if not find (words of import/) 'into [  ; See %import-shim.r
     do <import-shim.r>
 ]
 

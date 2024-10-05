@@ -48,7 +48,7 @@ REBOL [
 ]
 
 
-if not find (words of :import) 'into [
+if not find (words of import/) 'into [
     ; no /INTO means error here, so old r3 without import shim
 
     ; Don't use -{...}- in this error message, because if this message is
@@ -81,7 +81,7 @@ sys.util/rescue [
 ] then [
     ; Fall through to the body of this file, we are shimming version ~8994d23
 ] else [
-    if find (words of :transcode) 'next3 [  ; old shim'd interpreter
+    if find (words of transcode/) 'next3 [  ; old shim'd interpreter
         ;
         ; Old bootstrap executables that are already shimmed should not do
         ; tweaks for the modern import.  It's just generally inefficient to
@@ -105,24 +105,24 @@ sys.util/rescue [
     ; It is more brittle and less composable, but it is available in the
     ; bootstrap executable..and much faster (at time of writing) than UPARSE.
 
-    export parse: func [] [
-        fail/where "Use PARSE3 in Bootstrap Process, not UPARSE/PARSE" 'return
+    export /parse: func [] [
+        fail:where "Use PARSE3 in Bootstrap Process, not UPARSE/PARSE" 'return
     ]
 
-    export split-path3: enclose (
-        augment get $split-path [/file [any-word? any-path?]]
+    export /split-path3: enclose (
+        augment split-path/ [:file [any-word? any-path?]]
     ) f -> [
         let file: f.file
-        let results: unquasi ^ eval f  ; no [...]: in bootstrap load of file
+        let results: meta:lite eval f  ; no [...]: in bootstrap load of file
         set maybe file unmeta results.2
         unmeta results.1
     ]
-    export split-path: func [] [
-        fail/where "Use SPLIT-PATH3 in Bootstrap (no multi-return)" 'return
+    export /split-path: func [] [
+        fail:where "Use SPLIT-PATH3 in Bootstrap (no multi-return)" 'return
     ]
 
-    export transcode: enclose (
-        augment get $lib/transcode [/next3 [word!] "set to transcoded value"]
+    export /transcode: enclose (
+        augment lib.transcode/ [:next3 [word!] "set to transcoded value"]
     ) func [f] [
         if not f.next3 [
             return eval f
@@ -133,24 +133,24 @@ sys.util/rescue [
         return eval compose [(setify block) eval f]
     ]
 
-    export cscape-inside: :inside  ; modern string interpolation tool
+    export /cscape-inside: inside/  ; modern string interpolation tool
 
     ; LOAD changed to have no /ALL, so it always enforces getting a block.
     ; But LOAD-VALUE comes in the box to load a single value.
     ;
-    export load-all: runs get $load
+    export /load-all: load/
 
-    export for: func [] [
-        fail/where "FOR is being repurposed, use CFOR" 'return
+    export /for: func [] [
+        fail:where "FOR is being repurposed, use CFOR" 'return
     ]
 
-    export unless: func [/dummy] [
-        fail/where "Don't use UNLESS in Bootstrap, definition in flux" 'dummy
+    export /unless: func [/dummy] [
+        fail:where "Don't use UNLESS in Bootstrap, definition in flux" 'dummy
     ]
 
-    export boolean?!: get $boolean?
-    export onoff?!: get $onoff?
-    export yesno?!: get $yesno?
+    export /boolean?!: boolean?/
+    export /onoff?!: onoff?/
+    export /yesno?!: yesno?/
 
     quit 0
 ]
