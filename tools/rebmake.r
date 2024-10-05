@@ -1551,9 +1551,9 @@ makefile: make generator-class [
         let buf: make binary! 2048
         assert [solution.class = #solution]
 
-        .prepare/ solution
+        .prepare solution
 
-        .emit/ buf solution
+        .emit buf solution
 
         write output append buf "^/^/.PHONY:"
     ]
