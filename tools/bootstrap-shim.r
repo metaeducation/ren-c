@@ -212,6 +212,10 @@ for-each [alias] [  ; SET-WORD!s for readability + findability [1]
     ]
 ]
 
+function3: func3 [] [
+    fail/where "FUNCTION slated for synonym of FUNC, so no FUNCTION3" 'return
+]
+
 
 === "WORD!-BASED LOGIC" ===
 
@@ -651,7 +655,7 @@ let: func3 [
     if word? first look [take look]  ; otherwise leave SET-WORD! to runs
 ]
 
-modernize-typespec: function3 [
+modernize-typespec: func3 [
     return: [block!]
     types [block!]
 ][
@@ -665,11 +669,12 @@ modernize-typespec: function3 [
     return types
 ]
 
-modernize-action: function3 [
+modernize-action: func3 [
     "Account for <maybe> annotation, refinements as own arguments"
     return: [block!]
     spec [block!]
     body [block!]
+    <local> last-refine-word tryers proxiers proxy w types
 ][
     last-refine-word: null
 
@@ -841,9 +846,10 @@ noquote: func3 [x [~null~ any-value!]] [
 ;
 ; https://forum.rebol.info/t/1813
 ;
-apply: function3 [
+apply: func3 [
     action [action!]
     args [block!]
+    <local> f params result pos
 ][
     f: make frame! :action
     params: words of :action
