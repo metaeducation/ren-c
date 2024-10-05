@@ -73,7 +73,7 @@ for-each-line: function [
     body [block!]
         {Block to evaluate each time.}
 ][
-    while-not [tail? text] [
+    while [not tail? text] [
         eol: any [
             find text newline
             tail of text

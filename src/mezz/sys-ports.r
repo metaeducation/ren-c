@@ -244,7 +244,7 @@ init-schemes: func [
             ; Process all events (even if no awake ports).
             n-event: 0
             event-list: sport/state
-            while-not [empty? event-list][
+            while [not empty? event-list][
                 if n-event > 8 [break] ; Do only 8 events at a time (to prevent polling lockout).
                 event: first event-list
                 port: event/port

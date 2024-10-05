@@ -1,7 +1,7 @@
 (
     foo: func [x [integer! <...>]] [
         sum: 0
-        while-not [tail? x] [
+        while [not tail? x] [
             sum: sum + take x
         ]
     ]

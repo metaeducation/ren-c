@@ -53,7 +53,7 @@ read-deep: function [
 
     queue: compose [(root)]
 
-    while-not [tail? queue] [
+    while [not tail? queue] [
         append result maybe taker queue
     ]
 

@@ -498,7 +498,7 @@ host-start: function [
     emit #quit-if-halt
     emit #countdown-if-error
 
-    while-not [tail? argv] [
+    while [not tail? argv] [
 
         is-option: did parse/match/case argv/1 [
 

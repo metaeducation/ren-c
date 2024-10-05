@@ -1607,12 +1607,18 @@ DECLARE_NATIVE(for_next)
 }
 
 
-// Common code for UNTIL & UNTIL-NOT (same frame param layout)
 //
-INLINE Bounce Until_Core(
-    Level* level_,
-    bool trigger // body keeps running so until evaluation matches this
-){
+//  until: native [
+//
+//  "Evaluates the body until it evaluates to a conditionally true value"
+//
+//      return: [~null~ any-value!]
+//          {Last body result or BREAK value.}
+//      body [block! action!]
+//  ]
+//
+DECLARE_NATIVE(until)
+{
     INCLUDE_PARAMS_OF_UNTIL;
 
     do {
@@ -1630,7 +1636,7 @@ INLINE Bounce Until_Core(
                 goto skip_check;
         }
 
-        if (not Is_Void(OUT) and IS_TRUTHY(OUT) == trigger)
+        if (not Is_Void(OUT) and IS_TRUTHY(OUT))
             return OUT;
 
     } while (true);
@@ -1638,45 +1644,18 @@ INLINE Bounce Until_Core(
 
 
 //
-//  until: native [
+//  while: native [
 //
-//  "Evaluates the body until it evaluates to a conditionally true value"
+//  {While a condition is conditionally true, evaluates the body.}
 //
 //      return: [~null~ any-value!]
-//          {Last body result or BREAK value.}
+//          "Last body result, or null if BREAK"
+//      condition [block! action!]
 //      body [block! action!]
 //  ]
 //
-DECLARE_NATIVE(until)
+DECLARE_NATIVE(while)
 {
-    return Until_Core(level_, true); // run loop until result IS_TRUTHY()
-}
-
-
-//
-//  until-not: native [
-//
-//  "Evaluates the body until it evaluates to a conditionally false value"
-//
-//      return: [~null~ any-value!]
-//          {Last body result or BREAK value.}
-//      body [block! action!]
-//  ]
-//
-DECLARE_NATIVE(until_not)
-//
-// Faster than running NOT, and doesn't need groups for `until [...not (x =`
-{
-    return Until_Core(level_, false); // run loop until result IS_FALSEY()
-}
-
-
-// Common code for WHILE & WHILE-NOT
-//
-INLINE Bounce While_Core(
-    Level* level_,
-    bool trigger // body keeps running so long as condition matches
-){
     INCLUDE_PARAMS_OF_WHILE;
 
     DECLARE_VALUE (cell); // unsafe to use ARG() slots as frame output cells
@@ -1692,7 +1671,7 @@ INLINE Bounce While_Core(
             return BOUNCE_THROWN; // don't see BREAK/CONTINUE in the *condition*
         }
 
-        if (IS_TRUTHY(cell) != trigger) {
+        if (IS_FALSEY(cell)) {
             Drop_GC_Guard(cell);
             return OUT; // trigger didn't match, return last body result
         }
@@ -1712,40 +1691,4 @@ INLINE Bounce While_Core(
     } while (true);
 
     DEAD_END;
-}
-
-
-//
-//  while: native [
-//
-//  {While a condition is conditionally true, evaluates the body.}
-//
-//      return: [~null~ any-value!]
-//          "Last body result, or null if BREAK"
-//      condition [block! action!]
-//      body [block! action!]
-//  ]
-//
-DECLARE_NATIVE(while)
-{
-    return While_Core(level_, true); // run loop while condition IS_TRUTHY()
-}
-
-
-//
-//  while-not: native [
-//
-//  {While a condition is conditionally false, evaluate the body.}
-//
-//      return: [~null~ any-value!]
-//          "Last body result, or null if BREAK"
-//      condition [block! action!]
-//      body [block! action!]
-//  ]
-//
-DECLARE_NATIVE(while_not)
-//
-// Faster than running NOT, and doesn't need groups for `while [not (x =`
-{
-    return While_Core(level_, false); // run loop while condition IS_FALSEY()
 }

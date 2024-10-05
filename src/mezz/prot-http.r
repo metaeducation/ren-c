@@ -62,7 +62,7 @@ sync-op: function [port body] [
     ; state.  The timeout should be triggered only when the response from
     ; the other side exceeds the timeout value.
     ;
-    while-not [find [ready close] state/state] [
+    while [not find [ready close] state/state] [
         if not port? wait [state/connection port/spec/timeout] [
             fail make-http-error "Timeout"
         ]

@@ -235,7 +235,7 @@ for-each-record: function [
 
     table: next table
 
-    while-not [tail? table] [
+    while [not tail? table] [
         if (length of headings) > (length of table) [
             fail {Element count isn't even multiple of header count}
         ]
