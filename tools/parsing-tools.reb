@@ -55,7 +55,7 @@ export parsing-at: func [
         [word!]
     code "Code to evaluate. Should Return next input position, or null"  ; [1]
         [block!]
-    /end "Drop the default tail check (allows evaluation at the tail)"  ; [2]
+    :end "Drop the default tail check (allows evaluation at the tail)"  ; [2]
     <local> code-group obj
 ][
     use [instruction position] [  ; vars need to outlive this function call

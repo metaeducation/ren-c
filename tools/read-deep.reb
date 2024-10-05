@@ -26,7 +26,7 @@ import <bootstrap-shim.r>
 ;
 
 read-deep-seq: func [
-    {Iterative read deep.}
+    "Iterative read deep"
     queue [block!]
 ][
     let item: take queue
@@ -42,11 +42,11 @@ read-deep-seq: func [
 ;
 
 export read-deep: func [
-    {Return files and folders using recursive read strategy.}
+    "Return files and folders using recursive read strategy"
 
     root [file! url! block!]
-    /full "Include root path, retains full paths vs. returning relative paths"
-    /strategy "TAKEs next item from queue, building the queue as necessary"
+    :full "Include root path, retains full paths vs. returning relative paths"
+    :strategy "TAKEs next item from queue, building the queue as necessary"
         [<unrun> frame!]
 ][
     let taker: runs any [strategy, get $read-deep-seq]

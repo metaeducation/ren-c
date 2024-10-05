@@ -17,9 +17,9 @@ REBOL [
 import <bootstrap-shim.r>
 
 decode-lines: func [
-    {Decode text encoded using a line prefix e.g. comments (modifies).}
+    "Decode text encoded using a line prefix e.g. comments (modifies)"
     text [~null~ text! error!]  ; raised? in modern exe, not ERROR!
-    line-prefix [text! block!] {Usually "**" or "//". Matched using parse.}
+    line-prefix [text! block!] "Usually ** or // - matched using parse"
     indent [text! block!] {Usually "  ". Matched using parse.}
 ] [
     let pattern: compose [(line-prefix)]
@@ -46,11 +46,11 @@ decode-lines: func [
 ]
 
 encode-lines: func [
-    {Encode text using a line prefix (e.g. comments)}
+    "Encode text using a line prefix (e.g. comments)"
 
     text [text!]
-    line-prefix [text!] {Usually "**" or "//"}
-    indent [text!] {Usually "  "}
+    line-prefix [text!] "Usually ** or //"
+    indent [text!] "Usually two spaces"
 ] [
     ; Note: Preserves newline formatting of the block.
 
@@ -81,7 +81,7 @@ encode-lines: func [
 ]
 
 for-each-line: func [
-    {Iterate over text lines}
+    "Iterate over text lines"
 
     return: [~]
     var "Word set to metadata for each line"
@@ -180,7 +180,7 @@ text-line-of: func [
 ]
 
 text-location-of: func [
-    {Returns line and column of position within text.}
+    "Returns line and column of position within text"
     position [text! binary!]
 ] [
     ; Here newline is considered last character of a line.

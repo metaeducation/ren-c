@@ -55,8 +55,8 @@ path-zlib: https://raw.githubusercontent.com/madler/zlib/master/
 disable-user-includes: func [
     return: [~]
     lines [block!] "Block of strings"
-    /inline [block!] "Block of filenames to inline if seen"
-    /stdio "Disable stdio.h"
+    :inline [block!] "Block of filenames to inline if seen"
+    :stdio "Disable stdio.h"
     <local> name line-iter line pos
     <static>
     open-include (charset {"<})
@@ -391,7 +391,7 @@ for-each 'c-file [
     append source-lines spread read/lines (join path-zlib c-file)
 ]
 
-disable-user-includes/stdio/inline source-lines copy [
+disable-user-includes:stdio:inline source-lines copy [
     %trees.h
     %inffixed.h
     %crc32.h

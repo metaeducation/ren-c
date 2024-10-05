@@ -341,7 +341,7 @@ e1/write-emitted
 
 e: make-emitter "Ext custom init code" (join output-dir inc-name)
 
-initscript-body: stripload/header script-name inside [] 'header
+initscript-body: stripload:header script-name $header
 ensure text! header  ; stripload gives back textual header
 
 script-uncompressed: unspaced [

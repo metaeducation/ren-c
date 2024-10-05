@@ -116,10 +116,10 @@ syms-cscape: copy []
 sym-n: 1  ; counts up as symbols are added
 
 add-sym: func [
-    {Add SYM_XXX to enumeration}
+    "Add SYM_XXX to enumeration"
     return: [~null~ integer!]
     word [word! text!]
-    /exists "return ID of existing SYM_XXX constant if already exists"
+    :exists "return ID of existing SYM_XXX constant if already exists"
     <with> sym-n
 ][
     if let pos: find syms-words as text! word [
@@ -519,7 +519,7 @@ e-hooks: make-emitter "Built-in Type Hooks" (
 
 hookname: enfix func [
     return: [text!]
-    'prefix [text!] "quoted prefix, e.g. T_ for T_Action"
+    prefix [text!] "e.g. T_ for T_Action"
     t [object!] "type record (e.g. a row out of %types.r)"
     column [word!] "which column we are deriving the hook's name based on"
 ][
@@ -690,14 +690,14 @@ first-native-sym: sym-n
 
 native-names: copy []
 
-boot-natives: stripload/gather (
+boot-natives: stripload:gather (
     join prep-dir %boot/tmp-natives.r
-) inside [] 'native-names
+) $native-names
 
 insert boot-natives "["
 append boot-natives "]"
 for-each 'name native-names [
-    if first-native-sym < ((add-sym/exists name) else [0]) [
+    if first-native-sym < ((add-sym:exists name) else [0]) [
         fail ["Native name collision found:" name]
     ]
 ]
@@ -715,7 +715,7 @@ boot-generics: as text! read join prep-dir %boot/tmp-generics-stripped.r
 
 for-each 'name generic-names [
     assert [word? name]
-    if first-generic-sym < ((add-sym/exists name) else [0]) [
+    if first-generic-sym < ((add-sym:exists name) else [0]) [
         fail ["Generic name collision with Native or Generic found:" name]
     ]
 ]
@@ -749,15 +749,15 @@ e-sysobj: make-emitter "System Object" (
     join prep-dir %include/tmp-sysobj.h
 )
 
-at-value: func ['field] [return next find boot-sysobj to-set-word field]
+at-value: func [field] [return next find boot-sysobj to-set-word field]
 
 boot-sysobj: load %sysobj.r
-change (at-value version) version
-change (at-value commit) maybe git-commit  ; no-op if no git-commit
-change (at-value build) now/utc
-change (at-value product) (quote to word! "core")  ; want it to be quoted
+change (at-value 'version) version
+change (at-value 'commit) maybe git-commit  ; no-op if no git-commit
+change (at-value 'build) now:utc
+change (at-value 'product) (quote to word! "core")  ; want it to be quoted
 
-change at-value platform reduce [
+change at-value 'platform reduce [
     any [platform-config.name "Unknown"]
     any [platform-config.build-label ""]
 ]
@@ -772,11 +772,11 @@ ob: make object! boot-sysobj
 c-debug-break: get $lib/c-debug-break
 
 make-obj-defs: func [
-    {Given a Rebol OBJECT!, write C structs that can access its raw variables}
+    "Given a Rebol OBJECT!, write C structs that can access its raw variables"
 
     return: [~]
-    e [object!]
-       {The emitter to write definitions to}
+    e "The emitter to write definitions to"
+        [object!]
     obj
     prefix
     depth
@@ -881,7 +881,7 @@ for-each [sw-cat list] boot-errors [
 
         ; Add a SYM_XXX constant for the error's ID word
         ;
-        if first-error-sym < (add-sym/exists id else [0]) [
+        if first-error-sym < (add-sym:exists id else [0]) [
             fail ["Duplicate error ID found:" id]
         ]
 
@@ -960,9 +960,9 @@ for-each 'section [boot-base boot-system-util boot-mezz] [
     append/line s "["
     for-each 'file first mezz-files [  ; doesn't use LOAD to strip
         gather:  [null]
-        text: stripload/gather (
+        text: stripload:gather (
             join %../mezz/ file
-        ) if section = 'boot-system-util [inside [] 'sys-toplevel]
+        ) if section = 'boot-system-util [$sys-toplevel]
         append/line s text
     ]
     append/line s "~done~"
@@ -978,7 +978,7 @@ for-each 'section [boot-base boot-system-util boot-mezz] [
 ; lead to the function definitions.
 
 for-each 'item sys-toplevel [
-    add-sym/exists as word! item
+    add-sym:exists as word! item
 ]
 
 

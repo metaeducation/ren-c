@@ -674,14 +674,14 @@ modernize-action: func3 [
     return: [block!]
     spec [block!]
     body [block!]
-    <local> last-refine-word tryers proxiers proxy w types
+    <local> last-refine-word tryers proxiers proxy w types new-spec new-body
 ][
     last-refine-word: null
 
     tryers: copy []
     proxiers: copy []
 
-    spec: collect3 [  ; Note: offers KEEP/ONLY
+    new-spec: collect3 [  ; Note: offers KEEP/ONLY
         while [not tail? spec] [
             if tag? spec.1 [
                 last-refine-word: null
@@ -690,9 +690,13 @@ modernize-action: func3 [
                 continue
             ]
 
-            if refinement? spec.1 [  ; REFINEMENT! is ANY-WORD! in this r3
+            if lib3/refinement? spec.1 [  ; old refinement
+                fail/where ["Old refinement in spec:" mold spec] 'spec
+            ]
+
+            if get-word? spec.1 [  ; new refinement (GET-WORD is ANY-WORD!)
                 last-refine-word: as word! spec.1
-                keep3/only spec.1
+                keep3/only to refinement! spec.1
 
                 ; Feed through any TEXT!s following the PATH!
                 ;
@@ -778,7 +782,7 @@ modernize-action: func3 [
                 ]
             ]
 
-            if refinement? spec.1 [
+            if get-word? spec.1 [  ; new refinement
                 continue
             ]
 
@@ -791,16 +795,16 @@ modernize-action: func3 [
     ; We approximate it by searching the body for LET followed by SET-WORD!
     ; or WORD! and add that to locals.
     ;
-    append3 spec <local>
-    append3 spec collect-lets body  ; append3 splices blocks without /ONLY
+    append3 new-spec <local>
+    append3 new-spec collect-lets body  ; append3 splices blocks without /ONLY
 
-    body: compose3 [  ; splices
+    new-body: compose3 [  ; splices
         (tryers)
         (proxiers)
         (as group! body)  ; compose3 does not splice groups--just blocks
         return ~  ; functions now default to returning nothing
     ]
-    return reduce [spec body]
+    return reduce [new-spec new-body]
 ]
 
 func: adapt get $func3 [set [spec body] modernize-action spec body]
@@ -866,12 +870,14 @@ apply: func3 [
     ; Now go by the refinements.  If it's a refinement that takes an argument,
     ; we have to set the refinement to true
     ;
-    while [refinement? :args.1] [
-        pos: find params args.1 else [fail ["Unknown refinement" args.1]]
+    while [get-word? :args.1] [  ; new-style refinements are GET-WORD! in boot
+        pos: find params to refinement! args.1 else [
+            fail ["Unknown refinement" args.1]
+        ]
         args: evaluate/set (next args) 'result
         any [
             not :pos.2
-            refinement? pos.2
+            refinement? pos.2  ; old refinement in params block
         ] then [  ; doesn't take an argument, set it to the logical next value
             case [
                 any [
@@ -898,6 +904,10 @@ apply: func3 [
     ]
 
     eval f
+]
+
+//: enfix func3 ['left [word! path!] right [block!]] [
+    apply get left right
 ]
 
 ; For commentary purposes, e.g. old-append: runs lib.append

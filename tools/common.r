@@ -36,7 +36,7 @@ export to-c-name: func [
     return: [~null~ text!]
     value "Will be converted to text (via UNSPACED if BLOCK!)"
         [<maybe> text! block! word!]
-    /scope "[#global #local #prefixed] see http://stackoverflow.com/q/228783/"
+    :scope "[#global #local #prefixed] see http://stackoverflow.com/q/228783/"
         [issue!]
 ][
     scope: default [#global]
@@ -186,21 +186,23 @@ export to-c-name: func [
 
 
 ; http://stackoverflow.com/questions/11488616/
+;
+; 1. To be "strict" C standard compatible, we do not use a string literal due
+;    to length limits (509 characters in C89, and 4095 characters in C99).
+;    Instead we produce an array formatted as '{0xYY, ...}', 8 bytes per line
+;
+; 2. There should be one more byte in source than commas out.
+;
 export binary-to-c: func [
-    {Converts a binary to a string of C source that represents an initializer
-    for a character array.  To be "strict" C standard compatible, we do not
-    use a string literal due to length limits (509 characters in C89, and
-    4095 characters in C99).  Instead we produce an array formatted as
-    '{0xYY, ...}' with 8 bytes per line}
+    "Converts a binary to a string of C source to initialize a char array"
 
     return: [text!]
     data [binary!]
 ][
     let data-len: length of data
 
-    let out: make text! 6 * (length of data)
+    let out: make text! 6 * (length of data)  ; array, not string literal [1]
     while [not empty? maybe data] [
-        ; grab hexes in groups of 8 bytes
         let hexed: enbase/base (copy/part data 8) 16
         data: skip data 8
         for-each [digit1 digit2] hexed [
@@ -214,14 +216,13 @@ export binary-to-c: func [
         append out newline  ; newline after each group, and at end
     ]
 
-    ; Sanity check (should be one more byte in source than commas out)
     let comma-count
     parse3 out [
         (comma-count: 0)
         some [thru "," (comma-count: comma-count + 1)]
         to <end>
     ]
-    assert [(comma-count + 1) = data-len]
+    assert [(comma-count + 1) = data-len]  ; sanity check [2]
 
     return out
 ]
@@ -270,14 +271,14 @@ export parse-args: func [
 ]
 
 export uppercase-of: func [
-    {Copying variant of UPPERCASE, also FORMs words}
+    "Copying variant of UPPERCASE, also FORMs words"
     string [text! word!]
 ][
     return uppercase form string
 ]
 
 export lowercase-of: func [
-    {Copying variant of LOWERCASE, also FORMs words}
+    "Copying variant of LOWERCASE, also FORMs words"
     string [text! word!]
 ][
     return lowercase form string
@@ -295,7 +296,7 @@ export propercase: func [text [text!]] [
 ]
 
 export propercase-of: func [
-    {Make a copy of a string with just the first character uppercase}
+    "Make a copy of a string with just the first character uppercase"
     string [text! word!]
 ][
     return propercase form string
@@ -346,15 +347,15 @@ export relative-to-path: func [
 
 
 export stripload: func [
-    {Get an equivalent to MOLD/FLAT (plus no comments) without using LOAD}
+    "Get an equivalent to MOLD/FLAT (plus no comments) without using LOAD"
 
     return: "contents, w/o comments or indentation"
         [text!]
     source "Code to process without LOAD (avoids bootstrap scan differences)"
         [text! file!]
-    /header "<output> Request the header as text"  ; no packs in bootstrap
+    :header "<output> Request the header as text"  ; no packs in bootstrap
         [word! path!]
-    /gather "Collect what look like top-level declarations into variable"
+    :gather "Collect what look like top-level declarations into variable"
         [word!]
 ][
     ; Removing spacing and comments from a Rebol file is not exactly trivial

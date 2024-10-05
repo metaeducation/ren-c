@@ -48,7 +48,7 @@ import <platforms.r>  ; for BOOT-VERSION
 ; 3. These can be combined, so that $<xxx, > will delimit with ", "
 ;
 export cscape: func [
-    {Escape Rebol expressions in templated C source, returns new string}
+    "Escape Rebol expressions in templated C source, returns new string"
 
     return: "${} TO-C-NAME, $<> UNSPACED, $[]/$() DELIMIT closed/open"
         [text!]
@@ -184,7 +184,7 @@ export cscape: func [
                     ; are prefixed, like `cscape {SYM_${...}}`.  But if there
                     ; is no prefix, then the check might be helpful.  Review.
                     ;
-                    to-c-name/scope sub #prefixed
+                    to-c-name:scope sub #prefixed
                 ]
                 #unspaced [
                     if block? sub [
@@ -291,14 +291,14 @@ export cscape: func [
 export boot-version: load-value %../src/boot/version.r
 
 export make-emitter: func [
-    {Create a buffered output text file emitter}
+    "Create a buffered output text file emitter"
 
     return: [object!]
     title "Title for the comment header (header matches file type)"
         [text!]
     file "Filename to be emitted... .r/.reb/.c/.h/.inc files supported"
         [file!]
-    /temporary "DO-NOT-EDIT warning (automatic if file begins with 'tmp-')"
+    :temporary "DO-NOT-EDIT warning (automatic if file begins with 'tmp-')"
 
     <with>
     system  ; The `System:` SET-WORD! below overrides the global for access
@@ -337,7 +337,7 @@ export make-emitter: func [
         title: (title)
 
         emit: func [
-            {Write data to the emitter using CSCAPE templating (see HELP)}
+            "Write data to the emitter using CSCAPE templating (see HELP)"
 
             return: [~]
             template [text! char?! block!]
@@ -357,7 +357,7 @@ export make-emitter: func [
 
         write-emitted: func [
             return: [~]
-            /tabbed
+            :tabbed
             <with> file buf-emit
         ][
             if newline != last buf-emit [

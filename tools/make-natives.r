@@ -205,7 +205,7 @@ clear output-buffer
 === "GENERATE PROCESSED FILES FOR GENERICS" ===
 
 generic-names: copy []
-stripped-generics: stripload/gather (join src-dir %boot/generics.r) inside [] 'generic-names
+stripped-generics: stripload:gather (join src-dir %boot/generics.r) $generic-names
 
 write-if-changed (join output-dir %boot/tmp-generics-stripped.r) unspaced [
     "[" newline

@@ -83,7 +83,7 @@ args: parse-args system.script.args  ; either from command line or DO/ARGS
 ; [NAME VALUE ... '| COMMAND ...]
 ;
 if (commands: find args '|) [
-    options: copy/part args commands
+    options: copy:part args commands
     commands: next commands
 ]
 else [
@@ -108,7 +108,7 @@ for-each [name value] options [
             ;
             config-stack: copy []
             while [config] [
-                dir: split-path3/file config inside [] 'file
+                dir: split-path3:file config $file
                 change-dir dir
                 append config-stack (load read file)
 
@@ -123,7 +123,7 @@ for-each [name value] options [
                 config: select ensure block! second temp 'Inherits
             ]
             while [not empty? config-stack] [
-                user-config: make user-config take/last config-stack
+                user-config: make user-config take:last config-stack
             ]
 
             change-dir saved-dir
@@ -150,7 +150,7 @@ for-each [name value] options [
             ]
         ]
     ] else [
-        name: to-word replace/all to text! name #"_" #"-"
+        name: to-word replace:all to text! name #"_" #"-"
         set (has user-config name) load-value value  ; !!! else [value] ???
     ]
 ]
@@ -194,7 +194,7 @@ to-obj-path: func [
     if not ext [
         print ["File with no extension" mold file]
     ]
-    remove/part ext (length of ext)
+    remove:part ext (length of ext)
     append ext rebmake.target-platform.obj-suffix
     return join %objs/ file
 ]
@@ -204,11 +204,11 @@ gen-obj: func [
         [object!]
     s "file representation, or list if block"
         [file! text! word! path! tuple! block!]
-    /dir "directory" [any-string?]
-    /D "definitions" [block!]
-    /I "includes" [block!]
-    /F "cflags" [block!]
-    /main "for main object"
+    :dir "directory" [any-string?]
+    :D "definitions" [block!]
+    :I "includes" [block!]
+    :F "cflags" [block!]
+    :main "for main object"
 ][
     let prefer-O2: 'no  ; overrides -Os to give -O2, e.g. for %c-eval.c
     let standard: user-config.standard  ; may have a per-file override
@@ -958,7 +958,7 @@ for-each 'x targets [
 
 indent: func [
     text [text!]
-    /space
+    :space
 ][
     return apply get $replace/all [
         text
@@ -993,7 +993,7 @@ MORE HELP:^/
     { config: | load: | do: } PATH/TO/CONFIG-FILE^/
 FILES IN %make/configs/ SUBFOLDER:^/
     }
-    indent/space form sort map-each 'x ;\
+    indent:space form sort map-each 'x ;\
         load (join repo-dir %configs/)
         [to-text x]
     newline ]
@@ -1054,7 +1054,7 @@ replace help-topics.usage "HELP-TOPICS" ;\
 
 help: func [
     return: [~]
-    /topic [text!]
+    :topic [text!]
 ][
     if topic [
         topic: to-word topic
@@ -1082,7 +1082,7 @@ if commands [
     iterate (inert inside [] 'commands) [
         if find ["-h" "-help" "--help"] commands.1 [
             if second commands [  ; bootstrap commands.2 errors if null
-                help/topic second commands
+                help:topic second commands
             ] else [
                 help
             ]
@@ -1398,10 +1398,10 @@ libr3-core: make rebmake.object-library-class [
     optimization: app-config.optimization
     debug: app-config.debug
     depends: map-each 'w file-base.core [
-        gen-obj/dir w (join src-dir %core/)
+        gen-obj:dir w (join src-dir %core/)
     ]
     append depends spread map-each 'w file-base.generated [
-        gen-obj/dir w "prep/core/"
+        gen-obj:dir w "prep/core/"
     ]
 ]
 
@@ -1417,9 +1417,9 @@ main: make libr3-core [
 
     depends: reduce [
         either user-config.main [
-            gen-obj/main user-config.main
+            gen-obj:main user-config.main
         ][
-            gen-obj/dir file-base.main (join src-dir %main/)
+            gen-obj:dir file-base.main (join src-dir %main/)
         ]
     ]
 ]
@@ -1575,11 +1575,11 @@ for-each [mode label] [
 add-project-flags: func [
     return: [~]
     project [object!]
-    /I "includes" [block!]
-    /D "definitions" [block!]
-    /c "cflags" [block!]
-    /O "optimization" [word! integer!]
-    /g "debug" [onoff?!]
+    :I "includes" [block!]
+    :D "definitions" [block!]
+    :c "cflags" [block!]
+    :O "optimization" [word! integer!]
+    :g "debug" [onoff?!]
 ][
     assert [
         find [
@@ -1691,7 +1691,7 @@ for-each 'ext extensions [
         )[
             dep: case [
                 match [file! block!] s [
-                    gen-obj/dir s (join repo-dir %extensions/)
+                    gen-obj:dir s (join repo-dir %extensions/)
                 ]
                 all [
                     object? s
@@ -1740,12 +1740,12 @@ for-each 'ext extensions [
     ext-init-source: as file! unspaced [
         "tmp-mod-" ext-name-lower "-init.c"
     ]
-    append ext-objlib.depends apply get $gen-obj [
+    append ext-objlib.depends gen-obj // [
         ext-init-source
-        /dir unspaced ["prep/extensions/" ext-name-lower "/"]
-        /I ext.includes
-        /D ext.definitions
-        /F ext.cflags
+        :dir unspaced ["prep/extensions/" ext-name-lower "/"]
+        :I ext.includes
+        :D ext.definitions
+        :F ext.cflags
     ]
 
     ; Here we graft things like the global debug settings and optimization
@@ -1759,10 +1759,10 @@ for-each 'ext extensions [
     ; We add a #define of either REB_API or LIBREBOL_USES_API_TABLE based on
     ; if it's a DLL
     ;
-    apply get $add-project-flags [
+    add-project-flags // [
         ext-objlib
-        /I app-config.includes
-        /D compose [
+        :I app-config.includes
+        :D compose [
             (
                 either ext.mode = <builtin> [
                     "REB_API"
@@ -1772,9 +1772,9 @@ for-each 'ext extensions [
             )
             (spread app-config.definitions)
         ]
-        /c app-config.cflags
-        /O app-config.optimization
-        /g app-config.debug
+        :c app-config.cflags
+        :O app-config.optimization
+        :g app-config.debug
     ]
 
     if ext.mode = <builtin> [
@@ -1833,13 +1833,13 @@ for-each 'ext extensions [
 
         ; !!! It's not clear if this is really needed (?)
         ;
-        apply get $add-project-flags [
+        add-project-flags // [
             ext-proj
-            /I app-config.includes
-            /D join ["LIBREBOL_USES_API_TABLE"] spread app-config.definitions
-            /c app-config.cflags
-            /O app-config.optimization
-            /g app-config.debug
+            :I app-config.includes
+            :D join ["LIBREBOL_USES_API_TABLE"] spread app-config.definitions
+            :c app-config.cflags
+            :O app-config.optimization
+            :g app-config.debug
         ]
 
         append dynamic-libs ext-proj  ; need to add app as a dependency later

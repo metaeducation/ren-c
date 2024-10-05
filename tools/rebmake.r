@@ -72,10 +72,10 @@ ends-with?: func [
 
 filter-flag: func [
     return: [~null~ text! file!]
-    flag [tag! text! file!]
-        "If TAG! then must be <prefix:flag>, e.g. <gnu:-Wno-unknown-warning>"
-    prefix [text!]
-        "gnu -> GCC-compatible compilers, msc -> Microsoft C"
+    flag "If TAG! then <prefix:flag>, e.g. <gnu:-Wno-unknown-warning>"
+        [tag! text! file!]
+    prefix "gnu -> GCC-compatible compilers, msc -> Microsoft C"
+        [text!]
 ][
     if not tag? flag [return flag]  ; no filtering
 
@@ -373,9 +373,9 @@ application-class: make project-class [
 
     command: meth [return: [text!]] [
         let ld: any [linker, default-linker]
-        return apply get $ld/command [
+        return ld.command // [
             .output, .depends, .searches, .ldflags,
-            /debug .debug
+            :debug .debug
         ]
     ]
 
@@ -399,9 +399,9 @@ dynamic-library-class: make project-class [
         default-linker
     ][
         let l: any [.linker, default-linker]
-        return apply get $l/command [
+        return l.command // [
             .output, .depends, .searches, .ldflags
-            /dynamic ok
+            :dynamic ok
         ]
     ]
 ]
@@ -458,7 +458,7 @@ gcc: make compiler-class [
     check: meth [
         "Assigns .exec-file, extracts the compiler version"
         return: [logic?!]
-        /exec [file!]
+        :exec [file!]
     ][
         let digit: charset "0123456789"  ; no <static> in bootstrap
 
@@ -487,13 +487,13 @@ gcc: make compiler-class [
         return: [text!]
         output [file!]
         source [file!]
-        /I "includes" [block!]
-        /D "definitions" [block!]
-        /F "cflags" [block!]
-        /O "opt-level" [word! integer!]
-        /g "debug" [onoff?!]
-        /PIC "https://en.wikipedia.org/wiki/Position-independent_code"
-        /E "only preprocessing"
+        :I "includes" [block!]
+        :D "definitions" [block!]
+        :F "cflags" [block!]
+        :O "opt-level" [word! integer!]
+        :g "debug" [onoff?!]
+        :PIC "https://en.wikipedia.org/wiki/Position-independent_code"
+        :E "only preprocessing"
     ][
         return spaced collect [
             keep any [
@@ -599,14 +599,14 @@ cl: make compiler-class [
         return: [text!]
         output [file!]
         source
-        /I "includes" [block!]
-        /D "definitions" [block!]
-        /F "cflags" [block!]
-        /O "opt-level" [word! integer!]
-        /g "debug" [word! integer!]
-        /PIC "https://en.wikipedia.org/wiki/Position-independent_code"
+        :I "includes" [block!]
+        :D "definitions" [block!]
+        :F "cflags" [block!]
+        :O "opt-level" [word! integer!]
+        :g "debug" [word! integer!]
+        :PIC "https://en.wikipedia.org/wiki/Position-independent_code"
         ; Note: PIC is ignored for this Microsoft CL compiler handler
-        /E "only preprocessing"
+        :E "only preprocessing"
     ][
         return spaced collect [
             keep any [(file-to-local/pass maybe .exec-file) "cl"]
@@ -731,8 +731,8 @@ ld: make linker-class [
         depends [~null~ block!]
         searches [~null~ block!]
         ldflags [~null~ block! any-string?]
-        /dynamic
-        /debug [onoff?!]
+        :dynamic
+        :debug [onoff?!]
     ][
         let suffix: either dynamic [
             target-platform.dll-suffix
@@ -818,7 +818,7 @@ ld: make linker-class [
 
     check: meth [
         return: [logic?!]
-        /exec [file!]
+        :exec [file!]
     ][
         let version: copy ""
         .exec-file: exec: default ["gcc"]
@@ -838,8 +838,8 @@ llvm-link: make linker-class [
         depends [~null~ block!]
         searches [~null~ block!]
         ldflags [~null~ block! any-string?]
-        /dynamic
-        /debug [onoff?!]
+        :dynamic
+        :debug [onoff?!]
     ][
         let suffix: either dynamic [
             target-platform.dll-suffix
@@ -922,8 +922,8 @@ link: make linker-class [
         depends [~null~ block!]
         searches [~null~ block!]
         ldflags [~null~ block! any-string?]
-        /dynamic
-        /debug [onoff?!]
+        :dynamic
+        :debug [onoff?!]
     ][
         let suffix: either dynamic [
             target-platform.dll-suffix
@@ -1043,7 +1043,7 @@ strip: make strip-class [
     id: "gnu"
     check: meth [
         return: [logic?!]
-        /exec [file!]
+        :exec [file!]
     ][
         .exec-file: exec: default ["strip"]
         return ~
@@ -1071,13 +1071,13 @@ object-file-class: make object! [
 
     command: meth [
         return: [text!]
-        /I "extra includes" [block!]
-        /D "extra definitions" [block!]
-        /F "extra cflags (override)" [block!]
-        /O "opt-level" [word! integer!]
-        /g "dbg" [word! integer!]
-        /PIC "https://en.wikipedia.org/wiki/Position-independent_code"
-        /E "only preprocessing"
+        :I "extra includes" [block!]
+        :D "extra definitions" [block!]
+        :F "extra cflags (override)" [block!]
+        :O "opt-level" [word! integer!]
+        :g "dbg" [word! integer!]
+        :PIC "https://en.wikipedia.org/wiki/Position-independent_code"
+        :E "only preprocessing"
     ][
         let cc: any [compiler, default-compiler]
 
@@ -1091,30 +1091,30 @@ object-file-class: make object! [
             optimization: 0
         ]
 
-        return apply get $cc/command [  ; reduced APPLY in bootstrap!
+        return cc.command // [
             output
             source
 
-            /I compose [(maybe spread .includes) (maybe spread I)]
-            /D compose [(maybe spread .definitions) (maybe spread D)]
-            /F compose [(maybe spread F) (maybe spread .cflags)]
+            :I compose [(maybe spread .includes) (maybe spread I)]
+            :D compose [(maybe spread .definitions) (maybe spread D)]
+            :F compose [(maybe spread F) (maybe spread .cflags)]
                                                 ; ^-- reverses priority, why?
 
             ; "current setting overwrites /refinement"
             ; "because the refinements are inherited from the parent" (?)
 
-            /O any [O, .optimization]
-            /g any [g, .debug]
+            :O any [O, .optimization]
+            :g any [g, .debug]
 
-            /PIC PIC
-            /E E
+            :PIC PIC
+            :E E
         ]
     ]
 
     gen-entries: meth [
         return: [object!]
         parent [object!]
-        /PIC "https://en.wikipedia.org/wiki/Position-independent_code"
+        :PIC "https://en.wikipedia.org/wiki/Position-independent_code"
     ][
         assert [
             find [
@@ -1128,13 +1128,13 @@ object-file-class: make object! [
         return make entry-class [
             target: .output
             depends: append (copy any [.depends []]) .source
-            commands: reduce [apply get $.command/ [
-                /I maybe parent.includes
-                /D maybe parent.definitions
-                /F maybe parent.cflags
-                /O maybe parent.optimization
-                /g maybe parent.debug
-                /PIC any [PIC, parent.class = #dynamic-library]
+            commands: reduce [.command // [
+                :I maybe parent.includes
+                :D maybe parent.definitions
+                :F maybe parent.cflags
+                :O maybe parent.optimization
+                :g maybe parent.debug
+                :PIC any [PIC, parent.class = #dynamic-library]
             ]]
         ]
     ]
@@ -1190,7 +1190,7 @@ generator-class: make object! [
         return switch cmd.class [
             #cmd-create [
                 applique any [
-                    get $.gen-cmd-create/
+                    get $.gen-cmd-create
                     get $target-platform/gen-cmd-create
                 ] compose [
                     cmd: (cmd)
@@ -1198,7 +1198,7 @@ generator-class: make object! [
             ]
             #cmd-delete [
                 applique any [
-                    get $gen-cmd-delete
+                    get $.gen-cmd-delete
                     get $target-platform/gen-cmd-delete
                 ] compose [
                     cmd: (cmd)
@@ -1206,7 +1206,7 @@ generator-class: make object! [
             ]
             #cmd-strip [
                 applique any [
-                    get $.gen-cmd-strip/
+                    get $.gen-cmd-strip
                     get $target-platform/gen-cmd-strip
                 ] compose [
                     cmd: (cmd)
@@ -1478,7 +1478,7 @@ makefile: make generator-class [
         return: [~]
         buf [binary!]
         project [object!]
-        /parent [object!]  ; !!! Not heeded?
+        :parent [object!]  ; !!! Not heeded?
     ][
         for-each 'dep project.depends [
             if not object? dep [continue]
@@ -1521,9 +1521,9 @@ makefile: make generator-class [
                         assert [obj.class = #object-file]
                         if no? obj.generated [
                             obj.generated: 'yes
-                            append buf (gen-rule apply get $obj/gen-entries [
+                            append buf (gen-rule obj.gen-entries // [
                                 dep
-                                /PIC (project.class = #dynamic-library)
+                                :PIC (project.class = #dynamic-library)
                             ])
                         ]
                     ]
@@ -1601,7 +1601,7 @@ export execution: make generator-class [
     run-target: meth [
         return: [~]
         target [object!]
-        /cwd "change working directory"  ; !!! Not heeded (?)
+        :cwd "change working directory"  ; !!! Not heeded (?)
             [file!]
     ][
         switch target.class [
@@ -1637,7 +1637,7 @@ export execution: make generator-class [
     run: meth [
         return: [~]
         project [object!]
-        /parent "parent project"
+        :parent "parent project"
             [object!]
     ][
         ;dump project
@@ -1674,9 +1674,9 @@ export execution: make generator-class [
                     assert [obj.class = #object-file]
                     if no? obj.generated [
                         obj.generated: 'yes
-                        .run-target/ apply get $obj/gen-entries [
+                        .run-target obj.gen-entries // [
                             project
-                            /PIC (parent.class = #dynamic-library)
+                            :PIC (parent.class = #dynamic-library)
                         ]
                     ]
                 ]

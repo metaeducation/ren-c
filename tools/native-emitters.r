@@ -110,7 +110,7 @@ export emit-include-params-macro: func [
     return: [~]
     e [object!] "where to emit (see %common-emitters.r)"
     proto [text!]
-    /ext [text!] "extension name"  ; once used in extensions, not used now
+    :extension [text!] "extension name"  ; once used not used now
 ][
     if find proto "native/intrinsic" [
         return ~  ; intrinsics don't have INCLUDE_PARAMS_OF macros
@@ -230,7 +230,7 @@ export emit-include-params-macro: func [
     ; is an inconvenience, and if a native wants to do it for expedience then
     ; it needs to clear this bit itself (and set it back when done).
     ;
-    let prefix: all [ext unspaced [ext "_"]]
+    let prefix: all [extension unspaced [extension "_"]]
     e/emit [prefix native-name items {
         #define ${MAYBE PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \
             Set_Flex_Info(level_->varlist, HOLD); \

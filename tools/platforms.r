@@ -458,7 +458,7 @@ export platform-libraries: make object! [
 
 
 export for-each-platform: func [
-    {Use PARSE to enumerate the platforms, and set 'var to a record object}
+    "Use PARSE to enumerate the platforms, and set 'var to a record object"
 
     return: [~]
     var [word!]
@@ -592,7 +592,7 @@ use [
 
 
 export configure-platform: func [
-    {Return build configuration information}
+    "Return build configuration information"
     hint "Version ID (null means guess)"
         [~null~ text! tuple!]
 ][

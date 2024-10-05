@@ -29,9 +29,8 @@ import <text-lines.reb>
 import <parsing-tools.reb>
 
 load-until-double-newline: func [
-    {Load rebol values from text until double newline.}
+    "Load rebol values from text until double newline."
     text [text!]
-    /next {Return values and next position.}
     <local> position  ; no LET in parse :-/
 ][
     let wsp: compose [some (charset { ^-})]
@@ -253,7 +252,7 @@ export proto-parser: context [
 ]
 
 export rewrite-if-directives: func [
-    {Bottom up rewrite conditional directives to remove unnecessary sections.}
+    "Bottom up rewrite conditional directives to remove unnecessary sections"
     return: [~]
     position
 ][
